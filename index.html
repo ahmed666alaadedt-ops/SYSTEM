@@ -1,0 +1,153 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SYSTEM - الإنسان نحو الارتقاء</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+font-family:Tahoma,Arial,sans-serif;
+background:#080d18;color:#eef4ff;
+min-height:100vh;padding:20px
+}
+.container{max-width:850px;margin:auto}
+header{
+text-align:center;padding:30px 15px;
+border-bottom:1px solid #263653
+}
+.logo{
+color:#42d9ff;font-size:38px;font-weight:bold;
+letter-spacing:5px;text-shadow:0 0 20px #168dbb
+}
+.subtitle{color:#9baec9;margin-top:12px}
+.panel{
+background:#111b2d;border:1px solid #263b5d;
+border-radius:15px;padding:22px;margin-top:20px;
+box-shadow:0 5px 25px #0005
+}
+h2{color:#42d9ff;margin-bottom:16px;font-size:20px}
+.level{font-size:25px;font-weight:bold;margin-bottom:12px}
+.stats{
+display:grid;grid-template-columns:repeat(3,1fr);
+gap:10px;margin-top:20px
+}
+.stat{
+background:#192740;border-radius:12px;
+padding:15px 5px;text-align:center
+}
+.stat strong{
+display:block;color:#42d9ff;font-size:23px;margin-bottom:8px
+}
+.stat span{color:#aabbd3;font-size:13px}
+.progress-bg{
+height:12px;background:#263650;
+border-radius:20px;overflow:hidden;margin-top:12px
+}
+.progress{
+height:100%;width:0%;
+background:linear-gradient(90deg,#168dff,#42e5ff);
+transition:width .3s
+}
+.task{
+display:flex;align-items:center;gap:12px;
+background:#192740;padding:15px;
+border-radius:10px;margin-top:10px
+}
+.task input{width:20px;height:20px;accent-color:#35d9ff}
+.task label{flex:1;line-height:1.6}
+.points{color:#42d9ff;font-size:13px;white-space:nowrap}
+.domain{
+background:#192740;padding:14px;border-radius:10px;
+margin-top:9px;border-right:3px solid #42d9ff
+}
+.reset{
+margin-top:20px;background:#263650;color:white;
+border:0;border-radius:9px;padding:12px 18px;
+font-size:14px;cursor:pointer
+}
+footer{text-align:center;color:#70849f;padding:30px 10px;font-size:13px}
+@media(max-width:500px){
+.stats{grid-template-columns:1fr 1fr 1fr}
+.stat strong{font-size:19px}
+body{padding:12px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<div class="logo">SYSTEM</div>
+<p class="subtitle">الإنسان نحو الارتقاء</p>
+</header>
+
+<section class="panel">
+<h2>مرحباً بك أيها المستخدم</h2>
+<div class="level" id="level">المستوى 1</div>
+<p id="rank">بداية الطريق</p>
+<div class="stats">
+<div class="stat"><strong id="xp">0</strong><span>نقاط الخبرة XP</span></div>
+<div class="stat"><strong id="done">0</strong><span>المهام المكتملة</span></div>
+<div class="stat"><strong id="remaining">5</strong><span>المهام المتبقية</span></div>
+</div>
+<p style="margin-top:22px">التقدم نحو المستوى التالي</p>
+<div class="progress-bg"><div class="progress" id="progress"></div></div>
+</section>
+
+<section class="panel">
+<h2>مجالات التطور</h2>
+<div class="domain">✦ الروح — تقوية الجانب الروحي</div>
+<div class="domain">✦ العقل — تنمية المعرفة والتفكير</div>
+<div class="domain">✦ الجسد — بناء القوة والصحة</div>
+<div class="domain">✦ الوعي — فهم الذات وتطويرها</div>
+<div class="domain">✦ الانضباط — الالتزام والاستمرارية</div>
+</section>
+
+<section class="panel">
+<h2>المهام اليومية</h2>
+<p style="color:#aabbd3;margin-bottom:15px">أكمل مهامك اليومية واجمع نقاط الخبرة.</p>
+<div id="tasks">
+<div class="task"><input type="checkbox" id="t1"><label for="t1">أداء العبادات والمحافظة عليها</label><span class="points">+10 XP</span></div>
+<div class="task"><input type="checkbox" id="t2"><label for="t2">قراءة أو تعلم شيء جديد</label><span class="points">+10 XP</span></div>
+<div class="task"><input type="checkbox" id="t3"><label for="t3">ممارسة نشاط بدني</label><span class="points">+10 XP</span></div>
+<div class="task"><input type="checkbox" id="t4"><label for="t4">التأمل ومراجعة النفس</label><span class="points">+10 XP</span></div>
+<div class="task"><input type="checkbox" id="t5"><label for="t5">الالتزام بهدف يومي وإنجازه</label><span class="points">+10 XP</span></div>
+</div>
+<button class="reset" onclick="resetTasks()">إعادة ضبط المهام</button>
+</section>
+
+<footer>SYSTEM © الإنسان نحو الارتقاء</footer>
+</div>
+
+<script>
+const tasks=document.querySelectorAll('#tasks input');
+function update(){
+let done=0;
+tasks.forEach(task=>{if(task.checked)done++});
+let xp=done*10;
+let level=Math.floor(xp/50)+1;
+let progress=(xp%50)/50*100;
+document.getElementById('xp').textContent=xp;
+document.getElementById('done').textContent=done;
+document.getElementById('remaining').textContent=5-done;
+document.getElementById('level').textContent='المستوى '+level;
+document.getElementById('progress').style.width=progress+'%';
+document.getElementById('rank').textContent=
+level===1?'بداية الطريق':'رحلة الارتقاء مستمرة';
+localStorage.setItem('systemTasks',
+JSON.stringify([...tasks].map(t=>t.checked)));
+}
+function resetTasks(){
+tasks.forEach(t=>t.checked=false);
+update();
+}
+tasks.forEach(task=>task.addEventListener('change',update));
+try{
+let saved=JSON.parse(localStorage.getItem('systemTasks')||'[]');
+tasks.forEach((t,i)=>t.checked=!!saved[i]);
+}catch(e){}
+update();
+</script>
+</body>
+</html>
