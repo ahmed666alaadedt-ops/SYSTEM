@@ -1,3 +1,4 @@
+
 package com.system.irtqaa
 
 import android.os.Bundle
@@ -26,6 +27,27 @@ private val Gold = Color(0xFFFFC857)
 private val White = Color(0xFFF4F6FA)
 private val Muted = Color(0xFF9BA9BD)
 
+private data class SystemTask(
+    val title: String,
+    val area: String
+)
+
+private val areas = listOf(
+    "الروح" to "التوازن والقيم والجانب الروحي",
+    "العقل" to "المعرفة والتعلم وتنمية التفكير",
+    "الجسد" to "الصحة واللياقة والقوة البدنية",
+    "الوعي" to "الفهم والتركيز ومراقبة الذات",
+    "الانضباط" to "الالتزام والاستمرار وتحقيق الأهداف"
+)
+
+private val tasks = listOf(
+    SystemTask("استيقظ مبكراً", "الانضباط"),
+    SystemTask("اقرأ لمدة 20 دقيقة", "العقل"),
+    SystemTask("مارس التمارين الرياضية", "الجسد"),
+    SystemTask("خصص وقتاً للتأمل", "الروح"),
+    SystemTask("راجع أهدافك اليومية", "الوعي")
+)
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,7 +56,12 @@ class MainActivity : ComponentActivity() {
         val today = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
 
         if (prefs.getString("day", "") != today) {
-            prefs.edit().clear().putString("day", today).apply()
+            val editor = prefs.edit()
+            tasks.indices.forEach { index ->
+                editor.remove("task_$index")
+            }
+            editor.putString("day", today)
+            editor.apply()
         }
 
         setContent {
@@ -46,26 +73,30 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun SystemApp(prefs: android.content.SharedPreferences) {
     var page by remember { mutableIntStateOf(0) }
-    var xp by remember { mutableIntStateOf(prefs.getInt("xp", 0)) }
 
-    val tasks = listOf(
-        "استيقظ مبكراً",
-        "اقرأ لمدة 20 دقيقة",
-        "مارس التمارين الرياضية",
-        "خصص وقتاً للتأمل",
-        "راجع أهدافك اليومية"
-    )
+    var xp by remember {
+        mutableIntStateOf(prefs.getInt("xp", 0))
+    }
 
     val completed = remember {
         mutableStateListOf<Boolean>().apply {
-            repeat(tasks.size) { index ->
+            tasks.indices.forEach { index ->
                 add(prefs.getBoolean("task_$index", false))
+            }
+        }
+    }
+
+    val areaXp = remember {
+        mutableStateMapOf<String, Int>().apply {
+            areas.forEach { area ->
+                put(area.first, prefs.getInt("area_${area.first}", 0))
             }
         }
     }
 
     val level = (xp / 50) + 1
     val progress = (xp % 50) / 50f
+    val completedCount = completed.count { it }
 
     MaterialTheme {
         Scaffold(
@@ -92,6 +123,7 @@ fun SystemApp(prefs: android.content.SharedPreferences) {
                 }
             }
         ) { padding ->
+
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -100,6 +132,7 @@ fun SystemApp(prefs: android.content.SharedPreferences) {
                     .padding(18.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+
                 item {
                     Text(
                         "SYSTEM",
@@ -122,20 +155,25 @@ fun SystemApp(prefs: android.content.SharedPreferences) {
                     ) {
                         Column(Modifier.padding(20.dp)) {
                             Text("مستوى المستخدم", color = Muted)
+
                             Text(
                                 "LEVEL $level",
                                 color = Gold,
                                 fontSize = 34.sp,
                                 fontWeight = FontWeight.Bold
                             )
+
                             Text("$xp XP", color = White)
+
                             Spacer(Modifier.height(12.dp))
+
                             LinearProgressIndicator(
                                 progress = { progress },
                                 modifier = Modifier.fillMaxWidth(),
                                 color = Gold,
                                 trackColor = Dark
                             )
+
                             Text(
                                 "${xp % 50} / 50 XP للمستوى التالي",
                                 color = Muted,
@@ -158,20 +196,54 @@ fun SystemApp(prefs: android.content.SharedPreferences) {
                     )
                 }
 
-                if (page == 2) {
-                    val areas = listOf(
-                        "الروح" to "التوازن والقيم",
-                        "العقل" to "المعرفة والتعلم",
-                        "الجسد" to "الصحة والقوة",
-                        "الوعي" to "الفهم والتركيز",
-                        "الانضباط" to "الالتزام والاستمرار"
-                    )
+                if (page == 0) {
+
+                    item {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = Panel),
+                            shape = RoundedCornerShape(16.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(Modifier.padding(18.dp)) {
+                                Text("إنجازات اليوم", color = Gold, fontSize = 18.sp)
+                                Spacer(Modifier.height(8.dp))
+                                Text(
+                                    "$completedCount من ${tasks.size} مهام مكتملة",
+                                    color = White,
+                                    fontSize = 16.sp
+                                )
+                                Text(
+                                    "استمر بالتقدم، كل خطوة تصنع فرقاً.",
+                                    color = Muted,
+                                    fontSize = 13.sp
+                                )
+                            }
+                        }
+                    }
+
+                    item {
+                        Text(
+                            "مجالات التطور",
+                            color = White,
+                            fontSize = 19.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
 
                     items(areas.size) { index ->
-                        AreaCard(areas[index].first, areas[index].second)
+                        val area = areas[index]
+                        AreaCard(
+                            name = area.first,
+                            description = area.second,
+                            xp = areaXp[area.first] ?: 0
+                        )
                     }
-                } else {
+
+                } else if (page == 1) {
+
                     items(tasks.size) { index ->
+                        val task = tasks[index]
+
                         Card(
                             colors = CardDefaults.cardColors(containerColor = Panel),
                             shape = RoundedCornerShape(14.dp),
@@ -186,10 +258,21 @@ fun SystemApp(prefs: android.content.SharedPreferences) {
                                     onCheckedChange = { checked ->
                                         if (checked != completed[index]) {
                                             completed[index] = checked
-                                            xp += if (checked) 10 else -10
+
+                                            val change = if (checked) 10 else -10
+                                            xp = (xp + change).coerceAtLeast(0)
+
+                                            val oldAreaXp = areaXp[task.area] ?: 0
+                                            areaXp[task.area] =
+                                                (oldAreaXp + change).coerceAtLeast(0)
+
                                             prefs.edit()
                                                 .putBoolean("task_$index", checked)
                                                 .putInt("xp", xp)
+                                                .putInt(
+                                                    "area_${task.area}",
+                                                    areaXp[task.area] ?: 0
+                                                )
                                                 .apply()
                                         }
                                     },
@@ -197,16 +280,33 @@ fun SystemApp(prefs: android.content.SharedPreferences) {
                                         checkedColor = Gold
                                     )
                                 )
+
                                 Column(Modifier.weight(1f)) {
                                     Text(
-                                        tasks[index],
+                                        task.title,
                                         color = White,
                                         fontWeight = FontWeight.Medium
                                     )
-                                    Text("+10 XP", color = Gold, fontSize = 12.sp)
+                                    Text(
+                                        "${task.area}  •  +10 XP",
+                                        color = Gold,
+                                        fontSize = 12.sp
+                                    )
                                 }
                             }
                         }
+                    }
+
+                } else {
+
+                    items(areas.size) { index ->
+                        val area = areas[index]
+
+                        AreaCard(
+                            name = area.first,
+                            description = area.second,
+                            xp = areaXp[area.first] ?: 0
+                        )
                     }
                 }
 
@@ -225,15 +325,56 @@ fun SystemApp(prefs: android.content.SharedPreferences) {
 }
 
 @Composable
-fun AreaCard(name: String, description: String) {
+fun AreaCard(
+    name: String,
+    description: String,
+    xp: Int
+) {
+    val areaLevel = (xp / 50) + 1
+    val progress = (xp % 50) / 50f
+
     Card(
         colors = CardDefaults.cardColors(containerColor = Panel),
         shape = RoundedCornerShape(14.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(Modifier.padding(18.dp)) {
-            Text(name, color = Gold, fontSize = 19.sp, fontWeight = FontWeight.Bold)
-            Text(description, color = Muted, fontSize = 13.sp)
+
+            Text(
+                name,
+                color = Gold,
+                fontSize = 19.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                description,
+                color = Muted,
+                fontSize = 13.sp
+            )
+
+            Spacer(Modifier.height(10.dp))
+
+            Text(
+                "LEVEL $areaLevel  •  $xp XP",
+                color = White,
+                fontSize = 14.sp
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier.fillMaxWidth(),
+                color = Gold,
+                trackColor = Dark
+            )
+
+            Text(
+                "${xp % 50} / 50 XP للمستوى التالي",
+                color = Muted,
+                fontSize = 11.sp
+            )
         }
     }
 }
