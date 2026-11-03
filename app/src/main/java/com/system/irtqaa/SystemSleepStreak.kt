@@ -17,7 +17,7 @@ object SystemSleepStreak {
 
         val dates = records
             .filter { it.isValid }
-            .map { it.date.toLocalDate() }
+            .map { it.date }
             .distinct()
             .sorted()
 
