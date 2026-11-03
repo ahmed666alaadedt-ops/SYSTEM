@@ -33,3 +33,83 @@ data class SystemFitnessWeeklyPlan(
     val days: List<SystemFitnessPlanDay>,
     val safetyReminder: String
 )
+class SystemFitnessPlanEngine {
+
+    fun buildWeeklyPlan(
+        profile: SystemFitnessProfile,
+        startDate: LocalDate = LocalDate.now()
+    ): SystemFitnessWeeklyPlan {
+
+        val level = profile.activityLevel
+        val goal = profile.goal
+
+        val walkingMinutes = when (level) {
+            SystemFitnessActivityLevel.BEGINNER -> 15
+            SystemFitnessActivityLevel.LIGHT -> 25
+            SystemFitnessActivityLevel.MODERATE -> 35
+            SystemFitnessActivityLevel.ACTIVE -> 40
+        }
+
+        val strengthSets = when (level) {
+            SystemFitnessActivityLevel.BEGINNER -> 2
+            SystemFitnessActivityLevel.LIGHT -> 2
+            SystemFitnessActivityLevel.MODERATE -> 3
+            SystemFitnessActivityLevel.ACTIVE -> 3
+        }
+
+        val strengthDays = when (level) {
+            SystemFitnessActivityLevel.BEGINNER -> setOf(2, 5)
+            SystemFitnessActivityLevel.LIGHT -> setOf(2, 5)
+            SystemFitnessActivityLevel.MODERATE -> setOf(2, 4, 6)
+            SystemFitnessActivityLevel.ACTIVE -> setOf(2, 4, 6)
+        }
+
+        val restDays = when (level) {
+            SystemFitnessActivityLevel.BEGINNER -> setOf(4, 7)
+            SystemFitnessActivityLevel.LIGHT -> setOf(4, 7)
+            SystemFitnessActivityLevel.MODERATE -> setOf(1, 7)
+            SystemFitnessActivityLevel.ACTIVE -> setOf(1, 7)
+        }
+
+        val days = (1..7).map { dayNumber ->
+            val date = startDate.plusDays((dayNumber - 1).toLong())
+
+            val activities = when {
+                dayNumber in restDays -> listOf(
+                    SystemFitnessPlanActivity(
+                        type = SystemFitnessPlanActivityType.REST,
+                        title = "راحة واستشفاء",
+                        description = "استرح، واشرب الماء، ويمكنك المشي الخفيف حسب راحتك",
+                        durationMinutes = 0
+                    )
+                )
+
+                dayNumber in strengthDays -> strengthActivities(
+                    sets = strengthSets,
+                    goal = goal
+                )
+
+                else -> cardioActivities(
+                    minutes = walkingMinutes,
+                    goal = goal
+                )
+            }
+
+            SystemFitnessPlanDay(
+                date = date,
+                dayNumber = dayNumber,
+                title = "اليوم $dayNumber",
+                activities = activities,
+                isRestDay = dayNumber in restDays
+            )
+        }
+
+        return SystemFitnessWeeklyPlan(
+            userId = profile.userId,
+            goal = goal,
+            activityLevel = level,
+            days = days,
+            safetyReminder = "ابدأ بالتدريج، وتوقف عند الألم أو الدوخة أو ضيق النفس غير المعتاد. استشر مختصاً إذا كانت لديك حالة صحية تؤثر على التمرين."
+        )
+    }
+}
