@@ -113,3 +113,58 @@ class SystemFitnessPlanEngine {
         )
     }
 }
+private fun strengthActivities(
+    sets: Int,
+    goal: SystemFitnessGoal
+): List<SystemFitnessPlanActivity> {
+
+    val repetitions = when (goal) {
+        SystemFitnessGoal.MUSCLE_GAIN -> 10
+        else -> 8
+    }
+
+    return listOf(
+        SystemFitnessPlanActivity(
+            type = SystemFitnessPlanActivityType.STRENGTH,
+            title = "تمارين مقاومة للجسم",
+            description = "سكوات بوزن الجسم، ضغط على الحائط أو سطح مرتفع، وجسر الحوض. خذ استراحة بين المجموعات.",
+            durationMinutes = 20,
+            sets = sets,
+            repetitions = repetitions
+        ),
+        SystemFitnessPlanActivity(
+            type = SystemFitnessPlanActivityType.MOBILITY,
+            title = "إطالة ومرونة",
+            description = "حركات لطيفة للكتفين والظهر والساقين دون إجبار المفاصل.",
+            durationMinutes = 5
+        )
+    )
+}
+
+private fun cardioActivities(
+    minutes: Int,
+    goal: SystemFitnessGoal
+): List<SystemFitnessPlanActivity> {
+
+    val activity = when (goal) {
+        SystemFitnessGoal.IMPROVE_ENDURANCE -> "مشي نشيط أو هرولة خفيفة حسب القدرة"
+        SystemFitnessGoal.WEIGHT_LOSS -> "مشي منتظم بوتيرة مريحة"
+        SystemFitnessGoal.MUSCLE_GAIN -> "مشي خفيف للمحافظة على النشاط"
+        else -> "مشي منتظم حسب القدرة"
+    }
+
+    return listOf(
+        SystemFitnessPlanActivity(
+            type = SystemFitnessPlanActivityType.WALKING,
+            title = activity,
+            description = "ابدأ بوتيرة مريحة، ويمكن تقسيم المدة إلى فترات قصيرة.",
+            durationMinutes = minutes
+        ),
+        SystemFitnessPlanActivity(
+            type = SystemFitnessPlanActivityType.MOBILITY,
+            title = "إحماء وتهدئة",
+            description = "حركات خفيفة قبل المشي وبعده.",
+            durationMinutes = 5
+        )
+    )
+}
