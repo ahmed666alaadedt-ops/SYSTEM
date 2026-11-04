@@ -1,8 +1,14 @@
+ger.completeTask(
+                                                        task.taskId
+                                                    )
 package com.system.irtqaa
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,11 +19,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
 import java.time.LocalDate
 
 class MainActivity : ComponentActivity() {
@@ -67,9 +75,7 @@ fun SystemApp() {
     }
 
     var progressSnapshot by remember(progressEngine, userId) {
-        mutableStateOf(
-            progressEngine.getProgress(userId)
-        )
+        mutableStateOf(progressEngine.getProgress(userId))
     }
 
     var selectedTab by remember {
@@ -78,6 +84,14 @@ fun SystemApp() {
 
     var worldProgress by remember {
         mutableStateOf(PlayerWorldProgress())
+    }
+
+    var showWorldSelection by remember {
+        mutableStateOf(false)
+    }
+
+    var selectedWorld by remember {
+        mutableStateOf("")
     }
 
     val completedCount = tasks.count {
@@ -115,7 +129,7 @@ fun SystemApp() {
                     fontSize = 15.sp
                 )
 
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(16.dp))
 
                 Card(
                     colors = CardDefaults.cardColors(
@@ -123,11 +137,9 @@ fun SystemApp() {
                     ),
                     shape = RoundedCornerShape(18.dp)
                 ) {
-
                     Column(
-                        Modifier.padding(18.dp)
+                        Modifier.padding(16.dp)
                     ) {
-
                         Text(
                             "المستوى العام",
                             color = Color.White
@@ -155,7 +167,7 @@ fun SystemApp() {
                     }
                 }
 
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(16.dp))
 
                 Row(
                     modifier = Modifier.horizontalScroll(
@@ -168,7 +180,7 @@ fun SystemApp() {
                         "الرئيسية",
                         "المهام",
                         "المستويات",
-                        "العالم الافتراضي"
+                        "جزيرة الطمع"
                     )
 
                     tabs.forEachIndexed { index, title ->
@@ -176,6 +188,7 @@ fun SystemApp() {
                         Button(
                             onClick = {
                                 selectedTab = index
+                                showWorldSelection = false
                             },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor =
@@ -186,43 +199,119 @@ fun SystemApp() {
                                         Color.Black
                                     else
                                         Color.White
-                            )
+                            ),
+                            shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text(title)
+                            Text(
+                                title,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
 
-                Spacer(Modifier.height(18.dp))
+                Spacer(Modifier.height(16.dp))
 
                 when (selectedTab) {
 
+                    // الصفحة الرئيسية
                     0 -> {
 
-                        Text(
-                            "مرحباً بك أيها المقاتل",
-                            color = Color.White,
-                            fontSize = 21.sp
-                        )
+                        if (showWorldSelection) {
 
-                        Spacer(Modifier.height(12.dp))
+                            WorldSelectionScreen(
+                                onBack = {
+                                    showWorldSelection = false
+                                },
+                                onSelectWorld = { world ->
+                                    selectedWorld = world
+                                    showWorldSelection = false
+                                }
+                            )
 
-                        Text(
-                            "إنجازات اليوم: $completedCount / ${tasks.size}",
-                            color = cyan
-                        )
+                        } else if (selectedWorld == "real") {
 
-                        Text(
-                            "مجموع الخبرة: $totalExperience XP",
-                            color = gold
-                        )
+                            Column {
+                                Button(
+                                    onClick = {
+                                        selectedWorld = ""
+                                    }
+                                ) {
+                                    Text("العودة إلى العوالم")
+                                }
 
-                        Text(
-                            "المهام المكتملة محفوظة في النظام",
-                            color = Color.LightGray
-                        )
+                                SystemWorldScreen(
+                                    progress = worldProgress,
+                                    onProgressChange = {
+                                        worldProgress = it
+                                    }
+                                )
+                            }
+
+                        } else if (
+                            selectedWorld == "fantasy" ||
+                            selectedWorld == "mythology"
+                        ) {
+
+                            WorldComingSoonScreen(
+                                worldName =
+                                    if (selectedWorld == "fantasy")
+                                        "العالم الخيالي"
+                                    else
+                                        "عالم الأساطير",
+                                onBack = {
+                                    selectedWorld = ""
+                                    showWorldSelection = true
+                                }
+                            )
+
+                        } else {
+
+                            Column(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+
+                                Text(
+                                    "مرحباً بك أيها المقاتل",
+                                    color = Color.White,
+                                    fontSize = 21.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+
+                                Spacer(Modifier.height(8.dp))
+
+                                Text(
+                                    "إنجازات اليوم: $completedCount / ${tasks.size}",
+                                    color = cyan
+                                )
+
+                                Text(
+                                    "مجموع الخبرة: $totalExperience XP",
+                                    color = gold
+                                )
+
+                                Spacer(Modifier.height(18.dp))
+
+                                Text(
+                                    "عوالم SYSTEM",
+                                    color = gold,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+
+                                Spacer(Modifier.height(10.dp))
+
+                                // بطاقة العالم الافتراضي الكبيرة
+                                SystemWorldBanner(
+                                    onClick = {
+                                        showWorldSelection = true
+                                    }
+                                )
+                            }
+                        }
                     }
 
+                    // صفحة المهام
                     1 -> {
 
                         Text(
@@ -301,6 +390,444 @@ fun SystemApp() {
                                                         task.taskId
                                                     )
 
+                                                    tasks =
+                                                        taskManager.getTasks()
+                                                            .filter {
+                                                                it.taskId.startsWith(
+                                                                    "system_${today}_"
+                                                                )
+                                                            }
+
+                                                    progressSnapshot =
+                                                        progressEngine.getProgress(
+                                                            userId
+                                                        )
+                                                }
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // صفحة المستويات
+                    2 -> {
+
+                        Text(
+                            "مجالات التطور",
+                            color = gold,
+                            fontSize = 22.sp
+                        )
+
+                        Spacer(Modifier.height(10.dp))
+
+                        LazyColumn(
+                            verticalArrangement =
+                                Arrangement.spacedBy(10.dp)
+                        ) {
+
+                            items(
+                                progressSnapshot.domains,
+                                key = { it.domain.name }
+                            ) { domainProgress ->
+
+                                Card(
+                                    colors = CardDefaults.cardColors(
+                                        containerColor =
+                                            panel.copy(alpha = 0.92f)
+                                    )
+                                ) {
+
+                                    Column(
+                                        Modifier.padding(16.dp)
+                                    ) {
+
+                                        Text(
+                                            domainLabel(domainProgress.domain),
+                                            color = Color.White,
+                                            fontSize = 19.sp
+                                        )
+
+                                        Text(
+                                            "المستوى ${domainProgress.level}",
+                                            color = gold
+                                        )
+
+                                        Text(
+                                            "${domainProgress.experience} XP",
+                                            color = cyan
+                                        )
+
+                                        Text(
+                                            "المهام المكتملة: ${domainProgress.completedTasks}",
+                                            color = Color.LightGray
+                                        )
+
+                                        LinearProgressIndicator(
+                                            progress = {
+                                                (domainProgress.experience % 100) /
+                                                    100f
+                                            },
+                                            modifier =
+                                                Modifier.fillMaxWidth(),
+                                            color = gold
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // جزيرة الطمع
+                    3 -> {
+
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+
+                            Spacer(Modifier.height(20.dp))
+
+                            Text(
+                                "جزيرة الطمع",
+                                color = gold,
+                                fontSize = 27.sp,
+                                fontWeight = FontWeight.Black
+                            )
+
+                            Spacer(Modifier.height(20.dp))
+
+                            Text(
+                                "🏝️",
+                                fontSize = 76.sp
+                            )
+
+                            Spacer(Modifier.height(12.dp))
+
+                            Text(
+                                "بوابة الجزيرة مغلقة حالياً",
+                                color = Color.White,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Text(
+                                "تُفتح الجزيرة خلال المواسم والمسابقات الخاصة.",
+                                color = Color.LightGray,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// بطاقة العالم الافتراضي الكبيرة
+@Composable
+fun SystemWorldBanner(
+    onClick: () -> Unit
+) {
+
+    val gold = Color(0xFFFFC857)
+    val cyan = Color(0xFF45D6E8)
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(205.dp)
+            .clickable(onClick = onClick)
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        Color(0xFF101B35),
+                        Color(0xFF163C59),
+                        Color(0xFF241B43)
+                    )
+                ),
+                shape = RoundedCornerShape(22.dp)
+            )
+    ) {
+
+        Canvas(
+            modifier = Modifier.fillMaxSize()
+        ) {
+
+            drawCircle(
+                color = cyan.copy(alpha = 0.13f),
+                radius = size.minDimension * 0.42f,
+                center = Offset(
+                    size.width * 0.78f,
+                    size.height * 0.43f
+                )
+            )
+
+            drawCircle(
+                color = gold.copy(alpha = 0.12f),
+                radius = size.minDimension * 0.27f,
+                center = Offset(
+                    size.width * 0.83f,
+                    size.height * 0.44f
+                )
+            )
+
+            drawCircle(
+                color = cyan.copy(alpha = 0.30f),
+                radius = 5.dp.toPx(),
+                center = Offset(
+                    size.width * 0.15f,
+                    size.height * 0.22f
+                )
+            )
+
+            drawCircle(
+                color = gold.copy(alpha = 0.35f),
+                radius = 4.dp.toPx(),
+                center = Offset(
+                    size.width * 0.55f,
+                    size.height * 0.75f
+                )
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+
+                Text(
+                    "SYSTEM WORLD",
+                    color = gold,
+                    fontSize = 23.sp,
+                    fontWeight = FontWeight.Black
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                Text(
+                    "العالم الافتراضي",
+                    color = Color.White,
+                    fontSize = 21.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                Text(
+                    "اكتشف عوالم جديدة وابدأ رحلتك.",
+                    color = Color.LightGray,
+                    fontSize = 13.sp
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                Text(
+                    "اضغط للدخول  ←",
+                    color = cyan,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Text(
+                "🌌",
+                fontSize = 66.sp
+            )
+        }
+    }
+}
+
+// شاشة اختيار العوالم الثلاثة
+@Composable
+fun WorldSelectionScreen(
+    onBack: () -> Unit,
+    onSelectWorld: (String) -> Unit
+) {
+
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+
+        Button(
+            onClick = onBack
+        ) {
+            Text("رجوع")
+        }
+
+        Text(
+            "اختر عالمك",
+            color = Color(0xFFFFC857),
+            fontSize = 25.sp,
+            fontWeight = FontWeight.Black
+        )
+
+        Spacer(Modifier.height(14.dp))
+
+        WorldChoiceCard(
+            title = "العالم الخيالي",
+            description = "السحر والقوى والعناصر والمغامرات.",
+            symbol = "🧙",
+            colors = listOf(
+                Color(0xFF28194E),
+                Color(0xFF56318A)
+            ),
+            onClick = {
+                onSelectWorld("fantasy")
+            }
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        WorldChoiceCard(
+            title = "عالم الأساطير",
+            description = "القوى الأسطورية والأسرار والتحولات.",
+            symbol = "⚡",
+            colors = listOf(
+                Color(0xFF40201B),
+                Color(0xFF85502B)
+            ),
+            onClick = {
+                onSelectWorld("mythology")
+            }
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        WorldChoiceCard(
+            title = "العالم الواقعي الافتراضي",
+            description = "المدن والحياة والاستكشاف والعصور.",
+            symbol = "🌍",
+            colors = listOf(
+                Color(0xFF103A42),
+                Color(0xFF176A78)
+            ),
+            onClick = {
+                onSelectWorld("real")
+            }
+        )
+    }
+}
+
+@Composable
+fun WorldChoiceCard(
+    title: String,
+    description: String,
+    symbol: String,
+    colors: List<Color>,
+    onClick: () -> Unit
+) {
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(118.dp)
+            .clickable(onClick = onClick)
+            .background(
+                Brush.linearGradient(colors),
+                RoundedCornerShape(18.dp)
+            )
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+
+            Text(
+                title,
+                color = Color.White,
+                fontSize = 19.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(Modifier.height(7.dp))
+
+            Text(
+                description,
+                color = Color.LightGray,
+                fontSize = 12.sp
+            )
+
+            Spacer(Modifier.height(7.dp))
+
+            Text(
+                "استكشاف العالم ←",
+                color = Color(0xFFFFC857),
+                fontSize = 12.sp
+            )
+        }
+
+        Text(
+            symbol,
+            fontSize = 45.sp
+        )
+    }
+}
+
+@Composable
+fun WorldComingSoonScreen(
+    worldName: String,
+    onBack: () -> Unit
+) {
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        Button(
+            onClick = onBack
+        ) {
+            Text("العودة إلى العوالم")
+        }
+
+        Spacer(Modifier.height(30.dp))
+
+        Text(
+            worldName,
+            color = Color(0xFFFFC857),
+            fontSize = 25.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(Modifier.height(15.dp))
+
+        Text(
+            "هذا العالم ضمن خطة SYSTEM، وتجري تهيئة أنظمته بصورة مستقلة.",
+            color = Color.White,
+            fontSize = 15.sp
+        )
+
+        Spacer(Modifier.height(10.dp))
+
+        Text(
+            "سيتم تطويره وربطه بمحتواه الخاص في مرحلة لاحقة.",
+            color = Color.LightGray,
+            fontSize = 13.sp
+        )
+    }
+}
+
+private fun domainLabel(
+    domain: SystemDevelopmentDomain
+): String {
+
+    return when (domain) {
+        SystemDevelopmentDomain.SPIRIT -> "الروح"
+        SystemDevelopmentDomain.MIND -> "العقل"
+        SystemDevelopmentDomain.BODY -> "الجسد"
+        SystemDevelopmentDomain.AWARENESS -> "الوعي"
+        SystemDevelopmentDomain.DISCIPLINE -> "الانضباط"
+    }
+}
                                                     tasks =
                                                         taskManager.getTasks()
                                                             .filter {
