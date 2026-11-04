@@ -4,12 +4,14 @@ class_name MobileControls
 signal movement_changed(direction: Vector2)
 signal jump_pressed
 signal look_changed(delta: Vector2)
+signal camera_toggle_pressed
 
 
 class TouchOverlay extends Control:
 	signal movement_changed(direction: Vector2)
 	signal jump_pressed
 	signal look_changed(delta: Vector2)
+	signal camera_toggle_pressed
 
 	var joystick_touch := -1
 	var joystick_direction := Vector2.ZERO
@@ -19,6 +21,9 @@ class TouchOverlay extends Control:
 	var jump_touch := -1
 	var jump_center := Vector2.ZERO
 	var jump_radius := 55.0
+
+	var view_center := Vector2.ZERO
+	var view_radius := 48.0
 
 	var look_touch := -1
 
@@ -36,6 +41,7 @@ class TouchOverlay extends Control:
 	func _draw() -> void:
 		joystick_center = Vector2(125, size.y - 135)
 		jump_center = Vector2(size.x - 110, size.y - 125)
+		view_center = Vector2(size.x - 100, 105)
 
 		draw_circle(
 			joystick_center,
@@ -65,11 +71,30 @@ class TouchOverlay extends Control:
 			Color.WHITE
 		)
 
+		draw_circle(
+			view_center,
+			view_radius,
+			Color(0.35, 0.45, 0.7, 0.75)
+		)
+
+		draw_string(
+			ThemeDB.fallback_font,
+			view_center + Vector2(-24, 6),
+			"VIEW",
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			16,
+			Color.WHITE
+		)
+
 
 	func _gui_input(event: InputEvent) -> void:
 		if event is InputEventScreenTouch:
 			if event.pressed:
-				if event.position.distance_to(joystick_center) <= joystick_radius * 1.8:
+				if event.position.distance_to(view_center) <= view_radius * 1.5:
+					camera_toggle_pressed.emit()
+
+				elif event.position.distance_to(joystick_center) <= joystick_radius * 1.8:
 					if joystick_touch == -1:
 						joystick_touch = event.index
 						_update_joystick(event.position)
@@ -126,6 +151,7 @@ func _ready() -> void:
 	screen_control.movement_changed.connect(_on_movement_changed)
 	screen_control.jump_pressed.connect(_on_jump_pressed)
 	screen_control.look_changed.connect(_on_look_changed)
+	screen_control.camera_toggle_pressed.connect(_on_camera_toggle_pressed)
 
 
 func _on_movement_changed(direction: Vector2) -> void:
@@ -138,3 +164,7 @@ func _on_jump_pressed() -> void:
 
 func _on_look_changed(delta: Vector2) -> void:
 	look_changed.emit(delta)
+
+
+func _on_camera_toggle_pressed() -> void:
+	camera_toggle_pressed.emit()
