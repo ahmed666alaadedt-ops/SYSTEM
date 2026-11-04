@@ -57,7 +57,7 @@ object SystemWorldCombat {
         val coinReward = monster.coinReward.toInt()
 
         val newExperience = progress.experience + xpReward
-        val newLevel = 1 + (newExperience / 100)
+        val newLevel = SystemWorldCore.calculateLevel(newExperience.toLong())
 
         val updatedPlayer = progress.copy(
             playerLevel = newLevel,
