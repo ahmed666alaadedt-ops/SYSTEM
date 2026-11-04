@@ -7,9 +7,9 @@ const GRAVITY := 9.8
 const CAMERA_SENSITIVITY := 0.005
 const MIN_CAMERA_PITCH := -60.0
 const MAX_CAMERA_PITCH := 35.0
-
 const THIRD_PERSON_DISTANCE := 5.0
 const FIRST_PERSON_DISTANCE := 0.0
+const ROTATION_SPEED := 10.0
 
 const MobileControlsScript = preload("res://scripts/mobile_controls.gd")
 
@@ -209,6 +209,18 @@ func _physics_process(delta: float) -> void:
 
 	player.velocity.x = move_direction.x * PLAYER_SPEED
 	player.velocity.z = move_direction.z * PLAYER_SPEED
+
+	if move_direction.length() > 0.01:
+		var target_angle := atan2(
+			move_direction.x,
+			move_direction.z
+		)
+
+		player.rotation.y = lerp_angle(
+			player.rotation.y,
+			target_angle,
+			ROTATION_SPEED * delta
+		)
 
 	if not player.is_on_floor():
 		player.velocity.y -= GRAVITY * delta
