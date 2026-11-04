@@ -1,13 +1,19 @@
-
 package com.system.irtqaa
 
-class SystemProgressEngine {
+class SystemProgressLegacyEngine {
 
-    private val progress = mutableMapOf<String, SystemProgressSnapshot>()
-    private val experienceRecords = mutableListOf<SystemExperienceRecord>()
-    private val dailyProgress = mutableMapOf<String, SystemDailyProgress>()
+    private val progress =
+        mutableMapOf<String, SystemProgressSnapshot>()
+
+    private val experienceRecords =
+        mutableListOf<SystemExperienceRecord>()
+
+    private val dailyProgress =
+        mutableMapOf<String, SystemDailyProgress>()
 
     fun getProgress(userId: String): SystemProgressSnapshot {
+        require(userId.isNotBlank())
+
         return progress.getOrPut(userId) {
             SystemProgressSnapshot(
                 userId = userId,
@@ -25,24 +31,32 @@ class SystemProgressEngine {
         reason: String,
         timestamp: Long = System.currentTimeMillis()
     ): SystemProgressSnapshot {
-        require(amount > 0) { "Experience amount must be positive" }
+        require(userId.isNotBlank())
+        require(amount > 0)
+        require(reason.isNotBlank())
 
         val current = getProgress(userId)
+
         val updatedDomains = current.domains.map { item ->
             if (item.domain == domain) {
                 val newExperience = item.experience + amount
+
                 item.copy(
                     experience = newExperience,
                     level = calculateLevel(newExperience),
                     lastActivityAt = timestamp
                 )
-            } else item
+            } else {
+                item
+            }
         }
 
         val updated = current.copy(
             domains = updatedDomains,
             totalExperience = current.totalExperience + amount,
-            overallLevel = calculateLevel(current.totalExperience + amount),
+            overallLevel = calculateLevel(
+                current.totalExperience + amount
+            ),
             updatedAt = timestamp
         )
 
@@ -50,7 +64,7 @@ class SystemProgressEngine {
 
         experienceRecords.add(
             SystemExperienceRecord(
-                recordId = "XP-${timestamp}-${experienceRecords.size}",
+                recordId = "XP-$timestamp-${experienceRecords.size}",
                 userId = userId,
                 domain = domain,
                 amount = amount,
@@ -68,9 +82,9 @@ class SystemProgressEngine {
         experienceReward: Int,
         date: String
     ): SystemProgressSnapshot {
-        require(experienceReward > 0) {
-            "Experience reward must be positive"
-        }
+        require(userId.isNotBlank())
+        require(experienceReward > 0)
+        require(date.isNotBlank())
 
         val current = getProgress(userId)
 
@@ -80,9 +94,9 @@ class SystemProgressEngine {
                     completedTasks = item.completedTasks + 1,
                     totalTasks = item.totalTasks + 1
                 )
-            } else item.copy(
-                totalTasks = item.totalTasks + 1
-            )
+            } else {
+                item
+            }
         }
 
         progress[userId] = current.copy(
@@ -90,28 +104,38 @@ class SystemProgressEngine {
             updatedAt = System.currentTimeMillis()
         )
 
-        val today = dailyProgress[date] ?: SystemDailyProgress(date)
+        val today = dailyProgress[date]
+            ?: SystemDailyProgress(date)
 
         dailyProgress[date] = today.copy(
             completedTasks = today.completedTasks + 1,
             earnedExperience = today.earnedExperience + experienceReward,
-            activeDomains = (today.activeDomains + domain).distinct()
+            activeDomains = (
+                today.activeDomains + domain
+            ).distinct()
         )
 
         return addExperience(
             userId = userId,
             domain = domain,
             amount = experienceReward,
-            reason = "Task completed",
+            reason = "Task completed"
         )
     }
 
-    fun getExperienceHistory(userId: String): List<SystemExperienceRecord> {
-        return experienceRecords.filter { it.userId == userId }
+    fun getExperienceHistory(
+        userId: String
+    ): List<SystemExperienceRecord> {
+        return experienceRecords.filter {
+            it.userId == userId
+        }
     }
 
-    fun getDailyProgress(date: String): SystemDailyProgress {
-        return dailyProgress[date] ?: SystemDailyProgress(date)
+    fun getDailyProgress(
+        date: String
+    ): SystemDailyProgress {
+        return dailyProgress[date]
+            ?: SystemDailyProgress(date)
     }
 
     fun getAllProgress(): List<SystemProgressSnapshot> {
