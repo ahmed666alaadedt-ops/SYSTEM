@@ -1,17 +1,25 @@
-
 extends Node3D
 
 const PLAYER_SPEED := 6.0
 const JUMP_FORCE := 4.5
 const GRAVITY := 9.8
 
+const CAMERA_SENSITIVITY := 0.005
+const MIN_CAMERA_PITCH := -60.0
+const MAX_CAMERA_PITCH := 35.0
+
 const MobileControlsScript = preload("res://scripts/mobile_controls.gd")
 
 var player: CharacterBody3D
 var camera: Camera3D
-var mobile_controls
+var spring_arm: SpringArm3D
+var mobile_controls: MobileControls
+
 var mobile_direction := Vector2.ZERO
 var jump_requested := false
+
+var camera_yaw := 0.0
+var camera_pitch := -10.0
 
 
 func _ready() -> void:
@@ -86,7 +94,7 @@ func create_player() -> void:
 	collision.shape = shape
 	player.add_child(collision)
 
-	var spring_arm := SpringArm3D.new()
+	spring_arm = SpringArm3D.new()
 	spring_arm.spring_length = 5.0
 	spring_arm.position = Vector3(0, 1.2, 0)
 	player.add_child(spring_arm)
@@ -95,6 +103,8 @@ func create_player() -> void:
 	spring_arm.add_child(camera)
 	camera.current = true
 
+	update_camera_rotation()
+
 
 func create_mobile_controls() -> void:
 	mobile_controls = MobileControlsScript.new()
@@ -102,6 +112,7 @@ func create_mobile_controls() -> void:
 
 	mobile_controls.movement_changed.connect(_on_movement_changed)
 	mobile_controls.jump_pressed.connect(_on_jump_pressed)
+	mobile_controls.look_changed.connect(_on_look_changed)
 
 
 func _on_movement_changed(direction: Vector2) -> void:
@@ -110,6 +121,30 @@ func _on_movement_changed(direction: Vector2) -> void:
 
 func _on_jump_pressed() -> void:
 	jump_requested = true
+
+
+func _on_look_changed(delta: Vector2) -> void:
+	camera_yaw -= delta.x * CAMERA_SENSITIVITY
+	camera_pitch -= delta.y * CAMERA_SENSITIVITY
+
+	camera_pitch = clampf(
+		camera_pitch,
+		deg_to_rad(MIN_CAMERA_PITCH),
+		deg_to_rad(MAX_CAMERA_PITCH)
+	)
+
+	update_camera_rotation()
+
+
+func update_camera_rotation() -> void:
+	if spring_arm == null:
+		return
+
+	spring_arm.rotation = Vector3(
+		camera_pitch,
+		camera_yaw,
+		0.0
+	)
 
 
 func _physics_process(delta: float) -> void:
