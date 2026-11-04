@@ -24,7 +24,6 @@ var jump_requested := false
 
 var camera_yaw := 0.0
 var camera_pitch := deg_to_rad(-10.0)
-
 var first_person := false
 
 
@@ -178,11 +177,6 @@ func _physics_process(delta: float) -> void:
 	if player == null:
 		return
 
-	if Input.is_key_pressed(KEY_V):
-		if not Input.is_action_pressed("camera_toggle"):
-			first_person = not first_person
-			update_camera_mode()
-
 	var direction := Vector3.ZERO
 
 	direction.x = mobile_direction.x
@@ -198,12 +192,23 @@ func _physics_process(delta: float) -> void:
 		direction.x += 1
 
 	direction = direction.normalized()
-	direction = player.global_transform.basis * direction
-	direction.y = 0
-	direction = direction.normalized()
 
-	player.velocity.x = direction.x * PLAYER_SPEED
-	player.velocity.z = direction.z * PLAYER_SPEED
+	var camera_basis := spring_arm.global_transform.basis
+	var forward := -camera_basis.z
+	var right := camera_basis.x
+
+	forward.y = 0
+	right.y = 0
+
+	forward = forward.normalized()
+	right = right.normalized()
+
+	var move_direction := right * direction.x
+	move_direction += forward * -direction.z
+	move_direction = move_direction.normalized()
+
+	player.velocity.x = move_direction.x * PLAYER_SPEED
+	player.velocity.z = move_direction.z * PLAYER_SPEED
 
 	if not player.is_on_floor():
 		player.velocity.y -= GRAVITY * delta
