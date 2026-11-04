@@ -1,5 +1,9 @@
 package com.system.irtqaa
 
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+
 class SystemTaskEngine(
     private val progressEngine: SystemProgressEngine
 ) {
@@ -64,6 +68,10 @@ class SystemTaskEngine(
         userId: String,
         taskId: String
     ): SystemTaskDefinition? {
+        require(userId.isNotBlank()) {
+            "User ID cannot be blank"
+        }
+
         val current = getTask(userId, taskId) ?: return null
 
         if (current.status == SystemTaskStatus.COMPLETED ||
@@ -74,20 +82,24 @@ class SystemTaskEngine(
 
         val now = System.currentTimeMillis()
 
+        val taskDate = Instant.ofEpochMilli(current.createdAt)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDate()
+            .toString()
+
         val updated = current.copy(
             status = SystemTaskStatus.COMPLETED,
             completedAt = now
         )
 
-        tasks[userId]?.set(taskId, updated)
-
-        progressEngine.addExperience(
+        progressEngine.completeTask(
             userId = userId,
             domain = current.domain,
-            amount = current.experienceReward,
-            reason = "Task completed: ${current.title}",
-            timestamp = now
+            experienceReward = current.experienceReward,
+            date = taskDate
         )
+
+        tasks[userId]?.set(taskId, updated)
 
         return updated
     }
