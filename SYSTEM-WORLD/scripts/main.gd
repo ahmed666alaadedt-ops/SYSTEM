@@ -12,6 +12,10 @@ const FIRST_PERSON_DISTANCE := 0.0
 const ROTATION_SPEED := 10.0
 
 const MobileControlsScript = preload("res://scripts/mobile_controls.gd")
+const WorldManagerScript = preload("res://scripts/world_manager.gd")
+
+var world_manager: Node3D
+var active_world_root: Node3D
 
 var player: CharacterBody3D
 var player_mesh: MeshInstance3D
@@ -28,11 +32,21 @@ var first_person := false
 
 
 func _ready() -> void:
+	create_world_manager()
+
 	create_environment()
 	create_ground()
 	create_player()
 	create_mobile_controls()
 	update_camera_mode()
+
+
+func create_world_manager() -> void:
+	world_manager = WorldManagerScript.new()
+	world_manager.name = "WorldManager"
+	add_child(world_manager)
+
+	active_world_root = world_manager.get_active_world()
 
 
 func create_environment() -> void:
@@ -46,18 +60,18 @@ func create_environment() -> void:
 	environment.ambient_light_energy = 0.7
 
 	world_environment.environment = environment
-	add_child(world_environment)
+	active_world_root.add_child(world_environment)
 
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-45, -30, 0)
 	sun.light_energy = 1.2
-	add_child(sun)
+	active_world_root.add_child(sun)
 
 
 func create_ground() -> void:
 	var ground := StaticBody3D.new()
 	ground.name = "Ground"
-	add_child(ground)
+	active_world_root.add_child(ground)
 
 	var mesh := MeshInstance3D.new()
 	var box := BoxMesh.new()
@@ -80,7 +94,7 @@ func create_player() -> void:
 	player = CharacterBody3D.new()
 	player.name = "Player"
 	player.position = Vector3(0, 2, 0)
-	add_child(player)
+	active_world_root.add_child(player)
 
 	player_mesh = MeshInstance3D.new()
 	var capsule := CapsuleMesh.new()
