@@ -1,3 +1,4 @@
+
 package com.system.irtqaa
 
 object SystemWorldEngine {
@@ -53,7 +54,7 @@ object SystemWorldEngine {
 
         val newExperience = progress.experience + mission.xpReward
 
-        val newLevel = 1 + (newExperience / 100)
+        val newLevel = SystemWorldCore.calculateLevel(newExperience.toLong())
 
         return progress.copy(
             playerLevel = newLevel,
