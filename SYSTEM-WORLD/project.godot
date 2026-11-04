@@ -1,4 +1,3 @@
-
 ; SYSTEM WORLD
 ; Initial 3D project configuration
 
@@ -7,7 +6,7 @@ config_version=5
 [application]
 
 config/name="SYSTEM WORLD"
-run/main_scene="res://Main.tscn"
+run/main_scene="res://MainScene.tscn"
 
 [display]
 
