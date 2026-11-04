@@ -1,11 +1,15 @@
-
 extends CanvasLayer
 class_name MobileControls
+
+signal movement_changed(direction: Vector2)
+signal jump_pressed
+signal look_changed(delta: Vector2)
 
 
 class TouchOverlay extends Control:
 	signal movement_changed(direction: Vector2)
 	signal jump_pressed
+	signal look_changed(delta: Vector2)
 
 	var joystick_touch := -1
 	var joystick_direction := Vector2.ZERO
@@ -15,6 +19,9 @@ class TouchOverlay extends Control:
 	var jump_touch := -1
 	var jump_center := Vector2.ZERO
 	var jump_radius := 55.0
+
+	var look_touch := -1
+
 
 	func _ready() -> void:
 		mouse_filter = Control.MOUSE_FILTER_STOP
@@ -63,12 +70,18 @@ class TouchOverlay extends Control:
 		if event is InputEventScreenTouch:
 			if event.pressed:
 				if event.position.distance_to(joystick_center) <= joystick_radius * 1.8:
-					joystick_touch = event.index
-					_update_joystick(event.position)
+					if joystick_touch == -1:
+						joystick_touch = event.index
+						_update_joystick(event.position)
 
 				elif event.position.distance_to(jump_center) <= jump_radius * 1.5:
-					jump_touch = event.index
-					jump_pressed.emit()
+					if jump_touch == -1:
+						jump_touch = event.index
+						jump_pressed.emit()
+
+				elif look_touch == -1:
+					look_touch = event.index
+
 			else:
 				if event.index == joystick_touch:
 					joystick_touch = -1
@@ -79,9 +92,15 @@ class TouchOverlay extends Control:
 				if event.index == jump_touch:
 					jump_touch = -1
 
+				if event.index == look_touch:
+					look_touch = -1
+
 		elif event is InputEventScreenDrag:
 			if event.index == joystick_touch:
 				_update_joystick(event.position)
+
+			elif event.index == look_touch:
+				look_changed.emit(event.relative)
 
 
 	func _update_joystick(position: Vector2) -> void:
@@ -106,6 +125,7 @@ func _ready() -> void:
 
 	screen_control.movement_changed.connect(_on_movement_changed)
 	screen_control.jump_pressed.connect(_on_jump_pressed)
+	screen_control.look_changed.connect(_on_look_changed)
 
 
 func _on_movement_changed(direction: Vector2) -> void:
@@ -116,5 +136,5 @@ func _on_jump_pressed() -> void:
 	jump_pressed.emit()
 
 
-signal movement_changed(direction: Vector2)
-signal jump_pressed
+func _on_look_changed(delta: Vector2) -> void:
+	look_changed.emit(delta)
