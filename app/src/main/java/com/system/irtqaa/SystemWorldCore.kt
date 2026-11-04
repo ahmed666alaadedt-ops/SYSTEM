@@ -1,3 +1,4 @@
+
 package com.system.irtqaa
 
 // ========================================
@@ -222,7 +223,7 @@ object SystemWorldCore {
     fun calculateLevel(experience: Long): Int {
         if (experience <= 0) return 1
 
-        return (experience / 1000).toInt() + 1
+        return (experience / 100).toInt() + 1
     }
 
     fun calculateSkillLevel(experience: Long): Int {
