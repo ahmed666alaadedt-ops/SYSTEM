@@ -3,10 +3,11 @@ package com.system.irtqaa
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -58,6 +59,10 @@ fun SystemApp() {
         mutableIntStateOf(0)
     }
 
+    var worldProgress by remember {
+        mutableStateOf(PlayerWorldProgress())
+    }
+
     val xp = missions.count { it.completed } * 10
 
     val panel = Color(0xFF131D30)
@@ -97,15 +102,9 @@ fun SystemApp() {
                     ),
                     shape = RoundedCornerShape(18.dp)
                 ) {
+                    Column(Modifier.padding(18.dp)) {
 
-                    Column(
-                        Modifier.padding(18.dp)
-                    ) {
-
-                        Text(
-                            "المستوى العام",
-                            color = Color.White
-                        )
+                        Text("المستوى العام", color = Color.White)
 
                         Text(
                             "LV. ${1 + xp / 100}",
@@ -114,10 +113,7 @@ fun SystemApp() {
                             fontWeight = FontWeight.Bold
                         )
 
-                        Text(
-                            "$xp XP",
-                            color = cyan
-                        )
+                        Text("$xp XP", color = cyan)
 
                         LinearProgressIndicator(
                             progress = { (xp % 100) / 100f },
@@ -130,14 +126,20 @@ fun SystemApp() {
                 Spacer(Modifier.height(20.dp))
 
                 Row(
+                    modifier = Modifier.horizontalScroll(
+                        rememberScrollState()
+                    ),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
 
-                    listOf(
+                    val tabs = listOf(
                         "الرئيسية",
                         "المهام",
-                        "المستويات"
-                    ).forEachIndexed { index, title ->
+                        "المستويات",
+                        "العالم الافتراضي"
+                    )
+
+                    tabs.forEachIndexed { index, title ->
 
                         Button(
                             onClick = {
@@ -147,7 +149,10 @@ fun SystemApp() {
                                 containerColor =
                                     if (selectedTab == index) gold else panel,
                                 contentColor =
-                                    if (selectedTab == index) Color.Black else Color.White
+                                    if (selectedTab == index)
+                                        Color.Black
+                                    else
+                                        Color.White
                             )
                         ) {
                             Text(title)
@@ -191,7 +196,6 @@ fun SystemApp() {
                         LazyColumn(
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-
                             items(missions) { mission ->
 
                                 Card(
@@ -199,18 +203,15 @@ fun SystemApp() {
                                         containerColor = panel.copy(alpha = 0.92f)
                                     )
                                 ) {
-
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .padding(12.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-
                                         Column(
                                             Modifier.weight(1f)
                                         ) {
-
                                             Text(
                                                 mission.title,
                                                 color = Color.White
@@ -251,7 +252,6 @@ fun SystemApp() {
                         LazyColumn(
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-
                             items(categories) { category ->
 
                                 val points = missions.count {
@@ -263,11 +263,9 @@ fun SystemApp() {
                                         containerColor = panel.copy(alpha = 0.92f)
                                     )
                                 ) {
-
                                     Column(
                                         Modifier.padding(16.dp)
                                     ) {
-
                                         Text(
                                             category,
                                             color = Color.White,
@@ -290,6 +288,16 @@ fun SystemApp() {
                                 }
                             }
                         }
+                    }
+
+                    3 -> {
+
+                        SystemWorldScreen(
+                            progress = worldProgress,
+                            onProgressChange = {
+                                worldProgress = it
+                            }
+                        )
                     }
                 }
             }
