@@ -3,16 +3,19 @@ class_name WorldManager
 
 signal world_changed(world_id: int)
 
+# العوالم الأربعة مستقلة في هويتها ومحتواها.
 enum WorldID {
 	FANTASY,
 	MYTHOLOGY,
-	REALISTIC
+	REALISTIC,
+	GREED_ISLAND
 }
 
 const WORLD_NAMES := {
 	WorldID.FANTASY: "Fantasy World",
 	WorldID.MYTHOLOGY: "Mythology World",
-	WorldID.REALISTIC: "Realistic World"
+	WorldID.REALISTIC: "Realistic World",
+	WorldID.GREED_ISLAND: "Greed Island World"
 }
 
 var active_world: int = WorldID.FANTASY
@@ -57,3 +60,7 @@ func get_active_world() -> Node3D:
 
 func get_world_name(world_id: int) -> String:
 	return WORLD_NAMES.get(world_id, "Unknown World")
+
+
+func get_all_world_ids() -> Array:
+	return WORLD_NAMES.keys()
