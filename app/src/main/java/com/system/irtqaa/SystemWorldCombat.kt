@@ -18,7 +18,7 @@ object SystemWorldCombat {
     ): WorldBattleResult {
 
         val monster = SystemWorldData.monsters
-            .firstOrNull { it.id == monsterId }
+            .firstOrNull { it.monsterId == monsterId }
 
         if (monster == null) {
             return WorldBattleResult(
@@ -53,28 +53,34 @@ object SystemWorldCombat {
             )
         }
 
-        val newExperience =
-            progress.experience + monster.xpReward
+        val xpReward = monster.experienceReward.toInt()
+        val coinReward = monster.coinReward.toInt()
 
+        val newExperience = progress.experience + xpReward
         val newLevel = 1 + (newExperience / 100)
 
-        val newProgress = progress.copy(
+        val updatedPlayer = progress.copy(
             playerLevel = newLevel,
             experience = newExperience,
-            coins = progress.coins + monster.xpReward / 2,
+            coins = progress.coins + coinReward
+        )
+
+        val newProgress = updatedPlayer.copy(
             unlockedLocations =
-                progress.unlockedLocations +
+                updatedPlayer.unlockedLocations +
                 SystemWorldEngine.getAvailableLocations(
-                    progress.copy(playerLevel = newLevel)
-                ).filter { it.isUnlocked }.map { it.id }
+                    updatedPlayer
+                )
+                    .filter { it.isUnlocked }
+                    .map { it.id }
         )
 
         return WorldBattleResult(
             victory = true,
             monsterName = monster.name,
             message = "انتصرت على ${monster.name}!",
-            xpGained = monster.xpReward,
-            coinsGained = monster.xpReward / 2,
+            xpGained = xpReward,
+            coinsGained = coinReward,
             updatedProgress = newProgress
         )
     }
