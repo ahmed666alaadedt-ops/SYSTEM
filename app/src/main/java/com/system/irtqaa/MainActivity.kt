@@ -14,9 +14,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
+import java.time.LocalDate
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,30 +30,45 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-data class Mission(
-    val title: String,
-    val category: String,
-    var completed: Boolean = false
-)
-
 @Composable
 fun SystemApp() {
 
-    val categories = listOf(
-        "الروح",
-        "العقل",
-        "الجسد",
-        "الوعي",
-        "الانضباط"
-    )
+    val context = LocalContext.current.applicationContext
+    val userId = "system_local_player"
+    val today = LocalDate.now()
 
-    val missions = remember {
-        mutableStateListOf(
-            Mission("الصلاة والمحافظة عليها", "الروح"),
-            Mission("قراءة 10 صفحات", "العقل"),
-            Mission("ممارسة الرياضة", "الجسد"),
-            Mission("التأمل والتركيز", "الوعي"),
-            Mission("إنجاز مهمة مؤجلة", "الانضباط")
+    val progressEngine = remember(context) {
+        SystemProgressEngine(context)
+    }
+
+    val taskManager = remember(context) {
+        SystemTaskManager(
+            context = context,
+            userId = userId,
+            progressEngine = progressEngine
+        )
+    }
+
+    var tasks by remember(taskManager, today) {
+        val generatedTasks =
+            SystemTaskCatalog.buildDailyTasks(today)
+
+        generatedTasks.forEach { task ->
+            if (taskManager.getTask(task.taskId) == null) {
+                taskManager.addTask(task)
+            }
+        }
+
+        mutableStateOf(
+            taskManager.getTasks().filter {
+                it.taskId.startsWith("system_${today}_")
+            }
+        )
+    }
+
+    var progressSnapshot by remember(progressEngine, userId) {
+        mutableStateOf(
+            progressEngine.getProgress(userId)
         )
     }
 
@@ -63,7 +80,11 @@ fun SystemApp() {
         mutableStateOf(PlayerWorldProgress())
     }
 
-    val xp = missions.count { it.completed } * 10
+    val completedCount = tasks.count {
+        it.isCompleted
+    }
+
+    val totalExperience = progressSnapshot.totalExperience
 
     val panel = Color(0xFF131D30)
     val gold = Color(0xFFFFC857)
@@ -73,7 +94,7 @@ fun SystemApp() {
         modifier = Modifier.fillMaxSize()
     ) {
 
-        MaterialTheme {
+        SystemTheme {
 
             Column(
                 modifier = Modifier
@@ -102,21 +123,32 @@ fun SystemApp() {
                     ),
                     shape = RoundedCornerShape(18.dp)
                 ) {
-                    Column(Modifier.padding(18.dp)) {
 
-                        Text("المستوى العام", color = Color.White)
+                    Column(
+                        Modifier.padding(18.dp)
+                    ) {
 
                         Text(
-                            "LV. ${1 + xp / 100}",
+                            "المستوى العام",
+                            color = Color.White
+                        )
+
+                        Text(
+                            "LV. ${progressSnapshot.overallLevel}",
                             color = gold,
                             fontSize = 28.sp,
                             fontWeight = FontWeight.Bold
                         )
 
-                        Text("$xp XP", color = cyan)
+                        Text(
+                            "$totalExperience XP",
+                            color = cyan
+                        )
 
                         LinearProgressIndicator(
-                            progress = { (xp % 100) / 100f },
+                            progress = {
+                                (totalExperience % 100) / 100f
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             color = gold
                         )
@@ -147,7 +179,8 @@ fun SystemApp() {
                             },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor =
-                                    if (selectedTab == index) gold else panel,
+                                    if (selectedTab == index) gold
+                                    else panel,
                                 contentColor =
                                     if (selectedTab == index)
                                         Color.Black
@@ -175,12 +208,17 @@ fun SystemApp() {
                         Spacer(Modifier.height(12.dp))
 
                         Text(
-                            "إنجازات اليوم: ${missions.count { it.completed }} / 5",
+                            "إنجازات اليوم: $completedCount / ${tasks.size}",
                             color = cyan
                         )
 
                         Text(
-                            "كل مهمة مكتملة تمنحك 10 XP",
+                            "مجموع الخبرة: $totalExperience XP",
+                            color = gold
+                        )
+
+                        Text(
+                            "المهام المكتملة محفوظة في النظام",
                             color = Color.LightGray
                         )
                     }
@@ -193,45 +231,88 @@ fun SystemApp() {
                             fontSize = 22.sp
                         )
 
+                        Spacer(Modifier.height(10.dp))
+
                         LazyColumn(
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                            verticalArrangement =
+                                Arrangement.spacedBy(10.dp)
                         ) {
-                            items(missions) { mission ->
+
+                            items(
+                                items = tasks,
+                                key = { it.taskId }
+                            ) { task ->
 
                                 Card(
                                     colors = CardDefaults.cardColors(
-                                        containerColor = panel.copy(alpha = 0.92f)
+                                        containerColor =
+                                            panel.copy(alpha = 0.92f)
                                     )
                                 ) {
+
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .padding(12.dp),
-                                        verticalAlignment = Alignment.CenterVertically
+                                        verticalAlignment =
+                                            Alignment.CenterVertically
                                     ) {
+
                                         Column(
                                             Modifier.weight(1f)
                                         ) {
+
                                             Text(
-                                                mission.title,
+                                                task.title,
                                                 color = Color.White
                                             )
 
                                             Text(
-                                                mission.category,
+                                                domainLabel(task.domain),
                                                 color = cyan
+                                            )
+
+                                            if (task.description.isNotBlank()) {
+                                                Text(
+                                                    task.description,
+                                                    color = Color.LightGray,
+                                                    fontSize = 12.sp
+                                                )
+                                            }
+
+                                            Text(
+                                                "+${task.experienceReward} XP",
+                                                color = gold
                                             )
                                         }
 
                                         Checkbox(
-                                            checked = mission.completed,
-                                            onCheckedChange = {
-                                                val index =
-                                                    missions.indexOf(mission)
+                                            checked = task.isCompleted,
+                                            enabled =
+                                                task.status !=
+                                                    SystemTaskStatus.COMPLETED &&
+                                                task.status !=
+                                                    SystemTaskStatus.CANCELLED,
+                                            onCheckedChange = { checked ->
 
-                                                if (index >= 0) {
-                                                    missions[index] =
-                                                        mission.copy(completed = it)
+                                                if (checked) {
+
+                                                    taskManager.completeTask(
+                                                        task.taskId
+                                                    )
+
+                                                    tasks =
+                                                        taskManager.getTasks()
+                                                            .filter {
+                                                                it.taskId.startsWith(
+                                                                    "system_${today}_"
+                                                                )
+                                                            }
+
+                                                    progressSnapshot =
+                                                        progressEngine.getProgress(
+                                                            userId
+                                                        )
                                                 }
                                             }
                                         )
@@ -249,39 +330,57 @@ fun SystemApp() {
                             fontSize = 22.sp
                         )
 
-                        LazyColumn(
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            items(categories) { category ->
+                        Spacer(Modifier.height(10.dp))
 
-                                val points = missions.count {
-                                    it.category == category && it.completed
-                                } * 10
+                        LazyColumn(
+                            verticalArrangement =
+                                Arrangement.spacedBy(10.dp)
+                        ) {
+
+                            items(
+                                progressSnapshot.domains,
+                                key = { it.domain.name }
+                            ) { domainProgress ->
 
                                 Card(
                                     colors = CardDefaults.cardColors(
-                                        containerColor = panel.copy(alpha = 0.92f)
+                                        containerColor =
+                                            panel.copy(alpha = 0.92f)
                                     )
                                 ) {
+
                                     Column(
                                         Modifier.padding(16.dp)
                                     ) {
+
                                         Text(
-                                            category,
+                                            domainLabel(domainProgress.domain),
                                             color = Color.White,
                                             fontSize = 19.sp
                                         )
 
                                         Text(
-                                            "$points XP",
+                                            "المستوى ${domainProgress.level}",
+                                            color = gold
+                                        )
+
+                                        Text(
+                                            "${domainProgress.experience} XP",
                                             color = cyan
+                                        )
+
+                                        Text(
+                                            "المهام المكتملة: ${domainProgress.completedTasks}",
+                                            color = Color.LightGray
                                         )
 
                                         LinearProgressIndicator(
                                             progress = {
-                                                (points % 100) / 100f
+                                                (domainProgress.experience % 100) /
+                                                    100f
                                             },
-                                            modifier = Modifier.fillMaxWidth(),
+                                            modifier =
+                                                Modifier.fillMaxWidth(),
                                             color = gold
                                         )
                                     }
@@ -302,5 +401,18 @@ fun SystemApp() {
                 }
             }
         }
+    }
+}
+
+private fun domainLabel(
+    domain: SystemDevelopmentDomain
+): String {
+
+    return when (domain) {
+        SystemDevelopmentDomain.SPIRIT -> "الروح"
+        SystemDevelopmentDomain.MIND -> "العقل"
+        SystemDevelopmentDomain.BODY -> "الجسد"
+        SystemDevelopmentDomain.AWARENESS -> "الوعي"
+        SystemDevelopmentDomain.DISCIPLINE -> "الانضباط"
     }
 }
