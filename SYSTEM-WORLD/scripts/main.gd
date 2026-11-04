@@ -8,9 +8,13 @@ const CAMERA_SENSITIVITY := 0.005
 const MIN_CAMERA_PITCH := -60.0
 const MAX_CAMERA_PITCH := 35.0
 
+const THIRD_PERSON_DISTANCE := 5.0
+const FIRST_PERSON_DISTANCE := 0.0
+
 const MobileControlsScript = preload("res://scripts/mobile_controls.gd")
 
 var player: CharacterBody3D
+var player_mesh: MeshInstance3D
 var camera: Camera3D
 var spring_arm: SpringArm3D
 var mobile_controls: MobileControls
@@ -19,7 +23,9 @@ var mobile_direction := Vector2.ZERO
 var jump_requested := false
 
 var camera_yaw := 0.0
-var camera_pitch := -10.0
+var camera_pitch := deg_to_rad(-10.0)
+
+var first_person := false
 
 
 func _ready() -> void:
@@ -27,6 +33,7 @@ func _ready() -> void:
 	create_ground()
 	create_player()
 	create_mobile_controls()
+	update_camera_mode()
 
 
 func create_environment() -> void:
@@ -76,16 +83,16 @@ func create_player() -> void:
 	player.position = Vector3(0, 2, 0)
 	add_child(player)
 
-	var mesh := MeshInstance3D.new()
+	player_mesh = MeshInstance3D.new()
 	var capsule := CapsuleMesh.new()
 	capsule.radius = 0.4
 	capsule.height = 1.8
-	mesh.mesh = capsule
+	player_mesh.mesh = capsule
 
 	var material := StandardMaterial3D.new()
 	material.albedo_color = Color(0.2, 0.55, 0.95)
-	mesh.material_override = material
-	player.add_child(mesh)
+	player_mesh.material_override = material
+	player.add_child(player_mesh)
 
 	var collision := CollisionShape3D.new()
 	var shape := CapsuleShape3D.new()
@@ -95,8 +102,8 @@ func create_player() -> void:
 	player.add_child(collision)
 
 	spring_arm = SpringArm3D.new()
-	spring_arm.spring_length = 5.0
-	spring_arm.position = Vector3(0, 1.2, 0)
+	spring_arm.position = Vector3(0, 0.65, 0)
+	spring_arm.spring_length = THIRD_PERSON_DISTANCE
 	player.add_child(spring_arm)
 
 	camera = Camera3D.new()
@@ -113,6 +120,7 @@ func create_mobile_controls() -> void:
 	mobile_controls.movement_changed.connect(_on_movement_changed)
 	mobile_controls.jump_pressed.connect(_on_jump_pressed)
 	mobile_controls.look_changed.connect(_on_look_changed)
+	mobile_controls.camera_toggle_pressed.connect(_on_camera_toggle_pressed)
 
 
 func _on_movement_changed(direction: Vector2) -> void:
@@ -136,6 +144,25 @@ func _on_look_changed(delta: Vector2) -> void:
 	update_camera_rotation()
 
 
+func _on_camera_toggle_pressed() -> void:
+	first_person = not first_person
+	update_camera_mode()
+
+
+func update_camera_mode() -> void:
+	if spring_arm == null:
+		return
+
+	if first_person:
+		spring_arm.spring_length = FIRST_PERSON_DISTANCE
+		player_mesh.visible = false
+	else:
+		spring_arm.spring_length = THIRD_PERSON_DISTANCE
+		player_mesh.visible = true
+
+	update_camera_rotation()
+
+
 func update_camera_rotation() -> void:
 	if spring_arm == null:
 		return
@@ -150,6 +177,11 @@ func update_camera_rotation() -> void:
 func _physics_process(delta: float) -> void:
 	if player == null:
 		return
+
+	if Input.is_key_pressed(KEY_V):
+		if not Input.is_action_pressed("camera_toggle"):
+			first_person = not first_person
+			update_camera_mode()
 
 	var direction := Vector3.ZERO
 
