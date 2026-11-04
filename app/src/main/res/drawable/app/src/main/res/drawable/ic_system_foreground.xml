@@ -1,0 +1,53 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Outer futuristic frame -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#25D9E8"
+        android:strokeWidth="2.5"
+        android:strokeLineJoin="round"
+        android:pathData="M54,8 L89,28 L89,72 L54,96 L19,72 L19,28 Z" />
+
+    <!-- Inner golden frame -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#D9A441"
+        android:strokeWidth="1.5"
+        android:pathData="M54,17 L81,33 L81,67 L54,83 L27,67 L27,33 Z" />
+
+    <!-- SYSTEM core S symbol -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#E7B94F"
+        android:strokeWidth="7"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M69,34 C64,27 42,27 38,39 C33,52 72,48 70,63 C68,77 45,80 37,69" />
+
+    <!-- Cyan energy line -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#35E8F2"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M35,88 L54,99 L73,88" />
+
+    <!-- Top energy point -->
+    <path
+        android:fillColor="#35E8F2"
+        android:pathData="M54,3 L59,10 L54,17 L49,10 Z" />
+
+    <!-- Side golden markers -->
+    <path
+        android:fillColor="#D9A441"
+        android:pathData="M12,48 L17,54 L12,60 L7,54 Z" />
+
+    <path
+        android:fillColor="#D9A441"
+        android:pathData="M96,48 L101,54 L96,60 L91,54 Z" />
+
+</vector>
