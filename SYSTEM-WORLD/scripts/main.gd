@@ -14,7 +14,7 @@ const ROTATION_SPEED := 10.0
 const MobileControlsScript = preload("res://scripts/mobile_controls.gd")
 const WorldManagerScript = preload("res://scripts/world_manager.gd")
 
-var world_manager: Node3D
+var world_manager
 var active_world_root: Node3D
 
 var player: CharacterBody3D
