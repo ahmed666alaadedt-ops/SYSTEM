@@ -14,10 +14,24 @@ initializeApp();
 
 const db = getFirestore();
 
+function requireModerator(request: any): void {
+  if (!request.auth) {
+    throw new HttpsError(
+      "unauthenticated",
+      "يجب تسجيل الدخول."
+    );
+  }
+
+  if (request.auth.token.moderator !== true) {
+    throw new HttpsError(
+      "permission-denied",
+      "هذه العملية للمشرفين فقط."
+    );
+  }
+}
+
 /**
  * إرسال رسالة دردشة عالمية.
- * الرسالة تبقى pending ولا تظهر للاعبين
- * إلا بعد موافقة المشرف.
  */
 export const submitGlobalMessage = onCall(
   async (request) => {
@@ -110,24 +124,79 @@ export const submitGlobalMessage = onCall(
 );
 
 /**
+ * جلب الرسائل المعلقة للمشرف فقط.
+ * يعرض 50 رسالة كحد أقصى في كل دفعة.
+ */
+export const getPendingGlobalMessages = onCall(
+  async (request) => {
+    requireModerator(request);
+
+    const cursorId = request.data?.cursorId;
+
+    let query = db
+      .collection("globalMessages")
+      .where("moderationStatus", "==", "pending")
+      .limit(50);
+
+    if (cursorId !== undefined && cursorId !== null) {
+      if (
+        typeof cursorId !== "string" ||
+        cursorId.length === 0
+      ) {
+        throw new HttpsError(
+          "invalid-argument",
+          "معرّف الصفحة غير صالح."
+        );
+      }
+
+      const cursorSnapshot = await db
+        .collection("globalMessages")
+        .doc(cursorId)
+        .get();
+
+      if (!cursorSnapshot.exists) {
+        throw new HttpsError(
+          "not-found",
+          "نقطة متابعة الرسائل غير موجودة."
+        );
+      }
+
+      query = query.startAfter(cursorSnapshot);
+    }
+
+    const snapshot = await query.get();
+
+    const messages = snapshot.docs.map((doc) => {
+      const data = doc.data();
+
+      return {
+        messageId: doc.id,
+        senderId: data.senderId || "",
+        senderName: data.senderName || "لاعب",
+        text: data.text || "",
+        imageUrl: data.imageUrl || null,
+        createdAt: data.createdAt?.toMillis?.() ?? null,
+        moderationStatus: data.moderationStatus
+      };
+    });
+
+    return {
+      messages,
+      count: messages.length,
+      nextCursorId:
+        snapshot.docs.length === 50
+          ? snapshot.docs[snapshot.docs.length - 1].id
+          : null
+    };
+  }
+);
+
+/**
  * مراجعة الرسائل بواسطة مشرف مخوّل.
- * لا يمكن للاعب العادي اعتماد الرسائل.
  */
 export const reviewGlobalMessage = onCall(
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError(
-        "unauthenticated",
-        "يجب تسجيل الدخول."
-      );
-    }
-
-    if (request.auth.token.moderator !== true) {
-      throw new HttpsError(
-        "permission-denied",
-        "هذه العملية للمشرفين فقط."
-      );
-    }
+    requireModerator(request);
 
     const messageId = request.data?.messageId;
     const decision = request.data?.decision;
@@ -177,6 +246,14 @@ export const reviewGlobalMessage = onCall(
           reviewedBy: request.auth!.uid
         });
 
+        transaction.create(eventRef, {
+          userId: message.senderId,
+          messageId,
+          moderatorId: request.auth!.uid,
+          decision: "approve",
+          createdAt: FieldValue.serverTimestamp()
+        });
+
         return {
           status: "approved"
         };
@@ -222,10 +299,14 @@ export const reviewGlobalMessage = onCall(
         permanent = true;
       }
 
+      const rejectionReason =
+        typeof reason === "string"
+          ? reason.slice(0, 500)
+          : "مخالفة";
+
       transaction.update(messageRef, {
         moderationStatus: "rejected",
-        rejectionReason:
-          typeof reason === "string" ? reason.slice(0, 500) : "مخالفة",
+        rejectionReason,
         reviewedAt: FieldValue.serverTimestamp(),
         reviewedBy: request.auth!.uid
       });
@@ -244,8 +325,7 @@ export const reviewGlobalMessage = onCall(
           active: true,
           permanent,
           expiresAt,
-          reason:
-            typeof reason === "string" ? reason.slice(0, 500) : "مخالفة",
+          reason: rejectionReason,
           strikes,
           updatedAt: FieldValue.serverTimestamp()
         });
@@ -261,8 +341,7 @@ export const reviewGlobalMessage = onCall(
         messageId,
         moderatorId: request.auth!.uid,
         decision: "reject",
-        reason:
-          typeof reason === "string" ? reason.slice(0, 500) : "مخالفة",
+        reason: rejectionReason,
         strikes,
         durationMs,
         permanent,
