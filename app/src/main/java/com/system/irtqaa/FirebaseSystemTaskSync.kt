@@ -13,10 +13,7 @@ class FirebaseSystemTaskSync(context: Context) {
         onComplete: (Boolean, Exception?) -> Unit
     ) {
         if (userId.isBlank()) {
-            onComplete(
-                false,
-                IllegalArgumentException("User ID cannot be blank")
-            )
+            onComplete(false, IllegalArgumentException("User ID cannot be blank"))
             return
         }
 
@@ -40,25 +37,15 @@ class FirebaseSystemTaskSync(context: Context) {
                             val localDeletedIds =
                                 storage.loadDeletedTaskIds(userId)
 
-                            val cloudDeletedIds =
-                                deletedDocuments.documents
-                                    .map { it.id }
-                                    .toSet()
-
-                            // وجود المهمة محلياً بعد إزالة علامة حذفها
-                            // يعني أن المستخدم أعاد إضافتها.
-                            val restoredIds = localTasks
-                                .map { it.taskId }
-                                .toSet()
-
+                            // الحذف المحلي والسحابي له الأولوية دائماً.
                             val deletedIds = (
-                                localDeletedIds + cloudDeletedIds
-                            ) - restoredIds
+                                localDeletedIds +
+                                deletedDocuments.documents.map { it.id }
+                            ).toSet()
 
-                            val cloudTasks = taskDocuments.documents
-                                .mapNotNull { document ->
+                            val cloudTasks =
+                                taskDocuments.documents.mapNotNull { document ->
 
-                                    // لا نستعيد أي مهمة عليها علامة حذف.
                                     if (document.id in deletedIds) {
                                         return@mapNotNull null
                                     }
@@ -71,106 +58,68 @@ class FirebaseSystemTaskSync(context: Context) {
                                             )
 
                                         SystemTaskDefinition(
-                                            taskId =
-                                                document.getString("taskId")
-                                                    ?: document.id,
-
-                                            title =
-                                                document.getString("title")
-                                                    ?: return@mapNotNull null,
-
-                                            description =
-                                                document.getString("description")
-                                                    .orEmpty(),
-
+                                            taskId = document.getString("taskId")
+                                                ?: document.id,
+                                            title = document.getString("title")
+                                                ?: return@mapNotNull null,
+                                            description = document.getString("description")
+                                                .orEmpty(),
                                             domain = domain,
-
                                             experienceReward =
-                                                (document.getLong(
-                                                    "experienceReward"
-                                                ) ?: 10L).toInt(),
-
+                                                (document.getLong("experienceReward")
+                                                    ?: 10L).toInt(),
                                             priority = runCatching {
                                                 SystemTaskPriority.valueOf(
                                                     document.getString("priority")
                                                         ?: "NORMAL"
                                                 )
-                                            }.getOrDefault(
-                                                SystemTaskPriority.NORMAL
-                                            ),
-
+                                            }.getOrDefault(SystemTaskPriority.NORMAL),
                                             repeat = runCatching {
                                                 SystemTaskRepeat.valueOf(
                                                     document.getString("repeat")
                                                         ?: "NONE"
                                                 )
-                                            }.getOrDefault(
-                                                SystemTaskRepeat.NONE
-                                            ),
-
+                                            }.getOrDefault(SystemTaskRepeat.NONE),
                                             status = runCatching {
                                                 SystemTaskStatus.valueOf(
                                                     document.getString("status")
                                                         ?: "PENDING"
                                                 )
-                                            }.getOrDefault(
-                                                SystemTaskStatus.PENDING
-                                            ),
-
+                                            }.getOrDefault(SystemTaskStatus.PENDING),
                                             createdAt =
-                                                document.getLong("createdAt")
-                                                    ?: 0L,
-
-                                            dueAt =
-                                                document.getLong("dueAt"),
-
+                                                document.getLong("createdAt") ?: 0L,
+                                            dueAt = document.getLong("dueAt"),
                                             completedAt =
                                                 document.getLong("completedAt")
                                         )
-
                                     } catch (error: Exception) {
                                         null
                                     }
                                 }
 
-                            val filteredLocalTasks = localTasks
-                                .filterNot {
-                                    it.taskId in deletedIds
-                                }
+                            val filteredLocalTasks = localTasks.filterNot {
+                                it.taskId in deletedIds
+                            }
 
                             val mergedTasks = mergeTasks(
                                 filteredLocalTasks,
                                 cloudTasks
                             )
 
-                            // نحفظ المهام وعلامات الحذف محلياً.
-                            storage.saveTasks(
-                                userId,
-                                mergedTasks
-                            )
-
-                            storage.saveDeletedTaskIds(
-                                userId,
-                                deletedIds
-                            )
+                            storage.saveTasks(userId, mergedTasks)
+                            storage.saveDeletedTaskIds(userId, deletedIds)
 
                             val batch = firestore.batch()
 
-                            // رفع المهام النشطة إلى السحابة.
                             mergedTasks.forEach { task ->
-
-                                val document =
-                                    tasksReference.document(task.taskId)
-
                                 batch.set(
-                                    document,
+                                    tasksReference.document(task.taskId),
                                     mapOf(
                                         "taskId" to task.taskId,
                                         "title" to task.title,
                                         "description" to task.description,
                                         "domain" to task.domain.name,
-                                        "experienceReward" to
-                                            task.experienceReward,
+                                        "experienceReward" to task.experienceReward,
                                         "priority" to task.priority.name,
                                         "repeat" to task.repeat.name,
                                         "status" to task.status.name,
@@ -181,30 +130,18 @@ class FirebaseSystemTaskSync(context: Context) {
                                 )
                             }
 
-                            // تسجيل الحذف في مجموعة مستقلة
-                            // وحذف مستند المهمة الأصلي.
                             deletedIds.forEach { taskId ->
-
                                 batch.set(
                                     deletedReference.document(taskId),
                                     mapOf(
                                         "taskId" to taskId,
                                         "deleted" to true,
-                                        "deletedAt" to
-                                            System.currentTimeMillis()
+                                        "deletedAt" to System.currentTimeMillis()
                                     )
                                 )
 
                                 batch.delete(
                                     tasksReference.document(taskId)
-                                )
-                            }
-
-                            // إزالة علامة الحذف السحابية عند
-                            // إعادة إضافة المهمة بنفس المعرّف.
-                            restoredIds.forEach { taskId ->
-                                batch.delete(
-                                    deletedReference.document(taskId)
                                 )
                             }
 
@@ -234,20 +171,15 @@ class FirebaseSystemTaskSync(context: Context) {
         cloudTasks: List<SystemTaskDefinition>
     ): List<SystemTaskDefinition> {
 
-        val merged =
-            linkedMapOf<String, SystemTaskDefinition>()
+        val merged = linkedMapOf<String, SystemTaskDefinition>()
 
         (cloudTasks + localTasks).forEach { task ->
-
             val existing = merged[task.taskId]
 
-            if (existing == null) {
-                merged[task.taskId] = task
+            merged[task.taskId] = if (existing == null) {
+                task
             } else {
-                merged[task.taskId] = chooseTaskVersion(
-                    existing,
-                    task
-                )
+                chooseTaskVersion(existing, task)
             }
         }
 
@@ -259,21 +191,10 @@ class FirebaseSystemTaskSync(context: Context) {
         second: SystemTaskDefinition
     ): SystemTaskDefinition {
 
-        if (first.status == SystemTaskStatus.COMPLETED) {
-            return first
-        }
-
-        if (second.status == SystemTaskStatus.COMPLETED) {
-            return second
-        }
-
-        if (first.status == SystemTaskStatus.CANCELLED) {
-            return first
-        }
-
-        if (second.status == SystemTaskStatus.CANCELLED) {
-            return second
-        }
+        if (first.status == SystemTaskStatus.COMPLETED) return first
+        if (second.status == SystemTaskStatus.COMPLETED) return second
+        if (first.status == SystemTaskStatus.CANCELLED) return first
+        if (second.status == SystemTaskStatus.CANCELLED) return second
 
         return second
     }
