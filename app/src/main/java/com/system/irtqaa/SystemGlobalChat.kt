@@ -1,5 +1,6 @@
-
 package com.system.irtqaa
+
+import com.google.firebase.functions.FirebaseFunctionsException
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -16,7 +17,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// بيانات حساب اللاعب
 data class GlobalChatUser(
     val userId: String,
     val displayName: String,
@@ -24,7 +24,6 @@ data class GlobalChatUser(
     val isOnline: Boolean = false
 )
 
-// بيانات الرسالة
 data class GlobalChatMessage(
     val messageId: String,
     val sender: GlobalChatUser,
@@ -33,19 +32,16 @@ data class GlobalChatMessage(
     val timestamp: Long = 0L
 )
 
-// طلب الصداقة
 data class GlobalFriendRequest(
     val requestId: String,
     val sender: GlobalChatUser
 )
 
-// صديق اللاعب
 data class GlobalFriend(
     val user: GlobalChatUser,
     val addedAt: Long = 0L
 )
 
-// أقسام الدردشة
 private enum class GlobalChatTab {
     WORLD,
     FRIENDS,
@@ -78,6 +74,22 @@ fun SystemGlobalChatScreen(
         mutableStateOf("")
     }
 
+    var isSending by remember {
+        mutableStateOf(false)
+    }
+
+    var sendFeedback by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    var feedbackIsError by remember {
+        mutableStateOf(false)
+    }
+
+    val chatRepository = remember {
+        FirebaseGlobalChatRepository()
+    }
+
     val background = Color(0xFF080F1D)
     val panel = Color(0xFF14243A)
     val gold = Color(0xFFFFC857)
@@ -90,7 +102,6 @@ fun SystemGlobalChatScreen(
             .padding(14.dp)
     ) {
 
-        // العنوان
         Text(
             text = "SYSTEM WORLD",
             color = gold,
@@ -113,7 +124,6 @@ fun SystemGlobalChatScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        // التنقل بين أقسام التواصل
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(5.dp)
@@ -163,7 +173,6 @@ fun SystemGlobalChatScreen(
 
         when (selectedTab) {
 
-            // الدردشة العالمية
             GlobalChatTab.WORLD -> {
 
                 Text(
@@ -182,7 +191,6 @@ fun SystemGlobalChatScreen(
                         messages,
                         key = { it.messageId }
                     ) { message ->
-
                         GlobalMessageItem(
                             message = message,
                             panel = panel,
@@ -192,12 +200,12 @@ fun SystemGlobalChatScreen(
                     }
                 }
 
-                // كتابة الرسالة وإرسال الصور
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     OutlinedButton(
-                        onClick = onSendImage
+                        onClick = onSendImage,
+                        enabled = !isSending
                     ) {
                         Text("📷")
                     }
@@ -208,24 +216,71 @@ fun SystemGlobalChatScreen(
                         value = messageText,
                         onValueChange = {
                             messageText = it
+                            sendFeedback = null
                         },
                         modifier = Modifier.weight(1f),
                         placeholder = {
                             Text("اكتب رسالتك...")
                         },
                         singleLine = true,
+                        enabled = !isSending,
                         shape = RoundedCornerShape(14.dp)
                     )
 
                     Spacer(Modifier.width(6.dp))
 
                     Button(
+                        enabled = !isSending &&
+                            messageText.isNotBlank(),
                         onClick = {
                             val text = messageText.trim()
 
-                            if (text.isNotEmpty()) {
-                                onSendMessage(text)
-                                messageText = ""
+                            if (text.isNotEmpty() && !isSending) {
+                                isSending = true
+                                sendFeedback = "جارٍ إرسال الرسالة..."
+                                feedbackIsError = false
+
+                                chatRepository.submitGlobalMessage(text) { result ->
+
+                                    isSending = false
+
+                                    result.fold(
+                                        onSuccess = {
+                                            // إشعار الواجهة بنجاح الإرسال
+                                            onSendMessage(text)
+
+                                            messageText = ""
+                                            sendFeedback =
+                                                "تم إرسال الرسالة للمراجعة."
+                                            feedbackIsError = false
+                                        },
+                                        onFailure = { error ->
+
+                                            val firebaseError =
+                                                error as? FirebaseFunctionsException
+
+                                            sendFeedback =
+                                                when (
+                                                    firebaseError?.code
+                                                ) {
+                                                    FirebaseFunctionsException.Code.PERMISSION_DENIED ->
+                                                        "لا يمكنك استخدام الدردشة حالياً. إذا كان عليك حظر، فسيُرفع تلقائياً بعد 24 ساعة."
+
+                                                    FirebaseFunctionsException.Code.UNAUTHENTICATED ->
+                                                        "يجب تسجيل الدخول حتى تتمكن من الدردشة."
+
+                                                    FirebaseFunctionsException.Code.INVALID_ARGUMENT ->
+                                                        "الرسالة غير صالحة أو تتجاوز الحد المسموح."
+
+                                                    else ->
+                                                        error.localizedMessage
+                                                            ?: "تعذر إرسال الرسالة. حاول مرة أخرى."
+                                                }
+
+                                            feedbackIsError = true
+                                        }
+                                    )
+                                }
                             }
                         },
                         colors = ButtonDefaults.buttonColors(
@@ -233,12 +288,32 @@ fun SystemGlobalChatScreen(
                             contentColor = Color.Black
                         )
                     ) {
-                        Text("إرسال")
+                        if (isSending) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp,
+                                color = Color.Black
+                            )
+                        } else {
+                            Text("إرسال")
+                        }
                     }
+                }
+
+                sendFeedback?.let { feedback ->
+                    Spacer(Modifier.height(7.dp))
+
+                    Text(
+                        text = feedback,
+                        color = if (feedbackIsError)
+                            Color(0xFFFF7777)
+                        else
+                            cyan,
+                        fontSize = 12.sp
+                    )
                 }
             }
 
-            // قائمة الأصدقاء وطلبات الصداقة
             GlobalChatTab.FRIENDS -> {
 
                 Text(
@@ -307,10 +382,7 @@ fun SystemGlobalChatScreen(
                                     .padding(12.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                GlobalAvatar(
-                                    request.sender,
-                                    gold
-                                )
+                                GlobalAvatar(request.sender, gold)
 
                                 Spacer(Modifier.width(10.dp))
 
@@ -359,10 +431,7 @@ fun SystemGlobalChatScreen(
                                     .padding(12.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                GlobalAvatar(
-                                    friend.user,
-                                    gold
-                                )
+                                GlobalAvatar(friend.user, gold)
 
                                 Spacer(Modifier.width(10.dp))
 
@@ -402,7 +471,6 @@ fun SystemGlobalChatScreen(
                 }
             }
 
-            // المحادثات الخاصة
             GlobalChatTab.PRIVATE -> {
                 Column(
                     modifier = Modifier
@@ -428,7 +496,6 @@ fun SystemGlobalChatScreen(
                 }
             }
 
-            // المجموعات
             GlobalChatTab.GROUPS -> {
                 Column(
                     modifier = Modifier
@@ -457,7 +524,6 @@ fun SystemGlobalChatScreen(
     }
 }
 
-// عرض صورة الحساب والاسم بجانب الرسالة
 @Composable
 private fun GlobalAvatar(
     user: GlobalChatUser,
@@ -481,7 +547,6 @@ private fun GlobalAvatar(
     }
 }
 
-// بطاقة الرسالة
 @Composable
 private fun GlobalMessageItem(
     message: GlobalChatMessage,
@@ -502,10 +567,7 @@ private fun GlobalMessageItem(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                GlobalAvatar(
-                    message.sender,
-                    gold
-                )
+                GlobalAvatar(message.sender, gold)
 
                 Spacer(Modifier.width(9.dp))
 
