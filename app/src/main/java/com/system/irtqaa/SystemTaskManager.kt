@@ -11,6 +11,13 @@ class SystemTaskManager(
 
     private val engine = SystemTaskEngine(progressEngine)
 
+    private val cloudSync = FirebaseSystemTaskSync(
+        context.applicationContext
+    )
+
+    private var syncInProgress = false
+    private var syncRequested = false
+
     init {
         require(userId.isNotBlank()) {
             "User ID cannot be blank"
@@ -26,6 +33,7 @@ class SystemTaskManager(
     ): SystemTaskDefinition {
         val added = engine.addTask(userId, task)
         save()
+        requestCloudSync()
         return added
     }
 
@@ -49,6 +57,7 @@ class SystemTaskManager(
 
         if (completed != null) {
             save()
+            requestCloudSync()
         }
 
         return completed
@@ -66,6 +75,7 @@ class SystemTaskManager(
 
         if (updated != null) {
             save()
+            requestCloudSync()
         }
 
         return updated
@@ -110,5 +120,29 @@ class SystemTaskManager(
             userId,
             engine.getTasks(userId)
         )
+    }
+
+    private fun requestCloudSync() {
+        syncRequested = true
+
+        if (syncInProgress) {
+            return
+        }
+
+        syncInProgress = true
+        runNextCloudSync()
+    }
+
+    private fun runNextCloudSync() {
+        if (!syncRequested) {
+            syncInProgress = false
+            return
+        }
+
+        syncRequested = false
+
+        cloudSync.synchronize(userId) { _, _ ->
+            runNextCloudSync()
+        }
     }
 }
