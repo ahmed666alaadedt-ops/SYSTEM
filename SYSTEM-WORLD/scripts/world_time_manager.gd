@@ -1,17 +1,21 @@
-
 extends Node
 
 class_name SystemWorldTimeManager
 
 const UPDATE_INTERVAL := 1.0
+const NIGHT_LIGHT_RANGE := 15.0
+const NIGHT_LIGHT_MAX_ENERGY := 1.35
 
 var world_root: Node3D
 var world_environment: WorldEnvironment
 var sun: DirectionalLight3D
 var sky_material: ProceduralSkyMaterial
 
+var night_lights: Array[OmniLight3D] = []
+
 var elapsed := 0.0
 var current_hour := 12.0
+var current_daylight := 1.0
 
 
 func setup(target_world: Node3D) -> bool:
@@ -36,6 +40,10 @@ func setup(target_world: Node3D) -> bool:
 	if world_environment.environment == null:
 		return false
 
+	if world_environment.environment.sky == null:
+		push_warning("SYSTEM Time Manager: sky is missing.")
+		return false
+
 	sky_material = (
 		world_environment.environment.sky.sky_material
 		as ProceduralSkyMaterial
@@ -45,7 +53,9 @@ func setup(target_world: Node3D) -> bool:
 		push_warning("SYSTEM Time Manager: procedural sky is missing.")
 		return false
 
+	_create_city_night_lights()
 	_update_clock()
+
 	return true
 
 
@@ -74,6 +84,84 @@ func _update_clock() -> void:
 	_apply_day_night_cycle(current_hour)
 
 
+# --------------------------------------------------
+# CITY NIGHT LIGHTING
+# --------------------------------------------------
+
+func _create_city_night_lights() -> void:
+	if world_root == null:
+		return
+
+	# ستة أضواء فقط موزعة على امتداد الشارع.
+	# لا نستخدم الظلال حتى نحافظ على أداء الهاتف.
+	var light_positions := [
+		Vector3(-5.35, 5.55, -10.0),
+		Vector3(5.35, 5.55, -10.0),
+		Vector3(-5.35, 5.55, -54.0),
+		Vector3(5.35, 5.55, -54.0),
+		Vector3(-5.35, 5.55, -98.0),
+		Vector3(5.35, 5.55, -98.0)
+	]
+
+	for index in range(light_positions.size()):
+		var light_name := "CityNightLight_%02d" % index
+
+		var existing := world_root.get_node_or_null(
+			light_name
+		) as OmniLight3D
+
+		if existing != null:
+			night_lights.append(existing)
+			continue
+
+		var night_light := OmniLight3D.new()
+		night_light.name = light_name
+		night_light.position = light_positions[index]
+
+		night_light.light_color = Color(
+			1.0,
+			0.72,
+			0.43
+		)
+
+		night_light.light_energy = 0.0
+		night_light.omni_range = NIGHT_LIGHT_RANGE
+		night_light.shadow_enabled = false
+		night_light.light_specular = 0.25
+
+		world_root.add_child(night_light)
+		night_lights.append(night_light)
+
+
+func _update_night_lights(daylight: float) -> void:
+	# تعمل الإنارة تدريجياً عند الغروب
+	# وتنطفئ تدريجياً عند شروق الشمس.
+	var night_factor := clampf(
+		(0.42 - daylight) / 0.42,
+		0.0,
+		1.0
+	)
+
+	# انتقال ناعم بين النهار والليل.
+	night_factor = (
+		night_factor
+		* night_factor
+		* (3.0 - 2.0 * night_factor)
+	)
+
+	var target_energy := (
+		night_factor * NIGHT_LIGHT_MAX_ENERGY
+	)
+
+	for night_light in night_lights:
+		if is_instance_valid(night_light):
+			night_light.light_energy = target_energy
+
+
+# --------------------------------------------------
+# REAL-TIME DAY AND NIGHT
+# --------------------------------------------------
+
 func _apply_day_night_cycle(hour: float) -> void:
 	var environment := world_environment.environment
 
@@ -82,6 +170,7 @@ func _apply_day_night_cycle(hour: float) -> void:
 	)
 
 	var daylight := clampf(sun_curve, 0.0, 1.0)
+	current_daylight = daylight
 
 	var elevation := clampf(
 		sun_curve * 70.0,
@@ -96,7 +185,7 @@ func _apply_day_night_cycle(hour: float) -> void:
 
 	dawn_factor = clampf(dawn_factor, 0.0, 1.0)
 
-	# حركة الشمس بحسب ساعة الجهاز المحلية.
+	# حركة الشمس حسب ساعة الجهاز المحلية.
 	sun.rotation_degrees = Vector3(
 		-elevation,
 		-30.0,
@@ -115,6 +204,9 @@ func _apply_day_night_cycle(hour: float) -> void:
 		0.72 + daylight * 0.18,
 		0.48 + daylight * 0.42
 	)
+
+	# إضاءة الشوارع الحقيقية.
+	_update_night_lights(daylight)
 
 	# إضاءة السماء والبيئة.
 	environment.ambient_light_energy = lerpf(
@@ -149,9 +241,11 @@ func _apply_day_night_cycle(hour: float) -> void:
 	)
 
 	# ألوان الشروق والغروب.
-	sky_material.sky_horizon_color = sky_material.sky_horizon_color.lerp(
-		Color(1.0, 0.43, 0.20),
-		dawn_factor * 0.65
+	sky_material.sky_horizon_color = (
+		sky_material.sky_horizon_color.lerp(
+			Color(1.0, 0.43, 0.20),
+			dawn_factor * 0.65
+		)
 	)
 
 	environment.ambient_light_color = Color(
