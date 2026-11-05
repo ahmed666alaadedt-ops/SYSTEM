@@ -12,6 +12,10 @@ class SystemTaskStorage(context: Context) {
             Context.MODE_PRIVATE
         )
 
+    private fun deletedKey(userId: String): String {
+        return "${userId}_deleted_task_ids"
+    }
+
     fun saveTasks(
         userId: String,
         tasks: List<SystemTaskDefinition>
@@ -100,6 +104,71 @@ class SystemTaskStorage(context: Context) {
         } catch (exception: Exception) {
             emptyList()
         }
+    }
+
+    fun saveDeletedTaskIds(
+        userId: String,
+        taskIds: Set<String>
+    ) {
+        require(userId.isNotBlank())
+
+        val array = JSONArray()
+
+        taskIds.forEach { taskId ->
+            array.put(taskId)
+        }
+
+        preferences.edit()
+            .putString(deletedKey(userId), array.toString())
+            .apply()
+    }
+
+    fun loadDeletedTaskIds(
+        userId: String
+    ): Set<String> {
+        require(userId.isNotBlank())
+
+        val savedData = preferences.getString(
+            deletedKey(userId),
+            null
+        ) ?: return emptySet()
+
+        return try {
+            val array = JSONArray(savedData)
+            buildSet {
+                for (index in 0 until array.length()) {
+                    val taskId = array.optString(index)
+                    if (taskId.isNotBlank()) {
+                        add(taskId)
+                    }
+                }
+            }
+        } catch (exception: Exception) {
+            emptySet()
+        }
+    }
+
+    fun addDeletedTaskId(
+        userId: String,
+        taskId: String
+    ) {
+        require(userId.isNotBlank())
+        require(taskId.isNotBlank())
+
+        val deletedIds = loadDeletedTaskIds(userId).toMutableSet()
+        deletedIds.add(taskId)
+
+        saveDeletedTaskIds(userId, deletedIds)
+    }
+
+    fun removeDeletedTaskId(
+        userId: String,
+        taskId: String
+    ) {
+        val deletedIds = loadDeletedTaskIds(userId).toMutableSet()
+        deletedIds.remove(taskId)
+
+        saveDeletedTaskIds(userId, deletedIds)
     }
 
     fun clearTasks(userId: String) {
