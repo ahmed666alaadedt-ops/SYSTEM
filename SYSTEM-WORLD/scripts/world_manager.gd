@@ -1,6 +1,7 @@
-
 extends Node3D
 class_name WorldManager
+
+const ForestManagerScript = preload("res://SYSTEM-WORLD/scripts/forest_manager.gd")
 
 signal world_changed(world_id: int)
 
@@ -81,6 +82,7 @@ func _create_modern_city() -> void:
 	_create_city_trees(root)
 	_create_street_lights(root)
 	_create_distant_skyline(root)
+	_create_forest(root)
 
 
 func _make_material(
@@ -235,7 +237,6 @@ func _create_city_buildings(parent: Node3D) -> void:
 			var z_position := -float(index) * 19.0 - 8.0
 			var x_position := side * (15.0 + width * 0.5)
 
-			# المبنى أصبح جسماً ثابتاً حتى يمنع مرور اللاعب خلاله.
 			var building := StaticBody3D.new()
 			building.name = "CityBuilding_%s_%02d" % [
 				str(int(side)),
@@ -397,8 +398,6 @@ func _create_building_entrance(
 			frame_material
 		)
 
-	# المداخل حالياً تفاصيل بصرية؛ فتح المباني سيكون بنظام مستقل لاحقاً.
-
 
 func _create_city_trees(parent: Node3D) -> void:
 	var trunk_material := _make_material(
@@ -527,3 +526,9 @@ func _create_distant_skyline(parent: Node3D) -> void:
 			Vector3(9.0, height, 12.0),
 			distant_material
 		)
+
+
+func _create_forest(parent: Node3D) -> void:
+	var forest := ForestManagerScript.new()
+	forest.name = "ModernWorldForest"
+	parent.add_child(forest)
