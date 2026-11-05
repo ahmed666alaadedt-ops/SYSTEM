@@ -1,3 +1,4 @@
+
 extends Node3D
 
 const PLAYER_SPEED := 6.0
@@ -299,46 +300,95 @@ func _on_mobile_interact_pressed() -> void:
 	interaction_manager.interact_with_target()
 
 
+# --------------------------------------------------
+# CINEMATIC CITY ENVIRONMENT
+# --------------------------------------------------
+
 func create_environment() -> void:
 	var world_environment := WorldEnvironment.new()
+	world_environment.name = "ModernCityEnvironment"
+
 	var environment := Environment.new()
 
 	environment.background_mode = Environment.BG_SKY
-	environment.sky = Sky.new()
+
+	var sky := Sky.new()
+	var sky_material := ProceduralSkyMaterial.new()
+
+	sky_material.sky_top_color = Color(0.055, 0.12, 0.23)
+	sky_material.sky_horizon_color = Color(0.48, 0.57, 0.68)
+	sky_material.ground_bottom_color = Color(0.10, 0.12, 0.15)
+	sky_material.ground_horizon_color = Color(0.36, 0.40, 0.43)
+	sky_material.sun_angle_max = 25.0
+	sky_material.sun_curve = 0.15
+
+	sky.sky_material = sky_material
+	environment.sky = sky
+
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	environment.ambient_light_color = Color(0.65, 0.72, 0.85)
-	environment.ambient_light_energy = 0.7
+	environment.ambient_light_color = Color(0.58, 0.65, 0.78)
+	environment.ambient_light_energy = 0.65
+
+	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	environment.tonemap_exposure = 1.0
+
+	environment.fog_enabled = true
+	environment.fog_light_color = Color(0.48, 0.57, 0.68)
+	environment.fog_density = 0.0015
 
 	world_environment.environment = environment
 	active_world_root.add_child(world_environment)
 
 	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-45, -30, 0)
-	sun.light_energy = 1.2
+	sun.name = "ModernCitySun"
+	sun.rotation_degrees = Vector3(-38, -30, 0)
+	sun.light_color = Color(1.0, 0.88, 0.72)
+	sun.light_energy = 1.15
+	sun.shadow_enabled = true
 	active_world_root.add_child(sun)
 
 
+# --------------------------------------------------
+# CITY GROUND AND COLLISION
+# --------------------------------------------------
+
 func create_ground() -> void:
 	var ground := StaticBody3D.new()
-	ground.name = "Ground"
+	ground.name = "ModernCityGround"
+	ground.position = Vector3(0, 0, -45)
 	active_world_root.add_child(ground)
 
+	var ground_size := Vector3(100, 1, 160)
+
 	var mesh := MeshInstance3D.new()
+	mesh.name = "GroundVisual"
+
 	var box := BoxMesh.new()
-	box.size = Vector3(100, 1, 100)
+	box.size = ground_size
 	mesh.mesh = box
+	mesh.position.y = -0.5
 
 	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.18, 0.28, 0.20)
+	material.albedo_color = Color(0.20, 0.21, 0.22)
+	material.roughness = 0.95
 	mesh.material_override = material
+
 	ground.add_child(mesh)
 
 	var collision := CollisionShape3D.new()
+	collision.name = "GroundCollision"
+
 	var shape := BoxShape3D.new()
-	shape.size = Vector3(100, 1, 100)
+	shape.size = ground_size
 	collision.shape = shape
+	collision.position.y = -0.5
+
 	ground.add_child(collision)
 
+
+# --------------------------------------------------
+# PLAYER
+# --------------------------------------------------
 
 func create_player() -> void:
 	player = CharacterBody3D.new()
@@ -347,6 +397,7 @@ func create_player() -> void:
 	active_world_root.add_child(player)
 
 	player_mesh = MeshInstance3D.new()
+
 	var capsule := CapsuleMesh.new()
 	capsule.radius = 0.4
 	capsule.height = 1.8
@@ -370,11 +421,18 @@ func create_player() -> void:
 	player.add_child(spring_arm)
 
 	camera = Camera3D.new()
+	camera.fov = 72.0
+	camera.near = 0.05
+	camera.far = 300.0
 	spring_arm.add_child(camera)
 	camera.current = true
 
 	update_camera_rotation()
 
+
+# --------------------------------------------------
+# MOBILE CONTROLS
+# --------------------------------------------------
 
 func create_mobile_controls() -> void:
 	mobile_controls = MobileControlsScript.new()
@@ -437,6 +495,10 @@ func update_camera_rotation() -> void:
 		0.0
 	)
 
+
+# --------------------------------------------------
+# PLAYER MOVEMENT
+# --------------------------------------------------
 
 func _physics_process(delta: float) -> void:
 	if player == null:
