@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -15,6 +16,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -265,6 +268,7 @@ private fun SystemWorldAmbientBackground(
     }
 }
 
+/** بطاقة عالم مع استجابة لمس وإضاءة وحدود متحركة. */
 @Composable
 fun SystemWorldThemeCard(
     style: SystemWorldVisualStyle,
@@ -273,20 +277,59 @@ fun SystemWorldThemeCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val interactionSource = remember {
+        MutableInteractionSource()
+    }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
     val animatedScale by animateFloatAsState(
-        targetValue = if (selected) 1.035f else 1f,
-        animationSpec = tween(durationMillis = 220),
+        targetValue = when {
+            isPressed -> 0.975f
+            selected -> 1.035f
+            else -> 1f
+        },
+        animationSpec = tween(durationMillis = 160),
         label = "world-card-scale"
     )
 
     val animatedContainer by animateColorAsState(
-        targetValue = if (selected) {
-            style.accent.copy(alpha = 0.30f)
-        } else {
-            style.surface
+        targetValue = when {
+            isPressed -> style.accent.copy(alpha = 0.22f)
+            selected -> style.accent.copy(alpha = 0.30f)
+            else -> style.surface
         },
         animationSpec = tween(durationMillis = 220),
         label = "world-card-color"
+    )
+
+    val animatedBorderColor by animateColorAsState(
+        targetValue = when {
+            selected -> style.accent
+            isPressed -> style.accent.copy(alpha = 0.85f)
+            else -> style.accent.copy(alpha = 0.24f)
+        },
+        animationSpec = tween(durationMillis = 180),
+        label = "world-card-border-color"
+    )
+
+    val animatedBorderWidth by animateDpAsState(
+        targetValue = when {
+            selected -> 2.5.dp
+            isPressed -> 2.dp
+            else -> 1.dp
+        },
+        animationSpec = tween(durationMillis = 180),
+        label = "world-card-border-width"
+    )
+
+    val animatedElevation by animateDpAsState(
+        targetValue = when {
+            isPressed -> 3.dp
+            selected -> 14.dp
+            else -> 7.dp
+        },
+        animationSpec = tween(durationMillis = 180),
+        label = "world-card-elevation"
     )
 
     Card(
@@ -297,18 +340,22 @@ fun SystemWorldThemeCard(
                 scaleY = animatedScale
             }
             .border(
-                width = if (selected) 2.dp else 1.dp,
-                color = if (selected) style.accent
-                    else style.accent.copy(alpha = 0.24f),
+                width = animatedBorderWidth,
+                color = animatedBorderColor,
                 shape = RoundedCornerShape(22.dp)
             )
-            .clickable(enabled = enabled, onClick = onClick),
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                enabled = enabled,
+                onClick = onClick
+            ),
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(
             containerColor = animatedContainer
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = if (selected) 14.dp else 7.dp
+            defaultElevation = animatedElevation
         )
     ) {
         Row(
@@ -318,8 +365,11 @@ fun SystemWorldThemeCard(
                     Brush.linearGradient(
                         listOf(
                             style.deep,
-                            if (selected) style.accent.copy(alpha = 0.30f)
-                            else style.surface,
+                            if (selected || isPressed) {
+                                style.accent.copy(alpha = 0.30f)
+                            } else {
+                                style.surface
+                            },
                             style.secondary.copy(alpha = 0.48f)
                         )
                     )
