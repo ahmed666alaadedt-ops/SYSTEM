@@ -1,6 +1,11 @@
 
 package com.system.irtqaa
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,6 +21,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -94,7 +100,7 @@ object SystemMobileVisualTheme {
     val textSecondary = Color(0xFFB7C5D6)
 }
 
-/** معرض بطاقات العوالم الأربعة، جاهز للربط بمسارات البوابات. */
+/** معرض بطاقات العوالم الأربعة. */
 @Composable
 fun SystemWorldThemeGallery(
     onWorldSelected: (SystemWorldKind) -> Unit,
@@ -192,12 +198,29 @@ fun SystemWorldThemeCard(
     }
 }
 
-/** شارة مرسومة بطبقات إضاءة وظلال لإعطاء إحساس مجسّم دون صور خارجية. */
+/** شارة العوالم مع إضاءة متحركة وتأثيرات عمق بصرية. */
 @Composable
 fun SystemWorldThreeDimensionalEmblem(
     style: SystemWorldVisualStyle,
     modifier: Modifier = Modifier
 ) {
+    val lightTransition = rememberInfiniteTransition(
+        label = "world-emblem-light"
+    )
+
+    val lightPosition by lightTransition.animateFloat(
+        initialValue = -0.85f,
+        targetValue = 1.85f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = 3200,
+                delayMillis = 350
+            ),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "world-emblem-shimmer"
+    )
+
     Canvas(
         modifier = modifier.clip(RoundedCornerShape(20.dp))
     ) {
@@ -287,7 +310,11 @@ fun SystemWorldThreeDimensionalEmblem(
 
                 drawRect(
                     Brush.verticalGradient(
-                        listOf(style.accent, style.secondary, style.deep)
+                        listOf(
+                            style.accent,
+                            style.secondary,
+                            style.deep
+                        )
                     ),
                     Offset(w * 0.20f, h * 0.36f),
                     Size(w * 0.60f, h * 0.39f)
@@ -435,6 +462,37 @@ fun SystemWorldThreeDimensionalEmblem(
                 )
             }
         }
+
+        // شريط ضوء سينمائي متحرك يمر فوق الشارة.
+        drawRect(
+            brush = Brush.linearGradient(
+                colors = listOf(
+                    Color.Transparent,
+                    Color.White.copy(alpha = 0.025f),
+                    style.accent.copy(alpha = 0.16f),
+                    Color.White.copy(alpha = 0.10f),
+                    Color.Transparent
+                ),
+                start = Offset(w * lightPosition, h * 0.08f),
+                end = Offset(w * (lightPosition + 0.48f), h * 0.92f)
+            ),
+            topLeft = Offset.Zero,
+            size = Size(w, h)
+        )
+
+        // وهج ناعم أسفل الشارة.
+        drawLine(
+            brush = Brush.horizontalGradient(
+                listOf(
+                    Color.Transparent,
+                    style.accent.copy(alpha = 0.72f),
+                    Color.Transparent
+                )
+            ),
+            start = Offset(w * 0.18f, h * 0.91f),
+            end = Offset(w * 0.82f, h * 0.91f),
+            strokeWidth = 2.dp.toPx()
+        )
 
         drawRoundRect(
             Color.White.copy(alpha = 0.10f),
