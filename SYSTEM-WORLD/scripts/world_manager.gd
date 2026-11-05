@@ -69,7 +69,7 @@ func get_all_world_ids() -> Array:
 
 
 # --------------------------------------------------
-# MODERN WORLD - FIRST 3D CITY TEST
+# MODERN WORLD CITY
 # --------------------------------------------------
 
 func _create_modern_city() -> void:
@@ -116,6 +116,25 @@ func _add_box(
 	return instance
 
 
+func _add_collision(
+	parent: Node3D,
+	node_name: String,
+	position: Vector3,
+	size: Vector3
+) -> CollisionShape3D:
+	var collision := CollisionShape3D.new()
+	collision.name = node_name
+
+	var shape := BoxShape3D.new()
+	shape.size = size
+
+	collision.shape = shape
+	collision.position = position
+	parent.add_child(collision)
+
+	return collision
+
+
 func _create_road(parent: Node3D) -> void:
 	var asphalt := _make_material(
 		Color(0.075, 0.085, 0.10),
@@ -157,20 +176,44 @@ func _create_sidewalks(parent: Node3D) -> void:
 	)
 
 	for side in [-1.0, 1.0]:
+		var sidewalk := StaticBody3D.new()
+		sidewalk.name = "CitySidewalkCollision"
+		sidewalk.position = Vector3(side * 7.3, 0, -45)
+		parent.add_child(sidewalk)
+
 		_add_box(
-			parent,
-			"CitySidewalk",
-			Vector3(side * 7.3, 0.10, -45),
+			sidewalk,
+			"CitySidewalkVisual",
+			Vector3.ZERO,
 			Vector3(2.6, 0.20, 150),
 			sidewalk_material
 		)
 
+		_add_collision(
+			sidewalk,
+			"SidewalkCollision",
+			Vector3.ZERO,
+			Vector3(2.6, 0.20, 150)
+		)
+
+		var curb := StaticBody3D.new()
+		curb.name = "CityCurbCollision"
+		curb.position = Vector3(side * 6.05, 0.16, -45)
+		parent.add_child(curb)
+
 		_add_box(
-			parent,
-			"CityCurb",
-			Vector3(side * 6.05, 0.16, -45),
+			curb,
+			"CityCurbVisual",
+			Vector3.ZERO,
 			Vector3(0.25, 0.32, 150),
 			curb_material
+		)
+
+		_add_collision(
+			curb,
+			"CurbCollision",
+			Vector3.ZERO,
+			Vector3(0.25, 0.32, 150)
 		)
 
 
@@ -192,7 +235,8 @@ func _create_city_buildings(parent: Node3D) -> void:
 			var z_position := -float(index) * 19.0 - 8.0
 			var x_position := side * (15.0 + width * 0.5)
 
-			var building := Node3D.new()
+			# المبنى أصبح جسماً ثابتاً حتى يمنع مرور اللاعب خلاله.
+			var building := StaticBody3D.new()
 			building.name = "CityBuilding_%s_%02d" % [
 				str(int(side)),
 				index
@@ -220,11 +264,26 @@ func _create_city_buildings(parent: Node3D) -> void:
 				facade_material
 			)
 
+			_add_collision(
+				building,
+				"BuildingCollision",
+				Vector3(0, height * 0.5, 0),
+				Vector3(width, height, depth)
+			)
+
 			_create_building_windows(
 				building,
 				width,
 				height,
 				depth
+			)
+
+			_create_building_entrance(
+				building,
+				width,
+				height,
+				depth,
+				index
 			)
 
 			var roof_material := _make_material(
@@ -290,6 +349,57 @@ func _create_building_windows(
 			)
 
 
+func _create_building_entrance(
+	parent: Node3D,
+	width: float,
+	height: float,
+	depth: float,
+	index: int
+) -> void:
+	var door_material := _make_material(
+		Color(0.055, 0.075, 0.095),
+		0.35,
+		0.4
+	)
+
+	var frame_material := _make_material(
+		Color(0.55, 0.48, 0.34),
+		0.4,
+		0.65
+	)
+
+	var door_width := 1.5
+	var door_height := minf(2.8, height * 0.25)
+	var door_z := -depth * 0.5 - 0.045
+
+	_add_box(
+		parent,
+		"BuildingEntranceDoor_%02d" % index,
+		Vector3(0, door_height * 0.5, door_z),
+		Vector3(door_width, door_height, 0.09),
+		door_material
+	)
+
+	_add_box(
+		parent,
+		"EntranceFrameTop",
+		Vector3(0, door_height + 0.08, door_z),
+		Vector3(door_width + 0.3, 0.16, 0.15),
+		frame_material
+	)
+
+	for side in [-1.0, 1.0]:
+		_add_box(
+			parent,
+			"EntranceFrameSide",
+			Vector3(side * (door_width * 0.5 + 0.08), door_height * 0.5, door_z),
+			Vector3(0.16, door_height, 0.15),
+			frame_material
+		)
+
+	# المداخل حالياً تفاصيل بصرية؛ فتح المباني سيكون بنظام مستقل لاحقاً.
+
+
 func _create_city_trees(parent: Node3D) -> void:
 	var trunk_material := _make_material(
 		Color(0.25, 0.16, 0.10)
@@ -310,6 +420,10 @@ func _create_city_trees(parent: Node3D) -> void:
 			)
 			parent.add_child(tree)
 
+			var trunk_body := StaticBody3D.new()
+			trunk_body.name = "TreeTrunkBody"
+			tree.add_child(trunk_body)
+
 			var trunk := MeshInstance3D.new()
 			var trunk_mesh := CylinderMesh.new()
 			trunk_mesh.top_radius = 0.16
@@ -318,7 +432,15 @@ func _create_city_trees(parent: Node3D) -> void:
 			trunk.mesh = trunk_mesh
 			trunk.position.y = 1.25
 			trunk.material_override = trunk_material
-			tree.add_child(trunk)
+			trunk_body.add_child(trunk)
+
+			var trunk_collision := CollisionShape3D.new()
+			var trunk_shape := CylinderShape3D.new()
+			trunk_shape.radius = 0.23
+			trunk_shape.height = 2.5
+			trunk_collision.shape = trunk_shape
+			trunk_collision.position.y = 1.25
+			trunk_body.add_child(trunk_collision)
 
 			var crown := MeshInstance3D.new()
 			var crown_mesh := SphereMesh.new()
@@ -347,6 +469,11 @@ func _create_street_lights(parent: Node3D) -> void:
 		for index in range(7):
 			var z := -float(index) * 22.0 - 10.0
 
+			var pole_body := StaticBody3D.new()
+			pole_body.name = "StreetLightPoleBody"
+			pole_body.position = Vector3(side * 6.2, 0, z)
+			parent.add_child(pole_body)
+
 			var pole := MeshInstance3D.new()
 			var pole_mesh := CylinderMesh.new()
 			pole_mesh.top_radius = 0.07
@@ -354,9 +481,17 @@ func _create_street_lights(parent: Node3D) -> void:
 			pole_mesh.height = 6.0
 
 			pole.mesh = pole_mesh
-			pole.position = Vector3(side * 6.2, 3.0, z)
+			pole.position.y = 3.0
 			pole.material_override = pole_material
-			parent.add_child(pole)
+			pole_body.add_child(pole)
+
+			var pole_collision := CollisionShape3D.new()
+			var pole_shape := CylinderShape3D.new()
+			pole_shape.radius = 0.12
+			pole_shape.height = 6.0
+			pole_collision.shape = pole_shape
+			pole_collision.position.y = 3.0
+			pole_body.add_child(pole_collision)
 
 			_add_box(
 				parent,
