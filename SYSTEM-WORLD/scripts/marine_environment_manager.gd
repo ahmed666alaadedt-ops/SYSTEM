@@ -2,9 +2,11 @@ extends Node3D
 class_name SystemMarineEnvironmentManager
 
 # SYSTEM WORLD - Marine Environment
-# Prototype: ocean, beaches, islands, rocks and a moving ship.
+# Coastal prototype positioned east of the modern city.
 
 const WATER_LEVEL: float = 0.0
+const OCEAN_CENTER := Vector3(350.0, 0.0, -45.0)
+const COAST_X: float = 100.0
 
 @export var ocean_size: Vector2 = Vector2(500.0, 500.0)
 @export var wave_speed: float = 1.0
@@ -17,6 +19,7 @@ var ship_time: float = 0.0
 
 func _ready() -> void:
 	name = "SystemMarineEnvironment"
+
 	_create_ocean()
 	_create_beaches()
 	_create_islands()
@@ -43,7 +46,7 @@ func _create_ocean() -> void:
 	mesh.subdivide_depth = 100
 
 	ocean.mesh = mesh
-	ocean.position.y = WATER_LEVEL
+	ocean.position = OCEAN_CENTER
 	ocean_material = _make_water_material()
 	ocean.material_override = ocean_material
 
@@ -100,15 +103,9 @@ void fragment() {
 
 func _create_beaches() -> void:
 	_create_beach(
-		"NorthBeach",
-		Vector3(0.0, -0.12, -115.0),
-		Vector2(170.0, 35.0)
-	)
-
-	_create_beach(
-		"SouthBeach",
-		Vector3(0.0, -0.12, 115.0),
-		Vector2(170.0, 35.0)
+		"EastCoastBeach",
+		Vector3(75.0, -0.10, -45.0),
+		Vector2(50.0, 500.0)
 	)
 
 
@@ -125,7 +122,6 @@ func _create_beach(
 
 	beach.mesh = mesh
 	beach.position = beach_position
-	beach.rotation_degrees.x = -90.0
 
 	var material := StandardMaterial3D.new()
 	material.albedo_color = Color(0.76, 0.65, 0.43)
@@ -138,19 +134,19 @@ func _create_beach(
 func _create_islands() -> void:
 	_create_island(
 		"Island_East",
-		Vector3(145.0, 0.0, -35.0),
+		Vector3(190.0, 0.0, -5.0),
 		Vector3(35.0, 7.0, 27.0)
 	)
 
 	_create_island(
 		"Island_West",
-		Vector3(-155.0, 0.0, 65.0),
+		Vector3(440.0, 0.0, 65.0),
 		Vector3(42.0, 9.0, 32.0)
 	)
 
 	_create_island(
 		"Island_Far",
-		Vector3(80.0, 0.0, 175.0),
+		Vector3(330.0, 0.0, -210.0),
 		Vector3(25.0, 5.0, 22.0)
 	)
 
@@ -165,8 +161,9 @@ func _create_island(
 	island.position = island_position
 
 	var ground := MeshInstance3D.new()
-	var mesh := SphereMesh.new()
+	ground.name = "IslandGround"
 
+	var mesh := SphereMesh.new()
 	mesh.radius = 1.0
 	mesh.height = 2.0
 	mesh.radial_segments = 32
@@ -178,18 +175,24 @@ func _create_island(
 	var material := StandardMaterial3D.new()
 	material.albedo_color = Color(0.30, 0.48, 0.22)
 	material.roughness = 1.0
-	ground.material_override = material
 
+	ground.material_override = material
 	island.add_child(ground)
 
 	var collision := CollisionShape3D.new()
-	var shape := SphereShape3D.new()
-	shape.radius = 1.0
+	collision.name = "IslandCollision"
+
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(
+		island_size.x * 1.5,
+		island_size.y * 0.9,
+		island_size.z * 1.5
+	)
+
 	collision.shape = shape
-	collision.scale = island_size
+	collision.position.y = island_size.y * 0.25
 
 	island.add_child(collision)
-
 	add_child(island)
 
 
@@ -209,12 +212,10 @@ func _create_coastal_rocks() -> void:
 
 		rock.mesh = mesh
 
-		var side := -1.0 if i % 2 == 0 else 1.0
-
 		rock.position = Vector3(
-			side * rng.randf_range(72.0, 105.0),
+			rng.randf_range(88.0, 98.0),
 			rng.randf_range(-0.1, 0.5),
-			rng.randf_range(-110.0, 110.0)
+			rng.randf_range(-245.0, 205.0)
 		)
 
 		rock.scale = Vector3(
@@ -238,7 +239,7 @@ func _create_coastal_rocks() -> void:
 func _create_ship() -> void:
 	ship = Node3D.new()
 	ship.name = "CoastalShip"
-	ship.position = Vector3(20.0, 0.65, 35.0)
+	ship.position = Vector3(260.0, 0.65, 35.0)
 
 	var hull := MeshInstance3D.new()
 	hull.name = "ShipHull"
@@ -266,8 +267,8 @@ func _create_ship() -> void:
 
 	var deck_material := StandardMaterial3D.new()
 	deck_material.albedo_color = Color(0.55, 0.39, 0.22)
-	deck.material_override = deck_material
 
+	deck.material_override = deck_material
 	ship.add_child(deck)
 
 	var mast := MeshInstance3D.new()
@@ -283,8 +284,8 @@ func _create_ship() -> void:
 
 	var mast_material := StandardMaterial3D.new()
 	mast_material.albedo_color = Color(0.30, 0.19, 0.10)
-	mast.material_override = mast_material
 
+	mast.material_override = mast_material
 	ship.add_child(mast)
 
 	var sail := MeshInstance3D.new()
