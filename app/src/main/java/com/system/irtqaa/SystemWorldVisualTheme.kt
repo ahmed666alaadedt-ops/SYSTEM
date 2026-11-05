@@ -59,6 +59,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import kotlin.math.cos
+import kotlin.math.sin
 
 enum class SystemWorldKind {
     MODERN_REALISTIC,
@@ -527,7 +529,6 @@ fun SystemWorldThreeDimensionalEmblem(
         label = "world-emblem-shimmer"
     )
 
-    // نبض طاقة ضوئي خلف شعار العالم.
     val emblemPulse by lightTransition.animateFloat(
         initialValue = 0.22f,
         targetValue = 0.48f,
@@ -536,6 +537,17 @@ fun SystemWorldThreeDimensionalEmblem(
             repeatMode = RepeatMode.Reverse
         ),
         label = "world-emblem-energy-pulse"
+    )
+
+    // دوران المدار الضوئي حول الشعار.
+    val orbitRotation by lightTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 6200),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "world-emblem-orbit-rotation"
     )
 
     Canvas(
@@ -557,7 +569,6 @@ fun SystemWorldThreeDimensionalEmblem(
             cornerRadius = CornerRadius(w * 0.16f)
         )
 
-        // هالة الشعار النابضة.
         drawCircle(
             brush = Brush.radialGradient(
                 listOf(
@@ -780,6 +791,49 @@ fun SystemWorldThreeDimensionalEmblem(
                 )
             }
         }
+
+        // حلقة المدار حول الشعار.
+        val orbitTopLeft = Offset(w * 0.10f, h * 0.10f)
+        val orbitSize = Size(w * 0.80f, h * 0.80f)
+
+        drawArc(
+            color = style.accent.copy(alpha = 0.52f),
+            startAngle = orbitRotation,
+            sweepAngle = 245f,
+            useCenter = false,
+            topLeft = orbitTopLeft,
+            size = orbitSize,
+            style = Stroke(width = 1.8.dp.toPx())
+        )
+
+        // النقطة المضيئة التي تتحرك على المدار.
+        val orbitRadians = Math.toRadians(
+            orbitRotation.toDouble()
+        )
+
+        val orbitCenterX = w * 0.50f
+        val orbitCenterY = h * 0.50f
+        val orbitRadiusX = w * 0.40f
+        val orbitRadiusY = h * 0.40f
+
+        val orbitPoint = Offset(
+            x = orbitCenterX +
+                orbitRadiusX * cos(orbitRadians).toFloat(),
+            y = orbitCenterY +
+                orbitRadiusY * sin(orbitRadians).toFloat()
+        )
+
+        drawCircle(
+            color = style.accent.copy(alpha = 0.18f),
+            radius = 7.dp.toPx(),
+            center = orbitPoint
+        )
+
+        drawCircle(
+            color = Color.White.copy(alpha = 0.95f),
+            radius = 2.4.dp.toPx(),
+            center = orbitPoint
+        )
 
         drawRect(
             brush = Brush.linearGradient(
