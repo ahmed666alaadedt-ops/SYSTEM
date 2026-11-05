@@ -105,7 +105,6 @@ fun SystemAccountGate(
                 }
 
                 checkingSession = false
-
             }
             .addOnFailureListener { error ->
                 errorMessage =
@@ -121,7 +120,9 @@ fun SystemAccountGate(
     }
 
     if (account != null) {
-        content(account!!)
+        SystemProgressSyncGate(account = account!!) {
+            content(account!!)
+        }
         return
     }
 
