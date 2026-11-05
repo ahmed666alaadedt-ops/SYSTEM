@@ -36,13 +36,25 @@ fun SystemProgressSyncGate(
 
         FirebaseSystemProgressSync(context).synchronize(
             account.userId
-        ) { success, error ->
-            if (success) {
-                ready = true
-                errorMessage = null
-            } else {
-                errorMessage = error?.localizedMessage
+        ) { progressSuccess, progressError ->
+
+            if (!progressSuccess) {
+                errorMessage = progressError?.localizedMessage
                     ?: "تعذرت مزامنة تقدمك."
+                return@synchronize
+            }
+
+            FirebaseSystemTaskSync(context).synchronize(
+                account.userId
+            ) { taskSuccess, taskError ->
+
+                if (taskSuccess) {
+                    ready = true
+                    errorMessage = null
+                } else {
+                    errorMessage = taskError?.localizedMessage
+                        ?: "تعذرت مزامنة مهامك."
+                }
             }
         }
     }
@@ -78,7 +90,7 @@ fun SystemProgressSyncGate(
                 Spacer(Modifier.height(16.dp))
 
                 Text(
-                    "جاري مزامنة تقدم حسابك...",
+                    "جاري مزامنة تقدمك ومهامك...",
                     color = Color.White
                 )
             } else {
