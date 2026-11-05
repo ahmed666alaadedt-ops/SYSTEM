@@ -550,6 +550,20 @@ fun SystemWorldThreeDimensionalEmblem(
         label = "world-emblem-orbit-rotation"
     )
 
+    // الخطوة 15: شعاع مسح عمودي متحرك فوق الشعار.
+    val scanPosition by lightTransition.animateFloat(
+        initialValue = -0.15f,
+        targetValue = 1.15f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = 2600,
+                delayMillis = 250
+            ),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "world-emblem-scan-position"
+    )
+
     Canvas(
         modifier = modifier.clip(RoundedCornerShape(20.dp))
     ) {
@@ -849,6 +863,32 @@ fun SystemWorldThreeDimensionalEmblem(
             ),
             topLeft = Offset.Zero,
             size = Size(w, h)
+        )
+
+        // شعاع المسح العمودي: هالة ضوئية عريضة.
+        val scanX = w * scanPosition
+
+        drawLine(
+            color = style.accent.copy(alpha = 0.20f),
+            start = Offset(scanX, h * 0.08f),
+            end = Offset(scanX, h * 0.92f),
+            strokeWidth = 9.dp.toPx()
+        )
+
+        // قلب الشعاع بلون العالم.
+        drawLine(
+            color = style.accent.copy(alpha = 0.72f),
+            start = Offset(scanX, h * 0.08f),
+            end = Offset(scanX, h * 0.92f),
+            strokeWidth = 3.dp.toPx()
+        )
+
+        // خط أبيض رفيع يمنح المسح لمعاناً واضحاً.
+        drawLine(
+            color = Color.White.copy(alpha = 0.88f),
+            start = Offset(scanX, h * 0.12f),
+            end = Offset(scanX, h * 0.88f),
+            strokeWidth = 1.dp.toPx()
         )
 
         drawLine(
