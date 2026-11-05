@@ -17,11 +17,13 @@ const WorldManagerScript = preload("res://scripts/world_manager.gd")
 const WorldMapManagerScript = preload("res://scripts/world_map_manager.gd")
 const WorldInteractionManagerScript = preload("res://scripts/world_interaction_manager.gd")
 const AINPCSocietyManagerScript = preload("res://scripts/ai_npc_society_manager.gd")
+const WorldTimeManagerScript = preload("res://scripts/world_time_manager.gd")
 
 var world_manager
 var world_map_manager
 var interaction_manager
 var ai_npc_society_manager
+var world_time_manager
 
 var active_world_root: Node3D
 
@@ -48,6 +50,8 @@ func _ready() -> void:
 	create_world_map_manager()
 
 	create_environment()
+	create_world_time_manager()
+
 	create_ground()
 	create_player()
 
@@ -79,6 +83,23 @@ func create_world_map_manager() -> void:
 
 	world_map_manager.map_updated.connect(_on_map_updated)
 	world_map_manager.fast_travel_confirmed.connect(_on_fast_travel_confirmed)
+
+
+func create_world_time_manager() -> void:
+	world_time_manager = WorldTimeManagerScript.new()
+	world_time_manager.name = "WorldTimeManager"
+	add_child(world_time_manager)
+
+	var initialized: bool = world_time_manager.setup(active_world_root)
+
+	if not initialized:
+		push_warning("SYSTEM WORLD: Time manager initialization failed.")
+		return
+
+	print(
+		"SYSTEM WORLD local time: ",
+		world_time_manager.get_time_label()
+	)
 
 
 func create_interaction_manager() -> void:
