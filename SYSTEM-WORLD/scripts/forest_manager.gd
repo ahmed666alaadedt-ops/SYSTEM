@@ -4,6 +4,7 @@ class_name SystemForestManager
 
 const TREE_COUNT_PER_SIDE := 14
 const SHRUB_COUNT_PER_SIDE := 12
+const GRASS_COUNT := 90
 
 var rng := RandomNumberGenerator.new()
 
@@ -13,6 +14,7 @@ var ground_material: StandardMaterial3D
 var shrub_material: StandardMaterial3D
 var rock_material: StandardMaterial3D
 var log_material: StandardMaterial3D
+var grass_materials: Array[StandardMaterial3D] = []
 
 
 func _ready() -> void:
@@ -23,8 +25,9 @@ func _ready() -> void:
 	_create_shrubs()
 	_create_rocks()
 	_create_fallen_logs()
+	_create_ground_cover()
 
-	print("SYSTEM WORLD: Natural forest initialized.")
+	print("SYSTEM WORLD: Enhanced natural forest initialized.")
 
 
 func _make_material(color: Color, roughness: float = 0.9) -> StandardMaterial3D:
@@ -49,6 +52,10 @@ func _create_materials() -> void:
 	rock_material = _make_material(Color(0.30, 0.31, 0.28))
 	log_material = _make_material(Color(0.22, 0.13, 0.075))
 
+	grass_materials.append(_make_material(Color(0.18, 0.29, 0.10)))
+	grass_materials.append(_make_material(Color(0.24, 0.32, 0.13)))
+	grass_materials.append(_make_material(Color(0.12, 0.23, 0.08)))
+
 
 func _create_forest_ground() -> void:
 	for side in [-1.0, 1.0]:
@@ -61,7 +68,6 @@ func _create_forest_ground() -> void:
 
 		patch.position = Vector3(side * 40.0, 0.018, -48.0)
 		patch.material_override = ground_material
-
 		add_child(patch)
 
 
@@ -119,7 +125,65 @@ func _create_tree(
 	collision.position.y = trunk_height * 0.5
 	trunk_body.add_child(collision)
 
-	var crown_count := rng.randi_range(3, 5)
+	_create_tree_roots(tree, trunk_radius)
+	_create_tree_branches(tree, trunk_height, trunk_radius)
+	_create_tree_crowns(tree, trunk_height)
+
+
+func _create_tree_roots(tree: Node3D, trunk_radius: float) -> void:
+	for index in range(4):
+		var root := MeshInstance3D.new()
+		root.name = "TreeRoot"
+
+		var mesh := CylinderMesh.new()
+		mesh.top_radius = 0.07
+		mesh.bottom_radius = trunk_radius * 0.65
+		mesh.height = rng.randf_range(0.8, 1.4)
+
+		root.mesh = mesh
+		root.position = Vector3(
+			rng.randf_range(-0.3, 0.3),
+			0.22,
+			rng.randf_range(-0.3, 0.3)
+		)
+		root.rotation.z = rng.randf_range(-1.1, 1.1)
+		root.rotation.x = rng.randf_range(-0.5, 0.5)
+		root.material_override = trunk_materials[
+			rng.randi_range(0, trunk_materials.size() - 1)
+		]
+		tree.add_child(root)
+
+
+func _create_tree_branches(
+	tree: Node3D,
+	trunk_height: float,
+	trunk_radius: float
+) -> void:
+	for index in range(4):
+		var branch := MeshInstance3D.new()
+		branch.name = "TreeBranch"
+
+		var mesh := CylinderMesh.new()
+		mesh.top_radius = 0.045
+		mesh.bottom_radius = trunk_radius * 0.55
+		mesh.height = rng.randf_range(1.0, 1.8)
+
+		branch.mesh = mesh
+		branch.position = Vector3(
+			rng.randf_range(-0.35, 0.35),
+			trunk_height * rng.randf_range(0.48, 0.85),
+			rng.randf_range(-0.35, 0.35)
+		)
+		branch.rotation.z = rng.randf_range(-1.1, 1.1)
+		branch.rotation.x = rng.randf_range(-0.7, 0.7)
+		branch.material_override = trunk_materials[
+			rng.randi_range(0, trunk_materials.size() - 1)
+		]
+		tree.add_child(branch)
+
+
+func _create_tree_crowns(tree: Node3D, trunk_height: float) -> void:
+	var crown_count := rng.randi_range(4, 7)
 
 	for crown_index in range(crown_count):
 		var crown := MeshInstance3D.new()
@@ -131,21 +195,20 @@ func _create_tree(
 
 		crown.mesh = crown_mesh
 		crown.position = Vector3(
-			rng.randf_range(-0.65, 0.65),
-			trunk_height + rng.randf_range(-0.2, 1.3),
-			rng.randf_range(-0.65, 0.65)
+			rng.randf_range(-0.85, 0.85),
+			trunk_height + rng.randf_range(-0.2, 1.5),
+			rng.randf_range(-0.85, 0.85)
 		)
 
 		crown.scale = Vector3(
-			rng.randf_range(0.9, 1.2),
+			rng.randf_range(0.9, 1.3),
 			rng.randf_range(0.85, 1.2),
-			rng.randf_range(0.9, 1.2)
+			rng.randf_range(0.9, 1.3)
 		)
 
 		crown.material_override = leaf_materials[
 			rng.randi_range(0, leaf_materials.size() - 1)
 		]
-
 		tree.add_child(crown)
 
 
@@ -230,5 +293,32 @@ func _create_fallen_logs() -> void:
 		log.rotation.z = PI * 0.5
 		log.rotation.y = rng.randf_range(0.0, TAU)
 		log.material_override = log_material
-
 		add_child(log)
+
+
+func _create_ground_cover() -> void:
+	for index in range(GRASS_COUNT):
+		var grass := MeshInstance3D.new()
+		grass.name = "ForestGrassClump"
+
+		var mesh := SphereMesh.new()
+		mesh.radius = rng.randf_range(0.12, 0.25)
+		mesh.height = mesh.radius * 2.0
+
+		grass.mesh = mesh
+		grass.position = Vector3(
+			rng.randf_range(-47.0, 47.0),
+			0.08,
+			rng.randf_range(-116.0, -12.0)
+		)
+
+		grass.scale = Vector3(
+			rng.randf_range(0.8, 1.4),
+			rng.randf_range(0.4, 0.8),
+			rng.randf_range(0.8, 1.4)
+		)
+
+		grass.material_override = grass_materials[
+			rng.randi_range(0, grass_materials.size() - 1)
+		]
+		add_child(grass)
