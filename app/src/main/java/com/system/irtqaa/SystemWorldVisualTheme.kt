@@ -48,6 +48,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -268,7 +272,7 @@ private fun SystemWorldAmbientBackground(
     }
 }
 
-/** بطاقة عالم مع استجابة لمس وإضاءة وحدود متحركة. */
+/** بطاقة عالم مع استجابة لمس وإضاءة وحدود متحركة وإمكانية وصول محسّنة. */
 @Composable
 fun SystemWorldThemeCard(
     style: SystemWorldVisualStyle,
@@ -290,6 +294,12 @@ fun SystemWorldThemeCard(
         },
         animationSpec = tween(durationMillis = 160),
         label = "world-card-scale"
+    )
+
+    val animatedAlpha by animateFloatAsState(
+        targetValue = if (!enabled && !selected) 0.58f else 1f,
+        animationSpec = tween(durationMillis = 220),
+        label = "world-card-alpha"
     )
 
     val animatedContainer by animateColorAsState(
@@ -338,16 +348,22 @@ fun SystemWorldThemeCard(
             .graphicsLayer {
                 scaleX = animatedScale
                 scaleY = animatedScale
+                alpha = animatedAlpha
             }
             .border(
                 width = animatedBorderWidth,
                 color = animatedBorderColor,
                 shape = RoundedCornerShape(22.dp)
             )
+            .semantics(mergeDescendants = true) {
+                contentDescription = "${style.title}. ${style.subtitle}"
+                this.selected = selected
+            }
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
                 enabled = enabled,
+                role = Role.Button,
                 onClick = onClick
             ),
         shape = RoundedCornerShape(22.dp),
@@ -401,7 +417,9 @@ fun SystemWorldThemeCard(
                 )
 
                 Text(
-                    if (selected) "جاري فتح البوابة..." else "دخول العالم  ←",
+                    if (selected) "جاري فتح البوابة..."
+                    else if (!enabled) "غير متاح حالياً"
+                    else "دخول العالم  ←",
                     color = style.accent,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold
