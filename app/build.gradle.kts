@@ -1,4 +1,3 @@
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -43,15 +42,12 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.8.5")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
 
-    // Firebase
     implementation(platform("com.google.firebase:firebase-bom:35.1.0"))
 
-    // Player accounts
     implementation("com.google.firebase:firebase-auth")
-
-    // Global chat and friends database
     implementation("com.google.firebase:firebase-firestore")
-
-    // Profile pictures and shared images
     implementation("com.google.firebase:firebase-storage")
+
+    // Firebase Cloud Functions
+    implementation("com.google.firebase:firebase-functions")
 }
