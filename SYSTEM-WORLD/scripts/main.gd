@@ -1,4 +1,3 @@
-
 extends Node3D
 
 const PLAYER_SPEED := 6.0
@@ -15,9 +14,12 @@ const ROTATION_SPEED := 10.0
 const MobileControlsScript = preload("res://scripts/mobile_controls.gd")
 const WorldManagerScript = preload("res://scripts/world_manager.gd")
 const WorldMapManagerScript = preload("res://scripts/world_map_manager.gd")
+const WorldInteractionManagerScript = preload("res://scripts/world_interaction_manager.gd")
 
 var world_manager
 var world_map_manager
+var interaction_manager
+
 var active_world_root: Node3D
 
 var player: CharacterBody3D
@@ -25,6 +27,9 @@ var player_mesh: MeshInstance3D
 var camera: Camera3D
 var spring_arm: SpringArm3D
 var mobile_controls: MobileControls
+
+var interaction_prompt_layer: CanvasLayer
+var interaction_prompt_label: Label
 
 var mobile_direction := Vector2.ZERO
 var jump_requested := false
@@ -41,7 +46,11 @@ func _ready() -> void:
 	create_environment()
 	create_ground()
 	create_player()
+
+	create_interaction_manager()
 	create_mobile_controls()
+	create_interaction_prompt()
+
 	update_camera_mode()
 
 
@@ -62,10 +71,66 @@ func create_world_map_manager() -> void:
 	world_map_manager.fast_travel_confirmed.connect(_on_fast_travel_confirmed)
 
 
+func create_interaction_manager() -> void:
+	interaction_manager = WorldInteractionManagerScript.new()
+	interaction_manager.name = "WorldInteractionManager"
+	add_child(interaction_manager)
+
+	interaction_manager.setup(
+		player,
+		camera,
+		world_map_manager,
+		world_manager
+	)
+
+	interaction_manager.interaction_target_changed.connect(
+		_on_interaction_target_changed
+	)
+
+	interaction_manager.interaction_performed.connect(
+		_on_interaction_performed
+	)
+
+	interaction_manager.location_discovered.connect(
+		_on_location_discovered
+	)
+
+	interaction_manager.fast_travel_point_activated.connect(
+		_on_fast_travel_point_activated
+	)
+
+
+func create_interaction_prompt() -> void:
+	interaction_prompt_layer = CanvasLayer.new()
+	interaction_prompt_layer.name = "InteractionPromptLayer"
+	interaction_prompt_layer.layer = 9
+	add_child(interaction_prompt_layer)
+
+	interaction_prompt_label = Label.new()
+	interaction_prompt_label.name = "InteractionPrompt"
+	interaction_prompt_label.text = ""
+	interaction_prompt_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	interaction_prompt_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+
+	interaction_prompt_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	interaction_prompt_label.position = Vector2(-180, 85)
+	interaction_prompt_label.size = Vector2(360, 55)
+
+	interaction_prompt_label.add_theme_font_size_override("font_size", 22)
+	interaction_prompt_label.add_theme_color_override(
+		"font_color",
+		Color(1.0, 0.85, 0.55)
+	)
+
+	interaction_prompt_layer.add_child(interaction_prompt_label)
+	interaction_prompt_label.hide()
+
+
 ## معرّف الخريطة النصي يطابق رقم العالم الحالي في WorldManager.
 func get_current_map_world_id() -> String:
 	if world_manager == null:
 		return ""
+
 	return str(world_manager.active_world)
 
 
@@ -95,6 +160,7 @@ func register_world_location(
 func discover_world_region(region_id: String) -> bool:
 	if world_map_manager == null:
 		return false
+
 	return world_map_manager.discover_region(
 		get_current_map_world_id(),
 		region_id
@@ -104,6 +170,7 @@ func discover_world_region(region_id: String) -> bool:
 func discover_world_location(location_id: String) -> bool:
 	if world_map_manager == null:
 		return false
+
 	return world_map_manager.discover_location(
 		get_current_map_world_id(),
 		location_id
@@ -128,7 +195,10 @@ func activate_world_fast_travel_point(
 ## يعيد نتيجة التحقق والوجهة المقترحة؛ لا ينفذ النقل وحده.
 func request_world_fast_travel(point_id: String) -> Dictionary:
 	if world_map_manager == null:
-		return {"success": false, "reason": "MAP_MANAGER_NOT_READY"}
+		return {
+			"success": false,
+			"reason": "MAP_MANAGER_NOT_READY"
+		}
 
 	return world_map_manager.request_fast_travel(
 		get_current_map_world_id(),
@@ -149,13 +219,75 @@ func _on_map_updated(world_id: String) -> void:
 	print("SYSTEM WORLD map updated for world: ", world_id)
 
 
-func _on_fast_travel_confirmed(world_id: String, point_id: String) -> void:
+func _on_fast_travel_confirmed(
+	world_id: String,
+	point_id: String
+) -> void:
 	print(
 		"SYSTEM WORLD fast travel confirmed: ",
 		world_id,
 		" / ",
 		point_id
 	)
+
+
+func _on_interaction_target_changed(
+	target: Node,
+	prompt: String
+) -> void:
+	if interaction_prompt_label == null:
+		return
+
+	if target == null or prompt.is_empty():
+		interaction_prompt_label.hide()
+		interaction_prompt_label.text = ""
+		return
+
+	interaction_prompt_label.text = prompt + "  [E / USE]"
+	interaction_prompt_label.show()
+
+
+func _on_interaction_performed(
+	target: Node,
+	location_id: String
+) -> void:
+	print(
+		"SYSTEM interaction performed: ",
+		target.name,
+		" / ",
+		location_id
+	)
+
+
+func _on_location_discovered(
+	world_id: String,
+	location_id: String
+) -> void:
+	print(
+		"SYSTEM location discovered: ",
+		world_id,
+		" / ",
+		location_id
+	)
+
+
+func _on_fast_travel_point_activated(
+	world_id: String,
+	point_id: String
+) -> void:
+	print(
+		"SYSTEM fast travel point activated: ",
+		world_id,
+		" / ",
+		point_id
+	)
+
+
+func _on_mobile_interact_pressed() -> void:
+	if interaction_manager == null:
+		return
+
+	interaction_manager.interact_with_target()
 
 
 func create_environment() -> void:
@@ -243,6 +375,7 @@ func create_mobile_controls() -> void:
 	mobile_controls.jump_pressed.connect(_on_jump_pressed)
 	mobile_controls.look_changed.connect(_on_look_changed)
 	mobile_controls.camera_toggle_pressed.connect(_on_camera_toggle_pressed)
+	mobile_controls.interact_pressed.connect(_on_mobile_interact_pressed)
 
 
 func _on_movement_changed(direction: Vector2) -> void:
@@ -307,10 +440,13 @@ func _physics_process(delta: float) -> void:
 
 	if Input.is_key_pressed(KEY_W):
 		direction.z -= 1
+
 	if Input.is_key_pressed(KEY_S):
 		direction.z += 1
+
 	if Input.is_key_pressed(KEY_A):
 		direction.x -= 1
+
 	if Input.is_key_pressed(KEY_D):
 		direction.x += 1
 
