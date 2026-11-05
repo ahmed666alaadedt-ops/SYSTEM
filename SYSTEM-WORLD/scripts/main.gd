@@ -1,4 +1,3 @@
-
 extends Node3D
 
 const PLAYER_SPEED := 6.0
@@ -18,12 +17,14 @@ const WorldMapManagerScript = preload("res://scripts/world_map_manager.gd")
 const WorldInteractionManagerScript = preload("res://scripts/world_interaction_manager.gd")
 const AINPCSocietyManagerScript = preload("res://scripts/ai_npc_society_manager.gd")
 const WorldTimeManagerScript = preload("res://scripts/world_time_manager.gd")
+const WildlifeManagerScript = preload("res://scripts/wildlife_manager.gd")
 
 var world_manager
 var world_map_manager
 var interaction_manager
 var ai_npc_society_manager
 var world_time_manager
+var wildlife_manager
 
 var active_world_root: Node3D
 
@@ -46,6 +47,7 @@ var first_person := false
 
 func _ready() -> void:
 	create_world_manager()
+	create_wildlife_manager()
 	create_ai_npc_society_manager()
 	create_world_map_manager()
 
@@ -68,6 +70,23 @@ func create_world_manager() -> void:
 	add_child(world_manager)
 
 	active_world_root = world_manager.get_active_world()
+
+
+# --------------------------------------------------
+# WILDLIFE SYSTEM
+# --------------------------------------------------
+
+func create_wildlife_manager() -> void:
+	if active_world_root == null:
+		push_warning("SYSTEM WORLD: Modern world is missing.")
+		return
+
+	wildlife_manager = WildlifeManagerScript.new()
+	wildlife_manager.name = "WildlifeManager"
+
+	active_world_root.add_child(wildlife_manager)
+
+	print("SYSTEM WORLD: Wildlife system initialized.")
 
 
 func create_ai_npc_society_manager() -> void:
