@@ -290,12 +290,31 @@ fun SystemWorldThemeCard(
         initialValue = 0.18f,
         targetValue = 0.75f,
         animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 1700
-            ),
+            animation = tween(durationMillis = 1700),
             repeatMode = RepeatMode.Reverse
         ),
         label = "selected-world-glow-alpha"
+    )
+
+    // حركة الميل ثلاثية الأبعاد عند تحديد العالم.
+    val animatedRotationX by animateFloatAsState(
+        targetValue = when {
+            isPressed -> 1.8f
+            selected -> 1.2f
+            else -> 0f
+        },
+        animationSpec = tween(durationMillis = 320),
+        label = "world-card-rotation-x"
+    )
+
+    val animatedRotationY by animateFloatAsState(
+        targetValue = when {
+            isPressed -> -1.8f
+            selected -> -1.2f
+            else -> 0f
+        },
+        animationSpec = tween(durationMillis = 320),
+        label = "world-card-rotation-y"
     )
 
     val animatedScale by animateFloatAsState(
@@ -361,6 +380,9 @@ fun SystemWorldThemeCard(
                 scaleX = animatedScale
                 scaleY = animatedScale
                 alpha = animatedAlpha
+                rotationX = animatedRotationX
+                rotationY = animatedRotationY
+                cameraDistance = 12f * density
             }
             .border(
                 width = animatedBorderWidth,
