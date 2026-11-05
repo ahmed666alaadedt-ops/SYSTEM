@@ -282,7 +282,6 @@ fun SystemWorldThemeCard(
     val isPressed by interactionSource.collectIsPressedAsState()
     val haptic = LocalHapticFeedback.current
 
-    // نبض ضوئي متكرر للبطاقة المحددة.
     val glowTransition = rememberInfiniteTransition(
         label = "selected-world-glow"
     )
@@ -297,7 +296,6 @@ fun SystemWorldThemeCard(
         label = "selected-world-glow-alpha"
     )
 
-    // انعكاس ضوئي متحرك خاص بكل بطاقة.
     val shimmerTransition = rememberInfiniteTransition(
         label = "world-card-shimmer"
     )
@@ -312,7 +310,6 @@ fun SystemWorldThemeCard(
         label = "world-card-shimmer-progress"
     )
 
-    // حركة الميل ثلاثية الأبعاد عند تحديد العالم.
     val animatedRotationX by animateFloatAsState(
         targetValue = when {
             isPressed -> 1.8f
@@ -530,6 +527,17 @@ fun SystemWorldThreeDimensionalEmblem(
         label = "world-emblem-shimmer"
     )
 
+    // نبض طاقة ضوئي خلف شعار العالم.
+    val emblemPulse by lightTransition.animateFloat(
+        initialValue = 0.22f,
+        targetValue = 0.48f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2100),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "world-emblem-energy-pulse"
+    )
+
     Canvas(
         modifier = modifier.clip(RoundedCornerShape(20.dp))
     ) {
@@ -549,11 +557,12 @@ fun SystemWorldThreeDimensionalEmblem(
             cornerRadius = CornerRadius(w * 0.16f)
         )
 
+        // هالة الشعار النابضة.
         drawCircle(
             brush = Brush.radialGradient(
                 listOf(
-                    style.accent.copy(alpha = 0.34f),
-                    style.accent.copy(alpha = 0.02f),
+                    style.accent.copy(alpha = emblemPulse),
+                    style.accent.copy(alpha = emblemPulse * 0.06f),
                     Color.Transparent
                 ),
                 radius = w * 0.48f
