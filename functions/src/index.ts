@@ -14,6 +14,8 @@ initializeApp();
 
 const db = getFirestore();
 
+const CHAT_BAN_DURATION_MS = 24 * 60 * 60 * 1000;
+
 function requireModerator(request: any): void {
   if (!request.auth) {
     throw new HttpsError(
@@ -32,6 +34,7 @@ function requireModerator(request: any): void {
 
 /**
  * إرسال رسالة دردشة عالمية.
+ * الرسالة تبقى معلقة حتى مراجعتها.
  */
 export const submitGlobalMessage = onCall(
   async (request) => {
@@ -75,26 +78,25 @@ export const submitGlobalMessage = onCall(
         const ban = banSnapshot.data()!;
 
         if (ban.active === true) {
-          if (ban.permanent === true) {
+          const expiresAt = ban.expiresAt as Timestamp | null;
+
+          if (
+            expiresAt &&
+            expiresAt.toMillis() > Date.now()
+          ) {
             throw new HttpsError(
               "permission-denied",
-              "تم منع حسابك من استخدام الدردشة نهائياً."
-            );
-          }
-
-          const expiresAt = ban.expiresAt as Timestamp | undefined;
-
-          if (expiresAt && expiresAt.toMillis() > Date.now()) {
-            throw new HttpsError(
-              "permission-denied",
-              "أنت محظور مؤقتاً من الدردشة.",
+              "أنت محظور من الدردشة لمدة 24 ساعة.",
               {
                 expiresAt: expiresAt.toMillis(),
-                remainingMs: expiresAt.toMillis() - Date.now()
+                remainingMs:
+                  expiresAt.toMillis() - Date.now()
               }
             );
           }
 
+          // انتهاء الحظر تلقائياً.
+          // لا يوجد حظر دائم للدردشة.
           transaction.update(banRef, {
             active: false,
             expiredAt: FieldValue.serverTimestamp()
@@ -125,7 +127,6 @@ export const submitGlobalMessage = onCall(
 
 /**
  * جلب الرسائل المعلقة للمشرف فقط.
- * يعرض 50 رسالة كحد أقصى في كل دفعة.
  */
 export const getPendingGlobalMessages = onCall(
   async (request) => {
@@ -192,7 +193,9 @@ export const getPendingGlobalMessages = onCall(
 );
 
 /**
- * مراجعة الرسائل بواسطة مشرف مخوّل.
+ * مراجعة الرسائل.
+ * كل مخالفة مثبتة تؤدي إلى حظر الدردشة 24 ساعة فقط.
+ * لا يوجد حظر دائم أو حظر كامل للحساب.
  */
 export const reviewGlobalMessage = onCall(
   async (request) => {
@@ -272,7 +275,6 @@ export const reviewGlobalMessage = onCall(
       const banRef = db.collection("bannedUsers").doc(uid);
 
       const playerSnapshot = await transaction.get(playerRef);
-      const banSnapshot = await transaction.get(banRef);
 
       if (!playerSnapshot.exists) {
         throw new HttpsError(
@@ -282,27 +284,18 @@ export const reviewGlobalMessage = onCall(
       }
 
       const player = playerSnapshot.data()!;
-      const strikes = Number(player.moderationStrikes || 0) + 1;
-
-      let durationMs = 0;
-      let permanent = false;
-
-      if (strikes === 2) {
-        durationMs = 60 * 60 * 1000;
-      } else if (strikes === 3) {
-        durationMs = 2 * 60 * 60 * 1000;
-      } else if (strikes === 4) {
-        durationMs = 24 * 60 * 60 * 1000;
-      } else if (strikes === 5) {
-        durationMs = 7 * 24 * 60 * 60 * 1000;
-      } else if (strikes >= 6) {
-        permanent = true;
-      }
+      const strikes =
+        Number(player.moderationStrikes || 0) + 1;
 
       const rejectionReason =
         typeof reason === "string"
           ? reason.slice(0, 500)
           : "مخالفة";
+
+      // حظر الدردشة لمدة 24 ساعة من وقت اعتماد المخالفة.
+      const expiresAt = Timestamp.fromMillis(
+        Date.now() + CHAT_BAN_DURATION_MS
+      );
 
       transaction.update(messageRef, {
         moderationStatus: "rejected",
@@ -315,26 +308,18 @@ export const reviewGlobalMessage = onCall(
         moderationStrikes: strikes
       });
 
-      if (durationMs > 0 || permanent) {
-        const expiresAt = permanent
-          ? null
-          : Timestamp.fromMillis(Date.now() + durationMs);
-
-        transaction.set(banRef, {
-          userId: uid,
-          active: true,
-          permanent,
-          expiresAt,
-          reason: rejectionReason,
-          strikes,
-          updatedAt: FieldValue.serverTimestamp()
-        });
-      } else if (banSnapshot.exists) {
-        transaction.update(banRef, {
-          active: false,
-          updatedAt: FieldValue.serverTimestamp()
-        });
-      }
+      // الحظر يقتصر على الدردشة فقط.
+      // لا يوجد permanent ولا حظر للحساب أو اللعبة.
+      transaction.set(banRef, {
+        userId: uid,
+        active: true,
+        expiresAt,
+        durationMs: CHAT_BAN_DURATION_MS,
+        scope: "chat_only",
+        reason: rejectionReason,
+        strikes,
+        updatedAt: FieldValue.serverTimestamp()
+      });
 
       transaction.create(eventRef, {
         userId: uid,
@@ -343,16 +328,17 @@ export const reviewGlobalMessage = onCall(
         decision: "reject",
         reason: rejectionReason,
         strikes,
-        durationMs,
-        permanent,
+        durationMs: CHAT_BAN_DURATION_MS,
+        scope: "chat_only",
         createdAt: FieldValue.serverTimestamp()
       });
 
       return {
         status: "rejected",
         strikes,
-        durationMs,
-        permanent
+        durationMs: CHAT_BAN_DURATION_MS,
+        expiresAt: expiresAt.toMillis(),
+        scope: "chat_only"
       };
     });
 
