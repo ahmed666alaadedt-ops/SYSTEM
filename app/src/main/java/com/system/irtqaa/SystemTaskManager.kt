@@ -23,17 +23,28 @@ class SystemTaskManager(
             "User ID cannot be blank"
         }
 
-        storage.loadTasks(userId).forEach { task ->
-            engine.addTask(userId, task)
-        }
+        val deletedIds = storage.loadDeletedTaskIds(userId)
+
+        storage.loadTasks(userId)
+            .filterNot { it.taskId in deletedIds }
+            .forEach { task ->
+                engine.addTask(userId, task)
+            }
     }
 
     fun addTask(
         task: SystemTaskDefinition
     ): SystemTaskDefinition {
         val added = engine.addTask(userId, task)
+
+        storage.removeDeletedTaskId(
+            userId,
+            task.taskId
+        )
+
         save()
         requestCloudSync()
+
         return added
     }
 
@@ -109,7 +120,13 @@ class SystemTaskManager(
         )
 
         if (removed) {
+            storage.addDeletedTaskId(
+                userId,
+                taskId
+            )
+
             save()
+            requestCloudSync()
         }
 
         return removed
