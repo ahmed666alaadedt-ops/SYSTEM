@@ -15,10 +15,12 @@ const MobileControlsScript = preload("res://scripts/mobile_controls.gd")
 const WorldManagerScript = preload("res://scripts/world_manager.gd")
 const WorldMapManagerScript = preload("res://scripts/world_map_manager.gd")
 const WorldInteractionManagerScript = preload("res://scripts/world_interaction_manager.gd")
+const AINPCSocietyManagerScript = preload("res://scripts/ai_npc_society_manager.gd")
 
 var world_manager
 var world_map_manager
 var interaction_manager
+var ai_npc_society_manager
 
 var active_world_root: Node3D
 
@@ -41,6 +43,7 @@ var first_person := false
 
 func _ready() -> void:
 	create_world_manager()
+	create_ai_npc_society_manager()
 	create_world_map_manager()
 
 	create_environment()
@@ -60,6 +63,12 @@ func create_world_manager() -> void:
 	add_child(world_manager)
 
 	active_world_root = world_manager.get_active_world()
+
+
+func create_ai_npc_society_manager() -> void:
+	ai_npc_society_manager = AINPCSocietyManagerScript.new()
+	ai_npc_society_manager.name = "AINPCSocietyManager"
+	add_child(ai_npc_society_manager)
 
 
 func create_world_map_manager() -> void:
