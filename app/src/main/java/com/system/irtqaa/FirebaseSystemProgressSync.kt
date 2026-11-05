@@ -30,7 +30,10 @@ class FirebaseSystemProgressSync(context: Context) {
             storage.loadProgress(userId)
                 ?.takeIf { it.userId == userId }
         }.getOrElse { error ->
-            onComplete(false, error)
+            val exception = error as? Exception
+                ?: RuntimeException(error)
+
+            onComplete(false, exception)
             return
         }
 
@@ -65,8 +68,8 @@ class FirebaseSystemProgressSync(context: Context) {
                 }
 
                 repository.saveProgress(localProgress) {
-                        success,
-                        saveError ->
+                    success,
+                    saveError ->
 
                     if (!success) {
                         onComplete(false, saveError)
@@ -80,8 +83,8 @@ class FirebaseSystemProgressSync(context: Context) {
 
             if (localProgress != null) {
                 repository.saveProgress(localProgress) {
-                        success,
-                        saveError ->
+                    success,
+                    saveError ->
 
                     if (!success) {
                         onComplete(false, saveError)
