@@ -1,6 +1,5 @@
 package com.system.irtqaa
 
-import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -82,10 +81,9 @@ class SystemTaskEngine(
 
         val now = System.currentTimeMillis()
 
-        val taskDate = Instant.ofEpochMilli(current.createdAt)
-            .atZone(ZoneId.systemDefault())
-            .toLocalDate()
-            .toString()
+        val completionDate = LocalDate.now(
+            ZoneId.systemDefault()
+        ).toString()
 
         val updated = current.copy(
             status = SystemTaskStatus.COMPLETED,
@@ -96,7 +94,7 @@ class SystemTaskEngine(
             userId = userId,
             domain = current.domain,
             experienceReward = current.experienceReward,
-            date = taskDate
+            date = completionDate
         )
 
         tasks[userId]?.set(taskId, updated)
