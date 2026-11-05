@@ -1,7 +1,9 @@
+
 extends Node3D
 class_name WorldManager
 
 const ForestManagerScript = preload("res://SYSTEM-WORLD/scripts/forest_manager.gd")
+const MountainManagerScript = preload("res://SYSTEM-WORLD/scripts/mountain_manager.gd")
 
 signal world_changed(world_id: int)
 
@@ -83,6 +85,7 @@ func _create_modern_city() -> void:
 	_create_street_lights(root)
 	_create_distant_skyline(root)
 	_create_forest(root)
+	_create_mountains(root)
 
 
 func _make_material(
@@ -532,3 +535,9 @@ func _create_forest(parent: Node3D) -> void:
 	var forest := ForestManagerScript.new()
 	forest.name = "ModernWorldForest"
 	parent.add_child(forest)
+
+
+func _create_mountains(parent: Node3D) -> void:
+	var mountains := MountainManagerScript.new()
+	mountains.name = "ModernWorldMountains"
+	parent.add_child(mountains)
