@@ -1,4 +1,3 @@
-
 package com.system.irtqaa
 
 import android.os.Bundle
@@ -32,16 +31,18 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             SystemStartupGate {
-                SystemApp()
+                SystemAccountGate { account ->
+                    SystemApp(account)
+                }
             }
         }
     }
 }
 
 @Composable
-fun SystemApp() {
+fun SystemApp(account: SystemFirebaseAccount) {
     val context = LocalContext.current.applicationContext
-    val userId = "system_local_player"
+    val userId = account.userId
     val today = LocalDate.now()
 
     val progressEngine = remember(context) {
