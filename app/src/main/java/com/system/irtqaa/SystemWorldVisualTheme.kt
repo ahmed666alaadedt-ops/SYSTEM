@@ -6,7 +6,10 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,10 +24,15 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -35,6 +43,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 
 /** الهوية البصرية المستقلة لعوالم SYSTEM WORLD على واجهة الهاتف. */
 enum class SystemWorldKind {
@@ -100,12 +109,22 @@ object SystemMobileVisualTheme {
     val textSecondary = Color(0xFFB7C5D6)
 }
 
-/** معرض بطاقات العوالم الأربعة. */
+/** معرض بطاقات العوالم الأربعة مع انتقال اختيار سينمائي. */
 @Composable
 fun SystemWorldThemeGallery(
     onWorldSelected: (SystemWorldKind) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var selectedKind by remember { mutableStateOf<SystemWorldKind?>(null) }
+
+    LaunchedEffect(selectedKind) {
+        val selected = selectedKind
+        if (selected != null) {
+            delay(260)
+            onWorldSelected(selected)
+        }
+    }
+
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -124,9 +143,12 @@ fun SystemWorldThemeGallery(
         )
 
         SystemWorldVisualStyles.all.forEach { style ->
-            SystemWorldThemeCard(style = style) {
-                onWorldSelected(style.kind)
-            }
+            SystemWorldThemeCard(
+                style = style,
+                selected = selectedKind == style.kind,
+                enabled = selectedKind == null,
+                onClick = { selectedKind = style.kind }
+            )
         }
     }
 }
@@ -134,19 +156,47 @@ fun SystemWorldThemeGallery(
 @Composable
 fun SystemWorldThemeCard(
     style: SystemWorldVisualStyle,
+    selected: Boolean = false,
+    enabled: Boolean = true,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val animatedScale by animateFloatAsState(
+        targetValue = if (selected) 1.035f else 1f,
+        animationSpec = tween(durationMillis = 220),
+        label = "world-card-scale"
+    )
+
+    val animatedContainer by animateColorAsState(
+        targetValue = if (selected) {
+            style.accent.copy(alpha = 0.30f)
+        } else {
+            style.surface
+        },
+        animationSpec = tween(durationMillis = 220),
+        label = "world-card-color"
+    )
+
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .graphicsLayer {
+                scaleX = animatedScale
+                scaleY = animatedScale
+            }
+            .border(
+                width = if (selected) 2.dp else 1.dp,
+                color = if (selected) style.accent
+                    else style.accent.copy(alpha = 0.24f),
+                shape = RoundedCornerShape(22.dp)
+            )
+            .clickable(enabled = enabled, onClick = onClick),
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(
-            containerColor = style.surface
+            containerColor = animatedContainer
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 7.dp
+            defaultElevation = if (selected) 14.dp else 7.dp
         )
     ) {
         Row(
@@ -156,7 +206,8 @@ fun SystemWorldThemeCard(
                     Brush.linearGradient(
                         listOf(
                             style.deep,
-                            style.surface,
+                            if (selected) style.accent.copy(alpha = 0.30f)
+                            else style.surface,
                             style.secondary.copy(alpha = 0.48f)
                         )
                     )
@@ -188,7 +239,7 @@ fun SystemWorldThemeCard(
                 )
 
                 Text(
-                    "دخول العالم  ←",
+                    if (selected) "جاري فتح البوابة..." else "دخول العالم  ←",
                     color = style.accent,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold
