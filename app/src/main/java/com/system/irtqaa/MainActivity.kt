@@ -1,3 +1,4 @@
+
 package com.system.irtqaa
 
 import android.os.Bundle
@@ -7,6 +8,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -28,7 +30,6 @@ import java.time.LocalDate
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContent {
             SystemStartupGate {
                 SystemApp()
@@ -39,7 +40,6 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun SystemApp() {
-
     val context = LocalContext.current.applicationContext
     val userId = "system_local_player"
     val today = LocalDate.now()
@@ -97,10 +97,7 @@ fun SystemApp() {
         mutableStateOf<String?>(null)
     }
 
-    val completedCount = tasks.count {
-        it.isCompleted
-    }
-
+    val completedCount = tasks.count { it.isCompleted }
     val totalExperience = progressSnapshot.totalExperience
 
     val panel = Color(0xFF131D30)
@@ -110,19 +107,13 @@ fun SystemApp() {
     SystemHologramBackground(
         modifier = Modifier.fillMaxSize()
     ) {
-
         SystemTheme {
-
-            Box(
-                modifier = Modifier.fillMaxSize()
-            ) {
-
+            Box(modifier = Modifier.fillMaxSize()) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(18.dp)
                 ) {
-
                     Text(
                         "SYSTEM",
                         color = gold,
@@ -144,13 +135,8 @@ fun SystemApp() {
                         ),
                         shape = RoundedCornerShape(18.dp)
                     ) {
-                        Column(
-                            Modifier.padding(16.dp)
-                        ) {
-                            Text(
-                                "المستوى العام",
-                                color = Color.White
-                            )
+                        Column(Modifier.padding(16.dp)) {
+                            Text("المستوى العام", color = Color.White)
 
                             Text(
                                 "LV. ${progressSnapshot.overallLevel}",
@@ -159,10 +145,7 @@ fun SystemApp() {
                                 fontWeight = FontWeight.Bold
                             )
 
-                            Text(
-                                "$totalExperience XP",
-                                color = cyan
-                            )
+                            Text("$totalExperience XP", color = cyan)
 
                             LinearProgressIndicator(
                                 progress = {
@@ -182,7 +165,6 @@ fun SystemApp() {
                         ),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-
                         val tabs = listOf(
                             "الرئيسية",
                             "المهام",
@@ -191,7 +173,6 @@ fun SystemApp() {
                         )
 
                         tabs.forEachIndexed { index, title ->
-
                             Button(
                                 onClick = {
                                     selectedTab = index
@@ -199,8 +180,7 @@ fun SystemApp() {
                                 },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor =
-                                        if (selectedTab == index) gold
-                                        else panel,
+                                        if (selectedTab == index) gold else panel,
                                     contentColor =
                                         if (selectedTab == index)
                                             Color.Black
@@ -209,10 +189,7 @@ fun SystemApp() {
                                 ),
                                 shape = RoundedCornerShape(12.dp)
                             ) {
-                                Text(
-                                    title,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                Text(title, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -220,12 +197,8 @@ fun SystemApp() {
                     Spacer(Modifier.height(16.dp))
 
                     when (selectedTab) {
-
-                        // الصفحة الرئيسية
                         0 -> {
-
                             if (showWorldSelection) {
-
                                 WorldSelectionScreen(
                                     onBack = {
                                         showWorldSelection = false
@@ -235,9 +208,7 @@ fun SystemApp() {
                                         showWorldSelection = false
                                     }
                                 )
-
                             } else if (selectedWorld == "real") {
-
                                 Column {
                                     Button(
                                         onClick = {
@@ -254,31 +225,26 @@ fun SystemApp() {
                                         }
                                     )
                                 }
-
                             } else if (
                                 selectedWorld == "fantasy" ||
-                                selectedWorld == "mythology"
+                                selectedWorld == "mythology" ||
+                                selectedWorld == "greed"
                             ) {
-
                                 WorldComingSoonScreen(
-                                    worldName =
-                                        if (selectedWorld == "fantasy")
-                                            "العالم الخيالي"
-                                        else
-                                            "عالم الأساطير",
+                                    worldName = when (selectedWorld) {
+                                        "fantasy" -> "العالم الخيالي"
+                                        "mythology" -> "عالم الأساطير والتاريخ"
+                                        else -> "جزيرة الطمع"
+                                    },
                                     onBack = {
                                         selectedWorld = ""
                                         showWorldSelection = true
                                     }
                                 )
-
                             } else {
-
                                 Column(
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-
-                                    // بطاقة ميار الرئيسية
                                     SystemMiyarWelcomeCard(
                                         onExplainClick = {
                                             miyarDialog = "explain"
@@ -329,9 +295,7 @@ fun SystemApp() {
                             }
                         }
 
-                        // صفحة المهام
                         1 -> {
-
                             Text(
                                 "المهام اليومية",
                                 color = gold,
@@ -344,19 +308,16 @@ fun SystemApp() {
                                 verticalArrangement =
                                     Arrangement.spacedBy(10.dp)
                             ) {
-
                                 items(
                                     items = tasks,
                                     key = { it.taskId }
                                 ) { task ->
-
                                     Card(
                                         colors = CardDefaults.cardColors(
                                             containerColor =
                                                 panel.copy(alpha = 0.92f)
                                         )
                                     ) {
-
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -364,11 +325,9 @@ fun SystemApp() {
                                             verticalAlignment =
                                                 Alignment.CenterVertically
                                         ) {
-
                                             Column(
                                                 Modifier.weight(1f)
                                             ) {
-
                                                 Text(
                                                     task.title,
                                                     color = Color.White
@@ -401,9 +360,7 @@ fun SystemApp() {
                                                     task.status !=
                                                         SystemTaskStatus.CANCELLED,
                                                 onCheckedChange = { checked ->
-
                                                     if (checked) {
-
                                                         taskManager.completeTask(
                                                             task.taskId
                                                         )
@@ -429,9 +386,7 @@ fun SystemApp() {
                             }
                         }
 
-                        // صفحة المستويات
                         2 -> {
-
                             Text(
                                 "مجالات التطور",
                                 color = gold,
@@ -444,23 +399,19 @@ fun SystemApp() {
                                 verticalArrangement =
                                     Arrangement.spacedBy(10.dp)
                             ) {
-
                                 items(
                                     progressSnapshot.domains,
                                     key = { it.domain.name }
                                 ) { domainProgress ->
-
                                     Card(
                                         colors = CardDefaults.cardColors(
                                             containerColor =
                                                 panel.copy(alpha = 0.92f)
                                         )
                                     ) {
-
                                         Column(
                                             Modifier.padding(16.dp)
                                         ) {
-
                                             Text(
                                                 domainLabel(domainProgress.domain),
                                                 color = Color.White,
@@ -487,8 +438,7 @@ fun SystemApp() {
                                                     (domainProgress.experience % 100) /
                                                         100f
                                                 },
-                                                modifier =
-                                                    Modifier.fillMaxWidth(),
+                                                modifier = Modifier.fillMaxWidth(),
                                                 color = gold
                                             )
                                         }
@@ -497,14 +447,11 @@ fun SystemApp() {
                             }
                         }
 
-                        // جزيرة الطمع
                         3 -> {
-
                             Column(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-
                                 Spacer(Modifier.height(20.dp))
 
                                 Text(
@@ -516,10 +463,7 @@ fun SystemApp() {
 
                                 Spacer(Modifier.height(20.dp))
 
-                                Text(
-                                    "🏝️",
-                                    fontSize = 76.sp
-                                )
+                                Text("🏝️", fontSize = 76.sp)
 
                                 Spacer(Modifier.height(12.dp))
 
@@ -540,9 +484,7 @@ fun SystemApp() {
                     }
                 }
 
-                // رسائل أزرار ميار
                 if (miyarDialog != null) {
-
                     val dialogTitle =
                         if (miyarDialog == "explain") {
                             "مرحباً، أنا ميار"
@@ -569,10 +511,7 @@ fun SystemApp() {
                             )
                         },
                         text = {
-                            Text(
-                                dialogMessage,
-                                color = Color.White
-                            )
+                            Text(dialogMessage, color = Color.White)
                         },
                         confirmButton = {
                             TextButton(
@@ -580,10 +519,7 @@ fun SystemApp() {
                                     miyarDialog = null
                                 }
                             ) {
-                                Text(
-                                    "حسناً",
-                                    color = cyan
-                                )
+                                Text("حسناً", color = cyan)
                             }
                         },
                         containerColor = Color(0xFF131D30)
@@ -596,10 +532,7 @@ fun SystemApp() {
 
 // بطاقة العالم الافتراضي الكبيرة
 @Composable
-fun SystemWorldBanner(
-    onClick: () -> Unit
-) {
-
+fun SystemWorldBanner(onClick: () -> Unit) {
     val gold = Color(0xFFFFC857)
     val cyan = Color(0xFF45D6E8)
 
@@ -619,45 +552,29 @@ fun SystemWorldBanner(
                 shape = RoundedCornerShape(22.dp)
             )
     ) {
-
-        Canvas(
-            modifier = Modifier.fillMaxSize()
-        ) {
-
+        Canvas(modifier = Modifier.fillMaxSize()) {
             drawCircle(
                 color = cyan.copy(alpha = 0.13f),
                 radius = size.minDimension * 0.42f,
-                center = Offset(
-                    size.width * 0.78f,
-                    size.height * 0.43f
-                )
+                center = Offset(size.width * 0.78f, size.height * 0.43f)
             )
 
             drawCircle(
                 color = gold.copy(alpha = 0.12f),
                 radius = size.minDimension * 0.27f,
-                center = Offset(
-                    size.width * 0.83f,
-                    size.height * 0.44f
-                )
+                center = Offset(size.width * 0.83f, size.height * 0.44f)
             )
 
             drawCircle(
                 color = cyan.copy(alpha = 0.30f),
                 radius = 5.dp.toPx(),
-                center = Offset(
-                    size.width * 0.15f,
-                    size.height * 0.22f
-                )
+                center = Offset(size.width * 0.15f, size.height * 0.22f)
             )
 
             drawCircle(
                 color = gold.copy(alpha = 0.35f),
                 radius = 4.dp.toPx(),
-                center = Offset(
-                    size.width * 0.55f,
-                    size.height * 0.75f
-                )
+                center = Offset(size.width * 0.55f, size.height * 0.75f)
             )
         }
 
@@ -667,11 +584,7 @@ fun SystemWorldBanner(
                 .padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     "SYSTEM WORLD",
                     color = gold,
@@ -705,138 +618,40 @@ fun SystemWorldBanner(
                 )
             }
 
-            Text(
-                "🌌",
-                fontSize = 66.sp
-            )
+            Text("🌌", fontSize = 66.sp)
         }
     }
 }
 
-// شاشة اختيار العوالم الثلاثة
+// شاشة اختيار العوالم الأربعة بهوياتها البصرية المستقلة
 @Composable
 fun WorldSelectionScreen(
     onBack: () -> Unit,
     onSelectWorld: (String) -> Unit
 ) {
-
     Column(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+            .padding(bottom = 18.dp)
     ) {
-
-        Button(
-            onClick = onBack
-        ) {
+        Button(onClick = onBack) {
             Text("رجوع")
         }
 
-        Text(
-            "اختر عالمك",
-            color = Color(0xFFFFC857),
-            fontSize = 25.sp,
-            fontWeight = FontWeight.Black
-        )
+        Spacer(Modifier.height(10.dp))
 
-        Spacer(Modifier.height(14.dp))
+        SystemWorldThemeGallery(
+            onWorldSelected = { world ->
+                val destination = when (world) {
+                    SystemWorldKind.MODERN_REALISTIC -> "real"
+                    SystemWorldKind.MYTHOLOGY_HISTORY -> "mythology"
+                    SystemWorldKind.FANTASY -> "fantasy"
+                    SystemWorldKind.GREED_ISLAND -> "greed"
+                }
 
-        WorldChoiceCard(
-            title = "العالم الخيالي",
-            description = "السحر والقوى والعناصر والمغامرات.",
-            symbol = "🧙",
-            colors = listOf(
-                Color(0xFF28194E),
-                Color(0xFF56318A)
-            ),
-            onClick = {
-                onSelectWorld("fantasy")
+                onSelectWorld(destination)
             }
-        )
-
-        Spacer(Modifier.height(12.dp))
-
-        WorldChoiceCard(
-            title = "عالم الأساطير",
-            description = "القوى الأسطورية والأسرار والتحولات.",
-            symbol = "⚡",
-            colors = listOf(
-                Color(0xFF40201B),
-                Color(0xFF85502B)
-            ),
-            onClick = {
-                onSelectWorld("mythology")
-            }
-        )
-
-        Spacer(Modifier.height(12.dp))
-
-        WorldChoiceCard(
-            title = "العالم الواقعي الافتراضي",
-            description = "المدن والحياة والاستكشاف والعصور.",
-            symbol = "🌍",
-            colors = listOf(
-                Color(0xFF103A42),
-                Color(0xFF176A78)
-            ),
-            onClick = {
-                onSelectWorld("real")
-            }
-        )
-    }
-}
-
-@Composable
-fun WorldChoiceCard(
-    title: String,
-    description: String,
-    symbol: String,
-    colors: List<Color>,
-    onClick: () -> Unit
-) {
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(118.dp)
-            .clickable(onClick = onClick)
-            .background(
-                Brush.linearGradient(colors),
-                RoundedCornerShape(18.dp)
-            )
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-
-        Column(
-            modifier = Modifier.weight(1f)
-        ) {
-
-            Text(
-                title,
-                color = Color.White,
-                fontSize = 19.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(Modifier.height(7.dp))
-
-            Text(
-                description,
-                color = Color.LightGray,
-                fontSize = 12.sp
-            )
-
-            Spacer(Modifier.height(7.dp))
-
-            Text(
-                "استكشاف العالم ←",
-                color = Color(0xFFFFC857),
-                fontSize = 12.sp
-            )
-        }
-
-        Text(
-            symbol,
-            fontSize = 45.sp
         )
     }
 }
@@ -846,15 +661,11 @@ fun WorldComingSoonScreen(
     worldName: String,
     onBack: () -> Unit
 ) {
-
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
-        Button(
-            onClick = onBack
-        ) {
+        Button(onClick = onBack) {
             Text("العودة إلى العوالم")
         }
 
@@ -888,7 +699,6 @@ fun WorldComingSoonScreen(
 private fun domainLabel(
     domain: SystemDevelopmentDomain
 ): String {
-
     return when (domain) {
         SystemDevelopmentDomain.SPIRIT -> "الروح"
         SystemDevelopmentDomain.MIND -> "العقل"
