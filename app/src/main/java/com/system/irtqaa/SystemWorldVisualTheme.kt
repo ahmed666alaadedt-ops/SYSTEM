@@ -1,4 +1,3 @@
-
 package com.system.irtqaa
 
 import androidx.compose.animation.AnimatedVisibility
@@ -22,11 +21,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.matchParentSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -50,7 +48,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.hapticfeedback.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
@@ -80,35 +78,53 @@ data class SystemWorldVisualStyle(
 )
 
 object SystemWorldVisualStyles {
+
     val modern = SystemWorldVisualStyle(
         SystemWorldKind.MODERN_REALISTIC,
-        "العالم الواقعي الحديث", "مدن حقيقية وحياة معاصرة",
-        Color(0xFF42D9E8), Color(0xFF4388B8),
-        Color(0xFF071B2B), Color(0xFF102B3C)
+        "العالم الواقعي الحديث",
+        "مدن حقيقية وحياة معاصرة",
+        Color(0xFF42D9E8),
+        Color(0xFF4388B8),
+        Color(0xFF071B2B),
+        Color(0xFF102B3C)
     )
 
     val mythology = SystemWorldVisualStyle(
         SystemWorldKind.MYTHOLOGY_HISTORY,
-        "عالم الأساطير والتاريخ", "حضارات قديمة وأساطير الشعوب",
-        Color(0xFFE6B65C), Color(0xFFB96E3E),
-        Color(0xFF28170F), Color(0xFF42291C)
+        "عالم الأساطير والتاريخ",
+        "حضارات قديمة وأساطير الشعوب",
+        Color(0xFFE6B65C),
+        Color(0xFFB96E3E),
+        Color(0xFF28170F),
+        Color(0xFF42291C)
     )
 
     val fantasy = SystemWorldVisualStyle(
         SystemWorldKind.FANTASY,
-        "العالم الخيالي", "ممالك وسحر ومغامرات",
-        Color(0xFFB69BFF), Color(0xFF5B72D6),
-        Color(0xFF17132F), Color(0xFF29234B)
+        "العالم الخيالي",
+        "ممالك وسحر ومغامرات",
+        Color(0xFFB69BFF),
+        Color(0xFF5B72D6),
+        Color(0xFF17132F),
+        Color(0xFF29234B)
     )
 
     val greedIsland = SystemWorldVisualStyle(
         SystemWorldKind.GREED_ISLAND,
-        "جزيرة الطمع", "جزيرة الأسرار والتحديات",
-        Color(0xFF65E6A6), Color(0xFF36AFC0),
-        Color(0xFF08251F), Color(0xFF123C35)
+        "جزيرة الطمع",
+        "جزيرة الأسرار والتحديات",
+        Color(0xFF65E6A6),
+        Color(0xFF36AFC0),
+        Color(0xFF08251F),
+        Color(0xFF123C35)
     )
 
-    val all = listOf(modern, mythology, fantasy, greedIsland)
+    val all = listOf(
+        modern,
+        mythology,
+        fantasy,
+        greedIsland
+    )
 
     fun forKind(kind: SystemWorldKind): SystemWorldVisualStyle =
         all.first { it.kind == kind }
@@ -129,8 +145,13 @@ fun SystemWorldThemeGallery(
     onWorldSelected: (SystemWorldKind) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var selectedKind by remember { mutableStateOf<SystemWorldKind?>(null) }
-    var visibleCardCount by remember { mutableStateOf(0) }
+    var selectedKind by remember {
+        mutableStateOf<SystemWorldKind?>(null)
+    }
+
+    var visibleCardCount by remember {
+        mutableStateOf(0)
+    }
 
     LaunchedEffect(Unit) {
         for (index in 1..SystemWorldVisualStyles.all.size) {
@@ -141,6 +162,7 @@ fun SystemWorldThemeGallery(
 
     LaunchedEffect(selectedKind) {
         val selected = selectedKind
+
         if (selected != null) {
             delay(260)
             onWorldSelected(selected)
@@ -148,8 +170,9 @@ fun SystemWorldThemeGallery(
     }
 
     Box(modifier = modifier.fillMaxWidth()) {
+
         SystemWorldAmbientBackground(
-            modifier = Modifier.matchParentSize()
+            modifier = Modifier.fillMaxSize()
         )
 
         Column(
@@ -158,6 +181,7 @@ fun SystemWorldThemeGallery(
                 .padding(vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+
             Text(
                 text = "عوالم SYSTEM",
                 color = SystemMobileVisualTheme.gold,
@@ -172,12 +196,15 @@ fun SystemWorldThemeGallery(
             )
 
             SystemWorldVisualStyles.all.forEachIndexed { index, style ->
+
                 AnimatedVisibility(
                     visible = visibleCardCount > index,
                     enter = fadeIn(
                         animationSpec = tween(480)
                     ) + slideInHorizontally(
-                        initialOffsetX = { fullWidth -> fullWidth / 4 },
+                        initialOffsetX = { fullWidth ->
+                            fullWidth / 4
+                        },
                         animationSpec = tween(480)
                     )
                 ) {
@@ -185,7 +212,9 @@ fun SystemWorldThemeGallery(
                         style = style,
                         selected = selectedKind == style.kind,
                         enabled = selectedKind == null,
-                        onClick = { selectedKind = style.kind }
+                        onClick = {
+                            selectedKind = style.kind
+                        }
                     )
                 }
             }
@@ -212,6 +241,7 @@ private fun SystemWorldAmbientBackground(
     )
 
     Canvas(modifier = modifier) {
+
         val width = size.width
         val height = size.height
 
@@ -234,6 +264,7 @@ private fun SystemWorldAmbientBackground(
         )
 
         for (index in 0 until 22) {
+
             val seed = index + 1
             val xFactor = ((seed * 37) % 97) / 100f
             val baseY = ((seed * 53) % 101) / 100f
@@ -250,7 +281,10 @@ private fun SystemWorldAmbientBackground(
                 color = particleColors[index % particleColors.size]
                     .copy(alpha = pulse),
                 radius = radius,
-                center = Offset(width * xFactor, height * yFactor)
+                center = Offset(
+                    width * xFactor,
+                    height * yFactor
+                )
             )
         }
 
@@ -428,6 +462,7 @@ fun SystemWorldThemeCard(
             defaultElevation = animatedElevation
         )
     ) {
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -445,6 +480,7 @@ fun SystemWorldThemeCard(
                     )
                 )
                 .drawBehind {
+
                     val shimmerBrush = Brush.linearGradient(
                         colors = listOf(
                             Color.Transparent,
@@ -472,6 +508,7 @@ fun SystemWorldThemeCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+
             SystemWorldThreeDimensionalEmblem(
                 style = style,
                 modifier = Modifier.size(112.dp)
@@ -481,6 +518,7 @@ fun SystemWorldThemeCard(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(7.dp)
             ) {
+
                 Text(
                     style.title,
                     color = Color.White,
@@ -550,7 +588,7 @@ fun SystemWorldThreeDimensionalEmblem(
         label = "world-emblem-orbit-rotation"
     )
 
-    // الخطوة 15: شعاع مسح عمودي متحرك فوق الشعار.
+    // شعاع مسح عمودي متحرك فوق الشعار.
     val scanPosition by lightTransition.animateFloat(
         initialValue = -0.15f,
         targetValue = 1.15f,
@@ -567,6 +605,7 @@ fun SystemWorldThreeDimensionalEmblem(
     Canvas(
         modifier = modifier.clip(RoundedCornerShape(20.dp))
     ) {
+
         val w = size.width
         val h = size.height
 
@@ -597,7 +636,9 @@ fun SystemWorldThreeDimensionalEmblem(
         )
 
         when (style.kind) {
+
             SystemWorldKind.MODERN_REALISTIC -> {
+
                 val buildings = listOf(
                     floatArrayOf(0.16f, 0.48f, 0.17f, 0.35f),
                     floatArrayOf(0.36f, 0.34f, 0.18f, 0.49f),
@@ -606,6 +647,7 @@ fun SystemWorldThreeDimensionalEmblem(
                 )
 
                 buildings.forEach { b ->
+
                     drawRect(
                         Brush.horizontalGradient(
                             listOf(
@@ -618,6 +660,7 @@ fun SystemWorldThreeDimensionalEmblem(
                     )
 
                     for (r in 0..3) {
+
                         drawLine(
                             style.accent.copy(alpha = 0.8f),
                             Offset(
@@ -642,6 +685,7 @@ fun SystemWorldThreeDimensionalEmblem(
             }
 
             SystemWorldKind.MYTHOLOGY_HISTORY -> {
+
                 val roof = Path().apply {
                     moveTo(w * 0.12f, h * 0.36f)
                     lineTo(w * 0.50f, h * 0.15f)
@@ -664,6 +708,7 @@ fun SystemWorldThreeDimensionalEmblem(
                 )
 
                 for (x in listOf(0.29f, 0.43f, 0.57f, 0.71f)) {
+
                     drawRoundRect(
                         Color(0xFFFFD995),
                         Offset(w * x, h * 0.40f),
@@ -687,6 +732,7 @@ fun SystemWorldThreeDimensionalEmblem(
             }
 
             SystemWorldKind.FANTASY -> {
+
                 drawCircle(
                     style.accent.copy(alpha = 0.85f),
                     w * 0.105f,
@@ -716,6 +762,7 @@ fun SystemWorldThreeDimensionalEmblem(
                 )
 
                 for (x in listOf(0.34f, 0.61f)) {
+
                     drawRect(
                         style.secondary,
                         Offset(w * x, h * 0.42f),
@@ -740,6 +787,7 @@ fun SystemWorldThreeDimensionalEmblem(
             }
 
             SystemWorldKind.GREED_ISLAND -> {
+
                 drawOval(
                     Brush.verticalGradient(
                         listOf(
@@ -754,8 +802,10 @@ fun SystemWorldThreeDimensionalEmblem(
                 val island = Path().apply {
                     moveTo(w * 0.22f, h * 0.62f)
                     quadraticTo(
-                        w * 0.50f, h * 0.38f,
-                        w * 0.78f, h * 0.62f
+                        w * 0.50f,
+                        h * 0.38f,
+                        w * 0.78f,
+                        h * 0.62f
                     )
                     lineTo(w * 0.70f, h * 0.73f)
                     lineTo(w * 0.30f, h * 0.73f)
@@ -780,6 +830,7 @@ fun SystemWorldThreeDimensionalEmblem(
                 )
 
                 for (angle in listOf(-0.9f, -0.35f, 0.25f, 0.75f)) {
+
                     drawLine(
                         style.accent,
                         Offset(w * 0.57f, h * 0.31f),
