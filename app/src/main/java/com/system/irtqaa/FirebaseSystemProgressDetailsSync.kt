@@ -125,9 +125,15 @@ class FirebaseSystemProgressDetailsSync(context: Context) {
                         it.id
                     }
 
+                    // قراءة جميع تواريخ الإنجاز المحلية
+                    val localDates = storage.getDailyProgressDates(userId)
+
+                    // دمج تواريخ السحابة والموبايل وتاريخ اليوم
                     val dates = (
-                        cloudByDate.keys + today
-                    ).distinct()
+                        cloudByDate.keys +
+                            localDates +
+                            today
+                    ).distinct().sorted()
 
                     val batch = firestore.batch()
 
@@ -197,8 +203,8 @@ class FirebaseSystemProgressDetailsSync(context: Context) {
 
                         val hasProgress =
                             mergedDaily.completedTasks > 0 ||
-                            mergedDaily.earnedExperience > 0 ||
-                            mergedDaily.activeDomains.isNotEmpty()
+                                mergedDaily.earnedExperience > 0 ||
+                                mergedDaily.activeDomains.isNotEmpty()
 
                         if (hasProgress) {
                             batch.set(
