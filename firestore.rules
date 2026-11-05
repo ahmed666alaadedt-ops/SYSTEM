@@ -1,20 +1,16 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // التحقق من تسجيل الدخول
     function signedIn() {
       return request.auth != null;
     }
 
-    // التحقق من ملكية الحساب
     function isOwner(uid) {
       return signedIn() && request.auth.uid == uid;
     }
 
-    // التحقق من بيانات الحساب عند التسجيل
     function validPlayerData(uid) {
       return request.resource.data.keys().hasAll([
         'userId',
@@ -52,17 +48,12 @@ service cloud.firestore {
     // حسابات اللاعبين
     match /players/{uid} {
 
-      // اللاعب يقرأ بيانات حسابه فقط
       allow get: if isOwner(uid);
-
-      // منع استعراض جميع الحسابات
       allow list: if false;
 
-      // السماح بإنشاء الحساب وفق البيانات المحددة
       allow create: if isOwner(uid)
                     && validPlayerData(uid);
 
-      // السماح بتحديث اسم اللاعب فقط
       allow update: if isOwner(uid)
                     &&
                     request.resource.data
@@ -84,36 +75,32 @@ service cloud.firestore {
                     &&
                     request.resource.data.createdAt == resource.data.createdAt;
 
-      // لا يسمح بحذف الحساب من تطبيق الدردشة
       allow delete: if false;
+
+      // بيانات التقدم الخاصة بصاحب الحساب فقط
+      match /systemData/{document=**} {
+        allow read, write: if isOwner(uid);
+      }
     }
 
     // الرسائل العالمية
     match /globalMessages/{messageId} {
-
-      // قراءة الرسائل التي اجتازت الإشراف فقط
       allow get, list: if signedIn()
                        &&
                        resource.data.moderationStatus == 'approved';
 
-      // إنشاء الرسائل وتعديلها وحذفها للخادم الموثوق فقط
       allow create, update, delete: if false;
     }
 
     // المحادثات الخاصة
     match /privateChats/{chatId} {
-
-      // أعضاء المحادثة فقط يستطيعون قراءتها
       allow get, list: if signedIn()
                        &&
                        request.auth.uid in resource.data.memberIds;
 
-      // إدارة المحادثات من الخادم فقط
       allow create, update, delete: if false;
 
-      // رسائل المحادثة الخاصة
       match /messages/{messageId} {
-
         allow get, list: if signedIn()
                          &&
                          request.auth.uid in
@@ -123,7 +110,6 @@ service cloud.firestore {
                          &&
                          resource.data.moderationStatus == 'approved';
 
-        // منع الإرسال المباشر من التطبيق
         allow create, update, delete: if false;
       }
     }
@@ -162,7 +148,7 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // منع أي وصول غير محدد أعلاه
+    // منع أي وصول غير محدد
     match /{document=**} {
       allow read, write: if false;
     }
