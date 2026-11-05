@@ -40,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -296,6 +297,21 @@ fun SystemWorldThemeCard(
         label = "selected-world-glow-alpha"
     )
 
+    // انعكاس ضوئي متحرك خاص بكل بطاقة.
+    val shimmerTransition = rememberInfiniteTransition(
+        label = "world-card-shimmer"
+    )
+
+    val shimmerProgress by shimmerTransition.animateFloat(
+        initialValue = -1f,
+        targetValue = 2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 4800),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "world-card-shimmer-progress"
+    )
+
     // حركة الميل ثلاثية الأبعاد عند تحديد العالم.
     val animatedRotationX by animateFloatAsState(
         targetValue = when {
@@ -429,6 +445,30 @@ fun SystemWorldThemeCard(
                         )
                     )
                 )
+                .drawBehind {
+                    val shimmerBrush = Brush.linearGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            style.accent.copy(alpha = 0.13f),
+                            Color.White.copy(alpha = 0.09f),
+                            style.accent.copy(alpha = 0.13f),
+                            Color.Transparent
+                        ),
+                        start = Offset(
+                            size.width * shimmerProgress,
+                            0f
+                        ),
+                        end = Offset(
+                            size.width * (shimmerProgress + 0.38f),
+                            size.height
+                        )
+                    )
+
+                    drawRect(
+                        brush = shimmerBrush,
+                        size = size
+                    )
+                }
                 .padding(15.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
