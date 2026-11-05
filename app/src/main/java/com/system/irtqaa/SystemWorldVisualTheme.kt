@@ -59,7 +59,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 
-/** الهوية البصرية المستقلة لعوالم SYSTEM WORLD على واجهة الهاتف. */
 enum class SystemWorldKind {
     MODERN_REALISTIC,
     MYTHOLOGY_HISTORY,
@@ -112,7 +111,6 @@ object SystemWorldVisualStyles {
         all.first { it.kind == kind }
 }
 
-/** لوحة ألوان الواجهة العامة لتطبيق SYSTEM على الهاتف. */
 object SystemMobileVisualTheme {
     val background = Color(0xFF070B12)
     val panel = Color(0xE6121D2D)
@@ -123,7 +121,6 @@ object SystemMobileVisualTheme {
     val textSecondary = Color(0xFFB7C5D6)
 }
 
-/** معرض بطاقات العوالم الأربعة مع خلفية ضوئية متحركة وظهور سينمائي متتابع. */
 @Composable
 fun SystemWorldThemeGallery(
     onWorldSelected: (SystemWorldKind) -> Unit,
@@ -175,16 +172,10 @@ fun SystemWorldThemeGallery(
                 AnimatedVisibility(
                     visible = visibleCardCount > index,
                     enter = fadeIn(
-                        animationSpec = tween(
-                            durationMillis = 480
-                        )
+                        animationSpec = tween(480)
                     ) + slideInHorizontally(
-                        initialOffsetX = { fullWidth ->
-                            fullWidth / 4
-                        },
-                        animationSpec = tween(
-                            durationMillis = 480
-                        )
+                        initialOffsetX = { fullWidth -> fullWidth / 4 },
+                        animationSpec = tween(480)
                     )
                 ) {
                     SystemWorldThemeCard(
@@ -199,7 +190,6 @@ fun SystemWorldThemeGallery(
     }
 }
 
-/** خلفية هادئة بجزيئات ضوئية تتحرك ببطء خلف بطاقات العوالم. */
 @Composable
 private fun SystemWorldAmbientBackground(
     modifier: Modifier = Modifier
@@ -207,11 +197,12 @@ private fun SystemWorldAmbientBackground(
     val transition = rememberInfiniteTransition(
         label = "world-ambient-particles"
     )
+
     val progress by transition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 9000),
+            animation = tween(9000),
             repeatMode = RepeatMode.Restart
         ),
         label = "ambient-particle-progress"
@@ -246,6 +237,7 @@ private fun SystemWorldAmbientBackground(
             val travel = (progress + seed * 0.071f) % 1f
             val yFactor = (baseY + travel * 0.22f) % 1f
             val radius = (1.1f + (seed % 4) * 0.55f).dp.toPx()
+
             val pulse = 0.24f + 0.30f *
                 (0.5f + 0.5f * kotlin.math.sin(
                     (progress * 6.28318f) + seed
@@ -274,7 +266,6 @@ private fun SystemWorldAmbientBackground(
     }
 }
 
-/** بطاقة عالم مع استجابة لمس وإضاءة وحدود متحركة وإمكانية وصول محسّنة. */
 @Composable
 fun SystemWorldThemeCard(
     style: SystemWorldVisualStyle,
@@ -286,8 +277,26 @@ fun SystemWorldThemeCard(
     val interactionSource = remember {
         MutableInteractionSource()
     }
+
     val isPressed by interactionSource.collectIsPressedAsState()
     val haptic = LocalHapticFeedback.current
+
+    // نبض ضوئي متكرر للبطاقة المحددة.
+    val glowTransition = rememberInfiniteTransition(
+        label = "selected-world-glow"
+    )
+
+    val glowAlpha by glowTransition.animateFloat(
+        initialValue = 0.18f,
+        targetValue = 0.75f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = 1700
+            ),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "selected-world-glow-alpha"
+    )
 
     val animatedScale by animateFloatAsState(
         targetValue = when {
@@ -295,13 +304,13 @@ fun SystemWorldThemeCard(
             selected -> 1.035f
             else -> 1f
         },
-        animationSpec = tween(durationMillis = 160),
+        animationSpec = tween(160),
         label = "world-card-scale"
     )
 
     val animatedAlpha by animateFloatAsState(
         targetValue = if (!enabled && !selected) 0.58f else 1f,
-        animationSpec = tween(durationMillis = 220),
+        animationSpec = tween(220),
         label = "world-card-alpha"
     )
 
@@ -311,17 +320,17 @@ fun SystemWorldThemeCard(
             selected -> style.accent.copy(alpha = 0.30f)
             else -> style.surface
         },
-        animationSpec = tween(durationMillis = 220),
+        animationSpec = tween(220),
         label = "world-card-color"
     )
 
     val animatedBorderColor by animateColorAsState(
         targetValue = when {
-            selected -> style.accent
+            selected -> style.accent.copy(alpha = glowAlpha)
             isPressed -> style.accent.copy(alpha = 0.85f)
             else -> style.accent.copy(alpha = 0.24f)
         },
-        animationSpec = tween(durationMillis = 180),
+        animationSpec = tween(180),
         label = "world-card-border-color"
     )
 
@@ -331,7 +340,7 @@ fun SystemWorldThemeCard(
             isPressed -> 2.dp
             else -> 1.dp
         },
-        animationSpec = tween(durationMillis = 180),
+        animationSpec = tween(180),
         label = "world-card-border-width"
     )
 
@@ -341,7 +350,7 @@ fun SystemWorldThemeCard(
             selected -> 14.dp
             else -> 7.dp
         },
-        animationSpec = tween(durationMillis = 180),
+        animationSpec = tween(180),
         label = "world-card-elevation"
     )
 
@@ -437,7 +446,6 @@ fun SystemWorldThemeCard(
     }
 }
 
-/** شارة العوالم مع إضاءة متحركة وتأثيرات عمق بصرية. */
 @Composable
 fun SystemWorldThreeDimensionalEmblem(
     style: SystemWorldVisualStyle,
