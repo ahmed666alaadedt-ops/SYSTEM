@@ -4,6 +4,7 @@ class_name WorldManager
 const ForestManagerScript = preload("res://SYSTEM-WORLD/scripts/forest_manager.gd")
 const MountainManagerScript = preload("res://SYSTEM-WORLD/scripts/mountain_manager.gd")
 const WaterwaysManagerScript = preload("res://SYSTEM-WORLD/scripts/waterways_manager.gd")
+const MarineEnvironmentManagerScript = preload("res://SYSTEM-WORLD/scripts/marine_environment_manager.gd")
 
 signal world_changed(world_id: int)
 
@@ -87,6 +88,7 @@ func _create_modern_city() -> void:
 	_create_forest(root)
 	_create_mountains(root)
 	_create_waterways(root)
+	_create_marine_environment(root)
 
 
 func _make_material(
@@ -548,3 +550,9 @@ func _create_waterways(parent: Node3D) -> void:
 	var waterways := WaterwaysManagerScript.new()
 	waterways.name = "ModernWorldWaterways"
 	parent.add_child(waterways)
+
+
+func _create_marine_environment(parent: Node3D) -> void:
+	var marine := MarineEnvironmentManagerScript.new()
+	marine.name = "ModernWorldMarineEnvironment"
+	parent.add_child(marine)
