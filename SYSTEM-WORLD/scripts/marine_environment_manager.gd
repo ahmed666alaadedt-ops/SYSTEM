@@ -1,8 +1,10 @@
+
 extends Node3D
 class_name SystemMarineEnvironmentManager
 
 # SYSTEM WORLD - Marine Environment
-# Coastal prototype positioned east of the modern city.
+
+const MarineLifeManagerScript = preload("res://SYSTEM-WORLD/scripts/marine_life_manager.gd")
 
 const WATER_LEVEL: float = 0.0
 const OCEAN_CENTER := Vector3(350.0, 0.0, -45.0)
@@ -15,6 +17,7 @@ const COAST_X: float = 100.0
 var ocean_material: ShaderMaterial
 var ship: Node3D
 var ship_time: float = 0.0
+var marine_life: Node3D
 
 
 func _ready() -> void:
@@ -25,6 +28,7 @@ func _ready() -> void:
 	_create_islands()
 	_create_coastal_rocks()
 	_create_ship()
+	_create_marine_life()
 
 
 func _process(delta: float) -> void:
@@ -307,6 +311,12 @@ func _create_ship() -> void:
 	add_child(ship)
 
 
+func _create_marine_life() -> void:
+	marine_life = MarineLifeManagerScript.new()
+	marine_life.name = "UnderwaterMarineLife"
+	add_child(marine_life)
+
+
 func get_marine_status() -> Dictionary:
 	return {
 		"ocean": true,
@@ -314,5 +324,7 @@ func get_marine_status() -> Dictionary:
 		"islands": true,
 		"coastal_rocks": true,
 		"ship": ship != null,
+		"marine_life": marine_life != null,
+		"fish_count": 24 if marine_life != null else 0,
 		"prototype": true
 	}
