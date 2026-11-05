@@ -1,3 +1,4 @@
+
 extends CanvasLayer
 class_name MobileControls
 
@@ -5,13 +6,16 @@ signal movement_changed(direction: Vector2)
 signal jump_pressed
 signal look_changed(delta: Vector2)
 signal camera_toggle_pressed
+signal interact_pressed
 
 
 class TouchOverlay extends Control:
+
 	signal movement_changed(direction: Vector2)
 	signal jump_pressed
 	signal look_changed(delta: Vector2)
 	signal camera_toggle_pressed
+	signal interact_pressed
 
 	var joystick_touch := -1
 	var joystick_direction := Vector2.ZERO
@@ -24,6 +28,9 @@ class TouchOverlay extends Control:
 
 	var view_center := Vector2.ZERO
 	var view_radius := 48.0
+
+	var interact_center := Vector2.ZERO
+	var interact_radius := 52.0
 
 	var look_touch := -1
 
@@ -42,7 +49,9 @@ class TouchOverlay extends Control:
 		joystick_center = Vector2(125, size.y - 135)
 		jump_center = Vector2(size.x - 110, size.y - 125)
 		view_center = Vector2(size.x - 100, 105)
+		interact_center = Vector2(size.x - 230, size.y - 270)
 
+		# عصا الحركة
 		draw_circle(
 			joystick_center,
 			joystick_radius,
@@ -55,6 +64,7 @@ class TouchOverlay extends Control:
 			Color(0.4, 0.7, 1.0, 0.8)
 		)
 
+		# زر القفز
 		draw_circle(
 			jump_center,
 			jump_radius,
@@ -71,6 +81,7 @@ class TouchOverlay extends Control:
 			Color.WHITE
 		)
 
+		# زر تبديل منظور الكاميرا
 		draw_circle(
 			view_center,
 			view_radius,
@@ -87,12 +98,42 @@ class TouchOverlay extends Control:
 			Color.WHITE
 		)
 
+		# زر التفاعل
+		draw_circle(
+			interact_center,
+			interact_radius,
+			Color(0.75, 0.48, 0.16, 0.85)
+		)
+
+		draw_arc(
+			interact_center,
+			interact_radius,
+			0.0,
+			TAU,
+			48,
+			Color(1.0, 0.82, 0.48, 0.95),
+			3.0
+		)
+
+		draw_string(
+			ThemeDB.fallback_font,
+			interact_center + Vector2(-22, 6),
+			"USE",
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			18,
+			Color.WHITE
+		)
+
 
 	func _gui_input(event: InputEvent) -> void:
 		if event is InputEventScreenTouch:
 			if event.pressed:
 				if event.position.distance_to(view_center) <= view_radius * 1.5:
 					camera_toggle_pressed.emit()
+
+				elif event.position.distance_to(interact_center) <= interact_radius * 1.5:
+					interact_pressed.emit()
 
 				elif event.position.distance_to(joystick_center) <= joystick_radius * 1.8:
 					if joystick_touch == -1:
@@ -152,6 +193,7 @@ func _ready() -> void:
 	screen_control.jump_pressed.connect(_on_jump_pressed)
 	screen_control.look_changed.connect(_on_look_changed)
 	screen_control.camera_toggle_pressed.connect(_on_camera_toggle_pressed)
+	screen_control.interact_pressed.connect(_on_interact_pressed)
 
 
 func _on_movement_changed(direction: Vector2) -> void:
@@ -168,3 +210,7 @@ func _on_look_changed(delta: Vector2) -> void:
 
 func _on_camera_toggle_pressed() -> void:
 	camera_toggle_pressed.emit()
+
+
+func _on_interact_pressed() -> void:
+	interact_pressed.emit()
