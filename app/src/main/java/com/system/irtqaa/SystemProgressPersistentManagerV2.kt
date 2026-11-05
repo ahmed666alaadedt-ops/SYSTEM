@@ -1,12 +1,18 @@
 package com.system.irtqaa
 
 import android.content.Context
+import android.util.Log
 import java.time.LocalDate
 
 class SystemProgressPersistentManagerV2(context: Context) {
 
     private val storage = SystemProgressStorageV2(context)
+    private val cloudRepository = FirebaseSystemProgressRepository()
     private val lock = Any()
+
+    companion object {
+        private const val TAG = "SystemProgressManager"
+    }
 
     fun getProgress(userId: String): SystemProgressSnapshot {
         require(userId.isNotBlank()) {
@@ -59,16 +65,16 @@ class SystemProgressPersistentManagerV2(context: Context) {
             val history = storage.loadExperienceHistory(userId)
                 .toMutableList()
 
-            history.add(
-                SystemExperienceRecord(
-                    recordId = "XP-$timestamp-${history.size}",
-                    userId = userId,
-                    domain = domain,
-                    amount = amount,
-                    reason = reason,
-                    createdAt = timestamp
-                )
+            val record = SystemExperienceRecord(
+                recordId = "XP-$timestamp-${history.size}",
+                userId = userId,
+                domain = domain,
+                amount = amount,
+                reason = reason,
+                createdAt = timestamp
             )
+
+            history.add(record)
 
             check(storage.saveProgress(updated)) {
                 "Could not save progress"
@@ -76,6 +82,20 @@ class SystemProgressPersistentManagerV2(context: Context) {
 
             check(storage.saveExperienceHistory(userId, history)) {
                 "Could not save experience history"
+            }
+
+            // رفع التقدم إلى الحساب السحابي
+            cloudRepository.saveProgress(updated) { success, error ->
+                if (!success) {
+                    Log.e(TAG, "Cloud progress upload failed", error)
+                }
+            }
+
+            // رفع سجل الخبرة
+            cloudRepository.saveExperienceRecord(record) { success, error ->
+                if (!success) {
+                    Log.e(TAG, "Cloud experience history upload failed", error)
+                }
             }
 
             return updated
@@ -127,6 +147,16 @@ class SystemProgressPersistentManagerV2(context: Context) {
 
             check(storage.saveDailyProgress(userId, updatedDaily)) {
                 "Could not save daily progress"
+            }
+
+            // رفع تقدم اليوم إلى Firestore
+            cloudRepository.saveDailyProgress(
+                userId,
+                updatedDaily
+            ) { success, error ->
+                if (!success) {
+                    Log.e(TAG, "Cloud daily progress upload failed", error)
+                }
             }
 
             return addExperience(
