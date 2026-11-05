@@ -1,7 +1,8 @@
-
 package com.system.irtqaa
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.speech.tts.TextToSpeech
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -22,6 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.Locale
+import java.util.concurrent.atomic.AtomicReference
 
 private data class MiyarGuidePage(
     val icon: String,
@@ -141,6 +143,7 @@ private fun SystemMiyarGuideScreen(
     var currentPage by remember { mutableIntStateOf(0) }
     var ttsReady by remember { mutableStateOf(false) }
     var speechEnabled by remember { mutableStateOf(true) }
+
     var textToSpeech by remember {
         mutableStateOf<TextToSpeech?>(null)
     }
@@ -148,27 +151,48 @@ private fun SystemMiyarGuideScreen(
     val page = miyarGuidePages[currentPage]
 
     DisposableEffect(context) {
+        val engineReference =
+            AtomicReference<TextToSpeech?>(null)
+
+        val mainHandler = Handler(Looper.getMainLooper())
+        var disposed = false
+
         val engine = TextToSpeech(context) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                val languageResult = engineLanguage(
-                    textToSpeech,
-                    Locale("ar", "IQ")
-                )
-                ttsReady = languageResult
+            mainHandler.post {
+                val activeEngine = engineReference.get()
+
+                if (!disposed && activeEngine != null) {
+                    ttsReady =
+                        status == TextToSpeech.SUCCESS &&
+                        engineLanguage(
+                            activeEngine,
+                            Locale("ar", "IQ")
+                        )
+                }
             }
         }
 
+        engineReference.set(engine)
         textToSpeech = engine
 
         onDispose {
+            disposed = true
+
+            engineReference.set(null)
+
             engine.stop()
             engine.shutdown()
+
             textToSpeech = null
             ttsReady = false
         }
     }
 
-    LaunchedEffect(currentPage, ttsReady, speechEnabled) {
+    LaunchedEffect(
+        currentPage,
+        ttsReady,
+        speechEnabled
+    ) {
         if (ttsReady && speechEnabled) {
             textToSpeech?.speak(
                 page.speech,
@@ -303,7 +327,10 @@ private fun SystemMiyarGuideScreen(
                     modifier = Modifier.padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(page.icon, fontSize = 45.sp)
+                    Text(
+                        page.icon,
+                        fontSize = 45.sp
+                    )
 
                     Spacer(Modifier.height(12.dp))
 
@@ -332,26 +359,33 @@ private fun SystemMiyarGuideScreen(
             OutlinedButton(
                 onClick = {
                     speechEnabled = !speechEnabled
-                    if (!speechEnabled) textToSpeech?.stop()
+
+                    if (!speechEnabled) {
+                        textToSpeech?.stop()
+                    }
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp)
             ) {
                 Text(
-                    if (speechEnabled) "إيقاف الشرح الصوتي"
-                    else "تشغيل الشرح الصوتي",
+                    if (speechEnabled)
+                        "إيقاف الشرح الصوتي"
+                    else
+                        "تشغيل الشرح الصوتي",
                     color = cyan
                 )
             }
 
             Button(
                 onClick = {
-                    textToSpeech?.speak(
-                        page.speech,
-                        TextToSpeech.QUEUE_FLUSH,
-                        null,
-                        "miyar_replay_$currentPage"
-                    )
+                    if (ttsReady) {
+                        textToSpeech?.speak(
+                            page.speech,
+                            TextToSpeech.QUEUE_FLUSH,
+                            null,
+                            "miyar_replay_$currentPage"
+                        )
+                    }
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = ttsReady,
@@ -371,7 +405,9 @@ private fun SystemMiyarGuideScreen(
             ) {
                 if (currentPage > 0) {
                     OutlinedButton(
-                        onClick = { currentPage-- },
+                        onClick = {
+                            currentPage--
+                        },
                         modifier = Modifier.weight(1f)
                     ) {
                         Text("السابق")
@@ -380,7 +416,10 @@ private fun SystemMiyarGuideScreen(
 
                 Button(
                     onClick = {
-                        if (currentPage < miyarGuidePages.lastIndex) {
+                        if (
+                            currentPage <
+                            miyarGuidePages.lastIndex
+                        ) {
                             currentPage++
                         } else {
                             onFinish()
@@ -393,10 +432,14 @@ private fun SystemMiyarGuideScreen(
                     )
                 ) {
                     Text(
-                        if (currentPage == miyarGuidePages.lastIndex)
+                        if (
+                            currentPage ==
+                            miyarGuidePages.lastIndex
+                        ) {
                             "ابدأ رحلتك"
-                        else
-                            "التالي",
+                        } else {
+                            "التالي"
+                        },
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -429,21 +472,16 @@ private fun SystemMiyarGuideScreen(
 }
 
 private fun engineLanguage(
-    engine: TextToSpeech?,
+    engine: TextToSpeech,
     locale: Locale
 ): Boolean {
-    val result = engine?.setLanguage(locale)
+    val result = engine.setLanguage(locale)
 
-    if (
-        result == TextToSpeech.LANG_MISSING_DATA ||
-        result == TextToSpeech.LANG_NOT_SUPPORTED ||
-        result == null
-    ) {
-        val fallback = engine?.setLanguage(Locale("ar"))
-        return fallback != null &&
-            fallback != TextToSpeech.LANG_MISSING_DATA &&
-            fallback != TextToSpeech.LANG_NOT_SUPPORTED
+    if (result >= TextToSpeech.LANG_AVAILABLE) {
+        return true
     }
 
-    return true
+    val fallback = engine.setLanguage(Locale("ar"))
+
+    return fallback >= TextToSpeech.LANG_AVAILABLE
 }
