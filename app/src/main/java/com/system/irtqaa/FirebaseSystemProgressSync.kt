@@ -10,6 +10,10 @@ class FirebaseSystemProgressSync(context: Context) {
 
     private val repository = FirebaseSystemProgressRepository()
 
+    private val detailsSync = FirebaseSystemProgressDetailsSync(
+        context.applicationContext
+    )
+
     fun synchronize(
         userId: String,
         onComplete: (Boolean, Exception?) -> Unit
@@ -56,7 +60,7 @@ class FirebaseSystemProgressSync(context: Context) {
                         return@loadProgress
                     }
 
-                    onComplete(true, null)
+                    synchronizeDetails(userId, onComplete)
                     return@loadProgress
                 }
 
@@ -64,7 +68,11 @@ class FirebaseSystemProgressSync(context: Context) {
                         success,
                         saveError ->
 
-                    onComplete(success, saveError)
+                    if (!success) {
+                        onComplete(false, saveError)
+                    } else {
+                        synchronizeDetails(userId, onComplete)
+                    }
                 }
 
                 return@loadProgress
@@ -75,15 +83,31 @@ class FirebaseSystemProgressSync(context: Context) {
                         success,
                         saveError ->
 
-                    onComplete(success, saveError)
+                    if (!success) {
+                        onComplete(false, saveError)
+                    } else {
+                        synchronizeDetails(userId, onComplete)
+                    }
                 }
 
                 return@loadProgress
             }
 
-            // لا توجد بيانات محلية أو سحابية.
-            // لا نرفع تقدماً صفرياً حتى لا نمسح بيانات قديمة.
-            onComplete(true, null)
+            // لا توجد بيانات تقدم محلية أو سحابية.
+            // نسترجع السجلات التفصيلية دون إنشاء تقدم صفري.
+            synchronizeDetails(userId, onComplete)
+        }
+    }
+
+    private fun synchronizeDetails(
+        userId: String,
+        onComplete: (Boolean, Exception?) -> Unit
+    ) {
+        detailsSync.synchronize(
+            userId = userId
+        ) { success, error ->
+
+            onComplete(success, error)
         }
     }
 }
