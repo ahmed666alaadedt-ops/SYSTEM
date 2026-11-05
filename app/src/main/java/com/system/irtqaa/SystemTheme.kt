@@ -6,18 +6,26 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 
 object SystemColors {
     val Background = Color(0xFF070B14)
@@ -38,9 +46,17 @@ fun SystemTheme(
 ) {
     val context = LocalContext.current
 
-    val palette = remember(context) {
-        SystemAppThemeSettings.getSelectedTheme(context)
+    var selectedThemeId by remember(context) {
+        mutableStateOf(
+            SystemAppThemeSettings.getSelectedTheme(context).id
+        )
     }
+
+    var showThemeSelection by remember {
+        mutableStateOf(false)
+    }
+
+    val palette = SystemAppThemeCatalog.getById(selectedThemeId)
 
     val primary = Color(palette.primary)
     val secondary = Color(palette.secondary)
@@ -76,6 +92,41 @@ fun SystemTheme(
             )
 
             content()
+
+            if (showThemeSelection) {
+                SystemThemeSelectionScreen(
+                    onBack = {
+                        showThemeSelection = false
+                    },
+                    onThemeSelected = { themeId ->
+                        val saved =
+                            SystemAppThemeSettings.saveSelectedTheme(
+                                context,
+                                themeId
+                            )
+
+                        if (saved) {
+                            selectedThemeId = themeId
+                        }
+
+                        showThemeSelection = false
+                    }
+                )
+            } else {
+                Button(
+                    onClick = {
+                        showThemeSelection = true
+                    },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(
+                            top = 12.dp,
+                            end = 12.dp
+                        )
+                ) {
+                    Text("الثيمات")
+                }
+            }
         }
     }
 }
