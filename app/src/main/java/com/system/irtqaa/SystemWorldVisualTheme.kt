@@ -13,9 +13,11 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.matchParentSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.weight
@@ -109,7 +111,7 @@ object SystemMobileVisualTheme {
     val textSecondary = Color(0xFFB7C5D6)
 }
 
-/** معرض بطاقات العوالم الأربعة مع انتقال اختيار سينمائي. */
+/** معرض بطاقات العوالم الأربعة مع خلفية ضوئية متحركة. */
 @Composable
 fun SystemWorldThemeGallery(
     onWorldSelected: (SystemWorldKind) -> Unit,
@@ -125,31 +127,114 @@ fun SystemWorldThemeGallery(
         }
     }
 
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        Text(
-            text = "عوالم SYSTEM",
-            color = SystemMobileVisualTheme.gold,
-            fontSize = 23.sp,
-            fontWeight = FontWeight.Black
+    Box(modifier = modifier.fillMaxWidth()) {
+        SystemWorldAmbientBackground(
+            modifier = Modifier.matchParentSize()
         )
 
-        Text(
-            text = "أربع بوابات مستقلة، ولكل عالم هويته وألوانه الخاصة.",
-            color = SystemMobileVisualTheme.textSecondary,
-            fontSize = 13.sp
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Text(
+                text = "عوالم SYSTEM",
+                color = SystemMobileVisualTheme.gold,
+                fontSize = 23.sp,
+                fontWeight = FontWeight.Black
+            )
+
+            Text(
+                text = "أربع بوابات مستقلة، ولكل عالم هويته وألوانه الخاصة.",
+                color = SystemMobileVisualTheme.textSecondary,
+                fontSize = 13.sp
+            )
+
+            SystemWorldVisualStyles.all.forEach { style ->
+                SystemWorldThemeCard(
+                    style = style,
+                    selected = selectedKind == style.kind,
+                    enabled = selectedKind == null,
+                    onClick = { selectedKind = style.kind }
+                )
+            }
+        }
+    }
+}
+
+/** خلفية هادئة بجزيئات ضوئية تتحرك ببطء خلف بطاقات العوالم. */
+@Composable
+private fun SystemWorldAmbientBackground(
+    modifier: Modifier = Modifier
+) {
+    val transition = rememberInfiniteTransition(
+        label = "world-ambient-particles"
+    )
+    val progress by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 9000),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "ambient-particle-progress"
+    )
+
+    Canvas(modifier = modifier) {
+        val width = size.width
+        val height = size.height
+
+        drawRect(
+            brush = Brush.verticalGradient(
+                colors = listOf(
+                    Color(0xFF07111E).copy(alpha = 0.12f),
+                    Color(0xFF0B1422).copy(alpha = 0.04f),
+                    Color.Transparent
+                )
+            ),
+            size = size
         )
 
-        SystemWorldVisualStyles.all.forEach { style ->
-            SystemWorldThemeCard(
-                style = style,
-                selected = selectedKind == style.kind,
-                enabled = selectedKind == null,
-                onClick = { selectedKind = style.kind }
+        val particleColors = listOf(
+            SystemWorldVisualStyles.modern.accent,
+            SystemWorldVisualStyles.mythology.accent,
+            SystemWorldVisualStyles.fantasy.accent,
+            SystemWorldVisualStyles.greedIsland.accent
+        )
+
+        for (index in 0 until 22) {
+            val seed = index + 1
+            val xFactor = ((seed * 37) % 97) / 100f
+            val baseY = ((seed * 53) % 101) / 100f
+            val travel = (progress + seed * 0.071f) % 1f
+            val yFactor = (baseY + travel * 0.22f) % 1f
+            val radius = (1.1f + (seed % 4) * 0.55f).dp.toPx()
+            val pulse = 0.24f + 0.30f *
+                (0.5f + 0.5f * kotlin.math.sin(
+                    (progress * 6.28318f) + seed
+                ))
+
+            drawCircle(
+                color = particleColors[index % particleColors.size]
+                    .copy(alpha = pulse),
+                radius = radius,
+                center = Offset(width * xFactor, height * yFactor)
             )
         }
+
+        drawCircle(
+            brush = Brush.radialGradient(
+                colors = listOf(
+                    SystemWorldVisualStyles.fantasy.accent.copy(alpha = 0.055f),
+                    Color.Transparent
+                ),
+                center = Offset(width * 0.92f, height * 0.28f),
+                radius = width * 0.58f
+            ),
+            radius = width * 0.58f,
+            center = Offset(width * 0.92f, height * 0.28f)
+        )
     }
 }
 
@@ -514,7 +599,6 @@ fun SystemWorldThreeDimensionalEmblem(
             }
         }
 
-        // شريط ضوء سينمائي متحرك يمر فوق الشارة.
         drawRect(
             brush = Brush.linearGradient(
                 colors = listOf(
@@ -531,7 +615,6 @@ fun SystemWorldThreeDimensionalEmblem(
             size = Size(w, h)
         )
 
-        // وهج ناعم أسفل الشارة.
         drawLine(
             brush = Brush.horizontalGradient(
                 listOf(
