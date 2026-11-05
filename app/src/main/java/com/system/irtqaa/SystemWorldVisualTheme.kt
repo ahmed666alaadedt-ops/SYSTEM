@@ -1,6 +1,9 @@
 
 package com.system.irtqaa
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -111,13 +114,21 @@ object SystemMobileVisualTheme {
     val textSecondary = Color(0xFFB7C5D6)
 }
 
-/** معرض بطاقات العوالم الأربعة مع خلفية ضوئية متحركة. */
+/** معرض بطاقات العوالم الأربعة مع خلفية ضوئية متحركة وظهور سينمائي متتابع. */
 @Composable
 fun SystemWorldThemeGallery(
     onWorldSelected: (SystemWorldKind) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var selectedKind by remember { mutableStateOf<SystemWorldKind?>(null) }
+    var visibleCardCount by remember { mutableStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        for (index in 1..SystemWorldVisualStyles.all.size) {
+            delay(150)
+            visibleCardCount = index
+        }
+    }
 
     LaunchedEffect(selectedKind) {
         val selected = selectedKind
@@ -151,13 +162,29 @@ fun SystemWorldThemeGallery(
                 fontSize = 13.sp
             )
 
-            SystemWorldVisualStyles.all.forEach { style ->
-                SystemWorldThemeCard(
-                    style = style,
-                    selected = selectedKind == style.kind,
-                    enabled = selectedKind == null,
-                    onClick = { selectedKind = style.kind }
-                )
+            SystemWorldVisualStyles.all.forEachIndexed { index, style ->
+                AnimatedVisibility(
+                    visible = visibleCardCount > index,
+                    enter = fadeIn(
+                        animationSpec = tween(
+                            durationMillis = 480
+                        )
+                    ) + slideInHorizontally(
+                        initialOffsetX = { fullWidth ->
+                            fullWidth / 4
+                        },
+                        animationSpec = tween(
+                            durationMillis = 480
+                        )
+                    )
+                ) {
+                    SystemWorldThemeCard(
+                        style = style,
+                        selected = selectedKind == style.kind,
+                        enabled = selectedKind == null,
+                        onClick = { selectedKind = style.kind }
+                    )
+                }
             }
         }
     }
