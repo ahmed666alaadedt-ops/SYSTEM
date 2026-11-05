@@ -1,3 +1,4 @@
+
 extends Node3D
 
 const PLAYER_SPEED := 6.0
@@ -13,8 +14,10 @@ const ROTATION_SPEED := 10.0
 
 const MobileControlsScript = preload("res://scripts/mobile_controls.gd")
 const WorldManagerScript = preload("res://scripts/world_manager.gd")
+const WorldMapManagerScript = preload("res://scripts/world_map_manager.gd")
 
 var world_manager
+var world_map_manager
 var active_world_root: Node3D
 
 var player: CharacterBody3D
@@ -33,6 +36,7 @@ var first_person := false
 
 func _ready() -> void:
 	create_world_manager()
+	create_world_map_manager()
 
 	create_environment()
 	create_ground()
@@ -47,6 +51,111 @@ func create_world_manager() -> void:
 	add_child(world_manager)
 
 	active_world_root = world_manager.get_active_world()
+
+
+func create_world_map_manager() -> void:
+	world_map_manager = WorldMapManagerScript.new()
+	world_map_manager.name = "WorldMapManager"
+	add_child(world_map_manager)
+
+	world_map_manager.map_updated.connect(_on_map_updated)
+	world_map_manager.fast_travel_confirmed.connect(_on_fast_travel_confirmed)
+
+
+## معرّف الخريطة النصي يطابق رقم العالم الحالي في WorldManager.
+func get_current_map_world_id() -> String:
+	if world_manager == null:
+		return ""
+	return str(world_manager.active_world)
+
+
+## نقطة تسجيل موحدة حتى تسجل العوالم مواقعها في مدير الخريطة.
+func register_world_location(
+	location_id: String,
+	region_id: String,
+	display_name: String,
+	location_type: int,
+	location_position: Vector3,
+	is_fast_travel_point: bool = false
+) -> bool:
+	if world_map_manager == null:
+		return false
+
+	return world_map_manager.register_location(
+		get_current_map_world_id(),
+		location_id,
+		region_id,
+		display_name,
+		location_type,
+		location_position,
+		is_fast_travel_point
+	)
+
+
+func discover_world_region(region_id: String) -> bool:
+	if world_map_manager == null:
+		return false
+	return world_map_manager.discover_region(
+		get_current_map_world_id(),
+		region_id
+	)
+
+
+func discover_world_location(location_id: String) -> bool:
+	if world_map_manager == null:
+		return false
+	return world_map_manager.discover_location(
+		get_current_map_world_id(),
+		location_id
+	)
+
+
+func activate_world_fast_travel_point(
+	point_id: String,
+	activation_distance: float = 3.0
+) -> bool:
+	if world_map_manager == null or player == null:
+		return false
+
+	return world_map_manager.activate_fast_travel_point(
+		get_current_map_world_id(),
+		point_id,
+		player.global_position,
+		activation_distance
+	)
+
+
+## يعيد نتيجة التحقق والوجهة المقترحة؛ لا ينفذ النقل وحده.
+func request_world_fast_travel(point_id: String) -> Dictionary:
+	if world_map_manager == null:
+		return {"success": false, "reason": "MAP_MANAGER_NOT_READY"}
+
+	return world_map_manager.request_fast_travel(
+		get_current_map_world_id(),
+		point_id
+	)
+
+
+## تستدعى بعد أن ينفذ نظام الحركة نقل اللاعب بنجاح.
+func complete_world_fast_travel(point_id: String) -> void:
+	if world_map_manager != null:
+		world_map_manager.confirm_fast_travel(
+			get_current_map_world_id(),
+			point_id
+		)
+
+
+func _on_map_updated(world_id: String) -> void:
+	print("SYSTEM WORLD map updated for world: ", world_id)
+
+
+func _on_fast_travel_confirmed(world_id: String, point_id: String) -> void:
+	print(
+		"SYSTEM WORLD fast travel confirmed: ",
+		world_id,
+		" / ",
+		point_id
+	)
 
 
 func create_environment() -> void:
