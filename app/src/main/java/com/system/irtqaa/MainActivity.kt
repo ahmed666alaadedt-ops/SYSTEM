@@ -93,6 +93,10 @@ fun SystemApp() {
         mutableStateOf("")
     }
 
+    var miyarDialog by remember {
+        mutableStateOf<String?>(null)
+    }
+
     val completedCount = tasks.count {
         it.isCompleted
     }
@@ -109,414 +113,481 @@ fun SystemApp() {
 
         SystemTheme {
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(18.dp)
+            Box(
+                modifier = Modifier.fillMaxSize()
             ) {
 
-                Text(
-                    "SYSTEM",
-                    color = gold,
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Black
-                )
-
-                Text(
-                    "الإنسان نحو الارتقاء",
-                    color = Color.LightGray,
-                    fontSize = 15.sp
-                )
-
-                Spacer(Modifier.height(16.dp))
-
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = panel.copy(alpha = 0.92f)
-                    ),
-                    shape = RoundedCornerShape(18.dp)
-                ) {
-                    Column(
-                        Modifier.padding(16.dp)
-                    ) {
-                        Text(
-                            "المستوى العام",
-                            color = Color.White
-                        )
-
-                        Text(
-                            "LV. ${progressSnapshot.overallLevel}",
-                            color = gold,
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        Text(
-                            "$totalExperience XP",
-                            color = cyan
-                        )
-
-                        LinearProgressIndicator(
-                            progress = {
-                                (totalExperience % 100) / 100f
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            color = gold
-                        )
-                    }
-                }
-
-                Spacer(Modifier.height(16.dp))
-
-                Row(
-                    modifier = Modifier.horizontalScroll(
-                        rememberScrollState()
-                    ),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(18.dp)
                 ) {
 
-                    val tabs = listOf(
-                        "الرئيسية",
-                        "المهام",
-                        "المستويات",
-                        "جزيرة الطمع"
+                    Text(
+                        "SYSTEM",
+                        color = gold,
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.Black
                     )
 
-                    tabs.forEachIndexed { index, title ->
+                    Text(
+                        "الإنسان نحو الارتقاء",
+                        color = Color.LightGray,
+                        fontSize = 15.sp
+                    )
 
-                        Button(
-                            onClick = {
-                                selectedTab = index
-                                showWorldSelection = false
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor =
-                                    if (selectedTab == index) gold
-                                    else panel,
-                                contentColor =
-                                    if (selectedTab == index)
-                                        Color.Black
-                                    else
-                                        Color.White
-                            ),
-                            shape = RoundedCornerShape(12.dp)
+                    Spacer(Modifier.height(16.dp))
+
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = panel.copy(alpha = 0.92f)
+                        ),
+                        shape = RoundedCornerShape(18.dp)
+                    ) {
+                        Column(
+                            Modifier.padding(16.dp)
                         ) {
                             Text(
-                                title,
+                                "المستوى العام",
+                                color = Color.White
+                            )
+
+                            Text(
+                                "LV. ${progressSnapshot.overallLevel}",
+                                color = gold,
+                                fontSize = 28.sp,
                                 fontWeight = FontWeight.Bold
+                            )
+
+                            Text(
+                                "$totalExperience XP",
+                                color = cyan
+                            )
+
+                            LinearProgressIndicator(
+                                progress = {
+                                    (totalExperience % 100) / 100f
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                color = gold
                             )
                         }
                     }
-                }
 
-                Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(16.dp))
 
-                when (selectedTab) {
+                    Row(
+                        modifier = Modifier.horizontalScroll(
+                            rememberScrollState()
+                        ),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
 
-                    // الصفحة الرئيسية
-                    0 -> {
+                        val tabs = listOf(
+                            "الرئيسية",
+                            "المهام",
+                            "المستويات",
+                            "جزيرة الطمع"
+                        )
 
-                        if (showWorldSelection) {
+                        tabs.forEachIndexed { index, title ->
 
-                            WorldSelectionScreen(
-                                onBack = {
+                            Button(
+                                onClick = {
+                                    selectedTab = index
                                     showWorldSelection = false
                                 },
-                                onSelectWorld = { world ->
-                                    selectedWorld = world
-                                    showWorldSelection = false
-                                }
-                            )
-
-                        } else if (selectedWorld == "real") {
-
-                            Column {
-                                Button(
-                                    onClick = {
-                                        selectedWorld = ""
-                                    }
-                                ) {
-                                    Text("العودة إلى العوالم")
-                                }
-
-                                SystemWorldScreen(
-                                    progress = worldProgress,
-                                    onProgressChange = {
-                                        worldProgress = it
-                                    }
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor =
+                                        if (selectedTab == index) gold
+                                        else panel,
+                                    contentColor =
+                                        if (selectedTab == index)
+                                            Color.Black
+                                        else
+                                            Color.White
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text(
+                                    title,
+                                    fontWeight = FontWeight.Bold
                                 )
                             }
+                        }
+                    }
 
-                        } else if (
-                            selectedWorld == "fantasy" ||
-                            selectedWorld == "mythology"
-                        ) {
+                    Spacer(Modifier.height(16.dp))
 
-                            WorldComingSoonScreen(
-                                worldName =
-                                    if (selectedWorld == "fantasy")
-                                        "العالم الخيالي"
-                                    else
-                                        "عالم الأساطير",
-                                onBack = {
-                                    selectedWorld = ""
-                                    showWorldSelection = true
+                    when (selectedTab) {
+
+                        // الصفحة الرئيسية
+                        0 -> {
+
+                            if (showWorldSelection) {
+
+                                WorldSelectionScreen(
+                                    onBack = {
+                                        showWorldSelection = false
+                                    },
+                                    onSelectWorld = { world ->
+                                        selectedWorld = world
+                                        showWorldSelection = false
+                                    }
+                                )
+
+                            } else if (selectedWorld == "real") {
+
+                                Column {
+                                    Button(
+                                        onClick = {
+                                            selectedWorld = ""
+                                        }
+                                    ) {
+                                        Text("العودة إلى العوالم")
+                                    }
+
+                                    SystemWorldScreen(
+                                        progress = worldProgress,
+                                        onProgressChange = {
+                                            worldProgress = it
+                                        }
+                                    )
                                 }
-                            )
 
-                        } else {
-
-                            Column(
-                                modifier = Modifier.fillMaxWidth()
+                            } else if (
+                                selectedWorld == "fantasy" ||
+                                selectedWorld == "mythology"
                             ) {
 
-                                Text(
-                                    "مرحباً بك أيها المقاتل",
-                                    color = Color.White,
-                                    fontSize = 21.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-
-                                Spacer(Modifier.height(8.dp))
-
-                                Text(
-                                    "إنجازات اليوم: $completedCount / ${tasks.size}",
-                                    color = cyan
-                                )
-
-                                Text(
-                                    "مجموع الخبرة: $totalExperience XP",
-                                    color = gold
-                                )
-
-                                Spacer(Modifier.height(18.dp))
-
-                                Text(
-                                    "عوالم SYSTEM",
-                                    color = gold,
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-
-                                Spacer(Modifier.height(10.dp))
-
-                                SystemWorldBanner(
-                                    onClick = {
+                                WorldComingSoonScreen(
+                                    worldName =
+                                        if (selectedWorld == "fantasy")
+                                            "العالم الخيالي"
+                                        else
+                                            "عالم الأساطير",
+                                    onBack = {
+                                        selectedWorld = ""
                                         showWorldSelection = true
                                     }
                                 )
-                            }
-                        }
-                    }
 
-                    // صفحة المهام
-                    1 -> {
+                            } else {
 
-                        Text(
-                            "المهام اليومية",
-                            color = gold,
-                            fontSize = 22.sp
-                        )
-
-                        Spacer(Modifier.height(10.dp))
-
-                        LazyColumn(
-                            verticalArrangement =
-                                Arrangement.spacedBy(10.dp)
-                        ) {
-
-                            items(
-                                items = tasks,
-                                key = { it.taskId }
-                            ) { task ->
-
-                                Card(
-                                    colors = CardDefaults.cardColors(
-                                        containerColor =
-                                            panel.copy(alpha = 0.92f)
-                                    )
+                                Column(
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
 
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(12.dp),
-                                        verticalAlignment =
-                                            Alignment.CenterVertically
+                                    // بطاقة ميار الرئيسية
+                                    SystemMiyarWelcomeCard(
+                                        onExplainClick = {
+                                            miyarDialog = "explain"
+                                        },
+                                        onTalkClick = {
+                                            miyarDialog = "chat"
+                                        }
+                                    )
+
+                                    Spacer(Modifier.height(18.dp))
+
+                                    Text(
+                                        "مرحباً بك أيها المقاتل",
+                                        color = Color.White,
+                                        fontSize = 21.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+
+                                    Spacer(Modifier.height(8.dp))
+
+                                    Text(
+                                        "إنجازات اليوم: $completedCount / ${tasks.size}",
+                                        color = cyan
+                                    )
+
+                                    Text(
+                                        "مجموع الخبرة: $totalExperience XP",
+                                        color = gold
+                                    )
+
+                                    Spacer(Modifier.height(18.dp))
+
+                                    Text(
+                                        "عوالم SYSTEM",
+                                        color = gold,
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+
+                                    Spacer(Modifier.height(10.dp))
+
+                                    SystemWorldBanner(
+                                        onClick = {
+                                            showWorldSelection = true
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        // صفحة المهام
+                        1 -> {
+
+                            Text(
+                                "المهام اليومية",
+                                color = gold,
+                                fontSize = 22.sp
+                            )
+
+                            Spacer(Modifier.height(10.dp))
+
+                            LazyColumn(
+                                verticalArrangement =
+                                    Arrangement.spacedBy(10.dp)
+                            ) {
+
+                                items(
+                                    items = tasks,
+                                    key = { it.taskId }
+                                ) { task ->
+
+                                    Card(
+                                        colors = CardDefaults.cardColors(
+                                            containerColor =
+                                                panel.copy(alpha = 0.92f)
+                                        )
                                     ) {
 
-                                        Column(
-                                            Modifier.weight(1f)
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(12.dp),
+                                            verticalAlignment =
+                                                Alignment.CenterVertically
                                         ) {
 
-                                            Text(
-                                                task.title,
-                                                color = Color.White
-                                            )
+                                            Column(
+                                                Modifier.weight(1f)
+                                            ) {
 
-                                            Text(
-                                                domainLabel(task.domain),
-                                                color = cyan
-                                            )
-
-                                            if (task.description.isNotBlank()) {
                                                 Text(
-                                                    task.description,
-                                                    color = Color.LightGray,
-                                                    fontSize = 12.sp
+                                                    task.title,
+                                                    color = Color.White
+                                                )
+
+                                                Text(
+                                                    domainLabel(task.domain),
+                                                    color = cyan
+                                                )
+
+                                                if (task.description.isNotBlank()) {
+                                                    Text(
+                                                        task.description,
+                                                        color = Color.LightGray,
+                                                        fontSize = 12.sp
+                                                    )
+                                                }
+
+                                                Text(
+                                                    "+${task.experienceReward} XP",
+                                                    color = gold
                                                 )
                                             }
 
+                                            Checkbox(
+                                                checked = task.isCompleted,
+                                                enabled =
+                                                    task.status !=
+                                                        SystemTaskStatus.COMPLETED &&
+                                                    task.status !=
+                                                        SystemTaskStatus.CANCELLED,
+                                                onCheckedChange = { checked ->
+
+                                                    if (checked) {
+
+                                                        taskManager.completeTask(
+                                                            task.taskId
+                                                        )
+
+                                                        tasks =
+                                                            taskManager.getTasks()
+                                                                .filter {
+                                                                    it.taskId.startsWith(
+                                                                        "system_${today}_"
+                                                                    )
+                                                                }
+
+                                                        progressSnapshot =
+                                                            progressEngine.getProgress(
+                                                                userId
+                                                            )
+                                                    }
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // صفحة المستويات
+                        2 -> {
+
+                            Text(
+                                "مجالات التطور",
+                                color = gold,
+                                fontSize = 22.sp
+                            )
+
+                            Spacer(Modifier.height(10.dp))
+
+                            LazyColumn(
+                                verticalArrangement =
+                                    Arrangement.spacedBy(10.dp)
+                            ) {
+
+                                items(
+                                    progressSnapshot.domains,
+                                    key = { it.domain.name }
+                                ) { domainProgress ->
+
+                                    Card(
+                                        colors = CardDefaults.cardColors(
+                                            containerColor =
+                                                panel.copy(alpha = 0.92f)
+                                        )
+                                    ) {
+
+                                        Column(
+                                            Modifier.padding(16.dp)
+                                        ) {
+
                                             Text(
-                                                "+${task.experienceReward} XP",
+                                                domainLabel(domainProgress.domain),
+                                                color = Color.White,
+                                                fontSize = 19.sp
+                                            )
+
+                                            Text(
+                                                "المستوى ${domainProgress.level}",
+                                                color = gold
+                                            )
+
+                                            Text(
+                                                "${domainProgress.experience} XP",
+                                                color = cyan
+                                            )
+
+                                            Text(
+                                                "المهام المكتملة: ${domainProgress.completedTasks}",
+                                                color = Color.LightGray
+                                            )
+
+                                            LinearProgressIndicator(
+                                                progress = {
+                                                    (domainProgress.experience % 100) /
+                                                        100f
+                                                },
+                                                modifier =
+                                                    Modifier.fillMaxWidth(),
                                                 color = gold
                                             )
                                         }
-
-                                        Checkbox(
-                                            checked = task.isCompleted,
-                                            enabled =
-                                                task.status !=
-                                                    SystemTaskStatus.COMPLETED &&
-                                                task.status !=
-                                                    SystemTaskStatus.CANCELLED,
-                                            onCheckedChange = { checked ->
-
-                                                if (checked) {
-
-                                                    taskManager.completeTask(
-                                                        task.taskId
-                                                    )
-
-                                                    tasks =
-                                                        taskManager.getTasks()
-                                                            .filter {
-                                                                it.taskId.startsWith(
-                                                                    "system_${today}_"
-                                                                )
-                                                            }
-
-                                                    progressSnapshot =
-                                                        progressEngine.getProgress(
-                                                            userId
-                                                        )
-                                                }
-                                            }
-                                        )
                                     }
                                 }
                             }
                         }
-                    }
 
-                    // صفحة المستويات
-                    2 -> {
+                        // جزيرة الطمع
+                        3 -> {
 
-                        Text(
-                            "مجالات التطور",
-                            color = gold,
-                            fontSize = 22.sp
-                        )
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
 
-                        Spacer(Modifier.height(10.dp))
+                                Spacer(Modifier.height(20.dp))
 
-                        LazyColumn(
-                            verticalArrangement =
-                                Arrangement.spacedBy(10.dp)
-                        ) {
+                                Text(
+                                    "جزيرة الطمع",
+                                    color = gold,
+                                    fontSize = 27.sp,
+                                    fontWeight = FontWeight.Black
+                                )
 
-                            items(
-                                progressSnapshot.domains,
-                                key = { it.domain.name }
-                            ) { domainProgress ->
+                                Spacer(Modifier.height(20.dp))
 
-                                Card(
-                                    colors = CardDefaults.cardColors(
-                                        containerColor =
-                                            panel.copy(alpha = 0.92f)
-                                    )
-                                ) {
+                                Text(
+                                    "🏝️",
+                                    fontSize = 76.sp
+                                )
 
-                                    Column(
-                                        Modifier.padding(16.dp)
-                                    ) {
+                                Spacer(Modifier.height(12.dp))
 
-                                        Text(
-                                            domainLabel(domainProgress.domain),
-                                            color = Color.White,
-                                            fontSize = 19.sp
-                                        )
+                                Text(
+                                    "بوابة الجزيرة مغلقة حالياً",
+                                    color = Color.White,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
 
-                                        Text(
-                                            "المستوى ${domainProgress.level}",
-                                            color = gold
-                                        )
-
-                                        Text(
-                                            "${domainProgress.experience} XP",
-                                            color = cyan
-                                        )
-
-                                        Text(
-                                            "المهام المكتملة: ${domainProgress.completedTasks}",
-                                            color = Color.LightGray
-                                        )
-
-                                        LinearProgressIndicator(
-                                            progress = {
-                                                (domainProgress.experience % 100) /
-                                                    100f
-                                            },
-                                            modifier =
-                                                Modifier.fillMaxWidth(),
-                                            color = gold
-                                        )
-                                    }
-                                }
+                                Text(
+                                    "تُفتح الجزيرة خلال المواسم والمسابقات الخاصة.",
+                                    color = Color.LightGray,
+                                    fontSize = 14.sp
+                                )
                             }
                         }
                     }
+                }
 
-                    // جزيرة الطمع
-                    3 -> {
+                // رسائل أزرار ميار
+                if (miyarDialog != null) {
 
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
+                    val dialogTitle =
+                        if (miyarDialog == "explain") {
+                            "مرحباً، أنا ميار"
+                        } else {
+                            "التحدث مع ميار"
+                        }
 
-                            Spacer(Modifier.height(20.dp))
+                    val dialogMessage =
+                        if (miyarDialog == "explain") {
+                            "أنا مرشدتك داخل SYSTEM. سأساعدك على فهم نظام التطور، والمهام، والمستويات، والعوالم، وكيفية استخدام التطبيق. سيتم توسيع الشرح وربطه بأقسام النظام تباعاً."
+                        } else {
+                            "واجهة المحادثة مع ميار ضمن مراحل التطوير. سيجري ربط المحادثة النصية والصوتية عندما تكتمل مكوناتها."
+                        }
 
+                    AlertDialog(
+                        onDismissRequest = {
+                            miyarDialog = null
+                        },
+                        title = {
                             Text(
-                                "جزيرة الطمع",
+                                dialogTitle,
                                 color = gold,
-                                fontSize = 27.sp,
-                                fontWeight = FontWeight.Black
-                            )
-
-                            Spacer(Modifier.height(20.dp))
-
-                            Text(
-                                "🏝️",
-                                fontSize = 76.sp
-                            )
-
-                            Spacer(Modifier.height(12.dp))
-
-                            Text(
-                                "بوابة الجزيرة مغلقة حالياً",
-                                color = Color.White,
-                                fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold
                             )
-
+                        },
+                        text = {
                             Text(
-                                "تُفتح الجزيرة خلال المواسم والمسابقات الخاصة.",
-                                color = Color.LightGray,
-                                fontSize = 14.sp
+                                dialogMessage,
+                                color = Color.White
                             )
-                        }
-                    }
+                        },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    miyarDialog = null
+                                }
+                            ) {
+                                Text(
+                                    "حسناً",
+                                    color = cyan
+                                )
+                            }
+                        },
+                        containerColor = Color(0xFF131D30)
+                    )
                 }
             }
         }
