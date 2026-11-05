@@ -1,0 +1,170 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // التحقق من تسجيل الدخول
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // التحقق من ملكية الحساب
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // التحقق من بيانات الحساب عند التسجيل
+    function validPlayerData(uid) {
+      return request.resource.data.keys().hasAll([
+        'userId',
+        'displayName',
+        'email',
+        'avatarUrl',
+        'createdAt'
+      ])
+      &&
+      request.resource.data.keys().hasOnly([
+        'userId',
+        'displayName',
+        'email',
+        'avatarUrl',
+        'createdAt'
+      ])
+      &&
+      request.resource.data.userId == uid
+      &&
+      request.resource.data.displayName is string
+      &&
+      request.resource.data.displayName.size() >= 1
+      &&
+      request.resource.data.displayName.size() <= 40
+      &&
+      request.resource.data.email is string
+      &&
+      request.resource.data.email == request.auth.token.email
+      &&
+      request.resource.data.avatarUrl is string
+      &&
+      request.resource.data.createdAt is int;
+    }
+
+    // حسابات اللاعبين
+    match /players/{uid} {
+
+      // اللاعب يقرأ بيانات حسابه فقط
+      allow get: if isOwner(uid);
+
+      // منع استعراض جميع الحسابات
+      allow list: if false;
+
+      // السماح بإنشاء الحساب وفق البيانات المحددة
+      allow create: if isOwner(uid)
+                    && validPlayerData(uid);
+
+      // السماح بتحديث اسم اللاعب فقط
+      allow update: if isOwner(uid)
+                    &&
+                    request.resource.data
+                      .diff(resource.data)
+                      .affectedKeys()
+                      .hasOnly(['displayName'])
+                    &&
+                    request.resource.data.displayName is string
+                    &&
+                    request.resource.data.displayName.size() >= 1
+                    &&
+                    request.resource.data.displayName.size() <= 40
+                    &&
+                    request.resource.data.userId == uid
+                    &&
+                    request.resource.data.email == resource.data.email
+                    &&
+                    request.resource.data.avatarUrl == resource.data.avatarUrl
+                    &&
+                    request.resource.data.createdAt == resource.data.createdAt;
+
+      // لا يسمح بحذف الحساب من تطبيق الدردشة
+      allow delete: if false;
+    }
+
+    // الرسائل العالمية
+    match /globalMessages/{messageId} {
+
+      // قراءة الرسائل التي اجتازت الإشراف فقط
+      allow get, list: if signedIn()
+                       &&
+                       resource.data.moderationStatus == 'approved';
+
+      // إنشاء الرسائل وتعديلها وحذفها للخادم الموثوق فقط
+      allow create, update, delete: if false;
+    }
+
+    // المحادثات الخاصة
+    match /privateChats/{chatId} {
+
+      // أعضاء المحادثة فقط يستطيعون قراءتها
+      allow get, list: if signedIn()
+                       &&
+                       request.auth.uid in resource.data.memberIds;
+
+      // إدارة المحادثات من الخادم فقط
+      allow create, update, delete: if false;
+
+      // رسائل المحادثة الخاصة
+      match /messages/{messageId} {
+
+        allow get, list: if signedIn()
+                         &&
+                         request.auth.uid in
+                           get(
+                             /databases/$(database)/documents/privateChats/$(chatId)
+                           ).data.memberIds
+                         &&
+                         resource.data.moderationStatus == 'approved';
+
+        // منع الإرسال المباشر من التطبيق
+        allow create, update, delete: if false;
+      }
+    }
+
+    // طلبات الصداقة
+    match /friendRequests/{requestId} {
+      allow read, write: if false;
+    }
+
+    // علاقات الصداقة
+    match /friendships/{friendshipId} {
+      allow read, write: if false;
+    }
+
+    // المجموعات
+    match /chatGroups/{groupId} {
+      allow read, write: if false;
+
+      match /messages/{messageId} {
+        allow read, write: if false;
+      }
+    }
+
+    // بلاغات اللاعبين
+    match /reports/{reportId} {
+      allow read, write: if false;
+    }
+
+    // سجلات الإشراف والعقوبات
+    match /moderationEvents/{eventId} {
+      allow read, write: if false;
+    }
+
+    // بيانات الحظر
+    match /bannedUsers/{uid} {
+      allow read, write: if false;
+    }
+
+    // منع أي وصول غير محدد أعلاه
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
