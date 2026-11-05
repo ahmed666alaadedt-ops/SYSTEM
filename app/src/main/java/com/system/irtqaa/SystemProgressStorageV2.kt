@@ -1,4 +1,3 @@
-
 package com.system.irtqaa
 
 import android.content.Context
@@ -8,7 +7,10 @@ import org.json.JSONObject
 class SystemProgressStorageV2(context: Context) {
 
     private val preferences = context.applicationContext
-        .getSharedPreferences("system_progress_storage", Context.MODE_PRIVATE)
+        .getSharedPreferences(
+            "system_progress_storage",
+            Context.MODE_PRIVATE
+        )
 
     fun saveProgress(snapshot: SystemProgressSnapshot): Boolean {
         return try {
@@ -34,7 +36,10 @@ class SystemProgressStorageV2(context: Context) {
             }
 
             preferences.edit()
-                .putString(progressKey(snapshot.userId), json.toString())
+                .putString(
+                    progressKey(snapshot.userId),
+                    json.toString()
+                )
                 .commit()
         } catch (e: Exception) {
             false
@@ -43,8 +48,10 @@ class SystemProgressStorageV2(context: Context) {
 
     fun loadProgress(userId: String): SystemProgressSnapshot? {
         return try {
-            val raw = preferences.getString(progressKey(userId), null)
-                ?: return null
+            val raw = preferences.getString(
+                progressKey(userId),
+                null
+            ) ?: return null
 
             val json = JSONObject(raw)
             val array = json.optJSONArray("domains") ?: JSONArray()
@@ -54,7 +61,9 @@ class SystemProgressStorageV2(context: Context) {
                 val item = array.getJSONObject(i)
 
                 val domain = runCatching {
-                    SystemDevelopmentDomain.valueOf(item.getString("domain"))
+                    SystemDevelopmentDomain.valueOf(
+                        item.getString("domain")
+                    )
                 }.getOrNull() ?: continue
 
                 domains.add(
@@ -64,7 +73,10 @@ class SystemProgressStorageV2(context: Context) {
                         experience = item.optInt("experience", 0),
                         completedTasks = item.optInt("completedTasks", 0),
                         totalTasks = item.optInt("totalTasks", 0),
-                        lastActivityAt = item.optLong("lastActivityAt", 0L)
+                        lastActivityAt = item.optLong(
+                            "lastActivityAt",
+                            0L
+                        )
                     )
                 )
             }
@@ -88,7 +100,9 @@ class SystemProgressStorageV2(context: Context) {
         return try {
             val array = JSONArray()
 
-            records.filter { it.userId == userId }.forEach { record ->
+            records.filter {
+                it.userId == userId
+            }.forEach { record ->
                 array.put(JSONObject().apply {
                     put("recordId", record.recordId)
                     put("userId", record.userId)
@@ -107,10 +121,14 @@ class SystemProgressStorageV2(context: Context) {
         }
     }
 
-    fun loadExperienceHistory(userId: String): List<SystemExperienceRecord> {
+    fun loadExperienceHistory(
+        userId: String
+    ): List<SystemExperienceRecord> {
         return try {
-            val raw = preferences.getString(historyKey(userId), null)
-                ?: return emptyList()
+            val raw = preferences.getString(
+                historyKey(userId),
+                null
+            ) ?: return emptyList()
 
             val array = JSONArray(raw)
             val records = mutableListOf<SystemExperienceRecord>()
@@ -119,7 +137,9 @@ class SystemProgressStorageV2(context: Context) {
                 val item = array.getJSONObject(i)
 
                 val domain = runCatching {
-                    SystemDevelopmentDomain.valueOf(item.getString("domain"))
+                    SystemDevelopmentDomain.valueOf(
+                        item.getString("domain")
+                    )
                 }.getOrNull() ?: continue
 
                 records.add(
@@ -144,10 +164,13 @@ class SystemProgressStorageV2(context: Context) {
         userId: String,
         progress: SystemDailyProgress
     ): Boolean {
-        if (userId.isBlank() || progress.date.isBlank()) return false
+        if (userId.isBlank() || progress.date.isBlank()) {
+            return false
+        }
 
         return try {
             val domainsArray = JSONArray()
+
             progress.activeDomains.forEach {
                 domainsArray.put(it.name)
             }
@@ -160,6 +183,7 @@ class SystemProgressStorageV2(context: Context) {
             }
 
             val datesKey = dailyDatesKey(userId)
+
             val dates = JSONArray(
                 preferences.getString(datesKey, "[]") ?: "[]"
             )
@@ -171,12 +195,22 @@ class SystemProgressStorageV2(context: Context) {
             knownDates.add(progress.date)
 
             val updatedDates = JSONArray()
-            knownDates.forEach { updatedDates.put(it) }
+
+            knownDates.sorted().forEach {
+                updatedDates.put(it)
+            }
 
             preferences.edit()
-                .putString(dailyKey(userId, progress.date), json.toString())
-                .putString(datesKey, updatedDates.toString())
+                .putString(
+                    dailyKey(userId, progress.date),
+                    json.toString()
+                )
+                .putString(
+                    datesKey,
+                    updatedDates.toString()
+                )
                 .commit()
+
         } catch (e: Exception) {
             false
         }
@@ -191,8 +225,10 @@ class SystemProgressStorageV2(context: Context) {
         }
 
         return try {
-            val raw = preferences.getString(dailyKey(userId, date), null)
-                ?: return SystemDailyProgress(date)
+            val raw = preferences.getString(
+                dailyKey(userId, date),
+                null
+            ) ?: return SystemDailyProgress(date)
 
             val json = JSONObject(raw)
             val array = json.optJSONArray("activeDomains") ?: JSONArray()
@@ -200,10 +236,14 @@ class SystemProgressStorageV2(context: Context) {
 
             for (i in 0 until array.length()) {
                 val domain = runCatching {
-                    SystemDevelopmentDomain.valueOf(array.getString(i))
+                    SystemDevelopmentDomain.valueOf(
+                        array.getString(i)
+                    )
                 }.getOrNull()
 
-                if (domain != null) domains.add(domain)
+                if (domain != null) {
+                    domains.add(domain)
+                }
             }
 
             SystemDailyProgress(
@@ -217,11 +257,38 @@ class SystemProgressStorageV2(context: Context) {
         }
     }
 
+    fun getDailyProgressDates(
+        userId: String
+    ): List<String> {
+        if (userId.isBlank()) return emptyList()
+
+        return try {
+            val raw = preferences.getString(
+                dailyDatesKey(userId),
+                "[]"
+            ) ?: "[]"
+
+            val dates = JSONArray(raw)
+
+            (0 until dates.length())
+                .mapNotNull { index ->
+                    dates.optString(index)
+                        .takeIf { it.isNotBlank() }
+                }
+                .distinct()
+                .sorted()
+
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
     fun deleteUserProgress(userId: String): Boolean {
         if (userId.isBlank()) return false
 
         return try {
             val datesKey = dailyDatesKey(userId)
+
             val dates = JSONArray(
                 preferences.getString(datesKey, "[]") ?: "[]"
             )
@@ -232,7 +299,9 @@ class SystemProgressStorageV2(context: Context) {
                 .remove(datesKey)
 
             for (i in 0 until dates.length()) {
-                editor.remove(dailyKey(userId, dates.getString(i)))
+                editor.remove(
+                    dailyKey(userId, dates.getString(i))
+                )
             }
 
             editor.commit()
@@ -241,12 +310,16 @@ class SystemProgressStorageV2(context: Context) {
         }
     }
 
-    private fun progressKey(userId: String) = "progress_$userId"
+    private fun progressKey(userId: String) =
+        "progress_$userId"
 
-    private fun historyKey(userId: String) = "history_$userId"
+    private fun historyKey(userId: String) =
+        "history_$userId"
 
-    private fun dailyKey(userId: String, date: String) =
-        "daily_${userId}_$date"
+    private fun dailyKey(
+        userId: String,
+        date: String
+    ) = "daily_${userId}_$date"
 
     private fun dailyDatesKey(userId: String) =
         "daily_dates_$userId"
