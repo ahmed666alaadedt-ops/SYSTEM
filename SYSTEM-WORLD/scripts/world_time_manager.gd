@@ -12,6 +12,7 @@ var sun: DirectionalLight3D
 var sky_material: ProceduralSkyMaterial
 
 var night_lights: Array[OmniLight3D] = []
+var world_manager: Node
 
 var elapsed := 0.0
 var current_hour := 12.0
@@ -19,16 +20,71 @@ var current_daylight := 1.0
 
 
 # --------------------------------------------------
+# WORLD MANAGER CONNECTION
+# --------------------------------------------------
+
+func _connect_world_manager() -> void:
+	var scene_root := get_parent()
+
+	if scene_root == null:
+		return
+
+	world_manager = scene_root.get_node_or_null("WorldManager")
+
+	if world_manager == null:
+		push_warning("SYSTEM Time Manager: WorldManager not found.")
+		return
+
+	if not world_manager.has_signal("world_changed"):
+		push_warning("SYSTEM Time Manager: world_changed signal missing.")
+		return
+
+	var callback := Callable(self, "_on_world_changed")
+
+	if not world_manager.is_connected("world_changed", callback):
+		world_manager.connect("world_changed", callback)
+
+
+func _on_world_changed(world_id: int) -> void:
+	if world_manager == null:
+		return
+
+	if not world_manager.has_method("get_world_root"):
+		return
+
+	var next_root := world_manager.call(
+		"get_world_root",
+		world_id
+	) as Node3D
+
+	if next_root == null:
+		push_warning("SYSTEM Time Manager: new world root is missing.")
+		return
+
+	if next_root == world_root:
+		return
+
+	print("SYSTEM: Switching time and atmosphere to ", next_root.name)
+	setup(next_root)
+
+
+# --------------------------------------------------
 # SETUP — SUPPORT ALL WORLDS
 # --------------------------------------------------
 
 func setup(target_world: Node3D) -> bool:
-	world_root = target_world
-	night_lights.clear()
-
-	if world_root == null:
+	if target_world == null:
 		push_warning("SYSTEM Time Manager: world root is missing.")
 		return false
+
+	world_root = target_world
+	world_environment = null
+	sun = null
+	sky_material = null
+	night_lights.clear()
+	elapsed = 0.0
+
+	_connect_world_manager()
 
 	_find_or_create_environment()
 	_find_or_create_sun()
@@ -61,10 +117,7 @@ func setup(target_world: Node3D) -> bool:
 	_create_world_night_lights()
 	_update_clock()
 
-	print(
-		"SYSTEM Time Manager: active world = ",
-		world_root.name
-	)
+	print("SYSTEM Time Manager: active world = ", world_root.name)
 
 	return true
 
@@ -110,7 +163,6 @@ func _find_or_create_environment() -> void:
 		environment.sky = sky
 
 		world_environment.environment = environment
-		world_environment.name = "SystemWorldEnvironment"
 		world_root.add_child(world_environment)
 
 
@@ -210,9 +262,7 @@ func _update_night_lights(daylight: float) -> void:
 		* (3.0 - 2.0 * night_factor)
 	)
 
-	var target_energy := (
-		night_factor * NIGHT_LIGHT_MAX_ENERGY
-	)
+	var target_energy := night_factor * NIGHT_LIGHT_MAX_ENERGY
 
 	for light in night_lights:
 		if is_instance_valid(light):
