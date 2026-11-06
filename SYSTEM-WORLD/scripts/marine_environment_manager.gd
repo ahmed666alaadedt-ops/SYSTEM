@@ -4,7 +4,7 @@ class_name SystemMarineEnvironmentManager
 
 # SYSTEM WORLD - Marine Environment
 
-const MarineLifeManagerScript = preload("res://SYSTEM-WORLD/scripts/marine_life_manager.gd")
+const MarineLifeManagerScript = preload("res://scripts/marine_life_manager.gd")
 
 const WATER_LEVEL: float = 0.0
 const OCEAN_CENTER := Vector3(350.0, 0.0, -45.0)
