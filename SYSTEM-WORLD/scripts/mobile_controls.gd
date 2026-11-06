@@ -7,6 +7,7 @@ signal jump_pressed
 signal look_changed(delta: Vector2)
 signal camera_toggle_pressed
 signal interact_pressed
+signal flight_vertical_changed(value: float)
 
 
 class TouchOverlay extends Control:
@@ -16,6 +17,7 @@ class TouchOverlay extends Control:
 	signal look_changed(delta: Vector2)
 	signal camera_toggle_pressed
 	signal interact_pressed
+	signal flight_vertical_changed(value: float)
 
 	var joystick_touch := -1
 	var joystick_direction := Vector2.ZERO
@@ -31,6 +33,12 @@ class TouchOverlay extends Control:
 
 	var interact_center := Vector2.ZERO
 	var interact_radius := 52.0
+
+	var flight_up_center := Vector2.ZERO
+	var flight_down_center := Vector2.ZERO
+	var flight_button_radius := 38.0
+	var flight_touch := -1
+	var flight_value := 0.0
 
 	var look_touch := -1
 
@@ -50,6 +58,9 @@ class TouchOverlay extends Control:
 		jump_center = Vector2(size.x - 110, size.y - 125)
 		view_center = Vector2(size.x - 100, 105)
 		interact_center = Vector2(size.x - 230, size.y - 270)
+
+		flight_up_center = Vector2(size.x - 225, size.y - 390)
+		flight_down_center = Vector2(size.x - 125, size.y - 390)
 
 		# عصا الحركة
 		draw_circle(
@@ -125,6 +136,40 @@ class TouchOverlay extends Control:
 			Color.WHITE
 		)
 
+		# زر الطيران إلى الأعلى
+		draw_circle(
+			flight_up_center,
+			flight_button_radius,
+			Color(0.10, 0.65, 0.85, 0.78)
+		)
+
+		draw_string(
+			ThemeDB.fallback_font,
+			flight_up_center + Vector2(-18, 6),
+			"UP",
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			18,
+			Color.WHITE
+		)
+
+		# زر الطيران إلى الأسفل
+		draw_circle(
+			flight_down_center,
+			flight_button_radius,
+			Color(0.25, 0.38, 0.65, 0.78)
+		)
+
+		draw_string(
+			ThemeDB.fallback_font,
+			flight_down_center + Vector2(-29, 6),
+			"DOWN",
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			15,
+			Color.WHITE
+		)
+
 
 	func _gui_input(event: InputEvent) -> void:
 		if event is InputEventScreenTouch:
@@ -134,6 +179,18 @@ class TouchOverlay extends Control:
 
 				elif event.position.distance_to(interact_center) <= interact_radius * 1.5:
 					interact_pressed.emit()
+
+				elif event.position.distance_to(flight_up_center) <= flight_button_radius * 1.5:
+					if flight_touch == -1:
+						flight_touch = event.index
+						flight_value = 1.0
+						flight_vertical_changed.emit(flight_value)
+
+				elif event.position.distance_to(flight_down_center) <= flight_button_radius * 1.5:
+					if flight_touch == -1:
+						flight_touch = event.index
+						flight_value = -1.0
+						flight_vertical_changed.emit(flight_value)
 
 				elif event.position.distance_to(joystick_center) <= joystick_radius * 1.8:
 					if joystick_touch == -1:
@@ -160,6 +217,11 @@ class TouchOverlay extends Control:
 
 				if event.index == look_touch:
 					look_touch = -1
+
+				if event.index == flight_touch:
+					flight_touch = -1
+					flight_value = 0.0
+					flight_vertical_changed.emit(0.0)
 
 		elif event is InputEventScreenDrag:
 			if event.index == joystick_touch:
@@ -194,6 +256,7 @@ func _ready() -> void:
 	screen_control.look_changed.connect(_on_look_changed)
 	screen_control.camera_toggle_pressed.connect(_on_camera_toggle_pressed)
 	screen_control.interact_pressed.connect(_on_interact_pressed)
+	screen_control.flight_vertical_changed.connect(_on_flight_vertical_changed)
 
 
 func _on_movement_changed(direction: Vector2) -> void:
@@ -214,3 +277,7 @@ func _on_camera_toggle_pressed() -> void:
 
 func _on_interact_pressed() -> void:
 	interact_pressed.emit()
+
+
+func _on_flight_vertical_changed(value: float) -> void:
+	flight_vertical_changed.emit(value)
