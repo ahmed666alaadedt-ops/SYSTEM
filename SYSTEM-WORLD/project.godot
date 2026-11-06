@@ -12,6 +12,7 @@ run/main_scene="res://MainScene.tscn"
 
 GreedIslandCollisionGuard="*res://scripts/greed_island_collision_guard.gd"
 GreedIslandStarGates="*res://scripts/greed_island_star_gates.gd"
+GreedIslandAdminReturnUI="*res://scripts/greed_island_admin_return_ui.gd"
 
 [display]
 
