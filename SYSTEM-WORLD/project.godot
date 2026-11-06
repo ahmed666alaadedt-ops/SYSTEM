@@ -8,6 +8,10 @@ config_version=5
 config/name="SYSTEM WORLD"
 run/main_scene="res://MainScene.tscn"
 
+[autoload]
+
+GreedIslandCollisionGuard="*res://scripts/greed_island_collision_guard.gd"
+
 [display]
 
 window/size/viewport_width=1280
