@@ -1,3 +1,4 @@
+
 extends Node3D
 
 const PLAYER_SPEED := 6.0
@@ -57,12 +58,56 @@ func _ready() -> void:
 	create_ground()
 	create_player()
 
+	connect_sovereign_system()
+
 	create_interaction_manager()
 	create_mobile_controls()
 	create_interaction_prompt()
 
 	update_camera_mode()
 
+
+# --------------------------------------------------
+# SOVEREIGN SYSTEM CONNECTION
+# --------------------------------------------------
+
+func connect_sovereign_system() -> void:
+	if not is_instance_valid(SovereignPower):
+		push_warning("SYSTEM: SovereignPower Autoload is unavailable.")
+		return
+
+	if world_manager == null:
+		push_warning("SYSTEM: WorldManager is unavailable.")
+		return
+
+	SovereignPower.connect_world_manager(world_manager)
+
+	print("SYSTEM: Sovereign Power connected to WorldManager.")
+	print("SYSTEM: Creator identity verification is not yet configured.")
+
+
+func request_sovereign_world_travel(world_id: int) -> Dictionary:
+	if not is_instance_valid(SovereignPower):
+		return {
+			"success": false,
+			"reason": "SOVEREIGN_SYSTEM_UNAVAILABLE"
+		}
+
+	return SovereignPower.travel_to_world(world_id)
+
+
+func get_sovereign_status() -> Dictionary:
+	if not is_instance_valid(SovereignPower):
+		return {
+			"available": false
+		}
+
+	return SovereignPower.get_authority_status()
+
+
+# --------------------------------------------------
+# WORLD MANAGER
+# --------------------------------------------------
 
 func create_world_manager() -> void:
 	world_manager = WorldManagerScript.new()
