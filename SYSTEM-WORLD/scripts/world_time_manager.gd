@@ -1,10 +1,15 @@
 
 extends Node
+
 class_name SystemWorldTimeManager
 
 const UPDATE_INTERVAL := 1.0
 const NIGHT_LIGHT_RANGE := 18.0
 const NIGHT_LIGHT_MAX_ENERGY := 1.35
+
+const SkyWeatherFlyingManagerScript = preload(
+	"res://scripts/sky_weather_flying_manager.gd"
+)
 
 var world_root: Node3D
 var world_environment: WorldEnvironment
@@ -13,15 +18,12 @@ var sky_material: ProceduralSkyMaterial
 
 var night_lights: Array[OmniLight3D] = []
 var world_manager: Node
+var sky_weather_manager
 
 var elapsed := 0.0
 var current_hour := 12.0
 var current_daylight := 1.0
 
-
-# --------------------------------------------------
-# WORLD MANAGER CONNECTION
-# --------------------------------------------------
 
 func _connect_world_manager() -> void:
 	var scene_root := get_parent()
@@ -64,13 +66,9 @@ func _on_world_changed(world_id: int) -> void:
 	if next_root == world_root:
 		return
 
-	print("SYSTEM: Switching time and atmosphere to ", next_root.name)
+	print("SYSTEM: Switching time and sky to ", next_root.name)
 	setup(next_root)
 
-
-# --------------------------------------------------
-# SETUP — SUPPORT ALL WORLDS
-# --------------------------------------------------
 
 func setup(target_world: Node3D) -> bool:
 	if target_world == null:
@@ -115,11 +113,41 @@ func setup(target_world: Node3D) -> bool:
 		environment.sky.sky_material = sky_material
 
 	_create_world_night_lights()
+	_setup_sky_weather_manager()
 	_update_clock()
 
 	print("SYSTEM Time Manager: active world = ", world_root.name)
 
 	return true
+
+
+func _setup_sky_weather_manager() -> void:
+	if sky_weather_manager == null:
+		sky_weather_manager = SkyWeatherFlyingManagerScript.new()
+		sky_weather_manager.name = "SkyWeatherFlyingManager"
+		add_child(sky_weather_manager)
+
+	var active_world_id := 0
+
+	if world_manager != null:
+		var value = world_manager.get("active_world")
+
+		if value != null:
+			active_world_id = int(value)
+
+	sky_weather_manager.setup(
+		world_root,
+		active_world_id
+	)
+
+	sky_weather_manager.set_daylight_factor(
+		current_daylight
+	)
+
+	print(
+		"SYSTEM SKY: connected to world ",
+		active_world_id
+	)
 
 
 func _find_or_create_environment() -> void:
@@ -189,10 +217,6 @@ func _find_or_create_sun() -> void:
 		sun.shadow_enabled = true
 		world_root.add_child(sun)
 
-
-# --------------------------------------------------
-# WORLD NIGHT LIGHTS
-# --------------------------------------------------
 
 func _create_world_night_lights() -> void:
 	if world_root == null:
@@ -269,10 +293,6 @@ func _update_night_lights(daylight: float) -> void:
 			light.light_energy = target_energy
 
 
-# --------------------------------------------------
-# REAL-TIME CLOCK
-# --------------------------------------------------
-
 func _process(delta: float) -> void:
 	if world_environment == null or sun == null:
 		return
@@ -297,10 +317,6 @@ func _update_clock() -> void:
 
 	_apply_day_night_cycle(current_hour)
 
-
-# --------------------------------------------------
-# DAY / NIGHT ATMOSPHERE
-# --------------------------------------------------
 
 func _apply_day_night_cycle(hour: float) -> void:
 	if world_environment == null:
@@ -415,10 +431,24 @@ func _apply_day_night_cycle(hour: float) -> void:
 		daylight
 	)
 
+	if sky_weather_manager != null:
+		sky_weather_manager.set_daylight_factor(daylight)
 
-# --------------------------------------------------
-# PUBLIC TIME API
-# --------------------------------------------------
+
+func set_weather(weather_name: String) -> void:
+	if sky_weather_manager == null:
+		push_warning("SYSTEM SKY: weather manager is not ready.")
+		return
+
+	sky_weather_manager.set_weather(weather_name)
+
+
+func get_current_weather() -> String:
+	if sky_weather_manager == null:
+		return "clear"
+
+	return sky_weather_manager.get_current_weather()
+
 
 func get_current_hour() -> float:
 	return current_hour
