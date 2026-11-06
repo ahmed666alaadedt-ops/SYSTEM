@@ -1,4 +1,3 @@
-
 package com.system.irtqaa
 
 import android.speech.tts.TextToSpeech
