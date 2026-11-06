@@ -1,9 +1,9 @@
-extends Node
 
+extends Node
 class_name SystemWorldTimeManager
 
 const UPDATE_INTERVAL := 1.0
-const NIGHT_LIGHT_RANGE := 15.0
+const NIGHT_LIGHT_RANGE := 18.0
 const NIGHT_LIGHT_MAX_ENERGY := 1.35
 
 var world_root: Node3D
@@ -18,46 +18,210 @@ var current_hour := 12.0
 var current_daylight := 1.0
 
 
+# --------------------------------------------------
+# SETUP — SUPPORT ALL WORLDS
+# --------------------------------------------------
+
 func setup(target_world: Node3D) -> bool:
 	world_root = target_world
+	night_lights.clear()
 
 	if world_root == null:
 		push_warning("SYSTEM Time Manager: world root is missing.")
 		return false
 
-	world_environment = world_root.get_node_or_null(
-		"ModernCityEnvironment"
-	) as WorldEnvironment
-
-	sun = world_root.get_node_or_null(
-		"ModernCitySun"
-	) as DirectionalLight3D
+	_find_or_create_environment()
+	_find_or_create_sun()
 
 	if world_environment == null or sun == null:
-		push_warning("SYSTEM Time Manager: environment or sun is missing.")
+		push_warning("SYSTEM Time Manager: environment setup failed.")
 		return false
 
 	if world_environment.environment == null:
-		return false
+		world_environment.environment = Environment.new()
 
-	if world_environment.environment.sky == null:
-		push_warning("SYSTEM Time Manager: sky is missing.")
-		return false
+	var environment := world_environment.environment
+
+	if environment.sky == null:
+		environment.background_mode = Environment.BG_SKY
+		environment.sky = Sky.new()
+
+	if environment.sky.sky_material == null:
+		environment.sky.sky_material = ProceduralSkyMaterial.new()
 
 	sky_material = (
-		world_environment.environment.sky.sky_material
+		environment.sky.sky_material
 		as ProceduralSkyMaterial
 	)
 
 	if sky_material == null:
-		push_warning("SYSTEM Time Manager: procedural sky is missing.")
-		return false
+		sky_material = ProceduralSkyMaterial.new()
+		environment.sky.sky_material = sky_material
 
-	_create_city_night_lights()
+	_create_world_night_lights()
 	_update_clock()
+
+	print(
+		"SYSTEM Time Manager: active world = ",
+		world_root.name
+	)
 
 	return true
 
+
+func _find_or_create_environment() -> void:
+	world_environment = null
+
+	if world_root == null:
+		return
+
+	var found := world_root.find_children(
+		"*",
+		"WorldEnvironment",
+		true,
+		false
+	)
+
+	if not found.is_empty():
+		world_environment = found[0] as WorldEnvironment
+
+	if world_environment == null:
+		world_environment = WorldEnvironment.new()
+		world_environment.name = "SystemWorldEnvironment"
+
+		var environment := Environment.new()
+		environment.background_mode = Environment.BG_SKY
+		environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+		environment.ambient_light_color = Color(0.55, 0.65, 0.78)
+		environment.ambient_light_energy = 0.65
+		environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+		environment.fog_enabled = true
+		environment.fog_light_color = Color(0.48, 0.57, 0.68)
+		environment.fog_density = 0.0015
+
+		var sky := Sky.new()
+		var material := ProceduralSkyMaterial.new()
+		material.sky_top_color = Color(0.055, 0.12, 0.23)
+		material.sky_horizon_color = Color(0.48, 0.57, 0.68)
+		material.ground_bottom_color = Color(0.10, 0.12, 0.15)
+		material.ground_horizon_color = Color(0.36, 0.40, 0.43)
+
+		sky.sky_material = material
+		environment.sky = sky
+
+		world_environment.environment = environment
+		world_environment.name = "SystemWorldEnvironment"
+		world_root.add_child(world_environment)
+
+
+func _find_or_create_sun() -> void:
+	sun = null
+
+	if world_root == null:
+		return
+
+	var found := world_root.find_children(
+		"*",
+		"DirectionalLight3D",
+		true,
+		false
+	)
+
+	if not found.is_empty():
+		sun = found[0] as DirectionalLight3D
+
+	if sun == null:
+		sun = DirectionalLight3D.new()
+		sun.name = "SystemWorldSun"
+		sun.rotation_degrees = Vector3(-38.0, -30.0, 0.0)
+		sun.shadow_enabled = true
+		world_root.add_child(sun)
+
+
+# --------------------------------------------------
+# WORLD NIGHT LIGHTS
+# --------------------------------------------------
+
+func _create_world_night_lights() -> void:
+	if world_root == null:
+		return
+
+	var light_positions: Array[Vector3] = []
+
+	var is_greed_island := (
+		world_root.get_node_or_null(
+			"GreedIslandEnvironment"
+		) != null
+	)
+
+	if is_greed_island:
+		light_positions = [
+			Vector3(-35.0, 5.0, -45.0),
+			Vector3(35.0, 5.0, -45.0),
+			Vector3(-20.0, 5.0, 5.0),
+			Vector3(20.0, 5.0, -90.0),
+			Vector3(0.0, 6.0, -70.0),
+			Vector3(-40.0, 5.0, -15.0)
+		]
+	else:
+		light_positions = [
+			Vector3(-5.35, 5.55, -10.0),
+			Vector3(5.35, 5.55, -10.0),
+			Vector3(-5.35, 5.55, -54.0),
+			Vector3(5.35, 5.55, -54.0),
+			Vector3(-5.35, 5.55, -98.0),
+			Vector3(5.35, 5.55, -98.0)
+		]
+
+	for index in range(light_positions.size()):
+		var light_name := "SystemNightLight_%02d" % index
+
+		var existing := world_root.get_node_or_null(
+			light_name
+		) as OmniLight3D
+
+		if existing != null:
+			night_lights.append(existing)
+			continue
+
+		var light := OmniLight3D.new()
+		light.name = light_name
+		light.position = light_positions[index]
+		light.light_color = Color(1.0, 0.72, 0.43)
+		light.light_energy = 0.0
+		light.omni_range = NIGHT_LIGHT_RANGE
+		light.shadow_enabled = false
+		light.light_specular = 0.25
+
+		world_root.add_child(light)
+		night_lights.append(light)
+
+
+func _update_night_lights(daylight: float) -> void:
+	var night_factor := clampf(
+		(0.42 - daylight) / 0.42,
+		0.0,
+		1.0
+	)
+
+	night_factor = (
+		night_factor
+		* night_factor
+		* (3.0 - 2.0 * night_factor)
+	)
+
+	var target_energy := (
+		night_factor * NIGHT_LIGHT_MAX_ENERGY
+	)
+
+	for light in night_lights:
+		if is_instance_valid(light):
+			light.light_energy = target_energy
+
+
+# --------------------------------------------------
+# REAL-TIME CLOCK
+# --------------------------------------------------
 
 func _process(delta: float) -> void:
 	if world_environment == null or sun == null:
@@ -85,85 +249,20 @@ func _update_clock() -> void:
 
 
 # --------------------------------------------------
-# CITY NIGHT LIGHTING
-# --------------------------------------------------
-
-func _create_city_night_lights() -> void:
-	if world_root == null:
-		return
-
-	# ستة أضواء فقط موزعة على امتداد الشارع.
-	# لا نستخدم الظلال حتى نحافظ على أداء الهاتف.
-	var light_positions := [
-		Vector3(-5.35, 5.55, -10.0),
-		Vector3(5.35, 5.55, -10.0),
-		Vector3(-5.35, 5.55, -54.0),
-		Vector3(5.35, 5.55, -54.0),
-		Vector3(-5.35, 5.55, -98.0),
-		Vector3(5.35, 5.55, -98.0)
-	]
-
-	for index in range(light_positions.size()):
-		var light_name := "CityNightLight_%02d" % index
-
-		var existing := world_root.get_node_or_null(
-			light_name
-		) as OmniLight3D
-
-		if existing != null:
-			night_lights.append(existing)
-			continue
-
-		var night_light := OmniLight3D.new()
-		night_light.name = light_name
-		night_light.position = light_positions[index]
-
-		night_light.light_color = Color(
-			1.0,
-			0.72,
-			0.43
-		)
-
-		night_light.light_energy = 0.0
-		night_light.omni_range = NIGHT_LIGHT_RANGE
-		night_light.shadow_enabled = false
-		night_light.light_specular = 0.25
-
-		world_root.add_child(night_light)
-		night_lights.append(night_light)
-
-
-func _update_night_lights(daylight: float) -> void:
-	# تعمل الإنارة تدريجياً عند الغروب
-	# وتنطفئ تدريجياً عند شروق الشمس.
-	var night_factor := clampf(
-		(0.42 - daylight) / 0.42,
-		0.0,
-		1.0
-	)
-
-	# انتقال ناعم بين النهار والليل.
-	night_factor = (
-		night_factor
-		* night_factor
-		* (3.0 - 2.0 * night_factor)
-	)
-
-	var target_energy := (
-		night_factor * NIGHT_LIGHT_MAX_ENERGY
-	)
-
-	for night_light in night_lights:
-		if is_instance_valid(night_light):
-			night_light.light_energy = target_energy
-
-
-# --------------------------------------------------
-# REAL-TIME DAY AND NIGHT
+# DAY / NIGHT ATMOSPHERE
 # --------------------------------------------------
 
 func _apply_day_night_cycle(hour: float) -> void:
+	if world_environment == null:
+		return
+
+	if sun == null or sky_material == null:
+		return
+
 	var environment := world_environment.environment
+
+	if environment == null:
+		return
 
 	var sun_curve := sin(
 		(hour - 6.0) / 12.0 * PI
@@ -185,14 +284,12 @@ func _apply_day_night_cycle(hour: float) -> void:
 
 	dawn_factor = clampf(dawn_factor, 0.0, 1.0)
 
-	# حركة الشمس حسب ساعة الجهاز المحلية.
 	sun.rotation_degrees = Vector3(
 		-elevation,
 		-30.0,
 		0.0
 	)
 
-	# شدة ضوء الشمس.
 	sun.light_energy = lerpf(
 		0.04,
 		1.2,
@@ -205,10 +302,8 @@ func _apply_day_night_cycle(hour: float) -> void:
 		0.48 + daylight * 0.42
 	)
 
-	# إضاءة الشوارع الحقيقية.
 	_update_night_lights(daylight)
 
-	# إضاءة السماء والبيئة.
 	environment.ambient_light_energy = lerpf(
 		0.18,
 		0.75,
@@ -221,7 +316,6 @@ func _apply_day_night_cycle(hour: float) -> void:
 		daylight
 	)
 
-	# ألوان السماء بين الليل والنهار.
 	sky_material.sky_top_color = Color(
 		0.012,
 		0.025,
@@ -240,7 +334,6 @@ func _apply_day_night_cycle(hour: float) -> void:
 		daylight
 	)
 
-	# ألوان الشروق والغروب.
 	sky_material.sky_horizon_color = (
 		sky_material.sky_horizon_color.lerp(
 			Color(1.0, 0.43, 0.20),
@@ -273,6 +366,10 @@ func _apply_day_night_cycle(hour: float) -> void:
 	)
 
 
+# --------------------------------------------------
+# PUBLIC TIME API
+# --------------------------------------------------
+
 func get_current_hour() -> float:
 	return current_hour
 
@@ -284,3 +381,11 @@ func get_time_label() -> String:
 	)
 
 	return "%02d:%02d" % [hour, minute]
+
+
+func get_daylight_factor() -> float:
+	return current_daylight
+
+
+func is_night() -> bool:
+	return current_daylight < 0.25
