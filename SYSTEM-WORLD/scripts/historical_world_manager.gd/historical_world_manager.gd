@@ -28,6 +28,18 @@ const LANDMARKS := {
 		"civilization": "حضارة بابل",
 		"region": "بلاد الرافدين",
 		"lore": "برج مستوحى من العمارة البابلية والأساطير المرتبطة ببرج بابل."
+	},
+	"ancient_rome": {
+		"name": "روما القديمة",
+		"civilization": "الإمبراطورية الرومانية",
+		"region": "روما، إيطاليا",
+		"lore": "مدينة رومانية تاريخية تضم المنتدى والمعابد والطرق والمباني العامة."
+	},
+	"roman_colosseum": {
+		"name": "الكولوسيوم الروماني",
+		"civilization": "الإمبراطورية الرومانية",
+		"region": "روما، إيطاليا",
+		"lore": "مدرج روماني ضخم استُخدم للعروض والمواجهات العامة."
 	}
 }
 
@@ -36,11 +48,16 @@ var discovered_landmarks: Array[String] = []
 
 func _ready() -> void:
 	name = "HistoricalCivilizationsEnvironment"
+
 	_create_historical_ground()
+
 	_build_hercules_arches()
 	_build_atlantis()
 	_build_alexandria_lighthouse()
 	_build_babylon_tower()
+
+	_build_ancient_rome()
+	_build_roman_colosseum()
 
 	print("SYSTEM WORLD: Historical landmarks created.")
 
@@ -204,9 +221,7 @@ func _build_hercules_arches() -> void:
 			landmark,
 			"HeraclesPillar",
 			Vector3(side * 5.0, 5.0, 0.0),
-			1.5,
-			2.0,
-			10.0,
+			1.5, 2.0, 10.0,
 			stone
 		)
 
@@ -214,13 +229,10 @@ func _build_hercules_arches() -> void:
 			landmark,
 			"PillarCapital",
 			Vector3(side * 5.0, 10.2, 0.0),
-			2.1,
-			2.1,
-			0.7,
+			2.1, 2.1, 0.7,
 			dark_stone
 		)
 
-	# بناء القوس من قطع حجرية متتابعة.
 	var radius := 5.0
 	var center_height := 10.0
 
@@ -281,7 +293,6 @@ func _build_atlantis() -> void:
 	water.material_override = water_material
 	landmark.add_child(water)
 
-	# حلقات المدينة المتدرجة.
 	for ring in range(3):
 		var radius := 12.0 + float(ring) * 10.0
 
@@ -299,9 +310,7 @@ func _build_atlantis() -> void:
 				ring_node,
 				"AtlantisColumn",
 				Vector3(x, 2.0, z),
-				0.55,
-				0.75,
-				4.0,
+				0.55, 0.75, 4.0,
 				stone
 			)
 
@@ -313,14 +322,11 @@ func _build_atlantis() -> void:
 				gold
 			)
 
-	# القصر المركزي.
 	_add_cylinder(
 		landmark,
 		"AtlantisCentralPalace",
 		Vector3(0.0, 4.0, 0.0),
-		5.0,
-		7.0,
-		8.0,
+		5.0, 7.0, 8.0,
 		stone
 	)
 
@@ -332,7 +338,6 @@ func _build_atlantis() -> void:
 		gold
 	)
 
-	# أبراج المدينة.
 	for index in range(6):
 		var angle := TAU * float(index) / 6.0
 		var x := 16.0 * cos(angle)
@@ -342,9 +347,7 @@ func _build_atlantis() -> void:
 			landmark,
 			"AtlantisTower",
 			Vector3(x, 7.0, z),
-			1.3,
-			2.0,
-			14.0,
+			1.3, 2.0, 14.0,
 			stone
 		)
 
@@ -373,7 +376,6 @@ func _build_alexandria_lighthouse() -> void:
 	var upper_stone := _material(Color(0.88, 0.82, 0.67))
 	var bronze := _material(Color(0.55, 0.38, 0.18), 0.35, 0.65)
 
-	# قاعدة المنارة.
 	_add_box(
 		landmark,
 		"LighthouseFoundation",
@@ -382,7 +384,6 @@ func _build_alexandria_lighthouse() -> void:
 		limestone
 	)
 
-	# الطابق السفلي.
 	_add_box(
 		landmark,
 		"LighthouseLowerTower",
@@ -391,47 +392,35 @@ func _build_alexandria_lighthouse() -> void:
 		limestone
 	)
 
-	# الطابق الأوسط.
 	_add_cylinder(
 		landmark,
 		"LighthouseMiddleTower",
 		Vector3(0.0, 17.0, 0.0),
-		5.0,
-		7.0,
-		12.0,
+		5.0, 7.0, 12.0,
 		upper_stone
 	)
 
-	# الطابق العلوي.
 	_add_cylinder(
 		landmark,
 		"LighthouseUpperTower",
 		Vector3(0.0, 26.0, 0.0),
-		3.0,
-		5.0,
-		7.0,
+		3.0, 5.0, 7.0,
 		limestone
 	)
 
-	# منصة المصباح.
 	_add_cylinder(
 		landmark,
 		"LighthouseLanternBase",
 		Vector3(0.0, 30.0, 0.0),
-		4.0,
-		4.0,
-		1.0,
+		4.0, 4.0, 1.0,
 		bronze
 	)
 
-	# غرفة المصباح.
 	_add_cylinder(
 		landmark,
 		"LighthouseLanternRoom",
 		Vector3(0.0, 32.0, 0.0),
-		2.5,
-		2.5,
-		3.0,
+		2.5, 2.5, 3.0,
 		bronze
 	)
 
@@ -449,7 +438,6 @@ func _build_alexandria_lighthouse() -> void:
 		flame_material
 	)
 
-	# أعمدة حول المنارة.
 	for index in range(8):
 		var angle := TAU * float(index) / 8.0
 
@@ -461,9 +449,7 @@ func _build_alexandria_lighthouse() -> void:
 				2.5,
 				8.5 * sin(angle)
 			),
-			0.35,
-			0.45,
-			5.0,
+			0.35, 0.45, 5.0,
 			upper_stone
 		)
 
@@ -484,10 +470,7 @@ func _build_babylon_tower() -> void:
 	var dark_brick := _material(Color(0.38, 0.19, 0.13))
 	var gold := _material(Color(0.85, 0.65, 0.25), 0.35, 0.55)
 
-	# المصطبات البابلية المتدرجة.
-	var layer_count := 7
-
-	for layer in range(layer_count):
+	for layer in range(7):
 		var width := 34.0 - float(layer) * 4.0
 		var height := 3.0
 		var y := float(layer) * height + height * 0.5
@@ -504,7 +487,6 @@ func _build_babylon_tower() -> void:
 			layer_material
 		)
 
-		# شريط زخرفي حول المصطبة.
 		_add_box(
 			landmark,
 			"BabylonFrontDecoration_%02d" % layer,
@@ -513,7 +495,6 @@ func _build_babylon_tower() -> void:
 			gold
 		)
 
-	# المعبد في القمة.
 	_add_box(
 		landmark,
 		"BabylonSummitTemple",
@@ -530,19 +511,15 @@ func _build_babylon_tower() -> void:
 		dark_brick
 	)
 
-	# أعمدة مدخل البرج.
 	for side in [-1.0, 1.0]:
 		_add_cylinder(
 			landmark,
 			"BabylonEntranceColumn",
 			Vector3(side * 3.0, 4.0, -18.0),
-			0.8,
-			1.0,
-			8.0,
+			0.8, 1.0, 8.0,
 			gold
 		)
 
-	# طريق الصعود الأمامي.
 	_add_box(
 		landmark,
 		"BabylonEntrancePath",
@@ -550,6 +527,309 @@ func _build_babylon_tower() -> void:
 		Vector3(10.0, 0.5, 12.0),
 		dark_brick
 	)
+
+
+# --------------------------------------------------
+# 5. ANCIENT ROME — ROMAN FORUM
+# --------------------------------------------------
+
+func _build_ancient_rome() -> void:
+	var landmark := _create_landmark(
+		"ancient_rome",
+		self
+	)
+
+	landmark.position = Vector3(0.0, 0.0, -75.0)
+
+	var marble := _material(Color(0.78, 0.73, 0.63))
+	var aged_marble := _material(Color(0.58, 0.53, 0.45))
+	var roof_material := _material(Color(0.48, 0.27, 0.19))
+	var bronze := _material(Color(0.55, 0.38, 0.18), 0.4, 0.6)
+
+	# الساحة الرئيسية للمنتدى الروماني.
+	_add_box(
+		landmark,
+		"RomanForumSquare",
+		Vector3(0.0, 0.12, 0.0),
+		Vector3(65.0, 0.25, 42.0),
+		aged_marble
+	)
+
+	# طريق روماني رئيسي.
+	_add_box(
+		landmark,
+		"RomanMainRoad",
+		Vector3(0.0, 0.18, 25.0),
+		Vector3(75.0, 0.35, 10.0),
+		marble
+	)
+
+	# معبد روماني في وسط المدينة.
+	_add_box(
+		landmark,
+		"RomanTempleFoundation",
+		Vector3(0.0, 1.0, -7.0),
+		Vector3(25.0, 2.0, 18.0),
+		aged_marble
+	)
+
+	_add_box(
+		landmark,
+		"RomanTempleMainHall",
+		Vector3(0.0, 7.0, -7.0),
+		Vector3(17.0, 10.0, 12.0),
+		marble
+	)
+
+	_add_box(
+		landmark,
+		"RomanTempleRoof",
+		Vector3(0.0, 13.0, -7.0),
+		Vector3(23.0, 2.0, 17.0),
+		roof_material
+	)
+
+	# أعمدة واجهة المعبد.
+	for index in range(7):
+		var x := -9.0 + float(index) * 3.0
+
+		_add_cylinder(
+			landmark,
+			"RomanTempleColumn_%02d" % index,
+			Vector3(x, 5.0, -16.0),
+			0.65, 0.8, 10.0,
+			marble
+		)
+
+		_add_cylinder(
+			landmark,
+			"RomanTempleCapital_%02d" % index,
+			Vector3(x, 10.2, -16.0),
+			1.0, 1.0, 0.5,
+			bronze
+		)
+
+	# مبنى مجلس الشيوخ.
+	_add_box(
+		landmark,
+		"RomanSenateFoundation",
+		Vector3(-23.0, 1.0, -5.0),
+		Vector3(13.0, 2.0, 13.0),
+		aged_marble
+	)
+
+	_add_box(
+		landmark,
+		"RomanSenateBuilding",
+		Vector3(-23.0, 6.0, -5.0),
+		Vector3(11.0, 9.0, 11.0),
+		marble
+	)
+
+	_add_box(
+		landmark,
+		"RomanSenateRoof",
+		Vector3(-23.0, 11.0, -5.0),
+		Vector3(14.0, 1.5, 14.0),
+		roof_material
+	)
+
+	# قوس نصر روماني.
+	var arch_position := Vector3(23.0, 0.0, -5.0)
+
+	for side in [-1.0, 1.0]:
+		_add_box(
+			landmark,
+			"RomanTriumphalArchPillar",
+			arch_position + Vector3(side * 4.0, 4.0, 0.0),
+			Vector3(2.0, 8.0, 3.0),
+			marble
+		)
+
+	_add_box(
+		landmark,
+		"RomanTriumphalArchTop",
+		arch_position + Vector3(0.0, 8.0, 0.0),
+		Vector3(10.0, 2.0, 3.0),
+		aged_marble
+	)
+
+	# أعمدة وزخارف موزعة في المنتدى.
+	for index in range(10):
+		var x := -28.0 + float(index) * 6.0
+
+		_add_cylinder(
+			landmark,
+			"ForumColumn_%02d" % index,
+			Vector3(x, 3.0, 17.0),
+			0.45, 0.6, 6.0,
+			marble
+		)
+
+	# تمثال تذكاري في الساحة.
+	_add_cylinder(
+		landmark,
+		"RomanStatuePedestal",
+		Vector3(0.0, 1.5, 8.0),
+		2.0, 2.5, 3.0,
+		bronze
+	)
+
+	_add_sphere(
+		landmark,
+		"RomanStatueFigure",
+		Vector3(0.0, 4.0, 8.0),
+		1.6,
+		bronze
+	)
+
+
+# --------------------------------------------------
+# 6. ROMAN COLOSSEUM — AMPHITHEATRE
+# --------------------------------------------------
+
+func _build_roman_colosseum() -> void:
+	var landmark := _create_landmark(
+		"roman_colosseum",
+		self
+	)
+
+	landmark.position = Vector3(0.0, 0.0, 75.0)
+
+	var outer_stone := _material(Color(0.72, 0.66, 0.55))
+	var inner_stone := _material(Color(0.58, 0.51, 0.42))
+	var arch_shadow := _material(Color(0.30, 0.27, 0.23))
+	var sand := _material(Color(0.76, 0.59, 0.34))
+	var seat_material := _material(Color(0.66, 0.57, 0.45))
+
+	# أرضية المنطقة المحيطة بالمدرج.
+	_add_cylinder(
+		landmark,
+		"ColosseumOuterPlaza",
+		Vector3(0.0, 0.1, 0.0),
+		29.0, 29.0, 0.2,
+		inner_stone
+	).scale = Vector3(1.0, 1.0, 0.72)
+
+	# أرضية ميدان القتال البيضاوية.
+	_add_cylinder(
+		landmark,
+		"ColosseumArenaSand",
+		Vector3(0.0, 0.45, 0.0),
+		13.0, 13.0, 0.5,
+		sand
+	).scale = Vector3(1.0, 1.0, 0.72)
+
+	# الجدار الخارجي والمدرجات المتدرجة.
+	for level in range(3):
+		var radius := 23.0 - float(level) * 2.5
+		var y := 2.0 + float(level) * 4.5
+		var height := 4.0
+
+		var tier := _add_cylinder(
+			landmark,
+			"ColosseumTier_%d" % level,
+			Vector3(0.0, y, 0.0),
+			radius,
+			radius + 1.0,
+			height,
+			outer_stone if level != 1 else inner_stone
+		)
+
+		tier.scale = Vector3(1.0, 1.0, 0.72)
+
+	# صفوف المقاعد الداخلية.
+	for row in range(5):
+		var radius := 17.0 - float(row) * 1.0
+		var seat := _add_cylinder(
+			landmark,
+			"ColosseumSeatingRow_%d" % row,
+			Vector3(0.0, 3.0 + float(row) * 1.15, 0.0),
+			radius,
+			radius + 1.0,
+			0.8,
+			seat_material
+		)
+
+		seat.scale = Vector3(1.0, 1.0, 0.72)
+
+	# الأعمدة والفتحات الخارجية المتكررة.
+	for level in range(3):
+		var y := 2.0 + float(level) * 4.5
+		var radius_x := 23.5 - float(level) * 2.5
+		var radius_z := radius_x * 0.72
+
+		for index in range(32):
+			var angle := TAU * float(index) / 32.0
+
+			var x := radius_x * cos(angle)
+			var z := radius_z * sin(angle)
+
+			var pillar := _add_cylinder(
+				landmark,
+				"ColosseumPillar_%d_%d" % [level, index],
+				Vector3(x, y, z),
+				0.55, 0.7, 4.0,
+				outer_stone
+			)
+
+			pillar.rotation.y = -angle
+
+			var arch_marker := _add_box(
+				landmark,
+				"ColosseumArchFrame_%d_%d" % [level, index],
+				Vector3(x, y + 2.05, z),
+				Vector3(1.8, 0.35, 1.0),
+				arch_shadow
+			)
+
+			arch_marker.rotation.y = -angle
+
+	# منصة دخول المقاتلين.
+	_add_box(
+		landmark,
+		"ColosseumMainEntrance",
+		Vector3(0.0, 1.2, -24.0),
+		Vector3(9.0, 2.4, 4.0),
+		inner_stone
+	)
+
+	# أبراج جانبية عند المدخل.
+	for side in [-1.0, 1.0]:
+		_add_cylinder(
+			landmark,
+			"ColosseumEntranceTower",
+			Vector3(side * 7.0, 5.0, -22.0),
+			1.2, 1.6, 10.0,
+			outer_stone
+		)
+
+	# أعمدة وزخارف أعلى المدرج.
+	for index in range(16):
+		var angle := TAU * float(index) / 16.0
+		var x := 18.0 * cos(angle)
+		var z := 13.0 * sin(angle)
+
+		_add_cylinder(
+			landmark,
+			"ColosseumUpperColumn_%d" % index,
+			Vector3(x, 15.0, z),
+			0.45, 0.55, 5.0,
+			outer_stone
+		)
+
+	# علامة مركزية في ساحة القتال.
+	_add_cylinder(
+		landmark,
+		"ColosseumArenaMarker",
+		Vector3(0.0, 0.75, 0.0),
+		2.0, 2.0, 0.15,
+		bronze_material()
+	)
+
+
+func bronze_material() -> StandardMaterial3D:
+	return _material(Color(0.55, 0.34, 0.15), 0.4, 0.6)
 
 
 # --------------------------------------------------
