@@ -31,14 +31,28 @@ var weather_particles: GPUParticles3D
 
 
 func setup(target_world: Node3D, world_id: int) -> void:
+	# تنظيف عناصر العالم السابق قبل إنشاء عناصر العالم الجديد.
+	if is_instance_valid(visual_root):
+		visual_root.queue_free()
+
+	visual_root = null
+
+	clouds.clear()
+	stars.clear()
+	creatures.clear()
+
+	moon = null
+	lightning_light = null
+	weather_particles = null
+
+	lightning_timer = 0.0
+	lightning_flash = 0.0
+
 	world_root = target_world
 	target_world_id = clampi(world_id, 0, 3)
 
 	if not is_instance_valid(world_root):
 		return
-
-	if is_instance_valid(visual_root):
-		visual_root.queue_free()
 
 	visual_root = Node3D.new()
 	visual_root.name = "SkyWeatherFlyingVisuals"
