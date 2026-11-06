@@ -26,17 +26,14 @@ var moon: MeshInstance3D
 var lightning_light: OmniLight3D
 var lightning_timer: float = 0.0
 var lightning_flash: float = 0.0
-
 var weather_particles: GPUParticles3D
 
 
 func setup(target_world: Node3D, world_id: int) -> void:
-	# تنظيف عناصر العالم السابق قبل إنشاء عناصر العالم الجديد.
 	if is_instance_valid(visual_root):
 		visual_root.queue_free()
 
 	visual_root = null
-
 	clouds.clear()
 	stars.clear()
 	creatures.clear()
@@ -74,6 +71,22 @@ func _process(delta: float) -> void:
 
 
 # --------------------------------------------------
+# MATERIALS
+# --------------------------------------------------
+
+func _make_material(color: Color, glow: bool = false) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.roughness = 0.8
+
+	if glow:
+		material.emission_enabled = true
+		material.emission = color * 0.35
+
+	return material
+
+
+# --------------------------------------------------
 # SKY
 # --------------------------------------------------
 
@@ -89,7 +102,6 @@ func _create_sky() -> void:
 			randf_range(12.0, 25.0),
 			randf_range(-35.0, 35.0)
 		)
-		cloud.scale = Vector3.ONE
 		cloud.name = "SkyCloud_%d" % i
 		visual_root.add_child(cloud)
 		clouds.append(cloud)
@@ -102,11 +114,7 @@ func _create_sky() -> void:
 	moon.mesh = moon_mesh
 	moon.position = Vector3(0, 32, -45)
 	moon.name = "WorldMoon"
-	var moon_material := StandardMaterial3D.new()
-	moon_material.albedo_color = Color(0.8, 0.85, 1.0)
-	moon_material.emission_enabled = true
-	moon_material.emission = Color(0.35, 0.4, 0.65)
-	moon.material_override = moon_material
+	moon.material_override = _make_material(Color(0.8, 0.85, 1.0), true)
 	visual_root.add_child(moon)
 
 	for i in range(45):
@@ -120,11 +128,7 @@ func _create_sky() -> void:
 			randf_range(18.0, 42.0),
 			randf_range(-45.0, 45.0)
 		)
-		var material := StandardMaterial3D.new()
-		material.albedo_color = Color.WHITE
-		material.emission_enabled = true
-		material.emission = Color(0.8, 0.85, 1.0)
-		star.material_override = material
+		star.material_override = _make_material(Color.WHITE, true)
 		visual_root.add_child(star)
 		stars.append(star)
 
@@ -140,13 +144,16 @@ func _update_clouds(delta: float) -> void:
 	for cloud in clouds:
 		if not is_instance_valid(cloud):
 			continue
+
 		cloud.position.x += delta * 0.35
+
 		if cloud.position.x > 45.0:
 			cloud.position.x = -45.0
 
 
 func _update_stars() -> void:
 	var visible := daylight_factor < 0.35
+
 	for star in stars:
 		if is_instance_valid(star):
 			star.visible = visible
@@ -175,6 +182,7 @@ func _create_weather_system() -> void:
 	particle_material.initial_velocity_min = 5.0
 	particle_material.initial_velocity_max = 9.0
 	particle_material.gravity = Vector3(0, -2, 0)
+
 	weather_particles.process_material = particle_material
 
 	var particle_mesh := SphereMesh.new()
@@ -197,6 +205,7 @@ func _apply_weather_settings() -> void:
 		return
 
 	var material := weather_particles.process_material as ParticleProcessMaterial
+
 	if material == null:
 		return
 
@@ -207,12 +216,14 @@ func _apply_weather_settings() -> void:
 			material.initial_velocity_min = 12.0
 			material.initial_velocity_max = 20.0
 			material.gravity = Vector3(0, -5, 0)
+
 		"snow":
 			weather_particles.emitting = true
 			material.direction = Vector3(0, -1, 0)
 			material.initial_velocity_min = 1.0
 			material.initial_velocity_max = 3.0
 			material.gravity = Vector3(0, -0.5, 0)
+
 		_:
 			weather_particles.emitting = false
 
@@ -220,18 +231,22 @@ func _apply_weather_settings() -> void:
 func _update_weather(delta: float) -> void:
 	if current_weather == "storm":
 		lightning_timer -= delta
+
 		if lightning_timer <= 0.0:
 			lightning_timer = randf_range(5.0, 14.0)
 			lightning_flash = 0.25
+
 			lightning_light.position = Vector3(
 				randf_range(-20, 20),
 				25,
 				randf_range(-20, 20)
 			)
+
 			lightning_light.light_energy = 5.0
 
 	if lightning_flash > 0.0:
 		lightning_flash -= delta
+
 		if lightning_flash <= 0.0:
 			lightning_light.light_energy = 0.0
 
@@ -242,40 +257,119 @@ func set_daylight_factor(value: float) -> void:
 
 
 # --------------------------------------------------
-# FLYING CREATURES
+# WORLD CREATURE PROFILES
 # --------------------------------------------------
 
 func _create_flying_creatures() -> void:
 	match target_world_id:
 		WORLD_MODERN:
-			_create_birds(12)
+			_create_birds(12, "modern")
+
 		WORLD_HISTORICAL:
-			_create_birds(10)
+			_create_birds(10, "historical")
+
 		WORLD_FANTASY:
-			_create_dragons(4)
+			_create_fantasy_creatures()
+
 		WORLD_GREED_ISLAND:
-			_create_dragons(6)
+			_create_greed_creatures()
 
 
-func _create_birds(amount: int) -> void:
+func _create_fantasy_creatures() -> void:
+	_create_large_creature(
+		"FantasyDragon",
+		Color(0.65, 0.12, 0.08),
+		1.5,
+		4
+	)
+
+	_create_large_creature(
+		"FantasyWyvern",
+		Color(0.2, 0.35, 0.7),
+		1.0,
+		2
+	)
+
+
+func _create_greed_creatures() -> void:
+	_create_large_creature(
+		"GreedSkyDragon",
+		Color(0.65, 0.45, 0.12),
+		2.2,
+		3
+	)
+
+	_create_large_creature(
+		"GreedWingedGuardian",
+		Color(0.65, 0.85, 0.95),
+		1.7,
+		2
+	)
+
+	_create_large_creature(
+		"GreedNightCreature",
+		Color(0.35, 0.15, 0.55),
+		1.3,
+		1
+	)
+
+
+# --------------------------------------------------
+# BIRDS
+# --------------------------------------------------
+
+func _create_birds(amount: int, profile: String) -> void:
+	var species: Array[Dictionary] = []
+
+	if profile == "modern":
+		species = [
+			{"name": "Eagle", "color": Color(0.42, 0.25, 0.12), "size": 1.5},
+			{"name": "Falcon", "color": Color(0.45, 0.48, 0.52), "size": 0.9},
+			{"name": "Pigeon", "color": Color(0.5, 0.55, 0.62), "size": 0.65},
+			{"name": "Crow", "color": Color(0.06, 0.07, 0.09), "size": 0.8},
+			{"name": "Seabird", "color": Color(0.9, 0.9, 0.85), "size": 1.0}
+		]
+	else:
+		species = [
+			{"name": "AncientFalcon", "color": Color(0.65, 0.42, 0.18), "size": 1.1},
+			{"name": "SacredIbis", "color": Color(0.88, 0.82, 0.68), "size": 1.0},
+			{"name": "AncientRaven", "color": Color(0.12, 0.13, 0.16), "size": 1.2},
+			{"name": "HeritageEagle", "color": Color(0.5, 0.3, 0.16), "size": 1.5}
+		]
+
 	for i in range(amount):
+		var selected: Dictionary = species.pick_random()
 		var bird := Node3D.new()
-		bird.name = "SkyBird_%d" % i
+
+		bird.name = str(selected["name"]) + "_%d" % i
 		visual_root.add_child(bird)
+
+		var scale_factor: float = float(selected["size"])
+		var bird_material := _make_material(selected["color"])
 
 		var body := MeshInstance3D.new()
 		var body_mesh := SphereMesh.new()
-		body_mesh.radius = 0.22
-		body_mesh.height = 0.35
+		body_mesh.radius = 0.22 * scale_factor
+		body_mesh.height = 0.35 * scale_factor
 		body.mesh = body_mesh
+		body.material_override = bird_material
 		bird.add_child(body)
 
-		var wing_left := _make_wing()
-		wing_left.position = Vector3(-0.22, 0, 0)
+		var head := MeshInstance3D.new()
+		var head_mesh := SphereMesh.new()
+		head_mesh.radius = 0.11 * scale_factor
+		head_mesh.height = 0.16 * scale_factor
+		head.mesh = head_mesh
+		head.position = Vector3(0, 0.04, -0.23 * scale_factor)
+		head.material_override = bird_material
+		bird.add_child(head)
+
+		var wing_left := _make_wing(scale_factor, bird_material)
+		wing_left.position.x = -0.22 * scale_factor
 		bird.add_child(wing_left)
 
-		var wing_right := _make_wing()
-		wing_right.position = Vector3(0.22, 0, 0)
+		var wing_right := _make_wing(scale_factor, bird_material)
+		wing_right.position.x = 0.22 * scale_factor
 		bird.add_child(wing_right)
 
 		bird.position = Vector3(
@@ -289,78 +383,134 @@ func _create_birds(amount: int) -> void:
 		creatures.append({
 			"node": bird,
 			"type": "bird",
-			"name": "Bird_%d" % i,
+			"name": bird.name,
+			"species": str(selected["name"]),
 			"behavior": behavior,
 			"origin": bird.position,
 			"target": bird.position + Vector3(
 				randf_range(-8, 8), 0, randf_range(-8, 8)
 			),
-			"previous_position": bird.position,
 			"wing_left": wing_left,
 			"wing_right": wing_right,
 			"wing_phase": randf_range(0.0, TAU),
 			"landed_emitted": false,
 			"discovered": false,
-			"speed": randf_range(2.0, 4.0)
+			"speed": randf_range(2.0, 4.0) * scale_factor
 		})
 
 
-func _make_wing() -> MeshInstance3D:
+func _make_wing(
+	scale_factor: float,
+	material: Material
+) -> MeshInstance3D:
 	var wing := MeshInstance3D.new()
 	var mesh := BoxMesh.new()
-	mesh.size = Vector3(0.5, 0.06, 0.18)
+
+	mesh.size = Vector3(
+		0.5 * scale_factor,
+		0.06 * scale_factor,
+		0.18 * scale_factor
+	)
+
 	wing.mesh = mesh
+	wing.material_override = material
 	return wing
 
 
-func _create_dragons(amount: int) -> void:
+# --------------------------------------------------
+# LARGE FLYING CREATURES
+# --------------------------------------------------
+
+func _create_large_creature(
+	creature_name: String,
+	creature_color: Color,
+	size_factor: float,
+	amount: int
+) -> void:
 	for i in range(amount):
-		var dragon := Node3D.new()
-		dragon.name = "SkyDragon_%d" % i
-		visual_root.add_child(dragon)
+		var creature := Node3D.new()
+		creature.name = "%s_%d" % [creature_name, i]
+		visual_root.add_child(creature)
+
+		var creature_material := _make_material(creature_color, true)
 
 		var body := MeshInstance3D.new()
 		var body_mesh := SphereMesh.new()
-		body_mesh.radius = 1.0
-		body_mesh.height = 2.0
+		body_mesh.radius = size_factor
+		body_mesh.height = size_factor * 2.0
 		body.mesh = body_mesh
-		dragon.add_child(body)
+		body.material_override = creature_material
+		creature.add_child(body)
 
-		var wing_left := _make_dragon_wing()
-		wing_left.position = Vector3(-0.9, 0.2, 0)
-		dragon.add_child(wing_left)
+		var head := MeshInstance3D.new()
+		var head_mesh := SphereMesh.new()
+		head_mesh.radius = size_factor * 0.45
+		head_mesh.height = size_factor * 0.8
+		head.mesh = head_mesh
+		head.position = Vector3(0, 0.1, -size_factor)
+		head.material_override = creature_material
+		creature.add_child(head)
 
-		var wing_right := _make_dragon_wing()
-		wing_right.position = Vector3(0.9, 0.2, 0)
-		dragon.add_child(wing_right)
+		var tail := MeshInstance3D.new()
+		var tail_mesh := BoxMesh.new()
+		tail_mesh.size = Vector3(
+			size_factor * 0.25,
+			size_factor * 0.25,
+			size_factor * 1.8
+		)
+		tail.mesh = tail_mesh
+		tail.position.z = size_factor * 1.2
+		tail.material_override = creature_material
+		creature.add_child(tail)
 
-		dragon.position = Vector3(
+		var wing_left := _make_dragon_wing(size_factor, creature_material)
+		wing_left.position = Vector3(-size_factor * 0.9, 0.2, 0)
+		creature.add_child(wing_left)
+
+		var wing_right := _make_dragon_wing(size_factor, creature_material)
+		wing_right.position = Vector3(size_factor * 0.9, 0.2, 0)
+		creature.add_child(wing_right)
+
+		creature.position = Vector3(
 			randf_range(-25, 25),
 			randf_range(15, 28),
 			randf_range(-25, 25)
 		)
 
+		var behavior := ["patrol", "guard"].pick_random()
+
 		creatures.append({
-			"node": dragon,
-			"type": "dragon",
-			"name": "Dragon_%d" % i,
-			"behavior": "patrol",
-			"origin": dragon.position,
-			"target": dragon.position + Vector3(10, 0, 10),
+			"node": creature,
+			"type": "large_flying",
+			"name": creature.name,
+			"species": creature_name,
+			"behavior": behavior,
+			"origin": creature.position,
+			"target": creature.position + Vector3(10, 0, 10),
 			"wing_left": wing_left,
 			"wing_right": wing_right,
 			"wing_phase": randf_range(0.0, TAU),
 			"attack_cooldown": randf_range(0.0, 2.0),
 			"discovered": false,
-			"speed": randf_range(3.0, 5.0)
+			"speed": randf_range(3.0, 5.0) * size_factor
 		})
 
 
-func _make_dragon_wing() -> MeshInstance3D:
+func _make_dragon_wing(
+	size_factor: float,
+	material: Material
+) -> MeshInstance3D:
 	var wing := MeshInstance3D.new()
 	var mesh := BoxMesh.new()
-	mesh.size = Vector3(1.5, 0.08, 0.7)
+
+	mesh.size = Vector3(
+		1.5 * size_factor,
+		0.08 * size_factor,
+		0.7 * size_factor
+	)
+
 	wing.mesh = mesh
+	wing.material_override = material
 	return wing
 
 
@@ -371,6 +521,7 @@ func _make_dragon_wing() -> MeshInstance3D:
 func _update_flying_creatures(delta: float) -> void:
 	for data in creatures:
 		var creature := data.get("node") as Node3D
+
 		if not is_instance_valid(creature):
 			continue
 
@@ -380,7 +531,7 @@ func _update_flying_creatures(delta: float) -> void:
 		if data["type"] == "bird":
 			_update_bird_behavior(data, delta)
 		else:
-			_update_dragon_behavior(data, delta)
+			_update_large_creature_behavior(data, delta)
 
 
 func _animate_wings(data: Dictionary) -> void:
@@ -390,6 +541,7 @@ func _animate_wings(data: Dictionary) -> void:
 
 	if is_instance_valid(left):
 		left.rotation.z = sin(phase) * 0.65
+
 	if is_instance_valid(right):
 		right.rotation.z = -sin(phase) * 0.65
 
@@ -402,7 +554,11 @@ func _update_bird_behavior(data: Dictionary, delta: float) -> void:
 	if behavior == "orbit":
 		var origin: Vector3 = data["origin"]
 		var angle: float = float(data["wing_phase"]) * 0.25
-		target = origin + Vector3(cos(angle) * 7.0, 1.5, sin(angle) * 7.0)
+		target = origin + Vector3(
+			cos(angle) * 7.0,
+			1.5,
+			sin(angle) * 7.0
+		)
 
 	elif behavior == "hunt":
 		target = data["origin"] + Vector3(
@@ -413,6 +569,7 @@ func _update_bird_behavior(data: Dictionary, delta: float) -> void:
 
 	elif behavior == "migrate":
 		target = bird.position + Vector3(12.0, 0.0, 8.0)
+
 		if bird.position.distance_to(data["origin"]) > 35.0:
 			data["origin"] = bird.position
 			target = bird.position + Vector3(-20.0, 0.0, -15.0)
@@ -421,12 +578,14 @@ func _update_bird_behavior(data: Dictionary, delta: float) -> void:
 		target = data["target"]
 
 	var previous: Vector3 = bird.position
+
 	bird.position = bird.position.move_toward(
 		target,
 		float(data["speed"]) * delta
 	)
 
 	var direction: Vector3 = bird.position - previous
+
 	if direction.length() > 0.01:
 		bird.rotation.y = atan2(-direction.x, -direction.z)
 
@@ -440,13 +599,19 @@ func _update_bird_behavior(data: Dictionary, delta: float) -> void:
 
 	if not bool(data["discovered"]) and bird.position.length() < 12.0:
 		data["discovered"] = true
-		creature_discovered.emit(str(data["name"]), "bird")
+		creature_discovered.emit(
+			str(data["name"]),
+			str(data["species"])
+		)
 
 	data["target"] = target
 
 
-func _update_dragon_behavior(data: Dictionary, delta: float) -> void:
-	var dragon := data["node"] as Node3D
+func _update_large_creature_behavior(
+	data: Dictionary,
+	delta: float
+) -> void:
+	var creature := data["node"] as Node3D
 	var behavior: String = data["behavior"]
 
 	data["attack_cooldown"] = maxf(
@@ -460,7 +625,7 @@ func _update_dragon_behavior(data: Dictionary, delta: float) -> void:
 		target = data["origin"]
 
 	elif behavior == "patrol":
-		if dragon.position.distance_to(target) < 1.5:
+		if creature.position.distance_to(target) < 1.5:
 			target = data["origin"] + Vector3(
 				randf_range(-15, 15),
 				randf_range(-3, 3),
@@ -469,28 +634,37 @@ func _update_dragon_behavior(data: Dictionary, delta: float) -> void:
 
 	elif behavior == "chase":
 		var player := _find_player()
+
 		if is_instance_valid(player):
 			target = visual_root.to_local(player.global_position)
-			if dragon.position.distance_to(target) < 4.0:
-				_request_dragon_attack(data, player)
 
-	dragon.position = dragon.position.move_toward(
+			if creature.position.distance_to(target) < 4.0:
+				_request_creature_attack(data, player)
+
+	creature.position = creature.position.move_toward(
 		target,
 		float(data["speed"]) * delta
 	)
 
-	var direction: Vector3 = target - dragon.position
-	if direction.length() > 0.01:
-		dragon.rotation.y = atan2(-direction.x, -direction.z)
+	var direction: Vector3 = target - creature.position
 
-	if not bool(data["discovered"]) and dragon.position.length() < 18.0:
+	if direction.length() > 0.01:
+		creature.rotation.y = atan2(-direction.x, -direction.z)
+
+	if not bool(data["discovered"]) and creature.position.length() < 18.0:
 		data["discovered"] = true
-		creature_discovered.emit(str(data["name"]), "dragon")
+		creature_discovered.emit(
+			str(data["name"]),
+			str(data["species"])
+		)
 
 	data["target"] = target
 
 
-func _request_dragon_attack(data: Dictionary, target: Node3D) -> void:
+func _request_creature_attack(
+	data: Dictionary,
+	target: Node3D
+) -> void:
 	if float(data["attack_cooldown"]) > 0.0:
 		return
 
@@ -500,9 +674,11 @@ func _request_dragon_attack(data: Dictionary, target: Node3D) -> void:
 
 func _find_player() -> Node3D:
 	var players := get_tree().get_nodes_in_group("player")
+
 	for item in players:
 		if item is Node3D:
 			return item as Node3D
+
 	return null
 
 
@@ -523,9 +699,11 @@ func get_current_weather() -> String:
 
 func get_flying_creature_count() -> int:
 	var count := 0
+
 	for data in creatures:
 		if is_instance_valid(data.get("node")):
 			count += 1
+
 	return count
 
 
@@ -534,12 +712,14 @@ func get_creature_states() -> Array[Dictionary]:
 
 	for data in creatures:
 		var creature := data.get("node") as Node3D
+
 		if not is_instance_valid(creature):
 			continue
 
 		result.append({
 			"name": str(data["name"]),
 			"type": str(data["type"]),
+			"species": str(data.get("species", "")),
 			"behavior": str(data["behavior"]),
 			"position": creature.position
 		})
