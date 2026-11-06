@@ -1,5 +1,7 @@
+
 package com.system.irtqaa
 
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -10,16 +12,48 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
+private object SystemCompanionGenderSettings {
+
+    private const val PREFS = "system_companion_settings"
+    private const val KEY_GENDER = "player_gender"
+
+    fun load(context: Context): SystemPlayerGender? {
+        val value = context.getSharedPreferences(
+            PREFS,
+            Context.MODE_PRIVATE
+        ).getString(KEY_GENDER, null)
+
+        return when (value) {
+            "male" -> SystemPlayerGender.MALE
+            "female" -> SystemPlayerGender.FEMALE
+            else -> null
+        }
+    }
+
+    fun save(
+        context: Context,
+        gender: SystemPlayerGender
+    ): Boolean {
+        return context.getSharedPreferences(
+            PREFS,
+            Context.MODE_PRIVATE
+        ).edit()
+            .putString(KEY_GENDER, gender.storageValue)
+            .commit()
+    }
+}
 
 @Composable
 fun SystemMiyarWelcomeCard(
@@ -27,8 +61,50 @@ fun SystemMiyarWelcomeCard(
     onTalkClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val gold = Color(0xFFFFC857)
-    val cyan = Color(0xFF35D9F2)
+    val context = LocalContext.current
+
+    var playerGender by remember(context) {
+        mutableStateOf(
+            SystemCompanionGenderSettings.load(context)
+        )
+    }
+
+    val world = SystemWorldThemeRuntime.currentWorld
+        ?: SystemWorldKind.MODERN_REALISTIC
+
+    val primary = when (world) {
+        SystemWorldKind.MODERN_REALISTIC -> Color(0xFF35D9F2)
+        SystemWorldKind.MYTHOLOGY_HISTORY -> Color(0xFFE6B65C)
+        SystemWorldKind.FANTASY -> Color(0xFFB69BFF)
+        SystemWorldKind.GREED_ISLAND -> Color(0xFF65E6A6)
+    }
+
+    val background = when (world) {
+        SystemWorldKind.MODERN_REALISTIC -> listOf(
+            Color(0xFF101827),
+            Color(0xFF172B42),
+            Color(0xFF211B36)
+        )
+        SystemWorldKind.MYTHOLOGY_HISTORY -> listOf(
+            Color(0xFF28170F),
+            Color(0xFF49301B),
+            Color(0xFF21150F)
+        )
+        SystemWorldKind.FANTASY -> listOf(
+            Color(0xFF100D25),
+            Color(0xFF29234B),
+            Color(0xFF17132F)
+        )
+        SystemWorldKind.GREED_ISLAND -> listOf(
+            Color(0xFF062019),
+            Color(0xFF123C35),
+            Color(0xFF08251F)
+        )
+    }
+
+    val appearance = playerGender?.let {
+        SystemCompanionAppearanceEngine.create(it, world)
+    }
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -42,15 +118,7 @@ fun SystemMiyarWelcomeCard(
     ) {
         Box(
             modifier = Modifier
-                .background(
-                    Brush.linearGradient(
-                        listOf(
-                            Color(0xFF101827),
-                            Color(0xFF172B42),
-                            Color(0xFF211B36)
-                        )
-                    )
-                )
+                .background(Brush.linearGradient(background))
                 .padding(16.dp)
         ) {
             Column(
@@ -67,8 +135,7 @@ fun SystemMiyarWelcomeCard(
                             .background(
                                 Brush.radialGradient(
                                     listOf(
-                                        cyan.copy(alpha = 0.30f),
-                                        gold.copy(alpha = 0.18f),
+                                        primary.copy(alpha = 0.35f),
                                         Color(0xFF090E18)
                                     )
                                 )
@@ -88,15 +155,15 @@ fun SystemMiyarWelcomeCard(
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(
-                            text = "MIYAR",
-                            color = gold,
+                            text = appearance?.name ?: "المرافق الذكي",
+                            color = primary,
                             fontSize = 22.sp,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 2.sp
+                            fontWeight = FontWeight.Black
                         )
 
                         Text(
-                            text = "مرشدتك الذكية داخل SYSTEM",
+                            text = appearance?.worldTitle
+                                ?: "اختيار هوية المرافق",
                             color = Color(0xFFD7E2F0),
                             fontSize = 13.sp
                         )
@@ -109,31 +176,110 @@ fun SystemMiyarWelcomeCard(
                     )
                 }
 
-                Text(
-                    text = "أهلاً بك من جديد!",
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                if (playerGender == null) {
+                    Text(
+                        "حتى أختار لك المرافق المناسب، حدد ملف اللاعب:",
+                        color = Color.White,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold
+                    )
 
-                Text(
-                    text = "أنا ميار، أرافقك في رحلتك. أشرح لك الأنظمة والعوالم والمهام، وأساعدك تعرف خطوتك القادمة.",
-                    color = Color(0xFFB9C7D9),
-                    fontSize = 14.sp,
-                    lineHeight = 21.sp
-                )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                if (
+                                    SystemCompanionGenderSettings.save(
+                                        context,
+                                        SystemPlayerGender.MALE
+                                    )
+                                ) {
+                                    playerGender = SystemPlayerGender.MALE
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = primary,
+                                contentColor = Color.Black
+                            )
+                        ) {
+                            Text("لاعب")
+                        }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
+                        Button(
+                            onClick = {
+                                if (
+                                    SystemCompanionGenderSettings.save(
+                                        context,
+                                        SystemPlayerGender.FEMALE
+                                    )
+                                ) {
+                                    playerGender = SystemPlayerGender.FEMALE
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF18364A),
+                                contentColor = Color.White
+                            )
+                        ) {
+                            Text("لاعبة")
+                        }
+                    }
+                } else {
+                    Text(
+                        text = if (
+                            playerGender == SystemPlayerGender.MALE
+                        ) {
+                            "مرافقتك الذكية: ميار"
+                        } else {
+                            "مرافقك الذكي: آدم"
+                        },
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Text(
+                        text = appearance?.outfitName.orEmpty(),
+                        color = primary,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp
+                    )
+
+                    Text(
+                        text = appearance?.outfitDescription.orEmpty(),
+                        color = Color(0xFFB9C7D9),
+                        fontSize = 13.sp,
+                        lineHeight = 20.sp
+                    )
+
+                    Text(
+                        text = "يتغير وصف الزي تلقائياً مع انتقالك بين العوالم.",
+                        color = Color.LightGray,
+                        fontSize = 12.sp
+                    )
+
+                    Button(
+                        onClick = {
+                            playerGender = null
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF18364A),
+                            contentColor = primary
+                        )
+                    ) {
+                        Text("تغيير ملف اللاعب")
+                    }
+
                     Button(
                         onClick = onExplainClick,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = gold,
-                            contentColor = Color(0xFF101827)
+                            containerColor = primary,
+                            contentColor = Color.Black
                         )
                     ) {
                         Text(
@@ -144,17 +290,13 @@ fun SystemMiyarWelcomeCard(
 
                     Button(
                         onClick = onTalkClick,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF18364A),
-                            contentColor = cyan
+                            contentColor = primary
                         )
                     ) {
-                        Text(
-                            "تحدثي مع ميار",
-                            fontWeight = FontWeight.Bold
-                        )
+                        Text("تحدث مع المرافق")
                     }
                 }
             }
