@@ -4,24 +4,20 @@ package com.system.irtqaa
 import android.content.Context
 import android.media.AudioManager
 import android.media.ToneGenerator
+import android.os.Handler
+import android.os.Looper
 
-class SystemWorldAudioEngine(
-    context: Context
-) : AutoCloseable {
+class SystemWorldAudioEngine(context: Context) : AutoCloseable {
 
     private val appContext = context.applicationContext
+    private val handler = Handler(Looper.getMainLooper())
 
-    private var toneGenerator: ToneGenerator? =
-        createToneGenerator()
-
+    private var toneGenerator: ToneGenerator? = createToneGenerator()
     private var enabled = true
 
     private fun createToneGenerator(): ToneGenerator? {
         return try {
-            ToneGenerator(
-                AudioManager.STREAM_MUSIC,
-                75
-            )
+            ToneGenerator(AudioManager.STREAM_MUSIC, 75)
         } catch (_: Exception) {
             null
         }
@@ -29,116 +25,197 @@ class SystemWorldAudioEngine(
 
     fun setEnabled(value: Boolean) {
         enabled = value
+        if (!value) handler.removeCallbacksAndMessages(null)
     }
 
     fun playButtonClick() {
-        play(
-            ToneGenerator.TONE_PROP_BEEP,
-            65
-        )
+        play(ToneGenerator.TONE_PROP_BEEP, 65)
     }
 
     fun playPortalOpen() {
-        playSequence(
+        sequence(
             listOf(
                 ToneGenerator.TONE_PROP_BEEP,
                 ToneGenerator.TONE_PROP_ACK,
                 ToneGenerator.TONE_PROP_BEEP2
-            ),
-            140
+            ), 140
         )
     }
 
     fun playWorldSelection() {
-        playSequence(
+        sequence(
             listOf(
                 ToneGenerator.TONE_PROP_ACK,
                 ToneGenerator.TONE_PROP_BEEP2
-            ),
-            180
+            ), 180
         )
     }
 
     fun playTransition() {
-        playSequence(
+        sequence(
             listOf(
                 ToneGenerator.TONE_PROP_BEEP,
                 ToneGenerator.TONE_PROP_BEEP2,
                 ToneGenerator.TONE_PROP_ACK
-            ),
-            220
+            ), 220
         )
     }
 
     fun playReward() {
-        playSequence(
+        sequence(
             listOf(
                 ToneGenerator.TONE_PROP_ACK,
                 ToneGenerator.TONE_PROP_ACK,
                 ToneGenerator.TONE_PROP_BEEP2
-            ),
-            170
+            ), 170
         )
     }
 
     fun playWarning() {
-        playSequence(
+        sequence(
             listOf(
                 ToneGenerator.TONE_PROP_NACK,
                 ToneGenerator.TONE_PROP_NACK
-            ),
-            230
+            ), 230
         )
     }
 
     fun playLevelUp() {
-        playSequence(
+        sequence(
             listOf(
                 ToneGenerator.TONE_PROP_BEEP,
                 ToneGenerator.TONE_PROP_ACK,
                 ToneGenerator.TONE_PROP_BEEP2,
                 ToneGenerator.TONE_PROP_ACK
-            ),
-            190
+            ), 190
         )
     }
 
-    private fun play(
-        tone: Int,
-        duration: Int
-    ) {
+    fun playQuestStarted() {
+        sequence(
+            listOf(
+                ToneGenerator.TONE_PROP_BEEP,
+                ToneGenerator.TONE_PROP_ACK
+            ), 160
+        )
+    }
+
+    fun playQuestCompleted() {
+        sequence(
+            listOf(
+                ToneGenerator.TONE_PROP_ACK,
+                ToneGenerator.TONE_PROP_BEEP2,
+                ToneGenerator.TONE_PROP_ACK
+            ), 160
+        )
+    }
+
+    fun playQuestFailed() {
+        sequence(
+            listOf(
+                ToneGenerator.TONE_PROP_NACK,
+                ToneGenerator.TONE_PROP_BEEP,
+                ToneGenerator.TONE_PROP_NACK
+            ), 210
+        )
+    }
+
+    fun playCombatStarted() {
+        sequence(
+            listOf(
+                ToneGenerator.TONE_PROP_BEEP2,
+                ToneGenerator.TONE_PROP_BEEP,
+                ToneGenerator.TONE_PROP_BEEP2
+            ), 120
+        )
+    }
+
+    fun playCombatVictory() {
+        sequence(
+            listOf(
+                ToneGenerator.TONE_PROP_ACK,
+                ToneGenerator.TONE_PROP_BEEP2,
+                ToneGenerator.TONE_PROP_ACK,
+                ToneGenerator.TONE_PROP_BEEP2
+            ), 170
+        )
+    }
+
+    fun playCombatDefeat() {
+        sequence(
+            listOf(
+                ToneGenerator.TONE_PROP_NACK,
+                ToneGenerator.TONE_PROP_NACK,
+                ToneGenerator.TONE_PROP_BEEP
+            ), 250
+        )
+    }
+
+    fun playDiscovery() {
+        sequence(
+            listOf(
+                ToneGenerator.TONE_PROP_BEEP,
+                ToneGenerator.TONE_PROP_ACK,
+                ToneGenerator.TONE_PROP_BEEP2
+            ), 200
+        )
+    }
+
+    fun playHealing() {
+        sequence(
+            listOf(
+                ToneGenerator.TONE_PROP_ACK,
+                ToneGenerator.TONE_PROP_BEEP,
+                ToneGenerator.TONE_PROP_ACK
+            ), 240
+        )
+    }
+
+    fun playGreedIslandOpen() {
+        sequence(
+            listOf(
+                ToneGenerator.TONE_PROP_BEEP2,
+                ToneGenerator.TONE_PROP_ACK,
+                ToneGenerator.TONE_PROP_BEEP,
+                ToneGenerator.TONE_PROP_ACK,
+                ToneGenerator.TONE_PROP_BEEP2
+            ), 230
+        )
+    }
+
+    private fun play(tone: Int, duration: Int) {
         if (!enabled) return
 
         try {
-            toneGenerator?.startTone(
-                tone,
-                duration
-            )
+            if (toneGenerator == null) {
+                toneGenerator = createToneGenerator()
+            }
+
+            toneGenerator?.startTone(tone, duration)
         } catch (_: Exception) {
+            try {
+                toneGenerator?.release()
+            } catch (_: Exception) {
+            }
             toneGenerator = createToneGenerator()
         }
     }
 
-    private fun playSequence(
-        tones: List<Int>,
-        duration: Int
-    ) {
+    private fun sequence(tones: List<Int>, duration: Int) {
         if (!enabled) return
 
         tones.forEachIndexed { index, tone ->
-            val delay = index * (duration + 55L)
+            val delay = index.toLong() * (duration + 55L)
 
-            android.os.Handler(
-                android.os.Looper.getMainLooper()
-            ).postDelayed({
-                if (enabled) {
-                    play(tone, duration)
-                }
+            handler.postDelayed({
+                if (enabled) play(tone, duration)
             }, delay)
         }
     }
 
     override fun close() {
+        handler.removeCallbacksAndMessages(null)
+
         try {
             toneGenerator?.release()
         } catch (_: Exception) {
