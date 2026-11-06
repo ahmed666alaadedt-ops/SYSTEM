@@ -1,7 +1,7 @@
 extends Node
 
-## أيقونة العودة إلى جزيرة الطمع — واجهة المدير فقط.
-## صلاحية المدير هنا محلية للاختبار وليست حماية خادم متعددة اللاعبين.
+## أيقونة العودة إلى جزيرة الطمع — المدير فقط.
+## الصلاحية الحالية محلية للاختبار وليست حماية خادم.
 
 const GREED_ISLAND_ID := 3
 
@@ -9,14 +9,18 @@ var world_manager: Node
 var island_manager: Node3D
 var return_button: Button
 var canvas_layer: CanvasLayer
+var old_return_gates_removed := false
 
 
 func _process(_delta: float) -> void:
 	_find_managers()
-	_remove_old_physical_return_gates()
 
 	if world_manager == null or island_manager == null:
 		return
+
+	if not old_return_gates_removed:
+		_remove_old_physical_return_gates()
+		old_return_gates_removed = true
 
 	if not _is_admin_test_enabled():
 		if return_button != null:
@@ -49,6 +53,13 @@ func _is_admin_test_enabled() -> bool:
 			island_manager.call("is_admin_test_environment")
 		)
 	)
+
+
+func _get_active_world_id() -> int:
+	if world_manager == null:
+		return -1
+
+	return int(world_manager.get("active_world"))
 
 
 func _get_world_roots() -> Dictionary:
@@ -131,15 +142,9 @@ func _apply_button_style() -> void:
 	var pressed := normal.duplicate() as StyleBoxFlat
 	pressed.bg_color = Color(0.12, 0.34, 0.42, 1.0)
 
-	return_button.add_theme_stylebox_override(
-		"normal", normal
-	)
-	return_button.add_theme_stylebox_override(
-		"hover", hover
-	)
-	return_button.add_theme_stylebox_override(
-		"pressed", pressed
-	)
+	return_button.add_theme_stylebox_override("normal", normal)
+	return_button.add_theme_stylebox_override("hover", hover)
+	return_button.add_theme_stylebox_override("pressed", pressed)
 
 	return_button.add_theme_color_override(
 		"font_color", Color(0.75, 0.97, 1.0)
@@ -154,11 +159,9 @@ func _update_icon_visibility() -> void:
 		return_button.visible = false
 		return
 
-	var active_world := int(
-		world_manager.call("get_active_world")
+	return_button.visible = (
+		_get_active_world_id() != GREED_ISLAND_ID
 	)
-
-	return_button.visible = active_world != GREED_ISLAND_ID
 
 
 func _on_admin_return_pressed() -> void:
@@ -168,7 +171,7 @@ func _on_admin_return_pressed() -> void:
 	if not _is_admin_test_enabled():
 		return
 
-	if int(world_manager.call("get_active_world")) == GREED_ISLAND_ID:
+	if _get_active_world_id() == GREED_ISLAND_ID:
 		return
 
 	return_button.disabled = true
