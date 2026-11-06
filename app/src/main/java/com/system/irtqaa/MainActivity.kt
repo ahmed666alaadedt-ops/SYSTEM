@@ -1,3 +1,4 @@
+
 package com.system.irtqaa
 
 import android.os.Bundle
@@ -58,8 +59,7 @@ fun SystemApp(account: SystemFirebaseAccount) {
     }
 
     var tasks by remember(taskManager, today) {
-        val generatedTasks =
-            SystemTaskCatalog.buildDailyTasks(today)
+        val generatedTasks = SystemTaskCatalog.buildDailyTasks(today)
 
         generatedTasks.forEach { task ->
             if (taskManager.getTask(task.taskId) == null) {
@@ -531,7 +531,7 @@ fun SystemApp(account: SystemFirebaseAccount) {
     }
 }
 
-// بطاقة العالم الافتراضي الكبيرة
+// بطاقة العالم الافتراضي مع الكرة الأرضية المتحركة
 @Composable
 fun SystemWorldBanner(onClick: () -> Unit) {
     val gold = Color(0xFFFFC857)
@@ -582,10 +582,12 @@ fun SystemWorldBanner(onClick: () -> Unit) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(20.dp),
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
                 Text(
                     "SYSTEM WORLD",
                     color = gold,
@@ -619,7 +621,10 @@ fun SystemWorldBanner(onClick: () -> Unit) {
                 )
             }
 
-            Text("🌌", fontSize = 66.sp)
+            SystemAnimatedGlobe(
+                modifier = Modifier.padding(start = 4.dp),
+                globeSize = 112.dp
+            )
         }
     }
 }
