@@ -1,4 +1,3 @@
-
 package com.system.irtqaa
 
 import androidx.compose.animation.core.RepeatMode
@@ -11,14 +10,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.graphicsLayer
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
-import kotlin.math.sin
 
 @Composable
 fun SystemCompanionAnimatedAvatar(
@@ -26,7 +24,7 @@ fun SystemCompanionAnimatedAvatar(
     modifier: Modifier = Modifier
 ) {
     val transition = rememberInfiniteTransition(
-        label = "Companion breathing"
+        label = "Companion animation"
     )
 
     val breathing by transition.animateFloat(
@@ -53,31 +51,17 @@ fun SystemCompanionAnimatedAvatar(
         appearance.gender == SystemCompanionGender.FEMALE
 
     val accent = when (appearance.world) {
-        SystemWorldKind.MODERN_REALISTIC ->
-            Color(0xFF43DDF4)
-
-        SystemWorldKind.MYTHOLOGY_HISTORY ->
-            Color(0xFFE7B65B)
-
-        SystemWorldKind.FANTASY ->
-            Color(0xFFB99AFF)
-
-        SystemWorldKind.GREED_ISLAND ->
-            Color(0xFF65E6A6)
+        SystemWorldKind.MODERN_REALISTIC -> Color(0xFF43DDF4)
+        SystemWorldKind.MYTHOLOGY_HISTORY -> Color(0xFFE7B65B)
+        SystemWorldKind.FANTASY -> Color(0xFFB99AFF)
+        SystemWorldKind.GREED_ISLAND -> Color(0xFF65E6A6)
     }
 
     val outfit = when (appearance.world) {
-        SystemWorldKind.MODERN_REALISTIC ->
-            Color(0xFF14263E)
-
-        SystemWorldKind.MYTHOLOGY_HISTORY ->
-            Color(0xFF68401F)
-
-        SystemWorldKind.FANTASY ->
-            Color(0xFF35245F)
-
-        SystemWorldKind.GREED_ISLAND ->
-            Color(0xFF164A3C)
+        SystemWorldKind.MODERN_REALISTIC -> Color(0xFF14263E)
+        SystemWorldKind.MYTHOLOGY_HISTORY -> Color(0xFF68401F)
+        SystemWorldKind.FANTASY -> Color(0xFF35245F)
+        SystemWorldKind.GREED_ISLAND -> Color(0xFF164A3C)
     }
 
     Canvas(
@@ -89,14 +73,11 @@ fun SystemCompanionAnimatedAvatar(
     ) {
         val w = size.width
         val h = size.height
-
         val cx = w * 0.5f
         val headY = h * 0.27f
         val headRadius = w * 0.155f
-
         val pulse = breathing * 0.12f
 
-        // Holographic halo
         drawCircle(
             color = accent.copy(alpha = 0.12f + pulse),
             radius = w * 0.43f,
@@ -110,9 +91,8 @@ fun SystemCompanionAnimatedAvatar(
             style = Stroke(width = 1.5.dp.toPx())
         )
 
-        // Rear hair
         if (female) {
-            val longHair = Path().apply {
+            val hair = Path().apply {
                 moveTo(cx - headRadius * 0.9f, headY)
                 quadraticTo(
                     cx - headRadius * 2.1f,
@@ -120,15 +100,10 @@ fun SystemCompanionAnimatedAvatar(
                     cx - headRadius * 1.15f,
                     headY + headRadius * 1.9f
                 )
-                lineTo(
-                    cx - headRadius * 1.05f,
-                    h * 0.77f
-                )
+                lineTo(cx - headRadius * 1.05f, h * 0.77f)
                 quadraticTo(
-                    cx,
-                    h * 0.85f,
-                    cx + headRadius * 1.05f,
-                    h * 0.77f
+                    cx, h * 0.85f,
+                    cx + headRadius * 1.05f, h * 0.77f
                 )
                 lineTo(
                     cx + headRadius * 1.15f,
@@ -142,11 +117,7 @@ fun SystemCompanionAnimatedAvatar(
                 )
                 close()
             }
-
-            drawPath(
-                path = longHair,
-                color = Color(0xFF24182E)
-            )
+            drawPath(hair, Color(0xFF24182E))
         } else {
             drawOval(
                 color = Color(0xFF29212D),
@@ -161,14 +132,12 @@ fun SystemCompanionAnimatedAvatar(
             )
         }
 
-        // Face
         drawCircle(
             color = Color(0xFFEBC2A5),
             radius = headRadius,
             center = Offset(cx, headY)
         )
 
-        // Hair fringe
         val fringe = Path().apply {
             moveTo(
                 cx - headRadius,
@@ -199,33 +168,22 @@ fun SystemCompanionAnimatedAvatar(
             close()
         }
 
-        drawPath(
-            path = fringe,
-            color = Color(0xFF24182E)
-        )
+        drawPath(fringe, Color(0xFF24182E))
 
-        // Eyes
         val eyeY = headY + headRadius * 0.05f
 
         drawCircle(
-            color = Color(0xFF302331),
-            radius = 1.8.dp.toPx(),
-            center = Offset(
-                cx - headRadius * 0.38f,
-                eyeY
-            )
+            Color(0xFF302331),
+            1.8.dp.toPx(),
+            Offset(cx - headRadius * 0.38f, eyeY)
         )
 
         drawCircle(
-            color = Color(0xFF302331),
-            radius = 1.8.dp.toPx(),
-            center = Offset(
-                cx + headRadius * 0.38f,
-                eyeY
-            )
+            Color(0xFF302331),
+            1.8.dp.toPx(),
+            Offset(cx + headRadius * 0.38f, eyeY)
         )
 
-        // Smile
         drawArc(
             color = Color(0xFFAD6570),
             startAngle = 15f,
@@ -242,51 +200,36 @@ fun SystemCompanionAnimatedAvatar(
             style = Stroke(width = 1.2.dp.toPx())
         )
 
-        // Neck
         drawRect(
             color = Color(0xFFEBC2A5),
             topLeft = Offset(
                 cx - w * 0.055f,
                 headY + headRadius * 0.75f
             ),
-            size = Size(
-                w * 0.11f,
-                h * 0.10f
-            )
+            size = Size(w * 0.11f, h * 0.10f)
         )
 
-        // Shoulders and clothing
         val body = Path().apply {
             moveTo(cx - w * 0.12f, h * 0.43f)
             quadraticTo(
-                cx - w * 0.34f,
-                h * 0.43f,
-                cx - w * 0.43f,
-                h * 0.61f
+                cx - w * 0.34f, h * 0.43f,
+                cx - w * 0.43f, h * 0.61f
             )
             lineTo(cx - w * 0.35f, h * 0.95f)
             quadraticTo(
-                cx,
-                h * 1.02f,
-                cx + w * 0.35f,
-                h * 0.95f
+                cx, h * 1.02f,
+                cx + w * 0.35f, h * 0.95f
             )
             lineTo(cx + w * 0.43f, h * 0.61f)
             quadraticTo(
-                cx + w * 0.34f,
-                h * 0.43f,
-                cx + w * 0.12f,
-                h * 0.43f
+                cx + w * 0.34f, h * 0.43f,
+                cx + w * 0.12f, h * 0.43f
             )
             close()
         }
 
-        drawPath(
-            path = body,
-            color = outfit
-        )
+        drawPath(body, outfit)
 
-        // Clothing borders
         drawLine(
             color = accent,
             start = Offset(cx, h * 0.46f),
@@ -301,7 +244,6 @@ fun SystemCompanionAnimatedAvatar(
             strokeWidth = 1.5.dp.toPx()
         )
 
-        // SYSTEM emblem
         drawCircle(
             color = accent,
             radius = w * 0.055f,
@@ -314,7 +256,6 @@ fun SystemCompanionAnimatedAvatar(
             center = Offset(cx, h * 0.58f)
         )
 
-        // Shoulder glow
         drawLine(
             color = accent.copy(alpha = 0.8f),
             start = Offset(cx - w * 0.39f, h * 0.62f),
