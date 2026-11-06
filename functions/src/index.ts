@@ -1,3 +1,4 @@
+
 import { initializeApp } from "firebase-admin/app";
 import {
   FieldValue,
@@ -95,8 +96,6 @@ export const submitGlobalMessage = onCall(
             );
           }
 
-          // انتهاء الحظر تلقائياً.
-          // لا يوجد حظر دائم للدردشة.
           transaction.update(banRef, {
             active: false,
             expiredAt: FieldValue.serverTimestamp()
@@ -194,8 +193,7 @@ export const getPendingGlobalMessages = onCall(
 
 /**
  * مراجعة الرسائل.
- * كل مخالفة مثبتة تؤدي إلى حظر الدردشة 24 ساعة فقط.
- * لا يوجد حظر دائم أو حظر كامل للحساب.
+ * المخالفة المثبتة تؤدي إلى حظر الدردشة 24 ساعة فقط.
  */
 export const reviewGlobalMessage = onCall(
   async (request) => {
@@ -292,7 +290,6 @@ export const reviewGlobalMessage = onCall(
           ? reason.slice(0, 500)
           : "مخالفة";
 
-      // حظر الدردشة لمدة 24 ساعة من وقت اعتماد المخالفة.
       const expiresAt = Timestamp.fromMillis(
         Date.now() + CHAT_BAN_DURATION_MS
       );
@@ -308,8 +305,6 @@ export const reviewGlobalMessage = onCall(
         moderationStrikes: strikes
       });
 
-      // الحظر يقتصر على الدردشة فقط.
-      // لا يوجد permanent ولا حظر للحساب أو اللعبة.
       transaction.set(banRef, {
         userId: uid,
         active: true,
@@ -345,3 +340,10 @@ export const reviewGlobalMessage = onCall(
     return result;
   }
 );
+
+/**
+ * التحقق من صلاحية الملك الحصرية.
+ * لا يمنح هذا الإجراء الملكية؛ يتحقق فقط من
+ * الصلاحية التي يمنحها المسؤول الموثوق من Firebase Admin.
+ */
+export { getSovereignAuthority } from "./sovereign_authority";
