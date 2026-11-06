@@ -147,22 +147,86 @@ func _add_sphere(
 	return instance
 
 
+# --------------------------------------------------
+# HISTORICAL LANDMARK INTERACTION AND MAP REGISTRATION
+# --------------------------------------------------
+
+func _get_landmark_region_id(landmark_id: String) -> String:
+	match landmark_id:
+		"hercules_arches":
+			return "western_mediterranean"
+
+		"atlantis":
+			return "atlantis_legend"
+
+		"alexandria_lighthouse":
+			return "alexandria_egypt"
+
+		"babylon_tower":
+			return "babylon_mesopotamia"
+
+		"ancient_rome", "roman_colosseum":
+			return "rome_italy"
+
+		_:
+			return "historical_unknown"
+
+
 func _create_landmark(
 	landmark_id: String,
 	parent: Node3D
 ) -> Node3D:
 	var landmark := Node3D.new()
 	landmark.name = landmark_id
+
 	landmark.add_to_group("system_historical_landmark")
+	landmark.add_to_group("system_interactable")
 
 	var information: Dictionary = LANDMARKS[landmark_id]
+	var region_id := _get_landmark_region_id(landmark_id)
 
+	# معلومات المعلم التاريخي.
 	landmark.set_meta("landmark_id", landmark_id)
 	landmark.set_meta("landmark_name", information["name"])
 	landmark.set_meta("civilization", information["civilization"])
 	landmark.set_meta("region", information["region"])
 	landmark.set_meta("lore", information["lore"])
 	landmark.set_meta("discovered", false)
+
+	# البيانات التي يحتاجها نظام التفاعل والخريطة.
+	landmark.set_meta(
+		"system_location_id",
+		"historical_" + landmark_id
+	)
+	landmark.set_meta("system_region_id", region_id)
+	landmark.set_meta(
+		"system_display_name",
+		str(information["name"])
+	)
+	landmark.set_meta("system_location_type", 5)
+	landmark.set_meta(
+		"system_interaction_prompt",
+		"اكتشاف " + str(information["name"])
+	)
+	landmark.set_meta("system_fast_travel", false)
+
+	# نقطة تصادم حتى يتمكن Raycast من التقاط المعلم.
+	var interaction_area := Area3D.new()
+	interaction_area.name = "LandmarkInteractionArea"
+	interaction_area.position = Vector3(0.0, 6.0, 0.0)
+	interaction_area.collision_layer = 1
+	interaction_area.collision_mask = 1
+	interaction_area.add_to_group("system_interaction_area")
+
+	var collision := CollisionShape3D.new()
+	collision.name = "LandmarkInteractionCollision"
+
+	var shape := SphereShape3D.new()
+	shape.radius = 10.0
+
+	collision.shape = shape
+	interaction_area.add_child(collision)
+	landmark.add_child(interaction_area)
 
 	parent.add_child(landmark)
 	return landmark
@@ -546,7 +610,6 @@ func _build_ancient_rome() -> void:
 	var roof_material := _material(Color(0.48, 0.27, 0.19))
 	var bronze := _material(Color(0.55, 0.38, 0.18), 0.4, 0.6)
 
-	# الساحة الرئيسية للمنتدى الروماني.
 	_add_box(
 		landmark,
 		"RomanForumSquare",
@@ -555,7 +618,6 @@ func _build_ancient_rome() -> void:
 		aged_marble
 	)
 
-	# طريق روماني رئيسي.
 	_add_box(
 		landmark,
 		"RomanMainRoad",
@@ -564,7 +626,6 @@ func _build_ancient_rome() -> void:
 		marble
 	)
 
-	# معبد روماني في وسط المدينة.
 	_add_box(
 		landmark,
 		"RomanTempleFoundation",
@@ -589,7 +650,6 @@ func _build_ancient_rome() -> void:
 		roof_material
 	)
 
-	# أعمدة واجهة المعبد.
 	for index in range(7):
 		var x := -9.0 + float(index) * 3.0
 
@@ -609,7 +669,6 @@ func _build_ancient_rome() -> void:
 			bronze
 		)
 
-	# مبنى مجلس الشيوخ.
 	_add_box(
 		landmark,
 		"RomanSenateFoundation",
@@ -634,7 +693,6 @@ func _build_ancient_rome() -> void:
 		roof_material
 	)
 
-	# قوس نصر روماني.
 	var arch_position := Vector3(23.0, 0.0, -5.0)
 
 	for side in [-1.0, 1.0]:
@@ -654,7 +712,6 @@ func _build_ancient_rome() -> void:
 		aged_marble
 	)
 
-	# أعمدة وزخارف موزعة في المنتدى.
 	for index in range(10):
 		var x := -28.0 + float(index) * 6.0
 
@@ -666,7 +723,6 @@ func _build_ancient_rome() -> void:
 			marble
 		)
 
-	# تمثال تذكاري في الساحة.
 	_add_cylinder(
 		landmark,
 		"RomanStatuePedestal",
@@ -702,25 +758,24 @@ func _build_roman_colosseum() -> void:
 	var sand := _material(Color(0.76, 0.59, 0.34))
 	var seat_material := _material(Color(0.66, 0.57, 0.45))
 
-	# أرضية المنطقة المحيطة بالمدرج.
-	_add_cylinder(
+	var outer_plaza := _add_cylinder(
 		landmark,
 		"ColosseumOuterPlaza",
 		Vector3(0.0, 0.1, 0.0),
 		29.0, 29.0, 0.2,
 		inner_stone
-	).scale = Vector3(1.0, 1.0, 0.72)
+	)
+	outer_plaza.scale = Vector3(1.0, 1.0, 0.72)
 
-	# أرضية ميدان القتال البيضاوية.
-	_add_cylinder(
+	var arena_sand := _add_cylinder(
 		landmark,
 		"ColosseumArenaSand",
 		Vector3(0.0, 0.45, 0.0),
 		13.0, 13.0, 0.5,
 		sand
-	).scale = Vector3(1.0, 1.0, 0.72)
+	)
+	arena_sand.scale = Vector3(1.0, 1.0, 0.72)
 
-	# الجدار الخارجي والمدرجات المتدرجة.
 	for level in range(3):
 		var radius := 23.0 - float(level) * 2.5
 		var y := 2.0 + float(level) * 4.5
@@ -738,7 +793,6 @@ func _build_roman_colosseum() -> void:
 
 		tier.scale = Vector3(1.0, 1.0, 0.72)
 
-	# صفوف المقاعد الداخلية.
 	for row in range(5):
 		var radius := 17.0 - float(row) * 1.0
 		var seat := _add_cylinder(
@@ -753,7 +807,6 @@ func _build_roman_colosseum() -> void:
 
 		seat.scale = Vector3(1.0, 1.0, 0.72)
 
-	# الأعمدة والفتحات الخارجية المتكررة.
 	for level in range(3):
 		var y := 2.0 + float(level) * 4.5
 		var radius_x := 23.5 - float(level) * 2.5
@@ -785,7 +838,6 @@ func _build_roman_colosseum() -> void:
 
 			arch_marker.rotation.y = -angle
 
-	# منصة دخول المقاتلين.
 	_add_box(
 		landmark,
 		"ColosseumMainEntrance",
@@ -794,7 +846,6 @@ func _build_roman_colosseum() -> void:
 		inner_stone
 	)
 
-	# أبراج جانبية عند المدخل.
 	for side in [-1.0, 1.0]:
 		_add_cylinder(
 			landmark,
@@ -804,7 +855,6 @@ func _build_roman_colosseum() -> void:
 			outer_stone
 		)
 
-	# أعمدة وزخارف أعلى المدرج.
 	for index in range(16):
 		var angle := TAU * float(index) / 16.0
 		var x := 18.0 * cos(angle)
@@ -818,7 +868,6 @@ func _build_roman_colosseum() -> void:
 			outer_stone
 		)
 
-	# علامة مركزية في ساحة القتال.
 	_add_cylinder(
 		landmark,
 		"ColosseumArenaMarker",
