@@ -1,3 +1,4 @@
+
 package com.system.irtqaa
 
 enum class SystemPlayerGender(
@@ -39,14 +40,13 @@ object SystemCompanionAppearanceEngine {
         world: SystemWorldKind
     ): SystemCompanionAppearance {
 
-        val companionGender =
-            when (playerGender) {
-                SystemPlayerGender.MALE ->
-                    SystemCompanionGender.FEMALE
+        val companionGender = when (playerGender) {
+            SystemPlayerGender.MALE ->
+                SystemCompanionGender.FEMALE
 
-                SystemPlayerGender.FEMALE ->
-                    SystemCompanionGender.MALE
-            }
+            SystemPlayerGender.FEMALE ->
+                SystemCompanionGender.MALE
+        }
 
         val worldAppearance = when (world) {
 
@@ -103,26 +103,30 @@ object SystemCompanionAppearanceEngine {
             companionGender == SystemCompanionGender.FEMALE
 
         return SystemCompanionAppearance(
-            name = "ميار",
+            name = if (isFemale) "ميار" else "آدم",
             gender = companionGender,
             world = world,
             worldTitle = worldAppearance.title,
-            outfitName =
-                if (isFemale) {
-                    worldAppearance.femaleOutfit
-                } else {
-                    worldAppearance.maleOutfit
-                },
-            outfitDescription =
-                if (isFemale) {
-                    worldAppearance.femaleDescription
-                } else {
-                    worldAppearance.maleDescription
-                },
-            voiceStyle =
-                if (isFemale) "FEMALE" else "MALE",
-            animationStyle =
-                if (isFemale) "FEMALE_MOTION" else "MALE_MOTION"
+            outfitName = if (isFemale) {
+                worldAppearance.femaleOutfit
+            } else {
+                worldAppearance.maleOutfit
+            },
+            outfitDescription = if (isFemale) {
+                worldAppearance.femaleDescription
+            } else {
+                worldAppearance.maleDescription
+            },
+            voiceStyle = if (isFemale) {
+                "ARABIC_FEMALE"
+            } else {
+                "ARABIC_MALE"
+            },
+            animationStyle = if (isFemale) {
+                "FEMALE_MOTION"
+            } else {
+                "MALE_MOTION"
+            }
         )
     }
 
