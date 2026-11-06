@@ -1,63 +1,43 @@
+
 package com.system.irtqaa
 
+import android.speech.tts.TextToSpeech
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.border
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.*
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.graphicsLayer
 import kotlinx.coroutines.delay
-import kotlin.math.cos
+import java.util.Locale
 import kotlin.math.sin
 
 enum class SystemWorldKind {
@@ -81,7 +61,7 @@ object SystemWorldVisualStyles {
 
     val modern = SystemWorldVisualStyle(
         SystemWorldKind.MODERN_REALISTIC,
-        "العالم الواقعي الحديث",
+        "العالم الحديث الواقعي",
         "مدن حقيقية وحياة معاصرة",
         Color(0xFF42D9E8),
         Color(0xFF4388B8),
@@ -91,8 +71,8 @@ object SystemWorldVisualStyles {
 
     val mythology = SystemWorldVisualStyle(
         SystemWorldKind.MYTHOLOGY_HISTORY,
-        "عالم الأساطير والتاريخ",
-        "حضارات قديمة وأساطير الشعوب",
+        "عالم الحضارات التاريخية",
+        "سومر وبابل ومصر واليونان والصين القديمة",
         Color(0xFFE6B65C),
         Color(0xFFB96E3E),
         Color(0xFF28170F),
@@ -101,8 +81,8 @@ object SystemWorldVisualStyles {
 
     val fantasy = SystemWorldVisualStyle(
         SystemWorldKind.FANTASY,
-        "العالم الخيالي",
-        "ممالك وسحر ومغامرات",
+        "عالم الأساطير والفانتازيا",
+        "تنانين وسحر وممالك ومخلوقات أسطورية",
         Color(0xFFB69BFF),
         Color(0xFF5B72D6),
         Color(0xFF17132F),
@@ -112,7 +92,7 @@ object SystemWorldVisualStyles {
     val greedIsland = SystemWorldVisualStyle(
         SystemWorldKind.GREED_ISLAND,
         "جزيرة الطمع",
-        "جزيرة الأسرار والتحديات",
+        "جزيرة عائمة وأسرار ومواسم وتحديات",
         Color(0xFF65E6A6),
         Color(0xFF36AFC0),
         Color(0xFF08251F),
@@ -150,156 +130,168 @@ fun SystemWorldThemeGallery(
     }
 
     var visibleCardCount by remember {
-        mutableStateOf(0)
+        mutableIntStateOf(0)
     }
 
     LaunchedEffect(Unit) {
         for (index in 1..SystemWorldVisualStyles.all.size) {
-            delay(150)
+            delay(180)
             visibleCardCount = index
         }
     }
 
     LaunchedEffect(selectedKind) {
         val selected = selectedKind
-
         if (selected != null) {
             delay(260)
             onWorldSelected(selected)
         }
     }
 
-    Box(modifier = modifier.fillMaxWidth()) {
-
-        SystemWorldAmbientBackground(
-            modifier = Modifier.fillMaxSize()
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(SystemMobileVisualTheme.background)
+            .padding(vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(15.dp)
+    ) {
+        Text(
+            "SYSTEM WORLD",
+            color = SystemMobileVisualTheme.gold,
+            fontSize = 25.sp,
+            fontWeight = FontWeight.Black
         )
 
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
+        Text(
+            "اختر بوابتك وابدأ رحلتك بين العوالم الأربعة",
+            color = SystemMobileVisualTheme.textSecondary,
+            fontSize = 14.sp
+        )
 
-            Text(
-                text = "عوالم SYSTEM",
-                color = SystemMobileVisualTheme.gold,
-                fontSize = 23.sp,
-                fontWeight = FontWeight.Black
-            )
+        SystemWorldMiyarGuide()
 
-            Text(
-                text = "أربع بوابات مستقلة، ولكل عالم هويته وألوانه الخاصة.",
-                color = SystemMobileVisualTheme.textSecondary,
-                fontSize = 13.sp
-            )
-
-            SystemWorldVisualStyles.all.forEachIndexed { index, style ->
-
-                AnimatedVisibility(
-                    visible = visibleCardCount > index,
-                    enter = fadeIn(
-                        animationSpec = tween(480)
-                    ) + slideInHorizontally(
-                        initialOffsetX = { fullWidth ->
-                            fullWidth / 4
-                        },
-                        animationSpec = tween(480)
+        SystemWorldVisualStyles.all.forEachIndexed { index, style ->
+            AnimatedVisibility(
+                visible = visibleCardCount > index,
+                enter = fadeIn(tween(650)) +
+                    slideInHorizontally(
+                        initialOffsetX = { it / 3 },
+                        animationSpec = tween(650)
                     )
-                ) {
-                    SystemWorldThemeCard(
-                        style = style,
-                        selected = selectedKind == style.kind,
-                        enabled = selectedKind == null,
-                        onClick = {
-                            selectedKind = style.kind
-                        }
-                    )
-                }
+            ) {
+                SystemWorldThemeCard(
+                    style = style,
+                    selected = selectedKind == style.kind,
+                    enabled = selectedKind == null,
+                    onClick = {
+                        selectedKind = style.kind
+                    }
+                )
             }
         }
+
+        Text(
+            "كل بوابة تقود إلى عالم مستقل بقوانينه وخريطته وحياته الخاصة.",
+            color = SystemMobileVisualTheme.textSecondary,
+            fontSize = 12.sp
+        )
     }
 }
 
 @Composable
-private fun SystemWorldAmbientBackground(
-    modifier: Modifier = Modifier
-) {
-    val transition = rememberInfiniteTransition(
-        label = "world-ambient-particles"
-    )
+fun SystemWorldMiyarGuide() {
+    val context = LocalContext.current
 
-    val progress by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(9000),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "ambient-particle-progress"
-    )
+    var speechEngine by remember {
+        mutableStateOf<TextToSpeech?>(null)
+    }
 
-    Canvas(modifier = modifier) {
+    var voiceReady by remember {
+        mutableStateOf(false)
+    }
 
-        val width = size.width
-        val height = size.height
+    val explanation = """
+        أهلاً بك في نظام SYSTEM WORLD.
+        أنا ميار، مرشدتك داخل هذا العالم.
+        أمامك أربع بوابات مختلفة.
+        البوابة الأولى هي العالم الحديث، وفيه مدن ودول حقيقية وحياة معاصرة ومهن وتجارة ومغامرات.
+        البوابة الثانية هي عالم الحضارات التاريخية، وفيه حضارات حقيقية مثل سومر وبابل وآشور ومصر القديمة واليونان والصين القديمة.
+        البوابة الثالثة هي عالم الأساطير والفانتازيا، وفيه التنانين والسحر والممالك والمخلوقات الأسطورية.
+        البوابة الرابعة هي جزيرة الطمع، وهي جزيرة عائمة مليئة بالأسرار والتحديات والمواسم الخاصة.
+        اضغط على البوابة التي تريد دخولها.
+        وسأساعدك على فهم أنظمة العالم ومهامه وقوانينه وخريطته خطوة بخطوة.
+    """.trimIndent()
 
-        drawRect(
-            brush = Brush.verticalGradient(
-                colors = listOf(
-                    Color(0xFF07111E).copy(alpha = 0.12f),
-                    Color(0xFF0B1422).copy(alpha = 0.04f),
-                    Color.Transparent
-                )
-            ),
-            size = size
-        )
+    DisposableEffect(context) {
+        var created: TextToSpeech? = null
 
-        val particleColors = listOf(
-            SystemWorldVisualStyles.modern.accent,
-            SystemWorldVisualStyles.mythology.accent,
-            SystemWorldVisualStyles.fantasy.accent,
-            SystemWorldVisualStyles.greedIsland.accent
-        )
+        created = TextToSpeech(context) { status ->
+            val engine = created
 
-        for (index in 0 until 22) {
-
-            val seed = index + 1
-            val xFactor = ((seed * 37) % 97) / 100f
-            val baseY = ((seed * 53) % 101) / 100f
-            val travel = (progress + seed * 0.071f) % 1f
-            val yFactor = (baseY + travel * 0.22f) % 1f
-            val radius = (1.1f + (seed % 4) * 0.55f).dp.toPx()
-
-            val pulse = 0.24f + 0.30f *
-                (0.5f + 0.5f * kotlin.math.sin(
-                    (progress * 6.28318f) + seed
-                ))
-
-            drawCircle(
-                color = particleColors[index % particleColors.size]
-                    .copy(alpha = pulse),
-                radius = radius,
-                center = Offset(
-                    width * xFactor,
-                    height * yFactor
-                )
-            )
+            if (status == TextToSpeech.SUCCESS && engine != null) {
+                val languageStatus = engine.setLanguage(Locale("ar"))
+                voiceReady = languageStatus >= TextToSpeech.LANG_AVAILABLE
+            }
         }
 
-        drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(
-                    SystemWorldVisualStyles.fantasy.accent.copy(alpha = 0.055f),
-                    Color.Transparent
-                ),
-                center = Offset(width * 0.92f, height * 0.28f),
-                radius = width * 0.58f
-            ),
-            radius = width * 0.58f,
-            center = Offset(width * 0.92f, height * 0.28f)
+        speechEngine = created
+
+        onDispose {
+            created?.stop()
+            created?.shutdown()
+            speechEngine = null
+            voiceReady = false
+        }
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF142238)
         )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(
+                "ميار | مرشدتك في العوالم",
+                color = SystemMobileVisualTheme.gold,
+                fontSize = 19.sp,
+                fontWeight = FontWeight.Black
+            )
+
+            Text(
+                "أهلاً بك! سأعرّفك على البوابات الأربع، وأشرح لك طبيعة كل عالم قبل الدخول.",
+                color = Color.White,
+                fontSize = 14.sp
+            )
+
+            Button(
+                onClick = {
+                    speechEngine?.speak(
+                        explanation,
+                        TextToSpeech.QUEUE_FLUSH,
+                        null,
+                        "system_miyar_world_guide"
+                    )
+                },
+                enabled = voiceReady,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    if (voiceReady) "استمع إلى شرح ميار الصوتي"
+                    else "جارٍ تجهيز صوت ميار..."
+                )
+            }
+
+            Text(
+                "يمكن أن يعتمد نوع الصوت واللهجة على الأصوات العربية المثبتة في جهازك.",
+                color = Color.LightGray,
+                fontSize = 11.sp
+            )
+        }
     }
 }
 
@@ -311,231 +303,190 @@ fun SystemWorldThemeCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val interactionSource = remember {
-        MutableInteractionSource()
-    }
-
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val haptic = LocalHapticFeedback.current
-
-    val glowTransition = rememberInfiniteTransition(
-        label = "selected-world-glow"
+    val transition = rememberInfiniteTransition(
+        label = "portal-${style.kind}"
     )
 
-    val glowAlpha by glowTransition.animateFloat(
-        initialValue = 0.18f,
-        targetValue = 0.75f,
+    val movement by transition.animateFloat(
+        initialValue = -12f,
+        targetValue = 12f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1700),
+            animation = tween(4200),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "selected-world-glow-alpha"
+        label = "portal-movement"
     )
 
-    val shimmerTransition = rememberInfiniteTransition(
-        label = "world-card-shimmer"
+    val glow by transition.animateFloat(
+        initialValue = 0.18f,
+        targetValue = 0.65f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2200),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "portal-glow"
     )
 
-    val shimmerProgress by shimmerTransition.animateFloat(
+    val shimmer by transition.animateFloat(
         initialValue = -1f,
         targetValue = 2f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 4800),
+            animation = tween(5200),
             repeatMode = RepeatMode.Restart
         ),
-        label = "world-card-shimmer-progress"
-    )
-
-    val animatedRotationX by animateFloatAsState(
-        targetValue = when {
-            isPressed -> 1.8f
-            selected -> 1.2f
-            else -> 0f
-        },
-        animationSpec = tween(durationMillis = 320),
-        label = "world-card-rotation-x"
-    )
-
-    val animatedRotationY by animateFloatAsState(
-        targetValue = when {
-            isPressed -> -1.8f
-            selected -> -1.2f
-            else -> 0f
-        },
-        animationSpec = tween(durationMillis = 320),
-        label = "world-card-rotation-y"
-    )
-
-    val animatedScale by animateFloatAsState(
-        targetValue = when {
-            isPressed -> 0.975f
-            selected -> 1.035f
-            else -> 1f
-        },
-        animationSpec = tween(160),
-        label = "world-card-scale"
-    )
-
-    val animatedAlpha by animateFloatAsState(
-        targetValue = if (!enabled && !selected) 0.58f else 1f,
-        animationSpec = tween(220),
-        label = "world-card-alpha"
-    )
-
-    val animatedContainer by animateColorAsState(
-        targetValue = when {
-            isPressed -> style.accent.copy(alpha = 0.22f)
-            selected -> style.accent.copy(alpha = 0.30f)
-            else -> style.surface
-        },
-        animationSpec = tween(220),
-        label = "world-card-color"
-    )
-
-    val animatedBorderColor by animateColorAsState(
-        targetValue = when {
-            selected -> style.accent.copy(alpha = glowAlpha)
-            isPressed -> style.accent.copy(alpha = 0.85f)
-            else -> style.accent.copy(alpha = 0.24f)
-        },
-        animationSpec = tween(180),
-        label = "world-card-border-color"
-    )
-
-    val animatedBorderWidth by animateDpAsState(
-        targetValue = when {
-            selected -> 2.5.dp
-            isPressed -> 2.dp
-            else -> 1.dp
-        },
-        animationSpec = tween(180),
-        label = "world-card-border-width"
-    )
-
-    val animatedElevation by animateDpAsState(
-        targetValue = when {
-            isPressed -> 3.dp
-            selected -> 14.dp
-            else -> 7.dp
-        },
-        animationSpec = tween(180),
-        label = "world-card-elevation"
+        label = "portal-shimmer"
     )
 
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .height(178.dp)
             .graphicsLayer {
-                scaleX = animatedScale
-                scaleY = animatedScale
-                alpha = animatedAlpha
-                rotationX = animatedRotationX
-                rotationY = animatedRotationY
-                cameraDistance = 12f * density
+                translationY = movement * 0.10f
+                alpha = if (enabled || selected) 1f else 0.55f
             }
             .border(
-                width = animatedBorderWidth,
-                color = animatedBorderColor,
+                width = if (selected) 2.5.dp else 1.dp,
+                color = style.accent.copy(
+                    alpha = if (selected) glow else 0.45f
+                ),
                 shape = RoundedCornerShape(22.dp)
             )
-            .semantics(mergeDescendants = true) {
+            .semantics {
                 contentDescription = "${style.title}. ${style.subtitle}"
-                this.selected = selected
             }
             .clickable(
-                interactionSource = interactionSource,
-                indication = null,
                 enabled = enabled,
                 role = Role.Button,
-                onClick = {
-                    haptic.performHapticFeedback(
-                        HapticFeedbackType.LongPress
-                    )
-                    onClick()
-                }
+                onClick = onClick
             ),
         shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(
-            containerColor = animatedContainer
+            containerColor = style.deep
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = animatedElevation
+            defaultElevation = if (selected) 18.dp else 9.dp
         )
     ) {
+        Box(Modifier.fillMaxSize()) {
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    Brush.linearGradient(
+            Canvas(Modifier.fillMaxSize()) {
+                val w = size.width
+                val h = size.height
+
+                drawRect(
+                    brush = Brush.verticalGradient(
                         listOf(
                             style.deep,
-                            if (selected || isPressed) {
-                                style.accent.copy(alpha = 0.30f)
-                            } else {
-                                style.surface
-                            },
-                            style.secondary.copy(alpha = 0.48f)
+                            style.surface,
+                            Color.Black
                         )
                     )
                 )
-                .drawBehind {
 
-                    val shimmerBrush = Brush.linearGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            style.accent.copy(alpha = 0.13f),
-                            Color.White.copy(alpha = 0.09f),
-                            style.accent.copy(alpha = 0.13f),
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        listOf(
+                            style.accent.copy(alpha = glow),
+                            style.accent.copy(alpha = 0.08f),
                             Color.Transparent
                         ),
-                        start = Offset(
-                            size.width * shimmerProgress,
-                            0f
+                        center = Offset(
+                            w * 0.80f + movement,
+                            h * 0.40f
                         ),
-                        end = Offset(
-                            size.width * (shimmerProgress + 0.38f),
-                            size.height
-                        )
+                        radius = h * 0.90f
+                    ),
+                    radius = h * 0.90f,
+                    center = Offset(
+                        w * 0.80f + movement,
+                        h * 0.40f
                     )
+                )
 
-                    drawRect(
-                        brush = shimmerBrush,
-                        size = size
+                when (style.kind) {
+                    SystemWorldKind.MODERN_REALISTIC -> {
+                        drawModernPortal(w, h, style, movement)
+                    }
+
+                    SystemWorldKind.MYTHOLOGY_HISTORY -> {
+                        drawHistoryPortal(w, h, style, movement)
+                    }
+
+                    SystemWorldKind.FANTASY -> {
+                        drawFantasyPortal(w, h, style, movement)
+                    }
+
+                    SystemWorldKind.GREED_ISLAND -> {
+                        drawGreedPortal(w, h, style, movement)
+                    }
+                }
+
+                for (i in 0..18) {
+                    val x = w * ((i * 37 % 100) / 100f)
+                    val y = h * ((i * 23 % 100) / 100f)
+                    val pulse = 0.2f +
+                        0.45f * (0.5f + 0.5f * sin(i + shimmer * 3f))
+
+                    drawCircle(
+                        color = style.accent.copy(alpha = pulse),
+                        radius = (1.2f + i % 3).dp.toPx(),
+                        center = Offset(x, y)
                     )
                 }
-                .padding(15.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
 
-            SystemWorldThreeDimensionalEmblem(
-                style = style,
-                modifier = Modifier.size(112.dp)
+                drawRect(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.White.copy(alpha = 0.12f),
+                            style.accent.copy(alpha = 0.14f),
+                            Color.Transparent
+                        ),
+                        start = Offset(w * shimmer, 0f),
+                        end = Offset(w * (shimmer + 0.35f), h)
+                    )
+                )
+            }
+
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(
+                                Color.Black.copy(alpha = 0.88f),
+                                Color.Black.copy(alpha = 0.56f),
+                                Color.Transparent
+                            )
+                        )
+                    )
             )
 
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .padding(18.dp)
+                    .fillMaxWidth(0.82f),
                 verticalArrangement = Arrangement.spacedBy(7.dp)
             ) {
-
                 Text(
                     style.title,
                     color = Color.White,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Black
                 )
 
                 Text(
                     style.subtitle,
-                    color = Color(0xFFD1DCE8),
+                    color = Color.White.copy(alpha = 0.88f),
                     fontSize = 12.sp
                 )
 
                 Text(
                     if (selected) "جاري فتح البوابة..."
-                    else if (!enabled) "غير متاح حالياً"
-                    else "دخول العالم  ←",
+                    else if (!enabled) "يرجى الانتظار..."
+                    else "اضغط للدخول إلى العالم  ←",
                     color = style.accent,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold
@@ -545,430 +496,241 @@ fun SystemWorldThemeCard(
     }
 }
 
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawModernPortal(
+    w: Float,
+    h: Float,
+    style: SystemWorldVisualStyle,
+    movement: Float
+) {
+    for (i in 0..9) {
+        val x = w * (i / 10f)
+        val buildingHeight = h * (0.25f + (i % 4) * 0.12f)
+
+        drawRect(
+            color = style.secondary.copy(alpha = 0.65f),
+            topLeft = Offset(x, h - buildingHeight),
+            size = Size(w * 0.075f, buildingHeight)
+        )
+
+        for (row in 0..3) {
+            drawRect(
+                color = style.accent.copy(alpha = 0.75f),
+                topLeft = Offset(
+                    x + 5.dp.toPx(),
+                    h - buildingHeight + row * 13.dp.toPx()
+                ),
+                size = Size(4.dp.toPx(), 5.dp.toPx())
+            )
+        }
+    }
+
+    drawLine(
+        style.accent.copy(alpha = 0.8f),
+        Offset(w * 0.02f, h * 0.90f),
+        Offset(w * 0.98f, h * 0.90f),
+        3.dp.toPx()
+    )
+
+    for (i in 0..4) {
+        val x = (w * 0.15f) + i * (w * 0.18f) + movement
+        drawCircle(
+            style.accent.copy(alpha = 0.8f),
+            3.dp.toPx(),
+            Offset(x, h * 0.88f)
+        )
+    }
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawHistoryPortal(
+    w: Float,
+    h: Float,
+    style: SystemWorldVisualStyle,
+    movement: Float
+) {
+    val ground = h * 0.88f
+
+    for (i in 0..2) {
+        val x = w * (0.55f + i * 0.14f)
+        val width = w * 0.16f
+        val height = h * (0.34f + (i % 2) * 0.10f)
+
+        val pyramid = Path().apply {
+            moveTo(x, ground)
+            lineTo(x + width / 2f, ground - height)
+            lineTo(x + width, ground)
+            close()
+        }
+
+        drawPath(pyramid, style.accent.copy(alpha = 0.58f))
+    }
+
+    for (i in 0..3) {
+        val x = w * (0.12f + i * 0.10f)
+        drawRect(
+            style.secondary.copy(alpha = 0.75f),
+            Offset(x, h * 0.44f),
+            Size(w * 0.035f, h * 0.43f)
+        )
+    }
+
+    drawCircle(
+        style.accent.copy(alpha = 0.65f),
+        h * 0.11f,
+        Offset(w * 0.84f + movement * 0.3f, h * 0.20f)
+    )
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawFantasyPortal(
+    w: Float,
+    h: Float,
+    style: SystemWorldVisualStyle,
+    movement: Float
+) {
+    val mountains = Path().apply {
+        moveTo(0f, h * 0.88f)
+        lineTo(w * 0.22f, h * 0.30f)
+        lineTo(w * 0.42f, h * 0.80f)
+        lineTo(w * 0.65f, h * 0.18f)
+        lineTo(w, h * 0.85f)
+        lineTo(w, h)
+        lineTo(0f, h)
+        close()
+    }
+
+    drawPath(
+        mountains,
+        style.secondary.copy(alpha = 0.68f)
+    )
+
+    drawCircle(
+        brush = Brush.radialGradient(
+            listOf(
+                style.accent.copy(alpha = 0.85f),
+                style.accent.copy(alpha = 0.12f),
+                Color.Transparent
+            ),
+            center = Offset(w * 0.80f + movement, h * 0.25f),
+            radius = h * 0.38f
+        ),
+        radius = h * 0.38f,
+        center = Offset(w * 0.80f + movement, h * 0.25f)
+    )
+
+    drawLine(
+        style.accent,
+        Offset(w * 0.25f, h * 0.38f),
+        Offset(w * 0.35f, h * 0.25f),
+        3.dp.toPx()
+    )
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawGreedPortal(
+    w: Float,
+    h: Float,
+    style: SystemWorldVisualStyle,
+    movement: Float
+) {
+    val island = Path().apply {
+        moveTo(w * 0.25f, h * 0.48f + movement * 0.15f)
+        cubicTo(
+            w * 0.42f, h * 0.30f + movement * 0.15f,
+            w * 0.70f, h * 0.30f + movement * 0.15f,
+            w * 0.88f, h * 0.49f + movement * 0.15f
+        )
+        lineTo(w * 0.73f, h * 0.70f + movement * 0.15f)
+        lineTo(w * 0.61f, h * 0.94f)
+        lineTo(w * 0.45f, h * 0.70f + movement * 0.15f)
+        close()
+    }
+
+    drawPath(
+        island,
+        Brush.verticalGradient(
+            listOf(
+                style.accent,
+                style.secondary,
+                Color(0xFF382B24)
+            )
+        )
+    )
+
+    for (i in 0..4) {
+        val x = w * (0.39f + i * 0.095f)
+        val y = h * (0.42f + (i % 2) * 0.04f) + movement * 0.15f
+
+        drawLine(
+            Color(0xFF704B30),
+            Offset(x, y + 18.dp.toPx()),
+            Offset(x, y),
+            3.dp.toPx()
+        )
+
+        drawCircle(
+            style.accent.copy(alpha = 0.9f),
+            9.dp.toPx(),
+            Offset(x, y - 3.dp.toPx())
+        )
+    }
+
+    for (i in 0..3) {
+        drawCircle(
+            Color.White.copy(alpha = 0.32f),
+            13.dp.toPx(),
+            Offset(w * (0.18f + i * 0.19f), h * 0.72f)
+        )
+    }
+}
+
 @Composable
 fun SystemWorldThreeDimensionalEmblem(
     style: SystemWorldVisualStyle,
     modifier: Modifier = Modifier
 ) {
-    val lightTransition = rememberInfiniteTransition(
-        label = "world-emblem-light"
+    val transition = rememberInfiniteTransition(
+        label = "world-emblem"
     )
 
-    val lightPosition by lightTransition.animateFloat(
-        initialValue = -0.85f,
-        targetValue = 1.85f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 3200,
-                delayMillis = 350
-            ),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "world-emblem-shimmer"
-    )
-
-    val emblemPulse by lightTransition.animateFloat(
-        initialValue = 0.22f,
-        targetValue = 0.48f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2100),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "world-emblem-energy-pulse"
-    )
-
-    // دوران المدار الضوئي حول الشعار.
-    val orbitRotation by lightTransition.animateFloat(
+    val rotation by transition.animateFloat(
         initialValue = 0f,
         targetValue = 360f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 6200),
+            animation = tween(6500),
             repeatMode = RepeatMode.Restart
         ),
-        label = "world-emblem-orbit-rotation"
+        label = "emblem-rotation"
     )
 
-    // شعاع مسح عمودي متحرك فوق الشعار.
-    val scanPosition by lightTransition.animateFloat(
-        initialValue = -0.15f,
-        targetValue = 1.15f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 2600,
-                delayMillis = 250
-            ),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "world-emblem-scan-position"
-    )
-
-    Canvas(
-        modifier = modifier.clip(RoundedCornerShape(20.dp))
-    ) {
-
-        val w = size.width
-        val h = size.height
-
-        drawRoundRect(
-            brush = Brush.linearGradient(
-                listOf(
-                    style.secondary.copy(alpha = 0.65f),
-                    style.deep,
-                    Color.Black.copy(alpha = 0.45f)
-                )
-            ),
-            topLeft = Offset(w * 0.04f, h * 0.04f),
-            size = Size(w * 0.92f, h * 0.92f),
-            cornerRadius = CornerRadius(w * 0.16f)
-        )
-
-        drawCircle(
-            brush = Brush.radialGradient(
-                listOf(
-                    style.accent.copy(alpha = emblemPulse),
-                    style.accent.copy(alpha = emblemPulse * 0.06f),
-                    Color.Transparent
-                ),
-                radius = w * 0.48f
-            ),
-            radius = w * 0.46f,
-            center = Offset(w * 0.5f, h * 0.49f)
-        )
-
-        when (style.kind) {
-
-            SystemWorldKind.MODERN_REALISTIC -> {
-
-                val buildings = listOf(
-                    floatArrayOf(0.16f, 0.48f, 0.17f, 0.35f),
-                    floatArrayOf(0.36f, 0.34f, 0.18f, 0.49f),
-                    floatArrayOf(0.58f, 0.43f, 0.14f, 0.40f),
-                    floatArrayOf(0.75f, 0.51f, 0.10f, 0.32f)
-                )
-
-                buildings.forEach { b ->
-
-                    drawRect(
-                        Brush.horizontalGradient(
-                            listOf(
-                                style.secondary,
-                                style.accent.copy(alpha = 0.55f)
-                            )
-                        ),
-                        Offset(w * b[0], h * b[1]),
-                        Size(w * b[2], h * b[3])
-                    )
-
-                    for (r in 0..3) {
-
-                        drawLine(
-                            style.accent.copy(alpha = 0.8f),
-                            Offset(
-                                w * (b[0] + 0.035f),
-                                h * (b[1] + 0.06f + r * 0.065f)
-                            ),
-                            Offset(
-                                w * (b[0] + b[2] - 0.025f),
-                                h * (b[1] + 0.06f + r * 0.065f)
-                            ),
-                            1.4.dp.toPx()
-                        )
-                    }
-                }
-
-                drawLine(
-                    style.accent,
-                    Offset(w * 0.10f, h * 0.84f),
-                    Offset(w * 0.90f, h * 0.84f),
-                    3.dp.toPx()
-                )
-            }
-
-            SystemWorldKind.MYTHOLOGY_HISTORY -> {
-
-                val roof = Path().apply {
-                    moveTo(w * 0.12f, h * 0.36f)
-                    lineTo(w * 0.50f, h * 0.15f)
-                    lineTo(w * 0.88f, h * 0.36f)
-                    close()
-                }
-
-                drawPath(roof, style.accent)
-
-                drawRect(
-                    Brush.verticalGradient(
-                        listOf(
-                            style.accent,
-                            style.secondary,
-                            style.deep
-                        )
-                    ),
-                    Offset(w * 0.20f, h * 0.36f),
-                    Size(w * 0.60f, h * 0.39f)
-                )
-
-                for (x in listOf(0.29f, 0.43f, 0.57f, 0.71f)) {
-
-                    drawRoundRect(
-                        Color(0xFFFFD995),
-                        Offset(w * x, h * 0.40f),
-                        Size(w * 0.055f, h * 0.31f),
-                        CornerRadius(3.dp.toPx())
-                    )
-                }
-
-                drawRect(
-                    style.deep,
-                    Offset(w * 0.44f, h * 0.55f),
-                    Size(w * 0.12f, h * 0.20f)
-                )
-
-                drawLine(
-                    style.accent,
-                    Offset(w * 0.15f, h * 0.77f),
-                    Offset(w * 0.85f, h * 0.77f),
-                    3.dp.toPx()
-                )
-            }
-
-            SystemWorldKind.FANTASY -> {
-
-                drawCircle(
-                    style.accent.copy(alpha = 0.85f),
-                    w * 0.105f,
-                    Offset(w * 0.73f, h * 0.25f)
-                )
-
-                val mountain = Path().apply {
-                    moveTo(w * 0.08f, h * 0.82f)
-                    lineTo(w * 0.34f, h * 0.42f)
-                    lineTo(w * 0.49f, h * 0.64f)
-                    lineTo(w * 0.68f, h * 0.36f)
-                    lineTo(w * 0.94f, h * 0.82f)
-                    close()
-                }
-
-                drawPath(
-                    mountain,
-                    Brush.verticalGradient(
-                        listOf(style.secondary, style.deep)
-                    )
-                )
-
-                drawRect(
-                    style.accent,
-                    Offset(w * 0.39f, h * 0.48f),
-                    Size(w * 0.25f, h * 0.28f)
-                )
-
-                for (x in listOf(0.34f, 0.61f)) {
-
-                    drawRect(
-                        style.secondary,
-                        Offset(w * x, h * 0.42f),
-                        Size(w * 0.08f, h * 0.34f)
-                    )
-
-                    val tower = Path().apply {
-                        moveTo(w * x, h * 0.43f)
-                        lineTo(w * (x + 0.04f), h * 0.30f)
-                        lineTo(w * (x + 0.08f), h * 0.43f)
-                        close()
-                    }
-
-                    drawPath(tower, style.accent)
-                }
-
-                drawCircle(
-                    style.accent,
-                    2.dp.toPx(),
-                    Offset(w * 0.20f, h * 0.28f)
-                )
-            }
-
-            SystemWorldKind.GREED_ISLAND -> {
-
-                drawOval(
-                    Brush.verticalGradient(
-                        listOf(
-                            style.accent.copy(alpha = 0.7f),
-                            style.secondary
-                        )
-                    ),
-                    Offset(w * 0.12f, h * 0.58f),
-                    Size(w * 0.76f, h * 0.23f)
-                )
-
-                val island = Path().apply {
-                    moveTo(w * 0.22f, h * 0.62f)
-                    quadraticTo(
-                        w * 0.50f,
-                        h * 0.38f,
-                        w * 0.78f,
-                        h * 0.62f
-                    )
-                    lineTo(w * 0.70f, h * 0.73f)
-                    lineTo(w * 0.30f, h * 0.73f)
-                    close()
-                }
-
-                drawPath(
-                    island,
-                    Brush.verticalGradient(
-                        listOf(
-                            Color(0xFFFFD78A),
-                            Color(0xFF9B693C)
-                        )
-                    )
-                )
-
-                drawLine(
-                    Color(0xFF8D5734),
-                    Offset(w * 0.53f, h * 0.59f),
-                    Offset(w * 0.57f, h * 0.30f),
-                    4.dp.toPx()
-                )
-
-                for (angle in listOf(-0.9f, -0.35f, 0.25f, 0.75f)) {
-
-                    drawLine(
-                        style.accent,
-                        Offset(w * 0.57f, h * 0.31f),
-                        Offset(
-                            w * (0.57f + angle * 0.22f),
-                            h * (0.20f + kotlin.math.abs(angle) * 0.10f)
-                        ),
-                        4.dp.toPx()
-                    )
-                }
-
-                drawCircle(
-                    Color(0xFFFFE7A8),
-                    w * 0.075f,
-                    Offset(w * 0.25f, h * 0.22f)
-                )
-
-                drawOval(
-                    style.accent.copy(alpha = 0.65f),
-                    Offset(w * 0.18f, h * 0.78f),
-                    Size(w * 0.64f, h * 0.045f),
-                    style = Stroke(width = 1.5.dp.toPx())
-                )
-            }
-        }
-
-        // حلقة المدار حول الشعار.
-        val orbitTopLeft = Offset(w * 0.10f, h * 0.10f)
-        val orbitSize = Size(w * 0.80f, h * 0.80f)
-
-        drawArc(
-            color = style.accent.copy(alpha = 0.52f),
-            startAngle = orbitRotation,
-            sweepAngle = 245f,
-            useCenter = false,
-            topLeft = orbitTopLeft,
-            size = orbitSize,
-            style = Stroke(width = 1.8.dp.toPx())
-        )
-
-        // النقطة المضيئة التي تتحرك على المدار.
-        val orbitRadians = Math.toRadians(
-            orbitRotation.toDouble()
-        )
-
-        val orbitCenterX = w * 0.50f
-        val orbitCenterY = h * 0.50f
-        val orbitRadiusX = w * 0.40f
-        val orbitRadiusY = h * 0.40f
-
-        val orbitPoint = Offset(
-            x = orbitCenterX +
-                orbitRadiusX * cos(orbitRadians).toFloat(),
-            y = orbitCenterY +
-                orbitRadiusY * sin(orbitRadians).toFloat()
-        )
-
-        drawCircle(
-            color = style.accent.copy(alpha = 0.18f),
-            radius = 7.dp.toPx(),
-            center = orbitPoint
-        )
-
-        drawCircle(
-            color = Color.White.copy(alpha = 0.95f),
-            radius = 2.4.dp.toPx(),
-            center = orbitPoint
-        )
+    Canvas(modifier = modifier.clip(RoundedCornerShape(18.dp))) {
+        val center = Offset(size.width / 2f, size.height / 2f)
 
         drawRect(
-            brush = Brush.linearGradient(
-                colors = listOf(
-                    Color.Transparent,
-                    Color.White.copy(alpha = 0.025f),
-                    style.accent.copy(alpha = 0.16f),
-                    Color.White.copy(alpha = 0.10f),
-                    Color.Transparent
-                ),
-                start = Offset(w * lightPosition, h * 0.08f),
-                end = Offset(w * (lightPosition + 0.48f), h * 0.92f)
+            Brush.verticalGradient(
+                listOf(style.secondary, style.deep)
+            )
+        )
+
+        drawCircle(
+            style.accent.copy(alpha = 0.16f),
+            size.minDimension * 0.42f,
+            center
+        )
+
+        drawArc(
+            color = style.accent,
+            startAngle = rotation,
+            sweepAngle = 245f,
+            useCenter = false,
+            topLeft = Offset(
+                size.width * 0.10f,
+                size.height * 0.10f
             ),
-            topLeft = Offset.Zero,
-            size = Size(w, h)
-        )
-
-        // شعاع المسح العمودي: هالة ضوئية عريضة.
-        val scanX = w * scanPosition
-
-        drawLine(
-            color = style.accent.copy(alpha = 0.20f),
-            start = Offset(scanX, h * 0.08f),
-            end = Offset(scanX, h * 0.92f),
-            strokeWidth = 9.dp.toPx()
-        )
-
-        // قلب الشعاع بلون العالم.
-        drawLine(
-            color = style.accent.copy(alpha = 0.72f),
-            start = Offset(scanX, h * 0.08f),
-            end = Offset(scanX, h * 0.92f),
-            strokeWidth = 3.dp.toPx()
-        )
-
-        // خط أبيض رفيع يمنح المسح لمعاناً واضحاً.
-        drawLine(
-            color = Color.White.copy(alpha = 0.88f),
-            start = Offset(scanX, h * 0.12f),
-            end = Offset(scanX, h * 0.88f),
-            strokeWidth = 1.dp.toPx()
-        )
-
-        drawLine(
-            brush = Brush.horizontalGradient(
-                listOf(
-                    Color.Transparent,
-                    style.accent.copy(alpha = 0.72f),
-                    Color.Transparent
-                )
+            size = Size(
+                size.width * 0.80f,
+                size.height * 0.80f
             ),
-            start = Offset(w * 0.18f, h * 0.91f),
-            end = Offset(w * 0.82f, h * 0.91f),
-            strokeWidth = 2.dp.toPx()
-        )
-
-        drawRoundRect(
-            Color.White.copy(alpha = 0.10f),
-            Offset(w * 0.04f, h * 0.04f),
-            Size(w * 0.92f, h * 0.92f),
-            CornerRadius(w * 0.16f),
-            style = Stroke(width = 1.dp.toPx())
-        )
-
-        drawRoundRect(
-            style.accent.copy(alpha = 0.72f),
-            Offset(w * 0.04f, h * 0.04f),
-            Size(w * 0.92f, h * 0.92f),
-            CornerRadius(w * 0.16f),
-            style = Stroke(width = 1.2.dp.toPx())
+            style = androidx.compose.ui.graphics.drawscope.Stroke(
+                width = 2.dp.toPx()
+            )
         )
     }
 }
