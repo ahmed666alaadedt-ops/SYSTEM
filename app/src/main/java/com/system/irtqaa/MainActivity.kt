@@ -101,9 +101,22 @@ fun SystemApp(account: SystemFirebaseAccount) {
     val completedCount = tasks.count { it.isCompleted }
     val totalExperience = progressSnapshot.totalExperience
 
-    val panel = Color(0xFF131D30)
-    val gold = Color(0xFFFFC857)
-    val cyan = Color(0xFF45D6E8)
+    val activeStyle = when (selectedWorld) {
+        "real" -> SystemWorldVisualStyles.modern
+        "mythology" -> SystemWorldVisualStyles.mythology
+        "fantasy" -> SystemWorldVisualStyles.fantasy
+        "greed" -> SystemWorldVisualStyles.greedIsland
+        else -> null
+    }
+
+    val panel = activeStyle?.surface ?: Color(0xFF131D30)
+    val gold = activeStyle?.accent ?: Color(0xFFFFC857)
+    val cyan = activeStyle?.secondary ?: Color(0xFF45D6E8)
+
+    SystemWorldAudioHost(
+        selectedWorld = selectedWorld,
+        selectedTab = selectedTab
+    )
 
     SystemHologramBackground(
         modifier = Modifier.fillMaxSize()
@@ -209,11 +222,19 @@ fun SystemApp(account: SystemFirebaseAccount) {
                                         showWorldSelection = false
                                     }
                                 )
+                            } else if (selectedWorld == "mythology") {
+                                SystemHistoricalWorldScreen(
+                                    onBack = {
+                                        selectedWorld = ""
+                                        showWorldSelection = true
+                                    }
+                                )
                             } else if (selectedWorld == "real") {
                                 Column {
                                     Button(
                                         onClick = {
                                             selectedWorld = ""
+                                            showWorldSelection = true
                                         }
                                     ) {
                                         Text("العودة إلى العوالم")
@@ -228,13 +249,11 @@ fun SystemApp(account: SystemFirebaseAccount) {
                                 }
                             } else if (
                                 selectedWorld == "fantasy" ||
-                                selectedWorld == "mythology" ||
                                 selectedWorld == "greed"
                             ) {
                                 WorldComingSoonScreen(
                                     worldName = when (selectedWorld) {
                                         "fantasy" -> "العالم الخيالي"
-                                        "mythology" -> "عالم الأساطير والتاريخ"
                                         else -> "جزيرة الطمع"
                                     },
                                     onBack = {
@@ -629,7 +648,6 @@ fun SystemWorldBanner(onClick: () -> Unit) {
     }
 }
 
-// شاشة اختيار العوالم الأربعة بهوياتها البصرية المستقلة
 @Composable
 fun WorldSelectionScreen(
     onBack: () -> Unit,
@@ -647,7 +665,7 @@ fun WorldSelectionScreen(
 
         Spacer(Modifier.height(10.dp))
 
-        SystemWorldThemeGallery(
+        SystemNestedWorldHub(
             onWorldSelected = { world ->
                 val destination = when (world) {
                     SystemWorldKind.MODERN_REALISTIC -> "real"
