@@ -1,8 +1,6 @@
+
 package com.system.irtqaa
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,9 +30,7 @@ data class HistoricalCivilization(
 )
 
 object SystemHistoricalWorldData {
-
     val civilizations = listOf(
-
         HistoricalCivilization(
             id = "sumer",
             name = "حضارة سومر",
@@ -42,19 +38,13 @@ object SystemHistoricalWorldData {
             description = "أرض المدن الأولى والكتابة المسمارية والمعابد القديمة.",
             symbol = "𒀭",
             accent = Color(0xFFE8B85C),
-            locations = listOf(
-                "أوروك",
-                "أور",
-                "إريدو",
-                "لگش"
-            ),
+            locations = listOf("أوروك", "أور", "إريدو", "لگش"),
             missions = listOf(
                 "اكتشف ألواح الكتابة المسمارية",
                 "استكشف معابد أوروك",
                 "ابحث عن أسرار مدينة أور"
             )
         ),
-
         HistoricalCivilization(
             id = "babylon",
             name = "حضارة بابل",
@@ -62,19 +52,13 @@ object SystemHistoricalWorldData {
             description = "مدينة الأسوار العظيمة والبوابات الملكية وحدائق الأساطير.",
             symbol = "𒆍",
             accent = Color(0xFFE6A34A),
-            locations = listOf(
-                "مدينة بابل",
-                "بوابة عشتار",
-                "الزقورة",
-                "ضفاف الفرات"
-            ),
+            locations = listOf("مدينة بابل", "بوابة عشتار", "الزقورة", "ضفاف الفرات"),
             missions = listOf(
                 "اعبر بوابة عشتار",
                 "اكتشف أسرار المدينة القديمة",
                 "استكشف آثار الملوك البابليين"
             )
         ),
-
         HistoricalCivilization(
             id = "assyrian",
             name = "الحضارة الآشورية",
@@ -82,19 +66,13 @@ object SystemHistoricalWorldData {
             description = "ممالك قوية وقصور ملكية ونقوش ومعارك تاريخية.",
             symbol = "𒀸",
             accent = Color(0xFFC58A52),
-            locations = listOf(
-                "نينوى",
-                "نمرود",
-                "آشور",
-                "خورسباد"
-            ),
+            locations = listOf("نينوى", "نمرود", "آشور", "خورسباد"),
             missions = listOf(
                 "استكشف قصر نينوى",
                 "اكتشف النقوش الملكية",
                 "ابحث عن المكتبة القديمة"
             )
         ),
-
         HistoricalCivilization(
             id = "egypt",
             name = "مصر القديمة",
@@ -102,19 +80,13 @@ object SystemHistoricalWorldData {
             description = "الأهرامات والمعابد والملوك والأسرار الفرعونية.",
             symbol = "𓂀",
             accent = Color(0xFFE7C66A),
-            locations = listOf(
-                "الجيزة",
-                "الأقصر",
-                "وادي الملوك",
-                "الكرنك"
-            ),
+            locations = listOf("الجيزة", "الأقصر", "وادي الملوك", "الكرنك"),
             missions = listOf(
                 "استكشف الأهرامات",
                 "اكتشف أسرار المعابد",
                 "ابحث عن المقابر الملكية"
             )
         ),
-
         HistoricalCivilization(
             id = "greece",
             name = "اليونان القديمة",
@@ -122,19 +94,13 @@ object SystemHistoricalWorldData {
             description = "المدن الإغريقية والفلسفة والأسواق والملاعب القديمة.",
             symbol = "Ω",
             accent = Color(0xFF75BCE8),
-            locations = listOf(
-                "أثينا",
-                "إسبرطة",
-                "دلفي",
-                "أولمبيا"
-            ),
+            locations = listOf("أثينا", "إسبرطة", "دلفي", "أولمبيا"),
             missions = listOf(
                 "اكتشف أكروبوليس أثينا",
                 "استكشف مدينة إسبرطة",
                 "ابحث عن أسرار دلفي"
             )
         ),
-
         HistoricalCivilization(
             id = "china",
             name = "الصين القديمة",
@@ -142,12 +108,7 @@ object SystemHistoricalWorldData {
             description = "الإمبراطوريات القديمة والأسوار العظيمة والقصور.",
             symbol = "龍",
             accent = Color(0xFFE66D62),
-            locations = listOf(
-                "شيان",
-                "بكين القديمة",
-                "سور الصين",
-                "المدينة الإمبراطورية"
-            ),
+            locations = listOf("شيان", "بكين القديمة", "سور الصين", "المدينة الإمبراطورية"),
             missions = listOf(
                 "استكشف سور الصين",
                 "اكتشف جيش التيراكوتا",
@@ -188,7 +149,6 @@ fun SystemHistoricalWorldScreen(
             .fillMaxSize()
             .background(background)
     ) {
-
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -199,14 +159,15 @@ fun SystemHistoricalWorldScreen(
                 bottom = 28.dp
             )
         ) {
-
             item {
                 Button(
                     onClick = {
                         if (selectedLocation != null) {
                             selectedLocation = null
+                            SystemAudioEvents.transition()
                         } else if (selectedCivilization != null) {
                             selectedCivilization = null
+                            SystemAudioEvents.transition()
                         } else {
                             onBack()
                         }
@@ -255,9 +216,7 @@ fun SystemHistoricalWorldScreen(
                         containerColor = panel
                     )
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
+                    Column(Modifier.padding(16.dp)) {
                         Text(
                             "سجل المستكشف",
                             color = gold,
@@ -279,7 +238,6 @@ fun SystemHistoricalWorldScreen(
             }
 
             if (selectedCivilization == null) {
-
                 item {
                     Text(
                         "اختر حضارتك",
@@ -293,7 +251,6 @@ fun SystemHistoricalWorldScreen(
                     SystemHistoricalWorldData.civilizations,
                     key = { it.id }
                 ) { civilization ->
-
                     HistoricalCivilizationCard(
                         civilization = civilization,
                         onClick = {
@@ -303,12 +260,12 @@ fun SystemHistoricalWorldScreen(
                             guideMessage =
                                 "مرحباً بك في ${civilization.name}. " +
                                 "ابدأ بزيارة إحدى المناطق واكتشف أسرار هذه الحضارة."
+
+                            SystemAudioEvents.discovery()
                         }
                     )
                 }
-
             } else {
-
                 val civilization = selectedCivilization!!
 
                 item {
@@ -337,17 +294,20 @@ fun SystemHistoricalWorldScreen(
                 }
 
                 items(civilization.locations) { location ->
-
                     HistoricalLocationCard(
                         location = location,
                         accent = civilization.accent,
                         selected = selectedLocation == location,
                         onClick = {
-                            selectedLocation = location
+                            if (selectedLocation != location) {
+                                selectedLocation = location
 
-                            guideMessage =
-                                "وصلت إلى $location. " +
-                                "استكشف المكان وابحث عن آثاره وأسراره."
+                                guideMessage =
+                                    "وصلت إلى $location. " +
+                                    "استكشف المكان وابحث عن آثاره وأسراره."
+
+                                SystemAudioEvents.discovery()
+                            }
                         }
                     )
                 }
@@ -362,12 +322,8 @@ fun SystemHistoricalWorldScreen(
                 }
 
                 items(civilization.missions) { mission ->
-
-                    val missionId =
-                        "${civilization.id}_$mission"
-
-                    val completed =
-                        missionId in completedMissions
+                    val missionId = "${civilization.id}_$mission"
+                    val completed = missionId in completedMissions
 
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -380,7 +336,6 @@ fun SystemHistoricalWorldScreen(
                             modifier = Modifier.padding(14.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-
                             Text(
                                 mission,
                                 color = Color.White,
@@ -397,11 +352,15 @@ fun SystemHistoricalWorldScreen(
 
                             Button(
                                 onClick = {
-                                    completedMissions =
-                                        completedMissions + missionId
+                                    if (!completed) {
+                                        completedMissions =
+                                            completedMissions + missionId
 
-                                    guideMessage =
-                                        "أحسنت! أنجزت مهمة: $mission"
+                                        guideMessage =
+                                            "أحسنت! أنجزت مهمة: $mission"
+
+                                        SystemAudioEvents.questCompleted()
+                                    }
                                 },
                                 enabled = !completed,
                                 colors = ButtonDefaults.buttonColors(
@@ -504,7 +463,6 @@ private fun HistoricalCivilizationCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
             Box(
                 modifier = Modifier
                     .size(66.dp)
@@ -524,9 +482,7 @@ private fun HistoricalCivilizationCard(
 
             Spacer(Modifier.width(14.dp))
 
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
+            Column(Modifier.weight(1f)) {
                 Text(
                     civilization.name,
                     color = civilization.accent,
