@@ -1,6 +1,4 @@
-
-<?xml version="1.0" encoding="utf-8"?>
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?<vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
@@ -44,47 +42,4 @@
     <!-- Card shadow -->
     <path
         android:fillColor="#99000000"
-        android:pathData="M25,25 L83,25 L89,32 L89,82 L82,91 L26,91 L19,82 L19,32 Z" />
-
-    <!-- Silver outer card -->
-    <path
-        android:fillColor="#FF9EA8B3"
-        android:pathData="M25,23 L83,23 L89,30 L89,82 L82,90 L26,90 L19,82 L19,31 Z" />
-
-    <!-- Dark card body -->
-    <path
-        android:fillColor="#FF10151D"
-        android:pathData="M27,27 L81,27 L85,32 L85,80 L80,86 L28,86 L23,80 L23,33 Z" />
-
-    <!-- Inner silver border -->
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#FF697783"
-        android:strokeWidth="1.2"
-        android:pathData="M29,31 L79,31 L81,34 L81,78 L78,82 L30,82 L27,78 L27,34 Z" />
-
-    <!-- Red top emblem -->
-    <path
-        android:fillColor="#FFE32636"
-        android:pathData="M44,33 L64,33 L69,38 L39,38 Z" />
-
-    <!-- Main SYSTEM S -->
-    <path
-        android:fillColor="#FFFF2638"
-        android:pathData="M70,43 L48,43 L40,50 L40,56 L48,63 L63,63 L63,69 L40,69 L40,76 L66,76 L74,68 L74,59 L66,53 L51,53 L51,49 L70,49 Z" />
-
-    <!-- Metallic corner highlights -->
-    <path
-        android:fillColor="#FFDCE3E9"
-        android:pathData="M25,29 L30,29 L25,35 Z" />
-
-    <path
-        android:fillColor="#FFDCE3E9"
-        android:pathData="M83,78 L83,83 L78,87 Z" />
-
-    <!-- Red energy accents -->
-    <path
-        android:fillColor="#FFFF2638"
-        android:pathData="M31,79 L39,79 L36,81 L31,81 Z M69,34 L76,34 L73,36 L69,36 Z" />
-
-</vector>
+        
