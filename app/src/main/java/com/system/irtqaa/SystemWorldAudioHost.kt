@@ -1,3 +1,4 @@
+
 package com.system.irtqaa
 
 import androidx.compose.runtime.Composable
@@ -28,13 +29,16 @@ fun SystemWorldAudioHost(
         mutableStateOf(true)
     }
 
-    DisposableEffect(audioEngine) {
-        onDispose {
-            audioEngine.close()
-        }
-    }
-
     LaunchedEffect(selectedWorld) {
+        SystemWorldThemeRuntime.currentWorld =
+            when (selectedWorld) {
+                "real" -> SystemWorldKind.MODERN_REALISTIC
+                "mythology" -> SystemWorldKind.MYTHOLOGY_HISTORY
+                "fantasy" -> SystemWorldKind.FANTASY
+                "greed" -> SystemWorldKind.GREED_ISLAND
+                else -> null
+            }
+
         if (firstWorldEvent) {
             firstWorldEvent = false
         } else {
@@ -55,6 +59,12 @@ fun SystemWorldAudioHost(
             if (selectedTab == 3) {
                 audioEngine.playPortalOpen()
             }
+        }
+    }
+
+    DisposableEffect(audioEngine) {
+        onDispose {
+            audioEngine.close()
         }
     }
 }
