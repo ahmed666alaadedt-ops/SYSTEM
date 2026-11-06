@@ -1,3 +1,4 @@
+
 package com.system.irtqaa
 
 import android.content.Context
@@ -69,6 +70,9 @@ class SystemTaskManager(
         if (completed != null) {
             save()
             requestCloudSync()
+
+            // إطلاق حدث صوتي عند إكمال المهمة فعلياً
+            SystemAudioEvents.questCompleted()
         }
 
         return completed
