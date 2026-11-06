@@ -2,6 +2,7 @@
 package com.system.irtqaa
 
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -17,7 +18,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.unit.dp
+import kotlin.math.cos
+import kotlin.math.sin
 
 @Composable
 fun SystemHologramBackground(
@@ -51,10 +55,39 @@ fun SystemHologramBackground(
         label = "rotation"
     )
 
+    val coinRotation by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = 16000,
+                easing = LinearEasing
+            ),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "belly_coin_rotation"
+    )
+
+    val coinFloat by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = 3200,
+                easing = FastOutSlowInEasing
+            ),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "belly_coin_float"
+    )
+
     Box(modifier = modifier) {
+
         Canvas(Modifier.fillMaxSize()) {
             val cyan = Color(0xFF36D9F5)
+            val gold = Color(0xFFFFC857)
 
+            // خلفية SYSTEM الأساسية
             drawRect(
                 brush = Brush.verticalGradient(
                     colors = listOf(
@@ -65,6 +98,7 @@ fun SystemHologramBackground(
                 )
             )
 
+            // الشبكة الهولوغرافية
             val spacing = 34.dp.toPx()
             val alpha = 0.055f + pulse * 0.035f
 
@@ -90,6 +124,7 @@ fun SystemHologramBackground(
                 y += spacing
             }
 
+            // حلقات الطاقة
             val center = Offset(
                 size.width * 0.5f,
                 size.height * 0.22f
@@ -109,9 +144,10 @@ fun SystemHologramBackground(
             }
 
             val orbitRadius = radius * 1.85f
+
             val point = Offset(
-                center.x + kotlin.math.cos(rotation) * orbitRadius,
-                center.y + kotlin.math.sin(rotation) * orbitRadius
+                center.x + cos(rotation) * orbitRadius,
+                center.y + sin(rotation) * orbitRadius
             )
 
             drawCircle(
@@ -132,8 +168,138 @@ fun SystemHologramBackground(
                 radius = radius * 3.2f,
                 center = center
             )
+
+            // عملات Belly الذهبية بالخلفية
+            val coinPositions = listOf(
+                Offset(0.12f, 0.30f),
+                Offset(0.88f, 0.32f),
+                Offset(0.18f, 0.68f),
+                Offset(0.84f, 0.72f),
+                Offset(0.52f, 0.90f),
+                Offset(0.96f, 0.53f)
+            )
+
+            coinPositions.forEachIndexed { index, position ->
+
+                val coinCenter = Offset(
+                    x = size.width * position.x,
+                    y = size.height * position.y +
+                        sin(
+                            coinFloat * Math.PI * 2.0 +
+                                index.toDouble()
+                        ).toFloat() * 5.dp.toPx()
+                )
+
+                val coinRadius =
+                    (10 + (index % 3) * 3).dp.toPx()
+
+                val coinAlpha =
+                    0.17f + pulse * 0.055f
+
+                rotate(
+                    degrees = coinRotation * if (index % 2 == 0) {
+                        1f
+                    } else {
+                        -0.7f
+                    } + index * 31f,
+                    pivot = coinCenter
+                ) {
+
+                    // جسم العملة الذهبي
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                Color(0xFFFFF0A0).copy(
+                                    alpha = coinAlpha
+                                ),
+                                Color(0xFFFFC857).copy(
+                                    alpha = coinAlpha
+                                ),
+                                Color(0xFF9C641B).copy(
+                                    alpha = coinAlpha
+                                )
+                            ),
+                            center = coinCenter,
+                            radius = coinRadius
+                        ),
+                        radius = coinRadius,
+                        center = coinCenter
+                    )
+
+                    // الحافة الخارجية
+                    drawCircle(
+                        color = gold.copy(
+                            alpha = coinAlpha + 0.12f
+                        ),
+                        radius = coinRadius,
+                        center = coinCenter,
+                        style = Stroke(
+                            width = 1.5.dp.toPx()
+                        )
+                    )
+
+                    // النقش الداخلي
+                    drawCircle(
+                        color = Color(0xFFFFE69A).copy(
+                            alpha = coinAlpha + 0.08f
+                        ),
+                        radius = coinRadius * 0.72f,
+                        center = coinCenter,
+                        style = Stroke(
+                            width = 1.dp.toPx()
+                        )
+                    )
+
+                    // رمز زخرفي مستوحى من العملات
+                    drawLine(
+                        color = Color(0xFFFFF1B8).copy(
+                            alpha = coinAlpha + 0.12f
+                        ),
+                        start = Offset(
+                            coinCenter.x,
+                            coinCenter.y - coinRadius * 0.38f
+                        ),
+                        end = Offset(
+                            coinCenter.x,
+                            coinCenter.y + coinRadius * 0.38f
+                        ),
+                        strokeWidth = 1.8.dp.toPx()
+                    )
+
+                    drawLine(
+                        color = Color(0xFFFFF1B8).copy(
+                            alpha = coinAlpha + 0.12f
+                        ),
+                        start = Offset(
+                            coinCenter.x - coinRadius * 0.24f,
+                            coinCenter.y - coinRadius * 0.20f
+                        ),
+                        end = Offset(
+                            coinCenter.x + coinRadius * 0.25f,
+                            coinCenter.y - coinRadius * 0.20f
+                        ),
+                        strokeWidth = 1.5.dp.toPx()
+                    )
+
+                    drawLine(
+                        color = Color(0xFFFFF1B8).copy(
+                            alpha = coinAlpha + 0.12f
+                        ),
+                        start = Offset(
+                            coinCenter.x - coinRadius * 0.24f,
+                            coinCenter.y + coinRadius * 0.20f
+                        ),
+                        end = Offset(
+                            coinCenter.x + coinRadius * 0.25f,
+                            coinCenter.y + coinRadius * 0.20f
+                        ),
+                        strokeWidth = 1.5.dp.toPx()
+                    )
+                }
+            }
         }
 
+        // محتوى التطبيق يبقى فوق الخلفية
         content()
     }
 }
