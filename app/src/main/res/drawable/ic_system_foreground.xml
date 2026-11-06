@@ -1,3 +1,4 @@
+
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -5,32 +6,85 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
+    <!-- Misty Greed Island in the background -->
     <path
-        android:fillColor="#070B12"
-        android:pathData="M0,0h108v108h-108z" />
+        android:fillColor="#554B555D"
+        android:pathData="M10,34 L22,27 L31,29 L40,20 L49,25 L59,18 L69,25 L80,22 L96,34 L90,42 L78,44 L66,41 L54,47 L41,42 L27,45 L15,41 Z" />
 
+    <!-- Island landscape -->
+    <path
+        android:fillColor="#66566B57"
+        android:pathData="M22,34 L34,27 L43,29 L50,23 L58,28 L66,24 L76,30 L85,28 L93,36 L82,40 L69,37 L57,42 L44,37 L32,41 Z" />
+
+    <!-- Distant towers -->
+    <path
+        android:fillColor="#80515B52"
+        android:pathData="M37,29 L40,18 L43,29 Z M48,27 L51,15 L54,28 Z M67,29 L70,19 L73,30 Z M78,32 L81,22 L84,33 Z" />
+
+    <!-- Floating island rock -->
+    <path
+        android:fillColor="#80434A50"
+        android:pathData="M20,40 L33,43 L45,40 L57,44 L69,40 L83,43 L92,39 L85,49 L76,55 L70,63 L59,66 L50,59 L39,62 L30,54 L22,49 Z" />
+
+    <!-- Mist layer one -->
+    <path
+        android:fillColor="#554F5962"
+        android:pathData="M7,39 C20,33 29,38 39,35 C49,32 58,38 69,35 C81,32 92,37 101,34 L101,43 C89,45 80,41 69,44 C56,47 46,41 35,45 C24,48 15,43 7,46 Z" />
+
+    <!-- Mist layer two -->
+    <path
+        android:fillColor="#444F5962"
+        android:pathData="M10,49 C24,44 34,48 45,45 C57,42 66,48 77,45 C88,43 96,47 101,45 L101,53 C89,55 80,51 69,54 C57,57 47,51 36,55 C25,58 17,53 10,56 Z" />
+
+    <!-- Subtle red atmosphere -->
+    <path
+        android:fillColor="#22A20F18"
+        android:pathData="M12,48 L96,48 L96,79 L12,79 Z" />
+
+    <!-- Card shadow -->
+    <path
+        android:fillColor="#99000000"
+        android:pathData="M25,25 L83,25 L89,32 L89,82 L82,91 L26,91 L19,82 L19,32 Z" />
+
+    <!-- Silver outer card -->
+    <path
+        android:fillColor="#FF9EA8B3"
+        android:pathData="M25,23 L83,23 L89,30 L89,82 L82,90 L26,90 L19,82 L19,31 Z" />
+
+    <!-- Dark card body -->
+    <path
+        android:fillColor="#FF10151D"
+        android:pathData="M27,27 L81,27 L85,32 L85,80 L80,86 L28,86 L23,80 L23,33 Z" />
+
+    <!-- Inner silver border -->
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#19DDF2"
-        android:strokeWidth="2.5"
-        android:pathData="M54,12 L88,31 L88,77 L54,96 L20,77 L20,31 Z" />
+        android:strokeColor="#FF697783"
+        android:strokeWidth="1.2"
+        android:pathData="M29,31 L79,31 L81,34 L81,78 L78,82 L30,82 L27,78 L27,34 Z" />
+
+    <!-- Red top emblem -->
+    <path
+        android:fillColor="#FFE32636"
+        android:pathData="M44,33 L64,33 L69,38 L39,38 Z" />
+
+    <!-- Main SYSTEM S -->
+    <path
+        android:fillColor="#FFFF2638"
+        android:pathData="M70,43 L48,43 L40,50 L40,56 L48,63 L63,63 L63,69 L40,69 L40,76 L66,76 L74,68 L74,59 L66,53 L51,53 L51,49 L70,49 Z" />
+
+    <!-- Metallic corner highlights -->
+    <path
+        android:fillColor="#FFDCE3E9"
+        android:pathData="M25,29 L30,29 L25,35 Z" />
 
     <path
-        android:fillColor="#00000000"
-        android:strokeColor="#D6A84B"
-        android:strokeWidth="1.5"
-        android:pathData="M54,19 L82,35 L82,73 L54,89 L26,73 L26,35 Z" />
+        android:fillColor="#FFDCE3E9"
+        android:pathData="M83,78 L83,83 L78,87 Z" />
 
+    <!-- Red energy accents -->
     <path
-        android:fillColor="#D6A84B"
-        android:pathData="M70,34 L49,34 L38,45 L38,54 L49,65 L65,65 L65,73 L38,73 L38,80 L68,80 L77,71 L77,62 L66,52 L49,52 L49,43 L70,43 Z" />
-
-    <path
-        android:fillColor="#19DDF2"
-        android:pathData="M54,8 L57,16 L54,24 L51,16 Z" />
-
-    <path
-        android:fillColor="#19DDF2"
-        android:pathData="M54,84 L57,92 L54,100 L51,92 Z" />
+        android:fillColor="#FFFF2638"
+        android:pathData="M31,79 L39,79 L36,81 L31,81 Z M69,34 L76,34 L73,36 L69,36 Z" />
 
 </vector>
