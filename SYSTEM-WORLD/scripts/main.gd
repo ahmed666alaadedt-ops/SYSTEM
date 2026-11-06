@@ -11,6 +11,7 @@ const MAX_CAMERA_PITCH := 35.0
 const THIRD_PERSON_DISTANCE := 5.0
 const FIRST_PERSON_DISTANCE := 0.0
 const ROTATION_SPEED := 10.0
+const SOVEREIGN_FLIGHT_SPEED := 8.0
 
 const MobileControlsScript = preload("res://scripts/mobile_controls.gd")
 const WorldManagerScript = preload("res://scripts/world_manager.gd")
@@ -40,6 +41,7 @@ var interaction_prompt_label: Label
 
 var mobile_direction := Vector2.ZERO
 var jump_requested := false
+var flight_vertical_input := 0.0
 
 var camera_yaw := 0.0
 var camera_pitch := deg_to_rad(-10.0)
@@ -103,6 +105,34 @@ func get_sovereign_status() -> Dictionary:
 		}
 
 	return SovereignPower.get_authority_status()
+
+
+# --------------------------------------------------
+# SOVEREIGN FLIGHT INPUT
+# --------------------------------------------------
+
+func _on_flight_vertical_changed(value: float) -> void:
+	flight_vertical_input = clampf(value, -1.0, 1.0)
+
+
+func is_sovereign_flight_active() -> bool:
+	if not is_instance_valid(SovereignPower):
+		return false
+
+	return (
+		SovereignPower.is_sovereign(player)
+		and SovereignPower.flight_enabled
+	)
+
+
+func update_sovereign_flight() -> bool:
+	if not is_sovereign_flight_active():
+		return false
+
+	return SovereignPower.apply_flight_motion(
+		flight_vertical_input,
+		SOVEREIGN_FLIGHT_SPEED
+	)
 
 
 # --------------------------------------------------
@@ -528,6 +558,7 @@ func create_mobile_controls() -> void:
 	mobile_controls.look_changed.connect(_on_look_changed)
 	mobile_controls.camera_toggle_pressed.connect(_on_camera_toggle_pressed)
 	mobile_controls.interact_pressed.connect(_on_mobile_interact_pressed)
+	mobile_controls.flight_vertical_changed.connect(_on_flight_vertical_changed)
 
 
 func _on_movement_changed(direction: Vector2) -> void:
@@ -637,10 +668,13 @@ func _physics_process(delta: float) -> void:
 			ROTATION_SPEED * delta
 		)
 
-	if not player.is_on_floor():
-		player.velocity.y -= GRAVITY * delta
-	elif jump_requested or Input.is_key_pressed(KEY_SPACE):
-		player.velocity.y = JUMP_FORCE
+	var flight_controlled := update_sovereign_flight()
+
+	if not flight_controlled:
+		if not player.is_on_floor():
+			player.velocity.y -= GRAVITY * delta
+		elif jump_requested or Input.is_key_pressed(KEY_SPACE):
+			player.velocity.y = JUMP_FORCE
 
 	jump_requested = false
 	player.move_and_slide()
