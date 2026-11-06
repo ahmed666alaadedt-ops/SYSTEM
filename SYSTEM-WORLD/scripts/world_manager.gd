@@ -1,10 +1,13 @@
+
 extends Node3D
 class_name WorldManager
 
-const ForestManagerScript = preload("res://SYSTEM-WORLD/scripts/forest_manager.gd")
-const MountainManagerScript = preload("res://SYSTEM-WORLD/scripts/mountain_manager.gd")
-const WaterwaysManagerScript = preload("res://SYSTEM-WORLD/scripts/waterways_manager.gd")
-const MarineEnvironmentManagerScript = preload("res://SYSTEM-WORLD/scripts/marine_environment_manager.gd")
+# مسارات الموارد نسبةً إلى مجلد مشروع Godot.
+const ForestManagerScript = preload("res://scripts/forest_manager.gd")
+const MountainManagerScript = preload("res://scripts/mountain_manager.gd")
+const WaterwaysManagerScript = preload("res://scripts/waterways_manager.gd")
+const MarineEnvironmentManagerScript = preload("res://scripts/marine_environment_manager.gd")
+const GreedIslandManagerScript = preload("res://scripts/greed_island_manager.gd")
 
 signal world_changed(world_id: int)
 
@@ -40,11 +43,15 @@ func create_worlds() -> void:
 		world_roots[world_id] = world_root
 
 	_create_modern_city()
+	_create_greed_island()
 
 
 func switch_world(world_id: int) -> void:
 	if not world_roots.has(world_id):
 		push_warning("World ID does not exist.")
+		return
+
+	if active_world == world_id:
 		return
 
 	for id in world_roots:
@@ -64,12 +71,47 @@ func get_active_world() -> Node3D:
 	return world_roots.get(active_world)
 
 
+func get_world_root(world_id: int) -> Node3D:
+	return world_roots.get(world_id)
+
+
 func get_world_name(world_id: int) -> String:
 	return WORLD_NAMES.get(world_id, "Unknown World")
 
 
 func get_all_world_ids() -> Array:
 	return WORLD_NAMES.keys()
+
+
+func is_greed_island_active() -> bool:
+	return active_world == WorldID.GREED_ISLAND
+
+
+func is_combat_allowed() -> bool:
+	if is_greed_island_active():
+		return false
+	return true
+
+
+# --------------------------------------------------
+# GREED ISLAND — PRIVATE ADMIN TEST ENVIRONMENT
+# --------------------------------------------------
+
+func _create_greed_island() -> void:
+	var root: Node3D = world_roots[WorldID.GREED_ISLAND]
+
+	var island := GreedIslandManagerScript.new()
+	island.name = "GreedIslandEnvironment"
+	root.add_child(island)
+
+	# الجزيرة بيئة استكشاف واختبار فقط.
+	island.set_meta("system_private_environment", true)
+	island.set_meta("system_admin_test_mode", true)
+	island.set_meta("system_combat_enabled", false)
+
+	print("SYSTEM WORLD: Greed Island environment created.")
+	print("SYSTEM WORLD: Admin exploration mode enabled.")
+	print("SYSTEM WORLD: Combat disabled on Greed Island.")
 
 
 # --------------------------------------------------
