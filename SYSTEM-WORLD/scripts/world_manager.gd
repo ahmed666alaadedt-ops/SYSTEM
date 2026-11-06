@@ -7,6 +7,7 @@ const MountainManagerScript = preload("res://scripts/mountain_manager.gd")
 const WaterwaysManagerScript = preload("res://scripts/waterways_manager.gd")
 const MarineEnvironmentManagerScript = preload("res://scripts/marine_environment_manager.gd")
 const GreedIslandManagerScript = preload("res://scripts/greed_island_manager.gd")
+const HistoricalWorldManagerScript = preload("res://scripts/historical_world_manager.gd/historical_world_manager.gd")
 
 signal world_changed(world_id: int)
 
@@ -19,7 +20,7 @@ enum WorldID {
 
 const WORLD_NAMES := {
 	WorldID.FANTASY: "Fantasy World",
-	WorldID.MYTHOLOGY: "Mythology World",
+	WorldID.MYTHOLOGY: "Historical & Civilizations World",
 	WorldID.REALISTIC: "Modern Realistic World",
 	WorldID.GREED_ISLAND: "Greed Island World"
 }
@@ -44,6 +45,7 @@ func create_worlds() -> void:
 		world_roots[world_id] = world_root
 
 	_create_modern_city()
+	_create_historical_world()
 	_create_greed_island()
 
 
@@ -141,6 +143,20 @@ func get_world_spawn_position(world_id: int) -> Vector3:
 		return Vector3(0.0, 2.0, -45.0)
 
 	return Vector3(0.0, 2.0, 0.0)
+
+
+# --------------------------------------------------
+# HISTORICAL & CIVILIZATIONS WORLD
+# --------------------------------------------------
+
+func _create_historical_world() -> void:
+	var root: Node3D = world_roots[WorldID.MYTHOLOGY]
+
+	var historical_world := HistoricalWorldManagerScript.new()
+	historical_world.name = "HistoricalCivilizationsEnvironment"
+	root.add_child(historical_world)
+
+	print("SYSTEM WORLD: Historical & Civilizations world created.")
 
 
 # --------------------------------------------------
