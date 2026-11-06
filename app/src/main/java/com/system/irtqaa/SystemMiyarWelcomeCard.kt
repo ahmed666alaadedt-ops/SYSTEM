@@ -5,7 +5,6 @@ import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -15,7 +14,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -53,6 +51,15 @@ private object SystemCompanionGenderSettings {
             .putString(KEY_GENDER, gender.storageValue)
             .commit()
     }
+
+    fun clear(context: Context): Boolean {
+        return context.getSharedPreferences(
+            PREFS,
+            Context.MODE_PRIVATE
+        ).edit()
+            .remove(KEY_GENDER)
+            .commit()
+    }
 }
 
 @Composable
@@ -73,10 +80,17 @@ fun SystemMiyarWelcomeCard(
         ?: SystemWorldKind.MODERN_REALISTIC
 
     val primary = when (world) {
-        SystemWorldKind.MODERN_REALISTIC -> Color(0xFF35D9F2)
-        SystemWorldKind.MYTHOLOGY_HISTORY -> Color(0xFFE6B65C)
-        SystemWorldKind.FANTASY -> Color(0xFFB69BFF)
-        SystemWorldKind.GREED_ISLAND -> Color(0xFF65E6A6)
+        SystemWorldKind.MODERN_REALISTIC ->
+            Color(0xFF35D9F2)
+
+        SystemWorldKind.MYTHOLOGY_HISTORY ->
+            Color(0xFFE6B65C)
+
+        SystemWorldKind.FANTASY ->
+            Color(0xFFB69BFF)
+
+        SystemWorldKind.GREED_ISLAND ->
+            Color(0xFF65E6A6)
     }
 
     val background = when (world) {
@@ -85,16 +99,19 @@ fun SystemMiyarWelcomeCard(
             Color(0xFF172B42),
             Color(0xFF211B36)
         )
+
         SystemWorldKind.MYTHOLOGY_HISTORY -> listOf(
             Color(0xFF28170F),
             Color(0xFF49301B),
             Color(0xFF21150F)
         )
+
         SystemWorldKind.FANTASY -> listOf(
             Color(0xFF100D25),
             Color(0xFF29234B),
             Color(0xFF17132F)
         )
+
         SystemWorldKind.GREED_ISLAND -> listOf(
             Color(0xFF062019),
             Color(0xFF123C35),
@@ -124,35 +141,36 @@ fun SystemMiyarWelcomeCard(
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+
                     Box(
                         modifier = Modifier
-                            .size(66.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.radialGradient(
-                                    listOf(
-                                        primary.copy(alpha = 0.35f),
-                                        Color(0xFF090E18)
-                                    )
-                                )
-                            ),
+                            .size(112.dp, 150.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Image(
-                            painter = painterResource(
-                                id = R.drawable.ic_system_foreground
-                            ),
-                            contentDescription = "شعار SYSTEM",
-                            modifier = Modifier.size(46.dp)
-                        )
+                        if (appearance != null) {
+                            SystemCompanionAnimatedAvatar(
+                                appearance = appearance,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
+                            Image(
+                                painter = painterResource(
+                                    id = R.drawable.ic_system_foreground
+                                ),
+                                contentDescription = "شعار SYSTEM",
+                                modifier = Modifier.size(66.dp)
+                            )
+                        }
                     }
 
                     Column(
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(7.dp)
                     ) {
                         Text(
                             text = appearance?.name ?: "المرافق الذكي",
@@ -167,18 +185,19 @@ fun SystemMiyarWelcomeCard(
                             color = Color(0xFFD7E2F0),
                             fontSize = 13.sp
                         )
-                    }
 
-                    Text(
-                        text = "●",
-                        color = Color(0xFF4ADE80),
-                        fontSize = 13.sp
-                    )
+                        Text(
+                            text = "● متصل بالنظام",
+                            color = Color(0xFF4ADE80),
+                            fontSize = 12.sp
+                        )
+                    }
                 }
 
                 if (playerGender == null) {
+
                     Text(
-                        "حتى أختار لك المرافق المناسب، حدد ملف اللاعب:",
+                        text = "حتى أختار لك المرافق المناسب، حدد ملف اللاعب:",
                         color = Color.White,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
@@ -188,6 +207,7 @@ fun SystemMiyarWelcomeCard(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
+
                         Button(
                             onClick = {
                                 if (
@@ -196,7 +216,8 @@ fun SystemMiyarWelcomeCard(
                                         SystemPlayerGender.MALE
                                     )
                                 ) {
-                                    playerGender = SystemPlayerGender.MALE
+                                    playerGender =
+                                        SystemPlayerGender.MALE
                                 }
                             },
                             modifier = Modifier.weight(1f),
@@ -216,7 +237,8 @@ fun SystemMiyarWelcomeCard(
                                         SystemPlayerGender.FEMALE
                                     )
                                 ) {
-                                    playerGender = SystemPlayerGender.FEMALE
+                                    playerGender =
+                                        SystemPlayerGender.FEMALE
                                 }
                             },
                             modifier = Modifier.weight(1f),
@@ -228,7 +250,9 @@ fun SystemMiyarWelcomeCard(
                             Text("لاعبة")
                         }
                     }
+
                 } else {
+
                     Text(
                         text = if (
                             playerGender == SystemPlayerGender.MALE
@@ -257,14 +281,18 @@ fun SystemMiyarWelcomeCard(
                     )
 
                     Text(
-                        text = "يتغير وصف الزي تلقائياً مع انتقالك بين العوالم.",
+                        text = "يتغير مظهر وألوان المرافق حسب العالم المختار.",
                         color = Color.LightGray,
                         fontSize = 12.sp
                     )
 
                     Button(
                         onClick = {
-                            playerGender = null
+                            if (
+                                SystemCompanionGenderSettings.clear(context)
+                            ) {
+                                playerGender = null
+                            }
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF18364A),
