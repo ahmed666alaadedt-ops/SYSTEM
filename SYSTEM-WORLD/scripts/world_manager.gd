@@ -2,7 +2,6 @@
 extends Node3D
 class_name WorldManager
 
-# مسارات الموارد نسبةً إلى مجلد مشروع Godot.
 const ForestManagerScript = preload("res://scripts/forest_manager.gd")
 const MountainManagerScript = preload("res://scripts/mountain_manager.gd")
 const WaterwaysManagerScript = preload("res://scripts/waterways_manager.gd")
@@ -25,7 +24,8 @@ const WORLD_NAMES := {
 	WorldID.GREED_ISLAND: "Greed Island World"
 }
 
-var active_world: int = WorldID.REALISTIC
+# -1 يعني لم يتم تفعيل أي عالم بعد.
+var active_world: int = -1
 var world_roots: Dictionary = {}
 
 
@@ -39,6 +39,7 @@ func create_worlds() -> void:
 		var world_root := Node3D.new()
 		world_root.name = WORLD_NAMES[world_id]
 		world_root.visible = false
+		world_root.process_mode = Node.PROCESS_MODE_DISABLED
 		add_child(world_root)
 		world_roots[world_id] = world_root
 
@@ -46,25 +47,69 @@ func create_worlds() -> void:
 	_create_greed_island()
 
 
+# --------------------------------------------------
+# WORLD SWITCHING
+# --------------------------------------------------
+
 func switch_world(world_id: int) -> void:
 	if not world_roots.has(world_id):
-		push_warning("World ID does not exist.")
+		push_warning("SYSTEM WORLD: Unknown world ID.")
 		return
 
 	if active_world == world_id:
 		return
 
+	var previous_world := active_world
+	var destination_root: Node3D = world_roots[world_id]
+
+	# إظهار العالم المطلوب وإيقاف معالجة العوالم الأخرى.
 	for id in world_roots:
-		var world_root: Node3D = world_roots[id]
-		world_root.visible = id == world_id
-		world_root.process_mode = (
+		var root: Node3D = world_roots[id]
+		var is_selected := id == world_id
+
+		root.visible = is_selected
+		root.process_mode = (
 			Node.PROCESS_MODE_INHERIT
-			if id == world_id
+			if is_selected
 			else Node.PROCESS_MODE_DISABLED
 		)
 
+	# نقل اللاعب والكاميرا التابعة له إلى العالم الجديد.
+	if previous_world >= 0 and world_roots.has(previous_world):
+		var previous_root: Node3D = world_roots[previous_world]
+		var player := previous_root.get_node_or_null(
+			"Player"
+		) as CharacterBody3D
+
+		if player != null:
+			player.reparent(destination_root, true)
+			player.velocity = Vector3.ZERO
+
+			if world_id == WorldID.GREED_ISLAND:
+				player.position = Vector3(0.0, 2.0, -45.0)
+			else:
+				player.position = Vector3(0.0, 2.0, 0.0)
+
+			player.rotation = Vector3.ZERO
+
+			var camera_rig := player.get_node_or_null(
+				"SpringArm3D"
+			) as SpringArm3D
+
+			if camera_rig != null:
+				camera_rig.rotation = Vector3(
+					deg_to_rad(-10.0),
+					0.0,
+					0.0
+				)
+
 	active_world = world_id
 	world_changed.emit(world_id)
+
+	print(
+		"SYSTEM WORLD: switched to ",
+		get_world_name(world_id)
+	)
 
 
 func get_active_world() -> Node3D:
@@ -88,9 +133,14 @@ func is_greed_island_active() -> bool:
 
 
 func is_combat_allowed() -> bool:
-	if is_greed_island_active():
-		return false
-	return true
+	return not is_greed_island_active()
+
+
+func get_world_spawn_position(world_id: int) -> Vector3:
+	if world_id == WorldID.GREED_ISLAND:
+		return Vector3(0.0, 2.0, -45.0)
+
+	return Vector3(0.0, 2.0, 0.0)
 
 
 # --------------------------------------------------
@@ -102,12 +152,12 @@ func _create_greed_island() -> void:
 
 	var island := GreedIslandManagerScript.new()
 	island.name = "GreedIslandEnvironment"
-	root.add_child(island)
 
-	# الجزيرة بيئة استكشاف واختبار فقط.
 	island.set_meta("system_private_environment", true)
 	island.set_meta("system_admin_test_mode", true)
 	island.set_meta("system_combat_enabled", false)
+
+	root.add_child(island)
 
 	print("SYSTEM WORLD: Greed Island environment created.")
 	print("SYSTEM WORLD: Admin exploration mode enabled.")
