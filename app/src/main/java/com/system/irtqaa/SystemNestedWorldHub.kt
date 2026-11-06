@@ -1,4 +1,3 @@
-
 package com.system.irtqaa
 
 import androidx.compose.animation.animateColorAsState
@@ -17,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.text.font.FontWeight
@@ -319,7 +319,7 @@ private fun LivingWorldCard(
 // مدينة حديثة، أبراج، شوارع، مطاعم، سيارات وطائرة
 // =====================================================
 
-private fun modernCity(
+private fun DrawScope.modernCity(
     w: Float,
     h: Float,
     movement: Float,
@@ -533,7 +533,7 @@ private fun modernCity(
 // الحضارات والأسواق والمعابد والبوابة الأثرية
 // =====================================================
 
-private fun historicCity(
+private fun DrawScope.historicCity(
     w: Float,
     h: Float,
     movement: Float,
@@ -646,7 +646,7 @@ private fun historicCity(
 // جبال وقلعة وتنين أزرق وسحر
 // =====================================================
 
-private fun fantasyKingdom(
+private fun DrawScope.fantasyKingdom(
     w: Float,
     h: Float,
     movement: Float,
@@ -774,7 +774,7 @@ private fun fantasyKingdom(
 // جزيرة عائمة، بحر، أمواج، شلالات، جبال وقصور
 // =====================================================
 
-private fun greedIsland(
+private fun DrawScope.greedIsland(
     w: Float,
     h: Float,
     movement: Float,
