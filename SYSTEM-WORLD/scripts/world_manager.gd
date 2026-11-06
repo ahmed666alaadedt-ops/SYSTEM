@@ -1,4 +1,3 @@
-
 extends Node3D
 class_name WorldManager
 
@@ -9,6 +8,7 @@ const MarineEnvironmentManagerScript = preload("res://scripts/marine_environment
 const GreedIslandManagerScript = preload("res://scripts/greed_island_manager.gd")
 const HistoricalWorldManagerScript = preload("res://scripts/historical_world_manager.gd/historical_world_manager.gd")
 const FantasyWorldManagerScript = preload("res://scripts/fantasy_world_manager.gd")
+const ModernWorldDiscoveryManagerScript = preload("res://scripts/modern_world_discovery_manager.gd")
 
 signal world_changed(world_id: int)
 
@@ -208,6 +208,23 @@ func _create_modern_city() -> void:
 	_create_mountains(root)
 	_create_waterways(root)
 	_create_marine_environment(root)
+	_create_modern_discovery_manager(root)
+
+
+# --------------------------------------------------
+# MODERN WORLD DISCOVERY
+# --------------------------------------------------
+
+func _create_modern_discovery_manager(parent: Node3D) -> void:
+	var discovery_manager := ModernWorldDiscoveryManagerScript.new()
+	discovery_manager.name = "ModernWorldDiscoveryManager"
+
+	parent.add_child(discovery_manager)
+
+	print(
+		"SYSTEM WORLD: Modern discovery system initialized. Points: ",
+		discovery_manager.get_discovery_point_count()
+	)
 
 
 func _make_material(
