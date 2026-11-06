@@ -1,33 +1,23 @@
-
-<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- خلفية جزيرة الطمع: ظلال خافتة جداً -->
+    <!-- خلفية جزيرة الطمع -->
     <path
         android:fillColor="#FF090B0E"
         android:pathData="M0,0 H108 V108 H0 Z"/>
 
     <path
         android:fillColor="#182B3038"
-        android:pathData="M5,65 L19,48 L29,54 L42,35
-        L53,45 L65,29 L78,48 L91,39 L105,59
-        L105,75 L5,75 Z"/>
+        android:pathData="M5,65 L19,48 L29,54 L42,35 L53,45 L65,29 L78,48 L91,39 L105,59 L105,75 L5,75 Z"/>
 
     <path
         android:fillColor="#203A4149"
-        android:pathData="M13,69 L29,57 L40,61 L54,48
-        L66,58 L80,49 L96,66 L96,76 L13,76 Z"/>
+        android:pathData="M13,69 L29,57 L40,61 L54,48 L66,58 L80,49 L96,66 L96,76 L13,76 Z"/>
 
-    <path
-        android:fillColor="#301C2229"
-        android:pathData="M44,48 L44,38 L48,38 L48,48
-        M57,48 L57,34 L61,34 L61,48"/>
-
-    <!-- قاعدة سوداء فحمية أنيقة -->
+    <!-- الخلفية الفحمية -->
     <path
         android:fillColor="#FF101216"
         android:pathData="M7,7 H101 V101 H7 Z"/>
@@ -36,50 +26,38 @@
         android:fillColor="#FF15171B"
         android:pathData="M9,9 H99 V99 H9 Z"/>
 
-    <!-- خطوط X المترابطة: الجانبيتان -->
+    <!-- X الجانبية -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="#FFD9A928"
         android:strokeWidth="7"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="
-        M8,31 L35,58
-        M35,31 L8,58
-        M29,50 L42,63
-        M79,63 L100,42
-        M79,31 L100,52
-        M100,31 L79,52"/>
+        android:pathData="M8,31 L35,58 M35,31 L8,58 M29,50 L42,63 M79,63 L100,42 M79,31 L100,52 M100,31 L79,52"/>
 
-    <!-- X الوسطى: أكبر وأكثر بروزاً -->
+    <!-- X الوسطى -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="#FFFFD34A"
         android:strokeWidth="9"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="
-        M35,25 L75,65
-        M75,25 L35,65"/>
+        android:pathData="M35,25 L75,65 M75,25 L35,65"/>
 
-    <!-- وصلات هندسية تربط العلامات ببعضها -->
+    <!-- وصلات هندسية -->
     <path
         android:fillColor="#00000000"
         android:strokeColor="#FFD9A928"
         android:strokeWidth="6"
         android:strokeLineCap="round"
-        android:pathData="
-        M24,47 L42,47
-        M66,47 L84,47"/>
+        android:pathData="M24,47 L42,47 M66,47 L84,47"/>
 
-    <!-- الفراغ الهندسي الأوسط -->
+    <!-- مركز الشعار -->
     <path
         android:fillColor="#FF101216"
         android:strokeColor="#FFB98B26"
         android:strokeWidth="1.5"
-        android:pathData="
-        M46,45 L62,45 L68,54
-        L62,63 L46,63 L40,54 Z"/>
+        android:pathData="M46,45 L62,45 L68,54 L62,63 L46,63 L40,54 Z"/>
 
     <!-- حرف S الأول -->
     <path
@@ -88,11 +66,7 @@
         android:strokeWidth="3"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="
-        M53,49
-        C49,46 45,49 47,52
-        C48,54 54,54 54,57
-        C54,61 49,62 46,59"/>
+        android:pathData="M53,49 C49,46 45,49 47,52 C48,54 54,54 54,57 C54,61 49,62 46,59"/>
 
     <!-- حرف S الثاني -->
     <path
@@ -101,13 +75,9 @@
         android:strokeWidth="3"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="
-        M63,49
-        C59,46 55,49 57,52
-        C58,54 64,54 64,57
-        C64,61 59,62 56,59"/>
+        android:pathData="M63,49 C59,46 55,49 57,52 C58,54 64,54 64,57 C64,61 59,62 56,59"/>
 
-    <!-- لمعة ذهبية خفيفة -->
+    <!-- اللمعة الذهبية -->
     <path
         android:fillColor="#FFFFE39A"
         android:pathData="M51,22 L56,22 L53.5,26 Z"/>
