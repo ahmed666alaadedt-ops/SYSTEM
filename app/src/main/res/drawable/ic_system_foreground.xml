@@ -1,45 +1,54 @@
-<?xml version="1.0" encoding="utf-8"?<vector xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Misty Greed Island in the background -->
-    <path
-        android:fillColor="#554B555D"
-        android:pathData="M10,34 L22,27 L31,29 L40,20 L49,25 L59,18 L69,25 L80,22 L96,34 L90,42 L78,44 L66,41 L54,47 L41,42 L27,45 L15,41 Z" />
-
-    <!-- Island landscape -->
     <path
         android:fillColor="#66566B57"
-        android:pathData="M22,34 L34,27 L43,29 L50,23 L58,28 L66,24 L76,30 L85,28 L93,36 L82,40 L69,37 L57,42 L44,37 L32,41 Z" />
+        android:pathData="M8,38 L24,25 L38,30 L52,17 L67,27 L82,23 L100,38 L90,46 L72,42 L55,49 L35,43 L18,47 Z"/>
 
-    <!-- Distant towers -->
-    <path
-        android:fillColor="#80515B52"
-        android:pathData="M37,29 L40,18 L43,29 Z M48,27 L51,15 L54,28 Z M67,29 L70,19 L73,30 Z M78,32 L81,22 L84,33 Z" />
-
-    <!-- Floating island rock -->
-    <path
-        android:fillColor="#80434A50"
-        android:pathData="M20,40 L33,43 L45,40 L57,44 L69,40 L83,43 L92,39 L85,49 L76,55 L70,63 L59,66 L50,59 L39,62 L30,54 L22,49 Z" />
-
-    <!-- Mist layer one -->
     <path
         android:fillColor="#554F5962"
-        android:pathData="M7,39 C20,33 29,38 39,35 C49,32 58,38 69,35 C81,32 92,37 101,34 L101,43 C89,45 80,41 69,44 C56,47 46,41 35,45 C24,48 15,43 7,46 Z" />
+        android:pathData="M5,42 C25,34 35,44 53,37 C72,31 85,43 103,36 L103,52 C82,57 68,46 51,54 C32,60 18,49 5,56 Z"/>
 
-    <!-- Mist layer two -->
     <path
-        android:fillColor="#444F5962"
-        android:pathData="M10,49 C24,44 34,48 45,45 C57,42 66,48 77,45 C88,43 96,47 101,45 L101,53 C89,55 80,51 69,54 C57,57 47,51 36,55 C25,58 17,53 10,56 Z" />
+        android:fillColor="#80434A50"
+        android:pathData="M17,45 L34,49 L51,45 L69,50 L91,43 L84,57 L70,65 L59,70 L45,62 L31,65 L21,55 Z"/>
 
-    <!-- Subtle red atmosphere -->
-    <path
-        android:fillColor="#22A20F18"
-        android:pathData="M12,48 L96,48 L96,79 L12,79 Z" />
-
-    <!-- Card shadow -->
     <path
         android:fillColor="#99000000"
-        
+        android:pathData="M25,25 L83,25 L90,33 L90,81 L82,91 L26,91 L18,82 L18,32 Z"/>
+
+    <path
+        android:fillColor="#FF9EA8B3"
+        android:pathData="M25,22 L83,22 L90,30 L90,82 L82,90 L26,90 L18,82 L18,30 Z"/>
+
+    <path
+        android:fillColor="#FF10151D"
+        android:pathData="M27,27 L81,27 L85,33 L85,79 L79,85 L29,85 L23,79 L23,33 Z"/>
+
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF697783"
+        android:strokeWidth="1.5"
+        android:pathData="M29,31 L79,31 L81,34 L81,78 L78,82 L30,82 L27,78 L27,34 Z"/>
+
+    <path
+        android:fillColor="#FFE32636"
+        android:pathData="M44,34 L64,34 L69,39 L39,39 Z"/>
+
+    <path
+        android:fillColor="#FFFF2638"
+        android:pathData="M70,43 L48,43 L40,50 L40,56 L48,63 L63,63 L63,69 L40,69 L40,76 L66,76 L74,68 L74,59 L66,53 L51,53 L51,49 L70,49 Z"/>
+
+    <path
+        android:fillColor="#FFDCE3E9"
+        android:pathData="M25,29 L30,29 L25,35 Z"/>
+
+    <path
+        android:fillColor="#FFDCE3E9"
+        android:pathData="M83,78 L83,83 L78,87 Z"/>
+
+</vector>
