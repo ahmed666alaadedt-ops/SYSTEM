@@ -180,10 +180,8 @@ fun SystemApp(account: SystemFirebaseAccount) {
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         val tabs = listOf(
-                            "الرئيسية",
-                            "المهام",
-                            "المستويات",
-                            "جزيرة الطمع"
+                            "الرئيسية", "المهام", "المستويات",
+                            "جزيرة الطمع", "المهمات العالمية"
                         )
 
                         tabs.forEachIndexed { index, title ->
@@ -191,6 +189,7 @@ fun SystemApp(account: SystemFirebaseAccount) {
                                 onClick = {
                                     selectedTab = index
                                     showWorldSelection = false
+                                    if (index != 0) selectedWorld = ""
                                 },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor =
@@ -247,15 +246,17 @@ fun SystemApp(account: SystemFirebaseAccount) {
                                         }
                                     )
                                 }
-                            } else if (
-                                selectedWorld == "fantasy" ||
-                                selectedWorld == "greed"
-                            ) {
-                                WorldComingSoonScreen(
-                                    worldName = when (selectedWorld) {
-                                        "fantasy" -> "العالم الخيالي"
-                                        else -> "جزيرة الطمع"
-                                    },
+                            } else if (selectedWorld == "fantasy") {
+                                SystemFantasyWorldScreen(
+                                    onBack = {
+                                        selectedWorld = ""
+                                        showWorldSelection = true
+                                    }
+                                )
+                            } else if (selectedWorld == "greed") {
+                                SystemGreedIslandScreen(
+                                    playerId = userId,
+                                    playerLevel = progressSnapshot.overallLevel,
                                     onBack = {
                                         selectedWorld = ""
                                         showWorldSelection = true
@@ -468,38 +469,22 @@ fun SystemApp(account: SystemFirebaseAccount) {
                         }
 
                         3 -> {
-                            Column(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Spacer(Modifier.height(20.dp))
+                            SystemGreedIslandScreen(
+                                playerId = userId,
+                                playerLevel = progressSnapshot.overallLevel,
+                                onBack = {
+                                    selectedTab = 0
+                                    selectedWorld = ""
+                                    showWorldSelection = true
+                                }
+                            )
+                        }
 
-                                Text(
-                                    "جزيرة الطمع",
-                                    color = gold,
-                                    fontSize = 27.sp,
-                                    fontWeight = FontWeight.Black
-                                )
-
-                                Spacer(Modifier.height(20.dp))
-
-                                Text("🏝️", fontSize = 76.sp)
-
-                                Spacer(Modifier.height(12.dp))
-
-                                Text(
-                                    "بوابة الجزيرة مغلقة حالياً",
-                                    color = Color.White,
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-
-                                Text(
-                                    "تُفتح الجزيرة خلال المواسم والمسابقات الخاصة.",
-                                    color = Color.LightGray,
-                                    fontSize = 14.sp
-                                )
-                            }
+                        4 -> {
+                            SystemCrossWorldQuestScreen(
+                                playerId = userId,
+                                onBack = { selectedTab = 0 }
+                            )
                         }
                     }
                 }
@@ -729,5 +714,184 @@ private fun domainLabel(
         SystemDevelopmentDomain.BODY -> "الجسد"
         SystemDevelopmentDomain.AWARENESS -> "الوعي"
         SystemDevelopmentDomain.DISCIPLINE -> "الانضباط"
+    }
+}
+
+@Composable
+fun SystemGreedIslandScreen(
+    playerId: String,
+    playerLevel: Int,
+    onBack: () -> Unit
+) {
+    val context = LocalContext.current
+    val prefs = remember(playerId) {
+        context.getSharedPreferences(
+            "system_world_quest_${playerId.hashCode()}",
+            android.content.Context.MODE_PRIVATE
+        )
+    }
+    val gold = Color(0xFFFFC857)
+    val cyan = Color(0xFF55DDF0)
+    val panel = Color(0xFF171C30)
+    var selectedRegionId by remember {
+        mutableStateOf(SystemGreedIslandData.regions.first().id)
+    }
+    val progress = remember(playerId) {
+        SystemPlayerQuestProgress(
+            playerId = playerId,
+            chainId = SystemWorldQuestNetwork.artifactQuest.id,
+            completedStageIds = prefs.getStringSet("completed", emptySet())?.toSet() ?: emptySet(),
+            discoveredClues = prefs.getStringSet("clues", emptySet())?.toSet() ?: emptySet(),
+            artifactFound = prefs.getBoolean("artifact_found", false),
+            islandAccessUnlocked = prefs.getBoolean("island_unlocked", false)
+        )
+    }
+    val accessReady = SystemWorldQuestNetwork.canEnterGreedIsland(progress)
+    val region = SystemGreedIslandData.regions.first { it.id == selectedRegionId }
+    val quests = SystemGreedIslandData.quests.filter { it.regionId == selectedRegionId }
+
+    Column(
+        Modifier.fillMaxSize()
+            .background(Brush.verticalGradient(listOf(Color(0xFF080D1B), Color(0xFF17142D), Color(0xFF080D1B))))
+            .verticalScroll(rememberScrollState())
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Button(onClick = onBack, colors = ButtonDefaults.buttonColors(containerColor = panel)) {
+            Text("رجوع")
+        }
+        Text("SYSTEM WORLD • SEASON", color = cyan, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+        Text("جزيرة الطمع", color = gold, fontSize = 29.sp, fontWeight = FontWeight.Black)
+        Text("جزيرة عائمة تضم مناطق الاستكشاف والأسرار والبطاقات والمهمات الموسمية.", color = Color.LightGray)
+
+        Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = panel)) {
+            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                Text(SystemGreedIslandData.SEASON_NAME, color = gold, fontWeight = FontWeight.Bold, fontSize = 19.sp)
+                Text("مستواك: $playerLevel  •  المطلوب: ${SystemGreedIslandData.ENTRY_LEVEL}", color = cyan)
+                Text(
+                    when {
+                        playerLevel < SystemGreedIslandData.ENTRY_LEVEL -> "ارفع مستواك أولاً لتحقيق شرط المستوى."
+                        !accessReady -> "اجمع أدلة العوالم الثلاثة واكتشف القطعة النادرة من تبويب المهمات العالمية."
+                        else -> "اكتملت متطلبات القطعة. دخول الموسم الفعلي ينتظر تفعيل الموسم."
+                    },
+                    color = Color.White
+                )
+                Text(
+                    if (accessReady) "شرط القطعة مكتمل" else "الوصول لم يُفتح بعد",
+                    color = if (accessReady) gold else Color(0xFFFF8A80)
+                )
+            }
+        }
+
+        Text("مناطق الجزيرة", color = gold, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+
+        SystemGreedIslandData.regions.forEach { item ->
+            val isStartArea = item.isUnlocked &&
+                playerLevel >= SystemGreedIslandData.ENTRY_LEVEL
+
+            Card(
+                Modifier.fillMaxWidth().clickable {
+                    selectedRegionId = item.id
+                    SystemAudioEvents.discovery()
+                },
+                colors = CardDefaults.cardColors(
+                    containerColor = if (item.id == selectedRegionId)
+                        Color(0xFF26334D) else panel
+                )
+            ) {
+                Column(
+                    Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            item.name,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(
+                            if (isStartArea) "منطقة بداية" else "مقفلة",
+                            color = if (isStartArea) cyan else Color.Gray,
+                            fontSize = 11.sp
+                        )
+                    }
+                    Text(item.description, color = Color.LightGray, fontSize = 12.sp)
+                    Text(
+                        "الخطورة ${item.dangerLevel}/10 • ${item.reward} XP",
+                        color = gold,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+        }
+
+        Card(
+            Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = panel)
+        ) {
+            Column(
+                Modifier.padding(13.dp),
+                verticalArrangement = Arrangement.spacedBy(7.dp)
+            ) {
+                Text(region.name, color = gold, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("مهمات المنطقة", color = cyan, fontWeight = FontWeight.Bold)
+
+                if (quests.isEmpty()) {
+                    Text("لا توجد مهمات مسجلة لهذه المنطقة حالياً.", color = Color.LightGray)
+                } else {
+                    quests.forEach { quest ->
+                        Divider(color = Color.White.copy(alpha = 0.12f))
+                        Text(quest.title, color = Color.White, fontWeight = FontWeight.Bold)
+                        Text(quest.description, color = Color.LightGray, fontSize = 12.sp)
+                        Text(
+                            "المستوى ${quest.requiredLevel} • المكافأة ${quest.experienceReward} XP",
+                            color = gold,
+                            fontSize = 12.sp
+                        )
+                        Text(
+                            if (quest.isSeasonal) "مهمة موسمية" else "مهمة الجزيرة",
+                            color = cyan,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+            }
+        }
+
+        Text("بطاقات الجزيرة", color = gold, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+
+        SystemGreedIslandData.cards.forEach { card ->
+            Card(
+                Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = panel)
+            ) {
+                Column(
+                    Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            card.name,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(card.rarity, color = gold, fontSize = 12.sp)
+                    }
+                    Text(
+                        "${card.category} • ${card.description}",
+                        color = Color.LightGray,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+        }
+
+        Text(
+            "ملاحظة: الواجهة تعرض بيانات الجزيرة وتقرأ حالة القطعة من الحفظ المحلي. اللعب الجماعي والموسم والمكافآت الفعلية لم تُفعّل أونلاين بعد.",
+            color = Color.Gray,
+            fontSize = 11.sp
+        )
     }
 }
