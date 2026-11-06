@@ -1,4 +1,3 @@
-
 package com.system.irtqaa
 
 import androidx.compose.runtime.getValue
@@ -45,31 +44,48 @@ object SystemAudioEvents {
         )
     }
 
-    fun button() = emit(SystemAudioEventType.BUTTON)
+    fun button() =
+        emit(SystemAudioEventType.BUTTON)
 
-    fun portal() = emit(SystemAudioEventType.PORTAL_OPEN)
+    fun portal() =
+        emit(SystemAudioEventType.PORTAL_OPEN)
 
-    fun questStarted() = emit(SystemAudioEventType.QUEST_STARTED)
+    fun transition() =
+        emit(SystemAudioEventType.TRANSITION)
 
-    fun questCompleted() = emit(SystemAudioEventType.QUEST_COMPLETED)
+    fun questStarted() =
+        emit(SystemAudioEventType.QUEST_STARTED)
 
-    fun questFailed() = emit(SystemAudioEventType.QUEST_FAILED)
+    fun questCompleted() =
+        emit(SystemAudioEventType.QUEST_COMPLETED)
 
-    fun reward() = emit(SystemAudioEventType.REWARD)
+    fun questFailed() =
+        emit(SystemAudioEventType.QUEST_FAILED)
 
-    fun warning() = emit(SystemAudioEventType.WARNING)
+    fun reward() =
+        emit(SystemAudioEventType.REWARD)
 
-    fun levelUp() = emit(SystemAudioEventType.LEVEL_UP)
+    fun warning() =
+        emit(SystemAudioEventType.WARNING)
 
-    fun combatStarted() = emit(SystemAudioEventType.COMBAT_STARTED)
+    fun levelUp() =
+        emit(SystemAudioEventType.LEVEL_UP)
 
-    fun combatVictory() = emit(SystemAudioEventType.COMBAT_VICTORY)
+    fun combatStarted() =
+        emit(SystemAudioEventType.COMBAT_STARTED)
 
-    fun combatDefeat() = emit(SystemAudioEventType.COMBAT_DEFEAT)
+    fun combatVictory() =
+        emit(SystemAudioEventType.COMBAT_VICTORY)
 
-    fun discovery() = emit(SystemAudioEventType.DISCOVERY)
+    fun combatDefeat() =
+        emit(SystemAudioEventType.COMBAT_DEFEAT)
 
-    fun healing() = emit(SystemAudioEventType.HEALING)
+    fun discovery() =
+        emit(SystemAudioEventType.DISCOVERY)
 
-    fun greedIslandOpened() = emit(SystemAudioEventType.GREED_ISLAND_OPEN)
+    fun healing() =
+        emit(SystemAudioEventType.HEALING)
+
+    fun greedIslandOpened() =
+        emit(SystemAudioEventType.GREED_ISLAND_OPEN)
 }
