@@ -1,3 +1,4 @@
+
 package com.system.irtqaa
 
 import androidx.compose.foundation.layout.*
@@ -85,7 +86,10 @@ fun SystemWorldScreen(
 
                     Button(
                         onClick = {
-                            selectedLocation = location.id
+                            if (selectedLocation != location.id) {
+                                selectedLocation = location.id
+                                SystemAudioEvents.discovery()
+                            }
                         },
                         enabled = location.isUnlocked
                     ) {
@@ -134,8 +138,7 @@ fun SystemWorldScreen(
             Card(
                 colors = CardDefaults.cardColors(
                     containerColor = panel
-                ),
-                modifier = Modifier.fillMaxWidth()
+                )
             ) {
                 Column(Modifier.padding(14.dp)) {
                     Text(mission.title, color = Color.White)
@@ -144,12 +147,19 @@ fun SystemWorldScreen(
 
                     Button(
                         onClick = {
-                            onProgressChange(
+                            val updated =
                                 SystemWorldEngine.completeMission(
                                     progress,
                                     mission.id
                                 )
-                            )
+
+                            if (
+                                updated.completedMissions.size >
+                                progress.completedMissions.size
+                            ) {
+                                SystemAudioEvents.questCompleted()
+                                onProgressChange(updated)
+                            }
                         },
                         enabled = !mission.isCompleted
                     ) {
@@ -172,13 +182,25 @@ fun SystemWorldScreen(
             Card(
                 colors = CardDefaults.cardColors(
                     containerColor = panel
-                ),
-                modifier = Modifier.fillMaxWidth()
+                )
             ) {
                 Column(Modifier.padding(14.dp)) {
-                    Text(monster.name, color = Color.White, fontSize = 18.sp)
-                    Text(monster.description, color = Color.LightGray)
-                    Text("المستوى: ${monster.level}", color = cyan)
+                    Text(
+                        monster.name,
+                        color = Color.White,
+                        fontSize = 18.sp
+                    )
+
+                    Text(
+                        monster.description,
+                        color = Color.LightGray
+                    )
+
+                    Text(
+                        "المستوى: ${monster.level}",
+                        color = cyan
+                    )
+
                     Text(
                         "المكافأة: ${monster.experienceReward} XP",
                         color = gold
@@ -194,6 +216,12 @@ fun SystemWorldScreen(
 
                             onProgressChange(result.updatedProgress)
                             battleMessage = result.message
+
+                            if (result.victory) {
+                                SystemAudioEvents.combatVictory()
+                            } else {
+                                SystemAudioEvents.combatDefeat()
+                            }
                         },
                         enabled = progress.playerLevel >= monster.level
                     ) {
@@ -215,6 +243,7 @@ fun SystemWorldScreen(
 
         item {
             Spacer(Modifier.height(24.dp))
+
             Text(
                 "هذا العالم قابل للتوسع والاستكشاف.",
                 color = Color.LightGray
