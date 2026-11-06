@@ -1,3 +1,4 @@
+
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -5,50 +6,110 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
+    <!-- خلفية جزيرة الطمع: ظلال خافتة جداً -->
     <path
-        android:fillColor="#66566B57"
-        android:pathData="M8,38 L24,25 L38,30 L52,17 L67,27 L82,23 L100,38 L90,46 L72,42 L55,49 L35,43 L18,47 Z"/>
+        android:fillColor="#FF090B0E"
+        android:pathData="M0,0 H108 V108 H0 Z"/>
 
     <path
-        android:fillColor="#554F5962"
-        android:pathData="M5,42 C25,34 35,44 53,37 C72,31 85,43 103,36 L103,52 C82,57 68,46 51,54 C32,60 18,49 5,56 Z"/>
+        android:fillColor="#182B3038"
+        android:pathData="M5,65 L19,48 L29,54 L42,35
+        L53,45 L65,29 L78,48 L91,39 L105,59
+        L105,75 L5,75 Z"/>
 
     <path
-        android:fillColor="#80434A50"
-        android:pathData="M17,45 L34,49 L51,45 L69,50 L91,43 L84,57 L70,65 L59,70 L45,62 L31,65 L21,55 Z"/>
+        android:fillColor="#203A4149"
+        android:pathData="M13,69 L29,57 L40,61 L54,48
+        L66,58 L80,49 L96,66 L96,76 L13,76 Z"/>
 
     <path
-        android:fillColor="#99000000"
-        android:pathData="M25,25 L83,25 L90,33 L90,81 L82,91 L26,91 L18,82 L18,32 Z"/>
+        android:fillColor="#301C2229"
+        android:pathData="M44,48 L44,38 L48,38 L48,48
+        M57,48 L57,34 L61,34 L61,48"/>
+
+    <!-- قاعدة سوداء فحمية أنيقة -->
+    <path
+        android:fillColor="#FF101216"
+        android:pathData="M7,7 H101 V101 H7 Z"/>
 
     <path
-        android:fillColor="#FF9EA8B3"
-        android:pathData="M25,22 L83,22 L90,30 L90,82 L82,90 L26,90 L18,82 L18,30 Z"/>
+        android:fillColor="#FF15171B"
+        android:pathData="M9,9 H99 V99 H9 Z"/>
 
-    <path
-        android:fillColor="#FF10151D"
-        android:pathData="M27,27 L81,27 L85,33 L85,79 L79,85 L29,85 L23,79 L23,33 Z"/>
-
+    <!-- خطوط X المترابطة: الجانبيتان -->
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#FF697783"
+        android:strokeColor="#FFD9A928"
+        android:strokeWidth="7"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="
+        M8,31 L35,58
+        M35,31 L8,58
+        M29,50 L42,63
+        M79,63 L100,42
+        M79,31 L100,52
+        M100,31 L79,52"/>
+
+    <!-- X الوسطى: أكبر وأكثر بروزاً -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFD34A"
+        android:strokeWidth="9"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="
+        M35,25 L75,65
+        M75,25 L35,65"/>
+
+    <!-- وصلات هندسية تربط العلامات ببعضها -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFD9A928"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:pathData="
+        M24,47 L42,47
+        M66,47 L84,47"/>
+
+    <!-- الفراغ الهندسي الأوسط -->
+    <path
+        android:fillColor="#FF101216"
+        android:strokeColor="#FFB98B26"
         android:strokeWidth="1.5"
-        android:pathData="M29,31 L79,31 L81,34 L81,78 L78,82 L30,82 L27,78 L27,34 Z"/>
+        android:pathData="
+        M46,45 L62,45 L68,54
+        L62,63 L46,63 L40,54 Z"/>
 
+    <!-- حرف S الأول -->
     <path
-        android:fillColor="#FFE32636"
-        android:pathData="M44,34 L64,34 L69,39 L39,39 Z"/>
+        android:fillColor="#00000000"
+        android:strokeColor="#FFE32636"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="
+        M53,49
+        C49,46 45,49 47,52
+        C48,54 54,54 54,57
+        C54,61 49,62 46,59"/>
 
+    <!-- حرف S الثاني -->
     <path
-        android:fillColor="#FFFF2638"
-        android:pathData="M70,43 L48,43 L40,50 L40,56 L48,63 L63,63 L63,69 L40,69 L40,76 L66,76 L74,68 L74,59 L66,53 L51,53 L51,49 L70,49 Z"/>
+        android:fillColor="#00000000"
+        android:strokeColor="#FFE32636"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="
+        M63,49
+        C59,46 55,49 57,52
+        C58,54 64,54 64,57
+        C64,61 59,62 56,59"/>
 
+    <!-- لمعة ذهبية خفيفة -->
     <path
-        android:fillColor="#FFDCE3E9"
-        android:pathData="M25,29 L30,29 L25,35 Z"/>
-
-    <path
-        android:fillColor="#FFDCE3E9"
-        android:pathData="M83,78 L83,83 L78,87 Z"/>
+        android:fillColor="#FFFFE39A"
+        android:pathData="M51,22 L56,22 L53.5,26 Z"/>
 
 </vector>
