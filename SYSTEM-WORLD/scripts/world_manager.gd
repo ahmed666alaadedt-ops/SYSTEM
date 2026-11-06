@@ -8,6 +8,7 @@ const WaterwaysManagerScript = preload("res://scripts/waterways_manager.gd")
 const MarineEnvironmentManagerScript = preload("res://scripts/marine_environment_manager.gd")
 const GreedIslandManagerScript = preload("res://scripts/greed_island_manager.gd")
 const HistoricalWorldManagerScript = preload("res://scripts/historical_world_manager.gd/historical_world_manager.gd")
+const FantasyWorldManagerScript = preload("res://scripts/fantasy_world_manager.gd")
 
 signal world_changed(world_id: int)
 
@@ -25,7 +26,6 @@ const WORLD_NAMES := {
 	WorldID.GREED_ISLAND: "Greed Island World"
 }
 
-# -1 يعني لم يتم تفعيل أي عالم بعد.
 var active_world: int = -1
 var world_roots: Dictionary = {}
 
@@ -44,6 +44,7 @@ func create_worlds() -> void:
 		add_child(world_root)
 		world_roots[world_id] = world_root
 
+	_create_fantasy_world()
 	_create_modern_city()
 	_create_historical_world()
 	_create_greed_island()
@@ -64,7 +65,6 @@ func switch_world(world_id: int) -> void:
 	var previous_world := active_world
 	var destination_root: Node3D = world_roots[world_id]
 
-	# إظهار العالم المطلوب وإيقاف معالجة العوالم الأخرى.
 	for id in world_roots:
 		var root: Node3D = world_roots[id]
 		var is_selected := id == world_id
@@ -76,7 +76,6 @@ func switch_world(world_id: int) -> void:
 			else Node.PROCESS_MODE_DISABLED
 		)
 
-	# نقل اللاعب والكاميرا التابعة له إلى العالم الجديد.
 	if previous_world >= 0 and world_roots.has(previous_world):
 		var previous_root: Node3D = world_roots[previous_world]
 		var player := previous_root.get_node_or_null(
@@ -87,11 +86,7 @@ func switch_world(world_id: int) -> void:
 			player.reparent(destination_root, true)
 			player.velocity = Vector3.ZERO
 
-			if world_id == WorldID.GREED_ISLAND:
-				player.position = Vector3(0.0, 2.0, -45.0)
-			else:
-				player.position = Vector3(0.0, 2.0, 0.0)
-
+			player.position = get_world_spawn_position(world_id)
 			player.rotation = Vector3.ZERO
 
 			var camera_rig := player.get_node_or_null(
@@ -146,6 +141,21 @@ func get_world_spawn_position(world_id: int) -> Vector3:
 
 
 # --------------------------------------------------
+# FANTASY WORLD
+# --------------------------------------------------
+
+func _create_fantasy_world() -> void:
+	var root: Node3D = world_roots[WorldID.FANTASY]
+
+	var fantasy_world := FantasyWorldManagerScript.new()
+	fantasy_world.name = "FantasyWorldEnvironment"
+
+	root.add_child(fantasy_world)
+
+	print("SYSTEM WORLD: Fantasy World created.")
+
+
+# --------------------------------------------------
 # HISTORICAL & CIVILIZATIONS WORLD
 # --------------------------------------------------
 
@@ -160,7 +170,7 @@ func _create_historical_world() -> void:
 
 
 # --------------------------------------------------
-# GREED ISLAND — PRIVATE ADMIN TEST ENVIRONMENT
+# GREED ISLAND — PRIVATE ENVIRONMENT
 # --------------------------------------------------
 
 func _create_greed_island() -> void:
@@ -172,6 +182,7 @@ func _create_greed_island() -> void:
 	island.set_meta("system_private_environment", true)
 	island.set_meta("system_admin_test_mode", true)
 	island.set_meta("system_combat_enabled", false)
+	island.set_meta("system_isolated_memory", true)
 
 	root.add_child(island)
 
