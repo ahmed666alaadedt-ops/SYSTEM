@@ -2,11 +2,7 @@
 package com.system.irtqaa
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -41,16 +37,16 @@ fun SystemNestedWorldHub(
         SystemWorldVisualStyles.forKind(it)
     }
 
-    val backgroundTop by animateColorAsState(
-        targetValue = activeStyle?.deep ?: Color(0xFF070B12),
-        animationSpec = tween(850),
-        label = "world-background-top"
+    val top by animateColorAsState(
+        activeStyle?.deep ?: Color(0xFF070B12),
+        tween(850),
+        label = "world-top"
     )
 
-    val backgroundBottom by animateColorAsState(
-        targetValue = activeStyle?.surface ?: Color(0xFF101A2A),
-        animationSpec = tween(850),
-        label = "world-background-bottom"
+    val bottom by animateColorAsState(
+        activeStyle?.surface ?: Color(0xFF101A2A),
+        tween(850),
+        label = "world-bottom"
     )
 
     Column(
@@ -58,15 +54,11 @@ fun SystemNestedWorldHub(
             .fillMaxWidth()
             .background(
                 Brush.verticalGradient(
-                    listOf(
-                        backgroundTop,
-                        backgroundBottom,
-                        Color(0xFF05070D)
-                    )
+                    listOf(top, bottom, Color.Black)
                 )
             )
             .padding(horizontal = 9.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        verticalArrangement = Arrangement.spacedBy(11.dp)
     ) {
         Text(
             "SYSTEM WORLD",
@@ -83,22 +75,19 @@ fun SystemNestedWorldHub(
         )
 
         Text(
-            "اضغط على أحد المشاهد لتغيير خلفية شاشة العوالم.",
+            "عوالم مختلفة، حياة مختلفة، وتجارب مستقلة.",
             color = Color.LightGray,
             fontSize = 12.sp
         )
 
         SystemWorldMiyarGuide()
 
-        Spacer(Modifier.height(2.dp))
-
         SystemWorldVisualStyles.all.forEachIndexed { index, style ->
-            SystemLivingWorldCard(
+            LivingWorldCard(
                 style = style,
                 index = index,
                 selected = selectedKind == style.kind,
                 onClick = {
-                    // اختيار معاينة فقط، لا يدخل اللاعب إلى العالم
                     selectedKind = style.kind
                 }
             )
@@ -107,121 +96,105 @@ fun SystemNestedWorldHub(
         if (selectedKind != null) {
             Button(
                 onClick = {
-                    // الدخول يحدث فقط بعد ضغط الزر المنفصل
                     selectedKind?.let(onWorldSelected)
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(52.dp),
+                    .height(54.dp),
                 shape = RoundedCornerShape(17.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = activeStyle?.accent
-                        ?: Color(0xFFFFC857),
-                    contentColor = Color(0xFF07101B)
+                    containerColor = activeStyle!!.accent,
+                    contentColor = Color.Black
                 )
             ) {
                 Text(
-                    "دخول العالم المختار  ←",
+                    "دخول العالم المختار ←",
                     fontWeight = FontWeight.Black,
                     fontSize = 15.sp
                 )
             }
 
             Text(
-                "تم اختيار: ${activeStyle?.title ?: ""}",
+                "تم اختيار: ${activeStyle?.title}",
                 color = activeStyle?.accent ?: Color.White,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold
+                fontSize = 12.sp
             )
         } else {
             Text(
-                "اختر أحد العوالم الأربعة لمعاينة خلفيته.",
+                "اختر أحد العوالم لمعاينة أجوائه.",
                 color = Color(0xFF45D6E8),
                 fontSize = 12.sp
             )
         }
-
-        Spacer(Modifier.height(12.dp))
     }
 }
 
 @Composable
-private fun SystemLivingWorldCard(
+private fun LivingWorldCard(
     style: SystemWorldVisualStyle,
     index: Int,
     selected: Boolean,
     onClick: () -> Unit
 ) {
-    val transition = rememberInfiniteTransition(
-        label = "living-world-${style.kind}"
+    val animation = rememberInfiniteTransition(
+        label = "world-${style.kind}"
     )
 
-    val drift by transition.animateFloat(
-        initialValue = -12f,
-        targetValue = 12f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 3600 + index * 500
-            ),
-            repeatMode = RepeatMode.Reverse
+    val movement by animation.animateFloat(
+        -13f,
+        13f,
+        infiniteRepeatable(
+            tween(4200 + index * 350),
+            RepeatMode.Reverse
         ),
-        label = "scene-drift"
+        label = "movement"
     )
 
-    val pulse by transition.animateFloat(
-        initialValue = 0.25f,
-        targetValue = 0.9f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 1800 + index * 250
-            ),
-            repeatMode = RepeatMode.Reverse
+    val pulse by animation.animateFloat(
+        0.25f,
+        0.9f,
+        infiniteRepeatable(
+            tween(1900 + index * 250),
+            RepeatMode.Reverse
         ),
-        label = "scene-pulse"
+        label = "pulse"
     )
 
-    val rotation by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 14000 + index * 1000
-            ),
-            repeatMode = RepeatMode.Restart
+    val rotation by animation.animateFloat(
+        0f,
+        360f,
+        infiniteRepeatable(
+            tween(15000 + index * 1000),
+            RepeatMode.Restart
         ),
-        label = "scene-rotation"
+        label = "rotation"
     )
 
     val borderColor by animateColorAsState(
-        targetValue = if (selected) {
-            style.accent
-        } else {
-            style.accent.copy(alpha = 0.48f)
-        },
-        animationSpec = tween(400),
-        label = "world-border"
+        if (selected) style.accent
+        else style.accent.copy(alpha = 0.48f),
+        tween(350),
+        label = "border"
     )
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(112.dp)
-            .clip(RoundedCornerShape(19.dp))
+            .height(145.dp)
+            .clip(RoundedCornerShape(18.dp))
             .border(
-                width = if (selected) 2.5.dp else 1.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(19.dp)
+                if (selected) 2.5.dp else 1.dp,
+                borderColor,
+                RoundedCornerShape(18.dp)
             )
             .clickable(onClick = onClick)
     ) {
-        Canvas(
-            modifier = Modifier.fillMaxSize()
-        ) {
+        Canvas(Modifier.fillMaxSize()) {
             val w = size.width
             val h = size.height
 
             drawRect(
-                brush = Brush.verticalGradient(
+                Brush.verticalGradient(
                     listOf(
                         style.deep,
                         style.surface,
@@ -230,102 +203,64 @@ private fun SystemLivingWorldCard(
                 )
             )
 
-            // ضوء البيئة المتغير
-            val lightCenter = Offset(
-                w * 0.75f + drift,
-                h * 0.36f
-            )
-
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        style.accent.copy(alpha = pulse * 0.55f),
-                        style.secondary.copy(alpha = 0.18f),
-                        Color.Transparent
-                    ),
-                    center = lightCenter,
-                    radius = h * 1.1f
-                ),
-                radius = h * 1.1f,
-                center = lightCenter
-            )
-
             when (style.kind) {
-                SystemWorldKind.MODERN_REALISTIC -> {
-                    drawModernLivingScene(
-                        w, h, style, drift, rotation, pulse
-                    )
-                }
+                SystemWorldKind.MODERN_REALISTIC ->
+                    modernCity(w, h, movement, rotation, pulse)
 
-                SystemWorldKind.MYTHOLOGY_HISTORY -> {
-                    drawHistoricalLivingScene(
-                        w, h, style, drift, rotation, pulse
-                    )
-                }
+                SystemWorldKind.MYTHOLOGY_HISTORY ->
+                    historicCity(w, h, movement, rotation, pulse)
 
-                SystemWorldKind.FANTASY -> {
-                    drawFantasyLivingScene(
-                        w, h, style, drift, rotation, pulse
-                    )
-                }
+                SystemWorldKind.FANTASY ->
+                    fantasyKingdom(w, h, movement, rotation, pulse)
 
-                SystemWorldKind.GREED_ISLAND -> {
-                    drawGreedLivingScene(
-                        w, h, style, drift, rotation, pulse
-                    )
-                }
+                SystemWorldKind.GREED_ISLAND ->
+                    greedIsland(w, h, movement, rotation, pulse)
             }
 
-            // جسيمات ضوئية متحركة
-            for (i in 0..21) {
+            // حركة الإضاءة والجسيمات
+            for (i in 0..22) {
                 val x = (
                     w * ((i * 37 % 100) / 100f) +
-                    drift * ((i % 3 + 1) * 0.18f)
+                    movement * (0.15f + (i % 3) * 0.15f)
                 ).let { ((it % w) + w) % w }
 
-                val y = h * ((i * 23 % 85) / 100f)
+                val y = h * ((i * 23 % 90) / 100f)
 
-                val alpha = (
-                    0.2f +
-                    0.5f * (0.5f + 0.5f * sin(
-                        rotation / 35f + i
-                    ))
-                )
+                val alpha = 0.2f + 0.5f *
+                    (0.5f + 0.5f * sin(rotation / 35f + i))
 
                 drawCircle(
-                    color = style.accent.copy(alpha = alpha),
-                    radius = (1.2f + i % 3).dp.toPx(),
-                    center = Offset(x, y)
+                    style.accent.copy(alpha = alpha),
+                    (1.2f + i % 3).dp.toPx(),
+                    Offset(x, y)
                 )
             }
 
-            // لمعان متحرك على المشهد
+            // لمعان متحرك
+            val shine = (rotation % 5000f) / 5000f
+
             drawRect(
-                brush = Brush.linearGradient(
-                    colors = listOf(
+                Brush.linearGradient(
+                    listOf(
                         Color.Transparent,
-                        Color.White.copy(alpha = 0.09f),
-                        style.accent.copy(alpha = 0.10f),
+                        Color.White.copy(alpha = 0.08f),
+                        style.accent.copy(alpha = 0.08f),
                         Color.Transparent
                     ),
-                    start = Offset(w * ((rotation % 5000f) / 5000f), 0f),
-                    end = Offset(
-                        w * ((rotation % 5000f) / 5000f) + w * 0.35f,
-                        h
-                    )
+                    Offset(w * shine, 0f),
+                    Offset(w * shine + w * 0.35f, h)
                 )
             )
         }
 
-        // تدرج يساعد على وضوح العنوان
         Box(
-            modifier = Modifier
+            Modifier
                 .fillMaxSize()
                 .background(
                     Brush.horizontalGradient(
                         listOf(
                             Color.Black.copy(alpha = 0.78f),
-                            Color.Black.copy(alpha = 0.34f),
+                            Color.Black.copy(alpha = 0.35f),
                             Color.Transparent
                         )
                     )
@@ -333,10 +268,10 @@ private fun SystemLivingWorldCard(
         )
 
         Column(
-            modifier = Modifier
+            Modifier
                 .align(Alignment.CenterStart)
-                .padding(start = 14.dp, end = 8.dp)
-                .fillMaxWidth(0.73f),
+                .padding(start = 14.dp)
+                .fillMaxWidth(0.76f),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
@@ -348,14 +283,14 @@ private fun SystemLivingWorldCard(
 
             Text(
                 style.subtitle,
-                color = Color.White.copy(alpha = 0.9f),
+                color = Color.White,
                 fontSize = 10.sp,
                 maxLines = 1
             )
 
             Text(
-                if (selected) "✓ تمت معاينة هذا العالم"
-                else "اضغط لمعاينة الخلفية",
+                if (selected) "✓ تمت معاينة العالم"
+                else "اضغط لمعاينة العالم",
                 color = style.accent,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold
@@ -363,521 +298,679 @@ private fun SystemLivingWorldCard(
         }
 
         if (selected) {
-            Box(
+            Text(
+                "SELECTED",
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(8.dp)
-                    .clip(RoundedCornerShape(50))
+                    .clip(RoundedCornerShape(30.dp))
                     .background(style.accent.copy(alpha = 0.2f))
-                    .padding(
-                        horizontal = 9.dp,
-                        vertical = 5.dp
-                    )
-            ) {
-                Text(
-                    "SELECTED",
-                    color = style.accent,
-                    fontSize = 8.sp,
-                    fontWeight = FontWeight.Black
+                    .padding(horizontal = 9.dp, vertical = 5.dp),
+                color = style.accent,
+                fontSize = 8.sp,
+                fontWeight = FontWeight.Black
+            )
+        }
+    }
+}
+
+// =====================================================
+// 1. MODERN REALISTIC WORLD
+// مدينة حديثة، أبراج، شوارع، مطاعم، سيارات وطائرة
+// =====================================================
+
+private fun modernCity(
+    w: Float,
+    h: Float,
+    movement: Float,
+    rotation: Float,
+    pulse: Float
+) {
+    drawRect(
+        Brush.verticalGradient(
+            listOf(
+                Color(0xFF071D35),
+                Color(0xFF16476B),
+                Color(0xFF101C2A)
+            )
+        )
+    )
+
+    // أضواء السماء
+    drawCircle(
+        Color(0xFF42D9E8).copy(alpha = 0.12f),
+        h * 0.55f,
+        Offset(w * 0.76f, h * 0.35f)
+    )
+
+    // طبقات المدينة البعيدة
+    for (i in 0..17) {
+        val x = w * (i / 17f)
+        val buildingHeight = h * (
+            0.27f + (i % 6) * 0.075f
+        )
+
+        drawRect(
+            Color(0xFF17334B),
+            Offset(x, h * 0.78f - buildingHeight),
+            Size(w * 0.065f, buildingHeight)
+        )
+
+        // نوافذ الأبراج
+        for (row in 0..5) {
+            for (column in 0..1) {
+                drawRect(
+                    Color(0xFFFFD77A).copy(
+                        alpha = 0.35f + pulse * 0.25f
+                    ),
+                    Offset(
+                        x + 3.dp.toPx() + column * 5.dp.toPx(),
+                        h * 0.78f - buildingHeight +
+                            row * 9.dp.toPx()
+                    ),
+                    Size(3.dp.toPx(), 4.dp.toPx())
                 )
             }
         }
     }
-}
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawModernLivingScene(
-    w: Float,
-    h: Float,
-    style: SystemWorldVisualStyle,
-    drift: Float,
-    rotation: Float,
-    pulse: Float
-) {
-    val ground = h * 0.91f
-
-    // أفق المدينة وأبراجها
-    for (i in 0..11) {
-        val x = w * (i / 12f)
-        val buildingHeight = h * (
-            0.25f + (i % 5) * 0.105f
-        )
+    // أبراج أمامية
+    for (i in 0..5) {
+        val x = w * (0.05f + i * 0.14f)
+        val bh = h * (0.34f + (i % 3) * 0.12f)
 
         drawRect(
-            color = style.secondary.copy(alpha = 0.78f),
-            topLeft = Offset(x, ground - buildingHeight),
-            size = Size(
-                w * 0.075f,
-                buildingHeight
-            )
+            Color(0xFF0D263C),
+            Offset(x, h * 0.82f - bh),
+            Size(w * 0.105f, bh)
         )
 
-        for (row in 0..3) {
-            drawRect(
-                color = style.accent.copy(alpha = 0.75f),
-                topLeft = Offset(
-                    x + w * 0.025f,
-                    ground - buildingHeight + row * 8.dp.toPx()
-                ),
-                size = Size(
-                    3.dp.toPx(),
-                    4.dp.toPx()
-                )
+        for (row in 0..6) {
+            drawLine(
+                Color(0xFF49D9E9).copy(alpha = 0.6f),
+                Offset(x + 5.dp.toPx(), h * 0.82f - bh + row * 8.dp.toPx()),
+                Offset(x + w * 0.09f, h * 0.82f - bh + row * 8.dp.toPx()),
+                1.dp.toPx()
             )
         }
     }
 
-    // بوابة زمنية دائرية في وسط المشهد
-    val center = Offset(
-        w * 0.72f + drift * 0.25f,
-        h * 0.43f
+    // شارع المدينة
+    drawRect(
+        Color(0xFF101821),
+        Offset(0f, h * 0.82f),
+        Size(w, h * 0.18f)
     )
 
-    val diameter = h * 0.78f
-
-    drawCircle(
-        color = style.accent.copy(alpha = 0.14f),
-        radius = diameter * 0.57f,
-        center = center
+    drawLine(
+        Color(0xFFFFD56C),
+        Offset(0f, h * 0.91f),
+        Offset(w, h * 0.91f),
+        1.5.dp.toPx()
     )
 
-    drawArc(
-        color = style.accent.copy(alpha = 0.95f),
-        startAngle = rotation,
-        sweepAngle = 285f,
-        useCenter = false,
-        topLeft = Offset(
-            center.x - diameter / 2f,
-            center.y - diameter / 2f
-        ),
-        size = Size(diameter, diameter),
-        style = androidx.compose.ui.graphics.drawscope.Stroke(
-            width = 3.dp.toPx()
-        )
-    )
-
-    drawArc(
-        color = Color.White.copy(alpha = pulse * 0.8f),
-        startAngle = -rotation * 0.8f,
-        sweepAngle = 190f,
-        useCenter = false,
-        topLeft = Offset(
-            center.x - diameter * 0.38f,
-            center.y - diameter * 0.38f
-        ),
-        size = Size(
-            diameter * 0.76f,
-            diameter * 0.76f
-        ),
-        style = androidx.compose.ui.graphics.drawscope.Stroke(
-            width = 1.5.dp.toPx()
-        )
-    )
-
-    drawCircle(
-        brush = Brush.radialGradient(
-            listOf(
-                Color.White.copy(alpha = pulse * 0.75f),
-                style.accent.copy(alpha = 0.45f),
-                Color.Transparent
-            ),
-            center = center,
-            radius = diameter * 0.34f
-        ),
-        radius = diameter * 0.34f,
-        center = center
-    )
-
-    // حركة أضواء الشارع
+    // خطوط الطريق
     for (i in 0..5) {
-        val x = w * (i / 5f) + drift * (i % 2 + 1)
-        drawCircle(
-            style.accent.copy(alpha = 0.8f),
-            2.dp.toPx(),
-            Offset(x, h * 0.89f)
+        val x = (w * (i / 5f) + movement * 2f) % w
+        drawRect(
+            Color.White.copy(alpha = 0.6f),
+            Offset(x, h * 0.96f),
+            Size(w * 0.07f, 2.dp.toPx())
         )
     }
+
+    // مطاعم ومحلات في مستوى الشارع
+    for (i in 0..3) {
+        val x = w * (0.04f + i * 0.17f)
+
+        drawRect(
+            Color(0xFF263C4B),
+            Offset(x, h * 0.66f),
+            Size(w * 0.13f, h * 0.16f)
+        )
+
+        drawRect(
+            Color(0xFFFFB45C).copy(alpha = 0.85f),
+            Offset(x, h * 0.66f),
+            Size(w * 0.13f, h * 0.035f)
+        )
+
+        drawRect(
+            Color(0xFF6ADCEB).copy(alpha = 0.75f),
+            Offset(x + w * 0.025f, h * 0.71f),
+            Size(w * 0.08f, h * 0.075f)
+        )
+    }
+
+    // سيارات تتحرك
+    for (i in 0..3) {
+        val x = (
+            w * (0.12f + i * 0.24f) + movement * 2.2f
+        ).let { ((it % w) + w) % w }
+
+        drawRoundRect(
+            Color(0xFF182C40),
+            Offset(x, h * (0.86f + (i % 2) * 0.045f)),
+            Size(w * 0.075f, h * 0.035f),
+            androidx.compose.ui.geometry.CornerRadius(5f)
+        )
+
+        drawCircle(
+            Color(0xFFFFD16C),
+            2.dp.toPx(),
+            Offset(x + w * 0.065f, h * (0.875f + (i % 2) * 0.045f))
+        )
+
+        drawCircle(
+            Color(0xFFFF4E54),
+            2.dp.toPx(),
+            Offset(x + 3.dp.toPx(), h * (0.875f + (i % 2) * 0.045f))
+        )
+    }
+
+    // طائرة في السماء
+    val planeX = w * 0.38f + movement * 2f
+    val planeY = h * 0.20f + sin(rotation / 45f) * 3.dp.toPx()
+
+    drawLine(
+        Color.White.copy(alpha = 0.9f),
+        Offset(planeX - 15.dp.toPx(), planeY),
+        Offset(planeX + 15.dp.toPx(), planeY),
+        2.dp.toPx()
+    )
+
+    drawLine(
+        Color.White,
+        Offset(planeX, planeY),
+        Offset(planeX - 5.dp.toPx(), planeY - 9.dp.toPx()),
+        2.dp.toPx()
+    )
+
+    drawLine(
+        Color.White,
+        Offset(planeX, planeY),
+        Offset(planeX + 5.dp.toPx(), planeY + 8.dp.toPx()),
+        1.5.dp.toPx()
+    )
+
+    // البوابة الزمنية
+    val center = Offset(w * 0.79f, h * 0.48f)
+    val diameter = h * 0.72f
+
+    drawCircle(
+        Color(0xFF35DDF4).copy(alpha = pulse * 0.15f),
+        diameter * 0.7f,
+        center
+    )
+
+    drawArc(
+        Color(0xFF48E8FF),
+        rotation,
+        285f,
+        false,
+        Offset(center.x - diameter / 2, center.y - diameter / 2),
+        Size(diameter, diameter),
+        style = androidx.compose.ui.graphics.drawscope.Stroke(3.dp.toPx())
+    )
+
+    drawCircle(
+        Brush.radialGradient(
+            listOf(
+                Color.White.copy(alpha = pulse),
+                Color(0xFF21BEEB).copy(alpha = 0.5f),
+                Color.Transparent
+            ),
+            center,
+            diameter * 0.35f
+        ),
+        diameter * 0.35f,
+        center
+    )
 }
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawHistoricalLivingScene(
+// =====================================================
+// 2. HISTORICAL WORLD
+// الحضارات والأسواق والمعابد والبوابة الأثرية
+// =====================================================
+
+private fun historicCity(
     w: Float,
     h: Float,
-    style: SystemWorldVisualStyle,
-    drift: Float,
+    movement: Float,
     rotation: Float,
     pulse: Float
 ) {
-    val ground = h * 0.91f
-
-    // مبانٍ ومعابد قديمة
-    for (i in 0..4) {
-        val x = w * (0.06f + i * 0.10f)
-
-        drawRect(
-            color = style.secondary.copy(alpha = 0.85f),
-            topLeft = Offset(x, h * 0.43f),
-            size = Size(
-                w * 0.035f,
-                h * 0.48f
+    drawRect(
+        Brush.verticalGradient(
+            listOf(
+                Color(0xFF382217),
+                Color(0xFF9A6034),
+                Color(0xFF24170F)
             )
         )
+    )
 
-        drawLine(
-            color = style.accent.copy(alpha = 0.8f),
-            start = Offset(x - 3.dp.toPx(), h * 0.43f),
-            end = Offset(x + 10.dp.toPx(), h * 0.43f),
-            strokeWidth = 3.dp.toPx()
+    // الشمس
+    drawCircle(
+        Color(0xFFFFD58B).copy(alpha = 0.65f),
+        h * 0.19f,
+        Offset(w * 0.77f, h * 0.24f)
+    )
+
+    // مبانٍ تاريخية
+    for (i in 0..6) {
+        val x = w * (0.03f + i * 0.13f)
+        val bh = h * (0.28f + (i % 3) * 0.12f)
+
+        drawRect(
+            Color(0xFF795034),
+            Offset(x, h * 0.83f - bh),
+            Size(w * 0.105f, bh)
+        )
+
+        drawRect(
+            Color(0xFFC08B50),
+            Offset(x - 2.dp.toPx(), h * 0.83f - bh),
+            Size(w * 0.11f, 5.dp.toPx())
+        )
+
+        drawRect(
+            Color(0xFF352319),
+            Offset(x + w * 0.035f, h * 0.72f),
+            Size(w * 0.03f, h * 0.11f)
+        )
+    }
+
+    // معبد بأعمدة
+    for (i in 0..4) {
+        val x = w * (0.48f + i * 0.045f)
+
+        drawRect(
+            Color(0xFFE2B878),
+            Offset(x, h * 0.43f),
+            Size(w * 0.025f, h * 0.40f)
+        )
+
+        drawRect(
+            Color(0xFFFFD99B),
+            Offset(x - 3.dp.toPx(), h * 0.42f),
+            Size(w * 0.035f, 4.dp.toPx())
         )
     }
 
     // هرم بعيد
     val pyramid = Path().apply {
-        moveTo(w * 0.48f, ground)
-        lineTo(w * 0.60f, h * 0.40f)
-        lineTo(w * 0.73f, ground)
+        moveTo(w * 0.10f, h * 0.83f)
+        lineTo(w * 0.25f, h * 0.36f)
+        lineTo(w * 0.42f, h * 0.83f)
         close()
     }
 
-    drawPath(
-        pyramid,
-        color = style.accent.copy(alpha = 0.42f)
-    )
+    drawPath(pyramid, Color(0xFFC9975D))
 
-    // بوابة زمنية أثرية
-    val center = Offset(
-        w * 0.79f + drift * 0.18f,
-        h * 0.48f
-    )
-
-    val diameter = h * 0.72f
-
-    drawCircle(
-        color = style.accent.copy(alpha = 0.13f),
-        radius = diameter * 0.65f,
-        center = center
-    )
+    // بوابة أثرية
+    val center = Offset(w * 0.78f, h * 0.53f)
+    val diameter = h * 0.68f
 
     drawArc(
-        color = style.accent.copy(alpha = 0.95f),
-        startAngle = rotation,
-        sweepAngle = 300f,
-        useCenter = false,
-        topLeft = Offset(
-            center.x - diameter / 2f,
-            center.y - diameter / 2f
-        ),
-        size = Size(diameter, diameter),
-        style = androidx.compose.ui.graphics.drawscope.Stroke(
-            width = 4.dp.toPx()
-        )
-    )
-
-    drawArc(
-        color = Color.White.copy(alpha = pulse * 0.65f),
-        startAngle = -rotation,
-        sweepAngle = 145f,
-        useCenter = false,
-        topLeft = Offset(
-            center.x - diameter * 0.35f,
-            center.y - diameter * 0.35f
-        ),
-        size = Size(
-            diameter * 0.70f,
-            diameter * 0.70f
-        ),
-        style = androidx.compose.ui.graphics.drawscope.Stroke(
-            width = 2.dp.toPx()
-        )
+        Color(0xFFFFD17A),
+        rotation,
+        300f,
+        false,
+        Offset(center.x - diameter / 2, center.y - diameter / 2),
+        Size(diameter, diameter),
+        style = androidx.compose.ui.graphics.drawscope.Stroke(4.dp.toPx())
     )
 
     drawCircle(
-        color = style.secondary.copy(alpha = 0.45f),
-        radius = diameter * 0.25f,
-        center = center
+        Color(0xFFFFC66C).copy(alpha = pulse * 0.3f),
+        diameter * 0.35f,
+        center
     )
 
-    // غبار ذهبي متحرك
-    for (i in 0..8) {
+    // غبار ذهبي
+    for (i in 0..12) {
         drawCircle(
-            style.accent.copy(alpha = 0.3f + pulse * 0.35f),
-            (1 + i % 2).dp.toPx(),
+            Color(0xFFFFD38A).copy(alpha = 0.35f + pulse * 0.3f),
+            1.5.dp.toPx(),
             Offset(
-                w * (i / 9f) + drift * 0.2f,
-                h * (0.24f + (i % 3) * 0.12f)
+                w * (i / 13f) + movement,
+                h * (0.2f + (i % 4) * 0.13f)
             )
         )
     }
 }
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawFantasyLivingScene(
+// =====================================================
+// 3. FANTASY WORLD
+// جبال وقلعة وتنين أزرق وسحر
+// =====================================================
+
+private fun fantasyKingdom(
     w: Float,
     h: Float,
-    style: SystemWorldVisualStyle,
-    drift: Float,
+    movement: Float,
     rotation: Float,
     pulse: Float
 ) {
-    // سماء زرقاء وسحب مضيئة
     drawRect(
-        brush = Brush.verticalGradient(
+        Brush.verticalGradient(
             listOf(
-                Color(0xFF153E75),
-                Color(0xFF377FC2),
-                style.deep
+                Color(0xFF174E91),
+                Color(0xFF4C91D0),
+                Color(0xFF171B3A)
             )
         )
     )
 
-    for (i in 0..3) {
-        val cloudX = w * (0.15f + i * 0.25f) + drift * (i % 2 + 1)
-
-        drawCircle(
-            color = Color.White.copy(alpha = 0.12f),
-            radius = h * 0.13f,
-            center = Offset(cloudX, h * (0.20f + (i % 2) * 0.15f)
-            )
-        )
-    }
-
-    // جبال بعيدة
+    // الجبال
     val mountains = Path().apply {
-        moveTo(0f, h * 0.91f)
-        lineTo(w * 0.20f, h * 0.37f)
-        lineTo(w * 0.39f, h * 0.87f)
-        lineTo(w * 0.58f, h * 0.30f)
-        lineTo(w * 0.82f, h * 0.89f)
-        lineTo(w, h * 0.55f)
+        moveTo(0f, h * 0.88f)
+        lineTo(w * 0.18f, h * 0.32f)
+        lineTo(w * 0.39f, h * 0.85f)
+        lineTo(w * 0.60f, h * 0.22f)
+        lineTo(w * 0.83f, h * 0.85f)
+        lineTo(w, h * 0.43f)
         lineTo(w, h)
         lineTo(0f, h)
         close()
     }
 
-    drawPath(
-        mountains,
-        color = style.secondary.copy(alpha = 0.82f)
+    drawPath(mountains, Color(0xFF263D6B))
+
+    // قمم ثلجية
+    drawLine(
+        Color.White.copy(alpha = 0.7f),
+        Offset(w * 0.60f, h * 0.22f),
+        Offset(w * 0.55f, h * 0.37f),
+        3.dp.toPx()
     )
 
-    // قلعة خيالية
-    for (i in 0..2) {
-        val x = w * (0.43f + i * 0.055f)
+    // القلعة
+    drawRect(
+        Color(0xFF27385F),
+        Offset(w * 0.40f, h * 0.45f),
+        Size(w * 0.25f, h * 0.39f)
+    )
+
+    for (i in 0..3) {
+        val x = w * (0.40f + i * 0.075f)
 
         drawRect(
-            color = Color(0xFF263C6A),
-            topLeft = Offset(x, h * 0.43f),
-            size = Size(w * 0.045f, h * 0.38f)
+            Color(0xFF354E7A),
+            Offset(x, h * 0.36f),
+            Size(w * 0.055f, h * 0.48f)
         )
 
         val tower = Path().apply {
-            moveTo(x - 2.dp.toPx(), h * 0.43f)
-            lineTo(x + w * 0.022f, h * 0.25f)
-            lineTo(x + w * 0.047f, h * 0.43f)
+            moveTo(x - 2.dp.toPx(), h * 0.36f)
+            lineTo(x + w * 0.027f, h * 0.23f)
+            lineTo(x + w * 0.057f, h * 0.36f)
             close()
         }
 
-        drawPath(tower, style.accent.copy(alpha = 0.85f))
+        drawPath(tower, Color(0xFF9D9AD6))
     }
 
-    // تنين أزرق طائر
-    val dragonX = w * 0.69f + drift * 1.4f
-    val dragonY = h * 0.32f + sin(rotation / 35f) * 5.dp.toPx()
+    // التنين
+    val dragonX = w * 0.76f + movement * 1.3f
+    val dragonY = h * 0.27f + sin(rotation / 35f) * 5.dp.toPx()
 
-    val body = Path().apply {
-        moveTo(dragonX - 18.dp.toPx(), dragonY)
-        cubicTo(
-            dragonX - 5.dp.toPx(),
-            dragonY - 10.dp.toPx(),
-            dragonX + 12.dp.toPx(),
-            dragonY - 5.dp.toPx(),
-            dragonX + 19.dp.toPx(),
-            dragonY
-        )
-        cubicTo(
-            dragonX + 5.dp.toPx(),
-            dragonY + 9.dp.toPx(),
-            dragonX - 8.dp.toPx(),
-            dragonY + 8.dp.toPx(),
+    drawOval(
+        Color(0xFF42C7F3),
+        Offset(dragonX - 18.dp.toPx(), dragonY - 6.dp.toPx()),
+        Size(38.dp.toPx(), 14.dp.toPx())
+    )
+
+    // جناحان
+    val wingMotion = sin(rotation / 18f) * 12.dp.toPx()
+
+    val wingLeft = Path().apply {
+        moveTo(dragonX - 4.dp.toPx(), dragonY)
+        quadraticTo(
             dragonX - 18.dp.toPx(),
-            dragonY
+            dragonY - 35.dp.toPx() - wingMotion,
+            dragonX - 38.dp.toPx(),
+            dragonY - 22.dp.toPx()
         )
+        lineTo(dragonX - 18.dp.toPx(), dragonY + 7.dp.toPx())
         close()
     }
 
-    drawPath(
-        body,
-        color = Color(0xFF42BDEB)
-    )
+    drawPath(wingLeft, Color(0xFF8AE7FF))
 
-    // الجناح الأول
-    val wingOne = Path().apply {
-        moveTo(dragonX - 3.dp.toPx(), dragonY)
+    val wingRight = Path().apply {
+        moveTo(dragonX + 3.dp.toPx(), dragonY)
         quadraticTo(
-            dragonX - 17.dp.toPx(),
-            dragonY - 32.dp.toPx(),
-            dragonX - 34.dp.toPx(),
-            dragonY - 24.dp.toPx()
-        )
-        lineTo(dragonX - 19.dp.toPx(), dragonY + 5.dp.toPx())
-        close()
-    }
-
-    drawPath(
-        wingOne,
-        color = Color(0xFF75D7F4).copy(alpha = 0.9f)
-    )
-
-    // الجناح الثاني
-    val wingTwo = Path().apply {
-        moveTo(dragonX + 1.dp.toPx(), dragonY)
-        quadraticTo(
-            dragonX + 17.dp.toPx(),
-            dragonY - 31.dp.toPx(),
-            dragonX + 34.dp.toPx(),
+            dragonX + 18.dp.toPx(),
+            dragonY - 35.dp.toPx() + wingMotion,
+            dragonX + 39.dp.toPx(),
             dragonY - 20.dp.toPx()
         )
-        lineTo(dragonX + 18.dp.toPx(), dragonY + 5.dp.toPx())
+        lineTo(dragonX + 18.dp.toPx(), dragonY + 7.dp.toPx())
         close()
     }
 
-    drawPath(
-        wingTwo,
-        color = Color(0xFF368CCB)
-    )
+    drawPath(wingRight, Color(0xFF368CCB))
 
-    // ذيل التنين
+    // الذيل
     drawLine(
-        color = Color(0xFF42BDEB),
-        start = Offset(
-            dragonX - 17.dp.toPx(),
-            dragonY
-        ),
-        end = Offset(
-            dragonX - 35.dp.toPx(),
-            dragonY + 8.dp.toPx()
-        ),
-        strokeWidth = 3.dp.toPx()
+        Color(0xFF42C7F3),
+        Offset(dragonX - 17.dp.toPx(), dragonY),
+        Offset(dragonX - 37.dp.toPx(), dragonY + 12.dp.toPx()),
+        3.dp.toPx()
     )
 
-    // وهج سحري خلف التنين
+    // وهج سحري
     drawCircle(
-        color = style.accent.copy(alpha = pulse * 0.22f),
-        radius = 24.dp.toPx(),
-        center = Offset(dragonX, dragonY)
+        Color(0xFFB69BFF).copy(alpha = pulse * 0.3f),
+        30.dp.toPx(),
+        Offset(dragonX, dragonY)
     )
 }
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawGreedLivingScene(
+// =====================================================
+// 4. GREED ISLAND
+// جزيرة عائمة، بحر، أمواج، شلالات، جبال وقصور
+// =====================================================
+
+private fun greedIsland(
     w: Float,
     h: Float,
-    style: SystemWorldVisualStyle,
-    drift: Float,
+    movement: Float,
     rotation: Float,
     pulse: Float
 ) {
-    // سماء الجزيرة المظلمة
     drawRect(
-        brush = Brush.verticalGradient(
+        Brush.verticalGradient(
             listOf(
-                Color(0xFF03070C),
-                Color(0xFF102B2B),
-                Color(0xFF050A10)
+                Color(0xFF06192A),
+                Color(0xFF14546A),
+                Color(0xFF07141E)
             )
         )
     )
 
-    // هالة غامضة
-    val center = Offset(
-        w * 0.67f + drift * 0.2f,
-        h * 0.43f
-    )
+    // الجبال البعيدة
+    val mountains = Path().apply {
+        moveTo(0f, h * 0.70f)
+        lineTo(w * 0.16f, h * 0.31f)
+        lineTo(w * 0.31f, h * 0.70f)
+        lineTo(w * 0.48f, h * 0.24f)
+        lineTo(w * 0.70f, h * 0.70f)
+        lineTo(w * 0.88f, h * 0.35f)
+        lineTo(w, h * 0.68f)
+        lineTo(w, h)
+        lineTo(0f, h)
+        close()
+    }
 
-    drawCircle(
-        brush = Brush.radialGradient(
+    drawPath(mountains, Color(0xFF1A4651))
+
+    // البحر أسفل الجزيرة
+    drawRect(
+        Brush.verticalGradient(
             listOf(
-                style.accent.copy(alpha = pulse * 0.25f),
-                style.secondary.copy(alpha = 0.10f),
-                Color.Transparent
-            ),
-            center = center,
-            radius = h * 1.0f
+                Color(0xFF145B78),
+                Color(0xFF06283D),
+                Color(0xFF03121F)
+            )
         ),
-        radius = h * 1.0f,
-        center = center
+        Offset(0f, h * 0.68f),
+        Size(w, h * 0.32f)
     )
 
-    // الجزيرة الطافية
-    val island = Path().apply {
-        moveTo(w * 0.34f + drift * 0.2f, h * 0.43f)
-        cubicTo(
-            w * 0.48f + drift * 0.2f,
-            h * 0.26f,
-            w * 0.76f + drift * 0.2f,
-            h * 0.28f,
-            w * 0.88f + drift * 0.2f,
-            h * 0.45f
+    // أمواج البحر المتحركة
+    for (i in 0..6) {
+        val y = h * (0.73f + i * 0.04f)
+        val wave = Path().apply {
+            moveTo(0f, y)
+            cubicTo(
+                w * 0.25f, y - 5.dp.toPx() - movement * 0.08f,
+                w * 0.50f, y + 5.dp.toPx(),
+                w * 0.75f, y - 4.dp.toPx()
+            )
+            cubicTo(
+                w * 0.85f, y - 6.dp.toPx(),
+                w * 0.94f, y + 4.dp.toPx(),
+                w, y
+            )
+        }
+
+        drawPath(
+            wave,
+            Color(0xFF7BE8E6).copy(alpha = 0.35f + pulse * 0.2f),
+            style = androidx.compose.ui.graphics.drawscope.Stroke(1.2.dp.toPx())
         )
-        lineTo(w * 0.76f + drift * 0.2f, h * 0.62f)
-        lineTo(w * 0.62f, h * 0.91f)
-        lineTo(w * 0.49f, h * 0.64f)
+    }
+
+    // الجزيرة العائمة
+    val island = Path().apply {
+        moveTo(w * 0.24f + movement * 0.12f, h * 0.43f)
+        cubicTo(
+            w * 0.34f, h * 0.25f,
+            w * 0.70f, h * 0.24f,
+            w * 0.83f + movement * 0.12f, h * 0.44f
+        )
+        lineTo(w * 0.75f, h * 0.60f)
+        lineTo(w * 0.61f, h * 0.76f)
+        lineTo(w * 0.48f, h * 0.65f)
+        lineTo(w * 0.34f, h * 0.58f)
         close()
     }
 
     drawPath(
         island,
-        brush = Brush.verticalGradient(
+        Brush.verticalGradient(
             listOf(
-                Color(0xFF376C55),
-                Color(0xFF183B32),
-                Color(0xFF171E1C)
+                Color(0xFF5C986C),
+                Color(0xFF245A43),
+                Color(0xFF142C2A)
             )
         )
     )
 
-    // أشجار صغيرة فوق الجزيرة
-    for (i in 0..4) {
-        val x = w * (0.43f + i * 0.085f) + drift * 0.2f
-        val y = h * (0.40f + (i % 2) * 0.05f)
+    // قمة جبل وسط الجزيرة
+    val peak = Path().apply {
+        moveTo(w * 0.39f, h * 0.47f)
+        lineTo(w * 0.53f, h * 0.20f)
+        lineTo(w * 0.68f, h * 0.47f)
+        close()
+    }
+
+    drawPath(peak, Color(0xFF547B76))
+
+    // القصور
+    drawRect(
+        Color(0xFF9C8A6C),
+        Offset(w * 0.52f, h * 0.36f),
+        Size(w * 0.19f, h * 0.15f)
+    )
+
+    for (i in 0..2) {
+        val x = w * (0.53f + i * 0.065f)
+
+        drawRect(
+            Color(0xFFC5A879),
+            Offset(x, h * 0.27f),
+            Size(w * 0.045f, h * 0.24f)
+        )
+
+        val roof = Path().apply {
+            moveTo(x - 2.dp.toPx(), h * 0.27f)
+            lineTo(x + w * 0.022f, h * 0.20f)
+            lineTo(x + w * 0.047f, h * 0.27f)
+            close()
+        }
+
+        drawPath(roof, Color(0xFFE0BD82))
+    }
+
+    // أشجار
+    for (i in 0..5) {
+        val x = w * (0.28f + i * 0.085f) + movement * 0.1f
+        val y = h * (0.43f + (i % 2) * 0.045f)
 
         drawLine(
-            color = Color(0xFF513E2C),
-            start = Offset(x, y + 15.dp.toPx()),
-            end = Offset(x, y),
-            strokeWidth = 2.dp.toPx()
+            Color(0xFF503C2C),
+            Offset(x, y + 16.dp.toPx()),
+            Offset(x, y),
+            2.5.dp.toPx()
         )
 
         drawCircle(
-            color = Color(0xFF3E8061),
-            radius = 7.dp.toPx(),
-            center = Offset(x, y - 4.dp.toPx())
+            Color(0xFF39875A),
+            8.dp.toPx(),
+            Offset(x, y - 5.dp.toPx())
         )
     }
 
-    // ضباب متحرك أسفل الجزيرة
-    for (i in 0..4) {
+    // شلالات نازلة من الجزيرة
+    for (i in 0..2) {
+        val x = w * (0.37f + i * 0.16f)
+
+        drawLine(
+            Color(0xFF8BE9F3).copy(alpha = 0.75f),
+            Offset(x, h * 0.57f),
+            Offset(x - movement * 0.08f, h * 0.81f),
+            3.dp.toPx()
+        )
+
+        drawLine(
+            Color.White.copy(alpha = 0.55f),
+            Offset(x + 4.dp.toPx(), h * 0.59f),
+            Offset(x + 3.dp.toPx(), h * 0.77f),
+            1.dp.toPx()
+        )
+    }
+
+    // ضباب وسحب حول الجزيرة
+    for (i in 0..5) {
         drawCircle(
-            color = Color.White.copy(alpha = 0.06f + pulse * 0.04f),
-            radius = h * 0.14f,
-            center = Offset(
-                w * (0.40f + i * 0.13f) + drift,
-                h * 0.80f
+            Color.White.copy(alpha = 0.07f + pulse * 0.05f),
+            h * 0.13f,
+            Offset(
+                w * (0.15f + i * 0.14f) + movement,
+                h * (0.60f + (i % 2) * 0.12f)
             )
         )
     }
 
-    // رمز S خافت داخل الجزيرة
+    // ضوء غامض فوق القصور
+    drawCircle(
+        Color(0xFF65E6A6).copy(alpha = pulse * 0.25f),
+        h * 0.28f,
+        Offset(w * 0.62f, h * 0.34f)
+    )
+
+    // رمز SYSTEM المضيء
     drawArc(
-        color = style.accent.copy(alpha = 0.24f),
-        startAngle = rotation,
-        sweepAngle = 220f,
-        useCenter = false,
-        topLeft = Offset(
-            w * 0.62f,
-            h * 0.39f
-        ),
-        size = Size(
-            h * 0.20f,
-            h * 0.20f
-        ),
-        style = androidx.compose.ui.graphics.drawscope.Stroke(
-            width = 2.dp.toPx()
-        )
+        Color(0xFF65E6A6).copy(alpha = 0.55f),
+        rotation,
+        220f,
+        false,
+        Offset(w * 0.58f, h * 0.31f),
+        Size(h * 0.16f, h * 0.16f),
+        style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx())
     )
 }
