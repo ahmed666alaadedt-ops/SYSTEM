@@ -62,6 +62,58 @@ fun SystemWorldAudioHost(
         }
     }
 
+    LaunchedEffect(SystemAudioEvents.latestEvent.id) {
+        when (SystemAudioEvents.latestEvent.type) {
+            SystemAudioEventType.BUTTON ->
+                audioEngine.playButtonClick()
+
+            SystemAudioEventType.PORTAL_OPEN ->
+                audioEngine.playPortalOpen()
+
+            SystemAudioEventType.WORLD_SELECTED ->
+                audioEngine.playWorldSelection()
+
+            SystemAudioEventType.TRANSITION ->
+                audioEngine.playTransition()
+
+            SystemAudioEventType.QUEST_STARTED ->
+                audioEngine.playQuestStarted()
+
+            SystemAudioEventType.QUEST_COMPLETED ->
+                audioEngine.playQuestCompleted()
+
+            SystemAudioEventType.QUEST_FAILED ->
+                audioEngine.playQuestFailed()
+
+            SystemAudioEventType.REWARD ->
+                audioEngine.playReward()
+
+            SystemAudioEventType.WARNING ->
+                audioEngine.playWarning()
+
+            SystemAudioEventType.LEVEL_UP ->
+                audioEngine.playLevelUp()
+
+            SystemAudioEventType.COMBAT_STARTED ->
+                audioEngine.playCombatStarted()
+
+            SystemAudioEventType.COMBAT_VICTORY ->
+                audioEngine.playCombatVictory()
+
+            SystemAudioEventType.COMBAT_DEFEAT ->
+                audioEngine.playCombatDefeat()
+
+            SystemAudioEventType.DISCOVERY ->
+                audioEngine.playDiscovery()
+
+            SystemAudioEventType.HEALING ->
+                audioEngine.playHealing()
+
+            SystemAudioEventType.GREED_ISLAND_OPEN ->
+                audioEngine.playGreedIslandOpen()
+        }
+    }
+
     DisposableEffect(audioEngine) {
         onDispose {
             audioEngine.close()
