@@ -1,12 +1,16 @@
-
 extends Node3D
 
 # SYSTEM WORLD - 3D foundation
 # Godot 4.3 - Landscape / Android touch / Third-person
+# NPC Society + Persistent Save Integration
 
 const PLAYER_SPEED := 6.0
 const GRAVITY := 22.0
 const CAMERA_SENSITIVITY := 0.006
+
+const NPC_MANAGER_PATH := "res://scripts/ai_npc_society_manager.gd"
+const SAVE_MANAGER_PATH := "res://scripts/world_save_manager.gd"
+const AUTOSAVE_INTERVAL := 60.0
 
 var player: CharacterBody3D
 var camera_pivot: Node3D
@@ -19,20 +23,26 @@ var move_touch_index := -1
 var look_touch_index := -1
 var move_start_position := Vector2.ZERO
 var touch_movement := Vector2.ZERO
+
 var world_clock := 8.0
+var autosave_timer := 0.0
 
 var status_label: Label
 var npc_manager: Node
+var save_manager: Node
 
 
 func _ready() -> void:
 	randomize()
+
 	_create_environment()
 	_create_terrain()
 	_create_town()
 	_create_player()
 	_create_interface()
+
 	_connect_npc_society()
+	_connect_world_save_manager()
 
 
 func _process(delta: float) -> void:
@@ -44,7 +54,10 @@ func _process(delta: float) -> void:
 		status_label.text = "SYSTEM WORLD  |  %02d:%02d" % [hour, minute]
 
 	if is_instance_valid(npc_manager):
-		npc_manager.call("update_world", delta, world_clock)
+		if npc_manager.has_method("update_world"):
+			npc_manager.call("update_world", delta, world_clock)
+
+	_update_autosave(delta)
 
 
 func _physics_process(delta: float) -> void:
@@ -55,10 +68,13 @@ func _physics_process(delta: float) -> void:
 
 	if Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT):
 		movement.x -= 1.0
+
 	if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
 		movement.x += 1.0
+
 	if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP):
 		movement.y -= 1.0
+
 	if Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN):
 		movement.y += 1.0
 
@@ -125,6 +141,7 @@ func _input(event: InputEvent) -> void:
 	elif event is InputEventScreenDrag:
 		if event.index == move_touch_index:
 			var offset := event.position - move_start_position
+
 			touch_movement = Vector2(
 				offset.x / 75.0,
 				offset.y / 75.0
@@ -132,6 +149,7 @@ func _input(event: InputEvent) -> void:
 
 		elif event.index == look_touch_index:
 			camera_yaw -= event.relative.x * CAMERA_SENSITIVITY
+
 			camera_pitch = clamp(
 				camera_pitch - event.relative.y * CAMERA_SENSITIVITY,
 				-0.85,
@@ -141,6 +159,7 @@ func _input(event: InputEvent) -> void:
 	elif event is InputEventMouseMotion:
 		if Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
 			camera_yaw -= event.relative.x * CAMERA_SENSITIVITY
+
 			camera_pitch = clamp(
 				camera_pitch - event.relative.y * CAMERA_SENSITIVITY,
 				-0.85,
@@ -187,6 +206,7 @@ func _create_terrain() -> void:
 
 	var ground_mesh := MeshInstance3D.new()
 	var plane := PlaneMesh.new()
+
 	plane.size = Vector2(120, 120)
 
 	ground_mesh.mesh = plane
@@ -197,8 +217,8 @@ func _create_terrain() -> void:
 
 	var collision := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
-	shape.size = Vector3(120, 0.3, 120)
 
+	shape.size = Vector3(120, 0.3, 120)
 	collision.shape = shape
 	collision.position.y = -0.15
 	ground.add_child(collision)
@@ -223,6 +243,7 @@ func _create_town() -> void:
 
 	for i in range(12):
 		var side := -1.0 if i % 2 == 0 else 1.0
+
 		var position := Vector3(
 			side * 14.0,
 			0.0,
@@ -236,6 +257,7 @@ func _create_town() -> void:
 
 	for i in range(28):
 		var angle := TAU * float(i) / 28.0
+
 		var position := Vector3(
 			cos(angle) * randf_range(34.0, 45.0),
 			0.0,
@@ -351,6 +373,7 @@ func _create_interface() -> void:
 	status_label = Label.new()
 	status_label.position = Vector2(22, 18)
 	status_label.add_theme_font_size_override("font_size", 23)
+
 	status_label.add_theme_color_override(
 		"font_color",
 		Color(0.75, 0.94, 1.0)
@@ -361,6 +384,7 @@ func _create_interface() -> void:
 	instructions.text = "اسحب يسار الشاشة للحركة • اسحب يمينها لتحريك الكاميرا"
 	instructions.position = Vector2(22, 55)
 	instructions.add_theme_font_size_override("font_size", 17)
+
 	instructions.add_theme_color_override(
 		"font_color",
 		Color(0.95, 0.95, 0.95)
@@ -369,14 +393,94 @@ func _create_interface() -> void:
 
 
 func _connect_npc_society() -> void:
-	var manager_path := "res://scripts/ai_npc_society_manager.gd"
+	if not ResourceLoader.exists(NPC_MANAGER_PATH):
+		push_warning("NPC Society Manager script was not found.")
+		return
 
-	if ResourceLoader.exists(manager_path):
-		var manager_script = load(manager_path)
-		npc_manager = manager_script.new()
-		npc_manager.name = "NPC_Society_Manager"
-		add_child(npc_manager)
+	var manager_script = load(NPC_MANAGER_PATH)
+
+	if manager_script == null:
+		push_warning("NPC Society Manager could not be loaded.")
+		return
+
+	npc_manager = manager_script.new()
+	npc_manager.name = "NPC_Society_Manager"
+	add_child(npc_manager)
+
+	if npc_manager.has_method("setup"):
 		npc_manager.call("setup", self)
+
+
+func _connect_world_save_manager() -> void:
+	if not ResourceLoader.exists(SAVE_MANAGER_PATH):
+		push_warning("World Save Manager script was not found.")
+		return
+
+	var manager_script = load(SAVE_MANAGER_PATH)
+
+	if manager_script == null:
+		push_warning("World Save Manager could not be loaded.")
+		return
+
+	save_manager = manager_script.new()
+	save_manager.name = "World_Save_Manager"
+	add_child(save_manager)
+
+	if is_instance_valid(npc_manager):
+		if save_manager.has_method("restore_npc_manager"):
+			var restored: bool = save_manager.call(
+				"restore_npc_manager",
+				npc_manager
+			)
+
+			if restored:
+				print("SYSTEM WORLD: NPC data restored.")
+			else:
+				print(
+					"SYSTEM WORLD: No compatible NPC save was restored."
+				)
+
+
+func _update_autosave(delta: float) -> void:
+	if not is_instance_valid(save_manager):
+		return
+
+	if not is_instance_valid(npc_manager):
+		return
+
+	autosave_timer += delta
+
+	if autosave_timer >= AUTOSAVE_INTERVAL:
+		autosave_timer = 0.0
+		_save_world_progress()
+
+
+func _save_world_progress() -> void:
+	if not is_instance_valid(save_manager):
+		return
+
+	if not is_instance_valid(npc_manager):
+		return
+
+	if save_manager.has_method("save_npc_manager"):
+		var saved: bool = save_manager.call(
+			"save_npc_manager",
+			npc_manager
+		)
+
+		if saved:
+			print("SYSTEM WORLD: NPC progress saved.")
+		else:
+			push_warning(
+				"SYSTEM WORLD save failed: " +
+				str(save_manager.get("last_error"))
+			)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		_save_world_progress()
+		get_tree().quit()
 
 
 func _add_static_box(
