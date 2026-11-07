@@ -16,6 +16,7 @@ GreedIslandStarGates="*res://scripts/greed_island_star_gates.gd"
 GreedIslandAdminReturnUI="*res://scripts/greed_island_admin_return_ui.gd"
 SovereignPower="*res://scripts/system_sovereign_power.gd"
 SYSTEMCombatInputRouter="*res://scripts/system_combat_input_router.gd"
+SYSTEMWorldEvents="*res://scripts/system_world_event_manager.gd"
 
 [display]
 
