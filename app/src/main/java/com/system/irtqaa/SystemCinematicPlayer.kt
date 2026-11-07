@@ -39,7 +39,6 @@ fun SystemCinematicPlayer(
             .apply {
                 setMediaItem(MediaItem.fromUri(videoUri))
                 repeatMode = Player.REPEAT_MODE_OFF
-                volume = 1f
                 prepare()
                 playWhenReady = true
             }
@@ -80,9 +79,7 @@ fun SystemCinematicPlayer(
                     useController = false
                     resizeMode =
                         AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                    player = this@SystemCinematicPlayer.run {
-                        this@run.player
-                    }
+                    this.player = player
                 }
             },
             update = { view ->
