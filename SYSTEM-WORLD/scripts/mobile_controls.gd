@@ -9,6 +9,12 @@ signal camera_toggle_pressed
 signal interact_pressed
 signal flight_vertical_changed(value: float)
 
+# Combat input signals — ready for the combat system connection.
+signal attack_pressed
+signal skill_one_pressed
+signal skill_two_pressed
+signal dodge_pressed
+
 
 class TouchOverlay extends Control:
 
@@ -19,209 +25,443 @@ class TouchOverlay extends Control:
 	signal interact_pressed
 	signal flight_vertical_changed(value: float)
 
+	signal attack_pressed
+	signal skill_one_pressed
+	signal skill_two_pressed
+	signal dodge_pressed
+
 	var joystick_touch := -1
 	var joystick_direction := Vector2.ZERO
 	var joystick_center := Vector2.ZERO
-	var joystick_radius := 75.0
+	var joystick_radius := 70.0
 
-	var jump_touch := -1
 	var jump_center := Vector2.ZERO
-	var jump_radius := 55.0
+	var jump_radius := 40.0
 
-	var view_center := Vector2.ZERO
-	var view_radius := 48.0
+	var attack_center := Vector2.ZERO
+	var attack_radius := 52.0
+
+	var skill_one_center := Vector2.ZERO
+	var skill_two_center := Vector2.ZERO
+	var skill_radius := 43.0
+
+	var dodge_center := Vector2.ZERO
+	var dodge_radius := 40.0
 
 	var interact_center := Vector2.ZERO
-	var interact_radius := 52.0
+	var interact_radius := 38.0
+
+	var view_center := Vector2.ZERO
+	var view_radius := 37.0
 
 	var flight_up_center := Vector2.ZERO
 	var flight_down_center := Vector2.ZERO
-	var flight_button_radius := 38.0
+	var flight_button_radius := 32.0
+
 	var flight_touch := -1
 	var flight_value := 0.0
-
 	var look_touch := -1
+
+	var ui_scale := 1.0
 
 
 	func _ready() -> void:
 		mouse_filter = Control.MOUSE_FILTER_STOP
 		set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		_update_layout()
 
 
 	func _notification(what: int) -> void:
 		if what == NOTIFICATION_RESIZED:
+			_update_layout()
 			queue_redraw()
 
 
+	func _update_layout() -> void:
+		if size.x <= 0.0 or size.y <= 0.0:
+			return
+
+		# Responsive scale for different landscape screens.
+		ui_scale = clampf(
+			minf(size.x / 1280.0, size.y / 720.0),
+			0.72,
+			1.15
+		)
+
+		# LEFT SIDE: movement joystick.
+		joystick_radius = 70.0 * ui_scale
+		joystick_center = Vector2(
+			115.0 * ui_scale,
+			size.y - 125.0 * ui_scale
+		)
+
+		# RIGHT SIDE: combat controls.
+		attack_radius = 52.0 * ui_scale
+		attack_center = Vector2(
+			size.x - 105.0 * ui_scale,
+			size.y - 120.0 * ui_scale
+		)
+
+		skill_radius = 43.0 * ui_scale
+		skill_one_center = Vector2(
+			size.x - 230.0 * ui_scale,
+			size.y - 205.0 * ui_scale
+		)
+		skill_two_center = Vector2(
+			size.x - 115.0 * ui_scale,
+			size.y - 285.0 * ui_scale
+		)
+
+		dodge_radius = 40.0 * ui_scale
+		dodge_center = Vector2(
+			size.x - 245.0 * ui_scale,
+			size.y - 95.0 * ui_scale
+		)
+
+		jump_radius = 40.0 * ui_scale
+		jump_center = Vector2(
+			size.x - 365.0 * ui_scale,
+			size.y - 100.0 * ui_scale
+		)
+
+		interact_radius = 38.0 * ui_scale
+		interact_center = Vector2(
+			size.x - 365.0 * ui_scale,
+			size.y - 205.0 * ui_scale
+		)
+
+		# CAMERA AND FLIGHT CONTROLS.
+		view_radius = 37.0 * ui_scale
+		view_center = Vector2(
+			size.x - 105.0 * ui_scale,
+			90.0 * ui_scale
+		)
+
+		flight_button_radius = 32.0 * ui_scale
+		flight_up_center = Vector2(
+			size.x - 215.0 * ui_scale,
+			90.0 * ui_scale
+		)
+		flight_down_center = Vector2(
+			size.x - 300.0 * ui_scale,
+			90.0 * ui_scale
+		)
+
+
 	func _draw() -> void:
-		joystick_center = Vector2(125, size.y - 135)
-		jump_center = Vector2(size.x - 110, size.y - 125)
-		view_center = Vector2(size.x - 100, 105)
-		interact_center = Vector2(size.x - 230, size.y - 270)
-
-		flight_up_center = Vector2(size.x - 225, size.y - 390)
-		flight_down_center = Vector2(size.x - 125, size.y - 390)
-
-		# عصا الحركة
-		draw_circle(
+		# Movement joystick.
+		_draw_action_button(
 			joystick_center,
 			joystick_radius,
-			Color(0.2, 0.3, 0.5, 0.45)
+			Color(0.20, 0.45, 0.75),
+			"",
+			"joystick"
 		)
 
 		draw_circle(
-			joystick_center + joystick_direction * 35.0,
-			30.0,
-			Color(0.4, 0.7, 1.0, 0.8)
+			joystick_center + joystick_direction * 32.0 * ui_scale,
+			27.0 * ui_scale,
+			Color(0.35, 0.75, 1.0, 0.85)
 		)
 
-		# زر القفز
-		draw_circle(
+		# Main attack.
+		_draw_action_button(
+			attack_center,
+			attack_radius,
+			Color(0.85, 0.25, 0.18),
+			"ATK",
+			"sword"
+		)
+
+		# Combat skills.
+		_draw_action_button(
+			skill_one_center,
+			skill_radius,
+			Color(0.15, 0.65, 0.85),
+			"SKILL",
+			"burst"
+		)
+
+		_draw_action_button(
+			skill_two_center,
+			skill_radius,
+			Color(0.48, 0.30, 0.85),
+			"SKILL",
+			"magic"
+		)
+
+		# Dodge and jump.
+		_draw_action_button(
+			dodge_center,
+			dodge_radius,
+			Color(0.18, 0.65, 0.55),
+			"DODGE",
+			"dodge"
+		)
+
+		_draw_action_button(
 			jump_center,
 			jump_radius,
-			Color(0.2, 0.6, 1.0, 0.65)
-		)
-
-		draw_string(
-			ThemeDB.fallback_font,
-			jump_center + Vector2(-22, 7),
+			Color(0.20, 0.55, 0.90),
 			"JUMP",
-			HORIZONTAL_ALIGNMENT_LEFT,
-			-1,
-			18,
-			Color.WHITE
+			"jump"
 		)
 
-		# زر تبديل منظور الكاميرا
-		draw_circle(
-			view_center,
-			view_radius,
-			Color(0.35, 0.45, 0.7, 0.75)
-		)
-
-		draw_string(
-			ThemeDB.fallback_font,
-			view_center + Vector2(-24, 6),
-			"VIEW",
-			HORIZONTAL_ALIGNMENT_LEFT,
-			-1,
-			16,
-			Color.WHITE
-		)
-
-		# زر التفاعل
-		draw_circle(
+		# Interaction.
+		_draw_action_button(
 			interact_center,
 			interact_radius,
-			Color(0.75, 0.48, 0.16, 0.85)
+			Color(0.80, 0.52, 0.16),
+			"USE",
+			"interact"
+		)
+
+		# Camera view.
+		_draw_action_button(
+			view_center,
+			view_radius,
+			Color(0.35, 0.45, 0.72),
+			"VIEW",
+			"camera"
+		)
+
+		# Flight controls.
+		_draw_action_button(
+			flight_up_center,
+			flight_button_radius,
+			Color(0.10, 0.65, 0.85),
+			"UP",
+			"up"
+		)
+
+		_draw_action_button(
+			flight_down_center,
+			flight_button_radius,
+			Color(0.25, 0.38, 0.70),
+			"DOWN",
+			"down"
+		)
+
+
+	func _draw_action_button(
+		center: Vector2,
+		radius: float,
+		tint: Color,
+		label: String,
+		icon_type: String
+	) -> void:
+		draw_circle(
+			center,
+			radius,
+			Color(tint.r, tint.g, tint.b, 0.38)
 		)
 
 		draw_arc(
-			interact_center,
-			interact_radius,
+			center,
+			radius,
 			0.0,
 			TAU,
 			48,
-			Color(1.0, 0.82, 0.48, 0.95),
-			3.0
+			Color(0.65, 0.88, 1.0, 0.9),
+			2.0 * ui_scale,
+			true
 		)
 
-		draw_string(
-			ThemeDB.fallback_font,
-			interact_center + Vector2(-22, 6),
-			"USE",
-			HORIZONTAL_ALIGNMENT_LEFT,
-			-1,
-			18,
-			Color.WHITE
+		var icon_center := center - Vector2(
+			0,
+			8.0 * ui_scale if not label.is_empty() else 0
 		)
 
-		# زر الطيران إلى الأعلى
-		draw_circle(
-			flight_up_center,
-			flight_button_radius,
-			Color(0.10, 0.65, 0.85, 0.78)
-		)
+		_draw_icon(icon_center, radius, icon_type)
 
-		draw_string(
-			ThemeDB.fallback_font,
-			flight_up_center + Vector2(-18, 6),
-			"UP",
-			HORIZONTAL_ALIGNMENT_LEFT,
-			-1,
-			18,
-			Color.WHITE
-		)
+		if not label.is_empty():
+			draw_string(
+				ThemeDB.fallback_font,
+				center + Vector2(-radius * 0.55, radius * 0.62),
+				label,
+				HORIZONTAL_ALIGNMENT_CENTER,
+				radius * 1.1,
+				int(11.0 * ui_scale),
+				Color.WHITE
+			)
 
-		# زر الطيران إلى الأسفل
-		draw_circle(
-			flight_down_center,
-			flight_button_radius,
-			Color(0.25, 0.38, 0.65, 0.78)
-		)
 
-		draw_string(
-			ThemeDB.fallback_font,
-			flight_down_center + Vector2(-29, 6),
-			"DOWN",
-			HORIZONTAL_ALIGNMENT_LEFT,
-			-1,
-			15,
-			Color.WHITE
-		)
+	func _draw_icon(
+		center: Vector2,
+		radius: float,
+		icon_type: String
+	) -> void:
+		var s := radius / 50.0
+		var white := Color(1.0, 1.0, 1.0, 0.96)
+		var width := 3.0 * ui_scale
+
+		match icon_type:
+
+			"sword":
+				draw_line(
+					center + Vector2(-17, 15) * s,
+					center + Vector2(16, -18) * s,
+					white,
+					width,
+					true
+				)
+				draw_line(
+					center + Vector2(-13, -17) * s,
+					center + Vector2(17, 14) * s,
+					white,
+					width,
+					true
+				)
+				draw_line(
+					center + Vector2(-21, 10) * s,
+					center + Vector2(-9, 22) * s,
+					white,
+					width,
+					true
+				)
+				draw_line(
+					center + Vector2(9, 10) * s,
+					center + Vector2(21, -2) * s,
+					white,
+					width,
+					true
+				)
+
+			"burst", "magic":
+				for i in range(8):
+					var angle := TAU * float(i) / 8.0
+					var direction := Vector2(
+						cos(angle),
+						sin(angle)
+					)
+					draw_line(
+						center + direction * 5.0 * s,
+						center + direction * 23.0 * s,
+						white,
+						width,
+						true
+					)
+				draw_circle(center, 5.0 * s, white)
+
+			"dodge":
+				draw_line(
+					center + Vector2(-20, 0) * s,
+					center + Vector2(16, 0) * s,
+					white,
+					width,
+					true
+				)
+				draw_line(
+					center + Vector2(5, -12) * s,
+					center + Vector2(18, 0) * s,
+					white,
+					width,
+					true
+				)
+				draw_line(
+					center + Vector2(5, 12) * s,
+					center + Vector2(18, 0) * s,
+					white,
+					width,
+					true
+				)
+
+			"jump", "up":
+				draw_line(
+					center + Vector2(0, 19) * s,
+					center + Vector2(0, -18) * s,
+					white,
+					width,
+					true
+				)
+				draw_line(
+					center + Vector2(-13, -5) * s,
+					center + Vector2(0, -19) * s,
+					white,
+					width,
+					true
+				)
+				draw_line(
+					center + Vector2(13, -5) * s,
+					center + Vector2(0, -19) * s,
+					white,
+					width,
+					true
+				)
+
+			"down":
+				draw_line(
+					center + Vector2(0, -18) * s,
+					center + Vector2(0, 19) * s,
+					white,
+					width,
+					true
+				)
+				draw_line(
+					center + Vector2(-13, 5) * s,
+					center + Vector2(0, 19) * s,
+					white,
+					width,
+					true
+				)
+				draw_line(
+					center + Vector2(13, 5) * s,
+					center + Vector2(0, 19) * s,
+					white,
+					width,
+					true
+				)
+
+			"camera":
+				draw_arc(
+					center,
+					13.0 * s,
+					0,
+					TAU,
+					32,
+					white,
+					width,
+					true
+				)
+				draw_circle(
+					center,
+					5.0 * s,
+					white
+				)
+
+			"interact":
+				draw_arc(
+					center,
+					15.0 * s,
+					0,
+					TAU,
+					32,
+					white,
+					width,
+					true
+				)
+				draw_line(
+					center + Vector2(-10, 0) * s,
+					center + Vector2(10, 0) * s,
+					white,
+					width,
+					true
+				)
+				draw_line(
+					center + Vector2(0, -10) * s,
+					center + Vector2(0, 10) * s,
+					white,
+					width,
+					true
+				)
 
 
 	func _gui_input(event: InputEvent) -> void:
 		if event is InputEventScreenTouch:
 			if event.pressed:
-				if event.position.distance_to(view_center) <= view_radius * 1.5:
-					camera_toggle_pressed.emit()
-
-				elif event.position.distance_to(interact_center) <= interact_radius * 1.5:
-					interact_pressed.emit()
-
-				elif event.position.distance_to(flight_up_center) <= flight_button_radius * 1.5:
-					if flight_touch == -1:
-						flight_touch = event.index
-						flight_value = 1.0
-						flight_vertical_changed.emit(flight_value)
-
-				elif event.position.distance_to(flight_down_center) <= flight_button_radius * 1.5:
-					if flight_touch == -1:
-						flight_touch = event.index
-						flight_value = -1.0
-						flight_vertical_changed.emit(flight_value)
-
-				elif event.position.distance_to(joystick_center) <= joystick_radius * 1.8:
-					if joystick_touch == -1:
-						joystick_touch = event.index
-						_update_joystick(event.position)
-
-				elif event.position.distance_to(jump_center) <= jump_radius * 1.5:
-					if jump_touch == -1:
-						jump_touch = event.index
-						jump_pressed.emit()
-
-				elif look_touch == -1:
-					look_touch = event.index
-
+				_handle_touch_pressed(event)
 			else:
-				if event.index == joystick_touch:
-					joystick_touch = -1
-					joystick_direction = Vector2.ZERO
-					movement_changed.emit(Vector2.ZERO)
-					queue_redraw()
-
-				if event.index == jump_touch:
-					jump_touch = -1
-
-				if event.index == look_touch:
-					look_touch = -1
-
-				if event.index == flight_touch:
-					flight_touch = -1
-					flight_value = 0.0
-					flight_vertical_changed.emit(0.0)
+				_handle_touch_released(event)
 
 		elif event is InputEventScreenDrag:
 			if event.index == joystick_touch:
@@ -229,6 +469,78 @@ class TouchOverlay extends Control:
 
 			elif event.index == look_touch:
 				look_changed.emit(event.relative)
+
+
+	func _handle_touch_pressed(event: InputEventScreenTouch) -> void:
+		var p := event.position
+
+		if p.distance_to(view_center) <= view_radius * 1.45:
+			camera_toggle_pressed.emit()
+			return
+
+		if p.distance_to(interact_center) <= interact_radius * 1.45:
+			interact_pressed.emit()
+			return
+
+		if p.distance_to(flight_up_center) <= flight_button_radius * 1.45:
+			if flight_touch == -1:
+				flight_touch = event.index
+				flight_value = 1.0
+				flight_vertical_changed.emit(flight_value)
+			return
+
+		if p.distance_to(flight_down_center) <= flight_button_radius * 1.45:
+			if flight_touch == -1:
+				flight_touch = event.index
+				flight_value = -1.0
+				flight_vertical_changed.emit(flight_value)
+			return
+
+		if p.distance_to(attack_center) <= attack_radius * 1.4:
+			attack_pressed.emit()
+			return
+
+		if p.distance_to(skill_one_center) <= skill_radius * 1.4:
+			skill_one_pressed.emit()
+			return
+
+		if p.distance_to(skill_two_center) <= skill_radius * 1.4:
+			skill_two_pressed.emit()
+			return
+
+		if p.distance_to(dodge_center) <= dodge_radius * 1.4:
+			dodge_pressed.emit()
+			return
+
+		if p.distance_to(jump_center) <= jump_radius * 1.4:
+			jump_pressed.emit()
+			return
+
+		if p.distance_to(joystick_center) <= joystick_radius * 1.8:
+			if joystick_touch == -1:
+				joystick_touch = event.index
+				_update_joystick(p)
+			return
+
+		# Remaining right-side touch area controls camera look.
+		if p.x > size.x * 0.42 and look_touch == -1:
+			look_touch = event.index
+
+
+	func _handle_touch_released(event: InputEventScreenTouch) -> void:
+		if event.index == joystick_touch:
+			joystick_touch = -1
+			joystick_direction = Vector2.ZERO
+			movement_changed.emit(Vector2.ZERO)
+			queue_redraw()
+
+		if event.index == look_touch:
+			look_touch = -1
+
+		if event.index == flight_touch:
+			flight_touch = -1
+			flight_value = 0.0
+			flight_vertical_changed.emit(0.0)
 
 
 	func _update_joystick(position: Vector2) -> void:
@@ -258,6 +570,11 @@ func _ready() -> void:
 	screen_control.interact_pressed.connect(_on_interact_pressed)
 	screen_control.flight_vertical_changed.connect(_on_flight_vertical_changed)
 
+	screen_control.attack_pressed.connect(_on_attack_pressed)
+	screen_control.skill_one_pressed.connect(_on_skill_one_pressed)
+	screen_control.skill_two_pressed.connect(_on_skill_two_pressed)
+	screen_control.dodge_pressed.connect(_on_dodge_pressed)
+
 
 func _on_movement_changed(direction: Vector2) -> void:
 	movement_changed.emit(direction)
@@ -281,3 +598,19 @@ func _on_interact_pressed() -> void:
 
 func _on_flight_vertical_changed(value: float) -> void:
 	flight_vertical_changed.emit(value)
+
+
+func _on_attack_pressed() -> void:
+	attack_pressed.emit()
+
+
+func _on_skill_one_pressed() -> void:
+	skill_one_pressed.emit()
+
+
+func _on_skill_two_pressed() -> void:
+	skill_two_pressed.emit()
+
+
+func _on_dodge_pressed() -> void:
+	dodge_pressed.emit()
