@@ -3,11 +3,17 @@ class_name FantasyWorldManager
 
 ## SYSTEM WORLD — Fantasy World Foundation
 ## البيئة الخيالية الأساسية: غابات، جبال، أطلال، بلورات، وبوابات سحرية.
+## يربط القرى ونظام السكان بخريطة العالم بعد اكتمال تهيئة اللعبة.
 
 const WORLD_CENTER := Vector3.ZERO
 const GROUND_SIZE := Vector3(260.0, 2.0, 260.0)
 
+const FantasySettlementManagerScript = preload(
+	"res://scripts/fantasy_settlement_manager.gd/fantasy_settlement_manager.gd"
+)
+
 var discovered_regions: Array[String] = []
+var settlement_manager: Node3D
 
 var region_data := {
 	"enchanted_forest": {
@@ -40,7 +46,91 @@ func _ready() -> void:
 	_create_magic_gate()
 	_create_environment_lighting()
 
+	# ينتظر اكتمال إنشاء مديري الخريطة والشخصيات في main.gd.
+	call_deferred("_initialize_fantasy_settlements")
+
 	print("SYSTEM WORLD: Fantasy World initialized.")
+
+
+# --------------------------------------------------
+# FANTASY SETTLEMENTS CONNECTION
+# --------------------------------------------------
+
+func _initialize_fantasy_settlements() -> void:
+	if settlement_manager != null:
+		if is_instance_valid(settlement_manager):
+			return
+
+	var tree := get_tree()
+
+	if tree == null:
+		push_warning(
+			"SYSTEM FANTASY: Scene tree is unavailable."
+		)
+		return
+
+	var scene_root := tree.root
+
+	var map_manager := scene_root.find_child(
+		"WorldMapManager",
+		true,
+		false
+	)
+
+	var npc_society := scene_root.find_child(
+		"AINPCSocietyManager",
+		true,
+		false
+	)
+
+	if map_manager == null:
+		push_warning(
+			"SYSTEM FANTASY: WorldMapManager was not found."
+		)
+		return
+
+	if npc_society == null:
+		push_warning(
+			"SYSTEM FANTASY: AINPCSocietyManager was not found."
+		)
+		return
+
+	settlement_manager = FantasySettlementManagerScript.new()
+	settlement_manager.name = "FantasySettlementManager"
+
+	var initialized: bool = settlement_manager.setup(
+		get_parent() as Node3D,
+		map_manager,
+		npc_society,
+		0
+	)
+
+	if not initialized:
+		settlement_manager.queue_free()
+		settlement_manager = null
+
+		push_warning(
+			"SYSTEM FANTASY: Settlement initialization failed."
+		)
+		return
+
+	print(
+		"SYSTEM FANTASY: Villages connected to the world map and NPC society."
+	)
+
+	print(
+		"SYSTEM FANTASY: Villages created: ",
+		settlement_manager.get_village_count()
+	)
+
+	print(
+		"SYSTEM FANTASY: Residents created: ",
+		settlement_manager.get_resident_count()
+	)
+
+
+func get_fantasy_settlement_manager() -> Node3D:
+	return settlement_manager
 
 
 # --------------------------------------------------
