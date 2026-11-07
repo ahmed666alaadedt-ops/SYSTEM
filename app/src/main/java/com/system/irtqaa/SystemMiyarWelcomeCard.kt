@@ -124,207 +124,258 @@ fun SystemMiyarWelcomeCard(
     }
 
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 230.dp, max = 285.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xE6101828)
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 8.dp
+            defaultElevation = 10.dp
         )
     ) {
         Box(
             modifier = Modifier
-                .background(Brush.linearGradient(background))
-                .padding(16.dp)
+                .fillMaxSize()
+                .background(
+                    Brush.linearGradient(background)
+                )
+                .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                // شخصية ميار أو المرافق في الجهة اليمنى
+                Box(
+                    modifier = Modifier
+                        .width(145.dp)
+                        .fillMaxHeight(),
+                    contentAlignment = Alignment.Center
                 ) {
-
-                    Box(
-                        modifier = Modifier
-                            .size(112.dp, 150.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (appearance != null) {
-                            SystemCompanionAnimatedAvatar(
-                                appearance = appearance,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        } else {
-                            Image(
-                                painter = painterResource(
-                                    id = R.drawable.ic_system_foreground
-                                ),
-                                contentDescription = "شعار SYSTEM",
-                                modifier = Modifier.size(66.dp)
-                            )
-                        }
-                    }
-
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(7.dp)
-                    ) {
-                        Text(
-                            text = appearance?.name ?: "المرافق الذكي",
-                            color = primary,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Black
+                    if (appearance != null) {
+                        SystemCompanionAnimatedAvatar(
+                            appearance = appearance,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight()
                         )
-
-                        Text(
-                            text = appearance?.worldTitle
-                                ?: "اختيار هوية المرافق",
-                            color = Color(0xFFD7E2F0),
-                            fontSize = 13.sp
-                        )
-
-                        Text(
-                            text = "● متصل بالنظام",
-                            color = Color(0xFF4ADE80),
-                            fontSize = 12.sp
+                    } else {
+                        Image(
+                            painter = painterResource(
+                                id = R.drawable.ic_system_foreground
+                            ),
+                            contentDescription = "شعار SYSTEM",
+                            modifier = Modifier.size(82.dp)
                         )
                     }
                 }
 
-                if (playerGender == null) {
+                // معلومات المرافق وأزرار التفاعل
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    verticalArrangement = Arrangement.Center
+                ) {
 
                     Text(
-                        text = "حتى أختار لك المرافق المناسب، حدد ملف اللاعب:",
-                        color = Color.White,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-
-                        Button(
-                            onClick = {
-                                if (
-                                    SystemCompanionGenderSettings.save(
-                                        context,
-                                        SystemPlayerGender.MALE
-                                    )
-                                ) {
-                                    playerGender =
-                                        SystemPlayerGender.MALE
-                                }
-                            },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = primary,
-                                contentColor = Color.Black
-                            )
-                        ) {
-                            Text("لاعب")
-                        }
-
-                        Button(
-                            onClick = {
-                                if (
-                                    SystemCompanionGenderSettings.save(
-                                        context,
-                                        SystemPlayerGender.FEMALE
-                                    )
-                                ) {
-                                    playerGender =
-                                        SystemPlayerGender.FEMALE
-                                }
-                            },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF18364A),
-                                contentColor = Color.White
-                            )
-                        ) {
-                            Text("لاعبة")
-                        }
-                    }
-
-                } else {
-
-                    Text(
-                        text = if (
-                            playerGender == SystemPlayerGender.MALE
-                        ) {
-                            "مرافقتك الذكية: ميار"
-                        } else {
-                            "مرافقك الذكي: آدم"
-                        },
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Text(
-                        text = appearance?.outfitName.orEmpty(),
+                        text = appearance?.name ?: "المرافق الذكي",
                         color = primary,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
+                        fontSize = 23.sp,
+                        fontWeight = FontWeight.Black
                     )
+
+                    Spacer(Modifier.height(3.dp))
 
                     Text(
-                        text = appearance?.outfitDescription.orEmpty(),
-                        color = Color(0xFFB9C7D9),
-                        fontSize = 13.sp,
-                        lineHeight = 20.sp
+                        text = appearance?.worldTitle
+                            ?: "اختيار هوية المرافق",
+                        color = Color(0xFFD7E2F0),
+                        fontSize = 13.sp
                     )
+
+                    Spacer(Modifier.height(5.dp))
 
                     Text(
-                        text = "يتغير مظهر وألوان المرافق حسب العالم المختار.",
-                        color = Color.LightGray,
-                        fontSize = 12.sp
+                        text = "● متصل بالنظام",
+                        color = Color(0xFF4ADE80),
+                        fontSize = 11.sp
                     )
 
-                    Button(
-                        onClick = {
-                            if (
-                                SystemCompanionGenderSettings.clear(context)
-                            ) {
-                                playerGender = null
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF18364A),
-                            contentColor = primary
-                        )
-                    ) {
-                        Text("تغيير ملف اللاعب")
-                    }
+                    Spacer(Modifier.height(9.dp))
 
-                    Button(
-                        onClick = onExplainClick,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = primary,
-                            contentColor = Color.Black
-                        )
-                    ) {
+                    if (playerGender == null) {
+
                         Text(
-                            "اشرحي لي SYSTEM",
+                            text = "حدد ملف اللاعب لاختيار المرافق المناسب:",
+                            color = Color.White,
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.Bold
                         )
-                    }
 
-                    Button(
-                        onClick = onTalkClick,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF18364A),
-                            contentColor = primary
+                        Spacer(Modifier.height(9.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = {
+                                    if (
+                                        SystemCompanionGenderSettings.save(
+                                            context,
+                                            SystemPlayerGender.MALE
+                                        )
+                                    ) {
+                                        playerGender =
+                                            SystemPlayerGender.MALE
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = primary,
+                                    contentColor = Color.Black
+                                )
+                            ) {
+                                Text("لاعب")
+                            }
+
+                            Button(
+                                onClick = {
+                                    if (
+                                        SystemCompanionGenderSettings.save(
+                                            context,
+                                            SystemPlayerGender.FEMALE
+                                        )
+                                    ) {
+                                        playerGender =
+                                            SystemPlayerGender.FEMALE
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF18364A),
+                                    contentColor = Color.White
+                                )
+                            ) {
+                                Text("لاعبة")
+                            }
+                        }
+
+                    } else {
+
+                        Text(
+                            text = if (
+                                playerGender == SystemPlayerGender.MALE
+                            ) {
+                                "مرافقتك الذكية: ميار"
+                            } else {
+                                "مرافقك الذكي: آدم"
+                            },
+                            color = Color.White,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
                         )
-                    ) {
-                        Text("تحدث مع المرافق")
+
+                        Spacer(Modifier.height(5.dp))
+
+                        Text(
+                            text = appearance?.outfitName.orEmpty(),
+                            color = primary,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp
+                        )
+
+                        Text(
+                            text = appearance?.outfitDescription.orEmpty(),
+                            color = Color(0xFFB9C7D9),
+                            fontSize = 11.sp,
+                            lineHeight = 16.sp,
+                            maxLines = 2
+                        )
+
+                        Spacer(Modifier.height(7.dp))
+
+                        Text(
+                            text = "يتغير مظهر المرافق حسب العالم المختار.",
+                            color = Color.LightGray,
+                            fontSize = 10.sp
+                        )
+
+                        Spacer(Modifier.height(7.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = onExplainClick,
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = primary,
+                                    contentColor = Color.Black
+                                )
+                            ) {
+                                Text(
+                                    "شرح SYSTEM",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            Button(
+                                onClick = onTalkClick,
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF18364A),
+                                    contentColor = primary
+                                )
+                            ) {
+                                Text(
+                                    "تحدث معي",
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+
+                        Text(
+                            text = "تغيير ملف اللاعب",
+                            modifier = Modifier
+                                .align(Alignment.End),
+                            color = Color.LightGray,
+                            fontSize = 10.sp
+                        )
+
+                        Button(
+                            onClick = {
+                                if (
+                                    SystemCompanionGenderSettings.clear(context)
+                                ) {
+                                    playerGender = null
+                                }
+                            },
+                            modifier = Modifier
+                                .align(Alignment.End)
+                                .height(34.dp),
+                            contentPadding = PaddingValues(
+                                horizontal = 10.dp,
+                                vertical = 2.dp
+                            ),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF18364A),
+                                contentColor = primary
+                            )
+                        ) {
+                            Text(
+                                "تغيير",
+                                fontSize = 10.sp
+                            )
+                        }
                     }
                 }
             }
