@@ -1,10 +1,12 @@
-
 extends Node
 
 # SYSTEM WORLD - Living NPC Society
 # Godot 4.3
-# NPCs have identities, homes, jobs, families, needs and daily routines.
-# They live inside the world but never replace the player's main gameplay.
+# Connected NPC identity, social relationships and family records.
+
+const RelationshipSystem = preload(
+	"res://scripts/npc_relationship_system.gd"
+)
 
 const RESIDENT_COUNT := 12
 const WALK_SPEED := 1.35
@@ -12,6 +14,8 @@ const ARRIVAL_DISTANCE := 0.8
 
 var world: Node3D
 var residents: Array[Dictionary] = []
+var relationship_system: RefCounted
+
 var needs_timer := 0.0
 var initialized := false
 
@@ -24,6 +28,8 @@ func setup(world_root: Node3D) -> void:
 		return
 
 	world = world_root
+	relationship_system = RelationshipSystem.new()
+
 	_create_residents()
 	initialized = true
 
@@ -44,23 +50,22 @@ func update_world(delta: float, world_hour: float) -> void:
 
 func _create_residents() -> void:
 	var people := [
-		{"name": "سارة", "job": "تاجرة", "family": "family_1", "home": Vector3(-17, 0, -15), "work": Vector3(7, 0, 4)},
-		{"name": "عمر", "job": "خباز", "family": "family_1", "home": Vector3(-17, 0, -15), "work": Vector3(10, 0, -3)},
-		{"name": "ليلى", "job": "طبيبة", "family": "family_2", "home": Vector3(18, 0, -13), "work": Vector3(-13, 0, 5)},
-		{"name": "حسن", "job": "حارس", "family": "family_2", "home": Vector3(18, 0, -13), "work": Vector3(0, 0, -16)},
-		{"name": "نور", "job": "مزارعة", "family": "family_3", "home": Vector3(-19, 0, 16), "work": Vector3(-24, 0, 20)},
-		{"name": "آدم", "job": "نجار", "family": "family_3", "home": Vector3(-19, 0, 16), "work": Vector3(18, 0, 8)},
-		{"name": "مريم", "job": "تاجرة", "family": "family_4", "home": Vector3(19, 0, 17), "work": Vector3(7, 0, 4)},
-		{"name": "يوسف", "job": "حارس", "family": "family_4", "home": Vector3(19, 0, 17), "work": Vector3(0, 0, 15)},
-		{"name": "زينب", "job": "طبيبة", "family": "family_5", "home": Vector3(-23, 0, -5), "work": Vector3(-13, 0, 5)},
-		{"name": "كريم", "job": "نجار", "family": "family_5", "home": Vector3(-23, 0, -5), "work": Vector3(18, 0, 8)},
-		{"name": "هند", "job": "مزارعة", "family": "family_6", "home": Vector3(24, 0, 4), "work": Vector3(-24, 0, 20)},
-		{"name": "علي", "job": "خباز", "family": "family_6", "home": Vector3(24, 0, 4), "work": Vector3(10, 0, -3)}
+		{"name": "سارة", "job": "تاجرة", "family": "family_1", "age": 28, "personality": "اجتماعية", "home": Vector3(-17, 0, -15), "work": Vector3(7, 0, 4)},
+		{"name": "عمر", "job": "خباز", "family": "family_1", "age": 32, "personality": "هادئ", "home": Vector3(-17, 0, -15), "work": Vector3(10, 0, -3)},
+		{"name": "ليلى", "job": "طبيبة", "family": "family_2", "age": 30, "personality": "رحيمة", "home": Vector3(18, 0, -13), "work": Vector3(-13, 0, 5)},
+		{"name": "حسن", "job": "حارس", "family": "family_2", "age": 35, "personality": "شجاع", "home": Vector3(18, 0, -13), "work": Vector3(0, 0, -16)},
+		{"name": "نور", "job": "مزارعة", "family": "family_3", "age": 26, "personality": "محبة للطبيعة", "home": Vector3(-19, 0, 16), "work": Vector3(-24, 0, 20)},
+		{"name": "آدم", "job": "نجار", "family": "family_3", "age": 29, "personality": "مجتهد", "home": Vector3(-19, 0, 16), "work": Vector3(18, 0, 8)},
+		{"name": "مريم", "job": "تاجرة", "family": "family_4", "age": 27, "personality": "ذكية", "home": Vector3(19, 0, 17), "work": Vector3(7, 0, 4)},
+		{"name": "يوسف", "job": "حارس", "family": "family_4", "age": 33, "personality": "منضبط", "home": Vector3(19, 0, 17), "work": Vector3(0, 0, 15)},
+		{"name": "زينب", "job": "طبيبة", "family": "family_5", "age": 31, "personality": "حكيمة", "home": Vector3(-23, 0, -5), "work": Vector3(-13, 0, 5)},
+		{"name": "كريم", "job": "نجار", "family": "family_5", "age": 36, "personality": "صبور", "home": Vector3(-23, 0, -5), "work": Vector3(18, 0, 8)},
+		{"name": "هند", "job": "مزارعة", "family": "family_6", "age": 25, "personality": "مرحة", "home": Vector3(24, 0, 4), "work": Vector3(-24, 0, 20)},
+		{"name": "علي", "job": "خباز", "family": "family_6", "age": 34, "personality": "كريم", "home": Vector3(24, 0, 4), "work": Vector3(10, 0, -3)}
 	]
 
 	for index in range(people.size()):
-		var profile: Dictionary = people[index]
-		_create_resident(profile, index)
+		_create_resident(people[index], index)
 
 
 func _create_resident(profile: Dictionary, index: int) -> void:
@@ -68,6 +73,7 @@ func _create_resident(profile: Dictionary, index: int) -> void:
 	npc.name = "Resident_%02d" % index
 
 	var home: Vector3 = profile["home"]
+
 	npc.position = home + Vector3(
 		randf_range(-1.5, 1.5),
 		0,
@@ -105,11 +111,22 @@ func _create_resident(profile: Dictionary, index: int) -> void:
 	npc.add_child(name_label)
 	world.add_child(npc)
 
+	# Register the NPC in the relationship and family system.
+	var resident_id: String = relationship_system.register_resident(
+		str(profile["name"]),
+		int(profile["age"]),
+		str(profile["personality"]),
+		str(profile["family"])
+	)
+
 	var record := {
 		"node": npc,
+		"id": resident_id,
 		"name": profile["name"],
 		"job": profile["job"],
 		"family": profile["family"],
+		"age": profile["age"],
+		"personality": profile["personality"],
 		"home": home,
 		"workplace": profile["work"],
 		"state": "rest",
@@ -152,34 +169,31 @@ func _choose_daily_activity(
 	var hour := int(world_hour)
 	var current_state := str(record["state"])
 
-	# Night: residents return to their homes.
 	if hour >= 22 or hour < 6:
 		_set_activity(record, "rest", record["home"])
 		return
 
-	# Residents with low energy seek rest.
 	if float(record["energy"]) < 15.0:
 		_set_activity(record, "rest", record["home"])
 		return
 
-	# Residents with hunger visit the market.
 	if float(record["hunger"]) > 75.0:
 		_set_activity(record, "eat", market_position)
 		return
 
-	# Daily work schedules.
 	if hour >= 7 and hour < 16:
 		if current_state != "work" and randf() < 0.72:
 			_set_activity(record, "work", record["workplace"])
 			return
 
-	# Evening: social life and public places.
 	if hour >= 16 and hour < 22:
-		var social_target := _find_social_destination()
-		_set_activity(record, "socialize", social_target)
+		_set_activity(
+			record,
+			"socialize",
+			_find_social_destination()
+		)
 		return
 
-	# Free time: walking around town.
 	var random_destination := Vector3(
 		randf_range(-23, 23),
 		0,
@@ -306,6 +320,24 @@ func _update_social_needs() -> void:
 					_find_social_destination()
 				)
 
+	# A small social event gradually builds relationships.
+	if residents.size() >= 2:
+		var first_index := randi_range(0, residents.size() - 1)
+		var second_index := randi_range(0, residents.size() - 1)
+
+		while second_index == first_index:
+			second_index = randi_range(0, residents.size() - 1)
+
+		var first: Dictionary = residents[first_index]
+		var second: Dictionary = residents[second_index]
+
+		relationship_system.change_relationship(
+			str(first["id"]),
+			str(second["id"]),
+			1.0,
+			0.5
+		)
+
 
 func _find_social_destination() -> Vector3:
 	return town_square + Vector3(
@@ -322,10 +354,13 @@ func get_resident_count() -> int:
 func get_resident_information(resident_name: String) -> Dictionary:
 	for record in residents:
 		if str(record["name"]) == resident_name:
-			return {
+			var information := {
 				"name": record["name"],
+				"id": record["id"],
 				"job": record["job"],
 				"family": record["family"],
+				"age": record["age"],
+				"personality": record["personality"],
 				"state": record["state"],
 				"energy": record["energy"],
 				"hunger": record["hunger"],
@@ -333,4 +368,51 @@ func get_resident_information(resident_name: String) -> Dictionary:
 				"money": record["money"]
 			}
 
+			information["family_profile"] = (
+				relationship_system.get_resident_profile(
+					str(record["id"])
+				)
+			)
+
+			return information
+
 	return {}
+
+
+func get_relationship_information(
+	first_name: String,
+	second_name: String
+) -> Dictionary:
+	var first_id := _find_resident_id(first_name)
+	var second_id := _find_resident_id(second_name)
+
+	if first_id.is_empty() or second_id.is_empty():
+		return {}
+
+	return relationship_system.get_relationship(
+		first_id,
+		second_id
+	)
+
+
+func get_family_tree_for_resident(resident_name: String) -> Array:
+	var resident_id := _find_resident_id(resident_name)
+
+	if resident_id.is_empty():
+		return []
+
+	var profile: Dictionary = relationship_system.get_resident_profile(
+		resident_id
+	)
+
+	return relationship_system.get_family_tree(
+		str(profile.get("family_id", ""))
+	)
+
+
+func _find_resident_id(resident_name: String) -> String:
+	for record in residents:
+		if str(record["name"]) == resident_name:
+			return str(record["id"])
+
+	return ""
