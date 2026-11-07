@@ -5,11 +5,6 @@ const HISTORICAL_COMBAT_SCRIPT = preload(
 	"res://scripts/historical_combat_system.gd/historical_combat_system.gd"
 )
 
-# WorldManager enum:
-# FANTASY = 0
-# MYTHOLOGY = 1
-# REALISTIC = 2
-# GREED_ISLAND = 3
 const HISTORICAL_WORLD_ID := 1
 
 var bound_scene: Node
@@ -18,7 +13,7 @@ var world_manager: Node
 var player: CharacterBody3D
 var camera: Camera3D
 
-var historical_combat: Node3D
+var historical_combat: Node
 
 
 func _ready() -> void:
@@ -128,14 +123,14 @@ func _refresh_combat_system() -> void:
 		historical_combat.name = "HistoricalCombatSystem"
 
 		world_manager.add_child(historical_combat)
-		historical_combat.bind_actor(player, camera)
+		historical_combat.call("bind_actor", player, camera)
 
 		print("SYSTEM: Historical combat system activated.")
 	else:
-		historical_combat.set_combat_camera(camera)
+		historical_combat.call("set_combat_camera", camera)
 
 		if historical_combat.get("actor") != player:
-			historical_combat.bind_actor(player, camera)
+			historical_combat.call("bind_actor", player, camera)
 
 	_show_historical_weapon()
 
@@ -157,31 +152,33 @@ func _on_attack_pressed() -> void:
 	if not _is_historical_combat_active():
 		return
 
-	historical_combat.light_attack()
+	historical_combat.call("light_attack")
 
 
 func _on_skill_one_pressed() -> void:
 	if not _is_historical_combat_active():
 		return
 
-	historical_combat.heavy_attack()
+	historical_combat.call("heavy_attack")
 
 
 func _on_skill_two_pressed() -> void:
 	if not _is_historical_combat_active():
 		return
 
-	if historical_combat.is_blocking:
-		historical_combat.stop_block()
+	var blocking := bool(historical_combat.get("is_blocking"))
+
+	if blocking:
+		historical_combat.call("stop_block")
 	else:
-		historical_combat.start_block()
+		historical_combat.call("start_block")
 
 
 func _on_dodge_pressed() -> void:
 	if not _is_historical_combat_active():
 		return
 
-	historical_combat.dodge()
+	historical_combat.call("dodge")
 
 
 func _show_historical_weapon() -> void:
