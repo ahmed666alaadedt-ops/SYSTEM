@@ -2,13 +2,20 @@
 extends Node
 
 ## SYSTEM WORLD - Shared World Events
-## Timed events for all four worlds.
+## Timed events and discovery interface for all four worlds.
 
 signal event_started(world_id: int, data: Dictionary)
 signal event_expired(world_id: int, event_id: String)
 signal event_interacted(world_id: int, data: Dictionary)
 
 const DEFAULT_DURATION := 900.0
+
+const WORLD_NAMES := {
+	0: "العالم الخيالي",
+	1: "العالم التاريخي والحضارات",
+	2: "العالم الحديث",
+	3: "جزيرة الطمع"
+}
 
 const WORLD_EVENTS := {
 	0: [
@@ -56,9 +63,21 @@ var event_indices: Dictionary = {}
 var remaining_times: Dictionary = {}
 var attached := false
 
+var event_ui: CanvasLayer
+var event_panel: PanelContainer
+var event_title_label: Label
+var event_world_label: Label
+var event_description_label: Label
+var event_timer_label: Label
+var event_status_label: Label
+
+var displayed_event_world := -1
+var displayed_event_id := ""
+
 
 func _ready() -> void:
 	name = "SYSTEMWorldEvents"
+	_create_event_ui()
 
 
 func _process(delta: float) -> void:
@@ -75,6 +94,8 @@ func _process(delta: float) -> void:
 		else:
 			remaining_times[world_id] = left
 
+	_update_event_popup_timer()
+
 
 func _try_attach_to_worlds() -> void:
 	var candidate := get_tree().root.find_child(
@@ -82,6 +103,9 @@ func _try_attach_to_worlds() -> void:
 	)
 
 	if candidate == null:
+		return
+
+	if not candidate.has_method("get_world_root"):
 		return
 
 	var found_roots := {}
@@ -280,6 +304,10 @@ func _make_material(color: Color, emissive: bool) -> StandardMaterial3D:
 	return material
 
 
+# --------------------------------------------------
+# EVENT DISCOVERY
+# --------------------------------------------------
+
 func on_event_interacted(world_id: int, event_id: String) -> void:
 	var data: Dictionary = active_events.get(world_id, {})
 
@@ -287,6 +315,7 @@ func on_event_interacted(world_id: int, event_id: String) -> void:
 		return
 
 	event_interacted.emit(world_id, data.duplicate(true))
+	_show_event_popup(world_id, data)
 
 	print(
 		"SYSTEM EVENT DISCOVERED: ",
@@ -296,8 +325,173 @@ func on_event_interacted(world_id: int, event_id: String) -> void:
 	)
 
 
+# --------------------------------------------------
+# EVENT USER INTERFACE
+# --------------------------------------------------
+
+func _create_event_ui() -> void:
+	event_ui = CanvasLayer.new()
+	event_ui.name = "SYSTEMEventInterface"
+	event_ui.layer = 20
+	add_child(event_ui)
+
+	event_panel = PanelContainer.new()
+	event_panel.name = "EventDiscoveryPanel"
+	event_panel.set_anchors_preset(Control.PRESET_CENTER)
+	event_panel.position = Vector2(-320, -155)
+	event_panel.size = Vector2(640, 310)
+	event_panel.custom_minimum_size = Vector2(560, 280)
+	event_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.025, 0.045, 0.075, 0.97)
+	panel_style.border_color = Color(0.15, 0.72, 0.95, 0.95)
+	panel_style.set_border_width_all(2)
+	panel_style.set_corner_radius_all(14)
+	panel_style.content_margin_left = 24
+	panel_style.content_margin_right = 24
+	panel_style.content_margin_top = 20
+	panel_style.content_margin_bottom = 20
+	event_panel.add_theme_stylebox_override("panel", panel_style)
+
+	event_ui.add_child(event_panel)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 14)
+	event_panel.add_child(layout)
+
+	event_status_label = Label.new()
+	event_status_label.text = "تم اكتشاف حدث جديد"
+	event_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	event_status_label.add_theme_font_size_override("font_size", 20)
+	event_status_label.add_theme_color_override(
+		"font_color", Color(0.25, 0.85, 1.0)
+	)
+	layout.add_child(event_status_label)
+
+	event_title_label = Label.new()
+	event_title_label.text = ""
+	event_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	event_title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	event_title_label.add_theme_font_size_override("font_size", 27)
+	event_title_label.add_theme_color_override(
+		"font_color", Color(1.0, 0.82, 0.38)
+	)
+	layout.add_child(event_title_label)
+
+	event_world_label = Label.new()
+	event_world_label.text = ""
+	event_world_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	event_world_label.add_theme_font_size_override("font_size", 17)
+	event_world_label.add_theme_color_override(
+		"font_color", Color(0.65, 0.82, 0.95)
+	)
+	layout.add_child(event_world_label)
+
+	event_description_label = Label.new()
+	event_description_label.text = ""
+	event_description_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	event_description_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	event_description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	event_description_label.custom_minimum_size = Vector2(0, 55)
+	event_description_label.add_theme_font_size_override("font_size", 18)
+	event_description_label.add_theme_color_override(
+		"font_color", Color(0.92, 0.94, 0.98)
+	)
+	layout.add_child(event_description_label)
+
+	event_timer_label = Label.new()
+	event_timer_label.text = ""
+	event_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	event_timer_label.add_theme_font_size_override("font_size", 16)
+	event_timer_label.add_theme_color_override(
+		"font_color", Color(0.35, 0.9, 0.75)
+	)
+	layout.add_child(event_timer_label)
+
+	var close_button := Button.new()
+	close_button.name = "CloseEventButton"
+	close_button.text = "متابعة الاستكشاف"
+	close_button.custom_minimum_size = Vector2(220, 44)
+	close_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	close_button.add_theme_font_size_override("font_size", 18)
+	close_button.pressed.connect(_close_event_popup)
+	layout.add_child(close_button)
+
+	event_panel.hide()
+
+
+func _show_event_popup(world_id: int, data: Dictionary) -> void:
+	if event_panel == null:
+		return
+
+	displayed_event_world = world_id
+	displayed_event_id = str(data.get("id", ""))
+
+	event_status_label.text = (
+		"تم اكتشاف حدث موسمي محدود!"
+		if bool(data.get("seasonal", false))
+		else "تم اكتشاف حدث جديد!"
+	)
+
+	event_title_label.text = str(data.get("title", "حدث جديد"))
+	event_world_label.text = str(
+		WORLD_NAMES.get(world_id, "عالم غير معروف")
+	)
+	event_description_label.text = str(
+		data.get("description", "")
+	)
+
+	_update_event_popup_timer()
+	event_panel.show()
+
+
+func _update_event_popup_timer() -> void:
+	if event_panel == null or not event_panel.visible:
+		return
+
+	var active_data: Dictionary = active_events.get(
+		displayed_event_world, {}
+	)
+
+	if (
+		active_data.is_empty()
+		or str(active_data.get("id", "")) != displayed_event_id
+	):
+		event_timer_label.text = "انتهت مدة هذا الحدث."
+		return
+
+	var seconds_left := maxf(
+		float(remaining_times.get(displayed_event_world, 0.0)),
+		0.0
+	)
+
+	event_timer_label.text = (
+		"الوقت المتبقي للحدث: " + _format_time(seconds_left)
+	)
+
+
+func _format_time(seconds: float) -> String:
+	var total_seconds := int(ceil(seconds))
+	var minutes := int(total_seconds / 60)
+	var remaining_seconds := total_seconds % 60
+
+	return "%02d:%02d" % [minutes, remaining_seconds]
+
+
+func _close_event_popup() -> void:
+	if event_panel != null:
+		event_panel.hide()
+
+
+# --------------------------------------------------
+# PUBLIC EVENT DATA
+# --------------------------------------------------
+
 func get_active_event(world_id: int) -> Dictionary:
-	var result: Dictionary = active_events.get(world_id, {}).duplicate(true)
+	var result: Dictionary = active_events.get(
+		world_id, {}
+	).duplicate(true)
 
 	if not result.is_empty():
 		result["remaining_seconds"] = maxf(
