@@ -26,6 +26,7 @@ jobs:
           gradle-version: '8.9'
 
       - name: Fix Android resource filenames
+        shell: bash
         run: |
           if [ -f "app/src/main/res/drawable-nodpi/system_launcher_icon-2.png" ]; then
             mv "app/src/main/res/drawable-nodpi/system_launcher_icon-2.png" "app/src/main/res/drawable-nodpi/system_launcher_icon_2.png"
@@ -33,6 +34,21 @@ jobs:
 
           if [ -f "app/src/main/res/drawable/system_launcher_icon-4.png" ]; then
             mv "app/src/main/res/drawable/system_launcher_icon-4.png" "app/src/main/res/drawable/system_launcher_icon_4.png"
+          fi
+
+      - name: Fix cinematic video filename
+        shell: bash
+        run: |
+          VIDEO_SOURCE="app/src/main/res/raw/lv__٢٠٢٦١١٠٧١٢٣٧١٠.mp4"
+          VIDEO_TARGET="app/src/main/res/raw/system_intro.mp4"
+
+          if [ -f "$VIDEO_SOURCE" ]; then
+            mv "$VIDEO_SOURCE" "$VIDEO_TARGET"
+          fi
+
+          if [ ! -f "$VIDEO_TARGET" ]; then
+            echo "::error::SYSTEM intro video was not found."
+            exit 1
           fi
 
       - name: Build APK
