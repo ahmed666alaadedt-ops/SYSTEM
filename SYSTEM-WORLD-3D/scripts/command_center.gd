@@ -2,60 +2,85 @@ extends Node3D
 
 # SYSTEM WORLD - Command Center
 # Godot 4.3 | Landscape Interface
+# Connected to the central four-world registry and selection manager.
 
-const MODERN_SCENE := "res://scenes/main.tscn"
+const WorldData = preload("res://scripts/world_data.gd")
+const WorldSelectionManager = preload("res://scripts/world_selection_manager.gd")
 
+var world_manager: Node
 var selected_world := "modern"
+var world_data: Array = []
 var world_buttons: Dictionary = {}
 
 var world_panel: PanelContainer
 var player_panel: PanelContainer
 var miyar_panel: PanelContainer
 var title_label: Label
-
 var miyar_message: Label
 var utility_status: Label
 
 
-var world_data := [
-	{
-		"id": "modern",
-		"title": "العالم الحديث",
-		"subtitle": "المدن والحياة الواقعية",
+const WORLD_PRESENTATION := {
+	"modern": {
 		"color": Color(0.05, 0.75, 0.95),
 		"icon": "01"
 	},
-	{
-		"id": "history",
-		"title": "العالم التاريخي",
-		"subtitle": "الحضارات والأسرار القديمة",
+	"history": {
 		"color": Color(0.90, 0.65, 0.25),
 		"icon": "02"
 	},
-	{
-		"id": "fantasy",
-		"title": "العالم الخيالي",
-		"subtitle": "الممالك والسحر والمخلوقات",
+	"fantasy": {
 		"color": Color(0.65, 0.35, 0.95),
 		"icon": "03"
 	},
-	{
-		"id": "greed",
-		"title": "جزيرة الطمع",
-		"subtitle": "الموسم والتحديات النادرة",
+	"greed": {
 		"color": Color(0.95, 0.72, 0.20),
 		"icon": "04"
 	}
-]
+}
 
 
 func _ready() -> void:
+	_load_world_display_data()
+	_create_world_manager()
+
 	_create_environment()
 	_create_command_room()
 	_create_city_view()
 	_create_miyar_placeholder()
 	_create_camera()
 	_create_interface()
+
+	_on_world_manager_selected(selected_world)
+
+
+func _load_world_display_data() -> void:
+	world_data.clear()
+
+	for world in WorldData.get_all_worlds():
+		var world_id := str(world.get("id", ""))
+		var presentation: Dictionary = WORLD_PRESENTATION.get(
+			world_id,
+			{"color": Color.WHITE, "icon": "--"}
+		)
+
+		world["color"] = presentation["color"]
+		world["icon"] = presentation["icon"]
+		world_data.append(world)
+
+
+func _create_world_manager() -> void:
+	world_manager = WorldSelectionManager.new()
+	world_manager.name = "WorldSelectionManager"
+	add_child(world_manager)
+
+	world_manager.world_selected.connect(
+		_on_world_manager_selected
+	)
+
+	world_manager.world_entry_failed.connect(
+		_on_world_entry_failed
+	)
 
 
 # ==================================================
@@ -321,7 +346,10 @@ func _layout_interface(root: Control) -> void:
 	)
 	title_label.size = Vector2(420, 42)
 
-	var helper_width := minf(600.0, view_size.x - (panel_width * 2.0) - 60.0)
+	var helper_width := minf(
+		600.0,
+		view_size.x - (panel_width * 2.0) - 60.0
+	)
 	helper_width = maxf(helper_width, 300.0)
 
 	miyar_panel.size = Vector2(helper_width, 92)
@@ -386,7 +414,9 @@ func _create_world_panel(root: Control) -> void:
 			Color(0.90, 0.96, 1.0)
 		)
 
-		button.pressed.connect(_on_world_selected.bind(world_id))
+		button.pressed.connect(
+			_on_world_button_pressed.bind(world_id)
+		)
 
 		column.add_child(button)
 		world_buttons[world_id] = button
@@ -472,20 +502,39 @@ func _create_miyar_panel(root: Control) -> void:
 
 
 # ==================================================
-# WORLD SELECTION
+# WORLD SELECTION CONNECTION
 # ==================================================
 
-func _on_world_selected(world_id: String) -> void:
+func _on_world_button_pressed(world_id: String) -> void:
+	if world_manager == null:
+		return
+
+	world_manager.select_world(world_id)
+
+
+func _on_world_manager_selected(world_id: String) -> void:
 	selected_world = world_id
 	_update_world_buttons()
 
-	for world in world_data:
-		if str(world["id"]) == selected_world:
-			miyar_message.text = (
-				"تم اختيار " + str(world["title"]) + ". أنا معك."
-			)
-			utility_status.text = "العالم المحدد: " + str(world["title"])
-			return
+	var world := WorldData.get_world(world_id)
+
+	if world.is_empty():
+		return
+
+	var world_title := str(world.get("title", world_id))
+	var stage := str(world.get("stage", "planned"))
+
+	miyar_message.text = (
+		"تم اختيار " + world_title +
+		". أنا معك في هذه الرحلة."
+	)
+
+	if stage == "prototype":
+		utility_status.text = "العالم المحدد: " + world_title
+	else:
+		utility_status.text = (
+			world_title + " - مرحلة البناء"
+		)
 
 
 func _update_world_buttons() -> void:
@@ -508,15 +557,26 @@ func _update_world_buttons() -> void:
 
 
 func _enter_selected_world() -> void:
-	if selected_world == "modern":
-		var result := get_tree().change_scene_to_file(MODERN_SCENE)
-
-		if result != OK:
-			utility_status.text = "تعذر فتح مشهد العالم الحديث."
+	if world_manager == null:
+		utility_status.text = "مدير العوالم غير متاح."
 		return
 
-	miyar_message.text = "هذا العالم ضمن مراحل البناء القادمة."
-	utility_status.text = "العالم المحدد لم يُربط بمشهد لعب بعد."
+	world_manager.enter_selected_world()
+
+
+func _on_world_entry_failed(
+	world_id: String,
+	reason: String
+) -> void:
+	var world := WorldData.get_world(world_id)
+	var world_title := str(
+		world.get("title", world_id)
+	)
+
+	miyar_message.text = reason
+	utility_status.text = (
+		world_title + " - " + reason
+	)
 
 
 # ==================================================
@@ -542,7 +602,9 @@ func _add_utility_button(
 		)
 	)
 
-	button.pressed.connect(_on_utility_pressed.bind(action_name))
+	button.pressed.connect(
+		_on_utility_pressed.bind(action_name)
+	)
 	parent.add_child(button)
 
 
