@@ -1,16 +1,21 @@
 extends Node3D
 
 # SYSTEM WORLD - Command Center
-# Godot 4.3 | Landscape 1280x720
-# Four independent worlds + Miyar + Player panel
+# Godot 4.3 | Landscape Interface
 
 const MODERN_SCENE := "res://scenes/main.tscn"
 
 var selected_world := "modern"
 var world_buttons: Dictionary = {}
-var selection_label: Label
+
+var world_panel: PanelContainer
+var player_panel: PanelContainer
+var miyar_panel: PanelContainer
+var title_label: Label
+
 var miyar_message: Label
 var utility_status: Label
+
 
 var world_data := [
 	{
@@ -53,9 +58,9 @@ func _ready() -> void:
 	_create_interface()
 
 
-# --------------------------------------------------
+# ==================================================
 # ENVIRONMENT
-# --------------------------------------------------
+# ==================================================
 
 func _create_environment() -> void:
 	var world_environment := WorldEnvironment.new()
@@ -73,6 +78,7 @@ func _create_environment() -> void:
 
 	sky.sky_material = sky_material
 	environment.sky = sky
+
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	environment.ambient_light_color = Color(0.48, 0.65, 0.85)
 	environment.ambient_light_energy = 0.8
@@ -95,9 +101,9 @@ func _create_environment() -> void:
 	add_child(center_light)
 
 
-# --------------------------------------------------
+# ==================================================
 # COMMAND ROOM
-# --------------------------------------------------
+# ==================================================
 
 func _create_command_room() -> void:
 	var floor := MeshInstance3D.new()
@@ -143,25 +149,18 @@ func _create_command_room() -> void:
 
 
 func _create_city_view() -> void:
-	# Futuristic skyline visible behind the command room.
-
 	for i in range(19):
 		var x := -15.0 + float(i) * 1.65
 		var height := 3.0 + float((i * 7) % 8)
-
-		var building_material := _material(
-			Color(0.035, 0.09, 0.15),
-			Color(0.0, 0.22, 0.42)
-		)
 
 		_add_box(
 			"CityTower_%02d" % i,
 			Vector3(1.15, height, 0.9),
 			Vector3(x, height * 0.5, -12.0),
-			building_material
+			_material(Color(0.035, 0.09, 0.15), Color(0.0, 0.22, 0.42))
 		)
 
-		var light_bar := _add_box(
+		_add_box(
 			"TowerLight_%02d" % i,
 			Vector3(0.07, height * 0.65, 0.04),
 			Vector3(x - 0.25, height * 0.5, -11.48),
@@ -169,9 +168,9 @@ func _create_city_view() -> void:
 		)
 
 
-# --------------------------------------------------
-# MIYAR PLACEHOLDER
-# --------------------------------------------------
+# ==================================================
+# MIYAR 3D PLACEHOLDER
+# ==================================================
 
 func _create_miyar_placeholder() -> void:
 	var chair_material := _material(
@@ -198,13 +197,8 @@ func _create_miyar_placeholder() -> void:
 		Color(0.0, 0.75, 1.0)
 	)
 
-	var skin_material := _material(
-		Color(0.78, 0.59, 0.48)
-	)
-
-	var hair_material := _material(
-		Color(0.035, 0.045, 0.075)
-	)
+	var skin_material := _material(Color(0.78, 0.59, 0.48))
+	var hair_material := _material(Color(0.035, 0.045, 0.075))
 
 	_add_capsule(
 		"MiyarBody",
@@ -228,21 +222,23 @@ func _create_miyar_placeholder() -> void:
 		hair_material
 	)
 
-	_add_capsule(
+	var left_arm := _add_capsule(
 		"MiyarLeftArm",
 		0.17,
 		1.05,
 		Vector3(-0.72, 2.0, -0.5),
 		body_material
 	)
+	left_arm.rotation_degrees.z = -18
 
-	_add_capsule(
+	var right_arm := _add_capsule(
 		"MiyarRightArm",
 		0.17,
 		1.05,
 		Vector3(0.72, 2.0, -0.5),
 		body_material
 	)
+	right_arm.rotation_degrees.z = 18
 
 	_add_capsule(
 		"MiyarLeftLeg",
@@ -261,24 +257,24 @@ func _create_miyar_placeholder() -> void:
 	)
 
 
-# --------------------------------------------------
+# ==================================================
 # CAMERA
-# --------------------------------------------------
+# ==================================================
 
 func _create_camera() -> void:
 	var camera := Camera3D.new()
 	camera.name = "CommandCenterCamera"
 	camera.position = Vector3(0, 5.4, 17.5)
 	camera.fov = 55.0
-	add_child(camera)
 
+	add_child(camera)
 	camera.look_at(Vector3(0, 2.0, -1.0), Vector3.UP)
 	camera.current = true
 
 
-# --------------------------------------------------
-# USER INTERFACE
-# --------------------------------------------------
+# ==================================================
+# INTERFACE
+# ==================================================
 
 func _create_interface() -> void:
 	var layer := CanvasLayer.new()
@@ -288,58 +284,86 @@ func _create_interface() -> void:
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(root)
 
-	_create_top_title(root)
+	title_label = _make_label("S Y S T E M   W O R L D", 25)
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	root.add_child(title_label)
+
 	_create_world_panel(root)
 	_create_player_panel(root)
 	_create_miyar_panel(root)
 
+	root.resized.connect(_layout_interface.bind(root))
+	call_deferred("_layout_interface", root)
 
-func _create_top_title(root: Control) -> void:
-	var title := Label.new()
-	title.text = "S Y S T E M   W O R L D"
-	title.position = Vector2(440, 18)
-	title.size = Vector2(400, 42)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 25)
-	title.add_theme_color_override(
-		"font_color",
-		Color(0.55, 0.88, 1.0)
+
+func _layout_interface(root: Control) -> void:
+	var view_size := root.size
+
+	if view_size.x <= 0 or view_size.y <= 0:
+		return
+
+	var side_margin := 18.0
+	var panel_width := minf(300.0, view_size.x * 0.25)
+	var panel_height := minf(535.0, view_size.y - 155.0)
+
+	world_panel.position = Vector2(side_margin, 82)
+	world_panel.size = Vector2(panel_width, panel_height)
+
+	player_panel.position = Vector2(
+		view_size.x - panel_width - side_margin,
+		82
 	)
-	root.add_child(title)
+	player_panel.size = Vector2(panel_width, panel_height)
 
+	title_label.position = Vector2(
+		(view_size.x - 420.0) * 0.5,
+		18
+	)
+	title_label.size = Vector2(420, 42)
+
+	var helper_width := minf(600.0, view_size.x - (panel_width * 2.0) - 60.0)
+	helper_width = maxf(helper_width, 300.0)
+
+	miyar_panel.size = Vector2(helper_width, 92)
+	miyar_panel.position = Vector2(
+		(view_size.x - helper_width) * 0.5,
+		view_size.y - 112
+	)
+
+
+# ==================================================
+# WORLD PANEL
+# ==================================================
 
 func _create_world_panel(root: Control) -> void:
-	var panel := _create_panel(
+	world_panel = _create_panel(
 		root,
-		Vector2(22, 88),
-		Vector2(315, 545),
-		Color(0.025, 0.06, 0.11, 0.91),
+		Vector2.ZERO,
+		Vector2(300, 535),
+		Color(0.025, 0.06, 0.11, 0.94),
 		Color(0.0, 0.48, 0.75)
 	)
 
 	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 13)
-	panel.add_child(column)
+	column.add_theme_constant_override("separation", 10)
+	world_panel.add_child(column)
 
-	var heading := _make_label("اختر عالمك", 24)
-	column.add_child(heading)
-
-	var description := _make_label("أربعة عوالم مستقلة", 15)
-	column.add_child(description)
+	column.add_child(_make_label("اختر عالمك", 23))
+	column.add_child(_make_label("أربعة عوالم مستقلة", 15))
 
 	for world in world_data:
-		var button := Button.new()
+		var world_id := str(world["id"])
 
+		var button := Button.new()
 		button.text = (
-			str(world["icon"]) +
-			"   " +
-			str(world["title"]) +
-			"\n" +
+			str(world["icon"]) + "   " +
+			str(world["title"]) + "\n" +
 			str(world["subtitle"])
 		)
 
-		button.custom_minimum_size = Vector2(270, 88)
-		button.add_theme_font_size_override("font_size", 18)
+		button.custom_minimum_size = Vector2(250, 82)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.add_theme_font_size_override("font_size", 17)
 
 		button.add_theme_stylebox_override(
 			"normal",
@@ -362,49 +386,53 @@ func _create_world_panel(root: Control) -> void:
 			Color(0.90, 0.96, 1.0)
 		)
 
-		button.pressed.connect(
-			_on_world_selected.bind(str(world["id"]))
-		)
+		button.pressed.connect(_on_world_selected.bind(world_id))
 
 		column.add_child(button)
-		world_buttons[str(world["id"])] = button
+		world_buttons[world_id] = button
 
+	_update_world_buttons()
+
+
+# ==================================================
+# PLAYER PANEL
+# ==================================================
 
 func _create_player_panel(root: Control) -> void:
-	var panel := _create_panel(
+	player_panel = _create_panel(
 		root,
-		Vector2(960, 88),
-		Vector2(295, 545),
-		Color(0.025, 0.06, 0.11, 0.93),
+		Vector2.ZERO,
+		Vector2(300, 535),
+		Color(0.025, 0.06, 0.11, 0.94),
 		Color(0.0, 0.48, 0.75)
 	)
 
 	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 12)
-	panel.add_child(column)
+	column.add_theme_constant_override("separation", 8)
+	player_panel.add_child(column)
 
-	column.add_child(_make_label("ملف اللاعب", 23))
-	column.add_child(_make_label("المستوى  1", 20))
-	column.add_child(_make_label("الخبرة  0 / 100", 17))
-	column.add_child(_make_label("العملة  0", 17))
+	column.add_child(_make_label("ملف اللاعب", 22))
+	column.add_child(_make_label("المستوى  1", 19))
+	column.add_child(_make_label("الخبرة  0 / 100", 16))
+	column.add_child(_make_label("العملة  0", 16))
 
-	var separator := HSeparator.new()
-	column.add_child(separator)
-
-	column.add_child(_make_label("أنظمة العالم", 19))
+	column.add_child(HSeparator.new())
+	column.add_child(_make_label("أنظمة العالم", 18))
 
 	_add_utility_button(column, "الخريطة", "الخريطة")
 	_add_utility_button(column, "الدردشة العالمية", "الدردشة")
 	_add_utility_button(column, "المهام", "المهام")
 	_add_utility_button(column, "الإعدادات", "الإعدادات")
 
-	utility_status = _make_label("النظام جاهز", 14)
+	utility_status = _make_label("النظام جاهز", 13)
 	column.add_child(utility_status)
 
 	var enter_button := Button.new()
 	enter_button.text = "دخول العالم المحدد"
-	enter_button.custom_minimum_size = Vector2(250, 58)
-	enter_button.add_theme_font_size_override("font_size", 18)
+	enter_button.custom_minimum_size = Vector2(240, 48)
+	enter_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	enter_button.add_theme_font_size_override("font_size", 17)
+
 	enter_button.add_theme_stylebox_override(
 		"normal",
 		_button_style(
@@ -412,79 +440,88 @@ func _create_player_panel(root: Control) -> void:
 			Color(0.0, 0.85, 1.0)
 		)
 	)
+
 	enter_button.pressed.connect(_enter_selected_world)
 	column.add_child(enter_button)
 
 
+# ==================================================
+# MIYAR PANEL
+# ==================================================
+
 func _create_miyar_panel(root: Control) -> void:
-	var panel := _create_panel(
+	miyar_panel = _create_panel(
 		root,
-		Vector2(355, 570),
-		Vector2(580, 95),
-		Color(0.02, 0.055, 0.10, 0.92),
+		Vector2.ZERO,
+		Vector2(600, 92),
+		Color(0.02, 0.055, 0.10, 0.94),
 		Color(0.0, 0.55, 0.85)
 	)
 
 	var column := VBoxContainer.new()
-	panel.add_child(column)
+	column.add_theme_constant_override("separation", 4)
+	miyar_panel.add_child(column)
 
-	var name_label := _make_label("ميار | SYSTEM AI", 19)
-	column.add_child(name_label)
+	column.add_child(_make_label("ميار | SYSTEM AI", 18))
 
 	miyar_message = _make_label(
 		"أهلاً بك. أنا ميار، سأرافقك في رحلتك داخل SYSTEM WORLD.",
-		16
+		15
 	)
 	column.add_child(miyar_message)
 
 
-# --------------------------------------------------
+# ==================================================
 # WORLD SELECTION
-# --------------------------------------------------
+# ==================================================
 
 func _on_world_selected(world_id: String) -> void:
 	selected_world = world_id
+	_update_world_buttons()
 
 	for world in world_data:
-		var button: Button = world_buttons[str(world["id"])]
-
 		if str(world["id"]) == selected_world:
-			button.add_theme_stylebox_override(
-				"normal",
-				_button_style(
-					Color(0.08, 0.22, 0.30, 1.0),
-					world["color"]
-				)
+			miyar_message.text = (
+				"تم اختيار " + str(world["title"]) + ". أنا معك."
 			)
-		else:
-			button.add_theme_stylebox_override(
-				"normal",
-				_button_style(
-					Color(0.045, 0.10, 0.16, 0.96),
-					world["color"]
-				)
-			)
+			utility_status.text = "العالم المحدد: " + str(world["title"])
+			return
 
-		if str(world["id"]) == selected_world:
-			if is_instance_valid(miyar_message):
-				miyar_message.text = (
-					"تم اختيار " +
-					str(world["title"]) +
-					". أنا معك."
-				)
+
+func _update_world_buttons() -> void:
+	for world in world_data:
+		var world_id := str(world["id"])
+
+		if not world_buttons.has(world_id):
+			continue
+
+		var button: Button = world_buttons[world_id]
+		var background := Color(0.045, 0.10, 0.16, 0.96)
+
+		if world_id == selected_world:
+			background = Color(0.08, 0.22, 0.30, 1.0)
+
+		button.add_theme_stylebox_override(
+			"normal",
+			_button_style(background, world["color"])
+		)
 
 
 func _enter_selected_world() -> void:
 	if selected_world == "modern":
-		get_tree().change_scene_to_file(MODERN_SCENE)
+		var result := get_tree().change_scene_to_file(MODERN_SCENE)
+
+		if result != OK:
+			utility_status.text = "تعذر فتح مشهد العالم الحديث."
 		return
 
-	if is_instance_valid(miyar_message):
-		miyar_message.text = "هذا العالم ضمن مراحل البناء القادمة."
+	miyar_message.text = "هذا العالم ضمن مراحل البناء القادمة."
+	utility_status.text = "العالم المحدد لم يُربط بمشهد لعب بعد."
 
-	if is_instance_valid(utility_status):
-		utility_status.text = "العالم المحدد لم يُربط بمشهد لعب بعد."
 
+# ==================================================
+# UTILITY BUTTONS
+# ==================================================
 
 func _add_utility_button(
 	parent: VBoxContainer,
@@ -493,8 +530,9 @@ func _add_utility_button(
 ) -> void:
 	var button := Button.new()
 	button.text = button_text
-	button.custom_minimum_size = Vector2(245, 43)
-	button.add_theme_font_size_override("font_size", 16)
+	button.custom_minimum_size = Vector2(230, 36)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.add_theme_font_size_override("font_size", 15)
 
 	button.add_theme_stylebox_override(
 		"normal",
@@ -504,21 +542,17 @@ func _add_utility_button(
 		)
 	)
 
-	button.pressed.connect(
-		_on_utility_pressed.bind(action_name)
-	)
-
+	button.pressed.connect(_on_utility_pressed.bind(action_name))
 	parent.add_child(button)
 
 
 func _on_utility_pressed(action_name: String) -> void:
-	if is_instance_valid(utility_status):
-		utility_status.text = action_name + " - قيد التطوير"
+	utility_status.text = action_name + " - قيد التطوير"
 
 
-# --------------------------------------------------
+# ==================================================
 # VISUAL HELPERS
-# --------------------------------------------------
+# ==================================================
 
 func _create_panel(
 	parent: Control,
@@ -535,14 +569,16 @@ func _create_panel(
 	style.bg_color = background_color
 	style.border_color = border_color
 	style.set_border_width_all(2)
+
 	style.corner_radius_top_left = 12
 	style.corner_radius_top_right = 12
 	style.corner_radius_bottom_left = 12
 	style.corner_radius_bottom_right = 12
-	style.content_margin_left = 14
-	style.content_margin_right = 14
-	style.content_margin_top = 12
-	style.content_margin_bottom = 12
+
+	style.content_margin_left = 12
+	style.content_margin_right = 12
+	style.content_margin_top = 10
+	style.content_margin_bottom = 10
 
 	panel.add_theme_stylebox_override("panel", style)
 	parent.add_child(panel)
@@ -554,10 +590,12 @@ func _make_label(text_value: String, font_size: int) -> Label:
 	var label := Label.new()
 	label.text = text_value
 	label.add_theme_font_size_override("font_size", font_size)
+
 	label.add_theme_color_override(
 		"font_color",
 		Color(0.86, 0.94, 1.0)
 	)
+
 	return label
 
 
@@ -569,14 +607,17 @@ func _button_style(
 	style.bg_color = background_color
 	style.border_color = border_color
 	style.set_border_width_all(2)
+
 	style.corner_radius_top_left = 10
 	style.corner_radius_top_right = 10
 	style.corner_radius_bottom_left = 10
 	style.corner_radius_bottom_right = 10
-	style.content_margin_left = 10
-	style.content_margin_right = 10
-	style.content_margin_top = 8
-	style.content_margin_bottom = 8
+
+	style.content_margin_left = 8
+	style.content_margin_right = 8
+	style.content_margin_top = 6
+	style.content_margin_bottom = 6
+
 	return style
 
 
