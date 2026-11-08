@@ -1,9 +1,10 @@
+
 config_version=5
 
 [application]
 
 config/name="SYSTEM WORLD 3D"
-run/main_scene="res://scenes/command_center.tscn"
+run/main_scene="res://scenes/premium_command_center.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
 
 [display]
