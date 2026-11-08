@@ -13,7 +13,12 @@ var selected_world_title: Label
 var premium_status: Label
 var premium_dialogue: Label
 
+var reference_preview: TextureRect
+var reference_preview_button: Button
+
 var world_portal_buttons: Dictionary = {}
+
+const REFERENCE_IMAGE_PATH := "res://assets/ui/file_0000000053f081f4ab5d3e27245ce7a9.png"
 
 const PORTAL_COLORS := {
 	"modern": Color(0.08, 0.72, 1.0),
@@ -93,6 +98,9 @@ func _create_interface() -> void:
 	_create_bottom_thumbnails()
 	_create_miyar_dialogue()
 	_create_bottom_controls()
+
+	# تُضاف المعاينة أخيراً حتى تظهر فوق الواجهة عند تشغيلها.
+	_create_reference_preview()
 
 
 func _panel(parent: Control, accent: Color) -> PanelContainer:
@@ -210,6 +218,16 @@ func _create_top_bar() -> void:
 	)
 	row.add_child(
 		_label("💎 12,500", 16, Color(0.35, 0.82, 1.0))
+	)
+
+	reference_preview_button = _button(
+		row,
+		"معاينة التصميم",
+		Color(0.25, 0.85, 1.0),
+		Vector2(125, 40)
+	)
+	reference_preview_button.pressed.connect(
+		_toggle_reference_preview
 	)
 
 	var settings := _button(
@@ -435,6 +453,59 @@ func _create_bottom_controls() -> void:
 
 	enter.add_theme_font_size_override("font_size", 23)
 	enter.pressed.connect(_enter_selected_world)
+
+
+func _create_reference_preview() -> void:
+	reference_preview = TextureRect.new()
+	reference_preview.name = "SYSTEMDesignReferencePreview"
+
+	reference_preview.set_anchors_and_offsets_preset(
+		Control.PRESET_FULL_RECT
+	)
+
+	reference_preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	reference_preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+
+	# لا تمنع الصورة الضغط على الزر الموجود تحتها.
+	reference_preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	reference_preview.visible = false
+	reference_preview.modulate = Color(1, 1, 1, 0.96)
+
+	if ResourceLoader.exists(REFERENCE_IMAGE_PATH):
+		var loaded_texture = load(REFERENCE_IMAGE_PATH)
+
+		if loaded_texture is Texture2D:
+			reference_preview.texture = loaded_texture
+		else:
+			_set_status("تعذر تحميل صورة التصميم")
+	else:
+		_set_status("صورة التصميم غير موجودة في المسار المحدد")
+
+	premium_root.add_child(reference_preview)
+
+
+func _toggle_reference_preview() -> void:
+	if not is_instance_valid(reference_preview):
+		return
+
+	if reference_preview.texture == null:
+		_set_status("لم يتم العثور على صورة التصميم")
+		return
+
+	reference_preview.visible = not reference_preview.visible
+
+	if reference_preview.visible:
+		reference_preview_button.text = "إخفاء المعاينة"
+		_set_status("معاينة الصورة المرجعية")
+	else:
+		reference_preview_button.text = "معاينة التصميم"
+		_set_status("النظام جاهز")
+
+
+func _set_status(message: String) -> void:
+	if is_instance_valid(premium_status):
+		premium_status.text = message
 
 
 func _on_world_manager_selected(world_id: String) -> void:
