@@ -1,11 +1,10 @@
-
 extends "res://scripts/premium_world_details.gd"
 
-# SYSTEM WORLD - Miyar Command Center Integration
+# SYSTEM WORLD - MIYAR SCENE INTEGRATION
 # Godot 4.3
 
-const MiyarPersonalityScript = preload(
-	"res://scripts/miyar_personality_controller.gd"
+const MiyarCharacterScene = preload(
+	"res://scenes/miyar_character.tscn"
 )
 
 var miyar_controller: Node3D
@@ -13,15 +12,15 @@ var miyar_controller: Node3D
 
 func _ready() -> void:
 	super._ready()
-	_create_miyar_controller()
+	_create_miyar_character()
 
 
-func _create_miyar_controller() -> void:
+func _create_miyar_character() -> void:
 	if is_instance_valid(miyar_controller):
 		return
 
-	miyar_controller = MiyarPersonalityScript.new()
-	miyar_controller.name = "MiyarPersonalityController"
+	miyar_controller = MiyarCharacterScene.instantiate()
+	miyar_controller.name = "MiyarCharacter"
 
 	add_child(miyar_controller)
 
@@ -37,10 +36,6 @@ func _create_miyar_controller() -> void:
 
 	miyar_controller.call("enter_world", selected_world)
 
-
-# ==========================================
-# MIYAR DIALOGUE CONNECTION
-# ==========================================
 
 func _on_miyar_dialogue_started(message: String) -> void:
 	if is_instance_valid(premium_dialogue):
@@ -83,10 +78,6 @@ func _on_miyar_emotion_changed(emotion: String) -> void:
 	)
 
 
-# ==========================================
-# WORLD SELECTION
-# ==========================================
-
 func _on_world_manager_selected(world_id: String) -> void:
 	super._on_world_manager_selected(world_id)
 
@@ -94,22 +85,14 @@ func _on_world_manager_selected(world_id: String) -> void:
 		miyar_controller.call("enter_world", world_id)
 
 
-# ==========================================
-# PLAYER INTERACTION
-# ==========================================
-
 func make_miyar_follow_player(player: Node3D) -> void:
-	if not is_instance_valid(miyar_controller):
-		return
-
-	miyar_controller.call("start_following", player)
+	if is_instance_valid(miyar_controller):
+		miyar_controller.call("start_following", player)
 
 
 func stop_miyar_following() -> void:
-	if not is_instance_valid(miyar_controller):
-		return
-
-	miyar_controller.call("stop_following")
+	if is_instance_valid(miyar_controller):
+		miyar_controller.call("stop_following")
 
 
 func make_miyar_laugh() -> void:
@@ -129,7 +112,4 @@ func make_miyar_happy() -> void:
 
 func make_miyar_speak(message: String) -> void:
 	if is_instance_valid(miyar_controller):
-		miyar_controller.call(
-			"say",
-			message
-		)
+		miyar_controller.call("say", message)
