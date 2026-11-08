@@ -1,35 +1,51 @@
 extends "res://scripts/premium_world_details.gd"
 
-# SYSTEM WORLD - ASSISTANT SELECTION INTEGRATION
+# SYSTEM WORLD - ADAM & MIYAR COMMAND CENTER
 # Godot 4.3
+# Landscape 1280x720
+# Only one assistant is visible at a time.
 
 const MiyarCharacterScene = preload(
 	"res://scenes/miyar_character.tscn"
 )
+
 const AdamCharacterScene = preload(
 	"res://scenes/adam_character.tscn"
 )
+
 const WardrobeManagerScript = preload(
 	"res://scripts/system_wardrobe_manager.gd"
 )
+
 const AssistantManagerScript = preload(
 	"res://scripts/assistant_selection_manager.gd"
 )
 
 var miyar_controller: Node3D
 var adam_controller: Node3D
+
 var wardrobe_manager: Node
 var assistant_manager: Node
+
+var assistant_panel: PanelContainer
+var assistant_name_label: Label
+var assistant_description_label: Label
+var assistant_status_label: Label
 
 var miyar_button: Button
 var adam_button: Button
 
+
+# ==================================================
+# INITIALIZATION
+# ==================================================
 
 func _ready() -> void:
 	super._ready()
 
 	_create_wardrobe_manager()
 	_create_assistant_manager()
+
 	_create_miyar_character()
 	_create_adam_character()
 
@@ -40,12 +56,13 @@ func _ready() -> void:
 	)
 
 	_create_assistant_selection_ui()
+	_update_assistant_interface()
 	_update_active_assistant_world()
 
 
-# ==========================================
+# ==================================================
 # MANAGERS
-# ==========================================
+# ==================================================
 
 func _create_wardrobe_manager() -> void:
 	wardrobe_manager = WardrobeManagerScript.new()
@@ -69,13 +86,14 @@ func _create_assistant_manager() -> void:
 	)
 
 
-# ==========================================
-# MIYAR
-# ==========================================
+# ==================================================
+# MIYAR CHARACTER
+# ==================================================
 
 func _create_miyar_character() -> void:
 	miyar_controller = MiyarCharacterScene.instantiate()
 	miyar_controller.name = "MiyarCharacter"
+
 	add_child(miyar_controller)
 
 	miyar_controller.connect(
@@ -110,21 +128,21 @@ func _on_miyar_dialogue_started(message: String) -> void:
 
 
 func _on_miyar_emotion_changed(emotion: String) -> void:
-	if not is_instance_valid(premium_status):
-		return
-
-	premium_status.text = "حالة ميار: " + emotion
+	if is_instance_valid(premium_status):
+		premium_status.text = "حالة ميار: " + emotion
 
 
-# ==========================================
-# ADAM
-# ==========================================
+# ==================================================
+# ADAM CHARACTER
+# ==================================================
 
 func _create_adam_character() -> void:
 	adam_controller = AdamCharacterScene.instantiate()
 	adam_controller.name = "AdamCharacter"
+
 	adam_controller.position = Vector3(1.5, 0.0, 0.0)
 	adam_controller.visible = false
+
 	add_child(adam_controller)
 
 	adam_controller.connect(
@@ -163,57 +181,126 @@ func _on_adam_emotion_changed(emotion: String) -> void:
 		premium_status.text = "حالة آدم: " + emotion
 
 
-# ==========================================
-# ASSISTANT SELECTION UI
-# ==========================================
+# ==================================================
+# ASSISTANT SELECTION INTERFACE
+# ==================================================
 
 func _create_assistant_selection_ui() -> void:
 	if not is_instance_valid(premium_root):
 		return
 
-	var panel := PanelContainer.new()
-	panel.name = "AssistantSelectionPanel"
-
-	panel.anchor_left = 0.405
-	panel.anchor_right = 0.69
-	panel.anchor_top = 0.13
-	panel.anchor_bottom = 0.225
-
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.012, 0.035, 0.075, 0.94)
-	style.border_color = Color(0.0, 0.65, 0.95)
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(10)
-
-	panel.add_theme_stylebox_override("panel", style)
-	premium_root.add_child(panel)
-
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	panel.add_child(row)
-
-	miyar_button = Button.new()
-	miyar_button.text = "اختيار ميار"
-	miyar_button.custom_minimum_size = Vector2(0, 45)
-	miyar_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(miyar_button)
-
-	adam_button = Button.new()
-	adam_button.text = "اختيار آدم"
-	adam_button.custom_minimum_size = Vector2(0, 45)
-	adam_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(adam_button)
-
-	miyar_button.pressed.connect(
-		_select_miyar
+	assistant_panel = _panel(
+		premium_root,
+		Color(0.0, 0.72, 1.0)
 	)
 
-	adam_button.pressed.connect(
-		_select_adam
+	assistant_panel.name = "AssistantSelectionPanel"
+
+	# مساحة مستقلة أسفل معلومات العالم.
+	assistant_panel.anchor_left = 0.42
+	assistant_panel.anchor_right = 0.82
+	assistant_panel.anchor_top = 0.515
+	assistant_panel.anchor_bottom = 0.735
+
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 5)
+	assistant_panel.add_child(column)
+
+	var title := _label(
+		"اختر المرافق الخاص بك",
+		19,
+		Color(0.30, 0.88, 1.0)
 	)
 
-	_update_assistant_buttons()
+	column.add_child(title)
 
+	assistant_name_label = _label(
+		"ميار",
+		21,
+		Color(1.0, 0.82, 0.35)
+	)
+
+	column.add_child(assistant_name_label)
+
+	assistant_description_label = _label(
+		"مساعدتك الذكية ورفيقتك في الرحلة.",
+		13
+	)
+
+	column.add_child(assistant_description_label)
+
+	# أزرار اختيار الشخصية.
+	var selection_row := HBoxContainer.new()
+	selection_row.add_theme_constant_override("separation", 10)
+	column.add_child(selection_row)
+
+	miyar_button = _button(
+		selection_row,
+		"اختيار ميار",
+		Color(0.0, 0.75, 1.0),
+		Vector2(0, 38)
+	)
+
+	adam_button = _button(
+		selection_row,
+		"اختيار آدم",
+		Color(0.85, 0.62, 0.25),
+		Vector2(0, 38)
+	)
+
+	miyar_button.pressed.connect(_select_miyar)
+	adam_button.pressed.connect(_select_adam)
+
+	# تفاعلات المساعد النشط.
+	var action_row := HBoxContainer.new()
+	action_row.add_theme_constant_override("separation", 7)
+	column.add_child(action_row)
+
+	var welcome_button := _button(
+		action_row,
+		"ترحيب",
+		Color(0.0, 0.65, 0.9),
+		Vector2(0, 32)
+	)
+
+	welcome_button.pressed.connect(
+		_active_assistant_welcome
+	)
+
+	var encouragement_button := _button(
+		action_row,
+		"تشجيع",
+		Color(0.15, 0.75, 0.55),
+		Vector2(0, 32)
+	)
+
+	encouragement_button.pressed.connect(
+		_active_assistant_encouragement
+	)
+
+	var world_button := _button(
+		action_row,
+		"تقديم العالم",
+		Color(0.72, 0.48, 0.95),
+		Vector2(0, 32)
+	)
+
+	world_button.pressed.connect(
+		_active_assistant_explain_world
+	)
+
+	assistant_status_label = _label(
+		"المساعد النشط: ميار",
+		12,
+		Color(0.55, 0.90, 1.0)
+	)
+
+	column.add_child(assistant_status_label)
+
+
+# ==================================================
+# SELECTION
+# ==================================================
 
 func _select_miyar() -> void:
 	assistant_manager.call(
@@ -230,52 +317,149 @@ func _select_adam() -> void:
 
 
 func _on_assistant_changed(assistant_id: String) -> void:
-	_update_assistant_buttons()
+	_update_assistant_interface()
 	_update_active_assistant_world()
 
 	if assistant_id == "miyar":
-		premium_dialogue.text = "تم اختيار ميار. أنا هنا لمرافقتك!"
+		premium_dialogue.text = (
+			"تم اختيار ميار. أنا هنا لمرافقتك!"
+		)
+
 		premium_status.text = "المساعدة النشطة: ميار"
+
 	else:
-		premium_dialogue.text = "تم اختيار آدم. أنا هنا لمرافقتك!"
+		premium_dialogue.text = (
+			"تم اختيار آدم. أنا هنا لمرافقتك!"
+		)
+
 		premium_status.text = "المساعد النشط: آدم"
 
 
 func _on_assistant_selection_failed(reason: String) -> void:
+	if is_instance_valid(assistant_status_label):
+		assistant_status_label.text = reason
+
 	if is_instance_valid(premium_status):
 		premium_status.text = reason
 
 
-func _update_assistant_buttons() -> void:
+# ==================================================
+# UPDATE INTERFACE
+# ==================================================
+
+func _update_assistant_interface() -> void:
 	if not is_instance_valid(assistant_manager):
 		return
 
 	var selected := str(
-		assistant_manager.call("get_selected_assistant")
+		assistant_manager.call(
+			"get_selected_assistant"
+		)
 	)
+
+	var is_miyar := selected == "miyar"
 
 	if is_instance_valid(miyar_button):
-		miyar_button.disabled = selected == "miyar"
+		miyar_button.disabled = is_miyar
+		miyar_button.text = (
+			"✓ ميار المختارة"
+			if is_miyar
+			else "اختيار ميار"
+		)
 
 	if is_instance_valid(adam_button):
-		adam_button.disabled = selected == "adam"
+		adam_button.disabled = not is_miyar
+		adam_button.text = (
+			"اختيار آدم"
+			if is_miyar
+			else "✓ آدم المختار"
+		)
+
+	if is_miyar:
+		if is_instance_valid(assistant_name_label):
+			assistant_name_label.text = "ميار"
+
+		if is_instance_valid(assistant_description_label):
+			assistant_description_label.text = (
+				"مساعدتك الذكية ورفيقتك في الرحلة."
+			)
+
+		if is_instance_valid(assistant_status_label):
+			assistant_status_label.text = (
+				"المساعدة النشطة: ميار"
+			)
+
+	else:
+		if is_instance_valid(assistant_name_label):
+			assistant_name_label.text = "آدم"
+
+		if is_instance_valid(assistant_description_label):
+			assistant_description_label.text = (
+				"مرشد SYSTEM ومساعدك في التخطيط والتحديات."
+			)
+
+		if is_instance_valid(assistant_status_label):
+			assistant_status_label.text = (
+				"المساعد النشط: آدم"
+			)
 
 
-func _update_active_assistant_world() -> void:
+# ==================================================
+# ACTIVE ASSISTANT ACTIONS
+# ==================================================
+
+func _get_active_assistant() -> Node3D:
 	if not is_instance_valid(assistant_manager):
+		return null
+
+	return assistant_manager.call(
+		"get_active_assistant"
+	) as Node3D
+
+
+func _active_assistant_welcome() -> void:
+	var active := _get_active_assistant()
+
+	if not is_instance_valid(active):
 		return
 
-	var active = assistant_manager.call(
-		"get_active_assistant"
+	active.call("say_welcome")
+
+
+func _active_assistant_encouragement() -> void:
+	var active := _get_active_assistant()
+
+	if not is_instance_valid(active):
+		return
+
+	active.call("say_encouragement")
+
+
+func _active_assistant_explain_world() -> void:
+	var active := _get_active_assistant()
+
+	if not is_instance_valid(active):
+		return
+
+	active.call(
+		"enter_world",
+		selected_world
 	)
 
+
+# ==================================================
+# WORLD INTEGRATION
+# ==================================================
+
+func _update_active_assistant_world() -> void:
+	var active := _get_active_assistant()
+
 	if is_instance_valid(active):
-		active.call("enter_world", selected_world)
+		active.call(
+			"enter_world",
+			selected_world
+		)
 
-
-# ==========================================
-# WORLD SELECTION
-# ==========================================
 
 func _on_world_manager_selected(world_id: String) -> void:
 	super._on_world_manager_selected(world_id)
@@ -289,13 +473,16 @@ func _on_world_manager_selected(world_id: String) -> void:
 	_update_active_assistant_world()
 
 
-# ==========================================
-# MIYAR INTERACTION
-# ==========================================
+# ==================================================
+# MIYAR INTERACTION API
+# ==================================================
 
 func make_miyar_follow_player(player: Node3D) -> void:
 	if is_instance_valid(miyar_controller):
-		miyar_controller.call("start_following", player)
+		miyar_controller.call(
+			"start_following",
+			player
+		)
 
 
 func stop_miyar_following() -> void:
@@ -323,13 +510,16 @@ func make_miyar_shy() -> void:
 		miyar_controller.call("become_shy")
 
 
-# ==========================================
-# ADAM INTERACTION
-# ==========================================
+# ==================================================
+# ADAM INTERACTION API
+# ==================================================
 
 func make_adam_follow_player(player: Node3D) -> void:
 	if is_instance_valid(adam_controller):
-		adam_controller.call("start_following", player)
+		adam_controller.call(
+			"start_following",
+			player
+		)
 
 
 func stop_adam_following() -> void:
@@ -350,3 +540,8 @@ func make_adam_happy() -> void:
 func make_adam_laugh() -> void:
 	if is_instance_valid(adam_controller):
 		adam_controller.call("laugh")
+
+
+func make_adam_shy() -> void:
+	if is_instance_valid(adam_controller):
+		adam_controller.call("become_shy")
