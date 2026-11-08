@@ -1,6 +1,6 @@
 extends "res://scripts/premium_world_details.gd"
 
-# SYSTEM WORLD - DUAL ASSISTANT INTEGRATION
+# SYSTEM WORLD - DUAL ASSISTANT + WARDROBE
 # Godot 4.3
 
 const MiyarCharacterScene = preload(
@@ -11,14 +11,30 @@ const AdamCharacterScene = preload(
 	"res://scenes/adam_character.tscn"
 )
 
+const WardrobeManagerScript = preload(
+	"res://scripts/system_wardrobe_manager.gd"
+)
+
 var miyar_controller: Node3D
 var adam_controller: Node3D
+var wardrobe_manager: Node
 
 
 func _ready() -> void:
 	super._ready()
+
+	_create_wardrobe_manager()
 	_create_miyar_character()
 	_create_adam_character()
+
+
+func _create_wardrobe_manager() -> void:
+	if is_instance_valid(wardrobe_manager):
+		return
+
+	wardrobe_manager = WardrobeManagerScript.new()
+	wardrobe_manager.name = "WardrobeManager"
+	add_child(wardrobe_manager)
 
 
 # ==========================================
@@ -31,7 +47,6 @@ func _create_miyar_character() -> void:
 
 	miyar_controller = MiyarCharacterScene.instantiate()
 	miyar_controller.name = "MiyarCharacter"
-
 	add_child(miyar_controller)
 
 	miyar_controller.connect(
@@ -44,6 +59,11 @@ func _create_miyar_character() -> void:
 		_on_miyar_emotion_changed
 	)
 
+	wardrobe_manager.call(
+		"register_miyar",
+		miyar_controller
+	)
+
 	miyar_controller.call("enter_world", selected_world)
 
 
@@ -51,13 +71,9 @@ func _on_miyar_dialogue_started(message: String) -> void:
 	if is_instance_valid(premium_dialogue):
 		premium_dialogue.text = message
 
-	var display_time := clampf(
-		float(message.length()) / 12.0,
-		2.5,
-		12.0
-	)
-
-	await get_tree().create_timer(display_time).timeout
+	await get_tree().create_timer(
+		clampf(float(message.length()) / 12.0, 2.5, 12.0)
+	).timeout
 
 	if not is_instance_valid(miyar_controller):
 		return
@@ -70,7 +86,7 @@ func _on_miyar_emotion_changed(emotion: String) -> void:
 	if not is_instance_valid(premium_status):
 		return
 
-	var emotion_names := {
+	var names := {
 		"neutral": "طبيعية",
 		"happy": "سعيدة",
 		"laughing": "تضحك",
@@ -83,8 +99,7 @@ func _on_miyar_emotion_changed(emotion: String) -> void:
 	}
 
 	premium_status.text = (
-		"حالة ميار: " +
-		str(emotion_names.get(emotion, emotion))
+		"حالة ميار: " + str(names.get(emotion, emotion))
 	)
 
 
@@ -98,8 +113,6 @@ func _create_adam_character() -> void:
 
 	adam_controller = AdamCharacterScene.instantiate()
 	adam_controller.name = "AdamCharacter"
-
-	# Keep Adam available but hidden until selected.
 	adam_controller.visible = false
 	adam_controller.position = Vector3(1.5, 0.0, 0.0)
 
@@ -115,18 +128,19 @@ func _create_adam_character() -> void:
 		_on_adam_emotion_changed
 	)
 
+	wardrobe_manager.call(
+		"register_adam",
+		adam_controller
+	)
+
 
 func _on_adam_dialogue_started(message: String) -> void:
 	if is_instance_valid(premium_dialogue):
 		premium_dialogue.text = "آدم: " + message
 
-	var display_time := clampf(
-		float(message.length()) / 12.0,
-		2.5,
-		12.0
-	)
-
-	await get_tree().create_timer(display_time).timeout
+	await get_tree().create_timer(
+		clampf(float(message.length()) / 12.0, 2.5, 12.0)
+	).timeout
 
 	if not is_instance_valid(adam_controller):
 		return
@@ -136,10 +150,8 @@ func _on_adam_dialogue_started(message: String) -> void:
 
 
 func _on_adam_emotion_changed(emotion: String) -> void:
-	if not is_instance_valid(premium_status):
-		return
-
-	premium_status.text = "حالة آدم: " + emotion
+	if is_instance_valid(premium_status):
+		premium_status.text = "حالة آدم: " + emotion
 
 
 func show_adam() -> void:
@@ -177,11 +189,6 @@ func make_adam_laugh() -> void:
 		adam_controller.call("laugh")
 
 
-func adam_enter_world(world_id: String) -> void:
-	if is_instance_valid(adam_controller):
-		adam_controller.call("enter_world", world_id)
-
-
 # ==========================================
 # WORLD SELECTION
 # ==========================================
@@ -192,13 +199,15 @@ func _on_world_manager_selected(world_id: String) -> void:
 	if is_instance_valid(miyar_controller):
 		miyar_controller.call("enter_world", world_id)
 
-	if is_instance_valid(adam_controller):
-		if adam_controller.visible:
-			adam_controller.call("enter_world", world_id)
+	if is_instance_valid(adam_controller) and adam_controller.visible:
+		adam_controller.call("enter_world", world_id)
+
+	if is_instance_valid(wardrobe_manager):
+		wardrobe_manager.call("change_world", world_id)
 
 
 # ==========================================
-# MIYAR PLAYER INTERACTION
+# MIYAR INTERACTION
 # ==========================================
 
 func make_miyar_follow_player(player: Node3D) -> void:
