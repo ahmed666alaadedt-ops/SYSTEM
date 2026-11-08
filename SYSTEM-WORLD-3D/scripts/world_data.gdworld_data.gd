@@ -1,3 +1,4 @@
+
 extends RefCounted
 class_name SystemWorldData
 
@@ -63,8 +64,8 @@ const WORLD_DATA := {
 		"id": "fantasy",
 		"title": "العالم الخيالي",
 		"subtitle": "الممالك والسحر والمخلوقات",
-		"stage": "planned",
-		"scene_path": "",
+		"stage": "prototype",
+		"scene_path": "res://scenes/fantasy_world.tscn",
 		"miyar_outfit": "magic",
 		"environment": "ممالك خيالية وغابات عملاقة وجبال وقلاع",
 		"combat": "السحر والأسلحة الأسطورية والقوى الخارقة",
