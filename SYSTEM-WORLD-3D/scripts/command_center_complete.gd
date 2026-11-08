@@ -1,9 +1,7 @@
-
 extends "res://scripts/miyar_command_center_link.gd"
 
 # SYSTEM WORLD - Complete Command Center Integration
 # Godot 4.3
-# Assistant 3D Stage + Dynamic Party Display
 
 const AssistantStageScript = preload(
 	"res://scripts/assistant_3d_stage.gd"
@@ -13,11 +11,13 @@ const PartyDisplayScript = preload(
 	"res://scripts/command_center_party_display_v2.gd"
 )
 
+const SYSTEM_ICON_PATH := "res://assets/system_launcher_icon.png"
+
 var assistant_stage: Node3D
 var party_display: Node3D
+var system_logo: TextureRect
 
 
-# The 3D stage replaces the old placeholder figure.
 func _create_miyar_placeholder() -> void:
 	pass
 
@@ -28,6 +28,71 @@ func _ready() -> void:
 	_create_assistant_stage()
 	_create_party_display()
 	_position_active_assistant()
+	_create_system_logo_overlay()
+
+
+# --------------------------------------------------
+# SYSTEM OFFICIAL LOGO
+# --------------------------------------------------
+
+func _create_system_logo_overlay() -> void:
+	if not ResourceLoader.exists(SYSTEM_ICON_PATH):
+		push_warning(
+			"SYSTEM: Official icon image was not found: "
+			+ SYSTEM_ICON_PATH
+		)
+		return
+
+	var icon_texture := load(SYSTEM_ICON_PATH) as Texture2D
+
+	if icon_texture == null:
+		push_warning("SYSTEM: Could not load the official icon.")
+		return
+
+	var logo_layer := CanvasLayer.new()
+	logo_layer.name = "SYSTEMOfficialLogoLayer"
+	logo_layer.layer = 25
+	add_child(logo_layer)
+
+	var overlay := Control.new()
+	overlay.name = "SYSTEMLogoOverlay"
+	overlay.set_anchors_and_offsets_preset(
+		Control.PRESET_FULL_RECT
+	)
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	logo_layer.add_child(overlay)
+
+	system_logo = TextureRect.new()
+	system_logo.name = "SYSTEMOfficialLogo"
+	system_logo.texture = icon_texture
+
+	system_logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	system_logo.stretch_mode = (
+		TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	)
+
+	system_logo.texture_filter = (
+		CanvasItem.TEXTURE_FILTER_LINEAR
+	)
+
+	system_logo.tooltip_text = "SYSTEM WORLD"
+	system_logo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	overlay.add_child(system_logo)
+
+	_layout_system_logo()
+
+	get_viewport().size_changed.connect(
+		_layout_system_logo
+	)
+
+
+func _layout_system_logo() -> void:
+	if not is_instance_valid(system_logo):
+		return
+
+	system_logo.position = Vector2(18, 8)
+	system_logo.size = Vector2(68, 68)
 
 
 # --------------------------------------------------
@@ -64,7 +129,6 @@ func _position_active_assistant() -> void:
 
 	var active := _get_active_assistant()
 
-	# Hide every inactive assistant.
 	if is_instance_valid(miyar_controller):
 		miyar_controller.visible = (
 			is_instance_valid(active)
@@ -131,7 +195,6 @@ func _create_party_display() -> void:
 
 func _on_assistant_changed(assistant_id: String) -> void:
 	super._on_assistant_changed(assistant_id)
-
 	_position_active_assistant()
 
 
