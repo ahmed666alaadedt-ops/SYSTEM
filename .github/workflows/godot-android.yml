@@ -1,4 +1,3 @@
-
 name: Build SYSTEM WORLD 3D Preview
 
 on:
@@ -118,6 +117,52 @@ jobs:
           echo "GODOT_ANDROID_KEYSTORE_DEBUG_PATH=$RUNNER_TEMP/system-debug.keystore" >> "$GITHUB_ENV"
           echo "GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey" >> "$GITHUB_ENV"
           echo "GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android" >> "$GITHUB_ENV"
+
+      - name: Prepare Godot scripts for Android export
+        shell: bash
+        run: |
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD-3D"
+
+          echo "Preparing temporary Godot script fixes..."
+
+          # Remove duplicate class file from the runner workspace only.
+          rm -f "$PROJECT/scripts/world_data.gdworld_data.gd"
+
+          # Fix Vector2 type inference in fantasy_world.gd.
+          sed -i \
+            's/var offset := event.position - move_start$/var offset: Vector2 = event.position - move_start/' \
+            "$PROJECT/scripts/fantasy_world.gd"
+
+          # Fix Vector2 type inference in historical_world.gd.
+          sed -i \
+            's/var offset := event.position - move_start_position$/var offset: Vector2 = event.position - move_start_position/' \
+            "$PROJECT/scripts/historical_world.gd"
+
+          # Fix Vector2 type inference in main.gd.
+          sed -i \
+            's/var offset := event.position - move_start_position$/var offset: Vector2 = event.position - move_start_position/' \
+            "$PROJECT/scripts/main.gd"
+
+          # Verify duplicate file was removed.
+          if [ -e "$PROJECT/scripts/world_data.gdworld_data.gd" ]; then
+            echo "ERROR: Duplicate world_data file still exists."
+            exit 1
+          fi
+
+          # Verify all three type declarations.
+          grep -Fq \
+            'var offset: Vector2 = event.position - move_start' \
+            "$PROJECT/scripts/fantasy_world.gd"
+
+          grep -Fq \
+            'var offset: Vector2 = event.position - move_start_position' \
+            "$PROJECT/scripts/historical_world.gd"
+
+          grep -Fq \
+            'var offset: Vector2 = event.position - move_start_position' \
+            "$PROJECT/scripts/main.gd"
+
+          echo "Temporary script preparation completed successfully."
 
       - name: Import and validate Godot project
         shell: bash
