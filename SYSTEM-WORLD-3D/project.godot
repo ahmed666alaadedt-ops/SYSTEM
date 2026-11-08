@@ -7,6 +7,10 @@ config/name="SYSTEM WORLD 3D"
 run/main_scene="res://scenes/premium_command_center.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
 
+[autoload]
+
+XSXAssociation="*res://scripts/xsx_association_manager.gd"
+
 [display]
 
 window/size/viewport_width=1280
