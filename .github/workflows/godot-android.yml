@@ -220,15 +220,110 @@ jobs:
           print("Temporary Android export preset configured successfully.")
           PY
 
+      - name: Enable Android ETC2 ASTC texture import
+        shell: bash
+        run: |
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD-3D"
+          PROJECT_FILE="$PROJECT/project.godot"
+
+          if [ ! -f "$PROJECT_FILE" ]; then
+            echo "ERROR: project.godot was not found."
+            exit 1
+          fi
+
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          project_file = (
+              Path(os.environ["GITHUB_WORKSPACE"])
+              / "SYSTEM-WORLD-3D"
+              / "project.godot"
+          )
+
+          content = project_file.read_text(encoding="utf-8")
+          lines = content.splitlines()
+
+          rendering_index = None
+
+          for index, line in enumerate(lines):
+              if line.strip() == "[rendering]":
+                  rendering_index = index
+                  break
+
+          if rendering_index is None:
+              raise RuntimeError(
+                  "The [rendering] section was not found in project.godot."
+              )
+
+          section_end = len(lines)
+
+          for index in range(rendering_index + 1, len(lines)):
+              if re.match(r"^\s*\[.+\]\s*$", lines[index]):
+                  section_end = index
+                  break
+
+          setting = "textures/vram_compression/import_etc2_astc"
+          matching_lines = []
+
+          for index in range(rendering_index + 1, section_end):
+              if re.match(
+                  rf"^\s*{re.escape(setting)}\s*=",
+                  lines[index]
+              ):
+                  matching_lines.append(index)
+
+          if matching_lines:
+              first = matching_lines[0]
+              lines[first] = f"{setting}=true"
+
+              for index in reversed(matching_lines[1:]):
+                  del lines[index]
+          else:
+              lines.insert(
+                  rendering_index + 1,
+                  f"{setting}=true"
+              )
+
+          updated = "\n".join(lines) + "\n"
+          project_file.write_text(updated, encoding="utf-8")
+
+          verification = project_file.read_text(encoding="utf-8")
+          occurrences = re.findall(
+              rf"^\s*{re.escape(setting)}\s*=\s*true\s*$",
+              verification,
+              flags=re.MULTILINE
+          )
+
+          if len(occurrences) != 1:
+              raise RuntimeError(
+                  "ETC2/ASTC setting verification failed or duplicated."
+              )
+
+          print("Android ETC2/ASTC texture import enabled successfully.")
+          print(f"Verified setting: {setting}=true")
+          print("Only the temporary GitHub runner copy was modified.")
+          PY
+
       - name: Import and validate Godot project
         shell: bash
         run: |
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD-3D"
+
+          echo "Removing old imported texture cache..."
+
+          if [ -d "$PROJECT/.godot/imported" ]; then
+            rm -rf "$PROJECT/.godot/imported"
+          fi
+
+          echo "Importing project with ETC2/ASTC enabled..."
 
           "$GODOT" \
             --headless \
             --editor \
-            --path "$GITHUB_WORKSPACE/SYSTEM-WORLD-3D" \
+            --path "$PROJECT" \
             --quit
 
       - name: Verify Android export configuration
@@ -298,7 +393,13 @@ jobs:
                       f"Export preset verification failed: {setting.split('=')[0]}"
                   )
 
+          project_file = (project / "project.godot").read_text(encoding="utf-8")
+
+          if "textures/vram_compression/import_etc2_astc=true" not in project_file:
+              raise RuntimeError("ETC2/ASTC project setting is missing.")
+
           print("Android export preset verification passed.")
+          print("ETC2/ASTC project setting verification passed.")
           PY
 
           echo "All Android export prerequisites are available."
