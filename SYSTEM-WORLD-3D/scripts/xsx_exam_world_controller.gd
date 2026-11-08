@@ -3,8 +3,9 @@ extends Node3D
 
 # SYSTEM WORLD - XSX EXAM WORLD CONTROLLER
 # Godot 4.3
-# Endurance and survival stage prototype.
-# Local identity only; Firebase/server authority comes before launch.
+# Local prototype. Competitive multiplayer requires server authority.
+
+@export var exam_cohort_id := ""
 
 const IDENTITY_PATH := "user://system_local_identity.cfg"
 
@@ -40,6 +41,7 @@ var player: CharacterBody3D
 
 var exam_active := false
 var current_stage: Dictionary = {}
+var current_exam_id := ""
 
 var active_checkpoint: Area3D
 var supply_pickups: Array[Area3D] = []
@@ -48,6 +50,8 @@ var hazard_zones: Array[Area3D] = []
 var status_label: Label
 var progress_label: Label
 var exam_button: Button
+var identity_label: Label
+var secret_mission_label: Label
 
 var stage_started_at := 0.0
 var last_player_position := Vector3.ZERO
@@ -78,7 +82,7 @@ func _initialize_exam_system() -> void:
 	_load_or_create_local_identity()
 
 	if player_id.is_empty():
-		push_error("XSX Exam: Local player identity could not be created.")
+		push_error("XSX Exam: Local identity could not be created.")
 		return
 
 	var registration: Dictionary = XSXAssociation.register_player(
@@ -91,6 +95,7 @@ func _initialize_exam_system() -> void:
 		return
 
 	_create_exam_interface()
+	_refresh_contestant_information()
 
 	status_label.text = "XSX جاهزة لاستقبال طلبك"
 	progress_label.text = "اختبار الصيادين | 8 مراحل"
@@ -151,31 +156,241 @@ func _create_exam_interface() -> void:
 
 	status_label = Label.new()
 	status_label.position = Vector2(22, 128)
-	status_label.size = Vector2(560, 65)
+	status_label.size = Vector2(650, 55)
 	status_label.add_theme_font_size_override("font_size", 18)
-	status_label.add_theme_color_override(
-		"font_color",
-		Color(1.0, 1.0, 1.0)
-	)
 	layer.add_child(status_label)
 
 	progress_label = Label.new()
-	progress_label.position = Vector2(22, 192)
-	progress_label.size = Vector2(620, 45)
-	progress_label.add_theme_font_size_override("font_size", 17)
+	progress_label.position = Vector2(22, 184)
+	progress_label.size = Vector2(700, 42)
+	progress_label.add_theme_font_size_override("font_size", 16)
 	progress_label.add_theme_color_override(
 		"font_color",
 		Color(0.65, 0.9, 1.0)
 	)
 	layer.add_child(progress_label)
 
+	identity_label = Label.new()
+	identity_label.position = Vector2(22, 226)
+	identity_label.size = Vector2(700, 35)
+	identity_label.add_theme_font_size_override("font_size", 16)
+	layer.add_child(identity_label)
+
+	secret_mission_label = Label.new()
+	secret_mission_label.position = Vector2(22, 262)
+	secret_mission_label.size = Vector2(700, 50)
+	secret_mission_label.add_theme_font_size_override("font_size", 15)
+	secret_mission_label.add_theme_color_override(
+		"font_color",
+		Color(1.0, 0.78, 0.28)
+	)
+	layer.add_child(secret_mission_label)
+
 	exam_button = Button.new()
 	exam_button.text = "التقدم لاختبار الصيادين"
-	exam_button.position = Vector2(22, 245)
+	exam_button.position = Vector2(22, 320)
 	exam_button.size = Vector2(280, 58)
 	exam_button.add_theme_font_size_override("font_size", 18)
 	exam_button.pressed.connect(_on_exam_button_pressed)
 	layer.add_child(exam_button)
+
+
+# ==================================================
+# COHORT INFORMATION
+# ==================================================
+
+func _refresh_contestant_information() -> void:
+	if exam_cohort_id.strip_edges().is_empty():
+		identity_label.text = "رقم المتسابق: اختبار فردي"
+		return
+
+	var status := XSXCohorts.get_cohort_status(exam_cohort_id)
+
+	if status.is_empty():
+		identity_label.text = "دفعة المتسابقين غير موجودة"
+		return
+
+	var contestant := XSXCohorts.get_contestant(
+		exam_cohort_id,
+		player_id
+	)
+
+	if contestant.is_empty():
+		identity_label.text = "لم يتم تسجيلك في هذه الدفعة"
+		return
+
+	var original_number := int(
+		contestant.get("contestant_number", 0)
+	)
+
+	var holdings: Array = XSXCohorts.get_player_holdings(
+		exam_cohort_id,
+		player_id
+	)
+
+	identity_label.text = (
+		"رقمك الأصلي: %d | الأرقام التي تحملها: %d | حالة الدفعة: %s"
+		% [
+			original_number,
+			holdings.size(),
+			status
+		]
+	)
+
+
+func _get_active_cohort_players() -> Array:
+	var result: Array = []
+
+	if exam_cohort_id.is_empty():
+		return result
+
+	var summary := XSXCohorts.get_cohort_summary(exam_cohort_id)
+	var contestants: Array = summary.get("contestants", [])
+
+	for contestant in contestants:
+		if str(contestant.get("status", "")) == "active":
+			result.append(str(contestant.get("player_id", "")))
+
+	return result
+
+
+func _initialize_secret_missions(exam_id: String) -> void:
+	if exam_cohort_id.is_empty():
+		secret_mission_label.text = "لا توجد مهمات سرية في الاختبار الفردي"
+		return
+
+	var players := _get_active_cohort_players()
+
+	if players.size() < 2:
+		secret_mission_label.text = "تحتاج المهمات السرية إلى متسابقين حقيقيين على الأقل"
+		return
+
+	var existing := XSXSecretMissions.get_player_secret_mission(
+		exam_id,
+		player_id
+	)
+
+	if existing.is_empty():
+		var creation := XSXSecretMissions.create_missions(
+			exam_id,
+			players,
+			exam_cohort_id
+		)
+
+		if not bool(creation.get("success", false)):
+			# Another local session may already have created
+			# this mission set. Read the player's mission again.
+			existing = XSXSecretMissions.get_player_secret_mission(
+				exam_id,
+				player_id
+			)
+
+			if existing.is_empty():
+				secret_mission_label.text = (
+					"تعذر إنشاء المهمة السرية: "
+					+ str(creation.get("reason", "UNKNOWN"))
+				)
+				return
+
+	_refresh_secret_mission(exam_id)
+
+
+func _refresh_secret_mission(exam_id: String) -> void:
+	var data := XSXSecretMissions.get_player_secret_mission(
+		exam_id,
+		player_id
+	)
+
+	if data.is_empty():
+		secret_mission_label.text = "لم يتم تعيين مهمة سرية بعد"
+		return
+
+	var mission: Dictionary = data.get("mission", {})
+	var title := str(mission.get("title", "مهمة سرية"))
+	var description := str(mission.get("description", ""))
+	var progress := int(data.get("progress", 0))
+	var required := int(mission.get("target_progress", 1))
+
+	secret_mission_label.text = (
+		"مهمتك السرية: %s | %s | التقدم: %d/%d"
+		% [title, description, progress, required]
+	)
+
+
+# ==================================================
+# NUMBER THEFT ENTRY POINT
+# ==================================================
+
+# A gameplay/PVP system should call this only after
+# it has independently validated a successful theft.
+#
+# This method updates the cohort ownership first,
+# then records the confirmed event in the mission manager.
+#
+# This is not secure against a modified local client.
+
+func record_validated_number_theft(
+	target_player_id: String,
+	number: int,
+	gameplay_validated: bool
+) -> Dictionary:
+
+	if not gameplay_validated:
+		return _failure("GAMEPLAY_VALIDATION_REQUIRED")
+
+	if exam_cohort_id.is_empty():
+		return _failure("NO_ACTIVE_COHORT")
+
+	if current_exam_id.is_empty():
+		return _failure("NO_EXAM_SESSION")
+
+	if not exam_active:
+		return _failure("EXAM_NOT_ACTIVE")
+
+	if not XSXCohorts.is_active_contestant(
+		exam_cohort_id,
+		player_id
+	):
+		return _failure("PLAYER_NOT_ACTIVE_IN_COHORT")
+
+	if not XSXCohorts.is_active_contestant(
+		exam_cohort_id,
+		target_player_id
+	):
+		return _failure("TARGET_NOT_ACTIVE_IN_COHORT")
+
+	if XSXCohorts.get_number_owner(
+		exam_cohort_id,
+		number
+	) != target_player_id:
+		return _failure("NUMBER_NOT_OWNED_BY_TARGET")
+
+	var transfer: Dictionary = XSXCohorts.transfer_number(
+		exam_cohort_id,
+		player_id,
+		target_player_id,
+		number
+	)
+
+	if not bool(transfer.get("success", false)):
+		return transfer
+
+	var recorded: Dictionary = XSXSecretMissions.record_number_stolen(
+		current_exam_id,
+		player_id,
+		target_player_id,
+		number
+	)
+
+	_refresh_contestant_information()
+	_refresh_secret_mission(current_exam_id)
+
+	return {
+		"success": true,
+		"transfer": transfer,
+		"mission_recorded": bool(recorded.get("success", false)),
+		"mission_result": recorded
+	}
 
 
 # ==================================================
@@ -205,12 +420,29 @@ func _on_exam_button_pressed() -> void:
 		exam_button.disabled = true
 		return
 
+	if not exam_cohort_id.is_empty():
+		if XSXCohorts.get_cohort_status(exam_cohort_id) != "active":
+			status_label.text = "دفعة الاختبار غير فعّالة"
+			return
+
+		if not XSXCohorts.is_active_contestant(
+			exam_cohort_id,
+			player_id
+		):
+			status_label.text = "أنت غير مسجل كمتسابق فعّال في هذه الدفعة"
+			return
+
 	var saved_stage: Dictionary = XSXExaminer.get_current_stage(
 		player_id
 	)
 
 	if not saved_stage.is_empty():
+		current_exam_id = str(
+			XSXExaminer.get_exam_summary(player_id).get("exam_id", "")
+		)
+
 		_begin_playable_stage(saved_stage)
+		_initialize_secret_missions(current_exam_id)
 		return
 
 	if str(profile.get("membership_status", "")) != "candidate":
@@ -222,13 +454,18 @@ func _on_exam_button_pressed() -> void:
 			status_label.text = "تعذر تقديم طلب الاختبار"
 			return
 
-	var result: Dictionary = XSXExaminer.start_exam(player_id)
+	var result: Dictionary = XSXExaminer.start_exam(
+		player_id,
+		exam_cohort_id
+	)
 
 	if not bool(result.get("success", false)):
 		status_label.text = "تعذر بدء الاختبار: " + str(
 			result.get("reason", "UNKNOWN")
 		)
 		return
+
+	current_exam_id = str(result.get("exam_id", ""))
 
 	var first_stage: Dictionary = result.get(
 		"first_stage",
@@ -239,6 +476,8 @@ func _on_exam_button_pressed() -> void:
 		status_label.text = "لم يتم العثور على المرحلة الأولى"
 		return
 
+	_initialize_secret_missions(current_exam_id)
+	_refresh_contestant_information()
 	_begin_playable_stage(first_stage)
 
 
@@ -324,7 +563,7 @@ func _process(_delta: float) -> void:
 
 
 # ==================================================
-# ENDURANCE AND SURVIVAL COURSE
+# ENDURANCE COURSE
 # ==================================================
 
 func _spawn_endurance_course() -> void:
@@ -353,14 +592,10 @@ func _create_finish_checkpoint(
 	var checkpoint := Area3D.new()
 	checkpoint.name = "XSX_Endurance_Finish"
 	checkpoint.position = finish_position
-
-	checkpoint.body_entered.connect(
-		_on_checkpoint_body_entered
-	)
+	checkpoint.body_entered.connect(_on_checkpoint_body_entered)
 
 	var ring := MeshInstance3D.new()
 	var torus := TorusMesh.new()
-
 	torus.inner_radius = 1.5
 	torus.outer_radius = 1.9
 	torus.rings = 28
@@ -402,7 +637,6 @@ func _create_supply_pickup(
 	var pickup := Area3D.new()
 	pickup.name = "XSX_Supply_%d" % pickup_number
 	pickup.position = pickup_position
-
 	pickup.body_entered.connect(
 		_on_supply_body_entered.bind(pickup)
 	)
@@ -410,7 +644,6 @@ func _create_supply_pickup(
 	var mesh := MeshInstance3D.new()
 	var box := BoxMesh.new()
 	box.size = Vector3(0.9, 0.9, 0.9)
-
 	mesh.mesh = box
 	mesh.position.y = 0.7
 
@@ -419,7 +652,6 @@ func _create_supply_pickup(
 	material.emission_enabled = true
 	material.emission = Color(0.75, 0.35, 0.03)
 	mesh.material_override = material
-
 	pickup.add_child(mesh)
 
 	var collision := CollisionShape3D.new()
@@ -446,7 +678,6 @@ func _create_hazard_zone(
 	var hazard := Area3D.new()
 	hazard.name = "XSX_Hazard_%d" % hazard_number
 	hazard.position = hazard_position
-
 	hazard.body_entered.connect(
 		_on_hazard_body_entered.bind(hazard)
 	)
@@ -456,7 +687,6 @@ func _create_hazard_zone(
 	cylinder.top_radius = 1.7
 	cylinder.bottom_radius = 1.7
 	cylinder.height = 0.18
-
 	mesh.mesh = cylinder
 
 	var material := StandardMaterial3D.new()
@@ -464,7 +694,6 @@ func _create_hazard_zone(
 	material.emission_enabled = true
 	material.emission = Color(0.8, 0.02, 0.02)
 	mesh.material_override = material
-
 	hazard.add_child(mesh)
 
 	var collision := CollisionShape3D.new()
@@ -528,7 +757,7 @@ func _on_hazard_body_entered(
 
 
 # ==================================================
-# OTHER EXAM STAGE CHECKPOINTS
+# OTHER STAGE CHECKPOINTS
 # ==================================================
 
 func _spawn_stage_checkpoint() -> void:
@@ -547,14 +776,10 @@ func _spawn_stage_checkpoint() -> void:
 	var checkpoint := Area3D.new()
 	checkpoint.name = "XSX_Exam_Checkpoint_%d" % stage_number
 	checkpoint.position = CHECKPOINT_POSITIONS[position_index]
-
-	checkpoint.body_entered.connect(
-		_on_checkpoint_body_entered
-	)
+	checkpoint.body_entered.connect(_on_checkpoint_body_entered)
 
 	var ring := MeshInstance3D.new()
 	var torus := TorusMesh.new()
-
 	torus.inner_radius = 1.05
 	torus.outer_radius = 1.35
 	torus.rings = 24
@@ -568,7 +793,6 @@ func _spawn_stage_checkpoint() -> void:
 	ring_material.emission_enabled = true
 	ring_material.emission = Color(0.02, 0.55, 1.0)
 	ring_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-
 	ring.material_override = ring_material
 	checkpoint.add_child(ring)
 
@@ -613,10 +837,7 @@ func _clear_course_objects() -> void:
 # ==================================================
 
 func _on_checkpoint_body_entered(body: Node3D) -> void:
-	if not exam_active:
-		return
-
-	if body != player:
+	if not exam_active or body != player:
 		return
 
 	var stage_id := str(current_stage.get("id", ""))
@@ -716,6 +937,7 @@ func _complete_current_stage() -> void:
 
 		status_label.text = "تم اجتياز المرحلة بنجاح"
 		_begin_playable_stage(next_stage)
+		_refresh_secret_mission(current_exam_id)
 		return
 
 	_handle_final_exam_result(result)
@@ -732,6 +954,9 @@ func _handle_final_exam_result(result: Dictionary) -> void:
 		result.get("license_granted", false)
 	)
 
+	if not current_exam_id.is_empty() and not exam_cohort_id.is_empty():
+		XSXSecretMissions.finish_secret_missions(current_exam_id)
+
 	if passed and license_granted:
 		status_label.text = "مبروك! حصلت على رخصة صياد XSX"
 		progress_label.text = "النتيجة النهائية: %d / 100" % score
@@ -740,11 +965,13 @@ func _handle_final_exam_result(result: Dictionary) -> void:
 	else:
 		status_label.text = "لم تجتز الاختبار هذه المرة"
 		progress_label.text = "النتيجة النهائية: %d / 100" % score
-		exam_button.text = "إغلاق نتيجة الاختبار"
+		exam_button.text = "إعادة التقدم للاختبار"
 		exam_button.disabled = false
 
 	exam_active = false
 	current_stage = {}
+
+	_refresh_contestant_information()
 
 	print(
 		"XSX Exam completed. Passed: ",
@@ -754,3 +981,14 @@ func _handle_final_exam_result(result: Dictionary) -> void:
 		" | License: ",
 		license_granted
 	)
+
+
+# ==================================================
+# HELPERS
+# ==================================================
+
+func _failure(reason: String) -> Dictionary:
+	return {
+		"success": false,
+		"reason": reason
+	}
