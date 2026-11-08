@@ -29,22 +29,23 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Install Android SDK packages
         shell: bash
         run: |
-          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+
+          if [ ! -x "$SDKMANAGER" ]; then
+            echo "Android SDK manager not found: $SDKMANAGER"
+            exit 1
+          fi
 
           echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
 
-          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses || true
 
-          yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses
-
-          "$SDKMANAGER" --sdk_root="$SDK_ROOT" \
+          "$SDKMANAGER" --sdk_root="$SDK_ROOT" --install \
             "platform-tools" \
             "platforms;android-34" \
             "build-tools;34.0.0" \
@@ -78,7 +79,6 @@ jobs:
             -d "$RUNNER_TEMP/template_unpack"
 
           TEMPLATE_DIR="$HOME/.local/share/godot/export_templates/4.3.stable"
-
           mkdir -p "$TEMPLATE_DIR"
 
           if [ -d "$RUNNER_TEMP/template_unpack/templates" ]; then
