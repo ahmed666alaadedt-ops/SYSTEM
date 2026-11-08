@@ -16,6 +16,7 @@ GreedIslandAdminReturnUI="*res://scripts/greed_island_admin_return_ui.gd"
 SovereignPower="*res://scripts/system_sovereign_power.gd"
 SYSTEMCombatInputRouter="*res://scripts/system_combat_input_router.gd"
 SYSTEMWorldEvents="*res://scripts/system_world_event_manager.gd/system_world_event_manager.gd"
+FantasyCityInteriorExpansion="*res://scripts/fantasy_city_interior_expansion.gd"
 
 [display]
 
