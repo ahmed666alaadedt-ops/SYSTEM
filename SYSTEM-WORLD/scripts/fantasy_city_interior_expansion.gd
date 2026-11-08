@@ -1,8 +1,11 @@
-
 extends Node
 
 # SYSTEM WORLD - Fantasy City Interior Expansion
 # Creates enterable interiors for kingdom facilities and homes.
+
+const BuildingEntryInteractionScript = preload(
+	"res://scripts/fantasy_building_entry_interaction.gd"
+)
 
 var _completed := false
 
@@ -262,7 +265,7 @@ func _build_building_interior(
 	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	building.add_child(sign)
 
-	# Discovery and interaction point.
+	# Entry, exit, and discovery interactions.
 	_add_building_interaction(
 		building,
 		city,
@@ -489,11 +492,20 @@ func _add_building_interaction(
 	half_z: float
 ) -> void:
 
+	# Main entrance and map discovery point.
 	var area := Area3D.new()
 	area.name = "BuildingDiscoveryInteraction"
 	area.position = Vector3(0.0, 1.0, half_z + 1.8)
 	area.collision_layer = 1
 	area.collision_mask = 1
+
+	area.set_script(BuildingEntryInteractionScript)
+	area.call(
+		"configure",
+		building,
+		half_z,
+		false
+	)
 
 	var collision := CollisionShape3D.new()
 	var sphere := SphereShape3D.new()
@@ -521,13 +533,48 @@ func _add_building_interaction(
 	area.set_meta("system_location_type", 0)
 	area.set_meta(
 		"system_interaction_prompt",
-		"اكتشف " + display_name
+		"ادخل إلى " + display_name
 	)
 
 	area.add_to_group("system_interactable")
 	area.add_to_group("system_kingdom_building")
 
 	building.add_child(area)
+
+	# Interior exit point.
+	var exit_area := Area3D.new()
+	exit_area.name = "BuildingExitInteraction"
+	exit_area.position = Vector3(
+		0.0,
+		1.0,
+		half_z - 1.0
+	)
+	exit_area.collision_layer = 1
+	exit_area.collision_mask = 0
+
+	exit_area.set_script(BuildingEntryInteractionScript)
+	exit_area.call(
+		"configure",
+		building,
+		half_z,
+		true
+	)
+
+	var exit_collision := CollisionShape3D.new()
+	var exit_sphere := SphereShape3D.new()
+	exit_sphere.radius = 1.4
+	exit_collision.shape = exit_sphere
+	exit_area.add_child(exit_collision)
+
+	exit_area.set_meta(
+		"system_interaction_prompt",
+		"اخرج إلى المدينة"
+	)
+
+	exit_area.add_to_group("system_interactable")
+	exit_area.add_to_group("system_kingdom_building_exit")
+
+	building.add_child(exit_area)
 
 
 func _get_building_display_name(building_name: String) -> String:
@@ -572,6 +619,11 @@ func _add_visual_box(
 	material: Material
 ) -> MeshInstance3D:
 
+	# Furniture now has a physical collision body.
+	var body := StaticBody3D.new()
+	body.name = node_name + "Body"
+	body.position = position
+
 	var instance := MeshInstance3D.new()
 	instance.name = node_name
 
@@ -579,10 +631,17 @@ func _add_visual_box(
 	mesh.size = size
 
 	instance.mesh = mesh
-	instance.position = position
 	instance.material_override = material
+	body.add_child(instance)
 
-	parent.add_child(instance)
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = size
+
+	collision.shape = shape
+	body.add_child(collision)
+
+	parent.add_child(body)
 
 	return instance
 
