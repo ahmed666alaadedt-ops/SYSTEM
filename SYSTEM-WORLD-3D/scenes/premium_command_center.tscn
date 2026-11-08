@@ -1,0 +1,8 @@
+
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/command_center.tscn" id="1_base"]
+[ext_resource type="Script" path="res://scripts/premium_command_center.gd" id="2_premium"]
+
+[node name="CommandCenter" instance=ExtResource("1_base")]
+script = ExtResource("2_premium")
