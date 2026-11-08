@@ -10,6 +10,7 @@ config/features=PackedStringArray("4.3", "GL Compatibility")
 [autoload]
 
 XSXAssociation="*res://scripts/xsx_association_manager.gd"
+XSXExaminer="*res://scripts/xsx_ai_examiner.gd"
 
 [display]
 
