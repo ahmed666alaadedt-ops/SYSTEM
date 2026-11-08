@@ -106,6 +106,7 @@ jobs:
         run: |
           keytool -genkeypair -v \
             -keystore "$RUNNER_TEMP/system-debug.keystore" \
+            -storetype JKS \
             -storepass android \
             -alias androiddebugkey \
             -keypass android \
@@ -113,6 +114,11 @@ jobs:
             -keysize 2048 \
             -validity 10000 \
             -dname "CN=Android Debug,O=SYSTEM,C=US"
+
+          keytool -list -v \
+            -keystore "$RUNNER_TEMP/system-debug.keystore" \
+            -storepass android \
+            -alias androiddebugkey
 
           echo "GODOT_ANDROID_KEYSTORE_DEBUG_PATH=$RUNNER_TEMP/system-debug.keystore" >> "$GITHUB_ENV"
           echo "GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey" >> "$GITHUB_ENV"
@@ -125,31 +131,25 @@ jobs:
 
           echo "Preparing temporary Godot script fixes..."
 
-          # Remove duplicate class file from the runner workspace only.
           rm -f "$PROJECT/scripts/world_data.gdworld_data.gd"
 
-          # Fix Vector2 type inference in fantasy_world.gd.
           sed -i \
             's/var offset := event.position - move_start$/var offset: Vector2 = event.position - move_start/' \
             "$PROJECT/scripts/fantasy_world.gd"
 
-          # Fix Vector2 type inference in historical_world.gd.
           sed -i \
             's/var offset := event.position - move_start_position$/var offset: Vector2 = event.position - move_start_position/' \
             "$PROJECT/scripts/historical_world.gd"
 
-          # Fix Vector2 type inference in main.gd.
           sed -i \
             's/var offset := event.position - move_start_position$/var offset: Vector2 = event.position - move_start_position/' \
             "$PROJECT/scripts/main.gd"
 
-          # Verify duplicate file was removed.
           if [ -e "$PROJECT/scripts/world_data.gdworld_data.gd" ]; then
             echo "ERROR: Duplicate world_data file still exists."
             exit 1
           fi
 
-          # Verify all three type declarations.
           grep -Fq \
             'var offset: Vector2 = event.position - move_start' \
             "$PROJECT/scripts/fantasy_world.gd"
@@ -164,6 +164,62 @@ jobs:
 
           echo "Temporary script preparation completed successfully."
 
+      - name: Configure Android export preset
+        shell: bash
+        run: |
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD-3D"
+
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          project = Path(os.environ["GITHUB_WORKSPACE"]) / "SYSTEM-WORLD-3D"
+          preset = project / "export_presets.cfg"
+          keystore = Path(os.environ["RUNNER_TEMP"]) / "system-debug.keystore"
+
+          if not preset.is_file():
+              raise RuntimeError("export_presets.cfg was not found.")
+
+          if not keystore.is_file():
+              raise RuntimeError("Temporary Android debug keystore was not found.")
+
+          content = preset.read_text(encoding="utf-8")
+
+          replacements = {
+              'keystore/debug=""':
+                  f'keystore/debug="{keystore}"',
+              'keystore/debug_user=""':
+                  'keystore/debug_user="androiddebugkey"',
+              'keystore/debug_password=""':
+                  'keystore/debug_password="android"',
+          }
+
+          for old, new in replacements.items():
+              if old not in content:
+                  raise RuntimeError(
+                      f"Expected empty export preset setting was not found: {old.split('=')[0]}"
+                  )
+              content = content.replace(old, new, 1)
+
+          preset.write_text(content, encoding="utf-8")
+
+          updated = preset.read_text(encoding="utf-8")
+
+          required = [
+              f'keystore/debug="{keystore}"',
+              'keystore/debug_user="androiddebugkey"',
+              'keystore/debug_password="android"',
+          ]
+
+          for setting in required:
+              if setting not in updated:
+                  raise RuntimeError(
+                      f"Android signing configuration verification failed: {setting.split('=')[0]}"
+                  )
+
+          print("Temporary Android export preset configured successfully.")
+          PY
+
       - name: Import and validate Godot project
         shell: bash
         run: |
@@ -175,9 +231,83 @@ jobs:
             --path "$GITHUB_WORKSPACE/SYSTEM-WORLD-3D" \
             --quit
 
+      - name: Verify Android export configuration
+        shell: bash
+        run: |
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD-3D"
+          TEMPLATE_DIR="$HOME/.local/share/godot/export_templates/4.3.stable"
+
+          echo "Android SDK: $ANDROID_SDK_ROOT"
+          echo "Java SDK: $JAVA_HOME"
+
+          check_file() {
+            if [ ! -f "$1" ]; then
+              echo "ERROR: Required file not found: $1"
+              exit 1
+            fi
+            echo "Verified: $2"
+          }
+
+          check_file \
+            "$ANDROID_SDK_ROOT/platform-tools/adb" \
+            "Android platform tools"
+
+          check_file \
+            "$ANDROID_SDK_ROOT/platforms/android-34/android.jar" \
+            "Android 34 platform"
+
+          check_file \
+            "$ANDROID_SDK_ROOT/build-tools/34.0.0/aapt" \
+            "Android build tools"
+
+          check_file \
+            "$RUNNER_TEMP/system-debug.keystore" \
+            "Android debug keystore"
+
+          check_file \
+            "$TEMPLATE_DIR/android_debug.apk" \
+            "Godot Android debug export template"
+
+          keytool -list \
+            -keystore "$RUNNER_TEMP/system-debug.keystore" \
+            -storepass android \
+            -alias androiddebugkey \
+            > /dev/null
+
+          echo "Debug keystore validation passed."
+
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          project = Path(os.environ["GITHUB_WORKSPACE"]) / "SYSTEM-WORLD-3D"
+          preset = (project / "export_presets.cfg").read_text(encoding="utf-8")
+
+          required = [
+              'name="SYSTEM WORLD Android"',
+              'package/unique_name="com.system.world3d.preview"',
+              'package/signed=true',
+              f'keystore/debug="{Path(os.environ["RUNNER_TEMP"]) / "system-debug.keystore"}"',
+              'keystore/debug_user="androiddebugkey"',
+              'keystore/debug_password="android"',
+          ]
+
+          for setting in required:
+              if setting not in preset:
+                  raise RuntimeError(
+                      f"Export preset verification failed: {setting.split('=')[0]}"
+                  )
+
+          print("Android export preset verification passed.")
+          PY
+
+          echo "All Android export prerequisites are available."
+
       - name: Export SYSTEM WORLD 3D APK
         shell: bash
         run: |
+          set -o pipefail
+
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD-3D"
 
@@ -185,10 +315,12 @@ jobs:
 
           "$GODOT" \
             --headless \
+            --verbose \
             --path "$PROJECT" \
             --export-debug \
             "SYSTEM WORLD Android" \
-            "$PROJECT/build/SYSTEM-WORLD-3D-preview.apk"
+            "$PROJECT/build/SYSTEM-WORLD-3D-preview.apk" \
+            2>&1 | tee "$RUNNER_TEMP/godot-android-export.log"
 
       - name: Upload Android preview
         uses: actions/upload-artifact@v4
