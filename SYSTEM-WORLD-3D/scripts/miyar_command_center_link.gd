@@ -1,9 +1,10 @@
+
 extends "res://scripts/premium_world_details.gd"
 
 # SYSTEM WORLD - ADAM & MIYAR COMMAND CENTER
 # Godot 4.3
-# Landscape 1280x720
-# Only one assistant is visible at a time.
+# Landscape interface
+# One active assistant at a time.
 
 const MiyarCharacterScene = preload(
 	"res://scenes/miyar_character.tscn"
@@ -36,10 +37,6 @@ var miyar_button: Button
 var adam_button: Button
 
 
-# ==================================================
-# INITIALIZATION
-# ==================================================
-
 func _ready() -> void:
 	super._ready()
 
@@ -49,11 +46,12 @@ func _ready() -> void:
 	_create_miyar_character()
 	_create_adam_character()
 
-	assistant_manager.call(
-		"register_assistants",
-		miyar_controller,
-		adam_controller
-	)
+	if is_instance_valid(assistant_manager):
+		assistant_manager.call(
+			"register_assistants",
+			miyar_controller,
+			adam_controller
+		)
 
 	_create_assistant_selection_ui()
 	_update_assistant_interface()
@@ -87,7 +85,7 @@ func _create_assistant_manager() -> void:
 
 
 # ==================================================
-# MIYAR CHARACTER
+# MIYAR
 # ==================================================
 
 func _create_miyar_character() -> void:
@@ -133,7 +131,7 @@ func _on_miyar_emotion_changed(emotion: String) -> void:
 
 
 # ==================================================
-# ADAM CHARACTER
+# ADAM
 # ==================================================
 
 func _create_adam_character() -> void:
@@ -182,7 +180,7 @@ func _on_adam_emotion_changed(emotion: String) -> void:
 
 
 # ==================================================
-# ASSISTANT SELECTION INTERFACE
+# ASSISTANT SELECTION UI
 # ==================================================
 
 func _create_assistant_selection_ui() -> void:
@@ -196,7 +194,6 @@ func _create_assistant_selection_ui() -> void:
 
 	assistant_panel.name = "AssistantSelectionPanel"
 
-	# مساحة مستقلة أسفل معلومات العالم.
 	assistant_panel.anchor_left = 0.42
 	assistant_panel.anchor_right = 0.82
 	assistant_panel.anchor_top = 0.515
@@ -206,30 +203,27 @@ func _create_assistant_selection_ui() -> void:
 	column.add_theme_constant_override("separation", 5)
 	assistant_panel.add_child(column)
 
-	var title := _label(
-		"اختر المرافق الخاص بك",
-		19,
-		Color(0.30, 0.88, 1.0)
+	column.add_child(
+		_label(
+			"اختر المرافق الخاص بك",
+			19,
+			Color(0.30, 0.88, 1.0)
+		)
 	)
-
-	column.add_child(title)
 
 	assistant_name_label = _label(
 		"ميار",
 		21,
 		Color(1.0, 0.82, 0.35)
 	)
-
 	column.add_child(assistant_name_label)
 
 	assistant_description_label = _label(
 		"مساعدتك الذكية ورفيقتك في الرحلة.",
 		13
 	)
-
 	column.add_child(assistant_description_label)
 
-	# أزرار اختيار الشخصية.
 	var selection_row := HBoxContainer.new()
 	selection_row.add_theme_constant_override("separation", 10)
 	column.add_child(selection_row)
@@ -251,7 +245,6 @@ func _create_assistant_selection_ui() -> void:
 	miyar_button.pressed.connect(_select_miyar)
 	adam_button.pressed.connect(_select_adam)
 
-	# تفاعلات المساعد النشط.
 	var action_row := HBoxContainer.new()
 	action_row.add_theme_constant_override("separation", 7)
 	column.add_child(action_row)
@@ -262,7 +255,6 @@ func _create_assistant_selection_ui() -> void:
 		Color(0.0, 0.65, 0.9),
 		Vector2(0, 32)
 	)
-
 	welcome_button.pressed.connect(
 		_active_assistant_welcome
 	)
@@ -273,7 +265,6 @@ func _create_assistant_selection_ui() -> void:
 		Color(0.15, 0.75, 0.55),
 		Vector2(0, 32)
 	)
-
 	encouragement_button.pressed.connect(
 		_active_assistant_encouragement
 	)
@@ -284,7 +275,6 @@ func _create_assistant_selection_ui() -> void:
 		Color(0.72, 0.48, 0.95),
 		Vector2(0, 32)
 	)
-
 	world_button.pressed.connect(
 		_active_assistant_explain_world
 	)
@@ -294,7 +284,6 @@ func _create_assistant_selection_ui() -> void:
 		12,
 		Color(0.55, 0.90, 1.0)
 	)
-
 	column.add_child(assistant_status_label)
 
 
@@ -303,17 +292,19 @@ func _create_assistant_selection_ui() -> void:
 # ==================================================
 
 func _select_miyar() -> void:
-	assistant_manager.call(
-		"select_assistant",
-		"miyar"
-	)
+	if is_instance_valid(assistant_manager):
+		assistant_manager.call(
+			"select_assistant",
+			"miyar"
+		)
 
 
 func _select_adam() -> void:
-	assistant_manager.call(
-		"select_assistant",
-		"adam"
-	)
+	if is_instance_valid(assistant_manager):
+		assistant_manager.call(
+			"select_assistant",
+			"adam"
+		)
 
 
 func _on_assistant_changed(assistant_id: String) -> void:
@@ -321,18 +312,22 @@ func _on_assistant_changed(assistant_id: String) -> void:
 	_update_active_assistant_world()
 
 	if assistant_id == "miyar":
-		premium_dialogue.text = (
-			"تم اختيار ميار. أنا هنا لمرافقتك!"
-		)
+		if is_instance_valid(premium_dialogue):
+			premium_dialogue.text = (
+				"تم اختيار ميار. أنا هنا لمرافقتك!"
+			)
 
-		premium_status.text = "المساعدة النشطة: ميار"
+		if is_instance_valid(premium_status):
+			premium_status.text = "المساعدة النشطة: ميار"
 
 	else:
-		premium_dialogue.text = (
-			"تم اختيار آدم. أنا هنا لمرافقتك!"
-		)
+		if is_instance_valid(premium_dialogue):
+			premium_dialogue.text = (
+				"تم اختيار آدم. أنا هنا لمرافقتك!"
+			)
 
-		premium_status.text = "المساعد النشط: آدم"
+		if is_instance_valid(premium_status):
+			premium_status.text = "المساعد النشط: آدم"
 
 
 func _on_assistant_selection_failed(reason: String) -> void:
