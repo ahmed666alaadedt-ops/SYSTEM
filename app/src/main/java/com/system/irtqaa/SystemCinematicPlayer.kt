@@ -77,13 +77,18 @@ fun SystemCinematicPlayer(
             factory = { viewContext ->
                 PlayerView(viewContext).apply {
                     useController = false
+
+                    // عرض الفيديو كاملاً دون قص أو تشويه
                     resizeMode =
-                        AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                        AspectRatioFrameLayout.RESIZE_MODE_FIT
+
                     this.player = player
                 }
             },
             update = { view ->
                 view.player = player
+                view.resizeMode =
+                    AspectRatioFrameLayout.RESIZE_MODE_FIT
             }
         )
 
