@@ -189,37 +189,37 @@ jobs:
           )
 
           old_state = '''    var miyarDialog by remember {
-        mutableStateOf<String?>(null)
-    }
+                  mutableStateOf<String?>(null)
+              }
 
-    val completedCount'''
+              val completedCount'''
 
           new_state = '''    var miyarDialog by remember {
-        mutableStateOf<String?>(null)
-    }
+                  mutableStateOf<String?>(null)
+              }
 
-    var globalChatMessages by remember(userId) {
-        mutableStateOf(emptyList<GlobalChatMessage>())
-    }
+              var globalChatMessages by remember(userId) {
+                  mutableStateOf(emptyList<GlobalChatMessage>())
+              }
 
-    val globalChatRepository = remember {
-        FirebaseGlobalChatRepository()
-    }
+              val globalChatRepository = remember {
+                  FirebaseGlobalChatRepository()
+              }
 
-    DisposableEffect(globalChatRepository, userId) {
-        val registration =
-            globalChatRepository.listenToApprovedGlobalMessages { result ->
-                result.onSuccess { messages ->
-                    globalChatMessages = messages
-                }
-            }
+              DisposableEffect(globalChatRepository, userId) {
+                  val registration =
+                      globalChatRepository.listenToApprovedGlobalMessages { result ->
+                          result.onSuccess { messages ->
+                              globalChatMessages = messages
+                          }
+                      }
 
-        onDispose {
-            registration.remove()
-        }
-    }
+                  onDispose {
+                      registration.remove()
+                  }
+              }
 
-    val completedCount'''
+              val completedCount'''
 
           replace_once(
               old_state, new_state,
