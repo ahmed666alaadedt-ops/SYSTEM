@@ -85,273 +85,271 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           path = Path("app/src/main/java/com/system/irtqaa/MainActivity.kt")
           source = path.read_text(encoding="utf-8")
 
-          def replace_once(old, new, label, marker):
+          def replace_pattern_once(label, marker, pattern, build):
               global source
+
               if marker in source:
                   print(label + ": already connected")
                   return
-              if old not in source:
-                  raise SystemExit("Could not locate " + label)
-              source = source.replace(old, new, 1)
+
+              matches = list(re.finditer(
+                  pattern,
+                  source,
+                  flags=re.MULTILINE | re.DOTALL
+              ))
+
+              if len(matches) != 1:
+                  raise SystemExit(
+                      "Could not safely locate " + label +
+                      " (matches: " + str(len(matches)) + ")"
+                  )
+
+              match = matches[0]
+              replacement = build(match)
+
+              source = (
+                  source[:match.start()]
+                  + replacement
+                  + source[match.end():]
+              )
+
               print(label + ": connected")
 
-          old_home = '''                                    Column(
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        SystemMiyarWelcomeCard(
-                                            onExplainClick = {
-                                                miyarDialog = "explain"
-                                            },
-                                            onTalkClick = {
-                                                miyarDialog = "chat"
-                                            }
-                                        )
-
-                                        Spacer(Modifier.height(18.dp))
-
-                                        Text(
-                                            "مرحباً بك أيها المقاتل",
-                                            color = Color.White,
-                                            fontSize = 21.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-
-                                        Spacer(Modifier.height(8.dp))
-
-                                        Text(
-                                            "إنجازات اليوم: $completedCount / ${tasks.size}",
-                                            color = cyan
-                                        )
-
-                                        Text(
-                                            "مجموع الخبرة: $totalExperience XP",
-                                            color = gold
-                                        )
-
-                                        Spacer(Modifier.height(18.dp))
-
-                                        Text(
-                                            "عوالم SYSTEM",
-                                            color = gold,
-                                            fontSize = 20.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-
-                                        Spacer(Modifier.height(10.dp))
-
-                                        SystemWorldBanner(
-                                            onClick = {
-                                                showWorldSelection = true
-                                            }
-                                        )
-                                    }'''
-
-          new_home = '''                                    SystemHomeDashboard(
-                                        overallLevel = progressSnapshot.overallLevel,
-                                        totalExperience = totalExperience,
-                                        completedCount = completedCount,
-                                        totalTasks = tasks.size,
-                                        onSelectWorld = { world ->
-                                            selectedWorld = world
-                                            showWorldSelection = false
-                                        },
-                                        onStartGameClick = {
-                                            selectedWorld = ""
-                                            showWorldSelection = true
-                                        },
-                                        onExplainClick = {
-                                            miyarDialog = "explain"
-                                        },
-                                        onTalkClick = {
-                                            miyarDialog = "chat"
-                                        },
-                                        onChatClick = {
-                                            selectedWorld = ""
-                                            selectedTab = 5
-                                        },
-                                        onAccountLinkClick = {
-                                            miyarDialog = "account"
-                                        },
-                                        onSettingsClick = {
-                                            selectedWorld = ""
-                                            selectedTab = 6
-                                        }
-                                    )'''
-
-          replace_once(
-              old_home, new_home,
-              "Miyar home screen",
-              "SystemHomeDashboard("
+          # 1. Connect the actual Miyar home dashboard.
+          home_pattern = (
+              r'(?P<indent>^[ \t]*)\} else \{\s*'
+              r'Column\(\s*modifier\s*=\s*Modifier\.fillMaxWidth\(\)\s*\)'
+              r'\s*\{\s*SystemMiyarWelcomeCard\('
+              r'[\s\S]*?'
+              r'SystemWorldBanner\(\s*onClick\s*=\s*'
+              r'\{\s*showWorldSelection\s*=\s*true\s*\}\s*\)'
+              r'\s*\}\s*\n(?P=indent)\}'
           )
 
-          old_state = '''    var miyarDialog by remember {
-                  mutableStateOf<String?>(null)
-              }
+          def build_home(match):
+              i = match.group("indent")
+              return (
+                  i + "} else {\n"
+                  + i + "    SystemHomeDashboard(\n"
+                  + i + "        overallLevel = progressSnapshot.overallLevel,\n"
+                  + i + "        totalExperience = totalExperience,\n"
+                  + i + "        completedCount = completedCount,\n"
+                  + i + "        totalTasks = tasks.size,\n"
+                  + i + "        onSelectWorld = { world ->\n"
+                  + i + "            selectedWorld = world\n"
+                  + i + "            showWorldSelection = false\n"
+                  + i + "        },\n"
+                  + i + "        onStartGameClick = {\n"
+                  + i + "            selectedWorld = \"\"\n"
+                  + i + "            showWorldSelection = true\n"
+                  + i + "        },\n"
+                  + i + "        onExplainClick = {\n"
+                  + i + "            miyarDialog = \"explain\"\n"
+                  + i + "        },\n"
+                  + i + "        onTalkClick = {\n"
+                  + i + "            miyarDialog = \"chat\"\n"
+                  + i + "        },\n"
+                  + i + "        onChatClick = {\n"
+                  + i + "            selectedWorld = \"\"\n"
+                  + i + "            selectedTab = 5\n"
+                  + i + "        },\n"
+                  + i + "        onAccountLinkClick = {\n"
+                  + i + "            miyarDialog = \"account\"\n"
+                  + i + "        },\n"
+                  + i + "        onSettingsClick = {\n"
+                  + i + "            selectedWorld = \"\"\n"
+                  + i + "            selectedTab = 6\n"
+                  + i + "        }\n"
+                  + i + "    )\n"
+                  + i + "}"
+              )
 
-              val completedCount'''
+          replace_pattern_once(
+              "Miyar home dashboard",
+              "SystemHomeDashboard(",
+              home_pattern,
+              build_home
+          )
 
-          new_state = '''    var miyarDialog by remember {
-                  mutableStateOf<String?>(null)
-              }
+          # 2. Add the live global chat listener.
+          state_pattern = (
+              r'(?P<indent>^[ \t]*)var miyarDialog by remember \{\s*'
+              r'mutableStateOf<String\?>\(null\)\s*\}\s*'
+              r'(?=^[ \t]*val completedCount)'
+          )
 
-              var globalChatMessages by remember(userId) {
-                  mutableStateOf(emptyList<GlobalChatMessage>())
-              }
+          def build_chat_state(match):
+              i = match.group("indent")
+              return (
+                  i + "var miyarDialog by remember {\n"
+                  + i + "    mutableStateOf<String?>(null)\n"
+                  + i + "}\n\n"
+                  + i + "var globalChatMessages by remember(userId) {\n"
+                  + i + "    mutableStateOf(emptyList<GlobalChatMessage>())\n"
+                  + i + "}\n\n"
+                  + i + "val globalChatRepository = remember {\n"
+                  + i + "    FirebaseGlobalChatRepository()\n"
+                  + i + "}\n\n"
+                  + i + "DisposableEffect(globalChatRepository, userId) {\n"
+                  + i + "    val registration =\n"
+                  + i + "        globalChatRepository.listenToApprovedGlobalMessages { result ->\n"
+                  + i + "            result.onSuccess { messages ->\n"
+                  + i + "                globalChatMessages = messages\n"
+                  + i + "            }\n"
+                  + i + "        }\n\n"
+                  + i + "    onDispose {\n"
+                  + i + "        registration.remove()\n"
+                  + i + "    }\n"
+                  + i + "}\n\n"
+              )
 
-              val globalChatRepository = remember {
-                  FirebaseGlobalChatRepository()
-              }
-
-              DisposableEffect(globalChatRepository, userId) {
-                  val registration =
-                      globalChatRepository.listenToApprovedGlobalMessages { result ->
-                          result.onSuccess { messages ->
-                              globalChatMessages = messages
-                          }
-                      }
-
-                  onDispose {
-                      registration.remove()
-                  }
-              }
-
-              val completedCount'''
-
-          replace_once(
-              old_state, new_state,
+          replace_pattern_once(
               "Global chat listener",
-              "globalChatMessages"
+              "globalChatMessages",
+              state_pattern,
+              build_chat_state
           )
 
-          old_tabs = '''                                "جزيرة الطمع",
-                                "المهمات العالمية"
-                            )'''
+          # 3. Add navigation entries.
+          tabs_pattern = (
+              r'(?P<indent>^[ \t]*)"المهمات العالمية"\s*\n[ \t]*\)'
+          )
 
-          new_tabs = '''                                "جزيرة الطمع",
-                                "المهمات العالمية",
-                                "الدردشة العالمية",
-                                "الإعدادات"
-                            )'''
+          def build_tabs(match):
+              i = match.group("indent")
+              return (
+                  i + '"المهمات العالمية",\n'
+                  + i + '"الدردشة العالمية",\n'
+                  + i + '"الإعدادات"\n'
+                  + i + ")"
+              )
 
-          replace_once(
-              old_tabs, new_tabs,
+          replace_pattern_once(
               "Navigation tabs",
-              '"الدردشة العالمية",\n                                "الإعدادات"'
+              '"الدردشة العالمية"',
+              tabs_pattern,
+              build_tabs
           )
 
-          old_cases = '''                            4 -> {
-                                SystemCrossWorldQuestScreen(
-                                    playerId = userId,
-                                    onBack = { selectedTab = 0 }
-                                )
-                            }
-                        }'''
+          # 4. Connect the chat and settings screens.
+          cases_pattern = (
+              r'(?P<indent>^[ \t]*)4 -> \{\s*'
+              r'SystemCrossWorldQuestScreen\(\s*'
+              r'playerId\s*=\s*userId,\s*'
+              r'onBack\s*=\s*\{\s*selectedTab\s*=\s*0\s*\}\s*'
+              r'\)\s*\}\s*\n(?P<close>[ \t]*)\}'
+          )
 
-          new_cases = '''                            4 -> {
-                                SystemCrossWorldQuestScreen(
-                                    playerId = userId,
-                                    onBack = { selectedTab = 0 }
-                                )
-                            }
+          def build_cases(match):
+              i = match.group("indent")
+              close = match.group("close")
 
-                            5 -> {
-                                SystemGlobalChatScreen(
-                                    currentUser = GlobalChatUser(
-                                        userId = userId,
-                                        displayName = account.displayName,
-                                        avatarUrl = account.avatarUrl
-                                    ),
-                                    messages = globalChatMessages,
-                                    friends = emptyList(),
-                                    requests = emptyList(),
-                                    onSendMessage = {},
-                                    onSendImage = {},
-                                    onSendFriendRequest = {},
-                                    onAcceptFriendRequest = {},
-                                    onOpenPrivateChat = {},
-                                    onOpenGroups = {}
-                                )
-                            }
+              return (
+                  i + "4 -> {\n"
+                  + i + "    SystemCrossWorldQuestScreen(\n"
+                  + i + "        playerId = userId,\n"
+                  + i + "        onBack = { selectedTab = 0 }\n"
+                  + i + "    )\n"
+                  + i + "}\n\n"
+                  + i + "5 -> {\n"
+                  + i + "    SystemGlobalChatScreen(\n"
+                  + i + "        currentUser = GlobalChatUser(\n"
+                  + i + "            userId = userId,\n"
+                  + i + "            displayName = account.displayName,\n"
+                  + i + "            avatarUrl = account.avatarUrl\n"
+                  + i + "        ),\n"
+                  + i + "        messages = globalChatMessages,\n"
+                  + i + "        friends = emptyList(),\n"
+                  + i + "        requests = emptyList(),\n"
+                  + i + "        onSendMessage = {},\n"
+                  + i + "        onSendImage = {},\n"
+                  + i + "        onSendFriendRequest = {},\n"
+                  + i + "        onAcceptFriendRequest = {},\n"
+                  + i + "        onOpenPrivateChat = {},\n"
+                  + i + "        onOpenGroups = {}\n"
+                  + i + "    )\n"
+                  + i + "}\n\n"
+                  + i + "6 -> {\n"
+                  + i + "    SystemThemeSelectionScreen(\n"
+                  + i + "        onBack = { selectedTab = 0 },\n"
+                  + i + "        onThemeSelected = { selectedTab = 0 }\n"
+                  + i + "    )\n"
+                  + i + "}\n"
+                  + close + "}"
+              )
 
-                            6 -> {
-                                SystemThemeSelectionScreen(
-                                    onBack = { selectedTab = 0 },
-                                    onThemeSelected = { selectedTab = 0 }
-                                )
-                            }
-                        }'''
-
-          replace_once(
-              old_cases, new_cases,
+          replace_pattern_once(
               "Chat and settings screens",
-              "SystemGlobalChatScreen("
+              "SystemGlobalChatScreen(",
+              cases_pattern,
+              build_cases
           )
 
-          old_dialog = '''                    val dialogTitle =
-                        if (miyarDialog == "explain") {
-                            "مرحباً، أنا ميار"
-                        } else {
-                            "التحدث مع ميار"
-                        }
+          # 5. Improve the account and Miyar information dialog.
+          dialog_pattern = (
+              r'(?P<indent>^[ \t]*)val dialogTitle\s*=\s*'
+              r'if \(miyarDialog == "explain"\) \{[\s\S]*?'
+              r'val dialogMessage\s*=\s*'
+              r'if \(miyarDialog == "explain"\) \{[\s\S]*?'
+              r'\}\s*(?=^[ \t]*AlertDialog\()'
+          )
 
-                    val dialogMessage =
-                        if (miyarDialog == "explain") {
-                            "أنا مرشدتك داخل SYSTEM. سأساعدك على فهم نظام التطور، والمهام، والمستويات، والعوالم، وكيفية استخدام التطبيق. سيتم توسيع الشرح وربطه بأقسام النظام تباعاً."
-                        } else {
-                            "واجهة المحادثة مع ميار ضمن مراحل التطوير. سيجري ربط المحادثة النصية والصوتية عندما تكتمل مكوناتها."
-                        }'''
+          def build_dialog(match):
+              i = match.group("indent")
+              return (
+                  i + "val dialogTitle =\n"
+                  + i + "    when (miyarDialog) {\n"
+                  + i + '        "explain" -> "مرحباً، أنا ميار"\n'
+                  + i + '        "account" -> "حساب SYSTEM"\n'
+                  + i + '        else -> "التحدث مع ميار"\n'
+                  + i + "    }\n\n"
+                  + i + "val dialogMessage =\n"
+                  + i + "    when (miyarDialog) {\n"
+                  + i + '        "explain" ->\n'
+                  + i + '            "أنا مرشدتك داخل SYSTEM. سأساعدك على فهم نظام التطور، والمهام، والمستويات، والعوالم، وكيفية استخدام التطبيق."\n\n'
+                  + i + '        "account" ->\n'
+                  + i + "            if (account.email.isNotBlank()) {\n"
+                  + i + '                "أنت مسجل الدخول حالياً بالبريد: ${account.email}. ربط Google أو Facebook يحتاج تنفيذ واجهة الربط والتحقق من مزودي الخدمة في مرحلة لاحقة."\n'
+                  + i + "            } else {\n"
+                  + i + '                "أنت تستخدم حساب الضيف حالياً. تسجيل الدخول بالبريد وإنشاء الحساب متاحان من بوابة الحساب عند بدء التطبيق."\n'
+                  + i + "            }\n\n"
+                  + i + "        else ->\n"
+                  + i + '            "هذه محادثة ميار الإرشادية. أما الدردشة العالمية مع اللاعبين فتجدها في زر الدردشة العالمية."\n'
+                  + i + "    }\n\n"
+              )
 
-          new_dialog = '''                    val dialogTitle =
-                        when (miyarDialog) {
-                            "explain" -> "مرحباً، أنا ميار"
-                            "account" -> "حساب SYSTEM"
-                            else -> "التحدث مع ميار"
-                        }
-
-                    val dialogMessage =
-                        when (miyarDialog) {
-                            "explain" ->
-                                "أنا مرشدتك داخل SYSTEM. سأساعدك على فهم نظام التطور، والمهام، والمستويات، والعوالم، وكيفية استخدام التطبيق."
-
-                            "account" ->
-                                if (account.email.isNotBlank()) {
-                                    "أنت مسجل الدخول حالياً بالبريد: ${account.email}. تسجيل الدخول وحفظ هوية الحساب متاحان. ربط Google أو Facebook بحساب موجود يحتاج تنفيذ واجهة الربط والتحقق من مزودي الخدمة في مرحلة لاحقة."
-                                } else {
-                                    "أنت تستخدم حساب الضيف حالياً. تسجيل الدخول بالبريد وإنشاء الحساب متاحان من بوابة الحساب عند بدء التطبيق. ربط Google أو Facebook بحساب موجود يحتاج تنفيذاً إضافياً."
-                                }
-
-                            else ->
-                                "هذه محادثة ميار الإرشادية. أما الدردشة العالمية مع اللاعبين فتجدها في زر الدردشة العالمية."
-                        }'''
-
-          replace_once(
-              old_dialog, new_dialog,
+          replace_pattern_once(
               "Account information dialog",
-              '"account" -> "حساب SYSTEM"'
+              '"account" -> "حساب SYSTEM"',
+              dialog_pattern,
+              build_dialog
           )
 
           path.write_text(source, encoding="utf-8")
-
-          theme_path = Path("app/src/main/java/com/system/irtqaa/SystemTheme.kt")
-          theme_source = theme_path.read_text(encoding="utf-8")
-          old_palette = "val palette = SystemAppThemeCatalog.getById(selectedThemeId)"
-          new_palette = "val palette = SystemAppThemeSettings.getSelectedTheme(context)"
-
-          if old_palette in theme_source:
-              theme_source = theme_source.replace(old_palette, new_palette, 1)
-              theme_path.write_text(theme_source, encoding="utf-8")
-          elif new_palette not in theme_source:
-              raise SystemExit("Could not connect saved theme selection.")
 
           print("SYSTEM dashboard integration completed.")
           PY
 
       - name: Build APK
         run: gradle assembleDebug
+
+      - name: Verify APK
+        shell: bash
+        run: |
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+
+          if [ ! -f "$APK" ]; then
+            echo "::error::APK was not generated."
+            exit 1
+          fi
+
+          ls -lh "$APK"
+          sha256sum "$APK"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
