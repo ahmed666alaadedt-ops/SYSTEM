@@ -1,3 +1,4 @@
+
 name: Build SYSTEM Android APK
 
 on:
@@ -66,6 +67,22 @@ jobs:
           cp "$ICON_SOURCE" "$ICON_TARGET"
 
           echo "SYSTEM 3D launcher icon installed successfully."
+
+      - name: Install SYSTEM Miyar home background
+        shell: bash
+        run: |
+          IMAGE_SOURCE="SYSTEM-WORLD-3D/assets/ui/file_0000000053f081f4ab5d3e27245ce7a9.png"
+          IMAGE_TARGET="app/src/main/res/drawable-nodpi/system_home_background.png"
+
+          if [ ! -f "$IMAGE_SOURCE" ]; then
+            echo "::error::SYSTEM Miyar home image was not found."
+            exit 1
+          fi
+
+          mkdir -p "$(dirname "$IMAGE_TARGET")"
+          cp "$IMAGE_SOURCE" "$IMAGE_TARGET"
+
+          echo "SYSTEM Miyar home background installed successfully."
 
       - name: Build APK
         run: gradle assembleDebug
