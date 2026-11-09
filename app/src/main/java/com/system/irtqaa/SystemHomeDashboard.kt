@@ -1,5 +1,7 @@
+
 package com.system.irtqaa
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -10,6 +12,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -22,288 +26,297 @@ fun SystemHomeDashboard(
     completedCount: Int,
     totalTasks: Int,
     onSelectWorld: (String) -> Unit,
+    onStartGameClick: () -> Unit,
     onExplainClick: () -> Unit,
     onTalkClick: () -> Unit,
     onChatClick: () -> Unit,
-    onAccountLinkClick: () -> Unit
+    onAccountLinkClick: () -> Unit,
+    onSettingsClick: () -> Unit
 ) {
     val gold = Color(0xFFFFC857)
     val cyan = Color(0xFF45D6E8)
     val panel = Color(0xE6132035)
     val white = Color.White
 
-    Row(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.linearGradient(
-                    listOf(
-                        Color(0xFF07111F),
-                        Color(0xFF101C32),
-                        Color(0xFF17152D)
-                    )
-                )
-            )
-            .padding(12.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
 
-        // المنطقة اليسرى: العوالم الأربعة
-        Column(
+        Image(
+            painter = painterResource(R.drawable.system_home_background),
+            contentDescription = "واجهة ميار الرئيسية والعوالم الأربعة",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+
+        Box(
             modifier = Modifier
-                .width(225.dp)
-                .fillMaxHeight(),
-            verticalArrangement = Arrangement.spacedBy(9.dp)
-        ) {
-            Text(
-                "عوالم SYSTEM",
-                color = gold,
-                fontSize = 21.sp,
-                fontWeight = FontWeight.Black
-            )
+                .fillMaxSize()
+                .background(Color(0x66050B16))
+        )
 
-            Text(
-                "اختر عالم رحلتك",
-                color = Color.LightGray,
-                fontSize = 12.sp
-            )
-
-            HomeWorldCard(
-                title = "العالم الحديث",
-                subtitle = "المدن والحياة الواقعية",
-                symbol = "🌆",
-                accent = Color(0xFF45D6E8),
-                modifier = Modifier.weight(1f),
-                onClick = { onSelectWorld("real") }
-            )
-
-            HomeWorldCard(
-                title = "عالم التاريخ",
-                subtitle = "الحضارات والأساطير",
-                symbol = "🏛️",
-                accent = Color(0xFFE6B65C),
-                modifier = Modifier.weight(1f),
-                onClick = { onSelectWorld("mythology") }
-            )
-
-            HomeWorldCard(
-                title = "العالم الخيالي",
-                subtitle = "الممالك والسحر",
-                symbol = "🐉",
-                accent = Color(0xFFB69BFF),
-                modifier = Modifier.weight(1f),
-                onClick = { onSelectWorld("fantasy") }
-            )
-
-            HomeWorldCard(
-                title = "جزيرة الطمع",
-                subtitle = "العالم الموسمي الغامض",
-                symbol = "🏝️",
-                accent = Color(0xFF65E6A6),
-                modifier = Modifier.weight(1f),
-                onClick = { onSelectWorld("greed") }
-            )
-        }
-
-        // المنطقة الوسطى: ميار والإنجازات
-        Column(
+        Row(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .fillMaxSize()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+
+            // العوالم الأربعة
+            Column(
+                modifier = Modifier
+                    .width(205.dp)
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(
-                        "SYSTEM",
-                        color = gold,
-                        fontSize = 27.sp,
-                        fontWeight = FontWeight.Black
-                    )
+                Text(
+                    "عوالم SYSTEM",
+                    color = gold,
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Black
+                )
 
-                    Text(
-                        "نظام البشرية نحو الارتقاء",
-                        color = Color.LightGray,
-                        fontSize = 12.sp
+                HomeWorldCard(
+                    title = "العالم الحديث",
+                    subtitle = "المدن والحياة الواقعية",
+                    symbol = "🌆",
+                    accent = cyan,
+                    modifier = Modifier.weight(1f),
+                    onClick = { onSelectWorld("real") }
+                )
+
+                HomeWorldCard(
+                    title = "عالم التاريخ",
+                    subtitle = "الحضارات والعصور",
+                    symbol = "🏛️",
+                    accent = Color(0xFFE6B65C),
+                    modifier = Modifier.weight(1f),
+                    onClick = { onSelectWorld("mythology") }
+                )
+
+                HomeWorldCard(
+                    title = "العالم الخيالي",
+                    subtitle = "الممالك والسحر",
+                    symbol = "🐉",
+                    accent = Color(0xFFB69BFF),
+                    modifier = Modifier.weight(1f),
+                    onClick = { onSelectWorld("fantasy") }
+                )
+
+                HomeWorldCard(
+                    title = "جزيرة الطمع",
+                    subtitle = "العالم الموسمي",
+                    symbol = "🏝️",
+                    accent = Color(0xFF65E6A6),
+                    modifier = Modifier.weight(1f),
+                    onClick = { onSelectWorld("greed") }
+                )
+            }
+
+            // الوسط: ميار وبدء الرحلة
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    "SYSTEM",
+                    color = gold,
+                    fontSize = 30.sp,
+                    fontWeight = FontWeight.Black
+                )
+
+                Text(
+                    "نظام البشرية نحو الارتقاء",
+                    color = white,
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = panel
                     )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(7.dp)
+                    ) {
+                        Text(
+                            "مرحباً بك في SYSTEM",
+                            color = white,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Text(
+                            "أنا ميار، مرشدتك في رحلتك.",
+                            color = cyan,
+                            fontSize = 13.sp
+                        )
+
+                        Text(
+                            "إنجازات اليوم: $completedCount / $totalTasks",
+                            color = white,
+                            fontSize = 13.sp
+                        )
+
+                        LinearProgressIndicator(
+                            progress = {
+                                if (totalTasks > 0) {
+                                    (completedCount.toFloat() / totalTasks)
+                                        .coerceIn(0f, 1f)
+                                } else {
+                                    0f
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            color = gold,
+                            trackColor = Color.White.copy(alpha = 0.16f)
+                        )
+
+                        Button(
+                            onClick = onStartGameClick,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(49.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = gold,
+                                contentColor = Color(0xFF101522)
+                            ),
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+                            Text(
+                                "▶  بدء اللعب",
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Black
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = onExplainClick,
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = cyan
+                                )
+                            ) {
+                                Text("شرح النظام")
+                            }
+
+                            OutlinedButton(
+                                onClick = onTalkClick,
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = gold
+                                )
+                            ) {
+                                Text("تحدث مع ميار")
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ملف اللاعب والخدمات
+            Column(
+                modifier = Modifier
+                    .width(195.dp)
+                    .fillMaxHeight(),
+                verticalArrangement = Arrangement.spacedBy(9.dp)
+            ) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(17.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = panel
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(13.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            "ملف اللاعب",
+                            color = white,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Text("المستوى العام", color = Color.LightGray, fontSize = 12.sp)
+
+                        Text(
+                            "LV. $overallLevel",
+                            color = gold,
+                            fontSize = 29.sp,
+                            fontWeight = FontWeight.Black
+                        )
+
+                        HorizontalDivider(
+                            color = Color.White.copy(alpha = 0.15f)
+                        )
+
+                        Text("الخبرة الكلية", color = Color.LightGray, fontSize = 12.sp)
+
+                        Text(
+                            "$totalExperience XP",
+                            color = cyan,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
 
                 Text(
-                    "الرئيسية",
-                    color = cyan,
-                    fontSize = 14.sp,
+                    "الخدمات",
+                    color = gold,
+                    fontSize = 15.sp,
                     fontWeight = FontWeight.Bold
                 )
-            }
 
-            SystemMiyarWelcomeCard(
-                onExplainClick = onExplainClick,
-                onTalkClick = onTalkClick,
-                modifier = Modifier.weight(1f)
-            )
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = panel
+                HomeQuickAction(
+                    symbol = "💬",
+                    title = "الدردشة العالمية",
+                    subtitle = "فتح المحادثة",
+                    accent = cyan,
+                    onClick = onChatClick
                 )
-            ) {
-                Column(
-                    modifier = Modifier.padding(15.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        "مرحباً بك أيها المقاتل",
-                        color = white,
-                        fontSize = 19.sp,
-                        fontWeight = FontWeight.Bold
-                    )
 
-                    Text(
-                        "إنجازات اليوم: $completedCount / $totalTasks",
-                        color = cyan,
-                        fontSize = 14.sp
-                    )
-
-                    LinearProgressIndicator(
-                        progress = {
-                            if (totalTasks > 0) {
-                                completedCount.toFloat() / totalTasks
-                            } else {
-                                0f
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        color = gold,
-                        trackColor = Color.White.copy(alpha = 0.12f)
-                    )
-
-                    Text(
-                        "واصل رحلتك، فكل إنجاز يقربك من الارتقاء.",
-                        color = Color.LightGray,
-                        fontSize = 12.sp
-                    )
-                }
-            }
-        }
-
-        // المنطقة اليمنى: بيانات اللاعب والخدمات
-        Column(
-            modifier = Modifier
-                .width(205.dp)
-                .fillMaxHeight(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = panel
+                HomeQuickAction(
+                    symbol = "🔗",
+                    title = "ربط الحسابات",
+                    subtitle = "إدارة الحساب",
+                    accent = gold,
+                    onClick = onAccountLinkClick
                 )
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(15.dp),
-                    verticalArrangement = Arrangement.spacedBy(9.dp)
-                ) {
-                    Text(
-                        "ملف اللاعب",
-                        color = white,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold
-                    )
 
-                    Text(
-                        "المستوى العام",
-                        color = Color.LightGray,
-                        fontSize = 12.sp
-                    )
-
-                    Text(
-                        "LV. $overallLevel",
-                        color = gold,
-                        fontSize = 31.sp,
-                        fontWeight = FontWeight.Black
-                    )
-
-                    HorizontalDivider(
-                        color = Color.White.copy(alpha = 0.12f)
-                    )
-
-                    Text(
-                        "الخبرة الكلية",
-                        color = Color.LightGray,
-                        fontSize = 12.sp
-                    )
-
-                    Text(
-                        "$totalExperience XP",
-                        color = cyan,
-                        fontSize = 19.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-            Text(
-                "الاتصال والخدمات",
-                color = gold,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-            HomeQuickAction(
-                symbol = "💬",
-                title = "الدردشة العالمية",
-                subtitle = "تواصل مع اللاعبين",
-                accent = cyan,
-                onClick = onChatClick
-            )
-
-            HomeQuickAction(
-                symbol = "🔗",
-                title = "ربط الحسابات",
-                subtitle = "Google و Facebook",
-                accent = gold,
-                onClick = onAccountLinkClick
-            )
-
-            Spacer(Modifier.weight(1f))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = panel
+                HomeQuickAction(
+                    symbol = "⚙️",
+                    title = "الإعدادات",
+                    subtitle = "إعدادات التطبيق",
+                    accent = Color(0xFFB69BFF),
+                    onClick = onSettingsClick
                 )
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        "SYSTEM WORLD",
-                        color = gold,
-                        fontWeight = FontWeight.Black,
-                        fontSize = 15.sp
-                    )
 
-                    Text(
-                        "رحلتك تبدأ من هنا",
-                        color = Color.LightGray,
-                        fontSize = 11.sp,
-                        textAlign = TextAlign.Center
-                    )
-                }
+                Spacer(Modifier.weight(1f))
+
+                Text(
+                    "SYSTEM WORLD",
+                    color = gold,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Black,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
             }
         }
     }
@@ -322,25 +335,20 @@ private fun HomeWorldCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(17.dp),
+        shape = RoundedCornerShape(15.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xE6192940)
         ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 5.dp
-        )
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 10.dp, vertical = 7.dp),
+                .padding(horizontal = 9.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(9.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                symbol,
-                fontSize = 27.sp
-            )
+            Text(symbol, fontSize = 25.sp)
 
             Column(
                 modifier = Modifier.weight(1f),
@@ -349,7 +357,7 @@ private fun HomeWorldCard(
                 Text(
                     title,
                     color = accent,
-                    fontSize = 14.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Black
                 )
 
@@ -364,7 +372,7 @@ private fun HomeWorldCard(
             Text(
                 "‹",
                 color = accent,
-                fontSize = 24.sp,
+                fontSize = 23.sp,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -383,7 +391,7 @@ private fun HomeQuickAction(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(15.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xE6192940)
         )
@@ -391,22 +399,17 @@ private fun HomeQuickAction(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(11.dp),
+                .padding(9.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(9.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                symbol,
-                fontSize = 24.sp
-            )
+            Text(symbol, fontSize = 22.sp)
 
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     title,
                     color = accent,
-                    fontSize = 13.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
 
