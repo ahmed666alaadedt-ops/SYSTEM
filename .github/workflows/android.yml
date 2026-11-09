@@ -51,6 +51,22 @@ jobs:
             exit 1
           fi
 
+      - name: Install SYSTEM 3D launcher icon
+        shell: bash
+        run: |
+          ICON_SOURCE="SYSTEM-WORLD-3D/assets/1000220666-1.png"
+          ICON_TARGET="app/src/main/res/drawable-nodpi/system_launcher_icon_3d.png"
+
+          if [ ! -f "$ICON_SOURCE" ]; then
+            echo "::error::SYSTEM 3D launcher icon source was not found."
+            exit 1
+          fi
+
+          mkdir -p "$(dirname "$ICON_TARGET")"
+          cp "$ICON_SOURCE" "$ICON_TARGET"
+
+          echo "SYSTEM 3D launcher icon installed successfully."
+
       - name: Build APK
         run: gradle assembleDebug
 
