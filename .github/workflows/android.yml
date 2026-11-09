@@ -66,8 +66,6 @@ jobs:
           mkdir -p "$(dirname "$ICON_TARGET")"
           cp "$ICON_SOURCE" "$ICON_TARGET"
 
-          echo "SYSTEM 3D launcher icon installed successfully."
-
       - name: Install SYSTEM Miyar home background
         shell: bash
         run: |
@@ -82,7 +80,275 @@ jobs:
           mkdir -p "$(dirname "$IMAGE_TARGET")"
           cp "$IMAGE_SOURCE" "$IMAGE_TARGET"
 
-          echo "SYSTEM Miyar home background installed successfully."
+      - name: Connect Miyar dashboard to Android app
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("app/src/main/java/com/system/irtqaa/MainActivity.kt")
+          source = path.read_text(encoding="utf-8")
+
+          def replace_once(old, new, label, marker):
+              global source
+              if marker in source:
+                  print(label + ": already connected")
+                  return
+              if old not in source:
+                  raise SystemExit("Could not locate " + label)
+              source = source.replace(old, new, 1)
+              print(label + ": connected")
+
+          old_home = '''                                    Column(
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        SystemMiyarWelcomeCard(
+                                            onExplainClick = {
+                                                miyarDialog = "explain"
+                                            },
+                                            onTalkClick = {
+                                                miyarDialog = "chat"
+                                            }
+                                        )
+
+                                        Spacer(Modifier.height(18.dp))
+
+                                        Text(
+                                            "مرحباً بك أيها المقاتل",
+                                            color = Color.White,
+                                            fontSize = 21.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+
+                                        Spacer(Modifier.height(8.dp))
+
+                                        Text(
+                                            "إنجازات اليوم: $completedCount / ${tasks.size}",
+                                            color = cyan
+                                        )
+
+                                        Text(
+                                            "مجموع الخبرة: $totalExperience XP",
+                                            color = gold
+                                        )
+
+                                        Spacer(Modifier.height(18.dp))
+
+                                        Text(
+                                            "عوالم SYSTEM",
+                                            color = gold,
+                                            fontSize = 20.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+
+                                        Spacer(Modifier.height(10.dp))
+
+                                        SystemWorldBanner(
+                                            onClick = {
+                                                showWorldSelection = true
+                                            }
+                                        )
+                                    }'''
+
+          new_home = '''                                    SystemHomeDashboard(
+                                        overallLevel = progressSnapshot.overallLevel,
+                                        totalExperience = totalExperience,
+                                        completedCount = completedCount,
+                                        totalTasks = tasks.size,
+                                        onSelectWorld = { world ->
+                                            selectedWorld = world
+                                            showWorldSelection = false
+                                        },
+                                        onStartGameClick = {
+                                            selectedWorld = ""
+                                            showWorldSelection = true
+                                        },
+                                        onExplainClick = {
+                                            miyarDialog = "explain"
+                                        },
+                                        onTalkClick = {
+                                            miyarDialog = "chat"
+                                        },
+                                        onChatClick = {
+                                            selectedWorld = ""
+                                            selectedTab = 5
+                                        },
+                                        onAccountLinkClick = {
+                                            miyarDialog = "account"
+                                        },
+                                        onSettingsClick = {
+                                            selectedWorld = ""
+                                            selectedTab = 6
+                                        }
+                                    )'''
+
+          replace_once(
+              old_home, new_home,
+              "Miyar home screen",
+              "SystemHomeDashboard("
+          )
+
+          old_state = '''    var miyarDialog by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    val completedCount'''
+
+          new_state = '''    var miyarDialog by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    var globalChatMessages by remember(userId) {
+        mutableStateOf(emptyList<GlobalChatMessage>())
+    }
+
+    val globalChatRepository = remember {
+        FirebaseGlobalChatRepository()
+    }
+
+    DisposableEffect(globalChatRepository, userId) {
+        val registration =
+            globalChatRepository.listenToApprovedGlobalMessages { result ->
+                result.onSuccess { messages ->
+                    globalChatMessages = messages
+                }
+            }
+
+        onDispose {
+            registration.remove()
+        }
+    }
+
+    val completedCount'''
+
+          replace_once(
+              old_state, new_state,
+              "Global chat listener",
+              "globalChatMessages"
+          )
+
+          old_tabs = '''                                "جزيرة الطمع",
+                                "المهمات العالمية"
+                            )'''
+
+          new_tabs = '''                                "جزيرة الطمع",
+                                "المهمات العالمية",
+                                "الدردشة العالمية",
+                                "الإعدادات"
+                            )'''
+
+          replace_once(
+              old_tabs, new_tabs,
+              "Navigation tabs",
+              '"الدردشة العالمية",\n                                "الإعدادات"'
+          )
+
+          old_cases = '''                            4 -> {
+                                SystemCrossWorldQuestScreen(
+                                    playerId = userId,
+                                    onBack = { selectedTab = 0 }
+                                )
+                            }
+                        }'''
+
+          new_cases = '''                            4 -> {
+                                SystemCrossWorldQuestScreen(
+                                    playerId = userId,
+                                    onBack = { selectedTab = 0 }
+                                )
+                            }
+
+                            5 -> {
+                                SystemGlobalChatScreen(
+                                    currentUser = GlobalChatUser(
+                                        userId = userId,
+                                        displayName = account.displayName,
+                                        avatarUrl = account.avatarUrl
+                                    ),
+                                    messages = globalChatMessages,
+                                    friends = emptyList(),
+                                    requests = emptyList(),
+                                    onSendMessage = {},
+                                    onSendImage = {},
+                                    onSendFriendRequest = {},
+                                    onAcceptFriendRequest = {},
+                                    onOpenPrivateChat = {},
+                                    onOpenGroups = {}
+                                )
+                            }
+
+                            6 -> {
+                                SystemThemeSelectionScreen(
+                                    onBack = { selectedTab = 0 },
+                                    onThemeSelected = { selectedTab = 0 }
+                                )
+                            }
+                        }'''
+
+          replace_once(
+              old_cases, new_cases,
+              "Chat and settings screens",
+              "SystemGlobalChatScreen("
+          )
+
+          old_dialog = '''                    val dialogTitle =
+                        if (miyarDialog == "explain") {
+                            "مرحباً، أنا ميار"
+                        } else {
+                            "التحدث مع ميار"
+                        }
+
+                    val dialogMessage =
+                        if (miyarDialog == "explain") {
+                            "أنا مرشدتك داخل SYSTEM. سأساعدك على فهم نظام التطور، والمهام، والمستويات، والعوالم، وكيفية استخدام التطبيق. سيتم توسيع الشرح وربطه بأقسام النظام تباعاً."
+                        } else {
+                            "واجهة المحادثة مع ميار ضمن مراحل التطوير. سيجري ربط المحادثة النصية والصوتية عندما تكتمل مكوناتها."
+                        }'''
+
+          new_dialog = '''                    val dialogTitle =
+                        when (miyarDialog) {
+                            "explain" -> "مرحباً، أنا ميار"
+                            "account" -> "حساب SYSTEM"
+                            else -> "التحدث مع ميار"
+                        }
+
+                    val dialogMessage =
+                        when (miyarDialog) {
+                            "explain" ->
+                                "أنا مرشدتك داخل SYSTEM. سأساعدك على فهم نظام التطور، والمهام، والمستويات، والعوالم، وكيفية استخدام التطبيق."
+
+                            "account" ->
+                                if (account.email.isNotBlank()) {
+                                    "أنت مسجل الدخول حالياً بالبريد: ${account.email}. تسجيل الدخول وحفظ هوية الحساب متاحان. ربط Google أو Facebook بحساب موجود يحتاج تنفيذ واجهة الربط والتحقق من مزودي الخدمة في مرحلة لاحقة."
+                                } else {
+                                    "أنت تستخدم حساب الضيف حالياً. تسجيل الدخول بالبريد وإنشاء الحساب متاحان من بوابة الحساب عند بدء التطبيق. ربط Google أو Facebook بحساب موجود يحتاج تنفيذاً إضافياً."
+                                }
+
+                            else ->
+                                "هذه محادثة ميار الإرشادية. أما الدردشة العالمية مع اللاعبين فتجدها في زر الدردشة العالمية."
+                        }'''
+
+          replace_once(
+              old_dialog, new_dialog,
+              "Account information dialog",
+              '"account" -> "حساب SYSTEM"'
+          )
+
+          path.write_text(source, encoding="utf-8")
+
+          theme_path = Path("app/src/main/java/com/system/irtqaa/SystemTheme.kt")
+          theme_source = theme_path.read_text(encoding="utf-8")
+          old_palette = "val palette = SystemAppThemeCatalog.getById(selectedThemeId)"
+          new_palette = "val palette = SystemAppThemeSettings.getSelectedTheme(context)"
+
+          if old_palette in theme_source:
+              theme_source = theme_source.replace(old_palette, new_palette, 1)
+              theme_path.write_text(theme_source, encoding="utf-8")
+          elif new_palette not in theme_source:
+              raise SystemExit("Could not connect saved theme selection.")
+
+          print("SYSTEM dashboard integration completed.")
+          PY
 
       - name: Build APK
         run: gradle assembleDebug
