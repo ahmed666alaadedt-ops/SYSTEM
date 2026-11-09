@@ -1,4 +1,3 @@
-
 name: Build SYSTEM Android APK
 
 on:
@@ -30,11 +29,13 @@ jobs:
         shell: bash
         run: |
           if [ -f "app/src/main/res/drawable-nodpi/system_launcher_icon-2.png" ]; then
-            mv "app/src/main/res/drawable-nodpi/system_launcher_icon-2.png" "app/src/main/res/drawable-nodpi/system_launcher_icon_2.png"
+            mv "app/src/main/res/drawable-nodpi/system_launcher_icon-2.png" \
+               "app/src/main/res/drawable-nodpi/system_launcher_icon_2.png"
           fi
 
           if [ -f "app/src/main/res/drawable/system_launcher_icon-4.png" ]; then
-            mv "app/src/main/res/drawable/system_launcher_icon-4.png" "app/src/main/res/drawable/system_launcher_icon_4.png"
+            mv "app/src/main/res/drawable/system_launcher_icon-4.png" \
+               "app/src/main/res/drawable/system_launcher_icon_4.png"
           fi
 
       - name: Fix cinematic video filename
@@ -80,261 +81,6 @@ jobs:
           mkdir -p "$(dirname "$IMAGE_TARGET")"
           cp "$IMAGE_SOURCE" "$IMAGE_TARGET"
 
-      - name: Connect Miyar dashboard to Android app
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-
-          path = Path("app/src/main/java/com/system/irtqaa/MainActivity.kt")
-          source = path.read_text(encoding="utf-8")
-
-          def replace_pattern_once(label, marker, pattern, build):
-              global source
-
-              if marker in source:
-                  print(label + ": already connected")
-                  return
-
-              matches = list(re.finditer(
-                  pattern,
-                  source,
-                  flags=re.MULTILINE | re.DOTALL
-              ))
-
-              if len(matches) != 1:
-                  raise SystemExit(
-                      "Could not safely locate " + label +
-                      " (matches: " + str(len(matches)) + ")"
-                  )
-
-              match = matches[0]
-              replacement = build(match)
-
-              source = (
-                  source[:match.start()]
-                  + replacement
-                  + source[match.end():]
-              )
-
-              print(label + ": connected")
-
-          # 1. Connect the actual Miyar home dashboard.
-          home_pattern = (
-              r'(?P<indent>^[ \t]*)\} else \{\s*'
-              r'Column\(\s*modifier\s*=\s*Modifier\.fillMaxWidth\(\)\s*\)'
-              r'\s*\{\s*SystemMiyarWelcomeCard\('
-              r'[\s\S]*?'
-              r'SystemWorldBanner\(\s*onClick\s*=\s*'
-              r'\{\s*showWorldSelection\s*=\s*true\s*\}\s*\)'
-              r'\s*\}\s*\n(?P=indent)\}'
-          )
-
-          def build_home(match):
-              i = match.group("indent")
-              return (
-                  i + "} else {\n"
-                  + i + "    SystemHomeDashboard(\n"
-                  + i + "        overallLevel = progressSnapshot.overallLevel,\n"
-                  + i + "        totalExperience = totalExperience,\n"
-                  + i + "        completedCount = completedCount,\n"
-                  + i + "        totalTasks = tasks.size,\n"
-                  + i + "        onSelectWorld = { world ->\n"
-                  + i + "            selectedWorld = world\n"
-                  + i + "            showWorldSelection = false\n"
-                  + i + "        },\n"
-                  + i + "        onStartGameClick = {\n"
-                  + i + "            selectedWorld = \"\"\n"
-                  + i + "            showWorldSelection = true\n"
-                  + i + "        },\n"
-                  + i + "        onExplainClick = {\n"
-                  + i + "            miyarDialog = \"explain\"\n"
-                  + i + "        },\n"
-                  + i + "        onTalkClick = {\n"
-                  + i + "            miyarDialog = \"chat\"\n"
-                  + i + "        },\n"
-                  + i + "        onChatClick = {\n"
-                  + i + "            selectedWorld = \"\"\n"
-                  + i + "            selectedTab = 5\n"
-                  + i + "        },\n"
-                  + i + "        onAccountLinkClick = {\n"
-                  + i + "            miyarDialog = \"account\"\n"
-                  + i + "        },\n"
-                  + i + "        onSettingsClick = {\n"
-                  + i + "            selectedWorld = \"\"\n"
-                  + i + "            selectedTab = 6\n"
-                  + i + "        }\n"
-                  + i + "    )\n"
-                  + i + "}"
-              )
-
-          replace_pattern_once(
-              "Miyar home dashboard",
-              "SystemHomeDashboard(",
-              home_pattern,
-              build_home
-          )
-
-          # 2. Add the live global chat listener.
-          state_pattern = (
-              r'(?P<indent>^[ \t]*)var miyarDialog by remember \{\s*'
-              r'mutableStateOf<String\?>\(null\)\s*\}\s*'
-              r'(?=^[ \t]*val completedCount)'
-          )
-
-          def build_chat_state(match):
-              i = match.group("indent")
-              return (
-                  i + "var miyarDialog by remember {\n"
-                  + i + "    mutableStateOf<String?>(null)\n"
-                  + i + "}\n\n"
-                  + i + "var globalChatMessages by remember(userId) {\n"
-                  + i + "    mutableStateOf(emptyList<GlobalChatMessage>())\n"
-                  + i + "}\n\n"
-                  + i + "val globalChatRepository = remember {\n"
-                  + i + "    FirebaseGlobalChatRepository()\n"
-                  + i + "}\n\n"
-                  + i + "DisposableEffect(globalChatRepository, userId) {\n"
-                  + i + "    val registration =\n"
-                  + i + "        globalChatRepository.listenToApprovedGlobalMessages { result ->\n"
-                  + i + "            result.onSuccess { messages ->\n"
-                  + i + "                globalChatMessages = messages\n"
-                  + i + "            }\n"
-                  + i + "        }\n\n"
-                  + i + "    onDispose {\n"
-                  + i + "        registration.remove()\n"
-                  + i + "    }\n"
-                  + i + "}\n\n"
-              )
-
-          replace_pattern_once(
-              "Global chat listener",
-              "globalChatMessages",
-              state_pattern,
-              build_chat_state
-          )
-
-          # 3. Add navigation entries.
-          tabs_pattern = (
-              r'(?P<indent>^[ \t]*)"المهمات العالمية"\s*\n[ \t]*\)'
-          )
-
-          def build_tabs(match):
-              i = match.group("indent")
-              return (
-                  i + '"المهمات العالمية",\n'
-                  + i + '"الدردشة العالمية",\n'
-                  + i + '"الإعدادات"\n'
-                  + i + ")"
-              )
-
-          replace_pattern_once(
-              "Navigation tabs",
-              '"الدردشة العالمية"',
-              tabs_pattern,
-              build_tabs
-          )
-
-          # 4. Connect the chat and settings screens.
-          cases_pattern = (
-              r'(?P<indent>^[ \t]*)4 -> \{\s*'
-              r'SystemCrossWorldQuestScreen\(\s*'
-              r'playerId\s*=\s*userId,\s*'
-              r'onBack\s*=\s*\{\s*selectedTab\s*=\s*0\s*\}\s*'
-              r'\)\s*\}\s*\n(?P<close>[ \t]*)\}'
-          )
-
-          def build_cases(match):
-              i = match.group("indent")
-              close = match.group("close")
-
-              return (
-                  i + "4 -> {\n"
-                  + i + "    SystemCrossWorldQuestScreen(\n"
-                  + i + "        playerId = userId,\n"
-                  + i + "        onBack = { selectedTab = 0 }\n"
-                  + i + "    )\n"
-                  + i + "}\n\n"
-                  + i + "5 -> {\n"
-                  + i + "    SystemGlobalChatScreen(\n"
-                  + i + "        currentUser = GlobalChatUser(\n"
-                  + i + "            userId = userId,\n"
-                  + i + "            displayName = account.displayName,\n"
-                  + i + "            avatarUrl = account.avatarUrl\n"
-                  + i + "        ),\n"
-                  + i + "        messages = globalChatMessages,\n"
-                  + i + "        friends = emptyList(),\n"
-                  + i + "        requests = emptyList(),\n"
-                  + i + "        onSendMessage = {},\n"
-                  + i + "        onSendImage = {},\n"
-                  + i + "        onSendFriendRequest = {},\n"
-                  + i + "        onAcceptFriendRequest = {},\n"
-                  + i + "        onOpenPrivateChat = {},\n"
-                  + i + "        onOpenGroups = {}\n"
-                  + i + "    )\n"
-                  + i + "}\n\n"
-                  + i + "6 -> {\n"
-                  + i + "    SystemThemeSelectionScreen(\n"
-                  + i + "        onBack = { selectedTab = 0 },\n"
-                  + i + "        onThemeSelected = { selectedTab = 0 }\n"
-                  + i + "    )\n"
-                  + i + "}\n"
-                  + close + "}"
-              )
-
-          replace_pattern_once(
-              "Chat and settings screens",
-              "SystemGlobalChatScreen(",
-              cases_pattern,
-              build_cases
-          )
-
-          # 5. Improve the account and Miyar information dialog.
-          dialog_pattern = (
-              r'(?P<indent>^[ \t]*)val dialogTitle\s*=\s*'
-              r'if \(miyarDialog == "explain"\) \{[\s\S]*?'
-              r'val dialogMessage\s*=\s*'
-              r'if \(miyarDialog == "explain"\) \{[\s\S]*?'
-              r'\}\s*(?=^[ \t]*AlertDialog\()'
-          )
-
-          def build_dialog(match):
-              i = match.group("indent")
-              return (
-                  i + "val dialogTitle =\n"
-                  + i + "    when (miyarDialog) {\n"
-                  + i + '        "explain" -> "مرحباً، أنا ميار"\n'
-                  + i + '        "account" -> "حساب SYSTEM"\n'
-                  + i + '        else -> "التحدث مع ميار"\n'
-                  + i + "    }\n\n"
-                  + i + "val dialogMessage =\n"
-                  + i + "    when (miyarDialog) {\n"
-                  + i + '        "explain" ->\n'
-                  + i + '            "أنا مرشدتك داخل SYSTEM. سأساعدك على فهم نظام التطور، والمهام، والمستويات، والعوالم، وكيفية استخدام التطبيق."\n\n'
-                  + i + '        "account" ->\n'
-                  + i + "            if (account.email.isNotBlank()) {\n"
-                  + i + '                "أنت مسجل الدخول حالياً بالبريد: ${account.email}. ربط Google أو Facebook يحتاج تنفيذ واجهة الربط والتحقق من مزودي الخدمة في مرحلة لاحقة."\n'
-                  + i + "            } else {\n"
-                  + i + '                "أنت تستخدم حساب الضيف حالياً. تسجيل الدخول بالبريد وإنشاء الحساب متاحان من بوابة الحساب عند بدء التطبيق."\n'
-                  + i + "            }\n\n"
-                  + i + "        else ->\n"
-                  + i + '            "هذه محادثة ميار الإرشادية. أما الدردشة العالمية مع اللاعبين فتجدها في زر الدردشة العالمية."\n'
-                  + i + "    }\n\n"
-              )
-
-          replace_pattern_once(
-              "Account information dialog",
-              '"account" -> "حساب SYSTEM"',
-              dialog_pattern,
-              build_dialog
-          )
-
-          path.write_text(source, encoding="utf-8")
-
-          print("SYSTEM dashboard integration completed.")
-          PY
-
       - name: Build APK
         run: gradle assembleDebug
 
@@ -348,6 +94,7 @@ jobs:
             exit 1
           fi
 
+          echo "APK generated successfully:"
           ls -lh "$APK"
           sha256sum "$APK"
 
