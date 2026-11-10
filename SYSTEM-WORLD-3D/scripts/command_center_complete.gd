@@ -1,3 +1,4 @@
+
 extends "res://scripts/miyar_command_center_link.gd"
 
 # SYSTEM WORLD - Complete Command Center Integration
@@ -30,10 +31,130 @@ func _ready() -> void:
 	_position_active_assistant()
 	_create_system_logo_overlay()
 
+	_connect_android_world_bridge()
 
-# --------------------------------------------------
+
+# ==================================================
+# ANDROID WORLD BRIDGE
+# ==================================================
+
+func _connect_android_world_bridge() -> void:
+	var bridge := get_node_or_null(
+		"/root/SYSTEMAndroidBridge"
+	)
+
+	if not is_instance_valid(bridge):
+		push_warning(
+			"SYSTEM: Android bridge is unavailable."
+		)
+		return
+
+	var callback := Callable(
+		self,
+		"_on_android_world_entry_requested"
+	)
+
+	if not bridge.is_connected(
+		"world_entry_requested",
+		callback
+	):
+		bridge.connect(
+			"world_entry_requested",
+			callback
+		)
+
+	# Handle a request received before the command
+	# center finished loading.
+	if bridge.has_method("has_pending_world_request"):
+		if bridge.call("has_pending_world_request"):
+			call_deferred(
+				"_consume_pending_android_world_request"
+			)
+
+
+func _consume_pending_android_world_request() -> void:
+	var bridge := get_node_or_null(
+		"/root/SYSTEMAndroidBridge"
+	)
+
+	if not is_instance_valid(bridge):
+		return
+
+	if not bridge.has_method("has_pending_world_request"):
+		return
+
+	if not bridge.call("has_pending_world_request"):
+		return
+
+	var world_id := str(
+		bridge.call("consume_pending_world_request")
+	)
+
+	if world_id.is_empty():
+		return
+
+	_enter_world_from_android(world_id)
+
+
+func _on_android_world_entry_requested(
+	world_id: String
+) -> void:
+	var bridge := get_node_or_null(
+		"/root/SYSTEMAndroidBridge"
+	)
+
+	# Consume the request so it cannot be processed
+	# again after returning to the command center.
+	if is_instance_valid(bridge):
+		if bridge.has_method("has_pending_world_request"):
+			if bridge.call("has_pending_world_request"):
+				var pending_id := str(
+					bridge.call(
+						"consume_pending_world_request"
+					)
+				)
+
+				if not pending_id.is_empty():
+					world_id = pending_id
+
+	_enter_world_from_android(world_id)
+
+
+func _enter_world_from_android(
+	world_id: String
+) -> void:
+	if not is_instance_valid(world_manager):
+		push_warning(
+			"SYSTEM: World manager is unavailable."
+		)
+		return
+
+	if not world_manager.has_method("enter_world"):
+		push_warning(
+			"SYSTEM: World entry method is unavailable."
+		)
+		return
+
+	var entered: bool = world_manager.call(
+		"enter_world",
+		world_id
+	)
+
+	if not entered:
+		if is_instance_valid(utility_status):
+			utility_status.text = (
+				"تعذر دخول العالم: " + world_id
+			)
+
+		if is_instance_valid(miyar_message):
+			miyar_message.text = (
+				"لم أتمكن من فتح هذا العالم حالياً."
+			)
+
+
+# ==================================================
 # SYSTEM OFFICIAL LOGO
-# --------------------------------------------------
+# ==================================================
 
 func _create_system_logo_overlay() -> void:
 	if not ResourceLoader.exists(SYSTEM_ICON_PATH):
@@ -95,9 +216,9 @@ func _layout_system_logo() -> void:
 	system_logo.size = Vector2(68, 68)
 
 
-# --------------------------------------------------
+# ==================================================
 # ASSISTANT 3D STAGE
-# --------------------------------------------------
+# ==================================================
 
 func _create_assistant_stage() -> void:
 	assistant_stage = AssistantStageScript.new()
@@ -159,9 +280,9 @@ func _position_active_assistant() -> void:
 	)
 
 
-# --------------------------------------------------
+# ==================================================
 # PARTY DISPLAY
-# --------------------------------------------------
+# ==================================================
 
 func _create_party_display() -> void:
 	party_display = PartyDisplayScript.new()
@@ -189,9 +310,9 @@ func _create_party_display() -> void:
 	)
 
 
-# --------------------------------------------------
+# ==================================================
 # ASSISTANT SELECTION
-# --------------------------------------------------
+# ==================================================
 
 func _on_assistant_changed(assistant_id: String) -> void:
 	super._on_assistant_changed(assistant_id)
@@ -207,9 +328,9 @@ func _get_active_assistant() -> Node3D:
 	) as Node3D
 
 
-# --------------------------------------------------
+# ==================================================
 # PARTY DISPLAY PUBLIC API
-# --------------------------------------------------
+# ==================================================
 
 func add_party_display_member(
 	player_id: String,
