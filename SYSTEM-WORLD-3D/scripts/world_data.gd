@@ -3,25 +3,25 @@ extends RefCounted
 class_name SystemWorldData
 
 # SYSTEM WORLD
-# Central definition for the four independent worlds.
+# Central definition for the four connected worlds.
 # Godot 4.3
 
 const WORLD_DATA := {
 	"modern": {
 		"id": "modern",
-		"title": "العالم الحديث",
-		"subtitle": "عالم المدن والحياة الواقعية",
+		"title": "العالم الحديث والمستقبلي",
+		"subtitle": "المدن والحياة الواقعية",
 		"stage": "prototype",
 		"scene_path": "res://scenes/main.tscn",
 		"miyar_outfit": "future",
-		"environment": "مدن حديثة، طرق، مبانٍ، طبيعة ومناطق واقعية",
-		"combat": "أسلحة حديثة ومهارات شخصية مستوحاة من نظام Nen",
+		"environment": "مدن ودول حقيقية، شوارع، مبانٍ، طبيعة، بحار وجزر",
+		"combat": "قتال جسدي، أسلحة حديثة، ومهارات وقدرات شخصية",
 		"exploration": [
 			"مدن ودول حقيقية",
 			"مناطق ريفية",
 			"بحار وجزر",
 			"بوابات وأبراج تحديات",
-			"مستشفيات ونقاط سفر"
+			"مستشفيات ونقاط سفر سريع"
 		],
 		"activities": [
 			"النقابات",
@@ -67,7 +67,7 @@ const WORLD_DATA := {
 		"stage": "prototype",
 		"scene_path": "res://scenes/fantasy_world.tscn",
 		"miyar_outfit": "magic",
-		"environment": "ممالك خيالية وغابات عملاقة وجبال وقلاع",
+		"environment": "ممالك متعددة وغابات عملاقة وجبال وقلاع",
 		"combat": "السحر والأسلحة الأسطورية والقوى الخارقة",
 		"races": [
 			"البشر",
@@ -102,7 +102,7 @@ const WORLD_DATA := {
 		"combat": "وحوش وتحديات ومواجهات خاصة بالجزيرة",
 		"features": [
 			"قصر الجزيرة",
-			"الخدم والشخصيات المستقلة",
+			"الشخصيات المستقلة",
 			"الفنادق والمطاعم",
 			"بوابات التحديات",
 			"الكنوز النادرة",
@@ -121,12 +121,31 @@ const WORLD_DATA := {
 }
 
 
+# Android aliases and older identifiers.
+const WORLD_ALIASES := {
+	"real": "modern",
+	"modern": "modern",
+	"mythology": "history",
+	"historical": "history",
+	"history": "history",
+	"fantasy": "fantasy",
+	"greed": "greed",
+	"greed_island": "greed"
+}
+
+
 const SHARED_SYSTEMS := [
+	"central_player_account",
 	"player_progress",
+	"friends",
+	"unified_chat",
+	"voice_chat",
+	"teams_and_clans",
 	"guilds",
 	"quests",
 	"raids",
 	"trading",
+	"global_economy",
 	"npc_society",
 	"relationships",
 	"families",
@@ -138,15 +157,25 @@ const SHARED_SYSTEMS := [
 ]
 
 
+static func normalize_world_id(world_id: String) -> String:
+	var key := world_id.strip_edges().to_lower()
+	return str(WORLD_ALIASES.get(key, ""))
+
+
 static func get_all_worlds() -> Array:
 	return WORLD_DATA.values().duplicate(true)
 
 
 static func get_world(world_id: String) -> Dictionary:
-	if not WORLD_DATA.has(world_id):
+	var normalized_id := normalize_world_id(world_id)
+
+	if normalized_id.is_empty():
 		return {}
 
-	return WORLD_DATA[world_id].duplicate(true)
+	if not WORLD_DATA.has(normalized_id):
+		return {}
+
+	return WORLD_DATA[normalized_id].duplicate(true)
 
 
 static func get_world_ids() -> Array[String]:
@@ -187,3 +216,12 @@ static func get_miyar_outfit(world_id: String) -> String:
 
 static func get_shared_systems() -> Array:
 	return SHARED_SYSTEMS.duplicate(true)
+
+
+static func is_world_available(world_id: String) -> bool:
+	var scene_path := get_world_scene(world_id)
+
+	if scene_path.is_empty():
+		return false
+
+	return ResourceLoader.exists(scene_path)
