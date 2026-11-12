@@ -9,6 +9,7 @@ config/features=PackedStringArray("4.3", "GL Compatibility")
 
 [autoload]
 
+SYSTEMAudioManager="*res://scripts/audio_manager.gd"
 XSXAssociation="*res://scripts/xsx_association_manager.gd"
 XSXExaminer="*res://scripts/xsx_ai_examiner.gd"
 XSXCohorts="*res://scripts/xsx_exam_cohort_manager.gd"
