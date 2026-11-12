@@ -1,3 +1,4 @@
+
 extends Node
 
 # SYSTEM WORLD - COMMAND CENTER MAP PANEL
@@ -29,11 +30,7 @@ class MapCanvas extends Control:
 	func _draw() -> void:
 		var area := Rect2(Vector2.ZERO, size)
 
-		draw_rect(
-			area,
-			Color(0.015, 0.035, 0.065),
-			true
-		)
+		draw_rect(area, Color(0.015, 0.035, 0.065), true)
 
 		for x in range(0, int(size.x), 38):
 			draw_line(
@@ -69,17 +66,8 @@ class MapCanvas extends Control:
 			Vector2(size.x * 0.18, size.y * 0.51)
 		])
 
-		draw_colored_polygon(
-			land,
-			Color(0.07, 0.20, 0.25)
-		)
-
-		draw_polyline(
-			land,
-			accent,
-			3.0,
-			true
-		)
+		draw_colored_polygon(land, Color(0.07, 0.20, 0.25))
+		draw_polyline(land, accent, 3.0, true)
 
 		var points := [
 			Vector2(0.30, 0.36),
@@ -95,12 +83,7 @@ class MapCanvas extends Control:
 				size.y * point.y
 			)
 
-			draw_circle(
-				location,
-				6.0,
-				accent
-			)
-
+			draw_circle(location, 6.0, accent)
 			draw_arc(
 				location,
 				11.0,
@@ -239,7 +222,10 @@ func _build_interface() -> void:
 	legend.autowrap_mode = TextServer.AUTOWRAP_WORD
 	side_column.add_child(legend)
 
-	side_column.add_spacer(false)
+	# مساحة مرنة متوافقة مع Godot 4.3
+	var spacer := Control.new()
+	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	side_column.add_child(spacer)
 
 	location_status = Label.new()
 	location_status.text = "هذه معاينة أولية للأطلس."
