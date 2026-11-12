@@ -1,8 +1,11 @@
-
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/command_center.tscn" id="1_base"]
 [ext_resource type="Script" path="res://scripts/command_center_complete.gd" id="2_complete"]
+[ext_resource type="Script" path="res://scripts/player_profile_character_bridge.gd" id="3_player_bridge"]
 
 [node name="CommandCenter" instance=ExtResource("1_base")]
 script = ExtResource("2_complete")
+
+[node name="PlayerProfileCharacterBridge" type="Node" parent="."]
+script = ExtResource("3_player_bridge")
