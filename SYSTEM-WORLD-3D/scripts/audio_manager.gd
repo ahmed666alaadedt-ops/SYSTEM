@@ -33,57 +33,57 @@ var category_buses := {
 
 var sound_library := {
 	# Environment
-	"city_day": "res://audio/ambient/city_day.ogg",
-	"city_night": "res://audio/ambient/city_night.ogg",
-	"forest": "res://audio/ambient/forest.ogg",
-	"desert": "res://audio/ambient/desert.ogg",
-	"beach": "res://audio/ambient/beach.ogg",
-	"river": "res://audio/ambient/river.ogg",
-	"rain": "res://audio/weather/rain.ogg",
-	"thunder": "res://audio/weather/thunder.ogg",
-	"wind": "res://audio/weather/wind.ogg",
+	"city_day": "res://assets/audio/ambient/city_day.ogg",
+	"city_night": "res://assets/audio/ambient/city_night.ogg",
+	"forest": "res://assets/audio/ambient/forest.ogg",
+	"desert": "res://assets/audio/ambient/desert.ogg",
+	"beach": "res://assets/audio/ambient/beach.ogg",
+	"river": "res://assets/audio/ambient/river.ogg",
+	"rain": "res://assets/audio/weather/rain.ogg",
+	"thunder": "res://assets/audio/weather/thunder.ogg",
+	"wind": "res://assets/audio/weather/wind.ogg",
 
 	# Birds
-	"bird_small": "res://audio/animals/birds/bird_small.ogg",
-	"crow": "res://audio/animals/birds/crow.ogg",
-	"eagle": "res://audio/animals/birds/eagle.ogg",
-	"pigeon": "res://audio/animals/birds/pigeon.ogg",
-	"seagull": "res://audio/animals/birds/seagull.ogg",
+	"bird_small": "res://assets/audio/animals/birds/bird_small.ogg",
+	"crow": "res://assets/audio/animals/birds/crow.ogg",
+	"eagle": "res://assets/audio/animals/birds/eagle.ogg",
+	"pigeon": "res://assets/audio/animals/birds/pigeon.ogg",
+	"seagull": "res://assets/audio/animals/birds/seagull.ogg",
 
 	# Animals
-	"dog": "res://audio/animals/dog.ogg",
-	"cat": "res://audio/animals/cat.ogg",
-	"horse": "res://audio/animals/horse.ogg",
-	"cow": "res://audio/animals/cow.ogg",
-	"sheep": "res://audio/animals/sheep.ogg",
-	"wolf": "res://audio/animals/wolf.ogg",
-	"lion": "res://audio/animals/lion.ogg",
+	"dog": "res://assets/audio/animals/dog.ogg",
+	"cat": "res://assets/audio/animals/cat.ogg",
+	"horse": "res://assets/audio/animals/horse.ogg",
+	"cow": "res://assets/audio/animals/cow.ogg",
+	"sheep": "res://assets/audio/animals/sheep.ogg",
+	"wolf": "res://assets/audio/animals/wolf.ogg",
+	"lion": "res://assets/audio/animals/lion.ogg",
 
 	# Monsters
-	"monster_roar": "res://audio/monsters/roar.ogg",
-	"monster_attack": "res://audio/monsters/attack.ogg",
-	"monster_hurt": "res://audio/monsters/hurt.ogg",
-	"monster_death": "res://audio/monsters/death.ogg",
+	"monster_roar": "res://assets/audio/monsters/roar.ogg",
+	"monster_attack": "res://assets/audio/monsters/attack.ogg",
+	"monster_hurt": "res://assets/audio/monsters/hurt.ogg",
+	"monster_death": "res://assets/audio/monsters/death.ogg",
 
 	# Combat
-	"combat_start": "res://audio/combat/combat_start.ogg",
-	"heavy_hit": "res://audio/combat/heavy_hit.ogg",
-	"weapon_clash": "res://audio/combat/weapon_clash.ogg",
-	"special_attack": "res://audio/combat/special_attack.ogg",
-	"boss_appearance": "res://audio/combat/boss_appearance.ogg",
-	"victory": "res://audio/combat/victory.ogg",
-	"defeat": "res://audio/combat/defeat.ogg",
+	"combat_start": "res://assets/audio/combat/combat_start.ogg",
+	"heavy_hit": "res://assets/audio/combat/heavy_hit.ogg",
+	"weapon_clash": "res://assets/audio/combat/weapon_clash.ogg",
+	"special_attack": "res://assets/audio/combat/special_attack.ogg",
+	"boss_appearance": "res://assets/audio/combat/boss_appearance.ogg",
+	"victory": "res://assets/audio/combat/victory.ogg",
+	"defeat": "res://assets/audio/combat/defeat.ogg",
 
 	# Character and NPC
-	"character_breath": "res://audio/voices/character_breath.ogg",
-	"character_pain": "res://audio/voices/character_pain.ogg",
-	"npc_greeting": "res://audio/voices/npc_greeting.ogg",
-	"npc_talking": "res://audio/voices/npc_talking.ogg",
+	"character_breath": "res://assets/audio/voices/character_breath.ogg",
+	"character_pain": "res://assets/audio/voices/character_pain.ogg",
+	"npc_greeting": "res://assets/audio/voices/npc_greeting.ogg",
+	"npc_talking": "res://assets/audio/voices/npc_talking.ogg",
 
 	# Interface
-	"button_click": "res://audio/ui/button_click.ogg",
-	"menu_open": "res://audio/ui/menu_open.ogg",
-	"notification": "res://audio/ui/notification.ogg"
+	"button_click": "res://assets/audio/ui/button_click.ogg",
+	"menu_open": "res://assets/audio/ui/menu_open.ogg",
+	"notification": "res://assets/audio/ui/notification.ogg"
 }
 
 
