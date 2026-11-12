@@ -10,6 +10,7 @@ const WorldSelectionManager = preload("res://scripts/world_selection_manager.gd"
 const WorldPortalButton = preload("res://scripts/world_portal_button.gd")
 const HunterGuildButton = preload("res://scripts/hunter_guild_button.gd")
 const SocialHubButton = preload("res://scripts/social_hub_button.gd")
+const PlayerProfileButton = preload("res://scripts/player_profile_button.gd")
 
 var world_manager: Node
 var selected_world := "modern"
@@ -434,6 +435,10 @@ func _create_player_panel(root: Control) -> void:
 
 	column.add_child(HSeparator.new())
 	column.add_child(_make_label("أنظمة العالم", 18))
+
+	# Player profile and character customization button
+	var player_profile_button := PlayerProfileButton.new()
+	column.add_child(player_profile_button)
 
 	# Hunter Guild button
 	var hunter_guild_button := HunterGuildButton.new()
