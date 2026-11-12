@@ -12,8 +12,8 @@ var profile_button: Button
 
 
 func _ready() -> void:
-	call_deferred("_connect_profile_button")
 	_create_player_character()
+	call_deferred("_connect_profile_button")
 
 
 func _create_player_character() -> void:
@@ -51,24 +51,33 @@ func _connect_profile_button() -> void:
 	)
 
 	for item in buttons:
-		if item.has_signal("profile_updated"):
-			profile_button = item as Button
+		if not item.has_signal("profile_updated"):
+			continue
 
-			var callback := Callable(
-				self,
-				"_on_profile_updated"
-			)
+		profile_button = item as Button
 
-			if not profile_button.is_connected(
+		var callback := Callable(
+			self,
+			"_on_profile_updated"
+		)
+
+		if not profile_button.is_connected(
+			"profile_updated",
+			callback
+		):
+			profile_button.connect(
 				"profile_updated",
 				callback
-			):
-				profile_button.connect(
-					"profile_updated",
-					callback
-				)
+			)
 
-			return
+		var initial_data = profile_button.get(
+			"profile_data"
+		)
+
+		if initial_data is Dictionary:
+			_on_profile_updated(initial_data)
+
+		return
 
 	push_warning(
 		"SYSTEM: Player profile button was not found."
