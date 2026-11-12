@@ -24,6 +24,9 @@ var title_label: Label
 var miyar_message: Label
 var utility_status: Label
 
+# Player appearance data
+var player_profile_data: Dictionary = {}
+
 
 const WORLD_PRESENTATION := {
 	"modern": {
@@ -436,8 +439,11 @@ func _create_player_panel(root: Control) -> void:
 	column.add_child(HSeparator.new())
 	column.add_child(_make_label("أنظمة العالم", 18))
 
-	# Player profile and character customization button
+	# Player profile and character customization
 	var player_profile_button := PlayerProfileButton.new()
+	player_profile_button.profile_updated.connect(
+		_on_player_profile_updated
+	)
 	column.add_child(player_profile_button)
 
 	# Hunter Guild button
@@ -498,6 +504,26 @@ func _create_miyar_panel(root: Control) -> void:
 		15
 	)
 	column.add_child(miyar_message)
+
+
+# ==================================================
+# PLAYER PROFILE CONNECTION
+# ==================================================
+
+func _on_player_profile_updated(profile_data: Dictionary) -> void:
+	player_profile_data = profile_data.duplicate(true)
+
+	var player_name := str(
+		player_profile_data.get("name", "الصياد الجديد")
+	)
+
+	utility_status.text = "تم اعتماد مظهر: " + player_name
+
+	miyar_message.text = (
+		"تم حفظ اختيارات مظهرك يا " +
+		player_name +
+		". سنربطها بالمجسم ثلاثي الأبعاد في خطوة بناء شخصية اللاعب."
+	)
 
 
 # ==================================================
