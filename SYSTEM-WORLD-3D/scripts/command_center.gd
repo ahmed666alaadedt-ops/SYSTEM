@@ -1,11 +1,13 @@
+
 extends Node3D
 
 # SYSTEM WORLD - Command Center
 # Godot 4.3 | Landscape Interface
-# Connected to the central four-world registry and selection manager.
+# Four-world portal integration.
 
 const WorldData = preload("res://scripts/world_data.gd")
 const WorldSelectionManager = preload("res://scripts/world_selection_manager.gd")
+const WorldPortalButton = preload("res://scripts/world_portal_button.gd")
 
 var world_manager: Node
 var selected_world := "modern"
@@ -360,7 +362,7 @@ func _layout_interface(root: Control) -> void:
 
 
 # ==================================================
-# WORLD PANEL
+# WORLD PANEL - CONNECTED PORTAL BUTTONS
 # ==================================================
 
 func _create_world_panel(root: Control) -> void:
@@ -380,42 +382,24 @@ func _create_world_panel(root: Control) -> void:
 	column.add_child(_make_label("أربعة عوالم مستقلة", 15))
 
 	for world in world_data:
-		var world_id := str(world["id"])
+		var world_id := str(world.get("id", ""))
 
-		var button := Button.new()
-		button.text = (
-			str(world["icon"]) + "   " +
-			str(world["title"]) + "\n" +
-			str(world["subtitle"])
-		)
+		if world_id.is_empty():
+			continue
+
+		var button = WorldPortalButton.new()
 
 		button.custom_minimum_size = Vector2(250, 82)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.add_theme_font_size_override("font_size", 17)
 
-		button.add_theme_stylebox_override(
-			"normal",
-			_button_style(
-				Color(0.045, 0.10, 0.16, 0.96),
-				world["color"]
-			)
+		button.configure(
+			world,
+			world_id == selected_world
 		)
 
-		button.add_theme_stylebox_override(
-			"hover",
-			_button_style(
-				Color(0.08, 0.18, 0.26, 1.0),
-				world["color"]
-			)
-		)
-
-		button.add_theme_color_override(
-			"font_color",
-			Color(0.90, 0.96, 1.0)
-		)
-
-		button.pressed.connect(
-			_on_world_button_pressed.bind(world_id)
+		button.world_selected.connect(
+			_on_world_button_pressed
 		)
 
 		column.add_child(button)
@@ -539,21 +523,15 @@ func _on_world_manager_selected(world_id: String) -> void:
 
 func _update_world_buttons() -> void:
 	for world in world_data:
-		var world_id := str(world["id"])
+		var world_id := str(world.get("id", ""))
 
 		if not world_buttons.has(world_id):
 			continue
 
-		var button: Button = world_buttons[world_id]
-		var background := Color(0.045, 0.10, 0.16, 0.96)
+		var button = world_buttons[world_id]
 
-		if world_id == selected_world:
-			background = Color(0.08, 0.22, 0.30, 1.0)
-
-		button.add_theme_stylebox_override(
-			"normal",
-			_button_style(background, world["color"])
-		)
+		if button is WorldPortalButton:
+			button.set_selected(world_id == selected_world)
 
 
 func _enter_selected_world() -> void:
