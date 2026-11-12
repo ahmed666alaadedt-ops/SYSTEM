@@ -9,6 +9,7 @@ const WorldData = preload("res://scripts/world_data.gd")
 const WorldSelectionManager = preload("res://scripts/world_selection_manager.gd")
 const WorldPortalButton = preload("res://scripts/world_portal_button.gd")
 const HunterGuildButton = preload("res://scripts/hunter_guild_button.gd")
+const SocialHubButton = preload("res://scripts/social_hub_button.gd")
 
 var world_manager: Node
 var selected_world := "modern"
@@ -437,6 +438,10 @@ func _create_player_panel(root: Control) -> void:
 	# Hunter Guild button
 	var hunter_guild_button := HunterGuildButton.new()
 	column.add_child(hunter_guild_button)
+
+	# Friends and unified chat button
+	var social_hub_button := SocialHubButton.new()
+	column.add_child(social_hub_button)
 
 	_add_utility_button(column, "الخريطة", "الخريطة")
 	_add_utility_button(column, "الدردشة العالمية", "الدردشة")
