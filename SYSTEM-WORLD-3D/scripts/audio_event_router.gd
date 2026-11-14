@@ -3,9 +3,9 @@ extends Node
 
 # SYSTEM WORLD - AUDIO EVENT ROUTER
 # Godot 4.3
-# Routes game events to the central AudioManager.
+# Connects game events to SYSTEMAudioManager.
 
-@export var audio_manager_path: NodePath = NodePath("/root/AudioManager")
+@export var audio_manager_path: NodePath = NodePath("/root/SYSTEMAudioManager")
 
 var audio_manager: Node
 
@@ -18,8 +18,9 @@ func _connect_audio_manager() -> void:
 	audio_manager = get_node_or_null(audio_manager_path)
 
 	if audio_manager == null:
-		push_warning("AudioEventRouter: AudioManager not found.")
-		return
+		push_warning(
+			"AudioEventRouter: SYSTEMAudioManager not found."
+		)
 
 
 func _get_audio() -> Node:
@@ -78,6 +79,14 @@ func notification_received() -> void:
 	play_event("notification", "ui", -3.0)
 
 
+func confirmation_received() -> void:
+	play_event("button_click", "ui", -2.0)
+
+
+func cancellation_received() -> void:
+	play_event("button_click", "ui", -6.0)
+
+
 # WEATHER EVENTS
 
 func weather_event(
@@ -90,13 +99,10 @@ func weather_event(
 	match weather_type.to_lower():
 		"rain":
 			play_event("rain", "weather", volume)
-
 		"thunder":
 			play_event("thunder", "weather", volume)
-
 		"wind":
 			play_event("wind", "weather", volume)
-
 		_:
 			push_warning(
 				"Unknown weather event: " + weather_type
