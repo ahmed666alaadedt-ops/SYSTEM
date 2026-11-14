@@ -1,11 +1,11 @@
-
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/world_portal_menu.gd" id="2"]
 [ext_resource type="Script" path="res://scripts/hunter_guild_menu.gd" id="3"]
 [ext_resource type="Script" path="res://scripts/system_social_chat.gd" id="4"]
 [ext_resource type="Script" path="res://scripts/system_clan_manager.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/system_account_menu.gd" id="6"]
 
 [node name="SYSTEMWorld" type="Node3D"]
 script = ExtResource("1")
@@ -21,3 +21,6 @@ script = ExtResource("4")
 
 [node name="ClanManager" type="CanvasLayer" parent="."]
 script = ExtResource("5")
+
+[node name="AccountMenu" type="CanvasLayer" parent="."]
+script = ExtResource("6")
