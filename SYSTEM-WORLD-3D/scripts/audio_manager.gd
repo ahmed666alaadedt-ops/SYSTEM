@@ -81,7 +81,7 @@ var sound_library := {
 	"npc_talking": "res://assets/audio/voices/npc_talking.ogg",
 
 	# Interface
-	"button_click": "res://assets/audio/ui/button_click.ogg",
+	"button_click": "res://assets/audio/ui/SYSTEM_button_click.wav",
 	"menu_open": "res://assets/audio/ui/menu_open.ogg",
 	"notification": "res://assets/audio/ui/notification.ogg"
 }
