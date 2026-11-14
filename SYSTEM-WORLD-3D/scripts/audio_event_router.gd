@@ -3,7 +3,7 @@ extends Node
 
 # SYSTEM WORLD - AUDIO EVENT ROUTER
 # Godot 4.3
-# Connects game events to SYSTEMAudioManager.
+# Automatically connects UI buttons to the central audio system.
 
 @export var audio_manager_path: NodePath = NodePath("/root/SYSTEMAudioManager")
 
@@ -11,16 +11,16 @@ var audio_manager: Node
 
 
 func _ready() -> void:
+	get_tree().node_added.connect(_on_node_added)
 	call_deferred("_connect_audio_manager")
+	call_deferred("_scan_existing_buttons")
 
 
 func _connect_audio_manager() -> void:
 	audio_manager = get_node_or_null(audio_manager_path)
 
 	if audio_manager == null:
-		push_warning(
-			"AudioEventRouter: SYSTEMAudioManager not found."
-		)
+		push_warning("AudioEventRouter: SYSTEMAudioManager not found.")
 
 
 func _get_audio() -> Node:
@@ -30,6 +30,39 @@ func _get_audio() -> Node:
 	_connect_audio_manager()
 	return audio_manager
 
+
+# AUTOMATIC UI BUTTON CONNECTION
+
+func _on_node_added(node: Node) -> void:
+	_connect_button(node)
+
+
+func _scan_existing_buttons() -> void:
+	_connect_buttons_recursive(get_tree().root)
+
+
+func _connect_buttons_recursive(parent: Node) -> void:
+	_connect_button(parent)
+
+	for child in parent.get_children():
+		_connect_buttons_recursive(child)
+
+
+func _connect_button(node: Node) -> void:
+	if not node is BaseButton:
+		return
+
+	var button := node as BaseButton
+
+	if not button.pressed.is_connected(_on_ui_button_pressed):
+		button.pressed.connect(_on_ui_button_pressed)
+
+
+func _on_ui_button_pressed() -> void:
+	button_pressed()
+
+
+# GENERAL AUDIO EVENTS
 
 func play_event(
 	sound_id: String,
@@ -104,18 +137,11 @@ func weather_event(
 		"wind":
 			play_event("wind", "weather", volume)
 		_:
-			push_warning(
-				"Unknown weather event: " + weather_type
-			)
+			push_warning("Unknown weather event: " + weather_type)
 
 
 func thunder_at(position: Vector3) -> void:
-	play_world_event(
-		"thunder",
-		position,
-		"weather",
-		0.0
-	)
+	play_world_event("thunder", position, "weather", 0.0)
 
 
 # COMBAT EVENTS
@@ -150,38 +176,16 @@ func combat_defeat() -> void:
 
 # CREATURE EVENTS
 
-func monster_sound(
-	sound_id: String,
-	position: Vector3
-) -> void:
-	play_world_event(
-		sound_id,
-		position,
-		"monsters"
-	)
+func monster_sound(sound_id: String, position: Vector3) -> void:
+	play_world_event(sound_id, position, "monsters")
 
 
-func animal_sound(
-	sound_id: String,
-	position: Vector3
-) -> void:
-	play_world_event(
-		sound_id,
-		position,
-		"animals"
-	)
+func animal_sound(sound_id: String, position: Vector3) -> void:
+	play_world_event(sound_id, position, "animals")
 
 
-func bird_sound(
-	sound_id: String,
-	position: Vector3
-) -> void:
-	play_world_event(
-		sound_id,
-		position,
-		"animals",
-		-4.0
-	)
+func bird_sound(sound_id: String, position: Vector3) -> void:
+	play_world_event(sound_id, position, "animals", -4.0)
 
 
 # CHARACTER AND NPC EVENTS
