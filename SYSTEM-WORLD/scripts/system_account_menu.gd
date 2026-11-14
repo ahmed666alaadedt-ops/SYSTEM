@@ -9,6 +9,8 @@ var player_level := 1
 var player_xp := 0
 var current_world := "العالم الحديث"
 
+var progression: Node
+
 var account_panel: PanelContainer
 var name_input: LineEdit
 var name_label: Label
@@ -20,8 +22,36 @@ var status_label: Label
 
 func _ready() -> void:
 	layer = 24
+	_connect_progression()
 	_build_interface()
 	_refresh_profile()
+
+
+func _connect_progression() -> void:
+	progression = get_parent().get_node_or_null("PlayerProgression")
+
+	if progression == null:
+		push_warning("SYSTEM: PlayerProgression was not found.")
+		return
+
+	if progression.has_signal("progress_changed"):
+		progression.progress_changed.connect(_on_progress_changed)
+
+	if progression.has_method("get_progress_data"):
+		var data: Dictionary = progression.get_progress_data()
+		set_player_progress(
+			int(data.get("level", 1)),
+			int(data.get("total_xp", 0))
+		)
+
+
+func _on_progress_changed(
+	level: int,
+	total_xp: int,
+	_xp_in_level: int,
+	_xp_to_next: int
+) -> void:
+	set_player_progress(level, total_xp)
 
 
 func _build_interface() -> void:
@@ -101,7 +131,7 @@ func _toggle_panel() -> void:
 func _refresh_profile() -> void:
 	name_label.text = "اللاعب: " + player_name
 	level_label.text = "المستوى: " + str(player_level)
-	xp_label.text = "الخبرة: " + str(player_xp) + " XP"
+	xp_label.text = "الخبرة الكلية: " + str(player_xp) + " XP"
 	world_label.text = "العالم الحالي: " + current_world
 
 
