@@ -1,4 +1,3 @@
-
 config_version=5
 
 [application]
@@ -14,7 +13,7 @@ SYSTEMAudioEvents="*res://scripts/audio_event_router.gd"
 XSXAssociation="*res://scripts/xsx_association_manager.gd"
 XSXExaminer="*res://scripts/xsx_ai_examiner.gd"
 XSXCohorts="*res://scripts/xsx_exam_cohort_manager.gd"
-XSXSecretMissions="*res://scripts/xsx_secret_mission_manager.gd"
+XSXSecretMissions="*res://scripts/xsx_exam_secret_mission_manager.gd"
 SYSTEMAndroidBridge="*res://scripts/android_world_bridge.gd"
 
 [display]
