@@ -6,7 +6,7 @@ extends Node
 const FANTASY_ID := 0
 const REALISTIC_ID := 2
 const GREED_ISLAND_ID := 3
-const HISTORICAL_ID := 4
+const HISTORICAL_ID := 1
 
 const GATE_DATA := [
 	{
