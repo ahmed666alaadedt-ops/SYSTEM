@@ -107,3 +107,11 @@ Scripts:
 
 No generated GLB or finished art asset is registered yet. Add each exported
 asset here only after generation, GLB validation, Godot import and visual review.
+
+
+- `tools/blender/run_environment_pipeline_test.py`
+  - Acceptance runner for Blender generation across one or all four world presets.
+  - Checks non-empty BLEND/GLB/JSON outputs and runs the GLB structural validator.
+  - Writes a JSON report and distinguishes passed, failed and Blender-unavailable
+    outcomes. Runner source is committed; its execution remains pending because
+    Blender and a local repository checkout are unavailable in this environment.
