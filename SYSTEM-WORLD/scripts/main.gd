@@ -20,6 +20,7 @@ const WorldInteractionManagerScript = preload("res://scripts/world_interaction_m
 const AINPCSocietyManagerScript = preload("res://scripts/ai_npc_society_manager.gd")
 const WorldTimeManagerScript = preload("res://scripts/world_time_manager.gd")
 const WildlifeManagerScript = preload("res://scripts/wildlife_manager.gd")
+const MissionRewardManagerScript = preload("res://scripts/system_mission_reward_manager.gd")
 
 var world_manager
 var world_map_manager
@@ -27,6 +28,7 @@ var interaction_manager
 var ai_npc_society_manager
 var world_time_manager
 var wildlife_manager
+var mission_reward_manager
 
 var active_world_root: Node3D
 
@@ -59,6 +61,7 @@ func _ready() -> void:
 
 	create_ground()
 	create_player()
+	create_mission_reward_manager()
 
 	connect_sovereign_system()
 
@@ -138,6 +141,43 @@ func update_sovereign_flight() -> bool:
 # --------------------------------------------------
 # WORLD MANAGER
 # --------------------------------------------------
+
+func create_mission_reward_manager() -> void:
+	mission_reward_manager = MissionRewardManagerScript.new()
+	mission_reward_manager.name = "MissionRewardManager"
+	add_child(mission_reward_manager)
+
+	var hunter_guild_menu := get_node_or_null("HunterGuildMenu")
+
+	if hunter_guild_menu == null:
+		push_warning("SYSTEM: HunterGuildMenu is unavailable; mission acceptance is not connected.")
+		return
+
+	if not hunter_guild_menu.has_signal("mission_accepted"):
+		push_warning("SYSTEM: HunterGuildMenu has no mission_accepted signal.")
+		return
+
+	hunter_guild_menu.mission_accepted.connect(_on_hunter_mission_accepted)
+
+	print("SYSTEM: Mission rewards connected to Hunter Guild and Player Progression.")
+
+
+func _on_hunter_mission_accepted(mission_id: String) -> void:
+	if not is_instance_valid(mission_reward_manager):
+		push_warning("SYSTEM: Mission reward manager is unavailable.")
+		return
+
+	if not mission_reward_manager.accept_mission(mission_id):
+		push_warning("SYSTEM: Could not accept hunter mission: " + mission_id)
+
+
+## يستدعيها نظام تحقق موثوق فقط بعد إكمال أهداف المهمة فعلياً.
+func confirm_verified_hunter_mission(mission_id: String) -> bool:
+	if not is_instance_valid(mission_reward_manager):
+		return false
+
+	return mission_reward_manager.confirm_verified_completion(mission_id)
+
 
 func create_world_manager() -> void:
 	world_manager = WorldManagerScript.new()
