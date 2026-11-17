@@ -83,3 +83,27 @@ Scripts:
 - Inspect NPC visual appearance and animations.
 - Confirm all scene references and runtime links.
 - Separate finished assets from prototypes.
+
+
+## AI-Assisted Production Tools (2026-11-17)
+
+- `tools/blender/generate_system_world_environment.py`
+  - Deterministic Blender 4.x source generator for a low-poly terrain tile,
+    road spine, vegetation/rocks and a world-specific landmark.
+  - Four separate presets: modern, historical, fantasy and Greed Island.
+  - Exports editable BLEND, runtime GLB and seed/settings metadata JSON.
+  - Source added; Blender export has **not** yet been executed in the current
+    environment because Blender is unavailable.
+- `tools/validate_glb.py`
+  - Python standard-library GLB 2.0 structural validator.
+  - Checks header/chunks, embedded resources, buffer views/accessors, mesh
+    primitives and estimated triangle count.
+  - Includes a generated-fixture self-test; Godot import validation remains
+    a separate required step.
+- `tools/README.md`
+  - Documents generator usage, import workflow and Android-oriented constraints.
+- `PRODUCTION_AUDIT.md`
+  - Evidence-based repository, toolchain and asset-pipeline audit.
+
+No generated GLB or finished art asset is registered yet. Add each exported
+asset here only after generation, GLB validation, Godot import and visual review.
