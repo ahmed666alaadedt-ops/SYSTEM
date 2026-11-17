@@ -6,9 +6,10 @@ It does not replace either Godot project and it does not modify runtime scenes.
 ## Current tools
 
 - `blender/generate_system_world_environment.py`: deterministic Blender 4.x
-  generator for a small terrain tile, a navigation road, low-poly vegetation /
-  rocks and one world-specific landmark. Presets: modern, historical, fantasy,
-  greed_island. Exports a source `.blend`, runtime `.glb`, and metadata `.json`.
+  generator for a small terrain tile, a navigation road sampled along the generated
+  terrain height, low-poly vegetation / rocks and one world-specific landmark.
+  Presets: modern, historical, fantasy, greed_island. Exports a source `.blend`,
+  runtime `.glb`, and metadata `.json`.
 - `blender/run_environment_pipeline_test.py`: acceptance-test runner. It
   locates Blender, invokes the generator for one or all four worlds, verifies
   that all three output files exist and are non-empty, runs the repository GLB
