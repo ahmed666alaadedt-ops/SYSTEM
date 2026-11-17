@@ -9,6 +9,11 @@ It does not replace either Godot project and it does not modify runtime scenes.
   generator for a small terrain tile, a navigation road, low-poly vegetation /
   rocks and one world-specific landmark. Presets: modern, historical, fantasy,
   greed_island. Exports a source `.blend`, runtime `.glb`, and metadata `.json`.
+- `blender/run_environment_pipeline_test.py`: acceptance-test runner. It
+  locates Blender, invokes the generator for one or all four worlds, verifies
+  that all three output files exist and are non-empty, runs the repository GLB
+  validator, and writes a JSON report. If Blender is missing, it records a
+  blocked status and does not fabricate output assets.
 - `validate_glb.py`: standard-library GLB 2.0 structural validator. Checks
   container/chunk integrity, embedded buffers, buffer view/accessor bounds,
   mesh primitives, triangle counts and external texture/buffer references.
@@ -17,10 +22,34 @@ It does not replace either Godot project and it does not modify runtime scenes.
 
 ## Quick start
 
-Run the pure-Python checks without Blender:
+Run the GLB validator's self-test without Blender:
 
 ```bash
 python3 SYSTEM-WORLD/tools/validate_glb.py --self-test
+```
+
+Run the complete Blender generation + GLB validation pipeline for the modern
+world:
+
+```bash
+python3 SYSTEM-WORLD/tools/blender/run_environment_pipeline_test.py --world modern
+```
+
+Generate and validate all four independent world presets:
+
+```bash
+python3 SYSTEM-WORLD/tools/blender/run_environment_pipeline_test.py --world all
+```
+
+The runner writes `pipeline_test_report.json` in the output directory. Exit
+codes: `0` means all requested worlds generated and passed GLB validation;
+`1` means Blender ran but a generation/output/validation step failed; `2`
+means Blender could not be launched. Read the JSON report rather than treating
+the process exit code alone as proof of visual or in-game quality.
+
+For direct Blender use, the equivalent modern-world command is:
+
+```bash
 blender --background --python SYSTEM-WORLD/tools/blender/generate_system_world_environment.py -- \
   --world modern --seed 20261117 --segments 48 \
   --output SYSTEM-WORLD/generated/environment_tiles
@@ -61,6 +90,5 @@ it does not test Blender's `bpy` generator or exporter. Full observed results
 and blockers are in `TEST_RESULTS.md`.
 
 The Blender generator is authored for Blender 4.x. When Blender is available,
-run the exact Quick start commands above, then run the repository validator
-against the generated file. Godot import, visual review and Android profiling
-remain separate acceptance checks.
+run the acceptance-test runner above. Godot import, visual review and Android
+profiling remain separate acceptance checks.
