@@ -176,7 +176,15 @@ def main() -> int:
                     "passed": blend_ok, "output": blend_log,
                 }
                 validation = run_command([sys.executable, str(VALIDATOR), str(glb_path)])
-                try:\n                    glb_report = json.loads(validation.stdout) if validation.returncode == 0 else {}\n                    glb_ok = glb_report.get("status") == "structural_validation_passed" and glb_report.get("glb_version") == 2 and glb_report.get("triangle_count", 0) > 0\n                except json.JSONDecodeError:\n                    glb_ok = False
+                try:
+                    glb_report = json.loads(validation.stdout) if validation.returncode == 0 else {}
+                    glb_ok = (
+                        glb_report.get("status") == "structural_validation_passed"
+                        and glb_report.get("glb_version") == 2
+                        and glb_report.get("triangle_count", 0) > 0
+                    )
+                except json.JSONDecodeError:
+                    glb_ok = False
                 item["glb_validation"] = {
                     "exit_code": validation.returncode,
                     "passed": glb_ok,
