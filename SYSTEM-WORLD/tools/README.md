@@ -12,6 +12,8 @@ It does not replace either Godot project and it does not modify runtime scenes.
 - `validate_glb.py`: standard-library GLB 2.0 structural validator. Checks
   container/chunk integrity, embedded buffers, buffer view/accessor bounds,
   mesh primitives, triangle counts and external texture/buffer references.
+- `TEST_RESULTS.md`: dated record separating actual checks from checks blocked
+  by missing Blender/Godot executables.
 
 ## Quick start
 
@@ -45,7 +47,20 @@ produce 4,608 terrain triangles before props and the landmark.
    simple collision, region streaming and LOD before expanding the tile.
 6. Run a real Android export and device test before calling the asset mobile-ready.
 
-The Blender generator was authored for Blender 4.x, but Blender is not installed
-in the current execution environment. Its Blender export has therefore not yet
-been executed here. The GLB validator self-test is independent of Blender and
-can run with Python 3.10+.
+## Execution status (2026-11-17)
+
+Blender and Godot are not installed/discoverable in the current execution
+environment. The Blender generator has therefore **not** been executed here,
+and no Blender-exported GLB or `.blend` file is claimed.
+
+A separate fallback GLB smoke test was run with Trimesh 4.11.1: a seven-mesh
+fixture was exported (7,804 bytes), reopened successfully, and its GLB 2.0
+container, JSON chunk and binary chunk were inspected. This only proves that a
+GLB can be written and reopened by the fallback library in this environment;
+it does not test Blender's `bpy` generator or exporter. Full observed results
+and blockers are in `TEST_RESULTS.md`.
+
+The Blender generator is authored for Blender 4.x. When Blender is available,
+run the exact Quick start commands above, then run the repository validator
+against the generated file. Godot import, visual review and Android profiling
+remain separate acceptance checks.
