@@ -203,13 +203,24 @@ def build_scene(args: argparse.Namespace) -> dict:
     curve.bevel_depth = 0.85
     curve.bevel_resolution = 1
     spline = curve.splines.new("POLY")
-    spline.points.add(3)
-    road_points = [
-        (-half * 0.82, -half * 0.70, 0.15, 1.0),
-        (-half * 0.30, -half * 0.20, 0.15, 1.0),
-        (half * 0.15, half * 0.05, 0.15, 1.0),
-        (half * 0.75, half * 0.62, 0.15, 1.0),
+    road_anchors = [
+        (-half * 0.82, -half * 0.70),
+        (-half * 0.30, -half * 0.20),
+        (half * 0.15, half * 0.05),
+        (half * 0.75, half * 0.62),
     ]
+    road_points = []
+    samples_per_segment = 12
+    for start, end in zip(road_anchors, road_anchors[1:]):
+        for sample in range(samples_per_segment):
+            t = sample / samples_per_segment
+            x = start[0] + (end[0] - start[0]) * t
+            y = start[1] + (end[1] - start[1]) * t
+            z = height_at(x, y, args.seed, args.world) + 0.18
+            road_points.append((x, y, z, 1.0))
+    x, y = road_anchors[-1]
+    road_points.append((x, y, height_at(x, y, args.seed, args.world) + 0.18, 1.0))
+    spline.points.add(len(road_points) - 1)
     for point, coordinate in zip(spline.points, road_points):
         point.co = coordinate
     road = bpy.data.objects.new("SW_Road", curve)
