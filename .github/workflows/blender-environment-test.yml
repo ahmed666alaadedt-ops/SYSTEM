@@ -38,6 +38,10 @@ jobs:
     name: Generate BLEND and GLB assets
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    env:
+      # Ubuntu's Blender package uses its bundled Python. Expose the matching
+      # distro Python 3.12 site-packages so the bundled glTF exporter can import numpy.
+      PYTHONPATH: /usr/lib/python3/dist-packages
     steps:
       - name: Checkout SYSTEM repository
         uses: actions/checkout@v4
@@ -46,10 +50,13 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install --yes blender
+          sudo apt-get install --yes blender python3-numpy
           blender --version
           python3 --version
           test "$(blender --version | head -n 1)" = "Blender 4.0.2"
+
+      - name: Verify Blender glTF exporter dependency
+        run: blender --background --python-expr "import sys; sys.path.append('/usr/lib/python3/dist-packages'); import numpy; import bpy; assert hasattr(bpy.ops.export_scene, 'gltf'); print('BLENDER_GLTF_DEPENDENCIES_PASS numpy=' + numpy.__version__)"
 
       - name: Run GLB validator self-test
         run: python3 SYSTEM-WORLD/tools/validate_glb.py --self-test
