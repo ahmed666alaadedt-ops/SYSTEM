@@ -111,7 +111,20 @@ asset here only after generation, GLB validation, Godot import and visual review
 
 - `tools/blender/run_environment_pipeline_test.py`
   - Acceptance runner for Blender generation across one or all four world presets.
-  - Checks non-empty BLEND/GLB/JSON outputs and runs the GLB structural validator.
-  - Writes a JSON report and distinguishes passed, failed and Blender-unavailable
-    outcomes. Runner source is committed; its execution remains pending because
-    Blender and a local repository checkout are unavailable in this environment.
+  - Checks generator exit status, export marker, non-empty BLEND/GLB/JSON outputs,
+    reopens each BLEND in a fresh Blender process, validates GLB structure and
+    checks JSON metadata against the requested preset and seed.
+  - GitHub Actions run 44049618483 passed all four presets using Blender 4.0.2.
+
++
++## Verified CI export evidence (2026-11-17)
++
++- Workflow: `.github/workflows/blender-environment-test.yml`
++- Blender: 4.0.2
++- Run: https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44049618483
++- Result: 4/4 presets passed; each produced non-empty BLEND, GLB and JSON outputs.
++- BLEND files reopened in Blender; GLBs passed structural validation.
++- CI artifact: `system-world-environments-all-20261117` (retained by Actions).
++- Godot import, visual review, collision/navigation integration and Android
++  performance remain pending; generated blockouts are not finished art assets.
++
