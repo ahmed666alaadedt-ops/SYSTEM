@@ -1,0 +1,59 @@
+name: SYSTEM WORLD Blender Environment Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      world:
+        description: "اختر العالم المراد توليده"
+        required: true
+        type: choice
+        default: all
+        options:
+          - all
+          - modern
+          - historical
+          - fantasy
+          - greed_island
+      seed:
+        description: "Seed ثابت لإعادة إنتاج البيئة"
+        required: true
+        type: string
+        default: "20261117"
+
+permissions:
+  contents: read
+
+jobs:
+  generate-and-validate:
+    name: Generate BLEND and GLB assets
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout SYSTEM repository
+        uses: actions/checkout@v4
+
+      - name: Install Blender and Python
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes blender
+          blender --version
+          python3 --version
+
+      - name: Run GLB validator self-test
+        run: python3 SYSTEM-WORLD/tools/validate_glb.py --self-test
+
+      - name: Generate and validate requested world environments
+        run: |
+          python3 SYSTEM-WORLD/tools/blender/run_environment_pipeline_test.py \
+            --world "${{ inputs.world }}" \
+            --seed "${{ inputs.seed }}" \
+            --segments 48
+
+      - name: Upload generated environment assets and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: system-world-environments-${{ inputs.world }}-${{ inputs.seed }}
+          path: SYSTEM-WORLD/generated/environment_tiles/
+          if-no-files-found: warn
+          retention-days: 14
