@@ -1,6 +1,6 @@
 # SYSTEM WORLD — Technical Roadmap
 
-Last reviewed: 2026-11-07
+Last reviewed: 2026-11-17
 
 ## 1. Official project decisions
 
@@ -137,3 +137,13 @@ https://docs.godotengine.org/en/latest/tutorials/platform/android/embedding_in_a
 https://docs.godotengine.org/en/latest/tutorials/export/android_gradle_build.html
 
 https://godotengine.org/download/archive/
+
+
+## 10. Verified Blender environment pipeline (2026-11-17)
+
+- CI workflow: `.github/workflows/blender-environment-test.yml` runs on relevant pushes/pull requests and supports manual selection of one preset or all four.
+- Runtime: Ubuntu 24.04 with Blender 4.0.2. CI installs `python3-numpy` and exposes distro site-packages to Blender's bundled Python for the glTF exporter.
+- Successful run: https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44049618483
+- Verified result: modern, historical, fantasy and greed_island all passed. Each generated BLEND, GLB and JSON; BLEND files reopened in a fresh Blender process; GLBs passed structural validation; JSON metadata matched the requested settings. Result: 4 passed, 0 failed.
+- CI artifacts are retained by Actions and are not committed into the repository.
+- This verifies Blender generation/export only. Godot import, scene integration, visual approval and Android device performance remain pending.
