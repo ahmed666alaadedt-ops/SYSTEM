@@ -1,6 +1,16 @@
 name: SYSTEM WORLD Blender Environment Pipeline
 
 on:
+  push:
+    paths:
+      - ".github/workflows/blender-environment-test.yml"
+      - "SYSTEM-WORLD/tools/blender/**"
+      - "SYSTEM-WORLD/tools/validate_glb.py"
+  pull_request:
+    paths:
+      - ".github/workflows/blender-environment-test.yml"
+      - "SYSTEM-WORLD/tools/blender/**"
+      - "SYSTEM-WORLD/tools/validate_glb.py"
   workflow_dispatch:
     inputs:
       world:
@@ -32,28 +42,36 @@ jobs:
       - name: Checkout SYSTEM repository
         uses: actions/checkout@v4
 
-      - name: Install Blender and Python
+      - name: Install Blender 4.0.2 and Python
         run: |
+          set -euo pipefail
           sudo apt-get update
           sudo apt-get install --yes blender
           blender --version
           python3 --version
+          test "$(blender --version | head -n 1)" = "Blender 4.0.2"
 
       - name: Run GLB validator self-test
         run: python3 SYSTEM-WORLD/tools/validate_glb.py --self-test
 
+      - name: Run Blender generator preset self-test
+        run: blender --background --python SYSTEM-WORLD/tools/blender/generate_system_world_environment.py -- --self-test
+
       - name: Generate and validate requested world environments
+        env:
+          WORLD: ${{ inputs.world || 'all' }}
+          SEED: ${{ inputs.seed || '20261117' }}
         run: |
           python3 SYSTEM-WORLD/tools/blender/run_environment_pipeline_test.py \
-            --world "${{ inputs.world }}" \
-            --seed "${{ inputs.seed }}" \
+            --world "$WORLD" \
+            --seed "$SEED" \
             --segments 48
 
       - name: Upload generated environment assets and report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: system-world-environments-${{ inputs.world }}-${{ inputs.seed }}
+          name: system-world-environments-${{ inputs.world || 'all' }}-${{ inputs.seed || '20261117' }}
           path: SYSTEM-WORLD/generated/environment_tiles/
           if-no-files-found: warn
           retention-days: 14
