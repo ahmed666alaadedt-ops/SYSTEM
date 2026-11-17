@@ -73,3 +73,55 @@ Expected output files:
 - `sw_modern_tile_s20261117.json`
 
 The asset register must not mark this as a reviewed/finished asset until Blender generation, repository GLB validation, Godot import and visual review have all passed.
+
+
+## Follow-up work (2026-11-17 10:16 UTC+03:00)
+
+### Added pipeline acceptance-test runner
+
+- Added `blender/run_environment_pipeline_test.py`.
+- It resolves the Blender executable, records the Blender version, runs the
+  generator for the selected world (or all four), checks that each expected
+  `.blend`, `.glb`, and metadata `.json` exists and is non-empty, then runs
+  `validate_glb.py` against the generated GLB.
+- It writes a machine-readable JSON report and uses distinct exit codes:
+  `0` all requested worlds passed, `1` generation/output/validation failure,
+  `2` Blender unavailable or unable to launch.
+- If Blender is absent, the runner records `blocked_blender_unavailable` and
+  does not create fake model files.
+
+### Checks attempted in the current assistant execution environment
+
+| Check | Observed result |
+|---|---|
+| `command -v blender` | No executable found |
+| `command -v godot` / `godot4` | No executable found |
+| Python | 3.13.5 |
+| `import bpy` | `ModuleNotFoundError` |
+| Trimesh | 4.11.1 available |
+| Repository working tree | Not mounted in this execution environment; GitHub repository files were accessed remotely |
+| Direct local execution of repository scripts | Blocked because the repository paths are not present in the local filesystem |
+
+The local attempts to run the repository scripts by relative path returned
+`can't open file '//SYSTEM-WORLD/...'`. This is an environment/path limitation,
+not evidence that the scripts passed or failed. The newly added runner has not
+yet been executed; its runtime behavior remains unverified until it is run from
+a checkout with Python. No Blender `.blend` or Blender-exported GLB is claimed.
+
+### Next executable acceptance command
+
+From the repository root on a machine with Blender 4.x installed:
+
+```bash
+python3 SYSTEM-WORLD/tools/blender/run_environment_pipeline_test.py --world modern
+```
+
+To test all four independent world presets:
+
+```bash
+python3 SYSTEM-WORLD/tools/blender/run_environment_pipeline_test.py --world all
+```
+
+Review `pipeline_test_report.json` and inspect the actual model in Blender
+before registering any output as visually reviewed. Godot import and Android
+device profiling remain separate, pending acceptance checks.
