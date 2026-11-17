@@ -181,8 +181,10 @@ Added an isolated Blender-to-GLB starting pipeline under
   scenes, Android source or Firebase configuration was replaced.
 
 The Blender generator source is present, but Blender export has not been run
-because Blender is unavailable. The validator's self-test is designed to run
-with standard Python and is separately reported in the execution log.
+because Blender is unavailable. The pure GLB-validator fixture logic and the
+generator's deterministic terrain-sampling logic were exercised under Python
+3.13.5 using local mirrors of those routines. These checks do not validate the
+full checked-in Blender export job, GLB import in Godot, visuals or Android performance.
 
 ## 8. Prioritized roadmap and acceptance criteria
 
@@ -235,11 +237,15 @@ with standard Python and is separately reported in the execution log.
 | Count project scenes/scripts and asset extensions | Completed from Git tree |
 | Inspect both `project.godot` files and main scenes | Completed |
 | Compare declared autoload paths with tracked paths | Canonical: 8/8 present; prototype: 7/7 present after the path correction |
-| Correct prototype missing autoload path | Source change made; static path now resolves |\n| Scene external-resource path scan | All 9 tracked Godot scenes: all referenced scripts/scenes exist in the corresponding project tree |\n| Android project structure review | Compose MainActivity, landscape manifest, SDK levels, Firebase dependencies and seven Firebase repository/sync source files inspected |\n| Gradle wrapper presence | No wrapper scripts or wrapper directory found |
+| Correct prototype missing autoload path | Source change made; static path now resolves |
+| Scene external-resource path scan | All 9 tracked Godot scenes: all referenced scripts/scenes exist in the corresponding project tree |
+| Android project structure review | Compose MainActivity, landscape manifest, SDK levels, Firebase dependencies and seven Firebase repository/sync source files inspected |
+| Gradle wrapper presence | No wrapper scripts or wrapper directory found |
 | Tool availability lookup | Completed |
 | Godot import/scene launch | Not run: Godot unavailable |
 | Blender generation/export | Not run: Blender unavailable |
-| GLB validator self-test | PASS in Python 3.13.5 using a local mirror of the validator logic; this is not a Godot/Blender import test |\n| Blender terrain sampling self-test | PASS in Python 3.13.5 using a local mirror of the pure deterministic sampling/preset logic |
+| GLB validator self-test | PASS in Python 3.13.5 using a local mirror of the validator logic; this is not a Godot/Blender import test |
+| Blender terrain sampling self-test | PASS in Python 3.13.5 using a local mirror of the pure deterministic sampling/preset logic |
 | Android Gradle/APK/device test | Not run: Gradle and Android SDK unavailable |
 
 ## 10. Not verified / remaining prerequisites
