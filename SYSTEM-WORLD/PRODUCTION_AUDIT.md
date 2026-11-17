@@ -234,12 +234,12 @@ with standard Python and is separately reported in the execution log.
 | Nested agent instruction search | Root `AGENTS.md` only |
 | Count project scenes/scripts and asset extensions | Completed from Git tree |
 | Inspect both `project.godot` files and main scenes | Completed |
-| Compare declared autoload paths with tracked paths | Canonical: 8/8 present; prototype: 6/7 present before correction |
-| Correct prototype missing autoload path | Source change made; static path now resolves |
+| Compare declared autoload paths with tracked paths | Canonical: 8/8 present; prototype: 7/7 present after the path correction |
+| Correct prototype missing autoload path | Source change made; static path now resolves |\n| Scene external-resource path scan | All 9 tracked Godot scenes: all referenced scripts/scenes exist in the corresponding project tree |
 | Tool availability lookup | Completed |
 | Godot import/scene launch | Not run: Godot unavailable |
 | Blender generation/export | Not run: Blender unavailable |
-| GLB validator self-test | Run result recorded after implementation |
+| GLB validator self-test | PASS in Python 3.13.5 using a local mirror of the validator logic; this is not a Godot/Blender import test |\n| Blender terrain sampling self-test | PASS in Python 3.13.5 using a local mirror of the pure deterministic sampling/preset logic |
 | Android Gradle/APK/device test | Not run: Gradle and Android SDK unavailable |
 
 ## 10. Not verified / remaining prerequisites
