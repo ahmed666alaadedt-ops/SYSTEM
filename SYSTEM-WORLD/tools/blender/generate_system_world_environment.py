@@ -163,7 +163,17 @@ def build_scene(args: argparse.Namespace) -> dict:
     preset = WORLD_PRESETS[args.world]
     bpy.ops.wm.read_factory_settings(use_empty=True)
     scene = bpy.context.scene
-    scene.render.engine = "BLENDER_EEVEE_NEXT"
+    # Support Blender 4.0 (BLENDER_EEVEE) and newer releases (BLENDER_EEVEE_NEXT).
+    available_engines = {
+        item.identifier
+        for item in scene.render.bl_rna.properties["engine"].enum_items
+    }
+    if "BLENDER_EEVEE_NEXT" in available_engines:
+        scene.render.engine = "BLENDER_EEVEE_NEXT"
+    elif "BLENDER_EEVEE" in available_engines:
+        scene.render.engine = "BLENDER_EEVEE"
+    else:
+        scene.render.engine = "BLENDER_WORKBENCH"
     scene.unit_settings.system = "METRIC"
 
     ground_mat = make_material(bpy, "SW_Ground", preset["ground"])
