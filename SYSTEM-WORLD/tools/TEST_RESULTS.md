@@ -49,7 +49,7 @@ A local standard-library container-header check also confirmed the declared GLB 
 
 - Blender generator execution and `.blend` save.
 - Blender's glTF/GLB exporter.
-- The repository's `validate_glb.py` against a Blender-produced asset.
+- The repository validator's `--self-test` and validation of a Blender-produced asset.
 - Godot GLB import, visual inspection, collision/navigation setup.
 - Android device performance or memory profiling.
 
