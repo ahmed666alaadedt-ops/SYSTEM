@@ -117,14 +117,13 @@ asset here only after generation, GLB validation, Godot import and visual review
   - GitHub Actions run 44049618483 passed all four presets using Blender 4.0.2.
 
 +
-+## Verified CI export evidence (2026-11-17)
-+
-+- Workflow: `.github/workflows/blender-environment-test.yml`
-+- Blender: 4.0.2
-+- Run: https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44049618483
-+- Result: 4/4 presets passed; each produced non-empty BLEND, GLB and JSON outputs.
-+- BLEND files reopened in Blender; GLBs passed structural validation.
-+- CI artifact: `system-world-environments-all-20261117` (retained by Actions).
-+- Godot import, visual review, collision/navigation integration and Android
-+  performance remain pending; generated blockouts are not finished art assets.
-+
+## Verified CI export evidence (2026-11-17)
+
+- Workflow: `.github/workflows/blender-environment-test.yml`
+- Blender: 4.0.2
+- Run: https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44049618483
+- Result: 4/4 presets passed; each produced non-empty BLEND, GLB and JSON outputs.
+- BLEND files reopened in Blender; GLBs passed structural validation.
+- CI artifact: `system-world-environments-all-20261117` (retained by Actions).
+- Godot import, visual review, collision/navigation integration and Android
+  performance remain pending; generated blockouts are not finished art assets.
