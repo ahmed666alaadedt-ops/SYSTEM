@@ -92,8 +92,12 @@ Scripts:
     road spine, vegetation/rocks and a world-specific landmark.
   - Four separate presets: modern, historical, fantasy and Greed Island.
   - Exports editable BLEND, runtime GLB and seed/settings metadata JSON.
-  - Source added; Blender export has **not** yet been executed in the current
-    environment because Blender is unavailable.
+  - Source added and Blender 4.0.2 export successfully executed and verified
+    through GitHub Actions.
+  - All four world presets (modern, historical, fantasy and greed_island)
+    successfully generated non-empty BLEND, GLB and JSON outputs in CI.
+  - Local Blender execution has not been verified in the current development
+    environment; the successful export evidence is from GitHub Actions.
 - `tools/validate_glb.py`
   - Python standard-library GLB 2.0 structural validator.
   - Checks header/chunks, embedded resources, buffer views/accessors, mesh
@@ -105,8 +109,11 @@ Scripts:
 - `PRODUCTION_AUDIT.md`
   - Evidence-based repository, toolchain and asset-pipeline audit.
 
-No generated GLB or finished art asset is registered yet. Add each exported
-asset here only after generation, GLB validation, Godot import and visual review.
+The four procedural environment blockouts have been generated successfully
+and their BLEND/GLB/JSON outputs were verified by the Blender 4.0.2 CI pipeline.
+They are not yet registered as finished art assets: Godot import, visual review,
+collision/navigation integration and Android performance checks remain pending.
+Register finished assets only after those downstream checks are complete.
 
 
 - `tools/blender/run_environment_pipeline_test.py`
