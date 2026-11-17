@@ -116,7 +116,7 @@ asset here only after generation, GLB validation, Godot import and visual review
     checks JSON metadata against the requested preset and seed.
   - GitHub Actions run 44049618483 passed all four presets using Blender 4.0.2.
 
-+
+
 ## Verified CI export evidence (2026-11-17)
 
 - Workflow: `.github/workflows/blender-environment-test.yml`
