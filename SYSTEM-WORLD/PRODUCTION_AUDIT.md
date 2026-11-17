@@ -257,3 +257,69 @@ with standard Python and is separately reported in the execution log.
 tile on a workstation with Blender 4.x, validate the resulting GLB, then import
 and visually review it in the canonical Godot project before expanding the
 other three world presets.
+
+
+## 11. Follow-up implementation and execution record (2026-11-17)
+
+The audit document was already present on `main` when this follow-up began.
+This branch extends it with an executable production path rather than treating
+the audit itself as the deliverable.
+
+### Added pure-Python production path
+
+- Added `tools/generate_environment_glb.py`, a standard-library-only Python
+  3.10+ GLB 2.0 generator. It creates a deterministic 64 m terrain tile, a road
+  ribbon, low-poly vegetation/rocks and a world-specific landmark.
+- Supports the four independent presets: `modern`, `historical`,
+  `fantasy`, and `greed_island`.
+- Exports a self-contained GLB and JSON metadata containing world, seed, scale,
+  segment count, mesh count and a review-required status.
+- Added `tools/tests/test_environment_glb.py` with five regression tests.
+- Updated `tools/README.md` with exact commands and Godot import guidance.
+- The existing Blender 4.x generator remains available for editable BLEND
+  source files; it was not replaced.
+
+### Actual generation and inspection
+
+Command executed in the isolated working copy:
+
+```bash
+python3 SYSTEM-WORLD/tools/generate_environment_glb.py \
+  --world modern --seed 20261117 --segments 32 \
+  --output SYSTEM-WORLD/generated/environment_tiles
+```
+
+Observed output:
+- GLB 2.0 container, 44,812 bytes.
+- Four mesh primitives/nodes: terrain, road ribbon, vegetation/rocks and
+  modern city landmark.
+- Four PBR materials: ground, road, vegetation and landmark.
+- Terrain: 2,048 triangles at 32 segments.
+- Metadata JSON written beside the GLB.
+- The generated file was read back and its GLB header, declared byte length,
+  JSON chunk, mesh names, materials and node count were inspected.
+
+The generated GLB is a procedural blockout. It is not yet registered as an
+approved production asset because Godot import and visual review have not run.
+The isolated generated binary is not part of this source-only change set.
+
+### Tests actually run
+
+| Check | Result |
+|---|---|
+| Generator self-test | PASS — four presets, deterministic sampling, island falloff |
+| Python unit tests | PASS — 5 tests |
+| GLB generation | PASS — modern tile generated and read back |
+| GLB container inspection | PASS — magic, version, byte length, JSON chunk and mesh/material/node structure |
+| Existing GLB validator self-test | Not run in this isolated run |
+| Blender export | Not run — Blender unavailable |
+| Godot import/scene launch | Not run — Godot unavailable |
+| Android build/device test | Not run — Gradle and Android SDK unavailable |
+
+### Remaining verification boundary
+
+The new pure-Python generator removes Blender as a prerequisite for producing
+a first GLB blockout. It does not replace Godot import testing, visual review,
+collision/navigation setup, Blender-native editing, Android packaging or
+physical-device performance testing. No claim of AAA-quality artwork or
+runtime integration is made.
