@@ -107,3 +107,20 @@ Scripts:
 
 No generated GLB or finished art asset is registered yet. Add each exported
 asset here only after generation, GLB validation, Godot import and visual review.
+
+
+## AI-Assisted Production Tools — Follow-up (2026-11-17)
+
+- `tools/generate_environment_glb.py`
+  - Pure Python 3.10+ standard-library generator for a deterministic 64 m GLB
+    environment blockout. No Blender dependency.
+  - Four independent world presets, terrain/road/vegetation/rocks/landmark,
+    GLB 2.0 export and reproducibility metadata.
+  - Five regression tests pass. A modern tile was generated and inspected in
+    an isolated working copy; it remains pending Godot import and visual review.
+- `tools/tests/test_environment_glb.py`
+  - Checks all four presets, GLB container/scene structure, repeatability,
+    seed variation, Greed Island falloff and segment validation.
+
+Do not mark generated blockouts as finished art until Godot import and visual
+review have been completed.
