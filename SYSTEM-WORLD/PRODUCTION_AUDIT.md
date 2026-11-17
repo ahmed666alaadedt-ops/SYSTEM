@@ -30,12 +30,12 @@ device test or performance test is claimed in this report.
 |---|---|
 | Canonical Godot project | `SYSTEM-WORLD/project.godot`, `MainScene.tscn`, 43 GDScript files and project documentation |
 | Separate 3D prototype | `SYSTEM-WORLD-3D/project.godot`, 8 scenes, 43 GDScript files, Android export preset |
-| Android application | Gradle Kotlin build files, manifest, approximately 130 Kotlin source files |
-| Firebase | Dedicated auth, account, progress, task-sync and global-chat repositories; Firebase config and Firestore rules are present |
+| Android application | Gradle Kotlin build files, manifest, approximately 130 Kotlin source files; Compose app, compileSdk/targetSdk 35, minSdk 26, JVM 17 |
+| Firebase | Seven dedicated auth, account, progress, task-sync and global-chat Kotlin files; Firebase Auth/Firestore/Storage/Functions dependencies, config and Firestore rules are present |
 | CI | `.github/workflows/android.yml` and `.github/workflows/godot-android.yml` |
 | Root references | Master vision, master specification, build log and Codex instructions |
 
-The recursive Git tree returned 348 entries and was not marked truncated.
+The initial recursive Git tree returned 348 entries and was not marked truncated; the final tree grew by the four additive production-tool/audit files. The repository root has no `project.godot`; the only two Godot projects are the two named subdirectories.
 Only the root `AGENTS.md` was found; no nested `AGENTS.md` or
 `AGENTS.override.md` was present in the inspected tree.
 
@@ -235,7 +235,7 @@ with standard Python and is separately reported in the execution log.
 | Count project scenes/scripts and asset extensions | Completed from Git tree |
 | Inspect both `project.godot` files and main scenes | Completed |
 | Compare declared autoload paths with tracked paths | Canonical: 8/8 present; prototype: 7/7 present after the path correction |
-| Correct prototype missing autoload path | Source change made; static path now resolves |\n| Scene external-resource path scan | All 9 tracked Godot scenes: all referenced scripts/scenes exist in the corresponding project tree |
+| Correct prototype missing autoload path | Source change made; static path now resolves |\n| Scene external-resource path scan | All 9 tracked Godot scenes: all referenced scripts/scenes exist in the corresponding project tree |\n| Android project structure review | Compose MainActivity, landscape manifest, SDK levels, Firebase dependencies and seven Firebase repository/sync source files inspected |\n| Gradle wrapper presence | No wrapper scripts or wrapper directory found |
 | Tool availability lookup | Completed |
 | Godot import/scene launch | Not run: Godot unavailable |
 | Blender generation/export | Not run: Blender unavailable |
