@@ -74,16 +74,12 @@ Expected output files:
 
 The asset register must not mark this as a reviewed/finished asset until Blender generation, repository GLB validation, Godot import and visual review have all passed.
 
-
 ## Follow-up work (2026-11-17 10:16 UTC+03:00)
 
 ### Added pipeline acceptance-test runner
 
 - Added `blender/run_environment_pipeline_test.py`.
-- It resolves the Blender executable, records the Blender version, runs the
-  generator for the selected world (or all four), checks that each expected
-  `.blend`, `.glb`, and metadata `.json` exists and is non-empty, then runs
-  `validate_glb.py` against the generated GLB.
+- It resolves the Blender executable, records the Blender version, runs the generator for the selected world (or all four), checks that each expected `.blend`, `.glb`, and metadata `.json` exists and is non-empty, then runs `validate_glb.py` against the generated GLB.
 - It writes a machine-readable JSON report and uses distinct exit codes:
   `0` all requested worlds passed, `1` generation/output/validation failure,
   `2` Blender unavailable or unable to launch.
@@ -125,3 +121,28 @@ python3 SYSTEM-WORLD/tools/blender/run_environment_pipeline_test.py --world all
 Review `pipeline_test_report.json` and inspect the actual model in Blender
 before registering any output as visually reviewed. Godot import and Android
 device profiling remain separate, pending acceptance checks.
+
+## Follow-up verification (2026-11-17 10:30 UTC+03:00)
+
+### Checks actually performed in this continuation
+
+| Check | Observed result |
+|---|---|
+| `command -v blender` | No executable found |
+| `blender --version` | Could not run because Blender is absent |
+| `import bpy` | `ModuleNotFoundError` |
+| `python3 --version` | Python 3.13.5 |
+| Repository `validate_glb.py --self-test` logic | Passed in an isolated scratch copy reconstructed from the fetched repository source; one-triangle GLB fixture parsed successfully |
+| Missing-Blender pipeline branch | A scratch smoke test based on the fetched runner's blocked branch emitted `blocked_blender_unavailable`, with no generated asset files |
+| Blender-generated `.blend` / `.glb` | Not produced |
+| Godot import / Android profiling | Not run |
+
+**Important scope note:** The validator self-test and blocked-branch smoke test above were run from isolated scratch files, not from a mounted repository checkout. They verify the exercised code paths and environment behavior, but they are not a full execution of the committed repository pipeline. No result here upgrades the asset to Blender-generated, Godot-imported, visually reviewed, or Android-validated status.
+
+### Current acceptance status
+
+- Generator source exists in GitHub and has four world presets.
+- GLB structural validator source exists in GitHub.
+- A pipeline acceptance runner exists in GitHub.
+- Blender execution and Blender export remain blocked until Blender 4.x is installed in an accessible execution environment.
+- Godot import and Android performance acceptance remain pending.
