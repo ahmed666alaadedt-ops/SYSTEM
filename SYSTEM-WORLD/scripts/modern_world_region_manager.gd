@@ -8,6 +8,7 @@ const ModernWorldAmbienceManagerScript = preload("res://scripts/modern_world_amb
 const BaghdadTowerLandmarksManagerScript = preload("res://scripts/baghdad_tower_landmarks_manager.gd")
 const ModernWorldTransportNetworkManagerScript = preload("res://scripts/modern_world_transport_network_manager.gd")
 const ModernCityStreetFurnitureManagerScript = preload("res://scripts/modern_city_street_furniture_manager.gd")
+const ModernCityServicesManagerScript = preload("res://scripts/modern_city_services_manager.gd")
 
 ## طبقة تفاصيل المدن والمناطق الحضرية للعالم الحديث.
 ## تُبنى فوق تضاريس القارة الموجودة ولا تستبدلها أو تغيّر مواقعها المرجعية.
@@ -76,6 +77,7 @@ func _ready() -> void:
 	_build_city_roads()
 	_create_transport_network()
 	_create_city_street_furniture()
+	_create_city_services()
 	_build_transport_hubs()
 	_build_green_belts()
 	_build_rural_settlements()
@@ -445,6 +447,17 @@ func register_map_locations(map_manager: Node, world_id: String) -> void:
 			Vector3(village_position.x, terrain.get_terrain_height(village_position.x, village_position.y), village_position.y), false
 		)
 
+	var services_manager := get_node_or_null("ModernCityServicesManager")
+	if services_manager != null and services_manager.has_method("get_service_locations"):
+		for service_data in services_manager.call("get_service_locations"):
+			map_manager.call(
+				"register_location", world_id,
+				str(service_data["id"]),
+				"region_" + str(service_data["city"]).to_lower().replace(" ", "_"),
+				str(service_data["name"]), 7,
+				service_data["position"], false
+			)
+
 	var transport_manager := get_node_or_null("ModernWorldTransportNetworkManager")
 	if transport_manager != null and transport_manager.has_method("get_landmark_locations"):
 		for transport_data in transport_manager.call("get_landmark_locations"):
@@ -491,6 +504,12 @@ func get_city_names() -> Array[String]:
 		if city_anchors.has(city_name):
 			result.append(city_name)
 	return result
+
+
+func _create_city_services() -> void:
+	var services := ModernCityServicesManagerScript.new()
+	services.name = "ModernCityServicesManager"
+	add_child(services)
 
 
 func _create_city_street_furniture() -> void:
