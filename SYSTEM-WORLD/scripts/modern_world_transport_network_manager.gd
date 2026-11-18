@@ -219,7 +219,6 @@ func _build_waterfront_promenade(parent: Node3D, outward: Vector2) -> void:
 			parent.add_child(bench)
 			_add_box(bench, "BenchSeat", Vector3.ZERO, Vector3(2.6, 0.22, 0.72), bench_material)
 			_add_box(bench, "BenchBack", Vector3(0.0, 0.65, 0.32), Vector3(2.6, 0.9, 0.18), bench_material)
-	var direction := outward.normalized()
 	var sign_root := Node3D.new()
 	sign_root.name = "HarborWaterfrontSign"
 	sign_root.position = Vector3(-23.0, 0.0, -7.0)
