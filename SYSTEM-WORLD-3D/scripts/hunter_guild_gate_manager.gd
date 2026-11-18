@@ -75,7 +75,9 @@ func report_gate(gate_id: String, reporter_id: String = "PLAYER") -> Dictionary:
 
 
 func mark_gate_unstable(gate_data: Dictionary) -> void:
-	_update_status(str(gate_data.get("id", "")), "unstable")
+	var gate_id := str(gate_data.get("id", ""))
+	_update_status(gate_id, "unstable")
+	assess_gate_threat(gate_id, float(gate_data.get("time_remaining", 180.0)))
 
 
 func mark_gate_breached(gate_data: Dictionary) -> void:
