@@ -8,6 +8,7 @@ var root_ui: Control
 var guild_panel: PanelContainer
 var mission_list: VBoxContainer
 var status_label: Label
+var mission_progress_labels: Dictionary = {}
 
 var missions := [
 	{
@@ -119,6 +120,12 @@ func _build_missions() -> void:
 		]
 		details.add_child(info)
 
+		var progress_label := Label.new()
+		progress_label.text = "التقدم: 0/1"
+		progress_label.add_theme_font_size_override("font_size", 14)
+		details.add_child(progress_label)
+		mission_progress_labels[str(mission["id"])] = progress_label
+
 		var accept_button := Button.new()
 		accept_button.text = "قبول المهمة"
 		details.add_child(accept_button)
@@ -137,3 +144,31 @@ func _on_mission_accepted(mission_id: String, mission_title: String) -> void:
 	mission_accepted.emit(mission_id)
 
 	print("SYSTEM: Hunter mission selected: ", mission_id)
+
+
+
+func update_mission_progress(
+	mission_id: String,
+	current: int,
+	required: int
+) -> void:
+	var progress_label: Label = mission_progress_labels.get(mission_id)
+	if progress_label == null or not is_instance_valid(progress_label):
+		return
+
+	progress_label.text = "التقدم: %d/%d" % [current, required]
+
+
+func update_mission_status(
+	mission_id: String,
+	status: String
+) -> void:
+	var progress_label: Label = mission_progress_labels.get(mission_id)
+	if progress_label == null or not is_instance_valid(progress_label):
+		return
+
+	match status:
+		"accepted":
+			progress_label.text = "قيد التنفيذ"
+		"completed":
+			progress_label.text = "مكتملة ✓"
