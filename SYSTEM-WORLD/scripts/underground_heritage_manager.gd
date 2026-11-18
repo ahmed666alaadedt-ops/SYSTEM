@@ -1,6 +1,8 @@
 extends Node3D
 class_name UndergroundHeritageManager
 
+const UndergroundInteractableScript = preload("res://scripts/underground_interactable.gd")
+
 ## Hidden underground passages and heritage markets for the modern world.
 ## This is a first procedural exploration layout, not a complete navigable quest system.
 
@@ -194,6 +196,7 @@ func _build_secret_vault(parent: Node3D, is_market: bool, site_name: String) -> 
 	_add_box(parent, "VaultGateLeft", Vector3(-2.9, 2.0, -46.0), Vector3(0.55, 4.0, 0.65), _gold, false)
 	_add_box(parent, "VaultGateRight", Vector3(2.9, 2.0, -46.0), Vector3(0.55, 4.0, 0.65), _gold, false)
 	_add_box(parent, "VaultGateTop", Vector3(0, 4.1, -46.0), Vector3(6.3, 0.55, 0.65), _gold, false)
+	_create_vault_door_interaction(parent)
 
 	if is_market:
 		_add_box(parent, "MerchantHiddenStrongbox", Vector3(0, 0.9, -54.0), Vector3(2.2, 1.5, 1.5), _wood, true)
@@ -210,6 +213,7 @@ func _build_secret_vault(parent: Node3D, is_market: bool, site_name: String) -> 
 		relic_pedestal.material_override = _stone
 		parent.add_child(relic_pedestal)
 		_add_box(parent, "RelicDisplayBlock", Vector3(0, 1.35, -54.0), Vector3(1.0, 1.0, 1.0), _gold, false)
+		_create_relic_interaction(parent)
 
 	# Recesses along the vault walls suggest further sealed branches for later expansion.
 	for side in [-1.0, 1.0]:
@@ -288,3 +292,66 @@ func _build_baghdad_link() -> void:
 			light.light_energy = 0.55
 			light.omni_range = 8.0
 			segment.add_child(light)
+
+
+
+func _create_vault_door_interaction(parent: Node3D) -> void:
+	var target := UndergroundInteractableScript.new() as Node3D
+	target.name = "VaultStoneDoorInteraction"
+	target.action_type = "stone_door"
+	target.action_target_path = ^"DoorBody"
+	target.position = Vector3(0, 0, -39.0)
+	target.add_to_group("system_interactable")
+	target.set_meta("system_interaction_prompt", "اسحب الرافعة لفتح الباب الحجري")
+	parent.add_child(target)
+
+	var door_body := StaticBody3D.new()
+	door_body.name = "DoorBody"
+	door_body.position = Vector3(0, 1.9, -7.0)
+	target.add_child(door_body)
+
+	var door_visual := MeshInstance3D.new()
+	door_visual.name = "AncientSlidingStoneSlab"
+	var door_mesh := BoxMesh.new()
+	door_mesh.size = Vector3(4.8, 3.8, 0.55)
+	door_visual.mesh = door_mesh
+	door_visual.material_override = _stone
+	door_body.add_child(door_visual)
+
+	var door_collision := CollisionShape3D.new()
+	var door_shape := BoxShape3D.new()
+	door_shape.size = door_mesh.size
+	door_collision.shape = door_shape
+	door_body.add_child(door_collision)
+
+	var lever_area := Area3D.new()
+	lever_area.name = "LeverInteractionArea"
+	lever_area.position = Vector3(3.4, 1.2, 0.0)
+	target.add_child(lever_area)
+	var lever_shape := CollisionShape3D.new()
+	var lever_box := BoxShape3D.new()
+	lever_box.size = Vector3(1.4, 2.0, 1.4)
+	lever_shape.shape = lever_box
+	lever_area.add_child(lever_shape)
+
+	_add_box(target, "GoldenLeverHandle", Vector3(3.4, 1.25, -0.25), Vector3(0.18, 1.1, 0.18), _gold, false)
+	_add_box(target, "GoldenLeverBase", Vector3(3.4, 0.65, -0.25), Vector3(0.65, 0.18, 0.45), _gold, false)
+
+
+func _create_relic_interaction(parent: Node3D) -> void:
+	var target := UndergroundInteractableScript.new() as Node3D
+	target.name = "AncientRelicInteraction"
+	target.action_type = "relic"
+	target.position = Vector3(0, 1.0, -54.0)
+	target.add_to_group("system_interactable")
+	target.set_meta("system_interaction_prompt", "افحص الأثر القديم")
+	parent.add_child(target)
+
+	var relic_area := Area3D.new()
+	relic_area.name = "RelicInteractionArea"
+	target.add_child(relic_area)
+	var relic_shape := CollisionShape3D.new()
+	var sphere := SphereShape3D.new()
+	sphere.radius = 1.8
+	relic_shape.shape = sphere
+	relic_area.add_child(relic_shape)
