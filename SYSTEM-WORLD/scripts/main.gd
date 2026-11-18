@@ -159,7 +159,33 @@ func create_mission_reward_manager() -> void:
 
 	hunter_guild_menu.mission_accepted.connect(_on_hunter_mission_accepted)
 
-	print("SYSTEM: Mission rewards connected to Hunter Guild and Player Progression.")
+	if hunter_guild_menu.has_method("update_mission_progress"):
+		mission_reward_manager.mission_progress_changed.connect(
+			hunter_guild_menu.update_mission_progress
+		)
+	if hunter_guild_menu.has_method("update_mission_status"):
+		mission_reward_manager.mission_status_changed.connect(
+			hunter_guild_menu.update_mission_status
+		)
+
+	for mission_id in ["guild_001", "guild_002", "guild_003"]:
+		var saved_state: Dictionary = mission_reward_manager.get_mission_progress(
+			mission_id
+		)
+		if saved_state.is_empty():
+			continue
+		if hunter_guild_menu.has_method("update_mission_progress"):
+			hunter_guild_menu.update_mission_progress(
+				mission_id,
+				int(saved_state["progress"]),
+				int(saved_state["required"])
+			)
+		if bool(saved_state["completed"]) and hunter_guild_menu.has_method("update_mission_status"):
+			hunter_guild_menu.update_mission_status(mission_id, "completed")
+		elif bool(saved_state["accepted"]) and hunter_guild_menu.has_method("update_mission_status"):
+			hunter_guild_menu.update_mission_status(mission_id, "accepted")
+
+	print("SYSTEM: Mission objectives, progress display, and rewards connected.")
 
 
 func _on_hunter_mission_accepted(mission_id: String) -> void:
@@ -258,6 +284,10 @@ func create_interaction_manager() -> void:
 
 	interaction_manager.location_discovered.connect(
 		_on_location_discovered
+	)
+
+	interaction_manager.location_discovered.connect(
+		_on_mission_location_discovered
 	)
 
 	interaction_manager.fast_travel_point_activated.connect(
@@ -433,6 +463,20 @@ func _on_location_discovered(
 		world_id,
 		" / ",
 		location_id
+	)
+
+
+## يربط اكتشاف موقع فعلي بهدف الاستكشاف في المهام المقبولة.
+func _on_mission_location_discovered(
+	world_id: String,
+	location_id: String
+) -> void:
+	if not is_instance_valid(mission_reward_manager):
+		return
+
+	mission_reward_manager.record_objective_event(
+		"discover_location",
+		world_id + ":" + location_id
 	)
 
 
