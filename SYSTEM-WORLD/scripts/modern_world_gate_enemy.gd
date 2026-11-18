@@ -22,6 +22,8 @@ func _ready() -> void:
 	capsule_height = 3.4 if is_boss else 2.2
 	show_placeholder_visual = false
 	super._ready()
+	if is_instance_valid(body_collision):
+		body_collision.position.y = capsule_height * 0.5
 	add_to_group("system_enemy")
 	set_physics_process(true)
 	_create_gate_enemy_visual()
