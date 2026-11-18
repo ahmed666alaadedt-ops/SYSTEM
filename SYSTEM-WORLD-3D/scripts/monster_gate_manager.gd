@@ -22,6 +22,8 @@ const RANK_COLORS := {
 const STABLE_TIME := 900.0
 const UNSTABLE_TIME := 180.0
 const BREACH_TIME := 90.0
+const MAX_ACTIVE_GATES := 8
+const MIN_GATE_DISTANCE := 14.0
 
 var world_root: Node3D
 var active_gates: Array[Dictionary] = []
@@ -48,6 +50,7 @@ func update_world(delta: float) -> void:
 	if not initialized or not is_instance_valid(world_root):
 		return
 	_update_gate_timers(delta)
+	_animate_gate_visuals(delta)
 	_update_spawn_timer(delta)
 
 
@@ -58,15 +61,29 @@ func _update_spawn_timer(delta: float) -> void:
 	if spawn_timer >= next_spawn_time:
 		spawn_timer = 0.0
 		next_spawn_time = randf_range(180.0, 360.0)
-		var position := Vector3(
-			randf_range(-spawn_radius, spawn_radius), 0.0,
-			randf_range(-spawn_radius, spawn_radius)
-		)
-		spawn_gate_at(position, "Unmapped Region")
+		if active_gates.size() >= MAX_ACTIVE_GATES:
+			return
+		var location := _choose_spawn_location()
+		if not location.is_empty():
+			spawn_gate_at(
+				location["position"],
+				str(location["region"]),
+				"",
+				str(location["biome"])
+			)
 
 
-func spawn_gate_at(position: Vector3, region_name: String = "Unknown Region", forced_rank: String = "") -> Dictionary:
+func spawn_gate_at(
+	position: Vector3,
+	region_name: String = "Unknown Region",
+	forced_rank: String = "",
+	biome: String = "urban"
+) -> Dictionary:
 	if not initialized or not is_instance_valid(world_root):
+		return {}
+	if active_gates.size() >= MAX_ACTIVE_GATES:
+		return {}
+	if not _is_gate_position_available(position):
 		return {}
 	gate_counter += 1
 	var gate_id := "MG-%06d" % gate_counter
@@ -80,18 +97,56 @@ func spawn_gate_at(position: Vector3, region_name: String = "Unknown Region", fo
 			displayed_rank = RANKS[rank_index - 1]
 
 	var gate_data := {
-		"id": gate_id, "region": region_name, "position": position,
-		"actual_rank": actual_rank, "displayed_rank": displayed_rank,
+		"id": gate_id, "region": region_name, "biome": biome,
+		"position": position, "actual_rank": actual_rank,
+		"displayed_rank": displayed_rank,
 		"deceptive": deceptive, "monster_count": _generate_monster_count(actual_rank),
 		"boss_count": _generate_boss_count(actual_rank), "status": "stable",
 		"time_remaining": STABLE_TIME, "created_at": Time.get_unix_time_from_system(),
-		"scan_count": 0
+		"scan_count": 0, "pulse_time": 0.0
 	}
 	gate_data["visual"] = _create_gate_visual(gate_data)
 	active_gates.append(gate_data)
 	gate_spawned.emit(_public_data(gate_data))
 	print("SYSTEM: Gate discovered ", gate_id, " | ", displayed_rank)
 	return _public_data(gate_data)
+
+
+func _choose_spawn_location() -> Dictionary:
+	# Keep automatic gates outside the prototype town centre.
+	for attempt in range(10):
+		var angle := randf_range(0.0, TAU)
+		var distance := randf_range(maxf(22.0, spawn_radius * 0.42), spawn_radius)
+		var position := Vector3(cos(angle) * distance, 0.0, sin(angle) * distance)
+		if not _is_gate_position_available(position):
+			continue
+		var biome := "urban" if distance < 31.0 else "forest"
+		var region := "Outer District" if biome == "urban" else "Forest Border"
+		return {"position": position, "biome": biome, "region": region}
+	return {}
+
+
+func _is_gate_position_available(position: Vector3) -> bool:
+	for gate in active_gates:
+		var existing: Vector3 = gate.get("position", Vector3.ZERO)
+		if existing.distance_to(position) < MIN_GATE_DISTANCE:
+			return false
+	return true
+
+
+func _animate_gate_visuals(delta: float) -> void:
+	for data in active_gates:
+		data["pulse_time"] = float(data.get("pulse_time", 0.0)) + delta
+		var visual = data.get("visual")
+		if not is_instance_valid(visual):
+			continue
+		var ring = visual.get_node_or_null("GateRing")
+		var core = visual.get_node_or_null("GateCore")
+		if ring != null:
+			ring.rotation.z += delta * 0.22
+		if core != null:
+			var pulse := 1.0 + sin(float(data["pulse_time"]) * 2.2) * 0.055
+			core.scale = Vector3.ONE * pulse
 
 
 func _generate_random_rank() -> String:
