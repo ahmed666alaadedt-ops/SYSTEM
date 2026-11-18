@@ -373,7 +373,7 @@ func _build_city_overpasses() -> void:
 			var support_x := -45.0 + float(support_index) * 45.0
 			var support_point := center + Vector2(support_x, 0.0)
 			var support_ground := float(terrain.call("get_terrain_height", support_point.x, support_point.y))
-			var support_height := 5.5 * (1.0 - absf(support_x) / 120.0)
+			var support_height := 5.5 * (1.0 - absf(support_x) / 120.0) + 0.65
 			var pier := MeshInstance3D.new()
 			pier.name = deck.name + "_Pier_%02d" % support_index
 			var pier_mesh := BoxMesh.new()
