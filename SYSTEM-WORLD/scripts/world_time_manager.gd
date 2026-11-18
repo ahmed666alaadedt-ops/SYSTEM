@@ -272,6 +272,11 @@ func _create_world_night_lights() -> void:
 		world_root.add_child(light)
 		night_lights.append(light)
 
+	# التقط أضوية الساحات التي أنشأتها خريطة المدن حتى تتزامن مع الليل.
+	for candidate in world_root.find_children("*", "OmniLight3D", true, false):
+		if candidate.is_in_group("system_night_light") and not night_lights.has(candidate):
+			night_lights.append(candidate as OmniLight3D)
+
 
 func _update_night_lights(daylight: float) -> void:
 	var night_factor := clampf(
