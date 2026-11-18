@@ -199,3 +199,10 @@ This expansion is committed to the repository and wired into `world_manager.gd` 
 - The rest-stop scene includes a market building, glazed frontage, canopy, fuel-pump props, EV charging posts and marked parking bays.
 - Stops are skipped when neither side of the sampled midpoint is land.
 - These are scenery only: no fuel inventory, charging, purchases, vehicle service, staff, traffic entry/exit lanes or player interaction is implemented.
+
+
+## Urban flyovers — visual prototype
+
+- Each city attempts an elevated east-west flyover crossing its central boulevard, with sampled terrain ramps, a raised deck, dashed center marking, side barriers and three support piers.
+- The flyover is skipped when its full sampled alignment is not on land.
+- These structures are visual only; ramp grading, road junction connections, vehicle clearance, collision, traffic routing, pedestrian access and runtime validation are still required.
