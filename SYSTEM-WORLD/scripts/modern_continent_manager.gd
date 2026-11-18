@@ -90,6 +90,13 @@ func _gaussian_peak(x: float, z: float, center: Vector2, radius_x: float, radius
 	return strength * exp(-((nx * nx) + (nz * nz)) * 1.7)
 
 
+func _ridge_belt(x: float, z: float, start: Vector2, finish: Vector2, width: float, strength: float) -> float:
+	var distance := _distance_to_segment(Vector2(x, z), start, finish)
+	var ridge_profile := exp(-pow(distance / width, 2.0))
+	var crest_variation := 0.88 + 0.12 * sin((x + z) * 0.012)
+	return strength * ridge_profile * crest_variation
+
+
 func _land_base_height(x: float, z: float) -> float:
 	var broad_hills := (
 		sin(x * 0.0032 + z * 0.0011) * 7.0
@@ -106,11 +113,28 @@ func _land_base_height(x: float, z: float) -> float:
 	mountain_belts += _gaussian_peak(x, z, Vector2(760.0, 430.0), 210.0, 250.0, 68.0)
 	mountain_belts += _gaussian_peak(x, z, Vector2(-80.0, -650.0), 350.0, 115.0, 54.0)
 
+	# Additional connected ranges create distinct ridgelines instead of isolated peaks.
+	var regional_ridges := 0.0
+	regional_ridges += _ridge_belt(x, z, Vector2(-1030.0, -350.0), Vector2(-650.0, -610.0), 74.0, 31.0)
+	regional_ridges += _ridge_belt(x, z, Vector2(180.0, -720.0), Vector2(760.0, -560.0), 92.0, 27.0)
+	regional_ridges += _ridge_belt(x, z, Vector2(560.0, 260.0), Vector2(930.0, 610.0), 82.0, 24.0)
+	regional_ridges += _ridge_belt(x, z, Vector2(-760.0, 470.0), Vector2(-420.0, 700.0), 68.0, 19.0)
+
+	# A broad raised tableland and two lower corridors diversify the continental profile.
+	var western_tableland := _gaussian_peak(x, z, Vector2(-900.0, -80.0), 210.0, 250.0, 22.0)
+	var eastern_tableland := _gaussian_peak(x, z, Vector2(760.0, -60.0), 230.0, 190.0, 18.0)
+	var southern_valley := _gaussian_peak(x, z, Vector2(250.0, 690.0), 390.0, 105.0, -11.0)
+	var northern_pass := _gaussian_peak(x, z, Vector2(20.0, -520.0), 280.0, 72.0, -8.0)
+
+	# A restrained, deterministic dune ripple is concentrated in the southwest dry region.
+	var dune_weight := exp(-pow((x + 690.0) / 260.0, 2.0) - pow((z - 520.0) / 190.0, 2.0))
+	var dune_relief := sin((x + z * 0.42) * 0.035) * 2.8 * dune_weight
+
 	# A low basin through the central region creates a broad valley around the starting area.
 	var central_basin := _gaussian_peak(x, z, Vector2(0.0, 0.0), 390.0, 280.0, -7.0)
 	var river_carving := _river_channel_depth(x, z)
 	var lake_basin := _lake_basin_depth(x, z)
-	return broad_hills + rolling_detail + mountain_belts + central_basin - river_carving - lake_basin
+	return broad_hills + rolling_detail + mountain_belts + regional_ridges + western_tableland + eastern_tableland + southern_valley + northern_pass + dune_relief + central_basin - river_carving - lake_basin
 
 
 func _get_height(x: float, z: float) -> float:
