@@ -58,6 +58,7 @@ func _ready() -> void:
 
 	_build_ancient_rome()
 	_build_roman_colosseum()
+	_create_historical_world_fragments()
 
 	print("SYSTEM WORLD: Historical landmarks created.")
 
@@ -230,6 +231,48 @@ func _create_landmark(
 
 	parent.add_child(landmark)
 	return landmark
+
+
+func _create_historical_world_fragments() -> void:
+	var entries := [
+		{"id": "babylon_cuneiform_tablet", "name": "لوح المسمارية البابلي", "position": Vector3(-65.0, 2.0, 78.0)},
+		{"id": "alexandria_pharos_lens", "name": "عدسة منارة الإسكندرية", "position": Vector3(65.0, 3.0, 48.0)},
+		{"id": "atlantis_tide_relic", "name": "أثر مدّ أتلانتس", "position": Vector3(65.0, 2.0, -52.0)}
+	]
+	for entry in entries:
+		var item := Node3D.new()
+		item.name = "HistoricalKey_" + str(entry["id"])
+		item.position = entry["position"]
+		add_child(item)
+		var visual := MeshInstance3D.new()
+		visual.name = "AncientKeyRelicVisual"
+		var mesh := PrismMesh.new()
+		mesh.size = Vector3(0.9, 1.5, 0.55)
+		visual.mesh = mesh
+		var material := StandardMaterial3D.new()
+		material.albedo_color = Color(0.78, 0.53, 0.22)
+		material.metallic = 0.65
+		material.roughness = 0.3
+		material.emission_enabled = true
+		material.emission = Color(0.35, 0.16, 0.035)
+		visual.material_override = material
+		item.add_child(visual)
+		var endpoint: Node3D = UndergroundInteractableScript.new()
+		endpoint.name = "HistoricalKeyInteraction"
+		endpoint.set("action_type", "world_fragment")
+		endpoint.set("world_fragment_world", "historical")
+		endpoint.set("world_fragment_id", str(entry["id"]))
+		endpoint.add_to_group("system_interactable")
+		endpoint.set_meta("system_interaction_prompt", "اجمع " + str(entry["name"]))
+		item.add_child(endpoint)
+		var area := Area3D.new()
+		area.name = "HistoricalKeyArea"
+		var collision := CollisionShape3D.new()
+		var sphere := SphereShape3D.new()
+		sphere.radius = 2.5
+		collision.shape = sphere
+		area.add_child(collision)
+		endpoint.add_child(area)
 
 
 # --------------------------------------------------
