@@ -236,8 +236,7 @@ fun SystemWorldMiyarGuide() {
         speechEngine = created
 
         onDispose {
-            created?.stop()
-            created?.shutdown()
+            SystemMiyarSpeechCoordinator.release(created)
             speechEngine = null
             voiceReady = false
         }
@@ -269,10 +268,9 @@ fun SystemWorldMiyarGuide() {
 
             Button(
                 onClick = {
-                    speechEngine?.speak(
+                    SystemMiyarSpeechCoordinator.speak(
+                        speechEngine,
                         explanation,
-                        TextToSpeech.QUEUE_FLUSH,
-                        null,
                         "system_miyar_world_guide"
                     )
                 },
