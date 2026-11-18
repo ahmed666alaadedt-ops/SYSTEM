@@ -97,6 +97,47 @@ func _ridge_belt(x: float, z: float, start: Vector2, finish: Vector2, width: flo
 	return strength * ridge_profile * crest_variation
 
 
+func _canyon_cut(
+	x: float,
+	z: float,
+	start: Vector2,
+	finish: Vector2,
+	width: float,
+	depth: float,
+	rim_width: float
+) -> float:
+	# A broad, softened rim transitions into a narrower, deeper canyon floor.
+	var distance := _distance_to_segment(Vector2(x, z), start, finish)
+	if distance >= rim_width:
+		return 0.0
+	var floor_profile := exp(-pow(distance / width, 2.0) * 1.35)
+	var rim_profile := exp(-pow(distance / rim_width, 2.0) * 1.15)
+	var longitudinal := 0.88 + 0.12 * sin((x * 0.006) + (z * 0.004))
+	return depth * floor_profile * longitudinal + depth * 0.22 * rim_profile
+
+
+func _ravine_cut(x: float, z: float) -> float:
+	var point := Vector2(x, z)
+	var nearest_distance := 100000.0
+	var ravines := [
+		[Vector2(-980.0, 80.0), Vector2(-760.0, 210.0), Vector2(-520.0, 300.0)],
+		[Vector2(480.0, -80.0), Vector2(610.0, 80.0), Vector2(760.0, 230.0)],
+		[Vector2(-260.0, 440.0), Vector2(-80.0, 540.0), Vector2(150.0, 650.0)],
+		[Vector2(880.0, -420.0), Vector2(960.0, -240.0), Vector2(1010.0, -60.0)]
+	]
+	for route in ravines:
+		for index in range(route.size() - 1):
+			nearest_distance = minf(
+				nearest_distance,
+				_distance_to_segment(point, route[index], route[index + 1])
+			)
+	if nearest_distance >= 34.0:
+		return 0.0
+	var narrow_channel := exp(-pow(nearest_distance / 10.5, 2.0) * 1.2)
+	var weathered_sides := exp(-pow(nearest_distance / 27.0, 2.0) * 1.1)
+	return 8.5 * narrow_channel + 2.0 * weathered_sides
+
+
 func _land_base_height(x: float, z: float) -> float:
 	var broad_hills := (
 		sin(x * 0.0032 + z * 0.0011) * 7.0
@@ -132,9 +173,23 @@ func _land_base_height(x: float, z: float) -> float:
 
 	# A low basin through the central region creates a broad valley around the starting area.
 	var central_basin := _gaussian_peak(x, z, Vector2(0.0, 0.0), 390.0, 280.0, -7.0)
+	# Deep sculpted canyon corridors and narrower tributary ravines add readable relief.
+	var grand_canyon := _canyon_cut(
+		x, z, Vector2(-920.0, -250.0), Vector2(-420.0, 80.0),
+		24.0, 19.0, 92.0
+	)
+	var eastern_canyon := _canyon_cut(
+		x, z, Vector2(360.0, 320.0), Vector2(880.0, 520.0),
+		19.0, 15.0, 76.0
+	)
+	var northern_gorge := _canyon_cut(
+		x, z, Vector2(-170.0, -650.0), Vector2(300.0, -560.0),
+		17.0, 13.0, 68.0
+	)
+	var tributary_ravines := _ravine_cut(x, z)
 	var river_carving := _river_channel_depth(x, z)
 	var lake_basin := _lake_basin_depth(x, z)
-	return broad_hills + rolling_detail + mountain_belts + regional_ridges + western_tableland + eastern_tableland + southern_valley + northern_pass + dune_relief + central_basin - river_carving - lake_basin
+	return broad_hills + rolling_detail + mountain_belts + regional_ridges + western_tableland + eastern_tableland + southern_valley + northern_pass + dune_relief + central_basin - grand_canyon - eastern_canyon - northern_gorge - tributary_ravines - river_carving - lake_basin
 
 
 func _get_height(x: float, z: float) -> float:
