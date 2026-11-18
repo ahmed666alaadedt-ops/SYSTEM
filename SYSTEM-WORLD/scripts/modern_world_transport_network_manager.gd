@@ -16,6 +16,7 @@ const CITY_ROUTES := [
 var region_manager: Node
 var terrain: Node
 var road_material: StandardMaterial3D
+var road_marking_material: StandardMaterial3D
 var bridge_material: StandardMaterial3D
 var rail_material: StandardMaterial3D
 var port_material: StandardMaterial3D
@@ -41,6 +42,7 @@ func _ready() -> void:
 
 func _create_materials() -> void:
 	road_material = _make_material(Color(0.075, 0.085, 0.095), 0.94, 0.0)
+	road_marking_material = _make_material(Color(0.88, 0.86, 0.76), 0.82, 0.0)
 	bridge_material = _make_material(Color(0.24, 0.29, 0.34), 0.7, 0.42)
 	rail_material = _make_material(Color(0.34, 0.37, 0.4), 0.68, 0.58)
 	port_material = _make_material(Color(0.35, 0.38, 0.39), 0.82, 0.22)
@@ -89,6 +91,9 @@ func _build_corridor_segment(start: Vector3, finish: Vector3, route_index: int, 
 	var rail_surface := SurfaceTool.new()
 	rail_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	rail_surface.set_material(rail_material)
+	var marking_surface := SurfaceTool.new()
+	marking_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	marking_surface.set_material(road_marking_material)
 	var bridge_samples: Array[Vector3] = []
 	var added := 0
 	for step in range(steps):
@@ -116,9 +121,14 @@ func _build_corridor_segment(start: Vector3, finish: Vector3, route_index: int, 
 		_add_ribbon_quad(road_surface, a2, b2, side, a_y, b_y, 8.5, 0.0)
 		_add_ribbon_quad(rail_surface, a2, b2, side, a_y + 0.38, b_y + 0.38, 0.16, 4.5)
 		_add_ribbon_quad(rail_surface, a2, b2, side, a_y + 0.38, b_y + 0.38, 0.16, -4.5)
+		if step % 3 == 0:
+			_add_ribbon_quad(marking_surface, a2, b2, side, a_y + 0.06, b_y + 0.06, 0.13, 0.0)
+			_add_ribbon_quad(marking_surface, a2, b2, side, a_y + 0.06, b_y + 0.06, 0.11, 3.8)
+			_add_ribbon_quad(marking_surface, a2, b2, side, a_y + 0.06, b_y + 0.06, 0.11, -3.8)
 		added += 1
 	road_surface.generate_normals()
 	rail_surface.generate_normals()
+	marking_surface.generate_normals()
 	if added > 0:
 		var road_mesh := MeshInstance3D.new()
 		road_mesh.name = "IntercityHighway_%02d_%02d" % [route_index, segment_index]
@@ -132,6 +142,12 @@ func _build_corridor_segment(start: Vector3, finish: Vector3, route_index: int, 
 		rail_mesh.material_override = rail_material
 		rail_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(rail_mesh)
+		var marking_mesh := MeshInstance3D.new()
+		marking_mesh.name = "IntercityHighwayMarkings_%02d_%02d" % [route_index, segment_index]
+		marking_mesh.mesh = marking_surface.commit()
+		marking_mesh.material_override = road_marking_material
+		marking_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(marking_mesh)
 	if not bridge_samples.is_empty():
 		_build_bridge_supports(bridge_samples, route_index, segment_index)
 		_build_bridge_railings(bridge_samples, route_index, segment_index)
