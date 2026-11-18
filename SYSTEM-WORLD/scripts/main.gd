@@ -508,6 +508,9 @@ func create_environment() -> void:
 # --------------------------------------------------
 
 func create_ground() -> void:
+	if active_world_root != null and active_world_root.get_node_or_null("ModernContinent") != null:
+		return
+
 	var ground := StaticBody3D.new()
 	ground.name = "ModernCityGround"
 	ground.position = Vector3(0, 0, -45)
