@@ -139,3 +139,14 @@ asset here only after generation, GLB validation, Godot import and visual review
 - Mission/assignment Firestore documents remain client-write denied by the existing catch-all rule.
 - Roster snapshots contain only registered Firebase player UIDs and profile display names; no NPC is accepted or substituted.
 - Godot mission dispatch, gameplay contribution verification, completion and rewards are not connected yet. Cloud Functions deployment and Android runtime testing remain pending.
+
+
+## XSX Verified Mission Contribution Ledger (2026-11-18)
+
+- `functions/src/hunter_guild_contributions.ts` — leader-started mission sessions, game-server-only verified gameplay event ingestion, per-player contribution totals, duplicate-event protection, rate limiting and game-server-only session completion.
+- `functions/src/index.ts` exports session start, event record, contribution listing and session finish callables.
+- `app/src/main/java/com/system/irtqaa/FirebasePlayerPartyRepository.kt` — Android session start and contribution listing client.
+- `app/src/main/java/com/system/irtqaa/SystemPlayerPartyScreen.kt` — leader start button and verified contribution scoreboard.
+- `XSX_VERIFIED_CONTRIBUTION_SYSTEM.md` — event rules, weights, trust model and deployment requirements.
+- No client gameplay event submission endpoint is exposed. No NPCs are included. No rewards are granted.
+- Dedicated game-server identity, Godot bridge, Firebase deployment and runtime testing remain pending.
