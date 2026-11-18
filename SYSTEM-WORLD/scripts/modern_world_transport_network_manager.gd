@@ -378,6 +378,7 @@ func _build_city_ports() -> void:
 		_build_port_terminal_facilities(port)
 		var outward := (site - Vector2(anchor.x, anchor.z)).normalized()
 		_build_ship_visual(port, outward)
+		_build_access_road(anchor, port.position, "PortAccess_" + city_name.replace(" ", ""), 5.5)
 		landmark_records.append({
 			"id": "port_" + city_name.to_lower().replace(" ", "_"),
 			"name": city_name + " International Harbor",
@@ -461,6 +462,7 @@ func _build_aircraft_and_train_fleets() -> void:
 			plane.position = Vector3(airport.x, float(terrain.call("get_terrain_height", airport.x, airport.y)) + 1.0, airport.y)
 			add_child(plane)
 			_build_aircraft_visual(plane)
+			_build_access_road(anchor, plane.position, "AirportAccess_" + city_name.replace(" ", ""), 6.0)
 		var station := _nearest_land(Vector2(anchor.x - 205.0, anchor.z + 35.0))
 		if station != Vector2.INF:
 			var train := Node3D.new()
@@ -468,6 +470,57 @@ func _build_aircraft_and_train_fleets() -> void:
 			train.position = Vector3(station.x, float(terrain.call("get_terrain_height", station.x, station.y)) + 0.3, station.y)
 			add_child(train)
 			_build_train_visual(train)
+			_build_access_road(anchor, train.position, "StationAccess_" + city_name.replace(" ", ""), 4.8)
+
+
+func _build_access_road(start: Vector3, finish: Vector3, road_name: String, half_width: float) -> void:
+	if not _is_land_road_corridor(start, finish):
+		return
+	var start_2d := Vector2(start.x, start.z)
+	var finish_2d := Vector2(finish.x, finish.z)
+	var distance := start_2d.distance_to(finish_2d)
+	if distance < 8.0:
+		return
+	var steps := maxi(8, int(distance / 14.0))
+	var road_surface := SurfaceTool.new()
+	road_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	road_surface.set_material(road_material)
+	var edge_material := _make_material(Color(0.88, 0.82, 0.57), 0.82, 0.0)
+	var edge_surface := SurfaceTool.new()
+	edge_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	edge_surface.set_material(edge_material)
+	for step in range(steps):
+		var t0 := float(step) / float(steps)
+		var t1 := float(step + 1) / float(steps)
+		var a := start_2d.lerp(finish_2d, t0)
+		var b := start_2d.lerp(finish_2d, t1)
+		var direction := (b - a).normalized()
+		if direction.length_squared() < 0.001:
+			continue
+		var side := Vector2(-direction.y, direction.x)
+		var y_a := float(terrain.call("get_terrain_height", a.x, a.y)) + 0.46
+		var y_b := float(terrain.call("get_terrain_height", b.x, b.y)) + 0.46
+		_add_ribbon_quad(road_surface, a, b, side, y_a, y_b, half_width, 0.0)
+		_add_ribbon_quad(edge_surface, a, b, side, y_a + 0.035, y_b + 0.035, 0.12, half_width - 0.35)
+		_add_ribbon_quad(edge_surface, a, b, side, y_a + 0.035, y_b + 0.035, 0.12, -half_width + 0.35)
+	road_surface.generate_normals()
+	edge_surface.generate_normals()
+	var road_mesh := MeshInstance3D.new()
+	road_mesh.name = road_name
+	road_mesh.mesh = road_surface.commit()
+	road_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(road_mesh)
+	var edge_mesh := MeshInstance3D.new()
+	edge_mesh.name = road_name + "_EdgeLines"
+	edge_mesh.mesh = edge_surface.commit()
+	edge_mesh.material_override = edge_material
+	edge_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(edge_mesh)
+	landmark_records.append({
+		"id": road_name.to_lower(),
+		"name": road_name.replace("_", " "),
+		"position": (start + finish) * 0.5
+	})
 
 func _nearest_land(origin: Vector2) -> Vector2:
 	if bool(terrain.call("is_land_position", origin.x, origin.y)):
