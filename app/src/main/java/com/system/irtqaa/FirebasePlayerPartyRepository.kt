@@ -37,6 +37,23 @@ data class SystemHunterGuildMissionAssignment(
     val rosterSnapshot: List<Pair<String, String>>
 )
 
+
+data class SystemHunterGuildContribution(
+    val playerId: String,
+    val displayName: String,
+    val totalPoints: Double,
+    val eventCounts: Map<String, Int>
+)
+
+data class SystemHunterGuildMissionSession(
+    val sessionId: String,
+    val missionTitle: String,
+    val partyName: String,
+    val status: String,
+    val verifiedEventCount: Int,
+    val contributions: List<SystemHunterGuildContribution>
+)
+
 data class SystemPlayerPartyInvite(
     val inviteId: String,
     val partyId: String,
@@ -232,6 +249,67 @@ class FirebasePlayerPartyRepository(
                     )
                 }
                 callback(Result.success(assignments))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+
+    fun startHunterGuildMission(
+        assignmentId: String,
+        callback: (Result<String>) -> Unit
+    ) {
+        if (assignmentId.isBlank()) {
+            callback(Result.failure(IllegalArgumentException("معرّف تسجيل المهمة غير صالح.")))
+            return
+        }
+        functions.getHttpsCallable("startHunterGuildMission")
+            .call(mapOf("assignmentId" to assignmentId))
+            .addOnSuccessListener { result ->
+                val sessionId = (result.data as? Map<*, *>)?.get("sessionId") as? String
+                if (sessionId.isNullOrBlank()) {
+                    callback(Result.failure(IllegalStateException("لم يصل تأكيد بدء المهمة.")))
+                } else callback(Result.success(sessionId))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    fun loadMyHunterGuildMissionContributions(
+        callback: (Result<List<SystemHunterGuildMissionSession>>) -> Unit
+    ) {
+        functions.getHttpsCallable("listMyHunterGuildMissionContributions")
+            .call()
+            .addOnSuccessListener { result ->
+                val data = result.data as? Map<*, *>
+                val items = data?.get("sessions") as? List<*> ?: emptyList<Any>()
+                val sessions = items.mapNotNull { item ->
+                    val map = item as? Map<*, *> ?: return@mapNotNull null
+                    val id = map["sessionId"] as? String ?: return@mapNotNull null
+                    val contributions = (map["contributions"] as? List<*>)?.mapNotNull { entry ->
+                        val contribution = entry as? Map<*, *> ?: return@mapNotNull null
+                        val playerId = contribution["playerId"] as? String ?: return@mapNotNull null
+                        val rawCounts = contribution["eventCounts"] as? Map<*, *> ?: emptyMap<Any, Any>()
+                        val counts = rawCounts.mapNotNull { (key, value) ->
+                            val name = key as? String ?: return@mapNotNull null
+                            val count = (value as? Number)?.toInt() ?: return@mapNotNull null
+                            name to count
+                        }.toMap()
+                        SystemHunterGuildContribution(
+                            playerId = playerId,
+                            displayName = contribution["displayName"] as? String ?: "لاعب",
+                            totalPoints = (contribution["totalPoints"] as? Number)?.toDouble() ?: 0.0,
+                            eventCounts = counts
+                        )
+                    } ?: emptyList()
+                    SystemHunterGuildMissionSession(
+                        sessionId = id,
+                        missionTitle = map["missionTitle"] as? String ?: "مهمة XSX",
+                        partyName = map["partyName"] as? String ?: "فريق اللاعبين",
+                        status = map["status"] as? String ?: "active",
+                        verifiedEventCount = (map["verifiedEventCount"] as? Number)?.toInt() ?: 0,
+                        contributions = contributions
+                    )
+                }
+                callback(Result.success(sessions))
             }
             .addOnFailureListener { callback(Result.failure(it)) }
     }
