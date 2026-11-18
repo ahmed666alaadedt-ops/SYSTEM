@@ -147,11 +147,126 @@ func _build_city_districts() -> void:
 		city_root.position = Vector3(anchor.x, terrain.get_terrain_height(anchor.x, anchor.y), anchor.y)
 		add_child(city_root)
 		_build_city_plaza(city_root, city_name)
+		_build_city_identity_landmarks(city_root, city_name, int(city.get("style", 0)))
 		for district_index in range(DISTRICT_OFFSETS.size()):
 			var district_center: Vector2 = anchor + DISTRICT_OFFSETS[district_index]
 			_build_district(city_root, city_name, district_index, district_center)
 			_build_district_street_grid(city_root, city_name, district_index, district_center)
 
+
+
+func _build_city_identity_landmarks(parent: Node3D, city_name: String, style: int) -> void:
+	var root := Node3D.new()
+	root.name = city_name.replace(" ", "") + "_IdentityLandmarks"
+	root.position = Vector3(0.0, 0.0, -24.0)
+	parent.add_child(root)
+	var stone := building_materials[style % building_materials.size()]
+	var accent := _material(Color(0.62, 0.72, 0.76), 0.42, 0.42)
+	var glow := _material(Color(0.22, 0.72, 0.86), 0.3, 0.12)
+	glow.emission_enabled = true
+	glow.emission = Color(0.08, 0.42, 0.68)
+	glow.emission_energy_multiplier = 1.25
+	match style:
+		0:
+			for index in range(3):
+				var x := -18.0 + float(index) * 18.0
+				var height := 38.0 + float(index) * 13.0
+				_add_identity_box(root, "SkylineTower_%02d" % index, Vector3(x, height * 0.5, 0.0), Vector3(9.0, height, 9.0), stone)
+				_add_identity_cylinder(root, "SkylineCrown_%02d" % index, Vector3(x, height + 4.0, 0.0), 3.0, 1.0, 8.0, accent)
+			_add_identity_cylinder(root, "SkylineBeacon", Vector3(0.0, 68.0, 0.0), 0.6, 0.1, 20.0, glow)
+		1:
+			_add_identity_box(root, "CivicClockTower", Vector3(0.0, 17.0, 0.0), Vector3(9.0, 34.0, 9.0), stone)
+			_add_identity_cylinder(root, "ClockFace", Vector3(0.0, 25.0, -4.8), 2.5, 2.5, 0.35, accent)
+			_add_identity_cylinder(root, "ClockSpire", Vector3(0.0, 38.0, 0.0), 2.2, 0.0, 9.0, glow)
+			_add_identity_box(root, "CivicBridgeTower", Vector3(22.0, 12.0, 2.0), Vector3(7.0, 24.0, 7.0), accent)
+		2:
+			_add_identity_cylinder(root, "ObservationTowerShaft", Vector3(0.0, 19.0, 0.0), 3.2, 1.2, 38.0, stone)
+			_add_identity_cylinder(root, "ObservationDeckLower", Vector3(0.0, 25.0, 0.0), 7.0, 7.0, 2.0, accent)
+			_add_identity_cylinder(root, "ObservationDeckUpper", Vector3(0.0, 34.0, 0.0), 5.0, 5.0, 2.0, accent)
+			_add_identity_cylinder(root, "ObservationBeacon", Vector3(0.0, 43.0, 0.0), 0.8, 0.0, 16.0, glow)
+		3:
+			_add_identity_cylinder(root, "RiverfrontCivicHall", Vector3(0.0, 7.0, 0.0), 12.0, 10.0, 14.0, stone)
+			_add_identity_cylinder(root, "CivicDome", Vector3(0.0, 16.0, 0.0), 7.0, 0.8, 7.0, accent)
+			for side in [-1.0, 1.0]:
+				_add_identity_cylinder(root, "RiverfrontMinaret_%s" % str(side), Vector3(side * 17.0, 12.0, 0.0), 1.8, 0.8, 24.0, glow)
+			_add_identity_box(root, "RiverTerrace", Vector3(0.0, 0.5, 15.0), Vector3(46.0, 1.0, 8.0), accent)
+		4:
+			_add_identity_box(root, "CivicSpireBase", Vector3(0.0, 15.0, 0.0), Vector3(12.0, 30.0, 12.0), stone)
+			_add_identity_cylinder(root, "CivicSpireDome", Vector3(0.0, 33.0, 0.0), 5.0, 0.4, 7.0, glow)
+			for index in range(4):
+				var angle := TAU * float(index) / 4.0
+				var point := Vector3(cos(angle) * 17.0, 8.0, sin(angle) * 17.0)
+				_add_identity_cylinder(root, "HeritageDome_%02d" % index, point, 3.8, 1.0, 8.0, accent)
+		5:
+			for index in range(3):
+				var x := -18.0 + float(index) * 18.0
+				_add_identity_cylinder(root, "DesertPyramid_%02d" % index, Vector3(x, 7.0, 0.0), 8.0, 0.0, 14.0, stone)
+			_add_identity_box(root, "MuseumAxis", Vector3(0.0, 1.0, 17.0), Vector3(42.0, 2.0, 5.0), accent)
+		6:
+			_add_identity_box(root, "CeremonialGatewayLeft", Vector3(-8.0, 10.0, 0.0), Vector3(4.0, 20.0, 5.0), stone)
+			_add_identity_box(root, "CeremonialGatewayRight", Vector3(8.0, 10.0, 0.0), Vector3(4.0, 20.0, 5.0), stone)
+			_add_identity_box(root, "CeremonialGatewayLintel", Vector3(0.0, 20.0, 0.0), Vector3(22.0, 4.0, 7.0), accent)
+			_add_identity_cylinder(root, "GatewayBeacon", Vector3(0.0, 26.0, 0.0), 1.2, 0.0, 8.0, glow)
+		7:
+			for side in [-1.0, 1.0]:
+				_add_identity_box(root, "TwinSkyTower_%s" % str(side), Vector3(side * 12.0, 27.0, 0.0), Vector3(8.0, 54.0, 8.0), stone)
+			_add_identity_box(root, "SkyBridge", Vector3(0.0, 38.0, 0.0), Vector3(32.0, 3.0, 8.0), glow)
+		8:
+			_add_identity_box(root, "DigitalCultureTower", Vector3(0.0, 25.0, 0.0), Vector3(12.0, 50.0, 12.0), stone)
+			for level in range(5):
+				_add_identity_box(root, "DigitalLightBand_%02d" % level, Vector3(0.0, 8.0 + float(level) * 8.0, -6.2), Vector3(13.0, 0.65, 0.3), glow)
+		9:
+			_add_identity_box(root, "CulturalGateLeft", Vector3(-9.0, 8.0, 0.0), Vector3(2.0, 16.0, 2.0), accent)
+			_add_identity_box(root, "CulturalGateRight", Vector3(9.0, 8.0, 0.0), Vector3(2.0, 16.0, 2.0), accent)
+			_add_identity_box(root, "CulturalGateBeam", Vector3(0.0, 16.0, 0.0), Vector3(24.0, 2.0, 3.0), glow)
+			_add_identity_box(root, "PagodaRoof", Vector3(0.0, 20.0, 0.0), Vector3(19.0, 1.0, 12.0), stone)
+		10:
+			for index in range(3):
+				var x := -16.0 + float(index) * 16.0
+				_add_identity_cylinder(root, "GardenDome_%02d" % index, Vector3(x, 7.0, 0.0), 8.0, 8.0, 14.0, glow)
+			_add_identity_box(root, "GardenCanopyWalk", Vector3(0.0, 2.0, 16.0), Vector3(48.0, 1.0, 5.0), accent)
+		11:
+			for index in range(3):
+				var sail := Node3D.new()
+				sail.name = "HarborSailRoof_%02d" % index
+				sail.position = Vector3(-14.0 + float(index) * 14.0, 9.0 + float(index % 2) * 4.0, 0.0)
+				sail.rotation.z = -0.42 if index % 2 == 0 else 0.42
+				root.add_child(sail)
+				_add_identity_box(sail, "SailSurface", Vector3.ZERO, Vector3(12.0, 0.8, 8.0), accent)
+		12:
+			_add_identity_cylinder(root, "CoastalLookoutBase", Vector3(0.0, 8.0, 0.0), 12.0, 9.0, 16.0, stone)
+			_add_identity_cylinder(root, "CoastalLookoutDeck", Vector3(0.0, 17.0, 0.0), 16.0, 16.0, 2.0, accent)
+			_add_identity_cylinder(root, "CoastalLookoutBeacon", Vector3(0.0, 25.0, 0.0), 2.0, 0.5, 14.0, glow)
+		13:
+			_add_identity_box(root, "MiningHeritageFrame", Vector3(0.0, 14.0, 0.0), Vector3(18.0, 28.0, 3.0), stone)
+			_add_identity_box(root, "MiningCrossbeam", Vector3(0.0, 26.0, 0.0), Vector3(28.0, 2.0, 3.0), accent)
+			_add_identity_cylinder(root, "GoldDiscoveryBeacon", Vector3(0.0, 32.0, 0.0), 1.0, 0.2, 10.0, glow)
+
+
+func _add_identity_box(parent: Node3D, node_name: String, position: Vector3, size: Vector3, material: Material) -> void:
+	var instance := MeshInstance3D.new()
+	instance.name = node_name
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	instance.mesh = mesh
+	instance.position = position
+	instance.material_override = material
+	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(instance)
+
+
+func _add_identity_cylinder(parent: Node3D, node_name: String, position: Vector3, bottom_radius: float, top_radius: float, height: float, material: Material) -> void:
+	var instance := MeshInstance3D.new()
+	instance.name = node_name
+	var mesh := CylinderMesh.new()
+	mesh.bottom_radius = bottom_radius
+	mesh.top_radius = top_radius
+	mesh.height = height
+	instance.mesh = mesh
+	instance.position = position
+	instance.material_override = material
+	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(instance)
 
 func _build_city_plaza(parent: Node3D, city_name: String) -> void:
 	var plaza := MeshInstance3D.new()
