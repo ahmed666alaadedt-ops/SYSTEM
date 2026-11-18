@@ -9,6 +9,7 @@ const GreedIslandManagerScript = preload("res://scripts/greed_island_manager.gd"
 const HistoricalWorldManagerScript = preload("res://scripts/historical_world_manager.gd/historical_world_manager.gd")
 const FantasyWorldManagerScript = preload("res://scripts/fantasy_world_manager.gd")
 const ModernWorldDiscoveryManagerScript = preload("res://scripts/modern_world_discovery_manager.gd")
+const ModernContinentManagerScript = preload("res://scripts/modern_continent_manager.gd")
 
 signal world_changed(world_id: int)
 
@@ -197,6 +198,10 @@ func _create_greed_island() -> void:
 
 func _create_modern_city() -> void:
 	var root: Node3D = world_roots[WorldID.REALISTIC]
+
+	var continent := ModernContinentManagerScript.new()
+	continent.name = "ModernContinent"
+	root.add_child(continent)
 
 	_create_road(root)
 	_create_sidewalks(root)
