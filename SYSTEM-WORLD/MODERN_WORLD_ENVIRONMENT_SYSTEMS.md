@@ -87,3 +87,9 @@ GitHub file writes are confirmed for the scripts listed below. Godot parsing, sc
 - Road and sidewalk meshes sample terrain height along their segments; pedestrian zebra markings are added at the planned intersections.
 - Meshes are batched per district to limit scene-node overhead.
 - The street grid is not yet a drivable/navmesh road system: collision, curb ramps, lane routing, parking, traffic-rule integration, pedestrian AI, and district-to-district continuity checks remain outstanding.
+
+
+### 9. Race venue structures — visual prototype
+- Land-valid city circuits now receive a continuous outer barrier mesh, curb strip, start/finish gantry, pit-garage block, and small tiered grandstand.
+- The structures are batched where practical and use existing procedural materials.
+- No playable race logic, collision validation, pit interaction, AI racers, timing, checkpoint progression, rewards, or leaderboard is implied by these visuals.
