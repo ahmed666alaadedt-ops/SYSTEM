@@ -20,7 +20,6 @@ var grass_materials: Array[StandardMaterial3D] = []
 func _ready() -> void:
 	rng.randomize()
 	_create_materials()
-	_create_forest_ground()
 	_create_forest()
 	_create_shrubs()
 	_create_rocks()
@@ -28,6 +27,24 @@ func _ready() -> void:
 	_create_ground_cover()
 
 	print("SYSTEM WORLD: Enhanced natural forest initialized.")
+
+
+func _get_terrain_manager() -> ModernContinentManager:
+	if get_parent() == null:
+		return null
+	return get_parent().get_node_or_null("ModernContinent") as ModernContinentManager
+
+
+func _random_forest_position(y_offset: float = 0.0) -> Vector3:
+	var terrain := _get_terrain_manager()
+	for attempt in range(40):
+		var x := rng.randf_range(-270.0, 270.0)
+		var z := rng.randf_range(-680.0, -330.0)
+		if terrain == null:
+			return Vector3(x, y_offset, z)
+		if terrain.is_land_position(x, z):
+			return Vector3(x, terrain.get_terrain_height(x, z) + y_offset, z)
+	return Vector3(0.0, y_offset, -480.0)
 
 
 func _make_material(color: Color, roughness: float = 0.9) -> StandardMaterial3D:
@@ -74,15 +91,10 @@ func _create_forest_ground() -> void:
 func _create_forest() -> void:
 	for side in [-1.0, 1.0]:
 		for index in range(TREE_COUNT_PER_SIDE):
-			var tree_x := side * rng.randf_range(34.0, 47.0)
-			var tree_z := rng.randf_range(-116.0, -12.0)
+			var tree_position := _random_forest_position()
 			var tree_scale := rng.randf_range(0.8, 1.45)
 
-			_create_tree(
-				Vector3(tree_x, 0.0, tree_z),
-				tree_scale,
-				index
-			)
+			_create_tree(tree_position, tree_scale, index)
 
 
 func _create_tree(
@@ -218,11 +230,7 @@ func _create_shrubs() -> void:
 			var shrub := Node3D.new()
 			shrub.name = "ForestShrub"
 
-			shrub.position = Vector3(
-				side * rng.randf_range(34.0, 47.0),
-				0.0,
-				rng.randf_range(-116.0, -12.0)
-			)
+			shrub.position = _random_forest_position()
 
 			add_child(shrub)
 
@@ -257,11 +265,7 @@ func _create_rocks() -> void:
 		mesh.height = mesh.radius * 1.5
 
 		rock.mesh = mesh
-		rock.position = Vector3(
-			rng.randf_range(-47.0, 47.0),
-			0.2,
-			rng.randf_range(-116.0, -12.0)
-		)
+		rock.position = _random_forest_position(0.2)
 
 		rock.scale = Vector3(
 			rng.randf_range(0.8, 1.5),
@@ -284,11 +288,7 @@ func _create_fallen_logs() -> void:
 		mesh.height = rng.randf_range(2.0, 3.5)
 
 		log.mesh = mesh
-		log.position = Vector3(
-			rng.randf_range(-46.0, 46.0),
-			0.22,
-			rng.randf_range(-112.0, -16.0)
-		)
+		log.position = _random_forest_position(0.22)
 
 		log.rotation.z = PI * 0.5
 		log.rotation.y = rng.randf_range(0.0, TAU)
@@ -306,11 +306,7 @@ func _create_ground_cover() -> void:
 		mesh.height = mesh.radius * 2.0
 
 		grass.mesh = mesh
-		grass.position = Vector3(
-			rng.randf_range(-47.0, 47.0),
-			0.08,
-			rng.randf_range(-116.0, -12.0)
-		)
+		grass.position = _random_forest_position(0.08)
 
 		grass.scale = Vector3(
 			rng.randf_range(0.8, 1.4),
