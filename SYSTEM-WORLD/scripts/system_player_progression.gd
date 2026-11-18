@@ -24,6 +24,7 @@ var xp_in_level: int = 0
 var available_attribute_points: int = 0
 
 var attributes: Dictionary = DEFAULT_ATTRIBUTES.duplicate(true)
+var greed_fragments: Array[String] = []
 
 
 func _ready() -> void:
@@ -194,6 +195,13 @@ func load_progress() -> void:
 		int(config.get_value("progress", "attribute_points", 0))
 	)
 
+	var saved_fragments: Array = config.get_value("greed_island", "fragments", [])
+	greed_fragments.clear()
+	for fragment_id in saved_fragments:
+		var normalized_id := str(fragment_id)
+		if not normalized_id.is_empty() and not greed_fragments.has(normalized_id):
+			greed_fragments.append(normalized_id)
+
 	var saved_attributes: Dictionary = config.get_value(
 		"player",
 		"attributes",
@@ -217,7 +225,38 @@ func load_progress() -> void:
 		)
 
 
+func collect_greed_fragment(fragment_id: String) -> Dictionary:
+	var normalized_id := fragment_id.strip_edges()
+	if normalized_id.is_empty():
+		return {"success": false, "reason": "INVALID_FRAGMENT_ID"}
+	if greed_fragments.has(normalized_id):
+		return {"success": false, "reason": "ALREADY_COLLECTED", "count": greed_fragments.size()}
+	greed_fragments.append(normalized_id)
+	save_progress()
+	return {
+		"success": true,
+		"fragment_id": normalized_id,
+		"count": greed_fragments.size(),
+		"required": 3,
+		"island_seal_ready": greed_fragments.size() >= 3
+	}
+
+
+func has_greed_fragment(fragment_id: String) -> bool:
+	return greed_fragments.has(fragment_id)
+
+
+func get_greed_fragment_data() -> Dictionary:
+	return {
+		"collected": greed_fragments.duplicate(),
+		"count": greed_fragments.size(),
+		"required": 3,
+		"island_seal_ready": greed_fragments.size() >= 3
+	}
+
+
 func _reset_progress() -> void:
+	greed_fragments.clear()
 	current_level = 1
 	total_xp = 0
 	xp_in_level = 0
