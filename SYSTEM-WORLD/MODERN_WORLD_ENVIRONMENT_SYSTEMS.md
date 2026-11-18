@@ -107,3 +107,9 @@ GitHub file writes are confirmed for the scripts listed below. Godot parsing, sc
 - Accepted bridge spans receive side railings and spaced emissive marker lights along the sampled water-crossing points.
 - Harbor prototypes receive a small waterfront promenade with benches, bollards and signage.
 - No structural simulation, collision-tested bridge access, pedestrian navigation, or dynamic promenade lighting is implied.
+
+
+### 12. Inter-city highway markings — visual prototype
+- Inter-city corridor meshes now include dashed center and lane-edge markings following each sampled road segment.
+- Markings are batched per corridor segment and disable shadow casting.
+- A lane graph, traffic direction, speed rules, collision, and vehicle navigation remain separate unfinished systems.
