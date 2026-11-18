@@ -191,3 +191,11 @@ This expansion is committed to the repository and wired into `world_manager.gd` 
 - The generated inter-city road corridors now include dashed center and lane-edge markings, sampled along the same terrain-following segments as the road surface.
 - Markings are batched into a separate mesh per corridor segment and use no realtime shadow casting.
 - These visual markings do not yet define traffic lanes or navigation paths for vehicles.
+
+
+## Inter-city highway service areas — visual prototype
+
+- Each inter-city corridor segment that is generated attempts to place a roadside rest stop on nearby land.
+- The rest-stop scene includes a market building, glazed frontage, canopy, fuel-pump props, EV charging posts and marked parking bays.
+- Stops are skipped when neither side of the sampled midpoint is land.
+- These are scenery only: no fuel inventory, charging, purchases, vehicle service, staff, traffic entry/exit lanes or player interaction is implemented.
