@@ -3,6 +3,7 @@ class_name ModernWorldRegionManager
 
 const ModernCityTrafficManagerScript = preload("res://scripts/modern_city_traffic_manager.gd")
 const ModernWorldAmbienceManagerScript = preload("res://scripts/modern_world_ambience_manager.gd")
+const BaghdadTowerLandmarksManagerScript = preload("res://scripts/baghdad_tower_landmarks_manager.gd")
 
 ## طبقة تفاصيل المدن والمناطق الحضرية للعالم الحديث.
 ## تُبنى فوق تضاريس القارة الموجودة ولا تستبدلها أو تغيّر مواقعها المرجعية.
@@ -73,6 +74,7 @@ func _ready() -> void:
 	_build_green_belts()
 	_build_rural_settlements()
 	_build_city_lighting()
+	_create_baghdad_towers()
 	_create_city_traffic()
 	_create_ambient_soundscape()
 	print("SYSTEM WORLD: detailed city regions initialized: ", city_anchors.size())
@@ -436,6 +438,16 @@ func register_map_locations(map_manager: Node, world_id: String) -> void:
 			Vector3(village_position.x, terrain.get_terrain_height(village_position.x, village_position.y), village_position.y), false
 		)
 
+	var tower_manager := get_node_or_null("BaghdadTowerLandmarksManager")
+	if tower_manager != null and tower_manager.has_method("get_tower_positions"):
+		for tower_data in tower_manager.call("get_tower_positions"):
+			map_manager.call(
+				"register_location", world_id,
+				str(tower_data["id"]), "region_baghdad",
+				str(tower_data["name"]), 5,
+				tower_data["position"], false
+			)
+
 
 func discover_starting_city(map_manager: Node, world_id: String) -> void:
 	if map_manager == null or not map_manager.has_method("discover_region"):
@@ -462,6 +474,12 @@ func get_city_names() -> Array[String]:
 		if city_anchors.has(city_name):
 			result.append(city_name)
 	return result
+
+
+func _create_baghdad_towers() -> void:
+	var towers := BaghdadTowerLandmarksManagerScript.new()
+	towers.name = "BaghdadTowerLandmarksManager"
+	add_child(towers)
 
 
 func _create_city_traffic() -> void:
