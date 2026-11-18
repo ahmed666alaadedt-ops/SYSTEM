@@ -239,3 +239,14 @@ This expansion is committed to the repository and wired into `world_manager.gd` 
 - Added twelve coastal boulders and seven low shrubs per outer island, with palettes matching each island's terrain style.
 - Added a simple land trail leading toward each harbor so the dock reads as part of the island settlement rather than a detached prop.
 - These are low-detail procedural dressing meshes; they are not yet destructible, harvestable, animated, or individually collision-enabled.
+
+
+## Deterministic biome dressing — first regional ecology pass
+
+- Added `scripts/modern_world_biome_manager.gd` and integrated it after the continent and outer archipelago are created, before detailed city regions.
+- Four terrain-following dressing zones are defined: western woodland, eastern woodland, southern drylands, and northern highlands.
+- The manager uses a fixed random seed so the same accepted terrain positions are reproduced between launches.
+- Trees, canopies, shrubs and rocks are batched with MultiMesh instances to keep node counts lower than one-node-per-prop placement.
+- Candidate positions are rejected when they fall in water, near the existing city anchors, near the three river corridors, or inside the two lake buffers. Height bands also filter each biome type.
+- This is scenery dressing only: vegetation has no harvesting, growth, wind animation, individual collision, wildlife ecology, fire simulation, or player interaction. The existing terrain, city coordinates, river/lake network, and transport routes are not changed.
+- The manager has been committed and wired into the modern-world creation order. Godot parser validation, visual review, and Android performance profiling are still required.
