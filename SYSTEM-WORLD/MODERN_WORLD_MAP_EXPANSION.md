@@ -206,3 +206,10 @@ This expansion is committed to the repository and wired into `world_manager.gd` 
 - Each city attempts an elevated east-west flyover crossing its central boulevard, with sampled terrain ramps, a raised deck, dashed center marking, side barriers and three support piers.
 - The flyover is skipped when its full sampled alignment is not on land.
 - These structures are visual only; ramp grading, road junction connections, vehicle clearance, collision, traffic routing, pedestrian access and runtime validation are still required.
+
+
+## City identity landmark silhouettes
+
+- Every resolved city now receives a small procedural civic landmark group selected by its existing city style index.
+- The fourteen silhouettes are distinct: a layered skyline and beacon, civic clock tower, observation tower, riverfront domed hall and minarets, heritage domes, desert pyramid group, ceremonial gateway, twin towers with skybridge, digital culture tower, cultural gate and roof, garden domes, sail-like harbor roofs, coastal lookout, and mining-heritage headframe.
+- These are original stylized identity markers, not exact reproductions of real monuments. They establish visual distinction only; detailed architecture, cultural signage, interiors, collision, and local asset sets remain future work.
