@@ -131,6 +131,11 @@ func _process(delta: float) -> void:
 			position.z -= distance
 			position.x -= LANE_OFFSET
 			vehicle.rotation.y = 0.0
+		if terrain != null and terrain.has_method("is_land_position"):
+			if not bool(terrain.call("is_land_position", position.x, position.z)):
+				vehicle.visible = false
+				continue
+			vehicle.visible = true
 		if terrain != null and terrain.has_method("get_terrain_height"):
 			position.y = float(terrain.call("get_terrain_height", position.x, position.z)) + 0.05
 		vehicle.position = position
