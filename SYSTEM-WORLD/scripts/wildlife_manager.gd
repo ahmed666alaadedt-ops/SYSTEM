@@ -12,11 +12,56 @@ const WORLD_BOUNDS_Z_MAX := -8.0
 var birds: Array[Dictionary] = []
 var animals: Array[Dictionary] = []
 var elapsed := 0.0
+var terrain_manager: Node3D
+var current_weather := "clear"
 
 
 func _ready() -> void:
+	if get_parent() != null:
+		terrain_manager = get_parent().get_node_or_null("ModernContinent") as Node3D
 	_create_bird_flock()
 	_create_wild_animals()
+
+
+func set_weather_state(weather_name: String) -> void:
+	current_weather = weather_name.to_lower()
+	for animal_data in animals:
+		if current_weather == "storm":
+			animal_data["activity"] = "rest"
+			animal_data["activity_timer"] = randf_range(3.0, 6.0)
+		elif current_weather == "snow":
+			animal_data["activity_timer"] = minf(
+				float(animal_data["activity_timer"]),
+				2.0
+			)
+
+
+func _get_weather_speed_multiplier() -> float:
+	match current_weather:
+		"rain":
+			return 0.82
+		"storm":
+			return 0.55
+		"snow":
+			return 0.68
+		"heatwave", "hot":
+			return 0.78
+		_:
+			return 1.0
+
+
+func _get_ground_height(x: float, z: float) -> float:
+	if is_instance_valid(terrain_manager) and terrain_manager.has_method("get_terrain_height"):
+		return float(terrain_manager.call("get_terrain_height", x, z))
+	return 0.0
+
+
+func _get_terrain_band(height: float) -> String:
+	if height >= 55.0:
+		return "highland"
+	if height >= 22.0:
+		return "upland"
+	return "lowland"
 
 
 func _process(delta: float) -> void:
@@ -212,6 +257,7 @@ func _create_animal(
 	var animal := Node3D.new()
 	animal.name = "WildAnimal_" + species
 	animal.position = start_position
+	animal.position.y = _get_ground_height(start_position.x, start_position.z)
 	animal.scale = Vector3.ONE * animal_scale
 
 	add_child(animal)
@@ -324,10 +370,14 @@ func _create_animal(
 			dark_material
 		)
 
-	# Expose lightweight habitat data to discovery and ecology systems.
+	# Expose species, preferred habitat and sampled terrain band to ecology systems.
 	animal.add_to_group("system_wildlife")
 	animal.set_meta("wildlife_species", species)
 	animal.set_meta("wildlife_habitat", "woodland_edge" if species != "Rabbit" else "grassland_edge")
+	animal.set_meta(
+		"wildlife_terrain_band",
+		_get_terrain_band(_get_ground_height(start_position.x, start_position.z))
+	)
 
 	var species_speed := 0.55
 	if species == "Fox":
@@ -368,6 +418,13 @@ func _update_animals(delta: float) -> void:
 			elif species == "Rabbit":
 				choices = ["wander", "graze", "rest", "graze"]
 
+			if current_weather == "storm":
+				choices = ["rest", "rest", "wander"]
+			elif current_weather == "snow":
+				choices = ["rest", "wander", "rest"]
+			elif current_weather == "rain":
+				choices = ["graze", "rest", "wander"]
+
 			animal_data["activity"] = choices.pick_random()
 			animal_data["activity_timer"] = randf_range(2.5, 6.5)
 
@@ -393,7 +450,7 @@ func _update_animals(delta: float) -> void:
 				animal_data["change_timer"] = randf_range(2.0, 5.0)
 
 			var direction: Vector3 = animal_data["direction"]
-			var speed: float = animal_data["speed"]
+			var speed: float = animal_data["speed"] * _get_weather_speed_multiplier()
 			animal.position += direction * speed * delta
 
 			# Keep each animal close to its original habitat patch.
@@ -430,4 +487,5 @@ func _update_animals(delta: float) -> void:
 		var bob := sin(float(animal_data["phase"]) * 2.2) * 0.018
 		if activity == "wander":
 			bob = sin(float(animal_data["phase"]) * 5.0) * 0.025
-		animal.position.y = bob
+		# Follow the actual continent height instead of floating at world Y=0.
+		animal.position.y = _get_ground_height(animal.position.x, animal.position.z) + bob
