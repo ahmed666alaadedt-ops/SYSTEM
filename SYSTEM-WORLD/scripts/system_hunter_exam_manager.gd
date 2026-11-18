@@ -28,6 +28,7 @@ var failure_reason := ""
 
 func _ready() -> void:
 	name = "SYSTEMHunterExamManager"
+	_load_exam_state()
 
 func apply_for_exam(player_id: String) -> Dictionary:
 	if player_id.strip_edges().is_empty():
@@ -110,3 +111,18 @@ func withdraw_or_fail(reason: String) -> void:
 
 func get_exam_overview() -> Dictionary:
 	return {"candidate_number":candidate_number,"registered":registered,"active":exam_active,"current_stage_index":current_stage_index,"completed_stages":completed_stage_ids.duplicate(),"total_stages":EXAM_STAGES.size(),"failed":failed,"failure_reason":failure_reason,"stages":EXAM_STAGES.duplicate(true)}
+
+
+func _load_exam_state() -> void:
+	var config := ConfigFile.new()
+	if config.load(SAVE_PATH) != OK:
+		return
+	candidate_number = int(config.get_value("exam", "candidate_number", 0))
+	registered = candidate_number > 0
+	exam_active = bool(config.get_value("exam", "exam_active", false))
+	failed = bool(config.get_value("exam", "failed", false))
+	failure_reason = str(config.get_value("exam", "failure_reason", ""))
+	completed_stage_ids.clear()
+	for stage_id in config.get_value("exam", "completed_stage_ids", []):
+		completed_stage_ids.append(str(stage_id))
+	current_stage_index = completed_stage_ids.size() if exam_active else -1
