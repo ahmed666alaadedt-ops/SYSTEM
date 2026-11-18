@@ -115,3 +115,15 @@ asset here only after generation, GLB validation, Godot import and visual review
   - Writes a JSON report and distinguishes passed, failed and Blender-unavailable
     outcomes. Runner source is committed; its execution remains pending because
     Blender and a local repository checkout are unavailable in this environment.
+
+
+## Authenticated Player Parties (2026-11-18)
+
+- `PLAYER_PARTY_BACKEND.md` — design and implementation status.
+- `functions/src/player_party.ts` — authenticated, transaction-backed party and invitation callables.
+- `app/src/main/java/com/system/irtqaa/FirebasePlayerPartyRepository.kt` — Android Firebase Functions client.
+- `app/src/main/java/com/system/irtqaa/SystemPlayerPartyScreen.kt` — Android player-party interface.
+- `firestore.indexes.json` — compound index for pending incoming party invitations.
+- `MainActivity.kt` exposes the player-party section.
+- Cloud Functions deployment, two-account end-to-end testing, real-time presence and Godot runtime integration remain pending.
+- Existing Firestore client-write denial remains in place; party writes are server-side only.
