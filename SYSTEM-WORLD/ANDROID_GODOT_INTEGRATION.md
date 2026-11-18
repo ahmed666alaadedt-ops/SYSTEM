@@ -52,6 +52,18 @@ completion, damage, reward, or other trusted gameplay result is accepted from
 this bridge. Those values must continue to be verified by Firebase/server-side
 systems, never by an Android client message.
 
+## Android-side contract prepared
+
+- `app/src/main/java/com/system/irtqaa/SystemGodotRuntimeContract.kt`
+  defines the stable Intent action and world identifiers for a future host Activity.
+- `app/libs/godot-runtime/` is the documented AAR/JAR drop location.
+- `app/build.gradle.kts` discovers optional AAR/JAR files there and configures
+  the hidden-asset ignore pattern. The directory is empty, so no guessed binary
+  or unverified Maven engine version has been added.
+
+The contract allows external Android entry into the modern world only.
+Historical, fantasy and Greed Island remain behind Baghdad Star Gate travel.
+
 ## Native Android work still required
 
 The following is **not implemented yet**:
@@ -82,6 +94,8 @@ been generated yet.
 - [x] Engine-side bridge API added and registered.
 - [x] Main scene reports active-world changes through the bridge boundary.
 - [x] External direct entry is restricted to the modern starting world.
+- [x] Android-side world request Intent contract prepared.
+- [x] Optional AAR/JAR import location and Gradle discovery configured.
 - [ ] Native Android/Godot transport.
 - [ ] Godot AAR export and Gradle embedding.
 - [ ] Firebase account context adapter.
