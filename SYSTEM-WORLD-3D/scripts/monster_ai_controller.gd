@@ -109,6 +109,7 @@ func _create_monster(position: Vector3, rank: String, is_boss: bool, biome: Stri
 		"rank": rank,
 		"species_id": species_id,
 		"species_name": str(species_data.get("name", "Unknown")),
+		"family": str(species_data.get("family", "unknown")),
 		"weakness": str(species_data.get("weakness", "unknown")),
 		"resistance": str(species_data.get("resistance", "unknown")),
 		"behavior": str(species_data.get("behavior", "patrol")),
@@ -240,10 +241,11 @@ func apply_damage(monster_id: String, amount: float) -> bool:
 				xp *= 10
 			monster_defeated.emit(monster_id, xp)
 			monster_defeated_detailed.emit({
-				"id": monster_id, "rank": str(data["rank"]),
-					"is_boss": bool(data["is_boss"]),
-					"species_id": str(data.get("species_id", "unknown")),
-					"reward_xp": xp
+				"id": monster_id,
+				"rank": str(data["rank"]),
+				"is_boss": bool(data["is_boss"]),
+				"species_id": str(data.get("species_id", "unknown")),
+				"reward_xp": xp
 			})
 			monsters.remove_at(index)
 		return true
