@@ -257,7 +257,6 @@ func _on_gate_enemy_defeated(enemy: Node, is_boss: bool, xp_reward: int) -> void
 func _create_loot_drop(location: Vector3, boss: bool) -> void:
 	var pickup := Area3D.new()
 	pickup.name = "GateLoot_BossRelic" if boss else "GateLoot_MonsterCore"
-	pickup.position = location + Vector3(0.0,0.8,0.0)
 	pickup.add_to_group("system_gate_loot")
 	pickup.set_meta("system_loot_type","boss_relic" if boss else "monster_core")
 	pickup.set_meta("system_loot_quality","rare" if boss else "common")
@@ -274,6 +273,7 @@ func _create_loot_drop(location: Vector3, boss: bool) -> void:
 	collision.shape = sphere
 	pickup.add_child(collision)
 	active_dungeon.add_child(pickup)
+	pickup.global_position = location + Vector3(0.0,0.8,0.0)
 	pickup.body_entered.connect(_on_loot_collected.bind(pickup))
 
 
@@ -281,11 +281,11 @@ func _on_loot_collected(body: Node3D, pickup: Area3D) -> void:
 	if not _is_player(body) or not is_instance_valid(pickup):
 		return
 	var loot_type := str(pickup.get_meta("system_loot_type",""))
-	var inventory := get_tree().root.find_child("PlayerInventory",true,false)
-	if inventory != null and inventory.has_method("add_item"):
-		inventory.call("add_item",loot_type,1)
+	var progression := get_tree().root.find_child("PlayerProgression",true,false)
+	if progression != null and progression.has_method("add_item"):
+		progression.call("add_item",loot_type,1)
 	else:
-		print("SYSTEM LOOT: ",loot_type," collected; inventory integration is pending.")
+		print("SYSTEM LOOT: Player progression inventory is unavailable.")
 	pickup.queue_free()
 
 func _create_exit_gate(root: Node3D) -> void:
