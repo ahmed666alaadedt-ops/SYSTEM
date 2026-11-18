@@ -164,3 +164,10 @@ asset here only after generation, GLB validation, Godot import and visual review
 - Native Android host/plugin, Godot AAR export, Gradle embedding, Firebase
   session adapter and device verification remain pending. This is not yet a
   live Android-to-Godot transport.
+
+
+- `app/src/main/java/com/system/irtqaa/SystemGodotMessageRouter.kt`
+  - Transport-independent Android message router for the versioned Godot
+    protocol; modern-only external world requests; Firebase UID supplied by
+    the authenticated host; inbound message direction and payload validation.
+  - Not yet instantiated by an Activity or connected to a live Godot transport.
