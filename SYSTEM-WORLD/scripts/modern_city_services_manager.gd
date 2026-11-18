@@ -45,6 +45,11 @@ func _build_city_services(city_name: String) -> void:
 func _create_service_building(city_name: String, definition: Dictionary, position: Vector2, index: int) -> void:
 	var service_id := str(definition["id"])
 	var location_id := "service_%s_%s" % [city_name.to_lower().replace(" ", "_"), service_id]
+	var location_type := 7
+	if service_id == "hospital":
+		location_type = 2
+	elif service_id == "market" or service_id == "garage":
+		location_type = 4
 	var building := Node3D.new()
 	building.name = city_name.replace(" ", "") + "_" + service_id.capitalize() + "Building"
 	building.position = Vector3(position.x, float(terrain.call("get_terrain_height", position.x, position.y)), position.y)
@@ -124,7 +129,7 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 	interaction.set_meta("system_location_id", location_id)
 	interaction.set_meta("system_region_id", "region_" + city_name.to_lower().replace(" ", "_"))
 	interaction.set_meta("system_display_name", city_name + " " + str(definition["name"]))
-	interaction.set_meta("system_location_type", 7)
+	interaction.set_meta("system_location_type", location_type)
 	var area_shape := CollisionShape3D.new()
 	var area_box := BoxShape3D.new()
 	area_box.size = Vector3(3.0, 2.6, 3.0)
@@ -137,7 +142,8 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 		"city": city_name,
 		"name": city_name + " " + str(definition["name"]),
 		"position": building.position,
-		"service_type": service_id
+		"service_type": service_id,
+		"location_type": location_type
 	})
 
 func _material(color: Color, roughness: float, metallic: float) -> StandardMaterial3D:
