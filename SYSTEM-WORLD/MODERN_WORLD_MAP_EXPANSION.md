@@ -137,3 +137,12 @@ This expansion is committed to the repository and wired into `world_manager.gd` 
 
 
 - Vehicle ownership is now recorded on the corresponding AI society NPC profile. The owner keeps the vehicle ID in their owned-vehicle list, receives a theft memory when the car is stolen, and receives a recovery memory when police return it. This links the crime event to the citizen's persistent social record.
+
+
+## City road tunnels — first visual infrastructure pass
+
+- The transport manager now attempts to place one short covered road-tunnel landmark near each resolved city.
+- Candidate alignments are sampled against the existing terrain; a tunnel is skipped when the full segment is not on land or the sampled ground height varies too sharply.
+- Each generated tunnel includes a road bed, side walls, roof, framed portals, approach slabs, lane-edge markings, ceiling fixtures, and a city-named landmark record for map registration.
+- These are procedural visual structures only. The terrain is not excavated, the road network is not yet connected through the tunnel, and collision, vehicle navigation, traffic rules, dynamic tunnel lighting, emergency systems, and drive-through validation remain outstanding.
+- The build log reports how many city tunnel prototypes were placed; the number may be lower than fourteen when terrain validation rejects a candidate.
