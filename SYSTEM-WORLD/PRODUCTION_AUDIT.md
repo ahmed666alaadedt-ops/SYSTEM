@@ -20,9 +20,10 @@ verification note. Procedural GDScript managers exist; their visual output and
 runtime integration could not be inspected in this environment.
 
 **Important limitation:** Godot, Blender, Gradle and the Android SDK are not
-installed or discoverable in the current execution environment. Therefore no
-Godot import, scene launch, Blender export, Android build, APK installation,
-device test or performance test is claimed in this report.
+installed or discoverable in the current interactive execution environment.
+Blender export was run in GitHub Actions on Ubuntu 24.04 using Blender 4.0.2.
+No Godot import, scene launch, Android build, APK installation, device test or
+performance test is claimed in this report.
 
 ## 2. Verified repository structure
 
@@ -32,7 +33,7 @@ device test or performance test is claimed in this report.
 | Separate 3D prototype | `SYSTEM-WORLD-3D/project.godot`, 8 scenes, 43 GDScript files, Android export preset |
 | Android application | Gradle Kotlin build files, manifest, approximately 130 Kotlin source files; Compose app, compileSdk/targetSdk 35, minSdk 26, JVM 17 |
 | Firebase | Seven dedicated auth, account, progress, task-sync and global-chat Kotlin files; Firebase Auth/Firestore/Storage/Functions dependencies, config and Firestore rules are present |
-| CI | `.github/workflows/android.yml` and `.github/workflows/godot-android.yml` |
+| CI | Android/Godot workflows plus `.github/workflows/blender-environment-test.yml` |
 | Root references | Master vision, master specification, build log and Codex instructions |
 
 The initial recursive Git tree returned 348 entries and was not marked truncated; the final tree grew by the four additive production-tool/audit files. The repository root has no `project.godot`; the only two Godot projects are the two named subdirectories.
@@ -180,11 +181,14 @@ Added an isolated Blender-to-GLB starting pipeline under
 - The tools are isolated from runtime scene/autoload registration. No existing
   scenes, Android source or Firebase configuration was replaced.
 
-The Blender generator source is present, but Blender export has not been run
-because Blender is unavailable. The pure GLB-validator fixture logic and the
-generator's deterministic terrain-sampling logic were exercised under Python
-3.13.5 using local mirrors of those routines. These checks do not validate the
-full checked-in Blender export job, GLB import in Godot, visuals or Android performance.
+The Blender generator was executed by GitHub Actions on Ubuntu 24.04 with Blender
+4.0.2. Run 44049618483 completed successfully for modern, historical, fantasy and
+greed_island: each generated non-empty BLEND, GLB and JSON outputs; every BLEND
+reopened in a fresh Blender process; and every GLB passed structural validation
+with non-zero triangle counts. JSON metadata was checked against the world, seed,
+segment count and filenames. The local interactive environment still has no
+Blender executable. These CI results do not verify Godot import, visual quality
+or Android performance.
 
 ## 8. Prioritized roadmap and acceptance criteria
 
@@ -243,7 +247,7 @@ full checked-in Blender export job, GLB import in Godot, visuals or Android perf
 | Gradle wrapper presence | No wrapper scripts or wrapper directory found |
 | Tool availability lookup | Completed |
 | Godot import/scene launch | Not run: Godot unavailable |
-| Blender generation/export | Not run: Blender unavailable |
+| Blender generation/export | PASS in GitHub Actions with Blender 4.0.2 for all four presets; unavailable locally |
 | GLB validator self-test | PASS in Python 3.13.5 using a local mirror of the validator logic; this is not a Godot/Blender import test |
 | Blender terrain sampling self-test | PASS in Python 3.13.5 using a local mirror of the pure deterministic sampling/preset logic |
 | Android Gradle/APK/device test | Not run: Gradle and Android SDK unavailable |
@@ -263,3 +267,14 @@ full checked-in Blender export job, GLB import in Godot, visuals or Android perf
 tile on a workstation with Blender 4.x, validate the resulting GLB, then import
 and visually review it in the canonical Godot project before expanding the
 other three world presets.
+
+
+### Blender 4.0.2 CI verification (2026-11-17)
+
+- Successful run: https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44049618483
+- Tested commit: `728059cc528c94ee7f1c8d2212a2557c970d2357`
+- Dependency check confirmed Blender 4.0.2 imports NumPy 1.26.4 and exposes the bundled glTF exporter.
+- All four presets passed generation, BLEND reopen, GLB structural validation and JSON metadata checks (4 passed, 0 failed).
+- The workflow artifact `system-world-environments-all-20261117` contains the generated files; these are not tracked repository assets.
+- A non-fatal optional Draco compression library warning remains; uncompressed GLB export completed and validated.
+- Godot import and visual/device review remain unverified.

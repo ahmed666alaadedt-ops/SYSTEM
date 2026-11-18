@@ -1,18 +1,10 @@
 #!/usr/bin/env python3
 """Run and verify the SYSTEM WORLD Blender -> BLEND/GLB pipeline.
 
-This is an orchestration/acceptance-test runner, not a Blender replacement.
-It never creates fake output files when Blender is unavailable.
-
-Examples:
-  python3 SYSTEM-WORLD/tools/blender/run_environment_pipeline_test.py --world modern
-  python3 SYSTEM-WORLD/tools/blender/run_environment_pipeline_test.py --world all
-  python3 SYSTEM-WORLD/tools/blender/run_environment_pipeline_test.py --world greed_island --seed 20261117
-
 Exit codes:
-  0: every requested Blender export and GLB validation passed
-  1: Blender ran but generation, output checks, or GLB validation failed
-  2: Blender executable is unavailable
+  0: every requested Blender export, reopen check and GLB validation passed
+  1: Blender ran but generation or an artifact validation failed
+  2: Blender executable is unavailable or cannot be launched
 """
 from __future__ import annotations
 
@@ -39,15 +31,32 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=20261117)
     parser.add_argument("--segments", type=int, default=48)
     parser.add_argument("--size", type=float, default=64.0)
-    parser.add_argument(
-        "--output", type=Path,
-        default=PROJECT_DIR / "generated" / "environment_tiles",
-    )
-    parser.add_argument(
-        "--report", type=Path,
-        help="Optional JSON report path (default: <output>/pipeline_test_report.json)",
-    )
+    parser.add_argument("--output", type=Path, default=PROJECT_DIR / "generated" / "environment_tiles")
+    parser.add_argument("--report", type=Path, help="Optional JSON report path")
     return parser.parse_args()
+
+
+def run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        command, text=True, stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT, check=False,
+    )
+
+
+def validate_blend(blender: str, path: Path) -> tuple[bool, str]:
+    # Reopen the saved file in a fresh Blender process; a non-empty file alone
+    # is not evidence that Blender can parse the project.
+    expression = (
+        "import bpy; "
+        "meshes=[o for o in bpy.data.objects if o.type == 'MESH']; "
+        "assert bpy.data.filepath, 'blend file path is empty'; "
+        "assert len(meshes) >= 1, 'no mesh objects in saved scene'; "
+        "assert bpy.context.scene.camera is not None, 'preview camera missing'; "
+        "print('BLEND_REOPEN_VALIDATION_PASS')"
+    )
+    result = run_command([blender, "--background", str(path), "--python-expr", expression])
+    passed = result.returncode == 0 and "BLEND_REOPEN_VALIDATION_PASS" in result.stdout
+    return passed, result.stdout[-6000:]
 
 
 def main() -> int:
@@ -84,7 +93,7 @@ def main() -> int:
     if not blender:
         report["blocker"] = (
             "Blender executable was not found. No .blend or Blender-exported .glb "
-            "was generated; install Blender 4.x and rerun this command."
+            "was generated; install the CI-pinned Blender 4.0.2 and rerun."
         )
         report_path.parent.mkdir(parents=True, exist_ok=True)
         report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
@@ -92,14 +101,14 @@ def main() -> int:
         return 2
 
     try:
-        version = subprocess.run(
-            [blender, "--version"], check=True, text=True,
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        )
+        version = run_command([blender, "--version"])
+        if version.returncode != 0:
+            raise RuntimeError(version.stdout[-2000:])
         report["blender_version"] = version.stdout.splitlines()[0] if version.stdout else "unknown"
-    except (OSError, subprocess.CalledProcessError) as exc:
+    except (OSError, RuntimeError) as exc:
         report["status"] = "blender_launch_failed"
         report["blocker"] = str(exc)
+        report_path.parent.mkdir(parents=True, exist_ok=True)
         report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
         print(json.dumps(report, indent=2))
         return 2
@@ -121,14 +130,13 @@ def main() -> int:
             "command": command,
             "generator_exit_code": None,
             "outputs": {},
+            "blend_reopen_validation": None,
             "glb_validation": None,
+            "metadata_validation": None,
             "status": "not_run",
         }
         try:
-            run = subprocess.run(
-                command, text=True, stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT, check=False,
-            )
+            run = run_command(command)
             item["generator_exit_code"] = run.returncode
             item["generator_log_tail"] = run.stdout[-6000:]
             for label, path in (
@@ -139,20 +147,53 @@ def main() -> int:
                     "exists": path.is_file(),
                     "bytes": path.stat().st_size if path.is_file() else 0,
                 }
-            outputs_exist = all(x["exists"] and x["bytes"] > 0 for x in item["outputs"].values())
-            if run.returncode == 0 and outputs_exist:
-                validation = subprocess.run(
-                    [sys.executable, str(VALIDATOR), str(glb_path)],
-                    text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                    check=False,
-                )
+
+            outputs_exist = all(
+                value["exists"] and value["bytes"] > 0
+                for value in item["outputs"].values()
+            )
+            export_marker = f"EXPORTED: {glb_path.name}"
+            if run.returncode != 0 or not outputs_exist or export_marker not in run.stdout or "Traceback" in run.stdout:
+                item["status"] = "generation_failed_or_outputs_missing"
+            else:
+                try:
+                    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+                    metadata_ok = (
+                        metadata.get("asset") == stem
+                        and metadata.get("world") == world
+                        and metadata.get("seed") == args.seed
+                        and metadata.get("terrain_segments") == args.segments
+                        and metadata.get("source_file") == blend_path.name
+                        and metadata.get("runtime_file") == glb_path.name
+                        and metadata.get("status") == "procedural_blockout_requires_visual_review"
+                    )
+                except (OSError, json.JSONDecodeError) as exc:
+                    metadata_ok = False
+                    item["metadata_error"] = str(exc)
+                item["metadata_validation"] = {"passed": metadata_ok}
+                blend_ok, blend_log = validate_blend(blender, blend_path)
+                item["blend_reopen_validation"] = {
+                    "passed": blend_ok, "output": blend_log,
+                }
+                validation = run_command([sys.executable, str(VALIDATOR), str(glb_path)])
+                try:
+                    glb_report = json.loads(validation.stdout) if validation.returncode == 0 else {}
+                    glb_ok = (
+                        glb_report.get("status") == "structural_validation_passed"
+                        and glb_report.get("glb_version") == 2
+                        and glb_report.get("triangle_count", 0) > 0
+                    )
+                except json.JSONDecodeError:
+                    glb_ok = False
                 item["glb_validation"] = {
                     "exit_code": validation.returncode,
+                    "passed": glb_ok,
                     "output": validation.stdout[-6000:],
                 }
-                item["status"] = "passed" if validation.returncode == 0 else "glb_validation_failed"
-            else:
-                item["status"] = "generation_failed_or_outputs_missing"
+                item["status"] = (
+                    "passed" if metadata_ok and blend_ok and glb_ok
+                    else "artifact_validation_failed"
+                )
         except OSError as exc:
             item["status"] = "process_error"
             item["error"] = str(exc)
