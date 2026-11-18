@@ -366,5 +366,6 @@ export {
 export {
   startHunterGuildMission,
   recordHunterGuildGameplayEvent,
-  listMyHunterGuildMissionContributions
+  listMyHunterGuildMissionContributions,
+  finishHunterGuildMissionSession
 } from "./hunter_guild_contributions";
