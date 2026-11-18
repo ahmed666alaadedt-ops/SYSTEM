@@ -156,10 +156,10 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	entrance.configure(location_id, title, "region_baghdad")
 	var entrance_shape := CollisionShape3D.new()
 	var shape := SphereShape3D.new()
-	shape.radius = radius * 1.65
+	shape.radius = 3.5
 	entrance_shape.shape = shape
 	entrance.add_child(entrance_shape)
-	entrance.position = Vector3(0.0, 3.0, radius * 1.15)
+	entrance.position = Vector3(0.0, 3.0, radius + 4.0)
 	root.add_child(entrance)
 
 	var label := Label3D.new()
