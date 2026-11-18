@@ -238,7 +238,8 @@ func _create_modern_city() -> void:
 	_create_forest(root)
 	_create_mountains(root)
 	_create_waterways(root)
-	_create_marine_environment(root)
+	# Keep the legacy marine test scene detached until its ocean and island
+	# coordinates are aligned with the modern world's shared coastline.	#
 	_create_modern_discovery_manager(root)
 
 
