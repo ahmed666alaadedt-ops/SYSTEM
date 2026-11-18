@@ -440,6 +440,7 @@ func _build_rivers_and_lakes() -> void:
 	river_visual.mesh = river_surface.commit()
 	river_visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(river_visual)
+	_build_mountain_waterfalls()
 
 	var lake_data := [
 		{"name": "CentralLake", "center": Vector2(250.0, 165.0), "size": Vector2(58.0, 42.0)},
@@ -477,3 +478,61 @@ func _add_surface_quad(
 	surface.add_vertex(b)
 	surface.add_vertex(c)
 	surface.add_vertex(d)
+
+
+func _build_mountain_waterfalls() -> void:
+	# Add a vertical water sheet only where a river segment crosses a meaningful
+	# terrain drop. This keeps waterfalls tied to the actual mountain profile.
+	var waterfall_material := StandardMaterial3D.new()
+	waterfall_material.albedo_color = Color(0.20, 0.72, 0.86, 0.86)
+	waterfall_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	waterfall_material.roughness = 0.18
+	waterfall_material.metallic = 0.08
+	waterfall_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+
+	var waterfall_surface := SurfaceTool.new()
+	waterfall_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	waterfall_surface.set_material(waterfall_material)
+	var waterfall_count := 0
+
+	for route in RIVER_ROUTES:
+		for index in range(route.size() - 1):
+			var start: Vector2 = route[index]
+			var finish: Vector2 = route[index + 1]
+			var start_height := _get_height(start.x, start.y)
+			var finish_height := _get_height(finish.x, finish.y)
+			var drop := absf(start_height - finish_height)
+			if drop < 14.0:
+				continue
+
+			var high_point := start if start_height > finish_height else finish
+			var low_point := finish if start_height > finish_height else start
+			var midpoint := high_point.lerp(low_point, 0.5)
+			var direction := (low_point - high_point).normalized()
+			var side := Vector2(-direction.y, direction.x) * 3.4
+			var top_y := _get_height(midpoint.x, midpoint.y) + drop * 0.5
+			var bottom_y := _get_height(low_point.x, low_point.y) + 0.55
+			var left_top := Vector3(midpoint.x + side.x, top_y, midpoint.y + side.y)
+			var right_top := Vector3(midpoint.x - side.x, top_y, midpoint.y - side.y)
+			var left_bottom := Vector3(midpoint.x + side.x, bottom_y, midpoint.y + side.y)
+			var right_bottom := Vector3(midpoint.x - side.x, bottom_y, midpoint.y - side.y)
+
+			_add_surface_quad(
+				waterfall_surface,
+				left_top,
+				right_top,
+				left_bottom,
+				right_bottom
+			)
+			waterfall_count += 1
+
+	if waterfall_count == 0:
+		return
+
+	waterfall_surface.generate_normals()
+	var waterfall_visual := MeshInstance3D.new()
+	waterfall_visual.name = "MountainWaterfalls"
+	waterfall_visual.mesh = waterfall_surface.commit()
+	waterfall_visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(waterfall_visual)
+	print("SYSTEM WORLD: generated ", waterfall_count, " terrain-based waterfalls.")
