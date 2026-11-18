@@ -26,6 +26,7 @@ const PlayerVehicleManagerScript = preload("res://scripts/system_player_vehicle_
 const CrimeResponseManagerScript = preload("res://scripts/modern_city_crime_response_manager.gd")
 const HunterExamManagerScript = preload("res://scripts/system_hunter_exam_manager.gd")
 const PowerTowerManagerScript = preload("res://scripts/system_power_tower_manager.gd")
+const PlayerCombatHealthScript = preload("res://scripts/system_player_combat_health.gd")
 
 var world_manager
 var world_map_manager
@@ -39,6 +40,7 @@ var player_vehicle_manager
 var crime_response_manager
 var hunter_exam_manager
 var power_tower_manager
+var player_combat_health: Node
 
 var active_world_root: Node3D
 
@@ -685,6 +687,11 @@ func create_player() -> void:
 	player.position = Vector3(0, 2, 0)
 	active_world_root.add_child(player)
 
+	player_combat_health = PlayerCombatHealthScript.new()
+	player_combat_health.name = "PlayerCombatHealth"
+	player.add_child(player_combat_health)
+	player_combat_health.call("bind_player",player)
+
 	player_mesh = MeshInstance3D.new()
 
 	var capsule := CapsuleMesh.new()
@@ -827,8 +834,11 @@ func _physics_process(delta: float) -> void:
 	move_direction += forward * -direction.z
 	move_direction = move_direction.normalized()
 
-	player.velocity.x = move_direction.x * PLAYER_SPEED
-	player.velocity.z = move_direction.z * PLAYER_SPEED
+	var movement_speed := PLAYER_SPEED
+	if player.has_meta("system_wounded") and bool(player.get_meta("system_wounded")):
+		movement_speed *= 0.7
+	player.velocity.x = move_direction.x * movement_speed
+	player.velocity.z = move_direction.z * movement_speed
 
 	if move_direction.length() > 0.01:
 		var target_angle := atan2(

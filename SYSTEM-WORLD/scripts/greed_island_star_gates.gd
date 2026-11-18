@@ -12,28 +12,22 @@ const GATE_DATA := [
 	{
 		"id": FANTASY_ID,
 		"name": "FantasyStarGate",
-		"title": "بوابة عالم الخيال",
-		"position": Vector3(-25.0, 0.0, -70.0),
+		"title": "بوابة العالم الخيالي",
+		"position": Vector3(-8.0, 0.0, -2.0),
 		"theme": "fantasy"
-	},
-	{
-		"id": REALISTIC_ID,
-		"name": "RealisticStarGate",
-		"title": "بوابة العالم الواقعي",
-		"position": Vector3(0.0, 0.0, -70.0),
-		"theme": "modern"
 	},
 	{
 		"id": HISTORICAL_ID,
 		"name": "HistoricalStarGate",
 		"title": "بوابة العالم التاريخي",
-		"position": Vector3(25.0, 0.0, -70.0),
+		"position": Vector3(8.0, 0.0, -2.0),
 		"theme": "historical"
 	}
 ]
 
 var world_manager: Node
 var island_manager: Node3D
+var baghdad_gate_hub: Node3D
 var gates_created := false
 var transition_locked := false
 var greed_island_season_open := true
@@ -50,13 +44,17 @@ func _process(_delta: float) -> void:
 	island_manager = get_tree().root.find_child(
 		"GreedIslandManager", true, false
 	) as Node3D
+	if island_manager == null:
+		island_manager = get_tree().root.find_child(
+			"GreedIslandEnvironment", true, false
+		) as Node3D
 
 	if world_manager == null or island_manager == null:
 		return
 
 	# بوابات اللعب متاحة للاعب العادي؛ وضع الإدارة لا يتحكم بإنشائها.
 	_ensure_destination_worlds()
-	_create_island_gates()
+	_create_baghdad_star_gate_hub()
 	_create_return_gates()
 
 	gates_created = true
@@ -212,13 +210,44 @@ func _add_preview_ground(
 # THREE DIFFERENT ROYAL GATE DESIGNS
 # --------------------------------------------------
 
-func _create_island_gates() -> void:
-	for data in GATE_DATA:
-		var gate := Node3D.new()
-		gate.name = data["name"]
-		gate.position = data["position"]
-		island_manager.add_child(gate)
+func _create_baghdad_star_gate_hub() -> void:
+	var roots := _get_world_roots()
+	if not roots.has(REALISTIC_ID):
+		push_warning("SYSTEM: Baghdad star gate hub requires the modern world.")
+		return
 
+	var modern_root := roots[REALISTIC_ID] as Node3D
+	if modern_root == null:
+		return
+
+	if modern_root.has_node("BaghdadStarGateArchaeologicalComplex"):
+		baghdad_gate_hub = modern_root.get_node("BaghdadStarGateArchaeologicalComplex") as Node3D
+		return
+
+	baghdad_gate_hub = Node3D.new()
+	baghdad_gate_hub.name = "BaghdadStarGateArchaeologicalComplex"
+	var terrain := modern_root.get_node_or_null("ModernContinent")
+	var surface_y := 0.0
+	if terrain != null and terrain.has_method("get_terrain_height"):
+		surface_y = float(terrain.call("get_terrain_height", 18.0, 24.0))
+	baghdad_gate_hub.position = Vector3(18.0, surface_y, 24.0)
+	baghdad_gate_hub.set_meta("system_star_gate_hub", true)
+	baghdad_gate_hub.set_meta("system_location_city", "Baghdad")
+	baghdad_gate_hub.set_meta("system_location_site", "BaghdadOldSouk")
+	modern_root.add_child(baghdad_gate_hub)
+
+	# The three world destinations are grouped inside one archaeological complex in Baghdad.
+	var gate_offsets := [
+		Vector3(-8.0, 0.0, -2.0),
+		Vector3(8.0, 0.0, -2.0)
+	]
+	for index in range(GATE_DATA.size()):
+		var data: Dictionary = GATE_DATA[index].duplicate(true)
+		data["position"] = gate_offsets[index]
+		var gate := Node3D.new()
+		gate.name = str(data["name"])
+		gate.position = data["position"]
+		baghdad_gate_hub.add_child(gate)
 		match data["theme"]:
 			"fantasy":
 				_build_fantasy_gate(gate)
@@ -226,8 +255,13 @@ func _create_island_gates() -> void:
 				_build_modern_gate(gate)
 			"historical":
 				_build_historical_gate(gate)
-
 		_add_gate_trigger(gate, data)
+
+	var monument := _make_material(Color(0.48, 0.34, 0.22), 0.96)
+	var bronze := _make_material(Color(0.62, 0.43, 0.18), 0.42, 0.55)
+	_add_gate_box(baghdad_gate_hub, "MesopotamianGatePlaza", Vector3(0.0, -0.12, -2.0), Vector3(23.0, 0.24, 13.0), monument)
+	_add_gate_box(baghdad_gate_hub, "AncientInscriptionStele", Vector3(0.0, 2.6, 7.0), Vector3(3.0, 5.2, 0.65), bronze)
+	baghdad_gate_hub.set_meta("system_star_gates_city_only", "Baghdad")
 
 
 # بوابة خيالية: بلورات وأحجار سحرية وكرات طاقة.
@@ -461,39 +495,9 @@ func _add_gate_trigger(
 
 
 func _create_return_gates() -> void:
-	var roots := _get_world_roots()
-
-	# بوابة الدخول الرئيسية توضع في العالم الحديث فقط.
-	var modern_root := world_manager.call(
-		"get_world_root", REALISTIC_ID
-	) as Node3D
-	if modern_root != null:
-		_create_modern_island_entry_gate(modern_root)
-
-	# بوابات العودة/الانتقال من العوالم الأخرى تخضع لنفس شروط الجزيرة.
-	for world_id in [FANTASY_ID, HISTORICAL_ID]:
-		if not roots.has(world_id):
-			continue
-
-		var root := world_manager.call(
-			"get_world_root", world_id
-		) as Node3D
-		if root == null:
-			continue
-
-		var return_gate := Area3D.new()
-		return_gate.name = "GreedIslandAccessGate"
-		return_gate.position = Vector3(0.0, 1.2, 1.8)
-		return_gate.set_meta("system_return_gate", true)
-
-		var collision := CollisionShape3D.new()
-		var sphere := SphereShape3D.new()
-		sphere.radius = 2.0
-		collision.shape = sphere
-		return_gate.add_child(collision)
-
-		root.add_child(return_gate)
-		return_gate.body_entered.connect(_on_return_gate_entered)
+	# All inter-world and seasonal star-gate access is centralized in Baghdad.
+	if baghdad_gate_hub != null:
+		_create_modern_island_entry_gate(baghdad_gate_hub)
 
 
 func _create_modern_island_entry_gate(root: Node3D) -> void:
@@ -502,7 +506,7 @@ func _create_modern_island_entry_gate(root: Node3D) -> void:
 
 	var gate := Node3D.new()
 	gate.name = "GreedIslandSeasonalStarGate"
-	gate.position = Vector3(0.0, 0.0, -18.0)
+	gate.position = Vector3(0.0, 0.0, 9.0)
 	root.add_child(gate)
 
 	var frame_material := _make_material(Color(0.055, 0.12, 0.19), 0.28, 0.82)
