@@ -15,6 +15,7 @@ The towers are separate gameplay identities. The Power Tower is not the Hunter e
 - `scripts/system_tower_entrance.gd` provides a ray-interactable entrance marker for each tower.
 - `scripts/modern_world_region_manager.gd` creates the tower manager and registers both landmarks in the existing modern-world map manager as `LocationType.LANDMARK` (enum value 5).
 - `scripts/system_hunter_exam_manager.gd` defines a seven-stage examination, candidate numbering, registration, sequential progression, save-state fields, and completion/failure signals.
+- `scripts/system_power_tower_manager.gd` defines a separate 100-floor progression track, level requirements, boss/elite floor cadence, rank bands, clear-time records, and XP reward events. `scripts/main.gd` connects its floor-clear reward event to the existing player progression.
 - `scripts/hunter_guild_menu.gd` adds registration and start controls.
 - `scripts/main.gd` creates the examination manager and connects the guild menu signals.
 
@@ -46,7 +47,7 @@ The design can include candidate-number competition and controlled attempts to o
 
 The current work creates the procedural tower blockouts, entrance interaction markers, menu registration/start controls, and the examination progression data manager. It does **not** yet create the explorable interior floors, the seven physical stage environments, the actual maze geometry, puzzle devices, guardian AI encounters, city-to-city travel sequences, server-authoritative candidate verification, anti-cheat checks, or a production Hunter-license card. The entrance currently reports an interaction; it does not yet load a tower interior scene.
 
-The Power Tower currently has a distinct visible landmark only. Its floor-by-floor combat, rankings, opponent AI, rewards, and persistence remain to be implemented.
+The Power Tower now has a separate 100-floor progression manager with unlock order, level gates, boss/elite classification, rank bands, saved highest-floor and clear-time records, and a reward signal connected to player XP. Actual combat encounters, floor scenes, opponent AI, rankings, and a trusted combat-verification caller remain to be implemented.
 
 The stage completion method is an integration hook for a future trusted objective-verification system. A non-empty evidence string is not sufficient security for an online competitive game. Before live multiplayer, completion and candidate-number records must be validated by an authoritative server.
 
