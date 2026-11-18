@@ -19,6 +19,7 @@ SYSTEMCombatInputRouter="*res://scripts/system_combat_input_router.gd"
 SYSTEMWorldEvents="*res://scripts/system_world_event_manager.gd/system_world_event_manager.gd"
 FantasyCityInteriorExpansion="*res://scripts/fantasy_city_interior_expansion.gd"
 SYSTEMWorldMapUIBootstrap="*res://scripts/world_map_ui_bootstrap.gd"
+SYSTEMAndroidBridge="*res://scripts/system_android_bridge.gd"
 
 [display]
 
