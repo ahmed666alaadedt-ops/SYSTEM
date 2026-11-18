@@ -21,6 +21,7 @@ const AINPCSocietyManagerScript = preload("res://scripts/ai_npc_society_manager.
 const WorldTimeManagerScript = preload("res://scripts/world_time_manager.gd")
 const WildlifeManagerScript = preload("res://scripts/wildlife_manager.gd")
 const MissionRewardManagerScript = preload("res://scripts/system_mission_reward_manager.gd")
+const PlayerProgressionScript = preload("res://scripts/system_player_progression.gd")
 
 var world_manager
 var world_map_manager
@@ -29,6 +30,7 @@ var ai_npc_society_manager
 var world_time_manager
 var wildlife_manager
 var mission_reward_manager
+var player_progression
 
 var active_world_root: Node3D
 
@@ -61,6 +63,7 @@ func _ready() -> void:
 
 	create_ground()
 	create_player()
+	create_player_progression()
 	create_mission_reward_manager()
 
 	connect_sovereign_system()
@@ -141,6 +144,12 @@ func update_sovereign_flight() -> bool:
 # --------------------------------------------------
 # WORLD MANAGER
 # --------------------------------------------------
+
+func create_player_progression() -> void:
+	player_progression = PlayerProgressionScript.new()
+	player_progression.name = "PlayerProgression"
+	add_child(player_progression)
+
 
 func create_mission_reward_manager() -> void:
 	mission_reward_manager = MissionRewardManagerScript.new()
