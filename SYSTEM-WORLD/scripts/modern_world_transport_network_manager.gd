@@ -148,6 +148,7 @@ func _build_corridor_segment(start: Vector3, finish: Vector3, route_index: int, 
 		marking_mesh.material_override = road_marking_material
 		marking_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(marking_mesh)
+		_build_highway_rest_stop(start, finish, route_index, segment_index)
 	if not bridge_samples.is_empty():
 		_build_bridge_supports(bridge_samples, route_index, segment_index)
 		_build_bridge_railings(bridge_samples, route_index, segment_index)
@@ -242,6 +243,45 @@ func _add_ribbon_quad(surface: SurfaceTool, a: Vector2, b: Vector2, side: Vector
 	surface.add_vertex(vb)
 	surface.add_vertex(vc)
 	surface.add_vertex(vd)
+
+
+func _build_highway_rest_stop(start: Vector3, finish: Vector3, route_index: int, segment_index: int) -> void:
+	var midpoint := Vector2(start.x, start.z).lerp(Vector2(finish.x, finish.z), 0.5)
+	var direction := (Vector2(finish.x, finish.z) - Vector2(start.x, start.z)).normalized()
+	var side := Vector2(-direction.y, direction.x)
+	var candidates: Array[Vector2] = [midpoint + side * 25.0, midpoint - side * 25.0]
+	var site := Vector2.INF
+	for candidate in candidates:
+		if bool(terrain.call("is_land_position", candidate.x, candidate.y)):
+			site = candidate
+			break
+	if site == Vector2.INF:
+		return
+	var stop := Node3D.new()
+	stop.name = "HighwayRestStop_%02d_%02d" % [route_index, segment_index]
+	stop.position = Vector3(site.x, float(terrain.call("get_terrain_height", site.x, site.y)), site.y)
+	stop.rotation.y = atan2(-direction.x, -direction.y)
+	add_child(stop)
+	var building_material := _make_material(Color(0.38, 0.43, 0.46), 0.82, 0.12)
+	var roof_material := _make_material(Color(0.12, 0.18, 0.22), 0.58, 0.3)
+	var glass_material := _make_material(Color(0.12, 0.34, 0.43), 0.22, 0.25)
+	var fuel_material := _make_material(Color(0.78, 0.72, 0.48), 0.72, 0.08)
+	_add_box(stop, "RestStopMarket", Vector3(0.0, 3.0, -8.0), Vector3(22.0, 6.0, 12.0), building_material)
+	_add_box(stop, "RestStopGlassFront", Vector3(0.0, 3.0, -14.1), Vector3(17.0, 3.8, 0.18), glass_material)
+	_add_box(stop, "RestStopRoof", Vector3(0.0, 6.25, -8.0), Vector3(24.0, 0.55, 14.0), roof_material)
+	_add_box(stop, "FuelCanopy", Vector3(0.0, 4.8, 8.0), Vector3(20.0, 0.45, 12.0), roof_material)
+	for pump in range(4):
+		var x := -7.0 + float(pump) * 4.7
+		_add_box(stop, "FuelPump_%02d" % pump, Vector3(x, 1.0, 8.0), Vector3(0.9, 2.0, 0.8), fuel_material)
+	for charger in range(2):
+		_add_box(stop, "EVCharger_%02d" % charger, Vector3(-7.0 + float(charger) * 4.0, 1.0, 17.0), Vector3(0.9, 2.0, 0.7), glass_material)
+	for bay in range(5):
+		_add_box(stop, "ParkingBayLine_%02d" % bay, Vector3(-10.0 + float(bay) * 5.0, 0.13, 20.0), Vector3(0.12, 0.04, 7.0), fuel_material)
+	landmark_records.append({
+		"id": "highway_rest_stop_%02d_%02d" % [route_index, segment_index],
+		"name": "Highway Rest Stop",
+		"position": stop.position
+	})
 
 func _build_bridge_supports(samples: Array[Vector3], route_index: int, segment_index: int) -> void:
 	for index in range(0, samples.size(), 3):
