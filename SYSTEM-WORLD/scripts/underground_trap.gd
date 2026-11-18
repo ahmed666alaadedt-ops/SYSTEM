@@ -14,6 +14,7 @@ func configure_spikes(spikes: Array[Node3D]) -> void:
 	_spike_visuals = spikes
 	for spike in _spike_visuals:
 		spike.visible = false
+		_set_spike_collision(spike, false)
 
 
 func activate_for(body: Node3D) -> void:
@@ -25,6 +26,7 @@ func activate_for(body: Node3D) -> void:
 	_triggered = true
 	for spike in _spike_visuals:
 		spike.visible = true
+		_set_spike_collision(spike, true)
 	trap_triggered.emit(body, damage_amount)
 	print("SYSTEM underground trap triggered. Damage event emitted: ", damage_amount)
 
@@ -33,3 +35,11 @@ func reset_trap() -> void:
 	_triggered = false
 	for spike in _spike_visuals:
 		spike.visible = false
+
+
+
+func _set_spike_collision(node: Node, enabled: bool) -> void:
+	if node is CollisionShape3D:
+		(node as CollisionShape3D).disabled = not enabled
+	for child in node.get_children():
+		_set_spike_collision(child, enabled)
