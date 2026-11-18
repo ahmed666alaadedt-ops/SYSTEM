@@ -448,7 +448,8 @@ func _connect_monster_system() -> void:
 	add_child(monster_manager)
 	monster_manager.call("setup", self, player)
 
-	gate_manager.gate_breached.connect(
+	gate_manager.connect(
+		"gate_breached",
 		Callable(monster_manager, "spawn_gate_wave")
 	)
 
