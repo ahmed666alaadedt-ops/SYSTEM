@@ -131,3 +131,6 @@ This expansion is committed to the repository and wired into `world_manager.gd` 
 - Each generated city now receives separate hospital, police headquarters, fire/rescue station, hotel, central market and vehicle garage buildings. Buildings have basic facades, roofs, windows, entrances, collision bodies and discoverable entrance interaction areas.
 - Each service entrance is registered in the world map under its city region. The interaction prompt identifies the service, while treatment, police case handling, hotel booking, market transactions and garage service menus remain to be implemented.
 - These buildings are procedural exterior prototypes. Their interiors, staff NPC schedules, service workflows, economic transactions and full accessibility are not complete.
+
+
+- Civilian car models now include a visible driver silhouette while the car is in normal use, and their wheels rotate while the vehicle follows its local route. When theft is triggered, the driver visual leaves the vehicle and the escape/police-response state begins. The occupant is still a visual representation of the linked AI society owner record, not a fully animated enter/exit character.
