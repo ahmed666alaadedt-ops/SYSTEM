@@ -22,6 +22,7 @@ const WorldTimeManagerScript = preload("res://scripts/world_time_manager.gd")
 const WildlifeManagerScript = preload("res://scripts/wildlife_manager.gd")
 const MissionRewardManagerScript = preload("res://scripts/system_mission_reward_manager.gd")
 const PlayerProgressionScript = preload("res://scripts/system_player_progression.gd")
+const PlayerVehicleManagerScript = preload("res://scripts/system_player_vehicle_manager.gd")
 const HunterExamManagerScript = preload("res://scripts/system_hunter_exam_manager.gd")
 const PowerTowerManagerScript = preload("res://scripts/system_power_tower_manager.gd")
 
@@ -33,6 +34,7 @@ var world_time_manager
 var wildlife_manager
 var mission_reward_manager
 var player_progression
+var player_vehicle_manager
 var hunter_exam_manager
 var power_tower_manager
 
@@ -69,6 +71,7 @@ func _ready() -> void:
 	create_player()
 	register_modern_world_map_locations()
 	create_player_progression()
+	create_player_vehicle_manager()
 	create_hunter_exam_manager()
 	create_power_tower_manager()
 	create_mission_reward_manager()
@@ -156,6 +159,12 @@ func create_player_progression() -> void:
 	player_progression = PlayerProgressionScript.new()
 	player_progression.name = "PlayerProgression"
 	add_child(player_progression)
+
+
+func create_player_vehicle_manager() -> void:
+	player_vehicle_manager = PlayerVehicleManagerScript.new()
+	player_vehicle_manager.name = "PlayerVehicleManager"
+	add_child(player_vehicle_manager)
 
 
 func create_hunter_exam_manager() -> void:
