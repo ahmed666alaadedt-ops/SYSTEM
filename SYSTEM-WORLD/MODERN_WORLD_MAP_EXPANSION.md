@@ -121,3 +121,6 @@ This expansion is committed to the repository and wired into `world_manager.gd` 
 
 - Every generated city now receives pedestrian crosswalk markings, four-corner traffic signal props with alternating red/amber/green phases, bus-stop shelters with benches and signs, and a marked public parking bay.
 - The signal cycle is currently decorative. NPC vehicles do not yet query signal state, yield to pedestrians, reserve parking spaces or obey road rules; those behaviors belong to the next traffic-AI integration pass.
+
+
+- Airport prop sites now include a marked runway with edge lights and a parked passenger-aircraft model. Central rail prop sites include a track bed, twin rails, sleepers and a stationary multi-car train. Harbor sites include a stationary cargo/passenger vessel with containers. These details improve the visible transport hubs but remain non-functional set dressing.
