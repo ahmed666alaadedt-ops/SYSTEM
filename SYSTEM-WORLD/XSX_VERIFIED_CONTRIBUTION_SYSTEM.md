@@ -20,7 +20,7 @@ The server validates:
 - event ID is unique within the session;
 - event type is on the server-defined allowlist;
 - units are integer and within the per-event-type maximum;
-- no more than 120 events per player per rolling one-minute window.
+- no more than 120 events per player in a fixed one-minute window, measured from the first accepted event in that window.
 
 The server calculates points using fixed weights. Clients cannot choose the score, edit contribution totals, or mark an event verified. Events are written once to the session's `events` subcollection and aggregated into that player's `contributions` document in the same Firestore transaction.
 
