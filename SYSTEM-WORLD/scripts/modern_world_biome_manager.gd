@@ -28,7 +28,9 @@ const BIOME_ZONES := [
 	{"name": "NortheasternWoodland", "center": Vector2(1030.0, -610.0), "radius": 155.0, "kind": "woodland"},
 	{"name": "SouthwesternDrylands", "center": Vector2(-1030.0, 690.0), "radius": 145.0, "kind": "dry"},
 	{"name": "CentralWetlands", "center": Vector2(265.0, 390.0), "radius": 125.0, "kind": "wetland"},
-	{"name": "EasternCoastalScrub", "center": Vector2(1190.0, 500.0), "radius": 115.0, "kind": "coastal"}
+	{"name": "EasternCoastalScrub", "center": Vector2(1190.0, 500.0), "radius": 115.0, "kind": "coastal"},
+	{"name": "CentralMeadows", "center": Vector2(-260.0, -360.0), "radius": 180.0, "kind": "plains"},
+	{"name": "SouthernPrairie", "center": Vector2(300.0, 500.0), "radius": 210.0, "kind": "plains"}
 ]
 
 var terrain: ModernContinentManager
@@ -37,6 +39,7 @@ var trunk_material: StandardMaterial3D
 var canopy_materials: Array[StandardMaterial3D] = []
 var shrub_material: StandardMaterial3D
 var rock_material: StandardMaterial3D
+var grass_material: StandardMaterial3D
 
 
 func _ready() -> void:
@@ -58,6 +61,7 @@ func _create_materials() -> void:
 	canopy_materials.append(_make_material(Color(0.19, 0.36, 0.16), 1.0))
 	shrub_material = _make_material(Color(0.25, 0.34, 0.14), 1.0)
 	rock_material = _make_material(Color(0.34, 0.35, 0.34), 0.98)
+	grass_material = _make_material(Color(0.28, 0.43, 0.16), 1.0)
 
 
 func _make_material(color: Color, roughness: float) -> StandardMaterial3D:
@@ -77,6 +81,7 @@ func _build_biome_zones() -> void:
 		var canopy_transforms: Array[Transform3D] = []
 		var shrub_transforms: Array[Transform3D] = []
 		var rock_transforms: Array[Transform3D] = []
+		var grass_transforms: Array[Transform3D] = []
 		var center: Vector2 = zone["center"]
 		var radius: float = float(zone["radius"])
 		var kind := str(zone["kind"])
@@ -120,6 +125,11 @@ func _build_biome_zones() -> void:
 					shrub_transforms.append(_shrub_transform(point, ground_y))
 				else:
 					rock_transforms.append(_rock_transform(point, ground_y))
+			elif kind == "plains":
+				if rng.randf() < 0.84:
+					grass_transforms.append(_grass_transform(point, ground_y))
+				else:
+					shrub_transforms.append(_shrub_transform(point, ground_y))
 			else:
 				if rng.randf() < 0.78:
 					rock_transforms.append(_rock_transform(point, ground_y))
@@ -133,6 +143,9 @@ func _build_biome_zones() -> void:
 		_add_multimesh(zone_root, "TreeCanopies", SphereMesh.new(), canopy_materials[1], canopy_transforms)
 		_add_multimesh(zone_root, "LowShrubs", SphereMesh.new(), shrub_material, shrub_transforms)
 		_add_multimesh(zone_root, "NaturalRocks", SphereMesh.new(), rock_material, rock_transforms)
+		var grass_mesh := BoxMesh.new()
+		grass_mesh.size = Vector3(0.28, 1.0, 0.28)
+		_add_multimesh(zone_root, "PrairieGrass", grass_mesh, grass_material, grass_transforms)
 
 
 func _is_valid_biome_position(point: Vector2, kind: String) -> bool:
@@ -146,6 +159,8 @@ func _is_valid_biome_position(point: Vector2, kind: String) -> bool:
 	if kind == "wetland" and (height < 0.5 or height > 18.0):
 		return false
 	if kind == "coastal" and (height < 0.5 or height > 24.0):
+		return false
+	if kind == "plains" and (height < 1.0 or height > 48.0):
 		return false
 	if kind == "alpine" and height < 24.0:
 		return false
@@ -170,6 +185,15 @@ func _distance_to_segment(point: Vector2, start: Vector2, finish: Vector2) -> fl
 		return point.distance_to(start)
 	var t := clampf((point - start).dot(segment) / length_squared, 0.0, 1.0)
 	return point.distance_to(start + segment * t)
+
+
+func _grass_transform(point: Vector2, ground_y: float) -> Transform3D:
+	var width := rng.randf_range(0.65, 1.25)
+	var height := rng.randf_range(0.8, 1.8)
+	return Transform3D(
+		Basis().scaled(Vector3(width, height, width)),
+		Vector3(point.x, ground_y + height * 0.5, point.y)
+	)
 
 
 func _shrub_transform(point: Vector2, ground_y: float) -> Transform3D:
