@@ -153,7 +153,7 @@ func _animate_gate_visuals(delta: float) -> void:
 			label.text = "SYSTEM GATE\n%s | %s\n%02d:%02d" % [
 				str(data.get("displayed_rank", "F")),
 				str(data.get("status", "stable")).to_upper(),
-				seconds / 60,
+				floori(float(seconds) / 60.0),
 				seconds % 60
 			]
 
