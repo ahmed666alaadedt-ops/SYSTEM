@@ -1,4 +1,4 @@
-import { FieldValue, getFirestore, Timestamp, type DocumentData } from "firebase-admin/firestore";
+import { FieldValue, getFirestore, Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 
 const db = getFirestore();
@@ -204,4 +204,49 @@ export const listMyHunterGuildMissionContributions = onCall(async (request) => {
     });
   }
   return { sessions: results };
+});
+
+
+/** Only the trusted game server can close an active mission session. No rewards are granted here. */
+export const finishHunterGuildMissionSession = onCall(async (request) => {
+  const serverUid = requireGameServer(request);
+  const sessionId = requiredText(request.data?.sessionId, "sessionId", 256);
+  const sessionRef = db.collection("hunterGuildMissionSessions").doc(sessionId);
+
+  const result = await db.runTransaction(async (transaction) => {
+    const sessionSnapshot = await transaction.get(sessionRef);
+    if (!sessionSnapshot.exists) throw new HttpsError("not-found", "جلسة المهمة غير موجودة.");
+    const session = sessionSnapshot.data()!;
+    if (session.status === "completed") {
+      return { status: "completed", alreadyCompleted: true };
+    }
+    if (session.status !== "active") {
+      throw new HttpsError("failed-precondition", "جلسة المهمة ليست نشطة.");
+    }
+    const assignmentRef = db.collection("hunterGuildMissionAssignments").doc(sessionId);
+    const missionRef = db.collection("hunterGuildMissions").doc(String(session.missionId || ""));
+    const [assignmentSnapshot, missionSnapshot] = await Promise.all([
+      transaction.get(assignmentRef),
+      transaction.get(missionRef)
+    ]);
+    if (!assignmentSnapshot.exists || !missionSnapshot.exists) {
+      throw new HttpsError("failed-precondition", "سجل المهمة أو المهمة الأصلية غير موجود.");
+    }
+    const mission = missionSnapshot.data()!;
+    transaction.update(sessionRef, {
+      status: "completed",
+      completedAt: FieldValue.serverTimestamp(),
+      completedByGameServer: serverUid
+    });
+    transaction.update(assignmentRef, {
+      status: "completed",
+      completedAt: FieldValue.serverTimestamp()
+    });
+    transaction.update(missionRef, {
+      activeTeamCount: Math.max(0, Number(mission.activeTeamCount || 0) - 1),
+      updatedAt: FieldValue.serverTimestamp()
+    });
+    return { status: "completed", alreadyCompleted: false };
+  });
+  return result;
 });
