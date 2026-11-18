@@ -102,7 +102,7 @@ func _add_tree_cluster(parent: Node3D, dimensions: Vector3, style: int) -> void:
 		var offset: Vector2 = offsets[index]
 		var tree := Node3D.new()
 		tree.name = "IslandTree_%02d" % index
-		tree.position = Vector3(offset.x * dimensions.x, dimensions.y * 0.62,
+		tree.position = Vector3(offset.x * dimensions.x, dimensions.y * 0.80,
 			offset.y * dimensions.z)
 		parent.add_child(tree)
 
