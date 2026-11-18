@@ -81,6 +81,12 @@ func _build_site(site: Dictionary) -> void:
 	_build_main_chamber(underground, str(site["kind"]) == "market")
 	_build_side_passage(underground)
 	_build_hidden_relic_branch(underground)
+	if str(site["name"]) == "BaghdadRiverCatacombs":
+		_build_greed_fragment(underground, "mesopotamian_seal", "ختم بلاد الرافدين", Vector3(-5.0, 1.0, -14.0))
+	elif str(site["name"]) == "ParisStonePassages":
+		_build_greed_fragment(underground, "celestial_compass", "بوصلة النجوم", Vector3(5.0, 1.0, -20.0))
+	elif str(site["name"]) == "CairoBuriedBazaar":
+		_build_greed_fragment(underground, "royal_sun_shard", "شظية الشمس الملكية", Vector3(-5.0, 1.0, -24.0))
 	_build_secret_vault(underground, str(site["kind"]) == "market", str(site["name"]))
 	_build_torch_lighting(underground)
 	if str(site["kind"]) == "market":
@@ -198,6 +204,54 @@ func _build_hidden_relic_branch(parent: Node3D) -> void:
 	relic_light.light_energy = 0.8
 	relic_light.omni_range = 7.0
 	parent.add_child(relic_light)
+
+
+func _build_greed_fragment(parent: Node3D, fragment_id: String, display_name: String, local_position: Vector3) -> void:
+	var fragment_root := Node3D.new()
+	fragment_root.name = "GreedIslandFragment_" + fragment_id
+	fragment_root.position = local_position
+	parent.add_child(fragment_root)
+
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(0.18, 0.72, 0.9)
+	material.metallic = 0.72
+	material.roughness = 0.22
+	material.emission_enabled = true
+	material.emission = Color(0.04, 0.32, 0.58)
+	material.emission_energy_multiplier = 1.5
+
+	var shard := MeshInstance3D.new()
+	shard.name = "GreedIslandAncientFragmentVisual"
+	var mesh := PrismMesh.new()
+	mesh.size = Vector3(0.8, 1.35, 0.45)
+	shard.mesh = mesh
+	shard.material_override = material
+	fragment_root.add_child(shard)
+
+	var target: Node3D = UndergroundInteractableScript.new()
+	target.name = "GreedIslandFragmentInteraction"
+	target.set("action_type", "greed_fragment")
+	target.set("greed_fragment_id", fragment_id)
+	target.add_to_group("system_interactable")
+	target.set_meta("system_interaction_prompt", "اجمع " + display_name)
+	fragment_root.add_child(target)
+
+	var area := Area3D.new()
+	area.name = "GreedFragmentInteractionArea"
+	target.add_child(area)
+	var collision := CollisionShape3D.new()
+	var sphere := SphereShape3D.new()
+	sphere.radius = 2.0
+	collision.shape = sphere
+	area.add_child(collision)
+
+	var light := OmniLight3D.new()
+	light.name = "GreedFragmentGlow"
+	light.light_color = Color(0.12, 0.65, 1.0)
+	light.light_energy = 0.7
+	light.omni_range = 4.5
+	light.position.y = 0.7
+	fragment_root.add_child(light)
 
 
 func _build_market_stalls(parent: Node3D) -> void:
