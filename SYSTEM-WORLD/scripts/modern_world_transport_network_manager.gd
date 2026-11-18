@@ -596,11 +596,93 @@ func _build_race_circuits() -> void:
 		circuit.material_override = road_material
 		circuit.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(circuit)
+		_build_race_facilities(city_name, anchor, points)
 		landmark_records.append({
 			"id": "race_circuit_" + city_name.to_lower().replace(" ", "_"),
 			"name": city_name + " Motor Circuit",
 			"position": anchor + Vector3(0.0, 0.5, 285.0)
 		})
+
+
+func _build_race_facilities(city_name: String, anchor: Vector3, points: Array[Vector2]) -> void:
+	var barrier_material := _make_material(Color(0.78, 0.8, 0.82), 0.62, 0.28)
+	var curb_material := _make_material(Color(0.78, 0.16, 0.12), 0.78, 0.0)
+	var glass_material := _make_material(Color(0.2, 0.42, 0.52, 0.72), 0.3, 0.18)
+	var barrier_surface := SurfaceTool.new()
+	barrier_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	barrier_surface.set_material(barrier_material)
+	var curb_surface := SurfaceTool.new()
+	curb_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	curb_surface.set_material(curb_material)
+	for index in range(points.size()):
+		var a := points[index]
+		var b := points[(index + 1) % points.size()]
+		var direction := (b - a).normalized()
+		var outward := Vector2(direction.y, -direction.x)
+		var barrier_a := a + outward * 8.5
+		var barrier_b := b + outward * 8.5
+		var ground_a := float(terrain.call("get_terrain_height", barrier_a.x, barrier_a.y))
+		var ground_b := float(terrain.call("get_terrain_height", barrier_b.x, barrier_b.y))
+		var lower_a := Vector3(barrier_a.x, ground_a + 0.25, barrier_a.y)
+		var lower_b := Vector3(barrier_b.x, ground_b + 0.25, barrier_b.y)
+		var upper_a := lower_a + Vector3(0.0, 1.35, 0.0)
+		var upper_b := lower_b + Vector3(0.0, 1.35, 0.0)
+		barrier_surface.add_vertex(lower_a)
+		barrier_surface.add_vertex(upper_a)
+		barrier_surface.add_vertex(lower_b)
+		barrier_surface.add_vertex(lower_b)
+		barrier_surface.add_vertex(upper_a)
+		barrier_surface.add_vertex(upper_b)
+		var curb_a := a + outward * 6.0
+		var curb_b := b + outward * 6.0
+		var curb_y_a := float(terrain.call("get_terrain_height", curb_a.x, curb_a.y)) + 0.62
+		var curb_y_b := float(terrain.call("get_terrain_height", curb_b.x, curb_b.y)) + 0.62
+		_add_ribbon_quad(curb_surface, curb_a, curb_b, outward, curb_y_a, curb_y_b, 0.65, 0.0)
+	barrier_surface.generate_normals()
+	curb_surface.generate_normals()
+	var barriers := MeshInstance3D.new()
+	barriers.name = city_name.replace(" ", "") + "_RaceSafetyBarrier"
+	barriers.mesh = barrier_surface.commit()
+	barriers.material_override = barrier_material
+	barriers.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(barriers)
+	var curbs := MeshInstance3D.new()
+	curbs.name = city_name.replace(" ", "") + "_RaceKerbs"
+	curbs.mesh = curb_surface.commit()
+	curbs.material_override = curb_material
+	curbs.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(curbs)
+	var start_point := points[0]
+	var start_ground := float(terrain.call("get_terrain_height", start_point.x, start_point.y))
+	var start_root := Node3D.new()
+	start_root.name = city_name.replace(" ", "") + "_RaceStartFinish"
+	start_root.position = Vector3(start_point.x, start_ground + 0.8, start_point.y)
+	add_child(start_root)
+	_add_box(start_root, "StartFinishArchLeft", Vector3(-7.0, 5.0, 0.0), Vector3(0.8, 10.0, 0.8), barrier_material)
+	_add_box(start_root, "StartFinishArchRight", Vector3(7.0, 5.0, 0.0), Vector3(0.8, 10.0, 0.8), barrier_material)
+	_add_box(start_root, "StartFinishArchTop", Vector3(0.0, 9.8, 0.0), Vector3(14.8, 0.8, 0.8), barrier_material)
+	_add_box(start_root, "StartFinishSign", Vector3(0.0, 8.5, 0.48), Vector3(8.0, 1.0, 0.2), glass_material)
+	var facility_position := Vector2(anchor.x, anchor.z) + Vector2(315.0, -28.0)
+	if bool(terrain.call("is_land_position", facility_position.x, facility_position.y)):
+		var facility := Node3D.new()
+		facility.name = city_name.replace(" ", "") + "_RacePitAndGrandstand"
+		facility.position = Vector3(
+			facility_position.x,
+			float(terrain.call("get_terrain_height", facility_position.x, facility_position.y)),
+			facility_position.y
+		)
+		add_child(facility)
+		_add_box(facility, "PitGarage", Vector3(0.0, 4.0, 0.0), Vector3(38.0, 8.0, 16.0), barrier_material)
+		_add_box(facility, "PitRoof", Vector3(0.0, 8.3, 0.0), Vector3(40.0, 0.6, 18.0), bridge_material)
+		_add_box(facility, "GrandstandBase", Vector3(0.0, 2.0, -22.0), Vector3(34.0, 4.0, 10.0), bridge_material)
+		for seat_row in range(3):
+			_add_box(
+				facility,
+				"GrandstandTier_%02d" % seat_row,
+				Vector3(0.0, 4.2 + float(seat_row) * 1.5, -25.0 - float(seat_row) * 2.0),
+				Vector3(32.0, 0.45, 2.0),
+				glass_material
+			)
 
 func get_landmark_locations() -> Array[Dictionary]:
 	return landmark_records.duplicate(true)
