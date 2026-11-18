@@ -11,6 +11,32 @@ data class SystemPlayerParty(
     val maxMembers: Int = 6
 )
 
+
+data class SystemHunterGuildMission(
+    val missionId: String,
+    val title: String,
+    val description: String,
+    val worldId: String,
+    val category: String,
+    val rank: String,
+    val minMembers: Int,
+    val maxMembers: Int,
+    val maxTeams: Int,
+    val activeTeamCount: Int,
+    val closesAt: Long?
+)
+
+data class SystemHunterGuildMissionAssignment(
+    val assignmentId: String,
+    val missionId: String,
+    val missionTitle: String,
+    val partyId: String,
+    val partyName: String,
+    val leaderId: String,
+    val status: String,
+    val rosterSnapshot: List<Pair<String, String>>
+)
+
 data class SystemPlayerPartyInvite(
     val inviteId: String,
     val partyId: String,
@@ -121,6 +147,91 @@ class FirebasePlayerPartyRepository(
                     )
                 }
                 callback(Result.success(invites))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+
+    fun loadAvailableHunterGuildMissions(
+        callback: (Result<List<SystemHunterGuildMission>>) -> Unit
+    ) {
+        functions.getHttpsCallable("listAvailableHunterGuildMissions")
+            .call()
+            .addOnSuccessListener { result ->
+                val data = result.data as? Map<*, *>
+                val items = data?.get("missions") as? List<*> ?: emptyList<Any>()
+                val missions = items.mapNotNull { item ->
+                    val map = item as? Map<*, *> ?: return@mapNotNull null
+                    val id = map["missionId"] as? String ?: return@mapNotNull null
+                    SystemHunterGuildMission(
+                        missionId = id,
+                        title = map["title"] as? String ?: "مهمة XSX",
+                        description = map["description"] as? String ?: "",
+                        worldId = map["worldId"] as? String ?: "modern",
+                        category = map["category"] as? String ?: "general",
+                        rank = map["rank"] as? String ?: "E",
+                        minMembers = (map["minMembers"] as? Number)?.toInt() ?: 1,
+                        maxMembers = (map["maxMembers"] as? Number)?.toInt() ?: 6,
+                        maxTeams = (map["maxTeams"] as? Number)?.toInt() ?: 1,
+                        activeTeamCount = (map["activeTeamCount"] as? Number)?.toInt() ?: 0,
+                        closesAt = (map["closesAt"] as? Number)?.toLong()
+                    )
+                }
+                callback(Result.success(missions))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    fun registerPartyForMission(
+        missionId: String,
+        partyId: String,
+        callback: (Result<String>) -> Unit
+    ) {
+        if (missionId.isBlank() || partyId.isBlank()) {
+            callback(Result.failure(IllegalArgumentException("معرّف المهمة أو الفريق غير صالح.")))
+            return
+        }
+        functions.getHttpsCallable("registerPartyForHunterGuildMission")
+            .call(mapOf("missionId" to missionId, "partyId" to partyId))
+            .addOnSuccessListener { result ->
+                val assignmentId = (result.data as? Map<*, *>)?.get("assignmentId") as? String
+                if (assignmentId.isNullOrBlank()) {
+                    callback(Result.failure(IllegalStateException("لم يصل تأكيد تسجيل الفريق.")))
+                } else {
+                    callback(Result.success(assignmentId))
+                }
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    fun loadMyHunterGuildMissionAssignments(
+        callback: (Result<List<SystemHunterGuildMissionAssignment>>) -> Unit
+    ) {
+        functions.getHttpsCallable("listMyHunterGuildMissionAssignments")
+            .call()
+            .addOnSuccessListener { result ->
+                val data = result.data as? Map<*, *>
+                val items = data?.get("assignments") as? List<*> ?: emptyList<Any>()
+                val assignments = items.mapNotNull { item ->
+                    val map = item as? Map<*, *> ?: return@mapNotNull null
+                    val id = map["assignmentId"] as? String ?: return@mapNotNull null
+                    val roster = (map["rosterSnapshot"] as? List<*>)?.mapNotNull { entry ->
+                        val member = entry as? Map<*, *> ?: return@mapNotNull null
+                        val playerId = member["playerId"] as? String ?: return@mapNotNull null
+                        playerId to (member["displayName"] as? String ?: "لاعب")
+                    } ?: emptyList()
+                    SystemHunterGuildMissionAssignment(
+                        assignmentId = id,
+                        missionId = map["missionId"] as? String ?: "",
+                        missionTitle = map["missionTitle"] as? String ?: "مهمة XSX",
+                        partyId = map["partyId"] as? String ?: "",
+                        partyName = map["partyName"] as? String ?: "فريق اللاعبين",
+                        leaderId = map["leaderId"] as? String ?: "",
+                        status = map["status"] as? String ?: "registered",
+                        rosterSnapshot = roster
+                    )
+                }
+                callback(Result.success(assignments))
             }
             .addOnFailureListener { callback(Result.failure(it)) }
     }
