@@ -37,6 +37,10 @@ func get_floor_data(floor_number: int) -> Dictionary:
 func request_floor(floor_number: int, player_level: int) -> Dictionary:
 	if floor_number < 1 or floor_number > MAX_FLOORS:
 		return {"success": false, "reason": "INVALID_FLOOR"}
+	if highest_cleared_floor >= MAX_FLOORS:
+		return {"success": false, "reason": "TOWER_COMPLETED"}
+	if floor_number <= highest_cleared_floor:
+		return {"success": false, "reason": "FLOOR_ALREADY_CLEARED", "highest_cleared": highest_cleared_floor}
 	if floor_number > highest_cleared_floor + 1:
 		return {"success": false, "reason": "PREVIOUS_FLOOR_REQUIRED", "highest_cleared": highest_cleared_floor}
 	var data := get_floor_data(floor_number)
@@ -69,7 +73,7 @@ func abandon_active_floor() -> void:
 	active_floor = 0
 
 func get_tower_status() -> Dictionary:
-	return {"highest_cleared_floor": highest_cleared_floor, "active_floor": active_floor, "max_floors": MAX_FLOORS, "next_floor": mini(highest_cleared_floor + 1, MAX_FLOORS)}
+	return {"highest_cleared_floor": highest_cleared_floor, "active_floor": active_floor, "max_floors": MAX_FLOORS, "next_floor": 0 if highest_cleared_floor >= MAX_FLOORS else highest_cleared_floor + 1}
 
 func _rank_for_floor(floor_number: int) -> String:
 	if floor_number >= 90: return "S"
