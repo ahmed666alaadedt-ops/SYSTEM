@@ -33,6 +33,7 @@ func _ready() -> void:
 	_create_materials()
 	_build_intercity_corridors()
 	_build_city_ports()
+	_build_aircraft_and_train_fleets()
 	_build_race_circuits()
 	print("SYSTEM WORLD: transport corridor prototype initialized; landmarks=", landmark_records.size())
 
@@ -241,6 +242,84 @@ func _build_port_cranes(parent: Node3D) -> void:
 		arm.position = Vector3(5.0, 12.5, 0.0)
 		arm.material_override = bridge_material
 		crane.add_child(arm)
+
+func _build_aircraft_and_train_fleets() -> void:
+	var city_names: Array = region_manager.call("get_city_names")
+	for city_value in city_names:
+		var city_name := str(city_value)
+		var anchor := _city_anchor(city_name)
+		if anchor == Vector3.INF:
+			continue
+		var airport := _nearest_land(Vector2(anchor.x + 205.0, anchor.z - 35.0))
+		if airport != Vector2.INF:
+			var plane := Node3D.new()
+			plane.name = city_name.replace(" ", "") + "_ParkedPassengerAircraft"
+			plane.position = Vector3(airport.x, float(terrain.call("get_terrain_height", airport.x, airport.y)) + 1.0, airport.y)
+			add_child(plane)
+			_build_aircraft_visual(plane)
+		var station := _nearest_land(Vector2(anchor.x - 205.0, anchor.z + 35.0))
+		if station != Vector2.INF:
+			var train := Node3D.new()
+			train.name = city_name.replace(" ", "") + "_CentralStationTrain"
+			train.position = Vector3(station.x, float(terrain.call("get_terrain_height", station.x, station.y)) + 0.3, station.y)
+			add_child(train)
+			_build_train_visual(train)
+
+func _nearest_land(origin: Vector2) -> Vector2:
+	if bool(terrain.call("is_land_position", origin.x, origin.y)):
+		return origin
+	for radius_step in range(1, 10):
+		var radius := float(radius_step) * 14.0
+		for sample in range(24):
+			var angle := TAU * float(sample) / 24.0
+			var candidate := origin + Vector2(cos(angle), sin(angle)) * radius
+			if bool(terrain.call("is_land_position", candidate.x, candidate.y)):
+				return candidate
+	return Vector2.INF
+
+func _build_aircraft_visual(parent: Node3D) -> void:
+	var body_material := _make_material(Color(0.78, 0.81, 0.83), 0.42, 0.28)
+	var dark_material := _make_material(Color(0.12, 0.18, 0.23), 0.38, 0.3)
+	_add_box(parent, "AircraftFuselage", Vector3(0.0, 1.7, 0.0), Vector3(3.2, 2.1, 19.0), body_material)
+	_add_box(parent, "AircraftMainWing", Vector3(0.0, 1.2, 0.0), Vector3(25.0, 0.35, 3.6), body_material)
+	_add_box(parent, "AircraftTailWing", Vector3(0.0, 2.5, 7.0), Vector3(9.0, 0.3, 2.1), body_material)
+	_add_box(parent, "AircraftVerticalTail", Vector3(0.0, 3.4, 7.4), Vector3(0.35, 2.1, 2.0), body_material)
+	for side in [-1.0, 1.0]:
+		_add_box(parent, "AircraftEngine", Vector3(side * 6.0, 0.65, 0.1), Vector3(1.8, 1.5, 4.0), dark_material)
+		_add_box(parent, "AircraftWingTip", Vector3(side * 12.1, 1.25, 0.0), Vector3(0.35, 0.45, 1.0), dark_material)
+
+func _build_train_visual(parent: Node3D) -> void:
+	var body_material := _make_material(Color(0.12, 0.28, 0.36), 0.45, 0.38)
+	var window_material := _make_material(Color(0.08, 0.22, 0.31), 0.2, 0.35)
+	for car_index in range(4):
+		var carriage := Node3D.new()
+		carriage.name = "TrainCarriage_%02d" % car_index
+		carriage.position.z = float(car_index) * 15.0
+		parent.add_child(carriage)
+		_add_box(carriage, "TrainCarBody", Vector3(0.0, 1.8, 0.0), Vector3(3.5, 3.2, 13.5), body_material)
+		_add_box(carriage, "TrainWindows", Vector3(0.0, 2.45, -0.1), Vector3(3.58, 1.05, 10.2), window_material)
+		for side in [-1.0, 1.0]:
+			for axle in [-4.5, 4.5]:
+				var wheel := MeshInstance3D.new()
+				var wheel_mesh := CylinderMesh.new()
+				wheel_mesh.top_radius = 0.58
+				wheel_mesh.bottom_radius = 0.58
+				wheel_mesh.height = 0.28
+				wheel.mesh = wheel_mesh
+				wheel.rotation.z = PI * 0.5
+				wheel.position = Vector3(side * 1.8, 0.62, axle)
+				wheel.material_override = window_material
+				carriage.add_child(wheel)
+
+func _add_box(parent: Node3D, node_name: String, position: Vector3, size: Vector3, material: Material) -> void:
+	var instance := MeshInstance3D.new()
+	instance.name = node_name
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	instance.mesh = mesh
+	instance.position = position
+	instance.material_override = material
+	parent.add_child(instance)
 
 func _build_race_circuits() -> void:
 	var city_names: Array = region_manager.call("get_city_names")
