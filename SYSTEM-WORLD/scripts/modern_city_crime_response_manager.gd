@@ -1,9 +1,9 @@
 extends Node3D
 class_name ModernCityCrimeResponseManager
 
-## Prototype crime-response layer: civilian NPC-owned vehicles, theft reports,
-## witness-based police dispatch, pursuit and vehicle recovery.
-## This is not yet a full driving, arrest, evidence or multiplayer authority system.
+## Local prototype: NPC-owned vehicles drive short city loops, can be stolen,
+## generate witness reports and trigger police pursuit/recovery.
+## Full road-lane navigation, arrest AI and multiplayer authority remain future work.
 
 signal npc_vehicle_stolen(vehicle_id: String, owner_npc_id: String, city_name: String)
 signal theft_reported(vehicle_id: String, city_name: String)
@@ -34,20 +34,20 @@ func _ready() -> void:
 
 func _spawn_civilian_vehicle_fleet() -> void:
 	if region_manager == null or not region_manager.has_method("get_city_anchor"):
+		push_warning("SYSTEM Crime: city region manager is unavailable.")
 		return
 	for city_name in CITY_NAMES:
 		var anchor: Vector3 = region_manager.call("get_city_anchor", city_name)
 		if anchor == Vector3.INF:
 			continue
 		for slot in range(3):
-			var offset := Vector3(float(slot - 1) * 9.0, 0.0, 18.0 + float(slot) * 7.0)
 			var vehicle_id := "npc_car_%05d" % next_vehicle_number
 			next_vehicle_number += 1
 			var owner_id := "citizen_%s_%02d" % [city_name.to_lower().replace(" ", "_"), slot + 1]
 			var owner_name := _citizen_name(city_name, slot)
 			var vehicle := NPCVehicleScript.new()
-			vehicle.configure(vehicle_id, owner_id, owner_name, city_name, self)
-			vehicle.position = anchor + offset
+			vehicle.configure(vehicle_id, owner_id, owner_name, city_name, self, anchor, slot)
+			vehicle.position = anchor + Vector3(float(slot - 1) * 9.0, 0.05, 18.0 + float(slot) * 7.0)
 			_build_vehicle_visual(vehicle, slot)
 			add_child(vehicle)
 			vehicles[vehicle_id] = {
@@ -68,6 +68,7 @@ func _citizen_name(city_name: String, slot: int) -> String:
 
 func _build_vehicle_visual(vehicle: Area3D, style: int) -> void:
 	var body := MeshInstance3D.new()
+	body.name = "VehicleBody"
 	var body_mesh := BoxMesh.new()
 	body_mesh.size = Vector3(1.95, 0.78, 4.25)
 	body.mesh = body_mesh
@@ -147,7 +148,7 @@ func attempt_vehicle_theft(vehicle_id: String) -> Dictionary:
 	if int(record["witness_count"]) > 0:
 		_report_theft(vehicle_id)
 	_save_crime_state()
-	return {"success": true, "vehicle_id": vehicle_id, "wanted_level": wanted_level, "reported": bool(record["witness_count"] > 0)}
+	return {"success": true, "vehicle_id": vehicle_id, "wanted_level": wanted_level, "reported": int(record["witness_count"]) > 0}
 
 func _report_theft(vehicle_id: String) -> void:
 	var record: Dictionary = vehicles[vehicle_id]
@@ -190,7 +191,7 @@ func _dispatch_police(vehicle_id: String) -> void:
 	police.add_child(beacon)
 	add_child(police)
 	police.global_position = target.global_position + Vector3(-12.0, 0.0, -16.0)
-	police_units.append({"node": police, "target_id": vehicle_id, "speed": 13.0, "active": true})
+	police_units.append({"node": police, "target_id": vehicle_id, "speed": 14.5, "active": true})
 	police_pursuit_started.emit(vehicle_id, str(record["city_name"]))
 
 func _process(delta: float) -> void:
@@ -210,7 +211,7 @@ func _process(delta: float) -> void:
 			continue
 		var direction := target.global_position - police.global_position
 		direction.y = 0.0
-		if direction.length() > 2.8:
+		if direction.length() > 3.2:
 			police.global_position += direction.normalized() * float(unit["speed"]) * delta
 			police.look_at(Vector3(target.global_position.x, police.global_position.y, target.global_position.z), Vector3.UP)
 		else:
@@ -227,7 +228,8 @@ func _recover_stolen_vehicle(vehicle_id: String) -> void:
 	vehicles[vehicle_id] = record
 	var vehicle := record.get("node") as Node3D
 	if is_instance_valid(vehicle):
-		vehicle.set_meta("system_interaction_prompt", "مركبة مسترجعة لصاحبها")
+		if vehicle.has_method("stop_for_recovery"):
+			vehicle.call("stop_for_recovery")
 		vehicle.visible = false
 	stolen_vehicle_recovered.emit(vehicle_id, str(record["city_name"]))
 	_save_crime_state()
@@ -238,7 +240,14 @@ func get_vehicle_record(vehicle_id: String) -> Dictionary:
 	return record
 
 func get_crime_status() -> Dictionary:
-	return {"wanted_level": wanted_level, "active_pursuits": police_units.size(), "record_count": crime_records.size(), "vehicle_count": vehicles.size(), "save_mode": "local_prototype"}
+	return {
+		"wanted_level": wanted_level,
+		"active_pursuits": police_units.size(),
+		"record_count": crime_records.size(),
+		"vehicle_count": vehicles.size(),
+		"moving_npc_vehicles": vehicles.size(),
+		"save_mode": "local_prototype"
+	}
 
 func _save_crime_state() -> void:
 	var config := ConfigFile.new()
