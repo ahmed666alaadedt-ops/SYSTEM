@@ -6,7 +6,7 @@ extends Node
 const FANTASY_ID := 0
 const REALISTIC_ID := 2
 const GREED_ISLAND_ID := 3
-const HISTORICAL_ID := 4
+const HISTORICAL_ID := 1
 
 const GATE_DATA := [
 	{
@@ -548,10 +548,10 @@ func _get_player_progression() -> Node:
 
 func _has_greed_island_seal() -> bool:
 	var progression := _get_player_progression()
-	if progression == null or not progression.has_method("get_greed_fragment_data"):
+	if progression == null or not progression.has_method("get_world_fragment_data"):
 		return false
-	var data: Dictionary = progression.call("get_greed_fragment_data")
-	return bool(data.get("island_seal_ready", false))
+	var data: Dictionary = progression.call("get_world_fragment_data")
+	return bool(data.get("all_world_keys_ready", false))
 
 
 func _on_greed_island_entry_entered(body: Node3D) -> void:
@@ -561,7 +561,7 @@ func _on_greed_island_entry_entered(body: Node3D) -> void:
 		print("SYSTEM: Greed Island season is currently closed.")
 		return
 	if not _has_greed_island_seal():
-		print("SYSTEM: Collect the three ancient fragments to awaken the island seal.")
+		print("SYSTEM: Complete the modern, historical, and fantasy world keys to awaken the island seal.")
 		return
 	_enter_greed_island()
 
@@ -615,6 +615,6 @@ func _on_return_gate_entered(body: Node3D) -> void:
 	if transition_locked or not _is_local_admin_player(body):
 		return
 	if not greed_island_season_open or not _has_greed_island_seal():
-		print("SYSTEM: Greed Island access requires an active season and all three fragments.")
+		print("SYSTEM: Greed Island access requires an active season and all three world keys.")
 		return
 	_enter_greed_island()
