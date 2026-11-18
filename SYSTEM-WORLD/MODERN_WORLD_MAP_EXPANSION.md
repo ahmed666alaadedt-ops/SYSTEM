@@ -112,3 +112,6 @@ This expansion is committed to the repository and wired into `world_manager.gd` 
 - Where a complete land loop fits around a city, a motor-racing circuit is generated and registered as a map landmark.
 - Bridge, port and circuit landmarks are added to the modern-world map location registry.
 - Current limits: road and rail meshes are visual only; no drivable road graph, lane navigation, collision-aware traffic, rail vehicles, timetables, ship steering, airport flight routes, passenger boarding, tunnel interiors or race-event logic have been implemented by this pass. These must be built as separate functional systems and verified in Godot before the map is called complete.
+
+
+- The transport layer also places first-pass parked passenger-aircraft models at generated airport sites, multi-car train consists at central rail hubs, and a stationary passenger/cargo ship beside each harbor where a valid waterfront site is found. These are scene props only; no boarding, driving, flight, rail simulation or ship navigation is implied.
