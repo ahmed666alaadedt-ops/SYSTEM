@@ -33,8 +33,10 @@ func _ready() -> void:
 func apply_for_exam(player_id: String) -> Dictionary:
 	if player_id.strip_edges().is_empty():
 		return {"success":false,"reason":"PLAYER_ID_REQUIRED"}
-	if registered and exam_active:
-		return {"success":false,"reason":"EXAM_ALREADY_ACTIVE","candidate_number":candidate_number}
+	if registered and completed_stage_ids.size() >= EXAM_STAGES.size():
+		return {"success":false,"reason":"HUNTER_LICENSE_ALREADY_EARNED","candidate_number":candidate_number}
+	if registered and not failed:
+		return {"success":false,"reason":"ALREADY_REGISTERED","candidate_number":candidate_number,"stages":EXAM_STAGES.size()}
 	var config := ConfigFile.new()
 	config.load(SAVE_PATH)
 	candidate_number = int(config.get_value("exam","next_candidate_number",1001))
@@ -60,10 +62,15 @@ func begin_exam() -> Dictionary:
 		return {"success":false,"reason":"EXAM_FAILED"}
 	if exam_active:
 		return {"success":false,"reason":"EXAM_ALREADY_ACTIVE"}
+	if exam_active:
+		return {"success":true,"candidate_number":candidate_number,"stage":get_current_stage(),"resumed":true}
 	exam_active = true
-	current_stage_index = 0
-	stage_started.emit(str(EXAM_STAGES[0]["id"]),1)
-	return {"success":true,"candidate_number":candidate_number,"stage":EXAM_STAGES[0]}
+	current_stage_index = completed_stage_ids.size()
+	if current_stage_index >= EXAM_STAGES.size():
+		return {"success":false,"reason":"ALL_STAGES_COMPLETED"}
+	_save_exam_state()
+	stage_started.emit(str(EXAM_STAGES[current_stage_index]["id"]),current_stage_index + 1)
+	return {"success":true,"candidate_number":candidate_number,"stage":get_current_stage()}
 
 func get_current_stage() -> Dictionary:
 	if not exam_active or current_stage_index < 0 or current_stage_index >= EXAM_STAGES.size():
@@ -82,15 +89,13 @@ func complete_current_stage(stage_id: String, verified_evidence: String) -> Dict
 		return {"success":false,"reason":"STAGE_ALREADY_COMPLETED"}
 	completed_stage_ids.append(stage_id)
 	stage_completed.emit(stage_id,current_stage_index + 1)
-	var config := ConfigFile.new()
-	config.load(SAVE_PATH)
-	config.set_value("exam","completed_stage_ids",completed_stage_ids)
-	config.save(SAVE_PATH)
 	current_stage_index += 1
 	if current_stage_index >= EXAM_STAGES.size():
 		exam_active = false
+		_save_exam_state()
 		license_earned.emit(candidate_number,"PROVISIONAL_HUNTER")
 		return {"success":true,"exam_completed":true,"candidate_number":candidate_number,"license_rank":"PROVISIONAL_HUNTER"}
+	_save_exam_state()
 	var next_stage: Dictionary = EXAM_STAGES[current_stage_index]
 	stage_started.emit(str(next_stage["id"]),current_stage_index + 1)
 	return {"success":true,"exam_completed":false,"next_stage":next_stage}
@@ -102,12 +107,7 @@ func withdraw_or_fail(reason: String) -> void:
 	failed = true
 	failure_reason = reason
 	exam_failed.emit(reason)
-	var config := ConfigFile.new()
-	config.load(SAVE_PATH)
-	config.set_value("exam","exam_active",false)
-	config.set_value("exam","failed",true)
-	config.set_value("exam","failure_reason",reason)
-	config.save(SAVE_PATH)
+	_save_exam_state()
 
 func get_exam_overview() -> Dictionary:
 	return {"candidate_number":candidate_number,"registered":registered,"active":exam_active,"current_stage_index":current_stage_index,"completed_stages":completed_stage_ids.duplicate(),"total_stages":EXAM_STAGES.size(),"failed":failed,"failure_reason":failure_reason,"stages":EXAM_STAGES.duplicate(true)}
@@ -126,3 +126,17 @@ func _load_exam_state() -> void:
 	for stage_id in config.get_value("exam", "completed_stage_ids", []):
 		completed_stage_ids.append(str(stage_id))
 	current_stage_index = completed_stage_ids.size() if exam_active else -1
+
+
+func _save_exam_state() -> void:
+	var config := ConfigFile.new()
+	config.load(SAVE_PATH)
+	config.set_value("exam", "candidate_number", candidate_number)
+	config.set_value("exam", "completed_stage_ids", completed_stage_ids)
+	config.set_value("exam", "exam_active", exam_active)
+	config.set_value("exam", "current_stage_index", current_stage_index)
+	config.set_value("exam", "failed", failed)
+	config.set_value("exam", "failure_reason", failure_reason)
+	var error := config.save(SAVE_PATH)
+	if error != OK:
+		push_warning("SYSTEM: Hunter examination progress could not be saved.")
