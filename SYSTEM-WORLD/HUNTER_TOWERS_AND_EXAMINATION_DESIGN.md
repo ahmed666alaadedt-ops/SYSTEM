@@ -4,7 +4,7 @@
 
 The modern-world Baghdad region contains two distinct tower landmarks:
 
-1. **World Hunter Association Tower** — the monumental headquarters and public symbol of the global Hunter organization. It is intended to be the tallest tower in the world. The current procedural blockout uses an approximate 480 m height and 80 visible floor bands.
+1. **World Hunter Association Tower** — the monumental headquarters and public symbol of the global Hunter organization. It is intended to be the tallest tower in the world. The current procedural blockout uses an approximate 1,000 m height and 200 visible floor bands.
 2. **Power Tower** — a separate optional challenge arena for individual progression, ranked battles, increasingly difficult opponents, and rewards. The current procedural blockout uses an approximate 168 m height and 28 visible floor bands.
 
 The towers are separate gameplay identities. The Power Tower is not the Hunter examination, and the Hunter examination is not a Power Tower floor run.
