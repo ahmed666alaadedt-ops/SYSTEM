@@ -73,6 +73,7 @@ func _build_islands() -> void:
 		body.add_child(collision)
 
 		_add_tree_cluster(island_root, dimensions, style)
+		_build_shoreline_details(island_root, dimensions, style)
 		_build_island_harbor(island_root, dimensions, style, str(data["name"]))
 
 
@@ -272,3 +273,50 @@ func _build_navigation_buoys() -> void:
 		buoy.add_to_group("system_world_landmarks")
 		buoy.set_meta("landmark_type", "sea_navigation_buoy")
 		buoy.set_meta("discovery_required", true)
+
+
+func _build_shoreline_details(parent: Node3D, dimensions: Vector3, style: int) -> void:
+	var rock_material := _make_material(ROCK_COLORS[style], 0.98)
+	var shrub_material := _make_material(GRASS_COLORS[style], 1.0)
+	for index in range(12):
+		var angle := TAU * float(index) / 12.0
+		var direction := Vector2(cos(angle), sin(angle))
+		var rock := MeshInstance3D.new()
+		rock.name = "CoastalBoulder_%02d" % index
+		var rock_mesh := SphereMesh.new()
+		rock_mesh.radius = 1.0
+		rock_mesh.height = 2.0
+		rock.mesh = rock_mesh
+		rock.position = Vector3(
+			direction.x * dimensions.x * 0.91,
+			dimensions.y * 0.19,
+			direction.y * dimensions.z * 0.91
+		)
+		var rock_size := 2.2 + float(index % 4) * 0.9
+		rock.scale = Vector3(rock_size * 1.4, rock_size, rock_size)
+		rock.material_override = rock_material
+		rock.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		parent.add_child(rock)
+
+	for index in range(7):
+		var angle := TAU * (float(index) + 0.5) / 7.0
+		var shrub := MeshInstance3D.new()
+		shrub.name = "CoastalShrub_%02d" % index
+		var shrub_mesh := SphereMesh.new()
+		shrub_mesh.radius = 1.0
+		shrub_mesh.height = 1.5
+		shrub.mesh = shrub_mesh
+		shrub.position = Vector3(
+			cos(angle) * dimensions.x * 0.48,
+			dimensions.y * 0.72,
+			sin(angle) * dimensions.z * 0.48
+		)
+		shrub.scale = Vector3(2.2, 1.5, 2.2)
+		shrub.material_override = shrub_material
+		shrub.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		parent.add_child(shrub)
+
+	var trail_material := _make_material(Color(0.48, 0.39, 0.27), 1.0)
+	_add_box(parent, "TrailToHarbor",
+		Vector3(dimensions.x * 0.40, dimensions.y * 0.48, 0.0),
+		Vector3(dimensions.x * 0.55, 0.24, 3.2), trail_material)
