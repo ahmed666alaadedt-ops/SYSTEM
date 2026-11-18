@@ -146,3 +146,11 @@ This expansion is committed to the repository and wired into `world_manager.gd` 
 - Each generated tunnel includes a road bed, side walls, roof, framed portals, approach slabs, lane-edge markings, ceiling fixtures, and a city-named landmark record for map registration.
 - These are procedural visual structures only. The terrain is not excavated, the road network is not yet connected through the tunnel, and collision, vehicle navigation, traffic rules, dynamic tunnel lighting, emergency systems, and drive-through validation remain outstanding.
 - The build log reports how many city tunnel prototypes were placed; the number may be lower than fourteen when terrain validation rejects a candidate.
+
+
+## Rural settlement access roads — first visual pass
+
+- Resolved village anchors are now retained by the region manager and exposed to the transport layer.
+- Each village searches for the nearest city with a sampled all-land corridor; when a continuous land route is found, a narrow rural access road with center markings is generated.
+- Routes that cross water are skipped rather than bridged with an arbitrary straight line.
+- These roads are visual geometry only. They still need terrain-aware route planning, edge/shoulder treatment, collision, signs, junctions, drainage, lane navigation, traffic integration, and Godot runtime validation.
