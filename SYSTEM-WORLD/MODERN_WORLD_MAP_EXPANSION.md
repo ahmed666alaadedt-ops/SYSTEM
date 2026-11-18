@@ -85,3 +85,12 @@ This expansion is committed to the repository and wired into `world_manager.gd` 
 - Complete city services and street life: pedestrians, traffic signals, parking, shops, markets, garages, fuel/charging, repair, emergency response, street furniture, public spaces, building entrances/interiors, and district-specific lighting.
 - All purchases and balances must move to a trusted server/account backend before multiplayer trading or any real-money-linked economy is enabled.
 - Do not label the map or transportation systems complete until the actual scenes, interactions, navigation, persistence, performance, and Godot runtime tests are complete.
+
+
+## Civilian vehicle ownership and police response prototype
+
+- The modern world now creates a small civilian-owned vehicle fleet in each generated city. Each vehicle records an NPC owner, city, vehicle class, witness count and theft/recovery state.
+- Vehicles expose the standard world interaction target. Interacting with an NPC-owned vehicle attempts a theft and records the owner, location, witness count and wanted level.
+- Witnessed thefts generate a report and dispatch a visible police pursuit unit that follows the stolen vehicle. If the police unit catches the target in this prototype, the vehicle is recovered and removed from the street.
+- Crime records and wanted level are saved locally for this single-device prototype. This is not yet a secure authoritative law system, a multiplayer anti-cheat system, or a full player vehicle hijack/drive controller.
+- Required next production steps: civilian NPC occupants and schedules, key/lock and alarm states, player entering and driving the stolen vehicle, police patrol routes and response delays, line-of-sight and witness simulation, license-plate recognition, pursuit escalation, road-blocks, fines, arrest/jail, impound lots, insurance and ownership transfer. Police must pursue the actual player-controlled vehicle once vehicle possession and driving are implemented.
