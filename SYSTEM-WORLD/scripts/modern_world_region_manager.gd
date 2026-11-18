@@ -464,7 +464,7 @@ func register_map_locations(map_manager: Node, world_id: String) -> void:
 			map_manager.call(
 				"register_location", world_id,
 				str(transport_data["id"]), "region_transport",
-				str(transport_data["name"]), 6,
+				str(transport_data["name"]), 7,
 				transport_data["position"], false
 			)
 
