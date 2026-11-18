@@ -134,3 +134,6 @@ This expansion is committed to the repository and wired into `world_manager.gd` 
 
 
 - Civilian car models now include a visible driver silhouette while the car is in normal use, and their wheels rotate while the vehicle follows its local route. When theft is triggered, the driver visual leaves the vehicle and the escape/police-response state begins. The occupant is still a visual representation of the linked AI society owner record, not a fully animated enter/exit character.
+
+
+- Vehicle ownership is now recorded on the corresponding AI society NPC profile. The owner keeps the vehicle ID in their owned-vehicle list, receives a theft memory when the car is stolen, and receives a recovery memory when police return it. This links the crime event to the citizen's persistent social record.
