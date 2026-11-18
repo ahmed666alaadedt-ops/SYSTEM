@@ -1,8 +1,8 @@
 extends Node3D
 class_name ModernContinentManager
 
-## المرحلة الأولى من خريطة العالم الحديث: قارة متصلة، بحر، جزر، مواقع المدن وطرق رئيسية.
-## التضاريس مولّدة حسابياً لتبقى خفيفة وقابلة للتوسعة.
+## Procedural terrain foundation for the connected modern world.
+## The map is fictional; city names are real-world references only.
 
 const WORLD_WIDTH := 3000.0
 const WORLD_DEPTH := 2200.0
@@ -10,8 +10,19 @@ const GRID_X := 151
 const GRID_Z := 111
 const CONTINENT_RADIUS_X := 1120.0
 const CONTINENT_RADIUS_Z := 790.0
+const SEA_LEVEL := 0.0
+const OCEAN_FLOOR := -24.0
 
 var terrain_height_data := PackedFloat32Array()
+var terrain_step_x := WORLD_WIDTH / float(GRID_X - 1)
+var terrain_step_z := WORLD_DEPTH / float(GRID_Z - 1)
+
+const ISLAND_DATA := [
+	{"name": "WesternIsle", "center": Vector2(-1260.0, -520.0), "rx": 175.0, "rz": 125.0, "height": 38.0},
+	{"name": "EasternIsle", "center": Vector2(1250.0, -520.0), "rx": 190.0, "rz": 135.0, "height": 46.0},
+	{"name": "SouthernIsle", "center": Vector2(1180.0, 850.0), "rx": 220.0, "rz": 150.0, "height": 54.0},
+	{"name": "SouthwesternIsle", "center": Vector2(-1120.0, 820.0), "rx": 160.0, "rz": 120.0, "height": 32.0}
+]
 
 const CITY_DATA := [
 	{"name": "New York", "x": -650.0, "z": -260.0},
@@ -38,18 +49,19 @@ func _ready() -> void:
 	_build_islands()
 	_build_city_markers()
 	_build_highways()
-	print("SYSTEM WORLD: Modern continent terrain generated.")
+	print("SYSTEM WORLD: modern continent terrain generated.")
 
 
 func _continent_radius(x: float, z: float) -> float:
 	var nx := x / CONTINENT_RADIUS_X
 	var nz := z / CONTINENT_RADIUS_Z
-	var wave := (
+	var coast_wave := (
 		sin(x * 0.0041) * 0.025
 		+ sin(z * 0.0053) * 0.022
 		+ sin((x + z) * 0.0027) * 0.018
+		+ sin((x - z) * 0.007) * 0.009
 	)
-	return sqrt(nx * nx + nz * nz) + wave
+	return sqrt(nx * nx + nz * nz) + coast_wave
 
 
 func _island_radius(x: float, z: float, center: Vector2, radius_x: float, radius_z: float) -> float:
@@ -58,53 +70,77 @@ func _island_radius(x: float, z: float, center: Vector2, radius_x: float, radius
 	return sqrt(nx * nx + nz * nz)
 
 
+func _gaussian_peak(x: float, z: float, center: Vector2, radius_x: float, radius_z: float, strength: float) -> float:
+	var nx := (x - center.x) / radius_x
+	var nz := (z - center.y) / radius_z
+	return strength * exp(-((nx * nx) + (nz * nz)) * 1.7)
+
+
+func _land_base_height(x: float, z: float) -> float:
+	var broad_hills := (
+		sin(x * 0.0032 + z * 0.0011) * 7.0
+		+ sin(z * 0.0044 - x * 0.0017) * 5.0
+		+ sin((x + z) * 0.008) * 2.0
+	)
+	var rolling_detail := (
+		sin(x * 0.018) * sin(z * 0.014) * 1.8
+		+ sin((x - z) * 0.025) * 0.9
+	)
+	var mountain_belts := 0.0
+	mountain_belts += _gaussian_peak(x, z, Vector2(430.0, -390.0), 230.0, 430.0, 112.0)
+	mountain_belts += _gaussian_peak(x, z, Vector2(-610.0, 260.0), 270.0, 170.0, 76.0)
+	mountain_belts += _gaussian_peak(x, z, Vector2(760.0, 430.0), 210.0, 250.0, 68.0)
+	mountain_belts += _gaussian_peak(x, z, Vector2(-80.0, -650.0), 350.0, 115.0, 54.0)
+
+	# A low basin through the central region creates a broad valley around the starting area.
+	var central_basin := _gaussian_peak(x, z, Vector2(0.0, 0.0), 390.0, 280.0, -7.0)
+	return broad_hills + rolling_detail + mountain_belts + central_basin
+
+
 func _get_height(x: float, z: float) -> float:
 	var radius := _continent_radius(x, z)
 	if radius <= 1.0:
-		if radius < 0.72:
-			return 0.0
-		var slope := (radius - 0.72) / 0.28
-		return pow(clampf(slope, 0.0, 1.0), 1.45) * 72.0
+		var coast_factor := clampf((1.0 - radius) / 0.10, 0.0, 1.0)
+		var coast_ease := coast_factor * coast_factor * (3.0 - 2.0 * coast_factor)
+		var interior_height := _land_base_height(x, z)
+		return lerpf(SEA_LEVEL - 1.2, interior_height, coast_ease)
 
-	var islands := [
-		{"center": Vector2(-1260.0, -520.0), "rx": 175.0, "rz": 125.0},
-		{"center": Vector2(1250.0, -520.0), "rx": 190.0, "rz": 135.0},
-		{"center": Vector2(1180.0, 850.0), "rx": 220.0, "rz": 150.0},
-		{"center": Vector2(-1120.0, 820.0), "rx": 160.0, "rz": 120.0}
-	]
-	for island in islands:
-		var island_r := _island_radius(
+	for island in ISLAND_DATA:
+		var island_radius_value := _island_radius(
 			x, z, island["center"], island["rx"], island["rz"]
 		)
-		if island_r < 1.0:
-			return pow(1.0 - island_r, 1.25) * 24.0
-	return -18.0
+		if island_radius_value < 1.0:
+			var island_shape := pow(1.0 - island_radius_value, 1.25)
+			var island_ridge := sin(x * 0.025 + z * 0.012) * 2.0
+			return island_shape * float(island["height"]) + island_ridge
+
+	return OCEAN_FLOOR
 
 
 func _terrain_color(height: float, x: float, z: float) -> Color:
-	if height < -2.0:
-		return Color(0.035, 0.13, 0.19)
 	if height < 1.0:
-		return Color(0.72, 0.66, 0.48)
-	if height < 18.0:
-		return Color(0.24, 0.39, 0.22)
-	if height < 42.0:
-		return Color(0.29, 0.36, 0.25)
-	return Color(0.43, 0.43, 0.40)
+		return Color(0.72, 0.66, 0.49)
+	if height < 16.0:
+		return Color(0.25, 0.43, 0.24)
+	if height < 38.0:
+		return Color(0.34, 0.39, 0.25)
+	if height < 75.0:
+		return Color(0.38, 0.36, 0.29)
+	return Color(0.48, 0.47, 0.43)
 
 
 func _build_ocean() -> void:
 	var ocean := MeshInstance3D.new()
 	ocean.name = "WorldOcean"
 	var plane := PlaneMesh.new()
-	plane.size = Vector2(WORLD_WIDTH + 900.0, WORLD_DEPTH + 900.0)
+	plane.size = Vector2(WORLD_WIDTH + 1100.0, WORLD_DEPTH + 1100.0)
 	ocean.mesh = plane
-	ocean.position.y = -2.2
+	ocean.position.y = SEA_LEVEL - 1.8
 
 	var water := StandardMaterial3D.new()
 	water.albedo_color = Color(0.025, 0.16, 0.23, 1.0)
 	water.metallic = 0.18
-	water.roughness = 0.28
+	water.roughness = 0.24
 	water.cull_mode = BaseMaterial3D.CULL_DISABLED
 	ocean.material_override = water
 	ocean.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -117,13 +153,10 @@ func _build_continent() -> void:
 	var indices := PackedInt32Array()
 	terrain_height_data.resize(GRID_X * GRID_Z)
 
-	var step_x := WORLD_WIDTH / float(GRID_X - 1)
-	var step_z := WORLD_DEPTH / float(GRID_Z - 1)
-
 	for z_index in range(GRID_Z):
 		for x_index in range(GRID_X):
-			var x := -WORLD_WIDTH * 0.5 + float(x_index) * step_x
-			var z := -WORLD_DEPTH * 0.5 + float(z_index) * step_z
+			var x := -WORLD_WIDTH * 0.5 + float(x_index) * terrain_step_x
+			var z := -WORLD_DEPTH * 0.5 + float(z_index) * terrain_step_z
 			var height := _get_height(x, z)
 			var data_index := z_index * GRID_X + x_index
 			terrain_height_data[data_index] = height
@@ -136,7 +169,12 @@ func _build_continent() -> void:
 			var b := a + 1
 			var c := a + GRID_X
 			var d := c + 1
-			indices.append_array(PackedInt32Array([a, c, b, b, c, d]))
+			var average_height := (
+				terrain_height_data[a] + terrain_height_data[b]
+				+ terrain_height_data[c] + terrain_height_data[d]
+			) * 0.25
+			if average_height > SEA_LEVEL - 0.6:
+				indices.append_array(PackedInt32Array([a, c, b, b, c, d]))
 
 	var arrays := []
 	arrays.resize(Mesh.ARRAY_MAX)
@@ -146,7 +184,8 @@ func _build_continent() -> void:
 
 	var terrain_mesh := ArrayMesh.new()
 	terrain_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	terrain_mesh.surface_set_material(0, _make_terrain_material())
+	if terrain_mesh.get_surface_count() > 0:
+		terrain_mesh.surface_set_material(0, _make_terrain_material())
 
 	var terrain_visual := MeshInstance3D.new()
 	terrain_visual.name = "ContinentTerrainVisual"
@@ -154,6 +193,8 @@ func _build_continent() -> void:
 	terrain_visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	add_child(terrain_visual)
 
+	# HeightMapShape3D is centered around its local origin; scale it to match
+	# the generated terrain grid spacing and place its center over the world.
 	var terrain_body := StaticBody3D.new()
 	terrain_body.name = "ContinentTerrainCollision"
 	var height_shape := HeightMapShape3D.new()
@@ -162,6 +203,8 @@ func _build_continent() -> void:
 	height_shape.map_data = terrain_height_data
 	var collision := CollisionShape3D.new()
 	collision.shape = height_shape
+	collision.scale = Vector3(terrain_step_x, 1.0, terrain_step_z)
+	collision.position = Vector3(0.0, 0.0, 0.0)
 	terrain_body.add_child(collision)
 	add_child(terrain_body)
 
@@ -169,22 +212,22 @@ func _build_continent() -> void:
 func _make_terrain_material() -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()
 	material.vertex_color_use_as_albedo = true
-	material.roughness = 0.94
+	material.roughness = 0.96
 	material.cull_mode = BaseMaterial3D.CULL_DISABLED
 	return material
 
 
 func _build_islands() -> void:
-	var island_data := [
-		{"name": "WesternIsle", "position": Vector3(-1260.0, 0.0, -520.0)},
-		{"name": "EasternIsle", "position": Vector3(1250.0, 0.0, -520.0)},
-		{"name": "SouthernIsle", "position": Vector3(1180.0, 0.0, 850.0)},
-		{"name": "SouthwesternIsle", "position": Vector3(-1120.0, 0.0, 820.0)}
-	]
-	for item in island_data:
+	# Islands are sculpted directly into the same connected terrain mesh and collision.
+	for island in ISLAND_DATA:
+		var center: Vector2 = island["center"]
 		var marker := Node3D.new()
-		marker.name = str(item["name"])
-		marker.position = item["position"]
+		marker.name = str(island["name"])
+		marker.position = Vector3(
+			center.x,
+			_get_height(center.x, center.y),
+			center.y
+		)
 		add_child(marker)
 
 
@@ -225,25 +268,27 @@ func _build_city_markers() -> void:
 
 func _build_highways() -> void:
 	var routes := [
-		[Vector3(0, 0.35, 0), Vector3(-300, 0.35, 100), Vector3(-650, 0.35, -260)],
-		[Vector3(0, 0.35, 0), Vector3(120, 0.35, -250), Vector3(120, 0.35, -470)],
-		[Vector3(0, 0.35, 0), Vector3(390, 0.35, 230), Vector3(650, 0.35, 40), Vector3(1030, 0.35, 80)],
-		[Vector3(0, 0.35, 0), Vector3(-80, 0.35, 330), Vector3(-350, 0.35, 610)]
+		[Vector2(0, 0), Vector2(-300, 100), Vector2(-650, -260)],
+		[Vector2(0, 0), Vector2(120, -250), Vector2(120, -470)],
+		[Vector2(0, 0), Vector2(390, 230), Vector2(650, 40), Vector2(1030, 80)],
+		[Vector2(0, 0), Vector2(-80, 330), Vector2(-350, 610)]
 	]
 	var road_material := StandardMaterial3D.new()
 	road_material.albedo_color = Color(0.12, 0.14, 0.16)
 	road_material.roughness = 0.9
+
 	for route_index in range(routes.size()):
 		var points: Array = routes[route_index]
 		for segment_index in range(points.size() - 1):
-			var start: Vector3 = points[segment_index]
-			var finish: Vector3 = points[segment_index + 1]
+			var start_2d: Vector2 = points[segment_index]
+			var finish_2d: Vector2 = points[segment_index + 1]
+			var start := Vector3(start_2d.x, _get_height(start_2d.x, start_2d.y) + 0.45, start_2d.y)
+			var finish := Vector3(finish_2d.x, _get_height(finish_2d.x, finish_2d.y) + 0.45, finish_2d.y)
 			var midpoint := (start + finish) * 0.5
-			var length := start.distance_to(finish)
 			var road := MeshInstance3D.new()
 			road.name = "ContinentalHighway_%02d_%02d" % [route_index, segment_index]
 			var box := BoxMesh.new()
-			box.size = Vector3(10.0, 0.18, length)
+			box.size = Vector3(10.0, 0.18, start.distance_to(finish))
 			road.mesh = box
 			road.position = midpoint
 			road.look_at(finish, Vector3.UP)
