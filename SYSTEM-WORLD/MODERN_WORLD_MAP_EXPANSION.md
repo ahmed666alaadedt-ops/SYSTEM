@@ -223,3 +223,12 @@ This expansion is committed to the repository and wired into `world_manager.gd` 
 - Each island has layered rock, sand and grass ellipsoids, a simple collision volume, and a small tree cluster. The original continent, city anchors, and existing four islands are left unchanged.
 - These are first-pass explorable landform prototypes. They do not yet have docks, boats, NPC settlements, quests, detailed coast sculpting, underwater terrain, or island-specific discovery/fast-travel registration.
 - The new islands extend the visible exploration geography; they do not represent a completed world-scale planet map. The Godot project still needs parser, collision, visual, and Android performance validation.
+
+
+## Outer island harbors and maritime navigation
+
+- Added a first-pass wooden pier and edge rails to each of the eight outer islands, with support piles, harbor lights, and a moored ferry-boat visual.
+- Added lighthouse structures to selected larger islands.
+- Added twelve sea-navigation buoy markers and tagged them as discoverable world landmarks.
+- Harbor metadata marks fast travel as disabled by default; visiting and activating docks must be implemented by the discovery/transport gameplay systems.
+- Ferry visuals are scenery prototypes only. There is no boat controller, route schedule, passenger boarding, docking interaction, water physics, or functional maritime navigation yet.
