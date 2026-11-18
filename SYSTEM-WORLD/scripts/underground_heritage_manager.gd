@@ -2,6 +2,7 @@ extends Node3D
 class_name UndergroundHeritageManager
 
 const UndergroundInteractableScript = preload("res://scripts/underground_interactable.gd")
+const UndergroundPuzzleControllerScript = preload("res://scripts/underground_puzzle_controller.gd")
 
 ## Hidden underground passages and heritage markets for the modern world.
 ## This is a first procedural exploration layout, not a complete navigable quest system.
@@ -218,6 +219,7 @@ func _build_secret_vault(parent: Node3D, is_market: bool, site_name: String) -> 
 	# Recesses along the vault walls suggest further sealed branches for later expansion.
 	for side in [-1.0, 1.0]:
 		_add_box(parent, "SealedWallNiche", Vector3(side * 6.55, 1.7, -53.0), Vector3(0.12, 2.2, 3.0), _dark, false)
+	_build_rune_puzzle(parent)
 
 
 func _build_torch_lighting(parent: Node3D) -> void:
@@ -355,3 +357,67 @@ func _create_relic_interaction(parent: Node3D) -> void:
 	sphere.radius = 1.8
 	relic_shape.shape = sphere
 	relic_area.add_child(relic_shape)
+
+
+
+func _build_rune_puzzle(parent: Node3D) -> void:
+	var controller: Node3D = UndergroundPuzzleControllerScript.new()
+	controller.name = "PuzzleController"
+	parent.add_child(controller)
+
+	var gate := StaticBody3D.new()
+	gate.name = "RuneVaultGate"
+	gate.position = Vector3(0, 1.9, -58.0)
+	controller.add_child(gate)
+
+	var gate_visual := MeshInstance3D.new()
+	gate_visual.name = "RuneSealedStoneSlab"
+	var gate_mesh := BoxMesh.new()
+	gate_mesh.size = Vector3(5.2, 3.8, 0.65)
+	gate_visual.mesh = gate_mesh
+	gate_visual.material_override = _stone
+	gate.add_child(gate_visual)
+
+	var gate_collision := CollisionShape3D.new()
+	var gate_shape := BoxShape3D.new()
+	gate_shape.size = gate_mesh.size
+	gate_collision.shape = gate_shape
+	gate.add_child(gate_collision)
+
+	controller.call("configure", gate, gate_visual, gate_collision)
+
+	# The inscription is a visual hint; players discover the order in-world.
+	_add_box(parent, "RuneSequenceInscription", Vector3(0, 2.8, -50.0), Vector3(4.0, 1.0, 0.18), _gold, false)
+
+	var rune_symbols := ["river", "sun", "moon"]
+	var rune_labels := ["RiverRune", "SunRune", "MoonRune"]
+	var rune_positions := [
+		Vector3(-4.5, 0.0, -51.0),
+		Vector3(0.0, 0.0, -49.5),
+		Vector3(4.5, 0.0, -51.0)
+	]
+
+	for index in range(rune_symbols.size()):
+		var position: Vector3 = rune_positions[index]
+		_add_box(parent, rune_labels[index] + "Pillar", position + Vector3(0, 1.0, 0), Vector3(1.25, 2.0, 1.0), _stone, true)
+
+		var rune_target: Node3D = UndergroundInteractableScript.new()
+		rune_target.name = rune_labels[index] + "Interaction"
+		rune_target.set("action_type", "rune")
+		rune_target.set("puzzle_controller_path", ^"..")
+		rune_target.set("rune_symbol", rune_symbols[index])
+		rune_target.position = position + Vector3(0, 1.8, 0)
+		rune_target.add_to_group("system_interactable")
+		rune_target.set_meta("system_interaction_prompt", "افحص الرمز الأثري")
+		controller.add_child(rune_target)
+
+		var rune_area := Area3D.new()
+		rune_area.name = "RuneInteractionArea"
+		rune_target.add_child(rune_area)
+		var rune_collision := CollisionShape3D.new()
+		var rune_shape := SphereShape3D.new()
+		rune_shape.radius = 1.15
+		rune_collision.shape = rune_shape
+		rune_area.add_child(rune_collision)
+
+		_add_box(rune_target, "RuneGlyph", Vector3(0, 0.0, -0.55), Vector3(0.55, 0.75, 0.12), _gold, false)
