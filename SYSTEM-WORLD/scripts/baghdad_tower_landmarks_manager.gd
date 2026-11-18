@@ -2,7 +2,7 @@ extends Node3D
 class_name BaghdadTowerLandmarksManager
 
 const EntranceScript = preload("res://scripts/system_tower_entrance.gd")
-const HUNTER_TOWER_HEIGHT := 480.0
+const HUNTER_TOWER_HEIGHT := 1000.0
 const POWER_TOWER_HEIGHT := 168.0
 
 var terrain: Node
@@ -51,7 +51,7 @@ func _build_hunter_tower() -> void:
 		position,
 		HUNTER_TOWER_HEIGHT,
 		38.0,
-		80,
+		200,
 		Color(0.08, 0.62, 0.92)
 	)
 
