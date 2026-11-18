@@ -25,7 +25,7 @@ It creates a server-owned `hunterGuildMissions/{missionId}` document with status
 
 - `listAvailableHunterGuildMissions` — returns open, unexpired missions with remaining team capacity.
 - `registerPartyForHunterGuildMission` — only the party leader can register the existing party.
-- `listMyHunterGuildMissionAssignments` — returns assignments whose roster snapshot contains the signed-in player.
+- `listMyHunterGuildMissionAssignments` — returns assignments whose roster snapshot contains the signed-in player; the Android screen displays this registration history.
 
 ## Registration validation
 
