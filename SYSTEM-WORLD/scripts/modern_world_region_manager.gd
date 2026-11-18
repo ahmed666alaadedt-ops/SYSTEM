@@ -1,0 +1,330 @@
+extends Node3D
+class_name ModernWorldRegionManager
+
+## طبقة تفاصيل المدن والمناطق الحضرية للعالم الحديث.
+## تُبنى فوق تضاريس القارة الموجودة ولا تستبدلها أو تغيّر مواقعها المرجعية.
+
+const CITY_DATA := [
+	{"name": "New York", "center": Vector2(-650.0, -260.0), "style": 0},
+	{"name": "London", "center": Vector2(-420.0, -90.0), "style": 1},
+	{"name": "Paris", "center": Vector2(-300.0, 110.0), "style": 2},
+	{"name": "Baghdad", "center": Vector2(0.0, 0.0), "style": 3},
+	{"name": "Moscow", "center": Vector2(120.0, -470.0), "style": 4},
+	{"name": "Cairo", "center": Vector2(-80.0, 330.0), "style": 5},
+	{"name": "New Delhi", "center": Vector2(390.0, 230.0), "style": 6},
+	{"name": "Guangzhou", "center": Vector2(650.0, 40.0), "style": 7},
+	{"name": "Seoul", "center": Vector2(820.0, -260.0), "style": 8},
+	{"name": "Tokyo", "center": Vector2(1030.0, 80.0), "style": 9},
+	{"name": "Singapore", "center": Vector2(560.0, 490.0), "style": 10},
+	{"name": "Sydney", "center": Vector2(1050.0, 680.0), "style": 11},
+	{"name": "Rio de Janeiro", "center": Vector2(-850.0, 420.0), "style": 12},
+	{"name": "Johannesburg", "center": Vector2(-350.0, 610.0), "style": 13}
+]
+
+const DISTRICT_NAMES := [
+	"Downtown", "OldTown", "Residential", "Commercial",
+	"Industrial", "University", "Waterfront", "GreenBelt"
+]
+const CITY_SPACING := 34.0
+const DISTRICT_OFFSETS := [
+	Vector2(0.0, 0.0), Vector2(-78.0, -52.0),
+	Vector2(78.0, -52.0), Vector2(-78.0, 52.0),
+	Vector2(78.0, 52.0), Vector2(0.0, -112.0),
+	Vector2(0.0, 112.0), Vector2(0.0, 170.0)
+]
+
+var terrain: ModernContinentManager
+var rng := RandomNumberGenerator.new()
+var city_anchors: Dictionary = {}
+var road_material: StandardMaterial3D
+var rail_material: StandardMaterial3D
+var plaza_material: StandardMaterial3D
+var building_materials: Array[StandardMaterial3D] = []
+
+
+func _ready() -> void:
+	name = "ModernWorldRegionManager"
+	rng.seed = 20261118
+	terrain = get_parent().get_node_or_null("ModernContinent") as ModernContinentManager
+	if terrain == null:
+		push_warning("SYSTEM WORLD: region manager requires ModernContinent.")
+		return
+	_create_materials()
+	_resolve_city_anchors()
+	_build_city_districts()
+	_build_city_roads()
+	_build_transport_hubs()
+	_build_green_belts()
+	print("SYSTEM WORLD: detailed city regions initialized: ", city_anchors.size())
+
+
+func _create_materials() -> void:
+	road_material = _material(Color(0.075, 0.085, 0.095), 0.94)
+	rail_material = _material(Color(0.28, 0.31, 0.34), 0.72, 0.35)
+	plaza_material = _material(Color(0.48, 0.48, 0.43), 0.92)
+	var palettes := [
+		Color(0.30, 0.39, 0.48), Color(0.43, 0.42, 0.37),
+		Color(0.52, 0.48, 0.40), Color(0.49, 0.39, 0.27),
+		Color(0.38, 0.42, 0.47), Color(0.58, 0.48, 0.35),
+		Color(0.48, 0.40, 0.34), Color(0.36, 0.43, 0.44)
+	]
+	for color in palettes:
+		building_materials.append(_material(color, 0.78, 0.12))
+
+
+func _material(color: Color, roughness: float, metallic: float = 0.0) -> StandardMaterial3D:
+	var result := StandardMaterial3D.new()
+	result.albedo_color = color
+	result.roughness = roughness
+	result.metallic = metallic
+	return result
+
+
+func _resolve_city_anchors() -> void:
+	for city in CITY_DATA:
+		var requested: Vector2 = city["center"]
+		var resolved := _nearest_land_position(requested)
+		if resolved == Vector2.INF:
+			push_warning("SYSTEM WORLD: no land anchor found for " + str(city["name"]))
+			continue
+		city_anchors[str(city["name"])] = resolved
+
+
+func _nearest_land_position(origin: Vector2) -> Vector2:
+	if terrain.is_land_position(origin.x, origin.y):
+		return origin
+	for radius_step in range(1, 13):
+		var radius := float(radius_step) * 18.0
+		for sample in range(24):
+			var angle := TAU * float(sample) / 24.0
+			var candidate := origin + Vector2(cos(angle), sin(angle)) * radius
+			if terrain.is_land_position(candidate.x, candidate.y):
+				return candidate
+	return Vector2.INF
+
+
+func _build_city_districts() -> void:
+	for city in CITY_DATA:
+		var city_name := str(city["name"])
+		if not city_anchors.has(city_name):
+			continue
+		var anchor: Vector2 = city_anchors[city_name]
+		var city_root := Node3D.new()
+		city_root.name = "DetailedCity_" + city_name.replace(" ", "")
+		city_root.position = Vector3(anchor.x, terrain.get_terrain_height(anchor.x, anchor.y), anchor.y)
+		add_child(city_root)
+		_build_city_plaza(city_root, city_name)
+		for district_index in range(DISTRICT_OFFSETS.size()):
+			var district_center: Vector2 = anchor + DISTRICT_OFFSETS[district_index]
+			_build_district(city_root, city_name, district_index, district_center)
+
+
+func _build_city_plaza(parent: Node3D, city_name: String) -> void:
+	var plaza := MeshInstance3D.new()
+	plaza.name = city_name.replace(" ", "") + "_CivicPlaza"
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = 13.0
+	mesh.bottom_radius = 13.0
+	mesh.height = 0.35
+	plaza.mesh = mesh
+	plaza.position = Vector3(0.0, 0.22, 0.0)
+	plaza.material_override = plaza_material
+	parent.add_child(plaza)
+
+
+func _build_district(parent: Node3D, city_name: String, district_index: int, center: Vector2) -> void:
+	var district_name := str(DISTRICT_NAMES[district_index])
+	var district := Node3D.new()
+	district.name = city_name.replace(" ", "") + "_" + district_name
+	district.position = Vector3(
+		center.x - float(parent.position.x),
+		terrain.get_terrain_height(center.x, center.y) - parent.position.y,
+		center.y - float(parent.position.z)
+	)
+	parent.add_child(district)
+
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3.ONE
+	var multi := MultiMesh.new()
+	multi.transform_format = MultiMesh.TRANSFORM_3D
+	multi.mesh = mesh
+	var transforms: Array[Transform3D] = []
+	var half_width := 2
+	for z_index in range(-half_width, half_width + 1):
+		for x_index in range(-half_width, half_width + 1):
+			if abs(x_index) <= 1 and abs(z_index) <= 1:
+				continue
+			var world_x := center.x + float(x_index) * CITY_SPACING
+			var world_z := center.y + float(z_index) * CITY_SPACING
+			if not terrain.is_land_position(world_x, world_z):
+				continue
+			var ground_y := terrain.get_terrain_height(world_x, world_z)
+			var district_base := terrain.get_terrain_height(center.x, center.y)
+			if absf(ground_y - district_base) > 13.0:
+				continue
+			var seed_value := absf(sin(float(district_index * 83 + x_index * 29 + z_index * 47 + city_name.length() * 11)))
+			var width := 9.0 + seed_value * 8.0
+			var depth := 9.0 + absf(cos(seed_value * 9.0)) * 8.0
+			var height := _building_height(district_index, seed_value)
+			var local_x := world_x - center.x
+			var local_z := world_z - center.y
+			var local_y := ground_y - district_base + height * 0.5
+			var basis := Basis.from_scale(Vector3(width, height, depth))
+			var transform := Transform3D(basis, Vector3(local_x, local_y, local_z))
+			transforms.append(transform)
+	if transforms.is_empty():
+		return
+	multi.instance_count = transforms.size()
+	for index in range(transforms.size()):
+		multi.set_instance_transform(index, transforms[index])
+	var buildings := MultiMeshInstance3D.new()
+	buildings.name = "DistrictBuildings"
+	buildings.multimesh = multi
+	buildings.material_override = building_materials[district_index % building_materials.size()]
+	district.add_child(buildings)
+
+
+func _building_height(district_index: int, seed_value: float) -> float:
+	match district_index:
+		0:
+			return 38.0 + seed_value * 95.0
+		1:
+			return 9.0 + seed_value * 20.0
+		2:
+			return 8.0 + seed_value * 18.0
+		3:
+			return 16.0 + seed_value * 54.0
+		4:
+			return 12.0 + seed_value * 35.0
+		5:
+			return 14.0 + seed_value * 30.0
+		6:
+			return 10.0 + seed_value * 42.0
+		_:
+			return 7.0 + seed_value * 15.0
+
+
+func _build_city_roads() -> void:
+	for city in CITY_DATA:
+		var city_name := str(city["name"])
+		if not city_anchors.has(city_name):
+			continue
+		var anchor: Vector2 = city_anchors[city_name]
+		_add_road_strip(city_name + "_NorthSouthBoulevard", anchor, Vector2(0.0, -185.0), 13.0)
+		_add_road_strip(city_name + "_EastWestBoulevard", anchor, Vector2(185.0, 0.0), 13.0)
+		_add_road_strip(city_name + "_RingRoadNorth", anchor + Vector2(0.0, -145.0), Vector2(145.0, 0.0), 8.0)
+		_add_road_strip(city_name + "_RingRoadSouth", anchor + Vector2(0.0, 145.0), Vector2(145.0, 0.0), 8.0)
+
+
+func _add_road_strip(node_name: String, start: Vector2, offset: Vector2, width: float) -> void:
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	surface.set_material(road_material)
+	var direction := offset.normalized()
+	var side := Vector2(-direction.y, direction.x) * width * 0.5
+	var steps := 24
+	for index in range(steps):
+		var t0 := float(index) / float(steps)
+		var t1 := float(index + 1) / float(steps)
+		var p0 := start + offset * t0
+		var p1 := start + offset * t1
+		if not terrain.is_land_position(p0.x, p0.y) or not terrain.is_land_position(p1.x, p1.y):
+			continue
+		var a := Vector3(p0.x + side.x, terrain.get_terrain_height(p0.x + side.x, p0.y + side.y) + 0.18, p0.y + side.y)
+		var b := Vector3(p0.x - side.x, terrain.get_terrain_height(p0.x - side.x, p0.y - side.y) + 0.18, p0.y - side.y)
+		var c := Vector3(p1.x + side.x, terrain.get_terrain_height(p1.x + side.x, p1.y + side.y) + 0.18, p1.y + side.y)
+		var d := Vector3(p1.x - side.x, terrain.get_terrain_height(p1.x - side.x, p1.y - side.y) + 0.18, p1.y - side.y)
+		_add_quad(surface, a, b, c, d)
+	surface.generate_normals()
+	var mesh := surface.commit()
+	if mesh == null or mesh.get_surface_count() == 0:
+		return
+	var road := MeshInstance3D.new()
+	road.name = node_name
+	road.mesh = mesh
+	road.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(road)
+
+
+func _add_quad(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3) -> void:
+	surface.add_vertex(a)
+	surface.add_vertex(c)
+	surface.add_vertex(b)
+	surface.add_vertex(b)
+	surface.add_vertex(c)
+	surface.add_vertex(d)
+
+
+func _build_transport_hubs() -> void:
+	for city in CITY_DATA:
+		var city_name := str(city["name"])
+		if not city_anchors.has(city_name):
+			continue
+		var anchor: Vector2 = city_anchors[city_name]
+		_build_hub(city_name, "InternationalAirport", anchor + Vector2(205.0, -35.0), Color(0.35, 0.68, 0.82))
+		_build_hub(city_name, "CentralRailStation", anchor + Vector2(-205.0, 35.0), Color(0.82, 0.72, 0.42))
+
+
+func _build_hub(city_name: String, hub_name: String, requested: Vector2, color: Color) -> void:
+	var position := _nearest_land_position(requested)
+	if position == Vector2.INF:
+		return
+	var hub := Node3D.new()
+	hub.name = city_name.replace(" ", "") + "_" + hub_name
+	hub.position = Vector3(position.x, terrain.get_terrain_height(position.x, position.y) + 0.3, position.y)
+	add_child(hub)
+	var material := _material(color, 0.65, 0.25)
+	var base := MeshInstance3D.new()
+	var base_mesh := BoxMesh.new()
+	base_mesh.size = Vector3(54.0, 0.6, 24.0)
+	base.mesh = base_mesh
+	base.position.y = 0.3
+	base.material_override = plaza_material
+	hub.add_child(base)
+	for index in range(3):
+		var tower := MeshInstance3D.new()
+		var tower_mesh := BoxMesh.new()
+		tower_mesh.size = Vector3(4.0, 9.0 + float(index) * 2.0, 4.0)
+		tower.mesh = tower_mesh
+		tower.position = Vector3(-17.0 + float(index) * 17.0, tower_mesh.size.y * 0.5 + 0.6, 0.0)
+		tower.material_override = material
+		hub.add_child(tower)
+
+
+func _build_green_belts() -> void:
+	for city in CITY_DATA:
+		var city_name := str(city["name"])
+		if not city_anchors.has(city_name):
+			continue
+		var anchor: Vector2 = city_anchors[city_name]
+		for index in range(12):
+			var angle := TAU * float(index) / 12.0
+			var point := anchor + Vector2(cos(angle), sin(angle)) * 245.0
+			if not terrain.is_land_position(point.x, point.y):
+				continue
+			var park := MeshInstance3D.new()
+			park.name = city_name.replace(" ", "") + "_GreenBelt_%02d" % index
+			var park_mesh := CylinderMesh.new()
+			park_mesh.top_radius = 7.0
+			park_mesh.bottom_radius = 7.0
+			park_mesh.height = 0.24
+			park.mesh = park_mesh
+			park.position = Vector3(point.x, terrain.get_terrain_height(point.x, point.y) + 0.16, point.y)
+			park.material_override = _material(Color(0.15, 0.32, 0.18), 1.0)
+			add_child(park)
+
+
+func get_city_anchor(city_name: String) -> Vector3:
+	if not city_anchors.has(city_name):
+		return Vector3.INF
+	var point: Vector2 = city_anchors[city_name]
+	return Vector3(point.x, terrain.get_terrain_height(point.x, point.y), point.y)
+
+
+func get_city_names() -> Array[String]:
+	var result: Array[String] = []
+	for city in CITY_DATA:
+		var city_name := str(city["name"])
+		if city_anchors.has(city_name):
+			result.append(city_name)
+	return result
