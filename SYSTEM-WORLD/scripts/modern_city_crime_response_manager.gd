@@ -54,6 +54,8 @@ func _spawn_civilian_vehicle_fleet() -> void:
 			var owner_id := _get_or_create_owner_npc(owner_key, owner_name, city_name)
 			var vehicle := NPCVehicleScript.new()
 			vehicle.configure(vehicle_id, owner_id, owner_name, city_name, self, anchor, slot)
+			if society_manager != null and society_manager.has_method("assign_vehicle_to_npc"):
+				society_manager.call("assign_vehicle_to_npc", owner_id, vehicle_id)
 			vehicle.position = anchor + Vector3(float(slot - 1) * 9.0, 0.05, 18.0 + float(slot) * 7.0)
 			_build_vehicle_visual(vehicle, slot)
 			add_child(vehicle)
@@ -200,6 +202,8 @@ func attempt_vehicle_theft(vehicle_id: String) -> Dictionary:
 	npc_vehicle_stolen.emit(vehicle_id, str(record["owner_npc_id"]), str(record["city_name"]))
 	if society_manager != null and society_manager.has_method("set_activity"):
 		society_manager.call("set_activity", str(record["owner_npc_id"]), "gather_information", str(record["city_name"]))
+	if society_manager != null and society_manager.has_method("add_memory"):
+		society_manager.call("add_memory", str(record["owner_npc_id"]), "vehicle_stolen", {"vehicle_id": vehicle_id, "city": str(record["city_name"])})
 	if int(record["witness_count"]) > 0:
 		_report_theft(vehicle_id)
 	_save_crime_state()
@@ -288,6 +292,8 @@ func _recover_stolen_vehicle(vehicle_id: String) -> void:
 		vehicle.visible = false
 	if society_manager != null and society_manager.has_method("set_activity"):
 		society_manager.call("set_activity", str(record["owner_npc_id"]), "work", str(record["city_name"]))
+	if society_manager != null and society_manager.has_method("add_memory"):
+		society_manager.call("add_memory", str(record["owner_npc_id"]), "vehicle_recovered", {"vehicle_id": vehicle_id, "city": str(record["city_name"])})
 	stolen_vehicle_recovered.emit(vehicle_id, str(record["city_name"]))
 	_save_crime_state()
 
