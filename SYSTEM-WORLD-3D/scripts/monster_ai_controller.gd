@@ -27,6 +27,7 @@ var initialized := false
 var monster_counter := 0
 var species_database: RefCounted
 var pending_encounters: Array[Dictionary] = []
+var active_gate_monster_counts: Dictionary = {}
 
 
 func setup(world: Node3D, player_node: Node3D) -> void:
@@ -55,6 +56,7 @@ func spawn_gate_wave(gate_data: Dictionary) -> void:
 		"remaining_bosses": int(gate_data.get("boss_count", 0)),
 		"spawn_timer": 0.0
 	})
+	active_gate_monster_counts[gate_id] = 0
 	print("SYSTEM: Encounter queued for gate ", gate_id)
 
 
@@ -78,21 +80,25 @@ func _update_encounters(delta: float) -> void:
 		while spawned < SPAWN_BATCH_SIZE and int(encounter["remaining_monsters"]) > 0 and monsters.size() < MAX_ACTIVE_MONSTERS:
 			var angle := randf_range(0.0, TAU)
 			var offset := Vector3(cos(angle), 0.0, sin(angle)) * randf_range(5.0, 12.0)
-			_create_monster(gate_position + offset, rank, false, biome)
+			_create_monster(gate_position + offset, rank, false, biome, str(encounter["gate_id"]))
 			encounter["remaining_monsters"] = int(encounter["remaining_monsters"]) - 1
+			active_gate_monster_counts[str(encounter["gate_id"])] = int(active_gate_monster_counts.get(str(encounter["gate_id"]), 0)) + 1
 			spawned += 1
 
 		if int(encounter["remaining_monsters"]) <= 0 and int(encounter["remaining_bosses"]) > 0 and monsters.size() < MAX_ACTIVE_MONSTERS:
-			_create_monster(gate_position + Vector3(0.0, 0.0, -13.0), rank, true, biome)
+			_create_monster(gate_position + Vector3(0.0, 0.0, -13.0), rank, true, biome, str(encounter["gate_id"]))
 			encounter["remaining_bosses"] = int(encounter["remaining_bosses"]) - 1
+			active_gate_monster_counts[str(encounter["gate_id"])] = int(active_gate_monster_counts.get(str(encounter["gate_id"]), 0)) + 1
 		encounter["spawn_timer"] = SPAWN_INTERVAL
 
-		if int(encounter["remaining_monsters"]) <= 0 and int(encounter["remaining_bosses"]) <= 0:
-			gate_encounter_completed.emit(str(encounter["gate_id"]))
+		if int(encounter["remaining_monsters"]) <= 0 and int(encounter["remaining_bosses"]) <= 0 and int(active_gate_monster_counts.get(str(encounter["gate_id"]), 0)) <= 0:
+			var completed_gate_id := str(encounter["gate_id"])
+			gate_encounter_completed.emit(completed_gate_id)
+			active_gate_monster_counts.erase(completed_gate_id)
 			pending_encounters.remove_at(index)
 
 
-func _create_monster(position: Vector3, rank: String, is_boss: bool, biome: String = "urban") -> void:
+func _create_monster(position: Vector3, rank: String, is_boss: bool, biome: String = "urban", gate_id: String = "") -> void:
 	var species_data: Dictionary = {}
 	if is_instance_valid(species_database):
 		species_data = species_database.choose_species(biome, rank, is_boss)
@@ -141,6 +147,7 @@ func _create_monster(position: Vector3, rank: String, is_boss: bool, biome: Stri
 
 	monsters.append({
 		"id": monster_id,
+		"gate_id": gate_id,
 		"node": actor,
 		"rank": rank,
 		"species_id": species_id,
@@ -277,6 +284,9 @@ func apply_damage(monster_id: String, amount: float) -> bool:
 			if bool(data["is_boss"]):
 				xp *= 10
 			monster_defeated.emit(monster_id, xp)
+			var defeated_gate_id := str(data.get("gate_id", ""))
+			if not defeated_gate_id.is_empty():
+				active_gate_monster_counts[defeated_gate_id] = maxi(0, int(active_gate_monster_counts.get(defeated_gate_id, 0)) - 1)
 			monster_defeated_detailed.emit({
 				"id": monster_id,
 				"rank": str(data["rank"]),
