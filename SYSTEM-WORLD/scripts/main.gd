@@ -23,6 +23,7 @@ const WildlifeManagerScript = preload("res://scripts/wildlife_manager.gd")
 const MissionRewardManagerScript = preload("res://scripts/system_mission_reward_manager.gd")
 const PlayerProgressionScript = preload("res://scripts/system_player_progression.gd")
 const HunterExamManagerScript = preload("res://scripts/system_hunter_exam_manager.gd")
+const PowerTowerManagerScript = preload("res://scripts/system_power_tower_manager.gd")
 
 var world_manager
 var world_map_manager
@@ -33,6 +34,7 @@ var wildlife_manager
 var mission_reward_manager
 var player_progression
 var hunter_exam_manager
+var power_tower_manager
 
 var active_world_root: Node3D
 
@@ -68,6 +70,7 @@ func _ready() -> void:
 	register_modern_world_map_locations()
 	create_player_progression()
 	create_hunter_exam_manager()
+	create_power_tower_manager()
 	create_mission_reward_manager()
 
 	connect_sovereign_system()
@@ -159,6 +162,18 @@ func create_hunter_exam_manager() -> void:
 	hunter_exam_manager = HunterExamManagerScript.new()
 	hunter_exam_manager.name = "HunterExamManager"
 	add_child(hunter_exam_manager)
+
+
+func create_power_tower_manager() -> void:
+	power_tower_manager = PowerTowerManagerScript.new()
+	power_tower_manager.name = "PowerTowerManager"
+	add_child(power_tower_manager)
+	power_tower_manager.floor_cleared.connect(_on_power_tower_floor_cleared)
+
+
+func _on_power_tower_floor_cleared(floor_number: int, reward_xp: int, rank: String) -> void:
+	if player_progression != null:
+		player_progression.add_experience(reward_xp, "Power Tower floor %d (%s)" % [floor_number, rank])
 
 
 func _on_hunter_exam_registration_requested() -> void:
@@ -478,6 +493,15 @@ func _on_interaction_performed(
 		" / ",
 		location_id
 	)
+	if location_id == "power_tower_baghdad" and power_tower_manager != null:
+		var next_floor := int(power_tower_manager.get_tower_status().get("next_floor", 1))
+		var level := int(player_progression.current_level) if player_progression != null else 1
+		var result: Dictionary = power_tower_manager.request_floor(next_floor, level)
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "برج القوة: " + str(result.get("reason", "تم طلب دخول الطابق"))
+	elif location_id == "hunter_association_tower_baghdad":
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "مقر نقابة الصيادين العالمي — راجع واجهة النقابة للتسجيل بالاختبار"
 
 
 func _on_location_discovered(
