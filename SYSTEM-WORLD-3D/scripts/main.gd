@@ -10,6 +10,8 @@ const CAMERA_SENSITIVITY := 0.006
 
 const NPC_MANAGER_PATH := "res://scripts/ai_npc_society_manager.gd"
 const SAVE_MANAGER_PATH := "res://scripts/world_save_manager.gd"
+const GATE_MANAGER_PATH := "res://scripts/monster_gate_manager.gd"
+const MONSTER_AI_PATH := "res://scripts/monster_ai_controller.gd"
 const AUTOSAVE_INTERVAL := 60.0
 
 var player: CharacterBody3D
@@ -30,6 +32,8 @@ var autosave_timer := 0.0
 var status_label: Label
 var npc_manager: Node
 var save_manager: Node
+var gate_manager: Node
+var monster_manager: Node
 
 
 func _ready() -> void:
@@ -42,6 +46,7 @@ func _ready() -> void:
 	_create_interface()
 
 	_connect_npc_society()
+	_connect_monster_system()
 	_connect_world_save_manager()
 
 
@@ -56,6 +61,12 @@ func _process(delta: float) -> void:
 	if is_instance_valid(npc_manager):
 		if npc_manager.has_method("update_world"):
 			npc_manager.call("update_world", delta, world_clock)
+
+	if is_instance_valid(gate_manager):
+		gate_manager.call("update_world", delta)
+
+	if is_instance_valid(monster_manager):
+		monster_manager.call("update_world", delta)
 
 	_update_autosave(delta)
 
@@ -409,6 +420,39 @@ func _connect_npc_society() -> void:
 
 	if npc_manager.has_method("setup"):
 		npc_manager.call("setup", self)
+
+
+func _connect_monster_system() -> void:
+	if not ResourceLoader.exists(GATE_MANAGER_PATH):
+		push_warning("Monster Gate Manager script was not found.")
+		return
+
+	if not ResourceLoader.exists(MONSTER_AI_PATH):
+		push_warning("Monster AI Controller script was not found.")
+		return
+
+	var gate_script = load(GATE_MANAGER_PATH)
+	var monster_script = load(MONSTER_AI_PATH)
+
+	if gate_script == null or monster_script == null:
+		push_warning("Monster systems could not be loaded.")
+		return
+
+	gate_manager = gate_script.new()
+	gate_manager.name = "Monster_Gate_Manager"
+	add_child(gate_manager)
+	gate_manager.call("setup", self, 48.0)
+
+	monster_manager = monster_script.new()
+	monster_manager.name = "Monster_AI_Controller"
+	add_child(monster_manager)
+	monster_manager.call("setup", self, player)
+
+	gate_manager.gate_breached.connect(
+		Callable(monster_manager, "spawn_gate_wave")
+	)
+
+	print("SYSTEM WORLD: Monster gates and AI connected.")
 
 
 func _connect_world_save_manager() -> void:
