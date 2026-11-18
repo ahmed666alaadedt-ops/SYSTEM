@@ -1,22 +1,21 @@
 extends CanvasLayer
 
 # SYSTEM WORLD - Hunter Guild Operations Panel
-# Runtime-built mobile-friendly UI. Connects to the guild gate manager.
+# NPCs shown here are administrative staff only. Teams require real player accounts.
 
 var guild_manager: Node
 var player_node: Node3D
-var member_manager: Node
+var staff_manager: Node
 var panel: PanelContainer
 var report_list: VBoxContainer
 var detail_label: Label
 var selected_gate_id := ""
 var status_label: Label
 
-
-func setup(manager: Node, player: Node3D, member_manager_node: Node = null) -> void:
+func setup(manager: Node, player: Node3D, staff_manager_node: Node = null) -> void:
 	guild_manager = manager
 	player_node = player
-	member_manager = member_manager_node
+	staff_manager = staff_manager_node
 	_build_interface()
 	if is_instance_valid(guild_manager):
 		if guild_manager.has_signal("gate_registered"):
@@ -28,7 +27,6 @@ func setup(manager: Node, player: Node3D, member_manager_node: Node = null) -> v
 		if guild_manager.has_signal("gate_cleared"):
 			guild_manager.connect("gate_cleared", Callable(self, "_refresh_reports"))
 	_refresh_reports()
-
 
 func _build_interface() -> void:
 	var toggle := Button.new()
@@ -57,7 +55,6 @@ func _build_interface() -> void:
 	var root := VBoxContainer.new()
 	root.add_theme_constant_override("separation", 10)
 	panel.add_child(root)
-
 	var header := HBoxContainer.new()
 	root.add_child(header)
 	var title := Label.new()
@@ -74,11 +71,9 @@ func _build_interface() -> void:
 	status_label.text = "سجل البوابات والعمليات"
 	status_label.add_theme_color_override("font_color", Color(0.45, 0.85, 1.0))
 	root.add_child(status_label)
-
 	var split := VBoxContainer.new()
 	split.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(split)
-
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(0, 250)
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -88,7 +83,6 @@ func _build_interface() -> void:
 	report_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	report_list.add_theme_constant_override("separation", 7)
 	scroll.add_child(report_list)
-
 	var details := VBoxContainer.new()
 	details.custom_minimum_size = Vector2(0, 175)
 	details.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -102,12 +96,10 @@ func _build_interface() -> void:
 	detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	detail_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	details.add_child(detail_label)
-
 	var refresh_button := Button.new()
 	refresh_button.text = "تحديث السجل"
 	refresh_button.pressed.connect(_refresh_reports)
 	root.add_child(refresh_button)
-
 
 func _panel_style() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
@@ -121,12 +113,10 @@ func _panel_style() -> StyleBoxFlat:
 	style.content_margin_bottom = 12
 	return style
 
-
 func _toggle_panel() -> void:
 	panel.visible = not panel.visible
 	if panel.visible:
 		_refresh_reports()
-
 
 func _refresh_reports(_unused = null) -> void:
 	if not is_instance_valid(report_list) or not is_instance_valid(guild_manager):
@@ -153,7 +143,6 @@ func _refresh_reports(_unused = null) -> void:
 		button.pressed.connect(_select_gate.bind(gate_id))
 		report_list.add_child(button)
 
-
 func _select_gate(gate_id: String) -> void:
 	selected_gate_id = gate_id
 	if not is_instance_valid(guild_manager):
@@ -163,31 +152,25 @@ func _select_gate(gate_id: String) -> void:
 		return
 	var rank_text := str(report.get("verified_rank", "غير مؤكدة - " + str(report.get("rank", "?"))))
 	var reward: Dictionary = report.get("reward_preview", {})
-	detail_label.text = "رقم التقرير: %s\nالبوابة: %s\nالمنطقة: %s\nالرتبة: %s\nالحالة: %s\nمؤشر الخطر: %s/100\nالفريق المقترح: %s\nالفريق الحالي: %s" % [
-		str(report.get("report_id", "-")),
-		gate_id,
-		str(report.get("region", "-")),
-		rank_text,
-		str(report.get("status", "-")),
-		str(report.get("risk_score", 0)),
+	detail_label.text = "رقم التقرير: %s\nالبوابة: %s\nالمنطقة: %s\nالرتبة: %s\nالحالة: %s\nمؤشر الخطر: %s/100\nحجم الفريق المطلوب: %s\nعدد اللاعبين المسجلين بالفريق: %s" % [
+		str(report.get("report_id", "-")), gate_id,
+		str(report.get("region", "-")), rank_text,
+		str(report.get("status", "-")), str(report.get("risk_score", 0)),
 		str(report.get("recommended_team_size", 3)),
 		str(report.get("assigned_team", []).size())
 	]
 	if not reward.is_empty():
 		detail_label.text += "\n\nمكافأة تقديرية: %s XP / %s Credits / %s سمعة" % [
-			str(reward.get("guild_xp", 0)),
-			str(reward.get("credits", 0)),
+			str(reward.get("guild_xp", 0)), str(reward.get("credits", 0)),
 			str(reward.get("reputation", 0))
 		]
 	_add_detail_actions(report)
-
 
 func _add_detail_actions(report: Dictionary) -> void:
 	var parent := detail_label.get_parent()
 	for child in parent.get_children():
 		if child is Button:
 			child.queue_free()
-	var gate_id := str(report.get("gate_id", ""))
 	var scan_button := Button.new()
 	scan_button.text = "مسح الرتبة"
 	scan_button.pressed.connect(_scan_selected)
@@ -201,18 +184,17 @@ func _add_detail_actions(report: Dictionary) -> void:
 	reward_button.pressed.connect(_preview_reward)
 	parent.add_child(reward_button)
 	var team_button := Button.new()
-	team_button.text = "اختيار أفضل فريق من أعضاء النقابة"
-	team_button.pressed.connect(_assign_recommended_team)
+	team_button.text = "تشكيل فريق من اللاعبين الحقيقيين"
+	team_button.pressed.connect(_request_player_team)
 	parent.add_child(team_button)
-	var roster_button := Button.new()
-	roster_button.text = "عرض أعضاء النقابة ورتبهم"
-	roster_button.pressed.connect(_show_roster)
-	parent.add_child(roster_button)
+	var staff_button := Button.new()
+	staff_button.text = "عرض طاقم الإشراف الإداري"
+	staff_button.pressed.connect(_show_staff_roster)
+	parent.add_child(staff_button)
 	var dispatch_button := Button.new()
-	dispatch_button.text = "إرسال الفريق"
+	dispatch_button.text = "إرسال فريق اللاعبين"
 	dispatch_button.pressed.connect(_dispatch_selected)
 	parent.add_child(dispatch_button)
-
 
 func _scan_selected() -> void:
 	if not is_instance_valid(player_node) or selected_gate_id.is_empty():
@@ -226,13 +208,11 @@ func _scan_selected() -> void:
 		detail_label.text = "نجح المسح. الرتبة المؤكدة: %s" % str(result.get("verified_rank", result.get("rank", "?")))
 	_select_gate(selected_gate_id)
 
-
 func _report_selected() -> void:
 	if selected_gate_id.is_empty():
 		return
 	guild_manager.call("report_gate", selected_gate_id, "PLAYER")
 	_select_gate(selected_gate_id)
-
 
 func _preview_reward() -> void:
 	if selected_gate_id.is_empty():
@@ -240,47 +220,37 @@ func _preview_reward() -> void:
 	guild_manager.call("calculate_clear_reward", selected_gate_id, false)
 	_select_gate(selected_gate_id)
 
+func _request_player_team() -> void:
+	if selected_gate_id.is_empty():
+		return
+	detail_label.text = "تشكيل الفرق مخصص للاعبين الحقيقيين حصراً. نظام العثور على اللاعبين وإدارة فرقهم لم يُربط بعد؛ لن نضيف أي NPC لتعويض العدد الناقص."
 
-func _assign_recommended_team() -> void:
-	if selected_gate_id.is_empty() or not is_instance_valid(member_manager):
+func _show_staff_roster() -> void:
+	if not is_instance_valid(staff_manager):
+		detail_label.text = "طاقم الإشراف الإداري غير متاح حالياً."
 		return
-	var report: Dictionary = guild_manager.call("get_gate_report", selected_gate_id)
-	var wanted := int(report.get("recommended_team_size", 4))
-	wanted = mini(wanted, 5)
-	var team: Array[String] = member_manager.call("recommend_team", selected_gate_id, wanted)
-	if team.is_empty():
-		detail_label.text = "لا يوجد أعضاء متاحون بالرتب المناسبة لهذه البوابة"
-		return
-	guild_manager.call("assign_team", selected_gate_id, team)
-	var summary: Dictionary = member_manager.call("get_team_summary", team)
-	detail_label.text = "تم اختيار الفريق: %s\nالعدد: %d\nمتوسط الرتبة: %s\nقتال: %s | استطلاع: %s\nعلاج: %s | دعم: %s" % [
-		str(team), team.size(), str(summary.get("average_rank", "F")),
-		str(summary.get("combat", 0)), str(summary.get("scouting", 0)),
-		str(summary.get("healing", 0)), str(summary.get("support", 0))
-	]
-
-func _show_roster() -> void:
-	if not is_instance_valid(member_manager):
-		return
-	var roster: Array = member_manager.call("get_roster")
-	var lines := ["أعضاء نقابة الصيادين:"]
-	for member in roster:
-		lines.append("%s | %s | %s | XP %s" % [
-			str(member.get("name", "-")), str(member.get("rank", "F")),
-			str(member.get("role", "fighter")), str(member.get("guild_xp", 0))
+	var roster: Array = staff_manager.call("get_staff_roster")
+	var lines := ["طاقم الإشراف الإداري في النقابة:"]
+	for staff_member in roster:
+		lines.append("%s | %s\nالمهام: %s" % [
+			str(staff_member.get("name", "-")),
+			str(staff_member.get("role", "إداري")),
+			str(staff_member.get("duties", "-"))
 		])
 	detail_label.text = "\n".join(PackedStringArray(lines))
-
 
 func _dispatch_selected() -> void:
 	if selected_gate_id.is_empty():
 		return
+	var report: Dictionary = guild_manager.call("get_gate_report", selected_gate_id)
+	if report.get("assigned_team", []).is_empty():
+		detail_label.text = "لا يوجد فريق لاعبين حقيقيين مسجل لهذه البوابة. لا يمكن إرسال NPC كمقاتلين."
+		return
 	var result: Dictionary = guild_manager.call("dispatch_team", selected_gate_id)
 	if result.is_empty():
-		detail_label.text = "لا يمكن إرسال الفريق: جهّز الفريق أولاً"
+		detail_label.text = "تعذر إرسال الفريق. تحقق من تسجيل أعضاء الفريق كلاعبين حقيقيين."
 	else:
 		_select_gate(selected_gate_id)
-
 
 func _on_alert(report: Dictionary) -> void:
 	if is_instance_valid(status_label):
