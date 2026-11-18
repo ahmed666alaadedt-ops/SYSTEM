@@ -22,6 +22,7 @@ const WorldTimeManagerScript = preload("res://scripts/world_time_manager.gd")
 const WildlifeManagerScript = preload("res://scripts/wildlife_manager.gd")
 const MissionRewardManagerScript = preload("res://scripts/system_mission_reward_manager.gd")
 const PlayerProgressionScript = preload("res://scripts/system_player_progression.gd")
+const HunterExamManagerScript = preload("res://scripts/system_hunter_exam_manager.gd")
 
 var world_manager
 var world_map_manager
@@ -31,6 +32,7 @@ var world_time_manager
 var wildlife_manager
 var mission_reward_manager
 var player_progression
+var hunter_exam_manager
 
 var active_world_root: Node3D
 
@@ -65,6 +67,7 @@ func _ready() -> void:
 	create_player()
 	register_modern_world_map_locations()
 	create_player_progression()
+	create_hunter_exam_manager()
 	create_mission_reward_manager()
 
 	connect_sovereign_system()
@@ -152,6 +155,30 @@ func create_player_progression() -> void:
 	add_child(player_progression)
 
 
+func create_hunter_exam_manager() -> void:
+	hunter_exam_manager = HunterExamManagerScript.new()
+	hunter_exam_manager.name = "HunterExamManager"
+	add_child(hunter_exam_manager)
+
+
+func _on_hunter_exam_registration_requested() -> void:
+	if hunter_exam_manager == null:
+		return
+	var result: Dictionary = hunter_exam_manager.apply_for_exam("local_player")
+	var menu := get_node_or_null("HunterGuildMenu")
+	if menu != null and menu.has_method("set_exam_status"):
+		menu.call("set_exam_status", result)
+
+
+func _on_hunter_exam_start_requested() -> void:
+	if hunter_exam_manager == null:
+		return
+	var result: Dictionary = hunter_exam_manager.begin_exam()
+	var menu := get_node_or_null("HunterGuildMenu")
+	if menu != null and menu.has_method("set_exam_status"):
+		menu.call("set_exam_status", result)
+
+
 func create_mission_reward_manager() -> void:
 	mission_reward_manager = MissionRewardManagerScript.new()
 	mission_reward_manager.name = "MissionRewardManager"
@@ -168,6 +195,10 @@ func create_mission_reward_manager() -> void:
 		return
 
 	hunter_guild_menu.mission_accepted.connect(_on_hunter_mission_accepted)
+	if hunter_guild_menu.has_signal("exam_registration_requested"):
+		hunter_guild_menu.exam_registration_requested.connect(_on_hunter_exam_registration_requested)
+	if hunter_guild_menu.has_signal("exam_start_requested"):
+		hunter_guild_menu.exam_start_requested.connect(_on_hunter_exam_start_requested)
 
 	print("SYSTEM: Mission rewards connected to Hunter Guild and Player Progression.")
 
