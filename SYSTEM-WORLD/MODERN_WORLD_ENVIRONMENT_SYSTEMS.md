@@ -73,3 +73,10 @@ GitHub file writes are confirmed for the scripts listed below. Godot parsing, sc
 - Candidate sites are sampled for continuous land and limited height variation before geometry is placed.
 - Tunnel geometry includes approach slabs, road bed, side walls, ceiling, portal frames, lane-edge markings, emissive ceiling fixtures, and a map landmark record.
 - This is not an excavated or drivable tunnel system. The road graph, terrain cutting, collision, vehicle clearance tests, emergency exits, ventilation simulation, dynamic lighting, and runtime validation are still required.
+
+
+### 7. Rural settlement access roads — visual prototype
+- The region manager now stores each successfully resolved rural village anchor and exposes it to the transport layer.
+- The transport manager checks direct village-to-city candidates against the terrain and builds a marked road only when the sampled centerline remains on land.
+- Water-crossing candidates are rejected. The road meshes follow sampled terrain heights and are registered as map landmarks.
+- This is a first-pass visual connection, not a finished road graph: route optimization, collision, road-edge clearance, traffic navigation, junctions, signs, and runtime validation remain outstanding.
