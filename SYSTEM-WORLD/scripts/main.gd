@@ -185,6 +185,7 @@ func create_modern_city_crime_manager() -> void:
 		return
 	crime_response_manager = CrimeResponseManagerScript.new()
 	crime_response_manager.name = "ModernCityCrimeResponseManager"
+	crime_response_manager.setup(ai_npc_society_manager)
 	active_world_root.add_child(crime_response_manager)
 	crime_response_manager.npc_vehicle_stolen.connect(_on_npc_vehicle_stolen)
 	crime_response_manager.theft_reported.connect(_on_vehicle_theft_reported)
