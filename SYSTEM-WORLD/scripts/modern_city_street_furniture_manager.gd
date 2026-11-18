@@ -127,15 +127,14 @@ func _build_parking_bays(city_name: String, anchor: Vector3) -> void:
 func _process(delta: float) -> void:
 	elapsed += delta
 	var phase := fposmod(elapsed, SIGNAL_CYCLE_SECONDS)
-	var horizontal_green := phase < 10.0
-	var amber_phase := phase >= 10.0 and phase < 12.0
 	for group in signal_groups:
 		var lights: Array = group["lights"]
 		for index in range(lights.size()):
 			var light_set: Dictionary = lights[index]
 			var use_horizontal := index < 2
-			var green_active := horizontal_green == use_horizontal
-			_set_signal(light_set, green_active, amber_phase, not green_active and not amber_phase)
+			var green_active := (phase < 10.0) if use_horizontal else (phase >= 12.0 and phase < 22.0)
+			var amber_active := (phase >= 10.0 and phase < 12.0) if use_horizontal else (phase >= 22.0)
+			_set_signal(light_set, green_active, amber_active, not green_active and not amber_active)
 
 func _set_signal(light_set: Dictionary, green_on: bool, amber_on: bool, red_on: bool) -> void:
 	var red := light_set["red"] as MeshInstance3D
