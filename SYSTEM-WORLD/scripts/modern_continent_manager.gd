@@ -125,6 +125,31 @@ func _get_height(x: float, z: float) -> float:
 	return OCEAN_FLOOR
 
 
+# Public terrain sampling API for world systems such as forests, paths and NPCs.
+func get_terrain_height(x: float, z: float) -> float:
+	if terrain_height_data.size() != GRID_X * GRID_Z:
+		return _get_height(x, z)
+
+	var grid_x := clampf((x + WORLD_WIDTH * 0.5) / terrain_step_x, 0.0, float(GRID_X - 1))
+	var grid_z := clampf((z + WORLD_DEPTH * 0.5) / terrain_step_z, 0.0, float(GRID_Z - 1))
+	var x0 := int(floor(grid_x))
+	var z0 := int(floor(grid_z))
+	var x1 := mini(x0 + 1, GRID_X - 1)
+	var z1 := mini(z0 + 1, GRID_Z - 1)
+	var tx := grid_x - float(x0)
+	var tz := grid_z - float(z0)
+
+	var h00 := terrain_height_data[z0 * GRID_X + x0]
+	var h10 := terrain_height_data[z0 * GRID_X + x1]
+	var h01 := terrain_height_data[z1 * GRID_X + x0]
+	var h11 := terrain_height_data[z1 * GRID_X + x1]
+	return lerpf(lerpf(h00, h10, tx), lerpf(h01, h11, tx), tz)
+
+
+func is_land_position(x: float, z: float) -> bool:
+	return _get_height(x, z) > SEA_LEVEL + 0.5
+
+
 func _terrain_color(height: float, x: float, z: float) -> Color:
 	if height > 92.0:
 		return Color(0.88, 0.91, 0.94)
