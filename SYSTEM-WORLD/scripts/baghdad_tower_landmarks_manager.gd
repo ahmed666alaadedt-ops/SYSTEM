@@ -90,6 +90,24 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	base.material_override = trim_material
 	root.add_child(base)
 
+	var structure_body := StaticBody3D.new()
+	structure_body.name = "TowerStructureCollision"
+	root.add_child(structure_body)
+	var foundation_collision := CollisionShape3D.new()
+	var foundation_shape := CylinderShape3D.new()
+	foundation_shape.radius = radius * 1.48
+	foundation_shape.height = 7.0
+	foundation_collision.shape = foundation_shape
+	foundation_collision.position.y = 3.5
+	structure_body.add_child(foundation_collision)
+	var shaft_collision := CollisionShape3D.new()
+	var shaft_shape := CylinderShape3D.new()
+	shaft_shape.radius = radius
+	shaft_shape.height = height
+	shaft_collision.shape = shaft_shape
+	shaft_collision.position.y = height * 0.5 + 7.0
+	structure_body.add_child(shaft_collision)
+
 	var shaft := MeshInstance3D.new()
 	shaft.name = "TowerMainShaft"
 	var shaft_mesh := CylinderMesh.new()
@@ -165,7 +183,7 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	shape.radius = 3.5
 	entrance_shape.shape = shape
 	entrance.add_child(entrance_shape)
-	entrance.position = Vector3(0.0, 3.0, radius + 4.0)
+	entrance.position = Vector3(0.0, 3.0, radius * 1.48 + 6.0)
 	root.add_child(entrance)
 
 	var label := Label3D.new()
