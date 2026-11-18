@@ -26,11 +26,17 @@ var next_police_number := 1
 var crime_records: Array[Dictionary] = []
 var wanted_level := 0
 
+var society_manager: Node
+var owner_registry: Dictionary = {}
+
+func setup(p_society_manager: Node) -> void:
+	society_manager = p_society_manager
+
 func _ready() -> void:
 	name = "ModernCityCrimeResponseManager"
 	region_manager = get_parent().get_node_or_null("ModernWorldRegionManager")
-	_spawn_civilian_vehicle_fleet()
 	_load_crime_state()
+	_spawn_civilian_vehicle_fleet()
 
 func _spawn_civilian_vehicle_fleet() -> void:
 	if region_manager == null or not region_manager.has_method("get_city_anchor"):
@@ -43,8 +49,9 @@ func _spawn_civilian_vehicle_fleet() -> void:
 		for slot in range(3):
 			var vehicle_id := "npc_car_%05d" % next_vehicle_number
 			next_vehicle_number += 1
-			var owner_id := "citizen_%s_%02d" % [city_name.to_lower().replace(" ", "_"), slot + 1]
+			var owner_key := city_name.to_lower().replace(" ", "_") + "_" + str(slot + 1)
 			var owner_name := _citizen_name(city_name, slot)
+			var owner_id := _get_or_create_owner_npc(owner_key, owner_name, city_name)
 			var vehicle := NPCVehicleScript.new()
 			vehicle.configure(vehicle_id, owner_id, owner_name, city_name, self, anchor, slot)
 			vehicle.position = anchor + Vector3(float(slot - 1) * 9.0, 0.05, 18.0 + float(slot) * 7.0)
@@ -61,6 +68,23 @@ func _spawn_civilian_vehicle_fleet() -> void:
 				"witness_count": 1 + (slot % 3),
 				"vehicle_class": ["sedan", "hatchback", "utility_suv"][slot]
 			}
+
+func _get_or_create_owner_npc(owner_key: String, owner_name: String, city_name: String) -> String:
+	var saved_id := str(owner_registry.get(owner_key, ""))
+	if society_manager != null and society_manager.has_method("get_npc") and not saved_id.is_empty():
+		if not society_manager.call("get_npc", saved_id).is_empty():
+			return saved_id
+	if society_manager != null and society_manager.has_method("create_npc"):
+		var created_id := str(society_manager.call(
+			"create_npc", owner_name, 2, 28.0 + float(owner_registry.size() % 24),
+			"balanced", "driver"
+		))
+		if not created_id.is_empty():
+			owner_registry[owner_key] = created_id
+			if society_manager.has_method("set_activity"):
+				society_manager.call("set_activity", created_id, "travel", city_name)
+			return created_id
+	return "citizen_" + owner_key
 
 func _citizen_name(city_name: String, slot: int) -> String:
 	var names := ["Mira", "Omar", "Daniel", "Yuki", "Lina", "Adam"]
@@ -145,6 +169,8 @@ func attempt_vehicle_theft(vehicle_id: String) -> Dictionary:
 	}
 	crime_records.append(event)
 	npc_vehicle_stolen.emit(vehicle_id, str(record["owner_npc_id"]), str(record["city_name"]))
+	if society_manager != null and society_manager.has_method("set_activity"):
+		society_manager.call("set_activity", str(record["owner_npc_id"]), "gather_information", str(record["city_name"]))
 	if int(record["witness_count"]) > 0:
 		_report_theft(vehicle_id)
 	_save_crime_state()
@@ -231,6 +257,8 @@ func _recover_stolen_vehicle(vehicle_id: String) -> void:
 		if vehicle.has_method("stop_for_recovery"):
 			vehicle.call("stop_for_recovery")
 		vehicle.visible = false
+	if society_manager != null and society_manager.has_method("set_activity"):
+		society_manager.call("set_activity", str(record["owner_npc_id"]), "work", str(record["city_name"]))
 	stolen_vehicle_recovered.emit(vehicle_id, str(record["city_name"]))
 	_save_crime_state()
 
@@ -253,6 +281,7 @@ func _save_crime_state() -> void:
 	var config := ConfigFile.new()
 	config.set_value("crime", "wanted_level", wanted_level)
 	config.set_value("crime", "records", crime_records)
+	config.set_value("crime", "owner_registry", owner_registry)
 	config.save(SAVE_PATH)
 
 func _load_crime_state() -> void:
@@ -261,3 +290,4 @@ func _load_crime_state() -> void:
 		return
 	wanted_level = clampi(int(config.get_value("crime", "wanted_level", 0)), 0, 5)
 	crime_records = config.get_value("crime", "records", [])
+	owner_registry = config.get_value("crime", "owner_registry", {})
