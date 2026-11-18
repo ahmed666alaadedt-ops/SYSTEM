@@ -34,6 +34,7 @@ func _ready() -> void:
 	_create_materials()
 	_build_intercity_corridors()
 	_build_city_tunnels()
+	_build_city_overpasses()
 	_build_rural_access_roads()
 	_build_city_ports()
 	_build_aircraft_and_train_fleets()
@@ -294,6 +295,100 @@ func _build_bridge_supports(samples: Array[Vector3], route_index: int, segment_i
 		pier.position = Vector3(point.x, 2.9, point.z)
 		pier.material_override = bridge_material
 		add_child(pier)
+
+
+
+func _build_city_overpasses() -> void:
+	var city_names: Array = region_manager.call("get_city_names")
+	var built := 0
+	for city_value in city_names:
+		var city_name := str(city_value)
+		var anchor := _city_anchor(city_name)
+		if anchor == Vector3.INF:
+			continue
+		var center := Vector2(anchor.x, anchor.z)
+		var valid := true
+		for sample_index in range(17):
+			var sample := center + Vector2(-120.0 + float(sample_index) * 15.0, 0.0)
+			if not bool(terrain.call("is_land_position", sample.x, sample.y)):
+				valid = false
+				break
+		if not valid:
+			continue
+		var deck_surface := SurfaceTool.new()
+		deck_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+		deck_surface.set_material(road_material)
+		var marking_surface := SurfaceTool.new()
+		marking_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+		marking_surface.set_material(road_marking_material)
+		var barrier_surface := SurfaceTool.new()
+		barrier_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+		barrier_surface.set_material(bridge_material)
+		for step in range(16):
+			var x0 := -120.0 + float(step) * 15.0
+			var x1 := x0 + 15.0
+			var p0 := center + Vector2(x0, 0.0)
+			var p1 := center + Vector2(x1, 0.0)
+			var ramp0 := 5.5 * (1.0 - absf(x0) / 120.0)
+			var ramp1 := 5.5 * (1.0 - absf(x1) / 120.0)
+			var y0 := float(terrain.call("get_terrain_height", p0.x, p0.y)) + ramp0 + 0.65
+			var y1 := float(terrain.call("get_terrain_height", p1.x, p1.y)) + ramp1 + 0.65
+			var direction := (p1 - p0).normalized()
+			var side := Vector2(-direction.y, direction.x)
+			_add_ribbon_quad(deck_surface, p0, p1, side, y0, y1, 7.0, 0.0)
+			_add_ribbon_quad(marking_surface, p0, p1, side, y0 + 0.06, y1 + 0.06, 0.13, 0.0)
+			for side_sign in [-1.0, 1.0]:
+				var lower0 := Vector3(p0.x, y0 + 0.25, p0.y) + Vector3(side.x * 7.2 * side_sign, 0.0, side.y * 7.2 * side_sign)
+				var lower1 := Vector3(p1.x, y1 + 0.25, p1.y) + Vector3(side.x * 7.2 * side_sign, 0.0, side.y * 7.2 * side_sign)
+				var upper0 := lower0 + Vector3(0.0, 1.0, 0.0)
+				var upper1 := lower1 + Vector3(0.0, 1.0, 0.0)
+				barrier_surface.add_vertex(lower0)
+				barrier_surface.add_vertex(upper0)
+				barrier_surface.add_vertex(lower1)
+				barrier_surface.add_vertex(lower1)
+				barrier_surface.add_vertex(upper0)
+				barrier_surface.add_vertex(upper1)
+		deck_surface.generate_normals()
+		marking_surface.generate_normals()
+		barrier_surface.generate_normals()
+		var deck := MeshInstance3D.new()
+		deck.name = city_name.replace(" ", "") + "_UrbanFlyoverDeck"
+		deck.mesh = deck_surface.commit()
+		deck.material_override = road_material
+		deck.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(deck)
+		var markings := MeshInstance3D.new()
+		markings.name = deck.name + "_Markings"
+		markings.mesh = marking_surface.commit()
+		markings.material_override = road_marking_material
+		markings.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(markings)
+		var barriers := MeshInstance3D.new()
+		barriers.name = deck.name + "_Barriers"
+		barriers.mesh = barrier_surface.commit()
+		barriers.material_override = bridge_material
+		barriers.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(barriers)
+		for support_index in range(3):
+			var support_x := -45.0 + float(support_index) * 45.0
+			var support_point := center + Vector2(support_x, 0.0)
+			var support_ground := float(terrain.call("get_terrain_height", support_point.x, support_point.y))
+			var support_height := 5.5 * (1.0 - absf(support_x) / 120.0)
+			var pier := MeshInstance3D.new()
+			pier.name = deck.name + "_Pier_%02d" % support_index
+			var pier_mesh := BoxMesh.new()
+			pier_mesh.size = Vector3(1.8, maxf(1.0, support_height), 1.8)
+			pier.mesh = pier_mesh
+			pier.position = Vector3(support_point.x, support_ground + support_height * 0.5, support_point.y)
+			pier.material_override = bridge_material
+			add_child(pier)
+		landmark_records.append({
+			"id": "urban_flyover_" + city_name.to_lower().replace(" ", "_"),
+			"name": city_name + " Urban Flyover",
+			"position": anchor + Vector3(0.0, 5.5, 0.0)
+		})
+		built += 1
+	print("SYSTEM WORLD: urban flyover prototypes built=", built)
 
 
 func _build_city_tunnels() -> void:
