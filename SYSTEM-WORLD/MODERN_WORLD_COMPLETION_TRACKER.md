@@ -17,6 +17,7 @@ This is the acceptance checklist for the modern-world map. The project must not 
 - [x] Harbor visual prototypes include cargo warehouses, loading aprons, and freight-container yards.
 - [x] Terrain-checked access-road meshes are attempted for airports, stations, and harbors; water-crossing candidates are skipped.
 - [x] Accepted bridge spans receive visual side railings and marker lights.
+- [x] Inter-city corridor prototypes include dashed center and lane-edge markings.
 - [x] Harbor prototypes receive a waterfront promenade with benches, bollards and signage.
 - [x] Procedural city street fixtures now cover the generated boulevard and ring-road corridors, with plaza lantern fixtures.
 - [x] A capped pool of 24 shadowless dynamic lights is moved to the nearest street fixtures around the player; fixture meshes use emissive materials.
