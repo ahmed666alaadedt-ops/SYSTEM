@@ -12,6 +12,7 @@ const NPC_MANAGER_PATH := "res://scripts/ai_npc_society_manager.gd"
 const SAVE_MANAGER_PATH := "res://scripts/world_save_manager.gd"
 const GATE_MANAGER_PATH := "res://scripts/monster_gate_manager.gd"
 const MONSTER_AI_PATH := "res://scripts/monster_ai_controller.gd"
+const LOOT_MANAGER_PATH := "res://scripts/monster_loot_manager.gd"
 const AUTOSAVE_INTERVAL := 60.0
 
 var player: CharacterBody3D
@@ -34,6 +35,7 @@ var npc_manager: Node
 var save_manager: Node
 var gate_manager: Node
 var monster_manager: Node
+var loot_manager: Node
 
 
 func _ready() -> void:
@@ -453,7 +455,18 @@ func _connect_monster_system() -> void:
 		Callable(monster_manager, "spawn_gate_wave")
 	)
 
-	print("SYSTEM WORLD: Monster gates and AI connected.")
+	if ResourceLoader.exists(LOOT_MANAGER_PATH):
+		var loot_script = load(LOOT_MANAGER_PATH)
+		if loot_script != null:
+			loot_manager = loot_script.new()
+			loot_manager.name = "Monster_Loot_Manager"
+			add_child(loot_manager)
+			monster_manager.connect(
+				"monster_defeated_detailed",
+				Callable(loot_manager, "process_defeat")
+			)
+
+	print("SYSTEM WORLD: Monster gates, species AI and loot connected.")
 
 
 func _connect_world_save_manager() -> void:
