@@ -1,6 +1,8 @@
 extends Node3D
 class_name ModernWorldMonsterGateManager
 
+const GateEnemyScript = preload("res://scripts/modern_world_gate_enemy.gd")
+
 ## Procedural monster-gate network for every named city and the wilderness.
 ## Dungeon rooms and encounter markers are generated locally; combat AI/rewards
 ## are intentionally left to the shared combat and progression systems.
@@ -45,6 +47,11 @@ var gate_counter := 0
 var active_dungeon: Node3D
 var active_player: CharacterBody3D
 var return_position := Vector3.ZERO
+var current_gate: Area3D
+var dungeon_exit: Area3D
+var enemies_remaining := 0
+var boss_defeated := false
+var dungeon_xp_awarded := 0
 
 
 func _ready() -> void:
@@ -185,6 +192,7 @@ func _on_gate_body_entered(body: Node3D, gate: Area3D) -> void:
 	active_player = body as CharacterBody3D
 	return_position = gate.global_position + Vector3(0.0,1.5,5.0)
 	gate.set_meta("system_gate_status","occupied")
+	current_gate = gate
 	_enter_dungeon(gate)
 
 
@@ -194,14 +202,14 @@ func _enter_dungeon(gate: Area3D) -> void:
 	active_dungeon.name = "MonsterGateDungeon_" + rank
 	active_dungeon.position = Vector3(5000.0 + float(gate_counter) * 120.0, 100.0, 5000.0)
 	modern_root.add_child(active_dungeon)
-	_build_dungeon_rooms(active_dungeon, rank)
+	_build_dungeon_rooms(active_dungeon, rank, active_player)
 	if is_instance_valid(active_player):
 		active_player.reparent(active_dungeon, true)
 		active_player.velocity = Vector3.ZERO
 		active_player.global_position = active_dungeon.global_position + Vector3(0.0,1.5,9.0)
 
 
-func _build_dungeon_rooms(root: Node3D, rank: String) -> void:
+func _build_dungeon_rooms(root: Node3D, rank: String, player: CharacterBody3D) -> void:
 	var stone := _make_material(Color(0.16,0.18,0.22))
 	var floor_material := _make_material(Color(0.09,0.11,0.14))
 	var glow := _make_material(Color(0.25,0.42,0.58), true)
@@ -214,42 +222,77 @@ func _build_dungeon_rooms(root: Node3D, rank: String) -> void:
 		_add_box(root,"DungeonBossWall",Vector3(side*17.0,4.0,-34.0),Vector3(0.8,8.0,24.0),stone)
 	_add_box(root,"DungeonEntryCeiling",Vector3(0.0,6.3,8.0),Vector3(22.0,0.6,24.0),stone)
 	_add_box(root,"DungeonBossArch",Vector3(0.0,4.5,-23.0),Vector3(8.0,1.0,0.8),glow)
+	enemies_remaining = 5
+	boss_defeated = false
+	dungeon_xp_awarded = 0
 	for index in range(4):
-		_create_enemy_marker(root,Vector3(-5.0 + float(index)*3.3,0.0,-8.0),rank,false)
-	_create_enemy_marker(root,Vector3(0.0,0.0,-34.0),rank,true)
+		_create_enemy_marker(root,Vector3(-5.0 + float(index)*3.3,0.0,-8.0),rank,false,player)
+	_create_enemy_marker(root,Vector3(0.0,0.0,-34.0),rank,true,player)
 	_create_exit_gate(root)
 
 
-func _create_enemy_marker(root: Node3D, location: Vector3, rank: String, boss: bool) -> void:
-	var enemy := CharacterBody3D.new()
+func _create_enemy_marker(root: Node3D, location: Vector3, rank: String, boss: bool, player: CharacterBody3D) -> void:
+	var enemy := GateEnemyScript.new() as CharacterBody3D
 	enemy.name = "GateBoss" if boss else "GateMonster"
 	enemy.position = location
-	enemy.add_to_group("system_enemy")
-	enemy.set_meta("system_enemy_rank",rank)
-	enemy.set_meta("system_enemy_is_boss",boss)
-	enemy.set_meta("system_enemy_health",800 if boss else 180)
-	var mesh := MeshInstance3D.new()
-	var body_mesh := CapsuleMesh.new()
-	body_mesh.radius = 1.15 if boss else 0.72
-	body_mesh.height = 3.4 if boss else 2.2
-	mesh.mesh = body_mesh
-	var material := _make_material(Color(0.38,0.07,0.12) if boss else Color(0.24,0.18,0.2),true)
-	mesh.material_override = material
-	mesh.position.y = body_mesh.height * 0.5
-	enemy.add_child(mesh)
-	var collision := CollisionShape3D.new()
-	var shape := CapsuleShape3D.new()
-	shape.radius = body_mesh.radius
-	shape.height = body_mesh.height
-	collision.shape = shape
-	collision.position.y = body_mesh.height * 0.5
-	enemy.add_child(collision)
+	enemy.call("configure",rank,boss,player)
+	enemy.connect("defeated",_on_gate_enemy_defeated)
 	root.add_child(enemy)
 
+
+func _on_gate_enemy_defeated(enemy: Node, is_boss: bool, xp_reward: int) -> void:
+	enemies_remaining = maxi(enemies_remaining - 1,0)
+	dungeon_xp_awarded += xp_reward
+	var progression := get_tree().root.find_child("PlayerProgression",true,false)
+	if progression != null and progression.has_method("add_experience"):
+		progression.call("add_experience",xp_reward,"Monster Gate: " + str(enemy.name))
+	if is_instance_valid(enemy):
+		_create_loot_drop(enemy.global_position,is_boss)
+	if is_boss:
+		boss_defeated = true
+	if enemies_remaining == 0 and boss_defeated:
+		_unlock_dungeon_exit()
+
+
+func _create_loot_drop(location: Vector3, boss: bool) -> void:
+	var pickup := Area3D.new()
+	pickup.name = "GateLoot_BossRelic" if boss else "GateLoot_MonsterCore"
+	pickup.position = location + Vector3(0.0,0.8,0.0)
+	pickup.add_to_group("system_gate_loot")
+	pickup.set_meta("system_loot_type","boss_relic" if boss else "monster_core")
+	pickup.set_meta("system_loot_quality","rare" if boss else "common")
+	var visual := MeshInstance3D.new()
+	var mesh := SphereMesh.new()
+	mesh.radius = 0.32 if boss else 0.2
+	mesh.height = 0.64 if boss else 0.4
+	visual.mesh = mesh
+	visual.material_override = _make_material(Color(1.0,0.62,0.12) if boss else Color(0.22,0.78,0.92),true)
+	pickup.add_child(visual)
+	var collision := CollisionShape3D.new()
+	var sphere := SphereShape3D.new()
+	sphere.radius = 1.25
+	collision.shape = sphere
+	pickup.add_child(collision)
+	active_dungeon.add_child(pickup)
+	pickup.body_entered.connect(_on_loot_collected.bind(pickup))
+
+
+func _on_loot_collected(body: Node3D, pickup: Area3D) -> void:
+	if not _is_player(body) or not is_instance_valid(pickup):
+		return
+	var loot_type := str(pickup.get_meta("system_loot_type",""))
+	var inventory := get_tree().root.find_child("PlayerInventory",true,false)
+	if inventory != null and inventory.has_method("add_item"):
+		inventory.call("add_item",loot_type,1)
+	else:
+		print("SYSTEM LOOT: ",loot_type," collected; inventory integration is pending.")
+	pickup.queue_free()
 
 func _create_exit_gate(root: Node3D) -> void:
 	var exit_area := Area3D.new()
 	exit_area.name = "DungeonReturnGate"
+	exit_area.monitoring = false
+	dungeon_exit = exit_area
 	exit_area.position = Vector3(0.0,1.0,17.0)
 	var collision := CollisionShape3D.new()
 	var sphere := SphereShape3D.new()
@@ -258,6 +301,24 @@ func _create_exit_gate(root: Node3D) -> void:
 	exit_area.add_child(collision)
 	root.add_child(exit_area)
 	exit_area.body_entered.connect(_on_dungeon_exit_entered)
+
+
+func _unlock_dungeon_exit() -> void:
+	if is_instance_valid(dungeon_exit):
+		dungeon_exit.monitoring = true
+		var label := Label3D.new()
+		label.text = "DUNGEON CLEARED — EXIT OPEN"
+		label.position = Vector3(0.0,3.2,17.0)
+		label.font_size = 30
+		label.modulate = Color(0.3,1.0,0.65)
+		dungeon_exit.add_child(label)
+	if is_instance_valid(current_gate):
+		current_gate.set_meta("system_gate_status","cleared")
+		current_gate.set_meta("system_gate_cleared",true)
+		current_gate.monitoring = false
+		current_gate.visible = false
+		current_gate.queue_free()
+	print("SYSTEM GATE: Dungeon cleared. XP awarded: ",dungeon_xp_awarded)
 
 
 func _on_dungeon_exit_entered(body: Node3D) -> void:
@@ -270,6 +331,10 @@ func _on_dungeon_exit_entered(body: Node3D) -> void:
 	active_dungeon.queue_free()
 	active_dungeon = null
 	active_player = null
+	current_gate = null
+	dungeon_exit = null
+	enemies_remaining = 0
+	boss_defeated = false
 
 
 func _add_box(root: Node3D, node_name: String, location: Vector3, size: Vector3, material: Material) -> void:
