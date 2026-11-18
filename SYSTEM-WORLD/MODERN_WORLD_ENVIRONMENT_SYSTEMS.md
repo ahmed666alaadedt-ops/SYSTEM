@@ -125,3 +125,9 @@ GitHub file writes are confirmed for the scripts listed below. Godot parsing, sc
 - Cities attempt an elevated boulevard crossing with terrain-sampled approach ramps, lane marking, side barriers and support piers.
 - Sites crossing water are skipped.
 - The flyovers are not connected drivable roads yet; collision, clearance, junction and traffic validation remain outstanding.
+
+
+### 15. City identity landmarks — visual prototype
+- The city style index now selects a distinct procedural landmark silhouette for each of the fourteen named cities.
+- Landmark groups use lightweight box and cylinder meshes with restrained emissive accents; they are original stylized motifs rather than exact monument replicas.
+- Detailed city-specific architecture, signage, interiors, collision and runtime visual review remain outstanding.
