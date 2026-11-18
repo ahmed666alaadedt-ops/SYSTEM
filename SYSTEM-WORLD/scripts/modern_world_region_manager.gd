@@ -150,6 +150,7 @@ func _build_city_districts() -> void:
 		for district_index in range(DISTRICT_OFFSETS.size()):
 			var district_center: Vector2 = anchor + DISTRICT_OFFSETS[district_index]
 			_build_district(city_root, city_name, district_index, district_center)
+			_build_district_street_grid(city_root, city_name, district_index, district_center)
 
 
 func _build_city_plaza(parent: Node3D, city_name: String) -> void:
@@ -236,6 +237,117 @@ func _building_height(district_index: int, seed_value: float) -> float:
 		_:
 			return 7.0 + seed_value * 15.0
 
+
+
+func _build_district_street_grid(parent: Node3D, city_name: String, district_index: int, center: Vector2) -> void:
+	var road_surface := SurfaceTool.new()
+	road_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var sidewalk_surface := SurfaceTool.new()
+	sidewalk_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var crossing_surface := SurfaceTool.new()
+	crossing_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var street_offsets: Array[float] = [-51.0, -17.0, 17.0, 51.0]
+	for offset in street_offsets:
+		_append_district_street(road_surface, sidewalk_surface, center, Vector2(-68.0, offset), Vector2(68.0, offset), parent.position)
+		_append_district_street(road_surface, sidewalk_surface, center, Vector2(offset, -68.0), Vector2(offset, 68.0), parent.position)
+		for crossing_offset in street_offsets:
+			_append_crosswalk(crossing_surface, center, Vector2(offset, crossing_offset), true, parent.position)
+			_append_crosswalk(crossing_surface, center, Vector2(crossing_offset, offset), false, parent.position)
+	road_surface.generate_normals()
+	sidewalk_surface.generate_normals()
+	crossing_surface.generate_normals()
+	var road_mesh := road_surface.commit()
+	if road_mesh != null and road_mesh.get_surface_count() > 0:
+		var road_instance := MeshInstance3D.new()
+		road_instance.name = city_name.replace(" ", "") + "_DistrictRoadGrid_%02d" % district_index
+		road_instance.mesh = road_mesh
+		road_instance.material_override = road_material
+		road_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		parent.add_child(road_instance)
+	var sidewalk_mesh := sidewalk_surface.commit()
+	if sidewalk_mesh != null and sidewalk_mesh.get_surface_count() > 0:
+		var sidewalk_instance := MeshInstance3D.new()
+		sidewalk_instance.name = city_name.replace(" ", "") + "_DistrictSidewalks_%02d" % district_index
+		sidewalk_instance.mesh = sidewalk_mesh
+		sidewalk_instance.material_override = plaza_material
+		sidewalk_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		parent.add_child(sidewalk_instance)
+	var crossing_mesh := crossing_surface.commit()
+	if crossing_mesh != null and crossing_mesh.get_surface_count() > 0:
+		var crossing_material := _material(Color(0.82, 0.84, 0.82), 0.9)
+		var crossing_instance := MeshInstance3D.new()
+		crossing_instance.name = city_name.replace(" ", "") + "_Crosswalks_%02d" % district_index
+		crossing_instance.mesh = crossing_mesh
+		crossing_instance.material_override = crossing_material
+		crossing_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		parent.add_child(crossing_instance)
+
+
+func _append_district_street(roads: SurfaceTool, sidewalks: SurfaceTool, center: Vector2, start: Vector2, finish: Vector2, parent_position: Vector3) -> void:
+	var direction := (finish - start).normalized()
+	var side := Vector2(-direction.y, direction.x)
+	var steps := 16
+	for step in range(steps):
+		var p0 := start.lerp(finish, float(step) / float(steps))
+		var p1 := start.lerp(finish, float(step + 1) / float(steps))
+		var middle := center + (p0 + p1) * 0.5
+		if not terrain.is_land_position(middle.x, middle.y):
+			continue
+		var road_left := _district_local_point(center + p0 + side * 3.5, parent_position, 0.22)
+		var road_right := _district_local_point(center + p0 - side * 3.5, parent_position, 0.22)
+		var road_far_left := _district_local_point(center + p1 + side * 3.5, parent_position, 0.22)
+		var road_far_right := _district_local_point(center + p1 - side * 3.5, parent_position, 0.22)
+		_add_quad(roads, road_left, road_right, road_far_left, road_far_right)
+		for side_sign in [-1.0, 1.0]:
+			var sidewalk_inner_0 := center + p0 + side * (side_sign * 3.5)
+			var sidewalk_outer_0 := center + p0 + side * (side_sign * 5.8)
+			var sidewalk_inner_1 := center + p1 + side * (side_sign * 3.5)
+			var sidewalk_outer_1 := center + p1 + side * (side_sign * 5.8)
+			var a := _district_local_point(sidewalk_inner_0, parent_position, 0.27)
+			var b := _district_local_point(sidewalk_outer_0, parent_position, 0.27)
+			var c := _district_local_point(sidewalk_inner_1, parent_position, 0.27)
+			var d := _district_local_point(sidewalk_outer_1, parent_position, 0.27)
+			_add_quad(sidewalks, a, b, c, d)
+
+
+func _append_crosswalk(surface: SurfaceTool, center: Vector2, offset: Vector2, horizontal: bool, parent_position: Vector3) -> void:
+	var stripe_count := 5
+	for stripe in range(stripe_count):
+		var along := -2.4 + float(stripe) * 1.2
+		var point := center + offset
+		var half_width := 2.6
+		var half_length := 0.28
+		var a2: Vector2
+		var b2: Vector2
+		var c2: Vector2
+		var d2: Vector2
+		if horizontal:
+			a2 = point + Vector2(along - half_length, -half_width)
+			b2 = point + Vector2(along - half_length, half_width)
+			c2 = point + Vector2(along + half_length, -half_width)
+			d2 = point + Vector2(along + half_length, half_width)
+		else:
+			a2 = point + Vector2(-half_width, along - half_length)
+			b2 = point + Vector2(half_width, along - half_length)
+			c2 = point + Vector2(-half_width, along + half_length)
+			d2 = point + Vector2(half_width, along + half_length)
+		if not terrain.is_land_position(point.x, point.y):
+			return
+		_add_quad(
+			surface,
+			_district_local_point(a2, parent_position, 0.3),
+			_district_local_point(b2, parent_position, 0.3),
+			_district_local_point(c2, parent_position, 0.3),
+			_district_local_point(d2, parent_position, 0.3)
+		)
+
+
+func _district_local_point(world_point: Vector2, parent_position: Vector3, lift: float) -> Vector3:
+	return Vector3(
+		world_point.x - parent_position.x,
+		terrain.get_terrain_height(world_point.x, world_point.y) + lift - parent_position.y,
+		world_point.y - parent_position.z
+	)
 
 func _build_city_roads() -> void:
 	for city in CITY_DATA:
