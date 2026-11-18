@@ -11,6 +11,7 @@ This is the acceptance checklist for the modern-world map. The project must not 
 - [x] City road-tunnel visual prototypes are generated where terrain sampling finds a continuous, sufficiently level land alignment; rejected sites are skipped.
 - [x] Rural village anchors are retained and first-pass access-road meshes are generated when a continuous all-land route to a city is found.
 - [x] Every resolved district receives batched visual road-grid, sidewalk, and pedestrian-crossing meshes.
+- [x] Land-valid city race-circuit prototypes receive outer safety-barrier geometry, curb strips, a start/finish gantry, pit-garage block, and grandstand tiers.
 - [x] Procedural city street fixtures now cover the generated boulevard and ring-road corridors, with plaza lantern fixtures.
 - [x] A capped pool of 24 shadowless dynamic lights is moved to the nearest street fixtures around the player; fixture meshes use emissive materials.
 - [x] Ambient traffic catalog now contains eight visual archetypes per resolved city, up to 112 vehicles for fourteen cities.
