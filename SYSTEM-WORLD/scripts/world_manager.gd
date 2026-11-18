@@ -11,6 +11,7 @@ const FantasyWorldManagerScript = preload("res://scripts/fantasy_world_manager.g
 const ModernWorldDiscoveryManagerScript = preload("res://scripts/modern_world_discovery_manager.gd")
 const ModernContinentManagerScript = preload("res://scripts/modern_continent_manager.gd")
 const ModernWorldArchipelagoManagerScript = preload("res://scripts/modern_world_archipelago_manager.gd")
+const ModernWorldBiomeManagerScript = preload("res://scripts/modern_world_biome_manager.gd")
 const ModernWorldRegionManagerScript = preload("res://scripts/modern_world_region_manager.gd")
 const UndergroundHeritageManagerScript = preload("res://scripts/underground_heritage_manager.gd")
 
@@ -209,6 +210,10 @@ func _create_modern_city() -> void:
 	var archipelago := ModernWorldArchipelagoManagerScript.new()
 	archipelago.name = "ModernWorldArchipelagoManager"
 	root.add_child(archipelago)
+
+	var biome_manager := ModernWorldBiomeManagerScript.new()
+	biome_manager.name = "ModernWorldBiomeManager"
+	root.add_child(biome_manager)
 
 	var region_manager := ModernWorldRegionManagerScript.new()
 	region_manager.name = "ModernWorldRegionManager"
