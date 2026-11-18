@@ -23,6 +23,7 @@ const WildlifeManagerScript = preload("res://scripts/wildlife_manager.gd")
 const MissionRewardManagerScript = preload("res://scripts/system_mission_reward_manager.gd")
 const PlayerProgressionScript = preload("res://scripts/system_player_progression.gd")
 const PlayerVehicleManagerScript = preload("res://scripts/system_player_vehicle_manager.gd")
+const CrimeResponseManagerScript = preload("res://scripts/modern_city_crime_response_manager.gd")
 const HunterExamManagerScript = preload("res://scripts/system_hunter_exam_manager.gd")
 const PowerTowerManagerScript = preload("res://scripts/system_power_tower_manager.gd")
 
@@ -35,6 +36,7 @@ var wildlife_manager
 var mission_reward_manager
 var player_progression
 var player_vehicle_manager
+var crime_response_manager
 var hunter_exam_manager
 var power_tower_manager
 
@@ -72,6 +74,7 @@ func _ready() -> void:
 	register_modern_world_map_locations()
 	create_player_progression()
 	create_player_vehicle_manager()
+	create_modern_city_crime_manager()
 	create_hunter_exam_manager()
 	create_power_tower_manager()
 	create_mission_reward_manager()
@@ -174,6 +177,35 @@ func create_player_vehicle_manager() -> void:
 				for dealership in region.get_children():
 					if dealership.has_method("setup") and dealership.name.ends_with("VehicleDealership"):
 						dealership.setup(player_vehicle_manager)
+
+
+func create_modern_city_crime_manager() -> void:
+	if active_world_root == null:
+		push_warning("SYSTEM: Modern world is unavailable for city crime response.")
+		return
+	crime_response_manager = CrimeResponseManagerScript.new()
+	crime_response_manager.name = "ModernCityCrimeResponseManager"
+	active_world_root.add_child(crime_response_manager)
+	crime_response_manager.npc_vehicle_stolen.connect(_on_npc_vehicle_stolen)
+	crime_response_manager.theft_reported.connect(_on_vehicle_theft_reported)
+	crime_response_manager.police_pursuit_started.connect(_on_police_pursuit_started)
+	crime_response_manager.stolen_vehicle_recovered.connect(_on_stolen_vehicle_recovered)
+
+
+func _on_npc_vehicle_stolen(vehicle_id: String, owner_npc_id: String, city_name: String) -> void:
+	print("SYSTEM CRIME: NPC vehicle stolen: ", vehicle_id, " owner=", owner_npc_id, " city=", city_name)
+
+
+func _on_vehicle_theft_reported(vehicle_id: String, city_name: String) -> void:
+	print("SYSTEM POLICE: Vehicle theft reported in ", city_name, ": ", vehicle_id)
+
+
+func _on_police_pursuit_started(vehicle_id: String, city_name: String) -> void:
+	print("SYSTEM POLICE: Pursuit started for ", vehicle_id, " in ", city_name)
+
+
+func _on_stolen_vehicle_recovered(vehicle_id: String, city_name: String) -> void:
+	print("SYSTEM POLICE: Stolen vehicle recovered in ", city_name, ": ", vehicle_id)
 
 
 func create_hunter_exam_manager() -> void:
