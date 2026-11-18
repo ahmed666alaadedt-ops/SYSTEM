@@ -10,6 +10,7 @@ var city_anchor := Vector3.ZERO
 var tower_material: StandardMaterial3D
 var trim_material: StandardMaterial3D
 var emissive_material: StandardMaterial3D
+var tower_positions: Array[Dictionary] = []
 
 func _ready() -> void:
 	name = "BaghdadTowerLandmarksManager"
@@ -68,10 +69,15 @@ func _build_power_tower() -> void:
 	)
 
 func _build_tower(node_name: String, title: String, location_id: String, world_position: Vector3, height: float, radius: float, floors: int, beacon_color: Color) -> void:
+	var resolved := _nearest_land_position(Vector2(world_position.x, world_position.z))
+	if resolved == Vector2.INF:
+		push_warning("SYSTEM WORLD: no suitable land for tower " + title)
+		return
 	var root := Node3D.new()
 	root.name = node_name
-	root.position = world_position
+	root.position = Vector3(resolved.x, float(terrain.call("get_terrain_height", resolved.x, resolved.y)), resolved.y)
 	add_child(root)
+	tower_positions.append({"id": location_id, "name": title, "position": root.position})
 
 	var base := MeshInstance3D.new()
 	base.name = "MonumentalFoundation"
@@ -174,8 +180,18 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	root.set_meta("tower_id", location_id)
 	print("SYSTEM WORLD: landmark tower generated: ", title, " / ", floors, " floors / ", height, "m")
 
+func _nearest_land_position(origin: Vector2) -> Vector2:
+	if terrain.call("is_land_position", origin.x, origin.y):
+		return origin
+	for radius_step in range(1, 17):
+		var radius := float(radius_step) * 12.0
+		for sample in range(32):
+			var angle := TAU * float(sample) / 32.0
+			var candidate := origin + Vector2(cos(angle), sin(angle)) * radius
+			if terrain.call("is_land_position", candidate.x, candidate.y):
+				return candidate
+	return Vector2.INF
+
+
 func get_tower_positions() -> Array[Dictionary]:
-	return [
-		{"id": "hunter_association_tower_baghdad", "name": "برج الصيادين العالمي", "position": city_anchor + Vector3(0.0, 0.0, 365.0)},
-		{"id": "power_tower_baghdad", "name": "برج القوة", "position": city_anchor + Vector3(355.0, 0.0, 350.0)}
-	]
+	return tower_positions.duplicate(true)
