@@ -115,3 +115,9 @@ This expansion is committed to the repository and wired into `world_manager.gd` 
 
 
 - The transport layer also places first-pass parked passenger-aircraft models at generated airport sites, multi-car train consists at central rail hubs, and a stationary passenger/cargo ship beside each harbor where a valid waterfront site is found. These are scene props only; no boarding, driving, flight, rail simulation or ship navigation is implied.
+
+
+## Street-level city infrastructure — first visual pass
+
+- Every generated city now receives pedestrian crosswalk markings, four-corner traffic signal props with alternating red/amber/green phases, bus-stop shelters with benches and signs, and a marked public parking bay.
+- The signal cycle is currently decorative. NPC vehicles do not yet query signal state, yield to pedestrians, reserve parking spaces or obey road rules; those behaviors belong to the next traffic-AI integration pass.
