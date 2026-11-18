@@ -4,6 +4,8 @@ class_name UndergroundInteractable
 ## Small interaction endpoint used by the shared SystemWorldInteractionManager.
 @export_enum("stone_door", "relic", "strongbox") var action_type: String = "stone_door"
 @export var action_target_path: NodePath = ^"DoorBody"
+@export var puzzle_controller_path: NodePath = ^"../PuzzleController"
+@export var rune_symbol: String = "river"
 
 var _used := false
 var _opened := false
@@ -15,6 +17,8 @@ func system_interact() -> void:
 			_toggle_stone_door()
 		"relic", "strongbox":
 			_claim_discovery()
+		"rune":
+			_press_rune()
 
 
 func _toggle_stone_door() -> void:
@@ -49,3 +53,14 @@ func _claim_discovery() -> void:
 	_used = true
 	set_meta("system_interaction_prompt", "تم اكتشاف هذا الأثر")
 	print("SYSTEM underground discovery claimed: ", name)
+
+
+
+func _press_rune() -> void:
+	var controller := get_node_or_null(puzzle_controller_path)
+	if controller == null or not controller.has_method("press_rune"):
+		push_warning("SYSTEM underground: puzzle controller is missing.")
+		return
+
+	controller.call("press_rune", rune_symbol)
+	set_meta("system_interaction_prompt", "رمز أثري: " + rune_symbol)
