@@ -375,6 +375,7 @@ func _build_city_ports() -> void:
 			pier.material_override = bridge_material
 			port.add_child(pier)
 		_build_port_cranes(port)
+		_build_port_terminal_facilities(port)
 		var outward := (site - Vector2(anchor.x, anchor.z)).normalized()
 		_build_ship_visual(port, outward)
 		landmark_records.append({
@@ -519,6 +520,7 @@ func _build_aircraft_visual(parent: Node3D) -> void:
 	for side in [-1.0, 1.0]:
 		_add_box(parent, "AircraftEngine", Vector3(side * 6.0, 0.65, 0.1), Vector3(1.8, 1.5, 4.0), dark_material)
 		_add_box(parent, "AircraftWingTip", Vector3(side * 12.1, 1.25, 0.0), Vector3(0.35, 0.45, 1.0), dark_material)
+	_build_airport_terminal(parent, body_material, dark_material, runway_material)
 
 func _build_train_visual(parent: Node3D) -> void:
 	var body_material := _make_material(Color(0.12, 0.28, 0.36), 0.45, 0.38)
@@ -548,6 +550,71 @@ func _build_train_visual(parent: Node3D) -> void:
 				wheel.position = Vector3(side * 1.8, 0.62, axle)
 				wheel.material_override = window_material
 				carriage.add_child(wheel)
+	_build_station_facilities(parent, body_material, window_material, track_material)
+
+
+func _build_airport_terminal(parent: Node3D, facade: Material, glass: Material, apron_material: Material) -> void:
+	var terminal := Node3D.new()
+	terminal.name = "AirportPassengerTerminal"
+	terminal.position = Vector3(0.0, -0.55, 48.0)
+	parent.add_child(terminal)
+	_add_box(terminal, "TerminalMainHall", Vector3(0.0, 5.0, 0.0), Vector3(58.0, 10.0, 22.0), facade)
+	_add_box(terminal, "TerminalGlassFront", Vector3(0.0, 4.5, -11.2), Vector3(52.0, 7.0, 0.25), glass)
+	_add_box(terminal, "TerminalRoofCanopy", Vector3(0.0, 10.4, -2.0), Vector3(62.0, 0.8, 27.0), glass)
+	_add_box(terminal, "TerminalDepartureWing", Vector3(-34.0, 3.2, 4.0), Vector3(14.0, 6.4, 18.0), facade)
+	_add_box(terminal, "TerminalArrivalWing", Vector3(34.0, 3.2, 4.0), Vector3(14.0, 6.4, 18.0), facade)
+	_add_box(terminal, "AirportApron", Vector3(0.0, -0.35, -19.0), Vector3(78.0, 0.22, 15.0), apron_material)
+	for bay in range(4):
+		_add_box(terminal, "ApronStandLine_%02d" % bay, Vector3(-27.0 + float(bay) * 18.0, -0.20, -18.0), Vector3(0.16, 0.035, 12.0), glass)
+	var tower := Node3D.new()
+	tower.name = "AirportControlTower"
+	tower.position = Vector3(39.0, 0.0, 16.0)
+	terminal.add_child(tower)
+	_add_box(tower, "ControlTowerShaft", Vector3(0.0, 10.0, 0.0), Vector3(5.0, 20.0, 5.0), facade)
+	_add_box(tower, "ControlTowerCabin", Vector3(0.0, 21.0, 0.0), Vector3(9.0, 4.0, 9.0), glass)
+	_add_box(tower, "ControlTowerRoof", Vector3(0.0, 23.2, 0.0), Vector3(10.0, 0.5, 10.0), facade)
+
+
+func _build_station_facilities(parent: Node3D, facade: Material, glass: Material, track: Material) -> void:
+	for side in [-1.0, 1.0]:
+		var platform := Node3D.new()
+		platform.name = "PassengerPlatform_%s" % str(side)
+		platform.position = Vector3(side * 6.0, 0.0, 22.0)
+		parent.add_child(platform)
+		_add_box(platform, "PlatformSurface", Vector3(0.0, 0.12, 0.0), Vector3(4.0, 0.28, 78.0), facade)
+		_add_box(platform, "PlatformCanopy", Vector3(0.0, 4.0, 0.0), Vector3(4.8, 0.3, 32.0), track)
+		for support in [-14.0, 0.0, 14.0]:
+			_add_box(platform, "CanopySupport_%s" % str(support), Vector3(0.0, 2.0, support), Vector3(0.22, 4.0, 0.22), track)
+	var concourse := Node3D.new()
+	concourse.name = "CentralStationConcourse"
+	concourse.position = Vector3(0.0, 0.0, -35.0)
+	parent.add_child(concourse)
+	_add_box(concourse, "StationHall", Vector3(0.0, 4.0, 0.0), Vector3(34.0, 8.0, 18.0), facade)
+	_add_box(concourse, "StationGlassFacade", Vector3(0.0, 3.8, -9.2), Vector3(28.0, 5.4, 0.25), glass)
+	_add_box(concourse, "StationRoof", Vector3(0.0, 8.2, 0.0), Vector3(36.0, 0.6, 20.0), track)
+	_add_box(concourse, "StationDepartureSign", Vector3(0.0, 7.0, -9.6), Vector3(8.0, 1.0, 0.25), track)
+
+
+func _build_port_terminal_facilities(parent: Node3D) -> void:
+	var warehouse_material := _make_material(Color(0.42, 0.45, 0.46), 0.88, 0.18)
+	var roof_material := _make_material(Color(0.17, 0.21, 0.25), 0.62, 0.35)
+	var container_material := _make_material(Color(0.62, 0.27, 0.15), 0.82, 0.12)
+	var warehouse := Node3D.new()
+	warehouse.name = "HarborCargoWarehouse"
+	warehouse.position = Vector3(0.0, 0.0, -24.0)
+	parent.add_child(warehouse)
+	_add_box(warehouse, "CargoWarehouseBody", Vector3(0.0, 4.0, 0.0), Vector3(34.0, 8.0, 18.0), warehouse_material)
+	_add_box(warehouse, "CargoWarehouseRoof", Vector3(0.0, 8.3, 0.0), Vector3(36.0, 0.6, 20.0), roof_material)
+	for row in range(2):
+		for column in range(3):
+			_add_box(
+				parent,
+				"HarborContainer_%02d_%02d" % [row, column],
+				Vector3(-20.0 + float(column) * 9.0, 1.3, -37.0 + float(row) * 6.0),
+				Vector3(8.0, 2.6, 5.5),
+				container_material
+			)
+	_add_box(parent, "HarborTruckLoadingApron", Vector3(0.0, 0.08, -12.0), Vector3(46.0, 0.18, 10.0), port_material)
 
 func _add_box(parent: Node3D, node_name: String, position: Vector3, size: Vector3, material: Material) -> void:
 	var instance := MeshInstance3D.new()
