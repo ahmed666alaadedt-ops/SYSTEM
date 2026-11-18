@@ -5,6 +5,7 @@ This is the acceptance checklist for the modern-world map. The project must not 
 ## Current verified repository foundations
 
 - [x] Fourteen named city anchors and eight district labels per city are defined in modern_world_region_manager.gd.
+- [x] Each city style index generates a distinct original civic landmark silhouette to improve skyline and local identity.
 - [x] Ten rural settlement seeds are defined.
 - [x] City road strips, plaza markers, green-belt markers, airport/rail visual hubs, and map discovery registration exist.
 - [x] Baghdad tower landmarks are created by the region manager.
