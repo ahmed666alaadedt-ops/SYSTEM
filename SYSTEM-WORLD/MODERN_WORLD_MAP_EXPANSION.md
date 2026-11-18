@@ -168,3 +168,12 @@ This expansion is committed to the repository and wired into `world_manager.gd` 
 - Each race circuit that passes the all-land terrain check now receives an outer safety-barrier ribbon, red/white-style curb strip, start/finish gantry, pit garage block, and tiered grandstand.
 - These additions make the circuit read as a motorsport venue rather than only a loop of road mesh.
 - They remain scenery: no collision-tested barriers, pit services, race marshal logic, grid slots, timing, checkpoints, AI opponents, rewards, or playable race events are implemented yet.
+
+
+## Airport, rail-station and harbor facilities — visual expansion
+
+- Airport prototypes now include a passenger terminal hall, glass frontage, departure/arrival wings, apron stand markings, and an air-traffic control tower alongside the runway and parked aircraft.
+- Central rail prototypes now include passenger platforms, platform canopies and supports, a station concourse, glass frontage, roof, departure sign, tracks, sleepers and train carriages.
+- Harbor prototypes now include a cargo warehouse, loading apron and stacked freight containers in addition to docks, piers, cranes and a ship.
+- Terrain-checked access-road meshes are attempted between each city and its airport, central station, and harbor. A route is skipped if the direct sampled corridor crosses water.
+- All transport structures remain visual prototypes. No ticketing, boarding, vehicle movement, route schedules, freight handling, collision-tested access, or navigable transport has been implemented.
