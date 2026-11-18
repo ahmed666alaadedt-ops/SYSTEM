@@ -7,22 +7,28 @@ extends Node
 signal monster_spawned(monster_data: Dictionary)
 signal monster_attacked_player(monster_id: String, damage: float)
 signal monster_defeated(monster_id: String, reward_xp: int)
+signal monster_defeated_detailed(defeat_data: Dictionary)
 
 const DETECTION_RANGE := 18.0
 const ATTACK_RANGE := 2.0
 const ATTACK_COOLDOWN := 2.0
 const MAX_VISIBLE_PER_GATE := 12
+const SPECIES_DATABASE_PATH := "res://scripts/monster_species_database.gd"
 
 var world_root: Node3D
 var player: Node3D
 var monsters: Array[Dictionary] = []
 var initialized := false
 var monster_counter := 0
+var species_database: RefCounted
 
 
 func setup(world: Node3D, player_node: Node3D) -> void:
 	world_root = world
 	player = player_node
+	var species_script = load(SPECIES_DATABASE_PATH) if ResourceLoader.exists(SPECIES_DATABASE_PATH) else null
+	if species_script != null:
+		species_database = species_script.new()
 	initialized = is_instance_valid(world_root)
 	print("SYSTEM: Monster AI Controller initialized.")
 
@@ -36,19 +42,24 @@ func spawn_gate_wave(gate_data: Dictionary) -> void:
 	var visible_count := mini(requested_count, MAX_VISIBLE_PER_GATE)
 	var rank := str(gate_data.get("displayed_rank", "F"))
 	var boss_count := int(gate_data.get("boss_count", 0))
+	var biome := str(gate_data.get("biome", "urban"))
 
 	for index in range(visible_count):
 		var angle := TAU * float(index) / float(maxi(visible_count, 1))
 		var offset := Vector3(cos(angle), 0.0, sin(angle)) * randf_range(5.0, 11.0)
-		_create_monster(gate_position + offset, rank, false)
+		_create_monster(gate_position + offset, rank, false, biome)
 
 	if boss_count > 0:
-		_create_monster(gate_position + Vector3(0, 0, -13), rank, true)
+		_create_monster(gate_position + Vector3(0, 0, -13), rank, true, biome)
 
 	print("SYSTEM: Gate wave spawned. Visible monsters: ", visible_count)
 
 
-func _create_monster(position: Vector3, rank: String, is_boss: bool) -> void:
+func _create_monster(position: Vector3, rank: String, is_boss: bool, biome: String = "urban") -> void:
+	var species_data: Dictionary = {}
+	if is_instance_valid(species_database):
+		species_data = species_database.choose_species(biome, rank, is_boss)
+	var species_id := str(species_data.get("id", "urban_stalker"))
 	monster_counter += 1
 	var monster_id := "MON-%06d" % monster_counter
 	var actor := Node3D.new()
@@ -70,7 +81,7 @@ func _create_monster(position: Vector3, rank: String, is_boss: bool) -> void:
 	body.mesh = mesh
 
 	var material := StandardMaterial3D.new()
-	material.albedo_color = _rank_color(rank)
+	material.albedo_color = species_data.get("color", _rank_color(rank))
 	material.roughness = 0.72
 	material.emission_enabled = true
 	material.emission = material.albedo_color * 0.22
@@ -87,7 +98,7 @@ func _create_monster(position: Vector3, rank: String, is_boss: bool) -> void:
 
 	world_root.add_child(actor)
 
-	var hp := 100.0 + float(RANKS_INDEX(rank)) * 75.0
+	var hp := (100.0 + float(RANKS_INDEX(rank)) * 75.0) * float(species_data.get("health_mult", 1.0))
 	if is_boss:
 		hp *= 8.0
 
@@ -95,17 +106,24 @@ func _create_monster(position: Vector3, rank: String, is_boss: bool) -> void:
 		"id": monster_id,
 		"node": actor,
 		"rank": rank,
+		"species_id": species_id,
+		"species_name": str(species_data.get("name", "Unknown")),
+		"weakness": str(species_data.get("weakness", "unknown")),
+		"resistance": str(species_data.get("resistance", "unknown")),
+		"behavior": str(species_data.get("behavior", "patrol")),
 		"is_boss": is_boss,
 		"health": hp,
 		"max_health": hp,
 		"state": "patrol",
-		"speed": (2.0 + float(RANKS_INDEX(rank)) * 0.22) * (1.2 if is_boss else 1.0),
+		"speed": (2.0 + float(RANKS_INDEX(rank)) * 0.22) * float(species_data.get("speed_mult", 1.0)) * (1.2 if is_boss else 1.0),
 		"attack_timer": randf_range(0.2, 1.0),
 		"patrol_target": position + Vector3(randf_range(-5, 5), 0, randf_range(-5, 5))
 	})
 
 	monster_spawned.emit({
 		"id": monster_id, "rank": rank, "is_boss": is_boss,
+		"species_id": species_id, "species_name": str(species_data.get("name", "Unknown")),
+		"weakness": str(species_data.get("weakness", "unknown")),
 		"health": hp, "position": position
 	})
 
@@ -187,6 +205,12 @@ func apply_damage(monster_id: String, amount: float) -> bool:
 			if bool(data["is_boss"]):
 				xp *= 10
 			monster_defeated.emit(monster_id, xp)
+			monster_defeated_detailed.emit({
+				"id": monster_id, "rank": str(data["rank"]),
+					"is_boss": bool(data["is_boss"]),
+					"species_id": str(data.get("species_id", "unknown")),
+					"reward_xp": xp
+			})
 			monsters.remove_at(index)
 		return true
 	return false
@@ -201,6 +225,9 @@ func get_monster_snapshot() -> Array[Dictionary]:
 	for data in monsters:
 		result.append({
 			"id": data["id"], "rank": data["rank"],
+			"species_id": data.get("species_id", "unknown"),
+			"species_name": data.get("species_name", "Unknown"),
+			"weakness": data.get("weakness", "unknown"),
 			"is_boss": data["is_boss"], "health": data["health"],
 			"max_health": data["max_health"], "state": data["state"]
 		})
