@@ -363,3 +363,8 @@ export {
   registerPartyForHunterGuildMission,
   listMyHunterGuildMissionAssignments
 } from "./hunter_guild_missions";
+export {
+  startHunterGuildMission,
+  recordHunterGuildGameplayEvent,
+  listMyHunterGuildMissionContributions
+} from "./hunter_guild_contributions";
