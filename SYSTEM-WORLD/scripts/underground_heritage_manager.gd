@@ -296,10 +296,10 @@ func _build_baghdad_link() -> void:
 
 
 func _create_vault_door_interaction(parent: Node3D) -> void:
-	var target := UndergroundInteractableScript.new() as Node3D
+	var target: Node3D = UndergroundInteractableScript.new()
 	target.name = "VaultStoneDoorInteraction"
-	target.action_type = "stone_door"
-	target.action_target_path = ^"DoorBody"
+	target.set("action_type", "stone_door")
+	target.set("action_target_path", ^"DoorBody")
 	target.position = Vector3(0, 0, -39.0)
 	target.add_to_group("system_interactable")
 	target.set_meta("system_interaction_prompt", "اسحب الرافعة لفتح الباب الحجري")
@@ -339,9 +339,9 @@ func _create_vault_door_interaction(parent: Node3D) -> void:
 
 
 func _create_relic_interaction(parent: Node3D) -> void:
-	var target := UndergroundInteractableScript.new() as Node3D
+	var target: Node3D = UndergroundInteractableScript.new()
 	target.name = "AncientRelicInteraction"
-	target.action_type = "relic"
+	target.set("action_type", "relic")
 	target.position = Vector3(0, 1.0, -54.0)
 	target.add_to_group("system_interactable")
 	target.set_meta("system_interaction_prompt", "افحص الأثر القديم")
