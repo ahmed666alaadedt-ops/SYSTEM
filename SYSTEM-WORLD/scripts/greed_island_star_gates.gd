@@ -51,6 +51,10 @@ func _process(_delta: float) -> void:
 	island_manager = get_tree().root.find_child(
 		"GreedIslandManager", true, false
 	) as Node3D
+	if island_manager == null:
+		island_manager = get_tree().root.find_child(
+			"GreedIslandEnvironment", true, false
+		) as Node3D
 
 	if world_manager == null or island_manager == null:
 		return
