@@ -113,3 +113,9 @@ GitHub file writes are confirmed for the scripts listed below. Godot parsing, sc
 - Inter-city corridor meshes now include dashed center and lane-edge markings following each sampled road segment.
 - Markings are batched per corridor segment and disable shadow casting.
 - A lane graph, traffic direction, speed rules, collision, and vehicle navigation remain separate unfinished systems.
+
+
+### 13. Highway rest stops — visual prototype
+- Generated inter-city corridors attempt a roadside service area with a small market, fuel canopy, pump props, EV chargers and parking-bay markings.
+- Candidate sites are placed only on sampled land beside the corridor.
+- Fuel/charging economy, service interactions, staff, vehicle routing and collision remain unfinished.
