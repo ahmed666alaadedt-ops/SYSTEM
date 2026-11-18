@@ -169,6 +169,6 @@ func update_mission_status(
 
 	match status:
 		"accepted":
-			progress_label.text = "قيد التنفيذ"
+			progress_label.text = "قيد التنفيذ | " + progress_label.text
 		"completed":
 			progress_label.text = "مكتملة ✓"
