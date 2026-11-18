@@ -93,3 +93,11 @@ GitHub file writes are confirmed for the scripts listed below. Godot parsing, sc
 - Land-valid city circuits now receive a continuous outer barrier mesh, curb strip, start/finish gantry, pit-garage block, and small tiered grandstand.
 - The structures are batched where practical and use existing procedural materials.
 - No playable race logic, collision validation, pit interaction, AI racers, timing, checkpoint progression, rewards, or leaderboard is implied by these visuals.
+
+
+### 10. Transport terminals and access — visual prototype
+- Airport scenery includes terminal wings, passenger hall, apron markings and control tower.
+- Railway scenery includes platforms, canopies, station concourse and train carriages.
+- Harbor scenery includes warehouse, loading apron and freight containers.
+- Airport, station and harbor access-road meshes are generated only when sampled direct routes stay on land.
+- These are not functional terminals or transport services; boarding, schedules, route networks, freight, collision, and runtime validation remain outstanding.
