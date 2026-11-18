@@ -13,7 +13,7 @@ const SAVE_MANAGER_PATH := "res://scripts/world_save_manager.gd"
 const GATE_MANAGER_PATH := "res://scripts/monster_gate_manager.gd"
 const MONSTER_AI_PATH := "res://scripts/monster_ai_controller.gd"
 const LOOT_MANAGER_PATH := "res://scripts/monster_loot_manager.gd"
-const GUILD_GATE_MANAGER_PATH := "res://scripts/hunter_guild_gate_manager.gd"
+const GUILD_GATE_MANAGER_PATH := "res://scripts/hunter_guild_gate_manager.gd"\nconst GUILD_PANEL_PATH := "res://scripts/hunter_guild_panel.gd"
 const AUTOSAVE_INTERVAL := 60.0
 
 var player: CharacterBody3D
@@ -37,7 +37,7 @@ var save_manager: Node
 var gate_manager: Node
 var monster_manager: Node
 var loot_manager: Node
-var guild_gate_manager: Node
+var guild_gate_manager: Node\nvar guild_panel: CanvasLayer
 
 
 func _ready() -> void:
@@ -475,6 +475,13 @@ func _connect_monster_system() -> void:
 			guild_gate_manager.name = "Hunter_Guild_Gate_Manager"
 			add_child(guild_gate_manager)
 			guild_gate_manager.call("setup", gate_manager, monster_manager)
+			if ResourceLoader.exists(GUILD_PANEL_PATH):
+				var guild_panel_script = load(GUILD_PANEL_PATH)
+				if guild_panel_script != null:
+					guild_panel = guild_panel_script.new()
+					guild_panel.name = "Hunter_Guild_Panel"
+					add_child(guild_panel)
+					guild_panel.call("setup", guild_gate_manager, player)
 
 	print("SYSTEM WORLD: Monster gates, species AI, loot and hunter guild connected.")
 
