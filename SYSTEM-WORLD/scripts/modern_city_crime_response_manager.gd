@@ -68,6 +68,8 @@ func _spawn_civilian_vehicle_fleet() -> void:
 				"witness_count": 1 + (slot % 3),
 				"vehicle_class": ["sedan", "hatchback", "utility_suv"][slot]
 			}
+	if society_manager != null and society_manager.has_method("save_society"):
+		society_manager.call("save_society")
 
 func _get_or_create_owner_npc(owner_key: String, owner_name: String, city_name: String) -> String:
 	var saved_id := str(owner_registry.get(owner_key, ""))
