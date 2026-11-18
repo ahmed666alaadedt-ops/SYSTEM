@@ -81,11 +81,11 @@ func _create_mountain(index: int, world_x: float, world_z: float) -> void:
 				peak_height
 			)
 
-			var world_x := world_x + local_x
-			var world_z := world_z + local_z
+			var sample_x := world_x + local_x
+			var sample_z := world_z + local_z
 			var terrain_height := 0.0
 			if terrain != null:
-				terrain_height = terrain.get_terrain_height(world_x, world_z)
+				terrain_height = terrain.get_terrain_height(sample_x, sample_z)
 			var vertex := Vector3(
 				local_x,
 				terrain_height + height,
