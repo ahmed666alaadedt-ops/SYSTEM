@@ -5,6 +5,7 @@ extends CanvasLayer
 
 var guild_manager: Node
 var player_node: Node3D
+var member_manager: Node
 var panel: PanelContainer
 var report_list: VBoxContainer
 var detail_label: Label
@@ -12,9 +13,10 @@ var selected_gate_id := ""
 var status_label: Label
 
 
-func setup(manager: Node, player: Node3D) -> void:
+func setup(manager: Node, player: Node3D, member_manager_node: Node = null) -> void:
 	guild_manager = manager
 	player_node = player
+	member_manager = member_manager_node
 	_build_interface()
 	if is_instance_valid(guild_manager):
 		if guild_manager.has_signal("gate_registered"):
@@ -199,9 +201,13 @@ func _add_detail_actions(report: Dictionary) -> void:
 	reward_button.pressed.connect(_preview_reward)
 	parent.add_child(reward_button)
 	var team_button := Button.new()
-	team_button.text = "تجهيز فريق تجريبي"
-	team_button.pressed.connect(_assign_demo_team)
+	team_button.text = "اختيار أفضل فريق من أعضاء النقابة"
+	team_button.pressed.connect(_assign_recommended_team)
 	parent.add_child(team_button)
+	var roster_button := Button.new()
+	roster_button.text = "عرض أعضاء النقابة ورتبهم"
+	roster_button.pressed.connect(_show_roster)
+	parent.add_child(roster_button)
 	var dispatch_button := Button.new()
 	dispatch_button.text = "إرسال الفريق"
 	dispatch_button.pressed.connect(_dispatch_selected)
@@ -235,12 +241,35 @@ func _preview_reward() -> void:
 	_select_gate(selected_gate_id)
 
 
-func _assign_demo_team() -> void:
-	if selected_gate_id.is_empty():
+func _assign_recommended_team() -> void:
+	if selected_gate_id.is_empty() or not is_instance_valid(member_manager):
 		return
-	var members: Array[String] = ["PLAYER", "GUILD-NPC-01", "GUILD-NPC-02"]
-	guild_manager.call("assign_team", selected_gate_id, members)
-	_select_gate(selected_gate_id)
+	var report: Dictionary = guild_manager.call("get_gate_report", selected_gate_id)
+	var wanted := int(report.get("recommended_team_size", 4))
+	wanted = mini(wanted, 5)
+	var team: Array[String] = member_manager.call("recommend_team", selected_gate_id, wanted)
+	if team.is_empty():
+		detail_label.text = "لا يوجد أعضاء متاحون بالرتب المناسبة لهذه البوابة"
+		return
+	guild_manager.call("assign_team", selected_gate_id, team)
+	var summary: Dictionary = member_manager.call("get_team_summary", team)
+	detail_label.text = "تم اختيار الفريق: %s\nالعدد: %d\nمتوسط الرتبة: %s\nقتال: %s | استطلاع: %s\nعلاج: %s | دعم: %s" % [
+		", ".join(team), team.size(), str(summary.get("average_rank", "F")),
+		str(summary.get("combat", 0)), str(summary.get("scouting", 0)),
+		str(summary.get("healing", 0)), str(summary.get("support", 0))
+	]
+
+func _show_roster() -> void:
+	if not is_instance_valid(member_manager):
+		return
+	var roster: Array = member_manager.call("get_roster")
+	var lines := ["أعضاء نقابة الصيادين:"]
+	for member in roster:
+		lines.append("%s | %s | %s | XP %s" % [
+			str(member.get("name", "-")), str(member.get("rank", "F")),
+			str(member.get("role", "fighter")), str(member.get("guild_xp", 0))
+		])
+	detail_label.text = "\n".join(lines)
 
 
 func _dispatch_selected() -> void:
