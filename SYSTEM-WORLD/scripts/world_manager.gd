@@ -236,7 +236,8 @@ func _create_modern_city() -> void:
 	# inside ModernWorldRegionManager; avoid spawning the legacy duplicate set.
 	_create_distant_skyline(root)
 	_create_forest(root)
-	_create_mountains(root)
+	# Procedural mountain belts are already sculpted into ModernContinent.
+	# Keep the legacy overlay manager detached to avoid duplicate mountain meshes.
 	_create_waterways(root)
 	# Keep the legacy marine test scene detached until its ocean and island
 	# coordinates are aligned with the modern world's shared coastline.
