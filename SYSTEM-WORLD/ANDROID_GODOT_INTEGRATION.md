@@ -146,3 +146,24 @@ been generated yet.
 Godot's Android embedding documentation explains the AAR dependency, host
 Activity/Fragment lifecycle and bidirectional host-plugin communication:
 https://docs.godotengine.org/en/stable/tutorials/platform/android/embedding_in_android_projects.html
+
+
+## Android-side message router added
+
+`app/src/main/java/com/system/irtqaa/SystemGodotMessageRouter.kt`
+provides a transport-independent Android router over the versioned message
+contract:
+
+- Sends modern-world entry requests only; it rejects external requests for
+  historical, fantasy and Greed Island.
+- Obtains the player UID from an injected authenticated-session provider rather
+  than accepting a caller-supplied UID.
+- Marks the optional display context as untrusted and limits its display name.
+- Receives only Godot-to-Android allowlisted message types and validates the
+  required world-state/result fields before notifying a host listener.
+- Exposes a small transport callback so a future Godot host can supply the
+  actual send/receive channel without coupling this class to Godot APIs.
+
+This is reusable Android-side routing logic, not a live transport. No Activity
+or plugin currently instantiates it, and the callback is not connected to a
+Godot engine instance yet.
