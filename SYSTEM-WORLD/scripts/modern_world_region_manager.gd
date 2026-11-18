@@ -386,6 +386,62 @@ func _build_rural_settlements() -> void:
 		village_root.add_child(marker)
 
 
+
+func register_map_locations(map_manager: Node, world_id: String) -> void:
+	if map_manager == null or not map_manager.has_method("register_location"):
+		return
+	for city in CITY_DATA:
+		var city_name := str(city["name"])
+		if not city_anchors.has(city_name):
+			continue
+		var region_id := "region_" + city_name.to_lower().replace(" ", "_")
+		var point := get_city_anchor(city_name)
+		map_manager.call(
+			"register_location", world_id,
+			"city_" + city_name.to_lower().replace(" ", "_"),
+			region_id, city_name, 0, point, false
+		)
+		var airport_position := _nearest_land_position(city_anchors[city_name] + Vector2(205.0, -35.0))
+		if airport_position != Vector2.INF:
+			map_manager.call(
+				"register_location", world_id,
+				"airport_" + city_name.to_lower().replace(" ", "_"),
+				region_id, city_name + " International Airport", 6,
+				Vector3(airport_position.x, terrain.get_terrain_height(airport_position.x, airport_position.y), airport_position.y), true
+			)
+		var rail_position := _nearest_land_position(city_anchors[city_name] + Vector2(-205.0, 35.0))
+		if rail_position != Vector2.INF:
+			map_manager.call(
+				"register_location", world_id,
+				"rail_" + city_name.to_lower().replace(" ", "_"),
+				region_id, city_name + " Central Station", 6,
+				Vector3(rail_position.x, terrain.get_terrain_height(rail_position.x, rail_position.y), rail_position.y), true
+			)
+	for village in VILLAGE_DATA:
+		var village_name := str(village["name"])
+		var village_position := _nearest_land_position(village["position"])
+		if village_position == Vector2.INF:
+			continue
+		var region_id := "region_" + village_name.to_lower().replace(" ", "_")
+		map_manager.call(
+			"register_location", world_id,
+			"village_" + village_name.to_lower().replace(" ", "_"),
+			region_id, village_name, 1,
+			Vector3(village_position.x, terrain.get_terrain_height(village_position.x, village_position.y), village_position.y), false
+		)
+
+
+func discover_starting_city(map_manager: Node, world_id: String) -> void:
+	if map_manager == null or not map_manager.has_method("discover_region"):
+		return
+	var city_name := "Baghdad"
+	if not city_anchors.has(city_name):
+		return
+	var region_id := "region_baghdad"
+	map_manager.call("discover_region", world_id, region_id)
+	map_manager.call("discover_location", world_id, "city_baghdad")
+
+
 func get_city_anchor(city_name: String) -> Vector3:
 	if not city_anchors.has(city_name):
 		return Vector3.INF
