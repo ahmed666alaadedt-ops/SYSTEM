@@ -138,7 +138,10 @@ func get_progress_data() -> Dictionary:
 		"xp_to_next": get_xp_to_next_level(),
 		"max_level": MAX_LEVEL,
 		"attribute_points": available_attribute_points,
-		"attributes": attributes.duplicate(true)
+		"attributes": attributes.duplicate(true),
+		"greed_fragments": greed_fragments.duplicate(),
+		"greed_fragments_count": greed_fragments.size(),
+		"greed_island_seal_ready": greed_fragments.size() >= 3
 	}
 
 
@@ -158,6 +161,11 @@ func save_progress() -> void:
 		"player",
 		"attributes",
 		attributes.duplicate(true)
+	)
+	config.set_value(
+		"greed_island",
+		"fragments",
+		greed_fragments.duplicate()
 	)
 
 	var error := config.save(SAVE_PATH)
