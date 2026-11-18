@@ -80,3 +80,10 @@ GitHub file writes are confirmed for the scripts listed below. Godot parsing, sc
 - The transport manager checks direct village-to-city candidates against the terrain and builds a marked road only when the sampled centerline remains on land.
 - Water-crossing candidates are rejected. The road meshes follow sampled terrain heights and are registered as map landmarks.
 - This is a first-pass visual connection, not a finished road graph: route optimization, collision, road-edge clearance, traffic navigation, junctions, signs, and runtime validation remain outstanding.
+
+
+### 8. District streets, sidewalks and crossings — visual prototype
+- Each resolved city district receives a compact four-by-four street layout in both directions.
+- Road and sidewalk meshes sample terrain height along their segments; pedestrian zebra markings are added at the planned intersections.
+- Meshes are batched per district to limit scene-node overhead.
+- The street grid is not yet a drivable/navmesh road system: collision, curb ramps, lane routing, parking, traffic-rule integration, pedestrian AI, and district-to-district continuity checks remain outstanding.
