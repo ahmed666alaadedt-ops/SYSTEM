@@ -107,13 +107,16 @@ func _physics_process(delta: float) -> void:
 func _attack_target() -> void:
 	if not is_instance_valid(target):
 		return
-	if target.has_method("take_damage"):
+	var health_component := target.get_node_or_null("PlayerCombatHealth")
+	if health_component != null and health_component.has_method("receive_damage"):
+		health_component.call("receive_damage",attack_damage,self)
+	elif target.has_method("take_damage"):
 		target.call("take_damage",attack_damage,self)
 	elif target.has_method("receive_damage"):
 		target.call("receive_damage",attack_damage)
 	else:
 		target.set_meta("system_last_gate_attack",{"damage":attack_damage,"rank":gate_rank})
-		print("SYSTEM GATE: Enemy attack reached player; player health receiver is not connected yet.")
+		push_warning("SYSTEM GATE: Player health component is unavailable.")
 
 
 func die(source: Node = null) -> void:
