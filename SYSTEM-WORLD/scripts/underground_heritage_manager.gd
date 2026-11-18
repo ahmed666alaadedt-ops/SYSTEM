@@ -4,6 +4,7 @@ class_name UndergroundHeritageManager
 const UndergroundInteractableScript = preload("res://scripts/underground_interactable.gd")
 const UndergroundPuzzleControllerScript = preload("res://scripts/underground_puzzle_controller.gd")
 const UndergroundTrapScript = preload("res://scripts/underground_trap.gd")
+const UndergroundGuardianScript = preload("res://scripts/underground_guardian.gd")
 
 ## Hidden underground passages and heritage markets for the modern world.
 ## This is a first procedural exploration layout, not a complete navigable quest system.
@@ -217,6 +218,7 @@ func _build_secret_vault(parent: Node3D, is_market: bool, site_name: String) -> 
 		parent.add_child(relic_pedestal)
 		_add_box(parent, "RelicDisplayBlock", Vector3(0, 1.35, -54.0), Vector3(1.0, 1.0, 1.0), _gold, false)
 		_create_relic_interaction(parent)
+		_build_guardian_encounter(parent)
 
 	# Recesses along the vault walls suggest further sealed branches for later expansion.
 	for side in [-1.0, 1.0]:
@@ -511,3 +513,49 @@ func _build_spike_trap(parent: Node3D) -> void:
 
 	trap.call("configure_spikes", spikes)
 	trigger.body_entered.connect(Callable(trap, "activate_for"))
+
+
+
+func _build_guardian_encounter(parent: Node3D) -> void:
+	var guardian: CharacterBody3D = UndergroundGuardianScript.new()
+	guardian.name = "AncientVaultGuardian"
+	guardian.position = Vector3(0.0, 0.15, -54.0)
+	guardian.set("move_speed", 2.8)
+	guardian.set("detection_range", 12.0)
+	guardian.set("attack_range", 2.0)
+	guardian.set("attack_damage", 12.0)
+	guardian.add_to_group("system_enemy")
+	parent.add_child(guardian)
+
+	var body_visual := MeshInstance3D.new()
+	body_visual.name = "GuardianArmoredBody"
+	var body_mesh := CapsuleMesh.new()
+	body_mesh.radius = 0.72
+	body_mesh.height = 2.5
+	body_visual.mesh = body_mesh
+	body_visual.position.y = 1.25
+	body_visual.material_override = _stone
+	guardian.add_child(body_visual)
+
+	var body_collision := CollisionShape3D.new()
+	var capsule := CapsuleShape3D.new()
+	capsule.radius = 0.72
+	capsule.height = 2.5
+	body_collision.shape = capsule
+	body_collision.position.y = 1.25
+	guardian.add_child(body_collision)
+
+	_add_box(guardian, "GuardianChestPlate", Vector3(0, 1.45, -0.55), Vector3(1.05, 0.9, 0.18), _gold, false)
+	_add_box(guardian, "GuardianLeftShoulder", Vector3(-0.72, 1.8, -0.1), Vector3(0.42, 0.55, 0.65), _gold, false)
+	_add_box(guardian, "GuardianRightShoulder", Vector3(0.72, 1.8, -0.1), Vector3(0.42, 0.55, 0.65), _gold, false)
+
+	var detection_area := Area3D.new()
+	detection_area.name = "GuardianDetectionArea"
+	guardian.add_child(detection_area)
+	var detection_shape := CollisionShape3D.new()
+	var detection_sphere := SphereShape3D.new()
+	detection_sphere.radius = 12.0
+	detection_shape.shape = detection_sphere
+	detection_area.add_child(detection_shape)
+	detection_area.body_entered.connect(Callable(guardian, "set_target"))
+	detection_area.body_exited.connect(Callable(guardian, "clear_target"))
