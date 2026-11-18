@@ -198,7 +198,8 @@ fun SystemApp(account: SystemFirebaseAccount) {
                                     "المهام",
                                     "المستويات",
                                     "جزيرة الطمع",
-                                    "المهمات العالمية"
+                                    "المهمات العالمية",
+                                    "فرق اللاعبين"
                                 )
 
                                 tabs.forEachIndexed { index, title ->
@@ -514,6 +515,10 @@ fun SystemApp(account: SystemFirebaseAccount) {
                                     playerId = userId,
                                     onBack = { selectedTab = 0 }
                                 )
+                            }
+
+                            5 -> {
+                                SystemPlayerPartyScreen(account = account)
                             }
                         }
                     }
