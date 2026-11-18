@@ -57,6 +57,7 @@ const DISTRICT_OFFSETS := [
 var terrain: ModernContinentManager
 var rng := RandomNumberGenerator.new()
 var city_anchors: Dictionary = {}
+var village_anchors: Dictionary = {}
 var road_material: StandardMaterial3D
 var rail_material: StandardMaterial3D
 var plaza_material: StandardMaterial3D
@@ -75,12 +76,12 @@ func _ready() -> void:
 	_resolve_city_anchors()
 	_build_city_districts()
 	_build_city_roads()
-	_create_transport_network()
 	_create_city_street_furniture()
 	_create_city_services()
 	_build_transport_hubs()
 	_build_green_belts()
 	_build_rural_settlements()
+	_create_transport_network()
 	_build_city_lighting()
 	_create_city_dealerships()
 	_create_baghdad_towers()
@@ -352,6 +353,7 @@ func _build_rural_settlements() -> void:
 		var center := _nearest_land_position(requested)
 		if center == Vector2.INF:
 			continue
+		village_anchors[str(village["name"])] = center
 		var village_root := Node3D.new()
 		village_root.name = "Village_" + str(village["name"]).replace(" ", "")
 		village_root.position = Vector3(
@@ -504,6 +506,22 @@ func get_city_names() -> Array[String]:
 		if city_anchors.has(city_name):
 			result.append(city_name)
 	return result
+
+
+func get_village_names() -> Array[String]:
+	var result: Array[String] = []
+	for village in VILLAGE_DATA:
+		var village_name := str(village["name"])
+		if village_anchors.has(village_name):
+			result.append(village_name)
+	return result
+
+
+func get_village_anchor(village_name: String) -> Vector3:
+	if not village_anchors.has(village_name):
+		return Vector3.INF
+	var point: Vector2 = village_anchors[village_name]
+	return Vector3(point.x, terrain.get_terrain_height(point.x, point.y), point.y)
 
 
 func _create_city_services() -> void:
