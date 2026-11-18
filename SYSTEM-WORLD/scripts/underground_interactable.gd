@@ -2,7 +2,7 @@ extends Node3D
 class_name UndergroundInteractable
 
 ## Small interaction endpoint used by the shared SystemWorldInteractionManager.
-@export_enum("stone_door", "relic", "strongbox") var action_type: String = "stone_door"
+@export_enum("stone_door", "relic", "strongbox", "rune") var action_type: String = "stone_door"
 @export var action_target_path: NodePath = ^"DoorBody"
 @export var puzzle_controller_path: NodePath = ^"../PuzzleController"
 @export var rune_symbol: String = "river"
@@ -52,6 +52,8 @@ func _claim_discovery() -> void:
 
 	_used = true
 	set_meta("system_interaction_prompt", "تم اكتشاف هذا الأثر")
+	var reward_xp := 35 if action_type == "relic" else 50
+	_grant_exploration_xp(reward_xp, "Underground discovery: " + name)
 	print("SYSTEM underground discovery claimed: ", name)
 
 
@@ -64,3 +66,12 @@ func _press_rune() -> void:
 
 	controller.call("press_rune", rune_symbol)
 	set_meta("system_interaction_prompt", "رمز أثري: " + rune_symbol)
+
+
+
+func _grant_exploration_xp(amount: int, reason: String) -> void:
+	var progression := get_tree().root.find_child("PlayerProgression", true, false)
+	if progression == null or not progression.has_method("add_experience"):
+		push_warning("SYSTEM underground: player progression is unavailable; XP reward skipped.")
+		return
+	progression.call("add_experience", amount, reason)
