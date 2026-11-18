@@ -62,6 +62,7 @@ func _add_box(parent: Node3D, node_name: String, position: Vector3, size: Vector
 	instance.mesh = mesh
 	instance.position = position
 	instance.material_override = material
+	instance.visibility_range_end = 650.0
 	parent.add_child(instance)
 	return instance
 
