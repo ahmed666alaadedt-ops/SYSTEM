@@ -101,3 +101,9 @@ GitHub file writes are confirmed for the scripts listed below. Godot parsing, sc
 - Harbor scenery includes warehouse, loading apron and freight containers.
 - Airport, station and harbor access-road meshes are generated only when sampled direct routes stay on land.
 - These are not functional terminals or transport services; boarding, schedules, route networks, freight, collision, and runtime validation remain outstanding.
+
+
+### 11. Bridge railings and harbor promenades — visual prototype
+- Accepted bridge spans receive side railings and spaced emissive marker lights along the sampled water-crossing points.
+- Harbor prototypes receive a small waterfront promenade with benches, bollards and signage.
+- No structural simulation, collision-tested bridge access, pedestrian navigation, or dynamic promenade lighting is implied.
