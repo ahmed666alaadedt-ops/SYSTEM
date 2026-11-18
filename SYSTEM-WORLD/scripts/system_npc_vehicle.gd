@@ -19,6 +19,17 @@ var is_stolen := false
 var is_driving := true
 var stop_timer := 0.0
 var vehicle_style := 0
+var wheel_nodes: Array[MeshInstance3D] = []
+
+func _ready() -> void:
+	_collect_wheels(self)
+
+func _collect_wheels(parent: Node) -> void:
+	for child in parent.get_children():
+		if child is MeshInstance3D and str(child.name).begins_with("NPCWheel"):
+			wheel_nodes.append(child as MeshInstance3D)
+		if child.get_child_count() > 0:
+			_collect_wheels(child)
 
 func configure(
 	p_vehicle_id: String,
@@ -73,6 +84,9 @@ func _process(delta: float) -> void:
 	var speed := stolen_speed if is_stolen else cruise_speed
 	global_position += direction.normalized() * speed * delta
 	look_at(Vector3(target.x, global_position.y, target.z), Vector3.UP)
+	for wheel in wheel_nodes:
+		if is_instance_valid(wheel):
+			wheel.rotation.x += speed * delta / 0.34
 
 func _get_terrain() -> Node:
 	if not is_instance_valid(crime_manager):
@@ -90,6 +104,9 @@ func set_stolen_visual() -> void:
 	is_stolen = true
 	stop_timer = 0.0
 	set_meta("system_interaction_prompt", "مركبة مسروقة — الشرطة قد تلاحقك")
+	var driver := get_node_or_null("CivilianDriverVisual") as Node3D
+	if driver != null:
+		driver.visible = false
 	var body := get_node_or_null("VehicleBody") as MeshInstance3D
 	if body != null:
 		var material := StandardMaterial3D.new()
