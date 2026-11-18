@@ -82,6 +82,27 @@ defines a version-1 JSON envelope for the future native adapter:
 This is a protocol definition only. The native Godot host plugin and live
 message transport have not been implemented or tested yet.
 
+## Engine-side native adapter contract
+
+`SYSTEM-WORLD/scripts/system_android_bridge.gd` now contains the receiving and
+sending adapter for the version-1 JSON envelope. When the Android plugin is
+eventually added, it must register an Engine singleton named
+`SYSTEMAndroidHost` with:
+
+- Signal `message_from_android(raw_json: String)`.
+- Method `send_to_android(raw_json: String)`.
+
+Allowed Android-to-Godot messages are `open_world` and `player_context`.
+Allowed Godot-to-Android messages are `bridge_ready`, `world_state` and
+`world_entry_result`; the current engine bridge sends the latter two. Every
+envelope uses `version: 1`, a `type`, and a Dictionary `payload`.
+
+The GDScript adapter validates the version, message direction/type, JSON
+shape and 16 KiB limit. Player context is explicitly marked untrusted. It
+does not authenticate users or authorize missions, teams, rewards, moderator
+actions or game-server events. The native singleton is not present yet, so
+`transport_connected` remains false until a compatible plugin is installed.
+
 ## Native Android work still required
 
 The following is **not implemented yet**:
