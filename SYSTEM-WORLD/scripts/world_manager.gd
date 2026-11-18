@@ -10,6 +10,7 @@ const HistoricalWorldManagerScript = preload("res://scripts/historical_world_man
 const FantasyWorldManagerScript = preload("res://scripts/fantasy_world_manager.gd")
 const ModernWorldDiscoveryManagerScript = preload("res://scripts/modern_world_discovery_manager.gd")
 const ModernContinentManagerScript = preload("res://scripts/modern_continent_manager.gd")
+const UndergroundHeritageManagerScript = preload("res://scripts/underground_heritage_manager.gd")
 
 signal world_changed(world_id: int)
 
@@ -202,6 +203,10 @@ func _create_modern_city() -> void:
 	var continent := ModernContinentManagerScript.new()
 	continent.name = "ModernContinent"
 	root.add_child(continent)
+
+	var underground_heritage := UndergroundHeritageManagerScript.new()
+	underground_heritage.name = "UndergroundHeritageManager"
+	root.add_child(underground_heritage)
 
 	_create_road(root)
 	_create_sidewalks(root)
