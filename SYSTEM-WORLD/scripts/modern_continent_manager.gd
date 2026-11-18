@@ -102,7 +102,8 @@ func _land_base_height(x: float, z: float) -> float:
 	# A low basin through the central region creates a broad valley around the starting area.
 	var central_basin := _gaussian_peak(x, z, Vector2(0.0, 0.0), 390.0, 280.0, -7.0)
 	var river_carving := _river_channel_depth(x, z)
-	return broad_hills + rolling_detail + mountain_belts + central_basin - river_carving
+	var lake_basin := _lake_basin_depth(x, z)
+	return broad_hills + rolling_detail + mountain_belts + central_basin - river_carving - lake_basin
 
 
 func _get_height(x: float, z: float) -> float:
@@ -366,6 +367,22 @@ func _distance_to_segment(point: Vector2, start: Vector2, finish: Vector2) -> fl
 	return point.distance_to(start + segment * t)
 
 
+func _lake_basin_depth(x: float, z: float) -> float:
+	var depth := 0.0
+	var lake_centers := [
+		{"center": Vector2(250.0, 165.0), "radius_x": 44.0, "radius_z": 32.0, "depth": 9.0},
+		{"center": Vector2(-430.0, -70.0), "radius_x": 36.0, "radius_z": 27.0, "depth": 7.0}
+	]
+	for lake in lake_centers:
+		var center: Vector2 = lake["center"]
+		var nx := (x - center.x) / float(lake["radius_x"])
+		var nz := (z - center.y) / float(lake["radius_z"])
+		var distance_squared := nx * nx + nz * nz
+		if distance_squared < 1.0:
+			depth = maxf(depth, float(lake["depth"]) * exp(-distance_squared * 1.65))
+	return depth
+
+
 func _river_channel_depth(x: float, z: float) -> float:
 	var point := Vector2(x, z)
 	var nearest_distance := 100000.0
@@ -439,7 +456,7 @@ func _build_rivers_and_lakes() -> void:
 		lake_node.mesh = lake_mesh
 		lake_node.position = Vector3(
 			center.x,
-			_get_height(center.x, center.y) + 0.35,
+			_get_height(center.x, center.y) + (6.5 if str(lake["name"]) == "CentralLake" else 5.0),
 			center.y
 		)
 		lake_node.material_override = water_material
