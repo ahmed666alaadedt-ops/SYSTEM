@@ -22,6 +22,7 @@ fun SystemPlayerPartyScreen(account: SystemFirebaseAccount) {
     var invites by remember { mutableStateOf<List<SystemPlayerPartyInvite>>(emptyList()) }
     var missions by remember { mutableStateOf<List<SystemHunterGuildMission>>(emptyList()) }
     var assignments by remember { mutableStateOf<List<SystemHunterGuildMissionAssignment>>(emptyList()) }
+    var missionSessions by remember { mutableStateOf<List<SystemHunterGuildMissionSession>>(emptyList()) }
     var status by remember { mutableStateOf("إدارة فرق اللاعبين الحقيقيين") }
     var busy by remember { mutableStateOf(false) }
 
@@ -44,6 +45,10 @@ fun SystemPlayerPartyScreen(account: SystemFirebaseAccount) {
         repository.loadMyHunterGuildMissionAssignments { result ->
             result.onSuccess { assignments = it }
                 .onFailure { status = it.message ?: "تعذر تحميل سجل تسجيلات المهمات." }
+        }
+        repository.loadMyHunterGuildMissionContributions { result ->
+            result.onSuccess { missionSessions = it }
+                .onFailure { status = it.message ?: "تعذر تحميل مساهمات اللاعبين." }
         }
     }
 
@@ -275,7 +280,57 @@ fun SystemPlayerPartyScreen(account: SystemFirebaseAccount) {
                                 "الأعضاء وقت التسجيل: ${assignment.rosterSnapshot.joinToString { it.second }}",
                                 color = Color.LightGray,
                                 fontSize = 12.sp
-                            )
+                            )                            if (assignment.leaderId == account.userId && assignment.status == "registered") {
+                                Button(
+                                    enabled = !busy,
+                                    onClick = {
+                                        busy = true
+                                        repository.startHunterGuildMission(assignment.assignmentId) { result ->
+                                            result.onSuccess {
+                                                status = "بدأت جلسة المهمة. بانتظار أحداث موثوقة من خادم اللعبة."
+                                                refresh()
+                                            }.onFailure {
+                                                status = it.message ?: "تعذر بدء المهمة."
+                                            }
+                                            busy = false
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) { Text("بدء المهمة مع الفريق") }
+                            }
+                        }
+                    }
+                }
+            }
+            Text("مساهمات اللاعبين الموثّقة", color = Color(0xFFFFC857), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Text(
+                "تُحتسب النقاط من أحداث يرسلها خادم اللعبة الموثوق فقط. لا يستطيع تطبيق اللاعب إرسال ضرر أو نقاط لنفسه.",
+                color = Color.LightGray,
+                fontSize = 12.sp
+            )
+            if (missionSessions.isEmpty()) {
+                Text("لا توجد جلسات بدأت أو مساهمات موثّقة بعد.", color = Color.LightGray, fontSize = 13.sp)
+            } else {
+                missionSessions.forEach { session ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF18253A)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(session.missionTitle, color = Color.White, fontWeight = FontWeight.Bold)
+                            Text("الفريق: ${session.partyName} • الأحداث الموثّقة: ${session.verifiedEventCount}", color = Color(0xFF55DDF0), fontSize = 12.sp)
+                            if (session.contributions.isEmpty()) {
+                                Text("بانتظار أول حدث موثّق من خادم اللعبة.", color = Color.LightGray, fontSize = 12.sp)
+                            } else {
+                                session.contributions.sortedByDescending { it.totalPoints }.forEach { contribution ->
+                                    Text(
+                                        "${contribution.displayName}: ${contribution.totalPoints} نقطة • ${contribution.eventCounts.values.sum()} أحداث",
+                                        color = Color.LightGray,
+                                        fontSize = 12.sp
+                                    )
+                                }
+                            }
                         }
                     }
                 }
