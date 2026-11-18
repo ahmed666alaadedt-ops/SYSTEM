@@ -63,6 +63,7 @@ func _ready() -> void:
 
 	create_ground()
 	create_player()
+	register_modern_world_map_locations()
 	create_player_progression()
 	create_mission_reward_manager()
 
@@ -217,6 +218,21 @@ func create_ai_npc_society_manager() -> void:
 	ai_npc_society_manager = AINPCSocietyManagerScript.new()
 	ai_npc_society_manager.name = "AINPCSocietyManager"
 	add_child(ai_npc_society_manager)
+
+
+func register_modern_world_map_locations() -> void:
+	if world_map_manager == null or world_manager == null:
+		return
+	var modern_root := world_manager.get_world_root(WorldManagerScript.WorldID.REALISTIC)
+	if modern_root == null:
+		return
+	var region_manager := modern_root.get_node_or_null("ModernWorldRegionManager")
+	if region_manager == null:
+		return
+	if region_manager.has_method("register_map_locations"):
+		region_manager.call("register_map_locations", world_map_manager, str(WorldManagerScript.WorldID.REALISTIC))
+	if region_manager.has_method("discover_starting_city"):
+		region_manager.call("discover_starting_city", world_map_manager, str(WorldManagerScript.WorldID.REALISTIC))
 
 
 func create_world_map_manager() -> void:
