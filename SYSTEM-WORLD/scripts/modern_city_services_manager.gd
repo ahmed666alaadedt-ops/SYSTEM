@@ -83,10 +83,13 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 	roof.material_override = roof_material
 	building.add_child(roof)
 
-	for floor_index in range(maxi(2, int(height / 4.0))):
-		var y := 2.0 + float(floor_index) * 3.6
-		for column in range(3):
-			var x := -5.0 + float(column) * 5.0
+	# Keep facade detail counts bounded for Android: three visible window bands,
+	# with only two windows per band on each procedural service building.
+	var visible_window_bands := 3 if height > 15.0 else 2
+	for floor_index in range(visible_window_bands):
+		var y := 2.0 + float(floor_index) * 4.2
+		for column in range(2):
+			var x := -3.2 + float(column) * 6.4
 			var window := MeshInstance3D.new()
 			var window_mesh := BoxMesh.new()
 			window_mesh.size = Vector3(2.0, 1.55, 0.12)
