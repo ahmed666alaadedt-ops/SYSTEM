@@ -111,7 +111,11 @@ func _build_biome_zones() -> void:
 					rock_transforms.append(_rock_transform(point, ground_y))
 				else:
 					shrub_transforms.append(_shrub_transform(point, ground_y))
-		_add_multimesh(zone_root, "TreeTrunks", CylinderMesh.new(), trunk_material, tree_transforms)
+		var trunk_mesh := CylinderMesh.new()
+		trunk_mesh.height = 1.0
+		trunk_mesh.top_radius = 0.42
+		trunk_mesh.bottom_radius = 0.5
+		_add_multimesh(zone_root, "TreeTrunks", trunk_mesh, trunk_material, tree_transforms)
 		_add_multimesh(zone_root, "TreeCanopies", SphereMesh.new(), canopy_materials[1], canopy_transforms)
 		_add_multimesh(zone_root, "LowShrubs", SphereMesh.new(), shrub_material, shrub_transforms)
 		_add_multimesh(zone_root, "NaturalRocks", SphereMesh.new(), rock_material, rock_transforms)
