@@ -6,6 +6,7 @@ class_name UndergroundInteractable
 @export var action_target_path: NodePath = ^"DoorBody"
 @export var puzzle_controller_path: NodePath = ^"../PuzzleController"
 @export var rune_symbol: String = "river"
+@export_range(1, 500, 1) var discovery_xp: int = 35
 
 var _used := false
 var _opened := false
@@ -52,8 +53,7 @@ func _claim_discovery() -> void:
 
 	_used = true
 	set_meta("system_interaction_prompt", "تم اكتشاف هذا الأثر")
-	var reward_xp := 35 if action_type == "relic" else 50
-	_grant_exploration_xp(reward_xp, "Underground discovery: " + name)
+	_grant_exploration_xp(discovery_xp, "Underground discovery: " + name)
 	print("SYSTEM underground discovery claimed: ", name)
 
 
