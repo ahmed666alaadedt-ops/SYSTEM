@@ -72,6 +72,7 @@ func _build_islands() -> void:
 		body.add_child(collision)
 
 		_add_tree_cluster(island_root, dimensions, style)
+		_build_island_harbor(island_root, dimensions, style, str(data["name"]))
 
 
 func _add_ellipsoid(parent: Node3D, node_name: String, local_position: Vector3,
@@ -131,3 +132,112 @@ func _make_material(color: Color, roughness: float) -> StandardMaterial3D:
 	material.albedo_color = color
 	material.roughness = roughness
 	return material
+
+
+## Harbor details for the outer islands.
+func _build_island_harbor(parent: Node3D, dimensions: Vector3, style: int, island_name: String) -> void:
+	var harbor := Node3D.new()
+	harbor.name = "Harbor_" + island_name.replace(" ", "")
+	parent.add_child(harbor)
+
+	var deck_material := _make_material(Color(0.34, 0.25, 0.16), 0.88)
+	var metal_material := _make_material(Color(0.18, 0.23, 0.27), 0.48)
+	var light_material := _make_material(Color(1.0, 0.78, 0.42), 0.35)
+	light_material.emission_enabled = true
+	light_material.emission = Color(1.0, 0.48, 0.12)
+	light_material.emission_energy_multiplier = 1.1
+
+	var pier_length := dimensions.x * 0.92
+	var pier_width := 9.0
+	var pier_y := maxf(dimensions.y * 0.42, 5.0)
+	var pier_center_x := dimensions.x * 0.62 + pier_length * 0.5
+	_add_box(harbor, "MainPierDeck",
+		Vector3(pier_center_x, pier_y, 0.0),
+		Vector3(pier_length, 1.1, pier_width), deck_material)
+
+	for support_index in range(5):
+		var support_x := dimensions.x * 0.68 + float(support_index) * pier_length * 0.20
+		for side in [-1.0, 1.0]:
+			_add_cylinder(harbor, "PierSupport",
+				Vector3(support_x, pier_y * 0.48, side * pier_width * 0.34),
+				0.42, pier_y, metal_material)
+
+	for side in [-1.0, 1.0]:
+		_add_box(harbor, "PierEdgeRail",
+			Vector3(pier_center_x, pier_y + 0.85, side * (pier_width * 0.48)),
+			Vector3(pier_length * 0.92, 0.22, 0.22), metal_material)
+
+	for lamp_index in range(4):
+		var lamp_x := dimensions.x * 0.76 + float(lamp_index) * pier_length * 0.22
+		_add_cylinder(harbor, "HarborLampPole",
+			Vector3(lamp_x, pier_y + 2.0, -pier_width * 0.34),
+			0.12, 4.0, metal_material)
+		_add_box(harbor, "HarborLamp",
+			Vector3(lamp_x, pier_y + 4.0, -pier_width * 0.34),
+			Vector3(0.8, 0.35, 0.8), light_material)
+
+	var boat_x := pier_center_x + pier_length * 0.10
+	var boat := Node3D.new()
+	boat.name = "MooredFerryBoat"
+	boat.position = Vector3(boat_x, 1.1, pier_width * 1.7)
+	harbor.add_child(boat)
+	_add_box(boat, "FerryHull", Vector3.ZERO, Vector3(15.0, 2.2, 5.0), metal_material)
+	_add_box(boat, "FerryCabin", Vector3(-1.0, 2.0, 0.0), Vector3(6.0, 2.6, 4.0),
+		_make_material(Color(0.72, 0.76, 0.77), 0.42))
+	_add_box(boat, "FerryWindowBand", Vector3(-1.0, 2.1, -2.08),
+		Vector3(4.8, 0.8, 0.08), _make_material(Color(0.08, 0.22, 0.30), 0.2))
+
+	if style == 0 or style == 2:
+		_build_lighthouse(harbor, dimensions, pier_y, light_material, metal_material)
+
+	harbor.add_to_group("system_world_landmarks")
+	harbor.set_meta("landmark_name", island_name + " Harbor")
+	harbor.set_meta("landmark_type", "island_harbor")
+	harbor.set_meta("fast_travel_enabled", false)
+
+
+func _build_lighthouse(parent: Node3D, dimensions: Vector3, pier_y: float,
+		light_material: Material, metal_material: Material) -> void:
+	var lighthouse := Node3D.new()
+	lighthouse.name = "CoastalLighthouse"
+	lighthouse.position = Vector3(-dimensions.x * 0.48, dimensions.y * 0.48, -dimensions.z * 0.30)
+	parent.add_child(lighthouse)
+	_add_cylinder(lighthouse, "LighthouseTower", Vector3(0.0, 7.0, 0.0),
+		2.2, 14.0, _make_material(Color(0.82, 0.81, 0.74), 0.82))
+	_add_cylinder(lighthouse, "LighthouseLanternRoom", Vector3(0.0, 14.8, 0.0),
+		2.5, 1.8, metal_material)
+	_add_box(lighthouse, "LighthouseBeacon",
+		Vector3(0.0, 15.0, 0.0), Vector3(2.0, 1.2, 2.0), light_material)
+	_add_cylinder(lighthouse, "LighthouseRoof", Vector3(0.0, 16.2, 0.0),
+		2.8, 1.0, metal_material)
+	lighthouse.add_to_group("system_world_landmarks")
+	lighthouse.set_meta("landmark_name", "Coastal Lighthouse")
+	lighthouse.set_meta("landmark_type", "lighthouse")
+
+
+func _add_box(parent: Node3D, node_name: String, local_position: Vector3,
+		dimensions: Vector3, material: Material) -> void:
+	var instance := MeshInstance3D.new()
+	instance.name = node_name
+	var mesh := BoxMesh.new()
+	mesh.size = dimensions
+	instance.mesh = mesh
+	instance.position = local_position
+	instance.material_override = material
+	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(instance)
+
+
+func _add_cylinder(parent: Node3D, node_name: String, local_position: Vector3,
+		radius: float, height: float, material: Material) -> void:
+	var instance := MeshInstance3D.new()
+	instance.name = node_name
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = radius
+	mesh.bottom_radius = radius * 1.12
+	mesh.height = height
+	instance.mesh = mesh
+	instance.position = local_position
+	instance.material_override = material
+	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(instance)
