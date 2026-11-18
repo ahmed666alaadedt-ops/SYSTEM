@@ -217,7 +217,8 @@ func _create_modern_city() -> void:
 	_create_sidewalks(root)
 	_create_city_buildings(root)
 	_create_city_trees(root)
-	_create_street_lights(root)
+	# City-wide procedural lighting is owned by ModernWorldLightingManager
+	# inside ModernWorldRegionManager; avoid spawning the legacy duplicate set.
 	_create_distant_skyline(root)
 	_create_forest(root)
 	_create_mountains(root)
