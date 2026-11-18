@@ -46,3 +46,15 @@ Status: Implemented in source; deployment and runtime verification pending.
 - Passing a verified party roster into XSX mission dispatch and validating mission contribution/rewards server-side.
 
 Do not treat the party UI alone as proof of live multiplayer. The callable backend and Android client source are present, but they must be built, deployed and tested before live service is claimed.
+
+
+## XSX mission registration integration (2026-11-18)
+
+- `functions/src/hunter_guild_missions.ts` adds trusted mission publication, available mission listing, leader-only party registration, and player assignment listing.
+- `FirebasePlayerPartyRepository.kt` now calls the mission board and registration endpoints.
+- `SystemPlayerPartyScreen.kt` displays open XSX missions and lets the current party leader register an eligible real-player party.
+- Each registration stores a server-generated roster snapshot; later party changes do not modify that snapshot.
+- Mission publication requires a Firebase moderator custom claim. Firestore client writes remain denied.
+- See `XSX_PARTY_MISSION_BACKEND.md` for schema, validation and remaining deployment steps.
+
+Still not implemented: live mission execution in Godot, dispatch to a gate/raid, contribution evidence, mission completion, and rewards. Do not treat registration as mission dispatch or a completed mission.
