@@ -86,6 +86,101 @@ func _ready() -> void:
 	create_interaction_prompt()
 
 	update_camera_mode()
+	connect_android_runtime_bridge()
+
+
+func connect_android_runtime_bridge() -> void:
+	if not is_instance_valid(SYSTEMAndroidBridge):
+		push_warning("SYSTEM: Android runtime bridge autoload is unavailable.")
+		return
+
+	var world_callback := Callable(self, "_on_android_world_entry_requested")
+	if not SYSTEMAndroidBridge.world_entry_requested.is_connected(world_callback):
+		SYSTEMAndroidBridge.world_entry_requested.connect(world_callback)
+
+	if world_manager != null and world_manager.has_signal("world_changed"):
+		var changed_callback := Callable(self, "_on_runtime_world_changed")
+		if not world_manager.world_changed.is_connected(changed_callback):
+			world_manager.world_changed.connect(changed_callback)
+
+	if world_manager != null:
+		_publish_runtime_world_state(world_manager.active_world)
+
+	if SYSTEMAndroidBridge.has_pending_world_request():
+		call_deferred("_consume_pending_android_world_request")
+
+
+func _consume_pending_android_world_request() -> void:
+	if not is_instance_valid(SYSTEMAndroidBridge):
+		return
+	var requested_world := SYSTEMAndroidBridge.consume_pending_world_request()
+	if not requested_world.is_empty():
+		_handle_android_world_entry_request(requested_world)
+
+
+func _on_android_world_entry_requested(world_id: String) -> void:
+	if not is_instance_valid(SYSTEMAndroidBridge):
+		return
+	if SYSTEMAndroidBridge.has_pending_world_request():
+		var pending_world := SYSTEMAndroidBridge.consume_pending_world_request()
+		if not pending_world.is_empty():
+			world_id = pending_world
+	_handle_android_world_entry_request(world_id)
+
+
+func _handle_android_world_entry_request(world_id: String) -> void:
+	# External app launches may start in the modern world only.
+	# Other worlds require the in-world Star Gate flow in Baghdad.
+	if world_id != "modern":
+		SYSTEMAndroidBridge.publish_request_result(
+			world_id,
+			false,
+			"WORLD_ENTRY_REQUIRES_BAGHDAD_STAR_GATE"
+		)
+		return
+
+	if world_manager == null:
+		SYSTEMAndroidBridge.publish_request_result(
+			world_id,
+			false,
+			"WORLD_MANAGER_UNAVAILABLE"
+		)
+		return
+
+	world_manager.switch_world(WorldManagerScript.WorldID.REALISTIC)
+	active_world_root = world_manager.get_active_world()
+	SYSTEMAndroidBridge.publish_request_result(
+		world_id,
+		true,
+		"MODERN_WORLD_READY"
+	)
+
+
+func _on_runtime_world_changed(world_id: int) -> void:
+	active_world_root = world_manager.get_active_world()
+	_publish_runtime_world_state(world_id)
+
+
+func _publish_runtime_world_state(world_id: int) -> void:
+	if not is_instance_valid(SYSTEMAndroidBridge):
+		return
+	if world_manager == null:
+		return
+
+	var world_name := world_manager.get_world_name(world_id)
+	var normalized_id := ""
+	match world_id:
+		WorldManagerScript.WorldID.FANTASY:
+			normalized_id = "fantasy"
+		WorldManagerScript.WorldID.MYTHOLOGY:
+			normalized_id = "historical"
+		WorldManagerScript.WorldID.REALISTIC:
+			normalized_id = "modern"
+		WorldManagerScript.WorldID.GREED_ISLAND:
+			normalized_id = "greed_island"
+
+	if not normalized_id.is_empty():
+		SYSTEMAndroidBridge.publish_world_state(normalized_id, world_name)
 
 
 # --------------------------------------------------
