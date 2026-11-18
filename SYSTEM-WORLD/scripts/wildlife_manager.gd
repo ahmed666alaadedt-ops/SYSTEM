@@ -324,13 +324,26 @@ func _create_animal(
 			dark_material
 		)
 
+	# Expose lightweight habitat data to discovery and ecology systems.
+	animal.add_to_group("system_wildlife")
+	animal.set_meta("wildlife_species", species)
+	animal.set_meta("wildlife_habitat", "woodland_edge" if species != "Rabbit" else "grassland_edge")
+
+	var species_speed := 0.55
+	if species == "Fox":
+		species_speed = 0.78
+	elif species == "Rabbit":
+		species_speed = 0.68
+
 	animals.append({
 		"node": animal,
 		"species": species,
 		"origin": start_position,
 		"direction": Vector3.FORWARD,
-		"speed": 0.45 + randf() * 0.35,
+		"speed": species_speed,
 		"change_timer": randf_range(1.5, 4.0),
+		"activity": "wander",
+		"activity_timer": randf_range(3.0, 7.0),
 		"phase": randf() * TAU
 	})
 
