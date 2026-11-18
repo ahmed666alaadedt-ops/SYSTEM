@@ -66,6 +66,50 @@ func _ready() -> void:
 	print("SYSTEM WORLD: modern continent terrain generated.")
 
 
+func _angular_distance(a: float, b: float) -> float:
+	return absf(atan2(sin(a - b), cos(a - b)))
+
+
+func _coastal_outline_variation(angle: float) -> float:
+	# Positive offsets carve broad bays inward; negative offsets form headlands.
+	# Angles are measured around the normalized continental ellipse.
+	var features := [
+		{"angle": -2.45, "amount": 0.052, "width": 0.24},
+		{"angle": -1.18, "amount": -0.034, "width": 0.19},
+		{"angle": -0.34, "amount": 0.044, "width": 0.22},
+		{"angle": 0.58, "amount": -0.038, "width": 0.18},
+		{"angle": 1.52, "amount": 0.048, "width": 0.25},
+		{"angle": 2.62, "amount": -0.032, "width": 0.20}
+	]
+	var variation := 0.0
+	for feature in features:
+		var distance := _angular_distance(angle, float(feature["angle"]))
+		variation += float(feature["amount"]) * exp(-pow(distance / float(feature["width"]), 2.0))
+	return variation
+
+
+func _coastal_cliff_relief(x: float, z: float) -> float:
+	# Short, discontinuous cliff belts sit inland from selected exposed coasts.
+	# Their gaps preserve low beaches, estuaries and natural access to the sea.
+	var nx := x / CONTINENT_RADIUS_X
+	var nz := z / CONTINENT_RADIUS_Z
+	var radial := sqrt(nx * nx + nz * nz)
+	var angle := atan2(nz, nx)
+	var cliff_sectors := [
+		{"angle": -2.45, "strength": 15.0, "width": 0.16},
+		{"angle": -1.18, "strength": 11.0, "width": 0.13},
+		{"angle": 0.58, "strength": 13.0, "width": 0.15},
+		{"angle": 2.62, "strength": 10.0, "width": 0.14}
+	]
+	var relief := 0.0
+	for sector in cliff_sectors:
+		var angular := _angular_distance(angle, float(sector["angle"]))
+		var along_coast := exp(-pow(angular / float(sector["width"]), 2.0))
+		var inland_shelf := exp(-pow((radial - 0.925) / 0.026, 2.0))
+		relief += float(sector["strength"]) * along_coast * inland_shelf
+	return relief
+
+
 func _continent_radius(x: float, z: float) -> float:
 	var nx := x / CONTINENT_RADIUS_X
 	var nz := z / CONTINENT_RADIUS_Z
@@ -75,7 +119,8 @@ func _continent_radius(x: float, z: float) -> float:
 		+ sin((x + z) * 0.0027) * 0.018
 		+ sin((x - z) * 0.007) * 0.009
 	)
-	return sqrt(nx * nx + nz * nz) + coast_wave
+	var shoreline_angle := atan2(nz, nx)
+	return sqrt(nx * nx + nz * nz) + coast_wave + _coastal_outline_variation(shoreline_angle)
 
 
 func _island_radius(x: float, z: float, center: Vector2, radius_x: float, radius_z: float) -> float:
@@ -189,7 +234,8 @@ func _land_base_height(x: float, z: float) -> float:
 	var tributary_ravines := _ravine_cut(x, z)
 	var river_carving := _river_channel_depth(x, z)
 	var lake_basin := _lake_basin_depth(x, z)
-	return broad_hills + rolling_detail + mountain_belts + regional_ridges + western_tableland + eastern_tableland + southern_valley + northern_pass + dune_relief + central_basin - grand_canyon - eastern_canyon - northern_gorge - tributary_ravines - river_carving - lake_basin
+	var coastal_cliffs := _coastal_cliff_relief(x, z)
+	return broad_hills + rolling_detail + mountain_belts + regional_ridges + western_tableland + eastern_tableland + southern_valley + northern_pass + dune_relief + central_basin + coastal_cliffs - grand_canyon - eastern_canyon - northern_gorge - tributary_ravines - river_carving - lake_basin
 
 
 func _get_height(x: float, z: float) -> float:
