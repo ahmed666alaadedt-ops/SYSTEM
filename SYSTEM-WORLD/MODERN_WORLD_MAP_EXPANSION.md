@@ -102,3 +102,13 @@ This expansion is committed to the repository and wired into `world_manager.gd` 
 - Each civilian vehicle follows a lightweight loop around its city, with individual cruising speeds and short pauses. A theft switches the vehicle to a faster escape state; recovery stops and removes it from the active street scene.
 - A witnessed theft updates the owner's activity, raises the local wanted level, creates a crime report and dispatches a visible police unit to pursue the moving target. Recovery returns the owner's activity to work.
 - This remains an early simulation layer: routes are simple local loops, not lane-aware navigation; vehicle physics, traffic lights, collisions, pedestrian avoidance, player possession/steering, arrests and secure multiplayer crime authority are not yet implemented. These limitations must remain explicit until those systems are built and tested in Godot.
+
+
+## Intercity roads, bridges, rail corridors, ports and race circuits — first visual pass
+
+- A new transport network manager is created by the modern region manager after city anchors and local roads are available.
+- It lays out selected city-to-city highway corridors and parallel rail guide strips using the resolved city positions. Narrow water gaps can receive raised bridge decks and simple support piers; routes with long open-water gaps are skipped rather than creating implausible continent-spanning bridges.
+- Coastal city locations are checked for nearby land-to-water edges and receive a first-pass harbor/dock layout with simple crane structures. These are visual harbor landmarks, not navigable ship systems.
+- Where a complete land loop fits around a city, a motor-racing circuit is generated and registered as a map landmark.
+- Bridge, port and circuit landmarks are added to the modern-world map location registry.
+- Current limits: road and rail meshes are visual only; no drivable road graph, lane navigation, collision-aware traffic, rail vehicles, timetables, ship steering, airport flight routes, passenger boarding, tunnel interiors or race-event logic have been implemented by this pass. These must be built as separate functional systems and verified in Godot before the map is called complete.
