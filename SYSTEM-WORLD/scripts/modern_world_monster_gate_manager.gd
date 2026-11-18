@@ -86,6 +86,9 @@ func _terrain_height(x: float, z: float) -> float:
 
 
 func _create_gate(region_name: String, location: Vector2, elite_event: bool) -> void:
+	if terrain != null and terrain.has_method("is_land_position"):
+		if not bool(terrain.call("is_land_position", location.x, location.y)):
+			return
 	gate_counter += 1
 	var rank_index := rng.randi_range(0, 5) if elite_event else rng.randi_range(0, 3)
 	var rank := GATE_RANKS[rank_index]
