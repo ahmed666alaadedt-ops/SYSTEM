@@ -193,6 +193,13 @@ func _land_base_height(x: float, z: float) -> float:
 		sin(x * 0.018) * sin(z * 0.014) * 1.8
 		+ sin((x - z) * 0.025) * 0.9
 	)
+
+	# Broad low-relief plains soften local hills while preserving major ridges.
+	var central_meadow_mask := exp(-pow((x + 260.0) / 240.0, 2.0) - pow((z + 360.0) / 190.0, 2.0))
+	var southern_prairie_mask := exp(-pow((x - 300.0) / 250.0, 2.0) - pow((z - 500.0) / 190.0, 2.0))
+	var plains_mask := maxf(central_meadow_mask, southern_prairie_mask)
+	var plains_relief := (broad_hills + rolling_detail) * (1.0 - plains_mask * 0.82)
+	plains_relief += sin((x + z) * 0.006) * 1.15 * plains_mask
 	var mountain_belts := 0.0
 	mountain_belts += _gaussian_peak(x, z, Vector2(430.0, -390.0), 230.0, 430.0, 112.0)
 	mountain_belts += _gaussian_peak(x, z, Vector2(-610.0, 260.0), 270.0, 170.0, 76.0)
@@ -235,7 +242,7 @@ func _land_base_height(x: float, z: float) -> float:
 	var river_carving := _river_channel_depth(x, z)
 	var lake_basin := _lake_basin_depth(x, z)
 	var coastal_cliffs := _coastal_cliff_relief(x, z)
-	return broad_hills + rolling_detail + mountain_belts + regional_ridges + western_tableland + eastern_tableland + southern_valley + northern_pass + dune_relief + central_basin + coastal_cliffs - grand_canyon - eastern_canyon - northern_gorge - tributary_ravines - river_carving - lake_basin
+	return plains_relief + mountain_belts + regional_ridges + western_tableland + eastern_tableland + southern_valley + northern_pass + dune_relief + central_basin + coastal_cliffs - grand_canyon - eastern_canyon - northern_gorge - tributary_ravines - river_carving - lake_basin
 
 
 func _get_height(x: float, z: float) -> float:
