@@ -19,6 +19,7 @@ var gate_manager: Node
 var gate_records: Dictionary = {}
 var report_counter := 0
 var player_rank := "F"
+var registered_player_ids: Dictionary = {}
 
 
 func setup(gate_manager_node: Node, monster_manager: Node) -> void:
@@ -91,9 +92,29 @@ func mark_gate_breached(gate_data: Dictionary) -> void:
 	gate_breached_report.emit(record.duplicate(true))
 
 
+func register_player_id(player_id: String) -> bool:
+	if player_id.is_empty() or player_id.begins_with("HNT-") or player_id.begins_with("GST-"):
+		return false
+	registered_player_ids[player_id] = true
+	return true
+
+
+func unregister_player_id(player_id: String) -> void:
+	registered_player_ids.erase(player_id)
+
+
 func assign_team(gate_id: String, member_ids: Array[String]) -> bool:
 	if not gate_records.has(gate_id) or member_ids.is_empty():
 		return false
+	var unique_ids: Dictionary = {}
+	for member_id in member_ids:
+		if member_id.is_empty() or member_id.begins_with("HNT-") or member_id.begins_with("GST-"):
+			return false
+		if not registered_player_ids.has(member_id):
+			return false
+		if unique_ids.has(member_id):
+			return false
+		unique_ids[member_id] = true
 	var record: Dictionary = gate_records[gate_id]
 	record["assigned_team"] = member_ids.duplicate()
 	record["status"] = "team_assembled"
