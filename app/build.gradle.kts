@@ -20,6 +20,11 @@ android {
         versionName = "1.0"
     }
 
+    // Godot AARs can be added after exporting the canonical project.
+    aaptOptions {
+        ignoreAssetsPattern = "!.svn:!.git:!.gitignore:!.ds_store:!*.scc:<dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"
+    }
+
     buildFeatures {
         compose = true
     }
@@ -37,6 +42,8 @@ kotlin {
 }
 
 dependencies {
+    // Optional Godot runtime export; this folder remains empty until AAR export.
+    implementation(fileTree(mapOf("dir" to "libs/godot-runtime", "include" to listOf("*.jar", "*.aar"))))
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))
 
     implementation("androidx.activity:activity-compose:1.10.0")
