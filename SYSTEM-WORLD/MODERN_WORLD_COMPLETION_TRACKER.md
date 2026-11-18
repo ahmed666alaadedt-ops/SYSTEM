@@ -12,6 +12,10 @@ This is the acceptance checklist for the modern-world map. The project must not 
 - [x] Rural village anchors are retained and first-pass access-road meshes are generated when a continuous all-land route to a city is found.
 - [x] Every resolved district receives batched visual road-grid, sidewalk, and pedestrian-crossing meshes.
 - [x] Land-valid city race-circuit prototypes receive outer safety-barrier geometry, curb strips, a start/finish gantry, pit-garage block, and grandstand tiers.
+- [x] Airport visual prototypes include passenger halls, terminal wings, apron markings, and control towers.
+- [x] Rail visual prototypes include passenger platforms, canopies, concourses, and departure signage.
+- [x] Harbor visual prototypes include cargo warehouses, loading aprons, and freight-container yards.
+- [x] Terrain-checked access-road meshes are attempted for airports, stations, and harbors; water-crossing candidates are skipped.
 - [x] Procedural city street fixtures now cover the generated boulevard and ring-road corridors, with plaza lantern fixtures.
 - [x] A capped pool of 24 shadowless dynamic lights is moved to the nearest street fixtures around the player; fixture meshes use emissive materials.
 - [x] Ambient traffic catalog now contains eight visual archetypes per resolved city, up to 112 vehicles for fourteen cities.
@@ -53,7 +57,7 @@ This is the acceptance checklist for the modern-world map. The project must not 
 
 ## Transport, ports, and waterways
 
-- [ ] Turn airport and rail visual hubs into usable terminals with routes, schedules, boarding, fares, arrivals, and map integration.
+- [ ] Turn airport and rail visual hubs into usable terminals with routes, schedules, boarding, fares, arrivals, and map integration; current terminal geometry is scenery only.
 - [ ] Build ports, docks, marinas, cargo terminals, ferry routes, ship lanes, navigable vessels, and coastal logistics.
 - [ ] Add usable passenger/cargo ships, aircraft and trains only after their controls, collisions, route logic, and save/network behavior are implemented.
 - [ ] Connect bridges and waterways to the actual continent terrain and validate every crossing.
