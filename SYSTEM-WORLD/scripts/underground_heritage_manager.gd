@@ -17,10 +17,12 @@ var _floor: StandardMaterial3D
 var _dark: StandardMaterial3D
 var _gold: StandardMaterial3D
 var _wood: StandardMaterial3D
+var _terrain: Node
 
 
 func _ready() -> void:
 	name = "UndergroundHeritageNetwork"
+	_terrain = get_parent().get_node_or_null("ModernContinent")
 	_create_materials()
 	for site in SITE_DATA:
 		_build_site(site)
@@ -48,7 +50,10 @@ func _build_site(site: Dictionary) -> void:
 	var z := float(site["z"])
 	var entrance := Node3D.new()
 	entrance.name = str(site["name"])
-	entrance.position = Vector3(x, 0.0, z)
+	var surface_y := 0.0
+	if _terrain != null and _terrain.has_method("get_terrain_height"):
+		surface_y = float(_terrain.call("get_terrain_height", x, z))
+	entrance.position = Vector3(x, surface_y, z)
 	add_child(entrance)
 
 	# A visible stone hatch/arch marks the secret entrance at ground level.
