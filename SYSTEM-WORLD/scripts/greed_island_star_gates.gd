@@ -63,15 +63,6 @@ func _process(_delta: float) -> void:
 	print("SYSTEM: Royal star gates initialized.")
 
 
-func _is_admin_test_enabled() -> bool:
-	return (
-		island_manager != null
-		and island_manager.has_method("is_admin_test_environment")
-		and bool(
-			island_manager.call("is_admin_test_environment")
-		)
-	)
-
 
 func _get_world_roots() -> Dictionary:
 	if world_manager == null:
