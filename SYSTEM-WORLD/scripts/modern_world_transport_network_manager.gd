@@ -134,11 +134,82 @@ func _build_corridor_segment(start: Vector3, finish: Vector3, route_index: int, 
 		add_child(rail_mesh)
 	if not bridge_samples.is_empty():
 		_build_bridge_supports(bridge_samples, route_index, segment_index)
+		_build_bridge_railings(bridge_samples, route_index, segment_index)
 		landmark_records.append({
 			"id": "bridge_%02d_%02d" % [route_index, segment_index],
 			"name": "Intercity Bridge %02d-%02d" % [route_index + 1, segment_index + 1],
 			"position": bridge_samples[int(bridge_samples.size() / 2)]
 		})
+
+
+func _build_bridge_railings(samples: Array[Vector3], route_index: int, segment_index: int) -> void:
+	if samples.size() < 2:
+		return
+	var railing_material := _make_material(Color(0.62, 0.68, 0.72), 0.48, 0.68)
+	var lamp_material := _make_material(Color(0.7, 0.86, 1.0), 0.32, 0.0)
+	lamp_material.emission_enabled = true
+	lamp_material.emission = Color(0.24, 0.52, 0.78)
+	lamp_material.emission_energy_multiplier = 1.15
+	for side_sign in [-1.0, 1.0]:
+		var rail_surface := SurfaceTool.new()
+		rail_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+		rail_surface.set_material(railing_material)
+		for index in range(samples.size() - 1):
+			var a := samples[index]
+			var b := samples[index + 1]
+			var direction := Vector2(b.x - a.x, b.z - a.z).normalized()
+			var side := Vector2(-direction.y, direction.x) * side_sign * 5.0
+			var lower_a := Vector3(a.x + side.x, a.y + 0.7, a.z + side.y)
+			var lower_b := Vector3(b.x + side.x, b.y + 0.7, b.z + side.y)
+			var upper_a := lower_a + Vector3(0.0, 1.05, 0.0)
+			var upper_b := lower_b + Vector3(0.0, 1.05, 0.0)
+			rail_surface.add_vertex(lower_a)
+		rail_surface.add_vertex(upper_a)
+		rail_surface.add_vertex(lower_b)
+		rail_surface.add_vertex(lower_b)
+		rail_surface.add_vertex(upper_a)
+		rail_surface.add_vertex(upper_b)
+		rail_surface.generate_normals()
+		var rail_mesh := MeshInstance3D.new()
+		rail_mesh.name = "BridgeRailing_%02d_%02d_%s" % [route_index, segment_index, str(side_sign)]
+		rail_mesh.mesh = rail_surface.commit()
+		rail_mesh.material_override = railing_material
+		add_child(rail_mesh)
+	for index in range(0, samples.size(), 8):
+		var point := samples[index]
+		var lamp := MeshInstance3D.new()
+		lamp.name = "BridgeMarkerLight_%02d_%02d_%02d" % [route_index, segment_index, index]
+		var lamp_mesh := SphereMesh.new()
+		lamp_mesh.radius = 0.22
+		lamp_mesh.height = 0.44
+		lamp.mesh = lamp_mesh
+		lamp.position = point + Vector3(0.0, 2.05, 0.0)
+		lamp.material_override = lamp_material
+		add_child(lamp)
+
+
+func _build_waterfront_promenade(parent: Node3D, outward: Vector2) -> void:
+	var walkway_material := _make_material(Color(0.52, 0.55, 0.54), 0.86, 0.08)
+	var bench_material := _make_material(Color(0.25, 0.19, 0.13), 0.82, 0.0)
+	var bollard_material := _make_material(Color(0.18, 0.22, 0.25), 0.55, 0.48)
+	_add_box(parent, "WaterfrontPromenadeDeck", Vector3(0.0, 0.55, -3.0), Vector3(52.0, 0.35, 5.0), walkway_material)
+	for index in range(6):
+		var x := -22.0 + float(index) * 8.8
+		_add_box(parent, "PromenadeBollard_%02d" % index, Vector3(x, 1.15, 0.2), Vector3(0.35, 1.2, 0.35), bollard_material)
+		if index % 2 == 0:
+			var bench := Node3D.new()
+			bench.name = "PromenadeBench_%02d" % index
+			bench.position = Vector3(x, 0.75, -5.4)
+			parent.add_child(bench)
+			_add_box(bench, "BenchSeat", Vector3.ZERO, Vector3(2.6, 0.22, 0.72), bench_material)
+			_add_box(bench, "BenchBack", Vector3(0.0, 0.65, 0.32), Vector3(2.6, 0.9, 0.18), bench_material)
+	var direction := outward.normalized()
+	var sign_root := Node3D.new()
+	sign_root.name = "HarborWaterfrontSign"
+	sign_root.position = Vector3(-23.0, 0.0, -7.0)
+	parent.add_child(sign_root)
+	_add_box(sign_root, "HarborSignPost", Vector3(0.0, 2.0, 0.0), Vector3(0.22, 4.0, 0.22), bollard_material)
+	_add_box(sign_root, "HarborSignBoard", Vector3(0.0, 4.0, 0.0), Vector3(5.0, 1.1, 0.25), walkway_material)
 
 func _add_ribbon_quad(surface: SurfaceTool, a: Vector2, b: Vector2, side: Vector2, y_a: float, y_b: float, half_width: float, lateral_offset: float) -> void:
 	var center_offset := side * lateral_offset
@@ -377,6 +448,7 @@ func _build_city_ports() -> void:
 		_build_port_cranes(port)
 		_build_port_terminal_facilities(port)
 		var outward := (site - Vector2(anchor.x, anchor.z)).normalized()
+		_build_waterfront_promenade(port, outward)
 		_build_ship_visual(port, outward)
 		_build_access_road(anchor, port.position, "PortAccess_" + city_name.replace(" ", ""), 5.5)
 		landmark_records.append({
