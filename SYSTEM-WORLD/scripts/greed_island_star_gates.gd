@@ -1,6 +1,6 @@
 extends Node
 
-## البوابات النجمية الملكية — وضع اختبار المدير المحلي.
+## البوابات النجمية للعوالم والانتقال إلى جزيرة الطمع.
 ## حماية اللعب الجماعي الحقيقية تتطلب صلاحيات موثوقة من الخادم.
 
 const FANTASY_ID := 0
@@ -54,9 +54,7 @@ func _process(_delta: float) -> void:
 	if world_manager == null or island_manager == null:
 		return
 
-	if not _is_admin_test_enabled():
-		return
-
+	# بوابات اللعب متاحة للاعب العادي؛ وضع الإدارة لا يتحكم بإنشائها.
 	_ensure_destination_worlds()
 	_create_island_gates()
 	_create_return_gates()
@@ -555,7 +553,7 @@ func _has_greed_island_seal() -> bool:
 
 
 func _on_greed_island_entry_entered(body: Node3D) -> void:
-	if transition_locked or not _is_local_admin_player(body):
+	if transition_locked or not _is_local_player(body):
 		return
 	if not greed_island_season_open:
 		print("SYSTEM: Greed Island season is currently closed.")
@@ -583,8 +581,10 @@ func _enter_greed_island() -> void:
 # ADMIN ACCESS AND TRANSITIONS
 # --------------------------------------------------
 
-func _is_local_admin_player(body: Node3D) -> bool:
-	return body is CharacterBody3D and body.name == "Player"
+func _is_local_player(body: Node3D) -> bool:
+	if not body is CharacterBody3D:
+		return false
+	return body.name == "Player" or body.is_in_group("system_player")
 
 
 func _on_island_gate_entered(
@@ -594,7 +594,7 @@ func _on_island_gate_entered(
 	if transition_locked:
 		return
 
-	if not _is_local_admin_player(body):
+	if not _is_local_player(body):
 		return
 
 	var roots := _get_world_roots()
@@ -612,7 +612,7 @@ func _on_island_gate_entered(
 
 
 func _on_return_gate_entered(body: Node3D) -> void:
-	if transition_locked or not _is_local_admin_player(body):
+	if transition_locked or not _is_local_player(body):
 		return
 	if not greed_island_season_open or not _has_greed_island_seal():
 		print("SYSTEM: Greed Island access requires an active season and all three world keys.")
