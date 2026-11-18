@@ -20,6 +20,7 @@ fun SystemPlayerPartyScreen(account: SystemFirebaseAccount) {
     var targetPlayerId by remember { mutableStateOf("") }
     var parties by remember { mutableStateOf<List<SystemPlayerParty>>(emptyList()) }
     var invites by remember { mutableStateOf<List<SystemPlayerPartyInvite>>(emptyList()) }
+    var missions by remember { mutableStateOf<List<SystemHunterGuildMission>>(emptyList()) }
     var status by remember { mutableStateOf("إدارة فرق اللاعبين الحقيقيين") }
     var busy by remember { mutableStateOf(false) }
 
@@ -34,6 +35,10 @@ fun SystemPlayerPartyScreen(account: SystemFirebaseAccount) {
         repository.loadMyInvites { result ->
             result.onSuccess { invites = it }
                 .onFailure { status = it.message ?: "تعذر تحميل الدعوات." }
+        }
+        repository.loadAvailableHunterGuildMissions { result ->
+            result.onSuccess { missions = it }
+                .onFailure { status = it.message ?: "تعذر تحميل مهمات XSX." }
         }
     }
 
@@ -159,6 +164,85 @@ fun SystemPlayerPartyScreen(account: SystemFirebaseAccount) {
                                         }.onFailure { status = it.message ?: "تعذرت مغادرة الفريق." }
                                     }
                                 }) { Text("مغادرة الفريق") }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Text("لوحة مهمات نقابة الصيادين XSX", color = Color(0xFFFFC857), fontSize = 21.sp, fontWeight = FontWeight.Bold)
+            Text(
+                "يسجّل قائد الفريق فريقه الحقيقي فقط. تُحفظ قائمة الأعضاء عند التسجيل ولا يمكن استبدالها من واجهة العميل.",
+                color = Color.LightGray,
+                fontSize = 12.sp
+            )
+            if (missions.isEmpty()) {
+                Text("لا توجد مهمات مفتوحة منشورة حالياً من إدارة XSX.", color = Color.LightGray, fontSize = 13.sp)
+            } else {
+                LazyColumn(
+                    modifier = Modifier.height(330.dp),
+                    verticalArrangement = Arrangement.spacedBy(9.dp)
+                ) {
+                    items(missions, key = { it.missionId }) { mission ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF202B40)),
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+                            Column(
+                                Modifier.fillMaxWidth().padding(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(7.dp)
+                            ) {
+                                Text(mission.title, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                                Text(mission.description, color = Color.LightGray, fontSize = 12.sp)
+                                Text(
+                                    "العالم: ${when (mission.worldId) {
+                                        "modern" -> "العالم الحديث"
+                                        "historical" -> "عالم الحضارات"
+                                        "fantasy" -> "عالم الفانتازيا"
+                                        "greed" -> "جزيرة الطمع"
+                                        else -> mission.worldId
+                                    }}  •  الرتبة: ${mission.rank}",
+                                    color = Color(0xFF55DDF0),
+                                    fontSize = 12.sp
+                                )
+                                Text(
+                                    "حجم الفريق: ${mission.minMembers}-${mission.maxMembers} • الفرق المسجلة: ${mission.activeTeamCount}/${mission.maxTeams}",
+                                    color = Color.LightGray,
+                                    fontSize = 12.sp
+                                )
+                                val eligibleParties = parties.filter {
+                                    it.leaderId == account.userId &&
+                                        it.memberIds.size in mission.minMembers..mission.maxMembers
+                                }
+                                if (eligibleParties.isEmpty()) {
+                                    Text(
+                                        "لا يوجد فريق تقوده ويطابق شروط هذه المهمة. لا تُضاف شخصيات NPC لتعويض النقص.",
+                                        color = Color(0xFFFFC857),
+                                        fontSize = 12.sp
+                                    )
+                                } else {
+                                    eligibleParties.forEach { party ->
+                                        Button(
+                                            enabled = !busy,
+                                            onClick = {
+                                                busy = true
+                                                repository.registerPartyForMission(mission.missionId, party.partyId) { result ->
+                                                    result.onSuccess {
+                                                        status = "تم تسجيل فريق ${party.name} في مهمة XSX، وحُفظت قائمة أعضائه."
+                                                        refresh()
+                                                    }.onFailure {
+                                                        status = it.message ?: "تعذر تسجيل الفريق في المهمة."
+                                                    }
+                                                    busy = false
+                                                }
+                                            },
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text("تسجيل فريق ${party.name}")
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
