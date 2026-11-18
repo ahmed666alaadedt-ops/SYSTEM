@@ -13,8 +13,11 @@ var guild_manager: Node
 func setup(guild_gate_manager: Node) -> void:
 	guild_manager = guild_gate_manager
 	_create_initial_roster()
-	if is_instance_valid(guild_manager) and guild_manager.has_signal("gate_cleared"):
-		guild_manager.connect("gate_cleared", Callable(self, "_on_gate_cleared"))
+	if is_instance_valid(guild_manager):
+		if guild_manager.has_signal("gate_cleared"):
+			guild_manager.connect("gate_cleared", Callable(self, "_on_gate_cleared"))
+		if guild_manager.has_signal("team_dispatched"):
+			guild_manager.connect("team_dispatched", Callable(self, "_on_team_dispatched"))
 	print("SYSTEM: Hunter Guild roster initialized.")
 
 func _create_initial_roster() -> void:
@@ -133,6 +136,7 @@ func _on_gate_cleared(report: Dictionary) -> void:
 		if not members.has(str(member_id)):
 			continue
 		var member: Dictionary = members[str(member_id)]
+		member["available"] = true
 		member["guild_xp"] = int(member.get("guild_xp", 0)) + xp_share
 		member["missions_completed"] = int(member.get("missions_completed", 0)) + 1
 		_check_rank_up(member)
@@ -147,3 +151,10 @@ func _check_rank_up(member: Dictionary) -> void:
 		member["rank"] = RANKS[current_index + 1]
 		member["guild_xp"] = 0
 		member_rank_up.emit(str(member.get("id", "")), str(member["rank"]))
+
+
+func _on_team_dispatched(_gate_id: String, member_ids: Array) -> void:
+	for member_id in member_ids:
+		if members.has(str(member_id)):
+			members[str(member_id)]["available"] = false
+	roster_changed.emit()
