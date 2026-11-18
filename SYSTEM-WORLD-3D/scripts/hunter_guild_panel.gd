@@ -269,7 +269,7 @@ func _show_roster() -> void:
 			str(member.get("name", "-")), str(member.get("rank", "F")),
 			str(member.get("role", "fighter")), str(member.get("guild_xp", 0))
 		])
-	detail_label.text = "\n".join(lines)
+	detail_label.text = "\n".join(PackedStringArray(lines))
 
 
 func _dispatch_selected() -> void:
