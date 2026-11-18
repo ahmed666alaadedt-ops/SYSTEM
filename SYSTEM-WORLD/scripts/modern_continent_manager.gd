@@ -358,7 +358,6 @@ func _build_rivers_and_lakes() -> void:
 				var a := start_2d.lerp(finish_2d, t0)
 				var b := start_2d.lerp(finish_2d, t1)
 				var midpoint := (a + b) * 0.5
-				var direction := (b - a).normalized()
 				var segment_length := a.distance_to(b) + 0.35
 				var river_segment := MeshInstance3D.new()
 				river_segment.name = "River_%02d_Segment_%02d_%02d" % [route_index, point_index, step]
