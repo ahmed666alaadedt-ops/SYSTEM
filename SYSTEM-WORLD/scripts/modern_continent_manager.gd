@@ -52,7 +52,9 @@ func _ready() -> void:
 	name = "ModernContinent"
 	_build_ocean()
 	_build_continent()
+	_build_coastal_beaches()
 	_build_islands()
+	_build_cave_entrances()
 	_build_city_markers()
 	_build_highways()
 	_build_rivers_and_lakes()
@@ -255,6 +257,132 @@ func _make_terrain_material() -> StandardMaterial3D:
 	material.roughness = 0.96
 	material.cull_mode = BaseMaterial3D.CULL_DISABLED
 	return material
+
+
+func _coastline_radius_for_angle(angle: float, target_radius: float) -> float:
+	var direction := Vector2(cos(angle), sin(angle))
+	var low := 0.82
+	var high := 1.16
+	for _iteration in range(14):
+		var middle := (low + high) * 0.5
+		var x := direction.x * CONTINENT_RADIUS_X * middle
+		var z := direction.y * CONTINENT_RADIUS_Z * middle
+		if _continent_radius(x, z) < target_radius:
+			low = middle
+		else:
+			high = middle
+	return (low + high) * 0.5
+
+
+func _build_coastal_beaches() -> void:
+	# A narrow, terrain-following sand ribbon softens the transition between
+	# the continent's grassland and the ocean without adding separate flat land.
+	var beach_material := StandardMaterial3D.new()
+	beach_material.albedo_color = Color(0.72, 0.63, 0.43)
+	beach_material.roughness = 1.0
+	beach_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+
+	var beach_surface := SurfaceTool.new()
+	beach_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	beach_surface.set_material(beach_material)
+	var segments := 128
+	for index in range(segments):
+		var angle_a := TAU * float(index) / float(segments)
+		var angle_b := TAU * float(index + 1) / float(segments)
+		var inner_a := _coastline_radius_for_angle(angle_a, 0.955)
+		var outer_a := _coastline_radius_for_angle(angle_a, 0.992)
+		var inner_b := _coastline_radius_for_angle(angle_b, 0.955)
+		var outer_b := _coastline_radius_for_angle(angle_b, 0.992)
+
+		var dir_a := Vector2(cos(angle_a), sin(angle_a))
+		var dir_b := Vector2(cos(angle_b), sin(angle_b))
+		var a_inner := dir_a * Vector2(CONTINENT_RADIUS_X * inner_a, CONTINENT_RADIUS_Z * inner_a)
+		var a_outer := dir_a * Vector2(CONTINENT_RADIUS_X * outer_a, CONTINENT_RADIUS_Z * outer_a)
+		var b_inner := dir_b * Vector2(CONTINENT_RADIUS_X * inner_b, CONTINENT_RADIUS_Z * inner_b)
+		var b_outer := dir_b * Vector2(CONTINENT_RADIUS_X * outer_b, CONTINENT_RADIUS_Z * outer_b)
+
+		var a_inner_y := maxf(_get_height(a_inner.x, a_inner.y) + 0.16, SEA_LEVEL + 0.18)
+		var a_outer_y := maxf(_get_height(a_outer.x, a_outer.y) + 0.16, SEA_LEVEL + 0.18)
+		var b_inner_y := maxf(_get_height(b_inner.x, b_inner.y) + 0.16, SEA_LEVEL + 0.18)
+		var b_outer_y := maxf(_get_height(b_outer.x, b_outer.y) + 0.16, SEA_LEVEL + 0.18)
+
+		_add_surface_quad(
+			beach_surface,
+			Vector3(a_inner.x, a_inner_y, a_inner.y),
+			Vector3(a_outer.x, a_outer_y, a_outer.y),
+			Vector3(b_inner.x, b_inner_y, b_inner.y),
+			Vector3(b_outer.x, b_outer_y, b_outer.y)
+		)
+
+	beach_surface.generate_normals()
+	var beaches := MeshInstance3D.new()
+	beaches.name = "NaturalCoastlineBeaches"
+	beaches.mesh = beach_surface.commit()
+	beaches.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(beaches)
+
+
+func _build_cave_entrances() -> void:
+	# Initial discoverable cave mouths placed in the mountain belts.
+	var cave_sites := [
+		{"name": "NorthernRidgeCave", "position": Vector2(430.0, -515.0)},
+		{"name": "WesternCliffCave", "position": Vector2(-690.0, 260.0)},
+		{"name": "EasternHighlandCave", "position": Vector2(760.0, 470.0)},
+		{"name": "FrostPassageCave", "position": Vector2(-80.0, -690.0)}
+	]
+	var rock_material := StandardMaterial3D.new()
+	rock_material.albedo_color = Color(0.29, 0.30, 0.29)
+	rock_material.roughness = 0.98
+	var darkness_material := StandardMaterial3D.new()
+	darkness_material.albedo_color = Color(0.012, 0.018, 0.022)
+	darkness_material.roughness = 1.0
+	darkness_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+
+	for cave in cave_sites:
+		var location: Vector2 = cave["position"]
+		if not is_land_position(location.x, location.y):
+			continue
+		var entrance := Node3D.new()
+		entrance.name = str(cave["name"])
+		entrance.position = Vector3(
+			location.x,
+			get_terrain_height(location.x, location.y) + 0.3,
+			location.y
+		)
+		add_child(entrance)
+
+		var opening := MeshInstance3D.new()
+		opening.name = "CaveDarkOpening"
+		var opening_mesh := PlaneMesh.new()
+		opening_mesh.size = Vector2(8.0, 6.0)
+		opening.mesh = opening_mesh
+		opening.rotation_degrees.x = 90.0
+		opening.position = Vector3(0.0, 3.0, -0.35)
+		opening.material_override = darkness_material
+		entrance.add_child(opening)
+
+		for side in [-1.0, 1.0]:
+			var pillar := MeshInstance3D.new()
+			pillar.name = "CaveRockPillar"
+			var pillar_mesh := SphereMesh.new()
+			pillar_mesh.radius = 1.0
+			pillar_mesh.height = 2.0
+			pillar.mesh = pillar_mesh
+			pillar.position = Vector3(side * 4.1, 2.2, 0.0)
+			pillar.scale = Vector3(1.7, 2.7, 1.6)
+			pillar.material_override = rock_material
+			entrance.add_child(pillar)
+
+		var arch := MeshInstance3D.new()
+		arch.name = "CaveRockArch"
+		var arch_mesh := SphereMesh.new()
+		arch_mesh.radius = 1.0
+		arch_mesh.height = 2.0
+		arch.mesh = arch_mesh
+		arch.position = Vector3(0.0, 5.2, 0.0)
+		arch.scale = Vector3(4.5, 1.6, 1.8)
+		arch.material_override = rock_material
+		entrance.add_child(arch)
 
 
 func _build_islands() -> void:
