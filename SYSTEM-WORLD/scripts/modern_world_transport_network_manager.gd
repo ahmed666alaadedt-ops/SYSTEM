@@ -313,16 +313,26 @@ func _build_aircraft_visual(parent: Node3D) -> void:
 	runway_light_material.emission_enabled = true
 	runway_light_material.emission = Color(0.25, 0.65, 1.0)
 	runway_light_material.emission_energy_multiplier = 1.4
+	var light_mesh := SphereMesh.new()
+	light_mesh.radius = 0.18
+	light_mesh.height = 0.36
+	var runway_light_multi := MultiMesh.new()
+	runway_light_multi.transform_format = MultiMesh.TRANSFORM_3D
+	runway_light_multi.mesh = light_mesh
+	var light_transforms: Array[Transform3D] = []
 	for side in [-1.0, 1.0]:
 		for index in range(15):
-			var runway_light := MeshInstance3D.new()
-			var light_mesh := SphereMesh.new()
-			light_mesh.radius = 0.18
-			light_mesh.height = 0.36
-			runway_light.mesh = light_mesh
-			runway_light.position = Vector3(side * 14.5, -0.42, -70.0 + float(index) * 10.0)
-			runway_light.material_override = runway_light_material
-			parent.add_child(runway_light)
+			var light_position := Vector3(side * 14.5, -0.42, -70.0 + float(index) * 10.0)
+			light_transforms.append(Transform3D(Basis(), light_position))
+	runway_light_multi.instance_count = light_transforms.size()
+	for index in range(light_transforms.size()):
+		runway_light_multi.set_instance_transform(index, light_transforms[index])
+	var runway_lights := MultiMeshInstance3D.new()
+	runway_lights.name = "RunwayEdgeLightMultiMesh"
+	runway_lights.multimesh = runway_light_multi
+	runway_lights.material_override = runway_light_material
+	runway_lights.visibility_range_end = 1800.0
+	parent.add_child(runway_lights)
 	_add_box(parent, "AircraftFuselage", Vector3(0.0, 1.7, 0.0), Vector3(3.2, 2.1, 19.0), body_material)
 	_add_box(parent, "AircraftMainWing", Vector3(0.0, 1.2, 0.0), Vector3(25.0, 0.35, 3.6), body_material)
 	_add_box(parent, "AircraftTailWing", Vector3(0.0, 2.5, 7.0), Vector3(9.0, 0.3, 2.1), body_material)
@@ -368,6 +378,7 @@ func _add_box(parent: Node3D, node_name: String, position: Vector3, size: Vector
 	instance.mesh = mesh
 	instance.position = position
 	instance.material_override = material
+	instance.visibility_range_end = 1800.0
 	parent.add_child(instance)
 
 func _build_race_circuits() -> void:
