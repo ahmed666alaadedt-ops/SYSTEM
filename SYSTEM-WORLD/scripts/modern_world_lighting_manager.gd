@@ -72,6 +72,39 @@ func _build_city_fixture_network() -> void:
 		_add_corridor_lights(city_name, Vector3(anchor.x, anchor.y, anchor.z + 145.0), Vector2(145.0, 0.0), SECONDARY_ROAD_SPACING, 8.0)
 
 		_add_plaza_lanterns(city_name, anchor)
+		_add_district_and_transport_lights(city_name, anchor)
+
+
+func _add_district_and_transport_lights(city_name: String, anchor: Vector3) -> void:
+	# District-scale pedestrian lighting: fixtures are placed at the edges of
+	# each generated district block, not only on the two central boulevards.
+	var district_offsets := [
+		Vector2(0.0, 0.0), Vector2(-78.0, -52.0),
+		Vector2(78.0, -52.0), Vector2(-78.0, 52.0),
+		Vector2(78.0, 52.0), Vector2(0.0, -112.0),
+		Vector2(0.0, 112.0), Vector2(0.0, 170.0)
+	]
+	for district_index in range(district_offsets.size()):
+		var center: Vector2 = Vector2(anchor.x, anchor.z) + district_offsets[district_index]
+		var offset_distance := 58.0 if district_index == 0 else 52.0
+		for corner_x in [-1.0, 1.0]:
+			for corner_z in [-1.0, 1.0]:
+				_add_fixture(
+					city_name + "_District_%02d" % district_index,
+					center + Vector2(corner_x * offset_distance, corner_z * offset_distance),
+					4.8
+				)
+
+	# Airport and rail forecourts receive lower pedestrian-scale fixtures.
+	for hub_offset in [Vector2(205.0, -35.0), Vector2(-205.0, 35.0)]:
+		var hub_center := Vector2(anchor.x, anchor.z) + hub_offset
+		for side_x in [-1.0, 1.0]:
+			for side_z in [-1.0, 1.0]:
+				_add_fixture(
+					city_name + "_TransportForecourt",
+					hub_center + Vector2(side_x * 24.0, side_z * 13.0),
+					5.2
+				)
 
 
 func _add_corridor_lights(city_name: String, start_3d: Vector3, offset: Vector2, spacing: float, road_width: float) -> void:
