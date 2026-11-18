@@ -11,6 +11,7 @@ var _gate: StaticBody3D
 var _gate_visual: MeshInstance3D
 var _gate_collision: CollisionShape3D
 var _solved := false
+var _pressure_reward_claimed := false
 var _pressure_plate_states: Array[bool] = [false, false, false]
 var _pressure_gate_visual: MeshInstance3D
 var _pressure_gate_collision: CollisionShape3D
@@ -41,6 +42,7 @@ func press_rune(symbol: String) -> void:
 		if _gate_collision != null:
 			_gate_collision.disabled = true
 		puzzle_solved.emit()
+		_grant_puzzle_xp(80, "Solved ancient rune sequence")
 		print("SYSTEM underground puzzle solved: hidden vault opened.")
 
 
@@ -61,9 +63,20 @@ func on_pressure_plate_body_entered(body: Node3D, plate_index: int) -> void:
 		return
 
 	_pressure_plate_states[plate_index] = true
-	if _pressure_plate_states.all(func(value: bool) -> bool: return value):
+	if _pressure_plate_states.all(func(value: bool) -> bool: return value) and not _pressure_reward_claimed:
+		_pressure_reward_claimed = true
 		if _pressure_gate_visual != null:
 			_pressure_gate_visual.visible = false
 		if _pressure_gate_collision != null:
 			_pressure_gate_collision.disabled = true
+		_grant_puzzle_xp(25, "Opened hidden pressure-plate cache")
 		print("SYSTEM underground: all pressure plates activated; reward cache revealed.")
+
+
+
+func _grant_puzzle_xp(amount: int, reason: String) -> void:
+	var progression := get_tree().root.find_child("PlayerProgression", true, false)
+	if progression == null or not progression.has_method("add_experience"):
+		push_warning("SYSTEM underground: player progression is unavailable; puzzle XP skipped.")
+		return
+	progression.call("add_experience", amount, reason)
