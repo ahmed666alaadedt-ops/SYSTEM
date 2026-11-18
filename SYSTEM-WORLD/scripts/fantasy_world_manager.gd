@@ -8,6 +8,8 @@ class_name FantasyWorldManager
 const WORLD_CENTER := Vector3.ZERO
 const GROUND_SIZE := Vector3(260.0, 2.0, 260.0)
 
+const WorldFragmentInteractableScript = preload("res://scripts/underground_interactable.gd")
+
 const FantasySettlementManagerScript = preload(
 	"res://scripts/fantasy_settlement_manager.gd/fantasy_settlement_manager.gd"
 )
@@ -43,6 +45,7 @@ func _ready() -> void:
 	_create_mountains()
 	_create_ancient_ruins()
 	_create_crystal_valley()
+	_create_fantasy_world_fragments()
 	_create_magic_gate()
 	_create_environment_lighting()
 
@@ -50,6 +53,49 @@ func _ready() -> void:
 	call_deferred("_initialize_fantasy_settlements")
 
 	print("SYSTEM WORLD: Fantasy World initialized.")
+
+
+func _create_fantasy_world_fragments() -> void:
+	var entries := [
+		{"id": "dragon_star", "name": "نجمة التنين", "position": Vector3(72.0, 5.0, -42.0), "color": Color(0.25, 0.55, 1.0)},
+		{"id": "moon_diamond", "name": "ماسة القمر", "position": Vector3(55.0, 3.0, 72.0), "color": Color(0.65, 0.82, 1.0)},
+		{"id": "ancient_mana_core", "name": "قلب المانا القديم", "position": Vector3(-65.0, 4.0, 68.0), "color": Color(0.62, 0.28, 1.0)}
+	]
+	for entry in entries:
+		var item := Node3D.new()
+		item.name = "FantasyKey_" + str(entry["id"])
+		item.position = entry["position"]
+		add_child(item)
+		var visual := MeshInstance3D.new()
+		visual.name = "FantasyStarDiamondVisual"
+		var mesh := PrismMesh.new()
+		mesh.size = Vector3(1.0, 1.8, 0.7)
+		visual.mesh = mesh
+		var material := StandardMaterial3D.new()
+		material.albedo_color = entry["color"]
+		material.metallic = 0.35
+		material.roughness = 0.18
+		material.emission_enabled = true
+		material.emission = entry["color"]
+		material.emission_energy_multiplier = 1.8
+		visual.material_override = material
+		item.add_child(visual)
+		var endpoint: Node3D = WorldFragmentInteractableScript.new()
+		endpoint.name = "FantasyKeyInteraction"
+		endpoint.set("action_type", "world_fragment")
+		endpoint.set("world_fragment_world", "fantasy")
+		endpoint.set("world_fragment_id", str(entry["id"]))
+		endpoint.add_to_group("system_interactable")
+		endpoint.set_meta("system_interaction_prompt", "اجمع " + str(entry["name"]))
+		item.add_child(endpoint)
+		var area := Area3D.new()
+		area.name = "FantasyKeyArea"
+		var collision := CollisionShape3D.new()
+		var sphere := SphereShape3D.new()
+		sphere.radius = 2.5
+		collision.shape = sphere
+		area.add_child(collision)
+		endpoint.add_child(area)
 
 
 # --------------------------------------------------
