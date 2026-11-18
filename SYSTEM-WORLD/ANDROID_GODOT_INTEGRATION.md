@@ -64,6 +64,24 @@ systems, never by an Android client message.
 The contract allows external Android entry into the modern world only.
 Historical, fantasy and Greed Island remain behind Baghdad Star Gate travel.
 
+## Versioned message protocol prepared
+
+`app/src/main/java/com/system/irtqaa/SystemGodotMessageContract.kt`
+defines a version-1 JSON envelope for the future native adapter:
+
+- `open_world`: Android requests entry into the modern starting world.
+- `player_context`: optional minimal account display context; it is not proof
+  of identity and must never authorize rewards, missions, moderation or combat.
+- `bridge_ready`, `world_state`, `world_entry_result`: Godot-to-Android
+  status and navigation responses.
+- The parser rejects unknown protocol versions, unknown message types,
+  malformed JSON and messages larger than 16 KiB.
+- Message direction allowlists are explicit. Payload fields still require
+  validation by the receiving adapter.
+
+This is a protocol definition only. The native Godot host plugin and live
+message transport have not been implemented or tested yet.
+
 ## Native Android work still required
 
 The following is **not implemented yet**:
