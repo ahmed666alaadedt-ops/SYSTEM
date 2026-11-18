@@ -1,4 +1,4 @@
-import { FieldValue, getFirestore } from "firebase-admin/firestore";
+import { FieldValue, getFirestore, type DocumentData } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 
 const db = getFirestore();
@@ -22,7 +22,7 @@ function requiredText(value: unknown, field: string, maxLength: number): string 
   return clean;
 }
 
-function partyPayload(id: string, data: FirebaseFirestore.DocumentData) {
+function partyPayload(id: string, data: DocumentData) {
   return {
     partyId: id,
     name: String(data.name || "فريق اللاعبين"),
