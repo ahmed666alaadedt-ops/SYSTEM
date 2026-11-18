@@ -154,3 +154,10 @@ This expansion is committed to the repository and wired into `world_manager.gd` 
 - Each village searches for the nearest city with a sampled all-land corridor; when a continuous land route is found, a narrow rural access road with center markings is generated.
 - Routes that cross water are skipped rather than bridged with an arbitrary straight line.
 - These roads are visual geometry only. They still need terrain-aware route planning, edge/shoulder treatment, collision, signs, junctions, drainage, lane navigation, traffic integration, and Godot runtime validation.
+
+
+## District street-grid visual pass
+
+- Every resolved city district now receives a first-pass local street grid: four roads in each direction, terrain-sampled road surfaces, raised sidewalk strips on both sides, and zebra-style pedestrian crossing markings at grid intersections.
+- Geometry is batched into a small set of meshes per district rather than creating a separate node for every road segment.
+- These are visual street surfaces only. They do not yet include collision, curb ramps, lane direction graphs, parking rules, traffic-light control, pedestrian navigation, or verified continuity between neighboring district grids.
