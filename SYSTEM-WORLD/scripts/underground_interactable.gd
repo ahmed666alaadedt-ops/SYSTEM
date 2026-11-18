@@ -53,7 +53,10 @@ func _claim_discovery() -> void:
 
 	_used = true
 	set_meta("system_interaction_prompt", "تم اكتشاف هذا الأثر")
-	_grant_exploration_xp(discovery_xp, "Underground discovery: " + name)
+	var reward_xp := discovery_xp
+	if action_type == "strongbox":
+		reward_xp = maxi(reward_xp, 50)
+	_grant_exploration_xp(reward_xp, "Underground discovery: " + name)
 	print("SYSTEM underground discovery claimed: ", name)
 
 
