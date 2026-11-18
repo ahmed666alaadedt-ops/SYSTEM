@@ -196,6 +196,8 @@ func _build_city_ports() -> void:
 			pier.material_override = bridge_material
 			port.add_child(pier)
 		_build_port_cranes(port)
+		var outward := (site - Vector2(anchor.x, anchor.z)).normalized()
+		_build_ship_visual(port, outward)
 		landmark_records.append({
 			"id": "port_" + city_name.to_lower().replace(" ", "_"),
 			"name": city_name + " International Harbor",
@@ -221,6 +223,28 @@ func _find_waterfront(origin: Vector2) -> Vector2:
 		if best != Vector2.INF:
 			break
 	return best
+
+func _build_ship_visual(parent: Node3D, outward: Vector2) -> void:
+	var ship := Node3D.new()
+	ship.name = "HarborPassengerAndCargoShip"
+	ship.position = Vector3(outward.x * 31.0, 0.7, outward.y * 31.0)
+	ship.rotation.y = atan2(-outward.x, -outward.y)
+	parent.add_child(ship)
+	var hull_material := _make_material(Color(0.075, 0.16, 0.22), 0.58, 0.48)
+	var deck_material := _make_material(Color(0.68, 0.69, 0.65), 0.75, 0.12)
+	var container_material := _make_material(Color(0.56, 0.22, 0.13), 0.78, 0.08)
+	_add_box(ship, "ShipHull", Vector3(0.0, 0.0, 0.0), Vector3(9.0, 2.8, 25.0), hull_material)
+	_add_box(ship, "ShipDeck", Vector3(0.0, 1.55, 0.0), Vector3(8.0, 0.35, 22.0), deck_material)
+	_add_box(ship, "ShipBridge", Vector3(0.0, 3.2, -7.0), Vector3(5.0, 3.2, 5.0), deck_material)
+	for row in range(2):
+		for column in range(2):
+			_add_box(
+				ship,
+				"CargoContainer_%02d_%02d" % [row, column],
+				Vector3(-2.0 + float(column) * 4.0, 2.8, 1.5 + float(row) * 5.0),
+				Vector3(3.6, 2.2, 4.6),
+				container_material
+			)
 
 func _build_port_cranes(parent: Node3D) -> void:
 	for index in range(2):
