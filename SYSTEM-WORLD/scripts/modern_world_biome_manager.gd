@@ -24,7 +24,11 @@ const BIOME_ZONES := [
 	{"name": "WesternWoodland", "center": Vector2(-1010.0, -70.0), "radius": 175.0, "kind": "woodland"},
 	{"name": "EasternWoodland", "center": Vector2(500.0, -170.0), "radius": 165.0, "kind": "woodland"},
 	{"name": "SouthernDrylands", "center": Vector2(-610.0, 560.0), "radius": 165.0, "kind": "dry"},
-	{"name": "NorthernHighlands", "center": Vector2(455.0, -525.0), "radius": 190.0, "kind": "alpine"}
+	{"name": "NorthernHighlands", "center": Vector2(455.0, -525.0), "radius": 190.0, "kind": "alpine"},
+	{"name": "NortheasternWoodland", "center": Vector2(1030.0, -610.0), "radius": 155.0, "kind": "woodland"},
+	{"name": "SouthwesternDrylands", "center": Vector2(-1030.0, 690.0), "radius": 145.0, "kind": "dry"},
+	{"name": "CentralWetlands", "center": Vector2(265.0, 390.0), "radius": 125.0, "kind": "wetland"},
+	{"name": "EasternCoastalScrub", "center": Vector2(1190.0, 500.0), "radius": 115.0, "kind": "coastal"}
 ]
 
 var terrain: ModernContinentManager
@@ -106,6 +110,16 @@ func _build_biome_zones() -> void:
 					shrub_transforms.append(_shrub_transform(point, ground_y))
 				else:
 					rock_transforms.append(_rock_transform(point, ground_y))
+			elif kind == "wetland":
+				if rng.randf() < 0.86:
+					shrub_transforms.append(_shrub_transform(point, ground_y))
+				else:
+					rock_transforms.append(_rock_transform(point, ground_y))
+			elif kind == "coastal":
+				if rng.randf() < 0.42:
+					shrub_transforms.append(_shrub_transform(point, ground_y))
+				else:
+					rock_transforms.append(_rock_transform(point, ground_y))
 			else:
 				if rng.randf() < 0.78:
 					rock_transforms.append(_rock_transform(point, ground_y))
@@ -128,6 +142,10 @@ func _is_valid_biome_position(point: Vector2, kind: String) -> bool:
 	if kind == "woodland" and (height < 2.0 or height > 82.0):
 		return false
 	if kind == "dry" and (height < 1.0 or height > 55.0):
+		return false
+	if kind == "wetland" and (height < 0.5 or height > 18.0):
+		return false
+	if kind == "coastal" and (height < 0.5 or height > 24.0):
 		return false
 	if kind == "alpine" and height < 24.0:
 		return false
