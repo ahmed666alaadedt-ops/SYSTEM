@@ -8,6 +8,10 @@ signal gate_reported(report: Dictionary)
 signal team_dispatched(gate_id: String, team: Array)
 signal gate_cleared(report: Dictionary)
 signal gate_breached_report(report: Dictionary)
+signal gate_scan_completed(report: Dictionary)
+signal city_alert_requested(report: Dictionary)
+signal reinforcement_requested(report: Dictionary)
+signal gate_reward_previewed(report: Dictionary)
 
 const RANK_ORDER := ["F", "E", "D", "C", "B", "A", "S", "SS", "SSS", "EX"]
 
@@ -161,3 +165,110 @@ func _risk_score(rank: String) -> int:
 func _recommended_team_size(rank: String) -> int:
 	var index := maxi(0, RANK_ORDER.find(rank))
 	return clampi(3 + index * 2, 3, 20)
+
+
+
+# Scan a nearby gate without exposing its hidden rank before a successful scan.
+func scan_nearby_gate(gate_id: String, scanner_position: Vector3, scan_range: float = 30.0) -> Dictionary:
+	if not gate_records.has(gate_id) or not is_instance_valid(gate_manager):
+		return {}
+	if not gate_manager.has_method("get_gate_information") or not gate_manager.has_method("scan_gate"):
+		return {}
+	var info: Dictionary = gate_manager.call("get_gate_information", gate_id)
+	if info.is_empty():
+		return {}
+	var gate_position: Vector3 = info.get("position", Vector3.ZERO)
+	var distance := scanner_position.distance_to(gate_position)
+	if distance > maxf(1.0, scan_range):
+		return {"success": false, "reason": "out_of_range", "distance": distance}
+	var scan: Dictionary = gate_manager.call("scan_gate", gate_id)
+	if scan.is_empty():
+		return {}
+	var record: Dictionary = gate_records[gate_id]
+	record["last_scan_at"] = Time.get_unix_time_from_system()
+	record["scan_count"] = int(record.get("scan_count", 0)) + 1
+	if bool(scan.get("scan_success", false)):
+		record["verified_rank"] = str(scan.get("scanned_rank", record.get("rank", "F")))
+		record["rank_verified"] = true
+		record["risk_score"] = _risk_score(str(record["verified_rank"]))
+	else:
+		record["rank_verified"] = false
+	var result := record.duplicate(true)
+	result["success"] = bool(scan.get("scan_success", false))
+	result["distance"] = distance
+	result["real_rank_revealed"] = bool(scan.get("real_rank_revealed", false))
+	gate_scan_completed.emit(result)
+	return result
+
+
+# Recalculate threat and request a city warning before a gate breaches.
+func assess_gate_threat(gate_id: String, time_remaining: float) -> Dictionary:
+	if not gate_records.has(gate_id):
+		return {}
+	var record: Dictionary = gate_records[gate_id]
+	var rank := str(record.get("verified_rank", record.get("rank", "F")))
+	var base_risk := _risk_score(rank)
+	var urgency := 0
+	if time_remaining <= 30.0:
+		urgency = 3
+	elif time_remaining <= 90.0:
+		urgency = 2
+	elif time_remaining <= 180.0:
+		urgency = 1
+	var risk := clampi(base_risk + urgency * 15, 0, 100)
+	record["risk_score"] = risk
+	record["time_remaining"] = maxf(0.0, time_remaining)
+	record["threat_level"] = "critical" if risk >= 75 else ("high" if risk >= 50 else ("elevated" if risk >= 25 else "low"))
+	var report := record.duplicate(true)
+	if urgency >= 2:
+		city_alert_requested.emit(report)
+	if urgency >= 3:
+		reinforcement_requested.emit(report)
+	return report
+
+
+func request_reinforcements(gate_id: String, reason: String = "threat_escalation") -> Dictionary:
+	if not gate_records.has(gate_id):
+		return {}
+	var record: Dictionary = gate_records[gate_id]
+	record["reinforcement_requested"] = true
+	record["reinforcement_reason"] = reason
+	record["reinforcement_timestamp"] = Time.get_unix_time_from_system()
+	var report := record.duplicate(true)
+	reinforcement_requested.emit(report)
+	return report
+
+
+# Estimate in-game rewards only; this does not credit a wallet or real money.
+func calculate_clear_reward(gate_id: String, boss_defeated: bool = false) -> Dictionary:
+	if not gate_records.has(gate_id):
+		return {}
+	var record: Dictionary = gate_records[gate_id]
+	var rank := str(record.get("verified_rank", record.get("rank", "F")))
+	var rank_index := maxi(0, RANK_ORDER.find(rank))
+	var guild_xp := 40 + rank_index * 35
+	var credits := 25 + rank_index * 50
+	var reputation := 2 + rank_index * 2
+	if boss_defeated:
+		guild_xp = int(round(guild_xp * 1.5))
+		credits = int(round(credits * 1.5))
+		reputation += 3
+	var reward := {
+		"gate_id": gate_id,
+		"rank": rank,
+		"guild_xp": guild_xp,
+		"credits": credits,
+		"reputation": reputation,
+		"boss_bonus": boss_defeated,
+		"estimated_only": true
+	}
+	record["reward_preview"] = reward.duplicate(true)
+	gate_reward_previewed.emit(reward.duplicate(true))
+	return reward
+
+
+func get_verified_gate_rank(gate_id: String) -> String:
+	if not gate_records.has(gate_id):
+		return ""
+	var record: Dictionary = gate_records[gate_id]
+	return str(record.get("verified_rank", "")) if bool(record.get("rank_verified", false)) else ""
