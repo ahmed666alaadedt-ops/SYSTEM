@@ -2,8 +2,10 @@ extends Node3D
 class_name UndergroundInteractable
 
 ## Small interaction endpoint used by the shared SystemWorldInteractionManager.
-@export_enum("stone_door", "relic", "strongbox", "rune", "greed_fragment") var action_type: String = "stone_door"
+@export_enum("stone_door", "relic", "strongbox", "rune", "greed_fragment", "world_fragment") var action_type: String = "stone_door"
 @export var action_target_path: NodePath = ^"DoorBody"
+@export_enum("modern", "historical", "fantasy") var world_fragment_world: String = "modern"
+@export var world_fragment_id: String = ""
 @export var puzzle_controller_path: NodePath = ^"../PuzzleController"
 @export var rune_symbol: String = "river"
 @export_range(1, 500, 1) var discovery_xp: int = 35
@@ -23,6 +25,8 @@ func system_interact() -> void:
 			_press_rune()
 		"greed_fragment":
 			_claim_greed_fragment()
+		"world_fragment":
+			_claim_world_fragment()
 
 
 func _toggle_stone_door() -> void:
@@ -78,6 +82,22 @@ func _claim_greed_fragment() -> void:
 	_used = true
 	set_meta("system_interaction_prompt", "تم جمع قطعة جزيرة الطمع")
 	print("SYSTEM Greed Island fragment collected: ", greed_fragment_id, " (", result.get("count", 0), "/3)")
+
+
+func _claim_world_fragment() -> void:
+	if _used:
+		return
+	var progression := get_tree().root.find_child("PlayerProgression", true, false)
+	if progression == null or not progression.has_method("collect_world_fragment"):
+		push_warning("SYSTEM: World fragment collection service is unavailable.")
+		return
+	var result: Dictionary = progression.call("collect_world_fragment", world_fragment_world, world_fragment_id)
+	if not bool(result.get("success", false)):
+		set_meta("system_interaction_prompt", "هذه القطعة موجودة في مجموعتك مسبقاً")
+		return
+	_used = true
+	set_meta("system_interaction_prompt", "تم جمع قطعة " + world_fragment_world)
+	print("SYSTEM world fragment collected: ", world_fragment_world, " / ", world_fragment_id, " (", result.get("count", 0), "/3)")
 
 
 func _press_rune() -> void:
