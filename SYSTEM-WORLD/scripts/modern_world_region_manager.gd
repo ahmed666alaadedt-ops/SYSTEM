@@ -6,6 +6,7 @@ const VehicleDealershipManagerScript = preload("res://scripts/system_vehicle_dea
 const ModernWorldLightingManagerScript = preload("res://scripts/modern_world_lighting_manager.gd")
 const ModernWorldAmbienceManagerScript = preload("res://scripts/modern_world_ambience_manager.gd")
 const BaghdadTowerLandmarksManagerScript = preload("res://scripts/baghdad_tower_landmarks_manager.gd")
+const ModernWorldTransportNetworkManagerScript = preload("res://scripts/modern_world_transport_network_manager.gd")
 
 ## طبقة تفاصيل المدن والمناطق الحضرية للعالم الحديث.
 ## تُبنى فوق تضاريس القارة الموجودة ولا تستبدلها أو تغيّر مواقعها المرجعية.
@@ -72,6 +73,7 @@ func _ready() -> void:
 	_resolve_city_anchors()
 	_build_city_districts()
 	_build_city_roads()
+	_create_transport_network()
 	_build_transport_hubs()
 	_build_green_belts()
 	_build_rural_settlements()
@@ -441,6 +443,16 @@ func register_map_locations(map_manager: Node, world_id: String) -> void:
 			Vector3(village_position.x, terrain.get_terrain_height(village_position.x, village_position.y), village_position.y), false
 		)
 
+	var transport_manager := get_node_or_null("ModernWorldTransportNetworkManager")
+	if transport_manager != null and transport_manager.has_method("get_landmark_locations"):
+		for transport_data in transport_manager.call("get_landmark_locations"):
+			map_manager.call(
+				"register_location", world_id,
+				str(transport_data["id"]), "region_transport",
+				str(transport_data["name"]), 6,
+				transport_data["position"], false
+			)
+
 	var tower_manager := get_node_or_null("BaghdadTowerLandmarksManager")
 	if tower_manager != null and tower_manager.has_method("get_tower_positions"):
 		for tower_data in tower_manager.call("get_tower_positions"):
@@ -477,6 +489,12 @@ func get_city_names() -> Array[String]:
 		if city_anchors.has(city_name):
 			result.append(city_name)
 	return result
+
+
+func _create_transport_network() -> void:
+	var transport := ModernWorldTransportNetworkManagerScript.new()
+	transport.name = "ModernWorldTransportNetworkManager"
+	add_child(transport)
 
 
 func _create_city_dealerships() -> void:
