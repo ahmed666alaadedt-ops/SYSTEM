@@ -147,6 +147,15 @@ func _animate_gate_visuals(delta: float) -> void:
 		if core != null:
 			var pulse := 1.0 + sin(float(data["pulse_time"]) * 2.2) * 0.055
 			core.scale = Vector3.ONE * pulse
+		var label = visual.get_node_or_null("GateRankLabel")
+		if label != null:
+			var seconds := int(maxf(0.0, float(data.get("time_remaining", 0.0))))
+			label.text = "SYSTEM GATE\\n%s | %s\\n%02d:%02d" % [
+				str(data.get("displayed_rank", "F")),
+				str(data.get("status", "stable")).to_upper(),
+				seconds / 60,
+				seconds % 60
+			]
 
 
 func _generate_random_rank() -> String:
