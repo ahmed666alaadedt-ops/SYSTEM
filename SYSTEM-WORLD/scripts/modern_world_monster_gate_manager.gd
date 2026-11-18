@@ -52,12 +52,20 @@ var dungeon_exit: Area3D
 var enemies_remaining := 0
 var boss_defeated := false
 var dungeon_xp_awarded := 0
+var gate_event_timer: Timer
 
 
 func _ready() -> void:
 	name = "ModernWorldMonsterGateManager"
 	rng.randomize()
 	call_deferred("_initialize_gate_network")
+	gate_event_timer = Timer.new()
+	gate_event_timer.name = "MonsterGateEventTimer"
+	gate_event_timer.wait_time = 150.0
+	gate_event_timer.one_shot = false
+	add_child(gate_event_timer)
+	gate_event_timer.timeout.connect(_spawn_random_gate_event)
+	gate_event_timer.start()
 
 
 func _initialize_gate_network() -> void:
@@ -69,6 +77,22 @@ func _initialize_gate_network() -> void:
 	_create_city_gate_network()
 	_create_wilderness_gate_network()
 	print("SYSTEM: Monster gate network created across all cities and wilderness regions.")
+
+
+func _spawn_random_gate_event() -> void:
+	if modern_root == null or active_dungeon != null:
+		return
+	var choose_city := rng.randf() < 0.72
+	if choose_city:
+		var city: Dictionary = CITY_SITES[rng.randi_range(0,CITY_SITES.size()-1)]
+		var center: Vector2 = city["position"]
+		var angle := rng.randf_range(0.0,TAU)
+		var distance := rng.randf_range(30.0,72.0)
+		var location := center + Vector2(cos(angle),sin(angle)) * distance
+		_create_gate(str(city["name"]),location,rng.randf() < 0.18)
+	else:
+		var location: Vector2 = WILDERNESS_SITES[rng.randi_range(0,WILDERNESS_SITES.size()-1)]
+		_create_gate("Wilderness",location,rng.randf() < 0.3)
 
 
 func _create_city_gate_network() -> void:
