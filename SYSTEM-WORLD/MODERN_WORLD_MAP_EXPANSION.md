@@ -124,3 +124,10 @@ This expansion is committed to the repository and wired into `world_manager.gd` 
 
 
 - Airport prop sites now include a marked runway with edge lights and a parked passenger-aircraft model. Central rail prop sites include a track bed, twin rails, sleepers and a stationary multi-car train. Harbor sites include a stationary cargo/passenger vessel with containers. These details improve the visible transport hubs but remain non-functional set dressing.
+
+
+## City services and discoverable landmarks — first visual pass
+
+- Each generated city now receives separate hospital, police headquarters, fire/rescue station, hotel, central market and vehicle garage buildings. Buildings have basic facades, roofs, windows, entrances, collision bodies and discoverable entrance interaction areas.
+- Each service entrance is registered in the world map under its city region. The interaction prompt identifies the service, while treatment, police case handling, hotel booking, market transactions and garage service menus remain to be implemented.
+- These buildings are procedural exterior prototypes. Their interiors, staff NPC schedules, service workflows, economic transactions and full accessibility are not complete.
