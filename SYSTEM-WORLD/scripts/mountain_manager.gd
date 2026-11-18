@@ -4,8 +4,8 @@ class_name SystemMountainManager
 
 const MOUNTAIN_COUNT := 5
 const GRID_STEPS := 18
-const MOUNTAIN_WIDTH := 68.0
-const MOUNTAIN_DEPTH := 58.0
+const MOUNTAIN_WIDTH := 150.0
+const MOUNTAIN_DEPTH := 128.0
 
 var rng := RandomNumberGenerator.new()
 var mountain_material: StandardMaterial3D
@@ -24,15 +24,26 @@ func _create_material() -> void:
 	mountain_material.roughness = 1.0
 
 
+func _get_terrain_manager() -> ModernContinentManager:
+	if get_parent() == null:
+		return null
+	return get_parent().get_node_or_null("ModernContinent") as ModernContinentManager
+
+
 func _create_mountain_range() -> void:
-	var positions := [-110.0, -55.0, 0.0, 55.0, 110.0]
+	# These formations sit on the continent's existing mountain belts,
+	# rather than appearing as a disconnected range beside the starting city.
+	var positions := [
+		Vector2(430.0, -390.0),
+		Vector2(520.0, -610.0),
+		Vector2(-610.0, 260.0),
+		Vector2(760.0, 430.0),
+		Vector2(-80.0, -650.0)
+	]
 
 	for index in range(MOUNTAIN_COUNT):
-		_create_mountain(
-			index,
-			positions[index],
-			-160.0 + rng.randf_range(-8.0, 8.0)
-		)
+		var position: Vector2 = positions[index]
+		_create_mountain(index, position.x, position.y)
 
 
 func _create_mountain(index: int, world_x: float, world_z: float) -> void:
@@ -40,6 +51,8 @@ func _create_mountain(index: int, world_x: float, world_z: float) -> void:
 	mountain_body.name = "Mountain_%02d" % index
 	mountain_body.position = Vector3(world_x, 0.0, world_z)
 	add_child(mountain_body)
+
+	var terrain := _get_terrain_manager()
 
 	var surface := SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -68,7 +81,16 @@ func _create_mountain(index: int, world_x: float, world_z: float) -> void:
 				peak_height
 			)
 
-			var vertex := Vector3(local_x, height, local_z)
+			var world_x := world_x + local_x
+			var world_z := world_z + local_z
+			var terrain_height := 0.0
+			if terrain != null:
+				terrain_height = terrain.get_terrain_height(world_x, world_z)
+			var vertex := Vector3(
+				local_x,
+				terrain_height + height,
+				local_z
+			)
 			vertices.append(vertex)
 
 			colors.append(_get_terrain_color(height, peak_height))
@@ -83,6 +105,7 @@ func _create_mountain(index: int, world_x: float, world_z: float) -> void:
 			_add_triangle(surface, vertices, colors, a, c, b)
 			_add_triangle(surface, vertices, colors, b, c, d)
 
+	surface.generate_normals()
 	var mountain_mesh := surface.commit()
 
 	var visual := MeshInstance3D.new()
