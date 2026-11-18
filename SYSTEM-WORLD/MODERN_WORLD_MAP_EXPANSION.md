@@ -250,3 +250,14 @@ This expansion is committed to the repository and wired into `world_manager.gd` 
 - Candidate positions are rejected when they fall in water, near the existing city anchors, near the three river corridors, or inside the two lake buffers. Height bands also filter each biome type.
 - This is scenery dressing only: vegetation has no harvesting, growth, wind animation, individual collision, wildlife ecology, fire simulation, or player interaction. The existing terrain, city coordinates, river/lake network, and transport routes are not changed.
 - The manager has been committed and wired into the modern-world creation order. Godot parser validation, visual review, and Android performance profiling are still required.
+
+
+## Coastal ecology dressing — main-continent shoreline pass
+
+- Added `scripts/modern_world_coastal_detail_manager.gd` and integrated it into modern-world startup after terrain generation.
+- Samples the existing elliptical continent edge at 256 angular positions and searches the terrain height field for nearby low shoreline points.
+- Adds batched coastal rock clusters, driftwood and dune-grass silhouettes; it avoids the established city anchor areas.
+- Uses a fixed seed for repeatable placement and MultiMesh batches to reduce scene-node overhead.
+- The existing coastline, beaches, ocean, islands, ports and city coordinates are not reshaped or moved.
+- This pass is visual scenery only. It does not yet implement tides, swimming, shoreline collision, erosion, harvesting, fishing, dynamic weather interaction, or detailed sea-floor ecology.
+- The script and world-manager integration are committed. Godot parsing, in-engine visual inspection, collision review and mobile performance profiling remain pending.
