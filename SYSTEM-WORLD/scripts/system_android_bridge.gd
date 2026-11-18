@@ -1,27 +1,103 @@
 extends Node
 
-## Stable engine-side boundary for the Android host.
-## A native Godot Android plugin can call receive_android_world_request()
-## and listen to message_to_android after the Godot AAR is integrated.
+## Engine-side adapter for the versioned SYSTEM Android message protocol.
+## The native Android plugin is expected to register the Engine singleton
+## "SYSTEMAndroidHost", expose signal "message_from_android(raw_json)", and
+## expose method "send_to_android(raw_json)". Until then transport stays off.
 
 signal world_entry_requested(world_id: String)
+signal player_context_received(context: Dictionary)
 signal message_to_android(message_type: String, payload: Dictionary)
 signal bridge_status_changed(status: Dictionary)
 
+const PROTOCOL_VERSION := 1
+const NATIVE_SINGLETON_NAME := "SYSTEMAndroidHost"
 const WORLD_IDS := [
 	"fantasy",
 	"historical",
 	"modern",
 	"greed_island"
 ]
+const INBOUND_TYPES := ["open_world", "player_context"]
 
 var _pending_world_id := ""
 var _last_world_id := ""
 var _last_error := ""
+var _native_host: Object
 
 
 func _ready() -> void:
+	_connect_native_transport()
 	_read_startup_arguments()
+
+
+func _connect_native_transport() -> void:
+	_native_host = null
+	if not Engine.has_singleton(NATIVE_SINGLETON_NAME):
+		_publish_status()
+		return
+
+	_native_host = Engine.get_singleton(NATIVE_SINGLETON_NAME)
+	var callback := Callable(self, "receive_android_message")
+	if _native_host.has_signal("message_from_android"):
+		if not _native_host.is_connected("message_from_android", callback):
+			_native_host.connect("message_from_android", callback)
+	_publish_status()
+
+
+## Receives a JSON envelope from the native Android plugin.
+## Account context is display/session context only, never gameplay authority.
+func receive_android_message(raw_message: String) -> bool:
+	if raw_message.is_empty() or raw_message.length() > 16384:
+		_last_error = "MESSAGE_SIZE_INVALID"
+		_publish_status()
+		return false
+
+	var parsed: Variant = JSON.parse_string(raw_message)
+	if not parsed is Dictionary:
+		_last_error = "MESSAGE_JSON_INVALID"
+		_publish_status()
+		return false
+
+	var message: Dictionary = parsed
+	if int(message.get("version", -1)) != PROTOCOL_VERSION:
+		_last_error = "MESSAGE_VERSION_UNSUPPORTED"
+		_publish_status()
+		return false
+
+	var message_type := str(message.get("type", ""))
+	if message_type not in INBOUND_TYPES:
+		_last_error = "MESSAGE_TYPE_NOT_ALLOWED"
+		_publish_status()
+		return false
+
+	var payload: Variant = message.get("payload", {})
+	if not payload is Dictionary:
+		_last_error = "MESSAGE_PAYLOAD_INVALID"
+		_publish_status()
+		return false
+
+	match message_type:
+		"open_world":
+			var world_id := str(payload.get("world_id", ""))
+			return receive_android_world_request(world_id)
+		"player_context":
+			var uid := str(payload.get("uid", "")).strip_edges()
+			var display_name := str(payload.get("display_name", "")).strip_edges()
+			if uid.length() > 128 or display_name.length() > 80:
+				_last_error = "PLAYER_CONTEXT_INVALID"
+				_publish_status()
+				return false
+			player_context_received.emit({
+				"uid": uid,
+				"display_name": display_name,
+				"trusted": false
+			})
+			_last_error = ""
+			_publish_status()
+			return true
+
+	return false
 
 
 func receive_android_world_request(raw_world_id: String) -> bool:
@@ -56,13 +132,12 @@ func publish_world_state(world_id: String, world_name: String) -> void:
 		return
 
 	_last_world_id = normalized_id
-	message_to_android.emit(
-		"world_state",
-		{
-			"world_id": normalized_id,
-			"world_name": world_name
-		}
-	)
+	var payload := {
+		"world_id": normalized_id,
+		"world_name": world_name
+	}
+	message_to_android.emit("world_state", payload)
+	_send_to_android("world_state", payload)
 	_publish_status()
 
 
@@ -71,24 +146,44 @@ func publish_request_result(
 	accepted: bool,
 	reason: String
 ) -> void:
-	message_to_android.emit(
-		"world_entry_result",
-		{
-			"world_id": world_id,
-			"accepted": accepted,
-			"reason": reason
-		}
-	)
+	var payload := {
+		"world_id": world_id,
+		"accepted": accepted,
+		"reason": reason
+	}
+	message_to_android.emit("world_entry_result", payload)
+	_send_to_android("world_entry_result", payload)
 
 
 func get_bridge_status() -> Dictionary:
+	var connected := (
+		is_instance_valid(_native_host)
+		and _native_host.has_method("send_to_android")
+		and _native_host.has_signal("message_from_android")
+	)
 	return {
 		"ready": is_inside_tree(),
 		"pending_world_id": _pending_world_id,
 		"last_world_id": _last_world_id,
 		"last_error": _last_error,
-		"transport_connected": false
+		"transport_connected": connected
 	}
+
+
+func _send_to_android(message_type: String, payload: Dictionary) -> void:
+	if not is_instance_valid(_native_host):
+		return
+	if not _native_host.has_method("send_to_android"):
+		return
+
+	var envelope := {
+		"version": PROTOCOL_VERSION,
+		"type": message_type,
+		"payload": payload
+	}
+	var raw_message := JSON.stringify(envelope)
+	if raw_message.length() <= 16384:
+		_native_host.call("send_to_android", raw_message)
 
 
 func _normalize_world_id(raw_world_id: String) -> String:
