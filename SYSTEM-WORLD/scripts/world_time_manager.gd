@@ -115,6 +115,7 @@ func setup(target_world: Node3D) -> bool:
 	_create_world_night_lights()
 	_setup_sky_weather_manager()
 	_update_clock()
+	_sync_wildlife_weather()
 
 	print("SYSTEM Time Manager: active world = ", world_root.name)
 
@@ -446,6 +447,15 @@ func set_weather(weather_name: String) -> void:
 		return
 
 	sky_weather_manager.set_weather(weather_name)
+	_sync_wildlife_weather()
+
+
+func _sync_wildlife_weather() -> void:
+	if not is_instance_valid(world_root):
+		return
+	var wildlife := world_root.get_node_or_null("WildlifeManager")
+	if wildlife != null and wildlife.has_method("set_weather_state"):
+		wildlife.call("set_weather_state", get_current_weather())
 
 
 func get_current_weather() -> String:
