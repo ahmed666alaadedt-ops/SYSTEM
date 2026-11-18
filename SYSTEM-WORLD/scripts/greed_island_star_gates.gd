@@ -12,22 +12,15 @@ const GATE_DATA := [
 	{
 		"id": FANTASY_ID,
 		"name": "FantasyStarGate",
-		"title": "بوابة عالم الخيال",
-		"position": Vector3(-25.0, 0.0, -70.0),
+		"title": "بوابة العالم الخيالي",
+		"position": Vector3(-8.0, 0.0, -2.0),
 		"theme": "fantasy"
-	},
-	{
-		"id": REALISTIC_ID,
-		"name": "RealisticStarGate",
-		"title": "بوابة العالم الواقعي",
-		"position": Vector3(0.0, 0.0, -70.0),
-		"theme": "modern"
 	},
 	{
 		"id": HISTORICAL_ID,
 		"name": "HistoricalStarGate",
 		"title": "بوابة العالم التاريخي",
-		"position": Vector3(25.0, 0.0, -70.0),
+		"position": Vector3(8.0, 0.0, -2.0),
 		"theme": "historical"
 	}
 ]
@@ -246,7 +239,6 @@ func _create_baghdad_star_gate_hub() -> void:
 	# The three world destinations are grouped inside one archaeological complex in Baghdad.
 	var gate_offsets := [
 		Vector3(-8.0, 0.0, -2.0),
-		Vector3(0.0, 0.0, -2.0),
 		Vector3(8.0, 0.0, -2.0)
 	]
 	for index in range(GATE_DATA.size()):
