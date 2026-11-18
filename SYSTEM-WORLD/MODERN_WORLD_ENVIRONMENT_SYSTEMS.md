@@ -15,11 +15,12 @@ This document tracks the living-world layer for the connected modern-world map. 
 - City anchors are resolved against the existing terrain so an anchor requested over water is moved to a nearby land sample when one is found.
 
 ### 2. Street lighting and night illumination
-- Four visual street-lamp posts are placed around each city along the current boulevard axes.
-- Each city receives a plaza-area `OmniLight3D` with zero initial energy and the `system_night_light` group.
-- `scripts/world_time_manager.gd` now collects those grouped lights and drives their energy through its existing day/night cycle.
-- Lamp-head materials are emissive, so the fixtures remain visually readable even when dynamic lighting is reduced.
-- This is a first lighting pass, not a finished physically based city-lighting art pass. Window interiors, shop signs, traffic signals, vehicle light beams, volumetric night atmosphere, and per-district lighting profiles remain future work.
+- The original four-post-per-city pass has been superseded by scripts/modern_world_lighting_manager.gd.
+- The lighting manager procedurally places fixtures along both current boulevard corridors and both ring-road segments for each resolved city, with tighter spacing on main roads and wider spacing on secondary roads. It also adds a ring of plaza lantern fixtures.
+- Fixture geometry uses inexpensive emissive materials. A capped pool of 24 shadowless OmniLight3D lights is repositioned to the nearest fixtures around the player, rather than enabling a dynamic light at every post.
+- Nearby dynamic lights switch on after local sunset and switch off during daylight, using the system clock. The existing world-time manager continues to control the sun, sky, ambient illumination, and weather/daylight cycle.
+- This is a scalable street-corridor lighting foundation, not yet a complete lighting pass for every alley, bridge, tunnel, building interior, shopfront, airport, port, park, and road outside the currently generated city corridors. Those areas still need fixture placement and scene integration.
+- Dynamic illumination has not been visually or performance-tested on Android. A final pass should add baked/static lighting where supported, district-specific profiles, windows, signs, traffic signals, vehicle beams, wet-surface response, and quality tiers.
 
 ### 3. Ambient wind and bird calls
 - New `scripts/modern_world_ambience_manager.gd` generates looping PCM audio streams at runtime.
@@ -28,10 +29,10 @@ This document tracks the living-world layer for the connected modern-world map. 
 - These are procedural placeholder sounds, not recorded bird species or final sound-design assets. Later production should replace or layer them with licensed recordings and location-specific mixes: city traffic beds, river sounds, forest insects, rain on roofs, waves, distant aircraft, and indoor ambience.
 
 ### 4. Ambient city traffic
-- New `scripts/modern_city_traffic_manager.gd` creates two lightweight visual vehicles per city (28 total across the fourteen city anchors).
-- Vehicles have simple body, cabin, wheel, and emissive headlamp meshes and move along the two existing boulevard axes.
-- Their height follows the terrain, and a vehicle is hidden when its current sample falls over water.
-- This is ambient visual traffic only. It does not yet provide vehicle physics, road collision, lane networks, traffic lights, intersections, navigation, parking, pedestrian yielding, drivable player cars, or traffic-law AI.
+- scripts/modern_city_traffic_manager.gd now defines eight visual traffic archetypes per resolved city (sedan, taxi, delivery van, city bus, police, ambulance, utility truck, and sport car), producing up to 112 lightweight ambient vehicles across fourteen cities.
+- Vehicles have procedural body, cabin, wheel, and emissive headlamp meshes and move along the current two boulevard axes. Their height follows terrain and they hide when a sampled position is over water.
+- This is still a visual traffic prototype, not a finished traffic simulation. It has no vehicle physics, road collision, complete lane graph, junction logic, traffic signals, navigation, parking, pedestrian yielding, service dispatch, player ownership, garage, purchase/sale, multiplayer replication, or drivable controls.
+- Vehicle density must later be streamed and capped around the player by device tier and city population; the current prototype does not yet implement distance-based traffic streaming or a server-authoritative multiplayer vehicle service.
 
 ### 5. Existing environment systems retained
 - The project already contains a world clock/day-night manager and a sky/weather/flying manager.
