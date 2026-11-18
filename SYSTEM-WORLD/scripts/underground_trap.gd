@@ -35,6 +35,7 @@ func reset_trap() -> void:
 	_triggered = false
 	for spike in _spike_visuals:
 		spike.visible = false
+		_set_spike_collision(spike, false)
 
 
 
