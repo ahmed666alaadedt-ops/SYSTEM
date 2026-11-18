@@ -260,6 +260,10 @@ func create_interaction_manager() -> void:
 		_on_location_discovered
 	)
 
+	interaction_manager.location_discovered.connect(
+		_on_mission_location_discovered
+	)
+
 	interaction_manager.fast_travel_point_activated.connect(
 		_on_fast_travel_point_activated
 	)
@@ -433,6 +437,20 @@ func _on_location_discovered(
 		world_id,
 		" / ",
 		location_id
+	)
+
+
+## يربط اكتشاف موقع فعلي بهدف الاستكشاف في المهام المقبولة.
+func _on_mission_location_discovered(
+	world_id: String,
+	location_id: String
+) -> void:
+	if not is_instance_valid(mission_reward_manager):
+		return
+
+	mission_reward_manager.record_objective_event(
+		"discover_location",
+		world_id + ":" + location_id
 	)
 
 
