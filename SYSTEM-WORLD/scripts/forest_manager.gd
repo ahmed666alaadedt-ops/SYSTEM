@@ -43,7 +43,10 @@ func _random_forest_position(y_offset: float = 0.0) -> Vector3:
 		if terrain == null:
 			return Vector3(x, y_offset, z)
 		if terrain.is_land_position(x, z):
-			return Vector3(x, terrain.get_terrain_height(x, z) + y_offset, z)
+			var ground_height := terrain.get_terrain_height(x, z)
+			# Keep this temperate forest below the high rocky and snowy belts.
+			if ground_height <= 65.0:
+				return Vector3(x, ground_height + y_offset, z)
 	return Vector3(0.0, y_offset, -480.0)
 
 
