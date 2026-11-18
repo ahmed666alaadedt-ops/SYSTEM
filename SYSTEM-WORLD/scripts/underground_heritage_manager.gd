@@ -69,6 +69,8 @@ func _build_site(site: Dictionary) -> void:
 	entrance.add_child(underground)
 	_build_main_chamber(underground, str(site["kind"]) == "market")
 	_build_side_passage(underground)
+	_build_secret_vault(underground, str(site["kind"]) == "market")
+	_build_torch_lighting(underground)
 	if str(site["kind"]) == "market":
 		_build_market_stalls(underground)
 
@@ -80,7 +82,11 @@ func _build_main_chamber(parent: Node3D, is_market: bool) -> void:
 	_add_box(parent, "CeilingStoneSlab", Vector3(0, 5.5, -17), Vector3(room_width, 0.7, room_depth), _stone, true)
 	_add_box(parent, "LeftBuriedWall", Vector3(-room_width * 0.5, 2.6, -17), Vector3(0.7, 5.2, room_depth), _stone, true)
 	_add_box(parent, "RightBuriedWall", Vector3(room_width * 0.5, 2.6, -17), Vector3(0.7, 5.2, room_depth), _stone, true)
-	_add_box(parent, "FarBuriedWall", Vector3(0, 2.6, -17 - room_depth * 0.5), Vector3(room_width, 5.2, 0.7), _stone, true)
+	# Split rear wall leaves a real opening into the sealed lower passage.
+	var rear_z := -17.0 - room_depth * 0.5
+	var wall_segment_width := (room_width - 5.0) * 0.5
+	_add_box(parent, "FarBuriedWallLeft", Vector3(-(5.0 + wall_segment_width) * 0.5, 2.6, rear_z), Vector3(wall_segment_width, 5.2, 0.7), _stone, true)
+	_add_box(parent, "FarBuriedWallRight", Vector3((5.0 + wall_segment_width) * 0.5, 2.6, rear_z), Vector3(wall_segment_width, 5.2, 0.7), _stone, true)
 	_add_box(parent, "BackDarkPassage", Vector3(0, 2.0, -17 - room_depth * 0.5 + 0.4), Vector3(4.0, 3.5, 0.1), _dark, false)
 
 	for side in [-1.0, 1.0]:
@@ -155,3 +161,76 @@ func _add_box(
 	shape.size = size
 	collision.shape = shape
 	body.add_child(collision)
+
+
+
+func _build_secret_vault(parent: Node3D, is_market: bool) -> void:
+	# A narrow rear corridor physically connects the main chamber to a hidden vault.
+	_add_box(parent, "VaultPassageFloor", Vector3(0, -0.25, -39.0), Vector3(5.0, 0.5, 14.0), _floor, true)
+	_add_box(parent, "VaultPassageLeftWall", Vector3(-2.7, 2.2, -39.0), Vector3(0.5, 4.4, 14.0), _stone, true)
+	_add_box(parent, "VaultPassageRightWall", Vector3(2.7, 2.2, -39.0), Vector3(0.5, 4.4, 14.0), _stone, true)
+	_add_box(parent, "VaultPassageCeiling", Vector3(0, 4.55, -39.0), Vector3(5.8, 0.5, 14.0), _stone, true)
+
+	# The vault is deliberately compact so it can later be populated with real quests and loot.
+	_add_box(parent, "HiddenVaultFloor", Vector3(0, -0.25, -53.0), Vector3(14.0, 0.5, 14.0), _floor, true)
+	_add_box(parent, "HiddenVaultCeiling", Vector3(0, 4.8, -53.0), Vector3(14.0, 0.6, 14.0), _stone, true)
+	_add_box(parent, "HiddenVaultLeftWall", Vector3(-7.0, 2.2, -53.0), Vector3(0.6, 4.4, 14.0), _stone, true)
+	_add_box(parent, "HiddenVaultRightWall", Vector3(7.0, 2.2, -53.0), Vector3(0.6, 4.4, 14.0), _stone, true)
+	_add_box(parent, "HiddenVaultBackWall", Vector3(0, 2.2, -60.0), Vector3(14.0, 4.4, 0.6), _stone, true)
+
+	# Ancient stone gate frame and a visible sealed slab mark the vault's inner chamber.
+	_add_box(parent, "VaultGateLeft", Vector3(-2.9, 2.0, -46.0), Vector3(0.55, 4.0, 0.65), _gold, false)
+	_add_box(parent, "VaultGateRight", Vector3(2.9, 2.0, -46.0), Vector3(0.55, 4.0, 0.65), _gold, false)
+	_add_box(parent, "VaultGateTop", Vector3(0, 4.1, -46.0), Vector3(6.3, 0.55, 0.65), _gold, false)
+
+	if is_market:
+		_add_box(parent, "MerchantHiddenStrongbox", Vector3(0, 0.9, -54.0), Vector3(2.2, 1.5, 1.5), _wood, true)
+		_add_box(parent, "StrongboxGoldBand", Vector3(0, 1.0, -53.2), Vector3(2.28, 0.18, 0.12), _gold, false)
+	else:
+		var relic_pedestal := MeshInstance3D.new()
+		relic_pedestal.name = "AncientRelicPedestal"
+		var pedestal_mesh := CylinderMesh.new()
+		pedestal_mesh.top_radius = 1.0
+		pedestal_mesh.bottom_radius = 1.35
+		pedestal_mesh.height = 1.2
+		relic_pedestal.mesh = pedestal_mesh
+		relic_pedestal.position = Vector3(0, 0.35, -54.0)
+		relic_pedestal.material_override = _stone
+		parent.add_child(relic_pedestal)
+		_add_box(parent, "RelicDisplayBlock", Vector3(0, 1.35, -54.0), Vector3(1.0, 1.0, 1.0), _gold, false)
+
+	# Recesses along the vault walls suggest further sealed branches for later expansion.
+	for side in [-1.0, 1.0]:
+		_add_box(parent, "SealedWallNiche", Vector3(side * 6.55, 1.7, -53.0), Vector3(0.12, 2.2, 3.0), _dark, false)
+
+
+func _build_torch_lighting(parent: Node3D) -> void:
+	var flame_material := StandardMaterial3D.new()
+	flame_material.albedo_color = Color(1.0, 0.48, 0.12)
+	flame_material.emission_enabled = true
+	flame_material.emission = Color(1.0, 0.24, 0.045)
+	flame_material.emission_energy_multiplier = 2.0
+
+	for point in [
+		Vector3(-8.5, 3.2, -10.0),
+		Vector3(8.5, 3.2, -22.0),
+		Vector3(0.0, 3.0, -39.0),
+		Vector3(0.0, 3.0, -55.0)
+	]:
+		var flame := MeshInstance3D.new()
+		flame.name = "AncientTorchFlame"
+		var flame_mesh := SphereMesh.new()
+		flame_mesh.radius = 0.22
+		flame_mesh.height = 0.55
+		flame.mesh = flame_mesh
+		flame.position = point
+		flame.material_override = flame_material
+		parent.add_child(flame)
+
+		var light := OmniLight3D.new()
+		light.name = "AncientTorchLight"
+		light.position = point
+		light.light_color = Color(1.0, 0.55, 0.25)
+		light.light_energy = 0.65
+		light.omni_range = 9.0
+		parent.add_child(light)
