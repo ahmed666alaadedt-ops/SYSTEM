@@ -16,10 +16,10 @@ This document tracks the living-world layer for the connected modern-world map. 
 
 ### 2. Street lighting and night illumination
 - The original four-post-per-city pass has been superseded by scripts/modern_world_lighting_manager.gd.
-- The lighting manager procedurally places fixtures along both current boulevard corridors and both ring-road segments for each resolved city, with tighter spacing on main roads and wider spacing on secondary roads. It also adds a ring of plaza lantern fixtures.
+- The lighting manager procedurally places fixtures along both current boulevard corridors and both ring-road segments for each resolved city, with tighter spacing on main roads and wider spacing on secondary roads. It also adds plaza lanterns, four pedestrian-scale fixtures around each generated district block, and forecourt fixtures around each visual airport and rail hub. The obsolete duplicate streetlight pass in `world_manager.gd` is no longer spawned.
 - Fixture geometry uses inexpensive emissive materials. A capped pool of 24 shadowless OmniLight3D lights is repositioned to the nearest fixtures around the player, rather than enabling a dynamic light at every post.
 - Nearby dynamic lights switch on after local sunset and switch off during daylight, using the system clock. The existing world-time manager continues to control the sun, sky, ambient illumination, and weather/daylight cycle.
-- This is a scalable street-corridor lighting foundation, not yet a complete lighting pass for every alley, bridge, tunnel, building interior, shopfront, airport, port, park, and road outside the currently generated city corridors. Those areas still need fixture placement and scene integration.
+- This is a broader procedural district-and-transport lighting foundation, not yet a complete lighting pass for every alley, bridge, tunnel, building interior, shopfront, port, park, and road outside the currently generated city and district footprints. Those areas still need fixture placement and scene integration.
 - Dynamic illumination has not been visually or performance-tested on Android. A final pass should add baked/static lighting where supported, district-specific profiles, windows, signs, traffic signals, vehicle beams, wet-surface response, and quality tiers.
 
 ### 3. Ambient wind and bird calls
