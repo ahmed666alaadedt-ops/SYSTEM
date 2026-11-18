@@ -3,11 +3,15 @@ extends CanvasLayer
 class_name HunterGuildMenu
 
 signal mission_accepted(mission_id: String)
+signal exam_registration_requested
+signal exam_start_requested
 
 var root_ui: Control
 var guild_panel: PanelContainer
 var mission_list: VBoxContainer
 var status_label: Label
+var exam_register_button: Button
+var exam_start_button: Button
 
 var missions := [
 	{
@@ -85,12 +89,35 @@ func _build_interface() -> void:
 	var separator := HSeparator.new()
 	content.add_child(separator)
 
+	exam_register_button = Button.new()
+	exam_register_button.text = "التسجيل في اختبار الصيادين العالمي"
+	exam_register_button.pressed.connect(func(): exam_registration_requested.emit())
+	content.add_child(exam_register_button)
+
+	exam_start_button = Button.new()
+	exam_start_button.text = "بدء سلسلة الاختبار"
+	exam_start_button.pressed.connect(func(): exam_start_requested.emit())
+	content.add_child(exam_start_button)
+
 	mission_list = VBoxContainer.new()
 	mission_list.add_theme_constant_override("separation", 10)
 	content.add_child(mission_list)
 
 	_build_missions()
 	guild_panel.hide()
+
+
+func set_exam_status(result: Dictionary) -> void:
+	if not bool(result.get("success", false)):
+		status_label.text = "حالة الاختبار: " + str(result.get("reason", "تعذر تنفيذ الطلب"))
+		return
+	if result.has("candidate_number") and result.has("stages"):
+		status_label.text = "رقم المتسابق: %d | مراحل الاختبار: %d" % [int(result["candidate_number"]), int(result["stages"])]
+	elif result.has("stage"):
+		var stage: Dictionary = result["stage"]
+		status_label.text = "بدأ الاختبار: " + str(stage.get("title", ""))
+	else:
+		status_label.text = "تم تحديث حالة اختبار الصيادين"
 
 
 func _build_missions() -> void:
