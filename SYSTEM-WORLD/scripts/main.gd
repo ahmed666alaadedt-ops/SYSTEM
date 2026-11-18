@@ -223,14 +223,14 @@ func create_ai_npc_society_manager() -> void:
 func register_modern_world_map_locations() -> void:
 	if world_map_manager == null or world_manager == null:
 		return
-	var modern_root := world_manager.get_world_root(WorldManagerScript.WorldID.REALISTIC)
+	var modern_root := world_manager.get_world_root(2)
 	if modern_root == null:
 		return
 	var region_manager := modern_root.get_node_or_null("ModernWorldRegionManager")
 	if region_manager == null:
 		return
 	if region_manager.has_method("register_map_locations"):
-		region_manager.call("register_map_locations", world_map_manager, str(WorldManagerScript.WorldID.REALISTIC))
+		region_manager.call("register_map_locations", world_map_manager, "2")
 	if region_manager.has_method("discover_starting_city"):
 		region_manager.call("discover_starting_city", world_map_manager, str(WorldManagerScript.WorldID.REALISTIC))
 
