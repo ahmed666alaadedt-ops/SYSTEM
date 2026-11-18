@@ -96,8 +96,12 @@ func _build_shoreline_details() -> void:
 func _find_shore_position(direction: Vector2) -> Vector2:
 	var best := Vector2.INF
 	var best_height := 100000.0
+	# Follow the same angle-dependent shoreline profile used by the continent
+	# and beach builders, rather than sampling the old unmodified ellipse.
+	var angle := atan2(direction.y, direction.x)
+	var shoreline_radius := terrain._coastline_radius_for_angle(angle, 0.975)
 	for sample in range(28):
-		var radius := 0.88 + float(sample) * 0.0045
+		var radius := shoreline_radius - 0.025 + float(sample) * 0.00185
 		var point := Vector2(
 			direction.x * CONTINENT_RADIUS_X * radius,
 			direction.y * CONTINENT_RADIUS_Z * radius
