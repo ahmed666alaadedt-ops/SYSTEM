@@ -58,7 +58,9 @@ NPCs are not party members, squad members, mission participants, or substitutes.
 - Firestore client rules remain deny-by-default for mission and assignment collections.
 - Mission creation and registration writes occur through Firebase Admin callable functions.
 - The client cannot submit or edit roster snapshots, team counts, contribution scores, completion state, XP, currency, or rewards.
-- Contribution tracking, gameplay-event validation, mission dispatch into Godot, mission completion, and individual reward settlement are deliberately not implemented in this milestone. They require trusted gameplay evidence and anti-cheat validation; client-reported damage or reward values must never be accepted as authoritative.
+- Trusted session lifecycle and contribution ledger are now implemented in source: see `XSX_VERIFIED_CONTRIBUTION_SYSTEM.md`.
+- Gameplay-event recording and session completion require a dedicated Firebase identity with the `gameServer: true` custom claim. The Android client is not allowed to submit these events.
+- Godot gameplay dispatch, the authenticated game-server bridge, and reward settlement are still not implemented. Client-reported damage or reward values must never be accepted as authoritative.
 
 ## Deployment and verification still required
 
@@ -67,3 +69,12 @@ NPCs are not party members, squad members, mission participants, or substitutes.
 - Publish an open test mission through a trusted moderator account.
 - Test registration using two or more real player accounts, including rejection of a non-leader, duplicate registration, full mission capacity, invalid roster size, and expired/closed missions.
 - Connect the resulting assignment ID to the canonical Godot mission runtime only after Android/Godot identity bridging is implemented.
+
+
+## Follow-on contribution milestone (2026-11-18)
+
+- `functions/src/hunter_guild_contributions.ts` — leader-started session, trusted game-server event intake, idempotent contribution ledger, and trusted session completion.
+- `functions/src/index.ts` exports the new session and contribution callables.
+- Android repository and player-party screen display session state and verified per-player contribution totals.
+- See `XSX_VERIFIED_CONTRIBUTION_SYSTEM.md` for event types, point weights, server claim requirements and outstanding infrastructure.
+- No XP, currency, loot or cash rewards are issued by this system.
