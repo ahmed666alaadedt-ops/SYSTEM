@@ -72,6 +72,7 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 	structure.mesh = structure_mesh
 	structure.position.y = height * 0.5
 	structure.material_override = facade
+	structure.visibility_range_end = 1100.0
 	body.add_child(structure)
 	var collision := CollisionShape3D.new()
 	var collision_shape := BoxShape3D.new()
@@ -86,6 +87,7 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 	roof.mesh = roof_mesh
 	roof.position.y = height + 0.2
 	roof.material_override = roof_material
+	roof.visibility_range_end = 1100.0
 	building.add_child(roof)
 
 	# Keep facade detail counts bounded for Android: three visible window bands,
@@ -101,6 +103,7 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 			window.mesh = window_mesh
 			window.position = Vector3(x, y, -depth * 0.5 - 0.07)
 			window.material_override = glass
+			window.visibility_range_end = 1100.0
 			building.add_child(window)
 
 	var door := MeshInstance3D.new()
@@ -109,6 +112,7 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 	door.mesh = door_mesh
 	door.position = Vector3(0.0, 1.5, -depth * 0.5 - 0.12)
 	door.material_override = roof_material
+	door.visibility_range_end = 1100.0
 	building.add_child(door)
 
 	var sign := Label3D.new()
