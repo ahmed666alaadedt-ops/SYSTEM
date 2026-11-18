@@ -166,6 +166,15 @@ func create_player_vehicle_manager() -> void:
 	player_vehicle_manager.name = "PlayerVehicleManager"
 	add_child(player_vehicle_manager)
 
+	if world_manager != null and world_manager.has_method("get_active_world"):
+		var active_root := world_manager.get_active_world() as Node3D
+		if active_root != null:
+			var region := active_root.get_node_or_null("ModernWorldRegionManager")
+			if region != null:
+				for dealership in region.get_children():
+					if dealership is SystemVehicleDealershipManager:
+						dealership.setup(player_vehicle_manager)
+
 
 func create_hunter_exam_manager() -> void:
 	hunter_exam_manager = HunterExamManagerScript.new()
