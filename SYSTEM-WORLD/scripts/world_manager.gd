@@ -228,17 +228,15 @@ func _create_modern_city() -> void:
 	underground_heritage.name = "UndergroundHeritageManager"
 	root.add_child(underground_heritage)
 
-	_create_road(root)
-	_create_sidewalks(root)
-	_create_city_buildings(root)
-	_create_city_trees(root)
 	# City-wide procedural lighting is owned by ModernWorldLightingManager
 	# inside ModernWorldRegionManager; avoid spawning the legacy duplicate set.
-	_create_distant_skyline(root)
+	# ModernWorldRegionManager owns city districts, streets, hubs and identity landmarks.
+	# Keep the old fixed Baghdad starter-scene road/building/tree/skyline helpers detached.
 	_create_forest(root)
 	# Procedural mountain belts are already sculpted into ModernContinent.
 	# Keep the legacy overlay manager detached to avoid duplicate mountain meshes.
-	_create_waterways(root)
+	# ModernContinent owns the connected rivers, lakes, waterfalls and highways.
+	# Keep the old fixed-position waterways prototype detached to avoid overlap.
 	# Keep the legacy marine test scene detached until its ocean and island
 	# coordinates are aligned with the modern world's shared coastline.
 	_create_modern_discovery_manager(root)
