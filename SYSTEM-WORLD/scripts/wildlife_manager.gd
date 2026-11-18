@@ -388,7 +388,7 @@ func _create_animal(
 	animals.append({
 		"node": animal,
 		"species": species,
-		"origin": start_position,
+		"origin": animal.position,
 		"direction": Vector3.FORWARD,
 		"speed": species_speed,
 		"change_timer": randf_range(1.5, 4.0),
