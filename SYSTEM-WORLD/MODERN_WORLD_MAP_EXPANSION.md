@@ -161,3 +161,10 @@ This expansion is committed to the repository and wired into `world_manager.gd` 
 - Every resolved city district now receives a first-pass local street grid: four roads in each direction, terrain-sampled road surfaces, raised sidewalk strips on both sides, and zebra-style pedestrian crossing markings at grid intersections.
 - Geometry is batched into a small set of meshes per district rather than creating a separate node for every road segment.
 - These are visual street surfaces only. They do not yet include collision, curb ramps, lane direction graphs, parking rules, traffic-light control, pedestrian navigation, or verified continuity between neighboring district grids.
+
+
+## Race circuit facilities — visual prototype
+
+- Each race circuit that passes the all-land terrain check now receives an outer safety-barrier ribbon, red/white-style curb strip, start/finish gantry, pit garage block, and tiered grandstand.
+- These additions make the circuit read as a motorsport venue rather than only a loop of road mesh.
+- They remain scenery: no collision-tested barriers, pit services, race marshal logic, grid slots, timing, checkpoints, AI opponents, rewards, or playable race events are implemented yet.
