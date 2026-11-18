@@ -80,6 +80,7 @@ func _build_site(site: Dictionary) -> void:
 	entrance.add_child(underground)
 	_build_main_chamber(underground, str(site["kind"]) == "market")
 	_build_side_passage(underground)
+	_build_hidden_relic_branch(underground)
 	_build_secret_vault(underground, str(site["kind"]) == "market", str(site["name"]))
 	_build_torch_lighting(underground)
 	if str(site["kind"]) == "market":
@@ -120,6 +121,83 @@ func _build_side_passage(parent: Node3D) -> void:
 	_add_box(parent, "SidePassageRightWall", Vector3(13.0, 1.7, -17.9), Vector3(12.0, 3.8, 0.45), _stone, true)
 	_add_box(parent, "SidePassageEndShadow", Vector3(19.0, 1.6, -20.0), Vector3(0.15, 3.0, 3.8), _dark, false)
 	_build_spike_trap(parent)
+
+
+func _build_hidden_relic_branch(parent: Node3D) -> void:
+	# A narrow continuation beyond the side passage opens into a concealed relic chamber.
+	_add_box(parent, "HiddenBranchFloor", Vector3(23.0, -0.25, -20.0), Vector3(8.0, 0.5, 4.2), _floor, true)
+	_add_box(parent, "HiddenBranchCeiling", Vector3(23.0, 3.8, -20.0), Vector3(8.0, 0.45, 4.8), _stone, true)
+	_add_box(parent, "HiddenBranchLeftWall", Vector3(23.0, 1.7, -22.1), Vector3(8.0, 3.8, 0.45), _stone, true)
+	_add_box(parent, "HiddenBranchRightWall", Vector3(23.0, 1.7, -17.9), Vector3(8.0, 3.8, 0.45), _stone, true)
+
+	_add_box(parent, "SecretRelicChamberFloor", Vector3(34.0, -0.25, -20.0), Vector3(14.0, 0.5, 14.0), _floor, true)
+	_add_box(parent, "SecretRelicChamberCeiling", Vector3(34.0, 4.6, -20.0), Vector3(14.0, 0.5, 14.0), _stone, true)
+	_add_box(parent, "SecretRelicLeftWall", Vector3(27.0, 2.1, -20.0), Vector3(0.6, 4.2, 14.0), _stone, true)
+	_add_box(parent, "SecretRelicRightWall", Vector3(41.0, 2.1, -20.0), Vector3(0.6, 4.2, 14.0), _stone, true)
+	_add_box(parent, "SecretRelicBackWall", Vector3(34.0, 2.1, -27.0), Vector3(14.0, 4.2, 0.6), _stone, true)
+	# Two front wall sections leave a 4.5 m doorway aligned with the branch tunnel.
+	_add_box(parent, "SecretRelicFrontLeft", Vector3(27.0, 2.1, -24.75), Vector3(0.6, 4.2, 4.5), _stone, true)
+	_add_box(parent, "SecretRelicFrontRight", Vector3(27.0, 2.1, -15.25), Vector3(0.6, 4.2, 4.5), _stone, true)
+
+	for index in range(3):
+		var alcove := Node3D.new()
+		alcove.name = "AncientRelicAlcove"
+		alcove.position = Vector3(30.0 + float(index) * 4.0, 0.0, -25.8)
+		parent.add_child(alcove)
+		_add_box(alcove, "AlcoveStoneBase", Vector3(0.0, 0.35, 0.0), Vector3(2.0, 0.7, 1.0), _stone, true)
+		_add_box(alcove, "AlcoveGoldInscription", Vector3(0.0, 1.0, -0.1), Vector3(1.1, 0.7, 0.12), _gold, false)
+
+	var pedestal := MeshInstance3D.new()
+	pedestal.name = "RareRelicPedestal"
+	var pedestal_mesh := CylinderMesh.new()
+	pedestal_mesh.top_radius = 0.85
+	pedestal_mesh.bottom_radius = 1.15
+	pedestal_mesh.height = 1.0
+	pedestal.mesh = pedestal_mesh
+	pedestal.position = Vector3(34.0, 0.25, -20.0)
+	pedestal.material_override = _gold
+	parent.add_child(pedestal)
+
+	var relic_glow := MeshInstance3D.new()
+	relic_glow.name = "RareRelicCrystal"
+	var crystal_mesh := SphereMesh.new()
+	crystal_mesh.radius = 0.48
+	crystal_mesh.height = 1.25
+	relic_glow.mesh = crystal_mesh
+	relic_glow.position = Vector3(34.0, 1.25, -20.0)
+	var crystal_material := StandardMaterial3D.new()
+	crystal_material.albedo_color = Color(0.25, 0.75, 0.9)
+	crystal_material.emission_enabled = true
+	crystal_material.emission = Color(0.08, 0.55, 0.9)
+	crystal_material.emission_energy_multiplier = 1.4
+	relic_glow.material_override = crystal_material
+	parent.add_child(relic_glow)
+
+	var rare_target: Node3D = UndergroundInteractableScript.new()
+	rare_target.name = "RareAncientRelicInteraction"
+	rare_target.set("action_type", "relic")
+	rare_target.set("discovery_xp", 90)
+	rare_target.position = Vector3(34.0, 1.0, -20.0)
+	rare_target.add_to_group("system_interactable")
+	rare_target.set_meta("system_interaction_prompt", "افحص الأثر النادر")
+	parent.add_child(rare_target)
+
+	var relic_area := Area3D.new()
+	relic_area.name = "RareRelicInteractionArea"
+	rare_target.add_child(relic_area)
+	var relic_shape := CollisionShape3D.new()
+	var relic_sphere := SphereShape3D.new()
+	relic_sphere.radius = 2.2
+	relic_shape.shape = relic_sphere
+	relic_area.add_child(relic_shape)
+
+	var relic_light := OmniLight3D.new()
+	relic_light.name = "RareRelicLight"
+	relic_light.position = Vector3(34.0, 2.0, -20.0)
+	relic_light.light_color = Color(0.2, 0.7, 1.0)
+	relic_light.light_energy = 0.8
+	relic_light.omni_range = 7.0
+	parent.add_child(relic_light)
 
 
 func _build_market_stalls(parent: Node3D) -> void:
