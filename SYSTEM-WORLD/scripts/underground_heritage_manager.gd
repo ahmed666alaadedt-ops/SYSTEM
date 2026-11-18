@@ -26,6 +26,7 @@ func _ready() -> void:
 	_create_materials()
 	for site in SITE_DATA:
 		_build_site(site)
+	_build_baghdad_link()
 	print("SYSTEM WORLD: underground heritage passages generated: ", SITE_DATA.size())
 
 
@@ -74,7 +75,7 @@ func _build_site(site: Dictionary) -> void:
 	entrance.add_child(underground)
 	_build_main_chamber(underground, str(site["kind"]) == "market")
 	_build_side_passage(underground)
-	_build_secret_vault(underground, str(site["kind"]) == "market")
+	_build_secret_vault(underground, str(site["kind"]) == "market", str(site["name"]))
 	_build_torch_lighting(underground)
 	if str(site["kind"]) == "market":
 		_build_market_stalls(underground)
@@ -169,7 +170,7 @@ func _add_box(
 
 
 
-func _build_secret_vault(parent: Node3D, is_market: bool) -> void:
+func _build_secret_vault(parent: Node3D, is_market: bool, site_name: String) -> void:
 	# A narrow rear corridor physically connects the main chamber to a hidden vault.
 	_add_box(parent, "VaultPassageFloor", Vector3(0, -0.25, -39.0), Vector3(5.0, 0.5, 14.0), _floor, true)
 	_add_box(parent, "VaultPassageLeftWall", Vector3(-2.7, 2.2, -39.0), Vector3(0.5, 4.4, 14.0), _stone, true)
@@ -179,8 +180,14 @@ func _build_secret_vault(parent: Node3D, is_market: bool) -> void:
 	# The vault is deliberately compact so it can later be populated with real quests and loot.
 	_add_box(parent, "HiddenVaultFloor", Vector3(0, -0.25, -53.0), Vector3(14.0, 0.5, 14.0), _floor, true)
 	_add_box(parent, "HiddenVaultCeiling", Vector3(0, 4.8, -53.0), Vector3(14.0, 0.6, 14.0), _stone, true)
-	_add_box(parent, "HiddenVaultLeftWall", Vector3(-7.0, 2.2, -53.0), Vector3(0.6, 4.4, 14.0), _stone, true)
-	_add_box(parent, "HiddenVaultRightWall", Vector3(7.0, 2.2, -53.0), Vector3(0.6, 4.4, 14.0), _stone, true)
+	if site_name == "BaghdadOldSouk" or site_name == "BaghdadRiverCatacombs":
+		# Openings on the facing sides allow the inter-site tunnel to meet both vaults.
+		for side in [-1.0, 1.0]:
+			for segment_z in [-57.5, -48.5]:
+				_add_box(parent, "LinkedVaultSideWall", Vector3(side * 7.0, 2.2, segment_z), Vector3(0.6, 4.4, 5.0), _stone, true)
+	else:
+		_add_box(parent, "HiddenVaultLeftWall", Vector3(-7.0, 2.2, -53.0), Vector3(0.6, 4.4, 14.0), _stone, true)
+		_add_box(parent, "HiddenVaultRightWall", Vector3(7.0, 2.2, -53.0), Vector3(0.6, 4.4, 14.0), _stone, true)
 	_add_box(parent, "HiddenVaultBackWall", Vector3(0, 2.2, -60.0), Vector3(14.0, 4.4, 0.6), _stone, true)
 
 	# Ancient stone gate frame and a visible sealed slab mark the vault's inner chamber.
@@ -239,3 +246,45 @@ func _build_torch_lighting(parent: Node3D) -> void:
 		light.light_energy = 0.65
 		light.omni_range = 9.0
 		parent.add_child(light)
+
+
+
+func _build_baghdad_link() -> void:
+	# A real underground corridor links the Baghdad heritage souk vault to
+	# the nearby river catacombs beneath the fictional modern-world map.
+	var start := Vector2(25.0, -29.0)
+	var finish := Vector2(-49.0, 19.0)
+	var delta := finish - start
+	var total_length := delta.length()
+	var segment_count := 12
+	var segment_length := total_length / float(segment_count) + 0.35
+	var yaw := atan2(delta.x, delta.y)
+	var link_root := Node3D.new()
+	link_root.name = "BaghdadSoukToRiverCatacombsTunnel"
+	add_child(link_root)
+
+	for index in range(segment_count):
+		var t := (float(index) + 0.5) / float(segment_count)
+		var point := start.lerp(finish, t)
+		var surface_y := 0.0
+		if _terrain != null and _terrain.has_method("get_terrain_height"):
+			surface_y = float(_terrain.call("get_terrain_height", point.x, point.y))
+		var segment := Node3D.new()
+		segment.name = "UndergroundLinkSegment"
+		segment.position = Vector3(point.x, surface_y - 9.3, point.y)
+		segment.rotation.y = yaw
+		link_root.add_child(segment)
+
+		_add_box(segment, "LinkStoneFloor", Vector3(0, -2.1, 0), Vector3(3.8, 0.35, segment_length), _floor, true)
+		_add_box(segment, "LinkStoneCeiling", Vector3(0, 2.1, 0), Vector3(3.8, 0.35, segment_length), _stone, true)
+		_add_box(segment, "LinkLeftWall", Vector3(-2.0, 0, 0), Vector3(0.35, 4.0, segment_length), _stone, true)
+		_add_box(segment, "LinkRightWall", Vector3(2.0, 0, 0), Vector3(0.35, 4.0, segment_length), _stone, true)
+
+		if index % 3 == 1:
+			var light := OmniLight3D.new()
+			light.name = "BaghdadTunnelLantern"
+			light.position = Vector3(0, 1.25, 0)
+			light.light_color = Color(1.0, 0.58, 0.29)
+			light.light_energy = 0.55
+			light.omni_range = 8.0
+			segment.add_child(light)
