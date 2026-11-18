@@ -18,6 +18,7 @@ This is the acceptance checklist for the modern-world map. The project must not 
 - [x] Terrain-checked access-road meshes are attempted for airports, stations, and harbors; water-crossing candidates are skipped.
 - [x] Accepted bridge spans receive visual side railings and marker lights.
 - [x] Inter-city corridor prototypes include dashed center and lane-edge markings.
+- [x] Generated inter-city corridor segments attempt roadside rest-stop scenery with market, fuel canopy, EV chargers and parking markings on adjacent land.
 - [x] Harbor prototypes receive a waterfront promenade with benches, bollards and signage.
 - [x] Procedural city street fixtures now cover the generated boulevard and ring-road corridors, with plaza lantern fixtures.
 - [x] A capped pool of 24 shadowless dynamic lights is moved to the nearest street fixtures around the player; fixture meshes use emissive materials.
@@ -39,7 +40,7 @@ This is the acceptance checklist for the modern-world map. The project must not 
 - [ ] Convert the first-pass tunnel props into connected, excavated/terrain-integrated and collision-tested routes; add complete bridge, overpass, underpass, ramp, coastal-road, mountain-pass, junction, and drainage networks. Bridge railings and marker lights are visual details only.
 - [ ] Add road markings, lane graph, traffic rules, traffic lights, pedestrian crossings, speed zones, signs, and collision.
 - [ ] Add race circuits, street races, checkpoints, timing, results, rewards, leaderboards, and safe reset/respawn rules.
-- [ ] Add fuel/charging, repair, garages, service stations, towing, parking, and roadside incidents.
+- [ ] Implement fuel/charging, repair, garages, service stations, towing, parking, and roadside incidents; current rest-stop props are visual only.
 
 ## Vehicle completion gates
 
