@@ -5,6 +5,7 @@ extends Node
 # Actual combat/damage integration is intentionally exposed through signals.
 
 signal monster_spawned(monster_data: Dictionary)
+signal boss_phase_changed(monster_id: String, phase: int)
 signal monster_attacked_player(monster_id: String, damage: float)
 signal monster_defeated(monster_id: String, reward_xp: int)
 signal monster_defeated_detailed(defeat_data: Dictionary)
@@ -117,6 +118,7 @@ func _create_monster(position: Vector3, rank: String, is_boss: bool, biome: Stri
 		"state": "patrol",
 		"speed": (2.0 + float(RANKS_INDEX(rank)) * 0.22) * float(species_data.get("speed_mult", 1.0)) * (1.2 if is_boss else 1.0),
 		"attack_timer": randf_range(0.2, 1.0),
+		"boss_phase": 1,
 		"patrol_target": position + Vector3(randf_range(-5, 5), 0, randf_range(-5, 5))
 	})
 
@@ -146,6 +148,7 @@ func _update_monster(data: Dictionary, delta: float) -> void:
 	if not is_instance_valid(player):
 		return
 
+	_update_boss_phase(data)
 	var distance := actor.global_position.distance_to(player.global_position)
 	data["attack_timer"] = maxf(0.0, float(data["attack_timer"]) - delta)
 
@@ -181,12 +184,43 @@ func _move_toward(actor: Node3D, target: Vector3, speed: float, delta: float) ->
 func _try_attack(data: Dictionary) -> void:
 	if float(data["attack_timer"]) > 0.0:
 		return
-	data["attack_timer"] = ATTACK_COOLDOWN
+	var phase := int(data.get("boss_phase", 1))
+	var cooldown := ATTACK_COOLDOWN
+	if bool(data["is_boss"]):
+		cooldown = 1.8 if phase == 2 else (1.35 if phase >= 3 else ATTACK_COOLDOWN)
+	data["attack_timer"] = cooldown
 	var rank_index := RANKS_INDEX(str(data["rank"]))
 	var damage := 5.0 + float(rank_index) * 4.0
 	if bool(data["is_boss"]):
-		damage *= 2.5
+		damage *= 2.5 * (1.0 if phase == 1 else (1.45 if phase == 2 else 1.9))
 	monster_attacked_player.emit(str(data["id"]), damage)
+
+
+func _update_boss_phase(data: Dictionary) -> void:
+	if not bool(data.get("is_boss", false)):
+		return
+	var max_health := maxf(1.0, float(data.get("max_health", 1.0)))
+	var health_ratio := float(data.get("health", 0.0)) / max_health
+	var next_phase := 1
+	if health_ratio <= 0.30:
+		next_phase = 3
+	elif health_ratio <= 0.65:
+		next_phase = 2
+	var current_phase := int(data.get("boss_phase", 1))
+	if next_phase == current_phase:
+		return
+	data["boss_phase"] = next_phase
+	var actor = data.get("node")
+	if is_instance_valid(actor):
+		var scale_factor := 1.0 if next_phase == 1 else (1.12 if next_phase == 2 else 1.24)
+		actor.scale = Vector3.ONE * scale_factor
+		var body = actor.get_node_or_null("MeshInstance3D")
+		if body is MeshInstance3D and body.material_override is StandardMaterial3D:
+			var material: StandardMaterial3D = body.material_override
+			material.emission_enabled = true
+			material.emission = Color(1.0, 0.32, 0.08) if next_phase == 2 else Color(0.8, 0.05, 0.22)
+			material.emission_energy_multiplier = 0.8 + float(next_phase) * 0.7
+	boss_phase_changed.emit(str(data["id"]), next_phase)
 
 
 func apply_damage(monster_id: String, amount: float) -> bool:
@@ -229,7 +263,8 @@ func get_monster_snapshot() -> Array[Dictionary]:
 			"species_name": data.get("species_name", "Unknown"),
 			"weakness": data.get("weakness", "unknown"),
 			"is_boss": data["is_boss"], "health": data["health"],
-			"max_health": data["max_health"], "state": data["state"]
+			"max_health": data["max_health"], "state": data["state"],
+			"boss_phase": data.get("boss_phase", 1)
 		})
 	return result
 
