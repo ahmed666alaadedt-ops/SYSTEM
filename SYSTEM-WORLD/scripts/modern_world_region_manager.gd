@@ -26,6 +26,18 @@ const DISTRICT_NAMES := [
 	"Industrial", "University", "Waterfront", "GreenBelt"
 ]
 const CITY_SPACING := 34.0
+const VILLAGE_DATA := [
+	{"name": "Northern Crossing", "position": Vector2(-180.0, -820.0)},
+	{"name": "Riverbend", "position": Vector2(210.0, 150.0)},
+	{"name": "Western Orchard", "position": Vector2(-930.0, -80.0)},
+	{"name": "Highland Watch", "position": Vector2(520.0, -760.0)},
+	{"name": "Southern Oasis", "position": Vector2(120.0, 760.0)},
+	{"name": "Coastal Haven", "position": Vector2(850.0, 560.0)},
+	{"name": "Stonebridge", "position": Vector2(-540.0, 470.0)},
+	{"name": "Eastern Fields", "position": Vector2(900.0, 300.0)},
+	{"name": "Pine Valley", "position": Vector2(-120.0, -560.0)},
+	{"name": "Desert Gate", "position": Vector2(-250.0, 430.0)}
+]
 const DISTRICT_OFFSETS := [
 	Vector2(0.0, 0.0), Vector2(-78.0, -52.0),
 	Vector2(78.0, -52.0), Vector2(-78.0, 52.0),
@@ -40,6 +52,7 @@ var road_material: StandardMaterial3D
 var rail_material: StandardMaterial3D
 var plaza_material: StandardMaterial3D
 var building_materials: Array[StandardMaterial3D] = []
+var park_material: StandardMaterial3D
 
 
 func _ready() -> void:
@@ -55,6 +68,7 @@ func _ready() -> void:
 	_build_city_roads()
 	_build_transport_hubs()
 	_build_green_belts()
+	_build_rural_settlements()
 	print("SYSTEM WORLD: detailed city regions initialized: ", city_anchors.size())
 
 
@@ -70,6 +84,7 @@ func _create_materials() -> void:
 	]
 	for color in palettes:
 		building_materials.append(_material(color, 0.78, 0.12))
+	park_material = _material(Color(0.15, 0.32, 0.18), 1.0)
 
 
 func _material(color: Color, roughness: float, metallic: float = 0.0) -> StandardMaterial3D:
@@ -310,8 +325,65 @@ func _build_green_belts() -> void:
 			park_mesh.height = 0.24
 			park.mesh = park_mesh
 			park.position = Vector3(point.x, terrain.get_terrain_height(point.x, point.y) + 0.16, point.y)
-			park.material_override = _material(Color(0.15, 0.32, 0.18), 1.0)
+			park.material_override = park_material
 			add_child(park)
+
+
+func _build_rural_settlements() -> void:
+	for village in VILLAGE_DATA:
+		var requested: Vector2 = village["position"]
+		var center := _nearest_land_position(requested)
+		if center == Vector2.INF:
+			continue
+		var village_root := Node3D.new()
+		village_root.name = "Village_" + str(village["name"]).replace(" ", "")
+		village_root.position = Vector3(
+			center.x,
+			terrain.get_terrain_height(center.x, center.y),
+			center.y
+		)
+		add_child(village_root)
+		var ground := MeshInstance3D.new()
+		ground.name = "VillageCentralSquare"
+		var ground_mesh := CylinderMesh.new()
+		ground_mesh.top_radius = 11.0
+		ground_mesh.bottom_radius = 11.0
+		ground_mesh.height = 0.25
+		ground.mesh = ground_mesh
+		ground.position.y = 0.14
+		ground.material_override = plaza_material
+		village_root.add_child(ground)
+		for house_index in range(9):
+			var angle := TAU * float(house_index) / 9.0
+			var offset := Vector2(cos(angle), sin(angle)) * 19.0
+			var house_position := center + offset
+			if not terrain.is_land_position(house_position.x, house_position.y):
+				continue
+			var house := MeshInstance3D.new()
+			house.name = "VillageHouse_%02d" % house_index
+			var house_mesh := BoxMesh.new()
+			var width := 6.0 + float(house_index % 3)
+			var height := 4.5 + float(house_index % 4) * 1.1
+			house_mesh.size = Vector3(width, height, 6.0)
+			house.mesh = house_mesh
+			house.position = Vector3(
+				offset.x,
+				terrain.get_terrain_height(house_position.x, house_position.y)
+				- village_root.position.y + height * 0.5,
+				offset.y
+			)
+			house.material_override = building_materials[house_index % building_materials.size()]
+			village_root.add_child(house)
+		var marker := MeshInstance3D.new()
+		marker.name = "VillageNoticeTower"
+		var tower_mesh := CylinderMesh.new()
+		tower_mesh.top_radius = 0.45
+		tower_mesh.bottom_radius = 0.8
+		tower_mesh.height = 8.0
+		marker.mesh = tower_mesh
+		marker.position = Vector3(0.0, 4.0, -8.0)
+		marker.material_override = rail_material
+		village_root.add_child(marker)
 
 
 func get_city_anchor(city_name: String) -> Vector3:
