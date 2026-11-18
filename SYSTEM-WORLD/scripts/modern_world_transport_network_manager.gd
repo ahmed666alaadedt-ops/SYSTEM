@@ -65,13 +65,27 @@ func _city_anchor(city_name: String) -> Vector3:
 	return region_manager.call("get_city_anchor", city_name)
 
 func _build_corridor_segment(start: Vector3, finish: Vector3, route_index: int, segment_index: int) -> void:
+	var steps := maxi(12, int(start.distance_to(finish) / 24.0))
+	var water_run := 0.0
+	var maximum_water_run := 0.0
+	for step in range(steps):
+		var sample := Vector2(start.x, start.z).lerp(
+			Vector2(finish.x, finish.z),
+			(float(step) + 0.5) / float(steps)
+		)
+		if not bool(terrain.call("is_land_position", sample.x, sample.y)):
+			water_run += start.distance_to(finish) / float(steps)
+			maximum_water_run = maxf(maximum_water_run, water_run)
+		else:
+			water_run = 0.0
+	if maximum_water_run > 180.0:
+		return
 	var road_surface := SurfaceTool.new()
 	road_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	road_surface.set_material(road_material)
 	var rail_surface := SurfaceTool.new()
 	rail_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	rail_surface.set_material(rail_material)
-	var steps := maxi(12, int(start.distance_to(finish) / 24.0))
 	var bridge_samples: Array[Vector3] = []
 	var added := 0
 	for step in range(steps):
@@ -120,7 +134,7 @@ func _build_corridor_segment(start: Vector3, finish: Vector3, route_index: int, 
 		landmark_records.append({
 			"id": "bridge_%02d_%02d" % [route_index, segment_index],
 			"name": "Intercity Bridge %02d-%02d" % [route_index + 1, segment_index + 1],
-			"position": bridge_samples[bridge_samples.size() / 2]
+			"position": bridge_samples[int(bridge_samples.size() / 2)]
 		})
 
 func _add_ribbon_quad(surface: SurfaceTool, a: Vector2, b: Vector2, side: Vector2, y_a: float, y_b: float, half_width: float, lateral_offset: float) -> void:
