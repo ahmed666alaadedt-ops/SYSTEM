@@ -3,6 +3,7 @@ class_name UndergroundHeritageManager
 
 const UndergroundInteractableScript = preload("res://scripts/underground_interactable.gd")
 const UndergroundPuzzleControllerScript = preload("res://scripts/underground_puzzle_controller.gd")
+const UndergroundTrapScript = preload("res://scripts/underground_trap.gd")
 
 ## Hidden underground passages and heritage markets for the modern world.
 ## This is a first procedural exploration layout, not a complete navigable quest system.
@@ -117,6 +118,7 @@ func _build_side_passage(parent: Node3D) -> void:
 	_add_box(parent, "SidePassageLeftWall", Vector3(13.0, 1.7, -22.1), Vector3(12.0, 3.8, 0.45), _stone, true)
 	_add_box(parent, "SidePassageRightWall", Vector3(13.0, 1.7, -17.9), Vector3(12.0, 3.8, 0.45), _stone, true)
 	_add_box(parent, "SidePassageEndShadow", Vector3(19.0, 1.6, -20.0), Vector3(0.15, 3.0, 3.8), _dark, false)
+	_build_spike_trap(parent)
 
 
 func _build_market_stalls(parent: Node3D) -> void:
@@ -460,3 +462,52 @@ func _build_rune_puzzle(parent: Node3D) -> void:
 		plate_collision.shape = plate_shape
 		plate_area.add_child(plate_collision)
 		plate_area.body_entered.connect(Callable(controller, "on_pressure_plate_body_entered").bind(plate_index))
+
+
+
+func _build_spike_trap(parent: Node3D) -> void:
+	var trap: Node3D = UndergroundTrapScript.new()
+	trap.name = "AncientSpikeTrap"
+	trap.position = Vector3(13.0, 0.0, -20.0)
+	trap.set("damage_amount", 18.0)
+	parent.add_child(trap)
+
+	var trigger := Area3D.new()
+	trigger.name = "HiddenPressureTrigger"
+	trap.add_child(trigger)
+	var trigger_shape := CollisionShape3D.new()
+	var trigger_box := BoxShape3D.new()
+	trigger_box.size = Vector3(3.0, 2.0, 2.5)
+	trigger_shape.shape = trigger_box
+	trigger.add_child(trigger_shape)
+
+	var spikes: Array[Node3D] = []
+	for index in range(5):
+		var spike_body := StaticBody3D.new()
+		spike_body.name = "RetractableStoneSpike"
+		spike_body.position = Vector3(-1.2 + float(index) * 0.6, 0.0, 0.0)
+		trap.add_child(spike_body)
+
+		var spike_visual := MeshInstance3D.new()
+		spike_visual.name = "SpikeVisual"
+		var spike_mesh := CylinderMesh.new()
+		spike_mesh.top_radius = 0.0
+		spike_mesh.bottom_radius = 0.22
+		spike_mesh.height = 1.25
+		spike_visual.mesh = spike_mesh
+		spike_visual.position.y = 0.65
+		spike_visual.material_override = _gold
+		spike_body.add_child(spike_visual)
+
+		var spike_collision := CollisionShape3D.new()
+		var spike_shape := CylinderShape3D.new()
+		spike_shape.radius = 0.22
+		spike_shape.height = 1.25
+		spike_collision.shape = spike_shape
+		spike_collision.position.y = 0.65
+		spike_collision.disabled = true
+		spike_body.add_child(spike_collision)
+		spikes.append(spike_body)
+
+	trap.call("configure_spikes", spikes)
+	trigger.body_entered.connect(Callable(trap, "activate_for"))
