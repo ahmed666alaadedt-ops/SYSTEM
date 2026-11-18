@@ -33,6 +33,7 @@ func _ready() -> void:
 	_create_materials()
 	_build_intercity_corridors()
 	_build_city_tunnels()
+	_build_rural_access_roads()
 	_build_city_ports()
 	_build_aircraft_and_train_fleets()
 	_build_race_circuits()
@@ -256,6 +257,94 @@ func _build_tunnel_structure(parent: Node3D, city_name: String) -> void:
 		_add_box(parent, "TunnelSafetyBay_%s" % str(sign_side), Vector3(sign_side * 6.72, 1.25, 0.0), Vector3(0.22, 1.6, 3.0), concrete)
 	_add_box(parent, "TunnelNameSign", Vector3(0.0, 7.2, -43.2), Vector3(10.0, 0.55, 0.35), bridge_material)
 	_add_box(parent, "TunnelNameSignRear", Vector3(0.0, 7.2, 43.2), Vector3(10.0, 0.55, 0.35), bridge_material)
+
+
+func _build_rural_access_roads() -> void:
+	if not region_manager.has_method("get_village_names") or not region_manager.has_method("get_village_anchor"):
+		return
+	var city_names: Array = region_manager.call("get_city_names")
+	var village_names: Array = region_manager.call("get_village_names")
+	var built := 0
+	for village_value in village_names:
+		var village_name := str(village_value)
+		var village_anchor: Vector3 = region_manager.call("get_village_anchor", village_name)
+		if village_anchor == Vector3.INF:
+			continue
+		var best_city := ""
+		var best_distance := INF
+		var best_finish := Vector3.INF
+		for city_value in city_names:
+			var city_name := str(city_value)
+			var city_anchor := _city_anchor(city_name)
+			if city_anchor == Vector3.INF:
+				continue
+			var distance := Vector2(village_anchor.x, village_anchor.z).distance_to(Vector2(city_anchor.x, city_anchor.z))
+			if distance >= best_distance:
+				continue
+			if not _is_land_road_corridor(village_anchor, city_anchor):
+				continue
+			best_city = city_name
+			best_distance = distance
+			best_finish = city_anchor
+		if best_city.is_empty():
+			continue
+		var start_2d := Vector2(village_anchor.x, village_anchor.z)
+		var finish_2d := Vector2(best_finish.x, best_finish.z)
+		var steps := maxi(10, int(best_distance / 20.0))
+		var road_surface := SurfaceTool.new()
+		road_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+		road_surface.set_material(road_material)
+		var line_material := _make_material(Color(0.88, 0.82, 0.57), 0.82, 0.0)
+		var line_surface := SurfaceTool.new()
+		line_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+		line_surface.set_material(line_material)
+		for step in range(steps):
+			var t0 := float(step) / float(steps)
+			var t1 := float(step + 1) / float(steps)
+			var a := start_2d.lerp(finish_2d, t0)
+			var b := start_2d.lerp(finish_2d, t1)
+			var direction := (b - a).normalized()
+			if direction.length_squared() < 0.001:
+				continue
+			var side := Vector2(-direction.y, direction.x)
+			var y_a := float(terrain.call("get_terrain_height", a.x, a.y)) + 0.42
+			var y_b := float(terrain.call("get_terrain_height", b.x, b.y)) + 0.42
+			_add_ribbon_quad(road_surface, a, b, side, y_a, y_b, 4.2, 0.0)
+			if step % 3 == 0:
+				_add_ribbon_quad(line_surface, a, b, side, y_a + 0.035, y_b + 0.035, 0.12, 0.0)
+		road_surface.generate_normals()
+		line_surface.generate_normals()
+		var road_mesh := MeshInstance3D.new()
+		road_mesh.name = "RuralAccessRoad_" + village_name.replace(" ", "")
+		road_mesh.mesh = road_surface.commit()
+		road_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(road_mesh)
+		var line_mesh := MeshInstance3D.new()
+		line_mesh.name = road_mesh.name + "_CenterMarkings"
+		line_mesh.mesh = line_surface.commit()
+		line_mesh.material_override = line_material
+		line_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(line_mesh)
+		landmark_records.append({
+			"id": "rural_road_" + village_name.to_lower().replace(" ", "_"),
+			"name": village_name + " Access Road",
+			"position": (village_anchor + best_finish) * 0.5
+		})
+		built += 1
+	print("SYSTEM WORLD: rural access road prototypes built=", built)
+
+
+func _is_land_road_corridor(start: Vector3, finish: Vector3) -> bool:
+	var start_2d := Vector2(start.x, start.z)
+	var finish_2d := Vector2(finish.x, finish.z)
+	var distance := start_2d.distance_to(finish_2d)
+	var steps := maxi(12, int(distance / 18.0))
+	for sample_index in range(steps + 1):
+		var point := start_2d.lerp(finish_2d, float(sample_index) / float(steps))
+		if not bool(terrain.call("is_land_position", point.x, point.y)):
+			return false
+	return true
+
 
 func _build_city_ports() -> void:
 	var city_names: Array = region_manager.call("get_city_names")
