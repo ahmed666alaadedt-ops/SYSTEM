@@ -35,8 +35,11 @@ func _process(_delta: float) -> void:
 func _unbind_previous_scene() -> void:
 	if is_instance_valid(historical_combat):
 		historical_combat.queue_free()
+	if is_instance_valid(modern_combat):
+		modern_combat.queue_free()
 
 	historical_combat = null
+	modern_combat = null
 	bound_scene = null
 	controls = null
 	world_manager = null
