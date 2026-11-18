@@ -320,6 +320,7 @@ func _build_highways() -> void:
 					Vector3(b_left.x, b_y, b_left.y),
 					Vector3(b_right.x, b_y, b_right.y)
 				)
+	road_surface.generate_normals()
 	var road_visual := MeshInstance3D.new()
 	road_visual.name = "ContinentalHighwayNetwork"
 	road_visual.mesh = road_surface.commit()
@@ -391,6 +392,7 @@ func _build_rivers_and_lakes() -> void:
 					Vector3(b_left.x, b_y, b_left.y),
 					Vector3(b_right.x, b_y, b_right.y)
 				)
+	river_surface.generate_normals()
 	var river_visual := MeshInstance3D.new()
 	river_visual.name = "ConnectedRiverNetwork"
 	river_visual.mesh = river_surface.commit()
@@ -428,8 +430,8 @@ func _add_surface_quad(
 	d: Vector3
 ) -> void:
 	surface.add_vertex(a)
-	surface.add_vertex(b)
 	surface.add_vertex(c)
 	surface.add_vertex(b)
+	surface.add_vertex(b)
+	surface.add_vertex(c)
 	surface.add_vertex(d)
-	surface.add_vertex(c)
