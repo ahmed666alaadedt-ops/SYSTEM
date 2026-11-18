@@ -172,7 +172,7 @@ func create_player_vehicle_manager() -> void:
 			var region := active_root.get_node_or_null("ModernWorldRegionManager")
 			if region != null:
 				for dealership in region.get_children():
-					if dealership is SystemVehicleDealershipManager:
+					if dealership.has_method("setup") and dealership.name.ends_with("VehicleDealership"):
 						dealership.setup(player_vehicle_manager)
 
 
