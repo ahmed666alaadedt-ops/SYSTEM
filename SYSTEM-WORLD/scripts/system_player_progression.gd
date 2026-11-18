@@ -9,6 +9,12 @@ signal attribute_changed(attribute: String, new_value: int)
 const MAX_LEVEL := 100
 const SAVE_PATH := "user://system_player_progress.cfg"
 
+const WORLD_FRAGMENT_REQUIREMENTS := {
+	"modern": ["mesopotamian_seal", "celestial_compass", "royal_sun_shard"],
+	"historical": ["babylon_cuneiform_tablet", "alexandria_pharos_lens", "atlantis_tide_relic"],
+	"fantasy": ["dragon_star", "moon_diamond", "ancient_mana_core"]
+}
+
 const DEFAULT_ATTRIBUTES := {
 	"strength": 1,
 	"speed": 1,
@@ -251,8 +257,10 @@ func load_progress() -> void:
 func collect_world_fragment(world_key: String, fragment_id: String) -> Dictionary:
 	var key := world_key.strip_edges().to_lower()
 	var normalized_id := fragment_id.strip_edges()
-	if not world_fragments.has(key) or normalized_id.is_empty():
+	if not WORLD_FRAGMENT_REQUIREMENTS.has(key) or normalized_id.is_empty():
 		return {"success": false, "reason": "INVALID_WORLD_FRAGMENT"}
+	if not WORLD_FRAGMENT_REQUIREMENTS[key].has(normalized_id):
+		return {"success": false, "reason": "UNKNOWN_WORLD_FRAGMENT"}
 	var collected: Array = world_fragments[key]
 	if collected.has(normalized_id):
 		return {"success": false, "reason": "ALREADY_COLLECTED", "count": collected.size()}
@@ -269,8 +277,13 @@ func get_world_fragment_data() -> Dictionary:
 	var all_ready := true
 	for world_key in ["modern", "historical", "fantasy"]:
 		var collected: Array = world_fragments.get(world_key, [])
-		var ready := collected.size() >= 3
-		result[world_key] = {"collected": collected.duplicate(), "count": collected.size(), "required": 3, "ready": ready}
+		var required_ids: Array = WORLD_FRAGMENT_REQUIREMENTS[world_key]
+		var ready := true
+		for required_id in required_ids:
+			if not collected.has(required_id):
+				ready = false
+				break
+		result[world_key] = {"collected": collected.duplicate(), "count": collected.size(), "required": required_ids.size(), "ready": ready}
 		all_ready = all_ready and ready
 	result["all_world_keys_ready"] = all_ready
 	return result
