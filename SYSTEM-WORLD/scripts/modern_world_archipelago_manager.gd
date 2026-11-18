@@ -30,6 +30,7 @@ const GRASS_COLORS := [
 func _ready() -> void:
 	name = "ModernWorldOuterArchipelago"
 	_build_islands()
+	_build_navigation_buoys()
 	print("SYSTEM WORLD: outer archipelago initialized: ", ISLANDS.size(), " islands")
 
 
@@ -241,3 +242,33 @@ func _add_cylinder(parent: Node3D, node_name: String, local_position: Vector3,
 	instance.material_override = material
 	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	parent.add_child(instance)
+
+
+func _build_navigation_buoys() -> void:
+	var buoy_sites := [
+		Vector2(-1290.0, -850.0), Vector2(-810.0, -900.0),
+		Vector2(-300.0, -900.0), Vector2(420.0, -900.0),
+		Vector2(1120.0, -820.0), Vector2(1450.0, 180.0),
+		Vector2(940.0, 650.0), Vector2(40.0, 900.0),
+		Vector2(-650.0, 900.0), Vector2(-1120.0, 560.0),
+		Vector2(1180.0, -250.0), Vector2(700.0, 780.0)
+	]
+	var buoy_material := _make_material(Color(0.92, 0.34, 0.12), 0.48)
+	var beacon_material := _make_material(Color(1.0, 0.82, 0.42), 0.3)
+	beacon_material.emission_enabled = true
+	beacon_material.emission = Color(1.0, 0.52, 0.16)
+	beacon_material.emission_energy_multiplier = 1.5
+	for index in range(buoy_sites.size()):
+		var site := buoy_sites[index]
+		var buoy := Node3D.new()
+		buoy.name = "SeaNavigationBuoy_%02d" % (index + 1)
+		buoy.position = Vector3(site.x, -0.3, site.y)
+		add_child(buoy)
+		_add_cylinder(buoy, "BuoyFloat", Vector3.ZERO, 1.1, 2.2, buoy_material)
+		_add_cylinder(buoy, "BuoyBeaconMast", Vector3(0.0, 1.8, 0.0),
+			0.12, 1.8, buoy_material)
+		_add_box(buoy, "BuoySignalLight", Vector3(0.0, 2.8, 0.0),
+			Vector3(0.65, 0.55, 0.65), beacon_material)
+		buoy.add_to_group("system_world_landmarks")
+		buoy.set_meta("landmark_type", "sea_navigation_buoy")
+		buoy.set_meta("discovery_required", true)
