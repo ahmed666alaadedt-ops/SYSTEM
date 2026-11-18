@@ -1,0 +1,65 @@
+# SYSTEM WORLD — Hunter Towers and Global Hunter Examination
+
+## Canonical design
+
+The modern-world Baghdad region contains two distinct tower landmarks:
+
+1. **World Hunter Association Tower** — the monumental headquarters and public symbol of the global Hunter organization. It is intended to be the tallest tower in the world. The current procedural blockout uses an approximate 480 m height and 80 visible floor bands.
+2. **Power Tower** — a separate optional challenge arena for individual progression, ranked battles, increasingly difficult opponents, and rewards. The current procedural blockout uses an approximate 168 m height and 28 visible floor bands.
+
+The towers are separate gameplay identities. The Power Tower is not the Hunter examination, and the Hunter examination is not a Power Tower floor run.
+
+## Current source implementation
+
+- `scripts/baghdad_tower_landmarks_manager.gd` builds both landmark silhouettes near Baghdad and resolves each requested foundation to nearby land where possible.
+- `scripts/system_tower_entrance.gd` provides a ray-interactable entrance marker for each tower.
+- `scripts/modern_world_region_manager.gd` creates the tower manager and registers both landmarks in the existing modern-world map manager as `LocationType.LANDMARK` (enum value 5).
+- `scripts/system_hunter_exam_manager.gd` defines a seven-stage examination, candidate numbering, registration, sequential progression, save-state fields, and completion/failure signals.
+- `scripts/hunter_guild_menu.gd` adds registration and start controls.
+- `scripts/main.gd` creates the examination manager and connects the guild menu signals.
+
+## Seven-stage Hunter Examination
+
+The examination is a difficult, multi-city journey. It tests judgment, observation, navigation, teamwork, survival, and combat restraint—not only damage output.
+
+| Stage | Location | Core challenge |
+|---|---|---|
+| 1 | Baghdad — Mesopotamian heritage site | Recover the correct artifact, interpret inscriptions, identify false clues, and avoid traps |
+| 2 | Cairo — buried market | Navigate a layered maze with shifting routes, limited supplies, and misleading signs |
+| 3 | Alexandria — lighthouse and coast | Navigate a storm, restore signal mechanisms, and rescue separated candidates |
+| 4 | Paris — catacombs | Solve sound and logic puzzles while moving quietly through monitored passages |
+| 5 | Babylon — ancient ruins | Read the guardian mechanism and survive a high-risk guardian trial |
+| 6 | Tokyo — urban districts | Complete a changing pursuit and observation course without endangering civilians |
+| 7 | Highland frontier | Complete a long survival and teamwork route under harsh weather and resource pressure |
+
+The design can include candidate-number competition and controlled attempts to obtain another candidate's number in a dedicated later stage. Any such mechanic must have clear rules, prevent permanent account theft, and be judged as part of the examination rather than as an unrestricted griefing feature.
+
+## Candidate numbering and persistence
+
+- Registration allocates a sequential candidate number beginning at 1001.
+- The candidate number is saved locally with the current registration record.
+- Completed stage IDs and examination state are written to `user://system_hunter_exam.cfg`.
+- Stage order is enforced by the manager.
+- A provisional license signal is emitted only after all seven stage IDs have been completed.
+
+## Important implementation boundary
+
+The current work creates the procedural tower blockouts, entrance interaction markers, menu registration/start controls, and the examination progression data manager. It does **not** yet create the explorable interior floors, the seven physical stage environments, the actual maze geometry, puzzle devices, guardian AI encounters, city-to-city travel sequences, server-authoritative candidate verification, anti-cheat checks, or a production Hunter-license card. The entrance currently reports an interaction; it does not yet load a tower interior scene.
+
+The Power Tower currently has a distinct visible landmark only. Its floor-by-floor combat, rankings, opponent AI, rewards, and persistence remain to be implemented.
+
+The stage completion method is an integration hook for a future trusted objective-verification system. A non-empty evidence string is not sufficient security for an online competitive game. Before live multiplayer, completion and candidate-number records must be validated by an authoritative server.
+
+## Production sequence
+
+1. Build and validate the tower blockouts and land placement in Godot.
+2. Create separate interior scenes for the Hunter Association headquarters and Power Tower.
+3. Build each examination stage as a playable environment with objective triggers, puzzles, traps, navigation, NPC candidates, and safe failure/retry rules.
+4. Connect travel transitions between the modern and historical city maps.
+5. Add official license/card issuance, Hunter ranks, examination records, and rewards to the existing player/account progression systems.
+6. Add server-side candidate numbering, stage verification, anti-cheat, and multiplayer synchronization.
+7. Add cinematic art, character animations, environmental audio, and mobile performance/LOD passes.
+
+## Verification boundary
+
+GitHub writes and source-level connections are confirmed for this update. No Godot parser, editor import, runtime scene, Android build, multiplayer test, or visual inspection was performed in this session. The tower geometry and examination progression are prototypes, not a finished playable exam or completed tower experience.
