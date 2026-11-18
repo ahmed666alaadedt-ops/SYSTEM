@@ -25,6 +25,7 @@ var available_attribute_points: int = 0
 
 var attributes: Dictionary = DEFAULT_ATTRIBUTES.duplicate(true)
 var greed_fragments: Array[String] = []
+var world_fragments: Dictionary = {"modern": [], "historical": [], "fantasy": []}
 
 
 func _ready() -> void:
@@ -141,7 +142,8 @@ func get_progress_data() -> Dictionary:
 		"attributes": attributes.duplicate(true),
 		"greed_fragments": greed_fragments.duplicate(),
 		"greed_fragments_count": greed_fragments.size(),
-		"greed_island_seal_ready": greed_fragments.size() >= 3
+		"greed_island_seal_ready": bool(get_world_fragment_data().get("all_world_keys_ready", false)),
+		"world_keys": get_world_fragment_data()
 	}
 
 
@@ -167,6 +169,7 @@ func save_progress() -> void:
 		"fragments",
 		greed_fragments.duplicate()
 	)
+	config.set_value("world_keys", "fragments", world_fragments.duplicate(true))
 
 	var error := config.save(SAVE_PATH)
 
@@ -210,6 +213,18 @@ func load_progress() -> void:
 		if not normalized_id.is_empty() and not greed_fragments.has(normalized_id):
 			greed_fragments.append(normalized_id)
 
+	var saved_world_fragments: Dictionary = config.get_value("world_keys", "fragments", {})
+	world_fragments = {"modern": [], "historical": [], "fantasy": []}
+	for world_key in world_fragments.keys():
+		var entries: Array = saved_world_fragments.get(world_key, [])
+		for fragment_id in entries:
+			var normalized_id := str(fragment_id).strip_edges()
+			if not normalized_id.is_empty() and not world_fragments[world_key].has(normalized_id):
+				world_fragments[world_key].append(normalized_id)
+	for legacy_id in greed_fragments:
+		if not world_fragments["modern"].has(legacy_id):
+			world_fragments["modern"].append(legacy_id)
+
 	var saved_attributes: Dictionary = config.get_value(
 		"player",
 		"attributes",
@@ -233,7 +248,39 @@ func load_progress() -> void:
 		)
 
 
+func collect_world_fragment(world_key: String, fragment_id: String) -> Dictionary:
+	var key := world_key.strip_edges().to_lower()
+	var normalized_id := fragment_id.strip_edges()
+	if not world_fragments.has(key) or normalized_id.is_empty():
+		return {"success": false, "reason": "INVALID_WORLD_FRAGMENT"}
+	var collected: Array = world_fragments[key]
+	if collected.has(normalized_id):
+		return {"success": false, "reason": "ALREADY_COLLECTED", "count": collected.size()}
+	collected.append(normalized_id)
+	world_fragments[key] = collected
+	if key == "modern" and not greed_fragments.has(normalized_id):
+		greed_fragments.append(normalized_id)
+	save_progress()
+	return {"success": true, "world": key, "fragment_id": normalized_id, "count": collected.size(), "required": 3, "world_key_ready": collected.size() >= 3}
+
+
+func get_world_fragment_data() -> Dictionary:
+	var result := {}
+	var all_ready := true
+	for world_key in ["modern", "historical", "fantasy"]:
+		var collected: Array = world_fragments.get(world_key, [])
+		var ready := collected.size() >= 3
+		result[world_key] = {"collected": collected.duplicate(), "count": collected.size(), "required": 3, "ready": ready}
+		all_ready = all_ready and ready
+	result["all_world_keys_ready"] = all_ready
+	return result
+
+
 func collect_greed_fragment(fragment_id: String) -> Dictionary:
+	return collect_world_fragment("modern", fragment_id)
+
+
+func _legacy_collect_greed_fragment_unused(fragment_id: String) -> Dictionary:
 	var normalized_id := fragment_id.strip_edges()
 	if normalized_id.is_empty():
 		return {"success": false, "reason": "INVALID_FRAGMENT_ID"}
@@ -265,6 +312,7 @@ func get_greed_fragment_data() -> Dictionary:
 
 func _reset_progress() -> void:
 	greed_fragments.clear()
+	world_fragments = {"modern": [], "historical": [], "fantasy": []}
 	current_level = 1
 	total_xp = 0
 	xp_in_level = 0
