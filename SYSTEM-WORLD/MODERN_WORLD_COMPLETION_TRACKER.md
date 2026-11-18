@@ -1,0 +1,76 @@
+# SYSTEM WORLD — Modern World Completion Tracker
+
+This is the acceptance checklist for the modern-world map. The project must not be described as complete, and work must not move to the portal phase, until every required item is implemented, connected, and verified in Godot on the target platforms. A visual placeholder is not accepted as a completed gameplay system.
+
+## Current verified repository foundations
+
+- [x] Fourteen named city anchors and eight district labels per city are defined in modern_world_region_manager.gd.
+- [x] Ten rural settlement seeds are defined.
+- [x] City road strips, plaza markers, green-belt markers, airport/rail visual hubs, and map discovery registration exist.
+- [x] Baghdad tower landmarks are created by the region manager.
+- [x] Procedural city street fixtures now cover the generated boulevard and ring-road corridors, with plaza lantern fixtures.
+- [x] A capped pool of 24 shadowless dynamic lights is moved to the nearest street fixtures around the player; fixture meshes use emissive materials.
+- [x] Ambient traffic catalog now contains eight visual archetypes per resolved city, up to 112 vehicles for fourteen cities.
+- [x] Existing day/night, sky/weather, ambience, terrain, water, forest, mountain, marine, and wildlife managers remain in the project.
+- [ ] None of the above has been confirmed by a Godot runtime or Android visual/performance test in this work session.
+
+## City and district completion gates
+
+- [ ] Replace generic block clusters with distinctive city architecture, skyline silhouettes, landmarks, local street furniture, signage, vegetation, and cultural details.
+- [ ] Build connected, navigable street grids inside every district, including sidewalks, crossings, curbs, intersections, traffic islands, signs, barriers, and collision.
+- [ ] Add functioning markets, shops, restaurants, hotels, homes, offices, universities, industrial sites, hospitals, police/fire/ambulance stations, parks, recreation, and interiors.
+- [ ] Add residents, pedestrians, vendors, workers, schedules, crowds, public services, and city activity that responds to time and weather.
+- [ ] Make the ten rural settlements functional and connect them to roads, services, farms, orchards, fields, and local economies.
+
+## Global road, bridge, and race gates
+
+- [ ] Build a continuous inter-city road network that follows land and connects the fourteen cities and rural settlements.
+- [ ] Build bridges, overpasses, underpasses, tunnels, ramps, coastal roads, mountain passes, junctions, and road drainage where geography requires them.
+- [ ] Add road markings, lane graph, traffic rules, traffic lights, pedestrian crossings, speed zones, signs, and collision.
+- [ ] Add race circuits, street races, checkpoints, timing, results, rewards, leaderboards, and safe reset/respawn rules.
+- [ ] Add fuel/charging, repair, garages, service stations, towing, parking, and roadside incidents.
+
+## Vehicle completion gates
+
+- [ ] Replace ambient-only movement with lane-aware traffic AI, intersection logic, yielding, parking, emergency dispatch, and traffic-density streaming.
+- [ ] Add actual drivable vehicle physics and controls with mobile input, camera modes, suspension, braking, steering, collision, damage, and recovery.
+- [ ] Add player vehicle ownership, secure purchase/sale, garage inventory, vehicle persistence, customization, keys, summon/park flow, and recovery.
+- [ ] Connect ownership and vehicle state to authenticated accounts and an authoritative multiplayer backend; local save alone is not sufficient for shared-world ownership.
+- [ ] Add network interest management so only nearby relevant player vehicles are replicated and rendered.
+- [ ] Verify vehicle counts, physics cost, network load, and frame rate at Android quality tiers.
+
+## Global lighting completion gates
+
+- [ ] Extend fixture placement to all secondary streets, alleys, bridges, tunnels, stairways, parks, waterfronts, airports, ports, stations, parking structures, and rural roads.
+- [ ] Add building entrances, interiors, apartment windows, shopfronts, signs, billboards, neon districts, traffic signals, headlights, brake lights, and emergency lighting.
+- [ ] Use baked/static lighting where suitable, emissive distant fixtures, and a small nearby dynamic-light budget; avoid thousands of shadow-casting realtime lights.
+- [ ] Add per-city and per-district lighting profiles, sunset/sunrise transitions, weather/fog response, and wet-road reflections.
+- [ ] Validate night readability and performance on low-, mid-, and high-tier Android devices; provide scalable quality presets.
+
+## Transport, ports, and waterways
+
+- [ ] Turn airport and rail visual hubs into usable terminals with routes, schedules, boarding, fares, arrivals, and map integration.
+- [ ] Build ports, docks, marinas, cargo terminals, ferry routes, ship lanes, navigable vessels, and coastal logistics.
+- [ ] Add usable passenger/cargo ships, aircraft and trains only after their controls, collisions, route logic, and save/network behavior are implemented.
+- [ ] Connect bridges and waterways to the actual continent terrain and validate every crossing.
+
+## World life and environment
+
+- [ ] Complete NPC schedules, needs, jobs, family/social life, local commerce, and crowd behavior without allowing NPCs to perform player-only main quests.
+- [ ] Complete regional soundscapes: crowds, markets, engines, horns, river/water, forest insects, birds, aircraft, ships, weather, and interiors.
+- [ ] Complete weather effects, wet surfaces, puddles, fog, dust, wind response, climate-appropriate snow, and seasonal changes.
+- [ ] Complete wildlife species, animation, habitats, population limits, and player/world interactions.
+- [ ] Complete injury services, hospitals, police/jail consequences, reputation, and emergency response.
+
+## Map streaming, mobile performance, and verification
+
+- [ ] Implement region/cell streaming and LOD for geometry, NPCs, traffic, audio, lighting, foliage, and interiors.
+- [ ] Define device quality tiers and memory/CPU/GPU budgets.
+- [ ] Verify discovery, waypoints, fast travel, transport, collisions, save/load, and world transitions.
+- [ ] Run Godot parser checks, scene startup tests, gameplay tests, and Android device tests; fix all errors and regressions.
+- [ ] Inspect every city and the inter-city routes in-game, by day and night, on foot and in vehicles.
+- [ ] Only after every required gate is checked and the final build is reviewed may the modern-world map be declared complete and portal work begin.
+
+## Honesty rule
+
+A checked repository foundation does not mean a finished gameplay feature. Visual meshes are not drivable vehicles; terminal-shaped meshes are not usable transport; road strips are not a connected road network; fixture meshes are not complete city lighting; and code committed to GitHub is not runtime-tested until Godot actually runs it.
