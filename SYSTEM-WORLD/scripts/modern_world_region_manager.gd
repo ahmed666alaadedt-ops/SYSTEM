@@ -1,6 +1,9 @@
 extends Node3D
 class_name ModernWorldRegionManager
 
+const ModernCityTrafficManagerScript = preload("res://scripts/modern_city_traffic_manager.gd")
+const ModernWorldAmbienceManagerScript = preload("res://scripts/modern_world_ambience_manager.gd")
+
 ## طبقة تفاصيل المدن والمناطق الحضرية للعالم الحديث.
 ## تُبنى فوق تضاريس القارة الموجودة ولا تستبدلها أو تغيّر مواقعها المرجعية.
 
@@ -69,6 +72,8 @@ func _ready() -> void:
 	_build_transport_hubs()
 	_build_green_belts()
 	_build_rural_settlements()
+	_create_city_traffic()
+	_create_ambient_soundscape()
 	print("SYSTEM WORLD: detailed city regions initialized: ", city_anchors.size())
 
 
@@ -456,3 +461,15 @@ func get_city_names() -> Array[String]:
 		if city_anchors.has(city_name):
 			result.append(city_name)
 	return result
+
+
+func _create_city_traffic() -> void:
+	var traffic := ModernCityTrafficManagerScript.new()
+	traffic.name = "ModernCityTrafficManager"
+	add_child(traffic)
+
+
+func _create_ambient_soundscape() -> void:
+	var ambience := ModernWorldAmbienceManagerScript.new()
+	ambience.name = "ModernWorldAmbienceManager"
+	add_child(ambience)
