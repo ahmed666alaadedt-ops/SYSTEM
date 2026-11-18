@@ -66,3 +66,10 @@ This document tracks the living-world layer for the connected modern-world map. 
 ## Current verification boundary
 
 GitHub file writes are confirmed for the scripts listed below. Godot parsing, scene startup, sound playback, traffic motion, visual quality, and Android performance have **not** been runtime-tested in this work session. The procedural visuals and sounds are foundations that still need validation and final art/audio production.
+
+
+### 6. City road tunnels — visual prototype
+- `scripts/modern_world_transport_network_manager.gd` now attempts one short covered tunnel landmark per resolved city.
+- Candidate sites are sampled for continuous land and limited height variation before geometry is placed.
+- Tunnel geometry includes approach slabs, road bed, side walls, ceiling, portal frames, lane-edge markings, emissive ceiling fixtures, and a map landmark record.
+- This is not an excavated or drivable tunnel system. The road graph, terrain cutting, collision, vehicle clearance tests, emergency exits, ventilation simulation, dynamic lighting, and runtime validation are still required.
