@@ -232,3 +232,10 @@ This expansion is committed to the repository and wired into `world_manager.gd` 
 - Added twelve sea-navigation buoy markers and tagged them as discoverable world landmarks.
 - Harbor metadata marks fast travel as disabled by default; visiting and activating docks must be implemented by the discovery/transport gameplay systems.
 - Ferry visuals are scenery prototypes only. There is no boat controller, route schedule, passenger boarding, docking interaction, water physics, or functional maritime navigation yet.
+
+
+## Island shoreline dressing and paths
+
+- Added twelve coastal boulders and seven low shrubs per outer island, with palettes matching each island's terrain style.
+- Added a simple land trail leading toward each harbor so the dock reads as part of the island settlement rather than a detached prop.
+- These are low-detail procedural dressing meshes; they are not yet destructible, harvestable, animated, or individually collision-enabled.
