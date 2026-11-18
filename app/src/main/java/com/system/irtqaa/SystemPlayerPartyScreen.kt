@@ -80,7 +80,7 @@ fun SystemPlayerPartyScreen(account: SystemFirebaseAccount) {
                 ) { Text("إنشاء") }
             }
 
-            Text("دعواتك الواردة (\${invites.size})", color = Color(0xFFFFC857), fontWeight = FontWeight.Bold)
+            Text("دعواتك الواردة (${invites.size})", color = Color(0xFFFFC857), fontWeight = FontWeight.Bold)
             if (invites.isEmpty()) {
                 Text("لا توجد دعوات معلقة.", color = Color.LightGray, fontSize = 13.sp)
             } else {
@@ -89,7 +89,7 @@ fun SystemPlayerPartyScreen(account: SystemFirebaseAccount) {
                         Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF202B40))) {
                             Column(Modifier.fillMaxWidth().padding(10.dp)) {
                                 Text(invite.partyName, color = Color.White, fontWeight = FontWeight.Bold)
-                                Text("دعوة من: \${invite.fromName}", color = Color.LightGray, fontSize = 12.sp)
+                                Text("دعوة من: ${invite.fromName}", color = Color.LightGray, fontSize = 12.sp)
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     TextButton(onClick = {
                                         repository.respondToInvite(invite.inviteId, true) { result ->
@@ -111,7 +111,7 @@ fun SystemPlayerPartyScreen(account: SystemFirebaseAccount) {
             }
 
             Row {
-                Text("فرقك (\${parties.size})", color = Color(0xFFFFC857), fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                Text("فرقك (${parties.size})", color = Color(0xFFFFC857), fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                 TextButton(onClick = { refresh() }, enabled = !busy) { Text("تحديث") }
             }
             if (parties.isEmpty()) {
@@ -127,11 +127,11 @@ fun SystemPlayerPartyScreen(account: SystemFirebaseAccount) {
                             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
                                 Text(party.name, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                                 Text(
-                                    if (party.leaderId == account.userId) "أنت قائد الفريق" else "قائد الفريق: \${party.leaderId.take(10)}…",
+                                    if (party.leaderId == account.userId) "أنت قائد الفريق" else "قائد الفريق: ${party.leaderId.take(10)}…",
                                     color = Color(0xFF55DDF0), fontSize = 12.sp
                                 )
-                                Text("الأعضاء: \${party.memberIds.size} / \${party.maxMembers}", color = Color.LightGray)
-                                Text("معرّف الفريق: \${party.partyId}", color = Color.Gray, fontSize = 10.sp)
+                                Text("الأعضاء: ${party.memberIds.size} / ${party.maxMembers}", color = Color.LightGray)
+                                Text("معرّف الفريق: ${party.partyId}", color = Color.Gray, fontSize = 10.sp)
                                 if (party.leaderId == account.userId && party.memberIds.size < party.maxMembers) {
                                     OutlinedTextField(
                                         value = targetPlayerId,
