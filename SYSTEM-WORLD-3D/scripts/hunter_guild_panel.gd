@@ -254,7 +254,7 @@ func _assign_recommended_team() -> void:
 	guild_manager.call("assign_team", selected_gate_id, team)
 	var summary: Dictionary = member_manager.call("get_team_summary", team)
 	detail_label.text = "تم اختيار الفريق: %s\nالعدد: %d\nمتوسط الرتبة: %s\nقتال: %s | استطلاع: %s\nعلاج: %s | دعم: %s" % [
-		", ".join(team), team.size(), str(summary.get("average_rank", "F")),
+		str(team), team.size(), str(summary.get("average_rank", "F")),
 		str(summary.get("combat", 0)), str(summary.get("scouting", 0)),
 		str(summary.get("healing", 0)), str(summary.get("support", 0))
 	]
