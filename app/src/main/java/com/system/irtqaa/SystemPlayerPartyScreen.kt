@@ -21,6 +21,7 @@ fun SystemPlayerPartyScreen(account: SystemFirebaseAccount) {
     var parties by remember { mutableStateOf<List<SystemPlayerParty>>(emptyList()) }
     var invites by remember { mutableStateOf<List<SystemPlayerPartyInvite>>(emptyList()) }
     var missions by remember { mutableStateOf<List<SystemHunterGuildMission>>(emptyList()) }
+    var assignments by remember { mutableStateOf<List<SystemHunterGuildMissionAssignment>>(emptyList()) }
     var status by remember { mutableStateOf("إدارة فرق اللاعبين الحقيقيين") }
     var busy by remember { mutableStateOf(false) }
 
@@ -39,6 +40,10 @@ fun SystemPlayerPartyScreen(account: SystemFirebaseAccount) {
         repository.loadAvailableHunterGuildMissions { result ->
             result.onSuccess { missions = it }
                 .onFailure { status = it.message ?: "تعذر تحميل مهمات XSX." }
+        }
+        repository.loadMyHunterGuildMissionAssignments { result ->
+            result.onSuccess { assignments = it }
+                .onFailure { status = it.message ?: "تعذر تحميل سجل تسجيلات المهمات." }
         }
     }
 
@@ -244,6 +249,33 @@ fun SystemPlayerPartyScreen(account: SystemFirebaseAccount) {
                                     }
                                 }
                             }
+                        }
+                    }
+                }
+            }
+
+            Text("سجل تسجيلات فرقك", color = Color(0xFFFFC857), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            if (assignments.isEmpty()) {
+                Text("لا توجد تسجيلات مهمات مرتبطة بحسابك بعد.", color = Color.LightGray, fontSize = 13.sp)
+            } else {
+                assignments.forEach { assignment ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF18253A)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(
+                            Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(5.dp)
+                        ) {
+                            Text(assignment.missionTitle, color = Color.White, fontWeight = FontWeight.Bold)
+                            Text("الفريق: ${assignment.partyName}", color = Color(0xFF55DDF0), fontSize = 12.sp)
+                            Text("الحالة: ${assignment.status}", color = Color.LightGray, fontSize = 12.sp)
+                            Text(
+                                "الأعضاء وقت التسجيل: ${assignment.rosterSnapshot.joinToString { it.second }}",
+                                color = Color.LightGray,
+                                fontSize = 12.sp
+                            )
                         }
                     }
                 }
