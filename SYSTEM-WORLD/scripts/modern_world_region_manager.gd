@@ -72,6 +72,7 @@ func _ready() -> void:
 	_build_transport_hubs()
 	_build_green_belts()
 	_build_rural_settlements()
+	_build_city_lighting()
 	_create_city_traffic()
 	_create_ambient_soundscape()
 	print("SYSTEM WORLD: detailed city regions initialized: ", city_anchors.size())
@@ -473,3 +474,68 @@ func _create_ambient_soundscape() -> void:
 	var ambience := ModernWorldAmbienceManagerScript.new()
 	ambience.name = "ModernWorldAmbienceManager"
 	add_child(ambience)
+
+
+func _build_city_lighting() -> void:
+	var pole_material := _material(Color(0.075, 0.09, 0.11), 0.42, 0.72)
+	var lamp_material := StandardMaterial3D.new()
+	lamp_material.albedo_color = Color(1.0, 0.78, 0.42)
+	lamp_material.emission_enabled = true
+	lamp_material.emission = Color(1.0, 0.62, 0.24)
+	lamp_material.emission_energy_multiplier = 2.2
+
+	for city in CITY_DATA:
+		var city_name := str(city["name"])
+		if not city_anchors.has(city_name):
+			continue
+		var anchor: Vector2 = city_anchors[city_name]
+		var lamp_positions := [
+			anchor + Vector2(-5.8, -52.0),
+			anchor + Vector2(-5.8, -132.0),
+			anchor + Vector2(52.0, 5.8),
+			anchor + Vector2(132.0, 5.8)
+		]
+		for index in range(lamp_positions.size()):
+			var point: Vector2 = lamp_positions[index]
+			if not terrain.is_land_position(point.x, point.y):
+				continue
+			var lamp_root := Node3D.new()
+			lamp_root.name = city_name.replace(" ", "") + "_StreetLamp_%02d" % index
+			lamp_root.position = Vector3(point.x, terrain.get_terrain_height(point.x, point.y), point.y)
+			add_child(lamp_root)
+
+			var pole := MeshInstance3D.new()
+			var pole_mesh := CylinderMesh.new()
+			pole_mesh.top_radius = 0.075
+			pole_mesh.bottom_radius = 0.13
+			pole_mesh.height = 6.8
+			pole.mesh = pole_mesh
+			pole.position.y = 3.4
+			pole.material_override = pole_material
+			lamp_root.add_child(pole)
+
+			var arm := MeshInstance3D.new()
+			var arm_mesh := BoxMesh.new()
+			arm_mesh.size = Vector3(1.25, 0.10, 0.12)
+			arm.mesh = arm_mesh
+			arm.position = Vector3(0.48, 6.65, 0.0)
+			arm.material_override = pole_material
+			lamp_root.add_child(arm)
+
+			var head := MeshInstance3D.new()
+			var head_mesh := BoxMesh.new()
+			head_mesh.size = Vector3(0.48, 0.16, 0.42)
+			head.mesh = head_mesh
+			head.position = Vector3(0.98, 6.58, 0.0)
+			head.material_override = lamp_material
+			lamp_root.add_child(head)
+
+		var glow := OmniLight3D.new()
+		glow.name = city_name.replace(" ", "") + "_PlazaNightGlow"
+		glow.position = Vector3(anchor.x, terrain.get_terrain_height(anchor.x, anchor.y) + 5.5, anchor.y)
+		glow.light_color = Color(1.0, 0.72, 0.43)
+		glow.light_energy = 0.0
+		glow.omni_range = 30.0
+		glow.shadow_enabled = false
+		glow.add_to_group("system_night_light")
+		add_child(glow)
