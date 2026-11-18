@@ -9,6 +9,7 @@ This is the acceptance checklist for the modern-world map. The project must not 
 - [x] City road strips, plaza markers, green-belt markers, airport/rail visual hubs, and map discovery registration exist.
 - [x] Baghdad tower landmarks are created by the region manager.
 - [x] City road-tunnel visual prototypes are generated where terrain sampling finds a continuous, sufficiently level land alignment; rejected sites are skipped.
+- [x] Rural village anchors are retained and first-pass access-road meshes are generated when a continuous all-land route to a city is found.
 - [x] Procedural city street fixtures now cover the generated boulevard and ring-road corridors, with plaza lantern fixtures.
 - [x] A capped pool of 24 shadowless dynamic lights is moved to the nearest street fixtures around the player; fixture meshes use emissive materials.
 - [x] Ambient traffic catalog now contains eight visual archetypes per resolved city, up to 112 vehicles for fourteen cities.
@@ -25,7 +26,7 @@ This is the acceptance checklist for the modern-world map. The project must not 
 
 ## Global road, bridge, and race gates
 
-- [ ] Build a continuous inter-city road network that follows land and connects the fourteen cities and rural settlements.
+- [ ] Complete a continuous, optimized inter-city and rural road graph; current corridor and village-access meshes are visual prototypes and some routes are intentionally skipped.
 - [ ] Convert the first-pass tunnel props into connected, excavated/terrain-integrated and collision-tested routes; add complete bridge, overpass, underpass, ramp, coastal-road, mountain-pass, junction, and drainage networks.
 - [ ] Add road markings, lane graph, traffic rules, traffic lights, pedestrian crossings, speed zones, signs, and collision.
 - [ ] Add race circuits, street races, checkpoints, timing, results, rewards, leaderboards, and safe reset/respawn rules.
