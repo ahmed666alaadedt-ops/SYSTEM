@@ -309,6 +309,10 @@ func _build_aircraft_visual(parent: Node3D) -> void:
 	_add_box(parent, "AirportRunwaySurface", Vector3(0.0, -0.68, 0.0), Vector3(150.0, 0.22, 28.0), runway_material)
 	for index in range(11):
 		_add_box(parent, "RunwayCenterMark_%02d" % index, Vector3(0.0, -0.54, -55.0 + float(index) * 11.0), Vector3(1.1, 0.04, 5.0), runway_marking)
+	var runway_light_material := _make_material(Color(0.45, 0.82, 1.0), 0.3, 0.0)
+	runway_light_material.emission_enabled = true
+	runway_light_material.emission = Color(0.25, 0.65, 1.0)
+	runway_light_material.emission_energy_multiplier = 1.4
 	for side in [-1.0, 1.0]:
 		for index in range(15):
 			var runway_light := MeshInstance3D.new()
@@ -317,11 +321,7 @@ func _build_aircraft_visual(parent: Node3D) -> void:
 			light_mesh.height = 0.36
 			runway_light.mesh = light_mesh
 			runway_light.position = Vector3(side * 14.5, -0.42, -70.0 + float(index) * 10.0)
-			var light_material := _make_material(Color(0.45, 0.82, 1.0), 0.3, 0.0)
-			light_material.emission_enabled = true
-			light_material.emission = Color(0.25, 0.65, 1.0)
-			light_material.emission_energy_multiplier = 1.4
-			runway_light.material_override = light_material
+			runway_light.material_override = runway_light_material
 			parent.add_child(runway_light)
 	_add_box(parent, "AircraftFuselage", Vector3(0.0, 1.7, 0.0), Vector3(3.2, 2.1, 19.0), body_material)
 	_add_box(parent, "AircraftMainWing", Vector3(0.0, 1.2, 0.0), Vector3(25.0, 0.35, 3.6), body_material)
@@ -335,7 +335,7 @@ func _build_train_visual(parent: Node3D) -> void:
 	var body_material := _make_material(Color(0.12, 0.28, 0.36), 0.45, 0.38)
 	var window_material := _make_material(Color(0.08, 0.22, 0.31), 0.2, 0.35)
 	var track_material := _make_material(Color(0.28, 0.3, 0.32), 0.62, 0.62)
-	_add_box(parent, "StationTrackBed", Vector3(0.0, -0.12, 22.0), Vector3(6.5, 0.22, 82.0), dark_material)
+	_add_box(parent, "StationTrackBed", Vector3(0.0, -0.12, 22.0), Vector3(6.5, 0.22, 82.0), track_material)
 	for side in [-1.0, 1.0]:
 		_add_box(parent, "StationRail", Vector3(side * 2.0, 0.02, 22.0), Vector3(0.18, 0.18, 82.0), track_material)
 	for sleeper_index in range(20):
