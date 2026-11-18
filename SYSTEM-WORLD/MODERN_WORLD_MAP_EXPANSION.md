@@ -177,3 +177,10 @@ This expansion is committed to the repository and wired into `world_manager.gd` 
 - Harbor prototypes now include a cargo warehouse, loading apron and stacked freight containers in addition to docks, piers, cranes and a ship.
 - Terrain-checked access-road meshes are attempted between each city and its airport, central station, and harbor. A route is skipped if the direct sampled corridor crosses water.
 - All transport structures remain visual prototypes. No ticketing, boarding, vehicle movement, route schedules, freight handling, collision-tested access, or navigable transport has been implemented.
+
+
+## Bridge safety and waterfront public space — visual expansion
+
+- Water-crossing portions of accepted inter-city corridors now receive side railing meshes and spaced emissive marker lights in addition to their earlier deck and support prototypes.
+- Harbor edges now receive a promenade deck, bollards, benches and a simple harbor sign to create a pedestrian-facing waterfront.
+- These remain decorative meshes. Bridge collision/structural validation, continuous road routing, promenade access ramps, pedestrian navigation, lighting controls and water-level clearance tests remain outstanding.
