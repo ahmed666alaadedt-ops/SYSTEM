@@ -11,12 +11,14 @@ signal gate_breached_report(report: Dictionary)
 
 const RANK_ORDER := ["F", "E", "D", "C", "B", "A", "S", "SS", "SSS", "EX"]
 
+var gate_manager: Node
 var gate_records: Dictionary = {}
 var report_counter := 0
 var player_rank := "F"
 
 
-func setup(gate_manager: Node, monster_manager: Node) -> void:
+func setup(gate_manager_node: Node, monster_manager: Node) -> void:
+	gate_manager = gate_manager_node
 	if is_instance_valid(gate_manager):
 		if gate_manager.has_signal("gate_spawned"):
 			gate_manager.connect("gate_spawned", Callable(self, "register_gate"))
@@ -112,6 +114,9 @@ func complete_gate_operation(gate_id: String) -> void:
 	record["status"] = "cleared"
 	record["cleared"] = true
 	record["clear_timestamp"] = Time.get_unix_time_from_system()
+	if is_instance_valid(gate_manager) and gate_manager.has_method("contain_gate"):
+		gate_manager.call("contain_gate", gate_id)
+	record["status"] = "cleared"
 	gate_cleared.emit(record.duplicate(true))
 
 
