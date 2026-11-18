@@ -5,7 +5,17 @@ class_name ModernCityTrafficManager
 ## هذه مركبات بيئية أولية؛ لا تمثل بعد نظام قيادة أو اصطدام أو ذكاء مرور.
 
 const ROAD_LENGTH := 185.0
-const LANE_OFFSET := 3.1
+const LANE_OFFSET := 3.0
+const TRAFFIC_FLEET := [
+	{"name": "Sedan", "size": Vector3(1.9, 0.72, 4.1), "cabin": Vector3(1.52, 0.68, 1.9), "speed": 9.0},
+	{"name": "Taxi", "size": Vector3(1.9, 0.72, 4.2), "cabin": Vector3(1.52, 0.68, 1.9), "speed": 8.0},
+	{"name": "DeliveryVan", "size": Vector3(2.0, 1.05, 4.8), "cabin": Vector3(1.65, 0.72, 1.8), "speed": 7.2},
+	{"name": "CityBus", "size": Vector3(2.45, 1.55, 8.0), "cabin": Vector3(2.2, 0.8, 3.2), "speed": 5.8},
+	{"name": "Police", "size": Vector3(1.95, 0.78, 4.4), "cabin": Vector3(1.55, 0.72, 1.9), "speed": 9.5},
+	{"name": "Ambulance", "size": Vector3(2.0, 1.25, 5.2), "cabin": Vector3(1.7, 0.75, 1.9), "speed": 7.0},
+	{"name": "UtilityTruck", "size": Vector3(2.35, 1.35, 6.4), "cabin": Vector3(2.0, 0.82, 2.0), "speed": 6.2},
+	{"name": "Sport", "size": Vector3(1.95, 0.62, 4.3), "cabin": Vector3(1.5, 0.56, 1.7), "speed": 11.0}
+]
 
 var region_manager: Node3D
 var terrain: Node
@@ -58,18 +68,26 @@ func _build_city_traffic() -> void:
 		var anchor: Vector3 = region_manager.call("get_city_anchor", city_name)
 		if anchor == Vector3.INF:
 			continue
-		_create_vehicle(city_name + "_NorthSouthTraffic", anchor, false, city_index)
-		_create_vehicle(city_name + "_EastWestTraffic", anchor, true, city_index)
+		for fleet_index in range(TRAFFIC_FLEET.size()):
+			var east_west := fleet_index % 2 == 1
+			_create_vehicle(
+				city_name + "_" + str(TRAFFIC_FLEET[fleet_index]["name"]) + "_%02d" % fleet_index,
+				anchor,
+				east_west,
+				city_index * TRAFFIC_FLEET.size() + fleet_index,
+				fleet_index
+			)
 
 
-func _create_vehicle(vehicle_name: String, anchor: Vector3, east_west: bool, seed_index: int) -> void:
+func _create_vehicle(vehicle_name: String, anchor: Vector3, east_west: bool, seed_index: int, fleet_index: int) -> void:
+	var definition: Dictionary = TRAFFIC_FLEET[fleet_index]
 	var vehicle := Node3D.new()
 	vehicle.name = vehicle_name
 	add_child(vehicle)
 
 	var body := MeshInstance3D.new()
 	var body_mesh := BoxMesh.new()
-	body_mesh.size = Vector3(1.9, 0.72, 4.1)
+	body_mesh.size = definition["size"]
 	body.mesh = body_mesh
 	body.position.y = 0.72
 	body.material_override = body_material
@@ -77,9 +95,9 @@ func _create_vehicle(vehicle_name: String, anchor: Vector3, east_west: bool, see
 
 	var cabin := MeshInstance3D.new()
 	var cabin_mesh := BoxMesh.new()
-	cabin_mesh.size = Vector3(1.52, 0.68, 1.9)
+	cabin_mesh.size = definition["cabin"]
 	cabin.mesh = cabin_mesh
-	cabin.position = Vector3(0.0, 1.38, -0.18)
+	cabin.position = Vector3(0.0, float(definition["size"].y) + float(definition["cabin"].y) * 0.5, -0.18)
 	cabin.material_override = glass_material
 	vehicle.add_child(cabin)
 
@@ -109,8 +127,9 @@ func _create_vehicle(vehicle_name: String, anchor: Vector3, east_west: bool, see
 		"node": vehicle,
 		"anchor": anchor,
 		"east_west": east_west,
-		"speed": 8.5 + float(seed_index % 5) * 1.4,
-		"offset": float(seed_index) * 13.0 + (ROAD_LENGTH * 0.5 if east_west else 0.0)
+		"speed": float(definition["speed"]) + float(seed_index % 3) * 0.35,
+		"lane": 2.8 + float((fleet_index / 2) % 2) * 2.1,
+		"offset": float(seed_index) * 17.0 + (ROAD_LENGTH * 0.5 if east_west else 0.0)
 	})
 
 
@@ -125,11 +144,11 @@ func _process(delta: float) -> void:
 		var position := anchor
 		if bool(item["east_west"]):
 			position.x += distance
-			position.z += LANE_OFFSET
+			position.z += float(item["lane"])
 			vehicle.rotation.y = PI * 0.5
 		else:
 			position.z -= distance
-			position.x -= LANE_OFFSET
+			position.x -= float(item["lane"])
 			vehicle.rotation.y = 0.0
 		if terrain != null and terrain.has_method("is_land_position"):
 			if not bool(terrain.call("is_land_position", position.x, position.z)):
