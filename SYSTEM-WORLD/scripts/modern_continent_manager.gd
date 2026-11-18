@@ -25,9 +25,14 @@ const ISLAND_DATA := [
 ]
 
 const RIVER_ROUTES := [
+	# Northern mountain river flowing into the central basin.
 	[Vector2(430.0, -390.0), Vector2(330.0, -280.0), Vector2(210.0, -170.0), Vector2(90.0, -65.0), Vector2(0.0, 0.0)],
+	# Western highland river meeting the central river basin.
 	[Vector2(-610.0, 260.0), Vector2(-470.0, 190.0), Vector2(-310.0, 120.0), Vector2(-145.0, 55.0), Vector2(0.0, 0.0)],
-	[Vector2(760.0, 430.0), Vector2(610.0, 350.0), Vector2(470.0, 260.0), Vector2(330.0, 170.0)]
+	# Eastern mountain river and its foothill valley.
+	[Vector2(760.0, 430.0), Vector2(610.0, 350.0), Vector2(470.0, 260.0), Vector2(330.0, 170.0)],
+	# Southern outlet: carries the central basin toward the southern coastline.
+	[Vector2(0.0, 0.0), Vector2(40.0, 140.0), Vector2(80.0, 280.0), Vector2(70.0, 420.0), Vector2(30.0, 580.0), Vector2(10.0, 720.0)]
 ]
 
 const CITY_DATA := [
@@ -569,7 +574,9 @@ func _lake_basin_depth(x: float, z: float) -> float:
 	var depth := 0.0
 	var lake_centers := [
 		{"center": Vector2(250.0, 165.0), "radius_x": 44.0, "radius_z": 32.0, "depth": 9.0},
-		{"center": Vector2(-430.0, -70.0), "radius_x": 36.0, "radius_z": 27.0, "depth": 7.0}
+		{"center": Vector2(-430.0, -70.0), "radius_x": 36.0, "radius_z": 27.0, "depth": 7.0},
+		{"center": Vector2(-820.0, -520.0), "radius_x": 42.0, "radius_z": 31.0, "depth": 6.0},
+		{"center": Vector2(700.0, 590.0), "radius_x": 48.0, "radius_z": 34.0, "depth": 5.5}
 	]
 	for lake in lake_centers:
 		var center: Vector2 = lake["center"]
@@ -641,8 +648,10 @@ func _build_rivers_and_lakes() -> void:
 	_build_mountain_waterfalls()
 
 	var lake_data := [
-		{"name": "CentralLake", "center": Vector2(250.0, 165.0), "size": Vector2(58.0, 42.0)},
-		{"name": "WesternLake", "center": Vector2(-430.0, -70.0), "size": Vector2(42.0, 30.0)}
+		{"name": "CentralLake", "center": Vector2(250.0, 165.0), "size": Vector2(58.0, 42.0), "surface_offset": 6.5},
+		{"name": "WesternLake", "center": Vector2(-430.0, -70.0), "size": Vector2(42.0, 30.0), "surface_offset": 5.0},
+		{"name": "NorthwesternLake", "center": Vector2(-820.0, -520.0), "size": Vector2(54.0, 40.0), "surface_offset": 4.5},
+		{"name": "SoutheasternLake", "center": Vector2(700.0, 590.0), "size": Vector2(62.0, 46.0), "surface_offset": 4.5}
 	]
 	for lake in lake_data:
 		var center: Vector2 = lake["center"]
@@ -655,7 +664,7 @@ func _build_rivers_and_lakes() -> void:
 		lake_node.mesh = lake_mesh
 		lake_node.position = Vector3(
 			center.x,
-			_get_height(center.x, center.y) + (6.5 if str(lake["name"]) == "CentralLake" else 5.0),
+			_get_height(center.x, center.y) + float(lake.get("surface_offset", 5.0)),
 			center.y
 		)
 		lake_node.material_override = water_material
