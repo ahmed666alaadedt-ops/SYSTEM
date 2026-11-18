@@ -1,0 +1,94 @@
+extends Node
+class_name SystemPlayerVehicleManager
+
+signal wallet_changed(balance: int)
+signal garage_changed(vehicles: Array)
+
+const SAVE_PATH := "user://system_vehicle_garage.cfg"
+const STARTING_CURRENCY := 25000
+const RESALE_RATE := 0.60
+
+var balance: int = STARTING_CURRENCY
+var owned_vehicles: Array[String] = []
+var active_vehicle_id := ""
+var catalog_script = preload("res://scripts/system_vehicle_catalog.gd")
+
+func _ready() -> void:
+	load_garage()
+
+func get_balance() -> int:
+	return balance
+
+func get_garage() -> Array[String]:
+	return owned_vehicles.duplicate()
+
+func purchase_vehicle(vehicle_id: String) -> Dictionary:
+	var vehicle: Dictionary = catalog_script.get_vehicle(vehicle_id)
+	if vehicle.is_empty() or int(vehicle.get("price", 0)) <= 0:
+		return {"success":false,"reason":"VEHICLE_NOT_FOR_SALE"}
+	if owned_vehicles.has(vehicle_id):
+		return {"success":false,"reason":"ALREADY_OWNED"}
+	var price := int(vehicle["price"])
+	if balance < price:
+		return {"success":false,"reason":"INSUFFICIENT_CURRENCY","required":price,"balance":balance}
+	balance -= price
+	owned_vehicles.append(vehicle_id)
+	save_garage()
+	wallet_changed.emit(balance)
+	garage_changed.emit(get_garage())
+	return {"success":true,"vehicle_id":vehicle_id,"paid":price,"balance":balance}
+
+func sell_vehicle(vehicle_id: String) -> Dictionary:
+	if not owned_vehicles.has(vehicle_id):
+		return {"success":false,"reason":"NOT_OWNED"}
+	if vehicle_id == active_vehicle_id:
+		return {"success":false,"reason":"RETURN_VEHICLE_TO_GARAGE_FIRST"}
+	var vehicle: Dictionary = catalog_script.get_vehicle(vehicle_id)
+	var resale := int(floor(float(vehicle.get("price", 0)) * RESALE_RATE))
+	if resale <= 0:
+		return {"success":false,"reason":"VEHICLE_NOT_RESELLABLE"}
+	owned_vehicles.erase(vehicle_id)
+	balance += resale
+	save_garage()
+	wallet_changed.emit(balance)
+	garage_changed.emit(get_garage())
+	return {"success":true,"vehicle_id":vehicle_id,"received":resale,"balance":balance}
+
+func set_active_vehicle(vehicle_id: String) -> Dictionary:
+	if not owned_vehicles.has(vehicle_id):
+		return {"success":false,"reason":"NOT_OWNED"}
+	active_vehicle_id = vehicle_id
+	save_garage()
+	return {"success":true,"vehicle_id":vehicle_id}
+
+func clear_active_vehicle() -> void:
+	active_vehicle_id = ""
+	save_garage()
+
+func save_garage() -> void:
+	var config := ConfigFile.new()
+	config.set_value("wallet","balance",balance)
+	config.set_value("garage","owned",owned_vehicles)
+	config.set_value("garage","active_vehicle_id",active_vehicle_id)
+	var error := config.save(SAVE_PATH)
+	if error != OK:
+		push_warning("SYSTEM Vehicles: local garage save failed.")
+
+func load_garage() -> void:
+	var config := ConfigFile.new()
+	if config.load(SAVE_PATH) != OK:
+		save_garage()
+		return
+	balance = maxi(0,int(config.get_value("wallet","balance",STARTING_CURRENCY)))
+	owned_vehicles.clear()
+	for value in config.get_value("garage","owned",[]):
+		var vehicle_id := str(value)
+		if catalog_script.get_vehicle(vehicle_id).is_empty() or owned_vehicles.has(vehicle_id):
+			continue
+		owned_vehicles.append(vehicle_id)
+	active_vehicle_id = str(config.get_value("garage","active_vehicle_id",""))
+	if not owned_vehicles.has(active_vehicle_id):
+		active_vehicle_id = ""
+
+func get_economy_status() -> Dictionary:
+	return {"balance":balance,"owned_vehicles":get_garage(),"active_vehicle_id":active_vehicle_id,"save_mode":"local_prototype"}
