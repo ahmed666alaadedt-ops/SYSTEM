@@ -119,3 +119,9 @@ GitHub file writes are confirmed for the scripts listed below. Godot parsing, sc
 - Generated inter-city corridors attempt a roadside service area with a small market, fuel canopy, pump props, EV chargers and parking-bay markings.
 - Candidate sites are placed only on sampled land beside the corridor.
 - Fuel/charging economy, service interactions, staff, vehicle routing and collision remain unfinished.
+
+
+### 14. Urban flyovers — visual prototype
+- Cities attempt an elevated boulevard crossing with terrain-sampled approach ramps, lane marking, side barriers and support piers.
+- Sites crossing water are skipped.
+- The flyovers are not connected drivable roads yet; collision, clearance, junction and traffic validation remain outstanding.
