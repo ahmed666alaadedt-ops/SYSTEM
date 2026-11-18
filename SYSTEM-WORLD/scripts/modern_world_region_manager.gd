@@ -7,6 +7,7 @@ const ModernWorldLightingManagerScript = preload("res://scripts/modern_world_lig
 const ModernWorldAmbienceManagerScript = preload("res://scripts/modern_world_ambience_manager.gd")
 const BaghdadTowerLandmarksManagerScript = preload("res://scripts/baghdad_tower_landmarks_manager.gd")
 const ModernWorldTransportNetworkManagerScript = preload("res://scripts/modern_world_transport_network_manager.gd")
+const ModernCityStreetFurnitureManagerScript = preload("res://scripts/modern_city_street_furniture_manager.gd")
 
 ## طبقة تفاصيل المدن والمناطق الحضرية للعالم الحديث.
 ## تُبنى فوق تضاريس القارة الموجودة ولا تستبدلها أو تغيّر مواقعها المرجعية.
@@ -74,6 +75,7 @@ func _ready() -> void:
 	_build_city_districts()
 	_build_city_roads()
 	_create_transport_network()
+	_create_city_street_furniture()
 	_build_transport_hubs()
 	_build_green_belts()
 	_build_rural_settlements()
@@ -489,6 +491,12 @@ func get_city_names() -> Array[String]:
 		if city_anchors.has(city_name):
 			result.append(city_name)
 	return result
+
+
+func _create_city_street_furniture() -> void:
+	var street_furniture := ModernCityStreetFurnitureManagerScript.new()
+	street_furniture.name = "ModernCityStreetFurnitureManager"
+	add_child(street_furniture)
 
 
 func _create_transport_network() -> void:
