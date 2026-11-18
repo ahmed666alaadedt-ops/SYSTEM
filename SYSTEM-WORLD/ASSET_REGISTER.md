@@ -150,3 +150,17 @@ asset here only after generation, GLB validation, Godot import and visual review
 - `XSX_VERIFIED_CONTRIBUTION_SYSTEM.md` — event rules, weights, trust model and deployment requirements.
 - No client gameplay event submission endpoint is exposed. No NPCs are included. No rewards are granted.
 - Dedicated game-server identity, Godot bridge, Firebase deployment and runtime testing remain pending.
+
+
+## Android / Godot Runtime Bridge (2026-11-19)
+
+- `scripts/system_android_bridge.gd` — engine-side bridge contract for queued
+  world-entry requests, outbound world-state/result signals and startup arguments.
+- `project.godot` registers the bridge as `SYSTEMAndroidBridge`.
+- `scripts/main.gd` connects the bridge to the canonical `WorldManager`,
+  publishes active-world changes and accepts external startup entry only into
+  the modern world. Other world entry requests are directed to the Baghdad
+  Star Gate travel flow.
+- Native Android host/plugin, Godot AAR export, Gradle embedding, Firebase
+  session adapter and device verification remain pending. This is not yet a
+  live Android-to-Godot transport.
