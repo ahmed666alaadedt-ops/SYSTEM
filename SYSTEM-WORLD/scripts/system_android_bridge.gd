@@ -42,6 +42,8 @@ func _connect_native_transport() -> void:
 	if _native_host.has_signal("message_from_android"):
 		if not _native_host.is_connected("message_from_android", callback):
 			_native_host.connect("message_from_android", callback)
+	if _native_host.has_method("send_to_android"):
+		_send_to_android("bridge_ready", {"ready": true, "protocol_version": PROTOCOL_VERSION})
 	_publish_status()
 
 
