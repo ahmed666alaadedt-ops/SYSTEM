@@ -16,6 +16,8 @@ This is the acceptance checklist for the modern-world map. The project must not 
 - [x] Rail visual prototypes include passenger platforms, canopies, concourses, and departure signage.
 - [x] Harbor visual prototypes include cargo warehouses, loading aprons, and freight-container yards.
 - [x] Terrain-checked access-road meshes are attempted for airports, stations, and harbors; water-crossing candidates are skipped.
+- [x] Accepted bridge spans receive visual side railings and marker lights.
+- [x] Harbor prototypes receive a waterfront promenade with benches, bollards and signage.
 - [x] Procedural city street fixtures now cover the generated boulevard and ring-road corridors, with plaza lantern fixtures.
 - [x] A capped pool of 24 shadowless dynamic lights is moved to the nearest street fixtures around the player; fixture meshes use emissive materials.
 - [x] Ambient traffic catalog now contains eight visual archetypes per resolved city, up to 112 vehicles for fourteen cities.
@@ -33,7 +35,7 @@ This is the acceptance checklist for the modern-world map. The project must not 
 ## Global road, bridge, and race gates
 
 - [ ] Complete a continuous, optimized inter-city and rural road graph; current corridor and village-access meshes are visual prototypes and some routes are intentionally skipped.
-- [ ] Convert the first-pass tunnel props into connected, excavated/terrain-integrated and collision-tested routes; add complete bridge, overpass, underpass, ramp, coastal-road, mountain-pass, junction, and drainage networks.
+- [ ] Convert the first-pass tunnel props into connected, excavated/terrain-integrated and collision-tested routes; add complete bridge, overpass, underpass, ramp, coastal-road, mountain-pass, junction, and drainage networks. Bridge railings and marker lights are visual details only.
 - [ ] Add road markings, lane graph, traffic rules, traffic lights, pedestrian crossings, speed zones, signs, and collision.
 - [ ] Add race circuits, street races, checkpoints, timing, results, rewards, leaderboards, and safe reset/respawn rules.
 - [ ] Add fuel/charging, repair, garages, service stations, towing, parking, and roadside incidents.
