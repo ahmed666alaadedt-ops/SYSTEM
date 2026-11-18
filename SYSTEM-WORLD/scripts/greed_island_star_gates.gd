@@ -36,6 +36,7 @@ var world_manager: Node
 var island_manager: Node3D
 var gates_created := false
 var transition_locked := false
+var greed_island_season_open := true
 
 
 func _process(_delta: float) -> void:
@@ -473,19 +474,26 @@ func _add_gate_trigger(
 func _create_return_gates() -> void:
 	var roots := _get_world_roots()
 
-	for world_id in [FANTASY_ID, REALISTIC_ID, HISTORICAL_ID]:
+	# بوابة الدخول الرئيسية توضع في العالم الحديث فقط.
+	var modern_root := world_manager.call(
+		"get_world_root", REALISTIC_ID
+	) as Node3D
+	if modern_root != null:
+		_create_modern_island_entry_gate(modern_root)
+
+	# بوابات العودة/الانتقال من العوالم الأخرى تخضع لنفس شروط الجزيرة.
+	for world_id in [FANTASY_ID, HISTORICAL_ID]:
 		if not roots.has(world_id):
 			continue
 
 		var root := world_manager.call(
 			"get_world_root", world_id
 		) as Node3D
-
 		if root == null:
 			continue
 
 		var return_gate := Area3D.new()
-		return_gate.name = "RoyalReturnGate"
+		return_gate.name = "GreedIslandAccessGate"
 		return_gate.position = Vector3(0.0, 1.2, 1.8)
 		return_gate.set_meta("system_return_gate", true)
 
@@ -496,9 +504,79 @@ func _create_return_gates() -> void:
 		return_gate.add_child(collision)
 
 		root.add_child(return_gate)
-		return_gate.body_entered.connect(
-			_on_return_gate_entered
-		)
+		return_gate.body_entered.connect(_on_return_gate_entered)
+
+
+func _create_modern_island_entry_gate(root: Node3D) -> void:
+	if root.has_node("GreedIslandSeasonalStarGate"):
+		return
+
+	var gate := Node3D.new()
+	gate.name = "GreedIslandSeasonalStarGate"
+	gate.position = Vector3(0.0, 0.0, -18.0)
+	root.add_child(gate)
+
+	var frame_material := _make_material(Color(0.055, 0.12, 0.19), 0.28, 0.82)
+	var energy_material := _make_glowing_material(Color(0.08, 0.78, 1.0))
+
+	_add_gate_box(gate, "StarGateLeftFrame", Vector3(-2.0, 2.5, 0.0), Vector3(0.35, 5.0, 0.65), frame_material)
+	_add_gate_box(gate, "StarGateRightFrame", Vector3(2.0, 2.5, 0.0), Vector3(0.35, 5.0, 0.65), frame_material)
+	_add_gate_box(gate, "StarGateUpperFrame", Vector3(0.0, 4.9, 0.0), Vector3(4.3, 0.35, 0.65), frame_material)
+	_add_gate_box(gate, "StarGateEnergyVeil", Vector3(0.0, 2.4, 0.18), Vector3(3.1, 3.8, 0.08), energy_material)
+
+	var trigger := Area3D.new()
+	trigger.name = "SeasonalEntryActivationArea"
+	trigger.position = Vector3(0.0, 1.2, 1.8)
+	trigger.set_meta("system_star_gate", true)
+	trigger.set_meta("system_gate_title", "بوابة جزيرة الطمع الموسمية")
+	var collision := CollisionShape3D.new()
+	var sphere := SphereShape3D.new()
+	sphere.radius = 2.4
+	collision.shape = sphere
+	trigger.add_child(collision)
+	gate.add_child(trigger)
+	trigger.body_entered.connect(_on_greed_island_entry_entered)
+
+
+func set_greed_island_season_open(is_open: bool) -> void:
+	greed_island_season_open = is_open
+
+
+func _get_player_progression() -> Node:
+	return get_tree().root.find_child("PlayerProgression", true, false)
+
+
+func _has_greed_island_seal() -> bool:
+	var progression := _get_player_progression()
+	if progression == null or not progression.has_method("get_greed_fragment_data"):
+		return false
+	var data: Dictionary = progression.call("get_greed_fragment_data")
+	return bool(data.get("island_seal_ready", false))
+
+
+func _on_greed_island_entry_entered(body: Node3D) -> void:
+	if transition_locked or not _is_local_admin_player(body):
+		return
+	if not greed_island_season_open:
+		print("SYSTEM: Greed Island season is currently closed.")
+		return
+	if not _has_greed_island_seal():
+		print("SYSTEM: Collect the three ancient fragments to awaken the island seal.")
+		return
+	_enter_greed_island()
+
+
+func _enter_greed_island() -> void:
+	if transition_locked:
+		return
+	var roots := _get_world_roots()
+	if not roots.has(GREED_ISLAND_ID):
+		push_warning("SYSTEM: Greed Island destination is unavailable.")
+		return
+	transition_locked = true
+	world_manager.call("switch_world", GREED_ISLAND_ID)
+	await get_tree().create_timer(1.0).timeout
+	transition_locked = false
 
 
 # --------------------------------------------------
@@ -506,13 +584,7 @@ func _create_return_gates() -> void:
 # --------------------------------------------------
 
 func _is_local_admin_player(body: Node3D) -> bool:
-	if not body is CharacterBody3D:
-		return false
-
-	if body.name != "Player":
-		return false
-
-	return _is_admin_test_enabled()
+	return body is CharacterBody3D and body.name == "Player"
 
 
 func _on_island_gate_entered(
@@ -540,16 +612,9 @@ func _on_island_gate_entered(
 
 
 func _on_return_gate_entered(body: Node3D) -> void:
-	if transition_locked:
+	if transition_locked or not _is_local_admin_player(body):
 		return
-
-	if not _is_local_admin_player(body):
+	if not greed_island_season_open or not _has_greed_island_seal():
+		print("SYSTEM: Greed Island access requires an active season and all three fragments.")
 		return
-
-	transition_locked = true
-	world_manager.call(
-		"switch_world", GREED_ISLAND_ID
-	)
-
-	await get_tree().create_timer(1.0).timeout
-	transition_locked = false
+	_enter_greed_island()
