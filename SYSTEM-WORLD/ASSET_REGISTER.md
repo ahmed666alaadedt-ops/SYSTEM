@@ -127,3 +127,15 @@ asset here only after generation, GLB validation, Godot import and visual review
 - `MainActivity.kt` exposes the player-party section.
 - Cloud Functions deployment, two-account end-to-end testing, real-time presence and Godot runtime integration remain pending.
 - Existing Firestore client-write denial remains in place; party writes are server-side only.
+
+
+## XSX Real-Player Party Mission Registration (2026-11-18)
+
+- `functions/src/hunter_guild_missions.ts` — server-validated XSX mission publication, available mission listing, leader-only party registration, and assignment listing.
+- `functions/src/index.ts` exports the four mission callables.
+- `app/src/main/java/com/system/irtqaa/FirebasePlayerPartyRepository.kt` — Android mission-board and registration calls.
+- `app/src/main/java/com/system/irtqaa/SystemPlayerPartyScreen.kt` — mission board section and leader-only team registration.
+- `SYSTEM-WORLD/XSX_PARTY_MISSION_BACKEND.md` — backend schema, validation and deployment/test requirements.
+- Mission/assignment Firestore documents remain client-write denied by the existing catch-all rule.
+- Roster snapshots contain only registered Firebase player UIDs and profile display names; no NPC is accepted or substituted.
+- Godot mission dispatch, gameplay contribution verification, completion and rewards are not connected yet. Cloud Functions deployment and Android runtime testing remain pending.
