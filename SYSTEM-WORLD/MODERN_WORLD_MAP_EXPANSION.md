@@ -184,3 +184,10 @@ This expansion is committed to the repository and wired into `world_manager.gd` 
 - Water-crossing portions of accepted inter-city corridors now receive side railing meshes and spaced emissive marker lights in addition to their earlier deck and support prototypes.
 - Harbor edges now receive a promenade deck, bollards, benches and a simple harbor sign to create a pedestrian-facing waterfront.
 - These remain decorative meshes. Bridge collision/structural validation, continuous road routing, promenade access ramps, pedestrian navigation, lighting controls and water-level clearance tests remain outstanding.
+
+
+## Inter-city highway markings
+
+- The generated inter-city road corridors now include dashed center and lane-edge markings, sampled along the same terrain-following segments as the road surface.
+- Markings are batched into a separate mesh per corridor segment and use no realtime shadow casting.
+- These visual markings do not yet define traffic lanes or navigation paths for vehicles.
