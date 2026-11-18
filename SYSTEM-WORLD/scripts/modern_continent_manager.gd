@@ -304,6 +304,76 @@ func _build_city_markers() -> void:
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		label.modulate = Color(0.72, 0.94, 1.0)
 		marker.add_child(label)
+		_build_city_silhouette(marker, x, z, CITY_DATA.find(city))
+
+
+func _build_city_silhouette(
+	city_root: Node3D,
+	city_x: float,
+	city_z: float,
+	city_index: int
+) -> void:
+	# Lightweight procedural skyline blocks establish a distinct 3D footprint
+	# for every named city while keeping draw calls low through MultiMesh.
+	var palettes := [
+		Color(0.28, 0.36, 0.44), Color(0.42, 0.43, 0.41),
+		Color(0.34, 0.38, 0.46), Color(0.48, 0.42, 0.32),
+		Color(0.31, 0.37, 0.39), Color(0.43, 0.39, 0.33)
+	]
+	var building_material := StandardMaterial3D.new()
+	building_material.albedo_color = palettes[city_index % palettes.size()]
+	building_material.roughness = 0.76
+	building_material.metallic = 0.12
+
+	var building_mesh := BoxMesh.new()
+	building_mesh.size = Vector3.ONE
+	var multi_mesh := MultiMesh.new()
+	multi_mesh.transform_format = MultiMesh.TRANSFORM_3D
+	multi_mesh.mesh = building_mesh
+
+	var transforms: Array[Transform3D] = []
+	var spacing := 27.0
+	for grid_z in range(-2, 3):
+		for grid_x in range(-2, 3):
+			if grid_x == 0 and grid_z == 0:
+				continue
+			var offset_x := float(grid_x) * spacing
+			var offset_z := float(grid_z) * spacing
+			var world_x := city_x + offset_x
+			var world_z := city_z + offset_z
+			if not is_land_position(world_x, world_z):
+				continue
+
+			var ground_height := get_terrain_height(world_x, world_z)
+			var city_base_height := city_root.position.y
+			if absf(ground_height - city_base_height) > 18.0:
+				continue
+
+			var seed_value := absf(sin(float(city_index * 71 + grid_x * 19 + grid_z * 37)))
+			var width := 9.0 + seed_value * 7.0
+			var depth := 9.0 + absf(cos(seed_value * 8.0)) * 6.0
+			var height := 13.0 + seed_value * 48.0
+			var local_position := Vector3(
+				offset_x,
+				ground_height - city_base_height + height * 0.5,
+				offset_z
+			)
+			var scale := Vector3(width, height, depth)
+			transforms.append(Transform3D(Basis().scaled(scale), local_position))
+
+	if transforms.is_empty():
+		return
+
+	multi_mesh.instance_count = transforms.size()
+	for index in range(transforms.size()):
+		multi_mesh.set_instance_transform(index, transforms[index])
+
+	var skyline := MultiMeshInstance3D.new()
+	skyline.name = "CityDistrictBuildings"
+	skyline.multimesh = multi_mesh
+	skyline.material_override = building_material
+	skyline.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	city_root.add_child(skyline)
 
 
 func _build_highways() -> void:
