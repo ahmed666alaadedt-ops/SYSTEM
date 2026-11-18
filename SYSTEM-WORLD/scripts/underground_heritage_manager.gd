@@ -421,3 +421,42 @@ func _build_rune_puzzle(parent: Node3D) -> void:
 		rune_area.add_child(rune_collision)
 
 		_add_box(rune_target, "RuneGlyph", Vector3(0, 0.0, -0.55), Vector3(0.55, 0.75, 0.12), _gold, false)
+
+	# Three floor plates reveal a secondary cache when the player stands on all of them.
+	var pressure_gate := StaticBody3D.new()
+	pressure_gate.name = "PressureCacheGate"
+	pressure_gate.position = Vector3(5.7, 1.45, -54.0)
+	controller.add_child(pressure_gate)
+
+	var pressure_gate_visual := MeshInstance3D.new()
+	pressure_gate_visual.name = "HiddenCacheStonePanel"
+	var pressure_gate_mesh := BoxMesh.new()
+	pressure_gate_mesh.size = Vector3(0.55, 2.9, 3.2)
+	pressure_gate_visual.mesh = pressure_gate_mesh
+	pressure_gate_visual.material_override = _stone
+	pressure_gate.add_child(pressure_gate_visual)
+
+	var pressure_gate_collision := CollisionShape3D.new()
+	var pressure_gate_shape := BoxShape3D.new()
+	pressure_gate_shape.size = pressure_gate_mesh.size
+	pressure_gate_collision.shape = pressure_gate_shape
+	pressure_gate.add_child(pressure_gate_collision)
+	controller.call("configure_pressure_gate", pressure_gate_visual, pressure_gate_collision)
+
+	_add_box(parent, "PressureCacheStrongbox", Vector3(6.35, 0.85, -54.0), Vector3(1.0, 1.4, 1.8), _wood, true)
+	_add_box(parent, "PressureCacheGoldBand", Vector3(6.35, 1.0, -53.05), Vector3(1.08, 0.16, 0.12), _gold, false)
+
+	for plate_index in range(3):
+		var plate_position := Vector3(-4.5 + float(plate_index) * 4.5, 0.08, -55.0)
+		_add_box(parent, "PressurePlateStone", plate_position, Vector3(2.0, 0.16, 2.0), _gold, true)
+		var plate_area := Area3D.new()
+		plate_area.name = "PressurePlateArea"
+		plate_area.position = plate_position + Vector3(0, 0.55, 0)
+		controller.add_child(plate_area)
+
+		var plate_collision := CollisionShape3D.new()
+		var plate_shape := BoxShape3D.new()
+		plate_shape.size = Vector3(2.0, 1.1, 2.0)
+		plate_collision.shape = plate_shape
+		plate_area.add_child(plate_collision)
+		plate_area.body_entered.connect(Callable(controller, "on_pressure_plate_body_entered").bind(plate_index))
