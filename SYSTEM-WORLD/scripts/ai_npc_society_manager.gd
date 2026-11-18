@@ -96,6 +96,7 @@ func create_npc(
 		"life_stage": _life_stage(age_years),
 		"personality": personality,
 		"occupation": occupation,
+		"owned_vehicle_ids": [],
 		"alive": true,
 		"spouse_id": "",
 		"parent_ids": parents,
@@ -134,6 +135,38 @@ func create_npc(
 
 func get_npc(npc_id: String) -> Dictionary:
 	return npcs.get(npc_id, {}).duplicate(true)
+
+
+func assign_vehicle_to_npc(npc_id: String, vehicle_id: String) -> bool:
+	if not npcs.has(npc_id) or vehicle_id.is_empty():
+		return false
+	var npc: Dictionary = npcs[npc_id]
+	var owned: Array = npc.get("owned_vehicle_ids", [])
+	if not owned.has(vehicle_id):
+		owned.append(vehicle_id)
+	npc["owned_vehicle_ids"] = owned
+	npcs[npc_id] = npc
+	return true
+
+func remove_vehicle_from_npc(npc_id: String, vehicle_id: String) -> bool:
+	if not npcs.has(npc_id):
+		return false
+	var npc: Dictionary = npcs[npc_id]
+	var owned: Array = npc.get("owned_vehicle_ids", [])
+	if not owned.has(vehicle_id):
+		return false
+	owned.erase(vehicle_id)
+	npc["owned_vehicle_ids"] = owned
+	npcs[npc_id] = npc
+	return true
+
+func get_owned_vehicles(npc_id: String) -> Array[String]:
+	var result: Array[String] = []
+	if not npcs.has(npc_id):
+		return result
+	for vehicle_id in npcs[npc_id].get("owned_vehicle_ids", []):
+		result.append(str(vehicle_id))
+	return result
 
 
 func get_living_npcs(world_id: int = -1) -> Array[Dictionary]:
