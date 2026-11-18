@@ -73,7 +73,7 @@ func _build_interface() -> void:
 	status_label.add_theme_color_override("font_color", Color(0.45, 0.85, 1.0))
 	root.add_child(status_label)
 
-	var split := HBoxContainer.new()
+	var split := VBoxContainer.new()
 	split.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_child(split)
 
@@ -88,7 +88,7 @@ func _build_interface() -> void:
 	scroll.add_child(report_list)
 
 	var details := VBoxContainer.new()
-	details.custom_minimum_size = Vector2(190, 0)
+	details.custom_minimum_size = Vector2(0, 175)
 	details.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	split.add_child(details)
 	var detail_title := Label.new()
