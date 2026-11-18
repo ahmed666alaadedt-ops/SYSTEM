@@ -280,7 +280,8 @@ fun SystemPlayerPartyScreen(account: SystemFirebaseAccount) {
                                 "الأعضاء وقت التسجيل: ${assignment.rosterSnapshot.joinToString { it.second }}",
                                 color = Color.LightGray,
                                 fontSize = 12.sp
-                            )                            if (assignment.leaderId == account.userId && assignment.status == "registered") {
+                            )
+                            if (assignment.leaderId == account.userId && assignment.status == "registered") {
                                 Button(
                                     enabled = !busy,
                                     onClick = {
