@@ -291,24 +291,40 @@ func _build_highways() -> void:
 	road_material.albedo_color = Color(0.12, 0.14, 0.16)
 	road_material.roughness = 0.9
 
+	var road_surface := SurfaceTool.new()
+	road_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	road_surface.set_material(road_material)
 	for route_index in range(routes.size()):
 		var points: Array = routes[route_index]
 		for segment_index in range(points.size() - 1):
 			var start_2d: Vector2 = points[segment_index]
 			var finish_2d: Vector2 = points[segment_index + 1]
-			var start := Vector3(start_2d.x, _get_height(start_2d.x, start_2d.y) + 0.45, start_2d.y)
-			var finish := Vector3(finish_2d.x, _get_height(finish_2d.x, finish_2d.y) + 0.45, finish_2d.y)
-			var midpoint := (start + finish) * 0.5
-			var road := MeshInstance3D.new()
-			road.name = "ContinentalHighway_%02d_%02d" % [route_index, segment_index]
-			var box := BoxMesh.new()
-			box.size = Vector3(10.0, 0.18, start.distance_to(finish))
-			road.mesh = box
-			road.position = midpoint
-			road.look_at(finish, Vector3.UP)
-			road.material_override = road_material
-			road.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-			add_child(road)
+			var subdivisions := 8
+			for step in range(subdivisions):
+				var t0 := float(step) / float(subdivisions)
+				var t1 := float(step + 1) / float(subdivisions)
+				var a := start_2d.lerp(finish_2d, t0)
+				var b := start_2d.lerp(finish_2d, t1)
+				var direction := (b - a).normalized()
+				var side := Vector2(-direction.y, direction.x) * 5.0
+				var a_left := a + side
+				var a_right := a - side
+				var b_left := b + side
+				var b_right := b - side
+				var a_y := _get_height(a.x, a.y) + 0.38
+				var b_y := _get_height(b.x, b.y) + 0.38
+				_add_surface_quad(
+					road_surface,
+					Vector3(a_left.x, a_y, a_left.y),
+					Vector3(a_right.x, a_y, a_right.y),
+					Vector3(b_left.x, b_y, b_left.y),
+					Vector3(b_right.x, b_y, b_right.y)
+				)
+	var road_visual := MeshInstance3D.new()
+	road_visual.name = "ContinentalHighwayNetwork"
+	road_visual.mesh = road_surface.commit()
+	road_visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(road_visual)
 
 
 # --------------------------------------------------
@@ -346,36 +362,40 @@ func _build_rivers_and_lakes() -> void:
 	water_material.roughness = 0.2
 	water_material.cull_mode = BaseMaterial3D.CULL_DISABLED
 
+	var river_surface := SurfaceTool.new()
+	river_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	river_surface.set_material(water_material)
 	for route_index in range(RIVER_ROUTES.size()):
 		var route: Array = RIVER_ROUTES[route_index]
 		for point_index in range(route.size() - 1):
 			var start_2d: Vector2 = route[point_index]
 			var finish_2d: Vector2 = route[point_index + 1]
-			var subdivisions := 10
+			var subdivisions := 12
 			for step in range(subdivisions):
 				var t0 := float(step) / float(subdivisions)
 				var t1 := float(step + 1) / float(subdivisions)
 				var a := start_2d.lerp(finish_2d, t0)
 				var b := start_2d.lerp(finish_2d, t1)
-				var midpoint := (a + b) * 0.5
-				var segment_length := a.distance_to(b) + 0.35
-				var river_segment := MeshInstance3D.new()
-				river_segment.name = "River_%02d_Segment_%02d_%02d" % [route_index, point_index, step]
-				var river_mesh := BoxMesh.new()
-				river_mesh.size = Vector3(8.0, 0.22, segment_length)
-				river_segment.mesh = river_mesh
-				river_segment.position = Vector3(
-					midpoint.x,
-					_get_height(midpoint.x, midpoint.y) + 0.62,
-					midpoint.y
+				var direction := (b - a).normalized()
+				var bank_offset := Vector2(-direction.y, direction.x) * 4.0
+				var a_left := a + bank_offset
+				var a_right := a - bank_offset
+				var b_left := b + bank_offset
+				var b_right := b - bank_offset
+				var a_y := _get_height(a.x, a.y) + 0.42
+				var b_y := _get_height(b.x, b.y) + 0.42
+				_add_surface_quad(
+					river_surface,
+					Vector3(a_left.x, a_y, a_left.y),
+					Vector3(a_right.x, a_y, a_right.y),
+					Vector3(b_left.x, b_y, b_left.y),
+					Vector3(b_right.x, b_y, b_right.y)
 				)
-				river_segment.look_at(
-					Vector3(b.x, river_segment.position.y, b.y),
-					Vector3.UP
-				)
-				river_segment.material_override = water_material
-				river_segment.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-				add_child(river_segment)
+	var river_visual := MeshInstance3D.new()
+	river_visual.name = "ConnectedRiverNetwork"
+	river_visual.mesh = river_surface.commit()
+	river_visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(river_visual)
 
 	var lake_data := [
 		{"name": "CentralLake", "center": Vector2(250.0, 165.0), "size": Vector2(58.0, 42.0)},
@@ -398,3 +418,18 @@ func _build_rivers_and_lakes() -> void:
 		lake_node.material_override = water_material
 		lake_node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(lake_node)
+
+
+func _add_surface_quad(
+	surface: SurfaceTool,
+	a: Vector3,
+	b: Vector3,
+	c: Vector3,
+	d: Vector3
+) -> void:
+	surface.add_vertex(a)
+	surface.add_vertex(b)
+	surface.add_vertex(c)
+	surface.add_vertex(b)
+	surface.add_vertex(d)
+	surface.add_vertex(c)
