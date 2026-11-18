@@ -24,6 +24,12 @@ const ISLAND_DATA := [
 	{"name": "SouthwesternIsle", "center": Vector2(-1120.0, 820.0), "rx": 160.0, "rz": 120.0, "height": 32.0}
 ]
 
+const RIVER_ROUTES := [
+	[Vector2(430.0, -390.0), Vector2(330.0, -280.0), Vector2(210.0, -170.0), Vector2(90.0, -65.0), Vector2(0.0, 0.0)],
+	[Vector2(-610.0, 260.0), Vector2(-470.0, 190.0), Vector2(-310.0, 120.0), Vector2(-145.0, 55.0), Vector2(0.0, 0.0)],
+	[Vector2(760.0, 430.0), Vector2(610.0, 350.0), Vector2(470.0, 260.0), Vector2(330.0, 170.0)]
+]
+
 const CITY_DATA := [
 	{"name": "New York", "x": -650.0, "z": -260.0},
 	{"name": "London", "x": -420.0, "z": -90.0},
@@ -49,6 +55,7 @@ func _ready() -> void:
 	_build_islands()
 	_build_city_markers()
 	_build_highways()
+	_build_rivers_and_lakes()
 	print("SYSTEM WORLD: modern continent terrain generated.")
 
 
@@ -94,7 +101,8 @@ func _land_base_height(x: float, z: float) -> float:
 
 	# A low basin through the central region creates a broad valley around the starting area.
 	var central_basin := _gaussian_peak(x, z, Vector2(0.0, 0.0), 390.0, 280.0, -7.0)
-	return broad_hills + rolling_detail + mountain_belts + central_basin
+	var river_carving := _river_channel_depth(x, z)
+	return broad_hills + rolling_detail + mountain_belts + central_basin - river_carving
 
 
 func _get_height(x: float, z: float) -> float:
@@ -118,6 +126,12 @@ func _get_height(x: float, z: float) -> float:
 
 
 func _terrain_color(height: float, x: float, z: float) -> Color:
+	if height > 92.0:
+		return Color(0.88, 0.91, 0.94)
+	if x < -520.0 and z > 260.0 and height < 48.0:
+		return Color(0.68, 0.55, 0.34)
+	if x > -360.0 and x < 300.0 and z < -260.0 and height < 65.0:
+		return Color(0.12, 0.29, 0.16)
 	if height < 1.0:
 		return Color(0.72, 0.66, 0.49)
 	if height < 16.0:
@@ -295,3 +309,93 @@ func _build_highways() -> void:
 			road.material_override = road_material
 			road.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			add_child(road)
+
+
+# --------------------------------------------------
+# NATURAL WATER NETWORK
+# --------------------------------------------------
+
+func _distance_to_segment(point: Vector2, start: Vector2, finish: Vector2) -> float:
+	var segment := finish - start
+	var length_squared := segment.length_squared()
+	if length_squared <= 0.001:
+		return point.distance_to(start)
+	var t := clampf((point - start).dot(segment) / length_squared, 0.0, 1.0)
+	return point.distance_to(start + segment * t)
+
+
+func _river_channel_depth(x: float, z: float) -> float:
+	var point := Vector2(x, z)
+	var nearest_distance := 100000.0
+	for route in RIVER_ROUTES:
+		for index in range(route.size() - 1):
+			nearest_distance = minf(
+				nearest_distance,
+				_distance_to_segment(point, route[index], route[index + 1])
+			)
+	if nearest_distance >= 9.0:
+		return 0.0
+	var blend := 1.0 - nearest_distance / 9.0
+	return 2.8 * blend * blend
+
+
+func _build_rivers_and_lakes() -> void:
+	var water_material := StandardMaterial3D.new()
+	water_material.albedo_color = Color(0.035, 0.29, 0.39, 0.92)
+	water_material.metallic = 0.16
+	water_material.roughness = 0.2
+	water_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+
+	for route_index in range(RIVER_ROUTES.size()):
+		var route: Array = RIVER_ROUTES[route_index]
+		for point_index in range(route.size() - 1):
+			var start_2d: Vector2 = route[point_index]
+			var finish_2d: Vector2 = route[point_index + 1]
+			var subdivisions := 10
+			for step in range(subdivisions):
+				var t0 := float(step) / float(subdivisions)
+				var t1 := float(step + 1) / float(subdivisions)
+				var a := start_2d.lerp(finish_2d, t0)
+				var b := start_2d.lerp(finish_2d, t1)
+				var midpoint := (a + b) * 0.5
+				var direction := (b - a).normalized()
+				var segment_length := a.distance_to(b) + 0.35
+				var river_segment := MeshInstance3D.new()
+				river_segment.name = "River_%02d_Segment_%02d_%02d" % [route_index, point_index, step]
+				var river_mesh := BoxMesh.new()
+				river_mesh.size = Vector3(8.0, 0.22, segment_length)
+				river_segment.mesh = river_mesh
+				river_segment.position = Vector3(
+					midpoint.x,
+					_get_height(midpoint.x, midpoint.y) + 0.62,
+					midpoint.y
+				)
+				river_segment.look_at(
+					Vector3(b.x, river_segment.position.y, b.y),
+					Vector3.UP
+				)
+				river_segment.material_override = water_material
+				river_segment.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+				add_child(river_segment)
+
+	var lake_data := [
+		{"name": "CentralLake", "center": Vector2(250.0, 165.0), "size": Vector2(58.0, 42.0)},
+		{"name": "WesternLake", "center": Vector2(-430.0, -70.0), "size": Vector2(42.0, 30.0)}
+	]
+	for lake in lake_data:
+		var center: Vector2 = lake["center"]
+		var lake_node := MeshInstance3D.new()
+		lake_node.name = str(lake["name"])
+		var lake_mesh := PlaneMesh.new()
+		lake_mesh.size = lake["size"]
+		lake_mesh.subdivide_width = 12
+		lake_mesh.subdivide_depth = 12
+		lake_node.mesh = lake_mesh
+		lake_node.position = Vector3(
+			center.x,
+			_get_height(center.x, center.y) + 0.35,
+			center.y
+		)
+		lake_node.material_override = water_material
+		lake_node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(lake_node)
