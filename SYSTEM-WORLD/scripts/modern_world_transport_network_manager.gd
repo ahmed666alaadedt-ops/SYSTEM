@@ -32,6 +32,7 @@ func _ready() -> void:
 		return
 	_create_materials()
 	_build_intercity_corridors()
+	_build_city_tunnels()
 	_build_city_ports()
 	_build_aircraft_and_train_fleets()
 	_build_race_circuits()
@@ -166,6 +167,95 @@ func _build_bridge_supports(samples: Array[Vector3], route_index: int, segment_i
 		pier.position = Vector3(point.x, 2.9, point.z)
 		pier.material_override = bridge_material
 		add_child(pier)
+
+
+func _build_city_tunnels() -> void:
+	var city_names: Array = region_manager.call("get_city_names")
+	var built := 0
+	for city_index in range(city_names.size()):
+		var city_name := str(city_names[city_index])
+		var anchor := _city_anchor(city_name)
+		if anchor == Vector3.INF:
+			continue
+		var radial := Vector2(anchor.x, anchor.z).normalized()
+		if radial.length_squared() < 0.01:
+			radial = Vector2.RIGHT
+		var directions: Array[Vector2] = [
+			radial.rotated(PI * 0.5),
+			radial,
+			radial.rotated(-PI * 0.5),
+			Vector2.UP
+		]
+		var chosen_position := Vector2.INF
+		var chosen_direction := Vector2.ZERO
+		for direction in directions:
+			var requested := Vector2(anchor.x, anchor.z) + direction * 175.0
+			var candidate := _nearest_land(requested)
+			if candidate == Vector2.INF:
+				continue
+			var valid := true
+			var min_height := INF
+			var max_height := -INF
+			for sample_index in range(9):
+				var along := -42.0 + float(sample_index) * 10.5
+				var sample := candidate + direction * along
+				if not bool(terrain.call("is_land_position", sample.x, sample.y)):
+					valid = false
+					break
+				var height := float(terrain.call("get_terrain_height", sample.x, sample.y))
+				min_height = minf(min_height, height)
+				max_height = maxf(max_height, height)
+			if valid and max_height - min_height <= 4.0:
+				chosen_position = candidate
+				chosen_direction = direction
+				break
+		if chosen_position == Vector2.INF:
+			continue
+		var tunnel := Node3D.new()
+		tunnel.name = city_name.replace(" ", "") + "_RoadTunnel"
+		var ground_y := float(terrain.call("get_terrain_height", chosen_position.x, chosen_position.y))
+		tunnel.position = Vector3(chosen_position.x, ground_y + 0.25, chosen_position.y)
+		tunnel.rotation.y = atan2(-chosen_direction.x, -chosen_direction.y)
+		add_child(tunnel)
+		_build_tunnel_structure(tunnel, city_name)
+		landmark_records.append({
+			"id": "road_tunnel_" + city_name.to_lower().replace(" ", "_"),
+			"name": city_name + " Road Tunnel",
+			"position": tunnel.position
+		})
+		built += 1
+	print("SYSTEM WORLD: city road tunnel visual prototypes built=", built)
+
+
+func _build_tunnel_structure(parent: Node3D, city_name: String) -> void:
+	var concrete := _make_material(Color(0.25, 0.29, 0.32), 0.9, 0.12)
+	var inner_concrete := _make_material(Color(0.12, 0.15, 0.18), 0.96, 0.0)
+	var road := _make_material(Color(0.045, 0.052, 0.06), 0.98, 0.0)
+	var marking := _make_material(Color(0.88, 0.82, 0.57), 0.82, 0.0)
+	var lamp := _make_material(Color(0.72, 0.82, 0.9), 0.35, 0.0)
+	lamp.emission_enabled = true
+	lamp.emission = Color(0.42, 0.62, 0.82)
+	lamp.emission_energy_multiplier = 1.35
+	_add_box(parent, "TunnelRoadBed", Vector3(0.0, -0.12, 0.0), Vector3(15.0, 0.35, 84.0), road)
+	_add_box(parent, "TunnelLeftWall", Vector3(-7.5, 3.0, 0.0), Vector3(0.8, 6.0, 84.0), concrete)
+	_add_box(parent, "TunnelRightWall", Vector3(7.5, 3.0, 0.0), Vector3(0.8, 6.0, 84.0), concrete)
+	_add_box(parent, "TunnelCeiling", Vector3(0.0, 6.25, 0.0), Vector3(15.8, 0.7, 84.0), inner_concrete)
+	for end_sign in [-1.0, 1.0]:
+		var z := end_sign * 42.0
+		_add_box(parent, "TunnelPortalLeft_%s" % str(end_sign), Vector3(-7.1, 3.15, z), Vector3(1.2, 6.3, 1.8), concrete)
+		_add_box(parent, "TunnelPortalRight_%s" % str(end_sign), Vector3(7.1, 3.15, z), Vector3(1.2, 6.3, 1.8), concrete)
+		_add_box(parent, "TunnelPortalHeader_%s" % str(end_sign), Vector3(0.0, 6.25, z), Vector3(15.4, 1.1, 1.8), concrete)
+		_add_box(parent, "TunnelApproach_%s" % str(end_sign), Vector3(0.0, -0.12, end_sign * 57.0), Vector3(15.0, 0.3, 30.0), road)
+		_add_box(parent, "TunnelApproachLine_%s" % str(end_sign), Vector3(0.0, 0.06, end_sign * 57.0), Vector3(0.22, 0.035, 25.0), marking)
+	for lane_side in [-1.0, 1.0]:
+		_add_box(parent, "TunnelEdgeLine_%s" % str(lane_side), Vector3(lane_side * 6.2, 0.08, 0.0), Vector3(0.18, 0.04, 78.0), marking)
+	for lamp_index in range(9):
+		var z := -34.0 + float(lamp_index) * 8.5
+		_add_box(parent, "TunnelCeilingLamp_%02d" % lamp_index, Vector3(0.0, 5.78, z), Vector3(1.25, 0.12, 0.42), lamp)
+	for sign_side in [-1.0, 1.0]:
+		_add_box(parent, "TunnelSafetyBay_%s" % str(sign_side), Vector3(sign_side * 6.72, 1.25, 0.0), Vector3(0.22, 1.6, 3.0), concrete)
+	_add_box(parent, "TunnelNameSign", Vector3(0.0, 7.2, -43.2), Vector3(10.0, 0.55, 0.35), bridge_material)
+	_add_box(parent, "TunnelNameSignRear", Vector3(0.0, 7.2, 43.2), Vector3(10.0, 0.55, 0.35), bridge_material)
 
 func _build_city_ports() -> void:
 	var city_names: Array = region_manager.call("get_city_names")
