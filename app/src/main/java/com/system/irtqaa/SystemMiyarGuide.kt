@@ -180,8 +180,7 @@ private fun SystemMiyarGuideScreen(
 
             engineReference.set(null)
 
-            engine.stop()
-            engine.shutdown()
+            SystemMiyarSpeechCoordinator.release(engine)
 
             textToSpeech = null
             ttsReady = false
@@ -194,10 +193,9 @@ private fun SystemMiyarGuideScreen(
         speechEnabled
     ) {
         if (ttsReady && speechEnabled) {
-            textToSpeech?.speak(
+            SystemMiyarSpeechCoordinator.speak(
+                textToSpeech,
                 page.speech,
-                TextToSpeech.QUEUE_FLUSH,
-                null,
                 "miyar_guide_$currentPage"
             )
         }
@@ -361,7 +359,7 @@ private fun SystemMiyarGuideScreen(
                     speechEnabled = !speechEnabled
 
                     if (!speechEnabled) {
-                        textToSpeech?.stop()
+                        SystemMiyarSpeechCoordinator.stop(textToSpeech)
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -379,10 +377,9 @@ private fun SystemMiyarGuideScreen(
             Button(
                 onClick = {
                     if (ttsReady) {
-                        textToSpeech?.speak(
+                        SystemMiyarSpeechCoordinator.speak(
+                            textToSpeech,
                             page.speech,
-                            TextToSpeech.QUEUE_FLUSH,
-                            null,
                             "miyar_replay_$currentPage"
                         )
                     }

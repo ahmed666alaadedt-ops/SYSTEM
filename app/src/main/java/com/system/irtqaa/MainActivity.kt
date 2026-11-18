@@ -205,6 +205,7 @@ fun SystemApp(account: SystemFirebaseAccount) {
                                 tabs.forEachIndexed { index, title ->
                                     Button(
                                         onClick = {
+                                            miyarDialog = null
                                             selectedTab = index
                                             showWorldSelection = false
                                             if (index != 0) selectedWorld = ""
@@ -244,9 +245,12 @@ fun SystemApp(account: SystemFirebaseAccount) {
                                 if (showWorldSelection) {
                                     WorldSelectionScreen(
                                         onBack = {
+                                            miyarDialog = null
                                             showWorldSelection = false
                                         },
                                         onSelectWorld = { world ->
+                                            miyarDialog = null
+                                            selectedTab = 0
                                             selectedWorld = world
                                             showWorldSelection = false
                                         }
@@ -254,31 +258,23 @@ fun SystemApp(account: SystemFirebaseAccount) {
                                 } else if (selectedWorld == "mythology") {
                                     SystemHistoricalWorldScreen(
                                         onBack = {
+                                            miyarDialog = null
                                             selectedWorld = ""
                                             showWorldSelection = true
                                         }
                                     )
                                 } else if (selectedWorld == "real") {
-                                    Column {
-                                        Button(
-                                            onClick = {
-                                                selectedWorld = ""
-                                                showWorldSelection = true
-                                            }
-                                        ) {
-                                            Text("العودة إلى العوالم")
+                                    SystemModernWorldEntryScreen(
+                                        onBack = {
+                                            miyarDialog = null
+                                            selectedWorld = ""
+                                            showWorldSelection = true
                                         }
-
-                                        SystemWorldScreen(
-                                            progress = worldProgress,
-                                            onProgressChange = {
-                                                worldProgress = it
-                                            }
-                                        )
-                                    }
+                                    )
                                 } else if (selectedWorld == "fantasy") {
                                     SystemFantasyWorldScreen(
                                         onBack = {
+                                            miyarDialog = null
                                             selectedWorld = ""
                                             showWorldSelection = true
                                         }
@@ -288,6 +284,7 @@ fun SystemApp(account: SystemFirebaseAccount) {
                                         playerId = userId,
                                         playerLevel = progressSnapshot.overallLevel,
                                         onBack = {
+                                            miyarDialog = null
                                             selectedWorld = ""
                                             showWorldSelection = true
                                         }
@@ -339,6 +336,7 @@ fun SystemApp(account: SystemFirebaseAccount) {
 
                                         SystemWorldBanner(
                                             onClick = {
+                                                miyarDialog = null
                                                 showWorldSelection = true
                                             }
                                         )
@@ -524,7 +522,9 @@ fun SystemApp(account: SystemFirebaseAccount) {
                     }
                 }
 
-                if (miyarDialog != null) {
+                if (miyarDialog != null && selectedTab == 0 &&
+                    selectedWorld.isBlank() && !showWorldSelection
+                ) {
                     val dialogTitle =
                         if (miyarDialog == "explain") {
                             "مرحباً، أنا ميار"

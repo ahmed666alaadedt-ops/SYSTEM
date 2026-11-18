@@ -167,3 +167,21 @@ contract:
 This is reusable Android-side routing logic, not a live transport. No Activity
 or plugin currently instantiates it, and the callback is not connected to a
 Godot engine instance yet.
+
+
+## Miyar speech and Android navigation correction (2026-11-19)
+
+- `SystemMiyarSpeechCoordinator.kt` serializes Miyar TextToSpeech playback across
+  guide screens. Starting a new Miyar utterance stops the previous active engine;
+  leaving a screen stops and releases only that screen's engine.
+- `SystemMiyarGuide.kt` and `SystemWorldVisualTheme.kt` use the shared speech
+  coordinator to prevent separate guide instances from speaking over each other.
+- `MainActivity.kt` clears the Miyar modal state during navigation and world
+  selection, and only renders the Miyar modal on the home destination.
+- The modern-world selection no longer falls through to the legacy
+  `SystemWorldScreen`. It opens `SystemModernWorldEntryScreen`, which clearly
+  reports that the Godot Android host/AAR is still pending rather than presenting
+  the legacy Compose screen as the new 3D world.
+
+These changes correct the Android navigation destination and serialize Miyar
+speech, but they do not complete or verify the embedded Godot runtime.

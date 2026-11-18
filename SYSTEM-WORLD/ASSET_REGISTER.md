@@ -171,3 +171,19 @@ asset here only after generation, GLB validation, Godot import and visual review
     protocol; modern-only external world requests; Firebase UID supplied by
     the authenticated host; inbound message direction and payload validation.
   - Not yet instantiated by an Activity or connected to a live Godot transport.
+
+
+## Miyar and modern-world navigation correction (2026-11-19)
+
+- `app/src/main/java/com/system/irtqaa/SystemMiyarSpeechCoordinator.kt`
+  - Single active Miyar TTS engine; new speech stops previous playback and screen
+    disposal releases the owning engine.
+- `app/src/main/java/com/system/irtqaa/SystemModernWorldEntryScreen.kt`
+  - Dedicated modern-world destination; prevents accidental fallback to the
+    legacy Compose `SystemWorldScreen` while the Godot Android host is pending.
+- `MainActivity.kt`
+  - Clears Miyar modal state during route changes and keeps it scoped to home.
+- `SystemMiyarGuide.kt` and `SystemWorldVisualTheme.kt`
+  - Use the shared Miyar speech coordinator.
+- This is an Android UI routing/audio correction. It does not represent a live
+  Godot runtime or a physical-device test.
