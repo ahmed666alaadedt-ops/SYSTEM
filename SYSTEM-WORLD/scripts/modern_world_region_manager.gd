@@ -2,6 +2,7 @@ extends Node3D
 class_name ModernWorldRegionManager
 
 const ModernCityTrafficManagerScript = preload("res://scripts/modern_city_traffic_manager.gd")
+const VehicleDealershipManagerScript = preload("res://scripts/system_vehicle_dealership_manager.gd")
 const ModernWorldLightingManagerScript = preload("res://scripts/modern_world_lighting_manager.gd")
 const ModernWorldAmbienceManagerScript = preload("res://scripts/modern_world_ambience_manager.gd")
 const BaghdadTowerLandmarksManagerScript = preload("res://scripts/baghdad_tower_landmarks_manager.gd")
@@ -75,6 +76,7 @@ func _ready() -> void:
 	_build_green_belts()
 	_build_rural_settlements()
 	_build_city_lighting()
+	_create_city_dealerships()
 	_create_baghdad_towers()
 	_create_city_traffic()
 	_create_ambient_soundscape()
@@ -475,6 +477,22 @@ func get_city_names() -> Array[String]:
 		if city_anchors.has(city_name):
 			result.append(city_name)
 	return result
+
+
+func _create_city_dealerships() -> void:
+	for city in CITY_DATA:
+		var city_name := str(city["name"])
+		if not city_anchors.has(city_name):
+			continue
+		var anchor: Vector2 = city_anchors[city_name]
+		var position := _nearest_land_position(anchor + Vector2(105.0, 105.0))
+		if position == Vector2.INF:
+			continue
+		var dealer := VehicleDealershipManagerScript.new()
+		dealer.name = city_name.replace(" ", "") + "VehicleDealership"
+		dealer.position = Vector3(position.x, terrain.get_terrain_height(position.x, position.y), position.y)
+		add_child(dealer)
+		dealer.setup(null)
 
 
 func _create_baghdad_towers() -> void:
