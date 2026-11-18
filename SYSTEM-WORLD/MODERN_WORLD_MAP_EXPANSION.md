@@ -94,3 +94,11 @@ This expansion is committed to the repository and wired into `world_manager.gd` 
 - Witnessed thefts generate a report and dispatch a visible police pursuit unit that follows the stolen vehicle. If the police unit catches the target in this prototype, the vehicle is recovered and removed from the street.
 - Crime records and wanted level are saved locally for this single-device prototype. This is not yet a secure authoritative law system, a multiplayer anti-cheat system, or a full player vehicle hijack/drive controller.
 - Required next production steps: civilian NPC occupants and schedules, key/lock and alarm states, player entering and driving the stolen vehicle, police patrol routes and response delays, line-of-sight and witness simulation, license-plate recognition, pursuit escalation, road-blocks, fines, arrest/jail, impound lots, insurance and ownership transfer. Police must pursue the actual player-controlled vehicle once vehicle possession and driving are implemented.
+
+
+### Autonomous civilian driving and persistent NPC owners
+
+- Civilian car owners are now registered in the existing AI society manager as persistent driver NPC records, rather than existing only as labels on vehicles. Their owner IDs are saved in a registry so the same owner records can be reused on later launches.
+- Each civilian vehicle follows a lightweight loop around its city, with individual cruising speeds and short pauses. A theft switches the vehicle to a faster escape state; recovery stops and removes it from the active street scene.
+- A witnessed theft updates the owner's activity, raises the local wanted level, creates a crime report and dispatches a visible police unit to pursue the moving target. Recovery returns the owner's activity to work.
+- This remains an early simulation layer: routes are simple local loops, not lane-aware navigation; vehicle physics, traffic lights, collisions, pedestrian avoidance, player possession/steering, arrests and secure multiplayer crime authority are not yet implemented. These limitations must remain explicit until those systems are built and tested in Godot.
