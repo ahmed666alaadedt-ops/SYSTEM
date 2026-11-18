@@ -134,6 +134,9 @@ func _defeat_guardian() -> void:
 	for child in get_children():
 		if child is CollisionShape3D:
 			(child as CollisionShape3D).disabled = true
+		elif child is Area3D:
+			(child as Area3D).monitoring = false
+			(child as Area3D).monitorable = false
 	hide()
 	var progression := get_tree().root.find_child("PlayerProgression", true, false)
 	if progression != null and progression.has_method("add_experience"):
