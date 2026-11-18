@@ -64,3 +64,24 @@ The region manager registers city, village, airport and rail-station locations w
 ## Current implementation boundary
 
 This expansion is committed to the repository and wired into `world_manager.gd` and `main.gd`. It has been checked by re-fetching the committed files and confirming the integration references. It has **not** yet been run through the Godot parser or visually tested in-game. The world map is an ongoing build, not a claim that every city or the full planet is complete.
+
+
+## Vehicle ownership, dealerships, and transport completion scope
+
+### Implemented prototype foundation
+- A vehicle catalog now defines purchasable city cars, sports cars, SUVs, taxis, delivery vans, buses, utility trucks, and non-sale emergency service vehicles.
+- A player garage manager provides local prototype wallet balance, vehicle purchase, resale, active-vehicle selection, and local persistence.
+- A dealership visual manager is placed at a land-resolved site in each generated modern city and is connected to the player's garage manager during main-scene setup.
+- The current wallet and garage save to a local ConfigFile. This is a single-device prototype only: it is not secure, not cloud synchronized, and must not be used for real-money balances or a live multiplayer economy.
+- The showroom is currently a visual location plus callable manager API. A complete in-world interactive sales UI, vehicle preview turntable, test-drive flow, contracts, taxes, trade-in, financing, service bay, and garage UI remain to be built.
+- The traffic vehicles remain visual NPC traffic models. They are not yet drivable player vehicles and do not yet use a full vehicle physics controller.
+
+### Required world transport production
+- Connect road networks between cities with terrain-aware highways, local streets, bridges, tunnels, junctions, signs, barriers, lane markings, and race circuits.
+- Build navigable rail corridors, stations, platforms, switches, crossings, timetables, passenger trains, freight trains, and station interactions.
+- Build airport terminals, runways, taxiways, gates, air-traffic routes, aircraft models, boarding, and flight travel transitions.
+- Build ports, docks, cargo yards, ferry terminals, sea lanes, passenger ships, cargo vessels, and boat navigation.
+- Add ownership and usage systems for player cars, commercial fleets, public transport, aircraft, and vessels, with per-zone streaming and device performance budgets.
+- Complete city services and street life: pedestrians, traffic signals, parking, shops, markets, garages, fuel/charging, repair, emergency response, street furniture, public spaces, building entrances/interiors, and district-specific lighting.
+- All purchases and balances must move to a trusted server/account backend before multiplayer trading or any real-money-linked economy is enabled.
+- Do not label the map or transportation systems complete until the actual scenes, interactions, navigation, persistence, performance, and Godot runtime tests are complete.
