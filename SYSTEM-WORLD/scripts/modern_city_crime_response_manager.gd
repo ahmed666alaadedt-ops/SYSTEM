@@ -114,15 +114,41 @@ func _build_vehicle_visual(vehicle: Area3D, style: int) -> void:
 	cabin.mesh = cabin_mesh
 	cabin.position = Vector3(0.0, 1.42, -0.15)
 	var glass := StandardMaterial3D.new()
-	glass.albedo_color = Color(0.035, 0.075, 0.10)
+	glass.albedo_color = Color(0.035, 0.075, 0.10, 0.42)
 	glass.metallic = 0.3
 	glass.roughness = 0.18
+	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	cabin.material_override = glass
 	vehicle.add_child(cabin)
+
+	var driver := Node3D.new()
+	driver.name = "CivilianDriverVisual"
+	vehicle.add_child(driver)
+	var clothing := StandardMaterial3D.new()
+	var clothing_colors := [Color(0.16, 0.24, 0.34), Color(0.35, 0.18, 0.12), Color(0.18, 0.3, 0.2)]
+	clothing.albedo_color = clothing_colors[style % clothing_colors.size()]
+	var torso := MeshInstance3D.new()
+	var torso_mesh := BoxMesh.new()
+	torso_mesh.size = Vector3(0.55, 0.72, 0.34)
+	torso.mesh = torso_mesh
+	torso.position = Vector3(0.0, 1.28, -0.3)
+	torso.material_override = clothing
+	driver.add_child(torso)
+	var head := MeshInstance3D.new()
+	var head_mesh := SphereMesh.new()
+	head_mesh.radius = 0.23
+	head_mesh.height = 0.46
+	head.mesh = head_mesh
+	head.position = Vector3(0.0, 1.78, -0.3)
+	var skin := StandardMaterial3D.new()
+	skin.albedo_color = Color(0.62, 0.43, 0.31)
+	head.material_override = skin
+	driver.add_child(head)
 
 	for side in [-1.0, 1.0]:
 		for axle in [-1.35, 1.35]:
 			var wheel := MeshInstance3D.new()
+			wheel.name = "NPCWheel"
 			var wheel_mesh := CylinderMesh.new()
 			wheel_mesh.top_radius = 0.34
 			wheel_mesh.bottom_radius = 0.34
