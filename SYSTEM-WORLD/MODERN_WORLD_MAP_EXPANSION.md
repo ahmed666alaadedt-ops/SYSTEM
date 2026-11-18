@@ -213,3 +213,13 @@ This expansion is committed to the repository and wired into `world_manager.gd` 
 - Every resolved city now receives a small procedural civic landmark group selected by its existing city style index.
 - The fourteen silhouettes are distinct: a layered skyline and beacon, civic clock tower, observation tower, riverfront domed hall and minarets, heritage domes, desert pyramid group, ceremonial gateway, twin towers with skybridge, digital culture tower, cultural gate and roof, garden domes, sail-like harbor roofs, coastal lookout, and mining-heritage headframe.
 - These are original stylized identity markers, not exact reproductions of real monuments. They establish visual distinction only; detailed architecture, cultural signage, interiors, collision, and local asset sets remain future work.
+
+
+
+## Outer archipelago expansion — first connected-world extension
+
+- Added `scripts/modern_world_archipelago_manager.gd` and integrated it into the modern-world creation sequence immediately after the main continent.
+- The outer sea now receives eight additional named island landforms: Northwatch Isle, Whispering Keys, Stormglass Isle, Eastern Crown, Sunset Atoll, Southern Reach, Farwind Isle, and Bluewater Haven.
+- Each island has layered rock, sand and grass ellipsoids, a simple collision volume, and a small tree cluster. The original continent, city anchors, and existing four islands are left unchanged.
+- These are first-pass explorable landform prototypes. They do not yet have docks, boats, NPC settlements, quests, detailed coast sculpting, underwater terrain, or island-specific discovery/fast-travel registration.
+- The new islands extend the visible exploration geography; they do not represent a completed world-scale planet map. The Godot project still needs parser, collision, visual, and Android performance validation.
