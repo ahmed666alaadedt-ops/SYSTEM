@@ -2,6 +2,8 @@
 extends Node3D
 class_name SYSTEMPlayerCharacter3D
 
+const CHARACTER_MODEL = preload("res://scripts/npc_character_model.gd")
+
 # SYSTEM WORLD - PLAYER 3D CHARACTER
 # Godot 4.3
 # Procedural prototype that responds to profile customization.
