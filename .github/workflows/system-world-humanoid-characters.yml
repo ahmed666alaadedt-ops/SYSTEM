@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "SYSTEM-WORLD/tools/blender/generate_system_humanoids.py"
+      - "SYSTEM-WORLD/tools/validate_glb.py"
       - ".github/workflows/system-world-humanoid-characters.yml"
   workflow_dispatch:
 
@@ -31,6 +32,8 @@ jobs:
           python3 SYSTEM-WORLD/tools/validate_glb.py --self-test
           test -s SYSTEM-WORLD-3D/assets/characters/SYSTEM_Humanoid_Male.glb
           test -s SYSTEM-WORLD-3D/assets/characters/SYSTEM_Humanoid_Female.glb
+          python3 SYSTEM-WORLD/tools/validate_glb.py SYSTEM-WORLD-3D/assets/characters/SYSTEM_Humanoid_Male.glb --require-skin --require-animation
+          python3 SYSTEM-WORLD/tools/validate_glb.py SYSTEM-WORLD-3D/assets/characters/SYSTEM_Humanoid_Female.glb --require-skin --require-animation
           mkdir -p SYSTEM-WORLD/assets/characters
           cp SYSTEM-WORLD-3D/assets/characters/*.glb SYSTEM-WORLD/assets/characters/
           ls -lh SYSTEM-WORLD-3D/assets/characters SYSTEM-WORLD/assets/characters
