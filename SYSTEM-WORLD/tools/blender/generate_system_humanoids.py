@@ -173,15 +173,46 @@ def add_face_and_hair(name, female=False):
     # Upper and lower lip shapes use a natural lip material rather than hair color.
     objs.append(capsule(name+"_MouthUpper",(-0.031,1.718,-0.137),(0.031,1.718,-0.137),0.006,LIPS,12))
     objs.append(capsule(name+"_MouthLower",(-0.024,1.710,-0.135),(0.024,1.710,-0.135),0.0045,LIPS,12))
+    # Deterministic hairstyle and facial-proportion variation across base identities.
+    style = sum(ord(ch) for ch in name) % 3
     objs.append(uv_sphere(name+"_HairCap",(0,1.965,0.015),(0.15,0.085,0.14),HAIR,24,16))
-    # Layered hair silhouette; long side locks distinguish the female base mesh.
-    for i in range(9):
-        x=-0.12+i*0.03
-        objs.append(capsule(name+"_HairLock",(x,1.99,0.0),(x+0.018,1.91,-0.07),0.022,HAIR,12))
     if female:
-        for s in (-1,1):
-            objs.append(capsule(name+"_LongHairSide",(s*0.125,1.91,0.025),(s*0.145,1.64,0.025),0.035,HAIR,16))
-        objs.append(uv_sphere(name+"_HairBun",(0,1.91,0.115),(0.09,0.10,0.085),HAIR,20,12))
+        if style == 0:
+            for s in (-1,1):
+                objs.append(capsule(name+"_HairLongLayer",(s*0.125,1.91,0.025),(s*0.145,1.58,0.035),0.034,HAIR,16))
+            objs.append(uv_sphere(name+"_HairBun",(0,1.91,0.115),(0.09,0.10,0.085),HAIR,20,12))
+        elif style == 1:
+            for s in (-1,1):
+                objs.append(capsule(name+"_HairFlow",(s*0.12,1.92,0.02),(s*0.16,1.48,0.07),0.040,HAIR,16))
+            objs.append(capsule(name+"_HairFringe",(-0.105,1.965,-0.075),(0.025,1.925,-0.12),0.026,HAIR,16))
+            objs.append(uv_sphere(name+"_HairRear",(0,1.83,0.105),(0.135,0.18,0.075),HAIR,20,14))
+        else:
+            for s in (-1,1):
+                objs.append(capsule(name+"_HairBraid",(s*0.13,1.88,0.02),(s*0.16,1.48,0.025),0.026,HAIR,14))
+                objs.append(capsule(name+"_HairBraidTie",(s*0.15,1.58,0.02),(s*0.15,1.55,0.02),0.032,TRIM,12))
+            objs.append(capsule(name+"_HairBang",(-0.10,1.96,-0.08),(0.10,1.93,-0.09),0.024,HAIR,16))
+    else:
+        if style == 0:
+            for i in range(9):
+                x=-0.12+i*0.03
+                objs.append(capsule(name+"_HairLock",(x,1.99,0.0),(x+0.018,1.91,-0.07),0.022,HAIR,12))
+        elif style == 1:
+            for i in range(7):
+                x=-0.105+i*0.03
+                objs.append(capsule(name+"_HairSweep",(x,1.99,-0.01),(x+0.035,1.925,-0.105),0.026,HAIR,12))
+            objs.append(capsule(name+"_HairSidePart",(-0.14,1.91,0.015),(-0.15,1.78,0.015),0.025,HAIR,12))
+        else:
+            for s in (-1,1):
+                objs.append(capsule(name+"_HairSide",(s*0.13,1.93,0.02),(s*0.14,1.78,0.02),0.025,HAIR,12))
+            objs.append(capsule(name+"_HairTie",(0,1.91,0.12),(0,1.72,0.20),0.025,HAIR,12))
+    if style == 1:
+        for obj in objs:
+            if "EyeWhite" in obj.name or "Iris" in obj.name or "Pupil" in obj.name:
+                obj.location.x *= 1.08
+    elif style == 2:
+        for obj in objs:
+            if "NoseTip" in obj.name:
+                obj.scale.x *= 1.12
     return objs
 
 def add_finger_geometry(name):
@@ -431,6 +462,18 @@ def generate_character(name, female, output, age_group="adult"):
     # each semantic group into a weighted mesh to keep mobile draw calls low.
     face=add_face_and_hair(name,female)
     if age_group == "elder":
+        # Low-poly age lines around eyes, forehead and smile folds.
+        wrinkle_mat = material(name + " - soft age detail", (0.39, 0.245, 0.18), 0.88)
+        for side in (-1, 1):
+            face.extend([
+                capsule(name+"_CrowFoot",(side*0.073,1.825,-0.132),(side*0.105,1.835,-0.115),0.0035,wrinkle_mat,8),
+                capsule(name+"_UnderEyeLine",(side*0.035,1.805,-0.139),(side*0.082,1.803,-0.132),0.003,wrinkle_mat,8),
+                capsule(name+"_SmileFold",(side*0.045,1.765,-0.139),(side*0.075,1.735,-0.128),0.0035,wrinkle_mat,8)
+            ])
+        face.extend([
+            capsule(name+"_ForeheadLineA",(-0.075,1.915,-0.105),(0.075,1.915,-0.105),0.003,wrinkle_mat,8),
+            capsule(name+"_ForeheadLineB",(-0.060,1.900,-0.116),(0.060,1.900,-0.116),0.0025,wrinkle_mat,8)
+        ])
         elder_hair = material(name + " - silver hair", (0.58, 0.60, 0.62), 0.84)
         for obj in face:
             if "hair" in obj.name.lower() or "eyebrow" in obj.name.lower():
