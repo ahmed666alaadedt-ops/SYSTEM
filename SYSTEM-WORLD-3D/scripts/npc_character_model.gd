@@ -485,6 +485,9 @@ func _resolve_hair_color(value: String = "") -> Color:
 
 func set_hair_color(color_id: String) -> void:
 	appearance_profile["hair_color"] = color_id
+	if is_instance_valid(fallback_model) and fallback_model.has_method("set_hair_color"):
+		fallback_model.call("set_hair_color", color_id)
+		return
 	var selected_color := _resolve_hair_color(color_id)
 	var target_meshes: Array[Node] = _collect_mesh_nodes(imported_model) if is_instance_valid(imported_model) else []
 	for node in target_meshes:
@@ -505,6 +508,9 @@ func set_hair_color(color_id: String) -> void:
 func set_hair_style(style_id: String) -> void:
 	hair_style = _normalize_hair_style(style_id)
 	appearance_profile["hair_style"] = hair_style
+	if is_instance_valid(fallback_model) and fallback_model.has_method("set_hair_style"):
+		fallback_model.call("set_hair_style", hair_style)
+		return
 	var skeleton := _find_skeleton(imported_model) if is_instance_valid(imported_model) else null
 	if is_instance_valid(skeleton):
 		_apply_hair_style(skeleton, _resolve_hair_color(str(appearance_profile.get("hair_color", "black"))))
