@@ -217,3 +217,12 @@ asset here only after generation, GLB validation, Godot import and visual review
 - `SYSTEM-WORLD-3D/scripts/command_center.gd` creates the player avatar and applies each confirmed profile to the live 3D character.
 - `SYSTEM-WORLD-3D/tools/validate_character_showcase.gd` includes player-level QA for male long hair, hairstyle geometry, and the expanded hair-color palette.
 - Cloud profile synchronization and final in-game visual review remain future work; the current profile save is local to the device.
+
+
+## Gender-Specific Player Hairstyle Lists (2026-11-19)
+
+- The player creator filters hairstyle choices when the player selects male or female appearance.
+- Men's list includes modern barber styles (Fade family, Taper Fade, Undercut, Buzz Cut, Crew Cut, Textured Crop, French Crop, Quiff, Pompadour, Slick Back, Side Part, Spiky) and long men's options (long/layered/wavy/curly, ponytail, man bun, braids, dreadlocks).
+- Women's list remains separate and includes short, medium, long, curly, braided, bob, pixie and other styles.
+- Runtime character loaders recognize the modern haircut identifiers and map them to the currently implemented procedural geometry. Exact high-detail barber silhouettes remain to be produced as dedicated hair assets.
+- Showcase QA checks the gender-specific lists and verifies long men's options are present while feminine-only examples are not offered in the men's list.
