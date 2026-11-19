@@ -17,6 +17,10 @@ var walk_time := 0.0
 var walking := false
 var activity := "rest"
 var outfit_material: StandardMaterial3D
+var hair_attachment: BoneAttachment3D
+var hair_nodes: Array[MeshInstance3D] = []
+var hair_material: StandardMaterial3D
+var hair_style := "short"
 
 func _ready() -> void:
 	_build_rigged_body()
@@ -29,6 +33,150 @@ func configure(profile: Dictionary, palette_index: int = 0) -> void:
 	for part in outfit_meshes:
 		if is_instance_valid(part):
 			part.material_override = outfit_material
+	set_hair_color(str(profile.get("hair_color", "أسود")))
+	set_hair_style(str(profile.get("hair_style", "قصير")))
+
+func set_hair_color(color_id: String) -> void:
+	var color := _hair_color_from_id(color_id)
+	hair_material = _material(color)
+	if not attachments.has("head"):
+		return
+	var head_attachment := attachments["head"] as BoneAttachment3D
+	for child in head_attachment.get_children():
+		if child is MeshInstance3D and (child.name == "HairCap" or child.name.begins_with("RuntimeHair")):
+			child.material_override = hair_material
+
+
+func _hair_color_from_id(color_id: String) -> Color:
+	match color_id.to_lower().strip_edges():
+		"أسود", "اسود", "black": return Color8(28, 22, 20)
+		"بني", "brown": return Color8(92, 52, 30)
+		"أشقر", "اشقر", "أصفر", "اصفر", "blonde", "yellow": return Color8(220, 184, 72)
+		"أبيض", "ابيض", "white", "فضي", "silver": return Color8(215, 218, 220)
+		"رمادي", "gray", "grey": return Color8(112, 119, 128)
+		"أحمر", "احمر", "red": return Color8(178, 35, 42)
+		"أزرق", "ازرق", "blue": return Color8(35, 105, 220)
+		"أزرق داكن", "أزرق_داكن", "navy", "dark_blue": return Color8(24, 45, 112)
+		"سماوي", "cyan": return Color8(38, 190, 205)
+		"بنفسجي", "purple", "violet": return Color8(132, 62, 190)
+		"وردي", "pink": return Color8(230, 92, 158)
+		"أخضر", "اخضر", "green": return Color8(45, 145, 82)
+		"برتقالي", "orange": return Color8(220, 104, 38)
+		"ذهبي", "gold": return Color8(224, 176, 55)
+		"أرجواني", "magenta": return Color8(190, 45, 160)
+		_: return Color8(28, 22, 20)
+
+
+func set_hair_style(style_id: String) -> void:
+	var style := style_id.to_lower().strip_edges().replace("-", "_").replace(" ", "_")
+	match style:
+		"fade", "low_fade", "mid_fade", "high_fade", "taper_fade", "undercut", "محلوق_الجوانب":
+			hair_style = "fade"
+		"buzz_cut", "crew_cut", "french_crop", "قصير":
+			hair_style = "short"
+		"textured_crop", "quiff", "pompadour", "spiky", "شائك":
+			hair_style = "quiff"
+		"slick_back", "side_part", "side_swept", "جانبي":
+			hair_style = "slick_back"
+		"شعر_طويل", "شعر_طويل_مدرج", "شعر_ويفي_طويل", "شعر_مجعد_طويل", "long", "very_long", "طويل", "طويل_جدا":
+			hair_style = "long"
+		"شعر_متوسط", "medium", "متوسط", "ويفي":
+			hair_style = "medium"
+		"ذيل_حصان_رجالي", "ponytail", "pony_tail", "ذيل_حصان":
+			hair_style = "ponytail"
+		"كعكة_رجالية", "man_bun", "topknot", "مرفوع":
+			hair_style = "topknot"
+		"ضفائر_رجالية", "braided", "braid", "ضفيرة":
+			hair_style = "braided"
+		"دريدلوك", "dreadlocks":
+			hair_style = "dreadlocks"
+		"مجعد", "curly", "أفرو", "afro":
+			hair_style = "curly"
+		"بوب", "bob":
+			hair_style = "bob"
+		"بيكسي", "pixie":
+			hair_style = "pixie"
+		_:
+			hair_style = "short"
+
+	if not is_instance_valid(hair_attachment):
+		hair_attachment = _attachment_for_bone("head")
+	for part in hair_nodes:
+		if is_instance_valid(part):
+			part.queue_free()
+	hair_nodes.clear()
+	if not is_instance_valid(hair_material):
+		hair_material = _material(Color8(28, 22, 20))
+
+	# The base cap is kept and recolored; these strands define the selected silhouette.
+	match hair_style:
+		"long":
+			_add_runtime_hair_capsule("RuntimeHairLongLeft", Vector3(-0.155, -0.035, 0.025), 0.038, 0.43)
+			_add_runtime_hair_capsule("RuntimeHairLongRight", Vector3(0.155, -0.035, 0.025), 0.038, 0.43)
+			_add_runtime_hair_capsule("RuntimeHairLongBack", Vector3(0.0, -0.055, 0.13), 0.052, 0.48)
+			_add_runtime_hair_capsule("RuntimeHairLongFront", Vector3(0.0, 0.10, -0.105), 0.026, 0.22)
+		"medium", "bob":
+			_add_runtime_hair_capsule("RuntimeHairMediumLeft", Vector3(-0.15, 0.035, 0.025), 0.04, 0.30)
+			_add_runtime_hair_capsule("RuntimeHairMediumRight", Vector3(0.15, 0.035, 0.025), 0.04, 0.30)
+			_add_runtime_hair_capsule("RuntimeHairMediumBack", Vector3(0.0, 0.005, 0.13), 0.045, 0.28)
+		"fade":
+			_add_runtime_hair_capsule("RuntimeHairFadeTop", Vector3(0.0, 0.245, 0.0), 0.075, 0.17)
+			for side in [-1.0, 1.0]:
+				_add_runtime_hair_capsule("RuntimeHairFadeTemple", Vector3(0.175 * side, 0.105, 0.005), 0.018, 0.12)
+		"short":
+			_add_runtime_hair_capsule("RuntimeHairShortTop", Vector3(0.0, 0.22, 0.0), 0.075, 0.13)
+			_add_runtime_hair_capsule("RuntimeHairCropFringe", Vector3(0.0, 0.155, -0.115), 0.025, 0.12)
+		"quiff":
+			_add_runtime_hair_capsule("RuntimeHairQuiffBase", Vector3(0.0, 0.235, -0.015), 0.065, 0.18)
+			_add_runtime_hair_capsule("RuntimeHairQuiffFront", Vector3(0.0, 0.285, -0.085), 0.038, 0.20)
+			_add_runtime_hair_capsule("RuntimeHairQuiffSideL", Vector3(-0.075, 0.24, -0.025), 0.03, 0.14)
+			_add_runtime_hair_capsule("RuntimeHairQuiffSideR", Vector3(0.075, 0.24, -0.025), 0.03, 0.14)
+		"slick_back":
+			_add_runtime_hair_capsule("RuntimeHairSlickTop", Vector3(0.0, 0.24, 0.045), 0.065, 0.20)
+			_add_runtime_hair_capsule("RuntimeHairSlickBack", Vector3(0.0, 0.12, 0.13), 0.04, 0.20)
+			_add_runtime_hair_capsule("RuntimeHairPart", Vector3(0.065, 0.25, -0.015), 0.012, 0.16)
+		"curly":
+			for x in [-0.13, -0.08, -0.025, 0.035, 0.09, 0.14]:
+				for z in [-0.055, 0.025]:
+					_add_runtime_hair_sphere("RuntimeHairCurl", Vector3(x, 0.20, z), Vector3(0.065, 0.065, 0.065))
+		"braided", "dreadlocks":
+			for side in [-1.0, 1.0]:
+				_add_runtime_hair_capsule("RuntimeHairBraid", Vector3(0.14 * side, 0.0, 0.05), 0.028, 0.38)
+				for step in range(5):
+					_add_runtime_hair_sphere("RuntimeHairBraidKnot", Vector3(0.14 * side, 0.18 - float(step) * 0.065, 0.065), Vector3(0.045, 0.045, 0.045))
+		"ponytail", "topknot":
+			_add_runtime_hair_capsule("RuntimeHairTie", Vector3(0.0, 0.19, 0.13), 0.035, 0.09)
+			_add_runtime_hair_capsule("RuntimeHairTail", Vector3(0.0, -0.005, 0.18), 0.042, 0.40)
+		"pixie":
+			_add_runtime_hair_capsule("RuntimeHairPixieFringe", Vector3(0.0, 0.19, -0.09), 0.035, 0.15)
+
+
+func _add_runtime_hair_sphere(piece_name: String, at: Vector3, dimensions: Vector3) -> void:
+	var mesh := SphereMesh.new()
+	mesh.radius = 0.5
+	mesh.height = 1.0
+	var instance := MeshInstance3D.new()
+	instance.name = piece_name
+	instance.mesh = mesh
+	instance.position = at
+	instance.scale = dimensions
+	instance.material_override = hair_material
+	hair_attachment.add_child(instance)
+	hair_nodes.append(instance)
+
+
+func _add_runtime_hair_capsule(piece_name: String, at: Vector3, radius: float, height: float) -> void:
+	var mesh := CapsuleMesh.new()
+	mesh.radius = radius
+	mesh.height = height
+	var instance := MeshInstance3D.new()
+	instance.name = piece_name
+	instance.mesh = mesh
+	instance.position = at
+	instance.material_override = hair_material
+	hair_attachment.add_child(instance)
+	hair_nodes.append(instance)
+
 
 func set_activity(value: String) -> void:
 	activity = value
