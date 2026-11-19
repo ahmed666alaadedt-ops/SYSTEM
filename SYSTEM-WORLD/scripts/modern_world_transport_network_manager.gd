@@ -176,11 +176,11 @@ func _build_bridge_railings(samples: Array[Vector3], route_index: int, segment_i
 			var a := samples[index]
 			var b := samples[index + 1]
 			var direction := Vector2(b.x - a.x, b.z - a.z).normalized()
-			var side := Vector2(-direction.y, direction.x) * side_sign * 5.0
-			var lower_a := Vector3(a.x + side.x, a.y + 0.7, a.z + side.y)
-			var lower_b := Vector3(b.x + side.x, b.y + 0.7, b.z + side.y)
-			var upper_a := lower_a + Vector3(0.0, 1.05, 0.0)
-			var upper_b := lower_b + Vector3(0.0, 1.05, 0.0)
+			var side: Vector2 = Vector2(-direction.y, direction.x) * float(side_sign) * 5.0
+			var lower_a: Vector3 = Vector3(a.x + side.x, a.y + 0.7, a.z + side.y)
+			var lower_b: Vector3 = Vector3(b.x + side.x, b.y + 0.7, b.z + side.y)
+			var upper_a: Vector3 = lower_a + Vector3(0.0, 1.05, 0.0)
+			var upper_b: Vector3 = lower_b + Vector3(0.0, 1.05, 0.0)
 			rail_surface.add_vertex(lower_a)
 		rail_surface.add_vertex(upper_a)
 		rail_surface.add_vertex(lower_b)
@@ -463,7 +463,7 @@ func _build_tunnel_structure(parent: Node3D, city_name: String) -> void:
 	_add_box(parent, "TunnelRightWall", Vector3(7.5, 3.0, 0.0), Vector3(0.8, 6.0, 84.0), concrete)
 	_add_box(parent, "TunnelCeiling", Vector3(0.0, 6.25, 0.0), Vector3(15.8, 0.7, 84.0), inner_concrete)
 	for end_sign in [-1.0, 1.0]:
-		var z := end_sign * 42.0
+		var z: float = float(end_sign) * 42.0
 		_add_box(parent, "TunnelPortalLeft_%s" % str(end_sign), Vector3(-7.1, 3.15, z), Vector3(1.2, 6.3, 1.8), concrete)
 		_add_box(parent, "TunnelPortalRight_%s" % str(end_sign), Vector3(7.1, 3.15, z), Vector3(1.2, 6.3, 1.8), concrete)
 		_add_box(parent, "TunnelPortalHeader_%s" % str(end_sign), Vector3(0.0, 6.25, z), Vector3(15.4, 1.1, 1.8), concrete)
