@@ -801,13 +801,13 @@ func _create_resident(
 	if not npc_society.has_method("create_npc"):
 		return
 
-	var npc_id := npc_society.create_npc(
+	var npc_id: String = str(npc_society.create_npc(
 		display_name,
 		world_id,
 		age,
 		"balanced",
 		occupation
-	)
+	))
 
 	if npc_id.is_empty():
 		return
