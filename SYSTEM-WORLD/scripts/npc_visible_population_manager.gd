@@ -6,6 +6,7 @@ class_name SystemNPCVisiblePopulationManager
 ## approximate city-block anchors until real street/navigation data is connected.
 
 const NPCHumanoidVisualScript = preload("res://scripts/npc_character_model.gd")
+const NPCThreatReceiverScript = preload("res://scripts/npc_threat_receiver.gd")
 
 const WORLD_ID := 2
 const MAX_VISIBLE_CIVILIANS := 32
@@ -124,7 +125,26 @@ func _refresh_pedestrians() -> void:
 func _create_pedestrian(npc_id: String, npc: Dictionary, seed_index: int) -> void:
 	var actor := Node3D.new()
 	actor.name = "Civilian_" + npc_id.validate_node_name()
+	actor.set_script(NPCThreatReceiverScript)
+	actor.set("npc_id", npc_id)
+	actor.set("population_manager", self)
 	add_child(actor)
+
+	var hit_area := Area3D.new()
+	hit_area.name = "NPCThreatHitArea"
+	hit_area.collision_layer = 2
+	hit_area.collision_mask = 0
+	hit_area.monitoring = false
+	hit_area.monitorable = true
+	hit_area.input_ray_pickable = true
+	var hit_shape := CollisionShape3D.new()
+	var hit_capsule := CapsuleShape3D.new()
+	hit_capsule.radius = 0.42
+	hit_capsule.height = 1.8
+	hit_shape.shape = hit_capsule
+	hit_shape.position.y = 0.9
+	hit_area.add_child(hit_shape)
+	actor.add_child(hit_area)
 
 	var visual := NPCHumanoidVisualScript.new()
 	visual.name = "HumanoidVisual"
