@@ -63,7 +63,7 @@ jobs:
           VIDEO_SOURCE="$(find "$RAW_DIR" -maxdepth 1 -type f -iname '*.mp4' ! -name 'system_intro.mp4' -print -quit)"
           if [[ ! -f "$RAW_DIR/system_intro.mp4" ]]; then
             test -n "$VIDEO_SOURCE"
-            cp -- "$VIDEO_SOURCE" "$RAW_DIR/system_intro.mp4"
+            mv -- "$VIDEO_SOURCE" "$RAW_DIR/system_intro.mp4"
           fi
           test -s "$RAW_DIR/system_intro.mp4"
 
