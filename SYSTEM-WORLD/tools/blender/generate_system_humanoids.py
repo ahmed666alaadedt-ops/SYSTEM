@@ -139,18 +139,24 @@ def build_body(name, female=False):
     for poly in body.data.polygons: poly.use_smooth=True
     return body
 
-def add_face_and_hair(name):
+def add_face_and_hair(name, female=False):
     objs=[]
     for s in (-1,1):
         objs.append(uv_sphere(name+"_Eye",(s*0.054,1.84,-0.123),(0.021,0.018,0.012),EYES,16,12))
         objs.append(uv_sphere(name+"_EyeGlint",(s*0.058,1.847,-0.133),(0.006,0.006,0.004),WHITE,12,8))
         objs.append(uv_sphere(name+"_Ear",(s*0.145,1.81,0),(0.027,0.055,0.035),SKIN,16,12))
+        objs.append(capsule(name+"_Eyebrow",(s*0.025,1.885,-0.116),(s*0.085,1.89,-0.112),0.010,HAIR,12))
     objs.append(uv_sphere(name+"_Nose",(0,1.80,-0.143),(0.025,0.043,0.035),SKIN,16,12))
+    objs.append(capsule(name+"_Mouth",( -0.034,1.718,-0.132),(0.034,1.718,-0.132),0.006,HAIR,12))
     objs.append(uv_sphere(name+"_HairCap",(0,1.965,0.015),(0.15,0.085,0.14),HAIR,24,16))
-    # layered swept hair locks
+    # Layered hair silhouette; longer side locks distinguish the female base mesh.
     for i in range(7):
         x=-0.12+i*0.04
         objs.append(capsule(name+"_HairLock",(x,1.99,0.0),(x+0.018,1.91,-0.07),0.025,HAIR,12))
+    if female:
+        for s in (-1,1):
+            objs.append(capsule(name+"_LongHairSide",(s*0.125,1.91,0.025),(s*0.145,1.64,0.025),0.035,HAIR,16))
+        objs.append(uv_sphere(name+"_HairBun",(0,1.91,0.115),(0.09,0.10,0.085),HAIR,20,12))
     return objs
 
 def add_finger_geometry(name):
@@ -337,7 +343,7 @@ def generate_character(name, female, output):
     body=build_body(name,female)
     weight_body(body,arm)
     # bone-attached accessories and fitted clothing: stable rigid weighting
-    face=add_face_and_hair(name)
+    face=add_face_and_hair(name,female)
     fingers=add_finger_geometry(name)
     clothes=add_clothes(name)
     for obj in face:
