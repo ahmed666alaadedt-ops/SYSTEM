@@ -35,6 +35,7 @@ const PlayerCombatHealthScript = preload("res://scripts/system_player_combat_hea
 const InventoryPanelScript = preload("res://scripts/system_inventory_panel.gd")
 const PlayerCharacterModelScript = preload("res://scripts/npc_character_model.gd")
 const PlayerCharacterCreatorScript = preload("res://scripts/system_player_character_creator.gd")
+const SYSTEMCompanionManagerScript = preload("res://scripts/system_companion_manager.gd")
 
 var world_manager
 var world_map_manager
@@ -62,6 +63,7 @@ var player: CharacterBody3D
 var player_mesh: Node3D
 var player_appearance_profile: Dictionary = {}
 var player_character_creator: CanvasLayer
+var system_companion_manager: Node3D
 var camera: Camera3D
 var spring_arm: SpringArm3D
 var mobile_controls: MobileControls
@@ -91,6 +93,7 @@ func _ready() -> void:
 	create_ground()
 	create_player()
 	create_player_character_creator()
+	create_system_companions()
 	register_modern_world_map_locations()
 	create_player_progression()
 	create_inventory_panel()
@@ -976,6 +979,13 @@ func set_player_character_activity(activity: String) -> void:
 		return
 	if str(player_mesh.get("current_activity")) != activity:
 		player_mesh.call("set_activity", activity)
+
+
+func create_system_companions() -> void:
+	system_companion_manager = SYSTEMCompanionManagerScript.new()
+	system_companion_manager.name = "SYSTEMCompanionManager"
+	add_child(system_companion_manager)
+	system_companion_manager.call("setup", player, world_manager)
 
 
 func create_player_character_creator() -> void:

@@ -25,6 +25,15 @@ jobs:
       - name: Checkout SYSTEM
         uses: actions/checkout@v4
 
+      - name: Install SYSTEM launcher icon into canonical Godot project
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p SYSTEM-WORLD/assets
+          test -s SYSTEM-WORLD-3D/assets/1000220666-1.png
+          cp SYSTEM-WORLD-3D/assets/1000220666-1.png SYSTEM-WORLD/assets/system_icon.png
+          test -s SYSTEM-WORLD/assets/system_icon.png
+
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:

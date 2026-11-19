@@ -1,0 +1,112 @@
+name: Build SYSTEM Android App Shell
+
+on:
+  pull_request:
+    paths:
+      - "app/**"
+      - "build.gradle.kts"
+      - "settings.gradle.kts"
+      - ".github/workflows/system-android-app.yml"
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "build.gradle.kts"
+      - "settings.gradle.kts"
+      - ".github/workflows/system-android-app.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android-app:
+    name: Restore launcher, intro and native SYSTEM interface
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      - name: Exclude archived duplicate Kotlin source from build
+        shell: bash
+        run: |
+          set -euo pipefail
+          BACKUP="app/src/main/java/com/system/irtqaa/MainActivity_sidebar_hidden.kt/MainActivity_sidebar_hidden.kt"
+          if [[ -f "$BACKUP" ]]; then
+            mkdir -p "$RUNNER_TEMP/system-archive"
+            mv "$BACKUP" "$RUNNER_TEMP/system-archive/MainActivity_sidebar_hidden.kt"
+          else
+            echo "::error::Expected archived duplicate Kotlin source was not found."
+            exit 1
+          fi
+
+      - name: Normalize Android resource filenames and restore legacy assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          RAW_DIR="app/src/main/res/raw"
+          DRAWABLE_DIR="app/src/main/res/drawable"
+          NODPI_DIR="app/src/main/res/drawable-nodpi"
+          mkdir -p "$RAW_DIR" "$DRAWABLE_DIR" "$NODPI_DIR"
+
+          VIDEO_SOURCE="$(find "$RAW_DIR" -maxdepth 1 -type f -iname '*.mp4' ! -name 'system_intro.mp4' -print -quit)"
+          if [[ ! -f "$RAW_DIR/system_intro.mp4" ]]; then
+            test -n "$VIDEO_SOURCE"
+            mv -- "$VIDEO_SOURCE" "$RAW_DIR/system_intro.mp4"
+          fi
+          test -s "$RAW_DIR/system_intro.mp4"
+
+          if [[ -f "$NODPI_DIR/system_launcher_icon-2.png" ]]; then
+            mv "$NODPI_DIR/system_launcher_icon-2.png" "$NODPI_DIR/system_launcher_icon_2.png"
+          fi
+          if [[ -f "$DRAWABLE_DIR/system_launcher_icon-4.png" ]]; then
+            mv "$DRAWABLE_DIR/system_launcher_icon-4.png" "$DRAWABLE_DIR/system_launcher_icon_4.png"
+          fi
+
+          cp "SYSTEM-WORLD-3D/assets/1000220666-1.png" "$NODPI_DIR/system_launcher_icon_3d.png"
+          cp "SYSTEM-WORLD-3D/assets/ui/file_0000000053f081f4ab5d3e27245ce7a9.png" "$NODPI_DIR/system_home_background.png"
+
+      - name: Verify launcher icon, intro and Miyar home assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f app/src/main/AndroidManifest.xml
+          test -f app/src/main/res/mipmap-anydpi-v26/ic_system.xml
+          test -f app/src/main/res/drawable/ic_system_foreground.xml
+          test -s app/src/main/res/raw/system_intro.mp4
+          test -s app/src/main/res/drawable-nodpi/system_launcher_icon_3d.png
+          test -s app/src/main/res/drawable-nodpi/system_home_background.png
+          grep -q 'SystemStartupGate' app/src/main/java/com/system/irtqaa/MainActivity.kt
+          grep -q 'R.raw.system_intro' app/src/main/java/com/system/irtqaa/SystemStartup.kt
+
+      - name: Build native SYSTEM Android application
+        run: gradle --no-daemon --stacktrace :app:assembleDebug
+
+      - name: Verify and upload native SYSTEM APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          ls -lh "$APK"
+          sha256sum "$APK"
+        # Artifact upload is kept as a separate step for a clear CI result.
+
+      - name: Upload native SYSTEM APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SYSTEM-native-android-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
