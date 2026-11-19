@@ -68,6 +68,27 @@ func _run_validation() -> void:
 		print("SYSTEM_CHARACTER_QA ", child.name, " ", status)
 
 		if status.get("model_source", "") == "glb":
+			if child.name == "NPCCharacter_SYSTEM_Humanoid_Male":
+				child.call("set_hair_style", "long")
+				child.call("set_hair_color", "blue")
+				var long_hair_status: Dictionary = child.call("get_character_status")
+				if str(long_hair_status.get("hair_style", "")) != "long" or int(long_hair_status.get("hairstyle_mesh_count", 0)) < 3:
+					push_error("SYSTEM CHARACTER QA: long men's hairstyle did not create runtime hair geometry")
+					quit(1)
+					return
+				if str(long_hair_status.get("hair_color", "")).to_lower() != "blue":
+					push_error("SYSTEM CHARACTER QA: blue hair color was not saved to the appearance profile")
+					quit(1)
+					return
+				for test_color in ["red", "yellow", "white", "purple", "green"]:
+					child.call("set_hair_color", test_color)
+					var color_status: Dictionary = child.call("get_character_status")
+					if str(color_status.get("hair_color", "")).to_lower() != test_color:
+						push_error("SYSTEM CHARACTER QA: hair color option was not applied: " + test_color)
+						quit(1)
+						return
+				child.call("set_hair_color", "blue")
+				print("SYSTEM_HAIR_CUSTOMIZATION_QA long_male=true colors=blue,red,yellow,white,purple,green")
 			if int(status.get("skeleton_count", 0)) < 1:
 				push_error("SYSTEM CHARACTER QA: imported GLB has no Skeleton3D node")
 				quit(1)
