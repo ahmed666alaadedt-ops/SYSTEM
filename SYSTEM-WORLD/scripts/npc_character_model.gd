@@ -461,7 +461,8 @@ func _resolve_hair_color(value: String = "") -> Color:
 func set_hair_color(color_id: String) -> void:
 	appearance_profile["hair_color"] = color_id
 	var selected_color := _resolve_hair_color(color_id)
-	for node in _collect_mesh_nodes(imported_model) if is_instance_valid(imported_model) else []:
+	var target_meshes: Array[Node] = _collect_mesh_nodes(imported_model) if is_instance_valid(imported_model) else []
+	for node in target_meshes:
 		var mesh_node := node as MeshInstance3D
 		var part_name := mesh_node.name.to_lower()
 		if "hair" in part_name or "brow" in part_name or "beard" in part_name or "mustache" in part_name:
