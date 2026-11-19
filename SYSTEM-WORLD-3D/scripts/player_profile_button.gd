@@ -22,6 +22,7 @@ var hair_style_option: OptionButton
 var hair_color_option: OptionButton
 var face_option: OptionButton
 var body_option: OptionButton
+var height_option: OptionButton
 var outfit_option: OptionButton
 var status_label: Label
 
@@ -37,7 +38,7 @@ func _ready() -> void:
 
 func _open_profile_window() -> void:
 	if profile_popup != null and is_instance_valid(profile_popup):
-		profile_popup.popup_centered(Vector2i(440, 680))
+		profile_popup.popup_centered(Vector2i(440, 740))
 		return
 
 	_create_profile_window()
@@ -47,12 +48,12 @@ func _open_profile_window() -> void:
 func _create_profile_window() -> void:
 	profile_popup = PopupPanel.new()
 	profile_popup.name = "PlayerProfileWindow"
-	profile_popup.size = Vector2i(440, 620)
+	profile_popup.size = Vector2i(440, 740)
 	add_child(profile_popup)
 
 	var root := VBoxContainer.new()
 	root.add_theme_constant_override("separation", 10)
-	root.custom_minimum_size = Vector2(400, 640)
+	root.custom_minimum_size = Vector2(400, 700)
 	profile_popup.add_child(root)
 
 	var title := Label.new()
@@ -112,8 +113,16 @@ func _create_profile_window() -> void:
 	body_option = _add_option(
 		root,
 		"بنية الجسم",
-		["رياضي", "نحيف", "متوسط", "قوي"],
+		["رياضي", "نحيف", "متوسط", "قوي", "سمين"],
+
 		profile_data["body"]
+	)
+
+	height_option = _add_option(
+		root,
+		"الطول",
+		["قصير", "متوسط", "طويل"],
+		str(profile_data.get("height_type", "متوسط"))
 	)
 
 	outfit_option = _add_option(
@@ -199,9 +208,12 @@ func _confirm_profile() -> void:
 	profile_data["face"] = face_option.get_item_text(
 		face_option.selected
 	)
+
 	profile_data["body"] = body_option.get_item_text(
 		body_option.selected
 	)
+	var height_label := height_option.get_item_text(height_option.selected)
+	profile_data["height_type"] = "short" if height_label == "قصير" else ("tall" if height_label == "طويل" else "average")
 	profile_data["outfit"] = outfit_option.get_item_text(
 		outfit_option.selected
 	)
