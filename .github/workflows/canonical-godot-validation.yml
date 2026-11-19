@@ -67,6 +67,13 @@ jobs:
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
           "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_child_character_safety.gd
 
+      - name: Validate all four world runtime roots
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_world_runtime.gd
+
       - name: Launch canonical main scene headlessly
         shell: bash
         run: |
