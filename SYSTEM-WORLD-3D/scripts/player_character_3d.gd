@@ -52,6 +52,11 @@ func apply_profile(data: Dictionary) -> void:
 	character_visual.configure({
 		"name": str(profile_data.get("name", "SYSTEM Player")),
 		"gender": gender,
+		"age_group": str(profile_data.get("age_group", "adult")),
+		"age": int(profile_data.get("age", 25)),
+		"body": str(profile_data.get("body", "رياضي")),
+		"body_type": str(profile_data.get("body", "رياضي")),
+		"height_type": str(profile_data.get("height_type", "average")),
 		"job": role
 	}, _appearance_variant())
 
