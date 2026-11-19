@@ -178,24 +178,30 @@ func _apply_activity_animation(value: String) -> void:
 		return
 	if not is_instance_valid(animation_player):
 		return
-	var desired := "Idle_Breathing"
-	if value in ["run", "sprint", "running", "evade"]:
-		desired = "Run_Cycle"
-	elif value in ["defend", "block", "protect"]:
-		desired = "Block_Animation"
-	elif value in ["jump", "leap"]:
-		desired = "Jump_Animation"
-	elif value in ["attack", "combat", "fight"]:
-		desired = "Attack_Animation"
-	elif value in ["work", "eat", "socialize", "wander", "travel", "walk"]:
-		desired = "Walk_Cycle"
+	var requested := value.to_lower()
+	var candidates: Array[String] = ["Idle_Breathing", "Idle"]
+	if requested in ["run", "sprint", "running", "evade"]:
+		candidates = ["Run_Cycle", "Run", "Running"]
+	elif requested in ["walk", "work", "eat", "socialize", "wander", "travel"]:
+		candidates = ["Walk_Cycle", "Walk", "Walking"]
+	elif requested in ["defend", "block", "protect"]:
+		candidates = ["Block_Animation", "Block"]
+	elif requested in ["jump", "leap"]:
+		candidates = ["Jump_Animation", "Jump"]
+	elif requested in ["attack", "combat", "fight"]:
+		candidates = ["Attack_Animation", "Attack"]
 	var available := animation_player.get_animation_list()
+	for candidate in candidates:
+		for animation_name in available:
+			if str(animation_name).to_lower() == candidate.to_lower():
+				animation_player.play(animation_name)
+				return
+	# Never default to the first imported clip: it may be an attack animation.
 	for animation_name in available:
-		if desired.to_lower() in str(animation_name).to_lower():
+		if "idle" in str(animation_name).to_lower():
 			animation_player.play(animation_name)
 			return
-	if not available.is_empty():
-		animation_player.play(available[0])
+	push_warning("SYSTEM NPC: no safe animation clip for activity " + value)
 
 func set_appearance(variant_index: int = 0) -> void:
 	if not is_instance_valid(imported_model):
