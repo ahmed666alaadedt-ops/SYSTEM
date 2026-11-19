@@ -435,6 +435,29 @@ func add_resident(profile: Dictionary) -> bool:
 	return true
 
 
+
+func create_family_child(parent_one_name: String, parent_two_name: String, child_profile: Dictionary) -> bool:
+	var first_id := _find_resident_id(parent_one_name)
+	var second_id := _find_resident_id(parent_two_name)
+	if first_id.is_empty() or second_id.is_empty():
+		return false
+	var first_profile: Dictionary = relationship_system.get_resident_profile(first_id)
+	var second_profile: Dictionary = relationship_system.get_resident_profile(second_id)
+	if str(first_profile.get("married_to", "")) != second_id:
+		return false
+	if str(second_profile.get("married_to", "")) != first_id:
+		return false
+	if int(first_profile.get("age", 0)) < 18 or int(second_profile.get("age", 0)) < 18:
+		return false
+	var newborn := child_profile.duplicate(true)
+	newborn["age"] = 0
+	newborn["family"] = str(first_profile.get("family_id", "family_new"))
+	newborn["job"] = "طفل"
+	if not add_resident(newborn):
+		return false
+	var child_id := _find_resident_id(str(newborn.get("name", "")))
+	return relationship_system.set_parentage([first_id, second_id], child_id)
+
 func set_resident_activity(resident_name: String, activity: String, destination: Vector3) -> bool:
 	for record in residents:
 		if str(record.get("name", "")) != resident_name:
