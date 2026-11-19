@@ -207,3 +207,13 @@ asset here only after generation, GLB validation, Godot import and visual review
 - Runtime hairstyle silhouettes include short, medium, long, curly/afro, braided/dreadlocks, ponytail, twin tails, bun/topknot, bob, pixie, layered, spiky, side-swept and undercut. Styles are not gender-locked; long hairstyles are supported for male characters.
 - The preview showcase now presents a male character with long hair. Automated showcase QA tests long male hair geometry and multiple fantasy hair colors.
 - These are runtime-generated accessory meshes attached to the head bone, not a finished salon/customization UI. Player-facing UI, save/load integration, hair strand physics and final visual review remain pending.
+
+
+## Live Player Appearance Creator (2026-11-19)
+
+- `SYSTEM-WORLD-3D/scripts/player_profile_button.gd` now provides a scrollable player creator with 18 hairstyle choices and 17 hair colors, including fantasy shades and very long hair for male characters.
+- Player appearance is saved and restored locally with `user://system_player_profile.cfg`.
+- `SYSTEM-WORLD-3D/scripts/player_character_3d.gd` now uses the shared rigged character loader for both GLB and procedural fallback, preserving the same hairstyle and color controls.
+- `SYSTEM-WORLD-3D/scripts/command_center.gd` creates the player avatar and applies each confirmed profile to the live 3D character.
+- `SYSTEM-WORLD-3D/tools/validate_character_showcase.gd` includes player-level QA for male long hair, hairstyle geometry, and the expanded hair-color palette.
+- Cloud profile synchronization and final in-game visual review remain future work; the current profile save is local to the device.
