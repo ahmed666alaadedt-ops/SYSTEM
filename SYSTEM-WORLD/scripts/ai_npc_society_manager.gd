@@ -104,6 +104,11 @@ func create_npc(
 	if display_name.strip_edges().is_empty() or age_years < 0.0:
 		return ""
 
+	# Residents under 18 are dependants/students, never employees or officials.
+	# They still participate in ordinary family and community life.
+	if age_years < 18.0:
+		occupation = "student" if age_years >= 6.0 else "child_resident"
+
 	var npc_id := "npc_%06d" % next_npc_number
 	next_npc_number += 1
 
@@ -228,6 +233,10 @@ func set_activity(
 	var npc: Dictionary = npcs[npc_id]
 
 	if not npc.get("alive", false):
+		return false
+
+	# Minors may attend school and live socially, but cannot be assigned jobs.
+	if float(npc.get("age_years", 0.0)) < 18.0 and activity == "work":
 		return false
 
 	npc["activity"] = activity
@@ -524,6 +533,13 @@ func load_society() -> bool:
 	)
 
 	npcs = payload.get("npcs", {})
+	# Normalize existing saves too, so old child records cannot retain official
+	# or employee occupations after this safety rule is introduced.
+	for npc_id in npcs.keys():
+		var resident: Dictionary = npcs[npc_id]
+		if float(resident.get("age_years", 0.0)) < 18.0:
+			resident["occupation"] = "student" if float(resident.get("age_years", 0.0)) >= 6.0 else "child_resident"
+			npcs[npc_id] = resident
 	public_information.clear()
 
 	for item in payload.get("public_information", []):
