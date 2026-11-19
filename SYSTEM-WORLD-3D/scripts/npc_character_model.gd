@@ -68,6 +68,10 @@ func set_activity(value: String) -> void:
 	var desired := "Idle_Breathing"
 	if value in ["run", "sprint", "running"]:
 		desired = "Run_Cycle"
+	elif value in ["jump", "leap"]:
+		desired = "Jump_Animation"
+	elif value in ["attack", "combat", "fight"]:
+		desired = "Attack_Animation"
 	elif value in ["work", "eat", "socialize", "wander", "travel", "walk"]:
 		desired = "Walk_Cycle"
 	var available := animation_player.get_animation_list()
