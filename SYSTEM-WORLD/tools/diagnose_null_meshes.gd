@@ -1,5 +1,17 @@
 extends SceneTree
 
+
+func _count_meshes(start: Node) -> int:
+	var pending: Array[Node] = [start]
+	var count := 0
+	while not pending.is_empty():
+		var node: Node = pending.pop_back()
+		if node is MeshInstance3D:
+			count += 1
+		for child in node.get_children():
+			pending.append(child)
+	return count
+
 func _initialize() -> void:
 	call_deferred("_run_diagnostic")
 
@@ -50,6 +62,17 @@ func _run_diagnostic() -> void:
 				for child in world_node.get_children():
 					world_pending.append(child)
 			print("SYSTEM WORLD MESH COUNT: world=", world_id, " meshes=", world_mesh_count)
+			for top_child in world_root.get_children():
+				var child_mesh_count := _count_meshes(top_child)
+				if child_mesh_count > 0:
+					print("SYSTEM WORLD MESH GROUP: world=", world_id,
+						" group=", top_child.name, " meshes=", child_mesh_count)
+				if top_child.name == "ModernWorldRegionManager":
+					for region_child in top_child.get_children():
+						var region_mesh_count := _count_meshes(region_child)
+						if region_mesh_count > 0:
+							print("SYSTEM REGION MESH GROUP: group=", region_child.name,
+								" meshes=", region_mesh_count)
 	for path in null_mesh_paths.slice(0, 100):
 		print("SYSTEM NULL MESH: ", path)
 	for path in null_multimesh_paths.slice(0, 100):
