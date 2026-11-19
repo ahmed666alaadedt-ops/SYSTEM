@@ -78,3 +78,6 @@ Face geometry is assigned to these bones in semantic groups: left/right eye asse
 The Blender generator now assigns deterministic hairstyle silhouettes from three style families per gender: layered/tied-back, flowing/fringe, and braid-like styles for female bases; textured crop, side-swept fringe, and tied-back side locks for male bases. It also varies eye spacing or nose-tip width in selected base identities. Elder bases receive subtle low-poly crow's-foot, under-eye, smile-fold, and forehead age-detail geometry.
 
 The six base GLBs have been generated and passed the workflow's structural validation. This confirms file generation and structure, not final visual quality. Face variety is still a limited base-identity set, not a full morph-target sculpt system; hairstyle swapping in the live player creator is not yet wired.
+
+
+The generated armature also stores `system_hair_style_index`, `system_face_variant_index`, and `system_age_detail_level` custom properties. These metadata tags identify the base variant for future runtime selection; they do not yet provide a live hairstyle picker in the player UI.
