@@ -19,7 +19,7 @@ var daily_life: Node
 var crime_manager: Node
 var region_manager: Node
 var navigation_manager: Node
-signal minor_defensive_response(npc_id: String, response: String)
+signal npc_defensive_response(npc_id: String, response: String)
 
 var pedestrians: Dictionary = {}
 var service_units: Array[Dictionary] = []
@@ -229,9 +229,9 @@ func notify_npc_attacked(npc_id: String, attacker_global_position: Vector3) -> b
 	record["destination"] = safe_local_target
 	record["path"] = _build_city_block_path(actor.position, safe_local_target)
 	record["walking"] = true
-	record["animation_walking"] = is_minor
+	record["animation_walking"] = true
 	pedestrians[npc_id] = record
-	minor_defensive_response.emit(npc_id, "evade_to_safety" if is_minor else "defend_and_retreat")
+	npc_defensive_response.emit(npc_id, "evade_to_safety" if is_minor else "defend_and_retreat")
 	return true
 
 
