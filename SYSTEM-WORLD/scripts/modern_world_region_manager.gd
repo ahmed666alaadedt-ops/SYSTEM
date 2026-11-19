@@ -2,6 +2,7 @@ extends Node3D
 class_name ModernWorldRegionManager
 
 const ModernCityTrafficManagerScript = preload("res://scripts/modern_city_traffic_manager.gd")
+const ModernWorldIncidentManagerScript = preload("res://scripts/modern_world_incident_manager.gd")
 const VehicleDealershipManagerScript = preload("res://scripts/system_vehicle_dealership_manager.gd")
 const ModernWorldLightingManagerScript = preload("res://scripts/modern_world_lighting_manager.gd")
 const ModernWorldAmbienceManagerScript = preload("res://scripts/modern_world_ambience_manager.gd")
@@ -86,6 +87,7 @@ func _ready() -> void:
 	_create_city_dealerships()
 	_create_baghdad_towers()
 	_create_city_traffic()
+	_create_city_incidents()
 	_create_ambient_soundscape()
 	print("SYSTEM WORLD: detailed city regions initialized: ", city_anchors.size())
 
@@ -807,3 +809,25 @@ func _build_city_lighting() -> void:
 	var lighting := ModernWorldLightingManagerScript.new()
 	lighting.name = "ModernWorldLightingManager"
 	add_child(lighting)
+
+
+## Stable overview data for the large external-style world map.
+## The map displays the whole fictional continent while discovery markers remain separate.
+func get_map_overview() -> Dictionary:
+	var cities: Array[Dictionary] = []
+	var villages: Array[Dictionary] = []
+	for city_name in get_city_names():
+		cities.append({"name": city_name, "position": get_city_anchor(city_name)})
+	for village_name in get_village_names():
+		villages.append({"name": village_name, "position": get_village_anchor(village_name)})
+	var incidents: Array[Dictionary] = []
+	var incident_manager := get_node_or_null("ModernWorldIncidentManager")
+	if incident_manager != null and incident_manager.has_method("get_active_incidents"):
+		incidents = incident_manager.call("get_active_incidents")
+	return {"cities": cities, "villages": villages, "incidents": incidents}
+
+
+func _create_city_incidents() -> void:
+	var incidents := ModernWorldIncidentManagerScript.new()
+	incidents.name = "ModernWorldIncidentManager"
+	add_child(incidents)
