@@ -52,14 +52,18 @@ func begin_hospital_treatment() -> bool:
 	var treatment_seconds := clampf(missing_health * 0.22, 5.0, 22.0)
 	player.set_meta("system_hospital_treatment", true)
 	player.velocity = Vector3.ZERO
-	await get_tree().create_timer(treatment_seconds).timeout
+	_complete_hospital_treatment(treatment_seconds)
+	return true
+
+
+func _complete_hospital_treatment(duration: float) -> void:
+	await get_tree().create_timer(duration).timeout
 	if not is_instance_valid(player):
 		is_treating = false
-		return false
+		return
 	heal_at_hospital(MAX_HEALTH)
 	player.set_meta("system_hospital_treatment", false)
 	is_treating = false
-	return true
 
 
 func heal_at_hospital(amount: float = MAX_HEALTH) -> bool:
