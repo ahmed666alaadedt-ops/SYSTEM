@@ -91,3 +91,13 @@ Automated headless validation entry point:
 `godot --headless --path SYSTEM-WORLD --script res://tools/validate_child_character_safety.gd`
 
 This test verifies both sides of the rule: child combat is blocked and adult combat remains available. The test source is committed; execution in the Godot runtime must still be confirmed.
+
+
+## Facial micro-animation generation update (2026-11-19)
+
+The Blender source generator now creates two additional named clips for every adult, elder, and child base model:
+
+- `Facial_Blink`: a short eyelid/eye-bone close-and-open cycle with a looping curve.
+- `Facial_Talking`: subtle repeated jaw motion intended as a base for later speech animation.
+
+The character showcase QA now requires both clips in addition to idle, walk, run, jump, and attack. These are generated animation assets, not yet a complete runtime facial animation controller: selecting them through the same AnimationPlayer can conflict with locomotion, so concurrent facial/body blending still needs an AnimationTree or a dedicated animation-layer solution. Audio phoneme synchronization is also still pending.
