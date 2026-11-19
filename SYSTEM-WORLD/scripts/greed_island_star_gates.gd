@@ -33,7 +33,8 @@ func _process(_delta: float) -> void:
 	var island_root := roots[GREED_ISLAND_ID] as Node3D
 	if modern_root == null or island_root == null:
 		return
-	_create_baghdad_gate_hub(modern_root)
+	if not _create_baghdad_gate_hub(modern_root):
+		return
 	_create_island_return_gate(island_root)
 	gates_created = true
 	print("SYSTEM: Baghdad-only star gate hub initialized.")
@@ -63,11 +64,11 @@ func _get_baghdad_position(modern_root: Node3D) -> Vector3:
 	return Vector3(anchor.x, height, anchor.y)
 
 
-func _create_baghdad_gate_hub(modern_root: Node3D) -> void:
+func _create_baghdad_gate_hub(modern_root: Node3D) -> bool:
 	var baghdad := _get_baghdad_position(modern_root)
 	if baghdad == Vector3.INF:
-		return
-	var hub := modern_root.get_node_or_null("BaghdadStarGateHub")
+		return false
+	var hub := modern_root.get_node_or_null("BaghdadStarGateHub") as Node3D
 	if hub == null:
 		hub = Node3D.new()
 		hub.name = "BaghdadStarGateHub"
