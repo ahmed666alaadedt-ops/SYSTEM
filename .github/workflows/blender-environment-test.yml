@@ -78,9 +78,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add SYSTEM-WORLD/generated/environment_tiles/*.blend
-          git add SYSTEM-WORLD/generated/environment_tiles/*.glb
-          git add SYSTEM-WORLD/generated/environment_tiles/*.json
+          git add SYSTEM-WORLD/generated/environment_tiles/sw_*.blend
+          git add SYSTEM-WORLD/generated/environment_tiles/sw_*.glb
+          git add SYSTEM-WORLD/generated/environment_tiles/sw_*.json
           if git diff --cached --quiet; then
             echo "Generated environment assets are unchanged."
             exit 0
