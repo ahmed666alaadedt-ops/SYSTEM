@@ -16,6 +16,7 @@ var society: Node
 var daily_life: Node
 var crime_manager: Node
 var region_manager: Node
+var navigation_manager: Node
 var pedestrians: Dictionary = {}
 var service_units: Array[Dictionary] = []
 var refresh_clock := 0.0
@@ -30,11 +31,12 @@ var siren_red_material: StandardMaterial3D
 var siren_blue_material: StandardMaterial3D
 
 func setup(p_society: Node, p_daily_life: Node, p_crime_manager: Node,
-		p_region_manager: Node) -> void:
+		p_region_manager: Node, p_navigation_manager: Node = null) -> void:
 	society = p_society
 	daily_life = p_daily_life
 	crime_manager = p_crime_manager
 	region_manager = p_region_manager
+	navigation_manager = p_navigation_manager
 	if not is_instance_valid(society):
 		push_warning("SYSTEM Pedestrians: society manager is unavailable.")
 		set_process(false)
@@ -221,7 +223,11 @@ func _set_pedestrian_destination(npc_id: String, npc: Dictionary) -> void:
 	if old_target.distance_to(target) < 1.5:
 		return
 	record["destination"] = target
-	record["path"] = _build_city_block_path((record["actor"] as Node3D).position, target)
+	var actor := record["actor"] as Node3D
+	if is_instance_valid(navigation_manager) and navigation_manager.has_method("find_pedestrian_path"):
+		record["path"] = navigation_manager.call("find_pedestrian_path", str(record.get("city_name", "Baghdad")), actor.position, target)
+	else:
+		record["path"] = _build_city_block_path(actor.position, target)
 	record["walking"] = true
 	pedestrians[npc_id] = record
 
