@@ -187,7 +187,7 @@ func _publish_runtime_world_state(world_id: int) -> void:
 	if world_manager == null:
 		return
 
-	var world_name := world_manager.get_world_name(world_id)
+	var world_name: String = str(world_manager.get_world_name(world_id))
 	var normalized_id := ""
 	match world_id:
 		WorldManagerScript.WorldID.FANTASY:
@@ -496,10 +496,10 @@ func create_npc_daily_life_manager() -> void:
 func register_modern_world_map_locations() -> void:
 	if world_map_manager == null or world_manager == null:
 		return
-	var modern_root := world_manager.get_world_root(2)
+	var modern_root: Node = world_manager.get_world_root(2)
 	if modern_root == null:
 		return
-	var region_manager := modern_root.get_node_or_null("ModernWorldRegionManager")
+	var region_manager: Node = modern_root.get_node_or_null("ModernWorldRegionManager")
 	if region_manager == null:
 		return
 	if region_manager.has_method("register_map_locations"):
