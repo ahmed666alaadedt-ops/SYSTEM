@@ -61,6 +61,10 @@ func _run_validation() -> void:
 			loaded_models += 1
 			if str(visual.get("age_group")) == "child":
 				child_models += 1
+				var child_model_path := str(visual.get("selected_model_path"))
+				if not child_model_path.contains("SYSTEM_Humanoid_Child_"):
+					_fail("Child resident loaded an incorrect GLB model: " + child_model_path)
+					return
 
 	if loaded_models < 18:
 		_fail("Visible NPCs are falling back instead of loading their GLB models; loaded=" + str(loaded_models))
