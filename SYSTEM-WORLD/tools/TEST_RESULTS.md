@@ -146,3 +146,21 @@ device profiling remain separate, pending acceptance checks.
 - A pipeline acceptance runner exists in GitHub.
 - Blender execution and Blender export remain blocked until Blender 4.x is installed in an accessible execution environment.
 - Godot import and Android performance acceptance remain pending.
+
+
+## GitHub Actions Blender export failure and workflow correction (2026-11-19)
+
+### Observed failing run
+
+- Workflow run: [44523201472](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44523201472).
+- The four-world generation job installed the Ubuntu archive Blender package, which resolved to Blender 4.0.2.
+- The bundled glTF exporter failed during import with `ModuleNotFoundError: No module named 'numpy'`; all four world presets therefore produced no `.blend`, `.glb`, or metadata outputs.
+- The GLB validator self-test passed before generation, so the failure is specifically in the Blender exporter dependency environment, not the validator.
+
+### Corrective workflow change prepared
+
+- Replace the Ubuntu archive package with the same pinned Blender 4.3.2 setup action already used by the successful humanoid-character generation workflow.
+- Add an explicit Blender-Python `import bpy, numpy` preflight before generation.
+- Run the environment workflow on pull requests so the fix can be verified before merge.
+- After a successful push-triggered run on `main`, commit the validated `.blend`, `.glb`, and `.json` tile outputs into `SYSTEM-WORLD/generated/environment_tiles/` so the canonical runtime can import them. Pull-request runs only validate and upload artifacts; they do not push generated files.
+- This correction is pending CI. No environment tile is marked generated or integrated until a fresh run passes and the resulting assets are checked.
