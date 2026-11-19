@@ -195,10 +195,10 @@ func _location_for_action(npc: Dictionary, action: String, seed_index: int) -> V
 	var anchor := _city_anchor(city)
 	var seed_value := abs(str(npc.get("npc_id", npc.get("id", seed_index))).hash())
 	var block_x := float((seed_value % 5) - 2) * 7.0
-	var block_z := float(((seed_value / 5) % 5) - 2) * 7.0
+	var block_z := float((floori(float(seed_value) / 5.0) % 5) - 2) * 7.0
 	var home := Vector3(block_x, 0.0, block_z) + anchor
 	var district := Vector3(float((seed_value % 3) - 1) * 28.0, 0.0,
-		float(((seed_value / 3) % 3) - 1) * 24.0) + anchor
+		float((floori(float(seed_value) / 3.0) % 3) - 1) * 24.0) + anchor
 	match action:
 		"work":
 			return anchor + Vector3(block_x + 42.0, 0.0, block_z - 18.0)
@@ -250,8 +250,28 @@ func _update_pedestrians(delta: float) -> void:
 				path.pop_front()
 			else:
 				var step := direction.normalized()
-				actor.position += step * WALK_SPEED * delta
-				actor.rotation.y = atan2(step.x, step.z)
+				var candidate := actor.position + step * WALK_SPEED * delta
+				for other_id in pedestrians.keys():
+					if str(other_id) == str(npc_id):
+						continue
+					var other_record: Dictionary = pedestrians[other_id]
+					var other_actor := other_record.get("actor") as Node3D
+					if not is_instance_valid(other_actor):
+						continue
+					var separation := candidate - other_actor.position
+					separation.y = 0.0
+					if separation.length() < 0.9:
+						var away := actor.position - other_actor.position
+						away.y = 0.0
+						if away.length() > 0.01:
+							step = (step + away.normalized() * 0.85).normalized()
+							candidate = actor.position + step * WALK_SPEED * delta
+						if candidate.distance_to(other_actor.position) < 0.62:
+							step = Vector3.ZERO
+						break
+				if step.length() > 0.01:
+					actor.position = candidate
+					actor.rotation.y = atan2(step.x, step.z)
 		record["path"] = path
 		record["walking"] = not path.is_empty()
 		var phase := float(record.get("phase", 0.0)) + delta * (8.0 if walking else 1.5)
@@ -296,7 +316,7 @@ func _spawn_service_unit(unit_type: String, city_name: String, case_id: String) 
 		_add_siren(vehicle, Vector3(0.42, 1.0, -0.25), siren_blue_material)
 	vehicle.position = anchor + offset
 	var target := anchor + Vector3(float((case_id.hash() % 9) - 4) * 5.0, 0.0,
-		float(((case_id.hash() / 9) % 9) - 4) * 5.0)
+		float((floori(float(case_id.hash()) / 9.0) % 9) - 4) * 5.0)
 	service_units.append({
 		"node": vehicle, "type": unit_type, "case_id": case_id,
 		"target": target, "phase": "responding", "speed": SERVICE_SPEED
