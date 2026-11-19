@@ -223,26 +223,30 @@ def add_walk_animation(arm):
         if spine:
             spine.rotation_mode="XYZ"; spine.rotation_euler.z=math.sin(phase)*0.025
             spine.keyframe_insert(data_path="rotation_euler",frame=frame,group="Body")
-    action=arm.animation_data.action
-    action.name="Walk_Cycle"
-    for fc in action.fcurves:
+    walk_action=arm.animation_data.action
+    walk_action.name="Walk_Cycle"
+    for fc in walk_action.fcurves:
         for kp in fc.keyframe_points:
             kp.interpolation="BEZIER"
-    # loop modifier on all channels
-    for fc in action.fcurves:
         fc.modifiers.new("CYCLES")
-    # idle clip: subtle chest breathing on a separate action
-    idle=bpy.data.actions.new("Idle_Breathing")
-    arm.animation_data.action=idle
+    # Idle clip: subtle chest breathing, exported as its own NLA strip.
+    idle_action=bpy.data.actions.new("Idle_Breathing")
+    arm.animation_data.action=idle_action
     for frame in (1,13,25):
         spine=arm.pose.bones.get("spine")
         if spine:
             spine.rotation_mode="XYZ"
             spine.rotation_euler.x=math.sin((frame-1)/24*math.tau)*0.012
             spine.keyframe_insert(data_path="rotation_euler",frame=frame,group="Body")
-    for fc in idle.fcurves:
+    for fc in idle_action.fcurves:
         fc.modifiers.new("CYCLES")
-    arm.animation_data.action=action
+    arm.animation_data.action=None
+    walk_track=arm.animation_data.nla_tracks.new()
+    walk_track.name="Walk_Cycle"
+    walk_track.strips.new("Walk_Cycle",1,walk_action)
+    idle_track=arm.animation_data.nla_tracks.new()
+    idle_track.name="Idle_Breathing"
+    idle_track.strips.new("Idle_Breathing",1,idle_action)
 
 def generate_character(name, female, output):
     clear_scene()
@@ -278,7 +282,7 @@ def generate_character(name, female, output):
     blend=os.path.join(output,name+".blend")
     glb=os.path.join(output,name+".glb")
     bpy.ops.wm.save_as_mainfile(filepath=blend)
-    bpy.ops.export_scene.gltf(filepath=glb,export_format="GLB",use_selection=True,export_animations=True,export_skins=True,export_apply=True)
+    bpy.ops.export_scene.gltf(filepath=glb,export_format="GLB",use_selection=True,export_animations=True,export_nla_strips=True,export_skins=True,export_apply=True)
     print("GENERATED_CHARACTER",name,glb)
 
 def main():
