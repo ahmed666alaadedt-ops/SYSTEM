@@ -165,6 +165,50 @@ func _run_validation() -> void:
 		push_error("SYSTEM CHARACTER QA: NPC character script failed to load")
 		quit(1)
 		return
+	var player_script = load("res://scripts/player_character_3d.gd")
+	if player_script == null:
+		push_error("SYSTEM PLAYER QA: player character script failed to load")
+		quit(1)
+		return
+	var player_test = player_script.new()
+	get_root().add_child(player_test)
+	player_test.call("apply_profile", {
+		"name": "Long Hair Player QA",
+		"appearance": "ذكر",
+		"age_group": "adult",
+		"hair_style": "طويل",
+		"hair_color": "أزرق",
+		"face": "متوازن",
+		"body": "رياضي",
+		"outfit": "الزي الأساسي"
+	})
+	await process_frame
+	var player_status: Dictionary = player_test.imported_character.call("get_character_status")
+	if str(player_status.get("hair_style", "")) != "long" or int(player_status.get("hairstyle_mesh_count", 0)) < 3:
+		push_error("SYSTEM PLAYER QA: male player profile did not apply long hairstyle geometry")
+		quit(1)
+		return
+	if str(player_status.get("hair_color", "")).to_lower() != "أزرق":
+		push_error("SYSTEM PLAYER QA: male player profile did not apply blue hair color")
+		quit(1)
+		return
+	for player_color in ["أحمر", "أصفر", "أبيض", "فضي", "بنفسجي", "أخضر", "سماوي", "وردي", "برتقالي", "ذهبي", "أرجواني"]:
+		player_test.imported_character.call("set_hair_color", player_color)
+		var updated_player_status: Dictionary = player_test.imported_character.call("get_character_status")
+		if str(updated_player_status.get("hair_color", "")) != player_color:
+			push_error("SYSTEM PLAYER QA: player hair color was not applied: " + player_color)
+			quit(1)
+			return
+	for player_style in ["متوسط", "طويل", "مجعد", "ضفيرة", "ذيل حصان", "كعكة", "مرفوع", "أفرو", "دريدلوك", "ضفيرتان", "بوب", "بيكسي", "مدرج", "شائك", "جانبي", "محلوق الجوانب"]:
+		player_test.imported_character.call("set_hair_style", player_style)
+		var updated_style_status: Dictionary = player_test.imported_character.call("get_character_status")
+		if int(updated_style_status.get("hairstyle_mesh_count", 0)) < 1:
+			push_error("SYSTEM PLAYER QA: player hairstyle geometry was not generated: " + player_style)
+			quit(1)
+			return
+	print("SYSTEM PLAYER QA PASS: saved-profile input reaches live male 3D avatar with long hair and full palette")
+	player_test.queue_free()
+
 	var doctor_test = character_script.new()
 	get_root().add_child(doctor_test)
 	doctor_test.call("configure", {"name": "Doctor QA", "gender": "female", "age_group": "adult", "job": "طبيبة", "city": "بغداد"}, 1)
