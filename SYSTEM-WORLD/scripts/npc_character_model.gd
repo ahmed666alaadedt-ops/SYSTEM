@@ -134,22 +134,39 @@ func _find_animation_player(root: Node) -> AnimationPlayer:
 			return nested
 	return null
 
+var is_defending := false
+
 func set_activity(value: String) -> void:
 	var requested_activity := value.to_lower()
 	var combat_activities := ["attack", "combat", "fight", "battle", "قتال", "هجوم", "معركة"]
-	# Child residents may socialize, learn, play, walk and run, but never enter
-	# combat animations, even if a caller requests a combat activity by mistake.
+	# Minors are never allowed to initiate or join combat.
 	if age_group == "child" and requested_activity in combat_activities:
 		current_activity = "idle"
-	else:
-		current_activity = value
+		is_defending = false
+		_apply_activity_animation("idle")
+		return
+	current_activity = value
+	is_defending = requested_activity in ["defend", "evade", "call_for_help"]
+	_apply_activity_animation(value)
+
+## Called only by the combat/threat response system after a minor is attacked.
+## This is a defensive reaction, never an offensive attack or combat-role assignment.
+func respond_to_attack() -> bool:
+	if age_group != "child":
+		return false
+	is_defending = true
+	current_activity = "defend"
+	_apply_activity_animation("idle")
+	return true
+
+func _apply_activity_animation(value: String) -> void:
 	if is_instance_valid(fallback_model):
 		fallback_model.call("set_activity", value)
 		return
 	if not is_instance_valid(animation_player):
 		return
 	var desired := "Idle_Breathing"
-	if value in ["run", "sprint", "running"]:
+	if value in ["run", "sprint", "running", "evade"]:
 		desired = "Run_Cycle"
 	elif value in ["jump", "leap"]:
 		desired = "Jump_Animation"
