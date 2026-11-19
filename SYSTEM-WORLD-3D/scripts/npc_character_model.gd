@@ -22,6 +22,15 @@ func configure(profile: Dictionary, palette_index: int = 0) -> void:
 		is_female = (palette_index % 2) == 1
 	selected_model_path = FEMALE_MODEL_PATH if is_female else MALE_MODEL_PATH
 	if _load_imported_model(selected_model_path):
+		var role := str(profile.get("job", profile.get("occupation", ""))).to_lower()
+		var outfit_id := "civilian"
+		if "guard" in role or "soldier" in role or "police" in role:
+			outfit_id = "guard"
+		elif "hunter" in role or "guild" in role:
+			outfit_id = "hunter"
+		elif "noble" in role or "royal" in role:
+			outfit_id = "royal"
+		set_outfit(outfit_id)
 		return
 	_build_fallback(profile, palette_index)
 
