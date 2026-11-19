@@ -86,6 +86,7 @@ func _run_validation() -> void:
 	await _enter_world(world_manager, WORLD_GREED_ISLAND)
 	_validate_greed_island(world_manager)
 	_validate_generated_environment_tiles()
+	_scan_invalid_mesh_nodes(main, "main_all_worlds_and_managers")
 
 	if failures.is_empty():
 		print("WORLD RUNTIME QA PASS: modern, historical, fantasy, and Greed Island initialized and entered.")
