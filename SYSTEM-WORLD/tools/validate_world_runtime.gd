@@ -318,6 +318,12 @@ func _validate_visible_npc_glb_population(modern_root: Node3D) -> void:
 				pedestrians.size()
 			]
 		)
+	if unique_model_paths.size() < 6:
+		_fail(
+			"Visible NPC population uses only %d of the six age/gender GLB variants." % [
+				unique_model_paths.size()
+			]
+		)
 
 	print(
 		"VISIBLE NPC GLB QA: civilians=%d, imported=%d, unique_models=%d" % [
