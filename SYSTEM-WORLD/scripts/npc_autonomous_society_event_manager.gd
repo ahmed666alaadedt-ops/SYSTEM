@@ -88,7 +88,7 @@ func _try_create_civilian_event() -> void:
 	suspects.erase(victim_id)
 	if suspects.is_empty():
 		return
-	var suspect_id := suspects[randi_range(0, suspects.size() - 1)]
+	var suspect_id: String = str(suspects[randi_range(0, suspects.size() - 1)])
 	var crime_type := str(LOW_LEVEL_CRIMES[randi_range(0, LOW_LEVEL_CRIMES.size() - 1)])
 	var witnesses := randi_range(1, mini(3, local_adults.size() - 2))
 	var evidence: Array[String] = ["witness_statement"]
