@@ -22,6 +22,8 @@ var terrain: Node
 var vehicles: Array[Dictionary] = []
 var city_speed_factors: Dictionary = {}
 var elapsed := 0.0
+var city_check_clock := 0.0
+var active_city_name := ""
 var body_material: StandardMaterial3D
 var glass_material: StandardMaterial3D
 var tire_material: StandardMaterial3D
@@ -35,7 +37,8 @@ func _ready() -> void:
 		return
 	terrain = region_manager.get("terrain")
 	_create_materials()
-	_build_city_traffic()
+	active_city_name = _find_nearest_city_name(Vector3.ZERO)
+	_build_city_traffic(active_city_name)
 
 
 func _create_materials() -> void:
@@ -60,25 +63,52 @@ func _create_materials() -> void:
 	lamp_material.emission_energy_multiplier = 1.8
 
 
-func _build_city_traffic() -> void:
+func _build_city_traffic(city_name: String) -> void:
 	if not region_manager.has_method("get_city_names") or not region_manager.has_method("get_city_anchor"):
 		return
 	var city_names: Array = region_manager.call("get_city_names")
-	for city_index in range(city_names.size()):
-		var city_name := str(city_names[city_index])
+	var city_index := city_names.find(city_name)
+	if city_index < 0:
+		return
+	var anchor: Vector3 = region_manager.call("get_city_anchor", city_name)
+	if anchor == Vector3.INF:
+		return
+	for fleet_index in range(TRAFFIC_FLEET.size()):
+		var east_west := fleet_index % 2 == 1
+		_create_vehicle(
+			city_name + "_" + str(TRAFFIC_FLEET[fleet_index]["name"]) + "_%02d" % fleet_index,
+			city_name,
+			anchor,
+			east_west,
+			city_index * TRAFFIC_FLEET.size() + fleet_index,
+			fleet_index
+		)
+
+
+func _find_nearest_city_name(position: Vector3) -> String:
+	var city_names: Array = region_manager.call("get_city_names")
+	var nearest_name := "Baghdad"
+	var nearest_distance := INF
+	for city_value in city_names:
+		var city_name := str(city_value)
 		var anchor: Vector3 = region_manager.call("get_city_anchor", city_name)
 		if anchor == Vector3.INF:
 			continue
-		for fleet_index in range(TRAFFIC_FLEET.size()):
-			var east_west := fleet_index % 2 == 1
-			_create_vehicle(
-				city_name + "_" + str(TRAFFIC_FLEET[fleet_index]["name"]) + "_%02d" % fleet_index,
-				city_name,
-				anchor,
-				east_west,
-				city_index * TRAFFIC_FLEET.size() + fleet_index,
-				fleet_index
-			)
+		var distance := Vector2(position.x - anchor.x, position.z - anchor.z).length_squared()
+		if distance < nearest_distance:
+			nearest_distance = distance
+			nearest_name = city_name
+	return nearest_name
+
+
+func _rebuild_city_traffic(city_name: String) -> void:
+	for item in vehicles:
+		var vehicle := item.get("node") as Node3D
+		if is_instance_valid(vehicle):
+			vehicle.queue_free()
+	vehicles.clear()
+	active_city_name = city_name
+	_build_city_traffic(active_city_name)
 
 
 func _create_vehicle(vehicle_name: String, city_name: String, anchor: Vector3, east_west: bool, seed_index: int, fleet_index: int) -> void:
@@ -138,6 +168,14 @@ func _create_vehicle(vehicle_name: String, city_name: String, anchor: Vector3, e
 
 func _process(delta: float) -> void:
 	elapsed += delta
+	city_check_clock += delta
+	if city_check_clock >= 4.0:
+		city_check_clock = 0.0
+		var player := region_manager.get_parent().get_node_or_null("Player") as Node3D
+		var player_position := player.global_position if is_instance_valid(player) else Vector3.ZERO
+		var nearest_city := _find_nearest_city_name(player_position)
+		if nearest_city != active_city_name:
+			_rebuild_city_traffic(nearest_city)
 	for item in vehicles:
 		var vehicle: Node3D = item["node"]
 		if not is_instance_valid(vehicle):
