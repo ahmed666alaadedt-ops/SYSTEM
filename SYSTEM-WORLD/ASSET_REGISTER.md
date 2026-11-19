@@ -252,3 +252,10 @@ asset here only after generation, GLB validation, Godot import and visual review
   existing `SYSTEM-WORLD-3D/` Android preview workflow.
 - The workflow source is committed; its first run and all Godot runtime results
   must be read from GitHub Actions before claiming the canonical project passes.
+
+
+## Minor NPC Daily Schedule Safeguard (2026-11-19)
+
+- The Baghdad daily-life scheduler now routes all residents under 18 to school during daytime and family/social/community life outside school hours.
+- It independently blocks minors from employer destinations and wage accumulation, even if an older or malformed save contains an employment occupation.
+- Adult residents retain the existing work, wage, market, rest, and social routines.
