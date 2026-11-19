@@ -260,7 +260,7 @@ func _build_navigation_buoys() -> void:
 	beacon_material.emission = Color(1.0, 0.52, 0.16)
 	beacon_material.emission_energy_multiplier = 1.5
 	for index in range(buoy_sites.size()):
-		var site := buoy_sites[index]
+		var site: Vector2 = buoy_sites[index]
 		var buoy := Node3D.new()
 		buoy.name = "SeaNavigationBuoy_%02d" % (index + 1)
 		buoy.position = Vector3(site.x, -0.3, site.y)
