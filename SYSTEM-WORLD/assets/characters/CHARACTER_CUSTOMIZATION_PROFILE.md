@@ -71,3 +71,10 @@ The Blender generator now adds independent facial control bones:
 Face geometry is assigned to these bones in semantic groups: left/right eye assemblies, left/right brows, and jaw-driven mouth parts. The canonical Godot NPC loader exposes `set_facial_expression(expression)` with basic presets: happy, angry, sad, surprised, talking, and blink (Arabic aliases are accepted for the presets).
 
 **Limit:** These are skeletal pose presets, not facial blendshapes or a phoneme/lip-sync system. The current blink preset is an immediate pose and needs an animation/timing driver for natural periodic blinking. The current talking preset is a static jaw pose and needs audio/phoneme synchronization for speech.
+
+
+## Generated model diversity update (2026-11-19)
+
+The Blender generator now assigns deterministic hairstyle silhouettes from three style families per gender: layered/tied-back, flowing/fringe, and braid-like styles for female bases; textured crop, side-swept fringe, and tied-back side locks for male bases. It also varies eye spacing or nose-tip width in selected base identities. Elder bases receive subtle low-poly crow's-foot, under-eye, smile-fold, and forehead age-detail geometry.
+
+The six base GLBs have been generated and passed the workflow's structural validation. This confirms file generation and structure, not final visual quality. Face variety is still a limited base-identity set, not a full morph-target sculpt system; hairstyle swapping in the live player creator is not yet wired.
