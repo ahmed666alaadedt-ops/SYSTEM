@@ -274,6 +274,18 @@ func _create_town() -> void:
 
 		_create_building(position, building_size, i)
 
+	# A visible school gives child residents a safe daily destination.
+	var school_position := Vector3(-8.0, 0.0, 7.0)
+	_create_building(school_position, Vector3(12.0, 4.0, 9.0), 12)
+	var school_sign := Label3D.new()
+	school_sign.name = "TownSchoolSign"
+	school_sign.text = "المدرسة"
+	school_sign.position = school_position + Vector3(0.0, 5.0, -4.7)
+	school_sign.font_size = 36
+	school_sign.outline_size = 8
+	school_sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	add_child(school_sign)
+
 	for i in range(28):
 		var angle := TAU * float(i) / 28.0
 
