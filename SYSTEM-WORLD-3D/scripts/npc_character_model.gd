@@ -24,6 +24,10 @@ var appearance_profile: Dictionary = {}
 var hair_style := "short"
 var hairstyle_attachment: BoneAttachment3D
 var hairstyle_mesh_count := 0
+var face_attachment: BoneAttachment3D
+var outfit_attachment: BoneAttachment3D
+var face_detail_mesh_count := 0
+var job_accessory_mesh_count := 0
 
 func configure(profile: Dictionary, palette_index: int = 0) -> void:
 	name = "NPCCharacter_" + str(profile.get("name", "Resident")).replace(" ", "_")
@@ -73,20 +77,36 @@ func configure(profile: Dictionary, palette_index: int = 0) -> void:
 		height_type = ["short", "average", "tall"][posmod(int(palette_index / 2), 3)]
 
 	if _load_imported_model(selected_model_path):
-		var role := str(profile.get("job", profile.get("occupation", ""))).to_lower()
-		if age_group == "child":
-			role = "civilian"
-		var outfit_id := "civilian"
-		if "guard" in role or "soldier" in role or "police" in role:
-			outfit_id = "guard"
-		elif "hunter" in role or "guild" in role:
-			outfit_id = "hunter"
-		elif "noble" in role or "royal" in role:
-			outfit_id = "royal"
+		var outfit_id := _resolve_outfit_id(profile)
 		set_appearance(palette_index)
 		set_outfit(outfit_id, palette_index)
 		return
 	_build_fallback(profile, palette_index)
+
+func _resolve_outfit_id(profile: Dictionary) -> String:
+	if age_group == "child":
+		return "student" if str(profile.get("job", "")).to_lower() in ["طالب", "طالبة", "student"] else "civilian"
+	if age_group == "elder":
+		return "elder"
+	var job := str(profile.get("job", profile.get("occupation", ""))).to_lower()
+	if job in ["حارس", "حارسة", "guard", "soldier", "police"]:
+		return "guard"
+	if job in ["صياد", "صيادة", "hunter", "guild", "عضو نقابة"]:
+		return "hunter"
+	if job in ["طبيب", "طبيبة", "doctor", "nurse", "medic"]:
+		return "doctor"
+	if job in ["خباز", "خبازة", "baker"]:
+		return "baker"
+	if job in ["مزارع", "مزارعة", "farmer"]:
+		return "farmer"
+	if job in ["نجار", "نجارة", "carpenter"]:
+		return "carpenter"
+	if job in ["تاجر", "تاجرة", "merchant", "trader"]:
+		return "merchant"
+	if job in ["نبيل", "نبيلة", "royal", "noble"]:
+		return "royal"
+	return "civilian"
+
 
 func _load_imported_model(path: String) -> bool:
 	if not FileAccess.file_exists(path):
@@ -238,6 +258,8 @@ func set_appearance(variant_index: int = 0) -> void:
 					face_scale = Vector3(1.12, 0.97, 1.0)
 			skeleton.set_bone_pose_scale(head_bone, face_scale)
 		_apply_hair_style(skeleton, hair_color)
+		_apply_face_details(skeleton, skin_color)
+		_apply_profession_accessories(skeleton)
 	for node in _collect_mesh_nodes(imported_model):
 		var mesh_node := node as MeshInstance3D
 		var part_name := mesh_node.name.to_lower()
@@ -248,6 +270,151 @@ func set_appearance(variant_index: int = 0) -> void:
 			material.albedo_color = skin_color if is_skin else hair_color
 			material.roughness = 0.82
 			mesh_node.material_override = material
+
+func _make_bone_attachment(skeleton: Skeleton3D, bone_name: String, attachment_name: String) -> BoneAttachment3D:
+	var attachment := BoneAttachment3D.new()
+	attachment.name = attachment_name
+	attachment.bone_name = bone_name
+	skeleton.add_child(attachment)
+	return attachment
+
+
+func _apply_face_details(skeleton: Skeleton3D, skin_color: Color) -> void:
+	if is_instance_valid(face_attachment):
+		face_attachment.queue_free()
+	face_detail_mesh_count = 0
+	face_attachment = _make_bone_attachment(skeleton, "head", "RuntimeFaceDetails")
+	var dark := StandardMaterial3D.new()
+	dark.albedo_color = Color8(42, 27, 23)
+	dark.roughness = 0.9
+	var skin := StandardMaterial3D.new()
+	skin.albedo_color = skin_color
+	skin.roughness = 0.82
+	var face_shape := str(appearance_profile.get("face", "متوازن"))
+	var brow_width := 0.062
+	if face_shape == "عريض":
+		brow_width = 0.075
+	elif face_shape == "حاد":
+		brow_width = 0.055
+	_add_face_capsule("LeftEyebrowDetail", Vector3(-0.075, 0.125, -0.128), Vector3(-0.018, 0.135, -0.137), 0.009, dark)
+	_add_face_capsule("RightEyebrowDetail", Vector3(0.018, 0.135, -0.137), Vector3(0.075, 0.125, -0.128), 0.009, dark)
+	var cheek_size := Vector3(0.045, 0.035, 0.022)
+	if face_shape == "ناعم":
+		cheek_size = Vector3(0.052, 0.042, 0.025)
+	elif face_shape == "حاد":
+		cheek_size = Vector3(0.038, 0.03, 0.02)
+	_add_face_sphere("LeftCheekContour", Vector3(-0.09, -0.005, -0.105), cheek_size, skin)
+	_add_face_sphere("RightCheekContour", Vector3(0.09, -0.005, -0.105), cheek_size, skin)
+	var gender := str(appearance_profile.get("gender", appearance_profile.get("appearance", ""))).to_lower()
+	var is_male := gender in ["male", "man", "ذكر", "رجل", "ولد"]
+	if age_group == "elder":
+		for side in [-1.0, 1.0]:
+			_add_face_capsule("AgeSmileLine", Vector3(side * 0.055, -0.015, -0.132), Vector3(side * 0.09, -0.045, -0.115), 0.0035, dark)
+			_add_face_capsule("ForeheadWrinkle", Vector3(-0.045, 0.17, -0.105), Vector3(0.045, 0.17, -0.105), 0.003, dark)
+		if is_male:
+			_add_face_sphere("ElderBeard", Vector3(0.0, -0.105, -0.105), Vector3(0.085, 0.065, 0.055), dark)
+			_add_face_capsule("ElderMoustache", Vector3(-0.045, -0.055, -0.145), Vector3(0.045, -0.055, -0.145), 0.012, dark)
+	face_detail_mesh_count = face_attachment.get_child_count()
+
+
+func _add_face_sphere(piece_name: String, at: Vector3, dimensions: Vector3, mat: Material) -> void:
+	var mesh := SphereMesh.new()
+	mesh.radius = 0.5
+	mesh.height = 1.0
+	var instance := MeshInstance3D.new()
+	instance.name = piece_name
+	instance.mesh = mesh
+	instance.position = at
+	instance.scale = dimensions
+	instance.material_override = mat
+	face_attachment.add_child(instance)
+
+
+func _add_face_capsule(piece_name: String, from: Vector3, to: Vector3, radius: float, mat: Material) -> void:
+	var mesh := CapsuleMesh.new()
+	mesh.radius = radius
+	mesh.height = from.distance_to(to) + radius * 2.0
+	var instance := MeshInstance3D.new()
+	instance.name = piece_name
+	instance.mesh = mesh
+	instance.position = (from + to) * 0.5
+	instance.material_override = mat
+	instance.look_at(instance.position + (to - from).normalized(), Vector3.UP)
+	face_attachment.add_child(instance)
+
+
+func _apply_profession_accessories(skeleton: Skeleton3D) -> void:
+	if is_instance_valid(outfit_attachment):
+		outfit_attachment.queue_free()
+	job_accessory_mesh_count = 0
+	outfit_attachment = _make_bone_attachment(skeleton, "chest", "ProfessionAccessories")
+	var gold := StandardMaterial3D.new()
+	gold.albedo_color = Color8(188, 145, 65)
+	gold.metallic = 0.35
+	var dark := StandardMaterial3D.new()
+	dark.albedo_color = Color8(35, 42, 48)
+	var white := StandardMaterial3D.new()
+	white.albedo_color = Color8(220, 226, 225)
+	var job := str(appearance_profile.get("job", "")).to_lower()
+	match _resolve_outfit_id(appearance_profile):
+		"doctor":
+			_add_outfit_capsule("StethoscopeLeft", Vector3(-0.09, 0.12, -0.17), Vector3(-0.07, -0.12, -0.18), 0.012, dark)
+			_add_outfit_capsule("StethoscopeRight", Vector3(0.09, 0.12, -0.17), Vector3(0.07, -0.12, -0.18), 0.012, dark)
+			_add_outfit_sphere("StethoscopeChest", Vector3(0.0, -0.13, -0.19), Vector3(0.035, 0.035, 0.018), gold)
+			_add_outfit_box("MedicalBadge", Vector3(0.14, 0.02, -0.16), Vector3(0.07, 0.08, 0.018), white)
+		"baker":
+			_add_outfit_box("BakerApron", Vector3(0.0, -0.20, -0.17), Vector3(0.28, 0.34, 0.025), white)
+		"guard":
+			_add_outfit_box("GuardChestBadge", Vector3(0.14, 0.04, -0.17), Vector3(0.075, 0.09, 0.025), gold)
+			_add_outfit_sphere("GuardShoulderMark", Vector3(-0.22, 0.17, 0.0), Vector3(0.09, 0.055, 0.08), gold)
+		"farmer":
+			_add_outfit_box("FarmerFieldPouch", Vector3(0.19, -0.18, -0.11), Vector3(0.10, 0.13, 0.09), dark)
+		"carpenter":
+			_add_outfit_box("CarpenterToolBelt", Vector3(0.0, -0.30, -0.15), Vector3(0.34, 0.07, 0.05), gold)
+			_add_outfit_capsule("CarpenterHammerHandle", Vector3(0.19, -0.28, -0.19), Vector3(0.19, -0.12, -0.19), 0.018, dark)
+		"merchant":
+			_add_outfit_box("MerchantSash", Vector3(0.0, 0.02, -0.16), Vector3(0.10, 0.40, 0.025), gold)
+		"student":
+			_add_outfit_box("StudentBackpack", Vector3(0.0, -0.12, 0.13), Vector3(0.25, 0.28, 0.11), dark)
+	job_accessory_mesh_count = outfit_attachment.get_child_count()
+
+
+func _add_outfit_box(piece_name: String, at: Vector3, dimensions: Vector3, mat: Material) -> void:
+	var mesh := BoxMesh.new()
+	mesh.size = dimensions
+	var instance := MeshInstance3D.new()
+	instance.name = piece_name
+	instance.mesh = mesh
+	instance.position = at
+	instance.material_override = mat
+	outfit_attachment.add_child(instance)
+
+
+func _add_outfit_sphere(piece_name: String, at: Vector3, dimensions: Vector3, mat: Material) -> void:
+	var mesh := SphereMesh.new()
+	mesh.radius = 0.5
+	mesh.height = 1.0
+	var instance := MeshInstance3D.new()
+	instance.name = piece_name
+	instance.mesh = mesh
+	instance.position = at
+	instance.scale = dimensions
+	instance.material_override = mat
+	outfit_attachment.add_child(instance)
+
+
+func _add_outfit_capsule(piece_name: String, from: Vector3, to: Vector3, radius: float, mat: Material) -> void:
+	var mesh := CapsuleMesh.new()
+	mesh.radius = radius
+	mesh.height = from.distance_to(to) + radius * 2.0
+	var instance := MeshInstance3D.new()
+	instance.name = piece_name
+	instance.mesh = mesh
+	instance.position = (from + to) * 0.5
+	instance.material_override = mat
+	instance.look_at(instance.position + (to - from).normalized(), Vector3.UP)
+	outfit_attachment.add_child(instance)
+
 
 func _normalize_hair_style(value: String) -> String:
 	var style := value.to_lower().strip_edges()
@@ -331,7 +498,14 @@ func set_outfit(outfit_id: String, variant_index: int = 0) -> void:
 		"civilian": [Color8(54, 82, 92), Color8(86, 68, 48), Color8(72, 78, 83), Color8(48, 76, 62)],
 		"hunter": [Color8(20, 48, 82), Color8(30, 64, 82), Color8(36, 42, 68), Color8(62, 54, 36)],
 		"guard": [Color8(72, 42, 28), Color8(46, 58, 72), Color8(72, 62, 34), Color8(42, 66, 54)],
-		"royal": [Color8(86, 54, 104), Color8(105, 74, 34), Color8(44, 62, 104), Color8(92, 42, 54)]
+		"royal": [Color8(86, 54, 104), Color8(105, 74, 34), Color8(44, 62, 104), Color8(92, 42, 54)],
+		"doctor": [Color8(205, 218, 220), Color8(224, 230, 226), Color8(185, 207, 210), Color8(220, 224, 216)],
+		"baker": [Color8(130, 92, 58), Color8(164, 130, 88), Color8(112, 82, 58), Color8(150, 112, 72)],
+		"farmer": [Color8(58, 92, 55), Color8(88, 104, 55), Color8(78, 88, 48), Color8(64, 98, 72)],
+		"carpenter": [Color8(92, 64, 42), Color8(112, 78, 48), Color8(72, 58, 45), Color8(102, 76, 52)],
+		"merchant": [Color8(92, 48, 78), Color8(72, 62, 112), Color8(118, 78, 42), Color8(52, 82, 102)],
+		"student": [Color8(42, 68, 104), Color8(62, 82, 116), Color8(48, 74, 92), Color8(72, 84, 105)],
+		"elder": [Color8(88, 82, 72), Color8(72, 78, 82), Color8(104, 88, 72), Color8(76, 82, 68)]
 	}
 	var choices: Array = palettes.get(outfit_id.to_lower(), palettes["civilian"])
 	var cloth_color: Color = choices[posmod(variant_index, choices.size())]
@@ -390,6 +564,11 @@ func get_character_status() -> Dictionary:
 		"height_type": height_type,
 		"hair_style": hair_style,
 		"hairstyle_mesh_count": hairstyle_mesh_count,
+		"face_detail_mesh_count": face_detail_mesh_count,
+		"job_accessory_mesh_count": job_accessory_mesh_count,
+		"outfit_id": _resolve_outfit_id(appearance_profile),
+		"city": str(appearance_profile.get("city", "بغداد")),
+		"culture": str(appearance_profile.get("culture", "عراقية")),
 		"has_animation_player": is_instance_valid(animation_player),
 		"skeleton_count": skeleton_count,
 		"mesh_instance_count": mesh_count,
