@@ -330,7 +330,7 @@ func _build_coastline() -> void:
 			),
 			rock_material
 		)
-		rock.cast_shadow = false
+		rock.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
 # --------------------------------------------------
@@ -450,7 +450,7 @@ func _build_waterfall() -> void:
 	var water := _add_box(waterfall, "WaterfallStream",
 		Vector3(0.0, 3.0, 0.0),
 		Vector3(3.0, 7.0, 0.5), water_material)
-	water.cast_shadow = false
+	water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 	_add_sphere(waterfall, "WaterfallPool",
 		Vector3(0.0, 0.0, 4.0),
@@ -655,7 +655,7 @@ func _build_royal_palace() -> void:
 
 	for side in [-1.0, 1.0]:
 		for index in range(4):
-			var x := side * 15.0
+			var x: float = side * 15.0
 			var z := float(index) * 5.5 - 8.0
 
 			_add_cylinder(palace, "PalaceColumn",
@@ -701,7 +701,7 @@ func _build_babylon_tower() -> void:
 	var current_y := 2.0
 
 	for index in range(widths.size()):
-		var width := widths[index]
+		var width: float = float(widths[index])
 
 		_add_box(tower, "BabylonTerrace_%02d" % index,
 			Vector3(0.0, current_y, 0.0),
