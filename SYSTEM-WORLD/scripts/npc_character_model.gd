@@ -195,7 +195,10 @@ func set_appearance(variant_index: int = 0) -> void:
 		var head_bone := skeleton.find_bone("head")
 		if head_bone >= 0:
 			var face_scale := Vector3.ONE
-			var face_shape := str(appearance_profile.get("face_shape", appearance_profile.get("face", "balanced"))).to_lower()
+			var face_shape := str(appearance_profile.get("face_shape", appearance_profile.get("face", ""))).to_lower()
+			if face_shape.is_empty():
+				var face_variants := ["balanced", "sharp", "soft", "wide", "long", "round", "heart"]
+				face_shape = face_variants[posmod(variant_index, face_variants.size())]
 			match face_shape:
 				"sharp", "حاد":
 					face_scale = Vector3(0.94, 1.05, 0.98)
