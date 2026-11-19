@@ -176,9 +176,10 @@ func _apply_activity_animation(value: String) -> void:
 		return
 	if not is_instance_valid(animation_player):
 		return
+
 	var desired := "Idle_Breathing"
 	if value in ["run", "sprint", "running", "evade"]:
-		desired = "Run_Cycle"
+		desired = "Run"
 	elif value in ["defend", "block", "protect"]:
 		desired = "Block_Animation"
 	elif value in ["jump", "leap"]:
@@ -186,14 +187,21 @@ func _apply_activity_animation(value: String) -> void:
 	elif value in ["attack", "combat", "fight"]:
 		desired = "Attack_Animation"
 	elif value in ["work", "eat", "socialize", "wander", "travel", "walk"]:
-		desired = "Walk_Cycle"
+		desired = "Walk"
+
 	var available := animation_player.get_animation_list()
 	for animation_name in available:
 		if desired.to_lower() in str(animation_name).to_lower():
 			animation_player.play(animation_name)
 			return
-	if not available.is_empty():
-		animation_player.play(available[0])
+
+	# Never fall back to the first arbitrary clip: the first imported clip may
+	# be Attack_Animation. Civilian defense must remain non-offensive.
+	if desired != "Idle_Breathing":
+		for animation_name in available:
+			if "idle_breathing" in str(animation_name).to_lower():
+				animation_player.play(animation_name)
+				return
 
 func set_appearance(variant_index: int = 0) -> void:
 	if not is_instance_valid(imported_model):
