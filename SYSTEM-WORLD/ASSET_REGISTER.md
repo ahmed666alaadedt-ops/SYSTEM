@@ -299,3 +299,7 @@ asset here only after generation, GLB validation, Godot import and visual review
 - Added `tools/validate_humanoid_assets.gd` to instantiate all six canonical GLB variants after Godot import and verify a `Skeleton3D`, weighted `MeshInstance3D`, an imported `AnimationPlayer`, and the seven expected animation clips (idle, walk, run, jump, attack, facial blink, facial talking).
 - Updated `.github/workflows/canonical-godot-validation.yml` to run this direct import/runtime asset check and to execute the canonical validation workflow on pull requests as well as pushes to `main`.
 - This is a new acceptance test. Its result must be taken from the corresponding GitHub Actions run; adding the test does not itself prove that all six models pass Godot import.
+
+
+- Godot 4.3 import inspection confirmed that the Blender-exported locomotion clips are exposed as `Walk` and `Run` (not `Walk_Cycle` / `Run_Cycle`). Both canonical and preview NPC controllers now resolve the actual names and use `Idle_Breathing` rather than an arbitrary first clip when a requested animation is unavailable. This prevents a missing defensive clip from accidentally selecting `Attack_Animation`.
+- The canonical humanoid QA now checks all seven actual imported animation names and exercises the runtime controller's walk, run, and defensive-response selection.
