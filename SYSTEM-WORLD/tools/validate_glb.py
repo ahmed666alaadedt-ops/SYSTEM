@@ -251,7 +251,7 @@ def main() -> int:
     parser.add_argument("--self-test", action="store_true")
     parser.add_argument("--require-skin", action="store_true", help="fail unless the GLB contains a skeletal skin")
     parser.add_argument("--require-animation", action="store_true", help="fail unless the GLB contains at least one animation")
-    parser.add_argument("--max-triangles", type=int, default=120000, help="mobile-friendly triangle budget")
+    parser.add_argument("--max-triangles", type=int, default=85000, help="mobile-friendly triangle budget")
     args = parser.parse_args()
     try:
         if args.self_test:
