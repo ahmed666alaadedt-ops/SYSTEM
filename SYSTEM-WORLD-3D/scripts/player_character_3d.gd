@@ -57,6 +57,9 @@ func apply_profile(data: Dictionary) -> void:
 		"body": str(profile_data.get("body", "رياضي")),
 		"body_type": str(profile_data.get("body", "رياضي")),
 		"height_type": str(profile_data.get("height_type", "average")),
+		"hair_style": str(profile_data.get("hair_style", "قصير")),
+		"hair_color": str(profile_data.get("hair_color", "أسود")),
+		"face": str(profile_data.get("face", "متوازن")),
 		"job": role
 	}, _appearance_variant())
 
