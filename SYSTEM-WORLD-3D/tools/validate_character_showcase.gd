@@ -165,6 +165,29 @@ func _run_validation() -> void:
 		push_error("SYSTEM CHARACTER QA: NPC character script failed to load")
 		quit(1)
 		return
+	var creator_script = load("res://scripts/player_profile_button.gd")
+	if creator_script == null:
+		push_error("SYSTEM PLAYER QA: player creator script failed to load")
+		quit(1)
+		return
+	var creator_constants: Dictionary = creator_script.get_script_constant_map()
+	var male_styles: Array = creator_constants.get("MALE_HAIR_STYLES", [])
+	var female_styles: Array = creator_constants.get("FEMALE_HAIR_STYLES", [])
+	for modern_cut in ["Fade", "Low Fade", "Mid Fade", "High Fade", "Taper Fade", "Undercut", "Buzz Cut", "Crew Cut", "Textured Crop", "French Crop", "Quiff", "Pompadour", "Slick Back", "Side Part"]:
+		if not male_styles.has(modern_cut):
+			push_error("SYSTEM PLAYER QA: missing modern men's haircut: " + modern_cut)
+			quit(1)
+			return
+	for long_male_style in ["شعر طويل", "شعر طويل مدرج", "شعر ويفي طويل", "شعر مجعد طويل", "ذيل حصان رجالي", "كعكة رجالية", "ضفائر رجالية"]:
+		if not male_styles.has(long_male_style):
+			push_error("SYSTEM PLAYER QA: missing long men's hairstyle: " + long_male_style)
+			quit(1)
+			return
+	if male_styles.has("بيكسي") or not female_styles.has("بيكسي"):
+		push_error("SYSTEM PLAYER QA: gender-specific hairstyle lists are not separated")
+		quit(1)
+		return
+
 	var player_script = load("res://scripts/player_character_3d.gd")
 	if player_script == null:
 		push_error("SYSTEM PLAYER QA: player character script failed to load")
