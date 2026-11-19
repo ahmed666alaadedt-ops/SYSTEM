@@ -21,10 +21,14 @@ var age_group := "adult"
 var body_type := "average"
 var height_type := "average"
 var appearance_profile: Dictionary = {}
+var hair_style := "short"
+var hairstyle_attachment: BoneAttachment3D
+var hairstyle_mesh_count := 0
 
 func configure(profile: Dictionary, palette_index: int = 0) -> void:
 	name = "NPCCharacter_" + str(profile.get("name", "Resident")).replace(" ", "_")
 	appearance_profile = profile.duplicate(true)
+	hair_style = _normalize_hair_style(str(profile.get("hair_style", "short")))
 	var gender_text := str(profile.get("gender", profile.get("appearance", ""))).to_lower()
 	var is_female := gender_text in ["female", "woman", "girl", "أنثى", "بنت", "امرأة"]
 	if gender_text.is_empty():
@@ -233,6 +237,7 @@ func set_appearance(variant_index: int = 0) -> void:
 				"عريض":
 					face_scale = Vector3(1.12, 0.97, 1.0)
 			skeleton.set_bone_pose_scale(head_bone, face_scale)
+		_apply_hair_style(skeleton, hair_color)
 	for node in _collect_mesh_nodes(imported_model):
 		var mesh_node := node as MeshInstance3D
 		var part_name := mesh_node.name.to_lower()
@@ -244,6 +249,76 @@ func set_appearance(variant_index: int = 0) -> void:
 			material.roughness = 0.82
 			mesh_node.material_override = material
 
+func _normalize_hair_style(value: String) -> String:
+	var style := value.to_lower().strip_edges()
+	match style:
+		"طويل", "long":
+			return "long"
+		"مجعد", "كيرلي", "curly":
+			return "curly"
+		"ضفيرة", "مضفور", "braided", "braid":
+			return "braided"
+		"ذيل حصان", "pony tail", "ponytail":
+			return "ponytail"
+		"كعكة", "bun":
+			return "bun"
+		_ :
+			return "short"
+
+func _apply_hair_style(skeleton: Skeleton3D, color: Color) -> void:
+	if is_instance_valid(hairstyle_attachment):
+		hairstyle_attachment.queue_free()
+	hairstyle_mesh_count = 0
+	hairstyle_attachment = BoneAttachment3D.new()
+	hairstyle_attachment.name = "RuntimeHairstyle"
+	hairstyle_attachment.bone_name = "head"
+	skeleton.add_child(hairstyle_attachment)
+	var hair_material := StandardMaterial3D.new()
+	hair_material.albedo_color = color
+	hair_material.roughness = 0.86
+	match hair_style:
+		"long":
+			_add_hair_capsule("LongHairLeft", Vector3(-0.135, 0.02, 0.035), 0.035, 0.38, hair_material)
+			_add_hair_capsule("LongHairRight", Vector3(0.135, 0.02, 0.035), 0.035, 0.38, hair_material)
+		"curly":
+			for x in [-0.13, -0.08, -0.025, 0.035, 0.09, 0.14]:
+				for z in [-0.055, 0.025]:
+					_add_hair_sphere("CurlyLock", Vector3(x, 0.30, z), Vector3(0.065, 0.065, 0.065), hair_material)
+		"braided":
+			_add_hair_capsule("BraidLeft", Vector3(-0.14, 0.00, 0.04), 0.028, 0.32, hair_material)
+			for step in range(5):
+				var y := 0.18 - float(step) * 0.065
+				_add_hair_sphere("BraidKnot", Vector3(-0.14, y, 0.065), Vector3(0.045, 0.045, 0.045), hair_material)
+		"ponytail":
+			_add_hair_sphere("PonytailTie", Vector3(0.0, 0.23, 0.14), Vector3(0.075, 0.07, 0.07), hair_material)
+			_add_hair_capsule("Ponytail", Vector3(0.0, 0.04, 0.20), 0.045, 0.34, hair_material)
+		"bun":
+			_add_hair_sphere("HairBun", Vector3(0.0, 0.25, 0.15), Vector3(0.11, 0.12, 0.10), hair_material)
+
+func _add_hair_sphere(piece_name: String, at: Vector3, dimensions: Vector3, mat: Material) -> void:
+	var mesh := SphereMesh.new()
+	mesh.radius = 0.5
+	mesh.height = 1.0
+	var instance := MeshInstance3D.new()
+	instance.name = piece_name
+	instance.mesh = mesh
+	instance.position = at
+	instance.scale = dimensions
+	instance.material_override = mat
+	hairstyle_attachment.add_child(instance)
+	hairstyle_mesh_count += 1
+
+func _add_hair_capsule(piece_name: String, at: Vector3, radius: float, height: float, mat: Material) -> void:
+	var mesh := CapsuleMesh.new()
+	mesh.radius = radius
+	mesh.height = height
+	var instance := MeshInstance3D.new()
+	instance.name = piece_name
+	instance.mesh = mesh
+	instance.position = at
+	instance.material_override = mat
+	hairstyle_attachment.add_child(instance)
+	hairstyle_mesh_count += 1
 func set_outfit(outfit_id: String, variant_index: int = 0) -> void:
 	if not is_instance_valid(imported_model):
 		return
@@ -308,6 +383,8 @@ func get_character_status() -> Dictionary:
 		"age_group": age_group,
 		"body_type": body_type,
 		"height_type": height_type,
+		"hair_style": hair_style,
+		"hairstyle_mesh_count": hairstyle_mesh_count,
 		"has_animation_player": is_instance_valid(animation_player),
 		"skeleton_count": skeleton_count,
 		"mesh_instance_count": mesh_count,
