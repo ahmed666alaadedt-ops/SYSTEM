@@ -19,6 +19,12 @@ func _run_validation() -> void:
 		"job": "hunter",
 		"world": "fantasy"
 	}, 1)
+	var child_mesh_report: Dictionary = child.call("get_mesh_safety_report")
+	print("SYSTEM CHILD MESH SAFETY: ", child_mesh_report)
+	if int(child_mesh_report.get("null_meshes", 0)) > 0 or int(child_mesh_report.get("invalid_mesh_rids", 0)) > 0:
+		push_error("SYSTEM CHILD QA: imported character contains null or invalid mesh resources")
+		quit(1)
+		return
 	child.call("set_activity", "attack")
 	if str(child.get("current_activity")) != "idle":
 		push_error("SYSTEM CHILD QA: child entered an offensive combat activity")
