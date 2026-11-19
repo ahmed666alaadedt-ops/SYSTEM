@@ -17,6 +17,7 @@ var profile_data: Dictionary = {
 }
 
 var model_root: Node3D
+var imported_character: Node3D
 
 
 func _ready() -> void:
@@ -29,12 +30,52 @@ func apply_profile(data: Dictionary) -> void:
 	if is_instance_valid(model_root):
 		remove_child(model_root)
 		model_root.free()
+	model_root = null
+	imported_character = null
 
+	# Prefer the same rigged GLB assets already used by the NPC showcase.
+	# The original procedural player remains the fallback if an import fails.
+	var character_visual := CHARACTER_MODEL.new()
+	character_visual.name = "ImportedPlayerCharacter"
+	add_child(character_visual)
+
+	var gender := str(profile_data.get("appearance", "ذكر"))
+	var outfit := str(profile_data.get("outfit", "الزي الأساسي"))
+	var role := "hunter"
+	if outfit == "زي قتالي":
+		role = "guard"
+	elif outfit == "ملابس يومية" or outfit == "الزي الأساسي":
+		role = "civilian"
+
+	character_visual.configure({
+		"name": str(profile_data.get("name", "SYSTEM Player")),
+		"gender": gender,
+		"job": role
+	}, _appearance_variant())
+
+	var status: Dictionary = character_visual.get_character_status()
+	if str(status.get("model_source", "")) == "glb":
+		imported_character = character_visual
+		model_root = character_visual
+		imported_character.set_activity("idle")
+		return
+
+	# Remove the failed GLB/fallback wrapper and build the known-safe player mesh.
+	character_visual.free()
 	model_root = Node3D.new()
 	model_root.name = "GeneratedPlayerModel"
 	add_child(model_root)
-
 	_build_character()
+
+
+func _appearance_variant() -> int:
+	var hair_colors := ["أسود", "بني", "أشقر", "أبيض", "أحمر"]
+	var index := hair_colors.find(str(profile_data.get("hair_color", "أسود")))
+	if index < 0:
+		index = 0
+	var face_types := ["متوازن", "حاد", "ناعم", "عريض"]
+	var face_index := face_types.find(str(profile_data.get("face", "متوازن")))
+	return posmod(index + maxi(face_index, 0), 4)
 
 
 func _build_character() -> void:
