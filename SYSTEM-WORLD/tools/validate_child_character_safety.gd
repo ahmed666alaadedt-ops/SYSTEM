@@ -2,6 +2,7 @@ extends SceneTree
 
 const CHARACTER_SCRIPT := preload("res://scripts/npc_character_model.gd")
 const SOCIETY_SCRIPT := preload("res://scripts/ai_npc_society_manager.gd")
+const POPULATION_SCRIPT := preload("res://scripts/npc_visible_population_manager.gd")
 
 func _initialize() -> void:
 	call_deferred("_run_validation")
@@ -25,8 +26,8 @@ func _run_validation() -> void:
 		push_error("SYSTEM CHILD QA: child could not trigger a defensive response after being attacked")
 		quit(1)
 		return
-	if str(child.get("current_activity")) != "defend" or not bool(child.get("is_defending")):
-		push_error("SYSTEM CHILD QA: child defensive response state was not applied")
+	if str(child.get("current_activity")) != "evade" or not bool(child.get("is_defending")):
+		push_error("SYSTEM CHILD QA: child evasive defensive response state was not applied")
 		quit(1)
 		return
 	child.call("set_activity", "attack")
@@ -37,6 +38,34 @@ func _run_validation() -> void:
 	var profile: Dictionary = child.get("appearance_profile")
 	if str(profile.get("job", "")) != "civilian" or str(profile.get("occupation", "")) != "civilian":
 		push_error("SYSTEM CHILD QA: child profession was not restricted to civilian")
+		quit(1)
+		return
+
+	var population := POPULATION_SCRIPT.new()
+	root.add_child(population)
+	var visible_actor := Node3D.new()
+	population.add_child(visible_actor)
+	var visible_child := CHARACTER_SCRIPT.new()
+	visible_actor.add_child(visible_child)
+	visible_child.call("configure", {"name": "Visible Child QA", "age": 10, "gender": "male"}, 0)
+	population.set("pedestrians", {
+		"visible_child": {
+			"actor": visible_actor,
+			"visual": visible_child,
+			"destination": Vector3.ZERO,
+			"path": [],
+			"walking": false,
+			"animation_walking": false
+		}
+	})
+	if not bool(population.call("notify_npc_attacked", "visible_child", Vector3(3.0, 0.0, 0.0))):
+		push_error("SYSTEM CHILD QA: visible population did not route an attack into a defensive escape")
+		quit(1)
+		return
+	var visible_record: Dictionary = population.get("pedestrians").get("visible_child", {})
+	var escape_path: Array = visible_record.get("path", [])
+	if escape_path.is_empty() or float(escape_path[escape_path.size() - 1].x) >= float(visible_actor.position.x):
+		push_error("SYSTEM CHILD QA: child did not receive an escape path away from the attacker")
 		quit(1)
 		return
 
@@ -71,7 +100,7 @@ func _run_validation() -> void:
 		quit(1)
 		return
 
-	print("SYSTEM CHILD QA PASS: minors cannot take missions/jobs or initiate combat, can live socially and react defensively when attacked, and adult combat remains available")
+	print("SYSTEM CHILD QA PASS: minors cannot take missions/jobs or initiate combat, can live socially and evade to safety when attacked, and adult combat remains available")
 	child.queue_free()
 	adult.queue_free()
 	quit(0)
