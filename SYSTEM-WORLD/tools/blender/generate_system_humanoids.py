@@ -462,8 +462,9 @@ def generate_character(name, female, output):
     for pb in arm.pose.bones:
         pb.rotation_euler=(0,0,0)
 
-    # Modeling coordinates use Y as the human height axis. Rotate the full
-    # assembly in-place while preserving the armature/body/bone-parent links.
+    # Modeling coordinates use Y as the human height axis. Rotate the complete
+    # armature and all skinned meshes together without breaking their hierarchy.
+    assembly=[arm,body]+detail_meshes
     rotation=Matrix.Rotation(math.radians(90.0),4,"X")
     world_matrices=[(obj,obj.matrix_world.copy()) for obj in assembly]
     for obj,world_matrix in world_matrices:
