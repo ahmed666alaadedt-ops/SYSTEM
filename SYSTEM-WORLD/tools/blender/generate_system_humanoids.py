@@ -375,9 +375,9 @@ def generate_character(name, female, output):
     # Modeling coordinates use Y as the human height axis. Rotate the full
     # assembly in-place while preserving the armature/body/bone-parent links.
     rotation=Matrix.Rotation(math.radians(90.0),4,"X")
-    world_matrices={obj:obj.matrix_world.copy() for obj in assembly}
-    for obj in assembly:
-        obj.matrix_world=rotation @ world_matrices[obj]
+    world_matrices=[(obj,obj.matrix_world.copy()) for obj in assembly]
+    for obj,world_matrix in world_matrices:
+        obj.matrix_world=rotation @ world_matrix
 
     # Keep the armature as the true root for both skinned body and bone-attached parts.
     arm["system_character_type"]="humanoid"
