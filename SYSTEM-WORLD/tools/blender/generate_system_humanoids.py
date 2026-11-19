@@ -488,7 +488,7 @@ def generate_character(name, female, output, age_group="adult"):
     age_scale = {"child": 0.68, "elder": 0.93, "adult": 1.0}.get(age_group, 1.0)
     if age_scale != 1.0:
         for obj in assembly:
-            obj.matrix_world = Matrix.Scale(age_scale, 4, Vector((0,0,0))) @ obj.matrix_world
+            obj.matrix_world = Matrix.Scale(age_scale, 4) @ obj.matrix_world
 
     arm["system_character_type"]="humanoid"
     arm["system_rig"]="deform_armature"
