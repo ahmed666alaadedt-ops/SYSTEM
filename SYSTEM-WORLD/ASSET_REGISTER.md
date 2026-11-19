@@ -189,6 +189,7 @@ asset here only after generation, GLB validation, Godot import and visual review
 
 
 - Facial rig extension: `tools/blender/generate_system_humanoids.py` adds `jaw`, `eye.L/R`, and `brow.L/R` control bones and assigns mouth, eye, and brow mesh groups to them.
+- The Blender generator now exports `Facial_Blink` and `Facial_Talking` clips for all six base models; `SYSTEM-WORLD-3D/tools/validate_character_showcase.gd` requires both clips in its character QA. Concurrent facial/body blending and phoneme-synced lip movement remain pending.
 - `scripts/npc_character_model.gd` exposes `set_facial_expression(expression)` for basic bone-driven happy, angry, sad, surprised, talking, and blink poses. This is not yet a blendshape or audio-driven lip-sync implementation.
 - `assets/characters/CHARACTER_CUSTOMIZATION_PROFILE.md` documents the supported expression presets and validation limits.
 
