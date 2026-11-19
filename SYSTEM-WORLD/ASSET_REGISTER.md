@@ -285,3 +285,10 @@ asset here only after generation, GLB validation, Godot import and visual review
 - Modern and historical melee ray attacks now include physics areas and route NPC hits to `receive_threat` before ordinary damage handling. Civilian NPCs do not lose health or counterattack through this route.
 - The visible-population manager applies the existing age-aware reaction: minors evade six metres; adults defend and retreat three metres. A short per-NPC cooldown prevents repeated hit spam.
 - This connects the defensive behavior to the modern and historical melee ray-query paths for visible pedestrians. Ranged projectiles and NPCs in other world population systems still require separate integration.
+
+
+## Civilian Society Role Boundaries (2026-11-19)
+
+- NPC society records do not assign player missions, law-enforcement, guard, security, monitoring, military, supervisory, or administrative official roles.
+- Adult NPCs retain ordinary civilian livelihoods such as teaching, healthcare, trade, transport, construction, farming, and services. Minors remain students/dependants and cannot be assigned employment.
+- New records and previously saved records are normalized; character presentation also prevents restricted official job labels from producing police/guard outfits.
