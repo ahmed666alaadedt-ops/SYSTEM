@@ -61,7 +61,7 @@ func configure(profile: Dictionary, palette_index: int = 0) -> void:
 	elif height_type in ["متوسط", "متوسطة", "average", "medium"]:
 		height_type = "average"
 	else:
-		height_type = ["short", "average", "tall"][posmod(palette_index / 2, 3)]
+		height_type = ["short", "average", "tall"][posmod(int(palette_index / 2), 3)]
 
 	if _load_imported_model(selected_model_path):
 		var role := str(profile.get("job", profile.get("occupation", ""))).to_lower()
