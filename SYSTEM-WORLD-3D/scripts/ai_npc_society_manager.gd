@@ -8,7 +8,7 @@ const RelationshipSystem = preload(
 	"res://scripts/npc_relationship_system.gd"
 )
 const NPCVisual = preload(
-	"res://scripts/npc_humanoid_visual.gd"
+	"res://scripts/npc_character_model.gd"
 )
 
 const RESIDENT_COUNT := 12
