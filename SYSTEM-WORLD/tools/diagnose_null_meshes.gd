@@ -27,7 +27,9 @@ func _run_diagnostic() -> void:
 		await process_frame
 	var pending: Array[Node] = [scene]
 	var null_mesh_paths: Array[String] = []
+	var invalid_mesh_rid_paths: Array[String] = []
 	var null_multimesh_paths: Array[String] = []
+	var invalid_multimesh_rid_paths: Array[String] = []
 	var mesh_count := 0
 	var multimesh_count := 0
 	while not pending.is_empty():
@@ -37,17 +39,23 @@ func _run_diagnostic() -> void:
 			var mesh_instance := node as MeshInstance3D
 			if mesh_instance.mesh == null:
 				null_mesh_paths.append(str(mesh_instance.get_path()))
+			elif not mesh_instance.mesh.get_rid().is_valid():
+				invalid_mesh_rid_paths.append(str(mesh_instance.get_path()))
 		if node is MultiMeshInstance3D:
 			multimesh_count += 1
 			var multimesh_instance := node as MultiMeshInstance3D
 			if multimesh_instance.multimesh == null or multimesh_instance.multimesh.mesh == null:
 				null_multimesh_paths.append(str(multimesh_instance.get_path()))
+			elif not multimesh_instance.multimesh.get_rid().is_valid():
+				invalid_multimesh_rid_paths.append(str(multimesh_instance.get_path()))
 		for child in node.get_children():
 			pending.append(child)
 	print("SYSTEM MESH DIAGNOSTIC: mesh_instances=", mesh_count,
 		" null_mesh_instances=", null_mesh_paths.size(),
+		" invalid_mesh_rids=", invalid_mesh_rid_paths.size(),
 		" multimesh_instances=", multimesh_count,
-		" invalid_multimeshes=", null_multimesh_paths.size())
+		" invalid_multimeshes=", null_multimesh_paths.size(),
+		" invalid_multimesh_rids=", invalid_multimesh_rid_paths.size())
 	var manager := scene.find_child("WorldManager", true, false)
 	if manager != null:
 		var roots: Dictionary = manager.get("world_roots")
@@ -87,8 +95,12 @@ func _run_diagnostic() -> void:
 								" meshes=", region_mesh_count)
 	for path in null_mesh_paths.slice(0, 100):
 		print("SYSTEM NULL MESH: ", path)
+	for path in invalid_mesh_rid_paths.slice(0, 100):
+		print("SYSTEM INVALID MESH RID: ", path)
 	for path in null_multimesh_paths.slice(0, 100):
 		print("SYSTEM INVALID MULTIMESH: ", path)
+	for path in invalid_multimesh_rid_paths.slice(0, 100):
+		print("SYSTEM INVALID MULTIMESH RID: ", path)
 	# Exercise first-entry loading for all four worlds, then return to the modern world.
 	if manager != null:
 		for world_id in [0, 1, 3, 2]:
@@ -101,4 +113,4 @@ func _run_diagnostic() -> void:
 				quit(3)
 				return
 			print("SYSTEM WORLD LOAD TEST: world=", world_id, " initialized=true")
-	quit(1 if not null_mesh_paths.is_empty() or not null_multimesh_paths.is_empty() else 0)
+	quit(1 if not null_mesh_paths.is_empty() or not invalid_mesh_rid_paths.is_empty() or not null_multimesh_paths.is_empty() or not invalid_multimesh_rid_paths.is_empty() else 0)
