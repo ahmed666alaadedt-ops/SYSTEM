@@ -36,6 +36,7 @@ var vehicles: Dictionary = {}
 var police_units: Array[Dictionary] = []
 var next_vehicle_number := 1
 var next_police_number := 1
+var next_case_number := 1
 var crime_records: Array[Dictionary] = []
 var wanted_level := 0
 
@@ -329,6 +330,7 @@ func _save_crime_state() -> void:
 	var config := ConfigFile.new()
 	config.set_value("crime", "wanted_level", wanted_level)
 	config.set_value("crime", "records", crime_records)
+	config.set_value("crime", "next_case_number", next_case_number)
 	config.set_value("crime", "owner_registry", owner_registry)
 	config.save(SAVE_PATH)
 
@@ -338,6 +340,7 @@ func _load_crime_state() -> void:
 		return
 	wanted_level = clampi(int(config.get_value("crime", "wanted_level", 0)), 0, 5)
 	crime_records = config.get_value("crime", "records", [])
+	next_case_number = maxi(1, int(config.get_value("crime", "next_case_number", crime_records.size() + 1)))
 	owner_registry = config.get_value("crime", "owner_registry", {})
 
 
@@ -368,7 +371,8 @@ func report_civilian_crime(
 	if not victim_npc_id.is_empty() and society_manager.call("get_npc", victim_npc_id).is_empty():
 		return {"success": false, "reason": "VICTIM_NOT_FOUND"}
 
-	var case_id := "case_%06d" % (crime_records.size() + 1)
+	var case_id := "case_%06d" % next_case_number
+	next_case_number += 1
 	var severity := _crime_severity(crime_type)
 	var case_record := {
 		"case_id": case_id,
