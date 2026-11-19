@@ -27,3 +27,8 @@ The generator produces six base GLB variants:
 - Child male and female.
 
 The current base set does not yet represent the full range of unique faces, body morphs, hairstyles, or world-specific outfits shown in the reference. Those require additional variants and runtime customization passes.
+
+
+## Skeletal facial controls
+
+The Blender generator now adds separate jaw, left/right eye, and left/right eyebrow control bones. The Godot NPC character loader exposes basic bone-driven expression presets (happy, angry, sad, surprised, talking, blink). These are skeletal pose controls only; facial blendshapes, natural blink timing, and audio-driven phoneme lip sync remain future work and require runtime validation.
