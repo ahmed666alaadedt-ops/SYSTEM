@@ -175,6 +175,11 @@ def add_clothes(name):
     # tailored jacket and trousers, separate fitted pieces to permit outfit swaps
     objs.append(uv_sphere(name+"_Jacket",(0,1.31,0),(0.265,0.39,0.16),CLOTH,24,16))
     objs.append(uv_sphere(name+"_Belt",(0,1.00,-0.005),(0.205,0.045,0.145),TRIM,20,12))
+    objs.append(capsule(name+"_CollarLeft",(-0.09,1.63,-0.105),(0.0,1.51,-0.16),0.035,TRIM,12))
+    objs.append(capsule(name+"_CollarRight",(0.09,1.63,-0.105),(0.0,1.51,-0.16),0.035,TRIM,12))
+    for button_y in (1.43,1.33,1.23):
+        objs.append(uv_sphere(name+"_JacketButton",(0,button_y,-0.158),(0.012,0.016,0.008),TRIM,12,8))
+    objs.append(uv_sphere(name+"_BeltBuckle",(0,1.00,-0.15),(0.055,0.038,0.014),TRIM,16,10))
     for s in (-1,1):
         objs.append(capsule(name+"_Sleeve",(s*0.27,1.51,0),(s*0.30,1.20,0),0.082,CLOTH))
         objs.append(capsule(name+"_Glove",(s*0.31,0.90,0),(s*0.31,0.82,0),0.056,SHOES))
