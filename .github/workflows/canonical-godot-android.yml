@@ -198,6 +198,16 @@ jobs:
             --script res://tools/validate_companion_runtime.gd \
             2>&1 | tee "$RUNNER_TEMP/system-companion-runtime.log"
 
+      - name: Verify civilian NPC society and visible 3D population
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" \
+            --script res://tools/validate_npc_society_runtime.gd \
+            2>&1 | tee "$RUNNER_TEMP/system-npc-society-runtime.log"
+
       - name: Export canonical SYSTEM WORLD Android APK
         shell: bash
         run: |
@@ -228,5 +238,6 @@ jobs:
             ${{ runner.temp }}/system-world-import.log
             ${{ runner.temp }}/system-world-runtime.log
             ${{ runner.temp }}/system-companion-runtime.log
+            ${{ runner.temp }}/system-npc-society-runtime.log
           if-no-files-found: warn
           retention-days: 14
