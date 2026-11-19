@@ -1,0 +1,67 @@
+extends SceneTree
+
+const SHOWCASE_SCENE := "res://scenes/character_showcase.tscn"
+const REQUIRED_CLIPS := [
+	"Idle_Breathing",
+	"Walk_Cycle",
+	"Run_Cycle",
+	"Jump_Animation",
+	"Attack_Animation"
+]
+
+func _initialize() -> void:
+	call_deferred("_run_validation")
+
+func _run_validation() -> void:
+	var packed := load(SHOWCASE_SCENE) as PackedScene
+	if packed == null:
+		push_error("SYSTEM CHARACTER QA: showcase scene could not be loaded")
+		quit(1)
+		return
+
+	var showcase := packed.instantiate()
+	get_root().add_child(showcase)
+	await process_frame
+
+	var character_count := 0
+	var has_male_asset := ResourceLoader.exists("res://assets/characters/SYSTEM_Humanoid_Male.glb")
+	var has_female_asset := ResourceLoader.exists("res://assets/characters/SYSTEM_Humanoid_Female.glb")
+
+	for child in showcase.get_children():
+		if not child.has_method("get_character_status"):
+			continue
+		character_count += 1
+		var status: Dictionary = child.call("get_character_status")
+		print("SYSTEM_CHARACTER_QA ", child.name, " ", status)
+
+		if status.get("model_source", "") == "glb":
+			if int(status.get("skeleton_count", 0)) < 1:
+				push_error("SYSTEM CHARACTER QA: imported GLB has no Skeleton3D node")
+				quit(1)
+				return
+			var clips: Array = status.get("animation_clips", [])
+			for required_clip in REQUIRED_CLIPS:
+				var found := false
+				for clip_name in clips:
+					if str(clip_name).to_lower().contains(str(required_clip).to_lower()):
+						found = true
+						break
+				if not found:
+					push_error("SYSTEM CHARACTER QA: missing animation clip " + str(required_clip))
+					quit(1)
+					return
+
+	if character_count != 2:
+		push_error("SYSTEM CHARACTER QA: expected two showcase characters, found " + str(character_count))
+		quit(1)
+		return
+
+	if has_male_asset and has_female_asset:
+		for child in showcase.get_children():
+			if child.has_method("get_character_status") and child.call("get_character_status").get("model_source") != "glb":
+				push_error("SYSTEM CHARACTER QA: GLB assets exist but a character fell back to procedural mode")
+				quit(1)
+				return
+
+	print("SYSTEM CHARACTER QA PASS: two character models loaded and inspected")
+	quit(0)
