@@ -24,8 +24,12 @@ func _run_validation() -> void:
 	await process_frame
 
 	var character_count := 0
-	var has_male_asset := ResourceLoader.exists("res://assets/characters/SYSTEM_Humanoid_Male.glb")
-	var has_female_asset := ResourceLoader.exists("res://assets/characters/SYSTEM_Humanoid_Female.glb")
+	var has_male_asset := FileAccess.file_exists("res://assets/characters/SYSTEM_Humanoid_Male.glb")
+	var has_female_asset := FileAccess.file_exists("res://assets/characters/SYSTEM_Humanoid_Female.glb")
+	if not has_male_asset or not has_female_asset:
+		push_error("SYSTEM CHARACTER QA: expected male and female GLB source files are missing")
+		quit(1)
+		return
 
 	for child in showcase.get_children():
 		if not child.has_method("get_character_status"):
