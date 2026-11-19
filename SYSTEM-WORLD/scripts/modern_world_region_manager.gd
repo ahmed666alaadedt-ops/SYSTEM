@@ -766,7 +766,7 @@ func _create_city_street_furniture() -> void:
 
 
 func _create_transport_network() -> void:
-	var transport := ModernWorldTransportNetworkManagerScript.new()
+	var transport: Node3D = ModernWorldTransportNetworkManagerScript.new()
 	transport.name = "ModernWorldTransportNetworkManager"
 	add_child(transport)
 
