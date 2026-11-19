@@ -80,25 +80,11 @@ func _create_resident(profile: Dictionary, index: int) -> void:
 		randf_range(-1.5, 1.5)
 	)
 
-	var body := MeshInstance3D.new()
-	var capsule := CapsuleMesh.new()
-
-	capsule.radius = 0.34
-	capsule.height = 1.65
-
-	body.mesh = capsule
-	body.position.y = 0.83
-
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color.from_hsv(
-		float(index) / float(RESIDENT_COUNT),
-		0.48,
-		0.86
-	)
-	material.roughness = 0.8
-	body.material_override = material
-
-	npc.add_child(body)
+	# Use the shared full-body 3D civilian model instead of a capsule placeholder.
+	var visual := SystemNPCHumanoidVisual.new()
+	visual.name = "HumanoidVisual"
+	npc.add_child(visual)
+	visual.configure(profile, index)
 
 	var name_label := Label3D.new()
 	name_label.name = "ResidentName"
@@ -137,7 +123,8 @@ func _create_resident(profile: Dictionary, index: int) -> void:
 		"money": randi_range(20, 100),
 		"activity_timer": randf_range(2.0, 8.0),
 		"speed": randf_range(0.9, 1.2),
-		"label": name_label
+		"label": name_label,
+		"visual": visual
 	}
 
 	residents.append(record)
@@ -211,6 +198,10 @@ func _set_activity(
 	record["state"] = new_state
 	record["target"] = destination
 	record["activity_timer"] = randf_range(7.0, 15.0)
+
+	var visual: Node = record.get("visual")
+	if is_instance_valid(visual):
+		visual.call("set_activity", new_state)
 
 	var label: Label3D = record["label"]
 
