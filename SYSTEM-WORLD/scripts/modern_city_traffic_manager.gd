@@ -73,6 +73,7 @@ func _build_city_traffic() -> void:
 			var east_west := fleet_index % 2 == 1
 			_create_vehicle(
 				city_name + "_" + str(TRAFFIC_FLEET[fleet_index]["name"]) + "_%02d" % fleet_index,
+				city_name,
 				anchor,
 				east_west,
 				city_index * TRAFFIC_FLEET.size() + fleet_index,
@@ -80,7 +81,7 @@ func _build_city_traffic() -> void:
 			)
 
 
-func _create_vehicle(vehicle_name: String, anchor: Vector3, east_west: bool, seed_index: int, fleet_index: int) -> void:
+func _create_vehicle(vehicle_name: String, city_name: String, anchor: Vector3, east_west: bool, seed_index: int, fleet_index: int) -> void:
 	var definition: Dictionary = TRAFFIC_FLEET[fleet_index]
 	var vehicle := Node3D.new()
 	vehicle.name = vehicle_name
@@ -126,7 +127,7 @@ func _create_vehicle(vehicle_name: String, anchor: Vector3, east_west: bool, see
 
 	vehicles.append({
 		"node": vehicle,
-		"city_name": vehicle_name.split("_")[0],
+		"city_name": city_name,
 		"anchor": anchor,
 		"east_west": east_west,
 		"speed": float(definition["speed"]) + float(seed_index % 3) * 0.35,
