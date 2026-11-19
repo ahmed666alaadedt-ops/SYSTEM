@@ -120,3 +120,8 @@ The command-center player avatar is created from the saved profile and updated w
 ## Gender-specific hairstyle selection (2026-11-19)
 
 The player creator now filters the hairstyle list by the selected character appearance. Male characters receive contemporary men's cuts (Fade variants, Taper Fade, Undercut, Buzz Cut, Crew Cut, Textured/French Crop, Quiff, Pompadour, Slick Back, Side Part and Spiky) plus explicitly supported long men's styles (long/layered/wavy/curly hair, men's ponytail, man bun and braids). Female characters receive a separate list of short, medium, long, curly, braided and other feminine styling options. The long-hair options remain available to men; the selection is not restricted to short hair. The shared character loader maps the displayed modern cut names to its current procedural hairstyle geometry. Detailed salon-grade meshes for every named barber cut remain future art work.
+
+
+## Runtime barber-cut geometry update
+
+The 3D preview procedural fallback now exposes runtime hair-color and hairstyle controls, recolors its existing hair cap, and adds attached mesh strands for modern men's cuts. Fade variants, Undercut, Buzz/Crew/French Crop, Quiff/Pompadour/Textured Crop, Slick Back/Side Part and long men's options are mapped to runtime silhouettes. The imported-character loader now gives Fade, Quiff and Slick Back their own procedural hair groups rather than collapsing every modern cut into one generic style. These are stylized procedural meshes; salon-grade strand grooming and dedicated authored hair assets remain future work.
