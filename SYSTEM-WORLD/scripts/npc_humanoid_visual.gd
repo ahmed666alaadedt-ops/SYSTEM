@@ -54,7 +54,7 @@ func _hair_color_from_id(color_id: String) -> Color:
 		"gray", "grey", "رمادي": return Color8(112, 119, 128)
 		"red", "أحمر": return Color8(178, 35, 42)
 		"blue", "أزرق": return Color8(35, 105, 220)
-		"navy", "dark_blue": return Color8(24, 45, 112)
+		"navy", "dark_blue", "أزرق داكن": return Color8(24, 45, 112)
 		"cyan", "turquoise", "سماوي": return Color8(38, 190, 205)
 		"purple", "violet", "بنفسجي": return Color8(132, 62, 190)
 		"pink", "وردي": return Color8(230, 92, 158)
