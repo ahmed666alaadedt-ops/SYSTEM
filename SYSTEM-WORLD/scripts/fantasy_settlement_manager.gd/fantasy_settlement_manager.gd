@@ -7,6 +7,8 @@ class_name SystemFantasySettlementManager
 signal settlement_created(settlement_id: String)
 signal resident_created(npc_id: String, settlement_id: String)
 
+const NPCCharacterModelScript = preload("res://scripts/npc_character_model.gd")
+
 const FANTASY_WORLD_ID := 0
 
 const VILLAGE_DATA := [
@@ -126,6 +128,7 @@ var world_id: int = FANTASY_WORLD_ID
 var settlements: Dictionary = {}
 var kingdoms: Dictionary = {}
 var resident_nodes: Dictionary = {}
+var resident_visuals: Dictionary = {}
 var map_icon_records: Array[Dictionary] = []
 
 var initialized := false
@@ -812,6 +815,9 @@ func _create_resident(
 	if npc_id.is_empty():
 		return
 
+	var resident_index := resident_nodes.size()
+	var gender := "female" if resident_index % 2 == 1 else "male"
+
 	if npc_society.npcs.has(npc_id):
 		var npc: Dictionary = npc_society.npcs[npc_id]
 
@@ -819,6 +825,7 @@ func _create_resident(
 		npc["current_location"] = village_id
 		npc["activity"] = "daily_life"
 		npc["settlement_type"] = "village"
+		npc["gender"] = gender
 		npc["map_icon"] = OCCUPATION_ICONS.get(
 			occupation,
 			"👤"
@@ -842,20 +849,20 @@ func _create_resident(
 	resident.add_to_group("system_npc")
 	resident.add_to_group("system_interactable")
 
-	var capsule := MeshInstance3D.new()
-	var capsule_mesh := CapsuleMesh.new()
-
-	capsule_mesh.radius = 0.35
-	capsule_mesh.height = 1.8
-
-	capsule.mesh = capsule_mesh
-	capsule.position.y = 0.9
-
-	var body_material := StandardMaterial3D.new()
-	body_material.albedo_color = Color(0.35, 0.42, 0.52)
-
-	capsule.material_override = body_material
-	resident.add_child(capsule)
+	var visual_profile := {
+		"name": display_name,
+		"age_years": age,
+		"gender": gender,
+		"occupation": occupation,
+		"world": "fantasy",
+		"body_type": ["average", "slim", "athletic"][resident_index % 3],
+		"height_type": "average"
+	}
+	var visual := NPCCharacterModelScript.new()
+	visual.name = "HumanoidVisual"
+	resident.add_child(visual)
+	visual.configure(visual_profile, resident_index)
+	resident_visuals[npc_id] = visual
 
 	var name_label := Label3D.new()
 	name_label.text = display_name
@@ -881,7 +888,7 @@ func _create_resident(
 
 	resident.position = _get_resident_position(
 		village,
-		resident_nodes.size()
+		resident_index
 	)
 
 	village.add_child(resident)
