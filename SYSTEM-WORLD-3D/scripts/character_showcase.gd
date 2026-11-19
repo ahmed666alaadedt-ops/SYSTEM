@@ -15,6 +15,7 @@ func _spawn_character(display_name: String, gender: String, job: String, at: Vec
 	character.position = at
 	character.configure({"name": display_name, "gender": gender, "job": job}, 0)
 	character.set_activity("idle")
+	call_deferred("_report_character_status", character)
 	var title := Label3D.new()
 	title.text = gender.capitalize() + " • " + job.capitalize()
 	title.position = Vector3(0.0, 2.15, 0.0)
@@ -63,3 +64,7 @@ func _build_stage() -> void:
 	camera.current = true
 	add_child(camera)
 	camera.look_at(Vector3(0.0, 1.0, 0.0), Vector3.UP)
+
+func _report_character_status(character: Node) -> void:
+	if is_instance_valid(character) and character.has_method("get_character_status"):
+		print("SYSTEM_CHARACTER_SHOWCASE ", character.name, " ", character.call("get_character_status"))
