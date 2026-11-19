@@ -185,8 +185,10 @@ asset here only after generation, GLB validation, Godot import and visual review
 - `assets/characters/CHARACTER_CUSTOMIZATION_PROFILE.md` — documents the profile fields currently supported by the canonical NPC loader: age group, body type, height, skin tone, hair color, eye color, face shape, and job-based outfit palette.
 - `scripts/npc_character_model.gd` — now selects adult/elder/child male/female GLB paths and applies profile-based body proportions, skin/hair/iris colors, and head-shape scaling. The procedural fallback remains available when a GLB is missing.
 - The same runtime controller exposes `set_facial_expression()` presets (including fear, confusion, and determination), `set_eye_direction(Vector2)`, and reports whether all six facial control bones are present. `SYSTEM-WORLD-3D/tools/validate_character_showcase.gd` now checks these controls.
-- `tools/validate_child_character_safety.gd` — headless QA for civilian-only child profiles and blocked child combat activities; confirms adult combat requests remain available.
-- Runtime customization is partial: face morphs are head-bone scale presets, not independent facial morph targets; hairstyle switching, facial blendshapes, and world-specific clothing meshes remain pending. Child profiles are now forced to civilian occupation in imported and fallback models, and combat activity requests resolve to idle.
+- `tools/validate_child_character_safety.gd` — headless QA for minor NPC role/work restrictions, ordinary social life, defensive-only threat response, and unchanged adult combat.
+- Minor residents are NPC-only, never receive missions, official/administrative roles or employment; society records normalize them to student/child resident and reject formal work activity. They may continue family, school, play and social life.
+- Minor character controllers block offensive attack requests. A threat system may call `respond_to_attack()` only after a minor is attacked, producing a defensive state without granting offensive combat.
+- Runtime customization is partial: face morphs are head-bone scale presets, not independent facial morph targets; hairstyle switching, facial blendshapes, and world-specific clothing meshes remain pending.
 
 
 - Facial rig extension: `tools/blender/generate_system_humanoids.py` adds `jaw`, `eye.L/R`, and `brow.L/R` control bones and assigns mouth, eye, and brow mesh groups to them.
