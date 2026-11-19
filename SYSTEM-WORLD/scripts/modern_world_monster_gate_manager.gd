@@ -137,7 +137,7 @@ func _create_gate(region_name: String, location: Vector2, elite_event: bool) -> 
 			return
 	gate_counter += 1
 	var rank_index := _roll_gate_rank(elite_event)
-	var rank := GATE_RANKS[rank_index]
+	var rank: String = str(GATE_RANKS[rank_index])
 	var gate := Area3D.new()
 	gate.name = "MonsterGate_%03d" % gate_counter
 	gate.position = Vector3(location.x, _terrain_height(location.x, location.y), location.y)

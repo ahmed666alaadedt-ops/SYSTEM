@@ -169,7 +169,7 @@ func light_attack() -> void:
 
 	can_attack = false
 
-	var damage := light_damage + weapon_bonus_damage[weapon_type]
+	var damage: float = light_damage + float(weapon_bonus_damage[weapon_type])
 	_play_weapon_swing(false)
 	_apply_melee_damage(damage, attack_range)
 
@@ -190,7 +190,7 @@ func heavy_attack() -> void:
 
 	can_attack = false
 
-	var damage := heavy_damage + weapon_bonus_damage[weapon_type]
+	var damage: float = heavy_damage + float(weapon_bonus_damage[weapon_type])
 	_play_weapon_swing(true)
 	_apply_melee_damage(damage, attack_range + 1.0)
 
@@ -288,7 +288,7 @@ func shoot_arrow(powerful: bool = false) -> void:
 
 	can_attack = false
 
-	var damage := arrow_damage + weapon_bonus_damage[WeaponType.BOW]
+	var damage: float = arrow_damage + float(weapon_bonus_damage[WeaponType.BOW])
 
 	if powerful:
 		damage *= 1.8

@@ -1,0 +1,74 @@
+name: Validate SYSTEM WORLD Godot Project
+
+on:
+  pull_request:
+    paths:
+      - "SYSTEM-WORLD/**"
+      - ".github/workflows/godot-system-world-validation.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "SYSTEM-WORLD/**"
+      - ".github/workflows/godot-system-world-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Parse and launch SYSTEM WORLD
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Godot 4.3
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/godot"
+          curl -L --fail --retry 3 \
+            "https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip" \
+            -o "$RUNNER_TEMP/godot.zip"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP/godot"
+          chmod +x "$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+
+      - name: Diagnose transport network script directly
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          "$GODOT" --headless --path "$PROJECT" --check-only --script res://scripts/modern_world_transport_network_manager.gd
+
+      - name: Import resources and parse scripts
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --verbose --editor --path "$PROJECT" --quit 2>&1 | tee "$RUNNER_TEMP/system-world-import.log"
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" "$RUNNER_TEMP/system-world-import.log"; then
+            echo "Godot reported script or resource parse errors."
+            exit 1
+          fi
+
+      - name: Scan runtime scene for missing mesh resources
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/diagnose_null_meshes.gd
+
+      - name: Launch main scene headlessly
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" --quit-after 10 2>&1 | tee "$RUNNER_TEMP/system-world-runtime.log"
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" "$RUNNER_TEMP/system-world-runtime.log"; then
+            echo "Godot reported runtime script errors."
+            exit 1
+          fi

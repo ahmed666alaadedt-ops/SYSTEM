@@ -378,7 +378,7 @@ func _create_birds(amount: int, profile: String) -> void:
 			randf_range(-20, 20)
 		)
 
-		var behavior := ["orbit", "hunt", "migrate", "perch"].pick_random()
+		var behavior: String = str(["orbit", "hunt", "migrate", "perch"].pick_random())
 
 		creatures.append({
 			"node": bird,
@@ -477,7 +477,7 @@ func _create_large_creature(
 			randf_range(-25, 25)
 		)
 
-		var behavior := ["patrol", "guard"].pick_random()
+		var behavior: String = str(["patrol", "guard"].pick_random())
 
 		creatures.append({
 			"node": creature,

@@ -416,10 +416,10 @@ func _append_district_street(roads: SurfaceTool, sidewalks: SurfaceTool, center:
 		var road_far_right := _district_local_point(center + p1 - side * 3.5, parent_position, 0.22)
 		_add_quad(roads, road_left, road_right, road_far_left, road_far_right)
 		for side_sign in [-1.0, 1.0]:
-			var sidewalk_inner_0 := center + p0 + side * (side_sign * 3.5)
-			var sidewalk_outer_0 := center + p0 + side * (side_sign * 5.8)
-			var sidewalk_inner_1 := center + p1 + side * (side_sign * 3.5)
-			var sidewalk_outer_1 := center + p1 + side * (side_sign * 5.8)
+			var sidewalk_inner_0: Vector2 = center + p0 + side * (side_sign * 3.5)
+			var sidewalk_outer_0: Vector2 = center + p0 + side * (side_sign * 5.8)
+			var sidewalk_inner_1: Vector2 = center + p1 + side * (side_sign * 3.5)
+			var sidewalk_outer_1: Vector2 = center + p1 + side * (side_sign * 5.8)
 			var a := _district_local_point(sidewalk_inner_0, parent_position, 0.27)
 			var b := _district_local_point(sidewalk_outer_0, parent_position, 0.27)
 			var c := _district_local_point(sidewalk_inner_1, parent_position, 0.27)
@@ -766,7 +766,7 @@ func _create_city_street_furniture() -> void:
 
 
 func _create_transport_network() -> void:
-	var transport := ModernWorldTransportNetworkManagerScript.new()
+	var transport: Node3D = ModernWorldTransportNetworkManagerScript.new()
 	transport.name = "ModernWorldTransportNetworkManager"
 	add_child(transport)
 

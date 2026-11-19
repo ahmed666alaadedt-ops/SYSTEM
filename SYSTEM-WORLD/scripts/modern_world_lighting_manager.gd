@@ -97,7 +97,7 @@ func _add_district_and_transport_lights(city_name: String, anchor: Vector3) -> v
 
 	# Airport and rail forecourts receive lower pedestrian-scale fixtures.
 	for hub_offset in [Vector2(205.0, -35.0), Vector2(-205.0, 35.0)]:
-		var hub_center := Vector2(anchor.x, anchor.z) + hub_offset
+		var hub_center: Vector2 = Vector2(anchor.x, anchor.z) + hub_offset
 		for side_x in [-1.0, 1.0]:
 			for side_z in [-1.0, 1.0]:
 				_add_fixture(
@@ -118,7 +118,7 @@ func _add_corridor_lights(city_name: String, start_3d: Vector3, offset: Vector2,
 	for index in range(count + 1):
 		var point := start + direction * minf(float(index) * spacing, length)
 		for side_sign in [-1.0, 1.0]:
-			var lamp_point := point + side * (road_width * 0.5 + 3.0) * side_sign
+			var lamp_point: Vector2 = point + side * (road_width * 0.5 + 3.0) * side_sign
 			_add_fixture(city_name, lamp_point)
 
 

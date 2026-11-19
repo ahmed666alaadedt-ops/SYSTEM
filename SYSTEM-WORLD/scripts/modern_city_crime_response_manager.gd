@@ -63,7 +63,7 @@ func _spawn_civilian_vehicle_fleet() -> void:
 		for slot in range(3):
 			var vehicle_id := "npc_car_%05d" % next_vehicle_number
 			next_vehicle_number += 1
-			var owner_key := city_name.to_lower().replace(" ", "_") + "_" + str(slot + 1)
+			var owner_key: String = city_name.to_lower().replace(" ", "_") + "_" + str(slot + 1)
 			var owner_name := _citizen_name(city_name, slot)
 			var owner_id := _get_or_create_owner_npc(owner_key, owner_name, city_name)
 			var vehicle := NPCVehicleScript.new()

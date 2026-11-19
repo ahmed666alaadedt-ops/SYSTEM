@@ -35,6 +35,7 @@ const WORLD_NAMES := {
 
 var active_world: int = -1
 var world_roots: Dictionary = {}
+var world_initialized: Dictionary = {}
 
 
 func _ready() -> void:
@@ -51,10 +52,8 @@ func create_worlds() -> void:
 		add_child(world_root)
 		world_roots[world_id] = world_root
 
-	_create_fantasy_world()
-	_create_modern_city()
-	_create_historical_world()
-	_create_greed_island()
+	# Keep only lightweight world roots at startup. Build each world when first entered.
+	world_initialized.clear()
 
 
 # --------------------------------------------------
@@ -69,12 +68,14 @@ func switch_world(world_id: int) -> void:
 	if active_world == world_id:
 		return
 
+	_ensure_world_initialized(world_id)
+
 	var previous_world := active_world
 	var destination_root: Node3D = world_roots[world_id]
 
 	for id in world_roots:
 		var root: Node3D = world_roots[id]
-		var is_selected := id == world_id
+		var is_selected: bool = id == world_id
 
 		root.visible = is_selected
 		root.process_mode = (
@@ -114,6 +115,26 @@ func switch_world(world_id: int) -> void:
 		"SYSTEM WORLD: switched to ",
 		get_world_name(world_id)
 	)
+
+
+func _ensure_world_initialized(world_id: int) -> void:
+	if bool(world_initialized.get(world_id, false)):
+		return
+	if not world_roots.has(world_id):
+		return
+	match world_id:
+		WorldID.FANTASY:
+			_create_fantasy_world()
+		WorldID.MYTHOLOGY:
+			_create_historical_world()
+		WorldID.REALISTIC:
+			_create_modern_city()
+		WorldID.GREED_ISLAND:
+			_create_greed_island()
+		_:
+			return
+	world_initialized[world_id] = true
+	print("SYSTEM WORLD: lazy world load complete: ", get_world_name(world_id))
 
 
 func get_active_world() -> Node3D:
@@ -329,7 +350,7 @@ func _create_road(parent: Node3D) -> void:
 		asphalt
 	)
 
-	road.cast_shadow = false
+	road.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 	var line_material := _make_material(
 		Color(0.88, 0.78, 0.48),
@@ -413,7 +434,7 @@ func _create_city_buildings(parent: Node3D) -> void:
 			var depth := 10.0
 
 			var z_position := -float(index) * 19.0 - 8.0
-			var x_position := side * (15.0 + width * 0.5)
+			var x_position: float = float(side) * (15.0 + width * 0.5)
 
 			var building := StaticBody3D.new()
 			building.name = "CityBuilding_%s_%02d" % [
