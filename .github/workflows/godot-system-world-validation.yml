@@ -54,6 +54,13 @@ jobs:
             exit 1
           fi
 
+      - name: Scan runtime scene for missing mesh resources
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/diagnose_null_meshes.gd
+
       - name: Launch main scene headlessly
         shell: bash
         run: |
