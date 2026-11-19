@@ -457,12 +457,24 @@ func set_outfit(outfit_id: String, variant_index: int = 0) -> void:
 			material.roughness = 0.78
 			mesh_node.material_override = material
 
+func _replace_empty_mesh_instance(mesh_node: MeshInstance3D) -> void:
+	if mesh_node.mesh != null:
+		return
+	# An empty ArrayMesh has no rendering RID in headless/mobile drivers.
+	# Use a tiny valid primitive, hide it, and mark it so appearance code skips it.
+	var placeholder := BoxMesh.new()
+	placeholder.size = Vector3(0.001, 0.001, 0.001)
+	mesh_node.mesh = placeholder
+	mesh_node.visible = false
+	mesh_node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mesh_node.set_meta("system_empty_mesh_placeholder", true)
+
 func _sanitize_empty_mesh_instances(root: Node) -> void:
+	if root is MeshInstance3D:
+		_replace_empty_mesh_instance(root as MeshInstance3D)
 	for child in root.get_children():
 		if child is MeshInstance3D:
-			var mesh_node := child as MeshInstance3D
-			if mesh_node.mesh == null:
-				mesh_node.mesh = ArrayMesh.new()
+			_replace_empty_mesh_instance(child as MeshInstance3D)
 		_sanitize_empty_mesh_instances(child)
 
 func _collect_mesh_nodes(root: Node) -> Array[Node]:
@@ -470,8 +482,7 @@ func _collect_mesh_nodes(root: Node) -> Array[Node]:
 	for child in root.get_children():
 		if child is MeshInstance3D:
 			var mesh_node := child as MeshInstance3D
-			# Ignore zero-surface placeholders when applying appearance materials.
-			if mesh_node.mesh != null and mesh_node.mesh.get_surface_count() > 0:
+			if mesh_node.mesh != null and not mesh_node.has_meta("system_empty_mesh_placeholder"):
 				result.append(mesh_node)
 		result.append_array(_collect_mesh_nodes(child))
 	return result
