@@ -126,6 +126,20 @@ func _update_resident(npc_id: String, hours: float) -> void:
 		return
 	if int(npc.get("world_id", -1)) != MODERN_WORLD_ID:
 		return
+	if bool(npc.get("jailed", false)):
+		var remaining_days := maxf(0.0, float(npc.get("jail_days_remaining", 0.0)) - hours / 24.0)
+		npc["jail_days_remaining"] = remaining_days
+		npc["current_location"] = "baghdad_central_detention"
+		npc["current_action"] = "serving_sentence"
+		if remaining_days <= 0.0:
+			npc["jailed"] = false
+			npc["current_location"] = str(npc.get("home_location", "baghdad_residential_area"))
+			npc["current_action"] = "released_from_sentence"
+			npc["reputation"] = float(npc.get("reputation", 0.0)) - 5.0
+			if society_manager.has_method("add_memory"):
+				society_manager.call("add_memory", npc_id, "released_from_sentence", {})
+		society_manager.npcs[npc_id] = npc
+		return
 	var needs: Dictionary = npc.get("needs", {})
 	needs["hunger"] = maxf(0.0, float(needs.get("hunger", 80.0)) - hours * 1.7)
 	needs["thirst"] = maxf(0.0, float(needs.get("thirst", 85.0)) - hours * 2.6)
