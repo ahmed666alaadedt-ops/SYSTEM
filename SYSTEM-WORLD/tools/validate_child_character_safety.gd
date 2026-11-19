@@ -1,6 +1,7 @@
 extends SceneTree
 
 const CHARACTER_SCRIPT := preload("res://scripts/npc_character_model.gd")
+const SOCIETY_SCRIPT := preload("res://scripts/ai_npc_society_manager.gd")
 
 func _initialize() -> void:
 	call_deferred("_run_validation")
@@ -39,6 +40,23 @@ func _run_validation() -> void:
 		quit(1)
 		return
 
+	var society := SOCIETY_SCRIPT.new()
+	root.add_child(society)
+	var child_npc_id: String = society.call("create_npc", "Child Resident QA", 0, 10.0, "curious", "police")
+	var child_npc: Dictionary = society.call("get_npc", child_npc_id)
+	if str(child_npc.get("occupation", "")) != "student":
+		push_error("SYSTEM CHILD QA: society manager did not normalize a minor to student")
+		quit(1)
+		return
+	if bool(society.call("set_activity", child_npc_id, "work")):
+		push_error("SYSTEM CHILD QA: society manager allowed formal work for a minor")
+		quit(1)
+		return
+	if not bool(society.call("set_activity", child_npc_id, "socialize")):
+		push_error("SYSTEM CHILD QA: society manager blocked ordinary minor social life")
+		quit(1)
+		return
+
 	var adult := CHARACTER_SCRIPT.new()
 	root.add_child(adult)
 	adult.call("configure", {
@@ -53,7 +71,7 @@ func _run_validation() -> void:
 		quit(1)
 		return
 
-	print("SYSTEM CHILD QA PASS: minors remain civilian, cannot initiate combat, can react defensively when attacked, and adult combat remains available")
+	print("SYSTEM CHILD QA PASS: minors cannot take missions/jobs or initiate combat, can live socially and react defensively when attacked, and adult combat remains available")
 	child.queue_free()
 	adult.queue_free()
 	quit(0)
