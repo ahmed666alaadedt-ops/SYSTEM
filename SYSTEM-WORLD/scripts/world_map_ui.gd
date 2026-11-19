@@ -301,10 +301,12 @@ class MapDrawing extends Control:
 
 		var cities: Array = world_overview.get("cities", [])
 		var city_points: Array[Vector2] = []
+		var city_point_names: Array[String] = []
 		for city in cities:
-			if typeof(city) != TYPE_DICTIONARY or not city.get("position") is Vector3:
+			if typeof(city) != TYPE_DICTIONARY or not (city.get("position") is Vector3):
 				continue
 			city_points.append(_project_position(city["position"], rect, min_x, max_x, min_z, max_z))
+			city_point_names.append(str(city.get("name", "City")))
 
 		if city_points.size() > 1:
 			var connected: Array[int] = [0]
@@ -328,22 +330,19 @@ class MapDrawing extends Control:
 				connected.append(best_to)
 
 		for village in world_overview.get("villages", []):
-			if typeof(village) != TYPE_DICTIONARY or not village.get("position") is Vector3:
+			if typeof(village) != TYPE_DICTIONARY or not (village.get("position") is Vector3):
 				continue
 			var village_point := _project_position(village["position"], rect, min_x, max_x, min_z, max_z)
 			draw_circle(village_point, 3.0, Color(0.78, 0.72, 0.52, 0.9))
 
-		for city_index in range(cities.size()):
-			var city: Dictionary = cities[city_index]
-			if city_index >= city_points.size():
-				continue
+		for city_index in range(city_points.size()):
 			var point := city_points[city_index]
 			draw_circle(point, 5.0, Color(0.92, 0.78, 0.42))
 			draw_arc(point, 8.0, 0.0, TAU, 24, Color(0.95, 0.86, 0.62, 0.8), 1.2)
-			draw_string(ThemeDB.fallback_font, point + Vector2(8, -7), str(city.get("name", "City")), HORIZONTAL_ALIGNMENT_LEFT, 110, 10, Color(0.92, 0.94, 0.86))
+			draw_string(ThemeDB.fallback_font, point + Vector2(8, -7), city_point_names[city_index], HORIZONTAL_ALIGNMENT_LEFT, 110, 10, Color(0.92, 0.94, 0.86))
 
 		for incident in world_overview.get("incidents", []):
-			if typeof(incident) != TYPE_DICTIONARY or not incident.get("position") is Vector3:
+			if typeof(incident) != TYPE_DICTIONARY or not (incident.get("position") is Vector3):
 				continue
 			var incident_point := _project_position(incident["position"], rect, min_x, max_x, min_z, max_z)
 			draw_circle(incident_point, 5.5, Color(1.0, 0.22, 0.12))
