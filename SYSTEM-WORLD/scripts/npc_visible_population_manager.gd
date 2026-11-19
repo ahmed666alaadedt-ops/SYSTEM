@@ -201,8 +201,9 @@ func _set_pedestrian_destination(npc_id: String, npc: Dictionary) -> void:
 	record["walking"] = true
 	pedestrians[npc_id] = record
 
-## Called by a trusted hit/threat detector when a visible minor NPC is attacked.
-## The child evades toward safety; no damage, counterattack, or combat role is assigned.
+## Called by a trusted hit/threat detector when a visible civilian NPC is attacked.
+## Minors evade farther toward safety; adults adopt a defensive stance and retreat.
+## NPCs never counterattack or become combatants.
 func notify_npc_attacked(npc_id: String, attacker_global_position: Vector3) -> bool:
 	if not pedestrians.has(npc_id):
 		return false
@@ -211,26 +212,26 @@ func notify_npc_attacked(npc_id: String, attacker_global_position: Vector3) -> b
 	var visual := record.get("visual") as Node
 	if not is_instance_valid(actor) or not is_instance_valid(visual):
 		return false
-	if str(visual.get("age_group")) != "child":
-		return false
 	if not visual.has_method("respond_to_attack") or not bool(visual.call("respond_to_attack")):
 		return false
 
+	var is_minor := str(visual.get("age_group")) == "child"
 	var away := actor.global_position - attacker_global_position
 	away.y = 0.0
 	if away.length_squared() < 0.0001:
 		away = -actor.global_basis.z
-	away.y = 0.0
+		away.y = 0.0
 	if away.length_squared() < 0.0001:
 		away = Vector3.BACK
-	var safe_global_target := actor.global_position + away.normalized() * 6.0
+	var retreat_distance := 6.0 if is_minor else 3.0
+	var safe_global_target := actor.global_position + away.normalized() * retreat_distance
 	var safe_local_target := to_local(safe_global_target)
 	record["destination"] = safe_local_target
 	record["path"] = _build_city_block_path(actor.position, safe_local_target)
 	record["walking"] = true
-	record["animation_walking"] = true
+	record["animation_walking"] = is_minor
 	pedestrians[npc_id] = record
-	minor_defensive_response.emit(npc_id, "evade_to_safety")
+	minor_defensive_response.emit(npc_id, "evade_to_safety" if is_minor else "defend_and_retreat")
 	return true
 
 
