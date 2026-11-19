@@ -76,6 +76,13 @@ func _run_validation() -> void:
 				push_error("SYSTEM CHARACTER QA: imported character is missing expected body, face, hands or outfit mesh groups")
 				quit(1)
 				return
+			if not bool(status.get("facial_controls_complete", false)):
+				push_error("SYSTEM CHARACTER QA: imported rig is missing one or more head/jaw/eye/brow control bones")
+				quit(1)
+				return
+			child.call("set_facial_expression", "happy")
+			child.call("set_eye_direction", Vector2(0.5, -0.25))
+			child.call("set_facial_expression", "confused")
 			var clips: Array = status.get("animation_clips", [])
 			var clip_aliases := {
 				"Idle_Breathing": ["idle_breathing"],
