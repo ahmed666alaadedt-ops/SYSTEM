@@ -269,3 +269,11 @@ asset here only after generation, GLB validation, Godot import and visual review
 
 
 - Automated child/minor QA now also checks a 17-year-old resident is routed to school during daytime and never receives a work schedule later in the day.
+
+
+## Civilian NPC Defensive Response (2026-11-19)
+
+- All civilian NPCs, adults and minors, are prevented from initiating offensive combat or becoming combatants through their character activity controller.
+- When the visible-population threat interface `notify_npc_attacked(npc_id, attacker_global_position)` is called, minors enter an evasive response and move six metres away from the attacker; adults adopt a defensive stance and retreat three metres.
+- This is a response interface for a trusted hit/threat detector, not a claim that every weapon or enemy hit pipeline is already wired to it.
+- QA checks that adults and minors cannot initiate attacks and both receive their age-appropriate defensive response.
