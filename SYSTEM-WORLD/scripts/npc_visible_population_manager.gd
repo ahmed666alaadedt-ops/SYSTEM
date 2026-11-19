@@ -5,6 +5,8 @@ class_name SystemNPCVisiblePopulationManager
 ## Uses lightweight procedural characters and bounded updates; destinations are
 ## approximate city-block anchors until real street/navigation data is connected.
 
+const NPCHumanoidVisualScript = preload("res://scripts/npc_humanoid_visual.gd")
+
 const WORLD_ID := 2
 const MAX_VISIBLE_CIVILIANS := 32
 const WALK_SPEED := 1.45
@@ -121,63 +123,29 @@ func _create_pedestrian(npc_id: String, npc: Dictionary, seed_index: int) -> voi
 	var actor := Node3D.new()
 	actor.name = "Civilian_" + npc_id.validate_node_name()
 	add_child(actor)
-	var seed_value: int = absi(npc_id.hash())
-	var clothing: StandardMaterial3D = clothing_materials[seed_value % clothing_materials.size()]
-	var skin: StandardMaterial3D = skin_materials[(int(seed_value / 7)) % skin_materials.size()]
-	var torso := MeshInstance3D.new()
-	var torso_mesh := CapsuleMesh.new()
-	torso_mesh.radius = 0.24
-	torso_mesh.height = 0.88
-	torso.mesh = torso_mesh
-	torso.position.y = 1.02
-	torso.material_override = clothing
-	actor.add_child(torso)
-	var head := MeshInstance3D.new()
-	var head_mesh := SphereMesh.new()
-	head_mesh.radius = 0.17
-	head_mesh.height = 0.34
-	head.mesh = head_mesh
-	head.position.y = 1.62
-	head.material_override = skin
-	actor.add_child(head)
-	var left_leg := _create_limb("LeftLeg", Vector3(0.13, 0.48, 0.13), clothing)
-	left_leg.position = Vector3(-0.12, 0.48, 0.0)
-	actor.add_child(left_leg)
-	var right_leg := _create_limb("RightLeg", Vector3(0.13, 0.48, 0.13), clothing)
-	right_leg.position = Vector3(0.12, 0.48, 0.0)
-	actor.add_child(right_leg)
-	var left_arm := _create_limb("LeftArm", Vector3(0.11, 0.52, 0.11), clothing)
-	left_arm.position = Vector3(-0.30, 1.02, 0.0)
-	actor.add_child(left_arm)
-	var right_arm := _create_limb("RightArm", Vector3(0.11, 0.52, 0.11), clothing)
-	right_arm.position = Vector3(0.30, 1.02, 0.0)
-	actor.add_child(right_arm)
+
+	var visual := NPCHumanoidVisualScript.new()
+	visual.name = "HumanoidVisual"
+	actor.add_child(visual)
+	var visual_profile := npc.duplicate(true)
+	visual_profile["name"] = str(npc.get("name", npc.get("display_name", npc_id)))
+	visual_profile["job"] = str(npc.get("occupation", npc.get("job", "")))
+	visual.configure(visual_profile, seed_index)
+
 	var city_name := _city_name_for_npc(npc)
 	var start := _location_for_action(npc, "home", seed_index)
 	actor.position = start
 	pedestrians[npc_id] = {
 		"actor": actor,
+		"visual": visual,
 		"city_name": city_name,
 		"destination": start,
 		"path": [],
-		"leg_l": left_leg,
-		"leg_r": right_leg,
-		"arm_l": left_arm,
-		"arm_r": right_arm,
-		"phase": float(seed_value % 100) * 0.1,
+		"phase": float(absi(npc_id.hash()) % 100) * 0.1,
 		"walking": false,
+		"animation_walking": false,
 		"seed": seed_index
 	}
-
-func _create_limb(limb_name: String, dimensions: Vector3, material: Material) -> MeshInstance3D:
-	var limb := MeshInstance3D.new()
-	limb.name = limb_name
-	var mesh := CapsuleMesh.new()
-	mesh.radius = dimensions.x * 0.5
-	mesh.height = dimensions.y
-	limb.mesh = mesh
-	limb.material_override = material
-	return limb
 
 func _city_name_for_npc(npc: Dictionary) -> String:
 	var city_id := str(npc.get("city_id", "city_baghdad"))
@@ -280,13 +248,10 @@ func _update_pedestrians(delta: float) -> void:
 					actor.rotation.y = atan2(step.x, step.z)
 		record["path"] = path
 		record["walking"] = not path.is_empty()
-		var phase := float(record.get("phase", 0.0)) + delta * (8.0 if walking else 1.5)
-		record["phase"] = phase
-		var swing := sin(phase) * (0.48 if walking else 0.025)
-		(record["leg_l"] as Node3D).rotation.x = swing
-		(record["leg_r"] as Node3D).rotation.x = -swing
-		(record["arm_l"] as Node3D).rotation.x = -swing * 0.65
-		(record["arm_r"] as Node3D).rotation.x = swing * 0.65
+		var visual: Node = record.get("visual")
+		if is_instance_valid(visual) and bool(record.get("animation_walking", false)) != walking:
+			visual.call("set_activity", "walk" if walking else "idle")
+			record["animation_walking"] = walking
 		pedestrians[npc_id] = record
 
 func _on_crime_case_opened(case_id: String, crime_type: String, city_name: String) -> void:
