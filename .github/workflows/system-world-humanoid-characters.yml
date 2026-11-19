@@ -11,6 +11,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: system-world-humanoid-character-generation
+  cancel-in-progress: true
+
 jobs:
   generate-rigged-characters:
     runs-on: ubuntu-24.04
@@ -20,8 +24,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Install Blender
         run: |
-          sudo apt-get update
-          sudo apt-get install --yes blender
+          sudo apt-get install --no-install-recommends --yes blender
           blender --version
       - name: Generate male and female rigged characters
         run: |
