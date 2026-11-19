@@ -306,9 +306,30 @@ def generate_character(name, female, output):
     # Set clean rest pose before export; animations retain their own keyed poses.
     for pb in arm.pose.bones:
         pb.rotation_euler=(0,0,0)
+
+    # The modeling coordinates above use Y as the human height axis.
+    # Convert the complete rigged assembly to Blender Z-up without disturbing skin weights.
+    root=bpy.data.objects.new(name+"_Root",None)
+    bpy.context.scene.collection.objects.link(root)
+    root.empty_display_type="PLAIN_AXES"
+    assembly=[arm,body]+face+clothes
+    for obj in assembly:
+        world_matrix=obj.matrix_world.copy()
+        obj.parent=root
+        obj.matrix_parent_inverse=root.matrix_world.inverted()
+        obj.matrix_world=world_matrix
+    root.rotation_euler.x=math.radians(90.0)
+
+    # Add useful metadata for downstream character selection and runtime QA.
+    root["system_character_type"]="humanoid"
+    root["system_rig"]="deform_armature"
+    root["system_gender"]="female" if female else "male"
+    root["system_animation_set"]="idle,walk,run"
+    arm["system_joint_count"]=len(arm.data.bones)
+
     bpy.ops.object.select_all(action="DESELECT")
-    arm.select_set(True); body.select_set(True)
-    for obj in face+clothes: obj.select_set(True)
+    root.select_set(True)
+    for obj in assembly: obj.select_set(True)
     bpy.context.view_layer.objects.active=arm
     os.makedirs(output,exist_ok=True)
     blend=os.path.join(output,name+".blend")
