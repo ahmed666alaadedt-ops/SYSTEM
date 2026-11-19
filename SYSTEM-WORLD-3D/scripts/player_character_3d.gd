@@ -63,19 +63,14 @@ func apply_profile(data: Dictionary) -> void:
 		"job": role
 	}, _appearance_variant())
 
+	# Keep the shared character system for both imported GLB and procedural fallback.
+	# This guarantees identical hair, face, age and body customization in either path.
 	var status: Dictionary = character_visual.get_character_status()
-	if str(status.get("model_source", "")) == "glb":
-		imported_character = character_visual
-		model_root = character_visual
-		imported_character.set_activity("idle")
-		return
-
-	# Remove the failed GLB/fallback wrapper and build the known-safe player mesh.
-	character_visual.free()
-	model_root = Node3D.new()
-	model_root.name = "GeneratedPlayerModel"
-	add_child(model_root)
-	_build_character()
+	imported_character = character_visual
+	model_root = character_visual
+	character_visual.set_activity("idle")
+	if str(status.get("model_source", "")) != "glb":
+		print("SYSTEM PLAYER: using rigged procedural fallback with full appearance customization")
 
 
 func _appearance_variant() -> int:
