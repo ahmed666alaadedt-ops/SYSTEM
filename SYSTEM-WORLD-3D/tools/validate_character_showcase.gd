@@ -85,5 +85,33 @@ func _run_validation() -> void:
 			quit(1)
 			return
 
+
+	var society_script = load("res://scripts/ai_npc_society_manager.gd")
+	if society_script == null:
+		push_error("SYSTEM NPC QA: living society manager failed to load")
+		quit(1)
+		return
+	var society_world := Node3D.new()
+	society_world.name = "NPCSocietyValidationWorld"
+	get_root().add_child(society_world)
+	var society = society_script.new()
+	society_world.add_child(society)
+	society.call("setup", society_world)
+	if int(society.call("get_resident_count")) != 20:
+		push_error("SYSTEM NPC QA: expected 20 adult, elder and child residents")
+		quit(1)
+		return
+	var child_profile: Dictionary = society.call("get_resident_information", "ليان")
+	var elder_profile: Dictionary = society.call("get_resident_information", "جد سارة")
+	if str(child_profile.get("age_group", "")) != "child":
+		push_error("SYSTEM NPC QA: child life stage was not preserved")
+		quit(1)
+		return
+	if str(elder_profile.get("age_group", "")) != "elder":
+		push_error("SYSTEM NPC QA: elder life stage was not preserved")
+		quit(1)
+		return
+	print("SYSTEM NPC QA PASS: 20 residents, age groups, family records and varied body profiles initialized")
+	society_world.queue_free()
 	print("SYSTEM CHARACTER QA PASS: six age/gender character models loaded and inspected")
 	quit(0)
