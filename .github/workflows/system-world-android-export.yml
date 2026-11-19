@@ -1,0 +1,166 @@
+name: Export SYSTEM WORLD Game for Android
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "SYSTEM-WORLD/**"
+      - ".github/workflows/system-world-android-export.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    name: Export SYSTEM WORLD Godot APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            echo "Android SDK manager not found: $SDKMANAGER"
+            exit 1
+          fi
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+          yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses || true
+          "$SDKMANAGER" --sdk_root="$SDK_ROOT" --install \
+            "platform-tools" \
+            "platforms;android-34" \
+            "build-tools;34.0.0" \
+            "ndk;23.2.8568313" \
+            "cmake;3.10.2.4988404"
+
+      - name: Download Godot 4.3
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/godot"
+          curl -L --fail --retry 3 \
+            "https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip" \
+            -o "$RUNNER_TEMP/godot.zip"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP/godot"
+          chmod +x "$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+
+      - name: Install Godot 4.3 export templates
+        shell: bash
+        run: |
+          curl -L --fail --retry 3 \
+            "https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz" \
+            -o "$RUNNER_TEMP/templates.tpz"
+          mkdir -p "$RUNNER_TEMP/template_unpack"
+          unzip -q "$RUNNER_TEMP/templates.tpz" -d "$RUNNER_TEMP/template_unpack"
+          TEMPLATE_DIR="$HOME/.local/share/godot/export_templates/4.3.stable"
+          mkdir -p "$TEMPLATE_DIR"
+          if [ -d "$RUNNER_TEMP/template_unpack/templates" ]; then
+            cp -a "$RUNNER_TEMP/template_unpack/templates/." "$TEMPLATE_DIR/"
+          else
+            cp -a "$RUNNER_TEMP/template_unpack/." "$TEMPLATE_DIR/"
+          fi
+          echo "4.3.stable" > "$TEMPLATE_DIR/version.txt"
+
+      - name: Configure Godot Android SDK paths
+        shell: bash
+        run: |
+          mkdir -p "$HOME/.config/godot"
+          cat > "$HOME/.config/godot/editor_settings-4.tres" <<EOF
+          [gd_resource type="EditorSettings" format=3]
+          [resource]
+          export/android/android_sdk_path = "$ANDROID_SDK_ROOT"
+          export/android/java_sdk_path = "$JAVA_HOME"
+          EOF
+
+      - name: Create temporary debug signing key
+        shell: bash
+        run: |
+          keytool -genkeypair -v \
+            -keystore "$RUNNER_TEMP/system-world-debug.keystore" \
+            -storetype JKS -storepass android \
+            -alias androiddebugkey -keypass android \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=SYSTEM WORLD Debug,O=SYSTEM,C=IQ"
+          echo "GODOT_ANDROID_KEYSTORE_DEBUG_PATH=$RUNNER_TEMP/system-world-debug.keystore" >> "$GITHUB_ENV"
+          echo "GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey" >> "$GITHUB_ENV"
+          echo "GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android" >> "$GITHUB_ENV"
+
+      - name: Configure temporary Android export signing
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          project = Path(os.environ["GITHUB_WORKSPACE"]) / "SYSTEM-WORLD"
+          preset = project / "export_presets.cfg"
+          key = Path(os.environ["RUNNER_TEMP"]) / "system-world-debug.keystore"
+          content = preset.read_text(encoding="utf-8")
+          replacements = {
+              'keystore/debug=""': f'keystore/debug="{key}"',
+              'keystore/debug_user=""': 'keystore/debug_user="androiddebugkey"',
+              'keystore/debug_password=""': 'keystore/debug_password="android"',
+          }
+          for old, new in replacements.items():
+              if old not in content:
+                  raise SystemExit(f"Missing expected export setting: {old}")
+              content = content.replace(old, new, 1)
+          preset.write_text(content, encoding="utf-8")
+          for expected in replacements.values():
+              if expected not in preset.read_text(encoding="utf-8"):
+                  raise SystemExit(f"Export setting verification failed: {expected.split('=')[0]}")
+          print("Temporary debug signing configured; no signing secret is committed.")
+          PY
+
+      - name: Import resources and validate project
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          "$GODOT" --headless --editor --path "$PROJECT" --quit
+          "$GODOT" --headless --path "$PROJECT" --quit-after 10
+
+      - name: Verify Android export prerequisites
+        shell: bash
+        run: |
+          SDK="$ANDROID_SDK_ROOT"
+          TEMPLATE="$HOME/.local/share/godot/export_templates/4.3.stable/android_debug.apk"
+          test -x "$SDK/platform-tools/adb"
+          test -f "$SDK/platforms/android-34/android.jar"
+          test -f "$SDK/build-tools/34.0.0/aapt"
+          test -f "$TEMPLATE"
+          keytool -list -keystore "$RUNNER_TEMP/system-world-debug.keystore" -storepass android -alias androiddebugkey >/dev/null
+          echo "Android SDK, export template and temporary debug key verified."
+
+      - name: Export SYSTEM WORLD Android APK
+        shell: bash
+        run: |
+          set -o pipefail
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          mkdir -p "$PROJECT/build"
+          "$GODOT" --headless --verbose --path "$PROJECT" \
+            --export-debug "SYSTEM WORLD Android" "$PROJECT/build/SYSTEM-WORLD-debug.apk" \
+            2>&1 | tee "$RUNNER_TEMP/system-world-android-export.log"
+          test -s "$PROJECT/build/SYSTEM-WORLD-debug.apk"
+          sha256sum "$PROJECT/build/SYSTEM-WORLD-debug.apk"
+          ls -lh "$PROJECT/build/SYSTEM-WORLD-debug.apk"
+
+      - name: Upload SYSTEM WORLD APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SYSTEM-WORLD-Android-debug
+          path: SYSTEM-WORLD/build/SYSTEM-WORLD-debug.apk
+          if-no-files-found: error
+          retention-days: 14
