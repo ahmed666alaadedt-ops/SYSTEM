@@ -166,9 +166,11 @@ def add_clothes(name):
     return objs
 
 def parent_rigid_to_bone(obj, arm, bone_name):
-    obj.parent=arm
-    obj.parent_type="BONE"
-    obj.parent_bone=bone_name
+    world_matrix = obj.matrix_world.copy()
+    obj.parent = arm
+    obj.parent_type = "BONE"
+    obj.parent_bone = bone_name
+    obj.matrix_world = world_matrix
 
 def weight_body(body, arm):
     bpy.ops.object.select_all(action="DESELECT")
