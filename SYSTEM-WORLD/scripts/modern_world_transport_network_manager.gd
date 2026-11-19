@@ -128,7 +128,7 @@ func _build_corridor_segment(start: Vector3, finish: Vector3, route_index: int, 
 			_add_ribbon_quad(marking_surface, a2, b2, side, a_y + 0.06, b_y + 0.06, 0.11, -3.8)
 		added += 1
 	road_surface.generate_normals()
-		rail_surface.generate_normals()
+	rail_surface.generate_normals()
 	marking_surface.generate_normals()
 	if added > 0:
 		var road_mesh := MeshInstance3D.new()
