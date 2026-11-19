@@ -5,7 +5,7 @@ class_name SystemNPCVisiblePopulationManager
 ## Uses lightweight procedural characters and bounded updates; destinations are
 ## approximate city-block anchors until real street/navigation data is connected.
 
-const NPCHumanoidVisualScript = preload("res://scripts/npc_humanoid_visual.gd")
+const NPCHumanoidVisualScript = preload("res://scripts/npc_character_model.gd")
 
 const WORLD_ID := 2
 const MAX_VISIBLE_CIVILIANS := 32
