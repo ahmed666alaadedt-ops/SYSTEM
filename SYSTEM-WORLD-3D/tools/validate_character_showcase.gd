@@ -43,6 +43,22 @@ func _run_validation() -> void:
 		var status: Dictionary = child.call("get_character_status")
 		var hair_style := str(status.get("hair_style", ""))
 		hairstyle_variants[hair_style] = true
+		if int(status.get("face_detail_mesh_count", 0)) < 4:
+			push_error("SYSTEM CHARACTER QA: face details were not generated for " + child.name)
+			quit(1)
+			return
+		if str(status.get("age_group", "")) == "elder" and int(status.get("face_detail_mesh_count", 0)) < 8:
+			push_error("SYSTEM CHARACTER QA: elder wrinkles or age features are missing")
+			quit(1)
+			return
+		if str(status.get("outfit_id", "")) in ["guard", "hunter"] and int(status.get("job_accessory_mesh_count", 0)) < 2:
+			push_error("SYSTEM CHARACTER QA: profession-specific equipment is missing")
+			quit(1)
+			return
+		if str(status.get("city", "")) != "بغداد":
+			push_error("SYSTEM CHARACTER QA: local city identity was not passed to the character")
+			quit(1)
+			return
 		if hair_style != "short" and int(status.get("hairstyle_mesh_count", 0)) < 1:
 			push_error("SYSTEM CHARACTER QA: requested hairstyle did not create visible mesh pieces: " + hair_style)
 			quit(1)
@@ -97,6 +113,30 @@ func _run_validation() -> void:
 			quit(1)
 			return
 
+
+	var character_script = load("res://scripts/npc_character_model.gd")
+	if character_script == null:
+		push_error("SYSTEM CHARACTER QA: NPC character script failed to load")
+		quit(1)
+		return
+	var doctor_test = character_script.new()
+	get_root().add_child(doctor_test)
+	doctor_test.call("configure", {"name": "Doctor QA", "gender": "female", "age_group": "adult", "job": "طبيبة", "city": "بغداد"}, 1)
+	var doctor_status: Dictionary = doctor_test.call("get_character_status")
+	if str(doctor_status.get("outfit_id", "")) != "doctor" or int(doctor_status.get("job_accessory_mesh_count", 0)) < 3:
+		push_error("SYSTEM CHARACTER QA: Arabic doctor profession outfit was not created")
+		quit(1)
+		return
+	var baker_test = character_script.new()
+	get_root().add_child(baker_test)
+	baker_test.call("configure", {"name": "Baker QA", "gender": "male", "age_group": "adult", "job": "خباز", "city": "بغداد"}, 2)
+	var baker_status: Dictionary = baker_test.call("get_character_status")
+	if str(baker_status.get("outfit_id", "")) != "baker" or int(baker_status.get("job_accessory_mesh_count", 0)) < 1:
+		push_error("SYSTEM CHARACTER QA: Arabic baker profession outfit was not created")
+		quit(1)
+		return
+	doctor_test.queue_free()
+	baker_test.queue_free()
 
 	var society_script = load("res://scripts/ai_npc_society_manager.gd")
 	if society_script == null:
