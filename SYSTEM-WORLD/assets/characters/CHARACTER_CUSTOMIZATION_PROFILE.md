@@ -125,3 +125,12 @@ The player creator now filters the hairstyle list by the selected character appe
 ## Runtime barber-cut geometry update
 
 The 3D preview procedural fallback now exposes runtime hair-color and hairstyle controls, recolors its existing hair cap, and adds attached mesh strands for modern men's cuts. Fade variants, Undercut, Buzz/Crew/French Crop, Quiff/Pompadour/Textured Crop, Slick Back/Side Part and long men's options are mapped to runtime silhouettes. The imported-character loader now gives Fade, Quiff and Slick Back their own procedural hair groups rather than collapsing every modern cut into one generic style. These are stylized procedural meshes; salon-grade strand grooming and dedicated authored hair assets remain future work.
+
+
+## Minor NPC Life and Protection Rules (2026-11-19)
+
+- All residents under 18 are world NPCs only; they are not player-selectable avatars.
+- Minors never receive player missions, guild assignments, administrative duties, police/guard/monitor roles, or employment. Their society occupation is normalized to student (age 6–17) or child resident (under 6), including when loading older saves.
+- They remain active residents with family, school, play, social, rest, and ordinary community-life behaviors. The society manager rejects assigning the formal work activity to anyone under 18.
+- Minors cannot initiate attacks or enter offensive combat animations. If the threat/combat system reports that a minor has been attacked, it may call `respond_to_attack()` to trigger a defensive-only state (brace, evade, protect, or call for help); this does not grant an attack action or combat role.
+- Automated QA checks civilian appearance, blocked child attacks, defensive response, and unchanged adult combat behavior.
