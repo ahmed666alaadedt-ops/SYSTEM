@@ -419,7 +419,8 @@ func get_population_summary() -> Dictionary:
 	}
 	for record in residents:
 		var stage := str(record.get("age_group", "adult"))
-		result[stage + "s"] = int(result.get(stage + "s", 0)) + 1
+		var stage_key := "children" if stage == "child" else ("elders" if stage == "elder" else "adults")
+		result[stage_key] = int(result.get(stage_key, 0)) + 1
 		var body_key := str(record.get("body_type", "average"))
 		var height_key := str(record.get("height_type", "average"))
 		var bodies: Dictionary = result["body_types"]
