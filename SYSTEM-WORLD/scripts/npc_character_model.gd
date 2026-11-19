@@ -33,7 +33,7 @@ func configure(profile: Dictionary, palette_index: int = 0) -> void:
 	var is_female := gender_text in ["female", "woman", "girl", "أنثى", "بنت", "امرأة"]
 	if gender_text.is_empty():
 		is_female = (palette_index % 2) == 1
-	var age_value := float(profile.get("age", 30.0))
+	var age_value := float(profile.get("age", profile.get("age_years", 30.0)))
 	age_group = str(profile.get("age_group", "")).to_lower()
 	if age_group.is_empty():
 		age_group = "child" if age_value < 18.0 else ("elder" if age_value >= 60.0 else "adult")
