@@ -37,6 +37,10 @@ PANTS = material("Trousers - charcoal", (0.035, 0.045, 0.06), 0.88)
 SHOES = material("Boot leather", (0.018, 0.014, 0.012), 0.48)
 EYES = material("Eyes", (0.012, 0.009, 0.008), 0.22)
 WHITE = material("Eye highlights", (0.8, 0.72, 0.58), 0.3)
+EYE_WHITE = material("Eye sclera", (0.82, 0.78, 0.70), 0.28)
+IRIS = material("Iris - deep blue", (0.035, 0.12, 0.22), 0.24)
+PUPIL = material("Pupil", (0.004, 0.006, 0.009), 0.18)
+LIPS = material("Natural lips", (0.34, 0.105, 0.095), 0.48)
 
 def uv_sphere(name, loc, scale, mat, segments=16, rings=12):
     bpy.ops.mesh.primitive_uv_sphere_add(segments=segments, ring_count=rings, location=loc)
@@ -143,18 +147,31 @@ def build_body(name, female=False):
 
 def add_face_and_hair(name, female=False):
     objs=[]
+    # Eye whites, iris, pupils and catchlights are separate semantic parts.
+    # This creates readable eyes at gameplay distance without relying on a portrait shader.
     for s in (-1,1):
-        objs.append(uv_sphere(name+"_Eye",(s*0.054,1.84,-0.123),(0.021,0.018,0.012),EYES,16,12))
-        objs.append(uv_sphere(name+"_EyeGlint",(s*0.058,1.847,-0.133),(0.006,0.006,0.004),WHITE,12,8))
+        eye_x=s*0.054
+        objs.append(uv_sphere(name+"_EyeWhite",(eye_x,1.84,-0.126),(0.023,0.019,0.013),EYE_WHITE,20,14))
+        objs.append(uv_sphere(name+"_Iris",(eye_x,1.84,-0.138),(0.010,0.012,0.006),IRIS,16,12))
+        objs.append(uv_sphere(name+"_Pupil",(eye_x,1.84,-0.143),(0.005,0.007,0.0035),PUPIL,12,8))
+        objs.append(uv_sphere(name+"_EyeGlint",(eye_x-0.003,1.846,-0.147),(0.0035,0.0035,0.002),WHITE,12,8))
+        objs.append(uv_sphere(name+"_LowerEyelid",(eye_x,1.817,-0.121),(0.025,0.006,0.009),SKIN,16,8))
         objs.append(uv_sphere(name+"_Ear",(s*0.145,1.81,0),(0.027,0.055,0.035),SKIN,16,12))
-        objs.append(capsule(name+"_Eyebrow",(s*0.025,1.885,-0.116),(s*0.085,1.89,-0.112),0.010,HAIR,12))
-    objs.append(uv_sphere(name+"_Nose",(0,1.80,-0.143),(0.025,0.043,0.035),SKIN,16,12))
-    objs.append(capsule(name+"_Mouth",( -0.034,1.718,-0.132),(0.034,1.718,-0.132),0.006,HAIR,12))
-    objs.append(uv_sphere(name+"_HairCap",(0,1.965,0.015),(0.15,0.085,0.14),HAIR,20,12))
-    # Layered hair silhouette; longer side locks distinguish the female base mesh.
-    for i in range(7):
-        x=-0.12+i*0.04
-        objs.append(capsule(name+"_HairLock",(x,1.99,0.0),(x+0.018,1.91,-0.07),0.025,HAIR,12))
+        brow_radius=0.009 if female else 0.012
+        objs.append(capsule(name+"_Eyebrow",(s*0.025,1.885,-0.116),(s*0.085,1.89,-0.112),brow_radius,HAIR,12))
+    # A tapered-looking bridge, rounded tip and subtle nostril details.
+    objs.append(uv_sphere(name+"_NoseBridge",(0,1.825,-0.126),(0.018,0.044,0.020),SKIN,20,14))
+    objs.append(uv_sphere(name+"_NoseTip",(0,1.795,-0.151),(0.024,0.020,0.022),SKIN,20,14))
+    for s in (-1,1):
+        objs.append(uv_sphere(name+"_Nostril",(s*0.012,1.784,-0.151),(0.005,0.0035,0.003),HAIR,12,8))
+    # Upper and lower lip shapes use a natural lip material rather than hair color.
+    objs.append(capsule(name+"_MouthUpper",(-0.031,1.718,-0.137),(0.031,1.718,-0.137),0.006,LIPS,12))
+    objs.append(capsule(name+"_MouthLower",(-0.024,1.710,-0.135),(0.024,1.710,-0.135),0.0045,LIPS,12))
+    objs.append(uv_sphere(name+"_HairCap",(0,1.965,0.015),(0.15,0.085,0.14),HAIR,24,16))
+    # Layered hair silhouette; long side locks distinguish the female base mesh.
+    for i in range(9):
+        x=-0.12+i*0.03
+        objs.append(capsule(name+"_HairLock",(x,1.99,0.0),(x+0.018,1.91,-0.07),0.022,HAIR,12))
     if female:
         for s in (-1,1):
             objs.append(capsule(name+"_LongHairSide",(s*0.125,1.91,0.025),(s*0.145,1.64,0.025),0.035,HAIR,16))
@@ -426,6 +443,7 @@ def generate_character(name, female, output, age_group="adult"):
     groups={
         "FaceSkin":[],
         "Eyes":[],
+        "Mouth":[],
         "Hair":[],
         "Hands":[],
         "Jacket":[],
@@ -436,9 +454,11 @@ def generate_character(name, female, output, age_group="adult"):
     }
     for obj in face:
         part_name=obj.name.lower()
-        if "hair" in part_name or "eyebrow" in part_name or "mouth" in part_name or "beard" in part_name or "mustache" in part_name:
+        if "hair" in part_name or "eyebrow" in part_name or "beard" in part_name or "mustache" in part_name:
             groups["Hair"].append((obj,"head"))
-        elif "eye" in part_name:
+        elif "mouth" in part_name:
+            groups["Mouth"].append((obj,"head"))
+        elif "eye" in part_name or "iris" in part_name or "pupil" in part_name:
             groups["Eyes"].append((obj,"head"))
         else:
             groups["FaceSkin"].append((obj,"head"))
