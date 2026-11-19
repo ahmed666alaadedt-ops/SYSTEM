@@ -139,8 +139,8 @@ var is_defending := false
 func set_activity(value: String) -> void:
 	var requested_activity := value.to_lower()
 	var combat_activities := ["attack", "combat", "fight", "battle", "قتال", "هجوم", "معركة"]
-	# Minors are never allowed to initiate or join combat.
-	if age_group == "child" and requested_activity in combat_activities:
+	# Civilian NPCs never initiate offensive combat, regardless of age.
+	if requested_activity in combat_activities:
 		current_activity = "idle"
 		is_defending = false
 		_apply_activity_animation("idle")
@@ -149,15 +149,16 @@ func set_activity(value: String) -> void:
 	is_defending = requested_activity in ["defend", "evade", "call_for_help"]
 	_apply_activity_animation(value)
 
-## Called only by the combat/threat response system after a minor is attacked.
-## This is a defensive reaction, never an offensive attack or combat-role assignment.
+## Called by the threat-response system after any civilian NPC is attacked.
+## Adults adopt a defensive stance; minors evade toward safety. No NPC counterattacks.
 func respond_to_attack() -> bool:
-	if age_group != "child":
-		return false
-	# A minor's response is evasive and protective, never an offensive counterattack.
 	is_defending = true
-	current_activity = "evade"
-	_apply_activity_animation("evade")
+	if age_group == "child":
+		current_activity = "evade"
+		_apply_activity_animation("evade")
+	else:
+		current_activity = "defend"
+		_apply_activity_animation("defend")
 	return true
 
 func _apply_activity_animation(value: String) -> void:
@@ -169,6 +170,8 @@ func _apply_activity_animation(value: String) -> void:
 	var desired := "Idle_Breathing"
 	if value in ["run", "sprint", "running", "evade"]:
 		desired = "Run_Cycle"
+	elif value in ["defend", "block", "protect"]:
+		desired = "Block_Animation"
 	elif value in ["jump", "leap"]:
 		desired = "Jump_Animation"
 	elif value in ["attack", "combat", "fight"]:
