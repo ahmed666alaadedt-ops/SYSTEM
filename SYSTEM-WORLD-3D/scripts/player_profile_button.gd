@@ -27,10 +27,18 @@ var outfit_option: OptionButton
 var status_label: Label
 
 const PROFILE_SAVE_PATH := "user://system_player_profile.cfg"
-const HAIR_STYLES := [
+const MALE_HAIR_STYLES := [
+	"Fade", "Low Fade", "Mid Fade", "High Fade", "Taper Fade",
+	"Undercut", "Buzz Cut", "Crew Cut", "Textured Crop", "French Crop",
+	"Quiff", "Pompadour", "Slick Back", "Side Part", "Spiky",
+	"شعر متوسط", "شعر طويل", "شعر طويل مدرج", "شعر ويفي طويل",
+	"شعر مجعد طويل", "ذيل حصان رجالي", "كعكة رجالية", "ضفائر رجالية", "دريدلوك"
+]
+const FEMALE_HAIR_STYLES := [
 	"قصير", "متوسط", "طويل", "طويل جدا", "مجعد", "أفرو",
 	"ضفيرة", "دريدلوك", "ذيل حصان", "ضفيرتان", "كعكة", "مرفوع",
-	"بوب", "بيكسي", "مدرج", "شائك", "جانبي", "محلوق الجوانب"
+	"بوب", "بيكسي", "مدرج", "شائك", "جانبي", "محلوق الجوانب",
+	"ويفي", "طبقات طويلة", "غرة أمامية", "كعكة مزدوجة"
 ]
 const HAIR_COLORS := [
 	"أسود", "بني", "أشقر", "أصفر", "أبيض", "فضي", "رمادي",
@@ -111,9 +119,10 @@ func _create_profile_window() -> void:
 	hair_style_option = _add_option(
 		root,
 		"تسريحة الشعر",
-		HAIR_STYLES,
+		MALE_HAIR_STYLES if str(profile_data.get("appearance", "ذكر")) == "ذكر" else FEMALE_HAIR_STYLES,
 		profile_data["hair_style"]
 	)
+	appearance_option.item_selected.connect(_on_gender_changed)
 
 	hair_color_option = _add_option(
 		root,
@@ -123,7 +132,7 @@ func _create_profile_window() -> void:
 	)
 
 	var hair_note := Label.new()
-	hair_note.text = "كل التسريحات متاحة للرجال والنساء، ومنها الشعر الطويل للرجال."
+	hair_note.text = "للرجال قصّات حديثة خاصة، مع خيارات شعر طويل ومدرّج ومربوط وضفائر رجالية."
 	hair_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	root.add_child(hair_note)
 
@@ -214,6 +223,17 @@ func _add_option(
 
 	parent.add_child(option)
 	return option
+
+
+func _on_gender_changed(index: int) -> void:
+	var gender := appearance_option.get_item_text(index)
+	var previous_style := hair_style_option.get_item_text(hair_style_option.selected) if hair_style_option.item_count > 0 else ""
+	var styles: Array = MALE_HAIR_STYLES if gender == "ذكر" else FEMALE_HAIR_STYLES
+	hair_style_option.clear()
+	for style in styles:
+		hair_style_option.add_item(style)
+	var previous_index := styles.find(previous_style)
+	hair_style_option.select(previous_index if previous_index >= 0 else 0)
 
 
 func _confirm_profile() -> void:
