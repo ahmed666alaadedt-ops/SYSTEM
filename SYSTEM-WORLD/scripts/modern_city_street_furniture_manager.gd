@@ -8,6 +8,8 @@ const SIGNAL_CYCLE_SECONDS := 24.0
 var region_manager: Node
 var signal_groups: Array[Dictionary] = []
 var elapsed := 0.0
+var city_check_clock := 0.0
+var active_city_name := ""
 var white_material: StandardMaterial3D
 var dark_material: StandardMaterial3D
 var shelter_material: StandardMaterial3D
@@ -21,16 +23,43 @@ func _ready() -> void:
 	if region_manager == null or not region_manager.has_method("get_city_names"):
 		return
 	_create_materials()
-	for city_value in region_manager.call("get_city_names"):
+	active_city_name = _find_nearest_city_name(Vector3.ZERO)
+	_build_city_furniture(active_city_name)
+	print("SYSTEM WORLD: streamed street furniture for ", active_city_name)
+
+func _find_nearest_city_name(position: Vector3) -> String:
+	var city_names: Array = region_manager.call("get_city_names")
+	var nearest_name := "Baghdad"
+	var nearest_distance := INF
+	for city_value in city_names:
 		var city_name := str(city_value)
 		var anchor: Vector3 = region_manager.call("get_city_anchor", city_name)
 		if anchor == Vector3.INF:
 			continue
-		_build_crosswalks(city_name, anchor)
-		_build_traffic_signals(city_name, anchor)
-		_build_bus_shelters(city_name, anchor)
-		_build_parking_bays(city_name, anchor)
-	print("SYSTEM WORLD: street furniture initialized for ", signal_groups.size(), " city signal groups")
+		var distance := Vector2(position.x - anchor.x, position.z - anchor.z).length_squared()
+		if distance < nearest_distance:
+			nearest_distance = distance
+			nearest_name = city_name
+	return nearest_name
+
+
+func _build_city_furniture(city_name: String) -> void:
+	var anchor: Vector3 = region_manager.call("get_city_anchor", city_name)
+	if anchor == Vector3.INF:
+		return
+	_build_crosswalks(city_name, anchor)
+	_build_traffic_signals(city_name, anchor)
+	_build_bus_shelters(city_name, anchor)
+	_build_parking_bays(city_name, anchor)
+
+
+func _rebuild_city_furniture(city_name: String) -> void:
+	for child in get_children():
+		child.queue_free()
+	signal_groups.clear()
+	active_city_name = city_name
+	_build_city_furniture(active_city_name)
+
 
 func _create_materials() -> void:
 	white_material = _material(Color(0.88, 0.88, 0.82), 0.8)
@@ -127,6 +156,14 @@ func _build_parking_bays(city_name: String, anchor: Vector3) -> void:
 
 func _process(delta: float) -> void:
 	elapsed += delta
+	city_check_clock += delta
+	if city_check_clock >= 4.0:
+		city_check_clock = 0.0
+		var player := region_manager.get_parent().get_node_or_null("Player") as Node3D
+		var player_position := player.global_position if is_instance_valid(player) else Vector3.ZERO
+		var nearest_city := _find_nearest_city_name(player_position)
+		if nearest_city != active_city_name:
+			_rebuild_city_furniture(nearest_city)
 	var phase := fposmod(elapsed, SIGNAL_CYCLE_SECONDS)
 	for group in signal_groups:
 		var lights: Array = group["lights"]
