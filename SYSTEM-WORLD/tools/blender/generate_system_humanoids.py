@@ -399,7 +399,7 @@ def add_walk_animation(arm):
         track.name=clip_name
         track.strips.new(clip_name,1,clip_action)
 
-def generate_character(name, female, output):
+def generate_character(name, female, output, age_group="adult"):
     clear_scene()
     arm=make_armature(name,female)
     body=build_body(name,female)
@@ -407,6 +407,20 @@ def generate_character(name, female, output):
     # Build detailed face, fingers and swappable outfit pieces, then combine
     # each semantic group into a weighted mesh to keep mobile draw calls low.
     face=add_face_and_hair(name,female)
+    if age_group == "elder":
+        elder_hair = material(name + " - silver hair", (0.58, 0.60, 0.62), 0.84)
+        for obj in face:
+            if "hair" in obj.name.lower() or "eyebrow" in obj.name.lower():
+                obj.data.materials.clear()
+                obj.data.materials.append(elder_hair)
+        if not female:
+            face.append(capsule(name + "_Beard",(0,1.77,-0.105),(0,1.66,-0.105),0.065,elder_hair,16))
+            face.append(capsule(name + "_MustacheLeft",(-0.045,1.755,-0.145),(0,1.745,-0.15),0.012,elder_hair,12))
+            face.append(capsule(name + "_MustacheRight",(0,1.745,-0.15),(0.045,1.755,-0.145),0.012,elder_hair,12))
+    elif age_group == "child":
+        for obj in face:
+            if "eye" in obj.name.lower() or "cheek" in obj.name.lower():
+                obj.scale *= 1.12
     fingers=add_finger_geometry(name)
     clothes=add_clothes(name)
     groups={
@@ -422,7 +436,7 @@ def generate_character(name, female, output):
     }
     for obj in face:
         part_name=obj.name.lower()
-        if "hair" in part_name or "eyebrow" in part_name or "mouth" in part_name:
+        if "hair" in part_name or "eyebrow" in part_name or "mouth" in part_name or "beard" in part_name or "mustache" in part_name:
             groups["Hair"].append((obj,"head"))
         elif "eye" in part_name:
             groups["Eyes"].append((obj,"head"))
@@ -471,9 +485,16 @@ def generate_character(name, female, output):
         obj.matrix_world=rotation @ world_matrix
 
     # Keep the armature as the true root for both skinned body and bone-attached parts.
+    age_scale = {"child": 0.68, "elder": 0.93, "adult": 1.0}.get(age_group, 1.0)
+    if age_scale != 1.0:
+        for obj in assembly:
+            obj.matrix_world = Matrix.Scale(age_scale, 4, Vector((0,0,0))) @ obj.matrix_world
+
     arm["system_character_type"]="humanoid"
     arm["system_rig"]="deform_armature"
     arm["system_gender"]="female" if female else "male"
+    arm["system_age_group"]=age_group
+    arm["system_height_scale"]=age_scale
     arm["system_animation_set"]="idle,walk,run,jump,attack"
     arm["system_joint_count"]=len(arm.data.bones)
     body["system_weighted_to_armature"]=True
@@ -491,8 +512,12 @@ def generate_character(name, female, output):
 def main():
     args=parse_args()
     out=os.path.abspath(args.output)
-    generate_character("SYSTEM_Humanoid_Male",False,out)
-    generate_character("SYSTEM_Humanoid_Female",True,out)
+    generate_character("SYSTEM_Humanoid_Male",False,out,"adult")
+    generate_character("SYSTEM_Humanoid_Female",True,out,"adult")
+    generate_character("SYSTEM_Humanoid_Elder_Male",False,out,"elder")
+    generate_character("SYSTEM_Humanoid_Elder_Female",True,out,"elder")
+    generate_character("SYSTEM_Humanoid_Child_Male",False,out,"child")
+    generate_character("SYSTEM_Humanoid_Child_Female",True,out,"child")
 
 if __name__=="__main__":
     main()
