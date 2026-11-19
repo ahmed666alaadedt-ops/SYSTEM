@@ -8,7 +8,7 @@ def parse_args():
     argv = __import__("sys").argv
     argv = argv[argv.index("--") + 1:] if "--" in argv else []
     p = argparse.ArgumentParser()
-    p.add_argument("--output", default="SYSTEM-WORLD-3D/assets/characters")
+    p.add_argument("--output", default="SYSTEM-WORLD/assets/characters")
     return p.parse_args(argv)
 
 def clear_scene():
