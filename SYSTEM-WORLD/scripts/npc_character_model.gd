@@ -188,33 +188,56 @@ func set_appearance(variant_index: int = 0) -> void:
 		var head_bone := skeleton.find_bone("head")
 		if head_bone >= 0:
 			var face_scale := Vector3.ONE
-			match str(appearance_profile.get("face", "متوازن")):
-				"حاد":
+			var face_shape := str(appearance_profile.get("face_shape", appearance_profile.get("face", "balanced"))).to_lower()
+			match face_shape:
+				"sharp", "حاد":
 					face_scale = Vector3(0.94, 1.05, 0.98)
-				"ناعم":
+				"soft", "ناعم":
 					face_scale = Vector3(1.04, 1.0, 1.03)
-				"عريض":
+				"wide", "عريض":
 					face_scale = Vector3(1.12, 0.97, 1.0)
-				"طويل":
+				"long", "طويل":
 					face_scale = Vector3(0.96, 1.10, 0.98)
-				"مستدير":
+				"round", "مستدير":
 					face_scale = Vector3(1.08, 0.96, 1.06)
-			skeleton.set_bone_pose_scale(head_bone, face_scale)
+				"heart", "قلبي":
+					face_scale = Vector3(0.98, 1.04, 1.08)
+				skeleton.set_bone_pose_scale(head_bone, face_scale)
+	var lip_color := Color8(150, 78, 75)
+	var sclera_color := Color8(238, 232, 218)
 	for node in _collect_mesh_nodes(imported_model):
 		var mesh_node := node as MeshInstance3D
 		var part_name := mesh_node.name.to_lower()
-		var is_skin := "body" in part_name or "faceskin" in part_name or "hands" in part_name or "nose" in part_name or "ear" in part_name or "cheek" in part_name or "palm" in part_name or "finger" in part_name or "upperarm" in part_name or "forearm" in part_name or "thigh" in part_name or "calf" in part_name or "foot" in part_name
-		var is_hair := "hair" in part_name
+		var is_skin := "body" in part_name or "faceskin" in part_name or "hands" in part_name or "nose" in part_name or "ear" in part_name or "cheek" in part_name or "palm" in part_name or "finger" in part_name or "upperarm" in part_name or "forearm" in part_name or "thigh" in part_name or "calf" in part_name or "foot" in part_name or "jaw" in part_name
+		var is_hair := "hair" in part_name or "brow" in part_name or "eyebrow" in part_name or "beard" in part_name or "mustache" in part_name
 		var is_iris := "iris" in part_name
-		if is_skin or is_hair or is_iris:
+		var is_pupil := "pupil" in part_name
+		var is_sclera := "eyewhite" in part_name or "sclera" in part_name
+		var is_lip := "lip" in part_name or "mouth" in part_name
+		var is_highlight := "highlight" in part_name or "catchlight" in part_name
+		if is_skin or is_hair or is_iris or is_pupil or is_sclera or is_lip or is_highlight:
 			var material := StandardMaterial3D.new()
 			if is_skin:
 				material.albedo_color = skin_color
+				material.roughness = 0.78
 			elif is_hair:
 				material.albedo_color = hair_color
-			else:
+				material.roughness = 0.86
+			elif is_iris:
 				material.albedo_color = eye_color
-			material.roughness = 0.28 if is_iris else 0.82
+				material.roughness = 0.24
+			elif is_pupil:
+				material.albedo_color = Color8(8, 7, 8)
+				material.roughness = 0.18
+			elif is_sclera:
+				material.albedo_color = sclera_color
+				material.roughness = 0.3
+			elif is_lip:
+				material.albedo_color = lip_color
+				material.roughness = 0.5
+			else:
+				material.albedo_color = Color8(255, 248, 232)
+				material.roughness = 0.2
 			mesh_node.material_override = material
 
 func _find_skeleton(root: Node) -> Skeleton3D:
