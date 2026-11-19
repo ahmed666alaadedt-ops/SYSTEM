@@ -171,3 +171,12 @@ asset here only after generation, GLB validation, Godot import and visual review
     protocol; modern-only external world requests; Firebase UID supplied by
     the authenticated host; inbound message direction and payload validation.
   - Not yet instantiated by an Activity or connected to a live Godot transport.
+
+
+## Approved Character Visual Standard and Facial Pipeline (2026-11-19)
+
+- `CHARACTER_DESIGN_STANDARD.md` — owner-approved roster reference and four-world character art direction.
+- `tools/blender/generate_system_humanoids.py` — enhanced procedural facial geometry: separate sclera, iris, pupil, catchlight, eyelid, nose bridge/tip, nostrils and natural lip parts; mouth parts are exported as a separate semantic mesh group from hair.
+- `assets/characters/README.md` — records the approved reference, generated base-model coverage, and remaining asset gaps.
+- The generator change triggers `.github/workflows/system-world-humanoid-characters.yml` to regenerate six adult/elder/child male/female GLB base models, validate their GLB structure/skin/animation/triangle budgets, and copy them into both Godot project asset folders.
+- This commit updates the source generator and documentation only. Generated GLBs, CI completion, Godot import, visual review, and Android device validation must be confirmed separately.
