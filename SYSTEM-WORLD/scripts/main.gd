@@ -34,6 +34,7 @@ const PowerTowerManagerScript = preload("res://scripts/system_power_tower_manage
 const PlayerCombatHealthScript = preload("res://scripts/system_player_combat_health.gd")
 const InventoryPanelScript = preload("res://scripts/system_inventory_panel.gd")
 const PlayerCharacterModelScript = preload("res://scripts/npc_character_model.gd")
+const PlayerCharacterCreatorScript = preload("res://scripts/system_player_character_creator.gd")
 
 var world_manager
 var world_map_manager
@@ -60,6 +61,7 @@ var active_world_root: Node3D
 var player: CharacterBody3D
 var player_mesh: Node3D
 var player_appearance_profile: Dictionary = {}
+var player_character_creator: CanvasLayer
 var camera: Camera3D
 var spring_arm: SpringArm3D
 var mobile_controls: MobileControls
@@ -88,6 +90,7 @@ func _ready() -> void:
 
 	create_ground()
 	create_player()
+	create_player_character_creator()
 	register_modern_world_map_locations()
 	create_player_progression()
 	create_inventory_panel()
@@ -975,6 +978,13 @@ func set_player_character_activity(activity: String) -> void:
 		return
 	if str(player_mesh.get("current_activity")) != activity:
 		player_mesh.call("set_activity", activity)
+
+
+func create_player_character_creator() -> void:
+	player_character_creator = PlayerCharacterCreatorScript.new()
+	player_character_creator.name = "SYSTEMPlayerCharacterCreator"
+	add_child(player_character_creator)
+	player_character_creator.call("setup", self)
 
 
 # --------------------------------------------------
