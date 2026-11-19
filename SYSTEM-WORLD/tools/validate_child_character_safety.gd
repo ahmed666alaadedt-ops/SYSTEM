@@ -4,6 +4,7 @@ const CHARACTER_SCRIPT := preload("res://scripts/npc_character_model.gd")
 const SOCIETY_SCRIPT := preload("res://scripts/ai_npc_society_manager.gd")
 const DAILY_LIFE_SCRIPT := preload("res://scripts/npc_daily_life_manager.gd")
 const POPULATION_SCRIPT := preload("res://scripts/npc_visible_population_manager.gd")
+const THREAT_RECEIVER_SCRIPT := preload("res://scripts/npc_threat_receiver.gd")
 
 func _initialize() -> void:
 	call_deferred("_run_validation")
@@ -45,7 +46,13 @@ func _run_validation() -> void:
 	var population := POPULATION_SCRIPT.new()
 	root.add_child(population)
 	var visible_actor := Node3D.new()
+	visible_actor.set_script(THREAT_RECEIVER_SCRIPT)
+	visible_actor.set("npc_id", "visible_child")
+	visible_actor.set("population_manager", population)
 	population.add_child(visible_actor)
+	var attacker := Node3D.new()
+	attacker.position = Vector3(3.0, 0.0, 0.0)
+	root.add_child(attacker)
 	var visible_child := CHARACTER_SCRIPT.new()
 	visible_actor.add_child(visible_child)
 	visible_child.call("configure", {"name": "Visible Child QA", "age": 10, "gender": "male"}, 0)
@@ -59,7 +66,7 @@ func _run_validation() -> void:
 			"animation_walking": false
 		}
 	})
-	if not bool(population.call("notify_npc_attacked", "visible_child", Vector3(3.0, 0.0, 0.0))):
+	if not bool(visible_actor.call("receive_threat", attacker)):
 		push_error("SYSTEM CHILD QA: visible population did not route an attack into a defensive escape")
 		quit(1)
 		return
@@ -121,6 +128,9 @@ func _run_validation() -> void:
 		return
 
 	var visible_adult_actor := Node3D.new()
+	visible_adult_actor.set_script(THREAT_RECEIVER_SCRIPT)
+	visible_adult_actor.set("npc_id", "visible_adult")
+	visible_adult_actor.set("population_manager", population)
 	population.add_child(visible_adult_actor)
 	var visible_adult := CHARACTER_SCRIPT.new()
 	visible_adult_actor.add_child(visible_adult)
@@ -135,7 +145,8 @@ func _run_validation() -> void:
 		"animation_walking": false
 	}
 	population.set("pedestrians", population_records)
-	if not bool(population.call("notify_npc_attacked", "visible_adult", Vector3(-3.0, 0.0, 0.0))):
+	attacker.position = Vector3(-3.0, 0.0, 0.0)
+	if not bool(visible_adult_actor.call("receive_threat", attacker)):
 		push_error("SYSTEM NPC QA: visible adult did not receive defensive threat response")
 		quit(1)
 		return
