@@ -252,6 +252,8 @@ func set_appearance(variant_index: int = 0) -> void:
 func _normalize_hair_style(value: String) -> String:
 	var style := value.to_lower().strip_edges()
 	match style:
+		"متوسط", "medium":
+			return "medium"
 		"طويل", "long":
 			return "long"
 		"مجعد", "كيرلي", "curly":
@@ -277,6 +279,9 @@ func _apply_hair_style(skeleton: Skeleton3D, color: Color) -> void:
 	hair_material.albedo_color = color
 	hair_material.roughness = 0.86
 	match hair_style:
+		"medium":
+			_add_hair_capsule("MediumHairLeft", Vector3(-0.135, 0.09, 0.035), 0.032, 0.22, hair_material)
+			_add_hair_capsule("MediumHairRight", Vector3(0.135, 0.09, 0.035), 0.032, 0.22, hair_material)
 		"long":
 			_add_hair_capsule("LongHairLeft", Vector3(-0.135, 0.02, 0.035), 0.035, 0.38, hair_material)
 			_add_hair_capsule("LongHairRight", Vector3(0.135, 0.02, 0.035), 0.035, 0.38, hair_material)
