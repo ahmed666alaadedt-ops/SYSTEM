@@ -85,10 +85,17 @@ func set_activity(value: String) -> void:
 	elif value in ["work", "eat", "socialize", "wander", "travel", "walk"]:
 		desired = "Walk_Cycle"
 	var available := animation_player.get_animation_list()
+	var aliases := [desired.to_lower()]
+	if desired == "Walk_Cycle":
+		aliases.append("walk")
+	elif desired == "Run_Cycle":
+		aliases.append("run")
 	for animation_name in available:
-		if desired.to_lower() in str(animation_name).to_lower():
-			animation_player.play(animation_name)
-			return
+		var actual_name := str(animation_name).to_lower()
+		for alias in aliases:
+			if actual_name.contains(alias):
+				animation_player.play(animation_name)
+				return
 	if not available.is_empty():
 		animation_player.play(available[0])
 
