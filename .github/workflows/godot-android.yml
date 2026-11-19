@@ -326,6 +326,13 @@ jobs:
             --path "$PROJECT" \
             --quit
 
+      - name: Validate rigged humanoid character showcase
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD-3D"
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_character_showcase.gd
+
       - name: Verify Android export configuration
         shell: bash
         run: |
