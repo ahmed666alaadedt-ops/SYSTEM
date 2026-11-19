@@ -220,6 +220,61 @@ def weight_body(body, arm):
     if not any(m.type=="ARMATURE" for m in body.modifiers):
         mod=body.modifiers.new("Humanoid Armature","ARMATURE"); mod.object=arm
 
+def combine_bone_parts(name, parts, arm):
+    if not parts:
+        return None
+    vertices=[]
+    faces=[]
+    face_material_indices=[]
+    materials=[]
+    material_lookup={}
+    bone_vertex_indices={}
+    for source_obj,bone_name in parts:
+        source_mesh=source_obj.data
+        offset=len(vertices)
+        world_matrix=source_obj.matrix_world.copy()
+        for vertex in source_mesh.vertices:
+            point=world_matrix @ vertex.co
+            vertices.append((point.x,point.y,point.z))
+        bone_vertex_indices.setdefault(bone_name,[]).extend(
+            range(offset,offset+len(source_mesh.vertices))
+        )
+        for polygon in source_mesh.polygons:
+            faces.append([offset+index for index in polygon.vertices])
+            material=None
+            if polygon.material_index < len(source_mesh.materials):
+                material=source_mesh.materials[polygon.material_index]
+            if material is None:
+                raise RuntimeError("Character accessory has no material: "+source_obj.name)
+            material_key=material.name
+            if material_key not in material_lookup:
+                material_lookup[material_key]=len(materials)
+                materials.append(material)
+            face_material_indices.append(material_lookup[material_key])
+
+    mesh=bpy.data.meshes.new(name+"_Mesh")
+    mesh.from_pydata(vertices,[],faces)
+    mesh.update()
+    for material in materials:
+        mesh.materials.append(material)
+    for polygon,material_index in zip(mesh.polygons,face_material_indices):
+        polygon.material_index=material_index
+        polygon.use_smooth=True
+
+    combined=bpy.data.objects.new(name,mesh)
+    bpy.context.scene.collection.objects.link(combined)
+    combined.parent=arm
+    combined.matrix_world=Matrix.Identity(4)
+    for bone_name,vertex_indices in bone_vertex_indices.items():
+        group=combined.vertex_groups.new(name=bone_name)
+        group.add(vertex_indices,1.0,"REPLACE")
+    modifier=combined.modifiers.new("Accessory Armature Skin","ARMATURE")
+    modifier.object=arm
+
+    for source_obj,bone_name in parts:
+        bpy.data.objects.remove(source_obj,do_unlink=True)
+    return combined
+
 def add_walk_animation(arm):
     arm.animation_data_create()
     scene=bpy.context.scene
@@ -349,26 +404,59 @@ def generate_character(name, female, output):
     arm=make_armature(name,female)
     body=build_body(name,female)
     weight_body(body,arm)
-    # bone-attached accessories and fitted clothing: stable rigid weighting
+    # Build detailed face, fingers and swappable outfit pieces, then combine
+    # each semantic group into a weighted mesh to keep mobile draw calls low.
     face=add_face_and_hair(name,female)
     fingers=add_finger_geometry(name)
     clothes=add_clothes(name)
+    groups={
+        "FaceSkin":[],
+        "Eyes":[],
+        "Hair":[],
+        "Hands":[],
+        "Jacket":[],
+        "Trim":[],
+        "Trousers":[],
+        "Belt":[],
+        "Boots":[]
+    }
     for obj in face:
-        parent_rigid_to_bone(obj,arm,"head")
+        part_name=obj.name.lower()
+        if "hair" in part_name or "eyebrow" in part_name or "mouth" in part_name:
+            groups["Hair"].append((obj,"head"))
+        elif "eye" in part_name:
+            groups["Eyes"].append((obj,"head"))
+        else:
+            groups["FaceSkin"].append((obj,"head"))
     for obj,bone_name in fingers:
-        parent_rigid_to_bone(obj,arm,bone_name)
+        groups["Hands"].append((obj,bone_name))
     for obj in clothes:
-        n=obj.name
-        if "Sleeve" in n: b="upper_arm.L" if "_L" in n else "upper_arm.R"
-        elif "Glove" in n: b="hand.L" if "_L" in n else "hand.R"
-        elif "Trousers" in n: b="thigh.L" if "_L" in n else "thigh.R"
-        elif "Boot" in n: b="foot.L" if "_L" in n else "foot.R"
-        elif "Belt" in n: b="pelvis"
-        else: b="chest"
-        # Names do not encode side for generated parts; assign by object center.
-        if any(k in n for k in ("Sleeve","Glove","Trousers","Boot")):
-            b=b.rsplit(".",1)[0]+(".L" if obj.location.x<0 else ".R")
-        parent_rigid_to_bone(obj,arm,b)
+        part_name=obj.name.lower()
+        if "sleeve" in part_name:
+            bone_name="upper_arm.L" if obj.location.x<0 else "upper_arm.R"
+            groups["Jacket"].append((obj,bone_name))
+        elif "trousers" in part_name:
+            bone_name="thigh.L" if obj.location.x<0 else "thigh.R"
+            groups["Trousers"].append((obj,bone_name))
+        elif "glove" in part_name:
+            bone_name="hand.L" if obj.location.x<0 else "hand.R"
+            groups["Boots"].append((obj,bone_name))
+        elif "boot" in part_name:
+            bone_name="foot.L" if obj.location.x<0 else "foot.R"
+            groups["Boots"].append((obj,bone_name))
+        elif "belt" in part_name:
+            groups["Belt"].append((obj,"pelvis"))
+        elif "collar" in part_name or "button" in part_name:
+            groups["Trim"].append((obj,"chest"))
+        else:
+            groups["Jacket"].append((obj,"chest"))
+
+    detail_meshes=[]
+    for group_name,parts in groups.items():
+        combined=combine_bone_parts(name+"_"+group_name,parts,arm)
+        if combined is not None:
+            detail_meshes.append(combined)
+
     add_walk_animation(arm)
     # Set clean rest pose before export; animations retain their own keyed poses.
     for pb in arm.pose.bones:
