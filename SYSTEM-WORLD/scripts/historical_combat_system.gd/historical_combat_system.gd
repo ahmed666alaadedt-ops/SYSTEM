@@ -216,6 +216,7 @@ func _apply_melee_damage(damage: float, distance: float) -> void:
 
 	var query := PhysicsRayQueryParameters3D.create(from, to)
 	query.exclude = [actor.get_rid()]
+	query.collide_with_areas = true
 
 	var result := space.intersect_ray(query)
 
@@ -227,15 +228,19 @@ func _apply_melee_damage(damage: float, distance: float) -> void:
 	if target == null:
 		return
 
-	if target.has_method("take_damage"):
-		target.take_damage(damage)
+	if target.has_method("receive_threat"):
+		target.call("receive_threat", actor)
+
+	elif target.has_method("take_damage"):
+		target.call("take_damage", damage)
 
 	elif target is Node:
 		var target_node := target as Node
 		var parent := target_node.get_parent()
-
-		if parent != null and parent.has_method("take_damage"):
-			parent.take_damage(damage)
+		if parent != null and parent.has_method("receive_threat"):
+			parent.call("receive_threat", actor)
+		elif parent != null and parent.has_method("take_damage"):
+			parent.call("take_damage", damage)
 
 	_create_impact_effect(result.get("position", to))
 
