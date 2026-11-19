@@ -70,17 +70,17 @@ func _run_validation() -> void:
 					quit(1)
 					return
 
-	if character_count != 2:
-		push_error("SYSTEM CHARACTER QA: expected two showcase characters, found " + str(character_count))
+	if character_count != 6:
+		push_error("SYSTEM CHARACTER QA: expected six age/gender showcase characters, found " + str(character_count))
 		quit(1)
 		return
 
-	if has_male_asset and has_female_asset:
+	if true:
 		for child in showcase.get_children():
 			if child.has_method("get_character_status") and child.call("get_character_status").get("model_source") != "glb":
 				push_error("SYSTEM CHARACTER QA: GLB assets exist but a character fell back to procedural mode")
 				quit(1)
 				return
 
-	print("SYSTEM CHARACTER QA PASS: two character models loaded and inspected")
+	print("SYSTEM CHARACTER QA PASS: six age/gender character models loaded and inspected")
 	quit(0)
