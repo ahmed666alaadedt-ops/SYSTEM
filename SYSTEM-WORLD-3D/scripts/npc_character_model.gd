@@ -30,7 +30,7 @@ func configure(profile: Dictionary, palette_index: int = 0) -> void:
 			outfit_id = "hunter"
 		elif "noble" in role or "royal" in role:
 			outfit_id = "royal"
-		set_outfit(outfit_id)
+		set_outfit(outfit_id, palette_index)
 		return
 	_build_fallback(profile, palette_index)
 
@@ -91,16 +91,17 @@ func set_activity(value: String) -> void:
 	if not available.is_empty():
 		animation_player.play(available[0])
 
-func set_outfit(outfit_id: String) -> void:
+func set_outfit(outfit_id: String, variant_index: int = 0) -> void:
 	if not is_instance_valid(imported_model):
 		return
 	var palettes := {
-		"civilian": Color8(54, 82, 92),
-		"hunter": Color8(20, 48, 82),
-		"guard": Color8(72, 42, 28),
-		"royal": Color8(86, 54, 104)
+		"civilian": [Color8(54, 82, 92), Color8(86, 68, 48), Color8(72, 78, 83), Color8(48, 76, 62)],
+		"hunter": [Color8(20, 48, 82), Color8(30, 64, 82), Color8(36, 42, 68), Color8(62, 54, 36)],
+		"guard": [Color8(72, 42, 28), Color8(46, 58, 72), Color8(72, 62, 34), Color8(42, 66, 54)],
+		"royal": [Color8(86, 54, 104), Color8(105, 74, 34), Color8(44, 62, 104), Color8(92, 42, 54)]
 	}
-	var cloth_color: Color = palettes.get(outfit_id.to_lower(), palettes["civilian"])
+	var choices: Array = palettes.get(outfit_id.to_lower(), palettes["civilian"])
+	var cloth_color: Color = choices[posmod(variant_index, choices.size())]
 	for node in _collect_mesh_nodes(imported_model):
 		var mesh_node := node as MeshInstance3D
 		var part_name := mesh_node.name.to_lower()
