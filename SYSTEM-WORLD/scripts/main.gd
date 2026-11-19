@@ -26,6 +26,8 @@ const PlayerVehicleManagerScript = preload("res://scripts/system_player_vehicle_
 const CrimeResponseManagerScript = preload("res://scripts/modern_city_crime_response_manager.gd")
 const HunterExamManagerScript = preload("res://scripts/system_hunter_exam_manager.gd")
 const PowerTowerManagerScript = preload("res://scripts/system_power_tower_manager.gd")
+const PlayerCombatHealthScript = preload("res://scripts/system_player_combat_health.gd")
+const InventoryPanelScript = preload("res://scripts/system_inventory_panel.gd")
 
 var world_manager
 var world_map_manager
@@ -39,6 +41,8 @@ var player_vehicle_manager
 var crime_response_manager
 var hunter_exam_manager
 var power_tower_manager
+var player_combat_health: Node
+var inventory_panel: CanvasLayer
 
 var active_world_root: Node3D
 
@@ -73,6 +77,7 @@ func _ready() -> void:
 	create_player()
 	register_modern_world_map_locations()
 	create_player_progression()
+	create_inventory_panel()
 	create_player_vehicle_manager()
 	create_modern_city_crime_manager()
 	create_hunter_exam_manager()
@@ -257,6 +262,13 @@ func create_player_progression() -> void:
 	player_progression = PlayerProgressionScript.new()
 	player_progression.name = "PlayerProgression"
 	add_child(player_progression)
+
+
+func create_inventory_panel() -> void:
+	inventory_panel = InventoryPanelScript.new()
+	inventory_panel.name = "SYSTEMInventoryPanel"
+	add_child(inventory_panel)
+	inventory_panel.call("setup", player_progression)
 
 
 func create_player_vehicle_manager() -> void:
@@ -639,6 +651,13 @@ func _on_interaction_performed(
 		" / ",
 		location_id
 	)
+	if str(target.get_meta("system_service_type", "")) == "hospital":
+		if is_instance_valid(player_combat_health):
+			if bool(player_combat_health.call("begin_hospital_treatment")):
+				if interaction_prompt_label != null:
+					interaction_prompt_label.text = "بدأ العلاج في المستشفى — يرجى الانتظار حتى اكتماله"
+			elif interaction_prompt_label != null:
+				interaction_prompt_label.text = "لا تحتاج إلى علاج حالياً أو أن العلاج جارٍ بالفعل"
 	if location_id == "power_tower_baghdad" and power_tower_manager != null:
 		var next_floor := int(power_tower_manager.get_tower_status().get("next_floor", 1))
 		var level := int(player_progression.current_level) if player_progression != null else 1
@@ -777,7 +796,12 @@ func create_ground() -> void:
 func create_player() -> void:
 	player = CharacterBody3D.new()
 	player.name = "Player"
+	player.add_to_group("system_player")
 	player.position = Vector3(0, 2, 0)
+	player_combat_health = PlayerCombatHealthScript.new()
+	player_combat_health.name = "PlayerCombatHealth"
+	player.add_child(player_combat_health)
+	player_combat_health.call("bind_player", player)
 	active_world_root.add_child(player)
 
 	player_mesh = MeshInstance3D.new()
