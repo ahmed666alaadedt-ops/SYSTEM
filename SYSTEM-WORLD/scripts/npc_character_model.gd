@@ -65,8 +65,11 @@ func set_activity(value: String) -> void:
 		return
 	if not is_instance_valid(animation_player):
 		return
-	var wants_walk := value in ["work", "eat", "socialize", "wander", "travel", "walk"]
-	var desired := "Walk_Cycle" if wants_walk else "Idle_Breathing"
+	var desired := "Idle_Breathing"
+	if value in ["run", "sprint", "running"]:
+		desired = "Run_Cycle"
+	elif value in ["work", "eat", "socialize", "wander", "travel", "walk"]:
+		desired = "Walk_Cycle"
 	var available := animation_player.get_animation_list()
 	for animation_name in available:
 		if str(animation_name).to_lower() == desired.to_lower():
