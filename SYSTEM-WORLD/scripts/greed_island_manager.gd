@@ -5,6 +5,8 @@ class_name GreedIslandManager
 ## جزيرة الطمع — مملكة اختبار خاصة بمدير اللعبة.
 ## القتال معطل بالكامل. الكائنات الموجودة للعرض والاستكشاف فقط.
 
+const NPCCharacterModelScript = preload("res://scripts/npc_character_model.gd")
+
 const ISLAND_CENTER := Vector3(0.0, -3.0, -45.0)
 const ISLAND_SIZE := Vector3(118.0, 6.0, 145.0)
 const OCEAN_SIZE := Vector2(520.0, 520.0)
@@ -13,6 +15,7 @@ var admin_test_mode := true
 var combat_enabled := false
 var ocean_material: ShaderMaterial
 var cloud_nodes: Array[Node3D] = []
+var display_humanoid_visuals: Dictionary = {}
 var animated_time := 0.0
 
 
@@ -827,7 +830,6 @@ func _build_royal_guard() -> void:
 	guard_group.position = Vector3(0.0, 0.0, -65.0)
 	add_child(guard_group)
 
-	var armor := _material(Color(0.17, 0.22, 0.31), 0.35, 0.55)
 	var gold := _material(Color(0.82, 0.60, 0.22), 0.3, 0.7)
 
 	for index in range(8):
@@ -843,17 +845,18 @@ func _build_royal_guard() -> void:
 		)
 		guard_group.add_child(guard)
 
-		_add_sphere(guard, "GuardBody",
-			Vector3(0.0, 1.7, 0.0),
-			Vector3(0.65, 1.0, 0.4), armor)
-
-		_add_sphere(guard, "GuardHelmet",
-			Vector3(0.0, 3.0, 0.0),
-			Vector3(0.55, 0.55, 0.55), gold)
+		_add_display_humanoid(
+			guard,
+			"Royal Guard %02d" % index,
+			28.0 + float(index % 4),
+			"female" if index % 2 == 1 else "male",
+			"royal_guard",
+			index
+		)
 
 		_add_box(guard, "GuardShield",
-			Vector3(side * 0.8, 1.8, -0.2),
-			Vector3(0.25, 1.8, 1.1), gold)
+			Vector3(side * 0.8, 1.1, -0.2),
+			Vector3(0.25, 1.4, 0.9), gold)
 
 		guard.set_meta("system_display_only", true)
 		guard.set_meta("combat_enabled", false)
@@ -873,10 +876,6 @@ func _build_royal_servants() -> void:
 	servants.position = Vector3(0.0, 0.0, -72.0)
 	add_child(servants)
 
-	var clothing := _material(Color(0.48, 0.12, 0.24), 0.65)
-	var skin := _material(Color(0.78, 0.58, 0.43), 0.8)
-	var gold := _material(Color(0.85, 0.67, 0.30), 0.35, 0.5)
-
 	for index in range(4):
 		var servant := Node3D.new()
 		servant.name = "RoyalServant_%02d" % index
@@ -887,17 +886,14 @@ func _build_royal_servants() -> void:
 		)
 		servants.add_child(servant)
 
-		_add_sphere(servant, "ServantDress",
-			Vector3(0.0, 1.0, 0.0),
-			Vector3(0.65, 1.0, 0.45), clothing)
-
-		_add_sphere(servant, "ServantHead",
-			Vector3(0.0, 2.2, 0.0),
-			Vector3(0.4, 0.48, 0.4), skin)
-
-		_add_sphere(servant, "ServantHair",
-			Vector3(0.0, 2.55, 0.0),
-			Vector3(0.43, 0.25, 0.43), gold)
+		_add_display_humanoid(
+			servant,
+			"Royal Servant %02d" % index,
+			24.0 + float(index % 3),
+			"female" if index % 2 == 1 else "male",
+			"royal_servant",
+			index + 8
+		)
 
 		servant.set_meta("system_display_only", true)
 		servant.set_meta("combat_enabled", false)
@@ -905,6 +901,30 @@ func _build_royal_servants() -> void:
 
 	servants.set_meta("system_display_only", true)
 	servants.set_meta("combat_enabled", false)
+
+
+func _add_display_humanoid(
+	parent: Node3D,
+	display_name: String,
+	age: float,
+	gender: String,
+	occupation: String,
+	palette_index: int
+) -> Node3D:
+	var visual := NPCCharacterModelScript.new() as Node3D
+	visual.name = "HumanoidVisual_" + str(palette_index)
+	parent.add_child(visual)
+	visual.configure({
+		"name": display_name,
+		"age_years": age,
+		"gender": gender,
+		"occupation": occupation,
+		"world": "greed_island",
+		"body_type": ["average", "athletic", "slim"][palette_index % 3],
+		"height_type": "average"
+	}, palette_index)
+	display_humanoid_visuals[display_name] = visual
+	return visual
 
 
 # --------------------------------------------------
