@@ -128,7 +128,12 @@ func _count_skinned_meshes(node: Node) -> int:
 	var count := 0
 	if node is MeshInstance3D:
 		var mesh_instance := node as MeshInstance3D
-		if mesh_instance.skin != null and not mesh_instance.skeleton.is_empty():
+		if (
+			mesh_instance.mesh != null
+			and mesh_instance.mesh.get_surface_count() > 0
+			and mesh_instance.skin != null
+			and not mesh_instance.skeleton.is_empty()
+		):
 			count += 1
 	for child in node.get_children():
 		count += _count_skinned_meshes(child)
