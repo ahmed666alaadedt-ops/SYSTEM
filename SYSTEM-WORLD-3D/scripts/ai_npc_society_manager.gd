@@ -64,9 +64,7 @@ func _create_residents() -> void:
 		{"name": "زينب", "job": "طبيبة", "family": "family_5", "age": 31, "personality": "حكيمة", "home": Vector3(-23, 0, -5), "work": Vector3(-13, 0, 5)},
 		{"name": "كريم", "job": "نجار", "family": "family_5", "age": 36, "personality": "صبور", "home": Vector3(-23, 0, -5), "work": Vector3(18, 0, 8)},
 		{"name": "هند", "job": "مزارعة", "family": "family_6", "age": 25, "personality": "مرحة", "home": Vector3(24, 0, 4), "work": Vector3(-24, 0, 20)},
-		{"name": "علي", "job": "خباز", "family": "family_6", "age": 34, "personality": "كريم", "home": Vector3(24, 0, 4), "work": Vector3(10, 0, -3)}
-	]
-
+		{"name": "علي", "job": "خباز", "family": "family_6", "age": 34, "personality": "كريم", "home": Vector3(24, 0, 4), "work": Vector3(10, 0, -3)},
 		{"name": "جد سارة", "job": "متقاعد", "family": "family_1", "age": 68, "gender": "male", "personality": "حكيم", "home": Vector3(-17, 0, -15), "work": Vector3(-17, 0, -15)},
 		{"name": "جدة عمر", "job": "متقاعدة", "family": "family_1", "age": 64, "gender": "female", "personality": "حنونة", "home": Vector3(-17, 0, -15), "work": Vector3(-17, 0, -15)},
 		{"name": "ليان", "job": "طالبة", "family": "family_2", "age": 10, "gender": "female", "personality": "فضولية", "home": Vector3(18, 0, -13), "work": Vector3(18, 0, -13)},
@@ -75,6 +73,7 @@ func _create_residents() -> void:
 		{"name": "مريم الصغيرة", "job": "طالبة", "family": "family_4", "age": 8, "gender": "female", "personality": "مرحة", "home": Vector3(19, 0, 17), "work": Vector3(19, 0, 17)},
 		{"name": "يوسف الصغير", "job": "طالب", "family": "family_5", "age": 12, "gender": "male", "personality": "هادئ", "home": Vector3(-23, 0, -5), "work": Vector3(-23, 0, -5)},
 		{"name": "أم هند", "job": "متقاعدة", "family": "family_6", "age": 66, "gender": "female", "personality": "اجتماعية", "home": Vector3(24, 0, 4), "work": Vector3(24, 0, 4)}
+	]
 
 	for index in range(people.size()):
 		_create_resident(people[index], index)
