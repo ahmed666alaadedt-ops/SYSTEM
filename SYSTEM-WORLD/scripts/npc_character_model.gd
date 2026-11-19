@@ -206,29 +206,11 @@ func set_appearance(variant_index: int = 0) -> void:
 			eye_color = Color8(151, 111, 54)
 		"blue", "أزرق":
 			eye_color = Color8(45, 112, 174)
-	var skeleton := _find_skeleton(imported_model)
-	if is_instance_valid(skeleton):
-		var head_bone := skeleton.find_bone("head")
-		if head_bone >= 0:
-			var face_scale := Vector3.ONE
-			var face_shape := str(appearance_profile.get("face_shape", appearance_profile.get("face", ""))).to_lower()
-			if face_shape.is_empty():
-				var face_variants := ["balanced", "sharp", "soft", "wide", "long", "round", "heart"]
-				face_shape = face_variants[posmod(variant_index, face_variants.size())]
-			match face_shape:
-				"sharp", "حاد":
-					face_scale = Vector3(0.94, 1.05, 0.98)
-				"soft", "ناعم":
-					face_scale = Vector3(1.04, 1.0, 1.03)
-				"wide", "عريض":
-					face_scale = Vector3(1.12, 0.97, 1.0)
-				"long", "طويل":
-					face_scale = Vector3(0.96, 1.10, 0.98)
-				"round", "مستدير":
-					face_scale = Vector3(1.08, 0.96, 1.06)
-				"heart", "قلبي":
-					face_scale = Vector3(0.98, 1.04, 1.08)
-			skeleton.set_bone_pose_scale(head_bone, face_scale)
+	var face_shape := str(appearance_profile.get("face_shape", appearance_profile.get("face", ""))).to_lower()
+	if face_shape.is_empty():
+		var face_variants := ["balanced", "sharp", "soft", "wide", "long", "round", "heart"]
+		face_shape = face_variants[posmod(variant_index, face_variants.size())]
+	set_face_shape(face_shape)
 	var lip_color := Color8(150, 78, 75)
 	var sclera_color := Color8(238, 232, 218)
 	for node in _collect_mesh_nodes(imported_model):
@@ -265,6 +247,50 @@ func set_appearance(variant_index: int = 0) -> void:
 				material.albedo_color = Color8(255, 248, 232)
 				material.roughness = 0.2
 			mesh_node.material_override = material
+
+## Changes the overall facial silhouette through the head and jaw rig controls.
+## The seven profiles are lightweight and safe to apply during character creation.
+func set_face_shape(shape_id: String) -> void:
+	var skeleton := _find_skeleton(imported_model) if is_instance_valid(imported_model) else null
+	if not is_instance_valid(skeleton):
+		return
+	var face_shape := shape_id.to_lower()
+	var face_scale := Vector3.ONE
+	var jaw_scale := Vector3.ONE
+	match face_shape:
+		"sharp", "حاد":
+			face_shape = "sharp"
+			face_scale = Vector3(0.94, 1.05, 0.98)
+			jaw_scale = Vector3(0.94, 1.06, 0.96)
+		"soft", "ناعم":
+			face_shape = "soft"
+			face_scale = Vector3(1.04, 1.0, 1.03)
+			jaw_scale = Vector3(1.04, 0.98, 1.02)
+		"wide", "عريض":
+			face_shape = "wide"
+			face_scale = Vector3(1.12, 0.97, 1.0)
+			jaw_scale = Vector3(1.10, 0.98, 1.0)
+		"long", "طويل":
+			face_shape = "long"
+			face_scale = Vector3(0.96, 1.10, 0.98)
+			jaw_scale = Vector3(0.98, 1.08, 0.98)
+		"round", "مستدير":
+			face_shape = "round"
+			face_scale = Vector3(1.08, 0.96, 1.06)
+			jaw_scale = Vector3(1.08, 0.96, 1.06)
+		"heart", "قلبي":
+			face_shape = "heart"
+			face_scale = Vector3(0.98, 1.04, 1.08)
+			jaw_scale = Vector3(0.94, 1.02, 0.98)
+		_:
+			face_shape = "balanced"
+	var head_bone := skeleton.find_bone("head")
+	if head_bone >= 0:
+		skeleton.set_bone_pose_scale(head_bone, face_scale)
+	var jaw_bone := skeleton.find_bone("jaw")
+	if jaw_bone >= 0:
+		skeleton.set_bone_pose_scale(jaw_bone, jaw_scale)
+	appearance_profile["face_shape"] = face_shape
 
 func _find_skeleton(root: Node) -> Skeleton3D:
 	for child in root.get_children():
@@ -421,6 +447,10 @@ func get_character_status() -> Dictionary:
 		"animation_clips": clip_names,
 		"facial_control_bones": facial_control_bones,
 		"facial_controls_complete": facial_control_bones.size() == 6,
+		"face_shape": str(appearance_profile.get("face_shape", "balanced")),
+		"skin_tone": str(appearance_profile.get("skin_tone", "palette")),
+		"hair_color": str(appearance_profile.get("hair_color", "palette")),
+		"eye_color": str(appearance_profile.get("eye_color", "blue")),
 		"activity": current_activity
 	}
 
