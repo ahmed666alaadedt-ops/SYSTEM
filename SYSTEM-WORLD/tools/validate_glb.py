@@ -171,23 +171,6 @@ def inspect_glb(path: Path) -> dict[str, Any]:
     if skins and skinned_primitive_count == 0:
         raise GLBValidationError("skin exists but no mesh primitive contains JOINTS_0 and WEIGHTS_0")
 
-    joint_nodes = {int(index) for skin in skins for index in skin.get("joints", [])}
-    parent_of: dict[int, int] = {}
-    for parent_index, node in enumerate(nodes):
-        for child_index in node.get("children", []):
-            parent_of[int(child_index)] = parent_index
-    bone_attached_mesh_count = 0
-    for node_index, node in enumerate(nodes):
-        if "mesh" not in node or node_index in joint_nodes:
-            continue
-        parent_index = parent_of.get(node_index)
-        visited: set[int] = set()
-        while parent_index is not None and parent_index not in visited:
-            if parent_index in joint_nodes:
-                bone_attached_mesh_count += 1
-                break
-            visited.add(parent_index)
-            parent_index = parent_of.get(parent_index)
 
     return {
         "file": str(path),
@@ -201,7 +184,6 @@ def inspect_glb(path: Path) -> dict[str, Any]:
         "joint_count": joint_count,
         "skinned_primitive_count": skinned_primitive_count,
         "skinned_mesh_node_count": skinned_mesh_node_count,
-        "bone_attached_mesh_count": bone_attached_mesh_count,
         "animation_count": len(animations),
         "embedded_binary_bytes": len(binary),
         "external_resource_uris": 0,
