@@ -115,3 +115,8 @@ The generated blink/talking clips are still assets awaiting a blended runtime an
 The 3D preview project's player creator now exposes the expanded Arabic hairstyle and hair-color choices in a scrollable profile window. All listed hair styles are available to male and female player avatars, including very long hair for men. The profile is saved locally on the device through Godot's `user://system_player_profile.cfg` and is reloaded when the creator opens in a new session. Confirming the profile immediately rebuilds the live 3D player avatar using the shared rigged character loader, so imported GLB characters and the procedural fallback use the same appearance system.
 
 The command-center player avatar is created from the saved profile and updated whenever the player confirms a new appearance. The current save is device-local; cloud account synchronization is not included in this change.
+
+
+## Gender-specific hairstyle selection (2026-11-19)
+
+The player creator now filters the hairstyle list by the selected character appearance. Male characters receive contemporary men's cuts (Fade variants, Taper Fade, Undercut, Buzz Cut, Crew Cut, Textured/French Crop, Quiff, Pompadour, Slick Back, Side Part and Spiky) plus explicitly supported long men's styles (long/layered/wavy/curly hair, men's ponytail, man bun and braids). Female characters receive a separate list of short, medium, long, curly, braided and other feminine styling options. The long-hair options remain available to men; the selection is not restricted to short hair. The shared character loader maps the displayed modern cut names to its current procedural hairstyle geometry. Detailed salon-grade meshes for every named barber cut remain future art work.
