@@ -36,6 +36,20 @@ func _run_diagnostic() -> void:
 		" null_mesh_instances=", null_mesh_paths.size(),
 		" multimesh_instances=", multimesh_count,
 		" invalid_multimeshes=", null_multimesh_paths.size())
+	var manager := scene.find_child("WorldManager", true, false)
+	if manager != null:
+		var roots: Dictionary = manager.get("world_roots")
+		for world_id in roots.keys():
+			var world_root := roots[world_id] as Node
+			var world_pending: Array[Node] = [world_root]
+			var world_mesh_count := 0
+			while not world_pending.is_empty():
+				var world_node: Node = world_pending.pop_back()
+				if world_node is MeshInstance3D:
+					world_mesh_count += 1
+				for child in world_node.get_children():
+					world_pending.append(child)
+			print("SYSTEM WORLD MESH COUNT: world=", world_id, " meshes=", world_mesh_count)
 	for path in null_mesh_paths.slice(0, 100):
 		print("SYSTEM NULL MESH: ", path)
 	for path in null_multimesh_paths.slice(0, 100):
