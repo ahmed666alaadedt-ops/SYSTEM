@@ -188,6 +188,26 @@ func _validate_fantasy_world(world_manager: Node, map_manager: Node) -> void:
 	if resident_count < 18:
 		_fail("Fantasy world created fewer than eighteen settlement residents.")
 
+	var resident_visuals: Dictionary = settlements.get("resident_visuals")
+	var imported_residents := 0
+	for npc_id in resident_visuals:
+		var visual := resident_visuals[npc_id] as Node
+		if visual == null or not is_instance_valid(visual):
+			_fail("Fantasy resident has no humanoid visual: " + str(npc_id))
+			continue
+		var imported_model := visual.get("imported_model") as Node3D
+		if imported_model == null or not is_instance_valid(imported_model):
+			_fail("Fantasy resident did not load a GLB model: " + str(npc_id))
+			continue
+		imported_residents += 1
+	if imported_residents != resident_count:
+		_fail(
+			"Only %d of %d fantasy residents loaded GLB models." % [
+				imported_residents,
+				resident_count
+			]
+		)
+
 	var all_locations: Dictionary = map_manager.get("locations_by_world")
 	var fantasy_locations: Dictionary = all_locations.get("0", {})
 	if fantasy_locations.size() < 7:
@@ -195,10 +215,11 @@ func _validate_fantasy_world(world_manager: Node, map_manager: Node) -> void:
 
 	_scan_invalid_mesh_nodes(active_root, "fantasy")
 	print(
-		"FANTASY WORLD QA: villages=%d, kingdoms=%d, residents=%d, map_locations=%d" % [
+		"FANTASY WORLD QA: villages=%d, kingdoms=%d, residents=%d, GLB_residents=%d, map_locations=%d" % [
 			village_count,
 			kingdom_count,
 			resident_count,
+			imported_residents,
 			fantasy_locations.size()
 		]
 	)
