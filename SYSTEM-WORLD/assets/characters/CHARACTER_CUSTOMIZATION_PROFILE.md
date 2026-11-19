@@ -59,3 +59,15 @@ If the selected GLB is missing or cannot be loaded, the existing procedural Godo
 ## Validation boundary
 
 A successful source commit or GLB structural validation does not prove Godot import, animation playback, facial quality, or Android performance. Those checks must be run in the actual project environment.
+
+
+## Skeletal facial controls added (2026-11-19)
+
+The Blender generator now adds independent facial control bones:
+- `jaw` for basic mouth/jaw articulation.
+- `eye.L` and `eye.R` for independent eye control.
+- `brow.L` and `brow.R` for eyebrow pose control.
+
+Face geometry is assigned to these bones in semantic groups: left/right eye assemblies, left/right brows, and jaw-driven mouth parts. The canonical Godot NPC loader exposes `set_facial_expression(expression)` with basic presets: happy, angry, sad, surprised, talking, and blink (Arabic aliases are accepted for the presets).
+
+**Limit:** These are skeletal pose presets, not facial blendshapes or a phoneme/lip-sync system. The current blink preset is an immediate pose and needs an animation/timing driver for natural periodic blinking. The current talking preset is a static jaw pose and needs audio/phoneme synchronization for speech.
