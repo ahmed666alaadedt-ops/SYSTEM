@@ -16,7 +16,7 @@ const BAGHDAD_GATE_DATA := [
 
 var world_manager: Node
 var transition_locked := false
-var greed_island_season_open := false
+var greed_island_season_open := true
 var gates_created := false
 
 
