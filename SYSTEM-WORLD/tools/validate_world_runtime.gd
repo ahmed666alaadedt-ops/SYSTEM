@@ -197,9 +197,11 @@ func _validate_greed_island(world_manager: Node) -> void:
 		_fail("Greed Island has no active root.")
 		return
 
-	var island := active_root.get_node_or_null("GreedIslandEnvironment")
+	# GreedIslandManager renames its node during _ready(), so validate the
+	# runtime name rather than the temporary name assigned by WorldManager.
+	var island := active_root.get_node_or_null("GreedIslandManager")
 	if island == null:
-		_fail("Greed Island manager was not created.")
+		_fail("Greed Island manager was not created or did not enter its ready state.")
 		return
 
 	if bool(island.call("is_combat_allowed")):
