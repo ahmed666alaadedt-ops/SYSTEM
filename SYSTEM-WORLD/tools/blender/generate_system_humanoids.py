@@ -280,16 +280,56 @@ def add_walk_animation(arm):
     for fc in run_action.fcurves:
         fc.modifiers.new("CYCLES")
 
+    # Jump: anticipation, airborne tuck, landing recovery.
+    jump_action=bpy.data.actions.new("Jump_Animation")
+    arm.animation_data.action=jump_action
+    for frame, torso, thigh_angle, calf_angle in (
+        (1,0.0,0.0,0.0),(6,-0.12,-0.38,0.18),(13,0.10,0.52,-0.22),
+        (19,0.04,0.25,0.42),(25,0.0,0.0,0.0)
+    ):
+        spine=arm.pose.bones.get("spine")
+        if spine:
+            spine.rotation_mode="XYZ"; spine.rotation_euler.x=torso
+            spine.keyframe_insert(data_path="rotation_euler",frame=frame,group="Body")
+        for side in ("L","R"):
+            thigh=arm.pose.bones.get("thigh."+side)
+            calf=arm.pose.bones.get("calf."+side)
+            if thigh:
+                thigh.rotation_mode="XYZ"; thigh.rotation_euler.x=thigh_angle
+                thigh.keyframe_insert(data_path="rotation_euler",frame=frame,group="Legs")
+            if calf:
+                calf.rotation_mode="XYZ"; calf.rotation_euler.x=calf_angle
+                calf.keyframe_insert(data_path="rotation_euler",frame=frame,group="Legs")
+    for fc in jump_action.fcurves:
+        fc.modifiers.new("CYCLES")
+
+    # Unarmed strike: shoulder drive and opposing arm balance.
+    attack_action=bpy.data.actions.new("Attack_Animation")
+    arm.animation_data.action=attack_action
+    for frame, lead, support in ((1,0.0,0.0),(5,-0.25,0.12),(10,0.72,-0.30),(15,0.20,0.10),(21,0.0,0.0)):
+        for side, sign in (("R",1),("L",-1)):
+            upper=arm.pose.bones.get("upper_arm."+side)
+            fore=arm.pose.bones.get("forearm."+side)
+            if upper:
+                upper.rotation_mode="XYZ"
+                upper.rotation_euler.z=lead if sign==1 else support
+                upper.keyframe_insert(data_path="rotation_euler",frame=frame,group="Arms")
+            if fore:
+                fore.rotation_mode="XYZ"
+                fore.rotation_euler.z=-0.42 if sign==1 and frame==10 else 0.0
+                fore.keyframe_insert(data_path="rotation_euler",frame=frame,group="Arms")
+    for fc in attack_action.fcurves:
+        for kp in fc.keyframe_points: kp.interpolation="BEZIER"
+
     arm.animation_data.action=None
-    walk_track=arm.animation_data.nla_tracks.new()
-    walk_track.name="Walk_Cycle"
-    walk_track.strips.new("Walk_Cycle",1,walk_action)
-    run_track=arm.animation_data.nla_tracks.new()
-    run_track.name="Run_Cycle"
-    run_track.strips.new("Run_Cycle",1,run_action)
-    idle_track=arm.animation_data.nla_tracks.new()
-    idle_track.name="Idle_Breathing"
-    idle_track.strips.new("Idle_Breathing",1,idle_action)
+    for clip_name, clip_action in (
+        ("Walk_Cycle",walk_action),("Run_Cycle",run_action),
+        ("Idle_Breathing",idle_action),("Jump_Animation",jump_action),
+        ("Attack_Animation",attack_action)
+    ):
+        track=arm.animation_data.nla_tracks.new()
+        track.name=clip_name
+        track.strips.new(clip_name,1,clip_action)
 
 def generate_character(name, female, output):
     clear_scene()
@@ -338,7 +378,7 @@ def generate_character(name, female, output):
     root["system_character_type"]="humanoid"
     root["system_rig"]="deform_armature"
     root["system_gender"]="female" if female else "male"
-    root["system_animation_set"]="idle,walk,run"
+    root["system_animation_set"]="idle,walk,run,jump,attack"
     arm["system_joint_count"]=len(arm.data.bones)
 
     bpy.ops.object.select_all(action="DESELECT")
