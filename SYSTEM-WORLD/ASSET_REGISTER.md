@@ -277,3 +277,11 @@ asset here only after generation, GLB validation, Godot import and visual review
 - When the visible-population threat interface `notify_npc_attacked(npc_id, attacker_global_position)` is called, minors enter an evasive response and move six metres away from the attacker; adults adopt a defensive stance and retreat three metres.
 - This is a response interface for a trusted hit/threat detector, not a claim that every weapon or enemy hit pipeline is already wired to it.
 - QA checks that adults and minors cannot initiate attacks and both receive their age-appropriate defensive response.
+
+
+## Combat-to-NPC Threat Routing (2026-11-19)
+
+- Visible Baghdad civilians receive a lightweight ray-query hit area and a non-damaging `SYSTEMNPCThreatReceiver`.
+- Modern and historical melee ray attacks now include physics areas and route NPC hits to `receive_threat` before ordinary damage handling. Civilian NPCs do not lose health or counterattack through this route.
+- The visible-population manager applies the existing age-aware reaction: minors evade six metres; adults defend and retreat three metres. A short per-NPC cooldown prevents repeated hit spam.
+- This connects the defensive behavior to the modern and historical melee ray-query paths for visible pedestrians. Ranged projectiles and NPCs in other world population systems still require separate integration.
