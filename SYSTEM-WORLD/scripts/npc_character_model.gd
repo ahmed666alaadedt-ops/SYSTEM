@@ -205,7 +205,8 @@ func set_appearance(variant_index: int = 0) -> void:
 		var part_name := mesh_node.name.to_lower()
 		var is_skin := "body" in part_name or "faceskin" in part_name or "hands" in part_name or "nose" in part_name or "ear" in part_name or "cheek" in part_name or "palm" in part_name or "finger" in part_name or "upperarm" in part_name or "forearm" in part_name or "thigh" in part_name or "calf" in part_name or "foot" in part_name
 		var is_hair := "hair" in part_name
-		if is_skin or is_hair or "eyes" in part_name:
+		var is_iris := "iris" in part_name
+		if is_skin or is_hair or is_iris:
 			var material := StandardMaterial3D.new()
 			if is_skin:
 				material.albedo_color = skin_color
@@ -213,7 +214,7 @@ func set_appearance(variant_index: int = 0) -> void:
 				material.albedo_color = hair_color
 			else:
 				material.albedo_color = eye_color
-			material.roughness = 0.82 if not "eyes" in part_name else 0.28
+			material.roughness = 0.28 if is_iris else 0.82
 			mesh_node.material_override = material
 
 func _find_skeleton(root: Node) -> Skeleton3D:
