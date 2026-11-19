@@ -18,6 +18,12 @@ const MAX_MEMORY := 40
 const MAX_PUBLIC_INFO := 200
 const MAX_BACKGROUND_NPCS_PER_TICK := 32
 
+const RESTRICTED_OFFICIAL_OCCUPATIONS := [
+	"police", "policeman", "police_officer", "guard", "security",
+	"monitor", "supervisor", "administrator", "admin", "soldier", "military",
+	"شرطة", "شرطي", "حارس", "مراقب", "مشرف", "إداري", "عسكري"
+]
+
 const ALLOWED_ACTIVITIES := [
 	"daily_life", "work", "trade", "travel", "explore",
 	"gather_information", "socialize", "family", "rest"
@@ -104,8 +110,11 @@ func create_npc(
 	if display_name.strip_edges().is_empty() or age_years < 0.0:
 		return ""
 
-	# Residents under 18 are dependants/students, never employees or officials.
-	# They still participate in ordinary family and community life.
+	# NPCs are civilians, not player-mission agents or official enforcement staff.
+	# Adults may hold ordinary civilian jobs; minors remain students/dependants.
+	var occupation_key := occupation.to_lower().strip_edges()
+	if RESTRICTED_OFFICIAL_OCCUPATIONS.has(occupation_key):
+		occupation = "civilian"
 	if age_years < 18.0:
 		occupation = "student" if age_years >= 6.0 else "child_resident"
 
@@ -537,9 +546,13 @@ func load_society() -> bool:
 	# or employee occupations after this safety rule is introduced.
 	for npc_id in npcs.keys():
 		var resident: Dictionary = npcs[npc_id]
-		if float(resident.get("age_years", 0.0)) < 18.0:
-			resident["occupation"] = "student" if float(resident.get("age_years", 0.0)) >= 6.0 else "child_resident"
-			npcs[npc_id] = resident
+		var resident_age := float(resident.get("age_years", 0.0))
+		var resident_occupation := str(resident.get("occupation", "")).to_lower().strip_edges()
+		if resident_age < 18.0:
+			resident["occupation"] = "student" if resident_age >= 6.0 else "child_resident"
+		elif RESTRICTED_OFFICIAL_OCCUPATIONS.has(resident_occupation):
+			resident["occupation"] = "civilian"
+		npcs[npc_id] = resident
 	public_information.clear()
 
 	for item in payload.get("public_information", []):
