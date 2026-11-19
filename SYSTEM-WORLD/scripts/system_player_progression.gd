@@ -31,6 +31,7 @@ var available_attribute_points: int = 0
 
 var attributes: Dictionary = DEFAULT_ATTRIBUTES.duplicate(true)
 var greed_fragments: Array[String] = []
+var inventory_items: Dictionary = {}
 var world_fragments: Dictionary = {"modern": [], "historical": [], "fantasy": []}
 
 
@@ -111,6 +112,19 @@ func add_experience(amount: int, reason: String = "") -> Dictionary:
 	}
 
 
+func add_item(item_id: String, amount: int = 1) -> bool:
+	var normalized_id := item_id.strip_edges()
+	if normalized_id.is_empty() or amount <= 0:
+		return false
+	inventory_items[normalized_id] = int(inventory_items.get(normalized_id,0)) + amount
+	save_progress()
+	return true
+
+
+func get_item_count(item_id: String) -> int:
+	return int(inventory_items.get(item_id,0))
+
+
 func spend_attribute_point(attribute: String) -> bool:
 	if available_attribute_points <= 0:
 		return false
@@ -148,6 +162,7 @@ func get_progress_data() -> Dictionary:
 		"attributes": attributes.duplicate(true),
 		"greed_fragments": greed_fragments.duplicate(),
 		"greed_fragments_count": greed_fragments.size(),
+		"inventory_items": inventory_items.duplicate(true),
 		"greed_island_seal_ready": bool(get_world_fragment_data().get("all_world_keys_ready", false)),
 		"world_keys": get_world_fragment_data()
 	}
@@ -176,6 +191,7 @@ func save_progress() -> void:
 		greed_fragments.duplicate()
 	)
 	config.set_value("world_keys", "fragments", world_fragments.duplicate(true))
+	config.set_value("inventory", "items", inventory_items.duplicate(true))
 
 	var error := config.save(SAVE_PATH)
 
@@ -218,6 +234,13 @@ func load_progress() -> void:
 		var normalized_id := str(fragment_id)
 		if not normalized_id.is_empty() and not greed_fragments.has(normalized_id):
 			greed_fragments.append(normalized_id)
+
+	var saved_inventory: Dictionary = config.get_value("inventory", "items", {})
+	inventory_items = {}
+	for item_id in saved_inventory.keys():
+		var item_count := maxi(0,int(saved_inventory[item_id]))
+		if item_count > 0:
+			inventory_items[str(item_id)] = item_count
 
 	var saved_world_fragments: Dictionary = config.get_value("world_keys", "fragments", {})
 	world_fragments = {"modern": [], "historical": [], "fantasy": []}
