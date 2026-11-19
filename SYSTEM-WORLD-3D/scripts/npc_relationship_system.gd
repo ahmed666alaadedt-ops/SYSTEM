@@ -22,7 +22,7 @@ func register_resident(
 	resident_profiles[resident_id] = {
 		"id": resident_id,
 		"name": resident_name,
-		"age": maxi(age, 18),
+		"age": maxi(age, 0),
 		"personality": personality,
 		"family_id": family_id,
 		"alive": true,
@@ -30,7 +30,7 @@ func register_resident(
 		"parents": [],
 		"children": [],
 		"generation": 1,
-		"life_stage": "adult"
+		"life_stage": "child" if age < 18 else ("elder" if age >= 60 else "adult")
 	}
 
 	if not families.has(family_id):
