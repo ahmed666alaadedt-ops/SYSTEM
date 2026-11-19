@@ -26,6 +26,9 @@ func setup(player_node: CharacterBody3D, manager: Node) -> void:
 	world_manager = manager
 	_create_companion("miyar")
 	_create_companion("adam")
+	if is_instance_valid(player):
+		miyar.global_position = player.global_position + player.global_transform.basis * MIYAR_OFFSET
+		adam.global_position = player.global_position + player.global_transform.basis * ADAM_OFFSET
 	_create_assistant_interface()
 	_update_world_wardrobes()
 	_show_welcome("miyar")
