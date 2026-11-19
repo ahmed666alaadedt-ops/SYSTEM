@@ -150,8 +150,15 @@ func _update_resident(npc_id: String, hours: float) -> void:
 	var location := str(npc.get("home_location", "baghdad_residential_area"))
 	match action:
 		"work":
-			location = str(npc.get("employer_id", "baghdad_workplace"))
-			npc["wallet"] = float(npc.get("wallet", 0.0)) + float(npc.get("daily_wage", 10.0)) * hours / 8.0
+			# Defensive guard: a minor can never be sent to an employer or paid wages.
+			if float(npc.get("age_years", 0.0)) < 18.0:
+				action = "school" if float(society_manager.get("simulation_hours")) >= 8.0 and fposmod(float(society_manager.get("simulation_hours")), 24.0) < 15.0 else "family"
+				location = "baghdad_school" if action == "school" else str(npc.get("home_location", "baghdad_residential_area"))
+			else:
+				location = str(npc.get("employer_id", "baghdad_workplace"))
+				npc["wallet"] = float(npc.get("wallet", 0.0)) + float(npc.get("daily_wage", 10.0)) * hours / 8.0
+		"school":
+			location = "baghdad_school"
 		"eat":
 			location = "baghdad_market_or_cafe"
 			needs["hunger"] = minf(100.0, float(needs["hunger"]) + hours * 8.0)
@@ -187,6 +194,14 @@ func _choose_action(npc: Dictionary, needs: Dictionary) -> String:
 		return "socialize"
 	if hour >= 22.0 or hour < 6.0:
 		return "sleep"
+	# Minors attend school during daytime and never enter the employment schedule,
+	# even if an older save contains an invalid occupation label.
+	if float(npc.get("age_years", 0.0)) < 18.0:
+		if hour >= 8.0 and hour < 15.0:
+			return "school"
+		if hour >= 15.0 and hour < 20.0:
+			return "family" if not str(npc.get("parent_ids", [])).is_empty() else "socialize"
+		return "daily_life"
 	if hour >= 8.0 and hour < 16.0 and str(npc.get("occupation", "")) != "unemployed":
 		return "work"
 	if hour >= 16.0 and hour < 20.0:
@@ -202,6 +217,8 @@ func _activity_for_action(action: String) -> String:
 	match action:
 		"work":
 			return "work"
+		"school":
+			return "daily_life"
 		"socialize":
 			return "socialize"
 		"family":
