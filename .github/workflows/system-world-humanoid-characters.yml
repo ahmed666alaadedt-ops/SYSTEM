@@ -32,7 +32,7 @@ jobs:
 
       - name: Verify Blender
         run: blender --version
-      - name: Generate male and female rigged characters
+      - name: Generate adult, elder, and child rigged characters
         run: |
           mkdir -p SYSTEM-WORLD-3D/assets/characters
           blender --background --factory-startup --python-exit-code 1 --python SYSTEM-WORLD/tools/blender/generate_system_humanoids.py -- --output SYSTEM-WORLD-3D/assets/characters
@@ -41,8 +41,16 @@ jobs:
           python3 SYSTEM-WORLD/tools/validate_glb.py --self-test
           test -s SYSTEM-WORLD-3D/assets/characters/SYSTEM_Humanoid_Male.glb
           test -s SYSTEM-WORLD-3D/assets/characters/SYSTEM_Humanoid_Female.glb
+          test -s SYSTEM-WORLD-3D/assets/characters/SYSTEM_Humanoid_Elder_Male.glb
+          test -s SYSTEM-WORLD-3D/assets/characters/SYSTEM_Humanoid_Elder_Female.glb
+          test -s SYSTEM-WORLD-3D/assets/characters/SYSTEM_Humanoid_Child_Male.glb
+          test -s SYSTEM-WORLD-3D/assets/characters/SYSTEM_Humanoid_Child_Female.glb
           python3 SYSTEM-WORLD/tools/validate_glb.py SYSTEM-WORLD-3D/assets/characters/SYSTEM_Humanoid_Male.glb --require-skin --require-animation
           python3 SYSTEM-WORLD/tools/validate_glb.py SYSTEM-WORLD-3D/assets/characters/SYSTEM_Humanoid_Female.glb --require-skin --require-animation
+          python3 SYSTEM-WORLD/tools/validate_glb.py SYSTEM-WORLD-3D/assets/characters/SYSTEM_Humanoid_Elder_Male.glb --require-skin --require-animation
+          python3 SYSTEM-WORLD/tools/validate_glb.py SYSTEM-WORLD-3D/assets/characters/SYSTEM_Humanoid_Elder_Female.glb --require-skin --require-animation
+          python3 SYSTEM-WORLD/tools/validate_glb.py SYSTEM-WORLD-3D/assets/characters/SYSTEM_Humanoid_Child_Male.glb --require-skin --require-animation
+          python3 SYSTEM-WORLD/tools/validate_glb.py SYSTEM-WORLD-3D/assets/characters/SYSTEM_Humanoid_Child_Female.glb --require-skin --require-animation
           mkdir -p SYSTEM-WORLD/assets/characters
           cp SYSTEM-WORLD-3D/assets/characters/*.glb SYSTEM-WORLD/assets/characters/
           ls -lh SYSTEM-WORLD-3D/assets/characters SYSTEM-WORLD/assets/characters
