@@ -158,8 +158,28 @@ func _validate_historical_world(world_manager: Node) -> void:
 		if historical.get_node_or_null(landmark_id) == null:
 			_fail("Historical world is missing landmark: " + landmark_id)
 
+	var resident_visuals: Dictionary = historical.get("historical_resident_visuals")
+	var imported_historical_residents := 0
+	for npc_id in resident_visuals:
+		var visual := resident_visuals[npc_id] as Node
+		if visual == null or not is_instance_valid(visual):
+			_fail("Historical resident has no humanoid visual: " + str(npc_id))
+			continue
+		var imported_model := visual.get("imported_model") as Node3D
+		if imported_model == null or not is_instance_valid(imported_model):
+			_fail("Historical resident did not load a GLB model: " + str(npc_id))
+			continue
+		imported_historical_residents += 1
+	if imported_historical_residents != 6:
+		_fail("Historical world expected 6 imported GLB residents; found %d." % imported_historical_residents)
+
 	_scan_invalid_mesh_nodes(active_root, "historical")
-	print("HISTORICAL WORLD QA: six landmark scenes present.")
+	print(
+		"HISTORICAL WORLD QA: landmarks=%d, GLB_residents=%d" % [
+			REQUIRED_HISTORICAL_LANDMARKS.size(),
+			imported_historical_residents
+		]
+	)
 
 
 func _validate_fantasy_world(world_manager: Node, map_manager: Node) -> void:
