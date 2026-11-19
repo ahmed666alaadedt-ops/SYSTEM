@@ -10,11 +10,11 @@ const UndergroundGuardianScript = preload("res://scripts/underground_guardian.gd
 ## This is a first procedural exploration layout, not a complete navigable quest system.
 
 const SITE_DATA := [
-	{"name":"BaghdadOldSouk","label":"Baghdad Heritage Souk","x":18.0,"z":24.0,"kind":"market"},
-	{"name":"BaghdadRiverCatacombs","label":"River Catacombs","x":-42.0,"z":72.0,"kind":"catacomb"},
-	{"name":"ParisStonePassages","label":"Old Stone Passages","x":-300.0,"z":110.0,"kind":"catacomb"},
-	{"name":"CairoBuriedBazaar","label":"Buried Bazaar","x":-80.0,"z":330.0,"kind":"market"},
-	{"name":"LondonVaultMarket","label":"Vault Market","x":-420.0,"z":-90.0,"kind":"market"}
+	{"city":"Baghdad","name":"BaghdadOldSouk","label":"Baghdad Heritage Souk","x":18.0,"z":24.0,"kind":"market"},
+	{"city":"Baghdad","name":"BaghdadRiverCatacombs","label":"River Catacombs","x":-42.0,"z":72.0,"kind":"catacomb"},
+	{"city":"Paris","name":"ParisStonePassages","label":"Old Stone Passages","x":-300.0,"z":110.0,"kind":"catacomb"},
+	{"city":"Cairo","name":"CairoBuriedBazaar","label":"Buried Bazaar","x":-80.0,"z":330.0,"kind":"market"},
+	{"city":"London","name":"LondonVaultMarket","label":"Vault Market","x":-420.0,"z":-90.0,"kind":"market"}
 ]
 
 var _stone: StandardMaterial3D
@@ -23,16 +23,67 @@ var _dark: StandardMaterial3D
 var _gold: StandardMaterial3D
 var _wood: StandardMaterial3D
 var _terrain: Node
+var _region_manager: Node
+var _active_city_name := ""
+var _city_check_clock := 0.0
 
 
 func _ready() -> void:
 	name = "UndergroundHeritageNetwork"
 	_terrain = get_parent().get_node_or_null("ModernContinent")
+	_region_manager = get_parent().get_node_or_null("ModernWorldRegionManager")
 	_create_materials()
+	_active_city_name = _find_nearest_city_name(Vector3.ZERO)
+	_build_active_city_sites()
+	print("SYSTEM WORLD: underground heritage sites streamed for ", _active_city_name)
+
+
+func _process(delta: float) -> void:
+	_city_check_clock += delta
+	if _city_check_clock < 4.0:
+		return
+	_city_check_clock = 0.0
+	if not is_instance_valid(_region_manager):
+		return
+	var player := get_parent().get_node_or_null("Player") as Node3D
+	var player_position := player.global_position if is_instance_valid(player) else Vector3.ZERO
+	var nearest_city := _find_nearest_city_name(player_position)
+	if nearest_city != _active_city_name:
+		_rebuild_active_city_sites(nearest_city)
+
+
+func _find_nearest_city_name(position: Vector3) -> String:
+	if not is_instance_valid(_region_manager):
+		return "Baghdad"
+	var city_names: Array = _region_manager.call("get_city_names")
+	var nearest_name := "Baghdad"
+	var nearest_distance := INF
+	for city_value in city_names:
+		var city_name := str(city_value)
+		var anchor: Vector3 = _region_manager.call("get_city_anchor", city_name)
+		if anchor == Vector3.INF:
+			continue
+		var distance := Vector2(position.x - anchor.x, position.z - anchor.z).length_squared()
+		if distance < nearest_distance:
+			nearest_distance = distance
+			nearest_name = city_name
+	return nearest_name
+
+
+func _build_active_city_sites() -> void:
 	for site in SITE_DATA:
-		_build_site(site)
-	_build_baghdad_link()
-	print("SYSTEM WORLD: underground heritage passages generated: ", SITE_DATA.size())
+		if str(site.get("city", "Baghdad")) == _active_city_name:
+			_build_site(site)
+	if _active_city_name == "Baghdad":
+		_build_baghdad_link()
+
+
+func _rebuild_active_city_sites(city_name: String) -> void:
+	for child in get_children():
+		child.queue_free()
+	_active_city_name = city_name
+	_build_active_city_sites()
+	print("SYSTEM WORLD: underground heritage area changed to ", _active_city_name)
 
 
 func _create_materials() -> void:
