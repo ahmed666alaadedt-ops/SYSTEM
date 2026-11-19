@@ -154,9 +154,31 @@ func _collect_mesh_nodes(root: Node) -> Array[Node]:
 	return result
 
 func get_character_status() -> Dictionary:
+	var skeleton_count := 0
+	var mesh_count := 0
+	var clip_names: Array[String] = []
+	if is_instance_valid(imported_model):
+		for node in _collect_skeleton_nodes(imported_model):
+			skeleton_count += 1
+		for node in _collect_mesh_nodes(imported_model):
+			mesh_count += 1
+		if is_instance_valid(animation_player):
+			for clip_name in animation_player.get_animation_list():
+				clip_names.append(str(clip_name))
 	return {
 		"model_source": "glb" if is_instance_valid(imported_model) else "procedural_fallback",
 		"model_path": selected_model_path,
 		"has_animation_player": is_instance_valid(animation_player),
+		"skeleton_count": skeleton_count,
+		"mesh_instance_count": mesh_count,
+		"animation_clips": clip_names,
 		"activity": current_activity
 	}
+
+func _collect_skeleton_nodes(root: Node) -> Array[Node]:
+	var result: Array[Node] = []
+	for child in root.get_children():
+		if child is Skeleton3D:
+			result.append(child)
+		result.append_array(_collect_skeleton_nodes(child))
+	return result
