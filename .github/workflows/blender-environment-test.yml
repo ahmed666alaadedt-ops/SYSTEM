@@ -1,6 +1,13 @@
 name: SYSTEM WORLD Blender Environment Pipeline
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - "SYSTEM-WORLD/tools/blender/**"
+      - "SYSTEM-WORLD/tools/validate_glb.py"
+      - ".github/workflows/blender-environment-test.yml"
   workflow_dispatch:
     inputs:
       world:
@@ -28,6 +35,9 @@ jobs:
     name: Generate BLEND and GLB assets
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    env:
+      SYSTEM_WORLD_TARGET: ${{ inputs.world || 'all' }}
+      SYSTEM_WORLD_SEED: ${{ inputs.seed || '20261119' }}
     steps:
       - name: Checkout SYSTEM repository
         uses: actions/checkout@v4
@@ -45,15 +55,15 @@ jobs:
       - name: Generate and validate requested world environments
         run: |
           python3 SYSTEM-WORLD/tools/blender/run_environment_pipeline_test.py \
-            --world "${{ inputs.world }}" \
-            --seed "${{ inputs.seed }}" \
+            --world "$SYSTEM_WORLD_TARGET" \
+            --seed "$SYSTEM_WORLD_SEED" \
             --segments 48
 
       - name: Upload generated environment assets and report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: system-world-environments-${{ inputs.world }}-${{ inputs.seed }}
+          name: system-world-environments-${{ env.SYSTEM_WORLD_TARGET }}-${{ env.SYSTEM_WORLD_SEED }}
           path: SYSTEM-WORLD/generated/environment_tiles/
           if-no-files-found: warn
           retention-days: 14
