@@ -184,7 +184,8 @@ asset here only after generation, GLB validation, Godot import and visual review
 
 - `assets/characters/CHARACTER_CUSTOMIZATION_PROFILE.md` — documents the profile fields currently supported by the canonical NPC loader: age group, body type, height, skin tone, hair color, eye color, face shape, and job-based outfit palette.
 - `scripts/npc_character_model.gd` — now selects adult/elder/child male/female GLB paths and applies profile-based body proportions, skin/hair/iris colors, and head-shape scaling. The procedural fallback remains available when a GLB is missing.
-- Runtime customization is partial: face morphs are head-bone scale presets, not independent facial morph targets; hairstyle switching, facial blendshapes, and world-specific clothing meshes remain pending.
+- `tools/validate_child_character_safety.gd` — headless QA for civilian-only child profiles and blocked child combat activities; confirms adult combat requests remain available.
+- Runtime customization is partial: face morphs are head-bone scale presets, not independent facial morph targets; hairstyle switching, facial blendshapes, and world-specific clothing meshes remain pending. Child profiles are now forced to civilian occupation in imported and fallback models, and combat activity requests resolve to idle.
 
 
 - Facial rig extension: `tools/blender/generate_system_humanoids.py` adds `jaw`, `eye.L/R`, and `brow.L/R` control bones and assigns mouth, eye, and brow mesh groups to them.
