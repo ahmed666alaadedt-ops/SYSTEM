@@ -24,6 +24,7 @@ var initialized := false
 
 var town_square := Vector3(0, 0, 0)
 var market_position := Vector3(7, 0, 4)
+var school_position := Vector3(-8, 0, 7)
 
 
 func setup(world_root: Node3D) -> void:
@@ -67,11 +68,11 @@ func _create_residents() -> void:
 		{"name": "علي", "gender": "male", "job": "خباز", "family": "family_6", "age": 34, "personality": "كريم", "home": Vector3(24, 0, 4), "work": Vector3(10, 0, -3)},
 		{"name": "جد سارة", "job": "متقاعد", "family": "family_1", "age": 68, "gender": "male", "personality": "حكيم", "home": Vector3(-17, 0, -15), "work": Vector3(-17, 0, -15)},
 		{"name": "جدة عمر", "job": "متقاعدة", "family": "family_1", "age": 64, "gender": "female", "personality": "حنونة", "home": Vector3(-17, 0, -15), "work": Vector3(-17, 0, -15)},
-		{"name": "ليان", "job": "طالبة", "family": "family_2", "age": 10, "gender": "female", "personality": "فضولية", "home": Vector3(18, 0, -13), "work": Vector3(18, 0, -13)},
-		{"name": "حيدر", "job": "طالب", "family": "family_2", "age": 13, "gender": "male", "personality": "مرح", "home": Vector3(18, 0, -13), "work": Vector3(18, 0, -13)},
+		{"name": "ليان", "job": "طالبة", "family": "family_2", "age": 10, "gender": "female", "personality": "فضولية", "home": Vector3(18, 0, -13), "work": school_position},
+		{"name": "حيدر", "job": "طالب", "family": "family_2", "age": 13, "gender": "male", "personality": "مرح", "home": Vector3(18, 0, -13), "work": school_position},
 		{"name": "أبو نور", "job": "متقاعد", "family": "family_3", "age": 72, "gender": "male", "personality": "صبور", "home": Vector3(-19, 0, 16), "work": Vector3(-19, 0, 16)},
-		{"name": "مريم الصغيرة", "job": "طالبة", "family": "family_4", "age": 8, "gender": "female", "personality": "مرحة", "home": Vector3(19, 0, 17), "work": Vector3(19, 0, 17)},
-		{"name": "يوسف الصغير", "job": "طالب", "family": "family_5", "age": 12, "gender": "male", "personality": "هادئ", "home": Vector3(-23, 0, -5), "work": Vector3(-23, 0, -5)},
+		{"name": "مريم الصغيرة", "job": "طالبة", "family": "family_4", "age": 8, "gender": "female", "personality": "مرحة", "home": Vector3(19, 0, 17), "work": school_position},
+		{"name": "يوسف الصغير", "job": "طالب", "family": "family_5", "age": 12, "gender": "male", "personality": "هادئ", "home": Vector3(-23, 0, -5), "work": school_position},
 		{"name": "أم هند", "job": "متقاعدة", "family": "family_6", "age": 66, "gender": "female", "personality": "اجتماعية", "home": Vector3(24, 0, 4), "work": Vector3(24, 0, 4)}
 	]
 
