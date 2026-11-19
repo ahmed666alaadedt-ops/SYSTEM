@@ -226,8 +226,8 @@ def main() -> int:
         report = inspect_glb(args.glb)
         if args.require_skin and (report["skin_count"] < 1 or report["joint_count"] < 10):
             raise GLBValidationError("rigged character must contain a skin with at least 10 joints")
-        if args.require_animation and report["animation_count"] < 1:
-            raise GLBValidationError("rigged character must contain at least one animation")
+        if args.require_animation and report["animation_count"] < 3:
+            raise GLBValidationError("humanoid must contain idle, walk and run animation clips")
         print(json.dumps(report, indent=2))
         return 0
     except (OSError, GLBValidationError, AssertionError) as exc:
