@@ -42,6 +42,8 @@ var wanted_level := 0
 
 var society_manager: Node
 var owner_registry: Dictionary = {}
+var active_city_name := ""
+var city_check_clock := 0.0
 
 func setup(p_society_manager: Node) -> void:
 	society_manager = p_society_manager
@@ -56,37 +58,112 @@ func _spawn_civilian_vehicle_fleet() -> void:
 	if region_manager == null or not region_manager.has_method("get_city_anchor"):
 		push_warning("SYSTEM Crime: city region manager is unavailable.")
 		return
-	for city_name in CITY_NAMES:
+	active_city_name = _find_nearest_city_name(Vector3.ZERO)
+	_spawn_city_vehicle_fleet(active_city_name)
+
+
+func _find_nearest_city_name(position: Vector3) -> String:
+	if not is_instance_valid(region_manager):
+		return "Baghdad"
+	var city_names: Array = region_manager.call("get_city_names")
+	var nearest_name := "Baghdad"
+	var nearest_distance := INF
+	for city_value in city_names:
+		var city_name := str(city_value)
 		var anchor: Vector3 = region_manager.call("get_city_anchor", city_name)
 		if anchor == Vector3.INF:
 			continue
-		for slot in range(3):
-			var vehicle_id := "npc_car_%05d" % next_vehicle_number
-			next_vehicle_number += 1
-			var owner_key: String = city_name.to_lower().replace(" ", "_") + "_" + str(slot + 1)
-			var owner_name := _citizen_name(city_name, slot)
-			var owner_id := _get_or_create_owner_npc(owner_key, owner_name, city_name)
-			var vehicle := NPCVehicleScript.new()
-			vehicle.configure(vehicle_id, owner_id, owner_name, city_name, self, anchor, slot)
-			if society_manager != null and society_manager.has_method("assign_vehicle_to_npc"):
-				society_manager.call("assign_vehicle_to_npc", owner_id, vehicle_id)
-			vehicle.position = anchor + Vector3(float(slot - 1) * 9.0, 0.05, 18.0 + float(slot) * 7.0)
-			_build_vehicle_visual(vehicle, slot)
-			add_child(vehicle)
-			vehicles[vehicle_id] = {
-				"node": vehicle,
-				"owner_npc_id": owner_id,
-				"owner_name": owner_name,
-				"city_name": city_name,
-				"stolen": false,
-				"reported": false,
-				"recovered": false,
-				"witness_count": 1 + (slot % 3),
-				"vehicle_class": ["sedan", "hatchback", "utility_suv"][slot]
-			}
+		var distance := Vector2(position.x - anchor.x, position.z - anchor.z).length_squared()
+		if distance < nearest_distance:
+			nearest_distance = distance
+			nearest_name = city_name
+	return nearest_name
+
+
+func _find_city_vehicle_id(city_name: String, slot: int) -> String:
+	for vehicle_id in vehicles:
+		var record: Dictionary = vehicles[vehicle_id]
+		if str(record.get("city_name", "")) == city_name and int(record.get("slot", -1)) == slot:
+			return str(vehicle_id)
+	return ""
+
+
+func _spawn_city_vehicle_fleet(city_name: String) -> void:
+	var anchor: Vector3 = region_manager.call("get_city_anchor", city_name)
+	if anchor == Vector3.INF:
+		return
+	var city_names: Array = region_manager.call("get_city_names")
+	var city_index := city_names.find(city_name)
+	if city_index < 0:
+		city_index = 0
+	for slot in range(3):
+		var existing_id := _find_city_vehicle_id(city_name, slot)
+		if not existing_id.is_empty():
+			var existing: Dictionary = vehicles[existing_id]
+			if not is_instance_valid(existing.get("node")):
+				_attach_vehicle_visual(existing_id, existing)
+			continue
+		var vehicle_id := "npc_car_%05d" % next_vehicle_number
+		next_vehicle_number += 1
+		var owner_key: String = city_name.to_lower().replace(" ", "_") + "_" + str(slot + 1)
+		var owner_name := _citizen_name(city_name, slot)
+		var owner_id := _get_or_create_owner_npc(owner_key, owner_name, city_name)
+		var record := {
+			"node": null,
+			"owner_npc_id": owner_id,
+			"owner_name": owner_name,
+			"city_name": city_name,
+			"anchor": anchor,
+			"slot": slot,
+			"stolen": false,
+			"reported": false,
+			"recovered": false,
+			"witness_count": 1 + (slot % 3),
+			"vehicle_class": ["sedan", "hatchback", "utility_suv"][slot]
+		}
+		vehicles[vehicle_id] = record
+		if society_manager != null and society_manager.has_method("assign_vehicle_to_npc"):
+			society_manager.call("assign_vehicle_to_npc", owner_id, vehicle_id)
+		_attach_vehicle_visual(vehicle_id, record)
 	if society_manager != null and society_manager.has_method("save_society"):
 		society_manager.call("save_society")
 	_save_crime_state()
+
+
+func _attach_vehicle_visual(vehicle_id: String, record: Dictionary) -> void:
+	var anchor: Vector3 = record.get("anchor", Vector3.ZERO)
+	var slot := int(record.get("slot", 0))
+	var vehicle := NPCVehicleScript.new()
+	vehicle.configure(
+		vehicle_id,
+		str(record.get("owner_npc_id", "")),
+		str(record.get("owner_name", "Citizen")),
+		str(record.get("city_name", active_city_name)),
+		self,
+		anchor,
+		slot
+	)
+	vehicle.position = anchor + Vector3(float(slot - 1) * 9.0, 0.05, 18.0 + float(slot) * 7.0)
+	_build_vehicle_visual(vehicle, slot)
+	add_child(vehicle)
+	record["node"] = vehicle
+	vehicles[vehicle_id] = record
+
+
+func _stream_city_vehicle_fleet(city_name: String) -> void:
+	active_city_name = city_name
+	for vehicle_id in vehicles.keys():
+		var record: Dictionary = vehicles[vehicle_id]
+		var record_city := str(record.get("city_name", ""))
+		var keep_active := record_city == active_city_name or bool(record.get("stolen", false)) or bool(record.get("reported", false))
+		if not keep_active:
+			var old_vehicle := record.get("node") as Node3D
+			if is_instance_valid(old_vehicle):
+				old_vehicle.queue_free()
+			record["node"] = null
+			vehicles[vehicle_id] = record
+	_spawn_city_vehicle_fleet(active_city_name)
+
 
 func _get_or_create_owner_npc(owner_key: String, owner_name: String, city_name: String) -> String:
 	var saved_id := str(owner_registry.get(owner_key, ""))
@@ -268,6 +345,14 @@ func _dispatch_police(vehicle_id: String) -> void:
 	police_pursuit_started.emit(vehicle_id, str(record["city_name"]))
 
 func _process(delta: float) -> void:
+	city_check_clock += delta
+	if city_check_clock >= 4.0:
+		city_check_clock = 0.0
+		var player := get_parent().get_node_or_null("Player") as Node3D
+		var player_position := player.global_position if is_instance_valid(player) else Vector3.ZERO
+		var nearest_city := _find_nearest_city_name(player_position)
+		if nearest_city != active_city_name:
+			_stream_city_vehicle_fleet(nearest_city)
 	for index in range(police_units.size() - 1, -1, -1):
 		var unit: Dictionary = police_units[index]
 		var police := unit.get("node") as Node3D
@@ -317,12 +402,17 @@ func get_vehicle_record(vehicle_id: String) -> Dictionary:
 	return record
 
 func get_crime_status() -> Dictionary:
+	var active_vehicle_count := 0
+	for record in vehicles.values():
+		if is_instance_valid(record.get("node")):
+			active_vehicle_count += 1
 	return {
 		"wanted_level": wanted_level,
 		"active_pursuits": police_units.size(),
 		"record_count": crime_records.size(),
 		"vehicle_count": vehicles.size(),
-		"moving_npc_vehicles": vehicles.size(),
+		"moving_npc_vehicles": active_vehicle_count,
+		"active_city": active_city_name,
 		"save_mode": "local_prototype"
 	}
 
