@@ -229,6 +229,42 @@ func _run_validation() -> void:
 			push_error("SYSTEM PLAYER QA: player hairstyle geometry was not generated: " + player_style)
 			quit(1)
 			return
+	var modern_cut_tests := {
+		"Fade": "fade", "Low Fade": "fade", "Mid Fade": "fade",
+		"High Fade": "fade", "Taper Fade": "fade", "Undercut": "undercut",
+		"Buzz Cut": "short", "Crew Cut": "short", "Textured Crop": "quiff",
+		"French Crop": "short", "Quiff": "quiff", "Pompadour": "quiff",
+		"Slick Back": "slick_back", "Side Part": "slick_back"
+	}
+	for cut_name in modern_cut_tests.keys():
+		player_test.imported_character.call("set_hair_style", cut_name)
+		var cut_status: Dictionary = player_test.imported_character.call("get_character_status")
+		if str(cut_status.get("hair_style", "")) != str(modern_cut_tests[cut_name]) or int(cut_status.get("hairstyle_mesh_count", 0)) < 1:
+			push_error("SYSTEM PLAYER QA: modern men's cut did not produce its expected geometry: " + cut_name)
+			quit(1)
+			return
+
+	var fallback_script = load("res://scripts/npc_humanoid_visual.gd")
+	if fallback_script == null:
+		push_error("SYSTEM PLAYER QA: procedural 3D fallback visual failed to load")
+		quit(1)
+		return
+	var fallback_test = fallback_script.new()
+	get_root().add_child(fallback_test)
+	await process_frame
+	fallback_test.call("configure", {"name": "Men Hair Fallback QA", "appearance": "ذكر", "hair_style": "Fade", "hair_color": "أزرق داكن"})
+	for cut_name in modern_cut_tests.keys():
+		fallback_test.call("set_hair_style", cut_name)
+		var runtime_hair_count := 0
+		for mesh_node in fallback_test.find_children("*", "MeshInstance3D", true, false):
+			if str(mesh_node.name).begins_with("RuntimeHair"):
+				runtime_hair_count += 1
+		if runtime_hair_count < 1:
+			push_error("SYSTEM PLAYER QA: procedural fallback did not build hair geometry for " + cut_name)
+			quit(1)
+			return
+	fallback_test.queue_free()
+	print("SYSTEM PLAYER QA PASS: modern men's cuts map to distinct live hair styles and procedural fallback geometry")
 	print("SYSTEM PLAYER QA PASS: saved-profile input reaches live male 3D avatar with long hair and full palette")
 	player_test.queue_free()
 
