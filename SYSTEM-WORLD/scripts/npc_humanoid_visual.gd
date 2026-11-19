@@ -69,6 +69,7 @@ func set_hair_style(style_id: String) -> void:
 	match style:
 		"long", "طويل", "very_long", "طويل_جدا": hair_style = "long"
 		"medium", "متوسط": hair_style = "medium"
+		"layered", "مدرج": hair_style = "layered"
 		"curly", "مجعد", "كيرلي", "afro", "أفرو": hair_style = "curly"
 		"braided", "braid", "ضفيرة", "مضفور": hair_style = "braided"
 		"ponytail", "pony_tail", "ذيل_حصان": hair_style = "ponytail"
@@ -95,7 +96,7 @@ func set_hair_style(style_id: String) -> void:
 			_add_runtime_hair_capsule("RuntimeHairLongLeft", Vector3(-0.15, -0.03, 0.035), 0.035, 0.38)
 			_add_runtime_hair_capsule("RuntimeHairLongRight", Vector3(0.15, -0.03, 0.035), 0.035, 0.38)
 			_add_runtime_hair_capsule("RuntimeHairLongBack", Vector3(0.0, -0.03, 0.13), 0.045, 0.42)
-		"medium", "bob":
+		"medium", "bob", "layered":
 			_add_runtime_hair_capsule("RuntimeHairMediumLeft", Vector3(-0.14, 0.08, 0.035), 0.035, 0.25)
 			_add_runtime_hair_capsule("RuntimeHairMediumRight", Vector3(0.14, 0.08, 0.035), 0.035, 0.25)
 		"curly":
