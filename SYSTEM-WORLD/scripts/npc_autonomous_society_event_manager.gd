@@ -58,11 +58,14 @@ func _living_adults(city_name: String = "") -> Array[String]:
 			continue
 		if bool(npc.get("jailed", false)):
 			continue
-		var npc_city := str(npc.get("city_name", npc.get("city_id", "Baghdad")))
-		if not city_name.is_empty() and not npc_city.to_lower().contains(city_name.to_lower()):
+		var npc_city := _normalize_city_name(str(npc.get("city_name", npc.get("city_id", "Baghdad"))))
+		if not city_name.is_empty() and npc_city != _normalize_city_name(city_name):
 			continue
 		result.append(npc_id)
 	return result
+
+func _normalize_city_name(value: String) -> String:
+	return value.to_lower().replace("city_", "").replace("_", " ").strip_edges()
 
 func _try_create_civilian_event() -> void:
 	if autonomous_case_ids.size() >= MAX_OPEN_AUTONOMOUS_CASES:
