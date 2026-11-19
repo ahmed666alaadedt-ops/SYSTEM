@@ -700,7 +700,11 @@ func _collect_mesh_nodes(root: Node) -> Array[Node]:
 	var result: Array[Node] = []
 	for child in root.get_children():
 		if child is MeshInstance3D:
-			result.append(child)
+			var mesh_node := child as MeshInstance3D
+			# Imported glTF hierarchies can contain transform/helper mesh nodes
+			# without geometry. Never apply runtime materials to a null mesh.
+			if mesh_node.mesh != null:
+				result.append(mesh_node)
 		result.append_array(_collect_mesh_nodes(child))
 	return result
 
