@@ -9,9 +9,22 @@ signal npc_vehicle_stolen(vehicle_id: String, owner_npc_id: String, city_name: S
 signal theft_reported(vehicle_id: String, city_name: String)
 signal police_pursuit_started(vehicle_id: String, city_name: String)
 signal stolen_vehicle_recovered(vehicle_id: String, city_name: String)
+signal crime_case_opened(case_id: String, crime_type: String, city_name: String)
+signal crime_case_updated(case_id: String, status: String)
+signal civilian_protection_requested(npc_id: String, reason: String)
 
 const NPCVehicleScript = preload("res://scripts/system_npc_vehicle.gd")
 const SAVE_PATH := "user://system_city_crime_state.cfg"
+const CIVILIAN_CRIME_TYPES := [
+	"theft", "robbery", "assault", "murder", "sexual_assault",
+	"harassment", "stalking", "kidnapping", "human_trafficking",
+	"exploitation", "fraud", "vandalism", "arson", "corruption",
+	"domestic_abuse", "child_abuse"
+]
+const PROTECTION_CRIMES := [
+	"sexual_assault", "human_trafficking", "exploitation",
+	"domestic_abuse", "child_abuse", "kidnapping"
+]
 const CITY_NAMES := [
 	"New York", "London", "Paris", "Baghdad", "Moscow", "Cairo",
 	"New Delhi", "Guangzhou", "Seoul", "Tokyo", "Singapore",
@@ -326,3 +339,210 @@ func _load_crime_state() -> void:
 	wanted_level = clampi(int(config.get_value("crime", "wanted_level", 0)), 0, 5)
 	crime_records = config.get_value("crime", "records", [])
 	owner_registry = config.get_value("crime", "owner_registry", {})
+
+
+
+# --------------------------------------------------
+# CIVILIAN CRIME, JUSTICE AND PROTECTION
+# --------------------------------------------------
+
+## Creates a non-graphic crime record. Serious incidents are represented
+## through evidence, witness reports, investigation, support and legal outcomes.
+func report_civilian_crime(
+	crime_type: String,
+	city_name: String,
+	location_id: String,
+	suspect_npc_id: String = "",
+	victim_npc_id: String = "",
+	witness_count: int = 0,
+	evidence_tags: Array[String] = []
+) -> Dictionary:
+	if not CIVILIAN_CRIME_TYPES.has(crime_type):
+		return {"success": false, "reason": "UNKNOWN_CRIME_TYPE"}
+	if city_name.strip_edges().is_empty() or location_id.strip_edges().is_empty():
+		return {"success": false, "reason": "LOCATION_REQUIRED"}
+	if society_manager == null:
+		return {"success": false, "reason": "SOCIETY_MANAGER_UNAVAILABLE"}
+	if not suspect_npc_id.is_empty() and society_manager.call("get_npc", suspect_npc_id).is_empty():
+		return {"success": false, "reason": "SUSPECT_NOT_FOUND"}
+	if not victim_npc_id.is_empty() and society_manager.call("get_npc", victim_npc_id).is_empty():
+		return {"success": false, "reason": "VICTIM_NOT_FOUND"}
+
+	var case_id := "case_%06d" % (crime_records.size() + 1)
+	var severity := _crime_severity(crime_type)
+	var case_record := {
+		"case_id": case_id,
+		"type": crime_type,
+		"city_name": city_name,
+		"location_id": location_id,
+		"suspect_npc_id": suspect_npc_id,
+		"victim_npc_id": victim_npc_id,
+		"witness_count": maxi(0, witness_count),
+		"evidence_tags": evidence_tags.duplicate(),
+		"evidence_score": minf(0.85, float(evidence_tags.size()) * 0.12 + float(maxi(0, witness_count)) * 0.08),
+		"severity": severity,
+		"status": "reported",
+		"investigation_stage": "awaiting_dispatch",
+		"reported_at_unix": int(Time.get_unix_time_from_system()),
+		"victim_support_offered": false,
+		"court_verdict": "pending",
+		"sentence_days": 0
+	}
+	crime_records.append(case_record)
+
+	if not victim_npc_id.is_empty():
+		_apply_victim_protection(victim_npc_id, crime_type, case_id)
+	if crime_type == "murder" and not victim_npc_id.is_empty():
+		if society_manager.has_method("record_npc_death"):
+			society_manager.call("record_npc_death", victim_npc_id, "murder")
+	if not suspect_npc_id.is_empty():
+		var wanted_increase := 2 if severity >= 4 else 1
+		wanted_level = mini(5, wanted_level + wanted_increase)
+
+	_save_crime_state()
+	crime_case_opened.emit(case_id, crime_type, city_name)
+	return {"success": true, "case_id": case_id, "severity": severity, "status": "reported"}
+
+
+func _crime_severity(crime_type: String) -> int:
+	match crime_type:
+		"murder", "sexual_assault", "human_trafficking", "kidnapping", "child_abuse":
+			return 5
+		"robbery", "assault", "arson", "domestic_abuse", "exploitation":
+			return 4
+		"stalking", "harassment", "fraud", "corruption":
+			return 3
+		"theft", "vandalism":
+			return 2
+		_:
+			return 1
+
+
+func _apply_victim_protection(victim_npc_id: String, crime_type: String, case_id: String) -> void:
+	var victim: Dictionary = society_manager.call("get_npc", victim_npc_id)
+	if victim.is_empty():
+		return
+	victim["safety_status"] = "protected_pending_investigation" if PROTECTION_CRIMES.has(crime_type) else "support_available"
+	victim["active_crime_case_id"] = case_id
+	var needs: Dictionary = victim.get("needs", {})
+	needs["wellbeing"] = maxf(0.0, float(needs.get("wellbeing", 80.0)) - 22.0)
+	victim["needs"] = needs
+	society_manager.npcs[victim_npc_id] = victim
+	if society_manager.has_method("add_memory"):
+		society_manager.call("add_memory", victim_npc_id, "crime_victim_support_recorded", {
+			"case_id": case_id,
+			"crime_type": crime_type,
+			"details_visibility": "private"
+		})
+	if PROTECTION_CRIMES.has(crime_type):
+		civilian_protection_requested.emit(victim_npc_id, crime_type)
+
+
+func record_investigation_step(case_id: String, step: String, evidence_points: float = 0.0) -> Dictionary:
+	var index := _find_crime_case_index(case_id)
+	if index < 0:
+		return {"success": false, "reason": "CASE_NOT_FOUND"}
+	var record: Dictionary = crime_records[index]
+	var allowed_steps := ["police_arrived", "witness_interviewed", "evidence_collected", "suspect_identified", "victim_support_contacted", "case_sent_to_court"]
+	if not allowed_steps.has(step):
+		return {"success": false, "reason": "INVALID_INVESTIGATION_STEP"}
+	record["investigation_stage"] = step
+	record["evidence_score"] = clampf(float(record.get("evidence_score", 0.0)) + maxf(0.0, evidence_points), 0.0, 1.0)
+	if step == "victim_support_contacted":
+		record["victim_support_offered"] = true
+	if step == "case_sent_to_court":
+		record["status"] = "awaiting_trial"
+	crime_records[index] = record
+	_save_crime_state()
+	crime_case_updated.emit(case_id, str(record["status"]))
+	return {"success": true, "evidence_score": record["evidence_score"], "status": record["status"]}
+
+
+func resolve_crime_case(case_id: String, verdict: String, sentence_days: int = 0) -> Dictionary:
+	var index := _find_crime_case_index(case_id)
+	if index < 0:
+		return {"success": false, "reason": "CASE_NOT_FOUND"}
+	if verdict != "guilty" and verdict != "not_guilty" and verdict != "insufficient_evidence":
+		return {"success": false, "reason": "INVALID_VERDICT"}
+	var record: Dictionary = crime_records[index]
+	if str(record.get("status", "")) != "awaiting_trial":
+		return {"success": false, "reason": "CASE_NOT_READY_FOR_TRIAL"}
+	if verdict == "guilty" and float(record.get("evidence_score", 0.0)) < 0.35:
+		return {"success": false, "reason": "INSUFFICIENT_EVIDENCE"}
+	record["court_verdict"] = verdict
+	record["status"] = "closed"
+	if verdict == "guilty":
+		record["sentence_days"] = clampi(sentence_days, 1, 3650)
+		var suspect_id := str(record.get("suspect_npc_id", ""))
+		if not suspect_id.is_empty():
+			var suspect: Dictionary = society_manager.call("get_npc", suspect_id)
+			if not suspect.is_empty():
+				suspect["jailed"] = true
+				suspect["jail_days_remaining"] = int(record["sentence_days"])
+				suspect["reputation"] = float(suspect.get("reputation", 0.0)) - 30.0
+				suspect["current_location"] = "baghdad_central_detention"
+				suspect["current_action"] = "serving_sentence"
+				society_manager.npcs[suspect_id] = suspect
+				if society_manager.has_method("add_memory"):
+					society_manager.call("add_memory", suspect_id, "convicted_and_imprisoned", {"case_id": case_id, "sentence_days": record["sentence_days"]})
+	crime_records[index] = record
+	_save_crime_state()
+	crime_case_updated.emit(case_id, "closed")
+	return {"success": true, "verdict": verdict, "sentence_days": int(record.get("sentence_days", 0))}
+
+
+func _find_crime_case_index(case_id: String) -> int:
+	for index in range(crime_records.size()):
+		if str(crime_records[index].get("case_id", "")) == case_id:
+			return index
+	return -1
+
+
+func get_crime_case(case_id: String) -> Dictionary:
+	var index := _find_crime_case_index(case_id)
+	if index < 0:
+		return {}
+	return crime_records[index].duplicate(true)
+
+
+## Only consenting adults can be registered as independent adult workers.
+## Coercion, trafficking, and anyone under 18 are rejected and routed to protection.
+func register_adult_sex_work(npc_id: String, voluntary: bool, coercion_suspected: bool = false) -> Dictionary:
+	if society_manager == null:
+		return {"success": false, "reason": "SOCIETY_MANAGER_UNAVAILABLE"}
+	var npc: Dictionary = society_manager.call("get_npc", npc_id)
+	if npc.is_empty():
+		return {"success": false, "reason": "NPC_NOT_FOUND"}
+	if float(npc.get("age_years", 0.0)) < 18.0:
+		report_civilian_crime("human_trafficking", str(npc.get("city_id", "unknown")), str(npc.get("current_location", "unknown")), "", npc_id, 0, ["underage_exploitation_risk"])
+		return {"success": false, "reason": "MINOR_PROTECTION_REQUIRED"}
+	if not voluntary or coercion_suspected:
+		report_civilian_crime("human_trafficking", str(npc.get("city_id", "unknown")), str(npc.get("current_location", "unknown")), "", npc_id, 0, ["coercion_or_exploitation_report"])
+		return {"success": false, "reason": "COERCION_OR_EXPLOITATION_REQUIRES_PROTECTION"}
+	npc["occupation"] = "adult_independent_sex_worker"
+	npc["adult_work_status"] = "self_declared_voluntary"
+	npc["workplace_category"] = "adult_service_establishment"
+	npc["consent_policy"] = "revocable_at_any_time"
+	society_manager.npcs[npc_id] = npc
+	if society_manager.has_method("add_memory"):
+		society_manager.call("add_memory", npc_id, "adult_occupation_registered", {"category": "private_adult_work"})
+	return {"success": true, "occupation": "adult_independent_sex_worker", "explicit_content": false}
+
+
+func get_public_safety_snapshot(city_name: String) -> Dictionary:
+	var open_cases := 0
+	var serious_cases := 0
+	for record in crime_records:
+		if str(record.get("city_name", "")) != city_name:
+			continue
+		if str(record.get("status", "")) != "closed":
+			open_cases += 1
+			if int(record.get("severity", 0)) >= 4:
+				serious_cases += 1
+	return {
+		"city_name": city_name,
+		"open_cases": open_cases,
+		"serious_open_cases": serious_cases,
+		"wanted_level": wanted_level,
+		"police_units_active": police_units.size()
+	}
