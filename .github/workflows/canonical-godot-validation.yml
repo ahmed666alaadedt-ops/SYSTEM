@@ -7,6 +7,10 @@ on:
     paths:
       - "SYSTEM-WORLD/**"
       - ".github/workflows/canonical-godot-validation.yml"
+  pull_request:
+    paths:
+      - "SYSTEM-WORLD/**"
+      - ".github/workflows/canonical-godot-validation.yml"
   workflow_dispatch:
 
 permissions:
@@ -48,6 +52,13 @@ jobs:
           set -o pipefail
           "$GODOT" --headless --editor --path "$PROJECT" --quit \
             2>&1 | tee "$RUNNER_TEMP/canonical-godot-import.log"
+
+      - name: Validate imported humanoid GLB models
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_humanoid_assets.gd
 
       - name: Validate child-character safety rules
         shell: bash
