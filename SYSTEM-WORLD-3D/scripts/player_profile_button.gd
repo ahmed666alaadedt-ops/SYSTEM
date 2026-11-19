@@ -6,6 +6,7 @@ signal profile_updated(profile_data: Dictionary)
 var profile_data := {
 	"name": "الصياد الجديد",
 	"appearance": "ذكر",
+	"age_group": "adult",
 	"hair_style": "قصير",
 	"hair_color": "أسود",
 	"face": "متوازن",
@@ -16,6 +17,7 @@ var profile_data := {
 var profile_popup: PopupPanel
 var name_input: LineEdit
 var appearance_option: OptionButton
+var age_group_option: OptionButton
 var hair_style_option: OptionButton
 var hair_color_option: OptionButton
 var face_option: OptionButton
@@ -35,7 +37,7 @@ func _ready() -> void:
 
 func _open_profile_window() -> void:
 	if profile_popup != null and is_instance_valid(profile_popup):
-		profile_popup.popup_centered(Vector2i(440, 620))
+		profile_popup.popup_centered(Vector2i(440, 680))
 		return
 
 	_create_profile_window()
@@ -50,7 +52,7 @@ func _create_profile_window() -> void:
 
 	var root := VBoxContainer.new()
 	root.add_theme_constant_override("separation", 10)
-	root.custom_minimum_size = Vector2(400, 580)
+	root.custom_minimum_size = Vector2(400, 640)
 	profile_popup.add_child(root)
 
 	var title := Label.new()
@@ -77,6 +79,13 @@ func _create_profile_window() -> void:
 		"نوع الشخصية",
 		["ذكر", "أنثى"],
 		profile_data["appearance"]
+	)
+
+	age_group_option = _add_option(
+		root,
+		"الفئة العمرية",
+		["بالغ", "كبير السن", "طفل"],
+		"كبير السن" if str(profile_data.get("age_group", "adult")) == "elder" else ("طفل" if str(profile_data.get("age_group", "adult")) == "child" else "بالغ")
 	)
 
 	hair_style_option = _add_option(
@@ -179,6 +188,8 @@ func _confirm_profile() -> void:
 	profile_data["appearance"] = appearance_option.get_item_text(
 		appearance_option.selected
 	)
+	var age_label := age_group_option.get_item_text(age_group_option.selected)
+	profile_data["age_group"] = "elder" if age_label == "كبير السن" else ("child" if age_label == "طفل" else "adult")
 	profile_data["hair_style"] = hair_style_option.get_item_text(
 		hair_style_option.selected
 	)
