@@ -7,20 +7,46 @@ class_name SystemNPCCharacterModel
 const FALLBACK_VISUAL = preload("res://scripts/npc_humanoid_visual.gd")
 const MALE_MODEL_PATH := "res://assets/characters/SYSTEM_Humanoid_Male.glb"
 const FEMALE_MODEL_PATH := "res://assets/characters/SYSTEM_Humanoid_Female.glb"
+const ELDER_MALE_MODEL_PATH := "res://assets/characters/SYSTEM_Humanoid_Elder_Male.glb"
+const ELDER_FEMALE_MODEL_PATH := "res://assets/characters/SYSTEM_Humanoid_Elder_Female.glb"
+const CHILD_MALE_MODEL_PATH := "res://assets/characters/SYSTEM_Humanoid_Child_Male.glb"
+const CHILD_FEMALE_MODEL_PATH := "res://assets/characters/SYSTEM_Humanoid_Child_Female.glb"
 
 var imported_model: Node3D
 var fallback_model: Node3D
 var animation_player: AnimationPlayer
 var current_activity := "idle"
 var selected_model_path := ""
+var appearance_profile: Dictionary = {}
+var age_group := "adult"
+var body_type := "average"
+var height_type := "average"
 
 func configure(profile: Dictionary, palette_index: int = 0) -> void:
 	name = "NPCCharacter_" + str(profile.get("name", "Resident")).replace(" ", "_")
+	appearance_profile = profile.duplicate(true)
 	var gender_text := str(profile.get("gender", profile.get("appearance", ""))).to_lower()
 	var is_female := gender_text in ["female", "woman", "girl", "أنثى", "بنت", "امرأة"]
 	if gender_text.is_empty():
 		is_female = (palette_index % 2) == 1
-	selected_model_path = FEMALE_MODEL_PATH if is_female else MALE_MODEL_PATH
+	var age_value := float(profile.get("age", 30.0))
+	age_group = str(profile.get("age_group", "")).to_lower()
+	if age_group.is_empty():
+		age_group = "child" if age_value < 18.0 else ("elder" if age_value >= 60.0 else "adult")
+	if age_group in ["طفل", "طفلة", "child", "children"]:
+		age_group = "child"
+	elif age_group in ["كبير السن", "مسن", "مسنة", "elderly", "senior"]:
+		age_group = "elder"
+	else:
+		age_group = "adult"
+	if age_group == "child":
+		selected_model_path = CHILD_FEMALE_MODEL_PATH if is_female else CHILD_MALE_MODEL_PATH
+	elif age_group == "elder":
+		selected_model_path = ELDER_FEMALE_MODEL_PATH if is_female else ELDER_MALE_MODEL_PATH
+	else:
+		selected_model_path = FEMALE_MODEL_PATH if is_female else MALE_MODEL_PATH
+	body_type = str(profile.get("body_type", profile.get("body", "average"))).to_lower()
+	height_type = str(profile.get("height_type", "average")).to_lower()
 	if _load_imported_model(selected_model_path):
 		var role := str(profile.get("job", profile.get("occupation", ""))).to_lower()
 		var outfit_id := "civilian"
@@ -47,6 +73,26 @@ func _load_imported_model(path: String) -> bool:
 		push_warning("SYSTEM NPC: GLB root is not Node3D: " + path)
 		return false
 	imported_model.name = "RiggedGLBCharacter"
+	var width_scale := 1.0
+	var depth_scale := 1.0
+	if body_type in ["slim", "thin", "lean", "نحيف", "ضعيف"]:
+		width_scale = 0.84
+		depth_scale = 0.90
+	elif body_type in ["heavy", "overweight", "بدين", "سمين"]:
+		width_scale = 1.18
+		depth_scale = 1.14
+	elif body_type in ["athletic", "رياضي"]:
+		width_scale = 1.06
+		depth_scale = 1.02
+	elif body_type in ["muscular", "strong", "قوي", "ضخم العضلات"]:
+		width_scale = 1.14
+		depth_scale = 1.08
+	var stature := 1.0
+	if height_type in ["short", "قصير", "قصيرة"]:
+		stature = 0.92
+	elif height_type in ["tall", "طويل", "طويلة"]:
+		stature = 1.08
+	imported_model.scale = Vector3(width_scale, stature, depth_scale)
 	add_child(imported_model)
 	animation_player = _find_animation_player(imported_model)
 	set_activity(current_activity)
