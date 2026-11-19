@@ -17,11 +17,24 @@ func _run_validation() -> void:
 	}, 1)
 	child.call("set_activity", "attack")
 	if str(child.get("current_activity")) != "idle":
-		push_error("SYSTEM CHILD QA: child entered a combat activity")
+		push_error("SYSTEM CHILD QA: child entered an offensive combat activity")
+		quit(1)
+		return
+	if not bool(child.call("respond_to_attack")):
+		push_error("SYSTEM CHILD QA: child could not trigger a defensive response after being attacked")
+		quit(1)
+		return
+	if str(child.get("current_activity")) != "defend" or not bool(child.get("is_defending")):
+		push_error("SYSTEM CHILD QA: child defensive response state was not applied")
+		quit(1)
+		return
+	child.call("set_activity", "attack")
+	if str(child.get("current_activity")) != "idle" or bool(child.get("is_defending")):
+		push_error("SYSTEM CHILD QA: defensive response allowed a child to initiate an attack")
 		quit(1)
 		return
 	var profile: Dictionary = child.get("appearance_profile")
-	if str(profile.get("job", "")) != "civilian":
+	if str(profile.get("job", "")) != "civilian" or str(profile.get("occupation", "")) != "civilian":
 		push_error("SYSTEM CHILD QA: child profession was not restricted to civilian")
 		quit(1)
 		return
@@ -40,7 +53,7 @@ func _run_validation() -> void:
 		quit(1)
 		return
 
-	print("SYSTEM CHILD QA PASS: children remain civilian and cannot enter combat; adult combat remains available")
+	print("SYSTEM CHILD QA PASS: minors remain civilian, cannot initiate combat, can react defensively when attacked, and adult combat remains available")
 	child.queue_free()
 	adult.queue_free()
 	quit(0)
