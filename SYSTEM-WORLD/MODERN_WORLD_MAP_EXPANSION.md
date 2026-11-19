@@ -1,5 +1,7 @@
 # SYSTEM WORLD — Modern World Map Expansion
 
+> **Architecture status:** This document records the earlier fictional-continent prototype only. It is not the canonical geography decision. The modern world is now planned as a real-Earth geographic world with WGS84 source coordinates and licensed regional data packs. See REAL_EARTH_GEOGRAPHY_AND_NPC_LIFE.md for the current canonical direction. Existing procedural terrain and city anchors are retained as a temporary prototype until a verified real-data replacement is ready.
+
 ## Design foundation
 
 The modern world uses one connected fictional continent with real city names as cultural and architectural references. Its coordinates are intentionally fictional and do not claim to reproduce real-world geography. The existing terrain foundation remains authoritative and is not replaced by this expansion.

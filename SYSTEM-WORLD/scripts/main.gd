@@ -18,6 +18,7 @@ const WorldManagerScript = preload("res://scripts/world_manager.gd")
 const WorldMapManagerScript = preload("res://scripts/world_map_manager.gd")
 const WorldInteractionManagerScript = preload("res://scripts/world_interaction_manager.gd")
 const AINPCSocietyManagerScript = preload("res://scripts/ai_npc_society_manager.gd")
+const NPCDailyLifeManagerScript = preload("res://scripts/npc_daily_life_manager.gd")
 const WorldTimeManagerScript = preload("res://scripts/world_time_manager.gd")
 const WildlifeManagerScript = preload("res://scripts/wildlife_manager.gd")
 const MissionRewardManagerScript = preload("res://scripts/system_mission_reward_manager.gd")
@@ -33,6 +34,7 @@ var world_manager
 var world_map_manager
 var interaction_manager
 var ai_npc_society_manager
+var npc_daily_life_manager
 var world_time_manager
 var wildlife_manager
 var mission_reward_manager
@@ -68,6 +70,7 @@ func _ready() -> void:
 	create_world_manager()
 	create_wildlife_manager()
 	create_ai_npc_society_manager()
+	create_npc_daily_life_manager()
 	create_world_map_manager()
 
 	create_environment()
@@ -422,6 +425,13 @@ func create_ai_npc_society_manager() -> void:
 	ai_npc_society_manager = AINPCSocietyManagerScript.new()
 	ai_npc_society_manager.name = "AINPCSocietyManager"
 	add_child(ai_npc_society_manager)
+
+
+func create_npc_daily_life_manager() -> void:
+	npc_daily_life_manager = NPCDailyLifeManagerScript.new()
+	npc_daily_life_manager.name = "NPCDailyLifeManager"
+	add_child(npc_daily_life_manager)
+	npc_daily_life_manager.setup(ai_npc_society_manager)
 
 
 func register_modern_world_map_locations() -> void:
