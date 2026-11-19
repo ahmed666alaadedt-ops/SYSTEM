@@ -48,11 +48,22 @@ func _run_validation() -> void:
 				quit(1)
 				return
 			var clips: Array = status.get("animation_clips", [])
+			var clip_aliases := {
+				"Idle_Breathing": ["idle_breathing"],
+				"Walk_Cycle": ["walk_cycle", "walk"],
+				"Run_Cycle": ["run_cycle", "run"],
+				"Jump_Animation": ["jump_animation", "jump"],
+				"Attack_Animation": ["attack_animation", "attack"]
+			}
 			for required_clip in REQUIRED_CLIPS:
 				var found := false
 				for clip_name in clips:
-					if str(clip_name).to_lower().contains(str(required_clip).to_lower()):
-						found = true
+					var actual_name := str(clip_name).to_lower()
+					for alias in clip_aliases[required_clip]:
+						if actual_name.contains(alias):
+							found = true
+							break
+					if found:
 						break
 				if not found:
 					push_error("SYSTEM CHARACTER QA: missing animation clip " + str(required_clip))
