@@ -1,0 +1,70 @@
+name: Validate SYSTEM WORLD Canonical Godot Runtime
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "SYSTEM-WORLD/**"
+      - ".github/workflows/canonical-godot-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-canonical-project:
+    name: Import and headless-launch canonical Godot project
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout SYSTEM
+        uses: actions/checkout@v4
+
+      - name: Download Godot 4.3 stable
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/godot"
+          curl -L --fail --retry 3 \
+            "https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip" \
+            -o "$RUNNER_TEMP/godot.zip"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP/godot"
+          chmod +x "$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          "$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64" --version
+
+      - name: Verify canonical project entry points
+        shell: bash
+        run: |
+          test -f SYSTEM-WORLD/project.godot
+          test -f SYSTEM-WORLD/MainScene.tscn
+          grep -Fq 'run/main_scene="res://MainScene.tscn"' SYSTEM-WORLD/project.godot
+          echo "Canonical Godot project and main scene are present."
+
+      - name: Import and parse canonical Godot project
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --editor --path "$PROJECT" --quit \
+            2>&1 | tee "$RUNNER_TEMP/canonical-godot-import.log"
+
+      - name: Launch canonical main scene headlessly
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" --quit-after 8 \
+            2>&1 | tee "$RUNNER_TEMP/canonical-godot-runtime.log"
+
+      - name: Upload Godot validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: system-world-canonical-godot-validation-logs
+          path: |
+            ${{ runner.temp }}/canonical-godot-import.log
+            ${{ runner.temp }}/canonical-godot-runtime.log
+          if-no-files-found: warn
+          retention-days: 14
