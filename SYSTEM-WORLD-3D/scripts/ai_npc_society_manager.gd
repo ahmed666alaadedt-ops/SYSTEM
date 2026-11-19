@@ -375,6 +375,62 @@ func _find_social_destination() -> Vector3:
 	)
 
 
+func add_resident(profile: Dictionary) -> bool:
+	var resident_name := str(profile.get("name", "")).strip_edges()
+	if resident_name.is_empty():
+		return false
+	var normalized := profile.duplicate(true)
+	var age := clampi(int(normalized.get("age", 30)), 0, 110)
+	normalized["age"] = age
+	normalized["family"] = str(normalized.get("family", "family_generated_%02d" % (residents.size() + 1)))
+	normalized["personality"] = str(normalized.get("personality", "متوازن"))
+	if age < 18:
+		normalized["job"] = "طالب"
+	elif age >= 60 and str(normalized.get("job", "")).is_empty():
+		normalized["job"] = "متقاعد"
+	else:
+		normalized["job"] = str(normalized.get("job", "مواطن"))
+	normalized["home"] = normalized.get("home", Vector3(randf_range(-20.0, 20.0), 0.0, randf_range(-20.0, 20.0)))
+	normalized["work"] = normalized.get("work", normalized["home"] if age < 18 or age >= 60 else market_position)
+	_create_resident(normalized, residents.size())
+	return true
+
+
+func set_resident_activity(resident_name: String, activity: String, destination: Vector3) -> bool:
+	for record in residents:
+		if str(record.get("name", "")) != resident_name:
+			continue
+		var age := int(record.get("age", 30))
+		if age < 18 and activity in ["work", "attack", "combat", "fight", "hunter_mission"]:
+			return false
+		_set_activity(record, activity, destination)
+		return true
+	return false
+
+
+func get_population_summary() -> Dictionary:
+	var result := {
+		"total": residents.size(),
+		"children": 0,
+		"adults": 0,
+		"elders": 0,
+		"body_types": {},
+		"height_types": {}
+	}
+	for record in residents:
+		var stage := str(record.get("age_group", "adult"))
+		result[stage + "s"] = int(result.get(stage + "s", 0)) + 1
+		var body_key := str(record.get("body_type", "average"))
+		var height_key := str(record.get("height_type", "average"))
+		var bodies: Dictionary = result["body_types"]
+		var heights: Dictionary = result["height_types"]
+		bodies[body_key] = int(bodies.get(body_key, 0)) + 1
+		heights[height_key] = int(heights.get(height_key, 0)) + 1
+		result["body_types"] = bodies
+		result["height_types"] = heights
+	return result
+
+
 func get_resident_count() -> int:
 	return residents.size()
 
