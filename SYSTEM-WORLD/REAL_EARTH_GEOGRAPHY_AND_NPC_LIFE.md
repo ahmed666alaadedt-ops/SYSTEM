@@ -95,3 +95,35 @@ Civilian schedules must never bypass the Baghdad-only star-gate rule.
 The first Baghdad registry point is only a coordinate anchor. It does not contain Baghdad's real road graph, district polygons, terrain raster, building footprints or landmark geometry. The resident simulation creates persistent civilian records and routine state; it does not yet produce fully animated visible pedestrians or complete navigation routes.
 
 Godot import, parser, scene launch, Android build and device performance must be run on a workstation with the approved Godot and Android toolchain before these additions can be called runtime-verified.
+
+
+## 5. Civilian crime, public safety and justice layer
+
+The modern society supports crime as a systemic world event rather than a graphic spectacle. The first implementation extends the existing city crime response manager with persistent case records and a justice workflow.
+
+### Crime categories
+- Theft, robbery, assault, murder, harassment and stalking.
+- Kidnapping, domestic abuse, child abuse, human trafficking and exploitation.
+- Fraud, vandalism, arson and corruption.
+- Vehicle theft remains connected to the existing witness and police-pursuit prototype.
+
+### Case lifecycle
+- A crime report records its type, city/location, suspect/victim IDs, witness count, evidence tags, severity and timestamp.
+- Investigators can record arrival, witness interviews, evidence collection, suspect identification and victim-support contact.
+- Cases can be sent to trial. Convictions require a minimum evidence score; a guilty verdict can place the NPC in detention for a sentence.
+- NPC daily-life updates count down detention time and record release. Conviction affects reputation and routine access.
+- Murder can record a confirmed NPC death in the society history. The crime itself is represented through records and consequences, not graphic animation.
+
+### Victim care and protection
+- Sexual assault, trafficking, exploitation, kidnapping, domestic abuse and child abuse trigger a private protection state and a support-request signal.
+- Victim memories store only a private case reference and category; explicit details are not recorded.
+- A report is not automatically treated as proof of guilt. Evidence and a trial outcome remain separate steps.
+
+### Adult consensual sex work
+- Adult independent sex work can be represented as a non-explicit civilian occupation.
+- Registration requires an adult NPC and voluntary participation.
+- Coercion, trafficking, and under-18 involvement are rejected and routed to protection/crime reporting.
+- No sexual acts, explicit scenes, or coercive sexual content are simulated.
+
+### Current implementation boundary
+These are callable simulation APIs and persistent records, not a complete police department or courtroom scene. Patrol navigation, emergency calls, witness AI, evidence-object interaction, lawyer/prosecutor roles, court NPCs, and detailed social consequences remain staged work. No claim is made that the full society is already equivalent to real human life.
