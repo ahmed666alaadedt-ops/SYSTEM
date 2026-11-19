@@ -118,6 +118,7 @@ func _validate_modern_world(world_manager: Node, map_manager: Node) -> void:
 			]
 		)
 
+	_scan_invalid_mesh_nodes(active_root, "modern")
 	print(
 		"MODERN WORLD QA: terrain=%s, city_anchors=%d, map_locations=%d" % [
 			str(continent != null),
@@ -147,6 +148,7 @@ func _validate_historical_world(world_manager: Node) -> void:
 		if historical.get_node_or_null(landmark_id) == null:
 			_fail("Historical world is missing landmark: " + landmark_id)
 
+	_scan_invalid_mesh_nodes(active_root, "historical")
 	print("HISTORICAL WORLD QA: six landmark scenes present.")
 
 
@@ -181,6 +183,7 @@ func _validate_fantasy_world(world_manager: Node, map_manager: Node) -> void:
 	if fantasy_locations.size() < 7:
 		_fail("Fantasy settlements did not register villages and kingdoms on the world map.")
 
+	_scan_invalid_mesh_nodes(active_root, "fantasy")
 	print(
 		"FANTASY WORLD QA: villages=%d, kingdoms=%d, residents=%d, map_locations=%d" % [
 			village_count,
@@ -213,6 +216,7 @@ func _validate_greed_island(world_manager: Node) -> void:
 	if discovery_count < 4:
 		_fail("Greed Island created fewer than four discoverable map points.")
 
+	_scan_invalid_mesh_nodes(active_root, "greed_island")
 	print(
 		"GREED ISLAND QA: admin_test=%s, combat=%s, discovery_points=%d" % [
 			str(island.call("is_admin_test_environment")),
@@ -238,3 +242,35 @@ func _finish() -> void:
 		quit(0)
 	else:
 		quit(1)
+
+
+func _scan_invalid_mesh_nodes(node: Node, world_label: String) -> void:
+	var invalid_mesh_paths: Array[String] = []
+	_collect_invalid_mesh_paths(node, invalid_mesh_paths)
+	if not invalid_mesh_paths.is_empty():
+		_fail(
+			"%s world contains %d mesh instance(s) without geometry: %s" % [
+				world_label,
+				invalid_mesh_paths.size(),
+				"; ".join(invalid_mesh_paths.slice(0, 12))
+			]
+		)
+	print(
+		"WORLD MESH QA: %s invalid_mesh_nodes=%d" % [
+			world_label,
+			invalid_mesh_paths.size()
+		]
+	)
+
+
+func _collect_invalid_mesh_paths(node: Node, result: Array[String]) -> void:
+	if node is MeshInstance3D:
+		var mesh_instance := node as MeshInstance3D
+		if mesh_instance.mesh == null:
+			result.append(str(mesh_instance.get_path()))
+	elif node is MultiMeshInstance3D:
+		var multi_instance := node as MultiMeshInstance3D
+		if multi_instance.multimesh == null or multi_instance.multimesh.mesh == null:
+			result.append(str(multi_instance.get_path()))
+	for child in node.get_children():
+		_collect_invalid_mesh_paths(child, result)
