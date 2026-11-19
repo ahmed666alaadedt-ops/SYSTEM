@@ -262,7 +262,7 @@ func _normalize_hair_style(value: String) -> String:
 			return "ponytail"
 		"كعكة", "bun":
 			return "bun"
-		_ :
+		_:
 			return "short"
 
 func _apply_hair_style(skeleton: Skeleton3D, color: Color) -> void:
