@@ -70,20 +70,24 @@ func _try_create_civilian_event() -> void:
 	# Keep background crime uncommon; the simulation is not a constant crime feed.
 	if randf() > 0.32:
 		return
-	var adults := _living_adults()
-	if adults.size() < 3:
+	var all_adults := _living_adults()
+	if all_adults.size() < 3:
 		return
-	var suspect_id := adults[randi_range(0, adults.size() - 1)]
-	var victim_id := adults[randi_range(0, adults.size() - 1)]
-	if suspect_id == victim_id:
-		return
-	var suspect: Dictionary = society.call("get_npc", suspect_id)
+	var victim_id := all_adults[randi_range(0, all_adults.size() - 1)]
 	var victim: Dictionary = society.call("get_npc", victim_id)
-	var city_name := str(victim.get("city_name", "Baghdad"))
-	if city_name.is_empty() or city_name == "city_baghdad":
+	var city_name := str(victim.get("city_name", victim.get("city_id", "Baghdad")))
+	if city_name.is_empty() or city_name.to_lower() == "city_baghdad":
 		city_name = "Baghdad"
+	var local_adults := _living_adults(city_name)
+	if local_adults.size() < 3:
+		return
+	var suspects := local_adults.duplicate()
+	suspects.erase(victim_id)
+	if suspects.is_empty():
+		return
+	var suspect_id := suspects[randi_range(0, suspects.size() - 1)]
 	var crime_type := str(LOW_LEVEL_CRIMES[randi_range(0, LOW_LEVEL_CRIMES.size() - 1)])
-	var witnesses := randi_range(1, 3)
+	var witnesses := randi_range(1, mini(3, local_adults.size() - 2))
 	var evidence: Array[String] = ["witness_statement"]
 	if randf() < 0.65:
 		evidence.append("public_camera_or_transaction_record")
@@ -101,12 +105,12 @@ func _try_create_civilian_event() -> void:
 		return
 	autonomous_case_ids.append(case_id)
 	total_events_created += 1
-	_record_citizen_reaction(suspect_id, victim_id, case_id, crime_type, witnesses)
+	_record_citizen_reaction(suspect_id, victim_id, case_id, crime_type, witnesses, city_name)
 	_tag_case_for_background(case_id)
-	print("SYSTEM SOCIETY: civilian incident created: ", crime_type, " / ", case_id)
+	print("SYSTEM SOCIETY: civilian incident created: ", crime_type, " / ", city_name, " / ", case_id)
 
 func _record_citizen_reaction(suspect_id: String, victim_id: String, case_id: String,
-		crime_type: String, witness_count: int) -> void:
+		crime_type: String, witness_count: int, city_name: String) -> void:
 	if society.has_method("add_memory"):
 		society.call("add_memory", victim_id, "civilian_crime_reported", {
 			"case_id": case_id, "crime_type": crime_type, "support_available": true
@@ -122,7 +126,7 @@ func _record_citizen_reaction(suspect_id: String, victim_id: String, case_id: St
 	victim["support_contact_pending"] = true
 	society.npcs[victim_id] = victim
 	# Witnesses are represented as independent memories without exposing victim details.
-	var adults := _living_adults()
+	var adults := _living_adults(city_name)
 	var recorded := 0
 	for witness_id in adults:
 		if witness_id == suspect_id or witness_id == victim_id:
