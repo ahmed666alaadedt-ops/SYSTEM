@@ -198,3 +198,12 @@ asset here only after generation, GLB validation, Godot import and visual review
 - Character diversity pass: `tools/blender/generate_system_humanoids.py` now generates three deterministic hairstyle silhouette families across male/female base identities, minor face-proportion variation, and subtle age-line geometry for elder bases.
 - Automated Blender generation and GLB structural validation completed successfully for the six base models in workflow run `44509211756`; generated artifact: `system-world-rigged-humanoid-characters`.
 - New diversity pass commit `e36fca6c36ed6e201a1c30854e3f5983336d5248` is queued for a fresh generation and Godot validation run; its output is not yet confirmed.
+
+
+## Expanded Runtime Hair Customization (2026-11-19)
+
+- `scripts/npc_character_model.gd` in the canonical `SYSTEM-WORLD` project and `SYSTEM-WORLD-3D/scripts/npc_character_model.gd` in the preview project expose independent `set_hair_color()` and `set_hair_style()` controls.
+- Hair palette includes natural shades and fantasy colors: black, brown, blonde/yellow, white, silver/gray, red, blue/navy/cyan, purple, pink, green, orange/ginger, gold and magenta.
+- Runtime hairstyle silhouettes include short, medium, long, curly/afro, braided/dreadlocks, ponytail, twin tails, bun/topknot, bob, pixie, layered, spiky, side-swept and undercut. Styles are not gender-locked; long hairstyles are supported for male characters.
+- The preview showcase now presents a male character with long hair. Automated showcase QA tests long male hair geometry and multiple fantasy hair colors.
+- These are runtime-generated accessory meshes attached to the head bone, not a finished salon/customization UI. Player-facing UI, save/load integration, hair strand physics and final visual review remain pending.
