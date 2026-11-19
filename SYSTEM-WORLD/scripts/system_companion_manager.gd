@@ -119,15 +119,22 @@ func _get_world_id() -> String:
 
 
 func _update_world_wardrobes() -> void:
-	for pair in [[miyar, "ميار"], [adam, "آدم"]]:
+	var outfit_id := "modern"
+	match _last_world_id:
+		"historical":
+			outfit_id = "historical"
+		"fantasy":
+			outfit_id = "mythic"
+		"greed_island":
+			outfit_id = "greed_island"
+	for pair in [[miyar, 1], [adam, 0]]:
 		var character: Node3D = pair[0]
 		if not is_instance_valid(character):
 			continue
 		var profile: Dictionary = character.get("appearance_profile")
-		if profile.is_empty():
-			continue
 		profile["world_id"] = _last_world_id
-		character.call("configure", profile, 1 if pair[1] == "ميار" else 0)
+		character.set("appearance_profile", profile)
+		character.call("set_outfit", outfit_id, int(pair[1]))
 
 
 func _create_assistant_interface() -> void:
