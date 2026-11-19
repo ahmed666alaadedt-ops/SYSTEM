@@ -39,6 +39,11 @@ func configure(profile: Dictionary, palette_index: int = 0) -> void:
 		age_group = "elder"
 	else:
 		age_group = "adult"
+	appearance_profile["age_group"] = age_group
+	if age_group == "child":
+		# Keep the civilian-only rule consistent in both imported and fallback models.
+		appearance_profile["job"] = "civilian"
+		appearance_profile["occupation"] = "civilian"
 	if age_group == "child":
 		selected_model_path = CHILD_FEMALE_MODEL_PATH if is_female else CHILD_MALE_MODEL_PATH
 	elif age_group == "elder":
@@ -48,7 +53,7 @@ func configure(profile: Dictionary, palette_index: int = 0) -> void:
 	body_type = str(profile.get("body_type", profile.get("body", "average"))).to_lower()
 	height_type = str(profile.get("height_type", "average")).to_lower()
 	if _load_imported_model(selected_model_path):
-		var role := str(profile.get("job", profile.get("occupation", ""))).to_lower()
+		var role := str(appearance_profile.get("job", appearance_profile.get("occupation", ""))).to_lower()
 		var world_value := str(profile.get("world_id", profile.get("world", "modern"))).to_lower()
 		var outfit_id := "modern"
 		if world_value in ["historical", "history", "التاريخي", "تاريخي"]:
@@ -70,7 +75,7 @@ func configure(profile: Dictionary, palette_index: int = 0) -> void:
 		set_appearance(palette_index)
 		set_outfit(outfit_id, palette_index)
 		return
-	_build_fallback(profile, palette_index)
+	_build_fallback(appearance_profile, palette_index)
 
 func _load_imported_model(path: String) -> bool:
 	if not ResourceLoader.exists(path):
