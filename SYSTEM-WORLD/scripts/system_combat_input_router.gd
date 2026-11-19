@@ -4,8 +4,10 @@ extends Node
 const HISTORICAL_COMBAT_SCRIPT = preload(
 	"res://scripts/historical_combat_system.gd/historical_combat_system.gd"
 )
+const MODERN_COMBAT_SCRIPT = preload("res://scripts/modern_world_combat_system.gd")
 
 const HISTORICAL_WORLD_ID := 1
+const MODERN_WORLD_ID := 2
 
 var bound_scene: Node
 var controls: Object
@@ -14,6 +16,7 @@ var player: CharacterBody3D
 var camera: Camera3D
 
 var historical_combat: Node
+var modern_combat: Node
 
 
 func _ready() -> void:
@@ -32,8 +35,11 @@ func _process(_delta: float) -> void:
 func _unbind_previous_scene() -> void:
 	if is_instance_valid(historical_combat):
 		historical_combat.queue_free()
+	if is_instance_valid(modern_combat):
+		modern_combat.queue_free()
 
 	historical_combat = null
+	modern_combat = null
 	bound_scene = null
 	controls = null
 	world_manager = null
@@ -111,28 +117,39 @@ func _on_world_changed(_world_id: int) -> void:
 func _refresh_combat_system() -> void:
 	if not is_instance_valid(world_manager):
 		return
-
 	var active_world := int(world_manager.get("active_world"))
-
-	if active_world != HISTORICAL_WORLD_ID:
-		_hide_historical_weapon()
-		return
-
-	if not is_instance_valid(historical_combat):
-		historical_combat = HISTORICAL_COMBAT_SCRIPT.new()
-		historical_combat.name = "HistoricalCombatSystem"
-
-		world_manager.add_child(historical_combat)
-		historical_combat.call("bind_actor", player, camera)
-
-		print("SYSTEM: Historical combat system activated.")
-	else:
-		historical_combat.call("set_combat_camera", camera)
-
-		if historical_combat.get("actor") != player:
+	if active_world == HISTORICAL_WORLD_ID:
+		_hide_modern_combat()
+		if not is_instance_valid(historical_combat):
+			historical_combat = HISTORICAL_COMBAT_SCRIPT.new()
+			historical_combat.name = "HistoricalCombatSystem"
+			world_manager.add_child(historical_combat)
 			historical_combat.call("bind_actor", player, camera)
+			print("SYSTEM: Historical combat system activated.")
+		else:
+			historical_combat.call("set_combat_camera", camera)
+			if historical_combat.get("actor") != player:
+				historical_combat.call("bind_actor", player, camera)
+		_show_historical_weapon()
+		return
+	_hide_historical_weapon()
+	if active_world == MODERN_WORLD_ID:
+		if not is_instance_valid(modern_combat):
+			modern_combat = MODERN_COMBAT_SCRIPT.new()
+			modern_combat.name = "ModernWorldCombatSystem"
+			world_manager.add_child(modern_combat)
+			modern_combat.call("bind_actor", player, camera)
+			print("SYSTEM: Modern-world combat system activated.")
+		else:
+			modern_combat.call("set_combat_camera", camera)
+		return
+	_hide_modern_combat()
 
-	_show_historical_weapon()
+
+func _hide_modern_combat() -> void:
+	if is_instance_valid(modern_combat):
+		modern_combat.queue_free()
+		modern_combat = null
 
 
 func _is_historical_combat_active() -> bool:
@@ -149,36 +166,33 @@ func _is_historical_combat_active() -> bool:
 
 
 func _on_attack_pressed() -> void:
-	if not _is_historical_combat_active():
-		return
-
-	historical_combat.call("light_attack")
+	if _is_historical_combat_active():
+		historical_combat.call("light_attack")
+	elif is_instance_valid(modern_combat):
+		modern_combat.call("light_attack")
 
 
 func _on_skill_one_pressed() -> void:
-	if not _is_historical_combat_active():
-		return
-
-	historical_combat.call("heavy_attack")
+	if _is_historical_combat_active():
+		historical_combat.call("heavy_attack")
+	elif is_instance_valid(modern_combat):
+		modern_combat.call("heavy_attack")
 
 
 func _on_skill_two_pressed() -> void:
-	if not _is_historical_combat_active():
-		return
-
-	var blocking := bool(historical_combat.get("is_blocking"))
-
-	if blocking:
-		historical_combat.call("stop_block")
-	else:
-		historical_combat.call("start_block")
+	if _is_historical_combat_active():
+		var historical_blocking := bool(historical_combat.get("is_blocking"))
+		historical_combat.call("stop_block" if historical_blocking else "start_block")
+	elif is_instance_valid(modern_combat):
+		var modern_blocking := bool(modern_combat.get("is_blocking"))
+		modern_combat.call("stop_block" if modern_blocking else "start_block")
 
 
 func _on_dodge_pressed() -> void:
-	if not _is_historical_combat_active():
-		return
-
-	historical_combat.call("dodge")
+	if _is_historical_combat_active():
+		historical_combat.call("dodge")
+	elif is_instance_valid(modern_combat):
+		modern_combat.call("dodge")
 
 
 func _show_historical_weapon() -> void:
