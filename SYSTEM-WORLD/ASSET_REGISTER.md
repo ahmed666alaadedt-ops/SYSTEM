@@ -316,3 +316,10 @@ asset here only after generation, GLB validation, Godot import and visual review
 - Geometry audit: zero `MeshInstance3D` nodes without meshes and zero `MultiMeshInstance3D` nodes without a multimesh mesh in each of the four active world roots.
 - All four world roots initialized and were entered successfully in headless Godot 4.3. The headless dummy renderer still emits repeated `mesh_get_surface_count` null-parameter messages despite the geometry-node audit reporting zero invalid nodes; this remains a rendering/device verification item and is not represented as a clean visual pass.
 - This verifies runtime initialization and world switching, not final visual quality, Android frame rate, or a packaged-device play test.
+
+
+## Android Package Inclusion Check (2026-11-19)
+
+- The successful Godot Android export run [44525758672](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44525758672) built and signed `SYSTEM-WORLD-debug.apk` (35 MB); APK signature verification passed for v1, v2, and v3.
+- The exact source commit used for that export contains all six canonical humanoid GLBs under `SYSTEM-WORLD/assets/characters/` (each approximately 2.78–2.90 MB).
+- The exported APK is a build artifact, not evidence of installation or visual testing on a physical Android device. Device launch, animation playback, frame rate, and memory usage remain to be checked on the target phone.
