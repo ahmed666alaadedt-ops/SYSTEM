@@ -42,7 +42,7 @@ func _open_profile_window() -> void:
 		return
 
 	_create_profile_window()
-	profile_popup.popup_centered(Vector2i(440, 620))
+	profile_popup.popup_centered(Vector2i(440, 740))
 
 
 func _create_profile_window() -> void:
