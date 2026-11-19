@@ -33,6 +33,7 @@ const HunterExamManagerScript = preload("res://scripts/system_hunter_exam_manage
 const PowerTowerManagerScript = preload("res://scripts/system_power_tower_manager.gd")
 const PlayerCombatHealthScript = preload("res://scripts/system_player_combat_health.gd")
 const InventoryPanelScript = preload("res://scripts/system_inventory_panel.gd")
+const PlayerCharacterModelScript = preload("res://scripts/npc_character_model.gd")
 
 var world_manager
 var world_map_manager
@@ -57,7 +58,8 @@ var inventory_panel: CanvasLayer
 var active_world_root: Node3D
 
 var player: CharacterBody3D
-var player_mesh: MeshInstance3D
+var player_mesh: Node3D
+var player_appearance_profile: Dictionary = {}
 var camera: Camera3D
 var spring_arm: SpringArm3D
 var mobile_controls: MobileControls
@@ -873,17 +875,7 @@ func create_player() -> void:
 	player_combat_health.call("bind_player", player)
 	active_world_root.add_child(player)
 
-	player_mesh = MeshInstance3D.new()
-
-	var capsule := CapsuleMesh.new()
-	capsule.radius = 0.4
-	capsule.height = 1.8
-	player_mesh.mesh = capsule
-
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.2, 0.55, 0.95)
-	player_mesh.material_override = material
-	player.add_child(player_mesh)
+	apply_player_appearance(_load_player_appearance_profile(), false)
 
 	var collision := CollisionShape3D.new()
 	var shape := CapsuleShape3D.new()
@@ -905,6 +897,70 @@ func create_player() -> void:
 	camera.current = true
 
 	update_camera_rotation()
+
+
+func _default_player_appearance_profile() -> Dictionary:
+	return {
+		"name": "الصياد الجديد",
+		"gender": "male",
+		"age": 25,
+		"age_group": "adult",
+		"body_type": "athletic",
+		"height_type": "average",
+		"skin_tone": "olive",
+		"hair_style": "short",
+		"hair_color": "black",
+		"eye_color": "brown",
+		"face_shape": "balanced",
+		"job": "hunter",
+		"world_id": "modern",
+		"is_player_character": true
+	}
+
+
+func _load_player_appearance_profile() -> Dictionary:
+	var config := ConfigFile.new()
+	if config.load("user://system_player_profile.cfg") != OK:
+		return _default_player_appearance_profile()
+	var saved: Variant = config.get_value("appearance", "profile", {})
+	if saved is Dictionary:
+		var profile: Dictionary = _default_player_appearance_profile()
+		profile.merge(saved, true)
+		return profile
+	return _default_player_appearance_profile()
+
+
+## Rebuilds the live player with the shared rigged GLB character pipeline.
+## Appearance is saved locally so it survives a new game session on this device.
+func apply_player_appearance(profile: Dictionary, persist: bool = true) -> void:
+	if not is_instance_valid(player):
+		return
+	if is_instance_valid(player_mesh):
+		player_mesh.queue_free()
+	player_appearance_profile = _default_player_appearance_profile()
+	player_appearance_profile.merge(profile, true)
+	player_appearance_profile["is_player_character"] = true
+	player_appearance_profile["age_group"] = "adult"
+	player_appearance_profile["age"] = maxi(18, int(player_appearance_profile.get("age", 25)))
+	player_appearance_profile["job"] = "hunter"
+	if world_manager != null and world_manager.has_method("get_world_name"):
+		player_appearance_profile["world_id"] = "modern"
+	player_mesh = PlayerCharacterModelScript.new()
+	player_mesh.name = "PlayerCharacterVisual"
+	player.add_child(player_mesh)
+	player_mesh.call("configure", player_appearance_profile, int(player_appearance_profile.get("variant_index", 0)))
+	player_mesh.call("set_activity", "idle")
+	if persist:
+		var config := ConfigFile.new()
+		config.set_value("appearance", "profile", player_appearance_profile)
+		var save_error := config.save("user://system_player_profile.cfg")
+		if save_error != OK:
+			push_warning("SYSTEM: Could not save the player appearance profile.")
+
+
+func set_player_character_activity(activity: String) -> void:
+	if is_instance_valid(player_mesh) and player_mesh.has_method("set_activity"):
+		player_mesh.call("set_activity", activity)
 
 
 # --------------------------------------------------
@@ -1047,3 +1103,6 @@ func _physics_process(delta: float) -> void:
 
 	jump_requested = false
 	player.move_and_slide()
+	if is_instance_valid(player_mesh):
+		var moving := Vector2(player.velocity.x, player.velocity.z).length() > 0.15
+		player_mesh.call("set_activity", "run" if moving else "idle")
