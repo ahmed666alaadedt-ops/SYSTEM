@@ -16,6 +16,7 @@ const SAVE_PATH := "user://system_world_ai_society.json"
 const HOURS_PER_YEAR := 8760.0
 const MAX_MEMORY := 40
 const MAX_PUBLIC_INFO := 200
+const MAX_BACKGROUND_NPCS_PER_TICK := 32
 
 const ALLOWED_ACTIVITIES := [
 	"daily_life", "work", "trade", "travel", "explore",
@@ -32,15 +33,12 @@ var npcs: Dictionary = {}
 var public_information: Array[Dictionary] = []
 var next_npc_number: int = 1
 var autosave_hours: float = 0.0
+var background_process_accumulator: float = 0.0
+var background_process_cursor: int = 0
 
 
 func _ready() -> void:
 	load_society()
-
-
-const MAX_BACKGROUND_NPCS_PER_TICK := 32
-var background_process_accumulator: float = 0.0
-var background_process_cursor: int = 0
 
 
 func _process(delta: float) -> void:
