@@ -26,8 +26,21 @@ var height_option: OptionButton
 var outfit_option: OptionButton
 var status_label: Label
 
+const PROFILE_SAVE_PATH := "user://system_player_profile.cfg"
+const HAIR_STYLES := [
+	"قصير", "متوسط", "طويل", "طويل جدا", "مجعد", "أفرو",
+	"ضفيرة", "دريدلوك", "ذيل حصان", "ضفيرتان", "كعكة", "مرفوع",
+	"بوب", "بيكسي", "مدرج", "شائك", "جانبي", "محلوق الجوانب"
+]
+const HAIR_COLORS := [
+	"أسود", "بني", "أشقر", "أصفر", "أبيض", "فضي", "رمادي",
+	"أحمر", "أزرق", "أزرق داكن", "سماوي", "بنفسجي", "وردي",
+	"أخضر", "برتقالي", "ذهبي", "أرجواني"
+]
+
 
 func _ready() -> void:
+	_load_saved_profile()
 	text = "الحساب وتخصيص الشخصية"
 	custom_minimum_size = Vector2(230, 42)
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -54,7 +67,13 @@ func _create_profile_window() -> void:
 	var root := VBoxContainer.new()
 	root.add_theme_constant_override("separation", 10)
 	root.custom_minimum_size = Vector2(400, 700)
-	profile_popup.add_child(root)
+	var scroll := ScrollContainer.new()
+	scroll.name = "CustomizationScroll"
+	scroll.custom_minimum_size = Vector2(400, 680)
+	scroll.size = Vector2(400, 680)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	profile_popup.add_child(scroll)
+	scroll.add_child(root)
 
 	var title := Label.new()
 	title.text = "ملف اللاعب | تخصيص الشخصية"
@@ -92,16 +111,21 @@ func _create_profile_window() -> void:
 	hair_style_option = _add_option(
 		root,
 		"تسريحة الشعر",
-		["قصير", "متوسط", "طويل", "مجعد", "مربوط"],
+		HAIR_STYLES,
 		profile_data["hair_style"]
 	)
 
 	hair_color_option = _add_option(
 		root,
 		"لون الشعر",
-		["أسود", "بني", "أشقر", "أبيض", "أحمر"],
+		HAIR_COLORS,
 		profile_data["hair_color"]
 	)
+
+	var hair_note := Label.new()
+	hair_note.text = "كل التسريحات متاحة للرجال والنساء، ومنها الشعر الطويل للرجال."
+	hair_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	root.add_child(hair_note)
 
 	face_option = _add_option(
 		root,
@@ -218,5 +242,24 @@ func _confirm_profile() -> void:
 		outfit_option.selected
 	)
 
-	status_label.text = "تم تأكيد اختيارات الشخصية."
+	_save_profile()
+	status_label.text = "تم حفظ المظهر: " + str(profile_data.get("hair_style", "")) + " / " + str(profile_data.get("hair_color", ""))
 	profile_updated.emit(profile_data)
+
+
+func _load_saved_profile() -> void:
+	var config := ConfigFile.new()
+	if config.load(PROFILE_SAVE_PATH) != OK:
+		return
+	var saved: Variant = config.get_value("player", "profile", {})
+	if saved is Dictionary:
+		for key in saved.keys():
+			profile_data[key] = saved[key]
+
+
+func _save_profile() -> void:
+	var config := ConfigFile.new()
+	config.set_value("player", "profile", profile_data.duplicate(true))
+	var error := config.save(PROFILE_SAVE_PATH)
+	if error != OK:
+		push_warning("SYSTEM PROFILE: could not save local appearance profile: " + str(error))
