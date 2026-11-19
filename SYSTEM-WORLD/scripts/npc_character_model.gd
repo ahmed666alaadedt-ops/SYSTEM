@@ -49,12 +49,19 @@ func configure(profile: Dictionary, palette_index: int = 0) -> void:
 	height_type = str(profile.get("height_type", "average")).to_lower()
 	if _load_imported_model(selected_model_path):
 		var role := str(profile.get("job", profile.get("occupation", ""))).to_lower()
-		var outfit_id := "civilian"
-		if "guard" in role or "soldier" in role or "police" in role:
+		var world_value := str(profile.get("world_id", profile.get("world", "modern"))).to_lower()
+		var outfit_id := "modern"
+		if world_value in ["historical", "history", "التاريخي", "تاريخي"]:
+			outfit_id = "historical"
+		elif world_value in ["fantasy", "mythic", "mythology", "الأسطوري", "الخيالي"]:
+			outfit_id = "mythic"
+		elif world_value in ["greed_island", "greed island", "جزيرة الطمع"]:
+			outfit_id = "greed_island"
+		if "guard" in role or "soldier" in role or "police" in role or "حارس" in role:
 			outfit_id = "guard"
-		elif "hunter" in role or "guild" in role:
+		elif "hunter" in role or "guild" in role or "صياد" in role:
 			outfit_id = "hunter"
-		elif "noble" in role or "royal" in role:
+		elif "noble" in role or "royal" in role or "نبيل" in role:
 			outfit_id = "royal"
 		set_appearance(palette_index)
 		set_outfit(outfit_id, palette_index)
@@ -301,6 +308,10 @@ func set_outfit(outfit_id: String, variant_index: int = 0) -> void:
 		return
 	var palettes := {
 		"civilian": [Color8(54, 82, 92), Color8(86, 68, 48), Color8(72, 78, 83), Color8(48, 76, 62)],
+		"modern": [Color8(22, 48, 70), Color8(38, 62, 78), Color8(48, 52, 62), Color8(30, 76, 78)],
+		"historical": [Color8(112, 62, 34), Color8(92, 46, 38), Color8(142, 112, 62), Color8(54, 68, 52)],
+		"mythic": [Color8(58, 42, 112), Color8(112, 70, 34), Color8(38, 68, 112), Color8(112, 42, 64)],
+		"greed_island": [Color8(38, 104, 92), Color8(76, 82, 42), Color8(62, 62, 112), Color8(132, 76, 32)],
 		"hunter": [Color8(20, 48, 82), Color8(30, 64, 82), Color8(36, 42, 68), Color8(62, 54, 36)],
 		"guard": [Color8(72, 42, 28), Color8(46, 58, 72), Color8(72, 62, 34), Color8(42, 66, 54)],
 		"royal": [Color8(86, 54, 104), Color8(105, 74, 34), Color8(44, 62, 104), Color8(92, 42, 54)]
