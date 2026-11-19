@@ -22,6 +22,9 @@ jobs:
     steps:
       - name: Checkout SYSTEM
         uses: actions/checkout@v4
+      - name: Syntax-check Blender generator
+        run: python3 -m py_compile SYSTEM-WORLD/tools/blender/generate_system_humanoids.py
+
       - name: Install Blender 4.3.2
         uses: bradyajohnston/setup-blender@v5
         with:
@@ -32,7 +35,7 @@ jobs:
       - name: Generate male and female rigged characters
         run: |
           mkdir -p SYSTEM-WORLD-3D/assets/characters
-          blender --background --factory-startup --python SYSTEM-WORLD/tools/blender/generate_system_humanoids.py -- --output SYSTEM-WORLD-3D/assets/characters
+          blender --background --factory-startup --python-exit-code 1 --python SYSTEM-WORLD/tools/blender/generate_system_humanoids.py -- --output SYSTEM-WORLD-3D/assets/characters
       - name: Validate generated GLB files
         run: |
           python3 SYSTEM-WORLD/tools/validate_glb.py --self-test
