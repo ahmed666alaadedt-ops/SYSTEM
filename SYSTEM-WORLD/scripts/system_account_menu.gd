@@ -129,13 +129,21 @@ func _toggle_panel() -> void:
 
 
 func _refresh_profile() -> void:
+	# UI nodes can be unavailable briefly during scene construction or reload.
+	if not is_instance_valid(name_label):
+		return
 	name_label.text = "اللاعب: " + player_name
-	level_label.text = "المستوى: " + str(player_level)
-	xp_label.text = "الخبرة الكلية: " + str(player_xp) + " XP"
-	world_label.text = "العالم الحالي: " + current_world
+	if is_instance_valid(level_label):
+		level_label.text = "المستوى: " + str(player_level)
+	if is_instance_valid(xp_label):
+		xp_label.text = "الخبرة الكلية: " + str(player_xp) + " XP"
+	if is_instance_valid(world_label):
+		world_label.text = "العالم الحالي: " + current_world
 
 
 func _save_profile() -> void:
+	if not is_instance_valid(name_input) or not is_instance_valid(status_label):
+		return
 	var new_name := name_input.text.strip_edges()
 
 	if new_name.is_empty():
