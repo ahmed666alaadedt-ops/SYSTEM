@@ -2,6 +2,7 @@ extends SceneTree
 
 const CHARACTER_SCRIPT := preload("res://scripts/npc_character_model.gd")
 const SOCIETY_SCRIPT := preload("res://scripts/ai_npc_society_manager.gd")
+const DAILY_LIFE_SCRIPT := preload("res://scripts/npc_daily_life_manager.gd")
 const POPULATION_SCRIPT := preload("res://scripts/npc_visible_population_manager.gd")
 
 func _initialize() -> void:
@@ -83,6 +84,21 @@ func _run_validation() -> void:
 		return
 	if not bool(society.call("set_activity", child_npc_id, "socialize")):
 		push_error("SYSTEM CHILD QA: society manager blocked ordinary minor social life")
+		quit(1)
+		return
+
+	var daily_life := DAILY_LIFE_SCRIPT.new()
+	daily_life.society_manager = society
+	society.set("simulation_hours", 9.0)
+	var teen_profile := {"age_years": 17.0, "occupation": "police", "parent_ids": []}
+	var normal_needs := {"hunger": 100.0, "thirst": 100.0, "hygiene": 100.0, "energy": 100.0, "social": 100.0}
+	if str(daily_life.call("_choose_action", teen_profile, normal_needs)) != "school":
+		push_error("SYSTEM CHILD QA: minor daily schedule did not choose school instead of employment")
+		quit(1)
+		return
+	society.set("simulation_hours", 17.0)
+	if str(daily_life.call("_choose_action", teen_profile, normal_needs)) == "work":
+		push_error("SYSTEM CHILD QA: minor daily schedule assigned employment outside school hours")
 		quit(1)
 		return
 
