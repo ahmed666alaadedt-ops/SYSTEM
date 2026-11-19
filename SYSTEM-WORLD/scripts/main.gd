@@ -26,6 +26,7 @@ const PlayerProgressionScript = preload("res://scripts/system_player_progression
 const PlayerVehicleManagerScript = preload("res://scripts/system_player_vehicle_manager.gd")
 const CrimeResponseManagerScript = preload("res://scripts/modern_city_crime_response_manager.gd")
 const NPCAutonomousSocietyEventManagerScript = preload("res://scripts/npc_autonomous_society_event_manager.gd")
+const NPCVisiblePopulationManagerScript = preload("res://scripts/npc_visible_population_manager.gd")
 const HunterExamManagerScript = preload("res://scripts/system_hunter_exam_manager.gd")
 const PowerTowerManagerScript = preload("res://scripts/system_power_tower_manager.gd")
 const PlayerCombatHealthScript = preload("res://scripts/system_player_combat_health.gd")
@@ -43,6 +44,7 @@ var player_progression
 var player_vehicle_manager
 var crime_response_manager
 var npc_autonomous_event_manager
+var npc_visible_population_manager
 var hunter_exam_manager
 var power_tower_manager
 var player_combat_health: Node
@@ -86,6 +88,7 @@ func _ready() -> void:
 	create_player_vehicle_manager()
 	create_modern_city_crime_manager()
 	create_npc_autonomous_society_event_manager()
+	create_npc_visible_population_manager()
 	create_hunter_exam_manager()
 	create_power_tower_manager()
 	create_mission_reward_manager()
@@ -314,6 +317,22 @@ func create_npc_autonomous_society_event_manager() -> void:
 	npc_autonomous_event_manager.name = "NPCAutonomousSocietyEventManager"
 	active_world_root.add_child(npc_autonomous_event_manager)
 	npc_autonomous_event_manager.setup(ai_npc_society_manager, crime_response_manager)
+
+
+func create_npc_visible_population_manager() -> void:
+	if active_world_root == null or ai_npc_society_manager == null:
+		push_warning("SYSTEM: Visible NPC population requires the active modern world and society manager.")
+		return
+	npc_visible_population_manager = NPCVisiblePopulationManagerScript.new()
+	npc_visible_population_manager.name = "NPCVisiblePopulationManager"
+	active_world_root.add_child(npc_visible_population_manager)
+	var region_manager := active_world_root.get_node_or_null("ModernWorldRegionManager")
+	npc_visible_population_manager.setup(
+		ai_npc_society_manager,
+		npc_daily_life_manager,
+		crime_response_manager,
+		region_manager
+	)
 
 
 func _on_npc_vehicle_stolen(vehicle_id: String, owner_npc_id: String, city_name: String) -> void:
