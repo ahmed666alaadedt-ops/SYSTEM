@@ -174,6 +174,7 @@ func _update_resident(npc_id: String, hours: float) -> void:
 		"socialize", "family":
 			location = str(npc.get("district_id", "baghdad_neighborhood"))
 			needs["social"] = minf(100.0, float(needs["social"]) + hours * 2.5)
+	npc["current_action"] = action
 	npc["needs"] = needs
 	npc["current_location"] = location
 	society_manager.npcs[npc_id] = npc
@@ -200,7 +201,8 @@ func _choose_action(npc: Dictionary, needs: Dictionary) -> String:
 		if hour >= 8.0 and hour < 15.0:
 			return "school"
 		if hour >= 15.0 and hour < 20.0:
-			return "family" if not str(npc.get("parent_ids", [])).is_empty() else "socialize"
+			var parent_ids: Array = npc.get("parent_ids", [])
+			return "family" if not parent_ids.is_empty() else "socialize"
 		return "daily_life"
 	if hour >= 8.0 and hour < 16.0 and str(npc.get("occupation", "")) != "unemployed":
 		return "work"
