@@ -111,12 +111,40 @@ func _run_validation() -> void:
 		"job": "hunter"
 	}, 0)
 	adult.call("set_activity", "attack")
-	if str(adult.get("current_activity")) != "attack":
-		push_error("SYSTEM CHILD QA: adult combat activity was incorrectly blocked")
+	if str(adult.get("current_activity")) != "idle":
+		push_error("SYSTEM NPC QA: adult civilian NPC was allowed to initiate offensive combat")
+		quit(1)
+		return
+	if not bool(adult.call("respond_to_attack")) or str(adult.get("current_activity")) != "defend":
+		push_error("SYSTEM NPC QA: adult civilian NPC could not enter defensive stance after being attacked")
 		quit(1)
 		return
 
-	print("SYSTEM CHILD QA PASS: minors cannot take missions/jobs or initiate combat, can live socially and evade to safety when attacked, and adult combat remains available")
+	var visible_adult_actor := Node3D.new()
+	population.add_child(visible_adult_actor)
+	var visible_adult := CHARACTER_SCRIPT.new()
+	visible_adult_actor.add_child(visible_adult)
+	visible_adult.call("configure", {"name": "Visible Adult QA", "age": 30, "gender": "female"}, 0)
+	var population_records: Dictionary = population.get("pedestrians")
+	population_records["visible_adult"] = {
+		"actor": visible_adult_actor,
+		"visual": visible_adult,
+		"destination": Vector3.ZERO,
+		"path": [],
+		"walking": false,
+		"animation_walking": false
+	}
+	population.set("pedestrians", population_records)
+	if not bool(population.call("notify_npc_attacked", "visible_adult", Vector3(-3.0, 0.0, 0.0))):
+		push_error("SYSTEM NPC QA: visible adult did not receive defensive threat response")
+		quit(1)
+		return
+	if str(visible_adult.get("current_activity")) != "defend":
+		push_error("SYSTEM NPC QA: visible adult did not retain defensive stance")
+		quit(1)
+		return
+
+	print("SYSTEM NPC QA PASS: civilians do not join missions or initiate combat; minors evade and adults defend/retreat when attacked")
 	child.queue_free()
 	adult.queue_free()
 	quit(0)
