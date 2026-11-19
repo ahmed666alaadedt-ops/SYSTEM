@@ -7,12 +7,17 @@ class_name SystemNPCCharacterModel
 const FALLBACK_VISUAL = preload("res://scripts/npc_humanoid_visual.gd")
 const MALE_MODEL_PATH := "res://assets/characters/SYSTEM_Humanoid_Male.glb"
 const FEMALE_MODEL_PATH := "res://assets/characters/SYSTEM_Humanoid_Female.glb"
+const ELDER_MALE_MODEL_PATH := "res://assets/characters/SYSTEM_Humanoid_Elder_Male.glb"
+const ELDER_FEMALE_MODEL_PATH := "res://assets/characters/SYSTEM_Humanoid_Elder_Female.glb"
+const CHILD_MALE_MODEL_PATH := "res://assets/characters/SYSTEM_Humanoid_Child_Male.glb"
+const CHILD_FEMALE_MODEL_PATH := "res://assets/characters/SYSTEM_Humanoid_Child_Female.glb"
 
 var imported_model: Node3D
 var fallback_model: Node3D
 var animation_player: AnimationPlayer
 var current_activity := "idle"
 var selected_model_path := ""
+var age_group := "adult"
 
 func configure(profile: Dictionary, palette_index: int = 0) -> void:
 	name = "NPCCharacter_" + str(profile.get("name", "Resident")).replace(" ", "_")
@@ -20,9 +25,23 @@ func configure(profile: Dictionary, palette_index: int = 0) -> void:
 	var is_female := gender_text in ["female", "woman", "girl", "أنثى", "بنت", "امرأة"]
 	if gender_text.is_empty():
 		is_female = (palette_index % 2) == 1
-	selected_model_path = FEMALE_MODEL_PATH if is_female else MALE_MODEL_PATH
+	age_group = str(profile.get("age_group", profile.get("age", "adult"))).to_lower()
+	if age_group in ["طفل", "طفلة", "child", "children"]:
+		age_group = "child"
+	elif age_group in ["كبير السن", "مسن", "مسنة", "elderly", "senior"]:
+		age_group = "elder"
+	else:
+		age_group = "adult"
+	if age_group == "child":
+		selected_model_path = CHILD_FEMALE_MODEL_PATH if is_female else CHILD_MALE_MODEL_PATH
+	elif age_group == "elder":
+		selected_model_path = ELDER_FEMALE_MODEL_PATH if is_female else ELDER_MALE_MODEL_PATH
+	else:
+		selected_model_path = FEMALE_MODEL_PATH if is_female else MALE_MODEL_PATH
 	if _load_imported_model(selected_model_path):
 		var role := str(profile.get("job", profile.get("occupation", ""))).to_lower()
+		if age_group == "child":
+			role = "civilian"
 		var outfit_id := "civilian"
 		if "guard" in role or "soldier" in role or "police" in role:
 			outfit_id = "guard"
@@ -69,6 +88,8 @@ func _find_animation_player(root: Node) -> AnimationPlayer:
 	return null
 
 func set_activity(value: String) -> void:
+	if age_group == "child" and value in ["attack", "combat", "fight", "run", "sprint", "running", "jump", "leap"]:
+		value = "idle"
 	current_activity = value
 	if is_instance_valid(fallback_model):
 		fallback_model.call("set_activity", value)
