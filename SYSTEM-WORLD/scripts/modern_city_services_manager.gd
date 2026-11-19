@@ -16,6 +16,8 @@ const SERVICE_DATA := [
 var region_manager: Node
 var terrain: Node
 var service_locations: Array[Dictionary] = []
+var active_city_name := ""
+var city_check_clock := 0.0
 
 func _ready() -> void:
 	name = "ModernCityServicesManager"
@@ -25,9 +27,11 @@ func _ready() -> void:
 	terrain = region_manager.get("terrain")
 	if terrain == null:
 		return
+	active_city_name = _find_nearest_city_name(Vector3.ZERO)
 	for city_value in region_manager.call("get_city_names"):
 		_build_city_services(str(city_value))
-	print("SYSTEM WORLD: city service buildings created = ", service_locations.size())
+	print("SYSTEM WORLD: service locations registered = ", service_locations.size(),
+		"; active city visuals = ", active_city_name)
 
 func _build_city_services(city_name: String) -> void:
 	var anchor: Vector3 = region_manager.call("get_city_anchor", city_name)
@@ -40,7 +44,71 @@ func _build_city_services(city_name: String) -> void:
 		var resolved: Vector2 = region_manager.call("_nearest_land_position", requested)
 		if resolved == Vector2.INF:
 			continue
-		_create_service_building(city_name, definition, resolved, index)
+		var service_position := Vector3(
+			resolved.x,
+			float(terrain.call("get_terrain_height", resolved.x, resolved.y)),
+			resolved.y
+		)
+		var service_id := str(definition["id"])
+		var location_type := 7
+		if service_id == "hospital":
+			location_type = 2
+		elif service_id == "market" or service_id == "garage":
+			location_type = 4
+		service_locations.append({
+			"id": "service_%s_%s" % [city_name.to_lower().replace(" ", "_"), service_id],
+			"city": city_name,
+			"name": city_name + " " + str(definition["name"]),
+			"position": service_position,
+			"service_type": service_id,
+			"location_type": location_type
+		})
+		if city_name == active_city_name:
+			_create_service_building(city_name, definition, resolved, index)
+
+func _find_nearest_city_name(position: Vector3) -> String:
+	var city_names: Array = region_manager.call("get_city_names")
+	var nearest_name := "Baghdad"
+	var nearest_distance := INF
+	for city_value in city_names:
+		var city_name := str(city_value)
+		var anchor: Vector3 = region_manager.call("get_city_anchor", city_name)
+		if anchor == Vector3.INF:
+			continue
+		var distance := Vector2(position.x - anchor.x, position.z - anchor.z).length_squared()
+		if distance < nearest_distance:
+			nearest_distance = distance
+			nearest_name = city_name
+	return nearest_name
+
+
+func _rebuild_city_service_visuals(city_name: String) -> void:
+	if city_name == active_city_name:
+		return
+	for child in get_children():
+		child.queue_free()
+	active_city_name = city_name
+	for record in service_locations:
+		if str(record.get("city", "")) != active_city_name:
+			continue
+		var service_id := str(record.get("service_type", ""))
+		for index in range(SERVICE_DATA.size()):
+			var definition: Dictionary = SERVICE_DATA[index]
+			if str(definition.get("id", "")) == service_id:
+				var position: Vector3 = record.get("position", Vector3.ZERO)
+				_create_service_building(active_city_name, definition, Vector2(position.x, position.z), index)
+				break
+
+
+func _process(delta: float) -> void:
+	city_check_clock += delta
+	if city_check_clock < 4.0:
+		return
+	city_check_clock = 0.0
+	var player := region_manager.get_parent().get_node_or_null("Player") as Node3D
+	var player_position := player.global_position if is_instance_valid(player) else Vector3.ZERO
+	_rebuild_city_service_visuals(_find_nearest_city_name(player_position))
+
 
 func _create_service_building(city_name: String, definition: Dictionary, position: Vector2, index: int) -> void:
 	var service_id := str(definition["id"])
@@ -142,14 +210,6 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 	interaction.add_child(area_shape)
 	building.add_child(interaction)
 
-	service_locations.append({
-		"id": location_id,
-		"city": city_name,
-		"name": city_name + " " + str(definition["name"]),
-		"position": building.position,
-		"service_type": service_id,
-		"location_type": location_type
-	})
 
 func _material(color: Color, roughness: float, metallic: float) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()
