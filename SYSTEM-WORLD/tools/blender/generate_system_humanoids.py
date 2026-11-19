@@ -240,10 +240,42 @@ def add_walk_animation(arm):
             spine.keyframe_insert(data_path="rotation_euler",frame=frame,group="Body")
     for fc in idle_action.fcurves:
         fc.modifiers.new("CYCLES")
+    # Run cycle: stronger stride and arm drive for sprinting.
+    run_action=bpy.data.actions.new("Run_Cycle")
+    arm.animation_data.action=run_action
+    for frame in (1,7,13,19,25):
+        phase=(frame-1)/24.0*math.tau
+        for side,sign in (("L",1),("R",-1)):
+            thigh=arm.pose.bones.get("thigh."+side)
+            calf=arm.pose.bones.get("calf."+side)
+            upper=arm.pose.bones.get("upper_arm."+side)
+            fore=arm.pose.bones.get("forearm."+side)
+            if thigh:
+                thigh.rotation_mode="XYZ"; thigh.rotation_euler.x=math.sin(phase)*0.62*sign
+                thigh.keyframe_insert(data_path="rotation_euler",frame=frame,group="Legs")
+            if calf:
+                calf.rotation_mode="XYZ"; calf.rotation_euler.x=max(0,math.sin(phase+math.pi))*0.78
+                calf.keyframe_insert(data_path="rotation_euler",frame=frame,group="Legs")
+            if upper:
+                upper.rotation_mode="XYZ"; upper.rotation_euler.x=-math.sin(phase)*0.48*sign
+                upper.keyframe_insert(data_path="rotation_euler",frame=frame,group="Arms")
+            if fore:
+                fore.rotation_mode="XYZ"; fore.rotation_euler.x=-0.22
+                fore.keyframe_insert(data_path="rotation_euler",frame=frame,group="Arms")
+        spine=arm.pose.bones.get("spine")
+        if spine:
+            spine.rotation_mode="XYZ"; spine.rotation_euler.x=0.10
+            spine.keyframe_insert(data_path="rotation_euler",frame=frame,group="Body")
+    for fc in run_action.fcurves:
+        fc.modifiers.new("CYCLES")
+
     arm.animation_data.action=None
     walk_track=arm.animation_data.nla_tracks.new()
     walk_track.name="Walk_Cycle"
     walk_track.strips.new("Walk_Cycle",1,walk_action)
+    run_track=arm.animation_data.nla_tracks.new()
+    run_track.name="Run_Cycle"
+    run_track.strips.new("Run_Cycle",1,run_action)
     idle_track=arm.animation_data.nla_tracks.new()
     idle_track.name="Idle_Breathing"
     idle_track.strips.new("Idle_Breathing",1,idle_action)
