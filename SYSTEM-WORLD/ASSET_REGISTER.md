@@ -259,3 +259,10 @@ asset here only after generation, GLB validation, Godot import and visual review
 - The Baghdad daily-life scheduler now routes all residents under 18 to school during daytime and family/social/community life outside school hours.
 - It independently blocks minors from employer destinations and wage accumulation, even if an older or malformed save contains an employment occupation.
 - Adult residents retain the existing work, wage, market, rest, and social routines.
+
+
+## Minor NPC Threat Response Integration (2026-11-19)
+
+- `scripts/npc_visible_population_manager.gd` exposes `notify_npc_attacked(npc_id, attacker_global_position)` for a trusted combat/threat detector. It accepts only visible minor NPCs, requests an evasive response, and assigns a short escape route away from the attacker.
+- `scripts/npc_character_model.gd` represents the response as `evade` using the available run-cycle animation; it never triggers an offensive counterattack.
+- The headless child safety QA now constructs a visible child resident and verifies that an attack notification produces an escape path away from the attacker. A live combat hit detector still needs to call this API; the current pedestrian layer does not itself implement hitboxes or damage.
