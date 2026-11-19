@@ -76,6 +76,12 @@ func _run_diagnostic() -> void:
 				if top_child.name == "ModernWorldRegionManager":
 					for region_child in top_child.get_children():
 						var region_mesh_count := _count_meshes(region_child)
+						if region_child.name == "ModernWorldTransportNetworkManager":
+							for transport_child in region_child.get_children():
+								var transport_mesh_count := _count_meshes(transport_child)
+								if transport_mesh_count > 0:
+									print("SYSTEM TRANSPORT MESH GROUP: group=", transport_child.name,
+										" meshes=", transport_mesh_count)
 						if region_mesh_count > 0:
 							print("SYSTEM REGION MESH GROUP: group=", region_child.name,
 								" meshes=", region_mesh_count)
