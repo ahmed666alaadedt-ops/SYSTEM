@@ -151,16 +151,79 @@ func set_appearance(variant_index: int = 0) -> void:
 	]
 	var skin_color: Color = skin_tones[posmod(variant_index, skin_tones.size())]
 	var hair_color: Color = hair_tones[posmod(variant_index, hair_tones.size())]
+	match str(appearance_profile.get("skin_tone", "")).to_lower():
+		"fair", "فاتح", "بيضاء":
+			skin_color = Color8(238, 205, 178)
+		"olive", "قمحي", "حنطي":
+			skin_color = Color8(190, 143, 105)
+		"tan", "أسمر", "برونزي":
+			skin_color = Color8(151, 101, 72)
+		"dark", "داكن", "غامق":
+			skin_color = Color8(91, 59, 45)
+	match str(appearance_profile.get("hair_color", "")).to_lower():
+		"black", "أسود":
+			hair_color = Color8(28, 22, 20)
+		"brown", "بني":
+			hair_color = Color8(92, 52, 30)
+		"blonde", "أشقر":
+			hair_color = Color8(196, 156, 76)
+		"white", "أبيض", "رمادي":
+			hair_color = Color8(215, 218, 220)
+		"red", "أحمر":
+			hair_color = Color8(142, 42, 30)
+	var eye_color := Color8(45, 112, 174)
+	match str(appearance_profile.get("eye_color", "")).to_lower():
+		"brown", "بني":
+			eye_color = Color8(104, 64, 35)
+		"green", "أخضر":
+			eye_color = Color8(55, 125, 76)
+		"gray", "رمادي":
+			eye_color = Color8(116, 132, 145)
+		"hazel", "عسلي":
+			eye_color = Color8(151, 111, 54)
+		"blue", "أزرق":
+			eye_color = Color8(45, 112, 174)
+	var skeleton := _find_skeleton(imported_model)
+	if is_instance_valid(skeleton):
+		var head_bone := skeleton.find_bone("head")
+		if head_bone >= 0:
+			var face_scale := Vector3.ONE
+			match str(appearance_profile.get("face", "متوازن")):
+				"حاد":
+					face_scale = Vector3(0.94, 1.05, 0.98)
+				"ناعم":
+					face_scale = Vector3(1.04, 1.0, 1.03)
+				"عريض":
+					face_scale = Vector3(1.12, 0.97, 1.0)
+				"طويل":
+					face_scale = Vector3(0.96, 1.10, 0.98)
+				"مستدير":
+					face_scale = Vector3(1.08, 0.96, 1.06)
+			skeleton.set_bone_pose_scale(head_bone, face_scale)
 	for node in _collect_mesh_nodes(imported_model):
 		var mesh_node := node as MeshInstance3D
 		var part_name := mesh_node.name.to_lower()
 		var is_skin := "body" in part_name or "faceskin" in part_name or "hands" in part_name or "nose" in part_name or "ear" in part_name or "cheek" in part_name or "palm" in part_name or "finger" in part_name or "upperarm" in part_name or "forearm" in part_name or "thigh" in part_name or "calf" in part_name or "foot" in part_name
 		var is_hair := "hair" in part_name
-		if is_skin or is_hair:
+		if is_skin or is_hair or "eyes" in part_name:
 			var material := StandardMaterial3D.new()
-			material.albedo_color = skin_color if is_skin else hair_color
-			material.roughness = 0.82
+			if is_skin:
+				material.albedo_color = skin_color
+			elif is_hair:
+				material.albedo_color = hair_color
+			else:
+				material.albedo_color = eye_color
+			material.roughness = 0.82 if not "eyes" in part_name else 0.28
 			mesh_node.material_override = material
+
+func _find_skeleton(root: Node) -> Skeleton3D:
+	for child in root.get_children():
+		if child is Skeleton3D:
+			return child as Skeleton3D
+		var nested := _find_skeleton(child)
+		if nested != null:
+			return nested
+	return null
 
 func set_outfit(outfit_id: String, variant_index: int = 0) -> void:
 	if not is_instance_valid(imported_model):
