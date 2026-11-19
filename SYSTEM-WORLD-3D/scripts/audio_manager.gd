@@ -350,10 +350,13 @@ func set_category_volume(
 
 	var safe_volume := clampf(volume_linear, 0.0, 1.0)
 
-	AudioServer.set_bus_volume_linear(
-		bus_index,
-		safe_volume
-	)
+	if safe_volume <= 0.001:
+		AudioServer.set_bus_volume_db(bus_index, -80.0)
+	else:
+		AudioServer.set_bus_volume_db(
+			bus_index,
+			linear_to_db(safe_volume)
+		)
 
 
 func stop_all_effects() -> void:
