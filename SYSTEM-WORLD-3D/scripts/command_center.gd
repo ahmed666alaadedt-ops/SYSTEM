@@ -11,6 +11,7 @@ const WorldPortalButton = preload("res://scripts/world_portal_button.gd")
 const HunterGuildButton = preload("res://scripts/hunter_guild_button.gd")
 const SocialHubButton = preload("res://scripts/social_hub_button.gd")
 const PlayerProfileButton = preload("res://scripts/player_profile_button.gd")
+const PlayerCharacter3D = preload("res://scripts/player_character_3d.gd")
 
 var world_manager: Node
 var selected_world := "modern"
@@ -26,6 +27,7 @@ var utility_status: Label
 
 # Player appearance data
 var player_profile_data: Dictionary = {}
+var player_character: Node3D
 
 
 const WORLD_PRESENTATION := {
@@ -445,6 +447,7 @@ func _create_player_panel(root: Control) -> void:
 		_on_player_profile_updated
 	)
 	column.add_child(player_profile_button)
+	_on_player_profile_updated(player_profile_button.profile_data)
 
 	# Hunter Guild button
 	var hunter_guild_button := HunterGuildButton.new()
@@ -517,12 +520,21 @@ func _on_player_profile_updated(profile_data: Dictionary) -> void:
 		player_profile_data.get("name", "الصياد الجديد")
 	)
 
-	utility_status.text = "تم اعتماد مظهر: " + player_name
+	if not is_instance_valid(player_character):
+		player_character = PlayerCharacter3D.new()
+		player_character.name = "SYSTEMPlayerAvatar"
+		add_child(player_character)
+		player_character.position = Vector3(5.2, 0.0, 2.8)
+		player_character.rotation.y = PI
+		player_character.scale = Vector3.ONE * 0.88
 
+	player_character.apply_profile(player_profile_data)
+
+	utility_status.text = "تم تطبيق مظهر اللاعب: " + player_name
 	miyar_message.text = (
-		"تم حفظ اختيارات مظهرك يا " +
+		"تم تطبيق مظهرك على شخصيتك داخل العالم يا " +
 		player_name +
-		". سنربطها بالمجسم ثلاثي الأبعاد في خطوة بناء شخصية اللاعب."
+		". يمكنك تغيير لون الشعر وتسريحته وسيُحفظ اختيارك على هذا الجهاز."
 	)
 
 
