@@ -5,19 +5,23 @@ const CHARACTER_MODEL = preload("res://scripts/npc_character_model.gd")
 
 func _ready() -> void:
 	_build_stage()
-	_spawn_character("SYSTEM_Humanoid_Male", "male", "hunter", Vector3(-0.95, 0.0, 0.0))
-	_spawn_character("SYSTEM_Humanoid_Female", "female", "guard", Vector3(0.95, 0.0, 0.0))
+	_spawn_character("SYSTEM_Humanoid_Male", "male", "hunter", Vector3(-2.5, 0.0, 0.0), "adult")
+	_spawn_character("SYSTEM_Humanoid_Female", "female", "guard", Vector3(2.5, 0.0, 0.0), "adult")
+	_spawn_character("SYSTEM_Humanoid_Elder_Male", "male", "civilian", Vector3(-1.5, 0.0, 0.0), "elder")
+	_spawn_character("SYSTEM_Humanoid_Elder_Female", "female", "civilian", Vector3(-0.5, 0.0, 0.0), "elder")
+	_spawn_character("SYSTEM_Humanoid_Child_Male", "male", "civilian", Vector3(0.5, 0.0, 0.0), "child")
+	_spawn_character("SYSTEM_Humanoid_Child_Female", "female", "civilian", Vector3(1.5, 0.0, 0.0), "child")
 
-func _spawn_character(display_name: String, gender: String, job: String, at: Vector3) -> void:
+func _spawn_character(display_name: String, gender: String, job: String, at: Vector3, age_group: String = "adult") -> void:
 	var character := CHARACTER_MODEL.new()
 	character.name = display_name
 	add_child(character)
 	character.position = at
-	character.configure({"name": display_name, "gender": gender, "job": job}, 0)
+	character.configure({"name": display_name, "gender": gender, "job": job, "age_group": age_group}, 0)
 	character.set_activity("idle")
 	call_deferred("_report_character_status", character)
 	var title := Label3D.new()
-	title.text = gender.capitalize() + " • " + job.capitalize()
+	title.text = age_group.capitalize() + " • " + gender.capitalize()
 	title.position = Vector3(0.0, 2.15, 0.0)
 	title.font_size = 32
 	title.outline_size = 8
@@ -28,7 +32,7 @@ func _build_stage() -> void:
 	var floor := MeshInstance3D.new()
 	floor.name = "ShowcaseFloor"
 	var plane := PlaneMesh.new()
-	plane.size = Vector2(12.0, 12.0)
+	plane.size = Vector2(16.0, 12.0)
 	floor.mesh = plane
 	var floor_material := StandardMaterial3D.new()
 	floor_material.albedo_color = Color8(17, 25, 37)
@@ -60,7 +64,7 @@ func _build_stage() -> void:
 	add_child(fill_light)
 
 	var camera := Camera3D.new()
-	camera.position = Vector3(0.0, 1.45, 6.2)
+	camera.position = Vector3(0.0, 1.35, 7.4)
 	camera.current = true
 	add_child(camera)
 	camera.look_at(Vector3(0.0, 1.0, 0.0), Vector3.UP)
