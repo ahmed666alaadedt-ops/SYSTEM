@@ -5,7 +5,7 @@ const CHARACTER_MODEL = preload("res://scripts/npc_character_model.gd")
 
 func _ready() -> void:
 	_build_stage()
-	_spawn_character("SYSTEM_Humanoid_Male", "male", "hunter", Vector3(-2.5, 0.0, 0.0), "adult", "short")
+	_spawn_character("SYSTEM_Humanoid_Male", "male", "hunter", Vector3(-2.5, 0.0, 0.0), "adult", "long")
 	_spawn_character("SYSTEM_Humanoid_Female", "female", "guard", Vector3(2.5, 0.0, 0.0), "adult", "long")
 	_spawn_character("SYSTEM_Humanoid_Elder_Male", "male", "civilian", Vector3(-1.5, 0.0, 0.0), "elder", "short")
 	_spawn_character("SYSTEM_Humanoid_Elder_Female", "female", "civilian", Vector3(-0.5, 0.0, 0.0), "elder", "bun")
@@ -17,7 +17,7 @@ func _spawn_character(display_name: String, gender: String, job: String, at: Vec
 	character.name = display_name
 	add_child(character)
 	character.position = at
-	character.configure({"name": display_name, "gender": gender, "job": job, "age_group": age_group, "hair_style": hair_style}, 0)
+	character.configure({"name": display_name, "gender": gender, "job": job, "age_group": age_group, "hair_style": hair_style, "hair_color": "black"}, 0)
 	character.set_activity("idle")
 	call_deferred("_report_character_status", character)
 	var title := Label3D.new()
