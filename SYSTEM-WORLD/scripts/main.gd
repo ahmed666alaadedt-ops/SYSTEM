@@ -946,11 +946,15 @@ func _physics_process(delta: float) -> void:
 	move_direction += forward * -direction.z
 	move_direction = move_direction.normalized()
 	var is_in_hospital_treatment := bool(player.get_meta("system_hospital_treatment", false))
+	var movement_speed := PLAYER_SPEED
+	if bool(player.get_meta("system_wounded", false)):
+		movement_speed *= 0.7
 	if is_in_hospital_treatment:
 		move_direction = Vector3.ZERO
+		movement_speed = 0.0
 
-	player.velocity.x = move_direction.x * PLAYER_SPEED
-	player.velocity.z = move_direction.z * PLAYER_SPEED
+	player.velocity.x = move_direction.x * movement_speed
+	player.velocity.z = move_direction.z * movement_speed
 
 	if move_direction.length() > 0.01:
 		var target_angle := atan2(
