@@ -94,6 +94,13 @@ func _run_validation() -> void:
 		quit(1)
 		return
 
+	var adult_official_id: String = society.call("create_npc", "Adult Official QA", 0, 30.0, "balanced", "police")
+	var adult_official: Dictionary = society.call("get_npc", adult_official_id)
+	if str(adult_official.get("occupation", "")) != "civilian":
+		push_error("SYSTEM NPC QA: civilian society allowed an NPC to hold a police/official occupation")
+		quit(1)
+		return
+
 	var daily_life := DAILY_LIFE_SCRIPT.new()
 	daily_life.society_manager = society
 	society.set("simulation_hours", 9.0)
