@@ -303,3 +303,16 @@ asset here only after generation, GLB validation, Godot import and visual review
 
 - Godot 4.3 import inspection confirmed that the Blender-exported locomotion clips are exposed as `Walk` and `Run` (not `Walk_Cycle` / `Run_Cycle`). Both canonical and preview NPC controllers now resolve the actual names and use `Idle_Breathing` rather than an arbitrary first clip when a requested animation is unavailable. This prevents a missing defensive clip from accidentally selecting `Attack_Animation`.
 - The canonical humanoid QA now checks all seven actual imported animation names and exercises the runtime controller's walk, run, and defensive-response selection.
+
+
+## Four-World Godot Runtime Acceptance (2026-11-19)
+
+- Added `tools/validate_world_runtime.gd` to boot the canonical `MainScene.tscn` and enter each world through the real `WorldManager`.
+- Latest successful canonical runtime run: [44532289512](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44532289512).
+- Modern world: procedural continent present; 14 required real-city anchors found; 142 map locations registered.
+- Historical/civilizations world: six landmark scenes found (Hercules arches, Atlantis, Alexandria lighthouse, Babylon tower, ancient Rome, Roman Colosseum).
+- Fantasy world: 3 villages, 4 kingdom capitals, 18 residents, and 7 map locations initialized.
+- Greed Island: 10 discovery points; admin test mode enabled; combat disabled.
+- Geometry audit: zero `MeshInstance3D` nodes without meshes and zero `MultiMeshInstance3D` nodes without a multimesh mesh in each of the four active world roots.
+- All four world roots initialized and were entered successfully in headless Godot 4.3. The headless dummy renderer still emits repeated `mesh_get_surface_count` null-parameter messages despite the geometry-node audit reporting zero invalid nodes; this remains a rendering/device verification item and is not represented as a clean visual pass.
+- This verifies runtime initialization and world switching, not final visual quality, Android frame rate, or a packaged-device play test.
