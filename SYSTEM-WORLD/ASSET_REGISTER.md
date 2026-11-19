@@ -344,3 +344,12 @@ asset here only after generation, GLB validation, Godot import and visual review
 - Combined current runtime coverage: 27 modern civilians + 18 fantasy residents + 12 Greed Island display characters = **57 imported humanoid instances** when all three worlds are initialized.
 - Historical/civilizations currently passes its six landmark-scene test but does not yet have a populated humanoid resident group. That remains a planned integration stage rather than being marked complete.
 - The character population is functional in the canonical Godot scene, but visual fidelity, distance-based LOD, world unloading/streaming, and physical-device performance still need dedicated work.
+
+
+## Historical Civilization GLB Resident Integration (2026-11-19)
+
+- Latest canonical runtime run: [44536937683](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44536937683) — passed.
+- Added six historical residents around the six landmark scenes. Each is registered in the shared NPC society with historical-world context and uses an imported rigged GLB model.
+- Historical population: **6/6 residents loaded GLB models**, including adult, elder, and child profiles. Child profiles remain civilian-only.
+- Total imported humanoid instances represented by the current four-world runtime acceptance test: **63** — 27 modern, 6 historical, 18 fantasy, and 12 Greed Island display characters.
+- The historical world now has a small resident presence, but it is still a landmark-focused prototype rather than a fully populated historical civilization/city simulation.
