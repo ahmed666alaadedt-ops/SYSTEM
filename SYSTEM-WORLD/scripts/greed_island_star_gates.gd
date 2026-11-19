@@ -123,10 +123,12 @@ func _add_gate_trigger(parent: Node3D, data: Dictionary) -> void:
 
 
 func _create_island_return_gate(island_root: Node3D) -> void:
-	var island := island_root.get_node_or_null("GreedIslandEnvironment")
+	# The current world manager instantiates GreedIslandManager directly.
+	var island: Node = island_root.get_node_or_null("GreedIslandManager")
 	if island == null:
-		push_warning("SYSTEM: GreedIslandEnvironment is missing; island exit gate could not be created.")
-		return
+		island = island_root.get_node_or_null("GreedIslandEnvironment")
+	if island == null:
+		island = island_root
 	if island.has_node("ReturnToBaghdadGate"):
 		return
 	var gate := Node3D.new()
