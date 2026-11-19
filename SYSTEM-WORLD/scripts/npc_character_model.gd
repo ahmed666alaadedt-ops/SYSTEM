@@ -421,12 +421,18 @@ func _collect_mesh_nodes(root: Node) -> Array[Node]:
 func _normalize_hair_style(value: String) -> String:
 	var style := value.to_lower().strip_edges().replace("-", "_").replace(" ", "_")
 	match style:
-		"fade", "low_fade", "mid_fade", "high_fade", "taper_fade", "undercut", "buzz_cut", "crew_cut", "french_crop":
-			return "undercut" if style in ["fade", "low_fade", "mid_fade", "high_fade", "taper_fade", "undercut"] else "short"
-		"textured_crop", "quiff", "pompadour", "spiky":
+		"fade", "low_fade", "mid_fade", "high_fade", "taper_fade":
+			return "fade"
+		"undercut":
+			return "undercut"
+		"buzz_cut", "crew_cut", "french_crop":
+			return "short"
+		"textured_crop", "quiff", "pompadour":
+			return "quiff"
+		"spiky":
 			return "spiky"
 		"slick_back", "side_part":
-			return "side_swept"
+			return "slick_back"
 		"شعر_متوسط", "شعر_ويفي_طويل", "ويفي":
 			return "medium"
 		"شعر_طويل", "شعر_طويل_مدرج", "شعر_مجعد_طويل":
@@ -519,6 +525,21 @@ func _apply_hair_style(skeleton: Skeleton3D, color: Color) -> void:
 	hair_material.albedo_color = color
 	hair_material.roughness = 0.86
 	match hair_style:
+		"fade":
+			_add_hair_capsule("FadeTop", Vector3(0.0, 0.28, 0.0), 0.07, 0.16, hair_material)
+			for side in [-1.0, 1.0]:
+				_add_hair_capsule("FadeTemple", Vector3(0.175 * side, 0.105, 0.0), 0.018, 0.13, hair_material)
+		"quiff":
+			_add_hair_capsule("QuiffBase", Vector3(0.0, 0.25, -0.01), 0.065, 0.18, hair_material)
+			_add_hair_capsule("QuiffFront", Vector3(0.0, 0.30, -0.08), 0.035, 0.20, hair_material)
+			_add_hair_capsule("QuiffSideLeft", Vector3(-0.075, 0.24, -0.02), 0.03, 0.14, hair_material)
+			_add_hair_capsule("QuiffSideRight", Vector3(0.075, 0.24, -0.02), 0.03, 0.14, hair_material)
+		"slick_back":
+			_add_hair_capsule("SlickBackTop", Vector3(0.0, 0.24, 0.045), 0.065, 0.20, hair_material)
+			_add_hair_capsule("SlickBackRear", Vector3(0.0, 0.12, 0.13), 0.04, 0.20, hair_material)
+			_add_hair_capsule("SlickPartLine", Vector3(0.065, 0.25, -0.015), 0.012, 0.16, hair_material)
+		"short":
+			_add_hair_capsule("ShortCutTop", Vector3(0.0, 0.23, 0.0), 0.07, 0.14, hair_material)
 		"medium", "layered":
 			_add_hair_capsule("MediumHairLeft", Vector3(-0.135, 0.09, 0.035), 0.032, 0.22, hair_material)
 			_add_hair_capsule("MediumHairRight", Vector3(0.135, 0.09, 0.035), 0.032, 0.22, hair_material)
