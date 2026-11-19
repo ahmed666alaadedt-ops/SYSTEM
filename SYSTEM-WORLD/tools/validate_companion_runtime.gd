@@ -41,6 +41,7 @@ func _run_validation() -> void:
 			_fail(companion_id + " GLB has no AnimationPlayer")
 			return
 		var clips := animation_player.get_animation_list()
+		print("SYSTEM COMPANION CLIPS [", companion_id, "]: ", clips)
 		for required_clip in ["Idle_Breathing", "Walk_Cycle", "Run_Cycle"]:
 			var found := false
 			for clip in clips:
