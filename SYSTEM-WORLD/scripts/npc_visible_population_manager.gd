@@ -152,6 +152,9 @@ func _create_pedestrian(npc_id: String, npc: Dictionary, seed_index: int) -> voi
 	var visual_profile := npc.duplicate(true)
 	visual_profile["name"] = str(npc.get("name", npc.get("display_name", npc_id)))
 	visual_profile["job"] = str(npc.get("occupation", npc.get("job", "")))
+	# Society records store age_years; the character renderer consumes age.
+	# Preserve the real age so child and elder residents load their dedicated GLBs.
+	visual_profile["age"] = float(npc.get("age_years", npc.get("age", 30.0)))
 	visual.configure(visual_profile, seed_index)
 
 	var city_name := _city_name_for_npc(npc)
