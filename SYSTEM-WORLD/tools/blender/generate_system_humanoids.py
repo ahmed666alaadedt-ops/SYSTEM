@@ -580,6 +580,9 @@ def generate_character(name, female, output, age_group="adult"):
     arm["system_gender"]="female" if female else "male"
     arm["system_age_group"]=age_group
     arm["system_height_scale"]=age_scale
+    arm["system_hair_style_index"]=sum(ord(ch) for ch in name) % 3
+    arm["system_face_variant_index"]=sum(ord(ch) for ch in name) % 3
+    arm["system_age_detail_level"]=1 if age_group == "elder" else 0
     arm["system_body_shape_support"]="heavy,slim,average,athletic,muscular"
     arm["system_height_variants"]="short,average,tall"
     arm["system_animation_set"]="idle,walk,run,jump,attack"
