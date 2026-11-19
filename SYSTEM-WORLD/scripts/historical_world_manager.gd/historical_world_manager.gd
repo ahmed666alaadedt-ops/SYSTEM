@@ -5,6 +5,7 @@ class_name HistoricalWorldManager
 signal landmark_discovered(landmark_id: String, landmark_name: String)
 
 const UndergroundInteractableScript = preload("res://scripts/underground_interactable.gd")
+const NPCCharacterModelScript = preload("res://scripts/npc_character_model.gd")
 
 const LANDMARKS := {
 	"hercules_arches": {
@@ -46,6 +47,7 @@ const LANDMARKS := {
 }
 
 var discovered_landmarks: Array[String] = []
+var historical_resident_visuals: Dictionary = {}
 
 
 func _ready() -> void:
@@ -61,8 +63,169 @@ func _ready() -> void:
 	_build_ancient_rome()
 	_build_roman_colosseum()
 	_create_historical_world_fragments()
+	_build_historical_residents()
 
-	print("SYSTEM WORLD: Historical landmarks created.")
+	print("SYSTEM WORLD: Historical landmarks and six residents created.")
+
+
+
+# --------------------------------------------------
+# HISTORICAL CIVILIZATION RESIDENTS — RIGGED GLB HUMANOIDS
+# --------------------------------------------------
+
+func _build_historical_residents() -> void:
+	var society := get_tree().root.find_child(
+		"AINPCSocietyManager",
+		true,
+		false
+	)
+	if society == null or not society.has_method("create_npc"):
+		push_warning("Historical residents: NPC society manager is unavailable.")
+		return
+
+	var resident_root := Node3D.new()
+	resident_root.name = "HistoricalResidents"
+	add_child(resident_root)
+
+	var resident_data := [
+		{
+			"id": "greek_archivist",
+			"landmark": "hercules_arches",
+			"name": "Kleon",
+			"age": 35.0,
+			"gender": "male",
+			"occupation": "scholar",
+			"offset": Vector3(11.0, 0.0, 9.0)
+		},
+		{
+			"id": "atlantis_archivist",
+			"landmark": "atlantis",
+			"name": "Tiamat",
+			"age": 62.0,
+			"gender": "female",
+			"occupation": "archivist",
+			"offset": Vector3(12.0, 0.0, 10.0)
+		},
+		{
+			"id": "alexandria_scholar",
+			"landmark": "alexandria_lighthouse",
+			"name": "Hypatia",
+			"age": 31.0,
+			"gender": "female",
+			"occupation": "scholar",
+			"offset": Vector3(12.0, 0.0, 10.0)
+		},
+		{
+			"id": "babylon_scribe",
+			"landmark": "babylon_tower",
+			"name": "Nabu",
+			"age": 64.0,
+			"gender": "male",
+			"occupation": "scribe",
+			"offset": Vector3(12.0, 0.0, 11.0)
+		},
+		{
+			"id": "roman_apprentice",
+			"landmark": "ancient_rome",
+			"name": "Lucius",
+			"age": 15.0,
+			"gender": "male",
+			"occupation": "civilian",
+			"offset": Vector3(13.0, 0.0, 12.0)
+		},
+		{
+			"id": "colosseum_student",
+			"landmark": "roman_colosseum",
+			"name": "Livia",
+			"age": 16.0,
+			"gender": "female",
+			"occupation": "civilian",
+			"offset": Vector3(13.0, 0.0, 12.0)
+		}
+	]
+
+	for index in range(resident_data.size()):
+		var data: Dictionary = resident_data[index]
+		var landmark := get_node_or_null(str(data["landmark"])) as Node3D
+		if landmark == null:
+			push_warning("Historical resident landmark missing: " + str(data["landmark"]))
+			continue
+
+		var npc_id := str(society.call(
+			"create_npc",
+			str(data["name"]),
+			1,
+			float(data["age"]),
+			"balanced",
+			str(data["occupation"])
+		))
+		if npc_id.is_empty():
+			continue
+
+		if society.get("npcs") is Dictionary:
+			var npcs: Dictionary = society.get("npcs")
+			if npcs.has(npc_id):
+				var npc: Dictionary = npcs[npc_id]
+				npc["gender"] = str(data["gender"])
+				npc["home_location"] = str(data["landmark"])
+				npc["current_location"] = str(data["landmark"])
+				npc["activity"] = "daily_life"
+				npc["settlement_type"] = "historical"
+				npcs[npc_id] = npc
+
+		var resident := Node3D.new()
+		resident.name = "HistoricalResident_" + str(data["id"])
+		resident.position = landmark.position + data["offset"]
+		resident.set_meta("system_npc_id", npc_id)
+		resident.set_meta("system_location_id", "historical_resident_" + str(data["id"]))
+		resident.set_meta("system_region_id", _get_landmark_region_id(str(data["landmark"])))
+		resident.set_meta("system_display_name", str(data["name"]))
+		resident.set_meta("system_npc_occupation", str(data["occupation"]))
+		resident.set_meta("system_interaction_prompt", "Talk to " + str(data["name"]))
+		resident.add_to_group("system_npc")
+		resident.add_to_group("system_interactable")
+
+		var visual := NPCCharacterModelScript.new() as Node3D
+		resident.add_child(visual)
+		visual.configure({
+			"name": str(data["name"]),
+			"age_years": float(data["age"]),
+			"gender": str(data["gender"]),
+			"occupation": str(data["occupation"]),
+			"world": "historical",
+			"body_type": ["average", "slim", "athletic"][index % 3],
+			"height_type": "average"
+		}, index)
+
+		var name_label := Label3D.new()
+		name_label.text = str(data["name"])
+		name_label.position.y = 2.15
+		name_label.font_size = 26
+		name_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		resident.add_child(name_label)
+
+		var area := Area3D.new()
+		area.name = "HistoricalResidentInteractionArea"
+		area.collision_layer = 1
+		area.collision_mask = 1
+		var collision := CollisionShape3D.new()
+		var sphere := SphereShape3D.new()
+		sphere.radius = 1.5
+		collision.shape = sphere
+		area.add_child(collision)
+		resident.add_child(area)
+
+		resident_root.add_child(resident)
+		historical_resident_visuals[npc_id] = visual
+
+	print(
+		"SYSTEM HISTORICAL: GLB residents loaded: ",
+		historical_resident_visuals.size()
+	)
+
+
+func get_historical_resident_count() -> int:
+	return historical_resident_visuals.size()
 
 
 # --------------------------------------------------
