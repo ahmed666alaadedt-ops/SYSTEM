@@ -44,6 +44,15 @@ func configure(profile: Dictionary, palette_index: int = 0) -> void:
 	else:
 		age_group = "adult"
 	appearance_profile["age_group"] = age_group
+	var requested_role := str(appearance_profile.get("job", appearance_profile.get("occupation", ""))).to_lower().strip_edges()
+	var restricted_roles := [
+		"police", "policeman", "police_officer", "guard", "security",
+		"monitor", "supervisor", "administrator", "admin", "soldier", "military",
+		"شرطة", "شرطي", "حارس", "مراقب", "مشرف", "إداري", "عسكري"
+	]
+	if restricted_roles.has(requested_role):
+		appearance_profile["job"] = "civilian"
+		appearance_profile["occupation"] = "civilian"
 	if age_group == "child":
 		# Keep the civilian-only rule consistent in both imported and fallback models.
 		appearance_profile["job"] = "civilian"
