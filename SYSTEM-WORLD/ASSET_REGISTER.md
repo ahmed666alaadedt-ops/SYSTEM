@@ -292,3 +292,10 @@ asset here only after generation, GLB validation, Godot import and visual review
 - NPC society records do not assign player missions, law-enforcement, guard, security, monitoring, military, supervisory, or administrative official roles.
 - Adult NPCs retain ordinary civilian livelihoods such as teaching, healthcare, trade, transport, construction, farming, and services. Minors remain students/dependants and cannot be assigned employment.
 - New records and previously saved records are normalized; character presentation also prevents restricted official job labels from producing police/guard outfits.
+
+
+## Four-World Environment Pipeline Dependency Fix (2026-11-19)
+
+- GitHub Actions run `44523201472` confirmed the previous Ubuntu package installed Blender 4.0.2 without the NumPy module required by its bundled glTF exporter; all four requested environment exports failed before creating assets.
+- A workflow correction is prepared to pin Blender 4.3.2, preflight the bundled NumPy dependency, validate pull requests, and commit successful four-world tile outputs into the canonical runtime asset folder.
+- Status remains **pending** until the corrected workflow completes successfully and its generated GLB files pass structural validation and Godot import.
