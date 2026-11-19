@@ -19,6 +19,8 @@ var daily_life: Node
 var crime_manager: Node
 var region_manager: Node
 var navigation_manager: Node
+signal minor_defensive_response(npc_id: String, response: String)
+
 var pedestrians: Dictionary = {}
 var service_units: Array[Dictionary] = []
 var refresh_clock := 0.0
@@ -198,6 +200,39 @@ func _set_pedestrian_destination(npc_id: String, npc: Dictionary) -> void:
 		record["path"] = _build_city_block_path(actor.position, target)
 	record["walking"] = true
 	pedestrians[npc_id] = record
+
+## Called by a trusted hit/threat detector when a visible minor NPC is attacked.
+## The child evades toward safety; no damage, counterattack, or combat role is assigned.
+func notify_npc_attacked(npc_id: String, attacker_global_position: Vector3) -> bool:
+	if not pedestrians.has(npc_id):
+		return false
+	var record: Dictionary = pedestrians[npc_id]
+	var actor := record.get("actor") as Node3D
+	var visual := record.get("visual") as Node
+	if not is_instance_valid(actor) or not is_instance_valid(visual):
+		return false
+	if str(visual.get("age_group")) != "child":
+		return false
+	if not visual.has_method("respond_to_attack") or not bool(visual.call("respond_to_attack")):
+		return false
+
+	var away := actor.global_position - attacker_global_position
+	away.y = 0.0
+	if away.length_squared() < 0.0001:
+		away = -actor.global_basis.z
+	away.y = 0.0
+	if away.length_squared() < 0.0001:
+		away = Vector3.BACK
+	var safe_global_target := actor.global_position + away.normalized() * 6.0
+	var safe_local_target := to_local(safe_global_target)
+	record["destination"] = safe_local_target
+	record["path"] = _build_city_block_path(actor.position, safe_local_target)
+	record["walking"] = true
+	record["animation_walking"] = true
+	pedestrians[npc_id] = record
+	minor_defensive_response.emit(npc_id, "evade_to_safety")
+	return true
+
 
 func _build_city_block_path(start: Vector3, target: Vector3) -> Array[Vector3]:
 	var path: Array[Vector3] = []
