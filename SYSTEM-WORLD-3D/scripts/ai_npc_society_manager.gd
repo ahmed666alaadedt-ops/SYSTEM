@@ -78,6 +78,41 @@ func _create_residents() -> void:
 
 	for index in range(people.size()):
 		_create_resident(people[index], index)
+	_link_initial_families()
+
+
+
+func _link_initial_families() -> void:
+	var couples := [
+		["سارة", "عمر"], ["ليلى", "حسن"], ["نور", "آدم"],
+		["مريم", "يوسف"], ["زينب", "كريم"], ["هند", "علي"]
+	]
+	for couple in couples:
+		var first_id := _find_resident_id(str(couple[0]))
+		var second_id := _find_resident_id(str(couple[1]))
+		if first_id.is_empty() or second_id.is_empty():
+			continue
+		relationship_system.set_relationship(first_id, second_id, "partner", 90.0)
+		relationship_system.create_marriage(first_id, second_id)
+
+	var family_links := [
+		{"parents": ["جد سارة", "جدة عمر"], "children": ["سارة", "عمر"]},
+		{"parents": ["ليلى", "حسن"], "children": ["ليان", "حيدر"]},
+		{"parents": ["أبو نور"], "children": ["نور", "آدم"]},
+		{"parents": ["مريم", "يوسف"], "children": ["مريم الصغيرة"]},
+		{"parents": ["زينب", "كريم"], "children": ["يوسف الصغير"]},
+		{"parents": ["أم هند"], "children": ["هند", "علي"]}
+	]
+	for family in family_links:
+		var parent_ids: Array[String] = []
+		for parent_name in family["parents"]:
+			var parent_id := _find_resident_id(str(parent_name))
+			if not parent_id.is_empty():
+				parent_ids.append(parent_id)
+		for child_name in family["children"]:
+			var child_id := _find_resident_id(str(child_name))
+			if not child_id.is_empty():
+				relationship_system.set_parentage(parent_ids, child_id)
 
 
 func _create_resident(profile: Dictionary, index: int) -> void:
