@@ -243,15 +243,35 @@ func _validate_greed_island(world_manager: Node) -> void:
 	if not bool(island.call("is_admin_test_environment")):
 		_fail("Greed Island admin test mode is not enabled.")
 
+	var display_visuals: Dictionary = island.get("display_humanoid_visuals")
+	var imported_display_count := 0
+	for display_name in display_visuals:
+		var visual := display_visuals[display_name] as Node
+		if visual == null or not is_instance_valid(visual):
+			_fail("Greed Island display character has no visual: " + str(display_name))
+			continue
+		var imported_model := visual.get("imported_model") as Node3D
+		if imported_model == null or not is_instance_valid(imported_model):
+			_fail("Greed Island display character did not load a GLB: " + str(display_name))
+			continue
+		imported_display_count += 1
+	if display_visuals.size() < 12 or imported_display_count != 12:
+		_fail(
+			"Greed Island expected 12 imported guard/servant GLBs; found %d." % [
+				imported_display_count
+			]
+		)
+
 	var discovery_count := _count_discovery_points(island)
 	if discovery_count < 4:
 		_fail("Greed Island created fewer than four discoverable map points.")
 
 	_scan_invalid_mesh_nodes(active_root, "greed_island")
 	print(
-		"GREED ISLAND QA: admin_test=%s, combat=%s, discovery_points=%d" % [
+		"GREED ISLAND QA: admin_test=%s, combat=%s, GLB_display_characters=%d, discovery_points=%d" % [
 			str(island.call("is_admin_test_environment")),
 			str(island.call("is_combat_allowed")),
+			imported_display_count,
 			discovery_count
 		]
 	)
