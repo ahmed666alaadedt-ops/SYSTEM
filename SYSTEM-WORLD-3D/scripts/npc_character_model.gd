@@ -36,9 +36,9 @@ func configure(profile: Dictionary, palette_index: int = 0) -> void:
 	_build_fallback(profile, palette_index)
 
 func _load_imported_model(path: String) -> bool:
-	if not ResourceLoader.exists(path):
+	if not FileAccess.file_exists(path):
 		return false
-	var packed := load(path) as PackedScene
+	var packed := ResourceLoader.load(path) as PackedScene
 	if packed == null:
 		push_warning("SYSTEM NPC: GLB scene could not be loaded: " + path)
 		return false
