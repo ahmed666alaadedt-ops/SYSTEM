@@ -945,6 +945,9 @@ func _physics_process(delta: float) -> void:
 	var move_direction := right * direction.x
 	move_direction += forward * -direction.z
 	move_direction = move_direction.normalized()
+	var is_in_hospital_treatment := bool(player.get_meta("system_hospital_treatment", false))
+	if is_in_hospital_treatment:
+		move_direction = Vector3.ZERO
 
 	player.velocity.x = move_direction.x * PLAYER_SPEED
 	player.velocity.z = move_direction.z * PLAYER_SPEED
@@ -966,7 +969,7 @@ func _physics_process(delta: float) -> void:
 	if not flight_controlled:
 		if not player.is_on_floor():
 			player.velocity.y -= GRAVITY * delta
-		elif jump_requested or Input.is_key_pressed(KEY_SPACE):
+		elif not is_in_hospital_treatment and (jump_requested or Input.is_key_pressed(KEY_SPACE)):
 			player.velocity.y = JUMP_FORCE
 
 	jump_requested = false
