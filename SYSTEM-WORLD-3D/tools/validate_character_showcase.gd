@@ -6,7 +6,9 @@ const REQUIRED_CLIPS := [
 	"Walk_Cycle",
 	"Run_Cycle",
 	"Jump_Animation",
-	"Attack_Animation"
+	"Attack_Animation",
+	"Facial_Blink",
+	"Facial_Talking"
 ]
 
 func _initialize() -> void:
@@ -80,7 +82,9 @@ func _run_validation() -> void:
 				"Walk_Cycle": ["walk_cycle", "walk"],
 				"Run_Cycle": ["run_cycle", "run"],
 				"Jump_Animation": ["jump_animation", "jump"],
-				"Attack_Animation": ["attack_animation", "attack"]
+				"Attack_Animation": ["attack_animation", "attack"],
+				"Facial_Blink": ["facial_blink", "blink"],
+				"Facial_Talking": ["facial_talking", "talking"]
 			}
 			for required_clip in REQUIRED_CLIPS:
 				var found := false
