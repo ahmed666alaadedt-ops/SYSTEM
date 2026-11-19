@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "version": "2026-11-19.1",
+  "coordinate_reference_system": "EPSG:4326",
+  "coordinate_order": "latitude_longitude",
+  "world_model": "real_earth",
+  "regions": {
+    "iraq_baghdad_region": {
+      "country_id": "country_iraq",
+      "name": {"en": "Baghdad Region", "ar": "منطقة بغداد"},
+      "origin": {"latitude": 33.3152, "longitude": 44.3661, "altitude_m": 0.0},
+      "tile_size_meters_default": 1000,
+      "streaming_profile": "android_region"
+    }
+  },
+  "countries": {
+    "country_iraq": {
+      "iso_3166_1_alpha2": "IQ",
+      "iso_3166_1_alpha3": "IRQ",
+      "name": {"en": "Iraq", "ar": "العراق"},
+      "region_ids": ["iraq_baghdad_region"],
+      "data_status": "seed_only"
+    }
+  },
+  "cities": {
+    "city_baghdad": {
+      "country_id": "country_iraq",
+      "region_id": "iraq_baghdad_region",
+      "name": {"en": "Baghdad", "ar": "بغداد"},
+      "latitude": 33.3152,
+      "longitude": 44.3661,
+      "elevation_m": 34.0,
+      "city_status": "geographic_anchor_only",
+      "required_real_features": [
+        "Tigris River",
+        "real street and road network",
+        "district boundaries",
+        "bridges and river crossings",
+        "historic landmarks",
+        "airports and railway infrastructure"
+      ]
+    }
+  },
+  "data_sources": [
+    {
+      "source_id": "baghdad_anchor_seed",
+      "provider": "SYSTEM project seed",
+      "dataset": "Baghdad reference point",
+      "license": "coordinate reference only; verify against an approved geospatial source before production",
+      "attribution_required": true,
+      "status": "provisional"
+    }
+  ],
+  "production_rules": {
+    "never_invent_real_world_city_coordinates": true,
+    "never_claim_seed_records_are_complete_map_data": true,
+    "store_source_and_license_per_imported_dataset": true,
+    "use_offline_region_packs_for_gameplay": true,
+    "stream_tiles_by_distance_and_device_budget": true,
+    "preserve_real_world_geography": true,
+    "star_gate_interworld_hub_city_id": "city_baghdad"
+  }
+}
