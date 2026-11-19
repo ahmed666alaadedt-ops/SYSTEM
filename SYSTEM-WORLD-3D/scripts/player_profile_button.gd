@@ -7,7 +7,7 @@ var profile_data := {
 	"name": "الصياد الجديد",
 	"appearance": "ذكر",
 	"age_group": "adult",
-	"hair_style": "قصير",
+	"hair_style": "Buzz Cut",
 	"hair_color": "أسود",
 	"face": "متوازن",
 	"body": "رياضي",
@@ -218,8 +218,7 @@ func _add_option(
 		option.add_item(str(item))
 
 	var selected_index := options.find(selected_value)
-	if selected_index >= 0:
-		option.select(selected_index)
+	option.select(selected_index if selected_index >= 0 else 0)
 
 	parent.add_child(option)
 	return option
