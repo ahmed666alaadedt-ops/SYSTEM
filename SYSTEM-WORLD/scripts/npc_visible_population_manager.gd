@@ -121,9 +121,9 @@ func _create_pedestrian(npc_id: String, npc: Dictionary, seed_index: int) -> voi
 	var actor := Node3D.new()
 	actor.name = "Civilian_" + npc_id.validate_node_name()
 	add_child(actor)
-	var seed_value := abs(npc_id.hash())
-	var clothing := clothing_materials[seed_value % clothing_materials.size()]
-	var skin := skin_materials[(int(seed_value / 7)) % skin_materials.size()]
+	var seed_value: int = absi(npc_id.hash())
+	var clothing: StandardMaterial3D = clothing_materials[seed_value % clothing_materials.size()]
+	var skin: StandardMaterial3D = skin_materials[(int(seed_value / 7)) % skin_materials.size()]
 	var torso := MeshInstance3D.new()
 	var torso_mesh := CapsuleMesh.new()
 	torso_mesh.radius = 0.24
@@ -195,7 +195,7 @@ func _city_anchor(city_name: String) -> Vector3:
 func _location_for_action(npc: Dictionary, action: String, seed_index: int) -> Vector3:
 	var city := _city_name_for_npc(npc)
 	var anchor := _city_anchor(city)
-	var seed_value := abs(str(npc.get("npc_id", npc.get("id", seed_index))).hash())
+	var seed_value: int = absi(str(npc.get("npc_id", npc.get("id", seed_index))).hash())
 	var block_x := float((seed_value % 5) - 2) * 7.0
 	var block_z := float((floori(float(seed_value) / 5.0) % 5) - 2) * 7.0
 	var home := Vector3(block_x, 0.0, block_z) + anchor
