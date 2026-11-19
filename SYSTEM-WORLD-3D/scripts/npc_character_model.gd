@@ -367,6 +367,9 @@ func _apply_profession_accessories(skeleton: Skeleton3D) -> void:
 		"guard":
 			_add_outfit_box("GuardChestBadge", Vector3(0.14, 0.04, -0.17), Vector3(0.075, 0.09, 0.025), gold)
 			_add_outfit_sphere("GuardShoulderMark", Vector3(-0.22, 0.17, 0.0), Vector3(0.09, 0.055, 0.08), gold)
+		"hunter":
+			_add_outfit_box("HunterGuildInsignia", Vector3(0.14, 0.06, -0.17), Vector3(0.09, 0.09, 0.025), gold)
+			_add_outfit_box("HunterUtilityStrap", Vector3(-0.12, -0.19, -0.17), Vector3(0.07, 0.22, 0.025), dark)
 		"farmer":
 			_add_outfit_box("FarmerFieldPouch", Vector3(0.19, -0.18, -0.11), Vector3(0.10, 0.13, 0.09), dark)
 		"carpenter":
@@ -509,6 +512,7 @@ func set_outfit(outfit_id: String, variant_index: int = 0) -> void:
 	}
 	var choices: Array = palettes.get(outfit_id.to_lower(), palettes["civilian"])
 	var cloth_color: Color = choices[posmod(variant_index, choices.size())]
+	var regional_accent := _city_accent_color()
 	for node in _collect_mesh_nodes(imported_model):
 		var mesh_node := node as MeshInstance3D
 		var part_name := mesh_node.name.to_lower()
@@ -518,7 +522,7 @@ func set_outfit(outfit_id: String, variant_index: int = 0) -> void:
 		elif "trousers" in part_name:
 			tint = cloth_color.darkened(0.48)
 		elif "belt" in part_name or "trim" in part_name:
-			tint = Color8(156, 112, 48)
+			tint = regional_accent
 		elif "boot" in part_name or "glove" in part_name:
 			tint = Color8(28, 24, 22)
 		if tint.a > 0.0:
@@ -526,6 +530,21 @@ func set_outfit(outfit_id: String, variant_index: int = 0) -> void:
 			material.albedo_color = tint
 			material.roughness = 0.78
 			mesh_node.material_override = material
+
+func _city_accent_color() -> Color:
+	var city := str(appearance_profile.get("city", "بغداد")).to_lower()
+	if city in ["بغداد", "البصرة", "الموصل", "أربيل", "iraq", "baghdad"]:
+		return Color8(184, 137, 61)
+	if city in ["طوكيو", "سيول", "tokyo", "seoul"]:
+		return Color8(65, 165, 205)
+	if city in ["باريس", "لندن", "paris", "london"]:
+		return Color8(154, 166, 184)
+	if city in ["نيويورك", "new york"]:
+		return Color8(75, 184, 205)
+	if city in ["موسكو", "moscow"]:
+		return Color8(160, 92, 72)
+	return Color8(156, 130, 82)
+
 
 func _find_skeleton(root: Node) -> Skeleton3D:
 	if root is Skeleton3D:
