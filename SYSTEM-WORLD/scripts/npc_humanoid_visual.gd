@@ -101,7 +101,10 @@ func set_hair_style(style_id: String) -> void:
 			for x in [-0.13, -0.08, -0.025, 0.035, 0.09, 0.14]:
 				_add_runtime_hair_sphere("RuntimeHairCurl", Vector3(x, 0.20, 0.02), Vector3(0.065, 0.065, 0.065))
 		"braided", "dreadlocks":
-			for side in [-1.0, 1.0] if hair_style == "dreadlocks" else [-1.0]:
+			var braid_sides: Array = [-1.0]
+			if hair_style == "dreadlocks":
+				braid_sides = [-1.0, 1.0]
+			for side in braid_sides:
 				_add_runtime_hair_capsule("RuntimeHairBraid", Vector3(0.14 * side, 0.0, 0.05), 0.028, 0.38)
 		"ponytail", "twin_tails":
 			var sides: Array = [-1.0, 1.0] if hair_style == "twin_tails" else [0.0]
