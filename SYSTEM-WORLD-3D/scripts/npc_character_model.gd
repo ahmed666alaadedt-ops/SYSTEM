@@ -532,7 +532,10 @@ func _apply_hair_style(skeleton: Skeleton3D, color: Color) -> void:
 				for z in [-0.055, 0.025]:
 					_add_hair_sphere("CurlyLock", Vector3(x, 0.30, z), Vector3(0.065, 0.065, 0.065), hair_material)
 		"braided", "dreadlocks":
-			for side in [-1.0, 1.0] if hair_style == "dreadlocks" else [-1.0]:
+			var braid_sides: Array = [-1.0]
+			if hair_style == "dreadlocks":
+				braid_sides = [-1.0, 1.0]
+			for side in braid_sides:
 				_add_hair_capsule("BraidLock", Vector3(0.14 * side, 0.00, 0.04), 0.028, 0.36, hair_material)
 				for step in range(5):
 					var y := 0.18 - float(step) * 0.065
