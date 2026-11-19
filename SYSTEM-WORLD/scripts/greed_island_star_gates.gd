@@ -83,6 +83,7 @@ func _create_baghdad_gate_hub(modern_root: Node3D) -> bool:
 		hub.add_child(gate)
 		_build_gate_visual(gate, str(data["theme"]))
 		_add_gate_trigger(gate, data)
+	return true
 
 
 func _build_gate_visual(parent: Node3D, theme: String) -> void:
