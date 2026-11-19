@@ -121,7 +121,7 @@ func _create_pedestrian(npc_id: String, npc: Dictionary, seed_index: int) -> voi
 	add_child(actor)
 	var seed_value := abs(npc_id.hash())
 	var clothing := clothing_materials[seed_value % clothing_materials.size()]
-	var skin := skin_materials[(seed_value / 7) % skin_materials.size()]
+	var skin := skin_materials[(int(seed_value / 7)) % skin_materials.size()]
 	var torso := MeshInstance3D.new()
 	var torso_mesh := CapsuleMesh.new()
 	torso_mesh.radius = 0.24
