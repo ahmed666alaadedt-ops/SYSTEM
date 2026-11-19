@@ -151,7 +151,8 @@ func _build_fallback(profile: Dictionary, palette_index: int) -> void:
 			height_scale = 0.91
 		"tall":
 			height_scale = 1.09
-	fallback_model.scale = Vector3(width_scale, height_scale, depth_scale)
+		var age_scale := 0.68 if age_group == "child" else (0.93 if age_group == "elder" else 1.0)
+	fallback_model.scale = Vector3(width_scale * age_scale, height_scale * age_scale, depth_scale * age_scale)
 
 func _find_animation_player(root: Node) -> AnimationPlayer:
 	for child in root.get_children():
