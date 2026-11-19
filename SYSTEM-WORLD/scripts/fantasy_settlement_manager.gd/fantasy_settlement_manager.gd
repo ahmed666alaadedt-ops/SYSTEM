@@ -997,10 +997,6 @@ func get_resident_count() -> int:
 	return resident_nodes.size()
 
 
-func get_kingdom_count() -> int:
-	return kingdoms.size()
-
-
 func get_kingdoms() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 
