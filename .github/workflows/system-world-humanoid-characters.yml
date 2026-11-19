@@ -1,6 +1,10 @@
 name: SYSTEM WORLD Cinematic Humanoid Character Generator
 
 on:
+  push:
+    paths:
+      - "SYSTEM-WORLD/tools/blender/generate_system_humanoids.py"
+      - ".github/workflows/system-world-humanoid-characters.yml"
   workflow_dispatch:
 
 permissions:
