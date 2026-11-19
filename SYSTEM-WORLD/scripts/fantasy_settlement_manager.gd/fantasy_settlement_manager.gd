@@ -997,12 +997,4 @@ func get_resident_count() -> int:
 	return resident_nodes.size()
 
 
-func get_kingdoms() -> Array[Dictionary]:
-	var result: Array[Dictionary] = []
 
-	for kingdom in kingdoms.values():
-		var record: Dictionary = kingdom.duplicate()
-		record.erase("city_node")
-		result.append(record)
-
-	return result
