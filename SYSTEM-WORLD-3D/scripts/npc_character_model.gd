@@ -125,6 +125,28 @@ func _build_fallback(profile: Dictionary, palette_index: int) -> void:
 	add_child(fallback_model)
 	if fallback_model.has_method("configure"):
 		fallback_model.call("configure", profile, palette_index)
+	var width_scale := 1.0
+	var depth_scale := 1.0
+	match body_type:
+		"heavy":
+			width_scale = 1.22
+			depth_scale = 1.18
+		"slim":
+			width_scale = 0.82
+			depth_scale = 0.88
+		"athletic":
+			width_scale = 1.07
+			depth_scale = 1.02
+		"muscular":
+			width_scale = 1.16
+			depth_scale = 1.10
+	var height_scale := 1.0
+	match height_type:
+		"short":
+			height_scale = 0.91
+		"tall":
+			height_scale = 1.09
+	fallback_model.scale = Vector3(width_scale, height_scale, depth_scale)
 
 func _find_animation_player(root: Node) -> AnimationPlayer:
 	for child in root.get_children():
