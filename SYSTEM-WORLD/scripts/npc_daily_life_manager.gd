@@ -129,9 +129,7 @@ func _update_resident(npc_id: String, hours: float) -> void:
 	var needs: Dictionary = npc.get("needs", {})
 	needs["hunger"] = maxf(0.0, float(needs.get("hunger", 80.0)) - hours * 1.7)
 	needs["thirst"] = maxf(0.0, float(needs.get("thirst", 85.0)) - hours * 2.6)
-	needs["energy"] = maxf(0.0, float(needs.get("energy", 80.0)) - hours * 1.0)
 	needs["hygiene"] = maxf(0.0, float(needs.get("hygiene", 75.0)) - hours * 0.22)
-	needs["social"] = maxf(0.0, float(needs.get("social", 65.0)) - hours * 0.18)
 	var action := _choose_action(npc, needs)
 	npc["current_action"] = action
 	npc["needs"] = needs
