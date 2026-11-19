@@ -212,7 +212,7 @@ func set_appearance(variant_index: int = 0) -> void:
 		var is_hair := "hair" in part_name or "brow" in part_name or "eyebrow" in part_name or "beard" in part_name or "mustache" in part_name
 		var is_iris := "iris" in part_name
 		var is_pupil := "pupil" in part_name
-		var is_sclera := "eyewhite" in part_name or "sclera" in part_name
+		var is_sclera := "eyewhite" in part_name or "sclera" in part_name or "eyeleft" in part_name or "eyeright" in part_name or part_name.ends_with("_eyes")
 		var is_lip := "lip" in part_name or "mouth" in part_name
 		var is_highlight := "highlight" in part_name or "catchlight" in part_name
 		if is_skin or is_hair or is_iris or is_pupil or is_sclera or is_lip or is_highlight:
