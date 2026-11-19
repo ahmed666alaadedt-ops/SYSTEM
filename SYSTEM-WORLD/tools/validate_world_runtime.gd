@@ -36,6 +36,13 @@ const REQUIRED_HISTORICAL_LANDMARKS := [
 	"roman_colosseum"
 ]
 
+const GENERATED_ENVIRONMENT_TILE_PATHS := [
+	"res://generated/environment_tiles/sw_modern_tile_s20261119.glb",
+	"res://generated/environment_tiles/sw_historical_tile_s20261119.glb",
+	"res://generated/environment_tiles/sw_fantasy_tile_s20261119.glb",
+	"res://generated/environment_tiles/sw_greed_island_tile_s20261119.glb"
+]
+
 var failures: Array[String] = []
 
 
@@ -78,6 +85,7 @@ func _run_validation() -> void:
 	_validate_fantasy_world(world_manager, map_manager)
 	await _enter_world(world_manager, WORLD_GREED_ISLAND)
 	_validate_greed_island(world_manager)
+	_validate_generated_environment_tiles()
 
 	if failures.is_empty():
 		print("WORLD RUNTIME QA PASS: modern, historical, fantasy, and Greed Island initialized and entered.")
@@ -318,3 +326,52 @@ func _validate_visible_npc_glb_population(modern_root: Node3D) -> void:
 			unique_model_paths.size()
 		]
 	)
+
+
+func _validate_generated_environment_tiles() -> void:
+	var present_count := 0
+	for tile_path in GENERATED_ENVIRONMENT_TILE_PATHS:
+		if not ResourceLoader.exists(tile_path):
+			continue
+		var packed_scene := load(tile_path) as PackedScene
+		if packed_scene == null:
+			_fail("Generated environment tile did not import as PackedScene: " + tile_path)
+			continue
+		var instance := packed_scene.instantiate()
+		if instance == null:
+			_fail("Generated environment tile could not be instantiated: " + tile_path)
+			continue
+		var mesh_count := _count_renderable_meshes(instance)
+		if mesh_count < 1:
+			_fail("Generated environment tile contains no renderable MeshInstance3D: " + tile_path)
+		present_count += 1
+		print("ENVIRONMENT TILE QA: %s renderable_meshes=%d" % [tile_path, mesh_count])
+		instance.free()
+
+	if present_count == 0:
+		print("ENVIRONMENT TILE QA: generated tiles are not merged into the canonical project yet; import check deferred.")
+	elif present_count != GENERATED_ENVIRONMENT_TILE_PATHS.size():
+		_fail(
+			"Only %d of %d generated environment tiles are present in the canonical project." % [
+				present_count,
+				GENERATED_ENVIRONMENT_TILE_PATHS.size()
+			]
+		)
+	else:
+		print("ENVIRONMENT TILE QA PASS: all four generated world tiles imported and instantiated.")
+
+
+func _count_renderable_meshes(node: Node) -> int:
+	var count := 0
+	if node is MeshInstance3D:
+		var mesh_instance := node as MeshInstance3D
+		if mesh_instance.mesh != null and mesh_instance.mesh.get_surface_count() > 0:
+			count += 1
+	elif node is MultiMeshInstance3D:
+		var multi_instance := node as MultiMeshInstance3D
+		if multi_instance.multimesh != null and multi_instance.multimesh.mesh != null:
+			if multi_instance.multimesh.mesh.get_surface_count() > 0:
+				count += multi_instance.multimesh.instance_count
+	for child in node.get_children():
+		count += _count_renderable_meshes(child)
+	return count
