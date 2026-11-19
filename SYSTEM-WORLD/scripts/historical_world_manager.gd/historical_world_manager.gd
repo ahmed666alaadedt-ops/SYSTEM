@@ -4,6 +4,8 @@ class_name HistoricalWorldManager
 
 signal landmark_discovered(landmark_id: String, landmark_name: String)
 
+const UndergroundInteractableScript = preload("res://scripts/underground_interactable.gd")
+
 const LANDMARKS := {
 	"hercules_arches": {
 		"name": "أقواس هرقل",
