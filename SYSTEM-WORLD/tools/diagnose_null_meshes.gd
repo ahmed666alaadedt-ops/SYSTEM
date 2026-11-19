@@ -77,4 +77,16 @@ func _run_diagnostic() -> void:
 		print("SYSTEM NULL MESH: ", path)
 	for path in null_multimesh_paths.slice(0, 100):
 		print("SYSTEM INVALID MULTIMESH: ", path)
+	# Exercise first-entry loading for all four worlds, then return to the modern world.
+	if manager != null:
+		for world_id in [0, 1, 3, 2]:
+			manager.call("switch_world", world_id)
+			for frame_index in range(3):
+				await process_frame
+			var initialized: Dictionary = manager.get("world_initialized")
+			if not bool(initialized.get(world_id, false)):
+				push_error("World lazy-load test failed for world ID " + str(world_id))
+				quit(3)
+				return
+			print("SYSTEM WORLD LOAD TEST: world=", world_id, " initialized=true")
 	quit(1 if not null_mesh_paths.is_empty() or not null_multimesh_paths.is_empty() else 0)
