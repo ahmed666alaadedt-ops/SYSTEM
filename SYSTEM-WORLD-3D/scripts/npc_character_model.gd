@@ -464,7 +464,7 @@ func _resolve_hair_color(value: String = "") -> Color:
 			return Color8(178, 35, 42)
 		"أزرق", "ازرق", "blue", "electric_blue":
 			return Color8(35, 105, 220)
-		"أزرق_داكن", "navy", "dark_blue":
+		"أزرق_داكن", "أزرق داكن", "navy", "dark_blue":
 			return Color8(24, 45, 112)
 		"سماوي", "cyan", "turquoise":
 			return Color8(38, 190, 205)
