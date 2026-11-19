@@ -1,0 +1,45 @@
+name: SYSTEM WORLD Cinematic Humanoid Character Generator
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate-rigged-characters:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Checkout SYSTEM
+        uses: actions/checkout@v4
+      - name: Install Blender
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes blender
+          blender --version
+      - name: Generate male and female rigged characters
+        run: |
+          mkdir -p SYSTEM-WORLD-3D/assets/characters
+          blender --background --factory-startup --python SYSTEM-WORLD/tools/blender/generate_system_humanoids.py -- --output SYSTEM-WORLD-3D/assets/characters
+      - name: Validate generated GLB files
+        run: |
+          python3 SYSTEM-WORLD/tools/validate_glb.py --self-test
+          test -s SYSTEM-WORLD-3D/assets/characters/SYSTEM_Humanoid_Male.glb
+          test -s SYSTEM-WORLD-3D/assets/characters/SYSTEM_Humanoid_Female.glb
+          ls -lh SYSTEM-WORLD-3D/assets/characters
+      - name: Commit generated character assets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add SYSTEM-WORLD-3D/assets/characters/*.glb
+          git diff --cached --quiet || git commit -m "Generate rigged SYSTEM WORLD humanoid character assets"
+          git push
+      - name: Upload Blender source and character files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: system-world-rigged-humanoid-characters
+          path: SYSTEM-WORLD-3D/assets/characters/
+          if-no-files-found: error
+          retention-days: 30
