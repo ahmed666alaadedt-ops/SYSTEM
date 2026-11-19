@@ -32,7 +32,7 @@ func configure(profile: Dictionary, palette_index: int = 0) -> void:
 
 func set_activity(value: String) -> void:
 	activity = value
-	walking = value in ["work", "eat", "socialize", "wander", "travel", "walk"]
+	walking = value in ["work", "eat", "socialize", "wander", "travel", "walk", "play", "school", "family"]
 	if not walking:
 		_reset_pose()
 
