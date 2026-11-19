@@ -678,6 +678,33 @@ func _add_hair_capsule(piece_name: String, at: Vector3, radius: float, height: f
 	hairstyle_attachment.add_child(instance)
 	hairstyle_mesh_count += 1
 
+func get_mesh_safety_report() -> Dictionary:
+	var null_meshes := 0
+	var invalid_mesh_rids := 0
+	var valid_meshes := 0
+	if is_instance_valid(imported_model):
+		for node in _collect_all_mesh_instances(imported_model):
+			var mesh_node := node as MeshInstance3D
+			if mesh_node.mesh == null:
+				null_meshes += 1
+			elif not mesh_node.mesh.get_rid().is_valid():
+				invalid_mesh_rids += 1
+			else:
+				valid_meshes += 1
+	return {
+		"null_meshes": null_meshes,
+		"invalid_mesh_rids": invalid_mesh_rids,
+		"valid_meshes": valid_meshes
+	}
+
+func _collect_all_mesh_instances(root: Node) -> Array[Node]:
+	var result: Array[Node] = []
+	if root is MeshInstance3D:
+		result.append(root)
+	for child in root.get_children():
+		result.append_array(_collect_all_mesh_instances(child))
+	return result
+
 func get_character_status() -> Dictionary:
 	var skeleton_count := 0
 	var mesh_count := 0
