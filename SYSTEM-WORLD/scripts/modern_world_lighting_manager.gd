@@ -17,6 +17,8 @@ var terrain: Node
 var fixture_positions: Array[Vector3] = []
 var active_lights: Array[OmniLight3D] = []
 var elapsed := 0.0
+var city_check_clock := 0.0
+var active_city_name := ""
 var pole_material: StandardMaterial3D
 var lamp_material: StandardMaterial3D
 var fixture_root: Node3D
@@ -32,7 +34,8 @@ func _ready() -> void:
 		push_warning("SYSTEM Lighting: terrain is unavailable.")
 		return
 	_create_materials()
-	_build_city_fixture_network()
+	active_city_name = _find_nearest_city_name(Vector3.ZERO)
+	_build_city_fixture_network(active_city_name)
 	_create_dynamic_light_pool()
 	_refresh_nearby_lights()
 	print("SYSTEM WORLD: procedural city lighting fixtures = ", fixture_positions.size())
@@ -51,28 +54,50 @@ func _create_materials() -> void:
 	lamp_material.emission_energy_multiplier = 2.0
 
 
-func _build_city_fixture_network() -> void:
+func _build_city_fixture_network(city_name: String) -> void:
 	fixture_root = Node3D.new()
-	fixture_root.name = "ProceduralStreetFixtures"
+	fixture_root.name = "ProceduralStreetFixtures_" + city_name.replace(" ", "")
 	add_child(fixture_root)
+	var anchor: Vector3 = region_manager.call("get_city_anchor", city_name)
+	if anchor == Vector3.INF:
+		return
 
+	# Only the player's current city receives detailed lamp geometry.
+	_add_corridor_lights(city_name, anchor, Vector2(0.0, -185.0), MAIN_ROAD_SPACING, 13.0)
+	_add_corridor_lights(city_name, anchor, Vector2(185.0, 0.0), MAIN_ROAD_SPACING, 13.0)
+	_add_corridor_lights(city_name, Vector3(anchor.x, anchor.y, anchor.z - 145.0),
+		Vector2(145.0, 0.0), SECONDARY_ROAD_SPACING, 8.0)
+	_add_corridor_lights(city_name, Vector3(anchor.x, anchor.y, anchor.z + 145.0),
+		Vector2(145.0, 0.0), SECONDARY_ROAD_SPACING, 8.0)
+	_add_plaza_lanterns(city_name, anchor)
+	_add_district_and_transport_lights(city_name, anchor)
+
+
+func _find_nearest_city_name(position: Vector3) -> String:
 	var city_names: Array = region_manager.call("get_city_names")
-	for city_name_value in city_names:
-		var city_name := str(city_name_value)
+	var nearest_name := "Baghdad"
+	var nearest_distance := INF
+	for city_value in city_names:
+		var city_name := str(city_value)
 		var anchor: Vector3 = region_manager.call("get_city_anchor", city_name)
 		if anchor == Vector3.INF:
 			continue
+		var distance := Vector2(position.x - anchor.x, position.z - anchor.z).length_squared()
+		if distance < nearest_distance:
+			nearest_distance = distance
+			nearest_name = city_name
+	return nearest_name
 
-		# Main north/south and east/west boulevards.
-		_add_corridor_lights(city_name, anchor, Vector2(0.0, -185.0), MAIN_ROAD_SPACING, 13.0)
-		_add_corridor_lights(city_name, anchor, Vector2(185.0, 0.0), MAIN_ROAD_SPACING, 13.0)
 
-		# Two ring-road segments use wider spacing and lower fixture density.
-		_add_corridor_lights(city_name, Vector3(anchor.x, anchor.y, anchor.z - 145.0), Vector2(145.0, 0.0), SECONDARY_ROAD_SPACING, 8.0)
-		_add_corridor_lights(city_name, Vector3(anchor.x, anchor.y, anchor.z + 145.0), Vector2(145.0, 0.0), SECONDARY_ROAD_SPACING, 8.0)
-
-		_add_plaza_lanterns(city_name, anchor)
-		_add_district_and_transport_lights(city_name, anchor)
+func _rebuild_city_fixtures(city_name: String) -> void:
+	if city_name == active_city_name:
+		return
+	if is_instance_valid(fixture_root):
+		fixture_root.queue_free()
+	fixture_positions.clear()
+	active_city_name = city_name
+	_build_city_fixture_network(active_city_name)
+	_refresh_nearby_lights()
 
 
 func _add_district_and_transport_lights(city_name: String, anchor: Vector3) -> void:
@@ -182,10 +207,15 @@ func _create_dynamic_light_pool() -> void:
 
 func _process(delta: float) -> void:
 	elapsed += delta
-	if elapsed < REFRESH_INTERVAL:
-		return
-	elapsed = 0.0
-	_refresh_nearby_lights()
+	city_check_clock += delta
+	if city_check_clock >= 4.0:
+		city_check_clock = 0.0
+		var player := region_manager.get_parent().get_node_or_null("Player") as Node3D
+		var player_position := player.global_position if is_instance_valid(player) else Vector3.ZERO
+		_rebuild_city_fixtures(_find_nearest_city_name(player_position))
+	if elapsed >= REFRESH_INTERVAL:
+		elapsed = 0.0
+		_refresh_nearby_lights()
 
 
 func _refresh_nearby_lights() -> void:
