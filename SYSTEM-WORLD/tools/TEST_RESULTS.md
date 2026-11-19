@@ -163,4 +163,17 @@ device profiling remain separate, pending acceptance checks.
 - Add an explicit Blender-Python `import bpy, numpy` preflight before generation.
 - Run the environment workflow on pull requests so the fix can be verified before merge.
 - After a successful push-triggered run on `main`, commit the validated `.blend`, `.glb`, and `.json` tile outputs into `SYSTEM-WORLD/generated/environment_tiles/` so the canonical runtime can import them. Pull-request runs only validate and upload artifacts; they do not push generated files.
-- This correction is pending CI. No environment tile is marked generated or integrated until a fresh run passes and the resulting assets are checked.
+- The corrected pull-request CI run passed; see the result recorded below. The generated files are available as a workflow artifact, but the push-only commit step was correctly skipped on the PR branch. Canonical repository integration will occur on the first successful push-triggered run after this workflow is merged to `main`.
+
+
+### Corrected four-world environment run — PASS (2026-11-19)
+
+- GitHub Actions run: [44529185073](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44529185073).
+- Blender: **4.3.2**; Blender-Python NumPy preflight: passed.
+- GLB validator self-test: passed.
+- Environment generation: **4/4 worlds passed**, **0 failed**.
+- World presets: `modern`, `historical`, `fantasy`, and `greed_island`.
+- Each world produced a non-empty `.blend`, `.glb`, and metadata `.json`; all four GLBs passed structural validation.
+- Artifact: `system-world-environments-all-20261119.zip` (1,031,362 bytes), retained by GitHub Actions for 14 days.
+- The generated tiles are explicitly labelled `procedural_blockout_requires_visual_review`. They are valid initial blockout assets, not final art-quality terrain.
+- PR validation does not push files. After merge, the push-triggered workflow is configured to commit the validated `sw_*.blend`, `sw_*.glb`, and per-world `sw_*.json` files under `SYSTEM-WORLD/generated/environment_tiles/`. Godot import and visual/device review remain separate acceptance checks.
