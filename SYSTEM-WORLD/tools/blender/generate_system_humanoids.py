@@ -38,7 +38,7 @@ SHOES = material("Boot leather", (0.018, 0.014, 0.012), 0.48)
 EYES = material("Eyes", (0.012, 0.009, 0.008), 0.22)
 WHITE = material("Eye highlights", (0.8, 0.72, 0.58), 0.3)
 
-def uv_sphere(name, loc, scale, mat, segments=24, rings=16):
+def uv_sphere(name, loc, scale, mat, segments=16, rings=12):
     bpy.ops.mesh.primitive_uv_sphere_add(segments=segments, ring_count=rings, location=loc)
     o = bpy.context.object
     o.name = name
@@ -130,12 +130,14 @@ def build_body(name, female=False):
     bpy.ops.object.join()
     body=bpy.context.object
     body.name=name+"_Body"
-    body.data.remesh_voxel_size=0.018
+    body.data.remesh_voxel_size=0.022
     bpy.ops.object.voxel_remesh()
     smooth=body.modifiers.new("Anatomical smoothing","SMOOTH")
     smooth.factor=1.25; smooth.iterations=4
     sub=body.modifiers.new("Surface polish","SUBSURF")
     sub.levels=1; sub.render_levels=1
+    decimate=body.modifiers.new("Mobile polygon optimization","DECIMATE")
+    decimate.ratio=0.88
     for poly in body.data.polygons: poly.use_smooth=True
     return body
 
@@ -148,7 +150,7 @@ def add_face_and_hair(name, female=False):
         objs.append(capsule(name+"_Eyebrow",(s*0.025,1.885,-0.116),(s*0.085,1.89,-0.112),0.010,HAIR,12))
     objs.append(uv_sphere(name+"_Nose",(0,1.80,-0.143),(0.025,0.043,0.035),SKIN,16,12))
     objs.append(capsule(name+"_Mouth",( -0.034,1.718,-0.132),(0.034,1.718,-0.132),0.006,HAIR,12))
-    objs.append(uv_sphere(name+"_HairCap",(0,1.965,0.015),(0.15,0.085,0.14),HAIR,24,16))
+    objs.append(uv_sphere(name+"_HairCap",(0,1.965,0.015),(0.15,0.085,0.14),HAIR,20,12))
     # Layered hair silhouette; longer side locks distinguish the female base mesh.
     for i in range(7):
         x=-0.12+i*0.04
@@ -173,7 +175,7 @@ def add_finger_geometry(name):
 def add_clothes(name):
     objs=[]
     # tailored jacket and trousers, separate fitted pieces to permit outfit swaps
-    objs.append(uv_sphere(name+"_Jacket",(0,1.31,0),(0.265,0.39,0.16),CLOTH,24,16))
+    objs.append(uv_sphere(name+"_Jacket",(0,1.31,0),(0.265,0.39,0.16),CLOTH,20,12))
     objs.append(uv_sphere(name+"_Belt",(0,1.00,-0.005),(0.205,0.045,0.145),TRIM,20,12))
     objs.append(capsule(name+"_CollarLeft",(-0.09,1.63,-0.105),(0.0,1.51,-0.16),0.035,TRIM,12))
     objs.append(capsule(name+"_CollarRight",(0.09,1.63,-0.105),(0.0,1.51,-0.16),0.035,TRIM,12))
