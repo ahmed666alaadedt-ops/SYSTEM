@@ -20,6 +20,7 @@ const TRAFFIC_FLEET := [
 var region_manager: Node3D
 var terrain: Node
 var vehicles: Array[Dictionary] = []
+var city_speed_factors: Dictionary = {}
 var elapsed := 0.0
 var body_material: StandardMaterial3D
 var glass_material: StandardMaterial3D
@@ -72,6 +73,7 @@ func _build_city_traffic() -> void:
 			var east_west := fleet_index % 2 == 1
 			_create_vehicle(
 				city_name + "_" + str(TRAFFIC_FLEET[fleet_index]["name"]) + "_%02d" % fleet_index,
+				city_name,
 				anchor,
 				east_west,
 				city_index * TRAFFIC_FLEET.size() + fleet_index,
@@ -79,7 +81,7 @@ func _build_city_traffic() -> void:
 			)
 
 
-func _create_vehicle(vehicle_name: String, anchor: Vector3, east_west: bool, seed_index: int, fleet_index: int) -> void:
+func _create_vehicle(vehicle_name: String, city_name: String, anchor: Vector3, east_west: bool, seed_index: int, fleet_index: int) -> void:
 	var definition: Dictionary = TRAFFIC_FLEET[fleet_index]
 	var vehicle := Node3D.new()
 	vehicle.name = vehicle_name
@@ -125,6 +127,7 @@ func _create_vehicle(vehicle_name: String, anchor: Vector3, east_west: bool, see
 
 	vehicles.append({
 		"node": vehicle,
+		"city_name": city_name,
 		"anchor": anchor,
 		"east_west": east_west,
 		"speed": float(definition["speed"]) + float(seed_index % 3) * 0.35,
@@ -140,7 +143,8 @@ func _process(delta: float) -> void:
 		if not is_instance_valid(vehicle):
 			continue
 		var anchor: Vector3 = item["anchor"]
-		var distance := fposmod(elapsed * float(item["speed"]) + float(item["offset"]), ROAD_LENGTH)
+		var city_factor := float(city_speed_factors.get(str(item.get("city_name", "")), 1.0))
+		var distance := fposmod(elapsed * float(item["speed"]) * city_factor + float(item["offset"]), ROAD_LENGTH)
 		var position := anchor
 		if bool(item["east_west"]):
 			position.x += distance
@@ -158,3 +162,14 @@ func _process(delta: float) -> void:
 		if terrain != null and terrain.has_method("get_terrain_height"):
 			position.y = float(terrain.call("get_terrain_height", position.x, position.z)) + 0.05
 		vehicle.position = position
+
+
+
+func set_city_congestion(city_name: String, speed_factor: float) -> void:
+	if city_name.is_empty():
+		return
+	city_speed_factors[city_name] = clampf(speed_factor, 0.15, 1.0)
+
+
+func get_city_congestion(city_name: String) -> float:
+	return float(city_speed_factors.get(city_name, 1.0))

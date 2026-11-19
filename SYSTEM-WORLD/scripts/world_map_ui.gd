@@ -24,6 +24,7 @@ class MapDrawing extends Control:
 
 	var discovered_locations: Array = []
 	var personal_markers: Array = []
+	var world_overview: Dictionary = {}
 	var player_position := Vector3.ZERO
 	var player_visible := false
 
@@ -45,6 +46,12 @@ class MapDrawing extends Control:
 		_draw_grid(map_rect)
 
 		var all_positions: Array[Vector3] = []
+		for city in world_overview.get("cities", []):
+			if typeof(city) == TYPE_DICTIONARY and city.get("position") is Vector3:
+				all_positions.append(city["position"])
+		for village in world_overview.get("villages", []):
+			if typeof(village) == TYPE_DICTIONARY and village.get("position") is Vector3:
+				all_positions.append(village["position"])
 
 		for item in discovered_locations:
 			if typeof(item) != TYPE_DICTIONARY:
@@ -95,6 +102,8 @@ class MapDrawing extends Control:
 		if max_z - min_z < 20.0:
 			min_z -= 10.0
 			max_z += 10.0
+
+		_draw_world_overview(map_rect, min_x, max_x, min_z, max_z)
 
 		for item in discovered_locations:
 			if typeof(item) != TYPE_DICTIONARY:
@@ -272,6 +281,72 @@ class MapDrawing extends Control:
 			rect.position.x + x_ratio * rect.size.x,
 			rect.position.y + z_ratio * rect.size.y
 		)
+
+
+
+	func _draw_world_overview(rect: Rect2, min_x: float, max_x: float, min_z: float, max_z: float) -> void:
+		var land := PackedVector2Array()
+		var coast := PackedVector2Array()
+		var center := rect.get_center()
+		var radius_x := rect.size.x * 0.455
+		var radius_y := rect.size.y * 0.435
+		for index in range(80):
+			var angle := TAU * float(index) / 80.0
+			var wobble := 1.0 + 0.035 * sin(angle * 5.0) + 0.018 * cos(angle * 9.0)
+			var point := center + Vector2(cos(angle) * radius_x * wobble, sin(angle) * radius_y * wobble)
+			land.append(point)
+			coast.append(point)
+		draw_colored_polygon(land, Color(0.13, 0.20, 0.17, 0.96))
+		draw_polyline(coast, Color(0.48, 0.62, 0.48, 0.95), 2.2, true)
+
+		var cities: Array = world_overview.get("cities", [])
+		var city_points: Array[Vector2] = []
+		var city_point_names: Array[String] = []
+		for city in cities:
+			if typeof(city) != TYPE_DICTIONARY or not (city.get("position") is Vector3):
+				continue
+			city_points.append(_project_position(city["position"], rect, min_x, max_x, min_z, max_z))
+			city_point_names.append(str(city.get("name", "City")))
+
+		if city_points.size() > 1:
+			var connected: Array[int] = [0]
+			while connected.size() < city_points.size():
+				var best_distance := INF
+				var best_from := -1
+				var best_to := -1
+				for from_index in connected:
+					for to_index in range(city_points.size()):
+						if connected.has(to_index):
+							continue
+						var distance := city_points[from_index].distance_to(city_points[to_index])
+						if distance < best_distance:
+							best_distance = distance
+							best_from = from_index
+							best_to = to_index
+				if best_from < 0 or best_to < 0:
+					break
+				draw_line(city_points[best_from], city_points[best_to], Color(0.72, 0.66, 0.48, 0.8), 3.0, true)
+				draw_line(city_points[best_from], city_points[best_to], Color(0.20, 0.24, 0.22, 0.95), 1.0, true)
+				connected.append(best_to)
+
+		for village in world_overview.get("villages", []):
+			if typeof(village) != TYPE_DICTIONARY or not (village.get("position") is Vector3):
+				continue
+			var village_point := _project_position(village["position"], rect, min_x, max_x, min_z, max_z)
+			draw_circle(village_point, 3.0, Color(0.78, 0.72, 0.52, 0.9))
+
+		for city_index in range(city_points.size()):
+			var point := city_points[city_index]
+			draw_circle(point, 5.0, Color(0.92, 0.78, 0.42))
+			draw_arc(point, 8.0, 0.0, TAU, 24, Color(0.95, 0.86, 0.62, 0.8), 1.2)
+			draw_string(ThemeDB.fallback_font, point + Vector2(8, -7), city_point_names[city_index], HORIZONTAL_ALIGNMENT_LEFT, 110, 10, Color(0.92, 0.94, 0.86))
+
+		for incident in world_overview.get("incidents", []):
+			if typeof(incident) != TYPE_DICTIONARY or not (incident.get("position") is Vector3):
+				continue
+			var incident_point := _project_position(incident["position"], rect, min_x, max_x, min_z, max_z)
+			draw_circle(incident_point, 5.5, Color(1.0, 0.22, 0.12))
+			draw_arc(incident_point, 9.0, 0.0, TAU, 20, Color(1.0, 0.42, 0.18), 1.5)
 
 
 var map_manager: Node
@@ -510,6 +585,13 @@ func _refresh_map() -> void:
 		"get_map_snapshot",
 		str(selected_world_id)
 	)
+	map_canvas.world_overview = {}
+	if selected_world_id == 2 and world_manager != null and world_manager.has_method("get_world_root"):
+		var modern_root := world_manager.call("get_world_root", 2) as Node3D
+		if modern_root != null:
+			var region := modern_root.get_node_or_null("ModernWorldRegionManager")
+			if region != null and region.has_method("get_map_overview"):
+				map_canvas.world_overview = region.call("get_map_overview")
 
 	map_canvas.discovered_locations = snapshot.get(
 		"discovered_locations",
