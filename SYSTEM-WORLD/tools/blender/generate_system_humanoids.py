@@ -443,11 +443,40 @@ def add_walk_animation(arm):
     for fc in attack_action.fcurves:
         for kp in fc.keyframe_points: kp.interpolation="BEZIER"
 
+    # Natural facial micro-animation clips: periodic blinking and subtle jaw
+    # motion for speech. These remain separate from locomotion animations.
+    blink_action=bpy.data.actions.new("Facial_Blink")
+    arm.animation_data.action=blink_action
+    for frame, eye_scale in ((1,1.0),(22,1.0),(24,0.08),(26,1.0),(50,1.0)):
+        for side in ("L","R"):
+            eye=arm.pose.bones.get("eye."+side)
+            if eye:
+                eye.scale=(1.0,eye_scale,1.0)
+                eye.keyframe_insert(data_path="scale",frame=frame,group="Eyes")
+    for fc in blink_action.fcurves:
+        for kp in fc.keyframe_points:
+            kp.interpolation="BEZIER"
+        fc.modifiers.new("CYCLES")
+
+    talking_action=bpy.data.actions.new("Facial_Talking")
+    arm.animation_data.action=talking_action
+    for frame, jaw_angle in ((1,0.0),(4,-0.08),(7,-0.015),(10,-0.12),(13,-0.025),(16,-0.07),(19,0.0)):
+        jaw=arm.pose.bones.get("jaw")
+        if jaw:
+            jaw.rotation_mode="XYZ"
+            jaw.rotation_euler.x=jaw_angle
+            jaw.keyframe_insert(data_path="rotation_euler",frame=frame,group="Face")
+    for fc in talking_action.fcurves:
+        for kp in fc.keyframe_points:
+            kp.interpolation="BEZIER"
+        fc.modifiers.new("CYCLES")
+
     arm.animation_data.action=None
     for clip_name, clip_action in (
         ("Walk_Cycle",walk_action),("Run_Cycle",run_action),
         ("Idle_Breathing",idle_action),("Jump_Animation",jump_action),
-        ("Attack_Animation",attack_action)
+        ("Attack_Animation",attack_action),("Facial_Blink",blink_action),
+        ("Facial_Talking",talking_action)
     ):
         track=arm.animation_data.nla_tracks.new()
         track.name=clip_name
