@@ -225,6 +225,44 @@ func create_child(
 	return child_id
 
 
+
+func set_parentage(parent_ids: Array[String], child_id: String) -> bool:
+	if not _resident_exists(child_id) or parent_ids.is_empty():
+		return false
+	var child: Dictionary = resident_profiles[child_id]
+	var unique_parents: Array[String] = []
+	for parent_id in parent_ids:
+		if parent_id == child_id or not _resident_exists(parent_id):
+			continue
+		var parent: Dictionary = resident_profiles[parent_id]
+		if int(parent.get("age", 0)) <= int(child.get("age", 0)):
+			continue
+		if not unique_parents.has(parent_id):
+			unique_parents.append(parent_id)
+	if unique_parents.is_empty():
+		return false
+	child["parents"] = unique_parents
+	var highest_generation := 0
+	for parent_id in unique_parents:
+		var parent: Dictionary = resident_profiles[parent_id]
+		highest_generation = maxi(highest_generation, int(parent.get("generation", 1)))
+		var children: Array = parent.get("children", [])
+		if not children.has(child_id):
+			children.append(child_id)
+		parent["children"] = children
+		resident_profiles[parent_id] = parent
+		set_relationship(parent_id, child_id, "family", 85.0)
+	child["generation"] = highest_generation + 1
+	resident_profiles[child_id] = child
+	var family_id := str(child.get("family_id", ""))
+	if families.has(family_id):
+		families[family_id]["history"].append({
+			"event": "parentage_registered",
+			"child": child_id,
+			"parents": unique_parents.duplicate()
+		})
+	return true
+
 func advance_age(resident_id: String, years: int = 1) -> void:
 	if not _resident_exists(resident_id):
 		return
