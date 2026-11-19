@@ -18,6 +18,8 @@ var animation_player: AnimationPlayer
 var current_activity := "idle"
 var selected_model_path := ""
 var age_group := "adult"
+var body_type := "average"
+var height_type := "average"
 
 func configure(profile: Dictionary, palette_index: int = 0) -> void:
 	name = "NPCCharacter_" + str(profile.get("name", "Resident")).replace(" ", "_")
@@ -38,6 +40,29 @@ func configure(profile: Dictionary, palette_index: int = 0) -> void:
 		selected_model_path = ELDER_FEMALE_MODEL_PATH if is_female else ELDER_MALE_MODEL_PATH
 	else:
 		selected_model_path = FEMALE_MODEL_PATH if is_female else MALE_MODEL_PATH
+
+	body_type = str(profile.get("body_type", profile.get("body", ""))).to_lower()
+	if body_type in ["سمين", "بدين", "heavy", "fat", "overweight"]:
+		body_type = "heavy"
+	elif body_type in ["نحيف", "ضعيف", "slim", "thin", "lean"]:
+		body_type = "slim"
+	elif body_type in ["قوي", "ضخم العضلات", "muscular", "strong", "stocky"]:
+		body_type = "muscular"
+	elif body_type in ["رياضي", "athletic"]:
+		body_type = "athletic"
+	else:
+		body_type = ["average", "slim", "heavy", "athletic", "muscular"][posmod(palette_index, 5)]
+
+	height_type = str(profile.get("height_type", profile.get("height", ""))).to_lower()
+	if height_type in ["قصير", "قصيرة", "short"]:
+		height_type = "short"
+	elif height_type in ["طويل", "طويلة", "tall"]:
+		height_type = "tall"
+	elif height_type in ["متوسط", "متوسطة", "average", "medium"]:
+		height_type = "average"
+	else:
+		height_type = ["short", "average", "tall"][posmod(palette_index / 2, 3)]
+
 	if _load_imported_model(selected_model_path):
 		var role := str(profile.get("job", profile.get("occupation", ""))).to_lower()
 		if age_group == "child":
@@ -65,7 +90,30 @@ func _load_imported_model(path: String) -> bool:
 	if imported_model == null:
 		push_warning("SYSTEM NPC: GLB root is not Node3D: " + path)
 		return false
+
 	imported_model.name = "RiggedGLBCharacter"
+	var body_width := 1.0
+	var body_depth := 1.0
+	match body_type:
+		"heavy":
+			body_width = 1.22
+			body_depth = 1.18
+		"slim":
+			body_width = 0.82
+			body_depth = 0.88
+		"athletic":
+			body_width = 1.07
+			body_depth = 1.02
+		"muscular":
+			body_width = 1.16
+			body_depth = 1.10
+	var stature := 1.0
+	match height_type:
+		"short":
+			stature = 0.91
+		"tall":
+			stature = 1.09
+	imported_model.scale = Vector3(body_width, stature, body_depth)
 	add_child(imported_model)
 	animation_player = _find_animation_player(imported_model)
 	set_activity(current_activity)
@@ -196,6 +244,9 @@ func get_character_status() -> Dictionary:
 	return {
 		"model_source": "glb" if is_instance_valid(imported_model) else "procedural_fallback",
 		"model_path": selected_model_path,
+		"age_group": age_group,
+		"body_type": body_type,
+		"height_type": height_type,
 		"has_animation_player": is_instance_valid(animation_player),
 		"skeleton_count": skeleton_count,
 		"mesh_instance_count": mesh_count,
