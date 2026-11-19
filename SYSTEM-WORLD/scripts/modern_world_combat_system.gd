@@ -47,13 +47,18 @@ func _fire_hitscan(damage: float, distance: float) -> void:
 		direction = -camera.global_transform.basis.z
 	var query := PhysicsRayQueryParameters3D.create(origin,origin + direction.normalized() * distance)
 	query.exclude = [actor.get_rid()]
+	query.collide_with_areas = true
 	var result := actor.get_world_3d().direct_space_state.intersect_ray(query)
 	if result.is_empty():
 		return
 	var collider: Object = result.get("collider")
 	var target: Node = collider as Node
-	if target != null and not target.has_method("take_damage"):
+	if target != null and not target.has_method("receive_threat") and not target.has_method("take_damage"):
 		target = target.get_parent()
+	if target != null and target.has_method("receive_threat"):
+		target.call("receive_threat", actor)
+		_spawn_hit_flash(result.get("position",origin))
+		return
 	if target != null and target.has_method("take_damage"):
 		target.call("take_damage",damage,actor)
 		attack_performed.emit(damage,target)
