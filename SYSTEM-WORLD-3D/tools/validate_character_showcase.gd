@@ -103,6 +103,16 @@ func _run_validation() -> void:
 		return
 	var child_profile: Dictionary = society.call("get_resident_information", "ليان")
 	var elder_profile: Dictionary = society.call("get_resident_information", "جد سارة")
+	var child_family: Dictionary = child_profile.get("family_profile", {})
+	var married_bond: Dictionary = society.call("get_relationship_information", "ليلى", "حسن")
+	if child_family.get("parents", []).size() != 2:
+		push_error("SYSTEM NPC QA: child family parent links were not created")
+		quit(1)
+		return
+	if str(married_bond.get("type", "")) != "married":
+		push_error("SYSTEM NPC QA: adult family marriage link was not created")
+		quit(1)
+		return
 	if str(child_profile.get("age_group", "")) != "child":
 		push_error("SYSTEM NPC QA: child life stage was not preserved")
 		quit(1)
@@ -125,6 +135,19 @@ func _run_validation() -> void:
 		"body_type": "heavy", "height_type": "tall"
 	})):
 		push_error("SYSTEM NPC QA: dynamic resident creation failed")
+		quit(1)
+		return
+	if not bool(society.call("create_family_child", "ليلى", "حسن", {
+		"name": "مولود الاختبار", "gender": "male",
+		"body_type": "average", "height_type": "short"
+	})):
+		push_error("SYSTEM NPC QA: married NPC family could not welcome a child")
+		quit(1)
+		return
+	var newborn: Dictionary = society.call("get_resident_information", "مولود الاختبار")
+	var newborn_family: Dictionary = newborn.get("family_profile", {})
+	if str(newborn.get("age_group", "")) != "child" or newborn_family.get("parents", []).size() != 2:
+		push_error("SYSTEM NPC QA: newborn age or parentage record is invalid")
 		quit(1)
 		return
 	print("SYSTEM NPC QA PASS: age groups, family records, safe child rules, dynamic residents and body profiles initialized")
