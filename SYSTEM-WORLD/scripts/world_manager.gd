@@ -35,6 +35,7 @@ const WORLD_NAMES := {
 
 var active_world: int = -1
 var world_roots: Dictionary = {}
+var world_initialized: Dictionary = {}
 
 
 func _ready() -> void:
@@ -51,10 +52,8 @@ func create_worlds() -> void:
 		add_child(world_root)
 		world_roots[world_id] = world_root
 
-	_create_fantasy_world()
-	_create_modern_city()
-	_create_historical_world()
-	_create_greed_island()
+	# Keep only lightweight world roots at startup. Build each world when first entered.
+	world_initialized.clear()
 
 
 # --------------------------------------------------
@@ -68,6 +67,8 @@ func switch_world(world_id: int) -> void:
 
 	if active_world == world_id:
 		return
+
+	_ensure_world_initialized(world_id)
 
 	var previous_world := active_world
 	var destination_root: Node3D = world_roots[world_id]
@@ -114,6 +115,26 @@ func switch_world(world_id: int) -> void:
 		"SYSTEM WORLD: switched to ",
 		get_world_name(world_id)
 	)
+
+
+func _ensure_world_initialized(world_id: int) -> void:
+	if bool(world_initialized.get(world_id, false)):
+		return
+	if not world_roots.has(world_id):
+		return
+	match world_id:
+		WorldID.FANTASY:
+			_create_fantasy_world()
+		WorldID.MYTHOLOGY:
+			_create_historical_world()
+		WorldID.REALISTIC:
+			_create_modern_city()
+		WorldID.GREED_ISLAND:
+			_create_greed_island()
+		_:
+			return
+	world_initialized[world_id] = true
+	print("SYSTEM WORLD: lazy world load complete: ", get_world_name(world_id))
 
 
 func get_active_world() -> Node3D:
