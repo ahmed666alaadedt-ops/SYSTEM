@@ -334,3 +334,13 @@ asset here only after generation, GLB validation, Godot import and visual review
 - Runtime controller verification: `run` resolves to `Run`, `walk` resolves to `Walk`, and the current missing-block fallback resolves to `Idle_Breathing` rather than the attack clip.
 - The test now checks the whole main scene tree as well as each world root; all four world roots and the main scene reported zero MeshInstance3D/MultiMeshInstance3D nodes without geometry.
 - Generated environment tile import remains deferred until the separate Blender-pipeline PR is merged and the tile files are committed to the canonical project.
+
+
+## Fantasy and Greed Island GLB Character Integration (2026-11-19)
+
+- Latest passing canonical runtime run after these integrations: [44535823824](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44535823824).
+- Fantasy settlements now replace the 18 capsule placeholders with imported rigged humanoids: **18/18 residents loaded GLB models** across 3 villages; their NPC society records now carry alternating gender profiles and the `fantasy` outfit context.
+- Greed Island's 8 royal guards and 4 palace servants now use imported GLB humanoids: **12/12 display characters loaded**. They remain explicitly display-only; island combat remains disabled.
+- Combined current runtime coverage: 27 modern civilians + 18 fantasy residents + 12 Greed Island display characters = **57 imported humanoid instances** when all three worlds are initialized.
+- Historical/civilizations currently passes its six landmark-scene test but does not yet have a populated humanoid resident group. That remains a planned integration stage rather than being marked complete.
+- The character population is functional in the canonical Godot scene, but visual fidelity, distance-based LOD, world unloading/streaming, and physical-device performance still need dedicated work.
