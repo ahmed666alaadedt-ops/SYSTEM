@@ -101,3 +101,10 @@ The Blender source generator now creates two additional named clips for every ad
 - `Facial_Talking`: subtle repeated jaw motion intended as a base for later speech animation.
 
 The character showcase QA now requires both clips in addition to idle, walk, run, jump, and attack. These are generated animation assets, not yet a complete runtime facial animation controller: selecting them through the same AnimationPlayer can conflict with locomotion, so concurrent facial/body blending still needs an AnimationTree or a dedicated animation-layer solution. Audio phoneme synchronization is also still pending.
+
+
+## Runtime expression and gaze controls (2026-11-19)
+
+The canonical Godot NPC loader now supports additional `fear`, `confused`, and `determined` expression presets in addition to happy, angry, sad, surprised, talking, and blink. It also exposes `set_eye_direction(Vector2)`, clamped to a small natural gaze range for dialogue and attention systems. Character status reports whether all six expected head/jaw/eye/brow control bones are present. The character showcase QA invokes the expression and gaze APIs and rejects imported rigs missing any required facial control bone.
+
+The generated blink/talking clips are still assets awaiting a blended runtime animation layer; the current expression API uses direct skeletal poses.
