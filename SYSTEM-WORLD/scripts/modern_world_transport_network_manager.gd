@@ -59,8 +59,8 @@ func _build_intercity_corridors() -> void:
 	for route_index in range(CITY_ROUTES.size()):
 		var route: Array = CITY_ROUTES[route_index]
 		for segment_index in range(route.size() - 1):
-			var start := _city_anchor(str(route[segment_index]))
-			var finish := _city_anchor(str(route[segment_index + 1]))
+			var start: Vector3 = _city_anchor(str(route[segment_index]))
+			var finish: Vector3 = _city_anchor(str(route[segment_index + 1]))
 			if start == Vector3.INF or finish == Vector3.INF:
 				continue
 			_build_corridor_segment(start, finish, route_index, segment_index)
@@ -173,8 +173,8 @@ func _build_bridge_railings(samples: Array[Vector3], route_index: int, segment_i
 		rail_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 		rail_surface.set_material(railing_material)
 		for index in range(samples.size() - 1):
-			var a := samples[index]
-			var b := samples[index + 1]
+			var a: Vector3 = samples[index]
+			var b: Vector3 = samples[index + 1]
 			var direction := Vector2(b.x - a.x, b.z - a.z).normalized()
 			var side: Vector2 = Vector2(-direction.y, direction.x) * float(side_sign) * 5.0
 			var lower_a: Vector3 = Vector3(a.x + side.x, a.y + 0.7, a.z + side.y)
@@ -194,7 +194,7 @@ func _build_bridge_railings(samples: Array[Vector3], route_index: int, segment_i
 		rail_mesh.material_override = railing_material
 		add_child(rail_mesh)
 	for index in range(0, samples.size(), 8):
-		var point := samples[index]
+		var point: Vector3 = samples[index]
 		var lamp := MeshInstance3D.new()
 		lamp.name = "BridgeMarkerLight_%02d_%02d_%02d" % [route_index, segment_index, index]
 		var lamp_mesh := SphereMesh.new()
@@ -395,7 +395,7 @@ func _build_city_tunnels() -> void:
 	var city_names: Array = region_manager.call("get_city_names")
 	var built := 0
 	for city_index in range(city_names.size()):
-		var city_name := str(city_names[city_index])
+		var city_name: String = str(city_names[city_index])
 		var anchor := _city_anchor(city_name)
 		if anchor == Vector3.INF:
 			continue
@@ -924,8 +924,8 @@ func _build_race_circuits() -> void:
 		surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 		surface.set_material(road_material)
 		for index in range(points.size()):
-			var a := points[index]
-			var b := points[(index + 1) % points.size()]
+			var a: Vector2 = points[index]
+			var b: Vector2 = points[(index + 1) % points.size()]
 			var direction := (b - a).normalized()
 			var side := Vector2(-direction.y, direction.x)
 			var y_a := float(terrain.call("get_terrain_height", a.x, a.y)) + 0.55
@@ -994,7 +994,7 @@ func _build_race_facilities(city_name: String, anchor: Vector3, points: Array[Ve
 	curbs.material_override = curb_material
 	curbs.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(curbs)
-	var start_point := points[0]
+	var start_point: Vector2 = points[0]
 	var start_ground := float(terrain.call("get_terrain_height", start_point.x, start_point.y))
 	var start_root := Node3D.new()
 	start_root.name = city_name.replace(" ", "") + "_RaceStartFinish"
