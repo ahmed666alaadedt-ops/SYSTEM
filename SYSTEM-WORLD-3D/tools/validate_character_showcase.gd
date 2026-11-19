@@ -80,13 +80,21 @@ func _run_validation() -> void:
 					push_error("SYSTEM CHARACTER QA: blue hair color was not saved to the appearance profile")
 					quit(1)
 					return
-				for test_color in ["red", "yellow", "white", "purple", "green"]:
+				for test_color in ["red", "yellow", "white", "silver", "purple", "green", "cyan", "pink", "orange", "gold", "magenta"]:
 					child.call("set_hair_color", test_color)
 					var color_status: Dictionary = child.call("get_character_status")
 					if str(color_status.get("hair_color", "")).to_lower() != test_color:
 						push_error("SYSTEM CHARACTER QA: hair color option was not applied: " + test_color)
 						quit(1)
 						return
+				for test_style in ["medium", "long", "curly", "braided", "ponytail", "bun", "bob", "pixie", "topknot", "afro", "dreadlocks", "twin_tails", "spiky", "side_swept", "undercut", "layered"]:
+					child.call("set_hair_style", test_style)
+					var style_status: Dictionary = child.call("get_character_status")
+					if int(style_status.get("hairstyle_mesh_count", 0)) < 1:
+						push_error("SYSTEM CHARACTER QA: hairstyle geometry was not created: " + test_style)
+						quit(1)
+						return
+				child.call("set_hair_style", "long")
 				child.call("set_hair_color", "blue")
 				print("SYSTEM_HAIR_CUSTOMIZATION_QA long_male=true colors=blue,red,yellow,white,purple,green")
 			if int(status.get("skeleton_count", 0)) < 1:
