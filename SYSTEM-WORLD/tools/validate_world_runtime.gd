@@ -118,6 +118,7 @@ func _validate_modern_world(world_manager: Node, map_manager: Node) -> void:
 			]
 		)
 
+	_validate_visible_npc_glb_population(active_root)
 	_scan_invalid_mesh_nodes(active_root, "modern")
 	print(
 		"MODERN WORLD QA: terrain=%s, city_anchors=%d, map_locations=%d" % [
@@ -274,3 +275,46 @@ func _collect_invalid_mesh_paths(node: Node, result: Array[String]) -> void:
 			result.append(str(multi_instance.get_path()))
 	for child in node.get_children():
 		_collect_invalid_mesh_paths(child, result)
+
+
+func _validate_visible_npc_glb_population(modern_root: Node3D) -> void:
+	var population := modern_root.get_node_or_null("NPCVisiblePopulationManager")
+	if population == null:
+		_fail("Modern world did not create NPCVisiblePopulationManager.")
+		return
+
+	var pedestrians: Dictionary = population.get("pedestrians")
+	if pedestrians.is_empty():
+		_fail("Modern world has no visible civilian characters.")
+		return
+
+	var imported_count := 0
+	var unique_model_paths: Dictionary = {}
+	for npc_id in pedestrians:
+		var record: Dictionary = pedestrians[npc_id]
+		var visual := record.get("visual") as Node
+		if visual == null or not is_instance_valid(visual):
+			_fail("Visible NPC has no humanoid visual: " + str(npc_id))
+			continue
+		var imported_model := visual.get("imported_model") as Node3D
+		if imported_model == null or not is_instance_valid(imported_model):
+			_fail("Visible NPC is not using an imported GLB model: " + str(npc_id))
+			continue
+		imported_count += 1
+		unique_model_paths[str(visual.get("selected_model_path"))] = true
+
+	if imported_count != pedestrians.size():
+		_fail(
+			"Only %d of %d visible civilians loaded GLB models." % [
+				imported_count,
+				pedestrians.size()
+			]
+		)
+
+	print(
+		"VISIBLE NPC GLB QA: civilians=%d, imported=%d, unique_models=%d" % [
+			pedestrians.size(),
+			imported_count,
+			unique_model_paths.size()
+		]
+	)
