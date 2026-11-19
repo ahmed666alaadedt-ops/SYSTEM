@@ -316,11 +316,43 @@ func set_facial_expression(expression: String) -> void:
 		"talking", "يتكلم":
 			if jaw >= 0:
 				skeleton.set_bone_pose_rotation(jaw, Quaternion(Vector3.RIGHT, -0.12))
+		"fear", "afraid", "خائف":
+			if jaw >= 0:
+				skeleton.set_bone_pose_rotation(jaw, Quaternion(Vector3.RIGHT, -0.10))
+			if brow_left >= 0:
+				skeleton.set_bone_pose_rotation(brow_left, Quaternion(Vector3.RIGHT, -0.24))
+			if brow_right >= 0:
+				skeleton.set_bone_pose_rotation(brow_right, Quaternion(Vector3.RIGHT, -0.24))
+		"confused", "حائر", "محتار":
+			if brow_left >= 0:
+				skeleton.set_bone_pose_rotation(brow_left, Quaternion(Vector3.RIGHT, -0.16))
+			if brow_right >= 0:
+				skeleton.set_bone_pose_rotation(brow_right, Quaternion(Vector3.RIGHT, 0.08))
+		"determined", "مصمم", "عازم":
+			if brow_left >= 0:
+				skeleton.set_bone_pose_rotation(brow_left, Quaternion(Vector3.RIGHT, 0.12))
+			if brow_right >= 0:
+				skeleton.set_bone_pose_rotation(brow_right, Quaternion(Vector3.RIGHT, 0.12))
 		"blink", "رمش":
 			if eye_left >= 0:
 				skeleton.set_bone_pose_scale(eye_left, Vector3(1.0, 0.12, 1.0))
 			if eye_right >= 0:
 				skeleton.set_bone_pose_scale(eye_right, Vector3(1.0, 0.12, 1.0))
+
+## Directs both eye control bones for gaze tracking. Values are clamped to avoid
+## unnatural rotations; call from dialogue, attention, or look-at systems.
+func set_eye_direction(direction: Vector2) -> void:
+	var skeleton := _find_skeleton(imported_model) if is_instance_valid(imported_model) else null
+	if not is_instance_valid(skeleton):
+		return
+	var horizontal := clampf(direction.x, -1.0, 1.0) * 0.28
+	var vertical := clampf(direction.y, -1.0, 1.0) * 0.18
+	for bone_name in ["eye.L", "eye.R"]:
+		var bone_index := skeleton.find_bone(bone_name)
+		if bone_index >= 0:
+			var yaw := Quaternion(Vector3.UP, horizontal)
+			var pitch := Quaternion(Vector3.RIGHT, -vertical)
+			skeleton.set_bone_pose_rotation(bone_index, yaw * pitch)
 
 func set_outfit(outfit_id: String, variant_index: int = 0) -> void:
 	if not is_instance_valid(imported_model):
