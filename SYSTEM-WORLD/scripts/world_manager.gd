@@ -74,7 +74,7 @@ func switch_world(world_id: int) -> void:
 
 	for id in world_roots:
 		var root: Node3D = world_roots[id]
-		var is_selected := id == world_id
+		var is_selected: bool = id == world_id
 
 		root.visible = is_selected
 		root.process_mode = (
@@ -329,7 +329,7 @@ func _create_road(parent: Node3D) -> void:
 		asphalt
 	)
 
-	road.cast_shadow = false
+	road.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 	var line_material := _make_material(
 		Color(0.88, 0.78, 0.48),
@@ -413,7 +413,7 @@ func _create_city_buildings(parent: Node3D) -> void:
 			var depth := 10.0
 
 			var z_position := -float(index) * 19.0 - 8.0
-			var x_position := side * (15.0 + width * 0.5)
+			var x_position: float = float(side) * (15.0 + width * 0.5)
 
 			var building := StaticBody3D.new()
 			building.name = "CityBuilding_%s_%02d" % [
