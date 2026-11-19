@@ -20,9 +20,11 @@ var selected_model_path := ""
 var age_group := "adult"
 var body_type := "average"
 var height_type := "average"
+var appearance_profile: Dictionary = {}
 
 func configure(profile: Dictionary, palette_index: int = 0) -> void:
 	name = "NPCCharacter_" + str(profile.get("name", "Resident")).replace(" ", "_")
+	appearance_profile = profile.duplicate(true)
 	var gender_text := str(profile.get("gender", profile.get("appearance", ""))).to_lower()
 	var is_female := gender_text in ["female", "woman", "girl", "أنثى", "بنت", "امرأة"]
 	if gender_text.is_empty():
@@ -206,6 +208,30 @@ func set_appearance(variant_index: int = 0) -> void:
 	]
 	var skin_color: Color = skin_tones[posmod(variant_index, skin_tones.size())]
 	var hair_color: Color = hair_tones[posmod(variant_index, hair_tones.size())]
+	match str(appearance_profile.get("hair_color", "")):
+		"أسود":
+			hair_color = Color8(28, 22, 20)
+		"بني":
+			hair_color = Color8(92, 52, 30)
+		"أشقر":
+			hair_color = Color8(196, 156, 76)
+		"أبيض":
+			hair_color = Color8(215, 218, 220)
+		"أحمر":
+			hair_color = Color8(142, 42, 30)
+	var skeleton := _find_skeleton(imported_model)
+	if is_instance_valid(skeleton):
+		var head_bone := skeleton.find_bone("head")
+		if head_bone >= 0:
+			var face_scale := Vector3.ONE
+			match str(appearance_profile.get("face", "متوازن")):
+				"حاد":
+					face_scale = Vector3(0.94, 1.05, 0.98)
+				"ناعم":
+					face_scale = Vector3(1.04, 1.0, 1.03)
+				"عريض":
+					face_scale = Vector3(1.12, 0.97, 1.0)
+			skeleton.set_bone_pose_scale(head_bone, face_scale)
 	for node in _collect_mesh_nodes(imported_model):
 		var mesh_node := node as MeshInstance3D
 		var part_name := mesh_node.name.to_lower()
@@ -245,6 +271,15 @@ func set_outfit(outfit_id: String, variant_index: int = 0) -> void:
 			material.albedo_color = tint
 			material.roughness = 0.78
 			mesh_node.material_override = material
+
+func _find_skeleton(root: Node) -> Skeleton3D:
+	if root is Skeleton3D:
+		return root as Skeleton3D
+	for child in root.get_children():
+		var found := _find_skeleton(child)
+		if is_instance_valid(found):
+			return found
+	return null
 
 func _collect_mesh_nodes(root: Node) -> Array[Node]:
 	var result: Array[Node] = []
