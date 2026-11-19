@@ -54,6 +54,13 @@ func _run_validation() -> void:
 		if animation_player.current_animation != "Walk":
 			_fail(companion_id + " walk activity did not select Walk")
 			return
+		var walk_start := animation_player.current_animation_position
+		for _frame in range(4):
+			companion.call("set_activity", "walk")
+			await process_frame
+		if animation_player.current_animation_position <= walk_start:
+			_fail(companion_id + " walk animation playback was repeatedly reset")
+			return
 		companion.call("set_activity", "run")
 		if animation_player.current_animation != "Run":
 			_fail(companion_id + " run activity did not select Run")
