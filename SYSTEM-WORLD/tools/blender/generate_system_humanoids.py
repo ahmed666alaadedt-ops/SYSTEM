@@ -2,7 +2,7 @@ import argparse
 import math
 import os
 import bpy
-from mathutils import Vector
+from mathutils import Vector, Matrix
 
 def parse_args():
     argv = __import__("sys").argv
@@ -372,28 +372,22 @@ def generate_character(name, female, output):
     for pb in arm.pose.bones:
         pb.rotation_euler=(0,0,0)
 
-    # The modeling coordinates above use Y as the human height axis.
-    # Convert the complete rigged assembly to Blender Z-up without disturbing skin weights.
-    root=bpy.data.objects.new(name+"_Root",None)
-    bpy.context.scene.collection.objects.link(root)
-    root.empty_display_type="PLAIN_AXES"
-    assembly=[arm,body]+face+[obj for obj,bone_name in fingers]+clothes
+    # Modeling coordinates use Y as the human height axis. Rotate the full
+    # assembly in-place while preserving the armature/body/bone-parent links.
+    rotation=Matrix.Rotation(math.radians(90.0),4,"X")
+    world_matrices={obj:obj.matrix_world.copy() for obj in assembly}
     for obj in assembly:
-        world_matrix=obj.matrix_world.copy()
-        obj.parent=root
-        obj.matrix_parent_inverse=root.matrix_world.inverted()
-        obj.matrix_world=world_matrix
-    root.rotation_euler.x=math.radians(90.0)
+        obj.matrix_world=rotation @ world_matrices[obj]
 
-    # Add useful metadata for downstream character selection and runtime QA.
-    root["system_character_type"]="humanoid"
-    root["system_rig"]="deform_armature"
-    root["system_gender"]="female" if female else "male"
-    root["system_animation_set"]="idle,walk,run,jump,attack"
+    # Keep the armature as the true root for both skinned body and bone-attached parts.
+    arm["system_character_type"]="humanoid"
+    arm["system_rig"]="deform_armature"
+    arm["system_gender"]="female" if female else "male"
+    arm["system_animation_set"]="idle,walk,run,jump,attack"
     arm["system_joint_count"]=len(arm.data.bones)
+    body["system_weighted_to_armature"]=True
 
     bpy.ops.object.select_all(action="DESELECT")
-    root.select_set(True)
     for obj in assembly: obj.select_set(True)
     bpy.context.view_layer.objects.active=arm
     os.makedirs(output,exist_ok=True)
