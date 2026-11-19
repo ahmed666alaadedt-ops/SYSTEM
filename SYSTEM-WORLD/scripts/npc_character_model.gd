@@ -154,9 +154,10 @@ func set_activity(value: String) -> void:
 func respond_to_attack() -> bool:
 	if age_group != "child":
 		return false
+	# A minor's response is evasive and protective, never an offensive counterattack.
 	is_defending = true
-	current_activity = "defend"
-	_apply_activity_animation("idle")
+	current_activity = "evade"
+	_apply_activity_animation("evade")
 	return true
 
 func _apply_activity_animation(value: String) -> void:
