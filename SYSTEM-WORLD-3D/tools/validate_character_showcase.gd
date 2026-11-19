@@ -24,12 +24,16 @@ func _run_validation() -> void:
 	await process_frame
 
 	var character_count := 0
-	var has_male_asset := FileAccess.file_exists("res://assets/characters/SYSTEM_Humanoid_Male.glb")
-	var has_female_asset := FileAccess.file_exists("res://assets/characters/SYSTEM_Humanoid_Female.glb")
-	if not has_male_asset or not has_female_asset:
-		push_error("SYSTEM CHARACTER QA: expected male and female GLB source files are missing")
-		quit(1)
-		return
+	var required_assets := [
+		"SYSTEM_Humanoid_Male.glb", "SYSTEM_Humanoid_Female.glb",
+		"SYSTEM_Humanoid_Elder_Male.glb", "SYSTEM_Humanoid_Elder_Female.glb",
+		"SYSTEM_Humanoid_Child_Male.glb", "SYSTEM_Humanoid_Child_Female.glb"
+	]
+	for asset_name in required_assets:
+		if not FileAccess.file_exists("res://assets/characters/" + asset_name):
+			push_error("SYSTEM CHARACTER QA: missing age/gender asset " + asset_name)
+			quit(1)
+			return
 
 	for child in showcase.get_children():
 		if not child.has_method("get_character_status"):
@@ -75,12 +79,11 @@ func _run_validation() -> void:
 		quit(1)
 		return
 
-	if true:
-		for child in showcase.get_children():
-			if child.has_method("get_character_status") and child.call("get_character_status").get("model_source") != "glb":
-				push_error("SYSTEM CHARACTER QA: GLB assets exist but a character fell back to procedural mode")
-				quit(1)
-				return
+	for child in showcase.get_children():
+		if child.has_method("get_character_status") and child.call("get_character_status").get("model_source") != "glb":
+			push_error("SYSTEM CHARACTER QA: GLB assets exist but a character fell back to procedural mode")
+			quit(1)
+			return
 
 	print("SYSTEM CHARACTER QA PASS: six age/gender character models loaded and inspected")
 	quit(0)
