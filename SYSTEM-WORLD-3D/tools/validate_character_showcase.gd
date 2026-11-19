@@ -83,6 +83,12 @@ func _run_validation() -> void:
 			child.call("set_facial_expression", "happy")
 			child.call("set_eye_direction", Vector2(0.5, -0.25))
 			child.call("set_facial_expression", "confused")
+			child.call("set_face_shape", "wide")
+			var customized_status: Dictionary = child.call("get_character_status")
+			if str(customized_status.get("face_shape", "")) != "wide":
+				push_error("SYSTEM CHARACTER QA: runtime face-shape customization was not saved")
+				quit(1)
+				return
 			var clips: Array = status.get("animation_clips", [])
 			var clip_aliases := {
 				"Idle_Breathing": ["idle_breathing"],
