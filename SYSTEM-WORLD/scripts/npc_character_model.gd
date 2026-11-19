@@ -457,7 +457,11 @@ func _collect_mesh_nodes(root: Node) -> Array[Node]:
 	var result: Array[Node] = []
 	for child in root.get_children():
 		if child is MeshInstance3D:
-			result.append(child)
+			var mesh_node := child as MeshInstance3D
+			# Imported rigs can contain empty MeshInstance3D placeholders.
+			# Do not apply materials to nodes that have no mesh resource.
+			if mesh_node.mesh != null:
+				result.append(mesh_node)
 		result.append_array(_collect_mesh_nodes(child))
 	return result
 
