@@ -132,6 +132,14 @@ func _create_resident(profile: Dictionary, index: int) -> void:
 	var enriched_profile := profile.duplicate(true)
 	var resident_age := int(profile.get("age", 30))
 	enriched_profile["age_group"] = "child" if resident_age < 18 else ("elder" if resident_age >= 60 else "adult")
+	var resident_gender := str(profile.get("gender", "male" if index % 2 == 0 else "female"))
+	var female_styles := ["قصير", "متوسط", "طويل", "مجعد", "ضفيرة", "مربوط", "كعكة"]
+	var male_styles := ["قصير", "متوسط", "مجعد", "طويل"]
+	enriched_profile["hair_style"] = profile.get("hair_style", female_styles[posmod(index * 3 + resident_age, female_styles.size())] if resident_gender == "female" else male_styles[posmod(index * 2 + resident_age, male_styles.size())])
+	enriched_profile["hair_color"] = profile.get("hair_color", "أبيض" if resident_age >= 60 else (["أسود", "بني", "أسود", "بني"][posmod(index, 4)]))
+	enriched_profile["face"] = profile.get("face", ["متوازن", "حاد", "ناعم", "عريض"][posmod(index + resident_age, 4)])
+	enriched_profile["city"] = str(profile.get("city", "بغداد"))
+	enriched_profile["culture"] = str(profile.get("culture", "عراقية"))
 	if not enriched_profile.has("body_type"):
 		enriched_profile["body_type"] = ["average", "slim", "heavy", "athletic", "muscular"][posmod(index * 3 + resident_age, 5)]
 	if not enriched_profile.has("height_type"):
@@ -170,7 +178,12 @@ func _create_resident(profile: Dictionary, index: int) -> void:
 		"age_group": enriched_profile["age_group"],
 		"body_type": enriched_profile["body_type"],
 		"height_type": enriched_profile["height_type"],
-		"gender": profile.get("gender", "female" if index % 2 == 1 else "male"),
+		"hair_style": enriched_profile["hair_style"],
+		"hair_color": enriched_profile["hair_color"],
+		"face": enriched_profile["face"],
+		"city": enriched_profile["city"],
+		"culture": enriched_profile["culture"],
+		"gender": resident_gender,
 		"personality": profile["personality"],
 		"home": home,
 		"workplace": profile["work"],
