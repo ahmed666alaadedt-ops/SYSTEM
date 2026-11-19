@@ -24,10 +24,12 @@ var height_type := "average"
 var hair_style := "short"
 var hairstyle_attachment: BoneAttachment3D
 var hairstyle_mesh_count := 0
+var is_player_character := false
 
 func configure(profile: Dictionary, palette_index: int = 0) -> void:
 	name = "NPCCharacter_" + str(profile.get("name", "Resident")).replace(" ", "_")
 	appearance_profile = profile.duplicate(true)
+	is_player_character = bool(profile.get("is_player_character", false))
 	hair_style = _normalize_hair_style(str(profile.get("hair_style", "short")))
 	var gender_text := str(profile.get("gender", profile.get("appearance", ""))).to_lower()
 	var is_female := gender_text in ["female", "woman", "girl", "أنثى", "بنت", "امرأة"]
@@ -149,7 +151,7 @@ func set_activity(value: String) -> void:
 	var requested_activity := value.to_lower()
 	var combat_activities := ["attack", "combat", "fight", "battle", "قتال", "هجوم", "معركة"]
 	# Civilian NPCs never initiate offensive combat, regardless of age.
-	if requested_activity in combat_activities:
+	if requested_activity in combat_activities and not is_player_character:
 		current_activity = "idle"
 		is_defending = false
 		_apply_activity_animation("idle")

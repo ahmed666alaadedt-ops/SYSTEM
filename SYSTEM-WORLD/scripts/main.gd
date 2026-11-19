@@ -33,6 +33,8 @@ const HunterExamManagerScript = preload("res://scripts/system_hunter_exam_manage
 const PowerTowerManagerScript = preload("res://scripts/system_power_tower_manager.gd")
 const PlayerCombatHealthScript = preload("res://scripts/system_player_combat_health.gd")
 const InventoryPanelScript = preload("res://scripts/system_inventory_panel.gd")
+const PlayerCharacterModelScript = preload("res://scripts/npc_character_model.gd")
+const PlayerCharacterCreatorScript = preload("res://scripts/system_player_character_creator.gd")
 
 var world_manager
 var world_map_manager
@@ -57,7 +59,9 @@ var inventory_panel: CanvasLayer
 var active_world_root: Node3D
 
 var player: CharacterBody3D
-var player_mesh: MeshInstance3D
+var player_mesh: Node3D
+var player_appearance_profile: Dictionary = {}
+var player_character_creator: CanvasLayer
 var camera: Camera3D
 var spring_arm: SpringArm3D
 var mobile_controls: MobileControls
@@ -86,6 +90,7 @@ func _ready() -> void:
 
 	create_ground()
 	create_player()
+	create_player_character_creator()
 	register_modern_world_map_locations()
 	create_player_progression()
 	create_inventory_panel()
@@ -179,6 +184,18 @@ func _handle_android_world_entry_request(world_id: String) -> void:
 func _on_runtime_world_changed(world_id: int) -> void:
 	active_world_root = world_manager.get_active_world()
 	_publish_runtime_world_state(world_id)
+	if not player_appearance_profile.is_empty():
+		var updated_profile := player_appearance_profile.duplicate(true)
+		match world_id:
+			WorldManagerScript.WorldID.FANTASY:
+				updated_profile["world_id"] = "fantasy"
+			WorldManagerScript.WorldID.MYTHOLOGY:
+				updated_profile["world_id"] = "historical"
+			WorldManagerScript.WorldID.REALISTIC:
+				updated_profile["world_id"] = "modern"
+			WorldManagerScript.WorldID.GREED_ISLAND:
+				updated_profile["world_id"] = "greed_island"
+		apply_player_appearance(updated_profile, false)
 
 
 func _publish_runtime_world_state(world_id: int) -> void:
@@ -873,17 +890,7 @@ func create_player() -> void:
 	player_combat_health.call("bind_player", player)
 	active_world_root.add_child(player)
 
-	player_mesh = MeshInstance3D.new()
-
-	var capsule := CapsuleMesh.new()
-	capsule.radius = 0.4
-	capsule.height = 1.8
-	player_mesh.mesh = capsule
-
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.2, 0.55, 0.95)
-	player_mesh.material_override = material
-	player.add_child(player_mesh)
+	apply_player_appearance(_load_player_appearance_profile(), false)
 
 	var collision := CollisionShape3D.new()
 	var shape := CapsuleShape3D.new()
@@ -905,6 +912,77 @@ func create_player() -> void:
 	camera.current = true
 
 	update_camera_rotation()
+
+
+func _default_player_appearance_profile() -> Dictionary:
+	return {
+		"name": "الصياد الجديد",
+		"gender": "male",
+		"age": 25,
+		"age_group": "adult",
+		"body_type": "athletic",
+		"height_type": "average",
+		"skin_tone": "olive",
+		"hair_style": "short",
+		"hair_color": "black",
+		"eye_color": "brown",
+		"face_shape": "balanced",
+		"job": "hunter",
+		"world_id": "modern",
+		"is_player_character": true
+	}
+
+
+func _load_player_appearance_profile() -> Dictionary:
+	var config := ConfigFile.new()
+	if config.load("user://system_player_profile.cfg") != OK:
+		return _default_player_appearance_profile()
+	var saved: Variant = config.get_value("appearance", "profile", {})
+	if saved is Dictionary:
+		var profile: Dictionary = _default_player_appearance_profile()
+		profile.merge(saved, true)
+		return profile
+	return _default_player_appearance_profile()
+
+
+## Rebuilds the live player with the shared rigged GLB character pipeline.
+## Appearance is saved locally so it survives a new game session on this device.
+func apply_player_appearance(profile: Dictionary, persist: bool = true) -> void:
+	if not is_instance_valid(player):
+		return
+	if is_instance_valid(player_mesh):
+		player_mesh.queue_free()
+	player_appearance_profile = _default_player_appearance_profile()
+	player_appearance_profile.merge(profile, true)
+	player_appearance_profile["is_player_character"] = true
+	player_appearance_profile["age_group"] = "adult"
+	player_appearance_profile["age"] = maxi(18, int(player_appearance_profile.get("age", 25)))
+	player_appearance_profile["job"] = "hunter"
+	player_mesh = PlayerCharacterModelScript.new()
+	player_mesh.name = "PlayerCharacterVisual"
+	player.add_child(player_mesh)
+	player_mesh.call("configure", player_appearance_profile, int(player_appearance_profile.get("variant_index", 0)))
+	player_mesh.call("set_activity", "idle")
+	if persist:
+		var config := ConfigFile.new()
+		config.set_value("appearance", "profile", player_appearance_profile)
+		var save_error := config.save("user://system_player_profile.cfg")
+		if save_error != OK:
+			push_warning("SYSTEM: Could not save the player appearance profile.")
+
+
+func set_player_character_activity(activity: String) -> void:
+	if not is_instance_valid(player_mesh) or not player_mesh.has_method("set_activity"):
+		return
+	if str(player_mesh.get("current_activity")) != activity:
+		player_mesh.call("set_activity", activity)
+
+
+func create_player_character_creator() -> void:
+	player_character_creator = PlayerCharacterCreatorScript.new()
+	player_character_creator.name = "SYSTEMPlayerCharacterCreator"
+	add_child(player_character_creator)
+	player_character_creator.call("setup", self)
 
 
 # --------------------------------------------------
@@ -1047,3 +1125,6 @@ func _physics_process(delta: float) -> void:
 
 	jump_requested = false
 	player.move_and_slide()
+	if is_instance_valid(player_mesh):
+		var moving := Vector2(player.velocity.x, player.velocity.z).length() > 0.15
+		set_player_character_activity("run" if moving else "idle")
