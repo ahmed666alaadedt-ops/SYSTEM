@@ -21,6 +21,8 @@ var bridge_material: StandardMaterial3D
 var rail_material: StandardMaterial3D
 var port_material: StandardMaterial3D
 var landmark_records: Array[Dictionary] = []
+var active_city_name := ""
+var city_check_clock := 0.0
 
 func _ready() -> void:
 	name = "ModernWorldTransportNetworkManager"
@@ -32,6 +34,41 @@ func _ready() -> void:
 		push_warning("SYSTEM Transport: terrain is unavailable.")
 		return
 	_create_materials()
+	active_city_name = _find_nearest_city_name(Vector3.ZERO)
+	_build_active_city_transport()
+	print("SYSTEM WORLD: local transport network streamed for ", active_city_name,
+		"; landmarks=", landmark_records.size())
+
+
+func _process(delta: float) -> void:
+	city_check_clock += delta
+	if city_check_clock < 4.0:
+		return
+	city_check_clock = 0.0
+	var player := region_manager.get_parent().get_node_or_null("Player") as Node3D
+	var player_position := player.global_position if is_instance_valid(player) else Vector3.ZERO
+	var nearest_city := _find_nearest_city_name(player_position)
+	if nearest_city != active_city_name:
+		_rebuild_city_transport(nearest_city)
+
+
+func _find_nearest_city_name(position: Vector3) -> String:
+	var city_names: Array = region_manager.call("get_city_names")
+	var nearest_name := "Baghdad"
+	var nearest_distance := INF
+	for city_value in city_names:
+		var city_name := str(city_value)
+		var anchor: Vector3 = _city_anchor(city_name)
+		if anchor == Vector3.INF:
+			continue
+		var distance := Vector2(position.x - anchor.x, position.z - anchor.z).length_squared()
+		if distance < nearest_distance:
+			nearest_distance = distance
+			nearest_name = city_name
+	return nearest_name
+
+
+func _build_active_city_transport() -> void:
 	_build_intercity_corridors()
 	_build_city_tunnels()
 	_build_city_overpasses()
@@ -39,7 +76,16 @@ func _ready() -> void:
 	_build_city_ports()
 	_build_aircraft_and_train_fleets()
 	_build_race_circuits()
-	print("SYSTEM WORLD: transport corridor prototype initialized; landmarks=", landmark_records.size())
+
+
+func _rebuild_city_transport(city_name: String) -> void:
+	for child in get_children():
+		child.queue_free()
+	landmark_records.clear()
+	active_city_name = city_name
+	_build_active_city_transport()
+	print("SYSTEM WORLD: local transport area changed to ", active_city_name)
+
 
 func _create_materials() -> void:
 	road_material = _make_material(Color(0.075, 0.085, 0.095), 0.94, 0.0)
@@ -59,8 +105,12 @@ func _build_intercity_corridors() -> void:
 	for route_index in range(CITY_ROUTES.size()):
 		var route: Array = CITY_ROUTES[route_index]
 		for segment_index in range(route.size() - 1):
-			var start: Vector3 = _city_anchor(str(route[segment_index]))
-			var finish: Vector3 = _city_anchor(str(route[segment_index + 1]))
+			var route_start_city := str(route[segment_index])
+			var route_finish_city := str(route[segment_index + 1])
+			if route_start_city != active_city_name and route_finish_city != active_city_name:
+				continue
+			var start: Vector3 = _city_anchor(route_start_city)
+			var finish: Vector3 = _city_anchor(route_finish_city)
 			if start == Vector3.INF or finish == Vector3.INF:
 				continue
 			_build_corridor_segment(start, finish, route_index, segment_index)
@@ -303,6 +353,8 @@ func _build_city_overpasses() -> void:
 	var built := 0
 	for city_value in city_names:
 		var city_name := str(city_value)
+		if city_name != active_city_name:
+			continue
 		var anchor := _city_anchor(city_name)
 		if anchor == Vector3.INF:
 			continue
@@ -396,6 +448,8 @@ func _build_city_tunnels() -> void:
 	var built := 0
 	for city_index in range(city_names.size()):
 		var city_name: String = str(city_names[city_index])
+		if city_name != active_city_name:
+			continue
 		var anchor := _city_anchor(city_name)
 		if anchor == Vector3.INF:
 			continue
@@ -507,7 +561,7 @@ func _build_rural_access_roads() -> void:
 			best_city = city_name
 			best_distance = distance
 			best_finish = city_anchor
-		if best_city.is_empty():
+		if best_city.is_empty() or best_city != active_city_name:
 			continue
 		var start_2d := Vector2(village_anchor.x, village_anchor.z)
 		var finish_2d := Vector2(best_finish.x, best_finish.z)
