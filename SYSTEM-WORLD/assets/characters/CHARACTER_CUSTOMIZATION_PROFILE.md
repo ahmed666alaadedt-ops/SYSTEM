@@ -108,3 +108,10 @@ The character showcase QA now requires both clips in addition to idle, walk, run
 The canonical Godot NPC loader now supports additional `fear`, `confused`, and `determined` expression presets in addition to happy, angry, sad, surprised, talking, and blink. It also exposes `set_eye_direction(Vector2)`, clamped to a small natural gaze range for dialogue and attention systems. Character status reports whether all six expected head/jaw/eye/brow control bones are present. The character showcase QA invokes the expression and gaze APIs and rejects imported rigs missing any required facial control bone.
 
 The generated blink/talking clips are still assets awaiting a blended runtime animation layer; the current expression API uses direct skeletal poses.
+
+
+## Player Creator Integration (2026-11-19)
+
+The 3D preview project's player creator now exposes the expanded Arabic hairstyle and hair-color choices in a scrollable profile window. All listed hair styles are available to male and female player avatars, including very long hair for men. The profile is saved locally on the device through Godot's `user://system_player_profile.cfg` and is reloaded when the creator opens in a new session. Confirming the profile immediately rebuilds the live 3D player avatar using the shared rigged character loader, so imported GLB characters and the procedural fallback use the same appearance system.
+
+The command-center player avatar is created from the saved profile and updated whenever the player confirms a new appearance. The current save is device-local; cloud account synchronization is not included in this change.
