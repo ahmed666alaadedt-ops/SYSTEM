@@ -152,6 +152,26 @@ func _create_pedestrian(npc_id: String, npc: Dictionary, seed_index: int) -> voi
 	var visual_profile := npc.duplicate(true)
 	visual_profile["name"] = str(npc.get("name", npc.get("display_name", npc_id)))
 	visual_profile["job"] = str(npc.get("occupation", npc.get("job", "")))
+	# Society records store age_years; the character renderer consumes age.
+	# Preserve the real age so child and elder residents load their dedicated GLBs.
+	visual_profile["age"] = float(npc.get("age_years", npc.get("age", 30.0)))
+
+	# Give residents stable, reproducible visual variety while preserving any
+	# explicit appearance data already stored on their society profile.
+	var appearance_seed := absi(npc_id.hash())
+	var appearance_defaults := {
+		"gender": "female" if posmod(appearance_seed, 2) == 1 else "male",
+		"skin_tone": ["fair", "olive", "tan", "dark"][posmod(appearance_seed / 3, 4)],
+		"hair_color": ["black", "brown", "blonde", "gray", "red"][posmod(appearance_seed / 5, 5)],
+		"eye_color": ["brown", "green", "gray", "hazel", "blue"][posmod(appearance_seed / 7, 5)],
+		"face_shape": ["balanced", "sharp", "soft", "wide", "long", "round", "heart"][posmod(appearance_seed / 11, 7)],
+		"body_type": ["slim", "average", "athletic", "heavy", "muscular"][posmod(appearance_seed / 13, 5)],
+		"height_type": ["short", "average", "tall"][posmod(appearance_seed / 17, 3)],
+		"hair_style": ["short", "fade", "medium", "long", "curly", "braided", "ponytail", "bun", "afro", "dreadlocks", "quiff", "slick_back", "side_swept"][posmod(appearance_seed / 19, 13)]
+	}
+	for appearance_key in appearance_defaults.keys():
+		if not visual_profile.has(appearance_key) or str(visual_profile.get(appearance_key, "")).is_empty():
+			visual_profile[appearance_key] = appearance_defaults[appearance_key]
 	visual.configure(visual_profile, seed_index)
 
 	var city_name := _city_name_for_npc(npc)

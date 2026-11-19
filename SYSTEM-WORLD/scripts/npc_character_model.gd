@@ -124,6 +124,10 @@ func _load_imported_model(path: String) -> bool:
 	elif height_type in ["tall", "طويل", "طويلة"]:
 		stature = 1.08
 	imported_model.scale = Vector3(width_scale, stature, depth_scale)
+	# Some exported GLBs contain empty MeshInstance3D placeholders. Give those
+	# nodes a valid zero-surface mesh before entering the scene tree so the
+	# rendering server never receives a null mesh handle.
+	_sanitize_empty_mesh_instances(imported_model)
 	add_child(imported_model)
 	animation_player = _find_animation_player(imported_model)
 	set_activity(current_activity)
@@ -194,6 +198,11 @@ func _apply_activity_animation(value: String) -> void:
 	for candidate in candidates:
 		for animation_name in available:
 			if str(animation_name).to_lower() == candidate.to_lower():
+				# Population and companion managers may request the same activity
+				# every frame. Keep the current clip running instead of resetting
+				# its playback position on every update.
+				if animation_player.current_animation == animation_name and animation_player.is_playing():
+					return
 				animation_player.play(animation_name)
 				return
 	# Never default to the first imported clip: it may be an attack animation.
@@ -448,11 +457,22 @@ func set_outfit(outfit_id: String, variant_index: int = 0) -> void:
 			material.roughness = 0.78
 			mesh_node.material_override = material
 
+func _sanitize_empty_mesh_instances(root: Node) -> void:
+	for child in root.get_children():
+		if child is MeshInstance3D:
+			var mesh_node := child as MeshInstance3D
+			if mesh_node.mesh == null:
+				mesh_node.mesh = ArrayMesh.new()
+		_sanitize_empty_mesh_instances(child)
+
 func _collect_mesh_nodes(root: Node) -> Array[Node]:
 	var result: Array[Node] = []
 	for child in root.get_children():
 		if child is MeshInstance3D:
-			result.append(child)
+			var mesh_node := child as MeshInstance3D
+			# Ignore zero-surface placeholders when applying appearance materials.
+			if mesh_node.mesh != null and mesh_node.mesh.get_surface_count() > 0:
+				result.append(mesh_node)
 		result.append_array(_collect_mesh_nodes(child))
 	return result
 

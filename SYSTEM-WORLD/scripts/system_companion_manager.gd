@@ -95,10 +95,11 @@ func _follow_companion(companion: Node3D, offset: Vector3, delta: float) -> void
 		target,
 		FOLLOW_SPEED * delta
 	)
-	if distance > 0.55:
-		companion.call("set_activity", "walk")
-	else:
-		companion.call("set_activity", "idle")
+	# Do not restart the imported animation every frame. Replaying the same
+	# clip continuously resets its timeline and makes walking look frozen/jittery.
+	var desired_activity := "walk" if distance > 0.55 else "idle"
+	if str(companion.get("current_activity")) != desired_activity:
+		companion.call("set_activity", desired_activity)
 	var look_target := player.global_position
 	look_target.y = companion.global_position.y
 	if companion.global_position.distance_squared_to(look_target) > 0.05:

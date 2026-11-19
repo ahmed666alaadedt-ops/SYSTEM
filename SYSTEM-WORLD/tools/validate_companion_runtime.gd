@@ -54,6 +54,18 @@ func _run_validation() -> void:
 		if animation_player.current_animation != "Walk":
 			_fail(companion_id + " walk activity did not select Walk")
 			return
+		var walk_start := animation_player.current_animation_position
+		# Give the headless AnimationPlayer real elapsed time between repeated
+		# activity requests. A few process_frame awaits can occur within one
+		# animation tick on fast CI runners and create a false failure.
+		for _frame in range(4):
+			companion.call("set_activity", "walk")
+			await create_timer(0.12).timeout
+		var walk_end := animation_player.current_animation_position
+		print("SYSTEM COMPANION WALK CLOCK [", companion_id, "]: ", walk_start, " -> ", walk_end)
+		if walk_end <= walk_start:
+			_fail(companion_id + " walk animation playback did not advance while activity was repeated")
+			return
 		companion.call("set_activity", "run")
 		if animation_player.current_animation != "Run":
 			_fail(companion_id + " run activity did not select Run")

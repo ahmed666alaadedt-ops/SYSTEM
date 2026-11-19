@@ -49,17 +49,25 @@ func _process(delta: float) -> void:
 
 func _seed_baghdad_residents_if_needed() -> void:
 	var existing: Array = society_manager.call("get_living_npcs", MODERN_WORLD_ID)
-	if existing.size() >= STARTER_RESIDENT_COUNT:
-		seeded = true
-		return
-	var created: Array[String] = []
-	for index in range(STARTER_RESIDENT_COUNT):
+	var existing_minors: Array[Dictionary] = []
+	var existing_adults: Array[Dictionary] = []
+	for resident in existing:
+		if not resident is Dictionary:
+			continue
+		if float(resident.get("age_years", 0.0)) < 18.0:
+			existing_minors.append(resident)
+		else:
+			existing_adults.append(resident)
+
+	# Older saves may already contain the full starter headcount but no children.
+	# Top up each demographic independently so the visible city always has
+	# family-age variety without duplicating the entire starter population.
+	var created_adults: Array[String] = []
+	var adults_needed := maxi(0, STARTER_RESIDENT_COUNT - existing_adults.size())
+	for offset in range(adults_needed):
+		var index := existing_adults.size() + offset
 		var age := 19.0 + float((index * 7) % 43)
-		if index >= 18:
-			age = 7.0 + float(index - 18) * 2.0
 		var occupation := str(OCCUPATIONS[index % OCCUPATIONS.size()])
-		if age < 18.0:
-			occupation = "student"
 		var npc_id: String = society_manager.call(
 			"create_npc",
 			str(FIRST_NAMES[index % FIRST_NAMES.size()]) + " " + str(index + 1),
@@ -70,17 +78,40 @@ func _seed_baghdad_residents_if_needed() -> void:
 		)
 		if npc_id.is_empty():
 			continue
-		created.append(npc_id)
+		created_adults.append(npc_id)
 		_configure_resident(npc_id, index, occupation)
-	for pair_index in range(0, mini(8, created.size() - 1), 2):
-		var first_id := created[pair_index]
-		var second_id := created[pair_index + 1]
+
+	for pair_index in range(0, mini(8, created_adults.size() - 1), 2):
+		var first_id := created_adults[pair_index]
+		var second_id := created_adults[pair_index + 1]
 		var first: Dictionary = society_manager.call("get_npc", first_id)
 		var second: Dictionary = society_manager.call("get_npc", second_id)
 		if float(first.get("age_years", 0.0)) >= 18.0 and float(second.get("age_years", 0.0)) >= 18.0:
 			society_manager.call("marry_npcs", first_id, second_id)
+
+	var child_ages := [8.0, 11.0, 14.0, 16.0]
+	var children_needed := maxi(0, child_ages.size() - existing_minors.size())
+	var created_children := 0
+	for offset in range(children_needed):
+		var child_index := existing_minors.size() + offset
+		var child_name := "Baghdad Child " + str(child_index + 1)
+		var age := float(child_ages[child_index % child_ages.size()])
+		var child_id: String = society_manager.call(
+			"create_npc",
+			child_name,
+			MODERN_WORLD_ID,
+			age,
+			"curious",
+			"student"
+		)
+		if child_id.is_empty():
+			continue
+		_configure_resident(child_id, STARTER_RESIDENT_COUNT + child_index, "student")
+		created_children += 1
+
 	seeded = true
-	print("SYSTEM NPC Life: seeded ", created.size(), " Baghdad civilian records.")
+	print("SYSTEM NPC Life: residents=", existing.size() + created_adults.size() + created_children,
+		" | existing minors=", existing_minors.size(), " | new minors=", created_children)
 
 
 func _configure_resident(npc_id: String, index: int, occupation: String) -> void:
