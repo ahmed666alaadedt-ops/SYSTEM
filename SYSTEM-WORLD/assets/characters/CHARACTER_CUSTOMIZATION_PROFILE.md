@@ -15,7 +15,7 @@ This document records the profile fields currently read by `SYSTEM-WORLD/scripts
 | `body_type` or `body` | Average, slim, heavy, athletic, muscular; changes model width/depth scale |
 | `height_type` | Short, average, tall; changes model height scale |
 | `skin_tone` | Fair, olive, tan, dark (Arabic aliases supported) |
-| `hair_color` | Black, brown, blonde, white, silver/gray, red, blue/navy/cyan, purple, pink, green, orange/ginger, gold and magenta (English and Arabic aliases supported) |
+| `hair_color` | Black, brown, blonde, white, silver/gray, red, yellow/gold, blue/navy/cyan, purple, pink, green, orange/ginger and magenta (English and Arabic aliases supported) |
 | `hair_style` | Short, medium, long/very long, curly/afro, braided/dreadlocks, ponytail, twin tails, bun/topknot, bob, pixie, layered, spiky, side-swept, undercut; styles are not gender-locked, including long hair for men |\n| `eye_color` | Brown, green, gray, hazel, blue (Arabic aliases supported) |
 | `face` | Balanced/default, sharp, soft, broad, long, round; adjusts head-bone scale |
 | `job` or `occupation` | Selects civilian, hunter, guard, or royal outfit palette |
