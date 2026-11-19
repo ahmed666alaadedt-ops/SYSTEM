@@ -88,7 +88,7 @@ func _find_animation_player(root: Node) -> AnimationPlayer:
 	return null
 
 func set_activity(value: String) -> void:
-	if age_group == "child" and value in ["attack", "combat", "fight", "run", "sprint", "running", "jump", "leap"]:
+	if age_group == "child" and value in ["attack", "combat", "fight"]:
 		value = "idle"
 	current_activity = value
 	if is_instance_valid(fallback_model):
