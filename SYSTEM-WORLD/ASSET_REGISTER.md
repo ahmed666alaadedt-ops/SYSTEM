@@ -292,3 +292,10 @@ asset here only after generation, GLB validation, Godot import and visual review
 - NPC society records do not assign player missions, law-enforcement, guard, security, monitoring, military, supervisory, or administrative official roles.
 - Adult NPCs retain ordinary civilian livelihoods such as teaching, healthcare, trade, transport, construction, farming, and services. Minors remain students/dependants and cannot be assigned employment.
 - New records and previously saved records are normalized; character presentation also prevents restricted official job labels from producing police/guard outfits.
+
+
+## Canonical Humanoid GLB Import QA (2026-11-19)
+
+- Added `tools/validate_humanoid_assets.gd` to instantiate all six canonical GLB variants after Godot import and verify a `Skeleton3D`, weighted `MeshInstance3D`, an imported `AnimationPlayer`, and the seven expected animation clips (idle, walk, run, jump, attack, facial blink, facial talking).
+- Updated `.github/workflows/canonical-godot-validation.yml` to run this direct import/runtime asset check and to execute the canonical validation workflow on pull requests as well as pushes to `main`.
+- This is a new acceptance test. Its result must be taken from the corresponding GitHub Actions run; adding the test does not itself prove that all six models pass Godot import.
