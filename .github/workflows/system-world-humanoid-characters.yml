@@ -22,10 +22,13 @@ jobs:
     steps:
       - name: Checkout SYSTEM
         uses: actions/checkout@v4
-      - name: Install Blender
-        run: |
-          sudo apt-get install --no-install-recommends --yes blender
-          blender --version
+      - name: Install Blender 4.3.2
+        uses: bradyajohnston/setup-blender@v5
+        with:
+          version: 4.3.2
+
+      - name: Verify Blender
+        run: blender --version
       - name: Generate male and female rigged characters
         run: |
           mkdir -p SYSTEM-WORLD-3D/assets/characters
