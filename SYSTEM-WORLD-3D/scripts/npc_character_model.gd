@@ -82,6 +82,42 @@ func set_activity(value: String) -> void:
 	if not available.is_empty():
 		animation_player.play(available[0])
 
+func set_outfit(outfit_id: String) -> void:
+	if not is_instance_valid(imported_model):
+		return
+	var palettes := {
+		"civilian": Color8(54, 82, 92),
+		"hunter": Color8(20, 48, 82),
+		"guard": Color8(72, 42, 28),
+		"royal": Color8(86, 54, 104)
+	}
+	var cloth_color: Color = palettes.get(outfit_id.to_lower(), palettes["civilian"])
+	for node in _collect_mesh_nodes(imported_model):
+		var mesh_node := node as MeshInstance3D
+		var part_name := mesh_node.name.to_lower()
+		var tint := Color.TRANSPARENT
+		if "jacket" in part_name or "sleeve" in part_name:
+			tint = cloth_color
+		elif "trousers" in part_name:
+			tint = cloth_color.darkened(0.48)
+		elif "belt" in part_name:
+			tint = Color8(156, 112, 48)
+		elif "boot" in part_name or "glove" in part_name:
+			tint = Color8(28, 24, 22)
+		if tint.a > 0.0:
+			var material := StandardMaterial3D.new()
+			material.albedo_color = tint
+			material.roughness = 0.78
+			mesh_node.material_override = material
+
+func _collect_mesh_nodes(root: Node) -> Array[Node]:
+	var result: Array[Node] = []
+	for child in root.get_children():
+		if child is MeshInstance3D:
+			result.append(child)
+		result.append_array(_collect_mesh_nodes(child))
+	return result
+
 func get_character_status() -> Dictionary:
 	return {
 		"model_source": "glb" if is_instance_valid(imported_model) else "procedural_fallback",
