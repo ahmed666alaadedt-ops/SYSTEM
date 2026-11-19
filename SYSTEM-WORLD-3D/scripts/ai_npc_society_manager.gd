@@ -67,6 +67,15 @@ func _create_residents() -> void:
 		{"name": "علي", "job": "خباز", "family": "family_6", "age": 34, "personality": "كريم", "home": Vector3(24, 0, 4), "work": Vector3(10, 0, -3)}
 	]
 
+		{"name": "جد سارة", "job": "متقاعد", "family": "family_1", "age": 68, "gender": "male", "personality": "حكيم", "home": Vector3(-17, 0, -15), "work": Vector3(-17, 0, -15)},
+		{"name": "جدة عمر", "job": "متقاعدة", "family": "family_1", "age": 64, "gender": "female", "personality": "حنونة", "home": Vector3(-17, 0, -15), "work": Vector3(-17, 0, -15)},
+		{"name": "ليان", "job": "طالبة", "family": "family_2", "age": 10, "gender": "female", "personality": "فضولية", "home": Vector3(18, 0, -13), "work": Vector3(18, 0, -13)},
+		{"name": "حيدر", "job": "طالب", "family": "family_2", "age": 13, "gender": "male", "personality": "مرح", "home": Vector3(18, 0, -13), "work": Vector3(18, 0, -13)},
+		{"name": "أبو نور", "job": "متقاعد", "family": "family_3", "age": 72, "gender": "male", "personality": "صبور", "home": Vector3(-19, 0, 16), "work": Vector3(-19, 0, 16)},
+		{"name": "مريم الصغيرة", "job": "طالبة", "family": "family_4", "age": 8, "gender": "female", "personality": "مرحة", "home": Vector3(19, 0, 17), "work": Vector3(19, 0, 17)},
+		{"name": "يوسف الصغير", "job": "طالب", "family": "family_5", "age": 12, "gender": "male", "personality": "هادئ", "home": Vector3(-23, 0, -5), "work": Vector3(-23, 0, -5)},
+		{"name": "أم هند", "job": "متقاعدة", "family": "family_6", "age": 66, "gender": "female", "personality": "اجتماعية", "home": Vector3(24, 0, 4), "work": Vector3(24, 0, 4)}
+
 	for index in range(people.size()):
 		_create_resident(people[index], index)
 
@@ -84,10 +93,15 @@ func _create_resident(profile: Dictionary, index: int) -> void:
 	)
 
 	# Use the shared full-body 3D civilian model instead of a capsule placeholder.
+	var enriched_profile := profile.duplicate(true)
+	var resident_age := int(profile.get("age", 30))
+	enriched_profile["age_group"] = "child" if resident_age < 18 else ("elder" if resident_age >= 60 else "adult")
+	enriched_profile["body_type"] = ["average", "slim", "heavy", "athletic", "muscular"][posmod(index * 3 + resident_age, 5)]
+	enriched_profile["height_type"] = ["short", "average", "tall"][posmod(index + resident_age, 3)]
 	var visual := NPCVisual.new()
 	visual.name = "HumanoidVisual"
 	npc.add_child(visual)
-	visual.configure(profile, index)
+	visual.configure(enriched_profile, index)
 
 	var name_label := Label3D.new()
 	name_label.name = "ResidentName"
@@ -115,6 +129,10 @@ func _create_resident(profile: Dictionary, index: int) -> void:
 		"job": profile["job"],
 		"family": profile["family"],
 		"age": profile["age"],
+		"age_group": enriched_profile["age_group"],
+		"body_type": enriched_profile["body_type"],
+		"height_type": enriched_profile["height_type"],
+		"gender": profile.get("gender", "female" if index % 2 == 1 else "male"),
 		"personality": profile["personality"],
 		"home": home,
 		"workplace": profile["work"],
@@ -159,6 +177,15 @@ func _choose_daily_activity(
 	var hour := int(world_hour)
 	var current_state := str(record["state"])
 
+	var resident_age := int(record.get("age", 30))
+	if resident_age < 18:
+		if hour >= 22 or hour < 7:
+			_set_activity(record, "rest", record["home"])
+		elif hour >= 8 and hour < 13:
+			_set_activity(record, "school", record["workplace"])
+		else:
+			_set_activity(record, "play", _find_social_destination())
+		return
 	if hour >= 22 or hour < 6:
 		_set_activity(record, "rest", record["home"])
 		return
@@ -222,6 +249,10 @@ func _set_activity(
 				activity_text = "يتفاعل"
 			"wander":
 				activity_text = "يتجول"
+			"school":
+				activity_text = "في المدرسة"
+			"play":
+				activity_text = "يلعب"
 
 		label.text = str(record["name"]) + " • " + activity_text
 
@@ -242,6 +273,10 @@ func _move_resident(record: Dictionary, delta: float) -> void:
 		return
 
 	var speed := WALK_SPEED * float(record["speed"])
+	if int(record.get("age", 30)) >= 60:
+		speed *= 0.78
+	elif int(record.get("age", 30)) < 18:
+		speed *= 0.92
 
 	if str(record["state"]) == "rest":
 		speed *= 0.5
@@ -354,6 +389,9 @@ func get_resident_information(resident_name: String) -> Dictionary:
 				"job": record["job"],
 				"family": record["family"],
 				"age": record["age"],
+				"age_group": record.get("age_group", "adult"),
+				"body_type": record.get("body_type", "average"),
+				"height_type": record.get("height_type", "average"),
 				"personality": record["personality"],
 				"state": record["state"],
 				"energy": record["energy"],
