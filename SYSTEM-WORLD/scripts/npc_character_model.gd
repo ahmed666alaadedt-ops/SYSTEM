@@ -21,10 +21,14 @@ var appearance_profile: Dictionary = {}
 var age_group := "adult"
 var body_type := "average"
 var height_type := "average"
+var hair_style := "short"
+var hairstyle_attachment: BoneAttachment3D
+var hairstyle_mesh_count := 0
 
 func configure(profile: Dictionary, palette_index: int = 0) -> void:
 	name = "NPCCharacter_" + str(profile.get("name", "Resident")).replace(" ", "_")
 	appearance_profile = profile.duplicate(true)
+	hair_style = _normalize_hair_style(str(profile.get("hair_style", "short")))
 	var gender_text := str(profile.get("gender", profile.get("appearance", ""))).to_lower()
 	var is_female := gender_text in ["female", "woman", "girl", "أنثى", "بنت", "امرأة"]
 	if gender_text.is_empty():
@@ -183,17 +187,7 @@ func set_appearance(variant_index: int = 0) -> void:
 			skin_color = Color8(151, 101, 72)
 		"dark", "داكن", "غامق":
 			skin_color = Color8(91, 59, 45)
-	match str(appearance_profile.get("hair_color", "")).to_lower():
-		"black", "أسود":
-			hair_color = Color8(28, 22, 20)
-		"brown", "بني":
-			hair_color = Color8(92, 52, 30)
-		"blonde", "أشقر":
-			hair_color = Color8(196, 156, 76)
-		"white", "أبيض", "رمادي":
-			hair_color = Color8(215, 218, 220)
-		"red", "أحمر":
-			hair_color = Color8(142, 42, 30)
+	hair_color = _resolve_hair_color(str(appearance_profile.get("hair_color", "black")))
 	var eye_color := Color8(45, 112, 174)
 	match str(appearance_profile.get("eye_color", "")).to_lower():
 		"brown", "بني":
@@ -247,6 +241,9 @@ func set_appearance(variant_index: int = 0) -> void:
 				material.albedo_color = Color8(255, 248, 232)
 				material.roughness = 0.2
 			mesh_node.material_override = material
+	var hair_rig := _find_skeleton(imported_model)
+	if is_instance_valid(hair_rig):
+		_apply_hair_style(hair_rig, hair_color)
 
 ## Changes the overall facial silhouette through the head and jaw rig controls.
 ## The seven profiles are lightweight and safe to apply during character creation.
@@ -421,6 +418,153 @@ func _collect_mesh_nodes(root: Node) -> Array[Node]:
 		result.append_array(_collect_mesh_nodes(child))
 	return result
 
+func _normalize_hair_style(value: String) -> String:
+	var style := value.to_lower().strip_edges().replace("-", "_").replace(" ", "_")
+	match style:
+		"متوسط", "medium", "shoulder_length": return "medium"
+		"طويل", "طويل_جدا", "long", "very_long": return "long"
+		"مجعد", "كيرلي", "curly": return "curly"
+		"ضفيرة", "مضفور", "braided", "braid": return "braided"
+		"ذيل_حصان", "مربوط", "pony_tail", "ponytail": return "ponytail"
+		"كعكة", "bun": return "bun"
+		"بوب", "bob": return "bob"
+		"بيكسي", "pixie": return "pixie"
+		"مدرج", "layered": return "layered"
+		"مرفوع", "topknot", "man_bun": return "topknot"
+		"افرو", "أفرو", "afro": return "afro"
+		"دريدلوك", "ضفائر_رفيعة", "dreadlocks": return "dreadlocks"
+		"شعرتان", "ضفيرتان", "twin_tails": return "twin_tails"
+		"شائك", "spiky": return "spiky"
+		"جانبي", "side_swept": return "side_swept"
+		"محلوق_الجوانب", "undercut": return "undercut"
+		_: return "short"
+
+func _resolve_hair_color(value: String = "") -> Color:
+	match value.to_lower().strip_edges():
+		"أسود", "اسود", "black": return Color8(28, 22, 20)
+		"بني", "brown", "chestnut": return Color8(92, 52, 30)
+		"أشقر", "اشقر", "blonde", "golden_blonde", "yellow", "أصفر", "اصفر": return Color8(220, 184, 72)
+		"أبيض", "ابيض", "white", "silver", "فضي": return Color8(215, 218, 220)
+		"رمادي", "gray", "grey", "ash": return Color8(112, 119, 128)
+		"أحمر", "احمر", "red", "crimson": return Color8(178, 35, 42)
+		"أزرق", "ازرق", "blue", "electric_blue": return Color8(35, 105, 220)
+		"أزرق_داكن", "navy", "dark_blue": return Color8(24, 45, 112)
+		"سماوي", "cyan", "turquoise": return Color8(38, 190, 205)
+		"بنفسجي", "purple", "violet": return Color8(132, 62, 190)
+		"وردي", "pink", "rose": return Color8(230, 92, 158)
+		"أخضر", "اخضر", "green", "emerald": return Color8(45, 145, 82)
+		"برتقالي", "orange", "ginger": return Color8(220, 104, 38)
+		"ذهبي", "gold": return Color8(224, 176, 55)
+		"أرجواني", "magenta": return Color8(190, 45, 160)
+		_: return Color8(35, 22, 17)
+
+func set_hair_color(color_id: String) -> void:
+	appearance_profile["hair_color"] = color_id
+	var selected_color := _resolve_hair_color(color_id)
+	for node in _collect_mesh_nodes(imported_model) if is_instance_valid(imported_model) else []:
+		var mesh_node := node as MeshInstance3D
+		var part_name := mesh_node.name.to_lower()
+		if "hair" in part_name or "brow" in part_name or "beard" in part_name or "mustache" in part_name:
+			var material := StandardMaterial3D.new()
+			material.albedo_color = selected_color
+			material.roughness = 0.86
+			mesh_node.material_override = material
+	if is_instance_valid(hairstyle_attachment):
+		for child in hairstyle_attachment.get_children():
+			if child is MeshInstance3D:
+				var material := StandardMaterial3D.new()
+				material.albedo_color = selected_color
+				material.roughness = 0.86
+				child.material_override = material
+
+func set_hair_style(style_id: String) -> void:
+	hair_style = _normalize_hair_style(style_id)
+	appearance_profile["hair_style"] = hair_style
+	var skeleton := _find_skeleton(imported_model) if is_instance_valid(imported_model) else null
+	if is_instance_valid(skeleton):
+		_apply_hair_style(skeleton, _resolve_hair_color(str(appearance_profile.get("hair_color", "black"))))
+
+func _apply_hair_style(skeleton: Skeleton3D, color: Color) -> void:
+	if is_instance_valid(hairstyle_attachment):
+		hairstyle_attachment.queue_free()
+	hairstyle_mesh_count = 0
+	hairstyle_attachment = BoneAttachment3D.new()
+	hairstyle_attachment.name = "RuntimeHairstyle"
+	hairstyle_attachment.bone_name = "head"
+	skeleton.add_child(hairstyle_attachment)
+	var hair_material := StandardMaterial3D.new()
+	hair_material.albedo_color = color
+	hair_material.roughness = 0.86
+	match hair_style:
+		"medium", "layered":
+			_add_hair_capsule("MediumHairLeft", Vector3(-0.135, 0.09, 0.035), 0.032, 0.22, hair_material)
+			_add_hair_capsule("MediumHairRight", Vector3(0.135, 0.09, 0.035), 0.032, 0.22, hair_material)
+		"long":
+			_add_hair_capsule("LongHairLeft", Vector3(-0.135, 0.02, 0.035), 0.035, 0.38, hair_material)
+			_add_hair_capsule("LongHairRight", Vector3(0.135, 0.02, 0.035), 0.035, 0.38, hair_material)
+			_add_hair_capsule("LongHairBack", Vector3(0.0, 0.02, 0.12), 0.045, 0.42, hair_material)
+		"curly", "afro":
+			for x in [-0.13, -0.08, -0.025, 0.035, 0.09, 0.14]:
+				for z in [-0.055, 0.025]:
+					_add_hair_sphere("CurlyLock", Vector3(x, 0.30, z), Vector3(0.065, 0.065, 0.065), hair_material)
+		"braided", "dreadlocks":
+			var braid_sides: Array = [-1.0]
+			if hair_style == "dreadlocks":
+				braid_sides = [-1.0, 1.0]
+			for side in braid_sides:
+				_add_hair_capsule("BraidLock", Vector3(0.14 * side, 0.00, 0.04), 0.028, 0.36, hair_material)
+				for step in range(5):
+					var y := 0.18 - float(step) * 0.065
+					_add_hair_sphere("BraidKnot", Vector3(0.14 * side, y, 0.065), Vector3(0.045, 0.045, 0.045), hair_material)
+		"ponytail":
+			_add_hair_sphere("PonytailTie", Vector3(0.0, 0.23, 0.14), Vector3(0.075, 0.07, 0.07), hair_material)
+			_add_hair_capsule("Ponytail", Vector3(0.0, 0.04, 0.20), 0.045, 0.40, hair_material)
+		"twin_tails":
+			for side in [-1.0, 1.0]:
+				_add_hair_sphere("TwinTailTie", Vector3(0.14 * side, 0.22, 0.08), Vector3(0.055, 0.055, 0.055), hair_material)
+				_add_hair_capsule("TwinTail", Vector3(0.17 * side, 0.02, 0.11), 0.035, 0.38, hair_material)
+		"bun", "topknot":
+			_add_hair_sphere("HairBun", Vector3(0.0, 0.25, 0.15), Vector3(0.11, 0.12, 0.10), hair_material)
+			if hair_style == "topknot":
+				_add_hair_capsule("TopKnotTail", Vector3(0.0, 0.12, 0.18), 0.035, 0.24, hair_material)
+		"bob":
+			_add_hair_capsule("BobLeft", Vector3(-0.13, 0.12, 0.04), 0.038, 0.25, hair_material)
+			_add_hair_capsule("BobRight", Vector3(0.13, 0.12, 0.04), 0.038, 0.25, hair_material)
+		"pixie", "undercut":
+			_add_hair_capsule("PixieFringe", Vector3(0.0, 0.25, -0.055), 0.035, 0.16, hair_material)
+			if hair_style == "undercut":
+				_add_hair_capsule("UndercutTop", Vector3(0.0, 0.31, 0.02), 0.045, 0.18, hair_material)
+		"spiky":
+			for x in [-0.10, -0.05, 0.0, 0.05, 0.10]:
+				_add_hair_capsule("SpikyLock", Vector3(x, 0.31, 0.0), 0.022, 0.18, hair_material)
+		"side_swept":
+			_add_hair_capsule("SideSweptFringe", Vector3(-0.04, 0.25, -0.07), 0.035, 0.22, hair_material)
+
+func _add_hair_sphere(piece_name: String, at: Vector3, dimensions: Vector3, mat: Material) -> void:
+	var mesh := SphereMesh.new()
+	mesh.radius = 0.5
+	mesh.height = 1.0
+	var instance := MeshInstance3D.new()
+	instance.name = piece_name
+	instance.mesh = mesh
+	instance.position = at
+	instance.scale = dimensions
+	instance.material_override = mat
+	hairstyle_attachment.add_child(instance)
+	hairstyle_mesh_count += 1
+
+func _add_hair_capsule(piece_name: String, at: Vector3, radius: float, height: float, mat: Material) -> void:
+	var mesh := CapsuleMesh.new()
+	mesh.radius = radius
+	mesh.height = height
+	var instance := MeshInstance3D.new()
+	instance.name = piece_name
+	instance.mesh = mesh
+	instance.position = at
+	instance.material_override = mat
+	hairstyle_attachment.add_child(instance)
+	hairstyle_mesh_count += 1
+
 func get_character_status() -> Dictionary:
 	var skeleton_count := 0
 	var mesh_count := 0
@@ -450,6 +594,8 @@ func get_character_status() -> Dictionary:
 		"face_shape": str(appearance_profile.get("face_shape", "balanced")),
 		"skin_tone": str(appearance_profile.get("skin_tone", "palette")),
 		"hair_color": str(appearance_profile.get("hair_color", "palette")),
+		"hair_style": hair_style,
+		"hairstyle_mesh_count": hairstyle_mesh_count,
 		"eye_color": str(appearance_profile.get("eye_color", "blue")),
 		"activity": current_activity
 	}
