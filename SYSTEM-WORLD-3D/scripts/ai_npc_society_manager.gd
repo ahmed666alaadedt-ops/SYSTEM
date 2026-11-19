@@ -456,7 +456,8 @@ func create_family_child(parent_one_name: String, parent_two_name: String, child
 	if not add_resident(newborn):
 		return false
 	var child_id := _find_resident_id(str(newborn.get("name", "")))
-	return relationship_system.set_parentage([first_id, second_id], child_id)
+	var parent_ids: Array[String] = [first_id, second_id]
+	return relationship_system.set_parentage(parent_ids, child_id)
 
 func set_resident_activity(resident_name: String, activity: String, destination: Vector3) -> bool:
 	for record in residents:
