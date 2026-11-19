@@ -958,8 +958,6 @@ func apply_player_appearance(profile: Dictionary, persist: bool = true) -> void:
 	player_appearance_profile["age_group"] = "adult"
 	player_appearance_profile["age"] = maxi(18, int(player_appearance_profile.get("age", 25)))
 	player_appearance_profile["job"] = "hunter"
-	if world_manager != null and world_manager.has_method("get_world_name"):
-		player_appearance_profile["world_id"] = "modern"
 	player_mesh = PlayerCharacterModelScript.new()
 	player_mesh.name = "PlayerCharacterVisual"
 	player.add_child(player_mesh)
