@@ -443,6 +443,8 @@ def generate_character(name, female, output, age_group="adult"):
     groups={
         "FaceSkin":[],
         "Eyes":[],
+        "Iris":[],
+        "Pupils":[],
         "Mouth":[],
         "Hair":[],
         "Hands":[],
@@ -458,7 +460,11 @@ def generate_character(name, female, output, age_group="adult"):
             groups["Hair"].append((obj,"head"))
         elif "mouth" in part_name:
             groups["Mouth"].append((obj,"head"))
-        elif "eye" in part_name or "iris" in part_name or "pupil" in part_name:
+        elif "iris" in part_name:
+            groups["Iris"].append((obj,"head"))
+        elif "pupil" in part_name:
+            groups["Pupils"].append((obj,"head"))
+        elif "eye" in part_name:
             groups["Eyes"].append((obj,"head"))
         else:
             groups["FaceSkin"].append((obj,"head"))
