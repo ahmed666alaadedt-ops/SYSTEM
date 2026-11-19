@@ -67,7 +67,15 @@ func _hair_color_from_id(color_id: String) -> Color:
 func set_hair_style(style_id: String) -> void:
 	var style := style_id.to_lower().strip_edges().replace("-", "_").replace(" ", "_")
 	match style:
-		"long", "طويل", "very_long", "طويل_جدا": hair_style = "long"
+		"fade", "low_fade", "mid_fade", "high_fade", "taper_fade", "undercut", "محلوق_الجوانب": hair_style = "undercut"
+		"buzz_cut", "crew_cut", "french_crop": hair_style = "short"
+		"textured_crop", "quiff", "pompadour": hair_style = "spiky"
+		"slick_back", "side_part": hair_style = "side_swept"
+		"شعر_طويل", "شعر_طويل_مدرج", "شعر_ويفي_طويل", "شعر_مجعد_طويل", "long", "طويل", "very_long", "طويل_جدا": hair_style = "long"
+		"شعر_متوسط", "medium", "متوسط": hair_style = "medium"
+		"ذيل_حصان_رجالي", "ponytail", "pony_tail", "ذيل_حصان": hair_style = "ponytail"
+		"كعكة_رجالية", "man_bun", "topknot", "مرفوع": hair_style = "topknot"
+		"ضفائر_رجالية", "braided", "braid", "ضفيرة": hair_style = "braided"
 		"medium", "متوسط": hair_style = "medium"
 		"layered", "مدرج": hair_style = "layered"
 		"curly", "مجعد", "كيرلي", "afro", "أفرو": hair_style = "curly"
