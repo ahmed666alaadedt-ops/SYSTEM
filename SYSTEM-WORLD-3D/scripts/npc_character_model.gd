@@ -27,7 +27,10 @@ func configure(profile: Dictionary, palette_index: int = 0) -> void:
 	var is_female := gender_text in ["female", "woman", "girl", "أنثى", "بنت", "امرأة"]
 	if gender_text.is_empty():
 		is_female = (palette_index % 2) == 1
-	age_group = str(profile.get("age_group", profile.get("age", "adult"))).to_lower()
+	var age_value = float(profile.get("age", 30.0))
+	age_group = str(profile.get("age_group", "")).to_lower()
+	if age_group.is_empty():
+		age_group = "child" if age_value < 18.0 else ("elder" if age_value >= 60.0 else "adult")
 	if age_group in ["طفل", "طفلة", "child", "children"]:
 		age_group = "child"
 	elif age_group in ["كبير السن", "مسن", "مسنة", "elderly", "senior"]:
@@ -173,7 +176,7 @@ func set_activity(value: String) -> void:
 		desired = "Jump_Animation"
 	elif value in ["attack", "combat", "fight"]:
 		desired = "Attack_Animation"
-	elif value in ["work", "eat", "socialize", "wander", "travel", "walk"]:
+	elif value in ["work", "eat", "socialize", "wander", "travel", "walk", "play", "school", "family"]:
 		desired = "Walk_Cycle"
 	var available := animation_player.get_animation_list()
 	var aliases := [desired.to_lower()]
