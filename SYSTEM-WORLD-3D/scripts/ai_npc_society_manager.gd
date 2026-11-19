@@ -7,6 +7,9 @@ extends Node
 const RelationshipSystem = preload(
 	"res://scripts/npc_relationship_system.gd"
 )
+const NPCVisual = preload(
+	"res://scripts/npc_humanoid_visual.gd"
+)
 
 const RESIDENT_COUNT := 12
 const WALK_SPEED := 1.35
@@ -81,7 +84,7 @@ func _create_resident(profile: Dictionary, index: int) -> void:
 	)
 
 	# Use the shared full-body 3D civilian model instead of a capsule placeholder.
-	var visual := SystemNPCHumanoidVisual.new()
+	var visual := NPCVisual.new()
 	visual.name = "HumanoidVisual"
 	npc.add_child(visual)
 	visual.configure(profile, index)
