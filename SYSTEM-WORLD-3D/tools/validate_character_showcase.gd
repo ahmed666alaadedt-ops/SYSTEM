@@ -24,6 +24,7 @@ func _run_validation() -> void:
 	await process_frame
 
 	var character_count := 0
+	var hairstyle_variants: Dictionary = {}
 	var required_assets := [
 		"SYSTEM_Humanoid_Male.glb", "SYSTEM_Humanoid_Female.glb",
 		"SYSTEM_Humanoid_Elder_Male.glb", "SYSTEM_Humanoid_Elder_Female.glb",
@@ -40,6 +41,12 @@ func _run_validation() -> void:
 			continue
 		character_count += 1
 		var status: Dictionary = child.call("get_character_status")
+		var hair_style := str(status.get("hair_style", ""))
+		hairstyle_variants[hair_style] = true
+		if hair_style != "short" and int(status.get("hairstyle_mesh_count", 0)) < 1:
+			push_error("SYSTEM CHARACTER QA: requested hairstyle did not create visible mesh pieces: " + hair_style)
+			quit(1)
+			return
 		print("SYSTEM_CHARACTER_QA ", child.name, " ", status)
 
 		if status.get("model_source", "") == "glb":
@@ -73,6 +80,11 @@ func _run_validation() -> void:
 					push_error("SYSTEM CHARACTER QA: missing animation clip " + str(required_clip))
 					quit(1)
 					return
+
+	if hairstyle_variants.size() < 4:
+		push_error("SYSTEM CHARACTER QA: expected at least four hairstyle variants")
+		quit(1)
+		return
 
 	if character_count != 6:
 		push_error("SYSTEM CHARACTER QA: expected six age/gender showcase characters, found " + str(character_count))
