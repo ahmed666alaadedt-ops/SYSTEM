@@ -30,6 +30,7 @@ func configure(profile: Dictionary, palette_index: int = 0) -> void:
 			outfit_id = "hunter"
 		elif "noble" in role or "royal" in role:
 			outfit_id = "royal"
+		set_appearance(palette_index)
 		set_outfit(outfit_id, palette_index)
 		return
 	_build_fallback(profile, palette_index)
@@ -90,6 +91,30 @@ func set_activity(value: String) -> void:
 			return
 	if not available.is_empty():
 		animation_player.play(available[0])
+
+func set_appearance(variant_index: int = 0) -> void:
+	if not is_instance_valid(imported_model):
+		return
+	var skin_tones := [
+		Color8(232, 190, 154), Color8(190, 133, 96),
+		Color8(139, 91, 66), Color8(104, 70, 56)
+	]
+	var hair_tones := [
+		Color8(35, 22, 17), Color8(72, 43, 25),
+		Color8(116, 83, 48), Color8(35, 39, 48)
+	]
+	var skin_color: Color = skin_tones[posmod(variant_index, skin_tones.size())]
+	var hair_color: Color = hair_tones[posmod(variant_index, hair_tones.size())]
+	for node in _collect_mesh_nodes(imported_model):
+		var mesh_node := node as MeshInstance3D
+		var part_name := mesh_node.name.to_lower()
+		var is_skin := "body" in part_name or "nose" in part_name or "ear" in part_name or "cheek" in part_name or "palm" in part_name or "finger" in part_name or "upperarm" in part_name or "forearm" in part_name or "thigh" in part_name or "calf" in part_name or "foot" in part_name
+		var is_hair := "hair" in part_name
+		if is_skin or is_hair:
+			var material := StandardMaterial3D.new()
+			material.albedo_color = skin_color if is_skin else hair_color
+			material.roughness = 0.82
+			mesh_node.material_override = material
 
 func set_outfit(outfit_id: String, variant_index: int = 0) -> void:
 	if not is_instance_valid(imported_model):
