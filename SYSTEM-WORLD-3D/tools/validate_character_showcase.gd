@@ -39,6 +39,10 @@ func _run_validation() -> void:
 				push_error("SYSTEM CHARACTER QA: imported GLB has no Skeleton3D node")
 				quit(1)
 				return
+			if int(status.get("mesh_instance_count", 0)) < 20:
+				push_error("SYSTEM CHARACTER QA: imported character is missing expected body, face or outfit mesh parts")
+				quit(1)
+				return
 			var clips: Array = status.get("animation_clips", [])
 			for required_clip in REQUIRED_CLIPS:
 				var found := false
