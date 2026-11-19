@@ -226,6 +226,53 @@ func _find_skeleton(root: Node) -> Skeleton3D:
 			return nested
 	return null
 
+## Applies skeletal facial poses when the imported GLB contains the facial control bones.
+## These are bone-driven poses, not blendshape morph targets.
+func set_facial_expression(expression: String) -> void:
+	var skeleton := _find_skeleton(imported_model) if is_instance_valid(imported_model) else null
+	if not is_instance_valid(skeleton):
+		return
+	var jaw := skeleton.find_bone("jaw")
+	var eye_left := skeleton.find_bone("eye.L")
+	var eye_right := skeleton.find_bone("eye.R")
+	var brow_left := skeleton.find_bone("brow.L")
+	var brow_right := skeleton.find_bone("brow.R")
+	for bone_index in [jaw, eye_left, eye_right, brow_left, brow_right]:
+		if bone_index >= 0:
+			skeleton.set_bone_pose_rotation(bone_index, Quaternion.IDENTITY)
+			skeleton.set_bone_pose_scale(bone_index, Vector3.ONE)
+	match expression.to_lower():
+		"happy", "فرح", "سعيد":
+			if brow_left >= 0:
+				skeleton.set_bone_pose_rotation(brow_left, Quaternion(Vector3.RIGHT, -0.08))
+			if brow_right >= 0:
+				skeleton.set_bone_pose_rotation(brow_right, Quaternion(Vector3.RIGHT, -0.08))
+		"angry", "غاضب":
+			if brow_left >= 0:
+				skeleton.set_bone_pose_rotation(brow_left, Quaternion(Vector3.RIGHT, 0.18))
+			if brow_right >= 0:
+				skeleton.set_bone_pose_rotation(brow_right, Quaternion(Vector3.RIGHT, 0.18))
+		"surprised", "مندهش":
+			if jaw >= 0:
+				skeleton.set_bone_pose_rotation(jaw, Quaternion(Vector3.RIGHT, -0.22))
+			if brow_left >= 0:
+				skeleton.set_bone_pose_rotation(brow_left, Quaternion(Vector3.RIGHT, -0.20))
+			if brow_right >= 0:
+				skeleton.set_bone_pose_rotation(brow_right, Quaternion(Vector3.RIGHT, -0.20))
+		"sad", "حزين":
+			if brow_left >= 0:
+				skeleton.set_bone_pose_rotation(brow_left, Quaternion(Vector3.RIGHT, -0.12))
+			if brow_right >= 0:
+				skeleton.set_bone_pose_rotation(brow_right, Quaternion(Vector3.RIGHT, 0.12))
+		"talking", "يتكلم":
+			if jaw >= 0:
+				skeleton.set_bone_pose_rotation(jaw, Quaternion(Vector3.RIGHT, -0.12))
+		"blink", "رمش":
+			if eye_left >= 0:
+				skeleton.set_bone_pose_scale(eye_left, Vector3(1.0, 0.12, 1.0))
+			if eye_right >= 0:
+				skeleton.set_bone_pose_scale(eye_right, Vector3(1.0, 0.12, 1.0))
+
 func set_outfit(outfit_id: String, variant_index: int = 0) -> void:
 	if not is_instance_valid(imported_model):
 		return
