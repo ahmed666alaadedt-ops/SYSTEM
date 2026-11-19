@@ -584,6 +584,16 @@ func _update_needs(npc_id: String, hours: float) -> void:
 	npcs[npc_id] = npc
 
 
+## Public entry point for authoritative world events such as a confirmed murder.
+func record_npc_death(npc_id: String, cause: String) -> bool:
+	if not npcs.has(npc_id):
+		return false
+	if not bool(npcs[npc_id].get("alive", false)):
+		return false
+	_mark_dead(npc_id, cause)
+	return true
+
+
 func _mark_dead(npc_id: String, cause: String) -> void:
 	var npc: Dictionary = npcs[npc_id]
 
