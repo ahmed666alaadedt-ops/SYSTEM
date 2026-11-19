@@ -154,6 +154,8 @@ def inspect_glb(path: Path) -> dict[str, Any]:
     skins = document.get("skins", [])
     animations = document.get("animations", [])
     joint_count = sum(len(skin.get("joints", [])) for skin in skins)
+    nodes = document.get("nodes", [])
+    skinned_mesh_node_count = sum(1 for node in nodes if "mesh" in node and "skin" in node)
     skinned_primitive_count = 0
     for mesh_index, mesh in enumerate(meshes):
         for primitive_index, primitive in enumerate(mesh.get("primitives", [])):
@@ -169,7 +171,6 @@ def inspect_glb(path: Path) -> dict[str, Any]:
     if skins and skinned_primitive_count == 0:
         raise GLBValidationError("skin exists but no mesh primitive contains JOINTS_0 and WEIGHTS_0")
 
-    nodes = document.get("nodes", [])
     joint_nodes = {int(index) for skin in skins for index in skin.get("joints", [])}
     parent_of: dict[int, int] = {}
     for parent_index, node in enumerate(nodes):
@@ -199,6 +200,7 @@ def inspect_glb(path: Path) -> dict[str, Any]:
         "skin_count": len(skins),
         "joint_count": joint_count,
         "skinned_primitive_count": skinned_primitive_count,
+        "skinned_mesh_node_count": skinned_mesh_node_count,
         "bone_attached_mesh_count": bone_attached_mesh_count,
         "animation_count": len(animations),
         "embedded_binary_bytes": len(binary),
@@ -266,8 +268,8 @@ def main() -> int:
             raise GLBValidationError("humanoid must contain idle, walk, run, jump and attack animation clips")
         if args.require_skin and report["skinned_primitive_count"] < 1:
             raise GLBValidationError("humanoid mesh must be weighted to its skeleton")
-        if args.require_skin and report["bone_attached_mesh_count"] < 10:
-            raise GLBValidationError("character details and clothing must remain attached to rig bones")
+        if args.require_skin and report["skinned_mesh_node_count"] < 2:
+            raise GLBValidationError("body and detailed character parts must both be skinned to the armature")
         if report["triangle_count"] > args.max_triangles:
             raise GLBValidationError(
                 f"triangle count {report['triangle_count']} exceeds budget {args.max_triangles}"
