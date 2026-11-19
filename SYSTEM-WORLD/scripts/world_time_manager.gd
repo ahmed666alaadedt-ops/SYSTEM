@@ -23,6 +23,9 @@ var sky_weather_manager
 var elapsed := 0.0
 var current_hour := 12.0
 var current_daylight := 1.0
+var current_season := "unknown"
+var sunrise_hour := 6.0
+var sunset_hour := 18.0
 
 
 func _connect_world_manager() -> void:
@@ -320,7 +323,29 @@ func _update_clock() -> void:
 		+ float(datetime.get("second", 0)) / 3600.0
 	)
 
+	_update_season(int(datetime.get("month", 1)))
 	_apply_day_night_cycle(current_hour)
+
+
+func _update_season(month: int) -> void:
+	# Baghdad is in the northern hemisphere; use local seasonal daylight.
+	match month:
+		12, 1, 2:
+			current_season = "winter"
+			sunrise_hour = 7.0
+			sunset_hour = 17.0
+		3, 4, 5:
+			current_season = "spring"
+			sunrise_hour = 6.0
+			sunset_hour = 18.2
+		6, 7, 8:
+			current_season = "summer"
+			sunrise_hour = 5.0
+			sunset_hour = 19.2
+		9, 10, 11:
+			current_season = "autumn"
+			sunrise_hour = 5.8
+			sunset_hour = 18.0
 
 
 func _apply_day_night_cycle(hour: float) -> void:
@@ -335,9 +360,21 @@ func _apply_day_night_cycle(hour: float) -> void:
 	if environment == null:
 		return
 
-	var sun_curve := sin(
-		(hour - 6.0) / 12.0 * PI
-	)
+	var day_duration := maxf(sunset_hour - sunrise_hour, 1.0)
+	var night_duration := maxf(24.0 - day_duration, 1.0)
+	var sun_curve := 0.0
+
+	if hour >= sunrise_hour and hour <= sunset_hour:
+		var day_progress := (hour - sunrise_hour) / day_duration
+		sun_curve = sin(day_progress * PI)
+	else:
+		var night_elapsed := 0.0
+		if hour > sunset_hour:
+			night_elapsed = hour - sunset_hour
+		else:
+			night_elapsed = hour + 24.0 - sunset_hour
+		var night_progress := clampf(night_elapsed / night_duration, 0.0, 1.0)
+		sun_curve = -sin(night_progress * PI)
 
 	var daylight := clampf(sun_curve, 0.0, 1.0)
 	current_daylight = daylight
@@ -348,12 +385,10 @@ func _apply_day_night_cycle(hour: float) -> void:
 		70.0
 	)
 
-	var dawn_factor := maxf(
-		1.0 - absf(hour - 6.0) / 3.0,
-		1.0 - absf(hour - 18.0) / 3.0
-	)
-
-	dawn_factor = clampf(dawn_factor, 0.0, 1.0)
+	var sunrise_distance := absf(hour - sunrise_hour)
+	var sunset_distance := absf(hour - sunset_hour)
+	var dawn_distance := minf(sunrise_distance, sunset_distance)
+	var dawn_factor := clampf(1.0 - dawn_distance / 2.5, 0.0, 1.0)
 
 	sun.rotation_degrees = Vector3(
 		-elevation,
@@ -457,6 +492,18 @@ func get_current_weather() -> String:
 
 func get_current_hour() -> float:
 	return current_hour
+
+
+func get_current_season() -> String:
+	return current_season
+
+
+func get_sunrise_hour() -> float:
+	return sunrise_hour
+
+
+func get_sunset_hour() -> float:
+	return sunset_hour
 
 
 func get_time_label() -> String:
