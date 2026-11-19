@@ -323,3 +323,14 @@ asset here only after generation, GLB validation, Godot import and visual review
 - The successful Godot Android export run [44525758672](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44525758672) built and signed `SYSTEM-WORLD-debug.apk` (35 MB); APK signature verification passed for v1, v2, and v3.
 - The exact source commit used for that export contains all six canonical humanoid GLBs under `SYSTEM-WORLD/assets/characters/` (each approximately 2.78–2.90 MB).
 - The exported APK is a build artifact, not evidence of installation or visual testing on a physical Android device. Device launch, animation playback, frame rate, and memory usage remain to be checked on the target phone.
+
+
+## Live Six-Variant Civilian Population Verification (2026-11-19)
+
+- Latest successful canonical runtime run: [44534694182](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44534694182).
+- The Baghdad modern-world population spawned **27 visible civilians**; **27/27 loaded imported GLB models** (zero fallback-only residents).
+- All **six** model variants were represented in the live population: adult male/female, elder male/female, and child male/female.
+- Fixed the age lookup to use the society record's `age_years` field and preserved the normalized `elder` category. The starter population now includes both male and female elder residents.
+- Runtime controller verification: `run` resolves to `Run`, `walk` resolves to `Walk`, and the current missing-block fallback resolves to `Idle_Breathing` rather than the attack clip.
+- The test now checks the whole main scene tree as well as each world root; all four world roots and the main scene reported zero MeshInstance3D/MultiMeshInstance3D nodes without geometry.
+- Generated environment tile import remains deferred until the separate Blender-pipeline PR is merged and the tile files are committed to the canonical project.
