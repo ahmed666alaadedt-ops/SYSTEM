@@ -15,6 +15,7 @@ const ModernWorldBiomeManagerScript = preload("res://scripts/modern_world_biome_
 const ModernWorldCoastalDetailManagerScript = preload("res://scripts/modern_world_coastal_detail_manager.gd")
 const ModernWorldRegionManagerScript = preload("res://scripts/modern_world_region_manager.gd")
 const UndergroundHeritageManagerScript = preload("res://scripts/underground_heritage_manager.gd")
+const ModernWorldMonsterGateManagerScript = preload("res://scripts/modern_world_monster_gate_manager.gd")
 
 signal world_changed(world_id: int)
 
@@ -223,6 +224,10 @@ func _create_modern_city() -> void:
 	var region_manager := ModernWorldRegionManagerScript.new()
 	region_manager.name = "ModernWorldRegionManager"
 	root.add_child(region_manager)
+
+	var monster_gate_manager := ModernWorldMonsterGateManagerScript.new()
+	monster_gate_manager.name = "ModernWorldMonsterGateManager"
+	root.add_child(monster_gate_manager)
 
 	var underground_heritage := UndergroundHeritageManagerScript.new()
 	underground_heritage.name = "UndergroundHeritageManager"
