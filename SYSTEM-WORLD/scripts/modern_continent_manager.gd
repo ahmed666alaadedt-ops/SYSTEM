@@ -410,11 +410,14 @@ func _build_city_markers() -> void:
 
 		var beacon := MeshInstance3D.new()
 		beacon.name = "CityBeacon"
+		# City beacons are small navigation markers, not giant glowing orbs.
+		# The previous 2.8 m radius obscured the player camera when spawning near
+		# the starting city marker.
 		var sphere := SphereMesh.new()
-		sphere.radius = 2.8
-		sphere.height = 5.6
+		sphere.radius = 0.32
+		sphere.height = 0.64
 		beacon.mesh = sphere
-		beacon.position.y = 3.0
+		beacon.position.y = 1.25
 		var beacon_material := StandardMaterial3D.new()
 		beacon_material.albedo_color = Color(0.12, 0.82, 1.0)
 		beacon_material.emission_enabled = true
@@ -426,7 +429,7 @@ func _build_city_markers() -> void:
 		var label := Label3D.new()
 		label.name = "CityName"
 		label.text = str(city["name"])
-		label.position = Vector3(0.0, 9.0, 0.0)
+		label.position = Vector3(0.0, 5.5, 0.0)
 		label.font_size = 48
 		label.outline_size = 8
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
