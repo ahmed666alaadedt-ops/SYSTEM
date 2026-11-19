@@ -81,3 +81,13 @@ The six base GLBs have been generated and passed the workflow's structural valid
 
 
 The generated armature also stores `system_hair_style_index`, `system_face_variant_index`, and `system_age_detail_level` custom properties. These metadata tags identify the base variant for future runtime selection; they do not yet provide a live hairstyle picker in the player UI.
+
+
+## Child character safety rule (2026-11-19)
+
+Child profiles are normalized to the civilian occupation before either the imported GLB path or procedural fallback is configured. A child cannot be assigned guard, soldier, police, hunter, guild-fighter, or royal combat roles through profile data. If any caller requests an attack/combat/fight/battle activity for a child, the character controller safely resolves the request to idle. Adult combat activity remains unchanged.
+
+Automated headless validation entry point:
+`godot --headless --path SYSTEM-WORLD --script res://tools/validate_child_character_safety.gd`
+
+This test verifies both sides of the rule: child combat is blocked and adult combat remains available. The test source is committed; execution in the Godot runtime must still be confirmed.
