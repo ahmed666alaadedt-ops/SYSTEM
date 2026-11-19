@@ -421,6 +421,22 @@ func _collect_mesh_nodes(root: Node) -> Array[Node]:
 func _normalize_hair_style(value: String) -> String:
 	var style := value.to_lower().strip_edges().replace("-", "_").replace(" ", "_")
 	match style:
+		"fade", "low_fade", "mid_fade", "high_fade", "taper_fade", "undercut", "buzz_cut", "crew_cut", "french_crop":
+			return "undercut" if style in ["fade", "low_fade", "mid_fade", "high_fade", "taper_fade", "undercut"] else "short"
+		"textured_crop", "quiff", "pompadour", "spiky":
+			return "spiky"
+		"slick_back", "side_part":
+			return "side_swept"
+		"شعر_متوسط", "شعر_ويفي_طويل", "ويفي":
+			return "medium"
+		"شعر_طويل", "شعر_طويل_مدرج", "شعر_مجعد_طويل":
+			return "long"
+		"ذيل_حصان_رجالي":
+			return "ponytail"
+		"كعكة_رجالية":
+			return "topknot"
+		"ضفائر_رجالية":
+			return "braided"
 		"متوسط", "medium", "shoulder_length": return "medium"
 		"طويل", "طويل_جدا", "long", "very_long": return "long"
 		"مجعد", "كيرلي", "curly": return "curly"
