@@ -192,7 +192,7 @@ func _run_validation() -> void:
 		push_error("SYSTEM PLAYER QA: male player profile did not apply blue hair color")
 		quit(1)
 		return
-	for player_color in ["أحمر", "أصفر", "أبيض", "فضي", "بنفسجي", "أخضر", "سماوي", "وردي", "برتقالي", "ذهبي", "أرجواني"]:
+	for player_color in ["أحمر", "أصفر", "أبيض", "فضي", "رمادي", "أزرق داكن", "بنفسجي", "أخضر", "سماوي", "وردي", "برتقالي", "ذهبي", "أرجواني"]:
 		player_test.imported_character.call("set_hair_color", player_color)
 		var updated_player_status: Dictionary = player_test.imported_character.call("get_character_status")
 		if str(updated_player_status.get("hair_color", "")) != player_color:
