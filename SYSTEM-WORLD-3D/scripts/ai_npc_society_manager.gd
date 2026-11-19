@@ -132,8 +132,10 @@ func _create_resident(profile: Dictionary, index: int) -> void:
 	var enriched_profile := profile.duplicate(true)
 	var resident_age := int(profile.get("age", 30))
 	enriched_profile["age_group"] = "child" if resident_age < 18 else ("elder" if resident_age >= 60 else "adult")
-	enriched_profile["body_type"] = ["average", "slim", "heavy", "athletic", "muscular"][posmod(index * 3 + resident_age, 5)]
-	enriched_profile["height_type"] = ["short", "average", "tall"][posmod(index + resident_age, 3)]
+	if not enriched_profile.has("body_type"):
+		enriched_profile["body_type"] = ["average", "slim", "heavy", "athletic", "muscular"][posmod(index * 3 + resident_age, 5)]
+	if not enriched_profile.has("height_type"):
+		enriched_profile["height_type"] = ["short", "average", "tall"][posmod(index + resident_age, 3)]
 	var visual := NPCVisual.new()
 	visual.name = "HumanoidVisual"
 	npc.add_child(visual)
