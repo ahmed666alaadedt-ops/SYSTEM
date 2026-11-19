@@ -95,9 +95,9 @@ def make_armature(name, female=False):
         bone("calf."+side,(sign*0.13,0.53,0),(sign*0.13,0.13,0),"thigh."+side,True)
         bone("foot."+side,(sign*0.13,0.13,0),(sign*0.13,0.07,-0.19),"calf."+side,True)
         for finger, spread in (("thumb",0.055),("index",0.025),("middle",0.0),("ring",-0.025),("pinky",-0.05)):
-            start=(sign*0.31,0.82,spread)
-            mid=(sign*0.31,0.77,spread*1.2)
-            end=(sign*0.31,0.73,spread*1.4)
+            start=(sign*0.31+spread*sign,0.82,-0.015)
+            mid=(sign*0.31+spread*sign,0.77,-0.02)
+            end=(sign*0.31+spread*sign,0.73,-0.025)
             bone(f"{finger}_01.{side}",start,mid,"hand."+side)
             bone(f"{finger}_02.{side}",mid,end,f"{finger}_01.{side}",True)
     bpy.ops.object.mode_set(mode="OBJECT")
@@ -152,6 +152,17 @@ def add_face_and_hair(name):
         x=-0.12+i*0.04
         objs.append(capsule(name+"_HairLock",(x,1.99,0.0),(x+0.018,1.91,-0.07),0.025,HAIR,12))
     return objs
+
+def add_finger_geometry(name):
+    fingers=[]
+    for side,sign in (("L",-1),("R",1)):
+        for finger,spread in (("thumb",0.055),("index",0.025),("middle",0.0),("ring",-0.025),("pinky",-0.05)):
+            x=sign*0.31+spread*sign
+            first=capsule(name+"_"+finger+"_01_"+side,(x,0.82,-0.015),(x,0.77,-0.02),0.010,SKIN,12)
+            second=capsule(name+"_"+finger+"_02_"+side,(x,0.77,-0.02),(x,0.73,-0.025),0.008,SKIN,12)
+            fingers.append((first,finger+"_01."+side))
+            fingers.append((second,finger+"_02."+side))
+    return fingers
 
 def add_clothes(name):
     objs=[]
@@ -287,9 +298,12 @@ def generate_character(name, female, output):
     weight_body(body,arm)
     # bone-attached accessories and fitted clothing: stable rigid weighting
     face=add_face_and_hair(name)
+    fingers=add_finger_geometry(name)
     clothes=add_clothes(name)
     for obj in face:
         parent_rigid_to_bone(obj,arm,"head")
+    for obj,bone_name in fingers:
+        parent_rigid_to_bone(obj,arm,bone_name)
     for obj in clothes:
         n=obj.name
         if "Sleeve" in n: b="upper_arm.L" if "_L" in n else "upper_arm.R"
@@ -312,7 +326,7 @@ def generate_character(name, female, output):
     root=bpy.data.objects.new(name+"_Root",None)
     bpy.context.scene.collection.objects.link(root)
     root.empty_display_type="PLAIN_AXES"
-    assembly=[arm,body]+face+clothes
+    assembly=[arm,body]+face+[obj for obj,bone_name in fingers]+clothes
     for obj in assembly:
         world_matrix=obj.matrix_world.copy()
         obj.parent=root
