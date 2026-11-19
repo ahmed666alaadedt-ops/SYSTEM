@@ -226,3 +226,11 @@ asset here only after generation, GLB validation, Godot import and visual review
 - Women's list remains separate and includes short, medium, long, curly, braided, bob, pixie and other styles.
 - Runtime character loaders recognize the modern haircut identifiers and map them to the currently implemented procedural geometry. Exact high-detail barber silhouettes remain to be produced as dedicated hair assets.
 - Showcase QA checks the gender-specific lists and verifies long men's options are present while feminine-only examples are not offered in the men's list.
+
+
+## Runtime Hair Silhouette Expansion (2026-11-19)
+
+- Added dynamic hair color/style handling to the 3D preview procedural humanoid fallback.
+- Added runtime mesh silhouettes for fade family, short crops, quiff/pompadour, slick-back/side-part, and long styles.
+- Imported character loader maps the men's barber menu into separate fade, quiff and slick-back groups.
+- Character showcase QA now exercises men's haircut options on both imported player character and procedural fallback; CI result pending for the latest commit.
