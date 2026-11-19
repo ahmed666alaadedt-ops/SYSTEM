@@ -111,8 +111,9 @@ func _simulate_batch(real_seconds: float) -> void:
 	var npc_ids: Array = society_manager.npcs.keys()
 	if npc_ids.is_empty():
 		return
-	var simulated_hours := real_seconds / 60.0
+	var elapsed_hours := real_seconds / 60.0
 	var count := mini(MAX_NPCS_PER_TICK, npc_ids.size())
+	var simulated_hours := elapsed_hours * float(npc_ids.size()) / float(count)
 	for offset in range(count):
 		var index := (next_npc_index + offset) % npc_ids.size()
 		_update_resident(str(npc_ids[index]), simulated_hours)
