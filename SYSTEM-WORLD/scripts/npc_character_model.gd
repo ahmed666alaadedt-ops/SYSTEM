@@ -108,7 +108,7 @@ func set_appearance(variant_index: int = 0) -> void:
 	for node in _collect_mesh_nodes(imported_model):
 		var mesh_node := node as MeshInstance3D
 		var part_name := mesh_node.name.to_lower()
-		var is_skin := "body" in part_name or "nose" in part_name or "ear" in part_name or "cheek" in part_name or "palm" in part_name or "finger" in part_name or "upperarm" in part_name or "forearm" in part_name or "thigh" in part_name or "calf" in part_name or "foot" in part_name
+		var is_skin := "body" in part_name or "faceskin" in part_name or "hands" in part_name or "nose" in part_name or "ear" in part_name or "cheek" in part_name or "palm" in part_name or "finger" in part_name or "upperarm" in part_name or "forearm" in part_name or "thigh" in part_name or "calf" in part_name or "foot" in part_name
 		var is_hair := "hair" in part_name
 		if is_skin or is_hair:
 			var material := StandardMaterial3D.new()
@@ -135,7 +135,7 @@ func set_outfit(outfit_id: String, variant_index: int = 0) -> void:
 			tint = cloth_color
 		elif "trousers" in part_name:
 			tint = cloth_color.darkened(0.48)
-		elif "belt" in part_name:
+		elif "belt" in part_name or "trim" in part_name:
 			tint = Color8(156, 112, 48)
 		elif "boot" in part_name or "glove" in part_name:
 			tint = Color8(28, 24, 22)
