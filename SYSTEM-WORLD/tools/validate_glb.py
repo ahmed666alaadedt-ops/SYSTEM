@@ -154,6 +154,20 @@ def inspect_glb(path: Path) -> dict[str, Any]:
     skins = document.get("skins", [])
     animations = document.get("animations", [])
     joint_count = sum(len(skin.get("joints", [])) for skin in skins)
+    skinned_primitive_count = 0
+    for mesh_index, mesh in enumerate(meshes):
+        for primitive_index, primitive in enumerate(mesh.get("primitives", [])):
+            attributes = primitive.get("attributes", {})
+            if "JOINTS_0" in attributes and "WEIGHTS_0" in attributes:
+                skinned_primitive_count += 1
+                for attribute_name in ("JOINTS_0", "WEIGHTS_0"):
+                    accessor_index = int(attributes[attribute_name])
+                    if accessor_index >= len(accessors):
+                        raise GLBValidationError(
+                            f"mesh {mesh_index} primitive {primitive_index} has invalid {attribute_name}"
+                        )
+    if skins and skinned_primitive_count == 0:
+        raise GLBValidationError("skin exists but no mesh primitive contains JOINTS_0 and WEIGHTS_0")
 
     return {
         "file": str(path),
@@ -165,6 +179,7 @@ def inspect_glb(path: Path) -> dict[str, Any]:
         "triangle_count": triangle_count,
         "skin_count": len(skins),
         "joint_count": joint_count,
+        "skinned_primitive_count": skinned_primitive_count,
         "animation_count": len(animations),
         "embedded_binary_bytes": len(binary),
         "external_resource_uris": 0,
@@ -216,6 +231,7 @@ def main() -> int:
     parser.add_argument("--self-test", action="store_true")
     parser.add_argument("--require-skin", action="store_true", help="fail unless the GLB contains a skeletal skin")
     parser.add_argument("--require-animation", action="store_true", help="fail unless the GLB contains at least one animation")
+    parser.add_argument("--max-triangles", type=int, default=120000, help="mobile-friendly triangle budget")
     args = parser.parse_args()
     try:
         if args.self_test:
@@ -228,6 +244,12 @@ def main() -> int:
             raise GLBValidationError("rigged character must contain a skin with at least 10 joints")
         if args.require_animation and report["animation_count"] < 3:
             raise GLBValidationError("humanoid must contain idle, walk and run animation clips")
+        if args.require_skin and report["skinned_primitive_count"] < 1:
+            raise GLBValidationError("humanoid mesh must be weighted to its skeleton")
+        if report["triangle_count"] > args.max_triangles:
+            raise GLBValidationError(
+                f"triangle count {report['triangle_count']} exceeds budget {args.max_triangles}"
+            )
         print(json.dumps(report, indent=2))
         return 0
     except (OSError, GLBValidationError, AssertionError) as exc:
