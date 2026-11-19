@@ -258,7 +258,7 @@ func _normalize_hair_style(value: String) -> String:
 			return "curly"
 		"ضفيرة", "مضفور", "braided", "braid":
 			return "braided"
-		"ذيل حصان", "pony tail", "ponytail":
+		"ذيل حصان", "مربوط", "pony tail", "ponytail":
 			return "ponytail"
 		"كعكة", "bun":
 			return "bun"
