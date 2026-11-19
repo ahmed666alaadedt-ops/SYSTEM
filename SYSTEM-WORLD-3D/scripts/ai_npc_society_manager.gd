@@ -53,18 +53,18 @@ func update_world(delta: float, world_hour: float) -> void:
 
 func _create_residents() -> void:
 	var people := [
-		{"name": "سارة", "job": "تاجرة", "family": "family_1", "age": 28, "personality": "اجتماعية", "home": Vector3(-17, 0, -15), "work": Vector3(7, 0, 4)},
-		{"name": "عمر", "job": "خباز", "family": "family_1", "age": 32, "personality": "هادئ", "home": Vector3(-17, 0, -15), "work": Vector3(10, 0, -3)},
-		{"name": "ليلى", "job": "طبيبة", "family": "family_2", "age": 30, "personality": "رحيمة", "home": Vector3(18, 0, -13), "work": Vector3(-13, 0, 5)},
-		{"name": "حسن", "job": "حارس", "family": "family_2", "age": 35, "personality": "شجاع", "home": Vector3(18, 0, -13), "work": Vector3(0, 0, -16)},
-		{"name": "نور", "job": "مزارعة", "family": "family_3", "age": 26, "personality": "محبة للطبيعة", "home": Vector3(-19, 0, 16), "work": Vector3(-24, 0, 20)},
-		{"name": "آدم", "job": "نجار", "family": "family_3", "age": 29, "personality": "مجتهد", "home": Vector3(-19, 0, 16), "work": Vector3(18, 0, 8)},
-		{"name": "مريم", "job": "تاجرة", "family": "family_4", "age": 27, "personality": "ذكية", "home": Vector3(19, 0, 17), "work": Vector3(7, 0, 4)},
-		{"name": "يوسف", "job": "حارس", "family": "family_4", "age": 33, "personality": "منضبط", "home": Vector3(19, 0, 17), "work": Vector3(0, 0, 15)},
-		{"name": "زينب", "job": "طبيبة", "family": "family_5", "age": 31, "personality": "حكيمة", "home": Vector3(-23, 0, -5), "work": Vector3(-13, 0, 5)},
-		{"name": "كريم", "job": "نجار", "family": "family_5", "age": 36, "personality": "صبور", "home": Vector3(-23, 0, -5), "work": Vector3(18, 0, 8)},
-		{"name": "هند", "job": "مزارعة", "family": "family_6", "age": 25, "personality": "مرحة", "home": Vector3(24, 0, 4), "work": Vector3(-24, 0, 20)},
-		{"name": "علي", "job": "خباز", "family": "family_6", "age": 34, "personality": "كريم", "home": Vector3(24, 0, 4), "work": Vector3(10, 0, -3)},
+		{"name": "سارة", "gender": "female", "job": "تاجرة", "family": "family_1", "age": 28, "personality": "اجتماعية", "home": Vector3(-17, 0, -15), "work": Vector3(7, 0, 4)},
+		{"name": "عمر", "gender": "male", "job": "خباز", "family": "family_1", "age": 32, "personality": "هادئ", "home": Vector3(-17, 0, -15), "work": Vector3(10, 0, -3)},
+		{"name": "ليلى", "gender": "female", "job": "طبيبة", "family": "family_2", "age": 30, "personality": "رحيمة", "home": Vector3(18, 0, -13), "work": Vector3(-13, 0, 5)},
+		{"name": "حسن", "gender": "male", "job": "حارس", "family": "family_2", "age": 35, "personality": "شجاع", "home": Vector3(18, 0, -13), "work": Vector3(0, 0, -16)},
+		{"name": "نور", "gender": "female", "job": "مزارعة", "family": "family_3", "age": 26, "personality": "محبة للطبيعة", "home": Vector3(-19, 0, 16), "work": Vector3(-24, 0, 20)},
+		{"name": "آدم", "gender": "male", "job": "نجار", "family": "family_3", "age": 29, "personality": "مجتهد", "home": Vector3(-19, 0, 16), "work": Vector3(18, 0, 8)},
+		{"name": "مريم", "gender": "female", "job": "تاجرة", "family": "family_4", "age": 27, "personality": "ذكية", "home": Vector3(19, 0, 17), "work": Vector3(7, 0, 4)},
+		{"name": "يوسف", "gender": "male", "job": "حارس", "family": "family_4", "age": 33, "personality": "منضبط", "home": Vector3(19, 0, 17), "work": Vector3(0, 0, 15)},
+		{"name": "زينب", "gender": "female", "job": "طبيبة", "family": "family_5", "age": 31, "personality": "حكيمة", "home": Vector3(-23, 0, -5), "work": Vector3(-13, 0, 5)},
+		{"name": "كريم", "gender": "male", "job": "نجار", "family": "family_5", "age": 36, "personality": "صبور", "home": Vector3(-23, 0, -5), "work": Vector3(18, 0, 8)},
+		{"name": "هند", "gender": "female", "job": "مزارعة", "family": "family_6", "age": 25, "personality": "مرحة", "home": Vector3(24, 0, 4), "work": Vector3(-24, 0, 20)},
+		{"name": "علي", "gender": "male", "job": "خباز", "family": "family_6", "age": 34, "personality": "كريم", "home": Vector3(24, 0, 4), "work": Vector3(10, 0, -3)},
 		{"name": "جد سارة", "job": "متقاعد", "family": "family_1", "age": 68, "gender": "male", "personality": "حكيم", "home": Vector3(-17, 0, -15), "work": Vector3(-17, 0, -15)},
 		{"name": "جدة عمر", "job": "متقاعدة", "family": "family_1", "age": 64, "gender": "female", "personality": "حنونة", "home": Vector3(-17, 0, -15), "work": Vector3(-17, 0, -15)},
 		{"name": "ليان", "job": "طالبة", "family": "family_2", "age": 10, "gender": "female", "personality": "فضولية", "home": Vector3(18, 0, -13), "work": Vector3(18, 0, -13)},
@@ -376,6 +376,8 @@ func _find_social_destination() -> Vector3:
 
 
 func add_resident(profile: Dictionary) -> bool:
+	if not initialized or not is_instance_valid(world):
+		return false
 	var resident_name := str(profile.get("name", "")).strip_edges()
 	if resident_name.is_empty():
 		return false
