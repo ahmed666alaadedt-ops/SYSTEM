@@ -111,7 +111,23 @@ func _run_validation() -> void:
 		push_error("SYSTEM NPC QA: elder life stage was not preserved")
 		quit(1)
 		return
-	print("SYSTEM NPC QA PASS: 20 residents, age groups, family records and varied body profiles initialized")
+	var population: Dictionary = society.call("get_population_summary")
+	if int(population.get("children", 0)) != 4 or int(population.get("elders", 0)) != 4:
+		push_error("SYSTEM NPC QA: child/elder population distribution is incorrect")
+		quit(1)
+		return
+	if bool(society.call("set_resident_activity", "ليان", "combat", Vector3.ZERO)):
+		push_error("SYSTEM NPC QA: a child was incorrectly allowed to enter combat")
+		quit(1)
+		return
+	if not bool(society.call("add_resident", {
+		"name": "اختبار ساكن جديد", "age": 42, "family": "family_test",
+		"body_type": "heavy", "height_type": "tall"
+	})):
+		push_error("SYSTEM NPC QA: dynamic resident creation failed")
+		quit(1)
+		return
+	print("SYSTEM NPC QA PASS: age groups, family records, safe child rules, dynamic residents and body profiles initialized")
 	society_world.queue_free()
 	print("SYSTEM CHARACTER QA PASS: six age/gender character models loaded and inspected")
 	quit(0)
