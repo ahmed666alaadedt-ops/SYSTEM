@@ -134,6 +134,7 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 	interaction.set_meta("system_region_id", "region_" + city_name.to_lower().replace(" ", "_"))
 	interaction.set_meta("system_display_name", city_name + " " + str(definition["name"]))
 	interaction.set_meta("system_location_type", location_type)
+	interaction.set_meta("system_service_type", service_id)
 	var area_shape := CollisionShape3D.new()
 	var area_box := BoxShape3D.new()
 	area_box.size = Vector3(3.0, 2.6, 3.0)
