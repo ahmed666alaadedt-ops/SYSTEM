@@ -51,17 +51,17 @@ func _ready() -> void:
 
 func _open_profile_window() -> void:
 	if profile_popup != null and is_instance_valid(profile_popup):
-		profile_popup.popup_centered(Vector2i(440, 740))
+		profile_popup.popup_centered(Vector2i(420, 660))
 		return
 
 	_create_profile_window()
-	profile_popup.popup_centered(Vector2i(440, 740))
+	profile_popup.popup_centered(Vector2i(420, 660))
 
 
 func _create_profile_window() -> void:
 	profile_popup = PopupPanel.new()
 	profile_popup.name = "PlayerProfileWindow"
-	profile_popup.size = Vector2i(440, 740)
+	profile_popup.size = Vector2i(420, 660)
 	add_child(profile_popup)
 
 	var root := VBoxContainer.new()
@@ -69,8 +69,8 @@ func _create_profile_window() -> void:
 	root.custom_minimum_size = Vector2(400, 700)
 	var scroll := ScrollContainer.new()
 	scroll.name = "CustomizationScroll"
-	scroll.custom_minimum_size = Vector2(400, 680)
-	scroll.size = Vector2(400, 680)
+	scroll.custom_minimum_size = Vector2(400, 620)
+	scroll.size = Vector2(400, 620)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	profile_popup.add_child(scroll)
 	scroll.add_child(root)
