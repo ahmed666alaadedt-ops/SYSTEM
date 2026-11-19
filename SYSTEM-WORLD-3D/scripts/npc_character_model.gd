@@ -454,8 +454,8 @@ func _resolve_hair_color(value: String = "") -> Color:
 			return Color8(28, 22, 20)
 		"بني", "brown", "chestnut":
 			return Color8(92, 52, 30)
-		"أشقر", "اشقر", "blonde", "golden_blonde":
-			return Color8(196, 156, 76)
+		"أشقر", "اشقر", "blonde", "golden_blonde", "yellow", "أصفر", "اصفر":
+			return Color8(220, 184, 72)
 		"أبيض", "ابيض", "white", "silver", "فضي":
 			return Color8(215, 218, 220)
 		"رمادي", "gray", "grey", "ash":
