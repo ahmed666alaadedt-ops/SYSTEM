@@ -209,7 +209,7 @@ func set_appearance(variant_index: int = 0) -> void:
 					face_scale = Vector3(1.08, 0.96, 1.06)
 				"heart", "قلبي":
 					face_scale = Vector3(0.98, 1.04, 1.08)
-				skeleton.set_bone_pose_scale(head_bone, face_scale)
+			skeleton.set_bone_pose_scale(head_bone, face_scale)
 	var lip_color := Color8(150, 78, 75)
 	var sclera_color := Color8(238, 232, 218)
 	for node in _collect_mesh_nodes(imported_model):
