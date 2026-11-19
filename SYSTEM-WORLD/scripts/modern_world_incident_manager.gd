@@ -65,7 +65,7 @@ func _try_spawn_incident() -> void:
 	var point := anchor + Vector3(rng.randf_range(-34.0, 34.0), 0.0, rng.randf_range(-30.0, 30.0))
 	if terrain != null and terrain.has_method("is_land_position") and not bool(terrain.call("is_land_position", point.x, point.z)):
 		point = anchor + Vector3(18.0, 0.0, 12.0)
-	var incident_type := INCIDENT_TYPES[rng.randi_range(0, INCIDENT_TYPES.size() - 1)]
+	var incident_type: String = str(INCIDENT_TYPES[rng.randi_range(0, INCIDENT_TYPES.size() - 1)])
 	_create_incident(city_name, incident_type, point)
 
 
