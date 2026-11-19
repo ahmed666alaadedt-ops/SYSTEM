@@ -194,6 +194,11 @@ func _apply_activity_animation(value: String) -> void:
 	for candidate in candidates:
 		for animation_name in available:
 			if str(animation_name).to_lower() == candidate.to_lower():
+				# Population and companion managers may request the same activity
+				# every frame. Keep the current clip running instead of resetting
+				# its playback position on every update.
+				if animation_player.current_animation == animation_name and animation_player.is_playing():
+					return
 				animation_player.play(animation_name)
 				return
 	# Never default to the first imported clip: it may be an attack animation.
