@@ -57,7 +57,11 @@ func configure(profile: Dictionary, palette_index: int = 0) -> void:
 			outfit_id = "mythic"
 		elif world_value in ["greed_island", "greed island", "جزيرة الطمع"]:
 			outfit_id = "greed_island"
-		if "guard" in role or "soldier" in role or "police" in role or "حارس" in role:
+		# Children are civilian/family residents only. Never dress them as
+		# guards, soldiers, hunters, guild fighters, or combat-capable nobles.
+		if age_group == "child":
+			outfit_id = "civilian"
+		elif "guard" in role or "soldier" in role or "police" in role or "حارس" in role:
 			outfit_id = "guard"
 		elif "hunter" in role or "guild" in role or "صياد" in role:
 			outfit_id = "hunter"
@@ -122,7 +126,14 @@ func _find_animation_player(root: Node) -> AnimationPlayer:
 	return null
 
 func set_activity(value: String) -> void:
-	current_activity = value
+	var requested_activity := value.to_lower()
+	var combat_activities := ["attack", "combat", "fight", "battle", "قتال", "هجوم", "معركة"]
+	# Child residents may socialize, learn, play, walk and run, but never enter
+	# combat animations, even if a caller requests a combat activity by mistake.
+	if age_group == "child" and requested_activity in combat_activities:
+		current_activity = "idle"
+	else:
+		current_activity = value
 	if is_instance_valid(fallback_model):
 		fallback_model.call("set_activity", value)
 		return
