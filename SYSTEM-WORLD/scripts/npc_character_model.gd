@@ -399,9 +399,14 @@ func get_character_status() -> Dictionary:
 	var skeleton_count := 0
 	var mesh_count := 0
 	var clip_names: Array[String] = []
+	var facial_control_bones: Array[String] = []
 	if is_instance_valid(imported_model):
 		for node in _collect_skeleton_nodes(imported_model):
 			skeleton_count += 1
+			var rig := node as Skeleton3D
+			for bone_name in ["head", "jaw", "eye.L", "eye.R", "brow.L", "brow.R"]:
+				if rig.find_bone(bone_name) >= 0 and not facial_control_bones.has(bone_name):
+					facial_control_bones.append(bone_name)
 		for node in _collect_mesh_nodes(imported_model):
 			mesh_count += 1
 		if is_instance_valid(animation_player):
@@ -414,6 +419,8 @@ func get_character_status() -> Dictionary:
 		"skeleton_count": skeleton_count,
 		"mesh_instance_count": mesh_count,
 		"animation_clips": clip_names,
+		"facial_control_bones": facial_control_bones,
+		"facial_controls_complete": facial_control_bones.size() == 6,
 		"activity": current_activity
 	}
 
