@@ -190,3 +190,8 @@ asset here only after generation, GLB validation, Godot import and visual review
 - Facial rig extension: `tools/blender/generate_system_humanoids.py` adds `jaw`, `eye.L/R`, and `brow.L/R` control bones and assigns mouth, eye, and brow mesh groups to them.
 - `scripts/npc_character_model.gd` exposes `set_facial_expression(expression)` for basic bone-driven happy, angry, sad, surprised, talking, and blink poses. This is not yet a blendshape or audio-driven lip-sync implementation.
 - `assets/characters/CHARACTER_CUSTOMIZATION_PROFILE.md` documents the supported expression presets and validation limits.
+
+
+- Character diversity pass: `tools/blender/generate_system_humanoids.py` now generates three deterministic hairstyle silhouette families across male/female base identities, minor face-proportion variation, and subtle age-line geometry for elder bases.
+- Automated Blender generation and GLB structural validation completed successfully for the six base models in workflow run `44509211756`; generated artifact: `system-world-rigged-humanoid-characters`.
+- New diversity pass commit `e36fca6c36ed6e201a1c30854e3f5983336d5248` is queued for a fresh generation and Godot validation run; its output is not yet confirmed.
