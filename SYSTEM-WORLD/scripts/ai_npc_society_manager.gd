@@ -38,9 +38,38 @@ func _ready() -> void:
 	load_society()
 
 
+const MAX_BACKGROUND_NPCS_PER_TICK := 32
+var background_process_accumulator: float = 0.0
+var background_process_cursor: int = 0
+
+
 func _process(delta: float) -> void:
-	# One simulated minute per real second.
-	advance_simulation(delta / 60.0)
+	# Keep the simulation time stable while updating a bounded resident batch.
+	background_process_accumulator += delta
+	if background_process_accumulator < 1.0:
+		return
+	var elapsed_seconds := background_process_accumulator
+	background_process_accumulator = 0.0
+	var elapsed_hours := elapsed_seconds / 60.0
+	simulation_hours += elapsed_hours
+	autosave_hours += elapsed_hours
+
+	var npc_ids: Array = npcs.keys()
+	if not npc_ids.is_empty():
+		var batch_count := mini(MAX_BACKGROUND_NPCS_PER_TICK, npc_ids.size())
+		var per_npc_hours := elapsed_hours * float(npc_ids.size()) / float(batch_count)
+		for offset in range(batch_count):
+			var index := (background_process_cursor + offset) % npc_ids.size()
+			var npc_id := str(npc_ids[index])
+			if not bool(npcs[npc_id].get("alive", false)):
+				continue
+			_update_age(npc_id, per_npc_hours)
+			_update_needs(npc_id, per_npc_hours)
+		background_process_cursor = (background_process_cursor + batch_count) % npc_ids.size()
+
+	if autosave_hours >= 6.0:
+		autosave_hours = fposmod(autosave_hours, 6.0)
+		save_society()
 
 
 func advance_simulation(hours: float) -> void:
