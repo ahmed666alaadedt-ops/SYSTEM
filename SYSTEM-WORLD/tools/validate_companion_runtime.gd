@@ -42,15 +42,22 @@ func _run_validation() -> void:
 			return
 		var clips := animation_player.get_animation_list()
 		print("SYSTEM COMPANION CLIPS [", companion_id, "]: ", clips)
-		for required_clip in ["Idle_Breathing", "Walk_Cycle", "Run_Cycle"]:
-			var found := false
-			for clip in clips:
-				if required_clip.to_lower() in str(clip).to_lower():
-					found = true
-					break
-			if not found:
-				_fail(companion_id + " is missing animation clip: " + required_clip)
+		for required_clip in ["Idle_Breathing", "Walk", "Run"]:
+			if not clips.has(required_clip):
+				_fail(companion_id + " is missing imported animation clip: " + required_clip)
 				return
+		companion.call("set_activity", "idle")
+		if animation_player.current_animation != "Idle_Breathing":
+			_fail(companion_id + " idle activity did not select Idle_Breathing")
+			return
+		companion.call("set_activity", "walk")
+		if animation_player.current_animation != "Walk":
+			_fail(companion_id + " walk activity did not select Walk")
+			return
+		companion.call("set_activity", "run")
+		if animation_player.current_animation != "Run":
+			_fail(companion_id + " run activity did not select Run")
+			return
 		print("SYSTEM COMPANION OK: ", companion_id, " | clips=", clips)
 
 	print("SYSTEM COMPANION RUNTIME VALIDATION PASSED")
