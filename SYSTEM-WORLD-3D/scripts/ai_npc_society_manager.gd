@@ -96,7 +96,8 @@ func _link_initial_families() -> void:
 		relationship_system.create_marriage(first_id, second_id)
 
 	var family_links := [
-		{"parents": ["جد سارة", "جدة عمر"], "children": ["سارة", "عمر"]},
+		{"parents": ["جد سارة"], "children": ["سارة"]},
+		{"parents": ["جدة عمر"], "children": ["عمر"]},
 		{"parents": ["ليلى", "حسن"], "children": ["ليان", "حيدر"]},
 		{"parents": ["أبو نور"], "children": ["نور", "آدم"]},
 		{"parents": ["مريم", "يوسف"], "children": ["مريم الصغيرة"]},
