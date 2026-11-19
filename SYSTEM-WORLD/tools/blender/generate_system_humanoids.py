@@ -90,6 +90,12 @@ def make_armature(name, female=False):
     bone("chest",(0,1.40,0),(0,shoulder,0),"spine",True)
     bone("neck",(0,shoulder,0),(0,1.65,0),"chest",True)
     bone("head",(0,1.65,0),(0,1.91,0),"neck",True)
+    # Lightweight facial control bones: jaw articulation, independent eyes and brows.
+    bone("jaw",(0,1.75,-0.10),(0,1.70,-0.10),"head")
+    bone("eye.L",(-0.054,1.84,-0.126),(-0.054,1.87,-0.126),"head")
+    bone("eye.R",(0.054,1.84,-0.126),(0.054,1.87,-0.126),"head")
+    bone("brow.L",(-0.075,1.89,-0.11),(-0.075,1.92,-0.11),"head")
+    bone("brow.R",(0.075,1.89,-0.11),(0.075,1.92,-0.11),"head")
     for side, sign in (("L",-1),("R",1)):
         bone("clavicle."+side,(0,shoulder-0.02,0),(sign*0.25,shoulder-0.01,0),"chest")
         bone("upper_arm."+side,(sign*0.25,shoulder-0.01,0),(sign*0.29,1.17,0),"clavicle."+side,True)
@@ -446,6 +452,10 @@ def generate_character(name, female, output, age_group="adult"):
         "Iris":[],
         "Pupils":[],
         "Mouth":[],
+        "BrowLeft":[],
+        "BrowRight":[],
+        "EyeLeft":[],
+        "EyeRight":[],
         "Hair":[],
         "Hands":[],
         "Jacket":[],
@@ -456,16 +466,22 @@ def generate_character(name, female, output, age_group="adult"):
     }
     for obj in face:
         part_name=obj.name.lower()
-        if "hair" in part_name or "eyebrow" in part_name or "beard" in part_name or "mustache" in part_name:
+        if "eyebrow" in part_name:
+            side = "L" if obj.location.x < 0 else "R"
+            groups["BrowLeft" if side == "L" else "BrowRight"].append((obj,"brow."+side))
+        elif "hair" in part_name or "beard" in part_name or "mustache" in part_name:
             groups["Hair"].append((obj,"head"))
         elif "mouth" in part_name:
-            groups["Mouth"].append((obj,"head"))
+            groups["Mouth"].append((obj,"jaw"))
         elif "iris" in part_name:
-            groups["Iris"].append((obj,"head"))
+            side = "L" if obj.location.x < 0 else "R"
+            groups["Iris"].append((obj,"eye."+side))
         elif "pupil" in part_name:
-            groups["Pupils"].append((obj,"head"))
+            side = "L" if obj.location.x < 0 else "R"
+            groups["Pupils"].append((obj,"eye."+side))
         elif "eye" in part_name:
-            groups["Eyes"].append((obj,"head"))
+            side = "L" if obj.location.x < 0 else "R"
+            groups["EyeLeft" if side == "L" else "EyeRight"].append((obj,"eye."+side))
         else:
             groups["FaceSkin"].append((obj,"head"))
     for obj,bone_name in fingers:
