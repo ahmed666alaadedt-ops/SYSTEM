@@ -39,8 +39,9 @@ func configure(profile: Dictionary, palette_index: int = 0) -> void:
 func set_hair_color(color_id: String) -> void:
 	var color := _hair_color_from_id(color_id)
 	hair_material = _material(color)
-	if is_instance_valid(hair_attachment):
-		for child in hair_attachment.get_children():
+	if attachments.has("head"):
+		var head_attachment := attachments["head"] as BoneAttachment3D
+		for child in head_attachment.get_children():
 			if child is MeshInstance3D and ("HairCap" in child.name or child.name.begins_with("RuntimeHair")):
 				child.material_override = hair_material
 
