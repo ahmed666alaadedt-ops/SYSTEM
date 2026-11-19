@@ -443,6 +443,27 @@ def add_walk_animation(arm):
     for fc in attack_action.fcurves:
         for kp in fc.keyframe_points: kp.interpolation="BEZIER"
 
+    # Defensive guard: both forearms rise to protect the upper body.
+    block_action=bpy.data.actions.new("Block_Animation")
+    arm.animation_data.action=block_action
+    for frame, upper_angle, fore_angle in (
+        (1,0.0,0.0),(5,-0.28,-0.32),(10,-0.42,-0.58),
+        (16,-0.38,-0.52),(22,0.0,0.0)
+    ):
+        for side in ("L","R"):
+            upper=arm.pose.bones.get("upper_arm."+side)
+            fore=arm.pose.bones.get("forearm."+side)
+            if upper:
+                upper.rotation_mode="XYZ"
+                upper.rotation_euler.x=upper_angle
+                upper.keyframe_insert(data_path="rotation_euler",frame=frame,group="Arms")
+            if fore:
+                fore.rotation_mode="XYZ"
+                fore.rotation_euler.x=fore_angle
+                fore.keyframe_insert(data_path="rotation_euler",frame=frame,group="Arms")
+    for fc in block_action.fcurves:
+        for kp in fc.keyframe_points: kp.interpolation="BEZIER"
+
     # Natural facial micro-animation clips: periodic blinking and subtle jaw
     # motion for speech. These remain separate from locomotion animations.
     blink_action=bpy.data.actions.new("Facial_Blink")
@@ -475,8 +496,8 @@ def add_walk_animation(arm):
     for clip_name, clip_action in (
         ("Walk_Cycle",walk_action),("Run_Cycle",run_action),
         ("Idle_Breathing",idle_action),("Jump_Animation",jump_action),
-        ("Attack_Animation",attack_action),("Facial_Blink",blink_action),
-        ("Facial_Talking",talking_action)
+        ("Attack_Animation",attack_action),("Block_Animation",block_action),
+        ("Facial_Blink",blink_action),("Facial_Talking",talking_action)
     ):
         track=arm.animation_data.nla_tracks.new()
         track.name=clip_name
