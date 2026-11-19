@@ -234,3 +234,19 @@ asset here only after generation, GLB validation, Godot import and visual review
 - Added runtime mesh silhouettes for fade family, short crops, quiff/pompadour, slick-back/side-part, and long styles.
 - Imported character loader maps the men's barber menu into separate fade, quiff and slick-back groups.
 - Character showcase QA now exercises men's haircut options on both imported player character and procedural fallback; CI result pending for the latest commit.
+
+
+## Canonical Godot Runtime Validation CI (2026-11-19)
+
+- `.github/workflows/canonical-godot-validation.yml` runs on changes under
+  `SYSTEM-WORLD/` and supports manual dispatch.
+- The workflow downloads the project's Godot 4.3 baseline, verifies the
+  canonical `project.godot` and `MainScene.tscn`, performs a headless editor
+  import/parse pass, then launches the canonical main scene headlessly for a
+  bounded number of frames.
+- Import and runtime logs are uploaded as a GitHub Actions artifact even when
+  a later validation step fails.
+- This workflow validates the canonical runtime project separately from the
+  existing `SYSTEM-WORLD-3D/` Android preview workflow.
+- The workflow source is committed; its first run and all Godot runtime results
+  must be read from GitHub Actions before claiming the canonical project passes.
