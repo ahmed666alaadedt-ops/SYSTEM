@@ -181,6 +181,18 @@ func _handle_android_world_entry_request(world_id: String) -> void:
 func _on_runtime_world_changed(world_id: int) -> void:
 	active_world_root = world_manager.get_active_world()
 	_publish_runtime_world_state(world_id)
+	if not player_appearance_profile.is_empty():
+		var updated_profile := player_appearance_profile.duplicate(true)
+		match world_id:
+			WorldManagerScript.WorldID.FANTASY:
+				updated_profile["world_id"] = "fantasy"
+			WorldManagerScript.WorldID.MYTHOLOGY:
+				updated_profile["world_id"] = "historical"
+			WorldManagerScript.WorldID.REALISTIC:
+				updated_profile["world_id"] = "modern"
+			WorldManagerScript.WorldID.GREED_ISLAND:
+				updated_profile["world_id"] = "greed_island"
+		apply_player_appearance(updated_profile, false)
 
 
 func _publish_runtime_world_state(world_id: int) -> void:
@@ -959,7 +971,9 @@ func apply_player_appearance(profile: Dictionary, persist: bool = true) -> void:
 
 
 func set_player_character_activity(activity: String) -> void:
-	if is_instance_valid(player_mesh) and player_mesh.has_method("set_activity"):
+	if not is_instance_valid(player_mesh) or not player_mesh.has_method("set_activity"):
+		return
+	if str(player_mesh.get("current_activity")) != activity:
 		player_mesh.call("set_activity", activity)
 
 
@@ -1105,4 +1119,4 @@ func _physics_process(delta: float) -> void:
 	player.move_and_slide()
 	if is_instance_valid(player_mesh):
 		var moving := Vector2(player.velocity.x, player.velocity.z).length() > 0.15
-		player_mesh.call("set_activity", "run" if moving else "idle")
+		set_player_character_activity("run" if moving else "idle")
