@@ -151,6 +151,10 @@ def inspect_glb(path: Path) -> dict[str, Any]:
     if primitive_count == 0:
         raise GLBValidationError("meshes contain no primitives")
 
+    skins = document.get("skins", [])
+    animations = document.get("animations", [])
+    joint_count = sum(len(skin.get("joints", [])) for skin in skins)
+
     return {
         "file": str(path),
         "glb_version": version,
@@ -159,6 +163,9 @@ def inspect_glb(path: Path) -> dict[str, Any]:
         "mesh_count": len(meshes),
         "primitive_count": primitive_count,
         "triangle_count": triangle_count,
+        "skin_count": len(skins),
+        "joint_count": joint_count,
+        "animation_count": len(animations),
         "embedded_binary_bytes": len(binary),
         "external_resource_uris": 0,
         "status": "structural_validation_passed",
@@ -207,6 +214,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("glb", nargs="?", type=Path)
     parser.add_argument("--self-test", action="store_true")
+    parser.add_argument("--require-skin", action="store_true", help="fail unless the GLB contains a skeletal skin")
+    parser.add_argument("--require-animation", action="store_true", help="fail unless the GLB contains at least one animation")
     args = parser.parse_args()
     try:
         if args.self_test:
@@ -214,7 +223,12 @@ def main() -> int:
             return 0
         if args.glb is None:
             parser.error("provide a .glb file or use --self-test")
-        print(json.dumps(inspect_glb(args.glb), indent=2))
+        report = inspect_glb(args.glb)
+        if args.require_skin and (report["skin_count"] < 1 or report["joint_count"] < 10):
+            raise GLBValidationError("rigged character must contain a skin with at least 10 joints")
+        if args.require_animation and report["animation_count"] < 1:
+            raise GLBValidationError("rigged character must contain at least one animation")
+        print(json.dumps(report, indent=2))
         return 0
     except (OSError, GLBValidationError, AssertionError) as exc:
         print(f"VALIDATION FAILED: {exc}", file=sys.stderr)
