@@ -730,6 +730,8 @@ func _build_aircraft_and_train_fleets() -> void:
 	var city_names: Array = region_manager.call("get_city_names")
 	for city_value in city_names:
 		var city_name := str(city_value)
+		if city_name != active_city_name:
+			continue
 		var anchor := _city_anchor(city_name)
 		if anchor == Vector3.INF:
 			continue
@@ -962,6 +964,8 @@ func _build_race_circuits() -> void:
 	var city_names: Array = region_manager.call("get_city_names")
 	for city_value in city_names:
 		var city_name := str(city_value)
+		if city_name != active_city_name:
+			continue
 		var anchor := _city_anchor(city_name)
 		if anchor == Vector3.INF:
 			continue
