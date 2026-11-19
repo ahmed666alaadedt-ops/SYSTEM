@@ -292,3 +292,64 @@ asset here only after generation, GLB validation, Godot import and visual review
 - NPC society records do not assign player missions, law-enforcement, guard, security, monitoring, military, supervisory, or administrative official roles.
 - Adult NPCs retain ordinary civilian livelihoods such as teaching, healthcare, trade, transport, construction, farming, and services. Minors remain students/dependants and cannot be assigned employment.
 - New records and previously saved records are normalized; character presentation also prevents restricted official job labels from producing police/guard outfits.
+
+
+## Canonical Humanoid GLB Import QA (2026-11-19)
+
+- Added `tools/validate_humanoid_assets.gd` to instantiate all six canonical GLB variants after Godot import and verify a `Skeleton3D`, weighted `MeshInstance3D`, an imported `AnimationPlayer`, and the seven expected animation clips (idle, walk, run, jump, attack, facial blink, facial talking).
+- Updated `.github/workflows/canonical-godot-validation.yml` to run this direct import/runtime asset check and to execute the canonical validation workflow on pull requests as well as pushes to `main`.
+- This is a new acceptance test. Its result must be taken from the corresponding GitHub Actions run; adding the test does not itself prove that all six models pass Godot import.
+
+
+- Godot 4.3 import inspection confirmed that the Blender-exported locomotion clips are exposed as `Walk` and `Run` (not `Walk_Cycle` / `Run_Cycle`). Both canonical and preview NPC controllers now resolve the actual names and use `Idle_Breathing` rather than an arbitrary first clip when a requested animation is unavailable. This prevents a missing defensive clip from accidentally selecting `Attack_Animation`.
+- The canonical humanoid QA now checks all seven actual imported animation names and exercises the runtime controller's walk, run, and defensive-response selection.
+
+
+## Four-World Godot Runtime Acceptance (2026-11-19)
+
+- Added `tools/validate_world_runtime.gd` to boot the canonical `MainScene.tscn` and enter each world through the real `WorldManager`.
+- Latest successful canonical runtime run: [44532289512](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44532289512).
+- Modern world: procedural continent present; 14 required real-city anchors found; 142 map locations registered.
+- Historical/civilizations world: six landmark scenes found (Hercules arches, Atlantis, Alexandria lighthouse, Babylon tower, ancient Rome, Roman Colosseum).
+- Fantasy world: 3 villages, 4 kingdom capitals, 18 residents, and 7 map locations initialized.
+- Greed Island: 10 discovery points; admin test mode enabled; combat disabled.
+- Geometry audit: zero `MeshInstance3D` nodes without meshes and zero `MultiMeshInstance3D` nodes without a multimesh mesh in each of the four active world roots.
+- All four world roots initialized and were entered successfully in headless Godot 4.3. The headless dummy renderer still emits repeated `mesh_get_surface_count` null-parameter messages despite the geometry-node audit reporting zero invalid nodes; this remains a rendering/device verification item and is not represented as a clean visual pass.
+- This verifies runtime initialization and world switching, not final visual quality, Android frame rate, or a packaged-device play test.
+
+
+## Android Package Inclusion Check (2026-11-19)
+
+- The successful Godot Android export run [44525758672](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44525758672) built and signed `SYSTEM-WORLD-debug.apk` (35 MB); APK signature verification passed for v1, v2, and v3.
+- The exact source commit used for that export contains all six canonical humanoid GLBs under `SYSTEM-WORLD/assets/characters/` (each approximately 2.78–2.90 MB).
+- The exported APK is a build artifact, not evidence of installation or visual testing on a physical Android device. Device launch, animation playback, frame rate, and memory usage remain to be checked on the target phone.
+
+
+## Live Six-Variant Civilian Population Verification (2026-11-19)
+
+- Latest successful canonical runtime run: [44534694182](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44534694182).
+- The Baghdad modern-world population spawned **27 visible civilians**; **27/27 loaded imported GLB models** (zero fallback-only residents).
+- All **six** model variants were represented in the live population: adult male/female, elder male/female, and child male/female.
+- Fixed the age lookup to use the society record's `age_years` field and preserved the normalized `elder` category. The starter population now includes both male and female elder residents.
+- Runtime controller verification: `run` resolves to `Run`, `walk` resolves to `Walk`, and the current missing-block fallback resolves to `Idle_Breathing` rather than the attack clip.
+- The test now checks the whole main scene tree as well as each world root; all four world roots and the main scene reported zero MeshInstance3D/MultiMeshInstance3D nodes without geometry.
+- Generated environment tile import remains deferred until the separate Blender-pipeline PR is merged and the tile files are committed to the canonical project.
+
+
+## Fantasy and Greed Island GLB Character Integration (2026-11-19)
+
+- Latest passing canonical runtime run after these integrations: [44535823824](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44535823824).
+- Fantasy settlements now replace the 18 capsule placeholders with imported rigged humanoids: **18/18 residents loaded GLB models** across 3 villages; their NPC society records now carry alternating gender profiles and the `fantasy` outfit context.
+- Greed Island's 8 royal guards and 4 palace servants now use imported GLB humanoids: **12/12 display characters loaded**. They remain explicitly display-only; island combat remains disabled.
+- Combined current runtime coverage: 27 modern civilians + 18 fantasy residents + 12 Greed Island display characters = **57 imported humanoid instances** when all three worlds are initialized.
+- Historical/civilizations currently passes its six landmark-scene test but does not yet have a populated humanoid resident group. That remains a planned integration stage rather than being marked complete.
+- The character population is functional in the canonical Godot scene, but visual fidelity, distance-based LOD, world unloading/streaming, and physical-device performance still need dedicated work.
+
+
+## Historical Civilization GLB Resident Integration (2026-11-19)
+
+- Latest canonical runtime run: [44536937683](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44536937683) — passed.
+- Added six historical residents around the six landmark scenes. Each is registered in the shared NPC society with historical-world context and uses an imported rigged GLB model.
+- Historical population: **6/6 residents loaded GLB models**, including adult, elder, and child profiles. Child profiles remain civilian-only.
+- Total imported humanoid instances represented by the current four-world runtime acceptance test: **63** — 27 modern, 6 historical, 18 fantasy, and 12 Greed Island display characters.
+- The historical world now has a small resident presence, but it is still a landmark-focused prototype rather than a fully populated historical civilization/city simulation.

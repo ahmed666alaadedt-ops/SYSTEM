@@ -55,6 +55,8 @@ func _seed_baghdad_residents_if_needed() -> void:
 	var created: Array[String] = []
 	for index in range(STARTER_RESIDENT_COUNT):
 		var age := 19.0 + float((index * 7) % 43)
+		if index == 13:
+			age = 64.0
 		if index >= 18:
 			age = 7.0 + float(index - 18) * 2.0
 		var occupation := str(OCCUPATIONS[index % OCCUPATIONS.size()])

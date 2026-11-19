@@ -33,13 +33,13 @@ func configure(profile: Dictionary, palette_index: int = 0) -> void:
 	var is_female := gender_text in ["female", "woman", "girl", "أنثى", "بنت", "امرأة"]
 	if gender_text.is_empty():
 		is_female = (palette_index % 2) == 1
-	var age_value := float(profile.get("age", 30.0))
+	var age_value := float(profile.get("age", profile.get("age_years", 30.0)))
 	age_group = str(profile.get("age_group", "")).to_lower()
 	if age_group.is_empty():
 		age_group = "child" if age_value < 18.0 else ("elder" if age_value >= 60.0 else "adult")
 	if age_group in ["طفل", "طفلة", "child", "children"]:
 		age_group = "child"
-	elif age_group in ["كبير السن", "مسن", "مسنة", "elderly", "senior"]:
+	elif age_group in ["elder", "elderly", "senior", "older_adult", "كبير السن", "مسن", "مسنة"]:
 		age_group = "elder"
 	else:
 		age_group = "adult"
@@ -176,9 +176,10 @@ func _apply_activity_animation(value: String) -> void:
 		return
 	if not is_instance_valid(animation_player):
 		return
+
 	var desired := "Idle_Breathing"
 	if value in ["run", "sprint", "running", "evade"]:
-		desired = "Run_Cycle"
+		desired = "Run"
 	elif value in ["defend", "block", "protect"]:
 		desired = "Block_Animation"
 	elif value in ["jump", "leap"]:
@@ -186,14 +187,21 @@ func _apply_activity_animation(value: String) -> void:
 	elif value in ["attack", "combat", "fight"]:
 		desired = "Attack_Animation"
 	elif value in ["work", "eat", "socialize", "wander", "travel", "walk"]:
-		desired = "Walk_Cycle"
+		desired = "Walk"
+
 	var available := animation_player.get_animation_list()
 	for animation_name in available:
 		if desired.to_lower() in str(animation_name).to_lower():
 			animation_player.play(animation_name)
 			return
-	if not available.is_empty():
-		animation_player.play(available[0])
+
+	# Never fall back to the first arbitrary clip: the first imported clip may
+	# be Attack_Animation. Civilian defense must remain non-offensive.
+	if desired != "Idle_Breathing":
+		for animation_name in available:
+			if "idle_breathing" in str(animation_name).to_lower():
+				animation_player.play(animation_name)
+				return
 
 func set_appearance(variant_index: int = 0) -> void:
 	if not is_instance_valid(imported_model):
@@ -444,7 +452,11 @@ func _collect_mesh_nodes(root: Node) -> Array[Node]:
 	var result: Array[Node] = []
 	for child in root.get_children():
 		if child is MeshInstance3D:
-			result.append(child)
+			var mesh_node := child as MeshInstance3D
+			# Imported glTF hierarchies can contain transform/helper mesh nodes
+			# without geometry. Never apply runtime materials to a null mesh.
+			if mesh_node.mesh != null:
+				result.append(mesh_node)
 		result.append_array(_collect_mesh_nodes(child))
 	return result
 

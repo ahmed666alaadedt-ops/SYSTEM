@@ -196,29 +196,32 @@ func set_activity(value: String) -> void:
 		return
 	if not is_instance_valid(animation_player):
 		return
+
 	var desired := "Idle_Breathing"
-	if value in ["run", "sprint", "running"]:
-		desired = "Run_Cycle"
+	if value in ["run", "sprint", "running", "evade"]:
+		desired = "Run"
+	elif value in ["defend", "block", "protect"]:
+		desired = "Block_Animation"
 	elif value in ["jump", "leap"]:
 		desired = "Jump_Animation"
 	elif value in ["attack", "combat", "fight"]:
 		desired = "Attack_Animation"
 	elif value in ["work", "eat", "socialize", "wander", "travel", "walk", "play", "school", "family"]:
-		desired = "Walk_Cycle"
+		desired = "Walk"
+
 	var available := animation_player.get_animation_list()
-	var aliases := [desired.to_lower()]
-	if desired == "Walk_Cycle":
-		aliases.append("walk")
-	elif desired == "Run_Cycle":
-		aliases.append("run")
 	for animation_name in available:
-		var actual_name := str(animation_name).to_lower()
-		for alias in aliases:
-			if actual_name.contains(alias):
+		if desired.to_lower() in str(animation_name).to_lower():
+			animation_player.play(animation_name)
+			return
+
+	# Do not select an arbitrary clip when the requested animation is absent.
+	# This is especially important when a civilian needs to defend or evade.
+	if desired != "Idle_Breathing":
+		for animation_name in available:
+			if "idle_breathing" in str(animation_name).to_lower():
 				animation_player.play(animation_name)
 				return
-	if not available.is_empty():
-		animation_player.play(available[0])
 
 func set_appearance(variant_index: int = 0) -> void:
 	if not is_instance_valid(imported_model):
@@ -697,7 +700,11 @@ func _collect_mesh_nodes(root: Node) -> Array[Node]:
 	var result: Array[Node] = []
 	for child in root.get_children():
 		if child is MeshInstance3D:
-			result.append(child)
+			var mesh_node := child as MeshInstance3D
+			# Imported glTF hierarchies can contain transform/helper mesh nodes
+			# without geometry. Never apply runtime materials to a null mesh.
+			if mesh_node.mesh != null:
+				result.append(mesh_node)
 		result.append_array(_collect_mesh_nodes(child))
 	return result
 
