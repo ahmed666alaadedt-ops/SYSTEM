@@ -40,6 +40,19 @@ func _ready() -> void:
 	if not parsed is Dictionary or str(parsed.get("region_id", "")) != "iraq_baghdad_region":
 		push_error("SYSTEM Baghdad OSM: invalid region manifest.")
 		return
+	var origin: Dictionary = parsed.get("origin", {})
+	var origin_lat := float(origin.get("latitude", 0.0))
+	var origin_lon := float(origin.get("longitude", 0.0))
+	var projected_origin: Vector3 = SystemRealWorldGeography.to_local_world_position(
+		"iraq_baghdad_region", origin_lat, origin_lon, 0.0
+	)
+	if absf(projected_origin.x) > 0.05 or absf(projected_origin.z) > 0.05:
+		push_error("SYSTEM Baghdad OSM: cell pack origin does not match the canonical WGS84 region origin.")
+		return
+	var axes: Dictionary = parsed.get("axes", {})
+	if str(axes.get("x", "")) != "east_m" or str(axes.get("z", "")) != "south_m":
+		push_error("SYSTEM Baghdad OSM: unsupported local coordinate axes.")
+		return
 	cell_size = float(parsed.get("cell_size_m", DEFAULT_CELL_SIZE))
 	var bounds: Array = parsed.get("cell_bounds_inclusive", [-2, 2, -2, 2])
 	if bounds.size() != 4 or cell_size <= 0.0:
@@ -471,5 +484,6 @@ func get_streaming_status() -> Dictionary:
 		"cell_size_m": cell_size,
 		"source_license": "ODbL-1.0",
 		"source_attribution": "© OpenStreetMap contributors; © BBBike.org",
-		"real_scale_baghdad_pack": true
+		"real_scale_baghdad_pack": true,
+		"canonical_origin_frame_valid": true
 	}
