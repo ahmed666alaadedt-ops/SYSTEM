@@ -115,12 +115,13 @@ A checked repository foundation does not mean a finished gameplay feature. Visua
 ## Vehicle physics foundation — 20 November 2026
 
 - [x] Add a reusable Godot VehicleBody3D-based vehicle controller prototype with four VehicleWheel3D nodes, chassis collision, suspension setup, keyboard throttle/steering/reverse/brake inputs, and a mobile-control setter API.
-- [ ] Instantiate the vehicle from the dealership/garage using the selected owned vehicle and the active modern-world scene.
-- [ ] Add safe enter/exit interaction, driver/player state handoff, and a vehicle-follow camera.
-- [ ] Connect on-screen mobile steering, accelerator, reverse, and brake controls to set_mobile_controls().
+- [x] Add a runtime manager that can spawn the first owned/selected vehicle near a dealership in the active modern-world scene.
+- [x] Add a first-pass enter/exit flow, hide/disable the player collision while driving, and hand the camera to a vehicle-follow view.
+- [x] Route the existing mobile movement joystick to vehicle throttle/reverse and steering; route the existing jump button to a short brake input.
+- [ ] Add dedicated on-screen accelerator, reverse, and brake controls with clear driving-mode labels.
 - [ ] Tune wheel suspension, traction, braking, mass, collision, and maximum speeds using in-engine driving tests.
 - [ ] Test driving on flat roads, slopes, turns, elevated decks, and parking ramps on desktop and Android.
-- Note: this commit adds a reusable controller script only. It is not yet instantiated or connected to the player, garage, camera, mobile UI, or tower routes; no Godot runtime test was run.
+- Note: the controller is now connected through `system_vehicle_runtime_manager.gd` and `main.gd` to a first-pass dealership interaction, owned-vehicle spawning, player handoff, camera follow, and existing touch inputs. This is source-level integration only; it has not been parsed or run in Godot, and no Android driving test was performed.
 
 ## Connected Baghdad district — collision and access blockout update — 20 November 2026
 
@@ -144,3 +145,15 @@ A checked repository foundation does not mean a finished gameplay feature. Visua
 - [ ] Position and validate the full district against the real in-game Tigris corridor, Karkh/Rusafa geography, Tahrir Square, and the Freedom Monument; preserve river navigation and protected landmark sightlines.
 - [ ] Run Godot parser/editor/runtime checks and inspect the five-tower blockout in-game before calling this milestone validated.
 - Note: the checked items above indicate repository geometry/documentation was added, not that vehicles can already drive on the decks or that the amenities are playable.
+
+
+## Vehicle runtime integration — 20 November 2026
+
+- [x] Add `system_vehicle_runtime_manager.gd` to spawn an owned vehicle near a dealership in the active world.
+- [x] Connect the manager to the player, camera, spring arm, local garage manager, and active world from `main.gd`.
+- [x] Route mobile joystick input to vehicle throttle/reverse and steering while driving; route the existing jump touch button to a brief brake.
+- [x] Add first-pass enter/exit, player visibility/collision handoff, and vehicle-follow camera behavior.
+- [ ] Add a dedicated driving HUD with accelerator, reverse, brake, and exit controls.
+- [ ] Verify dealership proximity, spawn placement, camera restoration, wheel orientation, suspension, collision, and player recovery in Godot.
+- [ ] Test desktop and Android driving, including city streets, slopes, bridges, elevated tower decks, and parking ramps.
+- Note: the runtime manager and main-scene connections are committed source code, not verified gameplay. Godot parser, scene startup, and device tests have not been run; the existing jump button temporarily doubles as brake while driving.
