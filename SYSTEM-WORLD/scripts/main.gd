@@ -788,6 +788,9 @@ func _on_interaction_performed(
 		var estimated_floors := int(target.get_meta("system_estimated_floors", 1))
 		var height_m := float(target.get_meta("system_building_height_m", 0.0))
 		var access_note := "المبنى الخارجي مكتشف؛ الدخول والداخلية لم يُنفذا بعد."
+		if location_id.begins_with("baghdad_osm_approach_"):
+			var road_distance := float(target.get_meta("system_approach_distance_m", 0.0))
+			access_note = "نقطة اقتراب تقريبية تبعد %.1f م عن أقرب طريق؛ ليست باباً مؤكداً." % road_distance
 		if interaction_prompt_label != null:
 			interaction_prompt_label.text = "%s | %s | نحو %d طابق | ارتفاع تقديري %.1f م\n%s" % [
 				building_name,
