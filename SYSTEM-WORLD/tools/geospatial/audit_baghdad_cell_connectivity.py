@@ -99,6 +99,25 @@ def _builder_normalized_geometry(geometry):
     return geometry
 
 
+def _geometry_dimensions(geometry) -> set[str]:
+    """Return source dimensions so boundary-only polygon clips are not crossings."""
+    if geometry.is_empty:
+        return set()
+    kind = geometry.geom_type
+    if kind in ("Polygon", "MultiPolygon"):
+        return {"area"}
+    if kind in ("LineString", "MultiLineString", "LinearRing"):
+        return {"linear"}
+    if kind == "GeometryCollection":
+        dimensions: set[str] = set()
+        for part in geometry.geoms:
+            dimensions.update(_geometry_dimensions(part))
+        return dimensions
+    if kind in ("Point", "MultiPoint"):
+        return {"point"}
+    return set()
+
+
 def _builder_serialized_geometry(geometry):
     """Round-trip through the builder's exact 2-decimal GeoJSON payload."""
     if geometry.is_empty:
@@ -305,6 +324,7 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
             project = _projector()
             expected: dict[tuple[tuple[int, int], tuple[str, str, str]], list[Any]] = defaultdict(list)
             source_keys: set[tuple[str, str, str]] = set()
+            source_dimensions: dict[tuple[str, str, str], set[str]] = defaultdict(set)
             for layer in LAYERS:
                 source_path = input_dir / f"{layer}.geojson"
                 if not source_path.is_file() or source_path.stat().st_size == 0:
@@ -324,6 +344,7 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
                         continue
                     source_keys.add(key)
                     layer_keys.add(key)
+                    source_dimensions[key].update(_geometry_dimensions(geometry))
                     # The builder assigns non-clipped features to a cell per source
                     # feature. Never unary_union separate OSM feature records first:
                     # that changes representative_point() for mixed amenity layers.
@@ -385,12 +406,20 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
                 "overlapping_fragments": 0,
             }
 
-            def has_interior(geometry):
-                # Positive length covers lines; positive area covers polygons.
-                # A point/line that only touches an edge is not a crossing.
-                return geometry is not None and not geometry.is_empty and (
-                    geometry.length > 1e-6 or geometry.area > 1e-6
-                )
+            def has_interior(geometry, feature_key):
+                # Use the original source dimensions, not the clipped fragment's
+                # resulting type: a polygon that merely touches a cell can clip to
+                # a LineString, but that is not polygon interior in that cell.
+                if geometry is None or geometry.is_empty:
+                    return False
+                dimensions = source_dimensions.get(feature_key, set())
+                if dimensions == {"area"}:
+                    return geometry.area > 1e-6
+                if dimensions == {"linear"}:
+                    return geometry.length > 1e-6
+                if "area" in dimensions or "linear" in dimensions:
+                    return geometry.area > 1e-6 or geometry.length > 1e-6
+                return False
 
             def record_seam_error(layer, message):
                 report["disconnected_seams"] += 1
@@ -430,7 +459,7 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
                     # Only require continuity when the source has real geometry
                     # inside both cells. Boundary-only contacts are valid and are
                     # already checked by the expected-vs-actual part comparison.
-                    if not has_interior(expected_geometry_a) or not has_interior(expected_geometry_b):
+                    if not has_interior(expected_geometry_a, feature_key) or not has_interior(expected_geometry_b, feature_key):
                         if feature_key in expected_shared:
                             seam_report["valid_boundary_touches"] += 1
                         continue
