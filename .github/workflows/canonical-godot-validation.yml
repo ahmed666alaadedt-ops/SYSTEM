@@ -38,7 +38,28 @@ jobs:
           test -f SYSTEM-WORLD/project.godot
           test -f SYSTEM-WORLD/MainScene.tscn
           grep -Fq 'run/main_scene="res://MainScene.tscn"' SYSTEM-WORLD/project.godot
-          echo "Canonical Godot project and main scene are present."
+          test -s SYSTEM-WORLD/assets/system_world_icon.svg
+          grep -Fq 'config/icon="res://assets/system_world_icon.svg"' SYSTEM-WORLD/project.godot
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("SYSTEM-WORLD")
+          registry_path = root / "data/geography/real_world_registry.json"
+          registry = json.loads(registry_path.read_text(encoding="utf-8"))
+          assert registry.get("coordinate_reference_system") == "EPSG:4326"
+          assert registry.get("world_model") == "real_earth"
+          assert "iraq_baghdad_region" in registry.get("regions", {})
+          baghdad = registry.get("cities", {}).get("city_baghdad")
+          assert baghdad, "Baghdad geographic anchor is missing"
+          assert baghdad.get("region_id") == "iraq_baghdad_region"
+          assert baghdad.get("city_status") == "geographic_anchor_only"
+          lat, lon = float(baghdad["latitude"]), float(baghdad["longitude"])
+          assert -90 <= lat <= 90 and -180 <= lon <= 180
+          print("Canonical icon and provisional WGS84 Baghdad registry validated.")
+          print("Geography remains seed-only; this check does not certify real map coverage.")
+          PY
+          echo "Canonical Godot project, icon and geography seed are present."
 
       - name: Import and parse canonical Godot project
         shell: bash
