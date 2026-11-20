@@ -12,18 +12,63 @@ on:
       - "SYSTEM-WORLD/**"
       - ".github/workflows/canonical-godot-android.yml"
   workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Verify Baghdad OSM Source Candidate
+    types:
+      - completed
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   build-canonical-android:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     name: Validate and export canonical SYSTEM WORLD
     runs-on: ubuntu-24.04
     timeout-minutes: 50
     steps:
       - name: Checkout SYSTEM
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Download verified Baghdad OSM cell pack
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: SYSTEM-WORLD-Baghdad-OSM-boundary-candidate
+          path: ${{ runner.temp }}/baghdad-osm-artifact
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Baghdad OSM metric cells into canonical project
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          SOURCE_PACK="$RUNNER_TEMP/baghdad-osm-artifact/baghdad-metric-cell-pack-5x5.zip"
+          DESTINATION="$PROJECT/data/geography/baghdad/cell_pack"
+          test -s "$SOURCE_PACK"
+          mkdir -p "$DESTINATION"
+          unzip -q "$SOURCE_PACK" -d "$DESTINATION"
+          test -s "$DESTINATION/manifest.json"
+          test -s "$DESTINATION/cells/0_0.json"
+          python3 - <<'PY'
+          import json
+          import pathlib
+
+          root = pathlib.Path("SYSTEM-WORLD/data/geography/baghdad/cell_pack")
+          manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
+          assert manifest["region_id"] == "iraq_baghdad_region"
+          assert manifest["coordinate_system"] == "SYSTEM_LOCAL_ECEF_TANGENT"
+          assert manifest["cell_size_m"] == 200.0
+          cells = list((root / "cells").glob("*.json"))
+          assert len(cells) == manifest["cell_count"] == 25
+          print("Installed Baghdad OSM cell pack:", len(cells), "metric cells.")
+          PY
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
