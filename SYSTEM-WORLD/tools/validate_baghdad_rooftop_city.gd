@@ -97,7 +97,46 @@ func _run_validation() -> void:
 		_fail("Expected ten elevator call panels; found %d." % call_panel_count)
 		return
 
-	print("Baghdad rooftop city runtime passed: 5 towers, 20 rooftop quarters, 5 upper bridges, 5 lift cores, 5 cabins and 10 interactive call panels.")
+	var test_panel: Area3D
+	for child in network.get_children():
+		if child is Area3D and child.name == "RooftopElevatorCall_00_Lower":
+			test_panel = child
+			break
+	if test_panel == null:
+		_fail("Could not locate the first lower elevator call panel for ride testing.")
+		return
+	var test_cabin := network.get_node_or_null("RooftopCityLiftCabin_00") as Node3D
+	if test_cabin == null or test_cabin.get_node_or_null("CabinWalkableFloor") == null:
+		_fail("Elevator cabin is missing its walkable passenger floor.")
+		return
+	var floor_collision := test_cabin.get_node_or_null("CabinFloorCollisionBody/CollisionShape3D") as CollisionShape3D
+	if floor_collision == null or floor_collision.shape == null:
+		_fail("Elevator passenger floor is missing collision geometry.")
+		return
+	var test_player := CharacterBody3D.new()
+	test_player.name = "ElevatorRuntimeValidationPlayer"
+	root.add_child(test_player)
+	test_player.global_position = test_panel.global_position
+	test_panel.call("configure_player", test_player)
+	var expected_cabin_destination: Vector3 = test_panel.get("destination_cabin_position")
+	var expected_player_destination: Vector3 = test_panel.get("destination_player_position")
+	test_panel.call("system_interact")
+	if not bool(test_cabin.get_meta("system_elevator_busy", false)):
+		_fail("Elevator ride did not enter its busy/moving state.")
+		return
+	await create_timer(4.25).timeout
+	if test_cabin.global_position.distance_to(expected_cabin_destination) > 0.15:
+		_fail("Elevator cabin did not reach its configured destination.")
+		return
+	if test_player.global_position.distance_to(expected_player_destination) > 0.15:
+		_fail("Player did not travel with the elevator cabin.")
+		return
+	if bool(test_cabin.get_meta("system_elevator_busy", true)):
+		_fail("Elevator did not release its busy state after arriving.")
+		return
+	test_player.queue_free()
+
+	print("Baghdad rooftop city runtime passed: 5 towers, 20 rooftop quarters, 5 upper bridges, 5 lift cores, 5 walkable cabins, 10 interactive call panels and a complete player ride.")
 	quit(0)
 
 
