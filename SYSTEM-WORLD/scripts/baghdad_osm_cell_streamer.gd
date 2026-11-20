@@ -76,16 +76,16 @@ func _add_attribution_overlay() -> void:
 	layer.layer = 30
 	var label := Label.new()
 	label.name = "OpenStreetMapCredit"
-	label.text = "Map data © OpenStreetMap contributors · © BBBike.org · ODbL 1.0"
+	label.text = "© OpenStreetMap contributors · BBBike.org · ODbL 1.0"
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	label.add_theme_font_size_override("font_size", 12)
+	label.add_theme_font_size_override("font_size", 9)
 	label.add_theme_color_override("font_color", Color(0.88, 0.94, 0.98, 0.92))
-	label.anchor_left = 1.0
+	label.anchor_left = 0.0
 	label.anchor_right = 1.0
-	label.offset_left = -470.0
-	label.offset_top = 18.0
-	label.offset_right = -16.0
-	label.offset_bottom = 42.0
+	label.offset_left = 8.0
+	label.offset_top = 8.0
+	label.offset_right = -8.0
+	label.offset_bottom = 28.0
 	layer.add_child(label)
 	add_child(layer)
 
