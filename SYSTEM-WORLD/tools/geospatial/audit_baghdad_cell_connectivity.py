@@ -265,6 +265,9 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
         "missing_parts": 0,
         "missing_feature_cell_parts": 0,
         "mismatched_feature_cell_parts": 0,
+        "missing_osm_feature_ids": 0,
+        "unexpected_osm_feature_ids": 0,
+        "feature_id_comparison": {},
         "geometry_mismatch_diagnostics": [],
         "comparison_by_layer": {},
         "unexpected_parts": 0,
@@ -394,6 +397,35 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
             report["source_osm_features"] = len(source_keys)
             expected_union = {key: unary_union(items) for key, items in expected.items()}
             actual_union = {key: unary_union(items) for key, items in actual.items()}
+
+            # Compare OSM feature identity independently from per-cell geometry
+            # parity. A feature missing from every cell, or an unknown ID injected
+            # into the pack, must be visible as an ID-level failure as well.
+            actual_feature_keys = {feature_key for _cell, feature_key in actual_union}
+            missing_feature_keys = sorted(source_keys - actual_feature_keys)
+            unexpected_feature_keys = sorted(actual_feature_keys - source_keys)
+            report["missing_osm_feature_ids"] = len(missing_feature_keys)
+            report["unexpected_osm_feature_ids"] = len(unexpected_feature_keys)
+            report["feature_id_comparison"] = {
+                "source_feature_ids": len(source_keys),
+                "actual_feature_ids": len(actual_feature_keys),
+                "missing_osm_feature_ids": [
+                    {"layer": key[0], "osm_type": key[1], "osm_id": key[2]}
+                    for key in missing_feature_keys
+                ],
+                "unexpected_osm_feature_ids": [
+                    {"layer": key[0], "osm_type": key[1], "osm_id": key[2]}
+                    for key in unexpected_feature_keys
+                ],
+            }
+            for feature_key in missing_feature_keys:
+                report["errors"].append(
+                    f"Missing OSM feature ID from cell pack: {feature_key}"
+                )
+            for feature_key in unexpected_feature_keys:
+                report["errors"].append(
+                    f"Unexpected OSM feature ID not present in clipped source: {feature_key}"
+                )
 
             for key, geometry in expected_union.items():
                 cell, feature_key = key

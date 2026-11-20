@@ -496,6 +496,43 @@ class BaghdadCellConnectivityTests(unittest.TestCase):
             result = audit.audit_pack(source, pack)
             self.assertEqual(result["status"], "failed")
             self.assertGreater(result["unexpected_parts"], 0)
+            self.assertEqual(result["unexpected_osm_feature_ids"], 1)
+            self.assertEqual(
+                result["feature_id_comparison"]["unexpected_osm_feature_ids"][0]["osm_id"],
+                "999999",
+            )
+
+    def test_missing_osm_feature_id_is_reported_separately_from_missing_fragments(self):
+        with tempfile.TemporaryDirectory() as temp:
+            source, pack = _make_fixture(Path(temp))
+            with zipfile.ZipFile(pack, "r") as archive:
+                entries = {name: archive.read(name) for name in archive.namelist()}
+            target_key = None
+            for name in sorted(n for n in entries if n.startswith("cells/") and n.endswith(".json")):
+                tile = json.loads(entries[name])
+                roads = tile["layers"].get("roads", [])
+                if roads:
+                    target_key = (roads[0]["id"], roads[0]["osm_type"])
+                    break
+            self.assertIsNotNone(target_key)
+            for name in sorted(n for n in entries if n.startswith("cells/") and n.endswith(".json")):
+                tile = json.loads(entries[name])
+                tile["layers"]["roads"] = [
+                    feature for feature in tile["layers"].get("roads", [])
+                    if (feature["id"], feature["osm_type"]) != target_key
+                ]
+                entries[name] = json.dumps(tile).encode()
+            with zipfile.ZipFile(pack, "w", zipfile.ZIP_DEFLATED) as archive:
+                for name, payload in entries.items():
+                    archive.writestr(name, payload)
+            result = audit.audit_pack(source, pack)
+            self.assertEqual(result["status"], "failed")
+            self.assertEqual(result["missing_osm_feature_ids"], 1)
+            self.assertGreater(result["missing_feature_cell_parts"], 0)
+            self.assertEqual(
+                result["feature_id_comparison"]["missing_osm_feature_ids"][0]["osm_id"],
+                target_key[0],
+            )
 
     def test_exact_duplicate_and_overlapping_fragments_are_reported(self):
         with tempfile.TemporaryDirectory() as temp:
