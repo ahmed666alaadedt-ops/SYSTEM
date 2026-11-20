@@ -294,3 +294,14 @@ A checked repository foundation does not mean a finished gameplay feature. Visua
 - [ ] Validate polygon-center quality for concave/irregular footprints; current arithmetic vertex average is an approximation and may not lie inside every footprint.
 - [ ] Implement real entrance locations and enterable interiors only after reliable entrance data/placement and runtime validation are available.
 - [ ] Run Godot parser, map registration, interaction, UI, streaming, and Android performance tests; none were run for this source update.
+
+## Baghdad road-side building approach markers — 20 November 2026
+
+- [x] Build OSM road meshes before building interaction markers so the same cell's tagged road geometries can inform an approach estimate.
+- [x] For each polygon building, find the nearest tagged highway segment to its approximate footprint center, then project that road-side point onto the closest polygon edge and offset a small distance outward.
+- [x] Create a visible, interactable approach marker only when a tagged road is within the configured 40 m search radius; register it as a normal discoverable location, never as a fast-travel point.
+- [x] Store the approach distance, building category, estimated height and estimated floor count; the existing inspection readout is shown when the approach marker is used.
+- [x] Label the prompt as an approximate frontage/approach inspection. This is not a verified architectural entrance, door, sidewalk, accessible route, or permission to enter.
+- [ ] Validate approach positions against actual Baghdad building frontage, sidewalk widths, gates, walls, courtyards, and road-side geometry; the current nearest-road heuristic can be wrong.
+- [ ] Add entrance nodes only from verified entrance data or manually authored building-specific placements, then connect them to real interior scenes and access rules.
+- [ ] Run Godot parser, ray-target selection, collision, map discovery, cell streaming/unloading, and Android performance tests; none were run for this source update.
