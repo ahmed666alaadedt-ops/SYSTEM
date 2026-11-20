@@ -67,6 +67,31 @@ func _run_validation() -> void:
 	if reloaded_cell == null or str(reloaded_cell.get_meta("cell_id", "")) != "0:0":
 		_fail("Reloaded Baghdad cell lost its stable cell identity.")
 		return
+
+	# A queued load that is no longer desired must not recreate an old cell.
+	streamer._unload_cell(Vector2i(0, 0))
+	streamer.desired_cells.clear()
+	streamer.pending_loads.clear()
+	streamer.pending_unloads.clear()
+	streamer.pending_loads.append(Vector2i(0, 0))
+	streamer._process_cell_queue()
+	if streamer.loaded_cells.has(Vector2i(0, 0)):
+		_fail("A stale Baghdad load request recreated a cell outside the desired set.")
+		return
+
+	# A queued unload must not remove a cell that has become desired again.
+	var retained_cell := Node3D.new()
+	retained_cell.name = "BaghdadStaleQueueGuardTestCell"
+	streamer.add_child(retained_cell)
+	streamer.loaded_cells[Vector2i(9, 9)] = retained_cell
+	streamer.desired_cells[Vector2i(9, 9)] = true
+	streamer.pending_unloads.clear()
+	streamer.pending_unloads.append(Vector2i(9, 9))
+	streamer._process_cell_queue()
+	if not streamer.loaded_cells.has(Vector2i(9, 9)):
+		_fail("A stale Baghdad unload request removed a cell that is still desired.")
+		return
+	streamer._unload_cell(Vector2i(9, 9))
 	streamer.queue_free()
 	quit(0)
 
