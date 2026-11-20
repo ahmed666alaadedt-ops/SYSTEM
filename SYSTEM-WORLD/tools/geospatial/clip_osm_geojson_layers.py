@@ -58,6 +58,7 @@ def clip_layer(layer: str, input_path: Path, output_path: Path, boundary):
     features = data.get("features", [])
     output_features = []
     geometry_counts: Counter[str] = Counter()
+    coverage_boundary = boundary.buffer(1e-8)
     dropped = 0
     clipped = 0
     repaired = 0
@@ -101,7 +102,7 @@ def clip_layer(layer: str, input_path: Path, output_path: Path, boundary):
         for index, part in enumerate(parts):
             if part.is_empty:
                 continue
-            if not boundary.covers(part):
+            if not coverage_boundary.covers(part):
                 raise ValueError(
                     f"{layer}: clipped geometry is not covered by the Baghdad boundary "
                     f"(source OSM ID={properties.get('@id')})"
@@ -170,6 +171,7 @@ def main() -> int:
         "boundary_bounds_wgs84": list(boundary.bounds),
         "boundary_area_degrees_squared": boundary.area,
         "coordinate_reference_system": "EPSG:4326",
+        "coverage_tolerance_degrees": 1e-8,
         "license": "ODbL-1.0",
         "attribution": "© OpenStreetMap contributors; © BBBike.org",
         "layers": results,
