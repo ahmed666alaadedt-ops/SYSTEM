@@ -17,7 +17,19 @@ const SERVICE_DATA := [
 	{"id": "shops", "name": "Shopping Street", "prompt": "المحلات التجارية — التسوق", "color": Color(0.48, 0.34, 0.27), "height": 9.0},
 	{"id": "restaurant", "name": "City Restaurant", "prompt": "المطعم — الطعام والضيافة", "color": Color(0.58, 0.30, 0.20), "height": 9.0},
 	{"id": "bank", "name": "City Bank", "prompt": "المصرف — الخدمات المالية", "color": Color(0.30, 0.40, 0.48), "height": 13.0},
-	{"id": "mall", "name": "Shopping Mall", "prompt": "المركز التجاري — التسوق والترفيه", "color": Color(0.38, 0.42, 0.48), "height": 17.0}
+	{"id": "mall", "name": "Shopping Mall", "prompt": "المركز التجاري — التسوق والترفيه", "color": Color(0.38, 0.42, 0.48), "height": 17.0},
+	{"id": "pharmacy", "name": "Community Pharmacy", "prompt": "الصيدلية — المستلزمات الصحية", "color": Color(0.32, 0.58, 0.48), "height": 8.0},
+	{"id": "bakery", "name": "Neighborhood Bakery", "prompt": "المخبز — الخبز والمخبوزات", "color": Color(0.62, 0.42, 0.24), "height": 7.0},
+	{"id": "cafe", "name": "City Cafe", "prompt": "المقهى — الجلسات والضيافة", "color": Color(0.42, 0.28, 0.22), "height": 8.0},
+	{"id": "fuel_station", "name": "Fuel and Charging Station", "prompt": "محطة الوقود والشحن — خدمة المركبات", "color": Color(0.30, 0.36, 0.40), "height": 7.0},
+	{"id": "park", "name": "Public City Park", "prompt": "الحديقة العامة — التنزه والراحة", "color": Color(0.18, 0.38, 0.20), "height": 3.0},
+	{"id": "bus_station", "name": "Central Bus Station", "prompt": "محطة الحافلات — النقل العام", "color": Color(0.30, 0.38, 0.46), "height": 9.0},
+	{"id": "post_office", "name": "City Post Office", "prompt": "مكتب البريد — الطرود والخدمات", "color": Color(0.52, 0.34, 0.24), "height": 9.0},
+	{"id": "library", "name": "Public Library", "prompt": "المكتبة العامة — القراءة والمعرفة", "color": Color(0.38, 0.32, 0.26), "height": 12.0},
+	{"id": "train_station", "name": "Urban Rail Station", "prompt": "محطة القطار — الرحلات والتنقل", "color": Color(0.30, 0.40, 0.48), "height": 12.0},
+	{"id": "port", "name": "City Harbor Terminal", "prompt": "الميناء — السفن والشحن", "color": Color(0.18, 0.34, 0.46), "height": 14.0},
+	{"id": "cinema", "name": "City Cinema", "prompt": "دار السينما — العروض والفعاليات", "color": Color(0.28, 0.22, 0.34), "height": 11.0},
+	{"id": "gym", "name": "Fitness Center", "prompt": "مركز اللياقة — التدريب الرياضي", "color": Color(0.30, 0.34, 0.38), "height": 10.0}
 ]
 
 var region_manager: Node
@@ -60,7 +72,7 @@ func _build_city_services(city_name: String) -> void:
 		var location_type := 7
 		if service_id == "hospital":
 			location_type = 2
-		elif service_id == "market" or service_id == "garage":
+		elif service_id == "market" or service_id == "garage" or service_id == "fuel_station":
 			location_type = 4
 		service_locations.append({
 			"id": "service_%s_%s" % [city_name.to_lower().replace(" ", "_"), service_id],
@@ -144,6 +156,15 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 	elif service_id == "shops":
 		width = 38.0
 		depth = 12.0
+	elif service_id == "bus_station" or service_id == "train_station" or service_id == "port":
+		width = 42.0
+		depth = 30.0
+	elif service_id == "park":
+		width = 34.0
+		depth = 28.0
+	elif service_id == "cinema" or service_id == "library" or service_id == "gym":
+		width = 24.0
+		depth = 20.0
 	var height := float(definition["height"])
 	var facade := _material(definition["color"], 0.78, 0.12)
 	var roof_material := _material(Color(0.10, 0.13, 0.16), 0.55, 0.25)
@@ -155,7 +176,7 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 	var structure := MeshInstance3D.new()
 	structure.name = "ServiceBuildingFacade"
 	var structure_mesh := BoxMesh.new()
-	var shell_height := 1.2 if service_id == "stadium" else height
+	var shell_height := 0.6 if service_id == "park" else (1.2 if service_id == "stadium" else height)
 	structure_mesh.size = Vector3(width, shell_height, depth)
 	structure.mesh = structure_mesh
 	structure.position.y = shell_height * 0.5
@@ -169,7 +190,7 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 	collision.position.y = shell_height * 0.5
 	body.add_child(collision)
 
-	if service_id != "stadium":
+	if service_id != "stadium" and service_id != "park":
 		var roof := MeshInstance3D.new()
 		var roof_mesh := BoxMesh.new()
 		roof_mesh.size = Vector3(width + 0.7, 0.45, depth + 0.7)
@@ -181,7 +202,7 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 
 	# Keep facade detail counts bounded for Android: three visible window bands,
 	# with only two windows per band on each procedural service building.
-	var visible_window_bands := 0 if service_id == "stadium" else (3 if height > 15.0 else 2)
+	var visible_window_bands := 0 if service_id == "stadium" or service_id == "park" else (3 if height > 15.0 else 2)
 	for floor_index in range(visible_window_bands):
 		var y := 2.0 + float(floor_index) * 4.2
 		for column in range(2):
