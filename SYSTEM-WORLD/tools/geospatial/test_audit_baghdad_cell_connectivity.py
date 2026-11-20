@@ -148,6 +148,15 @@ def _append_projected_feature(source: Path, pack: Path, layer: str, osm_id: int,
 
 
 class BaghdadCellConnectivityTests(unittest.TestCase):
+    def test_geometry_parity_mismatch_has_exact_diagnostic_metrics(self):
+        expected = LineString([(0, 0), (100, 0)])
+        actual = LineString([(0, 0), (100, 3)])
+        details = audit._geometry_diagnostics(expected, actual)
+        self.assertEqual(details["expected"]["type"], "LineString")
+        self.assertEqual(details["actual"]["type"], "LineString")
+        self.assertGreater(details["hausdorff_distance_m"], 0)
+        self.assertGreater(details["symmetric_difference"]["length_m"], 0)
+
     def test_real_pack_fixture_passes_and_checks_all_crossings(self):
         with tempfile.TemporaryDirectory() as temp:
             source, pack = _make_fixture(Path(temp))
