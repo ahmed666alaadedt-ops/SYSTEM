@@ -2,7 +2,7 @@
 
 **Updated:** 2026-11-20  
 **Canonical project:** `SYSTEM-WORLD/`  
-**Status:** independent cell-streaming component and headless seam/lifecycle test added; canonical terrain replacement and runtime integration remain pending. CI execution is triggered by the latest commit and has not yet been confirmed here.
+**Status:** independent cell-streaming component is now instantiated by the canonical modern-continent manager, replacing its active monolithic terrain visual/collision path. Headless tests cover seams, load priority, collision, unload and canonical wiring. CI result still requires checking.
 
 ## Why this exists
 
@@ -16,7 +16,7 @@ Current capabilities:
 - Stable integer cell coordinates from world-space X/Z and a fixed regional origin.
 - Configurable square cell size and terrain sample spacing; defaults are 200 m cells and 20 m samples.
 - A shared world-space sampling contract: adjacent cells request the same coordinate along their common edge, so the sampled edge heights are deterministic and identical.
-- Player-centered desired-cell set, queued loading and unloading, and a one-cell-operation-per-frame budget.
+- Player-centered desired-cell set, queued loading and unloading, and a one-cell-operation-per-frame budget. The player's current cell is prioritized ahead of background loads/unloads.
 - Separate visual mesh and per-cell HeightMapShape3D collision nodes.
 - Collision only for the configured near-cell radius.
 - LOD tier classification (near/mid/far) is exposed as metadata only.
@@ -27,7 +27,7 @@ Current capabilities:
 - The existing monolithic terrain visual/collision is still the active canonical terrain path.
 - LOD mesh decimation and crack-free edge stitching are not enabled. The current component deliberately keeps a common sampling interval rather than introducing mismatched edge vertices.
 - Roads, rivers, coastlines, bridges and navigation are not yet split into cell-owned segments. They still need a deterministic clipping/ownership contract with shared boundary vertices and stable feature IDs.
-- No Baghdad OSM layer has been loaded into these cells.
+- **This is not yet the real-scale Baghdad map.** The current continent remains a 3 km × 2.2 km fictional prototype. Baghdad's municipal OSM GeoJSON pack is still not imported into the runtime, and the municipal boundary is approximately 861 km² pending official validation.
 - No physical Android memory/frame-time test has been run.
 
 ## Required next implementation sequence
