@@ -403,6 +403,8 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
                 "unexpected_neighbor_fragments": 0,
                 "disconnected_seams": 0,
                 "valid_boundary_touches": 0,
+                "non_crossing_adjacent_cell_features": 0,
+                "non_clipped_layer_features": 0,
                 "overlapping_fragments": 0,
             }
 
@@ -456,12 +458,41 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
                         )
                         continue
 
+                    # Some layers (notably amenities) are intentionally assigned
+                    # to one representative-point cell by the builder. Same-ID
+                    # components in adjacent cells are not split fragments and
+                    # must not be treated as a connected seam.
+                    if not _cell_clips_geometry(layer, expected_geometry_a or expected_geometry_b):
+                        seam_report["non_clipped_layer_features"] += 1
+                        continue
+
                     # Only require continuity when the source has real geometry
                     # inside both cells. Boundary-only contacts are valid and are
-                    # already checked by the expected-vs-actual part comparison.
+                    # already checked by expected-vs-actual part parity.
                     if not has_interior(expected_geometry_a, feature_key) or not has_interior(expected_geometry_b, feature_key):
                         if feature_key in expected_shared:
                             seam_report["valid_boundary_touches"] += 1
+                        continue
+
+                    expected_edge_a = _seam_geometry(
+                        expected_geometry_a, cell_a, cell_b, cell_size
+                    )
+                    expected_edge_b = _seam_geometry(
+                        expected_geometry_b, cell_a, cell_b, cell_size
+                    )
+                    if expected_edge_a is None or expected_edge_b is None:
+                        record_seam_error(
+                            layer,
+                            f"Could not calculate source shared-edge intersection for "
+                            f"{feature_key}, {cell_a}<->{cell_b}",
+                        )
+                        continue
+                    # A feature may occupy both cells while travelling around
+                    # their common edge (for example, a curved road that exits
+                    # through another side and later re-enters). Empty expected
+                    # intersections mean there is no seam to connect.
+                    if expected_edge_a.is_empty or expected_edge_b.is_empty:
+                        seam_report["non_crossing_adjacent_cell_features"] += 1
                         continue
 
                     report["cross_cell_feature_pairs"] += 1
@@ -480,12 +511,6 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
                         )
                         continue
 
-                    expected_edge_a = _seam_geometry(
-                        expected_geometry_a, cell_a, cell_b, cell_size
-                    )
-                    expected_edge_b = _seam_geometry(
-                        expected_geometry_b, cell_a, cell_b, cell_size
-                    )
                     actual_edge_a = _seam_geometry(
                         actual_geometry_a, cell_a, cell_b, cell_size
                     )
