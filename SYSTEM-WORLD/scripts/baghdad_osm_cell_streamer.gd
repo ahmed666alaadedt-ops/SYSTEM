@@ -279,7 +279,6 @@ func _load_cell(cell: Vector2i) -> void:
 	cell_root.set_meta("cell_z", cell.y)
 	cell_root.set_meta("schema_version", manifest_schema_version)
 	cell_root.set_meta("source_snapshot", source_snapshot)
-	cell_root.set_meta("road_navigation_segments", road_navigation_segments)
 	var counts := {}
 	var road_features: Array = layers.get("roads", [])
 	var road_navigation_segments: Array[Dictionary] = []
@@ -296,6 +295,7 @@ func _load_cell(cell: Vector2i) -> void:
 						"points": road_line
 					})
 		road_count += _build_line_feature(cell_root, feature, _road_width(road_tags), road_material, 0.16, "OSMRoad")
+	cell_root.set_meta("road_navigation_segments", road_navigation_segments)
 	var building_count := 0
 	for feature in layers.get("buildings", []):
 		building_count += _build_building_feature(cell_root, feature, road_features)
