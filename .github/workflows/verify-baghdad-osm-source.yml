@@ -211,6 +211,17 @@ jobs:
           for layer in ["buildings", "roads", "waterways", "bridges", "landuse", "amenities", "railway", "natural-water"]:
               layer_info = json.loads(Path(f"{layer}-fileinfo.json").read_text(encoding="utf-8"))
               report["feature_layer_counts"][layer] = layer_info.get("data", {}).get("count", {})
+          report["geojson_layer_stats"] = {}
+          for layer in ["buildings", "roads", "waterways", "bridges", "landuse", "amenities", "railway", "natural-water"]:
+              geojson = json.loads(Path(f"{layer}.geojson").read_text(encoding="utf-8"))
+              geometry_counts = {}
+              for feature in geojson.get("features", []):
+                  geometry_type = (feature.get("geometry") or {}).get("type", "null")
+                  geometry_counts[geometry_type] = geometry_counts.get(geometry_type, 0) + 1
+              report["geojson_layer_stats"][layer] = {
+                  "feature_count": len(geojson.get("features", [])),
+                  "geometry_types": geometry_counts,
+              }
           report["contributor_metadata_cleaning_applied"] = [
               "version", "timestamp", "changeset", "uid", "user"
           ]
