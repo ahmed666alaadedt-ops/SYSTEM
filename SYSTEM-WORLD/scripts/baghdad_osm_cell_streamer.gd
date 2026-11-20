@@ -433,8 +433,9 @@ func _build_mosque_landmark(parent: Node3D, feature: Dictionary, coordinates: Ar
 		root.add_child(minaret)
 		var cap := MeshInstance3D.new()
 		cap.name = "MinaretCap_%s" % str(side)
-		var cap_mesh := ConeMesh.new()
+		var cap_mesh := CylinderMesh.new()
 		cap_mesh.height = 1.8
+		cap_mesh.top_radius = 0.0
 		cap_mesh.bottom_radius = 0.65
 		cap.mesh = cap_mesh
 		cap.position = Vector3(side * 6.0, 10.9, -2.5)
