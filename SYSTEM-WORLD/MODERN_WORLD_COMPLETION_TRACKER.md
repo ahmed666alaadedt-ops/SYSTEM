@@ -19,6 +19,7 @@ This is the acceptance checklist for the modern-world map. The project must not 
 - [x] Terrain-checked access-road meshes are attempted for airports, stations, and harbors; water-crossing candidates are skipped.
 - [x] Accepted bridge spans receive visual side railings and marker lights.
 - [x] Inter-city corridor prototypes include dashed center and lane-edge markings.
+- [x] Generated inter-city highway surfaces now have matching static triangle-mesh collision bodies; this is a source-level implementation and still needs Godot runtime/Android driving-surface validation.
 - [x] Generated inter-city corridor segments attempt roadside rest-stop scenery with market, fuel canopy, EV chargers and parking markings on adjacent land.
 - [x] City centers attempt elevated boulevard flyover prototypes with ramps, barriers, lane markings and support piers when the alignment remains on land.
 - [x] Harbor prototypes receive a waterfront promenade with benches, bollards and signage.
