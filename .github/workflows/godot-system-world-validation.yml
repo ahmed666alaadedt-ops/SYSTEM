@@ -54,6 +54,16 @@ jobs:
             exit 1
           fi
 
+      - name: Validate terrain cell streaming, shared edges and lifecycle
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" \
+            --script res://tools/validate_terrain_cell_streaming.gd \
+            2>&1 | tee "$RUNNER_TEMP/terrain-cell-streaming.log"
+
       - name: Verify child character civilian and combat restrictions
         shell: bash
         run: |
