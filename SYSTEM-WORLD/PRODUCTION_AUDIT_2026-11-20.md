@@ -279,4 +279,7 @@ The following additive changes were committed after the inspected baseline. They
 - `modern_world_region_manager.gd` now obtains the Baghdad anchor from the WGS84 registry. The other thirteen city centers remain explicitly marked as prototype-layout coordinates.
 - `tools/validate_geography_anchor_runtime.gd` and canonical Godot CI add a runtime smoke test for the Baghdad-anchor connection.
 
+- `greed_island_star_gates.gd` now keeps all interworld Star Gates in Baghdad. Greed Island uses a separate extraction beacon for return travel, and its season is closed by default until explicitly opened.
+- `tools/validate_baghdad_star_gate_hub.gd` and canonical Godot CI verify the Baghdad-only Star Gate hub, non-gate island return beacon, and closed-by-default seasonal access.
+
 These changes require the latest CI run to finish successfully before the new runtime test can be considered passed. They do not provide Baghdad streets, district polygons, terrain tiles, building footprints or other missing real-world coverage.
