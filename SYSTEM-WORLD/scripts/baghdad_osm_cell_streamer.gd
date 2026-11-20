@@ -43,6 +43,14 @@ func _ready() -> void:
 	var origin: Dictionary = parsed.get("origin", {})
 	var origin_lat := float(origin.get("latitude", 0.0))
 	var origin_lon := float(origin.get("longitude", 0.0))
+	var region_record: Dictionary = SystemRealWorldGeography.get_region("iraq_baghdad_region")
+	var canonical_origin: Dictionary = region_record.get("origin", {})
+	if canonical_origin.is_empty():
+		push_error("SYSTEM Baghdad OSM: canonical Baghdad region origin is missing from the geography registry.")
+		return
+	if absf(origin_lat - float(canonical_origin.get("latitude", 0.0))) > 0.000001 or absf(origin_lon - float(canonical_origin.get("longitude", 0.0))) > 0.000001:
+		push_error("SYSTEM Baghdad OSM: cell pack origin differs from the canonical WGS84 registry anchor.")
+		return
 	var projected_origin: Vector3 = SystemRealWorldGeography.to_local_world_position(
 		"iraq_baghdad_region", origin_lat, origin_lon, 0.0
 	)
