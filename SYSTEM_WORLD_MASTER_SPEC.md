@@ -181,13 +181,13 @@ Monster Gates are separate from Star Gates. They are not the same system and mus
 
 ## 9. STAR GATES AND WORLD TRANSITION SYSTEM
 
-Star Gates are a fundamental independent system in SYSTEM WORLD.
+Star Gates are the exclusive interworld connection system for the four worlds of SYSTEM WORLD.
 
-Their primary purpose is connecting different worlds, maps, locations, islands, and historical eras.
+**Baghdad is the only Star Gate hub.** All Star Gates used to travel between the modern, historical/civilizations, fantasy/mythological and Greed Island worlds are located in Baghdad. No other city or region may contain an interworld Star Gate.
 
-Star Gates are distributed across cities, regions, special locations, and hidden areas.
+The Baghdad hub may connect to the approved destinations, islands and historical settings. Monster Gates are a separate system and may appear in cities and regions throughout the worlds; they must never be confused with Star Gates.
 
-Some gates are visible, while others require discovery.
+Some Star Gates in Baghdad may be visible, while others require discovery or progression.
 
 ### 9.1 Gate classifications
 
@@ -222,17 +222,15 @@ The system supports:
 
 ### 9.3 Gate discovery
 
-Players may discover gates through:
+Players may discover and unlock Star Gates at the Baghdad hub through:
 
-- Exploration.
-- Visiting specific locations.
-- Missions.
-- Achievements.
-- Special clues.
-- Hidden keys.
+- Exploration within Baghdad.
+- Missions and achievements.
+- Special clues and hidden keys.
 - Puzzles and secret conditions.
+- Required progression or abilities.
 
-Some gates remain undiscovered until the player fulfills their requirements.
+The Star Gate hub remains in Baghdad only. Monster Gates may be discovered throughout other cities and regions.
 
 ### 9.4 Instant travel
 
