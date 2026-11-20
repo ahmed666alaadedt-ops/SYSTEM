@@ -35,7 +35,7 @@ func _process(_delta: float) -> void:
 		return
 	if not _create_baghdad_gate_hub(modern_root):
 		return
-	_create_island_return_gate(island_root)
+	_create_island_return_beacon(island_root)
 	gates_created = true
 	print("SYSTEM: Baghdad-only star gate hub initialized.")
 
@@ -122,7 +122,7 @@ func _add_gate_trigger(parent: Node3D, data: Dictionary) -> void:
 	area.body_entered.connect(_on_baghdad_gate_entered.bind(int(data["id"])))
 
 
-func _create_island_return_gate(island_root: Node3D) -> void:
+func _create_island_return_beacon(island_root: Node3D) -> void:
 	# This is an extraction beacon, not a Star Gate. Inter-world Star Gates
 	# remain physically located in Baghdad only.
 	var island: Node = island_root.get_node_or_null("GreedIslandManager")
