@@ -8,6 +8,7 @@ var destination_cabin_position := Vector3.ZERO
 var destination_player_position := Vector3.ZERO
 var display_name := "مصعد المدينة العلوية"
 var _player_physics_was_enabled := true
+var _player_original_parent: Node
 
 func configure(p_player: CharacterBody3D, p_cabin: Node3D, cabin_destination: Vector3, player_destination: Vector3, title: String) -> void:
 	player = p_player
@@ -38,13 +39,17 @@ func system_interact() -> void:
 	# Board the platform first; do not carry the player beside or below the cabin.
 	var boarding_position := lift_cabin.global_position + Vector3(0.0, -0.9, 0.0)
 	_player_physics_was_enabled = player.is_physics_processing()
+	_player_original_parent = player.get_parent()
 	player.set_physics_process(false)
 	player.velocity = Vector3.ZERO
 	lift_cabin.set_meta("system_elevator_busy", true)
 	monitoring = false
 
+	# Make the passenger a child of the moving cabin so the platform carries
+	# the character transform directly instead of racing a second world-space tween.
+	player.reparent(lift_cabin, true)
 	var boarding_tween := create_tween()
-	boarding_tween.tween_property(player, "global_position", boarding_position, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	boarding_tween.tween_property(player, "position", Vector3(0.0, -0.9, 0.0), 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	boarding_tween.finished.connect(_begin_lift_travel)
 
 func _begin_lift_travel() -> void:
@@ -52,15 +57,15 @@ func _begin_lift_travel() -> void:
 		_on_ride_finished()
 		return
 	var ride_tween := create_tween()
-	ride_tween.set_parallel(true)
 	ride_tween.tween_property(lift_cabin, "global_position", destination_cabin_position, 4.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	ride_tween.tween_property(player, "global_position", destination_player_position, 4.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	ride_tween.finished.connect(_on_ride_finished)
 
 func _on_ride_finished() -> void:
 	if is_instance_valid(lift_cabin):
 		lift_cabin.set_meta("system_elevator_busy", false)
 	if is_instance_valid(player):
+		if is_instance_valid(_player_original_parent) and player.get_parent() != _player_original_parent:
+			player.reparent(_player_original_parent, true)
 		player.velocity = Vector3.ZERO
 		player.set_physics_process(_player_physics_was_enabled)
 	monitoring = true
