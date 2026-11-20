@@ -1,6 +1,7 @@
 extends SceneTree
 
 const BaghdadTowerManagerScript = preload("res://scripts/baghdad_tower_landmarks_manager.gd")
+const WorldInteractionManagerScript = preload("res://scripts/world_interaction_manager.gd")
 
 class FakeTerrain extends Node:
 	func is_land_position(_x: float, _z: float) -> bool:
@@ -8,6 +9,9 @@ class FakeTerrain extends Node:
 
 	func get_terrain_height(_x: float, _z: float) -> float:
 		return 0.0
+
+class FakeWorldManager extends Node:
+	var active_world := "modern"
 
 class FakeRegion extends Node3D:
 	var terrain: Node
@@ -127,9 +131,17 @@ func _run_validation() -> void:
 	root.add_child(test_player)
 	test_player.global_position = test_panel.global_position
 	test_panel.call("configure_player", test_player)
+	var fake_world_manager := FakeWorldManager.new()
+	root.add_child(fake_world_manager)
+	var interaction_dispatcher := WorldInteractionManagerScript.new()
+	root.add_child(interaction_dispatcher)
+	interaction_dispatcher.world_manager = fake_world_manager
+	interaction_dispatcher.current_target = test_panel
+	if not interaction_dispatcher.interact_with_target():
+		_fail("The standard world interaction dispatcher rejected the elevator call panel.")
+		return
 	var expected_cabin_destination: Vector3 = test_panel.get("destination_cabin_position")
 	var expected_player_destination: Vector3 = test_panel.get("destination_player_position")
-	test_panel.call("system_interact")
 	if not bool(test_cabin.get_meta("system_elevator_busy", false)):
 		_fail("Elevator ride did not enter its busy/moving state.")
 		return
