@@ -372,3 +372,17 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Validate facade orientation, screen readability, night brightness, occlusion, LOD, memory and Android frame rate on physical devices.
 - [ ] Complete Android APK export workflow and inspect the generated build on a device.
 - Note: CI confirms project parsing and headless scene startup, not visual correctness, gameplay feel, or physical-device performance. Local event records are not cross-player global rankings; an authoritative online service remains required.
+
+## Baghdad real-road player navigation map — 20 November 2026
+
+- [x] Expose the pedestrian-accessible road segments from currently loaded OSM metric cells through `get_loaded_road_map_segments()`; retain the source road classification and local metric coordinates.
+- [x] Add a strict player-facing `find_real_baghdad_road_path()` API. Unlike the NPC convenience path, it never falls back to the fictional procedural waypoint grid or claims a guessed route is real.
+- [x] Connect the existing city navigation manager to the world-map UI through the map bootstrap.
+- [x] Draw currently loaded OSM road geometry in the Baghdad map view, show the player's current position, and draw a highlighted route plus destination marker when a discovered Baghdad location is selected.
+- [x] Add route selection to discovered Baghdad map locations and a clear-route action. Non-Baghdad worlds do not use the Baghdad road graph.
+- [x] Explain route failure when the start/destination cannot be connected inside the currently loaded road cells; do not display a fabricated path.
+- [x] Godot 4.3 validation workflow 44798560091 passed project import/script parsing, terrain streaming lifecycle checks, Baghdad city-state persistence round-trip, child-character safety checks, null-mesh scan, and headless main-scene launch.
+- [ ] Run an end-to-end route calculation against the installed OSM cell-pack artifact with representative Baghdad start/destination pairs, including cell-boundary transitions and unreachable destinations.
+- [ ] Verify map readability, touch target sizes, route visibility, and performance on a physical Android device.
+- [ ] Add turn-by-turn guidance and an in-world 3D route ribbon/waypoint guidance after the map route is validated.
+- Note: road geometry and routes are available only when the real Baghdad OSM pack is installed and the relevant cells are loaded. The current route graph is local to loaded cells; this implementation does not yet promise city-wide routing across unloaded cells. CI confirms project parsing and headless startup, not physical-device visual/gameplay correctness.
