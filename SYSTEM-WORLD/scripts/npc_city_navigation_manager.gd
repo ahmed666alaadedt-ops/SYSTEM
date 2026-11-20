@@ -12,6 +12,9 @@ var region_manager: Node
 var cached_anchors: Dictionary = {}
 var routes_requested := 0
 var routes_found := 0
+var real_osm_routes_found := 0
+var procedural_fallback_routes := 0
+var osm_streamer: Node
 
 func setup(p_region_manager: Node) -> void:
 	region_manager = p_region_manager
@@ -20,9 +23,34 @@ func setup(p_region_manager: Node) -> void:
 		set_process(false)
 		return
 	set_process(false)
+	_resolve_osm_streamer()
+
+func _resolve_osm_streamer() -> void:
+	if is_instance_valid(osm_streamer):
+		return
+	var candidate := get_tree().root.find_child("BaghdadOSMCellStreamer", true, false)
+	if is_instance_valid(candidate) and candidate.has_method("get_road_navigation_path"):
+		osm_streamer = candidate
 
 func find_pedestrian_path(city_name: String, start: Vector3, target: Vector3) -> Array[Vector3]:
 	routes_requested += 1
+	if city_name.to_lower() in ["baghdad", "بغداد"]:
+		_resolve_osm_streamer()
+		if is_instance_valid(osm_streamer):
+			var osm_route: Array = osm_streamer.call("get_road_navigation_path", start, target)
+			if osm_route.size() >= 2:
+				var typed_osm_route: Array[Vector3] = []
+				for point in osm_route:
+					if point is Vector3:
+						typed_osm_route.append(point)
+				if typed_osm_route.size() >= 2:
+					real_osm_routes_found += 1
+					routes_found += 1
+					return typed_osm_route
+			if osm_streamer.has_method("get_streaming_status"):
+				var osm_status: Dictionary = osm_streamer.call("get_streaming_status")
+				if int(osm_status.get("loaded_cell_count", 0)) > 0:
+					procedural_fallback_routes += 1
 	var anchor := _get_anchor(city_name)
 	if anchor == Vector3.INF:
 		return [target]
@@ -93,6 +121,9 @@ func get_navigation_status() -> Dictionary:
 		"grid_spacing_m": GRID_SPACING,
 		"routes_requested": routes_requested,
 		"routes_found": routes_found,
-		"uses_real_road_data": false,
+		"real_osm_routes_found": real_osm_routes_found,
+		"procedural_fallback_routes": procedural_fallback_routes,
+		"baghdad_osm_streamer_available": is_instance_valid(osm_streamer),
+		"uses_real_road_data": real_osm_routes_found > 0,
 		"uses_navigation_mesh": false
 	}
