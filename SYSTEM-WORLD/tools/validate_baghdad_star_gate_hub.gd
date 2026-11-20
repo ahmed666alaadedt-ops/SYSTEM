@@ -31,6 +31,14 @@ func _run_validation() -> void:
 		_fail("One or more world roots are unavailable")
 		return
 
+	var gate_manager := root.get_node_or_null("GreedIslandStarGates")
+	if gate_manager == null:
+		_fail("GreedIslandStarGates autoload is unavailable")
+		return
+	if bool(gate_manager.get("greed_island_season_open")):
+		_fail("Greed Island must remain closed unless a season is explicitly opened")
+		return
+
 	var hub := modern_root.get_node_or_null("BaghdadStarGateHub")
 	if hub == null:
 		_fail("Baghdad Star Gate hub was not created")
