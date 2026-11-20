@@ -127,7 +127,25 @@ Each feature must retain a stable source ID, source tags, geometry type, source 
 10. Package the resulting region into offline tiles; do not make runtime gameplay depend on a public tile server.
 11. Run Godot import, scene, collision/navigation and map-overlay tests, then inspect the region in-editor and on Android.
 
-## 7. Production acceptance gates
+## 7. World-scale and streaming gate
+
+The current procedural continent is a small prototype, not a full-scale Baghdad map:
+
+- `modern_continent_manager.gd` uses `CONTINENT_RADIUS_X = 1120 m` and `CONTINENT_RADIUS_Z = 790 m`, giving an approximate full width of 2.24 km and depth of 1.58 km.
+- The candidate Baghdad municipal boundary spans approximately 36.0 km east-west and 34.1 km north-south, with a derived area estimate of 861.08 km².
+- The municipal region is therefore roughly 16 times wider and 22 times deeper than the current procedural continent. It must not be squeezed or rescaled into the prototype terrain.
+- The geography manager defines 1,000 m tile IDs, but a complete tile streaming system, region LOD, collision/navigation streaming and memory budgets have not yet been validated.
+
+Before loading the full Baghdad region into the canonical runtime:
+1. Define the global coordinate contract and preserve WGS84-derived meter scale.
+2. Build region/cell streaming so only nearby cells and their required collision/navigation are loaded.
+3. Keep roads and water connected across cell boundaries.
+4. Define LOD, occlusion, collision and navigation budgets for Android.
+5. Validate the first Baghdad cells at true scale before expanding the region.
+
+At a 1 km cell size, the boundary envelope alone spans roughly 36 × 35 cells. This is a streaming workload, not a single monolithic scene. Do not begin detailed building placement until this world-scale and streaming gate is accepted.
+
+## 8. Production acceptance gates
 
 A Baghdad region pack is not production-ready until:
 
@@ -141,6 +159,6 @@ A Baghdad region pack is not production-ready until:
 - Collision, navigation, LOD, memory and mobile performance are tested.
 - A reviewer records the exact snapshot, checksums, source IDs and validation report.
 
-## 8. Current boundary
+## 9. Current boundary
 
 The registry currently has one Baghdad coordinate anchor. The Baghdad city anchor now uses the WGS84 registry, but this plan does not mean the PBF has been imported. Real streets, district polygons, terrain, river geometry, bridges and building footprints are still absent from the canonical runtime. The other thirteen named city centers remain prototype-layout coordinates.
