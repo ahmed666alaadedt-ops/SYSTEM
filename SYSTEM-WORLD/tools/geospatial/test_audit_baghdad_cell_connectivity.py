@@ -321,7 +321,16 @@ class BaghdadCellConnectivityTests(unittest.TestCase):
             root = Path(temp)
             source, pack = _make_fixture(root)
             def wgs84(x, z):
-                return (44.3661 + x / (111319.49 * 0.835), 33.3152 - z / 110574.0)
+                latitude = 33.3152 - z / 110574.0
+                longitude = 44.3661 + x / (111319.49 * 0.835)
+                project = audit._projector()
+                for _ in range(8):
+                    projected_x, projected_z = transform(
+                        project, Point(longitude, latitude)
+                    ).coords[0]
+                    longitude += (x - projected_x) / (111319.49 * 0.835)
+                    latitude -= (z - projected_z) / 110574.0
+                return longitude, latitude
             touching_building = Polygon([
                 wgs84(160, 20), wgs84(200, 20), wgs84(200, 60),
                 wgs84(160, 60), wgs84(160, 20),
