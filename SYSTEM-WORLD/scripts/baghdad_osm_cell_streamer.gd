@@ -374,8 +374,73 @@ func _build_amenity_feature(parent: Node3D, feature: Dictionary) -> int:
 	var geometry: Dictionary = feature.get("geometry", {})
 	if str(geometry.get("type", "")) != "Point":
 		return 0
-	_add_point_marker(parent, geometry.get("coordinates", []), amenity_material, 0.48, "OSMAmenity_%s" % str(feature.get("id", "")))
+	var tags: Dictionary = feature.get("tags", {})
+	var coordinates: Array = geometry.get("coordinates", [])
+	var is_mosque := str(tags.get("amenity", "")) == "place_of_worship" and str(tags.get("religion", "")).to_lower() == "muslim"
+	is_mosque = is_mosque or str(tags.get("building", "")).to_lower() == "mosque"
+	if is_mosque:
+		_build_mosque_landmark(parent, feature, coordinates)
+	else:
+		_add_point_marker(parent, coordinates, amenity_material, 0.48, "OSMAmenity_%s" % str(feature.get("id", "")))
 	return 1
+
+
+func _build_mosque_landmark(parent: Node3D, feature: Dictionary, coordinates: Array) -> void:
+	if coordinates.size() < 2:
+		return
+	var point := Vector2(float(coordinates[0]), float(coordinates[1]))
+	var root := Node3D.new()
+	root.name = "OSMMosque_%s" % str(feature.get("id", "unknown"))
+	root.position = Vector3(point.x, _terrain_height(point) + 0.08, point.y)
+	root.set_meta("landmark_type", "mosque")
+	root.set_meta("osm_feature_id", str(feature.get("id", "")))
+	parent.add_child(root)
+	var stone := StandardMaterial3D.new()
+	stone.albedo_color = Color(0.78, 0.72, 0.57)
+	stone.roughness = 0.88
+	var roof := StandardMaterial3D.new()
+	roof.albedo_color = Color(0.12, 0.42, 0.39)
+	roof.metallic = 0.18
+	var minaret_material := StandardMaterial3D.new()
+	minaret_material.albedo_color = Color(0.84, 0.78, 0.63)
+	var body := MeshInstance3D.new()
+	body.name = "PrayerHall"
+	var body_mesh := BoxMesh.new()
+	body_mesh.size = Vector3(9.0, 4.0, 8.0)
+	body.mesh = body_mesh
+	body.position.y = 2.0
+	body.material_override = stone
+	root.add_child(body)
+	var dome := MeshInstance3D.new()
+	dome.name = "CentralDome"
+	var dome_mesh := SphereMesh.new()
+	dome_mesh.radius = 2.5
+	dome_mesh.height = 3.2
+	dome.mesh = dome_mesh
+	dome.position = Vector3(0.0, 5.2, 0.0)
+	dome.material_override = roof
+	root.add_child(dome)
+	for side in [-1.0, 1.0]:
+		var minaret := MeshInstance3D.new()
+		minaret.name = "Minaret_%s" % str(side)
+		var minaret_mesh := CylinderMesh.new()
+		minaret_mesh.top_radius = 0.32
+		minaret_mesh.bottom_radius = 0.55
+		minaret_mesh.height = 10.0
+		minaret.mesh = minaret_mesh
+		minaret.position = Vector3(side * 6.0, 5.0, -2.5)
+		minaret.material_override = minaret_material
+		root.add_child(minaret)
+		var cap := MeshInstance3D.new()
+		cap.name = "MinaretCap_%s" % str(side)
+		var cap_mesh := ConeMesh.new()
+		cap_mesh.height = 1.8
+		cap_mesh.bottom_radius = 0.65
+		cap.mesh = cap_mesh
+		cap.position = Vector3(side * 6.0, 10.9, -2.5)
+		cap.material_override = roof
+		root.add_child(cap)
+
 
 
 func _add_point_marker(parent: Node3D, coordinates: Array, material: Material, radius: float, node_name: String) -> void:
