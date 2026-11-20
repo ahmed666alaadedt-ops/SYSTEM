@@ -24,6 +24,7 @@ const WildlifeManagerScript = preload("res://scripts/wildlife_manager.gd")
 const MissionRewardManagerScript = preload("res://scripts/system_mission_reward_manager.gd")
 const PlayerProgressionScript = preload("res://scripts/system_player_progression.gd")
 const PlayerVehicleManagerScript = preload("res://scripts/system_player_vehicle_manager.gd")
+const VehicleRuntimeManagerScript = preload("res://scripts/system_vehicle_runtime_manager.gd")
 const CrimeResponseManagerScript = preload("res://scripts/modern_city_crime_response_manager.gd")
 const NPCAutonomousSocietyEventManagerScript = preload("res://scripts/npc_autonomous_society_event_manager.gd")
 const NPCVisiblePopulationManagerScript = preload("res://scripts/npc_visible_population_manager.gd")
@@ -47,6 +48,7 @@ var wildlife_manager
 var mission_reward_manager
 var player_progression
 var player_vehicle_manager
+var vehicle_runtime_manager
 var crime_response_manager
 var npc_autonomous_event_manager
 var npc_visible_population_manager
@@ -98,6 +100,7 @@ func _ready() -> void:
 	create_player_progression()
 	create_inventory_panel()
 	create_player_vehicle_manager()
+	create_vehicle_runtime_manager()
 	create_modern_city_crime_manager()
 	create_npc_autonomous_society_event_manager()
 	create_npc_city_navigation_manager()
@@ -319,6 +322,20 @@ func create_player_vehicle_manager() -> void:
 				for dealership in region.get_children():
 					if dealership.has_method("setup") and dealership.name.ends_with("VehicleDealership"):
 						dealership.setup(player_vehicle_manager)
+
+
+func create_vehicle_runtime_manager() -> void:
+	vehicle_runtime_manager = VehicleRuntimeManagerScript.new()
+	vehicle_runtime_manager.name = "VehicleRuntimeManager"
+	add_child(vehicle_runtime_manager)
+	vehicle_runtime_manager.setup(
+		player,
+		player_mesh,
+		camera,
+		spring_arm,
+		player_vehicle_manager,
+		active_world_root
+	)
 
 
 func create_modern_city_crime_manager() -> void:
@@ -783,6 +800,8 @@ func _on_fast_travel_point_activated(
 
 
 func _on_mobile_interact_pressed() -> void:
+	if vehicle_runtime_manager != null and vehicle_runtime_manager.try_dealership_interaction():
+		return
 	if interaction_manager == null:
 		return
 
@@ -1012,10 +1031,16 @@ func create_mobile_controls() -> void:
 
 
 func _on_movement_changed(direction: Vector2) -> void:
+	if vehicle_runtime_manager != null and vehicle_runtime_manager.is_driving:
+		vehicle_runtime_manager.set_mobile_movement(direction)
+		return
 	mobile_direction = direction
 
 
 func _on_jump_pressed() -> void:
+	if vehicle_runtime_manager != null and vehicle_runtime_manager.is_driving:
+		vehicle_runtime_manager.apply_mobile_brake()
+		return
 	jump_requested = true
 
 
@@ -1068,6 +1093,8 @@ func update_camera_rotation() -> void:
 
 func _physics_process(delta: float) -> void:
 	if player == null:
+		return
+	if vehicle_runtime_manager != null and vehicle_runtime_manager.is_driving:
 		return
 
 	var direction := Vector3.ZERO
