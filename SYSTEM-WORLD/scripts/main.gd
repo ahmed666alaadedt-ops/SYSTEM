@@ -444,6 +444,8 @@ func create_hunter_exam_manager() -> void:
 	hunter_exam_manager = HunterExamManagerScript.new()
 	hunter_exam_manager.name = "HunterExamManager"
 	add_child(hunter_exam_manager)
+	hunter_exam_manager.stage_completed.connect(_on_hunter_exam_stage_completed)
+	hunter_exam_manager.license_earned.connect(_on_hunter_exam_license_earned)
 
 
 func create_power_tower_manager() -> void:
@@ -451,11 +453,41 @@ func create_power_tower_manager() -> void:
 	power_tower_manager.name = "PowerTowerManager"
 	add_child(power_tower_manager)
 	power_tower_manager.floor_cleared.connect(_on_power_tower_floor_cleared)
+	power_tower_manager.floor_cleared.connect(_on_public_power_tower_floor_cleared)
 
 
 func _on_power_tower_floor_cleared(floor_number: int, reward_xp: int, rank: String) -> void:
 	if player_progression != null:
 		player_progression.add_experience(reward_xp, "Power Tower floor %d (%s)" % [floor_number, rank])
+
+
+
+func _get_public_event_board() -> Node:
+	return get_tree().root.find_child("SYSTEMPublicEventBoard", true, false)
+
+
+func _on_public_mission_rewarded(mission_id: String, xp_amount: int) -> void:
+	var board := _get_public_event_board()
+	if board != null and board.has_method("publish_mission_completion"):
+		board.call("publish_mission_completion", mission_id, xp_amount)
+
+
+func _on_hunter_exam_stage_completed(stage_id: String, stage_number: int) -> void:
+	var board := _get_public_event_board()
+	if board != null and board.has_method("publish_exam_stage"):
+		board.call("publish_exam_stage", stage_id, stage_number)
+
+
+func _on_hunter_exam_license_earned(candidate_number: int, license_rank: String) -> void:
+	var board := _get_public_event_board()
+	if board != null and board.has_method("publish_exam_champion"):
+		board.call("publish_exam_champion", candidate_number, license_rank)
+
+
+func _on_public_power_tower_floor_cleared(floor_number: int, _reward_xp: int, rank: String) -> void:
+	var board := _get_public_event_board()
+	if board != null and board.has_method("publish_power_tower_clear"):
+		board.call("publish_power_tower_clear", floor_number, rank)
 
 
 func _on_hunter_exam_registration_requested() -> void:
@@ -480,6 +512,7 @@ func create_mission_reward_manager() -> void:
 	mission_reward_manager = MissionRewardManagerScript.new()
 	mission_reward_manager.name = "MissionRewardManager"
 	add_child(mission_reward_manager)
+	mission_reward_manager.mission_rewarded.connect(_on_public_mission_rewarded)
 
 	var hunter_guild_menu := get_node_or_null("HunterGuildMenu")
 
