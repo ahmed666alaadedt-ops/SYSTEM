@@ -365,6 +365,8 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
                 )
 
             # Keep source parity and actual generated-cell seam checks separate.
+            # Candidate keys come from BOTH the expected source and actual pack,
+            # and every continuity measurement below is taken from actual_union.
             cell_set = set(cells)
             neighbor_pairs = set()
             for x, z in cell_set:
@@ -373,6 +375,7 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
                         neighbor_pairs.add(((x, z), neighbor))
             report["adjacent_cell_pairs"] = len(neighbor_pairs)
             seam_report = {
+                "geometry_source": "actual_generated_cell_geometries",
                 "checked_actual_cell_geometries": True,
                 "checks_by_layer": {},
                 "missing_neighbor_fragments": 0,
@@ -381,66 +384,117 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
                 "valid_boundary_touches": 0,
                 "overlapping_fragments": 0,
             }
+
+            def has_interior(geometry):
+                # Positive length covers lines; positive area covers polygons.
+                # A point/line that only touches an edge is not a crossing.
+                return geometry is not None and not geometry.is_empty and (
+                    geometry.length > 1e-6 or geometry.area > 1e-6
+                )
+
+            def record_seam_error(layer, message):
+                report["disconnected_seams"] += 1
+                seam_report["disconnected_seams"] += 1
+                stats = seam_report["checks_by_layer"].setdefault(
+                    layer, {"checks": 0, "disconnected": 0}
+                )
+                stats["disconnected"] += 1
+                report["errors"].append(message)
+
             for cell_a, cell_b in sorted(neighbor_pairs):
-                # Only source features expected on both sides are candidates for
-                # continuity checks. Actual geometry is always read from the pack.
-                keys_a = {key for cell, key in expected_union if cell == cell_a}
-                keys_b = {key for cell, key in expected_union if cell == cell_b}
-                shared_expected = keys_a.intersection(keys_b)
-                for feature_key in sorted(shared_expected):
+                expected_a_keys = {key for cell, key in expected_union if cell == cell_a}
+                expected_b_keys = {key for cell, key in expected_union if cell == cell_b}
+                actual_a_keys = {key for cell, key in actual_union if cell == cell_a}
+                actual_b_keys = {key for cell, key in actual_union if cell == cell_b}
+                expected_shared = expected_a_keys & expected_b_keys
+                actual_shared = actual_a_keys & actual_b_keys
+                # Include actual-only keys so unexpected cell geometry cannot
+                # escape the seam section merely because it is absent in source.
+                feature_keys = expected_shared | actual_shared
+
+                for feature_key in sorted(feature_keys):
                     layer = feature_key[0]
-                    expected_a = expected_union[(cell_a, feature_key)]
-                    expected_b = expected_union[(cell_b, feature_key)]
-                    expected_edge_a = _seam_geometry(expected_a, cell_a, cell_b, cell_size)
-                    expected_edge_b = _seam_geometry(expected_b, cell_a, cell_b, cell_size)
-                    if expected_edge_a is None or expected_edge_b is None:
-                        continue
-                    # A feature can occupy two cells without crossing their common
-                    # edge (e.g. disjoint pieces sharing an OSM relation ID).
-                    if expected_edge_a.is_empty and expected_edge_b.is_empty:
-                        continue
-                    report["cross_cell_feature_pairs"] += 1
-                    report["seam_checks"] += 1
-                    layer_stats = seam_report["checks_by_layer"].setdefault(layer, {"checks": 0, "disconnected": 0})
-                    layer_stats["checks"] += 1
-                    actual_a = actual_union.get((cell_a, feature_key))
-                    actual_b = actual_union.get((cell_b, feature_key))
-                    if actual_a is None or actual_b is None:
-                        seam_report["missing_neighbor_fragments"] += 1
-                        seam_report["disconnected_seams"] += 1
-                        report["disconnected_seams"] += 1
-                        layer_stats["disconnected"] += 1
+                    expected_geometry_a = expected_union.get((cell_a, feature_key))
+                    expected_geometry_b = expected_union.get((cell_b, feature_key))
+                    actual_geometry_a = actual_union.get((cell_a, feature_key))
+                    actual_geometry_b = actual_union.get((cell_b, feature_key))
+
+                    if feature_key in actual_shared and feature_key not in expected_shared:
+                        seam_report["unexpected_neighbor_fragments"] += 1
                         report["errors"].append(
-                            f"Actual cell seam is missing neighbor fragment for {feature_key}: {cell_a}<->{cell_b}"
+                            f"Unexpected OSM feature appears in both adjacent cells: "
+                            f"{feature_key}, {cell_a}<->{cell_b}"
                         )
                         continue
-                    actual_edge_a = _seam_geometry(actual_a, cell_a, cell_b, cell_size)
-                    actual_edge_b = _seam_geometry(actual_b, cell_a, cell_b, cell_size)
-                    if actual_edge_a is None or actual_edge_b is None:
+
+                    # Only require continuity when the source has real geometry
+                    # inside both cells. Boundary-only contacts are valid and are
+                    # already checked by the expected-vs-actual part comparison.
+                    if not has_interior(expected_geometry_a) or not has_interior(expected_geometry_b):
+                        if feature_key in expected_shared:
+                            seam_report["valid_boundary_touches"] += 1
                         continue
-                    # Touch-only geometry is valid when the source itself only
-                    # touches the edge. It is not a road/waterway continuity claim.
-                    source_crosses = not expected_edge_a.is_empty and not expected_edge_b.is_empty
-                    if not source_crosses:
-                        seam_report["valid_boundary_touches"] += 1
+
+                    report["cross_cell_feature_pairs"] += 1
+                    report["seam_checks"] += 1
+                    layer_stats = seam_report["checks_by_layer"].setdefault(
+                        layer, {"checks": 0, "disconnected": 0}
+                    )
+                    layer_stats["checks"] += 1
+
+                    if actual_geometry_a is None or actual_geometry_b is None:
+                        seam_report["missing_neighbor_fragments"] += 1
+                        record_seam_error(
+                            layer,
+                            f"Actual generated cell is missing a crossing neighbor fragment: "
+                            f"{feature_key}, {cell_a}<->{cell_b}",
+                        )
                         continue
+
+                    expected_edge_a = _seam_geometry(
+                        expected_geometry_a, cell_a, cell_b, cell_size
+                    )
+                    expected_edge_b = _seam_geometry(
+                        expected_geometry_b, cell_a, cell_b, cell_size
+                    )
+                    actual_edge_a = _seam_geometry(
+                        actual_geometry_a, cell_a, cell_b, cell_size
+                    )
+                    actual_edge_b = _seam_geometry(
+                        actual_geometry_b, cell_a, cell_b, cell_size
+                    )
+                    if any(edge is None for edge in (
+                        expected_edge_a, expected_edge_b, actual_edge_a, actual_edge_b
+                    )):
+                        record_seam_error(
+                            layer,
+                            f"Could not calculate shared-edge intersection for "
+                            f"{feature_key}, {cell_a}<->{cell_b}",
+                        )
+                        continue
+
                     mismatch = (
-                        actual_edge_a.is_empty or actual_edge_b.is_empty
+                        expected_edge_a.is_empty
+                        or expected_edge_b.is_empty
+                        or actual_edge_a.is_empty
+                        or actual_edge_b.is_empty
+                        or not _geometry_close(expected_edge_a, expected_edge_b)
                         or not _geometry_close(expected_edge_a, actual_edge_a)
                         or not _geometry_close(expected_edge_b, actual_edge_b)
                         or not _geometry_close(actual_edge_a, actual_edge_b)
                     )
                     if layer in LINE_LAYERS and not mismatch:
-                        # For linear networks, require the two actual fragments to
-                        # meet at the same shared-edge location(s).
+                        # Roads, waterways, bridge lines and railway segments
+                        # must meet at the same point(s) on the actual shared edge.
                         mismatch = actual_edge_a.distance(actual_edge_b) > TOLERANCE_M
                     if mismatch:
-                        seam_report["disconnected_seams"] += 1
-                        report["disconnected_seams"] += 1
-                        layer_stats["disconnected"] += 1
-                        report["errors"].append(
-                            f"Actual geometry seam mismatch for {feature_key}: {cell_a}<->{cell_b}"
+                        record_seam_error(
+                            layer,
+                            f"Actual geometry seam mismatch for {feature_key}: "
+                            f"{cell_a}<->{cell_b}",
                         )
+
+            report["actual_cell_seam_checks"] = seam_report
 
             # Detect non-identical overlaps between fragments with the same OSM key.
             overlap_errors = []
