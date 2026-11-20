@@ -17,6 +17,7 @@ var is_driving := false
 var mobile_throttle := 0.0
 var mobile_steering := 0.0
 var brake_hold_time := 0.0
+var player_mesh_was_visible := true
 
 func setup(
 	player_node: CharacterBody3D,
@@ -117,6 +118,7 @@ func enter_vehicle() -> bool:
 	is_driving = true
 	active_vehicle.set_driver_active(true)
 	if is_instance_valid(player_mesh):
+		player_mesh_was_visible = player_mesh.visible
 		player_mesh.visible = false
 	for child in player.get_children():
 		if child is CollisionShape3D:
@@ -140,7 +142,7 @@ func exit_vehicle() -> bool:
 		if child is CollisionShape3D:
 			child.set_deferred("disabled", false)
 	if is_instance_valid(player_mesh):
-		player_mesh.visible = true
+		player_mesh.visible = player_mesh_was_visible
 	if is_instance_valid(camera):
 		camera.top_level = false
 		camera.transform = Transform3D.IDENTITY
