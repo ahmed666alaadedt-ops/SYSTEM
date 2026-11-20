@@ -189,7 +189,8 @@ jobs:
           osmium tags-filter baghdad-municipality-candidate.osm.pbf nwr/amenity -o amenities.osm.pbf
           osmium tags-filter baghdad-municipality-candidate.osm.pbf w/railway -o railway.osm.pbf
           osmium tags-filter baghdad-municipality-candidate.osm.pbf nwr/natural=water -o natural-water.osm.pbf
-          for layer in buildings roads waterways bridges landuse amenities railway natural-water; do
+          osmium tags-filter baghdad-municipality-candidate.osm.pbf n/entrance n/door n/building=entrance -o entrances.osm.pbf
+          for layer in buildings roads waterways bridges landuse amenities railway natural-water entrances; do
             osmium fileinfo --extended --json "$layer.osm.pbf" > "$layer-fileinfo.json"
           done
           osmium export --geometry-types=point,polygon --attributes type,id --output buildings.geojson buildings.osm.pbf
@@ -200,6 +201,7 @@ jobs:
           osmium export --geometry-types=point,linestring,polygon --attributes type,id --output amenities.geojson amenities.osm.pbf
           osmium export --geometry-types=point,linestring --attributes type,id --output railway.geojson railway.osm.pbf
           osmium export --geometry-types=point,polygon --attributes type,id --output natural-water.geojson natural-water.osm.pbf
+          osmium export --geometry-types=point --attributes type,id --output entrances.geojson entrances.osm.pbf
           python3 - <<'PY'
           import hashlib
           import json
@@ -213,7 +215,7 @@ jobs:
               Path("baghdad-clip-fileinfo.json").read_text(encoding="utf-8")
           )
           report["feature_layer_counts"] = {}
-          for layer in ["buildings", "roads", "waterways", "bridges", "landuse", "amenities", "railway", "natural-water"]:
+          for layer in ["buildings", "roads", "waterways", "bridges", "landuse", "amenities", "railway", "natural-water", "entrances"]:
               layer_info = json.loads(Path(f"{layer}-fileinfo.json").read_text(encoding="utf-8"))
               report["feature_layer_counts"][layer] = layer_info.get("data", {}).get("count", {})
           report["geojson_layer_stats"] = {}
