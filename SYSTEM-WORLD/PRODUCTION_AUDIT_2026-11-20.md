@@ -326,6 +326,6 @@ After the baseline audit, the active canonical modern-continent terrain path was
 
 **Verified CI:** canonical Godot validation run [44707436131](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44707436131) completed successfully for commit `466041868a26605ebc70b84c1bd78ce35b070f45`. The import/parse step, terrain cell streaming test, existing safety/geography/gate tests and headless main-scene launch all passed.
 
-**Latest follow-up test extension:** partial edge-cell support and tests were added in commit `5292a22e4330a3e11574d91e80c6b81d3a875384`; its canonical validation workflow was triggered and was still running at the time of this addendum. Do not mark that newer test extension passed until its workflow result is confirmed.
+**Latest follow-up test extension:** partial edge-cell support and tests were added in commit `5292a22e4330a3e11574d91e80c6b81d3a875384`. Canonical validation run [44707771587](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44707771587) completed successfully, including the partial edge-cell and collision-bound checks.
 
 **Scope boundary:** this integration streams the existing 3 km × 2.2 km fictional continent prototype. It is not a full-scale Baghdad map. The candidate Baghdad municipal boundary remains approximately 861 km², and its eight GeoJSON source layers have not yet been imported into the Godot runtime. Roads/rivers/bridges, navigation, stitched LOD, detailed building assets and physical Android performance acceptance remain outstanding.
