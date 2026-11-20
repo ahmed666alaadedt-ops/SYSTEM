@@ -96,10 +96,18 @@ func _build_city_media_displays() -> void:
 	for city_value in city_anchors.keys():
 		var city_name := str(city_value)
 		var anchor: Vector2 = city_anchors[city_name]
-		var ground := _ground_height(anchor + Vector2(24.0, -30.0))
+		var placement := anchor + Vector2(24.0, -30.0)
+		if is_instance_valid(terrain) and terrain.has_method("is_land_position"):
+			if not bool(terrain.call("is_land_position", placement.x, placement.y)):
+				var region_manager := get_parent()
+				if region_manager.has_method("_nearest_land_position"):
+					placement = region_manager.call("_nearest_land_position", placement)
+				if placement == Vector2.INF:
+					continue
+		var ground := _ground_height(placement)
 		var display_root := Node3D.new()
 		display_root.name = "PublicMediaTower_" + city_name.replace(" ", "")
-		display_root.position = Vector3(anchor.x + 24.0, ground, anchor.y - 30.0)
+		display_root.position = Vector3(placement.x, ground, placement.y)
 		add_child(display_root)
 
 		_add_skyscraper(display_root, building_material, frame_material)
