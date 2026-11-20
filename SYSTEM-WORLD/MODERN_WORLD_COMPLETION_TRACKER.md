@@ -234,3 +234,17 @@ A checked repository foundation does not mean a finished gameplay feature. Visua
 - [ ] Implement secure server-authoritative player-to-player wager escrow, opt-in consent, limits, settlement, refunds, anti-collusion and dispute handling; no real-money betting.
 - [ ] Run Godot parser, scene integration, AI pursuit, vehicle stopping, and Android tests before treating any of these features as playable.
 - Note: the changes are source-level foundations only. No track trigger volumes or playable race venues have been built, the crime manager does not yet automatically detect street races, and the new police response has not been runtime-tested. The dedicated-track context setter must be connected to future physical track zones.
+
+
+## Baghdad International Motorsport Park blockout — 20 November 2026
+
+- [x] Add a procedural first-pass motorsport venue manager for the modern world.
+- [x] Create a 32-segment oval-style circuit surface with static road collision, inner guide line, and safety barriers.
+- [x] Add a basic paddock with eight garage bays, pit lane, and simple spectator grandstands.
+- [x] Add an approved-track Area3D zone; entering/exiting with the player toggles the dedicated-track context in both vehicle runtime and motorsport managers.
+- [x] Integrate the venue manager into modern-world startup from main.gd.
+- [ ] Replace procedural blockout meshes with detailed track art, curbs, runoff zones, pit buildings, race control, lighting, signage, and crowd assets.
+- [ ] Add track-specific layouts and validated checkpoint transforms, starting grids, finish lines, timing sectors, and track marshal posts.
+- [ ] Add track access gates, garage selection, race registration UI, spectator events, and AI competitors.
+- [ ] Verify player collision layer/mask and test entering/exiting the Area3D in Godot; run parser and Android performance tests.
+- Note: the venue is a source-level procedural blockout, not a finished or tested playable race track. The track zone is a broad access volume around the venue and currently toggles permission; the racing manager still needs actual checkpoint nodes and event registration integration.
