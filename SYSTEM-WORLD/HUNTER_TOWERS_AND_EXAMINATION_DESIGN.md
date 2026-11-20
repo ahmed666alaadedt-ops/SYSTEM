@@ -28,6 +28,18 @@ The towers are separate gameplay identities. The Power Tower is not the Hunter e
 - The Power Tower's 100-floor progression manager remains separate from the exterior. The arena terraces do not yet constitute explorable interior arenas. A later interior-scene milestone must provide multiple distinct arenas (duel, team combat, survival, boss trial, and ranked championship), spectator galleries, training halls, matchmaking, and verified reward/record flows.
 - The Hunter Association interior likewise still needs navigable reception, registration, mission hall, examination administration, training, research, medical support, meeting rooms, and a dynamically updated global hunter honor gallery.
 
+## Power Tower arena progression data
+
+The 100-floor progression now assigns a distinct challenge profile by floor cycle:
+- Duel arena: one-on-one combat.
+- Team battle arena: multi-opponent/team encounter.
+- Survival arena: escalating waves.
+- Elite gauntlet: successive stronger opponents.
+- Championship arena: timed ranked sequence.
+- Every tenth floor overrides the cycle with a boss-trial profile.
+
+Floor data now exposes arena type/name, Arabic rules text, opponent count, wave count, and whether the result is marked for ranked treatment. This is progression metadata only: no arena interior scene, opponent spawning, team matchmaking, wave director, or server-verified ranking has been implemented yet.
+
 ## Seven-stage Hunter Examination
 
 The examination is a difficult, multi-city journey. It tests judgment, observation, navigation, teamwork, survival, and combat restraint—not only damage output.
