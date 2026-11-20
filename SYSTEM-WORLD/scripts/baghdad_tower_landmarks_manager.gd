@@ -289,7 +289,7 @@ func _create_rooftop_microcity(root: Node3D, tower_id: String, tower_height: flo
 	platform.mesh = platform_mesh
 	platform.material_override = tower_material
 	district.add_child(platform)
-	_add_static_box_collision(district, "RooftopCityWalkableCollision", Vector3(0.0, 0.7, 0.0), Vector3(platform_radius * 1.72, 1.0, platform_radius * 1.72))
+	_add_static_box_collision(district, "RooftopCityWalkableCollision", Vector3(0.0, 0.7, 0.0), Vector3(platform_radius * 1.2, 1.0, platform_radius * 1.2))
 
 	# Four structural piers visibly transfer the rooftop district load into the tower crown.
 	for support_index in range(4):
