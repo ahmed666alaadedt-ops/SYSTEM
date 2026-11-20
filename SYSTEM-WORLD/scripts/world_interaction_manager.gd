@@ -218,7 +218,13 @@ func _register_and_discover_location(
 
 	var location_position := Vector3.ZERO
 
-	if target is Node3D:
+	if target.has_meta("system_location_position"):
+		var saved_position: Variant = target.get_meta("system_location_position")
+		if saved_position is Vector3:
+			location_position = saved_position
+		elif target is Node3D:
+			location_position = (target as Node3D).global_position
+	elif target is Node3D:
 		location_position = (target as Node3D).global_position
 
 	# التسجيل آمن عند تكراره؛ مدير الخريطة يرفض المعرف المكرر.
