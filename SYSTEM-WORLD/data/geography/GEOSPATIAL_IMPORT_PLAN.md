@@ -172,7 +172,7 @@ A reproducible cell-pack generator now exists at `SYSTEM-WORLD/tools/geospatial/
 - Cell IDs: X/Z = -2 through +2, inclusive.
 - Coverage: an initial 1 km × 1 km sample around the Baghdad anchor, not the full municipality.
 - Local axes and projection: the same WGS84 ECEF tangent frame used by `SystemRealWorldGeographyManager` (X east, Z south); this avoids a mismatch between exported data and the in-game regional origin.
-- Layers: buildings, roads, waterways, bridges, landuse, amenities, railway, natural-water, and a dedicated `entrances` point layer for OSM nodes tagged `entrance`, `door`, or `building=entrance`. The entrance layer is now supported by the extraction, clipping, and cell-pack code; the previously generated eight-layer artifact does not yet contain it until the updated workflow completes.
+- Layers: buildings, roads, waterways, bridges, landuse, amenities, railway, natural-water, and a dedicated `entrances` point layer for OSM nodes tagged `entrance`, `door`, or `building=entrance`. The updated workflow completed successfully (run 44736344496; artifact 14629100933): 188 entrance points were clipped to the Baghdad municipal boundary, and 30 were included in the initial 5×5 / 200 m sample pack. This is a partial sample, not a complete city-wide entrance inventory.
 - Source IDs and selected OSM tags are preserved; source attribution and ODbL metadata are included in the manifest.
 
 The first generated pack was validated in GitHub Actions run [44708930412](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44708930412), artifact [14615624945](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44708930412). The nested metric pack contained 25 cells and these feature parts:
