@@ -8,7 +8,7 @@ config_version=5
 
 config/name="SYSTEM WORLD"
 run/main_scene="res://MainScene.tscn"
-config/icon="res://assets/system_icon.png"
+config/icon="res://assets/system_world_icon.svg"
 
 [autoload]
 
