@@ -73,7 +73,7 @@ jobs:
                 "real_osm_source_required": True,
                 "build_mode": "procedural_fallback_unaudited",
                 "note": "No verified real Baghdad OSM pack was installed; this APK is procedural fallback only."
-            }, indent=2) + "\\n", encoding="utf-8")
+            }, indent=2) + "\n", encoding="utf-8")
             PY
             echo "BAGHDAD_BUILD_MODE=procedural_fallback_unaudited" >> "$GITHUB_ENV"
             echo "BAGHDAD_OSM_AUDIT_STATUS=${BAGHDAD_SOURCE_WORKFLOW_CONCLUSION}" >> "$GITHUB_ENV"
