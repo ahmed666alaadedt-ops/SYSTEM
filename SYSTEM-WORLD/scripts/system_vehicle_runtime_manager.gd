@@ -105,7 +105,7 @@ func spawn_owned_vehicle(vehicle_id: String) -> Dictionary:
 	active_vehicle.configure(data, vehicle_id)
 	world_root.add_child(active_vehicle)
 	var forward := -player.global_transform.basis.z
-	active_vehicle.global_position = player.global_position + forward * 8.0 + Vector3.UP * 0.8
+	active_vehicle.global_position = player.global_position + forward * 3.0 + Vector3.UP * 0.8
 	active_vehicle.global_rotation.y = player.global_rotation.y
 	return {"success":true,"vehicle_id":vehicle_id}
 
