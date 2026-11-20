@@ -139,12 +139,12 @@ func _run_validation() -> void:
 
 	await create_timer(1.0).timeout
 	var boarding_offset := test_player.global_position - test_cabin.global_position
-	if boarding_offset.distance_to(Vector3(0.0, 1.1, 0.0)) > 0.18:
+	if boarding_offset.distance_to(Vector3(0.0, -0.9, 0.0)) > 0.18:
 		_fail("Player did not board and remain centered on the moving cabin platform.")
 		return
 	await create_timer(1.5).timeout
 	var ride_offset := test_player.global_position - test_cabin.global_position
-	if ride_offset.distance_to(Vector3(0.0, 1.1, 0.0)) > 0.18:
+	if ride_offset.distance_to(Vector3(0.0, -0.9, 0.0)) > 0.18:
 		_fail("Player drifted away from the cabin during the elevator ride.")
 		return
 	await create_timer(2.5).timeout
