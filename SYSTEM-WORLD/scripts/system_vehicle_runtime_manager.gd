@@ -105,6 +105,7 @@ func spawn_owned_vehicle(vehicle_id: String) -> Dictionary:
 	active_vehicle = VehicleScript.new()
 	active_vehicle.name = "PlayerVehicle_" + vehicle_id
 	active_vehicle.configure(data, vehicle_id)
+	active_vehicle.set_paint_color(garage_manager.get_vehicle_color(vehicle_id))
 	world_root.add_child(active_vehicle)
 	var forward := -player.global_transform.basis.z
 	active_vehicle.global_position = player.global_position + forward * 3.0 + Vector3.UP * 0.8
@@ -141,6 +142,10 @@ func store_parked_vehicle() -> Dictionary:
 	active_vehicle = null
 	garage_manager.clear_active_vehicle()
 	return {"success":true}
+
+func apply_vehicle_paint(vehicle_id: String, color: Color) -> void:
+	if is_instance_valid(active_vehicle) and active_vehicle.vehicle_id == vehicle_id:
+		active_vehicle.set_paint_color(color)
 
 func enter_vehicle() -> bool:
 	if is_driving or not is_instance_valid(active_vehicle):
