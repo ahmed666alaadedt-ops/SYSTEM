@@ -342,7 +342,7 @@ jobs:
           test -s "$CELL_PACK"
           test -d "$SOURCE_DIR"
           cd "$PROJECT"
-          python3 -m unittest discover -s tools/geospatial -p 'test_audit_baghdad_cell_connectivity.py' -v
+          python3 -m unittest discover -s tools/geospatial -p 'test_*.py' -v
           python3 tools/geospatial/audit_baghdad_cell_connectivity.py \
             --input-dir "$SOURCE_DIR" \
             --pack "$CELL_PACK" \
