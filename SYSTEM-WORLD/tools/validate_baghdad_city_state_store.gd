@@ -43,33 +43,38 @@ func _run_test() -> void:
 	assert(FileAccess.file_exists(TEST_SAVE_PATH), "Cell state file was not written.")
 	assert(store.get_saved_feature_count(original_cell) == 1, "Expected one persisted city feature.")
 
+	# Simulate a fresh game session: the second store must read the JSON file from disk.
+	store.queue_free()
+	var fresh_store = STORE_SCRIPT.new()
+	fresh_store.save_path = TEST_SAVE_PATH
+	root.add_child(fresh_store)
+
 	var reloaded_cell := _make_cell()
 	var reloaded_building := StaticBody3D.new()
 	reloaded_building.set_meta("system_location_id", FEATURE_ID)
 	reloaded_building.set_meta("osm_feature_id", "way/424242")
 	reloaded_cell.add_child(reloaded_building)
 
-	store.restore_cell(Vector2i.ZERO, reloaded_cell)
-	assert(reloaded_building.has_meta("system_persistent_state"), "Feature state was not restored.")
+	fresh_store.restore_cell(Vector2i.ZERO, reloaded_cell)
+	assert(reloaded_building.has_meta("system_persistent_state"), "Feature state was not restored from disk.")
 	var restored: Dictionary = reloaded_building.get_meta("system_persistent_state")
-	assert(bool(restored.get("door_open", false)), "Door state did not survive unload/reload.")
-	assert(restored.get("shop_inventory", {}).get("water", 0) == 4, "Inventory did not survive unload/reload.")
-	assert(str(restored.get("service_status", "")) == "temporarily_closed", "Service state did not survive unload/reload.")
+	assert(bool(restored.get("door_open", false)), "Door state did not survive disk unload/reload.")
+	assert(restored.get("shop_inventory", {}).get("water", 0) == 4, "Inventory did not survive disk unload/reload.")
+	assert(str(restored.get("service_status", "")) == "temporarily_closed", "Service state did not survive disk unload/reload.")
 
 	# A changed source snapshot must not invalidate a feature with the same stable OSM-backed ID.
-	reloaded_cell.set_meta("source_snapshot", "test-snapshot-b")
 	var second_reload_cell := _make_cell()
 	second_reload_cell.set_meta("source_snapshot", "test-snapshot-b")
 	var second_reload_building := StaticBody3D.new()
 	second_reload_building.set_meta("system_location_id", FEATURE_ID)
 	second_reload_cell.add_child(second_reload_building)
-	store.restore_cell(Vector2i.ZERO, second_reload_cell)
+	fresh_store.restore_cell(Vector2i.ZERO, second_reload_cell)
 	assert(second_reload_building.has_meta("system_persistent_state"), "Stable feature ID was discarded after source snapshot change.")
 
 	original_cell.free()
 	reloaded_cell.free()
 	second_reload_cell.free()
-	store.queue_free()
+	fresh_store.queue_free()
 	if FileAccess.file_exists(TEST_SAVE_PATH):
 		DirAccess.remove_absolute(absolute_test_path)
 
