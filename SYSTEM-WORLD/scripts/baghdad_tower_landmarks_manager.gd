@@ -26,6 +26,11 @@ func _ready() -> void:
 	_create_materials()
 	_build_hunter_tower()
 	_build_power_tower()
+	_build_business_tower()
+	_build_shopping_tower()
+	_build_entertainment_tower()
+	_create_connected_city_links()
+	_create_public_amenities()
 
 func _create_materials() -> void:
 	tower_material = StandardMaterial3D.new()
@@ -217,4 +222,115 @@ func get_tower_positions() -> Array[Dictionary]:
 	return tower_positions.duplicate(true)
 
 
-##TOWER_ARCH_HELPERS_PLACEHOLDER
+
+func _build_business_tower() -> void:
+	_build_tower("BusinessTower", "برج الأعمال", "business_tower_baghdad", city_anchor + Vector3(-350.0, 0.0, 350.0), 220.0, 26.0, 36, Color(0.24, 0.78, 0.72))
+
+
+func _build_shopping_tower() -> void:
+	_build_tower("ShoppingTower", "برج التسوق", "shopping_tower_baghdad", city_anchor + Vector3(-355.0, 0.0, -350.0), 190.0, 30.0, 32, Color(0.95, 0.72, 0.28))
+
+
+func _build_entertainment_tower() -> void:
+	_build_tower("EntertainmentTower", "برج الترفيه", "entertainment_tower_baghdad", city_anchor + Vector3(355.0, 0.0, -350.0), 205.0, 29.0, 34, Color(0.75, 0.38, 0.95))
+
+
+func _create_tower_architecture(root: Node3D, node_name: String, title: String, height: float, radius: float, floors: int, beacon_color: Color) -> void:
+	# Procedural architectural blockout: podium terraces, facade fins, crown and identity signage.
+	for tier in range(3):
+		var podium := MeshInstance3D.new()
+		podium.name = "PodiumTerrace_%d" % tier
+		var podium_mesh := CylinderMesh.new()
+		podium_mesh.top_radius = radius * (1.48 - float(tier) * 0.13)
+		podium_mesh.bottom_radius = radius * (1.62 - float(tier) * 0.13)
+		podium_mesh.height = 3.0
+		podium.mesh = podium_mesh
+		podium.position.y = 8.5 + float(tier) * 3.2
+		podium.material_override = trim_material if tier == 0 else tower_material
+		root.add_child(podium)
+	for side in range(4):
+		var fin := MeshInstance3D.new()
+		fin.name = "FacadeFin_%d" % side
+		var fin_mesh := BoxMesh.new()
+		fin_mesh.size = Vector3(2.0, height * 0.94, 2.0)
+		fin.mesh = fin_mesh
+		var angle := TAU * float(side) / 4.0
+		fin.position = Vector3(cos(angle) * radius * 0.82, height * 0.5 + 7.0, sin(angle) * radius * 0.82)
+		fin.material_override = trim_material
+		root.add_child(fin)
+	var identity_ring := MeshInstance3D.new()
+	identity_ring.name = "IlluminatedIdentityRing"
+	var ring_mesh := CylinderMesh.new()
+	ring_mesh.top_radius = radius * 0.72
+	ring_mesh.bottom_radius = radius * 0.72
+	ring_mesh.height = 1.2
+	identity_ring.mesh = ring_mesh
+	identity_ring.position.y = height * 0.72 + 7.0
+	identity_ring.material_override = emissive_material
+	root.add_child(identity_ring)
+
+
+func _create_connected_city_links() -> void:
+	# Elevated pedestrian/vehicle corridor blockout linking all five tower podiums.
+	if tower_positions.size() < 2:
+		return
+	var link_root := Node3D.new()
+	link_root.name = "FiveTowerConnectedDistrict"
+	add_child(link_root)
+	for index in range(tower_positions.size()):
+		var first: Vector3 = tower_positions[index]["position"]
+		var second: Vector3 = tower_positions[(index + 1) % tower_positions.size()]["position"]
+		_create_link_deck(link_root, first + Vector3(0.0, 34.0, 0.0), second + Vector3(0.0, 34.0, 0.0), "SkyPromenade_%d" % index, 12.0, 0.65, trim_material)
+		_create_link_deck(link_root, first + Vector3(0.0, 23.0, 0.0), second + Vector3(0.0, 23.0, 0.0), "VehicleDeck_%d" % index, 18.0, 1.1, tower_material)
+		_create_vehicle_access_ramp(link_root, first, index)
+
+
+func _create_link_deck(parent: Node3D, start: Vector3, finish: Vector3, deck_name: String, width: float, thickness: float, material: Material) -> void:
+	var midpoint := (start + finish) * 0.5
+	var delta := finish - start
+	var deck := MeshInstance3D.new()
+	deck.name = deck_name
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(width, thickness, delta.length())
+	deck.mesh = mesh
+	deck.position = midpoint
+	deck.rotation.y = atan2(delta.x, delta.z)
+	deck.material_override = material
+	parent.add_child(deck)
+
+
+func _create_vehicle_access_ramp(parent: Node3D, tower_position: Vector3, index: int) -> void:
+	# Visual ramp prototype only; drivable vehicle navigation and collision validation remain future work.
+	var ramp_root := Node3D.new()
+	ramp_root.name = "VehicleAccessRamp_%d" % index
+	parent.add_child(ramp_root)
+	var outward := Vector3(1.0, 0.0, 0.35) if index % 2 == 0 else Vector3(-1.0, 0.0, -0.35)
+	var horizontal := Vector3(tower_position.x, 0.0, tower_position.z) + outward.normalized() * 58.0
+	for segment in range(8):
+		var t0 := float(segment) / 8.0
+		var t1 := float(segment + 1) / 8.0
+		var a := Vector3(horizontal.x, 2.0 + t0 * 21.0, horizontal.z) + outward * (t0 * 42.0)
+		var b := Vector3(horizontal.x, 2.0 + t1 * 21.0, horizontal.z) + outward * (t1 * 42.0)
+		_create_link_deck(ramp_root, a, b, "RampSegment_%d" % segment, 18.0, 1.0, tower_material)
+
+
+func _create_public_amenities() -> void:
+	var amenities := Node3D.new()
+	amenities.name = "ConnectedCityPublicAmenities_Blockout"
+	add_child(amenities)
+	var amenity_specs := [
+		{"name": "RooftopGardenDeck", "offset": Vector3(0.0, 38.0, 0.0), "size": Vector3(92.0, 1.2, 54.0), "material": trim_material},
+		{"name": "LeisureAndPoolDeck", "offset": Vector3(0.0, 42.0, 72.0), "size": Vector3(68.0, 1.0, 42.0), "material": emissive_material},
+		{"name": "FamilyEntertainmentPlaza", "offset": Vector3(0.0, 28.0, -78.0), "size": Vector3(82.0, 1.0, 48.0), "material": tower_material}
+	]
+	for spec in amenity_specs:
+		var deck := MeshInstance3D.new()
+		deck.name = str(spec["name"])
+		var mesh := BoxMesh.new()
+		mesh.size = spec["size"]
+		deck.mesh = mesh
+		deck.position = city_anchor + spec["offset"]
+		deck.material_override = spec["material"]
+		amenities.add_child(deck)
+	amenities.set_meta("planned_facilities", PackedStringArray(["parks", "restaurants", "cafes", "hotels", "cinema", "amusement_park", "water_park", "swimming_pools", "sports_courts", "family_services", "parking", "emergency_access"]))
+
