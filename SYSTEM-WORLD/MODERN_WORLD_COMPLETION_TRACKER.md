@@ -112,6 +112,16 @@ A checked repository foundation does not mean a finished gameplay feature. Visua
 - Design approval/documentation is recorded in `HUNTER_TOWERS_AND_EXAMINATION_DESIGN.md`. The connected city, bridges, detailed interiors, and river engineering are not yet implemented or runtime-tested.
 
 
+## Vehicle physics foundation — 20 November 2026
+
+- [x] Add a reusable Godot VehicleBody3D-based vehicle controller prototype with four VehicleWheel3D nodes, chassis collision, suspension setup, keyboard throttle/steering/reverse/brake inputs, and a mobile-control setter API.
+- [ ] Instantiate the vehicle from the dealership/garage using the selected owned vehicle and the active modern-world scene.
+- [ ] Add safe enter/exit interaction, driver/player state handoff, and a vehicle-follow camera.
+- [ ] Connect on-screen mobile steering, accelerator, reverse, and brake controls to set_mobile_controls().
+- [ ] Tune wheel suspension, traction, braking, mass, collision, and maximum speeds using in-engine driving tests.
+- [ ] Test driving on flat roads, slopes, turns, elevated decks, and parking ramps on desktop and Android.
+- Note: this commit adds a reusable controller script only. It is not yet instantiated or connected to the player, garage, camera, mobile UI, or tower routes; no Godot runtime test was run.
+
 ## Connected Baghdad district — collision and access blockout update — 20 November 2026
 
 - [x] Add static collision shapes matching the generated elevated promenade and vehicle-deck box geometry.
