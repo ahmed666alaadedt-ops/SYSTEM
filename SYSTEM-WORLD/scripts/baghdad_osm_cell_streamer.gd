@@ -8,6 +8,9 @@ const DEFAULT_DATA_ROOT := "res://data/geography/baghdad/cell_pack"
 const DEFAULT_CELL_SIZE := 200.0
 const MAX_CELL_OPERATIONS_PER_FRAME := 1
 
+signal cell_loaded(cell: Vector2i, cell_root: Node3D)
+signal cell_unloaded(cell: Vector2i, cell_id: String)
+
 var data_root := DEFAULT_DATA_ROOT
 var cell_size := DEFAULT_CELL_SIZE
 var min_cell_x := -2
@@ -21,6 +24,9 @@ var desired_cells: Dictionary = {}
 var pending_loads: Array[Vector2i] = []
 var pending_unloads: Array[Vector2i] = []
 var enabled := false
+var canonical_origin_frame_valid := false
+var source_snapshot := ""
+var manifest_schema_version := 0
 var _last_center_cell := Vector2i(2147483647, 2147483647)
 
 var road_material: StandardMaterial3D
@@ -37,15 +43,29 @@ func _ready() -> void:
 		push_warning("SYSTEM Baghdad OSM: cell pack is not installed; procedural Baghdad fallback remains active.")
 		return
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(manifest_path))
-	if not parsed is Dictionary or str(parsed.get("region_id", "")) != "iraq_baghdad_region":
-		push_error("SYSTEM Baghdad OSM: invalid region manifest.")
+	if not parsed is Dictionary:
+		push_error("SYSTEM Baghdad OSM: manifest JSON must be an object.")
+		return
+	manifest_schema_version = int(parsed.get("schema_version", 0))
+	if manifest_schema_version != 1:
+		push_error("SYSTEM Baghdad OSM: unsupported manifest schema version.")
+		return
+	if str(parsed.get("region_id", "")) != "iraq_baghdad_region":
+		push_error("SYSTEM Baghdad OSM: manifest region ID is invalid.")
 		return
 	if str(parsed.get("coordinate_system", "")) != "SYSTEM_LOCAL_ECEF_TANGENT":
 		push_error("SYSTEM Baghdad OSM: unsupported coordinate projection.")
 		return
-	var origin: Dictionary = parsed.get("origin", {})
-	var origin_lat := float(origin.get("latitude", 0.0))
-	var origin_lon := float(origin.get("longitude", 0.0))
+	var origin_value: Variant = parsed.get("origin", {})
+	if not origin_value is Dictionary:
+		push_error("SYSTEM Baghdad OSM: manifest origin must be an object.")
+		return
+	var origin: Dictionary = origin_value
+	var origin_lat := float(origin.get("latitude", NAN))
+	var origin_lon := float(origin.get("longitude", NAN))
+	if not is_finite(origin_lat) or not is_finite(origin_lon) or origin_lat < -90.0 or origin_lat > 90.0 or origin_lon < -180.0 or origin_lon > 180.0:
+		push_error("SYSTEM Baghdad OSM: manifest WGS84 origin is invalid.")
+		return
 	var registry_path := "res://data/geography/real_world_registry.json"
 	if not FileAccess.file_exists(registry_path):
 		push_error("SYSTEM Baghdad OSM: canonical geography registry is missing.")
@@ -67,18 +87,27 @@ func _ready() -> void:
 	if str(axes.get("x", "")) != "east_m" or str(axes.get("z", "")) != "south_m":
 		push_error("SYSTEM Baghdad OSM: unsupported local coordinate axes.")
 		return
-	cell_size = float(parsed.get("cell_size_m", DEFAULT_CELL_SIZE))
-	var bounds: Array = parsed.get("cell_bounds_inclusive", [-2, 2, -2, 2])
-	if bounds.size() != 4 or cell_size <= 0.0:
-		push_error("SYSTEM Baghdad OSM: invalid cell manifest bounds.")
+	cell_size = float(parsed.get("cell_size_m", NAN))
+	var bounds_value: Variant = parsed.get("cell_bounds_inclusive", [])
+	if not bounds_value is Array or not is_finite(cell_size) or cell_size <= 0.0:
+		push_error("SYSTEM Baghdad OSM: invalid cell size or bounds format.")
+		return
+	var bounds: Array = bounds_value
+	if bounds.size() != 4:
+		push_error("SYSTEM Baghdad OSM: cell bounds must contain min_x, max_x, min_z, max_z.")
 		return
 	min_cell_x = int(bounds[0])
 	max_cell_x = int(bounds[1])
 	min_cell_z = int(bounds[2])
 	max_cell_z = int(bounds[3])
+	if min_cell_x > max_cell_x or min_cell_z > max_cell_z:
+		push_error("SYSTEM Baghdad OSM: cell bounds are inverted.")
+		return
 	terrain_manager = get_parent().get_node_or_null("ModernContinent")
 	_create_materials()
 	_add_attribution_overlay()
+	source_snapshot = str(parsed.get("source_snapshot", ""))
+	canonical_origin_frame_valid = true
 	enabled = true
 	print("SYSTEM Baghdad OSM: metric cell pack ready; cell size ", cell_size, " m.")
 
@@ -190,10 +219,35 @@ func _load_cell(cell: Vector2i) -> void:
 	if not parsed is Dictionary:
 		push_warning("SYSTEM Baghdad OSM: invalid cell file: " + path)
 		return
+	if int(parsed.get("schema_version", 0)) != manifest_schema_version:
+		push_warning("SYSTEM Baghdad OSM: cell schema version does not match manifest: " + path)
+		return
+	if str(parsed.get("region_id", "")) != "iraq_baghdad_region":
+		push_warning("SYSTEM Baghdad OSM: cell region ID does not match manifest: " + path)
+		return
+	if int(parsed.get("cell_x", 2147483647)) != cell.x or int(parsed.get("cell_z", 2147483647)) != cell.y:
+		push_warning("SYSTEM Baghdad OSM: cell coordinates do not match requested cell: " + path)
+		return
+	var tile_cell_size := float(parsed.get("cell_size_m", NAN))
+	if not is_finite(tile_cell_size) or not is_equal_approx(tile_cell_size, cell_size):
+		push_warning("SYSTEM Baghdad OSM: cell size does not match manifest: " + path)
+		return
+	var layers_value: Variant = parsed.get("layers", {})
+	if not layers_value is Dictionary:
+		push_warning("SYSTEM Baghdad OSM: cell layers must be an object: " + path)
+		return
+	var layers: Dictionary = layers_value
+	for layer_name in layers:
+		if not layers[layer_name] is Array:
+			push_warning("SYSTEM Baghdad OSM: cell layer is not an array: " + str(layer_name))
+			return
 	var cell_root := Node3D.new()
 	cell_root.name = "BaghdadOSMCell_%d_%d" % [cell.x, cell.y]
 	cell_root.set_meta("cell_id", "%d:%d" % [cell.x, cell.y])
-	var layers: Dictionary = parsed.get("layers", {})
+	cell_root.set_meta("region_id", "iraq_baghdad_region")
+	cell_root.set_meta("cell_x", cell.x)
+	cell_root.set_meta("cell_z", cell.y)
+	cell_root.set_meta("schema_version", manifest_schema_version)
 	var counts := {}
 	var road_features: Array = layers.get("roads", [])
 	var road_count := 0
@@ -229,6 +283,11 @@ func _load_cell(cell: Vector2i) -> void:
 	cell_root.set_meta("feature_counts", counts)
 	add_child(cell_root)
 	loaded_cells[cell] = cell_root
+	cell_loaded.emit(cell, cell_root)
+
+
+func get_cell_node(cell: Vector2i) -> Node3D:
+	return loaded_cells.get(cell) as Node3D
 
 
 func _build_building_feature(parent: Node3D, feature: Dictionary, road_features: Array) -> int:
@@ -918,6 +977,8 @@ func _unload_cell(cell: Vector2i) -> void:
 		return
 	var node: Node3D = loaded_cells[cell]
 	loaded_cells.erase(cell)
+	var cell_id := str(node.get_meta("cell_id", "%d:%d" % [cell.x, cell.y]))
+	cell_unloaded.emit(cell, cell_id)
 	if is_instance_valid(node):
 		node.queue_free()
 
@@ -932,5 +993,7 @@ func get_streaming_status() -> Dictionary:
 		"source_license": "ODbL-1.0",
 		"source_attribution": "© OpenStreetMap contributors; © BBBike.org",
 		"real_scale_baghdad_pack": true,
-		"canonical_origin_frame_valid": true
+		"manifest_schema_version": manifest_schema_version,
+		"source_snapshot": source_snapshot,
+		"canonical_origin_frame_valid": canonical_origin_frame_valid
 	}
