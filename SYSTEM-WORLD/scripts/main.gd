@@ -657,6 +657,10 @@ func create_interaction_manager() -> void:
 		_on_fast_travel_point_activated
 	)
 
+	for elevator_panel in get_tree().get_nodes_in_group("system_rooftop_elevator_call"):
+		if elevator_panel.has_method("configure_player"):
+			elevator_panel.call("configure_player", player)
+
 
 func create_interaction_prompt() -> void:
 	interaction_prompt_layer = CanvasLayer.new()
