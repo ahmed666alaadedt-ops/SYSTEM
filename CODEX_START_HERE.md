@@ -70,3 +70,8 @@ Finish with:
 6. The next single recommended task.
 
 If a critical decision or unavailable tool blocks implementation, stop at the evidence-based audit and report the blocker clearly. Do not fabricate assets, test results, or successful builds.
+
+
+## Continuous production handoff — 20 November 2026
+
+After completing the initial audit and first safe implementation described above, read `CODEX_CONTINUOUS_PRODUCTION_QUEUE.md` completely and use it as the ordered production backlog for SYSTEM and SYSTEM WORLD. Resume from the repository's actual current state; do not repeat completed work. Execute phases sequentially, implement and verify real code/assets wherever the environment permits, commit each coherent increment, update the relevant trackers, and continue to the next unblocked phase in the same run. If the full queue cannot fit in one run, write an exact continuation status file and stop only at a safe checkpoint. Never claim untested work is complete.
