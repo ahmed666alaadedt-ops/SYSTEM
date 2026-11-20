@@ -131,3 +131,11 @@ GitHub file writes are confirmed for the scripts listed below. Godot parsing, sc
 - The city style index now selects a distinct procedural landmark silhouette for each of the fourteen named cities.
 - Landmark groups use lightweight box and cylinder meshes with restrained emissive accents; they are original stylized motifs rather than exact monument replicas.
 - Detailed city-specific architecture, signage, interiors, collision and runtime visual review remain outstanding.
+
+### 16. Worship landmarks and city advertising screens — first visual pass
+- Baghdad's OSM point amenities tagged as Muslim places of worship (or `building=mosque`) are now distinguished from generic amenity markers and receive a lightweight procedural prayer-hall, dome and twin-minaret landmark.
+- This first mosque pass applies to point features in the currently streamed Baghdad OSM amenity layer. Polygon-only mosque footprints and detailed city-specific mosque architecture still need dedicated treatment and asset review.
+- Each generated modern-world city now receives a large emissive LED billboard prototype with a visible placeholder campaign label. The screen nodes carry explicit metadata identifying demo mode and keeping live ads disabled.
+- Real advertising is not active. Production integration requires an approved ad provider, secure server-side campaign delivery, consent/privacy controls, content moderation, frequency limits, regional/legal review, and a non-ad fallback. Provider secrets must never be embedded in the Android client. No ad revenue or impressions are claimed.
+- Mosques are civic/worship landmarks and are excluded from commercial billboard placement.
+- These are source-level visual additions; runtime appearance, OSM feature coverage, and Android performance still require Godot validation.
