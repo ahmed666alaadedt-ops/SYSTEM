@@ -10,6 +10,7 @@ const DEFAULT_SAMPLE_SPACING := 20.0
 const MAX_CELL_OPERATIONS_PER_FRAME := 1
 
 signal cell_loaded(cell: Vector2i, cell_root: Node3D)
+signal cell_unloading(cell: Vector2i, cell_root: Node3D)
 signal cell_unloaded(cell: Vector2i, cell_id: String)
 
 var height_sampler: Callable
@@ -256,8 +257,9 @@ func _unload_cell(cell: Vector2i) -> void:
 	if not loaded_cells.has(cell):
 		return
 	var node: Node3D = loaded_cells[cell]
-	loaded_cells.erase(cell)
 	var cell_id := str(node.get_meta("cell_id", "%d:%d" % [cell.x, cell.y]))
+	cell_unloading.emit(cell, node)
+	loaded_cells.erase(cell)
 	cell_unloaded.emit(cell, cell_id)
 	if is_instance_valid(node):
 		node.queue_free()
