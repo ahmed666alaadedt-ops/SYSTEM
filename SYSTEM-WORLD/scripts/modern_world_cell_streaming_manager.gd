@@ -9,6 +9,9 @@ const DEFAULT_CELL_SIZE := 200.0
 const DEFAULT_SAMPLE_SPACING := 20.0
 const MAX_CELL_OPERATIONS_PER_FRAME := 1
 
+signal cell_loaded(cell: Vector2i, cell_root: Node3D)
+signal cell_unloaded(cell: Vector2i, cell_id: String)
+
 var height_sampler: Callable
 var world_width := 0.0
 var world_depth := 0.0
@@ -117,12 +120,14 @@ func _process_cell_queue() -> void:
 	# or crossing a cell boundary before its ground surface exists.
 	while not pending_loads.is_empty() and operations < MAX_CELL_OPERATIONS_PER_FRAME:
 		var cell: Vector2i = pending_loads.pop_front()
-		_load_cell(cell)
-		operations += 1
+		if desired_cells.has(cell) and not loaded_cells.has(cell):
+			_load_cell(cell)
+			operations += 1
 	while not pending_unloads.is_empty() and operations < MAX_CELL_OPERATIONS_PER_FRAME:
 		var cell: Vector2i = pending_unloads.pop_front()
-		_unload_cell(cell)
-		operations += 1
+		if not desired_cells.has(cell) and loaded_cells.has(cell):
+			_unload_cell(cell)
+			operations += 1
 
 
 func _load_cell(cell: Vector2i) -> void:
@@ -188,6 +193,7 @@ func _load_cell(cell: Vector2i) -> void:
 	cell_root.set_meta("height_intervals_z", intervals_z)
 	add_child(cell_root)
 	loaded_cells[cell] = cell_root
+	cell_loaded.emit(cell, cell_root)
 	var center_distance := maxi(absi(cell.x - _last_center_cell.x), absi(cell.y - _last_center_cell.y))
 	_set_cell_collision(cell_root, center_distance <= collision_radius)
 
@@ -251,8 +257,14 @@ func _unload_cell(cell: Vector2i) -> void:
 		return
 	var node: Node3D = loaded_cells[cell]
 	loaded_cells.erase(cell)
+	var cell_id := str(node.get_meta("cell_id", "%d:%d" % [cell.x, cell.y]))
+	cell_unloaded.emit(cell, cell_id)
 	if is_instance_valid(node):
 		node.queue_free()
+
+
+func get_cell_node(cell: Vector2i) -> Node3D:
+	return loaded_cells.get(cell) as Node3D
 
 
 func get_streaming_status() -> Dictionary:
@@ -263,5 +275,7 @@ func get_streaming_status() -> Dictionary:
 		"cell_size_m": cell_size,
 		"sample_spacing_m": sample_spacing,
 		"lod_geometry_enabled": false,
-		"collision_streaming_enabled": true
+		"collision_streaming_enabled": true,
+		"collision_radius": collision_radius,
+		"current_center_cell": _last_center_cell
 	}
