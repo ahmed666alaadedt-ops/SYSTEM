@@ -32,6 +32,8 @@ This is the acceptance checklist for the modern-world map. The project must not 
 
 - [ ] Import and validate licensed, attributed regional geospatial data for Baghdad before creating production buildings: real road graph, district boundaries, terrain/elevation, water, bridges and building footprints.
 - [ ] Extend the WGS84 registry and region projection pipeline to each additional city only when its approved geographic data pack is available; do not promote prototype coordinates to real locations.
+- [ ] Replace the 2.24 km × 1.58 km procedural continent prototype with a streamed real-scale region architecture before loading the approximately 36.0 km × 34.1 km Baghdad municipal area.
+- [ ] Validate 1 km region-cell streaming, cross-cell roads/water, LOD, collision/navigation streaming, memory and frame-time budgets on Android.
 - [ ] Replace generic block clusters with distinctive city architecture, skyline silhouettes, landmarks, local street furniture, signage, vegetation, and cultural details.
 - [ ] Build connected, navigable street grids inside every district, including sidewalks, crossings, curbs, intersections, traffic islands, signs, barriers, and collision.
 - [ ] Add functioning markets, shops, restaurants, hotels, homes, offices, universities, industrial sites, hospitals, police/fire/ambulance stations, parks, recreation, and interiors.
