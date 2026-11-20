@@ -320,12 +320,18 @@ jobs:
         if: success() && hashFiles('SYSTEM-WORLD/data/geography/baghdad/cell_pack/manifest.json') != ''
         shell: bash
         run: |
+          set -euo pipefail
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
-          set -o pipefail
+          LOG="$RUNNER_TEMP/baghdad-osm-runtime.log"
           timeout 90s "$GODOT" --headless --path "$PROJECT" \
             --script res://tools/validate_baghdad_osm_runtime.gd \
-            2>&1 | tee "$RUNNER_TEMP/baghdad-osm-runtime.log"
+            2>&1 | tee "$LOG"
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" "$LOG"; then
+            echo "::error::Godot reported a script error during audited Baghdad OSM runtime validation."
+            exit 1
+          fi
+          grep -q "Baghdad OSM runtime cell passed:" "$LOG"
 
       - name: Validate child character safety rules
         shell: bash
