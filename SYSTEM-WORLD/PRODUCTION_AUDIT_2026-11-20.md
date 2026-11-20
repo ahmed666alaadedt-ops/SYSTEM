@@ -302,3 +302,11 @@ These changes require the latest CI run to finish successfully before the new ru
 - The registry projection manager already provides WGS84-to-local metric conversion and 1,000 m tile IDs, but tile IDs are only coordinate identifiers; they do not constitute streaming.
 - This confirms the world-scale gate remains open. Do not simply enlarge the existing 151 × 111 grid or scale Baghdad into it. The next implementation must introduce independently generated region cells, shared border samples/edge stitching, stable regional origins, and budgeted collision/navigation before importing the municipal data pack.
 - The canonical runtime and geography-anchor validation workflows exited successfully for commit `ca224a372208fa3caf86a50b5effc6dcc25c180a`. However, the captured headless logs contain repeated Godot renderer errors `Parameter "m" is null` at `mesh_get_surface_count` (11,837 occurrences across the two launch logs inspected). Treat these as an unresolved runtime diagnostic; a green process exit alone does not certify a clean render/runtime. The separate Android APK export job was still running at the time of this audit.
+
+## Follow-up verification — 2026-11-20
+
+- Re-ran the canonical Godot runtime validation on commit `0d8e8c20b618e7bf0f6e35e5f6cb4c3b7b7c6f36`: workflow run 44701018326 completed successfully, and its captured job log contained zero occurrences of the earlier null-mesh diagnostic.
+- Canonical Android APK workflow run 44701018102 completed successfully and produced artifact `SYSTEM-WORLD-canonical-android-debug-apk` (artifact ID 14612837176; 35,460,624 bytes).
+- Additional Android export workflow run 44701018065 completed successfully and produced `SYSTEM-WORLD-Android-debug` (artifact ID 14612696780; 35,460,852 bytes). The standard Android build workflow run 44701018027 also completed successfully and produced `SYSTEM-debug-apk` (artifact ID 14613375313; 33,092,926 bytes).
+- The earlier null-mesh log spam was not reproduced in the later canonical validation. Keep it as a historical transient diagnostic, not as a current confirmed failure.
+- These CI results validate project import/startup and APK export only; they do not replace visual inspection or Android-device frame-time, memory, collision, navigation, and thermal profiling.
