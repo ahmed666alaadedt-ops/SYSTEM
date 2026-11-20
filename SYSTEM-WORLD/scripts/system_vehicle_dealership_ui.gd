@@ -9,6 +9,7 @@ var root_panel: PanelContainer
 var balance_label: Label
 var status_label: Label
 var list_container: VBoxContainer
+var scroll_container: ScrollContainer
 var selected_vehicle_id := ""
 
 func setup(garage: SystemPlayerVehicleManager, runtime) -> void:
@@ -62,7 +63,8 @@ func _build_interface() -> void:
 	outer.add_child(hint)
 
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(0, 300)
+	scroll_container = scroll
+	scroll.custom_minimum_size = Vector2(0, 180)
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	outer.add_child(scroll)
 
@@ -90,6 +92,14 @@ func _build_interface() -> void:
 func open_showroom() -> void:
 	if garage_manager == null:
 		return
+	var viewport_size := get_viewport().get_visible_rect().size
+	var panel_width := minf(620.0, maxf(300.0, viewport_size.x - 24.0))
+	var panel_height := minf(520.0, maxf(260.0, viewport_size.y - 24.0))
+	root_panel.offset_left = -panel_width * 0.5
+	root_panel.offset_right = panel_width * 0.5
+	root_panel.offset_top = -panel_height * 0.5
+	root_panel.offset_bottom = panel_height * 0.5
+	scroll_container.custom_minimum_size.y = maxf(110.0, panel_height - 225.0)
 	_refresh_catalog()
 	status_label.text = "اختر مركبتك. الشراء والحفظ حالياً محليان على هذا الجهاز."
 	visible = true
@@ -193,4 +203,4 @@ func _reason_text(reason: String) -> String:
 			return "تعذر تنفيذ الطلب: " + reason
 
 func _format_number(value: int) -> String:
-	return String.num_int64(value).reverse().insert(0, "").reverse()
+	return str(value)
