@@ -17,7 +17,7 @@ const ROAD_WIDTH := 18.0
 const ROAD_THICKNESS := 0.8
 
 const CHECKPOINT_COUNT := 4
-const START_GRID_OFFSET := Vector3(TRACK_HALF_LENGTH, 0.0, -22.0)
+const START_GRID_OFFSET := Vector3(TRACK_HALF_LENGTH, 0.0, -8.0)
 const CHECKPOINT_ANGLES := [0.0, PI * 0.5, PI, PI * 1.5]
 
 var checkpoint_areas: Array[Area3D] = []
@@ -120,7 +120,7 @@ func _build_start_finish_and_grid() -> void:
 	_create_box("StartFinishLine", Vector3(ROAD_WIDTH, 0.06, 1.3), Vector3(TRACK_HALF_LENGTH, 0.49, 0.0), 0.0, Color(0.95, 0.9, 0.16), false)
 	_create_box("StartFinishGantries_Crossbar", Vector3(ROAD_WIDTH + 3.0, 0.8, 1.2), Vector3(TRACK_HALF_LENGTH, 7.0, 0.0), 0.0, Color(0.12, 0.2, 0.27), false)
 	for side in [-1.0, 1.0]:
-		_create_box("StartFinishGantries_Post_%s" % str(side), Vector3(1.1, 7.0, 1.2), Vector3(TRACK_HALF_LENGTH, 3.5, side * (ROAD_WIDTH * 0.5 + 1.5)), 0.0, Color(0.12, 0.2, 0.27), false)
+		_create_box("StartFinishGantries_Post_%s" % str(side), Vector3(1.1, 7.0, 1.2), Vector3(TRACK_HALF_LENGTH + side * (ROAD_WIDTH * 0.5 + 1.5), 3.5, 0.0), 0.0, Color(0.12, 0.2, 0.27), false)
 
 func _build_checkpoints() -> void:
 	for index in range(CHECKPOINT_COUNT):
@@ -132,9 +132,9 @@ func _build_checkpoints() -> void:
 		gate.position = point
 		gate.rotation.y = atan2(tangent.x, tangent.z)
 		track_root.add_child(gate)
-		_create_box("Checkpoint_%02d_PostLeft" % index, Vector3(0.8, 5.5, 0.8), point + Vector3(-ROAD_WIDTH * 0.5, 2.75, 0.0), gate.rotation.y, Color(0.08, 0.72, 0.92), false)
-		_create_box("Checkpoint_%02d_PostRight" % index, Vector3(0.8, 5.5, 0.8), point + Vector3(ROAD_WIDTH * 0.5, 2.75, 0.0), gate.rotation.y, Color(0.08, 0.72, 0.92), false)
-		_create_box("Checkpoint_%02d_Header" % index, Vector3(ROAD_WIDTH, 0.55, 0.8), point + Vector3(0.0, 5.5, 0.0), gate.rotation.y, Color(0.08, 0.72, 0.92), false)
+		_create_box("Checkpoint_%02d_PostLeft" % index, Vector3(0.8, 5.5, 0.8), point + (Basis(Vector3.UP, gate.rotation.y) * Vector3(-ROAD_WIDTH * 0.5, 2.75, 0.0)), gate.rotation.y, Color(0.08, 0.72, 0.92), false)
+		_create_box("Checkpoint_%02d_PostRight" % index, Vector3(0.8, 5.5, 0.8), point + (Basis(Vector3.UP, gate.rotation.y) * Vector3(ROAD_WIDTH * 0.5, 2.75, 0.0)), gate.rotation.y, Color(0.08, 0.72, 0.92), false)
+		_create_box("Checkpoint_%02d_Header" % index, Vector3(ROAD_WIDTH, 0.55, 0.8), point + Vector3.UP * 5.5, gate.rotation.y, Color(0.08, 0.72, 0.92), false)
 		var area := Area3D.new()
 		area.name = "CheckpointTrigger_%02d" % index
 		area.collision_layer = 0
