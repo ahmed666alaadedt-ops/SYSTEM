@@ -4,7 +4,7 @@
 **Repository:** https://github.com/ahmed666alaadedt-ops/SYSTEM  
 **Branch:** `main`  
 **Initial audit baseline:** `9f75f6bf3aecf096c9658320149a3816d18b631f`  
-**Latest stabilization commit at update:** `3dca98ce1d67ecde22412162d245a88f2b917590`
+**Latest stabilization commit at update:** `ec512c7808ac0f604c46288418d7f6237f742c44`
 
 This is the central index for the existing SYSTEM application and SYSTEM WORLD projects. It is an inventory, not a claim that the game is complete.
 
@@ -61,6 +61,7 @@ A successful headless launch or APK export does not prove visual quality, full g
 - Greed Island's return point is an extraction beacon, not a Star Gate, and the island defaults to closed outside an explicitly opened season.
 - Runtime QA scripts now cover the Baghdad geography anchor and Baghdad-only Star Gate placement. Latest CI status must be checked before treating the new gate QA as passed.
 - A Geofabrik Iraq OSM snapshot and Baghdad Municipality boundary have been recorded as source candidates only. `SYSTEM-WORLD/data/geography/GEOSPATIAL_IMPORT_PLAN.md` documents licensing, attribution, quality caveats and import gates; no source geometry has been imported.
+- `.github/workflows/verify-baghdad-osm-source.yml` downloads the pinned OSM snapshot, verifies its checksum, extracts relation 5638803 with referenced members, and validates the administrative boundary tags. Its first run is pending/in progress; do not claim the relation has been verified until the run finishes.
 
 ## Audit rule
 
