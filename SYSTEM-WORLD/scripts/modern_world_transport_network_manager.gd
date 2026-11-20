@@ -181,12 +181,24 @@ func _build_corridor_segment(start: Vector3, finish: Vector3, route_index: int, 
 	rail_surface.generate_normals()
 	marking_surface.generate_normals()
 	if added > 0:
+		var road_body := StaticBody3D.new()
+		road_body.name = "IntercityHighwayBody_%02d_%02d" % [route_index, segment_index]
+		add_child(road_body)
+
 		var road_mesh := MeshInstance3D.new()
 		road_mesh.name = "IntercityHighway_%02d_%02d" % [route_index, segment_index]
 		road_mesh.mesh = road_surface.commit()
 		road_mesh.material_override = road_material
 		road_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		add_child(road_mesh)
+		road_body.add_child(road_mesh)
+
+		# Static triangle collision makes the generated highway physically solid.
+		# Keep it on the same body as the visual mesh so streamed route cleanup
+		# removes both together when the active city changes.
+		var road_collision := CollisionShape3D.new()
+		road_collision.name = "IntercityHighwayCollision"
+		road_collision.shape = road_mesh.mesh.create_trimesh_shape()
+		road_body.add_child(road_collision)
 		var rail_mesh := MeshInstance3D.new()
 		rail_mesh.name = "IntercityRailCorridor_%02d_%02d" % [route_index, segment_index]
 		rail_mesh.mesh = rail_surface.commit()
