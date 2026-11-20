@@ -502,6 +502,36 @@ class BaghdadCellConnectivityTests(unittest.TestCase):
                 "999999",
             )
 
+
+    def test_source_feature_ids_outside_cell_pack_extent_are_not_missing(self):
+        with tempfile.TemporaryDirectory() as temp:
+            source, pack = _make_fixture(Path(temp))
+            roads_path = source / "roads.geojson"
+            data = json.loads(roads_path.read_text(encoding="utf-8"))
+
+            def wgs84(x, z):
+                return (
+                    44.3661 + x / (111319.49 * 0.835),
+                    33.3152 - z / 110574.0,
+                )
+
+            data["features"].append(
+                _feature(
+                    999998,
+                    "way",
+                    LineString([wgs84(1000, 80), wgs84(1040, 80)]),
+                )
+            )
+            roads_path.write_text(json.dumps(data), encoding="utf-8")
+
+            result = audit.audit_pack(source, pack)
+            self.assertEqual(result["status"], "passed", result["errors"])
+            self.assertEqual(result["missing_osm_feature_ids"], 0)
+            comparison = result["feature_id_comparison"]
+            self.assertGreater(comparison["source_osm_feature_ids_total"], comparison["expected_cell_feature_ids"])
+            self.assertEqual(comparison["expected_cell_feature_ids"], comparison["actual_feature_ids"])
+
+
     def test_missing_osm_feature_id_is_reported_separately_from_missing_fragments(self):
         with tempfile.TemporaryDirectory() as temp:
             source, pack = _make_fixture(Path(temp))
