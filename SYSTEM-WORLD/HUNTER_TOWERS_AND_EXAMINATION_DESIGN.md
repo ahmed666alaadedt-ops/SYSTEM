@@ -85,3 +85,36 @@ The stage completion method is an integration hook for a future trusted objectiv
 ## Verification boundary
 
 GitHub writes and source-level connections are confirmed for this update. No Godot parser, editor import, runtime scene, Android build, multiplayer test, or visual inspection was performed in this session. The tower geometry and examination progression are prototypes, not a finished playable exam or completed tower experience.
+
+
+## Baghdad Five-Tower Connected City — approved spatial direction — 20 November 2026
+
+The five-tower concept is a connected urban district, not five isolated landmarks. Treat it as one continuous vertical city woven into central Baghdad and spanning the Karkh–Rusafa river corridor.
+
+### Geographic placement and protected landmarks
+- Place the district in central Baghdad between the Karkh and Rusafa banks of the Tigris, with major parts of the complex on both sides of the river.
+- The Tigris must remain visibly flowing beneath and through the composition as a real open river corridor. Do not roof over, fill, or visually hide the river.
+- Preserve the Tigris waterfront, river navigation corridor, riverbanks, and the legibility of the two historic sides of Baghdad.
+- Tahrir Square (Sahat al-Tahrir) is a mandatory protected landmark on the Rusafa side. Preserve the square's recognizable open public-space identity and the Freedom Monument; do not replace, bury, cover, or visually overwhelm either landmark with tower podiums or elevated structures.
+- Integrate the five-tower district with the existing city fabric and roads rather than treating it as a detached island or replacing central Baghdad.
+
+### Connected-city form
+- The five towers remain five distinct primary towers, each with its own silhouette and identity, but are joined into one coherent complex by elevated skybridges, multi-level pedestrian promenades, public terraces, and carefully placed cross-river connections.
+- Connections must create a walkable network across the Karkh and Rusafa sides while keeping the Tigris open below. River-crossing links should be elegant bridges or high-level connectors with clear navigation clearance; do not place solid building masses across the river.
+- Build a multi-level urban experience: ground-level public streets and plazas; mid-level retail, services, and indoor promenades; upper-level sky gardens, recreation decks, and observation spaces.
+- The five rooftops and podium terraces should connect into large shared gardens and entertainment districts, with some independent zones for each tower. Include parks, restaurants, cafes, pools, sports courts, event plazas, viewing decks, and family recreation areas.
+- Provide clear public routes, emergency/service access, transit connections, accessible paths, and wayfinding. The complex must feel like a functioning city district, not only a decorative mega-structure.
+
+### Five tower identities
+1. Power Tower — combat arenas, training, tournaments, champion displays, and spectator facilities.
+2. Hunter Association Tower — hunter registration, mission hall, examination administration, guild services, and Hall of Honor.
+3. Business Tower — company headquarters, offices, investment, trade, and professional services.
+4. Shopping Tower — connected malls, shops, restaurants, cinemas, and indoor public promenades.
+5. Entertainment Tower — amusement, sports, pools, family activities, festivals, and recreation.
+
+### Visual and gameplay rules
+- From multiple city viewpoints, the player should be able to recognize the five-tower skyline as one connected Baghdad landmark, while still distinguishing all five towers.
+- Ground-level views must preserve meaningful views toward the Tigris and the Freedom Monument/Tahrir Square. Use setbacks, view corridors, and controlled tower heights/placement to avoid hiding protected landmarks.
+- The riverfront and Tahrir Square remain explorable public spaces with their own activities; they are not merely scenery around the towers.
+- Do not claim the real Baghdad skyline or landmarks have been physically altered. This is the fictional future version of Baghdad inside SYSTEM WORLD.
+- This section establishes the approved design direction only. It does not mean the complete district, bridges, interiors, or river engineering are already implemented in Godot.
