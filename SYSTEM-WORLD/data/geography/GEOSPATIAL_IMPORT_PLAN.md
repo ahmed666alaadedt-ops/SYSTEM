@@ -162,3 +162,40 @@ A Baghdad region pack is not production-ready until:
 ## 9. Current boundary
 
 The registry currently has one Baghdad coordinate anchor. The Baghdad city anchor now uses the WGS84 registry, but this plan does not mean the PBF has been imported. Real streets, district polygons, terrain, river geometry, bridges and building footprints are still absent from the canonical runtime. The other thirteen named city centers remain prototype-layout coordinates.
+
+
+## 10. First 200 m metric cell proof — 2026-11-20
+
+A reproducible cell-pack generator now exists at `SYSTEM-WORLD/tools/geospatial/build_baghdad_metric_cell_pack.py`. It converts the clipped WGS84 OSM layers into a small 5 × 5 sample around the Baghdad registry origin:
+
+- Cell size: 200 m × 200 m.
+- Cell IDs: X/Z = -2 through +2, inclusive.
+- Coverage: an initial 1 km × 1 km sample around the Baghdad anchor, not the full municipality.
+- Local axes and projection: the same WGS84 ECEF tangent frame used by `SystemRealWorldGeographyManager` (X east, Z south); this avoids a mismatch between exported data and the in-game regional origin.
+- Layers: buildings, roads, waterways, bridges, landuse, amenities, railway and natural-water.
+- Source IDs and selected OSM tags are preserved; source attribution and ODbL metadata are included in the manifest.
+
+The first generated pack was validated in GitHub Actions run [44708930412](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44708930412), artifact [14615624945](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44708930412). The nested metric pack contained 25 cells and these feature parts:
+
+| Layer | Parts in first 5×5 sample |
+|---|---:|
+| Buildings | 246 |
+| Roads | 469 |
+| Waterways | 10 |
+| Bridges | 32 |
+| Landuse | 179 |
+| Amenities | 443 |
+| Railway | 25 |
+| Natural water | 13 |
+
+This sample proves the export pipeline can create metric cells; it does not establish completeness of the OSM source, nor a full Baghdad map. Building footprints are assigned to one cell by representative point to avoid splitting individual buildings; roads, waterways, bridges and area features are clipped at cell bounds with stable source IDs.
+
+Runtime support has now been added:
+- `scripts/baghdad_osm_cell_streamer.gd` reads the extracted cell JSON files, creates first-pass building extrusions/collisions and road/water/bridge/land-use meshes, and streams nearby cells.
+- `WorldManager` adds this streamer only when the regional pack manifest is present.
+- `ModernWorldRegionManager` skips Baghdad's procedural district blockout when the real OSM pack is present, avoiding duplicate buildings/roads.
+- `tools/validate_baghdad_osm_runtime.gd` checks that cell 0:0 creates real road, building, land-use and building-collision nodes.
+
+The source workflow now regenerates the pack and uploads it as part of the OSM artifact. The canonical Android workflow is wired to download the pack after that source workflow succeeds, unpack it into the Godot project and run the OSM runtime validation before exporting. **This end-to-end workflow-run handoff and on-device appearance still require a successful run and physical phone inspection.** The pack is not checked into the repository; it is a generated, short-lived Actions artifact.
+
+Do not scale this initial 5×5 sample to the whole 861 km² candidate municipality until road/water connectivity, source coverage, cell ownership, LOD, navigation, memory and physical Android performance have been reviewed.
