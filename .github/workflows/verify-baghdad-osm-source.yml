@@ -277,6 +277,7 @@ jobs:
             --input-dir "$RUNNER_TEMP/baghdad-source/clipped_layers" \
             --output "$RUNNER_TEMP/baghdad-source/baghdad-metric-cell-pack-5x5.zip" \
             --cell-size 200 \
+            --source-timestamp "$(python3 -c 'import json; print(json.load(open("baghdad-source-verification.json"))["snapshot_timestamp"])')" \
             --cell-bounds=-2,2,-2,2
           python3 - <<'PY'
           import json
