@@ -12,6 +12,7 @@ const CONTINENT_RADIUS_X := 1120.0
 const CONTINENT_RADIUS_Z := 790.0
 const SEA_LEVEL := 0.0
 const OCEAN_FLOOR := -24.0
+const TerrainCellStreamingManagerScript = preload("res://scripts/modern_world_cell_streaming_manager.gd")
 
 var terrain_height_data := PackedFloat32Array()
 var terrain_step_x := WORLD_WIDTH / float(GRID_X - 1)
@@ -51,7 +52,7 @@ const CITY_DATA := [
 func _ready() -> void:
 	name = "ModernContinent"
 	_build_ocean()
-	_build_continent()
+	_setup_terrain_streaming()
 	_build_coastal_beaches()
 	_build_islands()
 	_build_cave_entrances()
@@ -249,6 +250,29 @@ func _build_continent() -> void:
 	collision.position = Vector3(0.0, 0.0, 0.0)
 	terrain_body.add_child(collision)
 	add_child(terrain_body)
+
+
+
+func _setup_terrain_streaming() -> void:
+	# The monolithic continent mesh/collision is intentionally no longer built.
+	# Terrain cells now sample the same deterministic world-space height function.
+	var streamer = TerrainCellStreamingManagerScript.new()
+	streamer.name = "ModernWorldTerrainCellStreamer"
+	var terrain_material := _make_terrain_material()
+	if not streamer.configure(
+		Callable(self, "_get_height"),
+		WORLD_WIDTH,
+		WORLD_DEPTH,
+		200.0,
+		20.0,
+		terrain_material,
+		2,
+		1
+	):
+		push_error("SYSTEM WORLD: terrain cell streaming configuration failed.")
+		streamer.queue_free()
+		return
+	add_child(streamer)
 
 
 func _make_terrain_material() -> StandardMaterial3D:
