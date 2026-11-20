@@ -1,6 +1,13 @@
 name: Verify Baghdad OSM Source Candidate
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/verify-baghdad-osm-source.yml"
+      - "SYSTEM-WORLD/data/geography/GEOSPATIAL_IMPORT_PLAN.md"
+      - "SYSTEM-WORLD/data/geography/real_world_registry.json"
   workflow_dispatch:
 
 permissions:
