@@ -203,3 +203,17 @@ A checked repository foundation does not mean a finished gameplay feature. Visua
 - [ ] Build racing systems: licensed/fictional championships, circuits, qualifying, laps, timing, pit stops, penalties, AI opponents, multiplayer races, and rewards.
 - [ ] Balance prices, unlock requirements, progression, and availability through the intended shared economy.
 - Note: catalog metadata and vehicle class entries are source-level foundations only. They do not yet provide authentic manufacturer models, completed racing gameplay, or validated driving physics.
+
+
+## First-pass motorsport event framework — 20 November 2026
+
+- [x] Add a reusable motorsport manager with event definitions for city sprint, GT championship, formula grand prix, endurance, drift, rally, and quarter-mile drag.
+- [x] Validate that the selected event exists, the player owns the entered vehicle, and its catalog class is eligible for that discipline.
+- [x] Add ordered checkpoint registration, lap progression, elapsed-time tracking, finish/cancel flow, and race lifecycle signals.
+- [x] Add a local prototype wallet reward method and connect event completion to its fixed participation reward.
+- [ ] Connect the manager to the active world and instantiate real race start/finish gates and checkpoint Area3D nodes.
+- [ ] Build race tracks and route geometry for circuits, drag strips, drift arenas, rally stages, and endurance layouts.
+- [ ] Add countdowns, false-start detection, lap timing UI, position tracking, AI competitors, penalties, pit stops, damage rules, and reset/respawn handling.
+- [ ] Add event menus, qualifying, championships, seasonal events, leaderboards, multiplayer synchronization, anti-cheat validation, and server-authoritative rewards.
+- [ ] Validate all event flows and rewards in Godot and on Android.
+- Note: this is a reusable source-level race lifecycle/checkpoint foundation only. It is not yet connected to the active scene, no track/checkpoint nodes or AI opponents are built, and rewards remain local-device prototype currency.
