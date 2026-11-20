@@ -1,6 +1,7 @@
 extends SceneTree
 
 const STREAMER_SCRIPT = preload("res://scripts/modern_world_cell_streaming_manager.gd")
+const CONTINENT_SCRIPT = preload("res://scripts/modern_continent_manager.gd")
 
 
 func _initialize() -> void:
@@ -47,5 +48,13 @@ func _run_tests() -> void:
 	streamer._unload_cell(Vector2i(0, 0))
 	assert(streamer.loaded_cells.size() == 2)
 	streamer.queue_free()
-	print("Terrain cell streaming checks passed: stable IDs, shared edge heights, collision and unload.")
+
+	var continent = CONTINENT_SCRIPT.new()
+	root.add_child(continent)
+	var integrated_streamer := continent.get_node_or_null("ModernWorldTerrainCellStreamer")
+	assert(integrated_streamer != null, "Modern continent did not instantiate the cell streamer.")
+	assert(continent.get_node_or_null("ContinentTerrainVisual") == null, "Monolithic terrain visual is still active.")
+	assert(continent.get_node_or_null("ContinentTerrainCollision") == null, "Monolithic terrain collision is still active.")
+	continent.queue_free()
+	print("Terrain cell streaming checks passed: lifecycle, shared edges, collision and canonical continent integration.")
 	quit(0)
