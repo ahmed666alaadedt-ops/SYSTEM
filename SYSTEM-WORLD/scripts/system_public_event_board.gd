@@ -7,6 +7,7 @@ class_name SYSTEMPublicEventBoard
 
 const MAX_VISIBLE_RESULTS := 4
 const MAX_STORED_RESULTS := 40
+const SAVE_PATH := "user://system_public_event_results.cfg"
 
 var terrain: Node
 var city_anchors: Dictionary = {}
@@ -16,6 +17,7 @@ var ad_labels: Array[Label3D] = []
 
 
 func setup(anchors: Dictionary, terrain_manager: Node) -> void:
+	_load_results()
 	city_anchors = anchors.duplicate(true)
 	terrain = terrain_manager
 	_build_city_media_displays()
@@ -73,6 +75,7 @@ func _publish_result(category: String, headline: String, detail: String) -> void
 	results.push_front(record)
 	while results.size() > MAX_STORED_RESULTS:
 		results.pop_back()
+	_save_results()
 	_refresh_result_displays()
 	print("SYSTEM PUBLIC BOARD: ", category, " — ", headline)
 
@@ -81,6 +84,7 @@ func _build_city_media_displays() -> void:
 	var frame_material := _make_material(Color(0.035, 0.055, 0.085), 0.25, 0.5)
 	var ad_material := _make_material(Color(0.025, 0.16, 0.22), 0.18, 0.35)
 	var result_material := _make_material(Color(0.10, 0.075, 0.025), 0.2, 0.45)
+	var building_material := _make_material(Color(0.075, 0.095, 0.13), 0.82, 0.38)
 	ad_material.emission_enabled = true
 	ad_material.emission = Color(0.02, 0.32, 0.48)
 	ad_material.emission_energy_multiplier = 1.25
@@ -97,10 +101,9 @@ func _build_city_media_displays() -> void:
 		display_root.position = Vector3(anchor.x + 24.0, ground, anchor.y - 30.0)
 		add_child(display_root)
 
-		_add_support(display_root, Vector3(-7.8, 13.0, 0.0), Vector3(0.8, 26.0, 0.8), frame_material)
-		_add_support(display_root, Vector3(7.8, 13.0, 0.0), Vector3(0.8, 26.0, 0.8), frame_material)
-		_add_screen(display_root, "AdvertisingPanel", Vector3(0.0, 18.0, -0.55), Vector3(15.0, 8.0, 0.8), ad_material, frame_material)
-		_add_screen(display_root, "ChampionResultsPanel", Vector3(0.0, 27.0, -0.55), Vector3(15.0, 8.0, 0.8), result_material, frame_material)
+		_add_skyscraper(display_root, building_material, frame_material)
+		_add_screen(display_root, "AdvertisingPanel", Vector3(0.0, 31.0, -9.55), Vector3(15.0, 8.0, 0.8), ad_material, frame_material)
+		_add_screen(display_root, "ChampionResultsPanel", Vector3(0.0, 41.0, -9.55), Vector3(15.0, 8.0, 0.8), result_material, frame_material)
 
 		var ad_label := Label3D.new()
 		ad_label.name = "CuratedCampaignText"
@@ -119,13 +122,63 @@ func _build_city_media_displays() -> void:
 		var result_label := Label3D.new()
 		result_label.name = "VerifiedEventResultsText"
 		result_label.text = "SYSTEM CHAMPIONS\nبانتظار أول إنجاز موثق\nالنتائج محلية لهذه الجلسة"
-		result_label.position = Vector3(0.0, 27.0, -1.02)
+		result_label.position = Vector3(0.0, 41.0, -10.02)
 		result_label.font_size = 29
 		result_label.pixel_size = 0.014
 		result_label.modulate = Color(1.0, 0.88, 0.55)
 		result_label.outline_size = 7
 		display_root.add_child(result_label)
 		result_labels[city_name] = result_label
+
+
+func _add_skyscraper(parent: Node3D, building_material: Material, trim_material: Material) -> void:
+	var tower := MeshInstance3D.new()
+	tower.name = "AdvertisingSkyscraperFacade"
+	var tower_mesh := BoxMesh.new()
+	tower_mesh.size = Vector3(22.0, 82.0, 18.0)
+	tower.mesh = tower_mesh
+	tower.position = Vector3(0.0, 41.0, 0.0)
+	tower.material_override = building_material
+	parent.add_child(tower)
+	for side in [-1.0, 1.0]:
+		var fin := MeshInstance3D.new()
+		fin.name = "FacadeVerticalFin"
+		var fin_mesh := BoxMesh.new()
+		fin_mesh.size = Vector3(0.45, 78.0, 0.55)
+		fin.mesh = fin_mesh
+		fin.position = Vector3(side * 10.3, 41.0, -9.2)
+		fin.material_override = trim_material
+		parent.add_child(fin)
+	for level in range(10):
+		var band := MeshInstance3D.new()
+		band.name = "FacadeWindowBand_%02d" % level
+		var band_mesh := BoxMesh.new()
+		band_mesh.size = Vector3(20.0, 0.22, 0.12)
+		band.mesh = band_mesh
+		band.position = Vector3(0.0, 5.0 + float(level) * 7.5, -9.12)
+		band.material_override = trim_material
+		parent.add_child(band)
+
+
+func _load_results() -> void:
+	var config := ConfigFile.new()
+	if config.load(SAVE_PATH) != OK:
+		return
+	var saved: Array = config.get_value("public_board", "results", [])
+	results.clear()
+	for value in saved:
+		if value is Dictionary:
+			results.append((value as Dictionary).duplicate(true))
+	while results.size() > MAX_STORED_RESULTS:
+		results.pop_back()
+
+
+func _save_results() -> void:
+	var config := ConfigFile.new()
+	config.set_value("public_board", "results", results)
+	var error := config.save(SAVE_PATH)
+	if error != OK:
+		push_warning("SYSTEM: Public event results could not be saved.")
 
 
 func _add_screen(parent: Node3D, node_name: String, location: Vector3, size: Vector3, surface_material: Material, frame_material: Material) -> void:
