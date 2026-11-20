@@ -157,3 +157,18 @@ A checked repository foundation does not mean a finished gameplay feature. Visua
 - [ ] Verify dealership proximity, spawn placement, camera restoration, wheel orientation, suspension, collision, and player recovery in Godot.
 - [ ] Test desktop and Android driving, including city streets, slopes, bridges, elevated tower decks, and parking ramps.
 - Note: the runtime manager and main-scene connections are committed source code, not verified gameplay. Godot parser, scene startup, and device tests have not been run; the existing jump button temporarily doubles as brake while driving.
+
+
+## Vehicle showroom and garage UI — 20 November 2026
+
+- [x] Add a responsive in-game vehicle showroom panel listing the current catalog, vehicle categories, prices, and ownership state.
+- [x] Display the player's local vehicle-credit balance and report insufficient funds without completing a purchase.
+- [x] Connect purchase and selection actions to the existing local garage manager and its save file.
+- [x] Add a resale action using the garage manager's existing resale calculation and active-vehicle protection.
+- [x] Connect the selected owned vehicle to runtime spawning and the first-pass enter/drive flow.
+- [x] Add a return-to-garage action for a parked vehicle when the player is near a dealership.
+- [x] Make showroom panel dimensions adapt to the current viewport and refresh its world-root reference after world changes.
+- [ ] Replace prototype credits with the intended authenticated, server-authoritative economy before any shared-world or real-money use.
+- [ ] Add vehicle preview models, paint/customization, test-drive mode, purchase confirmation, and dedicated driving HUD.
+- [ ] Verify UI layout, purchase/save/load, selling, spawning, enter/exit, and mobile touch behavior in Godot on Android.
+- Note: the showroom and garage actions are source-level integrations committed to GitHub. Ownership and credits still use the existing local prototype save; no Godot parser, runtime, or Android test has been run. Vehicle previews and dedicated driving controls are not included yet.
