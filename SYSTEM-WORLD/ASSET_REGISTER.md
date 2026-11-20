@@ -27,7 +27,8 @@ Do not merge, delete, rename or silently replace these project roots. The canoni
 - Map systems: `world_map_manager.gd`, `world_map_ui.gd`, `world_map_ui_bootstrap.gd`, `modern_world_discovery_manager.gd`
 - Geography manager: `scripts/real_world_geography_manager.gd`
 - Geography seed: `data/geography/real_world_registry.json`
-- Candidate Baghdad source and staged import plan: `data/geography/GEOSPATIAL_IMPORT_PLAN.md` (OSM/Geofabrik source is registered but not downloaded or imported).
+- Candidate Baghdad source and staged import plan: `data/geography/GEOSPATIAL_IMPORT_PLAN.md`.
+- BBBike Iraq PBF snapshot has been downloaded and verified (2026-11-19 23:32:47 UTC); relation 5638803 and its multipolygon boundary have been extracted. The complete municipal clip and feature counts are under validation; no source geometry has yet been integrated into the runtime.
 - Android engine-side contract: `scripts/system_android_bridge.gd`
 
 The canonical project declares ten autoloads; all ten referenced script paths were present in the inspected tree. It uses the mobile-oriented Compatibility renderer.
