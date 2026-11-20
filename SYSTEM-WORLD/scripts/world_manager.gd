@@ -16,6 +16,7 @@ const ModernWorldCoastalDetailManagerScript = preload("res://scripts/modern_worl
 const ModernWorldRegionManagerScript = preload("res://scripts/modern_world_region_manager.gd")
 const UndergroundHeritageManagerScript = preload("res://scripts/underground_heritage_manager.gd")
 const ModernWorldMonsterGateManagerScript = preload("res://scripts/modern_world_monster_gate_manager.gd")
+const BaghdadOSMCellStreamerScript = preload("res://scripts/baghdad_osm_cell_streamer.gd")
 
 signal world_changed(world_id: int)
 
@@ -245,6 +246,11 @@ func _create_modern_city() -> void:
 	var region_manager := ModernWorldRegionManagerScript.new()
 	region_manager.name = "ModernWorldRegionManager"
 	root.add_child(region_manager)
+
+	if FileAccess.file_exists("res://data/geography/baghdad/cell_pack/manifest.json"):
+		var baghdad_osm := BaghdadOSMCellStreamerScript.new()
+		baghdad_osm.name = "BaghdadOSMCellStreamer"
+		root.add_child(baghdad_osm)
 
 	var monster_gate_manager := ModernWorldMonsterGateManagerScript.new()
 	monster_gate_manager.name = "ModernWorldMonsterGateManager"
