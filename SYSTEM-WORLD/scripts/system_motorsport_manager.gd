@@ -6,11 +6,12 @@ signal checkpoint_reached(checkpoint_index: int, completed_laps: int)
 signal lap_completed(completed_laps: int, elapsed_seconds: float)
 signal race_finished(result: Dictionary)
 signal race_cancelled(event_id: String)
+signal player_wager_created(wager_id: String, event_id: String, amount: int)
 
 const VehicleCatalogScript = preload("res://scripts/system_vehicle_catalog.gd")
 
 const EVENTS := {
-	"city_sprint": {"name":"City Sprint Cup","discipline":"street_circuit","vehicle_categories":["sports","premium","supercar","electric","race_gt","race_hyper"],"laps":3,"base_reward":1800,"description":"بطولة حلبات شوارع داخل المدينة"},
+	"city_sprint": {"name":"City Sprint Cup","discipline":"street_circuit","vehicle_categories":["sports","premium","supercar","electric","race_gt","race_hyper"],"laps":3,"base_reward":1800,"description":"بطولة حلبة مدينة مغلقة ومخصصة للسباق؛ ليست سباقاً على الشوارع العامة"},
 	"gt_championship": {"name":"SYSTEM GT Championship","discipline":"race_gt","vehicle_categories":["race_gt","race_endurance","race_hyper"],"laps":5,"base_reward":6500,"description":"بطولة سيارات GT والتحمل"},
 	"formula_grand_prix": {"name":"SYSTEM Formula Grand Prix","discipline":"race_formula","vehicle_categories":["race_formula"],"laps":8,"base_reward":12000,"description":"سباق سيارات المقعد الواحد"},
 	"endurance_challenge": {"name":"Endurance 60","discipline":"race_endurance","vehicle_categories":["race_endurance","race_gt","race_hyper"],"laps":12,"base_reward":15000,"description":"سباق تحمل طويل"},
@@ -26,9 +27,28 @@ var next_checkpoint_index := 0
 var completed_laps := 0
 var total_laps := 0
 var checkpoint_total := 0
+var dedicated_track_context := false
+var pending_player_wagers: Dictionary = {}
 
 func setup(vehicle_garage: SystemPlayerVehicleManager) -> void:
 	garage_manager = vehicle_garage
+
+func set_dedicated_track_context(enabled: bool) -> void:
+	dedicated_track_context = enabled
+
+func get_wager_rules() -> Dictionary:
+	return {
+		"enabled":false,
+		"currency":"SYSTEM_CREDITS",
+		"mode":"player_vs_player_escrow",
+		"requires_multiplayer":true,
+		"requires_server_authority":true,
+		"real_money_allowed":false,
+		"reason":"Wagers stay disabled until authenticated multiplayer escrow, anti-cheat, dispute handling, and regional compliance are implemented."
+	}
+
+func create_player_wager(_event_id: String, _opponent_player_id: String, _amount: int) -> Dictionary:
+	return {"success":false,"reason":"SERVER_AUTHORITATIVE_MULTIPLAYER_WAGERING_NOT_IMPLEMENTED","rules":get_wager_rules()}
 
 func _process(delta: float) -> void:
 	if not active_race.is_empty():
@@ -48,6 +68,8 @@ func start_race(event_id: String, vehicle_id: String, checkpoints: int, laps_ove
 		return {"success":false,"reason":"RACE_ALREADY_ACTIVE"}
 	if garage_manager == null:
 		return {"success":false,"reason":"GARAGE_NOT_READY"}
+	if not dedicated_track_context:
+		return {"success":false,"reason":"RACE_REQUIRES_DEDICATED_TRACK"}
 	var event: Dictionary = get_event(event_id)
 	if event.is_empty():
 		return {"success":false,"reason":"UNKNOWN_RACE_EVENT"}
