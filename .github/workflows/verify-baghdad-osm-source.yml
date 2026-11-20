@@ -359,6 +359,19 @@ jobs:
           print("Required real OSM cell connectivity audit passed.")
           PY
 
+      - name: Upload Baghdad OSM audit diagnostics, including failed reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SYSTEM-WORLD-Baghdad-OSM-audit-diagnostics-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/baghdad-source/baghdad-cell-connectivity-audit.json
+            ${{ runner.temp }}/baghdad-source/baghdad-metric-cell-pack-5x5.zip
+            ${{ runner.temp }}/baghdad-source/clipped_layers/clip-report.json
+            ${{ runner.temp }}/baghdad-source/clipped_layers/*.geojson
+          if-no-files-found: warn
+          retention-days: 30
+
       - name: Add attribution and source notes
         shell: bash
         run: |
