@@ -147,5 +147,94 @@ class BaghdadCellConnectivityTests(unittest.TestCase):
             self.assertTrue(any("200 m" in error for error in result["errors"]))
 
 
+    def test_multiple_source_parts_with_one_osm_id_keep_per_feature_cell_assignment(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source, pack = _make_fixture(root)
+            path = source / "amenities.geojson"
+            data = json.loads(path.read_text(encoding="utf-8"))
+            def wgs84(x, z):
+                return (44.3661 + x / (111319.49 * 0.835), 33.3152 - z / 110574.0)
+            data["features"] = [
+                _feature(777, "node", __import__("shapely").geometry.Point(wgs84(40, 80))),
+                _feature(777, "node", __import__("shapely").geometry.Point(wgs84(260, 80))),
+            ]
+            path.write_text(json.dumps(data), encoding="utf-8")
+            project = audit._projector()
+            points = [transform(project, shape(item["geometry"])) for item in data["features"]]
+            with zipfile.ZipFile(pack, "r") as archive:
+                entries = {name: archive.read(name) for name in archive.namelist()}
+            for x, point in enumerate(points):
+                tile_name = f"cells/{x}_0.json"
+                tile = json.loads(entries[tile_name])
+                tile["layers"]["amenities"].append({
+                    "id": "777", "osm_type": "node", "tags": {},
+                    "geometry": mapping(audit._builder_serialized_geometry(point)),
+                })
+                entries[tile_name] = json.dumps(tile).encode()
+            with zipfile.ZipFile(pack, "w", zipfile.ZIP_DEFLATED) as archive:
+                for name, payload in entries.items():
+                    archive.writestr(name, payload)
+            result = audit.audit_pack(source, pack)
+            self.assertEqual(result["status"], "passed", result["errors"])
+
+    def test_geometry_collection_and_builder_rounding_are_supported(self):
+        from shapely.geometry import GeometryCollection, Point
+        collection = GeometryCollection([
+            LineString([(0.004, 1.006), (10.004, 1.006)]),
+            Point(5.004, 1.006),
+        ])
+        normalized = audit._builder_serialized_geometry(collection)
+        self.assertEqual(normalized.geom_type, "GeometryCollection")
+        self.assertEqual(normalized.geoms[0].coords[0], (0.0, 1.01))
+        self.assertEqual(normalized.geoms[1].x, 5.0)
+
+    def test_invalid_polygon_uses_same_buffer_zero_repair_as_builder(self):
+        invalid = Polygon([(0, 0), (2, 2), (0, 2), (2, 0), (0, 0)])
+        self.assertFalse(invalid.is_valid)
+        repaired = audit._builder_normalized_geometry(invalid)
+        self.assertTrue(repaired.is_valid)
+        self.assertFalse(repaired.is_empty)
+
+    def test_unexpected_osm_id_is_reported(self):
+        with tempfile.TemporaryDirectory() as temp:
+            source, pack = _make_fixture(Path(temp))
+            with zipfile.ZipFile(pack, "r") as archive:
+                entries = {name: archive.read(name) for name in archive.namelist()}
+            tile = json.loads(entries["cells/0_0.json"])
+            tile["layers"]["roads"].append({
+                "id": "999999", "osm_type": "way", "tags": {},
+                "geometry": mapping(LineString([(20, 20), (30, 20)])),
+            })
+            entries["cells/0_0.json"] = json.dumps(tile).encode()
+            with zipfile.ZipFile(pack, "w", zipfile.ZIP_DEFLATED) as archive:
+                for name, payload in entries.items():
+                    archive.writestr(name, payload)
+            result = audit.audit_pack(source, pack)
+            self.assertEqual(result["status"], "failed")
+            self.assertGreater(result["unexpected_parts"], 0)
+
+    def test_exact_duplicate_and_overlapping_fragments_are_reported(self):
+        with tempfile.TemporaryDirectory() as temp:
+            source, pack = _make_fixture(Path(temp))
+            with zipfile.ZipFile(pack, "r") as archive:
+                entries = {name: archive.read(name) for name in archive.namelist()}
+            tile = json.loads(entries["cells/0_0.json"])
+            road = tile["layers"]["roads"][0]
+            tile["layers"]["roads"].append(dict(road))
+            tile["layers"]["roads"].append({
+                **road,
+                "geometry": mapping(LineString([(150, 100.01), (190, 100.01)])),
+            })
+            entries["cells/0_0.json"] = json.dumps(tile).encode()
+            with zipfile.ZipFile(pack, "w", zipfile.ZIP_DEFLATED) as archive:
+                for name, payload in entries.items():
+                    archive.writestr(name, payload)
+            result = audit.audit_pack(source, pack)
+            self.assertEqual(result["status"], "failed")
+            self.assertGreater(result["duplicate_parts"], 0)
+            self.assertGreater(result["overlapping_parts"], 0)
+
+
 if __name__ == "__main__":
     unittest.main()
