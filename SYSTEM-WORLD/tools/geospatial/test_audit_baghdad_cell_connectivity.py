@@ -227,6 +227,10 @@ class BaghdadCellConnectivityTests(unittest.TestCase):
             collection = GeometryCollection([
                 LineString([wgs84(25, 160), wgs84(35, 160)]),
                 Point(wgs84(30, 165)),
+                Polygon([
+                    wgs84(30, 150), wgs84(36, 150), wgs84(36, 156),
+                    wgs84(30, 156), wgs84(30, 150),
+                ]),
             ])
             _append_projected_feature(source, pack, "amenities", 810, "way", collection)
             result = audit.audit_pack(source, pack)
