@@ -8,6 +8,7 @@ on:
       - ".github/workflows/verify-baghdad-osm-source.yml"
       - "SYSTEM-WORLD/data/geography/GEOSPATIAL_IMPORT_PLAN.md"
       - "SYSTEM-WORLD/data/geography/real_world_registry.json"
+      - "SYSTEM-WORLD/tools/geospatial/clip_osm_geojson_layers.py"
   workflow_dispatch:
 
 permissions:
