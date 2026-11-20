@@ -413,6 +413,8 @@ func _add_building_approach_marker(parent: Node3D, approach: Dictionary, feature
 	body.set_meta("system_display_name", display_name)
 	body.set_meta("system_interaction_prompt", "فحص واجهة المبنى (نقطة اقتراب تقريبية)")
 	body.set_meta("system_approach_distance_m", float(approach.get("distance_to_road", 0.0)))
+	body.set_meta("system_building_height_m", _building_height(tags))
+	body.set_meta("system_estimated_floors", maxi(1, int(ceil(_building_height(tags) / 3.2))))
 	body.set_meta("system_access_state", "approach_only_no_verified_door")
 	root.add_child(body)
 
