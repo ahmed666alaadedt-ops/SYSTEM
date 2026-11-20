@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   verify-baghdad-boundary-source:
-    name: Verify OpenStreetData Iraq PBF and Baghdad boundary relation
+    name: Verify BBBike Iraq PBF and Baghdad boundary relation
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
@@ -29,18 +29,18 @@ jobs:
           sudo apt-get install --yes osmium-tool
           osmium --version
 
-      - name: Download OpenStreetData Iraq PBF and record source metadata
+      - name: Download BBBike Iraq PBF and record source metadata
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/baghdad-source"
           cd "$RUNNER_TEMP/baghdad-source"
           curl -L --fail --retry 3 --connect-timeout 30 --max-time 600 \
-            "https://files.openstreetdata.org/extracts/IQ.osm.pbf" \
-            -o IQ.osm.pbf
-          test -s IQ.osm.pbf
-          sha256sum IQ.osm.pbf | tee IQ.osm.pbf.sha256
-          osmium fileinfo --extended --json IQ.osm.pbf > osm-fileinfo.json
+            "https://data.bbbike.org/osm/pbf/region/asia/iraq.osm.pbf" \
+            -o iraq.osm.pbf
+          test -s iraq.osm.pbf
+          sha256sum iraq.osm.pbf | tee iraq.osm.pbf.sha256
+          osmium fileinfo --extended --json iraq.osm.pbf > osm-fileinfo.json
           cat osm-fileinfo.json
 
       - name: Extract Baghdad Municipality relation and all referenced members
@@ -48,7 +48,7 @@ jobs:
         run: |
           set -euo pipefail
           cd "$RUNNER_TEMP/baghdad-source"
-          osmium getid --add-referenced IQ.osm.pbf r5638803 \
+          osmium getid --add-referenced iraq.osm.pbf r5638803 \
             --output baghdad-municipality-5638803.osm.pbf
           osmium check-refs baghdad-municipality-5638803.osm.pbf
           osmium cat baghdad-municipality-5638803.osm.pbf \
@@ -93,13 +93,14 @@ jobs:
               info.get("data", {}).get("timestamp", {}).get("last")
               or info.get("header", {}).get("option", {}).get("osmosis_replication_timestamp")
           )
-          sha256 = hashlib.sha256(Path("IQ.osm.pbf").read_bytes()).hexdigest()
+          sha256 = hashlib.sha256(Path("iraq.osm.pbf").read_bytes()).hexdigest()
           report = {
-              "source_file": "IQ.osm.pbf",
-              "source_provider": "OpenStreetData",
+              "source_file": "iraq.osm.pbf",
+              "source_provider": "BBBike.org",
+              "provider_reported_update": "2026-10-16T06:00:02Z",
               "snapshot_timestamp": snapshot_timestamp,
               "source_file_sha256": sha256,
-              "source_file_size_bytes": Path("IQ.osm.pbf").stat().st_size,
+              "source_file_size_bytes": Path("iraq.osm.pbf").stat().st_size,
               "relation_id": 5638803,
               "tags": tags,
               "member_count": len(members),
@@ -121,10 +122,10 @@ jobs:
           cd "$RUNNER_TEMP/baghdad-source"
           cat > ATTRIBUTION.txt <<'EOF'
           © OpenStreetMap contributors
-          Source: OpenStreetData Iraq country extract from OpenStreetMap raw data.
+          Source: BBBike.org Iraq PBF extract from OpenStreetMap data.
           License: Open Database License (ODbL) 1.0.
-          https://openstreetdata.org/
-          https://files.openstreetdata.org/extracts/IQ.osm.pbf
+          © OpenStreetMap contributors; © BBBike.org.
+          https://data.bbbike.org/osm/region/asia/iraq/
           https://www.openstreetmap.org/copyright
 
           This artifact contains a source-boundary extraction for verification.
@@ -139,6 +140,6 @@ jobs:
             ${{ runner.temp }}/baghdad-source/baghdad-municipality-5638803.osm.pbf
             ${{ runner.temp }}/baghdad-source/baghdad-source-verification.json
             ${{ runner.temp }}/baghdad-source/ATTRIBUTION.txt
-            ${{ runner.temp }}/baghdad-source/IQ.osm.pbf.sha256
+            ${{ runner.temp }}/baghdad-source/iraq.osm.pbf.sha256
           if-no-files-found: error
           retention-days: 14
