@@ -219,7 +219,7 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 	if service_id == "stadium":
 		_create_stadium_details(building, width, depth)
 	elif service_id == "school" or service_id == "university":
-		var courtyard_material := _material(Color(0.15, 0.32, 0.18), 1.0)
+		var courtyard_material := _material(Color(0.15, 0.32, 0.18), 1.0, 0.0)
 		_create_civic_courtyard(building, width, depth, courtyard_material)
 	elif service_id == "shops":
 		_create_shopfronts(building, width, depth, glass, roof_material)
@@ -272,8 +272,8 @@ func get_service_locations() -> Array[Dictionary]:
 	return service_locations.duplicate(true)
 
 func _create_stadium_details(parent: Node3D, width: float, depth: float) -> void:
-	var pitch_material := _material(Color(0.08, 0.34, 0.12), 0.95)
-	var line_material := _material(Color(0.92, 0.94, 0.86), 0.9)
+	var pitch_material := _material(Color(0.08, 0.34, 0.12), 0.95, 0.0)
+	var line_material := _material(Color(0.92, 0.94, 0.86), 0.9, 0.0)
 	var pitch := MeshInstance3D.new()
 	pitch.name = "FootballPitch"
 	var pitch_mesh := BoxMesh.new()
@@ -289,7 +289,7 @@ func _create_stadium_details(parent: Node3D, width: float, depth: float) -> void
 		stand_mesh.size = Vector3(width * 0.72, 8.0, 10.0)
 		stand.mesh = stand_mesh
 		stand.position = Vector3(0.0, 5.0, side * depth * 0.39)
-		stand.material_override = _material(Color(0.28, 0.32, 0.38), 0.82)
+		stand.material_override = _material(Color(0.28, 0.32, 0.38), 0.82, 0.0)
 		parent.add_child(stand)
 	for side in [-1.0, 1.0]:
 		var goal := MeshInstance3D.new()
