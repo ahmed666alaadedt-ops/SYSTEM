@@ -2,6 +2,7 @@ extends SceneTree
 
 const BAGHDAD_STREAMER = preload("res://scripts/baghdad_osm_cell_streamer.gd")
 const CITY_STATE_STORE = preload("res://scripts/baghdad_city_state_store.gd")
+const CITY_NAVIGATION = preload("res://scripts/npc_city_navigation_manager.gd")
 
 
 func _initialize() -> void:
@@ -55,6 +56,37 @@ func _run_validation() -> void:
 	if building_collisions.is_empty():
 		_fail("Baghdad OSM building collision bodies were not created.")
 		return
+
+	var road_segments_value: Variant = cell_root.get_meta("road_navigation_segments", [])
+	if not road_segments_value is Array or road_segments_value.is_empty():
+		_fail("Baghdad OSM center cell did not retain pedestrian-accessible road geometry.")
+		return
+	var first_road_segment: Dictionary = road_segments_value[0]
+	var first_road_points: Variant = first_road_segment.get("points", PackedVector2Array())
+	if not first_road_points is PackedVector2Array or first_road_points.size() < 2:
+		_fail("Baghdad OSM road navigation segment has no usable path vertices.")
+		return
+	var road_start: Vector2 = first_road_points[0]
+	var road_end: Vector2 = first_road_points[first_road_points.size() - 1]
+	var osm_route: Array[Vector3] = streamer.get_road_navigation_path(
+		Vector3(road_start.x, 0.0, road_start.y),
+		Vector3(road_end.x, 0.0, road_end.y)
+	)
+	if osm_route.size() < 2:
+		_fail("Real OSM road graph did not return a route along the selected road feature.")
+		return
+	var navigation_manager = CITY_NAVIGATION.new()
+	navigation_manager.osm_streamer = streamer
+	var integrated_route: Array[Vector3] = navigation_manager.find_pedestrian_path(
+		"Baghdad",
+		Vector3(road_start.x, 0.0, road_start.y),
+		Vector3(road_end.x, 0.0, road_end.y)
+	)
+	if integrated_route.size() < 2 or int(navigation_manager.get_navigation_status().get("real_osm_routes_found", 0)) != 1:
+		_fail("Baghdad pedestrian navigation did not consume the real OSM road graph.")
+		return
+	navigation_manager.free()
+	print("Baghdad OSM pedestrian routing passed: road_nodes=", streamer.get_streaming_status().get("road_navigation_node_count", 0), " route_points=", osm_route.size())
 
 	# Exercise persistence against a real OSM-generated building ID, not a test-only ID.
 	var city_state_store = CITY_STATE_STORE.new()
