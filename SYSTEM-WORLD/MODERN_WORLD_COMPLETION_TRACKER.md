@@ -248,3 +248,15 @@ A checked repository foundation does not mean a finished gameplay feature. Visua
 - [ ] Add track access gates, garage selection, race registration UI, spectator events, and AI competitors.
 - [ ] Verify player collision layer/mask and test entering/exiting the Area3D in Godot; run parser and Android performance tests.
 - Note: the venue is a source-level procedural blockout, not a finished or tested playable race track. The track zone is a broad access volume around the venue and currently toggles permission; the racing manager still needs actual checkpoint nodes and event registration integration.
+
+
+## Baghdad motorsport start grid and checkpoint route — 20 November 2026
+
+- [x] Add a visible start/finish gantry and four-lane starting-grid markings to the Baghdad circuit blockout.
+- [x] Add four ordered checkpoint trigger areas around the oval route, with visible checkpoint gate markers.
+- [x] Connect vehicle-body checkpoint entry to the existing motorsport manager's ordered checkpoint/lap/timing lifecycle.
+- [x] Add a track event start API that requires the player to be inside the approved venue, actively driving an owned vehicle, and positioned near the start grid; event and vehicle-class validation remains delegated to the motorsport manager.
+- [ ] Build a registration/menu interaction that lets the player choose an eligible event and call the track start API in-game.
+- [ ] Add countdown, false-start detection, timing sectors, race HUD, restart/retire flow, AI competitors, and spectator/event presentation.
+- [ ] Validate checkpoint collision masks, checkpoint order, lap completion, and start-grid placement in Godot; run Android driving tests.
+- Note: this update adds source-level track geometry and trigger-to-manager integration. It is not yet a fully playable race event: there is no in-game event-selection UI or countdown, and no Godot parser/runtime or Android test has been run.
