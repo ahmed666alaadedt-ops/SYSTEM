@@ -46,31 +46,34 @@ jobs:
             const branch = context.payload.pull_request.head.ref;
             const deadline = Date.now() + 25 * 60 * 1000;
             while (Date.now() < deadline) {
-              const response = await github.rest.actions.listWorkflowRuns({
+              const response = await github.rest.actions.listWorkflowRunsForRepo({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                workflow_id: "verify-baghdad-osm-source.yml",
-                branch,
                 per_page: 100
               });
               const matches = response.data.workflow_runs
-                .filter(run => run.head_sha === headSha)
+                .filter(run =>
+                  run.name === "Verify Baghdad OSM Source Candidate" &&
+                  run.event === "pull_request" &&
+                  run.head_branch === branch &&
+                  run.head_sha === headSha
+                )
                 .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
               const latest = matches[0];
               if (latest && latest.status === "completed") {
                 core.setOutput("run_id", String(latest.id));
                 core.setOutput("conclusion", latest.conclusion || "failure");
                 if (latest.conclusion === "success") {
-                  core.info(`Using latest verified Baghdad OSM source run ${latest.id} for ${headSha}.`);
-                } else {
-                  core.warning(`Latest Baghdad OSM audit for ${headSha} concluded ${latest.conclusion}; only procedural fallback may be exported.`);
+                  core.info(`Using latest successful PR Baghdad OSM audit run ${latest.id} for ${headSha}.`);
+                  return;
                 }
+                core.setFailed(`Latest PR Baghdad OSM audit for ${headSha} concluded ${latest.conclusion}; refusing an unaudited APK export.`);
                 return;
               }
               await new Promise(resolve => setTimeout(resolve, 30000));
             }
             core.setOutput("conclusion", "timeout");
-            core.warning(`Timed out waiting for a matching Baghdad OSM audit for ${headSha}; only procedural fallback may be exported.`);
+            core.setFailed(`Timed out waiting for a successful PR Baghdad OSM audit for ${headSha}; refusing an unaudited APK export.`);
 
       - name: Download verified Baghdad OSM cell pack
         if: |
