@@ -5,7 +5,7 @@ class_name ModernWorldCellStreamingManager
 ## sample coordinates, so adjacent cells share exact edge heights.
 ## LOD is deliberately metadata-only until edge stitching is implemented.
 
-const DEFAULT_CELL_SIZE := 500.0
+const DEFAULT_CELL_SIZE := 200.0
 const DEFAULT_SAMPLE_SPACING := 20.0
 const MAX_CELL_OPERATIONS_PER_FRAME := 1
 
@@ -166,6 +166,7 @@ func _load_cell(cell: Vector2i) -> void:
 		shape.map_data = heights
 		var collision := CollisionShape3D.new()
 		collision.shape = shape
+		collision.position = Vector3(cell_size * 0.5, 0.0, cell_size * 0.5)
 		collision.scale = Vector3(sample_spacing, 1.0, sample_spacing)
 		body.add_child(collision)
 		cell_root.add_child(body)
