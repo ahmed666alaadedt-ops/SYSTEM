@@ -171,10 +171,22 @@ jobs:
           print("Baghdad boundary bounds (WGS84):", bounds)
           PY
           osmium extract --polygon=baghdad-boundary.geojson --strategy=complete_ways --set-bounds \
+            --clean=version --clean=timestamp --clean=changeset --clean=uid --clean=user \
             --output baghdad-municipality-candidate.osm.pbf iraq.osm.pbf
           osmium check-refs baghdad-municipality-candidate.osm.pbf
           osmium fileinfo --extended --json baghdad-municipality-candidate.osm.pbf \
             > baghdad-clip-fileinfo.json
+          osmium tags-filter baghdad-municipality-candidate.osm.pbf nwr/building -o buildings.osm.pbf
+          osmium tags-filter baghdad-municipality-candidate.osm.pbf w/highway -o roads.osm.pbf
+          osmium tags-filter baghdad-municipality-candidate.osm.pbf w/waterway -o waterways.osm.pbf
+          osmium tags-filter baghdad-municipality-candidate.osm.pbf w/bridge -o bridges.osm.pbf
+          osmium tags-filter baghdad-municipality-candidate.osm.pbf nwr/landuse -o landuse.osm.pbf
+          osmium tags-filter baghdad-municipality-candidate.osm.pbf nwr/amenity -o amenities.osm.pbf
+          osmium tags-filter baghdad-municipality-candidate.osm.pbf w/railway -o railway.osm.pbf
+          osmium tags-filter baghdad-municipality-candidate.osm.pbf nwr/natural=water -o natural-water.osm.pbf
+          for layer in buildings roads waterways bridges landuse amenities railway natural-water; do
+            osmium fileinfo --extended --json "$layer.osm.pbf" > "$layer-fileinfo.json"
+          done
           python3 - <<'PY'
           import hashlib
           import json
@@ -187,7 +199,14 @@ jobs:
           report["baghdad_clip_fileinfo"] = json.loads(
               Path("baghdad-clip-fileinfo.json").read_text(encoding="utf-8")
           )
-          report["baghdad_clip_status"] = "municipal_clip_created; feature coverage and visual review required"
+          report["feature_layer_counts"] = {}
+          for layer in ["buildings", "roads", "waterways", "bridges", "landuse", "amenities", "railway", "natural-water"]:
+              layer_info = json.loads(Path(f"{layer}-fileinfo.json").read_text(encoding="utf-8"))
+              report["feature_layer_counts"][layer] = layer_info.get("data", {}).get("count", {})
+          report["contributor_metadata_cleaned"] = [
+              "version", "timestamp", "changeset", "uid", "user"
+          ]
+          report["baghdad_clip_status"] = "municipal_clip_created; feature counts recorded; geometry and coverage review required"
           Path("baghdad-source-verification.json").write_text(
               json.dumps(report, ensure_ascii=False, indent=2) + "\n",
               encoding="utf-8",
@@ -217,7 +236,6 @@ jobs:
         with:
           name: SYSTEM-WORLD-Baghdad-OSM-boundary-candidate
           path: |
-            ${{ runner.temp }}/baghdad-source/baghdad-municipality-5638803.osm.pbf
             ${{ runner.temp }}/baghdad-source/baghdad-boundary.geojson
             ${{ runner.temp }}/baghdad-source/baghdad-municipality-candidate.osm.pbf
             ${{ runner.temp }}/baghdad-source/baghdad-clip-fileinfo.json
