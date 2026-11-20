@@ -11,6 +11,7 @@ const RESALE_RATE := 0.60
 var balance: int = STARTING_CURRENCY
 var owned_vehicles: Array[String] = []
 var active_vehicle_id := ""
+var vehicle_colors: Dictionary = {}
 var catalog_script = preload("res://scripts/system_vehicle_catalog.gd")
 
 func _ready() -> void:
@@ -18,6 +19,16 @@ func _ready() -> void:
 
 func get_balance() -> int:
 	return balance
+
+func get_vehicle_color(vehicle_id: String) -> Color:
+	return Color.from_string(str(vehicle_colors.get(vehicle_id, "#1479C8")), Color(0.08, 0.28, 0.48))
+
+func set_vehicle_color(vehicle_id: String, color: Color) -> void:
+	if catalog_script.get_vehicle(vehicle_id).is_empty():
+		return
+	vehicle_colors[vehicle_id] = color.to_html(false)
+	save_garage()
+	garage_changed.emit(get_garage())
 
 func get_garage() -> Array[String]:
 	return owned_vehicles.duplicate()
@@ -70,6 +81,7 @@ func save_garage() -> void:
 	config.set_value("wallet","balance",balance)
 	config.set_value("garage","owned",owned_vehicles)
 	config.set_value("garage","active_vehicle_id",active_vehicle_id)
+	config.set_value("garage","vehicle_colors",vehicle_colors)
 	var error := config.save(SAVE_PATH)
 	if error != OK:
 		push_warning("SYSTEM Vehicles: local garage save failed.")
@@ -86,6 +98,9 @@ func load_garage() -> void:
 		if catalog_script.get_vehicle(vehicle_id).is_empty() or owned_vehicles.has(vehicle_id):
 			continue
 		owned_vehicles.append(vehicle_id)
+	vehicle_colors = config.get_value("garage","vehicle_colors",{})
+	if not vehicle_colors is Dictionary:
+		vehicle_colors = {}
 	active_vehicle_id = str(config.get_value("garage","active_vehicle_id",""))
 	if not owned_vehicles.has(active_vehicle_id):
 		active_vehicle_id = ""
