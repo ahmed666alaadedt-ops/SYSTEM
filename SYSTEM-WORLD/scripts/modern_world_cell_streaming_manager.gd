@@ -63,9 +63,6 @@ func _process(_delta: float) -> void:
 	if center != _last_center_cell:
 		_last_center_cell = center
 		_refresh_desired_cells(center)
-		if not loaded_cells.has(center) and pending_loads.has(center):
-			pending_loads.erase(center)
-			pending_loads.push_front(center)
 	_process_cell_queue()
 
 
@@ -105,17 +102,22 @@ func _refresh_desired_cells(center: Vector2i) -> void:
 		var cell: Vector2i = key
 		if not desired_cells.has(cell):
 			pending_unloads.append(cell)
+	if pending_loads.has(center):
+		pending_loads.erase(center)
+		pending_loads.push_front(center)
 
 
 func _process_cell_queue() -> void:
 	var operations := 0
-	while not pending_unloads.is_empty() and operations < MAX_CELL_OPERATIONS_PER_FRAME:
-		var cell: Vector2i = pending_unloads.pop_front()
-		_unload_cell(cell)
-		operations += 1
+	# Load the player's current cell before background work to avoid spawning
+	# or crossing a cell boundary before its ground surface exists.
 	while not pending_loads.is_empty() and operations < MAX_CELL_OPERATIONS_PER_FRAME:
 		var cell: Vector2i = pending_loads.pop_front()
 		_load_cell(cell)
+		operations += 1
+	while not pending_unloads.is_empty() and operations < MAX_CELL_OPERATIONS_PER_FRAME:
+		var cell: Vector2i = pending_unloads.pop_front()
+		_unload_cell(cell)
 		operations += 1
 
 
