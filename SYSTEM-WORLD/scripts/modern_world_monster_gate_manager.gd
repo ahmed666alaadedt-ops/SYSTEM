@@ -354,6 +354,14 @@ func _unlock_dungeon_exit() -> void:
 	if is_instance_valid(current_gate):
 		current_gate.set_meta("system_gate_status","cleared")
 		current_gate.set_meta("system_gate_cleared",true)
+		var public_board := get_tree().root.find_child("SYSTEMPublicEventBoard", true, false)
+		if public_board != null and public_board.has_method("publish_gate_clear"):
+			public_board.call(
+				"publish_gate_clear",
+				str(current_gate.get_meta("system_gate_id", current_gate.name)),
+				str(current_gate.get_meta("system_gate_rank", "UNKNOWN")),
+				dungeon_xp_awarded
+			)
 		current_gate.monitoring = false
 		current_gate.visible = false
 		current_gate.queue_free()
