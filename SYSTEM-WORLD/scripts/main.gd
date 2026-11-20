@@ -189,6 +189,8 @@ func _handle_android_world_entry_request(world_id: String) -> void:
 
 func _on_runtime_world_changed(world_id: int) -> void:
 	active_world_root = world_manager.get_active_world()
+	if vehicle_runtime_manager != null:
+		vehicle_runtime_manager.set_world_root(active_world_root)
 	_publish_runtime_world_state(world_id)
 	if not player_appearance_profile.is_empty():
 		var updated_profile := player_appearance_profile.duplicate(true)
