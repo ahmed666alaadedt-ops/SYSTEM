@@ -118,3 +118,12 @@ The five-tower concept is a connected urban district, not five isolated landmark
 - The riverfront and Tahrir Square remain explorable public spaces with their own activities; they are not merely scenery around the towers.
 - Do not claim the real Baghdad skyline or landmarks have been physically altered. This is the fictional future version of Baghdad inside SYSTEM WORLD.
 - This section establishes the approved design direction only. It does not mean the complete district, bridges, interiors, or river engineering are already implemented in Godot.
+
+
+### Vehicle circulation, comfort, and recreation expansion — 20 November 2026
+- The district is intended to support cars entering from Baghdad streets, climbing dedicated ramps, crossing elevated vehicle decks, and reaching tower parking/drop-off levels. Separate pedestrian promenades and sky gardens keep walking routes safe and pleasant.
+- The five primary identities are fixed within the five-tower composition: Power Tower, Hunter Association Tower, Business Tower, Shopping Tower, and Entertainment Tower. The Power Tower and Hunter Association Tower are full independent towers within the connected district, not extra towers perched on top of other buildings.
+- The connected district's eventual facilities include hotels, rest areas, clinics/medical support, restaurants, cafes, retail, cinemas, amusement rides, water attractions, swimming pools, rooftop gardens, sports courts, family spaces, public plazas, parking, emergency access, and service routes.
+- The vehicle ramps and elevated decks added to the procedural manager are architectural blockout geometry only. They do not yet provide drivable road navigation, vehicle physics, traffic rules, parking interactions, or tested collision/clearance.
+- Amenity decks are placeholder geometry and metadata, not finished pools, rides, shops, hotels, or interactive interiors.
+- The Tigris river channel and navigation corridor must remain open below cross-river connections. Tahrir Square and the Freedom Monument remain protected, recognizable, explorable landmarks; no tower deck or bridge may cover or visually erase them.
