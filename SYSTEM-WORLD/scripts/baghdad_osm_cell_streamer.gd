@@ -273,6 +273,7 @@ func _load_cell(cell: Vector2i) -> void:
 	cell_root.set_meta("cell_x", cell.x)
 	cell_root.set_meta("cell_z", cell.y)
 	cell_root.set_meta("schema_version", manifest_schema_version)
+	cell_root.set_meta("source_snapshot", source_snapshot)
 	var counts := {}
 	var road_features: Array = layers.get("roads", [])
 	var road_count := 0
