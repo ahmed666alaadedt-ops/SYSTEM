@@ -30,7 +30,7 @@ Current capabilities:
 - **This is not yet the real-scale Baghdad map.** The current continent remains a 3 km × 2.2 km fictional prototype. Baghdad's municipal OSM GeoJSON pack is still not imported into the runtime, and the municipal boundary is approximately 861 km² pending official validation.
 - No physical Android memory/frame-time test has been run.
 
-## Required next implementation sequence
+## Road and water boundary utility\n\n`scripts/system_world_cell_geometry_clipper.gd` adds deterministic Liang–Barsky clipping for X/Z polylines against a cell rectangle. A headless test checks that two adjacent cells calculate the same shared endpoint for a line crossing their common edge. This is a geometry primitive only: current city road and waterway meshes have not yet been migrated to cell-owned clipped segments.\n\n## Required next implementation sequence
 
 1. Add automated headless tests for coordinate-to-cell mapping, edge sample identity, partial world bounds, load/unload queues and collision bounds.
 2. Replace the monolithic terrain generation in `ModernContinentManager` with a source-sampling API plus cell manager, while preserving `get_terrain_height()` for existing callers.
