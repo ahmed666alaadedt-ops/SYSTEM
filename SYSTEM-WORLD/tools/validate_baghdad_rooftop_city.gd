@@ -68,9 +68,10 @@ func _run_validation() -> void:
 	var bridge_count := 0
 	var lift_core_count := 0
 	for child in network.get_children():
-		if child.name.begins_with("UpperCityBridge_"):
+		# Count visible deck nodes only; each bridge also owns a collision body.
+		if child is MeshInstance3D and child.name.begins_with("UpperCityBridge_"):
 			bridge_count += 1
-		if child.name.begins_with("RooftopCityVerticalLiftCore_"):
+		if child is MeshInstance3D and child.name.begins_with("RooftopCityVerticalLiftCore_"):
 			lift_core_count += 1
 	if bridge_count != 5:
 		_fail("Expected five upper-city bridges; found %d." % bridge_count)
