@@ -11,6 +11,7 @@ func _run_validation() -> void:
 	var streamer = BAGHDAD_STREAMER.new()
 	root.add_child(streamer)
 	assert(streamer.enabled, "Baghdad OSM cell pack did not enable.")
+	assert(streamer.get_node_or_null("BaghdadOSMAttribution/OpenStreetMapCredit") != null, "Required OSM attribution overlay is missing.")
 	streamer._load_cell(Vector2i(0, 0))
 	assert(streamer.loaded_cells.has(Vector2i(0, 0)), "Baghdad center cell did not load.")
 	var cell_root: Node3D = streamer.loaded_cells[Vector2i(0, 0)]
