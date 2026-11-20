@@ -331,3 +331,23 @@ After the baseline audit, the active canonical modern-continent terrain path was
 **Android package:** canonical Android build [44707771593](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44707771593) also completed successfully and uploaded `SYSTEM-WORLD-canonical-android-debug-apk` (artifact `14614774483`, approximately 35.5 MB). This is an exported debug APK; it has not been physically tested on the target phone.
 
 **Scope boundary:** this integration streams the existing 3 km × 2.2 km fictional continent prototype. It is not a full-scale Baghdad map. The candidate Baghdad municipal boundary remains approximately 861 km², and its eight GeoJSON source layers have not yet been imported into the Godot runtime. Roads/rivers/bridges, navigation, stitched LOD, detailed building assets and physical Android performance acceptance remain outstanding.
+
+## 9. Baghdad OSM runtime integration — verified in CI
+
+The first 5×5, 200 m Baghdad metric cell pack was successfully handed from the OSM source workflow into the canonical Godot Android build:
+
+- Source workflow produced the verified OSM municipal extract and the nested metric cell pack.
+- Canonical Android workflow downloaded the source artifact and unpacked the 25 cell JSON files into the Godot project before import.
+- Runtime loader instantiated the OSM center cell and generated road meshes, extruded building meshes, land-use surfaces and static building collision bodies.
+- Required OpenStreetMap/BBBike attribution overlay was present in the runtime validation.
+- Godot project import/parse passed.
+- Baghdad OSM runtime geometry validation passed.
+- Canonical main scene launched headlessly with the OSM pack installed.
+- Miyar/Adam companion validation passed.
+- Civilian NPC society/visible population validation passed.
+- Android debug APK export and upload completed successfully.
+
+Verified build: [44709811736](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44709811736).  
+APK artifact: SYSTEM-WORLD-canonical-android-debug-apk, ID 14616791960, size 35,586,141 bytes (about 35.6 MB).
+
+**Acceptance boundary:** this is the first data-backed Baghdad vector sample, not a complete Baghdad city. The pack covers only 1 km × 1 km around the Baghdad anchor. Buildings are first-pass extrusions using OSM footprints and available height/level tags (6 m fallback where absent), not detailed cinematic architectural assets. Roads and buildings are placed on the existing procedural terrain; a reviewed real elevation/DEM dataset has not yet replaced that terrain. No physical Android visual, frame-time, memory, heat or battery test has been performed.
