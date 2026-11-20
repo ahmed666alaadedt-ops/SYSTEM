@@ -1,0 +1,129 @@
+name: Verify Baghdad OSM Source Candidate
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-baghdad-boundary-source:
+    name: Verify pinned Iraq PBF and Baghdad boundary relation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout SYSTEM
+        uses: actions/checkout@v4
+
+      - name: Install Osmium Tool
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes osmium-tool
+          osmium --version
+
+      - name: Download pinned Geofabrik Iraq snapshot and checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/baghdad-source"
+          cd "$RUNNER_TEMP/baghdad-source"
+          curl -L --fail --retry 3 \
+            "https://download.geofabrik.de/asia/iraq-261118.osm.pbf" \
+            -o iraq-261118.osm.pbf
+          curl -L --fail --retry 3 \
+            "https://download.geofabrik.de/asia/iraq-261118.osm.pbf.md5" \
+            -o iraq-261118.osm.pbf.md5
+          expected="$(awk 'NR==1 {print $1}' iraq-261118.osm.pbf.md5)"
+          test -n "$expected"
+          printf '%s  %s\n' "$expected" iraq-261118.osm.pbf | md5sum --check -
+          stat --printf='PBF bytes: %s\n' iraq-261118.osm.pbf
+          osmium fileinfo iraq-261118.osm.pbf
+
+      - name: Extract Baghdad Municipality relation and all referenced members
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/baghdad-source"
+          osmium getid --add-referenced iraq-261118.osm.pbf r5638803 \
+            --output baghdad-municipality-5638803.osm.pbf
+          osmium check-refs baghdad-municipality-5638803.osm.pbf
+          osmium cat baghdad-municipality-5638803.osm.pbf \
+            --output baghdad-municipality-5638803.osm \
+            --output-format osm
+
+      - name: Validate relation identity and member completeness
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/baghdad-source"
+          python3 - <<'PY'
+          import json
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          root = ET.parse("baghdad-municipality-5638803.osm").getroot()
+          relation = next(
+              (node for node in root.findall("relation") if node.attrib.get("id") == "5638803"),
+              None,
+          )
+          if relation is None:
+              raise SystemExit("OSM relation 5638803 is absent from the pinned extract.")
+
+          tags = {tag.attrib["k"]: tag.attrib["v"] for tag in relation.findall("tag")}
+          if tags.get("boundary") != "administrative":
+              raise SystemExit(f"Unexpected boundary tag: {tags.get('boundary')!r}")
+          if tags.get("admin_level") != "5":
+              raise SystemExit(f"Unexpected admin_level: {tags.get('admin_level')!r}")
+
+          members = relation.findall("member")
+          if not members:
+              raise SystemExit("Baghdad relation has no members.")
+          counts = {}
+          for member in members:
+              kind = member.attrib.get("type", "unknown")
+              counts[kind] = counts.get(kind, 0) + 1
+
+          report = {
+              "source_file": "iraq-261118.osm.pbf",
+              "snapshot_date": "2026-11-18",
+              "relation_id": 5638803,
+              "tags": tags,
+              "member_count": len(members),
+              "member_counts": counts,
+              "status": "source_relation_verified_geometry_review_still_required",
+              "license": "ODbL 1.0",
+              "attribution": "© OpenStreetMap contributors",
+          }
+          Path("baghdad-source-verification.json").write_text(
+              json.dumps(report, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(report, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Add attribution and source notes
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP/baghdad-source"
+          cat > ATTRIBUTION.txt <<'EOF'
+          © OpenStreetMap contributors
+          Source: Geofabrik Iraq OpenStreetMap extract, snapshot 2026-11-18.
+          License: Open Database License (ODbL) 1.0.
+          https://www.openstreetmap.org/copyright
+          https://download.geofabrik.de/asia/iraq.html
+
+          This artifact contains a source-boundary extraction for verification.
+          It is not yet a reviewed or production-ready Baghdad game map.
+          EOF
+
+      - name: Upload verified boundary source artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SYSTEM-WORLD-Baghdad-OSM-boundary-candidate
+          path: |
+            ${{ runner.temp }}/baghdad-source/baghdad-municipality-5638803.osm.pbf
+            ${{ runner.temp }}/baghdad-source/baghdad-source-verification.json
+            ${{ runner.temp }}/baghdad-source/ATTRIBUTION.txt
+          if-no-files-found: error
+          retention-days: 14
