@@ -61,6 +61,14 @@ func _run_validation() -> void:
 	if not road_segments_value is Array or road_segments_value.is_empty():
 		_fail("Baghdad OSM center cell did not retain pedestrian-accessible road geometry.")
 		return
+	var exported_road_segments: Array[Dictionary] = streamer.get_loaded_road_map_segments()
+	if exported_road_segments.is_empty():
+		_fail("Baghdad map UI road-geometry API returned no loaded OSM roads.")
+		return
+	var exported_points: Variant = exported_road_segments[0].get("points", PackedVector2Array())
+	if not exported_points is PackedVector2Array or exported_points.size() < 2:
+		_fail("Baghdad map UI road-geometry API returned an unusable road segment.")
+		return
 	var first_road_segment: Dictionary = road_segments_value[0]
 	var first_road_points: Variant = first_road_segment.get("points", PackedVector2Array())
 	if not first_road_points is PackedVector2Array or first_road_points.size() < 2:
@@ -85,8 +93,27 @@ func _run_validation() -> void:
 	if integrated_route.size() < 2 or int(navigation_manager.get_navigation_status().get("real_osm_routes_found", 0)) != 1:
 		_fail("Baghdad pedestrian navigation did not consume the real OSM road graph.")
 		return
+	var strict_player_route: Array[Vector3] = navigation_manager.find_real_baghdad_road_path(
+		"Baghdad",
+		Vector3(road_start.x, 0.0, road_start.y),
+		Vector3(road_end.x, 0.0, road_end.y)
+	)
+	if strict_player_route.size() < 2:
+		_fail("Player-facing Baghdad route API did not return a real OSM road path.")
+		return
+	if int(navigation_manager.get_navigation_status().get("real_osm_routes_found", 0)) != 2:
+		_fail("Player-facing route API did not record its real OSM route.")
+		return
+	var non_baghdad_route: Array[Vector3] = navigation_manager.find_real_baghdad_road_path(
+		"Tokyo",
+		Vector3(road_start.x, 0.0, road_start.y),
+		Vector3(road_end.x, 0.0, road_end.y)
+	)
+	if not non_baghdad_route.is_empty():
+		_fail("Baghdad OSM route API incorrectly returned a route for a different city.")
+		return
 	navigation_manager.free()
-	print("Baghdad OSM pedestrian routing passed: road_nodes=", streamer.get_streaming_status().get("road_navigation_node_count", 0), " route_points=", osm_route.size())
+	print("Baghdad OSM player routing and map road export passed: road_nodes=", streamer.get_streaming_status().get("road_navigation_node_count", 0), " route_points=", strict_player_route.size(), " map_road_segments=", exported_road_segments.size())
 
 	# Exercise persistence against a real OSM-generated building ID, not a test-only ID.
 	var city_state_store = CITY_STATE_STORE.new()
