@@ -44,7 +44,12 @@ func _run_tests() -> void:
 	var right_edge_height := right_vertices[row * (intervals + 1)].y
 	assert(is_equal_approx(left_edge_height, right_edge_height), "Adjacent terrain cell edge heights do not match.")
 
-	assert(left_root.get_node_or_null("TerrainCollision") != null)
+	var terrain_collision := left_root.get_node_or_null("TerrainCollision/TerrainHeightCollision") as CollisionShape3D
+	assert(terrain_collision != null)
+	streamer._update_loaded_cell_collisions(Vector2i(10, 10))
+	assert(terrain_collision.disabled, "Distant cell collision should be disabled.")
+	streamer._update_loaded_cell_collisions(Vector2i.ZERO)
+	assert(not terrain_collision.disabled, "Nearby cell collision should be enabled again.")
 	streamer._unload_cell(Vector2i(0, 0))
 	assert(streamer.loaded_cells.size() == 2)
 	streamer.queue_free()
