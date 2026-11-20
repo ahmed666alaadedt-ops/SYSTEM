@@ -192,7 +192,10 @@
           44.5699963,
           33.4868251
         ],
-        "geometry_status": "extracted_and_preliminarily_shape_inspected; official boundary validation still required"
+        "geometry_status": "extracted_and_preliminarily_shape_inspected; official boundary validation still required",
+        "geometry_area_estimate_km2": 861.08,
+        "geometry_area_calculation_crs": "EPSG:32638",
+        "geometry_area_status": "derived from extracted MultiPolygon; approximate and requires official boundary cross-check"
       },
       "verified_municipal_clip": {
         "file_name": "baghdad-municipality-candidate.osm.pbf",
