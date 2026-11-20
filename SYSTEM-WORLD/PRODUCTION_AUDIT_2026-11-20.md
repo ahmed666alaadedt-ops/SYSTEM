@@ -116,7 +116,7 @@ It also creates or coordinates:
 
 - The generated district building masses are box meshes with district-specific height ranges and material palettes. They are efficient blockout geometry, not detailed architecture.
 - City identity landmarks are currently assembled from primitive box/cylinder geometry.
-- The older `world_manager.gd` still calls legacy road, city-building, tree, skyline, forest, mountain and water generation in addition to the newer continent/region layer. This creates a potential duplicate/overlap and ownership risk that requires visual inspection before either layer is changed.
+- Follow-up source inspection confirmed the active `WorldManager._create_modern_city()` no longer calls the legacy starter-street, city-building, tree or skyline generators; `ModernWorldRegionManager` is the active owner of city districts and roads. The world manager still adds separate forest, mountain and waterway systems, which remain candidates for terrain-cell ownership and visual overlap review.
 - The modern-world completion tracker explicitly leaves distinctive architecture, complete streets, functioning facilities, interiors, transport and performance acceptance unchecked.
 - The current modern city code does not provide a finished building kit with reviewed facades, windows, doors, balconies, rooflines, signs, storefronts, interior furnishing and full access/navigation.
 
@@ -310,3 +310,22 @@ These changes require the latest CI run to finish successfully before the new ru
 - Additional Android export workflow run 44701018065 completed successfully and produced `SYSTEM-WORLD-Android-debug` (artifact ID 14612696780; 35,460,852 bytes). The standard Android build workflow run 44701018027 also completed successfully and produced `SYSTEM-debug-apk` (artifact ID 14613375313; 33,092,926 bytes).
 - The earlier null-mesh log spam was not reproduced in the later canonical validation. Keep it as a historical transient diagnostic, not as a current confirmed failure.
 - These CI results validate project import/startup and APK export only; they do not replace visual inspection or Android-device frame-time, memory, collision, navigation, and thermal profiling.
+
+
+## 8. Terrain streaming follow-up — 2026-11-20
+
+After the baseline audit, the active canonical modern-continent terrain path was changed:
+
+- `ModernContinentManager._ready()` now calls `_setup_terrain_streaming()` rather than the monolithic `_build_continent()` builder.
+- `ModernWorldCellStreamingManager` is instantiated under the canonical modern continent and samples the existing deterministic terrain height function.
+- The previous monolithic terrain visual/collision builder remains in source but is no longer called by the active `_ready()` path.
+- Initial cell profile: 200 m cells, 20 m sample spacing, load radius 2, collision radius 1. Player's current cell is prioritized; near-cell collisions are toggled as the player moves.
+- Terrain vertex colors and normals are generated for each cell.
+- A deterministic polyline clipper has been added for future cell-owned roads/rivers; current city road and waterway meshes are not yet migrated to it.
+- Headless test coverage was added for shared terrain-edge heights, cell priority, collision toggling, unload, canonical continent wiring and adjacent-cell polyline endpoints.
+
+**Verified CI:** canonical Godot validation run [44707436131](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44707436131) completed successfully for commit `466041868a26605ebc70b84c1bd78ce35b070f45`. The import/parse step, terrain cell streaming test, existing safety/geography/gate tests and headless main-scene launch all passed.
+
+**Latest follow-up test extension:** partial edge-cell support and tests were added in commit `5292a22e4330a3e11574d91e80c6b81d3a875384`; its canonical validation workflow was triggered and was still running at the time of this addendum. Do not mark that newer test extension passed until its workflow result is confirmed.
+
+**Scope boundary:** this integration streams the existing 3 km × 2.2 km fictional continent prototype. It is not a full-scale Baghdad map. The candidate Baghdad municipal boundary remains approximately 861 km², and its eight GeoJSON source layers have not yet been imported into the Godot runtime. Roads/rivers/bridges, navigation, stitched LOD, detailed building assets and physical Android performance acceptance remain outstanding.
