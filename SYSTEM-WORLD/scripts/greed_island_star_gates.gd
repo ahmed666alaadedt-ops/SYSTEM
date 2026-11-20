@@ -1,7 +1,7 @@
 extends Node
 
-## Central inter-world transit. All entry gates are created in Baghdad.
-## Greed Island has one exit gate that returns the player to the modern-world hub.
+## Central inter-world transit. All Star Gates are created in Baghdad only.
+## Greed Island uses a non-gate return beacon; it is not a Star Gate.
 
 const FANTASY_ID := 0
 const HISTORICAL_ID := 1
@@ -123,21 +123,50 @@ func _add_gate_trigger(parent: Node3D, data: Dictionary) -> void:
 
 
 func _create_island_return_gate(island_root: Node3D) -> void:
-	# The current world manager instantiates GreedIslandManager directly.
+	# This is an extraction beacon, not a Star Gate. Inter-world Star Gates
+	# remain physically located in Baghdad only.
 	var island: Node = island_root.get_node_or_null("GreedIslandManager")
 	if island == null:
 		island = island_root.get_node_or_null("GreedIslandEnvironment")
 	if island == null:
 		island = island_root
-	if island.has_node("ReturnToBaghdadGate"):
+	if island.has_node("GreedIslandReturnBeacon"):
 		return
-	var gate := Node3D.new()
-	gate.name = "ReturnToBaghdadGate"
-	gate.position = Vector3(0.0, 0.0, -35.0)
-	island.add_child(gate)
-	_build_gate_visual(gate, "modern")
-	var data := {"title": "بوابة العودة إلى بغداد", "id": MODERN_ID}
-	_add_gate_trigger(gate, data)
+
+	var beacon := Node3D.new()
+	beacon.name = "GreedIslandReturnBeacon"
+	beacon.position = Vector3(0.0, 0.0, -35.0)
+	island.add_child(beacon)
+
+	var marker := MeshInstance3D.new()
+	marker.name = "ReturnBeaconMarker"
+	var marker_mesh := CylinderMesh.new()
+	marker_mesh.top_radius = 0.35
+	marker_mesh.bottom_radius = 0.65
+	marker_mesh.height = 1.4
+	marker.mesh = marker_mesh
+	marker.position = Vector3(0.0, 0.7, 0.0)
+	marker.material_override = _make_glowing_material(Color(0.12, 0.82, 0.95))
+	beacon.add_child(marker)
+
+	var area := Area3D.new()
+	area.name = "ReturnToBaghdadZone"
+	area.position = Vector3(0.0, 1.0, 1.8)
+	area.set_meta("system_world_exit", true)
+	area.set_meta("system_exit_destination", "modern")
+	var collision := CollisionShape3D.new()
+	var sphere := SphereShape3D.new()
+	sphere.radius = 2.4
+	collision.shape = sphere
+	area.add_child(collision)
+	beacon.add_child(area)
+	area.body_entered.connect(_on_island_return_entered)
+
+
+func _on_island_return_entered(body: Node3D) -> void:
+	if transition_locked or not _is_local_player(body):
+		return
+	_transition_to_world(MODERN_ID)
 
 
 func set_greed_island_season_open(is_open: bool) -> void:
