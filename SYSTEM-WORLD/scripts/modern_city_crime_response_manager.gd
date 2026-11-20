@@ -12,6 +12,9 @@ signal stolen_vehicle_recovered(vehicle_id: String, city_name: String)
 signal crime_case_opened(case_id: String, crime_type: String, city_name: String)
 signal crime_case_updated(case_id: String, status: String)
 signal civilian_protection_requested(npc_id: String, reason: String)
+signal illegal_street_race_reported(race_id: String, city_name: String)
+signal illegal_street_race_pursuit_started(race_id: String, city_name: String)
+signal illegal_street_race_stopped(race_id: String, city_name: String)
 
 const NPCVehicleScript = preload("res://scripts/system_npc_vehicle.gd")
 const SAVE_PATH := "user://system_city_crime_state.cfg"
@@ -37,6 +40,7 @@ var police_units: Array[Dictionary] = []
 var next_vehicle_number := 1
 var next_police_number := 1
 var next_case_number := 1
+var next_illegal_race_number := 1
 var crime_records: Array[Dictionary] = []
 var wanted_level := 0
 
@@ -300,6 +304,62 @@ func attempt_vehicle_theft(vehicle_id: String) -> Dictionary:
 	_save_crime_state()
 	return {"success": true, "vehicle_id": vehicle_id, "wanted_level": wanted_level, "reported": int(record["witness_count"]) > 0}
 
+func report_illegal_street_race(target_vehicle: Node3D, city_name: String) -> Dictionary:
+	## Called by the street-race activity when witnesses report an unsanctioned race.
+	## The target must be a road-legal street vehicle; purpose-built race cars are track-only.
+	if not is_instance_valid(target_vehicle):
+		return {"success": false, "reason": "INVALID_RACE_VEHICLE"}
+	if bool(target_vehicle.get_meta("system_illegal_race_reported", false)):
+		return {"success": false, "reason": "RACE_ALREADY_REPORTED"}
+	target_vehicle.set_meta("system_illegal_race_reported", true)
+	var race_id := "illegal_street_race_%05d" % next_illegal_race_number
+	next_illegal_race_number += 1
+	var record := {
+		"node": target_vehicle,
+		"owner_npc_id": "player_or_civilian",
+		"owner_name": "Street racer",
+		"city_name": city_name,
+		"anchor": target_vehicle.global_position,
+		"slot": -1,
+		"stolen": false,
+		"reported": true,
+		"recovered": false,
+		"illegal_race": true,
+		"witness_count": 1
+	}
+	vehicles[race_id] = record
+	wanted_level = mini(5, wanted_level + 1)
+	crime_records.append({
+		"type": "illegal_street_racing",
+		"vehicle_id": race_id,
+		"city_name": city_name,
+		"wanted_level": wanted_level,
+		"time_unix": int(Time.get_unix_time_from_system())
+	})
+	illegal_street_race_reported.emit(race_id, city_name)
+	_dispatch_police(race_id)
+	illegal_street_race_pursuit_started.emit(race_id, city_name)
+	_save_crime_state()
+	return {"success": true, "race_id": race_id, "wanted_level": wanted_level, "police_dispatched": true}
+
+
+func _stop_illegal_street_race(race_id: String) -> void:
+	var record: Dictionary = vehicles.get(race_id, {})
+	if record.is_empty():
+		return
+	var target := record.get("node") as Node3D
+	if is_instance_valid(target):
+		if target.has_method("set_mobile_controls"):
+			target.call("set_mobile_controls", 0.0, 0.0, 1.0)
+		if target.has_method("set_driver_active"):
+			target.call("set_driver_active", false)
+	record["recovered"] = true
+	vehicles[race_id] = record
+	illegal_street_race_stopped.emit(race_id, str(record.get("city_name", "")))
+	crime_case_opened.emit(race_id, "illegal_street_racing", str(record.get("city_name", "")))
+	_save_crime_state()
+
+
 func _report_theft(vehicle_id: String) -> void:
 	var record: Dictionary = vehicles[vehicle_id]
 	if bool(record.get("reported", false)):
@@ -373,7 +433,11 @@ func _process(delta: float) -> void:
 			police.global_position += direction.normalized() * float(unit["speed"]) * delta
 			police.look_at(Vector3(target.global_position.x, police.global_position.y, target.global_position.z), Vector3.UP)
 		else:
-			_recover_stolen_vehicle(str(unit["target_id"]))
+			var target_id := str(unit["target_id"])
+			if bool(record.get("illegal_race", false)):
+				_stop_illegal_street_race(target_id)
+			else:
+				_recover_stolen_vehicle(target_id)
 			police.queue_free()
 			police_units.remove_at(index)
 
