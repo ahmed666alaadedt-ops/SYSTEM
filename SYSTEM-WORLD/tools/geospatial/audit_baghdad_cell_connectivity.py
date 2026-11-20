@@ -165,6 +165,12 @@ def _geometry_close(expected, actual) -> bool:
     try:
         if expected.hausdorff_distance(actual) > TOLERANCE_M:
             return False
+        if expected.geom_type == "GeometryCollection" or actual.geom_type == "GeometryCollection":
+            delta = expected.symmetric_difference(actual)
+            return (
+                delta.area <= max(0.10, expected.area * 1e-6)
+                and delta.length <= max(0.08, expected.length * 1e-6)
+            )
         if expected.geom_type in ("Polygon", "MultiPolygon") or actual.geom_type in ("Polygon", "MultiPolygon"):
             return expected.symmetric_difference(actual).area <= max(0.10, expected.area * 1e-6)
         return abs(expected.length - actual.length) <= max(0.08, expected.length * 1e-6)
@@ -400,7 +406,6 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
                     actual_b = actual_union.get((cell_b, feature_key))
                     if actual_a is None or actual_b is None:
                         seam_report["missing_neighbor_fragments"] += 1
-                        report["missing_parts"] += 1
                         seam_report["disconnected_seams"] += 1
                         report["disconnected_seams"] += 1
                         layer_stats["disconnected"] += 1
@@ -445,7 +450,9 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
                             continue
                         overlap = left.intersection(right)
                         magnitude = overlap.area if overlap.geom_type in ("Polygon", "MultiPolygon") else overlap.length
-                        if magnitude > 0.01:
+                        has_area = left.area > 1e-9 or right.area > 1e-9
+                        is_overlap = overlap.area > 0.01 if has_area else overlap.length > 0.01
+                        if is_overlap:
                             report["overlapping_parts"] = report.get("overlapping_parts", 0) + 1
                             seam_report["overlapping_fragments"] += 1
                             overlap_errors.append(f"Overlapping fragments for {feature_key} in cell {cell}")
