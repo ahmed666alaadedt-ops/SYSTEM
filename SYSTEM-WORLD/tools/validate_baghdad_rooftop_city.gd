@@ -109,9 +109,9 @@ func _run_validation() -> void:
 	if test_cabin == null or test_cabin.get_node_or_null("CabinWalkableFloor") == null:
 		_fail("Elevator cabin is missing its walkable passenger floor.")
 		return
-	var floor_collision := test_cabin.get_node_or_null("CabinFloorCollisionBody/CollisionShape3D") as CollisionShape3D
+	var floor_collision := _find_shape_collision(test_cabin)
 	if floor_collision == null or floor_collision.shape == null:
-		_fail("Elevator passenger floor is missing collision geometry.")
+		_fail("Elevator passenger floor is missing collision geometry under cabin; children: %s" % _describe_children(test_cabin))
 		return
 	var test_player := CharacterBody3D.new()
 	test_player.name = "ElevatorRuntimeValidationPlayer"
@@ -143,3 +143,20 @@ func _run_validation() -> void:
 func _fail(message: String) -> void:
 	push_error("Baghdad rooftop city runtime failed: " + message)
 	quit(1)
+
+
+func _find_shape_collision(node: Node) -> CollisionShape3D:
+	if node is CollisionShape3D and node.shape != null:
+		return node
+	for child in node.get_children():
+		var found := _find_shape_collision(child)
+		if found != null:
+			return found
+	return null
+
+
+func _describe_children(node: Node) -> String:
+	var names: PackedStringArray = []
+	for child in node.get_children():
+		names.append("%s:%s" % [child.name, child.get_class()])
+	return ", ".join(names)
