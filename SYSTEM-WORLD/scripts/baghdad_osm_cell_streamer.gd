@@ -40,22 +40,28 @@ func _ready() -> void:
 	if not parsed is Dictionary or str(parsed.get("region_id", "")) != "iraq_baghdad_region":
 		push_error("SYSTEM Baghdad OSM: invalid region manifest.")
 		return
+	if str(parsed.get("coordinate_system", "")) != "SYSTEM_LOCAL_ECEF_TANGENT":
+		push_error("SYSTEM Baghdad OSM: unsupported coordinate projection.")
+		return
 	var origin: Dictionary = parsed.get("origin", {})
 	var origin_lat := float(origin.get("latitude", 0.0))
 	var origin_lon := float(origin.get("longitude", 0.0))
-	var region_record: Dictionary = SystemRealWorldGeography.get_region("iraq_baghdad_region")
+	var registry_path := "res://data/geography/real_world_registry.json"
+	if not FileAccess.file_exists(registry_path):
+		push_error("SYSTEM Baghdad OSM: canonical geography registry is missing.")
+		return
+	var registry: Variant = JSON.parse_string(FileAccess.get_file_as_string(registry_path))
+	if not registry is Dictionary:
+		push_error("SYSTEM Baghdad OSM: canonical geography registry is invalid.")
+		return
+	var regions: Dictionary = registry.get("regions", {})
+	var region_record: Dictionary = regions.get("iraq_baghdad_region", {})
 	var canonical_origin: Dictionary = region_record.get("origin", {})
 	if canonical_origin.is_empty():
 		push_error("SYSTEM Baghdad OSM: canonical Baghdad region origin is missing from the geography registry.")
 		return
 	if absf(origin_lat - float(canonical_origin.get("latitude", 0.0))) > 0.000001 or absf(origin_lon - float(canonical_origin.get("longitude", 0.0))) > 0.000001:
 		push_error("SYSTEM Baghdad OSM: cell pack origin differs from the canonical WGS84 registry anchor.")
-		return
-	var projected_origin: Vector3 = SystemRealWorldGeography.to_local_world_position(
-		"iraq_baghdad_region", origin_lat, origin_lon, 0.0
-	)
-	if absf(projected_origin.x) > 0.05 or absf(projected_origin.z) > 0.05:
-		push_error("SYSTEM Baghdad OSM: cell pack origin does not match the canonical WGS84 region origin.")
 		return
 	var axes: Dictionary = parsed.get("axes", {})
 	if str(axes.get("x", "")) != "east_m" or str(axes.get("z", "")) != "south_m":
