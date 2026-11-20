@@ -187,6 +187,14 @@ jobs:
           for layer in buildings roads waterways bridges landuse amenities railway natural-water; do
             osmium fileinfo --extended --json "$layer.osm.pbf" > "$layer-fileinfo.json"
           done
+          osmium export --geometry-types=point,polygon --attributes type,id --output buildings.geojson buildings.osm.pbf
+          osmium export --geometry-types=linestring --attributes type,id --output roads.geojson roads.osm.pbf
+          osmium export --geometry-types=linestring --attributes type,id --output waterways.geojson waterways.osm.pbf
+          osmium export --geometry-types=linestring,polygon --attributes type,id --output bridges.geojson bridges.osm.pbf
+          osmium export --geometry-types=polygon --attributes type,id --output landuse.geojson landuse.osm.pbf
+          osmium export --geometry-types=point,linestring,polygon --attributes type,id --output amenities.geojson amenities.osm.pbf
+          osmium export --geometry-types=point,linestring --attributes type,id --output railway.geojson railway.osm.pbf
+          osmium export --geometry-types=point,polygon --attributes type,id --output natural-water.geojson natural-water.osm.pbf
           python3 - <<'PY'
           import hashlib
           import json
@@ -240,6 +248,14 @@ jobs:
             ${{ runner.temp }}/baghdad-source/baghdad-municipality-candidate.osm.pbf
             ${{ runner.temp }}/baghdad-source/baghdad-clip-fileinfo.json
             ${{ runner.temp }}/baghdad-source/baghdad-source-verification.json
+            ${{ runner.temp }}/baghdad-source/buildings.geojson
+            ${{ runner.temp }}/baghdad-source/roads.geojson
+            ${{ runner.temp }}/baghdad-source/waterways.geojson
+            ${{ runner.temp }}/baghdad-source/bridges.geojson
+            ${{ runner.temp }}/baghdad-source/landuse.geojson
+            ${{ runner.temp }}/baghdad-source/amenities.geojson
+            ${{ runner.temp }}/baghdad-source/railway.geojson
+            ${{ runner.temp }}/baghdad-source/natural-water.geojson
             ${{ runner.temp }}/baghdad-source/ATTRIBUTION.txt
             ${{ runner.temp }}/baghdad-source/iraq.osm.pbf.sha256
           if-no-files-found: error
