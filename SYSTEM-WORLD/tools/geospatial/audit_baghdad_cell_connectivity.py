@@ -228,6 +228,8 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
                 cell = (int(tile.get("cell_x", 999999)), int(tile.get("cell_z", 999999)))
                 if cell in cells:
                     raise AuditError(f"Duplicate cell coordinates in pack: {cell}")
+                if name != f"cells/{cell[0]}_{cell[1]}.json":
+                    raise AuditError(f"Cell filename does not match its embedded coordinates: {name} vs {cell}")
                 if not (min_x <= cell[0] <= max_x and min_z <= cell[1] <= max_z):
                     raise AuditError(f"Cell {cell} lies outside manifest bounds")
                 if tile.get("region_id") != manifest["region_id"]:
@@ -349,7 +351,7 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
                         report["errors"].append(
                             f"OSM feature does not meet both sides of shared cell edge: {feature_key}, {cell_a}<->{cell_b}"
                         )
-                    elif layer in LINE_LAYERS:
+                    elif layer in LINE_LAYERS and geometry_a.geom_type in ("LineString", "MultiLineString", "Point", "MultiPoint"):
                         if seam_a.distance(seam_b) > TOLERANCE_M:
                             report["disconnected_seams"] += 1
                             report["errors"].append(
