@@ -80,7 +80,24 @@ func _run_validation() -> void:
 		_fail("Expected five vertical access cores; found %d." % lift_core_count)
 		return
 
-	print("Baghdad rooftop city runtime passed: 5 towers, 20 rooftop quarters, 5 upper bridges, 5 access cores.")
+	var cabin_count := 0
+	var call_panel_count := 0
+	for child in network.get_children():
+		if child is Node3D and child.name.begins_with("RooftopCityLiftCabin_"):
+			cabin_count += 1
+		if child is Area3D and child.name.begins_with("RooftopElevatorCall_"):
+			call_panel_count += 1
+			if not child.is_in_group("system_interactable"):
+				_fail("Rooftop elevator call panel is not registered as interactable.")
+				return
+	if cabin_count != 5:
+		_fail("Expected five elevator cabins; found %d." % cabin_count)
+		return
+	if call_panel_count != 10:
+		_fail("Expected ten elevator call panels; found %d." % call_panel_count)
+		return
+
+	print("Baghdad rooftop city runtime passed: 5 towers, 20 rooftop quarters, 5 upper bridges, 5 lift cores, 5 cabins and 10 interactive call panels.")
 	quit(0)
 
 
