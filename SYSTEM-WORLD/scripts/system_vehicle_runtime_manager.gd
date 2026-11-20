@@ -20,6 +20,7 @@ var mobile_steering := 0.0
 var brake_hold_time := 0.0
 var player_mesh_was_visible := true
 var showroom_ui: SystemVehicleDealershipUI
+var dedicated_track_context := false
 
 func setup(
 	player_node: CharacterBody3D,
@@ -42,6 +43,13 @@ func setup(
 
 func set_world_root(active_root: Node3D) -> void:
 	world_root = active_root
+
+func set_dedicated_track_context(enabled: bool) -> void:
+	## Race-class vehicles may only be spawned and driven inside an approved track zone.
+	dedicated_track_context = enabled
+
+func is_vehicle_road_legal(vehicle_id: String) -> bool:
+	return not VehicleCatalogScript.is_race_vehicle(vehicle_id)
 
 func _process(delta: float) -> void:
 	if not is_driving or not is_instance_valid(active_vehicle):
@@ -102,6 +110,8 @@ func spawn_owned_vehicle(vehicle_id: String) -> Dictionary:
 	var data := VehicleCatalogScript.get_vehicle(vehicle_id)
 	if data.is_empty():
 		return {"success":false,"reason":"UNKNOWN_VEHICLE"}
+	if VehicleCatalogScript.is_race_vehicle(vehicle_id) and not dedicated_track_context:
+		return {"success":false,"reason":"RACE_VEHICLE_RESTRICTED_TO_DEDICATED_TRACKS"}
 	active_vehicle = VehicleScript.new()
 	active_vehicle.name = "PlayerVehicle_" + vehicle_id
 	active_vehicle.configure(data, vehicle_id)
@@ -149,6 +159,8 @@ func apply_vehicle_paint(vehicle_id: String, color: Color) -> void:
 
 func enter_vehicle() -> bool:
 	if is_driving or not is_instance_valid(active_vehicle):
+		return false
+	if VehicleCatalogScript.is_race_vehicle(active_vehicle.vehicle_id) and not dedicated_track_context:
 		return false
 	if player.global_position.distance_to(active_vehicle.global_position) > 5.0:
 		return false
