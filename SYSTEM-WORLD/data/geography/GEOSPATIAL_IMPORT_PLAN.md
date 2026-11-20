@@ -104,13 +104,14 @@ Each feature must retain a stable source ID, source tags, geometry type, source 
 1. Download the pinned PBF snapshot and verify its published checksum where available.
 2. Confirm relation 5638803 exists in that exact snapshot and inspect its members, tags and boundary geometry.
 3. Generate a reviewed Baghdad clipping polygon; preserve holes and multipolygon members.
-4. Extract the required OSM layers and clip them to the reviewed region polygon plus a documented streaming buffer.
+4. Extract the required OSM layers against the reviewed region polygon using reference-complete ways. Osmium does not geometrically clip OSM objects: complete ways may extend beyond the polygon, so later GIS conversion must clip/render geometry against the reviewed boundary plus a documented streaming buffer.
 5. Normalize tags and geometry into versioned GeoPackage/GeoJSON intermediate layers.
 6. Validate geometry integrity, duplicate IDs, invalid rings, coordinate ranges, road connectivity and feature coverage.
-7. Convert geographic coordinates through `SystemRealWorldGeography` using a region-specific origin.
-8. Generate terrain, roads, water, building footprints, collision and navigation from the approved layers.
-9. Package the resulting region into offline tiles; do not make runtime gameplay depend on a public tile server.
-10. Run Godot import, scene, collision/navigation and map-overlay tests, then inspect the region in-editor and on Android.
+7. Strip OSM contributor metadata (`version`, `timestamp`, `changeset`, `uid`, `user`) from distributed game data while retaining source IDs/tags needed for attribution and traceability.
+8. Convert geographic coordinates through `SystemRealWorldGeography` using a region-specific origin.
+9. Generate terrain, roads, water, building footprints, collision and navigation from the approved layers.
+10. Package the resulting region into offline tiles; do not make runtime gameplay depend on a public tile server.
+11. Run Godot import, scene, collision/navigation and map-overlay tests, then inspect the region in-editor and on Android.
 
 ## 7. Production acceptance gates
 
