@@ -367,10 +367,11 @@ func _create_rooftop_city_links() -> void:
 	var upper_city := Node3D.new()
 	upper_city.name = "BaghdadUnifiedRooftopCityNetwork"
 	add_child(upper_city)
-	var highest_tower_height := 0.0
+	var highest_roof_elevation := 0.0
 	for tower_data in tower_positions:
-		highest_tower_height = maxf(highest_tower_height, float(tower_data["height"]))
-	var shared_level := highest_tower_height + 58.0
+		var tower_position_for_height: Vector3 = tower_data["position"]
+		highest_roof_elevation = maxf(highest_roof_elevation, tower_position_for_height.y + float(tower_data["height"]) + 8.0)
+	var shared_level := highest_roof_elevation + 50.0
 	for index in range(tower_positions.size()):
 		var tower_data: Dictionary = tower_positions[index]
 		var tower_position: Vector3 = tower_data["position"]
@@ -378,8 +379,8 @@ func _create_rooftop_city_links() -> void:
 		var access_height := shared_level - roof_level
 		var radius := float(tower_data["radius"])
 		var access_offset := Vector3(radius * 1.35, 0.0, 0.0)
-		var access_base := tower_position + Vector3(0.0, roof_level - tower_position.y, 0.0) + access_offset
-		var access_top := tower_position + Vector3(0.0, shared_level, 0.0) + access_offset
+		var access_base := tower_position + Vector3(0.0, float(tower_data["height"]) + 8.0, 0.0) + access_offset
+		var access_top := Vector3(tower_position.x, shared_level, tower_position.z) + access_offset
 		var access_core := MeshInstance3D.new()
 		access_core.name = "RooftopCityVerticalLiftCore_%02d" % index
 		var core_mesh := BoxMesh.new()
@@ -406,7 +407,8 @@ func _create_rooftop_city_links() -> void:
 		upper_city.add_child(landing)
 		_add_static_box_collision(upper_city, "UpperSkyPromenadeLandingCollision_%02d" % index, access_top, landing_mesh.size)
 		var next_data: Dictionary = tower_positions[(index + 1) % tower_positions.size()]
-		var next_position: Vector3 = next_data["position"] + Vector3(0.0, shared_level, 0.0) + Vector3(float(next_data["radius"]) * 1.35, 0.0, 0.0)
+		var next_tower_position: Vector3 = next_data["position"]
+		var next_position := Vector3(next_tower_position.x, shared_level, next_tower_position.z) + Vector3(float(next_data["radius"]) * 1.35, 0.0, 0.0)
 		_create_link_deck(upper_city, access_top, next_position, "UpperCityBridge_%02d" % index, 16.0, 1.4, trim_material)
 	upper_city.set_meta("connected_tower_count", tower_positions.size())
 	upper_city.set_meta("shared_upper_city_elevation", shared_level)
