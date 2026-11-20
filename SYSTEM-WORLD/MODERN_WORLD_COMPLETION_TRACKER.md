@@ -112,6 +112,18 @@ A checked repository foundation does not mean a finished gameplay feature. Visua
 - Design approval/documentation is recorded in `HUNTER_TOWERS_AND_EXAMINATION_DESIGN.md`. The connected city, bridges, detailed interiors, and river engineering are not yet implemented or runtime-tested.
 
 
+## Connected Baghdad district — collision and access blockout update — 20 November 2026
+
+- [x] Add static collision shapes matching the generated elevated promenade and vehicle-deck box geometry.
+- [x] Add collision shapes to the visual parking-level slabs and parking-ramp deck segments.
+- [x] Add a three-level parking-garage blockout with thirty visual parking-bay markings.
+- [x] Add two visible vertical-access shaft placeholders for passenger/service lifts.
+- [ ] Add actual player vehicle spawning, enter/exit, mobile steering/throttle/brake controls, vehicle physics, and camera handoff.
+- [ ] Replace the parking-ramp straight prototype segments with a continuous tested ramp route and safe grade/turn radius.
+- [ ] Implement elevator movement, doors, floor selection, emergency controls, and accessible pedestrian paths.
+- [ ] Validate all collision surfaces, clearances, ramp slopes, and vehicle handling in Godot and on Android.
+- Note: collision-backed decks and parking slabs are source-level additions; no runtime or driving test was run in this update. Lift shafts and parking bay markings remain visual blockout, not interactive systems.
+
 ## Connected Baghdad district — vehicles and public life — 20 November 2026
 - [x] Record the five distinct tower identities as one connected district: Power, Hunter Association, Business, Shopping, and Entertainment.
 - [x] Add an initial procedural five-tower blockout with elevated promenade/vehicle-deck link geometry and ramp-segment placeholders.
