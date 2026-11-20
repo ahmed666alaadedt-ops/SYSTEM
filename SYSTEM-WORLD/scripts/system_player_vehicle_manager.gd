@@ -33,6 +33,15 @@ func set_vehicle_color(vehicle_id: String, color: Color) -> void:
 func get_garage() -> Array[String]:
 	return owned_vehicles.duplicate()
 
+func award_race_reward(amount: int) -> Dictionary:
+	if amount <= 0:
+		return {"success":false,"reason":"INVALID_REWARD"}
+	balance += amount
+	save_garage()
+	wallet_changed.emit(balance)
+	return {"success":true,"awarded":amount,"balance":balance,"economy_mode":"local_prototype"}
+
+
 func purchase_vehicle(vehicle_id: String) -> Dictionary:
 	var vehicle: Dictionary = catalog_script.get_vehicle(vehicle_id)
 	if vehicle.is_empty() or int(vehicle.get("price", 0)) <= 0:
