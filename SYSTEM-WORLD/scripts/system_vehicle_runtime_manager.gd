@@ -68,7 +68,6 @@ func try_dealership_interaction() -> bool:
 		if player.global_position.distance_to(active_vehicle.global_position) <= 5.0:
 			enter_vehicle()
 			return true
-		return false
 	var dealership := _find_nearest_dealership(18.0)
 	if dealership == null:
 		return false
