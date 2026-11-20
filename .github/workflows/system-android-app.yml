@@ -88,6 +88,8 @@ jobs:
           test -s app/src/main/res/drawable-nodpi/system_launcher_icon_3d.png
           test -s app/src/main/res/drawable-nodpi/system_home_background.png
           grep -q 'SystemStartupGate' app/src/main/java/com/system/irtqaa/MainActivity.kt
+          grep -q 'SystemMiyarGuideGate' app/src/main/java/com/system/irtqaa/MainActivity.kt
+          grep -q 'system_launcher_icon_3d' app/src/main/res/mipmap-anydpi-v26/ic_system.xml
           grep -q 'R.raw.system_intro' app/src/main/java/com/system/irtqaa/SystemStartup.kt
 
       - name: Build native SYSTEM Android application
