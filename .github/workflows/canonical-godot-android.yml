@@ -56,18 +56,15 @@ jobs:
               const matches = response.data.workflow_runs
                 .filter(run => run.head_sha === headSha)
                 .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
-              const passed = matches.find(run => run.status === "completed" && run.conclusion === "success");
-              if (passed) {
-                core.setOutput("run_id", String(passed.id));
-                core.setOutput("conclusion", "success");
-                core.info(`Using verified Baghdad OSM source run ${passed.id} for ${headSha}.`);
-                return;
-              }
               const latest = matches[0];
-              if (latest && latest.status === "completed" && !matches.some(run => run.status !== "completed")) {
+              if (latest && latest.status === "completed") {
                 core.setOutput("run_id", String(latest.id));
                 core.setOutput("conclusion", latest.conclusion || "failure");
-                core.warning(`No Baghdad OSM audit run passed for ${headSha}; latest result is ${latest.conclusion}. Only procedural fallback may be exported.`);
+                if (latest.conclusion === "success") {
+                  core.info(`Using latest verified Baghdad OSM source run ${latest.id} for ${headSha}.`);
+                } else {
+                  core.warning(`Latest Baghdad OSM audit for ${headSha} concluded ${latest.conclusion}; only procedural fallback may be exported.`);
+                }
                 return;
               }
               await new Promise(resolve => setTimeout(resolve, 30000));
