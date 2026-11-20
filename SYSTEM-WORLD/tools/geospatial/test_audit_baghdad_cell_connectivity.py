@@ -299,6 +299,24 @@ class BaghdadCellConnectivityTests(unittest.TestCase):
             self.assertEqual(result["status"], "passed", result["errors"])
             self.assertGreaterEqual(result["expected_source_comparison"]["expected_feature_cell_parts"], 2)
 
+    def test_polygon_that_only_touches_neighbor_edge_is_not_a_disconnected_seam(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source, pack = _make_fixture(root)
+            def wgs84(x, z):
+                return (44.3661 + x / (111319.49 * 0.835), 33.3152 - z / 110574.0)
+            touching_building = Polygon([
+                wgs84(160, 20), wgs84(200, 20), wgs84(200, 60),
+                wgs84(160, 60), wgs84(160, 20),
+            ])
+            _append_projected_feature(source, pack, "buildings", 813, "way", touching_building)
+            result = audit.audit_pack(source, pack)
+            self.assertEqual(result["status"], "passed", result["errors"])
+            self.assertGreater(
+                result["actual_cell_seam_checks"]["valid_boundary_touches"], 0
+            )
+            self.assertEqual(result["disconnected_seams"], 0)
+
     def test_unexpected_osm_id_is_reported(self):
         with tempfile.TemporaryDirectory() as temp:
             source, pack = _make_fixture(Path(temp))
