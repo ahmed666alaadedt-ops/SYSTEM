@@ -7,7 +7,7 @@ import unittest
 import zipfile
 from pathlib import Path
 
-from shapely.geometry import LineString, Point, Polygon, box, mapping, shape
+from shapely.geometry import LineString, MultiPolygon, Point, Polygon, box, mapping, shape
 from shapely.ops import transform
 
 import audit_baghdad_cell_connectivity as audit
@@ -108,6 +108,38 @@ def _make_fixture(root: Path, omit_east_road: bool = False):
     return source, pack
 
 
+def _append_projected_feature(source: Path, pack: Path, layer: str, osm_id: int, osm_type: str, geometry):
+    source_path = source / f"{layer}.geojson"
+    data = json.loads(source_path.read_text(encoding="utf-8"))
+    data["features"].append(_feature(osm_id, osm_type, geometry))
+    source_path.write_text(json.dumps(data), encoding="utf-8")
+    projected = transform(audit._projector(), geometry)
+    with zipfile.ZipFile(pack, "r") as archive:
+        entries = {name: archive.read(name) for name in archive.namelist()}
+    for x in (0, 1):
+        tile_name = f"cells/{x}_0.json"
+        tile = json.loads(entries[tile_name])
+        if layer in audit.LINE_LAYERS or layer in audit.AREA_LAYERS or (
+            layer == "buildings" and projected.geom_type in ("Polygon", "MultiPolygon")
+        ):
+            fragment = projected.intersection(box(x * 200, 0, (x + 1) * 200, 200))
+        else:
+            point = projected.representative_point()
+            fragment = projected if int(point.x // 200) == x else projected.intersection(
+                box(x * 200, 0, (x + 1) * 200, 200)
+            )
+        if not fragment.is_empty:
+            tile["layers"][layer].append({
+                "id": str(osm_id), "osm_type": osm_type, "tags": {},
+                "geometry": mapping(audit._builder_serialized_geometry(fragment)),
+            })
+        entries[tile_name] = json.dumps(tile).encode()
+    with zipfile.ZipFile(pack, "w", zipfile.ZIP_DEFLATED) as archive:
+        for name, payload in entries.items():
+            archive.writestr(name, payload)
+
+
+
 class BaghdadCellConnectivityTests(unittest.TestCase):
     def test_real_pack_fixture_passes_and_checks_all_crossings(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -116,6 +148,7 @@ class BaghdadCellConnectivityTests(unittest.TestCase):
             self.assertEqual(result["status"], "passed", result["errors"])
             self.assertGreaterEqual(result["cross_cell_feature_pairs"], 5)
             self.assertEqual(result["cell_size_m"], 200.0)
+            self.assertTrue(result["actual_cell_seam_checks"]["checked_actual_cell_geometries"])
 
     def test_missing_neighbor_road_fragment_fails(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -195,6 +228,31 @@ class BaghdadCellConnectivityTests(unittest.TestCase):
         repaired = audit._builder_normalized_geometry(invalid)
         self.assertTrue(repaired.is_valid)
         self.assertFalse(repaired.is_empty)
+
+
+    def test_multipolygon_building_crosses_cells_and_preserves_all_parts(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source, pack = _make_fixture(root)
+            def wgs84(x, z):
+                return (44.3661 + x / (111319.49 * 0.835), 33.3152 - z / 110574.0)
+            west = Polygon([wgs84(x, z) for x, z in [(175, 20), (210, 20), (210, 60), (175, 60), (175, 20)]])
+            east = Polygon([wgs84(x, z) for x, z in [(40, 30), (55, 30), (55, 45), (40, 45), (40, 30)]])
+            _append_projected_feature(source, pack, "buildings", 808, "way", MultiPolygon([west, east]))
+            result = audit.audit_pack(source, pack)
+            self.assertEqual(result["status"], "passed", result["errors"])
+
+    def test_bridge_polygon_crossing_cell_boundary_is_audited(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source, pack = _make_fixture(root)
+            def wgs84(x, z):
+                return (44.3661 + x / (111319.49 * 0.835), 33.3152 - z / 110574.0)
+            polygon = Polygon([wgs84(x, z) for x, z in [(190, 75), (210, 75), (210, 85), (190, 85), (190, 75)]])
+            _append_projected_feature(source, pack, "bridges", 809, "way", polygon)
+            result = audit.audit_pack(source, pack)
+            self.assertEqual(result["status"], "passed", result["errors"])
+
 
     def test_unexpected_osm_id_is_reported(self):
         with tempfile.TemporaryDirectory() as temp:
