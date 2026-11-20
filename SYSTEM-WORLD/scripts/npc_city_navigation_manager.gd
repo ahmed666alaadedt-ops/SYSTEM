@@ -113,6 +113,25 @@ func _find_grid_path(start: Vector2i, goal: Vector2i) -> Array[Vector2i]:
 	reversed.reverse()
 	return reversed
 
+
+## Strict player-facing route API: never substitutes the procedural NPC waypoint grid.
+## Returns only a route built from real pedestrian-accessible OSM roads in loaded Baghdad cells.
+func find_real_baghdad_road_path(city_name: String, start: Vector3, target: Vector3) -> Array[Vector3]:
+	if city_name.to_lower() not in ["baghdad", "بغداد"]:
+		return []
+	_resolve_osm_streamer()
+	if not is_instance_valid(osm_streamer):
+		return []
+	var osm_route: Array = osm_streamer.call("get_road_navigation_path", start, target)
+	var result: Array[Vector3] = []
+	for point in osm_route:
+		if point is Vector3:
+			result.append(point)
+	if result.size() >= 2:
+		real_osm_routes_found += 1
+		routes_found += 1
+	return result
+
 func get_navigation_status() -> Dictionary:
 	return {
 		"active": is_instance_valid(region_manager),
