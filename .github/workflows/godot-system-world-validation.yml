@@ -67,9 +67,16 @@ jobs:
       - name: Validate Baghdad city state persistence round-trip
         shell: bash
         run: |
+          set -euo pipefail
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
-          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_baghdad_city_state_store.gd
+          LOG="$RUNNER_TEMP/baghdad-city-state-validation.log"
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_baghdad_city_state_store.gd 2>&1 | tee "$LOG"
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" "$LOG"; then
+            echo "::error::Godot reported a script error during Baghdad city-state persistence validation."
+            exit 1
+          fi
+          grep -q "Baghdad city state persistence round-trip passed." "$LOG"
 
       - name: Verify child character civilian and combat restrictions
         shell: bash
