@@ -7,18 +7,18 @@
 
 ## 1. Candidate source snapshots
 
-### Primary candidate — OpenStreetData Iraq PBF
+### Primary candidate — BBBike Iraq PBF
 
-OpenStreetData publishes full country extracts from OpenStreetMap raw data dumps:
+BBBike publishes an Iraq OpenStreetMap PBF extract:
 
-- Country file: `IQ.osm.pbf`
-- Direct source: https://files.openstreetdata.org/extracts/IQ.osm.pbf
-- Index: https://openstreetdata.org/
-- Provider-reported size: 81.1 MB
-- License stated by provider: Open Database License (ODbL) 1.0.
-- The public index does not publish a snapshot date for the country PBF.
+- Direct source: https://data.bbbike.org/osm/pbf/region/asia/iraq.osm.pbf
+- Dataset page: https://data.bbbike.org/osm/region/asia/iraq/
+- Provider-reported last update: 2026-10-16 06:00:02 UTC
+- Provider-reported size: 97 MB
+- Map-data credit: © OpenStreetMap.org contributors; © BBBike.org
+- Underlying OSM data license: Open Database License (ODbL) 1.0.
 
-This is the current primary candidate because the download host is separate from Geofabrik. The exact OSM data timestamp and SHA-256 must be recorded from the downloaded file before use. The source has not yet been downloaded, parsed or imported into SYSTEM WORLD.
+This is the primary candidate because the provider page reports a recent update. The embedded PBF timestamp and SHA-256 must still be checked at download time. The source has not yet been downloaded, parsed or imported into SYSTEM WORLD.
 
 ### Fallback candidate — Geofabrik Iraq PBF
 
@@ -31,7 +31,17 @@ This is the current primary candidate because the download host is separate from
 
 A GitHub Actions runner could not connect to `download.geofabrik.de` during the first verification attempt. Keep this as a fallback candidate; do not treat the failed network request as evidence that the data or relation is invalid.
 
-Both sources derive from OpenStreetMap and require the same ODbL and attribution review. Do not merge their geometry until their timestamps, boundaries and feature coverage have been compared.
+### Stale comparison source — OpenStreetData Iraq PBF
+
+- Direct source: https://files.openstreetdata.org/extracts/IQ.osm.pbf
+- Provider-reported size: 81.1 MB
+- Provider index: https://openstreetdata.org/
+- License: Open Database License (ODbL) 1.0.
+- The downloaded file's actual last object timestamp was **2023-04-23 23:59:30 UTC**.
+
+This extract successfully contained Baghdad relation 5638803, but its verified data timestamp is too old to serve as the current production source for roads, buildings or infrastructure. Retain it only as a boundary/reference comparison candidate.
+
+All three sources derive from OpenStreetMap and require ODbL and attribution review. Do not merge their geometry until timestamps, boundaries and feature coverage have been compared.
 
 ## 2. Candidate Baghdad boundary
 
