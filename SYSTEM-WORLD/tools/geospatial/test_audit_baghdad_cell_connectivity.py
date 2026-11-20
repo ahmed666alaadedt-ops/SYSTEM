@@ -384,6 +384,88 @@ class BaghdadCellConnectivityTests(unittest.TestCase):
             self.assertEqual(result["disconnected_seams"], 0)
 
 
+    def test_mixed_amenity_point_line_polygon_records_are_audited_individually(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source, pack = _make_fixture(root)
+
+            def wgs84(x, z):
+                return (44.3661 + x / (111319.49 * 0.835), 33.3152 - z / 110574.0)
+
+            line = LineString([wgs84(190, 80), wgs84(234, 120)])
+            polygon = Polygon([
+                wgs84(190, 80), wgs84(234, 80), wgs84(234, 120),
+                wgs84(190, 120), wgs84(190, 80),
+            ])
+            point = Point(wgs84(100, 100))
+            _append_projected_feature(source, pack, "amenities", 950, "way", line)
+            _append_projected_feature(source, pack, "amenities", 950, "way", polygon)
+            _append_projected_feature(source, pack, "amenities", 951, "node", point)
+
+            result = audit.audit_pack(source, pack)
+            self.assertEqual(result["status"], "passed", result["errors"])
+            self.assertGreater(
+                result["actual_cell_seam_checks"]["non_clipped_layer_features"], 0
+            )
+            with zipfile.ZipFile(pack, "r") as archive:
+                west = json.loads(archive.read("cells/0_0.json"))
+                east = json.loads(archive.read("cells/1_0.json"))
+            west_950 = [f for f in west["layers"]["amenities"] if f["id"] == "950"]
+            east_950 = [f for f in east["layers"]["amenities"] if f["id"] == "950"]
+            self.assertEqual(len(west_950), 1)
+            self.assertEqual(len(east_950), 1)
+            self.assertEqual(shape(west_950[0]["geometry"]).geom_type, "LineString")
+            self.assertEqual(shape(east_950[0]["geometry"]).geom_type, "Polygon")
+
+    def test_landuse_polygon_crossing_multiple_cells_is_audited(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source, pack = _make_fixture(root)
+
+            def wgs84(x, z):
+                return (44.3661 + x / (111319.49 * 0.835), 33.3152 - z / 110574.0)
+
+            polygon = Polygon([
+                wgs84(175, 30), wgs84(225, 30), wgs84(225, 70),
+                wgs84(175, 70), wgs84(175, 30),
+            ])
+            _append_projected_feature(source, pack, "landuse", 820, "way", polygon)
+            result = audit.audit_pack(source, pack)
+            self.assertEqual(result["status"], "passed", result["errors"])
+            self.assertGreaterEqual(
+                result["expected_source_comparison"]["expected_feature_cell_parts"], 2
+            )
+
+    def test_actual_disconnected_road_seam_is_reported(self):
+        with tempfile.TemporaryDirectory() as temp:
+            source, pack = _make_fixture(Path(temp))
+            with zipfile.ZipFile(pack, "r") as archive:
+                entries = {name: archive.read(name) for name in archive.namelist()}
+            tile = json.loads(entries["cells/1_0.json"])
+            road = next(item for item in tile["layers"]["roads"] if item["id"] == "101")
+            geometry = shape(road["geometry"])
+            coordinates = list(geometry.coords)
+            edge_index = min(
+                range(len(coordinates)),
+                key=lambda index: abs(coordinates[index][0] - 200.0),
+            )
+            coordinates[edge_index] = (
+                coordinates[edge_index][0] + 5.0,
+                coordinates[edge_index][1],
+            )
+            road["geometry"] = mapping(LineString(coordinates))
+            entries["cells/1_0.json"] = json.dumps(tile).encode()
+            with zipfile.ZipFile(pack, "w", zipfile.ZIP_DEFLATED) as archive:
+                for name, payload in entries.items():
+                    archive.writestr(name, payload)
+
+            result = audit.audit_pack(source, pack)
+            self.assertEqual(result["status"], "failed")
+            self.assertGreater(result["disconnected_seams"], 0)
+            self.assertTrue(
+                any("Actual geometry seam mismatch" in error for error in result["errors"])
+            )
+
     def test_unexpected_osm_id_is_reported(self):
         with tempfile.TemporaryDirectory() as temp:
             source, pack = _make_fixture(Path(temp))

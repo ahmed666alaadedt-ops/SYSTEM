@@ -342,11 +342,29 @@ jobs:
           test -s "$CELL_PACK"
           test -d "$SOURCE_DIR"
           cd "$PROJECT"
+          set +e
           python3 -m unittest discover -s tools/geospatial -p 'test_*.py' -v
+          UNIT_TEST_STATUS=$?
           python3 tools/geospatial/audit_baghdad_cell_connectivity.py \
             --input-dir "$SOURCE_DIR" \
             --pack "$CELL_PACK" \
             --report "$AUDIT_REPORT"
+          AUDIT_STATUS=$?
+          if [ ! -s "$AUDIT_REPORT" ]; then
+            python3 - "$AUDIT_REPORT" "$UNIT_TEST_STATUS" "$AUDIT_STATUS" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          Path(sys.argv[1]).write_text(json.dumps({
+              "audit": "baghdad_osm_cross_cell_connectivity",
+              "status": "not_run_or_report_missing",
+              "real_osm_source_required": True,
+              "unit_test_exit_code": int(sys.argv[2]),
+              "audit_exit_code": int(sys.argv[3]),
+              "reason": "The audit command did not produce its JSON report."
+          }, indent=2) + "\n", encoding="utf-8")
+          PY
+          fi
           python3 - "$AUDIT_REPORT" <<'PY'
           import json
           import sys
@@ -358,6 +376,20 @@ jobs:
               raise SystemExit("Baghdad audit did not inspect a multi-cell real OSM dataset.")
           print("Required real OSM cell connectivity audit passed.")
           PY
+          REPORT_VALIDATION_STATUS=$?
+          set -e
+          if [ "$UNIT_TEST_STATUS" -ne 0 ]; then
+            echo "::error::Geospatial unit tests failed with exit code $UNIT_TEST_STATUS."
+          fi
+          if [ "$AUDIT_STATUS" -ne 0 ]; then
+            echo "::error::Real Baghdad OSM connectivity audit failed with exit code $AUDIT_STATUS."
+          fi
+          if [ "$REPORT_VALIDATION_STATUS" -ne 0 ]; then
+            echo "::error::Baghdad OSM audit report validation failed with exit code $REPORT_VALIDATION_STATUS."
+          fi
+          if [ "$UNIT_TEST_STATUS" -ne 0 ] || [ "$AUDIT_STATUS" -ne 0 ] || [ "$REPORT_VALIDATION_STATUS" -ne 0 ]; then
+            exit 1
+          fi
 
       - name: Upload Baghdad OSM audit diagnostics, including failed reports
         if: always()

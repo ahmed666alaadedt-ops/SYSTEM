@@ -462,7 +462,10 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
                     # to one representative-point cell by the builder. Same-ID
                     # components in adjacent cells are not split fragments and
                     # must not be treated as a connected seam.
-                    if not _cell_clips_geometry(layer, expected_geometry_a):
+                    if not (
+                        _cell_clips_geometry(layer, expected_geometry_a)
+                        or _cell_clips_geometry(layer, expected_geometry_b)
+                    ):
                         seam_report["non_clipped_layer_features"] += 1
                         continue
 
