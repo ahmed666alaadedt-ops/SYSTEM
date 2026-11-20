@@ -282,4 +282,6 @@ The following additive changes were committed after the inspected baseline. They
 - `greed_island_star_gates.gd` now keeps all interworld Star Gates in Baghdad. Greed Island uses a separate extraction beacon for return travel, and its season is closed by default until explicitly opened.
 - `tools/validate_baghdad_star_gate_hub.gd` and canonical Godot CI verify the Baghdad-only Star Gate hub, non-gate island return beacon, and closed-by-default seasonal access.
 
+- `real_world_registry.json` now records a candidate Geofabrik Iraq OSM PBF snapshot and Baghdad Municipality relation 5638803 as **not downloaded or imported**. `data/geography/GEOSPATIAL_IMPORT_PLAN.md` records the ODbL/attribution requirements and the known Iraq OSM coverage warnings. No real Baghdad feature geometry has been added.
+
 These changes require the latest CI run to finish successfully before the new runtime test can be considered passed. They do not provide Baghdad streets, district polygons, terrain tiles, building footprints or other missing real-world coverage.
