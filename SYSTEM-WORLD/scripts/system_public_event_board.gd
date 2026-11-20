@@ -117,7 +117,7 @@ func _build_city_media_displays() -> void:
 		var ad_label := Label3D.new()
 		ad_label.name = "CuratedCampaignText"
 		ad_label.text = "SYSTEM CITY — " + city_name + "\nحملة تجريبية | مساحة إعلانية رقمية"
-		ad_label.position = Vector3(0.0, 31.0, -10.02)
+		ad_label.position = Vector3(0.0, 31.0, -10.2)
 		ad_label.font_size = 42
 		ad_label.pixel_size = 0.012
 		ad_label.modulate = Color(0.78, 0.96, 1.0)
@@ -131,7 +131,7 @@ func _build_city_media_displays() -> void:
 		var result_label := Label3D.new()
 		result_label.name = "VerifiedEventResultsText"
 		result_label.text = "SYSTEM CHAMPIONS\nبانتظار أول إنجاز موثق\nالنتائج محلية لهذه الجلسة"
-		result_label.position = Vector3(0.0, 41.0, -10.02)
+		result_label.position = Vector3(0.0, 41.0, -10.2)
 		result_label.font_size = 29
 		result_label.pixel_size = 0.014
 		result_label.modulate = Color(1.0, 0.88, 0.55)
