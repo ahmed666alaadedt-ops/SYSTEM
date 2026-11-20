@@ -155,31 +155,33 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 	var structure := MeshInstance3D.new()
 	structure.name = "ServiceBuildingFacade"
 	var structure_mesh := BoxMesh.new()
-	structure_mesh.size = Vector3(width, height, depth)
+	var shell_height := 1.2 if service_id == "stadium" else height
+	structure_mesh.size = Vector3(width, shell_height, depth)
 	structure.mesh = structure_mesh
-	structure.position.y = height * 0.5
+	structure.position.y = shell_height * 0.5
 	structure.material_override = facade
 	structure.visibility_range_end = 1100.0
 	body.add_child(structure)
 	var collision := CollisionShape3D.new()
 	var collision_shape := BoxShape3D.new()
-	collision_shape.size = Vector3(width, height, depth)
+	collision_shape.size = Vector3(width, shell_height, depth)
 	collision.shape = collision_shape
-	collision.position.y = height * 0.5
+	collision.position.y = shell_height * 0.5
 	body.add_child(collision)
 
-	var roof := MeshInstance3D.new()
-	var roof_mesh := BoxMesh.new()
-	roof_mesh.size = Vector3(width + 0.7, 0.45, depth + 0.7)
-	roof.mesh = roof_mesh
-	roof.position.y = height + 0.2
-	roof.material_override = roof_material
-	roof.visibility_range_end = 1100.0
-	building.add_child(roof)
+	if service_id != "stadium":
+		var roof := MeshInstance3D.new()
+		var roof_mesh := BoxMesh.new()
+		roof_mesh.size = Vector3(width + 0.7, 0.45, depth + 0.7)
+		roof.mesh = roof_mesh
+		roof.position.y = height + 0.2
+		roof.material_override = roof_material
+		roof.visibility_range_end = 1100.0
+		building.add_child(roof)
 
 	# Keep facade detail counts bounded for Android: three visible window bands,
 	# with only two windows per band on each procedural service building.
-	var visible_window_bands := 3 if height > 15.0 else 2
+	var visible_window_bands := 0 if service_id == "stadium" else (3 if height > 15.0 else 2)
 	for floor_index in range(visible_window_bands):
 		var y := 2.0 + float(floor_index) * 4.2
 		for column in range(2):
