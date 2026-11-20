@@ -63,6 +63,7 @@ jobs:
           python3 - <<'PY'
           import hashlib
           import json
+          from datetime import datetime, timezone
           import xml.etree.ElementTree as ET
           from pathlib import Path
 
@@ -93,6 +94,12 @@ jobs:
               info.get("data", {}).get("timestamp", {}).get("last")
               or info.get("header", {}).get("option", {}).get("osmosis_replication_timestamp")
           )
+          if not snapshot_timestamp:
+              raise SystemExit("The PBF does not expose a verifiable OSM data timestamp.")
+          parsed_timestamp = datetime.fromisoformat(snapshot_timestamp.replace("Z", "+00:00"))
+          minimum_timestamp = datetime(2026, 9, 1, tzinfo=timezone.utc)
+          if parsed_timestamp < minimum_timestamp:
+              raise SystemExit(f"OSM extract is too old for the current production candidate: {snapshot_timestamp}")
           sha256 = hashlib.sha256(Path("iraq.osm.pbf").read_bytes()).hexdigest()
           report = {
               "source_file": "iraq.osm.pbf",
@@ -107,7 +114,7 @@ jobs:
               "member_counts": counts,
               "status": "source_relation_verified_geometry_review_still_required",
               "license": "ODbL 1.0",
-              "attribution": "© OpenStreetMap contributors",
+              "attribution": "© OpenStreetMap contributors; © BBBike.org",
           }
           Path("baghdad-source-verification.json").write_text(
               json.dumps(report, ensure_ascii=False, indent=2) + "\n",
