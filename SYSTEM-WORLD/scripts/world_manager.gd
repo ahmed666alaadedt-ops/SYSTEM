@@ -17,6 +17,7 @@ const ModernWorldRegionManagerScript = preload("res://scripts/modern_world_regio
 const UndergroundHeritageManagerScript = preload("res://scripts/underground_heritage_manager.gd")
 const ModernWorldMonsterGateManagerScript = preload("res://scripts/modern_world_monster_gate_manager.gd")
 const BaghdadOSMCellStreamerScript = preload("res://scripts/baghdad_osm_cell_streamer.gd")
+const BaghdadCityStateStoreScript = preload("res://scripts/baghdad_city_state_store.gd")
 
 signal world_changed(world_id: int)
 
@@ -248,9 +249,15 @@ func _create_modern_city() -> void:
 	root.add_child(region_manager)
 
 	if FileAccess.file_exists("res://data/geography/baghdad/cell_pack/manifest.json"):
+		var city_state_store = BaghdadCityStateStoreScript.new()
+		city_state_store.name = "BaghdadCityStateStore"
+		root.add_child(city_state_store)
+
 		var baghdad_osm := BaghdadOSMCellStreamerScript.new()
 		baghdad_osm.name = "BaghdadOSMCellStreamer"
 		root.add_child(baghdad_osm)
+		baghdad_osm.cell_loaded.connect(Callable(city_state_store, "restore_cell"))
+		baghdad_osm.cell_unloading.connect(Callable(city_state_store, "capture_cell"))
 
 	var monster_gate_manager := ModernWorldMonsterGateManagerScript.new()
 	monster_gate_manager.name = "ModernWorldMonsterGateManager"
