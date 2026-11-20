@@ -21,8 +21,12 @@ Inspiration from existing games and fictional universes must remain inspiration 
 
 SYSTEM WORLD consists of:
 
-1. The main realistic virtual world.
-2. Four independent fantasy worlds.
+1. The modern realistic world.
+2. The historical and civilizations world.
+3. The fantasy and mythological world.
+4. Greed Island.
+
+These are the four total worlds. The Star Gate system connects them; it does not create additional worlds.
 3. The Star Gates and World Transition System.
 4. The Monster Gates and Dungeon System.
 5. The Instant Travel System.
@@ -33,9 +37,9 @@ Each world maintains its own identity, geography, environment, rules, inhabitant
 
 ---
 
-## 3. MAIN WORLD — HUNTER-INSPIRED EXPERIENCE
+## 3. HUNTER-INSPIRED PROGRESSION EXPERIENCE
 
-The main fantasy experience is inspired by the general world structure of Hunter x Hunter.
+Hunter-inspired examinations, associations, ranks and missions are gameplay systems within the shared universe; they are not an additional standalone world. Their placement and availability must follow the approved world design.
 
 It includes:
 
@@ -429,17 +433,20 @@ The world includes:
 - Social activities.
 - Everyday civilian life.
 
-The realistic world must remain independent from the four fantasy worlds while allowing permitted connections through the Star Gate system.
+The modern realistic world must remain independent from the other three worlds while allowing permitted connections through the Star Gate system.
 
 ---
 
-## 14. FOUR INDEPENDENT FANTASY WORLDS
+## 14. THE FOUR INDEPENDENT WORLDS
 
-SYSTEM WORLD contains four independent fantasy worlds.
+SYSTEM WORLD contains exactly four independent worlds:
 
-Each world must have its own identity, geography, environment, inhabitants, stories, challenges, and activities.
+1. **Modern realistic world** — real countries, cities, geography, cultures and contemporary life.
+2. **Historical and civilizations world** — historical eras and civilizations, including their own geography, architecture, inhabitants and stories.
+3. **Fantasy and mythological world** — original mythic and fantasy environments, creatures, abilities and stories.
+4. **Greed Island** — a separate island world with its own mystery, geography, rules and seasonal activities.
 
-Their independence must be preserved.
+Each world must have its own identity, geography, environment, inhabitants, stories, challenges and activities. Their independence must be preserved. Star Gates connect the four worlds only through the approved Baghdad hub; Monster Gates remain a separate system.
 
 ### World Four — GREED ISLAND
 
@@ -456,7 +463,7 @@ The presentation must suggest that the island contains an undiscovered secret.
 
 The mystery should be revealed progressively through exploration and gameplay.
 
-The other fantasy worlds retain their previously approved identities and designs.
+The other three worlds retain their previously approved identities and designs.
 
 ---
 
@@ -469,7 +476,7 @@ The player begins with a dream.
 During the dream:
 
 - The player experiences a mysterious environment.
-- The four fantasy worlds appear.
+- The four worlds appear.
 - Each world is introduced through cinematic visual scenes.
 - Mysterious energy and environmental effects accompany the scenes.
 - The dream creates curiosity about the worlds and their secrets.
@@ -753,7 +760,7 @@ Development should proceed in organized stages.
 ### Stage 4 — World foundations
 
 - Realistic virtual world.
-- Four independent fantasy worlds.
+- Four independent worlds.
 - World maps and environments.
 
 ### Stage 5 — Travel and gate systems
@@ -817,7 +824,7 @@ The project must preserve the independence of its worlds and the distinction bet
 - Weapons and combat.
 - Civilian life.
 - The realistic virtual world.
-- The four fantasy worlds.
+- The four worlds.
 
 SYSTEM WORLD is one connected universe containing multiple independent experiences.
 
