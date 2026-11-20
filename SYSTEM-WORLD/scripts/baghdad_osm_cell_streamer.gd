@@ -363,6 +363,30 @@ func get_road_navigation_path(start: Vector3, target: Vector3, max_snap_distance
 	return route
 
 
+## Returns real OSM pedestrian road segments from currently loaded Baghdad cells.
+## Coordinates use the canonical local metric frame shared with the cell pack.
+func get_loaded_road_map_segments() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for cell_root_value in loaded_cells.values():
+		var cell_root := cell_root_value as Node3D
+		if not is_instance_valid(cell_root):
+			continue
+		var segments_value: Variant = cell_root.get_meta("road_navigation_segments", [])
+		if not segments_value is Array:
+			continue
+		for segment_value in segments_value:
+			if not segment_value is Dictionary:
+				continue
+			var points_value: Variant = segment_value.get("points", PackedVector2Array())
+			if not points_value is PackedVector2Array or points_value.size() < 2:
+				continue
+			result.append({
+				"highway": str(segment_value.get("highway", "road")),
+				"points": points_value
+			})
+	return result
+
+
 func _ensure_road_navigation_graph() -> void:
 	if not _road_navigation_graph_dirty:
 		return
