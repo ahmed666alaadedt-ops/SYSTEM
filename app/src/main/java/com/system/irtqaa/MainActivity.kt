@@ -32,7 +32,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             SystemStartupGate {
                 SystemAccountGate { account ->
-                    SystemApp(account)
+                    SystemMiyarGuideGate {
+                        SystemApp(account)
+                    }
                 }
             }
         }
