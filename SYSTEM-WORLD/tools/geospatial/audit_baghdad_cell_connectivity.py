@@ -401,13 +401,19 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
             # Compare OSM feature identity independently from per-cell geometry
             # parity. A feature missing from every cell, or an unknown ID injected
             # into the pack, must be visible as an ID-level failure as well.
+            expected_feature_keys = {feature_key for _cell, feature_key in expected_union}
             actual_feature_keys = {feature_key for _cell, feature_key in actual_union}
-            missing_feature_keys = sorted(source_keys - actual_feature_keys)
-            unexpected_feature_keys = sorted(actual_feature_keys - source_keys)
+            # The clipped source covers the whole Baghdad municipality, while
+            # this 5x5 pack intentionally covers only its configured cell bounds.
+            # Only IDs with at least one expected in-bounds cell fragment can be
+            # called missing from this pack.
+            missing_feature_keys = sorted(expected_feature_keys - actual_feature_keys)
+            unexpected_feature_keys = sorted(actual_feature_keys - expected_feature_keys)
             report["missing_osm_feature_ids"] = len(missing_feature_keys)
             report["unexpected_osm_feature_ids"] = len(unexpected_feature_keys)
             report["feature_id_comparison"] = {
-                "source_feature_ids": len(source_keys),
+                "source_osm_feature_ids_total": len(source_keys),
+                "expected_cell_feature_ids": len(expected_feature_keys),
                 "actual_feature_ids": len(actual_feature_keys),
                 "missing_osm_feature_ids": [
                     {"layer": key[0], "osm_type": key[1], "osm_id": key[2]}
@@ -424,7 +430,7 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
                 )
             for feature_key in unexpected_feature_keys:
                 report["errors"].append(
-                    f"Unexpected OSM feature ID not present in clipped source: {feature_key}"
+                    f"Unexpected OSM feature ID not expected in the audited cell bounds: {feature_key}"
                 )
 
             for key, geometry in expected_union.items():
