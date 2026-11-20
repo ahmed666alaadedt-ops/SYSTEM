@@ -649,7 +649,7 @@ class BaghdadCellConnectivityTests(unittest.TestCase):
 
                 result = audit.audit_pack(source, pack)
                 self.assertEqual(result["status"], "failed", result["errors"])
-                self.assertGreater(result["missing_neighbor_fragments"], 0)
+                self.assertGreater(result["actual_cell_seam_checks"]["missing_neighbor_fragments"], 0)
                 self.assertGreater(result["disconnected_seams"], 0)
 
     def test_actual_building_polygon_boundary_mismatch_is_reported(self):
