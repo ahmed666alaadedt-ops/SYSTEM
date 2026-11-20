@@ -289,7 +289,7 @@ func _build_building_feature(parent: Node3D, feature: Dictionary) -> void:
 		body.set_meta("baghdad_building_type", kind)
 		body.set_meta("osm_building_tag", str(tags.get("building", "yes")))
 		body.set_meta("system_location_id", "baghdad_osm_building_" + feature_id)
-		body.set_meta("system_region_id", "iraq_baghdad_region")
+		body.set_meta("system_region_id", "region_baghdad")
 		body.set_meta("system_location_type", 7)
 		body.set_meta("system_fast_travel", false)
 		body.set_meta("system_display_name", _building_display_name(kind, tags))
