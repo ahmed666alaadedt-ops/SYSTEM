@@ -195,12 +195,14 @@ func _load_cell(cell: Vector2i) -> void:
 	cell_root.set_meta("cell_id", "%d:%d" % [cell.x, cell.y])
 	var layers: Dictionary = parsed.get("layers", {})
 	var counts := {}
-	for feature in layers.get("buildings", []):
-		_build_building_feature(cell_root, feature)
-	counts["buildings"] = cell_root.get_child_count()
+	var road_features: Array = layers.get("roads", [])
 	var road_count := 0
-	for feature in layers.get("roads", []):
+	for feature in road_features:
 		road_count += _build_line_feature(cell_root, feature, _road_width(feature.get("tags", {})), road_material, 0.16, "OSMRoad")
+	var building_count := 0
+	for feature in layers.get("buildings", []):
+		building_count += _build_building_feature(cell_root, feature, road_features)
+	counts["buildings"] = building_count
 	var water_count := 0
 	for feature in layers.get("waterways", []):
 		water_count += _build_line_feature(cell_root, feature, _water_width(feature.get("tags", {})), water_material, 0.10, "OSMWaterway")
@@ -225,7 +227,8 @@ func _load_cell(cell: Vector2i) -> void:
 	loaded_cells[cell] = cell_root
 
 
-func _build_building_feature(parent: Node3D, feature: Dictionary) -> void:
+func _build_building_feature(parent: Node3D, feature: Dictionary, road_features: Array) -> int:
+	var built := 0
 	var geometry: Dictionary = feature.get("geometry", {})
 	var tags: Dictionary = feature.get("tags", {})
 	var height := _building_height(tags)
@@ -233,7 +236,7 @@ func _build_building_feature(parent: Node3D, feature: Dictionary) -> void:
 	var geometry_type := str(geometry.get("type", ""))
 	if geometry_type == "Point":
 		_add_point_marker(parent, geometry.get("coordinates", []), amenity_material, 0.8, "OSMBuildingPoint")
-		return
+		return 0
 	for polygon in _extract_polygons(geometry):
 		if polygon.size() < 4:
 			continue
@@ -314,8 +317,104 @@ func _build_building_feature(parent: Node3D, feature: Dictionary) -> void:
 		collision.shape = shape
 		body.add_child(collision)
 		parent.add_child(body)
+		var approach := _find_building_approach_point(ring, road_features)
+		if not approach.is_empty():
+			_add_building_approach_marker(parent, approach, feature_id, kind, tags)
+		built += 1
 		if kind == "church" or kind == "mosque":
 			_add_polygon_worship_detail(parent, ring, height, kind, feature_id)
+	return built
+
+
+func _find_building_approach_point(ring: PackedVector2Array, road_features: Array) -> Dictionary:
+	var center := Vector2.ZERO
+	for point in ring:
+		center += point
+	center /= float(ring.size())
+	var best_distance := INF
+	var best_road := Vector2.ZERO
+	for road_feature in road_features:
+		var road_tags: Dictionary = road_feature.get("tags", {})
+		if str(road_tags.get("highway", "")).is_empty():
+			continue
+		for line in _extract_lines(road_feature.get("geometry", {})):
+			for index in range(line.size() - 1):
+				var candidate := _closest_point_on_segment(center, line[index], line[index + 1])
+				var distance := center.distance_to(candidate)
+				if distance < best_distance:
+					best_distance = distance
+					best_road = candidate
+	if best_distance > 40.0 or best_distance == INF:
+		return {}
+	var best_boundary := ring[0]
+	var boundary_distance := INF
+	for index in range(ring.size()):
+		var candidate := _closest_point_on_segment(best_road, ring[index], ring[(index + 1) % ring.size()])
+		var distance := candidate.distance_to(best_road)
+		if distance < boundary_distance:
+			boundary_distance = distance
+			best_boundary = candidate
+	var outward := best_road - best_boundary
+	if outward.length_squared() < 0.0001:
+		return {}
+	outward = outward.normalized()
+	return {
+		"position": best_boundary + outward * 1.8,
+		"distance_to_road": boundary_distance
+	}
+
+
+func _closest_point_on_segment(point: Vector2, a: Vector2, b: Vector2) -> Vector2:
+	var segment := b - a
+	var length_squared := segment.length_squared()
+	if length_squared < 0.0001:
+		return a
+	var t := clampf((point - a).dot(segment) / length_squared, 0.0, 1.0)
+	return a + segment * t
+
+
+func _add_building_approach_marker(parent: Node3D, approach: Dictionary, feature_id: String, kind: String, tags: Dictionary) -> void:
+	var point: Vector2 = approach.get("position", Vector2.ZERO)
+	var position := Vector3(point.x, _terrain_height(point), point.y)
+	var location_id := "baghdad_osm_approach_" + feature_id
+	var display_name := _building_display_name(kind, tags) + " — نقطة اقتراب"
+	var root := Node3D.new()
+	root.name = "OSMBuildingApproach_%s" % feature_id
+	root.position = position
+	root.set_meta("osm_feature_id", feature_id)
+	root.set_meta("baghdad_building_type", kind)
+	root.set_meta("system_access_state", "approach_only_no_verified_door")
+	root.set_meta("system_approach_distance_m", float(approach.get("distance_to_road", 0.0)))
+	parent.add_child(root)
+	var marker := MeshInstance3D.new()
+	marker.name = "ApproachMarkerVisual"
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = 0.28
+	mesh.bottom_radius = 0.42
+	mesh.height = 0.8
+	marker.mesh = mesh
+	marker.position.y = 0.55
+	marker.material_override = amenity_material
+	marker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root.add_child(marker)
+	var body := StaticBody3D.new()
+	body.name = "ApproachInteractionBody"
+	body.add_to_group("system_interactable")
+	var shape := SphereShape3D.new()
+	shape.radius = 0.75
+	var collision := CollisionShape3D.new()
+	collision.shape = shape
+	body.add_child(collision)
+	body.set_meta("system_location_id", location_id)
+	body.set_meta("system_region_id", "region_baghdad")
+	body.set_meta("system_location_type", 7)
+	body.set_meta("system_fast_travel", false)
+	body.set_meta("system_location_position", position)
+	body.set_meta("system_display_name", display_name)
+	body.set_meta("system_interaction_prompt", "فحص واجهة المبنى (نقطة اقتراب تقريبية)")
+	body.set_meta("system_approach_distance_m", float(approach.get("distance_to_road", 0.0)))
+	body.set_meta("system_access_state", "approach_only_no_verified_door")
+	root.add_child(body)
 
 
 func _building_display_name(kind: String, tags: Dictionary) -> String:
