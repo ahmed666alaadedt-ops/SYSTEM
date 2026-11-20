@@ -264,9 +264,9 @@
         "status": "candidate_clip_created; feature coverage and visual review required"
       },
       "verified_geojson_layers": {
-        "artifact_id": 14610809943,
-        "workflow_run_id": 44697711925,
-        "status": "exported_and_boundary_clipped; visual_and_official_coverage_review_required",
+        "artifact_id": 14629100933,
+        "workflow_run_id": 44736344496,
+        "status": "nine_layers_exported_and_boundary_clipped_including_entrance_points; visual_and_official_coverage_review_required",
         "boundary_relation": 5638803,
         "coordinate_reference_system": "EPSG:4326",
         "layer_counts": {
@@ -342,6 +342,15 @@
             "multipolygons": 5,
             "clipped": 7,
             "invalid_repaired": 0
+          },
+          "entrances": {
+            "input": 188,
+            "output": 188,
+            "points": 188,
+            "dropped_outside_or_empty": 0,
+            "invalid_repaired": 0,
+            "clipped": 0,
+            "sample_5x5_cell_pack_points": 30
           }
         },
         "attribution": "© OpenStreetMap contributors; © BBBike.org",
