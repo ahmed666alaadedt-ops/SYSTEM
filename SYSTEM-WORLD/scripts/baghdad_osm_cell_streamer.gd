@@ -229,6 +229,7 @@ func _build_building_feature(parent: Node3D, feature: Dictionary) -> void:
 	var geometry: Dictionary = feature.get("geometry", {})
 	var tags: Dictionary = feature.get("tags", {})
 	var height := _building_height(tags)
+	var kind := _building_kind(tags)
 	var geometry_type := str(geometry.get("type", ""))
 	if geometry_type == "Point":
 		_add_point_marker(parent, geometry.get("coordinates", []), amenity_material, 0.8, "OSMBuildingPoint")
@@ -273,11 +274,13 @@ func _build_building_feature(parent: Node3D, feature: Dictionary) -> void:
 			continue
 		var feature_id := str(feature.get("id", "unknown"))
 		var building := MeshInstance3D.new()
-		building.name = "OSMBuilding_%s" % feature_id
+		building.name = "OSMBuilding_%s_%s" % [kind, feature_id]
 		building.mesh = mesh
-		building.material_override = building_material
+		building.material_override = _building_material_for(kind)
 		building.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 		building.set_meta("osm_feature_id", feature_id)
+		building.set_meta("baghdad_building_type", kind)
+		building.set_meta("osm_building_tag", str(tags.get("building", "yes")))
 		parent.add_child(building)
 		var body := StaticBody3D.new()
 		body.name = "OSMBuildingCollision_%s" % feature_id
@@ -287,6 +290,66 @@ func _build_building_feature(parent: Node3D, feature: Dictionary) -> void:
 		collision.shape = shape
 		body.add_child(collision)
 		parent.add_child(body)
+		if kind == "church" or kind == "mosque":
+			_add_polygon_worship_detail(parent, ring, height, kind, feature_id)
+
+
+func _add_polygon_worship_detail(parent: Node3D, ring: PackedVector2Array, height: float, kind: String, feature_id: String) -> void:
+	var center := Vector2.ZERO
+	for point in ring:
+		center += point
+	center /= float(ring.size())
+	var detail_root := Node3D.new()
+	detail_root.name = "OSMWorshipDetail_%s_%s" % [kind, feature_id]
+	detail_root.position = Vector3(center.x, _terrain_height(center) + height, center.y)
+	detail_root.set_meta("landmark_type", kind)
+	detail_root.set_meta("osm_feature_id", feature_id)
+	parent.add_child(detail_root)
+	if kind == "mosque":
+		var dome := MeshInstance3D.new()
+		dome.name = "RoofDome"
+		var dome_mesh := SphereMesh.new()
+		dome_mesh.radius = 2.2
+		dome_mesh.height = 2.8
+		dome.mesh = dome_mesh
+		dome.position.y = 1.1
+		dome.material_override = _building_material_for("mosque")
+		detail_root.add_child(dome)
+		var minaret := MeshInstance3D.new()
+		minaret.name = "MinaretMarker"
+		var minaret_mesh := CylinderMesh.new()
+		minaret_mesh.top_radius = 0.22
+		minaret_mesh.bottom_radius = 0.38
+		minaret_mesh.height = 7.0
+		minaret.mesh = minaret_mesh
+		minaret.position = Vector3(3.0, 3.5, 0.0)
+		minaret.material_override = _building_material_for("mosque")
+		detail_root.add_child(minaret)
+	else:
+		var tower := MeshInstance3D.new()
+		tower.name = "ChurchBellTower"
+		var tower_mesh := BoxMesh.new()
+		tower_mesh.size = Vector3(1.5, 5.0, 1.5)
+		tower.mesh = tower_mesh
+		tower.position = Vector3(3.0, 2.5, 0.0)
+		tower.material_override = _building_material_for("church")
+		detail_root.add_child(tower)
+		var cross := MeshInstance3D.new()
+		cross.name = "ChurchCross"
+		var cross_mesh := BoxMesh.new()
+		cross_mesh.size = Vector3(0.35, 2.0, 0.35)
+		cross.mesh = cross_mesh
+		cross.position = Vector3(3.0, 5.7, 0.0)
+		cross.material_override = _building_material_for("church")
+		detail_root.add_child(cross)
+		var cross_arm := MeshInstance3D.new()
+		cross_arm.name = "ChurchCrossArm"
+		var arm_mesh := BoxMesh.new()
+		arm_mesh.size = Vector3(1.2, 0.3, 0.35)
+		cross_arm.mesh = arm_mesh
+		cross_arm.position = Vector3(3.0, 6.0, 0.0)
+		cross_arm.material_override = _building_material_for("church")
+		detail_root.add_child(cross_arm)
 
 
 func _build_line_feature(parent: Node3D, feature: Dictionary, width: float, material: Material, lift: float, prefix: String) -> int:
@@ -376,13 +439,65 @@ func _build_amenity_feature(parent: Node3D, feature: Dictionary) -> int:
 		return 0
 	var tags: Dictionary = feature.get("tags", {})
 	var coordinates: Array = geometry.get("coordinates", [])
-	var is_mosque := str(tags.get("amenity", "")) == "place_of_worship" and str(tags.get("religion", "")).to_lower() == "muslim"
-	is_mosque = is_mosque or str(tags.get("building", "")).to_lower() == "mosque"
+	var worship := str(tags.get("amenity", "")) == "place_of_worship"
+	var religion := str(tags.get("religion", "")).to_lower()
+	var is_mosque := (worship and religion == "muslim") or str(tags.get("building", "")).to_lower() == "mosque"
+	var is_church := (worship and religion == "christian") or str(tags.get("building", "")).to_lower() == "church"
 	if is_mosque:
 		_build_mosque_landmark(parent, feature, coordinates)
+	elif is_church:
+		_build_church_landmark(parent, feature, coordinates)
 	else:
 		_add_point_marker(parent, coordinates, amenity_material, 0.48, "OSMAmenity_%s" % str(feature.get("id", "")))
 	return 1
+
+
+func _build_church_landmark(parent: Node3D, feature: Dictionary, coordinates: Array) -> void:
+	if coordinates.size() < 2:
+		return
+	var point := Vector2(float(coordinates[0]), float(coordinates[1]))
+	var root := Node3D.new()
+	root.name = "OSMChurch_%s" % str(feature.get("id", "unknown"))
+	root.position = Vector3(point.x, _terrain_height(point) + 0.08, point.y)
+	root.set_meta("landmark_type", "church")
+	root.set_meta("osm_feature_id", str(feature.get("id", "")))
+	parent.add_child(root)
+	var stone := _building_material_for("church")
+	var roof := StandardMaterial3D.new()
+	roof.albedo_color = Color(0.36, 0.24, 0.18)
+	roof.roughness = 0.86
+	var nave := MeshInstance3D.new()
+	nave.name = "ChurchNave"
+	var nave_mesh := BoxMesh.new()
+	nave_mesh.size = Vector3(9.0, 5.0, 14.0)
+	nave.mesh = nave_mesh
+	nave.position.y = 2.5
+	nave.material_override = stone
+	root.add_child(nave)
+	var tower := MeshInstance3D.new()
+	tower.name = "BellTower"
+	var tower_mesh := BoxMesh.new()
+	tower_mesh.size = Vector3(2.2, 8.0, 2.2)
+	tower.mesh = tower_mesh
+	tower.position = Vector3(0.0, 4.0, -7.0)
+	tower.material_override = stone
+	root.add_child(tower)
+	var cross := MeshInstance3D.new()
+	cross.name = "CrossVertical"
+	var cross_mesh := BoxMesh.new()
+	cross_mesh.size = Vector3(0.35, 2.2, 0.35)
+	cross.mesh = cross_mesh
+	cross.position = Vector3(0.0, 9.1, -7.0)
+	cross.material_override = roof
+	root.add_child(cross)
+	var cross_arm := MeshInstance3D.new()
+	cross_arm.name = "CrossHorizontal"
+	var arm_mesh := BoxMesh.new()
+	arm_mesh.size = Vector3(1.4, 0.32, 0.35)
+	cross_arm.mesh = arm_mesh
+	cross_arm.position = Vector3(0.0, 9.4, -7.0)
+	cross_arm.material_override = roof
+	root.add_child(cross_arm)
 
 
 func _build_mosque_landmark(parent: Node3D, feature: Dictionary, coordinates: Array) -> void:
@@ -537,7 +652,45 @@ func _building_height(tags: Dictionary) -> float:
 	var levels := str(tags.get("building:levels", "")).to_int()
 	if levels > 0 and levels <= 60:
 		return float(levels) * 3.2
+	var kind := str(tags.get("building", "yes")).to_lower()
+	if kind in ["house", "detached", "semidetached_house", "bungalow", "terrace"]:
+		return 6.5
+	if kind in ["apartments", "residential", "dormitory"]:
+		return 16.0
+	if kind in ["commercial", "office", "retail"]:
+		return 12.0
 	return 6.0
+
+
+func _building_kind(tags: Dictionary) -> String:
+	var kind := str(tags.get("building", "yes")).to_lower()
+	if kind in ["house", "detached", "semidetached_house", "bungalow", "terrace"]:
+		return "detached_house"
+	if kind in ["apartments", "residential", "dormitory"]:
+		return "apartment_block"
+	if kind in ["commercial", "office", "retail", "industrial"]:
+		return "commercial_building"
+	if kind == "mosque" or (str(tags.get("amenity", "")) == "place_of_worship" and str(tags.get("religion", "")).to_lower() == "muslim"):
+		return "mosque"
+	if kind == "church" or (str(tags.get("amenity", "")) == "place_of_worship" and str(tags.get("religion", "")).to_lower() == "christian"):
+		return "church"
+	return "general_building"
+
+
+func _building_material_for(kind: String) -> StandardMaterial3D:
+	var material := building_material.duplicate() as StandardMaterial3D
+	match kind:
+		"detached_house":
+			material.albedo_color = Color(0.68, 0.55, 0.40)
+		"apartment_block":
+			material.albedo_color = Color(0.62, 0.63, 0.60)
+		"commercial_building":
+			material.albedo_color = Color(0.43, 0.51, 0.56)
+		"mosque":
+			material.albedo_color = Color(0.72, 0.67, 0.52)
+		"church":
+			material.albedo_color = Color(0.70, 0.63, 0.52)
+	return material
 
 
 func _add_triangle(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> void:
