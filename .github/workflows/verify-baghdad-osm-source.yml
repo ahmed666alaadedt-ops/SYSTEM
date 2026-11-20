@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   verify-baghdad-boundary-source:
-    name: Verify pinned Iraq PBF and Baghdad boundary relation
+    name: Verify OpenStreetData Iraq PBF and Baghdad boundary relation
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
@@ -29,30 +29,26 @@ jobs:
           sudo apt-get install --yes osmium-tool
           osmium --version
 
-      - name: Download pinned Geofabrik Iraq snapshot and checksum
+      - name: Download OpenStreetData Iraq PBF and record source metadata
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/baghdad-source"
           cd "$RUNNER_TEMP/baghdad-source"
-          curl -L --fail --retry 3 \
-            "https://download.geofabrik.de/asia/iraq-261117.osm.pbf" \
-            -o iraq-261117.osm.pbf
-          curl -L --fail --retry 3 \
-            "https://download.geofabrik.de/asia/iraq-261117.osm.pbf.md5" \
-            -o iraq-261117.osm.pbf.md5
-          expected="$(awk 'NR==1 {print $1}' iraq-261117.osm.pbf.md5)"
-          test -n "$expected"
-          printf '%s  %s\n' "$expected" iraq-261117.osm.pbf | md5sum --check -
-          stat --printf='PBF bytes: %s\n' iraq-261117.osm.pbf
-          osmium fileinfo iraq-261117.osm.pbf
+          curl -L --fail --retry 3 --connect-timeout 30 --max-time 600 \
+            "https://files.openstreetdata.org/extracts/IQ.osm.pbf" \
+            -o IQ.osm.pbf
+          test -s IQ.osm.pbf
+          sha256sum IQ.osm.pbf | tee IQ.osm.pbf.sha256
+          osmium fileinfo --extended --json IQ.osm.pbf > osm-fileinfo.json
+          cat osm-fileinfo.json
 
       - name: Extract Baghdad Municipality relation and all referenced members
         shell: bash
         run: |
           set -euo pipefail
           cd "$RUNNER_TEMP/baghdad-source"
-          osmium getid --add-referenced iraq-261117.osm.pbf r5638803 \
+          osmium getid --add-referenced IQ.osm.pbf r5638803 \
             --output baghdad-municipality-5638803.osm.pbf
           osmium check-refs baghdad-municipality-5638803.osm.pbf
           osmium cat baghdad-municipality-5638803.osm.pbf \
@@ -65,6 +61,7 @@ jobs:
           set -euo pipefail
           cd "$RUNNER_TEMP/baghdad-source"
           python3 - <<'PY'
+          import hashlib
           import json
           import xml.etree.ElementTree as ET
           from pathlib import Path
@@ -91,9 +88,18 @@ jobs:
               kind = member.attrib.get("type", "unknown")
               counts[kind] = counts.get(kind, 0) + 1
 
+          info = json.loads(Path("osm-fileinfo.json").read_text(encoding="utf-8"))
+          snapshot_timestamp = (
+              info.get("data", {}).get("timestamp", {}).get("last")
+              or info.get("header", {}).get("option", {}).get("osmosis_replication_timestamp")
+          )
+          sha256 = hashlib.sha256(Path("IQ.osm.pbf").read_bytes()).hexdigest()
           report = {
-              "source_file": "iraq-261117.osm.pbf",
-              "snapshot_date": "2026-11-17",
+              "source_file": "IQ.osm.pbf",
+              "source_provider": "OpenStreetData",
+              "snapshot_timestamp": snapshot_timestamp,
+              "source_file_sha256": sha256,
+              "source_file_size_bytes": Path("IQ.osm.pbf").stat().st_size,
               "relation_id": 5638803,
               "tags": tags,
               "member_count": len(members),
@@ -131,6 +137,6 @@ jobs:
           path: |
             ${{ runner.temp }}/baghdad-source/baghdad-municipality-5638803.osm.pbf
             ${{ runner.temp }}/baghdad-source/baghdad-source-verification.json
-            ${{ runner.temp }}/baghdad-source/ATTRIBUTION.txt
+            ${{ runner.temp }}/baghdad-source/ATTRIBUTION.txt\n            ${{ runner.temp }}/baghdad-source/IQ.osm.pbf.sha256
           if-no-files-found: error
           retention-days: 14
