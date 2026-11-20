@@ -283,3 +283,14 @@ A checked repository foundation does not mean a finished gameplay feature. Visua
 - [x] Cross-check the Baghdad region ID against `ModernWorldRegionManager.register_map_locations`: building discovery now uses the same `region_baghdad` key as the registered Baghdad city map entry. Runtime discovery registration still requires Godot verification.
 - [ ] Add actual entrance/door placement, entrance approach points, interior scenes, apartment/shop use cases, and save-backed discovery state after the interaction flow is runtime-validated.
 - [ ] Run Godot parser, scene startup, ray-interaction, cell unload/reload, and Android performance tests; none were run for this source update.
+
+## Baghdad building discovery details and map positioning — 20 November 2026
+
+- [x] Calculate an approximate footprint-center position from each streamed building polygon and store it as discovery metadata, including terrain elevation at that point.
+- [x] Store source-derived building height and a clearly estimated floor count (height divided by the configured 3.2 m floor heuristic); these are estimates, not surveyed floor data.
+- [x] Update the existing interaction manager to register the stored footprint position instead of the collision body's origin, so discovered building markers are not all registered at world origin.
+- [x] Show a short building inspection readout after interaction: display name, classification, estimated floors, estimated height, and an explicit note that interiors/access are not implemented.
+- [ ] Improve the readout presentation for mobile screens and verify it with the actual HUD layout.
+- [ ] Validate polygon-center quality for concave/irregular footprints; current arithmetic vertex average is an approximation and may not lie inside every footprint.
+- [ ] Implement real entrance locations and enterable interiors only after reliable entrance data/placement and runtime validation are available.
+- [ ] Run Godot parser, map registration, interaction, UI, streaming, and Android performance tests; none were run for this source update.
