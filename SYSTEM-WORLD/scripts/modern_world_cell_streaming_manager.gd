@@ -43,6 +43,9 @@ func configure(
 	if not is_equal_approx(cell_size / sample_spacing, round(cell_size / sample_spacing)):
 		push_error("SYSTEM CellStreamer: cell size must be an integer multiple of sample spacing.")
 		return false
+	if not is_equal_approx(width_m / sample_spacing, round(width_m / sample_spacing)) or not is_equal_approx(depth_m / sample_spacing, round(depth_m / sample_spacing)):
+		push_error("SYSTEM CellStreamer: world dimensions must align to the shared sample spacing.")
+		return false
 	world_width = width_m
 	world_depth = depth_m
 	height_sampler = sampler
@@ -126,25 +129,33 @@ func _load_cell(cell: Vector2i) -> void:
 	if loaded_cells.has(cell):
 		return
 	var origin := cell_origin(cell)
-	var intervals := int(round(cell_size / sample_spacing))
+	var available_width := maxf(world_width * 0.5 - origin.x, 0.0)
+	var available_depth := maxf(world_depth * 0.5 - origin.y, 0.0)
+	var cell_width := minf(cell_size, available_width)
+	var cell_depth := minf(cell_size, available_depth)
+	var intervals_x := int(round(cell_width / sample_spacing))
+	var intervals_z := int(round(cell_depth / sample_spacing))
+	if intervals_x < 1 or intervals_z < 1:
+		return
+	var stride := intervals_x + 1
 	var vertices := PackedVector3Array()
 	var indices := PackedInt32Array()
 	var colors := PackedColorArray()
 	var heights := PackedFloat32Array()
-	heights.resize((intervals + 1) * (intervals + 1))
-	for z_index in range(intervals + 1):
-		for x_index in range(intervals + 1):
+	heights.resize(stride * (intervals_z + 1))
+	for z_index in range(intervals_z + 1):
+		for x_index in range(intervals_x + 1):
 			var world_x := origin.x + float(x_index) * sample_spacing
 			var world_z := origin.y + float(z_index) * sample_spacing
 			var height := float(height_sampler.call(world_x, world_z))
-			heights[z_index * (intervals + 1) + x_index] = height
+			heights[z_index * stride + x_index] = height
 			colors.append(_terrain_color_for_height(height, world_x, world_z))
 			vertices.append(Vector3(float(x_index) * sample_spacing, height, float(z_index) * sample_spacing))
-	for z_index in range(intervals):
-		for x_index in range(intervals):
-			var a := z_index * (intervals + 1) + x_index
+	for z_index in range(intervals_z):
+		for x_index in range(intervals_x):
+			var a := z_index * stride + x_index
 			var b := a + 1
-			var c := a + intervals + 1
+			var c := a + stride
 			var d := c + 1
 			indices.append_array(PackedInt32Array([a, c, b, b, c, d]))
 	var arrays: Array = []
@@ -171,6 +182,10 @@ func _load_cell(cell: Vector2i) -> void:
 	visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	cell_root.add_child(visual)
 	cell_root.set_meta("terrain_height_data", heights)
+	cell_root.set_meta("cell_width", cell_width)
+	cell_root.set_meta("cell_depth", cell_depth)
+	cell_root.set_meta("height_intervals_x", intervals_x)
+	cell_root.set_meta("height_intervals_z", intervals_z)
 	add_child(cell_root)
 	loaded_cells[cell] = cell_root
 	var center_distance := maxi(absi(cell.x - _last_center_cell.x), absi(cell.y - _last_center_cell.y))
@@ -213,17 +228,20 @@ func _set_cell_collision(cell_root: Node3D, enabled: bool) -> void:
 	if not enabled:
 		return
 	var heights: PackedFloat32Array = cell_root.get_meta("terrain_height_data")
-	var intervals := int(round(cell_size / sample_spacing))
+	var intervals_x := int(cell_root.get_meta("height_intervals_x"))
+	var intervals_z := int(cell_root.get_meta("height_intervals_z"))
+	var cell_width := float(cell_root.get_meta("cell_width"))
+	var cell_depth := float(cell_root.get_meta("cell_depth"))
 	var body := StaticBody3D.new()
 	body.name = "TerrainCollision"
 	var shape := HeightMapShape3D.new()
-	shape.map_width = intervals + 1
-	shape.map_depth = intervals + 1
+	shape.map_width = intervals_x + 1
+	shape.map_depth = intervals_z + 1
 	shape.map_data = heights
 	var collision := CollisionShape3D.new()
 	collision.name = "TerrainHeightCollision"
 	collision.shape = shape
-	collision.position = Vector3(cell_size * 0.5, 0.0, cell_size * 0.5)
+	collision.position = Vector3(cell_width * 0.5, 0.0, cell_depth * 0.5)
 	collision.scale = Vector3(sample_spacing, 1.0, sample_spacing)
 	body.add_child(collision)
 	cell_root.add_child(body)
