@@ -218,6 +218,10 @@ func _load_cell(cell: Vector2i) -> void:
 	var amenity_count := 0
 	for feature in layers.get("amenities", []):
 		amenity_count += _build_amenity_feature(cell_root, feature)
+	var entrance_count := 0
+	for feature in layers.get("entrances", []):
+		entrance_count += _build_entrance_feature(cell_root, feature)
+	counts["entrances"] = entrance_count
 	counts["roads"] = road_count
 	counts["waterways"] = water_count
 	counts["bridges"] = bridge_count
@@ -575,6 +579,72 @@ func _build_area_feature(parent: Node3D, feature: Dictionary, material: Material
 		instance.material_override = material
 		instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		parent.add_child(instance)
+
+
+func _build_entrance_feature(parent: Node3D, feature: Dictionary) -> int:
+	var geometry: Dictionary = feature.get("geometry", {})
+	if str(geometry.get("type", "")) != "Point":
+		return 0
+	var tags: Dictionary = feature.get("tags", {})
+	var entrance_kind := str(tags.get("entrance", "")).to_lower()
+	var door_kind := str(tags.get("door", "")).to_lower()
+	if entrance_kind == "no" or door_kind == "no":
+		return 0
+	var coordinates: Array = geometry.get("coordinates", [])
+	if coordinates.size() < 2:
+		return 0
+	var point := Vector2(float(coordinates[0]), float(coordinates[1]))
+	var position := Vector3(point.x, _terrain_height(point), point.y)
+	var feature_id := str(feature.get("id", "unknown"))
+	var location_id := "baghdad_osm_entrance_" + feature_id
+	var entrance_label := "مدخل مبنى موثق من بيانات OpenStreetMap"
+	if entrance_kind == "main":
+		entrance_label = "مدخل رئيسي موثق من بيانات OpenStreetMap"
+	elif entrance_kind == "service":
+		entrance_label = "مدخل خدمة موثق من بيانات OpenStreetMap"
+	elif entrance_kind == "exit":
+		entrance_label = "مخرج موثق من بيانات OpenStreetMap"
+	elif door_kind != "":
+		entrance_label = "باب موثق من بيانات OpenStreetMap"
+	var root := Node3D.new()
+	root.name = "OSMEntrance_%s" % feature_id
+	root.position = position
+	root.set_meta("osm_feature_id", feature_id)
+	root.set_meta("system_access_state", "mapped_entrance_point_no_interior_scene")
+	parent.add_child(root)
+	var marker := MeshInstance3D.new()
+	marker.name = "MappedEntranceMarker"
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = 0.22
+	mesh.bottom_radius = 0.34
+	mesh.height = 0.65
+	marker.mesh = mesh
+	marker.position.y = 0.42
+	marker.material_override = amenity_material
+	marker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root.add_child(marker)
+	var body := StaticBody3D.new()
+	body.name = "MappedEntranceInteraction"
+	body.add_to_group("system_interactable")
+	var shape := SphereShape3D.new()
+	shape.radius = 0.9
+	var collision := CollisionShape3D.new()
+	collision.shape = shape
+	body.add_child(collision)
+	body.set_meta("osm_feature_id", feature_id)
+	body.set_meta("system_location_id", location_id)
+	body.set_meta("system_region_id", "region_baghdad")
+	body.set_meta("system_location_type", 7)
+	body.set_meta("system_fast_travel", false)
+	body.set_meta("system_location_position", position)
+	body.set_meta("system_display_name", entrance_label)
+	body.set_meta("system_interaction_prompt", "مدخل محدد في بيانات الخريطة")
+	body.set_meta("system_entrance_type", entrance_kind if entrance_kind != "" else door_kind)
+	body.set_meta("system_access_tag", str(tags.get("access", "unknown")))
+	body.set_meta("system_wheelchair_tag", str(tags.get("wheelchair", "unknown")))
+	body.set_meta("system_access_state", "mapped_entrance_point_no_interior_scene")
+	root.add_child(body)
+	return 1
 
 
 func _build_amenity_feature(parent: Node3D, feature: Dictionary) -> int:
