@@ -144,8 +144,8 @@ func exit_vehicle() -> bool:
 	if is_instance_valid(camera):
 		camera.top_level = false
 		camera.transform = Transform3D.IDENTITY
-	if is_instance_valid(spring_arm):
-		spring_arm.current = true
+	if is_instance_valid(camera):
+		camera.current = true
 	is_driving = false
 	mobile_throttle = 0.0
 	mobile_steering = 0.0
