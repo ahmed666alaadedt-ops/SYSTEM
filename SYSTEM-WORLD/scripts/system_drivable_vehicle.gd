@@ -12,6 +12,7 @@ var max_reverse_speed := 12.0
 var mobile_throttle := 0.0
 var mobile_steering := 0.0
 var mobile_brake := 0.0
+var paint_color := Color(0.08, 0.28, 0.48)
 
 func configure(vehicle_data: Dictionary, requested_id: String = "city_sedan") -> void:
 	vehicle_id = requested_id
@@ -23,6 +24,14 @@ func configure(vehicle_data: Dictionary, requested_id: String = "city_sedan") ->
 	_add_wheel(Vector3(-0.92, -0.28, 1.25), false, "RearLeft")
 	_add_wheel(Vector3(0.92, -0.28, 1.25), false, "RearRight")
 	center_of_mass = Vector3(0.0, -0.35, 0.0)
+
+func set_paint_color(color: Color) -> void:
+	paint_color = color
+	var chassis := get_node_or_null("VehicleChassisVisual") as MeshInstance3D
+	if chassis != null and chassis.material_override is StandardMaterial3D:
+		var material := (chassis.material_override as StandardMaterial3D).duplicate() as StandardMaterial3D
+		material.albedo_color = paint_color
+		chassis.material_override = material
 
 func _physics_process(_delta: float) -> void:
 	if not control_enabled:
@@ -77,7 +86,7 @@ func _build_chassis() -> void:
 	chassis.mesh = mesh
 	chassis.position.y = 0.25
 	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.08, 0.28, 0.48)
+	material.albedo_color = paint_color
 	material.metallic = 0.72
 	material.roughness = 0.28
 	chassis.material_override = material
