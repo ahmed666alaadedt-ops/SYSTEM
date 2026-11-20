@@ -2,7 +2,7 @@
 
 **Updated:** 2026-11-20  
 **Canonical project:** `SYSTEM-WORLD/`  
-**Status:** first independent cell-streaming component added; canonical terrain replacement and runtime integration remain pending.
+**Status:** independent cell-streaming component and headless seam/lifecycle test added; canonical terrain replacement and runtime integration remain pending. CI execution is triggered by the latest commit and has not yet been confirmed here.
 
 ## Why this exists
 
