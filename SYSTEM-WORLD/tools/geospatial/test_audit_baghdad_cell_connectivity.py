@@ -331,11 +331,11 @@ class BaghdadCellConnectivityTests(unittest.TestCase):
                     longitude += (x - projected_x) / (111319.49 * 0.835)
                     latitude -= (z - projected_z) / 110574.0
                 return longitude, latitude
-            # Keep the projected east edge within floating-point roundoff
-            # of x=200 m so the neighbor receives a boundary-only clip, not
-            # an empty intersection caused by a 3e-11 m inward projection error; the 1e-8 m offset survives WGS84 float resolution.
+            # Place the east edge 1 mm beyond the boundary: the builder
+            # emits a non-empty east-cell sliver, then 2-decimal GeoJSON
+            # serialization collapses that sliver to a boundary-only part.
             touching_building = Polygon([
-                wgs84(160, 20), wgs84(200.00000001, 20), wgs84(200.00000001, 60),
+                wgs84(160, 20), wgs84(200.001, 20), wgs84(200.001, 60),
                 wgs84(160, 60), wgs84(160, 20),
             ])
             _append_projected_feature(source, pack, "buildings", 813, "way", touching_building)
