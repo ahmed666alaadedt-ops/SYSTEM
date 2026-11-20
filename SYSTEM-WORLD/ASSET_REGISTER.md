@@ -28,7 +28,8 @@ Do not merge, delete, rename or silently replace these project roots. The canoni
 - Geography manager: `scripts/real_world_geography_manager.gd`
 - Geography seed: `data/geography/real_world_registry.json`
 - Candidate Baghdad source and staged import plan: `data/geography/GEOSPATIAL_IMPORT_PLAN.md`.
-- BBBike Iraq PBF snapshot has been downloaded and verified (2026-11-19 23:32:47 UTC); relation 5638803 and its multipolygon boundary have been extracted. The complete municipal clip and feature counts are under validation; no source geometry has yet been integrated into the runtime.
+- BBBike Iraq PBF snapshot has been downloaded and verified (2026-11-19 23:32:47 UTC); relation 5638803, its MultiPolygon boundary and a contributor-metadata-cleaned municipal clip have been extracted. Preliminary GeoJSON layers for buildings, roads, waterways, bridges, landuse, amenities and rail are available as workflow artifacts; none is yet integrated into the runtime.
+- The candidate Baghdad boundary is about 36.0 km × 34.1 km, far larger than the current 2.24 km × 1.58 km procedural continent. Full-scale streaming, LOD and mobile budgets must be established before city production.
 - Android engine-side contract: `scripts/system_android_bridge.gd`
 
 The canonical project declares ten autoloads; all ten referenced script paths were present in the inspected tree. It uses the mobile-oriented Compatibility renderer.
