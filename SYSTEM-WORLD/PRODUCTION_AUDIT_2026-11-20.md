@@ -347,8 +347,8 @@ The first 5×5, 200 m Baghdad metric cell pack was successfully handed from the 
 - Civilian NPC society/visible population validation passed.
 - Android debug APK export and upload completed successfully.
 
-Verified build: [44710045959](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44710045959).  
-APK artifact: SYSTEM-WORLD-canonical-android-debug-apk, ID 14616337943, size 35,586,141 bytes (about 35.6 MB).
+Verified build: [44711157454](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44711157454).  
+APK artifact: SYSTEM-WORLD-canonical-android-debug-apk, ID 14617457540, size 35,586,141 bytes (about 35.6 MB).
 
 **Acceptance boundary:** this is the first data-backed Baghdad vector sample, not a complete Baghdad city. The pack covers only 1 km × 1 km around the Baghdad anchor. Buildings are first-pass extrusions using OSM footprints and available height/level tags (6 m fallback where absent), not detailed cinematic architectural assets. Roads and buildings are placed on the existing procedural terrain; a reviewed real elevation/DEM dataset has not yet replaced that terrain. No physical Android visual, frame-time, memory, heat or battery test has been performed.
 
