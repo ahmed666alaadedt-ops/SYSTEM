@@ -26,6 +26,7 @@ const PlayerProgressionScript = preload("res://scripts/system_player_progression
 const PlayerVehicleManagerScript = preload("res://scripts/system_player_vehicle_manager.gd")
 const VehicleRuntimeManagerScript = preload("res://scripts/system_vehicle_runtime_manager.gd")
 const MotorsportManagerScript = preload("res://scripts/system_motorsport_manager.gd")
+const MotorsportTrackManagerScript = preload("res://scripts/system_motorsport_track_manager.gd")
 const CrimeResponseManagerScript = preload("res://scripts/modern_city_crime_response_manager.gd")
 const NPCAutonomousSocietyEventManagerScript = preload("res://scripts/npc_autonomous_society_event_manager.gd")
 const NPCVisiblePopulationManagerScript = preload("res://scripts/npc_visible_population_manager.gd")
@@ -51,6 +52,7 @@ var player_progression
 var player_vehicle_manager
 var vehicle_runtime_manager
 var motorsport_manager
+var motorsport_track_manager
 var crime_response_manager
 var npc_autonomous_event_manager
 var npc_visible_population_manager
@@ -105,6 +107,7 @@ func _ready() -> void:
 	create_vehicle_runtime_manager()
 	create_motorsport_manager()
 	create_modern_city_crime_manager()
+	create_motorsport_track_manager()
 	create_npc_autonomous_society_event_manager()
 	create_npc_city_navigation_manager()
 	create_npc_visible_population_manager()
@@ -348,6 +351,16 @@ func create_motorsport_manager() -> void:
 	motorsport_manager.name = "MotorsportManager"
 	add_child(motorsport_manager)
 	motorsport_manager.setup(player_vehicle_manager)
+
+
+func create_motorsport_track_manager() -> void:
+	if active_world_root == null:
+		push_warning("SYSTEM: Modern world is unavailable for motorsport venue.")
+		return
+	motorsport_track_manager = MotorsportTrackManagerScript.new()
+	motorsport_track_manager.name = "MotorsportTrackManager"
+	active_world_root.add_child(motorsport_track_manager)
+	motorsport_track_manager.setup(player, vehicle_runtime_manager, motorsport_manager)
 
 
 func create_modern_city_crime_manager() -> void:
