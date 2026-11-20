@@ -234,6 +234,37 @@ jobs:
           print("Baghdad municipal clip SHA-256:", report["baghdad_clip_sha256"])
           PY
 
+      - name: Clip GeoJSON layers to Baghdad municipality polygon
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/baghdad-source"
+          python3 -m pip install --disable-pip-version-check "shapely==2.1.2"
+          source_timestamp="$(python3 -c 'import json; print(json.load(open("baghdad-source-verification.json"))["snapshot_timestamp"])')"
+          source_sha256="$(python3 -c 'import json; print(json.load(open("baghdad-source-verification.json"))["source_file_sha256"])')"
+          python3 "$GITHUB_WORKSPACE/SYSTEM-WORLD/tools/geospatial/clip_osm_geojson_layers.py" \
+            --input-dir "$RUNNER_TEMP/baghdad-source" \
+            --output-dir "$RUNNER_TEMP/baghdad-source/clipped_layers" \
+            --boundary "$RUNNER_TEMP/baghdad-source/baghdad-boundary.geojson" \
+            --source-timestamp "$source_timestamp" \
+            --source-sha256 "$source_sha256"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          report_path = Path("baghdad-source-verification.json")
+          report = json.loads(report_path.read_text(encoding="utf-8"))
+          clip_report = json.loads(
+              Path("clipped_layers/clip-report.json").read_text(encoding="utf-8")
+          )
+          report["clipped_geojson_layers"] = clip_report["layers"]
+          report["clipped_geojson_status"] = clip_report["status"]
+          report_path.write_text(
+              json.dumps(report, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
       - name: Add attribution and source notes
         shell: bash
         run: |
@@ -259,14 +290,8 @@ jobs:
             ${{ runner.temp }}/baghdad-source/baghdad-municipality-candidate.osm.pbf
             ${{ runner.temp }}/baghdad-source/baghdad-clip-fileinfo.json
             ${{ runner.temp }}/baghdad-source/baghdad-source-verification.json
-            ${{ runner.temp }}/baghdad-source/buildings.geojson
-            ${{ runner.temp }}/baghdad-source/roads.geojson
-            ${{ runner.temp }}/baghdad-source/waterways.geojson
-            ${{ runner.temp }}/baghdad-source/bridges.geojson
-            ${{ runner.temp }}/baghdad-source/landuse.geojson
-            ${{ runner.temp }}/baghdad-source/amenities.geojson
-            ${{ runner.temp }}/baghdad-source/railway.geojson
-            ${{ runner.temp }}/baghdad-source/natural-water.geojson
+            ${{ runner.temp }}/baghdad-source/clipped_layers/clip-report.json
+            ${{ runner.temp }}/baghdad-source/clipped_layers/*.geojson
             ${{ runner.temp }}/baghdad-source/ATTRIBUTION.txt
             ${{ runner.temp }}/baghdad-source/iraq.osm.pbf.sha256
           if-no-files-found: error
