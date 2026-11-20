@@ -137,7 +137,7 @@ The current repository state is only a seed:
 - It does not contain Baghdad road graphs, district polygons, elevation raster, building footprints, bridges or landmark datasets.
 - The registry marks the country as `seed_only` and Baghdad as `geographic_anchor_only`.
 - `real_world_geography_manager.gd` contains WGS84/ECEF and regional-coordinate conversion logic.
-- The manager is registered as an autoload, but a repository code search found no runtime caller using its city-position conversion API.
+- At the inspected baseline commit, the manager was registered as an autoload but its city-position conversion API had no runtime caller. A follow-up change now connects the Baghdad city anchor in `modern_world_region_manager.gd` to `SystemRealWorldGeography.get_city_world_position("city_baghdad")`. This is only a single geographic anchor, not a real Baghdad map.
 - The current fourteen-city `CITY_DATA` list in `modern_world_region_manager.gd` uses hard-coded fictional `Vector2` centers on the procedural continent. It does not yet derive city positions from the WGS84 registry.
 
 The earlier fictional-continent map is explicitly described as a prototype/reference layer in `MODERN_WORLD_MAP_EXPANSION.md`. It must not be called the finished real-Earth map.
@@ -267,3 +267,16 @@ Not verified by this repository audit:
 - Full multiplayer authority and server-side mission/economy validation.
 
 **Final decision:** building production remains on hold. The next safe work is the existing-system and geography reconciliation described above, not adding another batch of buildings.
+
+## 15. Post-audit stabilization work — 2026-11-20
+
+The following additive changes were committed after the inspected baseline. They do not change the original audit findings about missing real-world datasets or unfinished environments.
+
+- `SYSTEM_WORLD_MASTER_SPEC.md` now defines exactly four total worlds: modern realistic, historical/civilizations, fantasy/mythological, and Greed Island. Hunter progression is described as a gameplay system rather than an additional standalone world.
+- `SYSTEM-WORLD/ASSET_REGISTER.md` was refreshed to distinguish six humanoid GLBs per Godot project from the absence of standalone production environment/building models. Procedural blockouts are recorded separately from finished assets.
+- `SYSTEM-WORLD/project.godot` now references the tracked `assets/system_world_icon.svg`; the canonical Android workflow no longer copies a preview PNG into the runtime project.
+- Canonical Godot CI checks the tracked icon and validates the provisional WGS84 Baghdad registry seed.
+- `modern_world_region_manager.gd` now obtains the Baghdad anchor from the WGS84 registry. The other thirteen city centers remain explicitly marked as prototype-layout coordinates.
+- `tools/validate_geography_anchor_runtime.gd` and canonical Godot CI add a runtime smoke test for the Baghdad-anchor connection.
+
+These changes require the latest CI run to finish successfully before the new runtime test can be considered passed. They do not provide Baghdad streets, district polygons, terrain tiles, building footprints or other missing real-world coverage.
