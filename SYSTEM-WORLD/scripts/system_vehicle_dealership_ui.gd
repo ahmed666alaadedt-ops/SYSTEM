@@ -159,6 +159,8 @@ func _refresh_catalog() -> void:
 			action.disabled = true
 		row.add_child(action)
 
+	_update_vehicle_preview()
+
 func _on_select_vehicle(vehicle_id: String) -> void:
 	var result := garage_manager.set_active_vehicle(vehicle_id)
 	if bool(result.get("success", false)):
