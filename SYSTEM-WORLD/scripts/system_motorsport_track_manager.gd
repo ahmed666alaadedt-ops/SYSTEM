@@ -16,6 +16,15 @@ const TRACK_HALF_WIDTH := 82.0
 const ROAD_WIDTH := 18.0
 const ROAD_THICKNESS := 0.8
 
+const CHECKPOINT_COUNT := 4
+const START_GRID_OFFSET := Vector3(TRACK_HALF_LENGTH, 0.0, -22.0)
+const CHECKPOINT_ANGLES := [0.0, PI * 0.5, PI, PI * 1.5]
+
+var checkpoint_areas: Array[Area3D] = []
+var start_grid_marker: Node3D
+var last_checkpoint_result: Dictionary = {}
+
+
 var player: CharacterBody3D
 var vehicle_runtime_manager: Node
 var motorsport_manager: Node
@@ -47,6 +56,8 @@ func _build_baghdad_track() -> void:
 	_build_safety_barriers()
 	_build_paddock()
 	_build_spectator_stands()
+	_build_start_finish_and_grid()
+	_build_checkpoints()
 	_build_track_zone()
 	print("SYSTEM Motorsport: Baghdad track blockout created; final track art and navigation are pending.")
 
@@ -97,6 +108,83 @@ func _build_track_zone() -> void:
 	track_zone.body_entered.connect(_on_track_zone_body_entered)
 	track_zone.body_exited.connect(_on_track_zone_body_exited)
 
+
+func _build_start_finish_and_grid() -> void:
+	start_grid_marker = Node3D.new()
+	start_grid_marker.name = "RaceStartGrid"
+	start_grid_marker.position = START_GRID_OFFSET
+	track_root.add_child(start_grid_marker)
+	for lane in range(4):
+		var lane_x := -4.5 + float(lane) * 3.0
+		_create_box("StartGridLane_%02d" % lane, Vector3(0.22, 0.045, 8.0), START_GRID_OFFSET + Vector3(lane_x, 0.48, -2.0), 0.0, Color(0.95, 0.95, 0.9), false)
+	_create_box("StartFinishLine", Vector3(ROAD_WIDTH, 0.06, 1.3), Vector3(TRACK_HALF_LENGTH, 0.49, 0.0), 0.0, Color(0.95, 0.9, 0.16), false)
+	_create_box("StartFinishGantries_Crossbar", Vector3(ROAD_WIDTH + 3.0, 0.8, 1.2), Vector3(TRACK_HALF_LENGTH, 7.0, 0.0), 0.0, Color(0.12, 0.2, 0.27), false)
+	for side in [-1.0, 1.0]:
+		_create_box("StartFinishGantries_Post_%s" % str(side), Vector3(1.1, 7.0, 1.2), Vector3(TRACK_HALF_LENGTH, 3.5, side * (ROAD_WIDTH * 0.5 + 1.5)), 0.0, Color(0.12, 0.2, 0.27), false)
+
+func _build_checkpoints() -> void:
+	for index in range(CHECKPOINT_COUNT):
+		var angle: float = CHECKPOINT_ANGLES[index]
+		var point := Vector3(cos(angle) * TRACK_HALF_LENGTH, 0.0, sin(angle) * TRACK_HALF_WIDTH)
+		var tangent := Vector3(-sin(angle), 0.0, cos(angle))
+		var gate := Node3D.new()
+		gate.name = "RaceCheckpoint_%02d" % index
+		gate.position = point
+		gate.rotation.y = atan2(tangent.x, tangent.z)
+		track_root.add_child(gate)
+		_create_box("Checkpoint_%02d_PostLeft" % index, Vector3(0.8, 5.5, 0.8), point + Vector3(-ROAD_WIDTH * 0.5, 2.75, 0.0), gate.rotation.y, Color(0.08, 0.72, 0.92), false)
+		_create_box("Checkpoint_%02d_PostRight" % index, Vector3(0.8, 5.5, 0.8), point + Vector3(ROAD_WIDTH * 0.5, 2.75, 0.0), gate.rotation.y, Color(0.08, 0.72, 0.92), false)
+		_create_box("Checkpoint_%02d_Header" % index, Vector3(ROAD_WIDTH, 0.55, 0.8), point + Vector3(0.0, 5.5, 0.0), gate.rotation.y, Color(0.08, 0.72, 0.92), false)
+		var area := Area3D.new()
+		area.name = "CheckpointTrigger_%02d" % index
+		area.collision_layer = 0
+		area.collision_mask = 1
+		var collision := CollisionShape3D.new()
+		var shape := BoxShape3D.new()
+		shape.size = Vector3(ROAD_WIDTH + 3.0, 8.0, 5.0)
+		collision.shape = shape
+		area.add_child(collision)
+		area.position = point + Vector3.UP * 2.5
+		track_root.add_child(area)
+		area.body_entered.connect(_on_checkpoint_body_entered.bind(index))
+		checkpoint_areas.append(area)
+
+func get_start_grid_position() -> Vector3:
+	if not is_instance_valid(track_root):
+		return Vector3.INF
+	return track_root.to_global(START_GRID_OFFSET)
+
+func start_track_event(event_id: String) -> Dictionary:
+	if not player_inside_track:
+		return {"success":false,"reason":"PLAYER_NOT_INSIDE_APPROVED_TRACK"}
+	if vehicle_runtime_manager == null or not bool(vehicle_runtime_manager.get("is_driving")):
+		return {"success":false,"reason":"PLAYER_MUST_BE_DRIVING"}
+	var vehicle: Node3D = vehicle_runtime_manager.get("active_vehicle")
+	if not is_instance_valid(vehicle):
+		return {"success":false,"reason":"ACTIVE_VEHICLE_UNAVAILABLE"}
+	var vehicle_id := str(vehicle.get("vehicle_id"))
+	var grid_position := get_start_grid_position()
+	if vehicle.global_position.distance_to(grid_position) > 18.0:
+		return {"success":false,"reason":"VEHICLE_NOT_ON_START_GRID","start_grid":grid_position}
+	if motorsport_manager == null or not motorsport_manager.has_method("start_race"):
+		return {"success":false,"reason":"MOTORSPORT_MANAGER_UNAVAILABLE"}
+	var result: Dictionary = motorsport_manager.call("start_race", event_id, vehicle_id, CHECKPOINT_COUNT)
+	if bool(result.get("success", false)):
+		last_checkpoint_result.clear()
+	return result
+
+func _on_checkpoint_body_entered(body: Node3D, checkpoint_index: int) -> void:
+	if vehicle_runtime_manager == null:
+		return
+	var active_vehicle: Node = vehicle_runtime_manager.get("active_vehicle")
+	if not is_instance_valid(active_vehicle) or body != active_vehicle:
+		return
+	if motorsport_manager == null or not motorsport_manager.has_method("register_checkpoint"):
+		return
+	last_checkpoint_result = motorsport_manager.call("register_checkpoint", checkpoint_index)
+	if bool(last_checkpoint_result.get("success", false)):
+		print("SYSTEM Motorsport: checkpoint %d registered." % checkpoint_index)
+
 func _on_track_zone_body_entered(body: Node3D) -> void:
 	if body != player:
 		return
@@ -124,7 +212,10 @@ func get_track_info() -> Dictionary:
 		"track_zone_active": is_instance_valid(track_zone),
 		"player_inside": player_inside_track,
 		"venue_status": "procedural_blockout",
-		"race_ready": false
+		"race_ready": false,
+		"checkpoint_count": checkpoint_areas.size(),
+		"start_grid_position": get_start_grid_position(),
+		"race_start_api_available": true
 	}
 
 func _create_box(box_name: String, box_size: Vector3, local_position: Vector3, yaw: float, color: Color, with_collision: bool) -> void:
