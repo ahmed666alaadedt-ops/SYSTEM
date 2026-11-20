@@ -23,15 +23,38 @@ func get_floor_data(floor_number: int) -> Dictionary:
 	var difficulty := clampi(1 + int((floor_number - 1) / 5), 1, 20)
 	var required_level := maxi(1, int(ceil(float(floor_number) * 0.72)))
 	var reward_xp := 100 + floor_number * floor_number * 12
+	var arena_cycle := (floor_number - 1) % 5
+	var arena_names := [
+		"DUEL ARENA",
+		"TEAM BATTLE ARENA",
+		"SURVIVAL ARENA",
+		"ELITE GAUNTLET",
+		"CHAMPIONSHIP ARENA"
+	]
+	var arena_rules := [
+		"مواجهة فردية — اهزم خصمك ضمن حدود الحلبة",
+		"قتال فرق — تعاون مع فريقك ضد مجموعة خصوم",
+		"اختبار بقاء — اصمد أمام موجات متتابعة",
+		"تحدي نخبة — واجه خصوماً أقوى تباعاً",
+		"بطولة تصنيفية — سلسلة مواجهات بأداء ووقت محسوبين"
+	]
+	var arena_type := "BOSS_TRIAL" if boss_floor else str(["DUEL", "TEAM", "SURVIVAL", "ELITE", "CHAMPIONSHIP"][arena_cycle])
 	return {
 		"floor": floor_number,
 		"difficulty": difficulty,
 		"required_level": required_level,
 		"boss_floor": boss_floor,
 		"opponent_power": 80 + floor_number * 24,
+		"opponent_count": 1 if arena_type == "DUEL" or boss_floor else mini(2 + difficulty / 4, 8),
+		"wave_count": 1 if arena_type == "DUEL" or boss_floor else mini(2 + int(floor_number / 12), 10),
 		"reward_xp": reward_xp,
 		"rank": _rank_for_floor(floor_number),
-		"challenge_type": "BOSS" if boss_floor else ("ELITE" if floor_number % 5 == 0 else "COMBAT_TRIAL")
+		"challenge_type": "BOSS" if boss_floor else ("ELITE" if floor_number % 5 == 0 else "COMBAT_TRIAL"),
+		"arena_type": arena_type,
+		"arena_name": "BOSS TRIAL ARENA" if boss_floor else str(arena_names[arena_cycle]),
+		"arena_rules": "مواجهة زعيم الطابق — اهزم الخصم الرئيسي" if boss_floor else str(arena_rules[arena_cycle]),
+		"clear_time_recorded": true,
+		"ranked": arena_type == "CHAMPIONSHIP" or boss_floor
 	}
 
 func request_floor(floor_number: int, player_level: int) -> Dictionary:
