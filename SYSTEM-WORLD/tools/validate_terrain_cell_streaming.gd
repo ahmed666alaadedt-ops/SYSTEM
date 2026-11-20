@@ -23,6 +23,9 @@ func _run_tests() -> void:
 	streamer._refresh_desired_cells(Vector2i(1, 1))
 	assert(streamer.desired_cells.size() == 9)
 	assert(streamer.pending_loads.size() == 9)
+	assert(streamer.pending_loads[0] == Vector2i(1, 1), "Player cell must load first.")
+	streamer._process_cell_queue()
+	assert(streamer.loaded_cells.has(Vector2i(1, 1)), "Player cell was not loaded first.")
 
 	streamer._load_cell(Vector2i(0, 0))
 	streamer._load_cell(Vector2i(1, 0))
