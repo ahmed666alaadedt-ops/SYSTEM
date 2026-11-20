@@ -2,6 +2,7 @@ extends SceneTree
 
 const STREAMER_SCRIPT = preload("res://scripts/modern_world_cell_streaming_manager.gd")
 const CONTINENT_SCRIPT = preload("res://scripts/modern_continent_manager.gd")
+const GEOMETRY_CLIPPER = preload("res://scripts/system_world_cell_geometry_clipper.gd")
 
 
 func _initialize() -> void:
@@ -13,6 +14,12 @@ func _height_at(x: float, z: float) -> float:
 
 
 func _run_tests() -> void:
+	var source_line := PackedVector2Array([Vector2(-50.0, 50.0), Vector2(150.0, 50.0)])
+	var left_pieces: Array[PackedVector2Array] = GEOMETRY_CLIPPER.clip_polyline_to_rect(source_line, Vector2(0.0, 0.0), Vector2(100.0, 100.0))
+	var right_pieces: Array[PackedVector2Array] = GEOMETRY_CLIPPER.clip_polyline_to_rect(source_line, Vector2(100.0, 0.0), Vector2(200.0, 100.0))
+	assert(left_pieces.size() == 1 and right_pieces.size() == 1)
+	assert(left_pieces[0][1].is_equal_approx(right_pieces[0][0]), "Adjacent cell road/river clip endpoints must match.")
+
 	var streamer = STREAMER_SCRIPT.new()
 	root.add_child(streamer)
 	streamer._last_center_cell = Vector2i.ZERO
@@ -61,5 +68,5 @@ func _run_tests() -> void:
 	assert(continent.get_node_or_null("ContinentTerrainVisual") == null, "Monolithic terrain visual is still active.")
 	assert(continent.get_node_or_null("ContinentTerrainCollision") == null, "Monolithic terrain collision is still active.")
 	continent.queue_free()
-	print("Terrain cell streaming checks passed: lifecycle, shared edges, collision and canonical continent integration.")
+	print("Terrain cell streaming checks passed: lifecycle, shared edges, collision and canonical continent integration and deterministic road/river clipping.")
 	quit(0)
