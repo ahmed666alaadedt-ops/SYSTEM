@@ -193,6 +193,72 @@
           33.4868251
         ],
         "geometry_status": "extracted_and_preliminarily_shape_inspected; official boundary validation still required"
+      },
+      "verified_municipal_clip": {
+        "file_name": "baghdad-municipality-candidate.osm.pbf",
+        "file_size_bytes": 6177094,
+        "sha256": "09db4b98f6f1020e9228b9a21d4eaaf8885708709ee26f93e0190eba637abf7e",
+        "object_counts": {
+          "nodes": 756937,
+          "ways": 126889,
+          "relations": 1763
+        },
+        "data_bbox_wgs84": [
+          44.0753646,
+          31.3210325,
+          46.0328698,
+          33.7259272
+        ],
+        "metadata": {
+          "version": false,
+          "timestamp": false,
+          "changeset": false,
+          "user": false,
+          "uid": false
+        },
+        "feature_layer_counts": {
+          "buildings": {
+            "nodes": 231434,
+            "ways": 42302,
+            "relations": 361
+          },
+          "roads": {
+            "nodes": 258001,
+            "ways": 64167,
+            "relations": 0
+          },
+          "waterways": {
+            "nodes": 7552,
+            "ways": 1095,
+            "relations": 0
+          },
+          "bridges": {
+            "nodes": 4678,
+            "ways": 835,
+            "relations": 0
+          },
+          "landuse": {
+            "nodes": 75564,
+            "ways": 5416,
+            "relations": 152
+          },
+          "amenities": {
+            "nodes": 31190,
+            "ways": 3096,
+            "relations": 32
+          },
+          "railway": {
+            "nodes": 4881,
+            "ways": 526,
+            "relations": 0
+          },
+          "natural_water": {
+            "nodes": 23405,
+            "ways": 832,
+            "relations": 26
+          }
+        },
+        "status": "candidate_clip_created; feature coverage and visual review required"
       }
     }
   ],
