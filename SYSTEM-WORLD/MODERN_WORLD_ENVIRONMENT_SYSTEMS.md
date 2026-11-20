@@ -139,3 +139,11 @@ GitHub file writes are confirmed for the scripts listed below. Godot parsing, sc
 - Real advertising is not active. Production integration requires an approved ad provider, secure server-side campaign delivery, consent/privacy controls, content moderation, frequency limits, regional/legal review, and a non-ad fallback. Provider secrets must never be embedded in the Android client. No ad revenue or impressions are claimed.
 - Mosques are civic/worship landmarks and are excluded from commercial billboard placement.
 - These are source-level visual additions; runtime appearance, OSM feature coverage, and Android performance still require Godot validation.
+
+### 17. Civic services, education, sport and retail — visual/interaction-marker pass
+- Expanded the city service registry with public schools, a university, a football stadium, a shopping street, restaurant, bank and shopping mall, while retaining hospital, police headquarters, fire/rescue, hotel, central market and vehicle garage.
+- Each service is registered with a city-specific location ID and a nearby interaction Area3D carrying its service type and Arabic interaction prompt.
+- The football stadium now has a visible green pitch, simple center line, goal frames and two spectator-stand masses. The pitch remains open rather than being hidden inside a solid building block.
+- Schools and universities receive a simple courtyard; shopping streets receive repeated shopfront glazing and awnings. All remain lightweight procedural prototypes.
+- The service manager currently renders the nearest city and stores locations for all resolved cities. The service buildings are not yet complete interiors or fully playable systems: treatment, police case workflows, school schedules, university activities, matches/teams, shop inventories, purchases, restaurant service, banking, staff/NPC schedules and economy transactions still need implementation.
+- Runtime parsing, visual review, interaction testing and Android performance validation are still required.
