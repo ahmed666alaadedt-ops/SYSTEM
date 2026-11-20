@@ -21,7 +21,7 @@ ORIGIN_LON = 44.3661
 DEFAULT_CELL_SIZE = 200.0
 LAYERS = (
     "buildings", "roads", "waterways", "bridges",
-    "landuse", "amenities", "railway", "natural-water"
+    "landuse", "amenities", "railway", "natural-water", "entrances"
 )
 LINE_LAYERS = {"roads", "waterways", "bridges", "railway"}
 AREA_LAYERS = {"landuse", "natural-water"}
@@ -32,7 +32,8 @@ KEEP_TAGS = {
     "landuse", "amenity", "railway", "surface", "maxspeed", "lanes",
     "oneway", "access", "service", "tunnel", "layer", "leisure",
     "shop", "tourism", "historic", "man_made", "water", "place",
-    "religion", "operator", "aeroway", "barrier", "foot", "cycleway"
+    "religion", "operator", "aeroway", "barrier", "foot", "cycleway",
+    "entrance", "door", "wheelchair", "level", "indoor"
 }
 
 
