@@ -15,10 +15,14 @@ func _run_tests() -> void:
 	var streamer = STREAMER_SCRIPT.new()
 	root.add_child(streamer)
 	streamer._last_center_cell = Vector2i.ZERO
-	assert(streamer.configure(Callable(self, "_height_at"), 400.0, 400.0, 200.0, 20.0))
+	assert(streamer.configure(Callable(self, "_height_at"), 600.0, 600.0, 200.0, 20.0))
 	assert(streamer.world_to_cell(-199.0, -199.0) == Vector2i(0, 0))
 	assert(streamer.world_to_cell(0.0, 0.0) == Vector2i(1, 1))
-	assert(streamer.cell_origin(Vector2i(1, 0)) == Vector2(0.0, -200.0))
+	assert(streamer.cell_origin(Vector2i(1, 0)) == Vector2(-100.0, -300.0))
+
+	streamer._refresh_desired_cells(Vector2i(1, 1))
+	assert(streamer.desired_cells.size() == 9)
+	assert(streamer.pending_loads.size() == 9)
 
 	streamer._load_cell(Vector2i(0, 0))
 	streamer._load_cell(Vector2i(1, 0))
