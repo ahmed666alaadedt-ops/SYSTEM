@@ -64,6 +64,13 @@ jobs:
             --script res://tools/validate_terrain_cell_streaming.gd \
             2>&1 | tee "$RUNNER_TEMP/terrain-cell-streaming.log"
 
+      - name: Validate Baghdad city state persistence round-trip
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_baghdad_city_state_store.gd
+
       - name: Verify child character civilian and combat restrictions
         shell: bash
         run: |
