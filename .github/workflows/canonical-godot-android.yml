@@ -5,6 +5,7 @@ on:
     paths:
       - "SYSTEM-WORLD/**"
       - ".github/workflows/canonical-godot-android.yml"
+      - ".github/workflows/verify-baghdad-osm-source.yml"
   push:
     branches:
       - main
