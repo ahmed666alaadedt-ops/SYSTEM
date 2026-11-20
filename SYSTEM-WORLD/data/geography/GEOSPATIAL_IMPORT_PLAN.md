@@ -1,6 +1,6 @@
 # Baghdad Geospatial Import Plan
 
-**Status:** source candidate identified; no regional geometry has been imported yet.  
+**Status:** source candidate verified; first 5×5 metric cell pack generated as a GitHub Actions artifact; conditional Godot runtime loader and Android workflow handoff implemented. Full municipal geometry is not yet imported into the default repository/runtime.  
 **Target:** first production geography proof for Baghdad, Iraq.  
 **Runtime CRS:** WGS84 / EPSG:4326, projected into the existing regional Godot coordinate frame.  
 **Registry:** `real_world_registry.json`.
