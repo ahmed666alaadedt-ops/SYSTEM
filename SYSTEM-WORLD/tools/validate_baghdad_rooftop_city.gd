@@ -113,8 +113,17 @@ func _run_validation() -> void:
 	if floor_collision == null or floor_collision.shape == null:
 		_fail("Elevator passenger floor is missing collision geometry under cabin; children: %s" % _describe_children(test_cabin))
 		return
+	var cabin_body := test_cabin.get_node_or_null("CabinFloorCollisionBody")
+	if not cabin_body is AnimatableBody3D:
+		_fail("Elevator floor must use an AnimatableBody3D so its moving collision stays synchronized.")
+		return
+	if not (cabin_body as AnimatableBody3D).sync_to_physics:
+		_fail("Elevator AnimatableBody3D is not synchronized with physics.")
+		return
+
 	var test_player := CharacterBody3D.new()
 	test_player.name = "ElevatorRuntimeValidationPlayer"
+	test_player.set_physics_process(true)
 	root.add_child(test_player)
 	test_player.global_position = test_panel.global_position
 	test_panel.call("configure_player", test_player)
@@ -124,12 +133,29 @@ func _run_validation() -> void:
 	if not bool(test_cabin.get_meta("system_elevator_busy", false)):
 		_fail("Elevator ride did not enter its busy/moving state.")
 		return
-	await create_timer(4.25).timeout
+	if test_player.is_physics_processing():
+		_fail("Player physics was not paused while boarding the elevator.")
+		return
+
+	await create_timer(1.0).timeout
+	var boarding_offset := test_player.global_position - test_cabin.global_position
+	if boarding_offset.distance_to(Vector3(0.0, 1.1, 0.0)) > 0.18:
+		_fail("Player did not board and remain centered on the moving cabin platform.")
+		return
+	await create_timer(1.5).timeout
+	var ride_offset := test_player.global_position - test_cabin.global_position
+	if ride_offset.distance_to(Vector3(0.0, 1.1, 0.0)) > 0.18:
+		_fail("Player drifted away from the cabin during the elevator ride.")
+		return
+	await create_timer(2.5).timeout
 	if test_cabin.global_position.distance_to(expected_cabin_destination) > 0.15:
 		_fail("Elevator cabin did not reach its configured destination.")
 		return
 	if test_player.global_position.distance_to(expected_player_destination) > 0.15:
 		_fail("Player did not travel with the elevator cabin.")
+		return
+	if test_player.is_physics_processing() != true:
+		_fail("Player physics processing was not restored after the ride.")
 		return
 	if bool(test_cabin.get_meta("system_elevator_busy", true)):
 		_fail("Elevator did not release its busy state after arriving.")
