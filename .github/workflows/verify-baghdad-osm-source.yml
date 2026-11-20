@@ -219,7 +219,7 @@ jobs:
               layer_info = json.loads(Path(f"{layer}-fileinfo.json").read_text(encoding="utf-8"))
               report["feature_layer_counts"][layer] = layer_info.get("data", {}).get("count", {})
           report["geojson_layer_stats"] = {}
-          for layer in ["buildings", "roads", "waterways", "bridges", "landuse", "amenities", "railway", "natural-water"]:
+          for layer in ["buildings", "roads", "waterways", "bridges", "landuse", "amenities", "railway", "natural-water", "entrances"]:
               geojson = json.loads(Path(f"{layer}.geojson").read_text(encoding="utf-8"))
               geometry_counts = {}
               for feature in geojson.get("features", []):
