@@ -21,6 +21,7 @@ func setup(anchors: Dictionary, terrain_manager: Node) -> void:
 	city_anchors = anchors.duplicate(true)
 	terrain = terrain_manager
 	_build_city_media_displays()
+	_build_baghdad_tower_displays()
 
 
 func publish_gate_clear(gate_id: String, gate_rank: String, xp_awarded: int) -> void:
@@ -129,6 +130,66 @@ func _build_city_media_displays() -> void:
 		result_label.outline_size = 7
 		display_root.add_child(result_label)
 		result_labels[city_name] = result_label
+	_refresh_result_displays()
+
+
+func _build_baghdad_tower_displays() -> void:
+	var tower_manager := get_parent().get_node_or_null("BaghdadTowerLandmarksManager")
+	if tower_manager == null or not tower_manager.has_method("get_tower_positions"):
+		return
+	var frame_material := _make_material(Color(0.035, 0.055, 0.085), 0.25, 0.5)
+	var ad_material := _make_material(Color(0.025, 0.16, 0.22), 0.18, 0.35)
+	var result_material := _make_material(Color(0.10, 0.075, 0.025), 0.2, 0.45)
+	ad_material.emission_enabled = true
+	ad_material.emission = Color(0.02, 0.32, 0.48)
+	ad_material.emission_energy_multiplier = 1.2
+	result_material.emission_enabled = true
+	result_material.emission = Color(0.48, 0.28, 0.045)
+	result_material.emission_energy_multiplier = 1.0
+	var tower_nodes := {
+		"hunter_association_tower_baghdad": "HunterAssociationTower",
+		"power_tower_baghdad": "PowerTower",
+		"business_tower_baghdad": "BusinessTower",
+		"shopping_tower_baghdad": "ShoppingTower",
+		"entertainment_tower_baghdad": "EntertainmentTower"
+	}
+	var tower_records: Array = tower_manager.call("get_tower_positions")
+	for record_value in tower_records:
+		if typeof(record_value) != TYPE_DICTIONARY:
+			continue
+		var record: Dictionary = record_value
+		var tower_id := str(record.get("id", ""))
+		var node_name := str(tower_nodes.get(tower_id, ""))
+		var tower := tower_manager.get_node_or_null(node_name) as Node3D
+		if tower == null:
+			continue
+		var tower_height := float(record.get("height", 160.0))
+		var tower_radius := float(record.get("radius", 24.0))
+		var panel_width := clampf(tower_radius * 1.55, 24.0, 58.0)
+		var panel_height := panel_width * 0.43
+		var panel_y := clampf(tower_height * 0.58, 48.0, maxf(50.0, tower_height - panel_height * 2.2))
+		var panel_size := Vector3(panel_width, panel_height, 0.9)
+		_add_screen(tower, "TowerAdvertisingPanel", Vector3(0.0, panel_y + panel_height + 1.5, tower_radius + 0.55), panel_size, ad_material, frame_material)
+		_add_screen(tower, "TowerChampionPanel", Vector3(0.0, panel_y, tower_radius + 0.55), panel_size, result_material, frame_material)
+		var ad_label := Label3D.new()
+		ad_label.name = "TowerCampaignText"
+		ad_label.text = "SYSTEM BAGHDAD\nحملة تجريبية — مساحة إعلانية"
+		ad_label.position = Vector3(0.0, panel_y + panel_height + 1.5, tower_radius + 1.08)
+		ad_label.font_size = 32
+		ad_label.pixel_size = 0.012
+		ad_label.modulate = Color(0.78, 0.96, 1.0)
+		ad_label.outline_size = 7
+		tower.add_child(ad_label)
+		var result_label := Label3D.new()
+		result_label.name = "TowerChampionResultsText"
+		result_label.text = "SYSTEM CHAMPIONS\nبانتظار أول إنجاز موثق\nسجل محلي لهذه الجلسة"
+		result_label.position = Vector3(0.0, panel_y, tower_radius + 1.08)
+		result_label.font_size = 28
+		result_label.pixel_size = 0.012
+		result_label.modulate = Color(1.0, 0.88, 0.55)
+		result_label.outline_size = 7
+		tower.add_child(result_label)
+		result_labels["Baghdad Tower " + tower_id] = result_label
 	_refresh_result_displays()
 
 
