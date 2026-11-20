@@ -98,7 +98,7 @@ Godot import, parser, scene launch, Android build and device performance must be
 
 
 
-## 6. Candidate Baghdad geospatial source — not yet imported
+## 5. Candidate Baghdad geospatial source — not yet imported
 
 - Candidate source: Geofabrik Iraq OpenStreetMap PBF snapshot `iraq-261118.osm.pbf`, dated 2026-11-18.
 - Candidate Baghdad Municipality boundary: OSM relation 5638803, admin level 5. Confirm its presence and geometry in the pinned PBF before use.
@@ -110,7 +110,7 @@ Godot import, parser, scene launch, Android build and device performance must be
 
 The complete staged workflow, provenance rules, quality gates and offline packaging plan are documented in `data/geography/GEOSPATIAL_IMPORT_PLAN.md`. This candidate source is not permission to assume coverage is complete or to start detailed building production.
 
-## 7. Civilian crime, public safety and justice layer
+## 6. Civilian crime, public safety and justice layer
 
 The modern society supports crime as a systemic world event rather than a graphic spectacle. The first implementation extends the existing city crime response manager with persistent case records and a justice workflow.
 
