@@ -7,7 +7,8 @@ import unittest
 import zipfile
 from pathlib import Path
 
-from shapely.geometry import LineString, Polygon, box, mapping\nfrom shapely.ops import transform\nfrom shapely.geometry import shape
+from shapely.geometry import LineString, Polygon, box, mapping, shape
+from shapely.ops import transform
 
 import audit_baghdad_cell_connectivity as audit
 
@@ -23,10 +24,23 @@ def _feature(osm_id, osm_type, geometry):
 def _make_fixture(root: Path, omit_east_road: bool = False):
     source = root / "source"
     source.mkdir()
-    road = LineString([(150.0, 100.0), (250.0, 100.0)])
-    building = Polygon([(180, 30), (220, 30), (220, 70), (180, 70), (180, 30)])
-    source_features = {"roads": [_feature(101, "way", road)],
-                       "buildings": [_feature(202, "way", building)]}
+
+    # Small deterministic fixture around the real Baghdad WGS84 anchor.
+    def wgs84(x: float, z: float):
+        latitude = 33.3152 - z / 110574.0
+        longitude = 44.3661 + x / (111319.49 * 0.835)
+        return longitude, latitude
+
+    def polygon(points):
+        return Polygon([wgs84(x, z) for x, z in points])
+
+    source_features = {
+        "roads": [_feature(101, "way", LineString([wgs84(150, 100), wgs84(250, 100)]))],
+        "waterways": [_feature(102, "way", LineString([wgs84(140, 120), wgs84(260, 120)]))],
+        "bridges": [_feature(103, "way", LineString([wgs84(160, 80), wgs84(240, 80)]))],
+        "railway": [_feature(104, "way", LineString([wgs84(130, 140), wgs84(270, 140)]))],
+        "buildings": [_feature(202, "way", polygon([(180, 30), (220, 30), (220, 70), (180, 70), (180, 30)]))],
+    }
     for layer in audit.LAYERS:
         (source / f"{layer}.geojson").write_text(
             json.dumps({
@@ -48,36 +62,54 @@ def _make_fixture(root: Path, omit_east_road: bool = False):
         "source_snapshot": "2026-11-20T00:00:00Z",
         "cell_count": 2,
     }
-    cells = {}
-    for x in (0, 1):
-        layers = {name: [] for name in audit.LAYERS}
-        cell_box = box(x * 200, 0, (x + 1) * 200, 200)
-        road_part = road.intersection(cell_box)
-        building_part = building.intersection(cell_box)
-        if not (omit_east_road and x == 1) and not road_part.is_empty:
-            layers["roads"].append({
-                "id": "101", "osm_type": "way", "tags": {"highway": "primary"},
-                "geometry": mapping(road_part),
-            })
-        if not building_part.is_empty:
-            layers["buildings"].append({
-                "id": "202", "osm_type": "way", "tags": {"building": "yes"},
-                "geometry": mapping(building_part),
-            })
-        cells[f"cells/{x}_0.json"] = {
-            "schema_version": 1, "region_id": "iraq_baghdad_region",
-            "cell_x": x, "cell_z": 0, "cell_size_m": 200.0, "layers": layers,
-        }
+    project = audit._projector()
+    projected = {
+        layer: [transform(project, shape(feature["geometry"])) for feature in features]
+        for layer, features in source_features.items()
+    }
+    id_by_layer = {"roads": 101, "waterways": 102, "bridges": 103, "railway": 104, "buildings": 202}
+
     pack = root / "baghdad-pack.zip"
     with zipfile.ZipFile(pack, "w", zipfile.ZIP_DEFLATED) as archive:
         archive.writestr("manifest.json", json.dumps(manifest))
-        for name, tile in cells.items():
-            archive.writestr(name, json.dumps(tile))
+        for x in (0, 1):
+            layers = {name: [] for name in audit.LAYERS}
+            cell_box = box(x * 200, 0, (x + 1) * 200, 200)
+            for layer, geometries in projected.items():
+                for geometry in geometries:
+                    split = (
+                        layer in audit.LINE_LAYERS
+                        or layer in audit.AREA_LAYERS
+                        or (layer == "buildings" and geometry.geom_type in ("Polygon", "MultiPolygon"))
+                    )
+                    if split:
+                        part = geometry.intersection(cell_box)
+                    else:
+                        point = geometry.representative_point()
+                        part = geometry if int(point.x // 200) == x else geometry.intersection(box(x * 200, 0, (x + 1) * 200, 200))
+                    if layer == "roads" and omit_east_road and x == 1:
+                        continue
+                    if not part.is_empty:
+                        layers[layer].append({
+                            "id": str(id_by_layer[layer]),
+                            "osm_type": "way",
+                            "tags": {},
+                            "geometry": mapping(part),
+                        })
+            tile = {
+                "schema_version": 1,
+                "region_id": "iraq_baghdad_region",
+                "cell_x": x,
+                "cell_z": 0,
+                "cell_size_m": 200.0,
+                "layers": layers,
+            }
+            archive.writestr(f"cells/{x}_0.json", json.dumps(tile))
     return source, pack
 
 
 class BaghdadCellConnectivityTests(unittest.TestCase):
-    def test_real_pack_fixture_passes_and_checks_building_split(self):
+    def test_real_pack_fixture_passes_and_checks_all_crossings(self):
         with tempfile.TemporaryDirectory() as temp:
             source, pack = _make_fixture(Path(temp))
             result = audit.audit_pack(source, pack)
