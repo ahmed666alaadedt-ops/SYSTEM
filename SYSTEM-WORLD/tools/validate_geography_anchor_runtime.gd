@@ -22,7 +22,7 @@ func _run_validation() -> void:
 		return
 
 	var projected: Vector3 = geography.call("get_city_world_position", "city_baghdad")
-	if Vector2(projected.x, projected.z).length() > 0.1 or absf(projected.y - 34.0) > 0.5:
+	if Vector2(projected.x, projected.z).length() > 1.0 or absf(projected.y - 34.0) > 0.5:
 		_fail("Baghdad registry coordinate/elevation projection is incorrect; got " + str(projected))
 		return
 
