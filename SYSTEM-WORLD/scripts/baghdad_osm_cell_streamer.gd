@@ -9,6 +9,7 @@ const DEFAULT_CELL_SIZE := 200.0
 const MAX_CELL_OPERATIONS_PER_FRAME := 1
 
 signal cell_loaded(cell: Vector2i, cell_root: Node3D)
+signal cell_unloading(cell: Vector2i, cell_root: Node3D)
 signal cell_unloaded(cell: Vector2i, cell_id: String)
 
 var data_root := DEFAULT_DATA_ROOT
@@ -74,16 +75,32 @@ func _ready() -> void:
 	if not registry is Dictionary:
 		push_error("SYSTEM Baghdad OSM: canonical geography registry is invalid.")
 		return
-	var regions: Dictionary = registry.get("regions", {})
-	var region_record: Dictionary = regions.get("iraq_baghdad_region", {})
-	var canonical_origin: Dictionary = region_record.get("origin", {})
+	var regions_value: Variant = registry.get("regions", {})
+	if not regions_value is Dictionary:
+		push_error("SYSTEM Baghdad OSM: geography registry regions must be an object.")
+		return
+	var regions: Dictionary = regions_value
+	var region_record_value: Variant = regions.get("iraq_baghdad_region", {})
+	if not region_record_value is Dictionary:
+		push_error("SYSTEM Baghdad OSM: canonical Baghdad registry record is invalid.")
+		return
+	var region_record: Dictionary = region_record_value
+	var canonical_origin_value: Variant = region_record.get("origin", {})
+	if not canonical_origin_value is Dictionary:
+		push_error("SYSTEM Baghdad OSM: canonical Baghdad origin is invalid.")
+		return
+	var canonical_origin: Dictionary = canonical_origin_value
 	if canonical_origin.is_empty():
 		push_error("SYSTEM Baghdad OSM: canonical Baghdad region origin is missing from the geography registry.")
 		return
 	if absf(origin_lat - float(canonical_origin.get("latitude", 0.0))) > 0.000001 or absf(origin_lon - float(canonical_origin.get("longitude", 0.0))) > 0.000001:
 		push_error("SYSTEM Baghdad OSM: cell pack origin differs from the canonical WGS84 registry anchor.")
 		return
-	var axes: Dictionary = parsed.get("axes", {})
+	var axes_value: Variant = parsed.get("axes", {})
+	if not axes_value is Dictionary:
+		push_error("SYSTEM Baghdad OSM: manifest axes must be an object.")
+		return
+	var axes: Dictionary = axes_value
 	if str(axes.get("x", "")) != "east_m" or str(axes.get("z", "")) != "south_m":
 		push_error("SYSTEM Baghdad OSM: unsupported local coordinate axes.")
 		return
@@ -96,6 +113,10 @@ func _ready() -> void:
 	if bounds.size() != 4:
 		push_error("SYSTEM Baghdad OSM: cell bounds must contain min_x, max_x, min_z, max_z.")
 		return
+	for bound in bounds:
+		if typeof(bound) not in [TYPE_INT, TYPE_FLOAT] or not is_finite(float(bound)):
+			push_error("SYSTEM Baghdad OSM: cell bounds must be finite numbers.")
+			return
 	min_cell_x = int(bounds[0])
 	max_cell_x = int(bounds[1])
 	min_cell_z = int(bounds[2])
@@ -976,8 +997,9 @@ func _unload_cell(cell: Vector2i) -> void:
 	if not loaded_cells.has(cell):
 		return
 	var node: Node3D = loaded_cells[cell]
-	loaded_cells.erase(cell)
 	var cell_id := str(node.get_meta("cell_id", "%d:%d" % [cell.x, cell.y]))
+	cell_unloading.emit(cell, node)
+	loaded_cells.erase(cell)
 	cell_unloaded.emit(cell, cell_id)
 	if is_instance_valid(node):
 		node.queue_free()
