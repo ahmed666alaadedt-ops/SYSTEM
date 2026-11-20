@@ -100,7 +100,7 @@ These are procedural/runtime foundations. Do not classify them as finished world
 - Modern city buildings are currently generated blockout masses; no production building model kit is registered.
 - The fantasy project has `fantasy_city_interior_expansion.gd` for a limited first-pass set of enterable fantasy facilities/homes.
 - This does not establish complete interiors for the modern, historical or Greed Island worlds.
-- The canonical world manager still invokes legacy road/building/skyline generation alongside the newer continent and region layers. Their overlap and ownership need an in-editor visual audit before changing either layer.
+- Follow-up inspection confirmed WorldManager._create_modern_city() no longer calls the legacy starter-street, city-building, tree or skyline generators. ModernWorldRegionManager owns city blockouts and roads; separate forest, mountain and waterway systems still need cell-ownership integration.
 - Do not create new production buildings until the geographic data, existing blockout geometry, duplicate generation, collision, entrances, navigation and mobile budgets are reconciled.
 
 ## NPC and society systems
@@ -162,3 +162,15 @@ A new environmental or character asset may be marked production-ready only after
 9. A reviewer records the exact file path and validation evidence.
 
 Until then, label it as source, prototype, blockout, generated candidate, or pending review. Never count a placeholder as a finished asset.
+
+## Baghdad metric-cell runtime follow-up — 2026-11-20
+
+- Pack generator: tools/geospatial/build_baghdad_metric_cell_pack.py.
+- Runtime loader: scripts/baghdad_osm_cell_streamer.gd.
+- Runtime hookup: scripts/world_manager.gd adds the OSM streamer only when data/geography/baghdad/cell_pack/manifest.json is present.
+- City fallback: modern_world_region_manager.gd skips Baghdad's procedural district blockout/road strips when the OSM pack is installed, avoiding direct overlap in the sample area.
+- Runtime validation: tools/validate_baghdad_osm_runtime.gd checks actual OSM road meshes, building extrusions, land-use surfaces and building collision bodies.
+- First source artifact: GitHub Actions run [44708930412](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44708930412), artifact [14615624945](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44708930412). It contains a 5×5 pack of 200 m metric cells around Baghdad's WGS84 anchor.
+- The pack is a generated Actions artifact, not a committed runtime asset. The canonical Android workflow now has a workflow-run handoff to download and unpack it after the OSM source workflow succeeds. That handoff and the runtime validation still need a successful end-to-end workflow result before being marked complete.
+
+The 5×5 pack is only a 1 km × 1 km initial proof area. It is not the full Baghdad municipal map, and no physical Android visual/performance test has been performed.
