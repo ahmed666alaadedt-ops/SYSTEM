@@ -115,13 +115,43 @@
       "license": "Open Data Commons Open Database License (ODbL) 1.0",
       "attribution_required": true,
       "attribution_text": "© OpenStreetMap contributors",
-      "status": "candidate_not_downloaded_or_imported",
+      "status": "stale_snapshot_review_only_not_for_current_production",
       "production_use_blocked_until": [
         "Download the PBF and record its exact source timestamp and SHA-256 checksum.",
         "Confirm relation 5638803 exists in this exact extract and inspect its members and boundary geometry.",
         "Review the country extract boundary and confirm Baghdad Municipality coverage.",
         "Review ODbL obligations and preserve required OpenStreetMap attribution.",
-        "Validate coverage and supplement missing real-world features before production use."
+        "Validate coverage and supplement missing real-world features before production use.",
+        "Replace the 2023-04-23 snapshot with a current or suitably recent source before using roads, buildings or infrastructure."
+      ],
+      "verified_snapshot_timestamp": "2023-04-23T23:59:30Z"
+    },
+    {
+      "source_id": "bbbike_iraq_osm_pbf_2026_10_16_candidate",
+      "provider": "BBBike.org",
+      "dataset": "Iraq OpenStreetMap PBF extract",
+      "source_url": "https://data.bbbike.org/osm/pbf/region/asia/iraq.osm.pbf",
+      "index_url": "https://data.bbbike.org/osm/region/asia/iraq/",
+      "provider_reported_last_update": "2026-10-16T06:00:02Z",
+      "provider_reported_file_size": "97 MB",
+      "geographic_scope": "Iraq",
+      "planned_baghdad_boundary": {
+        "osm_element_type": "relation",
+        "osm_element_id": 5638803,
+        "admin_level": 5,
+        "name": "Baghdad Municipality (Amanat Baghdad)",
+        "status": "candidate_boundary_reference_not_imported"
+      },
+      "license": "Open Data Commons Open Database License (ODbL) 1.0",
+      "attribution_required": true,
+      "attribution_text": "© OpenStreetMap contributors; © BBBike.org",
+      "status": "candidate_not_downloaded_or_imported",
+      "production_use_blocked_until": [
+        "Download the PBF and verify the embedded data timestamp and SHA-256 checksum.",
+        "Confirm relation 5638803 and inspect its full geometry and members in this exact snapshot.",
+        "Review the Baghdad municipal boundary against official administrative references.",
+        "Review ODbL obligations and retain OpenStreetMap and BBBike attribution.",
+        "Measure feature coverage and supplement missing roads, waterways, bridges and buildings before production use."
       ]
     }
   ],
