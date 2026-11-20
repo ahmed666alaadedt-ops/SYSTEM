@@ -5,8 +5,6 @@ on:
     branches:
       - main
     paths:
-      - ".github/workflows/verify-baghdad-osm-source.yml"
-      - "SYSTEM-WORLD/data/geography/GEOSPATIAL_IMPORT_PLAN.md"
       - "SYSTEM-WORLD/data/geography/real_world_registry.json"
       - "SYSTEM-WORLD/tools/geospatial/clip_osm_geojson_layers.py"
       - "SYSTEM-WORLD/tools/geospatial/build_baghdad_metric_cell_pack.py"
@@ -14,7 +12,6 @@ on:
       - "SYSTEM-WORLD/scripts/world_manager.gd"
       - "SYSTEM-WORLD/scripts/modern_world_region_manager.gd"
       - "SYSTEM-WORLD/tools/validate_baghdad_osm_runtime.gd"
-      - ".github/workflows/canonical-godot-android.yml"
   workflow_dispatch:
 
 permissions:
