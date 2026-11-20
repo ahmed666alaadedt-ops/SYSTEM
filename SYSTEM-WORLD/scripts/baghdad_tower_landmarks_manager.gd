@@ -2,6 +2,7 @@ extends Node3D
 class_name BaghdadTowerLandmarksManager
 
 const EntranceScript = preload("res://scripts/system_tower_entrance.gd")
+const RooftopElevatorCallScript = preload("res://scripts/system_rooftop_elevator_call.gd")
 const HUNTER_TOWER_HEIGHT := 1000.0
 const POWER_TOWER_HEIGHT := 168.0
 
@@ -389,14 +390,28 @@ func _create_rooftop_city_links() -> void:
 		access_core.position = (access_base + access_top) * 0.5
 		access_core.material_override = emissive_material
 		upper_city.add_child(access_core)
-		var lift_cabin := MeshInstance3D.new()
+		var lift_cabin := Node3D.new()
 		lift_cabin.name = "RooftopCityLiftCabin_%02d" % index
+		lift_cabin.position = access_base + Vector3(0.0, 2.0, 0.0)
+		lift_cabin.set_meta("system_elevator_busy", false)
+		upper_city.add_child(lift_cabin)
+		var cabin_mesh_instance := MeshInstance3D.new()
+		cabin_mesh_instance.name = "CabinBody"
 		var cabin_mesh := BoxMesh.new()
 		cabin_mesh.size = Vector3(5.2, 4.0, 5.2)
-		lift_cabin.mesh = cabin_mesh
-		lift_cabin.position = access_base + Vector3(0.0, 2.0, 0.0)
-		lift_cabin.material_override = trim_material
-		upper_city.add_child(lift_cabin)
+		cabin_mesh_instance.mesh = cabin_mesh
+		cabin_mesh_instance.material_override = trim_material
+		lift_cabin.add_child(cabin_mesh_instance)
+		var cabin_collision_body := StaticBody3D.new()
+		cabin_collision_body.name = "CabinCollisionBody"
+		var cabin_collision := CollisionShape3D.new()
+		var cabin_shape := BoxShape3D.new()
+		cabin_shape.size = Vector3(5.2, 4.0, 5.2)
+		cabin_collision.shape = cabin_shape
+		cabin_collision_body.add_child(cabin_collision)
+		lift_cabin.add_child(cabin_collision_body)
+		_create_elevator_call_panel(upper_city, lift_cabin, access_base, access_top, index, false)
+		_create_elevator_call_panel(upper_city, lift_cabin, access_top, access_base, index, true)
 		var landing := MeshInstance3D.new()
 		landing.name = "UpperSkyPromenadeLanding_%02d" % index
 		var landing_mesh := BoxMesh.new()
@@ -414,6 +429,25 @@ func _create_rooftop_city_links() -> void:
 	upper_city.set_meta("shared_upper_city_elevation", shared_level)
 	upper_city.set_meta("upper_city_network", true)
 	print("SYSTEM WORLD: upper rooftop city bridge network created for ", tower_positions.size(), " towers at shared elevation ", shared_level, "m.")
+
+func _create_elevator_call_panel(parent: Node3D, cabin: Node3D, panel_position: Vector3, destination_position: Vector3, tower_index: int, upper_endpoint: bool) -> void:
+	var panel := RooftopElevatorCallScript.new()
+	panel.name = "RooftopElevatorCall_%02d_%s" % [tower_index, "Upper" if upper_endpoint else "Lower"]
+	panel.position = panel_position + Vector3(0.0, 1.0, 5.0)
+	var panel_shape := CollisionShape3D.new()
+	var panel_sphere := SphereShape3D.new()
+	panel_sphere.radius = 3.0
+	panel_shape.shape = panel_sphere
+	panel.add_child(panel_shape)
+	parent.add_child(panel)
+	panel.set_meta("system_location_id", "baghdad_rooftop_elevator_%02d_%s" % [tower_index, "upper" if upper_endpoint else "lower"])
+	panel.set_meta("system_region_id", "region_baghdad")
+	panel.set_meta("system_display_name", "مصعد المدينة العلوية")
+	panel.set_meta("system_interaction_prompt", "استدعاء المصعد / استخدامه")
+	panel.set_meta("system_location_type", 7)
+	panel.add_to_group("system_interactable")
+	panel.add_to_group("system_rooftop_elevator_call")
+	panel.configure(null, cabin, destination_position + Vector3(0.0, 2.0, 0.0), destination_position + Vector3(0.0, 1.0, 5.0), "مصعد البرج %02d" % (tower_index + 1))
 
 
 func _create_connected_city_links() -> void:
