@@ -7,8 +7,15 @@
   "regions": {
     "iraq_baghdad_region": {
       "country_id": "country_iraq",
-      "name": {"en": "Baghdad Region", "ar": "منطقة بغداد"},
-      "origin": {"latitude": 33.3152, "longitude": 44.3661, "altitude_m": 0.0},
+      "name": {
+        "en": "Baghdad Region",
+        "ar": "منطقة بغداد"
+      },
+      "origin": {
+        "latitude": 33.3152,
+        "longitude": 44.3661,
+        "altitude_m": 0
+      },
       "tile_size_meters_default": 1000,
       "streaming_profile": "android_region"
     }
@@ -17,8 +24,13 @@
     "country_iraq": {
       "iso_3166_1_alpha2": "IQ",
       "iso_3166_1_alpha3": "IRQ",
-      "name": {"en": "Iraq", "ar": "العراق"},
-      "region_ids": ["iraq_baghdad_region"],
+      "name": {
+        "en": "Iraq",
+        "ar": "العراق"
+      },
+      "region_ids": [
+        "iraq_baghdad_region"
+      ],
       "data_status": "seed_only"
     }
   },
@@ -26,10 +38,13 @@
     "city_baghdad": {
       "country_id": "country_iraq",
       "region_id": "iraq_baghdad_region",
-      "name": {"en": "Baghdad", "ar": "بغداد"},
+      "name": {
+        "en": "Baghdad",
+        "ar": "بغداد"
+      },
       "latitude": 33.3152,
       "longitude": 44.3661,
-      "elevation_m": 34.0,
+      "elevation_m": 34,
       "city_status": "geographic_anchor_only",
       "required_real_features": [
         "Tigris River",
@@ -49,6 +64,36 @@
       "license": "coordinate reference only; verify against an approved geospatial source before production",
       "attribution_required": true,
       "status": "provisional"
+    },
+    {
+      "source_id": "geofabrik_iraq_osm_2026_11_18_candidate",
+      "provider": "Geofabrik download server",
+      "dataset": "Iraq OpenStreetMap PBF extract",
+      "source_url": "https://download.geofabrik.de/asia/iraq-261118.osm.pbf",
+      "index_url": "https://download.geofabrik.de/asia/iraq.html",
+      "snapshot_date": "2026-11-18",
+      "source_snapshot_timestamp": "2026-11-18T23:58:00Z",
+      "file_size_bytes": 91667932,
+      "geographic_scope": "Iraq",
+      "planned_baghdad_boundary": {
+        "osm_element_type": "relation",
+        "osm_element_id": 5638803,
+        "admin_level": 5,
+        "name": "Baghdad Municipality (Amanat Baghdad)",
+        "status": "candidate_boundary_reference_not_imported"
+      },
+      "license": "Open Data Commons Open Database License (ODbL) 1.0",
+      "attribution_required": true,
+      "attribution_text": "© OpenStreetMap contributors",
+      "personal_contributor_metadata": "Geofabrik extract omits usernames, user IDs and changeset IDs.",
+      "status": "candidate_not_downloaded_or_imported",
+      "production_use_blocked_until": [
+        "Download the pinned source snapshot and verify its checksum.",
+        "Confirm the Baghdad boundary relation and geometry in the PBF.",
+        "Extract and review the Baghdad region extent and required feature layers.",
+        "Record source attribution and ODbL share-alike obligations in the shipped data pack.",
+        "Validate coordinate system, geometry integrity and coverage before runtime import."
+      ]
     }
   ],
   "production_rules": {
