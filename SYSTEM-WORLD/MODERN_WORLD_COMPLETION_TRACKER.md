@@ -4,7 +4,7 @@ This is the acceptance checklist for the modern-world map. The project must not 
 
 ## Current verified repository foundations
 
-- [x] Fourteen named city anchors and eight district labels per city are defined in modern_world_region_manager.gd.
+- [x] Fourteen city labels and eight district labels per city are defined in modern_world_region_manager.gd; only Baghdad is currently connected to the provisional WGS84 registry anchor, while the other thirteen centers remain prototype-layout coordinates.
 - [x] Each city style index generates a distinct original civic landmark silhouette to improve skyline and local identity.
 - [x] Ten rural settlement seeds are defined.
 - [x] City road strips, plaza markers, green-belt markers, airport/rail visual hubs, and map discovery registration exist.
@@ -30,6 +30,8 @@ This is the acceptance checklist for the modern-world map. The project must not 
 
 ## City and district completion gates
 
+- [ ] Import and validate licensed, attributed regional geospatial data for Baghdad before creating production buildings: real road graph, district boundaries, terrain/elevation, water, bridges and building footprints.
+- [ ] Extend the WGS84 registry and region projection pipeline to each additional city only when its approved geographic data pack is available; do not promote prototype coordinates to real locations.
 - [ ] Replace generic block clusters with distinctive city architecture, skyline silhouettes, landmarks, local street furniture, signage, vegetation, and cultural details.
 - [ ] Build connected, navigable street grids inside every district, including sidewalks, crossings, curbs, intersections, traffic islands, signs, barriers, and collision.
 - [ ] Add functioning markets, shops, restaurants, hotels, homes, offices, universities, industrial sites, hospitals, police/fire/ambulance stations, parks, recreation, and interiors.
