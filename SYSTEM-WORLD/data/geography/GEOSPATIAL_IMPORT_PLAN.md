@@ -5,18 +5,33 @@
 **Runtime CRS:** WGS84 / EPSG:4326, projected into the existing regional Godot coordinate frame.  
 **Registry:** `real_world_registry.json`.
 
-## 1. Candidate source snapshot
+## 1. Candidate source snapshots
 
-Geofabrik provides a downloadable Iraq OpenStreetMap PBF extract:
+### Primary candidate — OpenStreetData Iraq PBF
+
+OpenStreetData publishes full country extracts from OpenStreetMap raw data dumps:
+
+- Country file: `IQ.osm.pbf`
+- Direct source: https://files.openstreetdata.org/extracts/IQ.osm.pbf
+- Index: https://openstreetdata.org/
+- Provider-reported size: 81.1 MB
+- License stated by provider: Open Database License (ODbL) 1.0.
+- The public index does not publish a snapshot date for the country PBF.
+
+This is the current primary candidate because the download host is separate from Geofabrik. The exact OSM data timestamp and SHA-256 must be recorded from the downloaded file before use. The source has not yet been downloaded, parsed or imported into SYSTEM WORLD.
+
+### Fallback candidate — Geofabrik Iraq PBF
 
 - Snapshot file: `iraq-261117.osm.pbf`
 - Snapshot date: 2026-11-17
 - File size reported by Geofabrik: 91,646,428 bytes
 - Direct source: https://download.geofabrik.de/asia/iraq-261117.osm.pbf
-- Region index and snapshot history: https://download.geofabrik.de/asia/iraq.html
-- Geographic scope: all of Iraq, not a Baghdad-only extract.
+- Region index: https://download.geofabrik.de/asia/iraq.html
+- License: Open Database License (ODbL) 1.0.
 
-The file is a candidate input only. It has not yet been downloaded, checksum-verified, parsed or imported into SYSTEM WORLD. Do not mark the Baghdad map as built based on this source listing.
+A GitHub Actions runner could not connect to `download.geofabrik.de` during the first verification attempt. Keep this as a fallback candidate; do not treat the failed network request as evidence that the data or relation is invalid.
+
+Both sources derive from OpenStreetMap and require the same ODbL and attribution review. Do not merge their geometry until their timestamps, boundaries and feature coverage have been compared.
 
 ## 2. Candidate Baghdad boundary
 
