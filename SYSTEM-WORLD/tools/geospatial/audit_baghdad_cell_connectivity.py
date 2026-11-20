@@ -14,7 +14,7 @@ import zipfile
 from collections import defaultdict
 from typing import Any
 
-from shapely.geometry import LineString, box, shape
+from shapely.geometry import LineString, box, mapping, shape
 from shapely.ops import transform, unary_union
 
 A = 6378137.0
@@ -88,6 +88,42 @@ def _source_key(layer: str, feature: dict[str, Any]) -> tuple[str, str, str]:
 def _payload_geometry(payload: dict[str, Any]):
     return shape(payload)
 
+
+
+def _builder_normalized_geometry(geometry):
+    """Mirror build_baghdad_metric_cell_pack.py geometry normalization."""
+    if geometry.is_empty:
+        return geometry
+    if not geometry.is_valid and geometry.geom_type not in ("LineString", "MultiLineString"):
+        geometry = geometry.buffer(0)
+    return geometry
+
+
+def _builder_serialized_geometry(geometry):
+    """Round-trip through the builder's exact 2-decimal GeoJSON payload."""
+    if geometry.is_empty:
+        return geometry
+
+    def rounded(value):
+        if isinstance(value, (list, tuple)):
+            return [rounded(item) for item in value]
+        if isinstance(value, float):
+            return round(value, 2)
+        return value
+
+    payload = mapping(geometry)
+    if geometry.geom_type == "GeometryCollection":
+        payload = {"type": "GeometryCollection", "geometries": [
+            mapping(part) for part in geometry.geoms if not part.is_empty
+        ]}
+        def round_geometry(item):
+            if item.get("type") == "GeometryCollection":
+                return {"type": "GeometryCollection", "geometries": [round_geometry(p) for p in item.get("geometries", [])]}
+            return {"type": item["type"], "coordinates": rounded(item.get("coordinates", []))}
+        payload = round_geometry(payload)
+    else:
+        payload = {"type": payload["type"], "coordinates": rounded(payload["coordinates"])}
+    return shape(payload)
 
 def _cell_clips_geometry(layer: str, geometry) -> bool:
     if layer in LINE_LAYERS or layer in AREA_LAYERS:
@@ -164,7 +200,7 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
         "verified_feature_cell_parts": 0,
         "cross_cell_feature_pairs": 0,
         "seam_checks": 0,
-        "duplicate_parts": 0,
+        "duplicate_parts": 0,\n        "overlapping_parts": 0,
         "missing_parts": 0,
         "unexpected_parts": 0,
         "disconnected_seams": 0,
@@ -269,22 +305,24 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
                 source = json.loads(source_path.read_text(encoding="utf-8"))
                 if source.get("coordinate_reference_system") != "EPSG:4326":
                     raise AuditError(f"{layer}: source layer is not EPSG:4326")
-                grouped: dict[tuple[str, str, str], list[Any]] = defaultdict(list)
+                layer_keys: set[tuple[str, str, str]] = set()
                 for feature in source.get("features", []):
                     source_geometry = feature.get("geometry")
                     if not source_geometry:
                         continue
                     key = _source_key(layer, feature)
                     geometry = transform(project, shape(source_geometry))
+                    geometry = _builder_normalized_geometry(geometry)
                     if geometry.is_empty:
                         continue
-                    grouped[key].append(geometry)
-                report["source_layers"][layer] = len(grouped)
-                for key, geometries in grouped.items():
                     source_keys.add(key)
-                    source_geometry = unary_union(geometries)
-                    for cell, fragment in _expected_fragments(layer, source_geometry, cell_size, bounds):
-                        expected[(cell, key)].append(fragment)
+                    layer_keys.add(key)
+                    # The builder assigns non-clipped features to a cell per source
+                    # feature. Never unary_union separate OSM feature records first:
+                    # that changes representative_point() for mixed amenity layers.
+                    for cell, fragment in _expected_fragments(layer, geometry, cell_size, bounds):
+                        expected[(cell, key)].append(_builder_serialized_geometry(fragment))
+                report["source_layers"][layer] = len(layer_keys)
 
             report["source_osm_features"] = len(source_keys)
             expected_union = {key: unary_union(items) for key, items in expected.items()}
@@ -319,8 +357,7 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
                     f"Found {report['duplicate_parts']} byte-identical duplicate OSM parts in cells"
                 )
 
-            # Check every occupied east/south neighbor pair, and verify seams for
-            # each OSM feature whose source geometry occupies both cells.
+            # Keep source parity and actual generated-cell seam checks separate.
             cell_set = set(cells)
             neighbor_pairs = set()
             for x, z in cell_set:
@@ -328,41 +365,105 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
                     if neighbor in cell_set:
                         neighbor_pairs.add(((x, z), neighbor))
             report["adjacent_cell_pairs"] = len(neighbor_pairs)
-
+            seam_report = {
+                "checked_actual_cell_geometries": True,
+                "checks_by_layer": {},
+                "missing_neighbor_fragments": 0,
+                "unexpected_neighbor_fragments": 0,
+                "disconnected_seams": 0,
+                "valid_boundary_touches": 0,
+                "overlapping_fragments": 0,
+            }
             for cell_a, cell_b in sorted(neighbor_pairs):
+                # Only source features expected on both sides are candidates for
+                # continuity checks. Actual geometry is always read from the pack.
                 keys_a = {key for cell, key in expected_union if cell == cell_a}
                 keys_b = {key for cell, key in expected_union if cell == cell_b}
-                for feature_key in keys_a.intersection(keys_b):
-                    geometry_a = expected_union[(cell_a, feature_key)]
-                    geometry_b = expected_union[(cell_b, feature_key)]
+                shared_expected = keys_a.intersection(keys_b)
+                for feature_key in sorted(shared_expected):
                     layer = feature_key[0]
-                    combined = geometry_a.union(geometry_b)
-                    seam_a = _seam_geometry(geometry_a, cell_a, cell_b, cell_size)
-                    seam_b = _seam_geometry(geometry_b, cell_a, cell_b, cell_size)
-                    if seam_a is None or seam_b is None or combined.is_empty:
+                    expected_a = expected_union[(cell_a, feature_key)]
+                    expected_b = expected_union[(cell_b, feature_key)]
+                    expected_edge_a = _seam_geometry(expected_a, cell_a, cell_b, cell_size)
+                    expected_edge_b = _seam_geometry(expected_b, cell_a, cell_b, cell_size)
+                    if expected_edge_a is None or expected_edge_b is None:
                         continue
-                    source_seam = _seam_geometry(combined, cell_a, cell_b, cell_size)
-                    if source_seam is None or source_seam.is_empty:
+                    # A feature can occupy two cells without crossing their common
+                    # edge (e.g. disjoint pieces sharing an OSM relation ID).
+                    if expected_edge_a.is_empty and expected_edge_b.is_empty:
                         continue
                     report["cross_cell_feature_pairs"] += 1
                     report["seam_checks"] += 1
-                    if seam_a.is_empty or seam_b.is_empty:
+                    layer_stats = seam_report["checks_by_layer"].setdefault(layer, {"checks": 0, "disconnected": 0})
+                    layer_stats["checks"] += 1
+                    actual_a = actual_union.get((cell_a, feature_key))
+                    actual_b = actual_union.get((cell_b, feature_key))
+                    if actual_a is None or actual_b is None:
+                        seam_report["missing_neighbor_fragments"] += 1
+                        report["missing_parts"] += 1
+                        seam_report["disconnected_seams"] += 1
                         report["disconnected_seams"] += 1
+                        layer_stats["disconnected"] += 1
                         report["errors"].append(
-                            f"OSM feature does not meet both sides of shared cell edge: {feature_key}, {cell_a}<->{cell_b}"
+                            f"Actual cell seam is missing neighbor fragment for {feature_key}: {cell_a}<->{cell_b}"
                         )
-                    elif layer in LINE_LAYERS and geometry_a.geom_type in ("LineString", "MultiLineString", "Point", "MultiPoint"):
-                        if seam_a.distance(seam_b) > TOLERANCE_M:
-                            report["disconnected_seams"] += 1
-                            report["errors"].append(
-                                f"Line endpoint discontinuity at cell edge: {feature_key}, {cell_a}<->{cell_b}"
-                            )
-                    else:
-                        if not _geometry_close(seam_a, seam_b):
-                            report["disconnected_seams"] += 1
-                            report["errors"].append(
-                                f"Area/building edge mismatch at cell boundary: {feature_key}, {cell_a}<->{cell_b}"
-                            )
+                        continue
+                    actual_edge_a = _seam_geometry(actual_a, cell_a, cell_b, cell_size)
+                    actual_edge_b = _seam_geometry(actual_b, cell_a, cell_b, cell_size)
+                    if actual_edge_a is None or actual_edge_b is None:
+                        continue
+                    # Touch-only geometry is valid when the source itself only
+                    # touches the edge. It is not a road/waterway continuity claim.
+                    source_crosses = not expected_edge_a.is_empty and not expected_edge_b.is_empty
+                    if not source_crosses:
+                        seam_report["valid_boundary_touches"] += 1
+                        continue
+                    mismatch = (
+                        actual_edge_a.is_empty or actual_edge_b.is_empty
+                        or not _geometry_close(expected_edge_a, actual_edge_a)
+                        or not _geometry_close(expected_edge_b, actual_edge_b)
+                        or not _geometry_close(actual_edge_a, actual_edge_b)
+                    )
+                    if layer in LINE_LAYERS and not mismatch:
+                        # For linear networks, require the two actual fragments to
+                        # meet at the same shared-edge location(s).
+                        mismatch = actual_edge_a.distance(actual_edge_b) > TOLERANCE_M
+                    if mismatch:
+                        seam_report["disconnected_seams"] += 1
+                        report["disconnected_seams"] += 1
+                        layer_stats["disconnected"] += 1
+                        report["errors"].append(
+                            f"Actual geometry seam mismatch for {feature_key}: {cell_a}<->{cell_b}"
+                        )
+
+            # Detect non-identical overlaps between fragments with the same OSM key.
+            overlap_errors = []
+            for (cell, feature_key), geometries in actual.items():
+                for index, left in enumerate(geometries):
+                    for right in geometries[index + 1:]:
+                        if left.is_empty or right.is_empty or not left.intersects(right):
+                            continue
+                        overlap = left.intersection(right)
+                        magnitude = overlap.area if overlap.geom_type in ("Polygon", "MultiPolygon") else overlap.length
+                        if magnitude > 0.01:
+                            report["overlapping_parts"] = report.get("overlapping_parts", 0) + 1
+                            seam_report["overlapping_fragments"] += 1
+                            overlap_errors.append(f"Overlapping fragments for {feature_key} in cell {cell}")
+            report["actual_cell_seam_checks"] = seam_report
+            report["expected_source_comparison"] = {
+                "expected_feature_cell_parts": len(expected_union),
+                "actual_feature_cell_keys": len(actual_union),
+                "verified_feature_cell_parts": report["verified_feature_cell_parts"],
+                "missing_or_mismatched_parts": report["missing_parts"],
+                "unexpected_parts": report["unexpected_parts"],
+                "duplicate_exact_parts": report["duplicate_parts"],
+                "overlapping_parts": report.get("overlapping_parts", 0),
+            }
+            report["errors"].extend(overlap_errors)
+            if report["duplicate_parts"]:
+                report["errors"].append(
+                    f"Found {report['duplicate_parts']} byte-identical duplicate OSM parts in cells"
+                )
 
             report["status"] = "passed" if not report["errors"] else "failed"
     except (OSError, ValueError, KeyError, TypeError, zipfile.BadZipFile, AuditError) as exc:
