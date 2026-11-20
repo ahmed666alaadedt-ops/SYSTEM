@@ -288,6 +288,20 @@ func _build_building_feature(parent: Node3D, feature: Dictionary) -> void:
 		body.set_meta("osm_feature_id", feature_id)
 		body.set_meta("baghdad_building_type", kind)
 		body.set_meta("osm_building_tag", str(tags.get("building", "yes")))
+		var footprint_center := Vector2.ZERO
+		for footprint_point in ring:
+			footprint_center += footprint_point
+		footprint_center /= float(ring.size())
+		var footprint_position := Vector3(
+			footprint_center.x,
+			_terrain_height(footprint_center),
+			footprint_center.y
+		)
+		var estimated_floors := maxi(1, int(ceil(height / 3.2)))
+		body.set_meta("system_location_position", footprint_position)
+		body.set_meta("system_building_height_m", height)
+		body.set_meta("system_estimated_floors", estimated_floors)
+		body.set_meta("system_access_state", "exterior_only")
 		body.set_meta("system_location_id", "baghdad_osm_building_" + feature_id)
 		body.set_meta("system_region_id", "region_baghdad")
 		body.set_meta("system_location_type", 7)
