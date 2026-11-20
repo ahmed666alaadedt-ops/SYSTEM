@@ -202,3 +202,14 @@ For every phase:
 8. Do not merge unrelated branches or PRs automatically. Review their diffs and integration risks first.
 
 **Immediate next task:** resume Phase 1 from the current entrance-enabled Baghdad baseline: spatially associate the 188 source entrance points with building footprints, produce confidence/rejection reporting, then implement only verified entrance-door-interior paths. Do not restart OSM extraction or claim every building is enterable.
+
+
+## Cross-world feature requirement — advertising, event champions and Hunter Examination
+
+Read and implement `SYSTEM-WORLD/REAL_WORLD_ADVERTISING_AND_CHAMPION_DISPLAY_SYSTEM.md` as part of the modern-world, mission, gate, and Hunter Examination phases. This is a required feature, not an optional note.
+
+- Add architecturally attached digital advertising surfaces to appropriate buildings, skyscrapers, commercial facades, transport hubs, malls, stadiums, and the five Baghdad towers. Protect landmarks, entrances, road signage, Tigris views, Tahrir Square, and the Freedom Monument.
+- Distinguish curated fictional campaigns from real commercial ads. Real ads require a compliant approved provider, privacy/consent controls, moderation, opt-out, fallback content, and platform/legal review; never claim live ads before integration and tests.
+- Add verified champion/result boards for monster gates, missions, Power Tower events, and Hunter Examination stages/finals. Use authoritative server records, privacy-safe display names, anti-cheat, and separate provisional from final standings.
+- The Hunter Examination must publish stage qualifiers, finalists, and the verified overall winner in the Hunter Association Hall of Honor and selected public displays. Do not expose puzzle solutions or private player data.
+- Ads must not grant gameplay power, progression, competitive advantage, or exclusive ranking rewards.
