@@ -29,6 +29,7 @@ func _ready() -> void:
 	_build_business_tower()
 	_build_shopping_tower()
 	_build_entertainment_tower()
+	_create_rooftop_city_links()
 	_create_connected_city_links()
 	_create_public_amenities()
 
@@ -356,6 +357,61 @@ func _create_rooftop_microcity(root: Node3D, tower_id: String, tower_height: flo
 	district.set_meta("supported_by_tower", true)
 	district.set_meta("districts", PackedStringArray(["ResidentialQuarter", "MarketAndServicesQuarter", "GardenAndLeisureQuarter", "CivicAndCultureQuarter"]))
 	print("SYSTEM WORLD: supported rooftop micro-city generated for ", tower_id, " at ", tower_height, "m.")
+
+
+func _create_rooftop_city_links() -> void:
+	# Connect all five rooftop micro-cities at one shared upper-city elevation.
+	# Each tower receives a visible vertical access core from its own roof to the sky promenade.
+	if tower_positions.size() < 2:
+		return
+	var upper_city := Node3D.new()
+	upper_city.name = "BaghdadUnifiedRooftopCityNetwork"
+	add_child(upper_city)
+	var highest_tower_height := 0.0
+	for tower_data in tower_positions:
+		highest_tower_height = maxf(highest_tower_height, float(tower_data["height"]))
+	var shared_level := highest_tower_height + 58.0
+	for index in range(tower_positions.size()):
+		var tower_data: Dictionary = tower_positions[index]
+		var tower_position: Vector3 = tower_data["position"]
+		var roof_level := tower_position.y + float(tower_data["height"]) + 8.0
+		var access_height := shared_level - roof_level
+		var radius := float(tower_data["radius"])
+		var access_offset := Vector3(radius * 1.35, 0.0, 0.0)
+		var access_base := tower_position + Vector3(0.0, roof_level - tower_position.y, 0.0) + access_offset
+		var access_top := tower_position + Vector3(0.0, shared_level, 0.0) + access_offset
+		var access_core := MeshInstance3D.new()
+		access_core.name = "RooftopCityVerticalLiftCore_%02d" % index
+		var core_mesh := BoxMesh.new()
+		core_mesh.size = Vector3(7.0, maxf(access_height, 8.0), 7.0)
+		access_core.mesh = core_mesh
+		access_core.position = (access_base + access_top) * 0.5
+		access_core.material_override = emissive_material
+		upper_city.add_child(access_core)
+		var lift_cabin := MeshInstance3D.new()
+		lift_cabin.name = "RooftopCityLiftCabin_%02d" % index
+		var cabin_mesh := BoxMesh.new()
+		cabin_mesh.size = Vector3(5.2, 4.0, 5.2)
+		lift_cabin.mesh = cabin_mesh
+		lift_cabin.position = access_base + Vector3(0.0, 2.0, 0.0)
+		lift_cabin.material_override = trim_material
+		upper_city.add_child(lift_cabin)
+		var landing := MeshInstance3D.new()
+		landing.name = "UpperSkyPromenadeLanding_%02d" % index
+		var landing_mesh := BoxMesh.new()
+		landing_mesh.size = Vector3(24.0, 1.2, 24.0)
+		landing.mesh = landing_mesh
+		landing.position = access_top
+		landing.material_override = tower_material
+		upper_city.add_child(landing)
+		_add_static_box_collision(upper_city, "UpperSkyPromenadeLandingCollision_%02d" % index, access_top, landing_mesh.size)
+		var next_data: Dictionary = tower_positions[(index + 1) % tower_positions.size()]
+		var next_position: Vector3 = next_data["position"] + Vector3(0.0, shared_level, 0.0) + Vector3(float(next_data["radius"]) * 1.35, 0.0, 0.0)
+		_create_link_deck(upper_city, access_top, next_position, "UpperCityBridge_%02d" % index, 16.0, 1.4, trim_material)
+	upper_city.set_meta("connected_tower_count", tower_positions.size())
+	upper_city.set_meta("shared_upper_city_elevation", shared_level)
+	upper_city.set_meta("upper_city_network", true)
+	print("SYSTEM WORLD: upper rooftop city bridge network created for ", tower_positions.size(), " towers at shared elevation ", shared_level, "m.")
 
 
 func _create_connected_city_links() -> void:
