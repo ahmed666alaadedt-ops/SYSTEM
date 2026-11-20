@@ -39,7 +39,7 @@ A GitHub Actions runner could not connect to `download.geofabrik.de` during the 
 - License: Open Database License (ODbL) 1.0.
 - The downloaded file's actual last object timestamp was **2023-04-23 23:59:30 UTC**.
 
-This extract successfully contained Baghdad relation 5638803, but its verified data timestamp is too old to serve as the current production source for roads, buildings or infrastructure. Retain it only as a boundary/reference comparison candidate.
+This extract successfully contained Baghdad relation 5638803 (`boundary=administrative`, `admin_level=5`, Arabic name `بغداد`, note `حدود امانة بغداد`) with 54 relation members (1 node, 40 ways, 13 relations). Its verified last object timestamp was 2023-04-23 23:59:30 UTC; SHA-256: `ef0e0f868d1e3a8101d8aa022c3c4e22f902c06f174b1fdc2e0e8edd900780db`. That snapshot is too old to serve as the current production source for roads, buildings or infrastructure. Retain it only as a boundary/reference comparison candidate.
 
 All three sources derive from OpenStreetMap and require ODbL and attribution review. Do not merge their geometry until timestamps, boundaries and feature coverage have been compared.
 
