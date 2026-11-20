@@ -174,3 +174,5 @@ Until then, label it as source, prototype, blockout, generated candidate, or pen
 - The pack is a generated Actions artifact, not a committed runtime asset. The workflow-run handoff is verified by canonical Android build 44711157454: the latest OSM pack was downloaded/unpacked, WGS84 origin/axes validation passed, Baghdad runtime geometry validation passed, the main scene launched headlessly, and APK artifact 14617457540 (35.6 MB) was exported/uploaded.
 
 The 5×5 pack is only a 1 km × 1 km initial proof area. It is not the full Baghdad municipal map, and no physical Android visual/performance test has been performed.
+
+- `system_public_event_board.gd` — procedural facade-mounted advertising and public event-result displays for configured modern-world cities and all five Baghdad landmark towers; listens to verified local gameplay completion events and persists local result history. Real ad delivery and authoritative global rankings remain unimplemented.
