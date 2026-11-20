@@ -97,7 +97,20 @@ The first Baghdad registry point is only a coordinate anchor. It does not contai
 Godot import, parser, scene launch, Android build and device performance must be run on a workstation with the approved Godot and Android toolchain before these additions can be called runtime-verified.
 
 
-## 5. Civilian crime, public safety and justice layer
+
+## 6. Candidate Baghdad geospatial source — not yet imported
+
+- Candidate source: Geofabrik Iraq OpenStreetMap PBF snapshot `iraq-261118.osm.pbf`, dated 2026-11-18.
+- Candidate Baghdad Municipality boundary: OSM relation 5638803, admin level 5. Confirm its presence and geometry in the pinned PBF before use.
+- License: Open Database License (ODbL) 1.0. Public use requires clear OpenStreetMap attribution and compliance with applicable share-alike terms.
+- Attribution target: `© OpenStreetMap contributors`.
+- Geofabrik PBF extracts omit contributor usernames, user IDs and changeset IDs.
+- OSM's Iraq reference page warns that many major highways and very few waterways are mapped. The extract therefore requires coverage review and supplementation from suitable official or independently licensed sources.
+- The source is registered as `candidate_not_downloaded_or_imported` in `data/geography/real_world_registry.json`. No roads, districts, water geometry, bridges or building footprints from this source are present in the runtime yet.
+
+The complete staged workflow, provenance rules, quality gates and offline packaging plan are documented in `data/geography/GEOSPATIAL_IMPORT_PLAN.md`. This candidate source is not permission to assume coverage is complete or to start detailed building production.
+
+## 7. Civilian crime, public safety and justice layer
 
 The modern society supports crime as a systemic world event rather than a graphic spectacle. The first implementation extends the existing city crime response manager with persistent case records and a justice workflow.
 
