@@ -153,3 +153,13 @@ GitHub file writes are confirmed for the scripts listed below. Godot parsing, sc
 - Added procedural service-location definitions for community pharmacies, bakeries, cafes, fuel/charging stations, public parks, bus stations, post offices, public libraries, urban rail stations, harbor terminals, cinemas, and fitness centers.
 - These join the existing hospitals, police/fire stations, hotels, markets, garages, schools, universities, football stadiums, shopping streets, restaurants, banks, and malls.
 - The manager continues to register service locations for each generated city and render the nearby active city's service building prototypes. These additions are discoverable prototype locations, not yet complete service simulations, interiors, public-transport schedules, shops with inventories, or functioning economy transactions.
+
+
+### 18. Baghdad residential fabric and worship architecture — first classification pass
+- The Baghdad OSM building streamer now classifies mapped building footprints into detached/low-rise houses, apartment or residential blocks, commercial buildings, mosques, churches, and general buildings using available OSM building/religion tags.
+- Explicit OSM building height and level tags remain the preferred height inputs; tagged houses receive a low-rise fallback, apartment blocks receive a mid-rise fallback, and commercial buildings receive a separate fallback when source height data is absent.
+- Building meshes retain OSM feature IDs and now expose a `baghdad_building_type` metadata value for later district styling, interiors, ownership, and interaction systems.
+- Polygon-mapped mosques receive a simple dome/minaret roof marker; polygon-mapped churches receive a bell-tower/cross marker. Point worship amenities tagged Muslim or Christian receive separate mosque or church landmark blockouts.
+- This is a classification and visual-blockout pass, not a complete Baghdad building simulation. It does not yet create apartment units, stairwells, elevators, doors, furniture, home ownership, rent, utilities, residents, or enterable interiors. It also depends on the actual OSM snapshot containing the relevant features and tags; missing or unmapped buildings cannot be inferred from this pass.
+- Religious buildings are treated as civic/worship places, not commercial advertising locations. Their architecture should be refined respectfully and reflect the actual local building form rather than assuming every mosque or church has one universal design.
+- Godot parser/runtime, geometry placement, OSM coverage, and Android performance still require validation.
