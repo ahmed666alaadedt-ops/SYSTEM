@@ -36,23 +36,23 @@ jobs:
           mkdir -p "$RUNNER_TEMP/baghdad-source"
           cd "$RUNNER_TEMP/baghdad-source"
           curl -L --fail --retry 3 \
-            "https://download.geofabrik.de/asia/iraq-261118.osm.pbf" \
-            -o iraq-261118.osm.pbf
+            "https://download.geofabrik.de/asia/iraq-261117.osm.pbf" \
+            -o iraq-261117.osm.pbf
           curl -L --fail --retry 3 \
-            "https://download.geofabrik.de/asia/iraq-261118.osm.pbf.md5" \
-            -o iraq-261118.osm.pbf.md5
-          expected="$(awk 'NR==1 {print $1}' iraq-261118.osm.pbf.md5)"
+            "https://download.geofabrik.de/asia/iraq-261117.osm.pbf.md5" \
+            -o iraq-261117.osm.pbf.md5
+          expected="$(awk 'NR==1 {print $1}' iraq-261117.osm.pbf.md5)"
           test -n "$expected"
-          printf '%s  %s\n' "$expected" iraq-261118.osm.pbf | md5sum --check -
-          stat --printf='PBF bytes: %s\n' iraq-261118.osm.pbf
-          osmium fileinfo iraq-261118.osm.pbf
+          printf '%s  %s\n' "$expected" iraq-261117.osm.pbf | md5sum --check -
+          stat --printf='PBF bytes: %s\n' iraq-261117.osm.pbf
+          osmium fileinfo iraq-261117.osm.pbf
 
       - name: Extract Baghdad Municipality relation and all referenced members
         shell: bash
         run: |
           set -euo pipefail
           cd "$RUNNER_TEMP/baghdad-source"
-          osmium getid --add-referenced iraq-261118.osm.pbf r5638803 \
+          osmium getid --add-referenced iraq-261117.osm.pbf r5638803 \
             --output baghdad-municipality-5638803.osm.pbf
           osmium check-refs baghdad-municipality-5638803.osm.pbf
           osmium cat baghdad-municipality-5638803.osm.pbf \
@@ -92,8 +92,8 @@ jobs:
               counts[kind] = counts.get(kind, 0) + 1
 
           report = {
-              "source_file": "iraq-261118.osm.pbf",
-              "snapshot_date": "2026-11-18",
+              "source_file": "iraq-261117.osm.pbf",
+              "snapshot_date": "2026-11-17",
               "relation_id": 5638803,
               "tags": tags,
               "member_count": len(members),
@@ -115,7 +115,7 @@ jobs:
           cd "$RUNNER_TEMP/baghdad-source"
           cat > ATTRIBUTION.txt <<'EOF'
           © OpenStreetMap contributors
-          Source: Geofabrik Iraq OpenStreetMap extract, snapshot 2026-11-18.
+          Source: Geofabrik Iraq OpenStreetMap extract, snapshot 2026-11-17.
           License: Open Database License (ODbL) 1.0.
           https://www.openstreetmap.org/copyright
           https://download.geofabrik.de/asia/iraq.html
