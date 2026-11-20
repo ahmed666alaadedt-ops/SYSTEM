@@ -21,6 +21,9 @@ func configure(p_player: CharacterBody3D, p_cabin: Node3D, cabin_destination: Ve
 	set_meta("system_location_type", 7)
 	add_to_group("system_interactable")
 
+func configure_player(p_player: CharacterBody3D) -> void:
+	player = p_player
+
 func system_interact() -> void:
 	if not is_instance_valid(player) or not is_instance_valid(lift_cabin):
 		push_warning("SYSTEM WORLD: rooftop elevator is not connected to the player or cabin.")
