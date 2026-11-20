@@ -7,7 +7,7 @@ import unittest
 import zipfile
 from pathlib import Path
 
-from shapely.geometry import GeometryCollection, LineString, MultiPolygon, Point, Polygon, box, mapping, shape
+from shapely.geometry import GeometryCollection, LineString, MultiLineString, MultiPolygon, Point, Polygon, box, mapping, shape
 from shapely.ops import transform
 
 import audit_baghdad_cell_connectivity as audit
@@ -298,6 +298,23 @@ class BaghdadCellConnectivityTests(unittest.TestCase):
             result = audit.audit_pack(source, pack)
             self.assertEqual(result["status"], "passed", result["errors"])
             self.assertGreaterEqual(result["expected_source_comparison"]["expected_feature_cell_parts"], 2)
+
+    def test_same_osm_line_in_adjacent_cells_without_shared_edge_is_not_a_seam(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source, pack = _make_fixture(root)
+            def wgs84(x, z):
+                return (44.3661 + x / (111319.49 * 0.835), 33.3152 - z / 110574.0)
+            disjoint = MultiLineString([
+                [wgs84(20, 50), wgs84(60, 50)],
+                [wgs84(240, 50), wgs84(280, 50)],
+            ])
+            _append_projected_feature(source, pack, "roads", 814, "way", disjoint)
+            result = audit.audit_pack(source, pack)
+            self.assertEqual(result["status"], "passed", result["errors"])
+            self.assertGreater(
+                result["actual_cell_seam_checks"]["non_crossing_adjacent_cell_features"], 0
+            )
 
     def test_polygon_that_only_touches_neighbor_edge_is_not_a_disconnected_seam(self):
         with tempfile.TemporaryDirectory() as temp:
