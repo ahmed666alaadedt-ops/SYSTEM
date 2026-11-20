@@ -43,15 +43,42 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install Baghdad OSM metric cells into canonical project
-        if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
+      - name: Find latest successful Baghdad OSM pack for regular builds
+        if: github.event_name != 'workflow_run'
+        id: latest_baghdad_source
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          RUN_ID="$(gh api "/repos/$GITHUB_REPOSITORY/actions/workflows/verify-baghdad-osm-source.yml/runs?branch=main&per_page=20" --jq '.workflow_runs | map(select(.conclusion == "success")) | .[0].id // empty')"
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+          if [ -n "$RUN_ID" ]; then
+            echo "Using latest successful Baghdad OSM source run: $RUN_ID"
+          else
+            echo "::warning::No successful Baghdad OSM source run found; this build will use procedural fallback."
+          fi
+
+      - name: Download latest Baghdad OSM cell pack for regular builds
+        if: github.event_name != 'workflow_run' && steps.latest_baghdad_source.outputs.run_id != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: SYSTEM-WORLD-Baghdad-OSM-boundary-candidate
+          path: ${{ runner.temp }}/baghdad-osm-artifact
+          run-id: ${{ steps.latest_baghdad_source.outputs.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Baghdad OSM metric cells into canonical project when available
         shell: bash
         run: |
           set -euo pipefail
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
           SOURCE_PACK="$RUNNER_TEMP/baghdad-osm-artifact/baghdad-metric-cell-pack-5x5.zip"
           DESTINATION="$PROJECT/data/geography/baghdad/cell_pack"
-          test -s "$SOURCE_PACK"
+          if [ ! -s "$SOURCE_PACK" ]; then
+            echo "::warning::Baghdad OSM pack is unavailable; keeping procedural fallback for this build."
+            exit 0
+          fi
           mkdir -p "$DESTINATION"
           unzip -q "$SOURCE_PACK" -d "$DESTINATION"
           test -s "$DESTINATION/manifest.json"
@@ -211,7 +238,7 @@ jobs:
             2>&1 | tee "$RUNNER_TEMP/system-world-import.log"
 
       - name: Validate Baghdad OSM cell runtime geometry
-        if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
+        if: success() && hashFiles('SYSTEM-WORLD/data/geography/baghdad/cell_pack/manifest.json') != ''
         shell: bash
         run: |
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
