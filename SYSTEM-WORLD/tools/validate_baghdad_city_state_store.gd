@@ -62,19 +62,36 @@ func _run_test() -> void:
 	assert(restored.get("shop_inventory", {}).get("water", 0) == 4, "Inventory did not survive disk unload/reload.")
 	assert(str(restored.get("service_status", "")) == "temporarily_closed", "Service state did not survive disk unload/reload.")
 
+	# Simulate an Android pause while the cell remains loaded and mutable.
+	restored["door_open"] = false
+	reloaded_building.set_meta("system_persistent_state", restored)
+	fresh_store._capture_all_active_cells()
+	var pause_store = STORE_SCRIPT.new()
+	pause_store.save_path = TEST_SAVE_PATH
+	root.add_child(pause_store)
+	var pause_reload_cell := _make_cell()
+	var pause_reload_building := StaticBody3D.new()
+	pause_reload_building.set_meta("system_location_id", FEATURE_ID)
+	pause_reload_cell.add_child(pause_reload_building)
+	pause_store.restore_cell(Vector2i.ZERO, pause_reload_cell)
+	var pause_restored: Dictionary = pause_reload_building.get_meta("system_persistent_state")
+	assert(not bool(pause_restored.get("door_open", true)), "App-pause snapshot did not persist the latest active-cell state.")
+
 	# A changed source snapshot must not invalidate a feature with the same stable OSM-backed ID.
 	var second_reload_cell := _make_cell()
 	second_reload_cell.set_meta("source_snapshot", "test-snapshot-b")
 	var second_reload_building := StaticBody3D.new()
 	second_reload_building.set_meta("system_location_id", FEATURE_ID)
 	second_reload_cell.add_child(second_reload_building)
-	fresh_store.restore_cell(Vector2i.ZERO, second_reload_cell)
+	pause_store.restore_cell(Vector2i.ZERO, second_reload_cell)
 	assert(second_reload_building.has_meta("system_persistent_state"), "Stable feature ID was discarded after source snapshot change.")
 
 	original_cell.free()
 	reloaded_cell.free()
 	second_reload_cell.free()
+	pause_reload_cell.free()
 	fresh_store.queue_free()
+	pause_store.queue_free()
 	if FileAccess.file_exists(TEST_SAVE_PATH):
 		DirAccess.remove_absolute(absolute_test_path)
 
