@@ -82,7 +82,7 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	root.name = node_name
 	root.position = Vector3(resolved.x, float(terrain.call("get_terrain_height", resolved.x, resolved.y)), resolved.y)
 	add_child(root)
-	tower_positions.append({"id": location_id, "name": title, "position": root.position})
+	tower_positions.append({"id": location_id, "name": title, "position": root.position, "height": height, "radius": radius})
 
 	var base := MeshInstance3D.new()
 	base.name = "MonumentalFoundation"
