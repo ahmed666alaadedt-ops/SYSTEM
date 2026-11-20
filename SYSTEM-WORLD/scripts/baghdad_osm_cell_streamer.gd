@@ -223,11 +223,15 @@ func _refresh_desired_cells(center: Vector2i) -> void:
 func _process_cell_queue() -> void:
 	var operations := 0
 	while not pending_loads.is_empty() and operations < MAX_CELL_OPERATIONS_PER_FRAME:
-		_load_cell(pending_loads.pop_front())
-		operations += 1
+		var cell: Vector2i = pending_loads.pop_front()
+		if desired_cells.has(cell) and not loaded_cells.has(cell):
+			_load_cell(cell)
+			operations += 1
 	while not pending_unloads.is_empty() and operations < MAX_CELL_OPERATIONS_PER_FRAME:
-		_unload_cell(pending_unloads.pop_front())
-		operations += 1
+		var cell: Vector2i = pending_unloads.pop_front()
+		if not desired_cells.has(cell) and loaded_cells.has(cell):
+			_unload_cell(cell)
+			operations += 1
 
 
 func _load_cell(cell: Vector2i) -> void:
