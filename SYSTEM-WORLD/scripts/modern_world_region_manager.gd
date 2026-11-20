@@ -67,11 +67,13 @@ var rail_material: StandardMaterial3D
 var plaza_material: StandardMaterial3D
 var building_materials: Array[StandardMaterial3D] = []
 var park_material: StandardMaterial3D
+var use_baghdad_osm_cells := false
 
 
 func _ready() -> void:
 	name = "ModernWorldRegionManager"
 	rng.seed = 20261118
+	use_baghdad_osm_cells = FileAccess.file_exists("res://data/geography/baghdad/cell_pack/manifest.json")
 	terrain = get_parent().get_node_or_null("ModernContinent") as ModernContinentManager
 	if terrain == null:
 		push_warning("SYSTEM WORLD: region manager requires ModernContinent.")
@@ -161,6 +163,8 @@ func _build_city_districts() -> void:
 		add_child(city_root)
 		_build_city_plaza(city_root, city_name)
 		_build_city_identity_landmarks(city_root, city_name, int(city.get("style", 0)))
+		if city_name == "Baghdad" and use_baghdad_osm_cells:
+			continue
 		for district_index in range(DISTRICT_OFFSETS.size()):
 			var district_center: Vector2 = anchor + DISTRICT_OFFSETS[district_index]
 			_build_district(city_root, city_name, district_index, district_center)
@@ -481,6 +485,8 @@ func _build_city_roads() -> void:
 	for city in CITY_DATA:
 		var city_name := str(city["name"])
 		if not city_anchors.has(city_name):
+			continue
+		if city_name == "Baghdad" and use_baghdad_osm_cells:
 			continue
 		var anchor: Vector2 = city_anchors[city_name]
 		_add_road_strip(city_name + "_NorthSouthBoulevard", anchor, Vector2(0.0, -185.0), 13.0)
