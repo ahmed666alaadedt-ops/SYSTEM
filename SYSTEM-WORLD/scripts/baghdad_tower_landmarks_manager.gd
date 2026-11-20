@@ -195,6 +195,8 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	label.modulate = beacon_color
 	root.add_child(label)
 
+	_create_tower_architecture(root, node_name, title, height, radius, floors, beacon_color)
+
 	root.set_meta("tower_id", location_id)
 	print("SYSTEM WORLD: landmark tower generated: ", title, " / ", floors, " floors / ", height, "m")
 
@@ -213,3 +215,6 @@ func _nearest_land_position(origin: Vector2) -> Vector2:
 
 func get_tower_positions() -> Array[Dictionary]:
 	return tower_positions.duplicate(true)
+
+
+##TOWER_ARCH_HELPERS_PLACEHOLDER
