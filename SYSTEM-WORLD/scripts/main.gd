@@ -782,7 +782,28 @@ func _on_interaction_performed(
 		" / ",
 		location_id
 	)
-	if location_id.begins_with("baghdad_osm_building_") or location_id.begins_with("baghdad_osm_approach_"):
+	if location_id.begins_with("baghdad_osm_entrance_"):
+		var entrance_name := str(target.get_meta("system_display_name", "مدخل محدد على الخريطة"))
+		var entrance_kind := str(target.get_meta("system_entrance_type", "غير محدد"))
+		var access_tag := str(target.get_meta("system_access_tag", "unknown"))
+		var wheelchair_tag := str(target.get_meta("system_wheelchair_tag", "unknown"))
+		var access_note := "هذه نقطة مدخل موثقة في بيانات الخريطة؛ مشهد المبنى الداخلي لم يُنفذ بعد."
+		if access_tag == "private" or access_tag == "no":
+			access_note += " الوصول مقيّد حسب بيانات المصدر."
+		var accessibility_note := "إمكانية وصول الكراسي المتحركة غير محددة."
+		if wheelchair_tag == "yes":
+			accessibility_note = "بيانات المصدر تشير إلى إمكانية وصول الكراسي المتحركة."
+		elif wheelchair_tag == "no":
+			accessibility_note = "بيانات المصدر تشير إلى عدم تهيئة المدخل للكراسي المتحركة."
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "%s\nنوع المدخل: %s | الوصول: %s\n%s\n%s" % [
+				entrance_name,
+				entrance_kind,
+				access_tag,
+				access_note,
+				accessibility_note
+			]
+	elif location_id.begins_with("baghdad_osm_building_") or location_id.begins_with("baghdad_osm_approach_"):
 		var building_name := str(target.get_meta("system_display_name", "مبنى في بغداد"))
 		var building_kind := str(target.get_meta("baghdad_building_type", "general_building"))
 		var estimated_floors := int(target.get_meta("system_estimated_floors", 1))
