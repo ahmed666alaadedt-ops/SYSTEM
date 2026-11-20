@@ -25,6 +25,7 @@ const MissionRewardManagerScript = preload("res://scripts/system_mission_reward_
 const PlayerProgressionScript = preload("res://scripts/system_player_progression.gd")
 const PlayerVehicleManagerScript = preload("res://scripts/system_player_vehicle_manager.gd")
 const VehicleRuntimeManagerScript = preload("res://scripts/system_vehicle_runtime_manager.gd")
+const MotorsportManagerScript = preload("res://scripts/system_motorsport_manager.gd")
 const CrimeResponseManagerScript = preload("res://scripts/modern_city_crime_response_manager.gd")
 const NPCAutonomousSocietyEventManagerScript = preload("res://scripts/npc_autonomous_society_event_manager.gd")
 const NPCVisiblePopulationManagerScript = preload("res://scripts/npc_visible_population_manager.gd")
@@ -49,6 +50,7 @@ var mission_reward_manager
 var player_progression
 var player_vehicle_manager
 var vehicle_runtime_manager
+var motorsport_manager
 var crime_response_manager
 var npc_autonomous_event_manager
 var npc_visible_population_manager
@@ -101,6 +103,7 @@ func _ready() -> void:
 	create_inventory_panel()
 	create_player_vehicle_manager()
 	create_vehicle_runtime_manager()
+	create_motorsport_manager()
 	create_modern_city_crime_manager()
 	create_npc_autonomous_society_event_manager()
 	create_npc_city_navigation_manager()
@@ -338,6 +341,13 @@ func create_vehicle_runtime_manager() -> void:
 		player_vehicle_manager,
 		active_world_root
 	)
+
+
+func create_motorsport_manager() -> void:
+	motorsport_manager = MotorsportManagerScript.new()
+	motorsport_manager.name = "MotorsportManager"
+	add_child(motorsport_manager)
+	motorsport_manager.setup(player_vehicle_manager)
 
 
 func create_modern_city_crime_manager() -> void:
