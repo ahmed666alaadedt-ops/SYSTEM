@@ -304,6 +304,15 @@ jobs:
                   assert tile["region_id"] == manifest["region_id"]
                   assert tile["cell_size_m"] == 200.0
                   assert isinstance(tile.get("layers"), dict)
+                  for entrance in tile.get("layers", {}).get("entrances", []):
+                      assert entrance.get("geometry", {}).get("type") == "Point"
+                      tags = entrance.get("tags", {})
+                      assert tags.get("entrance") or tags.get("door") or tags.get("building") == "entrance"
+              entrance_count = sum(
+                  len(json.loads(archive.read(name)).get("layers", {}).get("entrances", []))
+                  for name in tile_names
+              )
+              print("Mapped entrance points in sample pack:", entrance_count)
           print("Validated Baghdad 5x5 metric cell pack:", path.stat().st_size, "bytes;", len(tile_names), "occupied cells.")
           PY
 
