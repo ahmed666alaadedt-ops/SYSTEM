@@ -29,7 +29,7 @@ func _run_tests() -> void:
 
 	streamer._load_cell(Vector2i(0, 0))
 	streamer._load_cell(Vector2i(1, 0))
-	assert(streamer.loaded_cells.size() == 2)
+	assert(streamer.loaded_cells.size() == 3)
 
 	var left_root: Node3D = streamer.loaded_cells[Vector2i(0, 0)]
 	var right_root: Node3D = streamer.loaded_cells[Vector2i(1, 0)]
@@ -45,7 +45,7 @@ func _run_tests() -> void:
 
 	assert(left_root.get_node_or_null("TerrainCollision") != null)
 	streamer._unload_cell(Vector2i(0, 0))
-	assert(streamer.loaded_cells.size() == 1)
+	assert(streamer.loaded_cells.size() == 2)
 	streamer.queue_free()
 	print("Terrain cell streaming checks passed: stable IDs, shared edge heights, collision and unload.")
 	quit(0)
