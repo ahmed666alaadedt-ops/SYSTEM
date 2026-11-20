@@ -1,0 +1,190 @@
+extends Node3D
+class_name SYSTEMPublicEventBoard
+
+## Local-session public display prototype. Results are emitted only after the
+## existing gameplay managers report a completed event. Cross-player champions
+## require a future authoritative online service; this node does not claim that.
+
+const MAX_VISIBLE_RESULTS := 4
+const MAX_STORED_RESULTS := 40
+
+var terrain: Node
+var city_anchors: Dictionary = {}
+var result_labels: Dictionary = {}
+var results: Array[Dictionary] = []
+var ad_labels: Array[Label3D] = []
+
+
+func setup(anchors: Dictionary, terrain_manager: Node) -> void:
+	city_anchors = anchors.duplicate(true)
+	terrain = terrain_manager
+	_build_city_media_displays()
+
+
+func publish_gate_clear(gate_id: String, gate_rank: String, xp_awarded: int) -> void:
+	_publish_result(
+		"بوابة وحوش",
+		"إنجاز بوابة %s" % gate_rank,
+		"تم تطهير %s — %d XP" % [gate_id, xp_awarded]
+	)
+
+
+func publish_mission_completion(mission_id: String, xp_awarded: int) -> void:
+	_publish_result(
+		"مهمة مكتملة",
+		"إنجاز مهمة نقابة الصيادين",
+		"%s — %d XP" % [mission_id, xp_awarded]
+	)
+
+
+func publish_exam_stage(stage_id: String, stage_number: int) -> void:
+	_publish_result(
+		"اختبار الصيادين",
+		"اجتياز المرحلة %d من 7" % stage_number,
+		stage_id
+	)
+
+
+func publish_exam_champion(candidate_number: int, license_rank: String) -> void:
+	_publish_result(
+		"بطل اختبار الصيادين",
+		"الصياد رقم %d" % candidate_number,
+		"الرتبة: %s — أكمل جميع المراحل" % license_rank
+	)
+
+
+func publish_power_tower_clear(floor_number: int, rank: String) -> void:
+	_publish_result(
+		"برج القوة",
+		"إنجاز الطابق %d" % floor_number,
+		"التصنيف: %s" % rank
+	)
+
+
+func _publish_result(category: String, headline: String, detail: String) -> void:
+	var record := {
+		"category": category,
+		"headline": headline,
+		"detail": detail,
+		"display_name": "SYSTEM HUNTER",
+		"timestamp": Time.get_datetime_string_from_system(false, true),
+		"verification": "LOCAL_GAMEPLAY_EVENT"
+	}
+	results.push_front(record)
+	while results.size() > MAX_STORED_RESULTS:
+		results.pop_back()
+	_refresh_result_displays()
+	print("SYSTEM PUBLIC BOARD: ", category, " — ", headline)
+
+
+func _build_city_media_displays() -> void:
+	var frame_material := _make_material(Color(0.035, 0.055, 0.085), 0.25, 0.5)
+	var ad_material := _make_material(Color(0.025, 0.16, 0.22), 0.18, 0.35)
+	var result_material := _make_material(Color(0.10, 0.075, 0.025), 0.2, 0.45)
+	ad_material.emission_enabled = true
+	ad_material.emission = Color(0.02, 0.32, 0.48)
+	ad_material.emission_energy_multiplier = 1.25
+	result_material.emission_enabled = true
+	result_material.emission = Color(0.48, 0.28, 0.045)
+	result_material.emission_energy_multiplier = 1.0
+
+	for city_value in city_anchors.keys():
+		var city_name := str(city_value)
+		var anchor: Vector2 = city_anchors[city_name]
+		var ground := _ground_height(anchor + Vector2(24.0, -30.0))
+		var display_root := Node3D.new()
+		display_root.name = "PublicMediaTower_" + city_name.replace(" ", "")
+		display_root.position = Vector3(anchor.x + 24.0, ground, anchor.y - 30.0)
+		add_child(display_root)
+
+		_add_support(display_root, Vector3(-7.8, 13.0, 0.0), Vector3(0.8, 26.0, 0.8), frame_material)
+		_add_support(display_root, Vector3(7.8, 13.0, 0.0), Vector3(0.8, 26.0, 0.8), frame_material)
+		_add_screen(display_root, "AdvertisingPanel", Vector3(0.0, 18.0, -0.55), Vector3(15.0, 8.0, 0.8), ad_material, frame_material)
+		_add_screen(display_root, "ChampionResultsPanel", Vector3(0.0, 27.0, -0.55), Vector3(15.0, 8.0, 0.8), result_material, frame_material)
+
+		var ad_label := Label3D.new()
+		ad_label.name = "CuratedCampaignText"
+		ad_label.text = "SYSTEM CITY\nمساحة إعلانية رقمية"
+		ad_label.position = Vector3(0.0, 18.0, -1.02)
+		ad_label.font_size = 42
+		ad_label.pixel_size = 0.012
+		ad_label.modulate = Color(0.78, 0.96, 1.0)
+		ad_label.outline_size = 8
+		display_root.add_child(ad_label)
+		ad_labels.append(ad_label)
+		display_root.set_meta("advertising_mode", "curated_demo")
+		display_root.set_meta("live_ads_enabled", false)
+		display_root.set_meta("city", city_name)
+
+		var result_label := Label3D.new()
+		result_label.name = "VerifiedEventResultsText"
+		result_label.text = "SYSTEM CHAMPIONS\nبانتظار أول إنجاز موثق\nالنتائج محلية لهذه الجلسة"
+		result_label.position = Vector3(0.0, 27.0, -1.02)
+		result_label.font_size = 29
+		result_label.pixel_size = 0.014
+		result_label.modulate = Color(1.0, 0.88, 0.55)
+		result_label.outline_size = 7
+		display_root.add_child(result_label)
+		result_labels[city_name] = result_label
+
+
+func _add_screen(parent: Node3D, node_name: String, location: Vector3, size: Vector3, surface_material: Material, frame_material: Material) -> void:
+	var frame := MeshInstance3D.new()
+	frame.name = node_name + "Frame"
+	var frame_mesh := BoxMesh.new()
+	frame_mesh.size = size
+	frame.mesh = frame_mesh
+	frame.position = location
+	frame.material_override = frame_material
+	parent.add_child(frame)
+
+	var surface := MeshInstance3D.new()
+	surface.name = node_name + "Surface"
+	var surface_mesh := BoxMesh.new()
+	surface_mesh.size = Vector3(size.x - 0.8, size.y - 0.8, 0.12)
+	surface.mesh = surface_mesh
+	surface.position = location + Vector3(0.0, 0.0, -0.48)
+	surface.material_override = surface_material
+	parent.add_child(surface)
+
+
+func _add_support(parent: Node3D, location: Vector3, size: Vector3, material: Material) -> void:
+	var support := MeshInstance3D.new()
+	support.name = "MediaTowerSupport"
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	support.mesh = mesh
+	support.position = location
+	support.material_override = material
+	parent.add_child(support)
+
+
+func _ground_height(point: Vector2) -> float:
+	if is_instance_valid(terrain) and terrain.has_method("get_terrain_height"):
+		return float(terrain.call("get_terrain_height", point.x, point.y))
+	return 0.0
+
+
+func _refresh_result_displays() -> void:
+	var lines: Array[String] = ["SYSTEM CHAMPIONS"]
+	if results.is_empty():
+		lines.append("بانتظار أول إنجاز موثق")
+	else:
+		for index in range(mini(results.size(), MAX_VISIBLE_RESULTS)):
+			var record: Dictionary = results[index]
+			lines.append("%d. %s" % [index + 1, str(record.get("headline", ""))])
+			lines.append(str(record.get("detail", "")))
+	lines.append("سجل محلي — ليس ترتيباً عالمياً")
+	var text_value := "\n".join(lines)
+	for label_value in result_labels.values():
+		var label := label_value as Label3D
+		if is_instance_valid(label):
+			label.text = text_value
+
+
+func _make_material(color: Color, roughness: float, metallic: float) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.roughness = roughness
+	material.metallic = metallic
+	return material
