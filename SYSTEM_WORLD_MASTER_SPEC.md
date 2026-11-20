@@ -291,6 +291,7 @@ The following systems must remain distinct:
 - Monster Gates: monster areas, dungeons, combat, exploration, and rewards.
 - Instant Travel: a rapid movement capability with conditions.
 - Transportation: natural physical travel using vehicles.
+- Greed Island return: a non-Star-Gate extraction/return beacon; it does not create an interworld Star Gate outside Baghdad.
 
 ---
 
