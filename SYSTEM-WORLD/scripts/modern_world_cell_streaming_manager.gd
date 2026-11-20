@@ -206,12 +206,11 @@ func _update_loaded_cell_collisions(center: Vector2i) -> void:
 
 
 func _set_cell_collision(cell_root: Node3D, enabled: bool) -> void:
-	var existing := cell_root.get_node_or_null("TerrainCollision") as StaticBody3D
-	if not enabled:
-		if existing != null:
-			existing.queue_free()
+	var existing_collision := cell_root.get_node_or_null("TerrainCollision/TerrainHeightCollision") as CollisionShape3D
+	if existing_collision != null:
+		existing_collision.disabled = not enabled
 		return
-	if existing != null:
+	if not enabled:
 		return
 	var heights: PackedFloat32Array = cell_root.get_meta("terrain_height_data")
 	var intervals := int(round(cell_size / sample_spacing))
@@ -222,12 +221,12 @@ func _set_cell_collision(cell_root: Node3D, enabled: bool) -> void:
 	shape.map_depth = intervals + 1
 	shape.map_data = heights
 	var collision := CollisionShape3D.new()
+	collision.name = "TerrainHeightCollision"
 	collision.shape = shape
 	collision.position = Vector3(cell_size * 0.5, 0.0, cell_size * 0.5)
 	collision.scale = Vector3(sample_spacing, 1.0, sample_spacing)
 	body.add_child(collision)
 	cell_root.add_child(body)
-
 
 func _unload_cell(cell: Vector2i) -> void:
 	if not loaded_cells.has(cell):
