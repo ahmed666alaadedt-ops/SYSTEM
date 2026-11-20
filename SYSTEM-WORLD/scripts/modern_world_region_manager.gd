@@ -10,6 +10,7 @@ const BaghdadTowerLandmarksManagerScript = preload("res://scripts/baghdad_tower_
 const ModernWorldTransportNetworkManagerScript = preload("res://scripts/modern_world_transport_network_manager.gd")
 const ModernCityStreetFurnitureManagerScript = preload("res://scripts/modern_city_street_furniture_manager.gd")
 const ModernCityServicesManagerScript = preload("res://scripts/modern_city_services_manager.gd")
+const SYSTEMPublicEventBoardScript = preload("res://scripts/system_public_event_board.gd")
 
 ## طبقة تفاصيل المدن والمناطق الحضرية للعالم الحديث.
 ## تُبنى فوق تضاريس القارة الموجودة ولا تستبدلها أو تغيّر مواقعها المرجعية.
@@ -851,43 +852,7 @@ func _create_city_incidents() -> void:
 	add_child(incidents)
 
 func _create_city_advertising_screens() -> void:
-	## Placeholder inventory only: live campaigns must be delivered by a secure ad service.
-	var frame_material := _material(Color(0.055, 0.065, 0.08), 0.42, 0.35)
-	var display_material := _material(Color(0.04, 0.18, 0.24), 0.28, 0.12)
-	display_material.emission_enabled = true
-	display_material.emission = Color(0.02, 0.32, 0.48)
-	display_material.emission_energy_multiplier = 1.1
-	for city_value in city_anchors.keys():
-		var city_name := str(city_value)
-		var anchor: Vector2 = city_anchors[city_name]
-		var screen_root := Node3D.new()
-		screen_root.name = "AdvertisingScreen_" + city_name.replace(" ", "")
-		screen_root.position = Vector3(anchor.x + 22.0, terrain.get_terrain_height(anchor.x + 22.0, anchor.y - 34.0), anchor.y - 34.0)
-		add_child(screen_root)
-		var frame := MeshInstance3D.new()
-		frame.name = "LEDDisplayFrame"
-		var frame_mesh := BoxMesh.new()
-		frame_mesh.size = Vector3(15.0, 8.5, 0.7)
-		frame.mesh = frame_mesh
-		frame.position.y = 18.0
-		frame.material_override = frame_material
-		screen_root.add_child(frame)
-		var display := MeshInstance3D.new()
-		display.name = "LEDDisplaySurface"
-		var display_mesh := BoxMesh.new()
-		display_mesh.size = Vector3(13.8, 7.3, 0.12)
-		display.mesh = display_mesh
-		display.position = Vector3(0.0, 18.0, -0.42)
-		display.material_override = display_material
-		screen_root.add_child(display)
-		var message := Label3D.new()
-		message.name = "DemoCampaignLabel"
-		message.text = "SYSTEM CITY\nAD SPACE AVAILABLE"
-		message.font_size = 48
-		message.pixel_size = 0.012
-		message.position = Vector3(0.0, 18.0, -0.52)
-		message.modulate = Color(0.78, 0.96, 1.0)
-		screen_root.add_child(message)
-		screen_root.set_meta("advertising_mode", "demo_placeholder")
-		screen_root.set_meta("live_ads_enabled", false)
-
+	var public_board := SYSTEMPublicEventBoardScript.new()
+	public_board.name = "SYSTEMPublicEventBoard"
+	add_child(public_board)
+	public_board.setup(city_anchors, terrain)
