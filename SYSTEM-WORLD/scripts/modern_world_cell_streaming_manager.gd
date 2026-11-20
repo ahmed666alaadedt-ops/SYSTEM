@@ -63,6 +63,9 @@ func _process(_delta: float) -> void:
 	if center != _last_center_cell:
 		_last_center_cell = center
 		_refresh_desired_cells(center)
+		if not loaded_cells.has(center) and pending_loads.has(center):
+			pending_loads.erase(center)
+			pending_loads.push_front(center)
 	_process_cell_queue()
 
 
@@ -123,6 +126,7 @@ func _load_cell(cell: Vector2i) -> void:
 	var intervals := int(round(cell_size / sample_spacing))
 	var vertices := PackedVector3Array()
 	var indices := PackedInt32Array()
+	var colors := PackedColorArray()
 	var heights := PackedFloat32Array()
 	heights.resize((intervals + 1) * (intervals + 1))
 	for z_index in range(intervals + 1):
@@ -131,6 +135,7 @@ func _load_cell(cell: Vector2i) -> void:
 			var world_z := origin.y + float(z_index) * sample_spacing
 			var height := float(height_sampler.call(world_x, world_z))
 			heights[z_index * (intervals + 1) + x_index] = height
+			colors.append(_terrain_color_for_height(height, world_x, world_z))
 			vertices.append(Vector3(float(x_index) * sample_spacing, height, float(z_index) * sample_spacing))
 	for z_index in range(intervals):
 		for x_index in range(intervals):
@@ -142,9 +147,15 @@ func _load_cell(cell: Vector2i) -> void:
 	var arrays: Array = []
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = vertices
+	arrays[Mesh.ARRAY_COLOR] = colors
 	arrays[Mesh.ARRAY_INDEX] = indices
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	if mesh.get_surface_count() > 0:
+		var surface_tool := SurfaceTool.new()
+		surface_tool.create_from(mesh, 0)
+		surface_tool.generate_normals()
+		mesh = surface_tool.commit()
 	var cell_root := Node3D.new()
 	cell_root.name = "TerrainCell_%d_%d" % [cell.x, cell.y]
 	cell_root.position = Vector3(origin.x, 0.0, origin.y)
@@ -172,6 +183,25 @@ func _load_cell(cell: Vector2i) -> void:
 		cell_root.add_child(body)
 	add_child(cell_root)
 	loaded_cells[cell] = cell_root
+
+
+
+func _terrain_color_for_height(height: float, x: float, z: float) -> Color:
+	if height > 92.0:
+		return Color(0.88, 0.91, 0.94)
+	if x < -520.0 and z > 260.0 and height < 48.0:
+		return Color(0.68, 0.55, 0.34)
+	if x > -360.0 and x < 300.0 and z < -260.0 and height < 65.0:
+		return Color(0.12, 0.29, 0.16)
+	if height < 1.0:
+		return Color(0.72, 0.66, 0.49)
+	if height < 16.0:
+		return Color(0.25, 0.43, 0.24)
+	if height < 38.0:
+		return Color(0.34, 0.39, 0.25)
+	if height < 75.0:
+		return Color(0.38, 0.36, 0.29)
+	return Color(0.48, 0.47, 0.43)
 
 
 func _unload_cell(cell: Vector2i) -> void:
