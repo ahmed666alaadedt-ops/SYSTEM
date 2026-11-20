@@ -43,6 +43,20 @@ This extract successfully contained Baghdad relation 5638803 (`boundary=administ
 
 All three sources derive from OpenStreetMap and require ODbL and attribution review. Do not merge their geometry until timestamps, boundaries and feature coverage have been compared.
 
+### First municipal candidate clip — generated, not yet approved
+
+The first reference-complete Baghdad municipal PBF clip was generated and its contributor metadata fields were cleaned:
+
+- File size: 6,177,094 bytes
+- SHA-256: `09db4b98f6f1020e9228b9a21d4eaaf8885708709ee26f93e0190eba637abf7e`
+- Object counts: 756,937 nodes, 126,889 ways, 1,763 relations
+- Metadata fields `version`, `timestamp`, `changeset`, `uid` and `user` are absent/cleaned in the distributed clip.
+- Preliminary tag-filter counts: 42,302 building ways and 361 building relations; 64,167 road ways; 1,095 waterway ways; 835 bridge ways; 5,416 landuse ways and 152 landuse relations; 3,096 amenity ways and 32 amenity relations; 526 railway ways; 832 natural-water ways and 26 relations. Building and amenity node counts are also recorded in the registry.
+
+The clip's object-data bounding box is `[44.0753646, 31.3210325, 46.0328698, 33.7259272]`, larger than the municipal boundary polygon. This is expected with Osmium's `complete_ways` strategy: it preserves full ways that touch the extraction polygon and does not geometrically clip their coordinates. The later GeoJSON/GIS conversion must clip feature geometry to the approved boundary or a documented buffer. Do not use the PBF bounding box as the playable-city boundary.
+
+This is a candidate data extract, not an accepted map. The counts measure tagged OSM objects, not completeness or accuracy. Roads, bridges, water, buildings and district geometry still need spatial review and cross-checking against suitable official/independently licensed sources.
+
 ## 2. Candidate Baghdad boundary
 
 A candidate OSM boundary reference is:
