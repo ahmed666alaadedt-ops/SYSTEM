@@ -148,14 +148,20 @@ func _run_validation() -> void:
 	if test_player.is_physics_processing():
 		_fail("Player physics was not paused while boarding the elevator.")
 		return
+	if test_player.get_parent() != test_cabin:
+		_fail("Player was not parented to the elevator cabin for a physically coherent ride.")
+		return
 
 	await create_timer(1.0).timeout
-	var boarding_offset := test_player.global_position - test_cabin.global_position
+	var boarding_offset := test_player.position
 	if boarding_offset.distance_to(Vector3(0.0, -0.9, 0.0)) > 0.18:
 		_fail("Player did not board and remain centered on the moving cabin platform.")
 		return
 	await create_timer(1.5).timeout
-	var ride_offset := test_player.global_position - test_cabin.global_position
+	var ride_offset := test_player.position
+	if test_player.get_parent() != test_cabin:
+		_fail("Player detached from the elevator cabin during travel.")
+		return
 	if ride_offset.distance_to(Vector3(0.0, -0.9, 0.0)) > 0.18:
 		_fail("Player drifted away from the cabin during the elevator ride.")
 		return
@@ -165,6 +171,9 @@ func _run_validation() -> void:
 		return
 	if test_player.global_position.distance_to(expected_player_destination) > 0.15:
 		_fail("Player did not travel with the elevator cabin.")
+		return
+	if test_player.get_parent() != root:
+		_fail("Player was not returned to the original world parent after the ride.")
 		return
 	if test_player.is_physics_processing() != true:
 		_fail("Player physics processing was not restored after the ride.")
