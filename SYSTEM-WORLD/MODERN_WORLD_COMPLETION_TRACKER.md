@@ -169,6 +169,22 @@ A checked repository foundation does not mean a finished gameplay feature. Visua
 - [x] Add a return-to-garage action for a parked vehicle when the player is near a dealership.
 - [x] Make showroom panel dimensions adapt to the current viewport and refresh its world-root reference after world changes.
 - [ ] Replace prototype credits with the intended authenticated, server-authoritative economy before any shared-world or real-money use.
-- [ ] Add vehicle preview models, paint/customization, test-drive mode, purchase confirmation, and dedicated driving HUD.
+- [x] Add a procedural 3D vehicle-preview blockout to the showroom, with body, cabin, wheels, lighting, and a preview floor.
+- [x] Add five paint-color choices and persist each owned vehicle's selected paint locally in the garage save.
+- [x] Apply the saved paint to the spawned drivable vehicle and update its material when the player changes paint.
+- [ ] Replace the generic preview blockout with distinct high-detail vehicle models and accurate category-specific proportions.
+- [ ] Add test-drive mode, purchase confirmation, and a dedicated driving HUD with accelerator, reverse, brake, and exit controls.
 - [ ] Verify UI layout, purchase/save/load, selling, spawning, enter/exit, and mobile touch behavior in Godot on Android.
 - Note: the showroom and garage actions are source-level integrations committed to GitHub. Ownership and credits still use the existing local prototype save; no Godot parser, runtime, or Android test has been run. Vehicle previews and dedicated driving controls are not included yet.
+
+
+## Vehicle 3D preview and paint customization — 20 November 2026
+
+- [x] Add an in-showroom 3D preview scene with a procedural body/cabin/wheel blockout, camera, lighting, and floor.
+- [x] Add blue, red, black, white, and gold paint swatches.
+- [x] Save a separate paint color for each vehicle in the local garage configuration.
+- [x] Apply saved paint when a vehicle is spawned and apply paint changes to the currently spawned vehicle.
+- [ ] Replace the generic blockout with final distinct vehicle assets, materials, glass, lights, interiors, and correct proportions for each catalog entry.
+- [ ] Add preview rotation/zoom, vehicle-specific paint options, and visual damage/customization.
+- [ ] Validate SubViewport rendering, UI fit, paint persistence, and material updates in Godot on Android.
+- Note: this is a procedural preview blockout, not a final vehicle model. Paint and ownership are stored locally on the device; no Godot parser, runtime, or Android validation has been performed.
