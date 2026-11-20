@@ -328,4 +328,6 @@ After the baseline audit, the active canonical modern-continent terrain path was
 
 **Latest follow-up test extension:** partial edge-cell support and tests were added in commit `5292a22e4330a3e11574d91e80c6b81d3a875384`. Canonical validation run [44707771587](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44707771587) completed successfully, including the partial edge-cell and collision-bound checks.
 
+**Android package:** canonical Android build [44707771593](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44707771593) also completed successfully and uploaded `SYSTEM-WORLD-canonical-android-debug-apk` (artifact `14614774483`, approximately 35.5 MB). This is an exported debug APK; it has not been physically tested on the target phone.
+
 **Scope boundary:** this integration streams the existing 3 km × 2.2 km fictional continent prototype. It is not a full-scale Baghdad map. The candidate Baghdad municipal boundary remains approximately 861 km², and its eight GeoJSON source layers have not yet been imported into the Godot runtime. Roads/rivers/bridges, navigation, stitched LOD, detailed building assets and physical Android performance acceptance remain outstanding.
