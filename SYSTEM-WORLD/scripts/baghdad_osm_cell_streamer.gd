@@ -37,6 +37,11 @@ var land_material: StandardMaterial3D
 var building_material: StandardMaterial3D
 var amenity_material: StandardMaterial3D
 
+var _road_navigation_graph := AStar2D.new()
+var _road_navigation_positions: Dictionary = {}
+var _road_navigation_graph_dirty := true
+var _road_navigation_graph_build_count := 0
+
 
 func _ready() -> void:
 	var manifest_path := data_root.path_join("manifest.json")
@@ -274,11 +279,23 @@ func _load_cell(cell: Vector2i) -> void:
 	cell_root.set_meta("cell_z", cell.y)
 	cell_root.set_meta("schema_version", manifest_schema_version)
 	cell_root.set_meta("source_snapshot", source_snapshot)
+	cell_root.set_meta("road_navigation_segments", road_navigation_segments)
 	var counts := {}
 	var road_features: Array = layers.get("roads", [])
+	var road_navigation_segments: Array[Dictionary] = []
 	var road_count := 0
 	for feature in road_features:
-		road_count += _build_line_feature(cell_root, feature, _road_width(feature.get("tags", {})), road_material, 0.16, "OSMRoad")
+		var road_tags: Dictionary = feature.get("tags", {})
+		var highway_kind := str(road_tags.get("highway", "")).to_lower()
+		if not highway_kind.is_empty() and str(road_tags.get("access", "")).to_lower() not in ["no", "private"] and str(road_tags.get("foot", "")).to_lower() != "no" and highway_kind not in ["motorway", "motorway_link", "trunk", "trunk_link", "raceway", "proposed", "construction"]:
+			for road_line in _extract_lines(feature.get("geometry", {})):
+				if road_line.size() >= 2:
+					road_navigation_segments.append({
+						"feature_id": str(feature.get("id", "")),
+						"highway": highway_kind,
+						"points": road_line
+					})
+		road_count += _build_line_feature(cell_root, feature, _road_width(road_tags), road_material, 0.16, "OSMRoad")
 	var building_count := 0
 	for feature in layers.get("buildings", []):
 		building_count += _build_building_feature(cell_root, feature, road_features)
@@ -309,7 +326,91 @@ func _load_cell(cell: Vector2i) -> void:
 	cell_root.set_meta("feature_counts", counts)
 	add_child(cell_root)
 	loaded_cells[cell] = cell_root
+	_road_navigation_graph_dirty = true
 	cell_loaded.emit(cell, cell_root)
+
+
+## Returns a route along real OSM pedestrian-accessible roads in currently loaded cells.
+## The route is local to the streamed neighborhood; callers should request it only for Baghdad.
+func get_road_navigation_path(start: Vector3, target: Vector3, max_snap_distance: float = 55.0) -> Array[Vector3]:
+	if not enabled or loaded_cells.is_empty():
+		return []
+	_ensure_road_navigation_graph()
+	if _road_navigation_graph.get_point_count() < 2:
+		return []
+	var start_id := _nearest_road_graph_point(Vector2(start.x, start.z), max_snap_distance)
+	var target_id := _nearest_road_graph_point(Vector2(target.x, target.z), max_snap_distance)
+	if start_id < 0 or target_id < 0:
+		return []
+	var graph_path := _road_navigation_graph.get_point_path(start_id, target_id)
+	if graph_path.is_empty():
+		return []
+	var route: Array[Vector3] = []
+	var start_road_point: Vector2 = graph_path[0]
+	var start_approach := Vector3(start.x, _terrain_height(Vector2(start.x, start.z)) + 0.22, start.z)
+	var snapped_start := Vector3(start_road_point.x, _terrain_height(start_road_point) + 0.24, start_road_point.y)
+	if start_approach.distance_to(snapped_start) > 0.35:
+		route.append(start_approach)
+	for point in graph_path:
+		var world_point := Vector3(point.x, _terrain_height(point) + 0.24, point.y)
+		if route.is_empty() or route[route.size() - 1].distance_to(world_point) > 0.5:
+			route.append(world_point)
+	var target_road_point: Vector2 = graph_path[graph_path.size() - 1]
+	var target_approach := Vector3(target.x, _terrain_height(Vector2(target.x, target.z)) + 0.22, target.z)
+	var snapped_target := Vector3(target_road_point.x, _terrain_height(target_road_point) + 0.24, target_road_point.y)
+	if snapped_target.distance_to(target_approach) > 0.35:
+		route.append(target_approach)
+	return route
+
+
+func _ensure_road_navigation_graph() -> void:
+	if not _road_navigation_graph_dirty:
+		return
+	_road_navigation_graph = AStar2D.new()
+	_road_navigation_positions.clear()
+	var coordinate_to_id: Dictionary = {}
+	var next_id := 1
+	for cell_root_value in loaded_cells.values():
+		var cell_root := cell_root_value as Node3D
+		if not is_instance_valid(cell_root):
+			continue
+		var segments_value: Variant = cell_root.get_meta("road_navigation_segments", [])
+		if not segments_value is Array:
+			continue
+		for segment_value in segments_value:
+			if not segment_value is Dictionary:
+				continue
+			var points_value: Variant = segment_value.get("points", PackedVector2Array())
+			if not points_value is PackedVector2Array or points_value.size() < 2:
+				continue
+			var previous_id := -1
+			for point in points_value:
+				var key := "%d:%d" % [roundi(point.x * 2.0), roundi(point.y * 2.0)]
+				var point_id := int(coordinate_to_id.get(key, -1))
+				if point_id < 0:
+					point_id = next_id
+					next_id += 1
+					coordinate_to_id[key] = point_id
+					_road_navigation_graph.add_point(point_id, point)
+					_road_navigation_positions[point_id] = point
+				if previous_id >= 0 and previous_id != point_id and not _road_navigation_graph.are_points_connected(previous_id, point_id):
+					_road_navigation_graph.connect_points(previous_id, point_id, true)
+				previous_id = point_id
+	_road_navigation_graph_dirty = false
+	_road_navigation_graph_build_count += 1
+
+
+func _nearest_road_graph_point(position: Vector2, max_distance: float) -> int:
+	var best_id := -1
+	var best_distance_squared := max_distance * max_distance
+	for point_id_value in _road_navigation_positions.keys():
+		var point_id := int(point_id_value)
+		var point: Vector2 = _road_navigation_positions[point_id]
+		var distance_squared := position.distance_squared_to(point)
+		if distance_squared < best_distance_squared:
+			best_distance_squared = distance_squared
+			best_id = point_id
+	return best_id
 
 
 func get_cell_node(cell: Vector2i) -> Node3D:
@@ -1005,6 +1106,7 @@ func _unload_cell(cell: Vector2i) -> void:
 	var cell_id := str(node.get_meta("cell_id", "%d:%d" % [cell.x, cell.y]))
 	cell_unloading.emit(cell, node)
 	loaded_cells.erase(cell)
+	_road_navigation_graph_dirty = true
 	cell_unloaded.emit(cell, cell_id)
 	if is_instance_valid(node):
 		node.queue_free()
@@ -1022,5 +1124,8 @@ func get_streaming_status() -> Dictionary:
 		"real_scale_baghdad_pack": true,
 		"manifest_schema_version": manifest_schema_version,
 		"source_snapshot": source_snapshot,
-		"canonical_origin_frame_valid": canonical_origin_frame_valid
+		"canonical_origin_frame_valid": canonical_origin_frame_valid,
+		"road_navigation_graph_dirty": _road_navigation_graph_dirty,
+		"road_navigation_node_count": _road_navigation_graph.get_point_count(),
+		"road_navigation_graph_build_count": _road_navigation_graph_build_count
 	}
