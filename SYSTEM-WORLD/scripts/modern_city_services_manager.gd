@@ -198,7 +198,8 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 	if service_id == "stadium":
 		_create_stadium_details(building, width, depth)
 	elif service_id == "school" or service_id == "university":
-		_create_civic_courtyard(building, width, depth, park_material)
+		var courtyard_material := _material(Color(0.15, 0.32, 0.18), 1.0)
+		_create_civic_courtyard(building, width, depth, courtyard_material)
 	elif service_id == "shops":
 		_create_shopfronts(building, width, depth, glass, roof_material)
 
