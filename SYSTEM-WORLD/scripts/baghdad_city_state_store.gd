@@ -84,7 +84,6 @@ func _capture_all_active_cells() -> void:
 		var cell_root: Node3D = active_cells[cell_key]
 		if is_instance_valid(cell_root) and _capture_cell_record(cell_root):
 			changed = true
-	active_cells.clear()
 	if changed:
 		_save_state()
 
