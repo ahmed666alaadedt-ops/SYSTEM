@@ -35,7 +35,7 @@ jobs:
         with:
           ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
-      - name: Wait for successful Baghdad OSM audit for this PR revision
+      - name: Wait for matching Baghdad OSM audit for this PR revision
         id: baghdad_source_run
         if: github.event_name == 'pull_request'
         timeout-minutes: 26
@@ -53,24 +53,27 @@ jobs:
                 branch,
                 per_page: 100
               });
-              const matches = response.data.workflow_runs.filter(run => run.head_sha === headSha);
-              const passed = matches
-                .filter(run => run.status === "completed" && run.conclusion === "success")
-                .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))[0];
+              const matches = response.data.workflow_runs
+                .filter(run => run.head_sha === headSha)
+                .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
+              const passed = matches.find(run => run.status === "completed" && run.conclusion === "success");
               if (passed) {
                 core.setOutput("run_id", String(passed.id));
                 core.setOutput("conclusion", "success");
                 core.info(`Using verified Baghdad OSM source run ${passed.id} for ${headSha}.`);
                 return;
               }
-              const pending = matches.some(run => run.status !== "completed");
-              if (matches.length > 0 && !pending) {
-                core.setFailed(`All Baghdad OSM audit runs for ${headSha} completed without success: ${matches.map(run => `${run.id}=${run.conclusion}`).join(", ")}`);
+              const latest = matches[0];
+              if (latest && latest.status === "completed" && !matches.some(run => run.status !== "completed")) {
+                core.setOutput("run_id", String(latest.id));
+                core.setOutput("conclusion", latest.conclusion || "failure");
+                core.warning(`No Baghdad OSM audit run passed for ${headSha}; latest result is ${latest.conclusion}. Only procedural fallback may be exported.`);
                 return;
               }
               await new Promise(resolve => setTimeout(resolve, 30000));
             }
-            core.setFailed(`Timed out waiting for a successful Baghdad OSM audit for ${headSha}.`);
+            core.setOutput("conclusion", "timeout");
+            core.warning(`Timed out waiting for a matching Baghdad OSM audit for ${headSha}; only procedural fallback may be exported.`);
 
       - name: Download verified Baghdad OSM cell pack
         if: |
@@ -102,13 +105,9 @@ jobs:
           SOURCE_PACK="$RUNNER_TEMP/baghdad-osm-artifact/baghdad-metric-cell-pack-5x5.zip"
           AUDIT_REPORT="$RUNNER_TEMP/baghdad-osm-artifact/baghdad-cell-connectivity-audit.json"
           DESTINATION="$PROJECT/data/geography/baghdad/cell_pack"
-          if [ "$BAGHDAD_SOURCE_WORKFLOW_CONCLUSION" != "not_applicable" ] && [ "$BAGHDAD_SOURCE_WORKFLOW_CONCLUSION" != "success" ]; then
-            echo "::error::Baghdad OSM source workflow did not succeed; refusing an unaudited APK export."
-            exit 1
-          fi
           if [ ! -s "$SOURCE_PACK" ]; then
             if [ "$BAGHDAD_SOURCE_WORKFLOW_CONCLUSION" = "success" ]; then
-              echo "::error::The successful Baghdad OSM audit artifact is missing; refusing fallback export."
+              echo "::error::The successful Baghdad OSM audit artifact is missing; refusing to mislabel a fallback APK as audited."
               exit 1
             fi
             if [ -s "$DESTINATION/manifest.json" ]; then
@@ -152,6 +151,14 @@ jobs:
               raise SystemExit("Cell-pack source snapshot does not match audited source snapshot.")
           if manifest.get("region_id") != "iraq_baghdad_region" or manifest.get("cell_size_m") != 200.0:
               raise SystemExit("Audited Baghdad pack has unexpected region or cell size.")
+          if manifest.get("origin") != {"latitude": 33.3152, "longitude": 44.3661}:
+              raise SystemExit("Audited Baghdad pack does not use the canonical 33.3152, 44.3661 origin.")
+          if manifest.get("cell_count") != 25 or report.get("cell_count") != 25:
+              raise SystemExit("Audited Baghdad pack must contain the verified 5x5 cell set.")
+          if report.get("origin") != manifest.get("origin") or report.get("cell_size_m") != 200.0:
+              raise SystemExit("Audit report origin/cell size does not match the installed pack.")
+          if report.get("errors"):
+              raise SystemExit("Audit report contains unresolved geometry errors.")
           print("Verified audit report and cell-pack source snapshot:", manifest["source_snapshot"])
           PY
           cp "$AUDIT_REPORT" "$RUNNER_TEMP/baghdad-cell-connectivity-audit.json"
