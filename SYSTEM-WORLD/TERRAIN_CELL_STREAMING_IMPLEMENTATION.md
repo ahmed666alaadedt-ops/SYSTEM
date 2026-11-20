@@ -48,7 +48,7 @@ This is a geometry primitive only: current city road, river, coast, bridge and n
 ## Remaining implementation sequence
 
 1. [x] Replace the active monolithic terrain visual/collision path with player-centered independent cells while preserving the terrain sampling API.
-2. [x] Add headless seam, priority, collision-toggle, unload, clipping and canonical-wiring checks; await CI confirmation.
+2. [x] Add headless seam, priority, partial-edge-cell, collision-toggle, unload, clipping and canonical-wiring checks; canonical Godot validation run 44707771587 passed.
 3. [ ] Expand tests for partial world bounds, rapid cell-boundary movement, queue churn and memory/collision budgets.
 4. [ ] Migrate roads, rivers, waterways, coastlines and bridges to cell-owned clipped segments with stable source feature IDs and shared boundary points.
 5. [ ] Add stitched LOD transitions (or validated skirts) before enabling lower-resolution geometry. Current LOD is metadata only.
