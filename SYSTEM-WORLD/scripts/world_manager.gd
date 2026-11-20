@@ -254,13 +254,9 @@ func _create_modern_city() -> void:
 	underground_heritage.name = "UndergroundHeritageManager"
 	root.add_child(underground_heritage)
 
-	_create_road(root)
-	_create_sidewalks(root)
-	_create_city_buildings(root)
-	_create_city_trees(root)
-	# City-wide procedural lighting is owned by ModernWorldLightingManager
-	# inside ModernWorldRegionManager; avoid spawning the legacy duplicate set.
-	_create_distant_skyline(root)
+	# ModernWorldRegionManager is the single owner of city districts,
+	# roads, sidewalks, buildings and street furniture. Do not spawn the
+	# legacy starter-street geometry here: it overlaps Baghdad's city grid.
 	_create_forest(root)
 	_create_mountains(root)
 	_create_waterways(root)
