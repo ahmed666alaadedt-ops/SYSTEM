@@ -72,7 +72,7 @@ jobs:
               None,
           )
           if relation is None:
-              raise SystemExit("OSM relation 5638803 is absent from the pinned extract.")
+              raise SystemExit("OSM relation 5638803 is absent from the downloaded country extract.")
 
           tags = {tag.attrib["k"]: tag.attrib["v"] for tag in relation.findall("tag")}
           if tags.get("boundary") != "administrative":
@@ -121,10 +121,11 @@ jobs:
           cd "$RUNNER_TEMP/baghdad-source"
           cat > ATTRIBUTION.txt <<'EOF'
           © OpenStreetMap contributors
-          Source: Geofabrik Iraq OpenStreetMap extract, snapshot 2026-11-17.
+          Source: OpenStreetData Iraq country extract from OpenStreetMap raw data.
           License: Open Database License (ODbL) 1.0.
+          https://openstreetdata.org/
+          https://files.openstreetdata.org/extracts/IQ.osm.pbf
           https://www.openstreetmap.org/copyright
-          https://download.geofabrik.de/asia/iraq.html
 
           This artifact contains a source-boundary extraction for verification.
           It is not yet a reviewed or production-ready Baghdad game map.
