@@ -161,14 +161,31 @@
       "license": "Open Data Commons Open Database License (ODbL) 1.0",
       "attribution_required": true,
       "attribution_text": "© OpenStreetMap contributors; © BBBike.org",
-      "status": "candidate_not_downloaded_or_imported",
+      "status": "source_and_boundary_relation_verified_geometry_review_required_not_imported",
       "production_use_blocked_until": [
         "Download the PBF and verify the embedded data timestamp and SHA-256 checksum.",
         "Confirm relation 5638803 and inspect its full geometry and members in this exact snapshot.",
         "Review the Baghdad municipal boundary against official administrative references.",
         "Review ODbL obligations and retain OpenStreetMap and BBBike attribution.",
         "Measure feature coverage and supplement missing roads, waterways, bridges and buildings before production use."
-      ]
+      ],
+      "verified_snapshot_timestamp": "2026-11-19T23:32:47Z",
+      "verified_file_size_bytes": 103097147,
+      "verified_file_sha256": "5cb6bbb8994d125ab159134c03972b3bcacc76c120661d7157844104f51c0fe5",
+      "verified_relation": {
+        "id": 5638803,
+        "name": "بغداد",
+        "name_en": "Baghdad",
+        "note": "حدود امانة بغداد",
+        "boundary": "administrative",
+        "admin_level": "5",
+        "member_count": 69,
+        "member_counts": {
+          "node": 1,
+          "way": 55,
+          "relation": 13
+        }
+      }
     }
   ],
   "production_rules": {
