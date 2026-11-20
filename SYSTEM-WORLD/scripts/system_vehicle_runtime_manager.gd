@@ -40,6 +40,9 @@ func setup(
 	add_child(showroom_ui)
 	showroom_ui.setup(garage_manager, self)
 
+func set_world_root(active_root: Node3D) -> void:
+	world_root = active_root
+
 func _process(delta: float) -> void:
 	if not is_driving or not is_instance_valid(active_vehicle):
 		return
