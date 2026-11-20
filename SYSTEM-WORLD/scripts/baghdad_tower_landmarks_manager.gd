@@ -201,6 +201,7 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	root.add_child(label)
 
 	_create_tower_architecture(root, node_name, title, height, radius, floors, beacon_color)
+	_create_rooftop_microcity(root, node_name, height, radius, beacon_color)
 
 	root.set_meta("tower_id", location_id)
 	print("SYSTEM WORLD: landmark tower generated: ", title, " / ", floors, " floors / ", height, "m")
@@ -268,6 +269,93 @@ func _create_tower_architecture(root: Node3D, node_name: String, title: String, 
 	identity_ring.position.y = height * 0.72 + 7.0
 	identity_ring.material_override = emissive_material
 	root.add_child(identity_ring)
+
+
+func _create_rooftop_microcity(root: Node3D, tower_id: String, tower_height: float, radius: float, beacon_color: Color) -> void:
+	# A supported, explorable rooftop district on every Baghdad landmark tower.
+	# The platform is seated directly on the tower crown; it is not a floating island.
+	var district := Node3D.new()
+	district.name = "RooftopMicroCity_" + tower_id
+	district.position = Vector3(0.0, tower_height + 8.0, 0.0)
+	root.add_child(district)
+
+	var platform_radius := maxf(radius * 2.05, 58.0)
+	var platform := MeshInstance3D.new()
+	platform.name = "SupportedRooftopCityPlatform"
+	var platform_mesh := CylinderMesh.new()
+	platform_mesh.top_radius = platform_radius
+	platform_mesh.bottom_radius = platform_radius * 0.94
+	platform_mesh.height = 2.4
+	platform.mesh = platform_mesh
+	platform.material_override = tower_material
+	district.add_child(platform)
+	_add_static_box_collision(district, "RooftopCityWalkableCollision", Vector3(0.0, 0.7, 0.0), Vector3(platform_radius * 1.72, 1.0, platform_radius * 1.72))
+
+	# Four structural piers visibly transfer the rooftop district load into the tower crown.
+	for support_index in range(4):
+		var angle := TAU * float(support_index) / 4.0
+		var support := MeshInstance3D.new()
+		support.name = "RooftopCityStructuralPier_%02d" % support_index
+		var support_mesh := BoxMesh.new()
+		support_mesh.size = Vector3(4.0, 7.0, 4.0)
+		support.mesh = support_mesh
+		support.position = Vector3(cos(angle) * radius * 0.82, -4.2, sin(angle) * radius * 0.82)
+		support.material_override = trim_material
+		district.add_child(support)
+
+	var plaza := MeshInstance3D.new()
+	plaza.name = "RooftopCentralPlaza"
+	var plaza_mesh := CylinderMesh.new()
+	plaza_mesh.top_radius = 13.0
+	plaza_mesh.bottom_radius = 13.0
+	plaza_mesh.height = 0.28
+	plaza.mesh = plaza_mesh
+	plaza.position.y = 1.45
+	plaza.material_override = trim_material
+	district.add_child(plaza)
+
+	var district_specs := [
+		{"name": "ResidentialQuarter", "center": Vector3(-platform_radius * 0.43, 0.0, -platform_radius * 0.34), "color": Color(0.30, 0.43, 0.52)},
+		{"name": "MarketAndServicesQuarter", "center": Vector3(platform_radius * 0.43, 0.0, -platform_radius * 0.34), "color": Color(0.48, 0.38, 0.25)},
+		{"name": "GardenAndLeisureQuarter", "center": Vector3(-platform_radius * 0.43, 0.0, platform_radius * 0.34), "color": Color(0.20, 0.40, 0.27)},
+		{"name": "CivicAndCultureQuarter", "center": Vector3(platform_radius * 0.43, 0.0, platform_radius * 0.34), "color": Color(0.39, 0.36, 0.48)}
+	]
+	for spec in district_specs:
+		var quarter := Node3D.new()
+		quarter.name = str(spec["name"])
+		quarter.position = spec["center"]
+		district.add_child(quarter)
+		var quarter_material := StandardMaterial3D.new()
+		quarter_material.albedo_color = spec["color"]
+		quarter_material.roughness = 0.72
+		quarter_material.metallic = 0.18
+		for building_index in range(3):
+			var building := MeshInstance3D.new()
+			building.name = "MicroCityBuilding_%02d" % building_index
+			var building_mesh := BoxMesh.new()
+			var width := 9.0 + float((building_index + 1) % 2) * 3.0
+			var building_height := 9.0 + float(building_index) * 5.0
+			building_mesh.size = Vector3(width, building_height, 9.0)
+			building.mesh = building_mesh
+			building.position = Vector3(float(building_index - 1) * 13.0, 1.2 + building_height * 0.5, 0.0)
+			building.material_override = quarter_material
+			quarter.add_child(building)
+			_add_static_box_collision(quarter, "MicroCityBuildingCollision_%02d" % building_index, building.position, building_mesh.size)
+		_add_static_box_collision(quarter, "QuarterWalkwayCollision", Vector3.ZERO, Vector3(48.0, 0.45, 30.0))
+
+	var identity := Label3D.new()
+	identity.name = "RooftopCitySYSTEMIdentity"
+	identity.text = "SYSTEM"
+	identity.font_size = 72
+	identity.position = Vector3(0.0, 5.0, -platform_radius * 0.72)
+	identity.pixel_size = 0.012
+	identity.modulate = Color(0.88, 0.70, 0.34)
+	district.add_child(identity)
+	district.set_meta("tower_id", tower_id)
+	district.set_meta("walkable_rooftop_city", true)
+	district.set_meta("supported_by_tower", true)
+	district.set_meta("districts", PackedStringArray(["ResidentialQuarter", "MarketAndServicesQuarter", "GardenAndLeisureQuarter", "CivicAndCultureQuarter"]))
+	print("SYSTEM WORLD: supported rooftop micro-city generated for ", tower_id, " at ", tower_height, "m.")
 
 
 func _create_connected_city_links() -> void:
