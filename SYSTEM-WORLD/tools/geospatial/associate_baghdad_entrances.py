@@ -13,7 +13,7 @@ import zipfile
 from collections import defaultdict
 from typing import Any
 
-from shapely.geometry import shape
+from shapely.geometry import mapping, shape
 from shapely.ops import unary_union
 
 # Distances are metres because the cell pack uses SYSTEM_LOCAL_ECEF_TANGENT.
@@ -58,8 +58,23 @@ def read_pack(pack_path: pathlib.Path) -> tuple[dict[str, Any], dict[str, list[d
                 feature_id = str(feature.get("id", "")).strip()
                 if feature_id:
                     entrances[feature_id].append(feature)
-    return manifest, {"buildings": [v[0] for _, v in sorted(buildings.items())],
-                      "entrances": [v[0] for _, v in sorted(entrances.items())]}
+    # Building polygons are clipped at cell boundaries. Reassemble every
+    # fragment for an OSM ID before measuring entrance-to-footprint distance.
+    merged_buildings: list[dict[str, Any]] = []
+    for feature_id, fragments in sorted(buildings.items()):
+        geometries = [geometry for geometry in
+                      (_feature_geometry(item) for item in fragments)
+                      if geometry is not None]
+        if not geometries:
+            continue
+        merged = dict(fragments[0])
+        merged["geometry"] = mapping(unary_union(geometries))
+        merged_buildings.append(merged)
+
+    # Entrance points may be repeated only if source tiling duplicates them;
+    # retain one canonical record per OSM ID.
+    unique_entrances = [items[0] for _, items in sorted(entrances.items())]
+    return manifest, {"buildings": merged_buildings, "entrances": unique_entrances}
 
 
 def associate_features(building_features: list[dict[str, Any]],
