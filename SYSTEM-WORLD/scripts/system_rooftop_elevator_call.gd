@@ -14,7 +14,8 @@ func configure(p_player: CharacterBody3D, p_cabin: Node3D, cabin_destination: Ve
 	destination_cabin_position = cabin_destination
 	destination_player_position = player_destination
 	display_name = title
-	set_meta("system_location_id", "baghdad_rooftop_elevator_" + str(get_instance_id()))
+	if not has_meta("system_location_id"):
+		set_meta("system_location_id", "baghdad_rooftop_elevator_" + str(get_instance_id()))
 	set_meta("system_region_id", "region_baghdad")
 	set_meta("system_display_name", display_name)
 	set_meta("system_interaction_prompt", "استخدام " + display_name)
