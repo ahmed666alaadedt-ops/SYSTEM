@@ -84,6 +84,10 @@ func _build_interface() -> void:
 	drive_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	drive_button.pressed.connect(_on_drive_pressed)
 	actions.add_child(drive_button)
+	var sell_button := Button.new()
+	sell_button.text = "بيع المحددة"
+	sell_button.pressed.connect(_on_sell_pressed)
+	actions.add_child(sell_button)
 	var store_button := Button.new()
 	store_button.text = "إرجاع للمرآب"
 	store_button.pressed.connect(_on_store_pressed)
@@ -178,6 +182,25 @@ func _on_drive_pressed() -> void:
 		close()
 	else:
 		status_label.text = _reason_text(str(result.get("reason", "UNKNOWN")))
+
+
+func _on_sell_pressed() -> void:
+	if selected_vehicle_id.is_empty():
+		status_label.text = "حدد مركبة تملكها حتى تبيعها."
+		return
+	var result := garage_manager.sell_vehicle(selected_vehicle_id)
+	if bool(result.get("success", false)):
+		status_label.text = "تم بيع المركبة واسترجاع %s Credits." % _format_number(int(result.get("received", 0)))
+		selected_vehicle_id = ""
+	else:
+		var reason := str(result.get("reason", "SALE_FAILED"))
+		if reason == "RETURN_VEHICLE_TO_GARAGE_FIRST":
+			status_label.text = "أرجع المركبة إلى المرآب قبل بيعها."
+		elif reason == "NOT_OWNED":
+			status_label.text = "هذه المركبة ليست ضمن ملكيتك."
+		else:
+			status_label.text = "تعذر بيع المركبة: " + reason
+	_refresh_catalog()
 
 func _on_store_pressed() -> void:
 	var result: Dictionary = runtime_manager.store_parked_vehicle()
