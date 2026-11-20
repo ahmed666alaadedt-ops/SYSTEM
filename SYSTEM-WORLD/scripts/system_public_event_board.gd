@@ -296,8 +296,9 @@ func _refresh_result_displays() -> void:
 		for index in range(mini(results.size(), MAX_VISIBLE_RESULTS)):
 			var record: Dictionary = results[index]
 			lines.append("%d. %s" % [index + 1, str(record.get("headline", ""))])
+			lines.append("الفائز: " + str(record.get("display_name", "SYSTEM HUNTER")))
 			lines.append(str(record.get("detail", "")))
-	lines.append("سجل محلي — ليس ترتيباً عالمياً")
+	lines.append("آخر الإنجازات — سجل هذا الجهاز وليس ترتيباً عالمياً")
 	var text_value := "\n".join(lines)
 	for label_value in result_labels.values():
 		var label := label_value as Label3D
