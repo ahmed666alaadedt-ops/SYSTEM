@@ -227,7 +227,7 @@ jobs:
           https://data.bbbike.org/osm/region/asia/iraq/
           https://www.openstreetmap.org/copyright
 
-          This artifact contains a source-boundary extraction for verification.
+          This artifact contains candidate Baghdad boundary geometry and a clipped OSM municipal PBF.
           It is not yet a reviewed or production-ready Baghdad game map.
           EOF
 
