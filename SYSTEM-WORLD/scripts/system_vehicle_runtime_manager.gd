@@ -5,6 +5,7 @@ signal driving_changed(active: bool, vehicle_id: String)
 
 const VehicleScript = preload("res://scripts/system_drivable_vehicle.gd")
 const VehicleCatalogScript = preload("res://scripts/system_vehicle_catalog.gd")
+const DealershipUIScript = preload("res://scripts/system_vehicle_dealership_ui.gd")
 
 var player: CharacterBody3D
 var player_mesh: Node3D
@@ -18,6 +19,7 @@ var mobile_throttle := 0.0
 var mobile_steering := 0.0
 var brake_hold_time := 0.0
 var player_mesh_was_visible := true
+var showroom_ui: SystemVehicleDealershipUI
 
 func setup(
 	player_node: CharacterBody3D,
@@ -33,6 +35,10 @@ func setup(
 	spring_arm = camera_arm
 	garage_manager = garage
 	world_root = active_root
+	showroom_ui = DealershipUIScript.new()
+	showroom_ui.name = "VehicleDealershipUI"
+	add_child(showroom_ui)
+	showroom_ui.setup(garage_manager, self)
 
 func _process(delta: float) -> void:
 	if not is_driving or not is_instance_valid(active_vehicle):
@@ -63,15 +69,8 @@ func try_dealership_interaction() -> bool:
 	var dealership := _find_nearest_dealership(18.0)
 	if dealership == null:
 		return false
-	var owned := garage_manager.get_garage()
-	if owned.is_empty():
-		return false
-	var vehicle_id := garage_manager.active_vehicle_id
-	if vehicle_id.is_empty() or not owned.has(vehicle_id):
-		vehicle_id = owned[0]
-	var result := spawn_owned_vehicle(vehicle_id)
-	if bool(result.get("success", false)):
-		enter_vehicle()
+	if is_instance_valid(showroom_ui):
+		showroom_ui.open_showroom()
 		return true
 	return false
 
@@ -109,6 +108,37 @@ func spawn_owned_vehicle(vehicle_id: String) -> Dictionary:
 	active_vehicle.global_position = player.global_position + forward * 3.0 + Vector3.UP * 0.8
 	active_vehicle.global_rotation.y = player.global_rotation.y
 	return {"success":true,"vehicle_id":vehicle_id}
+
+
+func spawn_selected_vehicle_and_enter(vehicle_id: String) -> Dictionary:
+	if garage_manager == null or not garage_manager.get_garage().has(vehicle_id):
+		return {"success":false,"reason":"VEHICLE_NOT_OWNED"}
+	if is_instance_valid(active_vehicle):
+		if active_vehicle.vehicle_id == vehicle_id and player.global_position.distance_to(active_vehicle.global_position) <= 5.0:
+			return {"success":enter_vehicle(),"vehicle_id":vehicle_id}
+		return {"success":false,"reason":"VEHICLE_ALREADY_SPAWNED"}
+	garage_manager.set_active_vehicle(vehicle_id)
+	var spawned := spawn_owned_vehicle(vehicle_id)
+	if not bool(spawned.get("success", false)):
+		return spawned
+	if not enter_vehicle():
+		active_vehicle.queue_free()
+		active_vehicle = null
+		return {"success":false,"reason":"PLAYER_TOO_FAR_FROM_VEHICLE"}
+	return {"success":true,"vehicle_id":vehicle_id}
+
+
+func store_parked_vehicle() -> Dictionary:
+	if is_driving:
+		return {"success":false,"reason":"VEHICLE_IN_USE"}
+	if not is_instance_valid(active_vehicle):
+		return {"success":false,"reason":"NO_ACTIVE_VEHICLE"}
+	if _find_nearest_dealership(25.0) == null:
+		return {"success":false,"reason":"TOO_FAR_FROM_DEALERSHIP"}
+	active_vehicle.queue_free()
+	active_vehicle = null
+	garage_manager.clear_active_vehicle()
+	return {"success":true}
 
 func enter_vehicle() -> bool:
 	if is_driving or not is_instance_valid(active_vehicle):
