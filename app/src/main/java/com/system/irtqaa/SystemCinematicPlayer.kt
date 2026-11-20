@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.PlaybackException
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
@@ -52,6 +53,11 @@ fun SystemCinematicPlayer(
                 if (playbackState == Player.STATE_ENDED) {
                     onFinished()
                 }
+            }
+
+            override fun onPlayerError(error: PlaybackException) {
+                // لا نترك المستخدم أمام شاشة سوداء إذا تعذر فك الفيديو.
+                onFinished()
             }
         }
 
