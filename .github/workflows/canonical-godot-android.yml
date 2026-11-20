@@ -66,14 +66,14 @@ jobs:
               exit 1
             fi
             python3 - "$RUNNER_TEMP/baghdad-cell-connectivity-audit.json" <<'PY'
-            import json, sys
-            from pathlib import Path
-            Path(sys.argv[1]).write_text(json.dumps({
-                "status": "not_available",
-                "real_osm_source_required": True,
-                "build_mode": "procedural_fallback_unaudited",
-                "note": "No verified real Baghdad OSM pack was installed; this APK is procedural fallback only."
-            }, indent=2) + "\n", encoding="utf-8")
+          import json, sys
+          from pathlib import Path
+          Path(sys.argv[1]).write_text(json.dumps({
+              "status": "not_available",
+              "real_osm_source_required": True,
+              "build_mode": "procedural_fallback_unaudited",
+              "note": "No verified real Baghdad OSM pack was installed; this APK is procedural fallback only."
+          }, indent=2) + "\n", encoding="utf-8")
           PY
             echo "BAGHDAD_BUILD_MODE=procedural_fallback_unaudited" >> "$GITHUB_ENV"
             echo "BAGHDAD_OSM_AUDIT_STATUS=${BAGHDAD_SOURCE_WORKFLOW_CONCLUSION}" >> "$GITHUB_ENV"
