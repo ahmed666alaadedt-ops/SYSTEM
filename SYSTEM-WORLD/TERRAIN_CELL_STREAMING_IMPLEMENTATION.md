@@ -1,45 +1,59 @@
 # SYSTEM WORLD — Terrain Cell Streaming Implementation
 
 **Updated:** 2026-11-20  
-**Canonical project:** `SYSTEM-WORLD/`  
-**Status:** independent cell-streaming component is now instantiated by the canonical modern-continent manager, replacing its active monolithic terrain visual/collision path. Headless tests cover seams, load priority, collision, unload and canonical wiring. CI result still requires checking.
+**Status:** The cell streamer is instantiated by the canonical modern-continent manager and replaces its active monolithic terrain visual/collision path. Headless tests cover adjacent seams, player-cell priority, collision toggling, unload, clipping endpoints and canonical wiring. CI execution still needs confirmation.
 
-## Why this exists
+## Active integration
 
-The existing `ModernContinentManager._build_continent()` still creates a single terrain ArrayMesh and one full-world HeightMapShape3D. It must not be enlarged to represent municipal Baghdad. The first implementation step is an independent cell lifecycle component that can be validated before replacing the current terrain path.
+`scripts/modern_continent_manager.gd` now calls `_setup_terrain_streaming()` instead of `_build_continent()` from `_ready()`. The new streamer samples the same deterministic `_get_height(x, z)` function, while the public `get_terrain_height()` API falls back to that sampler when the old baked grid is empty. Existing forests, cities and world systems can continue querying terrain heights.
 
-## New component
+## Cell streamer
 
 `scripts/modern_world_cell_streaming_manager.gd` — `ModernWorldCellStreamingManager`
 
-Current capabilities:
-- Stable integer cell coordinates from world-space X/Z and a fixed regional origin.
-- Configurable square cell size and terrain sample spacing; defaults are 200 m cells and 20 m samples.
-- A shared world-space sampling contract: adjacent cells request the same coordinate along their common edge, so the sampled edge heights are deterministic and identical.
-- Player-centered desired-cell set, queued loading and unloading, and a one-cell-operation-per-frame budget. The player's current cell is prioritized ahead of background loads/unloads.
-- Separate visual mesh and per-cell HeightMapShape3D collision nodes.
-- Collision only for the configured near-cell radius.
-- LOD tier classification (near/mid/far) is exposed as metadata only.
+- Integer cell IDs from world-space X/Z using a stable regional origin.
+- Current prototype settings: 200 m cells, 20 m sample spacing, load radius 2, collision radius 1.
+- Adjacent cells sample identical world-space coordinates along shared edges.
+- Player-centered desired-cell set, queued loading/unloading and one cell operation per frame.
+- Player's current cell is prioritized before background operations.
+- Separate visual mesh and HeightMapShape3D collision per cell.
+- Collision shapes are enabled inside the near-cell radius and toggled as the player moves; samples are retained while the visual cell remains loaded.
+- Terrain vertex colors and generated mesh normals are preserved.
 
-## Important limitations — do not mark as complete
+## Road and water boundary utility
 
-- The new component is not yet instantiated by `WorldManager._create_modern_city()`.
-- The existing monolithic terrain visual/collision is still the active canonical terrain path.
-- LOD mesh decimation and crack-free edge stitching are not enabled. The current component deliberately keeps a common sampling interval rather than introducing mismatched edge vertices.
-- Roads, rivers, coastlines, bridges and navigation are not yet split into cell-owned segments. They still need a deterministic clipping/ownership contract with shared boundary vertices and stable feature IDs.
-- **This is not yet the real-scale Baghdad map.** The current continent remains a 3 km × 2.2 km fictional prototype. Baghdad's municipal OSM GeoJSON pack is still not imported into the runtime, and the municipal boundary is approximately 861 km² pending official validation.
-- No physical Android memory/frame-time test has been run.
+`scripts/system_world_cell_geometry_clipper.gd` adds deterministic Liang–Barsky clipping for X/Z polylines against a cell rectangle. The headless test checks that two adjacent cells calculate the same shared endpoint for a line crossing their common edge.
 
-## Road and water boundary utility\n\n`scripts/system_world_cell_geometry_clipper.gd` adds deterministic Liang–Barsky clipping for X/Z polylines against a cell rectangle. A headless test checks that two adjacent cells calculate the same shared endpoint for a line crossing their common edge. This is a geometry primitive only: current city road and waterway meshes have not yet been migrated to cell-owned clipped segments.\n\n## Required next implementation sequence
+This is a geometry primitive only: current city road, river, coast, bridge and navigation meshes have **not** yet been migrated to cell-owned clipped segments.
 
-1. Add automated headless tests for coordinate-to-cell mapping, edge sample identity, partial world bounds, load/unload queues and collision bounds.
-2. Replace the monolithic terrain generation in `ModernContinentManager` with a source-sampling API plus cell manager, while preserving `get_terrain_height()` for existing callers.
-3. Add cell-aware clipping for roads, rivers, waterways and bridges. A feature crossing a cell boundary must share the exact same projected boundary point in both cells and retain one stable source ID.
-4. Add stitched LOD transitions (or skirts with measured visual limits) before enabling lower-resolution meshes.
-5. Add region-scoped navigation data and collision budget/streaming policies.
-6. Integrate a small, reviewed Baghdad test area using the versioned licensed GeoJSON pack; compare against the same geographic projection and inspect coverage before scaling to the municipal boundary.
-7. Only after those checks pass, bind building footprints to cells and start detailed building asset production.
+## Headless validation
+
+`tools/validate_terrain_cell_streaming.gd` is wired into `.github/workflows/canonical-godot-validation.yml`. It checks:
+- Stable cell coordinate mapping and the configured 3×3 desired set.
+- Player's current cell loads first.
+- Adjacent terrain cells produce matching edge heights.
+- Near/far collision toggling and reactivation.
+- Cell unloading.
+- Canonical continent instantiates the streamer and does not instantiate the old monolithic terrain visual/collision.
+- Adjacent cells produce the same clipped polyline boundary point.
+
+**CI status:** the test was added to the canonical Godot validation workflow, but a successful workflow result has not yet been confirmed. Do not report the test as passed until the Actions run shows success.
+
+## Important scope limitation
+
+**This is not yet the real-scale Baghdad map.** The current connected continent remains a 3 km × 2.2 km fictional prototype. Baghdad's municipal OSM GeoJSON pack is not imported into the runtime. The candidate municipal boundary is approximately 861 km² and still requires official boundary validation and a metric projection pipeline. The 200 m cells currently stream the existing prototype terrain only; they do not prove full-scale Baghdad coverage.
+
+## Remaining implementation sequence
+
+1. [x] Replace the active monolithic terrain visual/collision path with player-centered independent cells while preserving the terrain sampling API.
+2. [x] Add headless seam, priority, collision-toggle, unload, clipping and canonical-wiring checks; await CI confirmation.
+3. [ ] Expand tests for partial world bounds, rapid cell-boundary movement, queue churn and memory/collision budgets.
+4. [ ] Migrate roads, rivers, waterways, coastlines and bridges to cell-owned clipped segments with stable source feature IDs and shared boundary points.
+5. [ ] Add stitched LOD transitions (or validated skirts) before enabling lower-resolution geometry. Current LOD is metadata only.
+6. [ ] Add region-scoped navigation data and mobile collision budgets.
+7. [ ] Import and validate a small real Baghdad test area from the versioned licensed GeoJSON pack using a metric projection. Check roads, Tigris waterways, bridges and building footprint coverage.
+8. [ ] Only after those checks pass, bind building footprints to cells and begin detailed building asset production.
 
 ## Mobile baseline
 
-The initial 200 m cell / 20 m source-grid defaults are a prototype budget, not a final performance claim. Keep the per-frame operation budget small and measure on a physical Android device before increasing radii, collision density or sample resolution.
+The 200 m cell / 20 m sample settings are a prototype baseline, not a final performance claim. No physical Android memory, frame-time, heat or battery test has been run. Measure on the target phone before increasing cell radii, collision density or terrain sample resolution.
