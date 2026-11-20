@@ -354,3 +354,19 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Integrate a real advertising provider only after approvals, consent/privacy review, moderation, and platform compliance.
 - [ ] Run Godot parser/scene checks and Android performance tests for screen count, texture memory, animation, brightness, and night visibility.
 - Note: this commit records the requested system specification and required work; it does not mean live ads, public leaderboards, or event boards are already running in the game.
+
+
+## City advertising skyscrapers and public champion boards — 20 November 2026
+
+- [x] Add `scripts/system_public_event_board.gd` as a shared 3D display manager for the modern-world city map.
+- [x] Replace the previous detached demo billboard routine with a procedural skyscraper facade in each configured city, carrying a curated advertising panel and a separate public event-results panel.
+- [x] Add facade-mounted advertising and results panels to the five Baghdad landmark towers: Hunter Association, Power, Business, Shopping, and Entertainment.
+- [x] Connect completed monster-gate clears to publish gate rank, gate ID, and XP to the public boards.
+- [x] Connect verified mission-reward events to the public boards.
+- [x] Connect Hunter Examination stage completion and final license-earned signals to the public boards.
+- [x] Connect Power Tower floor-clear events to the public boards.
+- [x] Persist the most recent 40 local-session event records in a user config file and show the latest four on every city/tower results display.
+- [x] Keep the advertising mode explicitly curated/demo; live commercial ads remain disabled until a compliant provider/backend, consent, moderation, privacy and legal review are implemented.
+- [ ] Implement server-authoritative cross-player champion rankings, global winner history, anti-cheat validation and privacy controls; current records are local to the player's device/session and are not a global leaderboard.
+- [ ] Validate facade orientation, screen readability, night brightness, occlusion, LOD, memory and Android frame rate in Godot and on physical devices.
+- Note: these are source-level scene-generation and gameplay-event connections. They have not yet been confirmed by a Godot run or Android device test in this update.
