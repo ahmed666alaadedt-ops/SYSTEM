@@ -12,7 +12,7 @@ This register distinguishes source code, procedural placeholder geometry, genera
 
 | Project | Purpose | Verified inventory |
 |---|---|---|
-| `SYSTEM-WORLD/` | Canonical Godot runtime | 126 files; 90 GDScript files; 1 saved scene; 6 humanoid GLBs |
+| `SYSTEM-WORLD/` | Canonical Godot runtime | 129 files; 92 GDScript files; 1 saved scene; 6 humanoid GLBs |
 | `SYSTEM-WORLD-3D/` | Separate 3D preview/prototype | 86 files; 54 GDScript files; 9 saved scenes; 6 humanoid GLBs |
 | `app/` | Android Compose/Firebase application | 149 files; 135 Kotlin files |
 
