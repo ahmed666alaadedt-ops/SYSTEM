@@ -284,6 +284,16 @@ func _build_building_feature(parent: Node3D, feature: Dictionary) -> void:
 		parent.add_child(building)
 		var body := StaticBody3D.new()
 		body.name = "OSMBuildingCollision_%s" % feature_id
+		body.add_to_group("system_interactable")
+		body.set_meta("osm_feature_id", feature_id)
+		body.set_meta("baghdad_building_type", kind)
+		body.set_meta("osm_building_tag", str(tags.get("building", "yes")))
+		body.set_meta("system_location_id", "baghdad_osm_building_" + feature_id)
+		body.set_meta("system_region_id", "iraq_baghdad_region")
+		body.set_meta("system_location_type", 7)
+		body.set_meta("system_fast_travel", false)
+		body.set_meta("system_display_name", _building_display_name(kind, tags))
+		body.set_meta("system_interaction_prompt", "استكشاف معلومات المبنى")
 		var shape := ConcavePolygonShape3D.new()
 		shape.set_faces(mesh.get_faces())
 		var collision := CollisionShape3D.new()
@@ -292,6 +302,25 @@ func _build_building_feature(parent: Node3D, feature: Dictionary) -> void:
 		parent.add_child(body)
 		if kind == "church" or kind == "mosque":
 			_add_polygon_worship_detail(parent, ring, height, kind, feature_id)
+
+
+func _building_display_name(kind: String, tags: Dictionary) -> String:
+	var custom_name := str(tags.get("name:ar", tags.get("name", ""))).strip_edges()
+	if not custom_name.is_empty():
+		return custom_name
+	match kind:
+		"detached_house":
+			return "منزل سكني"
+		"apartment_block":
+			return "عمارة سكنية"
+		"commercial_building":
+			return "مبنى تجاري"
+		"mosque":
+			return "مسجد"
+		"church":
+			return "كنيسة"
+		_:
+			return "مبنى في بغداد"
 
 
 func _add_polygon_worship_detail(parent: Node3D, ring: PackedVector2Array, height: float, kind: String, feature_id: String) -> void:
