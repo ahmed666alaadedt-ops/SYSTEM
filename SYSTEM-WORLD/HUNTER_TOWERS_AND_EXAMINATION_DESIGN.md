@@ -19,6 +19,15 @@ The towers are separate gameplay identities. The Power Tower is not the Hunter e
 - `scripts/hunter_guild_menu.gd` adds registration and start controls.
 - `scripts/main.gd` creates the examination manager and connects the guild menu signals.
 
+## Landmark architecture expansion — 20 November 2026
+
+- The shared tower shell now adds four monumental facade fins, three stepped podium terraces, and an illuminated crown ring.
+- The Power Tower exterior now has four tournament/champion display blades and three concentric arena terraces at its base, reinforcing its identity as a public combat venue.
+- The Hunter Association Tower exterior now has two monumental association wings, a Hall of Honor display, and a crown spire.
+- These are procedural architectural blockout elements, not final high-detail art assets. The champion boards currently display static titles; they are not yet connected to live player rankings or verified gate-clearing records.
+- The Power Tower's 100-floor progression manager remains separate from the exterior. The arena terraces do not yet constitute explorable interior arenas. A later interior-scene milestone must provide multiple distinct arenas (duel, team combat, survival, boss trial, and ranked championship), spectator galleries, training halls, matchmaking, and verified reward/record flows.
+- The Hunter Association interior likewise still needs navigable reception, registration, mission hall, examination administration, training, research, medical support, meeting rooms, and a dynamically updated global hunter honor gallery.
+
 ## Seven-stage Hunter Examination
 
 The examination is a difficult, multi-city journey. It tests judgment, observation, navigation, teamwork, survival, and combat restraint—not only damage output.
