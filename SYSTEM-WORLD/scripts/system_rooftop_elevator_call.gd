@@ -36,8 +36,8 @@ func system_interact() -> void:
 	if player.global_position.distance_to(global_position) > 7.0:
 		return
 
-	# Board the platform first; do not carry the player beside or below the cabin.
-	var boarding_position := lift_cabin.global_position + Vector3(0.0, -0.9, 0.0)
+	# Board the platform first; keep the configured passenger offset relative to the cabin.
+	var passenger_local_position := destination_player_position - destination_cabin_position
 	_player_physics_was_enabled = player.is_physics_processing()
 	_player_original_parent = player.get_parent()
 	player.set_physics_process(false)
@@ -49,7 +49,7 @@ func system_interact() -> void:
 	# the character transform directly instead of racing a second world-space tween.
 	player.reparent(lift_cabin, true)
 	var boarding_tween := create_tween()
-	boarding_tween.tween_property(player, "position", Vector3(0.0, -0.9, 0.0), 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	boarding_tween.tween_property(player, "position", passenger_local_position, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	boarding_tween.finished.connect(_begin_lift_travel)
 
 func _begin_lift_travel() -> void:
