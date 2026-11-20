@@ -1,5 +1,9 @@
 """Unit tests for Baghdad OSM entrance association decisions."""
+import pathlib
+import sys
 import unittest
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 from shapely.geometry import Point, Polygon, mapping
 
