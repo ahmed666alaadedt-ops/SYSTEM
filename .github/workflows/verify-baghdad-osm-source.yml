@@ -4,11 +4,14 @@ on:
   push:
     branches:
       - main
+      - feature/baghdad-streaming-lifecycle
     paths:
       - ".github/workflows/verify-baghdad-osm-source.yml"
       - "SYSTEM-WORLD/data/geography/real_world_registry.json"
       - "SYSTEM-WORLD/tools/geospatial/clip_osm_geojson_layers.py"
       - "SYSTEM-WORLD/tools/geospatial/build_baghdad_metric_cell_pack.py"
+      - "SYSTEM-WORLD/tools/geospatial/audit_baghdad_cell_connectivity.py"
+      - "SYSTEM-WORLD/tools/geospatial/test_audit_baghdad_cell_connectivity.py"
       - "SYSTEM-WORLD/scripts/baghdad_osm_cell_streamer.gd"
       - "SYSTEM-WORLD/scripts/world_manager.gd"
       - "SYSTEM-WORLD/scripts/modern_world_region_manager.gd"
@@ -316,6 +319,34 @@ jobs:
           print("Validated Baghdad 5x5 metric cell pack:", path.stat().st_size, "bytes;", len(tile_names), "occupied cells.")
           PY
 
+      - name: Audit real OSM connectivity across every generated Baghdad cell
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          SOURCE_DIR="$RUNNER_TEMP/baghdad-source/clipped_layers"
+          CELL_PACK="$RUNNER_TEMP/baghdad-source/baghdad-metric-cell-pack-5x5.zip"
+          AUDIT_REPORT="$RUNNER_TEMP/baghdad-source/baghdad-cell-connectivity-audit.json"
+          test -s "$CELL_PACK"
+          test -d "$SOURCE_DIR"
+          cd "$PROJECT"
+          python3 -m unittest discover -s tools/geospatial -p 'test_audit_baghdad_cell_connectivity.py' -v
+          python3 tools/geospatial/audit_baghdad_cell_connectivity.py \
+            --input-dir "$SOURCE_DIR" \
+            --pack "$CELL_PACK" \
+            --report "$AUDIT_REPORT"
+          python3 - "$AUDIT_REPORT" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          report = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+          if report.get("status") != "passed" or not report.get("real_osm_source_required"):
+              raise SystemExit("Baghdad real OSM cross-cell audit did not pass.")
+          if report.get("cell_count", 0) < 2 or report.get("source_osm_features", 0) < 1:
+              raise SystemExit("Baghdad audit did not inspect a multi-cell real OSM dataset.")
+          print("Required real OSM cell connectivity audit passed.")
+          PY
+
       - name: Add attribution and source notes
         shell: bash
         run: |
@@ -344,6 +375,7 @@ jobs:
             ${{ runner.temp }}/baghdad-source/clipped_layers/clip-report.json
             ${{ runner.temp }}/baghdad-source/clipped_layers/*.geojson
             ${{ runner.temp }}/baghdad-source/baghdad-metric-cell-pack-5x5.zip
+            ${{ runner.temp }}/baghdad-source/baghdad-cell-connectivity-audit.json
             ${{ runner.temp }}/baghdad-source/ATTRIBUTION.txt
             ${{ runner.temp }}/baghdad-source/iraq.osm.pbf.sha256
           if-no-files-found: error
