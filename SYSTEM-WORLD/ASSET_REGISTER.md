@@ -171,6 +171,6 @@ Until then, label it as source, prototype, blockout, generated candidate, or pen
 - City fallback: modern_world_region_manager.gd skips Baghdad's procedural district blockout/road strips when the OSM pack is installed, avoiding direct overlap in the sample area.
 - Runtime validation: tools/validate_baghdad_osm_runtime.gd checks actual OSM road meshes, building extrusions, land-use surfaces and building collision bodies.
 - First source artifact: GitHub Actions run [44708930412](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44708930412), artifact [14615624945](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44708930412). It contains a 5×5 pack of 200 m metric cells around Baghdad's WGS84 anchor.
-- The pack is a generated Actions artifact, not a committed runtime asset. The canonical Android workflow now has a workflow-run handoff to download and unpack it after the OSM source workflow succeeds. That handoff and the runtime validation still need a successful end-to-end workflow result before being marked complete.
+- The pack is a generated Actions artifact, not a committed runtime asset. The workflow-run handoff is verified by canonical Android build 44709811736: the pack was downloaded/unpacked, Baghdad runtime geometry validation passed, the main scene launched headlessly, and APK artifact 14616791960 was exported/uploaded.
 
 The 5×5 pack is only a 1 km × 1 km initial proof area. It is not the full Baghdad municipal map, and no physical Android visual/performance test has been performed.
