@@ -211,9 +211,10 @@ A checked repository foundation does not mean a finished gameplay feature. Visua
 - [x] Validate that the selected event exists, the player owns the entered vehicle, and its catalog class is eligible for that discipline.
 - [x] Add ordered checkpoint registration, lap progression, elapsed-time tracking, finish/cancel flow, and race lifecycle signals.
 - [x] Add a local prototype wallet reward method and connect event completion to its fixed participation reward.
-- [ ] Connect the manager to the active world and instantiate real race start/finish gates and checkpoint Area3D nodes.
+- [x] Instantiate the motorsport manager from `main.gd` at startup and provide the existing player garage manager.
+- [ ] Connect race event selection and physical race routes to the active world; instantiate real start/finish gates and checkpoint Area3D nodes.
 - [ ] Build race tracks and route geometry for circuits, drag strips, drift arenas, rally stages, and endurance layouts.
 - [ ] Add countdowns, false-start detection, lap timing UI, position tracking, AI competitors, penalties, pit stops, damage rules, and reset/respawn handling.
 - [ ] Add event menus, qualifying, championships, seasonal events, leaderboards, multiplayer synchronization, anti-cheat validation, and server-authoritative rewards.
 - [ ] Validate all event flows and rewards in Godot and on Android.
-- Note: this is a reusable source-level race lifecycle/checkpoint foundation only. It is not yet connected to the active scene, no track/checkpoint nodes or AI opponents are built, and rewards remain local-device prototype currency.
+- Note: the manager is instantiated by the main game script, but this is still a source-level race lifecycle/checkpoint foundation only. No track/checkpoint nodes, race UI, or AI opponents are built, and rewards remain local-device prototype currency.
