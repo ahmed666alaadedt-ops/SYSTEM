@@ -124,7 +124,23 @@
         "Validate coverage and supplement missing real-world features before production use.",
         "Replace the 2023-04-23 snapshot with a current or suitably recent source before using roads, buildings or infrastructure."
       ],
-      "verified_snapshot_timestamp": "2023-04-23T23:59:30Z"
+      "verified_snapshot_timestamp": "2023-04-23T23:59:30Z",
+      "verified_file_size_bytes": 81084387,
+      "verified_file_sha256": "ef0e0f868d1e3a8101d8aa022c3c4e22f902c06f174b1fdc2e0e8edd900780db",
+      "verified_relation": {
+        "id": 5638803,
+        "name": "بغداد",
+        "name_en": "Baghdad",
+        "note": "حدود امانة بغداد",
+        "boundary": "administrative",
+        "admin_level": "5",
+        "member_count": 54,
+        "member_counts": {
+          "node": 1,
+          "way": 40,
+          "relation": 13
+        }
+      }
     },
     {
       "source_id": "bbbike_iraq_osm_pbf_2026_10_16_candidate",
