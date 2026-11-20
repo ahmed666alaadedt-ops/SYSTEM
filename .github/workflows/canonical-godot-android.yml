@@ -48,35 +48,12 @@ jobs:
         shell: bash
         run: echo "BAGHDAD_SOURCE_WORKFLOW_RUN_ID=${{ github.event.workflow_run.id }}" >> "$GITHUB_ENV"
 
-      - name: Find latest successful Baghdad OSM pack for regular builds
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        id: latest_baghdad_source
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          RUN_ID="$(gh api "/repos/$GITHUB_REPOSITORY/actions/workflows/verify-baghdad-osm-source.yml/runs?branch=main&per_page=20" --jq '.workflow_runs | map(select(.conclusion == "success")) | .[0].id // empty')"
-          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
-          echo "BAGHDAD_SOURCE_WORKFLOW_RUN_ID=$RUN_ID" >> "$GITHUB_ENV"
-          if [ -n "$RUN_ID" ]; then
-            echo "Using latest successful Baghdad OSM source run: $RUN_ID"
-          else
-            echo "::warning::No successful Baghdad OSM source run found; this build will use procedural fallback."
-          fi
-
-      - name: Download latest Baghdad OSM cell pack for regular builds
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.latest_baghdad_source.outputs.run_id != ''
-        uses: actions/download-artifact@v4
-        with:
-          name: SYSTEM-WORLD-Baghdad-OSM-boundary-candidate
-          path: ${{ runner.temp }}/baghdad-osm-artifact
-          run-id: ${{ steps.latest_baghdad_source.outputs.run_id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Verify Baghdad OSM audit provenance and install audited cell pack
         id: baghdad_pack
         shell: bash
+        env:
+          BAGHDAD_SOURCE_WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id || '' }}
+          BAGHDAD_SOURCE_WORKFLOW_CONCLUSION: ${{ github.event.workflow_run.conclusion || 'not_applicable' }}
         run: |
           set -euo pipefail
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
@@ -99,7 +76,8 @@ jobs:
             }, indent=2) + "\\n", encoding="utf-8")
             PY
             echo "BAGHDAD_BUILD_MODE=procedural_fallback_unaudited" >> "$GITHUB_ENV"
-            echo "BAGHDAD_OSM_AUDIT_STATUS=not_available" >> "$GITHUB_ENV"
+            echo "BAGHDAD_OSM_AUDIT_STATUS=${BAGHDAD_SOURCE_WORKFLOW_CONCLUSION}" >> "$GITHUB_ENV"
+            echo "BAGHDAD_SOURCE_WORKFLOW_RUN_ID=${BAGHDAD_SOURCE_WORKFLOW_RUN_ID}" >> "$GITHUB_ENV"
             echo "mode=procedural_fallback_unaudited" >> "$GITHUB_OUTPUT"
             echo "::warning::No verified Baghdad OSM pack is available. APK will be explicitly classified as procedural fallback, not audited OSM."
             exit 0
@@ -132,6 +110,7 @@ jobs:
           test -s "$DESTINATION/manifest.json"
           echo "BAGHDAD_BUILD_MODE=audited_osm" >> "$GITHUB_ENV"
           echo "BAGHDAD_OSM_AUDIT_STATUS=passed" >> "$GITHUB_ENV"
+          echo "BAGHDAD_SOURCE_WORKFLOW_RUN_ID=${BAGHDAD_SOURCE_WORKFLOW_RUN_ID}" >> "$GITHUB_ENV"
           echo "mode=audited_osm" >> "$GITHUB_OUTPUT"
           python3 - <<'PY'
           import json, pathlib
