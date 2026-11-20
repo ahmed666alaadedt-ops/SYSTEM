@@ -45,7 +45,7 @@ func get_floor_data(floor_number: int) -> Dictionary:
 		"required_level": required_level,
 		"boss_floor": boss_floor,
 		"opponent_power": 80 + floor_number * 24,
-		"opponent_count": 1 if arena_type == "DUEL" or boss_floor else mini(2 + difficulty / 4, 8),
+		"opponent_count": 1 if arena_type == "DUEL" or boss_floor else mini(2 + int(difficulty / 4), 8),
 		"wave_count": 1 if arena_type == "DUEL" or boss_floor else mini(2 + int(floor_number / 12), 10),
 		"reward_xp": reward_xp,
 		"rank": _rank_for_floor(floor_number),
