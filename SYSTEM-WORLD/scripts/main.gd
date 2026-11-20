@@ -782,6 +782,20 @@ func _on_interaction_performed(
 		" / ",
 		location_id
 	)
+	if location_id.begins_with("baghdad_osm_building_"):
+		var building_name := str(target.get_meta("system_display_name", "مبنى في بغداد"))
+		var building_kind := str(target.get_meta("baghdad_building_type", "general_building"))
+		var estimated_floors := int(target.get_meta("system_estimated_floors", 1))
+		var height_m := float(target.get_meta("system_building_height_m", 0.0))
+		var access_note := "المبنى الخارجي مكتشف؛ الدخول والداخلية لم يُنفذا بعد."
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "%s | %s | نحو %d طابق | ارتفاع تقديري %.1f م\n%s" % [
+				building_name,
+				building_kind,
+				estimated_floors,
+				height_m,
+				access_note
+			]
 	if str(target.get_meta("system_service_type", "")) == "hospital":
 		if is_instance_valid(player_combat_health):
 			if bool(player_combat_health.call("begin_hospital_treatment")):
