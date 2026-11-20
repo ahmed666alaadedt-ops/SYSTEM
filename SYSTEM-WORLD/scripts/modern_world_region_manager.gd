@@ -14,21 +14,24 @@ const ModernCityServicesManagerScript = preload("res://scripts/modern_city_servi
 ## طبقة تفاصيل المدن والمناطق الحضرية للعالم الحديث.
 ## تُبنى فوق تضاريس القارة الموجودة ولا تستبدلها أو تغيّر مواقعها المرجعية.
 
+## Baghdad is anchored to the provisional WGS84 registry record.
+## Other city centers remain clearly marked prototype-layout coordinates until
+## licensed regional datasets are imported for each city.
 const CITY_DATA := [
-	{"name": "New York", "center": Vector2(-650.0, -260.0), "style": 0},
-	{"name": "London", "center": Vector2(-420.0, -90.0), "style": 1},
-	{"name": "Paris", "center": Vector2(-300.0, 110.0), "style": 2},
-	{"name": "Baghdad", "center": Vector2(0.0, 0.0), "style": 3},
-	{"name": "Moscow", "center": Vector2(120.0, -470.0), "style": 4},
-	{"name": "Cairo", "center": Vector2(-80.0, 330.0), "style": 5},
-	{"name": "New Delhi", "center": Vector2(390.0, 230.0), "style": 6},
-	{"name": "Guangzhou", "center": Vector2(650.0, 40.0), "style": 7},
-	{"name": "Seoul", "center": Vector2(820.0, -260.0), "style": 8},
-	{"name": "Tokyo", "center": Vector2(1030.0, 80.0), "style": 9},
-	{"name": "Singapore", "center": Vector2(560.0, 490.0), "style": 10},
-	{"name": "Sydney", "center": Vector2(1050.0, 680.0), "style": 11},
-	{"name": "Rio de Janeiro", "center": Vector2(-850.0, 420.0), "style": 12},
-	{"name": "Johannesburg", "center": Vector2(-350.0, 610.0), "style": 13}
+	{"name": "New York", "center": Vector2(-650.0, -260.0), "style": 0, "coordinate_source": "prototype_layout"},
+	{"name": "London", "center": Vector2(-420.0, -90.0), "style": 1, "coordinate_source": "prototype_layout"},
+	{"name": "Paris", "center": Vector2(-300.0, 110.0), "style": 2, "coordinate_source": "prototype_layout"},
+	{"name": "Baghdad", "center": Vector2(0.0, 0.0), "style": 3, "geography_city_id": "city_baghdad", "coordinate_source": "WGS84_registry_anchor"},
+	{"name": "Moscow", "center": Vector2(120.0, -470.0), "style": 4, "coordinate_source": "prototype_layout"},
+	{"name": "Cairo", "center": Vector2(-80.0, 330.0), "style": 5, "coordinate_source": "prototype_layout"},
+	{"name": "New Delhi", "center": Vector2(390.0, 230.0), "style": 6, "coordinate_source": "prototype_layout"},
+	{"name": "Guangzhou", "center": Vector2(650.0, 40.0), "style": 7, "coordinate_source": "prototype_layout"},
+	{"name": "Seoul", "center": Vector2(820.0, -260.0), "style": 8, "coordinate_source": "prototype_layout"},
+	{"name": "Tokyo", "center": Vector2(1030.0, 80.0), "style": 9, "coordinate_source": "prototype_layout"},
+	{"name": "Singapore", "center": Vector2(560.0, 490.0), "style": 10, "coordinate_source": "prototype_layout"},
+	{"name": "Sydney", "center": Vector2(1050.0, 680.0), "style": 11, "coordinate_source": "prototype_layout"},
+	{"name": "Rio de Janeiro", "center": Vector2(-850.0, 420.0), "style": 12, "coordinate_source": "prototype_layout"},
+	{"name": "Johannesburg", "center": Vector2(-350.0, 610.0), "style": 13, "coordinate_source": "prototype_layout"}
 ]
 
 const DISTRICT_NAMES := [
@@ -118,6 +121,14 @@ func _material(color: Color, roughness: float, metallic: float = 0.0) -> Standar
 func _resolve_city_anchors() -> void:
 	for city in CITY_DATA:
 		var requested: Vector2 = city["center"]
+		var geography_city_id := str(city.get("geography_city_id", ""))
+		if not geography_city_id.is_empty():
+			var geography_record := SystemRealWorldGeography.get_city(geography_city_id)
+			if geography_record.is_empty():
+				push_warning("SYSTEM WORLD: missing geographic registry record for " + str(city["name"]))
+				continue
+			var projected_position := SystemRealWorldGeography.get_city_world_position(geography_city_id)
+			requested = Vector2(projected_position.x, projected_position.z)
 		var resolved := _nearest_land_position(requested)
 		if resolved == Vector2.INF:
 			push_warning("SYSTEM WORLD: no land anchor found for " + str(city["name"]))
