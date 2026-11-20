@@ -9,10 +9,17 @@ const DEFAULT_SAVE_PATH := "user://system_world_baghdad_city_state.json"
 
 var save_path := DEFAULT_SAVE_PATH
 var cells: Dictionary = {}
+var active_cells: Dictionary = {}
 
 
 func _ready() -> void:
 	_load_state()
+	get_tree().tree_exiting.connect(_capture_all_active_cells)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_WM_CLOSE_REQUEST:
+		_capture_all_active_cells()
 
 
 ## Connected to BaghdadOSMCellStreamer.cell_loaded.
@@ -20,7 +27,10 @@ func restore_cell(_cell: Vector2i, cell_root: Node3D) -> void:
 	if not is_instance_valid(cell_root):
 		return
 	var cell_key := _get_cell_key(cell_root)
-	if cell_key.is_empty() or not cells.has(cell_key):
+	if cell_key.is_empty():
+		return
+	active_cells[cell_key] = cell_root
+	if not cells.has(cell_key):
 		return
 
 	var record: Variant = cells[cell_key]
@@ -41,13 +51,21 @@ func capture_cell(_cell: Vector2i, cell_root: Node3D) -> void:
 	var cell_key := _get_cell_key(cell_root)
 	if cell_key.is_empty():
 		return
+	active_cells.erase(cell_key)
+	if _capture_cell_record(cell_root):
+		_save_state()
 
+
+func _capture_cell_record(cell_root: Node3D) -> bool:
+	var cell_key := _get_cell_key(cell_root)
+	if cell_key.is_empty():
+		return false
 	var feature_states: Dictionary = {}
 	_collect_feature_states(cell_root, feature_states)
 	# Do not overwrite a previous save with an empty record when a cell contains
 	# no mutable gameplay features yet.
 	if feature_states.is_empty():
-		return
+		return false
 
 	cells[cell_key] = {
 		"region_id": str(cell_root.get_meta("region_id", "")),
@@ -57,7 +75,18 @@ func capture_cell(_cell: Vector2i, cell_root: Node3D) -> void:
 		"source_snapshot": str(cell_root.get_meta("source_snapshot", "")),
 		"features": feature_states
 	}
-	_save_state()
+	return true
+
+
+func _capture_all_active_cells() -> void:
+	var changed := false
+	for cell_key in active_cells.keys():
+		var cell_root: Node3D = active_cells[cell_key]
+		if is_instance_valid(cell_root) and _capture_cell_record(cell_root):
+			changed = true
+	active_cells.clear()
+	if changed:
+		_save_state()
 
 
 func get_saved_feature_count(cell_root: Node3D) -> int:
