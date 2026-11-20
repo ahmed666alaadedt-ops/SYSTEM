@@ -66,14 +66,14 @@
       "status": "provisional"
     },
     {
-      "source_id": "geofabrik_iraq_osm_2026_11_18_candidate",
+      "source_id": "geofabrik_iraq_osm_2026_11_17_candidate",
       "provider": "Geofabrik download server",
-      "dataset": "Iraq OpenStreetMap PBF extract",
-      "source_url": "https://download.geofabrik.de/asia/iraq-261118.osm.pbf",
+      "dataset": "Iraq OpenStreetMap PBF extract (dated snapshot)",
+      "source_url": "https://download.geofabrik.de/asia/iraq-261117.osm.pbf",
       "index_url": "https://download.geofabrik.de/asia/iraq.html",
-      "snapshot_date": "2026-11-18",
-      "source_snapshot_timestamp": "2026-11-18T23:58:00Z",
-      "file_size_bytes": 91667932,
+      "snapshot_date": "2026-11-17",
+      "source_snapshot_timestamp": "2026-11-17T23:59:00Z",
+      "file_size_bytes": 91646428,
       "geographic_scope": "Iraq",
       "planned_baghdad_boundary": {
         "osm_element_type": "relation",
