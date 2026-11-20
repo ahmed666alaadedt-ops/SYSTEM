@@ -1,6 +1,7 @@
 extends SceneTree
 
 const BAGHDAD_STREAMER = preload("res://scripts/baghdad_osm_cell_streamer.gd")
+const CITY_STATE_STORE = preload("res://scripts/baghdad_city_state_store.gd")
 
 
 func _initialize() -> void:
@@ -54,6 +55,28 @@ func _run_validation() -> void:
 	if building_collisions.is_empty():
 		_fail("Baghdad OSM building collision bodies were not created.")
 		return
+
+	# Exercise persistence against a real OSM-generated building ID, not a test-only ID.
+	var city_state_store = CITY_STATE_STORE.new()
+	city_state_store.save_path = "user://baghdad_osm_real_feature_state_test.json"
+	root.add_child(city_state_store)
+	city_state_store.restore_cell(Vector2i(0, 0), cell_root)
+	var persistent_building: StaticBody3D
+	for candidate in building_collisions:
+		if candidate.has_meta("system_location_id") and not str(candidate.get_meta("system_location_id", "")).is_empty():
+			persistent_building = candidate
+			break
+	if persistent_building == null:
+		_fail("OSM building collision has no stable SYSTEM location ID for persistence.")
+		return
+	var persistent_id := str(persistent_building.get_meta("system_location_id"))
+	persistent_building.set_meta("system_persistent_state", {
+		"door_open": true,
+		"test_marker": "real_osm_feature_round_trip"
+	})
+	streamer.cell_loaded.connect(Callable(city_state_store, "restore_cell"))
+	streamer.cell_unloading.connect(Callable(city_state_store, "capture_cell"))
+
 	print("Baghdad OSM runtime cell passed: roads=", roads.size(), " buildings=", buildings.size(), " landuse=", landuse.size(), " building_collisions=", building_collisions.size())
 	streamer._unload_cell(Vector2i(0, 0))
 	if streamer.loaded_cells.has(Vector2i(0, 0)):
@@ -67,6 +90,20 @@ func _run_validation() -> void:
 	if reloaded_cell == null or str(reloaded_cell.get_meta("cell_id", "")) != "0:0":
 		_fail("Reloaded Baghdad cell lost its stable cell identity.")
 		return
+	var restored_buildings := reloaded_cell.find_children("OSMBuildingCollision_*", "StaticBody3D", true, false)
+	var restored_feature_found := false
+	for candidate in restored_buildings:
+		if str(candidate.get_meta("system_location_id", "")) == persistent_id:
+			var restored_state: Variant = candidate.get_meta("system_persistent_state", {})
+			if typeof(restored_state) == TYPE_DICTIONARY and bool(restored_state.get("door_open", false)) and str(restored_state.get("test_marker", "")) == "real_osm_feature_round_trip":
+				restored_feature_found = true
+				break
+	if not restored_feature_found:
+		_fail("Real OSM building state did not survive streamer unload/reload.")
+		return
+	city_state_store.queue_free()
+	if FileAccess.file_exists("user://baghdad_osm_real_feature_state_test.json"):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path("user://baghdad_osm_real_feature_state_test.json"))
 
 	# A queued load that is no longer desired must not recreate an old cell.
 	streamer._unload_cell(Vector2i(0, 0))
