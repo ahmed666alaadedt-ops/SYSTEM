@@ -140,9 +140,9 @@ func _refresh_catalog() -> void:
 		var price := int(data.get("price", 0))
 		var price_text := "غير متاح للبيع" if price <= 0 else _format_number(price) + " Credits"
 		var ownership := "مملوكة" if owned.has(vehicle_id) else "غير مملوكة"
-		details.text = "%s\n%s | %s | %s" % [str(data.get("name", vehicle_id)), str(data.get("category", "car")), price_text, ownership]
+		details.text = "%s\n%s | %s\n%s | %s | %s" % [str(data.get("name", vehicle_id)), str(data.get("model_class", data.get("category", "car"))), str(data.get("brand_reference", "SYSTEM vehicle market")), price_text, ownership, "سباق" if str(data.get("category", "")).begins_with("race_") else "سوق عالمي"]
 		details.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		details.custom_minimum_size = Vector2(0, 54)
+		details.custom_minimum_size = Vector2(0, 68)
 		details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		row.add_child(details)
 		var action := Button.new()
