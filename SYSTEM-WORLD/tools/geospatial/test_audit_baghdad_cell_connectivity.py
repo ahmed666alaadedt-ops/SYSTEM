@@ -333,9 +333,9 @@ class BaghdadCellConnectivityTests(unittest.TestCase):
                 return longitude, latitude
             # Keep the projected east edge within floating-point roundoff
             # of x=200 m so the neighbor receives a boundary-only clip, not
-            # an empty intersection caused by a 3e-11 m inward projection error.
+            # an empty intersection caused by a 3e-11 m inward projection error; the 1e-8 m offset survives WGS84 float resolution.
             touching_building = Polygon([
-                wgs84(160, 20), wgs84(200.0000000001, 20), wgs84(200.0000000001, 60),
+                wgs84(160, 20), wgs84(200.00000001, 20), wgs84(200.00000001, 60),
                 wgs84(160, 60), wgs84(160, 20),
             ])
             _append_projected_feature(source, pack, "buildings", 813, "way", touching_building)
