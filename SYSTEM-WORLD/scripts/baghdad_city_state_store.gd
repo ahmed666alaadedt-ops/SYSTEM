@@ -14,7 +14,8 @@ var active_cells: Dictionary = {}
 
 func _ready() -> void:
 	_load_state()
-	get_tree().tree_exiting.connect(_capture_all_active_cells)
+	# tree_exiting is a Node signal; SceneTree itself does not expose it.
+	tree_exiting.connect(_capture_all_active_cells)
 
 
 func _notification(what: int) -> void:
