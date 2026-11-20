@@ -7,7 +7,7 @@ import unittest
 import zipfile
 from pathlib import Path
 
-from shapely.geometry import LineString, Polygon, box, mapping, shape
+from shapely.geometry import LineString, Point, Polygon, box, mapping, shape
 from shapely.ops import transform
 
 import audit_baghdad_cell_connectivity as audit
@@ -156,8 +156,8 @@ class BaghdadCellConnectivityTests(unittest.TestCase):
             def wgs84(x, z):
                 return (44.3661 + x / (111319.49 * 0.835), 33.3152 - z / 110574.0)
             data["features"] = [
-                _feature(777, "node", __import__("shapely").geometry.Point(wgs84(40, 80))),
-                _feature(777, "node", __import__("shapely").geometry.Point(wgs84(260, 80))),
+                _feature(777, "node", Point(wgs84(40, 80))),
+                _feature(777, "node", Point(wgs84(260, 80))),
             ]
             path.write_text(json.dumps(data), encoding="utf-8")
             project = audit._projector()
@@ -224,7 +224,7 @@ class BaghdadCellConnectivityTests(unittest.TestCase):
             tile["layers"]["roads"].append(dict(road))
             tile["layers"]["roads"].append({
                 **road,
-                "geometry": mapping(LineString([(150, 100.01), (190, 100.01)])),
+                "geometry": mapping(LineString([(155, 100), (190, 100)])),
             })
             entries["cells/0_0.json"] = json.dumps(tile).encode()
             with zipfile.ZipFile(pack, "w", zipfile.ZIP_DEFLATED) as archive:
