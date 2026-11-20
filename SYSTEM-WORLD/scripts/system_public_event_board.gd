@@ -69,7 +69,7 @@ func _publish_result(category: String, headline: String, detail: String) -> void
 		"category": category,
 		"headline": headline,
 		"detail": detail,
-		"display_name": "SYSTEM HUNTER",
+		"display_name": _get_player_display_name(),
 		"timestamp": Time.get_datetime_string_from_system(false, true),
 		"verification": "LOCAL_GAMEPLAY_EVENT"
 	}
@@ -79,6 +79,15 @@ func _publish_result(category: String, headline: String, detail: String) -> void
 	_save_results()
 	_refresh_result_displays()
 	print("SYSTEM PUBLIC BOARD: ", category, " — ", headline)
+
+
+func _get_player_display_name() -> String:
+	var account_menu := get_tree().root.find_child("AccountMenu", true, false)
+	if account_menu != null:
+		var value: Variant = account_menu.get("player_name")
+		if value is String and not str(value).strip_edges().is_empty():
+			return str(value).strip_edges()
+	return "SYSTEM HUNTER"
 
 
 func _build_city_media_displays() -> void:
