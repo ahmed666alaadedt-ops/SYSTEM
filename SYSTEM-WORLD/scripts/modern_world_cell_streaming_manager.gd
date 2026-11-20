@@ -105,6 +105,7 @@ func _refresh_desired_cells(center: Vector2i) -> void:
 	if pending_loads.has(center):
 		pending_loads.erase(center)
 		pending_loads.push_front(center)
+	_update_loaded_cell_collisions(center)
 
 
 func _process_cell_queue() -> void:
@@ -169,22 +170,11 @@ func _load_cell(cell: Vector2i) -> void:
 	visual.material_override = terrain_material
 	visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	cell_root.add_child(visual)
-	var center_distance := maxi(absi(cell.x - _last_center_cell.x), absi(cell.y - _last_center_cell.y))
-	if center_distance <= collision_radius:
-		var body := StaticBody3D.new()
-		body.name = "TerrainCollision"
-		var shape := HeightMapShape3D.new()
-		shape.map_width = intervals + 1
-		shape.map_depth = intervals + 1
-		shape.map_data = heights
-		var collision := CollisionShape3D.new()
-		collision.shape = shape
-		collision.position = Vector3(cell_size * 0.5, 0.0, cell_size * 0.5)
-		collision.scale = Vector3(sample_spacing, 1.0, sample_spacing)
-		body.add_child(collision)
-		cell_root.add_child(body)
+	cell_root.set_meta("terrain_height_data", heights)
 	add_child(cell_root)
 	loaded_cells[cell] = cell_root
+	var center_distance := maxi(absi(cell.x - _last_center_cell.x), absi(cell.y - _last_center_cell.y))
+	_set_cell_collision(cell_root, center_distance <= collision_radius)
 
 
 
@@ -204,6 +194,39 @@ func _terrain_color_for_height(height: float, x: float, z: float) -> Color:
 	if height < 75.0:
 		return Color(0.38, 0.36, 0.29)
 	return Color(0.48, 0.47, 0.43)
+
+
+
+func _update_loaded_cell_collisions(center: Vector2i) -> void:
+	for key in loaded_cells.keys():
+		var cell: Vector2i = key
+		var cell_root: Node3D = loaded_cells[cell]
+		var distance := maxi(absi(cell.x - center.x), absi(cell.y - center.y))
+		_set_cell_collision(cell_root, distance <= collision_radius)
+
+
+func _set_cell_collision(cell_root: Node3D, enabled: bool) -> void:
+	var existing := cell_root.get_node_or_null("TerrainCollision") as StaticBody3D
+	if not enabled:
+		if existing != null:
+			existing.queue_free()
+		return
+	if existing != null:
+		return
+	var heights: PackedFloat32Array = cell_root.get_meta("terrain_height_data")
+	var intervals := int(round(cell_size / sample_spacing))
+	var body := StaticBody3D.new()
+	body.name = "TerrainCollision"
+	var shape := HeightMapShape3D.new()
+	shape.map_width = intervals + 1
+	shape.map_depth = intervals + 1
+	shape.map_data = heights
+	var collision := CollisionShape3D.new()
+	collision.shape = shape
+	collision.position = Vector3(cell_size * 0.5, 0.0, cell_size * 0.5)
+	collision.scale = Vector3(sample_spacing, 1.0, sample_spacing)
+	body.add_child(collision)
+	cell_root.add_child(body)
 
 
 func _unload_cell(cell: Vector2i) -> void:
