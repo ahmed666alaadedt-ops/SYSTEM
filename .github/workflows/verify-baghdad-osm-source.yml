@@ -138,6 +138,7 @@ jobs:
           path: |
             ${{ runner.temp }}/baghdad-source/baghdad-municipality-5638803.osm.pbf
             ${{ runner.temp }}/baghdad-source/baghdad-source-verification.json
-            ${{ runner.temp }}/baghdad-source/ATTRIBUTION.txt\n            ${{ runner.temp }}/baghdad-source/IQ.osm.pbf.sha256
+            ${{ runner.temp }}/baghdad-source/ATTRIBUTION.txt
+            ${{ runner.temp }}/baghdad-source/IQ.osm.pbf.sha256
           if-no-files-found: error
           retention-days: 14
