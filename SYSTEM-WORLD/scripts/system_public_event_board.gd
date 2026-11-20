@@ -107,8 +107,8 @@ func _build_city_media_displays() -> void:
 
 		var ad_label := Label3D.new()
 		ad_label.name = "CuratedCampaignText"
-		ad_label.text = "SYSTEM CITY\nمساحة إعلانية رقمية"
-		ad_label.position = Vector3(0.0, 18.0, -1.02)
+		ad_label.text = "SYSTEM CITY — " + city_name + "\nحملة تجريبية | مساحة إعلانية رقمية"
+		ad_label.position = Vector3(0.0, 31.0, -10.02)
 		ad_label.font_size = 42
 		ad_label.pixel_size = 0.012
 		ad_label.modulate = Color(0.78, 0.96, 1.0)
@@ -129,6 +129,7 @@ func _build_city_media_displays() -> void:
 		result_label.outline_size = 7
 		display_root.add_child(result_label)
 		result_labels[city_name] = result_label
+	_refresh_result_displays()
 
 
 func _add_skyscraper(parent: Node3D, building_material: Material, trim_material: Material) -> void:
@@ -167,8 +168,8 @@ func _load_results() -> void:
 	var saved: Array = config.get_value("public_board", "results", [])
 	results.clear()
 	for value in saved:
-		if value is Dictionary:
-			results.append((value as Dictionary).duplicate(true))
+		if typeof(value) == TYPE_DICTIONARY:
+			results.append(value.duplicate(true))
 	while results.size() > MAX_STORED_RESULTS:
 		results.pop_back()
 
