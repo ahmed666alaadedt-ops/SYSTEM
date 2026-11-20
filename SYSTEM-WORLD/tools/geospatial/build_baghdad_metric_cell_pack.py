@@ -81,6 +81,13 @@ def _rounded(value):
 def _geometry_payload(geometry):
     if geometry.is_empty:
         return None
+    if geometry.geom_type == "GeometryCollection":
+        parts = [
+            _geometry_payload(part)
+            for part in geometry.geoms
+            if not part.is_empty
+        ]
+        return {"type": "GeometryCollection", "geometries": [p for p in parts if p]}
     from shapely.geometry import mapping
     return {
         "type": geometry.geom_type,
@@ -93,6 +100,7 @@ def main() -> None:
     parser.add_argument("--input-dir", required=True, type=pathlib.Path)
     parser.add_argument("--output", required=True, type=pathlib.Path)
     parser.add_argument("--cell-size", type=float, default=DEFAULT_CELL_SIZE)
+    parser.add_argument("--source-timestamp", required=True)
     parser.add_argument(
         "--cell-bounds",
         default="-2,2,-2,2",
@@ -189,7 +197,7 @@ def main() -> None:
         "cell_bounds_inclusive": [min_x, max_x, min_z, max_z],
         "source": "OpenStreetMap contributors; BBBike.org",
         "license": "ODbL-1.0",
-        "source_snapshot": "2026-11-19T23:32:47Z",
+        "source_snapshot": args.source_timestamp,
         "boundary_relation": 5638803,
         "source_feature_counts": dict(source_counts),
         "emitted_feature_parts": dict(emitted_counts),
