@@ -9,6 +9,7 @@ on:
       - "SYSTEM-WORLD/data/geography/GEOSPATIAL_IMPORT_PLAN.md"
       - "SYSTEM-WORLD/data/geography/real_world_registry.json"
       - "SYSTEM-WORLD/tools/geospatial/clip_osm_geojson_layers.py"
+      - "SYSTEM-WORLD/tools/geospatial/build_baghdad_metric_cell_pack.py"
   workflow_dispatch:
 
 permissions:
@@ -266,6 +267,40 @@ jobs:
           )
           PY
 
+      - name: Build initial 5x5 Baghdad metric cell pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/baghdad-source"
+          python3 -m pip install --disable-pip-version-check "shapely==2.1.2"
+          python3 "$GITHUB_WORKSPACE/SYSTEM-WORLD/tools/geospatial/build_baghdad_metric_cell_pack.py" \
+            --input-dir "$RUNNER_TEMP/baghdad-source/clipped_layers" \
+            --output "$RUNNER_TEMP/baghdad-source/baghdad-metric-cell-pack-5x5.zip" \
+            --cell-size 200 \
+            --cell-bounds=-2,2,-2,2
+          python3 - <<'PY'
+          import json
+          import zipfile
+          from pathlib import Path
+
+          path = Path("baghdad-metric-cell-pack-5x5.zip")
+          with zipfile.ZipFile(path) as archive:
+              manifest = json.loads(archive.read("manifest.json"))
+              tile_names = [name for name in archive.namelist() if name.startswith("cells/")]
+              assert manifest["region_id"] == "iraq_baghdad_region"
+              assert manifest["coordinate_system"] == "SYSTEM_LOCAL_ECEF_TANGENT"
+              assert manifest["cell_size_m"] == 200.0
+              assert manifest["cell_bounds_inclusive"] == [-2, 2, -2, 2]
+              assert len(tile_names) == manifest["cell_count"]
+              assert 1 <= len(tile_names) <= 25
+              for name in tile_names:
+                  tile = json.loads(archive.read(name))
+                  assert tile["region_id"] == manifest["region_id"]
+                  assert tile["cell_size_m"] == 200.0
+                  assert isinstance(tile.get("layers"), dict)
+          print("Validated Baghdad 5x5 metric cell pack:", path.stat().st_size, "bytes;", len(tile_names), "occupied cells.")
+          PY
+
       - name: Add attribution and source notes
         shell: bash
         run: |
@@ -293,6 +328,7 @@ jobs:
             ${{ runner.temp }}/baghdad-source/baghdad-source-verification.json
             ${{ runner.temp }}/baghdad-source/clipped_layers/clip-report.json
             ${{ runner.temp }}/baghdad-source/clipped_layers/*.geojson
+            ${{ runner.temp }}/baghdad-source/baghdad-metric-cell-pack-5x5.zip
             ${{ runner.temp }}/baghdad-source/ATTRIBUTION.txt
             ${{ runner.temp }}/baghdad-source/iraq.osm.pbf.sha256
           if-no-files-found: error
