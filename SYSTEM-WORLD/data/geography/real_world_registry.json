@@ -184,7 +184,15 @@
           "node": 1,
           "way": 55,
           "relation": 13
-        }
+        },
+        "geometry_type": "MultiPolygon",
+        "geometry_bounds_wgs84": [
+          44.1846152,
+          33.1797569,
+          44.5699963,
+          33.4868251
+        ],
+        "geometry_status": "extracted_and_preliminarily_shape_inspected; official boundary validation still required"
       }
     }
   ],
