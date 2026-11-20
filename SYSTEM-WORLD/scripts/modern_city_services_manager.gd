@@ -5,12 +5,19 @@ class_name ModernCityServicesManager
 ## Functional service menus, interiors and backend transactions are future work.
 
 const SERVICE_DATA := [
-	{"id": "hospital", "name": "General Hospital", "prompt": "المستشفى — الخدمات الطبية قيد التطوير", "color": Color(0.78, 0.82, 0.82), "height": 22.0},
-	{"id": "police", "name": "Police Headquarters", "prompt": "مركز الشرطة — خدمات القانون قيد التطوير", "color": Color(0.18, 0.28, 0.38), "height": 19.0},
+	{"id": "hospital", "name": "General Hospital", "prompt": "المستشفى — العلاج والخدمات الطبية", "color": Color(0.78, 0.82, 0.82), "height": 22.0},
+	{"id": "police", "name": "Police Headquarters", "prompt": "مركز الشرطة — البلاغات والقانون", "color": Color(0.18, 0.28, 0.38), "height": 19.0},
 	{"id": "fire", "name": "Fire and Rescue Station", "prompt": "مركز الإطفاء والإنقاذ", "color": Color(0.55, 0.18, 0.12), "height": 13.0},
-	{"id": "hotel", "name": "Grand City Hotel", "prompt": "الفندق — الحجز والإقامة قيد التطوير", "color": Color(0.48, 0.38, 0.26), "height": 28.0},
-	{"id": "market", "name": "Central Market", "prompt": "السوق المركزي — التجارة قيد التطوير", "color": Color(0.38, 0.42, 0.31), "height": 12.0},
-	{"id": "garage", "name": "Vehicle Service Garage", "prompt": "كراج المركبات — الصيانة قيد التطوير", "color": Color(0.25, 0.31, 0.35), "height": 11.0}
+	{"id": "hotel", "name": "Grand City Hotel", "prompt": "الفندق — الحجز والإقامة", "color": Color(0.48, 0.38, 0.26), "height": 28.0},
+	{"id": "market", "name": "Central Market", "prompt": "السوق المركزي — البيع والشراء", "color": Color(0.38, 0.42, 0.31), "height": 12.0},
+	{"id": "garage", "name": "Vehicle Service Garage", "prompt": "كراج المركبات — الصيانة", "color": Color(0.25, 0.31, 0.35), "height": 11.0},
+	{"id": "school", "name": "Public School", "prompt": "المدرسة — التعليم والأنشطة", "color": Color(0.72, 0.58, 0.34), "height": 10.0},
+	{"id": "university", "name": "City University", "prompt": "الجامعة — التعليم والبحث", "color": Color(0.34, 0.39, 0.52), "height": 16.0},
+	{"id": "stadium", "name": "Football Stadium", "prompt": "ملعب كرة القدم — المباريات والفعاليات", "color": Color(0.24, 0.34, 0.28), "height": 18.0},
+	{"id": "shops", "name": "Shopping Street", "prompt": "المحلات التجارية — التسوق", "color": Color(0.48, 0.34, 0.27), "height": 9.0},
+	{"id": "restaurant", "name": "City Restaurant", "prompt": "المطعم — الطعام والضيافة", "color": Color(0.58, 0.30, 0.20), "height": 9.0},
+	{"id": "bank", "name": "City Bank", "prompt": "المصرف — الخدمات المالية", "color": Color(0.30, 0.40, 0.48), "height": 13.0},
+	{"id": "mall", "name": "Shopping Mall", "prompt": "المركز التجاري — التسوق والترفيه", "color": Color(0.38, 0.42, 0.48), "height": 17.0}
 ]
 
 var region_manager: Node
@@ -40,7 +47,7 @@ func _build_city_services(city_name: String) -> void:
 	for index in range(SERVICE_DATA.size()):
 		var definition: Dictionary = SERVICE_DATA[index]
 		var angle := TAU * float(index) / float(SERVICE_DATA.size()) + deg_to_rad(15.0)
-		var requested := Vector2(anchor.x, anchor.z) + Vector2(cos(angle), sin(angle)) * 205.0
+		var requested := Vector2(anchor.x, anchor.z) + Vector2(cos(angle), sin(angle)) * (310.0 if str(definition["id"]) == "stadium" else 205.0)
 		var resolved: Vector2 = region_manager.call("_nearest_land_position", requested)
 		if resolved == Vector2.INF:
 			continue
@@ -125,6 +132,18 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 
 	var width := 16.0 if service_id != "hotel" else 20.0
 	var depth := 14.0 if service_id != "hotel" else 18.0
+	if service_id == "stadium":
+		width = 96.0
+		depth = 76.0
+	elif service_id == "mall":
+		width = 34.0
+		depth = 28.0
+	elif service_id == "school" or service_id == "university":
+		width = 28.0
+		depth = 22.0
+	elif service_id == "shops":
+		width = 38.0
+		depth = 12.0
 	var height := float(definition["height"])
 	var facade := _material(definition["color"], 0.78, 0.12)
 	var roof_material := _material(Color(0.10, 0.13, 0.16), 0.55, 0.25)
@@ -174,6 +193,13 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 			window.visibility_range_end = 1100.0
 			building.add_child(window)
 
+	if service_id == "stadium":
+		_create_stadium_details(building, width, depth)
+	elif service_id == "school" or service_id == "university":
+		_create_civic_courtyard(building, width, depth, park_material)
+	elif service_id == "shops":
+		_create_shopfronts(building, width, depth, glass, roof_material)
+
 	var door := MeshInstance3D.new()
 	var door_mesh := BoxMesh.new()
 	door_mesh.size = Vector3(2.2, 3.0, 0.18)
@@ -220,3 +246,73 @@ func _material(color: Color, roughness: float, metallic: float) -> StandardMater
 
 func get_service_locations() -> Array[Dictionary]:
 	return service_locations.duplicate(true)
+
+func _create_stadium_details(parent: Node3D, width: float, depth: float) -> void:
+	var pitch_material := _material(Color(0.08, 0.34, 0.12), 0.95)
+	var line_material := _material(Color(0.92, 0.94, 0.86), 0.9)
+	var pitch := MeshInstance3D.new()
+	pitch.name = "FootballPitch"
+	var pitch_mesh := BoxMesh.new()
+	pitch_mesh.size = Vector3(width * 0.56, 0.18, depth * 0.52)
+	pitch.mesh = pitch_mesh
+	pitch.position.y = 1.2
+	pitch.material_override = pitch_material
+	parent.add_child(pitch)
+	for side in [-1.0, 1.0]:
+		var stand := MeshInstance3D.new()
+		stand.name = "SpectatorStand_%s" % str(side)
+		var stand_mesh := BoxMesh.new()
+		stand_mesh.size = Vector3(width * 0.72, 8.0, 10.0)
+		stand.mesh = stand_mesh
+		stand.position = Vector3(0.0, 5.0, side * depth * 0.39)
+		stand.material_override = _material(Color(0.28, 0.32, 0.38), 0.82)
+		parent.add_child(stand)
+	for side in [-1.0, 1.0]:
+		var goal := MeshInstance3D.new()
+		goal.name = "GoalFrame_%s" % str(side)
+		var goal_mesh := BoxMesh.new()
+		goal_mesh.size = Vector3(7.3, 2.5, 0.18)
+		goal.mesh = goal_mesh
+		goal.position = Vector3(0.0, 2.5, side * depth * 0.27)
+		goal.material_override = line_material
+		parent.add_child(goal)
+	var center_line := MeshInstance3D.new()
+	center_line.name = "PitchCenterLine"
+	var center_mesh := BoxMesh.new()
+	center_mesh.size = Vector3(0.16, 0.035, depth * 0.52)
+	center_line.mesh = center_mesh
+	center_line.position.y = 1.31
+	center_line.material_override = line_material
+	parent.add_child(center_line)
+
+
+func _create_civic_courtyard(parent: Node3D, width: float, depth: float, green: Material) -> void:
+	var yard := MeshInstance3D.new()
+	yard.name = "SchoolOrUniversityCourtyard"
+	var yard_mesh := BoxMesh.new()
+	yard_mesh.size = Vector3(width * 0.72, 0.16, depth * 0.5)
+	yard.mesh = yard_mesh
+	yard.position = Vector3(0.0, 0.12, depth * 0.68)
+	yard.material_override = green
+	parent.add_child(yard)
+
+
+func _create_shopfronts(parent: Node3D, width: float, depth: float, glass: Material, trim: Material) -> void:
+	for index in range(5):
+		var shop := MeshInstance3D.new()
+		shop.name = "Shopfront_%02d" % index
+		var shop_mesh := BoxMesh.new()
+		shop_mesh.size = Vector3(width / 6.0, 3.2, 0.16)
+		shop.mesh = shop_mesh
+		shop.position = Vector3(-width * 0.4 + float(index) * width * 0.2, 2.0, -depth * 0.5 - 0.12)
+		shop.material_override = glass
+		parent.add_child(shop)
+		var awning := MeshInstance3D.new()
+		awning.name = "ShopAwning_%02d" % index
+		var awning_mesh := BoxMesh.new()
+		awning_mesh.size = Vector3(width / 6.0, 0.22, 1.5)
+		awning.mesh = awning_mesh
+		awning.position = Vector3(shop.position.x, 4.0, -depth * 0.5 - 0.9)
+		awning.material_override = trim
+		parent.add_child(awning)
+
