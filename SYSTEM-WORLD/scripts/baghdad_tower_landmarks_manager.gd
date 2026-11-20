@@ -395,21 +395,43 @@ func _create_rooftop_city_links() -> void:
 		lift_cabin.position = access_base + Vector3(0.0, 2.0, 0.0)
 		lift_cabin.set_meta("system_elevator_busy", false)
 		upper_city.add_child(lift_cabin)
-		var cabin_mesh_instance := MeshInstance3D.new()
-		cabin_mesh_instance.name = "CabinBody"
-		var cabin_mesh := BoxMesh.new()
-		cabin_mesh.size = Vector3(5.2, 4.0, 5.2)
-		cabin_mesh_instance.mesh = cabin_mesh
-		cabin_mesh_instance.material_override = trim_material
-		lift_cabin.add_child(cabin_mesh_instance)
+		# Open passenger platform: solid walkable floor with visible safety rails,
+		# leaving the center clear so the player can stand inside while riding.
+		var cabin_floor := MeshInstance3D.new()
+		cabin_floor.name = "CabinWalkableFloor"
+		var cabin_floor_mesh := BoxMesh.new()
+		cabin_floor_mesh.size = Vector3(5.2, 0.36, 5.2)
+		cabin_floor.mesh = cabin_floor_mesh
+		cabin_floor.position.y = -1.82
+		cabin_floor.material_override = trim_material
+		lift_cabin.add_child(cabin_floor)
 		var cabin_collision_body := StaticBody3D.new()
-		cabin_collision_body.name = "CabinCollisionBody"
+		cabin_collision_body.name = "CabinFloorCollisionBody"
 		var cabin_collision := CollisionShape3D.new()
 		var cabin_shape := BoxShape3D.new()
-		cabin_shape.size = Vector3(5.2, 4.0, 5.2)
+		cabin_shape.size = cabin_floor_mesh.size
 		cabin_collision.shape = cabin_shape
+		cabin_collision.position.y = cabin_floor.position.y
 		cabin_collision_body.add_child(cabin_collision)
 		lift_cabin.add_child(cabin_collision_body)
+		for rail_index in range(4):
+			var rail := MeshInstance3D.new()
+			rail.name = "CabinSafetyRail_%02d" % rail_index
+			var rail_mesh := BoxMesh.new()
+			rail_mesh.size = Vector3(5.2, 0.16, 0.16) if rail_index < 2 else Vector3(0.16, 0.16, 5.2)
+			rail.mesh = rail_mesh
+			rail.position = Vector3(0.0, -0.72, -2.52) if rail_index == 0 else (Vector3(0.0, -0.72, 2.52) if rail_index == 1 else (Vector3(-2.52, -0.72, 0.0) if rail_index == 2 else Vector3(2.52, -0.72, 0.0)))
+			rail.material_override = emissive_material
+			lift_cabin.add_child(rail)
+		for post_index in range(4):
+			var post := MeshInstance3D.new()
+			post.name = "CabinSafetyPost_%02d" % post_index
+			var post_mesh := BoxMesh.new()
+			post_mesh.size = Vector3(0.16, 2.2, 0.16)
+			post.mesh = post_mesh
+			post.position = Vector3(-2.52 if post_index < 2 else 2.52, -0.72, -2.52 if post_index % 2 == 0 else 2.52)
+			post.material_override = trim_material
+			lift_cabin.add_child(post)
 		_create_elevator_call_panel(upper_city, lift_cabin, access_base, access_top, index, false)
 		_create_elevator_call_panel(upper_city, lift_cabin, access_top, access_base, index, true)
 		var landing := MeshInstance3D.new()
@@ -447,7 +469,7 @@ func _create_elevator_call_panel(parent: Node3D, cabin: Node3D, panel_position: 
 	panel.set_meta("system_location_type", 7)
 	panel.add_to_group("system_interactable")
 	panel.add_to_group("system_rooftop_elevator_call")
-	panel.configure(null, cabin, destination_position + Vector3(0.0, 2.0, 0.0), destination_position + Vector3(0.0, 1.0, 5.0), "مصعد البرج %02d" % (tower_index + 1))
+	panel.configure(null, cabin, destination_position + Vector3(0.0, 2.0, 0.0), destination_position + Vector3(0.0, 1.1, 0.0), "مصعد البرج %02d" % (tower_index + 1))
 
 
 func _create_connected_city_links() -> void:
