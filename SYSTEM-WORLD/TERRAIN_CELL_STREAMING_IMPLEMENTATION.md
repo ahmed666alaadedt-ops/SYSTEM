@@ -39,7 +39,7 @@ This is a geometry primitive only: current city road, river, coast, bridge and n
 
 **CI status:** [Canonical Godot validation run 44707771587](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44707771587) completed successfully for commit `5292a22e4330a3e11574d91e80c6b81d3a875384`. Godot import/parse, terrain streaming seam/lifecycle/partial-edge tests, existing safety/geography/gate tests and headless main-scene launch all passed.
 
-**Canonical Android APK with Baghdad OSM cells:** [Build run 44709811736](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44709811736) completed successfully. It downloaded/unpacked the OSM pack, passed the Baghdad OSM runtime geometry test, headless main-scene launch, companion and NPC checks, then exported and uploaded artifact `SYSTEM-WORLD-canonical-android-debug-apk` (ID `14616791960`, 35.6 MB). This confirms export and automated headless checks, not on-device performance or visual acceptance.
+**Canonical Android APK with Baghdad OSM cells:** [Build run 44710045959](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44710045959) completed successfully. It downloaded/unpacked the OSM pack, passed the Baghdad OSM runtime geometry test, headless main-scene launch, companion and NPC checks, then exported and uploaded artifact `SYSTEM-WORLD-canonical-android-debug-apk` (ID `14616791960`, 35.6 MB). This confirms export and automated headless checks, not on-device performance or visual acceptance.
 
 ## Important scope limitation
 
