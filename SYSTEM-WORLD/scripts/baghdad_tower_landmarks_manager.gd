@@ -297,6 +297,16 @@ func _create_link_deck(parent: Node3D, start: Vector3, finish: Vector3, deck_nam
 	deck.rotation.y = atan2(delta.x, delta.z)
 	deck.material_override = material
 	parent.add_child(deck)
+	var collision_body := StaticBody3D.new()
+	collision_body.name = deck_name + "_Collision"
+	collision_body.position = midpoint
+	collision_body.rotation.y = deck.rotation.y
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = mesh.size
+	collision.shape = shape
+	collision_body.add_child(collision)
+	parent.add_child(collision_body)
 
 
 func _create_vehicle_access_ramp(parent: Node3D, tower_position: Vector3, index: int) -> void:
@@ -333,4 +343,80 @@ func _create_public_amenities() -> void:
 		deck.material_override = spec["material"]
 		amenities.add_child(deck)
 	amenities.set_meta("planned_facilities", PackedStringArray(["parks", "restaurants", "cafes", "hotels", "cinema", "amusement_park", "water_park", "swimming_pools", "sports_courts", "family_services", "parking", "emergency_access"]))
+	_create_multilevel_parking_blockout(amenities)
+	_create_vertical_access_blockout(amenities)
+
+
+func _create_multilevel_parking_blockout(parent: Node3D) -> void:
+	var garage := Node3D.new()
+	garage.name = "ConnectedDistrictParkingGarage_Blockout"
+	garage.position = city_anchor + Vector3(112.0, 0.0, 24.0)
+	parent.add_child(garage)
+	var floor_material := _make_surface_material(Color(0.12, 0.15, 0.18), 0.82, 0.28)
+	var marking_material := _make_surface_material(Color(0.88, 0.78, 0.48), 0.7, 0.0)
+	for level in range(3):
+		var y := 8.0 + float(level) * 6.0
+		var slab := MeshInstance3D.new()
+		slab.name = "ParkingLevel_%02d" % level
+		var slab_mesh := BoxMesh.new()
+		slab_mesh.size = Vector3(72.0, 0.65, 48.0)
+		slab.mesh = slab_mesh
+		slab.position = Vector3(0.0, y, 0.0)
+		slab.material_override = floor_material
+		garage.add_child(slab)
+		_add_static_box_collision(garage, "ParkingLevelCollision_%02d" % level, slab.position, slab_mesh.size)
+		for bay in range(10):
+			var line := MeshInstance3D.new()
+			line.name = "ParkingBayLine_%02d_%02d" % [level, bay]
+			var line_mesh := BoxMesh.new()
+			line_mesh.size = Vector3(0.14, 0.04, 5.4)
+			line.mesh = line_mesh
+			line.position = Vector3(-31.0 + float(bay) * 6.8, y + 0.36, -13.0)
+			line.material_override = marking_material
+			garage.add_child(line)
+	for level in range(2):
+		var ramp_start := Vector3(-25.0, 8.35 + float(level) * 6.0, 16.0)
+		var ramp_end := Vector3(25.0, 14.35 + float(level) * 6.0, 16.0)
+		_create_link_deck(garage, ramp_start, ramp_end, "ParkingRamp_%02d" % level, 8.0, 0.55, floor_material)
+	garage.set_meta("levels", 3)
+	garage.set_meta("parking_bays_visual", 30)
+
+
+func _create_vertical_access_blockout(parent: Node3D) -> void:
+	var access := Node3D.new()
+	access.name = "PedestrianElevatorAndServiceCore_Blockout"
+	access.position = city_anchor + Vector3(-112.0, 0.0, 24.0)
+	parent.add_child(access)
+	var core_material := _make_surface_material(Color(0.18, 0.25, 0.31), 0.5, 0.42)
+	for shaft_index in range(2):
+		var shaft := MeshInstance3D.new()
+		shaft.name = "ElevatorShaftVisual_%02d" % shaft_index
+		var shaft_mesh := BoxMesh.new()
+		shaft_mesh.size = Vector3(7.0, 34.0, 7.0)
+		shaft.mesh = shaft_mesh
+		shaft.position = Vector3(float(shaft_index) * 10.0, 17.0, 0.0)
+		shaft.material_override = core_material
+		access.add_child(shaft)
+	access.set_meta("planned_access", PackedStringArray(["passenger_elevator", "service_elevator", "emergency_stairwell"]))
+	access.set_meta("interactive_lift_ready", false)
+
+
+func _add_static_box_collision(parent: Node3D, node_name: String, position: Vector3, size: Vector3) -> void:
+	var body := StaticBody3D.new()
+	body.name = node_name
+	body.position = position
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = size
+	collision.shape = shape
+	body.add_child(collision)
+	parent.add_child(body)
+
+
+func _make_surface_material(color: Color, roughness: float, metallic: float) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.roughness = roughness
+	material.metallic = metallic
+	return material
 
