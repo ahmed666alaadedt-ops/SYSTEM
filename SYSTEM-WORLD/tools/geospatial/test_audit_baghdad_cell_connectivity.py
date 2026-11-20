@@ -586,5 +586,101 @@ class BaghdadCellConnectivityTests(unittest.TestCase):
             self.assertGreater(result["overlapping_parts"], 0)
 
 
+    def test_waterway_bridge_and_railway_actual_line_seams_are_checked(self):
+        for layer in ("waterways", "bridges", "railway"):
+            with self.subTest(layer=layer), tempfile.TemporaryDirectory() as temp:
+                source, pack = _make_fixture(Path(temp))
+                with zipfile.ZipFile(pack, "r") as archive:
+                    entries = {name: archive.read(name) for name in archive.namelist()}
+                tile = json.loads(entries["cells/1_0.json"])
+                feature = tile["layers"][layer][0]
+                geometry = shape(feature["geometry"])
+                self.assertIn(geometry.geom_type, ("LineString", "MultiLineString"))
+                if geometry.geom_type == "LineString":
+                    coordinates = list(geometry.coords)
+                    edge_index = min(
+                        range(len(coordinates)),
+                        key=lambda index: abs(coordinates[index][0] - 200.0),
+                    )
+                    coordinates[edge_index] = (
+                        coordinates[edge_index][0] + 5.0,
+                        coordinates[edge_index][1],
+                    )
+                    feature["geometry"] = mapping(LineString(coordinates))
+                else:
+                    parts = []
+                    for line in geometry.geoms:
+                        coordinates = list(line.coords)
+                        edge_index = min(
+                            range(len(coordinates)),
+                            key=lambda index: abs(coordinates[index][0] - 200.0),
+                        )
+                        coordinates[edge_index] = (
+                            coordinates[edge_index][0] + 5.0,
+                            coordinates[edge_index][1],
+                        )
+                        parts.append(LineString(coordinates))
+                    feature["geometry"] = mapping(MultiLineString(parts))
+                entries["cells/1_0.json"] = json.dumps(tile).encode()
+                with zipfile.ZipFile(pack, "w", zipfile.ZIP_DEFLATED) as archive:
+                    for name, payload in entries.items():
+                        archive.writestr(name, payload)
+
+                result = audit.audit_pack(source, pack)
+                self.assertEqual(result["status"], "failed", result["errors"])
+                self.assertGreater(result["disconnected_seams"], 0)
+                self.assertTrue(
+                    any("Actual geometry seam mismatch" in error for error in result["errors"])
+                )
+
+    def test_missing_waterway_bridge_and_railway_neighbor_fragments_are_detected(self):
+        for layer in ("waterways", "bridges", "railway"):
+            with self.subTest(layer=layer), tempfile.TemporaryDirectory() as temp:
+                source, pack = _make_fixture(Path(temp))
+                with zipfile.ZipFile(pack, "r") as archive:
+                    entries = {name: archive.read(name) for name in archive.namelist()}
+                tile = json.loads(entries["cells/1_0.json"])
+                self.assertTrue(tile["layers"][layer])
+                tile["layers"][layer] = []
+                entries["cells/1_0.json"] = json.dumps(tile).encode()
+                with zipfile.ZipFile(pack, "w", zipfile.ZIP_DEFLATED) as archive:
+                    for name, payload in entries.items():
+                        archive.writestr(name, payload)
+
+                result = audit.audit_pack(source, pack)
+                self.assertEqual(result["status"], "failed", result["errors"])
+                self.assertGreater(result["missing_neighbor_fragments"], 0)
+                self.assertGreater(result["disconnected_seams"], 0)
+
+    def test_actual_building_polygon_boundary_mismatch_is_reported(self):
+        with tempfile.TemporaryDirectory() as temp:
+            source, pack = _make_fixture(Path(temp))
+            with zipfile.ZipFile(pack, "r") as archive:
+                entries = {name: archive.read(name) for name in archive.namelist()}
+            tile = json.loads(entries["cells/1_0.json"])
+            building = tile["layers"]["buildings"][0]
+            polygon = shape(building["geometry"])
+            self.assertEqual(polygon.geom_type, "Polygon")
+            exterior = list(polygon.exterior.coords)
+            edge_index = min(
+                range(len(exterior)),
+                key=lambda index: abs(exterior[index][0] - 200.0),
+            )
+            exterior[edge_index] = (
+                exterior[edge_index][0] + 5.0,
+                exterior[edge_index][1],
+            )
+            building["geometry"] = mapping(Polygon(exterior))
+            entries["cells/1_0.json"] = json.dumps(tile).encode()
+            with zipfile.ZipFile(pack, "w", zipfile.ZIP_DEFLATED) as archive:
+                for name, payload in entries.items():
+                    archive.writestr(name, payload)
+
+            result = audit.audit_pack(source, pack)
+            self.assertEqual(result["status"], "failed")
+            self.assertGreater(result["mismatched_feature_cell_parts"], 0)
+            self.assertGreater(result["disconnected_seams"], 0)
+
+
 if __name__ == "__main__":
     unittest.main()
