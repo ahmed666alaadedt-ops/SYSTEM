@@ -48,7 +48,7 @@ jobs:
         run: |
           set -euo pipefail
           cd "$RUNNER_TEMP/baghdad-source"
-          osmium getid --add-referenced iraq.osm.pbf r5638803 \
+          osmium getid --add-referenced --remove-tags iraq.osm.pbf r5638803 \
             --output baghdad-municipality-5638803.osm.pbf
           osmium check-refs baghdad-municipality-5638803.osm.pbf
           osmium cat baghdad-municipality-5638803.osm.pbf \
@@ -123,6 +123,79 @@ jobs:
           print(json.dumps(report, ensure_ascii=False, indent=2))
           PY
 
+      - name: Build Baghdad boundary geometry and clip municipal data
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/baghdad-source"
+          osmium export --geometry-types=polygon --attributes type,id \
+            --output baghdad-boundary.geojson \
+            baghdad-municipality-5638803.osm.pbf
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          data = json.loads(Path("baghdad-boundary.geojson").read_text(encoding="utf-8"))
+          features = data.get("features", [])
+          if len(features) != 1:
+              raise SystemExit(f"Expected one Baghdad boundary polygon, got {len(features)}")
+          feature = features[0]
+          geometry = feature.get("geometry") or {}
+          if geometry.get("type") not in ("Polygon", "MultiPolygon"):
+              raise SystemExit(f"Unexpected boundary geometry: {geometry.get('type')!r}")
+
+          def positions(value):
+              if isinstance(value, (list, tuple)) and value and isinstance(value[0], (int, float)):
+                  yield value
+              elif isinstance(value, (list, tuple)):
+                  for child in value:
+                      yield from positions(child)
+
+          coords = list(positions(geometry.get("coordinates", [])))
+          if not coords:
+              raise SystemExit("Baghdad boundary geometry has no coordinates")
+          longitudes = [p[0] for p in coords]
+          latitudes = [p[1] for p in coords]
+          bounds = [min(longitudes), min(latitudes), max(longitudes), max(latitudes)]
+          if not (43.5 <= bounds[0] < bounds[2] <= 45.2 and 32.8 <= bounds[1] < bounds[3] <= 34.0):
+              raise SystemExit(f"Baghdad boundary bounds are outside the expected Iraq region: {bounds}")
+
+          report = json.loads(Path("baghdad-source-verification.json").read_text(encoding="utf-8"))
+          report["boundary_geometry_type"] = geometry["type"]
+          report["boundary_feature_bounds_wgs84"] = bounds
+          report["boundary_geometry_status"] = "polygon_extracted; geographic review required"
+          Path("baghdad-source-verification.json").write_text(
+              json.dumps(report, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          print("Baghdad boundary bounds (WGS84):", bounds)
+          PY
+          osmium extract --polygon=baghdad-boundary.geojson --strategy=complete_ways --set-bounds \
+            --output baghdad-municipality-candidate.osm.pbf iraq.osm.pbf
+          osmium check-refs baghdad-municipality-candidate.osm.pbf
+          osmium fileinfo --extended --json baghdad-municipality-candidate.osm.pbf \
+            > baghdad-clip-fileinfo.json
+          python3 - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          report = json.loads(Path("baghdad-source-verification.json").read_text(encoding="utf-8"))
+          clip = Path("baghdad-municipality-candidate.osm.pbf")
+          report["baghdad_clip_file_size_bytes"] = clip.stat().st_size
+          report["baghdad_clip_sha256"] = hashlib.sha256(clip.read_bytes()).hexdigest()
+          report["baghdad_clip_fileinfo"] = json.loads(
+              Path("baghdad-clip-fileinfo.json").read_text(encoding="utf-8")
+          )
+          report["baghdad_clip_status"] = "municipal_clip_created; feature coverage and visual review required"
+          Path("baghdad-source-verification.json").write_text(
+              json.dumps(report, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          print("Baghdad municipal clip bytes:", report["baghdad_clip_file_size_bytes"])
+          print("Baghdad municipal clip SHA-256:", report["baghdad_clip_sha256"])
+          PY
+
       - name: Add attribution and source notes
         shell: bash
         run: |
@@ -145,6 +218,9 @@ jobs:
           name: SYSTEM-WORLD-Baghdad-OSM-boundary-candidate
           path: |
             ${{ runner.temp }}/baghdad-source/baghdad-municipality-5638803.osm.pbf
+            ${{ runner.temp }}/baghdad-source/baghdad-boundary.geojson
+            ${{ runner.temp }}/baghdad-source/baghdad-municipality-candidate.osm.pbf
+            ${{ runner.temp }}/baghdad-source/baghdad-clip-fileinfo.json
             ${{ runner.temp }}/baghdad-source/baghdad-source-verification.json
             ${{ runner.temp }}/baghdad-source/ATTRIBUTION.txt
             ${{ runner.temp }}/baghdad-source/iraq.osm.pbf.sha256
