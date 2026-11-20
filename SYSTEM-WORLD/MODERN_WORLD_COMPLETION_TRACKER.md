@@ -368,5 +368,7 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Persist the most recent 40 local-session event records in a user config file and show the latest four on every city/tower results display.
 - [x] Keep the advertising mode explicitly curated/demo; live commercial ads remain disabled until a compliant provider/backend, consent, moderation, privacy and legal review are implemented.
 - [ ] Implement server-authoritative cross-player champion rankings, global winner history, anti-cheat validation and privacy controls; current records are local to the player's device/session and are not a global leaderboard.
-- [ ] Validate facade orientation, screen readability, night brightness, occlusion, LOD, memory and Android frame rate in Godot and on physical devices.
-- Note: these are source-level scene-generation and gameplay-event connections. They have not yet been confirmed by a Godot run or Android device test in this update.
+- [x] Godot 4.3 project import/script parsing, missing-resource scan, and headless main-scene launch passed in GitHub Actions run 44741267042 on commit `efb156486d857c1a842fcbfb9278b3453923fd80`.
+- [ ] Validate facade orientation, screen readability, night brightness, occlusion, LOD, memory and Android frame rate on physical devices.
+- [ ] Complete Android APK export workflow and inspect the generated build on a device.
+- Note: CI confirms project parsing and headless scene startup, not visual correctness, gameplay feel, or physical-device performance. Local event records are not cross-player global rankings; an authoritative online service remains required.
