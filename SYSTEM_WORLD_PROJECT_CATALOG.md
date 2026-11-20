@@ -60,8 +60,8 @@ A successful headless launch or APK export does not prove visual quality, full g
 - The Baghdad city anchor is now read from the provisional WGS84 registry; the other thirteen city centers remain prototype coordinates.
 - Greed Island's return point is an extraction beacon, not a Star Gate, and the island defaults to closed outside an explicitly opened season.
 - Runtime QA scripts now cover the Baghdad geography anchor and Baghdad-only Star Gate placement. Latest CI status must be checked before treating the new gate QA as passed.
-- A Geofabrik Iraq OSM snapshot and Baghdad Municipality boundary have been recorded as source candidates only. `SYSTEM-WORLD/data/geography/GEOSPATIAL_IMPORT_PLAN.md` documents licensing, attribution, quality caveats and import gates; no source geometry has been imported.
-- `.github/workflows/verify-baghdad-osm-source.yml` downloads the pinned OSM snapshot, verifies its checksum, extracts relation 5638803 with referenced members, and validates the administrative boundary tags. Its first run is pending/in progress; do not claim the relation has been verified until the run finishes.
+- BBBike Iraq OSM data is verified at 2026-11-19 23:32:47 UTC; Baghdad relation 5638803 and its MultiPolygon boundary were extracted. A sanitized municipal PBF candidate clip (6.18 MB) and preliminary feature counts are recorded in the registry and import plan. The stale OpenStreetData 2023 extract is rejected for production; Geofabrik remains a network-unavailable fallback.
+- `.github/workflows/verify-baghdad-osm-source.yml` verifies the BBBike source timestamp and SHA-256, extracts and validates the Baghdad boundary, creates a contributor-metadata-cleaned municipal PBF clip, and records tagged feature counts. The latest revision also exports separate GeoJSON layers for review.
 
 ## Audit rule
 
