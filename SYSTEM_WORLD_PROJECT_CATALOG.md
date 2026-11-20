@@ -4,7 +4,7 @@
 **Repository:** https://github.com/ahmed666alaadedt-ops/SYSTEM  
 **Branch:** `main`  
 **Initial audit baseline:** `9f75f6bf3aecf096c9658320149a3816d18b631f`  
-**Latest stabilization commit at update:** `ed77e1eb98adce1666828bb7f3e40e47b3809b9a`
+**Latest stabilization commit at update:** `3dca98ce1d67ecde22412162d245a88f2b917590`
 
 This is the central index for the existing SYSTEM application and SYSTEM WORLD projects. It is an inventory, not a claim that the game is complete.
 
@@ -12,7 +12,7 @@ This is the central index for the existing SYSTEM application and SYSTEM WORLD p
 
 | Project | Role | Current repository inventory |
 |---|---|---|
-| `SYSTEM-WORLD/` | Canonical Godot runtime | 129 files, 92 GDScript files, 1 saved scene, 6 character GLBs |
+| `SYSTEM-WORLD/` | Canonical Godot runtime | 130 files, 92 GDScript files, 1 saved scene, 6 character GLBs |
 | `SYSTEM-WORLD-3D/` | Separate 3D prototype/reference | 86 files, 54 GDScript files, 9 saved scenes, 6 character GLBs |
 | `app/` | Android Compose/Firebase application | 149 files, 135 Kotlin files |
 
@@ -60,6 +60,7 @@ A successful headless launch or APK export does not prove visual quality, full g
 - The Baghdad city anchor is now read from the provisional WGS84 registry; the other thirteen city centers remain prototype coordinates.
 - Greed Island's return point is an extraction beacon, not a Star Gate, and the island defaults to closed outside an explicitly opened season.
 - Runtime QA scripts now cover the Baghdad geography anchor and Baghdad-only Star Gate placement. Latest CI status must be checked before treating the new gate QA as passed.
+- A Geofabrik Iraq OSM snapshot and Baghdad Municipality boundary have been recorded as source candidates only. `SYSTEM-WORLD/data/geography/GEOSPATIAL_IMPORT_PLAN.md` documents licensing, attribution, quality caveats and import gates; no source geometry has been imported.
 
 ## Audit rule
 
