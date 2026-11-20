@@ -147,3 +147,9 @@ GitHub file writes are confirmed for the scripts listed below. Godot parsing, sc
 - Schools and universities receive a simple courtyard; shopping streets receive repeated shopfront glazing and awnings. All remain lightweight procedural prototypes.
 - The service manager currently renders the nearest city and stores locations for all resolved cities. The service buildings are not yet complete interiors or fully playable systems: treatment, police case workflows, school schedules, university activities, matches/teams, shop inventories, purchases, restaurant service, banking, staff/NPC schedules and economy transactions still need implementation.
 - Runtime parsing, visual review, interaction testing and Android performance validation are still required.
+
+
+### 2026-11-20 — Expanded city service catalog
+- Added procedural service-location definitions for community pharmacies, bakeries, cafes, fuel/charging stations, public parks, bus stations, post offices, public libraries, urban rail stations, harbor terminals, cinemas, and fitness centers.
+- These join the existing hospitals, police/fire stations, hotels, markets, garages, schools, universities, football stadiums, shopping streets, restaurants, banks, and malls.
+- The manager continues to register service locations for each generated city and render the nearby active city's service building prototypes. These additions are discoverable prototype locations, not yet complete service simulations, interiors, public-transport schedules, shops with inventories, or functioning economy transactions.
