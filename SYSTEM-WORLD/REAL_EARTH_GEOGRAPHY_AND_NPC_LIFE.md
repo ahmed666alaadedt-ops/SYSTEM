@@ -100,15 +100,15 @@ Godot import, parser, scene launch, Android build and device performance must be
 
 ## 5. Candidate Baghdad geospatial sources — not yet imported
 
-- Primary candidate: BBBike Iraq OpenStreetMap PBF, provider-reported update 2026-10-16 06:00:02 UTC; exact embedded PBF timestamp and SHA-256 must be checked before use.
+- Verified source candidate: BBBike Iraq OpenStreetMap PBF. GitHub Actions verified the downloaded snapshot timestamp as 2026-11-19 23:32:47 UTC and SHA-256 `5cb6bbb8994d125ab159134c03972b3bcacc76c120661d7157844104f51c0fe5`.
 - Candidate source URL: `https://data.bbbike.org/osm/pbf/region/asia/iraq.osm.pbf`.
 - Fallback candidate: Geofabrik Iraq PBF snapshot `iraq-261117.osm.pbf`, dated 2026-11-17. GitHub Actions could not connect to its download host during verification.
 - OpenStreetData Iraq PBF was successfully downloaded and relation 5638803 was found, but its last OSM object timestamp was 2023-04-23 23:59:30 UTC. It is stale and is retained only for boundary/reference comparison, not current road/building production.
-- The Baghdad candidate relation is OSM relation 5638803, Arabic name `بغداد`, note `حدود امانة بغداد`, `boundary=administrative`, `admin_level=5`. Its exact municipal coverage still requires geographic review.
+- OSM relation 5638803 is present in the verified BBBike snapshot: Arabic name `بغداد`, note `حدود امانة بغداد`, `boundary=administrative`, `admin_level=5`, 69 members (1 node, 55 ways, 13 relations). Its exact municipal coverage and geometry still require geographic review.
 - OSM data uses the Open Database License (ODbL) 1.0. Preserve `© OpenStreetMap contributors` attribution and applicable share-alike obligations; include BBBike attribution when its extract is used.
 - OSM's Iraq reference page warns that many major highways and very few waterways are mapped. All candidate extracts require coverage review and supplementation from suitable official or independently licensed sources.
 
-The source candidates are recorded in `data/geography/real_world_registry.json`. The staged workflow, provenance, licensing, quality gates and offline packaging plan are documented in `data/geography/GEOSPATIAL_IMPORT_PLAN.md`. No roads, district polygons, water geometry, bridges or building footprints from these sources are yet present in the runtime. Do not treat source verification as a completed Baghdad map or as permission to begin detailed building production.
+The source candidates and verified snapshot metadata are recorded in `data/geography/real_world_registry.json`. The staged workflow, provenance, licensing, quality gates and offline packaging plan are documented in `data/geography/GEOSPATIAL_IMPORT_PLAN.md`. The relation-only boundary extraction passed reference checks, but the complete Baghdad municipal data pack has not yet been generated or reviewed. No real roads, district polygons, water geometry, bridges or building footprints from this source are yet present in the runtime. Do not treat relation verification as a completed Baghdad map or as permission to begin detailed building production.
 
 ## 6. Civilian crime, public safety and justice layer
 
