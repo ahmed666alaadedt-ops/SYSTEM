@@ -61,6 +61,19 @@ func _run_tests() -> void:
 	assert(streamer.loaded_cells.size() == 2)
 	streamer.queue_free()
 
+	var edge_streamer = STREAMER_SCRIPT.new()
+	root.add_child(edge_streamer)
+	edge_streamer._last_center_cell = Vector2i(3, 2)
+	assert(edge_streamer.configure(Callable(self, "_height_at"), 660.0, 460.0, 200.0, 20.0))
+	edge_streamer._load_cell(Vector2i(3, 2))
+	var edge_root: Node3D = edge_streamer.loaded_cells[Vector2i(3, 2)]
+	var edge_vertices: PackedVector3Array = edge_root.get_node("TerrainVisual").mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	assert(edge_vertices[edge_vertices.size() - 1].x == 60.0)
+	assert(edge_vertices[edge_vertices.size() - 1].z == 60.0)
+	var edge_shape := edge_root.get_node("TerrainCollision/TerrainHeightCollision").shape as HeightMapShape3D
+	assert(edge_shape.map_width == 4 and edge_shape.map_depth == 4, "Partial edge collision dimensions are incorrect.")
+	edge_streamer.queue_free()
+
 	var continent = CONTINENT_SCRIPT.new()
 	root.add_child(continent)
 	var integrated_streamer := continent.get_node_or_null("ModernWorldTerrainCellStreamer")
