@@ -28,7 +28,7 @@ Do not merge, delete, rename or silently replace these project roots. The canoni
 - Geography manager: `scripts/real_world_geography_manager.gd`
 - Geography seed: `data/geography/real_world_registry.json`
 - Candidate Baghdad source and staged import plan: `data/geography/GEOSPATIAL_IMPORT_PLAN.md`.
-- BBBike Iraq PBF snapshot has been downloaded and verified (2026-11-19 23:32:47 UTC); relation 5638803, its MultiPolygon boundary and a contributor-metadata-cleaned municipal clip have been extracted. Preliminary GeoJSON layers for buildings, roads, waterways, bridges, landuse, amenities and rail are available as workflow artifacts; none is yet integrated into the runtime.
+- BBBike Iraq PBF snapshot has been downloaded and verified (2026-11-19 23:32:47 UTC); relation 5638803, its MultiPolygon boundary and a contributor-metadata-cleaned municipal clip have been extracted. GitHub Actions run 44697711925 successfully exported eight boundary-clipped GeoJSON layers: 41,693 building features, 64,104 roads, 1,085 waterways, 839 bridges, 5,185 landuse, 17,125 amenities, 970 railway and 783 natural-water features. Artifact 14610809943 includes the review pack and ODbL attribution; these are 2D source features, not production 3D assets, and are not yet integrated into Godot.
 - The candidate Baghdad boundary is about 36.0 km × 34.1 km, far larger than the current 2.24 km × 1.58 km procedural continent. Full-scale streaming, LOD and mobile budgets must be established before city production.
 - Android engine-side contract: `scripts/system_android_bridge.gd`
 
