@@ -213,6 +213,41 @@ def _seam_geometry(geometry, cell_a: tuple[int, int], cell_b: tuple[int, int], s
     return geometry.intersection(edge)
 
 
+def _geometry_diagnostics(expected, actual) -> dict[str, Any]:
+    """Expose exact parity differences without relaxing geometry tolerances."""
+    def describe(geometry):
+        if geometry is None:
+            return None
+        if geometry.is_empty:
+            return {"type": geometry.geom_type, "empty": True}
+        return {
+            "type": geometry.geom_type,
+            "valid": bool(geometry.is_valid),
+            "bounds": [round(float(value), 6) for value in geometry.bounds],
+            "area_m2": round(float(geometry.area), 6),
+            "length_m": round(float(geometry.length), 6),
+        }
+
+    result = {"expected": describe(expected), "actual": describe(actual)}
+    if expected is None or actual is None or expected.is_empty or actual.is_empty:
+        return result
+    try:
+        result["hausdorff_distance_m"] = round(float(expected.hausdorff_distance(actual)), 6)
+    except Exception as exc:
+        result["hausdorff_error"] = str(exc)
+    try:
+        delta = expected.symmetric_difference(actual)
+        result["symmetric_difference"] = {
+            "type": delta.geom_type,
+            "area_m2": round(float(delta.area), 6),
+            "length_m": round(float(delta.length), 6),
+            "is_empty": bool(delta.is_empty),
+        }
+    except Exception as exc:
+        result["symmetric_difference_error"] = str(exc)
+    return result
+
+
 def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, Any]:
     report: dict[str, Any] = {
         "audit": "baghdad_osm_cross_cell_connectivity",
@@ -228,6 +263,10 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
         "duplicate_parts": 0,
         "overlapping_parts": 0,
         "missing_parts": 0,
+        "missing_feature_cell_parts": 0,
+        "mismatched_feature_cell_parts": 0,
+        "geometry_mismatch_diagnostics": [],
+        "comparison_by_layer": {},
         "unexpected_parts": 0,
         "disconnected_seams": 0,
         "errors": [],
@@ -358,22 +397,43 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
 
             for key, geometry in expected_union.items():
                 cell, feature_key = key
+                layer = feature_key[0]
+                layer_stats = report["comparison_by_layer"].setdefault(
+                    layer, {"expected": 0, "verified": 0, "missing": 0, "mismatched": 0}
+                )
+                layer_stats["expected"] += 1
                 if cell not in cells:
                     report["missing_parts"] += 1
+                    report["missing_feature_cell_parts"] += 1
+                    layer_stats["missing"] += 1
                     report["errors"].append(f"Missing cell {cell} for expected OSM part {feature_key}")
                     continue
                 candidate = actual_union.get(key)
                 if candidate is None:
                     report["missing_parts"] += 1
+                    report["missing_feature_cell_parts"] += 1
+                    layer_stats["missing"] += 1
                     report["errors"].append(f"Missing OSM part in cell {cell}: {feature_key}")
                     continue
                 if not _geometry_close(geometry, candidate):
                     report["missing_parts"] += 1
+                    report["mismatched_feature_cell_parts"] += 1
+                    layer_stats["mismatched"] += 1
+                    report["geometry_mismatch_diagnostics"].append({
+                        "cell": [cell[0], cell[1]],
+                        "layer": layer,
+                        "osm_type": feature_key[1],
+                        "osm_id": feature_key[2],
+                        "expected_source_records": len(expected[key]),
+                        "actual_cell_records": len(actual.get(key, [])),
+                        "metrics": _geometry_diagnostics(geometry, candidate),
+                    })
                     report["errors"].append(
-                        f"Geometry mismatch or disconnected/missing fragment in cell {cell}: {feature_key}"
+                        f"Geometry mismatch in cell {cell}: {feature_key}"
                     )
                 else:
                     report["verified_feature_cell_parts"] += 1
+                    layer_stats["verified"] += 1
 
             for key in actual_union:
                 if key not in expected_union:
@@ -574,6 +634,9 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
                 "actual_feature_cell_keys": len(actual_union),
                 "verified_feature_cell_parts": report["verified_feature_cell_parts"],
                 "missing_or_mismatched_parts": report["missing_parts"],
+                "missing_parts": report["missing_feature_cell_parts"],
+                "mismatched_parts": report["mismatched_feature_cell_parts"],
+                "comparison_by_layer": report["comparison_by_layer"],
                 "unexpected_parts": report["unexpected_parts"],
                 "duplicate_exact_parts": report["duplicate_parts"],
                 "overlapping_parts": report.get("overlapping_parts", 0),
