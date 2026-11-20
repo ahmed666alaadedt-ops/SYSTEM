@@ -405,8 +405,9 @@ func _create_rooftop_city_links() -> void:
 		cabin_floor.position.y = -1.82
 		cabin_floor.material_override = trim_material
 		lift_cabin.add_child(cabin_floor)
-		var cabin_collision_body := StaticBody3D.new()
+		var cabin_collision_body := AnimatableBody3D.new()
 		cabin_collision_body.name = "CabinFloorCollisionBody"
+		cabin_collision_body.sync_to_physics = true
 		var cabin_collision := CollisionShape3D.new()
 		var cabin_shape := BoxShape3D.new()
 		cabin_shape.size = cabin_floor_mesh.size
