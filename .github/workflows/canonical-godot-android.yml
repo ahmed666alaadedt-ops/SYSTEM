@@ -35,33 +35,82 @@ jobs:
         with:
           ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
+      - name: Wait for successful Baghdad OSM audit for this PR revision
+        id: baghdad_source_run
+        if: github.event_name == 'pull_request'
+        timeout-minutes: 26
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const headSha = context.payload.pull_request.head.sha;
+            const branch = context.payload.pull_request.head.ref;
+            const deadline = Date.now() + 25 * 60 * 1000;
+            while (Date.now() < deadline) {
+              const response = await github.rest.actions.listWorkflowRuns({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: "verify-baghdad-osm-source.yml",
+                branch,
+                per_page: 100
+              });
+              const matches = response.data.workflow_runs.filter(run => run.head_sha === headSha);
+              const passed = matches
+                .filter(run => run.status === "completed" && run.conclusion === "success")
+                .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))[0];
+              if (passed) {
+                core.setOutput("run_id", String(passed.id));
+                core.setOutput("conclusion", "success");
+                core.info(`Using verified Baghdad OSM source run ${passed.id} for ${headSha}.`);
+                return;
+              }
+              const pending = matches.some(run => run.status !== "completed");
+              if (matches.length > 0 && !pending) {
+                core.setFailed(`All Baghdad OSM audit runs for ${headSha} completed without success: ${matches.map(run => `${run.id}=${run.conclusion}`).join(", ")}`);
+                return;
+              }
+              await new Promise(resolve => setTimeout(resolve, 30000));
+            }
+            core.setFailed(`Timed out waiting for a successful Baghdad OSM audit for ${headSha}.`);
+
       - name: Download verified Baghdad OSM cell pack
-        if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
+        if: |
+          (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+          (github.event_name == 'pull_request' && steps.baghdad_source_run.outputs.conclusion == 'success')
         uses: actions/download-artifact@v4
         with:
           name: SYSTEM-WORLD-Baghdad-OSM-boundary-candidate
           path: ${{ runner.temp }}/baghdad-osm-artifact
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || steps.baghdad_source_run.outputs.run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Record Baghdad source workflow provenance
-        if: github.event_name == 'workflow_run'
+        if: github.event_name == 'workflow_run' || github.event_name == 'pull_request'
         shell: bash
-        run: echo "BAGHDAD_SOURCE_WORKFLOW_RUN_ID=${{ github.event.workflow_run.id }}" >> "$GITHUB_ENV"
+        env:
+          SOURCE_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || steps.baghdad_source_run.outputs.run_id }}
+        run: echo "BAGHDAD_SOURCE_WORKFLOW_RUN_ID=$SOURCE_RUN_ID" >> "$GITHUB_ENV"
 
       - name: Verify Baghdad OSM audit provenance and install audited cell pack
         id: baghdad_pack
         shell: bash
         env:
-          BAGHDAD_SOURCE_WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id || '' }}
-          BAGHDAD_SOURCE_WORKFLOW_CONCLUSION: ${{ github.event.workflow_run.conclusion || 'not_applicable' }}
+          BAGHDAD_SOURCE_WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id || steps.baghdad_source_run.outputs.run_id || '' }}
+          BAGHDAD_SOURCE_WORKFLOW_CONCLUSION: ${{ github.event.workflow_run.conclusion || steps.baghdad_source_run.outputs.conclusion || 'not_applicable' }}
         run: |
           set -euo pipefail
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
           SOURCE_PACK="$RUNNER_TEMP/baghdad-osm-artifact/baghdad-metric-cell-pack-5x5.zip"
           AUDIT_REPORT="$RUNNER_TEMP/baghdad-osm-artifact/baghdad-cell-connectivity-audit.json"
           DESTINATION="$PROJECT/data/geography/baghdad/cell_pack"
+          if [ "$BAGHDAD_SOURCE_WORKFLOW_CONCLUSION" != "not_applicable" ] && [ "$BAGHDAD_SOURCE_WORKFLOW_CONCLUSION" != "success" ]; then
+            echo "::error::Baghdad OSM source workflow did not succeed; refusing an unaudited APK export."
+            exit 1
+          fi
           if [ ! -s "$SOURCE_PACK" ]; then
+            if [ "$BAGHDAD_SOURCE_WORKFLOW_CONCLUSION" = "success" ]; then
+              echo "::error::The successful Baghdad OSM audit artifact is missing; refusing fallback export."
+              exit 1
+            fi
             if [ -s "$DESTINATION/manifest.json" ]; then
               echo "::error::A Baghdad cell pack exists in the checkout but has no matching verified artifact provenance. Refusing to reuse it."
               exit 1
