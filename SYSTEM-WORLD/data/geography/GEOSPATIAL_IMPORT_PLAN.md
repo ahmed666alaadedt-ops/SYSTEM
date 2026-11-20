@@ -18,7 +18,7 @@ BBBike publishes an Iraq OpenStreetMap PBF extract:
 - Map-data credit: © OpenStreetMap.org contributors; © BBBike.org
 - Underlying OSM data license: Open Database License (ODbL) 1.0.
 
-This source has now been downloaded and verified by GitHub Actions. The embedded OSM timestamp is 2026-11-19 23:32:47 UTC, file size is 103,097,147 bytes, and SHA-256 is `5cb6bbb8994d125ab159134c03972b3bcacc76c120661d7157844104f51c0fe5`. Relation 5638803 is present with `boundary=administrative`, `admin_level=5`, Arabic name `بغداد` and note `حدود امانة بغداد`; it contains 69 members (1 node, 55 ways, 13 relations). The relation extraction passed reference checks. The boundary geometry still requires visual/geographic review, and the complete Baghdad municipal feature extract has not yet been built or imported into SYSTEM WORLD.
+This source has now been downloaded and verified by GitHub Actions. The embedded OSM timestamp is 2026-11-19 23:32:47 UTC, file size is 103,097,147 bytes, and SHA-256 is `5cb6bbb8994d125ab159134c03972b3bcacc76c120661d7157844104f51c0fe5`. Relation 5638803 is present with `boundary=administrative`, `admin_level=5`, Arabic name `بغداد` and note `حدود امانة بغداد`; it contains 69 members (1 node, 55 ways, 13 relations). The relation extraction passed reference checks. Its exported geometry is a MultiPolygon with WGS84 bounds `[44.1846152, 33.1797569, 44.5699963, 33.4868251]` (west, south, east, north); a preliminary shape inspection was completed, but official boundary validation is still required. The complete Baghdad municipal feature extract has not yet been integrated into SYSTEM WORLD.
 
 ### Fallback candidate — Geofabrik Iraq PBF
 
