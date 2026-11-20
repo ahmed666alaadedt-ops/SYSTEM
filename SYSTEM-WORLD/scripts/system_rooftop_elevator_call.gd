@@ -36,7 +36,7 @@ func system_interact() -> void:
 		return
 
 	# Board the platform first; do not carry the player beside or below the cabin.
-	var boarding_position := lift_cabin.global_position + Vector3(0.0, 1.1, 0.0)
+	var boarding_position := lift_cabin.global_position + Vector3(0.0, -0.9, 0.0)
 	_player_physics_was_enabled = player.is_physics_processing()
 	player.set_physics_process(false)
 	player.velocity = Vector3.ZERO
