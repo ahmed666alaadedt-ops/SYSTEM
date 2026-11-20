@@ -262,6 +262,90 @@
           }
         },
         "status": "candidate_clip_created; feature coverage and visual review required"
+      },
+      "verified_geojson_layers": {
+        "artifact_id": 14610809943,
+        "workflow_run_id": 44697711925,
+        "status": "exported_and_boundary_clipped; visual_and_official_coverage_review_required",
+        "boundary_relation": 5638803,
+        "coordinate_reference_system": "EPSG:4326",
+        "layer_counts": {
+          "buildings": {
+            "input": 41693,
+            "output": 41693,
+            "polygons": 41451,
+            "multipolygons": 12,
+            "points": 230,
+            "invalid_repaired": 0,
+            "clipped": 0
+          },
+          "roads": {
+            "input": 64104,
+            "output": 64104,
+            "linestrings": 63989,
+            "multilinestrings": 115,
+            "clipped": 351,
+            "invalid_repaired": 0
+          },
+          "waterways": {
+            "input": 1085,
+            "output": 1085,
+            "linestrings": 1053,
+            "multilinestrings": 29,
+            "points": 3,
+            "clipped": 67,
+            "invalid_repaired": 0
+          },
+          "bridges": {
+            "input": 839,
+            "output": 839,
+            "linestrings": 835,
+            "polygons": 4,
+            "clipped": 13,
+            "invalid_repaired": 0
+          },
+          "landuse": {
+            "input": 5185,
+            "output": 5185,
+            "polygons": 5075,
+            "multipolygons": 110,
+            "clipped": 14,
+            "invalid_repaired": 0
+          },
+          "amenities": {
+            "input": 17125,
+            "output": 17125,
+            "points": 11140,
+            "linestrings": 3013,
+            "multilinestrings": 1,
+            "polygons": 2968,
+            "multipolygons": 3,
+            "clipped": 2,
+            "invalid_repaired": 0
+          },
+          "railway": {
+            "input": 992,
+            "output": 970,
+            "dropped_outside_or_empty": 22,
+            "points": 444,
+            "linestrings": 522,
+            "multilinestrings": 4,
+            "clipped": 13,
+            "invalid_repaired": 0
+          },
+          "natural_water": {
+            "input": 976,
+            "output": 783,
+            "dropped_outside_or_empty": 193,
+            "points": 8,
+            "polygons": 770,
+            "multipolygons": 5,
+            "clipped": 7,
+            "invalid_repaired": 0
+          }
+        },
+        "attribution": "© OpenStreetMap contributors; © BBBike.org",
+        "license": "ODbL-1.0"
       }
     }
   ],
