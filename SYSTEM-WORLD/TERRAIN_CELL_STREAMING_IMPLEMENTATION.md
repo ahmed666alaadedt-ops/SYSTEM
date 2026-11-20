@@ -37,7 +37,7 @@ This is a geometry primitive only: current city road, river, coast, bridge and n
 - Canonical continent instantiates the streamer and does not instantiate the old monolithic terrain visual/collision.
 - Adjacent cells produce the same clipped polyline boundary point.
 
-**CI status:** the test was added to the canonical Godot validation workflow, but a successful workflow result has not yet been confirmed. Do not report the test as passed until the Actions run shows success.
+**CI status:** <https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44707771587> completed successfully for commit `5292a22e4330a3e11574d91e80c6b81d3a875384`. Godot import/parse, terrain streaming seam/lifecycle/partial-edge tests, existing safety/geography/gate tests and headless main-scene launch all passed.
 
 ## Important scope limitation
 
