@@ -86,13 +86,42 @@
       "attribution_required": true,
       "attribution_text": "© OpenStreetMap contributors",
       "personal_contributor_metadata": "Geofabrik extract omits usernames, user IDs and changeset IDs.",
-      "status": "candidate_not_downloaded_or_imported",
+      "status": "fallback_candidate_not_downloaded; GitHub Actions runner could not connect to download.geofabrik.de during source verification",
       "production_use_blocked_until": [
         "Download the pinned source snapshot and verify its checksum.",
         "Confirm the Baghdad boundary relation and geometry in the PBF.",
         "Extract and review the Baghdad region extent and required feature layers.",
         "Record source attribution and ODbL share-alike obligations in the shipped data pack.",
         "Validate coordinate system, geometry integrity and coverage before runtime import."
+      ]
+    },
+    {
+      "source_id": "openstreetdata_iraq_osm_pbf_candidate",
+      "provider": "OpenStreetData",
+      "dataset": "Iraq country OpenStreetMap PBF extract",
+      "source_url": "https://files.openstreetdata.org/extracts/IQ.osm.pbf",
+      "index_url": "https://openstreetdata.org/",
+      "source_repository": "https://github.com/dagnelies/open-street-data",
+      "geographic_scope": "Iraq",
+      "file_size_reported_by_provider": "81.1 MB",
+      "snapshot_timestamp": "not_published_on_download_index; capture PBF timestamps and SHA-256 at download",
+      "planned_baghdad_boundary": {
+        "osm_element_type": "relation",
+        "osm_element_id": 5638803,
+        "admin_level": 5,
+        "name": "Baghdad Municipality (Amanat Baghdad)",
+        "status": "candidate_boundary_reference_not_imported"
+      },
+      "license": "Open Data Commons Open Database License (ODbL) 1.0",
+      "attribution_required": true,
+      "attribution_text": "© OpenStreetMap contributors",
+      "status": "candidate_not_downloaded_or_imported",
+      "production_use_blocked_until": [
+        "Download the PBF and record its exact source timestamp and SHA-256 checksum.",
+        "Confirm relation 5638803 exists in this exact extract and inspect its members and boundary geometry.",
+        "Review the country extract boundary and confirm Baghdad Municipality coverage.",
+        "Review ODbL obligations and preserve required OpenStreetMap attribution.",
+        "Validate coverage and supplement missing real-world features before production use."
       ]
     }
   ],
