@@ -9,10 +9,10 @@
 
 Geofabrik provides a downloadable Iraq OpenStreetMap PBF extract:
 
-- Snapshot file: `iraq-261118.osm.pbf`
-- Snapshot date: 2026-11-18
-- File size reported by Geofabrik: 91,667,932 bytes
-- Direct source: https://download.geofabrik.de/asia/iraq-261118.osm.pbf
+- Snapshot file: `iraq-261117.osm.pbf`
+- Snapshot date: 2026-11-17
+- File size reported by Geofabrik: 91,646,428 bytes
+- Direct source: https://download.geofabrik.de/asia/iraq-261117.osm.pbf
 - Region index and snapshot history: https://download.geofabrik.de/asia/iraq.html
 - Geographic scope: all of Iraq, not a Baghdad-only extract.
 
