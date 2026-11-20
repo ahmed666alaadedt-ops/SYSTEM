@@ -7,7 +7,7 @@ import unittest
 import zipfile
 from pathlib import Path
 
-from shapely.geometry import LineString, Polygon, box, mapping
+from shapely.geometry import LineString, Polygon, box, mapping\nfrom shapely.ops import transform\nfrom shapely.geometry import shape
 
 import audit_baghdad_cell_connectivity as audit
 
@@ -82,7 +82,7 @@ class BaghdadCellConnectivityTests(unittest.TestCase):
             source, pack = _make_fixture(Path(temp))
             result = audit.audit_pack(source, pack)
             self.assertEqual(result["status"], "passed", result["errors"])
-            self.assertGreaterEqual(result["cross_cell_feature_pairs"], 2)
+            self.assertGreaterEqual(result["cross_cell_feature_pairs"], 5)
             self.assertEqual(result["cell_size_m"], 200.0)
 
     def test_missing_neighbor_road_fragment_fails(self):
