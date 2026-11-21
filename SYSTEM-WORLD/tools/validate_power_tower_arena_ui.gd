@@ -44,6 +44,9 @@ func _run() -> void:
 	if not bool(registration.get("success", false)) or int(registration.get("entry_fee", -1)) != 0:
 		_fail("UI-linked fighter registration is not free.")
 		return
+	if manager.get_registered_fighters().size() != 1:
+		_fail("Free fighter registration was not persisted in the roster.")
+		return
 	var created: Dictionary = manager.create_match("arena_guest_alpha", "arena_guest_beta")
 	if not bool(created.get("success", false)):
 		_fail("Showcase match could not be created.")
