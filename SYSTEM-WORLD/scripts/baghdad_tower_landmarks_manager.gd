@@ -37,6 +37,7 @@ func _ready() -> void:
 	_build_entertainment_tower()
 	_build_technology_tower()
 	_build_power_tower()
+	_rebuild_connected_tower_positions()
 	_create_connected_city_links()
 	_create_hunter_association_headquarters()
 	_create_public_amenities()
@@ -92,6 +93,28 @@ func _build_power_tower() -> void:
 		floor_world.name = "PowerTowerFloorWorld"
 		floor_world.position = Vector3(0.0, 6000.0, 0.0)
 		power_tower.add_child(floor_world)
+
+func _rebuild_connected_tower_positions() -> void:
+	# Rebuild the district from the five canonical tower IDs after all tower
+	# records exist. This guarantees Power Tower can never enter the district.
+	connected_tower_positions.clear()
+	var district_ids := [
+		"hunter_association_tower_baghdad",
+		"business_tower_baghdad",
+		"shopping_tower_baghdad",
+		"entertainment_tower_baghdad",
+		"technology_tower_baghdad"
+	]
+	for required_id in district_ids:
+		for tower_data in tower_positions:
+			if str(tower_data.get("id", "")) == required_id:
+				connected_tower_positions.append(tower_data)
+				break
+
+
+func get_connected_tower_positions() -> Array[Dictionary]:
+	return connected_tower_positions.duplicate(true)
+
 
 func _build_tower(node_name: String, title: String, location_id: String, world_position: Vector3, height: float, radius: float, floors: int, beacon_color: Color, connected_to_district: bool = true) -> void:
 	var resolved := _nearest_land_position(Vector2(world_position.x, world_position.z))
