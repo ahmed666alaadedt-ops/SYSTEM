@@ -125,6 +125,32 @@ func _run() -> void:
 				_fail("Lobby lift selector has no destination in " + root_name)
 				return
 
+	var connected_district := towers.get_node_or_null("FiveTowerConnectedDistrict")
+	if connected_district == null:
+		_fail("The five connected towers have no shared district bridge network.")
+		return
+	for index in range(5):
+		var ramp_collision := connected_district.get_node_or_null("VehicleAccessRamp_%d/RampSegment_0_Collision/CollisionShape3D" % index) as CollisionShape3D
+		if ramp_collision == null or ramp_collision.shape == null:
+			_fail("A tower access ramp is missing physical collision: %d" % index)
+			return
+	var sky_ring := towers.get_node_or_null("BaghdadReferenceSkyPromenade_Blockout")
+	if sky_ring == null or sky_ring.get_child_count() < 12:
+		_fail("The shared sky promenade ring is missing its twelve walkable segments.")
+		return
+	var first_ring_segment := sky_ring.get_node_or_null("SkyPromenadeSegment_00")
+	if first_ring_segment == null or first_ring_segment.get_node_or_null("WalkableDeckCollision") == null:
+		_fail("The sky promenade has no collision-backed walking deck.")
+		return
+	var amenities := towers.get_node_or_null("ConnectedCityPublicAmenities_Blockout")
+	if amenities == null:
+		_fail("The connected tower district public amenities are missing.")
+		return
+	for amenity_name in ["RooftopGardenDeck", "LeisureAndPoolDeck", "FamilyEntertainmentPlaza"]:
+		if amenities.get_node_or_null(amenity_name + "_Collision/CollisionShape3D") == null:
+			_fail("Public amenity deck is not physically walkable: " + amenity_name)
+			return
+
 	var power_record: Dictionary = {}
 	for record in tower_records:
 		if str(record.get("id", "")) == "power_tower_baghdad":
