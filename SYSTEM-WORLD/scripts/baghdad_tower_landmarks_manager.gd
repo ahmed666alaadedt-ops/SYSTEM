@@ -284,6 +284,21 @@ func _create_hunter_association_headquarters() -> void:
 	headquarters.add_child(hall)
 	_add_static_box_collision(headquarters, "HeadquartersHallCollision", hall.position, hall_mesh.size)
 
+	# Four monumental corner pylons give the elevated headquarters a distinct skyline silhouette.
+	for corner_index in range(4):
+		var pylon := MeshInstance3D.new()
+		pylon.name = "HeadquartersCornerPylon_%d" % corner_index
+		var pylon_mesh := CylinderMesh.new()
+		pylon_mesh.top_radius = 2.8
+		pylon_mesh.bottom_radius = 5.0
+		pylon_mesh.height = 28.0
+		pylon.mesh = pylon_mesh
+		var x_side := -1.0 if corner_index in [0, 2] else 1.0
+		var z_side := -1.0 if corner_index in [0, 1] else 1.0
+		pylon.position = Vector3(x_side * 66.0, 16.0, z_side * 51.0)
+		pylon.material_override = trim_material
+		headquarters.add_child(pylon)
+
 	var crown := MeshInstance3D.new()
 	crown.name = "HeadquartersCrown"
 	var crown_mesh := BoxMesh.new()
