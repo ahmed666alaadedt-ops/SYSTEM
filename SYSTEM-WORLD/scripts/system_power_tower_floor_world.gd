@@ -10,6 +10,7 @@ signal floor_exit_requested(floor_number: int, return_position: Vector3)
 const FLOOR_SIZE := 520.0
 const FLOOR_HALF := FLOOR_SIZE * 0.5
 const CHECKPOINT_IDS := ["entry_checkpoint", "midpoint_checkpoint", "pre_boss_checkpoint"]
+const GateEnemyScript = preload("res://scripts/modern_world_gate_enemy.gd")
 
 var progression_manager: Node
 var player: Node3D
@@ -17,6 +18,8 @@ var active_floor_root: Node3D
 var active_floor_number := 0
 var external_return_position := Vector3.ZERO
 var active_floor_data: Dictionary = {}
+var active_enemy_ids: Array[String] = []
+var floor_started_at_msec := 0
 
 
 func setup(p_progression_manager: Node, p_player: Node3D) -> void:
@@ -59,7 +62,11 @@ func build_floor(floor_data: Dictionary, p_return_position: Vector3) -> Dictiona
 	_build_environment(floor_number, region_id, profile, structure_material, accent_material)
 	_build_landmarks(floor_number, profile, structure_material, accent_material)
 	_build_checkpoints()
+	if is_instance_valid(progression_manager) and int(progression_manager.get("active_floor")) == floor_number:
+		_spawn_floor_enemies(floor_data)
+	_build_clear_gate()
 	_build_exit()
+	floor_started_at_msec = Time.get_ticks_msec()
 
 	return {
 		"success": true,
@@ -67,15 +74,28 @@ func build_floor(floor_data: Dictionary, p_return_position: Vector3) -> Dictiona
 		"region_id": region_id,
 		"region_title": str(floor_data.get("region_title", profile["title"])),
 		"checkpoint_count": CHECKPOINT_IDS.size(),
+		"enemy_count": active_enemy_ids.size(),
+		"combat": progression_manager.call("get_floor_combat_status", active_floor_number) if is_instance_valid(progression_manager) and progression_manager.has_method("get_floor_combat_status") else {},
 		"boss_floor": bool(floor_data.get("boss_floor", false)),
-		"environment_status": "procedural_exploration_blockout"
+		"environment_status": "procedural_exploration_blockout",
+		"enemy_count": active_enemy_ids.size(),
+		"combat_required": not active_enemy_ids.is_empty()
 	}
 
 
 func get_entry_position() -> Vector3:
 	if not is_instance_valid(active_floor_root):
 		return global_position
-	return active_floor_root.to_global(Vector3(-220.0, 2.0, 0.0))
+	var resume_data: Dictionary = active_floor_data.get("resume_data", {})
+	var completed: Array = resume_data.get("completed_checkpoint_ids", [])
+	var spawn_x := -220.0
+	if completed.size() == 1:
+		spawn_x = -130.0
+	elif completed.size() == 2:
+		spawn_x = 15.0
+	elif completed.size() >= 3:
+		spawn_x = 160.0
+	return active_floor_root.to_global(Vector3(spawn_x, 2.0, 0.0))
 
 
 func get_return_position() -> Vector3:
@@ -99,6 +119,96 @@ func _clear_active_floor() -> void:
 	active_floor_root = null
 	active_floor_number = 0
 	active_floor_data.clear()
+	active_enemy_ids.clear()
+	floor_started_at_msec = 0
+
+
+func _spawn_floor_enemies(floor_data: Dictionary) -> void:
+	active_enemy_ids.clear()
+	if not is_instance_valid(player) or not player is CharacterBody3D:
+		push_warning("SYSTEM Power Tower: player combat actor is unavailable; floor enemies were not spawned.")
+		return
+	var floor_rank := str(floor_data.get("rank", "E"))
+	var boss_floor := bool(floor_data.get("boss_floor", false))
+	var regular_count := 0 if boss_floor else clampi(int(floor_data.get("opponent_count", 2)), 1, 8)
+	for index in range(regular_count + (1 if boss_floor else 0)):
+		var is_boss := boss_floor and index == regular_count
+		var enemy_id := "power_tower_%03d_enemy_%02d" % [active_floor_number, index + 1]
+		var enemy: Node = GateEnemyScript.new()
+		enemy.name = "PowerTowerEnemy_%02d" % (index + 1)
+		enemy.call("configure", floor_rank, is_boss, player as CharacterBody3D)
+		enemy.set_meta("system_power_tower_enemy_id", enemy_id)
+		var spawn_position := Vector3(-35.0 + float(index % 4) * 42.0, 0.0, -38.0 + float(int(index / 4)) * 52.0)
+		if is_boss:
+			spawn_position = Vector3(205.0, 2.5, 0.0)
+		enemy.position = spawn_position
+		enemy.call("set_meta", "system_power_tower_floor", active_floor_number)
+		enemy.connect("defeated", Callable(self, "_on_floor_enemy_defeated").bind(enemy_id))
+		active_floor_root.add_child(enemy)
+		active_enemy_ids.append(enemy_id)
+	if is_instance_valid(progression_manager) and progression_manager.has_method("set_floor_enemy_roster"):
+		var roster_result: Dictionary = progression_manager.call("set_floor_enemy_roster", active_floor_number, active_enemy_ids)
+		if not bool(roster_result.get("success", false)):
+			push_warning("SYSTEM Power Tower: enemy roster was rejected: " + str(roster_result.get("reason", "unknown")))
+
+
+func _on_floor_enemy_defeated(_enemy: Node, _is_boss: bool, _xp_reward: int, enemy_id: String) -> void:
+	if not is_instance_valid(progression_manager) or not progression_manager.has_method("record_floor_enemy_defeat"):
+		return
+	var result: Dictionary = progression_manager.call("record_floor_enemy_defeat", active_floor_number, enemy_id)
+	if bool(result.get("success", false)):
+		print("SYSTEM Power Tower: defeated %s (%d/%d)." % [enemy_id, int(result.get("defeated_enemies", 0)), int(result.get("required_enemies", 0))])
+
+
+func get_active_enemy_nodes() -> Array[Node]:
+	var result: Array[Node] = []
+	if not is_instance_valid(active_floor_root):
+		return result
+	for child in active_floor_root.get_children():
+		if child.is_in_group("system_enemy") and child.has_method("take_damage"):
+			result.append(child)
+	return result
+
+
+func _build_clear_gate() -> void:
+	var gate_material := _material(Color(0.92, 0.66, 0.18), 0.22, 0.48)
+	gate_material.emission_enabled = true
+	gate_material.emission = Color(0.62, 0.32, 0.04)
+	gate_material.emission_energy_multiplier = 1.6
+	_add_obstacle("FloorClearGateLeft", Vector3(250.0, 5.0, -9.0), Vector3(2.0, 10.0, 2.0), gate_material)
+	_add_obstacle("FloorClearGateRight", Vector3(250.0, 5.0, 9.0), Vector3(2.0, 10.0, 2.0), gate_material)
+	_add_obstacle("FloorClearGateHeader", Vector3(250.0, 10.0, 0.0), Vector3(2.0, 1.5, 20.0), gate_material)
+	var label := Label3D.new()
+	label.name = "FloorClearGateSign"
+	label.text = "FLOOR CLEAR — CLAIM REWARD"
+	label.font_size = 18
+	label.position = Vector3(250.0, 13.0, 0.0)
+	label.modulate = Color(1.0, 0.86, 0.46)
+	active_floor_root.add_child(label)
+	var area := Area3D.new()
+	area.name = "FloorClearGate"
+	area.position = Vector3(250.0, 2.0, 0.0)
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(12.0, 8.0, 18.0)
+	collision.shape = shape
+	area.add_child(collision)
+	area.body_entered.connect(_on_floor_clear_gate_body_entered)
+	active_floor_root.add_child(area)
+
+
+func _on_floor_clear_gate_body_entered(body: Node3D) -> void:
+	if not is_instance_valid(body) or not body.is_in_group("system_player"):
+		return
+	if not is_instance_valid(progression_manager) or not progression_manager.has_method("confirm_floor_clear"):
+		return
+	var elapsed := maxf(float(Time.get_ticks_msec() - floor_started_at_msec) / 1000.0, 0.1)
+	var result: Dictionary = progression_manager.call("confirm_floor_clear", active_floor_number, elapsed)
+	if bool(result.get("success", false)):
+		print("SYSTEM Power Tower: floor %d cleared with rank %s." % [active_floor_number, str(result.get("rank", "?"))])
+		floor_exit_requested.emit(active_floor_number, external_return_position)
+	else:
+		push_warning("SYSTEM Power Tower: clear gate rejected the run: " + str(result.get("reason", "unknown")))
 
 
 func _build_ground(material: Material) -> void:
