@@ -50,6 +50,7 @@ func _build_interface() -> void:
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	layout.add_child(hint)
 	_floor_picker = OptionButton.new()
+	_floor_picker.name = "FloorPicker"
 	_floor_picker.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	layout.add_child(_floor_picker)
 	var enter_button := Button.new()
