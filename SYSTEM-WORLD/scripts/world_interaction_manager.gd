@@ -180,9 +180,61 @@ func interact_with_target() -> bool:
 
 	interaction_performed.emit(target, location_id)
 
+	if _handle_building_transition(target):
+		return true
+
 	if target.has_method("system_interact"):
 		target.call("system_interact")
 
+	return true
+
+
+func _handle_building_transition(target: Node) -> bool:
+	if not is_instance_valid(player) or target == null:
+		return false
+
+	var target_id := str(target.get_meta("system_location_id", ""))
+	var target_parent := target.get_parent()
+	if target_parent == null:
+		return false
+
+	var destination := Vector3.INF
+	var transition_label := ""
+
+	# Tower entrances are children of the tower root; the interior is a sibling.
+	if target_id.begins_with("hunter_association_tower_") or target_id in [
+		"business_tower_baghdad",
+		"shopping_tower_baghdad",
+		"entertainment_tower_baghdad",
+		"technology_tower_baghdad"
+	]:
+		var tower_interior := target_parent.get_node_or_null("TowerInterior")
+		if tower_interior != null and tower_interior.has_method("get_entry_position"):
+			destination = tower_interior.call("get_entry_position")
+			transition_label = "enter_tower"
+
+	# The headquarters entrance is a sibling of HeadquartersInterior.
+	elif target_id == "hunter_association_headquarters_baghdad":
+		var headquarters_interior := target_parent.get_node_or_null("HeadquartersInterior")
+		if headquarters_interior != null and headquarters_interior.has_method("get_entry_position"):
+			destination = headquarters_interior.call("get_entry_position")
+			transition_label = "enter_headquarters"
+
+	# Exit interaction nodes live inside their interior and expose the return point.
+	elif target_id.begins_with("tower_exit_") or target_id == "hunter_association_headquarters_exit_baghdad":
+		if target_parent.has_method("get_return_position"):
+			destination = target_parent.call("get_return_position")
+			transition_label = "exit_building"
+
+	if destination == Vector3.INF:
+		return false
+
+	player.global_position = destination
+	player.velocity = Vector3.ZERO
+	current_target = null
+	current_prompt = "تفاعل"
+	interaction_target_changed.emit(null, "")
+	print("SYSTEM WORLD: building transition completed: ", transition_label, " / ", target_id)
 	return true
 
 
