@@ -77,6 +77,7 @@ var mobile_controls: MobileControls
 var interaction_prompt_layer: CanvasLayer
 var interaction_prompt_label: Label
 var motorsport_leaderboard_layer: CanvasLayer
+var motorsport_leaderboard_panel: PanelContainer
 var motorsport_leaderboard_event_select: OptionButton
 var motorsport_leaderboard_best_label: Label
 var motorsport_leaderboard_rows: VBoxContainer
@@ -694,19 +695,19 @@ func create_motorsport_leaderboard_ui() -> void:
 	motorsport_leaderboard_layer.layer = 18
 	add_child(motorsport_leaderboard_layer)
 
-	var panel := PanelContainer.new()
-	panel.name = "MotorsportLeaderboardPanel"
-	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-	panel.offset_left = 12.0
-	panel.offset_top = 82.0
-	panel.offset_right = -12.0
-	panel.offset_bottom = -82.0
-	panel.visible = false
-	motorsport_leaderboard_layer.add_child(panel)
+	motorsport_leaderboard_panel = PanelContainer.new()
+	motorsport_leaderboard_panel.name = "MotorsportLeaderboardPanel"
+	motorsport_leaderboard_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	motorsport_leaderboard_panel.offset_left = 12.0
+	motorsport_leaderboard_panel.offset_top = 82.0
+	motorsport_leaderboard_panel.offset_right = -12.0
+	motorsport_leaderboard_panel.offset_bottom = -82.0
+	motorsport_leaderboard_panel.visible = false
+	motorsport_leaderboard_layer.add_child(motorsport_leaderboard_panel)
 
 	var layout := VBoxContainer.new()
 	layout.add_theme_constant_override("separation", 12)
-	panel.add_child(layout)
+	motorsport_leaderboard_panel.add_child(layout)
 
 	var heading := Label.new()
 	heading.text = "SYSTEM MOTORSPORT — لوحة النتائج"
@@ -769,13 +770,13 @@ func create_motorsport_leaderboard_ui() -> void:
 func _show_motorsport_leaderboard() -> void:
 	if motorsport_leaderboard_layer == null:
 		return
-	motorsport_leaderboard_layer.get_node("MotorsportLeaderboardPanel").show()
+	motorsport_leaderboard_panel.show()
 	_refresh_motorsport_leaderboard()
 
 
 func _close_motorsport_leaderboard() -> void:
 	if motorsport_leaderboard_layer != null:
-		motorsport_leaderboard_layer.get_node("MotorsportLeaderboardPanel").hide()
+		motorsport_leaderboard_panel.hide()
 
 
 func _on_motorsport_leaderboard_event_selected(_index: int) -> void:
