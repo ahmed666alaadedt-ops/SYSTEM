@@ -8,6 +8,11 @@ on:
       - "SYSTEM-WORLD/tools/blender/**"
       - "SYSTEM-WORLD/tools/validate_glb.py"
       - ".github/workflows/blender-environment-test.yml"
+  pull_request:
+    paths:
+      - "SYSTEM-WORLD/tools/blender/**"
+      - "SYSTEM-WORLD/tools/validate_glb.py"
+      - ".github/workflows/blender-environment-test.yml"
   workflow_dispatch:
     inputs:
       world:
@@ -28,7 +33,11 @@ on:
         default: "20261117"
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: system-world-environment-generation
+  cancel-in-progress: true
 
 jobs:
   generate-and-validate:
@@ -42,11 +51,15 @@ jobs:
       - name: Checkout SYSTEM repository
         uses: actions/checkout@v4
 
-      - name: Install Blender and Python
+      - name: Install Blender 4.3.2
+        uses: bradyajohnston/setup-blender@v5
+        with:
+          version: 4.3.2
+
+      - name: Verify Blender GLB exporter dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install --yes blender
           blender --version
+          blender --background --python-expr "import bpy, numpy; print('Blender numpy:', numpy.__version__)"
           python3 --version
 
       - name: Run GLB validator self-test
@@ -58,6 +71,33 @@ jobs:
             --world "$SYSTEM_WORLD_TARGET" \
             --seed "$SYSTEM_WORLD_SEED" \
             --segments 48
+
+      - name: Commit validated environment assets to canonical runtime
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add SYSTEM-WORLD/generated/environment_tiles/sw_*.blend
+          git add SYSTEM-WORLD/generated/environment_tiles/sw_*.glb
+          git add SYSTEM-WORLD/generated/environment_tiles/sw_*.json
+          if git diff --cached --quiet; then
+            echo "Generated environment assets are unchanged."
+            exit 0
+          fi
+          git commit -m "Generate validated four-world environment tiles"
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "Could not push generated environment assets after three attempts."
+              exit 1
+            fi
+            sleep 2
+          done
 
       - name: Upload generated environment assets and report
         if: always()

@@ -146,3 +146,34 @@ device profiling remain separate, pending acceptance checks.
 - A pipeline acceptance runner exists in GitHub.
 - Blender execution and Blender export remain blocked until Blender 4.x is installed in an accessible execution environment.
 - Godot import and Android performance acceptance remain pending.
+
+
+## GitHub Actions Blender export failure and workflow correction (2026-11-19)
+
+### Observed failing run
+
+- Workflow run: [44523201472](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44523201472).
+- The four-world generation job installed the Ubuntu archive Blender package, which resolved to Blender 4.0.2.
+- The bundled glTF exporter failed during import with `ModuleNotFoundError: No module named 'numpy'`; all four world presets therefore produced no `.blend`, `.glb`, or metadata outputs.
+- The GLB validator self-test passed before generation, so the failure is specifically in the Blender exporter dependency environment, not the validator.
+
+### Corrective workflow change prepared
+
+- Replace the Ubuntu archive package with the same pinned Blender 4.3.2 setup action already used by the successful humanoid-character generation workflow.
+- Add an explicit Blender-Python `import bpy, numpy` preflight before generation.
+- Run the environment workflow on pull requests so the fix can be verified before merge.
+- After a successful push-triggered run on `main`, commit the validated `.blend`, `.glb`, and `.json` tile outputs into `SYSTEM-WORLD/generated/environment_tiles/` so the canonical runtime can import them. Pull-request runs only validate and upload artifacts; they do not push generated files.
+- The corrected pull-request CI run passed; see the result recorded below. The generated files are available as a workflow artifact, but the push-only commit step was correctly skipped on the PR branch. Canonical repository integration will occur on the first successful push-triggered run after this workflow is merged to `main`.
+
+
+### Corrected four-world environment run — PASS (2026-11-19)
+
+- GitHub Actions run: [44529185073](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44529185073).
+- Blender: **4.3.2**; Blender-Python NumPy preflight: passed.
+- GLB validator self-test: passed.
+- Environment generation: **4/4 worlds passed**, **0 failed**.
+- World presets: `modern`, `historical`, `fantasy`, and `greed_island`.
+- Each world produced a non-empty `.blend`, `.glb`, and metadata `.json`; all four GLBs passed structural validation.
+- Artifact: `system-world-environments-all-20261119.zip` (1,031,362 bytes), retained by GitHub Actions for 14 days.
+- The generated tiles are explicitly labelled `procedural_blockout_requires_visual_review`. They are valid initial blockout assets, not final art-quality terrain.
+- PR validation does not push files. After merge, the push-triggered workflow is configured to commit the validated `sw_*.blend`, `sw_*.glb`, and per-world `sw_*.json` files under `SYSTEM-WORLD/generated/environment_tiles/`. Godot import and visual/device review remain separate acceptance checks.
