@@ -170,9 +170,12 @@ func _build_landmarks(
 	structure_material: Material,
 	accent_material: Material
 ) -> void:
-	_add_obstacle("FloorArrivalGate", Vector3(-205.0, 8.0, 0.0), Vector3(5.0, 16.0, 34.0), accent_material)
-	_add_obstacle("CentralRegionLandmark", Vector3(0.0, 7.0, 0.0), Vector3(24.0, 14.0, 24.0), structure_material)
-	_add_visual_box("CentralLandmarkCrown", Vector3(0.0, 16.0, 0.0), Vector3(18.0, 2.0, 18.0), accent_material)
+	var accent_color: Color = profile["accent"]
+	_add_obstacle("FloorArrivalGateLeft", Vector3(-205.0, 8.0, -15.0), Vector3(5.0, 16.0, 4.0), accent_material)
+	_add_obstacle("FloorArrivalGateRight", Vector3(-205.0, 8.0, 15.0), Vector3(5.0, 16.0, 4.0), accent_material)
+	_add_obstacle("FloorArrivalGateHeader", Vector3(-205.0, 16.0, 0.0), Vector3(5.0, 2.0, 34.0), accent_material)
+	_add_obstacle("CentralRegionLandmark", Vector3(0.0, 7.0, 45.0), Vector3(24.0, 14.0, 24.0), structure_material)
+	_add_visual_box("CentralLandmarkCrown", Vector3(0.0, 16.0, 45.0), Vector3(18.0, 2.0, 18.0), accent_material)
 
 	var region_sign := Label3D.new()
 	region_sign.name = "FloorRegionSign"
