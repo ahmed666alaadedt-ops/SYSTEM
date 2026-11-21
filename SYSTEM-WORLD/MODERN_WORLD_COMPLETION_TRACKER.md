@@ -584,14 +584,17 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 
 - [x] Open a dedicated passage in the Hunter Association Tower lobby rear wall without changing the other four tower lobby layouts.
 - [x] Build a long enclosed tunnel with floor, side walls, ceiling, repeated structural frames, illuminated guidance strips, and a separate candidate staging chamber.
-- [x] Add a visible examination gate and a dedicated interaction target at the tunnel staging area.
-- [x] Connect the tunnel gate to the existing Hunter Exam Manager; registered candidates can begin or resume the current exam stage from this location.
-- [x] Show candidate number, stage title, and stage briefing through the existing Hunter Guild menu; unregistered players are directed back to the registration desk.
-- [ ] Build the actual playable exam-stage environments and connect stage completion to validated objectives/evidence; the current gate starts the existing exam state and briefing only.
-- [ ] Add a complete return/abort route, candidate queue, NPC exam staff, multiplayer synchronization, and server-authoritative candidate identity.
+- [x] Add seven numbered stage gates and candidate wayfinding markers along the tunnel.
+- [x] Add free registration, public notice, and start/resume interactions in the Hunter Association lobby and tunnel.
+- [x] Connect registration, notice and start interactions to the existing Hunter Exam Manager and open the guild UI with candidate status and stage briefing.
+- [x] Expand the exam data to seven ordered original stages: endurance pursuit, fieldcraft/cooking, puzzle tower, island survival, strategy/negotiation, individual duels and a secret final trial.
+- [x] Save candidate identity, attempt number, failure timestamp and permanent-license status; expose the next weekly retry time after a failed attempt.
+- [x] Award the permanent HUNTER_LICENSE only after all seven ordered stage records are completed.
+- [x] Add a Godot 4.3 automated validator for stage order, progression and permanent-license state.
+- [ ] Build the seven actual challenge environments, puzzle/maze geometry, survival resources, cooking interaction, duel opponents and evidence verification; the tunnel gates are currently a briefing/route blockout, not seven finished playable environments.
+- [ ] Add server-authoritative candidate identity, anti-cheat evidence validation and account-synced license persistence before multiplayer examinations.
 - [ ] Run Godot 4.3 parser/import and in-engine collision, camera, interaction-ray, player-clearance, lighting, and Android performance checks.
-- Note: this is a procedural architectural and interaction prototype inside the Hunter Association Tower. It does not yet teleport candidates into a playable external challenge map or validate exam evidence.
-
+- Note: this is a procedural architectural and interaction prototype inside the Hunter Association Tower. It does not yet teleport candidates into playable external challenge maps or validate exam evidence.
 
 ## Hunter Association public examination announcement — 21 November 2026
 
