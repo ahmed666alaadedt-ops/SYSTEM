@@ -184,7 +184,7 @@ func get_market_board() -> Dictionary:
 		"catalogue":get_catalogue(),
 		"auctions":active,
 		"inventory":get_local_player_inventory(),
-		"balance":int(wallet.get("balance")) if wallet != null and "balance" in wallet else 0
+		"balance":int(wallet.call("get_balance")) if wallet != null and wallet.has_method("get_balance") else 0
 	}
 
 func _add_item(owner_id: String, item_id: String) -> void:
