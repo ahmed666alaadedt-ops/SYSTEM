@@ -1313,7 +1313,6 @@ func _on_interaction_performed(
 		if bool(result.get("success", false)):
 			var power_tower_root := target.get_parent()
 			var floor_world := power_tower_root.get_node_or_null("PowerTowerFloorWorld") if power_tower_root != null else null
-			var arena_venue := power_tower_root.get_node_or_null("PowerTowerArenaVenue") if power_tower_root != null else null
 			if floor_world != null and player != null:
 				floor_world.call("setup", power_tower_manager, player)
 				var floor_build: Dictionary = floor_world.call("build_floor", result.get("floor_data", {}), player.global_position)
@@ -1321,8 +1320,6 @@ func _on_interaction_performed(
 					var exit_callback := Callable(self, "_on_power_tower_floor_exit_requested")
 					if not floor_world.is_connected("floor_exit_requested", exit_callback):
 						floor_world.connect("floor_exit_requested", exit_callback)
-					if arena_venue != null and power_tower_arena_manager != null:
-						power_tower_arena_manager.call("attach_venue", arena_venue)
 					player.global_position = floor_world.call("get_entry_position")
 					player.velocity = Vector3.ZERO
 					if interaction_prompt_label != null:
