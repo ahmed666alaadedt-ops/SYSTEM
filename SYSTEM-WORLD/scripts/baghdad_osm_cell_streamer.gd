@@ -315,6 +315,9 @@ func _load_cell(cell: Vector2i) -> void:
 	var amenity_count := 0
 	for feature in layers.get("amenities", []):
 		amenity_count += _build_amenity_feature(cell_root, feature)
+	var historic_site_count := 0
+	for feature in layers.get("historic-sites", []):
+		historic_site_count += _build_historic_site_feature(cell_root, feature)
 	var entrance_count := 0
 	for feature in layers.get("entrances", []):
 		entrance_count += _build_entrance_feature(cell_root, feature)
@@ -323,6 +326,7 @@ func _load_cell(cell: Vector2i) -> void:
 	counts["waterways"] = water_count
 	counts["bridges"] = bridge_count
 	counts["amenities"] = amenity_count
+	counts["historic-sites"] = historic_site_count
 	cell_root.set_meta("feature_counts", counts)
 	add_child(cell_root)
 	loaded_cells[cell] = cell_root
@@ -861,6 +865,42 @@ func _build_entrance_feature(parent: Node3D, feature: Dictionary) -> int:
 	body.set_meta("system_access_state", "mapped_entrance_point_no_interior_scene")
 	root.add_child(body)
 	return 1
+
+
+func _build_historic_site_feature(parent: Node3D, feature: Dictionary) -> int:
+	var tags: Dictionary = feature.get("tags", {})
+	if not _is_archaeological_site(tags):
+		return 0
+	var feature_id := str(feature.get("id", "unknown"))
+	for child in parent.get_children():
+		if str(child.get_meta("osm_feature_id", "")) == feature_id and str(child.get_meta("landmark_type", "")) in ["archaeological_site", "archaeological_ruin"]:
+			return 0
+	var geometry: Dictionary = feature.get("geometry", {})
+	var geometry_type := str(geometry.get("type", ""))
+	if geometry_type in ["Point", "Polygon", "MultiPolygon"]:
+		return _build_amenity_feature(parent, feature)
+	if geometry_type == "LineString" or geometry_type == "MultiLineString":
+		var stone := StandardMaterial3D.new()
+		stone.albedo_color = Color(0.48, 0.38, 0.28)
+		stone.roughness = 0.98
+		var built := _build_line_feature(parent, feature, 1.6, stone, 0.14, "OSMHistoricSiteBoundary")
+		var lines := _extract_lines(geometry)
+		if not lines.is_empty() and lines[0].size() >= 2:
+			var line: PackedVector2Array = lines[0]
+			var midpoint: Vector2 = line[int(line.size() / 2)]
+			_build_archaeological_site_landmark(parent, feature, [midpoint.x, midpoint.y])
+			return maxi(built, 1)
+		return built
+	if geometry_type == "GeometryCollection":
+		var built_parts := 0
+		for index in range(geometry.get("geometries", []).size()):
+			var part: Dictionary = geometry.get("geometries", [])[index]
+			var part_feature: Dictionary = feature.duplicate(true)
+			part_feature["id"] = feature_id + "_part_" + str(index)
+			part_feature["geometry"] = part
+			built_parts += _build_historic_site_feature(parent, part_feature)
+		return built_parts
+	return 0
 
 
 func _is_archaeological_site(tags: Dictionary) -> bool:
