@@ -35,6 +35,32 @@ func _initialize() -> void:
 		push_error("City faction validation failed: local standing update did not apply.")
 		quit(1)
 		return
+	var contract_result: Dictionary = manager.issue_player_contract(faction_id, "collect_public_evidence")
+	if not bool(contract_result.get("success", false)):
+		push_error("City faction validation failed: player contract could not be issued.")
+		quit(1)
+		return
+	var contract: Dictionary = contract_result.get("contract", {})
+	var contract_id := str(contract.get("id", ""))
+	if bool(contract.get("npc_completion_allowed", true)) or not bool(contract.get("player_only", false)):
+		push_error("City faction validation failed: player-only contract policy missing.")
+		quit(1)
+		return
+	var rejected: Dictionary = manager.complete_player_contract(contract_id, "NPC_COMPLETED")
+	if bool(rejected.get("success", false)):
+		push_error("City faction validation failed: NPC completion was allowed.")
+		quit(1)
+		return
+	var completed: Dictionary = manager.complete_player_contract(contract_id, "SYSTEM_PLAYER_EVIDENCE:validator")
+	if not bool(completed.get("success", false)):
+		push_error("City faction validation failed: player evidence completion failed.")
+		quit(1)
+		return
+	var rival_result: Dictionary = manager.set_faction_rivalry(faction_id, str(records[1].get("id", "")), true)
+	if not bool(rival_result.get("success", false)):
+		push_error("City faction validation failed: local rivalry could not be recorded.")
+		quit(1)
+		return
 	manager.free()
-	print("City faction validation passed: Baghdad factions, roles, protected civic venues and reputation API.")
+	print("City faction validation passed: Baghdad factions, roles, protected civic venues, reputation, player-only contracts and rivalries.")
 	quit(0)
