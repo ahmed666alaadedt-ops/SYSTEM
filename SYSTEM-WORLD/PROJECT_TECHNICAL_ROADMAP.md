@@ -15,8 +15,9 @@ Last reviewed: 2026-11-07
 
 ## 2. Godot version
 
-- The exact version previously used by this project is not yet verified.
-- Target stable version for compatibility review: Godot 4.7.2.
+- The canonical Godot runtime has been imported, parsed, and headlessly launched in GitHub Actions using Godot 4.3 stable (latest verified run: 44954253300 on 2026-11-21 UTC).
+- The current Godot validation and canonical Android export workflows are pinned to Godot 4.3 stable and matching 4.3 export templates.
+- Godot 4.7.2 remains a compatibility-review target from the earlier roadmap, not a verified or selected production baseline. Do not upgrade until a clean-copy compatibility and Android export test is completed.
 - Do not use Godot 4.8 beta as the production baseline.
 - Do not upgrade the existing project blindly.
 - First import a clean copy and verify scripts, scenes, assets and autoloads.
