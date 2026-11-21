@@ -891,7 +891,9 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Sort AI standings by completed laps, finish state, ordered checkpoint progress, distance to the next checkpoint, then elapsed time.
 - [x] Refresh the open race-results panel every 0.5 seconds while visible, so the AI status changes during the race rather than only when the panel is opened.
 - [x] Keep AI standings visible before the player's first local result exists; an empty personal-record list no longer hides active opponents.
-- [x] Extend the motorsport validator with same-lap checkpoint-order regression cases. Godot 4.3 workflow run 44954979678 passed on commit 923da9226bb5d2e3323fa8836343e68568988a3f; both motorsport validators, all configured Baghdad/tower/Hunter/Power Tower checks, mesh scan and headless main-scene launch passed.
+- [x] Extend the motorsport validator with same-lap checkpoint-order regression cases. Godot 4.3 workflow run 44955686318 passed on commit 9e6a8f4fc7dbd5f7e0845b50fcd673a2c98c99a7; both motorsport validators, all configured Baghdad/tower/Hunter/Power Tower checks, mesh scan and headless main-scene launch passed.
 - [ ] Build a unified authoritative player-versus-AI finishing order using the player's live checkpoint position, not only separate local records and AI-only standings.
 - [ ] Implement server-authoritative global leaderboards and multiplayer race results; current personal records and AI standings remain local/prototype data.
 - Note: checkpoint-based AI ranking is a live local approximation. Physical vehicle feel, overtake/collision behavior, full race-class routes, Android controls and global competition remain unverified.
+
+- [x] Stabilize the race validator by using an in-memory garage contract and removing fragile global-class-cache annotations from the race-manager/mobile-controls preload path; the final workflow run 44955686318 passed after this correction.
