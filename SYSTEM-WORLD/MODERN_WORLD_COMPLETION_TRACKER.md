@@ -771,3 +771,16 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Add researched site-specific layouts, artifacts, environmental storytelling, guarded excavation areas, NPC archaeologists and discovery missions after real site coverage is confirmed.
 - [ ] Run Godot 4.3 OSM runtime validation and inspect the tagged sites in the live Baghdad world.
 - Note: the builder only creates landmarks for source features carrying recognized historic/ruins tags. A synthetic validator fixture proves the builder path, not that a particular real archaeological site exists in the current Baghdad OSM sample.
+
+
+## Baghdad football stadium — physical facilities and walk-in rooms — 21 November 2026
+
+- [x] Expand only the Baghdad stadium footprint to fit the full-size 105 m × 68 m pitch, concourses and service rooms; other city stadiums retain their lighter footprint.
+- [x] Convert the stepped spectator stands to collision-backed structures and batch visible seat rows with MultiMesh instances.
+- [x] Add north, south, east and west physical access gates with stable Baghdad interaction IDs.
+- [x] Add walk-in home/away team locker rooms, referee room, medical room, media room and press-conference room with floors, collision-backed walls, open doorways and basic furnishings.
+- [x] Add a collision-backed player/official tunnel connecting the south concourse toward the pitch.
+- [x] Add four stadium floodlight towers and a Baghdad stadium scoreboard.
+- [x] Extend the existing Baghdad civic venue validator to check the stadium's facilities and room collision/entry nodes.
+- [ ] Add ticket validation, secure spectator circulation, stair navigation, crowd NPCs, team/official schedules, dressing-room interactions and a complete football match simulation.
+- [ ] Run Godot 4.3 validation and inspect the expanded stadium in the live Baghdad scene.
