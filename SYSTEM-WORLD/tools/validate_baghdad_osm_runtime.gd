@@ -102,6 +102,30 @@ func _run_validation() -> void:
 		_fail("The archaeological polygon is missing its stable discovery interaction.")
 		return
 
+	var memorial_feature := {
+		"id": "validator_memorial",
+		"tags": {"historic": "memorial", "name:ar": "نصب تذكاري اختباري"},
+		"geometry": {"type": "Point", "coordinates": [90.0, 90.0]}
+	}
+	var memorial_count: int = streamer.call("_build_historic_site_feature", cell_root, memorial_feature)
+	if memorial_count != 1:
+		_fail("An OSM memorial feature was not recognized as a historic landmark.")
+		return
+	var memorial_root := cell_root.get_node_or_null("OSMArchaeologicalSite_validator_memorial")
+	if memorial_root == null or memorial_root.get_node_or_null("MonumentPedestal") == null:
+		_fail("An OSM memorial did not receive its monument-specific physical style.")
+		return
+
+	var kadhimiya_feature := {
+		"id": "validator_kadhimiya_shrine",
+		"tags": {"historic": "tomb", "name:en": "Kadhimain Shrine"},
+		"geometry": {"type": "Point", "coordinates": [100.0, 100.0]}
+	}
+	var kadhimiya_count: int = streamer.call("_build_historic_site_feature", cell_root, kadhimiya_feature)
+	if kadhimiya_count != 0:
+		_fail("A Kadhimiya historic feature entered the current Baghdad landmark scope.")
+		return
+
 	var road_segments_value: Variant = cell_root.get_meta("road_navigation_segments", [])
 	if not road_segments_value is Array or road_segments_value.is_empty():
 		_fail("Baghdad OSM center cell did not retain pedestrian-accessible road geometry.")
