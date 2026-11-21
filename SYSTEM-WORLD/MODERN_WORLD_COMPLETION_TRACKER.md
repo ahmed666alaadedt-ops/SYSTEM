@@ -763,6 +763,7 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Use existing OSM historic tags retained by the Baghdad cell-pack pipeline; do not invent or move real archaeological site coordinates.
 - [x] Recognize OSM archaeological_site, ruins, castle, fort and city_gate tags, plus building=ruins and site_type=archaeological.
 - [x] Generate collision-backed outdoor ruin details for tagged ruin building footprints while retaining their source OSM feature IDs.
+- [x] Support both historic point features and polygon/multipolygon archaeological site boundaries in the OSM amenity layer, with collision-backed ruin fragments and stable discovery interactions.
 - [x] Generate outdoor archaeological landmark clusters, broken walls, columns, site names and stable discovery interactions for tagged OSM historic point features.
 - [x] Extend the existing Baghdad OSM runtime validator with a synthetic tagged-feature regression for the archaeological landmark builder and its stable interaction ID.
 - [ ] Audit the installed Baghdad OSM pack and report the actual number and names of historic/archaeological features available; do not substitute synthetic test fixtures for real-world coverage.
