@@ -815,7 +815,14 @@ func _on_interaction_performed(
 		" / ",
 		location_id
 	)
-	if location_id.begins_with("baghdad_osm_entrance_"):
+	if location_id == "service_baghdad_stadium":
+		var stadium := target.get_parent()
+		if stadium != null and player != null:
+			player.global_position = stadium.global_position + Vector3(0.0, 2.0, 0.0)
+			player.velocity = Vector3.ZERO
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "دخلت ملعب كرة القدم — الملعب مفتوح للاستكشاف؛ نظام المباريات والفرق قيد التطوير."
+	elif location_id.begins_with("baghdad_osm_entrance_"):
 		var entrance_name := str(target.get_meta("system_display_name", "مدخل محدد على الخريطة"))
 		var entrance_kind := str(target.get_meta("system_entrance_type", "غير محدد"))
 		var access_tag := str(target.get_meta("system_access_tag", "unknown"))
