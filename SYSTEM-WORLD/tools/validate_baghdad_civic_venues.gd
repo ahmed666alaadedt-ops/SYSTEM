@@ -54,6 +54,33 @@ func _initialize() -> void:
 				quit(1)
 				return
 		venue.queue_free()
+
+	var stadium := Node3D.new()
+	stadium.name = "BaghdadStadiumValidation"
+	root.add_child(stadium)
+	manager.call("_create_stadium_details", stadium, 150.0, 180.0)
+	manager.call("_build_baghdad_stadium_facilities", stadium, 105.0, 68.0)
+	for required_node in [
+		"StadiumNorthConcourseFloor", "StadiumSouthConcourseFloor",
+		"StadiumGate_north_Interaction", "StadiumGate_south_Interaction",
+		"StadiumGate_east_Interaction", "StadiumGate_west_Interaction",
+		"HomeTeamLockerRoom", "AwayTeamLockerRoom", "RefereeRoom",
+		"MedicalRoom", "MediaRoom", "PressConferenceRoom",
+		"PlayerTunnelFloor", "StadiumFloodlight_00", "BaghdadStadiumScoreboard"
+	]:
+		if stadium.get_node_or_null(required_node) == null:
+			push_error("Baghdad stadium validation failed: missing physical facility " + required_node)
+			quit(1)
+			return
+	if stadium.get_node_or_null("HomeTeamLockerRoom/RoomFloor/CollisionShape3D") == null:
+		push_error("Baghdad stadium validation failed: locker room floor collision is missing.")
+		quit(1)
+		return
+	if stadium.get_node_or_null("HomeTeamLockerRoom/RoomEntranceInteraction") == null:
+		push_error("Baghdad stadium validation failed: locker room entry interaction is missing.")
+		quit(1)
+		return
+	stadium.queue_free()
 	manager.free()
-	print("Baghdad civic venue validation passed: four civic interiors have collision-backed walls, entry openings, floors and venue-specific fixtures; mosque includes five prayer rows with individual prayer mats.")
+	print("Baghdad civic venue validation passed: civic interiors plus the Baghdad stadium's collision-backed concourses, four gates, walk-in team/referee/medical/media rooms, player tunnel, floodlights and scoreboard.")
 	quit(0)
