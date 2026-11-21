@@ -128,7 +128,7 @@ func settle_auction(auction_id: String) -> Dictionary:
 	if wallet == null or not is_instance_valid(wallet):
 		return {"success":false,"reason":"LOCAL_WALLET_UNAVAILABLE"}
 	if seller == "local_player":
-		wallet.call("credit_currency", "SYSTEM_CREDITS", amount)
+		_credit_local_credits(amount)
 	_remove_item(seller, str(auction.get("item_id", "")))
 	_add_item(bidder, str(auction.get("item_id", "")))
 	auction["status"] = "SOLD"
