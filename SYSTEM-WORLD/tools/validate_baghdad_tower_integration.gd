@@ -66,7 +66,7 @@ func _run() -> void:
 		if exterior_collision == null:
 			_fail("Missing physical exterior collision body for " + root_name)
 			return
-		for collider_name in ["CollisionShape3D", "CollisionShape3D2"]:
+		for collider_name in ["FoundationCollisionShape", "ShaftCollisionShape"]:
 			var exterior_shape := exterior_collision.get_node_or_null(collider_name) as CollisionShape3D
 			if exterior_shape == null or exterior_shape.shape == null or exterior_shape.disabled:
 				_fail("Tower exterior shell collision is missing or disabled for " + root_name + ": " + collider_name)
@@ -169,7 +169,7 @@ func _run() -> void:
 	if power_collision == null:
 		_fail("Independent Power Tower exterior collision body is missing.")
 		return
-	for collider_name in ["CollisionShape3D", "CollisionShape3D2"]:
+	for collider_name in ["FoundationCollisionShape", "ShaftCollisionShape"]:
 		var power_shape := power_collision.get_node_or_null(collider_name) as CollisionShape3D
 		if power_shape == null or power_shape.shape == null or power_shape.disabled:
 			_fail("Independent Power Tower exterior collision is missing or disabled: " + collider_name)
