@@ -3,7 +3,7 @@ class_name SystemMotorsportTrackManager
 
 ## First-pass physical motorsport venue blockout.
 ## The track-zone Area3D enables race-only vehicle access while the player is inside.
-## Final road navigation, polished assets, AI grid, and race UI remain future work.
+## AI grid and race HUD prototypes are active; final road navigation and polished production assets remain future work.
 
 signal track_zone_entered(track_id: String)
 signal track_zone_exited(track_id: String)
@@ -418,6 +418,40 @@ func _on_ai_opponent_finished(result: Dictionary) -> void:
 
 func get_ai_race_results() -> Array[Dictionary]:
 	return ai_race_results.duplicate(true)
+
+
+func get_ai_race_event_id() -> String:
+	return ai_race_event_id
+
+
+func get_ai_race_status() -> Array[Dictionary]:
+	var standings: Array[Dictionary] = []
+	for controller in ai_controller_nodes:
+		if not is_instance_valid(controller):
+			continue
+		var completed_laps := int(controller.get("completed_laps"))
+		var total_laps := maxi(1, int(controller.get("total_laps")))
+		var elapsed := float(controller.get("elapsed_seconds"))
+		var active := bool(controller.get("active"))
+		var finished := not active and completed_laps >= total_laps
+		standings.append({
+			"opponent_id": str(controller.get("opponent_id")),
+			"opponent_name": str(controller.get("opponent_name")),
+			"vehicle_id": str(controller.get("vehicle").get("vehicle_id")) if is_instance_valid(controller.get("vehicle")) else "",
+			"completed_laps": completed_laps,
+			"total_laps": total_laps,
+			"elapsed_seconds": elapsed,
+			"finished": finished,
+			"status": "finished" if finished else ("racing" if active else "retired")
+		})
+	standings.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a.get("completed_laps", 0)) != int(b.get("completed_laps", 0)):
+			return int(a.get("completed_laps", 0)) > int(b.get("completed_laps", 0))
+		if bool(a.get("finished", false)) != bool(b.get("finished", false)):
+			return bool(a.get("finished", false))
+		return float(a.get("elapsed_seconds", 0.0)) < float(b.get("elapsed_seconds", 0.0))
+	)
+	return standings
 
 func _on_motorsport_race_cancelled(_event_id: String) -> void:
 	_clear_ai_opponents()
