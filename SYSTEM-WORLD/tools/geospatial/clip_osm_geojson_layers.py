@@ -25,6 +25,7 @@ LAYERS = (
     "bridges",
     "landuse",
     "amenities",
+    "historic-sites",
     "railway",
     "natural-water",
     "entrances",
