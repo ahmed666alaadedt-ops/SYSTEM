@@ -19,7 +19,10 @@ func build(p_tower_id: String, p_title: String, p_entrance_script: Script, p_ext
 	_build_exit()
 	_build_tower_identity_feature()
 	_build_lobby_wayfinding()
+	_build_upper_floor_access()
 	set_meta("playable_interior_blockout", true)
+	set_meta("upper_floor_blockout_count", 4)
+	set_meta("interactive_floor_selection", true)
 	set_meta("tower_identity_feature_ready", true)
 	set_meta("service_desks_have_collision", true)
 	set_meta("tower_id", tower_id)
@@ -223,3 +226,45 @@ func _build_lobby_wayfinding() -> void:
 	direction.pixel_size = 0.012
 	direction.modulate = Color(0.72, 0.9, 1.0)
 	add_child(direction)
+
+
+func _build_upper_floor_access() -> void:
+	var floor_material := _material(Color(0.13, 0.19, 0.25), 0.38, 0.52)
+	var edge_material := _material(Color(0.06, 0.55, 0.78), 0.24, 0.42)
+	edge_material.emission_enabled = true
+	edge_material.emission = Color(0.02, 0.32, 0.58)
+	edge_material.emission_energy_multiplier = 1.1
+	var floor_titles := ["الطابق 02 — الخدمات", "الطابق 03 — المرافق", "الطابق 04 — الإدارة", "الطابق 05 — المنصة العليا"]
+	for index in range(4):
+		var floor_number := index + 2
+		var floor_y := 18.0 * float(floor_number - 1)
+		_add_solid_box("UpperFloor_%02d" % floor_number, Vector3(0.0, floor_y, 0.0), Vector3(38.0, 0.8, 38.0), floor_material)
+		_add_visual_box("UpperFloorIdentityBand_%02d" % floor_number, Vector3(0.0, floor_y + 0.48, -17.0), Vector3(24.0, 0.18, 0.22), edge_material)
+		var floor_label := Label3D.new()
+		floor_label.name = "UpperFloorLabel_%02d" % floor_number
+		floor_label.text = str(floor_titles[index])
+		floor_label.font_size = 26
+		floor_label.position = Vector3(0.0, floor_y + 4.0, -16.5)
+		floor_label.pixel_size = 0.014
+		floor_label.modulate = Color(0.76, 0.91, 1.0)
+		add_child(floor_label)
+		_add_solid_box("LiftLandingMarker_%02d" % floor_number, Vector3(14.0, floor_y + 1.2, 12.0), Vector3(5.0, 2.4, 4.0), floor_material)
+		_create_floor_selector(floor_number, floor_y)
+
+
+func _create_floor_selector(floor_number: int, floor_y: float) -> void:
+	if entrance_script == null:
+		return
+	var area: Area3D = entrance_script.new()
+	area.name = "LiftFloorSelector_%02d" % floor_number
+	var floor_title := "الطابق %02d" % floor_number
+	area.configure("tower_floor_%s_%02d" % [tower_id, floor_number], "الانتقال إلى " + floor_title, "region_baghdad")
+	area.set_meta("system_destination_position", to_global(Vector3(10.0, floor_y + 1.5, 12.0)))
+	area.set_meta("system_interaction_prompt", "استخدام المصعد — " + floor_title)
+	var collision := CollisionShape3D.new()
+	var shape := SphereShape3D.new()
+	shape.radius = 3.2
+	collision.shape = shape
+	area.add_child(collision)
+	area.position = Vector3(10.0, floor_y + 1.5, 8.0)
+	add_child(area)
