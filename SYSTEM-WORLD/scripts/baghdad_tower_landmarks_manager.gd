@@ -412,6 +412,7 @@ func _create_tower_architecture(root: Node3D, node_name: String, title: String, 
 	identity_ring.position.y = height * 0.72 + 7.0
 	identity_ring.material_override = emissive_material
 	root.add_child(identity_ring)
+	_create_tower_identity_features(root, node_name, height, radius)
 
 
 func _create_connected_city_links() -> void:
@@ -651,3 +652,79 @@ func _create_reference_sky_district() -> void:
 	district.set_meta("ring_radius_m", ring_radius)
 	district.set_meta("final_art_assets_ready", false)
 	district.set_meta("note", "Procedural first-pass sky promenade; validate land clearance, navigation, collision and Android performance before final art.")
+
+
+func _create_tower_identity_features(root: Node3D, node_name: String, height: float, radius: float) -> void:
+	# Low-node-count silhouette accents distinguish the five functional towers.
+	# These are visual blockouts; access, collision and final materials are separate tasks.
+	match node_name:
+		"HunterAssociationTower":
+			for tier in range(3):
+				var y := height * (0.28 + float(tier) * 0.25)
+				var terrace := MeshInstance3D.new()
+				terrace.name = "HunterSkyTerrace_%d" % tier
+				var terrace_mesh := CylinderMesh.new()
+				terrace_mesh.top_radius = radius * (2.05 - float(tier) * 0.22)
+				terrace_mesh.bottom_radius = radius * (2.12 - float(tier) * 0.22)
+				terrace_mesh.height = 2.8
+				terrace.mesh = terrace_mesh
+				terrace.position.y = y
+				terrace.material_override = trim_material
+				root.add_child(terrace)
+		"BusinessTower":
+			for tier in range(4):
+				var balcony := MeshInstance3D.new()
+				balcony.name = "BusinessSkyOfficeDeck_%d" % tier
+				var balcony_mesh := BoxMesh.new()
+				balcony_mesh.size = Vector3(radius * 3.1, 2.0, radius * 1.25)
+				balcony.mesh = balcony_mesh
+				balcony.position = Vector3(0.0, height * (0.22 + float(tier) * 0.18), 0.0)
+				balcony.rotation.y = PI * 0.25 if tier % 2 == 0 else -PI * 0.25
+				balcony.material_override = trim_material
+				root.add_child(balcony)
+		"ShoppingTower":
+			for tier in range(3):
+				var market_deck := MeshInstance3D.new()
+				market_deck.name = "ShoppingSkyMarketDeck_%d" % tier
+				var market_mesh := CylinderMesh.new()
+				market_mesh.top_radius = radius * (2.0 - float(tier) * 0.28)
+				market_mesh.bottom_radius = radius * (2.08 - float(tier) * 0.28)
+				market_mesh.height = 3.2
+				market_deck.mesh = market_mesh
+				market_deck.position.y = 16.0 + float(tier) * 30.0
+				market_deck.material_override = trim_material if tier == 0 else tower_material
+				root.add_child(market_deck)
+		"EntertainmentTower":
+			for tier in range(2):
+				var halo := MeshInstance3D.new()
+				halo.name = "EntertainmentSkyHalo_%d" % tier
+				var halo_mesh := CylinderMesh.new()
+				halo_mesh.top_radius = radius * 1.72
+				halo_mesh.bottom_radius = radius * 1.72
+				halo_mesh.height = 1.6
+				halo.mesh = halo_mesh
+				halo.position.y = height * (0.42 + float(tier) * 0.28)
+				halo.material_override = emissive_material
+				root.add_child(halo)
+		"TechnologyTower":
+			var spire := MeshInstance3D.new()
+			spire.name = "TechnologyInnovationSpire"
+			var spire_mesh := CylinderMesh.new()
+			spire_mesh.top_radius = 0.35
+			spire_mesh.bottom_radius = radius * 0.22
+			spire_mesh.height = height * 0.18
+			spire.mesh = spire_mesh
+			spire.position.y = height + height * 0.09 + 7.0
+			spire.material_override = emissive_material
+			root.add_child(spire)
+			for antenna_index in range(3):
+				var antenna := MeshInstance3D.new()
+				antenna.name = "TechnologyAntenna_%d" % antenna_index
+				var antenna_mesh := CylinderMesh.new()
+				antenna_mesh.top_radius = 0.12
+				antenna_mesh.bottom_radius = 0.28
+				antenna_mesh.height = 18.0 + float(antenna_index) * 5.0
+				antenna.mesh = antenna_mesh
+				antenna.position = Vector3((float(antenna_index) - 1.0) * 4.0, height + 18.0, 0.0)
+				antenna.material_override = trim_material
+				root.add_child(antenna)
