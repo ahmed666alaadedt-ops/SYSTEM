@@ -484,3 +484,12 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Re-run Godot 4.3 import/script parsing on the latest PR head to confirm the parse blocker is cleared.
 - [ ] Investigate separate runtime validation failures reported by the earlier CI run: NPC visible-population manager was not mounted, and main.gd accessed a nil global_transform at line 1296. These failures are separate from the Baghdad tower blockout and must be resolved before a successful full project validation can be claimed.
 - Note: the available failing CI logs were produced by an earlier PR revision, not the current latest head. The latest head still needs its own workflow run.
+
+
+## Runtime guard and civilian population mounting corrections — 21 November 2026
+
+- [x] Prevent the player physics loop from reading the SpringArm global transform before both player and camera rig are valid.
+- [x] Resolve the modern world root directly from WorldManager when creating city navigation and visible civilian population managers, rather than relying on a possibly stale active-root reference.
+- [ ] Confirm the population manager mounts and spawns visible civilians in the latest Godot run.
+- [ ] Confirm no nil camera-transform errors remain during headless startup.
+- Note: these changes address the failure signatures from the earlier CI run; they are not yet confirmed by a new successful run on the latest branch head.
