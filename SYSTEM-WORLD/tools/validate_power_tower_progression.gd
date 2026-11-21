@@ -71,6 +71,12 @@ func _run_validation() -> void:
 		if floor_world.get_node_or_null("ActiveFloor_001/Checkpoint_" + checkpoint_id) == null:
 			_fail("Floor 1 is missing checkpoint area: " + checkpoint_id)
 			return
+		if floor_world.get_node_or_null("ActiveFloor_001/CheckpointMarker_" + checkpoint_id) == null:
+			_fail("Floor 1 is missing visible checkpoint marker: " + checkpoint_id)
+			return
+	if floor_world.get_node_or_null("ActiveFloor_001/FloorReturnGateSign") == null:
+		_fail("Floor 1 is missing its visible return gate.")
+		return
 
 	for checkpoint_id in ["entry_checkpoint", "midpoint_checkpoint"]:
 		floor_world.call("_on_checkpoint_body_entered", player, checkpoint_id)
