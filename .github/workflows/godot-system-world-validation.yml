@@ -201,7 +201,7 @@ jobs:
           fi
           grep -q "Hunter exam validation passed:" "$LOG"
 
-      - name: Validate Power Tower 200-floor progression and checkpoint recovery
+      - name: Validate Power Tower 200-floor progression, generated exploration environments and checkpoint recovery
         shell: bash
         run: |
           set -euo pipefail
