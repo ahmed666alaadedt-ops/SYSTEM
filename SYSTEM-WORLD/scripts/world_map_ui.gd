@@ -16,7 +16,8 @@ const LOCATION_TYPES := {
 	4: "متجر",
 	5: "مَعْلَم",
 	6: "نقطة سفر",
-	7: "موقع آخر"
+	7: "موقع آخر",
+	8: "إعلان"
 }
 
 
@@ -24,6 +25,7 @@ class MapDrawing extends Control:
 
 	var discovered_locations: Array = []
 	var personal_markers: Array = []
+	var advertisements: Array = []
 	var world_overview: Dictionary = {}
 	var player_position := Vector3.ZERO
 	var player_visible := false
@@ -85,6 +87,13 @@ class MapDrawing extends Control:
 			var position: Variant = marker.get("position", Vector3.ZERO)
 			if position is Vector3:
 				all_positions.append(position)
+
+		for advertisement in advertisements:
+			if typeof(advertisement) != TYPE_DICTIONARY:
+				continue
+			var ad_position: Variant = advertisement.get("position", Vector3.ZERO)
+			if ad_position is Vector3:
+				all_positions.append(ad_position)
 
 		if player_visible:
 			all_positions.append(player_position)
@@ -244,6 +253,23 @@ class MapDrawing extends Control:
 				12,
 				Color(1.0, 0.82, 0.48)
 			)
+
+		for advertisement in advertisements:
+			if typeof(advertisement) != TYPE_DICTIONARY:
+				continue
+			var ad_position: Variant = advertisement.get("position", Vector3.ZERO)
+			if not ad_position is Vector3:
+				continue
+			var ad_point := _project_position(ad_position, map_rect, min_x, max_x, min_z, max_z)
+			var diamond := PackedVector2Array([
+				ad_point + Vector2(0, -9),
+				ad_point + Vector2(9, 0),
+				ad_point + Vector2(0, 9),
+				ad_point + Vector2(-9, 0)
+			])
+			draw_colored_polygon(diamond, Color(1.0, 0.35, 0.78, 1.0))
+			draw_arc(ad_point, 13.0, 0.0, TAU, 24, Color(1.0, 0.68, 0.9, 0.9), 2.0)
+			draw_string(ThemeDB.fallback_font, ad_point + Vector2(12, 14), "إعلان: " + str(advertisement.get("city", "")), HORIZONTAL_ALIGNMENT_LEFT, 140, 12, Color(1.0, 0.78, 0.92))
 
 		if player_visible:
 			var player_point := _project_position(
@@ -677,6 +703,7 @@ func _refresh_map() -> void:
 		"personal_markers",
 		[]
 	)
+	map_canvas.advertisements = snapshot.get("advertisements", [])
 
 	map_canvas.player_visible = false
 	if selected_world_id != 2:
@@ -704,8 +731,8 @@ func _refresh_map() -> void:
 	var markers: Array = snapshot.get("personal_markers", [])
 
 	statistics_label.text = (
-		"المناطق المكتشفة: %d\nالمواقع المكتشفة: %d\nعلاماتك الشخصية: %d"
-		% [regions.size(), locations.size(), markers.size()]
+		"المناطق المكتشفة: %d\nالمواقع المكتشفة: %d\nعلاماتك الشخصية: %d\nلوحات الإعلانات: %d"
+		% [regions.size(), locations.size(), markers.size(), map_canvas.advertisements.size()]
 	)
 
 	for child in location_list.get_children():
@@ -728,6 +755,30 @@ func _refresh_map() -> void:
 					marker.get("label", "علامة شخصية")
 				)
 				_add_list_label("◆ " + marker_name)
+
+	if not map_canvas.advertisements.is_empty():
+		_add_list_label("إعلانات الشوارع القريبة من المدن")
+		for advertisement in map_canvas.advertisements:
+			if typeof(advertisement) != TYPE_DICTIONARY:
+				continue
+			var ad_entry := VBoxContainer.new()
+			ad_entry.add_theme_constant_override("separation", 3)
+			location_list.add_child(ad_entry)
+			var ad_label := Label.new()
+			ad_label.text = "◆ %s — %s\n%s" % [
+				str(advertisement.get("city", "مدينة")),
+				str(advertisement.get("campaign_title", "إعلان")),
+				str(advertisement.get("campaign_category", "حملة"))
+			]
+			ad_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+			ad_label.add_theme_color_override("font_color", Color(1.0, 0.72, 0.9))
+			ad_entry.add_child(ad_label)
+			var ad_button := Button.new()
+			ad_button.text = "عرض تفاصيل الإعلان"
+			ad_button.custom_minimum_size = Vector2(0, 34)
+			ad_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			ad_button.pressed.connect(_show_advertisement.bind(advertisement.duplicate(true)))
+			ad_entry.add_child(ad_button)
 
 	marker_button.disabled = (
 		player == null
@@ -762,6 +813,20 @@ func _add_location_entry(item: Dictionary) -> void:
 		route_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		route_button.pressed.connect(_request_navigation_to_location.bind(item.duplicate(true)))
 		entry.add_child(route_button)
+
+
+func _show_advertisement(advertisement: Dictionary) -> void:
+	if navigation_status_label == null:
+		return
+	var remaining := maxi(0, int(advertisement.get("expires_at", 0)) - int(Time.get_unix_time_from_system()))
+	var remaining_label := "انتهت مدة العرض" if remaining <= 0 else "متبقي نحو %d ثانية" % remaining
+	navigation_status_label.text = "%s — %s\n%s\nالإجراء المقترح: %s\n%s" % [
+		str(advertisement.get("campaign_category", "إعلان")),
+		str(advertisement.get("campaign_title", "حملة")),
+		str(advertisement.get("campaign_body", "")),
+		str(advertisement.get("campaign_action", "استكشف المدينة")),
+		remaining_label
+	]
 
 
 func _request_navigation_to_location(item: Dictionary) -> void:
