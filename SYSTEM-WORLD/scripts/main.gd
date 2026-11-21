@@ -1232,6 +1232,20 @@ func _on_interaction_performed(
 			player.velocity = Vector3.ZERO
 			if interaction_prompt_label != null:
 				interaction_prompt_label.text = "دخلت ملعب بغداد — ابدأ المباراة من مكتب الإدارة، ثم اقترب من الكرة وتفاعل لركلها."
+	elif location_id.begins_with("baghdad_football_stadium_exit_"):
+		var return_position: Vector3 = target.get_meta("system_return_position", Vector3.INF)
+		if player != null and return_position != Vector3.INF:
+			player.global_position = return_position
+			player.velocity = Vector3.ZERO
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "خرجت إلى ساحة ملعب بغداد."
+	elif location_id.begins_with("baghdad_football_stadium_") and not location_id.begins_with("baghdad_football_stadium_gate_"):
+		var stadium_room := target.get_parent()
+		if stadium_room != null and player != null:
+			player.global_position = stadium_room.global_position + Vector3(0.0, 1.5, 0.0)
+			player.velocity = Vector3.ZERO
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "دخلت %s — اقترب من بوابة الخروج للعودة إلى ساحة الملعب." % str(target.get_meta("system_display_name", "غرفة الملعب"))
 	elif location_id == "baghdad_stadium_match_control":
 		if is_instance_valid(football_match_manager):
 			var match_result: Dictionary = football_match_manager.call("start_match")
