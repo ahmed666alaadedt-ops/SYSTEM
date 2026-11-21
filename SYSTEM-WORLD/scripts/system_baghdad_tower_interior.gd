@@ -18,6 +18,7 @@ func build(p_tower_id: String, p_title: String, p_entrance_script: Script, p_ext
 	_build_service_desks()
 	if tower_id == "hunter_association_tower_baghdad":
 		_build_hunter_exam_tunnel()
+		_build_hunter_exam_public_announcement()
 	_build_exit()
 	_build_tower_identity_feature()
 	_build_lobby_wayfinding()
@@ -148,6 +149,62 @@ func _build_hunter_exam_tunnel() -> void:
 	set_meta("hunter_exam_tunnel_length", 58.0)
 	set_meta("hunter_exam_tunnel_staging_chamber", true)
 
+
+func _build_hunter_exam_public_announcement() -> void:
+	# Official public-facing announcement: the exam facility is visible and openly
+	# identified by the Hunter Association, not concealed or presented as secret.
+	var frame_mat := _material(Color(0.10, 0.14, 0.19), 0.3, 0.72)
+	var screen_mat := _material(Color(0.025, 0.16, 0.23), 0.22, 0.38)
+	screen_mat.emission_enabled = true
+	screen_mat.emission = Color(0.01, 0.24, 0.42)
+	screen_mat.emission_energy_multiplier = 1.5
+	var gold_mat := _material(Color(0.78, 0.56, 0.22), 0.25, 0.72)
+	gold_mat.emission_enabled = true
+	gold_mat.emission = Color(0.22, 0.12, 0.025)
+	gold_mat.emission_energy_multiplier = 0.8
+
+	# Large bilingual sign directly above the open tunnel threshold.
+	_add_visual_box("HunterExamPublicSignBacking", Vector3(0.0, 8.8, -19.45), Vector3(16.0, 3.0, 0.55), frame_mat)
+	_add_visual_box("HunterExamPublicSignBorder", Vector3(0.0, 10.45, -19.12), Vector3(15.4, 0.12, 0.12), gold_mat)
+	var public_sign := Label3D.new()
+	public_sign.name = "HunterExamPublicSign"
+	public_sign.text = "مركز اختبارات الصيادين\nHUNTER EXAMINATION CENTER"
+	public_sign.font_size = 30
+	public_sign.position = Vector3(0.0, 8.65, -19.05)
+	public_sign.pixel_size = 0.014
+	public_sign.modulate = Color(0.84, 0.94, 1.0)
+	add_child(public_sign)
+
+	# Public notice board beside the entrance, visible from the main lobby.
+	_add_visual_box("HunterExamNoticeBoardFrame", Vector3(-14.2, 5.0, -19.35), Vector3(7.2, 7.2, 0.65), gold_mat)
+	_add_visual_box("HunterExamNoticeBoardScreen", Vector3(-14.2, 5.0, -18.98), Vector3(6.85, 6.85, 0.16), screen_mat)
+	var notice := Label3D.new()
+	notice.name = "HunterExamPublicNotice"
+	notice.text = "إعلان رسمي من نقابة الصيادين\nاختبارات الصيادين\n\nالتسجيل والاستعلام\nفي مكاتب النقابة\n\nمواعيد الدفعات\nتُعلن عبر النقابة\n\nالدخول للنفق للمسجلين\nوالمقبولين فقط"
+	notice.font_size = 18
+	notice.position = Vector3(-14.2, 7.65, -18.82)
+	notice.pixel_size = 0.012
+	notice.modulate = Color(0.9, 0.95, 1.0)
+	add_child(notice)
+
+	if entrance_script != null:
+		var notice_area: Area3D = entrance_script.new()
+		notice_area.name = "HunterExamPublicNoticeInteraction"
+		notice_area.configure("hunter_exam_public_notice_baghdad", "إعلان اختبارات الصيادين ومواعيدها", "region_baghdad")
+		notice_area.position = Vector3(-14.2, 1.5, -15.8)
+		notice_area.set_meta("system_display_name", "إعلان نقابة الصيادين")
+		notice_area.set_meta("system_service_description", "لوحة عامة معلنة للاختبارات؛ التسجيل والاستعلام متاحان من مكاتب النقابة، والدخول للنفق للمسجلين والمقبولين فقط.")
+		notice_area.set_meta("system_interaction_prompt", "قراءة إعلان اختبارات الصيادين")
+		var notice_collision := CollisionShape3D.new()
+		var notice_shape := SphereShape3D.new()
+		notice_shape.radius = 3.0
+		notice_collision.shape = notice_shape
+		notice_area.add_child(notice_collision)
+		add_child(notice_area)
+
+	set_meta("hunter_exam_publicly_announced", true)
+	set_meta("hunter_exam_public_notice_board", true)
+	set_meta("hunter_exam_entry_requires_registration", true)
 
 func _build_service_desks() -> void:
 	var desk_mat := _material(Color(0.20, 0.24, 0.29), 0.34, 0.55)
