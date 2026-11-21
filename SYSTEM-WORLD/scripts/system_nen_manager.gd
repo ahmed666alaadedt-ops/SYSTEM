@@ -61,7 +61,7 @@ func register_character(character_id: String, character_profile: Dictionary = {}
 		str(character_profile.get("background", character_profile.get("occupation", "unknown"))),
 		str(character_profile.get("birth_seed", character_profile.get("variant_index", key.hash())))
 	]
-	var affinity := AFFINITIES[abs(seed_text.hash()) % AFFINITIES.size()]
+	var affinity: String = AFFINITIES[abs(seed_text.hash()) % AFFINITIES.size()]
 	var record := {
 		"character_id": key,
 		"display_name": str(character_profile.get("name", key)),

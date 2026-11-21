@@ -158,7 +158,7 @@ func _seed_house_auctions_if_needed() -> void:
 	var seed_items := ["uruk_cylinder_seal", "bronze_star_astrolabe", "lapis_guardian_figurine"]
 	for item_id in seed_items:
 		var item: Dictionary = LOTS[item_id]
-		var auction_id := "house_lot_" + item_id
+		var auction_id: String = "house_lot_" + item_id
 		auctions[auction_id] = {
 			"id":auction_id,"item_id":item_id,"item_name":str(item.get("name", item_id)),
 			"seller_id":"SYSTEM_AUCTION_HOUSE","reserve_price":int(item.get("opening_bid", 1)),

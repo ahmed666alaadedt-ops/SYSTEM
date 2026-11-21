@@ -659,8 +659,8 @@ func get_service_locations() -> Array[Dictionary]:
 func _create_stadium_details(parent: Node3D, width: float, depth: float) -> void:
 	# Full-size open pitch blockout with collision, markings, goals and four spectator sides.
 	# Regulation-size pitch: 105 m × 68 m, kept inside the stadium footprint.
-	var pitch_width := minf(width * 0.70, 105.0)
-	var pitch_depth := minf(depth * 0.60, 68.0)
+	var pitch_width: float = minf(width * 0.70, 105.0)
+	var pitch_depth: float = minf(depth * 0.60, 68.0)
 	var pitch_material := _material(Color(0.07, 0.31, 0.105), 0.96, 0.0)
 	var alternate_grass := _material(Color(0.09, 0.37, 0.13), 0.96, 0.0)
 	var line_material := _material(Color(0.92, 0.94, 0.86), 0.9, 0.0)
@@ -725,12 +725,12 @@ func _create_stadium_details(parent: Node3D, width: float, depth: float) -> void
 
 	for side in [-1.0, 1.0]:
 		# Penalty area: 16.5 m deep × 40.32 m wide.
-		var penalty_front_x := side * (pitch_width * 0.5 - 16.5)
+		var penalty_front_x: float = side * (pitch_width * 0.5 - 16.5)
 		_add_stadium_marking(parent, "PenaltyAreaFront_%s" % str(side), Vector3(penalty_front_x, 1.12, 0.0), Vector3(0.16, 0.045, 40.32), line_material)
 		for edge in [-1.0, 1.0]:
 			_add_stadium_marking(parent, "PenaltyAreaSide_%s_%s" % [str(side), str(edge)], Vector3(side * (pitch_width * 0.5 - 8.25), 1.12, edge * 20.16), Vector3(16.5, 0.045, 0.16), line_material)
 		# Goal area: 5.5 m deep × 18.32 m wide.
-		var goal_area_front_x := side * (pitch_width * 0.5 - 5.5)
+		var goal_area_front_x: float = side * (pitch_width * 0.5 - 5.5)
 		_add_stadium_marking(parent, "GoalAreaFront_%s" % str(side), Vector3(goal_area_front_x, 1.13, 0.0), Vector3(0.16, 0.045, 18.32), line_material)
 		for edge in [-1.0, 1.0]:
 			_add_stadium_marking(parent, "GoalAreaSide_%s_%s" % [str(side), str(edge)], Vector3(side * (pitch_width * 0.5 - 2.75), 1.13, edge * 9.16), Vector3(5.5, 0.045, 0.16), line_material)
@@ -750,13 +750,13 @@ func _create_stadium_details(parent: Node3D, width: float, depth: float) -> void
 	for side in [-1.0, 1.0]:
 		for row in range(4):
 			var stand_y := 2.0 + float(row) * 1.5
-			var stand_z := side * (pitch_depth * 0.5 + 7.0 + float(row) * 3.0)
+			var stand_z: float = side * (pitch_depth * 0.5 + 7.0 + float(row) * 3.0)
 			_add_stadium_solid_box(parent, "LongStand_%s_%02d" % [str(side), row], Vector3(pitch_width * 0.82, 1.4, 4.2), Vector3(0.0, stand_y, stand_z), stand_material)
 			_add_stadium_seat_row(parent, "LongStandSeats_%s_%02d" % [str(side), row], Vector3(0.0, stand_y + 0.95, stand_z), pitch_width * 0.78, 28, true, stand_material)
 	for side in [-1.0, 1.0]:
 		for row in range(3):
 			var stand_y := 2.0 + float(row) * 1.5
-			var stand_x := side * (pitch_width * 0.5 + 7.0 + float(row) * 3.0)
+			var stand_x: float = side * (pitch_width * 0.5 + 7.0 + float(row) * 3.0)
 			_add_stadium_solid_box(parent, "EndStand_%s_%02d" % [str(side), row], Vector3(4.0, 1.4, pitch_depth * 0.55), Vector3(stand_x, stand_y, 0.0), stand_material)
 			_add_stadium_seat_row(parent, "EndStandSeats_%s_%02d" % [str(side), row], Vector3(stand_x, stand_y + 0.95, 0.0), pitch_depth * 0.52, 12, false, stand_material)
 	var canopy := MeshInstance3D.new()

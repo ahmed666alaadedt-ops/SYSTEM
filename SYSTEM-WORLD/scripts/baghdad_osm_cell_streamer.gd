@@ -1227,49 +1227,6 @@ func _add_archaeological_site_interaction(root: Node3D, feature_id: String, tags
 	root.add_child(interaction)
 
 
-func _add_historic_polygon_landmark(parent: Node3D, ring: PackedVector2Array, height: float, feature_id: String, tags: Dictionary, landmark_kind: String) -> Node3D:
-	if ring.size() < 3:
-		return null
-	var center := Vector2.ZERO
-	for point in ring:
-		center += point
-	center /= float(ring.size())
-	var root := Node3D.new()
-	root.name = "OSMHistoricLandmarkDetail_%s" % feature_id
-	root.position = Vector3(center.x, _terrain_height(center), center.y)
-	root.set_meta("landmark_type", landmark_kind)
-	root.set_meta("osm_feature_id", feature_id)
-	root.set_meta("osm_historic_tag", str(tags.get("historic", "")))
-	parent.add_child(root)
-	var stone := StandardMaterial3D.new()
-	stone.albedo_color = Color(0.55, 0.43, 0.30)
-	stone.roughness = 0.94
-	var accent := StandardMaterial3D.new()
-	accent.albedo_color = Color(0.39, 0.32, 0.25)
-	accent.roughness = 0.98
-	match landmark_kind:
-		"historic_monument":
-			_build_point_historic_monument(root, tags, stone, accent)
-		"historic_tomb":
-			_build_point_historic_tomb(root, stone, accent)
-		"historic_building":
-			_build_point_historic_building(root, stone, accent)
-		"historic_fortification":
-			_build_point_historic_fortification(root, stone, accent)
-		"historic_gate":
-			_build_point_historic_gate(root, stone, accent)
-		_:
-			_build_point_archaeological_ruins(root, feature_id, stone, accent)
-	var label := Label3D.new()
-	label.name = "HistoricLandmarkLabel"
-	label.text = str(tags.get("name:ar", tags.get("name", "معلم تاريخي موثق")))
-	label.font_size = 20
-	label.position = Vector3(0.0, maxf(height, 7.0) + 2.0, 0.0)
-	label.modulate = Color(0.9, 0.78, 0.57)
-	root.add_child(label)
-	return root
-
-
 func _add_archaeological_ruin_detail(parent: Node3D, ring: PackedVector2Array, height: float, feature_id: String, tags: Dictionary) -> Node3D:
 	if ring.size() < 3:
 		return null
