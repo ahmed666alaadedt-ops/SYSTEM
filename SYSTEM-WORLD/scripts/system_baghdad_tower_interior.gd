@@ -234,6 +234,9 @@ func _build_upper_floor_access() -> void:
 	edge_material.emission_enabled = true
 	edge_material.emission = Color(0.02, 0.32, 0.58)
 	edge_material.emission_energy_multiplier = 1.1
+	# Continuous visual lift shaft, with paired illuminated guide rails.
+	_add_visual_box("LiftShaftGuide_Left", Vector3(8.0, 36.0, 12.0), Vector3(0.35, 72.0, 0.35), edge_material)
+	_add_visual_box("LiftShaftGuide_Right", Vector3(12.0, 36.0, 12.0), Vector3(0.35, 72.0, 0.35), edge_material)
 	var floor_titles := ["الطابق 02 — الخدمات", "الطابق 03 — المرافق", "الطابق 04 — الإدارة", "الطابق 05 — المنصة العليا"]
 	for index in range(4):
 		var floor_number := index + 2
@@ -249,6 +252,8 @@ func _build_upper_floor_access() -> void:
 		floor_label.modulate = Color(0.76, 0.91, 1.0)
 		add_child(floor_label)
 		_add_solid_box("LiftLandingMarker_%02d" % floor_number, Vector3(14.0, floor_y + 1.2, 12.0), Vector3(5.0, 2.4, 4.0), floor_material)
+		_add_visual_box("LiftDoor_Left_%02d" % floor_number, Vector3(9.0, floor_y + 4.0, 11.6), Vector3(1.8, 7.0, 0.22), edge_material)
+		_add_visual_box("LiftDoor_Right_%02d" % floor_number, Vector3(11.0, floor_y + 4.0, 11.6), Vector3(1.8, 7.0, 0.22), edge_material)
 		_create_floor_selector(floor_number, floor_y)
 
 
