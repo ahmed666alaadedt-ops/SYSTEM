@@ -372,3 +372,12 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Validate facade orientation, screen readability, night brightness, occlusion, LOD, memory and Android frame rate on physical devices.
 - [ ] Complete Android APK export workflow and inspect the generated build on a device.
 - Note: CI confirms project parsing and headless scene startup, not visual correctness, gameplay feel, or physical-device performance. Local event records are not cross-player global rankings; an authoritative online service remains required.
+
+
+## Mountain cave passage blockout — 21 November 2026
+
+- [x] Add `scripts/modern_world_cave_passage_manager.gd` for the four existing mountain cave sites without moving their coordinates or changing the continent.
+- [x] Generate a walkable passage floor with static collision, side-wall collision, an arched ceiling mesh, and a larger inner chamber floor.
+- [x] Tag each generated passage as a cave landmark and mark it explicitly as geometry blockout requiring runtime validation.
+- [ ] Add validated entrance-to-building association, proper terrain excavation, complete chamber wall/ceiling collision, cave lighting, audio, navigation, discovery persistence, and player interaction.
+- [ ] Run Godot parser/import, scene startup, collision traversal, and Android performance tests. The new geometry is committed source code and has not yet been run in Godot or on a device.
