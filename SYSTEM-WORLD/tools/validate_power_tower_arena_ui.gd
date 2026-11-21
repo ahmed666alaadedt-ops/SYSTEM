@@ -30,6 +30,7 @@ func _run() -> void:
 	var ui = ARENA_UI_SCRIPT.new()
 	root.add_child(manager)
 	root.add_child(ui)
+	await process_frame
 	ui.setup(manager)
 	if ui.get_node_or_null("ArenaControlPanel") == null:
 		_fail("Arena panel was not created.")
