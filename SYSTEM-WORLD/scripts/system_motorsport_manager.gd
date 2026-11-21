@@ -63,6 +63,7 @@ func _record_completed_race(result: Dictionary) -> Dictionary:
 	var event_id := str(result.get("event_id", ""))
 	if event_id.is_empty():
 		return {"saved": false, "reason": "INVALID_EVENT_ID"}
+	var recorded_at := int(result.get("recorded_at_unix", Time.get_unix_time_from_system()))
 	var attempts: Array = race_records.get(event_id, [])
 	attempts.append({
 		"event_id": event_id,
@@ -70,7 +71,7 @@ func _record_completed_race(result: Dictionary) -> Dictionary:
 		"elapsed_seconds": maxf(0.0, float(result.get("elapsed_seconds", 0.0))),
 		"completed_laps": int(result.get("completed_laps", 0)),
 		"vehicle_id": str(result.get("vehicle_id", "")),
-		"recorded_at_unix": int(Time.get_unix_time_from_system())
+		"recorded_at_unix": recorded_at
 	})
 	while attempts.size() > MAX_LOCAL_ATTEMPTS_PER_EVENT:
 		attempts.pop_front()
@@ -79,13 +80,18 @@ func _record_completed_race(result: Dictionary) -> Dictionary:
 	var sorted_attempts: Array = attempts.duplicate(true)
 	sorted_attempts.sort_custom(_sort_race_records)
 	var best: Dictionary = sorted_attempts[0] if not sorted_attempts.is_empty() else {}
+	var local_rank := 0
+	for index in range(sorted_attempts.size()):
+		if int(sorted_attempts[index].get("recorded_at_unix", 0)) == recorded_at:
+			local_rank = index + 1
+			break
 	return {
 		"saved": saved_ok,
 		"scope": "local_device_only",
 		"attempt_count": attempts.size(),
 		"best_time_seconds": float(best.get("elapsed_seconds", 0.0)),
-		"is_personal_best": not best.is_empty() and int(best.get("recorded_at_unix", 0)) == int(result.get("recorded_at_unix", -1)),
-		"local_rank": 1,
+		"is_personal_best": not best.is_empty() and int(best.get("recorded_at_unix", 0)) == recorded_at,
+		"local_rank": local_rank,
 		"local_leaderboard": sorted_attempts.slice(0, mini(10, sorted_attempts.size()))
 	}
 
