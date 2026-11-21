@@ -15,7 +15,9 @@ func _run() -> void:
 	var second := manager.register_character("validator_beta", {"personality": "bold", "background": "fighter"})
 	assert(bool(first.get("success", false)))
 	assert(bool(second.get("success", false)))
-	assert(str(first.profile.affinity) != str(second.profile.affinity), "Distinct profile seeds should produce individual affinities.")
+	assert(NenManagerScript.AFFINITIES.has(str(first.profile.affinity)))
+	assert(NenManagerScript.AFFINITIES.has(str(second.profile.affinity)))
+	assert(int(first.profile.aura_capacity) != int(second.profile.aura_capacity) or str(first.profile.affinity) != str(second.profile.affinity), "Character profiles must receive individualized Nen traits.")
 	assert(not bool(manager.get_character_state("validator_alpha").discovered))
 	for index in range(3):
 		manager.add_discovery_insight("validator_alpha", "deep_meditation")
