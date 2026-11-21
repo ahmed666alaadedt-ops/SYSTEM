@@ -175,4 +175,4 @@ Until then, label it as source, prototype, blockout, generated candidate, or pen
 
 The 5×5 pack is only a 1 km × 1 km initial proof area. It is not the full Baghdad municipal map, and no physical Android visual/performance test has been performed.
 
-- `system_public_event_board.gd` — procedural facade-mounted advertising and public event-result displays for configured modern-world cities and all five Baghdad landmark towers; listens to verified local gameplay completion events and persists local result history. Real ad delivery and authoritative global rankings remain unimplemented.
+- `system_public_event_board.gd` — procedural facade-mounted advertising and public event-result displays for configured modern-world cities and the five connected Baghdad district towers (Hunter Association, Business, Shopping, Entertainment, Technology & Innovation), plus the separate Power Tower; listens to verified local gameplay completion events and persists local result history. Real ad delivery and authoritative global rankings remain unimplemented.
