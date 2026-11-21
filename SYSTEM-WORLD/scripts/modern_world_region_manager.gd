@@ -750,6 +750,88 @@ func register_map_locations(map_manager: Node, world_id: String) -> void:
 	if baghdad_landmarks != null and baghdad_landmarks.has_method("register_map_locations"):
 		baghdad_landmarks.call("register_map_locations", map_manager, world_id)
 
+	_audit_baghdad_map_registration(map_manager, world_id)
+
+
+func _audit_baghdad_map_registration(map_manager: Node, world_id: String) -> void:
+	if world_id != "2" or map_manager == null:
+		return
+	var buckets_value: Variant = map_manager.get("locations_by_world")
+	if typeof(buckets_value) != TYPE_DICTIONARY:
+		push_error("SYSTEM WORLD Baghdad map audit: map location registry is unavailable.")
+		return
+	var world_buckets: Dictionary = buckets_value
+	var locations: Dictionary = world_buckets.get(world_id, {})
+	var missing := PackedStringArray()
+	var service_count := 0
+
+	var services_manager := get_node_or_null("ModernCityServicesManager")
+	if services_manager == null or not services_manager.has_method("get_service_locations"):
+		missing.append("ModernCityServicesManager")
+	else:
+		for service_data in services_manager.call("get_service_locations"):
+			if str(service_data.get("city", "")) != "Baghdad":
+				continue
+			service_count += 1
+			var service_id := str(service_data.get("id", ""))
+			if not locations.has(service_id):
+				missing.append(service_id)
+
+	var tower_manager := get_node_or_null("BaghdadTowerLandmarksManager")
+	var tower_count := 0
+	var power_tower_found := false
+	if tower_manager == null or not tower_manager.has_method("get_tower_positions"):
+		missing.append("BaghdadTowerLandmarksManager")
+	else:
+		for tower_data in tower_manager.call("get_tower_positions"):
+			tower_count += 1
+			var tower_id := str(tower_data.get("id", ""))
+			if tower_id == "power_tower_baghdad":
+				power_tower_found = true
+			if not locations.has(tower_id):
+				missing.append(tower_id)
+		if tower_manager.has_method("get_headquarters_position"):
+			var headquarters_position: Vector3 = tower_manager.call("get_headquarters_position")
+			if headquarters_position != Vector3.INF and not locations.has("hunter_association_headquarters_baghdad"):
+				missing.append("hunter_association_headquarters_baghdad")
+		var connected_towers: Array = tower_manager.get("connected_tower_positions")
+		if connected_towers.size() != 5:
+			missing.append("five_tower_district_count")
+		for connected_tower in connected_towers:
+			if str(connected_tower.get("id", "")) == "power_tower_baghdad":
+				missing.append("power_tower_must_remain_independent")
+
+	for landmark_id in [
+		"hunter_exam_tunnel_start_baghdad",
+		"hunter_exam_public_notice_baghdad",
+		"baghdad_archaeological_ruins",
+		"baghdad_international_motorsport_park"
+	]:
+		if not locations.has(landmark_id):
+			missing.append(landmark_id)
+
+	var baghdad_ad_count := 0
+	if map_manager.has_method("get_advertisements"):
+		for advertisement in map_manager.call("get_advertisements", world_id):
+			if str(advertisement.get("city", "")) == "Baghdad":
+				baghdad_ad_count += 1
+	if baghdad_ad_count < 3:
+		missing.append("baghdad_street_advertisement_map_records")
+
+	if service_count == 0 or tower_count < 6 or not power_tower_found or not missing.is_empty():
+		push_error(
+			"SYSTEM WORLD Baghdad map audit failed. Missing: "
+			+ ", ".join(missing)
+		)
+		return
+
+	print(
+		"Baghdad map registration audit passed: ",
+		service_count, " Baghdad services, ",
+		tower_count, " tower pins including the independent Power Tower, ",
+		baghdad_ad_count, " Baghdad advertising records, and all exploration landmarks."
+	)
+
 
 func discover_starting_city(map_manager: Node, world_id: String) -> void:
 	if map_manager == null or not map_manager.has_method("discover_region"):
