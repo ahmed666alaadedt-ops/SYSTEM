@@ -779,6 +779,17 @@ func _refresh_map() -> void:
 			ad_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			ad_button.pressed.connect(_show_advertisement.bind(advertisement.duplicate(true)))
 			ad_entry.add_child(ad_button)
+			if selected_world_id == 2 and str(advertisement.get("city", "")) == "Baghdad":
+				var route_button := Button.new()
+				route_button.text = "ارسم الطريق إلى اللوحة"
+				route_button.custom_minimum_size = Vector2(0, 34)
+				route_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				route_button.pressed.connect(_request_navigation_to_location.bind({
+					"name": str(advertisement.get("name", "لوحة إعلان")),
+					"region_id": "region_baghdad",
+					"position": advertisement.get("position", Vector3.ZERO)
+				}))
+				ad_entry.add_child(route_button)
 
 	marker_button.disabled = (
 		player == null
