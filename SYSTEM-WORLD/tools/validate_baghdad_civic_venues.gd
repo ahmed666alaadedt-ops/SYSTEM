@@ -90,10 +90,36 @@ func _initialize() -> void:
 		push_error("Baghdad stadium validation failed: locker room floor collision is missing.")
 		quit(1)
 		return
-	if stadium.get_node_or_null("HomeTeamLockerRoom/RoomEntranceInteraction") == null:
-		push_error("Baghdad stadium validation failed: locker room entry interaction is missing.")
-		quit(1)
-		return
+	var stadium_room_ids := [
+		"HomeTeamLockerRoom", "AwayTeamLockerRoom", "RefereeRoom",
+		"MedicalRoom", "MediaRoom", "PressConferenceRoom"
+	]
+	for room_id in stadium_room_ids:
+		var room := stadium.get_node_or_null(room_id)
+		if room == null:
+			push_error("Baghdad stadium validation failed: room is missing: " + room_id)
+			quit(1)
+			return
+		var entry_interaction := room.get_node_or_null("RoomEntranceInteraction") as Area3D
+		var exit_interaction := room.get_node_or_null("RoomExitInteraction") as Area3D
+		if entry_interaction == null or not entry_interaction.is_in_group("system_interactable"):
+			push_error("Baghdad stadium validation failed: usable room entry is missing: " + room_id)
+			quit(1)
+			return
+		if exit_interaction == null or not exit_interaction.is_in_group("system_interactable"):
+			push_error("Baghdad stadium validation failed: usable room exit is missing: " + room_id)
+			quit(1)
+			return
+		var exit_id := str(exit_interaction.get_meta("system_location_id", ""))
+		if not exit_id.begins_with("baghdad_football_stadium_exit_"):
+			push_error("Baghdad stadium validation failed: invalid room exit ID: " + room_id)
+			quit(1)
+			return
+		var return_position: Vector3 = exit_interaction.get_meta("system_return_position", Vector3.INF)
+		if return_position == Vector3.INF:
+			push_error("Baghdad stadium validation failed: return position is missing: " + room_id)
+			quit(1)
+			return
 	stadium.queue_free()
 	manager.free()
 	print("Baghdad civic venue validation passed: civic interiors plus the Baghdad stadium's collision-backed concourses, four gates, walk-in team/referee/medical/media rooms, player tunnel, floodlights and scoreboard.")
