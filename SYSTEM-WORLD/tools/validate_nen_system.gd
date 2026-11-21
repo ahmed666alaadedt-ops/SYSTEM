@@ -9,6 +9,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	var manager = NenManagerScript.new()
+	manager.save_path = "user://system_nen_validator_%d.cfg" % int(Time.get_unix_time_from_system())
 	root.add_child(manager)
 	manager.setup(null)
 	var first := manager.register_character("validator_alpha", {"personality": "calm", "background": "scholar"})
