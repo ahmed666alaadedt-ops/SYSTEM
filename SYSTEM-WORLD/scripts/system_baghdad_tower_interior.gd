@@ -17,7 +17,11 @@ func build(p_tower_id: String, p_title: String, p_entrance_script: Script, p_ext
 	_build_lobby()
 	_build_service_desks()
 	_build_exit()
+	_build_tower_identity_feature()
+	_build_lobby_wayfinding()
 	set_meta("playable_interior_blockout", true)
+	set_meta("tower_identity_feature_ready", true)
+	set_meta("service_desks_have_collision", true)
 	set_meta("tower_id", tower_id)
 
 func get_entry_position() -> Vector3:
@@ -69,7 +73,7 @@ func _build_service_desks() -> void:
 	var desk_positions := [Vector3(-12.0, 1.2, -8.0), Vector3(0.0, 1.2, -8.0), Vector3(12.0, 1.2, -8.0)]
 	var desk_titles := _service_titles()
 	for index in range(desk_positions.size()):
-		_add_visual_box("ServiceDesk_%d" % index, desk_positions[index], Vector3(7.0, 2.4, 3.0), desk_mat)
+		_add_solid_box("ServiceDesk_%d" % index, desk_positions[index], Vector3(7.0, 2.4, 3.0), desk_mat)
 		_add_visual_box("ServiceTerminal_%d" % index, desk_positions[index] + Vector3(0.0, 2.0, -0.3), Vector3(3.6, 1.7, 0.25), screen_mat)
 		var label := Label3D.new()
 		label.name = "ServiceLabel_%d" % index
@@ -153,3 +157,69 @@ func _material(color: Color, roughness: float, metallic: float) -> StandardMater
 	result.roughness = roughness
 	result.metallic = metallic
 	return result
+
+
+func _build_tower_identity_feature() -> void:
+	var accent_color := Color(0.08, 0.62, 0.92)
+	var feature_title := "SYSTEM"
+	match tower_id:
+		"hunter_association_tower_baghdad":
+			accent_color = Color(0.08, 0.62, 0.92)
+			feature_title = "HUNTER MISSION CORE"
+		"business_tower_baghdad":
+			accent_color = Color(0.24, 0.78, 0.72)
+			feature_title = "BUSINESS & INVESTMENT"
+		"shopping_tower_baghdad":
+			accent_color = Color(0.95, 0.72, 0.28)
+			feature_title = "CITY MARKET DIRECTORY"
+		"entertainment_tower_baghdad":
+			accent_color = Color(0.75, 0.38, 0.95)
+			feature_title = "EVENTS & ARENA HUB"
+		"technology_tower_baghdad":
+			accent_color = Color(0.18, 0.88, 0.78)
+			feature_title = "INNOVATION CORE"
+	var accent := _material(accent_color, 0.24, 0.48)
+	accent.emission_enabled = true
+	accent.emission = accent_color * 0.38
+	accent.emission_energy_multiplier = 1.2
+	var dark := _material(Color(0.025, 0.055, 0.085), 0.32, 0.58)
+	_add_visual_box("TowerIdentityFeatureBase", Vector3(0.0, 0.12, 1.0), Vector3(12.0, 0.22, 7.0), dark)
+	_add_visual_box("TowerIdentityFeatureScreen", Vector3(0.0, 5.2, -1.0), Vector3(10.0, 7.0, 0.45), accent)
+	_add_visual_box("TowerIdentityFeatureHeader", Vector3(0.0, 9.2, -0.72), Vector3(11.0, 0.28, 0.24), accent)
+	var title := Label3D.new()
+	title.name = "TowerIdentityFeatureTitle"
+	title.text = feature_title
+	title.font_size = 25
+	title.position = Vector3(0.0, 10.1, -0.55)
+	title.pixel_size = 0.012
+	title.modulate = accent_color.lightened(0.25)
+	add_child(title)
+	for index in range(3):
+		var marker := MeshInstance3D.new()
+		marker.name = "FeatureStatusMarker_%d" % index
+		var marker_mesh := SphereMesh.new()
+		marker_mesh.radius = 0.28
+		marker_mesh.height = 0.56
+		marker.mesh = marker_mesh
+		marker.position = Vector3(-3.0 + float(index) * 3.0, 2.4, -0.65)
+		marker.material_override = accent
+		add_child(marker)
+
+
+func _build_lobby_wayfinding() -> void:
+	var gold := _material(Color(0.78, 0.57, 0.25), 0.28, 0.72)
+	var cyan := _material(Color(0.06, 0.56, 0.78), 0.24, 0.42)
+	cyan.emission_enabled = true
+	cyan.emission = Color(0.02, 0.32, 0.62)
+	cyan.emission_energy_multiplier = 1.0
+	for side in [-1.0, 1.0]:
+		_add_solid_box("LobbyWayfindingPillar_%s" % str(int(side)), Vector3(side * 17.5, 6.0, 12.0), Vector3(1.2, 12.0, 1.2), gold)
+		_add_visual_box("LobbyWayfindingLight_%s" % str(int(side)), Vector3(side * 17.5, 10.0, 11.3), Vector3(0.16, 6.0, 0.12), cyan)
+	var direction := Label3D.new()
+	direction.name = "LobbyWayfindingSign"
+	direction.text = "معلومات وخدمات البرج  ←     →  المخرج"
+	direction.font_size = 22
+	direction.position = Vector3(0.0, 12.0, 16.0)
+	direction.pixel_size = 0.012
+	direction.modulate = Color(0.72, 0.9, 1.0)
+	add_child(direction)
