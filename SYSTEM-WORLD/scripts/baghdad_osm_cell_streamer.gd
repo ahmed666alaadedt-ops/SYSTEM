@@ -893,8 +893,9 @@ func _build_historic_site_feature(parent: Node3D, feature: Dictionary) -> int:
 		return built
 	if geometry_type == "GeometryCollection":
 		var built_parts := 0
-		for index in range(geometry.get("geometries", []).size()):
-			var part: Dictionary = geometry.get("geometries", [])[index]
+		var geometry_parts: Array = geometry.get("geometries", [])
+		for index in range(geometry_parts.size()):
+			var part: Dictionary = geometry_parts[index]
 			var part_feature: Dictionary = feature.duplicate(true)
 			part_feature["id"] = feature_id + "_part_" + str(index)
 			part_feature["geometry"] = part
