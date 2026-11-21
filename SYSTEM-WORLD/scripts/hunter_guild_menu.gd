@@ -116,15 +116,32 @@ func _build_interface() -> void:
 
 func set_exam_status(result: Dictionary) -> void:
 	if not bool(result.get("success", false)):
-		status_label.text = "حالة الاختبار: " + str(result.get("reason", "تعذر تنفيذ الطلب"))
+		var reason := str(result.get("reason", "تعذر تنفيذ الطلب"))
+		status_label.text = "حالة الاختبار: " + reason
+		if reason == "NEXT_WEEKLY_EXAM_REQUIRED":
+			var retry_at := int(result.get("retry_at", 0))
+			service_info_label.text = "لم تنجح المحاولة السابقة. يمكنك إعادة التقديم في الدفعة الأسبوعية التالية. موعد فتح التقديم (UTC): %s" % Time.get_datetime_string_from_unix_time(retry_at) if retry_at > 0 else "يمكنك إعادة التقديم في الدفعة الأسبوعية التالية."
+		elif reason == "HUNTER_LICENSE_ALREADY_EARNED":
+			service_info_label.text = "رخصة الصياد الدائمة مسجلة لهذا الحساب."
+		elif reason == "ALREADY_REGISTERED":
+			service_info_label.text = "أنت مسجل بالفعل. استخدم بوابة النفق لبدء الاختبار أو استئنافه."
+		else:
+			service_info_label.text = "راجع شروط التسجيل وحالة محاولتك لدى مكتب النقابة."
+		service_info_label.show()
 		return
 	if result.has("candidate_number") and result.has("stages"):
-		status_label.text = "رقم المتسابق: %d | مراحل الاختبار: %d" % [int(result["candidate_number"]), int(result["stages"])]
+		status_label.text = "رقم المرشح: %d | المحاولة: %d | المراحل: %d" % [int(result["candidate_number"]), int(result.get("attempt_number", 1)), int(result["stages"])]
+		service_info_label.text = "تم تسجيلك مجاناً. اتجه إلى نفق الاختبار عند الاستعداد."
 	elif result.has("stage"):
 		var stage: Dictionary = result["stage"]
 		status_label.text = "بدأ الاختبار: " + str(stage.get("title", ""))
+		service_info_label.text = str(stage.get("description", ""))
+	elif bool(result.get("permanent", false)):
+		status_label.text = "مبروك — حصلت على رخصة الصياد الدائمة"
+		service_info_label.text = "رقم المرشح: %s" % str(result.get("candidate_number", "—"))
 	else:
 		status_label.text = "تم تحديث حالة اختبار الصيادين"
+	service_info_label.show()
 
 
 func _build_missions() -> void:
