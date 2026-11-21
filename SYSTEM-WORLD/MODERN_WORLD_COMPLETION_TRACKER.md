@@ -51,6 +51,17 @@ This is the acceptance checklist for the modern-world map. The project must not 
 - [ ] Add residents, pedestrians, vendors, workers, schedules, crowds, public services, and city activity that responds to time and weather.
 - [ ] Make the ten rural settlements functional and connect them to roads, services, farms, orchards, fields, and local economies.
 
+## Baghdad football stadium match prototype — 21 November 2026
+
+- [x] Add a physical RigidBody3D football with spherical collision and a player interaction area.
+- [x] Add home/away goal trigger zones, score state, a visible scoreboard and a five-minute local match timer.
+- [x] Add stadium match-control and ball-kick interactions; entering the stadium initializes the local match manager.
+- [x] Add a Godot 4.3 automated validator for match start, nearby-player kick, goal scoring and timer state.
+- [ ] Add complete player and goalkeeper teams, locomotion/ball possession AI, tackling, passing, shooting controls, goalkeeper logic, referee, fouls, throw-ins, corners, penalties, offside and substitutions.
+- [ ] Add team selection, local tournaments, season schedules, crowd reactions, replay/highlight systems and server-authoritative multiplayer.
+- [ ] Run Godot runtime physics tests and Android touch/performance validation.
+- Note: the current pass is a local playable ball-and-score prototype, not a complete football simulation or full 11-v-11 match.
+
 ## Global road, bridge, and race gates
 
 - [ ] Complete a continuous, optimized inter-city and rural road graph; current corridor and village-access meshes are visual prototypes and some routes are intentionally skipped.
