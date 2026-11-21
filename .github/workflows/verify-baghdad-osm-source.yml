@@ -20,6 +20,7 @@ on:
       - "SYSTEM-WORLD/scripts/world_map_manager.gd"
       - "SYSTEM-WORLD/scripts/world_map_ui.gd"
       - "SYSTEM-WORLD/scripts/system_baghdad_landmark_integration.gd"
+      - "SYSTEM-WORLD/scripts/baghdad_tower_landmarks_manager.gd"
       - "SYSTEM-WORLD/scripts/modern_world_region_manager.gd"
       - "SYSTEM-WORLD/tools/validate_baghdad_osm_runtime.gd"
   pull_request:
@@ -38,6 +39,7 @@ on:
       - "SYSTEM-WORLD/scripts/world_map_manager.gd"
       - "SYSTEM-WORLD/scripts/world_map_ui.gd"
       - "SYSTEM-WORLD/scripts/system_baghdad_landmark_integration.gd"
+      - "SYSTEM-WORLD/scripts/baghdad_tower_landmarks_manager.gd"
       - "SYSTEM-WORLD/scripts/modern_world_region_manager.gd"
       - "SYSTEM-WORLD/tools/validate_baghdad_osm_runtime.gd"
   workflow_dispatch:
