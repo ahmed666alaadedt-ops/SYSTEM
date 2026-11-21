@@ -1,6 +1,7 @@
 extends SceneTree
 
 const POWER_TOWER_SCRIPT = preload("res://scripts/system_power_tower_manager.gd")
+const FLOOR_WORLD_SCRIPT = preload("res://scripts/system_power_tower_floor_world.gd")
 
 
 func _initialize() -> void:
@@ -16,6 +17,15 @@ func _run_validation() -> void:
 	var manager = POWER_TOWER_SCRIPT.new()
 	manager.save_enabled = false
 	root.add_child(manager)
+
+	var player := CharacterBody3D.new()
+	player.name = "PowerTowerValidationPlayer"
+	player.add_to_group("system_player")
+	root.add_child(player)
+	var floor_world = FLOOR_WORLD_SCRIPT.new()
+	floor_world.name = "PowerTowerFloorWorldValidation"
+	root.add_child(floor_world)
+	floor_world.setup(manager, player)
 
 	if int(manager.MAX_FLOORS) != 200:
 		_fail("The tower must contain exactly 200 floors.")
@@ -50,10 +60,22 @@ func _run_validation() -> void:
 		_fail("Floor 1 should be available to a level 1 player.")
 		return
 
+	var floor_build: Dictionary = floor_world.build_floor(started.get("floor_data", {}), Vector3.ZERO)
+	if not bool(floor_build.get("success", false)):
+		_fail("Floor 1 physical exploration environment could not be built.")
+		return
+	if floor_world.get_node_or_null("ActiveFloor_001/GroundCollision/CollisionShape3D") == null:
+		_fail("Floor 1 has no collision-backed exploration ground.")
+		return
+	for checkpoint_id in ["entry_checkpoint", "midpoint_checkpoint", "pre_boss_checkpoint"]:
+		if floor_world.get_node_or_null("ActiveFloor_001/Checkpoint_" + checkpoint_id) == null:
+			_fail("Floor 1 is missing checkpoint area: " + checkpoint_id)
+			return
+
 	for checkpoint_id in ["entry_checkpoint", "midpoint_checkpoint"]:
-		var checkpoint_result: Dictionary = manager.record_floor_checkpoint(1, checkpoint_id)
-		if not bool(checkpoint_result.get("success", false)):
-			_fail("Could not record checkpoint: " + checkpoint_id)
+		floor_world.call("_on_checkpoint_body_entered", player, checkpoint_id)
+		if manager.get_floor_resume_data(1).get("completed_checkpoint_ids", []).size() != (1 if checkpoint_id == "entry_checkpoint" else 2):
+			_fail("Physical checkpoint trigger did not record: " + checkpoint_id)
 			return
 
 	var failed_run: Dictionary = manager.fail_active_floor()
@@ -69,9 +91,9 @@ func _run_validation() -> void:
 		_fail("Retry did not resume from the last saved checkpoint.")
 		return
 
-	var last_checkpoint: Dictionary = manager.record_floor_checkpoint(1, "pre_boss_checkpoint")
-	if not bool(last_checkpoint.get("success", false)):
-		_fail("Could not record the final checkpoint.")
+	floor_world.call("_on_checkpoint_body_entered", player, "pre_boss_checkpoint")
+	if manager.get_floor_resume_data(1).get("completed_checkpoint_ids", []).size() != 3:
+		_fail("Physical final checkpoint trigger did not record.")
 		return
 
 	var clear_result: Dictionary = manager.confirm_floor_clear(1, 42.0)
@@ -88,8 +110,20 @@ func _run_validation() -> void:
 	var final_floor: Dictionary = manager.get_floor_data(200)
 	if not bool(final_floor.get("tower_finale", false)) or not bool(final_floor.get("boss_floor", false)):
 		_fail("Floor 200 must be the final boss trial.")
+
+	var finale_build: Dictionary = floor_world.build_floor(final_floor, Vector3.ZERO)
+	if not bool(finale_build.get("success", false)):
+		_fail("Floor 200 physical exploration environment could not be built.")
+		return
+	if floor_world.get_node_or_null("ActiveFloor_200/BossArenaPlatform") == null:
+		_fail("Floor 200 is missing its physical boss-trial arena.")
+		return
+	if int(floor_world.get_active_floor_info().get("floor", 0)) != 200:
+		_fail("Generated floor-world status does not report floor 200.")
 		return
 
+	floor_world.queue_free()
+	player.queue_free()
 	manager.queue_free()
-	print("Power Tower validation passed: 200 floors, 10 region bands, 20 boss floors, checkpoint retry, XP/currency rewards and floor unlock progression.")
+	print("Power Tower validation passed: 200 floors, 10 region bands, generated collision-backed exploration worlds, physical checkpoints, boss arenas, retry, XP/currency rewards and floor unlock progression.")
 	quit(0)
