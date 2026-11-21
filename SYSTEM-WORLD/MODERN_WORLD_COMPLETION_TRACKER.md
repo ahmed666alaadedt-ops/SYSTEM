@@ -527,3 +527,12 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Verify player placement, collision clearance, and interaction reach at all four landings in Godot.
 - [ ] Implement a true moving elevator car, doors, call buttons, travel animation, stairwell, and floor-specific gameplay services.
 - Note: current lift selection is a prototype floor transition, not a physically animated elevator. Upper floors are structural blockouts and not complete furnished interiors.
+
+
+## Tower-specific upper-floor spaces and service-desk information — 21 November 2026
+
+- [x] Add distinct first-pass floor-space blockouts for all five tower identities across floors 02–05: Hunter briefing/mission display, business office pods/conference table, shopping kiosks/market island, entertainment stage/audience tiers, and technology workbenches/prototype display.
+- [x] Add a main interaction response for tower service desks that displays their configured service title and prototype description.
+- [ ] Replace static service descriptions with real service workflows, data, inventories, bookings, jobs and NPC staff.
+- [ ] Verify all 20 themed floor layouts, collisions, labels and interaction targets in Godot; no current runtime validation is available.
+- Note: these are shared five-floor themed blockouts, not fully furnished or operational businesses, labs, arenas or hunter mission systems.
