@@ -200,3 +200,6 @@ The progression manager now supports 200-floor metadata, ten 20-floor region ban
 - Remote/player-to-player wagering remains disabled until authenticated server-authoritative multiplayer escrow, anti-cheat, dispute handling, and regional compliance exist. Real-money bets, purchases, cash-outs, and cash prizes are prohibited.
 - Main scene now creates the arena manager, supplies the local wallet, and attaches it to the existing independent Power Tower venue when the player enters the tower.
 - Validation covers free entry, fighter self-bet rejection, remote wager rejection, minimum bet, one-ticket rule, lock-before-start, pool payout conservation, NPC non-monetary predictions, and cancellation refunds.
+
+- NPC crowd prediction now drives a lightweight cheering/sway response in the visible crowd blockout.
+- If a match ends with no winning spectator tickets, accepted local virtual stakes are refunded rather than retained by the venue.
