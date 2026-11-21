@@ -52,7 +52,7 @@ func _run_validation() -> void:
 		if int(campaign.get("expires_at", 0)) <= int(Time.get_unix_time_from_system()):
 			_fail("Campaign expiry is not in the future: " + board_id)
 			return
-		var record := advertising_manager.displays_by_id.get(board_id, {})
+		var record: Dictionary = advertising_manager.displays_by_id.get(board_id, {})
 		var board_root := record.get("root") as Node3D
 		if board_root == null:
 			_fail("Billboard scene root is missing: " + board_id)
