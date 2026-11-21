@@ -116,6 +116,30 @@ func _run() -> void:
 		if floor_exit.get_meta("system_return_position", Vector3.INF) == Vector3.INF:
 			_fail("Generated tower floor return gate has no saved return position for " + root_name)
 			return
+		var tower_variant_nodes := {
+			"hunter_association_tower_baghdad": ["HunterTrainingMat", "HunterMissionBriefingTable", "HunterSparringCircle", "HunterWeaponPracticeTarget_00"],
+			"business_tower_baghdad": ["BusinessOffice_00", "TradingDesk_00_00", "ExecutiveBoardroomTable", "ExecutiveSuite_00"],
+			"shopping_tower_baghdad": ["RetailKiosk_00", "FashionDisplayPod_00", "FoodCourtCounter_00", "ElectronicsIsland_00"],
+			"entertainment_tower_baghdad": ["EntertainmentStage", "EsportsArenaStage", "CinemaScreen", "IndoorSportsCourt"],
+			"technology_tower_baghdad": ["InnovationWorkbench_00", "ResearchLabBench_00", "ServerRack_00_00", "PrototypeDisplayPod_00"]
+		}
+		var expected_variant_nodes: Array = tower_variant_nodes.get(str(tower_root.get_meta("tower_id", "")), [])
+		if expected_variant_nodes.size() != 4:
+			_fail("Missing four-layout test catalog for " + root_name)
+			return
+		for variant_index in range(4):
+			var variant_build: Dictionary = floor_world.call("build_floor", variant_index + 1, Vector3(5.0, 0.0, 5.0))
+			if not bool(variant_build.get("success", false)):
+				_fail("Could not generate tower floor layout variant %d for %s." % [variant_index + 1, root_name])
+				return
+			var variant_root := floor_world.get_node_or_null("ActiveTowerFloor_%03d" % (variant_index + 1))
+			if variant_root == null or int(variant_root.get_meta("floor_theme_variant", -1)) != variant_index:
+				_fail("Tower floor variant index was not preserved for %s." % root_name)
+				return
+			if variant_root.get_node_or_null(str(expected_variant_nodes[variant_index])) == null:
+				_fail("Tower %s is missing its unique floor layout feature: %s" % [root_name, str(expected_variant_nodes[variant_index])])
+				return
+
 		for floor_number in range(2, 6):
 			var selector := interior.get_node_or_null("LobbyLiftSelector_%02d" % floor_number) as Area3D
 			if selector == null or not selector.is_in_group("system_interactable"):
