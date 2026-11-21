@@ -9,6 +9,7 @@ on:
     branches:
       - main
       - feature/baghdad-streaming-lifecycle
+      - work/baghdad-system-integration
     paths:
       - "SYSTEM-WORLD/**"
       - ".github/workflows/godot-system-world-validation.yml"
