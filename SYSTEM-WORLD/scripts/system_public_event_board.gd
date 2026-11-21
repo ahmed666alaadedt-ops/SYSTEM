@@ -168,7 +168,8 @@ func _build_baghdad_tower_displays() -> void:
 		"power_tower_baghdad": "PowerTower",
 		"business_tower_baghdad": "BusinessTower",
 		"shopping_tower_baghdad": "ShoppingTower",
-		"entertainment_tower_baghdad": "EntertainmentTower"
+		"entertainment_tower_baghdad": "EntertainmentTower",
+		"technology_tower_baghdad": "TechnologyTower"
 	}
 	var tower_records: Array = tower_manager.call("get_tower_positions")
 	for record_value in tower_records:
