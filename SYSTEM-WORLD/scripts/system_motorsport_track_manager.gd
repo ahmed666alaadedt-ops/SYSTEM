@@ -294,12 +294,10 @@ func _on_player_driving_changed(active: bool, _vehicle_id: String) -> void:
 	print("SYSTEM Motorsport AI: opponents released when the player entered the car.")
 
 func _on_ai_opponent_finished(result: Dictionary) -> void:
-	ai_race_results.append(result.duplicate(true))
-	ai_race_results.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		return float(a.get("elapsed_seconds", 0.0)) < float(b.get("elapsed_seconds", 0.0))
-	)
-	result["finish_position"] = ai_race_results.size()
-	print("SYSTEM Motorsport AI: %s finished in position %d." % [str(result.get("opponent_name", "AI")), ai_race_results.size()])
+	var completed_result := result.duplicate(true)
+	completed_result["finish_position"] = ai_race_results.size() + 1
+	ai_race_results.append(completed_result)
+	print("SYSTEM Motorsport AI: %s finished in position %d." % [str(completed_result.get("opponent_name", "AI")), int(completed_result.get("finish_position", 0))])
 
 func get_ai_race_results() -> Array[Dictionary]:
 	return ai_race_results.duplicate(true)
