@@ -342,3 +342,4 @@ jobs:
             echo "Godot reported runtime script errors."
             exit 1
           fi
+          grep -q "Baghdad map registration audit passed:" "$RUNNER_TEMP/system-world-runtime.log"
