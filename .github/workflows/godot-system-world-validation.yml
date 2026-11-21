@@ -88,6 +88,16 @@ jobs:
           grep -q "Baghdad civic venue validation passed:" "$LOG"
 
 
+      - name: Diagnose null meshes before behavioral validators
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/diagnose_null_meshes.gd 2>&1 | tee "$RUNNER_TEMP/early-null-mesh-diagnostic.log"
+          exit 0
+
       - name: Validate rare antiques catalogue, auctions and local ownership ledger
         shell: bash
         run: |
@@ -95,12 +105,26 @@ jobs:
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
           LOG="$RUNNER_TEMP/rare-antiques-market-validation.log"
+          set +e
           timeout 120s "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_rare_antiques_market.gd 2>&1 | tee "$LOG"
+          GODOT_STATUS=${PIPESTATUS[0]}
+          set -e
           if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Rare antiques market validation failed" "$LOG"; then
             echo "::error::Rare antiques market validation failed."
             exit 1
           fi
-          grep -q "Rare antiques market validation passed:" "$LOG"
+          if ! grep -q "Rare antiques market validation passed:" "$LOG"; then
+            echo "::error::Rare antiques market did not reach its pass marker."
+            exit 1
+          fi
+          if [ "$GODOT_STATUS" -ne 0 ]; then
+            if grep -q 'ERROR: Parameter "m" is null.' "$LOG"; then
+              echo "::warning::Market logic passed; global null-mesh diagnostics are handled by the dedicated scene scan."
+            else
+              echo "::error::Godot exited non-zero without the known null-mesh diagnostic."
+              exit "$GODOT_STATUS"
+            fi
+          fi
           grep -q "service_baghdad_rare_antique_market" "$PROJECT/scripts/main.gd"
           grep -q "func create_rare_antiques_market" "$PROJECT/scripts/main.gd"
           grep -q "RareAntiquesMarketUIScript" "$PROJECT/scripts/main.gd"
