@@ -23,6 +23,8 @@ class FakeMap:
 		return true
 
 const TOWER_SCRIPT = preload("res://scripts/baghdad_tower_landmarks_manager.gd")
+const TOWER_FLOOR_SCRIPT = preload("res://scripts/system_baghdad_tower_floor_world.gd")
+const TOWER_LIFT_UI_SCRIPT = preload("res://scripts/system_baghdad_tower_lift_ui.gd")
 const LANDMARK_SCRIPT = preload("res://scripts/system_baghdad_landmark_integration.gd")
 
 func _initialize() -> void:
@@ -64,6 +66,29 @@ func _run() -> void:
 		if interior == null:
 			_fail("Missing playable lobby for " + root_name)
 			return
+		var floor_world := tower_root.get_node_or_null("BaghdadTowerFloorWorld")
+		if floor_world == null or not floor_world.has_method("build_floor"):
+			_fail("Missing procedural floor world for " + root_name)
+			return
+		var configured_floor_count := int(floor_world.get("max_floors"))
+		if configured_floor_count < 30:
+			_fail("Tower floor world does not expose its full building floor count for " + root_name)
+			return
+		var generated_floor: Dictionary = floor_world.call("build_floor", configured_floor_count, Vector3(5.0, 0.0, 5.0))
+		if not bool(generated_floor.get("success", false)):
+			_fail("Could not generate the top floor for " + root_name)
+			return
+		var active_floor_name := "ActiveTowerFloor_%03d" % configured_floor_count
+		if floor_world.get_node_or_null(active_floor_name + "/FloorGround_Collision/CollisionShape3D") == null:
+			_fail("Generated floor has no collision-backed ground for " + root_name)
+			return
+		var floor_exit := floor_world.get_node_or_null(active_floor_name + "/TowerFloorExit") as Area3D
+		if floor_exit == null or not floor_exit.is_in_group("system_interactable"):
+			_fail("Generated tower floor has no usable return gate for " + root_name)
+			return
+		if floor_exit.get_meta("system_return_position", Vector3.INF) == Vector3.INF:
+			_fail("Generated tower floor return gate has no saved return position for " + root_name)
+			return
 		for floor_number in range(2, 6):
 			var selector := interior.get_node_or_null("LobbyLiftSelector_%02d" % floor_number) as Area3D
 			if selector == null or not selector.is_in_group("system_interactable"):
@@ -93,6 +118,16 @@ func _run() -> void:
 	if power_root.get_node_or_null("PowerTowerFloorWorld") == null:
 		_fail("Power Tower 200-floor exploration world is not attached.")
 		return
+
+	var lift_ui = TOWER_LIFT_UI_SCRIPT.new()
+	root.add_child(lift_ui)
+	await process_frame
+	lift_ui.call("open_for_tower", "hunter_association_tower_baghdad", "برج نقابة الصيادين", 200)
+	var picker := lift_ui.get_node_or_null("TowerLiftPanel/VBoxContainer/FloorPicker") as OptionButton
+	if picker == null or picker.item_count != 200:
+		_fail("Hunter tower lift UI does not list all 200 floors.")
+		return
+	lift_ui.queue_free()
 
 	var headquarters_position: Vector3 = towers.get_headquarters_position()
 	if headquarters_position == Vector3.INF:
