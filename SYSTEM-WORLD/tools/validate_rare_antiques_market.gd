@@ -24,14 +24,18 @@ func _initialize() -> void:
 	var wallet := TestWallet.new()
 	root.add_child(wallet)
 	root.add_child(manager)
+	print("Rare antiques validator: manager setup")
 	manager.setup(wallet)
+	print("Rare antiques validator: manager ready")
 	manager.auctions.clear()
 	manager.market_seeded = false
 	manager.call("_seed_house_auctions_if_needed")
+	print("Rare antiques validator: seeded auction house")
 	var catalogue: Dictionary = manager.get_catalogue()
 	if catalogue.size() < 4:
 		_fail("Rare artifact catalogue is incomplete.")
 		return
+	print("Rare antiques validator: catalogue size = %d" % catalogue.size())
 	if manager.list_open_auctions().size() < 3:
 		_fail("NPC auction house did not seed the public market board.")
 		return
@@ -46,7 +50,9 @@ func _initialize() -> void:
 		return
 	var auction: Dictionary = created.get("auction", {})
 	var auction_id := str(auction.get("id", ""))
+	print("Rare antiques validator: created seller auction")
 	var bid: Dictionary = manager.place_bid(auction_id, "local_player", 700)
+	print("Rare antiques validator: placed first bid")
 	if not bool(bid.get("success", false)) or wallet.balance != 49300:
 		_fail("Bid escrow was not applied.")
 		return
@@ -58,6 +64,7 @@ func _initialize() -> void:
 		return
 	manager.auctions[own_auction_id]["ends_at"] = int(Time.get_unix_time_from_system()) - 1
 	var unsold: Dictionary = manager.settle_auction(own_auction_id)
+	print("Rare antiques validator: settled unsold lot")
 	if not bool(unsold.get("success", false)) or not (manager.get_inventory().get("local_player", []) as Array).has("bronze_star_astrolabe"):
 		_fail("Unsold artifact was not returned from escrow to its owner.")
 		return
@@ -71,6 +78,7 @@ func _initialize() -> void:
 		return
 	manager.auctions[auction_id]["ends_at"] = int(Time.get_unix_time_from_system()) - 1
 	var settled: Dictionary = manager.settle_auction(auction_id)
+	print("Rare antiques validator: settled sold lot")
 	if not bool(settled.get("success", false)) or not (manager.get_inventory().get("local_player", []) as Array).has("uruk_cylinder_seal"):
 		_fail("Auction settlement did not transfer local ownership.")
 		return
@@ -78,13 +86,17 @@ func _initialize() -> void:
 	if str(item.get("authenticity", "")) != "APPRAISED" or str(item.get("provenance", "")).is_empty():
 		_fail("Artifact provenance/appraisal metadata is missing.")
 		return
+	print("Rare antiques validator: preparing UI")
 	var ui = MARKET_UI_SCRIPT.new()
 	ui.call("setup", manager, wallet)
 	root.add_child(ui)
+	print("Rare antiques validator: UI ready")
 	ui.call("open_market")
+	print("Rare antiques validator: market opened")
 	if not bool(ui.panel.visible):
 		_fail("In-world market interface did not open.")
 		return
+	print("Rare antiques validator: freeing test nodes")
 	ui.free()
 	manager.free()
 	wallet.free()

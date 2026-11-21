@@ -17,6 +17,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: godot-validation-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     name: Parse and launch SYSTEM WORLD
@@ -91,7 +95,7 @@ jobs:
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
           LOG="$RUNNER_TEMP/rare-antiques-market-validation.log"
-          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_rare_antiques_market.gd 2>&1 | tee "$LOG"
+          timeout 120s "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_rare_antiques_market.gd 2>&1 | tee "$LOG"
           if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Rare antiques market validation failed" "$LOG"; then
             echo "::error::Rare antiques market validation failed."
             exit 1
