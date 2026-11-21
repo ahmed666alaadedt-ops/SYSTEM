@@ -581,10 +581,20 @@ func _create_reference_sky_district() -> void:
 	light_material.emission = Color(0.02, 0.42, 0.82)
 	light_material.emission_energy_multiplier = 1.8
 	var segment_count := 12
-	var ring_radius := 510.0
-	var segment_length := 265.0
+	var ring_radius := 580.0
+	var segment_length := 302.0
 	var deck_width := 80.0
 	var deck_y := 34.0
+	# Radial pedestrian bridges connect each tower perimeter to the outer ring.
+	# The 580 m ring radius clears the five tower footprints instead of cutting through them.
+	for tower_index in range(connected_tower_positions.size()):
+		var tower_data: Dictionary = connected_tower_positions[tower_index]
+		var tower_position: Vector3 = tower_data["position"]
+		var outward := Vector3(tower_position.x - city_anchor.x, 0.0, tower_position.z - city_anchor.z).normalized()
+		var tower_radius := float(tower_data.get("radius", 28.0))
+		var bridge_start := tower_position + Vector3.UP * deck_y + outward * (tower_radius + 2.0)
+		var bridge_end := city_anchor + outward * ring_radius + Vector3.UP * deck_y
+		_create_link_deck(district, bridge_start, bridge_end, "TowerToSkyRing_%02d" % tower_index, 12.0, 1.6, deck_material)
 	for index in range(segment_count):
 		var angle := TAU * float(index) / float(segment_count)
 		var tangent_rotation := -angle
@@ -650,6 +660,7 @@ func _create_reference_sky_district() -> void:
 			segment.add_child(canopy)
 	district.set_meta("reference_visual_blockout", true)
 	district.set_meta("walkable_ring_segment_count", segment_count)
+	district.set_meta("radial_tower_connectors", connected_tower_positions.size())
 		district.set_meta("ring_radius_m", ring_radius)
 	district.set_meta("segment_length_m", segment_length)
 	district.set_meta("deck_width_m", deck_width)
