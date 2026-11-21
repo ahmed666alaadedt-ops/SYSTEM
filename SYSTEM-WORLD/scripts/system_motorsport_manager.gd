@@ -2,6 +2,9 @@ extends Node
 class_name SystemMotorsportManager
 
 signal race_started(event_id: String, vehicle_id: String)
+signal race_countdown_updated(seconds_remaining: int)
+signal race_go(event_id: String)
+signal race_progress_updated(completed_laps: int, total_laps: int, checkpoint_index: int, checkpoint_total: int)
 signal checkpoint_reached(checkpoint_index: int, completed_laps: int)
 signal lap_completed(completed_laps: int, elapsed_seconds: float)
 signal race_finished(result: Dictionary)
@@ -25,6 +28,9 @@ const EVENTS := {
 var garage_manager: SystemPlayerVehicleManager
 var active_race: Dictionary = {}
 var race_elapsed := 0.0
+var race_countdown_remaining := -1.0
+var race_is_running := false
+var race_time_penalty := 0.0
 var next_checkpoint_index := 0
 var completed_laps := 0
 var total_laps := 0
@@ -122,7 +128,19 @@ func create_player_wager(_event_id: String, _opponent_player_id: String, _amount
 	return {"success":false,"reason":"SERVER_AUTHORITATIVE_MULTIPLAYER_WAGERING_NOT_IMPLEMENTED","rules":get_wager_rules()}
 
 func _process(delta: float) -> void:
-	if not active_race.is_empty():
+	if active_race.is_empty():
+		return
+	if race_countdown_remaining >= 0.0 and not race_is_running:
+		var previous_second := ceili(race_countdown_remaining)
+		race_countdown_remaining = maxf(0.0, race_countdown_remaining - maxf(0.0, delta))
+		var current_second := ceili(race_countdown_remaining)
+		if current_second != previous_second:
+			race_countdown_updated.emit(current_second)
+		if race_countdown_remaining <= 0.0:
+			race_is_running = true
+			race_countdown_remaining = -1.0
+			race_go.emit(str(active_race.get("event_id", "")))
+	elif race_is_running:
 		race_elapsed += maxf(0.0, delta)
 
 func get_event_catalog() -> Dictionary:
@@ -161,6 +179,9 @@ func start_race(event_id: String, vehicle_id: String, checkpoints: int, laps_ove
 	next_checkpoint_index = 0
 	completed_laps = 0
 	race_elapsed = 0.0
+	race_countdown_remaining = -1.0
+	race_is_running = false
+	race_time_penalty = 0.0
 	active_race = {
 		"event_id":event_id,
 		"event_name":str(event.get("name", event_id)),
@@ -171,15 +192,39 @@ func start_race(event_id: String, vehicle_id: String, checkpoints: int, laps_ove
 		"base_reward":int(event.get("base_reward", 0))
 	}
 	race_started.emit(event_id, vehicle_id)
-	return {"success":true,"event":active_race.duplicate(true)}
+	return {"success":true,"event":active_race.duplicate(true),"awaiting_grid_start":true}
+
+func begin_race_countdown(seconds: float = 3.0) -> Dictionary:
+	if not is_race_active():
+		return {"success": false, "reason": "NO_ACTIVE_RACE"}
+	if race_is_running or race_countdown_remaining >= 0.0:
+		return {"success": false, "reason": "RACE_START_ALREADY_RELEASED"}
+	race_countdown_remaining = maxf(0.0, seconds)
+	race_countdown_updated.emit(ceili(race_countdown_remaining))
+	if race_countdown_remaining <= 0.0:
+		race_is_running = true
+		race_countdown_remaining = -1.0
+		race_go.emit(str(active_race.get("event_id", "")))
+	return {"success": true, "countdown_seconds": ceili(race_countdown_remaining) if race_countdown_remaining >= 0.0 else 0, "running": race_is_running}
+
+
+func add_race_time_penalty(seconds: float, reason: String = "") -> Dictionary:
+	if not is_race_active() or seconds <= 0.0:
+		return {"success": false, "reason": "INVALID_PENALTY"}
+	race_time_penalty += seconds
+	return {"success": true, "penalty_seconds": race_time_penalty, "reason": reason}
+
 
 func register_checkpoint(checkpoint_index: int) -> Dictionary:
 	if not is_race_active():
 		return {"success":false,"reason":"NO_ACTIVE_RACE"}
+	if not race_is_running:
+		return {"success":false,"reason":"RACE_NOT_STARTED"}
 	if checkpoint_index != next_checkpoint_index:
 		return {"success":false,"reason":"CHECKPOINT_OUT_OF_ORDER","expected":next_checkpoint_index}
 	next_checkpoint_index += 1
 	checkpoint_reached.emit(checkpoint_index, completed_laps)
+	race_progress_updated.emit(completed_laps, total_laps, next_checkpoint_index, checkpoint_total)
 	if next_checkpoint_index >= checkpoint_total:
 		completed_laps += 1
 		next_checkpoint_index = 0
@@ -200,7 +245,9 @@ func finish_race() -> Dictionary:
 		"event_name":str(finished.get("event_name", "")),
 		"vehicle_id":str(finished.get("vehicle_id", "")),
 		"completed_laps":completed_laps,
-		"elapsed_seconds":race_elapsed,
+		"elapsed_seconds":race_elapsed + race_time_penalty,
+		"raw_elapsed_seconds":race_elapsed,
+		"time_penalty_seconds":race_time_penalty,
 		"reward":reward if bool(payment.get("success", false)) else 0,
 		"wallet_updated":bool(payment.get("success", false)),
 		"economy_mode":"local_prototype",
@@ -208,6 +255,8 @@ func finish_race() -> Dictionary:
 	}
 	result["records"] = _record_completed_race(result)
 	active_race.clear()
+	race_is_running = false
+	race_countdown_remaining = -1.0
 	race_finished.emit(result)
 	return result
 
@@ -216,6 +265,9 @@ func cancel_race() -> Dictionary:
 		return {"success":false,"reason":"NO_ACTIVE_RACE"}
 	var event_id := str(active_race.get("event_id", ""))
 	active_race.clear()
+	race_is_running = false
+	race_countdown_remaining = -1.0
+	race_time_penalty = 0.0
 	race_elapsed = 0.0
 	next_checkpoint_index = 0
 	completed_laps = 0
