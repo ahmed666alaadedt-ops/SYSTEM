@@ -38,6 +38,22 @@ func register_map_locations(p_map_manager: Node, world_id: String = WORLD_ID) ->
 		var point := _site_position(site)
 		map_manager.call("register_location", world_id, str(site["id"]), REGION_ID, str(site["name"]), 5, point, false)
 	map_manager.call("register_location", world_id, "baghdad_international_motorsport_park", REGION_ID, "مضمار بغداد الدولي للسيارات", 5, _world_point(Vector2(320.0,220.0)), false)
+	# Register the five connected Baghdad towers and the independent Power Tower
+	# from their resolved terrain positions; never infer positions from the planned offsets.
+	var region_manager := get_parent()
+	var tower_manager: Node = region_manager.get_node_or_null("BaghdadTowerLandmarksManager") if region_manager != null else null
+	if tower_manager != null and tower_manager.has_method("get_tower_positions"):
+		for tower_data in tower_manager.call("get_tower_positions"):
+			var tower_id := str(tower_data.get("id", ""))
+			var tower_name := str(tower_data.get("name", tower_id))
+			var tower_position: Vector3 = tower_data.get("position", Vector3.INF)
+			if tower_id.is_empty() or tower_position == Vector3.INF:
+				continue
+			map_manager.call("register_location", world_id, tower_id, REGION_ID, tower_name, 5, tower_position, false)
+		if tower_manager.has_method("get_headquarters_position"):
+			var headquarters_position: Vector3 = tower_manager.call("get_headquarters_position")
+			if headquarters_position != Vector3.INF:
+				map_manager.call("register_location", world_id, "hunter_association_headquarters_baghdad", REGION_ID, "المقر الرئيسي لنقابة الصيادين", 5, headquarters_position, false)
 	_registered = true
 
 func _tower_offset(index: int) -> Vector2:
