@@ -3,6 +3,7 @@ class_name BaghdadTowerLandmarksManager
 
 const EntranceScript = preload("res://scripts/system_tower_entrance.gd")
 const HeadquartersInteriorScript = preload("res://scripts/system_hunter_headquarters_interior.gd")
+const TowerInteriorScript = preload("res://scripts/system_baghdad_tower_interior.gd")
 const HUNTER_TOWER_HEIGHT := 1000.0
 const POWER_TOWER_HEIGHT := 168.0
 const TECHNOLOGY_TOWER_HEIGHT := 210.0
@@ -200,6 +201,14 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	entrance.add_child(entrance_shape)
 	entrance.position = Vector3(0.0, 3.0, radius * 1.48 + 6.0)
 	root.add_child(entrance)
+
+	# The five connected district towers each receive a distinct service lobby.
+	# Power Tower is deliberately excluded: it remains an independent challenge venue.
+	if connected_to_district:
+		var tower_interior := TowerInteriorScript.new()
+		tower_interior.name = "TowerInterior"
+		root.add_child(tower_interior)
+		tower_interior.call("build", location_id, title, EntranceScript, entrance.global_position + Vector3(0.0, 0.0, 5.0))
 
 	var label := Label3D.new()
 	label.name = "TowerNameSign"
