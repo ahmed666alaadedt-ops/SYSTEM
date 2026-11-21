@@ -61,6 +61,8 @@ func setup(p_player: CharacterBody3D, p_vehicle_runtime_manager: Node, p_motorsp
 			motorsport_manager.connect("race_started", Callable(self, "_on_motorsport_race_started"))
 		if motorsport_manager.has_signal("race_cancelled"):
 			motorsport_manager.connect("race_cancelled", Callable(self, "_on_motorsport_race_cancelled"))
+		if motorsport_manager.has_signal("race_go"):
+			motorsport_manager.connect("race_go", Callable(self, "_on_motorsport_race_go"))
 	if is_instance_valid(vehicle_runtime_manager) and vehicle_runtime_manager.has_signal("driving_changed"):
 		vehicle_runtime_manager.connect("driving_changed", Callable(self, "_on_player_driving_changed"))
 
@@ -334,11 +336,19 @@ func _on_motorsport_race_started(event_id: String, _player_vehicle_id: String) -
 func _on_player_driving_changed(active: bool, _vehicle_id: String) -> void:
 	if not active or not ai_race_pending_start:
 		return
-	ai_race_pending_start = false
+	if not is_instance_valid(motorsport_manager) or not motorsport_manager.has_method("begin_race_countdown"):
+		return
+	var countdown_result: Dictionary = motorsport_manager.call("begin_race_countdown", 3.0)
+	if bool(countdown_result.get("success", false)):
+		ai_race_pending_start = false
+		print("SYSTEM Motorsport: three-second starting countdown initiated.")
+
+
+func _on_motorsport_race_go(_event_id: String) -> void:
 	for controller in ai_controller_nodes:
 		if is_instance_valid(controller) and controller.has_method("start_race"):
 			controller.call("start_race")
-	print("SYSTEM Motorsport AI: opponents released when the player entered the car.")
+	print("SYSTEM Motorsport: green light — all AI opponents released.")
 
 func _on_ai_opponent_finished(result: Dictionary) -> void:
 	var completed_result := result.duplicate(true)
