@@ -1001,7 +1001,12 @@ func _on_interaction_performed(
 		" / ",
 		location_id
 	)
-	if location_id.begins_with("street_ad_"):
+	if location_id.begins_with("tower_service_"):
+		var service_title := str(target.get_meta("system_interaction_prompt", "خدمات البرج"))
+		var service_description := str(target.get_meta("system_service_description", "الخدمة قيد التطوير."))
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "%s\\n%s" % [service_title, service_description]
+	elif location_id.begins_with("street_ad_"):
 		var advertising_manager: Node = target.get_parent().get_parent() if target.get_parent() != null else null
 		if advertising_manager != null and advertising_manager.has_method("get_campaign_details"):
 			var campaign: Dictionary = advertising_manager.call("get_campaign_details", location_id)
