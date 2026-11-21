@@ -69,6 +69,8 @@ func _build_connected_roads() -> void:
 			road_points.append(Vector2(service_position.x-anchor.x, service_position.z-anchor.z))
 	# Connect the existing motorsport circuit rather than creating a duplicate track.
 	road_points.append(Vector2(320.0,220.0))
+	# The Power Tower remains a separate landmark, outside the five-tower cluster.
+	road_points.append(Vector2(850.0,600.0))
 	for index in range(1, road_points.size()):
 		_add_road_segment("BaghdadRoad_%02d" % index, road_points[0], road_points[index])
 	# A perimeter connector makes the landmark district navigable as one loop.
