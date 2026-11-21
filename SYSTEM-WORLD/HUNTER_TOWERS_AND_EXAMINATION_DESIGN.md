@@ -186,3 +186,17 @@ Every floor is described by runtime progression data as a large explorable regio
 
 ### Implementation boundary
 The progression manager now supports 200-floor metadata, ten 20-floor region bands, 20 boss floors, ordered checkpoints, checkpoint-preserving retries, XP and Tower Credits rewards, and floor-unlock progression. A Godot headless validation script covers these contracts and is wired into the canonical Godot validation workflow. Physical checkpoint triggers, actual unique floor environments, opponent spawning/AI, live spectator crowds, multiplayer matchmaking, and authoritative online verification remain separate implementation work.
+
+
+## Power Tower arena, crowd and spectator wagering — 21 November 2026
+
+- Fighter registration/entry is free; the arena manager returns an entry fee of zero.
+- Matches support SINGLE and TEAM categories at the manager contract level.
+- The venue can receive 28 visible placeholder NPC spectators who sway as a lightweight crowd blockout. This is not final character art, full animation, or advanced crowd AI.
+- NPC spectators can submit non-monetary predictions and trigger crowd-cheer events. They do not create currency or betting pools.
+- Betting is spectator-only, uses local virtual SYSTEM Credits, has a 10-credit minimum and 1,000-credit ticket maximum, one local ticket per match, and disallows fighters betting on their own match.
+- Betting closes before match start. A pari-mutuel pool is distributed proportionally to winning tickets; cancelled matches refund accepted stakes.
+- Local prototype settlement uses the existing local vehicle wallet and is device-only. It is not a shared online wallet.
+- Remote/player-to-player wagering remains disabled until authenticated server-authoritative multiplayer escrow, anti-cheat, dispute handling, and regional compliance exist. Real-money bets, purchases, cash-outs, and cash prizes are prohibited.
+- Main scene now creates the arena manager, supplies the local wallet, and attaches it to the existing independent Power Tower venue when the player enters the tower.
+- Validation covers free entry, fighter self-bet rejection, remote wager rejection, minimum bet, one-ticket rule, lock-before-start, pool payout conservation, NPC non-monetary predictions, and cancellation refunds.
