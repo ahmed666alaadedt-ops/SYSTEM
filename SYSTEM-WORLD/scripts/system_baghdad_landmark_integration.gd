@@ -45,12 +45,12 @@ func _tower_offset(index: int) -> Vector2:
 	return Vector2(cos(angle), sin(angle)) * 135.0
 
 func _world_point(offset: Vector2) -> Vector3:
-	var anchor := Vector3.ZERO
+	var city_origin := Vector3.ZERO
 	var region_manager := get_parent()
 	if region_manager != null and region_manager.has_method("get_city_anchor"):
-		anchor = region_manager.call("get_city_anchor", "Baghdad")
-	var x := anchor.x + offset.x
-	var z := anchor.z + offset.y
+		city_origin = region_manager.call("get_city_anchor", "Baghdad")
+	var x := city_origin.x + offset.x
+	var z := city_origin.z + offset.y
 	return Vector3(x, float(terrain.call("get_terrain_height", x, z)), z)
 
 func _site_position(site: Dictionary) -> Vector3:
@@ -62,16 +62,16 @@ func _build_connected_roads() -> void:
 	for site in _sites:
 		road_points.append(site["offset"])
 	var region_parent: Node = get_parent()
-	var anchor: Vector3 = Vector3.ZERO
+	var origin_position: Vector3 = Vector3.ZERO
 	if region_parent != null and region_parent.has_method("get_city_anchor"):
-		anchor = region_parent.call("get_city_anchor", "Baghdad")
+		origin_position = region_parent.call("get_city_anchor", "Baghdad")
 	var services: Node = region_parent.get_node_or_null("ModernCityServicesManager") if region_parent != null else null
 	if services != null and services.has_method("get_service_locations"):
 		for service_data in services.call("get_service_locations"):
 			if str(service_data.get("city", "")) != "Baghdad":
 				continue
 			var service_position: Vector3 = service_data["position"]
-			road_points.append(Vector2(service_position.x-anchor.x, service_position.z-anchor.z))
+			road_points.append(Vector2(service_position.x - origin_position.x, service_position.z - origin_position.z))
 	# Connect the existing motorsport circuit rather than creating a duplicate track.
 	road_points.append(Vector2(320.0,220.0))
 	# The Power Tower remains a separate landmark, outside the five-tower cluster.
@@ -85,7 +85,7 @@ func _build_connected_roads() -> void:
 				continue
 			var tower_position: Vector3 = tower_data.get("position", Vector3.INF)
 			if tower_position != Vector3.INF:
-				road_points.append(Vector2(tower_position.x - anchor.x, tower_position.z - anchor.z))
+				road_points.append(Vector2(tower_position.x - origin_position.x, tower_position.z - origin_position.z))
 				power_tower_added = true
 			break
 	if not power_tower_added:
