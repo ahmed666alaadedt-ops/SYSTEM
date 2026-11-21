@@ -3,6 +3,7 @@ class_name SYSTEMPowerTowerArenaUI
 
 const LOCAL_PLAYER_ID := "local_player"
 const SHOWCASE_FIGHTERS := ["arena_guest_alpha", "arena_guest_beta"]
+const SHOWCASE_TEAMS := ["arena_team_alpha", "arena_team_beta"]
 
 var arena_manager: Node
 var panel: PanelContainer
@@ -11,6 +12,7 @@ var fighters_label: Label
 var pool_label: Label
 var feedback_label: Label
 var fighter_choice: OptionButton
+var match_type_choice: OptionButton
 var bet_amount: SpinBox
 var register_button: Button
 var create_match_button: Button
@@ -90,6 +92,10 @@ func _build_interface() -> void:
 
 	var match_title := _make_label("نزالات استعراضية محلية", 16)
 	outer.add_child(match_title)
+	match_type_choice = OptionButton.new()
+	match_type_choice.add_item("مواجهة فردية")
+	match_type_choice.add_item("مواجهة فرق")
+	outer.add_child(match_type_choice)
 	var note := _make_label("النزال الاستعراضي يستخدم خصمين تجريبيين لعرض واجهة الجمهور؛ لا يمثل قتالاً فعلياً أو منافسة عبر الإنترنت.", 12)
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	outer.add_child(note)
@@ -156,13 +162,15 @@ func _on_register_pressed() -> void:
 func _on_create_match_pressed() -> void:
 	if not _manager_ready():
 		return
-	var result: Dictionary = arena_manager.call("create_match", SHOWCASE_FIGHTERS[0], SHOWCASE_FIGHTERS[1], "SINGLE")
+	var match_type := "TEAM" if match_type_choice.selected == 1 else "SINGLE"
+	var participants: Array = SHOWCASE_TEAMS if match_type == "TEAM" else SHOWCASE_FIGHTERS
+	var result: Dictionary = arena_manager.call("create_match", str(participants[0]), str(participants[1]), match_type)
 	if not bool(result.get("success", false)):
 		feedback_label.text = "تعذر إنشاء النزال: " + str(result.get("reason", "UNKNOWN"))
 		_refresh()
 		return
 	for index in range(28):
-		var fighter_id: String = SHOWCASE_FIGHTERS[index % 2]
+		var fighter_id: String = str(participants[index % 2])
 		arena_manager.call("add_npc_prediction", "arena_spectator_%02d" % index, fighter_id)
 	feedback_label.text = "تم إنشاء نزال استعراضي؛ توقعات الجمهور الـ28 تفاعلية وغير نقدية."
 	_refresh()
