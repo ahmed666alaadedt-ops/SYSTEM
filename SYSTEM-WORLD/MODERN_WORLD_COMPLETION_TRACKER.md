@@ -536,3 +536,13 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Replace static service descriptions with real service workflows, data, inventories, bookings, jobs and NPC staff.
 - [ ] Verify all 20 themed floor layouts, collisions, labels and interaction targets in Godot; no current runtime validation is available.
 - Note: these are shared five-floor themed blockouts, not fully furnished or operational businesses, labs, arenas or hunter mission systems.
+
+## Hunter examination state continuity fix — 21 November 2026
+
+- [x] Correct the exam start/resume flow so an already-active examination returns its current stage instead of being rejected by an unreachable duplicate condition.
+- [x] Validate the active-stage state before reporting a successful resume.
+- [x] Clear persisted failure status, failure reason, and stage index when a new exam registration is created, preventing a previous failed attempt from reappearing after reload.
+- [ ] Add authoritative evidence verification for each exam stage; the current non-empty evidence string is only a placeholder and is not secure proof of completion.
+- [ ] Add explicit player identity persistence and server-side candidate-number allocation before online/multiplayer examinations.
+- [ ] Run the Godot 4.3 parser and examination save/resume regression tests on the latest branch head.
+- Note: this fixes state-flow defects in the local Hunter examination prototype. It does not implement the actual seven exam challenges, secure evidence validation, online exam service, or a production hunter license.
