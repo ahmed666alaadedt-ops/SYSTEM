@@ -47,6 +47,7 @@ const SYSTEMEconomyManagerScript = preload("res://scripts/system_economy_manager
 const SYSTEMBusinessServicesMenuScript = preload("res://scripts/system_business_services_menu.gd")
 const RareAntiquesMarketManagerScript = preload("res://scripts/system_rare_antiques_market_manager.gd")
 const RareAntiquesMarketUIScript = preload("res://scripts/system_rare_antiques_market_ui.gd")
+const CityFactionUIScript = preload("res://scripts/system_city_faction_ui.gd")
 
 var world_manager
 var world_map_manager
@@ -68,6 +69,7 @@ var football_match_manager: Node
 var motorsport_track_manager
 var crime_response_manager
 var city_faction_manager: Node
+var city_faction_ui: CanvasLayer
 var npc_autonomous_event_manager
 var npc_visible_population_manager
 var npc_social_interaction_manager
@@ -131,6 +133,7 @@ func _ready() -> void:
 	create_motorsport_manager()
 	create_modern_city_crime_manager()
 	create_city_faction_manager()
+	create_city_faction_ui()
 	create_motorsport_track_manager()
 	create_npc_autonomous_society_event_manager()
 	create_npc_city_navigation_manager()
@@ -460,6 +463,15 @@ func create_city_faction_manager() -> void:
 	active_world_root.add_child(city_faction_manager)
 	var region_manager := active_world_root.get_node_or_null("ModernWorldRegionManager")
 	city_faction_manager.setup(crime_response_manager, ai_npc_society_manager, region_manager)
+
+
+func create_city_faction_ui() -> void:
+	if not is_instance_valid(city_faction_manager):
+		return
+	city_faction_ui = CityFactionUIScript.new()
+	city_faction_ui.name = "SystemCityFactionUI"
+	city_faction_ui.call("setup", city_faction_manager)
+	add_child(city_faction_ui)
 
 
 func create_npc_autonomous_society_event_manager() -> void:
@@ -1166,6 +1178,14 @@ func _on_interaction_performed(
 		else:
 			if interaction_prompt_label != null:
 				interaction_prompt_label.text = "سوق التحف غير متاح حالياً."
+	elif location_id.ends_with("_underworld_exchange"):
+		if is_instance_valid(city_faction_ui):
+			var faction_city := str(target.get_meta("system_city_name", "Baghdad"))
+			city_faction_ui.call("open_city", faction_city)
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "دار الوسطاء — شبكة الفصائل والعقود الخاصة باللاعب في " + faction_city
+		elif interaction_prompt_label != null:
+			interaction_prompt_label.text = "شبكة الفصائل غير متاحة حالياً."
 	if location_id == "service_baghdad_stadium":
 		var stadium := target.get_parent()
 		if stadium != null and player != null:
