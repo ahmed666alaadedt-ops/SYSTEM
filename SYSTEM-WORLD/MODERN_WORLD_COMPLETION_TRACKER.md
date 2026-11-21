@@ -1,3 +1,15 @@
+
+## Baghdad rare-antiquities bazaar — in-world player market UI integration — 21 November 2026
+
+- [x] Initialize the rare-antiquities manager from the main game scene and connect it to the player's existing local SYSTEM Credits wallet.
+- [x] Seed three NPC auction-house lots on first market initialization, each with a one-hour local bidding window.
+- [x] Add an in-world Arabic market panel with open auction listings, rarity/current bid/time remaining, artifact catalogue, era and provenance notes, and a player bid control.
+- [x] Open the market panel from the Baghdad rare-antiquities bazaar interaction marker.
+- [x] Adapt the market panel to the mobile viewport and extend the validator to check the UI can open and that the public auction board is seeded.
+- [ ] Add NPC seller personas, expert appraisal dialogue, museum loans/exhibitions, collection set bonuses, fraud investigations and evidence-based provenance verification.
+- [ ] Add safe, server-authoritative ownership, escrow, bid clocks, transaction replay protection and account synchronization before any online trading.
+- Note: auctions, balances and inventory are still local-device prototype data. No real-money purchases, withdrawals, or online marketplace are enabled.
+
 # Tower layout decision update — 21 November 2026
 
 The current approved Baghdad layout supersedes older five-tower identity lists below: the connected district contains Hunter Association, Business, Shopping, Entertainment, and Technology & Innovation towers. Power Tower is a separate detached landmark and is excluded from all district connection loops. The Global Hunter Association headquarters is an elevated building above the shared district; it is not on Power Tower and is not counted as a sixth primary tower. Source changes are committed, but Godot/runtime/Android verification remains open.
