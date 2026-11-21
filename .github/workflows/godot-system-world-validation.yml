@@ -171,6 +171,22 @@ jobs:
           fi
           grep -q "Football validation passed:" "$LOG"
 
+      - name: Validate individualized Nen discovery, training and personal techniques
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          LOG="$RUNNER_TEMP/nen-system-validation.log"
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_nen_system.gd 2>&1 | tee "$LOG"
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|SYSTEM NEN VALIDATION FAILED" "$LOG"; then
+            echo "::error::SYSTEM Nen validation failed."
+            exit 1
+          fi
+          grep -q "SYSTEM NEN VALIDATION PASSED" "$LOG"
+          grep -q "func create_nen_system" "$PROJECT/scripts/main.gd"
+          grep -q "قوة النِن" "$PROJECT/scripts/system_nen_ui.gd"
+
       - name: Validate seven-stage Hunter Examination and permanent license
         shell: bash
         run: |
