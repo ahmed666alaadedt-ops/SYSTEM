@@ -741,6 +741,8 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 
 
 ## Power Tower — first physical 200-floor exploration-world pass — 21 November 2026
+- [x] Keep the independent exhibition arena separately accessible through its own stable Baghdad interaction; do not open its demo UI automatically when entering a 200-floor exploration environment.
+
 
 - [x] Add a dedicated system_power_tower_floor_world.gd builder without replacing the existing 200-floor progression manager or the independent arena venue.
 - [x] Generate a collision-backed, 520 m exploration ground and traversable route for the requested floor, instancing only the active floor to control memory and scene cost.
