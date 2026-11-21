@@ -125,7 +125,7 @@ func _clear_active_floor() -> void:
 
 func _spawn_floor_enemies(floor_data: Dictionary) -> void:
 	active_enemy_ids.clear()
-	if not is_instance_valid(player) or not player is CharacterBody3D:
+	if not is_instance_valid(player) or not (player is CharacterBody3D):
 		push_warning("SYSTEM Power Tower: player combat actor is unavailable; floor enemies were not spawned.")
 		return
 	var floor_rank := str(floor_data.get("rank", "E"))
@@ -134,7 +134,7 @@ func _spawn_floor_enemies(floor_data: Dictionary) -> void:
 	for index in range(regular_count + (1 if boss_floor else 0)):
 		var is_boss := boss_floor and index == regular_count
 		var enemy_id := "power_tower_%03d_enemy_%02d" % [active_floor_number, index + 1]
-		var enemy: Node = GateEnemyScript.new()
+		var enemy := GateEnemyScript.new() as CharacterBody3D
 		enemy.name = "PowerTowerEnemy_%02d" % (index + 1)
 		enemy.call("configure", floor_rank, is_boss, player as CharacterBody3D)
 		enemy.set_meta("system_power_tower_enemy_id", enemy_id)
