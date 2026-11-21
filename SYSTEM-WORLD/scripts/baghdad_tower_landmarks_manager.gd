@@ -2,6 +2,7 @@ extends Node3D
 class_name BaghdadTowerLandmarksManager
 
 const EntranceScript = preload("res://scripts/system_tower_entrance.gd")
+const RooftopElevatorCallScript = preload("res://scripts/system_rooftop_elevator_call.gd")
 const HUNTER_TOWER_HEIGHT := 1000.0
 const POWER_TOWER_HEIGHT := 168.0
 
@@ -29,6 +30,7 @@ func _ready() -> void:
 	_build_business_tower()
 	_build_shopping_tower()
 	_build_entertainment_tower()
+	_create_rooftop_city_links()
 	_create_connected_city_links()
 	_create_public_amenities()
 
@@ -201,6 +203,7 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	root.add_child(label)
 
 	_create_tower_architecture(root, node_name, title, height, radius, floors, beacon_color)
+	_create_rooftop_microcity(root, node_name, height, radius, beacon_color)
 
 	root.set_meta("tower_id", location_id)
 	print("SYSTEM WORLD: landmark tower generated: ", title, " / ", floors, " floors / ", height, "m")
@@ -268,6 +271,206 @@ func _create_tower_architecture(root: Node3D, node_name: String, title: String, 
 	identity_ring.position.y = height * 0.72 + 7.0
 	identity_ring.material_override = emissive_material
 	root.add_child(identity_ring)
+
+
+func _create_rooftop_microcity(root: Node3D, tower_id: String, tower_height: float, radius: float, beacon_color: Color) -> void:
+	# A supported, explorable rooftop district on every Baghdad landmark tower.
+	# The platform is seated directly on the tower crown; it is not a floating island.
+	var district := Node3D.new()
+	district.name = "RooftopMicroCity_" + tower_id
+	district.position = Vector3(0.0, tower_height + 8.0, 0.0)
+	root.add_child(district)
+
+	var platform_radius := maxf(radius * 2.05, 58.0)
+	var platform := MeshInstance3D.new()
+	platform.name = "SupportedRooftopCityPlatform"
+	var platform_mesh := CylinderMesh.new()
+	platform_mesh.top_radius = platform_radius
+	platform_mesh.bottom_radius = platform_radius * 0.94
+	platform_mesh.height = 2.4
+	platform.mesh = platform_mesh
+	platform.material_override = tower_material
+	district.add_child(platform)
+	_add_static_box_collision(district, "RooftopCityWalkableCollision", Vector3(0.0, 0.7, 0.0), Vector3(platform_radius * 1.2, 1.0, platform_radius * 1.2))
+
+	# Four structural piers visibly transfer the rooftop district load into the tower crown.
+	for support_index in range(4):
+		var angle := TAU * float(support_index) / 4.0
+		var support := MeshInstance3D.new()
+		support.name = "RooftopCityStructuralPier_%02d" % support_index
+		var support_mesh := BoxMesh.new()
+		support_mesh.size = Vector3(4.0, 7.0, 4.0)
+		support.mesh = support_mesh
+		support.position = Vector3(cos(angle) * radius * 0.82, -4.2, sin(angle) * radius * 0.82)
+		support.material_override = trim_material
+		district.add_child(support)
+
+	var plaza := MeshInstance3D.new()
+	plaza.name = "RooftopCentralPlaza"
+	var plaza_mesh := CylinderMesh.new()
+	plaza_mesh.top_radius = 13.0
+	plaza_mesh.bottom_radius = 13.0
+	plaza_mesh.height = 0.28
+	plaza.mesh = plaza_mesh
+	plaza.position.y = 1.45
+	plaza.material_override = trim_material
+	district.add_child(plaza)
+
+	var district_specs := [
+		{"name": "ResidentialQuarter", "center": Vector3(-platform_radius * 0.43, 0.0, -platform_radius * 0.34), "color": Color(0.30, 0.43, 0.52)},
+		{"name": "MarketAndServicesQuarter", "center": Vector3(platform_radius * 0.43, 0.0, -platform_radius * 0.34), "color": Color(0.48, 0.38, 0.25)},
+		{"name": "GardenAndLeisureQuarter", "center": Vector3(-platform_radius * 0.43, 0.0, platform_radius * 0.34), "color": Color(0.20, 0.40, 0.27)},
+		{"name": "CivicAndCultureQuarter", "center": Vector3(platform_radius * 0.43, 0.0, platform_radius * 0.34), "color": Color(0.39, 0.36, 0.48)}
+	]
+	for spec in district_specs:
+		var quarter := Node3D.new()
+		quarter.name = str(spec["name"])
+		quarter.position = spec["center"]
+		district.add_child(quarter)
+		var quarter_material := StandardMaterial3D.new()
+		quarter_material.albedo_color = spec["color"]
+		quarter_material.roughness = 0.72
+		quarter_material.metallic = 0.18
+		for building_index in range(3):
+			var building := MeshInstance3D.new()
+			building.name = "MicroCityBuilding_%02d" % building_index
+			var building_mesh := BoxMesh.new()
+			var width := 9.0 + float((building_index + 1) % 2) * 3.0
+			var building_height := 9.0 + float(building_index) * 5.0
+			building_mesh.size = Vector3(width, building_height, 9.0)
+			building.mesh = building_mesh
+			building.position = Vector3(float(building_index - 1) * 13.0, 1.2 + building_height * 0.5, 0.0)
+			building.material_override = quarter_material
+			quarter.add_child(building)
+			_add_static_box_collision(quarter, "MicroCityBuildingCollision_%02d" % building_index, building.position, building_mesh.size)
+		_add_static_box_collision(quarter, "QuarterWalkwayCollision", Vector3.ZERO, Vector3(48.0, 0.45, 30.0))
+
+	var identity := Label3D.new()
+	identity.name = "RooftopCitySYSTEMIdentity"
+	identity.text = "SYSTEM"
+	identity.font_size = 72
+	identity.position = Vector3(0.0, 5.0, -platform_radius * 0.72)
+	identity.pixel_size = 0.012
+	identity.modulate = Color(0.88, 0.70, 0.34)
+	district.add_child(identity)
+	district.set_meta("tower_id", tower_id)
+	district.set_meta("walkable_rooftop_city", true)
+	district.set_meta("supported_by_tower", true)
+	district.set_meta("districts", PackedStringArray(["ResidentialQuarter", "MarketAndServicesQuarter", "GardenAndLeisureQuarter", "CivicAndCultureQuarter"]))
+	print("SYSTEM WORLD: supported rooftop micro-city generated for ", tower_id, " at ", tower_height, "m.")
+
+
+func _create_rooftop_city_links() -> void:
+	# Connect all five rooftop micro-cities at one shared upper-city elevation.
+	# Each tower receives a visible vertical access core from its own roof to the sky promenade.
+	if tower_positions.size() < 2:
+		return
+	var upper_city := Node3D.new()
+	upper_city.name = "BaghdadUnifiedRooftopCityNetwork"
+	add_child(upper_city)
+	var highest_roof_elevation := 0.0
+	for tower_data in tower_positions:
+		var tower_position_for_height: Vector3 = tower_data["position"]
+		highest_roof_elevation = maxf(highest_roof_elevation, tower_position_for_height.y + float(tower_data["height"]) + 8.0)
+	var shared_level := highest_roof_elevation + 50.0
+	for index in range(tower_positions.size()):
+		var tower_data: Dictionary = tower_positions[index]
+		var tower_position: Vector3 = tower_data["position"]
+		var roof_level := tower_position.y + float(tower_data["height"]) + 8.0
+		var access_height := shared_level - roof_level
+		var radius := float(tower_data["radius"])
+		var access_offset := Vector3(radius * 1.35, 0.0, 0.0)
+		var access_base := tower_position + Vector3(0.0, float(tower_data["height"]) + 8.0, 0.0) + access_offset
+		var access_top := Vector3(tower_position.x, shared_level, tower_position.z) + access_offset
+		var access_core := MeshInstance3D.new()
+		access_core.name = "RooftopCityVerticalLiftCore_%02d" % index
+		var core_mesh := BoxMesh.new()
+		core_mesh.size = Vector3(7.0, maxf(access_height, 8.0), 7.0)
+		access_core.mesh = core_mesh
+		access_core.position = (access_base + access_top) * 0.5
+		access_core.material_override = emissive_material
+		upper_city.add_child(access_core)
+		var lift_cabin := Node3D.new()
+		lift_cabin.name = "RooftopCityLiftCabin_%02d" % index
+		lift_cabin.position = access_base + Vector3(0.0, 2.0, 0.0)
+		lift_cabin.set_meta("system_elevator_busy", false)
+		upper_city.add_child(lift_cabin)
+		# Open passenger platform: solid walkable floor with visible safety rails,
+		# leaving the center clear so the player can stand inside while riding.
+		var cabin_floor := MeshInstance3D.new()
+		cabin_floor.name = "CabinWalkableFloor"
+		var cabin_floor_mesh := BoxMesh.new()
+		cabin_floor_mesh.size = Vector3(5.2, 0.36, 5.2)
+		cabin_floor.mesh = cabin_floor_mesh
+		cabin_floor.position.y = -1.82
+		cabin_floor.material_override = trim_material
+		lift_cabin.add_child(cabin_floor)
+		var cabin_collision_body := AnimatableBody3D.new()
+		cabin_collision_body.name = "CabinFloorCollisionBody"
+		cabin_collision_body.sync_to_physics = true
+		var cabin_collision := CollisionShape3D.new()
+		var cabin_shape := BoxShape3D.new()
+		cabin_shape.size = cabin_floor_mesh.size
+		cabin_collision.shape = cabin_shape
+		cabin_collision.position.y = cabin_floor.position.y
+		cabin_collision_body.add_child(cabin_collision)
+		lift_cabin.add_child(cabin_collision_body)
+		for rail_index in range(4):
+			var rail := MeshInstance3D.new()
+			rail.name = "CabinSafetyRail_%02d" % rail_index
+			var rail_mesh := BoxMesh.new()
+			rail_mesh.size = Vector3(5.2, 0.16, 0.16) if rail_index < 2 else Vector3(0.16, 0.16, 5.2)
+			rail.mesh = rail_mesh
+			rail.position = Vector3(0.0, -0.72, -2.52) if rail_index == 0 else (Vector3(0.0, -0.72, 2.52) if rail_index == 1 else (Vector3(-2.52, -0.72, 0.0) if rail_index == 2 else Vector3(2.52, -0.72, 0.0)))
+			rail.material_override = emissive_material
+			lift_cabin.add_child(rail)
+		for post_index in range(4):
+			var post := MeshInstance3D.new()
+			post.name = "CabinSafetyPost_%02d" % post_index
+			var post_mesh := BoxMesh.new()
+			post_mesh.size = Vector3(0.16, 2.2, 0.16)
+			post.mesh = post_mesh
+			post.position = Vector3(-2.52 if post_index < 2 else 2.52, -0.72, -2.52 if post_index % 2 == 0 else 2.52)
+			post.material_override = trim_material
+			lift_cabin.add_child(post)
+		_create_elevator_call_panel(upper_city, lift_cabin, access_base, access_top, index, false)
+		_create_elevator_call_panel(upper_city, lift_cabin, access_top, access_base, index, true)
+		var landing := MeshInstance3D.new()
+		landing.name = "UpperSkyPromenadeLanding_%02d" % index
+		var landing_mesh := BoxMesh.new()
+		landing_mesh.size = Vector3(24.0, 1.2, 24.0)
+		landing.mesh = landing_mesh
+		landing.position = access_top
+		landing.material_override = tower_material
+		upper_city.add_child(landing)
+		_add_static_box_collision(upper_city, "UpperSkyPromenadeLandingCollision_%02d" % index, access_top, landing_mesh.size)
+		var next_data: Dictionary = tower_positions[(index + 1) % tower_positions.size()]
+		var next_tower_position: Vector3 = next_data["position"]
+		var next_position := Vector3(next_tower_position.x, shared_level, next_tower_position.z) + Vector3(float(next_data["radius"]) * 1.35, 0.0, 0.0)
+		_create_link_deck(upper_city, access_top, next_position, "UpperCityBridge_%02d" % index, 16.0, 1.4, trim_material)
+	upper_city.set_meta("connected_tower_count", tower_positions.size())
+	upper_city.set_meta("shared_upper_city_elevation", shared_level)
+	upper_city.set_meta("upper_city_network", true)
+	print("SYSTEM WORLD: upper rooftop city bridge network created for ", tower_positions.size(), " towers at shared elevation ", shared_level, "m.")
+
+func _create_elevator_call_panel(parent: Node3D, cabin: Node3D, panel_position: Vector3, destination_position: Vector3, tower_index: int, upper_endpoint: bool) -> void:
+	var panel := RooftopElevatorCallScript.new()
+	panel.name = "RooftopElevatorCall_%02d_%s" % [tower_index, "Upper" if upper_endpoint else "Lower"]
+	panel.position = panel_position + Vector3(0.0, 1.0, 5.0)
+	var panel_shape := CollisionShape3D.new()
+	var panel_sphere := SphereShape3D.new()
+	panel_sphere.radius = 3.0
+	panel_shape.shape = panel_sphere
+	panel.add_child(panel_shape)
+	parent.add_child(panel)
+	panel.set_meta("system_location_id", "baghdad_rooftop_elevator_%02d_%s" % [tower_index, "upper" if upper_endpoint else "lower"])
+	panel.set_meta("system_region_id", "region_baghdad")
+	panel.set_meta("system_display_name", "مصعد المدينة العلوية")
+	panel.set_meta("system_interaction_prompt", "استدعاء المصعد / استخدامه")
+	panel.set_meta("system_location_type", 7)
+	panel.add_to_group("system_interactable")
+	panel.add_to_group("system_rooftop_elevator_call")
+	panel.configure(null, cabin, destination_position + Vector3(0.0, 2.0, 0.0), destination_position + Vector3(0.0, 1.1, 0.0), "مصعد البرج %02d" % (tower_index + 1))
 
 
 func _create_connected_city_links() -> void:
