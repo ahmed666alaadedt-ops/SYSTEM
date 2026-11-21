@@ -150,9 +150,9 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 	var width := 16.0 if service_id != "hotel" else 20.0
 	var depth := 14.0 if service_id != "hotel" else 18.0
 	if service_id == "stadium":
-		# Full-size city stadium footprint with room for a regulation football pitch and stands.
+		# Baghdad receives the full stadium concourse and room wing; other city stadiums keep the lighter footprint.
 		width = 150.0
-		depth = 116.0
+		depth = 180.0 if city_name == "Baghdad" else 116.0
 	elif service_id == "mall":
 		width = 34.0
 		depth = 28.0
@@ -232,6 +232,8 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 
 	if service_id == "stadium":
 		_create_stadium_details(building, width, depth)
+		if city_name == "Baghdad":
+			_build_baghdad_stadium_facilities(building, minf(width * 0.70, 105.0), minf(depth * 0.60, 68.0))
 	elif service_id == "school" or service_id == "university":
 		var courtyard_material := _material(Color(0.15, 0.32, 0.18), 1.0, 0.0)
 		_create_civic_courtyard(building, width, depth, courtyard_material)
@@ -744,27 +746,19 @@ func _create_stadium_details(parent: Node3D, width: float, depth: float) -> void
 		parent.add_child(penalty_spot)
 		_build_stadium_goal(parent, side, pitch_width, pitch_depth, line_material)
 
-	# Four stepped grandstands leave the corners open for access.
+	# Four stepped grandstands are collision-backed; individual seats are batched for lower mobile node cost.
 	for side in [-1.0, 1.0]:
 		for row in range(4):
-			var stand := MeshInstance3D.new()
-			stand.name = "LongStand_%s_%02d" % [str(side), row]
-			var stand_mesh := BoxMesh.new()
-			stand_mesh.size = Vector3(pitch_width * 0.82, 1.4, 4.2)
-			stand.mesh = stand_mesh
-			stand.position = Vector3(0.0, 2.0 + float(row) * 1.5, side * (pitch_depth * 0.5 + 7.0 + float(row) * 3.0))
-			stand.material_override = stand_material
-			parent.add_child(stand)
+			var stand_y := 2.0 + float(row) * 1.5
+			var stand_z := side * (pitch_depth * 0.5 + 7.0 + float(row) * 3.0)
+			_add_stadium_solid_box(parent, "LongStand_%s_%02d" % [str(side), row], Vector3(pitch_width * 0.82, 1.4, 4.2), Vector3(0.0, stand_y, stand_z), stand_material)
+			_add_stadium_seat_row(parent, "LongStandSeats_%s_%02d" % [str(side), row], Vector3(0.0, stand_y + 0.95, stand_z), pitch_width * 0.78, 28, true, stand_material)
 	for side in [-1.0, 1.0]:
 		for row in range(3):
-			var end_stand := MeshInstance3D.new()
-			end_stand.name = "EndStand_%s_%02d" % [str(side), row]
-			var end_mesh := BoxMesh.new()
-			end_mesh.size = Vector3(4.0, 1.4, pitch_depth * 0.55)
-			end_stand.mesh = end_mesh
-			end_stand.position = Vector3(side * (pitch_width * 0.5 + 7.0 + float(row) * 3.0), 2.0 + float(row) * 1.5, 0.0)
-			end_stand.material_override = stand_material
-			parent.add_child(end_stand)
+			var stand_y := 2.0 + float(row) * 1.5
+			var stand_x := side * (pitch_width * 0.5 + 7.0 + float(row) * 3.0)
+			_add_stadium_solid_box(parent, "EndStand_%s_%02d" % [str(side), row], Vector3(4.0, 1.4, pitch_depth * 0.55), Vector3(stand_x, stand_y, 0.0), stand_material)
+			_add_stadium_seat_row(parent, "EndStandSeats_%s_%02d" % [str(side), row], Vector3(stand_x, stand_y + 0.95, 0.0), pitch_depth * 0.52, 12, false, stand_material)
 	var canopy := MeshInstance3D.new()
 	canopy.name = "StadiumRoofCanopy"
 	var canopy_mesh := BoxMesh.new()
@@ -773,6 +767,231 @@ func _create_stadium_details(parent: Node3D, width: float, depth: float) -> void
 	canopy.position = Vector3(0.0, 10.0, -pitch_depth * 0.5 - 13.0)
 	canopy.material_override = roof_material
 	parent.add_child(canopy)
+	var south_canopy := MeshInstance3D.new()
+	south_canopy.name = "StadiumSouthRoofCanopy"
+	var south_canopy_mesh := BoxMesh.new()
+	south_canopy_mesh.size = Vector3(pitch_width + 30.0, 1.0, 5.0)
+	south_canopy.mesh = south_canopy_mesh
+	south_canopy.position = Vector3(0.0, 10.0, pitch_depth * 0.5 + 13.0)
+	south_canopy.material_override = roof_material
+	parent.add_child(south_canopy)
+
+func _build_baghdad_stadium_facilities(parent: Node3D, pitch_width: float, pitch_depth: float) -> void:
+	var concourse_material := _material(Color(0.25, 0.28, 0.32), 0.9, 0.12)
+	var wall_material := _material(Color(0.48, 0.51, 0.54), 0.82, 0.1)
+	var roof_material := _material(Color(0.12, 0.17, 0.22), 0.58, 0.28)
+	_add_stadium_solid_box(parent, "StadiumNorthConcourseFloor", Vector3(132.0, 0.28, 9.0), Vector3(0.0, 0.14, -66.0), concourse_material)
+	_add_stadium_solid_box(parent, "StadiumSouthConcourseFloor", Vector3(132.0, 0.28, 9.0), Vector3(0.0, 0.14, 66.0), concourse_material)
+	_add_stadium_solid_box(parent, "StadiumEastConcourseFloor", Vector3(9.0, 0.28, 112.0), Vector3(68.0, 0.14, 0.0), concourse_material)
+	_add_stadium_solid_box(parent, "StadiumWestConcourseFloor", Vector3(9.0, 0.28, 112.0), Vector3(-68.0, 0.14, 0.0), concourse_material)
+
+	_build_stadium_access_gate(parent, "north", Vector3(0.0, 0.0, -84.0), 0.0, wall_material)
+	_build_stadium_access_gate(parent, "south", Vector3(0.0, 0.0, 84.0), 0.0, wall_material)
+	_build_stadium_access_gate(parent, "east", Vector3(70.0, 0.0, 0.0), PI * 0.5, wall_material)
+	_build_stadium_access_gate(parent, "west", Vector3(-70.0, 0.0, 0.0), PI * 0.5, wall_material)
+
+	_build_stadium_room(parent, "HomeTeamLockerRoom", "غرفة تبديل الفريق المضيف", Vector3(-46.0, 0.0, 74.0), Vector3(18.0, 4.8, 12.0), wall_material, roof_material, "locker")
+	_build_stadium_room(parent, "AwayTeamLockerRoom", "غرفة تبديل الفريق الضيف", Vector3(-23.0, 0.0, 74.0), Vector3(18.0, 4.8, 12.0), wall_material, roof_material, "locker")
+	_build_stadium_room(parent, "RefereeRoom", "غرفة الحكام", Vector3(0.0, 0.0, 74.0), Vector3(18.0, 4.8, 12.0), wall_material, roof_material, "referee")
+	_build_stadium_room(parent, "MedicalRoom", "الغرفة الطبية", Vector3(23.0, 0.0, 74.0), Vector3(18.0, 4.8, 12.0), wall_material, roof_material, "medical")
+	_build_stadium_room(parent, "MediaRoom", "غرفة الإعلام والبث", Vector3(46.0, 0.0, 74.0), Vector3(18.0, 4.8, 12.0), wall_material, roof_material, "media")
+	_build_stadium_room(parent, "PressConferenceRoom", "قاعة المؤتمرات الصحفية", Vector3(0.0, 0.0, -74.0), Vector3(28.0, 4.8, 12.0), wall_material, roof_material, "press")
+
+	_build_stadium_player_tunnel(parent, wall_material, roof_material)
+	_build_stadium_floodlights(parent, wall_material)
+	var scoreboard := MeshInstance3D.new()
+	scoreboard.name = "BaghdadStadiumScoreboard"
+	var scoreboard_mesh := BoxMesh.new()
+	scoreboard_mesh.size = Vector3(22.0, 8.0, 0.8)
+	scoreboard.mesh = scoreboard_mesh
+	scoreboard.position = Vector3(0.0, 15.0, -62.0)
+	scoreboard.material_override = roof_material
+	parent.add_child(scoreboard)
+	var scoreboard_label := Label3D.new()
+	scoreboard_label.name = "BaghdadStadiumScoreboardText"
+	scoreboard_label.text = "SYSTEM BAGHDAD STADIUM"
+	scoreboard_label.font_size = 28
+	scoreboard_label.position = Vector3(0.0, 15.0, -61.4)
+	scoreboard_label.modulate = Color(0.55, 0.9, 1.0)
+	parent.add_child(scoreboard_label)
+
+
+func _build_stadium_access_gate(parent: Node3D, gate_id: String, center: Vector3, yaw: float, material: Material) -> void:
+	var basis := Basis(Vector3.UP, yaw)
+	_add_stadium_solid_box(parent, "StadiumGate_%s_LeftPost" % gate_id, Vector3(1.2, 6.0, 1.2), center + basis * Vector3(-6.5, 3.0, 0.0), material, yaw)
+	_add_stadium_solid_box(parent, "StadiumGate_%s_RightPost" % gate_id, Vector3(1.2, 6.0, 1.2), center + basis * Vector3(6.5, 3.0, 0.0), material, yaw)
+	_add_stadium_solid_box(parent, "StadiumGate_%s_Header" % gate_id, Vector3(14.0, 0.8, 1.2), center + Vector3.UP * 6.0, material, yaw)
+	var sign := Label3D.new()
+	sign.name = "StadiumGate_%s_Sign" % gate_id
+	sign.text = "GATE " + gate_id.to_upper()
+	sign.font_size = 20
+	sign.position = center + Vector3.UP * 7.2
+	sign.modulate = Color(0.76, 0.9, 1.0)
+	parent.add_child(sign)
+	var interaction := Area3D.new()
+	interaction.name = "StadiumGate_%s_Interaction" % gate_id
+	interaction.position = center + Vector3.UP * 1.5
+	interaction.add_to_group("system_interactable")
+	interaction.set_meta("system_location_id", "baghdad_football_stadium_gate_" + gate_id)
+	interaction.set_meta("system_region_id", "region_baghdad")
+	interaction.set_meta("system_location_type", 7)
+	interaction.set_meta("system_display_name", "بوابة ملعب بغداد — " + gate_id)
+	interaction.set_meta("system_interaction_prompt", "مدخل ومدرجات ملعب بغداد — بوابة " + gate_id)
+	interaction.set_meta("system_access_state", "stadium_public_gate")
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(12.0, 4.0, 4.0)
+	collision.shape = shape
+	interaction.add_child(collision)
+	parent.add_child(interaction)
+
+
+func _build_stadium_room(parent: Node3D, room_id: String, display_name: String, center: Vector3, size: Vector3, wall_material: Material, roof_material: Material, room_kind: String) -> void:
+	var room := Node3D.new()
+	room.name = room_id
+	room.position = center
+	room.set_meta("system_location_id", "baghdad_football_stadium_" + room_id.to_lower())
+	room.set_meta("system_display_name", display_name)
+	room.set_meta("system_access_state", "walk_in_interior")
+	parent.add_child(room)
+	var floor_material := _material(Color(0.24, 0.27, 0.3), 0.9, 0.05)
+	var room_width := size.x
+	var room_height := size.y
+	var room_depth := size.z
+	var wall_thickness := 0.45
+	var door_width := 3.2
+	_add_stadium_solid_box(room, "RoomFloor", Vector3(room_width, 0.3, room_depth), Vector3(0.0, 0.15, 0.0), floor_material)
+	_add_stadium_solid_box(room, "RoomLeftWall", Vector3(wall_thickness, room_height, room_depth), Vector3(-room_width * 0.5 + wall_thickness * 0.5, room_height * 0.5 + 0.15, 0.0), wall_material)
+	_add_stadium_solid_box(room, "RoomRightWall", Vector3(wall_thickness, room_height, room_depth), Vector3(room_width * 0.5 - wall_thickness * 0.5, room_height * 0.5 + 0.15, 0.0), wall_material)
+	_add_stadium_solid_box(room, "RoomRearWall", Vector3(room_width, room_height, wall_thickness), Vector3(0.0, room_height * 0.5 + 0.15, room_depth * 0.5 - wall_thickness * 0.5), wall_material)
+	var front_piece_width := (room_width - door_width) * 0.5
+	_add_stadium_solid_box(room, "RoomFrontLeftWall", Vector3(front_piece_width, room_height, wall_thickness), Vector3(-door_width * 0.5 - front_piece_width * 0.5, room_height * 0.5 + 0.15, -room_depth * 0.5 + wall_thickness * 0.5), wall_material)
+	_add_stadium_solid_box(room, "RoomFrontRightWall", Vector3(front_piece_width, room_height, wall_thickness), Vector3(door_width * 0.5 + front_piece_width * 0.5, room_height * 0.5 + 0.15, -room_depth * 0.5 + wall_thickness * 0.5), wall_material)
+	var roof := MeshInstance3D.new()
+	roof.name = "RoomRoof"
+	var roof_mesh := BoxMesh.new()
+	roof_mesh.size = Vector3(room_width, 0.35, room_depth)
+	roof.mesh = roof_mesh
+	roof.position.y = room_height + 0.35
+	roof.material_override = roof_material
+	room.add_child(roof)
+	var sign := Label3D.new()
+	sign.name = "RoomNameSign"
+	sign.text = display_name
+	sign.font_size = 18
+	sign.position = Vector3(0.0, room_height + 1.4, -room_depth * 0.5 - 0.4)
+	sign.modulate = Color(0.72, 0.9, 1.0)
+	room.add_child(sign)
+
+	match room_kind:
+		"locker":
+			for index in range(6):
+				_add_stadium_solid_box(room, "Locker_%02d" % index, Vector3(1.3, 2.2, 0.7), Vector3(-6.5 + float(index) * 2.6, 1.4, room_depth * 0.5 - 1.0), wall_material)
+			_add_stadium_solid_box(room, "LockerRoomBench", Vector3(8.0, 0.65, 1.1), Vector3(0.0, 0.55, 0.0), roof_material)
+		"referee":
+			_add_stadium_solid_box(room, "RefereeDesk", Vector3(5.0, 0.9, 1.8), Vector3(0.0, 0.8, 0.0), roof_material)
+			for side in [-1.0, 1.0]:
+				_add_stadium_solid_box(room, "RefereeChair_%s" % str(side), Vector3(1.0, 1.0, 1.0), Vector3(side * 4.0, 0.65, 0.0), wall_material)
+		"medical":
+			for index in range(2):
+				_add_stadium_solid_box(room, "MedicalBed_%02d" % index, Vector3(5.0, 0.55, 2.0), Vector3(-4.0 + float(index) * 8.0, 0.65, 1.0), roof_material)
+			_add_stadium_solid_box(room, "MedicalCabinet", Vector3(2.0, 2.2, 0.8), Vector3(0.0, 1.4, room_depth * 0.5 - 1.0), wall_material)
+		_:
+			for index in range(3):
+				_add_stadium_solid_box(room, "MediaDesk_%02d" % index, Vector3(4.0, 0.8, 1.6), Vector3(-5.0 + float(index) * 5.0, 0.7, 0.0), roof_material)
+	var interaction := Area3D.new()
+	interaction.name = "RoomEntranceInteraction"
+	interaction.position = Vector3(0.0, 1.4, -room_depth * 0.5 - 1.5)
+	interaction.add_to_group("system_interactable")
+	interaction.set_meta("system_location_id", str(room.get_meta("system_location_id", "")))
+	interaction.set_meta("system_region_id", "region_baghdad")
+	interaction.set_meta("system_location_type", 7)
+	interaction.set_meta("system_display_name", display_name)
+	interaction.set_meta("system_interaction_prompt", "دخول " + display_name)
+	interaction.set_meta("system_access_state", "walk_in_interior")
+	var area_collision := CollisionShape3D.new()
+	var area_shape := BoxShape3D.new()
+	area_shape.size = Vector3(4.0, 2.6, 3.0)
+	area_collision.shape = area_shape
+	interaction.add_child(area_collision)
+	room.add_child(interaction)
+
+
+func _build_stadium_player_tunnel(parent: Node3D, wall_material: Material, roof_material: Material) -> void:
+	_add_stadium_solid_box(parent, "PlayerTunnelFloor", Vector3(6.0, 0.3, 26.0), Vector3(0.0, 0.15, 55.0), wall_material)
+	_add_stadium_solid_box(parent, "PlayerTunnelLeftWall", Vector3(0.45, 4.2, 26.0), Vector3(-3.0, 2.25, 55.0), wall_material)
+	_add_stadium_solid_box(parent, "PlayerTunnelRightWall", Vector3(0.45, 4.2, 26.0), Vector3(3.0, 2.25, 55.0), wall_material)
+	var roof := MeshInstance3D.new()
+	roof.name = "PlayerTunnelRoof"
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(6.0, 0.35, 26.0)
+	roof.mesh = mesh
+	roof.position = Vector3(0.0, 4.4, 55.0)
+	roof.material_override = roof_material
+	parent.add_child(roof)
+	var sign := Label3D.new()
+	sign.name = "PlayerTunnelSign"
+	sign.text = "PLAYERS / OFFICIALS"
+	sign.font_size = 18
+	sign.position = Vector3(0.0, 4.9, 43.0)
+	parent.add_child(sign)
+
+
+func _build_stadium_floodlights(parent: Node3D, pole_material: Material) -> void:
+	var index := 0
+	for x_side in [-1.0, 1.0]:
+		for z_side in [-1.0, 1.0]:
+			var pole_position := Vector3(x_side * 68.0, 11.0, z_side * 76.0)
+			_add_stadium_solid_box(parent, "StadiumFloodlightPole_%02d" % index, Vector3(0.9, 22.0, 0.9), pole_position, pole_material)
+			var light := SpotLight3D.new()
+			light.name = "StadiumFloodlight_%02d" % index
+			light.position = pole_position + Vector3(0.0, 10.5, 0.0)
+			light.rotation.x = -PI * 0.5
+			light.spot_range = 86.0
+			light.spot_angle = 52.0
+			light.light_energy = 1.6
+			parent.add_child(light)
+			index += 1
+
+
+func _add_stadium_solid_box(parent: Node3D, node_name: String, size: Vector3, position: Vector3, material: Material, yaw: float = 0.0) -> void:
+	var body := StaticBody3D.new()
+	body.name = node_name
+	body.position = position
+	body.rotation.y = yaw
+	var visual := MeshInstance3D.new()
+	visual.name = "Visual"
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	visual.mesh = mesh
+	visual.material_override = material
+	body.add_child(visual)
+	var collision := CollisionShape3D.new()
+	collision.name = "CollisionShape3D"
+	var shape := BoxShape3D.new()
+	shape.size = size
+	collision.shape = shape
+	body.add_child(collision)
+	parent.add_child(body)
+
+
+func _add_stadium_seat_row(parent: Node3D, node_name: String, center: Vector3, length: float, count: int, along_x: bool, material: Material) -> void:
+	var seat_mesh := BoxMesh.new()
+	seat_mesh.size = Vector3(1.1, 0.55, 0.8)
+	var multi := MultiMesh.new()
+	multi.transform_format = MultiMesh.TRANSFORM_3D
+	multi.mesh = seat_mesh
+	multi.instance_count = count
+	for index in range(count):
+		var offset := -length * 0.5 + (float(index) + 0.5) * length / float(count)
+		var seat_position := center + (Vector3(offset, 0.0, 0.0) if along_x else Vector3(0.0, 0.0, offset))
+		multi.set_instance_transform(index, Transform3D(Basis(), seat_position))
+	var seats := MultiMeshInstance3D.new()
+	seats.name = node_name
+	seats.multimesh = multi
+	seats.material_override = material
+	parent.add_child(seats)
+
 
 func _build_stadium_goal(parent: Node3D, side: float, pitch_width: float, pitch_depth: float, material: Material) -> void:
 	var goal_center := Vector3(side * (pitch_width * 0.5 + 0.15), 1.1, 0.0)
