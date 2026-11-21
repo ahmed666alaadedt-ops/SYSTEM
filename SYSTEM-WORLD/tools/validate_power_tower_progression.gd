@@ -96,17 +96,38 @@ func _run_validation() -> void:
 	if str(resumed.get("resume_data", {}).get("last_checkpoint_id", "")) != "midpoint_checkpoint":
 		_fail("Retry did not resume from the last saved checkpoint.")
 		return
+	var resumed_build: Dictionary = floor_world.build_floor(resumed.get("floor_data", {}), Vector3.ZERO)
+	if not bool(resumed_build.get("success", false)):
+		_fail("The floor environment could not be rebuilt for a checkpoint retry.")
+		return
+	if floor_world.get_entry_position().x <= 0.0:
+		_fail("The player did not resume beyond the saved midpoint checkpoint.")
+		return
+	if floor_world.get_active_enemy_nodes().is_empty():
+		_fail("The active floor did not spawn its required combat opponents.")
+		return
 
 	floor_world.call("_on_checkpoint_body_entered", player, "pre_boss_checkpoint")
 	if manager.get_floor_resume_data(1).get("completed_checkpoint_ids", []).size() != 3:
 		_fail("Physical final checkpoint trigger did not record.")
 		return
 
-	var clear_result: Dictionary = manager.confirm_floor_clear(1, 42.0)
-	if not bool(clear_result.get("success", false)):
-		_fail("A fully completed floor did not clear.")
+	var blocked_clear: Dictionary = manager.confirm_floor_clear(1, 42.0)
+	if bool(blocked_clear.get("success", false)) or str(blocked_clear.get("reason", "")) != "FLOOR_ENEMIES_REMAIN":
+		_fail("A floor was allowed to clear while its opponents were still alive.")
 		return
-	if int(clear_result.get("reward_currency", 0)) != 55:
+	for enemy in floor_world.get_active_enemy_nodes():
+		enemy.call("take_damage", 1000000.0, player)
+	var combat_status: Dictionary = manager.get_floor_combat_status(1)
+	if not bool(combat_status.get("combat_complete", false)):
+		_fail("Defeating the spawned floor opponents did not complete the combat objective.")
+		return
+	floor_world.call("_on_floor_clear_gate_body_entered", player)
+	var clear_result: Dictionary = manager.get_tower_status()
+	if int(clear_result.get("highest_cleared_floor", 0)) != 1:
+		_fail("The physical clear gate did not award and complete floor 1.")
+		return
+	if int(manager.tower_credits) != 55:
 		_fail("Floor 1 currency reward is not the expected 55 tower credits.")
 		return
 	if int(manager.get_tower_status().get("next_floor", 0)) != 2:
