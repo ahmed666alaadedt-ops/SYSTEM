@@ -155,6 +155,11 @@ func _run() -> void:
 		fake_map.call("register_location", "2", str(record.get("id", "")), "region_baghdad", str(record.get("name", "")), 5, record.get("position", Vector3.ZERO), false)
 	fake_map.call("register_location", "2", "hunter_association_headquarters_baghdad", "region_baghdad", "المقر الرئيسي لنقابة الصيادين", 5, headquarters_position, false)
 	landmarks.call("register_map_locations", fake_map, "2")
+	var main_source := FileAccess.get_file_as_string("res://scripts/main.gd")
+	for required_contract in ["tower_lift_console_", "tower_floor_exit_", "_enter_baghdad_tower_floor", "BaghdadTowerLiftUIScript"]:
+		if not main_source.contains(required_contract):
+			_fail("Main interaction runtime is missing tower lift contract: " + required_contract)
+			return
 	var region_source := FileAccess.get_file_as_string("res://scripts/modern_world_region_manager.gd")
 	if not region_source.contains("tower_manager.call(\"get_tower_positions\")") or not region_source.contains("baghdad_landmarks.call(\"register_map_locations\""):
 		_fail("Modern region manager does not register tower roots and Baghdad landmark locations.")
