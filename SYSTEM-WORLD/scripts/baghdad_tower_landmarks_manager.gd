@@ -5,6 +5,7 @@ const EntranceScript = preload("res://scripts/system_tower_entrance.gd")
 const HeadquartersInteriorScript = preload("res://scripts/system_hunter_headquarters_interior.gd")
 const TowerInteriorScript = preload("res://scripts/system_baghdad_tower_interior.gd")
 const PowerTowerArenaVenueScript = preload("res://scripts/system_power_tower_arena_venue.gd")
+const PowerTowerFloorWorldScript = preload("res://scripts/system_power_tower_floor_world.gd")
 const HUNTER_TOWER_HEIGHT := 1000.0
 const POWER_TOWER_HEIGHT := 168.0
 const TECHNOLOGY_TOWER_HEIGHT := 210.0
@@ -87,6 +88,10 @@ func _build_power_tower() -> void:
 		var arena_venue := PowerTowerArenaVenueScript.new()
 		arena_venue.name = "PowerTowerArenaVenue"
 		power_tower.add_child(arena_venue)
+		var floor_world := PowerTowerFloorWorldScript.new()
+		floor_world.name = "PowerTowerFloorWorld"
+		floor_world.position = Vector3(0.0, 6000.0, 0.0)
+		power_tower.add_child(floor_world)
 
 func _build_tower(node_name: String, title: String, location_id: String, world_position: Vector3, height: float, radius: float, floors: int, beacon_color: Color, connected_to_district: bool = true) -> void:
 	var resolved := _nearest_land_position(Vector2(world_position.x, world_position.z))
