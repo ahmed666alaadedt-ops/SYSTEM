@@ -1446,7 +1446,7 @@ func _on_interaction_performed(
 			baghdad_tower_lift_ui.call("open_for_tower", str(target.get_meta("system_tower_id", "")), str(target.get_meta("system_tower_title", "برج بغداد")), int(target.get_meta("system_tower_floor_count", 1)))
 		elif interaction_prompt_label != null:
 			interaction_prompt_label.text = "واجهة مصعد البرج غير متاحة."
-	elif location_id.begins_with("tower_floor_"):
+	elif location_id.begins_with("tower_floor_") and not location_id.begins_with("tower_floor_exit_"):
 		var tower_id := str(target.get_meta("system_tower_id", ""))
 		var floor_number := int(target.get_meta("system_floor_number", 0))
 		if not tower_id.is_empty() and floor_number > 0:
