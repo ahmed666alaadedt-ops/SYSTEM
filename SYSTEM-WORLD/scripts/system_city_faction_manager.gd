@@ -18,6 +18,8 @@ const PROTECTED_SERVICE_TYPES := ["hospital", "school", "university", "mosque", 
 var factions: Dictionary = {}
 var player_standing: Dictionary = {}
 var incident_log: Array[Dictionary] = []
+var player_contracts: Dictionary = {}
+var next_contract_id := 1
 var crime_manager: Node
 var society_manager: Node
 var region_manager: Node
@@ -64,6 +66,73 @@ func _register_city_factions(city_name: String) -> void:
 			"protected_service_exclusion": PROTECTED_SERVICE_TYPES.duplicate()
 		}
 		player_standing[faction_id] = int(player_standing.get(faction_id, 0))
+
+
+func set_faction_rivalry(faction_id: String, rival_id: String, hostile: bool = true) -> Dictionary:
+	if faction_id == rival_id or not factions.has(faction_id) or not factions.has(rival_id):
+		return {"success":false,"reason":"INVALID_FACTION_PAIR"}
+	var faction: Dictionary = factions[faction_id]
+	var rival: Dictionary = factions[rival_id]
+	if str(faction.get("city", "")) != str(rival.get("city", "")):
+		return {"success":false,"reason":"RIVAL_MUST_BE_IN_SAME_CITY"}
+	var rivals: Array = faction.get("rivals", [])
+	var reverse_rivals: Array = rival.get("rivals", [])
+	if hostile:
+		if not rivals.has(rival_id):
+			rivals.append(rival_id)
+		if not reverse_rivals.has(faction_id):
+			reverse_rivals.append(faction_id)
+	else:
+		rivals.erase(rival_id)
+		reverse_rivals.erase(faction_id)
+	faction["rivals"] = rivals
+	rival["rivals"] = reverse_rivals
+	factions[faction_id] = faction
+	factions[rival_id] = rival
+	_record_incident(faction_id, "rivalry_updated", {"rival_id":rival_id,"hostile":hostile})
+	_save_state()
+	return {"success":true,"hostile":hostile}
+
+func issue_player_contract(faction_id: String, objective_type: String) -> Dictionary:
+	if not factions.has(faction_id):
+		return {"success":false,"reason":"FACTION_NOT_FOUND"}
+	var allowed_objectives := ["deliver_courier_package", "collect_public_evidence", "scout_district", "protect_civilian_route"]
+	if not allowed_objectives.has(objective_type):
+		return {"success":false,"reason":"UNSUPPORTED_PLAYER_OBJECTIVE"}
+	if get_player_standing(faction_id) < -50:
+		return {"success":false,"reason":"REPUTATION_TOO_LOW"}
+	var contract_id := "player_faction_contract_%05d" % next_contract_id
+	next_contract_id += 1
+	var contract := {
+		"id":contract_id,"faction_id":faction_id,"objective":objective_type,
+		"status":"AVAILABLE_TO_PLAYER","owner":"local_player","player_only":true,
+		"npc_completion_allowed":false,"issued_at":int(Time.get_unix_time_from_system())
+	}
+	player_contracts[contract_id] = contract
+	_record_incident(faction_id, "player_contract_issued", {"contract_id":contract_id,"objective":objective_type})
+	_save_state()
+	return {"success":true,"contract":contract.duplicate(true)}
+
+func complete_player_contract(contract_id: String, evidence_token: String) -> Dictionary:
+	if not player_contracts.has(contract_id):
+		return {"success":false,"reason":"CONTRACT_NOT_FOUND"}
+	var contract: Dictionary = player_contracts[contract_id]
+	if str(contract.get("status", "")) != "AVAILABLE_TO_PLAYER":
+		return {"success":false,"reason":"CONTRACT_NOT_ACTIVE"}
+	if not evidence_token.begins_with("SYSTEM_PLAYER_EVIDENCE:"):
+		return {"success":false,"reason":"PLAYER_EVIDENCE_REQUIRED"}
+	contract["status"] = "COMPLETED"
+	contract["completed_at"] = int(Time.get_unix_time_from_system())
+	player_contracts[contract_id] = contract
+	adjust_player_standing(str(contract.get("faction_id", "")), 5, "player_contract_completed")
+	_save_state()
+	return {"success":true,"contract":contract.duplicate(true)}
+
+func get_player_contracts() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for contract_id in player_contracts:
+		result.append(player_contracts[contract_id].duplicate(true))
+	return result
 
 func get_city_factions(city_name: String) -> Array[Dictionary]:
 	_register_city_factions(city_name)
@@ -151,6 +220,8 @@ func _load_state() -> void:
 	player_standing = config.get_value("factions", "player_standing", player_standing)
 	incident_log = config.get_value("factions", "incident_log", incident_log)
 	next_incident_id = int(config.get_value("factions", "next_incident_id", next_incident_id))
+	player_contracts = config.get_value("factions", "player_contracts", {})
+	next_contract_id = int(config.get_value("factions", "next_contract_id", next_contract_id))
 	var saved_factions: Dictionary = config.get_value("factions", "faction_state", {})
 	for faction_id in saved_factions:
 		if factions.has(faction_id):
@@ -161,6 +232,8 @@ func _save_state() -> void:
 	config.set_value("factions", "player_standing", player_standing)
 	config.set_value("factions", "incident_log", incident_log)
 	config.set_value("factions", "next_incident_id", next_incident_id)
+	config.set_value("factions", "player_contracts", player_contracts)
+	config.set_value("factions", "next_contract_id", next_contract_id)
 	config.set_value("factions", "faction_state", factions)
 	var error := config.save(SAVE_PATH)
 	if error != OK:
