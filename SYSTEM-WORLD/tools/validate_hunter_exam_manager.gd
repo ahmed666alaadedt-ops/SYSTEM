@@ -55,6 +55,20 @@ func _initialize() -> void:
 		push_error("Hunter exam validation failed: permanent license was not recorded.")
 		quit(1)
 		return
+	var retry_probe = EXAM_SCRIPT.new()
+	root.add_child(retry_probe)
+	retry_probe.license_earned_permanently = false
+	retry_probe.registered = true
+	retry_probe.failed = true
+	retry_probe.last_failure_unix = int(Time.get_unix_time_from_system())
+	retry_probe.attempt_number = 1
+	retry_probe.completed_stage_ids.clear()
+	var retry_result: Dictionary = retry_probe.apply_for_exam("validator_retry_candidate")
+	if str(retry_result.get("reason", "")) != "NEXT_WEEKLY_EXAM_REQUIRED":
+		push_error("Hunter exam validation failed: weekly retry cycle was not enforced.")
+		quit(1)
+		return
+	retry_probe.queue_free()
 	manager.queue_free()
 	print("Hunter exam validation passed: seven ordered stages, progression persistence and permanent license.")
 	quit(0)
