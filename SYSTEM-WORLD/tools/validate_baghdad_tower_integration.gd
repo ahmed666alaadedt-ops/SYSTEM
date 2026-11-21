@@ -90,9 +90,12 @@ func _run() -> void:
 		if generated_root == null:
 			_fail("Generated floor root is missing for " + root_name + ": " + str(floor_world.get_children().map(func(child): return child.name)))
 			return
-		var ground_body := generated_root.find_child("FloorGround_Collision", true, false)
+		var ground_body := generated_root.get_node_or_null("FloorGround_Collision")
 		if ground_body == null or ground_body.get_node_or_null("CollisionShape3D") == null:
-			_fail("Generated floor has no collision-backed ground for " + root_name)
+			var generated_child_names := PackedStringArray()
+			for generated_child in generated_root.get_children():
+				generated_child_names.append(str(generated_child.name))
+			_fail("Generated floor has no collision-backed ground for " + root_name + "; children=" + ", ".join(generated_child_names))
 			return
 		var floor_exit := generated_root.get_node_or_null("TowerFloorExit") as Area3D
 		if floor_exit == null or not floor_exit.is_in_group("system_interactable"):
