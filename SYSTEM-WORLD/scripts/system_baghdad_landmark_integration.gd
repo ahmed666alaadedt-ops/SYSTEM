@@ -17,11 +17,10 @@ var _sites: Array[Dictionary] = [
 	{"id":"baghdad_church_old","name":"الكنيسة التاريخية في بغداد","kind":"church","offset":Vector2(-95.0,-205.0),"size":Vector3(42.0,22.0,36.0),"color":Color(0.54,0.48,0.39),"prompt":"دخول الكنيسة التاريخية في بغداد"},
 	{"id":"baghdad_antiquities_museum","name":"متحف وآثار بغداد","kind":"museum","offset":Vector2(95.0,-205.0),"size":Vector3(62.0,20.0,44.0),"color":Color(0.52,0.43,0.31),"prompt":"زيارة متحف وآثار بغداد"},
 	{"id":"baghdad_rare_market","name":"سوق التحف والمزادات","kind":"market","offset":Vector2(190.0,-105.0),"size":Vector3(68.0,12.0,42.0),"color":Color(0.43,0.29,0.17),"prompt":"دخول سوق التحف والمزادات"},
-	{"id":"baghdad_football_stadium","name":"ملعب بغداد لكرة القدم","kind":"stadium","offset":Vector2(205.0,105.0),"size":Vector3(150.0,18.0,108.0),"color":Color(0.12,0.30,0.16),"prompt":"دخول ملعب بغداد لكرة القدم"},
+	{"id":"service_baghdad_stadium","name":"ملعب بغداد لكرة القدم","kind":"stadium","offset":Vector2(205.0,105.0),"size":Vector3(150.0,18.0,108.0),"color":Color(0.12,0.30,0.16),"prompt":"دخول ملعب بغداد لكرة القدم"},
 	{"id":"baghdad_motorsport_circuit","name":"مضمار بغداد الدولي للسيارات","kind":"motorsport","offset":Vector2(-185.0,205.0),"size":Vector3(190.0,8.0,120.0),"color":Color(0.12,0.13,0.15),"prompt":"دخول مضمار سباق السيارات"},
-	{"id":"baghdad_hunter_exam_tunnel","name":"نفق اختبار الصيادين","kind":"tunnel","offset":Vector2(0.0,245.0),"size":Vector3(42.0,12.0,28.0),"color":Color(0.10,0.19,0.27),"prompt":"دخول نفق اختبار الصيادين"},
-	{"id":"baghdad_power_tower","name":"برج القوة — 200 طابق","kind":"power_tower","offset":Vector2(0.0,-300.0),"size":Vector3(44.0,480.0,44.0),"color":Color(0.12,0.24,0.34),"prompt":"دخول برج القوة المستقل"},
-	{"id":"baghdad_advertising_plaza","name":"ساحة الإعلانات العامة","kind":"advertising","offset":Vector2(0.0,90.0),"size":Vector3(32.0,20.0,10.0),"color":Color(0.08,0.35,0.48),"prompt":"عرض إعلانات وأخبار بغداد"}
+	{"id":"hunter_exam_tunnel_start_baghdad","name":"نفق اختبار الصيادين","kind":"tunnel","offset":Vector2(0.0,245.0),"size":Vector3(42.0,12.0,28.0),"color":Color(0.10,0.19,0.27),"prompt":"دخول نفق اختبار الصيادين"},
+	{"id":"hunter_exam_public_notice_baghdad","name":"إعلان اختبار الصيادين العام","kind":"advertising","offset":Vector2(0.0,90.0),"size":Vector3(32.0,20.0,10.0),"color":Color(0.08,0.35,0.48),"prompt":"عرض إعلانات وأخبار بغداد"}
 ]
 
 func build(p_terrain: Node) -> void:
@@ -43,12 +42,6 @@ func register_map_locations(p_map_manager: Node, world_id: String = WORLD_ID) ->
 	for site in _sites:
 		var point := _site_position(site)
 		map_manager.call("register_location", world_id, str(site["id"]), REGION_ID, str(site["name"]), 5, point, false)
-	for index in range(5):
-		var tower_id := "baghdad_tower_%02d" % (index + 1)
-		var offset := _tower_offset(index)
-		var point := _world_point(offset)
-		map_manager.call("register_location", world_id, tower_id, REGION_ID, "برج بغداد %d" % (index + 1), 5, point, false)
-	map_manager.call("register_location", world_id, "hunter_association_headquarters_baghdad", REGION_ID, "المقر الرئيسي لنقابة الصيادين", 5, _world_point(Vector2(0.0,0.0)), false)
 	_registered = true
 
 func _tower_offset(index: int) -> Vector2:
