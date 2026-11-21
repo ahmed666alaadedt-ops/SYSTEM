@@ -105,6 +105,8 @@ var motorsport_leaderboard_panel: PanelContainer
 var motorsport_leaderboard_event_select: OptionButton
 var motorsport_leaderboard_best_label: Label
 var motorsport_leaderboard_rows: VBoxContainer
+var motorsport_race_hud_layer: CanvasLayer
+var motorsport_race_hud_label: Label
 
 var mobile_direction := Vector2.ZERO
 var jump_requested := false
@@ -157,6 +159,7 @@ func _ready() -> void:
 	create_mobile_controls()
 	create_interaction_prompt()
 	create_motorsport_leaderboard_ui()
+	create_motorsport_race_hud_ui()
 	create_baghdad_tower_lift_ui()
 
 	update_camera_mode()
@@ -424,6 +427,60 @@ func create_motorsport_manager() -> void:
 	add_child(motorsport_manager)
 	motorsport_manager.setup(player_vehicle_manager)
 	motorsport_manager.race_finished.connect(_on_motorsport_race_finished)
+	motorsport_manager.race_started.connect(_on_motorsport_race_started)
+	motorsport_manager.race_countdown_updated.connect(_on_motorsport_race_countdown_updated)
+	motorsport_manager.race_progress_updated.connect(_on_motorsport_race_progress_updated)
+	motorsport_manager.race_go.connect(_on_motorsport_race_go)
+
+
+func create_motorsport_race_hud_ui() -> void:
+	motorsport_race_hud_layer = CanvasLayer.new()
+	motorsport_race_hud_layer.name = "MotorsportRaceHUD"
+	motorsport_race_hud_layer.layer = 17
+	add_child(motorsport_race_hud_layer)
+	motorsport_race_hud_label = Label.new()
+	motorsport_race_hud_label.name = "RaceStatus"
+	motorsport_race_hud_label.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	motorsport_race_hud_label.offset_left = 12.0
+	motorsport_race_hud_label.offset_top = 18.0
+	motorsport_race_hud_label.offset_right = -12.0
+	motorsport_race_hud_label.offset_bottom = 70.0
+	motorsport_race_hud_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	motorsport_race_hud_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	motorsport_race_hud_label.add_theme_font_size_override("font_size", 22)
+	motorsport_race_hud_label.add_theme_color_override("font_color", Color(0.72, 0.94, 1.0))
+	motorsport_race_hud_label.add_theme_color_override("font_shadow_color", Color(0.02, 0.06, 0.1, 0.95))
+	motorsport_race_hud_label.add_theme_constant_override("shadow_offset_x", 2)
+	motorsport_race_hud_label.add_theme_constant_override("shadow_offset_y", 2)
+	motorsport_race_hud_label.text = ""
+	motorsport_race_hud_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	motorsport_race_hud_layer.add_child(motorsport_race_hud_label)
+
+
+func _on_motorsport_race_started(event_id: String, _vehicle_id: String) -> void:
+	if motorsport_race_hud_label == null:
+		return
+	var event_data: Dictionary = motorsport_manager.get_event(event_id)
+	motorsport_race_hud_label.text = "%s — استعد للانطلاق" % str(event_data.get("name", event_id))
+
+
+func _on_motorsport_race_countdown_updated(seconds_remaining: int) -> void:
+	if motorsport_race_hud_label == null:
+		return
+	motorsport_race_hud_label.text = "استعد... %d" % seconds_remaining if seconds_remaining > 0 else "انطلق!"
+
+
+func _on_motorsport_race_go(_event_id: String) -> void:
+	if motorsport_race_hud_label != null:
+		motorsport_race_hud_label.text = "انطلق! — السباق بدأ"
+
+
+func _on_motorsport_race_progress_updated(laps_done: int, laps_total: int, checkpoint_index: int, checkpoints_total: int) -> void:
+	if motorsport_race_hud_label == null:
+		return
+	motorsport_race_hud_label.text = "اللفة %d / %d   |   نقطة المسار %d / %d" % [
+		mini(laps_done + 1, laps_total), laps_total, checkpoint_index + 1, checkpoints_total
+	]
 
 
 func _on_motorsport_race_finished(result: Dictionary) -> void:
@@ -441,6 +498,10 @@ func _on_motorsport_race_finished(result: Dictionary) -> void:
 	var scope_note := "السجل محفوظ على هذا الجهاز فقط؛ ليس ترتيباً عالمياً."
 	if not bool(records.get("saved", false)):
 		scope_note = "تعذر حفظ السجل؛ النتيجة الحالية ظاهرة فقط."
+	if motorsport_race_hud_label != null:
+		motorsport_race_hud_label.text = "انتهى السباق — %s | الزمن: %s | المكافأة: %d رصيد" % [
+			str(result.get("event_name", "السباق")), time_label, int(result.get("reward", 0))
+		]
 	if interaction_prompt_label != null:
 		interaction_prompt_label.text = "اكتمل %s!\nزمنك: %s | أفضل زمن محلي: %s\n%s\n%s" % [
 			str(result.get("event_name", "السباق")),
