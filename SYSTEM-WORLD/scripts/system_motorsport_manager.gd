@@ -9,6 +9,8 @@ signal race_cancelled(event_id: String)
 signal player_wager_created(wager_id: String, event_id: String, amount: int)
 
 const VehicleCatalogScript = preload("res://scripts/system_vehicle_catalog.gd")
+const RACE_RECORDS_PATH := "user://system_motorsport_records.cfg"
+const MAX_LOCAL_ATTEMPTS_PER_EVENT := 50
 
 const EVENTS := {
 	"city_sprint": {"name":"City Sprint Cup","discipline":"street_circuit","vehicle_categories":["sports","premium","supercar","electric","race_gt","race_hyper"],"laps":3,"base_reward":1800,"description":"بطولة حلبة مدينة مغلقة ومخصصة للسباق؛ ليست سباقاً على الشوارع العامة"},
@@ -29,9 +31,72 @@ var total_laps := 0
 var checkpoint_total := 0
 var dedicated_track_context := false
 var pending_player_wagers: Dictionary = {}
+var race_records: Dictionary = {}
+
+func _ready() -> void:
+	_load_race_records()
 
 func setup(vehicle_garage: SystemPlayerVehicleManager) -> void:
 	garage_manager = vehicle_garage
+
+func _load_race_records() -> void:
+	var config := ConfigFile.new()
+	if config.load(RACE_RECORDS_PATH) != OK:
+		return
+	var saved: Variant = config.get_value("race_records", "events", {})
+	if typeof(saved) == TYPE_DICTIONARY:
+		race_records = saved.duplicate(true)
+
+func _save_race_records() -> bool:
+	var config := ConfigFile.new()
+	config.set_value("race_records", "events", race_records.duplicate(true))
+	var error := config.save(RACE_RECORDS_PATH)
+	if error != OK:
+		push_warning("SYSTEM: Motorsport records could not be saved.")
+		return false
+	return true
+
+func _sort_race_records(a: Dictionary, b: Dictionary) -> bool:
+	return float(a.get("elapsed_seconds", 0.0)) < float(b.get("elapsed_seconds", 0.0))
+
+func _record_completed_race(result: Dictionary) -> Dictionary:
+	var event_id := str(result.get("event_id", ""))
+	if event_id.is_empty():
+		return {"saved": false, "reason": "INVALID_EVENT_ID"}
+	var attempts: Array = race_records.get(event_id, [])
+	attempts.append({
+		"event_id": event_id,
+		"event_name": str(result.get("event_name", event_id)),
+		"elapsed_seconds": maxf(0.0, float(result.get("elapsed_seconds", 0.0))),
+		"completed_laps": int(result.get("completed_laps", 0)),
+		"vehicle_id": str(result.get("vehicle_id", "")),
+		"recorded_at_unix": int(Time.get_unix_time_from_system())
+	})
+	while attempts.size() > MAX_LOCAL_ATTEMPTS_PER_EVENT:
+		attempts.pop_front()
+	race_records[event_id] = attempts
+	var saved_ok := _save_race_records()
+	var sorted_attempts: Array = attempts.duplicate(true)
+	sorted_attempts.sort_custom(_sort_race_records)
+	var best: Dictionary = sorted_attempts[0] if not sorted_attempts.is_empty() else {}
+	return {
+		"saved": saved_ok,
+		"scope": "local_device_only",
+		"attempt_count": attempts.size(),
+		"best_time_seconds": float(best.get("elapsed_seconds", 0.0)),
+		"is_personal_best": not best.is_empty() and int(best.get("recorded_at_unix", 0)) == int(result.get("recorded_at_unix", -1)),
+		"local_rank": 1,
+		"local_leaderboard": sorted_attempts.slice(0, mini(10, sorted_attempts.size()))
+	}
+
+func get_event_leaderboard(event_id: String, limit: int = 10) -> Array:
+	var attempts: Array = race_records.get(event_id, []).duplicate(true)
+	attempts.sort_custom(_sort_race_records)
+	return attempts.slice(0, clampi(limit, 1, 50))
+
+func get_personal_best(event_id: String) -> Dictionary:
+	var leaderboard := get_event_leaderboard(event_id, MAX_LOCAL_ATTEMPTS_PER_EVENT)
+	return leaderboard[0].duplicate(true) if not leaderboard.is_empty() else {}
 
 func set_dedicated_track_context(enabled: bool) -> void:
 	dedicated_track_context = enabled
@@ -132,8 +197,10 @@ func finish_race() -> Dictionary:
 		"elapsed_seconds":race_elapsed,
 		"reward":reward if bool(payment.get("success", false)) else 0,
 		"wallet_updated":bool(payment.get("success", false)),
-		"economy_mode":"local_prototype"
+		"economy_mode":"local_prototype",
+		"recorded_at_unix":int(Time.get_unix_time_from_system())
 	}
+	result["records"] = _record_completed_race(result)
 	active_race.clear()
 	race_finished.emit(result)
 	return result
