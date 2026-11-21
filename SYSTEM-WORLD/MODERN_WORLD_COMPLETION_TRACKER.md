@@ -773,7 +773,8 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Support both historic point features and polygon/multipolygon archaeological site boundaries in the OSM amenity layer, with collision-backed ruin fragments and stable discovery interactions.
 - [x] Generate outdoor archaeological landmark clusters, broken walls, columns, site names and stable discovery interactions for tagged OSM historic point features.
 - [x] Extend the existing Baghdad OSM runtime validator with a synthetic tagged-feature regression for the archaeological landmark builder and its stable interaction ID.
-- [ ] Audit the installed Baghdad OSM pack and report the actual number and names of historic/archaeological features available; do not substitute synthetic test fixtures for real-world coverage.
+- [x] Audit the verified source artifact and clipped municipal historic layer; distinguish source features from the smaller 5×5 sample-pack coverage and do not treat synthetic validator fixtures as real-world sites.
+- [ ] Audit the installed runtime pack and confirm actual landmark coverage after the map-integration milestone.
 - [ ] Add researched site-specific layouts, artifacts, environmental storytelling, guarded excavation areas, NPC archaeologists and discovery missions after real site coverage is confirmed.
 - [ ] Install the verified candidate cell pack into the runtime only at the planned map-integration milestone; the current 5×5 source artifact is not yet installed, so the OSM landmark generator is prepared but not active in the live Baghdad scene.
 - [ ] Run Godot 4.3 OSM runtime validation and inspect the tagged sites in the live Baghdad world once the pack is installed.
