@@ -74,12 +74,11 @@ func build_floor(floor_data: Dictionary, p_return_position: Vector3) -> Dictiona
 		"region_id": region_id,
 		"region_title": str(floor_data.get("region_title", profile["title"])),
 		"checkpoint_count": CHECKPOINT_IDS.size(),
-		"enemy_count": active_enemy_ids.size(),
-		"combat": progression_manager.call("get_floor_combat_status", active_floor_number) if is_instance_valid(progression_manager) and progression_manager.has_method("get_floor_combat_status") else {},
 		"boss_floor": bool(floor_data.get("boss_floor", false)),
 		"environment_status": "procedural_exploration_blockout",
 		"enemy_count": active_enemy_ids.size(),
-		"combat_required": not active_enemy_ids.is_empty()
+		"combat_required": not active_enemy_ids.is_empty(),
+		"combat": progression_manager.call("get_floor_combat_status", active_floor_number) if is_instance_valid(progression_manager) and progression_manager.has_method("get_floor_combat_status") else {}
 	}
 
 
@@ -108,7 +107,9 @@ func get_active_floor_info() -> Dictionary:
 		"region_id": str(active_floor_data.get("region_id", "")),
 		"boss_floor": bool(active_floor_data.get("boss_floor", false)),
 		"active": is_instance_valid(active_floor_root),
-		"checkpoint_count": CHECKPOINT_IDS.size()
+		"checkpoint_count": CHECKPOINT_IDS.size(),
+		"enemy_count": active_enemy_ids.size(),
+		"combat": progression_manager.call("get_floor_combat_status", active_floor_number) if is_instance_valid(progression_manager) and progression_manager.has_method("get_floor_combat_status") else {}
 	}
 
 
