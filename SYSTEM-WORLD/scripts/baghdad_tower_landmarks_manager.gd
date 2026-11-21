@@ -13,6 +13,7 @@ var trim_material: StandardMaterial3D
 var emissive_material: StandardMaterial3D
 var tower_positions: Array[Dictionary] = []
 var connected_tower_positions: Array[Dictionary] = []
+var headquarters_position := Vector3.INF
 
 func _ready() -> void:
 	name = "BaghdadTowerLandmarksManager"
@@ -252,7 +253,15 @@ func _create_hunter_association_headquarters() -> void:
 	# it is an elevated headquarters building, not a sixth tower and not part of Power Tower.
 	var headquarters := Node3D.new()
 	headquarters.name = "HunterAssociationHeadquarters"
-	headquarters.position = city_anchor + Vector3(0.0, 72.0, 0.0)
+	var highest_district_roof := city_anchor.y
+	var highest_tower: Dictionary = {}
+	for tower_data in connected_tower_positions:
+		var roof_y := float(tower_data["position"].y) + float(tower_data["height"]) + 14.0
+		if roof_y > highest_district_roof:
+			highest_district_roof = roof_y
+			highest_tower = tower_data
+	headquarters.position = Vector3(city_anchor.x, highest_district_roof + 12.0, city_anchor.z)
+	headquarters_position = headquarters.position
 	add_child(headquarters)
 
 	var podium := MeshInstance3D.new()
@@ -304,8 +313,30 @@ func _create_hunter_association_headquarters() -> void:
 	entrance.position = Vector3(0.0, 6.0, 48.0)
 	headquarters.add_child(entrance)
 
-	tower_positions.append({"id": "hunter_association_headquarters_baghdad", "name": "المقر الرئيسي لنقابة الصيادين", "position": headquarters.position, "height": 38.0, "radius": 56.0})
-	headquarters.set_meta("district_headquarters", true)
+	# Connect the headquarters sky platform to the highest district tower roof.
+	# This is a dedicated access bridge, not an extension of the five-tower district loop.
+	if not highest_tower.is_empty():
+		var access_bridge := Node3D.new()
+		access_bridge.name = "HunterHeadquartersSkyAccessBridge"
+		add_child(access_bridge)
+		var tower_roof: Vector3 = highest_tower["position"] + Vector3(0.0, float(highest_tower["height"]) + 14.0, 0.0)
+		var headquarters_edge := headquarters.position + Vector3(0.0, 2.0, 59.0)
+		_create_link_deck(access_bridge, tower_roof, headquarters_edge, "HunterHeadquartersAccessDeck", 16.0, 2.4, trim_material)
+		for side in range(2):
+			var rail := MeshInstance3D.new()
+			rail.name = "HeadquartersAccessRail_%d" % side
+			var rail_mesh := BoxMesh.new()
+			rail_mesh.size = Vector3(1.2, 3.0, tower_roof.distance_to(headquarters_edge))
+			rail.mesh = rail_mesh
+			rail.position = (tower_roof + headquarters_edge) * 0.5 + Vector3(8.0 if side == 0 else -8.0, 2.0, 0.0)
+			rail.rotation.y = atan2((headquarters_edge - tower_roof).x, (headquarters_edge - tower_roof).z)
+			rail.material_override = emissive_material
+			access_bridge.add_child(rail)
+		headquarters.set_meta("district_headquarters", true)
+
+
+func get_headquarters_position() -> Vector3:
+	return headquarters_position
 
 
 func _create_tower_architecture(root: Node3D, node_name: String, title: String, height: float, radius: float, floors: int, beacon_color: Color) -> void:
