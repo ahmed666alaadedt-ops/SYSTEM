@@ -15,6 +15,7 @@ class FakeWallet:
 		return {"success": true, "balance": balance}
 
 const ARENA_SCRIPT = preload("res://scripts/system_power_tower_arena_manager.gd")
+const ARENA_VENUE_SCRIPT = preload("res://scripts/system_power_tower_arena_venue.gd")
 
 func _initialize() -> void:
 	call_deferred("_run")
@@ -29,6 +30,19 @@ func _run() -> void:
 	arena.setup(wallet)
 	root.add_child(wallet)
 	root.add_child(arena)
+
+	var venue = ARENA_VENUE_SCRIPT.new()
+	root.add_child(venue)
+	var venue_interaction := venue.get_node_or_null("PowerTowerArenaInteraction")
+	if venue_interaction == null:
+		_fail("The independent exhibition arena has no physical entry interaction.")
+		return
+	if str(venue_interaction.get_meta("system_location_id", "")) != "power_tower_arena_baghdad":
+		_fail("The exhibition arena entry does not have its stable Baghdad location ID.")
+		return
+	if not venue_interaction.is_in_group("system_interactable"):
+		_fail("The exhibition arena entry is not registered as an interactable location.")
+		return
 	var created: Dictionary = arena.create_match("fighter_a", "fighter_b")
 	if not bool(created.get("success", false)) or int(created.get("fighter_entry_fee", -1)) != 0:
 		_fail("Fighter entry must be free.")
@@ -98,6 +112,7 @@ func _run() -> void:
 	if int(cancelled.get("refunded", 0)) != 150 or wallet.balance != 10000:
 		_fail("Cancelled match did not refund the spectator.")
 		return
+	venue.queue_free()
 	arena.queue_free()
 	wallet.queue_free()
 	print("Power Tower arena validation passed: free fighter entry, spectator-only local wagers, anti-self-bet, locked betting, pari-mutuel payout, NPC predictions and refunds.")
