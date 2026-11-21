@@ -34,6 +34,23 @@ func setup(anchors: Dictionary, terrain_manager: Node, p_map_manager: Node = nul
 	_refresh_all_displays()
 
 
+func connect_map_manager(p_map_manager: Node, world_id: String = WORLD_ID) -> void:
+	map_manager = p_map_manager
+	for record in display_records:
+		var board_id := str(record.get("id", ""))
+		if map_manager != null and map_manager.has_method("register_advertisement"):
+			map_manager.call(
+				"register_advertisement",
+				world_id,
+				board_id,
+				str(record.get("city", "")),
+				str(record.get("name", "إعلان")),
+				record.get("position", Vector3.ZERO)
+			)
+		if map_manager != null and map_manager.has_method("update_advertisement"):
+			map_manager.call("update_advertisement", world_id, board_id, _campaign_for_record(record, int(Time.get_unix_time_from_system())))
+
+
 func _process(delta: float) -> void:
 	refresh_elapsed += delta
 	if refresh_elapsed < ROTATION_REFRESH_SECONDS:
