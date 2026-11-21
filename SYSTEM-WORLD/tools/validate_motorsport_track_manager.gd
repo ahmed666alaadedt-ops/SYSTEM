@@ -7,6 +7,15 @@ class MockVehicleRuntime extends Node:
 	var active_vehicle: Node3D
 	var is_driving := true
 
+class MockAIController extends Node:
+	var opponent_id := ""
+	var opponent_name := ""
+	var vehicle: Node
+	var completed_laps := 0
+	var total_laps := 3
+	var elapsed_seconds := 0.0
+	var active := true
+
 func _initialize() -> void:
 	var runtime := MockVehicleRuntime.new()
 	root.add_child(runtime)
@@ -120,6 +129,35 @@ func _initialize() -> void:
 		return
 	race_manager.cancel_race()
 
+	manager.ai_race_event_id = "city_sprint"
+	var ai_finished := MockAIController.new()
+	ai_finished.opponent_id = "ai_finished"
+	ai_finished.opponent_name = "SYSTEM Racer Finished"
+	ai_finished.active = false
+	ai_finished.completed_laps = 3
+	ai_finished.elapsed_seconds = 115.0
+	root.add_child(ai_finished)
+	var ai_second := MockAIController.new()
+	ai_second.opponent_id = "ai_second"
+	ai_second.opponent_name = "SYSTEM Racer Two"
+	ai_second.completed_laps = 2
+	ai_second.elapsed_seconds = 80.0
+	root.add_child(ai_second)
+	var ai_third := MockAIController.new()
+	ai_third.opponent_id = "ai_third"
+	ai_third.opponent_name = "SYSTEM Racer Three"
+	ai_third.completed_laps = 1
+	ai_third.elapsed_seconds = 60.0
+	root.add_child(ai_third)
+	manager.ai_controller_nodes = [ai_third, ai_finished, ai_second]
+	var ai_standings: Array[Dictionary] = manager.get_ai_race_status()
+	if manager.get_ai_race_event_id() != "city_sprint" or ai_standings.size() != 3:
+		_fail("The last AI race event or opponent standings were not exposed.")
+		return
+	if str(ai_standings[0].get("opponent_id", "")) != "ai_finished" or str(ai_standings[1].get("opponent_id", "")) != "ai_second" or str(ai_standings[2].get("opponent_id", "")) != "ai_third":
+		_fail("AI opponent standings are not sorted by completed laps and elapsed time.")
+		return
+
 	var info: Dictionary = manager.get_track_info()
 	if int(info.get("pit_garage_count", 0)) != 8 or int(info.get("marshal_post_count", 0)) != 4:
 		_fail("Track info does not report the physical garage and marshal facilities.")
@@ -128,6 +166,9 @@ func _initialize() -> void:
 		_fail("Pit lane limit or conservative race-ready state is incorrect.")
 		return
 	manager.free()
+	ai_finished.free()
+	ai_second.free()
+	ai_third.free()
 	race_manager.free()
 	test_vehicle.free()
 	runtime.free()
