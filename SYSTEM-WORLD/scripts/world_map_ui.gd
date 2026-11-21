@@ -318,12 +318,15 @@ class MapDrawing extends Control:
 	func _gui_input(event: InputEvent) -> void:
 		var tap_position := Vector2.ZERO
 		var is_tap := false
-		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			tap_position = event.position
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event != null and mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
+			tap_position = mouse_event.position
 			is_tap = true
-		elif event is InputEventScreenTouch and event.pressed:
-			tap_position = event.position
-			is_tap = true
+		else:
+			var touch_event := event as InputEventScreenTouch
+			if touch_event != null and touch_event.pressed:
+				tap_position = touch_event.position
+				is_tap = true
 		if not is_tap:
 			return
 		for hit in ad_hit_targets:
