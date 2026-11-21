@@ -33,13 +33,28 @@ func set_vehicle_color(vehicle_id: String, color: Color) -> void:
 func get_garage() -> Array[String]:
 	return owned_vehicles.duplicate()
 
-func award_race_reward(amount: int) -> Dictionary:
+func credit_currency(amount: int, reason: String = "system_reward") -> Dictionary:
 	if amount <= 0:
-		return {"success":false,"reason":"INVALID_REWARD"}
+		return {"success":false,"reason":"INVALID_AMOUNT"}
 	balance += amount
 	save_garage()
 	wallet_changed.emit(balance)
-	return {"success":true,"awarded":amount,"balance":balance,"economy_mode":"local_prototype"}
+	return {"success":true,"credited":amount,"balance":balance,"reason":reason,"economy_mode":"local_prototype"}
+
+
+func spend_currency(amount: int, reason: String = "system_purchase") -> Dictionary:
+	if amount <= 0:
+		return {"success":false,"reason":"INVALID_AMOUNT"}
+	if balance < amount:
+		return {"success":false,"reason":"INSUFFICIENT_CURRENCY","required":amount,"balance":balance}
+	balance -= amount
+	save_garage()
+	wallet_changed.emit(balance)
+	return {"success":true,"spent":amount,"balance":balance,"reason":reason,"economy_mode":"local_prototype"}
+
+
+func award_race_reward(amount: int) -> Dictionary:
+	return credit_currency(amount, "motorsport_race_reward")
 
 
 func purchase_vehicle(vehicle_id: String) -> Dictionary:
