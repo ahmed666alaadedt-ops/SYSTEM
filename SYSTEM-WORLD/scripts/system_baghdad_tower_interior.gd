@@ -130,6 +130,30 @@ func _build_hunter_exam_tunnel() -> void:
 	title.modulate = Color(0.76, 0.91, 1.0)
 	add_child(title)
 
+	# Seven numbered examination gates turn the tunnel into a readable candidate journey.
+	var stage_titles := [
+		"01 — المطاردة والتحمل",
+		"02 — المهارة والمعرفة",
+		"03 — برج الاختبارات",
+		"04 — البقاء في الجزيرة",
+		"05 — الاستراتيجية والتفاوض",
+		"06 — المواجهات الفردية",
+		"07 — الاختبار النهائي"
+	]
+	for stage_index in range(stage_titles.size()):
+		var stage_z := -26.0 - float(stage_index) * 6.7
+		_add_visual_box("HunterExamStageGate_%02d" % (stage_index + 1), Vector3(0.0, 4.8, stage_z), Vector3(13.0, 0.18, 0.3), gold_mat)
+		_add_visual_box("HunterExamStageGate_Left_%02d" % (stage_index + 1), Vector3(-6.4, 2.4, stage_z), Vector3(0.18, 4.8, 0.3), gold_mat)
+		_add_visual_box("HunterExamStageGate_Right_%02d" % (stage_index + 1), Vector3(6.4, 2.4, stage_z), Vector3(0.18, 4.8, 0.3), gold_mat)
+		var stage_label := Label3D.new()
+		stage_label.name = "HunterExamStageLabel_%02d" % (stage_index + 1)
+		stage_label.text = str(stage_titles[stage_index])
+		stage_label.font_size = 20
+		stage_label.position = Vector3(0.0, 6.0, stage_z - 0.25)
+		stage_label.pixel_size = 0.012
+		stage_label.modulate = Color(0.84, 0.94, 1.0)
+		add_child(stage_label)
+
 	if entrance_script != null:
 		var start_area: Area3D = entrance_script.new()
 		start_area.name = "HunterExamTunnelStart"
@@ -186,6 +210,21 @@ func _build_hunter_exam_public_announcement() -> void:
 	notice.pixel_size = 0.012
 	notice.modulate = Color(0.9, 0.95, 1.0)
 	add_child(notice)
+
+	if entrance_script != null:
+		var registration_area: Area3D = entrance_script.new()
+		registration_area.name = "HunterExamRegistrationInteraction"
+		registration_area.configure("hunter_exam_registration_counter_baghdad", "التسجيل في اختبار الصيادين", "region_baghdad")
+		registration_area.position = Vector3(-7.0, 1.5, -9.0)
+		registration_area.set_meta("system_display_name", "مكتب تسجيل اختبار الصيادين")
+		registration_area.set_meta("system_service_description", "التسجيل مجاني، وتُحفظ هوية المرشح ورقم محاولته وتقدمه.")
+		registration_area.set_meta("system_interaction_prompt", "التسجيل / الاستعلام عن اختبار الصيادين")
+		var registration_collision := CollisionShape3D.new()
+		var registration_shape := SphereShape3D.new()
+		registration_shape.radius = 3.0
+		registration_collision.shape = registration_shape
+		registration_area.add_child(registration_collision)
+		add_child(registration_area)
 
 	if entrance_script != null:
 		var notice_area: Area3D = entrance_script.new()
