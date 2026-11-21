@@ -595,6 +595,18 @@ func _on_power_tower_floor_cleared(floor_number: int, reward_xp: int, rank: Stri
 		player_progression.add_experience(reward_xp, "Power Tower floor %d (%s)" % [floor_number, rank])
 
 
+func _on_power_tower_floor_exit_requested(floor_number: int, return_position: Vector3) -> void:
+	if player != null:
+		player.global_position = return_position
+		player.velocity = Vector3.ZERO
+	if power_tower_manager != null:
+		var status: Dictionary = power_tower_manager.get_tower_status()
+		if int(status.get("active_floor", 0)) == floor_number:
+			power_tower_manager.fail_active_floor()
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = "غادرت الطابق %d — نقاط التفتيش المسجلة محفوظة للمحاولة التالية." % floor_number
+
+
 
 func _get_public_event_board() -> Node:
 	return get_tree().root.find_child("SYSTEMPublicEventBoard", true, false)
@@ -1300,18 +1312,30 @@ func _on_interaction_performed(
 		var result: Dictionary = power_tower_manager.request_floor(next_floor, level)
 		if bool(result.get("success", false)):
 			var power_tower_root := target.get_parent()
+			var floor_world := power_tower_root.get_node_or_null("PowerTowerFloorWorld") if power_tower_root != null else null
 			var arena_venue := power_tower_root.get_node_or_null("PowerTowerArenaVenue") if power_tower_root != null else null
-			if arena_venue != null and player != null:
-				if power_tower_arena_manager != null:
-					power_tower_arena_manager.call("attach_venue", arena_venue)
-				if power_tower_arena_ui != null:
-					power_tower_arena_ui.call("show_arena", power_tower_arena_manager)
-				player.global_position = arena_venue.call("get_arena_entry_position")
-				player.velocity = Vector3.ZERO
-				if interaction_prompt_label != null:
-					interaction_prompt_label.text = "برج القوة — بدأت محاولة الطابق %d. دخول المقاتل مجاني؛ الجمهور يشاهد ويشجع. المراهنات الافتراضية المحلية متاحة للمشاهدين فقط." % next_floor
+			if floor_world != null and player != null:
+				floor_world.call("setup", power_tower_manager, player)
+				var floor_build: Dictionary = floor_world.call("build_floor", result.get("floor_data", {}), player.global_position)
+				if bool(floor_build.get("success", false)):
+					var exit_callback := Callable(self, "_on_power_tower_floor_exit_requested")
+					if not floor_world.is_connected("floor_exit_requested", exit_callback):
+						floor_world.connect("floor_exit_requested", exit_callback)
+					if arena_venue != null and power_tower_arena_manager != null:
+						power_tower_arena_manager.call("attach_venue", arena_venue)
+					if power_tower_arena_ui != null:
+						power_tower_arena_ui.call("show_arena", power_tower_arena_manager)
+					player.global_position = floor_world.call("get_entry_position")
+					player.velocity = Vector3.ZERO
+					if interaction_prompt_label != null:
+						interaction_prompt_label.text = "برج القوة — دخلت الطابق %d: %s. استكشف المنطقة وسجّل نقاط التفتيش الثلاث." % [next_floor, str(floor_build.get("region_title", "منطقة التحدي"))]
+				else:
+					power_tower_manager.fail_active_floor()
+					if interaction_prompt_label != null:
+						interaction_prompt_label.text = "تعذر إنشاء بيئة الطابق %d؛ لم تُستهلك المحاولة." % next_floor
 			elif interaction_prompt_label != null:
-				interaction_prompt_label.text = "تم حجز الطابق %d، لكن الحلبة غير متاحة حالياً." % next_floor
+				power_tower_manager.fail_active_floor()
+				interaction_prompt_label.text = "بيئة برج القوة غير متاحة حالياً."
 		elif interaction_prompt_label != null:
 			interaction_prompt_label.text = "برج القوة: " + str(result.get("reason", "تعذر بدء التحدي"))
 	elif location_id == "hunter_association_tower_baghdad":
