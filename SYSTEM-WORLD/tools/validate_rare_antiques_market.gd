@@ -1,18 +1,23 @@
 extends SceneTree
 
 const MARKET_SCRIPT = preload("res://scripts/system_rare_antiques_market_manager.gd")
+const MARKET_UI_SCRIPT = preload("res://scripts/system_rare_antiques_market_ui.gd")
 
 class TestWallet:
 	extends Node
 	var balance := 50000
-	func spend_currency(currency: String, amount: int) -> bool:
-		if currency != "SYSTEM_CREDITS" or amount > balance:
-			return false
+	func get_balance() -> int:
+		return balance
+	func spend_currency(amount: int, reason: String = "") -> Dictionary:
+		if amount <= 0 or amount > balance:
+			return {"success":false,"reason":"INSUFFICIENT_CURRENCY"}
 		balance -= amount
-		return true
-	func credit_currency(currency: String, amount: int) -> void:
-		if currency == "SYSTEM_CREDITS":
-			balance += amount
+		return {"success":true,"balance":balance}
+	func credit_currency(amount: int, reason: String = "") -> Dictionary:
+		if amount <= 0:
+			return {"success":false,"reason":"INVALID_AMOUNT"}
+		balance += amount
+		return {"success":true,"balance":balance}
 
 func _initialize() -> void:
 	var manager = MARKET_SCRIPT.new()
@@ -20,9 +25,15 @@ func _initialize() -> void:
 	root.add_child(wallet)
 	root.add_child(manager)
 	manager.setup(wallet)
+	manager.auctions.clear()
+	manager.market_seeded = false
+	manager.call("_seed_house_auctions_if_needed")
 	var catalogue: Dictionary = manager.get_catalogue()
 	if catalogue.size() < 4:
 		_fail("Rare artifact catalogue is incomplete.")
+		return
+	if manager.list_open_auctions().size() < 3:
+		_fail("NPC auction house did not seed the public market board.")
 		return
 	manager.inventory["seller_test"] = ["uruk_cylinder_seal"]
 	manager.inventory["local_player"] = ["bronze_star_astrolabe"]
@@ -59,6 +70,14 @@ func _initialize() -> void:
 	if str(item.get("authenticity", "")) != "APPRAISED" or str(item.get("provenance", "")).is_empty():
 		_fail("Artifact provenance/appraisal metadata is missing.")
 		return
+	var ui = MARKET_UI_SCRIPT.new()
+	ui.call("setup", manager, wallet)
+	root.add_child(ui)
+	ui.call("open_market")
+	if not bool(ui.panel.visible):
+		_fail("In-world market interface did not open.")
+		return
+	ui.free()
 	manager.free()
 	wallet.free()
 	print("Rare antiques market validation passed: catalogue, provenance, escrow, anti-self-bid and local ownership ledger.")
