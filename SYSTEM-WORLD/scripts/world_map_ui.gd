@@ -23,6 +23,9 @@ const LOCATION_TYPES := {
 
 class MapDrawing extends Control:
 
+	signal advertisement_selected(advertisement: Dictionary)
+
+	var ad_hit_targets: Array[Dictionary] = []
 	var discovered_locations: Array = []
 	var personal_markers: Array = []
 	var advertisements: Array = []
@@ -36,9 +39,10 @@ class MapDrawing extends Control:
 	var navigation_focus := false
 
 	func _ready() -> void:
-		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		mouse_filter = Control.MOUSE_FILTER_STOP
 
 	func _draw() -> void:
+		ad_hit_targets.clear()
 		if size.x < 50.0 or size.y < 50.0:
 			return
 
@@ -307,6 +311,25 @@ class MapDrawing extends Control:
 				Color(0.45, 1.0, 0.58)
 			)
 
+	func _gui_input(event: InputEvent) -> void:
+		var tap_position := Vector2.ZERO
+		var is_tap := false
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			tap_position = event.position
+			is_tap = true
+		elif event is InputEventScreenTouch and event.pressed:
+			tap_position = event.position
+			is_tap = true
+		if not is_tap:
+			return
+		for hit in ad_hit_targets:
+			var point: Vector2 = hit.get("point", Vector2.ZERO)
+			if point.distance_to(tap_position) <= 20.0:
+				advertisement_selected.emit(hit.get("advertisement", {}))
+				accept_event()
+				return
+
+
 	func _draw_grid(rect: Rect2) -> void:
 		var grid_color := Color(0.10, 0.22, 0.32, 0.55)
 
@@ -442,6 +465,8 @@ var map_panel: PanelContainer
 var map_canvas: MapDrawing
 var location_list: VBoxContainer
 var statistics_label: Label
+var advertisement_filter: OptionButton
+var selected_advertisement_category := "الكل"
 var marker_button: Button
 var tab_buttons: Dictionary = {}
 
@@ -577,6 +602,7 @@ func _build_map_body(parent: VBoxContainer) -> void:
 	map_canvas.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	map_canvas.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_child(map_canvas)
+	map_canvas.advertisement_selected.connect(_on_map_advertisement_selected)
 
 	var side_panel := PanelContainer.new()
 	side_panel.custom_minimum_size = Vector2(270, 0)
@@ -601,6 +627,13 @@ func _build_map_body(parent: VBoxContainer) -> void:
 		Color(0.72, 0.82, 0.92)
 	)
 	side_column.add_child(statistics_label)
+
+	advertisement_filter = OptionButton.new()
+	advertisement_filter.custom_minimum_size = Vector2(0, 38)
+	for category in ["الكل", "نقابة الصيادين", "تجارة المدينة", "بطولات", "رياضة", "رياضة المحركات", "فعاليات المدينة"]:
+		advertisement_filter.add_item("الإعلانات: " + category)
+	advertisement_filter.item_selected.connect(_on_advertisement_filter_changed)
+	side_column.add_child(advertisement_filter)
 
 	navigation_status_label = Label.new()
 	navigation_status_label.text = "اختر موقعاً مكتشفاً لرسم طريق المشاة."
@@ -673,6 +706,28 @@ func _on_map_updated(world_id: String) -> void:
 		_refresh_map()
 
 
+func _on_advertisement_filter_changed(index: int) -> void:
+	if advertisement_filter == null:
+		return
+	selected_advertisement_category = advertisement_filter.get_item_text(index).replace("الإعلانات: ", "")
+	_refresh_map()
+
+
+func _filter_advertisements(source: Array) -> Array:
+	var result: Array = []
+	for advertisement in source:
+		if typeof(advertisement) != TYPE_DICTIONARY:
+			continue
+		if selected_advertisement_category != "الكل" and str(advertisement.get("campaign_category", "")) != selected_advertisement_category:
+			continue
+		result.append(advertisement)
+	return result
+
+
+func _on_map_advertisement_selected(advertisement: Dictionary) -> void:
+	_show_advertisement(advertisement)
+
+
 func _refresh_map() -> void:
 	if map_manager == null or map_canvas == null:
 		return
@@ -703,7 +758,7 @@ func _refresh_map() -> void:
 		"personal_markers",
 		[]
 	)
-	map_canvas.advertisements = snapshot.get("advertisements", [])
+	map_canvas.advertisements = _filter_advertisements(snapshot.get("advertisements", []))
 
 	map_canvas.player_visible = false
 	if selected_world_id != 2:
