@@ -141,9 +141,9 @@ func _run() -> void:
 	root.add_child(lift_ui)
 	await process_frame
 	lift_ui.call("open_for_tower", "hunter_association_tower_baghdad", "برج نقابة الصيادين", 200)
-	var picker := lift_ui.get_node_or_null("TowerLiftPanel/VBoxContainer/FloorPicker") as OptionButton
-	if picker == null or picker.item_count != 200:
-		_fail("Hunter tower lift UI does not list all 200 floors.")
+	var available_floor_count := int(lift_ui.call("get_available_floor_count"))
+	if available_floor_count != 200:
+		_fail("Hunter tower lift UI does not list all 200 floors; listed=%d." % available_floor_count)
 		return
 	lift_ui.queue_free()
 
