@@ -45,6 +45,8 @@ const PlayerCharacterCreatorScript = preload("res://scripts/system_player_charac
 const SYSTEMCompanionManagerScript = preload("res://scripts/system_companion_manager.gd")
 const SYSTEMEconomyManagerScript = preload("res://scripts/system_economy_manager.gd")
 const SYSTEMBusinessServicesMenuScript = preload("res://scripts/system_business_services_menu.gd")
+const RareAntiquesMarketManagerScript = preload("res://scripts/system_rare_antiques_market_manager.gd")
+const RareAntiquesMarketUIScript = preload("res://scripts/system_rare_antiques_market_ui.gd")
 
 var world_manager
 var world_map_manager
@@ -58,6 +60,8 @@ var player_progression
 var player_vehicle_manager
 var economy_manager: Node
 var business_services_menu: CanvasLayer
+var rare_antiques_market_manager: Node
+var rare_antiques_market_ui: CanvasLayer
 var vehicle_runtime_manager
 var motorsport_manager
 var football_match_manager: Node
@@ -122,6 +126,7 @@ func _ready() -> void:
 	create_inventory_panel()
 	create_player_vehicle_manager()
 	create_business_services()
+	create_rare_antiques_market()
 	create_vehicle_runtime_manager()
 	create_motorsport_manager()
 	create_modern_city_crime_manager()
@@ -363,6 +368,17 @@ func create_business_services() -> void:
 	business_services_menu.name = "SYSTEMBusinessServicesMenu"
 	business_services_menu.setup(economy_manager)
 	add_child(business_services_menu)
+
+
+func create_rare_antiques_market() -> void:
+	rare_antiques_market_manager = RareAntiquesMarketManagerScript.new()
+	rare_antiques_market_manager.name = "SystemRareAntiquesMarketManager"
+	add_child(rare_antiques_market_manager)
+	rare_antiques_market_manager.call("setup", player_vehicle_manager)
+	rare_antiques_market_ui = RareAntiquesMarketUIScript.new()
+	rare_antiques_market_ui.name = "SystemRareAntiquesMarketUI"
+	rare_antiques_market_ui.call("setup", rare_antiques_market_manager, player_vehicle_manager)
+	add_child(rare_antiques_market_ui)
 
 
 func create_vehicle_runtime_manager() -> void:
@@ -1142,6 +1158,14 @@ func _on_interaction_performed(
 					interaction_prompt_label.text = "يلزم التسجيل في مكتب النقابة قبل دخول الاختبار."
 		elif interaction_prompt_label != null:
 			interaction_prompt_label.text = "نظام اختبارات الصيادين غير متاح حالياً."
+	elif location_id == "service_baghdad_rare_antique_market":
+		if is_instance_valid(rare_antiques_market_ui):
+			rare_antiques_market_ui.call("open_market")
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "وصلت إلى سوق بغداد للتحف النادرة — اختر قطعة من المزادات المفتوحة وراجع تاريخها قبل المزايدة."
+		else:
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "سوق التحف غير متاح حالياً."
 	if location_id == "service_baghdad_stadium":
 		var stadium := target.get_parent()
 		if stadium != null and player != null:
