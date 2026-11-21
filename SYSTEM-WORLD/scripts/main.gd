@@ -1338,8 +1338,7 @@ func _on_interaction_performed(
 		elif interaction_prompt_label != null:
 			interaction_prompt_label.text = "برج القوة: " + str(result.get("reason", "تعذر بدء التحدي"))
 	elif location_id == "power_tower_arena_baghdad":
-		var arena_root := target.get_parent()
-		var arena_venue := arena_root.get_node_or_null("PowerTowerArenaVenue") if arena_root != null else null
+		var arena_venue := target.get_parent()
 		if arena_venue != null and player != null:
 			if power_tower_arena_manager != null:
 				power_tower_arena_manager.call("attach_venue", arena_venue)
