@@ -692,6 +692,14 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - Note: this is a first connected progression prototype, not a finished combat ability system. Nen is intended to be learnable by all eligible characters, but each character must discover it through their own path; NPC-wide automatic enrollment and actual combat execution remain pending.
 
 
+## Building-first production scope and NPC role constraints — 21 November 2026
+
+- [x] Keep the immediate development priority on completing physical buildings and their interiors before expanding unrelated gameplay systems.
+- [x] Record the NPC role rules as world-design constraints: ordinary NPCs live natural lives and hold varied professions such as teachers, trainers, police officers, professors, doctors and merchants.
+- [x] Keep NPCs out of the Hunter Exam candidate pool; NPCs serve as examiners and staff.
+- [x] Keep gangs as the specific NPC faction exception that players may choose to join; do not turn ordinary NPC populations into universal fighters or supernatural combatants.
+- [ ] Return to full map integration only after each building has a traversable interior, clear entrance/exit flow, functional interaction points and a registered map location.
+
 ## Baghdad civic buildings — structural interior completion pass — 21 November 2026
 
 - [x] Replace the four civic venues' opaque solid facade blocks with separate wall sections and a real entrance opening.
