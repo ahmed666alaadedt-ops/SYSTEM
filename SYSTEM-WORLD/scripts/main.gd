@@ -1323,8 +1323,6 @@ func _on_interaction_performed(
 						floor_world.connect("floor_exit_requested", exit_callback)
 					if arena_venue != null and power_tower_arena_manager != null:
 						power_tower_arena_manager.call("attach_venue", arena_venue)
-					if power_tower_arena_ui != null:
-						power_tower_arena_ui.call("show_arena", power_tower_arena_manager)
 					player.global_position = floor_world.call("get_entry_position")
 					player.velocity = Vector3.ZERO
 					if interaction_prompt_label != null:
@@ -1339,6 +1337,20 @@ func _on_interaction_performed(
 					interaction_prompt_label.text = "بيئة برج القوة غير متاحة حالياً."
 		elif interaction_prompt_label != null:
 			interaction_prompt_label.text = "برج القوة: " + str(result.get("reason", "تعذر بدء التحدي"))
+	elif location_id == "power_tower_arena_baghdad":
+		var arena_root := target.get_parent()
+		var arena_venue := arena_root.get_node_or_null("PowerTowerArenaVenue") if arena_root != null else null
+		if arena_venue != null and player != null:
+			if power_tower_arena_manager != null:
+				power_tower_arena_manager.call("attach_venue", arena_venue)
+			if power_tower_arena_ui != null:
+				power_tower_arena_ui.call("show_arena", power_tower_arena_manager)
+			player.global_position = arena_venue.call("get_arena_entry_position")
+			player.velocity = Vector3.ZERO
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "دخلت حلبة برج القوة المستقلة — واجهة النزالات الاستعراضية متاحة."
+		elif interaction_prompt_label != null:
+			interaction_prompt_label.text = "تعذر تحميل حلبة برج القوة حالياً."
 	elif location_id == "hunter_association_tower_baghdad":
 		var hunter_tower_root := target.get_parent()
 		var hunter_tower_lobby := hunter_tower_root.get_node_or_null("TowerInterior") if hunter_tower_root != null else null
