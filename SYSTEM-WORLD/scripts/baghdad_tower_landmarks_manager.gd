@@ -661,7 +661,7 @@ func _create_reference_sky_district() -> void:
 	district.set_meta("reference_visual_blockout", true)
 	district.set_meta("walkable_ring_segment_count", segment_count)
 	district.set_meta("radial_tower_connectors", connected_tower_positions.size())
-		district.set_meta("ring_radius_m", ring_radius)
+	district.set_meta("ring_radius_m", ring_radius)
 	district.set_meta("segment_length_m", segment_length)
 	district.set_meta("deck_width_m", deck_width)
 	district.set_meta("safety_rail_collision", true)
