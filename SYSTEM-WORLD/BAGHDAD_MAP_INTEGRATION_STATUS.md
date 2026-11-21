@@ -21,7 +21,8 @@
 | الأبراج الخمسة ومقر النقابة | `BaghdadTowerLandmarksManager` |
 | برج القوة المستقل | `BaghdadTowerLandmarksManager` و`SYSTEMPowerTowerManager` |
 | الجوامع والكنائس | `ModernCityServicesManager` |
-| المتحف والآثار وسوق التحف | `ModernCityServicesManager`، مع موقع آثار خارجي إضافي |
+| المتحف وسوق التحف | `ModernCityServicesManager` |
+| موقع الآثار التاريخية الخارجي | `SYSTEMBaghdadLandmarkIntegration` ومعالج التفاعل في `main.gd` |
 | ملعب كرة القدم | `ModernCityServicesManager` و`FootballMatchManager` |
 | مضمار السيارات | `SystemMotorsportTrackManager` |
 | الإعلانات | `SYSTEMCityAdvertisingManager` |
