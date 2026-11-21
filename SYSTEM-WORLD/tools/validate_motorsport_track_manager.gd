@@ -1,10 +1,23 @@
 extends SceneTree
 
 const TRACK_SCRIPT = preload("res://scripts/system_motorsport_track_manager.gd")
+const RACE_SCRIPT = preload("res://scripts/system_motorsport_manager.gd")
+
+class MockVehicleRuntime extends Node:
+	var active_vehicle: Node3D
 
 func _initialize() -> void:
+	var runtime := MockVehicleRuntime.new()
+	root.add_child(runtime)
+	var test_vehicle := RigidBody3D.new()
+	test_vehicle.linear_velocity = Vector3(20.0, 0.0, 0.0)
+	root.add_child(test_vehicle)
+	runtime.active_vehicle = test_vehicle
+	var race_manager: SystemMotorsportManager = RACE_SCRIPT.new() as SystemMotorsportManager
+	root.add_child(race_manager)
+	race_manager.active_race = {"event_id": "pit_speed_validation"}
 	var manager: SystemMotorsportTrackManager = TRACK_SCRIPT.new() as SystemMotorsportTrackManager
-	manager.setup(null, null, null)
+	manager.setup(null, runtime, race_manager)
 	root.add_child(manager)
 	# The track is constructed from _ready(); wait for the manager to enter the tree.
 	await process_frame
@@ -61,6 +74,18 @@ func _initialize() -> void:
 		_fail("Pit lane entry gate is not connected to its vehicle trigger.")
 		return
 
+	manager.active_vehicle_in_pit_lane = true
+	manager._physics_process(0.016)
+	if absf(race_manager.race_time_penalty - 5.0) > 0.01 or not manager.pit_lane_speed_violation_applied:
+		_fail("Pit lane speeding above 60 km/h did not apply the five-second penalty.")
+		return
+	manager._physics_process(0.016)
+	if absf(race_manager.race_time_penalty - 5.0) > 0.01:
+		_fail("The same pit lane speeding incident was penalized more than once.")
+		return
+	manager.active_vehicle_in_pit_lane = false
+	manager._on_pit_lane_context_body_exited(test_vehicle)
+
 	var info: Dictionary = manager.get_track_info()
 	if int(info.get("pit_garage_count", 0)) != 8 or int(info.get("marshal_post_count", 0)) != 4:
 		_fail("Track info does not report the physical garage and marshal facilities.")
@@ -69,7 +94,10 @@ func _initialize() -> void:
 		_fail("Pit lane limit or conservative race-ready state is incorrect.")
 		return
 	manager.free()
-	print("Baghdad motorsport track validation passed: 8 walk-in pit garages, pit lane entry/exit and context areas, race control tower, four marshal posts and collision-backed spectator stands.")
+	race_manager.free()
+	test_vehicle.free()
+	runtime.free()
+	print("Baghdad motorsport track validation passed: 8 walk-in pit garages, pit lane entry/exit and context areas, race control tower, four marshal posts, collision-backed spectator stands and 60 km/h pit speed enforcement.")
 	quit(0)
 
 
