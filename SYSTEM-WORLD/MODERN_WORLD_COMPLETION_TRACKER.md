@@ -820,7 +820,8 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Extend the physical circuit validator to verify pit-lane speeding applies the five-second penalty only once.
 - [x] Godot 4.3 workflow run 44952389954 passed on commit 36512d1afa0a2ce8402bff30c6a1d0f51e2125c5, including script import/parse, both motorsport validators, all other configured Baghdad validators, resource scan and headless main-scene launch.
 - [ ] Build detailed production track art, curbs, runoff zones, road-surface grip/tyre physics, reliable high-speed checkpoint crossing, collisions/overtaking, damage and repairs, marshal flags/penalties, pit-stop tyre/fuel service, qualifying and race-class-specific event routes.
-- [ ] Add full AI race standings that compare player and opponents on the same authoritative timing, grid formation, replay, retire/recovery flow and spectator event presentation.
+- [x] Add local unified player-versus-AI standings using the player's live checkpoint position and opponent progress.
+- [ ] Add server-authoritative timing, grid formation, replay, retire/recovery flow and spectator event presentation.
 - [ ] Validate actual driving feel, controller/mobile handling, vehicle-to-checkpoint alignment, and Android device performance; a headless validator pass is not a visual driving test.
 - Note: the venue remains a procedural physical blockout. The latest tests prove manager lifecycle, checkpoint order, countdown gating, local rewards/records, pit speed enforcement and venue structures; they do not certify finished track art, production vehicle physics or global multiplayer leaderboards.
 
@@ -905,5 +906,5 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Rank finished racers by elapsed result time; rank active racers by completed laps, ordered checkpoint progress, distance to the next checkpoint, then elapsed time.
 - [x] Display the player and AI opponents together in the race-results panel, including awaiting-vehicle, starting, racing, finished and retired states.
 - [x] Keep the unified panel live-refreshing while open and visible even before the player's first saved attempt.
-- [x] Extend the Godot validator to assert a six-racer order including the player. Godot 4.3 workflow run 44956090384 passed on commit b4f6a4617775d1f85d792c2ae0cdb9c689ed86e1; both motorsport validators and the headless main-scene launch passed.
+- [x] Extend the Godot validator to assert a six-racer order including the player. Godot 4.3 workflow run 44956217108 passed on commit 3d5d9bebf55cdf5524510687e560155c11b5f6cd; both motorsport validators, all configured validators and the headless main-scene launch passed.
 - [ ] Implement server-authoritative global leaderboards and multiplayer race results. The current unified standings and personal best records are local runtime data only.
