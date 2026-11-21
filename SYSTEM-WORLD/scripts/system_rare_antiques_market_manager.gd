@@ -71,6 +71,7 @@ func create_auction(item_id: String, seller_id: String, reserve_price: int = 0) 
 		"ends_at":int(Time.get_unix_time_from_system()) + AUCTION_DURATION_SECONDS,
 		"status":"OPEN","bid_count":0
 	}
+	_remove_item(seller_id, item_id)
 	auctions[auction_id] = auction
 	_save_state()
 	auction_started.emit(auction_id)
@@ -122,6 +123,7 @@ func settle_auction(auction_id: String) -> Dictionary:
 		auction["status"] = "NO_SALE"
 		auction["highest_bidder"] = ""
 		auction["current_bid"] = 0
+		_add_item(seller, str(auction.get("item_id", "")))
 		auctions[auction_id] = auction
 		_save_state()
 		return {"success":true,"status":"NO_SALE"}
@@ -129,7 +131,6 @@ func settle_auction(auction_id: String) -> Dictionary:
 		return {"success":false,"reason":"LOCAL_WALLET_UNAVAILABLE"}
 	if seller == "local_player":
 		_credit_local_credits(amount)
-	_remove_item(seller, str(auction.get("item_id", "")))
 	_add_item(bidder, str(auction.get("item_id", "")))
 	auction["status"] = "SOLD"
 	auctions[auction_id] = auction
