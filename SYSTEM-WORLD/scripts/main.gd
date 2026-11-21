@@ -968,7 +968,7 @@ func create_motorsport_leaderboard_ui() -> void:
 	layout.add_child(heading)
 
 	var subtitle := Label.new()
-	subtitle.text = "مضمار بغداد الدولي | أفضل الأزمنة المسجلة على هذا الجهاز"
+	subtitle.text = "مضمار بغداد الدولي | أفضل أزمنتك ونتائج منافسي AI في آخر سباق"
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	layout.add_child(subtitle)
@@ -1085,6 +1085,32 @@ func _refresh_motorsport_leaderboard() -> void:
 		row.add_theme_font_size_override("font_size", 17)
 		row.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		motorsport_leaderboard_rows.add_child(row)
+
+	if is_instance_valid(motorsport_track_manager) and motorsport_track_manager.has_method("get_ai_race_event_id") and str(motorsport_track_manager.call("get_ai_race_event_id")) == event_id:
+		var ai_heading := Label.new()
+		ai_heading.text = "ترتيب منافسي الذكاء الاصطناعي — آخر سباق"
+		ai_heading.add_theme_font_size_override("font_size", 18)
+		motorsport_leaderboard_rows.add_child(ai_heading)
+		var ai_standings: Array = motorsport_track_manager.call("get_ai_race_status")
+		if ai_standings.is_empty():
+			var no_ai := Label.new()
+			no_ai.text = "لا توجد نتائج منافسين محفوظة لهذا السباق."
+			motorsport_leaderboard_rows.add_child(no_ai)
+		else:
+			for index in range(ai_standings.size()):
+				var opponent: Dictionary = ai_standings[index]
+				var state_text := "أنهى السباق" if bool(opponent.get("finished", false)) else ("يتسابق الآن" if str(opponent.get("status", "")) == "racing" else "انسحب")
+				var opponent_row := Label.new()
+				opponent_row.text = "%02d  |  %s  |  اللفات %d/%d  |  %s  |  %s" % [
+					index + 1,
+					str(opponent.get("opponent_name", "SYSTEM Racer")),
+					int(opponent.get("completed_laps", 0)),
+					int(opponent.get("total_laps", 0)),
+					_format_motorsport_time(float(opponent.get("elapsed_seconds", 0.0))),
+					state_text
+				]
+				opponent_row.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+				motorsport_leaderboard_rows.add_child(opponent_row)
 
 
 func create_interaction_prompt() -> void:
