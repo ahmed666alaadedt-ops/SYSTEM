@@ -431,6 +431,7 @@ func create_motorsport_manager() -> void:
 	motorsport_manager.race_countdown_updated.connect(_on_motorsport_race_countdown_updated)
 	motorsport_manager.race_progress_updated.connect(_on_motorsport_race_progress_updated)
 	motorsport_manager.race_go.connect(_on_motorsport_race_go)
+	motorsport_manager.race_cancelled.connect(_on_motorsport_race_cancelled)
 
 
 func create_motorsport_race_hud_ui() -> void:
@@ -474,6 +475,10 @@ func _on_motorsport_race_countdown_updated(seconds_remaining: int) -> void:
 		return
 	motorsport_race_hud_label.text = "استعد... %d" % seconds_remaining if seconds_remaining > 0 else "انطلق!"
 
+
+func _on_motorsport_race_cancelled(_event_id: String) -> void:
+	if motorsport_race_hud_label != null:
+		motorsport_race_hud_label.text = "تم إلغاء الانطلاق — لم تبقَ السيارة على شبكة البداية."
 
 func _on_motorsport_race_go(_event_id: String) -> void:
 	if motorsport_race_hud_label != null:
