@@ -45,6 +45,9 @@ func apply_for_exam(player_id: String) -> Dictionary:
 	config.set_value("exam","player_id",player_id)
 	config.set_value("exam","completed_stage_ids",[])
 	config.set_value("exam","exam_active",false)
+	config.set_value("exam","current_stage_index",-1)
+	config.set_value("exam","failed",false)
+	config.set_value("exam","failure_reason","")
 	config.save(SAVE_PATH)
 	registered = true
 	exam_active = false
@@ -61,13 +64,14 @@ func begin_exam() -> Dictionary:
 	if failed:
 		return {"success":false,"reason":"EXAM_FAILED"}
 	if exam_active:
-		return {"success":false,"reason":"EXAM_ALREADY_ACTIVE"}
-	if exam_active:
-		return {"success":true,"candidate_number":candidate_number,"stage":get_current_stage(),"resumed":true}
-	exam_active = true
+		var active_stage := get_current_stage()
+		if active_stage.is_empty():
+			return {"success":false,"reason":"ACTIVE_STAGE_STATE_INVALID"}
+		return {"success":true,"candidate_number":candidate_number,"stage":active_stage,"resumed":true}
 	current_stage_index = completed_stage_ids.size()
 	if current_stage_index >= EXAM_STAGES.size():
 		return {"success":false,"reason":"ALL_STAGES_COMPLETED"}
+	exam_active = true
 	_save_exam_state()
 	stage_started.emit(str(EXAM_STAGES[current_stage_index]["id"]),current_stage_index + 1)
 	return {"success":true,"candidate_number":candidate_number,"stage":get_current_stage()}
