@@ -869,6 +869,16 @@ func _on_interaction_performed(
 	elif location_id == "hunter_association_tower_baghdad":
 		if interaction_prompt_label != null:
 			interaction_prompt_label.text = "برج نقابة الصيادين — خدمات النقابة والمهام والاختبارات"
+	elif location_id in ["business_tower_baghdad", "shopping_tower_baghdad", "entertainment_tower_baghdad", "technology_tower_baghdad"]:
+		var tower_root := target.get_parent()
+		var tower_lobby := tower_root.get_node_or_null("TowerInterior") if tower_root != null else null
+		if tower_lobby != null and player != null:
+			player.global_position = tower_lobby.call("get_entry_position")
+			player.velocity = Vector3.ZERO
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "دخلت بهو البرج — اقترب من بوابة الخروج للتفاعل"
+		elif interaction_prompt_label != null:
+			interaction_prompt_label.text = "تعذر تحميل بهو البرج حالياً"
 	elif location_id == "hunter_association_headquarters_baghdad":
 		var headquarters := target.get_parent()
 		var interior := headquarters.get_node_or_null("HeadquartersInterior") if headquarters != null else null
@@ -886,6 +896,13 @@ func _on_interaction_performed(
 			player.velocity = Vector3.ZERO
 			if interaction_prompt_label != null:
 				interaction_prompt_label.text = "خرجت من المقر الرئيسي لنقابة الصيادين"
+	elif location_id.begins_with("tower_exit_"):
+		var tower_lobby := target.get_parent()
+		if tower_lobby != null and player != null and tower_lobby.has_method("get_return_position"):
+			player.global_position = tower_lobby.call("get_return_position")
+			player.velocity = Vector3.ZERO
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "خرجت إلى ساحة البرج"
 
 
 func _on_location_discovered(
