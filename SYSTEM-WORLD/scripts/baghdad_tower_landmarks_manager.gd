@@ -128,9 +128,9 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	foundation_shape.height = 7.0
 	foundation_collision.shape = foundation_shape
 	foundation_collision.position.y = 3.5
-	# The five connected towers have a ground-floor lobby; do not seal it inside
-	# the monolithic foundation collider. Their lobby supplies its own floor/walls.
-	foundation_collision.disabled = connected_to_district
+	# Public entrances sit outside the tower footprint and teleport visitors into
+	# the separate interior scene; keep the visible exterior physically solid.
+	foundation_collision.disabled = false
 	structure_body.add_child(foundation_collision)
 	var shaft_collision := CollisionShape3D.new()
 	var shaft_shape := CylinderShape3D.new()
@@ -138,8 +138,9 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	shaft_shape.height = height
 	shaft_collision.shape = shaft_shape
 	shaft_collision.position.y = height * 0.5 + 7.0
-	# Keep the lobby volume clear; the independent Power Tower retains its full collider.
-	shaft_collision.disabled = connected_to_district
+	# The detached playable lobby is not inside this exterior mesh volume.
+	# All six visible tower shafts therefore need their own solid collision shell.
+	shaft_collision.disabled = false
 	structure_body.add_child(shaft_collision)
 
 	var shaft := MeshInstance3D.new()
