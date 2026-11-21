@@ -177,6 +177,20 @@ jobs:
           fi
           grep -q "Motorsport validation passed:" "$LOG"
 
+      - name: Validate Baghdad motorsport circuit physical facilities
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          LOG="$RUNNER_TEMP/baghdad-motorsport-track-validation.log"
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_motorsport_track_manager.gd 2>&1 | tee "$LOG"
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Baghdad motorsport track validation failed" "$LOG"; then
+            echo "::error::Baghdad motorsport track validation failed."
+            exit 1
+          fi
+          grep -q "Baghdad motorsport track validation passed:" "$LOG"
+
       - name: Validate Baghdad football match, ball interaction and scoring
         shell: bash
         run: |

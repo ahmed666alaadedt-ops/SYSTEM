@@ -145,6 +145,22 @@ This is the acceptance checklist for the modern-world map. The project must not 
 - [ ] Run Godot runtime physics tests and Android touch/performance validation.
 - Note: the current pass is a local playable ball-and-score prototype, not a complete football simulation or full 11-v-11 match.
 
+## Baghdad football stadium — structural venue validation — 21 November 2026
+
+- [x] Godot 4.3 civic venue validator passed for the stadium's pitch, spectator stands, four access gates, concourses, walk-in team/referee/medical/media rooms, player tunnel, floodlights and scoreboard.
+- [ ] Inspect player navigation and visual scale in the live Baghdad scene; full 11-v-11 simulation and multiplayer remain separate completion gates.
+
+## Baghdad motorsport circuit — physical pit and spectator facilities — 21 November 2026
+
+- [x] Separate the north-side paddock, service apron and pit lane from spectator structures to avoid overlapping footprints.
+- [x] Replace eight decorative garage blocks with eight walk-in pit garage interiors containing collision-backed floors/walls, open vehicle entries, tool cabinets, tire racks, workbenches, lighting and stable interaction IDs.
+- [x] Add pit-lane context detection, entry/exit gate triggers and a 60 km/h pit-lane speed-limit metadata value.
+- [x] Build a collision-backed race-control tower with an open entrance, interior console/monitors, upper observation deck, railings and stairs.
+- [x] Build four marshal posts with platforms, shelter, flag racks and stable location/interaction IDs.
+- [x] Add collision-backed south/east/west spectator stands, seat rows and south-stand stair access.
+- [x] Add a dedicated Godot validator for the track facilities to the branch validation workflow.
+- [ ] Validate actual player/vehicle traversal, pit speed enforcement, pit-stop service interactions, marshal NPCs, race timing and complete event simulation; the circuit remains a physical blockout, not a production-ready race simulation.
+
 ## Global road, bridge, and race gates
 
 - [ ] Complete a continuous, optimized inter-city and rural road graph; current corridor and village-access meshes are visual prototypes and some routes are intentionally skipped.
