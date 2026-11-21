@@ -7,6 +7,10 @@ const STEERING_LIMIT := 0.48
 
 var vehicle_id := "city_sedan"
 var control_enabled := false
+var ai_control_enabled := false
+var ai_throttle := 0.0
+var ai_steering := 0.0
+var ai_brake := 0.0
 var max_forward_speed := 40.0
 var max_reverse_speed := 12.0
 var mobile_throttle := 0.0
@@ -34,6 +38,15 @@ func set_paint_color(color: Color) -> void:
 		chassis.material_override = material
 
 func _physics_process(_delta: float) -> void:
+	if ai_control_enabled:
+		var ai_speed_kmh := linear_velocity.length() * 3.6
+		var ai_drive := clampf(ai_throttle, 0.0, 1.0)
+		if ai_speed_kmh >= max_forward_speed * 3.6:
+			ai_drive = 0.0
+		engine_force = ai_drive * ENGINE_FORCE_MAX
+		brake = clampf(ai_brake, 0.0, 1.0) * BRAKE_FORCE_MAX
+		steering = clampf(ai_steering, -1.0, 1.0) * STEERING_LIMIT
+		return
 	if not control_enabled:
 		engine_force = 0.0
 		brake = 8.0
@@ -62,6 +75,21 @@ func _physics_process(_delta: float) -> void:
 	engine_force = drive * ENGINE_FORCE_MAX
 	brake = braking * BRAKE_FORCE_MAX
 	steering = clampf(steer, -1.0, 1.0) * STEERING_LIMIT
+
+func set_ai_control_enabled(enabled: bool) -> void:
+	ai_control_enabled = enabled
+	if enabled:
+		control_enabled = false
+		mobile_throttle = 0.0
+		mobile_steering = 0.0
+		mobile_brake = 0.0
+	else:
+		set_ai_controls(0.0, 0.0, 1.0)
+
+func set_ai_controls(throttle: float, steering_value: float, brake_value: float) -> void:
+	ai_throttle = clampf(throttle, 0.0, 1.0)
+	ai_steering = clampf(steering_value, -1.0, 1.0)
+	ai_brake = clampf(brake_value, 0.0, 1.0)
 
 func set_mobile_controls(throttle: float, steering_value: float, brake_value: float) -> void:
 	mobile_throttle = clampf(throttle, -1.0, 1.0)
