@@ -136,6 +136,29 @@ func _build_start_finish_and_grid() -> void:
 	race_control.add_child(control_collision)
 	track_root.add_child(race_control)
 
+	var leaderboard_board := Area3D.new()
+	leaderboard_board.name = "MotorsportLeaderboardInteraction"
+	leaderboard_board.position = START_GRID_OFFSET + Vector3(-13.0, 1.5, -13.0)
+	leaderboard_board.add_to_group("system_interactable")
+	leaderboard_board.set_meta("system_location_id", "baghdad_motorsport_leaderboard")
+	leaderboard_board.set_meta("system_region_id", "region_baghdad")
+	leaderboard_board.set_meta("system_display_name", "SYSTEM Motorsport — لوحة النتائج")
+	leaderboard_board.set_meta("system_interaction_prompt", "لوحة نتائج السباقات — عرض أفضل الأزمنة والترتيب المحلي")
+	var leaderboard_collision := CollisionShape3D.new()
+	var leaderboard_shape := SphereShape3D.new()
+	leaderboard_shape.radius = 4.5
+	leaderboard_collision.shape = leaderboard_shape
+	leaderboard_board.add_child(leaderboard_collision)
+	track_root.add_child(leaderboard_board)
+	_create_box(
+		"MotorsportLeaderboardScreen",
+		Vector3(5.0, 3.2, 0.35),
+		START_GRID_OFFSET + Vector3(-13.0, 3.0, -15.5),
+		0.0,
+		Color(0.035, 0.12, 0.17),
+		false
+	)
+
 func _build_checkpoints() -> void:
 	for index in range(CHECKPOINT_COUNT):
 		var angle: float = CHECKPOINT_ANGLES[index]
