@@ -135,7 +135,7 @@ Current starting evidence in the tracker: an OSM Baghdad boundary pack and a sou
 - Implement modern-world monster gates in eligible cities; inter-world star gates remain only in Baghdad.
 - Add fixed and dynamic gates, dungeon layouts, difficulty tiers, bosses, raids, drops, elixirs and gate currency.
 - Keep injuries persistent after combat/death according to severity and require a real hospital/healer visit and treatment time; do not auto-heal.
-- Complete the optional Hunter Examination as seven playable stages and keep it distinct from the optional 100-floor Power Tower challenge. Implement actual environments, puzzles, NPC candidates, encounters, fair retry rules and license records.
+- Complete the optional Hunter Examination as seven playable stages and keep it distinct from the optional 200-floor Power Tower challenge. Implement actual environments, puzzles, NPC candidates, encounters, fair retry rules and license records.
 - Add player-specific abilities, ranks, guilds and optional tests without forcing a single playstyle.
 
 **Acceptance:** end-to-end combat/gate/dungeon/exam/tower playtests, persistence, balance, anti-cheat boundaries and mobile controls.
