@@ -9,6 +9,14 @@ func _has_collision_shape(node: Node) -> bool:
 	return false
 
 
+func _require_source_text(path: String, expected: String, description: String) -> bool:
+	var source := FileAccess.get_file_as_string(path)
+	if source.is_empty() or not source.contains(expected):
+		push_error("Baghdad integration validation failed: " + description)
+		return false
+	return true
+
+
 func _initialize() -> void:
 	var manager = SERVICES_SCRIPT.new()
 	var required_ids := ["mosque", "church", "museum", "rare_antique_market", "underworld_exchange", "stadium"]
@@ -121,6 +129,24 @@ func _initialize() -> void:
 			quit(1)
 			return
 	stadium.queue_free()
+	var source_contracts := [
+		["res://scripts/main.gd", "baghdad_motorsport_race_control", "main interaction handler for race control"],
+		["res://scripts/main.gd", "hunter_exam_tunnel_start_baghdad", "main interaction handler for hunter exam tunnel"],
+		["res://scripts/system_motorsport_manager.gd", '"city_sprint"', "registered Baghdad sprint event"],
+		["res://scripts/system_motorsport_track_manager.gd", "TRACK_CENTER_OFFSET := Vector3(320.0, 0.0, 220.0)", "Baghdad motorsport track anchor"],
+		["res://scripts/system_motorsport_track_manager.gd", "baghdad_motorsport_race_control", "physical race-control interaction"],
+		["res://scripts/system_baghdad_landmark_integration.gd", "baghdad_international_motorsport_park", "motorsport map landmark registration"],
+		["res://scripts/system_baghdad_landmark_integration.gd", "hunter_exam_tunnel_start_baghdad", "hunter tunnel map landmark registration"],
+		["res://scripts/system_hunter_exam_manager.gd", "const EXAM_STAGES := [", "hunter exam stage catalog"],
+		["res://scripts/system_power_tower_manager.gd", "const MAX_FLOORS := 200", "200-floor Power Tower progression"],
+		["res://scripts/baghdad_tower_landmarks_manager.gd", '"power_tower_baghdad"', "independent Power Tower landmark"],
+		["res://scripts/baghdad_tower_landmarks_manager.gd", "\t\tfalse\n\t)", "Power Tower excluded from five-tower district"]
+	]
+	for contract in source_contracts:
+		if not _require_source_text(str(contract[0]), str(contract[1]), str(contract[2])):
+			quit(1)
+			return
+
 	manager.free()
 	print("Baghdad civic venue validation passed: civic interiors plus the Baghdad stadium's collision-backed concourses, four gates, walk-in team/referee/medical/media rooms, player tunnel, floodlights and scoreboard.")
 	quit(0)
