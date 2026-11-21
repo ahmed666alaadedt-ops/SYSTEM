@@ -29,6 +29,10 @@ func open_for_tower(tower_id: String, tower_title: String, max_floors: int) -> v
 	show()
 
 
+func get_available_floor_count() -> int:
+	return _floor_picker.item_count if is_instance_valid(_floor_picker) else 0
+
+
 func _build_interface() -> void:
 	_panel = PanelContainer.new()
 	_panel.name = "TowerLiftPanel"
