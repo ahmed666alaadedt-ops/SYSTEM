@@ -7,12 +7,14 @@ var tower_id := ""
 var display_title := ""
 var entrance_script: Script
 var external_return_position := Vector3.ZERO
+var floor_count := 1
 
-func build(p_tower_id: String, p_title: String, p_entrance_script: Script, p_external_return_position: Vector3) -> void:
+func build(p_tower_id: String, p_title: String, p_entrance_script: Script, p_external_return_position: Vector3, p_floor_count: int = 1) -> void:
 	tower_id = p_tower_id
 	display_title = p_title
 	entrance_script = p_entrance_script
 	external_return_position = p_external_return_position
+	floor_count = maxi(1, p_floor_count)
 	name = "TowerInterior"
 	_build_lobby()
 	_build_service_desks()
@@ -23,8 +25,11 @@ func build(p_tower_id: String, p_title: String, p_entrance_script: Script, p_ext
 	_build_tower_identity_feature()
 	_build_lobby_wayfinding()
 	_build_upper_floor_access()
+	_build_lift_console()
 	set_meta("playable_interior_blockout", true)
-	set_meta("upper_floor_blockout_count", 4)
+	set_meta("upper_floor_blockout_count", mini(4, maxi(0, floor_count - 1)))
+	set_meta("total_floor_count", floor_count)
+	set_meta("procedural_floor_world_available", true)
 	set_meta("interactive_floor_selection", true)
 	set_meta("tower_identity_feature_ready", true)
 	set_meta("service_desks_have_collision", true)
@@ -437,6 +442,40 @@ func _build_upper_floor_access() -> void:
 		_create_lobby_floor_selector(floor_number, floor_y)
 
 
+func _build_lift_console() -> void:
+	if entrance_script == null:
+		return
+	var console_material := _material(Color(0.035, 0.09, 0.14), 0.28, 0.62)
+	var screen_material := _material(Color(0.04, 0.58, 0.82), 0.2, 0.38)
+	screen_material.emission_enabled = true
+	screen_material.emission = Color(0.02, 0.34, 0.72)
+	screen_material.emission_energy_multiplier = 1.5
+	_add_solid_box("CentralLiftConsole", Vector3(0.0, 1.5, 3.0), Vector3(5.0, 3.0, 1.2), console_material)
+	_add_visual_box("CentralLiftConsoleScreen", Vector3(0.0, 2.2, 2.35), Vector3(4.0, 1.4, 0.12), screen_material)
+	var label := Label3D.new()
+	label.name = "CentralLiftConsoleLabel"
+	label.text = "مصعد البرج\nاختيار جميع الطوابق"
+	label.font_size = 21
+	label.position = Vector3(0.0, 5.0, 2.3)
+	label.pixel_size = 0.012
+	label.modulate = Color(0.8, 0.94, 1.0)
+	add_child(label)
+	var area: Area3D = entrance_script.new()
+	area.name = "CentralLiftConsoleInteraction"
+	area.configure("tower_lift_console_" + tower_id, "اختيار طابق في " + display_title, "region_baghdad")
+	area.set_meta("system_tower_id", tower_id)
+	area.set_meta("system_tower_title", display_title)
+	area.set_meta("system_tower_floor_count", floor_count)
+	area.set_meta("system_interaction_prompt", "فتح قائمة طوابق البرج")
+	var collision := CollisionShape3D.new()
+	var shape := SphereShape3D.new()
+	shape.radius = 3.0
+	collision.shape = shape
+	area.add_child(collision)
+	area.position = Vector3(0.0, 1.5, 4.5)
+	add_child(area)
+
+
 func _create_floor_selector(floor_number: int, floor_y: float) -> void:
 	if entrance_script == null:
 		return
@@ -445,6 +484,8 @@ func _create_floor_selector(floor_number: int, floor_y: float) -> void:
 	var floor_title := "الطابق %02d" % floor_number
 	area.configure("tower_floor_%s_%02d" % [tower_id, floor_number], "الانتقال إلى " + floor_title, "region_baghdad")
 	area.set_meta("system_destination_position", to_global(Vector3(10.0, floor_y + 1.5, 12.0)))
+	area.set_meta("system_tower_id", tower_id)
+	area.set_meta("system_floor_number", floor_number)
 	area.set_meta("system_interaction_prompt", "استخدام المصعد — " + floor_title)
 	var collision := CollisionShape3D.new()
 	var shape := SphereShape3D.new()
@@ -479,6 +520,8 @@ func _create_lobby_floor_selector(floor_number: int, floor_y: float) -> void:
 	area.name = "LobbyLiftSelector_%02d" % floor_number
 	area.configure("tower_floor_%s_%02d" % [tower_id, floor_number], "المصعد إلى الطابق %02d" % floor_number, "region_baghdad")
 	area.set_meta("system_destination_position", to_global(Vector3(10.0, floor_y + 1.5, 12.0)))
+	area.set_meta("system_tower_id", tower_id)
+	area.set_meta("system_floor_number", floor_number)
 	area.set_meta("system_display_name", "مصعد الطابق %02d" % floor_number)
 	area.set_meta("system_interaction_prompt", "الانتقال إلى الطابق %02d" % floor_number)
 	var collision := CollisionShape3D.new()
