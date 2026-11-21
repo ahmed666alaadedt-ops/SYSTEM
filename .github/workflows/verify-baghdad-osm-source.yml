@@ -333,7 +333,12 @@ jobs:
                   len(json.loads(archive.read(name)).get("layers", {}).get("entrances", []))
                   for name in tile_names
               )
+              historic_count = sum(
+                  len(json.loads(archive.read(name)).get("layers", {}).get("historic-sites", []))
+                  for name in tile_names
+              )
               print("Mapped entrance points in sample pack:", entrance_count)
+              print("Historic/archaeological OSM features in sample pack:", historic_count)
           print("Validated Baghdad 5x5 metric cell pack:", path.stat().st_size, "bytes;", len(tile_names), "occupied cells.")
           PY
 
