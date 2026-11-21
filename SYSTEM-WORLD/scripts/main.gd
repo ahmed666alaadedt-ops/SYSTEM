@@ -1401,7 +1401,15 @@ func _on_interaction_performed(
 			player.velocity = Vector3.ZERO
 			if interaction_prompt_label != null:
 				interaction_prompt_label.text = "خرجت من المقر الرئيسي لنقابة الصيادين"
-	elif location_id.begins_with("tower_exit_"):
+	elif location_id.begins_with("tower_floor_"):
+		var destination: Vector3 = target.get_meta("system_destination_position", Vector3.INF)
+		if player != null and destination != Vector3.INF:
+			player.global_position = destination
+			player.velocity = Vector3.ZERO
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "وصلت إلى " + str(target.get_meta("system_display_name", "الطابق المحدد"))
+		elif location_id.begins_with("tower_exit_"):
+
 		var tower_lobby := target.get_parent()
 		if tower_lobby != null and player != null and tower_lobby.has_method("get_return_position"):
 			player.global_position = tower_lobby.call("get_return_position")
