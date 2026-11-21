@@ -351,7 +351,32 @@ func create_motorsport_manager() -> void:
 	motorsport_manager.name = "MotorsportManager"
 	add_child(motorsport_manager)
 	motorsport_manager.setup(player_vehicle_manager)
+	motorsport_manager.race_finished.connect(_on_motorsport_race_finished)
 
+
+func _on_motorsport_race_finished(result: Dictionary) -> void:
+	var elapsed := maxf(0.0, float(result.get("elapsed_seconds", 0.0)))
+	var total_ms := int(round(elapsed * 1000.0))
+	var minutes := total_ms / 60000
+	var seconds := (total_ms / 1000) % 60
+	var milliseconds := total_ms % 1000
+	var time_label := "%02d:%02d.%03d" % [minutes, seconds, milliseconds]
+	var records: Dictionary = result.get("records", {})
+	var best := maxf(0.0, float(records.get("best_time_seconds", elapsed)))
+	var best_ms := int(round(best * 1000.0))
+	var best_label := "%02d:%02d.%03d" % [best_ms / 60000, (best_ms / 1000) % 60, best_ms % 1000]
+	var status := "رقمك الشخصي الجديد!" if bool(records.get("is_personal_best", false)) else "تم تسجيل المحاولة."
+	var scope_note := "السجل محفوظ على هذا الجهاز فقط؛ ليس ترتيباً عالمياً."
+	if not bool(records.get("saved", false)):
+		scope_note = "تعذر حفظ السجل؛ النتيجة الحالية ظاهرة فقط."
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = "اكتمل %s!\nزمنك: %s | أفضل زمن محلي: %s\n%s\n%s" % [
+			str(result.get("event_name", "السباق")),
+			time_label,
+			best_label,
+			status,
+			scope_note
+		]
 
 func create_motorsport_track_manager() -> void:
 	if active_world_root == null:
