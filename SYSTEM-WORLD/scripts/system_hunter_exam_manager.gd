@@ -8,17 +8,22 @@ signal exam_failed(reason: String)
 signal license_earned(candidate_number: int, license_rank: String)
 
 const SAVE_PATH := "user://system_hunter_exam.cfg"
+const RETRY_CYCLE_SECONDS := 7 * 24 * 60 * 60
 const EXAM_STAGES := [
-	{"id":"baghdad_heritage_trial","city":"Baghdad","title":"اختبار الأثر الرافديني","type":"artifact_recovery","difficulty":3,"description":"دخول موقع أثري مغلق، قراءة النقوش، تحديد القطعة الصحيحة وتجنب الفخاخ الوهمية والحقيقية."},
-	{"id":"cairo_buried_market","city":"Cairo","title":"متاهة السوق المدفون","type":"maze_navigation","difficulty":4,"description":"متاهة متعددة الطبقات، طرق تتغير، موارد محدودة وعلامات مضللة؛ يجب إيجاد المخرج دون إضاعة فريقك."},
-	{"id":"alexandria_lighthouse","city":"Alexandria","title":"اختبار المنارة والعاصفة","type":"navigation_rescue","difficulty":4,"description":"توجيه فريق عبر ممرات ساحلية وعاصفة، تشغيل إشارات قديمة وإنقاذ متسابقين."},
-	{"id":"paris_catacombs","city":"Paris","title":"سراديب باريس الصامتة","type":"logic_and_stealth","difficulty":4,"description":"شبكة سراديب وألغاز صوتية ومسارات مراقبة؛ القتال ليس الحل الأفضل."},
-	{"id":"babylon_guardian","city":"Babylon","title":"حارس بابل","type":"guardian_trial","difficulty":5,"description":"اجتياز أطلال بابل، كشف آلية الحارس، ثم مواجهة حارس قوي وفق قواعد المرحلة."},
-	{"id":"tokyo_urban_pursuit","city":"Tokyo","title":"مطاردة المدينة المتغيرة","type":"urban_pursuit","difficulty":4,"description":"سباق تتبع وملاحظة بين أحياء حضرية وحواجز متغيرة، مع منع إيذاء المدنيين."},
-	{"id":"final_survival_route","city":"Highland Frontier","title":"مسار البقاء الأخير","type":"survival_and_teamwork","difficulty":5,"description":"مسار جبلي طويل، طقس قاسٍ وموارد محدودة وقرارات تعاون؛ يصل للنهاية من يوازن بين السرعة والبقاء."}
+	{"id":"endurance_pursuit","city":"Baghdad outskirts","title":"المرحلة الأولى: المطاردة والتحمل","type":"endurance_tracking","difficulty":3,"description":"تتبّع الهدف عبر مسار طويل، اجتز نقاط التفتيش، حافظ على طاقتك، ولا تؤذِ المدنيين.","objectives":["تسجيل ثلاث نقاط تتبع صحيحة","إكمال مسار التحمل ضمن الحد الزمني","حماية المدنيين وتجنب المخالفات"]},
+	{"id":"fieldcraft_and_cooking","city":"Babylon frontier","title":"المرحلة الثانية: المهارة والمعرفة","type":"fieldcraft_cooking","difficulty":3,"description":"اجمع مكونات محددة من البيئة، تعرّف على خصائصها، وأعد وجبة وفق وصفة الاختبار.","objectives":["جمع المكونات الصحيحة","تمييز المواد الآمنة من غير الصالحة","إعداد الوصفة وتسليمها"]},
+	{"id":"tower_of_choices","city":"Baghdad examination tower","title":"المرحلة الثالثة: برج الاختبارات","type":"puzzles_and_decisions","difficulty":4,"description":"اصعد برجاً متعدد المسارات، حل ألغازاً مترابطة، واتخذ قرارات تؤثر في طريق فريقك.","objectives":["حل ثلاثة ألغاز مترابطة","اختيار مسار مع تبرير القرار","الوصول إلى بوابة الخروج"]},
+	{"id":"island_survival","city":"Island wilderness","title":"المرحلة الرابعة: البقاء في الجزيرة","type":"island_survival","difficulty":4,"description":"ابقَ على قيد الحياة في جزيرة متغيرة، وأدر الماء والطعام والمأوى والطقس دون الاعتماد على القتال وحده.","objectives":["تأمين الماء والطعام","إنشاء مأوى آمن","الوصول إلى نقطة الإخلاء"]},
+	{"id":"strategy_and_negotiation","city":"Freeport district","title":"المرحلة الخامسة: الاستراتيجية والتفاوض","type":"strategy_deception_negotiation","difficulty":5,"description":"اجمع المعلومات، اكشف التضليل، فاوض أطرافاً متعارضة، واختر متى تتعاون ومتى تنسحب.","objectives":["جمع دليلين مستقلين","كشف معلومة مضللة","إتمام اتفاق أو انسحاب آمن"]},
+	{"id":"individual_duels","city":"Hunter arena","title":"المرحلة السادسة: المواجهات الفردية","type":"individual_duels","difficulty":5,"description":"واجه خصوماً في نزالات فردية بقواعد واضحة؛ الفوز ليس بالقوة وحدها بل بالتحكم والانضباط واحترام قواعد السلامة.","objectives":["إكمال المواجهة الأولى","إظهار التحكم والدفاع","اجتياز مواجهة التقييم"]},
+	{"id":"secret_final_trial","city":"Classified SYSTEM location","title":"المرحلة السابعة: الاختبار النهائي السري","type":"secret_final_trial","difficulty":5,"description":"اختبار نهائي يتغير بين الدفعات ويجمع الملاحظة والقرار والتعاون؛ تفاصيله لا تكشف قبل بدء المرحلة.","objectives":["اكتشاف الهدف الحقيقي","اتخاذ القرار النهائي","العودة إلى لجنة التقييم"]}
 ]
 
 var candidate_number := 0
+var player_id := ""
+var attempt_number := 0
+var last_failure_unix := 0
+var license_earned_permanently := false
 var registered := false
 var exam_active := false
 var current_stage_index := -1
@@ -43,12 +48,17 @@ func apply_for_exam(player_id: String) -> Dictionary:
 	config.set_value("exam","next_candidate_number",candidate_number + 1)
 	config.set_value("exam","candidate_number",candidate_number)
 	config.set_value("exam","player_id",player_id)
+	attempt_number += 1
+	config.set_value("exam","attempt_number",attempt_number)
+	config.set_value("exam","last_failure_unix",last_failure_unix)
+	config.set_value("exam","license_earned_permanently",false)
 	config.set_value("exam","completed_stage_ids",[])
 	config.set_value("exam","exam_active",false)
 	config.set_value("exam","current_stage_index",-1)
 	config.set_value("exam","failed",false)
 	config.set_value("exam","failure_reason","")
 	config.save(SAVE_PATH)
+	self.player_id = player_id
 	registered = true
 	exam_active = false
 	current_stage_index = -1
@@ -97,8 +107,10 @@ func complete_current_stage(stage_id: String, verified_evidence: String) -> Dict
 	if current_stage_index >= EXAM_STAGES.size():
 		exam_active = false
 		_save_exam_state()
-		license_earned.emit(candidate_number,"PROVISIONAL_HUNTER")
-		return {"success":true,"exam_completed":true,"candidate_number":candidate_number,"license_rank":"PROVISIONAL_HUNTER"}
+		license_earned_permanently = true
+		_save_exam_state()
+		license_earned.emit(candidate_number,"HUNTER_LICENSE")
+		return {"success":true,"exam_completed":true,"candidate_number":candidate_number,"license_rank":"HUNTER_LICENSE","permanent":true}
 	_save_exam_state()
 	var next_stage: Dictionary = EXAM_STAGES[current_stage_index]
 	stage_started.emit(str(next_stage["id"]),current_stage_index + 1)
@@ -110,11 +122,13 @@ func withdraw_or_fail(reason: String) -> void:
 	exam_active = false
 	failed = true
 	failure_reason = reason
+	last_failure_unix = int(Time.get_unix_time_from_system())
 	exam_failed.emit(reason)
 	_save_exam_state()
 
 func get_exam_overview() -> Dictionary:
-	return {"candidate_number":candidate_number,"registered":registered,"active":exam_active,"current_stage_index":current_stage_index,"completed_stages":completed_stage_ids.duplicate(),"total_stages":EXAM_STAGES.size(),"failed":failed,"failure_reason":failure_reason,"stages":EXAM_STAGES.duplicate(true)}
+	var retry_at := last_failure_unix + RETRY_CYCLE_SECONDS if failed and last_failure_unix > 0 else 0
+	return {"candidate_number":candidate_number,"player_id":player_id,"attempt_number":attempt_number,"registered":registered,"active":exam_active,"current_stage_index":current_stage_index,"completed_stages":completed_stage_ids.duplicate(),"total_stages":EXAM_STAGES.size(),"failed":failed,"failure_reason":failure_reason,"retry_at":retry_at,"license_earned_permanently":license_earned_permanently,"stages":EXAM_STAGES.duplicate(true)}
 
 
 func _load_exam_state() -> void:
@@ -122,6 +136,10 @@ func _load_exam_state() -> void:
 	if config.load(SAVE_PATH) != OK:
 		return
 	candidate_number = int(config.get_value("exam", "candidate_number", 0))
+	player_id = str(config.get_value("exam", "player_id", ""))
+	attempt_number = int(config.get_value("exam", "attempt_number", 0))
+	last_failure_unix = int(config.get_value("exam", "last_failure_unix", 0))
+	license_earned_permanently = bool(config.get_value("exam", "license_earned_permanently", false))
 	registered = candidate_number > 0
 	exam_active = bool(config.get_value("exam", "exam_active", false))
 	failed = bool(config.get_value("exam", "failed", false))
@@ -136,6 +154,10 @@ func _save_exam_state() -> void:
 	var config := ConfigFile.new()
 	config.load(SAVE_PATH)
 	config.set_value("exam", "candidate_number", candidate_number)
+	config.set_value("exam", "player_id", player_id)
+	config.set_value("exam", "attempt_number", attempt_number)
+	config.set_value("exam", "last_failure_unix", last_failure_unix)
+	config.set_value("exam", "license_earned_permanently", license_earned_permanently)
 	config.set_value("exam", "completed_stage_ids", completed_stage_ids)
 	config.set_value("exam", "exam_active", exam_active)
 	config.set_value("exam", "current_stage_index", current_stage_index)
