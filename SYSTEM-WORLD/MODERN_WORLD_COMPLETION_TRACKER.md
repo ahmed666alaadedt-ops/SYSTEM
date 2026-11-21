@@ -51,6 +51,18 @@ This is the acceptance checklist for the modern-world map. The project must not 
 - [ ] Add residents, pedestrians, vendors, workers, schedules, crowds, public services, and city activity that responds to time and weather.
 - [ ] Make the ten rural settlements functional and connect them to roads, services, farms, orchards, fields, and local economies.
 
+
+## Baghdad rare-antiquities bazaar — auction prototype — 21 November 2026
+
+- [x] Add an original fictional artifact catalogue with rarity, era, appraisal state, museum reference value and provenance notes.
+- [x] Add local auction creation, timed bidding, seller self-bid prevention, minimum-increment enforcement, outbid escrow refunds, reserve-price handling and settlement.
+- [x] Add local inventory ownership transfers and a capped transaction ledger saved on the device.
+- [x] Add a Godot validator for catalogue metadata, auction creation, escrow and invalid-bid rejection.
+- [ ] Connect the bazaar building's interaction marker to an in-world market UI and the player's persistent inventory/economy.
+- [ ] Add NPC appraisers/dealers, museum exhibition loans, collection bonuses, fraud/evidence investigations, and authenticated server-side ownership/escrow.
+- [ ] Add a production-safe auction clock and transaction recovery; current timer and persistence are local-device prototype only.
+- Note: artifact names and lore are original fictional SYSTEM items; this is functional inspiration from collectible/auction gameplay, not copied anime assets or names.
+
 ## Baghdad football stadium match prototype — 21 November 2026
 
 - [x] Add a physical RigidBody3D football with spherical collision and a player interaction area.
