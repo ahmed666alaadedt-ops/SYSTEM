@@ -883,3 +883,15 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] The runtime mesh scan reported zero null MeshInstance3D meshes and zero invalid MultiMesh resources; all four world roots passed lazy-load initialization.
 - [ ] Validate actual driving feel, vehicle movement during the countdown, mobile controls, and pit entry/exit on a physical device.
 - Note: Baghdad OSM runtime validation was skipped because the audited candidate cell-pack manifest was not installed in this branch checkout. The motorsport venue remains a procedural blockout, not finished track art or certified vehicle physics.
+
+
+## Baghdad motorsport — live AI standings and leaderboard refresh — 22 November 2026
+
+- [x] Expose each AI opponent's completed laps, next checkpoint progress, distance to the next checkpoint, elapsed time, and finish/retirement state.
+- [x] Sort AI standings by completed laps, finish state, ordered checkpoint progress, distance to the next checkpoint, then elapsed time.
+- [x] Refresh the open race-results panel every 0.5 seconds while visible, so the AI status changes during the race rather than only when the panel is opened.
+- [x] Keep AI standings visible before the player's first local result exists; an empty personal-record list no longer hides active opponents.
+- [x] Extend the motorsport validator with same-lap checkpoint-order regression cases. Godot 4.3 workflow run 44954979678 passed on commit 923da9226bb5d2e3323fa8836343e68568988a3f; both motorsport validators, all configured Baghdad/tower/Hunter/Power Tower checks, mesh scan and headless main-scene launch passed.
+- [ ] Build a unified authoritative player-versus-AI finishing order using the player's live checkpoint position, not only separate local records and AI-only standings.
+- [ ] Implement server-authoritative global leaderboards and multiplayer race results; current personal records and AI standings remain local/prototype data.
+- Note: checkpoint-based AI ranking is a live local approximation. Physical vehicle feel, overtake/collision behavior, full race-class routes, Android controls and global competition remain unverified.
