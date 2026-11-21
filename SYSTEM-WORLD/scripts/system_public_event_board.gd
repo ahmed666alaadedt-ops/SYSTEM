@@ -14,6 +14,7 @@ var city_anchors: Dictionary = {}
 var result_labels: Dictionary = {}
 var results: Array[Dictionary] = []
 var ad_labels: Array[Label3D] = []
+var advertising_manager: Node
 
 
 func setup(anchors: Dictionary, terrain_manager: Node) -> void:
@@ -22,6 +23,32 @@ func setup(anchors: Dictionary, terrain_manager: Node) -> void:
 	terrain = terrain_manager
 	_build_city_media_displays()
 	_build_baghdad_tower_displays()
+
+
+func connect_advertising_manager(manager: Node) -> void:
+	advertising_manager = manager
+	if advertising_manager != null and advertising_manager.has_signal("campaign_rotation_updated"):
+		var callback := Callable(self, "_refresh_city_advertising_labels")
+		if not advertising_manager.is_connected("campaign_rotation_updated", callback):
+			advertising_manager.connect("campaign_rotation_updated", callback)
+	_refresh_city_advertising_labels()
+
+
+func _refresh_city_advertising_labels() -> void:
+	if advertising_manager == null or not advertising_manager.has_method("get_city_campaign"):
+		return
+	for label in ad_labels:
+		if not is_instance_valid(label):
+			continue
+		var city_name := str(label.get_meta("advertising_city", "Baghdad"))
+		var campaign: Dictionary = advertising_manager.call("get_city_campaign", city_name)
+		if campaign.is_empty():
+			continue
+		label.text = "%s\n%s\n%s" % [
+			str(campaign.get("title", "SYSTEM")),
+			str(campaign.get("body", "")),
+			str(campaign.get("category", "إعلان المدينة"))
+		]
 
 
 func publish_gate_clear(gate_id: String, gate_rank: String, xp_awarded: int) -> void:
@@ -131,6 +158,7 @@ func _build_city_media_displays() -> void:
 		ad_label.pixel_size = 0.012
 		ad_label.modulate = Color(0.78, 0.96, 1.0)
 		ad_label.outline_size = 8
+		ad_label.set_meta("advertising_city", city_name)
 		display_root.add_child(ad_label)
 		ad_labels.append(ad_label)
 		display_root.set_meta("advertising_mode", "curated_demo")
@@ -197,7 +225,9 @@ func _build_baghdad_tower_displays() -> void:
 		ad_label.pixel_size = 0.012
 		ad_label.modulate = Color(0.78, 0.96, 1.0)
 		ad_label.outline_size = 7
+		ad_label.set_meta("advertising_city", "Baghdad")
 		tower.add_child(ad_label)
+		ad_labels.append(ad_label)
 		var result_label := Label3D.new()
 		result_label.name = "TowerChampionResultsText"
 		result_label.text = "SYSTEM CHAMPIONS\nبانتظار أول إنجاز موثق\nسجل محلي لهذه الجلسة"
