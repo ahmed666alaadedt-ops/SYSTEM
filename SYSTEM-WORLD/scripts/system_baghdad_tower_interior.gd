@@ -16,6 +16,8 @@ func build(p_tower_id: String, p_title: String, p_entrance_script: Script, p_ext
 	name = "TowerInterior"
 	_build_lobby()
 	_build_service_desks()
+	if tower_id == "hunter_association_tower_baghdad":
+		_build_hunter_exam_tunnel()
 	_build_exit()
 	_build_tower_identity_feature()
 	_build_lobby_wayfinding()
@@ -44,7 +46,12 @@ func _build_lobby() -> void:
 	_add_solid_box("LobbyFloor", Vector3(0.0, -0.35, 0.0), Vector3(42.0, 0.7, 42.0), floor_mat)
 	_add_solid_box("LobbyLeftWall", Vector3(-21.0, 7.0, 0.0), Vector3(1.0, 14.0, 42.0), wall_mat)
 	_add_solid_box("LobbyRightWall", Vector3(21.0, 7.0, 0.0), Vector3(1.0, 14.0, 42.0), wall_mat)
-	_add_solid_box("LobbyRearWall", Vector3(0.0, 7.0, -21.0), Vector3(42.0, 14.0, 1.0), wall_mat)
+	if tower_id == "hunter_association_tower_baghdad":
+		_add_solid_box("LobbyRearWall_Left", Vector3(-15.0, 7.0, -21.0), Vector3(12.0, 14.0, 1.0), wall_mat)
+		_add_solid_box("LobbyRearWall_Right", Vector3(15.0, 7.0, -21.0), Vector3(12.0, 14.0, 1.0), wall_mat)
+		_add_solid_box("LobbyRearWall_AboveExamTunnel", Vector3(0.0, 12.0, -21.0), Vector3(18.0, 4.0, 1.0), wall_mat)
+	else:
+		_add_solid_box("LobbyRearWall", Vector3(0.0, 7.0, -21.0), Vector3(42.0, 14.0, 1.0), wall_mat)
 	_add_solid_box("LobbyFrontWallLeft", Vector3(-14.0, 7.0, 21.0), Vector3(14.0, 14.0, 1.0), wall_mat)
 	_add_solid_box("LobbyFrontWallRight", Vector3(14.0, 7.0, 21.0), Vector3(14.0, 14.0, 1.0), wall_mat)
 	_add_solid_box("LobbyCeiling", Vector3(0.0, 14.0, 0.0), Vector3(42.0, 0.8, 42.0), wall_mat)
@@ -66,6 +73,74 @@ func _build_lobby() -> void:
 	light.omni_range = 48.0
 	light.shadow_enabled = false
 	add_child(light)
+
+func _build_hunter_exam_tunnel() -> void:
+	var shell_mat := _material(Color(0.035, 0.065, 0.095), 0.3, 0.78)
+	var floor_mat := _material(Color(0.12, 0.16, 0.20), 0.32, 0.62)
+	var trim_mat := _material(Color(0.04, 0.58, 0.82), 0.22, 0.48)
+	trim_mat.emission_enabled = true
+	trim_mat.emission = Color(0.015, 0.34, 0.72)
+	trim_mat.emission_energy_multiplier = 2.0
+	var gold_mat := _material(Color(0.72, 0.48, 0.16), 0.26, 0.72)
+	gold_mat.emission_enabled = true
+	gold_mat.emission = Color(0.24, 0.11, 0.015)
+	gold_mat.emission_energy_multiplier = 0.8
+
+	# Open threshold from the Hunter lobby into a dedicated, physically enclosed passage.
+	_add_solid_box("ExamTunnelFloor", Vector3(0.0, -0.35, -49.0), Vector3(18.0, 0.7, 58.0), floor_mat)
+	_add_solid_box("ExamTunnelLeftWall", Vector3(-9.0, 5.0, -49.0), Vector3(0.7, 10.0, 58.0), shell_mat)
+	_add_solid_box("ExamTunnelRightWall", Vector3(9.0, 5.0, -49.0), Vector3(0.7, 10.0, 58.0), shell_mat)
+	_add_solid_box("ExamTunnelCeiling", Vector3(0.0, 10.0, -49.0), Vector3(18.0, 0.7, 58.0), shell_mat)
+
+	for index in range(8):
+		var z := -23.0 - float(index) * 7.2
+		_add_visual_box("ExamTunnelLightStrip_%02d" % index, Vector3(0.0, 9.55, z), Vector3(12.0, 0.12, 0.24), trim_mat)
+		_add_visual_box("ExamTunnelFloorGuide_%02d" % index, Vector3(0.0, 0.055, z), Vector3(10.0, 0.045, 0.12), trim_mat)
+		_add_solid_box("ExamTunnelFrame_%02d" % index, Vector3(0.0, 5.0, z), Vector3(0.22, 9.0, 0.35), gold_mat)
+		var side_light := OmniLight3D.new()
+		side_light.name = "ExamTunnelLamp_%02d" % index
+		side_light.position = Vector3(0.0, 8.2, z)
+		side_light.light_color = Color(0.08, 0.58, 0.95)
+		side_light.light_energy = 1.25
+		side_light.omni_range = 13.0
+		side_light.shadow_enabled = false
+		add_child(side_light)
+
+	_add_solid_box("ExamStagingFloor", Vector3(0.0, -0.35, -82.0), Vector3(24.0, 0.7, 10.0), floor_mat)
+	_add_solid_box("ExamStagingBackWall", Vector3(0.0, 6.0, -87.0), Vector3(24.0, 12.0, 0.7), shell_mat)
+	_add_solid_box("ExamStagingLeftWall", Vector3(-12.0, 6.0, -82.0), Vector3(0.7, 12.0, 10.0), shell_mat)
+	_add_solid_box("ExamStagingRightWall", Vector3(12.0, 6.0, -82.0), Vector3(0.7, 12.0, 10.0), shell_mat)
+	_add_visual_box("ExamStagingGateFrame", Vector3(0.0, 5.0, -86.45), Vector3(9.0, 9.0, 0.35), gold_mat)
+	_add_visual_box("ExamStagingGateCore", Vector3(0.0, 4.8, -86.2), Vector3(7.0, 7.0, 0.12), trim_mat)
+
+	var title := Label3D.new()
+	title.name = "HunterExamTunnelTitle"
+	title.text = "HUNTER EXAMINATION\nCANDIDATE TRANSIT"
+	title.font_size = 30
+	title.position = Vector3(0.0, 7.2, -84.0)
+	title.pixel_size = 0.012
+	title.modulate = Color(0.76, 0.91, 1.0)
+	add_child(title)
+
+	if entrance_script != null:
+		var start_area: Area3D = entrance_script.new()
+		start_area.name = "HunterExamTunnelStart"
+		start_area.configure("hunter_exam_tunnel_start_baghdad", "بدء اختبار الصيادين من نفق الانطلاق", "region_baghdad")
+		start_area.position = Vector3(0.0, 1.5, -78.0)
+		start_area.set_meta("system_display_name", "بوابة انطلاق اختبار الصيادين")
+		start_area.set_meta("system_service_description", "بوابة الانطلاق الرسمية لاختبارات الصيادين داخل برج الجمعية.")
+		start_area.set_meta("system_interaction_prompt", "بدء / استئناف اختبار الصيادين")
+		var start_collision := CollisionShape3D.new()
+		var start_shape := SphereShape3D.new()
+		start_shape.radius = 3.2
+		start_collision.shape = start_shape
+		start_area.add_child(start_collision)
+		add_child(start_area)
+
+	set_meta("hunter_exam_tunnel_built", true)
+	set_meta("hunter_exam_tunnel_length", 58.0)
+	set_meta("hunter_exam_tunnel_staging_chamber", true)
+
 
 func _build_service_desks() -> void:
 	var desk_mat := _material(Color(0.20, 0.24, 0.29), 0.34, 0.55)
