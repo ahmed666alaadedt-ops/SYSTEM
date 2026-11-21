@@ -602,12 +602,18 @@ func _on_power_tower_floor_exit_requested(floor_number: int, return_position: Ve
 	if player != null:
 		player.global_position = return_position
 		player.velocity = Vector3.ZERO
+	var completed_floor := false
 	if power_tower_manager != null:
 		var status: Dictionary = power_tower_manager.get_tower_status()
 		if int(status.get("active_floor", 0)) == floor_number:
 			power_tower_manager.fail_active_floor()
+		else:
+			completed_floor = int(status.get("highest_cleared_floor", 0)) >= floor_number
 	if interaction_prompt_label != null:
-		interaction_prompt_label.text = "غادرت الطابق %d — نقاط التفتيش المسجلة محفوظة للمحاولة التالية." % floor_number
+		if completed_floor:
+			interaction_prompt_label.text = "أحسنت! اجتزت الطابق %d وحصلت على مكافآته. الطابق التالي أصبح متاحاً." % floor_number
+		else:
+			interaction_prompt_label.text = "غادرت الطابق %d — نقاط التفتيش المسجلة محفوظة للمحاولة التالية." % floor_number
 
 
 
