@@ -457,3 +457,12 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Add working lift/stair access, public NPC activity, shop/restaurant interactions, and per-platform activity routing.
 - [ ] Profile draw calls, collision count, shadows, and frame time on Android quality tiers before increasing detail.
 - Note: this is a procedural visual/gameplay blockout only. It is not a final rendered asset pack, and it has not been physically tested on Android.
+
+
+## Baghdad tower-specific skyline silhouettes — 21 November 2026
+
+- [x] Add distinct procedural visual accents for the five district towers: Hunter sky terraces, Business office decks, Shopping market decks, Entertainment halo rings, and the Technology innovation spire/antennas.
+- [x] Keep these accents visual-only and low-node-count; do not claim that the decks are enterable or functional.
+- [ ] Validate tower silhouette proportions, intersections with the existing shafts/floor bands, material readability, and skyline composition in Godot.
+- [ ] Replace primitive shapes with optimized final modular meshes and authored materials after visual review.
+- Note: all five towers remain within the approved district; Power Tower is not included in these identity features.
