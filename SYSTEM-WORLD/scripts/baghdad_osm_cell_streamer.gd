@@ -535,10 +535,15 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 		collision.shape = shape
 		body.add_child(collision)
 		parent.add_child(body)
-		if kind == "archaeological_ruin":
-			building.set_meta("landmark_type", "archaeological_ruin")
-			building.set_meta("osm_historic_tag", str(tags.get("historic", tags.get("building", "ruins"))))
-			_add_archaeological_ruin_detail(parent, ring, height, feature_id, tags)
+		var historic_landmark_kind := _historic_landmark_kind(tags)
+		if not historic_landmark_kind.is_empty():
+			building.set_meta("landmark_type", historic_landmark_kind)
+			building.set_meta("osm_feature_id", feature_id)
+			building.set_meta("osm_historic_tag", str(tags.get("historic", tags.get("building", ""))))
+			if historic_landmark_kind in ["archaeological_ruin", "archaeological_site"]:
+				_add_archaeological_ruin_detail(parent, ring, height, feature_id, tags)
+			else:
+				_add_historic_polygon_landmark(parent, ring, height, feature_id, tags, historic_landmark_kind)
 		var approach := _find_building_approach_point(ring, road_features)
 		if not approach.is_empty():
 			_add_building_approach_marker(parent, approach, feature_id, kind, tags)
@@ -645,9 +650,19 @@ func _building_display_name(kind: String, tags: Dictionary) -> String:
 	var custom_name := str(tags.get("name:ar", tags.get("name", ""))).strip_edges()
 	if not custom_name.is_empty():
 		return custom_name
-	if kind == "archaeological_ruin":
-		return "أطلال أثرية موثقة"
 	match kind:
+		"archaeological_ruin", "archaeological_site":
+			return "أطلال أو موقع أثري موثق"
+		"historic_monument":
+			return "نصب أو معلم تذكاري"
+		"historic_tomb":
+			return "مرقد أو ضريح تراثي"
+		"historic_building":
+			return "مبنى تراثي"
+		"historic_fortification":
+			return "حصن أو قصر تاريخي"
+		"historic_gate":
+			return "بوابة تاريخية"
 		"detached_house":
 			return "منزل سكني"
 		"apartment_block":
@@ -869,11 +884,11 @@ func _build_entrance_feature(parent: Node3D, feature: Dictionary) -> int:
 
 func _build_historic_site_feature(parent: Node3D, feature: Dictionary) -> int:
 	var tags: Dictionary = feature.get("tags", {})
-	if not _is_archaeological_site(tags):
+	if not _is_historic_landmark(tags):
 		return 0
 	var feature_id := str(feature.get("id", "unknown"))
 	for child in parent.get_children():
-		if str(child.get_meta("osm_feature_id", "")) == feature_id and str(child.get_meta("landmark_type", "")) in ["archaeological_site", "archaeological_ruin"]:
+		if str(child.get_meta("osm_feature_id", "")) == feature_id and not str(child.get_meta("landmark_type", "")).is_empty():
 			return 0
 	var geometry: Dictionary = feature.get("geometry", {})
 	var geometry_type := str(geometry.get("type", ""))
@@ -904,11 +919,40 @@ func _build_historic_site_feature(parent: Node3D, feature: Dictionary) -> int:
 	return 0
 
 
-func _is_archaeological_site(tags: Dictionary) -> bool:
+func _is_kadhimiya_historic_feature(tags: Dictionary) -> bool:
+	for key in ["name", "name:ar", "name:en", "addr:suburb", "addr:district", "addr:neighbourhood"]:
+		var value := str(tags.get(key, "")).to_lower()
+		if value.contains("الكاظمية") or value.contains("kadhimiya") or value.contains("kadhimain"):
+			return true
+	return false
+
+
+func _historic_landmark_kind(tags: Dictionary) -> String:
+	if _is_kadhimiya_historic_feature(tags):
+		return ""
 	var historic := str(tags.get("historic", "")).to_lower()
 	var building := str(tags.get("building", "")).to_lower()
 	var site_type := str(tags.get("site_type", "")).to_lower()
-	return historic in ["archaeological_site", "ruins", "castle", "fort", "city_gate"] or building == "ruins" or site_type == "archaeological"
+	var ruins_tag := str(tags.get("ruins", "")).to_lower()
+	if historic in ["ruins", "citywalls"] or building == "ruins" or ruins_tag in ["yes", "fort"]:
+		return "archaeological_ruin"
+	if historic == "archaeological_site" or site_type == "archaeological":
+		return "archaeological_site"
+	if historic in ["castle", "fort"]:
+		return "historic_fortification"
+	if historic == "city_gate":
+		return "historic_gate"
+	if historic == "tomb":
+		return "historic_tomb"
+	if historic == "building":
+		return "historic_building"
+	if historic in ["monument", "memorial"]:
+		return "historic_monument"
+	return ""
+
+
+func _is_historic_landmark(tags: Dictionary) -> bool:
+	return not _historic_landmark_kind(tags).is_empty()
 
 
 func _build_amenity_feature(parent: Node3D, feature: Dictionary) -> int:
@@ -916,7 +960,7 @@ func _build_amenity_feature(parent: Node3D, feature: Dictionary) -> int:
 	var geometry_type := str(geometry.get("type", ""))
 	var tags: Dictionary = feature.get("tags", {})
 	var feature_id := str(feature.get("id", "unknown"))
-	if _is_archaeological_site(tags):
+	if _is_historic_landmark(tags):
 		if geometry_type == "Point":
 			_build_archaeological_site_landmark(parent, feature, geometry.get("coordinates", []))
 			return 1
@@ -931,7 +975,12 @@ func _build_amenity_feature(parent: Node3D, feature: Dictionary) -> int:
 					ring.remove_at(ring.size() - 1)
 				if ring.size() < 3:
 					continue
-				var site_root := _add_archaeological_ruin_detail(parent, ring, 3.2, feature_id, tags)
+				var landmark_kind := _historic_landmark_kind(tags)
+				var site_root: Node3D
+				if landmark_kind in ["archaeological_ruin", "archaeological_site"]:
+					site_root = _add_archaeological_ruin_detail(parent, ring, 3.2, feature_id, tags)
+				else:
+					site_root = _add_historic_polygon_landmark(parent, ring, 8.0, feature_id, tags, landmark_kind)
 				if site_root != null:
 					site_root.name = "OSMArchaeologicalSiteArea_%s_%d" % [feature_id, built_sites]
 					_add_archaeological_site_interaction(site_root, feature_id, tags)
@@ -961,11 +1010,12 @@ func _build_archaeological_site_landmark(parent: Node3D, feature: Dictionary, co
 	var feature_id := str(feature.get("id", "unknown"))
 	var tags: Dictionary = feature.get("tags", {})
 	var historic_kind := str(tags.get("historic", tags.get("site_type", "archaeological_site")))
-	var site_name := str(tags.get("name:ar", tags.get("name", "موقع أثري موثق")))
+	var landmark_kind := _historic_landmark_kind(tags)
+	var site_name := str(tags.get("name:ar", tags.get("name", "معلم تاريخي موثق")))
 	var root := Node3D.new()
 	root.name = "OSMArchaeologicalSite_%s" % feature_id
 	root.position = Vector3(point.x, _terrain_height(point), point.y)
-	root.set_meta("landmark_type", "archaeological_site")
+	root.set_meta("landmark_type", landmark_kind)
 	root.set_meta("osm_feature_id", feature_id)
 	root.set_meta("osm_historic_tag", historic_kind)
 	root.set_meta("system_display_name", site_name)
@@ -978,44 +1028,25 @@ func _build_archaeological_site_landmark(parent: Node3D, feature: Dictionary, co
 	worn_stone.albedo_color = Color(0.39, 0.32, 0.25)
 	worn_stone.roughness = 1.0
 	_add_archaeology_box(root, "SiteFoundation", Vector3(0.0, 0.16, 0.0), Vector3(22.0, 0.32, 22.0), stone, 0.0)
-
-	var rng := RandomNumberGenerator.new()
-	rng.seed = abs(feature_id.hash())
-	for index in range(8):
-		var angle := TAU * float(index) / 8.0
-		var radius := 8.0 + rng.randf_range(-1.2, 1.2)
-		var wall_height := rng.randf_range(1.1, 2.8)
-		var wall_length := rng.randf_range(3.0, 5.5)
-		var wall_position := Vector3(cos(angle) * radius, wall_height * 0.5, sin(angle) * radius)
-		_add_archaeology_box(root, "BrokenWall_%02d" % index, wall_position, Vector3(wall_length, wall_height, 0.9), worn_stone, angle)
-
-	for index in range(4):
-		var angle := TAU * float(index) / 4.0 + 0.35
-		var pillar_height := rng.randf_range(2.2, 5.0)
-		var pillar := StaticBody3D.new()
-		pillar.name = "RuinedColumn_%02d" % index
-		pillar.position = Vector3(cos(angle) * 5.8, pillar_height * 0.5, sin(angle) * 5.8)
-		var visual := MeshInstance3D.new()
-		var cylinder := CylinderMesh.new()
-		cylinder.top_radius = 0.42
-		cylinder.bottom_radius = 0.58
-		cylinder.height = pillar_height
-		visual.mesh = cylinder
-		visual.material_override = stone
-		pillar.add_child(visual)
-		var collision := CollisionShape3D.new()
-		var cylinder_shape := CylinderShape3D.new()
-		cylinder_shape.radius = 0.58
-		cylinder_shape.height = pillar_height
-		collision.shape = cylinder_shape
-		pillar.add_child(collision)
-		root.add_child(pillar)
+	match landmark_kind:
+		"historic_monument":
+			_build_point_historic_monument(root, tags, stone, worn_stone)
+		"historic_tomb":
+			_build_point_historic_tomb(root, stone, worn_stone)
+		"historic_building":
+			_build_point_historic_building(root, stone, worn_stone)
+		"historic_fortification":
+			_build_point_historic_fortification(root, stone, worn_stone)
+		"historic_gate":
+			_build_point_historic_gate(root, stone, worn_stone)
+		_:
+			_build_point_archaeological_ruins(root, feature_id, stone, worn_stone)
 
 	var sign := Label3D.new()
-	sign.name = "ArchaeologicalSiteName"
+	sign.name = "HistoricLandmarkName"
 	sign.text = site_name
 	sign.font_size = 24
-	sign.position = Vector3(0.0, 7.0, -12.0)
+	sign.position = Vector3(0.0, 10.0, -12.0)
 	sign.modulate = Color(0.9, 0.78, 0.57)
 	root.add_child(sign)
 
@@ -1042,6 +1073,136 @@ func _add_archaeology_box(parent: Node3D, node_name: String, position: Vector3, 
 	parent.add_child(body)
 
 
+func _build_point_historic_monument(root: Node3D, tags: Dictionary, stone: Material, accent: Material) -> void:
+	if str(tags.get("memorial", "")).to_lower() == "plaque":
+		_add_archaeology_box(root, "MemorialPlaqueBase", Vector3(0.0, 0.55, 0.0), Vector3(10.0, 1.1, 3.0), stone, 0.0)
+		_add_archaeology_box(root, "MemorialPlaqueWall", Vector3(0.0, 2.9, 0.0), Vector3(8.0, 3.8, 0.65), accent, 0.0)
+	else:
+		_add_archaeology_box(root, "MonumentPedestal", Vector3(0.0, 0.8, 0.0), Vector3(5.5, 1.6, 5.5), stone, 0.0)
+		_add_archaeology_box(root, "MonumentShaft", Vector3(0.0, 4.5, 0.0), Vector3(2.2, 6.0, 2.2), accent, 0.0)
+		_add_archaeology_box(root, "MonumentCap", Vector3(0.0, 7.8, 0.0), Vector3(3.5, 1.0, 3.5), stone, 0.0)
+
+
+func _build_point_historic_tomb(root: Node3D, stone: Material, accent: Material) -> void:
+	_add_archaeology_box(root, "TombFoundation", Vector3(0.0, 0.45, 0.0), Vector3(15.0, 0.9, 15.0), stone, 0.0)
+	_add_archaeology_box(root, "TombLeftWall", Vector3(-6.5, 3.0, 0.0), Vector3(0.8, 5.0, 13.0), stone, 0.0)
+	_add_archaeology_box(root, "TombRightWall", Vector3(6.5, 3.0, 0.0), Vector3(0.8, 5.0, 13.0), stone, 0.0)
+	_add_archaeology_box(root, "TombRearWall", Vector3(0.0, 3.0, 6.5), Vector3(13.0, 5.0, 0.8), stone, 0.0)
+	_add_archaeology_box(root, "TombEntranceLintel", Vector3(0.0, 5.0, -6.5), Vector3(5.0, 1.0, 0.8), accent, 0.0)
+	var dome := MeshInstance3D.new()
+	dome.name = "TombDome"
+	var dome_mesh := SphereMesh.new()
+	dome_mesh.radius = 4.8
+	dome_mesh.height = 4.2
+	dome.mesh = dome_mesh
+	dome.position = Vector3(0.0, 6.8, 0.0)
+	dome.material_override = accent
+	root.add_child(dome)
+
+
+func _build_point_historic_building(root: Node3D, stone: Material, accent: Material) -> void:
+	_add_archaeology_box(root, "HeritageBuildingBase", Vector3(0.0, 0.4, 0.0), Vector3(18.0, 0.8, 14.0), stone, 0.0)
+	for x_side in [-1.0, 1.0]:
+		for z_side in [-1.0, 1.0]:
+			_add_archaeology_box(root, "HeritageFacadeColumn_%s_%s" % [str(x_side), str(z_side)], Vector3(x_side * 6.5, 3.0, z_side * 4.8), Vector3(1.1, 5.2, 1.1), accent, 0.0)
+	_add_archaeology_box(root, "HeritageFacadeLintel", Vector3(0.0, 5.8, -4.8), Vector3(14.0, 1.0, 1.0), stone, 0.0)
+	_add_archaeology_box(root, "HeritageRoof", Vector3(0.0, 6.4, 0.0), Vector3(18.0, 0.8, 14.0), stone, 0.0)
+
+
+func _build_point_historic_fortification(root: Node3D, stone: Material, accent: Material) -> void:
+	for x_side in [-1.0, 1.0]:
+		for z_side in [-1.0, 1.0]:
+			_add_archaeology_box(root, "FortressCornerTower_%s_%s" % [str(x_side), str(z_side)], Vector3(x_side * 8.0, 4.0, z_side * 8.0), Vector3(4.0, 8.0, 4.0), accent, 0.0)
+	_add_archaeology_box(root, "FortressNorthWall", Vector3(0.0, 2.2, -8.0), Vector3(14.0, 4.4, 1.2), stone, 0.0)
+	_add_archaeology_box(root, "FortressSouthWall", Vector3(0.0, 2.2, 8.0), Vector3(14.0, 4.4, 1.2), stone, 0.0)
+	_add_archaeology_box(root, "FortressWestWall", Vector3(-8.0, 2.2, 0.0), Vector3(1.2, 4.4, 14.0), stone, 0.0)
+	_add_archaeology_box(root, "FortressEastWall", Vector3(8.0, 2.2, 0.0), Vector3(1.2, 4.4, 14.0), stone, 0.0)
+
+
+func _build_point_historic_gate(root: Node3D, stone: Material, accent: Material) -> void:
+	_add_archaeology_box(root, "HistoricGateLeftPillar", Vector3(-5.0, 4.0, 0.0), Vector3(2.0, 8.0, 2.0), stone, 0.0)
+	_add_archaeology_box(root, "HistoricGateRightPillar", Vector3(5.0, 4.0, 0.0), Vector3(2.0, 8.0, 2.0), stone, 0.0)
+	_add_archaeology_box(root, "HistoricGateHeader", Vector3(0.0, 8.0, 0.0), Vector3(12.0, 2.0, 2.0), accent, 0.0)
+
+
+func _build_point_archaeological_ruins(root: Node3D, feature_id: String, stone: Material, worn_stone: Material) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = abs(feature_id.hash())
+	for index in range(8):
+		var angle := TAU * float(index) / 8.0
+		var radius := 8.0 + rng.randf_range(-1.2, 1.2)
+		var wall_height := rng.randf_range(1.1, 2.8)
+		var wall_length := rng.randf_range(3.0, 5.5)
+		var wall_position := Vector3(cos(angle) * radius, wall_height * 0.5, sin(angle) * radius)
+		_add_archaeology_box(root, "BrokenWall_%02d" % index, wall_position, Vector3(wall_length, wall_height, 0.9), worn_stone, angle)
+	for index in range(4):
+		var angle := TAU * float(index) / 4.0 + 0.35
+		var pillar_height := rng.randf_range(2.2, 5.0)
+		var pillar := StaticBody3D.new()
+		pillar.name = "RuinedColumn_%02d" % index
+		pillar.position = Vector3(cos(angle) * 5.8, pillar_height * 0.5, sin(angle) * 5.8)
+		var visual := MeshInstance3D.new()
+		var cylinder := CylinderMesh.new()
+		cylinder.top_radius = 0.42
+		cylinder.bottom_radius = 0.58
+		cylinder.height = pillar_height
+		visual.mesh = cylinder
+		visual.material_override = stone
+		pillar.add_child(visual)
+		var collision := CollisionShape3D.new()
+		var cylinder_shape := CylinderShape3D.new()
+		cylinder_shape.radius = 0.58
+		cylinder_shape.height = pillar_height
+		collision.shape = cylinder_shape
+		pillar.add_child(collision)
+		root.add_child(pillar)
+
+
+func _add_historic_polygon_landmark(parent: Node3D, ring: PackedVector2Array, height: float, feature_id: String, tags: Dictionary, landmark_kind: String) -> Node3D:
+	if ring.size() < 3:
+		return null
+	var center := Vector2.ZERO
+	for point in ring:
+		center += point
+	center /= float(ring.size())
+	var root := Node3D.new()
+	root.name = "OSMHistoricLandmarkDetail_%s" % feature_id
+	root.position = Vector3(center.x, _terrain_height(center), center.y)
+	root.set_meta("landmark_type", landmark_kind)
+	root.set_meta("osm_feature_id", feature_id)
+	root.set_meta("osm_historic_tag", str(tags.get("historic", "")))
+	parent.add_child(root)
+	var stone := StandardMaterial3D.new()
+	stone.albedo_color = Color(0.55, 0.43, 0.30)
+	stone.roughness = 0.94
+	var accent := StandardMaterial3D.new()
+	accent.albedo_color = Color(0.39, 0.32, 0.25)
+	accent.roughness = 0.98
+	match landmark_kind:
+		"historic_monument":
+			_build_point_historic_monument(root, tags, stone, accent)
+		"historic_tomb":
+			_build_point_historic_tomb(root, stone, accent)
+		"historic_building":
+			_build_point_historic_building(root, stone, accent)
+		"historic_fortification":
+			_build_point_historic_fortification(root, stone, accent)
+		"historic_gate":
+			_build_point_historic_gate(root, stone, accent)
+		_:
+			_build_point_archaeological_ruins(root, feature_id, stone, accent)
+	var label := Label3D.new()
+	label.name = "HistoricLandmarkLabel"
+	label.text = str(tags.get("name:ar", tags.get("name", "معلم تاريخي موثق")))
+	label.font_size = 20
+	label.position = Vector3(0.0, maxf(height, 7.0) + 2.0, 0.0)
+	label.modulate = Color(0.9, 0.78, 0.57)
+	root.add_child(label)
+	return root
+
+
+
+
 func _add_archaeological_site_interaction(root: Node3D, feature_id: String, tags: Dictionary) -> void:
 	var site_name := str(tags.get("name:ar", tags.get("name", "موقع أثري موثق")))
 	var historic_kind := str(tags.get("historic", tags.get("site_type", "archaeological_site")))
@@ -1049,21 +1210,64 @@ func _add_archaeological_site_interaction(root: Node3D, feature_id: String, tags
 	interaction.name = "ArchaeologicalSiteInteraction"
 	interaction.add_to_group("system_interactable")
 	interaction.set_meta("osm_feature_id", feature_id)
-	interaction.set_meta("system_location_id", "baghdad_osm_archaeology_" + feature_id)
+	interaction.set_meta("system_location_id", "baghdad_osm_historic_" + feature_id)
 	interaction.set_meta("system_region_id", "region_baghdad")
 	interaction.set_meta("system_location_type", 7)
 	interaction.set_meta("system_fast_travel", false)
 	interaction.set_meta("system_location_position", root.position)
 	interaction.set_meta("system_display_name", site_name)
-	interaction.set_meta("system_interaction_prompt", "استكشاف موقع أثري موثق — فحص معلومات الموقع")
+	interaction.set_meta("system_interaction_prompt", "استكشاف معلم تاريخي موثق — فحص معلومات الموقع")
 	interaction.set_meta("system_historic_tag", historic_kind)
-	interaction.set_meta("system_access_state", "outdoor_archaeological_site")
+	interaction.set_meta("system_access_state", "historic_landmark_discovery")
 	var area_collision := CollisionShape3D.new()
 	var area_shape := SphereShape3D.new()
 	area_shape.radius = 5.5
 	area_collision.shape = area_shape
 	interaction.add_child(area_collision)
 	root.add_child(interaction)
+
+
+func _add_historic_polygon_landmark(parent: Node3D, ring: PackedVector2Array, height: float, feature_id: String, tags: Dictionary, landmark_kind: String) -> Node3D:
+	if ring.size() < 3:
+		return null
+	var center := Vector2.ZERO
+	for point in ring:
+		center += point
+	center /= float(ring.size())
+	var root := Node3D.new()
+	root.name = "OSMHistoricLandmarkDetail_%s" % feature_id
+	root.position = Vector3(center.x, _terrain_height(center), center.y)
+	root.set_meta("landmark_type", landmark_kind)
+	root.set_meta("osm_feature_id", feature_id)
+	root.set_meta("osm_historic_tag", str(tags.get("historic", "")))
+	parent.add_child(root)
+	var stone := StandardMaterial3D.new()
+	stone.albedo_color = Color(0.55, 0.43, 0.30)
+	stone.roughness = 0.94
+	var accent := StandardMaterial3D.new()
+	accent.albedo_color = Color(0.39, 0.32, 0.25)
+	accent.roughness = 0.98
+	match landmark_kind:
+		"historic_monument":
+			_build_point_historic_monument(root, tags, stone, accent)
+		"historic_tomb":
+			_build_point_historic_tomb(root, stone, accent)
+		"historic_building":
+			_build_point_historic_building(root, stone, accent)
+		"historic_fortification":
+			_build_point_historic_fortification(root, stone, accent)
+		"historic_gate":
+			_build_point_historic_gate(root, stone, accent)
+		_:
+			_build_point_archaeological_ruins(root, feature_id, stone, accent)
+	var label := Label3D.new()
+	label.name = "HistoricLandmarkLabel"
+	label.text = str(tags.get("name:ar", tags.get("name", "معلم تاريخي موثق")))
+	label.font_size = 20
+	label.position = Vector3(0.0, maxf(height, 7.0) + 2.0, 0.0)
+	label.modulate = Color(0.9, 0.78, 0.57)
+	root.add_child(label)
+	return root
 
 
 func _add_archaeological_ruin_detail(parent: Node3D, ring: PackedVector2Array, height: float, feature_id: String, tags: Dictionary) -> Node3D:
@@ -1076,7 +1280,7 @@ func _add_archaeological_ruin_detail(parent: Node3D, ring: PackedVector2Array, h
 	var root := Node3D.new()
 	root.name = "OSMArchaeologicalRuinDetail_%s" % feature_id
 	root.position = Vector3(center.x, _terrain_height(center), center.y)
-	root.set_meta("landmark_type", "archaeological_ruin")
+	root.set_meta("landmark_type", _historic_landmark_kind(tags))
 	root.set_meta("osm_feature_id", feature_id)
 	root.set_meta("osm_historic_tag", str(tags.get("historic", tags.get("building", "ruins"))))
 	parent.add_child(root)
@@ -1306,8 +1510,22 @@ func _building_height(tags: Dictionary) -> float:
 	var levels := str(tags.get("building:levels", "")).to_int()
 	if levels > 0 and levels <= 60:
 		return float(levels) * 3.2
-	if _is_archaeological_site(tags):
-		return 2.8
+	var historic_kind := _historic_landmark_kind(tags)
+	match historic_kind:
+		"archaeological_ruin":
+			return 2.8
+		"archaeological_site":
+			return 4.0
+		"historic_monument":
+			return 9.0
+		"historic_tomb":
+			return 8.0
+		"historic_fortification":
+			return 12.0
+		"historic_gate":
+			return 10.0
+		"historic_building":
+			return 8.0
 	var kind := str(tags.get("building", "yes")).to_lower()
 	if kind in ["house", "detached", "semidetached_house", "bungalow", "terrace"]:
 		return 6.5
@@ -1319,8 +1537,9 @@ func _building_height(tags: Dictionary) -> float:
 
 
 func _building_kind(tags: Dictionary) -> String:
-	if _is_archaeological_site(tags):
-		return "archaeological_ruin"
+	var historic_kind := _historic_landmark_kind(tags)
+	if not historic_kind.is_empty():
+		return historic_kind
 	var kind := str(tags.get("building", "yes")).to_lower()
 	if kind in ["house", "detached", "semidetached_house", "bungalow", "terrace"]:
 		return "detached_house"
@@ -1348,8 +1567,18 @@ func _building_material_for(kind: String) -> StandardMaterial3D:
 			material.albedo_color = Color(0.72, 0.67, 0.52)
 		"church":
 			material.albedo_color = Color(0.70, 0.63, 0.52)
-		"archaeological_ruin":
+		"archaeological_ruin", "archaeological_site":
 			material.albedo_color = Color(0.48, 0.38, 0.28)
+		"historic_monument":
+			material.albedo_color = Color(0.61, 0.54, 0.45)
+		"historic_tomb":
+			material.albedo_color = Color(0.66, 0.57, 0.43)
+		"historic_building":
+			material.albedo_color = Color(0.59, 0.44, 0.29)
+		"historic_fortification":
+			material.albedo_color = Color(0.45, 0.36, 0.27)
+		"historic_gate":
+			material.albedo_color = Color(0.57, 0.45, 0.31)
 	return material
 
 
