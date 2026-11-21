@@ -509,10 +509,10 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 ## Power Tower, football stadium and motorsport follow-up — 21 November 2026
 
 - [x] Keep Power Tower detached from the five-tower connected district and all district skybridge loops.
-- [x] Align the Power Tower's visible architectural floor bands with its existing 100-floor progression data (previous visual count was only 28).
+- [x] Align the independent Power Tower architecture with the 200-floor progression system; keep it separate from the five connected Baghdad towers.
 - [x] Add an independent physical challenge-arena blockout at the Power Tower, with a walkable floor, ring boundary, spectator tiers, lighting and arena signage.
 - [x] On a valid next-floor request, move the player to the separate arena and clearly report that opponent/combat integration is still pending.
-- [ ] Add floor-specific combat rooms, real opponent/boss spawning, combat objective verification, return flow, and secure clear-time/rank validation. The current 100-floor manager is progression metadata and save state; it is not yet a complete combat loop.
+- [ ] Add floor-specific combat rooms, real opponent/boss spawning, combat objective verification, return flow, and secure clear-time/rank validation. The current 200-floor manager stores progression metadata and save state; generated physical exploration environments are now built one active floor at a time, while combat and boss gameplay remain incomplete.
 - [x] Expand Baghdad's football stadium from a flat placeholder into an open pitch blockout with grass bands, boundary/halfway lines, center circle, penalty areas, goals, four-sided spectator stands, and an open playable pitch collision surface.
 - [x] Disable the solid stadium-shell collider that previously blocked access to the field; add an entry transition from the stadium interaction point to the pitch.
 - [ ] Add ball physics, player/team control, match rules, goalkeeper/keeper AI, fouls, score, clock, tournaments, multiplayer and spectator NPC behavior.
@@ -738,3 +738,19 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Complete the remaining service buildings (schools/universities, hospitals, police/fire stations, hotels, markets, transport hubs, shops, libraries, cinemas, gyms and other civic services) with distinct room layouts and functional interiors.
 - [ ] Integrate each completed building's entrance, interior navigation, service interactions and map marker into the unified city map and streamed region lifecycle.
 - Note: this pass upgrades the four Baghdad civic interiors from open placeholder rooms to collision-backed traversable architectural shells with venue-specific fixtures. It does not yet mean all city buildings or all interiors are production-complete.
+
+
+## Power Tower — first physical 200-floor exploration-world pass — 21 November 2026
+
+- [x] Add a dedicated system_power_tower_floor_world.gd builder without replacing the existing 200-floor progression manager or the independent arena venue.
+- [x] Generate a collision-backed, 520 m exploration ground and traversable route for the requested floor, instancing only the active floor to control memory and scene cost.
+- [x] Generate deterministic region-specific environment layouts across the ten existing region profiles, with floor-seeded obstacle and landmark variation.
+- [x] Add three physical checkpoint trigger areas and connect their player-entry events to the existing progression manager's ordered checkpoint records.
+- [x] Add a physical boss-trial platform and spawn marker on every tenth floor, including the floor-200 finale.
+- [x] Add a return gate that sends the player back to the Power Tower entrance while preserving reached checkpoints for a retry.
+- [x] Route the Power Tower entrance interaction into the generated floor environment rather than sending every floor attempt to the same arena floor.
+- [x] Extend the existing Power Tower validator and Godot workflow to check generated ground collision, all three checkpoint areas, checkpoint registration, and the floor-200 boss platform.
+- [ ] Run the updated Godot 4.3 workflow on the new branch head and fix any parser/runtime issues it reports.
+- [ ] Replace primitive environment geometry with authored biome assets, varied terrain elevation, water, caves, structures, lighting, sound, vegetation and navigation.
+- [ ] Add actual floor-specific quests, secret discoveries with rewards, enemy populations, boss characters, combat objective verification, and a complete return/reward flow.
+- Note: this is a first physical procedural exploration pass for all 200 floor IDs, not 200 individually hand-authored finished maps. Each active floor is generated from its region profile and stable floor seed; final art, enemy AI, quest content and runtime validation remain outstanding.
