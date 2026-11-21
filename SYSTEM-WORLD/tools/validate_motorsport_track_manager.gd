@@ -178,6 +178,26 @@ func _initialize() -> void:
 			_fail("AI standings did not prioritize laps and ordered checkpoint progress.")
 			return
 
+	# Unified standings must include the player and rank the player against AI opponents.
+	race_manager.active_race = {"event_id": "city_sprint"}
+	race_manager.race_is_running = true
+	race_manager.race_countdown_remaining = -1.0
+	race_manager.completed_laps = 1
+	race_manager.total_laps = 3
+	race_manager.next_checkpoint_index = 2
+	race_manager.race_elapsed = 85.0
+	test_vehicle.global_position = manager.checkpoint_areas[2].global_position + Vector3(0.0, 0.0, 1.0)
+	var unified_standings: Array[Dictionary] = manager.get_race_standings()
+	var expected_unified_order := ["ai_finished", "ai_second", "ai_same_lap_advanced", "player", "ai_same_lap_middle", "ai_third"]
+	if unified_standings.size() != expected_unified_order.size():
+		_fail("Unified race standings did not include the player and all AI opponents.")
+		return
+	for index in range(expected_unified_order.size()):
+		if str(unified_standings[index].get("opponent_id", "")) != expected_unified_order[index]:
+			_fail("Unified player-versus-AI standings are not sorted by live race progress.")
+			return
+	race_manager.cancel_race()
+
 	var info: Dictionary = manager.get_track_info()
 	if int(info.get("pit_garage_count", 0)) != 8 or int(info.get("marshal_post_count", 0)) != 4:
 		_fail("Track info does not report the physical garage and marshal facilities.")
