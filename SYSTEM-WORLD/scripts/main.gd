@@ -26,6 +26,7 @@ const PlayerProgressionScript = preload("res://scripts/system_player_progression
 const PlayerVehicleManagerScript = preload("res://scripts/system_player_vehicle_manager.gd")
 const VehicleRuntimeManagerScript = preload("res://scripts/system_vehicle_runtime_manager.gd")
 const MotorsportManagerScript = preload("res://scripts/system_motorsport_manager.gd")
+const FootballMatchManagerScript = preload("res://scripts/system_football_match_manager.gd")
 const MotorsportTrackManagerScript = preload("res://scripts/system_motorsport_track_manager.gd")
 const CrimeResponseManagerScript = preload("res://scripts/modern_city_crime_response_manager.gd")
 const CityFactionManagerScript = preload("res://scripts/system_city_faction_manager.gd")
@@ -59,6 +60,7 @@ var economy_manager: Node
 var business_services_menu: CanvasLayer
 var vehicle_runtime_manager
 var motorsport_manager
+var football_match_manager: Node
 var motorsport_track_manager
 var crime_response_manager
 var city_faction_manager: Node
@@ -1143,10 +1145,27 @@ func _on_interaction_performed(
 	if location_id == "service_baghdad_stadium":
 		var stadium := target.get_parent()
 		if stadium != null and player != null:
+			if not is_instance_valid(football_match_manager) or football_match_manager.get_parent() != stadium:
+				if is_instance_valid(football_match_manager):
+					football_match_manager.queue_free()
+				football_match_manager = FootballMatchManagerScript.new()
+				football_match_manager.name = "SYSTEMFootballMatchManager"
+				stadium.add_child(football_match_manager)
+				football_match_manager.call("setup", stadium, player)
 			player.global_position = stadium.global_position + Vector3(0.0, 2.0, 0.0)
 			player.velocity = Vector3.ZERO
 			if interaction_prompt_label != null:
-				interaction_prompt_label.text = "دخلت ملعب كرة القدم — الملعب مفتوح للاستكشاف؛ نظام المباريات والفرق قيد التطوير."
+				interaction_prompt_label.text = "دخلت ملعب بغداد — ابدأ المباراة من مكتب الإدارة، ثم اقترب من الكرة وتفاعل لركلها."
+	elif location_id == "baghdad_stadium_match_control":
+		if is_instance_valid(football_match_manager):
+			var match_result: Dictionary = football_match_manager.call("start_match")
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "ملعب بغداد: " + ("بدأت المباراة! اقترب من الكرة لركلها." if bool(match_result.get("success", false)) else str(match_result.get("reason", "تعذر بدء المباراة")))
+	elif location_id == "baghdad_stadium_ball":
+		if is_instance_valid(football_match_manager) and player != null:
+			var kick_result: Dictionary = football_match_manager.call("kick_ball_toward_goal", player)
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "ملعب بغداد: " + ("تم ركل الكرة باتجاه المرمى." if bool(kick_result.get("success", false)) else str(kick_result.get("reason", "تعذر ركل الكرة")))
 	elif location_id == "baghdad_motorsport_leaderboard":
 		_show_motorsport_leaderboard()
 	elif location_id == "baghdad_motorsport_race_control":
