@@ -65,6 +65,12 @@ func _initialize() -> void:
 	var ui = FACTION_UI_SCRIPT.new()
 	ui.call("setup", manager)
 	root.add_child(ui)
+	# CanvasLayer creates its controls in _ready(); wait before opening the board.
+	await process_frame
+	if ui.panel == null or ui.faction_list == null:
+		push_error("City faction validation failed: faction UI did not initialize.")
+		quit(1)
+		return
 	ui.call("open_city", "Baghdad")
 	if not bool(ui.panel.visible) or ui.faction_list.get_child_count() != 3:
 		push_error("City faction validation failed: in-world faction board did not display all Baghdad factions.")
