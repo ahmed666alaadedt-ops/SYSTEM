@@ -39,6 +39,8 @@ const InventoryPanelScript = preload("res://scripts/system_inventory_panel.gd")
 const PlayerCharacterModelScript = preload("res://scripts/npc_character_model.gd")
 const PlayerCharacterCreatorScript = preload("res://scripts/system_player_character_creator.gd")
 const SYSTEMCompanionManagerScript = preload("res://scripts/system_companion_manager.gd")
+const SYSTEMEconomyManagerScript = preload("res://scripts/system_economy_manager.gd")
+const SYSTEMBusinessServicesMenuScript = preload("res://scripts/system_business_services_menu.gd")
 
 var world_manager
 var world_map_manager
@@ -50,6 +52,8 @@ var wildlife_manager
 var mission_reward_manager
 var player_progression
 var player_vehicle_manager
+var economy_manager: Node
+var business_services_menu: CanvasLayer
 var vehicle_runtime_manager
 var motorsport_manager
 var motorsport_track_manager
@@ -109,6 +113,7 @@ func _ready() -> void:
 	create_player_progression()
 	create_inventory_panel()
 	create_player_vehicle_manager()
+	create_business_services()
 	create_vehicle_runtime_manager()
 	create_motorsport_manager()
 	create_modern_city_crime_manager()
@@ -336,6 +341,18 @@ func create_player_vehicle_manager() -> void:
 				for dealership in region.get_children():
 					if dealership.has_method("setup") and dealership.name.ends_with("VehicleDealership"):
 						dealership.setup(player_vehicle_manager)
+
+
+func create_business_services() -> void:
+	economy_manager = SYSTEMEconomyManagerScript.new()
+	economy_manager.name = "SYSTEMEconomyManager"
+	economy_manager.setup(player_vehicle_manager)
+	add_child(economy_manager)
+
+	business_services_menu = SYSTEMBusinessServicesMenuScript.new()
+	business_services_menu.name = "SYSTEMBusinessServicesMenu"
+	business_services_menu.setup(economy_manager)
+	add_child(business_services_menu)
 
 
 func create_vehicle_runtime_manager() -> void:
@@ -1014,6 +1031,15 @@ func _on_interaction_performed(
 					service_description = "تم فتح لوحة مهام النقابة."
 				elif location_id.ends_with("_2"):
 					service_description = "تم فتح مكتب معلومات النقابة."
+		elif location_id.begins_with("tower_service_business_tower_baghdad_"):
+			if is_instance_valid(business_services_menu) and business_services_menu.has_method("open_service_view"):
+				business_services_menu.call("open_service_view", location_id)
+				if location_id.ends_with("_0"):
+					service_description = "تم فتح مركز استشارات الأعمال."
+				elif location_id.ends_with("_1"):
+					service_description = "تم فتح مكتب الاستثمار؛ السوق الاستثماري ما زال مغلقاً حتى اكتمال ضوابطه."
+				elif location_id.ends_with("_2"):
+					service_description = "تم فتح مكتب تسجيل الشركات."
 		if interaction_prompt_label != null:
 			interaction_prompt_label.text = "%s\\n%s" % [service_title, service_description]
 	elif location_id.begins_with("street_ad_"):
