@@ -421,3 +421,22 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Add complete race UI/event selection, opponents/grid AI, timing display, vehicle recovery, track marshal behavior, replay and tested finish/reward flow.
 - [ ] Run Godot 4.3 parser/import/headless scene validation and Android gameplay/performance tests for all new venue changes before calling them verified.
 - Note: arena, stadium and race-venue geometry are procedural blockouts. A connected interaction or API call does not mean combat, football matches, AI racing, or the full event experience is complete.
+
+
+## City street advertising and live map campaign network — 21 November 2026
+
+- [x] Add a dedicated modern-world city advertising manager, separate from the public champion/results display.
+- [x] Create three procedural interactive street billboard displays per generated modern-world city, with Arabic text, visible frames, supports, lighting surfaces, and interaction areas.
+- [x] Add a timed campaign rotation covering Hunter Association tests, city commerce, Power Tower, football, motorsport, and seasonal city events.
+- [x] Show the active campaign category, title, body, suggested action, and expiry when the player interacts with a street board.
+- [x] Register street billboard IDs and current campaign data in the world map manager.
+- [x] Render advertisement markers with a distinct visual symbol on the modern-world map and show campaign details from the map's advertisement list.
+- [x] Add a Baghdad map action to request navigation to a street billboard through the existing real-road route service; route generation still depends on available connected OSM cells.
+- [x] Avoid redundant map refreshes while the current campaign remains unchanged.
+- [x] Document campaign lifecycle, placement, moderation, privacy, fairness, performance, backend, and production requirements in `CITY_ADVERTISING_SYSTEM_DESIGN.md`.
+- [ ] Add final art assets, city-specific billboard styles, animation/video display surfaces, and more realistic street placement validated against loaded road/building geometry.
+- [ ] Add direct map-pin touch selection, search and category filters, hide/report controls, and accessible campaign settings.
+- [ ] Add authorized campaign-management tools, server-authoritative scheduling, moderation, advertiser accounts, billing, analytics, and anti-fraud controls. Current campaigns are local demo data only.
+- [ ] Extend campaign support to the historical, mythic/fantasy, and Greed Island worlds after their distinct in-world media rules are designed.
+- [ ] Run Godot 4.3 parser/import/headless validation after the advertising integration and verify in-world board interactions, map refresh, expiry/rotation, and Baghdad route requests on Android.
+- Note: this is a first functional local campaign prototype. It does not yet provide a live commercial advertising network, online campaign administration, or final-quality art. Street and map campaigns are linked by stable board IDs, but the complete production lifecycle remains future work.
