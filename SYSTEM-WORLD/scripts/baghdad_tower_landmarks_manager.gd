@@ -4,6 +4,7 @@ class_name BaghdadTowerLandmarksManager
 const EntranceScript = preload("res://scripts/system_tower_entrance.gd")
 const HeadquartersInteriorScript = preload("res://scripts/system_hunter_headquarters_interior.gd")
 const TowerInteriorScript = preload("res://scripts/system_baghdad_tower_interior.gd")
+const BaghdadTowerFloorWorldScript = preload("res://scripts/system_baghdad_tower_floor_world.gd")
 const PowerTowerArenaVenueScript = preload("res://scripts/system_power_tower_arena_venue.gd")
 const PowerTowerFloorWorldScript = preload("res://scripts/system_power_tower_floor_world.gd")
 const HUNTER_TOWER_HEIGHT := 1000.0
@@ -225,7 +226,12 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 		var tower_interior := TowerInteriorScript.new()
 		tower_interior.name = "TowerInterior"
 		root.add_child(tower_interior)
-		tower_interior.call("build", location_id, title, EntranceScript, entrance.global_position + Vector3(0.0, 0.0, 5.0))
+		tower_interior.call("build", location_id, title, EntranceScript, entrance.global_position + Vector3(0.0, 0.0, 5.0), floors)
+		var tower_floor_world := BaghdadTowerFloorWorldScript.new()
+		tower_floor_world.name = "BaghdadTowerFloorWorld"
+		tower_floor_world.position = Vector3(0.0, 4000.0, 0.0)
+		root.add_child(tower_floor_world)
+		tower_floor_world.call("setup", location_id, floors)
 
 	var label := Label3D.new()
 	label.name = "TowerNameSign"
@@ -252,6 +258,13 @@ func _nearest_land_position(origin: Vector2) -> Vector2:
 			if terrain.call("is_land_position", candidate.x, candidate.y):
 				return candidate
 	return Vector2.INF
+
+
+func get_tower_root(tower_id: String) -> Node3D:
+	for child in get_children():
+		if child is Node3D and str(child.get_meta("tower_id", "")) == tower_id:
+			return child as Node3D
+	return null
 
 
 func get_tower_positions() -> Array[Dictionary]:
