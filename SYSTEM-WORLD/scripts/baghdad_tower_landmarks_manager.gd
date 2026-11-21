@@ -102,7 +102,7 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	root.name = node_name
 	root.position = Vector3(resolved.x, float(terrain.call("get_terrain_height", resolved.x, resolved.y)), resolved.y)
 	add_child(root)
-	var tower_record := {"id": location_id, "name": title, "position": root.position, "height": height, "radius": radius}
+	var tower_record := {"id": location_id, "name": title, "position": root.position, "height": height, "radius": radius, "floors": floors}
 	tower_positions.append(tower_record)
 	if connected_to_district:
 		connected_tower_positions.append(tower_record)
