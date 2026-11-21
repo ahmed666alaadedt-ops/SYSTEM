@@ -46,13 +46,15 @@ The examination is a difficult, multi-city journey. It tests judgment, observati
 
 | Stage | Location | Core challenge |
 |---|---|---|
-| 1 | Baghdad — Mesopotamian heritage site | Recover the correct artifact, interpret inscriptions, identify false clues, and avoid traps |
-| 2 | Cairo — buried market | Navigate a layered maze with shifting routes, limited supplies, and misleading signs |
-| 3 | Alexandria — lighthouse and coast | Navigate a storm, restore signal mechanisms, and rescue separated candidates |
-| 4 | Paris — catacombs | Solve sound and logic puzzles while moving quietly through monitored passages |
-| 5 | Babylon — ancient ruins | Read the guardian mechanism and survive a high-risk guardian trial |
-| 6 | Tokyo — urban districts | Complete a changing pursuit and observation course without endangering civilians |
-| 7 | Highland frontier | Complete a long survival and teamwork route under harsh weather and resource pressure |
+| 1 | Baghdad outskirts | Endurance pursuit, tracking checkpoints, resource control and civilian safety |
+| 2 | Babylon frontier | Fieldcraft, ingredient gathering, knowledge checks and cooking |
+| 3 | Baghdad examination tower | Multi-route tower, linked puzzles, decisions and team coordination |
+| 4 | Island wilderness | Survival, water, food, shelter, weather and extraction |
+| 5 | Freeport district | Strategy, evidence gathering, deception detection and negotiation |
+| 6 | Hunter arena | Individual duels emphasizing control, defense and rule compliance |
+| 7 | Classified SYSTEM location | A secret rotating final trial combining observation, judgment and cooperation |
+
+The physical Baghdad association tunnel now displays seven numbered stage gates, a registration interaction, a public notice interaction and a start/resume interaction. These gates are a candidate-facing route and briefing blockout; they do not mean the seven remote challenge environments are already built.
 
 The design can include candidate-number competition and controlled attempts to obtain another candidate's number in a dedicated later stage. Any such mechanic must have clear rules, prevent permanent account theft, and be judged as part of the examination rather than as an unrestricted griefing feature.
 
@@ -62,11 +64,13 @@ The design can include candidate-number competition and controlled attempts to o
 - The candidate number is saved locally with the current registration record.
 - Completed stage IDs and examination state are written to `user://system_hunter_exam.cfg`.
 - Stage order is enforced by the manager.
-- A provisional license signal is emitted only after all seven stage IDs have been completed.
+- The manager enforces the seven-stage order and saves candidate identity, attempt number, completed stages, failure time and permanent-license state.
+- A failed candidate may register for the next weekly examination cycle; the retry timestamp is exposed to the guild UI.
+- The permanent `HUNTER_LICENSE` signal is emitted only after all seven stage IDs have been completed.
 
 ## Important implementation boundary
 
-The current work creates the procedural tower blockouts, entrance interaction markers, menu registration/start controls, and the examination progression data manager. It does **not** yet create the explorable interior floors, the seven physical stage environments, the actual maze geometry, puzzle devices, guardian AI encounters, city-to-city travel sequences, server-authoritative candidate verification, anti-cheat checks, or a production Hunter-license card. The entrance currently reports an interaction; it does not yet load a tower interior scene.
+The current work creates the procedural tower blockouts, entrance interaction markers, menu registration/start controls, a seven-gate tunnel briefing route, and a persistent seven-stage examination progression manager. It does **not** yet create the explorable interior floors, the seven physical stage environments, the actual maze geometry, puzzle devices, guardian AI encounters, city-to-city travel sequences, server-authoritative candidate verification, anti-cheat checks, or a production Hunter-license card. The entrance currently reports an interaction; it does not yet load a tower interior scene.
 
 The Power Tower now has a separate 200-floor progression manager with unlock order, level gates, boss/elite classification, rank bands, saved highest-floor and clear-time records, and a reward signal connected to player XP. Actual combat encounters, floor scenes, opponent AI, rankings, and a trusted combat-verification caller remain to be implemented.
 
