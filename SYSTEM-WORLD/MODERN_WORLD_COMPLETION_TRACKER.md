@@ -760,7 +760,8 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 
 ## Baghdad archaeological sites and ruins — OSM-grounded landmark pass — 21 November 2026
 
-- [x] Use existing OSM historic tags retained by the Baghdad cell-pack pipeline; do not invent or move real archaeological site coordinates.
+- [x] Add a dedicated historic-sites OSM layer to the Baghdad extraction, clipping and metric cell-pack pipeline; retain historic tags and source feature IDs.
+- [x] Stream the dedicated historic-sites layer into Baghdad cells and prevent duplicate ruin landmarks when a feature is also present in the buildings/amenities layers.
 - [x] Recognize OSM archaeological_site, ruins, castle, fort and city_gate tags, plus building=ruins and site_type=archaeological.
 - [x] Generate collision-backed outdoor ruin details for tagged ruin building footprints while retaining their source OSM feature IDs.
 - [x] Support both historic point features and polygon/multipolygon archaeological site boundaries in the OSM amenity layer, with collision-backed ruin fragments and stable discovery interactions.
