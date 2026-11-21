@@ -920,7 +920,7 @@ func _build_historic_site_feature(parent: Node3D, feature: Dictionary) -> int:
 
 
 func _is_kadhimiya_historic_feature(tags: Dictionary) -> bool:
-	for key in ["name", "name:ar", "name:en", "addr:suburb", "addr:district", "addr:neighbourhood"]:
+	for key in ["name", "name:ar", "name:en", "addr:suburb", "addr:district", "addr:neighbourhood", "addr:city", "addr:quarter"]:
 		var value := str(tags.get(key, "")).to_lower()
 		if value.contains("الكاظمية") or value.contains("kadhimiya") or value.contains("kadhimain"):
 			return true
