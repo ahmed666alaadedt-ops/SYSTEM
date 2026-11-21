@@ -74,7 +74,7 @@ func create_auction(item_id: String, seller_id: String, reserve_price: int = 0) 
 func place_bid(auction_id: String, bidder_id: String, amount: int) -> Dictionary:
 	if wallet == null or not is_instance_valid(wallet):
 		return {"success":false,"reason":"LOCAL_WALLET_UNAVAILABLE"}
-	if bidder_id.is_empty() or amount <= 0 or amount > MAX_BID:
+	if bidder_id != "local_player" or amount <= 0 or amount > MAX_BID:
 		return {"success":false,"reason":"INVALID_BID"}
 	if not auctions.has(auction_id):
 		return {"success":false,"reason":"AUCTION_NOT_FOUND"}
@@ -122,7 +122,8 @@ func settle_auction(auction_id: String) -> Dictionary:
 		return {"success":true,"status":"NO_SALE"}
 	if wallet == null or not is_instance_valid(wallet):
 		return {"success":false,"reason":"LOCAL_WALLET_UNAVAILABLE"}
-	wallet.call("credit_currency", "SYSTEM_CREDITS", amount)
+	if seller == "local_player":
+		wallet.call("credit_currency", "SYSTEM_CREDITS", amount)
 	_remove_item(seller, str(auction.get("item_id", "")))
 	_add_item(bidder, str(auction.get("item_id", "")))
 	auction["status"] = "SOLD"
