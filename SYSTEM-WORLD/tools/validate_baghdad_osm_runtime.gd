@@ -33,6 +33,10 @@ func _run_validation() -> void:
 		_fail("Baghdad center cell did not load.")
 		return
 	var cell_root: Node3D = streamer.loaded_cells[Vector2i(0, 0)]
+	var cell_feature_counts: Dictionary = cell_root.get_meta("feature_counts", {})
+	if not cell_feature_counts.has("historic-sites"):
+		_fail("Baghdad OSM cell did not report its dedicated historic-sites layer.")
+		return
 	if str(cell_root.get_meta("region_id", "")) != "iraq_baghdad_region":
 		_fail("Loaded cell does not expose its canonical region ID.")
 		return
