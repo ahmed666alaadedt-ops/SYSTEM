@@ -89,6 +89,31 @@ func _physics_process(_delta: float) -> void:
 		pit_lane_speed_violation.emit(speed_kph, PIT_SPEED_PENALTY_SECONDS)
 		push_warning("SYSTEM Motorsport: pit lane speed %.1f km/h exceeded the %.1f km/h limit; %.1f seconds added." % [speed_kph, PIT_LANE_SPEED_LIMIT_KPH, PIT_SPEED_PENALTY_SECONDS])
 
+
+func _process(_delta: float) -> void:
+	_validate_countdown_grid_state()
+
+
+## Cancel the start while the countdown is active if the player leaves the car
+## or the staged vehicle moves away from the starting grid.
+func _validate_countdown_grid_state() -> void:
+	if not is_instance_valid(motorsport_manager) or not motorsport_manager.has_method("is_race_active"):
+		return
+	if not bool(motorsport_manager.call("is_race_active")):
+		return
+	var countdown_remaining := float(motorsport_manager.get("race_countdown_remaining"))
+	if countdown_remaining < 0.0 or bool(motorsport_manager.get("race_is_running")):
+		return
+	if not is_instance_valid(vehicle_runtime_manager) or not bool(vehicle_runtime_manager.get("is_driving")):
+		if motorsport_manager.has_method("cancel_race"):
+			motorsport_manager.call("cancel_race")
+		return
+	var active_vehicle := vehicle_runtime_manager.get("active_vehicle") as Node3D
+	if not is_instance_valid(active_vehicle) or active_vehicle.global_position.distance_to(get_start_grid_position()) > 22.0:
+		if motorsport_manager.has_method("cancel_race"):
+			motorsport_manager.call("cancel_race")
+
+
 func _ready() -> void:
 	name = "SystemMotorsportTrackManager"
 	_build_baghdad_track()
@@ -357,7 +382,10 @@ func _on_motorsport_race_started(event_id: String, _player_vehicle_id: String) -
 	print("SYSTEM Motorsport AI: %d circuit opponents entered %s." % [ai_opponent_nodes.size(), event_id])
 
 func _on_player_driving_changed(active: bool, _vehicle_id: String) -> void:
-	if not active or not ai_race_pending_start:
+	if not active:
+		_validate_countdown_grid_state()
+		return
+	if not ai_race_pending_start:
 		return
 	if not is_instance_valid(motorsport_manager) or not motorsport_manager.has_method("begin_race_countdown"):
 		return
