@@ -586,3 +586,13 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Add a complete return/abort route, candidate queue, NPC exam staff, multiplayer synchronization, and server-authoritative candidate identity.
 - [ ] Run Godot 4.3 parser/import and in-engine collision, camera, interaction-ray, player-clearance, lighting, and Android performance checks.
 - Note: this is a procedural architectural and interaction prototype inside the Hunter Association Tower. It does not yet teleport candidates into a playable external challenge map or validate exam evidence.
+
+
+## Hunter Association public examination announcement — 21 November 2026
+
+- [x] Add a large, clearly visible Arabic/English "Hunter Examination Center" sign directly above the tunnel entrance in the Association Tower lobby.
+- [x] Add an official public notice board beside the entrance explaining registration, public information, announced candidate batches, and the registered/accepted-candidate entry rule.
+- [x] Add an interaction on the public notice board that opens the existing Hunter Association information desk view.
+- [x] Mark the exam center as publicly announced in the interior metadata; it is an official visible Association facility, not a hidden or secret tunnel.
+- [ ] Verify sign and board readability, placement, collision, and interaction reach in Godot 4.3 and on Android.
+- Note: the notice board does not invent fixed exam dates or imply that registration is currently open. The tunnel start gate still checks the existing local exam registration/state flow; final candidate eligibility and server authority remain future work.
