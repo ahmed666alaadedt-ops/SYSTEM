@@ -15,7 +15,7 @@ const LOTS := {
 	"lapis_guardian_figurine": {"name":"Lapis Guardian Figurine","era":"Neo-Sumerian-inspired (fictional game item)","rarity":"LEGENDARY","opening_bid":5000,"museum_value":11000,"provenance":"Museum-deaccession story arc; chain of custody documented in-game","authenticity":"VERIFIED"},
 	"royal_trade_tablet": {"name":"Royal Trade Tablet","era":"Old Babylonian-inspired (fictional game item)","rarity":"MYTHIC","opening_bid":12000,"museum_value":28000,"provenance":"Found in a sealed fictional archive vault","authenticity":"SEALED"}
 }
-const AUCTION_DURATION_SECONDS := 180
+const AUCTION_DURATION_SECONDS := 3600
 const MAX_BID := 1000000
 
 var wallet: Node
