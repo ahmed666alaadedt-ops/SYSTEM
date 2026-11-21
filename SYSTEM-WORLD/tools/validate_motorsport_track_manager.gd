@@ -6,6 +6,8 @@ func _initialize() -> void:
 	var manager: SystemMotorsportTrackManager = TRACK_SCRIPT.new() as SystemMotorsportTrackManager
 	manager.setup(null, null, null)
 	root.add_child(manager)
+	# The track is constructed from _ready(); wait for the manager to enter the tree.
+	await process_frame
 	var track_root: Node3D = manager.track_root
 	if not is_instance_valid(track_root):
 		_fail("Baghdad motorsport track root was not built.")
