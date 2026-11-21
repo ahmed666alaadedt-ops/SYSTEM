@@ -101,7 +101,9 @@ func _build_hunter_exam_tunnel() -> void:
 		var z := -23.0 - float(index) * 7.2
 		_add_visual_box("ExamTunnelLightStrip_%02d" % index, Vector3(0.0, 9.55, z), Vector3(12.0, 0.12, 0.24), trim_mat)
 		_add_visual_box("ExamTunnelFloorGuide_%02d" % index, Vector3(0.0, 0.055, z), Vector3(10.0, 0.045, 0.12), trim_mat)
-		_add_solid_box("ExamTunnelFrame_%02d" % index, Vector3(0.0, 5.0, z), Vector3(0.22, 9.0, 0.35), gold_mat)
+		_add_visual_box("ExamTunnelFrame_Left_%02d" % index, Vector3(-8.45, 5.0, z), Vector3(0.22, 9.0, 0.35), gold_mat)
+		_add_visual_box("ExamTunnelFrame_Right_%02d" % index, Vector3(8.45, 5.0, z), Vector3(0.22, 9.0, 0.35), gold_mat)
+		_add_visual_box("ExamTunnelFrame_Header_%02d" % index, Vector3(0.0, 9.4, z), Vector3(17.0, 0.22, 0.35), gold_mat)
 		var side_light := OmniLight3D.new()
 		side_light.name = "ExamTunnelLamp_%02d" % index
 		side_light.position = Vector3(0.0, 8.2, z)
