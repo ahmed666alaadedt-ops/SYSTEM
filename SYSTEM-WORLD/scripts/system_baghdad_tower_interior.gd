@@ -434,6 +434,7 @@ func _build_upper_floor_access() -> void:
 		_add_visual_box("LiftDoor_Right_%02d" % floor_number, Vector3(11.0, floor_y + 4.0, 11.6), Vector3(1.8, 7.0, 0.22), edge_material)
 		_build_floor_theme(floor_number, floor_y, floor_material, edge_material)
 		_create_floor_selector(floor_number, floor_y)
+		_create_lobby_floor_selector(floor_number, floor_y)
 
 
 func _create_floor_selector(floor_number: int, floor_y: float) -> void:
@@ -451,6 +452,41 @@ func _create_floor_selector(floor_number: int, floor_y: float) -> void:
 	collision.shape = shape
 	area.add_child(collision)
 	area.position = Vector3(10.0, floor_y + 1.5, 8.0)
+	add_child(area)
+
+
+func _create_lobby_floor_selector(floor_number: int, floor_y: float) -> void:
+	if entrance_script == null:
+		return
+	var selector_index := floor_number - 2
+	var x_position := -15.0 + float(selector_index) * 10.0
+	var panel_material := _material(Color(0.035, 0.12, 0.18), 0.24, 0.62)
+	var accent_material := _material(Color(0.04, 0.58, 0.82), 0.22, 0.4)
+	accent_material.emission_enabled = true
+	accent_material.emission = Color(0.02, 0.34, 0.72)
+	accent_material.emission_energy_multiplier = 1.4
+	_add_solid_box("LobbyLiftPanel_%02d" % floor_number, Vector3(x_position, 1.5, 5.0), Vector3(3.4, 3.0, 0.7), panel_material)
+	_add_visual_box("LobbyLiftPanelScreen_%02d" % floor_number, Vector3(x_position, 2.0, 4.58), Vector3(2.5, 1.25, 0.12), accent_material)
+	var label := Label3D.new()
+	label.name = "LobbyLiftPanelLabel_%02d" % floor_number
+	label.text = "طابق %02d" % floor_number
+	label.font_size = 20
+	label.position = Vector3(x_position, 3.4, 4.45)
+	label.pixel_size = 0.012
+	label.modulate = Color(0.78, 0.94, 1.0)
+	add_child(label)
+	var area: Area3D = entrance_script.new()
+	area.name = "LobbyLiftSelector_%02d" % floor_number
+	area.configure("tower_floor_%s_%02d" % [tower_id, floor_number], "المصعد إلى الطابق %02d" % floor_number, "region_baghdad")
+	area.set_meta("system_destination_position", to_global(Vector3(10.0, floor_y + 1.5, 12.0)))
+	area.set_meta("system_display_name", "مصعد الطابق %02d" % floor_number)
+	area.set_meta("system_interaction_prompt", "الانتقال إلى الطابق %02d" % floor_number)
+	var collision := CollisionShape3D.new()
+	var shape := SphereShape3D.new()
+	shape.radius = 2.4
+	collision.shape = shape
+	area.add_child(collision)
+	area.position = Vector3(x_position, 1.5, 6.5)
 	add_child(area)
 
 
