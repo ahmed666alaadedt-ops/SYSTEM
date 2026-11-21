@@ -304,14 +304,22 @@ func update_advertisement(world_id: String, advertisement_id: String, campaign: 
 	if not ads.has(advertisement_id):
 		return false
 	var record: Dictionary = ads[advertisement_id]
-	record["campaign_title"] = str(campaign.get("title", ""))
-	record["campaign_category"] = str(campaign.get("category", ""))
-	record["campaign_body"] = str(campaign.get("body", ""))
-	record["campaign_action"] = str(campaign.get("action", ""))
-	record["expires_at"] = int(campaign.get("expires_at", 0))
+	var next_values := {
+		"campaign_title": str(campaign.get("title", "")),
+		"campaign_category": str(campaign.get("category", "")),
+		"campaign_body": str(campaign.get("body", "")),
+		"campaign_action": str(campaign.get("action", "")),
+		"expires_at": int(campaign.get("expires_at", 0))
+	}
+	var changed := false
+	for field in next_values.keys():
+		if record.get(field) != next_values[field]:
+			changed = true
+		record[field] = next_values[field]
 	ads[advertisement_id] = record
-	map_updated.emit(world_id)
-	return true
+	if changed:
+		map_updated.emit(world_id)
+	return changed
 
 
 func get_advertisements(world_id: String) -> Array[Dictionary]:
