@@ -1052,8 +1052,11 @@ func _on_interaction_performed(
 		if hunter_exam_manager != null:
 			var registration_result: Dictionary = hunter_exam_manager.apply_for_exam("local_player")
 			var guild_menu := get_node_or_null("HunterGuildMenu")
-			if guild_menu != null and guild_menu.has_method("set_exam_status"):
-				guild_menu.call("set_exam_status", registration_result)
+			if guild_menu != null:
+				if guild_menu.has_method("open_service_view"):
+					guild_menu.call("open_service_view", "tower_service_hunter_association_tower_baghdad_0")
+				if guild_menu.has_method("set_exam_status"):
+					guild_menu.call("set_exam_status", registration_result)
 			if interaction_prompt_label != null:
 				interaction_prompt_label.text = "اختبار الصيادين — التسجيل\n" + str(registration_result)
 		return
@@ -1069,7 +1072,9 @@ func _on_interaction_performed(
 		if hunter_exam_manager != null:
 			var start_result: Dictionary = hunter_exam_manager.begin_exam()
 			var guild_menu := get_node_or_null("HunterGuildMenu")
-			if guild_menu != null and guild_menu.has_method("set_exam_status"):
+			if guild_menu != null and guild_menu.has_method("show_exam_tunnel_result"):
+				guild_menu.call("show_exam_tunnel_result", start_result)
+			elif guild_menu != null and guild_menu.has_method("set_exam_status"):
 				guild_menu.call("set_exam_status", start_result)
 			if interaction_prompt_label != null:
 				if bool(start_result.get("success", false)):
