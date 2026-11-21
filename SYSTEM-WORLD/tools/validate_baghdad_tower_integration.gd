@@ -62,6 +62,15 @@ func _run() -> void:
 		if tower_root == null:
 			_fail("Missing Baghdad tower root: " + root_name)
 			return
+		var exterior_collision := tower_root.get_node_or_null("TowerStructureCollision") as StaticBody3D
+		if exterior_collision == null:
+			_fail("Missing physical exterior collision body for " + root_name)
+			return
+		for collider_name in ["CollisionShape3D", "CollisionShape3D2"]:
+			var exterior_shape := exterior_collision.get_node_or_null(collider_name) as CollisionShape3D
+			if exterior_shape == null or exterior_shape.shape == null or exterior_shape.disabled:
+				_fail("Tower exterior shell collision is missing or disabled for " + root_name + ": " + collider_name)
+				return
 		var interior := tower_root.get_node_or_null("TowerInterior")
 		if interior == null:
 			_fail("Missing playable lobby for " + root_name)
@@ -130,6 +139,15 @@ func _run() -> void:
 	if power_root == null or power_root.get_node_or_null("TowerInterior") != null:
 		_fail("Power Tower must remain a separate challenge structure without a five-tower lobby.")
 		return
+	var power_collision := power_root.get_node_or_null("TowerStructureCollision") as StaticBody3D
+	if power_collision == null:
+		_fail("Independent Power Tower exterior collision body is missing.")
+		return
+	for collider_name in ["CollisionShape3D", "CollisionShape3D2"]:
+		var power_shape := power_collision.get_node_or_null(collider_name) as CollisionShape3D
+		if power_shape == null or power_shape.shape == null or power_shape.disabled:
+			_fail("Independent Power Tower exterior collision is missing or disabled: " + collider_name)
+			return
 	if power_root.get_node_or_null("PowerTowerArenaVenue/PowerTowerArenaInteraction") == null:
 		_fail("Power Tower exhibition arena entry is missing.")
 		return
