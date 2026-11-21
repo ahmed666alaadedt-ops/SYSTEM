@@ -66,6 +66,11 @@ func _run() -> void:
 	if str(manager.place_spectator_bet("local_player", "arena_guest_alpha", 50).get("reason", "")) != "BETTING_CLOSED":
 		_fail("The UI manager accepted a wager after match start.")
 		return
+	manager.cancel_match()
+	var team_match: Dictionary = manager.create_match("arena_team_alpha", "arena_team_beta", "TEAM")
+	if not bool(team_match.get("success", false)) or str(team_match.get("match", {}).get("match_type", "")) != "TEAM":
+		_fail("Team match type is not supported by the arena manager.")
+		return
 	ui.queue_free()
 	manager.queue_free()
 	wallet.queue_free()
