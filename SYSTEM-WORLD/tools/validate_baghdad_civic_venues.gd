@@ -19,7 +19,7 @@ func _initialize() -> void:
 			push_error("Baghdad civic venue validation failed: missing interaction prompt for " + service_id)
 			quit(1)
 			return
-	for method_name in ["_create_mosque_details", "_create_church_details", "_create_museum_details", "_create_rare_antique_market_details"]:
+	for method_name in ["_create_mosque_details", "_create_church_details", "_create_museum_details", "_create_rare_antique_market_details", "_create_civic_interior_blockout"]:
 		if not manager.has_method(method_name):
 			push_error("Baghdad civic venue validation failed: missing builder " + method_name)
 			quit(1)
