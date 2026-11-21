@@ -808,3 +808,18 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Extend the existing Baghdad civic venue validator to check the stadium's facilities and room collision/entry nodes.
 - [ ] Add ticket validation, secure spectator circulation, stair navigation, crowd NPCs, team/official schedules, dressing-room interactions and a complete football match simulation.
 - [ ] Run Godot 4.3 validation and inspect the expanded stadium in the live Baghdad scene.
+
+
+## Baghdad international motorsport park — green-light race flow and pit enforcement — 22 November 2026
+
+- [x] Add a three-second starting countdown after the player enters the staged owned vehicle; race timing and AI vehicle movement begin only on the green light.
+- [x] Add a live race HUD for countdown, lap number and ordered checkpoint progress, plus finish/cancel and pit-speed notices.
+- [x] Cancel the start if the player exits the vehicle or leaves the start-grid staging area during the countdown.
+- [x] Enforce the 60 km/h pit-lane speed limit and apply one five-second time penalty per speeding incident/entry; prevent repeated penalties for the same continuous incident.
+- [x] Extend the motorsport manager validator to reject checkpoints before green light and verify the time-penalty result.
+- [x] Extend the physical circuit validator to verify pit-lane speeding applies the five-second penalty only once.
+- [x] Godot 4.3 workflow run 44952389954 passed on commit 36512d1afa0a2ce8402bff30c6a1d0f51e2125c5, including script import/parse, both motorsport validators, all other configured Baghdad validators, resource scan and headless main-scene launch.
+- [ ] Build detailed production track art, curbs, runoff zones, road-surface grip/tyre physics, reliable high-speed checkpoint crossing, collisions/overtaking, damage and repairs, marshal flags/penalties, pit-stop tyre/fuel service, qualifying and race-class-specific event routes.
+- [ ] Add full AI race standings that compare player and opponents on the same authoritative timing, grid formation, replay, retire/recovery flow and spectator event presentation.
+- [ ] Validate actual driving feel, controller/mobile handling, vehicle-to-checkpoint alignment, and Android device performance; a headless validator pass is not a visual driving test.
+- Note: the venue remains a procedural physical blockout. The latest tests prove manager lifecycle, checkpoint order, countdown gating, local rewards/records, pit speed enforcement and venue structures; they do not certify finished track art, production vehicle physics or global multiplayer leaderboards.
