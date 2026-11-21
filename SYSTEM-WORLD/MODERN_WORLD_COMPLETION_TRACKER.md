@@ -101,7 +101,7 @@ This is the acceptance checklist for the modern-world map. The project must not 
 ## Baghdad rare-antiquities bazaar — auction prototype — 21 November 2026
 
 - [x] Add an original fictional artifact catalogue with rarity, era, appraisal state, museum reference value and provenance notes.
-- [x] Add local auction creation, timed bidding, seller self-bid prevention, minimum-increment enforcement, outbid escrow refunds, reserve-price handling and settlement.
+- [x] Add local auction creation, timed bidding, seller self-bid prevention, minimum-increment enforcement, outbid escrow refunds, reserve-price handling and settlement; listed player artifacts are escrowed to prevent duplicate listings and returned if unsold.
 - [x] Add local inventory ownership transfers and a capped transaction ledger saved on the device.
 - [x] Add a Godot validator for catalogue metadata, auction creation, escrow and invalid-bid rejection.
 - [ ] Connect the bazaar building's interaction marker to an in-world market UI and the player's persistent inventory/economy.
