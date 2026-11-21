@@ -56,6 +56,11 @@ func _initialize() -> void:
 	if str(self_bid.get("reason", "")) != "SELLER_CANNOT_BID":
 		_fail("Seller self-bidding was not blocked.")
 		return
+	manager.auctions[own_auction_id]["ends_at"] = int(Time.get_unix_time_from_system()) - 1
+	var unsold: Dictionary = manager.settle_auction(own_auction_id)
+	if not bool(unsold.get("success", false)) or not (manager.get_inventory().get("local_player", []) as Array).has("bronze_star_astrolabe"):
+		_fail("Unsold artifact was not returned from escrow to its owner.")
+		return
 	var low_bid: Dictionary = manager.place_bid(auction_id, "local_player", 650)
 	if str(low_bid.get("reason", "")) != "BID_MUST_EXCEED_CURRENT":
 		_fail("Out-of-order bid was not blocked.")
