@@ -39,6 +39,7 @@ func _ready() -> void:
 	_create_connected_city_links()
 	_create_hunter_association_headquarters()
 	_create_public_amenities()
+	_create_reference_sky_district()
 
 func _create_materials() -> void:
 	tower_material = StandardMaterial3D.new()
@@ -564,3 +565,89 @@ func _make_surface_material(color: Color, roughness: float, metallic: float) -> 
 	material.metallic = metallic
 	return material
 
+
+
+func _create_reference_sky_district() -> void:
+	# First-pass walkable sky promenade inspired by the approved Baghdad reference.
+	# The five towers remain separate landmarks; this ring supplements their existing links.
+	var district := Node3D.new()
+	district.name = "BaghdadReferenceSkyPromenade_Blockout"
+	add_child(district)
+	var deck_material := _make_surface_material(Color(0.075, 0.12, 0.17), 0.34, 0.72)
+	var rail_material := _make_surface_material(Color(0.16, 0.31, 0.39), 0.24, 0.58)
+	var light_material := _make_surface_material(Color(0.035, 0.58, 0.82), 0.22, 0.38)
+	light_material.emission_enabled = true
+	light_material.emission = Color(0.02, 0.42, 0.82)
+	light_material.emission_energy_multiplier = 1.8
+	var segment_count := 12
+	var ring_radius := 372.0
+	var segment_length := 194.0
+	var deck_width := 88.0
+	var deck_y := 34.0
+	for index in range(segment_count):
+		var angle := TAU * float(index) / float(segment_count)
+		var tangent_rotation := -angle
+		var center := city_anchor + Vector3(cos(angle) * ring_radius, deck_y, sin(angle) * ring_radius)
+		var segment := Node3D.new()
+		segment.name = "SkyPromenadeSegment_%02d" % index
+		segment.position = center
+		segment.rotation.y = tangent_rotation
+		district.add_child(segment)
+		var deck := MeshInstance3D.new()
+		deck.name = "WalkableDeck"
+		var deck_mesh := BoxMesh.new()
+		deck_mesh.size = Vector3(deck_width, 2.4, segment_length)
+		deck.mesh = deck_mesh
+		deck.material_override = deck_material
+		segment.add_child(deck)
+		_add_static_box_collision(segment, "WalkableDeckCollision", Vector3.ZERO, deck_mesh.size)
+		for side in [-1.0, 1.0]:
+			var rail := MeshInstance3D.new()
+			rail.name = "GlassSafetyRail_%s" % str(int(side))
+			var rail_mesh := BoxMesh.new()
+			rail_mesh.size = Vector3(1.0, 3.2, segment_length)
+			rail.mesh = rail_mesh
+			rail.position = Vector3(side * (deck_width * 0.5 - 1.0), 2.7, 0.0)
+			rail.material_override = rail_material
+			segment.add_child(rail)
+			var rail_light := MeshInstance3D.new()
+			rail_light.name = "RailLight_%s" % str(int(side))
+			var light_mesh := BoxMesh.new()
+			light_mesh.size = Vector3(0.32, 0.12, segment_length - 8.0)
+			rail_light.mesh = light_mesh
+			rail_light.position = Vector3(side * (deck_width * 0.5 - 1.0), 1.15, 0.0)
+			rail_light.material_override = light_material
+			segment.add_child(rail_light)
+		if index % 2 == 0:
+			var planter := MeshInstance3D.new()
+			planter.name = "SkyGardenPlanter"
+			var planter_mesh := BoxMesh.new()
+			planter_mesh.size = Vector3(14.0, 1.1, 18.0)
+			planter.mesh = planter_mesh
+			planter.position = Vector3(0.0, 1.7, 0.0)
+			planter.material_override = trim_material
+			segment.add_child(planter)
+			var tree_trunk := MeshInstance3D.new()
+			tree_trunk.name = "SkyGardenTreeTrunk"
+			var trunk_mesh := CylinderMesh.new()
+			trunk_mesh.top_radius = 0.45
+			trunk_mesh.bottom_radius = 0.7
+			trunk_mesh.height = 5.0
+			tree_trunk.mesh = trunk_mesh
+			tree_trunk.position = Vector3(0.0, 4.7, 0.0)
+			tree_trunk.material_override = tower_material
+			segment.add_child(tree_trunk)
+			var canopy := MeshInstance3D.new()
+			canopy.name = "SkyGardenCanopy"
+			var canopy_mesh := SphereMesh.new()
+			canopy_mesh.radius = 3.2
+			canopy_mesh.height = 5.6
+			canopy.mesh = canopy_mesh
+			canopy.position = Vector3(0.0, 8.2, 0.0)
+			canopy.material_override = _make_surface_material(Color(0.12, 0.34, 0.22), 0.82, 0.0)
+			segment.add_child(canopy)
+	district.set_meta("reference_visual_blockout", true)
+	district.set_meta("walkable_ring_segment_count", segment_count)
+	district.set_meta("ring_radius_m", ring_radius)
+	district.set_meta("final_art_assets_ready", false)
+	district.set_meta("note", "Procedural first-pass sky promenade; validate land clearance, navigation, collision and Android performance before final art.")
