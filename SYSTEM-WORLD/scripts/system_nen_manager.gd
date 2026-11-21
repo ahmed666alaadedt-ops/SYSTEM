@@ -8,7 +8,7 @@ class_name SYSTEMNenManager
 signal nen_state_changed(character_id: String, state: Dictionary)
 signal discovery_stage_changed(character_id: String, stage: int)
 
-const SAVE_PATH := "user://system_nen_progress.cfg"
+var save_path := "user://system_nen_progress.cfg"
 const AFFINITIES := ["enhancement", "emission", "manipulation", "transmutation", "conjuration", "specialization"]
 const AFFINITY_AR := {
 	"enhancement": "التعزيز",
@@ -201,14 +201,14 @@ func _emit_state(character_id: String) -> void:
 func _save_state() -> void:
 	var config := ConfigFile.new()
 	config.set_value("nen", "profiles", profiles)
-	var error := config.save(SAVE_PATH)
+	var error := config.save(save_path)
 	if error != OK:
 		push_warning("SYSTEM NEN: Could not save local aura progression.")
 
 
 func _load_state() -> void:
 	var config := ConfigFile.new()
-	if config.load(SAVE_PATH) != OK:
+	if config.load(save_path) != OK:
 		return
 	var saved: Dictionary = config.get_value("nen", "profiles", {})
 	for key in saved:
