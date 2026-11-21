@@ -1,4 +1,16 @@
 
+## City underworld exchange and faction contract board — 21 November 2026
+
+- [x] Add an underworld-exchange service point to each generated city service registry, with the city identity attached to its interaction marker.
+- [x] Add an Arabic in-world faction board showing each city's original factions, district, influence, heat, player standing and recorded rivals.
+- [x] Add player contract issuance from the board for courier delivery, public evidence collection, district scouting and civilian-route protection.
+- [x] Display the player's active/completed faction contracts by city and keep the NPC-completion restriction in the faction manager.
+- [x] Extend faction and civic-venue validators to check the board UI and underworld-exchange service registration.
+- [ ] Add actual hideout interiors, named gang NPCs, patrol/territory routines, recruitment, alliance negotiation, dynamic turf events and authored mission objectives.
+- [ ] Replace local evidence tokens and local faction persistence with server-authoritative quest evidence, synchronized reputation and multiplayer-safe conflict rules.
+- Note: the board issues player-owned contract records; objective world interactions and gang combat/territory gameplay are not yet fully implemented.
+
+
 ## Baghdad rare-antiquities bazaar — in-world player market UI integration — 21 November 2026
 
 - [x] Initialize the rare-antiquities manager from the main game scene and connect it to the player's existing local SYSTEM Credits wallet.
