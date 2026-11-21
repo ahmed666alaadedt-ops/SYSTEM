@@ -82,6 +82,21 @@ jobs:
           fi
           grep -q "Baghdad civic venue validation passed:" "$LOG"
 
+
+      - name: Validate rare antiques catalogue, auctions and local ownership ledger
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          LOG="$RUNNER_TEMP/rare-antiques-market-validation.log"
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_rare_antiques_market.gd 2>&1 | tee "$LOG"
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Rare antiques market validation failed" "$LOG"; then
+            echo "::error::Rare antiques market validation failed."
+            exit 1
+          fi
+          grep -q "Rare antiques market validation passed:" "$LOG"
+
       - name: Validate modern city faction registry and reputation
         shell: bash
         run: |
