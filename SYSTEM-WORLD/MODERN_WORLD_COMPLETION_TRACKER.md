@@ -673,3 +673,20 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Mark the exam center as publicly announced in the interior metadata; it is an official visible Association facility, not a hidden or secret tunnel.
 - [ ] Verify sign and board readability, placement, collision, and interaction reach in Godot 4.3 and on Android.
 - Note: the notice board does not invent fixed exam dates or imply that registration is currently open. The tunnel start gate still checks the existing local exam registration/state flow; final candidate eligibility and server authority remain future work.
+
+
+## SYSTEM Nen discovery and individualized aura discipline — 21 November 2026
+
+- [x] Add a dedicated SYSTEM Nen manager with six affinity families: enhancement, emission, manipulation, transmutation, conjuration, and specialization.
+- [x] Make Nen discoverable by any registered eligible player or NPC character; discovery is a three-step insight journey rather than an automatic unlock.
+- [x] Generate per-character affinity and aura-capacity traits from character identity/background seeds; different people can share an affinity family but retain individual profiles.
+- [x] Reveal a character's affinity only after their own discovery is completed.
+- [x] Add foundational Ten, Ren and Zetsu training progression with per-character training records.
+- [x] Add a personal Hatsu technique creation gate that requires foundation training; technique naming and optional self-imposed vows are stored per character.
+- [x] Persist local character Nen profiles and connect a mobile-friendly Nen panel to the main runtime.
+- [x] Add a Godot headless validator and workflow step for discovery isolation, training requirements and personal technique creation.
+- [ ] Integrate automatic registration and visible discovery/training storylines into every NPC population, mentors, guilds and world-specific locations; the manager currently exposes the shared character API but NPC population systems are not yet automatically wired to it.
+- [ ] Expand combat abilities into balanced, animated, effect-backed techniques with stamina/aura costs, counterplay, restrictions and AI usage.
+- [ ] Add online account synchronization, server-authoritative progression and anti-cheat validation; current saves are local-device prototypes.
+- [ ] Run the new Godot 4.3 validator and full Android runtime tests on the latest PR head.
+- Note: this is a first connected progression prototype, not a finished combat ability system. Nen is intended to be learnable by all eligible characters, but each character must discover it through their own path; NPC-wide automatic enrollment and actual combat execution remain pending.
