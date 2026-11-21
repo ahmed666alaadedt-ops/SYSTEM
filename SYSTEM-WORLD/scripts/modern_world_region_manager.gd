@@ -794,9 +794,31 @@ func _audit_baghdad_map_registration(map_manager: Node, world_id: String) -> voi
 			var headquarters_position: Vector3 = tower_manager.call("get_headquarters_position")
 			if headquarters_position != Vector3.INF and not locations.has("hunter_association_headquarters_baghdad"):
 				missing.append("hunter_association_headquarters_baghdad")
-		var connected_towers: Array = tower_manager.get("connected_tower_positions")
+		var connected_towers: Array = []
+		if tower_manager.has_method("get_connected_tower_positions"):
+			connected_towers = tower_manager.call("get_connected_tower_positions")
+		else:
+			missing.append("get_connected_tower_positions")
+		var required_district_ids := [
+			"hunter_association_tower_baghdad",
+			"business_tower_baghdad",
+			"shopping_tower_baghdad",
+			"entertainment_tower_baghdad",
+			"technology_tower_baghdad"
+		]
 		if connected_towers.size() != 5:
-			missing.append("five_tower_district_count")
+			var connected_ids := PackedStringArray()
+			for connected_tower in connected_towers:
+				connected_ids.append(str(connected_tower.get("id", "")))
+			missing.append("five_tower_district_count=%d:%s" % [connected_towers.size(), ",".join(connected_ids)])
+		for required_id in required_district_ids:
+			var found := false
+			for connected_tower in connected_towers:
+				if str(connected_tower.get("id", "")) == required_id:
+					found = true
+					break
+			if not found:
+				missing.append("district_tower_" + required_id)
 		for connected_tower in connected_towers:
 			if str(connected_tower.get("id", "")) == "power_tower_baghdad":
 				missing.append("power_tower_must_remain_independent")
