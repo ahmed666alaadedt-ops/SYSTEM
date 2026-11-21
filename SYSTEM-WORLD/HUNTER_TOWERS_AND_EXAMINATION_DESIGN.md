@@ -150,3 +150,8 @@ Power Tower remains a separate, optional combat-arena landmark at a clearly deta
 
 ### Implementation and verification boundary
 The source-level implementation now distinguishes the five connected district towers from the independent Power Tower, registers the elevated Hunter Association headquarters as its own map location, and keeps Power Tower's existing interaction/progression ID intact. Procedural exterior geometry remains a blockout. No Godot parser, scene runtime, collision/navigation, Android performance, or visual verification is claimed until those checks are run.
+
+
+### Headquarters vertical placement and access update — 21 November 2026
+
+The Global Hunter Association headquarters must sit above the highest roofline among the five connected district towers, not at a fixed low elevation within the tower cluster. The current procedural blockout computes the highest district roof at runtime and positions the headquarters sky podium above it. A dedicated elevated access deck links the highest district tower roof to the headquarters platform; this bridge is separate from the five-tower pedestrian/vehicle connection loop. The headquarters is registered as its own map location and is no longer included in the five-tower landmark array or the public tower advertising-board loop.
