@@ -511,7 +511,7 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Keep Power Tower detached from the five-tower connected district and all district skybridge loops.
 - [x] Align the independent Power Tower architecture with the 200-floor progression system; keep it separate from the five connected Baghdad towers.
 - [x] Add an independent physical challenge-arena blockout at the Power Tower, with a walkable floor, ring boundary, spectator tiers, lighting and arena signage.
-- [x] On a valid next-floor request, move the player to the separate arena and clearly report that opponent/combat integration is still pending.
+- [x] Route a valid next-floor request into its generated 200-floor exploration environment; keep the exhibition arena as a separate independently entered venue.
 - [ ] Add floor-specific combat rooms, real opponent/boss spawning, combat objective verification, return flow, and secure clear-time/rank validation. The current 200-floor manager stores progression metadata and save state; generated physical exploration environments are now built one active floor at a time, while combat and boss gameplay remain incomplete.
 - [x] Expand Baghdad's football stadium from a flat placeholder into an open pitch blockout with grass bands, boundary/halfway lines, center circle, penalty areas, goals, four-sided spectator stands, and an open playable pitch collision surface.
 - [x] Disable the solid stadium-shell collider that previously blocked access to the field; add an entry transition from the stadium interaction point to the pitch.
