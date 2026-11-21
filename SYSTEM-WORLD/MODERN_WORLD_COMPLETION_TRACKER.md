@@ -493,3 +493,14 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Confirm the population manager mounts and spawns visible civilians in the latest Godot run.
 - [ ] Confirm no nil camera-transform errors remain during headless startup.
 - Note: these changes address the failure signatures from the earlier CI run; they are not yet confirmed by a new successful run on the latest branch head.
+
+
+## Baghdad tower lobbies — identity fit-out and physical service desks — 21 November 2026
+
+- [x] Add a dedicated identity display to each of the five tower lobbies, with tower-specific color and function.
+- [x] Convert the three service desks in each lobby from decorative-only meshes to solid desk assemblies with collision.
+- [x] Add lobby wayfinding pillars and a directional sign near the entrance zone.
+- [x] Correct the indentation of the sky promenade metadata statement found during source review.
+- [ ] Verify lobby entry/exit routing, player clearance, and the five identity display layouts in a live Godot scene.
+- [ ] Replace the current prototype screens with data-backed service UIs and implement working elevator/stair floor selection.
+- Note: the lobby remains a first-floor playable blockout. Upper floors, service workflows, NPC staffing and real lift movement are not implemented by this pass.
