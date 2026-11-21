@@ -1333,9 +1333,10 @@ func _on_interaction_performed(
 					power_tower_manager.fail_active_floor()
 					if interaction_prompt_label != null:
 						interaction_prompt_label.text = "تعذر إنشاء بيئة الطابق %d؛ لم تُستهلك المحاولة." % next_floor
-			elif interaction_prompt_label != null:
+			else:
 				power_tower_manager.fail_active_floor()
-				interaction_prompt_label.text = "بيئة برج القوة غير متاحة حالياً."
+				if interaction_prompt_label != null:
+					interaction_prompt_label.text = "بيئة برج القوة غير متاحة حالياً."
 		elif interaction_prompt_label != null:
 			interaction_prompt_label.text = "برج القوة: " + str(result.get("reason", "تعذر بدء التحدي"))
 	elif location_id == "hunter_association_tower_baghdad":
