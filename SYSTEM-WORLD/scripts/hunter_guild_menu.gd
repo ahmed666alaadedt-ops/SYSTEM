@@ -234,6 +234,13 @@ func show_exam_tunnel_result(result: Dictionary) -> void:
 		elif reason == "EXAM_FAILED":
 			status_label.text = "محاولتك السابقة متوقفة"
 			service_info_label.text = "راجع مكتب التسجيل لمعرفة حالة المحاولة وإجراءات إعادة التقديم."
+		elif reason == "NEXT_WEEKLY_EXAM_REQUIRED":
+			status_label.text = "موعد الدفعة الأسبوعية التالية لم يحن بعد"
+			var retry_at := int(result.get("retry_at", 0))
+			service_info_label.text = "موعد إعادة التقديم (UTC): %s" % Time.get_datetime_string_from_unix_time(retry_at) if retry_at > 0 else "راجع لوحة النقابة لموعد الدفعة القادمة."
+		elif reason == "HUNTER_LICENSE_ALREADY_EARNED":
+			status_label.text = "رخصة الصياد الدائمة مفعّلة"
+			service_info_label.text = "لا تحتاج إلى إعادة الاختبار؛ رخصتك الدائمة محفوظة."
 		else:
 			status_label.text = "تعذر بدء الاختبار: " + reason
 			service_info_label.text = "يمكنك العودة إلى مكتب التسجيل أو مراجعة معلومات النقابة."
