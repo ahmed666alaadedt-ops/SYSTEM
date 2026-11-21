@@ -171,10 +171,20 @@ func _campaign_for_record(record: Dictionary, now: int) -> Dictionary:
 	var cycle_seconds := 0
 	for campaign in CAMPAIGNS:
 		cycle_seconds += int(campaign.get("duration", 90))
-	var slot := int(floor(float(now + city_offset * 37 + board_offset * 19) / float(maxi(cycle_seconds, 1))))
-	var campaign_index := posmod(slot + city_offset + board_offset, CAMPAIGNS.size())
-	var campaign: Dictionary = CAMPAIGNS[campaign_index].duplicate(true)
-	campaign["expires_at"] = now + int(campaign.get("duration", 90)) - posmod(now, int(campaign.get("duration", 90)))
+	var cycle_position := posmod(now + city_offset * 37 + board_offset * 19, maxi(cycle_seconds, 1))
+	var campaign: Dictionary = {}
+	var remaining_in_campaign := 0
+	for candidate in CAMPAIGNS:
+		var duration := maxi(1, int(candidate.get("duration", 90)))
+		if cycle_position < duration:
+			campaign = candidate.duplicate(true)
+			remaining_in_campaign = duration - cycle_position
+			break
+		cycle_position -= duration
+	if campaign.is_empty():
+		campaign = CAMPAIGNS[0].duplicate(true)
+		remaining_in_campaign = int(campaign.get("duration", 90))
+	campaign["expires_at"] = now + remaining_in_campaign
 	campaign["city"] = str(record.get("city", ""))
 	campaign["board_id"] = str(record.get("id", ""))
 	return campaign
