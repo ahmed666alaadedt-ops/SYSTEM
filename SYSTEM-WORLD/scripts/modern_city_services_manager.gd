@@ -254,6 +254,8 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 	door_mesh.size = Vector3(2.2, 3.0, 0.18)
 	door.mesh = door_mesh
 	door.position = Vector3(0.0, 1.5, -depth * 0.5 - 0.12)
+	# Civic interiors keep their main doorway visibly open for walk-in access.
+	door.rotation.y = deg_to_rad(72.0) if is_civic_interior else 0.0
 	door.material_override = roof_material
 	door.visibility_range_end = 1100.0
 	building.add_child(door)
@@ -477,15 +479,30 @@ func _build_civic_interior(parent: Node3D, service_id: String, width: float, dep
 	match service_id:
 		"mosque":
 			var prayer_carpet := _material(Color(0.22, 0.34, 0.28), 0.98, 0.0)
+			var prayer_mat_count := 10
+			var prayer_mat_gap := 0.18
+			var prayer_mat_width := (width - 8.0 - float(prayer_mat_count - 1) * prayer_mat_gap) / float(prayer_mat_count)
+			var prayer_mat_start_x := -(width - 8.0) * 0.5 + prayer_mat_width * 0.5
+			var prayer_mat_trim := _material(Color(0.72, 0.58, 0.31), 0.92, 0.05)
 			for row in range(5):
+				var row_z := -depth * 0.31 + float(row) * 3.2
 				var runner := MeshInstance3D.new()
 				runner.name = "PrayerCarpetRow_%02d" % row
 				var runner_mesh := BoxMesh.new()
 				runner_mesh.size = Vector3(width - 7.0, 0.035, 1.55)
 				runner.mesh = runner_mesh
-				runner.position = Vector3(0.0, 0.43, -depth * 0.31 + float(row) * 3.2)
+				runner.position = Vector3(0.0, 0.43, row_z)
 				runner.material_override = prayer_carpet
 				parent.add_child(runner)
+				for mat_index in range(prayer_mat_count):
+					var prayer_mat := MeshInstance3D.new()
+					prayer_mat.name = "PrayerMat_%02d_%02d" % [row, mat_index]
+					var prayer_mat_mesh := BoxMesh.new()
+					prayer_mat_mesh.size = Vector3(prayer_mat_width, 0.025, 1.38)
+					prayer_mat.mesh = prayer_mat_mesh
+					prayer_mat.position = Vector3(prayer_mat_start_x + float(mat_index) * (prayer_mat_width + prayer_mat_gap), 0.462, row_z)
+					prayer_mat.material_override = prayer_mat_trim if mat_index % 2 == 0 else prayer_carpet
+					parent.add_child(prayer_mat)
 			var mihrab := MeshInstance3D.new()
 			mihrab.name = "PrayerHallMihrab"
 			var mihrab_mesh := BoxMesh.new()
