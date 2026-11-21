@@ -2,6 +2,7 @@ extends Node3D
 class_name BaghdadTowerLandmarksManager
 
 const EntranceScript = preload("res://scripts/system_tower_entrance.gd")
+const HeadquartersInteriorScript = preload("res://scripts/system_hunter_headquarters_interior.gd")
 const HUNTER_TOWER_HEIGHT := 1000.0
 const POWER_TOWER_HEIGHT := 168.0
 const TECHNOLOGY_TOWER_HEIGHT := 210.0
@@ -282,7 +283,10 @@ func _create_hunter_association_headquarters() -> void:
 	hall.position.y = 18.0
 	hall.material_override = tower_material
 	headquarters.add_child(hall)
-	_add_static_box_collision(headquarters, "HeadquartersHallCollision", hall.position, hall_mesh.size)
+	var headquarters_interior := HeadquartersInteriorScript.new()
+	headquarters_interior.name = "HeadquartersInterior"
+	headquarters.add_child(headquarters_interior)
+	headquarters_interior.call("build", EntranceScript)
 
 	# Four monumental corner pylons give the elevated headquarters a distinct skyline silhouette.
 	for corner_index in range(4):
