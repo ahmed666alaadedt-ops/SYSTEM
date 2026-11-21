@@ -738,7 +738,7 @@ func register_map_locations(map_manager: Node, world_id: String) -> void:
 				)
 
 
-func discover_starting_city(map_manager: Node, world_id: String) -> void
+func discover_starting_city(map_manager: Node, world_id: String) -> void:
 	if map_manager == null or not map_manager.has_method("discover_region"):
 		return
 	var city_name := "Baghdad"
