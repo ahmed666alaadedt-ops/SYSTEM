@@ -258,6 +258,7 @@ func _run_validation() -> void:
 		return
 	streamer._unload_cell(Vector2i(9, 9))
 	streamer.queue_free()
+	print("Baghdad OSM runtime validation passed: historic landmarks, Kadhimiya exclusion, player routing and cell persistence.")
 	quit(0)
 
 
