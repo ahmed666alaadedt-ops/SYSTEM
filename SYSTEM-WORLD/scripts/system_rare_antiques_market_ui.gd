@@ -31,9 +31,11 @@ func _build_interface() -> void:
 	root.add_child(open_button)
 	open_button.pressed.connect(open_market)
 	panel = PanelContainer.new()
-	panel.position = Vector2(12, 225)
-	panel.size = Vector2(356, 510)
-	panel.custom_minimum_size = Vector2(330, 480)
+	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	panel.offset_left = 8.0
+	panel.offset_top = 80.0
+	panel.offset_right = -8.0
+	panel.offset_bottom = -80.0
 	root.add_child(panel)
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 7)
