@@ -1048,6 +1048,36 @@ func _on_interaction_performed(
 		" / ",
 		location_id
 	)
+	if location_id == "hunter_exam_registration_counter_baghdad":
+		if hunter_exam_manager != null:
+			var registration_result: Dictionary = hunter_exam_manager.apply_for_exam("local_player")
+			var guild_menu := get_node_or_null("HunterGuildMenu")
+			if guild_menu != null and guild_menu.has_method("set_exam_status"):
+				guild_menu.call("set_exam_status", registration_result)
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "اختبار الصيادين — التسجيل\n" + str(registration_result)
+		return
+	elif location_id == "hunter_exam_public_notice_baghdad":
+		if hunter_exam_manager != null and interaction_prompt_label != null:
+			var overview: Dictionary = hunter_exam_manager.get_exam_overview()
+			var stage_lines := PackedStringArray()
+			for stage in overview.get("stages", []):
+				stage_lines.append(str(stage.get("title", "")))
+			interaction_prompt_label.text = "إعلان نقابة الصيادين — سبع مراحل\n" + "\n".join(stage_lines)
+		return
+	elif location_id == "hunter_exam_tunnel_start_baghdad":
+		if hunter_exam_manager != null:
+			var start_result: Dictionary = hunter_exam_manager.begin_exam()
+			var guild_menu := get_node_or_null("HunterGuildMenu")
+			if guild_menu != null and guild_menu.has_method("set_exam_status"):
+				guild_menu.call("set_exam_status", start_result)
+			if interaction_prompt_label != null:
+				if bool(start_result.get("success", false)):
+					var stage: Dictionary = start_result.get("stage", {})
+					interaction_prompt_label.text = str(stage.get("title", "مرحلة الاختبار")) + "\n" + str(stage.get("description", ""))
+				else:
+					interaction_prompt_label.text = "اختبار الصيادين\n" + str(start_result.get("reason", "تعذر بدء الاختبار"))
+		return
 	if location_id.begins_with("tower_service_"):
 		var service_title := str(target.get_meta("system_interaction_prompt", "خدمات البرج"))
 		var service_description := str(target.get_meta("system_service_description", "الخدمة قيد التطوير."))
