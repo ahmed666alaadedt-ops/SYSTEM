@@ -145,8 +145,9 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 	var width := 16.0 if service_id != "hotel" else 20.0
 	var depth := 14.0 if service_id != "hotel" else 18.0
 	if service_id == "stadium":
-		width = 96.0
-		depth = 76.0
+		# Full-size city stadium footprint with room for a regulation football pitch and stands.
+		width = 150.0
+		depth = 116.0
 	elif service_id == "mall":
 		width = 34.0
 		depth = 28.0
@@ -176,7 +177,8 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 	var structure := MeshInstance3D.new()
 	structure.name = "ServiceBuildingFacade"
 	var structure_mesh := BoxMesh.new()
-	var shell_height := 0.6 if service_id == "park" else (1.2 if service_id == "stadium" else height)
+	# Keep the stadium foundation below the playing surface so the grass is not buried.
+	var shell_height := 0.6 if service_id == "park" or service_id == "stadium" else height
 	structure_mesh.size = Vector3(width, shell_height, depth)
 	structure.mesh = structure_mesh
 	structure.position.y = shell_height * 0.5
@@ -275,8 +277,9 @@ func get_service_locations() -> Array[Dictionary]:
 
 func _create_stadium_details(parent: Node3D, width: float, depth: float) -> void:
 	# Full-size open pitch blockout with collision, markings, goals and four spectator sides.
-	var pitch_width := width * 0.66
-	var pitch_depth := depth * 0.62
+	# Regulation-size pitch: 105 m × 68 m, kept inside the stadium footprint.
+	var pitch_width := minf(width * 0.70, 105.0)
+	var pitch_depth := minf(depth * 0.60, 68.0)
 	var pitch_material := _material(Color(0.07, 0.31, 0.105), 0.96, 0.0)
 	var alternate_grass := _material(Color(0.09, 0.37, 0.13), 0.96, 0.0)
 	var line_material := _material(Color(0.92, 0.94, 0.86), 0.9, 0.0)
@@ -316,6 +319,17 @@ func _create_stadium_details(parent: Node3D, width: float, depth: float) -> void
 	_add_stadium_marking(parent, "GoalLineLeft", Vector3(-pitch_width * 0.5, 1.09, 0.0), Vector3(0.16, 0.045, pitch_depth), line_material)
 	_add_stadium_marking(parent, "GoalLineRight", Vector3(pitch_width * 0.5, 1.09, 0.0), Vector3(0.16, 0.045, pitch_depth), line_material)
 	_add_stadium_marking(parent, "HalfwayLine", Vector3(0.0, 1.09, 0.0), Vector3(0.14, 0.045, pitch_depth), line_material)
+	var center_spot := MeshInstance3D.new()
+	center_spot.name = "CenterSpot"
+	var center_spot_mesh := CylinderMesh.new()
+	center_spot_mesh.top_radius = 0.22
+	center_spot_mesh.bottom_radius = 0.22
+	center_spot_mesh.height = 0.035
+	center_spot.mesh = center_spot_mesh
+	center_spot.position.y = 1.15
+	center_spot.material_override = line_material
+	parent.add_child(center_spot)
+
 	var center_circle := MeshInstance3D.new()
 	center_circle.name = "CenterCircle"
 	var circle_mesh := TorusMesh.new()
@@ -329,14 +343,26 @@ func _create_stadium_details(parent: Node3D, width: float, depth: float) -> void
 	parent.add_child(center_circle)
 
 	for side in [-1.0, 1.0]:
-		var box := MeshInstance3D.new()
-		box.name = "PenaltyArea_%s" % str(side)
-		var box_mesh := BoxMesh.new()
-		box_mesh.size = Vector3(16.0, 0.04, 0.42)
-		box.mesh = box_mesh
-		box.position = Vector3(side * (pitch_width * 0.5 - 8.0), 1.12, 0.0)
-		box.material_override = line_material
-		parent.add_child(box)
+		# Penalty area: 16.5 m deep × 40.32 m wide.
+		var penalty_front_x := side * (pitch_width * 0.5 - 16.5)
+		_add_stadium_marking(parent, "PenaltyAreaFront_%s" % str(side), Vector3(penalty_front_x, 1.12, 0.0), Vector3(0.16, 0.045, 40.32), line_material)
+		for edge in [-1.0, 1.0]:
+			_add_stadium_marking(parent, "PenaltyAreaSide_%s_%s" % [str(side), str(edge)], Vector3(side * (pitch_width * 0.5 - 8.25), 1.12, edge * 20.16), Vector3(16.5, 0.045, 0.16), line_material)
+		# Goal area: 5.5 m deep × 18.32 m wide.
+		var goal_area_front_x := side * (pitch_width * 0.5 - 5.5)
+		_add_stadium_marking(parent, "GoalAreaFront_%s" % str(side), Vector3(goal_area_front_x, 1.13, 0.0), Vector3(0.16, 0.045, 18.32), line_material)
+		for edge in [-1.0, 1.0]:
+			_add_stadium_marking(parent, "GoalAreaSide_%s_%s" % [str(side), str(edge)], Vector3(side * (pitch_width * 0.5 - 2.75), 1.13, edge * 9.16), Vector3(5.5, 0.045, 0.16), line_material)
+		var penalty_spot := MeshInstance3D.new()
+		penalty_spot.name = "PenaltySpot_%s" % str(side)
+		var spot_mesh := CylinderMesh.new()
+		spot_mesh.top_radius = 0.22
+		spot_mesh.bottom_radius = 0.22
+		spot_mesh.height = 0.035
+		penalty_spot.mesh = spot_mesh
+		penalty_spot.position = Vector3(side * (pitch_width * 0.5 - 11.0), 1.15, 0.0)
+		penalty_spot.material_override = line_material
+		parent.add_child(penalty_spot)
 		_build_stadium_goal(parent, side, pitch_width, pitch_depth, line_material)
 
 	# Four stepped grandstands leave the corners open for access.
