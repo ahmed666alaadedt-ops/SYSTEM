@@ -204,6 +204,37 @@ func _set_service_view(view: String) -> void:
 			service_info_label.text = "مركز خدمات نقابة الصيادين العالمية."
 
 
+func show_exam_tunnel_result(result: Dictionary) -> void:
+	if not is_instance_valid(guild_panel):
+		return
+	_set_service_view("registration")
+	guild_panel.show()
+	if not bool(result.get("success", false)):
+		var reason := str(result.get("reason", "UNKNOWN_ERROR"))
+		if reason == "NOT_REGISTERED":
+			status_label.text = "التسجيل مطلوب قبل دخول الاختبار"
+			service_info_label.text = "ارجع إلى مكتب التسجيل في بهو البرج، سجّل أولاً، ثم عد إلى بوابة النفق."
+		elif reason == "EXAM_FAILED":
+			status_label.text = "محاولتك السابقة متوقفة"
+			service_info_label.text = "راجع مكتب التسجيل لمعرفة حالة المحاولة وإجراءات إعادة التقديم."
+		else:
+			status_label.text = "تعذر بدء الاختبار: " + reason
+			service_info_label.text = "يمكنك العودة إلى مكتب التسجيل أو مراجعة معلومات النقابة."
+		exam_register_button.show()
+		exam_start_button.show()
+		return
+
+	var stage: Dictionary = result.get("stage", {})
+	status_label.text = "تم تفعيل بوابة الاختبار | رقم المتسابق: %s" % str(result.get("candidate_number", "—"))
+	service_info_label.visible = true
+	service_info_label.text = "%s\n\n%s\n\nهذه إحاطة المرحلة. موقع التحدي الفعلي والتحقق من أدلته ما زالا قيد التطوير." % [
+		str(stage.get("title", "مرحلة الاختبار الحالية")),
+		str(stage.get("description", "اتبع تعليمات النقابة."))
+	]
+	exam_register_button.hide()
+	exam_start_button.hide()
+
+
 func close_guild_panel() -> void:
 	if is_instance_valid(guild_panel):
 		guild_panel.hide()
