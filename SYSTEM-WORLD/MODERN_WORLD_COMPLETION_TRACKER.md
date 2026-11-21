@@ -823,3 +823,25 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Add full AI race standings that compare player and opponents on the same authoritative timing, grid formation, replay, retire/recovery flow and spectator event presentation.
 - [ ] Validate actual driving feel, controller/mobile handling, vehicle-to-checkpoint alignment, and Android device performance; a headless validator pass is not a visual driving test.
 - Note: the venue remains a procedural physical blockout. The latest tests prove manager lifecycle, checkpoint order, countdown gating, local rewards/records, pit speed enforcement and venue structures; they do not certify finished track art, production vehicle physics or global multiplayer leaderboards.
+
+
+## Power Tower — hidden exploration caches and persistent discovery — 22 November 2026
+
+- [x] Generate three deterministic hidden cache locations on every active floor, placed away from the main cross-route to reward exploration.
+- [x] Award tower credits for each discovered cache and persist per-floor claim IDs so the same cache cannot be claimed twice.
+- [x] Keep already claimed caches absent when a player retries a floor; preserve discoveries independently from checkpoint retry progress.
+- [x] Connect cache discovery to the player HUD feedback and tower reward signal.
+- [x] Extend the Power Tower validator to verify three caches, first-cache reward amount and duplicate-claim rejection.
+- [x] Godot 4.3 workflow run 44953236524 passed on commit 8fe8c979f15f490358e2e453ce756458259188ea, including the updated Power Tower progression validator and headless main-scene launch.
+- [ ] Expand caches into authored secret rooms, environmental clues, rare equipment/relic loot, multi-step hidden puzzles and region-specific exploration missions.
+- Note: cache locations and reward persistence are functional procedural foundations; final treasure assets, authored puzzles and richer quest content remain to be built.
+
+## Baghdad five-tower district — physical exterior and walkable shared amenities — 22 November 2026
+
+- [x] Enable solid foundation and shaft collision on all five connected towers and the separate Power Tower; name collision shapes explicitly and validate them.
+- [x] Add collision-backed decks for the rooftop garden, pool/leisure terrace and family entertainment plaza.
+- [x] Validate collision-backed access-ramp segments, the twelve-segment sky promenade, public amenity decks and all six tower exterior shells.
+- [x] Godot 4.3 workflow run 44953236524 passed the Baghdad tower integration validator and the full configured workflow.
+- [ ] Complete authored tower facade details, glass/metal materials, interior furnishing, lift animation, emergency stairs, functional elevator/service access and final skyline lighting.
+- [ ] Test pedestrian and vehicle traversal of every bridge/ramp on varied terrain, including slope, clearance, fall protection and Android performance.
+- Note: this pass makes the visible tower shells and selected shared-district decks physically solid; the tower complex remains a procedural blockout and is not final art or a fully drivable city transport network.
