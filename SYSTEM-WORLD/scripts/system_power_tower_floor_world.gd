@@ -44,11 +44,13 @@ func build_floor(floor_data: Dictionary, p_return_position: Vector3) -> Dictiona
 	add_child(active_floor_root)
 
 	var profile := _region_profile(region_id)
-	var ground_material := _material(profile["ground"], 0.96, 0.0)
-	var structure_material := _material(profile["structure"], 0.82, 0.12)
-	var accent_material := _material(profile["accent"], 0.34, 0.48)
-	accent_material.emission_enabled = true
+	var ground_color: Color = profile["ground"]
+	var structure_color: Color = profile["structure"]
 	var accent_color: Color = profile["accent"]
+	var ground_material := _material(ground_color, 0.96, 0.0)
+	var structure_material := _material(structure_color, 0.82, 0.12)
+	var accent_material := _material(accent_color, 0.34, 0.48)
+	accent_material.emission_enabled = true
 	accent_material.emission = accent_color * 0.28
 	accent_material.emission_energy_multiplier = 0.65
 
@@ -182,7 +184,7 @@ func _build_landmarks(
 	region_sign.text = "FLOOR %03d\n%s" % [floor_number, str(profile["title"])]
 	region_sign.font_size = 28
 	region_sign.position = Vector3(0.0, 20.0, -22.0)
-	region_sign.modulate = profile["accent"]
+	region_sign.modulate = accent_color
 	active_floor_root.add_child(region_sign)
 
 	if floor_number % 10 == 0:
