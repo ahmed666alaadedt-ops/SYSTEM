@@ -52,6 +52,18 @@ This is the acceptance checklist for the modern-world map. The project must not 
 - [ ] Make the ten rural settlements functional and connect them to roads, services, farms, orchards, fields, and local economies.
 
 
+
+## Baghdad motorsport park and city faction gameplay follow-up — 21 November 2026
+
+- [x] Add a Godot validator for dedicated-track entry, owned vehicle class eligibility, ordered checkpoint progression, three-lap completion, local reward and personal-record scope.
+- [x] Keep circuit AI opponent vehicle/controller prototypes connected to race-start and player-driving signals for supported circuit events.
+- [ ] Complete track-grade vehicle physics, reliable checkpoint crossing at speed, AI collision/overtaking/pit strategy, grid staging, race countdown, flags, penalties, damage, repairs and mobile race HUD.
+- [ ] Run the new race validator and verify the AI race physically in Godot 4.3 and on Android; source-level wiring is not runtime proof.
+- [x] Extend the existing city-faction registry with reciprocal same-city rivalries and player-only faction contracts for courier delivery, public evidence collection, district scouting and civilian-route protection.
+- [x] Persist faction contracts and validate that an NPC cannot complete a player-owned contract through the local API.
+- [ ] Add authored gang NPCs, hideouts, territory schedules, recruitment/membership, faction-specific interiors, investigation chains and server-authoritative multiplayer consequences.
+- Note: contract evidence tokens and all faction state remain local prototype safeguards, not anti-cheat or secure online authority.
+
 ## Baghdad rare-antiquities bazaar — auction prototype — 21 November 2026
 
 - [x] Add an original fictional artifact catalogue with rarity, era, appraisal state, museum reference value and provenance notes.
