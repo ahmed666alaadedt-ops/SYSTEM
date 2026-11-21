@@ -9,6 +9,8 @@ var balance_label: Label
 var company_name_input: LineEdit
 var sector_select: OptionButton
 var company_list: VBoxContainer
+var registration_section: VBoxContainer
+var company_section: VBoxContainer
 var active_view := "overview"
 
 
@@ -50,25 +52,30 @@ func _build_interface() -> void:
 	content.add_child(status_label)
 	var separator := HSeparator.new()
 	content.add_child(separator)
+	registration_section = VBoxContainer.new()
+	registration_section.add_theme_constant_override("separation", 8)
+	content.add_child(registration_section)
 	var form_label := Label.new()
 	form_label.text = "تسجيل شركة جديدة"
-	content.add_child(form_label)
+	registration_section.add_child(form_label)
 	company_name_input = LineEdit.new()
 	company_name_input.placeholder_text = "اسم الشركة (3 إلى 32 حرفاً)"
-	content.add_child(company_name_input)
+	registration_section.add_child(company_name_input)
 	sector_select = OptionButton.new()
 	for sector in ["تجارة", "تقنية", "خدمات", "ضيافة", "نقل", "صناعة"]:
 		sector_select.add_item(sector)
-	content.add_child(sector_select)
+	registration_section.add_child(sector_select)
 	var register_button := Button.new()
 	register_button.text = "تسجيل الشركة — 1,000 رصيد"
 	register_button.pressed.connect(_on_register_company_pressed)
-	content.add_child(register_button)
+	registration_section.add_child(register_button)
+	company_section = VBoxContainer.new()
+	content.add_child(company_section)
 	var list_heading := Label.new()
 	list_heading.text = "الشركات المسجلة محلياً"
-	content.add_child(list_heading)
+	company_section.add_child(list_heading)
 	company_list = VBoxContainer.new()
-	content.add_child(company_list)
+	company_section.add_child(company_list)
 	panel.hide()
 
 
@@ -97,9 +104,11 @@ func _refresh_view() -> void:
 	var balance := int(economy.call("get_balance"))
 	balance_label.text = "رصيدك الحالي: %s SYSTEM Credits" % _format_number(balance)
 	heading.text = "برج التجارة والاستثمار"
+	registration_section.visible = active_view == "companies"
+	company_section.visible = active_view != "investments"
 	match active_view:
 		"overview":
-			status_label.text = "مركز استشارات الأعمال: يمكنك تأسيس شركة محلية وتسجيل نشاطها. خدمات التراخيص الرسمية والموظفين والعقود قيد التطوير."
+			status_label.text = "مركز استشارات الأعمال: تابع رصيدك وشركاتك المحلية. يمكنك تسجيل شركة من مكتب تسجيل الشركات."
 		"investments":
 			status_label.text = "سوق الاستثمار غير مفعّل بعد. لن تُخصم أموال ولن تُعرض أرباح وهمية. سيُفتح بعد بناء نظام شركات ومشاريع وعوائد قابلة للتحقق."
 		"companies":
