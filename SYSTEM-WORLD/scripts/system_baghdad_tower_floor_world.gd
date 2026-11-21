@@ -21,7 +21,8 @@ func build_floor(floor_number: int, return_position: Vector3) -> Dictionary:
 	if tower_id.is_empty() or floor_number < 1 or floor_number > max_floors:
 		return {"success": false, "reason": "INVALID_TOWER_FLOOR"}
 	if is_instance_valid(active_floor_root):
-		active_floor_root.free()
+		remove_child(active_floor_root)
+		active_floor_root.queue_free()
 	active_floor = floor_number
 	external_return_position = return_position
 	active_floor_root = Node3D.new()
@@ -61,7 +62,8 @@ func get_active_floor_status() -> Dictionary:
 
 func clear_active_floor() -> void:
 	if is_instance_valid(active_floor_root):
-		active_floor_root.free()
+		remove_child(active_floor_root)
+		active_floor_root.queue_free()
 	active_floor_root = null
 	active_floor = 0
 
