@@ -860,3 +860,15 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Godot 4.3 workflow run 44953652619 passed on commit 6de5c182ad5e2ab97b1e60fdead6de65a42509a3; all configured validators, missing-mesh scan and headless main-scene launch passed.
 - [ ] Add real service/mission interactions to each floor archetype, NPC staff/visitors, furniture/prop assets, lighting/audio and authored activities.
 - Note: four procedural archetypes repeat across the tower's floors; this improves layout variety but does not yet mean every individual floor has unique authored content or finished production art.
+
+
+## Baghdad Shopping Tower — local collectibles commerce — 22 November 2026
+
+- [x] Add a five-item souvenir catalog to the Shopping Tower service menu: Baghdad tower emblem, Hunter Association patch, SYSTEM city poster, Baghdad architecture model and five-tower collector set.
+- [x] Connect the three Shopping Tower service desks to overview/catalog/collection views.
+- [x] Charge SYSTEM Credits through the existing player wallet and store purchased items in the player's persistent inventory; purchases are cosmetic/collectible only and grant no combat advantage.
+- [x] Protect against insufficient funds and refund the wallet if inventory insertion fails.
+- [x] Add automated checks for catalog size, successful and repeated purchases, wallet deductions, inventory updates, insufficient-funds rejection and owned collection view.
+- [x] Godot 4.3 workflow run 44953971555 passed on commit 45d200f4e6c4d86f06530c1ba562a1b3eedeeb2c, including shopping tower validator and headless main-scene launch.
+- [ ] Add authored item artwork, 3D shop displays, more store categories, vendor NPCs, player-to-player trading and online inventory synchronization.
+- Note: this is a working local-device collectibles shop; it is not a global marketplace or player-to-player economy.
