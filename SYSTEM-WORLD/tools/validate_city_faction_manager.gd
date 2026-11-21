@@ -1,6 +1,7 @@
 extends SceneTree
 
 const FACTION_SCRIPT = preload("res://scripts/system_city_faction_manager.gd")
+const FACTION_UI_SCRIPT = preload("res://scripts/system_city_faction_ui.gd")
 
 func _initialize() -> void:
 	var manager = FACTION_SCRIPT.new()
@@ -61,6 +62,15 @@ func _initialize() -> void:
 		push_error("City faction validation failed: local rivalry could not be recorded.")
 		quit(1)
 		return
+	var ui = FACTION_UI_SCRIPT.new()
+	ui.call("setup", manager)
+	root.add_child(ui)
+	ui.call("open_city", "Baghdad")
+	if not bool(ui.panel.visible) or ui.faction_list.get_child_count() != 3:
+		push_error("City faction validation failed: in-world faction board did not display all Baghdad factions.")
+		quit(1)
+		return
+	ui.free()
 	manager.free()
-	print("City faction validation passed: Baghdad factions, roles, protected civic venues, reputation, player-only contracts and rivalries.")
+	print("City faction validation passed: Baghdad factions, roles, protected civic venues, reputation, player-only contracts, rivalries and board UI.")
 	quit(0)
