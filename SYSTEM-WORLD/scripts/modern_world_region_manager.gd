@@ -12,6 +12,7 @@ const ModernCityStreetFurnitureManagerScript = preload("res://scripts/modern_cit
 const ModernCityServicesManagerScript = preload("res://scripts/modern_city_services_manager.gd")
 const SYSTEMPublicEventBoardScript = preload("res://scripts/system_public_event_board.gd")
 const SYSTEMCityAdvertisingManagerScript = preload("res://scripts/system_city_advertising_manager.gd")
+const SYSTEMBaghdadLandmarkIntegrationScript = preload("res://scripts/system_baghdad_landmark_integration.gd")
 
 ## طبقة تفاصيل المدن والمناطق الحضرية للعالم الحديث.
 ## تُبنى فوق تضاريس القارة الموجودة ولا تستبدلها أو تغيّر مواقعها المرجعية.
@@ -71,6 +72,7 @@ var building_materials: Array[StandardMaterial3D] = []
 var park_material: StandardMaterial3D
 var use_baghdad_osm_cells := false
 var city_advertising_manager: Node3D
+var baghdad_landmark_manager: Node3D
 
 
 func _ready() -> void:
@@ -94,6 +96,7 @@ func _ready() -> void:
 	_build_city_lighting()
 	_create_city_dealerships()
 	_create_baghdad_towers()
+	_create_baghdad_landmark_integration()
 	_create_city_advertising_screens()
 	_create_city_traffic()
 	_create_city_incidents()
@@ -743,6 +746,10 @@ func register_map_locations(map_manager: Node, world_id: String) -> void:
 					headquarters_location, false
 				)
 
+	var baghdad_landmarks := get_node_or_null("SYSTEMBaghdadLandmarkIntegration")
+	if baghdad_landmarks != null and baghdad_landmarks.has_method("register_map_locations"):
+		baghdad_landmarks.call("register_map_locations", map_manager, world_id)
+
 
 func discover_starting_city(map_manager: Node, world_id: String) -> void:
 	if map_manager == null or not map_manager.has_method("discover_region"):
@@ -825,6 +832,15 @@ func _create_baghdad_towers() -> void:
 	var towers := BaghdadTowerLandmarksManagerScript.new()
 	towers.name = "BaghdadTowerLandmarksManager"
 	add_child(towers)
+
+
+func _create_baghdad_landmark_integration() -> void:
+	if not city_anchors.has("Baghdad"):
+		return
+	baghdad_landmark_manager = SYSTEMBaghdadLandmarkIntegrationScript.new()
+	baghdad_landmark_manager.name = "SYSTEMBaghdadLandmarkIntegration"
+	add_child(baghdad_landmark_manager)
+	baghdad_landmark_manager.call("build", terrain)
 
 
 func _create_city_traffic() -> void:
