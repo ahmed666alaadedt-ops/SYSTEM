@@ -676,6 +676,12 @@ func _on_power_tower_floor_cleared(floor_number: int, reward_xp: int, rank: Stri
 		player_progression.add_experience(reward_xp, "Power Tower floor %d (%s)" % [floor_number, rank])
 
 
+func _on_power_tower_secret_cache_discovered(floor_number: int, secret_id: String, reward_currency: int) -> void:
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = "اكتشفت مخبأً سرياً في طابق برج القوة %d! +%d رصيد برج القوة." % [floor_number, reward_currency]
+	print("SYSTEM Power Tower: secret cache %s discovered on floor %d." % [secret_id, floor_number])
+
+
 func _on_power_tower_floor_exit_requested(floor_number: int, return_position: Vector3) -> void:
 	if player != null:
 		player.global_position = return_position
@@ -1461,6 +1467,9 @@ func _on_interaction_performed(
 					var exit_callback := Callable(self, "_on_power_tower_floor_exit_requested")
 					if not floor_world.is_connected("floor_exit_requested", exit_callback):
 						floor_world.connect("floor_exit_requested", exit_callback)
+					var secret_callback := Callable(self, "_on_power_tower_secret_cache_discovered")
+					if not floor_world.is_connected("secret_cache_discovered", secret_callback):
+						floor_world.connect("secret_cache_discovered", secret_callback)
 					player.global_position = floor_world.call("get_entry_position")
 					player.velocity = Vector3.ZERO
 					if interaction_prompt_label != null:
