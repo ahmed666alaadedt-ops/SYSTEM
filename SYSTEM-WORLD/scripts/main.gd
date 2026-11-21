@@ -109,6 +109,7 @@ var motorsport_leaderboard_best_label: Label
 var motorsport_leaderboard_rows: VBoxContainer
 var motorsport_race_hud_layer: CanvasLayer
 var motorsport_race_hud_label: Label
+var motorsport_live_refresh_elapsed := 0.0
 
 var mobile_direction := Vector2.ZERO
 var jump_requested := false
@@ -1111,6 +1112,16 @@ func _refresh_motorsport_leaderboard() -> void:
 				]
 				opponent_row.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 				motorsport_leaderboard_rows.add_child(opponent_row)
+
+
+func _process(delta: float) -> void:
+	if motorsport_leaderboard_panel == null or not motorsport_leaderboard_panel.visible:
+		return
+	motorsport_live_refresh_elapsed += maxf(0.0, delta)
+	if motorsport_live_refresh_elapsed < 0.5:
+		return
+	motorsport_live_refresh_elapsed = 0.0
+	_refresh_motorsport_leaderboard()
 
 
 func create_interaction_prompt() -> void:
