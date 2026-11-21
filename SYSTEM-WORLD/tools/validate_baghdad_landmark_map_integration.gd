@@ -1,6 +1,5 @@
 extends SceneTree
 
-const MAIN_SCENE: PackedScene = preload("res://MainScene.tscn")
 
 func _initialize() -> void:
 	call_deferred("_run_validation")
@@ -12,7 +11,11 @@ func _fail(message: String) -> void:
 
 
 func _run_validation() -> void:
-	var main := MAIN_SCENE.instantiate()
+	var main_scene := load("res://MainScene.tscn") as PackedScene
+	if main_scene == null:
+		_fail("Main scene resource could not be loaded.")
+		return
+	var main := main_scene.instantiate()
 	root.add_child(main)
 	await process_frame
 	await process_frame
