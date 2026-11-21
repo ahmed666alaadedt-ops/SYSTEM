@@ -4,7 +4,7 @@ const SERVICES_SCRIPT = preload("res://scripts/modern_city_services_manager.gd")
 
 func _initialize() -> void:
 	var manager = SERVICES_SCRIPT.new()
-	var required_ids := ["mosque", "church", "museum", "rare_antique_market", "stadium"]
+	var required_ids := ["mosque", "church", "museum", "rare_antique_market", "underworld_exchange", "stadium"]
 	var found: Dictionary = {}
 	for entry in SERVICES_SCRIPT.SERVICE_DATA:
 		found[str(entry.get("id", ""))] = entry
