@@ -78,6 +78,26 @@ func _run_validation() -> void:
 		_fail("The archaeological site has no stable map/discovery location ID.")
 		return
 
+	var archaeological_area_feature := {
+		"id": "validator_archaeological_polygon",
+		"tags": {"historic": "ruins", "name:ar": "أطلال أثرية اختبارية"},
+		"geometry": {
+			"type": "Polygon",
+			"coordinates": [[[40.0, 40.0], [80.0, 40.0], [80.0, 80.0], [40.0, 80.0], [40.0, 40.0]]]
+		}
+	}
+	var archaeological_area_count: int = streamer.call("_build_amenity_feature", cell_root, archaeological_area_feature)
+	if archaeological_area_count != 1:
+		_fail("An OSM archaeological polygon was not converted into a ruin landmark.")
+		return
+	var archaeological_area_root := cell_root.get_node_or_null("OSMArchaeologicalSiteArea_validator_archaeological_polygon_0")
+	if archaeological_area_root == null:
+		_fail("The archaeological polygon has no physical ruin detail root.")
+		return
+	if archaeological_area_root.get_node_or_null("ArchaeologicalSiteInteraction") == null:
+		_fail("The archaeological polygon is missing its stable discovery interaction.")
+		return
+
 	var road_segments_value: Variant = cell_root.get_meta("road_navigation_segments", [])
 	if not road_segments_value is Array or road_segments_value.is_empty():
 		_fail("Baghdad OSM center cell did not retain pedestrian-accessible road geometry.")
