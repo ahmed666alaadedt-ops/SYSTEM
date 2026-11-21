@@ -121,6 +121,20 @@ jobs:
           grep -q "Baghdad city state persistence round-trip passed." "$LOG"
 
 
+      - name: Validate Baghdad football match, ball interaction and scoring
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          LOG="$RUNNER_TEMP/football-match-validation.log"
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_football_match_manager.gd 2>&1 | tee "$LOG"
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Football validation failed" "$LOG"; then
+            echo "::error::Football match validation failed."
+            exit 1
+          fi
+          grep -q "Football validation passed:" "$LOG"
+
       - name: Validate seven-stage Hunter Examination and permanent license
         shell: bash
         run: |
