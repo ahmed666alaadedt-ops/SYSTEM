@@ -868,7 +868,10 @@ func _on_interaction_performed(
 			interaction_prompt_label.text = "برج القوة: " + str(result.get("reason", "تم طلب دخول الطابق"))
 	elif location_id == "hunter_association_tower_baghdad":
 		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "مقر نقابة الصيادين العالمي — راجع واجهة النقابة للتسجيل بالاختبار"
+			interaction_prompt_label.text = "برج نقابة الصيادين — خدمات النقابة والمهام والاختبارات"
+	elif location_id == "hunter_association_headquarters_baghdad":
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "وصلت إلى المقر الرئيسي لنقابة الصيادين فوق مجمع الأبراج الخمسة — راجع واجهة النقابة للخدمات والتسجيل"
 
 
 func _on_location_discovered(
