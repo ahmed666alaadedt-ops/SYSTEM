@@ -16,6 +16,7 @@ func _ready() -> void:
 	_build_fighting_ring()
 	_build_spectator_bowls()
 	_build_lighting_and_signage()
+	_build_arena_entry_interaction()
 	set_meta("independent_power_tower_venue", true)
 	set_meta("challenge_arena_blockout", true)
 
@@ -143,3 +144,20 @@ func _material(color: Color, roughness: float, metallic: float) -> StandardMater
 	result.roughness = roughness
 	result.metallic = metallic
 	return result
+
+func _build_arena_entry_interaction() -> void:
+	var interaction := Area3D.new()
+	interaction.name = "PowerTowerArenaInteraction"
+	interaction.position = Vector3(0.0, 1.8, ARENA_CENTER.z + ARENA_RADIUS + 12.0)
+	interaction.add_to_group("system_interactable")
+	interaction.set_meta("system_location_id", "power_tower_arena_baghdad")
+	interaction.set_meta("system_region_id", "region_baghdad")
+	interaction.set_meta("system_display_name", "حلبة برج القوة")
+	interaction.set_meta("system_location_type", 5)
+	interaction.set_meta("system_interaction_prompt", "دخول حلبة برج القوة — النزالات الاستعراضية")
+	var collision := CollisionShape3D.new()
+	var shape := SphereShape3D.new()
+	shape.radius = 4.5
+	collision.shape = shape
+	interaction.add_child(collision)
+	add_child(interaction)
