@@ -140,6 +140,7 @@ func _on_register_company_pressed() -> void:
 		return
 	var sector := sector_select.get_item_text(sector_select.selected)
 	var result: Dictionary = economy.call("register_company", company_name_input.text, sector)
+	_refresh_view()
 	if bool(result.get("success", false)):
 		company_name_input.clear()
 		status_label.text = "تم تسجيل الشركة محلياً: %s. الرصيد المتبقي: %s" % [
@@ -161,7 +162,6 @@ func _on_register_company_pressed() -> void:
 				status_label.text = "الرصيد غير كافٍ. تحتاج إلى 1,000 رصيد."
 			_:
 				status_label.text = "تعذر التسجيل: " + reason
-	_refresh_view()
 
 
 func _format_number(value: int) -> String:
