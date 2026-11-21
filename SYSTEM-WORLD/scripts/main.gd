@@ -816,7 +816,7 @@ func _on_interaction_performed(
 		location_id
 	)
 	if location_id.begins_with("street_ad_"):
-		var advertising_manager := target.get_parent().get_parent() if target.get_parent() != null else null
+		var advertising_manager: Node = target.get_parent().get_parent() if target.get_parent() != null else null
 		if advertising_manager != null and advertising_manager.has_method("get_campaign_details"):
 			var campaign: Dictionary = advertising_manager.call("get_campaign_details", location_id)
 			if interaction_prompt_label != null and not campaign.is_empty():
