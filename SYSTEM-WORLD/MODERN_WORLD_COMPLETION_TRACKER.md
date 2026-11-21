@@ -892,8 +892,18 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Refresh the open race-results panel every 0.5 seconds while visible, so the AI status changes during the race rather than only when the panel is opened.
 - [x] Keep AI standings visible before the player's first local result exists; an empty personal-record list no longer hides active opponents.
 - [x] Extend the motorsport validator with same-lap checkpoint-order regression cases. Godot 4.3 workflow run 44955686318 passed on commit 9e6a8f4fc7dbd5f7e0845b50fcd673a2c98c99a7; both motorsport validators, all configured Baghdad/tower/Hunter/Power Tower checks, mesh scan and headless main-scene launch passed.
-- [ ] Build a unified authoritative player-versus-AI finishing order using the player's live checkpoint position, not only separate local records and AI-only standings.
+- [x] Build a unified local player-versus-AI standings order using the player's live checkpoint position and AI checkpoint progress; the leaderboard now ranks the player and opponents together.
 - [ ] Implement server-authoritative global leaderboards and multiplayer race results; current personal records and AI standings remain local/prototype data.
 - Note: checkpoint-based AI ranking is a live local approximation. Physical vehicle feel, overtake/collision behavior, full race-class routes, Android controls and global competition remain unverified.
 
 - [x] Stabilize the race validator by using an in-memory garage contract and removing fragile global-class-cache annotations from the race-manager/mobile-controls preload path; the final workflow run 44955686318 passed after this correction.
+
+
+## Baghdad motorsport — unified player and AI standings — 22 November 2026
+
+- [x] Add a unified standings API that combines the player's current lap/checkpoint/distance/time state with AI opponent progress.
+- [x] Rank finished racers by elapsed result time; rank active racers by completed laps, ordered checkpoint progress, distance to the next checkpoint, then elapsed time.
+- [x] Display the player and AI opponents together in the race-results panel, including awaiting-vehicle, starting, racing, finished and retired states.
+- [x] Keep the unified panel live-refreshing while open and visible even before the player's first saved attempt.
+- [x] Extend the Godot validator to assert a six-racer order including the player. Godot 4.3 workflow run 44956090384 passed on commit b4f6a4617775d1f85d792c2ae0cdb9c689ed86e1; both motorsport validators and the headless main-scene launch passed.
+- [ ] Implement server-authoritative global leaderboards and multiplayer race results. The current unified standings and personal best records are local runtime data only.
