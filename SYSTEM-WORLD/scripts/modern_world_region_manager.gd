@@ -834,6 +834,8 @@ func _create_baghdad_towers() -> void:
 	add_child(towers)
 
 
+# Keep this after city services and Baghdad towers are created: connector roads
+# resolve their final service placements and the Power Tower's adjusted position.
 func _create_baghdad_landmark_integration() -> void:
 	if not city_anchors.has("Baghdad"):
 		return
