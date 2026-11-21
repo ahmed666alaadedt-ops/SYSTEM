@@ -79,6 +79,19 @@ func _build_service_desks() -> void:
 		label.pixel_size = 0.014
 		label.modulate = Color(0.78, 0.91, 1.0)
 		add_child(label)
+		if entrance_script != null:
+			var service_area: Area3D = entrance_script.new()
+			service_area.name = "ServiceInteraction_%d" % index
+			service_area.configure("tower_service_" + tower_id + "_" + str(index), str(desk_titles[index]), "region_baghdad")
+			service_area.set_meta("system_service_description", "نقطة معلومات وخدمة أولية في بهو البرج؛ ربط الخدمة التشغيلية الكاملة قيد التطوير.")
+			service_area.set_meta("system_interaction_prompt", "استعراض " + str(desk_titles[index]))
+			var service_collision := CollisionShape3D.new()
+			var service_shape := SphereShape3D.new()
+			service_shape.radius = 3.0
+			service_collision.shape = service_shape
+			service_area.add_child(service_collision)
+			service_area.position = desk_positions[index] + Vector3(0.0, 1.5, 3.0)
+			add_child(service_area)
 
 func _service_titles() -> Array[String]:
 	match tower_id:
