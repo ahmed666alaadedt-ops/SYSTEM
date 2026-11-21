@@ -23,9 +23,14 @@ func setup(p_vehicle: SystemDrivableVehicle, p_id: String, p_name: String, p_way
 	total_laps = maxi(1, p_laps)
 	cruise_speed = maxf(12.0, p_speed)
 	target_checkpoint = 1 if waypoints.size() > 1 else 0
-	active = is_instance_valid(vehicle) and waypoints.size() >= 2
-	if active:
+	active = false
+	if is_instance_valid(vehicle):
 		vehicle.set_ai_control_enabled(true)
+		vehicle.set_ai_controls(0.0, 0.0, 1.0)
+
+func start_race() -> void:
+	if is_instance_valid(vehicle) and waypoints.size() >= 2:
+		active = true
 
 func _physics_process(delta: float) -> void:
 	if not active or not is_instance_valid(vehicle):
