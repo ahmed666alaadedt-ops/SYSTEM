@@ -35,8 +35,9 @@ func _run() -> void:
 	if ui.get_node_or_null("ArenaControlPanel") == null:
 		_fail("Arena panel was not created.")
 		return
-	if ui.get_node("ArenaControlPanel").get_node_or_null("VBoxContainer") == null:
-		_fail("Arena panel layout is missing.")
+	var arena_panel: PanelContainer = ui.get_node("ArenaControlPanel") as PanelContainer
+	if arena_panel.get_child_count() == 0 or not (arena_panel.get_child(0) is VBoxContainer):
+		_fail("Arena panel does not contain its vertical control layout.")
 		return
 	if not ui.has_method("show_arena") or not ui.has_method("hide_arena"):
 		_fail("Arena visibility controls are missing.")
