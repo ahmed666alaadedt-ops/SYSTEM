@@ -77,7 +77,7 @@ func _build_power_tower() -> void:
 		position,
 		POWER_TOWER_HEIGHT,
 		22.0,
-		28,
+		100,
 		Color(0.95, 0.55, 0.16),
 		false
 	)
