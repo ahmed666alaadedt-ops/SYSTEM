@@ -864,8 +864,18 @@ func _on_interaction_performed(
 		var next_floor := int(power_tower_manager.get_tower_status().get("next_floor", 1))
 		var level := int(player_progression.current_level) if player_progression != null else 1
 		var result: Dictionary = power_tower_manager.request_floor(next_floor, level)
-		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "برج القوة: " + str(result.get("reason", "تم طلب دخول الطابق"))
+		if bool(result.get("success", false)):
+			var power_tower_root := target.get_parent()
+			var arena_venue := power_tower_root.get_node_or_null("PowerTowerArenaVenue") if power_tower_root != null else null
+			if arena_venue != null and player != null:
+				player.global_position = arena_venue.call("get_arena_entry_position")
+				player.velocity = Vector3.ZERO
+				if interaction_prompt_label != null:
+					interaction_prompt_label.text = "برج القوة — بدأت محاولة الطابق %d. الحلبة جاهزة، ونظام الخصوم والقتال الفعلي قيد الإكمال." % next_floor
+			elif interaction_prompt_label != null:
+				interaction_prompt_label.text = "تم حجز الطابق %d، لكن الحلبة غير متاحة حالياً." % next_floor
+		elif interaction_prompt_label != null:
+			interaction_prompt_label.text = "برج القوة: " + str(result.get("reason", "تعذر بدء التحدي"))
 	elif location_id == "hunter_association_tower_baghdad":
 		var hunter_tower_root := target.get_parent()
 		var hunter_tower_lobby := hunter_tower_root.get_node_or_null("TowerInterior") if hunter_tower_root != null else null
