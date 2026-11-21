@@ -25,6 +25,7 @@ func _initialize() -> void:
 		_fail("Rare artifact catalogue is incomplete.")
 		return
 	manager.inventory["seller_test"] = ["uruk_cylinder_seal"]
+	manager.inventory["local_player"] = ["bronze_star_astrolabe"]
 	var created: Dictionary = manager.create_auction("uruk_cylinder_seal", "seller_test", 500)
 	if not bool(created.get("success", false)):
 		_fail("Could not create a valid artifact auction.")
@@ -35,7 +36,9 @@ func _initialize() -> void:
 	if not bool(bid.get("success", false)) or wallet.balance != 49300:
 		_fail("Bid escrow was not applied.")
 		return
-	var self_bid: Dictionary = manager.place_bid(auction_id, "seller_test", 900)
+	var own_lot: Dictionary = manager.create_auction("bronze_star_astrolabe", "local_player", 800)
+	var own_auction_id := str(own_lot.get("auction", {}).get("id", ""))
+	var self_bid: Dictionary = manager.place_bid(own_auction_id, "local_player", 900)
 	if str(self_bid.get("reason", "")) != "SELLER_CANNOT_BID":
 		_fail("Seller self-bidding was not blocked.")
 		return
@@ -46,6 +49,11 @@ func _initialize() -> void:
 	var forged_identity: Dictionary = manager.place_bid(auction_id, "forged_player_id", 900)
 	if str(forged_identity.get("reason", "")) != "INVALID_BID":
 		_fail("Non-player bidder identity was accepted.")
+		return
+	manager.auctions[auction_id]["ends_at"] = int(Time.get_unix_time_from_system()) - 1
+	var settled: Dictionary = manager.settle_auction(auction_id)
+	if not bool(settled.get("success", false)) or not (manager.get_inventory().get("local_player", []) as Array).has("uruk_cylinder_seal"):
+		_fail("Auction settlement did not transfer local ownership.")
 		return
 	var item: Dictionary = manager.get_item_details("uruk_cylinder_seal")
 	if str(item.get("authenticity", "")) != "APPRAISED" or str(item.get("provenance", "")).is_empty():
