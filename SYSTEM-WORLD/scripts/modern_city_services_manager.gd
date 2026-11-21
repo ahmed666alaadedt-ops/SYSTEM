@@ -188,6 +188,8 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 	collision_shape.size = Vector3(width, shell_height, depth)
 	collision.shape = collision_shape
 	collision.position.y = shell_height * 0.5
+	# A stadium is an open venue, not a solid building shell; the pitch and stands provide their own collision.
+	collision.disabled = service_id == "stadium"
 	body.add_child(collision)
 
 	if service_id != "stadium" and service_id != "park":
@@ -272,42 +274,117 @@ func get_service_locations() -> Array[Dictionary]:
 	return service_locations.duplicate(true)
 
 func _create_stadium_details(parent: Node3D, width: float, depth: float) -> void:
-	var pitch_material := _material(Color(0.08, 0.34, 0.12), 0.95, 0.0)
+	# Full-size open pitch blockout with collision, markings, goals and four spectator sides.
+	var pitch_width := width * 0.66
+	var pitch_depth := depth * 0.62
+	var pitch_material := _material(Color(0.07, 0.31, 0.105), 0.96, 0.0)
+	var alternate_grass := _material(Color(0.09, 0.37, 0.13), 0.96, 0.0)
 	var line_material := _material(Color(0.92, 0.94, 0.86), 0.9, 0.0)
+	var stand_material := _material(Color(0.22, 0.28, 0.36), 0.84, 0.12)
+	var roof_material := _material(Color(0.12, 0.17, 0.22), 0.55, 0.3)
+
+	var pitch_body := StaticBody3D.new()
+	pitch_body.name = "PlayableFootballPitchCollision"
 	var pitch := MeshInstance3D.new()
 	pitch.name = "FootballPitch"
 	var pitch_mesh := BoxMesh.new()
-	pitch_mesh.size = Vector3(width * 0.56, 0.18, depth * 0.52)
+	pitch_mesh.size = Vector3(pitch_width, 0.3, pitch_depth)
 	pitch.mesh = pitch_mesh
-	pitch.position.y = 1.2
+	pitch.position.y = 0.9
 	pitch.material_override = pitch_material
-	parent.add_child(pitch)
+	pitch_body.add_child(pitch)
+	var pitch_collision := CollisionShape3D.new()
+	var pitch_shape := BoxShape3D.new()
+	pitch_shape.size = Vector3(pitch_width, 0.3, pitch_depth)
+	pitch_collision.shape = pitch_shape
+	pitch_collision.position.y = 0.9
+	pitch_body.add_child(pitch_collision)
+	parent.add_child(pitch_body)
+
+	for stripe_index in range(8):
+		var stripe := MeshInstance3D.new()
+		stripe.name = "GrassStripe_%02d" % stripe_index
+		var stripe_mesh := BoxMesh.new()
+		stripe_mesh.size = Vector3(pitch_width / 8.0, 0.025, pitch_depth)
+		stripe.mesh = stripe_mesh
+		stripe.position = Vector3(-pitch_width * 0.4375 + float(stripe_index) * pitch_width / 7.0, 1.065, 0.0)
+		stripe.material_override = alternate_grass if stripe_index % 2 == 0 else pitch_material
+		parent.add_child(stripe)
+
+	_add_stadium_marking(parent, "TouchlineTop", Vector3(0.0, 1.09, -pitch_depth * 0.5), Vector3(pitch_width, 0.045, 0.16), line_material)
+	_add_stadium_marking(parent, "TouchlineBottom", Vector3(0.0, 1.09, pitch_depth * 0.5), Vector3(pitch_width, 0.045, 0.16), line_material)
+	_add_stadium_marking(parent, "GoalLineLeft", Vector3(-pitch_width * 0.5, 1.09, 0.0), Vector3(0.16, 0.045, pitch_depth), line_material)
+	_add_stadium_marking(parent, "GoalLineRight", Vector3(pitch_width * 0.5, 1.09, 0.0), Vector3(0.16, 0.045, pitch_depth), line_material)
+	_add_stadium_marking(parent, "HalfwayLine", Vector3(0.0, 1.09, 0.0), Vector3(0.14, 0.045, pitch_depth), line_material)
+	var center_circle := MeshInstance3D.new()
+	center_circle.name = "CenterCircle"
+	var circle_mesh := TorusMesh.new()
+	circle_mesh.inner_radius = 8.8
+	circle_mesh.outer_radius = 9.0
+	circle_mesh.rings = 8
+	circle_mesh.ring_segments = 48
+	center_circle.mesh = circle_mesh
+	center_circle.position.y = 1.12
+	center_circle.material_override = line_material
+	parent.add_child(center_circle)
+
 	for side in [-1.0, 1.0]:
-		var stand := MeshInstance3D.new()
-		stand.name = "SpectatorStand_%s" % str(side)
-		var stand_mesh := BoxMesh.new()
-		stand_mesh.size = Vector3(width * 0.72, 8.0, 10.0)
-		stand.mesh = stand_mesh
-		stand.position = Vector3(0.0, 5.0, side * depth * 0.39)
-		stand.material_override = _material(Color(0.28, 0.32, 0.38), 0.82, 0.0)
-		parent.add_child(stand)
+		var box := MeshInstance3D.new()
+		box.name = "PenaltyArea_%s" % str(side)
+		var box_mesh := BoxMesh.new()
+		box_mesh.size = Vector3(16.0, 0.04, 0.42)
+		box.mesh = box_mesh
+		box.position = Vector3(side * (pitch_width * 0.5 - 8.0), 1.12, 0.0)
+		box.material_override = line_material
+		parent.add_child(box)
+		_build_stadium_goal(parent, side, pitch_width, pitch_depth, line_material)
+
+	# Four stepped grandstands leave the corners open for access.
 	for side in [-1.0, 1.0]:
-		var goal := MeshInstance3D.new()
-		goal.name = "GoalFrame_%s" % str(side)
-		var goal_mesh := BoxMesh.new()
-		goal_mesh.size = Vector3(7.3, 2.5, 0.18)
-		goal.mesh = goal_mesh
-		goal.position = Vector3(0.0, 2.5, side * depth * 0.27)
-		goal.material_override = line_material
-		parent.add_child(goal)
-	var center_line := MeshInstance3D.new()
-	center_line.name = "PitchCenterLine"
-	var center_mesh := BoxMesh.new()
-	center_mesh.size = Vector3(0.16, 0.035, depth * 0.52)
-	center_line.mesh = center_mesh
-	center_line.position.y = 1.31
-	center_line.material_override = line_material
-	parent.add_child(center_line)
+		for row in range(4):
+			var stand := MeshInstance3D.new()
+			stand.name = "LongStand_%s_%02d" % [str(side), row]
+			var stand_mesh := BoxMesh.new()
+			stand_mesh.size = Vector3(pitch_width * 0.82, 1.4, 4.2)
+			stand.mesh = stand_mesh
+			stand.position = Vector3(0.0, 2.0 + float(row) * 1.5, side * (pitch_depth * 0.5 + 7.0 + float(row) * 3.0))
+			stand.material_override = stand_material
+			parent.add_child(stand)
+	for side in [-1.0, 1.0]:
+		for row in range(3):
+			var end_stand := MeshInstance3D.new()
+			end_stand.name = "EndStand_%s_%02d" % [str(side), row]
+			var end_mesh := BoxMesh.new()
+			end_mesh.size = Vector3(4.0, 1.4, pitch_depth * 0.55)
+			end_stand.mesh = end_mesh
+			end_stand.position = Vector3(side * (pitch_width * 0.5 + 7.0 + float(row) * 3.0), 2.0 + float(row) * 1.5, 0.0)
+			end_stand.material_override = stand_material
+			parent.add_child(end_stand)
+	var canopy := MeshInstance3D.new()
+	canopy.name = "StadiumRoofCanopy"
+	var canopy_mesh := BoxMesh.new()
+	canopy_mesh.size = Vector3(pitch_width + 30.0, 1.0, 5.0)
+	canopy.mesh = canopy_mesh
+	canopy.position = Vector3(0.0, 10.0, -pitch_depth * 0.5 - 13.0)
+	canopy.material_override = roof_material
+	parent.add_child(canopy)
+
+func _build_stadium_goal(parent: Node3D, side: float, pitch_width: float, pitch_depth: float, material: Material) -> void:
+	var goal_center := Vector3(side * (pitch_width * 0.5 + 0.15), 1.1, 0.0)
+	for post_side in [-1.0, 1.0]:
+		_add_stadium_marking(parent, "GoalPost_%s_%s" % [str(side), str(post_side)], goal_center + Vector3(0.0, 1.2, post_side * 3.66), Vector3(0.18, 2.4, 0.18), material)
+	_add_stadium_marking(parent, "GoalCrossbar_%s" % str(side), goal_center + Vector3(0.0, 2.4, 0.0), Vector3(0.18, 0.18, 7.5), material)
+	_add_stadium_marking(parent, "GoalNetBack_%s" % str(side), goal_center + Vector3(side * 2.0, 1.0, 0.0), Vector3(0.12, 2.0, 7.3), material)
+
+func _add_stadium_marking(parent: Node3D, node_name: String, position: Vector3, size: Vector3, material: Material) -> void:
+	var marking := MeshInstance3D.new()
+	marking.name = node_name
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	marking.mesh = mesh
+	marking.position = position
+	marking.material_override = material
+	parent.add_child(marking)
 
 
 func _create_civic_courtyard(parent: Node3D, width: float, depth: float, green: Material) -> void:
