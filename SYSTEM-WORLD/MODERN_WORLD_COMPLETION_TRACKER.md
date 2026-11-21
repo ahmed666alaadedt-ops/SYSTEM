@@ -504,3 +504,14 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Verify lobby entry/exit routing, player clearance, and the five identity display layouts in a live Godot scene.
 - [ ] Replace the current prototype screens with data-backed service UIs and implement working elevator/stair floor selection.
 - Note: the lobby remains a first-floor playable blockout. Upper floors, service workflows, NPC staffing and real lift movement are not implemented by this pass.
+
+
+## Tower building entry/exit interaction wiring — 21 November 2026
+
+- [x] Route interactions with the five connected tower entrance IDs to their sibling TowerInterior entry positions.
+- [x] Route the Hunter Association headquarters entrance to HeadquartersInterior.
+- [x] Route tower lobby and headquarters exit interactions back to their configured exterior return positions.
+- [x] Reset player velocity and clear the active interaction prompt after a building transition.
+- [ ] Verify the transition targets and player capsule clearance in Godot; this code path has not yet been confirmed in a live run.
+- [ ] Add camera/facing alignment, transition fade, door animation, floor selection and working elevators/stairs.
+- Note: this wires first-floor entry and exit only. It does not make upper tower floors accessible or implement lift travel.
