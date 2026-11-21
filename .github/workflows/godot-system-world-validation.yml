@@ -105,7 +105,8 @@ jobs:
           grep -q "func create_rare_antiques_market" "$PROJECT/scripts/main.gd"
           grep -q "RareAntiquesMarketUIScript" "$PROJECT/scripts/main.gd"
           grep -q "func open_market" "$PROJECT/scripts/system_rare_antiques_market_ui.gd"
-          grep -q "service_baghdad_underworld_exchange" "$PROJECT/scripts/main.gd"
+          grep -q '"underworld_exchange"' "$PROJECT/scripts/modern_city_services_manager.gd"
+          grep -q 'ends_with("_underworld_exchange")' "$PROJECT/scripts/main.gd"
           grep -q "func create_city_faction_ui" "$PROJECT/scripts/main.gd"
 
       - name: Validate modern city faction registry and reputation
