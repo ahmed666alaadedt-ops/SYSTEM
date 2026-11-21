@@ -182,6 +182,7 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 	var body := StaticBody3D.new()
 	body.name = "ServiceBuildingCollisionBody"
 	building.add_child(body)
+	var is_civic_interior := ["mosque", "church", "museum", "rare_antique_market"].has(service_id)
 	var structure := MeshInstance3D.new()
 	structure.name = "ServiceBuildingFacade"
 	var structure_mesh := BoxMesh.new()
@@ -192,6 +193,7 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 	structure.position.y = shell_height * 0.5
 	structure.material_override = facade
 	structure.visibility_range_end = 1100.0
+	structure.visible = not is_civic_interior
 	body.add_child(structure)
 	var collision := CollisionShape3D.new()
 	var collision_shape := BoxShape3D.new()
@@ -207,14 +209,14 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 		var roof_mesh := BoxMesh.new()
 		roof_mesh.size = Vector3(width + 0.7, 0.45, depth + 0.7)
 		roof.mesh = roof_mesh
-		roof.position.y = height + 0.2
+		roof.position.y = _get_civic_wall_height(service_id) + 0.55 if is_civic_interior else height + 0.2
 		roof.material_override = roof_material
 		roof.visibility_range_end = 1100.0
 		building.add_child(roof)
 
 	# Keep facade detail counts bounded for Android: three visible window bands,
 	# with only two windows per band on each procedural service building.
-	var visible_window_bands := 0 if service_id == "stadium" or service_id == "park" else (3 if height > 15.0 else 2)
+	var visible_window_bands := 0 if service_id == "stadium" or service_id == "park" or is_civic_interior else (3 if height > 15.0 else 2)
 	for floor_index in range(visible_window_bands):
 		var y := 2.0 + float(floor_index) * 4.2
 		for column in range(2):
@@ -243,8 +245,9 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 		_create_museum_details(building, width, depth, roof_material)
 	elif service_id == "rare_antique_market":
 		_create_rare_antique_market_details(building, width, depth, glass, roof_material)
-	if ["mosque", "church", "museum", "rare_antique_market"].has(service_id):
-		_create_civic_interior_blockout(building, service_id, width, depth, facade, glass, roof_material)
+	if is_civic_interior:
+		_create_civic_structural_shell(building, service_id, width, depth, facade, roof_material)
+		_build_civic_interior(building, service_id, width, depth, facade, glass, roof_material)
 
 	var door := MeshInstance3D.new()
 	var door_mesh := BoxMesh.new()
@@ -400,7 +403,69 @@ func _create_rare_antique_market_details(parent: Node3D, width: float, depth: fl
 
 
 
-func _create_civic_interior_blockout(parent: Node3D, service_id: String, width: float, depth: float, stone: Material, glass: Material, timber: Material) -> void:
+
+func _get_civic_wall_height(service_id: String) -> float:
+	match service_id:
+		"mosque", "church":
+			return 13.5
+		"museum":
+			return 11.0
+		"rare_antique_market":
+			return 9.0
+	return 8.0
+
+
+func _add_civic_wall(parent: Node3D, wall_name: String, center: Vector3, size: Vector3, material: Material) -> void:
+	var wall_body := StaticBody3D.new()
+	wall_body.name = wall_name + "_Body"
+	wall_body.position = center
+	parent.add_child(wall_body)
+	var wall_mesh := MeshInstance3D.new()
+	wall_mesh.name = wall_name
+	var box := BoxMesh.new()
+	box.size = size
+	wall_mesh.mesh = box
+	wall_mesh.material_override = material
+	wall_body.add_child(wall_mesh)
+	var wall_collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = size
+	wall_collision.shape = shape
+	wall_body.add_child(wall_collision)
+
+
+func _create_civic_structural_shell(parent: Node3D, service_id: String, width: float, depth: float, wall_material: Material, trim_material: Material) -> void:
+	var wall_height := _get_civic_wall_height(service_id)
+	var wall_thickness := 0.65
+	var half_width := width * 0.5
+	var half_depth := depth * 0.5
+	var door_width := 3.4
+	var front_segment := (width - door_width) * 0.5
+	_add_civic_wall(parent, "CivicLeftWall", Vector3(-half_width + wall_thickness * 0.5, wall_height * 0.5, 0.0), Vector3(wall_thickness, wall_height, depth), wall_material)
+	_add_civic_wall(parent, "CivicRightWall", Vector3(half_width - wall_thickness * 0.5, wall_height * 0.5, 0.0), Vector3(wall_thickness, wall_height, depth), wall_material)
+	_add_civic_wall(parent, "CivicRearWall", Vector3(0.0, wall_height * 0.5, half_depth - wall_thickness * 0.5), Vector3(width, wall_height, wall_thickness), wall_material)
+	_add_civic_wall(parent, "CivicFrontLeft", Vector3(-door_width * 0.5 - front_segment * 0.5, wall_height * 0.5, -half_depth + wall_thickness * 0.5), Vector3(front_segment, wall_height, wall_thickness), wall_material)
+	_add_civic_wall(parent, "CivicFrontRight", Vector3(door_width * 0.5 + front_segment * 0.5, wall_height * 0.5, -half_depth + wall_thickness * 0.5), Vector3(front_segment, wall_height, wall_thickness), wall_material)
+	_add_civic_wall(parent, "CivicDoorLintel", Vector3(0.0, wall_height - 1.0, -half_depth + wall_thickness * 0.5), Vector3(door_width, 2.0, wall_thickness), trim_material)
+	var floor_body := StaticBody3D.new()
+	floor_body.name = "CivicInteriorFloorCollision"
+	parent.add_child(floor_body)
+	var floor_shape := CollisionShape3D.new()
+	var floor_box := BoxShape3D.new()
+	floor_box.size = Vector3(width - 1.2, 0.35, depth - 1.2)
+	floor_shape.shape = floor_box
+	floor_shape.position.y = 0.12
+	floor_body.add_child(floor_shape)
+	var entry_step := MeshInstance3D.new()
+	entry_step.name = "CivicEntranceStep"
+	var step_mesh := BoxMesh.new()
+	step_mesh.size = Vector3(5.0, 0.35, 1.6)
+	entry_step.mesh = step_mesh
+	entry_step.position = Vector3(0.0, 0.18, -half_depth - 0.8)
+	entry_step.material_override = trim_material
+	parent.add_child(entry_step)
+
+func _build_civic_interior(parent: Node3D, service_id: String, width: float, depth: float, stone: Material, glass: Material, timber: Material) -> void:
 	var floor := MeshInstance3D.new()
 	floor.name = "InteriorFloor_Blockout"
 	var floor_mesh := BoxMesh.new()
