@@ -19,6 +19,12 @@ func _run_validation() -> void:
 		"job": "hunter",
 		"world": "fantasy"
 	}, 1)
+	var child_mesh_report: Dictionary = child.call("get_mesh_safety_report")
+	print("SYSTEM CHILD MESH SAFETY: ", child_mesh_report)
+	if int(child_mesh_report.get("null_meshes", 0)) > 0 or int(child_mesh_report.get("invalid_mesh_rids", 0)) > 0:
+		push_error("SYSTEM CHILD QA: imported character contains null or invalid mesh resources")
+		quit(1)
+		return
 	child.call("set_activity", "attack")
 	if str(child.get("current_activity")) != "idle":
 		push_error("SYSTEM CHILD QA: child entered an offensive combat activity")
@@ -162,7 +168,45 @@ func _run_validation() -> void:
 		quit(1)
 		return
 
+	# Report every character rig and every MeshInstance3D in this isolated test
+	# scene. The first child rig was clean, but renderer errors continued after
+	# the other adult/visible-character rigs were created.
+	for character in [child, visible_child, adult, visible_adult]:
+		if character.has_method("get_mesh_safety_report"):
+			print("SYSTEM CHARACTER MESH SAFETY ", character.name, ": ",
+				character.call("get_mesh_safety_report"))
+	var scene_mesh_report := _get_scene_mesh_safety_report(root)
+	print("SYSTEM CHILD QA SCENE MESH SAFETY: ", scene_mesh_report)
+	if int(scene_mesh_report.get("null_meshes", 0)) > 0 or int(scene_mesh_report.get("invalid_mesh_rids", 0)) > 0:
+		push_error("SYSTEM CHILD QA: test scene contains null or invalid mesh resources")
+		quit(1)
+		return
+
 	print("SYSTEM NPC QA PASS: civilians do not join missions or initiate combat; minors evade and adults defend/retreat when attacked")
-	child.queue_free()
-	adult.queue_free()
+	await process_frame
 	quit(0)
+
+
+func _get_scene_mesh_safety_report(root_node: Node) -> Dictionary:
+	var report := {
+		"null_meshes": 0,
+		"invalid_mesh_rids": 0,
+		"valid_meshes": 0,
+		"invalid_nodes": []
+	}
+	var stack: Array[Node] = [root_node]
+	while not stack.is_empty():
+		var current: Node = stack.pop_back()
+		if current is MeshInstance3D:
+			var mesh_node := current as MeshInstance3D
+			if mesh_node.mesh == null:
+				report["null_meshes"] += 1
+				report["invalid_nodes"].append(str(mesh_node.get_path()) + " (null)")
+			elif not mesh_node.mesh.get_rid().is_valid():
+				report["invalid_mesh_rids"] += 1
+				report["invalid_nodes"].append(str(mesh_node.get_path()) + " (invalid RID)")
+			else:
+				report["valid_meshes"] += 1
+		for child_node in current.get_children():
+			stack.append(child_node)
+	return report
