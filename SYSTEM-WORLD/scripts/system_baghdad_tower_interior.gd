@@ -254,6 +254,7 @@ func _build_upper_floor_access() -> void:
 		_add_solid_box("LiftLandingMarker_%02d" % floor_number, Vector3(14.0, floor_y + 1.2, 12.0), Vector3(5.0, 2.4, 4.0), floor_material)
 		_add_visual_box("LiftDoor_Left_%02d" % floor_number, Vector3(9.0, floor_y + 4.0, 11.6), Vector3(1.8, 7.0, 0.22), edge_material)
 		_add_visual_box("LiftDoor_Right_%02d" % floor_number, Vector3(11.0, floor_y + 4.0, 11.6), Vector3(1.8, 7.0, 0.22), edge_material)
+		_build_floor_theme(floor_number, floor_y, floor_material, edge_material)
 		_create_floor_selector(floor_number, floor_y)
 
 
@@ -273,3 +274,54 @@ func _create_floor_selector(floor_number: int, floor_y: float) -> void:
 	area.add_child(collision)
 	area.position = Vector3(10.0, floor_y + 1.5, 8.0)
 	add_child(area)
+
+
+func _build_floor_theme(floor_number: int, floor_y: float, floor_material: Material, accent_material: Material) -> void:
+	match tower_id:
+		"hunter_association_tower_baghdad":
+			_build_hunter_floor(floor_number, floor_y, floor_material, accent_material)
+		"business_tower_baghdad":
+			_build_business_floor(floor_number, floor_y, floor_material, accent_material)
+		"shopping_tower_baghdad":
+			_build_shopping_floor(floor_number, floor_y, floor_material, accent_material)
+		"entertainment_tower_baghdad":
+			_build_entertainment_floor(floor_number, floor_y, floor_material, accent_material)
+		"technology_tower_baghdad":
+			_build_technology_floor(floor_number, floor_y, floor_material, accent_material)
+
+
+func _build_hunter_floor(floor_number: int, floor_y: float, base: Material, accent: Material) -> void:
+	_add_solid_box("HunterBriefingTable_%02d" % floor_number, Vector3(-8.0, floor_y + 1.5, -5.0), Vector3(12.0, 1.0, 5.0), base)
+	_add_visual_box("HunterMissionBoard_%02d" % floor_number, Vector3(0.0, floor_y + 6.0, -17.0), Vector3(15.0, 7.0, 0.4), accent)
+	_add_visual_box("HunterHallOfHonor_%02d" % floor_number, Vector3(0.0, floor_y + 4.0, 16.0), Vector3(18.0, 5.0, 0.5), base)
+
+
+func _build_business_floor(floor_number: int, floor_y: float, base: Material, accent: Material) -> void:
+	for index in range(3):
+		var x := -11.0 + float(index) * 11.0
+		_add_solid_box("BusinessOfficePod_%02d_%d" % [floor_number, index], Vector3(x, floor_y + 1.5, -7.0), Vector3(8.0, 3.0, 8.0), base)
+		_add_visual_box("BusinessDisplay_%02d_%d" % [floor_number, index], Vector3(x, floor_y + 5.0, -11.0), Vector3(6.0, 2.8, 0.25), accent)
+	_add_solid_box("InvestmentConferenceTable_%02d" % floor_number, Vector3(0.0, floor_y + 1.2, 8.0), Vector3(15.0, 0.8, 4.0), base)
+
+
+func _build_shopping_floor(floor_number: int, floor_y: float, base: Material, accent: Material) -> void:
+	for index in range(4):
+		var x := -12.0 + float(index) * 8.0
+		_add_solid_box("MarketKiosk_%02d_%d" % [floor_number, index], Vector3(x, floor_y + 1.5, -7.0), Vector3(5.0, 3.0, 6.0), base)
+		_add_visual_box("MarketCanopy_%02d_%d" % [floor_number, index], Vector3(x, floor_y + 3.5, -7.0), Vector3(5.8, 0.35, 6.8), accent)
+	_add_solid_box("MarketServiceIsland_%02d" % floor_number, Vector3(0.0, floor_y + 1.0, 10.0), Vector3(12.0, 2.0, 4.0), base)
+
+
+func _build_entertainment_floor(floor_number: int, floor_y: float, base: Material, accent: Material) -> void:
+	_add_solid_box("EntertainmentStage_%02d" % floor_number, Vector3(0.0, floor_y + 1.0, -12.0), Vector3(18.0, 2.0, 7.0), base)
+	for row in range(3):
+		_add_solid_box("EntertainmentAudienceTier_%02d_%d" % [floor_number, row], Vector3(0.0, floor_y + 1.0 + float(row) * 1.2, 3.0 + float(row) * 4.0), Vector3(22.0 - float(row) * 2.0, 1.0, 2.0), base)
+	_add_visual_box("EntertainmentEventDisplay_%02d" % floor_number, Vector3(0.0, floor_y + 6.0, -16.0), Vector3(14.0, 6.0, 0.3), accent)
+
+
+func _build_technology_floor(floor_number: int, floor_y: float, base: Material, accent: Material) -> void:
+	for index in range(3):
+		var x := -10.0 + float(index) * 10.0
+		_add_solid_box("InnovationWorkbench_%02d_%d" % [floor_number, index], Vector3(x, floor_y + 1.2, -5.0), Vector3(7.0, 1.2, 5.0), base)
+		_add_visual_box("InnovationDisplay_%02d_%d" % [floor_number, index], Vector3(x, floor_y + 4.0, -8.0), Vector3(5.0, 3.0, 0.25), accent)
+	_add_solid_box("PrototypePresentationPod_%02d" % floor_number, Vector3(0.0, floor_y + 1.0, 10.0), Vector3(10.0, 2.0, 8.0), base)
