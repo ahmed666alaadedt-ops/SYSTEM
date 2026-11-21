@@ -30,6 +30,7 @@ var next_match_number := 1
 func _ready() -> void:
 	name = "SYSTEMPowerTowerArenaManager"
 	set_process(true)
+	crowd_cheered.connect(_on_crowd_cheered)
 
 func setup(p_wallet_manager: Node) -> void:
 	wallet_manager = p_wallet_manager
@@ -155,6 +156,14 @@ func resolve_match(winner_id: String) -> Dictionary:
 	var total_pool := int(pool.get("total", 0))
 	var payout := 0
 	var payout_count := 0
+	var refunded_no_winner := 0
+	if total_pool > 0 and winning_stake <= 0:
+		for bet in spectator_bets:
+			var refund_amount := int(bet.get("amount", 0))
+			if refund_amount > 0 and wallet_manager != null and wallet_manager.has_method("credit_currency"):
+				var refund: Dictionary = wallet_manager.call("credit_currency", refund_amount, "power_tower_no_winning_bets_refund")
+				if bool(refund.get("success", false)):
+					refunded_no_winner += refund_amount
 	if total_pool > 0 and winning_stake > 0:
 		for bet in spectator_bets:
 			if str(bet.get("fighter_id", "")) != winner_id:
@@ -173,7 +182,8 @@ func resolve_match(winner_id: String) -> Dictionary:
 		"winning_stake": winning_stake,
 		"payout_total": payout,
 		"winning_bets_paid": payout_count,
-		"unclaimed_pool": maxi(0, total_pool - payout),
+		"no_winner_refunds": refunded_no_winner,
+		"unclaimed_pool": maxi(0, total_pool - payout - refunded_no_winner),
 		"currency_id": CURRENCY_ID,
 		"real_money_allowed": false,
 		"settlement_mode": "local_device_prototype",
@@ -222,6 +232,8 @@ func _build_npc_crowd() -> void:
 		var spectator := Node3D.new()
 		spectator.name = "ArenaSpectatorNPC_%02d" % index
 		spectator.position = Vector3((float(column) - 2.5) * 8.5, 3.0 + float(row) * 1.55, side * (ARENA_STAND_Z + float(row) * 4.0))
+		spectator.set_meta("base_y", spectator.position.y)
+		spectator.set_meta("cheer_intensity", 0.0)
 		var body := MeshInstance3D.new()
 		body.name = "SpectatorBody"
 		var capsule := CapsuleMesh.new()
@@ -248,13 +260,25 @@ func _build_npc_crowd() -> void:
 
 const ARENA_STAND_Z := 38.0
 
+func _on_crowd_cheered(_fighter_id: String, intensity: float) -> void:
+	for index in range(crowd_nodes.size()):
+		var spectator := crowd_nodes[index]
+		if not is_instance_valid(spectator):
+			continue
+		if index % 5 != 0 or intensity >= 0.75:
+			spectator.set_meta("cheer_intensity", maxf(float(spectator.get_meta("cheer_intensity", 0.0)), intensity))
+
 func _process(delta: float) -> void:
 	crowd_clock += delta
 	for index in range(crowd_nodes.size()):
 		var spectator := crowd_nodes[index]
 		if is_instance_valid(spectator):
-			var sway := sin(crowd_clock * (2.0 + float(index % 4) * 0.25) + float(index)) * 0.035
+			var intensity := float(spectator.get_meta("cheer_intensity", 0.0))
+			var sway := sin(crowd_clock * (2.0 + float(index % 4) * 0.25) + float(index)) * (0.035 + intensity * 0.08)
 			spectator.rotation.z = sway
+			var base_y := float(spectator.get_meta("base_y", spectator.position.y))
+			spectator.position.y = base_y + absf(sin(crowd_clock * 5.0 + float(index))) * 0.32 * intensity
+			spectator.set_meta("cheer_intensity", maxf(0.0, intensity - delta * 0.7))
 
 func _exit_tree() -> void:
 	for spectator in crowd_nodes:
