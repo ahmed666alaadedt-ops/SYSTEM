@@ -103,7 +103,7 @@ func complete_current_stage(stage_id: String, verified_evidence: String) -> Dict
 	var stage: Dictionary = EXAM_STAGES[current_stage_index]
 	if stage_id != str(stage["id"]):
 		return {"success":false,"reason":"STAGE_ORDER_MISMATCH"}
-	if verified_evidence.strip_edges().is_empty():
+	if not verified_evidence.begins_with("SYSTEM_VERIFIED:") or verified_evidence.length() <= "SYSTEM_VERIFIED:".length():
 		return {"success":false,"reason":"VERIFIED_EVIDENCE_REQUIRED"}
 	if completed_stage_ids.has(stage_id):
 		return {"success":false,"reason":"STAGE_ALREADY_COMPLETED"}
