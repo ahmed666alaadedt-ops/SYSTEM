@@ -90,6 +90,11 @@ func _initialize() -> void:
 	var ui = MARKET_UI_SCRIPT.new()
 	ui.call("setup", manager, wallet)
 	root.add_child(ui)
+	# CanvasLayer builds its controls in _ready(); wait one frame before using panel.
+	await process_frame
+	if ui.panel == null:
+		_fail("Market UI panel was not created after the CanvasLayer entered the scene tree.")
+		return
 	print("Rare antiques validator: UI ready")
 	ui.call("open_market")
 	print("Rare antiques validator: market opened")
