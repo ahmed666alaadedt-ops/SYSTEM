@@ -573,3 +573,16 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Move wallet, company registry, and transaction ledger to authenticated server-authoritative storage before multiplayer or cross-device use; current records are local-device prototypes.
 - [ ] Run Godot 4.3 parser/import/headless validation and test all three service desks, wallet debit/persistence, duplicate company names, insufficient funds, and reload recovery.
 - Note: company registration currently deducts local prototype credits from the same wallet used by the vehicle garage. It is not a real legal company, online financial service, investment product, or cross-player economy. The investment desk is intentionally informational and disabled; it does not accept deposits or promise returns.
+
+
+## Baghdad Hunter Examination Tunnel — 21 November 2026
+
+- [x] Open a dedicated passage in the Hunter Association Tower lobby rear wall without changing the other four tower lobby layouts.
+- [x] Build a long enclosed tunnel with floor, side walls, ceiling, repeated structural frames, illuminated guidance strips, and a separate candidate staging chamber.
+- [x] Add a visible examination gate and a dedicated interaction target at the tunnel staging area.
+- [x] Connect the tunnel gate to the existing Hunter Exam Manager; registered candidates can begin or resume the current exam stage from this location.
+- [x] Show candidate number, stage title, and stage briefing through the existing Hunter Guild menu; unregistered players are directed back to the registration desk.
+- [ ] Build the actual playable exam-stage environments and connect stage completion to validated objectives/evidence; the current gate starts the existing exam state and briefing only.
+- [ ] Add a complete return/abort route, candidate queue, NPC exam staff, multiplayer synchronization, and server-authoritative candidate identity.
+- [ ] Run Godot 4.3 parser/import and in-engine collision, camera, interaction-ray, player-clearance, lighting, and Android performance checks.
+- Note: this is a procedural architectural and interaction prototype inside the Hunter Association Tower. It does not yet teleport candidates into a playable external challenge map or validate exam evidence.
