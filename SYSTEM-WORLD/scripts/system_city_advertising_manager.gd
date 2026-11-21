@@ -17,6 +17,8 @@ const BOARDS_PER_CITY := 3
 const ROTATION_REFRESH_SECONDS := 8.0
 const WORLD_ID := "2"
 
+signal campaign_rotation_updated
+
 var city_anchors: Dictionary = {}
 var terrain: Node
 var map_manager: Node
@@ -164,6 +166,7 @@ func _register_map_advertisement(record: Dictionary) -> void:
 
 func _refresh_all_displays() -> void:
 	var now := int(Time.get_unix_time_from_system())
+	var any_campaign_changed := false
 	for record in display_records:
 		var campaign := _campaign_for_record(record, now)
 		var label := record.get("label") as Label3D
@@ -177,6 +180,7 @@ func _refresh_all_displays() -> void:
 		if is_instance_valid(label) and label.text != campaign_text:
 			label.text = campaign_text
 		if is_instance_valid(root) and str(root.get_meta("active_campaign_id", "")) != campaign_id:
+			any_campaign_changed = true
 			var surface := root.get_node_or_null("DisplaySurface") as MeshInstance3D
 			if surface != null:
 				var campaign_color: Color = campaign.get("color", Color(0.04, 0.16, 0.22))
@@ -184,6 +188,8 @@ func _refresh_all_displays() -> void:
 			root.set_meta("active_campaign_id", campaign_id)
 		if map_manager != null and map_manager.has_method("update_advertisement"):
 			map_manager.call("update_advertisement", WORLD_ID, str(record["id"]), campaign)
+	if any_campaign_changed:
+		campaign_rotation_updated.emit()
 
 
 func _campaign_for_record(record: Dictionary, now: int) -> Dictionary:
@@ -209,6 +215,13 @@ func _campaign_for_record(record: Dictionary, now: int) -> Dictionary:
 	campaign["city"] = str(record.get("city", ""))
 	campaign["board_id"] = str(record.get("id", ""))
 	return campaign
+
+
+func get_city_campaign(city_name: String) -> Dictionary:
+	for record in display_records:
+		if str(record.get("city", "")) == city_name:
+			return _campaign_for_record(record, int(Time.get_unix_time_from_system()))
+	return {}
 
 
 func get_campaign_details(board_id: String) -> Dictionary:
