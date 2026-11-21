@@ -46,6 +46,7 @@ const PlayerCharacterCreatorScript = preload("res://scripts/system_player_charac
 const SYSTEMCompanionManagerScript = preload("res://scripts/system_companion_manager.gd")
 const SYSTEMEconomyManagerScript = preload("res://scripts/system_economy_manager.gd")
 const SYSTEMBusinessServicesMenuScript = preload("res://scripts/system_business_services_menu.gd")
+const SYSTEMShoppingTowerMenuScript = preload("res://scripts/system_shopping_tower_menu.gd")
 const RareAntiquesMarketManagerScript = preload("res://scripts/system_rare_antiques_market_manager.gd")
 const RareAntiquesMarketUIScript = preload("res://scripts/system_rare_antiques_market_ui.gd")
 const CityFactionUIScript = preload("res://scripts/system_city_faction_ui.gd")
@@ -64,6 +65,7 @@ var player_progression
 var player_vehicle_manager
 var economy_manager: Node
 var business_services_menu: CanvasLayer
+var shopping_tower_menu: CanvasLayer
 var rare_antiques_market_manager: Node
 var rare_antiques_market_ui: CanvasLayer
 var vehicle_runtime_manager
@@ -394,6 +396,11 @@ func create_business_services() -> void:
 	business_services_menu.name = "SYSTEMBusinessServicesMenu"
 	business_services_menu.setup(economy_manager)
 	add_child(business_services_menu)
+
+	shopping_tower_menu = SYSTEMShoppingTowerMenuScript.new()
+	shopping_tower_menu.name = "SYSTEMShoppingTowerMenu"
+	shopping_tower_menu.setup(player_vehicle_manager, player_progression)
+	add_child(shopping_tower_menu)
 
 
 func create_rare_antiques_market() -> void:
@@ -1294,6 +1301,15 @@ func _on_interaction_performed(
 					service_description = "تم فتح مكتب الاستثمار؛ السوق الاستثماري ما زال مغلقاً حتى اكتمال ضوابطه."
 				elif location_id.ends_with("_2"):
 					service_description = "تم فتح مكتب تسجيل الشركات."
+		elif location_id.begins_with("tower_service_shopping_tower_baghdad_"):
+			if is_instance_valid(shopping_tower_menu) and shopping_tower_menu.has_method("open_service_view"):
+				shopping_tower_menu.call("open_service_view", location_id)
+				if location_id.ends_with("_0"):
+					service_description = "تم فتح دليل المقتنيات التذكارية في برج التسوق."
+				elif location_id.ends_with("_1"):
+					service_description = "تم فتح كتالوج المشتريات المحلية."
+				elif location_id.ends_with("_2"):
+					service_description = "تم فتح مجموعة مقتنياتك المحفوظة في الحقيبة."
 		if interaction_prompt_label != null:
 			interaction_prompt_label.text = "%s\\n%s" % [service_title, service_description]
 	elif location_id.begins_with("street_ad_"):
