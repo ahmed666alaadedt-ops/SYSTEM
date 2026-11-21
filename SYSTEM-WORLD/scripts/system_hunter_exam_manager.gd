@@ -40,8 +40,14 @@ func apply_for_exam(player_id: String) -> Dictionary:
 		return {"success":false,"reason":"PLAYER_ID_REQUIRED"}
 	if registered and completed_stage_ids.size() >= EXAM_STAGES.size():
 		return {"success":false,"reason":"HUNTER_LICENSE_ALREADY_EARNED","candidate_number":candidate_number}
+	if license_earned_permanently or (registered and completed_stage_ids.size() >= EXAM_STAGES.size()):
+		return {"success":false,"reason":"HUNTER_LICENSE_ALREADY_EARNED","candidate_number":candidate_number}
 	if registered and not failed:
 		return {"success":false,"reason":"ALREADY_REGISTERED","candidate_number":candidate_number,"stages":EXAM_STAGES.size()}
+	if failed and last_failure_unix > 0:
+		var retry_at := last_failure_unix + RETRY_CYCLE_SECONDS
+		if int(Time.get_unix_time_from_system()) < retry_at:
+			return {"success":false,"reason":"NEXT_WEEKLY_EXAM_REQUIRED","retry_at":retry_at,"attempt_number":attempt_number}
 	var config := ConfigFile.new()
 	config.load(SAVE_PATH)
 	candidate_number = int(config.get_value("exam","next_candidate_number",1001))
