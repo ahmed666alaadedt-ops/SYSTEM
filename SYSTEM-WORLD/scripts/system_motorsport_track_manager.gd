@@ -76,7 +76,7 @@ func _physics_process(_delta: float) -> void:
 	if not is_instance_valid(vehicle_runtime_manager) or not is_instance_valid(motorsport_manager):
 		return
 	var active_vehicle: Node = vehicle_runtime_manager.get("active_vehicle")
-	if not is_instance_valid(active_vehicle) or not active_vehicle is RigidBody3D:
+	if not is_instance_valid(active_vehicle) or not (active_vehicle is RigidBody3D):
 		return
 	var speed_kph := (active_vehicle as RigidBody3D).linear_velocity.length() * 3.6
 	if speed_kph <= PIT_LANE_SPEED_LIMIT_KPH:
