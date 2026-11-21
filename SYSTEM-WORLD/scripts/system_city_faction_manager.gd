@@ -75,7 +75,8 @@ func get_city_factions(city_name: String) -> Array[Dictionary]:
 	return result
 
 func get_faction(faction_id: String) -> Dictionary:
-	return (factions.get(faction_id, {}) as Dictionary).duplicate(true)
+	var record: Dictionary = factions.get(faction_id, {})
+	return record.duplicate(true)
 
 func get_player_standing(faction_id: String) -> int:
 	return int(player_standing.get(faction_id, 0))
