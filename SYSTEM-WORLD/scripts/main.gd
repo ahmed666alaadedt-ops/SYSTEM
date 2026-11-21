@@ -1073,19 +1073,18 @@ func _refresh_motorsport_leaderboard() -> void:
 		empty_label.text = "لا توجد محاولات مسجلة لهذه البطولة حتى الآن."
 		empty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		motorsport_leaderboard_rows.add_child(empty_label)
-		return
-
-	for index in range(attempts.size()):
-		var attempt: Dictionary = attempts[index]
-		var row := Label.new()
-		row.text = "%02d  |  %s  |  %s" % [
-			index + 1,
-			_format_motorsport_time(float(attempt.get("elapsed_seconds", 0.0))),
-			str(attempt.get("vehicle_id", "مركبة"))
-		]
-		row.add_theme_font_size_override("font_size", 17)
-		row.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		motorsport_leaderboard_rows.add_child(row)
+	else:
+		for index in range(attempts.size()):
+			var attempt: Dictionary = attempts[index]
+			var row := Label.new()
+			row.text = "%02d  |  %s  |  %s" % [
+				index + 1,
+				_format_motorsport_time(float(attempt.get("elapsed_seconds", 0.0))),
+				str(attempt.get("vehicle_id", "مركبة"))
+			]
+			row.add_theme_font_size_override("font_size", 17)
+			row.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			motorsport_leaderboard_rows.add_child(row)
 
 	if is_instance_valid(motorsport_track_manager) and motorsport_track_manager.has_method("get_ai_race_event_id") and str(motorsport_track_manager.call("get_ai_race_event_id")) == event_id:
 		var ai_heading := Label.new()
