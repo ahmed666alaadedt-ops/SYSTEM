@@ -65,7 +65,7 @@ func _build_hunter_tower() -> void:
 	)
 
 func _build_power_tower() -> void:
-	var position := city_anchor + Vector3(1450.0, 0.0, 1250.0)
+	var position := city_anchor + Vector3(850.0, 0.0, 600.0)
 	_build_tower(
 		"PowerTower",
 		"برج القوة",
