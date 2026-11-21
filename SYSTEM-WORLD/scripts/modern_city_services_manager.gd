@@ -76,7 +76,7 @@ func _build_city_services(city_name: String) -> void:
 		var location_type := 7
 		if service_id == "hospital":
 			location_type = 2
-		elif service_id == "market" or service_id == "garage" or service_id == "fuel_station":
+		elif service_id == "market" or service_id == "garage" or service_id == "fuel_station" or service_id == "rare_antique_market":
 			location_type = 4
 		service_locations.append({
 			"id": "service_%s_%s" % [city_name.to_lower().replace(" ", "_"), service_id],
