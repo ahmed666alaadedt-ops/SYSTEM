@@ -265,16 +265,26 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	print("SYSTEM WORLD: landmark tower generated: ", title, " / ", floors, " floors / ", height, "m")
 
 func _nearest_land_position(origin: Vector2) -> Vector2:
-	if terrain.call("is_land_position", origin.x, origin.y):
+	if _is_stable_tower_land(origin):
 		return origin
-	for radius_step in range(1, 17):
+	# The central Baghdad basin contains low wetlands. Search farther inland
+	# and require a safe elevation so no tower foundation is placed in shallow water.
+	for radius_step in range(1, 49):
 		var radius := float(radius_step) * 12.0
-		for sample in range(32):
-			var angle := TAU * float(sample) / 32.0
+		for sample in range(48):
+			var angle := TAU * float(sample) / 48.0
 			var candidate := origin + Vector2(cos(angle), sin(angle)) * radius
-			if terrain.call("is_land_position", candidate.x, candidate.y):
+			if _is_stable_tower_land(candidate):
 				return candidate
 	return Vector2.INF
+
+
+func _is_stable_tower_land(point: Vector2) -> bool:
+	if not bool(terrain.call("is_land_position", point.x, point.y)):
+		return false
+	if terrain.has_method("get_terrain_height"):
+		return float(terrain.call("get_terrain_height", point.x, point.y)) > 4.0
+	return true
 
 
 func get_tower_positions() -> Array[Dictionary]:
