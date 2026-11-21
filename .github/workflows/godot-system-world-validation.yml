@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - main
+      - feature/baghdad-streaming-lifecycle
     paths:
       - "SYSTEM-WORLD/**"
       - ".github/workflows/godot-system-world-validation.yml"
@@ -142,6 +143,21 @@ jobs:
           grep -q "Baghdad city state persistence round-trip passed." "$LOG"
 
 
+
+      - name: Validate Baghdad OSM runtime and historic landmarks when the candidate pack is installed
+        if: hashFiles('SYSTEM-WORLD/data/geography/baghdad/cell_pack/manifest.json') != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          LOG="$RUNNER_TEMP/baghdad-osm-runtime-validation.log"
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_baghdad_osm_runtime.gd 2>&1 | tee "$LOG"
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Baghdad OSM runtime validation failed" "$LOG"; then
+            echo "::error::Baghdad OSM runtime validation failed."
+            exit 1
+          fi
+          grep -q "Baghdad OSM runtime validation passed:" "$LOG"
 
       - name: Validate motorsport race entry, checkpoints, laps and local records
         shell: bash
