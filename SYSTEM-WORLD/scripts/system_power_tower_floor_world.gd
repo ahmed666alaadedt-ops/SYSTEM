@@ -48,7 +48,8 @@ func build_floor(floor_data: Dictionary, p_return_position: Vector3) -> Dictiona
 	var structure_material := _material(profile["structure"], 0.82, 0.12)
 	var accent_material := _material(profile["accent"], 0.34, 0.48)
 	accent_material.emission_enabled = true
-	accent_material.emission = profile["accent"] * 0.28
+	var accent_color: Color = profile["accent"]
+	accent_material.emission = accent_color * 0.28
 	accent_material.emission_energy_multiplier = 0.65
 
 	_build_ground(ground_material)
@@ -189,7 +190,7 @@ func _build_landmarks(
 		boss_sign.text = "BOSS TRIAL\nFLOOR %03d" % floor_number
 		boss_sign.font_size = 24
 		boss_sign.position = Vector3(205.0, 18.0, -34.0)
-		boss_sign.modulate = profile["accent"]
+		boss_sign.modulate = accent_color
 		active_floor_root.add_child(boss_sign)
 
 
@@ -199,8 +200,29 @@ func _build_checkpoints() -> void:
 		Vector3(0.0, 2.0, 0.0),
 		Vector3(145.0, 2.0, 0.0)
 	]
+	var marker_material := _material(Color(0.12, 0.76, 0.96), 0.24, 0.42)
+	marker_material.emission_enabled = true
+	marker_material.emission = Color(0.04, 0.42, 0.72)
+	marker_material.emission_energy_multiplier = 1.2
 	for index in range(CHECKPOINT_IDS.size()):
 		var checkpoint_id := str(CHECKPOINT_IDS[index])
+		var marker := MeshInstance3D.new()
+		marker.name = "CheckpointMarker_" + checkpoint_id
+		var ring := TorusMesh.new()
+		ring.inner_radius = 4.5
+		ring.outer_radius = 5.0
+		ring.ring_segments = 40
+		marker.mesh = ring
+		marker.position = checkpoint_positions[index] + Vector3.UP * 0.18
+		marker.material_override = marker_material
+		active_floor_root.add_child(marker)
+		var marker_label := Label3D.new()
+		marker_label.name = "CheckpointLabel_" + checkpoint_id
+		marker_label.text = "CHECKPOINT %02d" % (index + 1)
+		marker_label.font_size = 18
+		marker_label.position = checkpoint_positions[index] + Vector3.UP * 5.0
+		marker_label.modulate = Color(0.52, 0.88, 1.0)
+		active_floor_root.add_child(marker_label)
 		var area := Area3D.new()
 		area.name = "Checkpoint_" + checkpoint_id
 		area.position = checkpoint_positions[index]
@@ -216,6 +238,20 @@ func _build_checkpoints() -> void:
 
 
 func _build_exit() -> void:
+	var gate_material := _material(Color(0.12, 0.66, 0.82), 0.24, 0.5)
+	gate_material.emission_enabled = true
+	gate_material.emission = Color(0.03, 0.3, 0.52)
+	gate_material.emission_energy_multiplier = 1.4
+	_add_obstacle("FloorReturnGateLeft", Vector3(-250.0, 5.0, -8.0), Vector3(1.5, 10.0, 1.5), gate_material)
+	_add_obstacle("FloorReturnGateRight", Vector3(-250.0, 5.0, 8.0), Vector3(1.5, 10.0, 1.5), gate_material)
+	_add_obstacle("FloorReturnGateHeader", Vector3(-250.0, 10.0, 0.0), Vector3(1.5, 1.5, 18.0), gate_material)
+	var exit_label := Label3D.new()
+	exit_label.name = "FloorReturnGateSign"
+	exit_label.text = "RETURN TO POWER TOWER"
+	exit_label.font_size = 18
+	exit_label.position = Vector3(-250.0, 13.0, 0.0)
+	exit_label.modulate = Color(0.5, 0.9, 1.0)
+	active_floor_root.add_child(exit_label)
 	var exit_area := Area3D.new()
 	exit_area.name = "FloorReturnGate"
 	exit_area.position = Vector3(-250.0, 2.0, 0.0)
