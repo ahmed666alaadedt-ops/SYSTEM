@@ -7,6 +7,7 @@ signal floor_rewarded(reward_data: Dictionary)
 signal tower_record_updated(highest_floor: int)
 signal checkpoint_reached(floor_number: int, checkpoint_id: String)
 signal floor_failed(floor_number: int, resume_checkpoint_id: String)
+signal floor_combat_progress(floor_number: int, defeated_count: int, required_count: int)
 
 const SAVE_PATH := "user://system_power_tower.cfg"
 const MAX_FLOORS := 200
@@ -29,6 +30,8 @@ var active_floor := 0
 var floor_clear_times: Dictionary = {}
 var completed_checkpoints_by_floor: Dictionary = {}
 var tower_credits := 0
+var active_floor_enemy_ids: Array[String] = []
+var defeated_floor_enemy_ids: Array[String] = []
 ## Tests may disable disk writes; normal gameplay keeps this enabled.
 var save_enabled := true
 
@@ -105,6 +108,8 @@ func request_floor(floor_number: int, player_level: int) -> Dictionary:
 	if active_floor != 0:
 		return {"success": false, "reason": "ANOTHER_FLOOR_IS_ACTIVE", "active_floor": active_floor}
 	active_floor = floor_number
+	active_floor_enemy_ids.clear()
+	defeated_floor_enemy_ids.clear()
 	var resume_data := get_floor_resume_data(floor_number)
 	data["resume_data"] = resume_data
 	floor_started.emit(floor_number, data.duplicate(true))
@@ -144,6 +149,47 @@ func record_floor_checkpoint(floor_number: int, checkpoint_id: String) -> Dictio
 	checkpoint_reached.emit(floor_number, normalized_id)
 	return {"success": true, "floor": floor_number, "checkpoint_id": normalized_id, "resume_data": get_floor_resume_data(floor_number)}
 
+
+## Called by the generated floor controller after it creates its actual enemy roster.
+func set_floor_enemy_roster(floor_number: int, enemy_ids: Array) -> Dictionary:
+	if active_floor != floor_number or floor_number <= 0:
+		return {"success": false, "reason": "FLOOR_NOT_ACTIVE"}
+	var normalized: Array[String] = []
+	for raw_id in enemy_ids:
+		var enemy_id := str(raw_id).strip_edges()
+		if enemy_id.is_empty() or normalized.has(enemy_id):
+			continue
+		normalized.append(enemy_id)
+	if normalized.is_empty():
+		return {"success": false, "reason": "FLOOR_ENEMY_ROSTER_REQUIRED"}
+	active_floor_enemy_ids = normalized
+	defeated_floor_enemy_ids.clear()
+	floor_combat_progress.emit(floor_number, 0, active_floor_enemy_ids.size())
+	return {"success": true, "floor": floor_number, "required_enemies": active_floor_enemy_ids.size()}
+
+
+## Only IDs from the active floor's generated roster can count as defeated.
+func record_floor_enemy_defeat(floor_number: int, enemy_id: String) -> Dictionary:
+	if active_floor != floor_number or floor_number <= 0:
+		return {"success": false, "reason": "FLOOR_NOT_ACTIVE"}
+	var normalized_id := enemy_id.strip_edges()
+	if not active_floor_enemy_ids.has(normalized_id):
+		return {"success": false, "reason": "UNKNOWN_FLOOR_ENEMY"}
+	if defeated_floor_enemy_ids.has(normalized_id):
+		return {"success": false, "reason": "ENEMY_ALREADY_DEFEATED"}
+	defeated_floor_enemy_ids.append(normalized_id)
+	floor_combat_progress.emit(floor_number, defeated_floor_enemy_ids.size(), active_floor_enemy_ids.size())
+	return {"success": true, "floor": floor_number, "defeated_enemies": defeated_floor_enemy_ids.size(), "required_enemies": active_floor_enemy_ids.size(), "combat_complete": defeated_floor_enemy_ids.size() >= active_floor_enemy_ids.size()}
+
+
+func get_floor_combat_status(floor_number: int) -> Dictionary:
+	return {
+		"floor": floor_number,
+		"required_enemies": active_floor_enemy_ids.size() if active_floor == floor_number else 0,
+		"defeated_enemies": defeated_floor_enemy_ids.size() if active_floor == floor_number else 0,
+		"combat_complete": active_floor == floor_number and not active_floor_enemy_ids.is_empty() and defeated_floor_enemy_ids.size() >= active_floor_enemy_ids.size()
+	}
+
 ## Call this after defeat. Checkpoints remain saved and the player can retry the same floor.
 func fail_active_floor() -> Dictionary:
 	if active_floor <= 0:
@@ -151,6 +197,8 @@ func fail_active_floor() -> Dictionary:
 	var failed_floor := active_floor
 	var resume_data := get_floor_resume_data(failed_floor)
 	active_floor = 0
+	active_floor_enemy_ids.clear()
+	defeated_floor_enemy_ids.clear()
 	_save_progress()
 	floor_failed.emit(failed_floor, str(resume_data.get("last_checkpoint_id", "")))
 	return {"success": true, "floor": failed_floor, "resume_data": resume_data, "progress_preserved": true}
@@ -169,9 +217,13 @@ func confirm_floor_clear(floor_number: int, clear_time_seconds: float) -> Dictio
 	var completed := _get_completed_checkpoints(floor_number)
 	if completed.size() < REQUIRED_CHECKPOINTS_PER_FLOOR:
 		return {"success": false, "reason": "FLOOR_OBJECTIVES_INCOMPLETE", "completed_checkpoints": completed.size(), "required_checkpoints": REQUIRED_CHECKPOINTS_PER_FLOOR}
+	if active_floor_enemy_ids.is_empty() or defeated_floor_enemy_ids.size() < active_floor_enemy_ids.size():
+		return {"success": false, "reason": "FLOOR_ENEMIES_REMAIN", "defeated_enemies": defeated_floor_enemy_ids.size(), "required_enemies": active_floor_enemy_ids.size()}
 	highest_cleared_floor = maxi(highest_cleared_floor, floor_number)
 	floor_clear_times[str(floor_number)] = clear_time_seconds
 	active_floor = 0
+	active_floor_enemy_ids.clear()
+	defeated_floor_enemy_ids.clear()
 	var reward_xp := int(data["reward_xp"])
 	var reward_currency := int(data["reward_currency"])
 	tower_credits += reward_currency
@@ -210,7 +262,8 @@ func get_tower_status() -> Dictionary:
 		"max_floors": MAX_FLOORS,
 		"next_floor": 0 if highest_cleared_floor >= MAX_FLOORS else highest_cleared_floor + 1,
 		"tower_credits": tower_credits,
-		"active_floor_resume": get_floor_resume_data(active_floor) if active_floor > 0 else {}
+		"active_floor_resume": get_floor_resume_data(active_floor) if active_floor > 0 else {},
+		"active_floor_combat": get_floor_combat_status(active_floor) if active_floor > 0 else {}
 	}
 
 func _get_completed_checkpoints(floor_number: int) -> Array:
