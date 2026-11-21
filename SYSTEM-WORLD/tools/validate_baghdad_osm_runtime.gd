@@ -62,7 +62,7 @@ func _run_validation() -> void:
 		"tags": {"historic": "archaeological_site", "name:ar": "موقع أثري اختباري"},
 		"geometry": {"type": "Point", "coordinates": [60.0, 60.0]}
 	}
-	var archaeological_count: int = streamer.call("_build_amenity_feature", cell_root, archaeological_feature)
+	var archaeological_count: int = streamer.call("_build_historic_site_feature", cell_root, archaeological_feature)
 	if archaeological_count != 1:
 		_fail("An OSM-tagged archaeological site was not converted into a physical landmark.")
 		return
