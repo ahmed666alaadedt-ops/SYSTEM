@@ -515,3 +515,15 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Verify the transition targets and player capsule clearance in Godot; this code path has not yet been confirmed in a live run.
 - [ ] Add camera/facing alignment, transition fade, door animation, floor selection and working elevators/stairs.
 - Note: this wires first-floor entry and exit only. It does not make upper tower floors accessible or implement lift travel.
+
+
+## Upper tower floors and interactive lift selection — 21 November 2026
+
+- [x] Add four upper-floor blockout decks to each of the five tower interiors (floors 02–05).
+- [x] Add floor identity labels and landing markers.
+- [x] Add a continuous visual lift-shaft guide pair and illuminated landing-door panels.
+- [x] Add one interaction selector per upper floor with an explicit world-space destination.
+- [x] Route tower-floor selector interactions through the building transition manager.
+- [ ] Verify player placement, collision clearance, and interaction reach at all four landings in Godot.
+- [ ] Implement a true moving elevator car, doors, call buttons, travel animation, stairwell, and floor-specific gameplay services.
+- Note: current lift selection is a prototype floor transition, not a physically animated elevator. Upper floors are structural blockouts and not complete furnished interiors.
