@@ -466,3 +466,13 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Validate tower silhouette proportions, intersections with the existing shafts/floor bands, material readability, and skyline composition in Godot.
 - [ ] Replace primitive shapes with optimized final modular meshes and authored materials after visual review.
 - Note: all five towers remain within the approved district; Power Tower is not included in these identity features.
+
+
+## Sky promenade clearance and tower access connectors — 21 November 2026
+
+- [x] Increase the outer ring radius to 580 m so the promenade clears the five tower footprints at the current Baghdad anchor.
+- [x] Resize the 12 deck segments to approximately 302 m to follow the larger ring chord.
+- [x] Add five radial pedestrian bridge blockouts from the tower perimeter zones to the outer sky ring.
+- [x] Add collision to both sides' safety-rail blockouts.
+- [ ] Verify clearances and bridge joins against terrain and tower transforms in Godot; current coordinates remain provisional until live scene inspection.
+- [ ] Add railings/collision to radial bridges, stairs/lifts, lighting budget, navigation links and final modular assets.
