@@ -7,6 +7,10 @@ class_name SystemMotorsportTrackManager
 
 signal track_zone_entered(track_id: String)
 signal track_zone_exited(track_id: String)
+signal pit_lane_entered(track_id: String)
+signal pit_lane_exited(track_id: String)
+signal pit_lane_entry_crossed(track_id: String)
+signal pit_lane_exit_crossed(track_id: String)
 
 const TRACK_ID := "baghdad_international_motorsport_park"
 const TRACK_NAME := "Baghdad International Motorsport Park"
@@ -15,6 +19,7 @@ const TRACK_HALF_LENGTH := 145.0
 const TRACK_HALF_WIDTH := 82.0
 const ROAD_WIDTH := 18.0
 const ROAD_THICKNESS := 0.8
+const PIT_LANE_SPEED_LIMIT_KPH := 60.0
 
 const CHECKPOINT_COUNT := 4
 const MotorsportAIControllerScript = preload("res://scripts/system_motorsport_ai_controller.gd")
@@ -39,6 +44,13 @@ var motorsport_manager: Node
 var track_root: Node3D
 var track_zone: Area3D
 var player_inside_track := false
+var pit_lane_context_area: Area3D
+var pit_lane_entry_area: Area3D
+var pit_lane_exit_area: Area3D
+var active_vehicle_in_pit_lane := false
+var pit_garage_nodes: Array[Node3D] = []
+var marshal_post_nodes: Array[Node3D] = []
+var race_control_tower: Node3D
 
 func setup(p_player: CharacterBody3D, p_vehicle_runtime_manager: Node, p_motorsport_manager: Node) -> void:
 	player = p_player
@@ -97,16 +109,44 @@ func _build_safety_barriers() -> void:
 		_create_box("SafetyBarrier_%02d" % index, Vector3(3.0, 2.8, 9.0), position, atan2(tangent.x, tangent.z), Color(0.78, 0.79, 0.8), true)
 
 func _build_paddock() -> void:
-	_create_box("PaddockGround", Vector3(112.0, 0.7, 58.0), Vector3(0.0, 0.0, -TRACK_HALF_WIDTH - 66.0), 0.0, Color(0.22, 0.23, 0.24), true)
+	# Separate the north-side paddock from spectator stands and connect it to the pit lane.
+	_create_box("PaddockGround", Vector3(112.0, 0.4, 58.0), Vector3(0.0, 0.2, -200.0), 0.0, Color(0.22, 0.23, 0.24), true)
+	_create_box("PitServiceApron", Vector3(112.0, 0.4, 50.0), Vector3(0.0, 0.2, -145.0), 0.0, Color(0.29, 0.30, 0.31), true)
+	_create_box("PitLane", Vector3(112.0, 0.4, 12.0), Vector3(0.0, 0.2, -TRACK_HALF_WIDTH - 34.0), 0.0, Color(0.16, 0.17, 0.18), true)
 	for bay in range(8):
-		var x := -46.0 + float(bay) * 13.0
-		_create_box("PitGarageBay_%02d" % bay, Vector3(11.0, 5.0, 16.0), Vector3(x, 2.8, -TRACK_HALF_WIDTH - 77.0), 0.0, Color(0.28, 0.32, 0.36), false)
-	_create_box("PitLane", Vector3(112.0, 0.45, 12.0), Vector3(0.0, 0.5, -TRACK_HALF_WIDTH - 34.0), 0.0, Color(0.16, 0.17, 0.18), true)
+		var garage_x: float = -45.5 + float(bay) * 13.0
+		_build_pit_garage_bay(bay, garage_x, -181.0)
+	_build_pit_lane_triggers()
+
 
 func _build_spectator_stands() -> void:
-	for side in [-1.0, 1.0]:
-		for row in range(4):
-			_create_box("Grandstand_%s_%02d" % [str(side), row], Vector3(76.0, 2.0, 7.0), Vector3(0.0, 2.0 + float(row) * 1.8, side * (TRACK_HALF_WIDTH + 34.0 + float(row) * 5.0)), 0.0, Color(0.24, 0.27, 0.31), false)
+	var stand_color := Color(0.24, 0.27, 0.31)
+	var seat_color := Color(0.12, 0.34, 0.52)
+	# Main grandstand on the south straight.
+	for row in range(4):
+		var stand_y: float = 2.0 + float(row) * 1.8
+		var stand_z: float = TRACK_HALF_WIDTH + 34.0 + float(row) * 5.0
+		_create_box("Grandstand_South_%02d" % row, Vector3(76.0, 2.0, 7.0), Vector3(0.0, stand_y, stand_z), 0.0, stand_color, true)
+		for seat_index in range(16):
+			var seat_x: float = -34.0 + float(seat_index) * 4.5
+			_create_box("GrandstandSeat_South_%02d_%02d" % [row, seat_index], Vector3(1.4, 0.6, 0.9), Vector3(seat_x, stand_y + 1.35, stand_z), 0.0, seat_color, false)
+	# East and west end stands complete the spectator circuit without overlapping the paddock.
+	for side_index in range(2):
+		var side: float = -1.0 if side_index == 0 else 1.0
+		var side_label: String = "west" if side < 0.0 else "east"
+		for row in range(3):
+			var stand_y: float = 2.0 + float(row) * 1.8
+			var stand_x: float = side * (TRACK_HALF_LENGTH + 34.0 + float(row) * 5.0)
+			_create_box("Grandstand_End_%s_%02d" % [side_label, row], Vector3(7.0, 2.0, 56.0), Vector3(stand_x, stand_y, 0.0), 0.0, stand_color, true)
+			for seat_index in range(8):
+				var seat_z: float = -24.0 + float(seat_index) * 6.8
+				_create_box("GrandstandSeat_End_%s_%02d_%02d" % [side_label, row, seat_index], Vector3(0.9, 0.6, 1.4), Vector3(stand_x, stand_y + 1.35, seat_z), 0.0, seat_color, false)
+	# Collision-backed stairs give players physical access to the south stand tiers.
+	for stair_side in [-1.0, 1.0]:
+		for step in range(5):
+			var step_y: float = 0.3 + float(step) * 0.6
+			var step_z: float = TRACK_HALF_WIDTH + 25.0 + float(step) * 1.5
+			_create_box("GrandstandSouthStair_%s_%02d" % [str(stair_side), step], Vector3(3.2, 0.55, 2.4), Vector3(stair_side * 27.0, step_y, step_z), 0.0, stand_color, true)
 
 func _build_track_zone() -> void:
 	track_zone = Area3D.new()
@@ -116,7 +156,7 @@ func _build_track_zone() -> void:
 	track_zone.collision_mask = 1
 	var collision := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
-	shape.size = Vector3((TRACK_HALF_LENGTH + 48.0) * 2.0, 18.0, (TRACK_HALF_WIDTH + 104.0) * 2.0)
+	shape.size = Vector3((TRACK_HALF_LENGTH + 48.0) * 2.0, 18.0, (TRACK_HALF_WIDTH + 150.0) * 2.0)
 	collision.shape = shape
 	track_zone.add_child(collision)
 	track_root.add_child(track_zone)
@@ -144,6 +184,9 @@ func _build_start_finish_and_grid() -> void:
 	race_control.set_meta("system_region_id", "region_baghdad")
 	race_control.set_meta("system_display_name", "Baghdad International Motorsport Park — Race Control")
 	race_control.set_meta("system_interaction_prompt", "مكتب إدارة السباق — بدء كأس السرعة بعد الوقوف على خط الانطلاق")
+	race_control.set_meta("system_location_type", 7)
+	race_control.set_meta("system_access_state", "walk_in_race_control")
+	race_control.set_meta("system_location_position", track_root.to_global(race_control.position))
 	var control_collision := CollisionShape3D.new()
 	var control_shape := SphereShape3D.new()
 	control_shape.radius = 4.5
@@ -159,6 +202,8 @@ func _build_start_finish_and_grid() -> void:
 	leaderboard_board.set_meta("system_region_id", "region_baghdad")
 	leaderboard_board.set_meta("system_display_name", "SYSTEM Motorsport — لوحة النتائج")
 	leaderboard_board.set_meta("system_interaction_prompt", "لوحة نتائج السباقات — عرض أفضل الأزمنة والترتيب المحلي")
+	leaderboard_board.set_meta("system_location_type", 7)
+	leaderboard_board.set_meta("system_location_position", track_root.to_global(leaderboard_board.position))
 	var leaderboard_collision := CollisionShape3D.new()
 	var leaderboard_shape := SphereShape3D.new()
 	leaderboard_shape.radius = 4.5
@@ -173,6 +218,7 @@ func _build_start_finish_and_grid() -> void:
 		Color(0.035, 0.12, 0.17),
 		false
 	)
+	_build_race_control_tower()
 
 func _build_checkpoints() -> void:
 	for index in range(CHECKPOINT_COUNT):
@@ -200,6 +246,7 @@ func _build_checkpoints() -> void:
 		track_root.add_child(area)
 		area.body_entered.connect(_on_checkpoint_body_entered.bind(index))
 		checkpoint_areas.append(area)
+	_build_marshal_posts()
 
 func get_start_grid_position() -> Vector3:
 	if not is_instance_valid(track_root):
@@ -353,19 +400,251 @@ func get_track_info() -> Dictionary:
 		"name": TRACK_NAME,
 		"track_zone_active": is_instance_valid(track_zone),
 		"player_inside": player_inside_track,
-		"venue_status": "procedural_blockout",
+		"venue_status": "physical_facilities_blockout",
 		"race_ready": false,
 		"checkpoint_count": checkpoint_areas.size(),
+		"pit_garage_count": pit_garage_nodes.size(),
+		"marshal_post_count": marshal_post_nodes.size(),
+		"pit_lane_context_active": is_instance_valid(pit_lane_context_area),
+		"active_vehicle_in_pit_lane": active_vehicle_in_pit_lane,
+		"pit_lane_speed_limit_kph": PIT_LANE_SPEED_LIMIT_KPH,
+		"race_control_tower_ready": is_instance_valid(race_control_tower),
 		"start_grid_position": get_start_grid_position(),
 		"race_start_api_available": true
 	}
 
-func _create_box(box_name: String, box_size: Vector3, local_position: Vector3, yaw: float, color: Color, with_collision: bool) -> void:
+func _build_pit_garage_bay(bay_index: int, x: float, z: float) -> void:
+	var garage := Node3D.new()
+	garage.name = "PitGarageBay_%02d" % bay_index
+	garage.position = Vector3(x, 0.0, z)
+	garage.set_meta("system_location_id", "baghdad_motorsport_pit_garage_%02d" % bay_index)
+	track_root.add_child(garage)
+	pit_garage_nodes.append(garage)
+	var wall_color := Color(0.28, 0.32, 0.36)
+	_create_box_under(garage, "GarageFloor", Vector3(11.0, 0.4, 16.0), Vector3(0.0, 0.2, 0.0), 0.0, Color(0.19, 0.21, 0.23), true)
+	_create_box_under(garage, "GarageBackWall", Vector3(11.0, 5.0, 0.6), Vector3(0.0, 2.9, -7.7), 0.0, wall_color, true)
+	_create_box_under(garage, "GarageLeftWall", Vector3(0.6, 5.0, 16.0), Vector3(-5.2, 2.9, 0.0), 0.0, wall_color, true)
+	_create_box_under(garage, "GarageRightWall", Vector3(0.6, 5.0, 16.0), Vector3(5.2, 2.9, 0.0), 0.0, wall_color, true)
+	_create_box_under(garage, "GarageFrontHeader", Vector3(11.0, 0.7, 0.6), Vector3(0.0, 4.9, 7.7), 0.0, wall_color, true)
+	_create_box_under(garage, "TireRack", Vector3(1.2, 2.5, 1.5), Vector3(-4.0, 1.45, -3.0), 0.0, Color(0.13, 0.15, 0.17), true)
+	_create_box_under(garage, "ToolCabinet", Vector3(1.2, 2.4, 1.2), Vector3(4.0, 1.4, -3.0), 0.0, Color(0.48, 0.27, 0.12), true)
+	_create_box_under(garage, "WorkBench", Vector3(4.0, 0.9, 1.5), Vector3(0.0, 0.65, -5.2), 0.0, Color(0.34, 0.36, 0.38), true)
+	_create_box_under(garage, "GarageRoof", Vector3(11.0, 0.4, 16.0), Vector3(0.0, 5.35, 0.0), 0.0, Color(0.12, 0.16, 0.2), false)
+	var sign := Label3D.new()
+	sign.name = "PitGarageSign"
+	sign.text = "PIT %02d" % (bay_index + 1)
+	sign.font_size = 22
+	sign.position = Vector3(0.0, 5.9, 7.9)
+	sign.modulate = Color(0.62, 0.9, 1.0)
+	garage.add_child(sign)
+	var light := OmniLight3D.new()
+	light.name = "GarageCeilingLight"
+	light.position = Vector3(0.0, 4.6, 0.0)
+	light.omni_range = 18.0
+	light.light_energy = 1.1
+	garage.add_child(light)
+	var interaction := Area3D.new()
+	interaction.name = "GarageEntranceInteraction"
+	interaction.position = Vector3(0.0, 1.5, 7.2)
+	interaction.add_to_group("system_interactable")
+	interaction.set_meta("system_location_id", "baghdad_motorsport_pit_garage_%02d" % bay_index)
+	interaction.set_meta("system_region_id", "region_baghdad")
+	interaction.set_meta("system_location_type", 7)
+	interaction.set_meta("system_display_name", "كراج صيانة السباق — %02d" % (bay_index + 1))
+	interaction.set_meta("system_interaction_prompt", "دخول كراج الصيانة وفحص تجهيزات سيارة السباق")
+	interaction.set_meta("system_access_state", "walk_in_pit_garage")
+	interaction.set_meta("system_location_position", garage.to_global(interaction.position))
+	var area_collision := CollisionShape3D.new()
+	var area_shape := BoxShape3D.new()
+	area_shape.size = Vector3(4.0, 3.0, 3.0)
+	area_collision.shape = area_shape
+	interaction.add_child(area_collision)
+	garage.add_child(interaction)
+
+
+func _build_pit_lane_triggers() -> void:
+	var pit_z: float = -TRACK_HALF_WIDTH - 34.0
+	pit_lane_context_area = Area3D.new()
+	pit_lane_context_area.name = "PitLaneContextArea"
+	pit_lane_context_area.position = Vector3(0.0, 2.5, pit_z)
+	pit_lane_context_area.collision_layer = 0
+	pit_lane_context_area.collision_mask = 1
+	pit_lane_context_area.set_meta("system_pit_lane_speed_limit_kph", PIT_LANE_SPEED_LIMIT_KPH)
+	var context_collision := CollisionShape3D.new()
+	var context_shape := BoxShape3D.new()
+	context_shape.size = Vector3(112.0, 6.0, 12.0)
+	context_collision.shape = context_shape
+	pit_lane_context_area.add_child(context_collision)
+	track_root.add_child(pit_lane_context_area)
+	pit_lane_context_area.body_entered.connect(_on_pit_lane_context_body_entered)
+	pit_lane_context_area.body_exited.connect(_on_pit_lane_context_body_exited)
+	pit_lane_entry_area = _build_pit_lane_gate("PitLaneEntryGateArea", "baghdad_motorsport_pit_entry", Vector3(45.0, 0.0, pit_z), true)
+	pit_lane_exit_area = _build_pit_lane_gate("PitLaneExitGateArea", "baghdad_motorsport_pit_exit", Vector3(-45.0, 0.0, pit_z), false)
+
+
+func _build_pit_lane_gate(node_name: String, location_id: String, center: Vector3, is_entry: bool) -> Area3D:
+	var gate_name: String = "ENTRY" if is_entry else "EXIT"
+	_create_box("PitLane%s_LeftPost" % gate_name, Vector3(0.8, 5.0, 0.8), center + Vector3(-5.0, 2.5, 0.0), 0.0, Color(0.08, 0.7, 0.88), false)
+	_create_box("PitLane%s_RightPost" % gate_name, Vector3(0.8, 5.0, 0.8), center + Vector3(5.0, 2.5, 0.0), 0.0, Color(0.08, 0.7, 0.88), false)
+	_create_box("PitLane%s_Header" % gate_name, Vector3(10.0, 0.6, 0.8), center + Vector3(0.0, 5.0, 0.0), 0.0, Color(0.08, 0.7, 0.88), false)
+	var sign := Label3D.new()
+	sign.name = "PitLane%sSign" % gate_name
+	sign.text = "PIT " + gate_name
+	sign.font_size = 20
+	sign.position = center + Vector3(0.0, 6.0, 0.0)
+	sign.modulate = Color(0.62, 0.9, 1.0)
+	track_root.add_child(sign)
+	var area := Area3D.new()
+	area.name = node_name
+	area.position = center + Vector3.UP * 1.5
+	area.collision_layer = 0
+	area.collision_mask = 1
+	area.set_meta("system_location_id", location_id)
+	area.set_meta("system_region_id", "region_baghdad")
+	area.set_meta("system_location_type", 7)
+	area.set_meta("system_display_name", "بوابة حارة الصيانة — " + gate_name)
+	area.set_meta("system_access_state", "pit_lane_vehicle_gate")
+	area.set_meta("system_location_position", track_root.to_global(center))
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(10.0, 4.0, 5.0)
+	collision.shape = shape
+	area.add_child(collision)
+	track_root.add_child(area)
+	if is_entry:
+		area.body_entered.connect(_on_pit_lane_entry_body_entered)
+	else:
+		area.body_entered.connect(_on_pit_lane_exit_body_entered)
+	return area
+
+
+func _on_pit_lane_context_body_entered(body: Node3D) -> void:
+	if not _is_active_vehicle(body) or active_vehicle_in_pit_lane:
+		return
+	active_vehicle_in_pit_lane = true
+	pit_lane_entered.emit(TRACK_ID)
+
+
+func _on_pit_lane_context_body_exited(body: Node3D) -> void:
+	if not _is_active_vehicle(body) or not active_vehicle_in_pit_lane:
+		return
+	active_vehicle_in_pit_lane = false
+	pit_lane_exited.emit(TRACK_ID)
+
+
+func _on_pit_lane_entry_body_entered(body: Node3D) -> void:
+	if _is_active_vehicle(body):
+		pit_lane_entry_crossed.emit(TRACK_ID)
+
+
+func _on_pit_lane_exit_body_entered(body: Node3D) -> void:
+	if _is_active_vehicle(body):
+		pit_lane_exit_crossed.emit(TRACK_ID)
+
+
+func _is_active_vehicle(body: Node3D) -> bool:
+	if not is_instance_valid(vehicle_runtime_manager):
+		return false
+	var active_vehicle: Node = vehicle_runtime_manager.get("active_vehicle")
+	return is_instance_valid(active_vehicle) and body == active_vehicle
+
+
+func _build_race_control_tower() -> void:
+	var center: Vector3 = START_GRID_OFFSET + Vector3(0.0, 0.0, -13.0)
+	race_control_tower = Node3D.new()
+	race_control_tower.name = "RaceControlTower"
+	race_control_tower.position = center
+	race_control_tower.set_meta("system_location_id", "baghdad_motorsport_race_control")
+	race_control_tower.set_meta("system_location_position", track_root.to_global(center))
+	track_root.add_child(race_control_tower)
+	var wall_color := Color(0.22, 0.29, 0.35)
+	var glass_color := Color(0.12, 0.38, 0.48)
+	_create_box_under(race_control_tower, "RaceControlFloor", Vector3(14.0, 0.4, 12.0), Vector3(0.0, 0.2, 0.0), 0.0, Color(0.19, 0.21, 0.23), true)
+	_create_box_under(race_control_tower, "RaceControlLeftWall", Vector3(0.45, 6.0, 12.0), Vector3(-6.8, 3.2, 0.0), 0.0, wall_color, true)
+	_create_box_under(race_control_tower, "RaceControlRightWall", Vector3(0.45, 6.0, 12.0), Vector3(6.8, 3.2, 0.0), 0.0, wall_color, true)
+	_create_box_under(race_control_tower, "RaceControlRearWall", Vector3(14.0, 6.0, 0.45), Vector3(0.0, 3.2, -5.8), 0.0, wall_color, true)
+	_create_box_under(race_control_tower, "RaceControlFrontLeftWall", Vector3(4.5, 6.0, 0.45), Vector3(-4.75, 3.2, 5.8), 0.0, wall_color, true)
+	_create_box_under(race_control_tower, "RaceControlFrontRightWall", Vector3(4.5, 6.0, 0.45), Vector3(4.75, 3.2, 5.8), 0.0, wall_color, true)
+	_create_box_under(race_control_tower, "RaceControlDoorHeader", Vector3(5.0, 0.6, 0.45), Vector3(0.0, 5.8, 5.8), 0.0, wall_color, true)
+	_create_box_under(race_control_tower, "RaceControlRoof", Vector3(14.0, 0.4, 12.0), Vector3(0.0, 6.4, 0.0), 0.0, wall_color, false)
+	_create_box_under(race_control_tower, "RaceControlObservationDeck", Vector3(16.0, 0.4, 14.0), Vector3(0.0, 6.8, 0.0), 0.0, Color(0.16, 0.21, 0.26), true)
+	_create_box_under(race_control_tower, "RaceControlBalconyFrontRail", Vector3(16.0, 1.0, 0.35), Vector3(0.0, 7.5, 6.8), 0.0, glass_color, true)
+	_create_box_under(race_control_tower, "RaceControlBalconyBackRail", Vector3(16.0, 1.0, 0.35), Vector3(0.0, 7.5, -6.8), 0.0, glass_color, true)
+	_create_box_under(race_control_tower, "RaceControlBalconyLeftRail", Vector3(0.35, 1.0, 13.6), Vector3(-7.8, 7.5, 0.0), 0.0, glass_color, true)
+	_create_box_under(race_control_tower, "RaceControlBalconyRightRail", Vector3(0.35, 1.0, 13.6), Vector3(7.8, 7.5, 0.0), 0.0, glass_color, true)
+	_create_box_under(race_control_tower, "RaceControlConsole", Vector3(4.5, 0.9, 1.4), Vector3(0.0, 0.85, -2.0), 0.0, Color(0.08, 0.12, 0.16), true)
+	for index in range(3):
+		_create_box_under(race_control_tower, "RaceControlMonitor_%02d" % index, Vector3(1.15, 0.9, 0.15), Vector3(-1.35 + float(index) * 1.35, 1.75, -2.55), 0.0, Color(0.06, 0.34, 0.48), false)
+	for step in range(8):
+		var step_y: float = 0.45 + float(step) * 0.82
+		var step_z: float = 5.0 - float(step) * 1.35
+		_create_box_under(race_control_tower, "RaceControlStair_%02d" % step, Vector3(3.0, 0.55, 1.5), Vector3(-8.2, step_y, step_z), 0.0, Color(0.27, 0.31, 0.35), true)
+	var label := Label3D.new()
+	label.name = "RaceControlTowerSign"
+	label.text = "RACE CONTROL"
+	label.font_size = 22
+	label.position = Vector3(0.0, 9.0, -5.9)
+	label.modulate = Color(0.6, 0.9, 1.0)
+	race_control_tower.add_child(label)
+	var light := OmniLight3D.new()
+	light.name = "RaceControlInteriorLight"
+	light.position = Vector3(0.0, 5.0, 0.0)
+	light.omni_range = 18.0
+	light.light_energy = 1.0
+	race_control_tower.add_child(light)
+
+
+func _build_marshal_posts() -> void:
+	for index in range(CHECKPOINT_COUNT):
+		var angle: float = CHECKPOINT_ANGLES[index]
+		var post_x: float = cos(angle) * (TRACK_HALF_LENGTH + 24.0)
+		var post_z: float = sin(angle) * (TRACK_HALF_WIDTH + 24.0)
+		if index == 3:
+			post_x = -80.0
+		var post := Node3D.new()
+		post.name = "MarshalPost_%02d" % index
+		post.position = Vector3(post_x, 0.0, post_z)
+		post.set_meta("system_location_id", "baghdad_motorsport_marshal_post_%02d" % index)
+		post.set_meta("system_region_id", "region_baghdad")
+		post.set_meta("system_display_name", "نقطة مراقبة السباق — %02d" % (index + 1))
+		post.set_meta("system_location_position", track_root.to_global(post.position))
+		track_root.add_child(post)
+		marshal_post_nodes.append(post)
+		_create_box_under(post, "MarshalPlatform", Vector3(6.0, 0.4, 6.0), Vector3(0.0, 0.2, 0.0), 0.0, Color(0.24, 0.27, 0.3), true)
+		_create_box_under(post, "MarshalRearWall", Vector3(6.0, 3.0, 0.4), Vector3(0.0, 1.9, -2.8), 0.0, Color(0.3, 0.34, 0.38), true)
+		_create_box_under(post, "MarshalSideWall", Vector3(0.4, 3.0, 6.0), Vector3(-2.8, 1.9, 0.0), 0.0, Color(0.3, 0.34, 0.38), true)
+		_create_box_under(post, "MarshalRoof", Vector3(6.0, 0.4, 6.0), Vector3(0.0, 3.7, 0.0), 0.0, Color(0.12, 0.17, 0.22), false)
+		_create_box_under(post, "MarshalFlagRack", Vector3(0.8, 1.8, 0.8), Vector3(2.0, 1.3, 2.0), 0.0, Color(0.72, 0.16, 0.12), true)
+		var sign := Label3D.new()
+		sign.name = "MarshalPostSign"
+		sign.text = "MARSHAL %02d" % (index + 1)
+		sign.font_size = 18
+		sign.position = Vector3(0.0, 4.8, 2.7)
+		post.add_child(sign)
+		var interaction := Area3D.new()
+		interaction.name = "MarshalPostInteraction"
+		interaction.position = Vector3(0.0, 1.4, 2.5)
+		interaction.add_to_group("system_interactable")
+		interaction.set_meta("system_location_id", "baghdad_motorsport_marshal_post_%02d" % index)
+		interaction.set_meta("system_region_id", "region_baghdad")
+		interaction.set_meta("system_location_type", 7)
+		interaction.set_meta("system_display_name", "نقطة مراقبة السباق — %02d" % (index + 1))
+		interaction.set_meta("system_interaction_prompt", "فحص نقطة مراقبة الحكام وإشارات السلامة")
+		interaction.set_meta("system_location_position", post.to_global(interaction.position))
+		var area_collision := CollisionShape3D.new()
+		var area_shape := BoxShape3D.new()
+		area_shape.size = Vector3(4.0, 2.5, 3.0)
+		area_collision.shape = area_shape
+		interaction.add_child(area_collision)
+		post.add_child(interaction)
+
+
+func _create_box_under(parent: Node3D, box_name: String, box_size: Vector3, local_position: Vector3, yaw: float, color: Color, with_collision: bool) -> Node3D:
 	var root := Node3D.new()
 	root.name = box_name
 	root.position = local_position
 	root.rotation.y = yaw
-	track_root.add_child(root)
+	parent.add_child(root)
 	var mesh_instance := MeshInstance3D.new()
 	var mesh := BoxMesh.new()
 	mesh.size = box_size
@@ -379,8 +658,14 @@ func _create_box(box_name: String, box_size: Vector3, local_position: Vector3, y
 		var body := StaticBody3D.new()
 		body.name = "StaticCollision"
 		var shape_node := CollisionShape3D.new()
+		shape_node.name = "CollisionShape3D"
 		var shape := BoxShape3D.new()
 		shape.size = box_size
 		shape_node.shape = shape
 		body.add_child(shape_node)
 		root.add_child(body)
+	return root
+
+
+func _create_box(box_name: String, box_size: Vector3, local_position: Vector3, yaw: float, color: Color, with_collision: bool) -> void:
+	_create_box_under(track_root, box_name, box_size, local_position, yaw, color, with_collision)
