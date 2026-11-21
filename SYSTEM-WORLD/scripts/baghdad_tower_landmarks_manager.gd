@@ -581,9 +581,9 @@ func _create_reference_sky_district() -> void:
 	light_material.emission = Color(0.02, 0.42, 0.82)
 	light_material.emission_energy_multiplier = 1.8
 	var segment_count := 12
-	var ring_radius := 372.0
-	var segment_length := 194.0
-	var deck_width := 88.0
+	var ring_radius := 510.0
+	var segment_length := 265.0
+	var deck_width := 80.0
 	var deck_y := 34.0
 	for index in range(segment_count):
 		var angle := TAU * float(index) / float(segment_count)
@@ -611,6 +611,7 @@ func _create_reference_sky_district() -> void:
 			rail.position = Vector3(side * (deck_width * 0.5 - 1.0), 2.7, 0.0)
 			rail.material_override = rail_material
 			segment.add_child(rail)
+			_add_static_box_collision(segment, "GlassSafetyRailCollision_%s" % str(int(side)), rail.position, rail_mesh.size)
 			var rail_light := MeshInstance3D.new()
 			rail_light.name = "RailLight_%s" % str(int(side))
 			var light_mesh := BoxMesh.new()
@@ -649,7 +650,10 @@ func _create_reference_sky_district() -> void:
 			segment.add_child(canopy)
 	district.set_meta("reference_visual_blockout", true)
 	district.set_meta("walkable_ring_segment_count", segment_count)
-	district.set_meta("ring_radius_m", ring_radius)
+		district.set_meta("ring_radius_m", ring_radius)
+	district.set_meta("segment_length_m", segment_length)
+	district.set_meta("deck_width_m", deck_width)
+	district.set_meta("safety_rail_collision", true)
 	district.set_meta("final_art_assets_ready", false)
 	district.set_meta("note", "Procedural first-pass sky promenade; validate land clearance, navigation, collision and Android performance before final art.")
 
