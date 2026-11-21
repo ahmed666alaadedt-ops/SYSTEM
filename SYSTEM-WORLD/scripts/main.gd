@@ -1088,29 +1088,30 @@ func _refresh_motorsport_leaderboard() -> void:
 
 	if is_instance_valid(motorsport_track_manager) and motorsport_track_manager.has_method("get_ai_race_event_id") and str(motorsport_track_manager.call("get_ai_race_event_id")) == event_id:
 		var ai_heading := Label.new()
-		ai_heading.text = "ترتيب منافسي الذكاء الاصطناعي — آخر سباق"
+		ai_heading.text = "ترتيب المتسابقين — اللاعب ومنافسو الذكاء الاصطناعي"
 		ai_heading.add_theme_font_size_override("font_size", 18)
 		motorsport_leaderboard_rows.add_child(ai_heading)
-		var ai_standings: Array = motorsport_track_manager.call("get_ai_race_status")
-		if ai_standings.is_empty():
-			var no_ai := Label.new()
-			no_ai.text = "لا توجد نتائج منافسين محفوظة لهذا السباق."
-			motorsport_leaderboard_rows.add_child(no_ai)
+		var race_standings: Array = motorsport_track_manager.call("get_race_standings")
+		if race_standings.is_empty():
+			var no_racers := Label.new()
+			no_racers.text = "لا توجد نتائج متسابقين لهذا السباق بعد."
+			motorsport_leaderboard_rows.add_child(no_racers)
 		else:
-			for index in range(ai_standings.size()):
-				var opponent: Dictionary = ai_standings[index]
-				var state_text := "أنهى السباق" if bool(opponent.get("finished", false)) else ("يتسابق الآن" if str(opponent.get("status", "")) == "racing" else "انسحب")
-				var opponent_row := Label.new()
-				opponent_row.text = "%02d  |  %s  |  اللفات %d/%d  |  %s  |  %s" % [
+			for index in range(race_standings.size()):
+				var racer: Dictionary = race_standings[index]
+				var racer_status := str(racer.get("status", ""))
+				var state_text := "أنهى السباق" if bool(racer.get("finished", false)) else ("يتسابق الآن" if racer_status == "racing" else ("على خط الانطلاق" if racer_status == "starting" else ("بانتظار السيارة" if racer_status == "awaiting_vehicle" else ("جاهز" if racer_status == "ready" else "انسحب"))))
+				var racer_row := Label.new()
+				racer_row.text = "%02d  |  %s  |  اللفات %d/%d  |  %s  |  %s" % [
 					index + 1,
-					str(opponent.get("opponent_name", "SYSTEM Racer")),
-					int(opponent.get("completed_laps", 0)),
-					int(opponent.get("total_laps", 0)),
-					_format_motorsport_time(float(opponent.get("elapsed_seconds", 0.0))),
+					str(racer.get("opponent_name", "SYSTEM Racer")),
+					int(racer.get("completed_laps", 0)),
+					int(racer.get("total_laps", 0)),
+					_format_motorsport_time(float(racer.get("elapsed_seconds", 0.0))),
 					state_text
 				]
-				opponent_row.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-				motorsport_leaderboard_rows.add_child(opponent_row)
+				racer_row.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+				motorsport_leaderboard_rows.add_child(racer_row)
 
 
 func _process(delta: float) -> void:
