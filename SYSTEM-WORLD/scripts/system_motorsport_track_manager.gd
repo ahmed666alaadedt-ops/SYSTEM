@@ -171,8 +171,12 @@ func get_start_grid_position() -> Vector3:
 func start_track_event(event_id: String) -> Dictionary:
 	if not player_inside_track:
 		return {"success":false,"reason":"PLAYER_NOT_INSIDE_APPROVED_TRACK"}
-	if vehicle_runtime_manager == null or not bool(vehicle_runtime_manager.get("is_driving")):
-		return {"success":false,"reason":"PLAYER_MUST_BE_DRIVING"}
+	if vehicle_runtime_manager == null:
+		return {"success":false,"reason":"VEHICLE_RUNTIME_UNAVAILABLE"}
+	# Register the event on foot at Race Control after staging the owned car on the grid.
+	# This avoids requiring the player to ray-interact through the vehicle body.
+	if bool(vehicle_runtime_manager.get("is_driving")):
+		return {"success":false,"reason":"EXIT_VEHICLE_TO_REGISTER_RACE"}
 	var vehicle: Node3D = vehicle_runtime_manager.get("active_vehicle")
 	if not is_instance_valid(vehicle):
 		return {"success":false,"reason":"ACTIVE_VEHICLE_UNAVAILABLE"}
