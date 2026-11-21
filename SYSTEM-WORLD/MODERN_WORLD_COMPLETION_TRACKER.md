@@ -759,6 +759,12 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 
 
 ## Baghdad archaeological sites and ruins — OSM-grounded landmark pass — 21 November 2026
+- [x] Classify historic memorials/monuments, tombs, heritage buildings, fortifications and city gates separately instead of rendering every historic tag as generic ruins.
+- [x] Preserve worship identities for historic mosques/churches while allowing their heritage details to be built from the same OSM source.
+- [x] Exclude explicitly named Kadhimiya/Kadhimain historic features from this current landmark pass.
+- [x] Audit result from OSM source workflow run 44943717154: 318 historic-tagged source objects in the municipal extract; the initial 5×5 sample pack contains 4 historic geometry features from 3 unique OSM IDs, all tagged historic=memorial. This is source coverage, not proof of finished in-game assets.
+- [ ] Inspect the 3 unique sample memorials in Godot and check their physical scale/placement; full municipal historic layer also contains named heritage buildings, tombs, gates, palaces and ruin features outside the initial sample cells.
+
 
 - [x] Add a dedicated historic-sites OSM layer to the Baghdad extraction, clipping and metric cell-pack pipeline; retain historic tags and source feature IDs.
 - [x] Stream the dedicated historic-sites layer into Baghdad cells and prevent duplicate ruin landmarks when a feature is also present in the buildings/amenities layers.
