@@ -2,8 +2,12 @@ extends Node3D
 class_name BaghdadTowerLandmarksManager
 
 const EntranceScript = preload("res://scripts/system_tower_entrance.gd")
+const HeadquartersInteriorScript = preload("res://scripts/system_hunter_headquarters_interior.gd")
+const TowerInteriorScript = preload("res://scripts/system_baghdad_tower_interior.gd")
+const PowerTowerArenaVenueScript = preload("res://scripts/system_power_tower_arena_venue.gd")
 const HUNTER_TOWER_HEIGHT := 1000.0
 const POWER_TOWER_HEIGHT := 168.0
+const TECHNOLOGY_TOWER_HEIGHT := 210.0
 
 var terrain: Node
 var city_anchor := Vector3.ZERO
@@ -11,6 +15,8 @@ var tower_material: StandardMaterial3D
 var trim_material: StandardMaterial3D
 var emissive_material: StandardMaterial3D
 var tower_positions: Array[Dictionary] = []
+var connected_tower_positions: Array[Dictionary] = []
+var headquarters_position := Vector3.INF
 
 func _ready() -> void:
 	name = "BaghdadTowerLandmarksManager"
@@ -25,11 +31,13 @@ func _ready() -> void:
 		return
 	_create_materials()
 	_build_hunter_tower()
-	_build_power_tower()
 	_build_business_tower()
 	_build_shopping_tower()
 	_build_entertainment_tower()
+	_build_technology_tower()
+	_build_power_tower()
 	_create_connected_city_links()
+	_create_hunter_association_headquarters()
 	_create_public_amenities()
 
 func _create_materials() -> void:
@@ -61,7 +69,7 @@ func _build_hunter_tower() -> void:
 	)
 
 func _build_power_tower() -> void:
-	var position := city_anchor + Vector3(355.0, 0.0, 350.0)
+	var position := city_anchor + Vector3(850.0, 0.0, 600.0)
 	_build_tower(
 		"PowerTower",
 		"برج القوة",
@@ -69,11 +77,17 @@ func _build_power_tower() -> void:
 		position,
 		POWER_TOWER_HEIGHT,
 		22.0,
-		28,
-		Color(0.95, 0.55, 0.16)
+		100,
+		Color(0.95, 0.55, 0.16),
+		false
 	)
+	var power_tower := get_node_or_null("PowerTower")
+	if power_tower != null:
+		var arena_venue := PowerTowerArenaVenueScript.new()
+		arena_venue.name = "PowerTowerArenaVenue"
+		power_tower.add_child(arena_venue)
 
-func _build_tower(node_name: String, title: String, location_id: String, world_position: Vector3, height: float, radius: float, floors: int, beacon_color: Color) -> void:
+func _build_tower(node_name: String, title: String, location_id: String, world_position: Vector3, height: float, radius: float, floors: int, beacon_color: Color, connected_to_district: bool = true) -> void:
 	var resolved := _nearest_land_position(Vector2(world_position.x, world_position.z))
 	if resolved == Vector2.INF:
 		push_warning("SYSTEM WORLD: no suitable land for tower " + title)
@@ -82,7 +96,10 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	root.name = node_name
 	root.position = Vector3(resolved.x, float(terrain.call("get_terrain_height", resolved.x, resolved.y)), resolved.y)
 	add_child(root)
-	tower_positions.append({"id": location_id, "name": title, "position": root.position, "height": height, "radius": radius})
+	var tower_record := {"id": location_id, "name": title, "position": root.position, "height": height, "radius": radius}
+	tower_positions.append(tower_record)
+	if connected_to_district:
+		connected_tower_positions.append(tower_record)
 
 	var base := MeshInstance3D.new()
 	base.name = "MonumentalFoundation"
@@ -104,6 +121,9 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	foundation_shape.height = 7.0
 	foundation_collision.shape = foundation_shape
 	foundation_collision.position.y = 3.5
+	# The five connected towers have a ground-floor lobby; do not seal it inside
+	# the monolithic foundation collider. Their lobby supplies its own floor/walls.
+	foundation_collision.disabled = connected_to_district
 	structure_body.add_child(foundation_collision)
 	var shaft_collision := CollisionShape3D.new()
 	var shaft_shape := CylinderShape3D.new()
@@ -111,6 +131,8 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	shaft_shape.height = height
 	shaft_collision.shape = shaft_shape
 	shaft_collision.position.y = height * 0.5 + 7.0
+	# Keep the lobby volume clear; the independent Power Tower retains its full collider.
+	shaft_collision.disabled = connected_to_district
 	structure_body.add_child(shaft_collision)
 
 	var shaft := MeshInstance3D.new()
@@ -191,6 +213,14 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	entrance.position = Vector3(0.0, 3.0, radius * 1.48 + 6.0)
 	root.add_child(entrance)
 
+	# The five connected district towers each receive a distinct service lobby.
+	# Power Tower is deliberately excluded: it remains an independent challenge venue.
+	if connected_to_district:
+		var tower_interior := TowerInteriorScript.new()
+		tower_interior.name = "TowerInterior"
+		root.add_child(tower_interior)
+		tower_interior.call("build", location_id, title, EntranceScript, entrance.global_position + Vector3(0.0, 0.0, 5.0))
+
 	var label := Label3D.new()
 	label.name = "TowerNameSign"
 	label.text = title
@@ -235,6 +265,119 @@ func _build_entertainment_tower() -> void:
 	_build_tower("EntertainmentTower", "برج الترفيه", "entertainment_tower_baghdad", city_anchor + Vector3(355.0, 0.0, -350.0), 205.0, 29.0, 34, Color(0.75, 0.38, 0.95))
 
 
+func _build_technology_tower() -> void:
+	_build_tower("TechnologyTower", "برج التكنولوجيا والابتكار", "technology_tower_baghdad", city_anchor + Vector3(355.0, 0.0, 350.0), TECHNOLOGY_TOWER_HEIGHT, 28.0, 36, Color(0.18, 0.88, 0.78))
+
+
+func _create_hunter_association_headquarters() -> void:
+	# The Hunter Association headquarters crowns the shared five-tower district;
+	# it is an elevated headquarters building, not a sixth tower and not part of Power Tower.
+	var headquarters := Node3D.new()
+	headquarters.name = "HunterAssociationHeadquarters"
+	var highest_district_roof := city_anchor.y
+	var highest_tower: Dictionary = {}
+	for tower_data in connected_tower_positions:
+		var roof_y := float(tower_data["position"].y) + float(tower_data["height"]) + 14.0
+		if roof_y > highest_district_roof:
+			highest_district_roof = roof_y
+			highest_tower = tower_data
+	headquarters.position = Vector3(city_anchor.x, highest_district_roof + 12.0, city_anchor.z)
+	headquarters_position = headquarters.position
+	add_child(headquarters)
+
+	var podium := MeshInstance3D.new()
+	podium.name = "HeadquartersSkyPodium"
+	var podium_mesh := BoxMesh.new()
+	podium_mesh.size = Vector3(156.0, 4.0, 118.0)
+	podium.mesh = podium_mesh
+	podium.position.y = 2.0
+	podium.material_override = trim_material
+	headquarters.add_child(podium)
+	_add_static_box_collision(headquarters, "HeadquartersPodiumCollision", podium.position, podium_mesh.size)
+
+	var hall := MeshInstance3D.new()
+	hall.name = "GlobalHunterHeadquartersHall"
+	var hall_mesh := BoxMesh.new()
+	hall_mesh.size = Vector3(112.0, 28.0, 82.0)
+	hall.mesh = hall_mesh
+	hall.position.y = 18.0
+	hall.material_override = tower_material
+	headquarters.add_child(hall)
+	var headquarters_interior := HeadquartersInteriorScript.new()
+	headquarters_interior.name = "HeadquartersInterior"
+	headquarters.add_child(headquarters_interior)
+	headquarters_interior.call("build", EntranceScript)
+
+	# Four monumental corner pylons give the elevated headquarters a distinct skyline silhouette.
+	for corner_index in range(4):
+		var pylon := MeshInstance3D.new()
+		pylon.name = "HeadquartersCornerPylon_%d" % corner_index
+		var pylon_mesh := CylinderMesh.new()
+		pylon_mesh.top_radius = 2.8
+		pylon_mesh.bottom_radius = 5.0
+		pylon_mesh.height = 28.0
+		pylon.mesh = pylon_mesh
+		var x_side := -1.0 if corner_index in [0, 2] else 1.0
+		var z_side := -1.0 if corner_index in [0, 1] else 1.0
+		pylon.position = Vector3(x_side * 66.0, 16.0, z_side * 51.0)
+		pylon.material_override = trim_material
+		headquarters.add_child(pylon)
+
+	var crown := MeshInstance3D.new()
+	crown.name = "HeadquartersCrown"
+	var crown_mesh := BoxMesh.new()
+	crown_mesh.size = Vector3(120.0, 2.0, 90.0)
+	crown.mesh = crown_mesh
+	crown.position.y = 33.0
+	crown.material_override = emissive_material
+	headquarters.add_child(crown)
+
+	var sign := Label3D.new()
+	sign.name = "HeadquartersIdentitySign"
+	sign.text = "WORLD HUNTER ASSOCIATION\nالمقر الرئيسي لنقابة الصيادين"
+	sign.font_size = 38
+	sign.position = Vector3(0.0, 36.0, 42.0)
+	sign.pixel_size = 0.014
+	sign.modulate = Color(0.45, 0.88, 1.0)
+	headquarters.add_child(sign)
+
+	var entrance := EntranceScript.new()
+	entrance.name = "HeadquartersEntrance"
+	entrance.configure("hunter_association_headquarters_baghdad", "المقر الرئيسي لنقابة الصيادين", "region_baghdad")
+	var entrance_shape := CollisionShape3D.new()
+	var shape := SphereShape3D.new()
+	shape.radius = 5.0
+	entrance_shape.shape = shape
+	entrance.add_child(entrance_shape)
+	entrance.position = Vector3(0.0, 6.0, 48.0)
+	headquarters.add_child(entrance)
+
+	# Connect the headquarters sky platform to the highest district tower roof.
+	# This is a dedicated access bridge, not an extension of the five-tower district loop.
+	if not highest_tower.is_empty():
+		var access_bridge := Node3D.new()
+		access_bridge.name = "HunterHeadquartersSkyAccessBridge"
+		add_child(access_bridge)
+		var tower_roof: Vector3 = highest_tower["position"] + Vector3(0.0, float(highest_tower["height"]) + 14.0, 0.0)
+		var headquarters_edge := headquarters.position + Vector3(0.0, 2.0, 59.0)
+		_create_link_deck(access_bridge, tower_roof, headquarters_edge, "HunterHeadquartersAccessDeck", 16.0, 2.4, trim_material)
+		for side in range(2):
+			var rail := MeshInstance3D.new()
+			rail.name = "HeadquartersAccessRail_%d" % side
+			var rail_mesh := BoxMesh.new()
+			rail_mesh.size = Vector3(1.2, 3.0, tower_roof.distance_to(headquarters_edge))
+			rail.mesh = rail_mesh
+			rail.position = (tower_roof + headquarters_edge) * 0.5 + Vector3(8.0 if side == 0 else -8.0, 2.0, 0.0)
+			rail.rotation.y = atan2((headquarters_edge - tower_roof).x, (headquarters_edge - tower_roof).z)
+			rail.material_override = emissive_material
+			access_bridge.add_child(rail)
+		headquarters.set_meta("district_headquarters", true)
+
+
+func get_headquarters_position() -> Vector3:
+	return headquarters_position
+
+
 func _create_tower_architecture(root: Node3D, node_name: String, title: String, height: float, radius: float, floors: int, beacon_color: Color) -> void:
 	# Procedural architectural blockout: podium terraces, facade fins, crown and identity signage.
 	for tier in range(3):
@@ -271,15 +414,16 @@ func _create_tower_architecture(root: Node3D, node_name: String, title: String, 
 
 
 func _create_connected_city_links() -> void:
-	# Elevated pedestrian/vehicle corridor blockout linking all five tower podiums.
-	if tower_positions.size() < 2:
+	# Elevated pedestrian/vehicle corridor blockout linking only the five district towers.
+	# Power Tower is intentionally excluded and remains a remote independent landmark.
+	if connected_tower_positions.size() < 2:
 		return
 	var link_root := Node3D.new()
 	link_root.name = "FiveTowerConnectedDistrict"
 	add_child(link_root)
-	for index in range(tower_positions.size()):
-		var first: Vector3 = tower_positions[index]["position"]
-		var second: Vector3 = tower_positions[(index + 1) % tower_positions.size()]["position"]
+	for index in range(connected_tower_positions.size()):
+		var first: Vector3 = connected_tower_positions[index]["position"]
+		var second: Vector3 = connected_tower_positions[(index + 1) % connected_tower_positions.size()]["position"]
 		_create_link_deck(link_root, first + Vector3(0.0, 34.0, 0.0), second + Vector3(0.0, 34.0, 0.0), "SkyPromenade_%d" % index, 12.0, 0.65, trim_material)
 		_create_link_deck(link_root, first + Vector3(0.0, 23.0, 0.0), second + Vector3(0.0, 23.0, 0.0), "VehicleDeck_%d" % index, 18.0, 1.1, tower_material)
 		_create_vehicle_access_ramp(link_root, first, index)

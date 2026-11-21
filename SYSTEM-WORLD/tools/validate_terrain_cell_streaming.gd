@@ -4,6 +4,24 @@ const STREAMER_SCRIPT = preload("res://scripts/modern_world_cell_streaming_manag
 const CONTINENT_SCRIPT = preload("res://scripts/modern_continent_manager.gd")
 const GEOMETRY_CLIPPER = preload("res://scripts/system_world_cell_geometry_clipper.gd")
 
+var _loaded_signal_count := 0
+var _unloading_signal_count := 0
+var _unloaded_signal_count := 0
+var _last_unloading_cell_root: Node3D
+
+
+func _on_cell_loaded(_cell: Vector2i, _cell_root: Node3D) -> void:
+	_loaded_signal_count += 1
+
+
+func _on_cell_unloading(_cell: Vector2i, cell_root: Node3D) -> void:
+	_unloading_signal_count += 1
+	_last_unloading_cell_root = cell_root
+
+
+func _on_cell_unloaded(_cell: Vector2i, _cell_id: String) -> void:
+	_unloaded_signal_count += 1
+
 
 func _initialize() -> void:
 	call_deferred("_run_tests")
@@ -22,6 +40,9 @@ func _run_tests() -> void:
 
 	var streamer = STREAMER_SCRIPT.new()
 	root.add_child(streamer)
+	streamer.cell_loaded.connect(_on_cell_loaded)
+	streamer.cell_unloading.connect(_on_cell_unloading)
+	streamer.cell_unloaded.connect(_on_cell_unloaded)
 	streamer._last_center_cell = Vector2i.ZERO
 	assert(streamer.configure(Callable(self, "_height_at"), 600.0, 600.0, 200.0, 20.0))
 	assert(streamer.world_to_cell(-199.0, -199.0) == Vector2i(0, 0))
@@ -59,6 +80,10 @@ func _run_tests() -> void:
 	assert(not terrain_collision.disabled, "Nearby cell collision should be enabled again.")
 	streamer._unload_cell(Vector2i(0, 0))
 	assert(streamer.loaded_cells.size() == 2)
+	assert(_loaded_signal_count >= 3, "Cell-loaded lifecycle signal was not emitted.")
+	assert(_unloading_signal_count == 1, "Cell-unloading signal must fire before the cell is freed.")
+	assert(_unloaded_signal_count == 1, "Cell-unloaded signal was not emitted.")
+	assert(_last_unloading_cell_root != null, "Pre-unload signal must expose the cell root for state capture.")
 	streamer.queue_free()
 
 	var edge_streamer = STREAMER_SCRIPT.new()

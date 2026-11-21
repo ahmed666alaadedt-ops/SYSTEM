@@ -99,7 +99,11 @@ It includes:
 - Rare equipment and discoveries.
 - Individual and competitive progression.
 
-The tower must remain part of the larger world rather than a disconnected mini-game.
+The tower must remain part of the larger world rather than a disconnected mini-game. It is a separate optional Baghdad landmark and must not be physically connected to the five-tower civic district.
+
+### Baghdad tower district relationship — approved 21 November 2026
+
+The connected five-tower district consists of the Hunter Association, Business, Shopping, Entertainment, and Technology & Innovation towers. The Global Hunter Association headquarters is an elevated headquarters building above the shared district. Power Tower remains an independent combat landmark outside that connected complex, retaining its own 100-floor progression system. The five-tower district's skybridges and vehicle decks must never include Power Tower.
 
 ---
 

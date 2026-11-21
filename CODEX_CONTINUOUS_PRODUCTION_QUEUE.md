@@ -55,10 +55,11 @@ Current starting evidence in the tracker: an OSM Baghdad boundary pack and a sou
 
 - Continue from the existing metric-cell OSM streamer and current map foundation. Expand coverage through staged geographic packs; do not load the entire municipal area as one unbounded scene.
 - Validate official boundary, roads, district data, elevation, hydrology and land/water alignment before production promotion.
-- Build the five towers as a connected multi-level district integrated into real central Baghdad geography. Retain five distinct tower identities and clear skyline silhouettes.
+- Build the five connected district towers: Hunter Association, Business, Shopping, Entertainment, and Technology & Innovation. Keep Power Tower physically detached and excluded from all district skybridge/vehicle-deck loops.
+- Place the Global Hunter Association headquarters as a separate elevated headquarters above the shared five-tower district; do not place it on Power Tower or count it as a sixth primary tower.
 - Keep the Tigris visibly open below/through the district, preserve river navigation and riverfront access, and protect Tahrir Square/Freedom Monument sightlines.
 - Add tested skybridges, promenades, ramps, elevators, pedestrian paths, accessible routes, service/emergency access, parking and public transit links. Visual shafts and ramp blocks are not working lifts/roads.
-- Create actual usable interiors and facilities: Power Tower arenas/training; Hunter Association reception, mission hall, exam offices, training, research, medical support and honor hall; Business Tower offices; Shopping Tower malls/shops/food/cinema; Entertainment Tower parks, pools, sports, events and family recreation.
+- Create actual usable interiors and facilities: independent Power Tower arenas/training; Hunter Association Tower public services; elevated Global Hunter Association headquarters; Business Tower offices; Shopping Tower malls/shops/food/cinema; Entertainment Tower parks, pools, sports, events and family recreation; Technology & Innovation Tower laboratories, robotics, AI, research and incubators.
 - Validate from Karkh, Rusafa, Tigris waterfront and Tahrir Square views.
 
 **Acceptance:** geographic alignment checks, collision/navigation checks, playable entry/exit, lift/ramp tests, river and landmark clearance checks, Android streaming/performance checks.

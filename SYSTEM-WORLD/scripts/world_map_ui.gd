@@ -16,22 +16,33 @@ const LOCATION_TYPES := {
 	4: "متجر",
 	5: "مَعْلَم",
 	6: "نقطة سفر",
-	7: "موقع آخر"
+	7: "موقع آخر",
+	8: "إعلان"
 }
 
 
 class MapDrawing extends Control:
 
+	signal advertisement_selected(advertisement: Dictionary)
+
+	var ad_hit_targets: Array[Dictionary] = []
 	var discovered_locations: Array = []
 	var personal_markers: Array = []
+	var advertisements: Array = []
 	var world_overview: Dictionary = {}
 	var player_position := Vector3.ZERO
 	var player_visible := false
+	var road_segments: Array = []
+	var navigation_route: Array[Vector3] = []
+	var navigation_destination := Vector3.ZERO
+	var navigation_destination_visible := false
+	var navigation_focus := false
 
 	func _ready() -> void:
-		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		mouse_filter = Control.MOUSE_FILTER_STOP
 
 	func _draw() -> void:
+		ad_hit_targets.clear()
 		if size.x < 50.0 or size.y < 50.0:
 			return
 
@@ -46,12 +57,24 @@ class MapDrawing extends Control:
 		_draw_grid(map_rect)
 
 		var all_positions: Array[Vector3] = []
-		for city in world_overview.get("cities", []):
-			if typeof(city) == TYPE_DICTIONARY and city.get("position") is Vector3:
-				all_positions.append(city["position"])
-		for village in world_overview.get("villages", []):
-			if typeof(village) == TYPE_DICTIONARY and village.get("position") is Vector3:
-				all_positions.append(village["position"])
+		if not navigation_focus:
+			for city in world_overview.get("cities", []):
+				if typeof(city) == TYPE_DICTIONARY and city.get("position") is Vector3:
+					all_positions.append(city["position"])
+			for village in world_overview.get("villages", []):
+				if typeof(village) == TYPE_DICTIONARY and village.get("position") is Vector3:
+					all_positions.append(village["position"])
+		for segment_value in road_segments:
+			if not segment_value is Dictionary:
+				continue
+			var segment_points: Variant = segment_value.get("points", PackedVector2Array())
+			if segment_points is PackedVector2Array:
+				for road_point in segment_points:
+					all_positions.append(Vector3(road_point.x, 0.0, road_point.y))
+		for route_point in navigation_route:
+			all_positions.append(route_point)
+		if navigation_destination_visible:
+			all_positions.append(navigation_destination)
 
 		for item in discovered_locations:
 			if typeof(item) != TYPE_DICTIONARY:
@@ -68,6 +91,13 @@ class MapDrawing extends Control:
 			var position: Variant = marker.get("position", Vector3.ZERO)
 			if position is Vector3:
 				all_positions.append(position)
+
+		for advertisement in advertisements:
+			if typeof(advertisement) != TYPE_DICTIONARY:
+				continue
+			var ad_position: Variant = advertisement.get("position", Vector3.ZERO)
+			if ad_position is Vector3:
+				all_positions.append(ad_position)
 
 		if player_visible:
 			all_positions.append(player_position)
@@ -103,7 +133,42 @@ class MapDrawing extends Control:
 			min_z -= 10.0
 			max_z += 10.0
 
-		_draw_world_overview(map_rect, min_x, max_x, min_z, max_z)
+		if not navigation_focus:
+			_draw_world_overview(map_rect, min_x, max_x, min_z, max_z)
+
+		for segment_value in road_segments:
+			if not segment_value is Dictionary:
+				continue
+			var segment_points: Variant = segment_value.get("points", PackedVector2Array())
+			if not segment_points is PackedVector2Array or segment_points.size() < 2:
+				continue
+			var projected_road := PackedVector2Array()
+			for road_point in segment_points:
+				projected_road.append(_project_position(
+					Vector3(road_point.x, 0.0, road_point.y),
+					map_rect, min_x, max_x, min_z, max_z
+				))
+			if projected_road.size() >= 2:
+				draw_polyline(projected_road, Color(0.43, 0.55, 0.62, 0.82), 1.35, true)
+
+		if navigation_route.size() >= 2:
+			var projected_route := PackedVector2Array()
+			for route_point in navigation_route:
+				projected_route.append(_project_position(
+					route_point, map_rect, min_x, max_x, min_z, max_z
+				))
+			draw_polyline(projected_route, Color(0.015, 0.06, 0.09, 0.96), 7.0, true)
+			draw_polyline(projected_route, Color(0.10, 0.91, 1.0, 1.0), 4.0, true)
+			for route_index in range(1, projected_route.size() - 1):
+				draw_circle(projected_route[route_index], 2.2, Color(0.88, 0.98, 1.0, 0.95))
+
+		if navigation_destination_visible:
+			var destination_point := _project_position(
+				navigation_destination, map_rect, min_x, max_x, min_z, max_z
+			)
+			draw_circle(destination_point, 9.0, Color(1.0, 0.58, 0.18, 1.0))
+			draw_arc(destination_point, 15.0, 0.0, TAU, 32, Color(1.0, 0.78, 0.35, 0.95), 2.5)
+			draw_string(ThemeDB.fallback_font, destination_point + Vector2(12, 18), "الوجهة", HORIZONTAL_ALIGNMENT_LEFT, 80, 12, Color(1.0, 0.84, 0.56))
 
 		for item in discovered_locations:
 			if typeof(item) != TYPE_DICTIONARY:
@@ -193,6 +258,27 @@ class MapDrawing extends Control:
 				Color(1.0, 0.82, 0.48)
 			)
 
+		for advertisement in advertisements:
+			if typeof(advertisement) != TYPE_DICTIONARY:
+				continue
+			var ad_position: Variant = advertisement.get("position", Vector3.ZERO)
+			if not ad_position is Vector3:
+				continue
+			var ad_point := _project_position(ad_position, map_rect, min_x, max_x, min_z, max_z)
+			var ad_diamond := PackedVector2Array([
+				ad_point + Vector2(0, -9),
+				ad_point + Vector2(9, 0),
+				ad_point + Vector2(0, 9),
+				ad_point + Vector2(-9, 0)
+			])
+			draw_colored_polygon(ad_diamond, Color(1.0, 0.35, 0.78, 1.0))
+			draw_arc(ad_point, 13.0, 0.0, TAU, 24, Color(1.0, 0.68, 0.9, 0.9), 2.0)
+			ad_hit_targets.append({
+				"point": ad_point,
+				"advertisement": advertisement.duplicate(true)
+			})
+			draw_string(ThemeDB.fallback_font, ad_point + Vector2(12, 14), "إعلان: " + str(advertisement.get("city", "")), HORIZONTAL_ALIGNMENT_LEFT, 140, 12, Color(1.0, 0.78, 0.92))
+
 		if player_visible:
 			var player_point := _project_position(
 				player_position,
@@ -228,6 +314,28 @@ class MapDrawing extends Control:
 				14,
 				Color(0.45, 1.0, 0.58)
 			)
+
+	func _gui_input(event: InputEvent) -> void:
+		var tap_position := Vector2.ZERO
+		var is_tap := false
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event != null and mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
+			tap_position = mouse_event.position
+			is_tap = true
+		else:
+			var touch_event := event as InputEventScreenTouch
+			if touch_event != null and touch_event.pressed:
+				tap_position = touch_event.position
+				is_tap = true
+		if not is_tap:
+			return
+		for hit in ad_hit_targets:
+			var point: Vector2 = hit.get("point", Vector2.ZERO)
+			if point.distance_to(tap_position) <= 20.0:
+				advertisement_selected.emit(hit.get("advertisement", {}))
+				accept_event()
+				return
+
 
 	func _draw_grid(rect: Rect2) -> void:
 		var grid_color := Color(0.10, 0.22, 0.32, 0.55)
@@ -352,6 +460,9 @@ class MapDrawing extends Control:
 var map_manager: Node
 var world_manager: Node
 var player: CharacterBody3D
+var navigation_manager: Node
+var navigation_status_label: Label
+var clear_navigation_button: Button
 
 var selected_world_id := 2
 
@@ -361,6 +472,8 @@ var map_panel: PanelContainer
 var map_canvas: MapDrawing
 var location_list: VBoxContainer
 var statistics_label: Label
+var advertisement_filter: OptionButton
+var selected_advertisement_category := "الكل"
 var marker_button: Button
 var tab_buttons: Dictionary = {}
 
@@ -368,11 +481,13 @@ var tab_buttons: Dictionary = {}
 func setup(
 	p_map_manager: Node,
 	p_world_manager: Node,
-	p_player: CharacterBody3D
+	p_player: CharacterBody3D,
+	p_navigation_manager: Node = null
 ) -> void:
 	map_manager = p_map_manager
 	world_manager = p_world_manager
 	player = p_player
+	navigation_manager = p_navigation_manager
 
 	_build_interface()
 
@@ -494,6 +609,7 @@ func _build_map_body(parent: VBoxContainer) -> void:
 	map_canvas.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	map_canvas.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_child(map_canvas)
+	map_canvas.advertisement_selected.connect(_on_map_advertisement_selected)
 
 	var side_panel := PanelContainer.new()
 	side_panel.custom_minimum_size = Vector2(270, 0)
@@ -518,6 +634,26 @@ func _build_map_body(parent: VBoxContainer) -> void:
 		Color(0.72, 0.82, 0.92)
 	)
 	side_column.add_child(statistics_label)
+
+	advertisement_filter = OptionButton.new()
+	advertisement_filter.custom_minimum_size = Vector2(0, 38)
+	for category in ["الكل", "نقابة الصيادين", "تجارة المدينة", "بطولات", "رياضة", "رياضة المحركات", "فعاليات المدينة"]:
+		advertisement_filter.add_item("الإعلانات: " + category)
+	advertisement_filter.item_selected.connect(_on_advertisement_filter_changed)
+	side_column.add_child(advertisement_filter)
+
+	navigation_status_label = Label.new()
+	navigation_status_label.text = "اختر موقعاً مكتشفاً لرسم طريق المشاة."
+	navigation_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	navigation_status_label.add_theme_color_override("font_color", Color(0.48, 0.86, 0.96))
+	side_column.add_child(navigation_status_label)
+
+	clear_navigation_button = Button.new()
+	clear_navigation_button.text = "إلغاء مسار الملاحة"
+	clear_navigation_button.custom_minimum_size = Vector2(0, 36)
+	clear_navigation_button.visible = false
+	clear_navigation_button.pressed.connect(_clear_navigation_route)
+	side_column.add_child(clear_navigation_button)
 
 	marker_button = Button.new()
 	marker_button.text = "＋ أضف علامة هنا"
@@ -577,6 +713,28 @@ func _on_map_updated(world_id: String) -> void:
 		_refresh_map()
 
 
+func _on_advertisement_filter_changed(index: int) -> void:
+	if advertisement_filter == null:
+		return
+	selected_advertisement_category = advertisement_filter.get_item_text(index).replace("الإعلانات: ", "")
+	_refresh_map()
+
+
+func _filter_advertisements(source: Array) -> Array:
+	var result: Array = []
+	for advertisement in source:
+		if typeof(advertisement) != TYPE_DICTIONARY:
+			continue
+		if selected_advertisement_category != "الكل" and str(advertisement.get("campaign_category", "")) != selected_advertisement_category:
+			continue
+		result.append(advertisement)
+	return result
+
+
+func _on_map_advertisement_selected(advertisement: Dictionary) -> void:
+	_show_advertisement(advertisement)
+
+
 func _refresh_map() -> void:
 	if map_manager == null or map_canvas == null:
 		return
@@ -586,12 +744,17 @@ func _refresh_map() -> void:
 		str(selected_world_id)
 	)
 	map_canvas.world_overview = {}
+	map_canvas.road_segments.clear()
 	if selected_world_id == 2 and world_manager != null and world_manager.has_method("get_world_root"):
 		var modern_root := world_manager.call("get_world_root", 2) as Node3D
 		if modern_root != null:
 			var region := modern_root.get_node_or_null("ModernWorldRegionManager")
 			if region != null and region.has_method("get_map_overview"):
 				map_canvas.world_overview = region.call("get_map_overview")
+			var osm_streamer := modern_root.find_child("BaghdadOSMCellStreamer", true, false)
+			if is_instance_valid(osm_streamer) and osm_streamer.has_method("get_loaded_road_map_segments"):
+				map_canvas.road_segments = osm_streamer.call("get_loaded_road_map_segments")
+	map_canvas.navigation_focus = not map_canvas.road_segments.is_empty()
 
 	map_canvas.discovered_locations = snapshot.get(
 		"discovered_locations",
@@ -602,8 +765,17 @@ func _refresh_map() -> void:
 		"personal_markers",
 		[]
 	)
+	map_canvas.advertisements = _filter_advertisements(snapshot.get("advertisements", []))
 
 	map_canvas.player_visible = false
+	if selected_world_id != 2:
+		map_canvas.navigation_route.clear()
+		map_canvas.navigation_destination_visible = false
+		map_canvas.navigation_focus = false
+		if navigation_status_label != null:
+			navigation_status_label.text = "الملاحة بالطرق الحقيقية متاحة حالياً في بغداد فقط."
+		if clear_navigation_button != null:
+			clear_navigation_button.visible = false
 
 	if world_manager != null and player != null:
 		var active_id: Variant = world_manager.get("active_world")
@@ -613,14 +785,16 @@ func _refresh_map() -> void:
 			map_canvas.player_visible = true
 
 	map_canvas.queue_redraw()
+	if clear_navigation_button != null:
+		clear_navigation_button.visible = not map_canvas.navigation_route.is_empty()
 
 	var regions: Array = snapshot.get("discovered_regions", [])
 	var locations: Array = snapshot.get("discovered_locations", [])
 	var markers: Array = snapshot.get("personal_markers", [])
 
 	statistics_label.text = (
-		"المناطق المكتشفة: %d\nالمواقع المكتشفة: %d\nعلاماتك الشخصية: %d"
-		% [regions.size(), locations.size(), markers.size()]
+		"المناطق المكتشفة: %d\nالمواقع المكتشفة: %d\nعلاماتك الشخصية: %d\nلوحات الإعلانات: %d"
+		% [regions.size(), locations.size(), markers.size(), map_canvas.advertisements.size()]
 	)
 
 	for child in location_list.get_children():
@@ -644,6 +818,41 @@ func _refresh_map() -> void:
 				)
 				_add_list_label("◆ " + marker_name)
 
+	if not map_canvas.advertisements.is_empty():
+		_add_list_label("إعلانات الشوارع القريبة من المدن")
+		for advertisement in map_canvas.advertisements:
+			if typeof(advertisement) != TYPE_DICTIONARY:
+				continue
+			var ad_entry := VBoxContainer.new()
+			ad_entry.add_theme_constant_override("separation", 3)
+			location_list.add_child(ad_entry)
+			var ad_label := Label.new()
+			ad_label.text = "◆ %s — %s\n%s" % [
+				str(advertisement.get("city", "مدينة")),
+				str(advertisement.get("campaign_title", "إعلان")),
+				str(advertisement.get("campaign_category", "حملة"))
+			]
+			ad_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+			ad_label.add_theme_color_override("font_color", Color(1.0, 0.72, 0.9))
+			ad_entry.add_child(ad_label)
+			var ad_button := Button.new()
+			ad_button.text = "عرض تفاصيل الإعلان"
+			ad_button.custom_minimum_size = Vector2(0, 34)
+			ad_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			ad_button.pressed.connect(_show_advertisement.bind(advertisement.duplicate(true)))
+			ad_entry.add_child(ad_button)
+			if selected_world_id == 2 and str(advertisement.get("city", "")) == "Baghdad":
+				var route_button := Button.new()
+				route_button.text = "ارسم الطريق إلى اللوحة"
+				route_button.custom_minimum_size = Vector2(0, 34)
+				route_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				route_button.pressed.connect(_request_navigation_to_location.bind({
+					"name": str(advertisement.get("name", "لوحة إعلان")),
+					"region_id": "region_baghdad",
+					"position": advertisement.get("position", Vector3.ZERO)
+				}))
+				ad_entry.add_child(route_button)
+
 	marker_button.disabled = (
 		player == null
 		or world_manager == null
@@ -654,29 +863,104 @@ func _refresh_map() -> void:
 func _add_location_entry(item: Dictionary) -> void:
 	var location_name := str(item.get("name", "موقع"))
 	var location_type := int(item.get("type", 7))
-
-	var type_name := str(
-		LOCATION_TYPES.get(location_type, "موقع")
-	)
-
+	var type_name := str(LOCATION_TYPES.get(location_type, "موقع"))
 	var status := ""
-
 	if bool(item.get("is_fast_travel_activated", false)):
 		status = "\n✓ نقطة سفر سريع مفعّلة"
 
-	var label := Label.new()
-	label.text = "● %s\n%s%s" % [
-		location_name,
-		type_name,
-		status
-	]
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	label.add_theme_color_override(
-		"font_color",
-		Color(0.78, 0.88, 1.0)
-	)
+	var entry := VBoxContainer.new()
+	entry.add_theme_constant_override("separation", 3)
+	location_list.add_child(entry)
 
-	location_list.add_child(label)
+	var label := Label.new()
+	label.text = "● %s\n%s%s" % [location_name, type_name, status]
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	label.add_theme_color_override("font_color", Color(0.78, 0.88, 1.0))
+	entry.add_child(label)
+
+	var region_id := str(item.get("region_id", "")).to_lower()
+	if selected_world_id == 2 and region_id in ["region_baghdad", "iraq_baghdad_region"]:
+		var route_button := Button.new()
+		route_button.text = "ارسم الطريق إلى هذا الموقع"
+		route_button.custom_minimum_size = Vector2(0, 34)
+		route_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		route_button.pressed.connect(_request_navigation_to_location.bind(item.duplicate(true)))
+		entry.add_child(route_button)
+
+
+func _show_advertisement(advertisement: Dictionary) -> void:
+	if navigation_status_label == null:
+		return
+	var remaining := maxi(0, int(advertisement.get("expires_at", 0)) - int(Time.get_unix_time_from_system()))
+	var remaining_label := "انتهت مدة العرض" if remaining <= 0 else "متبقي نحو %d ثانية" % remaining
+	navigation_status_label.text = "%s — %s\n%s\nالإجراء المقترح: %s\n%s" % [
+		str(advertisement.get("campaign_category", "إعلان")),
+		str(advertisement.get("campaign_title", "حملة")),
+		str(advertisement.get("campaign_body", "")),
+		str(advertisement.get("campaign_action", "استكشف المدينة")),
+		remaining_label
+	]
+
+
+func _request_navigation_to_location(item: Dictionary) -> void:
+	if selected_world_id != 2 or world_manager == null or player == null:
+		return
+	if int(world_manager.get("active_world")) != selected_world_id:
+		navigation_status_label.text = "ادخل العالم الحديث أولاً حتى نحدد موقعك الحالي."
+		return
+	if not is_instance_valid(navigation_manager) or not navigation_manager.has_method("find_real_baghdad_road_path"):
+		navigation_status_label.text = "مدير الملاحة غير جاهز حالياً."
+		return
+	var destination_value: Variant = item.get("position", null)
+	if not destination_value is Vector3:
+		navigation_status_label.text = "إحداثيات الوجهة غير متاحة."
+		return
+	var destination: Vector3 = destination_value
+	var route_value: Variant = navigation_manager.call(
+		"find_real_baghdad_road_path",
+		"Baghdad",
+		player.global_position,
+		destination
+	)
+	if not route_value is Array or route_value.size() < 2:
+		map_canvas.navigation_route.clear()
+		map_canvas.navigation_destination_visible = false
+		map_canvas.queue_redraw()
+		navigation_status_label.text = "لم نعثر على طريق مشاة متصل ضمن خلايا الطرق المحمّلة. اقترب من المنطقة أو انتظر تحميل خلاياها."
+		clear_navigation_button.visible = false
+		return
+	map_canvas.navigation_route.clear()
+	for point in route_value:
+		if point is Vector3:
+			map_canvas.navigation_route.append(point)
+	if map_canvas.navigation_route.size() < 2:
+		navigation_status_label.text = "بيانات الطريق غير مكتملة؛ لم نعرض مساراً تخمينياً."
+		return
+	map_canvas.navigation_destination = destination
+	map_canvas.navigation_destination_visible = true
+	map_canvas.navigation_focus = true
+	map_canvas.queue_redraw()
+	var distance_m := 0.0
+	for index in range(1, map_canvas.navigation_route.size()):
+		distance_m += map_canvas.navigation_route[index - 1].distance_to(map_canvas.navigation_route[index])
+	navigation_status_label.text = "مسار مشاة عبر طرق OpenStreetMap المحمّلة · %s · %d نقطة" % [
+		"%.0f م" % distance_m if distance_m < 1000.0 else "%.2f كم" % (distance_m / 1000.0),
+		map_canvas.navigation_route.size()
+	]
+	clear_navigation_button.visible = true
+
+
+func _clear_navigation_route() -> void:
+	if map_canvas == null:
+		return
+	map_canvas.navigation_route.clear()
+	map_canvas.navigation_destination_visible = false
+	map_canvas.navigation_focus = not map_canvas.road_segments.is_empty()
+	map_canvas.queue_redraw()
+	if navigation_status_label != null:
+		navigation_status_label.text = "اختر موقعاً مكتشفاً لرسم طريق المشاة."
+	if clear_navigation_button != null:
+		clear_navigation_button.visible = false
 
 
 func _add_list_label(value: String) -> void:

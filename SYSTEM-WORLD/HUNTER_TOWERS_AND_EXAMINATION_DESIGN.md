@@ -127,3 +127,31 @@ The five-tower concept is a connected urban district, not five isolated landmark
 - The vehicle ramps and elevated decks added to the procedural manager are architectural blockout geometry only. They do not yet provide drivable road navigation, vehicle physics, traffic rules, parking interactions, or tested collision/clearance.
 - Amenity decks are placeholder geometry and metadata, not finished pools, rides, shops, hotels, or interactive interiors.
 - The Tigris river channel and navigation corridor must remain open below cross-river connections. Tahrir Square and the Freedom Monument remain protected, recognizable, explorable landmarks; no tower deck or bridge may cover or visually erase them.
+
+
+## Superseding canonical decision — independent Power Tower and five-tower district — 21 November 2026
+
+This section supersedes any earlier tower-identity or spatial wording in this document that conflicts with the following approved decision. Earlier descriptions remain historical design notes only.
+
+### The five connected district towers
+1. Hunter Association Tower — the association's public-facing tower and guild services.
+2. Business Tower — companies, offices, investment, trade, and professional services.
+3. Shopping Tower — retail, restaurants, cinemas, and connected indoor promenades.
+4. Entertainment Tower — sports, pools, family activities, festivals, and recreation.
+5. Technology and Innovation Tower — research laboratories, engineering, robotics, AI, digital services, startup incubators, and public technology experiences.
+
+These five towers form the connected Baghdad district. The Power Tower is not one of them and must never be included in their skybridge, vehicle-deck, or shared-podium connection loop.
+
+### Global Hunter Association headquarters above the district
+The main World Hunter Association headquarters is a distinct elevated headquarters building placed above the shared five-tower district. It is not located on top of Power Tower and is not counted as a sixth primary tower. The Hunter Association Tower remains one of the five district towers and provides the guild's public-facing tower identity; the elevated headquarters is the central global administration hub.
+
+### Independent Power Tower
+Power Tower remains a separate, optional combat-arena landmark at a clearly detached location in Baghdad. Preserve its existing 100-floor progression manager, floor unlocks, boss/elite cadence, challenge profiles, XP reward integration, and save data. Keep it independent of the five-tower complex physically and in connection generation. Its future playable interiors, opponent AI, matchmaking, ranked verification, and spectator facilities remain separate implementation milestones.
+
+### Implementation and verification boundary
+The source-level implementation now distinguishes the five connected district towers from the independent Power Tower, registers the elevated Hunter Association headquarters as its own map location, and keeps Power Tower's existing interaction/progression ID intact. Procedural exterior geometry remains a blockout. No Godot parser, scene runtime, collision/navigation, Android performance, or visual verification is claimed until those checks are run.
+
+
+### Headquarters vertical placement and access update — 21 November 2026
+
+The Global Hunter Association headquarters must sit above the highest roofline among the five connected district towers, not at a fixed low elevation within the tower cluster. The current procedural blockout computes the highest district roof at runtime and positions the headquarters sky podium above it. A dedicated elevated access deck links the highest district tower roof to the headquarters platform; this bridge is separate from the five-tower pedestrian/vehicle connection loop. The headquarters is registered as its own map location and is no longer included in the five-tower landmark array or the public tower advertising-board loop.

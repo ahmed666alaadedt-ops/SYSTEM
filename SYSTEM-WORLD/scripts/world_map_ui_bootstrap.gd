@@ -40,7 +40,8 @@ func _process(_delta: float) -> void:
 	map_ui.setup(
 		map_manager,
 		world_manager,
-		player
+		player,
+		main.get("npc_city_navigation_manager") as Node
 	)
 
 	attached = true

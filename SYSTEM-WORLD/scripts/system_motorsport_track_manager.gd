@@ -121,6 +121,20 @@ func _build_start_finish_and_grid() -> void:
 	_create_box("StartFinishGantries_Crossbar", Vector3(ROAD_WIDTH + 3.0, 0.8, 1.2), Vector3(TRACK_HALF_LENGTH, 7.0, 0.0), 0.0, Color(0.12, 0.2, 0.27), false)
 	for side in [-1.0, 1.0]:
 		_create_box("StartFinishGantries_Post_%s" % str(side), Vector3(1.1, 7.0, 1.2), Vector3(TRACK_HALF_LENGTH + side * (ROAD_WIDTH * 0.5 + 1.5), 3.5, 0.0), 0.0, Color(0.12, 0.2, 0.27), false)
+	var race_control := Area3D.new()
+	race_control.name = "RaceControlInteraction"
+	race_control.position = START_GRID_OFFSET + Vector3(0.0, 1.5, -13.0)
+	race_control.add_to_group("system_interactable")
+	race_control.set_meta("system_location_id", "baghdad_motorsport_race_control")
+	race_control.set_meta("system_region_id", "region_baghdad")
+	race_control.set_meta("system_display_name", "Baghdad International Motorsport Park — Race Control")
+	race_control.set_meta("system_interaction_prompt", "مكتب إدارة السباق — بدء كأس السرعة بعد الوقوف على خط الانطلاق")
+	var control_collision := CollisionShape3D.new()
+	var control_shape := SphereShape3D.new()
+	control_shape.radius = 4.5
+	control_collision.shape = control_shape
+	race_control.add_child(control_collision)
+	track_root.add_child(race_control)
 
 func _build_checkpoints() -> void:
 	for index in range(CHECKPOINT_COUNT):

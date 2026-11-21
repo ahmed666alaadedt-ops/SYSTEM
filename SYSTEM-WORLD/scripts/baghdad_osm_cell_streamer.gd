@@ -8,6 +8,10 @@ const DEFAULT_DATA_ROOT := "res://data/geography/baghdad/cell_pack"
 const DEFAULT_CELL_SIZE := 200.0
 const MAX_CELL_OPERATIONS_PER_FRAME := 1
 
+signal cell_loaded(cell: Vector2i, cell_root: Node3D)
+signal cell_unloading(cell: Vector2i, cell_root: Node3D)
+signal cell_unloaded(cell: Vector2i, cell_id: String)
+
 var data_root := DEFAULT_DATA_ROOT
 var cell_size := DEFAULT_CELL_SIZE
 var min_cell_x := -2
@@ -21,6 +25,9 @@ var desired_cells: Dictionary = {}
 var pending_loads: Array[Vector2i] = []
 var pending_unloads: Array[Vector2i] = []
 var enabled := false
+var canonical_origin_frame_valid := false
+var source_snapshot := ""
+var manifest_schema_version := 0
 var _last_center_cell := Vector2i(2147483647, 2147483647)
 
 var road_material: StandardMaterial3D
@@ -30,6 +37,11 @@ var land_material: StandardMaterial3D
 var building_material: StandardMaterial3D
 var amenity_material: StandardMaterial3D
 
+var _road_navigation_graph := AStar2D.new()
+var _road_navigation_positions: Dictionary = {}
+var _road_navigation_graph_dirty := true
+var _road_navigation_graph_build_count := 0
+
 
 func _ready() -> void:
 	var manifest_path := data_root.path_join("manifest.json")
@@ -37,15 +49,29 @@ func _ready() -> void:
 		push_warning("SYSTEM Baghdad OSM: cell pack is not installed; procedural Baghdad fallback remains active.")
 		return
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(manifest_path))
-	if not parsed is Dictionary or str(parsed.get("region_id", "")) != "iraq_baghdad_region":
-		push_error("SYSTEM Baghdad OSM: invalid region manifest.")
+	if not parsed is Dictionary:
+		push_error("SYSTEM Baghdad OSM: manifest JSON must be an object.")
+		return
+	manifest_schema_version = int(parsed.get("schema_version", 0))
+	if manifest_schema_version != 1:
+		push_error("SYSTEM Baghdad OSM: unsupported manifest schema version.")
+		return
+	if str(parsed.get("region_id", "")) != "iraq_baghdad_region":
+		push_error("SYSTEM Baghdad OSM: manifest region ID is invalid.")
 		return
 	if str(parsed.get("coordinate_system", "")) != "SYSTEM_LOCAL_ECEF_TANGENT":
 		push_error("SYSTEM Baghdad OSM: unsupported coordinate projection.")
 		return
-	var origin: Dictionary = parsed.get("origin", {})
-	var origin_lat := float(origin.get("latitude", 0.0))
-	var origin_lon := float(origin.get("longitude", 0.0))
+	var origin_value: Variant = parsed.get("origin", {})
+	if not origin_value is Dictionary:
+		push_error("SYSTEM Baghdad OSM: manifest origin must be an object.")
+		return
+	var origin: Dictionary = origin_value
+	var origin_lat := float(origin.get("latitude", NAN))
+	var origin_lon := float(origin.get("longitude", NAN))
+	if not is_finite(origin_lat) or not is_finite(origin_lon) or origin_lat < -90.0 or origin_lat > 90.0 or origin_lon < -180.0 or origin_lon > 180.0:
+		push_error("SYSTEM Baghdad OSM: manifest WGS84 origin is invalid.")
+		return
 	var registry_path := "res://data/geography/real_world_registry.json"
 	if not FileAccess.file_exists(registry_path):
 		push_error("SYSTEM Baghdad OSM: canonical geography registry is missing.")
@@ -54,31 +80,60 @@ func _ready() -> void:
 	if not registry is Dictionary:
 		push_error("SYSTEM Baghdad OSM: canonical geography registry is invalid.")
 		return
-	var regions: Dictionary = registry.get("regions", {})
-	var region_record: Dictionary = regions.get("iraq_baghdad_region", {})
-	var canonical_origin: Dictionary = region_record.get("origin", {})
+	var regions_value: Variant = registry.get("regions", {})
+	if not regions_value is Dictionary:
+		push_error("SYSTEM Baghdad OSM: geography registry regions must be an object.")
+		return
+	var regions: Dictionary = regions_value
+	var region_record_value: Variant = regions.get("iraq_baghdad_region", {})
+	if not region_record_value is Dictionary:
+		push_error("SYSTEM Baghdad OSM: canonical Baghdad registry record is invalid.")
+		return
+	var region_record: Dictionary = region_record_value
+	var canonical_origin_value: Variant = region_record.get("origin", {})
+	if not canonical_origin_value is Dictionary:
+		push_error("SYSTEM Baghdad OSM: canonical Baghdad origin is invalid.")
+		return
+	var canonical_origin: Dictionary = canonical_origin_value
 	if canonical_origin.is_empty():
 		push_error("SYSTEM Baghdad OSM: canonical Baghdad region origin is missing from the geography registry.")
 		return
 	if absf(origin_lat - float(canonical_origin.get("latitude", 0.0))) > 0.000001 or absf(origin_lon - float(canonical_origin.get("longitude", 0.0))) > 0.000001:
 		push_error("SYSTEM Baghdad OSM: cell pack origin differs from the canonical WGS84 registry anchor.")
 		return
-	var axes: Dictionary = parsed.get("axes", {})
+	var axes_value: Variant = parsed.get("axes", {})
+	if not axes_value is Dictionary:
+		push_error("SYSTEM Baghdad OSM: manifest axes must be an object.")
+		return
+	var axes: Dictionary = axes_value
 	if str(axes.get("x", "")) != "east_m" or str(axes.get("z", "")) != "south_m":
 		push_error("SYSTEM Baghdad OSM: unsupported local coordinate axes.")
 		return
-	cell_size = float(parsed.get("cell_size_m", DEFAULT_CELL_SIZE))
-	var bounds: Array = parsed.get("cell_bounds_inclusive", [-2, 2, -2, 2])
-	if bounds.size() != 4 or cell_size <= 0.0:
-		push_error("SYSTEM Baghdad OSM: invalid cell manifest bounds.")
+	cell_size = float(parsed.get("cell_size_m", NAN))
+	var bounds_value: Variant = parsed.get("cell_bounds_inclusive", [])
+	if not bounds_value is Array or not is_finite(cell_size) or cell_size <= 0.0:
+		push_error("SYSTEM Baghdad OSM: invalid cell size or bounds format.")
 		return
+	var bounds: Array = bounds_value
+	if bounds.size() != 4:
+		push_error("SYSTEM Baghdad OSM: cell bounds must contain min_x, max_x, min_z, max_z.")
+		return
+	for bound in bounds:
+		if typeof(bound) not in [TYPE_INT, TYPE_FLOAT] or not is_finite(float(bound)):
+			push_error("SYSTEM Baghdad OSM: cell bounds must be finite numbers.")
+			return
 	min_cell_x = int(bounds[0])
 	max_cell_x = int(bounds[1])
 	min_cell_z = int(bounds[2])
 	max_cell_z = int(bounds[3])
+	if min_cell_x > max_cell_x or min_cell_z > max_cell_z:
+		push_error("SYSTEM Baghdad OSM: cell bounds are inverted.")
+		return
 	terrain_manager = get_parent().get_node_or_null("ModernContinent")
 	_create_materials()
 	_add_attribution_overlay()
+	source_snapshot = str(parsed.get("source_snapshot", ""))
+	canonical_origin_frame_valid = true
 	enabled = true
 	print("SYSTEM Baghdad OSM: metric cell pack ready; cell size ", cell_size, " m.")
 
@@ -173,11 +228,15 @@ func _refresh_desired_cells(center: Vector2i) -> void:
 func _process_cell_queue() -> void:
 	var operations := 0
 	while not pending_loads.is_empty() and operations < MAX_CELL_OPERATIONS_PER_FRAME:
-		_load_cell(pending_loads.pop_front())
-		operations += 1
+		var cell: Vector2i = pending_loads.pop_front()
+		if desired_cells.has(cell) and not loaded_cells.has(cell):
+			_load_cell(cell)
+			operations += 1
 	while not pending_unloads.is_empty() and operations < MAX_CELL_OPERATIONS_PER_FRAME:
-		_unload_cell(pending_unloads.pop_front())
-		operations += 1
+		var cell: Vector2i = pending_unloads.pop_front()
+		if not desired_cells.has(cell) and loaded_cells.has(cell):
+			_unload_cell(cell)
+			operations += 1
 
 
 func _load_cell(cell: Vector2i) -> void:
@@ -190,15 +249,53 @@ func _load_cell(cell: Vector2i) -> void:
 	if not parsed is Dictionary:
 		push_warning("SYSTEM Baghdad OSM: invalid cell file: " + path)
 		return
+	if int(parsed.get("schema_version", 0)) != manifest_schema_version:
+		push_warning("SYSTEM Baghdad OSM: cell schema version does not match manifest: " + path)
+		return
+	if str(parsed.get("region_id", "")) != "iraq_baghdad_region":
+		push_warning("SYSTEM Baghdad OSM: cell region ID does not match manifest: " + path)
+		return
+	if int(parsed.get("cell_x", 2147483647)) != cell.x or int(parsed.get("cell_z", 2147483647)) != cell.y:
+		push_warning("SYSTEM Baghdad OSM: cell coordinates do not match requested cell: " + path)
+		return
+	var tile_cell_size := float(parsed.get("cell_size_m", NAN))
+	if not is_finite(tile_cell_size) or not is_equal_approx(tile_cell_size, cell_size):
+		push_warning("SYSTEM Baghdad OSM: cell size does not match manifest: " + path)
+		return
+	var layers_value: Variant = parsed.get("layers", {})
+	if not layers_value is Dictionary:
+		push_warning("SYSTEM Baghdad OSM: cell layers must be an object: " + path)
+		return
+	var layers: Dictionary = layers_value
+	for layer_name in layers:
+		if not layers[layer_name] is Array:
+			push_warning("SYSTEM Baghdad OSM: cell layer is not an array: " + str(layer_name))
+			return
 	var cell_root := Node3D.new()
 	cell_root.name = "BaghdadOSMCell_%d_%d" % [cell.x, cell.y]
 	cell_root.set_meta("cell_id", "%d:%d" % [cell.x, cell.y])
-	var layers: Dictionary = parsed.get("layers", {})
+	cell_root.set_meta("region_id", "iraq_baghdad_region")
+	cell_root.set_meta("cell_x", cell.x)
+	cell_root.set_meta("cell_z", cell.y)
+	cell_root.set_meta("schema_version", manifest_schema_version)
+	cell_root.set_meta("source_snapshot", source_snapshot)
 	var counts := {}
 	var road_features: Array = layers.get("roads", [])
+	var road_navigation_segments: Array[Dictionary] = []
 	var road_count := 0
 	for feature in road_features:
-		road_count += _build_line_feature(cell_root, feature, _road_width(feature.get("tags", {})), road_material, 0.16, "OSMRoad")
+		var road_tags: Dictionary = feature.get("tags", {})
+		var highway_kind := str(road_tags.get("highway", "")).to_lower()
+		if not highway_kind.is_empty() and str(road_tags.get("access", "")).to_lower() not in ["no", "private"] and str(road_tags.get("foot", "")).to_lower() != "no" and highway_kind not in ["motorway", "motorway_link", "trunk", "trunk_link", "raceway", "proposed", "construction"]:
+			for road_line in _extract_lines(feature.get("geometry", {})):
+				if road_line.size() >= 2:
+					road_navigation_segments.append({
+						"feature_id": str(feature.get("id", "")),
+						"highway": highway_kind,
+						"points": road_line
+					})
+		road_count += _build_line_feature(cell_root, feature, _road_width(road_tags), road_material, 0.16, "OSMRoad")
+	cell_root.set_meta("road_navigation_segments", road_navigation_segments)
 	var building_count := 0
 	for feature in layers.get("buildings", []):
 		building_count += _build_building_feature(cell_root, feature, road_features)
@@ -229,6 +326,119 @@ func _load_cell(cell: Vector2i) -> void:
 	cell_root.set_meta("feature_counts", counts)
 	add_child(cell_root)
 	loaded_cells[cell] = cell_root
+	_road_navigation_graph_dirty = true
+	cell_loaded.emit(cell, cell_root)
+
+
+## Returns a route along real OSM pedestrian-accessible roads in currently loaded cells.
+## The route is local to the streamed neighborhood; callers should request it only for Baghdad.
+func get_road_navigation_path(start: Vector3, target: Vector3, max_snap_distance: float = 55.0) -> Array[Vector3]:
+	if not enabled or loaded_cells.is_empty():
+		return []
+	_ensure_road_navigation_graph()
+	if _road_navigation_graph.get_point_count() < 2:
+		return []
+	var start_id := _nearest_road_graph_point(Vector2(start.x, start.z), max_snap_distance)
+	var target_id := _nearest_road_graph_point(Vector2(target.x, target.z), max_snap_distance)
+	if start_id < 0 or target_id < 0:
+		return []
+	var graph_path := _road_navigation_graph.get_point_path(start_id, target_id)
+	if graph_path.is_empty():
+		return []
+	var route: Array[Vector3] = []
+	var start_road_point: Vector2 = graph_path[0]
+	var start_approach := Vector3(start.x, _terrain_height(Vector2(start.x, start.z)) + 0.22, start.z)
+	var snapped_start := Vector3(start_road_point.x, _terrain_height(start_road_point) + 0.24, start_road_point.y)
+	if start_approach.distance_to(snapped_start) > 0.35:
+		route.append(start_approach)
+	for point in graph_path:
+		var world_point := Vector3(point.x, _terrain_height(point) + 0.24, point.y)
+		if route.is_empty() or route[route.size() - 1].distance_to(world_point) > 0.5:
+			route.append(world_point)
+	var target_road_point: Vector2 = graph_path[graph_path.size() - 1]
+	var target_approach := Vector3(target.x, _terrain_height(Vector2(target.x, target.z)) + 0.22, target.z)
+	var snapped_target := Vector3(target_road_point.x, _terrain_height(target_road_point) + 0.24, target_road_point.y)
+	if snapped_target.distance_to(target_approach) > 0.35:
+		route.append(target_approach)
+	return route
+
+
+## Returns real OSM pedestrian road segments from currently loaded Baghdad cells.
+## Coordinates use the canonical local metric frame shared with the cell pack.
+func get_loaded_road_map_segments() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for cell_root_value in loaded_cells.values():
+		var cell_root := cell_root_value as Node3D
+		if not is_instance_valid(cell_root):
+			continue
+		var segments_value: Variant = cell_root.get_meta("road_navigation_segments", [])
+		if not segments_value is Array:
+			continue
+		for segment_value in segments_value:
+			if not segment_value is Dictionary:
+				continue
+			var points_value: Variant = segment_value.get("points", PackedVector2Array())
+			if not points_value is PackedVector2Array or points_value.size() < 2:
+				continue
+			result.append({
+				"highway": str(segment_value.get("highway", "road")),
+				"points": points_value
+			})
+	return result
+
+
+func _ensure_road_navigation_graph() -> void:
+	if not _road_navigation_graph_dirty:
+		return
+	_road_navigation_graph = AStar2D.new()
+	_road_navigation_positions.clear()
+	var coordinate_to_id: Dictionary = {}
+	var next_id := 1
+	for cell_root_value in loaded_cells.values():
+		var cell_root := cell_root_value as Node3D
+		if not is_instance_valid(cell_root):
+			continue
+		var segments_value: Variant = cell_root.get_meta("road_navigation_segments", [])
+		if not segments_value is Array:
+			continue
+		for segment_value in segments_value:
+			if not segment_value is Dictionary:
+				continue
+			var points_value: Variant = segment_value.get("points", PackedVector2Array())
+			if not points_value is PackedVector2Array or points_value.size() < 2:
+				continue
+			var previous_id := -1
+			for point in points_value:
+				var key := "%d:%d" % [roundi(point.x * 2.0), roundi(point.y * 2.0)]
+				var point_id := int(coordinate_to_id.get(key, -1))
+				if point_id < 0:
+					point_id = next_id
+					next_id += 1
+					coordinate_to_id[key] = point_id
+					_road_navigation_graph.add_point(point_id, point)
+					_road_navigation_positions[point_id] = point
+				if previous_id >= 0 and previous_id != point_id and not _road_navigation_graph.are_points_connected(previous_id, point_id):
+					_road_navigation_graph.connect_points(previous_id, point_id, true)
+				previous_id = point_id
+	_road_navigation_graph_dirty = false
+	_road_navigation_graph_build_count += 1
+
+
+func _nearest_road_graph_point(position: Vector2, max_distance: float) -> int:
+	var best_id := -1
+	var best_distance_squared := max_distance * max_distance
+	for point_id_value in _road_navigation_positions.keys():
+		var point_id := int(point_id_value)
+		var point: Vector2 = _road_navigation_positions[point_id]
+		var distance_squared := position.distance_squared_to(point)
+		if distance_squared < best_distance_squared:
+			best_distance_squared = distance_squared
+			best_id = point_id
+	return best_id
+
+
+func get_cell_node(cell: Vector2i) -> Node3D:
+	return loaded_cells.get(cell) as Node3D
 
 
 func _build_building_feature(parent: Node3D, feature: Dictionary, road_features: Array) -> int:
@@ -917,7 +1127,11 @@ func _unload_cell(cell: Vector2i) -> void:
 	if not loaded_cells.has(cell):
 		return
 	var node: Node3D = loaded_cells[cell]
+	var cell_id := str(node.get_meta("cell_id", "%d:%d" % [cell.x, cell.y]))
+	cell_unloading.emit(cell, node)
 	loaded_cells.erase(cell)
+	_road_navigation_graph_dirty = true
+	cell_unloaded.emit(cell, cell_id)
 	if is_instance_valid(node):
 		node.queue_free()
 
@@ -932,5 +1146,10 @@ func get_streaming_status() -> Dictionary:
 		"source_license": "ODbL-1.0",
 		"source_attribution": "© OpenStreetMap contributors; © BBBike.org",
 		"real_scale_baghdad_pack": true,
-		"canonical_origin_frame_valid": true
+		"manifest_schema_version": manifest_schema_version,
+		"source_snapshot": source_snapshot,
+		"canonical_origin_frame_valid": canonical_origin_frame_valid,
+		"road_navigation_graph_dirty": _road_navigation_graph_dirty,
+		"road_navigation_node_count": _road_navigation_graph.get_point_count(),
+		"road_navigation_graph_build_count": _road_navigation_graph_build_count
 	}

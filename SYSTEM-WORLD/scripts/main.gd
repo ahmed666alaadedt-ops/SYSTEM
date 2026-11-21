@@ -815,7 +815,32 @@ func _on_interaction_performed(
 		" / ",
 		location_id
 	)
-	if location_id.begins_with("baghdad_osm_entrance_"):
+	if location_id.begins_with("street_ad_"):
+		var advertising_manager: Node = target.get_parent().get_parent() if target.get_parent() != null else null
+		if advertising_manager != null and advertising_manager.has_method("get_campaign_details"):
+			var campaign: Dictionary = advertising_manager.call("get_campaign_details", location_id)
+			if interaction_prompt_label != null and not campaign.is_empty():
+				var remaining := maxi(0, int(campaign.get("expires_at", 0)) - int(Time.get_unix_time_from_system()))
+				interaction_prompt_label.text = "%s\n%s\n%s\nالإجراء المقترح: %s\n%s" % [
+					str(campaign.get("category", "إعلان")),
+					str(campaign.get("title", "حملة SYSTEM")),
+					str(campaign.get("body", "")),
+					str(campaign.get("action", "استكشف المدينة")),
+					"انتهت مدة الإعلان" if remaining <= 0 else "مدة العرض المتبقية: %d ثانية" % remaining
+				]
+	if location_id == "service_baghdad_stadium":
+		var stadium := target.get_parent()
+		if stadium != null and player != null:
+			player.global_position = stadium.global_position + Vector3(0.0, 2.0, 0.0)
+			player.velocity = Vector3.ZERO
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "دخلت ملعب كرة القدم — الملعب مفتوح للاستكشاف؛ نظام المباريات والفرق قيد التطوير."
+	elif location_id == "baghdad_motorsport_race_control":
+		if motorsport_track_manager != null and motorsport_track_manager.has_method("start_track_event"):
+			var race_result: Dictionary = motorsport_track_manager.call("start_track_event", "city_sprint")
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "إدارة السباق: " + str(race_result.get("reason", "تم تسجيل بداية السباق" if race_result.get("success", false) else "تعذر بدء السباق"))
+	elif location_id.begins_with("baghdad_osm_entrance_"):
 		var entrance_name := str(target.get_meta("system_display_name", "مدخل محدد على الخريطة"))
 		var entrance_kind := str(target.get_meta("system_entrance_type", "غير محدد"))
 		var access_tag := str(target.get_meta("system_access_tag", "unknown"))
@@ -864,11 +889,67 @@ func _on_interaction_performed(
 		var next_floor := int(power_tower_manager.get_tower_status().get("next_floor", 1))
 		var level := int(player_progression.current_level) if player_progression != null else 1
 		var result: Dictionary = power_tower_manager.request_floor(next_floor, level)
-		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "برج القوة: " + str(result.get("reason", "تم طلب دخول الطابق"))
+		if bool(result.get("success", false)):
+			var power_tower_root := target.get_parent()
+			var arena_venue := power_tower_root.get_node_or_null("PowerTowerArenaVenue") if power_tower_root != null else null
+			if arena_venue != null and player != null:
+				player.global_position = arena_venue.call("get_arena_entry_position")
+				player.velocity = Vector3.ZERO
+				if interaction_prompt_label != null:
+					interaction_prompt_label.text = "برج القوة — بدأت محاولة الطابق %d. الحلبة جاهزة، ونظام الخصوم والقتال الفعلي قيد الإكمال." % next_floor
+			elif interaction_prompt_label != null:
+				interaction_prompt_label.text = "تم حجز الطابق %d، لكن الحلبة غير متاحة حالياً." % next_floor
+		elif interaction_prompt_label != null:
+			interaction_prompt_label.text = "برج القوة: " + str(result.get("reason", "تعذر بدء التحدي"))
 	elif location_id == "hunter_association_tower_baghdad":
+		var hunter_tower_root := target.get_parent()
+		var hunter_tower_lobby := hunter_tower_root.get_node_or_null("TowerInterior") if hunter_tower_root != null else null
+		if hunter_tower_lobby != null and player != null:
+			player.global_position = hunter_tower_lobby.call("get_entry_position")
+			player.velocity = Vector3.ZERO
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "دخلت برج نقابة الصيادين — استخدم مكاتب الاستقبال ولوحة المعلومات"
+		elif interaction_prompt_label != null:
+			interaction_prompt_label.text = "تعذر تحميل بهو برج نقابة الصيادين"
+	elif location_id in ["business_tower_baghdad", "shopping_tower_baghdad", "entertainment_tower_baghdad", "technology_tower_baghdad"]:
+		var tower_root := target.get_parent()
+		var tower_lobby := tower_root.get_node_or_null("TowerInterior") if tower_root != null else null
+		if tower_lobby != null and player != null:
+			player.global_position = tower_lobby.call("get_entry_position")
+			player.velocity = Vector3.ZERO
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "دخلت بهو البرج — اقترب من بوابة الخروج للتفاعل"
+		elif interaction_prompt_label != null:
+			interaction_prompt_label.text = "تعذر تحميل بهو البرج حالياً"
+	elif location_id == "hunter_association_headquarters_baghdad":
+		var headquarters := target.get_parent()
+		var interior := headquarters.get_node_or_null("HeadquartersInterior") if headquarters != null else null
+		if interior != null and player != null:
+			player.global_position = interior.call("get_entry_position")
+			player.velocity = Vector3.ZERO
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "دخلت المقر الرئيسي لنقابة الصيادين — اقترب من بوابة الخروج للتفاعل"
+		elif interaction_prompt_label != null:
+			interaction_prompt_label.text = "المقر الرئيسي لنقابة الصيادين — تعذر تحميل المساحة الداخلية"
+	elif location_id == "hunter_association_headquarters_exit_baghdad":
+		var interior := target.get_parent()
+		if interior != null and player != null and interior.has_method("get_return_position"):
+			player.global_position = interior.call("get_return_position")
+			player.velocity = Vector3.ZERO
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "خرجت من المقر الرئيسي لنقابة الصيادين"
+	elif location_id.begins_with("tower_exit_"):
+		var tower_lobby := target.get_parent()
+		if tower_lobby != null and player != null and tower_lobby.has_method("get_return_position"):
+			player.global_position = tower_lobby.call("get_return_position")
+			player.velocity = Vector3.ZERO
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "خرجت إلى ساحة البرج"
+	elif location_id.begins_with("tower_service_"):
+		var service_title := str(target.get_meta("system_display_name", "خدمة البرج"))
+		var service_note := str(target.get_meta("system_service_description", "معلومات الخدمة غير متاحة."))
 		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "مقر نقابة الصيادين العالمي — راجع واجهة النقابة للتسجيل بالاختبار"
+			interaction_prompt_label.text = service_title + "\n" + service_note
 
 
 func _on_location_discovered(

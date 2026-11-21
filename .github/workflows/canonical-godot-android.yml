@@ -5,6 +5,7 @@ on:
     paths:
       - "SYSTEM-WORLD/**"
       - ".github/workflows/canonical-godot-android.yml"
+      - ".github/workflows/verify-baghdad-osm-source.yml"
   push:
     branches:
       - main
@@ -24,7 +25,7 @@ permissions:
 
 jobs:
   build-canonical-android:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    if: always()
     name: Validate and export canonical SYSTEM WORLD
     runs-on: ubuntu-24.04
     timeout-minutes: 50
@@ -34,67 +35,148 @@ jobs:
         with:
           ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
 
+      - name: Wait for matching Baghdad OSM audit for this PR revision
+        id: baghdad_source_run
+        if: github.event_name == 'pull_request'
+        timeout-minutes: 26
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const headSha = context.payload.pull_request.head.sha;
+            const branch = context.payload.pull_request.head.ref;
+            const deadline = Date.now() + 25 * 60 * 1000;
+            while (Date.now() < deadline) {
+              const response = await github.rest.actions.listWorkflowRunsForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100
+              });
+              const matches = response.data.workflow_runs
+                .filter(run =>
+                  run.name === "Verify Baghdad OSM Source Candidate" &&
+                  run.event === "pull_request" &&
+                  run.head_branch === branch &&
+                  run.head_sha === headSha
+                )
+                .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
+              const latest = matches[0];
+              if (latest && latest.status === "completed") {
+                core.setOutput("run_id", String(latest.id));
+                core.setOutput("conclusion", latest.conclusion || "failure");
+                if (latest.conclusion === "success") {
+                  core.info(`Using latest successful PR Baghdad OSM audit run ${latest.id} for ${headSha}.`);
+                  return;
+                }
+                core.setFailed(`Latest PR Baghdad OSM audit for ${headSha} concluded ${latest.conclusion}; refusing an unaudited APK export.`);
+                return;
+              }
+              await new Promise(resolve => setTimeout(resolve, 30000));
+            }
+            core.setOutput("conclusion", "timeout");
+            core.setFailed(`Timed out waiting for a successful PR Baghdad OSM audit for ${headSha}; refusing an unaudited APK export.`);
+
       - name: Download verified Baghdad OSM cell pack
-        if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
+        if: |
+          (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+          (github.event_name == 'pull_request' && steps.baghdad_source_run.outputs.conclusion == 'success')
         uses: actions/download-artifact@v4
         with:
           name: SYSTEM-WORLD-Baghdad-OSM-boundary-candidate
           path: ${{ runner.temp }}/baghdad-osm-artifact
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || steps.baghdad_source_run.outputs.run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Find latest successful Baghdad OSM pack for regular builds
-        if: github.event_name != 'workflow_run'
-        id: latest_baghdad_source
+      - name: Record Baghdad source workflow provenance
+        if: github.event_name == 'workflow_run' || github.event_name == 'pull_request'
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          RUN_ID="$(gh api "/repos/$GITHUB_REPOSITORY/actions/workflows/verify-baghdad-osm-source.yml/runs?branch=main&per_page=20" --jq '.workflow_runs | map(select(.conclusion == "success")) | .[0].id // empty')"
-          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
-          if [ -n "$RUN_ID" ]; then
-            echo "Using latest successful Baghdad OSM source run: $RUN_ID"
-          else
-            echo "::warning::No successful Baghdad OSM source run found; this build will use procedural fallback."
-          fi
+          SOURCE_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || steps.baghdad_source_run.outputs.run_id }}
+        run: echo "BAGHDAD_SOURCE_WORKFLOW_RUN_ID=$SOURCE_RUN_ID" >> "$GITHUB_ENV"
 
-      - name: Download latest Baghdad OSM cell pack for regular builds
-        if: github.event_name != 'workflow_run' && steps.latest_baghdad_source.outputs.run_id != ''
-        uses: actions/download-artifact@v4
-        with:
-          name: SYSTEM-WORLD-Baghdad-OSM-boundary-candidate
-          path: ${{ runner.temp }}/baghdad-osm-artifact
-          run-id: ${{ steps.latest_baghdad_source.outputs.run_id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install Baghdad OSM metric cells into canonical project when available
+      - name: Verify Baghdad OSM audit provenance and install audited cell pack
+        id: baghdad_pack
         shell: bash
+        env:
+          BAGHDAD_SOURCE_WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id || steps.baghdad_source_run.outputs.run_id || '' }}
+          BAGHDAD_SOURCE_WORKFLOW_CONCLUSION: ${{ github.event.workflow_run.conclusion || steps.baghdad_source_run.outputs.conclusion || 'not_applicable' }}
         run: |
           set -euo pipefail
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
           SOURCE_PACK="$RUNNER_TEMP/baghdad-osm-artifact/baghdad-metric-cell-pack-5x5.zip"
+          AUDIT_REPORT="$RUNNER_TEMP/baghdad-osm-artifact/baghdad-cell-connectivity-audit.json"
           DESTINATION="$PROJECT/data/geography/baghdad/cell_pack"
           if [ ! -s "$SOURCE_PACK" ]; then
-            echo "::warning::Baghdad OSM pack is unavailable; keeping procedural fallback for this build."
+            if [ "$BAGHDAD_SOURCE_WORKFLOW_CONCLUSION" = "success" ]; then
+              echo "::error::The successful Baghdad OSM audit artifact is missing; refusing to mislabel a fallback APK as audited."
+              exit 1
+            fi
+            if [ -s "$DESTINATION/manifest.json" ]; then
+              echo "::error::A Baghdad cell pack exists in the checkout but has no matching verified artifact provenance. Refusing to reuse it."
+              exit 1
+            fi
+            python3 - "$RUNNER_TEMP/baghdad-cell-connectivity-audit.json" <<'PY'
+          import json, sys
+          from pathlib import Path
+          Path(sys.argv[1]).write_text(json.dumps({
+              "status": "not_available",
+              "real_osm_source_required": True,
+              "build_mode": "procedural_fallback_unaudited",
+              "note": "No verified real Baghdad OSM pack was installed; this APK is procedural fallback only."
+          }, indent=2) + "\n", encoding="utf-8")
+          PY
+            echo "BAGHDAD_BUILD_MODE=procedural_fallback_unaudited" >> "$GITHUB_ENV"
+            echo "BAGHDAD_OSM_AUDIT_STATUS=${BAGHDAD_SOURCE_WORKFLOW_CONCLUSION}" >> "$GITHUB_ENV"
+            echo "BAGHDAD_SOURCE_WORKFLOW_RUN_ID=${BAGHDAD_SOURCE_WORKFLOW_RUN_ID}" >> "$GITHUB_ENV"
+            echo "mode=procedural_fallback_unaudited" >> "$GITHUB_OUTPUT"
+            echo "::warning::No verified Baghdad OSM pack is available. APK will be explicitly classified as procedural fallback, not audited OSM."
             exit 0
           fi
+          if [ ! -s "$AUDIT_REPORT" ]; then
+            echo "::error::Baghdad OSM pack exists without its real connectivity audit report. Refusing to install it."
+            exit 1
+          fi
+          python3 - "$SOURCE_PACK" "$AUDIT_REPORT" <<'PY'
+          import json, sys, zipfile
+          from pathlib import Path
+          pack_path, report_path = map(Path, sys.argv[1:])
+          report = json.loads(report_path.read_text(encoding="utf-8"))
+          if report.get("status") != "passed" or report.get("real_osm_source_required") is not True:
+              raise SystemExit("Real Baghdad OSM audit is not passed; refusing APK installation.")
+          for key in ("missing_parts", "missing_feature_cell_parts", "mismatched_feature_cell_parts", "missing_osm_feature_ids", "unexpected_osm_feature_ids", "unexpected_parts", "duplicate_parts", "disconnected_seams", "overlapping_parts"):
+              if report.get(key, 0):
+                  raise SystemExit(f"Audit report has unresolved {key}: {report[key]}")
+          with zipfile.ZipFile(pack_path) as archive:
+              manifest = json.loads(archive.read("manifest.json"))
+          if manifest.get("source_snapshot") != report.get("source_snapshot"):
+              raise SystemExit("Cell-pack source snapshot does not match audited source snapshot.")
+          if manifest.get("region_id") != "iraq_baghdad_region" or manifest.get("cell_size_m") != 200.0:
+              raise SystemExit("Audited Baghdad pack has unexpected region or cell size.")
+          if manifest.get("origin") != {"latitude": 33.3152, "longitude": 44.3661}:
+              raise SystemExit("Audited Baghdad pack does not use the canonical 33.3152, 44.3661 origin.")
+          if manifest.get("cell_count") != 25 or report.get("cell_count") != 25:
+              raise SystemExit("Audited Baghdad pack must contain the verified 5x5 cell set.")
+          if report.get("origin") != manifest.get("origin") or report.get("cell_size_m") != 200.0:
+              raise SystemExit("Audit report origin/cell size does not match the installed pack.")
+          if report.get("errors"):
+              raise SystemExit("Audit report contains unresolved geometry errors.")
+          print("Verified audit report and cell-pack source snapshot:", manifest["source_snapshot"])
+          PY
+          cp "$AUDIT_REPORT" "$RUNNER_TEMP/baghdad-cell-connectivity-audit.json"
           mkdir -p "$DESTINATION"
           unzip -q "$SOURCE_PACK" -d "$DESTINATION"
           test -s "$DESTINATION/manifest.json"
-          test -s "$DESTINATION/cells/0_0.json"
+          echo "BAGHDAD_BUILD_MODE=audited_osm" >> "$GITHUB_ENV"
+          echo "BAGHDAD_OSM_AUDIT_STATUS=passed" >> "$GITHUB_ENV"
+          echo "BAGHDAD_SOURCE_WORKFLOW_RUN_ID=${BAGHDAD_SOURCE_WORKFLOW_RUN_ID}" >> "$GITHUB_ENV"
+          echo "mode=audited_osm" >> "$GITHUB_OUTPUT"
           python3 - <<'PY'
-          import json
-          import pathlib
-
+          import json, pathlib
           root = pathlib.Path("SYSTEM-WORLD/data/geography/baghdad/cell_pack")
           manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
-          assert manifest["region_id"] == "iraq_baghdad_region"
-          assert manifest["coordinate_system"] == "SYSTEM_LOCAL_ECEF_TANGENT"
-          assert manifest["cell_size_m"] == 200.0
           cells = list((root / "cells").glob("*.json"))
-          assert len(cells) == manifest["cell_count"] == 25
-          print("Installed Baghdad OSM cell pack:", len(cells), "metric cells.")
+          if len(cells) != manifest["cell_count"]:
+              raise SystemExit("Installed Baghdad cell count differs from manifest.")
+          print("Installed audited Baghdad OSM cell pack:", len(cells), "cells.")
           PY
 
       - name: Set up Java 17
@@ -241,12 +323,18 @@ jobs:
         if: success() && hashFiles('SYSTEM-WORLD/data/geography/baghdad/cell_pack/manifest.json') != ''
         shell: bash
         run: |
+          set -euo pipefail
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
-          set -o pipefail
+          LOG="$RUNNER_TEMP/baghdad-osm-runtime.log"
           timeout 90s "$GODOT" --headless --path "$PROJECT" \
             --script res://tools/validate_baghdad_osm_runtime.gd \
-            2>&1 | tee "$RUNNER_TEMP/baghdad-osm-runtime.log"
+            2>&1 | tee "$LOG"
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" "$LOG"; then
+            echo "::error::Godot reported a script error during audited Baghdad OSM runtime validation."
+            exit 1
+          fi
+          grep -q "Baghdad OSM runtime cell passed:" "$LOG"
 
       - name: Validate child character safety rules
         shell: bash
@@ -284,24 +372,59 @@ jobs:
             --script res://tools/validate_npc_society_runtime.gd \
             2>&1 | tee "$RUNNER_TEMP/system-npc-society-runtime.log"
 
+      - name: Report Baghdad APK data classification
+        shell: bash
+        run: |
+          set -euo pipefail
+          MODE="${BAGHDAD_BUILD_MODE:-procedural_fallback_unaudited}"
+          echo "Baghdad build mode: $MODE"
+          echo "Baghdad OSM audit status: ${BAGHDAD_OSM_AUDIT_STATUS:-not_available}"
+          if [ "$MODE" = "audited_osm" ]; then
+            echo "This APK includes the exact Baghdad OSM pack whose real geometry audit passed."
+          else
+            echo "This APK is an unaudited procedural fallback and must not be described as audited Baghdad OSM."
+          fi
+
       - name: Export canonical SYSTEM WORLD Android APK
         shell: bash
         run: |
+          set -euo pipefail
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
           mkdir -p "$RUNNER_TEMP/system-world-export"
+          if [ "${BAGHDAD_BUILD_MODE:-procedural_fallback_unaudited}" = "audited_osm" ]; then
+            APK_NAME="SYSTEM-WORLD-Baghdad-OSM-AUDITED-debug.apk"
+          else
+            APK_NAME="SYSTEM-WORLD-Baghdad-PROCEDURAL-FALLBACK-UNAUDITED-debug.apk"
+          fi
           "$GODOT" --headless --path "$PROJECT" \
             --export-debug "SYSTEM WORLD Android" \
-            "$RUNNER_TEMP/system-world-export/SYSTEM-WORLD-debug.apk"
-          test -s "$RUNNER_TEMP/system-world-export/SYSTEM-WORLD-debug.apk"
-          ls -lh "$RUNNER_TEMP/system-world-export/SYSTEM-WORLD-debug.apk"
-          sha256sum "$RUNNER_TEMP/system-world-export/SYSTEM-WORLD-debug.apk"
+            "$RUNNER_TEMP/system-world-export/$APK_NAME"
+          test -s "$RUNNER_TEMP/system-world-export/$APK_NAME"
+          ls -lh "$RUNNER_TEMP/system-world-export/$APK_NAME"
+          sha256sum "$RUNNER_TEMP/system-world-export/$APK_NAME"
+          python3 - "$RUNNER_TEMP/system-world-export/build-provenance.json" "$APK_NAME" <<'PY'
+          import json, os, sys
+          from pathlib import Path
+          payload = {
+              "baghdad_build_mode": os.environ.get("BAGHDAD_BUILD_MODE", "procedural_fallback_unaudited"),
+              "baghdad_osm_audit_status": os.environ.get("BAGHDAD_OSM_AUDIT_STATUS", "not_available"),
+              "source_workflow_run_id": os.environ.get("BAGHDAD_SOURCE_WORKFLOW_RUN_ID", ""),
+              "github_sha": os.environ.get("GITHUB_SHA", ""),
+              "github_ref": os.environ.get("GITHUB_REF", ""),
+              "apk_file": sys.argv[2],
+          }
+          Path(sys.argv[1]).write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+          PY
 
-      - name: Upload canonical Godot APK
+      - name: Upload canonical Godot APK with Baghdad provenance
         uses: actions/upload-artifact@v4
         with:
-          name: SYSTEM-WORLD-canonical-android-debug-apk
-          path: ${{ runner.temp }}/system-world-export/SYSTEM-WORLD-debug.apk
+          name: ${{ env.BAGHDAD_BUILD_MODE == 'audited_osm' && 'SYSTEM-WORLD-Baghdad-OSM-AUDITED-android-apk' || 'SYSTEM-WORLD-Baghdad-PROCEDURAL-FALLBACK-UNAUDITED-android-apk' }}
+          path: |
+            ${{ runner.temp }}/system-world-export/*.apk
+            ${{ runner.temp }}/system-world-export/build-provenance.json
+            ${{ runner.temp }}/baghdad-cell-connectivity-audit.json
           if-no-files-found: error
           retention-days: 14
 

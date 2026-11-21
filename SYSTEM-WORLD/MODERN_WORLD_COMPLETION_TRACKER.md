@@ -1,3 +1,7 @@
+# Tower layout decision update — 21 November 2026
+
+The current approved Baghdad layout supersedes older five-tower identity lists below: the connected district contains Hunter Association, Business, Shopping, Entertainment, and Technology & Innovation towers. Power Tower is a separate detached landmark and is excluded from all district connection loops. The Global Hunter Association headquarters is an elevated building above the shared district; it is not on Power Tower and is not counted as a sixth primary tower. Source changes are committed, but Godot/runtime/Android verification remains open.
+
 # SYSTEM WORLD — Modern World Completion Tracker
 
 This is the acceptance checklist for the modern-world map. The project must not be described as complete, and work must not move to the portal phase, until every required item is implemented, connected, and verified in Godot on the target platforms. A visual placeholder is not accepted as a completed gameplay system.
@@ -372,3 +376,69 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Validate facade orientation, screen readability, night brightness, occlusion, LOD, memory and Android frame rate on physical devices.
 - [ ] Complete Android APK export workflow and inspect the generated build on a device.
 - Note: CI confirms project parsing and headless scene startup, not visual correctness, gameplay feel, or physical-device performance. Local event records are not cross-player global rankings; an authoritative online service remains required.
+
+## Baghdad real-road player navigation map — 20 November 2026
+
+- [x] Expose the pedestrian-accessible road segments from currently loaded OSM metric cells through `get_loaded_road_map_segments()`; retain the source road classification and local metric coordinates.
+- [x] Add a strict player-facing `find_real_baghdad_road_path()` API. Unlike the NPC convenience path, it never falls back to the fictional procedural waypoint grid or claims a guessed route is real.
+- [x] Connect the existing city navigation manager to the world-map UI through the map bootstrap.
+- [x] Draw currently loaded OSM road geometry in the Baghdad map view, show the player's current position, and draw a highlighted route plus destination marker when a discovered Baghdad location is selected.
+- [x] Add route selection to discovered Baghdad map locations and a clear-route action. Non-Baghdad worlds do not use the Baghdad road graph.
+- [x] Explain route failure when the start/destination cannot be connected inside the currently loaded road cells; do not display a fabricated path.
+- [x] Godot 4.3 validation workflow 44798560091 passed project import/script parsing, terrain streaming lifecycle checks, Baghdad city-state persistence round-trip, child-character safety checks, null-mesh scan, and headless main-scene launch.
+- [ ] Run an end-to-end route calculation against the installed OSM cell-pack artifact with representative Baghdad start/destination pairs, including cell-boundary transitions and unreachable destinations.
+- [ ] Verify map readability, touch target sizes, route visibility, and performance on a physical Android device.
+- [ ] Add turn-by-turn guidance and an in-world 3D route ribbon/waypoint guidance after the map route is validated.
+- Note: road geometry and routes are available only when the real Baghdad OSM pack is installed and the relevant cells are loaded. The current route graph is local to loaded cells; this implementation does not yet promise city-wide routing across unloaded cells. CI confirms project parsing and headless startup, not physical-device visual/gameplay correctness.
+
+
+## Baghdad five-tower lobby implementation — 21 November 2026
+
+- [x] Add a shared procedural first-pass lobby interior for the five connected Baghdad towers: Hunter Association, Business, Shopping, Entertainment, and Technology & Innovation.
+- [x] Give each lobby a distinct service-desk identity and Arabic information labels matching its tower purpose.
+- [x] Add discoverable entry, exit, and service-information interaction areas to the four public service lobbies and the Hunter Association Tower lobby.
+- [x] Wire lobby entry/exit transitions through the main interaction handler and clear the player velocity on transitions.
+- [x] Keep the separate Power Tower excluded from the lobby script and preserve its independent challenge venue and collider.
+- [x] Disable the five connected towers' monolithic base/shaft colliders where they would seal the playable lobby volume; the lobby supplies its own floor and wall collision.
+- [ ] Replace the current lobby/service-desk blockouts with final art, working elevators/floor access, staffed NPCs, and complete tower-specific service workflows.
+- [ ] Add real shop/business/technology/entertainment activity systems and persistent ownership/transactions where applicable.
+- [ ] Run Godot 4.3 parser and headless scene validation on this commit; test player entry, service prompts, and exit on Android.
+- [ ] Validate the complete five-tower sky district, river clearance, bridge connections, navigation, and mobile performance in a live build.
+- Note: these are first playable lobby blockouts and local information interactions. They do not mean the five towers or their business services are fully complete. Power Tower remains separate and unchanged.
+
+
+## Power Tower, football stadium and motorsport follow-up — 21 November 2026
+
+- [x] Keep Power Tower detached from the five-tower connected district and all district skybridge loops.
+- [x] Align the Power Tower's visible architectural floor bands with its existing 100-floor progression data (previous visual count was only 28).
+- [x] Add an independent physical challenge-arena blockout at the Power Tower, with a walkable floor, ring boundary, spectator tiers, lighting and arena signage.
+- [x] On a valid next-floor request, move the player to the separate arena and clearly report that opponent/combat integration is still pending.
+- [ ] Add floor-specific combat rooms, real opponent/boss spawning, combat objective verification, return flow, and secure clear-time/rank validation. The current 100-floor manager is progression metadata and save state; it is not yet a complete combat loop.
+- [x] Expand Baghdad's football stadium from a flat placeholder into an open pitch blockout with grass bands, boundary/halfway lines, center circle, penalty areas, goals, four-sided spectator stands, and an open playable pitch collision surface.
+- [x] Disable the solid stadium-shell collider that previously blocked access to the field; add an entry transition from the stadium interaction point to the pitch.
+- [ ] Add ball physics, player/team control, match rules, goalkeeper/keeper AI, fouls, score, clock, tournaments, multiplayer and spectator NPC behavior.
+- [x] Add a race-control interaction at the dedicated Baghdad motorsport start grid and connect it to the existing sanctioned City Sprint event API.
+- [ ] Add complete race UI/event selection, opponents/grid AI, timing display, vehicle recovery, track marshal behavior, replay and tested finish/reward flow.
+- [ ] Run Godot 4.3 parser/import/headless scene validation and Android gameplay/performance tests for all new venue changes before calling them verified.
+- Note: arena, stadium and race-venue geometry are procedural blockouts. A connected interaction or API call does not mean combat, football matches, AI racing, or the full event experience is complete.
+
+
+## City street advertising and live map campaign network — 21 November 2026
+
+- [x] Add a dedicated modern-world city advertising manager, separate from the public champion/results display.
+- [x] Create three procedural interactive street billboard displays per generated modern-world city, with Arabic text, visible frames, supports, lighting surfaces, and interaction areas.
+- [x] Add a timed campaign rotation covering Hunter Association tests, city commerce, Power Tower, football, motorsport, and seasonal city events.
+- [x] Show the active campaign category, title, body, suggested action, and expiry when the player interacts with a street board.
+- [x] Register street billboard IDs and current campaign data in the world map manager.
+- [x] Render advertisement markers with a distinct visual symbol on the modern-world map; support direct touch selection, a campaign-category filter, and a campaign details view.
+- [x] Synchronize city media-tower and Baghdad tower facade advertising labels with the same active campaign rotation used by street billboards.
+- [x] Add a dedicated headless Godot validation script for billboard/map/facade integration and wire it into the Godot validation workflow.
+- [x] Add a Baghdad map action to request navigation to a street billboard through the existing real-road route service; route generation still depends on available connected OSM cells.
+- [x] Avoid redundant map refreshes while the current campaign remains unchanged.
+- [x] Document campaign lifecycle, placement, moderation, privacy, fairness, performance, backend, and production requirements in `CITY_ADVERTISING_SYSTEM_DESIGN.md`.
+- [ ] Add final art assets, city-specific billboard styles, animation/video display surfaces, and more realistic street placement validated against loaded road/building geometry.
+- [ ] Add map search, saved favorites, hide/report controls, and accessible campaign settings.
+- [ ] Add authorized campaign-management tools, server-authoritative scheduling, moderation, advertiser accounts, billing, analytics, and anti-fraud controls. Current campaigns are local demo data only.
+- [ ] Extend campaign support to the historical, mythic/fantasy, and Greed Island worlds after their distinct in-world media rules are designed.
+- [ ] Run the updated Godot 4.3 parser/import/headless validation workflow on the latest branch revision; verify in-world board interactions, map refresh, expiry/rotation, facade synchronization, and Baghdad route requests on Android.
+- Note: this is a first functional local campaign prototype. It does not yet provide a live commercial advertising network, online campaign administration, or final-quality art. Street and map campaigns are linked by stable board IDs, but the complete production lifecycle remains future work.

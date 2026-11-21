@@ -159,7 +159,11 @@ def main() -> None:
             ix1 = min(math.floor(max_fx / args.cell_size), max_x)
             iz1 = min(math.floor(max_fz / args.cell_size), max_z)
 
-            if layer in LINE_LAYERS or layer in AREA_LAYERS:
+            split_building_footprint = (
+                layer == "buildings"
+                and geometry.geom_type in ("Polygon", "MultiPolygon")
+            )
+            if layer in LINE_LAYERS or layer in AREA_LAYERS or split_building_footprint:
                 for ix in range(ix0, ix1 + 1):
                     for iz in range(iz0, iz1 + 1):
                         cell_bounds = box(
