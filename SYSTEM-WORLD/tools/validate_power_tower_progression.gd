@@ -77,6 +77,22 @@ func _run_validation() -> void:
 	if floor_world.get_node_or_null("ActiveFloor_001/FloorReturnGateSign") == null:
 		_fail("Floor 1 is missing its visible return gate.")
 		return
+	var hidden_cache_count := 0
+	for child in floor_world.get_node("ActiveFloor_001").get_children():
+		if str(child.name).begins_with("HiddenCache_"):
+			hidden_cache_count += 1
+	if hidden_cache_count != 3:
+		_fail("Each active floor must generate three discoverable hidden reward caches.")
+		return
+	var secret_ids: Array = manager.get_floor_secret_ids(1)
+	var secret_reward: Dictionary = manager.claim_floor_secret(1, str(secret_ids[0]))
+	if not bool(secret_reward.get("success", false)) or int(secret_reward.get("reward_currency", 0)) != 28:
+		_fail("The first hidden cache did not grant its expected tower-credit reward.")
+		return
+	var duplicate_secret: Dictionary = manager.claim_floor_secret(1, str(secret_ids[0]))
+	if bool(duplicate_secret.get("success", false)) or str(duplicate_secret.get("reason", "")) != "FLOOR_SECRET_ALREADY_CLAIMED":
+		_fail("A hidden cache could be claimed more than once.")
+		return
 
 	for checkpoint_id in ["entry_checkpoint", "midpoint_checkpoint"]:
 		floor_world.call("_on_checkpoint_body_entered", player, checkpoint_id)
@@ -127,7 +143,7 @@ func _run_validation() -> void:
 	if int(clear_result.get("highest_cleared_floor", 0)) != 1:
 		_fail("The physical clear gate did not award and complete floor 1.")
 		return
-	if int(manager.tower_credits) != 55:
+	if int(manager.tower_credits) != 83:
 		_fail("Floor 1 currency reward is not the expected 55 tower credits.")
 		return
 	if int(manager.get_tower_status().get("next_floor", 0)) != 2:
