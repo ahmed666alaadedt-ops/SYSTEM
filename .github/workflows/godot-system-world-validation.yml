@@ -98,6 +98,8 @@ jobs:
           grep -q "Rare antiques market validation passed:" "$LOG"
           grep -q "service_baghdad_rare_antique_market" "$PROJECT/scripts/main.gd"
           grep -q "func create_rare_antiques_market" "$PROJECT/scripts/main.gd"
+          grep -q "RareAntiquesMarketUIScript" "$PROJECT/scripts/main.gd"
+          grep -q "func open_market" "$PROJECT/scripts/system_rare_antiques_market_ui.gd"
 
       - name: Validate modern city faction registry and reputation
         shell: bash
