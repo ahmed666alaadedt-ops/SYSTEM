@@ -15,7 +15,9 @@ Create one consistent advertising network for the modern world. A campaign shown
 - The map draws a distinct pink diamond marker for each advertisement and lists its city, campaign title, and category.
 - The map can show campaign details and, for Baghdad boards, request a route through the existing Baghdad road-navigation service.
 - The map manager updates campaign details only when a campaign changes, avoiding needless map refreshes.
-- Existing city media towers and Baghdad tower advertising panels remain separate architectural displays. Public event/champion boards continue to show local gameplay results.
+- Existing city media towers and Baghdad tower advertising panels are synchronized to the same active city campaign. Public event/champion boards continue to show local gameplay results in their separate result panels.
+- The map supports direct touch selection of visible ad diamonds, a category filter, and a Baghdad-only route action for a selected street billboard.
+- A dedicated headless Godot validation script checks physical board count, interaction metadata, active campaign data, map marker parity, and facade-screen linkage.
 
 ## Current demo campaign categories
 
@@ -67,9 +69,9 @@ These are locally authored demo campaigns. No advertiser account, payment, exter
 - Final high-quality billboard models, animated video/material playback, weather/night adaptation, and per-city art direction.
 - In-world campaign management terminal and authorized advertiser tools.
 - Backend synchronization, account permissions, moderation queue, billing, reporting, analytics, and anti-fraud controls.
-- Direct map-pin touch selection and full map filter/search controls.
+- Full map search, saved favorites, and richer filter controls beyond the current campaign-category selector.
 - Campaign scheduling from a real calendar/event service.
-- Physical Android tests for readability, draw calls, thermal load, and touch interaction.
+- Physical Android tests for readability, draw calls, thermal load, and touch interaction; CI script execution is still pending after the latest branch commits.
 - Campaigns for historical, mythic/fantasy, and Greed Island worlds; this first implementation is for the modern-world city network only.
 
 ## Validation boundary
