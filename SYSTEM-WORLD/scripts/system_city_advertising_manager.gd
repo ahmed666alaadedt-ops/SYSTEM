@@ -183,7 +183,7 @@ func _refresh_all_displays() -> void:
 
 
 func _campaign_for_record(record: Dictionary, now: int) -> Dictionary:
-	var city_offset := abs(hash(str(record.get("city", "")))) % CAMPAIGNS.size()
+	var city_offset: int = int(abs(hash(str(record.get("city", ""))))) % CAMPAIGNS.size()
 	var board_offset := int(record.get("index", 0))
 	var cycle_seconds := 0
 	for campaign in CAMPAIGNS:
