@@ -822,6 +822,11 @@ func _on_interaction_performed(
 			player.velocity = Vector3.ZERO
 			if interaction_prompt_label != null:
 				interaction_prompt_label.text = "دخلت ملعب كرة القدم — الملعب مفتوح للاستكشاف؛ نظام المباريات والفرق قيد التطوير."
+	elif location_id == "baghdad_motorsport_race_control":
+		if motorsport_track_manager != null and motorsport_track_manager.has_method("start_track_event"):
+			var race_result: Dictionary = motorsport_track_manager.call("start_track_event", "city_sprint")
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "إدارة السباق: " + str(race_result.get("reason", "تم تسجيل بداية السباق" if race_result.get("success", false) else "تعذر بدء السباق"))
 	elif location_id.begins_with("baghdad_osm_entrance_"):
 		var entrance_name := str(target.get_meta("system_display_name", "مدخل محدد على الخريطة"))
 		var entrance_kind := str(target.get_meta("system_entrance_type", "غير محدد"))
