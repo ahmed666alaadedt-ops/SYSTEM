@@ -28,6 +28,7 @@ const VehicleRuntimeManagerScript = preload("res://scripts/system_vehicle_runtim
 const MotorsportManagerScript = preload("res://scripts/system_motorsport_manager.gd")
 const MotorsportTrackManagerScript = preload("res://scripts/system_motorsport_track_manager.gd")
 const CrimeResponseManagerScript = preload("res://scripts/modern_city_crime_response_manager.gd")
+const CityFactionManagerScript = preload("res://scripts/system_city_faction_manager.gd")
 const NPCAutonomousSocietyEventManagerScript = preload("res://scripts/npc_autonomous_society_event_manager.gd")
 const NPCVisiblePopulationManagerScript = preload("res://scripts/npc_visible_population_manager.gd")
 const NPCSocialInteractionManagerScript = preload("res://scripts/npc_social_interaction_manager.gd")
@@ -60,6 +61,7 @@ var vehicle_runtime_manager
 var motorsport_manager
 var motorsport_track_manager
 var crime_response_manager
+var city_faction_manager: Node
 var npc_autonomous_event_manager
 var npc_visible_population_manager
 var npc_social_interaction_manager
@@ -121,6 +123,7 @@ func _ready() -> void:
 	create_vehicle_runtime_manager()
 	create_motorsport_manager()
 	create_modern_city_crime_manager()
+	create_city_faction_manager()
 	create_motorsport_track_manager()
 	create_npc_autonomous_society_event_manager()
 	create_npc_city_navigation_manager()
@@ -428,6 +431,17 @@ func create_modern_city_crime_manager() -> void:
 	crime_response_manager.theft_reported.connect(_on_vehicle_theft_reported)
 	crime_response_manager.police_pursuit_started.connect(_on_police_pursuit_started)
 	crime_response_manager.stolen_vehicle_recovered.connect(_on_stolen_vehicle_recovered)
+
+
+func create_city_faction_manager() -> void:
+	if active_world_root == null or crime_response_manager == null:
+		push_warning("SYSTEM: City factions require the modern world and crime response manager.")
+		return
+	city_faction_manager = CityFactionManagerScript.new()
+	city_faction_manager.name = "SystemCityFactionManager"
+	active_world_root.add_child(city_faction_manager)
+	var region_manager := active_world_root.get_node_or_null("ModernWorldRegionManager")
+	city_faction_manager.setup(crime_response_manager, ai_npc_society_manager, region_manager)
 
 
 func create_npc_autonomous_society_event_manager() -> void:
