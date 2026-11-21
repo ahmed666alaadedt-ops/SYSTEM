@@ -149,7 +149,16 @@ func _run() -> void:
 	landmarks.call("build", terrain)
 	var fake_map := FakeMap.new()
 	root.add_child(fake_map)
+	# The region manager owns the single registration pass for existing tower roots;
+	# the civic landmark manager contributes only tunnel/ruins/motorsport locations.
+	for record in tower_records:
+		fake_map.call("register_location", "2", str(record.get("id", "")), "region_baghdad", str(record.get("name", "")), 5, record.get("position", Vector3.ZERO), false)
+	fake_map.call("register_location", "2", "hunter_association_headquarters_baghdad", "region_baghdad", "المقر الرئيسي لنقابة الصيادين", 5, headquarters_position, false)
 	landmarks.call("register_map_locations", fake_map, "2")
+	var region_source := FileAccess.get_file_as_string("res://scripts/modern_world_region_manager.gd")
+	if not region_source.contains("tower_manager.call(\"get_tower_positions\")") or not region_source.contains("baghdad_landmarks.call(\"register_map_locations\""):
+		_fail("Modern region manager does not register tower roots and Baghdad landmark locations.")
+		return
 	for record in tower_records:
 		var tower_id := str(record.get("id", ""))
 		if not fake_map.entries.has(tower_id):
