@@ -35,6 +35,9 @@ Last reviewed: 2026-11-07
 - Android MainActivity currently launches a Jetpack Compose application.
 - Android Gradle currently contains Compose and Firebase dependencies.
 - Godot embedding into the Android application has not yet been verified.
+- Repository inspection confirms `app/libs/godot-runtime/` contains only its handoff README; no exported Godot AAR/JAR is present.
+- `app/build.gradle.kts` only declares an optional fileTree for that directory, and its README explicitly leaves the Godot host Activity/Fragment, GodotHost and host-plugin lifecycle integration pending.
+- Android `MainActivity` currently launches the Jetpack Compose application; the Godot runtime is not yet embedded in the APK.
 - A Node3D root does not mean the entire game is already implemented in 3D.
 
 ## 4. Android and Godot integration
