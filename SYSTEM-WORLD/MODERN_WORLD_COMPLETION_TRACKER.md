@@ -442,3 +442,18 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Extend campaign support to the historical, mythic/fantasy, and Greed Island worlds after their distinct in-world media rules are designed.
 - [ ] Run the updated Godot 4.3 parser/import/headless validation workflow on the latest branch revision; verify in-world board interactions, map refresh, expiry/rotation, facade synchronization, and Baghdad route requests on Android.
 - Note: this is a first functional local campaign prototype. It does not yet provide a live commercial advertising network, online campaign administration, or final-quality art. Street and map campaigns are linked by stable board IDs, but the complete production lifecycle remains future work.
+
+
+## Baghdad approved five-tower reference — elevated sky promenade blockout — 21 November 2026
+
+- [x] Preserve the five existing tower identities and their current independent tower roots.
+- [x] Keep the Power Tower separate from the five-tower district and its sky-promenade loop.
+- [x] Add a first-pass 12-segment elevated ring promenade around the five-tower district, aligned with the existing elevated-link level.
+- [x] Add walkable deck collision, glass-style safety rails, cyan emissive rail accents, and six simple sky-garden planter/tree blockouts.
+- [x] Tag the generated promenade with explicit prototype metadata and a note that final art and runtime validation are still pending.
+- [ ] Run Godot 4.3 project import/script parsing and headless startup against the new commit; the latest code change has no confirmed workflow run yet.
+- [ ] Verify ring alignment against actual tower transforms, bridge joins, player navigation, collision seams, and terrain/river clearance in a live scene.
+- [ ] Replace primitive deck/rail/tree geometry with final modular architecture, glass materials, planted landscaping, and city-specific facade art.
+- [ ] Add working lift/stair access, public NPC activity, shop/restaurant interactions, and per-platform activity routing.
+- [ ] Profile draw calls, collision count, shadows, and frame time on Android quality tiers before increasing detail.
+- Note: this is a procedural visual/gameplay blockout only. It is not a final rendered asset pack, and it has not been physically tested on Android.
