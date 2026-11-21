@@ -727,9 +727,18 @@ func register_map_locations(map_manager: Node, world_id: String) -> void:
 				str(tower_data["name"]), 5,
 				tower_data["position"], false
 			)
+		if tower_manager.has_method("get_headquarters_position"):
+			var headquarters_location: Vector3 = tower_manager.call("get_headquarters_position")
+			if headquarters_location != Vector3.INF:
+				map_manager.call(
+					"register_location", world_id,
+					"hunter_association_headquarters_baghdad", "region_baghdad",
+					"المقر الرئيسي لنقابة الصيادين", 6,
+					headquarters_location, false
+				)
 
 
-func discover_starting_city(map_manager: Node, world_id: String) -> void:
+func discover_starting_city(map_manager: Node, world_id: String) -> void
 	if map_manager == null or not map_manager.has_method("discover_region"):
 		return
 	var city_name := "Baghdad"
