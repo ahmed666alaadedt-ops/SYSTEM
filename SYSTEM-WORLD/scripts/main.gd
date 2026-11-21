@@ -76,6 +76,10 @@ var mobile_controls: MobileControls
 
 var interaction_prompt_layer: CanvasLayer
 var interaction_prompt_label: Label
+var motorsport_leaderboard_layer: CanvasLayer
+var motorsport_leaderboard_event_select: OptionButton
+var motorsport_leaderboard_best_label: Label
+var motorsport_leaderboard_rows: VBoxContainer
 
 var mobile_direction := Vector2.ZERO
 var jump_requested := false
@@ -121,6 +125,7 @@ func _ready() -> void:
 	create_interaction_manager()
 	create_mobile_controls()
 	create_interaction_prompt()
+	create_motorsport_leaderboard_ui()
 
 	update_camera_mode()
 	connect_android_runtime_bridge()
@@ -683,6 +688,152 @@ func create_interaction_manager() -> void:
 	)
 
 
+func create_motorsport_leaderboard_ui() -> void:
+	motorsport_leaderboard_layer = CanvasLayer.new()
+	motorsport_leaderboard_layer.name = "MotorsportLeaderboardLayer"
+	motorsport_leaderboard_layer.layer = 18
+	add_child(motorsport_leaderboard_layer)
+
+	var panel := PanelContainer.new()
+	panel.name = "MotorsportLeaderboardPanel"
+	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	panel.offset_left = 12.0
+	panel.offset_top = 82.0
+	panel.offset_right = -12.0
+	panel.offset_bottom = -82.0
+	panel.visible = false
+	motorsport_leaderboard_layer.add_child(panel)
+
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 12)
+	panel.add_child(layout)
+
+	var heading := Label.new()
+	heading.text = "SYSTEM MOTORSPORT — لوحة النتائج"
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.add_theme_font_size_override("font_size", 22)
+	layout.add_child(heading)
+
+	var subtitle := Label.new()
+	subtitle.text = "مضمار بغداد الدولي | أفضل الأزمنة المسجلة على هذا الجهاز"
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	layout.add_child(subtitle)
+
+	motorsport_leaderboard_event_select = OptionButton.new()
+	motorsport_leaderboard_event_select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	layout.add_child(motorsport_leaderboard_event_select)
+	motorsport_leaderboard_event_select.item_selected.connect(_on_motorsport_leaderboard_event_selected)
+
+	motorsport_leaderboard_best_label = Label.new()
+	motorsport_leaderboard_best_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	motorsport_leaderboard_best_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	layout.add_child(motorsport_leaderboard_best_label)
+
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	layout.add_child(scroll)
+
+	motorsport_leaderboard_rows = VBoxContainer.new()
+	motorsport_leaderboard_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(motorsport_leaderboard_rows)
+
+	var scope_note := Label.new()
+	scope_note.text = "تنبيه: هذا ترتيب محلي لمحاولاتك فقط، وليس ترتيباً عالمياً بين اللاعبين."
+	scope_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	scope_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	layout.add_child(scope_note)
+
+	var close_button := Button.new()
+	close_button.text = "إغلاق اللوحة"
+	close_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	close_button.pressed.connect(_close_motorsport_leaderboard)
+	layout.add_child(close_button)
+
+	var catalog: Dictionary = motorsport_manager.get_event_catalog() if motorsport_manager != null else {}
+	var event_ids: Array = catalog.keys()
+	event_ids.sort()
+	for event_id in event_ids:
+		var event_data: Dictionary = catalog[event_id]
+		motorsport_leaderboard_event_select.add_item(str(event_data.get("name", event_id)))
+		motorsport_leaderboard_event_select.set_item_metadata(
+			motorsport_leaderboard_event_select.item_count - 1,
+			str(event_id)
+		)
+	if motorsport_leaderboard_event_select.item_count > 0:
+		motorsport_leaderboard_event_select.select(0)
+		_refresh_motorsport_leaderboard()
+
+
+func _show_motorsport_leaderboard() -> void:
+	if motorsport_leaderboard_layer == null:
+		return
+	motorsport_leaderboard_layer.get_node("MotorsportLeaderboardPanel").show()
+	_refresh_motorsport_leaderboard()
+
+
+func _close_motorsport_leaderboard() -> void:
+	if motorsport_leaderboard_layer != null:
+		motorsport_leaderboard_layer.get_node("MotorsportLeaderboardPanel").hide()
+
+
+func _on_motorsport_leaderboard_event_selected(_index: int) -> void:
+	_refresh_motorsport_leaderboard()
+
+
+func _format_motorsport_time(elapsed_seconds: float) -> String:
+	var total_ms := int(round(maxf(0.0, elapsed_seconds) * 1000.0))
+	var minutes := int(total_ms / 60000)
+	var seconds := int(total_ms / 1000) % 60
+	var milliseconds := total_ms % 1000
+	return "%02d:%02d.%03d" % [minutes, seconds, milliseconds]
+
+
+func _refresh_motorsport_leaderboard() -> void:
+	if motorsport_manager == null or motorsport_leaderboard_event_select == null:
+		return
+	if motorsport_leaderboard_event_select.item_count == 0:
+		return
+	var selected_index := motorsport_leaderboard_event_select.selected
+	if selected_index < 0:
+		selected_index = 0
+	var event_id := str(motorsport_leaderboard_event_select.get_item_metadata(selected_index))
+	var best: Dictionary = motorsport_manager.get_personal_best(event_id)
+	var attempts: Array = motorsport_manager.get_event_leaderboard(event_id, 10)
+
+	if best.is_empty():
+		motorsport_leaderboard_best_label.text = "أفضل زمن شخصي: لا توجد نتيجة بعد — أكمل السباق لتسجيل أول زمن."
+	else:
+		motorsport_leaderboard_best_label.text = "أفضل زمن شخصي: %s | عدد المحاولات: %d" % [
+			_format_motorsport_time(float(best.get("elapsed_seconds", 0.0))),
+			int(attempts.size())
+		]
+
+	for child in motorsport_leaderboard_rows.get_children():
+		motorsport_leaderboard_rows.remove_child(child)
+		child.queue_free()
+
+	if attempts.is_empty():
+		var empty_label := Label.new()
+		empty_label.text = "لا توجد محاولات مسجلة لهذه البطولة حتى الآن."
+		empty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		motorsport_leaderboard_rows.add_child(empty_label)
+		return
+
+	for index in range(attempts.size()):
+		var attempt: Dictionary = attempts[index]
+		var row := Label.new()
+		row.text = "%02d  |  %s  |  %s" % [
+			index + 1,
+			_format_motorsport_time(float(attempt.get("elapsed_seconds", 0.0))),
+			str(attempt.get("vehicle_id", "مركبة"))
+		]
+		row.add_theme_font_size_override("font_size", 17)
+		row.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		motorsport_leaderboard_rows.add_child(row)
+
+
 func create_interaction_prompt() -> void:
 	interaction_prompt_layer = CanvasLayer.new()
 	interaction_prompt_layer.name = "InteractionPromptLayer"
@@ -860,6 +1011,8 @@ func _on_interaction_performed(
 			player.velocity = Vector3.ZERO
 			if interaction_prompt_label != null:
 				interaction_prompt_label.text = "دخلت ملعب كرة القدم — الملعب مفتوح للاستكشاف؛ نظام المباريات والفرق قيد التطوير."
+	elif location_id == "baghdad_motorsport_leaderboard":
+		_show_motorsport_leaderboard()
 	elif location_id == "baghdad_motorsport_race_control":
 		if motorsport_track_manager != null and motorsport_track_manager.has_method("start_track_event"):
 			var race_result: Dictionary = motorsport_track_manager.call("start_track_event", "city_sprint")
