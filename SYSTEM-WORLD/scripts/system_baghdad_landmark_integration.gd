@@ -61,9 +61,12 @@ func _build_connected_roads() -> void:
 	var road_points: Array[Vector2] = [hub]
 	for site in _sites:
 		road_points.append(site["offset"])
-	var services := get_parent().get_node_or_null("ModernCityServicesManager")
+	var region_parent: Node = get_parent()
+	var anchor: Vector3 = Vector3.ZERO
+	if region_parent != null and region_parent.has_method("get_city_anchor"):
+		anchor = region_parent.call("get_city_anchor", "Baghdad")
+	var services: Node = region_parent.get_node_or_null("ModernCityServicesManager") if region_parent != null else null
 	if services != null and services.has_method("get_service_locations"):
-		var anchor: Vector3 = get_parent().call("get_city_anchor", "Baghdad")
 		for service_data in services.call("get_service_locations"):
 			if str(service_data.get("city", "")) != "Baghdad":
 				continue
@@ -74,7 +77,7 @@ func _build_connected_roads() -> void:
 	# The Power Tower remains a separate landmark, outside the five-tower cluster.
 	# Use its resolved placement from the existing tower manager so a terrain
 	# fallback cannot leave the connecting road pointing at the unadjusted anchor.
-	var tower_manager := get_parent().get_node_or_null("BaghdadTowerLandmarksManager")
+	var tower_manager: Node = region_parent.get_node_or_null("BaghdadTowerLandmarksManager") if region_parent != null else null
 	var power_tower_added := false
 	if tower_manager != null and tower_manager.has_method("get_tower_positions"):
 		for tower_data in tower_manager.call("get_tower_positions"):
