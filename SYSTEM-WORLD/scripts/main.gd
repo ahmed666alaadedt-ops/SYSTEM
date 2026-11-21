@@ -1055,6 +1055,20 @@ func _on_interaction_performed(
 					str(campaign.get("action", "استكشف المدينة")),
 					"انتهت مدة الإعلان" if remaining <= 0 else "مدة العرض المتبقية: %d ثانية" % remaining
 				]
+	if location_id == "hunter_exam_tunnel_start_baghdad":
+		var hunter_menu := get_node_or_null("HunterGuildMenu")
+		if hunter_exam_manager != null:
+			var exam_result: Dictionary = hunter_exam_manager.call("begin_exam")
+			if hunter_menu != null and hunter_menu.has_method("show_exam_tunnel_result"):
+				hunter_menu.call("show_exam_tunnel_result", exam_result)
+			if interaction_prompt_label != null:
+				if bool(exam_result.get("success", false)):
+					var stage: Dictionary = exam_result.get("stage", {})
+					interaction_prompt_label.text = "بوابة اختبار الصيادين مفعّلة — %s" % str(stage.get("title", "المرحلة الحالية"))
+				else:
+					interaction_prompt_label.text = "يلزم التسجيل في مكتب النقابة قبل دخول الاختبار."
+		elif interaction_prompt_label != null:
+			interaction_prompt_label.text = "نظام اختبارات الصيادين غير متاح حالياً."
 	if location_id == "service_baghdad_stadium":
 		var stadium := target.get_parent()
 		if stadium != null and player != null:
