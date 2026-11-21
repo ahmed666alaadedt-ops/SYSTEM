@@ -66,7 +66,7 @@ func apply_for_exam(player_id: String) -> Dictionary:
 	failed = false
 	failure_reason = ""
 	exam_registered.emit(candidate_number)
-	return {"success":true,"candidate_number":candidate_number,"stages":EXAM_STAGES.size(),"message":"تم تسجيلك. احتفظ برقمك طوال الاختبار."}
+	return {"success":true,"candidate_number":candidate_number,"attempt_number":attempt_number,"stages":EXAM_STAGES.size(),"message":"تم تسجيلك. احتفظ برقمك طوال الاختبار."}
 
 func begin_exam() -> Dictionary:
 	if not registered:
