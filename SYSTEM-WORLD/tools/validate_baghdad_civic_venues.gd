@@ -2,6 +2,13 @@ extends SceneTree
 
 const SERVICES_SCRIPT = preload("res://scripts/modern_city_services_manager.gd")
 
+func _has_collision_shape(node: Node) -> bool:
+	for child in node.get_children():
+		if child is CollisionShape3D and child.shape != null and not child.disabled:
+			return true
+	return false
+
+
 func _initialize() -> void:
 	var manager = SERVICES_SCRIPT.new()
 	var required_ids := ["mosque", "church", "museum", "rare_antique_market", "underworld_exchange", "stadium"]
@@ -38,8 +45,15 @@ func _initialize() -> void:
 				push_error("Baghdad civic venue validation failed: missing structural component " + required_node + " in " + service_id)
 				quit(1)
 				return
-		if venue.get_node_or_null("CivicLeftWall_Body/CollisionShape3D") == null:
-			push_error("Baghdad civic venue validation failed: wall collision missing in " + service_id)
+		for wall_body_name in ["CivicLeftWall_Body", "CivicRightWall_Body", "CivicRearWall_Body", "CivicFrontLeft_Body", "CivicFrontRight_Body", "CivicDoorLintel_Body"]:
+			var wall_body: Node = venue.get_node_or_null(wall_body_name)
+			if wall_body == null or not _has_collision_shape(wall_body):
+				push_error("Baghdad civic venue validation failed: collision-backed wall missing in " + service_id + " at " + wall_body_name)
+				quit(1)
+				return
+		var floor_collision: Node = venue.get_node_or_null("CivicInteriorFloorCollision")
+		if floor_collision == null or not _has_collision_shape(floor_collision):
+			push_error("Baghdad civic venue validation failed: floor collision missing in " + service_id)
 			quit(1)
 			return
 		var specific_nodes := {

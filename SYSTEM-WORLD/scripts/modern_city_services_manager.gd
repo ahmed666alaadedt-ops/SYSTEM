@@ -432,6 +432,8 @@ func _add_civic_wall(parent: Node3D, wall_name: String, center: Vector3, size: V
 	wall_mesh.material_override = material
 	wall_body.add_child(wall_mesh)
 	var wall_collision := CollisionShape3D.new()
+	wall_collision.name = "CollisionShape3D"
+	wall_collision.disabled = false
 	var shape := BoxShape3D.new()
 	shape.size = size
 	wall_collision.shape = shape
@@ -455,6 +457,7 @@ func _create_civic_structural_shell(parent: Node3D, service_id: String, width: f
 	floor_body.name = "CivicInteriorFloorCollision"
 	parent.add_child(floor_body)
 	var floor_shape := CollisionShape3D.new()
+	floor_shape.name = "CollisionShape3D"
 	var floor_box := BoxShape3D.new()
 	floor_box.size = Vector3(width - 1.2, 0.35, depth - 1.2)
 	floor_shape.shape = floor_box
