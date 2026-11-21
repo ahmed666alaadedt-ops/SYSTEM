@@ -68,6 +68,14 @@ func _run() -> void:
 	if not menu.panel.visible or menu.item_list.get_child_count() != 1:
 		_fail("The shopping tower collection desk did not show the owned collectibles.")
 		return
+	var main_source := FileAccess.get_file_as_string("res://scripts/main.gd")
+	if not main_source.contains("SYSTEMShoppingTowerMenuScript") or not main_source.contains("tower_service_shopping_tower_baghdad_") or not main_source.contains("shopping_tower_menu.call(\"open_service_view\", location_id)"):
+		_fail("Main interaction routing does not connect the Shopping Tower service desks to the shop UI.")
+		return
+	var tower_interior_source := FileAccess.get_file_as_string("res://scripts/system_baghdad_tower_interior.gd")
+	if not tower_interior_source.contains("tower_service_") or not tower_interior_source.contains("ServiceInteraction_%d"):
+		_fail("Baghdad tower interiors do not generate the three indexed service desk interactions.")
+		return
 	menu.free()
 	wallet.free()
 	progression.free()
