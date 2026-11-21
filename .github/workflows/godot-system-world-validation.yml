@@ -103,6 +103,20 @@ jobs:
           fi
           grep -q "Baghdad tower integration validation passed:" "$LOG"
 
+      - name: Validate Baghdad Shopping Tower local collectibles and inventory purchases
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          LOG="$RUNNER_TEMP/shopping-tower-validation.log"
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_shopping_tower_menu.gd 2>&1 | tee "$LOG"
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Baghdad Shopping Tower validation failed" "$LOG"; then
+            echo "::error::Baghdad Shopping Tower validation failed."
+            exit 1
+          fi
+          grep -q "Baghdad Shopping Tower validation passed:" "$LOG"
+
       - name: Diagnose null meshes before behavioral validators
         continue-on-error: true
         shell: bash
