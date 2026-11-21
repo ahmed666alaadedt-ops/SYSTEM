@@ -116,6 +116,7 @@ func _run_validation() -> void:
 	var final_floor: Dictionary = manager.get_floor_data(200)
 	if not bool(final_floor.get("tower_finale", false)) or not bool(final_floor.get("boss_floor", false)):
 		_fail("Floor 200 must be the final boss trial.")
+		return
 
 	var finale_build: Dictionary = floor_world.build_floor(final_floor, Vector3.ZERO)
 	if not bool(finale_build.get("success", false)):
