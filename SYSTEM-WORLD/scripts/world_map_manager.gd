@@ -40,6 +40,9 @@ var activated_fast_travel_points: Dictionary = {}
 # تُخزن إحداثيات العلامة كأرقام حتى يمكن حفظها في JSON.
 var personal_markers: Dictionary = {}
 
+# world_id -> advertisement_id -> current public campaign data
+var advertisements_by_world: Dictionary = {}
+
 
 func _ready() -> void:
 	_load_state()
@@ -275,6 +278,51 @@ func get_discovered_locations(world_id: String) -> Array[Dictionary]:
 	return result
 
 
+func register_advertisement(world_id: String, advertisement_id: String, city_name: String, display_name: String, position: Vector3) -> bool:
+	if world_id.is_empty() or advertisement_id.is_empty() or display_name.is_empty():
+		return false
+	var ads := _get_bucket(advertisements_by_world, world_id)
+	if ads.has(advertisement_id):
+		return false
+	ads[advertisement_id] = {
+		"id": advertisement_id,
+		"city": city_name,
+		"name": display_name,
+		"position": position,
+		"campaign_title": "",
+		"campaign_category": "",
+		"campaign_body": "",
+		"campaign_action": "",
+		"expires_at": 0
+	}
+	map_updated.emit(world_id)
+	return true
+
+
+func update_advertisement(world_id: String, advertisement_id: String, campaign: Dictionary) -> bool:
+	var ads := _get_bucket(advertisements_by_world, world_id)
+	if not ads.has(advertisement_id):
+		return false
+	var record: Dictionary = ads[advertisement_id]
+	record["campaign_title"] = str(campaign.get("title", ""))
+	record["campaign_category"] = str(campaign.get("category", ""))
+	record["campaign_body"] = str(campaign.get("body", ""))
+	record["campaign_action"] = str(campaign.get("action", ""))
+	record["expires_at"] = int(campaign.get("expires_at", 0))
+	ads[advertisement_id] = record
+	map_updated.emit(world_id)
+	return true
+
+
+func get_advertisements(world_id: String) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	var ads := _get_bucket(advertisements_by_world, world_id)
+	for value in ads.values():
+		if typeof(value) == TYPE_DICTIONARY:
+			result.append(value.duplicate(true))
+	return result
+
+
 func get_map_snapshot(world_id: String) -> Dictionary:
 	var regions: Dictionary = _get_bucket(discovered_regions, world_id)
 	var activated: Dictionary = _get_bucket(activated_fast_travel_points, world_id)
@@ -284,7 +332,8 @@ func get_map_snapshot(world_id: String) -> Dictionary:
 		"discovered_regions": regions.keys(),
 		"discovered_locations": get_discovered_locations(world_id),
 		"activated_fast_travel_points": activated.keys(),
-		"personal_markers": get_personal_markers(world_id)
+		"personal_markers": get_personal_markers(world_id),
+		"advertisements": get_advertisements(world_id)
 	}
 
 
