@@ -29,6 +29,7 @@ var highest_cleared_floor := 0
 var active_floor := 0
 var floor_clear_times: Dictionary = {}
 var completed_checkpoints_by_floor: Dictionary = {}
+var claimed_floor_secrets: Dictionary = {}
 var tower_credits := 0
 var active_floor_enemy_ids: Array[String] = []
 var defeated_floor_enemy_ids: Array[String] = []
@@ -190,6 +191,40 @@ func get_floor_combat_status(floor_number: int) -> Dictionary:
 		"combat_complete": active_floor == floor_number and not active_floor_enemy_ids.is_empty() and defeated_floor_enemy_ids.size() >= active_floor_enemy_ids.size()
 	}
 
+
+
+func get_floor_secret_ids(floor_number: int) -> Array[String]:
+	if floor_number < 1 or floor_number > MAX_FLOORS:
+		return []
+	return [
+		"power_tower_%03d_hidden_cache_01" % floor_number,
+		"power_tower_%03d_hidden_cache_02" % floor_number,
+		"power_tower_%03d_hidden_cache_03" % floor_number
+	]
+
+
+func is_floor_secret_claimed(floor_number: int, secret_id: String) -> bool:
+	var claimed: Variant = claimed_floor_secrets.get(str(floor_number), [])
+	return claimed is Array and claimed.has(secret_id)
+
+
+func claim_floor_secret(floor_number: int, secret_id: String) -> Dictionary:
+	if active_floor != floor_number or floor_number <= 0:
+		return {"success": false, "reason": "FLOOR_NOT_ACTIVE"}
+	if not get_floor_secret_ids(floor_number).has(secret_id):
+		return {"success": false, "reason": "UNKNOWN_FLOOR_SECRET"}
+	if is_floor_secret_claimed(floor_number, secret_id):
+		return {"success": false, "reason": "FLOOR_SECRET_ALREADY_CLAIMED"}
+	var claimed: Array = claimed_floor_secrets.get(str(floor_number), []).duplicate()
+	claimed.append(secret_id)
+	claimed_floor_secrets[str(floor_number)] = claimed
+	var reward_currency := 25 + floor_number * 3
+	tower_credits += reward_currency
+	_save_progress()
+	var reward_data := {"floor": floor_number, "secret_id": secret_id, "currency": reward_currency, "currency_id": "tower_credits", "tower_credits_balance": tower_credits, "secret_discovery": true}
+	floor_rewarded.emit(reward_data.duplicate(true))
+	return {"success": true, "reward_currency": reward_currency, "tower_credits_balance": tower_credits, "claimed_count": claimed.size(), "secret_id": secret_id}
+
 ## Call this after defeat. Checkpoints remain saved and the player can retry the same floor.
 func fail_active_floor() -> Dictionary:
 	if active_floor <= 0:
@@ -288,6 +323,7 @@ func _save_progress() -> void:
 	config.set_value("tower", "highest_cleared_floor", highest_cleared_floor)
 	config.set_value("tower", "floor_clear_times", floor_clear_times)
 	config.set_value("tower", "completed_checkpoints_by_floor", completed_checkpoints_by_floor)
+	config.set_value("tower", "claimed_floor_secrets", claimed_floor_secrets)
 	config.set_value("tower", "tower_credits", tower_credits)
 	var error := config.save(SAVE_PATH)
 	if error != OK:
@@ -302,4 +338,6 @@ func _load_progress() -> void:
 	floor_clear_times = saved_times.duplicate(true) if saved_times is Dictionary else {}
 	var saved_checkpoints: Variant = config.get_value("tower", "completed_checkpoints_by_floor", {})
 	completed_checkpoints_by_floor = saved_checkpoints.duplicate(true) if saved_checkpoints is Dictionary else {}
+	var saved_secrets: Variant = config.get_value("tower", "claimed_floor_secrets", {})
+	claimed_floor_secrets = saved_secrets.duplicate(true) if saved_secrets is Dictionary else {}
 	tower_credits = maxi(0, int(config.get_value("tower", "tower_credits", 0)))
