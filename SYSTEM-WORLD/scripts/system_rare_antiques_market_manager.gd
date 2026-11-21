@@ -23,10 +23,12 @@ var inventory: Dictionary = {}
 var auctions: Dictionary = {}
 var transaction_ledger: Array[Dictionary] = []
 var next_transaction_id := 1
+var market_seeded := false
 
 func setup(p_wallet: Node) -> void:
 	wallet = p_wallet
 	_load_state()
+	_seed_house_auctions_if_needed()
 
 func get_catalogue() -> Dictionary:
 	return LOTS.duplicate(true)
@@ -36,6 +38,9 @@ func get_item_details(item_id: String) -> Dictionary:
 
 func get_inventory() -> Dictionary:
 	return inventory.duplicate(true)
+
+func get_local_player_inventory() -> Array:
+	return (inventory.get("local_player", []) as Array).duplicate()
 
 func get_auction(auction_id: String) -> Dictionary:
 	var auction: Dictionary = auctions.get(auction_id, {})
@@ -87,10 +92,10 @@ func place_bid(auction_id: String, bidder_id: String, amount: int) -> Dictionary
 		return {"success":false,"reason":"BID_MUST_EXCEED_CURRENT"}
 	var previous_bidder := str(auction.get("highest_bidder", ""))
 	var previous_amount := int(auction.get("current_bid", 0))
-	if not bool(wallet.call("spend_currency", "SYSTEM_CREDITS", amount)):
+	if not _spend_local_credits(amount):
 		return {"success":false,"reason":"INSUFFICIENT_FUNDS"}
 	if not previous_bidder.is_empty() and previous_amount > 0:
-		wallet.call("credit_currency", "SYSTEM_CREDITS", previous_amount)
+		_credit_local_credits(previous_amount)
 	auction["highest_bidder"] = bidder_id
 	auction["current_bid"] = amount
 	auction["bid_count"] = int(auction.get("bid_count", 0)) + 1
@@ -113,7 +118,7 @@ func settle_auction(auction_id: String) -> Dictionary:
 	var seller := str(auction.get("seller_id", ""))
 	if bidder.is_empty() or amount < int(auction.get("reserve_price", 0)):
 		if not bidder.is_empty() and amount > 0 and wallet != null:
-			wallet.call("credit_currency", "SYSTEM_CREDITS", amount)
+			_credit_local_credits(amount)
 		auction["status"] = "NO_SALE"
 		auction["highest_bidder"] = ""
 		auction["current_bid"] = 0
@@ -132,6 +137,55 @@ func settle_auction(auction_id: String) -> Dictionary:
 	_save_state()
 	auction_settled.emit(auction_id, bidder)
 	return {"success":true,"status":"SOLD","winner_id":bidder,"amount":amount}
+
+
+func _spend_local_credits(amount: int) -> bool:
+	if wallet == null or not is_instance_valid(wallet) or not wallet.has_method("spend_currency"):
+		return false
+	var result: Variant = wallet.call("spend_currency", amount, "rare_antique_market_bid")
+	return result is Dictionary and bool(result.get("success", false))
+
+func _credit_local_credits(amount: int) -> void:
+	if wallet == null or not is_instance_valid(wallet) or not wallet.has_method("credit_currency"):
+		return
+	wallet.call("credit_currency", amount, "rare_antique_market_refund")
+
+func _seed_house_auctions_if_needed() -> void:
+	if market_seeded:
+		return
+	var now := int(Time.get_unix_time_from_system())
+	var seed_items := ["uruk_cylinder_seal", "bronze_star_astrolabe", "lapis_guardian_figurine"]
+	for item_id in seed_items:
+		var item: Dictionary = LOTS[item_id]
+		var auction_id := "house_lot_" + item_id
+		auctions[auction_id] = {
+			"id":auction_id,"item_id":item_id,"item_name":str(item.get("name", item_id)),
+			"seller_id":"SYSTEM_AUCTION_HOUSE","reserve_price":int(item.get("opening_bid", 1)),
+			"current_bid":int(item.get("opening_bid", 1)) - 1,"highest_bidder":"",
+			"ends_at":now + AUCTION_DURATION_SECONDS,"status":"OPEN","bid_count":0
+		}
+	market_seeded = true
+	_save_state()
+
+func get_market_board() -> Dictionary:
+	var now := int(Time.get_unix_time_from_system())
+	var active: Array[Dictionary] = []
+	for auction_id in auctions:
+		var auction: Dictionary = auctions[auction_id]
+		if str(auction.get("status", "")) == "OPEN":
+			if int(auction.get("ends_at", 0)) <= now:
+				settle_auction(str(auction_id))
+			else:
+				active.append(auction.duplicate(true))
+	active.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return int(a.get("ends_at", 0)) < int(b.get("ends_at", 0))
+	)
+	return {
+		"catalogue":get_catalogue(),
+		"auctions":active,
+		"inventory":get_local_player_inventory(),
+		"balance":int(wallet.get("balance")) if wallet != null and "balance" in wallet else 0
+	}
 
 func _add_item(owner_id: String, item_id: String) -> void:
 	var owned: Array = inventory.get(owner_id, [])
@@ -159,6 +213,7 @@ func _save_state() -> void:
 	config.set_value("market", "auctions", auctions)
 	config.set_value("market", "ledger", transaction_ledger)
 	config.set_value("market", "next_transaction_id", next_transaction_id)
+	config.set_value("market", "market_seeded", market_seeded)
 	var error := config.save(SAVE_PATH)
 	if error != OK:
 		push_warning("SYSTEM antiques market: local state save failed.")
@@ -171,3 +226,4 @@ func _load_state() -> void:
 	auctions = config.get_value("market", "auctions", {})
 	transaction_ledger = config.get_value("market", "ledger", [])
 	next_transaction_id = int(config.get_value("market", "next_transaction_id", 1))
+	market_seeded = bool(config.get_value("market", "market_seeded", false))
