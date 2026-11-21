@@ -15,7 +15,7 @@ The towers are separate gameplay identities. The Power Tower is not the Hunter e
 - `scripts/system_tower_entrance.gd` provides a ray-interactable entrance marker for each tower.
 - `scripts/modern_world_region_manager.gd` creates the tower manager and registers both landmarks in the existing modern-world map manager as `LocationType.LANDMARK` (enum value 5).
 - `scripts/system_hunter_exam_manager.gd` defines a seven-stage examination, candidate numbering, registration, sequential progression, save-state fields, and completion/failure signals.
-- `scripts/system_power_tower_manager.gd` defines a separate 100-floor progression track, level requirements, boss/elite floor cadence, rank bands, clear-time records, and XP reward events. `scripts/main.gd` connects its floor-clear reward event to the existing player progression.
+- `scripts/system_power_tower_manager.gd` defines a separate 200-floor progression track, level requirements, boss/elite floor cadence, rank bands, clear-time records, and XP reward events. `scripts/main.gd` connects its floor-clear reward event to the existing player progression.
 - `scripts/hunter_guild_menu.gd` adds registration and start controls.
 - `scripts/main.gd` creates the examination manager and connects the guild menu signals.
 
@@ -25,12 +25,12 @@ The towers are separate gameplay identities. The Power Tower is not the Hunter e
 - The Power Tower exterior now has four tournament/champion display blades and three concentric arena terraces at its base, reinforcing its identity as a public combat venue.
 - The Hunter Association Tower exterior now has two monumental association wings, a Hall of Honor display, and a crown spire.
 - These are procedural architectural blockout elements, not final high-detail art assets. The champion boards currently display static titles; they are not yet connected to live player rankings or verified gate-clearing records.
-- The Power Tower's 100-floor progression manager remains separate from the exterior. The arena terraces do not yet constitute explorable interior arenas. A later interior-scene milestone must provide multiple distinct arenas (duel, team combat, survival, boss trial, and ranked championship), spectator galleries, training halls, matchmaking, and verified reward/record flows.
+- The Power Tower's 200-floor progression manager remains separate from the exterior. The arena terraces do not yet constitute explorable interior arenas. A later interior-scene milestone must provide multiple distinct arenas (duel, team combat, survival, boss trial, and ranked championship), spectator galleries, training halls, matchmaking, and verified reward/record flows.
 - The Hunter Association interior likewise still needs navigable reception, registration, mission hall, examination administration, training, research, medical support, meeting rooms, and a dynamically updated global hunter honor gallery.
 
 ## Power Tower arena progression data
 
-The 100-floor progression now assigns a distinct challenge profile by floor cycle:
+The 200-floor progression now assigns a distinct challenge profile by floor cycle:
 - Duel arena: one-on-one combat.
 - Team battle arena: multi-opponent/team encounter.
 - Survival arena: escalating waves.
@@ -68,7 +68,7 @@ The design can include candidate-number competition and controlled attempts to o
 
 The current work creates the procedural tower blockouts, entrance interaction markers, menu registration/start controls, and the examination progression data manager. It does **not** yet create the explorable interior floors, the seven physical stage environments, the actual maze geometry, puzzle devices, guardian AI encounters, city-to-city travel sequences, server-authoritative candidate verification, anti-cheat checks, or a production Hunter-license card. The entrance currently reports an interaction; it does not yet load a tower interior scene.
 
-The Power Tower now has a separate 100-floor progression manager with unlock order, level gates, boss/elite classification, rank bands, saved highest-floor and clear-time records, and a reward signal connected to player XP. Actual combat encounters, floor scenes, opponent AI, rankings, and a trusted combat-verification caller remain to be implemented.
+The Power Tower now has a separate 200-floor progression manager with unlock order, level gates, boss/elite classification, rank bands, saved highest-floor and clear-time records, and a reward signal connected to player XP. Actual combat encounters, floor scenes, opponent AI, rankings, and a trusted combat-verification caller remain to be implemented.
 
 The stage completion method is an integration hook for a future trusted objective-verification system. A non-empty evidence string is not sufficient security for an online competitive game. Before live multiplayer, completion and candidate-number records must be validated by an authoritative server.
 
@@ -146,7 +146,7 @@ These five towers form the connected Baghdad district. The Power Tower is not on
 The main World Hunter Association headquarters is a distinct elevated headquarters building placed above the shared five-tower district. It is not located on top of Power Tower and is not counted as a sixth primary tower. The Hunter Association Tower remains one of the five district towers and provides the guild's public-facing tower identity; the elevated headquarters is the central global administration hub.
 
 ### Independent Power Tower
-Power Tower remains a separate, optional combat-arena landmark at a clearly detached location in Baghdad. Preserve its existing 100-floor progression manager, floor unlocks, boss/elite cadence, challenge profiles, XP reward integration, and save data. Keep it independent of the five-tower complex physically and in connection generation. Its future playable interiors, opponent AI, matchmaking, ranked verification, and spectator facilities remain separate implementation milestones.
+Power Tower remains a separate, optional combat-arena landmark at a clearly detached location in Baghdad. Preserve its existing 200-floor progression manager, floor unlocks, boss/elite cadence, challenge profiles, XP reward integration, and save data. Keep it independent of the five-tower complex physically and in connection generation. Its future playable interiors, opponent AI, matchmaking, ranked verification, and spectator facilities remain separate implementation milestones.
 
 ### Implementation and verification boundary
 The source-level implementation now distinguishes the five connected district towers from the independent Power Tower, registers the elevated Hunter Association headquarters as its own map location, and keeps Power Tower's existing interaction/progression ID intact. Procedural exterior geometry remains a blockout. No Godot parser, scene runtime, collision/navigation, Android performance, or visual verification is claimed until those checks are run.
@@ -155,3 +155,34 @@ The source-level implementation now distinguishes the five connected district to
 ### Headquarters vertical placement and access update — 21 November 2026
 
 The Global Hunter Association headquarters must sit above the highest roofline among the five connected district towers, not at a fixed low elevation within the tower cluster. The current procedural blockout computes the highest district roof at runtime and positions the headquarters sky podium above it. A dedicated elevated access deck links the highest district tower roof to the headquarters platform; this bridge is separate from the five-tower pedestrian/vehicle connection loop. The headquarters is registered as its own map location and is no longer included in the five-tower landmark array or the public tower advertising-board loop.
+
+
+## Power Tower — approved 200-floor progression update — 21 November 2026
+
+The Power Tower progression target is now **200 floors**. This supersedes earlier 100-floor progression wording above.
+
+### Floor regions
+- Floors 1–20: Frontier Forests.
+- Floors 21–40: Warrior Citadels.
+- Floors 41–60: Beast Wilds.
+- Floors 61–80: Shifting Labyrinths.
+- Floors 81–100: Elite Proving Grounds.
+- Floors 101–120: Elemental Frontiers.
+- Floors 121–140: Lost Kingdoms.
+- Floors 141–160: Giant Territories.
+- Floors 161–180: Mythic Reaches.
+- Floors 181–200: Apex Trials.
+
+Every floor is described by runtime progression data as a large explorable region, with an environment profile, challenge type, arena rules, reward values, and three ordered checkpoint IDs. Every tenth floor is a boss trial; floor 200 is the final tower trial. These are data contracts and progression metadata; they do not prove that 200 unique explorable 3D maps or boss encounters have been built.
+
+### Retry and rewards
+- Entry is free.
+- A player must clear floors in order and meet the floor's level requirement.
+- Three ordered checkpoints are recorded per floor by the trusted objective controller.
+- Defeat/abandonment clears the active attempt but preserves the last reached checkpoint; retry resumes from that checkpoint.
+- A verified floor clear awards XP and local-only virtual Tower Credits. Credits are not cash, cannot be purchased for real money, and cannot be withdrawn.
+- The existing `floor_cleared(floor_number, reward_xp, rank)` signal remains unchanged for compatibility. A new `floor_rewarded(reward_data)` signal carries the Tower Credits result.
+- Current save data remains in `user://system_power_tower.cfg`; prior highest-floor and clear-time data are retained.
+
+### Implementation boundary
+The progression manager now supports 200-floor metadata, ten 20-floor region bands, 20 boss floors, ordered checkpoints, checkpoint-preserving retries, XP and Tower Credits rewards, and floor-unlock progression. A Godot headless validation script covers these contracts and is wired into the canonical Godot validation workflow. Physical checkpoint triggers, actual unique floor environments, opponent spawning/AI, live spectator crowds, multiplayer matchmaking, and authoritative online verification remain separate implementation work.
