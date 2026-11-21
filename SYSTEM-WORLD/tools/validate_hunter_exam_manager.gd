@@ -4,6 +4,8 @@ const EXAM_SCRIPT = preload("res://scripts/system_hunter_exam_manager.gd")
 
 func _initialize() -> void:
 	var manager = EXAM_SCRIPT.new()
+	var validation_save_path := "user://hunter_exam_validator_%d.cfg" % int(Time.get_unix_time_from_system())
+	manager.save_path = validation_save_path
 	root.add_child(manager)
 	if EXAM_SCRIPT.EXAM_STAGES.size() != 7:
 		push_error("Hunter exam validation failed: expected exactly seven stages.")
@@ -56,6 +58,7 @@ func _initialize() -> void:
 		quit(1)
 		return
 	var retry_probe = EXAM_SCRIPT.new()
+	retry_probe.save_path = validation_save_path
 	root.add_child(retry_probe)
 	retry_probe.license_earned_permanently = false
 	retry_probe.registered = true
