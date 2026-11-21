@@ -11,6 +11,7 @@ signal pit_lane_entered(track_id: String)
 signal pit_lane_exited(track_id: String)
 signal pit_lane_entry_crossed(track_id: String)
 signal pit_lane_exit_crossed(track_id: String)
+signal pit_lane_speed_violation(speed_kph: float, penalty_seconds: float)
 
 const TRACK_ID := "baghdad_international_motorsport_park"
 const TRACK_NAME := "Baghdad International Motorsport Park"
@@ -48,6 +49,8 @@ var pit_lane_context_area: Area3D
 var pit_lane_entry_area: Area3D
 var pit_lane_exit_area: Area3D
 var active_vehicle_in_pit_lane := false
+var pit_lane_speed_violation_applied := false
+const PIT_SPEED_PENALTY_SECONDS := 5.0
 var pit_garage_nodes: Array[Node3D] = []
 var marshal_post_nodes: Array[Node3D] = []
 var race_control_tower: Node3D
@@ -65,6 +68,26 @@ func setup(p_player: CharacterBody3D, p_vehicle_runtime_manager: Node, p_motorsp
 			motorsport_manager.connect("race_go", Callable(self, "_on_motorsport_race_go"))
 	if is_instance_valid(vehicle_runtime_manager) and vehicle_runtime_manager.has_signal("driving_changed"):
 		vehicle_runtime_manager.connect("driving_changed", Callable(self, "_on_player_driving_changed"))
+
+
+func _physics_process(_delta: float) -> void:
+	if not active_vehicle_in_pit_lane or pit_lane_speed_violation_applied:
+		return
+	if not is_instance_valid(vehicle_runtime_manager) or not is_instance_valid(motorsport_manager):
+		return
+	var active_vehicle: Node = vehicle_runtime_manager.get("active_vehicle")
+	if not is_instance_valid(active_vehicle) or not active_vehicle is RigidBody3D:
+		return
+	var speed_kph := (active_vehicle as RigidBody3D).linear_velocity.length() * 3.6
+	if speed_kph <= PIT_LANE_SPEED_LIMIT_KPH:
+		return
+	if not motorsport_manager.has_method("add_race_time_penalty") or not motorsport_manager.call("is_race_active"):
+		return
+	var penalty_result: Dictionary = motorsport_manager.call("add_race_time_penalty", PIT_SPEED_PENALTY_SECONDS, "pit_lane_speeding")
+	if bool(penalty_result.get("success", false)):
+		pit_lane_speed_violation_applied = true
+		pit_lane_speed_violation.emit(speed_kph, PIT_SPEED_PENALTY_SECONDS)
+		push_warning("SYSTEM Motorsport: pit lane speed %.1f km/h exceeded the %.1f km/h limit; %.1f seconds added." % [speed_kph, PIT_LANE_SPEED_LIMIT_KPH, PIT_SPEED_PENALTY_SECONDS])
 
 func _ready() -> void:
 	name = "SystemMotorsportTrackManager"
@@ -532,6 +555,7 @@ func _on_pit_lane_context_body_entered(body: Node3D) -> void:
 	if not _is_active_vehicle(body) or active_vehicle_in_pit_lane:
 		return
 	active_vehicle_in_pit_lane = true
+	pit_lane_speed_violation_applied = false
 	pit_lane_entered.emit(TRACK_ID)
 
 
@@ -539,6 +563,7 @@ func _on_pit_lane_context_body_exited(body: Node3D) -> void:
 	if not _is_active_vehicle(body) or not active_vehicle_in_pit_lane:
 		return
 	active_vehicle_in_pit_lane = false
+	pit_lane_speed_violation_applied = false
 	pit_lane_exited.emit(TRACK_ID)
 
 
