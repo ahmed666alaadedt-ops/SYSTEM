@@ -136,6 +136,21 @@ jobs:
           grep -q "Baghdad city state persistence round-trip passed." "$LOG"
 
 
+
+      - name: Validate motorsport race entry, checkpoints, laps and local records
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          LOG="$RUNNER_TEMP/motorsport-validation.log"
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_motorsport_manager.gd 2>&1 | tee "$LOG"
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Motorsport validation failed" "$LOG"; then
+            echo "::error::Motorsport validation failed."
+            exit 1
+          fi
+          grep -q "Motorsport validation passed:" "$LOG"
+
       - name: Validate Baghdad football match, ball interaction and scoring
         shell: bash
         run: |
