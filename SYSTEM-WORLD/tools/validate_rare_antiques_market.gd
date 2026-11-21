@@ -41,6 +41,9 @@ func _initialize() -> void:
 	if not bool(created.get("success", false)):
 		_fail("Could not create a valid artifact auction.")
 		return
+	if (manager.get_inventory().get("seller_test", []) as Array).has("uruk_cylinder_seal"):
+		_fail("Listed artifact was not moved into auction escrow.")
+		return
 	var auction: Dictionary = created.get("auction", {})
 	var auction_id := str(auction.get("id", ""))
 	var bid: Dictionary = manager.place_bid(auction_id, "local_player", 700)
