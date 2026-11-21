@@ -265,14 +265,18 @@ class MapDrawing extends Control:
 			if not ad_position is Vector3:
 				continue
 			var ad_point := _project_position(ad_position, map_rect, min_x, max_x, min_z, max_z)
-			var diamond := PackedVector2Array([
+			var ad_diamond := PackedVector2Array([
 				ad_point + Vector2(0, -9),
 				ad_point + Vector2(9, 0),
 				ad_point + Vector2(0, 9),
 				ad_point + Vector2(-9, 0)
 			])
-			draw_colored_polygon(diamond, Color(1.0, 0.35, 0.78, 1.0))
+			draw_colored_polygon(ad_diamond, Color(1.0, 0.35, 0.78, 1.0))
 			draw_arc(ad_point, 13.0, 0.0, TAU, 24, Color(1.0, 0.68, 0.9, 0.9), 2.0)
+			ad_hit_targets.append({
+				"point": ad_point,
+				"advertisement": advertisement.duplicate(true)
+			})
 			draw_string(ThemeDB.fallback_font, ad_point + Vector2(12, 14), "إعلان: " + str(advertisement.get("city", "")), HORIZONTAL_ALIGNMENT_LEFT, 140, 12, Color(1.0, 0.78, 0.92))
 
 		if player_visible:
