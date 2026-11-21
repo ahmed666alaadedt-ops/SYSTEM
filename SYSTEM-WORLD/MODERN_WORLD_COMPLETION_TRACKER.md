@@ -845,3 +845,18 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Complete authored tower facade details, glass/metal materials, interior furnishing, lift animation, emergency stairs, functional elevator/service access and final skyline lighting.
 - [ ] Test pedestrian and vehicle traversal of every bridge/ramp on varied terrain, including slope, clearance, fall protection and Android performance.
 - Note: this pass makes the visible tower shells and selected shared-district decks physically solid; the tower complex remains a procedural blockout and is not final art or a fully drivable city transport network.
+
+
+## Baghdad tower floor variety — four interior archetypes per tower — 22 November 2026
+
+- [x] Replace the repeated single-layout floor shells with four distinct procedural layouts per tower category, selected deterministically by floor number.
+- [x] Hunter Tower layouts: training course, mission-planning/briefing hall, sparring arena, weapon-practice hall.
+- [x] Business Tower layouts: office suites, trading desks, executive boardroom, executive suites.
+- [x] Shopping Tower layouts: retail kiosks, fashion gallery/runway, food court, electronics gallery.
+- [x] Entertainment Tower layouts: performance stage, esports arena, cinema hall, indoor sports court.
+- [x] Technology Tower layouts: innovation workbenches, research lab, server operations floor, prototype showcase.
+- [x] Add stable floor-variant metadata and include the variant in the floor identity sign.
+- [x] Extend the Baghdad tower validator to build and verify all four unique layout archetypes for each of the five connected towers.
+- [x] Godot 4.3 workflow run 44953652619 passed on commit 6de5c182ad5e2ab97b1e60fdead6de65a42509a3; all configured validators, missing-mesh scan and headless main-scene launch passed.
+- [ ] Add real service/mission interactions to each floor archetype, NPC staff/visitors, furniture/prop assets, lighting/audio and authored activities.
+- Note: four procedural archetypes repeat across the tower's floors; this improves layout variety but does not yet mean every individual floor has unique authored content or finished production art.
