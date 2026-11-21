@@ -872,13 +872,34 @@ func _is_archaeological_site(tags: Dictionary) -> bool:
 
 func _build_amenity_feature(parent: Node3D, feature: Dictionary) -> int:
 	var geometry: Dictionary = feature.get("geometry", {})
-	if str(geometry.get("type", "")) != "Point":
-		return 0
+	var geometry_type := str(geometry.get("type", ""))
 	var tags: Dictionary = feature.get("tags", {})
-	var coordinates: Array = geometry.get("coordinates", [])
+	var feature_id := str(feature.get("id", "unknown"))
 	if _is_archaeological_site(tags):
-		_build_archaeological_site_landmark(parent, feature, coordinates)
-		return 1
+		if geometry_type == "Point":
+			_build_archaeological_site_landmark(parent, feature, geometry.get("coordinates", []))
+			return 1
+		if geometry_type == "Polygon" or geometry_type == "MultiPolygon":
+			var built_sites := 0
+			for polygon in _extract_polygons(geometry):
+				var ring := PackedVector2Array()
+				for coordinate in polygon:
+					if coordinate is Array and coordinate.size() >= 2:
+						ring.append(Vector2(float(coordinate[0]), float(coordinate[1])))
+				if ring.size() > 2 and ring[0].is_equal_approx(ring[ring.size() - 1]):
+					ring.remove_at(ring.size() - 1)
+				if ring.size() < 3:
+					continue
+				var site_root := _add_archaeological_ruin_detail(parent, ring, 3.2, feature_id, tags)
+				if site_root != null:
+					site_root.name = "OSMArchaeologicalSiteArea_%s_%d" % [feature_id, built_sites]
+					_add_archaeological_site_interaction(site_root, feature_id, tags)
+					built_sites += 1
+			return built_sites
+		return 0
+	if geometry_type != "Point":
+		return 0
+	var coordinates: Array = geometry.get("coordinates", [])
 	var worship := str(tags.get("amenity", "")) == "place_of_worship"
 	var religion := str(tags.get("religion", "")).to_lower()
 	var is_mosque := (worship and religion == "muslim") or str(tags.get("building", "")).to_lower() == "mosque"
@@ -888,7 +909,7 @@ func _build_amenity_feature(parent: Node3D, feature: Dictionary) -> int:
 	elif is_church:
 		_build_church_landmark(parent, feature, coordinates)
 	else:
-		_add_point_marker(parent, coordinates, amenity_material, 0.48, "OSMAmenity_%s" % str(feature.get("id", "")))
+		_add_point_marker(parent, coordinates, amenity_material, 0.48, "OSMAmenity_%s" % feature_id)
 	return 1
 
 
@@ -957,25 +978,7 @@ func _build_archaeological_site_landmark(parent: Node3D, feature: Dictionary, co
 	sign.modulate = Color(0.9, 0.78, 0.57)
 	root.add_child(sign)
 
-	var interaction := Area3D.new()
-	interaction.name = "ArchaeologicalSiteInteraction"
-	interaction.add_to_group("system_interactable")
-	interaction.set_meta("osm_feature_id", feature_id)
-	interaction.set_meta("system_location_id", "baghdad_osm_archaeology_" + feature_id)
-	interaction.set_meta("system_region_id", "region_baghdad")
-	interaction.set_meta("system_location_type", 7)
-	interaction.set_meta("system_fast_travel", false)
-	interaction.set_meta("system_location_position", root.position)
-	interaction.set_meta("system_display_name", site_name)
-	interaction.set_meta("system_interaction_prompt", "استكشاف موقع أثري موثق — فحص معلومات الموقع")
-	interaction.set_meta("system_historic_tag", historic_kind)
-	interaction.set_meta("system_access_state", "outdoor_archaeological_site")
-	var area_collision := CollisionShape3D.new()
-	var area_shape := SphereShape3D.new()
-	area_shape.radius = 5.5
-	area_collision.shape = area_shape
-	interaction.add_child(area_collision)
-	root.add_child(interaction)
+	_add_archaeological_site_interaction(root, feature_id, tags)
 
 
 func _add_archaeology_box(parent: Node3D, node_name: String, position: Vector3, size: Vector3, material: Material, rotation_y: float) -> void:
@@ -998,9 +1001,33 @@ func _add_archaeology_box(parent: Node3D, node_name: String, position: Vector3, 
 	parent.add_child(body)
 
 
-func _add_archaeological_ruin_detail(parent: Node3D, ring: PackedVector2Array, height: float, feature_id: String, tags: Dictionary) -> void:
+func _add_archaeological_site_interaction(root: Node3D, feature_id: String, tags: Dictionary) -> void:
+	var site_name := str(tags.get("name:ar", tags.get("name", "موقع أثري موثق")))
+	var historic_kind := str(tags.get("historic", tags.get("site_type", "archaeological_site")))
+	var interaction := Area3D.new()
+	interaction.name = "ArchaeologicalSiteInteraction"
+	interaction.add_to_group("system_interactable")
+	interaction.set_meta("osm_feature_id", feature_id)
+	interaction.set_meta("system_location_id", "baghdad_osm_archaeology_" + feature_id)
+	interaction.set_meta("system_region_id", "region_baghdad")
+	interaction.set_meta("system_location_type", 7)
+	interaction.set_meta("system_fast_travel", false)
+	interaction.set_meta("system_location_position", root.position)
+	interaction.set_meta("system_display_name", site_name)
+	interaction.set_meta("system_interaction_prompt", "استكشاف موقع أثري موثق — فحص معلومات الموقع")
+	interaction.set_meta("system_historic_tag", historic_kind)
+	interaction.set_meta("system_access_state", "outdoor_archaeological_site")
+	var area_collision := CollisionShape3D.new()
+	var area_shape := SphereShape3D.new()
+	area_shape.radius = 5.5
+	area_collision.shape = area_shape
+	interaction.add_child(area_collision)
+	root.add_child(interaction)
+
+
+func _add_archaeological_ruin_detail(parent: Node3D, ring: PackedVector2Array, height: float, feature_id: String, tags: Dictionary) -> Node3D:
 	if ring.size() < 3:
-		return
+		return null
 	var center := Vector2.ZERO
 	for point in ring:
 		center += point
@@ -1026,16 +1053,16 @@ func _add_archaeological_ruin_detail(parent: Node3D, ring: PackedVector2Array, h
 			continue
 		var midpoint := (p0 + p1) * 0.5
 		var wall_height := minf(2.8, maxf(1.1, height * (0.35 + float(index % 3) * 0.12)))
-		var wall := MeshInstance3D.new()
-		wall.name = "BrokenRuinWall_%02d" % index
-		var wall_mesh := BoxMesh.new()
-		wall_mesh.size = Vector3(length, wall_height, 0.75)
-		wall.mesh = wall_mesh
-		wall.position = Vector3(midpoint.x - center.x, _terrain_height(midpoint) - _terrain_height(center) + wall_height * 0.5, midpoint.y - center.y)
-		wall.rotation.y = atan2(-direction.y, direction.x)
-		wall.material_override = stone
-		root.add_child(wall)
-
+		var local_position := Vector3(midpoint.x - center.x, _terrain_height(midpoint) - _terrain_height(center) + wall_height * 0.5, midpoint.y - center.y)
+		_add_archaeology_box(root, "BrokenRuinWall_%02d" % index, local_position, Vector3(length, wall_height, 0.75), stone, atan2(-direction.y, direction.x))
+	var site_label := Label3D.new()
+	site_label.name = "ArchaeologicalRuinLabel"
+	site_label.text = str(tags.get("name:ar", tags.get("name", "أطلال أثرية موثقة")))
+	site_label.font_size = 20
+	site_label.position = Vector3(0.0, 5.0, 0.0)
+	site_label.modulate = Color(0.9, 0.78, 0.57)
+	root.add_child(site_label)
+	return root
 
 
 func _build_church_landmark(parent: Node3D, feature: Dictionary, coordinates: Array) -> void:
