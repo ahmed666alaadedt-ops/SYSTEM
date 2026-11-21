@@ -580,6 +580,7 @@ func create_power_tower_manager() -> void:
 	add_child(power_tower_manager)
 	power_tower_manager.floor_cleared.connect(_on_power_tower_floor_cleared)
 	power_tower_manager.floor_cleared.connect(_on_public_power_tower_floor_cleared)
+	power_tower_manager.floor_combat_progress.connect(_on_power_tower_combat_progress)
 
 
 func create_power_tower_arena_manager() -> void:
@@ -591,6 +592,11 @@ func create_power_tower_arena_manager() -> void:
 	power_tower_arena_ui.name = "PowerTowerArenaUI"
 	add_child(power_tower_arena_ui)
 	power_tower_arena_ui.call("setup", power_tower_arena_manager)
+
+
+func _on_power_tower_combat_progress(floor_number: int, defeated_count: int, required_count: int) -> void:
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = "برج القوة — الطابق %d: هزيمة الخصوم %d / %d" % [floor_number, defeated_count, required_count]
 
 
 func _on_power_tower_floor_cleared(floor_number: int, reward_xp: int, rank: String) -> void:
