@@ -72,7 +72,21 @@ func _build_connected_roads() -> void:
 	# Connect the existing motorsport circuit rather than creating a duplicate track.
 	road_points.append(Vector2(320.0,220.0))
 	# The Power Tower remains a separate landmark, outside the five-tower cluster.
-	road_points.append(Vector2(850.0,600.0))
+	# Use its resolved placement from the existing tower manager so a terrain
+	# fallback cannot leave the connecting road pointing at the unadjusted anchor.
+	var tower_manager := get_parent().get_node_or_null("BaghdadTowerLandmarksManager")
+	var power_tower_added := false
+	if tower_manager != null and tower_manager.has_method("get_tower_positions"):
+		for tower_data in tower_manager.call("get_tower_positions"):
+			if str(tower_data.get("id", "")) != "power_tower_baghdad":
+				continue
+			var tower_position: Vector3 = tower_data.get("position", Vector3.INF)
+			if tower_position != Vector3.INF:
+				road_points.append(Vector2(tower_position.x - anchor.x, tower_position.z - anchor.z))
+				power_tower_added = true
+			break
+	if not power_tower_added:
+		road_points.append(Vector2(850.0,600.0))
 	for index in range(1, road_points.size()):
 		_add_road_segment("BaghdadRoad_%02d" % index, road_points[0], road_points[index])
 	# A perimeter connector makes the landmark district navigable as one loop.
