@@ -457,6 +457,11 @@ func create_motorsport_race_hud_ui() -> void:
 	motorsport_race_hud_layer.add_child(motorsport_race_hud_label)
 
 
+func _on_motorsport_pit_lane_speed_violation(speed_kph: float, penalty_seconds: float) -> void:
+	if motorsport_race_hud_label != null:
+		motorsport_race_hud_label.text = "مخالفة سرعة حارة الصيانة: %.1f كم/س — +%.0f ثوانٍ" % [speed_kph, penalty_seconds]
+
+
 func _on_motorsport_race_started(event_id: String, _vehicle_id: String) -> void:
 	if motorsport_race_hud_label == null:
 		return
@@ -519,6 +524,7 @@ func create_motorsport_track_manager() -> void:
 	motorsport_track_manager.name = "MotorsportTrackManager"
 	active_world_root.add_child(motorsport_track_manager)
 	motorsport_track_manager.setup(player, vehicle_runtime_manager, motorsport_manager)
+	motorsport_track_manager.pit_lane_speed_violation.connect(_on_motorsport_pit_lane_speed_violation)
 
 
 func create_modern_city_crime_manager() -> void:
