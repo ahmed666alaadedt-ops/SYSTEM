@@ -198,7 +198,7 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 	collision.shape = collision_shape
 	collision.position.y = shell_height * 0.5
 	# A stadium is an open venue, not a solid building shell; the pitch and stands provide their own collision.
-	collision.disabled = service_id == "stadium"
+	collision.disabled = ["stadium", "mosque", "church", "museum", "rare_antique_market"].has(service_id)
 	body.add_child(collision)
 
 	if service_id != "stadium" and service_id != "park":
@@ -242,6 +242,8 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 		_create_museum_details(building, width, depth, roof_material)
 	elif service_id == "rare_antique_market":
 		_create_rare_antique_market_details(building, width, depth, glass, roof_material)
+	if ["mosque", "church", "museum", "rare_antique_market"].has(service_id):
+		_create_civic_interior_blockout(building, service_id, width, depth, facade, glass, roof_material)
 
 	var door := MeshInstance3D.new()
 	var door_mesh := BoxMesh.new()
@@ -394,6 +396,96 @@ func _create_rare_antique_market_details(parent: Node3D, width: float, depth: fl
 			relic.material_override = _material(Color(0.72, 0.53, 0.24), 0.3, 0.78)
 			booth.add_child(relic)
 
+
+
+func _create_civic_interior_blockout(parent: Node3D, service_id: String, width: float, depth: float, stone: Material, glass: Material, timber: Material) -> void:
+	var floor := MeshInstance3D.new()
+	floor.name = "InteriorFloor_Blockout"
+	var floor_mesh := BoxMesh.new()
+	floor_mesh.size = Vector3(width - 2.0, 0.24, depth - 2.0)
+	floor.mesh = floor_mesh
+	floor.position.y = 0.28
+	floor.material_override = _material(Color(0.34, 0.31, 0.26), 0.94, 0.0)
+	parent.add_child(floor)
+	match service_id:
+		"mosque":
+			var prayer_carpet := _material(Color(0.22, 0.34, 0.28), 0.98, 0.0)
+			for row in range(5):
+				var runner := MeshInstance3D.new()
+				runner.name = "PrayerCarpetRow_%02d" % row
+				var runner_mesh := BoxMesh.new()
+				runner_mesh.size = Vector3(width - 7.0, 0.035, 1.55)
+				runner.mesh = runner_mesh
+				runner.position = Vector3(0.0, 0.43, -depth * 0.31 + float(row) * 3.2)
+				runner.material_override = prayer_carpet
+				parent.add_child(runner)
+			for side in [-1.0, 1.0]:
+				for column in range(2):
+					var pillar := MeshInstance3D.new()
+					pillar.name = "PrayerHallColumn_%s_%d" % [str(side), column]
+					var pillar_mesh := CylinderMesh.new()
+					pillar_mesh.top_radius = 0.42
+					pillar_mesh.bottom_radius = 0.55
+					pillar_mesh.height = 7.5
+					pillar.mesh = pillar_mesh
+					pillar.position = Vector3(side * (width * 0.31), 4.0, -4.0 + float(column) * 8.0)
+					pillar.material_override = stone
+					parent.add_child(pillar)
+		"church":
+			for side in [-1.0, 1.0]:
+				for row in range(4):
+					var pew := MeshInstance3D.new()
+					pew.name = "ChurchPew_%s_%02d" % [str(side), row]
+					var pew_mesh := BoxMesh.new()
+					pew_mesh.size = Vector3(7.0, 0.65, 0.85)
+					pew.mesh = pew_mesh
+					pew.position = Vector3(side * 7.0, 0.85, -depth * 0.29 + float(row) * 4.0)
+					pew.material_override = timber
+					parent.add_child(pew)
+			var altar := MeshInstance3D.new()
+			altar.name = "ChurchAltar_Blockout"
+			var altar_mesh := BoxMesh.new()
+			altar_mesh.size = Vector3(5.0, 1.1, 2.0)
+			altar.mesh = altar_mesh
+			altar.position = Vector3(0.0, 0.9, depth * 0.31)
+			altar.material_override = stone
+			parent.add_child(altar)
+			var stained_glass := MeshInstance3D.new()
+			stained_glass.name = "ChurchStainedGlass_Blockout"
+			var glass_mesh := BoxMesh.new()
+			glass_mesh.size = Vector3(4.0, 5.0, 0.16)
+			stained_glass.mesh = glass_mesh
+			stained_glass.position = Vector3(0.0, 7.0, depth * 0.49)
+			stained_glass.material_override = glass
+			parent.add_child(stained_glass)
+		"museum":
+			for index in range(4):
+				var pedestal := MeshInstance3D.new()
+				pedestal.name = "MuseumExhibitPedestal_%02d" % index
+				var pedestal_mesh := BoxMesh.new()
+				pedestal_mesh.size = Vector3(3.0, 1.2, 2.8)
+				pedestal.mesh = pedestal_mesh
+				pedestal.position = Vector3(-width * 0.32 + float(index) * width * 0.21, 0.9, 0.0)
+				pedestal.material_override = timber
+				parent.add_child(pedestal)
+				var case_mesh_node := MeshInstance3D.new()
+				case_mesh_node.name = "MuseumGlassCase_%02d" % index
+				var case_mesh := BoxMesh.new()
+				case_mesh.size = Vector3(2.4, 2.2, 2.1)
+				case_mesh_node.mesh = case_mesh
+				case_mesh_node.position = pedestal.position + Vector3.UP * 1.7
+				case_mesh_node.material_override = glass
+				parent.add_child(case_mesh_node)
+		"rare_antique_market":
+			for index in range(3):
+				var display := MeshInstance3D.new()
+				display.name = "AntiqueDisplayCabinet_%02d" % index
+				var display_mesh := BoxMesh.new()
+				display_mesh.size = Vector3(4.2, 2.5, 1.4)
+				display.mesh = display_mesh
+				display.position = Vector3(-width * 0.3 + float(index) * width * 0.3, 1.55, depth * 0.34)
+				display.material_override = glass
+				parent.add_child(display)
 
 func _material(color: Color, roughness: float, metallic: float) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()
