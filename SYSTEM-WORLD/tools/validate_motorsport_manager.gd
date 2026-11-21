@@ -17,9 +17,21 @@ func _initialize() -> void:
 	if not bool(started.get("success", false)):
 		_fail("Eligible owned vehicle could not enter a dedicated-track event.")
 		return
+	var premature: Dictionary = manager.register_checkpoint(0)
+	if str(premature.get("reason", "")) != "RACE_NOT_STARTED":
+		_fail("The race accepted checkpoints before the green light.")
+		return
+	var countdown: Dictionary = manager.begin_race_countdown(0.0)
+	if not bool(countdown.get("success", false)) or not bool(countdown.get("running", false)):
+		_fail("The zero-duration test countdown did not release the green light.")
+		return
 	var skipped: Dictionary = manager.register_checkpoint(1)
 	if str(skipped.get("reason", "")) != "CHECKPOINT_OUT_OF_ORDER":
 		_fail("Out-of-order checkpoint was accepted.")
+		return
+	var penalty: Dictionary = manager.add_race_time_penalty(5.0, "validation")
+	if not bool(penalty.get("success", false)) or float(penalty.get("penalty_seconds", 0.0)) != 5.0:
+		_fail("Race time penalty could not be recorded.")
 		return
 	var final_result: Dictionary = {}
 	for lap in range(3):
@@ -28,7 +40,7 @@ func _initialize() -> void:
 	if not bool(final_result.get("success", false)) or manager.is_race_active():
 		_fail("Ordered checkpoints did not finish the configured three-lap event.")
 		return
-	if garage.balance - starting_balance != 1800 or int(final_result.get("completed_laps", 0)) != 3:
+	if garage.balance - starting_balance != 1800 or int(final_result.get("completed_laps", 0)) != 3 or absf(float(final_result.get("elapsed_seconds", 0.0)) - 5.0) > 0.01:
 		_fail("Race reward or lap result was incorrect.")
 		return
 	var record: Dictionary = final_result.get("records", {})
