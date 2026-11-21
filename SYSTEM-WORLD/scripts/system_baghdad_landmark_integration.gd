@@ -14,7 +14,8 @@ var map_manager: Node
 var _registered := false
 var _sites: Array[Dictionary] = [
 	{"id":"hunter_exam_tunnel_start_baghdad","name":"نفق اختبار الصيادين","kind":"tunnel","offset":Vector2(0.0,245.0),"size":Vector3(42.0,12.0,28.0),"color":Color(0.10,0.19,0.27),"prompt":"دخول نفق اختبار الصيادين"},
-	{"id":"hunter_exam_public_notice_baghdad","name":"إعلان اختبار الصيادين العام","kind":"advertising","offset":Vector2(0.0,90.0),"size":Vector3(32.0,20.0,10.0),"color":Color(0.08,0.35,0.48),"prompt":"عرض إعلان اختبار الصيادين ومراحله"}
+	{"id":"hunter_exam_public_notice_baghdad","name":"إعلان اختبار الصيادين العام","kind":"advertising","offset":Vector2(0.0,90.0),"size":Vector3(32.0,20.0,10.0),"color":Color(0.08,0.35,0.48),"prompt":"عرض إعلان اختبار الصيادين ومراحله"},
+	{"id":"baghdad_archaeological_ruins","name":"موقع الآثار التاريخية في بغداد","kind":"ruins","offset":Vector2(-115.0,-85.0),"size":Vector3(48.0,7.0,38.0),"color":Color(0.52,0.39,0.24),"prompt":"استكشاف موقع الآثار التاريخية"}
 ]
 
 func build(p_terrain: Node) -> void:
@@ -36,6 +37,7 @@ func register_map_locations(p_map_manager: Node, world_id: String = WORLD_ID) ->
 	for site in _sites:
 		var point := _site_position(site)
 		map_manager.call("register_location", world_id, str(site["id"]), REGION_ID, str(site["name"]), 5, point, false)
+	map_manager.call("register_location", world_id, "baghdad_international_motorsport_park", REGION_ID, "مضمار بغداد الدولي للسيارات", 5, _world_point(Vector2(320.0,220.0)), false)
 	_registered = true
 
 func _tower_offset(index: int) -> Vector2:
@@ -106,6 +108,7 @@ func _build_site(site: Dictionary) -> void:
 		"tunnel": _build_tunnel(root, site)
 		"power_tower": _build_power_tower(root, site)
 		"advertising": _build_advertising(root, site)
+		"ruins": _build_ruins(root, site)
 		_: _build_civic_building(root, site)
 	_build_interaction(root, site)
 
@@ -187,6 +190,16 @@ func _build_advertising(root: Node3D, site: Dictionary) -> void:
 	_add_box(root,"AdvertisingFrame",Vector3(0.0,10.0,0.0),Vector3(26.0,18.0,3.0),frame,true)
 	_add_box(root,"PublicInformationScreen",Vector3(0.0,10.0,-1.7),Vector3(23.0,14.0,0.35),screen,false)
 	_add_sign(root,"إعلانات وأخبار بغداد",Vector3(0.0,21.0,-2.2))
+
+func _build_ruins(root: Node3D, site: Dictionary) -> void:
+	var stone := _material(Color(0.43,0.34,0.24),0.92,0.0)
+	var size: Vector3 = site["size"]
+	for index in range(7):
+		var x := -size.x*0.42 + float(index)*size.x*0.14
+		var height := 2.5 + float(index % 3)*1.4
+		_add_box(root,"BrokenStoneColumn_%02d" % index,Vector3(x,height*0.5,0.0),Vector3(2.2,height,2.2),stone,true)
+	_add_box(root,"RuinedFoundation",Vector3(0.0,0.25,0.0),Vector3(size.x,0.5,size.z),stone,false)
+	_add_sign(root,str(site["name"]),Vector3(0.0,9.0,-size.z*0.5-3.0))
 
 func _build_existing_tower_map_pins() -> void:
 	# Pins only: the five physical towers are already built by BaghdadTowerLandmarksManager.
