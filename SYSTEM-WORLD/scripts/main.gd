@@ -48,6 +48,8 @@ const SYSTEMBusinessServicesMenuScript = preload("res://scripts/system_business_
 const RareAntiquesMarketManagerScript = preload("res://scripts/system_rare_antiques_market_manager.gd")
 const RareAntiquesMarketUIScript = preload("res://scripts/system_rare_antiques_market_ui.gd")
 const CityFactionUIScript = preload("res://scripts/system_city_faction_ui.gd")
+const NenManagerScript = preload("res://scripts/system_nen_manager.gd")
+const NenUIScript = preload("res://scripts/system_nen_ui.gd")
 
 var world_manager
 var world_map_manager
@@ -70,6 +72,8 @@ var motorsport_track_manager
 var crime_response_manager
 var city_faction_manager: Node
 var city_faction_ui: CanvasLayer
+var nen_manager: Node
+var nen_ui: CanvasLayer
 var npc_autonomous_event_manager
 var npc_visible_population_manager
 var npc_social_interaction_manager
@@ -125,6 +129,7 @@ func _ready() -> void:
 	create_system_companions()
 	register_modern_world_map_locations()
 	create_player_progression()
+	create_nen_system()
 	create_inventory_panel()
 	create_player_vehicle_manager()
 	create_business_services()
@@ -337,6 +342,18 @@ func create_player_progression() -> void:
 	player_progression = PlayerProgressionScript.new()
 	player_progression.name = "PlayerProgression"
 	add_child(player_progression)
+
+
+
+func create_nen_system() -> void:
+	nen_manager = NenManagerScript.new()
+	nen_manager.name = "SYSTEMNenManager"
+	add_child(nen_manager)
+	nen_manager.call("setup", player_progression)
+	nen_ui = NenUIScript.new()
+	nen_ui.name = "SYSTEMNenUI"
+	add_child(nen_ui)
+	nen_ui.call("setup", nen_manager)
 
 
 func create_inventory_panel() -> void:
