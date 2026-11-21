@@ -57,6 +57,27 @@ func _run_validation() -> void:
 		_fail("Baghdad OSM building collision bodies were not created.")
 		return
 
+	var archaeological_feature := {
+		"id": "validator_archaeological_site",
+		"tags": {"historic": "archaeological_site", "name:ar": "موقع أثري اختباري"},
+		"geometry": {"type": "Point", "coordinates": [60.0, 60.0]}
+	}
+	var archaeological_count: int = streamer.call("_build_amenity_feature", cell_root, archaeological_feature)
+	if archaeological_count != 1:
+		_fail("An OSM-tagged archaeological site was not converted into a physical landmark.")
+		return
+	var archaeological_root := cell_root.get_node_or_null("OSMArchaeologicalSite_validator_archaeological_site")
+	if archaeological_root == null:
+		_fail("The archaeological site landmark root is missing.")
+		return
+	var archaeological_interaction := archaeological_root.get_node_or_null("ArchaeologicalSiteInteraction")
+	if archaeological_interaction == null or not archaeological_interaction.is_in_group("system_interactable"):
+		_fail("The archaeological site is missing its discoverable interaction area.")
+		return
+	if str(archaeological_interaction.get_meta("system_location_id", "")).is_empty():
+		_fail("The archaeological site has no stable map/discovery location ID.")
+		return
+
 	var road_segments_value: Variant = cell_root.get_meta("road_navigation_segments", [])
 	if not road_segments_value is Array or road_segments_value.is_empty():
 		_fail("Baghdad OSM center cell did not retain pedestrian-accessible road geometry.")
