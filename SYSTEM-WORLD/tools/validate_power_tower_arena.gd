@@ -70,6 +70,21 @@ func _run() -> void:
 	if wallet.balance != 10000:
 		_fail("Wallet settlement did not conserve virtual currency.")
 		return
+	var no_winner_match: Dictionary = arena.create_match("fighter_e", "fighter_f")
+	if not bool(no_winner_match.get("success", false)):
+		_fail("Could not create no-winner refund test match.")
+		return
+	arena.open_betting()
+	var losing_side_bet: Dictionary = arena.place_spectator_bet("local_player", "fighter_e", 200)
+	if not bool(losing_side_bet.get("success", false)):
+		_fail("Could not place no-winner refund test bet.")
+		return
+	arena.lock_betting_and_start_match()
+	var no_winner_result: Dictionary = arena.resolve_match("fighter_f")
+	if int(no_winner_result.get("no_winner_refunds", 0)) != 200 or wallet.balance != 10000:
+		_fail("A pool with no winning tickets was not refunded.")
+		return
+
 	var cancel_match: Dictionary = arena.create_match("fighter_c", "fighter_d")
 	if not bool(cancel_match.get("success", false)):
 		_fail("Could not create a second match.")
