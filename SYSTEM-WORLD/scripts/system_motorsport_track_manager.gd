@@ -27,6 +27,8 @@ var checkpoint_areas: Array[Area3D] = []
 var start_grid_marker: Node3D
 var last_checkpoint_result: Dictionary = {}
 var ai_opponent_nodes: Array[Node3D] = []
+var ai_controller_nodes: Array[Node] = []
+var ai_race_pending_start := false
 var ai_race_results: Array[Dictionary] = []
 var ai_race_event_id := ""
 
@@ -47,6 +49,8 @@ func setup(p_player: CharacterBody3D, p_vehicle_runtime_manager: Node, p_motorsp
 			motorsport_manager.connect("race_started", Callable(self, "_on_motorsport_race_started"))
 		if motorsport_manager.has_signal("race_cancelled"):
 			motorsport_manager.connect("race_cancelled", Callable(self, "_on_motorsport_race_cancelled"))
+	if is_instance_valid(vehicle_runtime_manager) and vehicle_runtime_manager.has_signal("driving_changed"):
+		vehicle_runtime_manager.connect("driving_changed", Callable(self, "_on_player_driving_changed"))
 
 func _ready() -> void:
 	name = "SystemMotorsportTrackManager"
@@ -228,6 +232,7 @@ func start_track_event(event_id: String) -> Dictionary:
 func _on_motorsport_race_started(event_id: String, _player_vehicle_id: String) -> void:
 	_clear_ai_opponents()
 	ai_race_event_id = event_id
+	ai_race_pending_start = true
 	ai_race_results.clear()
 	var event: Dictionary = motorsport_manager.call("get_event", event_id)
 	var laps := maxi(1, int(event.get("laps", 3)))
@@ -266,7 +271,7 @@ func _on_motorsport_race_started(event_id: String, _player_vehicle_id: String) -
 		opponent.configure(vehicle_data, vehicle_id)
 		opponent.set_paint_color(colors[index])
 		track_root.add_child(opponent)
-		opponent.global_position = grid + Vector3(lane_offsets[index], 0.85, 0.0)
+		opponent.global_position = grid + Vector3(lane_offsets[index], 0.85, -8.0)
 		opponent.global_rotation.y = PI
 		var controller := MotorsportAIControllerScript.new()
 		controller.name = "MotorsportAIController"
@@ -275,8 +280,18 @@ func _on_motorsport_race_started(event_id: String, _player_vehicle_id: String) -
 		var cruise_speed := 27.0 + float(index) * 1.8
 		controller.setup(opponent, "baghdad_ai_%02d" % (index + 1), opponent_name, waypoints, laps, cruise_speed)
 		controller.opponent_finished.connect(_on_ai_opponent_finished)
+		ai_controller_nodes.append(controller)
 		ai_opponent_nodes.append(opponent)
 	print("SYSTEM Motorsport AI: %d circuit opponents entered %s." % [ai_opponent_nodes.size(), event_id])
+
+func _on_player_driving_changed(active: bool, _vehicle_id: String) -> void:
+	if not active or not ai_race_pending_start:
+		return
+	ai_race_pending_start = false
+	for controller in ai_controller_nodes:
+		if is_instance_valid(controller) and controller.has_method("start_race"):
+			controller.call("start_race")
+	print("SYSTEM Motorsport AI: opponents released when the player entered the car.")
 
 func _on_ai_opponent_finished(result: Dictionary) -> void:
 	ai_race_results.append(result.duplicate(true))
@@ -292,6 +307,7 @@ func get_ai_race_results() -> Array[Dictionary]:
 func _on_motorsport_race_cancelled(_event_id: String) -> void:
 	_clear_ai_opponents()
 	ai_race_results.clear()
+	ai_race_pending_start = false
 	ai_race_event_id = ""
 
 func _clear_ai_opponents() -> void:
@@ -299,6 +315,7 @@ func _clear_ai_opponents() -> void:
 		if is_instance_valid(opponent):
 			opponent.queue_free()
 	ai_opponent_nodes.clear()
+	ai_controller_nodes.clear()
 
 func _on_checkpoint_body_entered(body: Node3D, checkpoint_index: int) -> void:
 	if vehicle_runtime_manager == null:
