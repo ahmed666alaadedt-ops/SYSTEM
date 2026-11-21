@@ -226,6 +226,13 @@ func _handle_building_transition(target: Node) -> bool:
 			destination = target_parent.call("get_return_position")
 			transition_label = "exit_building"
 
+	# Lift selectors carry an explicit world-space destination for the chosen floor.
+	elif target_id.begins_with("tower_floor_"):
+		var saved_destination: Variant = target.get_meta("system_destination_position", Vector3.INF)
+		if saved_destination is Vector3:
+			destination = saved_destination
+			transition_label = "tower_floor_selection"
+
 	if destination == Vector3.INF:
 		return false
 
