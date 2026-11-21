@@ -11,6 +11,7 @@ const ModernWorldTransportNetworkManagerScript = preload("res://scripts/modern_w
 const ModernCityStreetFurnitureManagerScript = preload("res://scripts/modern_city_street_furniture_manager.gd")
 const ModernCityServicesManagerScript = preload("res://scripts/modern_city_services_manager.gd")
 const SYSTEMPublicEventBoardScript = preload("res://scripts/system_public_event_board.gd")
+const SYSTEMCityAdvertisingManagerScript = preload("res://scripts/system_city_advertising_manager.gd")
 
 ## طبقة تفاصيل المدن والمناطق الحضرية للعالم الحديث.
 ## تُبنى فوق تضاريس القارة الموجودة ولا تستبدلها أو تغيّر مواقعها المرجعية.
@@ -69,6 +70,7 @@ var plaza_material: StandardMaterial3D
 var building_materials: Array[StandardMaterial3D] = []
 var park_material: StandardMaterial3D
 var use_baghdad_osm_cells := false
+var city_advertising_manager: Node3D
 
 
 func _ready() -> void:
@@ -697,6 +699,11 @@ func register_map_locations(map_manager: Node, world_id: String) -> void:
 			Vector3(village_position.x, terrain.get_terrain_height(village_position.x, village_position.y), village_position.y), false
 		)
 
+	var advertising_manager := get_node_or_null("SYSTEMCityAdvertisingManager")
+	if advertising_manager != null and advertising_manager.has_method("get_advertisement_locations"):
+		for advertisement in advertising_manager.call("get_advertisement_locations"):
+			map_manager.call("register_advertisement", world_id, str(advertisement.get("id", "")), str(advertisement.get("city", "")), str(advertisement.get("name", "إعلان")), advertisement.get("position", Vector3.ZERO))
+			map_manager.call("update_advertisement", world_id, str(advertisement.get("id", "")), advertisement)
 	var services_manager := get_node_or_null("ModernCityServicesManager")
 	if services_manager != null and services_manager.has_method("get_service_locations"):
 		for service_data in services_manager.call("get_service_locations"):
@@ -865,3 +872,8 @@ func _create_city_advertising_screens() -> void:
 	public_board.name = "SYSTEMPublicEventBoard"
 	add_child(public_board)
 	public_board.setup(city_anchors, terrain)
+
+	city_advertising_manager = SYSTEMCityAdvertisingManagerScript.new()
+	city_advertising_manager.name = "SYSTEMCityAdvertisingManager"
+	add_child(city_advertising_manager)
+	city_advertising_manager.setup(city_anchors, terrain)
