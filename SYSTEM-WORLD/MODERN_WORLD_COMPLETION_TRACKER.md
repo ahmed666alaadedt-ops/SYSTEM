@@ -872,3 +872,14 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Godot 4.3 workflow run 44953971555 passed on commit 45d200f4e6c4d86f06530c1ba562a1b3eedeeb2c, including shopping tower validator and headless main-scene launch.
 - [ ] Add authored item artwork, 3D shop displays, more store categories, vendor NPCs, player-to-player trading and online inventory synchronization.
 - Note: this is a working local-device collectibles shop; it is not a global marketplace or player-to-player economy.
+
+
+## Baghdad motorsport — countdown cancellation hardening — 22 November 2026
+
+- [x] Revalidate the active three-second countdown every frame and cancel immediately when the player exits the vehicle or the staged car moves more than 22 m from the start grid.
+- [x] Preserve the countdown when the player remains in the vehicle and within the approved start-grid radius.
+- [x] Extend the physical track validator with regression cases for leaving the vehicle, moving away from the grid, and remaining correctly staged.
+- [x] Godot 4.3 workflow run 44954253300 passed on commit 79c2e88cea3591fbe841f60f861575d9da0c9d29. The run imported/parsed the project, passed both motorsport validators, all configured Baghdad/tower/hunter/Power Tower checks, the missing-mesh scan, and headless main-scene launch.
+- [x] The runtime mesh scan reported zero null MeshInstance3D meshes and zero invalid MultiMesh resources; all four world roots passed lazy-load initialization.
+- [ ] Validate actual driving feel, vehicle movement during the countdown, mobile controls, and pit entry/exit on a physical device.
+- Note: Baghdad OSM runtime validation was skipped because the audited candidate cell-pack manifest was not installed in this branch checkout. The motorsport venue remains a procedural blockout, not finished track art or certified vehicle physics.
