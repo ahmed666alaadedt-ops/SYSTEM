@@ -53,6 +53,16 @@ This is the acceptance checklist for the modern-world map. The project must not 
 
 
 
+
+## Baghdad worship and museum interior blockout pass — 21 November 2026
+
+- [x] Add first-pass interior floor and spatial props to mosque, church, city museum and rare-antiquities bazaar service buildings.
+- [x] Add mosque prayer-row carpet and column placeholders; church nave pews, altar and stained-glass placeholder; museum display pedestals/cases; bazaar display cabinets.
+- [x] Remove the solid full-building collision shell for these four interior blockouts so the spaces can be entered during the prototype phase.
+- [ ] Replace pass-through placeholder shells with proper door openings, wall/roof collision, accessibility, navigation, lighting, acoustics, cultural review and complete interior art.
+- [ ] Add respectful optional visitor interactions, museum exhibit descriptions/collections, worship-venue schedules and local NPC behavior.
+- Note: these are first-pass interior geometry placeholders, not researched, production-ready sacred or museum environments.
+
 ## Baghdad motorsport park and city faction gameplay follow-up — 21 November 2026
 
 - [x] Add a Godot validator for dedicated-track entry, owned vehicle class eligibility, ordered checkpoint progression, three-lap completion, local reward and personal-record scope.
