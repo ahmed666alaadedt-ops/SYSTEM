@@ -690,3 +690,18 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Add online account synchronization, server-authoritative progression and anti-cheat validation; current saves are local-device prototypes.
 - [ ] Run the new Godot 4.3 validator and full Android runtime tests on the latest PR head.
 - Note: this is a first connected progression prototype, not a finished combat ability system. Nen is intended to be learnable by all eligible characters, but each character must discover it through their own path; NPC-wide automatic enrollment and actual combat execution remain pending.
+
+
+## Baghdad civic buildings — structural interior completion pass — 21 November 2026
+
+- [x] Replace the four civic venues' opaque solid facade blocks with separate wall sections and a real entrance opening.
+- [x] Add collision-backed side, rear, front and lintel wall sections plus an interior floor collision for the mosque, church, city museum and rare-antiquities bazaar.
+- [x] Match interior wall and roof heights to each venue type; preserve the mosque dome/minarets and church roof/towers above the visitor space.
+- [x] Add venue-specific interior fixtures: prayer-hall mihrab/minbar, church altar/lectern/stained glass, museum reception/exhibit labels/display cases, and bazaar auctioneer/appraisal desks.
+- [x] Add low-cost non-shadowing interior lighting to the four venues.
+- [x] Extend the civic venue validator to instantiate all four interiors and check wall collision, entrance-side wall layout, floor collision and venue-specific props.
+- [ ] Run the Godot 4.3 validator and visually verify door clearance, wall/floor alignment, roof coverage, interior scale and Android performance; source-level validation has not yet been executed.
+- [ ] Replace placeholder exhibit labels and generic props with authored historically grounded collections, culturally reviewed architecture, NPC staff, schedules and interactive visitor experiences.
+- [ ] Complete the remaining service buildings (schools/universities, hospitals, police/fire stations, hotels, markets, transport hubs, shops, libraries, cinemas, gyms and other civic services) with distinct room layouts and functional interiors.
+- [ ] Integrate each completed building's entrance, interior navigation, service interactions and map marker into the unified city map and streamed region lifecycle.
+- Note: this pass upgrades the four Baghdad civic interiors from open placeholder rooms to collision-backed traversable architectural shells with venue-specific fixtures. It does not yet mean all city buildings or all interiors are production-complete.
