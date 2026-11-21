@@ -1056,11 +1056,11 @@ func _on_interaction_performed(
 					"انتهت مدة الإعلان" if remaining <= 0 else "مدة العرض المتبقية: %d ثانية" % remaining
 				]
 	if location_id == "hunter_exam_tunnel_start_baghdad":
-		var hunter_menu := get_node_or_null("HunterGuildMenu")
+		var tunnel_hunter_menu := get_node_or_null("HunterGuildMenu")
 		if hunter_exam_manager != null:
 			var exam_result: Dictionary = hunter_exam_manager.call("begin_exam")
-			if hunter_menu != null and hunter_menu.has_method("show_exam_tunnel_result"):
-				hunter_menu.call("show_exam_tunnel_result", exam_result)
+			if tunnel_hunter_menu != null and tunnel_hunter_menu.has_method("show_exam_tunnel_result"):
+				tunnel_hunter_menu.call("show_exam_tunnel_result", exam_result)
 			if interaction_prompt_label != null:
 				if bool(exam_result.get("success", false)):
 					var stage: Dictionary = exam_result.get("stage", {})
