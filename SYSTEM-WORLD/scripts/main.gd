@@ -1006,9 +1006,14 @@ func _on_interaction_performed(
 		var service_description := str(target.get_meta("system_service_description", "الخدمة قيد التطوير."))
 		if location_id.begins_with("tower_service_hunter_association_tower_baghdad_"):
 			var hunter_menu := get_node_or_null("HunterGuildMenu")
-			if hunter_menu != null and hunter_menu.has_method("open_guild_panel"):
-				hunter_menu.call("open_guild_panel")
-				service_description = "تم فتح لوحة النقابة. اختر مهمة أو سجّل في اختبار الصيادين."
+			if hunter_menu != null and hunter_menu.has_method("open_service_view"):
+				hunter_menu.call("open_service_view", location_id)
+				if location_id.ends_with("_0"):
+					service_description = "تم فتح مكتب تسجيل اختبار الصيادين."
+				elif location_id.ends_with("_1"):
+					service_description = "تم فتح لوحة مهام النقابة."
+				elif location_id.ends_with("_2"):
+					service_description = "تم فتح مكتب معلومات النقابة."
 		if interaction_prompt_label != null:
 			interaction_prompt_label.text = "%s\\n%s" % [service_title, service_description]
 	elif location_id.begins_with("street_ad_"):
