@@ -1,6 +1,14 @@
 extends CanvasLayer
 class_name SYSTEMInventoryPanel
 
+const ITEM_DISPLAY_NAMES := {
+	"baghdad_tower_emblem": "شارة أبراج بغداد",
+	"hunter_association_patch": "رقعة نقابة الصيادين",
+	"system_city_poster": "ملصق مدينة SYSTEM",
+	"baghdad_architecture_model": "مجسم بغداد المصغر",
+	"five_towers_collectors_set": "مجموعة الأبراج الخمسة"
+}
+
 var progression: Node
 var panel: PanelContainer
 var item_list: Label
@@ -65,5 +73,6 @@ func refresh_inventory() -> void:
 		return
 	var lines := PackedStringArray()
 	for item_id in items.keys():
-		lines.append("%s  × %d" % [str(item_id), int(items[item_id])])
+		var display_name := str(ITEM_DISPLAY_NAMES.get(str(item_id), str(item_id)))
+		lines.append("%s  × %d" % [display_name, int(items[item_id])])
 	item_list.text = "\n".join(lines)
