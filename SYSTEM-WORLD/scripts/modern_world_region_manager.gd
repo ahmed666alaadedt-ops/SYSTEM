@@ -876,6 +876,6 @@ func _create_city_advertising_screens() -> void:
 	city_advertising_manager.name = "SYSTEMCityAdvertisingManager"
 	add_child(city_advertising_manager)
 	city_advertising_manager.setup(city_anchors, terrain)
-	var public_board := get_node_or_null("SYSTEMPublicEventBoard")
-	if public_board != null and public_board.has_method("connect_advertising_manager"):
-		public_board.call("connect_advertising_manager", city_advertising_manager)
+	var event_board := get_node_or_null("SYSTEMPublicEventBoard")
+	if event_board != null and event_board.has_method("connect_advertising_manager"):
+		event_board.call("connect_advertising_manager", city_advertising_manager)
