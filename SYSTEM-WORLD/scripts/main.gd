@@ -870,8 +870,22 @@ func _on_interaction_performed(
 		if interaction_prompt_label != null:
 			interaction_prompt_label.text = "برج نقابة الصيادين — خدمات النقابة والمهام والاختبارات"
 	elif location_id == "hunter_association_headquarters_baghdad":
-		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "وصلت إلى المقر الرئيسي لنقابة الصيادين فوق مجمع الأبراج الخمسة — راجع واجهة النقابة للخدمات والتسجيل"
+		var headquarters := target.get_parent()
+		var interior := headquarters.get_node_or_null("HeadquartersInterior") if headquarters != null else null
+		if interior != null and player != null:
+			player.global_position = interior.call("get_entry_position")
+			player.velocity = Vector3.ZERO
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "دخلت المقر الرئيسي لنقابة الصيادين — اقترب من بوابة الخروج للتفاعل"
+		elif interaction_prompt_label != null:
+			interaction_prompt_label.text = "المقر الرئيسي لنقابة الصيادين — تعذر تحميل المساحة الداخلية"
+	elif location_id == "hunter_association_headquarters_exit_baghdad":
+		var interior := target.get_parent()
+		if interior != null and player != null and interior.has_method("get_return_position"):
+			player.global_position = interior.call("get_return_position")
+			player.velocity = Vector3.ZERO
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "خرجت من المقر الرئيسي لنقابة الصيادين"
 
 
 func _on_location_discovered(
