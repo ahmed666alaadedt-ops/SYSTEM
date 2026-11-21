@@ -98,6 +98,7 @@ func _refresh_view() -> void:
 		return
 	balance_label.text = "رصيدك: %s SYSTEM Credits" % String.num_int64(int(wallet.call("get_balance")))
 	for child in item_list.get_children():
+		item_list.remove_child(child)
 		child.queue_free()
 	if active_view == "overview":
 		status_label.text = "متجر تذكارات محلي. المشتريات تُحفظ في حقيبتك ولا تمنح أفضلية قتالية."
@@ -168,9 +169,9 @@ func _purchase_item(item_id: String) -> void:
 		return
 	if not bool(progression.call("add_item", item_id, 1)):
 		wallet.call("credit_currency", price, "shopping_tower_purchase_refund")
-		status_label.text = "تعذرت إضافة المقتنى إلى الحقيبة؛ أُعيد المبلغ إلى محفظتك."
 		_refresh_view()
+		status_label.text = "تعذرت إضافة المقتنى إلى الحقيبة؛ أُعيد المبلغ إلى محفظتك."
 		return
 	item_purchased.emit(item_id, str(selected["name"]), price)
-	status_label.text = "تم شراء %s وإضافته إلى حقيبتك." % str(selected["name"])
 	_refresh_view()
+	status_label.text = "تم شراء %s وإضافته إلى حقيبتك." % str(selected["name"])
