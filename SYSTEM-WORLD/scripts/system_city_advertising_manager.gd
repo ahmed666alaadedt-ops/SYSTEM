@@ -167,17 +167,21 @@ func _refresh_all_displays() -> void:
 	for record in display_records:
 		var campaign := _campaign_for_record(record, now)
 		var label := record.get("label") as Label3D
-		if is_instance_valid(label):
-			label.text = "%s\n%s\n%s" % [
-				str(campaign.get("title", "SYSTEM")),
-				str(campaign.get("body", "")),
-				"تفاعل لمعرفة التفاصيل"
-			]
-			var root := record.get("root") as Node3D
-			if is_instance_valid(root):
-				var surface := root.get_node_or_null("DisplaySurface") as MeshInstance3D
-				if surface != null:
-					surface.material_override = _campaign_material(campaign.get("color", Color(0.04, 0.16, 0.22)))
+		var root := record.get("root") as Node3D
+		var campaign_id := str(campaign.get("id", ""))
+		var campaign_text := "%s\n%s\n%s" % [
+			str(campaign.get("title", "SYSTEM")),
+			str(campaign.get("body", "")),
+			"تفاعل لمعرفة التفاصيل"
+		]
+		if is_instance_valid(label) and label.text != campaign_text:
+			label.text = campaign_text
+		if is_instance_valid(root) and str(root.get_meta("active_campaign_id", "")) != campaign_id:
+			var surface := root.get_node_or_null("DisplaySurface") as MeshInstance3D
+			if surface != null:
+				var campaign_color: Color = campaign.get("color", Color(0.04, 0.16, 0.22))
+				surface.material_override = _campaign_material(campaign_color)
+			root.set_meta("active_campaign_id", campaign_id)
 		if map_manager != null and map_manager.has_method("update_advertisement"):
 			map_manager.call("update_advertisement", WORLD_ID, str(record["id"]), campaign)
 
@@ -188,7 +192,7 @@ func _campaign_for_record(record: Dictionary, now: int) -> Dictionary:
 	var cycle_seconds := 0
 	for campaign in CAMPAIGNS:
 		cycle_seconds += int(campaign.get("duration", 90))
-	var cycle_position := posmod(now + city_offset * 37 + board_offset * 19, maxi(cycle_seconds, 1))
+	var cycle_position: int = posmod(now + city_offset * 37 + board_offset * 19, maxi(cycle_seconds, 1))
 	var campaign: Dictionary = {}
 	var remaining_in_campaign := 0
 	for candidate in CAMPAIGNS:
