@@ -5,6 +5,7 @@ const RACE_SCRIPT = preload("res://scripts/system_motorsport_manager.gd")
 
 class MockVehicleRuntime extends Node:
 	var active_vehicle: Node3D
+	var is_driving := true
 
 func _initialize() -> void:
 	var runtime := MockVehicleRuntime.new()
@@ -85,6 +86,39 @@ func _initialize() -> void:
 		return
 	manager.active_vehicle_in_pit_lane = false
 	manager._on_pit_lane_context_body_exited(test_vehicle)
+
+	# Leaving the vehicle during the countdown must cancel immediately.
+	race_manager.cancel_race()
+	race_manager.active_race = {"event_id": "leave_vehicle_during_countdown"}
+	race_manager.race_countdown_remaining = 2.0
+	race_manager.race_is_running = false
+	runtime.is_driving = false
+	manager._on_player_driving_changed(false, "sport_coupe")
+	if race_manager.is_race_active():
+		_fail("Leaving the vehicle during the countdown did not cancel the race.")
+		return
+
+	# Moving the staged vehicle away from the grid during the countdown must cancel.
+	runtime.is_driving = true
+	race_manager.active_race = {"event_id": "leave_grid_during_countdown"}
+	race_manager.race_countdown_remaining = 2.0
+	race_manager.race_is_running = false
+	test_vehicle.global_position = manager.get_start_grid_position() + Vector3(30.0, 0.0, 0.0)
+	manager._process(0.016)
+	if race_manager.is_race_active():
+		_fail("Moving away from the start grid during the countdown did not cancel the race.")
+		return
+
+	# Remaining in the vehicle and on the grid must preserve the active countdown.
+	test_vehicle.global_position = manager.get_start_grid_position()
+	race_manager.active_race = {"event_id": "valid_grid_countdown"}
+	race_manager.race_countdown_remaining = 2.0
+	race_manager.race_is_running = false
+	manager._process(0.016)
+	if not race_manager.is_race_active():
+		_fail("A valid staged vehicle was incorrectly removed from the countdown.")
+		return
+	race_manager.cancel_race()
 
 	var info: Dictionary = manager.get_track_info()
 	if int(info.get("pit_garage_count", 0)) != 8 or int(info.get("marshal_post_count", 0)) != 4:
