@@ -57,9 +57,12 @@ func _tower_offset(index: int) -> Vector2:
 
 func _world_point(offset: Vector2) -> Vector3:
 	var anchor := Vector3.ZERO
-	if terrain.has_method("get_baghdad_anchor"):
-		anchor = terrain.call("get_baghdad_anchor")
-	return Vector3(anchor.x + offset.x, float(terrain.call("get_terrain_height", anchor.x + offset.x, anchor.z + offset.y)), anchor.z + offset.y)
+	var region_manager := get_parent()
+	if region_manager != null and region_manager.has_method("get_city_anchor"):
+		anchor = region_manager.call("get_city_anchor", "Baghdad")
+	var x := anchor.x + offset.x
+	var z := anchor.z + offset.y
+	return Vector3(x, float(terrain.call("get_terrain_height", x, z)), z)
 
 func _site_position(site: Dictionary) -> Vector3:
 	return _world_point(site["offset"])
@@ -196,7 +199,8 @@ func _build_existing_tower_map_pins() -> void:
 func _build_interaction(root: Node3D, site: Dictionary) -> void:
 	var area := Area3D.new()
 	area.name = "LandmarkInteraction"
-	area.position = Vector3(0.0,1.5, -float((site["size"] as Vector3).z)*0.5-3.0)
+	var site_size: Vector3 = site["size"]
+	area.position = Vector3(0.0,1.5, -site_size.z*0.5-3.0)
 	area.add_to_group("system_interactable")
 	area.set_meta("system_location_id",str(site["id"]))
 	area.set_meta("system_region_id",REGION_ID)
