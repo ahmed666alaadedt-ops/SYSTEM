@@ -475,7 +475,7 @@ func _create_link_deck(parent: Node3D, start: Vector3, finish: Vector3, deck_nam
 
 
 func _create_vehicle_access_ramp(parent: Node3D, tower_position: Vector3, index: int) -> void:
-	# Visual ramp prototype only; drivable vehicle navigation and collision validation remain future work.
+	# Collision-backed ramp segments are walkable; drivable vehicle navigation and slope testing remain future work.
 	var ramp_root := Node3D.new()
 	ramp_root.name = "VehicleAccessRamp_%d" % index
 	parent.add_child(ramp_root)
@@ -507,6 +507,7 @@ func _create_public_amenities() -> void:
 		deck.position = city_anchor + spec["offset"]
 		deck.material_override = spec["material"]
 		amenities.add_child(deck)
+		_add_static_box_collision(amenities, str(spec["name"]) + "_Collision", deck.position, mesh.size)
 	amenities.set_meta("planned_facilities", PackedStringArray(["parks", "restaurants", "cafes", "hotels", "cinema", "amusement_park", "water_park", "swimming_pools", "sports_courts", "family_services", "parking", "emergency_access"]))
 	_create_multilevel_parking_blockout(amenities)
 	_create_vertical_access_blockout(amenities)
