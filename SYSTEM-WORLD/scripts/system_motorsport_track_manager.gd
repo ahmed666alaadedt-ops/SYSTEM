@@ -17,12 +17,18 @@ const ROAD_WIDTH := 18.0
 const ROAD_THICKNESS := 0.8
 
 const CHECKPOINT_COUNT := 4
+const MotorsportAIControllerScript = preload("res://scripts/system_motorsport_ai_controller.gd")
+const VehicleScript = preload("res://scripts/system_drivable_vehicle.gd")
+const VehicleCatalogScript = preload("res://scripts/system_vehicle_catalog.gd")
 const START_GRID_OFFSET := Vector3(TRACK_HALF_LENGTH, 0.0, -8.0)
 const CHECKPOINT_ANGLES := [0.0, PI * 0.5, PI, PI * 1.5]
 
 var checkpoint_areas: Array[Area3D] = []
 var start_grid_marker: Node3D
 var last_checkpoint_result: Dictionary = {}
+var ai_opponent_nodes: Array[Node3D] = []
+var ai_race_results: Array[Dictionary] = []
+var ai_race_event_id := ""
 
 
 var player: CharacterBody3D
@@ -36,6 +42,11 @@ func setup(p_player: CharacterBody3D, p_vehicle_runtime_manager: Node, p_motorsp
 	player = p_player
 	vehicle_runtime_manager = p_vehicle_runtime_manager
 	motorsport_manager = p_motorsport_manager
+	if is_instance_valid(motorsport_manager):
+		if motorsport_manager.has_signal("race_started"):
+			motorsport_manager.connect("race_started", Callable(self, "_on_motorsport_race_started"))
+		if motorsport_manager.has_signal("race_cancelled"):
+			motorsport_manager.connect("race_cancelled", Callable(self, "_on_motorsport_race_cancelled"))
 
 func _ready() -> void:
 	name = "SystemMotorsportTrackManager"
@@ -213,6 +224,81 @@ func start_track_event(event_id: String) -> Dictionary:
 	if bool(result.get("success", false)):
 		last_checkpoint_result.clear()
 	return result
+
+func _on_motorsport_race_started(event_id: String, _player_vehicle_id: String) -> void:
+	_clear_ai_opponents()
+	ai_race_event_id = event_id
+	ai_race_results.clear()
+	var event: Dictionary = motorsport_manager.call("get_event", event_id)
+	var laps := maxi(1, int(event.get("laps", 3)))
+	var categories: Array = event.get("vehicle_categories", [])
+	var circuit_events := ["city_sprint", "gt_championship", "formula_grand_prix", "endurance_challenge"]
+	if not circuit_events.has(event_id):
+		print("SYSTEM Motorsport AI: this event discipline is not yet supported by the circuit prototype.")
+		return
+	var waypoints: Array[Vector3] = []
+	for area in checkpoint_areas:
+		if is_instance_valid(area):
+			waypoints.append(area.global_position)
+	if waypoints.size() < 2:
+		push_warning("SYSTEM Motorsport AI: checkpoint route is unavailable.")
+		return
+	var candidate_ids := [
+		"sport_coupe", "performance_supercar", "electric_hyper_sedan",
+		"gt3_race_car", "endurance_prototype", "track_hypercar", "formula_race_car"
+	]
+	var eligible_ids: Array[String] = []
+	for candidate_id in candidate_ids:
+		var data := VehicleCatalogScript.get_vehicle(candidate_id)
+		if categories.has(str(data.get("category", ""))):
+			eligible_ids.append(candidate_id)
+	if eligible_ids.is_empty():
+		push_warning("SYSTEM Motorsport AI: no eligible opponent vehicle class was found.")
+		return
+	var grid := get_start_grid_position()
+	var lane_offsets := [-4.5, 0.0, 4.5]
+	var colors := [Color(0.78, 0.12, 0.12), Color(0.08, 0.42, 0.82), Color(0.92, 0.62, 0.08)]
+	for index in range(3):
+		var vehicle_id: String = eligible_ids[index % eligible_ids.size()]
+		var vehicle_data := VehicleCatalogScript.get_vehicle(vehicle_id)
+		var opponent := VehicleScript.new()
+		opponent.name = "AI_Racer_%02d_%s" % [index + 1, vehicle_id]
+		opponent.configure(vehicle_data, vehicle_id)
+		opponent.set_paint_color(colors[index])
+		track_root.add_child(opponent)
+		opponent.global_position = grid + Vector3(lane_offsets[index], 0.85, 0.0)
+		opponent.global_rotation.y = PI
+		var controller := MotorsportAIControllerScript.new()
+		controller.name = "MotorsportAIController"
+		opponent.add_child(controller)
+		var opponent_name := "SYSTEM Racer %02d" % (index + 1)
+		var cruise_speed := 27.0 + float(index) * 1.8
+		controller.setup(opponent, "baghdad_ai_%02d" % (index + 1), opponent_name, waypoints, laps, cruise_speed)
+		controller.opponent_finished.connect(_on_ai_opponent_finished)
+		ai_opponent_nodes.append(opponent)
+	print("SYSTEM Motorsport AI: %d circuit opponents entered %s." % [ai_opponent_nodes.size(), event_id])
+
+func _on_ai_opponent_finished(result: Dictionary) -> void:
+	ai_race_results.append(result.duplicate(true))
+	ai_race_results.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return float(a.get("elapsed_seconds", 0.0)) < float(b.get("elapsed_seconds", 0.0))
+	)
+	result["finish_position"] = ai_race_results.size()
+	print("SYSTEM Motorsport AI: %s finished in position %d." % [str(result.get("opponent_name", "AI")), ai_race_results.size()])
+
+func get_ai_race_results() -> Array[Dictionary]:
+	return ai_race_results.duplicate(true)
+
+func _on_motorsport_race_cancelled(_event_id: String) -> void:
+	_clear_ai_opponents()
+	ai_race_results.clear()
+	ai_race_event_id = ""
+
+func _clear_ai_opponents() -> void:
+	for opponent in ai_opponent_nodes:
+		if is_instance_valid(opponent):
+			opponent.queue_free()
+	ai_opponent_nodes.clear()
 
 func _on_checkpoint_body_entered(body: Node3D, checkpoint_index: int) -> void:
 	if vehicle_runtime_manager == null:
