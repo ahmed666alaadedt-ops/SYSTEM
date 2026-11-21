@@ -7,7 +7,7 @@ const TowerInteriorScript = preload("res://scripts/system_baghdad_tower_interior
 const PowerTowerArenaVenueScript = preload("res://scripts/system_power_tower_arena_venue.gd")
 const PowerTowerFloorWorldScript = preload("res://scripts/system_power_tower_floor_world.gd")
 const HUNTER_TOWER_HEIGHT := 1000.0
-const POWER_TOWER_HEIGHT := 168.0
+const POWER_TOWER_HEIGHT := 620.0
 const TECHNOLOGY_TOWER_HEIGHT := 210.0
 
 var terrain: Node
