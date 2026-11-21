@@ -419,23 +419,32 @@ func create_npc_autonomous_society_event_manager() -> void:
 
 
 func create_npc_city_navigation_manager() -> void:
-	if active_world_root == null:
+	if world_manager == null:
 		return
-	var region_manager := active_world_root.get_node_or_null("ModernWorldRegionManager")
+	var modern_root := world_manager.get_world_root(WorldManagerScript.WorldID.REALISTIC) as Node3D
+	if modern_root == null:
+		return
+	active_world_root = modern_root
+	var region_manager := modern_root.get_node_or_null("ModernWorldRegionManager")
 	npc_city_navigation_manager = NPCCityNavigationManagerScript.new()
 	npc_city_navigation_manager.name = "NPCCityNavigationManager"
-	active_world_root.add_child(npc_city_navigation_manager)
+	modern_root.add_child(npc_city_navigation_manager)
 	npc_city_navigation_manager.setup(region_manager)
 
 
 func create_npc_visible_population_manager() -> void:
-	if active_world_root == null or ai_npc_society_manager == null:
-		push_warning("SYSTEM: Visible NPC population requires the active modern world and society manager.")
+	if world_manager == null or ai_npc_society_manager == null:
+		push_warning("SYSTEM: Visible NPC population requires the modern world and society manager.")
 		return
+	var modern_root := world_manager.get_world_root(WorldManagerScript.WorldID.REALISTIC) as Node3D
+	if modern_root == null:
+		push_warning("SYSTEM: Modern world root is unavailable for visible NPC population.")
+		return
+	active_world_root = modern_root
 	npc_visible_population_manager = NPCVisiblePopulationManagerScript.new()
 	npc_visible_population_manager.name = "NPCVisiblePopulationManager"
-	active_world_root.add_child(npc_visible_population_manager)
-	var region_manager := active_world_root.get_node_or_null("ModernWorldRegionManager")
+	modern_root.add_child(npc_visible_population_manager)
+	var region_manager := modern_root.get_node_or_null("ModernWorldRegionManager")
 	npc_visible_population_manager.setup(
 		ai_npc_society_manager,
 		npc_daily_life_manager,
@@ -1463,7 +1472,7 @@ func update_camera_rotation() -> void:
 # --------------------------------------------------
 
 func _physics_process(delta: float) -> void:
-	if player == null:
+	if not is_instance_valid(player) or not is_instance_valid(spring_arm):
 		return
 	if vehicle_runtime_manager != null and vehicle_runtime_manager.is_driving:
 		return
