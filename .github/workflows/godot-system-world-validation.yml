@@ -82,6 +82,20 @@ jobs:
           fi
           grep -q "Baghdad civic venue validation passed:" "$LOG"
 
+      - name: Validate modern city faction registry and reputation
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          LOG="$RUNNER_TEMP/city-faction-validation.log"
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_city_faction_manager.gd 2>&1 | tee "$LOG"
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|City faction validation failed" "$LOG"; then
+            echo "::error::City faction validation failed."
+            exit 1
+          fi
+          grep -q "City faction validation passed:" "$LOG"
+
       - name: Validate terrain cell streaming, shared edges and lifecycle
         shell: bash
         run: |
