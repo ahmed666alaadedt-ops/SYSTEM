@@ -467,7 +467,7 @@ func _create_civic_structural_shell(parent: Node3D, service_id: String, width: f
 
 func _build_civic_interior(parent: Node3D, service_id: String, width: float, depth: float, stone: Material, glass: Material, timber: Material) -> void:
 	var floor := MeshInstance3D.new()
-	floor.name = "InteriorFloor_Blockout"
+	floor.name = "CivicInteriorFloor"
 	var floor_mesh := BoxMesh.new()
 	floor_mesh.size = Vector3(width - 2.0, 0.24, depth - 2.0)
 	floor.mesh = floor_mesh
@@ -486,6 +486,22 @@ func _build_civic_interior(parent: Node3D, service_id: String, width: float, dep
 				runner.position = Vector3(0.0, 0.43, -depth * 0.31 + float(row) * 3.2)
 				runner.material_override = prayer_carpet
 				parent.add_child(runner)
+			var mihrab := MeshInstance3D.new()
+			mihrab.name = "PrayerHallMihrab"
+			var mihrab_mesh := BoxMesh.new()
+			mihrab_mesh.size = Vector3(4.0, 5.0, 0.7)
+			mihrab.mesh = mihrab_mesh
+			mihrab.position = Vector3(0.0, 3.0, depth * 0.5 - 0.8)
+			mihrab.material_override = stone
+			parent.add_child(mihrab)
+			var minbar := MeshInstance3D.new()
+			minbar.name = "PrayerHallMinbar"
+			var minbar_mesh := BoxMesh.new()
+			minbar_mesh.size = Vector3(2.0, 2.2, 2.0)
+			minbar.mesh = minbar_mesh
+			minbar.position = Vector3(width * 0.32, 1.1, depth * 0.5 - 2.0)
+			minbar.material_override = timber
+			parent.add_child(minbar)
 			for side in [-1.0, 1.0]:
 				for column in range(2):
 					var pillar := MeshInstance3D.new()
@@ -510,7 +526,7 @@ func _build_civic_interior(parent: Node3D, service_id: String, width: float, dep
 					pew.material_override = timber
 					parent.add_child(pew)
 			var altar := MeshInstance3D.new()
-			altar.name = "ChurchAltar_Blockout"
+			altar.name = "ChurchAltar"
 			var altar_mesh := BoxMesh.new()
 			altar_mesh.size = Vector3(5.0, 1.1, 2.0)
 			altar.mesh = altar_mesh
@@ -518,13 +534,21 @@ func _build_civic_interior(parent: Node3D, service_id: String, width: float, dep
 			altar.material_override = stone
 			parent.add_child(altar)
 			var stained_glass := MeshInstance3D.new()
-			stained_glass.name = "ChurchStainedGlass_Blockout"
+			stained_glass.name = "ChurchStainedGlass"
 			var glass_mesh := BoxMesh.new()
 			glass_mesh.size = Vector3(4.0, 5.0, 0.16)
 			stained_glass.mesh = glass_mesh
 			stained_glass.position = Vector3(0.0, 7.0, depth * 0.49)
 			stained_glass.material_override = glass
 			parent.add_child(stained_glass)
+			var lectern := MeshInstance3D.new()
+			lectern.name = "ChurchLectern"
+			var lectern_mesh := BoxMesh.new()
+			lectern_mesh.size = Vector3(1.0, 1.5, 0.8)
+			lectern.mesh = lectern_mesh
+			lectern.position = Vector3(-4.5, 1.0, depth * 0.2)
+			lectern.material_override = timber
+			parent.add_child(lectern)
 		"museum":
 			for index in range(4):
 				var pedestal := MeshInstance3D.new()
@@ -543,6 +567,20 @@ func _build_civic_interior(parent: Node3D, service_id: String, width: float, dep
 				case_mesh_node.position = pedestal.position + Vector3.UP * 1.7
 				case_mesh_node.material_override = glass
 				parent.add_child(case_mesh_node)
+				var exhibit_label := Label3D.new()
+				exhibit_label.name = "MuseumExhibitLabel_%02d" % index
+				exhibit_label.text = "معروض تاريخي %02d" % (index + 1)
+				exhibit_label.font_size = 22
+				exhibit_label.position = pedestal.position + Vector3(0.0, 2.8, 0.0)
+				parent.add_child(exhibit_label)
+			var reception := MeshInstance3D.new()
+			reception.name = "MuseumReceptionDesk"
+			var reception_mesh := BoxMesh.new()
+			reception_mesh.size = Vector3(6.0, 1.2, 1.8)
+			reception.mesh = reception_mesh
+			reception.position = Vector3(0.0, 0.8, -depth * 0.34)
+			reception.material_override = timber
+			parent.add_child(reception)
 		"rare_antique_market":
 			for index in range(3):
 				var display := MeshInstance3D.new()
@@ -553,6 +591,41 @@ func _build_civic_interior(parent: Node3D, service_id: String, width: float, dep
 				display.position = Vector3(-width * 0.3 + float(index) * width * 0.3, 1.55, depth * 0.34)
 				display.material_override = glass
 				parent.add_child(display)
+			var auction_desk := MeshInstance3D.new()
+			auction_desk.name = "AntiqueAuctioneerDesk"
+			var desk_mesh := BoxMesh.new()
+			desk_mesh.size = Vector3(5.5, 1.2, 2.0)
+			auction_desk.mesh = desk_mesh
+			auction_desk.position = Vector3(0.0, 0.8, -depth * 0.34)
+			auction_desk.material_override = timber
+			parent.add_child(auction_desk)
+			var appraisal_table := MeshInstance3D.new()
+			appraisal_table.name = "AntiqueAppraisalTable"
+			var table_mesh := BoxMesh.new()
+			table_mesh.size = Vector3(4.0, 0.9, 2.4)
+			appraisal_table.mesh = table_mesh
+			appraisal_table.position = Vector3(0.0, 0.55, depth * 0.1)
+			appraisal_table.material_override = stone
+			parent.add_child(appraisal_table)
+	_create_civic_interior_lighting(parent, service_id, width, depth)
+
+
+func _create_civic_interior_lighting(parent: Node3D, service_id: String, width: float, depth: float) -> void:
+	var warm_color := Color(1.0, 0.78, 0.52)
+	if service_id == "museum":
+		warm_color = Color(0.72, 0.84, 1.0)
+	elif service_id == "rare_antique_market":
+		warm_color = Color(1.0, 0.66, 0.34)
+	for index in range(3):
+		var light := OmniLight3D.new()
+		light.name = "CivicInteriorLight_%02d" % index
+		light.position = Vector3(-width * 0.28 + float(index) * width * 0.28, _get_civic_wall_height(service_id) - 1.2, 0.0)
+		light.light_color = warm_color
+		light.light_energy = 0.85
+		light.omni_range = 13.0
+		light.shadow_enabled = false
+		parent.add_child(light)
+
 
 func _material(color: Color, roughness: float, metallic: float) -> StandardMaterial3D:
 	var material := StandardMaterial3D.new()
