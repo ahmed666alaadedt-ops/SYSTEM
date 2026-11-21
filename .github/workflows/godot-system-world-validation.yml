@@ -122,6 +122,20 @@ jobs:
           fi
           grep -q "Power Tower arena validation passed:" "$LOG"
 
+      - name: Validate Power Tower arena interface and runtime wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          LOG="$RUNNER_TEMP/power-tower-arena-ui-validation.log"
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_power_tower_arena_ui.gd 2>&1 | tee "$LOG"
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Power Tower arena UI validation failed" "$LOG"; then
+            echo "::error::Power Tower arena UI validation failed."
+            exit 1
+          fi
+          grep -q "Power Tower arena UI validation passed:" "$LOG"
+
       - name: Verify child character civilian and combat restrictions
         shell: bash
         run: |
