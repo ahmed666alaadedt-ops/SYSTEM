@@ -25,6 +25,7 @@ var crowd_clock := 0.0
 var npc_predictions: Dictionary = {}
 var spectator_bets: Array[Dictionary] = []
 var local_wager_totals: Dictionary = {}
+var registered_fighters: Dictionary = {}
 var next_match_number := 1
 
 func _ready() -> void:
@@ -70,9 +71,24 @@ func create_match(fighter_a_id: String, fighter_b_id: String, match_type: String
 	return {"success": true, "match": active_match.duplicate(true), "fighter_entry_fee": 0}
 
 func register_fighter(fighter_id: String) -> Dictionary:
-	if fighter_id.strip_edges().is_empty():
+	var normalized_id := fighter_id.strip_edges()
+	if normalized_id.is_empty():
 		return {"success": false, "reason": "INVALID_FIGHTER_ID"}
-	return {"success": true, "fighter_id": fighter_id.strip_edges(), "entry_fee": 0, "currency_charged": false}
+	if registered_fighters.has(normalized_id):
+		return {"success": true, "fighter_id": normalized_id, "entry_fee": 0, "currency_charged": false, "already_registered": true}
+	registered_fighters[normalized_id] = {
+		"fighter_id": normalized_id,
+		"registered_at_unix": int(Time.get_unix_time_from_system()),
+		"entry_fee": 0,
+		"status": "REGISTERED"
+	}
+	return {"success": true, "fighter_id": normalized_id, "entry_fee": 0, "currency_charged": false, "already_registered": false}
+
+func get_registered_fighters() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for fighter_id in registered_fighters:
+		result.append(registered_fighters[fighter_id].duplicate(true))
+	return result
 
 func open_betting() -> Dictionary:
 	if active_match.is_empty():
