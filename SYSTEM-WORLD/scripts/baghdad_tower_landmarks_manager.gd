@@ -123,6 +123,7 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	structure_body.name = "TowerStructureCollision"
 	root.add_child(structure_body)
 	var foundation_collision := CollisionShape3D.new()
+	foundation_collision.name = "FoundationCollisionShape"
 	var foundation_shape := CylinderShape3D.new()
 	foundation_shape.radius = radius * 1.48
 	foundation_shape.height = 7.0
@@ -133,6 +134,7 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	foundation_collision.disabled = false
 	structure_body.add_child(foundation_collision)
 	var shaft_collision := CollisionShape3D.new()
+	shaft_collision.name = "ShaftCollisionShape"
 	var shaft_shape := CylinderShape3D.new()
 	shaft_shape.radius = radius
 	shaft_shape.height = height
