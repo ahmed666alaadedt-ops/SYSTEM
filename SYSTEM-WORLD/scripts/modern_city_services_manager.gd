@@ -857,6 +857,10 @@ func _build_stadium_room(parent: Node3D, room_id: String, display_name: String, 
 	room.set_meta("system_location_id", "baghdad_football_stadium_" + room_id.to_lower())
 	room.set_meta("system_display_name", display_name)
 	room.set_meta("system_access_state", "walk_in_interior")
+	room.set_meta(
+		"system_return_position",
+		parent.to_global(center + Vector3(0.0, 1.5, -size.z * 0.5 - 4.0))
+	)
 	parent.add_child(room)
 	var floor_material := _material(Color(0.24, 0.27, 0.3), 0.9, 0.05)
 	var room_width := size.x
@@ -920,6 +924,23 @@ func _build_stadium_room(parent: Node3D, room_id: String, display_name: String, 
 	area_collision.shape = area_shape
 	interaction.add_child(area_collision)
 	room.add_child(interaction)
+
+	var exit_interaction := Area3D.new()
+	exit_interaction.name = "RoomExitInteraction"
+	exit_interaction.position = Vector3(0.0, 1.4, -room_depth * 0.5 + 2.2)
+	exit_interaction.add_to_group("system_interactable")
+	exit_interaction.set_meta("system_location_id", "baghdad_football_stadium_exit_" + room_id.to_lower())
+	exit_interaction.set_meta("system_region_id", "region_baghdad")
+	exit_interaction.set_meta("system_location_type", 7)
+	exit_interaction.set_meta("system_display_name", "الخروج من " + display_name)
+	exit_interaction.set_meta("system_interaction_prompt", "العودة إلى ساحة ملعب بغداد")
+	exit_interaction.set_meta("system_return_position", room.get_meta("system_return_position"))
+	var exit_collision := CollisionShape3D.new()
+	var exit_shape := SphereShape3D.new()
+	exit_shape.radius = 2.4
+	exit_collision.shape = exit_shape
+	exit_interaction.add_child(exit_collision)
+	room.add_child(exit_interaction)
 
 
 func _build_stadium_player_tunnel(parent: Node3D, wall_material: Material, roof_material: Material) -> void:
