@@ -43,7 +43,7 @@ func _initialize() -> void:
 			quit(1)
 			return
 		var specific_nodes := {
-			"mosque": ["PrayerHallMihrab", "CivicInteriorLight_00"],
+			"mosque": ["PrayerHallMihrab", "PrayerHallMinbar", "PrayerCarpetRow_00", "PrayerMat_00_00", "PrayerMat_04_09", "CivicInteriorLight_00"],
 			"church": ["ChurchAltar", "ChurchLectern", "CivicInteriorLight_00"],
 			"museum": ["MuseumReceptionDesk", "MuseumExhibitLabel_00", "CivicInteriorLight_00"],
 			"rare_antique_market": ["AntiqueAuctioneerDesk", "AntiqueAppraisalTable", "CivicInteriorLight_00"]
@@ -55,5 +55,5 @@ func _initialize() -> void:
 				return
 		venue.queue_free()
 	manager.free()
-	print("Baghdad civic venue validation passed: four civic interiors have collision-backed walls, entry openings, floors and venue-specific fixtures.")
+	print("Baghdad civic venue validation passed: four civic interiors have collision-backed walls, entry openings, floors and venue-specific fixtures; mosque includes five prayer rows with individual prayer mats.")
 	quit(0)
