@@ -557,3 +557,19 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Validate service-area targeting, menu visibility, mission acceptance, and exam registration in Godot 4.3 on device.
 - [ ] Validate service-area targeting, menu visibility, mission acceptance, and exam registration in Godot 4.3 on device.
 - Note: this makes the existing Hunter Guild UI reachable from the Baghdad Hunter Association lobby. It does not complete the full mission objective/evidence verification pipeline or online account persistence.
+
+
+## Baghdad Business Tower — local economy and company registration prototype — 21 November 2026
+
+- [x] Add a dedicated economy manager that uses the existing player wallet balance rather than creating a second disconnected currency balance.
+- [x] Expose generic local wallet credit/debit operations and keep existing vehicle purchases and motorsport rewards on the same wallet.
+- [x] Add a locally persisted business registry with company name, sector, local owner, registration timestamp, and stable local company ID.
+- [x] Add input validation, duplicate-name prevention, a five-company local prototype limit, and a 1,000 SYSTEM Credits registration fee.
+- [x] Add separate Business Tower service views for business consultation, investment information, and company registration.
+- [x] Connect the three Business Tower lobby service IDs to the dedicated service interface.
+- [x] Persist a local transaction record for company registration and expose recent ledger entries through the economy manager API.
+- [ ] Add real business operations: employees, premises, supply chains, products, sales, operating costs, contracts, taxes, and company progression.
+- [ ] Implement a simulated investment market with transparent risk, valuation, cash flow, loss conditions, and anti-exploit balancing before enabling investment transactions.
+- [ ] Move wallet, company registry, and transaction ledger to authenticated server-authoritative storage before multiplayer or cross-device use; current records are local-device prototypes.
+- [ ] Run Godot 4.3 parser/import/headless validation and test all three service desks, wallet debit/persistence, duplicate company names, insufficient funds, and reload recovery.
+- Note: company registration currently deducts local prototype credits from the same wallet used by the vehicle garage. It is not a real legal company, online financial service, investment product, or cross-player economy. The investment desk is intentionally informational and disabled; it does not accept deposits or promise returns.
