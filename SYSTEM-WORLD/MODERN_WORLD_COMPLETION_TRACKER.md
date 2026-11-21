@@ -756,3 +756,16 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Replace primitive environment geometry with authored biome assets, varied terrain elevation, water, caves, structures, lighting, sound, vegetation and navigation.
 - [ ] Add actual floor-specific quests, secret discoveries with rewards, enemy populations, boss characters, combat objective verification, and a complete return/reward flow.
 - Note: this is a first physical procedural exploration pass for all 200 floor IDs, not 200 individually hand-authored finished maps. Each active floor is generated from its region profile and stable floor seed; final art, enemy AI, quest content and runtime validation remain outstanding.
+
+
+## Baghdad archaeological sites and ruins — OSM-grounded landmark pass — 21 November 2026
+
+- [x] Use existing OSM historic tags retained by the Baghdad cell-pack pipeline; do not invent or move real archaeological site coordinates.
+- [x] Recognize OSM archaeological_site, ruins, castle, fort and city_gate tags, plus building=ruins and site_type=archaeological.
+- [x] Generate collision-backed outdoor ruin details for tagged ruin building footprints while retaining their source OSM feature IDs.
+- [x] Generate outdoor archaeological landmark clusters, broken walls, columns, site names and stable discovery interactions for tagged OSM historic point features.
+- [x] Extend the existing Baghdad OSM runtime validator with a synthetic tagged-feature regression for the archaeological landmark builder and its stable interaction ID.
+- [ ] Audit the installed Baghdad OSM pack and report the actual number and names of historic/archaeological features available; do not substitute synthetic test fixtures for real-world coverage.
+- [ ] Add researched site-specific layouts, artifacts, environmental storytelling, guarded excavation areas, NPC archaeologists and discovery missions after real site coverage is confirmed.
+- [ ] Run Godot 4.3 OSM runtime validation and inspect the tagged sites in the live Baghdad world.
+- Note: the builder only creates landmarks for source features carrying recognized historic/ruins tags. A synthetic validator fixture proves the builder path, not that a particular real archaeological site exists in the current Baghdad OSM sample.
