@@ -156,7 +156,14 @@ func _run() -> void:
 		_fail("The connected tower district public amenities are missing.")
 		return
 	for amenity_name in ["RooftopGardenDeck", "LeisureAndPoolDeck", "FamilyEntertainmentPlaza"]:
-		if amenities.get_node_or_null(amenity_name + "_Collision/CollisionShape3D") == null:
+		var amenity_body := amenities.find_child(amenity_name + "_Collision", true, false) as StaticBody3D
+		var amenity_has_collision := false
+		if amenity_body != null:
+			for amenity_shape in amenity_body.get_children():
+				if amenity_shape is CollisionShape3D and amenity_shape.shape != null and not amenity_shape.disabled:
+					amenity_has_collision = true
+					break
+		if not amenity_has_collision:
 			_fail("Public amenity deck is not physically walkable: " + amenity_name)
 			return
 
