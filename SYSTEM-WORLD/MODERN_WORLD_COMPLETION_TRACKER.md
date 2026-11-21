@@ -390,3 +390,18 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Verify map readability, touch target sizes, route visibility, and performance on a physical Android device.
 - [ ] Add turn-by-turn guidance and an in-world 3D route ribbon/waypoint guidance after the map route is validated.
 - Note: road geometry and routes are available only when the real Baghdad OSM pack is installed and the relevant cells are loaded. The current route graph is local to loaded cells; this implementation does not yet promise city-wide routing across unloaded cells. CI confirms project parsing and headless startup, not physical-device visual/gameplay correctness.
+
+
+## Baghdad five-tower lobby implementation — 21 November 2026
+
+- [x] Add a shared procedural first-pass lobby interior for the five connected Baghdad towers: Hunter Association, Business, Shopping, Entertainment, and Technology & Innovation.
+- [x] Give each lobby a distinct service-desk identity and Arabic information labels matching its tower purpose.
+- [x] Add discoverable entry, exit, and service-information interaction areas to the four public service lobbies and the Hunter Association Tower lobby.
+- [x] Wire lobby entry/exit transitions through the main interaction handler and clear the player velocity on transitions.
+- [x] Keep the separate Power Tower excluded from the lobby script and preserve its independent challenge venue and collider.
+- [x] Disable the five connected towers' monolithic base/shaft colliders where they would seal the playable lobby volume; the lobby supplies its own floor and wall collision.
+- [ ] Replace the current lobby/service-desk blockouts with final art, working elevators/floor access, staffed NPCs, and complete tower-specific service workflows.
+- [ ] Add real shop/business/technology/entertainment activity systems and persistent ownership/transactions where applicable.
+- [ ] Run Godot 4.3 parser and headless scene validation on this commit; test player entry, service prompts, and exit on Android.
+- [ ] Validate the complete five-tower sky district, river clearance, bridge connections, navigation, and mobile performance in a live build.
+- Note: these are first playable lobby blockouts and local information interactions. They do not mean the five towers or their business services are fully complete. Power Tower remains separate and unchanged.
