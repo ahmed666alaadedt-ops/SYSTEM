@@ -66,6 +66,13 @@ func _run() -> void:
 		if interior == null:
 			_fail("Missing playable lobby for " + root_name)
 			return
+		var lift_console := interior.get_node_or_null("CentralLiftConsoleInteraction") as Area3D
+		if lift_console == null or not lift_console.is_in_group("system_interactable"):
+			_fail("Missing full-range central lift console for " + root_name)
+			return
+		if int(lift_console.get_meta("system_tower_floor_count", 0)) < 30:
+			_fail("Central lift console does not expose the full tower floor count for " + root_name)
+			return
 		var floor_world := tower_root.get_node_or_null("BaghdadTowerFloorWorld")
 		if floor_world == null or not floor_world.has_method("build_floor"):
 			_fail("Missing procedural floor world for " + root_name)
