@@ -22,6 +22,31 @@
 - [ ] Add safe, server-authoritative ownership, escrow, bid clocks, transaction replay protection and account synchronization before any online trading.
 - Note: auctions, balances and inventory are still local-device prototype data. No real-money purchases, withdrawals, or online marketplace are enabled.
 
+# Baghdad landmark completion scope — authoritative priority — 21 November 2026
+
+The immediate building-completion milestone is specifically the set of Baghdad landmarks and venues below. Do not divert the active workstream into unrelated gameplay systems or generic city-service buildings until these locations are ready for main-map integration.
+
+## Required Baghdad landmarks and venues
+
+- [ ] **Five connected Baghdad towers and shared district:** Hunter Association, Business, Shopping, Entertainment, and Technology & Innovation towers; complete recognizable exterior architecture, district connections, accessible entrances, tower-specific interiors, vertical circulation, collision/navigation, and map location registration.
+- [ ] **Hunter Association headquarters:** retain its elevated position above the five-tower complex; finish the headquarters rooms, public services, examiner spaces, and the Hunter Examination tunnel connection. NPCs are examiners and staff, never exam candidates.
+- [ ] **Independent Power Tower:** keep it detached from the five-tower complex; preserve the 200-floor design, and build the physical playable floor environments, entrance/lobby, vertical transition, checkpoints, and exploration spaces. The 200-floor progression data alone does not mean the 200 physical floors are built.
+- [ ] **Football stadium:** complete the venue around the pitch with stands, access gates, concourses, locker rooms, officials/media spaces, lighting, spectator circulation, and playable match access.
+- [ ] **Motorsport circuit:** complete the actual track venue, pit lane, garages, paddock, race control, grandstands, access gates, safety barriers, checkpoints, and player/vehicle access.
+- [ ] **Hunter Examination tunnel:** finish the physical candidate arrival, registration, briefing, waiting, examiner control, stage gates, lighting, signage, and safe route into the examination. Candidates are players; NPCs operate and examine.
+- [ ] **City advertising:** finish the physical billboards, tower facade displays, street screens, stadium displays, and public-result boards as visible city fixtures. Keep commercial live-ad integration disabled until its compliance requirements are met.
+- [ ] **Rare antiques market and auction venue:** finish the exterior, stalls, indoor auction hall, appraisal rooms, secure display, seller/buyer access, and exploration/interactions.
+- [ ] **Archaeological sites and historic ruins:** build distinct discoverable physical sites with researched visual identity, access paths, environmental storytelling, and map markers; do not treat a museum interior as a substitute for outdoor archaeological locations.
+- [ ] **Mosques and churches:** finish distinct culturally respectful exteriors and interiors, courtyards/approaches, accessible entrances, visitor paths, lighting, and map markers.
+
+## Integration gate
+
+- [ ] Every listed landmark has finished-enough exterior and interior geometry for exploration, collision/navigation, entrance and exit flow, and a stable location ID.
+- [ ] Add each completed site to the main world map and region streaming lifecycle only after its own validation passes.
+- [ ] Validate all landmarks together in Godot before calling the Baghdad integration milestone complete.
+
+**Status rule:** procedural meshes, metadata, first-pass blockouts, and source-level manager wiring are foundations only; they are not production-complete buildings or proof of playable map integration.
+
 # Tower layout decision update — 21 November 2026
 
 The current approved Baghdad layout supersedes older five-tower identity lists below: the connected district contains Hunter Association, Business, Shopping, Entertainment, and Technology & Innovation towers. Power Tower is a separate detached landmark and is excluded from all district connection loops. The Global Hunter Association headquarters is an elevated building above the shared district; it is not on Power Tower and is not counted as a sixth primary tower. Source changes are committed, but Godot/runtime/Android verification remains open.
