@@ -1055,6 +1055,12 @@ func _on_interaction_performed(
 					str(campaign.get("action", "استكشف المدينة")),
 					"انتهت مدة الإعلان" if remaining <= 0 else "مدة العرض المتبقية: %d ثانية" % remaining
 				]
+	if location_id == "hunter_exam_public_notice_baghdad":
+		var notice_hunter_menu := get_node_or_null("HunterGuildMenu")
+		if notice_hunter_menu != null and notice_hunter_menu.has_method("open_service_view"):
+			notice_hunter_menu.call("open_service_view", "tower_service_hunter_association_tower_baghdad_2")
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "إعلان رسمي من نقابة الصيادين — التسجيل والاستعلام من مكاتب النقابة، والدخول للنفق للمسجلين والمقبولين فقط."
 	if location_id == "hunter_exam_tunnel_start_baghdad":
 		var tunnel_hunter_menu := get_node_or_null("HunterGuildMenu")
 		if hunter_exam_manager != null:
