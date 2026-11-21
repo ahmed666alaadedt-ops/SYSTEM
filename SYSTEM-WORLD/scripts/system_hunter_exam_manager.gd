@@ -9,6 +9,8 @@ signal license_earned(candidate_number: int, license_rank: String)
 
 const SAVE_PATH := "user://system_hunter_exam.cfg"
 const RETRY_CYCLE_SECONDS := 7 * 24 * 60 * 60
+
+var save_path := SAVE_PATH
 const EXAM_STAGES := [
 	{"id":"endurance_pursuit","city":"Baghdad outskirts","title":"المرحلة الأولى: المطاردة والتحمل","type":"endurance_tracking","difficulty":3,"description":"تتبّع الهدف عبر مسار طويل، اجتز نقاط التفتيش، حافظ على طاقتك، ولا تؤذِ المدنيين.","objectives":["تسجيل ثلاث نقاط تتبع صحيحة","إكمال مسار التحمل ضمن الحد الزمني","حماية المدنيين وتجنب المخالفات"]},
 	{"id":"fieldcraft_and_cooking","city":"Babylon frontier","title":"المرحلة الثانية: المهارة والمعرفة","type":"fieldcraft_cooking","difficulty":3,"description":"اجمع مكونات محددة من البيئة، تعرّف على خصائصها، وأعد وجبة وفق وصفة الاختبار.","objectives":["جمع المكونات الصحيحة","تمييز المواد الآمنة من غير الصالحة","إعداد الوصفة وتسليمها"]},
@@ -49,7 +51,7 @@ func apply_for_exam(player_id: String) -> Dictionary:
 		if int(Time.get_unix_time_from_system()) < retry_at:
 			return {"success":false,"reason":"NEXT_WEEKLY_EXAM_REQUIRED","retry_at":retry_at,"attempt_number":attempt_number}
 	var config := ConfigFile.new()
-	config.load(SAVE_PATH)
+	config.load(save_path)
 	candidate_number = int(config.get_value("exam","next_candidate_number",1001))
 	config.set_value("exam","next_candidate_number",candidate_number + 1)
 	config.set_value("exam","candidate_number",candidate_number)
@@ -63,7 +65,7 @@ func apply_for_exam(player_id: String) -> Dictionary:
 	config.set_value("exam","current_stage_index",-1)
 	config.set_value("exam","failed",false)
 	config.set_value("exam","failure_reason","")
-	config.save(SAVE_PATH)
+	config.save(save_path)
 	self.player_id = player_id
 	registered = true
 	exam_active = false
@@ -139,7 +141,7 @@ func get_exam_overview() -> Dictionary:
 
 func _load_exam_state() -> void:
 	var config := ConfigFile.new()
-	if config.load(SAVE_PATH) != OK:
+	if config.load(save_path) != OK:
 		return
 	candidate_number = int(config.get_value("exam", "candidate_number", 0))
 	player_id = str(config.get_value("exam", "player_id", ""))
@@ -158,7 +160,7 @@ func _load_exam_state() -> void:
 
 func _save_exam_state() -> void:
 	var config := ConfigFile.new()
-	config.load(SAVE_PATH)
+	config.load(save_path)
 	config.set_value("exam", "candidate_number", candidate_number)
 	config.set_value("exam", "player_id", player_id)
 	config.set_value("exam", "attempt_number", attempt_number)
@@ -169,6 +171,6 @@ func _save_exam_state() -> void:
 	config.set_value("exam", "current_stage_index", current_stage_index)
 	config.set_value("exam", "failed", failed)
 	config.set_value("exam", "failure_reason", failure_reason)
-	var error := config.save(SAVE_PATH)
+	var error := config.save(save_path)
 	if error != OK:
 		push_warning("SYSTEM: Hunter examination progress could not be saved.")
