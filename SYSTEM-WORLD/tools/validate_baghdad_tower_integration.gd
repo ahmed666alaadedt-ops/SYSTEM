@@ -130,8 +130,17 @@ func _run() -> void:
 		_fail("The five connected towers have no shared district bridge network.")
 		return
 	for index in range(5):
-		var ramp_collision := connected_district.get_node_or_null("VehicleAccessRamp_%d/RampSegment_0_Collision/CollisionShape3D" % index) as CollisionShape3D
-		if ramp_collision == null or ramp_collision.shape == null:
+		var ramp_root := connected_district.get_node_or_null("VehicleAccessRamp_%d" % index)
+		var ramp_has_collision := false
+		if ramp_root != null:
+			for ramp_body in ramp_root.find_children("*", "StaticBody3D", true, false):
+				for ramp_shape in ramp_body.get_children():
+					if ramp_shape is CollisionShape3D and ramp_shape.shape != null and not ramp_shape.disabled:
+						ramp_has_collision = true
+						break
+				if ramp_has_collision:
+					break
+		if not ramp_has_collision:
 			_fail("A tower access ramp is missing physical collision: %d" % index)
 			return
 	var sky_ring := towers.get_node_or_null("BaghdadReferenceSkyPromenade_Blockout")
