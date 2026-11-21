@@ -21,10 +21,10 @@ ORIGIN_LON = 44.3661
 DEFAULT_CELL_SIZE = 200.0
 LAYERS = (
     "buildings", "roads", "waterways", "bridges",
-    "landuse", "amenities", "railway", "natural-water", "entrances"
+    "landuse", "amenities", "historic-sites", "railway", "natural-water", "entrances"
 )
 LINE_LAYERS = {"roads", "waterways", "bridges", "railway"}
-AREA_LAYERS = {"landuse", "natural-water"}
+AREA_LAYERS = {"landuse", "natural-water", "historic-sites"}
 KEEP_TAGS = {
     "name", "name:en", "name:ar", "ref", "highway", "building",
     "building:levels", "building:material", "height", "min_height",
