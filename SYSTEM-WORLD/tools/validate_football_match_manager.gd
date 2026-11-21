@@ -12,6 +12,8 @@ func _initialize() -> void:
 	var manager = FOOTBALL_SCRIPT.new()
 	root.add_child(manager)
 	manager.setup(stadium, player)
+	# Wait until the test nodes are inside the SceneTree before using global transforms/timers.
+	await process_frame
 	for node_name in ["SYSTEMFootballMatchBall", "FootballMatchControlInteraction", "FootballMatchScoreboard", "HomeGoalTrigger", "AwayGoalTrigger"]:
 		if stadium.get_node_or_null(node_name) == null:
 			push_error("Football validation failed: missing stadium component " + node_name)
