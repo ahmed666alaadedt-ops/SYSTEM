@@ -13,14 +13,8 @@ var terrain: Node
 var map_manager: Node
 var _registered := false
 var _sites: Array[Dictionary] = [
-	{"id":"baghdad_mosque_grand","name":"الجامع الكبير في بغداد","kind":"mosque","offset":Vector2(-170.0,-120.0),"size":Vector3(58.0,18.0,48.0),"color":Color(0.68,0.58,0.39),"prompt":"دخول الجامع الكبير في بغداد"},
-	{"id":"baghdad_church_old","name":"الكنيسة التاريخية في بغداد","kind":"church","offset":Vector2(-95.0,-205.0),"size":Vector3(42.0,22.0,36.0),"color":Color(0.54,0.48,0.39),"prompt":"دخول الكنيسة التاريخية في بغداد"},
-	{"id":"baghdad_antiquities_museum","name":"متحف وآثار بغداد","kind":"museum","offset":Vector2(95.0,-205.0),"size":Vector3(62.0,20.0,44.0),"color":Color(0.52,0.43,0.31),"prompt":"زيارة متحف وآثار بغداد"},
-	{"id":"baghdad_rare_market","name":"سوق التحف والمزادات","kind":"market","offset":Vector2(190.0,-105.0),"size":Vector3(68.0,12.0,42.0),"color":Color(0.43,0.29,0.17),"prompt":"دخول سوق التحف والمزادات"},
-	{"id":"service_baghdad_stadium","name":"ملعب بغداد لكرة القدم","kind":"stadium","offset":Vector2(205.0,105.0),"size":Vector3(150.0,18.0,108.0),"color":Color(0.12,0.30,0.16),"prompt":"دخول ملعب بغداد لكرة القدم"},
-	{"id":"baghdad_motorsport_circuit","name":"مضمار بغداد الدولي للسيارات","kind":"motorsport","offset":Vector2(-185.0,205.0),"size":Vector3(190.0,8.0,120.0),"color":Color(0.12,0.13,0.15),"prompt":"دخول مضمار سباق السيارات"},
 	{"id":"hunter_exam_tunnel_start_baghdad","name":"نفق اختبار الصيادين","kind":"tunnel","offset":Vector2(0.0,245.0),"size":Vector3(42.0,12.0,28.0),"color":Color(0.10,0.19,0.27),"prompt":"دخول نفق اختبار الصيادين"},
-	{"id":"hunter_exam_public_notice_baghdad","name":"إعلان اختبار الصيادين العام","kind":"advertising","offset":Vector2(0.0,90.0),"size":Vector3(32.0,20.0,10.0),"color":Color(0.08,0.35,0.48),"prompt":"عرض إعلانات وأخبار بغداد"}
+	{"id":"hunter_exam_public_notice_baghdad","name":"إعلان اختبار الصيادين العام","kind":"advertising","offset":Vector2(0.0,90.0),"size":Vector3(32.0,20.0,10.0),"color":Color(0.08,0.35,0.48),"prompt":"عرض إعلان اختبار الصيادين ومراحله"}
 ]
 
 func build(p_terrain: Node) -> void:
@@ -64,10 +58,17 @@ func _build_connected_roads() -> void:
 	var hub := Vector2.ZERO
 	var road_points: Array[Vector2] = [hub]
 	for site in _sites:
-		var offset: Vector2 = site["offset"]
-		if str(site["kind"]) == "power_tower":
-			continue
-		road_points.append(offset)
+		road_points.append(site["offset"])
+	var services := get_parent().get_node_or_null("ModernCityServicesManager")
+	if services != null and services.has_method("get_service_locations"):
+		var anchor: Vector3 = get_parent().call("get_city_anchor", "Baghdad")
+		for service_data in services.call("get_service_locations"):
+			if str(service_data.get("city", "")) != "Baghdad":
+				continue
+			var service_position: Vector3 = service_data["position"]
+			road_points.append(Vector2(service_position.x-anchor.x, service_position.z-anchor.z))
+	# Connect the existing motorsport circuit rather than creating a duplicate track.
+	road_points.append(Vector2(320.0,220.0))
 	for index in range(1, road_points.size()):
 		_add_road_segment("BaghdadRoad_%02d" % index, road_points[0], road_points[index])
 	# A perimeter connector makes the landmark district navigable as one loop.
