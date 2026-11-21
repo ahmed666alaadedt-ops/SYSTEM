@@ -8,6 +8,7 @@ var balance_label: Label
 var status_label: Label
 var lots_list: VBoxContainer
 var catalogue_list: VBoxContainer
+var inventory_label: Label
 var bid_amount_input: SpinBox
 var selected_auction_id := ""
 
@@ -29,6 +30,7 @@ func _build_interface() -> void:
 	open_button.position = Vector2(18, 165)
 	open_button.custom_minimum_size = Vector2(210, 54)
 	root.add_child(open_button)
+	open_button.hide()
 	open_button.pressed.connect(open_market)
 	panel = PanelContainer.new()
 	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -76,6 +78,13 @@ func _build_interface() -> void:
 	catalogue_list = VBoxContainer.new()
 	catalogue_list.add_theme_constant_override("separation", 5)
 	sections.add_child(catalogue_list)
+	var inventory_heading := Label.new()
+	inventory_heading.text = "مقتنياتك"
+	inventory_heading.add_theme_font_size_override("font_size", 16)
+	sections.add_child(inventory_heading)
+	inventory_label = Label.new()
+	inventory_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	sections.add_child(inventory_label)
 	var bid_row := HBoxContainer.new()
 	content.add_child(bid_row)
 	bid_amount_input = SpinBox.new()
@@ -146,6 +155,12 @@ func refresh_market() -> void:
 			select_button.text = "اختيار هذا المزاد"
 			select_button.pressed.connect(_select_auction.bind(auction_id, int(auction.get("current_bid", 0)) + 50))
 			details.add_child(select_button)
+	var owned: Array = board.get("inventory", [])
+	var owned_names := PackedStringArray()
+	for owned_id in owned:
+		var owned_item: Dictionary = market.call("get_item_details", str(owned_id))
+		owned_names.append(str(owned_item.get("name", owned_id)))
+	inventory_label.text = "لا تملك قطعاً بعد." if owned_names.is_empty() else " • ".join(owned_names)
 	var catalogue: Dictionary = board.get("catalogue", {})
 	for child in catalogue_list.get_children():
 		child.queue_free()
@@ -173,22 +188,24 @@ func _place_selected_bid() -> void:
 		status_label.text = "اختر مزاداً أولاً."
 		return
 	var result: Dictionary = market.call("place_bid", selected_auction_id, "local_player", int(bid_amount_input.value))
+	var feedback := ""
 	if bool(result.get("success", false)):
-		status_label.text = "تم تسجيل مزايدتك وحجز الرصيد محلياً."
+		feedback = "تم تسجيل مزايدتك وحجز الرصيد محلياً."
 	else:
 		var reason := str(result.get("reason", "UNKNOWN_ERROR"))
 		match reason:
 			"INSUFFICIENT_FUNDS":
-				status_label.text = "رصيدك لا يكفي لهذه المزايدة."
+				feedback = "رصيدك لا يكفي لهذه المزايدة."
 			"BID_MUST_EXCEED_CURRENT":
-				status_label.text = "يجب أن تكون المزايدة أعلى من السعر الحالي."
+				feedback = "يجب أن تكون المزايدة أعلى من السعر الحالي."
 			"AUCTION_CLOSED":
-				status_label.text = "انتهى المزاد. حدّث القائمة لاختيار مزاد آخر."
+				feedback = "انتهى المزاد. حدّث القائمة لاختيار مزاد آخر."
 			"SELLER_CANNOT_BID":
-				status_label.text = "لا يمكنك المزايدة على قطعتك الخاصة."
+				feedback = "لا يمكنك المزايدة على قطعتك الخاصة."
 			_:
-				status_label.text = "تعذرت المزايدة: " + reason
+				feedback = "تعذرت المزايدة: " + reason
 	refresh_market()
+	status_label.text = feedback
 
 func _format_number(value: int) -> String:
 	return String.num_int64(value)
