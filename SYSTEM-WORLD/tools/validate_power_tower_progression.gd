@@ -138,13 +138,17 @@ func _run_validation() -> void:
 	if not bool(final_floor.get("tower_finale", false)) or not bool(final_floor.get("boss_floor", false)):
 		_fail("Floor 200 must be the final boss trial.")
 		return
-
+	manager.active_floor = 200
 	var finale_build: Dictionary = floor_world.build_floor(final_floor, Vector3.ZERO)
 	if not bool(finale_build.get("success", false)):
 		_fail("Floor 200 physical exploration environment could not be built.")
 		return
 	if floor_world.get_node_or_null("ActiveFloor_200/BossArenaPlatform") == null:
 		_fail("Floor 200 is missing its physical boss-trial arena.")
+		return
+	var finale_enemies := floor_world.get_active_enemy_nodes()
+	if finale_enemies.size() != 1 or not bool(finale_enemies[0].get("is_boss")):
+		_fail("Floor 200 must spawn its actual final boss combatant.")
 		return
 	if int(floor_world.get_active_floor_info().get("floor", 0)) != 200:
 		_fail("Generated floor-world status does not report floor 200.")
