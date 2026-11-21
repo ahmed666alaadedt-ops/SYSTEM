@@ -434,12 +434,21 @@ func get_ai_race_status() -> Array[Dictionary]:
 		var elapsed := float(controller.get("elapsed_seconds"))
 		var active := bool(controller.get("active"))
 		var finished := not active and completed_laps >= total_laps
+		var target_checkpoint := int(controller.get("target_checkpoint"))
+		var waypoints: Array = controller.get("waypoints")
+		var checkpoint_progress := posmod(target_checkpoint - 1, waypoints.size()) if not waypoints.is_empty() else 0
+		var distance_to_next_checkpoint := INF
+		var vehicle_node := controller.get("vehicle") as Node3D
+		if is_instance_valid(vehicle_node) and target_checkpoint >= 0 and target_checkpoint < waypoints.size():
+			distance_to_next_checkpoint = vehicle_node.global_position.distance_to(waypoints[target_checkpoint])
 		standings.append({
 			"opponent_id": str(controller.get("opponent_id")),
 			"opponent_name": str(controller.get("opponent_name")),
-			"vehicle_id": str(controller.get("vehicle").get("vehicle_id")) if is_instance_valid(controller.get("vehicle")) else "",
+			"vehicle_id": str(vehicle_node.get("vehicle_id")) if is_instance_valid(vehicle_node) else "",
 			"completed_laps": completed_laps,
 			"total_laps": total_laps,
+			"checkpoint_progress": checkpoint_progress,
+			"distance_to_next_checkpoint": distance_to_next_checkpoint,
 			"elapsed_seconds": elapsed,
 			"finished": finished,
 			"status": "finished" if finished else ("racing" if active else "retired")
@@ -449,6 +458,10 @@ func get_ai_race_status() -> Array[Dictionary]:
 			return int(a.get("completed_laps", 0)) > int(b.get("completed_laps", 0))
 		if bool(a.get("finished", false)) != bool(b.get("finished", false)):
 			return bool(a.get("finished", false))
+		if int(a.get("checkpoint_progress", 0)) != int(b.get("checkpoint_progress", 0)):
+			return int(a.get("checkpoint_progress", 0)) > int(b.get("checkpoint_progress", 0))
+		if absf(float(a.get("distance_to_next_checkpoint", INF)) - float(b.get("distance_to_next_checkpoint", INF))) > 0.001:
+			return float(a.get("distance_to_next_checkpoint", INF)) < float(b.get("distance_to_next_checkpoint", INF))
 		return float(a.get("elapsed_seconds", 0.0)) < float(b.get("elapsed_seconds", 0.0))
 	)
 	return standings
