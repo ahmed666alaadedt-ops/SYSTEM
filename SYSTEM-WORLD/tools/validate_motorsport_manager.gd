@@ -1,10 +1,23 @@
 extends SceneTree
 
 const RACE_SCRIPT = preload("res://scripts/system_motorsport_manager.gd")
-const GARAGE_SCRIPT = preload("res://scripts/system_player_vehicle_manager.gd")
+
+class MockGarage extends Node:
+	var balance := 25000
+	var owned_vehicles: Array[String] = []
+
+	func get_garage() -> Array[String]:
+		return owned_vehicles.duplicate()
+
+	func award_race_reward(amount: int) -> Dictionary:
+		if amount <= 0:
+			return {"success": false, "reason": "INVALID_AMOUNT"}
+		balance += amount
+		return {"success": true, "credited": amount, "balance": balance}
+
 
 func _initialize() -> void:
-	var garage: Variant = GARAGE_SCRIPT.new()
+	var garage := MockGarage.new()
 	root.add_child(garage)
 	garage.owned_vehicles = ["sport_coupe"]
 	var starting_balance: int = garage.balance
