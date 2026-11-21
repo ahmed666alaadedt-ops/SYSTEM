@@ -476,3 +476,11 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Add collision to both sides' safety-rail blockouts.
 - [ ] Verify clearances and bridge joins against terrain and tower transforms in Godot; current coordinates remain provisional until live scene inspection.
 - [ ] Add railings/collision to radial bridges, stairs/lifts, lighting budget, navigation links and final modular assets.
+
+
+## CI parse blocker found during continued review — 21 November 2026
+
+- [x] Fix a duplicate local variable declaration in ModernWorldRegionManager._create_city_advertising_screens by giving the later event-board lookup its own variable name.
+- [ ] Re-run Godot 4.3 import/script parsing on the latest PR head to confirm the parse blocker is cleared.
+- [ ] Investigate separate runtime validation failures reported by the earlier CI run: NPC visible-population manager was not mounted, and main.gd accessed a nil global_transform at line 1296. These failures are separate from the Baghdad tower blockout and must be resolved before a successful full project validation can be claimed.
+- Note: the available failing CI logs were produced by an earlier PR revision, not the current latest head. The latest head still needs its own workflow run.
