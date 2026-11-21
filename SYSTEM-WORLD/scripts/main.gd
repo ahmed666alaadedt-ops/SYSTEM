@@ -815,6 +815,19 @@ func _on_interaction_performed(
 		" / ",
 		location_id
 	)
+	if location_id.begins_with("street_ad_"):
+		var advertising_manager := target.get_parent().get_parent() if target.get_parent() != null else null
+		if advertising_manager != null and advertising_manager.has_method("get_campaign_details"):
+			var campaign: Dictionary = advertising_manager.call("get_campaign_details", location_id)
+			if interaction_prompt_label != null and not campaign.is_empty():
+				var remaining := maxi(0, int(campaign.get("expires_at", 0)) - int(Time.get_unix_time_from_system()))
+				interaction_prompt_label.text = "%s\n%s\n%s\nالإجراء المقترح: %s\n%s" % [
+					str(campaign.get("category", "إعلان")),
+					str(campaign.get("title", "حملة SYSTEM")),
+					str(campaign.get("body", "")),
+					str(campaign.get("action", "استكشف المدينة")),
+					"انتهت مدة الإعلان" if remaining <= 0 else "مدة العرض المتبقية: %d ثانية" % remaining
+				]
 	if location_id == "service_baghdad_stadium":
 		var stadium := target.get_parent()
 		if stadium != null and player != null:
