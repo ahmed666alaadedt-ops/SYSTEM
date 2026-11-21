@@ -700,10 +700,9 @@ func register_map_locations(map_manager: Node, world_id: String) -> void:
 		)
 
 	var advertising_manager := get_node_or_null("SYSTEMCityAdvertisingManager")
-	if advertising_manager != null and advertising_manager.has_method("get_advertisement_locations"):
-		for advertisement in advertising_manager.call("get_advertisement_locations"):
-			map_manager.call("register_advertisement", world_id, str(advertisement.get("id", "")), str(advertisement.get("city", "")), str(advertisement.get("name", "إعلان")), advertisement.get("position", Vector3.ZERO))
-			map_manager.call("update_advertisement", world_id, str(advertisement.get("id", "")), advertisement)
+	if advertising_manager != null and advertising_manager.has_method("connect_map_manager"):
+		advertising_manager.call("connect_map_manager", map_manager, world_id)
+
 	var services_manager := get_node_or_null("ModernCityServicesManager")
 	if services_manager != null and services_manager.has_method("get_service_locations"):
 		for service_data in services_manager.call("get_service_locations"):
