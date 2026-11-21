@@ -56,7 +56,12 @@ func _build_lobby() -> void:
 	_add_solid_box("LobbyFrontWallRight", Vector3(14.0, 7.0, 21.0), Vector3(14.0, 14.0, 1.0), wall_mat)
 	_add_solid_box("LobbyCeiling", Vector3(0.0, 14.0, 0.0), Vector3(42.0, 0.8, 42.0), wall_mat)
 	_add_visual_box("FloorIdentityLine", Vector3(0.0, 0.08, 0.0), Vector3(28.0, 0.08, 0.5), accent)
-	_add_visual_box("RearFeatureWall", Vector3(0.0, 7.5, -20.35), Vector3(26.0, 11.0, 0.25), glass)
+	if tower_id == "hunter_association_tower_baghdad":
+		_add_visual_box("RearFeatureWall_Left", Vector3(-11.0, 7.5, -20.35), Vector3(4.0, 11.0, 0.25), glass)
+		_add_visual_box("RearFeatureWall_Right", Vector3(11.0, 7.5, -20.35), Vector3(4.0, 11.0, 0.25), glass)
+		_add_visual_box("ExamTunnelEntranceHeader", Vector3(0.0, 12.0, -20.35), Vector3(18.0, 2.0, 0.25), glass)
+	else:
+		_add_visual_box("RearFeatureWall", Vector3(0.0, 7.5, -20.35), Vector3(26.0, 11.0, 0.25), glass)
 	var identity := Label3D.new()
 	identity.name = "TowerLobbyIdentity"
 	identity.text = display_title + "\nSYSTEM BAGHDAD"
