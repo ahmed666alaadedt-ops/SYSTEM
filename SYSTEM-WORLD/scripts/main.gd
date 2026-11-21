@@ -38,6 +38,7 @@ const HunterExamManagerScript = preload("res://scripts/system_hunter_exam_manage
 const PowerTowerManagerScript = preload("res://scripts/system_power_tower_manager.gd")
 const PowerTowerArenaManagerScript = preload("res://scripts/system_power_tower_arena_manager.gd")
 const PowerTowerArenaUIScript = preload("res://scripts/system_power_tower_arena_ui.gd")
+const BaghdadTowerLiftUIScript = preload("res://scripts/system_baghdad_tower_lift_ui.gd")
 const PlayerCombatHealthScript = preload("res://scripts/system_player_combat_health.gd")
 const InventoryPanelScript = preload("res://scripts/system_inventory_panel.gd")
 const PlayerCharacterModelScript = preload("res://scripts/npc_character_model.gd")
@@ -82,6 +83,7 @@ var hunter_exam_manager
 var power_tower_manager
 var power_tower_arena_manager: Node
 var power_tower_arena_ui: CanvasLayer
+var baghdad_tower_lift_ui: CanvasLayer
 var player_combat_health: Node
 var inventory_panel: CanvasLayer
 
@@ -155,6 +157,7 @@ func _ready() -> void:
 	create_mobile_controls()
 	create_interaction_prompt()
 	create_motorsport_leaderboard_ui()
+	create_baghdad_tower_lift_ui()
 
 	update_camera_mode()
 	connect_android_runtime_bridge()
@@ -804,6 +807,43 @@ func create_interaction_manager() -> void:
 	)
 
 
+func create_baghdad_tower_lift_ui() -> void:
+	baghdad_tower_lift_ui = BaghdadTowerLiftUIScript.new()
+	baghdad_tower_lift_ui.name = "SYSTEMBaghdadTowerLiftUI"
+	add_child(baghdad_tower_lift_ui)
+	baghdad_tower_lift_ui.floor_selected.connect(_on_baghdad_tower_floor_selected)
+
+
+func _on_baghdad_tower_floor_selected(tower_id: String, floor_number: int) -> void:
+	_enter_baghdad_tower_floor(tower_id, floor_number)
+
+
+func _enter_baghdad_tower_floor(tower_id: String, floor_number: int) -> void:
+	if player == null or active_world_root == null:
+		return
+	var tower_manager := active_world_root.find_child("BaghdadTowerLandmarksManager", true, false)
+	if tower_manager == null or not tower_manager.has_method("get_tower_root"):
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "تعذر العثور على مدير أبراج بغداد."
+		return
+	var tower_root: Node3D = tower_manager.call("get_tower_root", tower_id)
+	var floor_world := tower_root.get_node_or_null("BaghdadTowerFloorWorld") if tower_root != null else null
+	if floor_world == null:
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "عالم طوابق هذا البرج غير متاح."
+		return
+	var return_position := player.global_position
+	var result: Dictionary = floor_world.call("build_floor", floor_number, return_position)
+	if not bool(result.get("success", false)):
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "تعذر فتح الطابق: " + str(result.get("reason", "خطأ غير معروف"))
+		return
+	player.global_position = floor_world.call("get_entry_position")
+	player.velocity = Vector3.ZERO
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = "دخلت %s — الطابق %d من %d. استكشف المرافق ثم استخدم بوابة العودة." % [str(result.get("tower_id", tower_id)), floor_number, int(result.get("max_floors", 1))]
+
+
 func create_motorsport_leaderboard_ui() -> void:
 	motorsport_leaderboard_layer = CanvasLayer.new()
 	motorsport_leaderboard_layer.name = "MotorsportLeaderboardLayer"
@@ -1401,13 +1441,34 @@ func _on_interaction_performed(
 			player.velocity = Vector3.ZERO
 			if interaction_prompt_label != null:
 				interaction_prompt_label.text = "خرجت من المقر الرئيسي لنقابة الصيادين"
+	elif location_id.begins_with("tower_lift_console_"):
+		if baghdad_tower_lift_ui != null:
+			baghdad_tower_lift_ui.call("open_for_tower", str(target.get_meta("system_tower_id", "")), str(target.get_meta("system_tower_title", "برج بغداد")), int(target.get_meta("system_tower_floor_count", 1)))
+		elif interaction_prompt_label != null:
+			interaction_prompt_label.text = "واجهة مصعد البرج غير متاحة."
 	elif location_id.begins_with("tower_floor_"):
-		var destination: Vector3 = target.get_meta("system_destination_position", Vector3.INF)
-		if player != null and destination != Vector3.INF:
-			player.global_position = destination
+		var tower_id := str(target.get_meta("system_tower_id", ""))
+		var floor_number := int(target.get_meta("system_floor_number", 0))
+		if not tower_id.is_empty() and floor_number > 0:
+			_enter_baghdad_tower_floor(tower_id, floor_number)
+		else:
+			var destination: Vector3 = target.get_meta("system_destination_position", Vector3.INF)
+			if player != null and destination != Vector3.INF:
+				player.global_position = destination
+				player.velocity = Vector3.ZERO
+	elif location_id.begins_with("tower_floor_exit_"):
+		var return_position: Vector3 = target.get_meta("system_return_position", Vector3.INF)
+		var tower_id := str(target.get_meta("system_tower_id", ""))
+		if player != null and return_position != Vector3.INF:
+			var tower_manager := active_world_root.find_child("BaghdadTowerLandmarksManager", true, false) if active_world_root != null else null
+			var tower_root: Node3D = tower_manager.call("get_tower_root", tower_id) if tower_manager != null and tower_manager.has_method("get_tower_root") else null
+			var floor_world := tower_root.get_node_or_null("BaghdadTowerFloorWorld") if tower_root != null else null
+			if floor_world != null:
+				floor_world.call("clear_active_floor")
+			player.global_position = return_position
 			player.velocity = Vector3.ZERO
 			if interaction_prompt_label != null:
-				interaction_prompt_label.text = "وصلت إلى " + str(target.get_meta("system_display_name", "الطابق المحدد"))
+				interaction_prompt_label.text = "عدت إلى بهو البرج."
 		elif location_id.begins_with("tower_exit_"):
 
 		var tower_lobby := target.get_parent()
