@@ -4,6 +4,7 @@ class_name BaghdadTowerLandmarksManager
 const EntranceScript = preload("res://scripts/system_tower_entrance.gd")
 const HeadquartersInteriorScript = preload("res://scripts/system_hunter_headquarters_interior.gd")
 const TowerInteriorScript = preload("res://scripts/system_baghdad_tower_interior.gd")
+const PowerTowerArenaVenueScript = preload("res://scripts/system_power_tower_arena_venue.gd")
 const HUNTER_TOWER_HEIGHT := 1000.0
 const POWER_TOWER_HEIGHT := 168.0
 const TECHNOLOGY_TOWER_HEIGHT := 210.0
@@ -80,6 +81,11 @@ func _build_power_tower() -> void:
 		Color(0.95, 0.55, 0.16),
 		false
 	)
+	var power_tower := get_node_or_null("PowerTower")
+	if power_tower != null:
+		var arena_venue := PowerTowerArenaVenueScript.new()
+		arena_venue.name = "PowerTowerArenaVenue"
+		power_tower.add_child(arena_venue)
 
 func _build_tower(node_name: String, title: String, location_id: String, world_position: Vector3, height: float, radius: float, floors: int, beacon_color: Color, connected_to_district: bool = true) -> void:
 	var resolved := _nearest_land_position(Vector2(world_position.x, world_position.z))
