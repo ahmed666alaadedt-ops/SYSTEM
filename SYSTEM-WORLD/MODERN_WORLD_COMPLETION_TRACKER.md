@@ -552,6 +552,8 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Expose explicit open/close methods on the existing Hunter Guild menu so world interactions can open it without requiring the HUD toggle button.
 - [x] Connect all three Hunter Association lobby service interaction points to the existing Hunter Guild panel using their tower service IDs.
 - [x] Reuse the existing mission acceptance and Hunter examination signals; no duplicate mission/exam manager was introduced.
-- [ ] Distinguish the three desk destinations with dedicated filtered views (registration, mission board, information) rather than opening the same guild panel from all three.
+- [x] Give the registration desk, mission board, and information desk separate filtered views in the existing Hunter Guild menu.
+- [x] Route the exact lobby service IDs ending in `_0`, `_1`, and `_2` to registration, missions, and information respectively.
+- [ ] Validate service-area targeting, menu visibility, mission acceptance, and exam registration in Godot 4.3 on device.
 - [ ] Validate service-area targeting, menu visibility, mission acceptance, and exam registration in Godot 4.3 on device.
 - Note: this makes the existing Hunter Guild UI reachable from the Baghdad Hunter Association lobby. It does not complete the full mission objective/evidence verification pipeline or online account persistence.
