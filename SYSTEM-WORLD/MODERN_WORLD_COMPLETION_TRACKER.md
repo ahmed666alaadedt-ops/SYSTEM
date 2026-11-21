@@ -405,3 +405,19 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Run Godot 4.3 parser and headless scene validation on this commit; test player entry, service prompts, and exit on Android.
 - [ ] Validate the complete five-tower sky district, river clearance, bridge connections, navigation, and mobile performance in a live build.
 - Note: these are first playable lobby blockouts and local information interactions. They do not mean the five towers or their business services are fully complete. Power Tower remains separate and unchanged.
+
+
+## Power Tower, football stadium and motorsport follow-up — 21 November 2026
+
+- [x] Keep Power Tower detached from the five-tower connected district and all district skybridge loops.
+- [x] Align the Power Tower's visible architectural floor bands with its existing 100-floor progression data (previous visual count was only 28).
+- [x] Add an independent physical challenge-arena blockout at the Power Tower, with a walkable floor, ring boundary, spectator tiers, lighting and arena signage.
+- [x] On a valid next-floor request, move the player to the separate arena and clearly report that opponent/combat integration is still pending.
+- [ ] Add floor-specific combat rooms, real opponent/boss spawning, combat objective verification, return flow, and secure clear-time/rank validation. The current 100-floor manager is progression metadata and save state; it is not yet a complete combat loop.
+- [x] Expand Baghdad's football stadium from a flat placeholder into an open pitch blockout with grass bands, boundary/halfway lines, center circle, penalty areas, goals, four-sided spectator stands, and an open playable pitch collision surface.
+- [x] Disable the solid stadium-shell collider that previously blocked access to the field; add an entry transition from the stadium interaction point to the pitch.
+- [ ] Add ball physics, player/team control, match rules, goalkeeper/keeper AI, fouls, score, clock, tournaments, multiplayer and spectator NPC behavior.
+- [x] Add a race-control interaction at the dedicated Baghdad motorsport start grid and connect it to the existing sanctioned City Sprint event API.
+- [ ] Add complete race UI/event selection, opponents/grid AI, timing display, vehicle recovery, track marshal behavior, replay and tested finish/reward flow.
+- [ ] Run Godot 4.3 parser/import/headless scene validation and Android gameplay/performance tests for all new venue changes before calling them verified.
+- Note: arena, stadium and race-venue geometry are procedural blockouts. A connected interaction or API call does not mean combat, football matches, AI racing, or the full event experience is complete.
