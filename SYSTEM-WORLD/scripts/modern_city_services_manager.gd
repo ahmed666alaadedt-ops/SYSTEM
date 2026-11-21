@@ -29,7 +29,11 @@ const SERVICE_DATA := [
 	{"id": "train_station", "name": "Urban Rail Station", "prompt": "محطة القطار — الرحلات والتنقل", "color": Color(0.30, 0.40, 0.48), "height": 12.0},
 	{"id": "port", "name": "City Harbor Terminal", "prompt": "الميناء — السفن والشحن", "color": Color(0.18, 0.34, 0.46), "height": 14.0},
 	{"id": "cinema", "name": "City Cinema", "prompt": "دار السينما — العروض والفعاليات", "color": Color(0.28, 0.22, 0.34), "height": 11.0},
-	{"id": "gym", "name": "Fitness Center", "prompt": "مركز اللياقة — التدريب الرياضي", "color": Color(0.30, 0.34, 0.38), "height": 10.0}
+	{"id": "gym", "name": "Fitness Center", "prompt": "مركز اللياقة — التدريب الرياضي", "color": Color(0.30, 0.34, 0.38), "height": 10.0},
+	{"id": "mosque", "name": "Grand Mosque", "prompt": "الجامع — مكان العبادة والزيارة باحترام", "color": Color(0.68, 0.62, 0.43), "height": 24.0},
+	{"id": "church", "name": "City Church", "prompt": "الكنيسة — مكان العبادة والزيارة باحترام", "color": Color(0.62, 0.55, 0.43), "height": 22.0},
+	{"id": "museum", "name": "City History Museum", "prompt": "متحف المدينة — التاريخ والآثار والمعارض", "color": Color(0.48, 0.38, 0.27), "height": 18.0},
+	{"id": "rare_antique_market", "name": "Rare Antiques Bazaar", "prompt": "سوق التحف النادرة — المزادات والتبادل والقطع الأثرية", "color": Color(0.40, 0.28, 0.18), "height": 13.0}
 ]
 
 var region_manager: Node
@@ -135,7 +139,7 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 	var location_type := 7
 	if service_id == "hospital":
 		location_type = 2
-	elif service_id == "market" or service_id == "garage":
+	elif service_id == "market" or service_id == "garage" or service_id == "rare_antique_market":
 		location_type = 4
 	var building := Node3D.new()
 	building.name = city_name.replace(" ", "") + "_" + service_id.capitalize() + "Building"
@@ -149,6 +153,9 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 		width = 150.0
 		depth = 116.0
 	elif service_id == "mall":
+		width = 34.0
+		depth = 28.0
+	elif service_id == "mosque" or service_id == "church" or service_id == "museum" or service_id == "rare_antique_market":
 		width = 34.0
 		depth = 28.0
 	elif service_id == "school" or service_id == "university":
@@ -227,6 +234,14 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 		_create_civic_courtyard(building, width, depth, courtyard_material)
 	elif service_id == "shops":
 		_create_shopfronts(building, width, depth, glass, roof_material)
+	elif service_id == "mosque":
+		_create_mosque_details(building, width, depth, roof_material, glass)
+	elif service_id == "church":
+		_create_church_details(building, width, depth, roof_material, glass)
+	elif service_id == "museum":
+		_create_museum_details(building, width, depth, roof_material)
+	elif service_id == "rare_antique_market":
+		_create_rare_antique_market_details(building, width, depth, glass, roof_material)
 
 	var door := MeshInstance3D.new()
 	var door_mesh := BoxMesh.new()
@@ -263,6 +278,121 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 	area_shape.shape = area_box
 	interaction.add_child(area_shape)
 	building.add_child(interaction)
+
+
+func _create_mosque_details(parent: Node3D, width: float, depth: float, stone: Material, glass: Material) -> void:
+	var dome := MeshInstance3D.new()
+	dome.name = "MosqueCentralDome"
+	var dome_mesh := SphereMesh.new()
+	dome_mesh.radius = 7.0
+	dome_mesh.height = 10.0
+	dome.mesh = dome_mesh
+	dome.position = Vector3(0.0, 8.0, 0.0)
+	dome.material_override = stone
+	parent.add_child(dome)
+	for side_x in [-1.0, 1.0]:
+		for side_z in [-1.0, 1.0]:
+			var minaret := MeshInstance3D.new()
+			minaret.name = "MosqueMinaret_%s_%s" % [str(int(side_x)), str(int(side_z))]
+			var shaft := CylinderMesh.new()
+			shaft.top_radius = 0.7
+			shaft.bottom_radius = 1.15
+			shaft.height = 21.0
+			minaret.mesh = shaft
+			minaret.position = Vector3(side_x * (width * 0.39), 10.5, side_z * (depth * 0.39))
+			minaret.material_override = stone
+			parent.add_child(minaret)
+			var balcony := MeshInstance3D.new()
+			var balcony_mesh := CylinderMesh.new()
+			balcony_mesh.top_radius = 1.55
+			balcony_mesh.bottom_radius = 1.55
+			balcony_mesh.height = 0.55
+			balcony.mesh = balcony_mesh
+			balcony.position = minaret.position + Vector3.UP * 5.0
+			balcony.material_override = glass
+			parent.add_child(balcony)
+
+
+func _create_church_details(parent: Node3D, width: float, depth: float, stone: Material, glass: Material) -> void:
+	var nave_roof := MeshInstance3D.new()
+	nave_roof.name = "ChurchNaveRoof"
+	var roof_mesh := PrismMesh.new()
+	roof_mesh.size = Vector3(width + 2.0, 5.0, depth + 2.0)
+	nave_roof.mesh = roof_mesh
+	nave_roof.position = Vector3(0.0, 13.0, 0.0)
+	nave_roof.material_override = stone
+	parent.add_child(nave_roof)
+	for side in [-1.0, 1.0]:
+		var tower := MeshInstance3D.new()
+		tower.name = "ChurchBellTower_%s" % str(int(side))
+		var tower_mesh := BoxMesh.new()
+		tower_mesh.size = Vector3(5.0, 19.0, 5.0)
+		tower.mesh = tower_mesh
+		tower.position = Vector3(side * (width * 0.37), 9.5, -depth * 0.34)
+		tower.material_override = stone
+		parent.add_child(tower)
+		var spire := MeshInstance3D.new()
+		var spire_mesh := CylinderMesh.new()
+		spire_mesh.top_radius = 0.0
+		spire_mesh.bottom_radius = 3.2
+		spire_mesh.height = 7.0
+		spire.mesh = spire_mesh
+		spire.position = tower.position + Vector3.UP * 13.0
+		spire.material_override = glass
+		parent.add_child(spire)
+
+
+func _create_museum_details(parent: Node3D, width: float, depth: float, stone: Material) -> void:
+	var portico := Node3D.new()
+	portico.name = "MuseumEntrancePortico"
+	parent.add_child(portico)
+	for index in range(6):
+		var pillar := MeshInstance3D.new()
+		var pillar_mesh := CylinderMesh.new()
+		pillar_mesh.top_radius = 0.48
+		pillar_mesh.bottom_radius = 0.62
+		pillar_mesh.height = 9.0
+		pillar.mesh = pillar_mesh
+		pillar.position = Vector3(-width * 0.38 + float(index) * width * 0.152, 4.5, -depth * 0.5 - 1.0)
+		pillar.material_override = stone
+		portico.add_child(pillar)
+	var pediment := MeshInstance3D.new()
+	var pediment_mesh := PrismMesh.new()
+	pediment_mesh.size = Vector3(width * 0.92, 5.0, 2.0)
+	pediment.mesh = pediment_mesh
+	pediment.position = Vector3(0.0, 10.5, -depth * 0.5 - 1.0)
+	pediment.material_override = stone
+	portico.add_child(pediment)
+
+
+func _create_rare_antique_market_details(parent: Node3D, width: float, depth: float, canvas: Material, timber: Material) -> void:
+	for row in range(2):
+		for stall in range(5):
+			var booth := Node3D.new()
+			booth.name = "RareAntiqueStall_%02d_%02d" % [row, stall]
+			booth.position = Vector3(-width * 0.36 + float(stall) * width * 0.18, 0.0, -depth * 0.22 + float(row) * depth * 0.48)
+			parent.add_child(booth)
+			var counter := MeshInstance3D.new()
+			var counter_mesh := BoxMesh.new()
+			counter_mesh.size = Vector3(4.8, 1.2, 3.2)
+			counter.mesh = counter_mesh
+			counter.position.y = 0.8
+			counter.material_override = timber
+			booth.add_child(counter)
+			var canopy := MeshInstance3D.new()
+			var canopy_mesh := BoxMesh.new()
+			canopy_mesh.size = Vector3(5.4, 0.35, 4.2)
+			canopy.mesh = canopy_mesh
+			canopy.position.y = 4.0
+			canopy.material_override = canvas
+			booth.add_child(canopy)
+			var relic := MeshInstance3D.new()
+			var relic_mesh := SphereMesh.new()
+			relic_mesh.radius = 0.72
+			relic.mesh = relic_mesh
+			relic.position = Vector3(0.0, 1.85, 0.0)
+			relic.material_override = _material(Color(0.72, 0.53, 0.24), 0.3, 0.78)
+			booth.add_child(relic)
 
 
 func _material(color: Color, roughness: float, metallic: float) -> StandardMaterial3D:
