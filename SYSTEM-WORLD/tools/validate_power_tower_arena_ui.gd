@@ -1,5 +1,17 @@
 extends SceneTree
 
+class FakeWallet:
+	extends Node
+	var balance := 500
+	func spend_currency(amount: int, _reason: String = "") -> Dictionary:
+		if amount <= 0 or balance < amount:
+			return {"success": false, "balance": balance}
+		balance -= amount
+		return {"success": true, "balance": balance}
+	func credit_currency(amount: int, _reason: String = "") -> Dictionary:
+		balance += amount
+		return {"success": true, "balance": balance}
+
 const ARENA_UI_SCRIPT = preload("res://scripts/system_power_tower_arena_ui.gd")
 const ARENA_MANAGER_SCRIPT = preload("res://scripts/system_power_tower_arena_manager.gd")
 
@@ -11,7 +23,10 @@ func _fail(message: String) -> void:
 	quit(1)
 
 func _run() -> void:
+	var wallet := FakeWallet.new()
 	var manager = ARENA_MANAGER_SCRIPT.new()
+	manager.setup(wallet)
+	root.add_child(wallet)
 	var ui = ARENA_UI_SCRIPT.new()
 	root.add_child(manager)
 	root.add_child(ui)
@@ -53,5 +68,6 @@ func _run() -> void:
 		return
 	ui.queue_free()
 	manager.queue_free()
+	wallet.queue_free()
 	print("Power Tower arena UI validation passed: panel construction, free registration, 28 audience predictions, spectator betting and lockout.")
 	quit(0)
