@@ -4,7 +4,7 @@ const RACE_SCRIPT = preload("res://scripts/system_motorsport_manager.gd")
 const GARAGE_SCRIPT = preload("res://scripts/system_player_vehicle_manager.gd")
 
 func _initialize() -> void:
-	var garage: SystemPlayerVehicleManager = GARAGE_SCRIPT.new() as SystemPlayerVehicleManager
+	var garage: Variant = GARAGE_SCRIPT.new()
 	root.add_child(garage)
 	garage.owned_vehicles = ["sport_coupe"]
 	var starting_balance: int = garage.balance
