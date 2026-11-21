@@ -960,6 +960,16 @@ func _build_amenity_feature(parent: Node3D, feature: Dictionary) -> int:
 	var geometry_type := str(geometry.get("type", ""))
 	var tags: Dictionary = feature.get("tags", {})
 	var feature_id := str(feature.get("id", "unknown"))
+	var worship := str(tags.get("amenity", "")) == "place_of_worship"
+	var religion := str(tags.get("religion", "")).to_lower()
+	var is_mosque := (worship and religion == "muslim") or str(tags.get("building", "")).to_lower() == "mosque"
+	var is_church := (worship and religion == "christian") or str(tags.get("building", "")).to_lower() == "church"
+	if geometry_type == "Point" and is_mosque:
+		_build_mosque_landmark(parent, feature, geometry.get("coordinates", []))
+		return 1
+	if geometry_type == "Point" and is_church:
+		_build_church_landmark(parent, feature, geometry.get("coordinates", []))
+		return 1
 	if _is_historic_landmark(tags):
 		if geometry_type == "Point":
 			_build_archaeological_site_landmark(parent, feature, geometry.get("coordinates", []))
@@ -989,17 +999,7 @@ func _build_amenity_feature(parent: Node3D, feature: Dictionary) -> int:
 		return 0
 	if geometry_type != "Point":
 		return 0
-	var coordinates: Array = geometry.get("coordinates", [])
-	var worship := str(tags.get("amenity", "")) == "place_of_worship"
-	var religion := str(tags.get("religion", "")).to_lower()
-	var is_mosque := (worship and religion == "muslim") or str(tags.get("building", "")).to_lower() == "mosque"
-	var is_church := (worship and religion == "christian") or str(tags.get("building", "")).to_lower() == "church"
-	if is_mosque:
-		_build_mosque_landmark(parent, feature, coordinates)
-	elif is_church:
-		_build_church_landmark(parent, feature, coordinates)
-	else:
-		_add_point_marker(parent, coordinates, amenity_material, 0.48, "OSMAmenity_%s" % feature_id)
+	_add_point_marker(parent, geometry.get("coordinates", []), amenity_material, 0.48, "OSMAmenity_%s" % feature_id)
 	return 1
 
 
@@ -1537,20 +1537,20 @@ func _building_height(tags: Dictionary) -> float:
 
 
 func _building_kind(tags: Dictionary) -> String:
+	var kind := str(tags.get("building", "yes")).to_lower()
+	if kind == "mosque" or (str(tags.get("amenity", "")) == "place_of_worship" and str(tags.get("religion", "")).to_lower() == "muslim"):
+		return "mosque"
+	if kind == "church" or (str(tags.get("amenity", "")) == "place_of_worship" and str(tags.get("religion", "")).to_lower() == "christian"):
+		return "church"
 	var historic_kind := _historic_landmark_kind(tags)
 	if not historic_kind.is_empty():
 		return historic_kind
-	var kind := str(tags.get("building", "yes")).to_lower()
 	if kind in ["house", "detached", "semidetached_house", "bungalow", "terrace"]:
 		return "detached_house"
 	if kind in ["apartments", "residential", "dormitory"]:
 		return "apartment_block"
 	if kind in ["commercial", "office", "retail", "industrial"]:
 		return "commercial_building"
-	if kind == "mosque" or (str(tags.get("amenity", "")) == "place_of_worship" and str(tags.get("religion", "")).to_lower() == "muslim"):
-		return "mosque"
-	if kind == "church" or (str(tags.get("amenity", "")) == "place_of_worship" and str(tags.get("religion", "")).to_lower() == "christian"):
-		return "church"
 	return "general_building"
 
 
