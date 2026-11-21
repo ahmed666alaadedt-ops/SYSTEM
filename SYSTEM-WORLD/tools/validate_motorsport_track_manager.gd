@@ -13,6 +13,8 @@ class MockAIController extends Node:
 	var vehicle: Node
 	var completed_laps := 0
 	var total_laps := 3
+	var target_checkpoint := 1
+	var waypoints: Array[Vector3] = [Vector3.ZERO, Vector3.RIGHT, Vector3.FORWARD, Vector3.LEFT]
 	var elapsed_seconds := 0.0
 	var active := true
 
@@ -141,22 +143,40 @@ func _initialize() -> void:
 	ai_second.opponent_id = "ai_second"
 	ai_second.opponent_name = "SYSTEM Racer Two"
 	ai_second.completed_laps = 2
+	ai_second.target_checkpoint = 0
 	ai_second.elapsed_seconds = 80.0
 	root.add_child(ai_second)
+	var ai_same_lap_advanced := MockAIController.new()
+	ai_same_lap_advanced.opponent_id = "ai_same_lap_advanced"
+	ai_same_lap_advanced.opponent_name = "SYSTEM Racer Advanced"
+	ai_same_lap_advanced.completed_laps = 1
+	ai_same_lap_advanced.target_checkpoint = 0
+	ai_same_lap_advanced.elapsed_seconds = 90.0
+	root.add_child(ai_same_lap_advanced)
+	var ai_same_lap_middle := MockAIController.new()
+	ai_same_lap_middle.opponent_id = "ai_same_lap_middle"
+	ai_same_lap_middle.opponent_name = "SYSTEM Racer Middle"
+	ai_same_lap_middle.completed_laps = 1
+	ai_same_lap_middle.target_checkpoint = 2
+	ai_same_lap_middle.elapsed_seconds = 30.0
+	root.add_child(ai_same_lap_middle)
 	var ai_third := MockAIController.new()
 	ai_third.opponent_id = "ai_third"
 	ai_third.opponent_name = "SYSTEM Racer Three"
 	ai_third.completed_laps = 1
+	ai_third.target_checkpoint = 1
 	ai_third.elapsed_seconds = 60.0
 	root.add_child(ai_third)
-	manager.ai_controller_nodes = [ai_third, ai_finished, ai_second]
+	manager.ai_controller_nodes = [ai_third, ai_same_lap_middle, ai_finished, ai_second, ai_same_lap_advanced]
 	var ai_standings: Array[Dictionary] = manager.get_ai_race_status()
-	if manager.get_ai_race_event_id() != "city_sprint" or ai_standings.size() != 3:
+	if manager.get_ai_race_event_id() != "city_sprint" or ai_standings.size() != 5:
 		_fail("The last AI race event or opponent standings were not exposed.")
 		return
-	if str(ai_standings[0].get("opponent_id", "")) != "ai_finished" or str(ai_standings[1].get("opponent_id", "")) != "ai_second" or str(ai_standings[2].get("opponent_id", "")) != "ai_third":
-		_fail("AI opponent standings are not sorted by completed laps and elapsed time.")
-		return
+	var expected_ai_order := ["ai_finished", "ai_second", "ai_same_lap_advanced", "ai_same_lap_middle", "ai_third"]
+	for index in range(expected_ai_order.size()):
+		if str(ai_standings[index].get("opponent_id", "")) != expected_ai_order[index]:
+			_fail("AI standings did not prioritize laps and ordered checkpoint progress.")
+			return
 
 	var info: Dictionary = manager.get_track_info()
 	if int(info.get("pit_garage_count", 0)) != 8 or int(info.get("marshal_post_count", 0)) != 4:
@@ -168,6 +188,8 @@ func _initialize() -> void:
 	manager.free()
 	ai_finished.free()
 	ai_second.free()
+	ai_same_lap_advanced.free()
+	ai_same_lap_middle.free()
 	ai_third.free()
 	race_manager.free()
 	test_vehicle.free()
