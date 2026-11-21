@@ -33,7 +33,8 @@ const SERVICE_DATA := [
 	{"id": "mosque", "name": "Grand Mosque", "prompt": "الجامع — مكان العبادة والزيارة باحترام", "color": Color(0.68, 0.62, 0.43), "height": 24.0},
 	{"id": "church", "name": "City Church", "prompt": "الكنيسة — مكان العبادة والزيارة باحترام", "color": Color(0.62, 0.55, 0.43), "height": 22.0},
 	{"id": "museum", "name": "City History Museum", "prompt": "متحف المدينة — التاريخ والآثار والمعارض", "color": Color(0.48, 0.38, 0.27), "height": 18.0},
-	{"id": "rare_antique_market", "name": "Rare Antiques Bazaar", "prompt": "سوق التحف النادرة — المزادات والتبادل والقطع الأثرية", "color": Color(0.40, 0.28, 0.18), "height": 13.0}
+	{"id": "rare_antique_market", "name": "Rare Antiques Bazaar", "prompt": "سوق التحف النادرة — المزادات والتبادل والقطع الأثرية", "color": Color(0.40, 0.28, 0.18), "height": 13.0},
+	{"id": "underworld_exchange", "name": "Underworld Exchange", "prompt": "دار الوسطاء — معلومات الفصائل والعقود السرية داخل عالم اللعبة", "color": Color(0.22, 0.18, 0.24), "height": 12.0}
 ]
 
 var region_manager: Node
@@ -76,7 +77,7 @@ func _build_city_services(city_name: String) -> void:
 		var location_type := 7
 		if service_id == "hospital":
 			location_type = 2
-		elif service_id == "market" or service_id == "garage" or service_id == "fuel_station" or service_id == "rare_antique_market":
+		elif service_id == "market" or service_id == "garage" or service_id == "fuel_station" or service_id == "rare_antique_market" or service_id == "underworld_exchange":
 			location_type = 4
 		service_locations.append({
 			"id": "service_%s_%s" % [city_name.to_lower().replace(" ", "_"), service_id],
@@ -274,6 +275,7 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 	interaction.set_meta("system_display_name", city_name + " " + str(definition["name"]))
 	interaction.set_meta("system_location_type", location_type)
 	interaction.set_meta("system_service_type", service_id)
+	interaction.set_meta("system_city_name", city_name)
 	var area_shape := CollisionShape3D.new()
 	var area_box := BoxShape3D.new()
 	area_box.size = Vector3(3.0, 2.6, 3.0)
