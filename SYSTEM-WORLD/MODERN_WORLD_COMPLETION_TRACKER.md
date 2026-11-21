@@ -546,3 +546,12 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Add explicit player identity persistence and server-side candidate-number allocation before online/multiplayer examinations.
 - [ ] Run the Godot 4.3 parser and examination save/resume regression tests on the latest branch head.
 - Note: this fixes state-flow defects in the local Hunter examination prototype. It does not implement the actual seven exam challenges, secure evidence validation, online exam service, or a production hunter license.
+
+## Baghdad Hunter Association service connection — 21 November 2026
+
+- [x] Expose explicit open/close methods on the existing Hunter Guild menu so world interactions can open it without requiring the HUD toggle button.
+- [x] Connect all three Hunter Association lobby service interaction points to the existing Hunter Guild panel using their tower service IDs.
+- [x] Reuse the existing mission acceptance and Hunter examination signals; no duplicate mission/exam manager was introduced.
+- [ ] Distinguish the three desk destinations with dedicated filtered views (registration, mission board, information) rather than opening the same guild panel from all three.
+- [ ] Validate service-area targeting, menu visibility, mission acceptance, and exam registration in Godot 4.3 on device.
+- Note: this makes the existing Hunter Guild UI reachable from the Baghdad Hunter Association lobby. It does not complete the full mission objective/evidence verification pipeline or online account persistence.
