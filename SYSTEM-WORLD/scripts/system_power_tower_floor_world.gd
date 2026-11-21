@@ -6,6 +6,7 @@ class_name SYSTEMPowerTowerFloorWorld
 
 signal checkpoint_registered(floor_number: int, checkpoint_id: String)
 signal floor_exit_requested(floor_number: int, return_position: Vector3)
+signal secret_cache_discovered(floor_number: int, secret_id: String, reward_currency: int)
 
 const FLOOR_SIZE := 520.0
 const FLOOR_HALF := FLOOR_SIZE * 0.5
@@ -61,6 +62,7 @@ func build_floor(floor_data: Dictionary, p_return_position: Vector3) -> Dictiona
 	_build_route(accent_material)
 	_build_environment(floor_number, region_id, profile, structure_material, accent_material)
 	_build_landmarks(floor_number, profile, structure_material, accent_material)
+	_build_secret_caches(floor_number, accent_material)
 	_build_checkpoints()
 	if is_instance_valid(progression_manager) and int(progression_manager.get("active_floor")) == floor_number:
 		_spawn_floor_enemies(floor_data)
@@ -308,6 +310,68 @@ func _build_landmarks(
 		boss_sign.position = Vector3(205.0, 18.0, -34.0)
 		boss_sign.modulate = accent_color
 		active_floor_root.add_child(boss_sign)
+
+
+
+func _build_secret_caches(floor_number: int, accent_material: Material) -> void:
+	if not is_instance_valid(progression_manager) or not progression_manager.has_method("get_floor_secret_ids"):
+		return
+	var secret_ids: Array = progression_manager.call("get_floor_secret_ids", floor_number)
+	var positions := [Vector3(-170.0, 0.0, -155.0), Vector3(175.0, 0.0, -145.0), Vector3(0.0, 0.0, 185.0)]
+	for index in range(mini(secret_ids.size(), positions.size())):
+		var secret_id := str(secret_ids[index])
+		if progression_manager.has_method("is_floor_secret_claimed") and bool(progression_manager.call("is_floor_secret_claimed", floor_number, secret_id)):
+			continue
+		var cache_root := Node3D.new()
+		cache_root.name = "HiddenCache_%02d" % (index + 1)
+		cache_root.position = positions[index]
+		cache_root.set_meta("system_power_tower_secret_id", secret_id)
+		active_floor_root.add_child(cache_root)
+		var chest := MeshInstance3D.new()
+		chest.name = "CacheChest"
+		var chest_mesh := BoxMesh.new()
+		chest_mesh.size = Vector3(3.4, 2.0, 2.4)
+		chest.mesh = chest_mesh
+		chest.position = Vector3(0.0, 1.0, 0.0)
+		chest.material_override = accent_material
+		cache_root.add_child(chest)
+		var glow := OmniLight3D.new()
+		glow.name = "CacheGlow"
+		glow.position = Vector3(0.0, 3.0, 0.0)
+		glow.light_color = Color(0.22, 0.82, 1.0)
+		glow.light_energy = 1.4
+		glow.omni_range = 10.0
+		cache_root.add_child(glow)
+		var label := Label3D.new()
+		label.name = "CacheHint"
+		label.text = "HIDDEN CACHE"
+		label.font_size = 14
+		label.position = Vector3(0.0, 4.2, 0.0)
+		label.modulate = Color(0.62, 0.9, 1.0)
+		cache_root.add_child(label)
+		var area := Area3D.new()
+		area.name = "SecretCacheTrigger"
+		area.position = Vector3(0.0, 1.2, 0.0)
+		var collision := CollisionShape3D.new()
+		var shape := SphereShape3D.new()
+		shape.radius = 4.0
+		collision.shape = shape
+		area.add_child(collision)
+		area.body_entered.connect(_on_secret_cache_body_entered.bind(secret_id, cache_root))
+		cache_root.add_child(area)
+
+
+func _on_secret_cache_body_entered(body: Node3D, secret_id: String, cache_root: Node3D) -> void:
+	if not is_instance_valid(body) or not body.is_in_group("system_player"):
+		return
+	if not is_instance_valid(progression_manager) or not progression_manager.has_method("claim_floor_secret"):
+		return
+	var result: Dictionary = progression_manager.call("claim_floor_secret", active_floor_number, secret_id)
+	if not bool(result.get("success", false)):
+		return
+	secret_cache_discovered.emit(active_floor_number, secret_id, int(result.get("reward_currency", 0)))
+	if is_instance_valid(cache_root):
+		cache_root.queue_free()
 
 
 func _build_checkpoints() -> void:
