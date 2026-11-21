@@ -368,10 +368,19 @@ func _on_player_driving_changed(active: bool, _vehicle_id: String) -> void:
 
 
 func _on_motorsport_race_go(_event_id: String) -> void:
+	if not is_instance_valid(vehicle_runtime_manager) or not bool(vehicle_runtime_manager.get("is_driving")):
+		if is_instance_valid(motorsport_manager) and motorsport_manager.has_method("cancel_race"):
+			motorsport_manager.call("cancel_race")
+		return
+	var active_vehicle: Node3D = vehicle_runtime_manager.get("active_vehicle")
+	if not is_instance_valid(active_vehicle) or active_vehicle.global_position.distance_to(get_start_grid_position()) > 22.0:
+		if is_instance_valid(motorsport_manager) and motorsport_manager.has_method("cancel_race"):
+			motorsport_manager.call("cancel_race")
+		return
 	for controller in ai_controller_nodes:
 		if is_instance_valid(controller) and controller.has_method("start_race"):
 			controller.call("start_race")
-	print("SYSTEM Motorsport: green light — all AI opponents released.")
+	print("SYSTEM Motorsport: green light — player and AI grid released.")
 
 func _on_ai_opponent_finished(result: Dictionary) -> void:
 	var completed_result := result.duplicate(true)
