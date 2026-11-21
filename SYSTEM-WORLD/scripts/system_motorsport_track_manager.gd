@@ -451,20 +451,60 @@ func get_ai_race_status() -> Array[Dictionary]:
 			"distance_to_next_checkpoint": distance_to_next_checkpoint,
 			"elapsed_seconds": elapsed,
 			"finished": finished,
-			"status": "finished" if finished else ("racing" if active else "retired")
+			"status": "finished" if finished else ("racing" if active else ("starting" if ai_race_pending_start or (is_instance_valid(motorsport_manager) and float(motorsport_manager.get("race_countdown_remaining")) >= 0.0) else "retired"))
 		})
-	standings.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		if int(a.get("completed_laps", 0)) != int(b.get("completed_laps", 0)):
-			return int(a.get("completed_laps", 0)) > int(b.get("completed_laps", 0))
-		if bool(a.get("finished", false)) != bool(b.get("finished", false)):
-			return bool(a.get("finished", false))
-		if int(a.get("checkpoint_progress", 0)) != int(b.get("checkpoint_progress", 0)):
-			return int(a.get("checkpoint_progress", 0)) > int(b.get("checkpoint_progress", 0))
-		if absf(float(a.get("distance_to_next_checkpoint", INF)) - float(b.get("distance_to_next_checkpoint", INF))) > 0.001:
-			return float(a.get("distance_to_next_checkpoint", INF)) < float(b.get("distance_to_next_checkpoint", INF))
-		return float(a.get("elapsed_seconds", 0.0)) < float(b.get("elapsed_seconds", 0.0))
-	)
+	standings.sort_custom(_sort_race_standings)
 	return standings
+
+
+func get_race_standings() -> Array[Dictionary]:
+	var standings := get_ai_race_status()
+	if ai_race_event_id.is_empty() or not is_instance_valid(motorsport_manager):
+		return standings
+	var active_race := bool(motorsport_manager.call("is_race_active"))
+	var completed_laps := int(motorsport_manager.get("completed_laps"))
+	var total_laps := maxi(1, int(motorsport_manager.get("total_laps")))
+	var next_checkpoint := int(motorsport_manager.get("next_checkpoint_index"))
+	var finished := not active_race and completed_laps >= total_laps
+	var checkpoint_progress := next_checkpoint if not finished else 0
+	var distance_to_next_checkpoint := INF
+	var player_vehicle := vehicle_runtime_manager.get("active_vehicle") as Node3D if is_instance_valid(vehicle_runtime_manager) else null
+	if not finished and is_instance_valid(player_vehicle) and next_checkpoint >= 0 and next_checkpoint < checkpoint_areas.size():
+		distance_to_next_checkpoint = player_vehicle.global_position.distance_to(checkpoint_areas[next_checkpoint].global_position)
+	var countdown_active := float(motorsport_manager.get("race_countdown_remaining")) >= 0.0
+	var race_running := bool(motorsport_manager.get("race_is_running"))
+	var player_status := "finished" if finished else ("racing" if race_running else ("starting" if countdown_active else ("awaiting_vehicle" if ai_race_pending_start else "ready")))
+	standings.append({
+		"opponent_id": "player",
+		"opponent_name": "أنت",
+		"vehicle_id": str(player_vehicle.get("vehicle_id")) if is_instance_valid(player_vehicle) else "",
+		"completed_laps": completed_laps,
+		"total_laps": total_laps,
+		"checkpoint_progress": checkpoint_progress,
+		"distance_to_next_checkpoint": distance_to_next_checkpoint,
+		"elapsed_seconds": float(motorsport_manager.get("race_elapsed")) + float(motorsport_manager.get("race_time_penalty")),
+		"finished": finished,
+		"status": player_status,
+		"is_player": true
+	})
+	standings.sort_custom(_sort_race_standings)
+	return standings
+
+
+func _sort_race_standings(a: Dictionary, b: Dictionary) -> bool:
+	if int(a.get("completed_laps", 0)) != int(b.get("completed_laps", 0)):
+		return int(a.get("completed_laps", 0)) > int(b.get("completed_laps", 0))
+	var a_finished := bool(a.get("finished", false))
+	var b_finished := bool(b.get("finished", false))
+	if a_finished != b_finished:
+		return a_finished
+	if a_finished and b_finished:
+		return float(a.get("elapsed_seconds", 0.0)) < float(b.get("elapsed_seconds", 0.0))
+	if int(a.get("checkpoint_progress", 0)) != int(b.get("checkpoint_progress", 0)):
+		return int(a.get("checkpoint_progress", 0)) > int(b.get("checkpoint_progress", 0))
+	if absf(float(a.get("distance_to_next_checkpoint", INF)) - float(b.get("distance_to_next_checkpoint", INF))) > 0.001:
+		return float(a.get("distance_to_next_checkpoint", INF)) < float(b.get("distance_to_next_checkpoint", INF))
+	return float(a.get("elapsed_seconds", 0.0)) < float(b.get("elapsed_seconds", 0.0))
 
 func _on_motorsport_race_cancelled(_event_id: String) -> void:
 	_clear_ai_opponents()
