@@ -1209,7 +1209,7 @@ func _on_interaction_performed(
 				interaction_prompt_label.text = "سوق التحف غير متاح حالياً."
 	elif location_id == "baghdad_archaeological_ruins":
 		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "موقع الآثار التاريخية في بغداد\\nيمكنك استكشاف البقايا المعمارية وفحص النقوش واللقى المسجلة. سوق التحف النادرة منفصل، ولا تُعرض القطع الأثرية للبيع قبل توثيق مصدرها."
+			interaction_prompt_label.text = "موقع الآثار التاريخية في بغداد\nيمكنك استكشاف البقايا المعمارية وفحص النقوش واللقى المسجلة. سوق التحف النادرة منفصل، ولا تُعرض القطع الأثرية للبيع قبل توثيق مصدرها."
 	elif location_id.ends_with("_underworld_exchange"):
 		if is_instance_valid(city_faction_ui):
 			var faction_city := str(target.get_meta("system_city_name", "Baghdad"))
