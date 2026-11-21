@@ -155,6 +155,16 @@ func _build_missions() -> void:
 		)
 
 
+func open_guild_panel() -> void:
+	if is_instance_valid(guild_panel):
+		guild_panel.show()
+
+
+func close_guild_panel() -> void:
+	if is_instance_valid(guild_panel):
+		guild_panel.hide()
+
+
 func _toggle_panel() -> void:
 	guild_panel.visible = not guild_panel.visible
 
