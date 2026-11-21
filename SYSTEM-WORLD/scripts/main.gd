@@ -34,6 +34,7 @@ const NPCSocialInteractionManagerScript = preload("res://scripts/npc_social_inte
 const NPCCityNavigationManagerScript = preload("res://scripts/npc_city_navigation_manager.gd")
 const HunterExamManagerScript = preload("res://scripts/system_hunter_exam_manager.gd")
 const PowerTowerManagerScript = preload("res://scripts/system_power_tower_manager.gd")
+const PowerTowerArenaManagerScript = preload("res://scripts/system_power_tower_arena_manager.gd")
 const PlayerCombatHealthScript = preload("res://scripts/system_player_combat_health.gd")
 const InventoryPanelScript = preload("res://scripts/system_inventory_panel.gd")
 const PlayerCharacterModelScript = preload("res://scripts/npc_character_model.gd")
@@ -64,6 +65,7 @@ var npc_social_interaction_manager
 var npc_city_navigation_manager
 var hunter_exam_manager
 var power_tower_manager
+var power_tower_arena_manager: Node
 var player_combat_health: Node
 var inventory_panel: CanvasLayer
 
@@ -124,6 +126,7 @@ func _ready() -> void:
 	create_npc_social_interaction_manager()
 	create_hunter_exam_manager()
 	create_power_tower_manager()
+	create_power_tower_arena_manager()
 	create_mission_reward_manager()
 
 	connect_sovereign_system()
@@ -511,6 +514,13 @@ func create_power_tower_manager() -> void:
 	add_child(power_tower_manager)
 	power_tower_manager.floor_cleared.connect(_on_power_tower_floor_cleared)
 	power_tower_manager.floor_cleared.connect(_on_public_power_tower_floor_cleared)
+
+
+func create_power_tower_arena_manager() -> void:
+	power_tower_arena_manager = PowerTowerArenaManagerScript.new()
+	power_tower_arena_manager.name = "PowerTowerArenaManager"
+	add_child(power_tower_arena_manager)
+	power_tower_arena_manager.call("setup", player_vehicle_manager)
 
 
 func _on_power_tower_floor_cleared(floor_number: int, reward_xp: int, rank: String) -> void:
@@ -1157,10 +1167,12 @@ func _on_interaction_performed(
 			var power_tower_root := target.get_parent()
 			var arena_venue := power_tower_root.get_node_or_null("PowerTowerArenaVenue") if power_tower_root != null else null
 			if arena_venue != null and player != null:
+				if power_tower_arena_manager != null:
+					power_tower_arena_manager.call("attach_venue", arena_venue)
 				player.global_position = arena_venue.call("get_arena_entry_position")
 				player.velocity = Vector3.ZERO
 				if interaction_prompt_label != null:
-					interaction_prompt_label.text = "برج القوة — بدأت محاولة الطابق %d. الحلبة جاهزة، ونظام الخصوم والقتال الفعلي قيد الإكمال." % next_floor
+					interaction_prompt_label.text = "برج القوة — بدأت محاولة الطابق %d. دخول المقاتل مجاني؛ الجمهور يشاهد ويشجع. المراهنات الافتراضية المحلية متاحة للمشاهدين فقط." % next_floor
 			elif interaction_prompt_label != null:
 				interaction_prompt_label.text = "تم حجز الطابق %d، لكن الحلبة غير متاحة حالياً." % next_floor
 		elif interaction_prompt_label != null:
