@@ -867,8 +867,15 @@ func _on_interaction_performed(
 		if interaction_prompt_label != null:
 			interaction_prompt_label.text = "برج القوة: " + str(result.get("reason", "تم طلب دخول الطابق"))
 	elif location_id == "hunter_association_tower_baghdad":
-		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "برج نقابة الصيادين — خدمات النقابة والمهام والاختبارات"
+		var hunter_tower_root := target.get_parent()
+		var hunter_tower_lobby := hunter_tower_root.get_node_or_null("TowerInterior") if hunter_tower_root != null else null
+		if hunter_tower_lobby != null and player != null:
+			player.global_position = hunter_tower_lobby.call("get_entry_position")
+			player.velocity = Vector3.ZERO
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "دخلت برج نقابة الصيادين — استخدم مكاتب الاستقبال ولوحة المعلومات"
+		elif interaction_prompt_label != null:
+			interaction_prompt_label.text = "تعذر تحميل بهو برج نقابة الصيادين"
 	elif location_id in ["business_tower_baghdad", "shopping_tower_baghdad", "entertainment_tower_baghdad", "technology_tower_baghdad"]:
 		var tower_root := target.get_parent()
 		var tower_lobby := tower_root.get_node_or_null("TowerInterior") if tower_root != null else null
@@ -903,6 +910,11 @@ func _on_interaction_performed(
 			player.velocity = Vector3.ZERO
 			if interaction_prompt_label != null:
 				interaction_prompt_label.text = "خرجت إلى ساحة البرج"
+	elif location_id.begins_with("tower_service_"):
+		var service_title := str(target.get_meta("system_display_name", "خدمة البرج"))
+		var service_note := str(target.get_meta("system_service_description", "معلومات الخدمة غير متاحة."))
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = service_title + "\n" + service_note
 
 
 func _on_location_discovered(
