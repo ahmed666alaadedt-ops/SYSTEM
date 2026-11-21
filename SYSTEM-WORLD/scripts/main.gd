@@ -839,7 +839,22 @@ func _on_interaction_performed(
 		if motorsport_track_manager != null and motorsport_track_manager.has_method("start_track_event"):
 			var race_result: Dictionary = motorsport_track_manager.call("start_track_event", "city_sprint")
 			if interaction_prompt_label != null:
-				interaction_prompt_label.text = "إدارة السباق: " + str(race_result.get("reason", "تم تسجيل بداية السباق" if race_result.get("success", false) else "تعذر بدء السباق"))
+				if bool(race_result.get("success", false)):
+					var event_data: Dictionary = race_result.get("event", {})
+					interaction_prompt_label.text = "تم تسجيل %s! ارجع إلى سيارتك، اركبها، ثم اعبر نقاط التفتيش بالترتيب لإكمال اللفات." % str(event_data.get("event_name", "السباق"))
+				else:
+					var reason := str(race_result.get("reason", "تعذر بدء السباق"))
+					var reason_text := reason
+					match reason:
+						"PLAYER_NOT_INSIDE_APPROVED_TRACK":
+							reason_text = "يجب دخول منطقة الحلبة أولاً."
+						"EXIT_VEHICLE_TO_REGISTER_RACE":
+							reason_text = "انزل من السيارة وسجّل السباق من مكتب الإدارة."
+						"VEHICLE_NOT_ON_START_GRID":
+							reason_text = "ضع سيارتك على خط الانطلاق أولاً."
+						"ACTIVE_VEHICLE_UNAVAILABLE":
+							reason_text = "أحضر سيارة مملوكة لك إلى خط الانطلاق."
+					interaction_prompt_label.text = "إدارة السباق: " + reason_text
 	elif location_id.begins_with("baghdad_osm_entrance_"):
 		var entrance_name := str(target.get_meta("system_display_name", "مدخل محدد على الخريطة"))
 		var entrance_kind := str(target.get_meta("system_entrance_type", "غير محدد"))
