@@ -103,7 +103,8 @@ func _follow_companion(companion: Node3D, offset: Vector3, delta: float) -> void
 	var look_target := player.global_position
 	look_target.y = companion.global_position.y
 	if companion.global_position.distance_squared_to(look_target) > 0.05:
-		companion.look_at(look_target, Vector3.UP)
+		# Safe during companion setup/reparenting before the node enters the SceneTree.
+		companion.look_at_from_position(companion.global_position, look_target, Vector3.UP)
 
 
 func _get_world_id() -> String:
