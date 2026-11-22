@@ -504,3 +504,6 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Extend the Godot validator to require the separate Power Tower, 200 floors, 200 registry entries and twenty boss trial floors.
 - [ ] Implement actual arena rooms, combat encounters, enemy/boss spawning, matchmaking, rewards, persistence and server-verified rankings; current additions are progression metadata and visual arena markers.
 - [ ] Run Godot validation and Android export against the exact Power Tower activation commits.
+
+- [x] Enrich every Power Tower floor record with a floor label, 1–10 difficulty tier, previous-floor-clear requirement and a unique boss-trial ID on every tenth floor.
+- [x] Extend validation to check the opening challenge type, ninth/tenth-floor boss cadence, 200th-floor label, final difficulty tier and progression lock metadata.
