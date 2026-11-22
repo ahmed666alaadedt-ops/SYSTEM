@@ -2412,11 +2412,25 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 				root.add_child(assembly)
 				var robotics_stats: Dictionary = facility_activity_stats.get("robotics_lab", {})
 				var assembly_complete := int(robotics_stats.get("plays", 0)) > 0
-				for part_index in range(3):
+				var robot_colors: Array[Color] = [
+					Color(0.12, 0.72, 0.86),
+					Color(0.78, 0.82, 0.88),
+					Color(0.95, 0.62, 0.18),
+					Color(0.18, 0.68, 0.82),
+					Color(0.18, 0.68, 0.82)
+				]
+				var target_positions: Array[Vector3] = [
+					Vector3(0.0, 0.3, 0.0),
+					Vector3(0.0, 1.2, 0.0),
+					Vector3(0.0, 2.35, 0.0),
+					Vector3(-0.92, 1.15, 0.0),
+					Vector3(0.92, 1.15, 0.0)
+				]
+				for part_index in range(5):
 					var part := MeshInstance3D.new()
 					part.name = "RobotAssemblyPart_%02d" % part_index
 					var part_material := StandardMaterial3D.new()
-					part_material.albedo_color = [Color(0.12, 0.72, 0.86), Color(0.78, 0.82, 0.88), Color(0.95, 0.62, 0.18)][part_index]
+					part_material.albedo_color = robot_colors[part_index]
 					part_material.metallic = 0.62
 					part_material.roughness = 0.28
 					part_material.emission_enabled = true
@@ -2430,12 +2444,16 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 						torso_mesh.radius = 0.52
 						torso_mesh.height = 1.55
 						part.mesh = torso_mesh
+					elif part_index == 2:
+						var head_mesh := SphereMesh.new()
+						head_mesh.radius = 0.48
+						head_mesh.height = 0.96
+						part.mesh = head_mesh
 					else:
 						var arm_mesh := BoxMesh.new()
-						arm_mesh.size = Vector3(2.1, 0.24, 0.34)
+						arm_mesh.size = Vector3(0.34, 1.25, 0.42)
 						part.mesh = arm_mesh
 					part.material_override = part_material
-					var target_positions: Array[Vector3] = [Vector3(0.0, 0.3, 0.0), Vector3(0.0, 1.25, 0.0), Vector3(0.0, 2.25, 0.0)]
 					var target_position: Vector3 = target_positions[part_index]
 					part.set_meta("system_robot_target_position", target_position)
 					part.set_meta("system_robot_assembled", assembly_complete)
@@ -2443,6 +2461,8 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 					part.visible = assembly_complete
 					part.scale = Vector3.ONE if assembly_complete else Vector3.ZERO
 					assembly.add_child(part)
+				if assembly_complete:
+					_start_robot_idle_animation(assembly)
 		"innovation_rooftop":
 			for index in range(5):
 				_add_facility_box(root, "InnovationConsole_%02d" % index, Vector3(-12.0 + float(index) * 6.0, 1.0, 1.0), Vector3(2.4, 2.0, 1.8), highlight)
@@ -2554,7 +2574,7 @@ func _facility_activity_definition(facility_type: String) -> Dictionary:
 		"arcade": {"action": "hit", "action_label": "إطلاق الكرة الضوئية", "goal": 10, "reward": 55, "title": "SYSTEM ARCADE — تحدي الأهداف"},
 		"family_zone": {"action": "discover", "action_label": "اكتشاف محطة عائلية", "goal": 3, "reward": 30, "title": "استكشاف العائلة"},
 		"rooftop_leisure": {"action": "photo", "action_label": "التقاط صورة للسطح", "goal": 1, "reward": 20, "title": "استكشاف السطح"},
-		"robotics_lab": {"action": "assemble", "action_label": "تركيب القطعة التالية", "goal": 3, "reward": 75, "title": "تركيب الروبوت"},
+		"robotics_lab": {"action": "assemble", "action_label": "تركيب القطعة التالية", "goal": 5, "reward": 95, "title": "تجميع روبوت SYSTEM بخمس قطع"},
 		"ai_lab": {"action": "analyze", "action_label": "تحليل إشارة جديدة", "goal": 3, "reward": 65, "title": "تحليل الذكاء الاصطناعي"},
 		"vr_lab": {"action": "checkpoint", "action_label": "اجتياز نقطة المحاكاة", "goal": 3, "reward": 60, "title": "محاكاة الواقع الافتراضي"}
 	}
@@ -3289,7 +3309,7 @@ func _advance_robotics_assembly(step: int) -> void:
 	var assembly := current_facility_root.get_node_or_null("RobotAssemblyDisplay") as Node3D
 	if assembly == null:
 		return
-	var part_index := clampi(step - 1, 0, 2)
+	var part_index := clampi(step - 1, 0, 4)
 	var part := assembly.get_node_or_null("RobotAssemblyPart_%02d" % part_index) as MeshInstance3D
 	if part == null:
 		return
@@ -3303,7 +3323,30 @@ func _advance_robotics_assembly(step: int) -> void:
 	assembly_tween.tween_property(part, "position", target_position, 0.72).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	assembly_tween.tween_property(part, "scale", Vector3.ONE, 0.72).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	assembly_tween.tween_property(part, "rotation", Vector3.ZERO, 0.72).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	_set_status("تركيب الروبوت: تم تثبيت الجزء %d من 3" % (part_index + 1))
+	_set_status("تجميع الروبوت: تم تثبيت القطعة %d من 5" % (part_index + 1))
+	if step >= 5:
+		_start_robot_idle_animation(assembly)
+
+
+func _start_robot_idle_animation(assembly: Node3D) -> void:
+	if not is_instance_valid(assembly) or bool(assembly.get_meta("system_robot_idle_animation", false)):
+		return
+	assembly.set_meta("system_robot_idle_animation", true)
+	var left_arm := assembly.get_node_or_null("RobotAssemblyPart_03") as MeshInstance3D
+	var right_arm := assembly.get_node_or_null("RobotAssemblyPart_04") as MeshInstance3D
+	var head := assembly.get_node_or_null("RobotAssemblyPart_02") as MeshInstance3D
+	if left_arm != null:
+		var left_tween := assembly.create_tween().set_loops()
+		left_tween.tween_property(left_arm, "rotation", Vector3(0.0, 0.0, -0.24), 0.65).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		left_tween.tween_property(left_arm, "rotation", Vector3.ZERO, 0.65).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	if right_arm != null:
+		var right_tween := assembly.create_tween().set_loops()
+		right_tween.tween_property(right_arm, "rotation", Vector3(0.0, 0.0, 0.24), 0.65).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		right_tween.tween_property(right_arm, "rotation", Vector3.ZERO, 0.65).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	if head != null:
+		var head_tween := assembly.create_tween().set_loops()
+		head_tween.tween_property(head, "rotation", Vector3(0.0, 0.18, 0.0), 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		head_tween.tween_property(head, "rotation", Vector3.ZERO, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 
 func _update_cinema_program_screen(scene_number: int) -> void:
