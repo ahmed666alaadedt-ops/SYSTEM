@@ -311,6 +311,12 @@ func update_sovereign_flight() -> bool:
 # --------------------------------------------------
 
 func create_player_progression() -> void:
+	# MainScene.tscn already owns the canonical progression node. Reuse it
+	# instead of creating a second, auto-renamed instance with split save state.
+	var existing_progression := get_node_or_null("PlayerProgression")
+	if existing_progression != null:
+		player_progression = existing_progression
+		return
 	player_progression = PlayerProgressionScript.new()
 	player_progression.name = "PlayerProgression"
 	add_child(player_progression)
