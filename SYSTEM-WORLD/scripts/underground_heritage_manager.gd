@@ -26,6 +26,9 @@ var _terrain: Node
 var _region_manager: Node
 var _active_city_name := ""
 var _city_check_clock := 0.0
+var _door_states: Dictionary = {}
+
+const DOOR_STATE_SAVE_PATH := "user://system_underground_door_states.cfg"
 
 
 func _ready() -> void:
@@ -33,6 +36,7 @@ func _ready() -> void:
 	_terrain = get_parent().get_node_or_null("ModernContinent")
 	_region_manager = get_parent().get_node_or_null("ModernWorldRegionManager")
 	_create_materials()
+	_load_door_states()
 	_active_city_name = _find_nearest_city_name(Vector3.ZERO)
 	_build_active_city_sites()
 	print("SYSTEM WORLD: underground heritage sites streamed for ", _active_city_name)
@@ -139,9 +143,50 @@ func _build_site(site: Dictionary) -> void:
 	elif str(site["name"]) == "CairoBuriedBazaar":
 		_build_greed_fragment(underground, "royal_sun_shard", "شظية الشمس الملكية", Vector3(-5.0, 1.0, -24.0))
 	_build_secret_vault(underground, str(site["kind"]) == "market", str(site["name"]))
+	_restore_and_connect_vault_door(underground, str(site["name"]))
 	_build_torch_lighting(underground)
 	if str(site["kind"]) == "market":
 		_build_market_stalls(underground)
+
+
+
+func _restore_and_connect_vault_door(underground: Node3D, site_id: String) -> void:
+	var door_interaction := underground.get_node_or_null("VaultStoneDoorInteraction")
+	if door_interaction == null:
+		return
+	var saved_open := bool(_door_states.get(site_id, false))
+	if door_interaction.has_method("restore_stone_door_state"):
+		door_interaction.call("restore_stone_door_state", saved_open)
+	if not door_interaction.is_connected(
+		"door_state_changed",
+		Callable(self, "_on_vault_door_state_changed").bind(site_id)
+	):
+		door_interaction.connect(
+			"door_state_changed",
+			Callable(self, "_on_vault_door_state_changed").bind(site_id)
+		)
+
+
+func _on_vault_door_state_changed(is_open: bool, site_id: String) -> void:
+	_door_states[site_id] = is_open
+	_save_door_states()
+
+
+func _load_door_states() -> void:
+	var config := ConfigFile.new()
+	if config.load(DOOR_STATE_SAVE_PATH) != OK:
+		return
+	var saved_states: Variant = config.get_value("vault_doors", "states", {})
+	if saved_states is Dictionary:
+		_door_states = saved_states.duplicate(true)
+
+
+func _save_door_states() -> void:
+	var config := ConfigFile.new()
+	config.set_value("vault_doors", "states", _door_states.duplicate(true))
+	var error := config.save(DOOR_STATE_SAVE_PATH)
+	if error != OK:
+		push_warning("SYSTEM underground: failed to persist vault door states; error " + str(error))
 
 
 func _build_main_chamber(parent: Node3D, is_market: bool) -> void:
