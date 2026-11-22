@@ -7,6 +7,7 @@ const TowerInteriorScript = preload("res://scripts/system_baghdad_tower_interior
 const BaghdadTowerFloorWorldScript = preload("res://scripts/system_baghdad_tower_floor_world.gd")
 const PowerTowerArenaVenueScript = preload("res://scripts/system_power_tower_arena_venue.gd")
 const PowerTowerFloorWorldScript = preload("res://scripts/system_power_tower_floor_world.gd")
+const RepublicBridgeAccessManagerScript = preload("res://scripts/baghdad_republic_bridge_access_manager.gd")
 const HUNTER_TOWER_HEIGHT := 1000.0
 const POWER_TOWER_HEIGHT := 620.0
 const TECHNOLOGY_TOWER_HEIGHT := 210.0
@@ -19,6 +20,7 @@ var emissive_material: StandardMaterial3D
 var tower_positions: Array[Dictionary] = []
 var connected_tower_positions: Array[Dictionary] = []
 var headquarters_position := Vector3.INF
+var republic_bridge_route: Dictionary = {}
 
 func _ready() -> void:
 	name = "BaghdadTowerLandmarksManager"
@@ -42,6 +44,7 @@ func _ready() -> void:
 	_create_hunter_association_headquarters()
 	_create_public_amenities()
 	_create_reference_sky_district()
+	_create_republic_bridge_access()
 
 func _create_materials() -> void:
 	tower_material = StandardMaterial3D.new()
@@ -94,16 +97,33 @@ func _build_power_tower() -> void:
 		floor_world.position = Vector3(0.0, 6000.0, 0.0)
 		power_tower.add_child(floor_world)
 
-func _build_tower(node_name: String, title: String, location_id: String, world_position: Vector3, height: float, radius: float, floors: int, beacon_color: Color, connected_to_district: bool = true) -> void:
-	var resolved := _nearest_land_position(Vector2(world_position.x, world_position.z))
+func _build_tower(
+	node_name: String,
+	title: String,
+	location_id: String,
+	world_position: Vector3,
+	height: float,
+	radius: float,
+	floors: int,
+	beacon_color: Color,
+	connected_to_district: bool = true,
+	use_exact_position: bool = false,
+	base_height_override: float = NAN
+) -> void:
+	var requested_position := Vector2(world_position.x, world_position.z)
+	var resolved := requested_position if use_exact_position else _nearest_land_position(requested_position)
 	if resolved == Vector2.INF:
 		push_warning("SYSTEM WORLD: no suitable land for tower " + title)
 		return
+	var base_height := float(terrain.call("get_terrain_height", resolved.x, resolved.y))
+	if is_finite(base_height_override):
+		base_height = base_height_override
 	var root := Node3D.new()
 	root.name = node_name
-	root.position = Vector3(resolved.x, float(terrain.call("get_terrain_height", resolved.x, resolved.y)), resolved.y)
+	root.position = Vector3(resolved.x, base_height, resolved.y)
+	root.set_meta("connected_to_local_tower_district", connected_to_district)
 	add_child(root)
-	var tower_record := {"id": location_id, "name": title, "position": root.position, "height": height, "radius": radius, "floors": floors}
+	var tower_record := {"id": location_id, "name": title, "position": root.position, "height": height, "radius": radius, "floors": floors, "connected_to_district": connected_to_district}
 	tower_positions.append(tower_record)
 	if connected_to_district:
 		connected_tower_positions.append(tower_record)
@@ -282,7 +302,22 @@ func _build_business_tower() -> void:
 
 
 func _build_shopping_tower() -> void:
-	_build_tower("ShoppingTower", "برج الأسلحة وإيقاظ النِن", "shopping_tower_baghdad", city_anchor + Vector3(-355.0, 0.0, -350.0), 190.0, 30.0, 32, Color(0.95, 0.72, 0.28))
+	republic_bridge_route = _read_verified_republic_bridge_route()
+	var tower_position := city_anchor + Vector3(-355.0, 0.0, -350.0)
+	var connected_to_district := true
+	var use_exact_position := false
+	var platform_height_override := NAN
+	if not republic_bridge_route.is_empty():
+		var anchor: Array = republic_bridge_route["tower_anchor_local_m"]
+		tower_position = Vector3(float(anchor[0]), 0.0, float(anchor[1]))
+		platform_height_override = float(republic_bridge_route["world_tower_platform_elevation_m"])
+		connected_to_district = false
+		use_exact_position = true
+	_build_tower(
+		"ShoppingTower", "برج الأسلحة وإيقاظ النِن", "shopping_tower_baghdad",
+		tower_position, 190.0, 30.0, 32, Color(0.95, 0.72, 0.28),
+		connected_to_district, use_exact_position, platform_height_override
+	)
 	var armory_tower := get_node_or_null("ShoppingTower")
 	if armory_tower != null:
 		armory_tower.set_meta("tower_role", "weapon_armory_and_nen_awakening")
@@ -291,7 +326,66 @@ func _build_shopping_tower() -> void:
 		armory_tower.set_meta("target_landmark", "Republic Bridge / جسر الجمهورية")
 		armory_tower.set_meta("target_river", "Tigris / نهر دجلة")
 		armory_tower.set_meta("target_bank_connection", PackedStringArray(["Al-Karkh / الكرخ", "Al-Rusafa / الرصافة"]))
-		armory_tower.set_meta("geospatial_relocation_pending", true)
+		armory_tower.set_meta("geospatial_relocation_pending", not republic_bridge_route.is_empty())
+		armory_tower.set_meta("real_world_anchor_verified", false)
+		armory_tower.set_meta("tower_network_role", "republic_bridge_outpost" if not republic_bridge_route.is_empty() else "core_district_pending")
+		if not republic_bridge_route.is_empty():
+			armory_tower.set_meta("bridge_osm_centerline_id", "754157537")
+			armory_tower.set_meta("tigris_osm_centerline_id", "24709603")
+			armory_tower.set_meta("tower_platform_elevation_world_m", platform_height_override)
+
+
+func _read_verified_republic_bridge_route() -> Dictionary:
+	var manifest_path := "res://data/geography/baghdad/cell_pack/manifest.json"
+	if not FileAccess.file_exists(manifest_path):
+		return {}
+	var manifest_value: Variant = JSON.parse_string(FileAccess.get_file_as_string(manifest_path))
+	if not manifest_value is Dictionary:
+		return {}
+	var manifest: Dictionary = manifest_value
+	if int(manifest.get("ground_layer_schema_version", 0)) != 1:
+		return {}
+	var source_ground := float(manifest.get("ground_elevation_m", NAN))
+	var source_water := float(manifest.get("water_surface_elevation_m", NAN))
+	var source_bridge := float(manifest.get("bridge_deck_elevation_m", NAN))
+	if not is_finite(source_ground) or not is_finite(source_water) or not is_finite(source_bridge):
+		return {}
+	if not is_equal_approx(source_ground, 34.0) or not is_equal_approx(source_water, 28.0) or not is_equal_approx(source_bridge, 34.28):
+		return {}
+	var route: Dictionary = manifest.get("landmark_routes", {}).get("republic_bridge", {})
+	if str(route.get("osm_bridge_polygon_id", "")) != "1077808833":
+		return {}
+	if str(route.get("osm_bridge_centerline_id", "")) != "754157537":
+		return {}
+	if str(route.get("osm_tigris_water_polygon_id", "")) != "1145641":
+		return {}
+	if str(route.get("osm_tigris_centerline_id", "")) != "24709603":
+		return {}
+	var anchor: Array = route.get("tower_anchor_local_m", [])
+	var bank_points: Array = route.get("bank_access_points_local_m", [])
+	var centerline: Array = route.get("centerline_local_m", [])
+	if anchor.size() != 2 or bank_points.size() != 2 or centerline.size() < 2:
+		return {}
+	var bounds: Array = manifest.get("cell_bounds_inclusive", [])
+	if bounds.size() != 4:
+		return {}
+	var target_cell_x := floori(float(anchor[0]) / float(manifest.get("cell_size_m", 200.0)))
+	var target_cell_z := floori(float(anchor[1]) / float(manifest.get("cell_size_m", 200.0)))
+	if target_cell_x < int(bounds[0]) or target_cell_x > int(bounds[1]) or target_cell_z < int(bounds[2]) or target_cell_z > int(bounds[3]):
+		return {}
+	var source_platform := float(route.get("tower_platform_elevation_m", NAN))
+	var source_river := float(route.get("river_surface_elevation_m", NAN))
+	var source_deck := float(route.get("bridge_deck_elevation_m", NAN))
+	if not is_finite(source_platform) or not is_finite(source_river) or not is_finite(source_deck):
+		return {}
+	if source_platform - source_river < 18.0 or source_platform <= source_deck:
+		return {}
+	var world_ground := float(terrain.call("get_terrain_height", city_anchor.x, city_anchor.z))
+	route["world_ground_elevation_m"] = world_ground
+	route["world_bridge_deck_elevation_m"] = world_ground + source_deck - source_ground
+	route["world_river_surface_elevation_m"] = world_ground + source_river - source_ground
+	route["world_tower_platform_elevation_m"] = world_ground + source_platform - source_ground
+	return route
 
 
 func _build_entertainment_tower() -> void:
@@ -603,8 +697,8 @@ func _make_surface_material(color: Color, roughness: float, metallic: float) -> 
 
 
 func _create_reference_sky_district() -> void:
-	# First-pass walkable sky promenade inspired by the approved Baghdad reference.
-	# The five towers remain separate landmarks; this ring supplements their existing links.
+	# Four core towers stay on the local ring; the fifth, Republic Bridge outpost,
+	# joins the same network through a dedicated elevated express skyway.
 	var district := Node3D.new()
 	district.name = "BaghdadReferenceSkyPromenade_Blockout"
 	add_child(district)
@@ -810,6 +904,31 @@ func _create_tower_facade_glazing(root: Node3D, height: float, radius: float, fl
 	root.add_child(accent_light)
 	root.set_meta("facade_glass_panel_count", safe_floor_count * 4)
 	root.set_meta("facade_metal_frame_count", safe_floor_count * 4)
+
+
+func _create_republic_bridge_access() -> void:
+	if republic_bridge_route.is_empty():
+		return
+	var armory_tower := get_node_or_null("ShoppingTower") as Node3D
+	if armory_tower == null:
+		push_warning("SYSTEM WORLD: verified Republic Bridge tower anchor exists, but ShoppingTower was not built.")
+		return
+	var access_manager := RepublicBridgeAccessManagerScript.new()
+	access_manager.name = "RepublicBridgeTowerAccessManager"
+	add_child(access_manager)
+	var access_ready := bool(access_manager.call("build", armory_tower, city_anchor, republic_bridge_route))
+	if not access_ready:
+		access_manager.queue_free()
+		armory_tower.set_meta("geospatial_relocation_pending", true)
+		armory_tower.set_meta("real_world_anchor_verified", false)
+		armory_tower.set_meta("bridge_tower_access_ready", false)
+		push_warning("SYSTEM WORLD: Republic Bridge tower access corridors failed validation; inspect the QA branch before release.")
+		return
+	armory_tower.set_meta("geospatial_relocation_pending", false)
+	armory_tower.set_meta("real_world_anchor_verified", true)
+	armory_tower.set_meta("bridge_tower_access_ready", true)
+	armory_tower.set_meta("district_connector_type", "express_skyway")
+	print("SYSTEM WORLD: weapon/Nen tower relocated above Republic Bridge with Al-Karkh and Al-Rusafa access corridors.")
 
 
 func _create_tower_identity_features(root: Node3D, node_name: String, height: float, radius: float) -> void:
