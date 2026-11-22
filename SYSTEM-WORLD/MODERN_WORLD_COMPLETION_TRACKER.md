@@ -1,5 +1,17 @@
 ## Baghdad sports gameplay physics — 22 November 2026
 
+## Authoritative status and supersession note — 22 November 2026
+
+This status block is authoritative over older historical backlog notes below. Older entries are retained for project history; where they say a feature is absent or unverified, use the later verification records and the status here.
+
+- The five connected Baghdad district towers and the independent 200-floor Power Tower remain on draft PR #38; nothing is merged into `main`.
+- The hotel is beyond a visual blockout: local-save room booking, rank-gated room selection, payment/refund, check-in/check-out, housekeeping plus inspection, and paid room-service orders with guarded `placed → preparing → delivered` transitions are implemented. This is a local prototype, not a server-authoritative online hotel.
+- Pool water-volume detection, swimming state, buoyancy and swim-stroke input are implemented and covered by the tower operations validator; full Godot validation #1405 and Android export #1142 passed on exact source commit `976ffdf2a2b92dede330b617303ab847ae07c878`. Physical Android inspection is still outstanding.
+- Physical bowling, basketball and arcade target gameplay also has automated regression coverage. Full sports match rules, bowling bonus scoring, cinema programming/playback, full arcade cabinet play, animated robotics, immersive VR, autonomous staff navigation and completed room interiors remain open.
+- Do not call the five-tower district fully complete while these explicitly open gameplay and physical-device checks remain. Keep PR #38 as draft and do not merge without the user's explicit approval.
+
+---
+
 - [x] Upgrade the bowling floor with a collidable lane, one physical bowling ball per throw, ten rigid-body pins, collision-driven pinfall scoring and pin reset between frames.
 - [x] Add ten scored bowling frames with per-frame pinfall, cumulative score, a lock while the ball is moving and completion rewards.
 - [x] Upgrade the basketball court with a collidable court surface, backboard, visible rim, scoring Area3D and a launched rigid-body basketball; score only when the ball enters the hoop sensor.
@@ -17,7 +29,7 @@
 - [x] Set and clear the player's swimming state and water-surface height when entering/leaving the pool.
 - [x] Add reduced horizontal swim speed, buoyancy toward the water surface and a jump/swim-stroke impulse in the main player physics loop.
 - [x] Extend the tower operations validator to check water-volume generation, swimming-state entry/exit and the swim-stroke impulse.
-- [ ] Run Godot and Android workflows on the swim-physics revision and inspect the pool in a real Android session; until those checks pass, this implementation remains unverified.
+- [x] Godot 4.3 validation #1405 passed on tested source commit `976ffdf2a2b92dede330b617303ab847ae07c878`; the full tower operations validator includes pool water-volume entry/exit, swimming state, buoyancy and swim-stroke checks. Android export #1142 passed on the same source commit. Physical Android pool inspection remains pending.
 
 ## Baghdad tower facility activity loops — 22 November 2026
 
@@ -30,7 +42,7 @@
 - [x] Add a rooftop photo/exploration completion activity.
 - [x] Add three-step robotics assembly, AI signal-analysis and VR checkpoint challenges.
 - [x] Persist completed rounds, best scores, cumulative scores and rewards locally; extend the operations validator to exercise every activity and verify save/load persistence.
-- [ ] Replace remaining prototype controls with full movement-driven gameplay: the pool's water-volume/buoyancy/swim-stroke implementation still awaits validation; bowling now has an initial physical ball and ten-pin loop; basketball now has a physical ball and hoop sensor. Full bowling scoring rules, complete sports matches, actual cinema playback, arcade machine gameplay, animated robotics assembly and immersive VR simulation remain open.
+- [ ] Replace remaining prototype controls with full movement-driven gameplay: pool water-volume/buoyancy/swim-stroke behavior is implemented and passed Godot validation #1405; bowling has physical ball/pins and a ten-frame loop; basketball has a physical ball and hoop sensor. Full bowling bonus scoring, complete sports matches, actual cinema playback, full arcade cabinet gameplay, animated robotics assembly and immersive VR simulation remain open.
 - [x] Godot 4.3 full validation passed on gameplay commit `bdbcf4e0c607d0aef37ca1d087163dc10ecc36a1`: validation run #1365 (run ID `45062732609`), including script import/parser, headless launch, Baghdad tower landmark checks, and the complete tower operations validator with all eleven activity loops plus local save/load regression.
 - [x] Canonical Android APK export passed on the same exact gameplay commit: build #1102 (run ID `45062732606`); APK size 35,877,768 bytes; SHA-256 `52aeb1e53e558922eda631ade2f4a856ac1451415981022ddb449838a9fd4630`; artifact expires 6 December 2026.
 - [ ] Inspect the exported build on a physical Android device after a fresh export.
@@ -77,7 +89,7 @@ This section supersedes older tower-role notes below wherever they describe the 
 - [x] Entertainment Tower: add ticket products for pools, sport, cinema, bowling, arcade, fitness, spa, family areas and rooftop events; generate pool, gym, sports court, bowling, cinema, arcade, family-zone and rooftop-leisure floor props.
 - [x] Technology Tower: expand the catalog for robotics kits, AI compute access, VR simulation, prototype-lab access and diagnostics; generate robotics, AI, VR and rooftop innovation floor props.
 - [x] Hunter Association Tower: add training rooms, guild lounge, archive/library, Hall of Honor, Global Council and top-floor Global Headquarters facilities.
-- [ ] Add full swimming movement/physics, water entry/exit, pool activities and lifeguard routines; current pool work is the authored 3D pool facility and its service interaction.
+- [x] Add swimming movement/physics, water entry/exit and a pool activity loop; pool movement and swim-stroke regression passed Godot validation #1405. [ ] Lifeguard routines and physical Android inspection remain open.
 - [ ] Add playable cinema programming, bowling/arcade minigames, full sports matches, live business-market simulation, and hands-on robotics/VR experiences; current additions establish their floor layouts, service points and catalog entries.
 - [ ] Complete floor-by-floor furniture, accessible routes, elevators, emergency exits, lighting, sound, staff navigation and visual polish across every tower floor.
 
@@ -110,7 +122,7 @@ This section supersedes older tower-role notes below wherever they describe the 
 - [x] Add 1-, 3- and 7-night booking controls with availability checks, rank eligibility and SYSTEM-credit payment.
 - [x] Add hotel receptionist interaction controls for booking, guest check-in and checkout; checkout releases the room and refunds unused nights beyond the first night.
 - [x] Add validator coverage for reservation payment, check-in state persistence and checkout room release, restoring test wallet/booking fixtures after the test.
-- [ ] Hotel persistence is currently local to the device/save. Server-authoritative shared room inventory, real-world calendar dates, guest NPC occupancy, room-service delivery and housekeeping schedules remain future integration work.
+- [ ] Hotel booking, room-service orders and housekeeping are functional local-save workflows. Server-authoritative shared room inventory, real-world calendar dates, guest NPC occupancy, autonomous waiter/staff navigation and cross-device synchronization remain future integration work.
 - [ ] Run Godot 4.3 parser/import and the updated hotel/Baghdad validators on the exact latest PR head. No fresh green run has been returned by GitHub Actions yet.
 
 ## Baghdad public event-board tower map alignment — 22 November 2026
@@ -145,7 +157,7 @@ This section supersedes older tower-role notes below wherever they describe the 
 - [x] Keep SYSTEM Hotel inside Shopping Tower floors 27–28: reception/lounge and reservation interaction on floor 27; eight guest-suite doors and suite-booking interaction on floor 28.
 - [x] Keep restaurants/dining areas on floors 29–32; the existing food-hall furniture and restaurant catalog remain within Shopping Tower.
 - [x] Align the Baghdad tower validator to the five connected towers plus the independent Power Tower; move forge/elixir lab checks to Shopping Tower floor 14 and add hotel/staff assertions.
-- [ ] Functional hotel backend still required: persistent room inventory, date-based reservation, rates, payment/refund, check-in/check-out, housekeeping schedule, room service and guest NPC routines. Current hotel content is a 3D blockout plus interaction metadata, not a complete reservation system.
+- [x] Local hotel gameplay now includes persistent room records, availability, 1/3/7-night pricing, rank checks, payment/refund, check-in/check-out, housekeeping/inspection turnover and paid room-service order states. [ ] Server-authoritative shared inventory/payments, real calendar reservations, autonomous guest NPC occupancy/staff navigation and finished room interiors remain open.
 - [ ] Run Godot 4.3 import/parser and the full Baghdad tower validator on the latest branch head; then build and test the Android APK. No test pass is claimed yet.
 
 
@@ -154,7 +166,7 @@ This section supersedes older tower-role notes below wherever they describe the 
 - [x] Reserve floors 27–28 for the hotel within the existing Shopping Tower: floor 27 reception/lounge and floor 28 guest rooms/suites; restaurant floors remain 29–32.
 - [x] Add a hospitality manager staff role and attach hotel reception/booking interaction metadata to both hotel floors.
 - [x] Add first-pass 3D reception desk, lounge feature, suite-door visuals, and interaction areas; no separate tower is created.
-- [ ] Implement actual room inventory/availability, reservation, check-in/check-out, pricing, room service, guest persistence, and server-authoritative payment.
+- [x] Implement local room inventory/availability, reservation, check-in/check-out, pricing, paid room service and persisted booking/order records. [ ] Server-authoritative payment and shared online guest/room persistence remain open.
 - [ ] Replace hotel blockout geometry with complete room interiors, beds, bathrooms, lighting, accessibility, fire exits, and staff navigation.
 - [ ] Run Godot parser/import, scene interaction, save/load, economy, visual, and Android-device tests. This source change is not runtime-verified yet.
 
@@ -373,7 +385,7 @@ A checked repository foundation does not mean a finished gameplay feature. Visua
 - [x] Add placeholder public amenity deck geometry and a planned facility inventory for recreation, hospitality, shopping, health support, parking, and emergency access.
 - [ ] Implement validated drivable ramp paths, vehicle physics, lane widths, slope limits, collision barriers, traffic rules, and safe merges from Baghdad streets.
 - [ ] Implement parking garages, vehicle elevators/ramps, drop-off points, pedestrian crossings, and service/emergency circulation.
-- [ ] Build actual interactive pools, water park, amusement park, hotels, restaurants, cafes, cinemas, sports courts, gardens, and public facilities.
+- [ ] Expand beyond the current local gameplay prototypes: water-park/amusement-park systems, complete hotel room interiors, full restaurant seating/service, cinema programming/playback, complete sports matches, gardens and public-facility life simulation remain open.
 - [ ] Position and validate the full district against the real in-game Tigris corridor, Karkh/Rusafa geography, Tahrir Square, and the Freedom Monument; preserve river navigation and protected landmark sightlines.
 - [ ] Run Godot parser/editor/runtime checks and inspect the five-tower blockout in-game before calling this milestone validated.
 - Note: the checked items above indicate repository geometry/documentation was added, not that vehicles can already drive on the decks or that the amenities are playable.
