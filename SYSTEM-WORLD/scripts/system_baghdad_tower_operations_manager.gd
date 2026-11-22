@@ -1558,7 +1558,7 @@ func open_hotel_room_preview(room_id: String) -> void:
 	title_label.text = "فندق SYSTEM — " + str(room_data.get("name", "غرفة فندقية"))
 	_clear_dynamic_controls()
 	var details := Label.new()
-	details.text = "معاينة داخلية للغرفة\\nالسعر: %d رصيد لليلة\\nالرتبة المطلوبة: %s\\nتتضمن سريراً وخزانة ومكتباً وحماماً خاصاً." % [int(room_data.get("rate", 0)), str(room_data.get("required_rank", "F"))]
+	details.text = "معاينة داخلية للغرفة\nالسعر: %d رصيد لليلة\nالرتبة المطلوبة: %s\nتتضمن سريراً وخزانة ومكتباً وحماماً خاصاً." % [int(room_data.get("rate", 0)), str(room_data.get("required_rank", "F"))]
 	details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content.add_child(details)
 	var booking: Dictionary = hotel_bookings.get(room_id, {})
@@ -3582,7 +3582,7 @@ func _create_hotel_room_interior(parent: Node3D, room_data: Dictionary, room_ind
 	var glass: Material = materials["glass"]
 	var gold: Material = materials["gold"]
 	var dark: Material = materials["dark"]
-	_add_hotel_room_box(room_root, "HotelRoomFloor", Vector3(5.4, 0.18, 5.8), Vector3(0.0, 0.09, 0.0), floor)
+	_add_hotel_room_box(room_root, "HotelRoomFloor", Vector3(5.4, 0.08, 5.8), Vector3(0.0, 0.04, 0.0), floor)
 	_add_hotel_room_box(room_root, "HotelRoomBackWall", Vector3(5.4, 3.2, 0.16), Vector3(0.0, 1.6, -2.9), wall)
 	_add_hotel_room_collision_box(room_root, "HotelRoomBackWallCollision", Vector3(5.4, 3.2, 0.16), Vector3(0.0, 1.6, -2.9))
 	_add_hotel_room_box(room_root, "HotelRoomLeftWall", Vector3(0.16, 3.2, 5.8), Vector3(-2.7, 1.6, 0.0), wall)
