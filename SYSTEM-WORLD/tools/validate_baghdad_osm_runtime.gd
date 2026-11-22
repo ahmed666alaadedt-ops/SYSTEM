@@ -44,6 +44,11 @@ func _run_validation() -> void:
 		_fail("Loaded cell identity does not match the requested cell coordinates.")
 		return
 	print("Baghdad OSM validation: center cell loaded; checking generated scene nodes.")
+	var invalid_mesh_paths := _find_invalid_mesh_nodes(cell_root)
+	if not invalid_mesh_paths.is_empty():
+		_fail("Baghdad OSM generated null-mesh scene nodes: " + ", ".join(invalid_mesh_paths.slice(0, 12)))
+		return
+	print("Baghdad OSM mesh integrity: no null MeshInstance3D or MultiMeshInstance3D resources in loaded center cell.")
 	var roads := cell_root.find_children("OSMRoad_*", "MeshInstance3D", true, false)
 	var buildings := cell_root.find_children("OSMBuilding_*", "MeshInstance3D", true, false)
 	var landuse := cell_root.find_children("OSMLanduse_*", "MeshInstance3D", true, false)
@@ -259,7 +264,28 @@ func _run_validation() -> void:
 	streamer._unload_cell(Vector2i(9, 9))
 	streamer.queue_free()
 	print("Baghdad OSM runtime validation passed: historic landmarks, Kadhimiya exclusion, player routing and cell persistence.")
+	# queue_free() is deferred. Let SceneTree process every queued deletion before
+	# quitting so the headless renderer never observes partially torn-down meshes.
+	await process_frame
+	await process_frame
+	print("Baghdad OSM runtime cleanup flushed before SceneTree shutdown.")
 	quit(0)
+
+
+func _find_invalid_mesh_nodes(start: Node) -> Array[String]:
+	var invalid_paths: Array[String] = []
+	var pending: Array[Node] = [start]
+	while not pending.is_empty():
+		var node: Node = pending.pop_back()
+		if node is MeshInstance3D and (node as MeshInstance3D).mesh == null:
+			invalid_paths.append(str(node.get_path()))
+		if node is MultiMeshInstance3D:
+			var instance := node as MultiMeshInstance3D
+			if instance.multimesh == null or instance.multimesh.mesh == null:
+				invalid_paths.append(str(node.get_path()))
+		for child in node.get_children():
+			pending.append(child)
+	return invalid_paths
 
 
 func _fail(message: String) -> void:
