@@ -2586,6 +2586,7 @@ func _launch_arcade_projectile() -> Dictionary:
 	_set_status("انطلقت الكرة الضوئية — أصب الهدف المحدد!")
 	var hit := false
 	var target_id := -1
+	var nearest_target_distance := INF
 	for _physics_step in range(90):
 		await get_tree().physics_frame
 		if not is_instance_valid(projectile):
@@ -2596,16 +2597,20 @@ func _launch_arcade_projectile() -> Dictionary:
 			break
 		for sensor_index in range(5):
 			var target_sensor := current_facility_root.get_node_or_null("ArcadeTargetSensor_%02d" % sensor_index) as Area3D
-			if target_sensor != null and projectile.global_position.distance_to(target_sensor.global_position) <= 0.95:
-				hit = true
-				target_id = sensor_index
-				break
+			if target_sensor != null:
+				var target_distance := projectile.global_position.distance_to(target_sensor.global_position)
+				nearest_target_distance = minf(nearest_target_distance, target_distance)
+				if target_distance <= 0.95:
+					hit = true
+					target_id = sensor_index
+					break
 		if hit:
 			break
 	if is_instance_valid(projectile):
 		projectile.queue_free()
 	var step := int(active_facility_activity.get("step", 0)) + 1
 	var points := 1 if hit else 0
+	var projectile_end_position := projectile.global_position if is_instance_valid(projectile) else Vector3.ZERO
 	active_facility_activity["step"] = step
 	active_facility_activity["score"] = int(active_facility_activity.get("score", 0)) + points
 	facility_projectile_in_progress = false
@@ -2615,9 +2620,11 @@ func _launch_arcade_projectile() -> Dictionary:
 		var result := _complete_facility_activity()
 		result["last_target_hit"] = hit
 		result["last_target_id"] = target_id
+		result["last_target_distance"] = nearest_target_distance
+		result["last_projectile_position"] = projectile_end_position
 		return result
 	_set_status(("أصبت الهدف %d!" % (target_id + 1) if hit else "لم تصب الهدف — عدّل الاتجاه وحاول.") + " المحاولة %d/%d | النقاط: %d" % [step, goal, score])
-	return {"success": true, "completed": false, "step": step, "hit": hit, "target_id": target_id, "score": score}
+	return {"success": true, "completed": false, "step": step, "hit": hit, "target_id": target_id, "score": score, "nearest_target_distance": nearest_target_distance, "projectile_end_position": projectile_end_position}
 
 
 func _launch_basketball() -> Dictionary:
