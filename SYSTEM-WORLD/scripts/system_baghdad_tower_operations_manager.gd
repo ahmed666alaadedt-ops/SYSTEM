@@ -3050,7 +3050,7 @@ func open_restaurant_table(table_node: Node) -> void:
 		for item_value in items:
 			var item: Dictionary = item_value
 			item_names.append(str(item.get("name", "وجبة")))
-		status_label.text = "%s\n%s\nالإجمالي: %d رصيد" % [str(state_names.get(state, state)), "، ".join(item_names), int(active_order.get("total", 0))]
+		status_label.text = "%s\n%s\nالإجمالي: %d رصيد" % [str(state_names.get(state, state)), "، ".join(PackedStringArray(item_names)), int(active_order.get("total", 0))]
 		var next_states := {
 			"placed": ["preparing", "إرسال الطلب إلى الشيف لبدء التحضير"],
 			"preparing": ["ready", "تأكيد جاهزية الوجبة"],
@@ -3095,7 +3095,8 @@ func open_restaurant_table(table_node: Node) -> void:
 
 
 func _add_restaurant_draft_item(table_id: String, item_id: String, item_name: String, price: int) -> void:
-	if table_id.is_empty() or price <= 0 or not restaurant_orders.get(table_id, {}).is_empty():
+	var active_order: Dictionary = restaurant_orders.get(table_id, {})
+	if table_id.is_empty() or price <= 0 or not active_order.is_empty():
 		return
 	var draft: Array = restaurant_draft_items.get(table_id, [])
 	draft.append({"item_id": item_id, "name": item_name, "price": price})
