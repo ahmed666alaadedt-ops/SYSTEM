@@ -12,6 +12,15 @@ const CONTINENT_RADIUS_X := 1120.0
 const CONTINENT_RADIUS_Z := 790.0
 const SEA_LEVEL := 0.0
 const OCEAN_FLOOR := -24.0
+
+# Real Baghdad OSM coverage: 200 m cells x[-2..20], z[-8..2].
+# The city elevation is the registry baseline; detailed relief can be replaced by DEM data later.
+const BAGHDAD_OSM_CELL_SIZE := 200.0
+const BAGHDAD_OSM_MIN_CELL_X := -2
+const BAGHDAD_OSM_MAX_CELL_X := 20
+const BAGHDAD_OSM_MIN_CELL_Z := -8
+const BAGHDAD_OSM_MAX_CELL_Z := 2
+const BAGHDAD_OSM_GROUND_ELEVATION_M := 34.0
 const TerrainCellStreamingManagerScript = preload("res://scripts/modern_world_cell_streaming_manager.gd")
 
 var terrain_height_data := PackedFloat32Array()
@@ -131,6 +140,8 @@ func _get_height(x: float, z: float) -> float:
 
 # Public terrain sampling API for world systems such as forests, paths and NPCs.
 func get_terrain_height(x: float, z: float) -> float:
+	if _is_baghdad_osm_region(x, z):
+		return BAGHDAD_OSM_GROUND_ELEVATION_M
 	if terrain_height_data.size() != GRID_X * GRID_Z:
 		return _get_height(x, z)
 
@@ -151,7 +162,24 @@ func get_terrain_height(x: float, z: float) -> float:
 
 
 func is_land_position(x: float, z: float) -> bool:
+	if _is_baghdad_osm_region(x, z):
+		var streamers := get_tree().get_nodes_in_group("baghdad_osm_cell_streamer")
+		if not streamers.is_empty() and streamers[0].has_method("is_ground_position"):
+			return bool(streamers[0].call("is_ground_position", x, z))
+		# The cell streamer is added after the region manager creates its landmarks.
+		return true
 	return _get_height(x, z) > SEA_LEVEL + 0.5
+
+
+func _is_baghdad_osm_region(x: float, z: float) -> bool:
+	var cell_x := floori(x / BAGHDAD_OSM_CELL_SIZE)
+	var cell_z := floori(z / BAGHDAD_OSM_CELL_SIZE)
+	return (
+		cell_x >= BAGHDAD_OSM_MIN_CELL_X
+		and cell_x <= BAGHDAD_OSM_MAX_CELL_X
+		and cell_z >= BAGHDAD_OSM_MIN_CELL_Z
+		and cell_z <= BAGHDAD_OSM_MAX_CELL_Z
+	)
 
 
 func _terrain_color(height: float, x: float, z: float) -> Color:
