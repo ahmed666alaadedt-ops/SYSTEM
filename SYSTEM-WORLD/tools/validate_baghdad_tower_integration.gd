@@ -474,6 +474,37 @@ func _run() -> void:
 	var landmarks = LANDMARK_SCRIPT.new()
 	region.add_child(landmarks)
 	landmarks.call("build", terrain)
+	var hunter_tunnel_root := landmarks.get_node_or_null("hunter_exam_tunnel_start_baghdad") as Node3D
+	var hunter_tunnel_floor := hunter_tunnel_root.get_node_or_null("TunnelFloor") as MeshInstance3D if hunter_tunnel_root != null else null
+	var hunter_tunnel_floor_body := hunter_tunnel_root.get_node_or_null("TunnelFloorCollision") as StaticBody3D if hunter_tunnel_root != null else null
+	var hunter_tunnel_floor_collision := hunter_tunnel_floor_body.get_node_or_null("CollisionShape3D") as CollisionShape3D if hunter_tunnel_floor_body != null else null
+	if hunter_tunnel_floor == null or hunter_tunnel_floor.mesh == null or hunter_tunnel_floor_collision == null or hunter_tunnel_floor_collision.shape == null:
+		_fail("Hunter examination tunnel floor is missing its physical collision.")
+		return
+	if int(hunter_tunnel_root.get_meta("hunter_exam_stage_gate_count", 0)) != 7:
+		_fail("Hunter examination tunnel does not contain seven numbered stage gates.")
+		return
+	for stage_number in range(1, 8):
+		var hunter_stage_gate := hunter_tunnel_root.get_node_or_null("StageGate_%02d" % stage_number) as Node3D
+		var hunter_stage_sign := hunter_stage_gate.get_node_or_null("StageNumberSign_%02d" % stage_number) as Label3D if hunter_stage_gate != null else null
+		if hunter_stage_gate == null or hunter_stage_sign == null or not hunter_stage_sign.text.contains("بوابة المرحلة"):
+			_fail("Hunter examination tunnel stage gate or number sign is missing: %d" % stage_number)
+			return
+	var hunter_access_gate := hunter_tunnel_root.get_node_or_null("CandidateAccessGate") as Node3D
+	var hunter_access_barrier := hunter_access_gate.get_node_or_null("CandidateAccessBarrier") as MeshInstance3D if hunter_access_gate != null else null
+	var hunter_access_body := hunter_access_gate.get_node_or_null("CandidateAccessBarrierCollision") as StaticBody3D if hunter_access_gate != null else null
+	var hunter_access_shape := hunter_access_body.get_node_or_null("CollisionShape3D") as CollisionShape3D if hunter_access_body != null else null
+	if hunter_access_barrier == null or hunter_access_shape == null or hunter_access_shape.disabled or not hunter_access_barrier.visible:
+		_fail("Hunter examination tunnel candidate access barrier must start closed.")
+		return
+	landmarks.call("set_hunter_exam_tunnel_access", true)
+	if hunter_access_shape.disabled != true or hunter_access_barrier.visible or not bool(hunter_tunnel_root.get_meta("candidate_access_enabled", false)):
+		_fail("Hunter examination tunnel did not open after successful candidate access was granted.")
+		return
+	landmarks.call("set_hunter_exam_tunnel_access", false)
+	if hunter_access_shape.disabled or not hunter_access_barrier.visible or bool(hunter_tunnel_root.get_meta("candidate_access_enabled", true)):
+		_fail("Hunter examination tunnel candidate access barrier did not return to its closed state.")
+		return
 	var fake_map := FakeMap.new()
 	root.add_child(fake_map)
 	# The region manager owns the single registration pass for existing tower roots;
@@ -483,7 +514,7 @@ func _run() -> void:
 	fake_map.call("register_location", "2", "hunter_association_headquarters_baghdad", "region_baghdad", "المقر الرئيسي لنقابة الصيادين", 5, headquarters_position, false)
 	landmarks.call("register_map_locations", fake_map, "2")
 	var main_source := FileAccess.get_file_as_string("res://scripts/main.gd")
-	for required_contract in ["tower_lift_console_", "tower_stair_", "tower_floor_exit_", "tower_service_", "tower_service_hunter_headquarters_", "_enter_baghdad_tower_floor", "BaghdadTowerLiftUIScript", "set_hunter_exam_tunnel_access"]:
+	for required_contract in ["tower_lift_console_", "tower_stair_", "tower_floor_exit_", "tower_service_", "tower_service_hunter_headquarters_", "_enter_baghdad_tower_floor", "BaghdadTowerLiftUIScript", "set_hunter_exam_tunnel_access", "tunnel_access_controller.get_parent()", "tunnel_access_controller.call(\\\"set_hunter_exam_tunnel_access\\\", true)"]:
 		if not main_source.contains(required_contract):
 			_fail("Main interaction runtime is missing tower lift contract: " + required_contract)
 			return
