@@ -58,8 +58,6 @@ def read_pack(pack_path: pathlib.Path) -> tuple[dict[str, Any], dict[str, list[d
                 feature_id = str(feature.get("id", "")).strip()
                 if feature_id:
                     entrances[feature_id].append(feature)
-    # Building polygons are clipped at cell boundaries. Reassemble every
-    # fragment for an OSM ID before measuring entrance-to-footprint distance.
     merged_buildings: list[dict[str, Any]] = []
     for feature_id, fragments in sorted(buildings.items()):
         geometries = [geometry for geometry in
@@ -70,9 +68,6 @@ def read_pack(pack_path: pathlib.Path) -> tuple[dict[str, Any], dict[str, list[d
         merged = dict(fragments[0])
         merged["geometry"] = mapping(unary_union(geometries))
         merged_buildings.append(merged)
-
-    # Entrance points may be repeated only if source tiling duplicates them;
-    # retain one canonical record per OSM ID.
     unique_entrances = [items[0] for _, items in sorted(entrances.items())]
     return manifest, {"buildings": merged_buildings, "entrances": unique_entrances}
 
@@ -101,7 +96,6 @@ def associate_features(building_features: list[dict[str, Any]],
             associations.append({"entrance_id": entrance_id, "status": "rejected",
                                  "reason": "entrance_geometry_is_not_a_point"})
             continue
-
         entrance_kind = str(tags.get("entrance", "")).lower()
         door_kind = str(tags.get("door", "")).lower()
         access = str(tags.get("access", "")).lower()
@@ -111,21 +105,18 @@ def associate_features(building_features: list[dict[str, Any]],
                                  "reason": "OSM tags explicitly mark this point as non-entry",
                                  "entrance_tags": tags})
             continue
-
         candidates = []
         for building in building_records:
             distance = float(building["geometry"].distance(point))
             if distance <= MAX_CANDIDATE_DISTANCE_M:
                 candidates.append((distance, building))
         candidates.sort(key=lambda item: (item[0], item[1]["id"]))
-
         if not candidates:
             counts["rejected_no_nearby_building"] += 1
             associations.append({"entrance_id": entrance_id, "status": "rejected",
                                  "reason": "no_building_within_10m",
                                  "entrance_tags": tags})
             continue
-
         best_distance, best = candidates[0]
         second_distance = candidates[1][0] if len(candidates) > 1 else None
         ambiguous = second_distance is not None and (second_distance - best_distance) < AMBIGUITY_MARGIN_M
@@ -153,7 +144,6 @@ def associate_features(building_features: list[dict[str, Any]],
             status = "rejected"
             reason = "nearest_building_is_more_than_5m_away"
             counts["rejected_low_confidence"] += 1
-
         associations.append({
             "entrance_id": entrance_id,
             "building_id": best["id"],
@@ -166,7 +156,6 @@ def associate_features(building_features: list[dict[str, Any]],
             "entrance_tags": tags,
             "building_tags": best["tags"],
         })
-
     return {
         "summary": {
             "entrance_count": len(entrance_features),
@@ -185,11 +174,7 @@ def associate_features(building_features: list[dict[str, Any]],
 
 
 def annotate_pack(pack_path: pathlib.Path, associations: list[dict[str, Any]]) -> None:
-    """Embed association decisions in each source entrance feature in the ZIP.
-
-    The runtime consumes this metadata directly from the same cell pack, so a
-    report cannot silently drift away from the data installed in the game.
-    """
+    """Embed association decisions in each source entrance feature in the ZIP."""
     by_id = {str(item.get("entrance_id", "")): item for item in associations}
     temporary_path = pack_path.with_name(pack_path.name + ".tmp")
     try:
@@ -251,6 +236,9 @@ def main() -> None:
         },
         **report,
     }
+    if args.annotate_pack:
+        annotate_pack(args.pack, report["associations"])
+        output["runtime_pack_annotated"] = True
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n",
                            encoding="utf-8")
