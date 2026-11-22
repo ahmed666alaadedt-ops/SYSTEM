@@ -6,7 +6,9 @@
 - [x] Expose preparation and delivery confirmation controls in the active hotel stay interface.
 - [x] Extend the Baghdad operations validator with a paid order lifecycle regression and restore the original hotel booking/wallet fixtures after the test.
 - [ ] Room-service processing is currently local and staff-confirmed through the hotel interface; server-backed kitchen dispatch, autonomous waiter navigation and physical table/room occupancy are not implemented.
-- [ ] Run the updated Godot validator and Android export on this exact branch head. The existing workflows trigger on pushes to main or manual dispatch, not pushes to this feature branch; no fresh run is claimed.
+- [x] Run the updated Godot validator on exact commit `54e7ad39ecdc8ecd2076ebb18154dcf9342592d2`; GitHub Actions validation run #1359 completed successfully (run ID `45062020997`).
+- [x] Export the canonical Android APK from the same exact commit; GitHub Actions Android build #1096 completed successfully (run ID `45062020991`).
+- [ ] Physical-device Android gameplay inspection remains pending; successful export does not certify device-side visuals, controls, frame rate or persistence.
 
 # Baghdad living tower district — canonical implementation update — 22 November 2026
 
@@ -53,6 +55,7 @@ This section supersedes older tower-role notes below wherever they describe the 
 - Note: this is active-floor visitor behavior, not an autonomous multi-floor schedule or full restaurant seating/room occupancy simulation.
 
 ## Validation status for this revision
+- [x] Latest room-service commit `54e7ad39ecdc8ecd2076ebb18154dcf9342592d2` passed GitHub Actions Godot validation #1359 and Android APK export #1096.
 - [x] Extend the Godot operations validator for the five connected towers plus independent Power Tower, 45 staff, 20 customers, uniform presence, staffed cafes, NPC purchases, pools, cinema, trading hall, AI lab, Hall of Honor, Global Council, Global Headquarters, Shopping Tower forge/lab, hotel and dining.
 - [x] Run the complete Godot 4.3 import/parser, main-scene launch, tower landmark and tower operations validators on the latest branch head — passed in GitHub Actions validation run #1343 (22 November 2026).
 - [x] Confirm the fresh GitHub Actions Godot validation result is green (run #1348); Android export is a separate pending check.
