@@ -1,7 +1,17 @@
 extends SceneTree
 
+var _validation_finished := false
+
+
 func _initialize() -> void:
 	call_deferred("_run_validation")
+	call_deferred("_watchdog")
+
+
+func _watchdog() -> void:
+	await create_timer(30.0).timeout
+	if not _validation_finished:
+		_fail("Live main-scene integration validation timed out before reaching its completion checkpoint.")
 
 
 func _run_validation() -> void:
@@ -12,8 +22,9 @@ func _run_validation() -> void:
 
 	var main_scene := packed_scene.instantiate()
 	root.add_child(main_scene)
+	print("SYSTEM QA integration: canonical main scene instantiated.")
 	await process_frame
-	await physics_frame
+	print("SYSTEM QA integration: main scene ready frame reached.")
 
 	var world_manager := main_scene.get_node_or_null("WorldManager")
 	if world_manager == null:
@@ -23,6 +34,7 @@ func _run_validation() -> void:
 		_fail("Canonical main scene did not start in the Modern Realistic World.")
 		return
 
+	print("SYSTEM QA integration: WorldManager and active world verified.")
 	var modern_root := world_manager.call("get_world_root", 2) as Node3D
 	if modern_root == null:
 		_fail("Modern world root is missing from WorldManager.")
@@ -33,6 +45,7 @@ func _run_validation() -> void:
 		_fail("UndergroundHeritageManager is not attached to the active modern world.")
 		return
 
+	print("SYSTEM QA integration: live heritage manager verified.")
 	var door_interactable := modern_root.get_node_or_null(
 		"UndergroundHeritageManager/BaghdadOldSouk/UndergroundChambers/VaultStoneDoorInteraction"
 	)
@@ -52,6 +65,7 @@ func _run_validation() -> void:
 		_fail("Live vault slab collision is missing or disabled.")
 		return
 
+	print("SYSTEM QA integration: live vault door and collision verified.")
 	var interaction_manager := main_scene.get_node_or_null("WorldInteractionManager")
 	if interaction_manager == null:
 		_fail("Canonical WorldInteractionManager is missing.")
@@ -65,11 +79,13 @@ func _run_validation() -> void:
 		return
 
 	print("SYSTEM Baghdad live-scene integration passed: modern world, heritage manager, vault door, collision, player/camera interaction wiring.")
+	_validation_finished = true
 	main_scene.queue_free()
 	await process_frame
 	quit(0)
 
 
 func _fail(message: String) -> void:
+	_validation_finished = true
 	push_error("SYSTEM Baghdad live-scene integration failed: " + message)
 	quit(1)
