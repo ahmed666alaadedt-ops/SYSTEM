@@ -636,3 +636,9 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Add automated progression regression checks for sequential floor access, player-level requirements, duplicate active-floor requests, and rejection of clear reports for floors that were never activated.
 - [ ] Pass Godot 4.3 parser, complete Baghdad tower operations validator, and canonical Android APK export on the latest PR head.
 - [ ] Verify the full 200-floor progression, save/reload continuity, boss floors, rewards and failure/abandon recovery through extended automated gameplay tests and Android device testing.
+
+
+### Baghdad tower interaction prompt alignment — 22 November 2026
+
+- [x] Update the in-world tower interaction prompt: the floor selector and elevator travel are available, while unfinished tower services/interior details remain explicitly marked as in development.
+- [ ] Pass the latest Godot operations validation and canonical Android APK export after the Hunter exam, Power Tower and prompt updates.
