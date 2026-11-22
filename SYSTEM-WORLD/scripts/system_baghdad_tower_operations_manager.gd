@@ -451,7 +451,11 @@ func _start_tower_staff_waypoint_patrol(employee: Node3D, model: Node3D, staff_i
 	employee.set_meta("system_staff_navigation_enabled", true)
 	employee.set_meta("system_staff_patrol_waypoints", waypoints)
 	employee.set_meta("system_staff_navigation_speed", 1.8)
+	var previous_tween: Variant = employee.get_meta("system_staff_patrol_tween", null)
+	if previous_tween is Tween:
+		(previous_tween as Tween).kill()
 	var patrol_tween := employee.create_tween().set_loops()
+	employee.set_meta("system_staff_patrol_tween", patrol_tween)
 	var previous_position := origin
 	for waypoint in waypoints:
 		var direction := waypoint - previous_position
