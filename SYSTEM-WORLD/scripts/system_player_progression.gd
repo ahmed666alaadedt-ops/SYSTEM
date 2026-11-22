@@ -25,6 +25,8 @@ const DEFAULT_ATTRIBUTES := {
 }
 
 const DEFAULT_EQUIPMENT_SLOTS := {"weapon": "", "shield": "", "armor": "", "helmet": "", "outfit": ""}
+const MAX_EQUIPMENT_UPGRADE_LEVEL := 10
+const MAX_EQUIPMENT_DURABILITY := 100.0
 const EQUIPMENT_SLOTS_BY_ITEM := {
 	"training_sword": "weapon", "steel_sword": "weapon", "hunter_spear": "weapon",
 	"battle_axe": "weapon", "composite_bow": "weapon", "system_firearm": "weapon",
@@ -68,6 +70,8 @@ var greed_fragments: Array[String] = []
 var inventory_items: Dictionary = {}
 var world_fragments: Dictionary = {"modern": [], "historical": [], "fantasy": []}
 var equipment_slots: Dictionary = DEFAULT_EQUIPMENT_SLOTS.duplicate(true)
+var equipment_upgrade_levels: Dictionary = {}
+var equipment_durability: Dictionary = {}
 var active_elixir_effects: Dictionary = {}
 var nen_unlocked := false
 var nen_control_rank := 0
@@ -225,6 +229,10 @@ func equip_item(item_id: String) -> Dictionary:
 	if get_item_count(item_id) <= 0:
 		return {"success": false, "reason": "ITEM_NOT_OWNED"}
 	equipment_slots[slot] = item_id
+	if not equipment_durability.has(item_id):
+		equipment_durability[item_id] = MAX_EQUIPMENT_DURABILITY
+	if not equipment_upgrade_levels.has(item_id):
+		equipment_upgrade_levels[item_id] = 0
 	save_progress()
 	return {"success": true, "slot": slot, "item_id": item_id}
 
@@ -251,10 +259,90 @@ func is_item_equipped(item_id: String) -> bool:
 func get_equipment_bonuses() -> Dictionary:
 	var damage := 0.0
 	var defense := 0.0
-	for item_id in equipment_slots.values():
-		damage += float(EQUIPMENT_DAMAGE_BONUS.get(str(item_id), 0.0))
-		defense += float(EQUIPMENT_DEFENSE_BONUS.get(str(item_id), 0.0))
-	return {"damage_bonus": damage, "defense_bonus": defense}
+	var movement := 1.0
+	for slot in equipment_slots.keys():
+		var item_id := str(equipment_slots[slot])
+		if item_id.is_empty() or get_item_durability(item_id) <= 0.0:
+			continue
+		var upgrade_level := get_item_upgrade_level(item_id)
+		damage += float(EQUIPMENT_DAMAGE_BONUS.get(item_id, 0.0)) + (float(upgrade_level) * 2.0 if slot == "weapon" else 0.0)
+		defense += float(EQUIPMENT_DEFENSE_BONUS.get(item_id, 0.0)) + (float(upgrade_level) * 1.5 if slot in ["shield", "armor", "helmet"] else 0.0)
+		if slot == "outfit":
+			movement *= 1.0 + float(upgrade_level) * 0.01
+	return {"damage_bonus": damage, "defense_bonus": defense, "movement_multiplier": movement}
+
+
+func get_item_upgrade_level(item_id: String) -> int:
+	return clampi(int(equipment_upgrade_levels.get(item_id, 0)), 0, MAX_EQUIPMENT_UPGRADE_LEVEL)
+
+
+func get_item_durability(item_id: String) -> float:
+	if item_id.is_empty():
+		return 0.0
+	return clampf(float(equipment_durability.get(item_id, MAX_EQUIPMENT_DURABILITY)), 0.0, MAX_EQUIPMENT_DURABILITY)
+
+
+func consume_equipment_durability(slot: String, amount: float) -> bool:
+	if not DEFAULT_EQUIPMENT_SLOTS.has(slot) or amount <= 0.0:
+		return false
+	var item_id := str(equipment_slots.get(slot, ""))
+	if item_id.is_empty():
+		return false
+	var old_value := get_item_durability(item_id)
+	var new_value := maxf(0.0, old_value - amount)
+	equipment_durability[item_id] = new_value
+	if new_value <= 0.0 or int(old_value / 10.0) != int(new_value / 10.0):
+		save_progress()
+	return true
+
+
+func repair_item(item_id: String) -> Dictionary:
+	if get_item_equipment_slot(item_id).is_empty() or get_item_count(item_id) <= 0:
+		return {"success": false, "reason": "ITEM_NOT_OWNED"}
+	if get_item_durability(item_id) >= MAX_EQUIPMENT_DURABILITY:
+		return {"success": false, "reason": "ITEM_ALREADY_REPAIRED"}
+	if get_item_count("repair_kit") <= 0:
+		return {"success": false, "reason": "REPAIR_KIT_REQUIRED"}
+	var remaining := get_item_count("repair_kit") - 1
+	if remaining <= 0:
+		inventory_items.erase("repair_kit")
+	else:
+		inventory_items["repair_kit"] = remaining
+	equipment_durability[item_id] = MAX_EQUIPMENT_DURABILITY
+	save_progress()
+	return {"success": true, "item_id": item_id, "durability": MAX_EQUIPMENT_DURABILITY}
+
+
+func upgrade_item(item_id: String) -> Dictionary:
+	if get_item_equipment_slot(item_id).is_empty() or get_item_count(item_id) <= 0:
+		return {"success": false, "reason": "ITEM_NOT_OWNED"}
+	var current_upgrade := get_item_upgrade_level(item_id)
+	var next_upgrade := current_upgrade + 1
+	if next_upgrade > MAX_EQUIPMENT_UPGRADE_LEVEL:
+		return {"success": false, "reason": "UPGRADE_MAXED"}
+	if current_level < next_upgrade:
+		return {"success": false, "reason": "LEVEL_REQUIREMENT", "required_level": next_upgrade}
+	var iron_cost := 2 + current_upgrade
+	var rare_core_cost := 1 if next_upgrade >= 6 else 0
+	var nen_fragment_cost := 1 if next_upgrade >= 8 else 0
+	if next_upgrade >= 8 and (not nen_unlocked or nen_control_rank < 3):
+		return {"success": false, "reason": "NEN_CONTROL_RANK_REQUIRED"}
+	if get_item_count("iron_ingot") < iron_cost or get_item_count("rare_core") < rare_core_cost or get_item_count("nen_fragment") < nen_fragment_cost:
+		return {"success": false, "reason": "MISSING_UPGRADE_MATERIALS"}
+	for material_id in ["iron_ingot", "rare_core", "nen_fragment"]:
+		var cost := iron_cost if material_id == "iron_ingot" else (rare_core_cost if material_id == "rare_core" else nen_fragment_cost)
+		if cost <= 0:
+			continue
+		var remaining := get_item_count(material_id) - cost
+		if remaining <= 0:
+			inventory_items.erase(material_id)
+		else:
+			inventory_items[material_id] = remaining
+	equipment_upgrade_levels[item_id] = next_upgrade
+	if not equipment_durability.has(item_id):
+		equipment_durability[item_id] = MAX_EQUIPMENT_DURABILITY
+	save_progress()
+	return {"success": true, "item_id": item_id, "upgrade_level": next_upgrade}
 
 
 func get_combat_damage_bonus() -> float:
@@ -275,6 +363,8 @@ func get_defense_bonus() -> float:
 
 func get_movement_multiplier() -> float:
 	var result := 1.0
+	var equipment_bonus := get_equipment_bonuses()
+	result *= float(equipment_bonus.get("movement_multiplier", 1.0))
 	for effect in active_elixir_effects.values():
 		result *= float(effect.get("movement_multiplier", 1.0))
 	return clampf(result, 0.65, 1.6)
@@ -377,6 +467,8 @@ func get_progress_data() -> Dictionary:
 		"greed_fragments_count": greed_fragments.size(),
 		"inventory_items": inventory_items.duplicate(true),
 		"equipment_slots": equipment_slots.duplicate(true),
+		"equipment_upgrade_levels": equipment_upgrade_levels.duplicate(true),
+		"equipment_durability": equipment_durability.duplicate(true),
 		"equipment_bonuses": get_equipment_bonuses(),
 		"active_elixir_effects": active_elixir_effects.duplicate(true),
 		"nen_unlocked": nen_unlocked,
@@ -411,6 +503,8 @@ func save_progress() -> void:
 	config.set_value("world_keys", "fragments", world_fragments.duplicate(true))
 	config.set_value("inventory", "items", inventory_items.duplicate(true))
 	config.set_value("equipment", "slots", equipment_slots.duplicate(true))
+	config.set_value("equipment", "upgrade_levels", equipment_upgrade_levels.duplicate(true))
+	config.set_value("equipment", "durability", equipment_durability.duplicate(true))
 	config.set_value("effects", "active_elixirs", active_elixir_effects.duplicate(true))
 	config.set_value("nen", "unlocked", nen_unlocked)
 	config.set_value("nen", "control_rank", nen_control_rank)
@@ -470,6 +564,19 @@ func load_progress() -> void:
 		var item_id := str(saved_equipment.get(slot, ""))
 		if item_id.is_empty() or str(EQUIPMENT_SLOTS_BY_ITEM.get(item_id, "")) == str(slot):
 			equipment_slots[slot] = item_id
+	equipment_upgrade_levels = {}
+	var saved_upgrades: Dictionary = config.get_value("equipment", "upgrade_levels", {})
+	for item_id in saved_upgrades.keys():
+		equipment_upgrade_levels[str(item_id)] = clampi(int(saved_upgrades[item_id]), 0, MAX_EQUIPMENT_UPGRADE_LEVEL)
+	equipment_durability = {}
+	var saved_durability: Dictionary = config.get_value("equipment", "durability", {})
+	for item_id in saved_durability.keys():
+		equipment_durability[str(item_id)] = clampf(float(saved_durability[item_id]), 0.0, MAX_EQUIPMENT_DURABILITY)
+	for item_id in equipment_slots.values():
+		var equipped_id := str(item_id)
+		if not equipped_id.is_empty() and not equipment_durability.has(equipped_id):
+			equipment_durability[equipped_id] = MAX_EQUIPMENT_DURABILITY
+
 	var saved_effects: Dictionary = config.get_value("effects", "active_elixirs", {})
 	active_elixir_effects = {}
 	for effect_id in saved_effects.keys():
@@ -592,6 +699,8 @@ func _reset_progress() -> void:
 	available_attribute_points = 0
 	attributes = DEFAULT_ATTRIBUTES.duplicate(true)
 	equipment_slots = DEFAULT_EQUIPMENT_SLOTS.duplicate(true)
+	equipment_upgrade_levels.clear()
+	equipment_durability.clear()
 	active_elixir_effects.clear()
 	nen_unlocked = false
 	nen_control_rank = 0
