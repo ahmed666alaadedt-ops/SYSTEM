@@ -250,6 +250,7 @@ func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_po
 	_resolve_towers()
 	_create_staff_for_all_towers()
 	_create_customer_population()
+	_create_public_lobby_cafes()
 	_create_advertising_surfaces()
 	_create_power_tower_progress_board()
 	set_process(true)
@@ -485,6 +486,72 @@ func _create_customer_population() -> void:
 	if society.has_method("save_society"):
 		society.call("save_society")
 	print("SYSTEM Baghdad towers: customer NPC population initialized.")
+
+func _create_public_lobby_cafes() -> void:
+	var public_towers := [
+		"hunter_association_tower_baghdad",
+		"business_investment_tower_baghdad",
+		"shopping_tower_baghdad",
+		"entertainment_tower_baghdad",
+		"technology_tower_baghdad"
+	]
+	for tower_id_value in public_towers:
+		var tower_id := str(tower_id_value)
+		var tower := tower_nodes.get(tower_id) as Node3D
+		var config: Dictionary = TOWER_CONFIG[tower_id]
+		var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D if tower != null else null
+		if lobby == null or lobby.get_node_or_null("SYSTEMLobbyCafe") != null:
+			continue
+		var staff_ids: Array = staff_by_tower.get(tower_id, [])
+		if staff_ids.is_empty():
+			continue
+		var radius := float(config.get("radius", 24.0))
+		var center_z := radius * 1.48 + 18.0
+		var cafe := Node3D.new()
+		cafe.name = "SYSTEMLobbyCafe"
+		cafe.position = Vector3(radius * 0.78, 0.0, center_z + 2.0)
+		cafe.set_meta("system_tower_cafe", true)
+		lobby.add_child(cafe)
+		var counter_material := StandardMaterial3D.new()
+		counter_material.albedo_color = Color(0.12, 0.18, 0.22)
+		counter_material.metallic = 0.32
+		counter_material.roughness = 0.42
+		var accent_material := StandardMaterial3D.new()
+		accent_material.albedo_color = Color(0.78, 0.57, 0.25)
+		accent_material.metallic = 0.45
+		_add_facility_box(cafe, "CafeCounter", Vector3(0.0, 0.8, -4.0), Vector3(9.0, 1.6, 2.4), counter_material)
+		_add_facility_box(cafe, "CafeDisplayCase", Vector3(0.0, 1.9, -4.0), Vector3(6.0, 0.55, 1.5), accent_material)
+		var sign := Label3D.new()
+		sign.name = "CafeSign"
+		sign.text = "SYSTEM CAFE — مقهى واستراحة الزوار"
+		sign.position = Vector3(0.0, 3.6, -5.2)
+		sign.font_size = 18
+		sign.pixel_size = 0.012
+		sign.modulate = Color(1.0, 0.82, 0.48)
+		cafe.add_child(sign)
+		for table_index in range(3):
+			var x := -7.0 + float(table_index) * 7.0
+			_add_facility_box(cafe, "CafeTable_%02d" % table_index, Vector3(x, 0.85, 3.0), Vector3(3.0, 0.18, 2.2), counter_material)
+			for seat_index in range(2):
+				_add_facility_box(cafe, "CafeSeat_%02d_%02d" % [table_index, seat_index], Vector3(x + (-1.0 if seat_index == 0 else 1.0), 0.45, 4.7), Vector3(0.7, 0.9, 0.7), accent_material)
+		var interaction := Area3D.new()
+		interaction.name = "CafeServiceInteraction"
+		interaction.add_to_group("system_interactable")
+		interaction.set_meta("system_tower_id", tower_id)
+		interaction.set_meta("system_tower_staff_id", str(staff_ids[0]))
+		interaction.set_meta("system_tower_staff_role", str(config["jobs"][0]))
+		interaction.set_meta("system_display_name", "مقهى واستراحة " + str(config["title"]))
+		interaction.set_meta("system_interaction_prompt", "مقهى البرج — طلب مشروب أو وجبة خفيفة")
+		interaction.collision_layer = 1
+		interaction.collision_mask = 0
+		var shape := CollisionShape3D.new()
+		var sphere := SphereShape3D.new()
+		sphere.radius = 3.4
+		shape.shape = sphere
+		shape.position = Vector3(0.0, 1.1, -3.0)
+		interaction.add_child(shape)
+		cafe.add_child(interaction)
+
 
 func _load_npc_sales_ledger() -> void:
 	var config := ConfigFile.new()
