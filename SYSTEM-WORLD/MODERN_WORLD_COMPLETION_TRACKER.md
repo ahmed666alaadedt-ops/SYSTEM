@@ -20,6 +20,7 @@ This section supersedes older tower-role notes below wherever they describe the 
 - [ ] Replace local-only economy and customer records with server-authoritative shared inventory, transactions, anti-duplication and cross-device synchronization before online multiplayer commerce.
 
 ## Tower departments and signature amenities
+- [x] Add a staffed public cafe and visitor seating lounge to each of the five district tower lobbies; each cafe routes to its tower's NPC staff service and each tower catalog includes cafe drinks/snacks.
 - [x] Business Tower: add a purchasable service catalog for company registration, business banking, consultations, office passes, investment certificates, market participation and recruitment listings; add a trading hall, conference center and investor lounge floor builds.
 - [x] Shopping Tower: retain the weapons/armour/outfit and Nen/elixir catalogs, forge and elixir laboratory on floor 14, SYSTEM Hotel on floors 27–28, and restaurants/dining on floors 29–32; add the dedicated ninth advertising/marketing employee.
 - [x] Entertainment Tower: add ticket products for pools, sport, cinema, bowling, arcade, fitness, spa, family areas and rooftop events; generate pool, gym, sports court, bowling, cinema, arcade, family-zone and rooftop-leisure floor props.
@@ -30,7 +31,7 @@ This section supersedes older tower-role notes below wherever they describe the 
 - [ ] Complete floor-by-floor furniture, accessible routes, elevators, emergency exits, lighting, sound, staff navigation and visual polish across every tower floor.
 
 ## Validation status for this revision
-- [x] Extend the Godot operations validator for the five connected towers plus independent Power Tower, 45 staff, 20 customers, uniform presence, NPC purchases, pools, cinema, trading hall, AI lab, Hall of Honor, Global Council, Global Headquarters, Shopping Tower forge/lab, hotel and dining.
+- [x] Extend the Godot operations validator for the five connected towers plus independent Power Tower, 45 staff, 20 customers, uniform presence, staffed cafes, NPC purchases, pools, cinema, trading hall, AI lab, Hall of Honor, Global Council, Global Headquarters, Shopping Tower forge/lab, hotel and dining.
 - [ ] Run the complete Godot 4.3 import/parser, main-scene launch, tower landmark and tower operations validators on the latest branch head.
 - [ ] Confirm the fresh GitHub Actions result is green; source edits are not a substitute for a passing run.
 - [ ] Export the Android APK from the exact validated head and inspect all five towers on a physical Android device.
