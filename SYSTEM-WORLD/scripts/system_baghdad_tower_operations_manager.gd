@@ -309,7 +309,9 @@ func _refresh_power_tower_progress_board() -> void:
 	var status: Dictionary = power_tower_manager.call("get_tower_status")
 	var highest := int(status.get("highest_cleared_floor", 0))
 	var next_floor := int(status.get("next_floor", 1))
-	power_tower_progress_board.text = "SYSTEM POWER TOWER\nالطوابق المنجزة: %d / 200\nالطابق التالي: %s\nالتقدم: %d%%" % [highest, "اكتمل البرج" if next_floor == 0 else str(next_floor), int(round(float(highest) / 200.0 * 100.0))]
+	var best_time := float(status.get("best_clear_time", 0.0))
+	var best_time_text := "%.1f ثانية" % best_time if best_time > 0.0 else "لم يسجل بعد"
+	power_tower_progress_board.text = "SYSTEM POWER TOWER\nالطوابق المنجزة: %d / 200\nالطابق التالي: %s\nرتبة التقدم: %s\nأفضل وقت: %s\nالتقدم: %d%%" % [highest, "اكتمل البرج" if next_floor == 0 else str(next_floor), str(status.get("highest_rank", "-")), best_time_text, int(round(float(highest) / 200.0 * 100.0))]
 
 
 func _create_advertising_surfaces() -> void:
