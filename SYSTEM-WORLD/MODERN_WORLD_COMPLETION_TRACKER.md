@@ -1,3 +1,13 @@
+## Baghdad sports gameplay physics — 22 November 2026
+
+- [x] Upgrade the bowling floor with a collidable lane, one physical bowling ball per throw, ten rigid-body pins, collision-driven pinfall scoring and pin reset between frames.
+- [x] Add ten scored bowling frames with per-frame pinfall, cumulative score, a lock while the ball is moving and completion rewards.
+- [x] Upgrade the basketball court with a collidable court surface, backboard, visible rim, scoring Area3D and a launched rigid-body basketball; score only when the ball enters the hoop sensor.
+- [x] Add five basketball attempts with two points per detected basket and a final result that records whether the last shot scored.
+- [x] Extend the Godot operations validator to check bowling lane/pin generation, await ten physical throws, check the basketball sensor and await five physical shots.
+- [ ] Run Godot 4.3 and Android export on this revision. The last confirmed successful runs (#1365/#1102) apply only to gameplay commit `bdbcf4e0c607d0aef37ca1d087163dc10ecc36a1`; these newer bowling/basketball changes remain unverified until fresh runs are available.
+- [ ] Tune physical ball trajectories, collision response and touch aiming after a real Android play session.
+
 ## Baghdad pool movement integration — 22 November 2026
 
 - [x] Add a dedicated 3D water-volume Area3D inside the pool, with player body enter/exit detection.
@@ -17,7 +27,7 @@
 - [x] Add a rooftop photo/exploration completion activity.
 - [x] Add three-step robotics assembly, AI signal-analysis and VR checkpoint challenges.
 - [x] Persist completed rounds, best scores, cumulative scores and rewards locally; extend the operations validator to exercise every activity and verify save/load persistence.
-- [ ] Replace remaining prototype controls with full movement-driven gameplay: the pool now has an initial water-volume/buoyancy/swim-stroke implementation pending validation; physical bowling-ball simulation, complete sports matches, actual cinema playback, arcade machine gameplay, animated robotics assembly and immersive VR simulation remain open.
+- [ ] Replace remaining prototype controls with full movement-driven gameplay: the pool's water-volume/buoyancy/swim-stroke implementation still awaits validation; bowling now has an initial physical ball and ten-pin loop; basketball now has a physical ball and hoop sensor. Full bowling scoring rules, complete sports matches, actual cinema playback, arcade machine gameplay, animated robotics assembly and immersive VR simulation remain open.
 - [x] Godot 4.3 full validation passed on gameplay commit `bdbcf4e0c607d0aef37ca1d087163dc10ecc36a1`: validation run #1365 (run ID `45062732609`), including script import/parser, headless launch, Baghdad tower landmark checks, and the complete tower operations validator with all eleven activity loops plus local save/load regression.
 - [x] Canonical Android APK export passed on the same exact gameplay commit: build #1102 (run ID `45062732606`); APK size 35,877,768 bytes; SHA-256 `52aeb1e53e558922eda631ade2f4a856ac1451415981022ddb449838a9fd4630`; artifact expires 6 December 2026.
 - [ ] Inspect the exported build on a physical Android device after a fresh export.
