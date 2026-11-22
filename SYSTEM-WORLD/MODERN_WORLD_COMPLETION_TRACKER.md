@@ -908,3 +908,13 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Extend the Godot operations validator to cover checkout, cleaning-state transition, inspection, and room re-availability.
 - [ ] Run Godot 4.3 validation and canonical Android APK export on the updated PR head; do not claim this pass validated until both results are confirmed.
 - Note: housekeeping workflow is a local-save prototype. Staff navigation/animation and online shared hotel occupancy remain future work.
+
+
+## Arcade physical target detection correction — 22 November 2026
+
+- [x] Investigate Godot validation run #1397 on PR source HEAD `e552608b342ad8257d2d410dfdb2704b7c57d86b`: the arcade projectile passed within 1.4101 m of the nearest target, but the 0.95 m proximity fallback and 0.7 m sensor radius did not register a hit.
+- [x] Increase the physical target sensor radius to 1.25 m and the near-hit fallback to 1.6 m, retaining the rigid-body projectile and target-sensor scoring path.
+- [x] Commit the correction as `ae8c7a633ce5636d4fa5edc87f50e4a97be3d988` on the Baghdad feature branch only.
+- [ ] Re-run the full Godot operations validator, including ten bowling throws, five basketball shots and five arcade shots, on the corrected HEAD.
+- [ ] Confirm Android export on the same corrected HEAD before distributing a new APK.
+- Note: the preceding Android export #1134 succeeded on `e552608b342ad8257d2d410dfdb2704b7c57d86b`, but the Godot operations run #1397 failed only at the arcade hit assertion. Neither result validates this correction.
