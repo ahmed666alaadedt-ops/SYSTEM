@@ -7,6 +7,7 @@ const TowerFloorThemeBuilder = preload("res://scripts/system_baghdad_tower_floor
 const SAVE_PATH := "user://system_baghdad_tower_operations.cfg"
 const STOCK_SAVE_PATH := "user://system_tower_vendor_stock.cfg"
 const HOTEL_SAVE_PATH := "user://system_baghdad_hotel_bookings.cfg"
+const NPC_SALES_SAVE_PATH := "user://system_baghdad_npc_sales.cfg"
 const WORLD_ID := 2
 const STAFF_NAMES := ["أحمد", "سارة", "علي", "نور", "حسن", "مريم", "يوسف", "ليان", "عمر", "زينب", "مصطفى", "رنا"]
 
@@ -219,6 +220,7 @@ var defeated_in_wave := 0
 var power_floor_in_progress := false
 var customer_ids_by_tower: Dictionary = {}
 var customer_purchase_clock := 0.0
+var customer_walk_clock := 0.0
 var npc_sales_total := 0
 var npc_purchase_count := 0
 
@@ -239,6 +241,7 @@ func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_po
 	_load_wallet()
 	_load_vendor_stock()
 	_load_hotel_bookings()
+	_load_npc_sales_ledger()
 	_build_ui()
 	if is_instance_valid(player_health) and player_health.has_signal("player_wounded"):
 		var wounded_callback := Callable(self, "_on_player_wounded")
@@ -266,6 +269,10 @@ func _process(delta: float) -> void:
 	if customer_purchase_clock >= 42.0:
 		customer_purchase_clock = 0.0
 		_simulate_customer_purchases()
+	customer_walk_clock += delta
+	if customer_walk_clock >= 13.0:
+		customer_walk_clock = 0.0
+		_move_customer_visitors()
 	if power_floor_in_progress and power_floor_timer_remaining > 0.0:
 		power_floor_timer_remaining = maxf(0.0, power_floor_timer_remaining - delta)
 		power_floor_timer_display_clock -= delta
@@ -479,6 +486,52 @@ func _create_customer_population() -> void:
 		society.call("save_society")
 	print("SYSTEM Baghdad towers: customer NPC population initialized.")
 
+func _load_npc_sales_ledger() -> void:
+	var config := ConfigFile.new()
+	if config.load(NPC_SALES_SAVE_PATH) == OK:
+		npc_sales_total = int(config.get_value("sales", "total_credits", 0))
+		npc_purchase_count = int(config.get_value("sales", "purchase_count", 0))
+
+
+func _save_npc_sales_ledger() -> void:
+	var config := ConfigFile.new()
+	config.set_value("sales", "total_credits", npc_sales_total)
+	config.set_value("sales", "purchase_count", npc_purchase_count)
+	config.set_value("sales", "updated_at", Time.get_datetime_string_from_system())
+	config.save(NPC_SALES_SAVE_PATH)
+
+
+func _move_customer_visitors() -> void:
+	for tower_id_value in customer_ids_by_tower.keys():
+		var tower_id := str(tower_id_value)
+		var config: Dictionary = TOWER_CONFIG.get(tower_id, {})
+		var tower := tower_nodes.get(tower_id) as Node3D
+		var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D if tower != null else null
+		if lobby == null:
+			continue
+		for visitor in lobby.get_children():
+			if not str(visitor.name).begins_with("TowerCustomer_"):
+				continue
+			var target_x := randf_range(-float(config.get("radius", 20.0)) * 0.9, float(config.get("radius", 20.0)) * 0.9)
+			var target_z := float(config.get("radius", 20.0)) * 1.48 + randf_range(5.0, 30.0)
+			var model: Node = null
+			for visitor_child in visitor.get_children():
+				if visitor_child.has_method("set_activity"):
+					model = visitor_child
+					break
+			if model != null:
+				model.call("set_activity", "walk")
+			var tween := create_tween()
+			tween.set_trans(Tween.TRANS_SINE)
+			tween.set_ease(Tween.EASE_IN_OUT)
+			tween.tween_property(visitor, "position", Vector3(target_x, 0.0, target_z), randf_range(3.0, 5.0))
+			if model != null:
+				tween.finished.connect(func():
+					if is_instance_valid(model):
+						model.call("set_activity", "socialize")
+				)
+
+
 func _simulate_customer_purchases() -> void:
 	for tower_id_value in customer_ids_by_tower.keys():
 		var tower_id := str(tower_id_value)
@@ -512,10 +565,21 @@ func _simulate_customer_purchases() -> void:
 		customer["last_purchase_price"] = paid
 		customer["last_purchase_at"] = Time.get_datetime_string_from_system()
 		customer["current_action"] = "shopping"
+		customer["current_location"] = tower_id + "_retail_area"
 		society.npcs[customer_id] = customer
+		var tower := tower_nodes.get(tower_id) as Node3D
+		var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D if tower != null else null
+		if lobby != null:
+			var visitor := lobby.get_node_or_null("TowerCustomer_" + customer_id)
+			if visitor != null:
+				for visitor_child in visitor.get_children():
+					if visitor_child.has_method("set_activity"):
+						visitor_child.call("set_activity", "eat" if purchased_id.begins_with("restaurant_") else "socialize")
+						break
 		npc_sales_total += paid
 		npc_purchase_count += 1
 	_save_vendor_stock()
+	_save_npc_sales_ledger()
 	if is_instance_valid(society) and society.has_method("save_society"):
 		society.call("save_society")
 
