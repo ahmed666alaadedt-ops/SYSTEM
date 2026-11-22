@@ -345,6 +345,9 @@ func _run() -> void:
 		if int(bridge_access.get_meta("bank_access_corridor_count", 0)) != 2 or float(bridge_access.get_meta("river_clearance_to_tower_platform_m", 0.0)) < 18.0:
 			_fail("Republic Bridge tower access does not preserve both banks and the Tigris navigation clearance.")
 			return
+		if int(bridge_access.get_meta("express_skyway_support_count", 0)) < 5:
+			_fail("Republic Bridge express skyway has fewer than five verified land supports.")
+			return
 		if not bool(bridge_access.get_meta("traffic_lane_clear", false)) or not bool(bridge_access.get_meta("tigris_navigation_corridor_clear", false)):
 			_fail("Republic Bridge access corridors do not certify traffic-lane and river-navigation clearance.")
 			return
