@@ -54,6 +54,7 @@ func _create_parked_helicopter() -> void:
 	aircraft.name = "HunterAssociationHelicopter"
 	add_child(aircraft)
 	aircraft.position = Vector3(0.0, 2.0, 0.0)
+	_load_parked_state()
 	heli_position = aircraft.global_position
 	var body := MeshInstance3D.new()
 	body.name = "HelicopterFuselage"
@@ -192,6 +193,8 @@ func _exit_aircraft() -> void:
 	player.set_physics_process(player_physics_was_enabled)
 	player.global_position = global_position + Vector3(-22.0, 3.0, 0.0)
 	player.velocity = Vector3.ZERO
+	heli_position = aircraft.global_position
+	_save_parked_state()
 	for key in control_buttons:
 		control_buttons[key].visible = false
 	interact_button.text = "Enter Helicopter"
@@ -293,6 +296,30 @@ func _can_pilot() -> bool:
 	var overview: Dictionary = exam_manager.call("get_exam_overview")
 	var completed: Array = overview.get("completed_stages", [])
 	return bool(overview.get("registered", false)) and completed.size() >= int(overview.get("total_stages", 7))
+
+func _load_parked_state() -> void:
+	var config := ConfigFile.new()
+	if config.load("user://system_hunter_helicopter_parking.cfg") != OK:
+		return
+	var saved_position: Variant = config.get_value("parking", "local_position", Vector3(0.0, 2.0, 0.0))
+	var saved_rotation: Variant = config.get_value("parking", "local_rotation", Vector3.ZERO)
+	if typeof(saved_position) != TYPE_VECTOR3 or typeof(saved_rotation) != TYPE_VECTOR3:
+		return
+	var position_value: Vector3 = saved_position
+	if absf(position_value.x) > 250.0 or absf(position_value.z) > 250.0 or position_value.y < -5.0 or position_value.y > 200.0:
+		return
+	aircraft.position = position_value
+	aircraft.rotation = saved_rotation
+
+
+func _save_parked_state() -> bool:
+	if not is_instance_valid(aircraft) or pilot_active or not landed:
+		return false
+	var config := ConfigFile.new()
+	config.set_value("parking", "local_position", aircraft.position)
+	config.set_value("parking", "local_rotation", aircraft.rotation)
+	return config.save("user://system_hunter_helicopter_parking.cfg") == OK
+
 
 func _is_aircraft_position_clear(candidate_position: Vector3) -> bool:
 	var world := get_world_3d()
