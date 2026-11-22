@@ -861,6 +861,15 @@ func _on_interaction_performed(
 	if target.has_meta("system_restaurant_table_id") and tower_operations_manager != null:
 		tower_operations_manager.call("open_restaurant_table", target)
 		return
+	if target.has_meta("system_arcade_cabinet_id") and tower_operations_manager != null:
+		tower_operations_manager.call(
+			"open_arcade_cabinet",
+			str(target.get_meta("system_tower_id", "")),
+			int(target.get_meta("system_tower_floor_number", 0)),
+			int(target.get_meta("system_arcade_cabinet_id", -1)),
+			str(target.get_meta("system_arcade_cabinet_mode", ""))
+		)
+		return
 	if target.has_meta("system_facility_type") and target.has_meta("system_tower_floor_number") and target.has_meta("system_tower_id") and tower_operations_manager != null:
 		tower_operations_manager.call(
 			"open_facility_service",
