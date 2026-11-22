@@ -227,7 +227,7 @@ func _update_flight(delta: float) -> void:
 	_update_camera()
 
 func _can_pilot() -> bool:
-	var exam_manager := get_tree().root.find_child("HunterExamManager", true, false)
+	var exam_manager := get_tree().root.find_child("SYSTEMHunterExamManager", true, false)
 	if exam_manager == null or not exam_manager.has_method("get_exam_overview"):
 		return false
 	var overview: Dictionary = exam_manager.call("get_exam_overview")
