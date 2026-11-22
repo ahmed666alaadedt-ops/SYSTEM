@@ -174,6 +174,24 @@ func _run() -> void:
 	if bool(helipad.get("pilot_active")) or not helicopter_player.visible or bool(helicopter_player.get_meta("system_helicopter_piloting", true)) or helicopter_player.is_physics_processing() != player_physics_before_flight:
 		_fail("Helicopter exit did not restore the on-foot player controls.")
 		return
+	helipad.call("_enter_aircraft")
+	helipad.set("vertical_input", 1.0)
+	helipad.call("_update_flight", 0.5)
+	if bool(helipad.get("landed")):
+		_fail("Emergency-landing regression setup could not reach airborne state.")
+		return
+	helipad.call("_begin_emergency_landing")
+	if not bool(helipad.get("emergency_landing_active")):
+		_fail("Emergency landing did not activate over a detected safe ground surface.")
+		return
+	for _landing_step in range(12):
+		helipad.call("_update_flight", 0.5)
+		if bool(helipad.get("landed")):
+			break
+	if not bool(helipad.get("landed")) or bool(helipad.get("emergency_landing_active")):
+		_fail("Emergency landing did not complete a controlled descent to detected ground.")
+		return
+	helipad.call("_exit_aircraft")
 	exam_manager.set("registered", false)
 	exam_manager.set("completed_stage_ids", empty_stage_ids)
 	exam_manager.set("exam_active", false)
