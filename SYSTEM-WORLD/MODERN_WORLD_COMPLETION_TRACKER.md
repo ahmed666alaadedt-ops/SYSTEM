@@ -39,7 +39,7 @@ This section supersedes older tower-role notes below wherever they describe the 
 - [x] Return all floor visitors to their correct public lobby before the previous active floor is removed or a different tower is entered.
 - [x] Extend the Godot operations validator to check the Shopping Tower restaurant floor receives two customers, the lobby retains two, and both visitors return safely so all four customers are visible in the lobby again.
 - [x] Pass the new floor-visit regression, complete Godot 4.3 import/parser, headless startup, Baghdad landmark checks, and full tower-operations/Power Tower regression on gameplay commit `64422bf2209b8a400a3c92577c305d8ea72a6220` (validation run #1348, 22 November 2026).
-- [ ] Confirm the canonical Android APK export finishes for this gameplay commit; Android workflow run #1085 is in progress.
+- [x] Export the canonical Android APK for this gameplay commit — GitHub Actions build #1085 passed on exact code HEAD `64422bf2209b8a400a3c92577c305d8ea72a6220`; artifact size 35,864,379 bytes; SHA-256 `2a193b85823f89486de2e92fd1fa2ca1230e1ead662c2389a6fc93bae932678f`; expires 6 December 2026.
 - Note: this is active-floor visitor behavior, not an autonomous multi-floor schedule or full restaurant seating/room occupancy simulation.
 
 ## Validation status for this revision
@@ -47,7 +47,7 @@ This section supersedes older tower-role notes below wherever they describe the 
 - [x] Run the complete Godot 4.3 import/parser, main-scene launch, tower landmark and tower operations validators on the latest branch head — passed in GitHub Actions validation run #1343 (22 November 2026).
 - [x] Confirm the fresh GitHub Actions Godot validation result is green (run #1348); Android export is a separate pending check.
 - [x] Export canonical Android APK for gameplay code revision `393880387de3ac27113943676a4cf9ee8401f29c` — GitHub Actions build #1080 passed; artifact size 35,861,631 bytes; SHA-256 `9b482bd6c91da27299d51b9288e818fa2871ff72cec81781eb8082dc4398c3eb`; expires 6 December 2026.
-- [ ] Export canonical Android APK for the new active-floor customer visit code revision `64422bf2209b8a400a3c92577c305d8ea72a6220`; GitHub Actions build #1085 is running.
+- [x] Export canonical Android APK for the new active-floor customer visit code revision `64422bf2209b8a400a3c92577c305d8ea72a6220`; GitHub Actions build #1085 passed and uploaded artifact `SYSTEM-WORLD-canonical-android-debug-apk` (35,864,379 bytes), expires 6 December 2026.
 - [ ] Inspect all five towers on a physical Android device; headless validation and APK export do not replace device-side visual, touch, thermal and performance review.
 - [ ] Keep PR #38 as draft and do not merge to main without the user's explicit approval.
 
