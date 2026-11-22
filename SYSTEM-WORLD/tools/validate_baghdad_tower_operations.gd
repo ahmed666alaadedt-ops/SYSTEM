@@ -787,7 +787,7 @@ func _run() -> void:
 	if hotel_reception_room == null or hotel_suite_room == null or hotel_reception_room.get_node_or_null("SYSTEMHotelFacilities/HotelReceptionInteraction") == null or hotel_suite_room.get_node_or_null("SYSTEMHotelFacilities/HotelSuiteBookingInteraction") == null:
 		_fail("SYSTEM Hotel reception or guest-suite booking area is missing from Shopping Tower floors 27–28.")
 		return
-	for room_value in operations.get("HOTEL_ROOM_CATALOG"):
+	for room_value in operations.call("_get_hotel_room_catalog"):
 		var room_data: Dictionary = room_value
 		var room_id := str(room_data.get("id", ""))
 		var interior := hotel_suite_room.get_node_or_null("SYSTEMHotelFacilities/HotelRoomInterior_" + room_id) as Node3D
