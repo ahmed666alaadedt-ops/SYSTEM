@@ -400,4 +400,5 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Persist each Baghdad heritage-vault door's desired open/closed state in a local ConfigFile and restore the slab position/prompt when the heritage manager recreates its city sites.
 - [x] Connect door-state changes to the heritage manager so the saved state is updated when the player toggles the door, including during an active animation.
 - [x] Verify local save/reload behavior in Godot 4.3 workflow run 44992857584 on commit `373f82954546e2844b47a692bd015b1c8563a189`; saved open state restores the raised slab after manager recreation and a physics frame.
-- [ ] Verify independent per-site state in the two Baghdad vaults; this remains device-local persistence, not Firebase/cloud synchronization.
+- [x] Two-site isolation passed in Godot 4.3 workflow run 44992928278 on commit `22e390432ce856395e2dff286ba70471b9c0b7e0`: opening Baghdad Old Souk did not open Baghdad River Catacombs, and the independent closed state remained closed after manager recreation.
+- [ ] Verify both open and closed states across repeated manager reloads (new extended assertion on commit `725acf124b01f5fd77560d1e5c35d1f7a53d162a` is awaiting CI); this remains device-local persistence, not Firebase/cloud synchronization.
