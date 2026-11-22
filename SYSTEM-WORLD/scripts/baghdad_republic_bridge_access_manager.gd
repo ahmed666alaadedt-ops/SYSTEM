@@ -307,7 +307,9 @@ func _create_skyway_supports(
 		if point.distance_to(finish) < EXPRESS_SKYWAY_NO_PYLON_RADIUS:
 			continue
 		var local_ground_y := fallback_ground_y
-		if terrain_manager != null and terrain_manager.has_method("get_terrain_height"):
+		if terrain_manager != null and terrain_manager.has_method("get_baghdad_osm_ground_height"):
+			local_ground_y = float(terrain_manager.call("get_baghdad_osm_ground_height", point.x, point.y))
+		elif terrain_manager != null and terrain_manager.has_method("get_terrain_height"):
 			local_ground_y = float(terrain_manager.call("get_terrain_height", point.x, point.y))
 		var deck_y := lerpf(start_y, end_y, progress)
 		var support_height := deck_y - local_ground_y - EXPRESS_SKYWAY_THICKNESS
