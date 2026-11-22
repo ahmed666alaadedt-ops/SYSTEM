@@ -66,7 +66,8 @@ func get_equipped_weapon_profile() -> Dictionary:
 	var weapon_id := str(progression.call("get_equipped_weapon"))
 	if weapon_id.is_empty():
 		return DEFAULT_WEAPON_PROFILE.duplicate(true)
-	return (WEAPON_PROFILES.get(weapon_id, DEFAULT_WEAPON_PROFILE) as Dictionary).duplicate(true)
+	var profile: Dictionary = WEAPON_PROFILES.get(weapon_id, DEFAULT_WEAPON_PROFILE)
+	return profile.duplicate(true)
 
 
 func _fire_hitscan(damage: float, distance: float) -> void:
