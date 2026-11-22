@@ -120,7 +120,10 @@ const PRODUCT_CATALOG := {
 		{"id":"business_office_week_pass","name":"تصريح مكتب لأسبوع","price":720},
 		{"id":"business_investment_certificate","name":"شهادة استثمار تجريبية","price":850},
 		{"id":"business_market_share_unit","name":"وحدة مشاركة في محفظة السوق","price":1250},
-		{"id":"business_recruitment_listing","name":"إعلان توظيف للشركات","price":120}
+		{"id":"business_recruitment_listing","name":"إعلان توظيف للشركات","price":120},
+		{"id":"business_cafe_espresso","name":"إسبريسو مقهى الأعمال","price":28},
+		{"id":"business_cafe_tea","name":"شاي جلسات المستثمرين","price":15},
+		{"id":"business_cafe_pastry","name":"معجنات مقهى الأعمال","price":22}
 	],
 	"entertainment_tower_baghdad": [
 		{"id":"sports_ticket","name":"تذكرة رياضية","price":65},
@@ -133,7 +136,10 @@ const PRODUCT_CATALOG := {
 		{"id":"fitness_day_pass","name":"تذكرة النادي الرياضي","price":50},
 		{"id":"spa_relaxation_ticket","name":"تذكرة الاسترخاء والسبا","price":95},
 		{"id":"family_zone_pass","name":"تذكرة منطقة العائلات","price":80},
-		{"id":"rooftop_event_ticket","name":"تذكرة فعالية السطح","price":120}
+		{"id":"rooftop_event_ticket","name":"تذكرة فعالية السطح","price":120},
+		{"id":"entertainment_cafe_juice","name":"عصير منعش","price":22},
+		{"id":"entertainment_cafe_popcorn","name":"فشار السينما","price":18},
+		{"id":"entertainment_cafe_sandwich","name":"ساندويتش الزوار","price":35}
 	],
 	"technology_tower_baghdad": [
 		{"id":"scanner_device","name":"جهاز ماسح","price":750},
@@ -144,12 +150,18 @@ const PRODUCT_CATALOG := {
 		{"id":"ai_compute_access_pass","name":"تصريح استخدام حوسبة الذكاء الاصطناعي","price":180},
 		{"id":"vr_simulation_pass","name":"تذكرة محاكاة الواقع الافتراضي","price":90},
 		{"id":"prototype_lab_pass","name":"تصريح دخول مختبر النماذج الأولية","price":240},
-		{"id":"device_diagnostic_service","name":"فحص وتشخيص جهاز","price":110}
+		{"id":"device_diagnostic_service","name":"فحص وتشخيص جهاز","price":110},
+		{"id":"technology_cafe_coffee","name":"قهوة مقهى التقنية","price":25},
+		{"id":"technology_cafe_energy_drink","name":"مشروب طاقة","price":32},
+		{"id":"technology_cafe_snack","name":"وجبة خفيفة","price":20}
 	],
 	"hunter_association_tower_baghdad": [
 		{"id":"mission_supply_pack","name":"حزمة تجهيز المهمات","price":160},
 		{"id":"hunter_medical_kit","name":"حقيبة إسعاف صياد","price":230},
-		{"id":"exam_application_pack","name":"حزمة التسجيل للاختبار","price":100}
+		{"id":"exam_application_pack","name":"حزمة التسجيل للاختبار","price":100},
+		{"id":"hunter_cafe_meal","name":"وجبة استراحة الصيادين","price":38},
+		{"id":"hunter_cafe_coffee","name":"قهوة الصيادين","price":18},
+		{"id":"hunter_cafe_water","name":"ماء معدني","price":12}
 	]
 }
 const HOTEL_ROOM_CATALOG := [
