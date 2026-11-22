@@ -916,7 +916,7 @@ func _on_interaction_performed(
 	var tower_id := str(target.get_meta("system_tower_id", location_id))
 	if tower_id in [
 		"hunter_association_tower_baghdad",
-		"weapons_equipment_elixirs_tower_baghdad",
+		"business_investment_tower_baghdad",
 		"shopping_tower_baghdad",
 		"entertainment_tower_baghdad",
 		"technology_tower_baghdad",
@@ -931,10 +931,10 @@ func _on_interaction_performed(
 		match tower_id:
 			"hunter_association_tower_baghdad":
 				directory = "الأقسام: تسجيل الصيادين، المهمات، إدارة الاختبار العالمي، النقابات، قاعة الشرف."
-			"weapons_equipment_elixirs_tower_baghdad":
-				directory = "الأقسام: الأسلحة، السيوف والرماح والفؤوس والأقواس والأسلحة النارية، الدروع والخوذ والبدلات، تطوير المعدات، إكسيرات النِن والشفاء والقوة والسرعة والتحمل والطاقة."
+			"business_investment_tower_baghdad":
+				directory = "الأقسام: مكاتب الشركات، الاستثمار، البنوك، التمويل، العقود التجارية، الاستشارات والتوظيف."
 			"shopping_tower_baghdad":
-				directory = "الأقسام المخططة: المتاجر، المطاعم، المقاهي، السينما، الخدمات والأسواق."
+				directory = "الأقسام: الأسواق والمتاجر، الأسلحة الحديثة والسيوف والأقواس والسهام، الدروع والبدلات حسب الرتب، الأكاسير والعلاج وإيقاظ النِن، المطاعم والمقاهي وصالات الطعام."
 			"entertainment_tower_baghdad":
 				directory = "الأقسام المخططة: الترفيه، الرياضة، المسابح، الأنشطة العائلية، المهرجانات."
 			"technology_tower_baghdad":
