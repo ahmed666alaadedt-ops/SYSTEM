@@ -466,7 +466,7 @@ func create_modern_world_combat_system() -> void:
 	modern_world_combat_system = ModernWorldCombatSystemScript.new()
 	modern_world_combat_system.name = "ModernWorldCombatSystem"
 	add_child(modern_world_combat_system)
-	modern_world_combat_system.call("bind_actor", player, camera)
+	modern_world_combat_system.call("bind_actor", player, camera, player_progression)
 
 
 func create_baghdad_tower_operations_manager() -> void:
