@@ -148,8 +148,12 @@ func _run() -> void:
 		_fail("Entertainment Tower swimming pool floor is missing its pool and water surface.")
 		return
 	var cinema_floor := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 24) as Node3D
-	if cinema_floor == null or cinema_floor.find_child("CinemaScreen", true, false) == null:
+	var cinema_facility := cinema_floor.get_node_or_null("SpecialFacility_cinema") as Node3D if cinema_floor != null else null
+	if cinema_facility == null or cinema_facility.find_child("CinemaScreen", true, false) == null:
 		_fail("Entertainment Tower cinema room is missing its screen.")
+		return
+	if cinema_facility.get_node_or_null("CinemaProgramScreen") == null or cinema_facility.get_node_or_null("CinemaProgramTitle") == null:
+		_fail("Cinema must generate its original program screen and scene title display.")
 		return
 	var business_floor := operations.call("_ensure_floor_room", "business_investment_tower_baghdad", 8) as Node3D
 	if business_floor == null or business_floor.find_child("TradingDisplay", true, false) == null:
@@ -1167,7 +1171,7 @@ func _run() -> void:
 		"fitness_gym": ["rep", 8],
 		"sports_court": ["shot", 10],
 		"bowling": ["throw", 10],
-		"cinema": ["watch", 1],
+		"cinema": ["watch", 3],
 		"arcade": ["hit", 5],
 		"family_zone": ["discover", 3],
 		"rooftop_leisure": ["photo", 1],
@@ -1187,6 +1191,8 @@ func _run() -> void:
 			operations.set("current_facility_root", bowling_facility)
 		elif str(activity_type) == "arcade":
 			operations.set("current_facility_root", arcade_facility)
+		elif str(activity_type) == "cinema":
+			operations.set("current_facility_root", cinema_facility)
 		if not bool(operations.call("start_facility_activity", str(activity_type))):
 			_fail("Facility activity could not start: " + str(activity_type))
 			return
@@ -1200,6 +1206,12 @@ func _run() -> void:
 			if not bool(final_activity_result.get("success", false)):
 				_fail("Facility activity action failed: " + str(activity_type) + " / " + str(final_activity_result))
 				return
+			if str(activity_type) == "cinema":
+				var cinema_title := cinema_facility.get_node_or_null("CinemaProgramTitle") as Label3D
+				var expected_scene := int(final_activity_result.get("step", 0))
+				if cinema_title == null or not cinema_title.text.contains("المشهد %d" % expected_scene):
+					_fail("Cinema scene progression did not update the screen for scene %d." % expected_scene)
+					return
 			if str(activity_type) == "bowling":
 				bowling_total_pinfall += int(final_activity_result.get("pins", final_activity_result.get("last_throw", 0)))
 			elif str(activity_type) == "sports_court":
