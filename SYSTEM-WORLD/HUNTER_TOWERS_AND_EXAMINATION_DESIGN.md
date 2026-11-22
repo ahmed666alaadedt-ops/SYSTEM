@@ -140,3 +140,7 @@ The Power Tower is a standalone 200-floor challenge destination outside the five
 ## Tower entrance directory data — 22 November 2026
 
 Every Baghdad tower entrance exposes its configured floor count, approximate exterior height, and whether it belongs to the connected district. Interacting with a tower displays a short Arabic directory for its planned departments. This is an information directory only; it does not create an explorable floor, elevator ride, or interior scene.
+
+## Public lobby pavilion prototype — 22 November 2026
+
+Each Baghdad tower landmark now creates an open ground-level lobby pavilion outside the tower shaft collision, with a collidable floor, canopy, four support columns, a directory kiosk and a tower-name sign. The kiosk is ray-interactable and shows the tower's Arabic department directory. These are first-pass blockouts only; reception staff, finished interiors, elevator cars, floor scenes and real vertical travel are not yet implemented.
