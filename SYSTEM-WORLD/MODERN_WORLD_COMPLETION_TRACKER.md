@@ -1,3 +1,13 @@
+## SYSTEM ARCADE — color-memory cabinet mini-game — 22 November 2026
+
+- [x] Added an arcade game-mode selector with the existing physical projectile target challenge and a distinct color-memory cabinet mini-game.
+- [x] Memory mode presents a five-color sequence for a timed preview, then accepts player input through four dedicated color buttons; correct inputs advance the sequence and score, wrong inputs reset progress and consume one of three lives, and exhausted lives end the round without a reward.
+- [x] Added deterministic validator coverage for correct input, wrong-input reset, sequence completion and invalid post-completion cursor; retained six individually addressable arcade cabinet nodes and the existing physical target-sensor tests.
+- [x] Fixed a GDScript type-inference issue in the robotics assembly target-position setup discovered by the Godot parser during this validation cycle.
+- [x] Godot 4.3 full validation #1438 passed (run `45068152660`) and Android export #1175 passed (run `45068152569`) on exact PR head `d3c5c4f8e120c391adda03505b52fa2c9d16838a`.
+- [x] Android APK artifact `14771998841`, 35,914,561 bytes; SHA-256 `0dd8f59177fee08b2d6da6e685fb7c60c24ad9078564b0d315bcc8c1084ece8b`; expires 6 December 2026.
+- [ ] Cabinet-specific full games for each physical cabinet, individual cabinet interaction/start routing and real-device play inspection remain open. This milestone adds a second playable mini-game mode; it does not close the full arcade-cabinet feature.
+
 ## SYSTEM cinema original three-scene program — 22 November 2026
 
 - [x] Replace the cinema's single generic attendance confirmation with a three-scene in-game viewing sequence using original SYSTEM story cards: "نداء بغداد", "أسرار برج النور", and "رحلة الصياد الأول".
