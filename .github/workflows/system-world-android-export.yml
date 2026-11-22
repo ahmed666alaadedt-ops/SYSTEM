@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - feature/baghdad-five-plus-power-tower-20261122
     paths:
       - "SYSTEM-WORLD/**"
       - ".github/workflows/system-world-android-export.yml"
