@@ -92,8 +92,12 @@ func _create_power_tower_challenge_layout(root: Node3D, floor_count: int, tower_
 		var boss_trial := floor_number % 10 == 0
 		floor_registry.append({
 			"floor": floor_number,
+			"floor_label": "POWER TOWER — FLOOR %03d" % floor_number,
 			"challenge": challenge_type,
 			"boss_trial": boss_trial,
+			"boss_trial_id": "POWER_BOSS_%03d" % floor_number if boss_trial else "",
+			"difficulty_tier": int((floor_number - 1) / 20) + 1,
+			"requires_previous_floor_clear": floor_number > 1,
 			"arena_scale": "major" if boss_trial else "standard"
 		})
 		if boss_trial:
@@ -121,6 +125,8 @@ func _create_power_tower_challenge_layout(root: Node3D, floor_count: int, tower_
 	challenge_root.set_meta("matchmaking_enabled", false)
 	challenge_root.set_meta("combat_spawning_enabled", false)
 	challenge_root.set_meta("ranking_verification_enabled", false)
+	challenge_root.set_meta("difficulty_tiers", 10)
+	challenge_root.set_meta("previous_floor_clear_required", true)
 	root.set_meta("challenge_system_revision", 1)
 
 
