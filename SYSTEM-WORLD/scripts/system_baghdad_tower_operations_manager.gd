@@ -25,6 +25,8 @@ const PRODUCT_CATALOG := {
 		{"id":"system_firearm","name":"سلاح ناري حديث","price":2400},
 		{"id":"hunter_shield","name":"درع صياد","price":650},
 		{"id":"hunter_armor","name":"درع واقٍ","price":1450},
+		{"id":"hunter_helmet","name":"خوذة صياد","price":450},
+		{"id":"combat_outfit","name":"زي قتالي","price":950},
 		{"id":"healing_elixir","name":"إكسير الشفاء","price":280},
 		{"id":"strength_elixir","name":"إكسير القوة","price":420},
 		{"id":"speed_elixir","name":"إكسير السرعة","price":420},
@@ -430,6 +432,39 @@ func _add_sell_controls() -> void:
 		sell_button.text = "بيع %s × %d" % [item_id, count]
 		sell_button.pressed.connect(_sell_item.bind(item_id, count))
 		content.add_child(sell_button)
+		if progression.has_method("get_item_equipment_slot"):
+			var equipment_slot := str(progression.call("get_item_equipment_slot", item_id))
+			if not equipment_slot.is_empty():
+				var equip_button := Button.new()
+				equip_button.text = "تجهيز %s في خانة %s" % [item_id, equipment_slot]
+				equip_button.pressed.connect(_equip_item.bind(item_id))
+				content.add_child(equip_button)
+		if item_id.ends_with("_elixir"):
+			var elixir_button := Button.new()
+			elixir_button.text = "استخدام " + item_id
+			elixir_button.pressed.connect(_consume_elixir.bind(item_id))
+			content.add_child(elixir_button)
+
+func _equip_item(item_id: String) -> void:
+	if not is_instance_valid(progression) or not progression.has_method("equip_item"):
+		_set_status("نظام التجهيز غير متاح.")
+		return
+	var result: Dictionary = progression.call("equip_item", item_id)
+	if bool(result.get("success", false)):
+		var bonuses: Dictionary = progression.call("get_equipment_bonuses")
+		_set_status("تم تجهيز %s. زيادة الضرر: +%d | الدفاع: +%d" % [item_id, int(bonuses.get("damage_bonus", 0)), int(bonuses.get("defense_bonus", 0))])
+	else:
+		_set_status("تعذر التجهيز: " + str(result.get("reason", "غير معروف")))
+
+func _consume_elixir(item_id: String) -> void:
+	if not is_instance_valid(progression) or not progression.has_method("consume_elixir"):
+		_set_status("نظام الإكسير غير متاح.")
+		return
+	var result: Dictionary = progression.call("consume_elixir", item_id)
+	if bool(result.get("success", false)):
+		_set_status("تم استخدام %s بنجاح." % item_id)
+	else:
+		_set_status("تعذر استخدام الإكسير: " + str(result.get("reason", "غير معروف")))
 
 func _buy_product(item_id: String, item_name: String, price: int) -> void:
 	if credits < price:
