@@ -127,3 +127,16 @@ The five-tower concept is a connected urban district, not five isolated landmark
 - The vehicle ramps and elevated decks added to the procedural manager are architectural blockout geometry only. They do not yet provide drivable road navigation, vehicle physics, traffic rules, parking interactions, or tested collision/clearance.
 - Amenity decks are placeholder geometry and metadata, not finished pools, rides, shops, hotels, or interactive interiors.
 - The Tigris river channel and navigation corridor must remain open below cross-river connections. Tahrir Square and the Freedom Monument remain protected, recognizable, explorable landmarks; no tower deck or bridge may cover or visually erase them.
+
+
+## Canonical correction — Baghdad five towers versus the separate Power Tower — 22 November 2026
+
+The older five-tower list above is superseded where it conflicts with this correction:
+
+1. Hunter Association Tower.
+2. Business & Investment Tower.
+3. Shopping & Commerce Tower.
+4. Entertainment & Sports Tower.
+5. Technology & Innovation Tower.
+
+The Power Tower is a separate optional challenge landmark and is not one of the five connected Baghdad district towers. The Hunter Guild headquarters remains positioned above the five-tower complex as a distinct elevated headquarters feature. The five-tower district must be completed first; the separate Power Tower is the next work phase afterward. The current source update changes the five-tower build sequence and adds distinct procedural skyline identity features, but it remains a visual blockout until interiors, access, gameplay interactions, navigation, collision, and Godot/Android verification are completed.
