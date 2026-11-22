@@ -53,3 +53,12 @@ Last verified: 2026-11-22 (GitHub repository review)
 - Continue on qa/fix-deferred-test-cleanup-20261122 only; never merge to main without explicit user approval.
 
 - Follow-up geometry commit: 48c85425ee7961457ee1c066e9a780a3f6c47bfd adds five radial skybridges between the central SYSTEM hub and the five tower positions, and aligns the shared sky-garden collision bounds with the 252 m terrace diameter. This remains untested source geometry.
+
+
+## Tower podium and accessible shell source pass — 22 November 2026
+
+- Latest code commit: 88da99a0e5a3d61c966167df25bda99a9efef970 on qa/fix-deferred-test-cleanup-20261122.
+- Added a three-level public podium/arrival hall to each of the five tower roots. Each level has a cylindrical floor plate with static collision, twelve glass-pillar markers and an accent ring; tower-specific arrival signage is included.
+- Reworked each facility block from a solid box into an open-front shell with a floor plate and collision, two side walls, a rear wall and a high lintel, preserving an open entrance. Cinema hall layouts also receive floor/collision markers.
+- This is still a source-level blockout. Elevators, floor selection, emergency stairs, actual service scenes, cinema playback/tickets, retail/hotel transactions, NPC staffing, interior navigation and complete gameplay interactions are not implemented or tested.
+- No local Godot executable is available in the current workspace; latest changes still require the repository's Godot CI validation and Android export. Do not claim runtime validation until a run passes.
