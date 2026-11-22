@@ -618,3 +618,11 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [ ] Add robust aircraft body collision, terrain-aware flight physics, emergency landing, aircraft parking persistence and flight safety validation.
 - [ ] Review rooftop approach clearance, touch layout, camera behavior, collision traversal, lighting and Android performance on a physical device.
 - Note: this is a first playable flight prototype using scripted movement and a procedural helicopter blockout. It is not yet a production aircraft physics model, and membership permissions and obstacle collision are still pending.
+
+
+### Hunter examination continuity — 22 November 2026
+
+- [x] Fix the active-exam resume branch: a saved in-progress examination now returns its current stage instead of incorrectly rejecting the player as already registered.
+- [x] Extend the Baghdad tower operations validator to simulate a saved active examination and assert that it resumes at the current stage.
+- [ ] Pass the updated Godot 4.3 validator and canonical Android APK export on the latest PR head.
+- [ ] Test the full seven-stage examination, app restart/resume, license persistence, and pilot-permission unlock on an Android device.
