@@ -1142,6 +1142,22 @@ func _run() -> void:
 	if arcade_facility.get_node_or_null("ArcadeCabinet_00") == null or arcade_facility.get_node_or_null("ArcadeCabinet_05") == null:
 		_fail("Arcade gallery must generate six individually addressable cabinets.")
 		return
+	var arcade_interaction_count := 0
+	for cabinet_index in range(6):
+		var cabinet_interaction := arcade_facility.get_node_or_null("ArcadeCabinetInteraction_%02d" % cabinet_index) as Area3D
+		if cabinet_interaction == null or not cabinet_interaction.is_in_group("system_interactable"):
+			_fail("Arcade cabinet %d is missing its direct interaction area." % cabinet_index)
+			return
+		if int(cabinet_interaction.get_meta("system_arcade_cabinet_id", -1)) != cabinet_index:
+			_fail("Arcade cabinet interaction metadata does not match its cabinet ID.")
+			return
+		if str(cabinet_interaction.get_meta("system_arcade_cabinet_mode", "")) not in ["shooter", "memory"]:
+			_fail("Arcade cabinet must route to a supported playable game mode.")
+			return
+		arcade_interaction_count += 1
+	if arcade_interaction_count != 6:
+		_fail("Arcade gallery must expose six direct cabinet interactions.")
+		return
 	var arcade_sensor_count := 0
 	for arcade_child in arcade_facility.get_children():
 		if arcade_child is Area3D and str(arcade_child.name).begins_with("ArcadeTargetSensor_"):
