@@ -670,7 +670,9 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Resize the tower operations panel to the current viewport, keeping it centered and bounded for phone portrait and landscape layouts.
 - [x] Recalculate panel dimensions when the viewport changes orientation or size.
 - [x] Add automated sizing assertions for 360×780 portrait and 780×360 landscape viewports.
-- [ ] Pass Godot 4.3 operations validation and canonical Android APK export on the latest UI head; inspect the actual panel on the HONOR 50 after installation.
+- [x] Pass Godot 4.3 parsing, full Baghdad tower operations validation and responsive-size assertions on UI source commit `b5bcf4b04bdd45888874d0b4591c8f7668f7ec90`.
+- [x] Pass canonical Android APK export on the same UI source head; artifact `SYSTEM-WORLD-canonical-android-debug-apk` (35,806,414 bytes) uploaded successfully.
+- [ ] Inspect the actual panel on the HONOR 50 after installation, including portrait/landscape layout and scrolling.
 
 
 ### Responsive panel viewport API correction — 22 November 2026
