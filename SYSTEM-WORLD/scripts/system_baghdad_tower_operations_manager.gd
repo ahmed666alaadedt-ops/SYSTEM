@@ -33,7 +33,7 @@ const PRODUCT_CATALOG := {
 		{"id":"speed_elixir","name":"إكسير السرعة","price":420},
 		{"id":"endurance_elixir","name":"إكسير التحمل","price":450},
 		{"id":"energy_elixir","name":"إكسير الطاقة","price":360},
-		{"id":"nen_acquisition_elixir","name":"إكسير اكتساب النِن","price":1800},
+		{"id":"nen_awakening_elixir","name":"إكسير إيقاظ النِن","price":1800},
 		{"id":"nen_control_elixir","name":"إكسير التحكم بالنِن","price":2600},
 		{"id":"rare_legendary_elixir","name":"إكسير نادر/أسطوري","price":12000},
 		{"id":"repair_kit","name":"عدة إصلاح المعدات","price":250},
@@ -430,12 +430,82 @@ func open_tower(tower_id: String) -> void:
 	if tower_id == "power_tower_baghdad":
 		var power_status: Dictionary = power_tower_manager.call("get_tower_status") if is_instance_valid(power_tower_manager) else {}
 		status_label.text = "برج مستقل — 200 طابق\nأعلى طابق مكتمل: %d | الطابق التالي: %d\nكل طابق تحدٍ فعلي، والطابق العاشر ومضاعفاته اختبار زعيم." % [int(power_status.get("highest_cleared_floor", 0)), int(power_status.get("next_floor", 1))]
+	if tower_id == "hunter_association_tower_baghdad":
+		var nen_demo_button := Button.new()
+		nen_demo_button.name = "NenTrainingDemoButton"
+		nen_demo_button.text = "ساحة استعراض ضربة النِن — تجربة تدريبية"
+		nen_demo_button.pressed.connect(_run_nen_training_demo)
+		content.add_child(nen_demo_button)
+		var nen_note := Label.new()
+		nen_note.text = "الإكسير يوقظ النِن في برج الأسلحة والإكسير؛ أما ضربة النِن فتُستعرض هنا داخل جمعية الصيادين."
+		nen_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		content.add_child(nen_note)
 	panel.show()
 
 func _on_travel_button_pressed() -> void:
 	if floor_selector == null:
 		return
 	_travel_to_floor(current_tower_id, int(floor_selector.value))
+
+
+func _run_nen_training_demo() -> void:
+	if current_tower_id != "hunter_association_tower_baghdad":
+		return
+	if is_instance_valid(progression) and bool(progression.get("nen_unlocked")) and int(progression.get("nen_control_rank")) >= 4:
+		var combat_system := get_tree().root.find_child("ModernWorldCombatSystem", true, false)
+		if combat_system != null and combat_system.has_method("skill_one"):
+			var result: Dictionary = combat_system.call("skill_one")
+			if bool(result.get("success", false)):
+				_set_status("استعراض فعلي لضربة النِن! هذه مهارة قتالية وليست إكسيراً.")
+			else:
+				_set_status("تعذر تنفيذ الضربة الآن: " + str(result.get("reason", "النظام مشغول")))
+			return
+	_spawn_nen_training_preview()
+	_set_status("استعراض تدريبي لضربة النِن: عرض للقوة فقط، لا يستهلك إكسيراً ولا يوقظ النِن. إكسير الإيقاظ يُشترى أو يُصنع في برج الأسلحة والمعدات والإكسير.")
+
+
+func _spawn_nen_training_preview() -> void:
+	if not is_instance_valid(player) or get_tree().current_scene == null:
+		return
+	var preview := Node3D.new()
+	preview.name = "NenTrainingPreviewEffect"
+	get_tree().current_scene.add_child(preview)
+	preview.global_position = player.global_position - player.global_transform.basis.z * 2.2 + Vector3.UP * 1.2
+	var core := MeshInstance3D.new()
+	core.name = "NenEnergyCore"
+	var core_mesh := SphereMesh.new()
+	core_mesh.radius = 0.72
+	core_mesh.height = 1.44
+	core.mesh = core_mesh
+	var core_material := StandardMaterial3D.new()
+	core_material.albedo_color = Color(0.16, 0.72, 1.0, 0.9)
+	core_material.emission_enabled = true
+	core_material.emission = Color(0.08, 0.52, 1.0)
+	core_material.emission_energy_multiplier = 3.5
+	core_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	core.material_override = core_material
+	preview.add_child(core)
+	var shockwave := MeshInstance3D.new()
+	shockwave.name = "NenStrikeShockwave"
+	var ring := TorusMesh.new()
+	ring.inner_radius = 0.85
+	ring.outer_radius = 1.15
+	shockwave.mesh = ring
+	shockwave.rotation.x = deg_to_rad(90.0)
+	shockwave.position.z = -0.35
+	var ring_material := StandardMaterial3D.new()
+	ring_material.albedo_color = Color(0.25, 0.85, 1.0, 0.85)
+	ring_material.emission_enabled = true
+	ring_material.emission = Color(0.1, 0.65, 1.0)
+	ring_material.emission_energy_multiplier = 4.0
+	ring_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	shockwave.material_override = ring_material
+	preview.add_child(shockwave)
+	get_tree().create_timer(1.25).timeout.connect(func():
+		if is_instance_valid(preview):
+			preview.queue_free()
+	)
+
 
 func open_staff_service(staff_node: Node) -> void:
 	if staff_node == null:
@@ -754,7 +824,7 @@ func _save_vendor_stock() -> void:
 func _get_stock_cap(item_id: String) -> int:
 	if item_id in ["rare_legendary_elixir", "rare_core"]:
 		return 3
-	if item_id in ["nen_acquisition_elixir", "nen_control_elixir", "nen_fragment", "sovereign_core"]:
+	if item_id in ["nen_awakening_elixir", "nen_acquisition_elixir", "nen_control_elixir", "nen_fragment", "sovereign_core"]:
 		return 8
 	if item_id in ["iron_ingot", "wood_plank", "leather_roll", "medicinal_herb", "crystal_dust", "monster_core", "energy_crystal"]:
 		return 60
