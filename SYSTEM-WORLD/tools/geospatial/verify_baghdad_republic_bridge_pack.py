@@ -192,6 +192,10 @@ def _assert_runtime_pack(pack_path: pathlib.Path, source_report: dict) -> dict:
         bank_points = route.get("bank_access_points_local_m", [])
         if len(bank_points) != 2 or any(len(point) != 2 for point in bank_points):
             raise SystemExit("Manifest Republic Bridge route must contain two bank access points.")
+        skyway_start = route.get("express_skyway_start_local_m", [])
+        skyway_support_points = route.get("express_skyway_support_points_local_m", [])
+        if len(skyway_start) != 2 or len(skyway_support_points) < 5:
+            raise SystemExit("Manifest Republic Bridge express skyway has no verified land-only support plan.")
 
         cell_names = sorted(
             name for name in names
@@ -264,6 +268,12 @@ def _assert_runtime_pack(pack_path: pathlib.Path, source_report: dict) -> dict:
         for bank_point in bank_points:
             if not ground_union.covers(Point(float(bank_point[0]), float(bank_point[1]))):
                 raise SystemExit(f"Generated ground does not reach both bank access points: {bank_point}")
+        for support_point in skyway_support_points:
+            point = Point(float(support_point[0]), float(support_point[1]))
+            if not ground_union.covers(point):
+                raise SystemExit(f"Express skyway support is not over mapped land: {support_point}")
+            if water_union is not None and water_union.covers(point):
+                raise SystemExit(f"Express skyway support would obstruct mapped water: {support_point}")
         water_overlap_area = ground_union.intersection(water_union).area if water_union is not None else 0.0
         if water_overlap_area > 20.0:
             raise SystemExit(f"Generated ground overlaps mapped water by {water_overlap_area:.2f} m².")
@@ -285,6 +295,7 @@ def _assert_runtime_pack(pack_path: pathlib.Path, source_report: dict) -> dict:
             "ground_area_m2": round(float(manifest.get("ground_area_m2", 0.0)), 2),
             "water_ground_overlap_m2": round(water_overlap_area, 3),
             "bank_access_points_local_m": bank_points,
+            "express_skyway_support_count": len(skyway_support_points),
             "tower_platform_elevation_m": float(manifest["bridge_tower_platform_elevation_m"]),
         }
 
