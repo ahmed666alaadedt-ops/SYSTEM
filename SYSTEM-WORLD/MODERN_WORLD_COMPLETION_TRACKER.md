@@ -1112,3 +1112,14 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Extend the tower operations validator to require all three parts to be visible and marked assembled after the robotics activity.
 - [ ] Run Godot 4.3 full validation and canonical Android export on this animated assembly change before claiming it verified.
 - Note: this is a local procedural assembly prototype; interactive component wiring, robot behavior programming and autonomous robot tasks remain open.
+
+
+## Five-tower elevator regression and swim impulse validation — 22 November 2026
+
+- [x] Extend the Baghdad tower operations validator to travel to floor 2 in each of the five connected district towers (Hunter Association, Business & Investment, Shopping & Trade, Entertainment & Sports, Technology & Innovation).
+- [x] For each tower, assert the active floor metadata, elevator cabin alignment with the destination floor, completion of the player's elevator lock, and cleanup/return to the lobby.
+- [x] Record the actual upward swimming impulse at the moment the player requests a stroke, so collision resolution after move_and_slide() does not erase the evidence needed by the regression assertion.
+- [x] Validate the swim impulse is registered at 2.6 m/s and that the swim state is cleared after leaving the pool.
+- [x] Pass Godot 4.3 validation workflow #1479 (run ID 45075559321) on PR merge commit 814b30146cc5da89083b64bdbea102604a94db31, including import/parser, headless launch, all Baghdad landmarks/lobbies, five-tower floor travel and complete tower operations checks.
+- [x] Pass canonical Android export workflow #1216 (run ID 45075559263) on source commit a5c44974a5175fcd208bebaa8a295b91310d4f0d; APK artifact 14774657998, 35,938,599 bytes, uploaded successfully and expires 6 December 2026.
+- [ ] Physical Android device inspection remains outstanding; automated CI does not verify touch feel, visuals, collision feel, thermal load or frame rate.
