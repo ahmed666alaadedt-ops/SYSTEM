@@ -1349,7 +1349,10 @@ func _physics_process(delta: float) -> void:
 	move_direction += forward * -direction.z
 	move_direction = move_direction.normalized()
 	var is_in_hospital_treatment := bool(player.get_meta("system_hospital_treatment", false))
+	var is_swimming := bool(player.get_meta("system_swimming", false))
 	var movement_speed := PLAYER_SPEED
+	if is_swimming:
+		movement_speed *= 0.62
 	if bool(player.get_meta("system_wounded", false)):
 		movement_speed *= 0.7
 	if is_instance_valid(player_progression) and player_progression.has_method("get_movement_multiplier"):
@@ -1376,7 +1379,15 @@ func _physics_process(delta: float) -> void:
 	var flight_controlled := update_sovereign_flight()
 
 	if not flight_controlled:
-		if not player.is_on_floor():
+		if is_swimming:
+			var swim_surface_y := float(player.get_meta("system_swim_surface_y", player.global_position.y + 0.25))
+			var swim_target_y := swim_surface_y - 0.25
+			if not is_in_hospital_treatment and (jump_requested or Input.is_key_just_pressed(KEY_SPACE)):
+				player.velocity.y = 2.6
+			else:
+				var buoyancy_error := swim_target_y - player.global_position.y
+				player.velocity.y = clampf(buoyancy_error * 3.2, -2.0, 2.0)
+		elif not player.is_on_floor():
 			player.velocity.y -= GRAVITY * delta
 		elif not is_in_hospital_treatment and (jump_requested or Input.is_key_pressed(KEY_SPACE)):
 			player.velocity.y = JUMP_FORCE
