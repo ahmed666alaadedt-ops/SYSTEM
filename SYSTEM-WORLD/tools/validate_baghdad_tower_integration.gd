@@ -475,10 +475,15 @@ func _run() -> void:
 	region.add_child(landmarks)
 	landmarks.call("build", terrain)
 	var hunter_tunnel_root := landmarks.get_node_or_null("hunter_exam_tunnel_start_baghdad") as Node3D
-	var hunter_tunnel_floor := hunter_tunnel_root.get_node_or_null("TunnelFloor") as MeshInstance3D if hunter_tunnel_root != null else null
-	var hunter_tunnel_floor_body := hunter_tunnel_root.get_node_or_null("TunnelFloorCollision") as StaticBody3D if hunter_tunnel_root != null else null
-	var hunter_tunnel_floor_collision := hunter_tunnel_floor_body.get_node_or_null("CollisionShape3D") as CollisionShape3D if hunter_tunnel_floor_body != null else null
+	var hunter_tunnel_floor := hunter_tunnel_root.find_child("TunnelFloor", true, false) as MeshInstance3D if hunter_tunnel_root != null else null
+	var hunter_tunnel_floor_body := hunter_tunnel_root.find_child("TunnelFloorCollision", true, false) as StaticBody3D if hunter_tunnel_root != null else null
+	var hunter_tunnel_floor_collision := hunter_tunnel_floor_body.find_child("CollisionShape3D", true, false) as CollisionShape3D if hunter_tunnel_floor_body != null else null
 	if hunter_tunnel_floor == null or hunter_tunnel_floor.mesh == null or hunter_tunnel_floor_collision == null or hunter_tunnel_floor_collision.shape == null:
+		var tunnel_children := PackedStringArray()
+		if hunter_tunnel_root != null:
+			for tunnel_child in hunter_tunnel_root.get_children():
+				tunnel_children.append(str(tunnel_child.name))
+		print("Hunter tunnel floor diagnostic: root=", hunter_tunnel_root != null, " floor=", hunter_tunnel_floor != null, " body=", hunter_tunnel_floor_body != null, " collision=", hunter_tunnel_floor_collision != null, " children=", ", ".join(tunnel_children))
 		_fail("Hunter examination tunnel floor is missing its physical collision.")
 		return
 	if int(hunter_tunnel_root.get_meta("hunter_exam_stage_gate_count", 0)) != 7:
