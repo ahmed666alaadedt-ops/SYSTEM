@@ -320,6 +320,21 @@ func _create_tower_lobby(root: Node3D, tower_id: String, title: String, radius: 
 	var lift_door_position := Vector3(0.0, 4.5, back_z + 0.55)
 	_add_tower_identity_box(lobby, "LobbyLiftDoor_Blockout", lift_door_position, Vector3(11.2, 9.0, 0.55), emissive_material)
 	_add_static_box_collision(lobby, "LobbyLiftDoorCollision", lift_door_position, Vector3(11.2, 9.0, 0.55))
+	var lift_area := Area3D.new()
+	lift_area.name = "LobbyElevatorInteraction"
+	lift_area.position = lift_door_position + Vector3(0.0, 0.0, 1.2)
+	lift_area.add_to_group("system_interactable")
+	lift_area.set_meta("system_tower_id", tower_id)
+	lift_area.set_meta("system_tower_floor_count", floors)
+	lift_area.set_meta("system_interaction_prompt", "افتح مصعد " + title + " واختر الطابق")
+	lift_area.collision_layer = 1
+	lift_area.collision_mask = 0
+	var lift_shape := CollisionShape3D.new()
+	var lift_sphere := SphereShape3D.new()
+	lift_sphere.radius = 4.5
+	lift_shape.shape = lift_sphere
+	lift_area.add_child(lift_shape)
+	lobby.add_child(lift_area)
 	var front_segment_width := (width - 14.0) * 0.5
 	for side in [-1.0, 1.0]:
 		var front_wall_position := Vector3(side * (7.0 + front_segment_width * 0.5), wall_y, front_z)
@@ -400,7 +415,8 @@ func _create_tower_lobby(root: Node3D, tower_id: String, title: String, radius: 
 	lobby.add_child(sign)
 	lobby.set_meta("lobby_status", "enclosed_reception_lobby_blockout")
 	lobby.set_meta("elevator_status", "not_implemented")
-	lobby.set_meta("lift_door_visual_only", true)
+	lobby.set_meta("lift_door_visual_only", false)
+	lobby.set_meta("lift_door_interactive", true)
 
 
 func _get_tower_floor_directory(tower_id: String) -> PackedStringArray:
