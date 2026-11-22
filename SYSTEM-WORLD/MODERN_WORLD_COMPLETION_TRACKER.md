@@ -728,3 +728,13 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [ ] Re-run Godot validation and canonical Android APK export on the corrected rank-authorization commit.
 - [ ] Implement and validate the full multi-stage rank-award board, including exceptional SSS evaluation; the ladder and helicopter gate alone do not constitute a completed promotion system.
 - [ ] Connect association NPC pilot staffing/flight automation; current authorization is evaluated for the player character.
+
+
+### Hunter Association rank progression board — 22 November 2026
+
+- [x] Add an entry to the Hunter Association tower menu for the official F-to-SSS rank board.
+- [x] Display the player's current rank, verified mission points/count, Nen awakening/control rank, Nen skill-use count, and distinct abilities.
+- [x] Show the progression requirements for F, E, D, C, B, A, S, SS, and SSS; clearly state that SSS requires exceptional Hunter Association Board approval and cannot be self-awarded.
+- [x] Extend the Baghdad operations validator to open the Hunter Association menu and assert that the rank-board entry and progression rows are generated.
+- [ ] Run Godot 4.3 import/parse, the full Baghdad tower operations validator, and canonical Android APK export on the latest branch head; this UI addition is not yet marked tested.
+- [ ] Implement the separate multi-stage SSS examination/board decision workflow; the current board is a transparent progress display, not the final SSS approval workflow.
