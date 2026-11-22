@@ -97,6 +97,10 @@ func _run() -> void:
 	if not bool(boss_data.get("final_boss", false)) or str(boss_data.get("challenge_type", "")) != "FINAL_BOSS":
 		_fail("Power Tower floor 200 is missing its unique final sovereign boss profile.")
 		return
+	var final_rewards: Array = boss_data.get("reward_items", [])
+	if not final_rewards.has("power_tower_sovereign_crown") or not final_rewards.has("sovereign_core"):
+		_fail("Power Tower floor 200 is missing its unique completion rewards.")
+		return
 	if int(boss_data.get("required_level", 999)) > 100:
 		_fail("Power Tower floor 200 is unreachable under the 100-level player progression cap.")
 		return
