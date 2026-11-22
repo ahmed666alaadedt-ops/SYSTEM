@@ -156,3 +156,7 @@ The six tower landmarks now generate an enclosed ground-level lobby blockout wit
 ## Automated Baghdad tower validation and land-placement correction — 22 November 2026
 
 A dedicated Godot validation script now instantiates the canonical main scene and checks all six tower landmark IDs, exactly five connected district members, standalone 200-floor Power Tower, lobby floor/reception/lift-door collision blockouts, directory signs and interactable kiosks, floor-zoning metadata, Weapons/Elixirs categories, and Technology public display mapping. The first run found that the Shopping Tower's requested plot was on water; the tower manager now searches a wider local radius and places it on nearby land. The rerun passed in GitHub Actions run 45035977040. The Shopping Tower's 264 m relocation still needs visual review against the intended Baghdad district footprint and protected landmarks.
+
+## Android build evidence — 22 November 2026
+
+The canonical SYSTEM WORLD Android APK export and artifact upload passed in GitHub Actions run 45035977001 for the Baghdad tower changes. This confirms the project can be exported to an APK; the generated build still requires installation and visual/gameplay/performance inspection on a physical Android device.
