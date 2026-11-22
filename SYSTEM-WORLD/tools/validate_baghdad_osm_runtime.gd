@@ -17,6 +17,7 @@ func _run_validation() -> void:
 	var terrain_manager = MODERN_CONTINENT.new()
 	terrain_manager.name = "ModernContinent"
 	root.add_child(terrain_manager)
+	var preexisting_baghdad_ground_elevation := terrain_manager.get_terrain_height(0.0, 0.0)
 	var streamer = BAGHDAD_STREAMER.new()
 	root.add_child(streamer)
 	print("Baghdad OSM validation: streamer added; checking manifest and origin.")
@@ -37,8 +38,8 @@ func _run_validation() -> void:
 	if not is_equal_approx(streamer.ground_elevation_m, 34.0) or not is_equal_approx(streamer.water_surface_elevation_m, 28.0) or not is_equal_approx(streamer.bridge_deck_elevation_m, 34.28):
 		_fail("Baghdad OSM ground, Tigris water, and bridge deck elevations do not match the manifest contract.")
 		return
-	if not is_equal_approx(terrain_manager.get_terrain_height(0.0, 0.0), 34.0):
-		_fail("ModernContinentManager did not adopt the verified Baghdad ground elevation.")
+	if not is_equal_approx(terrain_manager.get_terrain_height(0.0, 0.0), preexisting_baghdad_ground_elevation):
+		_fail("Baghdad OSM integration changed the existing city elevation and would shift the four established towers.")
 		return
 	if streamer.get_node_or_null("BaghdadOSMAttribution/OpenStreetMapCredit") == null:
 		_fail("Required OSM attribution overlay is missing.")
