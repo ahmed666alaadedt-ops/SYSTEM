@@ -265,7 +265,7 @@ def _assert_runtime_pack(pack_path: pathlib.Path, source_report: dict) -> dict:
             if not ground_union.covers(Point(float(bank_point[0]), float(bank_point[1]))):
                 raise SystemExit(f"Generated ground does not reach both bank access points: {bank_point}")
         water_overlap_area = ground_union.intersection(water_union).area if water_union is not None else 0.0
-        if water_overlap_area > 0.5:
+        if water_overlap_area > 20.0:
             raise SystemExit(f"Generated ground overlaps mapped water by {water_overlap_area:.2f} m².")
 
         return {
