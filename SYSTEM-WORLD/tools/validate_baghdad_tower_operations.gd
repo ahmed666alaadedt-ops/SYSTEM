@@ -73,6 +73,16 @@ func _run() -> void:
 	if helipad_lights != 8:
 		_fail("Hunter Association helicopter landing pad requires eight perimeter lights.")
 		return
+	if not helipad.has_method("get_helicopter_status"):
+		_fail("Hunter Association helicopter flight controller is not attached to the landing pad.")
+		return
+	var helicopter_status: Dictionary = helipad.call("get_helicopter_status")
+	if not bool(helicopter_status.get("available", false)) or str(helicopter_status.get("owner_tower_id", "")) != "hunter_association_tower_baghdad" or float(helicopter_status.get("landing_radius_m", 0.0)) != 18.0:
+		_fail("Hunter Association helicopter controller ownership or landing-zone configuration is invalid.")
+		return
+	if helipad.get_node_or_null("HunterAssociationHelicopter") == null or helipad.get_node_or_null("HunterHelicopterTouchHUD") == null:
+		_fail("Hunter Association helicopter aircraft model or touch-control HUD was not generated.")
+		return
 	for tower_id in TOWER_IDS:
 		var tower := tower_manager.get_node_or_null(str(NODE_NAMES[tower_id])) as Node3D
 		if tower == null:
