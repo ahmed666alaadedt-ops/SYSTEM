@@ -114,3 +114,13 @@ Code validated on commit `83db22c01e7ecf1addd01ce01cbb1b341bd1fdc8`:
 - Remaining Hunter Exam work is the actual seven challenge locations/gameplay and trusted server-side evidence verification. Do not bypass the verifier or award exam completion/license locally.
 - Next queue: inspect the next unchecked Baghdad landmark integration task after this tunnel milestone, while preserving the five connected towers, Hunter HQ, and independent 200-floor Power Tower structure. No physical Android device visual/performance test has been performed.
 - Branch remains `work/baghdad-system-integration`; main has not been modified or merged.
+
+## 22 November 2026 — Baghdad tower advertising display checkpoint
+
+- Active branch remains `work/baghdad-system-integration`; latest commit: `5b13b25f366633231ecdf7c86df2f28920aedc21`.
+- Added two exterior advertising display structures to each of the five connected Baghdad towers (and the independent Power Tower exterior), with emissive panels and bilingual local placeholder content.
+- Added two interior advertising screens to each of the five connected tower lobbies; placements are on side walls to preserve the Hunter examination tunnel and lobby access.
+- Extended `validate_baghdad_tower_integration.gd` to require both exterior and interior screen structures and labels for all five connected towers.
+- Updated `MODERN_WORLD_COMPLETION_TRACKER.md` with the advertising-screen milestone and remaining runtime/mobile verification.
+- GitHub combined commit status currently reports no checks for this commit; Godot parser, full validator suite, headless scene startup and Android visual/performance checks have not yet been confirmed. Do not mark the tower district complete.
+- `main` remains untouched. Do not merge this work without the user's explicit approval.
