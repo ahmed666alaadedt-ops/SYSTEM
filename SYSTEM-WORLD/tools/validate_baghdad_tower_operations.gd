@@ -141,12 +141,16 @@ func _run() -> void:
 	pilot_player.remove_meta("system_hunter_association_role")
 	progression.set("current_level", 50)
 	exam_manager.set("completed_stage_ids", all_stage_ids)
-	pilot_player.set_meta("system_hunter_rank", "A")
-	progression.set("current_level", 1)
-	exam_manager.set("completed_stage_ids", empty_stage_ids)
-	if not helipad.call("_can_pilot"):
-		_fail("An A-rank notable hunter must receive helicopter access without the level 50 threshold.")
-		return
+	for rank in ["F", "E", "D", "C", "B"]:
+		pilot_player.set_meta("system_hunter_rank", rank)
+		if helipad.call("_can_pilot"):
+			_fail("A %s hunter must not receive high-rank helicopter authorization." % rank)
+			return
+	for rank in ["A", "S", "SS", "SSS"]:
+		pilot_player.set_meta("system_hunter_rank", rank)
+		if not helipad.call("_can_pilot"):
+			_fail("A %s notable hunter must receive helicopter access without the level 50 threshold." % rank)
+			return
 	pilot_player.remove_meta("system_hunter_rank")
 	progression.set("current_level", 50)
 	exam_manager.set("completed_stage_ids", all_stage_ids)
@@ -457,7 +461,7 @@ func _run() -> void:
 	operations.call("_complete_power_floor")
 	var final_rewards_granted := true
 	for reward_id in final_rewards:
-		if int(tower_progression.call("get_item_count", str(reward_id))) <= int(original_inventory.get(str(reward_id), 0)):
+		if int(tower_player_progression_manager.call("get_item_count", str(reward_id))) <= int(original_inventory.get(str(reward_id), 0)):
 			final_rewards_granted = false
 	if int(power_manager.get("highest_cleared_floor")) != 200 or int(power_manager.get("active_floor")) != 0 or int(operations.get("credits")) <= original_credits or not final_rewards_granted:
 		_fail("Power Tower final boss clear did not grant the sovereign rewards, credits and completion record.")
@@ -581,7 +585,7 @@ func _run() -> void:
 	if shopping_tower.get_node_or_null("ActiveTowerElevatorCar") != null:
 		_fail("Elevator cabin was not cleaned up after returning to the lobby.")
 		return
-	var progression: Node = main.get("player_progression") as Node
+	var player_progression_manager: Node = main.get("player_progression") as Node
 	var shop_employee: Node = null
 	var shopping_lobby := shopping_tower.get_node_or_null("PublicLobby_Blockout")
 	for child in shopping_lobby.get_children():
