@@ -104,8 +104,9 @@ func _ready() -> void:
 				and route.get("express_skyway_support_points_local_m", []).size() >= 5
 			)
 			var platform_elevation := float(route.get("tower_platform_elevation_m", NAN))
+			var top_level_platform_elevation := float(manifest.get("bridge_tower_platform_elevation_m", NAN))
 			var river_elevation := float(route.get("river_surface_elevation_m", NAN))
-			route_valid = route_valid and is_finite(platform_elevation) and is_finite(river_elevation) and platform_elevation - river_elevation >= 18.0
+			route_valid = route_valid and is_finite(platform_elevation) and is_finite(top_level_platform_elevation) and is_finite(river_elevation) and is_equal_approx(platform_elevation, top_level_platform_elevation) and platform_elevation - river_elevation >= 18.0
 			if ground_schema == 1 and is_finite(ground_elevation) and is_finite(water_elevation) and is_finite(bridge_elevation) and is_equal_approx(ground_elevation, 34.0) and is_equal_approx(water_elevation, 28.0) and is_equal_approx(bridge_elevation, 34.28) and route_valid:
 				pass
 			else:
