@@ -908,3 +908,18 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Keep the unified panel live-refreshing while open and visible even before the player's first saved attempt.
 - [x] Extend the Godot validator to assert a six-racer order including the player. Godot 4.3 workflow run 44956217108 passed on commit 3d5d9bebf55cdf5524510687e560155c11b5f6cd; both motorsport validators, all configured validators and the headless main-scene launch passed.
 - [ ] Implement server-authoritative global leaderboards and multiplayer race results. The current unified standings and personal best records are local runtime data only.
+
+## Baghdad entrance-to-building association runtime integration — 22 November 2026
+
+- [x] Extend `associate_baghdad_entrances.py` with an atomic ZIP annotation step that embeds each entrance's reviewed association decision, source building ID, measured distance and reason into the same cell-pack artifact consumed by Godot.
+- [x] Require association schema version 1 before the runtime emits entrance markers; legacy/unannotated packs no longer create independent, unlinked entrance markers.
+- [x] Spawn runtime entrance interactions only for accepted or access-restricted associations; review and rejected candidates remain absent from the public interaction layer.
+- [x] Bind each accepted/restricted entrance to the matching OSM building collision body in the same streamed cell, and retain the source entrance IDs/count on that building.
+- [x] Preserve private/no-access classification and wheelchair/access source tags. Restricted entrance interactions explicitly deny public entry.
+- [x] Extend the Baghdad OSM Godot validator to load the entrance-bearing sample cell, compare source decisions with runtime markers, and verify every marker resolves to its matching building body.
+- [x] Extend the source workflow to annotate and validate the runtime cell pack, publish the association report, and run on `work/baghdad-system-integration` so the canonical Android workflow can consume its artifact.
+- [ ] Confirm the current branch's GitHub Actions source audit and canonical Godot 4.3/Android handoff results; the new runtime assertions must pass before this slice is considered CI-verified.
+- [ ] Build actual door frames/leaves and wall openings, enforce access at entry, create safe enter/exit transitions and category-specific interior scenes. The current accepted marker is a verified building association, not a physical/openable door or enterable interior.
+- [ ] Inspect the resulting APK on a physical Android device for doorway placement, clearance, readability, streaming and frame-time impact.
+
+**Evidence boundary:** the earlier local association run on the 5×5 sample contained 30 source entrances and classified 25 as accepted, 3 for review and 2 as rejected. That earlier report predates the runtime-pack annotation change; do not treat it as validation of the new annotated artifact. The municipal source layer contains 188 entrance nodes, but the installed 5×5 runtime sample is only a 1 km × 1 km proof area.
