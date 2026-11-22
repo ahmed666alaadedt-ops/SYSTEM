@@ -381,3 +381,14 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Tag each generated passage as a cave landmark and mark it explicitly as geometry blockout requiring runtime validation.
 - [ ] Add validated entrance-to-building association, proper terrain excavation, complete chamber wall/ceiling collision, cave lighting, audio, navigation, discovery persistence, and player interaction.
 - [ ] Run Godot parser/import, scene startup, collision traversal, and Android performance tests. The new geometry is committed source code and has not yet been run in Godot or on a device.
+
+ 
+## Baghdad underground vault door lifecycle — 22 November 2026
+
+- [x] Keep the existing interaction root, group registration, and DoorBody target path unchanged; the ray interaction still resolves the moving body to its parent interactable.
+- [x] Replace instant hide/collision-disable behavior with a 1.25-second vertical stone-slab movement; the slab retains its collision while moving and clears the doorway by rising 4.2 m.
+- [x] Allow the door to reverse direction safely if the player interacts while its tween is running; expose the current open state and matching Arabic prompt on the interaction root.
+- [x] Use an AnimatableBody3D for the moving door slab so its physical motion can be synchronized with the physics engine.
+- [ ] Run the dedicated Godot headless lifecycle test and canonical project import/launch workflow; source changes alone are not runtime proof.
+- [ ] Persist the open/closed state across cell unload/reload through the world-state save service; this change deliberately does not claim persistence.
+- [ ] Validate doorway clearance, ray targeting from both sides, repeated interaction, and mobile-device behavior in the running game.
