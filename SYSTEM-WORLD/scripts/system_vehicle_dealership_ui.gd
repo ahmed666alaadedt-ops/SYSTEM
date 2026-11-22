@@ -256,9 +256,9 @@ func _build_3d_preview(parent: VBoxContainer) -> void:
 	viewport.add_child(world)
 	var camera_3d := Camera3D.new()
 	camera_3d.position = Vector3(4.2, 2.8, 5.6)
+	world.add_child(camera_3d)
 	camera_3d.look_at(Vector3(0.0, 0.25, 0.0), Vector3.UP)
 	camera_3d.current = true
-	world.add_child(camera_3d)
 	var light := DirectionalLight3D.new()
 	light.rotation_degrees = Vector3(-42.0, -28.0, 0.0)
 	light.light_energy = 1.5
