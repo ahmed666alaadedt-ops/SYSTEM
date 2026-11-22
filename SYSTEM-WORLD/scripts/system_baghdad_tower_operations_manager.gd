@@ -505,7 +505,7 @@ func _prepare_tower_interior(tower_id: String) -> void:
 		var angle := TAU * float(segment) / 24.0
 		var shape_node := CollisionShape3D.new()
 		var box := BoxShape3D.new()
-		box.size = Vector3(4.2, height, 1.4)
+		box.size = Vector3(radius * 2.0 * PI / 24.0 * 1.15, height, 1.4)
 		shape_node.shape = box
 		shape_node.position = Vector3(cos(angle) * radius * 0.86, height * 0.5 + 7.0, sin(angle) * radius * 0.86)
 		shape_node.rotation.y = -angle
@@ -573,7 +573,7 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 	deck_collision.shape = deck_shape
 	body.add_child(deck_collision)
 	for segment in range(20):
-		if segment == 0 or segment == 1:
+		if segment == 0:
 			continue
 		var angle := TAU * float(segment) / 20.0
 		var wall_mesh_instance := MeshInstance3D.new()
