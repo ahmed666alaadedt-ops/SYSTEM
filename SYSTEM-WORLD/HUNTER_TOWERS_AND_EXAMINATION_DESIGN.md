@@ -2,16 +2,15 @@
 
 ## Canonical design
 
-The modern-world Baghdad region contains two distinct tower landmarks:
+Baghdad has **five connected district towers plus one separate Power Tower**. The five connected towers are Hunter Association, Business and Investment, Shopping and Commerce, Entertainment and Sports, and Technology and Innovation. The Power Tower is a separate destination, is not counted among those five, and must not join their skybridge or vehicle-deck loop.
 
-1. **World Hunter Association Tower** — the monumental headquarters and public symbol of the global Hunter organization. It is intended to be the tallest tower in the world. The current procedural blockout uses an approximate 1,000 m height and 200 visible floor bands.
-2. **Power Tower** — a separate optional challenge arena for individual progression, ranked battles, increasingly difficult opponents, and rewards. The current procedural blockout uses an approximate 168 m height and 28 visible floor bands.
+The World Hunter Association Tower is the global Hunter headquarters and public symbol of the organization. It remains the tallest tower in the five-tower district (approximately 1,000 m in the current blockout). The separate Power Tower is a 200-floor challenge destination with its own entrance, progression, arenas, spectator facilities, and rewards. Its current exterior blockout is approximately 820 m tall with 200 visible floor bands, keeping the Hunter headquarters taller.
 
-The towers are separate gameplay identities. The Power Tower is not the Hunter examination, and the Hunter examination is not a Power Tower floor run.
+The Hunter examination is a separate seven-stage global qualification journey. It is not the Power Tower and cannot be substituted by clearing Power Tower floors.
 
 ## Current source implementation
 
-- `scripts/baghdad_tower_landmarks_manager.gd` builds both landmark silhouettes near Baghdad and resolves each requested foundation to nearby land where possible.
+- `scripts/baghdad_tower_landmarks_manager.gd` builds the five connected district towers plus the separate Power Tower, resolves foundations to nearby land where possible, and excludes Power Tower from the five-tower connection loop.
 - `scripts/system_tower_entrance.gd` provides a ray-interactable entrance marker for each tower.
 - `scripts/modern_world_region_manager.gd` creates the tower manager and registers both landmarks in the existing modern-world map manager as `LocationType.LANDMARK` (enum value 5).
 - `scripts/system_hunter_exam_manager.gd` defines a seven-stage examination, candidate numbering, registration, sequential progression, save-state fields, and completion/failure signals.
@@ -68,7 +67,7 @@ The design can include candidate-number competition and controlled attempts to o
 
 The current work creates the procedural tower blockouts, entrance interaction markers, menu registration/start controls, and the examination progression data manager. It does **not** yet create the explorable interior floors, the seven physical stage environments, the actual maze geometry, puzzle devices, guardian AI encounters, city-to-city travel sequences, server-authoritative candidate verification, anti-cheat checks, or a production Hunter-license card. The entrance currently reports an interaction; it does not yet load a tower interior scene.
 
-The Power Tower now has a separate 100-floor progression manager with unlock order, level gates, boss/elite classification, rank bands, saved highest-floor and clear-time records, and a reward signal connected to player XP. Actual combat encounters, floor scenes, opponent AI, rankings, and a trusted combat-verification caller remain to be implemented.
+The Power Tower now has a separate 200-floor progression manager with unlock order, level gates, boss/elite classification, rank bands, saved highest-floor and clear-time records, and a reward signal connected to player XP. Actual combat encounters, floor scenes, opponent AI, rankings, and a trusted combat-verification caller remain to be implemented.
 
 The stage completion method is an integration hook for a future trusted objective-verification system. A non-empty evidence string is not sufficient security for an online competitive game. Before live multiplayer, completion and candidate-number records must be validated by an authoritative server.
 
@@ -106,11 +105,13 @@ The five-tower concept is a connected urban district, not five isolated landmark
 - Provide clear public routes, emergency/service access, transit connections, accessible paths, and wayfinding. The complex must feel like a functioning city district, not only a decorative mega-structure.
 
 ### Five tower identities
-1. Power Tower — combat arenas, training, tournaments, champion displays, and spectator facilities.
-2. Hunter Association Tower — hunter registration, mission hall, examination administration, guild services, and Hall of Honor.
-3. Business Tower — company headquarters, offices, investment, trade, and professional services.
-4. Shopping Tower — connected malls, shops, restaurants, cinemas, and indoor public promenades.
-5. Entertainment Tower — amusement, sports, pools, family activities, festivals, and recreation.
+1. Hunter Association Tower — hunter registration, mission hall, examination administration, guild services, and Hall of Honor.
+2. Business and Investment Tower — company headquarters, offices, investment, trade, and professional services.
+3. Shopping and Commerce Tower — connected malls, shops, restaurants, cinemas, and indoor public promenades.
+4. Entertainment and Sports Tower — amusement, sports, pools, family activities, festivals, and recreation.
+5. Technology and Innovation Tower — research campuses, laboratories, robotics, engineering, digital services, startup incubators, and technology exhibitions.
+
+The Power Tower is a standalone 200-floor challenge destination outside the five-tower district. It has its own map marker and entrance and must never be linked into the five-tower skybridge/vehicle-deck network.
 
 ### Visual and gameplay rules
 - From multiple city viewpoints, the player should be able to recognize the five-tower skyline as one connected Baghdad landmark, while still distinguishing all five towers.
@@ -122,7 +123,7 @@ The five-tower concept is a connected urban district, not five isolated landmark
 
 ### Vehicle circulation, comfort, and recreation expansion — 20 November 2026
 - The district is intended to support cars entering from Baghdad streets, climbing dedicated ramps, crossing elevated vehicle decks, and reaching tower parking/drop-off levels. Separate pedestrian promenades and sky gardens keep walking routes safe and pleasant.
-- The five primary identities are fixed within the five-tower composition: Power Tower, Hunter Association Tower, Business Tower, Shopping Tower, and Entertainment Tower. The Power Tower and Hunter Association Tower are full independent towers within the connected district, not extra towers perched on top of other buildings.
+- The five primary identities in the connected district are Hunter Association, Business and Investment, Shopping and Commerce, Entertainment and Sports, and Technology and Innovation. The Power Tower is a separate standalone destination outside this district; it is not one of the five and is not linked by the district skybridges or vehicle decks.
 - The connected district's eventual facilities include hotels, rest areas, clinics/medical support, restaurants, cafes, retail, cinemas, amusement rides, water attractions, swimming pools, rooftop gardens, sports courts, family spaces, public plazas, parking, emergency access, and service routes.
 - The vehicle ramps and elevated decks added to the procedural manager are architectural blockout geometry only. They do not yet provide drivable road navigation, vehicle physics, traffic rules, parking interactions, or tested collision/clearance.
 - Amenity decks are placeholder geometry and metadata, not finished pools, rides, shops, hotels, or interactive interiors.
