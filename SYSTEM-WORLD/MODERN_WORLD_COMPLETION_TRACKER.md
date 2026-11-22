@@ -420,3 +420,15 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Add interior navigation meshes, doorway triggers, NPC staffing, save/load, and per-floor discovery; current facility shells are not yet wired into those systems.
 - [ ] Validate all five towers' positions and the elevated district against Baghdad's real geographic constraints and preserve the Tigris corridor.
 - [ ] Run canonical Godot import/parse, tower-manager scene test, headless main-scene startup, Android export, and on-device visual/performance checks for the latest QA branch head.
+
+
+## Vertical transport visual pass and test correction — 22 November 2026
+
+- [x] Add four panoramic lift shaft visuals and four lift cabin markers to each tower.
+- [x] Add two protected stair-core visual markers to each tower.
+- [x] Add floor directory labels at regular intervals (every 10 floors for tall towers; every 5 floors for shorter towers).
+- [x] Extend the Godot five-tower validation to assert lift shafts, stair cores and floor directories exist on all five towers.
+- [x] Make the radial skybridge count assertion recursive to inspect nested scene nodes.
+- [ ] Runtime revalidation after these exact latest source/test commits; the preceding validation run failed only the radial skybridge assertion, while tower existence, podiums, facility zones, entrances, six cinema halls/floors, central spire and three sky gardens passed.
+- [ ] Remove/resolve non-fatal null-mesh cleanup diagnostics if they remain after the next validation run.
+- [ ] All lift/stair visuals remain non-interactive blockouts: no lift movement, floor selection, stair navigation, emergency routing or access control yet.
