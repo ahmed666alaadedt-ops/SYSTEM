@@ -175,6 +175,9 @@ func add_item(item_id: String, amount: int = 1) -> bool:
 	var normalized_id := item_id.strip_edges()
 	if normalized_id.is_empty() or amount <= 0:
 		return false
+	if get_item_count(normalized_id) <= 0 and EQUIPMENT_SLOTS_BY_ITEM.has(normalized_id):
+		equipment_durability[normalized_id] = MAX_EQUIPMENT_DURABILITY
+		equipment_upgrade_levels[normalized_id] = 0
 	inventory_items[normalized_id] = int(inventory_items.get(normalized_id,0)) + amount
 	save_progress()
 	return true
