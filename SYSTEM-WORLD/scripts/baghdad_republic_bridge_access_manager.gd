@@ -19,13 +19,23 @@ var light_material: StandardMaterial3D
 var support_material: StandardMaterial3D
 
 
-func build(tower: Node3D, city_anchor: Vector3, route: Dictionary) -> bool:
+func build(tower: Node3D, city_anchor: Vector3, route: Dictionary, terrain_manager: Node = null) -> bool:
 	if tower == null or route.is_empty():
 		return false
 	var anchor_value: Array = route.get("tower_anchor_local_m", [])
 	var bank_values: Array = route.get("bank_access_points_local_m", [])
+	var bank_elevations: Array = [
+		route.get("world_karkh_bank_elevation_m", NAN),
+		route.get("world_rusafa_bank_elevation_m", NAN),
+	]
 	var centerline_values: Array = route.get("centerline_local_m", [])
+	var support_points: Array = route.get("express_skyway_support_points_local_m", [])
+	var manifest_skyway_start: Array = route.get("express_skyway_start_local_m", [])
 	if anchor_value.size() != 2 or bank_values.size() != 2 or centerline_values.size() < 2:
+		return false
+	if bank_elevations.size() != 2 or not is_finite(float(bank_elevations[0])) or not is_finite(float(bank_elevations[1])):
+		return false
+	if support_points.size() < 5 or manifest_skyway_start.size() != 2:
 		return false
 
 	var target := Vector2(float(anchor_value[0]), float(anchor_value[1]))
@@ -88,11 +98,11 @@ func build(tower: Node3D, city_anchor: Vector3, route: Dictionary) -> bool:
 	bank_corridors.name = "RepublicBridgeTwoBankAccessCorridors"
 	add_child(bank_corridors)
 	var karkh_length := _create_sloped_corridor(
-		bank_corridors, karkh_path, ground_y, platform_y,
+		bank_corridors, karkh_path, float(bank_elevations[0]), platform_y,
 		BANK_RAMP_WIDTH, BANK_RAMP_THICKNESS, "AlKarkhAccessRamp"
 	)
 	var rusafa_length := _create_sloped_corridor(
-		bank_corridors, rusafa_path, ground_y, platform_y,
+		bank_corridors, rusafa_path, float(bank_elevations[1]), platform_y,
 		BANK_RAMP_WIDTH, BANK_RAMP_THICKNESS, "AlRusafaAccessRamp"
 	)
 	if karkh_length < 100.0 or rusafa_length < 100.0:
@@ -115,8 +125,14 @@ func build(tower: Node3D, city_anchor: Vector3, route: Dictionary) -> bool:
 		EXPRESS_SKYWAY_WIDTH, EXPRESS_SKYWAY_THICKNESS, "SkyRailDeck"
 	)
 	var support_count := _create_skyway_supports(
-		express_skyway, ring_start, target, ring_elevation, platform_y, ground_y
+		express_skyway,
+		Vector2(float(manifest_skyway_start[0]), float(manifest_skyway_start[1])),
+		ring_start, target, ring_elevation, platform_y, ground_y,
+		support_points, terrain_manager
 	)
+	if support_count < 5:
+		push_warning("SYSTEM Baghdad bridge access: fewer than five land-verified express skyway supports were built.")
+		return false
 
 	set_meta("republic_bridge_access_ready", true)
 	set_meta("bank_access_corridor_count", 2)
@@ -279,24 +295,32 @@ func _create_sloped_corridor(
 
 func _create_skyway_supports(
 	parent: Node3D,
-	start: Vector2,
+	manifest_start: Vector2,
+	actual_start: Vector2,
 	finish: Vector2,
 	start_y: float,
 	end_y: float,
-	ground_y: float
+	fallback_ground_y: float,
+	support_points: Array,
+	terrain_manager: Node
 ) -> int:
-	var total_length := start.distance_to(finish)
-	if total_length < 900.0:
+	var manifest_length := manifest_start.distance_to(finish)
+	if manifest_length < 900.0:
 		return 0
-	var target := finish
 	var support_count := 0
-	for distance in range(int(EXPRESS_SKYWAY_SUPPORT_SPACING), int(total_length - EXPRESS_SKYWAY_NO_PYLON_RADIUS), int(EXPRESS_SKYWAY_SUPPORT_SPACING)):
-		var progress := float(distance) / total_length
-		var point := start.lerp(finish, progress)
-		if point.distance_to(target) < EXPRESS_SKYWAY_NO_PYLON_RADIUS:
+	for support_value in support_points:
+		if not support_value is Array or support_value.size() != 2:
 			continue
+		var manifest_point := Vector2(float(support_value[0]), float(support_value[1]))
+		var progress := clampf(manifest_start.distance_to(manifest_point) / manifest_length, 0.0, 1.0)
+		var point := actual_start.lerp(finish, progress)
+		if point.distance_to(finish) < EXPRESS_SKYWAY_NO_PYLON_RADIUS:
+			continue
+		var local_ground_y := fallback_ground_y
+		if terrain_manager != null and terrain_manager.has_method("get_terrain_height"):
+			local_ground_y = float(terrain_manager.call("get_terrain_height", point.x, point.y))
 		var deck_y := lerpf(start_y, end_y, progress)
-		var support_height := deck_y - ground_y - EXPRESS_SKYWAY_THICKNESS
+		var support_height := deck_y - local_ground_y - EXPRESS_SKYWAY_THICKNESS
 		if support_height < 4.0:
 			continue
 		var pylon := MeshInstance3D.new()
@@ -306,7 +330,7 @@ func _create_skyway_supports(
 		pylon_mesh.bottom_radius = 2.8
 		pylon_mesh.height = support_height
 		pylon.mesh = pylon_mesh
-		pylon.position = Vector3(point.x, ground_y + support_height * 0.5, point.y)
+		pylon.position = Vector3(point.x, local_ground_y + support_height * 0.5, point.y)
 		pylon.material_override = support_material
 		pylon.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		parent.add_child(pylon)
