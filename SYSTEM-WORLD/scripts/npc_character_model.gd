@@ -435,7 +435,15 @@ func set_outfit(outfit_id: String, variant_index: int = 0) -> void:
 		"greed_island": [Color8(38, 104, 92), Color8(76, 82, 42), Color8(62, 62, 112), Color8(132, 76, 32)],
 		"hunter": [Color8(20, 48, 82), Color8(30, 64, 82), Color8(36, 42, 68), Color8(62, 54, 36)],
 		"guard": [Color8(72, 42, 28), Color8(46, 58, 72), Color8(72, 62, 34), Color8(42, 66, 54)],
-		"royal": [Color8(86, 54, 104), Color8(105, 74, 34), Color8(44, 62, 104), Color8(92, 42, 54)]
+		"royal": [Color8(86, 54, 104), Color8(105, 74, 34), Color8(44, 62, 104), Color8(92, 42, 54)],
+		"hunter_staff": [Color8(15, 43, 70), Color8(24, 68, 94), Color8(31, 48, 67), Color8(91, 68, 34)],
+		"business_staff": [Color8(38, 46, 57), Color8(23, 70, 77), Color8(50, 58, 76), Color8(83, 42, 54)],
+		"shopping_staff": [Color8(113, 77, 27), Color8(30, 57, 78), Color8(88, 43, 47), Color8(35, 84, 76)],
+		"hotel_staff": [Color8(24, 43, 67), Color8(76, 34, 48), Color8(27, 76, 62), Color8(48, 51, 61)],
+		"restaurant_staff": [Color8(43, 43, 43), Color8(86, 58, 38), Color8(66, 76, 55), Color8(72, 72, 68)],
+		"entertainment_staff": [Color8(71, 42, 104), Color8(30, 91, 72), Color8(34, 66, 108), Color8(126, 70, 30)],
+		"technology_staff": [Color8(19, 79, 101), Color8(30, 58, 99), Color8(45, 58, 70), Color8(23, 103, 93)],
+		"power_staff": [Color8(37, 38, 44), Color8(101, 37, 35), Color8(116, 83, 31), Color8(58, 61, 68)]
 	}
 	var choices: Array = palettes.get(outfit_id.to_lower(), palettes["civilian"])
 	var cloth_color: Color = choices[posmod(variant_index, choices.size())]
