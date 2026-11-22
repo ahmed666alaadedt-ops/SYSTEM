@@ -308,6 +308,10 @@ func _can_pilot() -> bool:
 
 	# Hunter pilot privileges begin at S rank. A license or player level alone never substitutes for rank.
 	var hunter_rank := str(player.get_meta("system_hunter_rank", "")).strip_edges().to_upper()
+	if hunter_rank.is_empty():
+		var progression := get_tree().root.find_child("PlayerProgression", true, false)
+		if progression != null and progression.has_method("get_hunter_rank"):
+			hunter_rank = str(progression.call("get_hunter_rank")).strip_edges().to_upper()
 	return hunter_rank in ["S", "SS", "SSS"]
 
 func _load_parked_state() -> void:
