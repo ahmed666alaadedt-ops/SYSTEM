@@ -241,7 +241,7 @@ var facility_activity_stats: Dictionary = {}
 var active_facility_activity: Dictionary = {}
 var current_facility_root: Node3D
 var bowling_throw_in_progress := false
-var basketball_throw_in_progress := false
+var facility_projectile_in_progress := false
 var facility_aim := 0.0
 
 func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_power_manager: Node, p_player_health: Node, p_region_manager: Node) -> void:
@@ -2380,7 +2380,7 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 
 
 func open_facility_service(tower_id: String, floor_number: int, facility_type: String) -> void:
-	if bowling_throw_in_progress or basketball_throw_in_progress:
+	if bowling_throw_in_progress or facility_projectile_in_progress:
 		return
 	if not TOWER_CONFIG.has(tower_id) or _facility_activity_definition(facility_type).is_empty():
 		return
@@ -2482,7 +2482,7 @@ func _on_facility_aim_changed(value: float) -> void:
 
 
 func start_facility_activity(facility_type: String) -> bool:
-	if bowling_throw_in_progress or basketball_throw_in_progress:
+	if bowling_throw_in_progress or facility_projectile_in_progress:
 		return false
 	var definition := _facility_activity_definition(facility_type)
 	if definition.is_empty():
@@ -2546,7 +2546,7 @@ func _on_arcade_target_body_entered(body: Node3D, target_index: int) -> void:
 
 
 func _launch_arcade_projectile() -> Dictionary:
-	if bowling_throw_in_progress or basketball_throw_in_progress:
+	if bowling_throw_in_progress or facility_projectile_in_progress:
 		return {"success": false, "reason": "انتظر حتى تنتهي المحاولة الحالية."}
 	if current_facility_root == null or not is_instance_valid(current_facility_root):
 		return {"success": false, "reason": "مركز الألعاب غير جاهز."}
@@ -2556,7 +2556,7 @@ func _launch_arcade_projectile() -> Dictionary:
 			target_count += 1
 	if target_count != 5:
 		return {"success": false, "reason": "أهداف مركز الألعاب غير مكتملة."}
-	basketball_throw_in_progress = true
+	facility_projectile_in_progress = true
 	var projectile := RigidBody3D.new()
 	projectile.name = "ArcadeProjectile_Active"
 	projectile.mass = 0.5
@@ -2592,7 +2592,7 @@ func _launch_arcade_projectile() -> Dictionary:
 	var points := 1 if hit else 0
 	active_facility_activity["step"] = step
 	active_facility_activity["score"] = int(active_facility_activity.get("score", 0)) + points
-	basketball_throw_in_progress = false
+	facility_projectile_in_progress = false
 	var goal := int(active_facility_activity.get("goal", 5))
 	var score := int(active_facility_activity.get("score", 0))
 	if step >= goal:
@@ -2605,13 +2605,13 @@ func _launch_arcade_projectile() -> Dictionary:
 
 
 func _launch_basketball() -> Dictionary:
-	if basketball_throw_in_progress:
+	if facility_projectile_in_progress:
 		return {"success": false, "reason": "المحاولة السابقة لم تنتهِ بعد."}
 	if current_facility_root == null or not is_instance_valid(current_facility_root):
 		return {"success": false, "reason": "ملعب كرة السلة غير جاهز."}
 	if current_facility_root.get_node_or_null("BasketballScoringSensor") == null:
 		return {"success": false, "reason": "حلقة التسجيل غير موجودة."}
-	basketball_throw_in_progress = true
+	facility_projectile_in_progress = true
 	var ball := RigidBody3D.new()
 	ball.name = "Basketball_Active"
 	ball.mass = 1.2
@@ -2645,7 +2645,7 @@ func _launch_basketball() -> Dictionary:
 	var points := 2 if scored else 0
 	active_facility_activity["step"] = step
 	active_facility_activity["score"] = int(active_facility_activity.get("score", 0)) + points
-	basketball_throw_in_progress = false
+	facility_projectile_in_progress = false
 	var goal := int(active_facility_activity.get("goal", 5))
 	var score := int(active_facility_activity.get("score", 0))
 	if step >= goal:
