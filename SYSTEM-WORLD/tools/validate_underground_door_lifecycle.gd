@@ -48,7 +48,21 @@ func _run_validation() -> void:
 	root.add_child(ray_camera)
 	ray_manager.set("camera", ray_camera)
 	ray_manager.set("interaction_distance", 12.0)
+	var player_clearance_cast := ShapeCast3D.new()
+	var player_capsule := CapsuleShape3D.new()
+	player_capsule.radius = 0.35
+	player_capsule.height = 1.8
+	player_clearance_cast.shape = player_capsule
+	player_clearance_cast.target_position = Vector3(0.0, 0.0, -14.0)
+	player_clearance_cast.position = Vector3(0.0, 1.0, 0.0)
+	player_clearance_cast.collision_mask = 1
+	player_clearance_cast.enabled = true
+	root.add_child(player_clearance_cast)
 	await physics_frame
+	player_clearance_cast.force_shapecast_update()
+	if player_clearance_cast.get_collision_count() == 0:
+		_fail("Player-sized capsule sweep passed through the closed stone door; physical blocking is missing.")
+		return
 
 	ray_camera.global_position = Vector3(0.0, 1.9, 0.0)
 	ray_camera.look_at(Vector3(0.0, 1.9, -7.0), Vector3.UP)
@@ -80,6 +94,10 @@ func _run_validation() -> void:
 	if ray_manager.call("_find_target_in_front") != target:
 		_fail("Door collision stopped blocking the camera ray during the opening animation.")
 		return
+	player_clearance_cast.force_shapecast_update()
+	if player_clearance_cast.get_collision_count() == 0:
+		_fail("Player-sized capsule passed through the slab before the opening animation completed.")
+		return
 	await create_timer(1.1).timeout
 	if door.position.distance_to(OPEN_POSITION) > 0.03:
 		_fail("Stone door did not reach its fully open position.")
@@ -93,6 +111,10 @@ func _run_validation() -> void:
 	if ray_manager.call("_find_target_in_front") != null:
 		_fail("Fully open vault doorway is still blocked by the raised slab at player height.")
 		return
+	player_clearance_cast.force_shapecast_update()
+	if player_clearance_cast.get_collision_count() != 0:
+		_fail("Player-sized capsule cannot pass through the fully opened vault doorway.")
+		return
 
 	# Closing must return the same slab and retain its physical collision.
 	target.call("system_interact")
@@ -102,6 +124,10 @@ func _run_validation() -> void:
 		return
 	if collision.disabled:
 		_fail("Stone door collision was disabled after closing.")
+		return
+	player_clearance_cast.force_shapecast_update()
+	if player_clearance_cast.get_collision_count() == 0:
+		_fail("Player-sized capsule passed through the door after it closed.")
 		return
 	if bool(target.get_meta("system_door_open", true)):
 		_fail("Closed state metadata was not updated.")
