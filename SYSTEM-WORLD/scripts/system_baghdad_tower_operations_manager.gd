@@ -409,7 +409,7 @@ func _add_catalog_controls(tower_id: String) -> void:
 	heading.text = "المعروض للبيع — بإشراف موظفي البرج"
 	content.add_child(heading)
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(0.0, 245.0)
+	scroll.custom_minimum_size = Vector2(0.0, 160.0)
 	content.add_child(scroll)
 	var list := VBoxContainer.new()
 	scroll.add_child(list)
@@ -431,7 +431,7 @@ func _add_crafting_controls(tower_id: String) -> void:
 	heading.text = "ورشة الحدادة ومختبر الإكسير — التصنيع بإشراف الموظفين"
 	content.add_child(heading)
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(0.0, 150.0)
+	scroll.custom_minimum_size = Vector2(0.0, 120.0)
 	content.add_child(scroll)
 	var recipe_list := VBoxContainer.new()
 	scroll.add_child(recipe_list)
@@ -462,10 +462,16 @@ func _craft_recipe(recipe_id: String) -> void:
 
 func _add_sell_controls() -> void:
 	if is_instance_valid(inventory_controls):
-		inventory_controls.queue_free()
+		var old_scroll := inventory_controls.get_parent()
+		if old_scroll != null:
+			old_scroll.queue_free()
+	var inventory_scroll := ScrollContainer.new()
+	inventory_scroll.name = "InventoryActionScroll"
+	inventory_scroll.custom_minimum_size = Vector2(0.0, 115.0)
+	content.add_child(inventory_scroll)
 	inventory_controls = VBoxContainer.new()
 	inventory_controls.name = "InventoryActionControls"
-	content.add_child(inventory_controls)
+	inventory_scroll.add_child(inventory_controls)
 	var heading := Label.new()
 	heading.text = "إدارة الحقيبة — بيع وتجهيز واستخدام"
 	inventory_controls.add_child(heading)
