@@ -299,28 +299,16 @@ func _can_pilot() -> bool:
 	if not is_instance_valid(player):
 		return false
 
-	# Explicit association staff and officials receive access through their assigned role.
-	if bool(player.get_meta("system_hunter_helicopter_access", false)):
-		return true
 	var association_role := str(player.get_meta("system_hunter_association_role", "")).strip_edges().to_lower()
-	if association_role in ["association_director", "association_official", "chief_hunter", "helicopter_pilot", "receptionist", "mission_clerk", "exam_registrar", "advertising_manager"]:
+	# Only senior officials and explicitly certified professional employees may use aircraft.
+	if association_role in ["association_director", "association_official", "chief_hunter", "helicopter_pilot"]:
+		return true
+	if bool(player.get_meta("system_hunter_staff_professional", false)) and association_role in ["professional_employee", "senior_security", "operations_manager", "tower_manager"]:
 		return true
 
-	# Exceptional hunters may pilot only after earning a high hunter rank.
+	# Hunter pilot privileges begin at S rank. A license or player level alone never substitutes for rank.
 	var hunter_rank := str(player.get_meta("system_hunter_rank", "")).strip_edges().to_upper()
-	if hunter_rank in ["A", "S", "SS", "SSS"]:
-		return true
-
-	# A completed Hunter License alone is not enough: the hunter must also reach level 50.
-	var progression := get_tree().root.find_child("PlayerProgression", true, false)
-	if progression == null or int(progression.get("current_level")) < 50:
-		return false
-	var exam_manager := get_tree().root.find_child("SYSTEMHunterExamManager", true, false)
-	if exam_manager == null or not exam_manager.has_method("get_exam_overview"):
-		return false
-	var overview: Dictionary = exam_manager.call("get_exam_overview")
-	var completed: Array = overview.get("completed_stages", [])
-	return bool(overview.get("registered", false)) and completed.size() >= int(overview.get("total_stages", 7))
+	return hunter_rank in ["S", "SS", "SSS"]
 
 func _load_parked_state() -> void:
 	var config := ConfigFile.new()
