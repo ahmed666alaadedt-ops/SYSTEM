@@ -365,7 +365,9 @@ func _read_verified_republic_bridge_route() -> Dictionary:
 	var anchor: Array = route.get("tower_anchor_local_m", [])
 	var bank_points: Array = route.get("bank_access_points_local_m", [])
 	var centerline: Array = route.get("centerline_local_m", [])
-	if anchor.size() != 2 or bank_points.size() != 2 or centerline.size() < 2:
+	var skyway_start: Array = route.get("express_skyway_start_local_m", [])
+	var skyway_support_points: Array = route.get("express_skyway_support_points_local_m", [])
+	if anchor.size() != 2 or bank_points.size() != 2 or centerline.size() < 2 or skyway_start.size() != 2 or skyway_support_points.size() < 5:
 		return {}
 	var bounds: Array = manifest.get("cell_bounds_inclusive", [])
 	if bounds.size() != 4:
@@ -382,7 +384,13 @@ func _read_verified_republic_bridge_route() -> Dictionary:
 	if source_platform - source_river < 18.0 or source_platform <= source_deck:
 		return {}
 	var world_ground := float(terrain.call("get_terrain_height", city_anchor.x, city_anchor.z))
+	var karkh_bank: Array = bank_points[0]
+	var rusafa_bank: Array = bank_points[1]
+	if karkh_bank.size() != 2 or rusafa_bank.size() != 2:
+		return {}
 	route["world_ground_elevation_m"] = world_ground
+	route["world_karkh_bank_elevation_m"] = float(terrain.call("get_terrain_height", float(karkh_bank[0]), float(karkh_bank[1])))
+	route["world_rusafa_bank_elevation_m"] = float(terrain.call("get_terrain_height", float(rusafa_bank[0]), float(rusafa_bank[1])))
 	route["world_bridge_deck_elevation_m"] = world_ground + source_deck - source_ground
 	route["world_river_surface_elevation_m"] = world_ground + source_river - source_ground
 	route["world_tower_platform_elevation_m"] = world_ground + source_platform - source_ground
@@ -917,7 +925,7 @@ func _create_republic_bridge_access() -> void:
 	var access_manager := RepublicBridgeAccessManagerScript.new()
 	access_manager.name = "RepublicBridgeTowerAccessManager"
 	add_child(access_manager)
-	var access_ready := bool(access_manager.call("build", armory_tower, city_anchor, republic_bridge_route))
+	var access_ready := bool(access_manager.call("build", armory_tower, city_anchor, republic_bridge_route, terrain))
 	if not access_ready:
 		access_manager.queue_free()
 		armory_tower.set_meta("geospatial_relocation_pending", true)
