@@ -717,3 +717,14 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Pass canonical Android APK export on the same tested source HEAD; artifact `SYSTEM-WORLD-canonical-android-debug-apk`, 35,815,543 bytes, expires 6 December 2026 (Android run `45053818923`).
 - [x] Add validator coverage for survival-timer completion, championship timeout abandonment without a clear, and wound-triggered active-floor abandonment/recovery.
 - [ ] Pass the extended survival/championship/abandon regression on the latest PR head; physical Android gameplay review remains outstanding.
+
+
+### Hunter rank ladder and helicopter high-rank authorization — 22 November 2026
+
+- [x] Establish the official hunter grade order from F through E, D, C, B, A, S, SS and SSS, with SSS as the highest and exceptionally rare grade.
+- [x] Permit A/S/SS/SSS hunters to use the Hunter Association helicopter without the separate level-50 threshold; F–B grades do not qualify by rank alone.
+- [x] Extend the Godot validator to check denial for F–B and authorization for A/S/SS/SSS.
+- [x] Investigate the latest Godot CI failure: the validator declared progression twice in the same function scope. Rename the later shopping-test reference to avoid the duplicate declaration.
+- [ ] Re-run Godot validation and canonical Android APK export on the corrected rank-authorization commit.
+- [ ] Implement and validate the full multi-stage rank-award board, including exceptional SSS evaluation; the ladder and helicopter gate alone do not constitute a completed promotion system.
+- [ ] Connect association NPC pilot staffing/flight automation; current authorization is evaluated for the player character.
