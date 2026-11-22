@@ -626,6 +626,8 @@ func _place_floor_duty_staff_on_floor(trip: Dictionary, room: Node3D, radius: fl
 	var role := str(trip.get("role", "tower_staff"))
 	var station_name := "StaffWorkstation_" + role
 	var target_position := Vector3(radius * 0.34, 0.0, -radius * 0.16)
+	var service_position := target_position + Vector3(2.4, 0.0, 0.0)
+	var information_position := target_position + Vector3(1.2, 0.0, 2.1)
 	var station := room.get_node_or_null(station_name) as Node3D
 	if station == null:
 		station = Node3D.new()
@@ -668,6 +670,67 @@ func _place_floor_duty_staff_on_floor(trip: Dictionary, room: Node3D, radius: fl
 		role_sign.pixel_size = 0.012
 		role_sign.modulate = Color(0.72, 0.94, 1.0)
 		station.add_child(role_sign)
+
+	var service_name := "StaffServicePoint_" + role
+	if room.get_node_or_null(service_name) == null:
+		var service_point := Node3D.new()
+		service_point.name = service_name
+		service_point.position = service_position
+		service_point.set_meta("system_staff_workstation_type", "service_counter")
+		room.add_child(service_point)
+		var service_counter := MeshInstance3D.new()
+		service_counter.name = "ServiceCounter"
+		var counter_mesh := BoxMesh.new()
+		counter_mesh.size = Vector3(1.8, 1.05, 0.8)
+		service_counter.mesh = counter_mesh
+		service_counter.position.y = 0.525
+		var counter_material := StandardMaterial3D.new()
+		counter_material.albedo_color = Color(0.10, 0.27, 0.31)
+		counter_material.metallic = 0.48
+		service_counter.material_override = counter_material
+		service_point.add_child(service_counter)
+		var service_label := Label3D.new()
+		service_label.name = "ServicePointLabel"
+		service_label.text = "SERVICE / خدمة الموظف"
+		service_label.position.y = 1.45
+		service_label.font_size = 15
+		service_label.pixel_size = 0.012
+		service_label.modulate = Color(0.62, 0.94, 1.0)
+		service_point.add_child(service_label)
+
+	var information_name := "StaffInformationPoint_" + role
+	if room.get_node_or_null(information_name) == null:
+		var information_point := Node3D.new()
+		information_point.name = information_name
+		information_point.position = information_position
+		information_point.set_meta("system_staff_workstation_type", "information_terminal")
+		room.add_child(information_point)
+		var information_pedestal := MeshInstance3D.new()
+		information_pedestal.name = "InformationPedestal"
+		var pedestal_mesh := BoxMesh.new()
+		pedestal_mesh.size = Vector3(0.8, 1.2, 0.8)
+		information_pedestal.mesh = pedestal_mesh
+		information_pedestal.position.y = 0.6
+		var pedestal_material := StandardMaterial3D.new()
+		pedestal_material.albedo_color = Color(0.12, 0.18, 0.24)
+		pedestal_material.metallic = 0.62
+		information_pedestal.material_override = pedestal_material
+		information_point.add_child(information_pedestal)
+		var information_screen := MeshInstance3D.new()
+		information_screen.name = "InformationScreen"
+		var screen_mesh := BoxMesh.new()
+		screen_mesh.size = Vector3(0.72, 0.52, 0.1)
+		information_screen.mesh = screen_mesh
+		information_screen.position = Vector3(0.0, 1.38, -0.12)
+		var screen_material := StandardMaterial3D.new()
+		screen_material.albedo_color = Color(0.08, 0.62, 0.82)
+		screen_material.emission_enabled = true
+		screen_material.emission = Color(0.04, 0.42, 0.72)
+		screen_material.emission_energy_multiplier = 0.75
+		information_screen.material_override = screen_material
+		information_point.add_child(information_screen)
+
+	var work_route: Array[Vector3] = [service_position, information_position, target_position]
 	employee.reparent(room, false)
 	employee.position = Vector3.ZERO
 	employee.rotation.y = 0.0
@@ -675,6 +738,7 @@ func _place_floor_duty_staff_on_floor(trip: Dictionary, room: Node3D, radius: fl
 	employee.set_meta("system_staff_current_location", tower_id + "_floor_" + str(floor_number))
 	employee.set_meta("system_staff_workstation_position", target_position)
 	employee.set_meta("system_staff_workstation_active", false)
+	employee.set_meta("system_staff_work_route", work_route)
 	model.call("set_activity", "walk")
 	var walk_tween := employee.create_tween()
 	employee.set_meta("system_staff_patrol_tween", walk_tween)
@@ -682,8 +746,29 @@ func _place_floor_duty_staff_on_floor(trip: Dictionary, room: Node3D, radius: fl
 	walk_tween.tween_callback(func():
 		if is_instance_valid(employee) and employee.get_parent() == room:
 			employee.set_meta("system_staff_workstation_active", true)
-			model.call("set_activity", "idle")
+			_start_floor_duty_staff_work_loop(employee, model, work_route)
 	)
+
+
+func _start_floor_duty_staff_work_loop(employee: Node3D, model: Node3D, waypoints: Array[Vector3]) -> void:
+	if not is_instance_valid(employee) or not is_instance_valid(model) or waypoints.size() < 2:
+		return
+	var previous_tween: Variant = employee.get_meta("system_staff_patrol_tween", null)
+	if previous_tween is Tween:
+		(previous_tween as Tween).kill()
+	var work_tween := employee.create_tween().set_loops()
+	employee.set_meta("system_staff_patrol_tween", work_tween)
+	var previous_position := employee.position
+	for waypoint in waypoints:
+		var direction := waypoint - previous_position
+		var yaw := atan2(direction.x, direction.z)
+		var travel_duration := maxf(direction.length() / 1.5, 0.4)
+		work_tween.tween_callback(Callable(model, "set_activity").bind("walk"))
+		work_tween.tween_property(employee, "rotation:y", yaw, 0.18).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		work_tween.tween_property(employee, "position", waypoint, travel_duration).set_trans(Tween.TRANS_LINEAR)
+		work_tween.tween_callback(Callable(model, "set_activity").bind("idle"))
+		work_tween.tween_interval(1.0)
+		previous_position = waypoint
 
 
 func _return_one_tower_staff_to_lobby(employee: Node3D) -> void:
@@ -710,6 +795,7 @@ func _return_one_tower_staff_to_lobby(employee: Node3D) -> void:
 	employee.remove_meta("system_staff_current_location")
 	employee.remove_meta("system_staff_workstation_position")
 	employee.remove_meta("system_staff_workstation_active")
+	employee.remove_meta("system_staff_work_route")
 	if is_instance_valid(model):
 		model.call("set_activity", "idle")
 	_start_tower_staff_waypoint_patrol(employee, model, staff_index)
