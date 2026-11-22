@@ -185,6 +185,13 @@ func get_equipped_item(slot: String) -> String:
 	return str(equipment_slots.get(slot, ""))
 
 
+func is_item_equipped(item_id: String) -> bool:
+	for equipped_item in equipment_slots.values():
+		if str(equipped_item) == item_id:
+			return true
+	return false
+
+
 func get_equipment_bonuses() -> Dictionary:
 	var damage := 0.0
 	var defense := 0.0
