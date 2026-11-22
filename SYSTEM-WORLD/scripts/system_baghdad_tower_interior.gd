@@ -42,8 +42,7 @@ func build(p_tower_id: String, p_title: String, p_entrance_script: Script, p_ext
 	set_meta("tower_identity_feature_ready", true)
 	set_meta("interior_ad_screen_count", 2)
 	set_meta("emergency_stairwell_ready", true)
-	set_meta("emergency_stairwell_step_count", 80)
-	set_meta("emergency_stairwell_step_count", 80)
+	set_meta("emergency_stairwell_step_count", 200)
 	set_meta("animated_elevator_ready", true)
 	set_meta("service_desks_have_collision", true)
 	set_meta("tower_id", tower_id)
@@ -695,19 +694,22 @@ func _build_emergency_stairwell() -> void:
 	for floor_number in range(2, 6):
 		var floor_y := 18.0 * float(floor_number - 1)
 		for flight in range(2):
-			for step_index in range(10):
+			for step_index in range(25):
 				var step_x := -15.0 if flight == 0 else -9.0
-				var step_z := 5.0 + float(step_index) * 0.9 if flight == 0 else 14.0 - float(step_index) * 0.9
-				var step_y := floor_y - 18.0 + float(flight * 10 + step_index + 1) * 0.9
-				_add_solid_box("EmergencyStair_%02d_%02d_%02d" % [floor_number, flight, step_index], Vector3(step_x, step_y, step_z), Vector3(4.6, 0.9, 1.05), step_material)
+				var step_z := -14.0 + (float(step_index) + 0.5) * 0.6 if flight == 0 else 14.0 - (float(step_index) + 0.5) * 0.6
+				var step_y := floor_y - 18.0 + float(flight * 25 + step_index + 1) * 0.36
+				_add_solid_box("EmergencyStair_%02d_%02d_%02d" % [floor_number, flight, step_index], Vector3(step_x, step_y, step_z), Vector3(4.6, 0.36, 0.72), step_material)
 			var rail_x := -17.6 if flight == 0 else -6.4
-			_add_visual_box("EmergencyStairRail_%02d_%02d" % [floor_number, flight], Vector3(rail_x, floor_y - 13.5 + float(flight) * 9.0, 9.5), Vector3(0.18, 2.2, 10.5), rail_material)
-		_add_solid_box("EmergencyStairLanding_%02d" % floor_number, Vector3(-12.0, floor_y - 9.0, 9.5), Vector3(10.5, 0.7, 5.0), step_material)
+			var rail_z := -7.0 if flight == 0 else 7.0
+			var rail_y := floor_y - 13.5 + float(flight) * 9.0
+			_add_visual_box("EmergencyStairRail_%02d_%02d" % [floor_number, flight], Vector3(rail_x, rail_y, rail_z), Vector3(0.18, 2.2, 15.5), rail_material)
+			_add_solid_box("EmergencyStairRailCollision_%02d_%02d" % [floor_number, flight], Vector3(rail_x, rail_y, rail_z), Vector3(0.18, 2.2, 15.5), rail_material)
+		_add_solid_box("EmergencyStairLanding_%02d" % floor_number, Vector3(-12.0, floor_y - 9.0, 0.0), Vector3(10.5, 0.7, 4.0), step_material)
 		var sign := Label3D.new()
 		sign.name = "EmergencyStairSign_%02d" % floor_number
 		sign.text = "مخرج طوارئ — الطابق %02d" % floor_number
 		sign.font_size = 18
-		sign.position = Vector3(-12.0, floor_y - 8.0, 12.0)
+		sign.position = Vector3(-12.0, floor_y - 8.0, 2.2)
 		sign.pixel_size = 0.012
 		sign.modulate = Color(1.0, 0.72, 0.35)
 		add_child(sign)
