@@ -353,6 +353,39 @@ func _run() -> void:
 	if int(boss_data.get("required_level", 999)) > 100:
 		_fail("Power Tower floor 200 is unreachable under the 100-level player progression cap.")
 		return
+	var power_tower_test_script := load("res://scripts/system_power_tower_manager.gd") as Script
+	if power_tower_test_script == null:
+		_fail("Power Tower progression script could not be loaded for the 200-floor regression.")
+		return
+	var progression_test_manager := power_tower_test_script.new() as Node
+	root.add_child(progression_test_manager)
+	await process_frame
+	progression_test_manager.set("highest_cleared_floor", 0)
+	progression_test_manager.set("active_floor", 0)
+	progression_test_manager.set("floor_clear_times", {})
+	for test_floor in range(1, 201):
+		var floor_request: Dictionary = progression_test_manager.call("request_floor", test_floor, 100)
+		if not bool(floor_request.get("success", false)):
+			_fail("Power Tower rejected sequential progression at floor %d: %s" % [test_floor, str(floor_request.get("reason", "unknown"))])
+			progression_test_manager.queue_free()
+			return
+		var floor_clear: Dictionary = progression_test_manager.call("confirm_floor_clear", test_floor, float(test_floor))
+		if not bool(floor_clear.get("success", false)):
+			_fail("Power Tower could not persist a valid clear at floor %d." % test_floor)
+			progression_test_manager.queue_free()
+			return
+	var reloaded_progression_manager := power_tower_test_script.new() as Node
+	root.add_child(reloaded_progression_manager)
+	await process_frame
+	var reloaded_tower_status: Dictionary = reloaded_progression_manager.call("get_tower_status")
+	var reloaded_floor_times: Dictionary = reloaded_progression_manager.get("floor_clear_times")
+	if int(reloaded_tower_status.get("highest_cleared_floor", 0)) != 200 or int(reloaded_tower_status.get("next_floor", 1)) != 0 or int(reloaded_floor_times.size()) != 200:
+		_fail("Power Tower did not restore all 200 cleared floors and their clear-time records.")
+		progression_test_manager.queue_free()
+		reloaded_progression_manager.queue_free()
+		return
+	progression_test_manager.queue_free()
+	reloaded_progression_manager.queue_free()
 	var weapons_room := operations.call("_ensure_floor_room", "weapons_equipment_elixirs_tower_baghdad", 1) as Node3D
 	if weapons_room.get_node_or_null("WeaponsForge") == null or weapons_room.get_node_or_null("ElixirLaboratory") == null:
 		_fail("Weapons Tower forge and elixir laboratory stations are missing.")
