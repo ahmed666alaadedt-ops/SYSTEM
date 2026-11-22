@@ -201,16 +201,6 @@ func _create_tower_platform(tower: Node3D) -> void:
 	platform_body.add_child(platform_collision)
 	tower.add_child(platform_body)
 
-	var accent := MeshInstance3D.new()
-	accent.name = "RepublicBridgeTowerPlatformLightRing"
-	var accent_mesh := CylinderMesh.new()
-	accent_mesh.top_radius = TOWER_PLATFORM_RADIUS - 1.0
-	accent_mesh.bottom_radius = TOWER_PLATFORM_RADIUS - 1.0
-	accent_mesh.height = 0.16
-	accent.mesh = accent_mesh
-	accent.position.y = -0.08
-	accent.material_override = light_material
-	tower.add_child(accent)
 
 
 func _create_sloped_corridor(
