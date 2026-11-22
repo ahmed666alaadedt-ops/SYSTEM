@@ -260,6 +260,17 @@ func _run() -> void:
 	if not bool(progression.get("nen_unlocked")) or int(progression.get("nen_control_rank")) != 2:
 		_fail("Nen acquisition/control elixirs did not update the player's Nen state.")
 		return
+	progression.call("add_item", "nen_control_elixir", 2)
+	progression.call("consume_elixir", "nen_control_elixir")
+	progression.call("consume_elixir", "nen_control_elixir")
+	if int(progression.get("nen_control_rank")) != 4:
+		_fail("Nen control elixirs did not unlock the rank-four ability threshold.")
+		return
+	var nen_burst_result: Dictionary = progression.call("activate_nen_burst")
+	var nen_button: Button = progression.get("nen_burst_button") as Button
+	if not bool(nen_burst_result.get("success", false)) or not progression.get("active_elixir_effects").has("nen_burst") or nen_button == null or not nen_button.visible:
+		_fail("Rank-four Nen Burst did not activate or expose its mobile HUD button.")
+		return
 	var credits_before := int(operations.call("get_operations_status").get("credits", 0))
 	var final_credit_reward := int(operations.call("grant_power_tower_credits", 200, true))
 	var credits_after := int(operations.call("get_operations_status").get("credits", 0))
