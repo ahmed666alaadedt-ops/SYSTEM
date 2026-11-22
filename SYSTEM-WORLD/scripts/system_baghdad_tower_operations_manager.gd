@@ -12,7 +12,7 @@ const TOWER_CONFIG := {
 	"hunter_association_tower_baghdad": {"node": "HunterAssociationTower", "title": "برج جمعية الصيادين", "floors": 200, "height": 1000.0, "radius": 38.0, "roles": ["موظف الاستقبال", "موظف المهمات", "موظف التسجيل", "مسؤول الإعلانات"], "jobs": ["receptionist", "mission_clerk", "exam_registrar", "advertising_manager"]},
 
 	"business_investment_tower_baghdad": {"node": "BusinessInvestmentTower", "title": "برج الأعمال والاستثمار", "floors": 36, "height": 220.0, "radius": 26.0, "roles": ["مدير الاستثمار", "مستشار الشركات", "موظف البنوك والعقود", "مسؤول الإعلانات"], "jobs": ["investment_manager", "business_advisor", "bank_contract_clerk", "advertising_manager"]},
-	"shopping_tower_baghdad": {"node": "ShoppingTower", "title": "برج التسوق والتجارة", "floors": 32, "height": 190.0, "radius": 30.0, "roles": ["مدير البرج", "تاجر الأسلحة والدروع", "صيدلاني الإكسير", "مدير المطاعم والمقاهي"], "jobs": ["shop_manager", "weapons_merchant", "elixir_pharmacist", "restaurant_manager"]},
+	"shopping_tower_baghdad": {"node": "ShoppingTower", "title": "برج التسوق والتجارة", "floors": 32, "height": 190.0, "radius": 30.0, "roles": ["مدير البرج", "تاجر الأسلحة والدروع", "صيدلاني الإكسير", "مدير المطاعم والفندق"], "jobs": ["shop_manager", "weapons_merchant", "elixir_pharmacist", "hospitality_manager"]},
 	"entertainment_tower_baghdad": {"node": "EntertainmentTower", "title": "برج الترفيه والرياضة", "floors": 34, "height": 205.0, "radius": 29.0, "roles": ["منظم الفعاليات", "موظف التذاكر", "موظف الأنشطة", "مسؤول الإعلانات"], "jobs": ["event_coordinator", "ticket_clerk", "activity_host", "advertising_manager"]},
 	"technology_tower_baghdad": {"node": "TechnologyTower", "title": "برج التكنولوجيا والابتكار", "floors": 40, "height": 245.0, "radius": 27.0, "roles": ["موظف المختبر", "مهندس الأجهزة", "موظف الخدمات الرقمية", "مسؤول الإعلانات"], "jobs": ["lab_receptionist", "device_engineer", "digital_services", "advertising_manager"]},
 	"power_tower_baghdad": {"node": "PowerTower", "title": "برج القوة", "floors": 200, "height": 820.0, "radius": 26.0, "roles": ["موظف تسجيل التحديات", "منظم الحلبة", "موظف الاستراحة الطبية", "مسؤول الإعلانات"], "jobs": ["arena_registrar", "arena_coordinator", "arena_medic", "advertising_manager"]}
@@ -1221,6 +1221,8 @@ func _department_for_floor(tower_id: String, floor_number: int, total: int) -> S
 	var ratio := float(floor_number) / float(maxi(total, 1))
 	match tower_id:
 		"shopping_tower_baghdad":
+			if floor_number >= 29: return "المطاعم الراقية وصالات الطعام والمقاهي"
+			if floor_number >= 27: return "فندق SYSTEM — الاستقبال والأجنحة والغرف الفندقية"
 			if ratio > 0.90: return "المطاعم الراقية وصالات الطعام والمقاهي"
 			if ratio > 0.80: return "مطاعم الوجبات السريعة والحلويات والمشروبات"
 			if ratio > 0.68: return "مخزن الإكسير النادر والأسطوري — وصول مقيّد"
@@ -1297,10 +1299,86 @@ func _create_floor_facilities(room: Node3D, tower_id: String, floor_number: int,
 			_create_workshop_station(room, "ElixirLaboratory", "مختبر تحضير الأكاسير وإيقاظ النِن والعلاج", Vector3(radius * 0.32, 0.0, -radius * 0.42), str(staff_ids[2]), "elixir_pharmacist")
 	if tower_id == "shopping_tower_baghdad" and floor_number >= 29:
 		_create_restaurant_dining_area(room, radius, floor_number)
+	if tower_id == "shopping_tower_baghdad" and floor_number in [27, 28]:
+		var hotel_staff: Array = staff_by_tower.get(tower_id, [])
+		var hospitality_staff_id := str(hotel_staff[3]) if hotel_staff.size() > 3 else ""
+		_create_hotel_facilities(room, radius, floor_number, hospitality_staff_id)
 	room.set_meta("system_tower_id", tower_id)
 	room.set_meta("system_tower_floor_number", floor_number)
 	room.set_meta("system_tower_department", department)
 
+
+func _create_hotel_facilities(room: Node3D, radius: float, floor_number: int, hospitality_staff_id: String) -> void:
+	var hotel := Node3D.new()
+	hotel.name = "SYSTEMHotelFacilities"
+	room.add_child(hotel)
+	var gold := StandardMaterial3D.new()
+	gold.albedo_color = Color(0.62, 0.39, 0.12)
+	gold.metallic = 0.58
+	gold.roughness = 0.3
+	var dark := StandardMaterial3D.new()
+	dark.albedo_color = Color(0.07, 0.12, 0.16)
+	dark.metallic = 0.35
+	var sign := Label3D.new()
+	sign.name = "HotelFloorSign"
+	sign.text = "فندق SYSTEM — " + ("الاستقبال والصالة" if floor_number == 27 else "الغرف والأجنحة")
+	sign.position = Vector3(0.0, 4.0, -radius * 0.48)
+	sign.font_size = 28
+	sign.pixel_size = 0.014
+	sign.modulate = Color(1.0, 0.82, 0.48)
+	hotel.add_child(sign)
+	if floor_number == 27:
+		var desk := MeshInstance3D.new()
+		desk.name = "HotelReceptionDesk"
+		var desk_mesh := BoxMesh.new()
+		desk_mesh.size = Vector3(8.0, 1.4, 2.2)
+		desk.mesh = desk_mesh
+		desk.position = Vector3(0.0, 0.7, -radius * 0.18)
+		desk.material_override = gold
+		hotel.add_child(desk)
+		var lounge := MeshInstance3D.new()
+		lounge.name = "HotelLoungeFeature"
+		var lounge_mesh := CylinderMesh.new()
+		lounge_mesh.top_radius = 4.5
+		lounge_mesh.bottom_radius = 4.5
+		lounge_mesh.height = 0.35
+		lounge.mesh = lounge_mesh
+		lounge.position = Vector3(0.0, 0.2, radius * 0.28)
+		lounge.material_override = dark
+		hotel.add_child(lounge)
+	else:
+		for index in range(8):
+			var angle := TAU * float(index) / 8.0
+			var door := MeshInstance3D.new()
+			door.name = "HotelSuiteDoor_%02d" % index
+			var door_mesh := BoxMesh.new()
+			door_mesh.size = Vector3(2.2, 3.4, 0.22)
+			door.mesh = door_mesh
+			door.position = Vector3(cos(angle) * radius * 0.48, 1.7, sin(angle) * radius * 0.48)
+			door.rotation.y = -angle
+			door.material_override = gold
+			hotel.add_child(door)
+	var interaction := Area3D.new()
+	interaction.name = "HotelReceptionInteraction" if floor_number == 27 else "HotelSuiteBookingInteraction"
+	interaction.add_to_group("system_interactable")
+	interaction.set_meta("system_tower_id", "shopping_tower_baghdad")
+	interaction.set_meta("system_tower_floor_number", floor_number)
+	interaction.set_meta("system_hotel_service", "reception_booking" if floor_number == 27 else "room_and_suite_booking")
+	interaction.set_meta("system_tower_staff_id", hospitality_staff_id)
+	interaction.set_meta("system_tower_staff_role", "hospitality_manager")
+	interaction.set_meta("system_display_name", "استقبال فندق SYSTEM" if floor_number == 27 else "حجز الغرف والأجنحة")
+	interaction.set_meta("system_interaction_prompt", "فندق SYSTEM — " + ("حجز غرفة أو جناح وتسجيل الدخول" if floor_number == 27 else "اختيار غرفة أو جناح ومعاينة خيارات الإقامة"))
+	interaction.collision_layer = 1
+	interaction.collision_mask = 0
+	var shape := CollisionShape3D.new()
+	var sphere := SphereShape3D.new()
+	sphere.radius = 3.2
+	shape.shape = sphere
+	shape.position.y = 1.2
+	interaction.add_child(shape)
+	hotel.add_child(interaction)
+	room.set_meta("system_hotel_floor", floor_number)
+	room.set_meta("system_hotel_staff_id", hospitality_staff_id)
 
 
 func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: int) -> void:
