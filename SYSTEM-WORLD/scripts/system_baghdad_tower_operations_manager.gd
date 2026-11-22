@@ -527,6 +527,29 @@ func _spawn_nen_training_preview() -> void:
 	)
 
 
+
+func open_floor_services(tower_id: String, floor_number: int) -> void:
+	if not tower_nodes.has(tower_id) or not TOWER_CONFIG.has(tower_id):
+		return
+	var config: Dictionary = TOWER_CONFIG[tower_id]
+	if floor_number < 1 or floor_number > int(config.get("floors", 0)):
+		return
+	var staff_ids: Array = staff_by_tower.get(tower_id, [])
+	if staff_ids.is_empty():
+		return
+	var tower := tower_nodes.get(tower_id) as Node3D
+	var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D if tower != null else null
+	if lobby == null:
+		return
+	var staff_index := posmod(floor_number - 1, staff_ids.size())
+	var staff_node := lobby.get_node_or_null("TowerStaff_" + str(staff_ids[staff_index]))
+	if staff_node == null:
+		return
+	open_staff_service(staff_node)
+	if is_instance_valid(status_label):
+		status_label.text = "خدمات %s — الطابق %d\n%s" % [str(config.get("title", "البرج")), floor_number, str(staff_node.get_meta("system_tower_staff_role", "service"))]
+
+
 func open_staff_service(staff_node: Node) -> void:
 	if staff_node == null:
 		return
