@@ -71,6 +71,30 @@ jobs:
           "$GODOT" --headless --editor --path "$PROJECT" --quit \
             2>&1 | tee "$RUNNER_TEMP/canonical-godot-import.log"
 
+      - name: Validate Baghdad tower landmarks and lobby systems
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_baghdad_towers.gd 2>&1 | tee "$RUNNER_TEMP/baghdad-tower-landmarks.log"
+          if grep -E "SCRIPT ERROR|Parse Error|Baghdad tower validation failed" "$RUNNER_TEMP/baghdad-tower-landmarks.log"; then
+            echo "Baghdad tower landmark validation reported an error."
+            exit 1
+          fi
+
+      - name: Validate Baghdad tower operations, elevator staff and emergency evacuation
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_baghdad_tower_operations.gd 2>&1 | tee "$RUNNER_TEMP/baghdad-tower-operations.log"
+          if grep -E "SCRIPT ERROR|Parse Error|Baghdad tower operations validation failed" "$RUNNER_TEMP/baghdad-tower-operations.log"; then
+            echo "Baghdad tower operations validation reported an error."
+            exit 1
+          fi
+
       - name: Validate terrain cell streaming seam and lifecycle
         shell: bash
         run: |
@@ -107,30 +131,6 @@ jobs:
           "$GODOT" --headless --path "$PROJECT" \
             --script res://tools/validate_baghdad_star_gate_hub.gd \
             2>&1 | tee "$RUNNER_TEMP/baghdad-star-gate-runtime.log"
-
-      - name: Validate Baghdad tower landmarks and lobby systems
-        shell: bash
-        run: |
-          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
-          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
-          set -o pipefail
-          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_baghdad_towers.gd 2>&1 | tee "$RUNNER_TEMP/baghdad-tower-landmarks.log"
-          if grep -E "SCRIPT ERROR|Parse Error|Baghdad tower validation failed" "$RUNNER_TEMP/baghdad-tower-landmarks.log"; then
-            echo "Baghdad tower landmark validation reported an error."
-            exit 1
-          fi
-
-      - name: Validate Baghdad tower operations, elevator staff and emergency evacuation
-        shell: bash
-        run: |
-          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
-          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
-          set -o pipefail
-          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_baghdad_tower_operations.gd 2>&1 | tee "$RUNNER_TEMP/baghdad-tower-operations.log"
-          if grep -E "SCRIPT ERROR|Parse Error|Baghdad tower operations validation failed" "$RUNNER_TEMP/baghdad-tower-operations.log"; then
-            echo "Baghdad tower operations validation reported an error."
-            exit 1
-          fi
 
       - name: Launch canonical main scene headlessly
         shell: bash
