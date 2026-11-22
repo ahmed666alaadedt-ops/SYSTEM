@@ -1201,3 +1201,6 @@ Implementation added on the feature branch; automated runtime validation is pend
 
 - [x] Pass full Godot 4.3 validation #1522 (run ID 45083924507) on source HEAD d7d174cc21d2e0bb0c7adbb94ffc62ccf7268439; tower operations passed and runtime log contained zero Node not inside tree warnings.
 - [x] Pass canonical Android export #1259 (run ID 45083924528) on the same source HEAD; APK artifact 14778229274, 35,967,083 bytes, SHA-256 f590967987150f59fc46fcae491f59793264b0ef864aa334810e3b7f14edcf71, expires 6 December 2026.
+
+- [x] Make facade layout QA deterministic in Godot headless mode by asserting the generated window count, floor/segment metadata and panel dimensions instead of relying on dummy-renderer MultiMesh transform readback.
+- [ ] Re-run Godot and Android workflows after the headless facade validator adjustment.
