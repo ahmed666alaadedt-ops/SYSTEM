@@ -1203,6 +1203,10 @@ func _run() -> void:
 			operations.set("current_facility_root", arcade_facility)
 		elif str(activity_type) == "cinema":
 			operations.set("current_facility_root", cinema_facility)
+		elif str(activity_type) == "robotics_lab":
+			var robotics_room := operations.call("_ensure_floor_room", "technology_tower_baghdad", 10) as Node3D
+			var robotics_facility := robotics_room.get_node_or_null("SpecialFacility_robotics_lab") as Node3D if robotics_room != null else null
+			operations.set("current_facility_root", robotics_facility)
 		if not bool(operations.call("start_facility_activity", str(activity_type))):
 			_fail("Facility activity could not start: " + str(activity_type))
 			return
@@ -1254,6 +1258,17 @@ func _run() -> void:
 			else:
 				_fail("Facility activity did not complete its required steps: " + str(activity_type))
 			return
+		if str(activity_type) == "robotics_lab":
+			var robotics_root := operations.get("current_facility_root") as Node3D
+			var assembly := robotics_root.get_node_or_null("RobotAssemblyDisplay") as Node3D if robotics_root != null else null
+			if assembly == null:
+				_fail("Robotics assembly display was not generated.")
+				return
+			for part_index in range(3):
+				var part := assembly.get_node_or_null("RobotAssemblyPart_%02d" % part_index) as MeshInstance3D
+				if part == null or not part.visible or not bool(part.get_meta("system_robot_assembled", false)):
+					_fail("Robotics assembly part %d did not animate into its completed position." % part_index)
+					return
 		if not operations.get("facility_activity_stats").has(activity_type):
 			_fail("Facility activity result was not recorded: " + str(activity_type))
 			return
