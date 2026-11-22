@@ -3325,13 +3325,20 @@ func _advance_robotics_assembly(step: int) -> void:
 	assembly_tween.tween_property(part, "rotation", Vector3.ZERO, 0.72).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	_set_status("تجميع الروبوت: تم تثبيت القطعة %d من 5" % (part_index + 1))
 	if step >= 5:
-		_start_robot_idle_animation(assembly)
+		assembly.set_meta("system_robot_idle_animation", true)
+		assembly_tween.finished.connect(_animate_robot_idle_animation.bind(assembly))
 
 
 func _start_robot_idle_animation(assembly: Node3D) -> void:
 	if not is_instance_valid(assembly) or bool(assembly.get_meta("system_robot_idle_animation", false)):
 		return
 	assembly.set_meta("system_robot_idle_animation", true)
+	_animate_robot_idle_animation(assembly)
+
+
+func _animate_robot_idle_animation(assembly: Node3D) -> void:
+	if not is_instance_valid(assembly):
+		return
 	var left_arm := assembly.get_node_or_null("RobotAssemblyPart_03") as MeshInstance3D
 	var right_arm := assembly.get_node_or_null("RobotAssemblyPart_04") as MeshInstance3D
 	var head := assembly.get_node_or_null("RobotAssemblyPart_02") as MeshInstance3D
