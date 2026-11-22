@@ -624,5 +624,6 @@ Implementation added on the feature branch; automated runtime validation is pend
 
 - [x] Fix the active-exam resume branch: a saved in-progress examination now returns its current stage instead of incorrectly rejecting the player as already registered.
 - [x] Extend the Baghdad tower operations validator to simulate a saved active examination and assert that it resumes at the current stage.
+- [x] Correct the helicopter pilot-authorization lookup and validator to use the actual runtime node name `SYSTEMHunterExamManager`, discovered by the first regression run.
 - [ ] Pass the updated Godot 4.3 validator and canonical Android APK export on the latest PR head.
 - [ ] Test the full seven-stage examination, app restart/resume, license persistence, and pilot-permission unlock on an Android device.
