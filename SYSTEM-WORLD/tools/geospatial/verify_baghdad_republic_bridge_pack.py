@@ -180,6 +180,12 @@ def _assert_runtime_pack(pack_path: pathlib.Path, source_report: dict) -> dict:
             raise SystemExit("Manifest Republic Bridge route does not reference the verified Tigris water polygon.")
         if route.get("osm_bridge_polygon_id") != BRIDGE_POLYGON_ID:
             raise SystemExit("Manifest Republic Bridge route does not reference the verified bridge polygon.")
+        if float(route.get("tower_platform_elevation_m", -999.0)) != float(manifest["bridge_tower_platform_elevation_m"]):
+            raise SystemExit("Route and manifest tower-platform elevations do not match.")
+        if float(route.get("river_surface_elevation_m", -999.0)) != float(manifest["water_surface_elevation_m"]):
+            raise SystemExit("Route Tigris elevation does not match the manifest water-surface elevation.")
+        if float(route.get("bridge_deck_elevation_m", -999.0)) != float(manifest["bridge_deck_elevation_m"]):
+            raise SystemExit("Route bridge-deck elevation does not match the manifest bridge elevation.")
         route_anchor = route.get("tower_anchor_local_m", [])
         if len(route_anchor) != 2:
             raise SystemExit("Manifest Republic Bridge route has no local tower anchor.")
