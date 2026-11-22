@@ -468,6 +468,7 @@ func _create_customer_population() -> void:
 				var visitor := Node3D.new()
 				visitor.name = node_name
 				visitor.set_meta("system_tower_customer_id", existing_id)
+				visitor.set_meta("system_tower_customer_index", index)
 				visitor.set_meta("system_tower_id", tower_id)
 				visitor.set_meta("system_display_name", str(customer.get("name", customer_name)))
 				lobby.add_child(visitor)
