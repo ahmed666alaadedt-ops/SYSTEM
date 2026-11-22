@@ -218,10 +218,25 @@ func _run() -> void:
 	if not str(progression.call("get_equipped_item", "weapon")).is_empty():
 		_fail("NPC service did not remove the weapon from its equipment slot.")
 		return
+	progression.call("add_item", "iron_ingot", 2)
+	var upgrade_result: Dictionary = progression.call("upgrade_item", "training_sword")
+	if not bool(upgrade_result.get("success", false)) or int(progression.call("get_item_upgrade_level", "training_sword")) != 1:
+		_fail("NPC weapon upgrade service did not apply the first equipment upgrade.")
+		return
+	progression.call("equip_item", "training_sword")
+	progression.call("consume_equipment_durability", "weapon", 100.0)
+	if float(progression.call("get_item_durability", "training_sword")) > 0.0 or float(progression.call("get_combat_damage_bonus")) > 0.0:
+		_fail("Broken weapon durability did not disable its equipment damage bonus.")
+		return
+	progression.call("add_item", "repair_kit", 1)
+	var repair_result: Dictionary = progression.call("repair_item", "training_sword")
+	if not bool(repair_result.get("success", false)) or float(progression.call("get_item_durability", "training_sword")) < 99.9 or float(progression.call("get_combat_damage_bonus")) < 7.0:
+		_fail("NPC repair service did not restore the upgraded weapon and its damage bonus.")
+		return
 	progression.call("add_item", "strength_elixir", 1)
 	var strength_result: Dictionary = progression.call("consume_elixir", "strength_elixir")
-	if not bool(strength_result.get("success", false)) or float(progression.call("get_combat_damage_bonus")) < 15.0:
-		_fail("Strength elixir did not apply its timed combat damage effect.")
+	if not bool(strength_result.get("success", false)) or float(progression.call("get_combat_damage_bonus")) < 22.0:
+		_fail("Strength elixir did not stack with the upgraded weapon's timed combat bonus.")
 		return
 	progression.call("add_item", "speed_elixir", 1)
 	progression.call("consume_elixir", "speed_elixir")
