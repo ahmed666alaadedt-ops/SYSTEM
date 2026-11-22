@@ -385,9 +385,32 @@ func _run() -> void:
 	if headquarters_position == Vector3.INF:
 		_fail("Hunter Association headquarters has no resolved elevated position.")
 		return
-	if towers.get_node_or_null("HunterAssociationHeadquarters/HeadquartersInterior/HeadquartersExit") == null:
-		_fail("Hunter Association headquarters interior exit is missing.")
+	var headquarters_interior := towers.get_node_or_null("HunterAssociationHeadquarters/HeadquartersInterior")
+	if headquarters_interior == null or headquarters_interior.get_node_or_null("HeadquartersExit") == null:
+		_fail("Hunter Association headquarters interior or exit is missing.")
 		return
+	if not bool(headquarters_interior.get_meta("headquarters_service_interactions_ready", false)) or int(headquarters_interior.get_meta("headquarters_public_service_count", 0)) != 4:
+		_fail("Hunter Association headquarters does not expose all four public service interaction points.")
+		return
+	for service_id in ["reception", "registry", "missions", "examiner_control"]:
+		var service_marker := headquarters_interior.get_node_or_null("HQServiceInteraction_" + service_id) as Area3D
+		var service_desk := headquarters_interior.get_node_or_null("HQServiceDeskCollision_" + service_id) as StaticBody3D
+		var service_sign := headquarters_interior.get_node_or_null("HQServiceSign_" + service_id) as Label3D
+		var service_collision_ready := false
+		if service_desk != null:
+			for desk_child in service_desk.get_children():
+				if desk_child is CollisionShape3D and desk_child.shape != null and not desk_child.disabled:
+					service_collision_ready = true
+					break
+		if service_marker == null or not service_marker.is_in_group("system_interactable"):
+			_fail("Hunter HQ service interaction is missing or not interactable: " + service_id)
+			return
+		if str(service_marker.get_meta("system_hq_service_id", "")) != service_id or str(service_marker.get_meta("system_service_description", "")).is_empty():
+			_fail("Hunter HQ service interaction metadata is incomplete: " + service_id)
+			return
+		if not service_collision_ready or service_sign == null or service_sign.text.is_empty():
+			_fail("Hunter HQ service desk is missing physical collision or readable signage: " + service_id)
+			return
 
 	var landmarks = LANDMARK_SCRIPT.new()
 	region.add_child(landmarks)
