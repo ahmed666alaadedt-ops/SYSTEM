@@ -99,9 +99,7 @@ static func build(room: Node3D, tower_id: String, floor_number: int, radius: flo
 		station_label.font_size = 17
 		station_label.pixel_size = 0.012
 		station.add_child(station_label)
-		if tower_id == "weapons_equipment_elixirs_tower_baghdad":
-			_add_weapon_rack(station, base_material, accent_material)
-		elif tower_id == "shopping_tower_baghdad":
+		if tower_id == "shopping_tower_baghdad":
 			_add_shop_display(station, base_material, accent_material)
 		elif tower_id == "entertainment_tower_baghdad":
 			_add_sports_display(station, base_material, accent_material)
@@ -118,17 +116,6 @@ static func _material(color: Color, metallic: float, roughness: float) -> Standa
 	material.metallic = metallic
 	material.roughness = roughness
 	return material
-
-static func _add_weapon_rack(parent: Node3D, base: Material, accent: Material) -> void:
-	for index in range(3):
-		var item := MeshInstance3D.new()
-		var mesh := BoxMesh.new()
-		mesh.size = Vector3(0.22, 2.5, 0.22)
-		item.mesh = mesh
-		item.position = Vector3(-0.9 + float(index) * 0.9, 2.0, 0.25)
-		item.rotation.z = -0.12 + float(index) * 0.12
-		item.material_override = accent if index == 1 else base
-		parent.add_child(item)
 
 static func _add_shop_display(parent: Node3D, base: Material, accent: Material) -> void:
 	for index in range(3):
