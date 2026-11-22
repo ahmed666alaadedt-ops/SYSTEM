@@ -242,6 +242,7 @@ var active_facility_activity: Dictionary = {}
 var current_facility_root: Node3D
 var bowling_throw_in_progress := false
 var basketball_throw_in_progress := false
+var facility_aim := 0.0
 
 func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_power_manager: Node, p_player_health: Node, p_region_manager: Node) -> void:
 	player = p_player
@@ -2358,6 +2359,7 @@ func open_facility_service(tower_id: String, floor_number: int, facility_type: S
 	current_staff_id = ""
 	var facility_room := _ensure_floor_room(tower_id, floor_number)
 	current_facility_root = facility_room.get_node_or_null("SpecialFacility_" + facility_type) as Node3D if facility_room != null else null
+	facility_aim = 0.0
 	_clear_dynamic_controls()
 	var facility_names := {
 		"swimming_pool": "مسبح SYSTEM — تحدي السباحة",
@@ -2409,6 +2411,21 @@ func _add_facility_activity_controls(facility_type: String) -> void:
 	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	description.text = "%s: أكمل %d خطوات. تُحفظ أفضل نتيجة وعدد الجولات على هذا الجهاز." % [str(definition["title"]), int(definition["goal"])]
 	content.add_child(description)
+	if facility_type in ["bowling", "sports_court"]:
+		var aim_label := Label.new()
+		aim_label.name = "FacilityAimLabel"
+		aim_label.text = "اتجاه الرمية: وسط"
+		content.add_child(aim_label)
+		var aim_slider := HSlider.new()
+		aim_slider.name = "FacilityAimSlider"
+		aim_slider.min_value = -1.0
+		aim_slider.max_value = 1.0
+		aim_slider.step = 0.05
+		aim_slider.value = 0.0
+		aim_slider.custom_minimum_size = Vector2(260.0, 38.0)
+		 aim_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		 aim_slider.value_changed.connect(_on_facility_aim_changed)
+		content.add_child(aim_slider)
 	var start_button := Button.new()
 	start_button.name = "StartFacilityActivityButton"
 	start_button.text = "بدء النشاط"
@@ -2425,6 +2442,14 @@ func _add_facility_activity_controls(facility_type: String) -> void:
 	stats_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	stats_label.text = "الجولات المكتملة: %d | أفضل نتيجة: %d" % [int(stats.get("plays", 0)), int(stats.get("best_score", 0))]
 	content.add_child(stats_label)
+
+
+func _on_facility_aim_changed(value: float) -> void:
+	facility_aim = clampf(value, -1.0, 1.0)
+	var aim_label := content.get_node_or_null("FacilityAimLabel") as Label
+	if aim_label != null:
+		var direction_name := "يسار" if facility_aim < -0.15 else ("يمين" if facility_aim > 0.15 else "وسط")
+		aim_label.text = "اتجاه الرمية: " + direction_name
 
 
 func start_facility_activity(facility_type: String) -> bool:
@@ -2511,7 +2536,7 @@ func _launch_basketball() -> Dictionary:
 	ball.add_child(collision)
 	current_facility_root.add_child(ball)
 	ball.position = Vector3(0.0, 1.4, 1.5)
-	var aim := Input.get_axis("ui_left", "ui_right")
+	var aim := facility_aim
 	ball.apply_central_impulse(Vector3(aim * 1.2, 7.2, -10.0))
 	_set_status("التصويبة انطلقت — حاول تمرير الكرة داخل الحلقة!")
 	await get_tree().create_timer(1.45).timeout
