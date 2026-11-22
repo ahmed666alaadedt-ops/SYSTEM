@@ -1,3 +1,9 @@
+## Baghdad public event-board tower map alignment — 22 November 2026
+
+- [x] Replace the obsolete Weapons/Equipment/Elixirs tower entry in the public event-board tower map with Business & Investment Tower.
+- [x] Keep Shopping Tower as the sole mapped landmark for retail, weapons, armour, elixirs, restaurants and hotel services.
+- [ ] Re-run the complete landmark and operations validators after the final public-board mapping update; the previous CI failure was the stale landmark validator and no fresh green run has yet been observed.
+
 ## Correct Baghdad tower count and integrated Shopping Tower — 22 November 2026
 
 - [x] Replace the obsolete standalone Weapons/Equipment/Elixirs landmark with the missing Business & Investment Tower; Baghdad now generates the intended five connected towers: Hunter Association, Business & Investment, Shopping & Commerce, Entertainment & Sports, and Technology & Innovation.
