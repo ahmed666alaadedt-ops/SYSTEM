@@ -174,7 +174,7 @@ This is the acceptance checklist for the modern-world map. The project must not 
 
 ## Baghdad five-tower district role update — 22 November 2026
 
-- [x] Replace the former Business and Investment Tower identity with the Weapons, Equipment and Elixirs Tower; keep the district at exactly five connected primary towers.
+- [x] Preserve Business & Investment Tower as one of the five connected towers; weapons, armour, equipment upgrades and all elixirs remain departments inside Shopping & Commerce Tower, not a separate tower.
 - [x] Preserve the existing tower site and connected-district membership for this replacement; update its stable landmark ID and the public event-board node mapping together.
 - [x] Define the tower's equipment scope: swords, spears, axes, bows, firearms, shields, helmets, armor, combat outfits, and equipment upgrades.
 - [x] Define its elixir scope: Nen acquisition, Nen control and ability development, healing, strength, speed, endurance, energy, and rare/legendary elixirs.
@@ -187,7 +187,7 @@ This is the acceptance checklist for the modern-world map. The project must not 
 
 ## Baghdad tower exterior identity and public display coverage — 22 November 2026
 
-- [x] Add a distinct architectural identity pass for the Hunter Association Tower, Weapons/Equipment/Elixirs Tower, Shopping Tower, Entertainment/Sports Tower, and Technology/Innovation Tower.
+- [x] Add a distinct architectural identity pass for the Hunter Association Tower, Business & Investment Tower, Shopping & Commerce Tower, Entertainment & Sports Tower, and Technology & Innovation Tower.
 - [x] Add a separate tournament/champion identity detail to the standalone Power Tower without adding it to the connected district.
 - [x] Store each landmark's floor count, approximate height, and connected-district membership as node metadata.
 - [x] Add the Technology Tower to the Baghdad tower public advertising/champion display node map; all five connected towers and the standalone Power Tower now have explicit node mappings.
@@ -197,7 +197,7 @@ This is the acceptance checklist for the modern-world map. The project must not 
 ## Baghdad tower entrance directory metadata — 22 November 2026
 
 - [x] Attach floor count, approximate height, and connected-versus-standalone status to each tower entrance interaction marker.
-- [x] Extend the existing interaction response with a tower directory for Hunter Association, Weapons/Equipment/Elixirs, Shopping, Entertainment/Sports, Technology/Innovation, and the standalone Power Tower.
+- [x] Extend the existing interaction response with a tower directory for Hunter Association, Business & Investment, Shopping & Commerce, Entertainment & Sports, Technology & Innovation, and the standalone Power Tower.
 - [x] Explicitly label floor directories as informational until real interior floors and elevator transitions exist; do not imply that selecting a tower entrance grants access to all floors.
 - [ ] Replace the text-only directory with a mobile-friendly interactive floor selector and validated elevator transitions after interior scenes and collision-safe arrival points exist.
 - [ ] Test entrance targeting and directory readability in Godot and on Android; no physical-device visual test is claimed.
@@ -214,7 +214,7 @@ This is the acceptance checklist for the modern-world map. The project must not 
 
 ## Baghdad tower floor zoning and reception blockouts — 22 November 2026
 
-- [x] Define floor zoning for the Hunter Association headquarters, Weapons/Equipment/Elixirs, Shopping/Commerce, Entertainment/Sports, Technology/Innovation, and standalone Power Tower.
+- [x] Define floor zoning for the Hunter Association headquarters, Business & Investment, Shopping/Commerce, Entertainment/Sports, Technology/Innovation, and standalone Power Tower.
 - [x] Attach floor zoning data to the tower root, public entrance, and lobby directory kiosk.
 - [x] Display the floor ranges and department labels on each lobby's 3D directory sign.
 - [x] Add a first-pass reception counter and security-gate frame to each public lobby pavilion, with collision on the counter and gate posts.
@@ -335,7 +335,7 @@ A checked repository foundation does not mean a finished gameplay feature. Visua
 - [ ] Preserve Tahrir Square and the Freedom Monument as recognizable, explorable public landmarks on the Rusafa side; do not cover, replace, or overwhelm them.
 - [ ] Connect the five towers with skybridges, elevated promenades, public terraces, and carefully designed cross-river links while keeping the river unobstructed below.
 - [ ] Create a multi-level public district with ground streets/plazas, mid-level shopping and services, and upper sky gardens/recreation decks.
-- [ ] Implement the five connected district identities: Hunter Association, Weapons/Equipment/Elixirs, Shopping and Commerce, Entertainment and Sports, and Technology and Innovation.
+- [x] Implement the five connected district identities: Hunter Association, Business and Investment, Shopping and Commerce, Entertainment and Sports, and Technology and Innovation.
 - [ ] Keep the 200-floor Power Tower separate, with its own entrance/map marker; exclude it from the five-tower skybridge and vehicle-deck loop.
 - [ ] Add accessible pedestrian routes, transit access, emergency/service circulation, wayfinding, and clear public connections to the existing Baghdad street network.
 - [ ] Validate the district in Godot from Karkh, Rusafa, Tigris riverfront, and Tahrir Square viewpoints; ensure the Freedom Monument and river remain visually legible.
@@ -366,7 +366,7 @@ A checked repository foundation does not mean a finished gameplay feature. Visua
 - Note: collision-backed decks and parking slabs are source-level additions; no runtime or driving test was run in this update. Lift shafts and parking bay markings remain visual blockout, not interactive systems.
 
 ## Connected Baghdad district — vehicles and public life — 20 November 2026
-- [x] Record the five connected district identities: Hunter Association, Weapons/Equipment/Elixirs, Shopping and Commerce, Entertainment and Sports, and Technology and Innovation; keep Power Tower separate.
+- [x] Record the five connected district identities: Hunter Association, Business and Investment, Shopping and Commerce, Entertainment and Sports, and Technology and Innovation; keep Power Tower separate.
 - [x] Expand the separate Power Tower progression model to 200 floors; playable interiors, opponent encounters, and server-verified records remain open.
 - [x] Add an initial procedural five-tower district blockout with elevated promenade/vehicle-deck link geometry and ramp-segment placeholders; add the separate Power Tower landmark outside that connection loop.
 - [x] Add placeholder public amenity deck geometry and a planned facility inventory for recreation, hospitality, shopping, health support, parking, and emergency access.
@@ -591,7 +591,7 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 
 - [x] Add `scripts/system_public_event_board.gd` as a shared 3D display manager for the modern-world city map.
 - [x] Replace the previous detached demo billboard routine with a procedural skyscraper facade in each configured city, carrying a curated advertising panel and a separate public event-results panel.
-- [x] Add facade-mounted advertising and results panels to the five connected Baghdad towers plus the standalone Power Tower: Hunter Association, Weapons/Equipment/Elixirs, Shopping, Entertainment, Technology, and Power.
+- [x] Add facade-mounted advertising and results panels to the five connected Baghdad towers plus the standalone Power Tower: Hunter Association, Business & Investment, Shopping, Entertainment, Technology, and Power.
 - [x] Connect completed monster-gate clears to publish gate rank, gate ID, and XP to the public boards.
 - [x] Connect verified mission-reward events to the public boards.
 - [x] Connect Hunter Examination stage completion and final license-earned signals to the public boards.
@@ -731,14 +731,14 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Rename the player-facing item and crafting recipe to **إكسير إيقاظ النِن**; it awakens Nen and is not an attack or combat skill.
 - [x] Preserve existing saves by migrating the old `nen_acquisition_elixir` inventory key to `nen_awakening_elixir`; the old item ID remains accepted by the consume method for compatibility.
 - [x] Keep the actual Nen strike as a separate combat ability. The Hunter Association Tower now exposes a dedicated training-demo entry, with a visual preview before awakening and the real strike after Nen reaches control rank 4.
-- [x] Keep the awakening elixir in the Weapons/Equipment/Elixirs Tower catalog and crafting laboratory; the Nen strike demonstration belongs to the Hunter Association Tower.
+- [x] Keep the Nen awakening elixir, equipment and crafting laboratory inside Shopping & Commerce Tower; the Nen strike demonstration belongs to the Hunter Association Tower.
 - [ ] Run the updated Godot validator and canonical Android APK export; physical-device touch/visual review remains pending.
 - Note: the pre-awakening preview is a visual training effect only; it does not unlock Nen, consume an item, or deal damage. The real combat strike still uses the existing combat system and its normal rank/cooldown requirements.
 
 ### Baghdad tower interior identity pass — 22 November 2026
 
 - [x] Add a dedicated reusable floor-theme builder for the five connected Baghdad towers.
-- [x] Give the Weapons/Equipment/Elixirs Tower a forge, equipment-display and elixir-laboratory visual identity.
+- [x] Give Shopping & Commerce Tower a forge, equipment-display and elixir-laboratory department identity.
 - [x] Give the Shopping Tower retail display, market and visitor-rest areas.
 - [x] Give the Entertainment/Sports Tower event, fitness and audience-area visual identity.
 - [x] Give the Technology/Innovation Tower robotics, test-platform and data-lab visual identity.
@@ -915,6 +915,7 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Investigate Godot validation run #1397 on PR source HEAD `e552608b342ad8257d2d410dfdb2704b7c57d86b`: the arcade projectile passed within 1.4101 m of the nearest target, but the 0.95 m proximity fallback and 0.7 m sensor radius did not register a hit.
 - [x] Increase the physical target sensor radius to 1.25 m and the near-hit fallback to 1.6 m, retaining the rigid-body projectile and target-sensor scoring path.
 - [x] Commit the correction as `ae8c7a633ce5636d4fa5edc87f50e4a97be3d988` on the Baghdad feature branch only.
-- [ ] Re-run the full Godot operations validator, including ten bowling throws, five basketball shots and five arcade shots, on the corrected HEAD.
-- [ ] Confirm Android export on the same corrected HEAD before distributing a new APK.
+- [x] Re-run the full Godot 4.3 validation on corrected HEAD `8e3cbfce9b8184239ed2481c1043d6c8ce9075ae`; workflow run #1400 (`45065179104`) passed, including the complete Baghdad operations validator and arcade physics assertion.
+- [x] Confirm Android export on the same corrected HEAD; workflow run #1137 (`45065179082`) passed and uploaded APK artifact `14771151265` (35,892,247 bytes; APK SHA-256 `b99558deef44b5d1bb9991444a01013990df08d44efc7cb4fb7e9c4b91d0e01a`).
+- [ ] Inspect the new APK on a physical Android device; automated CI does not replace touch, visuals, collision feel or performance testing.
 - Note: the preceding Android export #1134 succeeded on `e552608b342ad8257d2d410dfdb2704b7c57d86b`, but the Godot operations run #1397 failed only at the arcade hit assertion. Neither result validates this correction.
