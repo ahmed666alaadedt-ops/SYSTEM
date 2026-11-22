@@ -192,3 +192,16 @@ The first runtime operations layer now connects the six tower lobbies to the exi
 - Power Tower rewards now include routine tokens, milestone fragments, boss cores and the unique sovereign crown/core reward for floor 200.
 - The final floor's level gate is 90, so it remains reachable within the existing 100-level progression cap.
 - These are procedural gameplay foundations. Final boss animation/telegraph phases, authored arena environments, balance testing, multiplayer matchmaking, server-authoritative ranking and physical Android inspection remain open.
+
+
+## Equipment, elixir and Nen service behavior — 22 November 2026
+
+The Weapons/Equipment/Elixirs Tower employee panel now exposes first-pass functional progression effects:
+
+- Owned weapons can be equipped in a weapon slot. Swords, spear, axe, bow and modern firearm items apply their configured damage bonuses to light/heavy combat hitscan attacks.
+- Shields, armour and helmets apply bounded defense bonuses to incoming combat damage. Outfits have a dedicated slot; visible 3D attachment models and weapon-specific animations remain future work.
+- Strength elixir adds damage for 120 seconds; speed elixir increases movement for 120 seconds; endurance elixir adds defense for 120 seconds; energy elixir reduces attack cooldown for 120 seconds; rare/legendary elixir applies a stronger combined effect for 180 seconds.
+- Healing elixir restores 30 combat health in the field but intentionally does not clear the persistent wound flag. Full recovery still requires the hospital treatment system.
+- Nen acquisition elixir unlocks Nen and starts control rank 1. Nen control elixirs advance the rank up to 5. This stores progression state only; actual Nen aura techniques, personalized abilities and skill trees remain future work.
+- Equipped items cannot be sold until unequipped. Equipment slots, Nen state and active effects are included in progression save data.
+- All current prices/effects are first-pass local balance values. Crafting, recipe discovery, stock supply chains, online transaction authority and final gameplay balance remain open.
