@@ -57,8 +57,36 @@ func _run() -> void:
 	if operations.find_child("HunterRankProgressRows", true, false) == null:
 		_fail("Hunter rank board did not render its F-to-SSS progression requirements.")
 		return
-	if int(status.get("staff_count", 0)) != 24:
-		_fail("Expected four persistent NPC staff members per tower; found %d." % int(status.get("staff_count", 0)))
+	if int(status.get("staff_count", 0)) != 44:
+		_fail("Expected eight professional NPC staff members in each of the five district towers plus four Power Tower staff; found %d." % int(status.get("staff_count", 0)))
+		return
+	if int(status.get("customer_count", 0)) != 20:
+		_fail("Expected four persistent customer NPCs in each of the five Baghdad district towers; found %d." % int(status.get("customer_count", 0)))
+		return
+	for tower_id in ["hunter_association_tower_baghdad", "business_investment_tower_baghdad", "shopping_tower_baghdad", "entertainment_tower_baghdad", "technology_tower_baghdad"]:
+		var tower_config: Dictionary = operations.get("TOWER_CONFIG")[tower_id]
+		var tower_node := tower_manager.get_node_or_null(str(tower_config.get("node", "")))
+		var lobby := tower_node.get_node_or_null("PublicLobby_Blockout") if tower_node != null else null
+		if lobby == null:
+			_fail("Tower lobby missing for staff/customer validation: " + tower_id)
+			return
+		var visible_staff := 0
+		var visible_customers := 0
+		var uniformed_staff := 0
+		for lobby_child in lobby.get_children():
+			if str(lobby_child.name).begins_with("TowerStaff_"):
+				visible_staff += 1
+				for staff_child in lobby_child.get_children():
+					if staff_child.has_meta("system_uniform_id") and not str(staff_child.get_meta("system_uniform_id", "")).is_empty():
+						uniformed_staff += 1
+			elif str(lobby_child.name).begins_with("TowerCustomer_"):
+				visible_customers += 1
+		if visible_staff != 8 or uniformed_staff != 8 or visible_customers != 4:
+			_fail("Tower %s requires 8 uniformed visible staff and 4 visible customer NPCs; found staff=%d uniformed=%d customers=%d." % [tower_id, visible_staff, uniformed_staff, visible_customers])
+			return
+	operations.call("_simulate_customer_purchases")
+	if int(operations.call("get_operations_status").get("npc_purchase_count", 0)) <= 0:
+		_fail("NPC customer purchasing did not complete a transaction.")
 		return
 	if str(status.get("advertising_mode", "")) != "npc_staff_managed_internal_external":
 		_fail("NPC-managed internal/external advertising is not active.")
@@ -70,6 +98,27 @@ func _run() -> void:
 	var tower_manager := region.get_node_or_null("BaghdadTowerLandmarksManager")
 	if tower_manager == null:
 		_fail("BaghdadTowerLandmarksManager is missing.")
+		return
+	var entertainment_pool := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 18) as Node3D
+	var pool_facility := entertainment_pool.get_node_or_null("SpecialFacility_swimming_pool") if entertainment_pool != null else null
+	if pool_facility == null or pool_facility.get_node_or_null("PoolWater") == null:
+		_fail("Entertainment Tower swimming pool floor is missing its pool and water surface.")
+		return
+	var cinema_floor := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 24) as Node3D
+	if cinema_floor == null or cinema_floor.find_child("CinemaScreen", true, false) == null:
+		_fail("Entertainment Tower cinema room is missing its screen.")
+		return
+	var business_floor := operations.call("_ensure_floor_room", "business_investment_tower_baghdad", 8) as Node3D
+	if business_floor == null or business_floor.find_child("TradingDisplay", true, false) == null:
+		_fail("Business Tower stock-exchange trading hall is missing its display.")
+		return
+	var technology_floor := operations.call("_ensure_floor_room", "technology_tower_baghdad", 20) as Node3D
+	if technology_floor == null or technology_floor.find_child("TechnologyPod_00", true, false) == null:
+		_fail("Technology Tower AI laboratory is missing its equipment pods.")
+		return
+	var hunter_honor_floor := operations.call("_ensure_floor_room", "hunter_association_tower_baghdad", 100) as Node3D
+	if hunter_honor_floor == null or hunter_honor_floor.find_child("HonorPillar_00", true, false) == null:
+		_fail("Hunter Association Tower Hall of Honor floor is missing its pillars.")
 		return
 	var exam_manager := main.get_node_or_null("SYSTEMHunterExamManager")
 	if exam_manager == null:
