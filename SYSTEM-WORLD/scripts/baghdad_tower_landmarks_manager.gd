@@ -2,6 +2,7 @@ extends Node3D
 class_name BaghdadTowerLandmarksManager
 
 const EntranceScript = preload("res://scripts/system_tower_entrance.gd")
+const HunterHelicopterControllerScript = preload("res://scripts/system_hunter_helicopter_pad_controller.gd")
 const HUNTER_TOWER_HEIGHT := 1000.0
 const POWER_TOWER_HEIGHT := 820.0
 
@@ -70,6 +71,7 @@ func _create_hunter_helipad(tower: Node3D, tower_radius: float) -> void:
 	# A dedicated rooftop helicopter pad attached to the Hunter Association only.
 	var pad_root := Node3D.new()
 	pad_root.name = "HunterAssociationHelipad"
+	pad_root.set_script(HunterHelicopterControllerScript)
 	pad_root.position = Vector3(tower_radius * 1.42, HUNTER_TOWER_HEIGHT + 8.2, 0.0)
 	pad_root.set_meta("system_facility_type", "helicopter_landing_pad")
 	pad_root.set_meta("system_owner_tower_id", "hunter_association_tower_baghdad")
