@@ -20,12 +20,11 @@ const BAGHDAD_OSM_MIN_CELL_X := -2
 const BAGHDAD_OSM_MAX_CELL_X := 20
 const BAGHDAD_OSM_MIN_CELL_Z := -8
 const BAGHDAD_OSM_MAX_CELL_Z := 2
-const BAGHDAD_OSM_GROUND_ELEVATION_M := 34.0
 const TerrainCellStreamingManagerScript = preload("res://scripts/modern_world_cell_streaming_manager.gd")
 
 var terrain_height_data := PackedFloat32Array()
 var baghdad_osm_ground_enabled := false
-var baghdad_osm_ground_elevation_m := BAGHDAD_OSM_GROUND_ELEVATION_M
+var baghdad_osm_world_ground_elevation_m := 0.0
 var terrain_step_x := WORLD_WIDTH / float(GRID_X - 1)
 var terrain_step_z := WORLD_DEPTH / float(GRID_Z - 1)
 
@@ -142,8 +141,7 @@ func _get_height(x: float, z: float) -> float:
 
 # Public terrain sampling API for world systems such as forests, paths and NPCs.
 func get_terrain_height(x: float, z: float) -> float:
-	if baghdad_osm_ground_enabled and _is_baghdad_osm_region(x, z):
-		return baghdad_osm_ground_elevation_m
+	# Keep the established procedural terrain profile; the OSM ground mesh is draped onto it.
 	if terrain_height_data.size() != GRID_X * GRID_Z:
 		return _get_height(x, z)
 
@@ -173,11 +171,12 @@ func is_land_position(x: float, z: float) -> bool:
 	return _get_height(x, z) > SEA_LEVEL + 0.5
 
 
-func configure_baghdad_osm_ground(elevation_m: float) -> void:
-	if not is_finite(elevation_m):
-		push_warning("SYSTEM Baghdad OSM: rejected non-finite ground elevation.")
+func configure_baghdad_osm_ground(world_ground_elevation_m: float) -> void:
+	if not is_finite(world_ground_elevation_m):
+		push_warning("SYSTEM Baghdad OSM: rejected non-finite world ground baseline.")
 		return
-	baghdad_osm_ground_elevation_m = elevation_m
+	# This enables the streamed OSM land mask without changing existing tower elevations.
+	baghdad_osm_world_ground_elevation_m = world_ground_elevation_m
 	baghdad_osm_ground_enabled = true
 
 
