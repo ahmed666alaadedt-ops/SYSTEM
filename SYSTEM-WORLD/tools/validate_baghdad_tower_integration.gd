@@ -742,7 +742,7 @@ func _run() -> void:
 	towers.free()
 	region.free()
 	fake_map.free()
-	print("Baghdad tower integration validation passed: five connected playable towers, accessible lobby lifts, independent 200-floor Power Tower, arena, Hunter HQ and all tower/sport/exam map registrations.")
+	print("Baghdad tower integration validation passed: four core towers plus verified Republic Bridge Weapon/Nen outpost, accessible lobby lifts, independent 200-floor Power Tower, arena, Hunter HQ and all tower/sport/exam map registrations.")
 	quit(0)
 
 
