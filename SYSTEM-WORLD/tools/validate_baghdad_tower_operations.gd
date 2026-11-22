@@ -1592,6 +1592,15 @@ func _run() -> void:
 	if not operations.has_method("open_facility_service"):
 		_fail("Facility interaction service entry point is missing.")
 		return
+	operations.set("current_tower_id", "entertainment_tower_baghdad")
+	operations.set("active_floor_root", pool_room)
+	pool_room.set_meta("system_tower_id", "entertainment_tower_baghdad")
+	var pool_emergency_sensor := pool_room.get_node("EmergencyExitSensor") as Area3D
+	pool_emergency_sensor.body_entered.emit(player)
+	await create_timer(3.1).timeout
+	if operations.get("active_floor_root") != null or bool(player.get_meta("system_tower_elevator_active", false)):
+		_fail("Physically entering the tower emergency exit did not complete the evacuation return to the public lobby.")
+		return
 	print("Baghdad tower operations validation passed: five connected Baghdad towers, independent Power Tower, NPC commerce, hotel workflows, eleven playable leisure/technology activity loops, equipment, Nen progression and the 200th-floor sovereign boss arena.")
 	main.queue_free()
 	await process_frame
