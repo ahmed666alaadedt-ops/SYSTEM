@@ -642,3 +642,9 @@ Implementation added on the feature branch; automated runtime validation is pend
 
 - [x] Update the in-world tower interaction prompt: the floor selector and elevator travel are available, while unfinished tower services/interior details remain explicitly marked as in development.
 - [ ] Pass the latest Godot operations validation and canonical Android APK export after the Hunter exam, Power Tower and prompt updates.
+
+
+### Hunter examination regression fixture correction — 22 November 2026
+
+- [x] Correct the automated test fixture to use a typed empty stage-ID array when switching from the completed-candidate test profile back to the unlicensed profile; this prevents stale completed-stage data from contaminating the helicopter authorization assertion.
+- [ ] Re-run the full Godot operations validator and Android export on the corrected head.
