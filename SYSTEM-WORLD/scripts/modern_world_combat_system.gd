@@ -25,8 +25,8 @@ func light_attack() -> void:
 	if not can_attack or not is_instance_valid(actor):
 		return
 	can_attack = false
-	_fire_hitscan(attack_damage,attack_range)
-	await get_tree().create_timer(0.38).timeout
+	_fire_hitscan(attack_damage + _get_progression_damage_bonus(),attack_range)
+	await get_tree().create_timer(0.38 * _get_attack_cooldown_multiplier()).timeout
 	can_attack = true
 
 
@@ -34,9 +34,23 @@ func heavy_attack() -> void:
 	if not can_attack or not is_instance_valid(actor):
 		return
 	can_attack = false
-	_fire_hitscan(heavy_damage,attack_range * 1.35)
-	await get_tree().create_timer(1.1).timeout
+	_fire_hitscan(heavy_damage + _get_progression_damage_bonus(),attack_range * 1.35)
+	await get_tree().create_timer(1.1 * _get_attack_cooldown_multiplier()).timeout
 	can_attack = true
+
+
+func _get_progression_damage_bonus() -> float:
+	var progression := get_tree().root.find_child("PlayerProgression", true, false)
+	if progression != null and progression.has_method("get_combat_damage_bonus"):
+		return float(progression.call("get_combat_damage_bonus"))
+	return 0.0
+
+
+func _get_attack_cooldown_multiplier() -> float:
+	var progression := get_tree().root.find_child("PlayerProgression", true, false)
+	if progression != null and progression.has_method("get_attack_cooldown_multiplier"):
+		return float(progression.call("get_attack_cooldown_multiplier"))
+	return 1.0
 
 
 func _fire_hitscan(damage: float, distance: float) -> void:
