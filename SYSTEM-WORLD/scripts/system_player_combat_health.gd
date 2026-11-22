@@ -27,7 +27,14 @@ func receive_damage(amount: float, source: Node = null) -> float:
 		var defense_bonus := float(progression.call("get_defense_bonus"))
 		incoming = maxf(1.0, incoming - minf(defense_bonus, incoming * 0.65))
 	var combat := get_tree().root.find_child("ModernWorldCombatSystem",true,false)
-	if combat != null and bool(combat.get("is_blocking")):
+	var is_blocking := combat != null and bool(combat.get("is_blocking"))
+	if progression != null and progression.has_method("consume_equipment_durability"):
+		if is_blocking:
+			progression.call("consume_equipment_durability", "shield", 0.8)
+		else:
+			progression.call("consume_equipment_durability", "armor", 0.55)
+			progression.call("consume_equipment_durability", "helmet", 0.2)
+	if is_blocking:
 		incoming *= 0.25
 	current_health = maxf(current_health - incoming,0.0)
 	_sync_player_state()
