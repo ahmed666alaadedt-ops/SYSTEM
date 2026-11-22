@@ -244,7 +244,7 @@ func _build_tower(
 	entrance.position = Vector3(0.0, 3.0, radius * 1.48 + 6.0)
 	root.add_child(entrance)
 
-	# The five connected district towers each receive a distinct service lobby.
+	# All five primary towers receive playable service lobbies; the bridge outpost is linked by its express skyway.
 	# Power Tower is deliberately excluded: it remains an independent challenge venue.
 	if build_playable_interior:
 		var tower_interior := TowerInteriorScript.new()
