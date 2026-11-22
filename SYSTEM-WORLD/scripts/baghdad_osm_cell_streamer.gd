@@ -34,6 +34,10 @@ var ground_layer_schema_version := 0
 var ground_elevation_m := 34.0
 var water_surface_elevation_m := 28.0
 var bridge_deck_elevation_m := 34.28
+var world_ground_elevation_m := 0.0
+var world_water_surface_elevation_m := -6.0
+var world_bridge_deck_elevation_m := 0.28
+var world_tower_platform_elevation_m := 12.28
 var _last_center_cell := Vector2i(2147483647, 2147483647)
 
 var road_material: StandardMaterial3D
@@ -157,6 +161,10 @@ func _ready() -> void:
 			# Standalone runtime validation keeps the pre-existing world height as its local baseline.
 			var existing_world_ground := float(terrain_manager.call("get_terrain_height", 0.0, 0.0))
 			terrain_manager.call("configure_baghdad_osm_ground", existing_world_ground)
+		world_ground_elevation_m = float(terrain_manager.get("baghdad_osm_world_ground_elevation_m"))
+	world_water_surface_elevation_m = world_ground_elevation_m + water_surface_elevation_m - ground_elevation_m
+	world_bridge_deck_elevation_m = world_ground_elevation_m + bridge_deck_elevation_m - ground_elevation_m
+	world_tower_platform_elevation_m = world_ground_elevation_m + float(parsed.get("bridge_tower_platform_elevation_m", 46.28)) - ground_elevation_m
 	add_to_group("baghdad_osm_cell_streamer")
 	_create_materials()
 	_add_attribution_overlay()
@@ -339,22 +347,28 @@ func _load_cell(cell: Vector2i) -> void:
 		building_count += _build_building_feature(cell_root, feature, road_features)
 	counts["buildings"] = building_count
 	var water_count := 0
-	var water_line_lift := water_surface_elevation_m - ground_elevation_m + 0.10
 	for feature in layers.get("waterways", []):
-		water_count += _build_line_feature(cell_root, feature, _water_width(feature.get("tags", {})), water_material, water_line_lift, "OSMWaterway")
+		water_count += _build_line_feature(
+			cell_root, feature, _water_width(feature.get("tags", {})),
+			water_material, 0.0, "OSMWaterway", false, world_water_surface_elevation_m + 0.10
+		)
 	var bridge_count := 0
-	var bridge_deck_lift := bridge_deck_elevation_m - ground_elevation_m
 	for feature in layers.get("bridges", []):
 		if not _extract_polygons(feature.get("geometry", {})).is_empty():
-			bridge_count += _build_area_feature(cell_root, feature, bridge_material, bridge_deck_lift, "OSMBridgeDeck", true)
-		bridge_count += _build_line_feature(cell_root, feature, maxf(_road_width(feature.get("tags", {})), 3.0), bridge_material, bridge_deck_lift + 0.04, "OSMBridge", true)
+			bridge_count += _build_area_feature(
+				cell_root, feature, bridge_material, 0.0, "OSMBridgeDeck",
+				true, world_bridge_deck_elevation_m
+			)
+		bridge_count += _build_line_feature(
+			cell_root, feature, maxf(_road_width(feature.get("tags", {})), 3.0),
+			bridge_material, 0.0, "OSMBridge", true, world_bridge_deck_elevation_m + 0.04
+		)
 	for feature in layers.get("railway", []):
 		_build_line_feature(cell_root, feature, 2.2, bridge_material, 0.20, "OSMRailway")
 	for feature in layers.get("landuse", []):
 		_build_area_feature(cell_root, feature, land_material, 0.035, "OSMLanduse")
-	var water_area_lift := water_surface_elevation_m - ground_elevation_m
 	for feature in layers.get("natural-water", []):
-		_build_area_feature(cell_root, feature, water_material, water_area_lift, "OSMNaturalWater")
+		_build_area_feature(cell_root, feature, water_material, 0.0, "OSMNaturalWater", false, world_water_surface_elevation_m)
 	var amenity_count := 0
 	for feature in layers.get("amenities", []):
 		amenity_count += _build_amenity_feature(cell_root, feature)
@@ -1267,7 +1281,7 @@ func _add_polygon_worship_detail(parent: Node3D, ring: PackedVector2Array, heigh
 		detail_root.add_child(cross_arm)
 
 
-func _build_line_feature(parent: Node3D, feature: Dictionary, width: float, material: Material, lift: float, prefix: String, create_collision: bool = false) -> int:
+func _build_line_feature(parent: Node3D, feature: Dictionary, width: float, material: Material, lift: float, prefix: String, create_collision: bool = false, absolute_elevation: float = NAN) -> int:
 	var geometry: Dictionary = feature.get("geometry", {})
 	var lines := _extract_lines(geometry)
 	var built := 0
@@ -1287,10 +1301,14 @@ func _build_line_feature(parent: Node3D, feature: Dictionary, width: float, mate
 			var b2 := p0 - side
 			var c2 := p1 + side
 			var d2 := p1 - side
-			var a := Vector3(a2.x, _terrain_height(a2) + lift, a2.y)
-			var b := Vector3(b2.x, _terrain_height(b2) + lift, b2.y)
-			var c := Vector3(c2.x, _terrain_height(c2) + lift, c2.y)
-			var d := Vector3(d2.x, _terrain_height(d2) + lift, d2.y)
+			var a_y := absolute_elevation if is_finite(absolute_elevation) else _terrain_height(a2) + lift
+			var b_y := absolute_elevation if is_finite(absolute_elevation) else _terrain_height(b2) + lift
+			var c_y := absolute_elevation if is_finite(absolute_elevation) else _terrain_height(c2) + lift
+			var d_y := absolute_elevation if is_finite(absolute_elevation) else _terrain_height(d2) + lift
+			var a := Vector3(a2.x, a_y, a2.y)
+			var b := Vector3(b2.x, b_y, b2.y)
+			var c := Vector3(c2.x, c_y, c2.y)
+			var d := Vector3(d2.x, d_y, d2.y)
 			_add_triangle(surface, a, c, b)
 			_add_triangle(surface, b, c, d)
 		surface.generate_normals()
@@ -1377,7 +1395,7 @@ func _build_ground_feature(parent: Node3D, feature: Dictionary, output_polygons:
 	return 1
 
 
-func _build_area_feature(parent: Node3D, feature: Dictionary, material: Material, lift: float, prefix: String, create_collision: bool = false) -> int:
+func _build_area_feature(parent: Node3D, feature: Dictionary, material: Material, lift: float, prefix: String, create_collision: bool = false, absolute_elevation: float = NAN) -> int:
 	var geometry: Dictionary = feature.get("geometry", {})
 	var built := 0
 	for polygon in _extract_polygons(geometry):
@@ -1402,9 +1420,9 @@ func _build_area_feature(parent: Node3D, feature: Dictionary, material: Material
 			var p2 := ring[triangulation[index + 2]]
 			_add_triangle(
 				surface,
-				Vector3(p0.x, _terrain_height(p0) + lift, p0.y),
-				Vector3(p1.x, _terrain_height(p1) + lift, p1.y),
-				Vector3(p2.x, _terrain_height(p2) + lift, p2.y)
+				Vector3(p0.x, absolute_elevation if is_finite(absolute_elevation) else _terrain_height(p0) + lift, p0.y),
+				Vector3(p1.x, absolute_elevation if is_finite(absolute_elevation) else _terrain_height(p1) + lift, p1.y),
+				Vector3(p2.x, absolute_elevation if is_finite(absolute_elevation) else _terrain_height(p2) + lift, p2.y)
 			)
 		surface.generate_normals()
 		var mesh := surface.commit()
@@ -2268,6 +2286,10 @@ func get_streaming_status() -> Dictionary:
 		"ground_elevation_m": ground_elevation_m,
 		"water_surface_elevation_m": water_surface_elevation_m,
 		"bridge_deck_elevation_m": bridge_deck_elevation_m,
+		"world_ground_elevation_m": world_ground_elevation_m,
+		"world_water_surface_elevation_m": world_water_surface_elevation_m,
+		"world_bridge_deck_elevation_m": world_bridge_deck_elevation_m,
+		"world_tower_platform_elevation_m": world_tower_platform_elevation_m,
 		"source_snapshot": source_snapshot,
 		"canonical_origin_frame_valid": canonical_origin_frame_valid,
 		"road_navigation_graph_dirty": _road_navigation_graph_dirty,
