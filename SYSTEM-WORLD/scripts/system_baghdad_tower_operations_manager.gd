@@ -451,6 +451,11 @@ func open_tower(tower_id: String) -> void:
 		var power_status: Dictionary = power_tower_manager.call("get_tower_status") if is_instance_valid(power_tower_manager) else {}
 		status_label.text = "برج مستقل — 200 طابق\nأعلى طابق مكتمل: %d | الطابق التالي: %d\nكل طابق تحدٍ فعلي، والطابق العاشر ومضاعفاته اختبار زعيم." % [int(power_status.get("highest_cleared_floor", 0)), int(power_status.get("next_floor", 1))]
 	if tower_id == "hunter_association_tower_baghdad":
+		var rank_board_button := Button.new()
+		rank_board_button.name = "HunterRankBoardButton"
+		rank_board_button.text = "لوحة رتب الصيادين — F إلى SSS"
+		rank_board_button.pressed.connect(_open_hunter_rank_board)
+		content.add_child(rank_board_button)
 		var nen_demo_button := Button.new()
 		nen_demo_button.name = "NenTrainingDemoButton"
 		nen_demo_button.text = "ساحة استعراض ضربة النِن — تجربة تدريبية"
@@ -460,6 +465,62 @@ func open_tower(tower_id: String) -> void:
 		nen_note.text = "الإكسير يوقظ النِن في برج الأسلحة والإكسير؛ أما ضربة النِن فتُستعرض هنا داخل جمعية الصيادين."
 		nen_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		content.add_child(nen_note)
+	panel.show()
+
+
+func _open_hunter_rank_board() -> void:
+	if not is_instance_valid(progression) or not progression.has_method("get_hunter_rank_progress"):
+		_set_status("بيانات تقدم الصياد غير متاحة حالياً.")
+		return
+	var rank_data: Dictionary = progression.call("get_hunter_rank_progress")
+	_clear_dynamic_controls()
+	title_label.text = "لوحة رتب نقابة الصيادين"
+	credits_label.text = "الرتبة الحالية: %s" % str(rank_data.get("rank", "F"))
+	status_label.text = "الترقية تعتمد على المهمات الموثقة وإتقان النِن واستخدام المهارات؛ لا يمكن شراء الرتب أو تجاوز الاختبارات."
+	var close_button := Button.new()
+	close_button.text = "إغلاق"
+	close_button.pressed.connect(func(): panel.hide())
+	content.add_child(close_button)
+	var scroll := ScrollContainer.new()
+	scroll.name = "HunterRankProgressScroll"
+	scroll.custom_minimum_size = Vector2(0.0, 300.0)
+	content.add_child(scroll)
+	var rows := VBoxContainer.new()
+	rows.name = "HunterRankProgressRows"
+	scroll.add_child(rows)
+	var rank_order: Array = rank_data.get("rank_order", ["F", "E", "D", "C", "B", "A", "S", "SS", "SSS"])
+	var current_rank := str(rank_data.get("rank", "F"))
+	var mission_points := int(rank_data.get("verified_mission_points", 0))
+	var mission_count := int(rank_data.get("verified_mission_count", 0))
+	var nen_unlocked_value := bool(rank_data.get("nen_unlocked", false))
+	var nen_control := int(rank_data.get("nen_control_rank", 0))
+	var nen_uses := int(rank_data.get("nen_skill_uses", 0))
+	var distinct_abilities := int(rank_data.get("distinct_nen_abilities", 0))
+	var requirements := {
+		"F": "رتبة البداية والتسجيل في النقابة",
+		"E": "100 نقطة مهمات موثقة",
+		"D": "250 نقطة مهمات موثقة",
+		"C": "500 نقطة مهمات موثقة",
+		"B": "850 نقطة مهمات موثقة",
+		"A": "1500 نقطة + إيقاظ النِن + تحكم 2 + استخدام 10 مهارات",
+		"S": "2500 نقطة + تحكم نِن 4 + 50 استخداماً + قدرتان مختلفتان",
+		"SS": "5000 نقطة + تحكم نِن 5 + 150 استخداماً + 3 قدرات مختلفة",
+		"SSS": "اعتماد استثنائي من مجلس نقابة الصيادين بعد تقييم خاص"
+	}
+	for rank_value in rank_order:
+		var rank_name := str(rank_value)
+		var row := Label.new()
+		row.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		row.text = ("▶ " if rank_name == current_rank else "• ") + rank_name + " — " + str(requirements.get(rank_name, "تقييم النقابة"))
+		rows.add_child(row)
+	var details := Label.new()
+	details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	details.text = "المهمات الموثقة: %d نقطة / %d مهمة\\nالنِن: %s | رتبة التحكم: %d\\nاستخدام المهارات: %d | قدرات مختلفة: %d\\nاعتماد SSS: %s" % [mission_points, mission_count, "مستيقظ" if nen_unlocked_value else "غير مستيقظ", nen_control, nen_uses, distinct_abilities, "موجود" if bool(rank_data.get("sss_board_approved", false)) else "يتطلب قرار المجلس"]
+	rows.add_child(details)
+	var policy := Label.new()
+	policy.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	policy.text = "رتبة SSS استثنائية ونادرة جداً؛ لا يستطيع اللاعب منحها لنفسه، ويجب أن يصدر القرار من مجلس النقابة بعد اختبار خاص."
+	rows.add_child(policy)
 	panel.show()
 
 func _on_travel_button_pressed() -> void:
