@@ -53,6 +53,12 @@ func _run_validation() -> void:
 			continue
 		_expect(tower.get_node_or_null("PublicPodiumAndArrivalHall") != null, "three-level public podium exists: " + tower_name)
 		_expect(tower.get_node_or_null("TowerFacilities_Blockout") != null, "facility zone exists: " + tower_name)
+		var transport := tower.get_node_or_null("VerticalTransport_Blockout")
+		_expect(transport != null, "lift and stair core blockout exists: " + tower_name)
+		if transport != null:
+			_expect(transport.get_node_or_null("PanoramicLiftShaft_00") != null, "panoramic lift shaft exists: " + tower_name)
+			_expect(transport.get_node_or_null("ProtectedStairCore_00") != null, "protected stair core exists: " + tower_name)
+			_expect(transport.get_node_or_null("FloorDirectoryMarkers") != null, "floor directory exists: " + tower_name)
 		_expect(tower.get_node_or_null("PublicEntrance") != null, "public entrance trigger exists: " + tower_name)
 
 	var shopping := manager.get_node_or_null("ShoppingTower")
