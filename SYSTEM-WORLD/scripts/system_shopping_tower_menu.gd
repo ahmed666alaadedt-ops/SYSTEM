@@ -61,6 +61,8 @@ func open_service_view(service_id: String) -> void:
 		active_view = "weapons"
 	elif service_id.ends_with("_1"):
 		active_view = "potions"
+	elif service_id.ends_with("_2"):
+		active_view = "souvenir"
 	else:
 		active_view = "collection"
 	_refresh_view()
@@ -122,6 +124,8 @@ func _refresh_view() -> void:
 			status_label.text = "معرض الأسلحة: تُضاف المشتريات إلى حقيبتك. ربط التجهيز والقتال الفعلي مرحلة مستقلة."
 		"potions":
 			status_label.text = "مختبر الجرعات: قارورة الإيقاظ تمنح بصيرة تدريجية، ولا تتجاوز شروط نظام النِن."
+		"souvenir":
+			status_label.text = "سوق بغداد ومقتنيات المجمع؛ بقيت التجارة والمتاجر ضمن البرج."
 		_:
 			status_label.text = "مقتنياتك وجرعاتك المسجلة في حقيبة اللاعب."
 	if active_view == "collection":
@@ -131,7 +135,7 @@ func _refresh_view() -> void:
 
 
 func _show_catalog_items() -> void:
-	var wanted_category := "weapon" if active_view == "weapons" else "potion"
+	var wanted_category := "weapon" if active_view == "weapons" else ("potion" if active_view == "potions" else "souvenir")
 	for item in CATALOG:
 		if str(item.get("category", "")) != wanted_category:
 			continue
