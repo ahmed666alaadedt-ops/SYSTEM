@@ -60,6 +60,7 @@ func _run_validation() -> void:
 			_expect(transport.get_node_or_null("ProtectedStairCore_00") != null, "protected stair core exists: " + tower_name)
 			_expect(transport.get_node_or_null("FloorDirectoryMarkers") != null, "floor directory exists: " + tower_name)
 		_expect(tower.get_node_or_null("PublicEntrance") != null, "public entrance trigger exists: " + tower_name)
+		_expect(int(tower.get_meta("transport_blockout_revision", 0)) == 1, "transport blockout revision is registered: " + tower_name)
 
 	var shopping := manager.get_node_or_null("ShoppingTower")
 	if shopping != null:
