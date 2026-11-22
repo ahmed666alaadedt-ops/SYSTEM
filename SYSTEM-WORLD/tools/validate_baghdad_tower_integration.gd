@@ -244,7 +244,7 @@ func _run() -> void:
 				if armory_service == null or not armory_service.is_in_group("system_interactable"):
 					_fail("Weapon/Nen tower lobby is missing service interaction %d." % service_index)
 					return
-			var armory_meta := tower_root.get_meta("geospatial_relocation_pending", false)
+			var armory_meta: bool = bool(tower_root.get_meta("geospatial_relocation_pending", false))
 			if not bool(armory_meta) or not is_equal_approx(float(tower_root.get_meta("target_latitude", 0.0)), 33.32495) or not is_equal_approx(float(tower_root.get_meta("target_longitude", 0.0)), 44.40483):
 				_fail("Weapon/Nen tower is missing the verified Republic Bridge target coordinates or relocation-pending marker.")
 				return
