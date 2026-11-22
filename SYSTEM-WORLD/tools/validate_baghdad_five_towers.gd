@@ -53,6 +53,17 @@ func _run_validation() -> void:
 			continue
 		_expect(tower.get_node_or_null("PublicPodiumAndArrivalHall") != null, "three-level public podium exists: " + tower_name)
 		_expect(tower.get_node_or_null("TowerFacilities_Blockout") != null, "facility zone exists: " + tower_name)
+		var tower_facilities := tower.get_node_or_null("TowerFacilities_Blockout")
+		var has_service_directory := false
+		var has_reception_counter := false
+		if tower_facilities != null:
+			for facility in tower_facilities.get_children():
+				if facility.get_node_or_null("FacilityServiceDirectory") != null:
+					has_service_directory = true
+				if facility.get_node_or_null("ReceptionCounterVisual") != null:
+					has_reception_counter = true
+		_expect(has_service_directory, "tower facilities include visitor service directories: " + tower_name)
+		_expect(has_reception_counter, "tower facilities include reception counters: " + tower_name)
 		var transport := tower.get_node_or_null("VerticalTransport_Blockout")
 		_expect(transport != null, "lift and stair core blockout exists: " + tower_name)
 		if transport != null:
@@ -81,6 +92,10 @@ func _run_validation() -> void:
 				_expect(hall != null, "cinema hall %02d exists" % hall_index)
 				if hall != null:
 					_expect(hall.get_node_or_null("CinemaWalkableFloor") != null, "cinema hall %02d has floor collision" % hall_index)
+					_expect(hall.get_node_or_null("AisleGuidanceLights") != null, "cinema hall %02d has aisle guidance" % hall_index)
+					_expect(hall.get_node_or_null("EmergencyExitSign") != null, "cinema hall %02d has exit signage" % hall_index)
+					_expect(hall.get_node_or_null("TicketKioskVisual") != null, "cinema hall %02d has ticket kiosk visual" % hall_index)
+					_expect(hall.get_node_or_null("HallNumberSign") != null, "cinema hall %02d has hall numbering" % hall_index)
 
 	var district := manager.get_node_or_null("FiveTowerConnectedDistrict")
 	_expect(district != null, "connected five-tower district exists")
