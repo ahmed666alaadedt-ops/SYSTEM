@@ -85,7 +85,7 @@ func _build_power_tower() -> void:
 		22.0,
 		200,
 		Color(0.95, 0.55, 0.16),
-		false
+		false, false, NAN, false
 	)
 	var power_tower := get_node_or_null("PowerTower")
 	if power_tower != null:
@@ -108,7 +108,8 @@ func _build_tower(
 	beacon_color: Color,
 	connected_to_district: bool = true,
 	use_exact_position: bool = false,
-	base_height_override: float = NAN
+	base_height_override: float = NAN,
+	build_playable_interior: bool = true
 ) -> void:
 	var requested_position := Vector2(world_position.x, world_position.z)
 	var resolved := requested_position if use_exact_position else _nearest_land_position(requested_position)
@@ -123,7 +124,7 @@ func _build_tower(
 	root.position = Vector3(resolved.x, base_height, resolved.y)
 	root.set_meta("connected_to_local_tower_district", connected_to_district)
 	add_child(root)
-	var tower_record := {"id": location_id, "name": title, "position": root.position, "height": height, "radius": radius, "floors": floors, "connected_to_district": connected_to_district}
+	var tower_record := {"id": location_id, "name": title, "position": root.position, "height": height, "radius": radius, "floors": floors, "connected_to_district": connected_to_district, "has_playable_interior": build_playable_interior}
 	tower_positions.append(tower_record)
 	if connected_to_district:
 		connected_tower_positions.append(tower_record)
@@ -245,7 +246,7 @@ func _build_tower(
 
 	# The five connected district towers each receive a distinct service lobby.
 	# Power Tower is deliberately excluded: it remains an independent challenge venue.
-	if connected_to_district:
+	if build_playable_interior:
 		var tower_interior := TowerInteriorScript.new()
 		tower_interior.name = "TowerInterior"
 		root.add_child(tower_interior)
@@ -316,7 +317,7 @@ func _build_shopping_tower() -> void:
 	_build_tower(
 		"ShoppingTower", "برج الأسلحة وإيقاظ النِن", "shopping_tower_baghdad",
 		tower_position, 190.0, 30.0, 32, Color(0.95, 0.72, 0.28),
-		connected_to_district, use_exact_position, platform_height_override
+		connected_to_district, use_exact_position, platform_height_override, true
 	)
 	var armory_tower := get_node_or_null("ShoppingTower")
 	if armory_tower != null:
