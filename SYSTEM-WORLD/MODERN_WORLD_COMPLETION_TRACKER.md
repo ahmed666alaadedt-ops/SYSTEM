@@ -443,3 +443,12 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Replace the procedural blockout with detailed production-grade 3D tower/skydeck assets and complete the exact reference silhouette, façade glazing, bridges, landscaping, lighting, Baghdad/Tigris context and scale.
 - [ ] Make all decks and bridges traversable with navigation/collision, connect them to elevators and stairs, and finish service interiors and interactive amenities.
 - [ ] Verify appearance in a rendered Godot viewport and on an Android device; headless CI does not establish visual fidelity to the reference.
+
+
+## Cinema hall interior wayfinding pass — 22 November 2026
+
+- [x] Add aisle guidance light markers to each of the six cinema halls.
+- [x] Add emergency-exit signage to each hall.
+- [x] Add hall number signage and ticket kiosk visual markers.
+- [ ] Implement ticket purchase, booking, entry validation, film playback, seat interaction and emergency-exit behavior; current additions are visual placeholders only.
+- [ ] Verify the latest Godot and Android CI runs after these changes.
