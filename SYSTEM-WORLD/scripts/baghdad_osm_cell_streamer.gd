@@ -155,6 +155,29 @@ func _ready() -> void:
 	if not is_equal_approx(ground_elevation_m, 34.0) or not is_equal_approx(water_surface_elevation_m, 28.0) or not is_equal_approx(bridge_deck_elevation_m, 34.28) or not is_equal_approx(tower_platform_source_elevation_m, 46.28):
 		push_error("SYSTEM Baghdad OSM: regional elevation contract does not match the verified Baghdad pack.")
 		return
+	var landmark_routes_value: Variant = parsed.get("landmark_routes", {})
+	if not landmark_routes_value is Dictionary:
+		push_error("SYSTEM Baghdad OSM: verified landmark routes are missing.")
+		return
+	var republic_bridge_value: Variant = landmark_routes_value.get("republic_bridge", {})
+	if not republic_bridge_value is Dictionary:
+		push_error("SYSTEM Baghdad OSM: Republic Bridge route is missing.")
+		return
+	var republic_bridge_route: Dictionary = republic_bridge_value
+	var tower_anchor: Array = republic_bridge_route.get("tower_anchor_local_m", [])
+	var bank_access_points: Array = republic_bridge_route.get("bank_access_points_local_m", [])
+	var bridge_centerline: Array = republic_bridge_route.get("centerline_local_m", [])
+	var skyway_start: Array = republic_bridge_route.get("express_skyway_start_local_m", [])
+	var skyway_support_points: Array = republic_bridge_route.get("express_skyway_support_points_local_m", [])
+	if str(republic_bridge_route.get("osm_bridge_polygon_id", "")) != "1077808833" or str(republic_bridge_route.get("osm_bridge_centerline_id", "")) != "754157537" or str(republic_bridge_route.get("osm_tigris_water_polygon_id", "")) != "1145641" or str(republic_bridge_route.get("osm_tigris_centerline_id", "")) != "24709603":
+		push_error("SYSTEM Baghdad OSM: Republic Bridge/Tigris OSM feature identities do not match the verified route.")
+		return
+	if tower_anchor.size() != 2 or bank_access_points.size() != 2 or bridge_centerline.size() < 2 or skyway_start.size() != 2 or skyway_support_points.size() < 5:
+		push_error("SYSTEM Baghdad OSM: Republic Bridge anchor, both banks, centerline or skyway support plan is incomplete.")
+		return
+	if not is_equal_approx(float(republic_bridge_route.get("bridge_deck_elevation_m", NAN)), bridge_deck_elevation_m) or not is_equal_approx(float(republic_bridge_route.get("river_surface_elevation_m", NAN)), water_surface_elevation_m) or not is_equal_approx(float(republic_bridge_route.get("tower_platform_elevation_m", NAN)), tower_platform_source_elevation_m):
+		push_error("SYSTEM Baghdad OSM: Republic Bridge route elevations do not match the manifest contract.")
+		return
 	terrain_manager = get_parent().get_node_or_null("ModernContinent")
 	if terrain_manager != null and terrain_manager.has_method("configure_baghdad_osm_ground"):
 		var ground_already_configured := bool(terrain_manager.get("baghdad_osm_ground_enabled"))
