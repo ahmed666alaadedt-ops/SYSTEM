@@ -1,3 +1,13 @@
+## Entertainment Tower — expanded indoor aquatic facilities — 23 November 2026
+
+- [ ] Expanded the existing pool floors 18–20 without replacing the swimming trigger, buoyancy, swim-stroke movement or lap activity.
+- [ ] Added separate men's and women's changing suites on each pool floor, with lockers, benches, shower partitions, shower fixtures and floor signage.
+- [ ] Added a lifeguard station, rescue ring, pool ladders and clear Arabic/English zone labels.
+- [ ] Differentiated the three pool floors: floor 18 lap lanes and starting blocks; floor 19 family splash pool and fountains; floor 20 spa hot tubs, thermal pool, sauna and steam room.
+- [ ] Extended the Godot operations validator to require all three floor layouts, changing suites, lockers/showers, lifeguard station and floor-specific aquatic features.
+- [ ] Awaiting canonical Godot validation and Android export on the resulting PR head; no Android device inspection has been claimed.
+- Scope remains the five connected Baghdad district towers. The independent 200-floor Power Tower remains separate; no merge to main.
+
 ## Baghdad tower staff elevator duty and floor workstations — 23 November 2026
 
 - [x] Added floor-to-role duty assignments across all 542 floors in the six Baghdad towers: Hunter Association (200), Business & Investment (36), Shopping & Commerce (32), Entertainment & Sports (34), Technology & Innovation (40) and Power Tower (200). Every valid floor now resolves to a persistent staff member within that tower's roster.
