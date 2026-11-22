@@ -361,8 +361,8 @@ func _create_tower_lobby(root: Node3D, tower_id: String, title: String, radius: 
 	_add_tower_identity_box(lobby, "LobbySecurityGateHeader", gate_header_position, Vector3(10.8, 0.8, 0.8), trim_material)
 	var sign := Label3D.new()
 	sign.name = "LobbyDirectorySign"
-	sign.text = "SYSTEM TOWER DIRECTORY\\n" + title
-	sign.font_size = 30
+	sign.text = "SYSTEM TOWER DIRECTORY\\n" + title + "\\n" + "\\n".join(_get_tower_floor_directory(tower_id))
+	sign.font_size = 22
 	sign.pixel_size = 0.012
 	sign.position = Vector3(0.0, 10.0, center_z - depth * 0.5 + 4.0)
 	sign.modulate = Color(0.78, 0.94, 1.0)
