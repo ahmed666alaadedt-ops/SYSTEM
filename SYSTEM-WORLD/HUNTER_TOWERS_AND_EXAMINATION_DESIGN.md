@@ -140,11 +140,11 @@ This section supersedes any earlier tower-identity or spatial wording in this do
 ### The five connected district towers
 1. Hunter Association Tower — the association's public-facing tower and guild services.
 2. Business Tower — companies, offices, investment, trade, and professional services.
-3. Shopping Tower — retail, restaurants, cinemas, and connected indoor promenades.
+3. Shopping Tower / Weapon Armory & Nen Awakening — retail, restaurants, cinemas, weapon services, Nen awakening and control-potion services.
 4. Entertainment Tower — sports, pools, family activities, festivals, and recreation.
 5. Technology and Innovation Tower — research laboratories, engineering, robotics, AI, digital services, startup incubators, and public technology experiences.
 
-These five towers form the connected Baghdad district. The Power Tower is not one of them and must never be included in their skybridge, vehicle-deck, or shared-podium connection loop.
+The five towers form one connected Baghdad network, but they do not all sit on the same local ring. Hunter Association, Business, Entertainment, and Technology & Innovation remain the four core towers around the Baghdad sky-ring. The Shopping/Weapon-and-Nen Tower is the fifth primary tower and is positioned as an outpost above Republic Bridge, over the Tigris crossing between Al-Karkh and Al-Rusafa. A dedicated elevated express skyway links this outpost back to the four-core ring, and two separate access ramps reach it from the Karkh and Rusafa banks. The Power Tower is not one of the five and must never be included in their district loops.
 
 ### Global Hunter Association headquarters above the district
 The main World Hunter Association headquarters is a distinct elevated headquarters building placed above the shared five-tower district. It is not located on top of Power Tower and is not counted as a sixth primary tower. The Hunter Association Tower remains one of the five district towers and provides the guild's public-facing tower identity; the elevated headquarters is the central global administration hub.
@@ -153,7 +153,7 @@ The main World Hunter Association headquarters is a distinct elevated headquarte
 Power Tower remains a separate, optional combat-arena landmark at a clearly detached location in Baghdad. Preserve its existing 200-floor progression manager, floor unlocks, boss/elite cadence, challenge profiles, XP reward integration, and save data. Keep it independent of the five-tower complex physically and in connection generation. Its future playable interiors, opponent AI, matchmaking, ranked verification, and spectator facilities remain separate implementation milestones.
 
 ### Implementation and verification boundary
-The source-level implementation now distinguishes the five connected district towers from the independent Power Tower, registers the elevated Hunter Association headquarters as its own map location, and keeps Power Tower's existing interaction/progression ID intact. Procedural exterior geometry remains a blockout. No Godot parser, scene runtime, collision/navigation, Android performance, or visual verification is claimed until those checks are run.
+The source-level implementation now distinguishes the four-core sky-ring, the fifth Republic Bridge Shopping/Weapon-and-Nen outpost, and the independent Power Tower. The outpost relocation is conditional on the verified OSM manifest; its playable lobby/interior is retained, while the four core tower transforms remain unchanged. The OSM builder and verifier define the river cutout, bridge anchor, two bank approaches and land-only skyway support plan. Current-head Godot parser/runtime validation, live visual review, collision/navigation traversal and Android performance are still pending. Source elevations are game-world assumptions until a reliable DEM/survey is integrated.
 
 
 ### Headquarters vertical placement and access update — 21 November 2026
