@@ -698,9 +698,101 @@ func _create_tower_facility_blockout(root: Node3D, node_name: String, radius: fl
 			_add_facility_block(facility_root, "RoboticsAndAI", Vector3(14.0, 5.0, 0.0), Vector3(20.0, 9.0, 20.0), screen, "ROBOTICS • AI")
 			_add_facility_block(facility_root, "InnovationExhibition", Vector3(0.0, 5.0, -22.0), Vector3(38.0, 9.0, 14.0), interior, "INNOVATION EXPO")
 			_add_facility_block(facility_root, "DigitalLibrary", Vector3(0.0, 5.0, 22.0), Vector3(38.0, 9.0, 14.0), glass, "DIGITAL LIBRARY")
+	_create_specialized_tower_interiors(facility_root, node_name, glass, screen, interior)
 	facility_root.set_meta("facility_ids", facility_ids)
 	facility_root.set_meta("geometry_status", "visual_blockout")
 	facility_root.set_meta("interactive", false)
+
+
+
+func _create_specialized_tower_interiors(parent: Node3D, tower_name: String, glass: Material, screen: Material, interior: Material) -> void:
+	var detail_root := Node3D.new()
+	detail_root.name = "SpecializedInteriorDetails_Blockout"
+	parent.add_child(detail_root)
+	match tower_name:
+		"HunterAssociationTower":
+			var boards := Node3D.new()
+			boards.name = "HunterMissionBoardGallery"
+			boards.position = Vector3(0.0, 10.0, -18.0)
+			detail_root.add_child(boards)
+			for board_index in range(3):
+				_add_facility_piece(boards, "MissionBoard_%02d" % board_index, Vector3(-9.0 + float(board_index) * 9.0, 2.5, 0.0), Vector3(7.0, 5.0, 0.35), screen, false)
+			var dummies := Node3D.new()
+			dummies.name = "HunterTrainingDummyGallery"
+			dummies.position = Vector3(-16.0, 10.0, 18.0)
+			detail_root.add_child(dummies)
+			for dummy_index in range(4):
+				var dummy := MeshInstance3D.new()
+				dummy.name = "TrainingDummy_%02d" % dummy_index
+				var dummy_mesh := CapsuleMesh.new()
+				dummy_mesh.radius = 0.55
+				dummy_mesh.height = 2.4
+				dummy.mesh = dummy_mesh
+				dummy.position = Vector3(float(dummy_index) * 4.0, 1.2, 0.0)
+				dummy.material_override = interior
+				dummies.add_child(dummy)
+			var clinic := Node3D.new()
+			clinic.name = "HunterClinicTreatmentStations"
+			clinic.position = Vector3(16.0, 10.0, 18.0)
+			detail_root.add_child(clinic)
+			for bed_index in range(3):
+				_add_facility_piece(clinic, "TreatmentBed_%02d" % bed_index, Vector3(-5.0 + float(bed_index) * 5.0, 0.55, 0.0), Vector3(3.8, 1.1, 2.2), glass, true)
+		"BusinessTower":
+			var conference := Node3D.new()
+			conference.name = "ExecutiveConferenceTableAndSeating"
+			conference.position = Vector3(0.0, 10.0, -20.0)
+			detail_root.add_child(conference)
+			_add_facility_piece(conference, "ConferenceTable", Vector3(0.0, 1.0, 0.0), Vector3(18.0, 1.0, 4.0), interior, true)
+			for seat_index in range(16):
+				var seat := MeshInstance3D.new()
+				seat.name = "ConferenceSeat_%02d" % seat_index
+				var seat_mesh := BoxMesh.new()
+				seat_mesh.size = Vector3(0.9, 1.0, 0.9)
+				seat.mesh = seat_mesh
+				seat.position = Vector3(-8.0 + float(seat_index % 8) * 2.3, 0.55, -4.0 if seat_index < 8 else 4.0)
+				seat.material_override = glass
+				conference.add_child(seat)
+			var ticker := Label3D.new()
+			ticker.name = "InvestmentMarketTicker"
+			ticker.text = "SYSTEM EXCHANGE • MARKET DATA • INVESTMENT"
+			ticker.font_size = 22
+			ticker.position = Vector3(0.0, 5.0, -25.0)
+			ticker.modulate = Color(0.35, 0.9, 1.0)
+			detail_root.add_child(ticker)
+			var hotel := Node3D.new()
+			hotel.name = "BusinessHotelGuestRoomGallery"
+			hotel.position = Vector3(0.0, 10.0, 20.0)
+			detail_root.add_child(hotel)
+			for room_index in range(4):
+				_add_facility_piece(hotel, "GuestRoomDoor_%02d" % room_index, Vector3(-12.0 + float(room_index) * 8.0, 1.5, 0.0), Vector3(4.0, 3.0, 0.25), glass, false)
+		"TechnologyInnovationTower":
+			var labs := Node3D.new()
+			labs.name = "RoboticsResearchBenchGallery"
+			labs.position = Vector3(-14.0, 10.0, 0.0)
+			detail_root.add_child(labs)
+			for lab_index in range(6):
+				_add_facility_piece(labs, "ResearchBench_%02d" % lab_index, Vector3(float(lab_index % 3) * 5.0, 0.9, float(lab_index / 3) * 6.0), Vector3(3.8, 1.8, 2.6), interior, true)
+			var pods := Node3D.new()
+			pods.name = "ArtificialIntelligenceResearchPods"
+			pods.position = Vector3(14.0, 10.0, 0.0)
+			detail_root.add_child(pods)
+			for pod_index in range(4):
+				var pod := MeshInstance3D.new()
+				pod.name = "AIResearchPod_%02d" % pod_index
+				var pod_mesh := SphereMesh.new()
+				pod_mesh.radius = 1.2
+				pod.mesh = pod_mesh
+				pod.position = Vector3(float(pod_index % 2) * 5.0, 1.5, float(pod_index / 2) * 5.0)
+				pod.material_override = screen
+				pods.add_child(pod)
+			var library := Node3D.new()
+			library.name = "DigitalLibraryShelfGallery"
+			library.position = Vector3(0.0, 10.0, 22.0)
+			detail_root.add_child(library)
+			for shelf_index in range(6):
+				_add_facility_piece(library, "DigitalShelf_%02d" % shelf_index, Vector3(-12.5 + float(shelf_index) * 5.0, 2.0, 0.0), Vector3(4.0, 4.0, 0.8), glass, true)
+	detail_root.set_meta("tower_type", tower_name)
+	detail_root.set_meta("interactive", false)
 
 
 func _add_facility_block(parent: Node3D, node_name: String, local_position: Vector3, size: Vector3, material: Material, sign_text: String) -> void:
