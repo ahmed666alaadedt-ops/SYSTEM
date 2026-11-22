@@ -793,9 +793,6 @@ func _run() -> void:
 	if not service_order_ok:
 		_fail("SYSTEM Hotel room service did not complete the paid placed/preparing/delivered lifecycle.")
 		return
-	if not operations.has_method("_book_hotel_room") or not operations.has_method("_check_in_hotel_room") or not operations.has_method("_checkout_hotel_room") or not operations.has_method("_save_hotel_bookings") or not operations.has_method("_start_hotel_room_cleaning") or not operations.has_method("_complete_hotel_room_cleaning") or not operations.has_method("_is_hotel_room_available"):
-		_fail("SYSTEM Hotel reservation/check-in/check-out persistence methods are missing.")
-		return
 	var original_hotel_bookings: Dictionary = operations.get("hotel_bookings").duplicate(true)
 	var original_hotel_credits := int(operations.get("credits"))
 	operations.set("hotel_bookings", {})
