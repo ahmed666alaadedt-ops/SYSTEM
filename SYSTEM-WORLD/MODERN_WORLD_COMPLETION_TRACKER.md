@@ -16,6 +16,16 @@ This is the acceptance checklist for the modern-world map. The project must not 
 - [ ] Run Godot parser/import, scene startup, interaction, visual inspection, Android performance, and physical-device tests; this role replacement is source-level only until those checks pass.
 - Note: the tower remains a procedural exterior landmark and connected-district member. Its actual interior and equipment/elixir gameplay are unfinished. The standalone 200-floor Power Tower remains separate and unchanged.
 
+
+## Baghdad tower exterior identity and public display coverage — 22 November 2026
+
+- [x] Add a distinct architectural identity pass for the Hunter Association Tower, Weapons/Equipment/Elixirs Tower, Shopping Tower, Entertainment/Sports Tower, and Technology/Innovation Tower.
+- [x] Add a separate tournament/champion identity detail to the standalone Power Tower without adding it to the connected district.
+- [x] Store each landmark's floor count, approximate height, and connected-district membership as node metadata.
+- [x] Add the Technology Tower to the Baghdad tower public advertising/champion display node map; all five connected towers and the standalone Power Tower now have explicit node mappings.
+- [ ] Verify the new procedural identity geometry in Godot for scale, overlaps, silhouette, collision, readability, river/Tahrir view corridors, and Android rendering cost.
+- Note: this pass adds exterior identity blockout meshes and metadata only. No tower interior, elevator ride, shop transaction, equipment equip flow, elixir effect, or live online leaderboard is claimed complete.
+
 ## Current verified repository foundations
 
 - [x] Fourteen city labels and eight district labels per city are defined in modern_world_region_manager.gd; only Baghdad is currently connected to the provisional WGS84 registry anchor, while the other thirteen centers remain prototype-layout coordinates.
@@ -120,7 +130,7 @@ A checked repository foundation does not mean a finished gameplay feature. Visua
 - [ ] Preserve Tahrir Square and the Freedom Monument as recognizable, explorable public landmarks on the Rusafa side; do not cover, replace, or overwhelm them.
 - [ ] Connect the five towers with skybridges, elevated promenades, public terraces, and carefully designed cross-river links while keeping the river unobstructed below.
 - [ ] Create a multi-level public district with ground streets/plazas, mid-level shopping and services, and upper sky gardens/recreation decks.
-- [ ] Implement the five connected district identities: Hunter Association, Business and Investment, Shopping and Commerce, Entertainment and Sports, and Technology and Innovation.
+- [ ] Implement the five connected district identities: Hunter Association, Weapons/Equipment/Elixirs, Shopping and Commerce, Entertainment and Sports, and Technology and Innovation.
 - [ ] Keep the 200-floor Power Tower separate, with its own entrance/map marker; exclude it from the five-tower skybridge and vehicle-deck loop.
 - [ ] Add accessible pedestrian routes, transit access, emergency/service circulation, wayfinding, and clear public connections to the existing Baghdad street network.
 - [ ] Validate the district in Godot from Karkh, Rusafa, Tigris riverfront, and Tahrir Square viewpoints; ensure the Freedom Monument and river remain visually legible.
