@@ -142,11 +142,13 @@ func _get_height(x: float, z: float) -> float:
 
 # Public terrain sampling API for world systems such as forests, paths and NPCs.
 func get_terrain_height(x: float, z: float) -> float:
-	# The four established core towers keep their original per-point terrain heights.
-	# Baghdad's OSM extension beyond the original 3 km x 2.2 km terrain grid blends
-	# smoothly from the existing edge into the city's resolved ground baseline.
-	if baghdad_osm_ground_enabled and _is_baghdad_osm_region(x, z) and _is_outside_terrain_grid(x, z):
-		return _get_baghdad_osm_extended_height(x, z)
+	# The four established core towers stay above the sea plane and keep their exact
+	# original heights. Low municipal land is raised only to the minimum visible ground
+	# datum; the OSM extension beyond the original grid blends to the river-safe baseline.
+	if baghdad_osm_ground_enabled and _is_baghdad_osm_region(x, z):
+		if _is_outside_terrain_grid(x, z):
+			return _get_baghdad_osm_extended_height(x, z)
+		return maxf(_sample_terrain_height_grid(x, z), SEA_LEVEL + 0.25)
 	return _sample_terrain_height_grid(x, z)
 
 
@@ -178,7 +180,7 @@ func _is_outside_terrain_grid(x: float, z: float) -> bool:
 func _get_baghdad_osm_extended_height(x: float, z: float) -> float:
 	var edge_x := clampf(x, -WORLD_WIDTH * 0.5, WORLD_WIDTH * 0.5)
 	var edge_z := clampf(z, -WORLD_DEPTH * 0.5, WORLD_DEPTH * 0.5)
-	var edge_height := _sample_terrain_height_grid(edge_x, edge_z)
+	var edge_height := maxf(_sample_terrain_height_grid(edge_x, edge_z), SEA_LEVEL + 0.25)
 	var outside_distance := maxf(
 		maxf(absf(x) - WORLD_WIDTH * 0.5, 0.0),
 		maxf(absf(z) - WORLD_DEPTH * 0.5, 0.0)
@@ -193,8 +195,9 @@ func is_land_position(x: float, z: float) -> bool:
 		var streamers := get_tree().get_nodes_in_group("baghdad_osm_cell_streamer")
 		if not streamers.is_empty() and streamers[0].has_method("is_ground_position"):
 			return bool(streamers[0].call("is_ground_position", x, z))
-		# The cell streamer is added after the region manager creates its landmarks.
-		return true
+		# Before streaming begins, retain the original procedural land test so the
+		# four core towers are not moved onto unverified water/lowland positions.
+		return _get_height(x, z) > SEA_LEVEL + 0.5
 	return _get_height(x, z) > SEA_LEVEL + 0.5
 
 
@@ -202,8 +205,9 @@ func configure_baghdad_osm_ground(world_ground_elevation_m: float) -> void:
 	if not is_finite(world_ground_elevation_m):
 		push_warning("SYSTEM Baghdad OSM: rejected non-finite world ground baseline.")
 		return
-	# This enables the streamed OSM land mask without changing existing tower elevations.
-	baghdad_osm_world_ground_elevation_m = world_ground_elevation_m
+	# Keep the Tigris water surface above the global ocean plane while preserving the
+	# original heights of the four core towers inside the terrain grid.
+	baghdad_osm_world_ground_elevation_m = maxf(world_ground_elevation_m, SEA_LEVEL + 6.25)
 	baghdad_osm_ground_enabled = true
 
 
