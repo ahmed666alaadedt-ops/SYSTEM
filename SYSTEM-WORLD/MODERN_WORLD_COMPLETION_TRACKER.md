@@ -1,3 +1,13 @@
+## Baghdad tower staff elevator duty and floor workstations — 23 November 2026
+
+- [x] Added floor-to-role duty assignments for key service floors across the Hunter Association, Business & Investment, Shopping & Commerce, Entertainment & Sports, Technology & Innovation and Power Towers.
+- [x] The assigned persistent employee boards the actual tower elevator car, travels with the car, then exits onto the active floor and walks to a generated 3D desk/terminal workstation with a role and floor sign. The employee remains a normal interactable staff NPC.
+- [x] On floor changes, the previous duty employee is safely returned to the correct lobby before its floor is replaced. On lobby return, the active employee rides the elevator back, resumes the original four-waypoint lobby patrol and retains the same NPC identity.
+- [x] Return-to-lobby now restores customer visitors to their correct public lobby before the active floor is removed.
+- [x] Extended the tower operations validator to exercise the Shopping Tower chef's elevator boarding, arrival at the floor-29 workstation, physical emergency-exit evacuation, staff return to lobby patrol and restoration of all four persistent Shopping Tower customers.
+- [ ] Run the updated canonical tower operations validator and Android export on the final checkpoint commit; physical Android inspection remains outstanding.
+- [ ] Extend staff duty schedules from the currently mapped signature service floors to every floor and multi-stop autonomous work routes.
+
 ## Baghdad tower floor emergency evacuation — 23 November 2026
 
 - [x] Added a marked emergency exit doorway to every generated tower floor, with a clear wall opening, bilingual Arabic/English floor-specific signage, illuminated beacon, emergency light, route marking and alarm call point.
