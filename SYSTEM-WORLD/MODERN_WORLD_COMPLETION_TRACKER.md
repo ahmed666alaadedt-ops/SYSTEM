@@ -390,7 +390,8 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Allow the door to reverse direction safely if the player interacts while its tween is running; expose the current open state and matching Arabic prompt on the interaction root.
 - [x] Use an AnimatableBody3D for the moving door slab so its physical motion can be synchronized with the physics engine.
 - [x] Godot 4.3 headless project import/parser and dedicated vault-door lifecycle test passed in GitHub Actions run 44990348872 on commit `ed5ea163b54bb92a34b323449d84c448520ab1d2`; the test covers animated open/close, collision remaining enabled, Arabic prompts/state metadata, tween reversal, and local state restoration after manager recreation.
-- [ ] Run the canonical main-scene launch and verify actual physics blocking/clearance; the current lifecycle test checks that the collision shape remains enabled but does not yet assert a physics collision query against the moving slab.
+- [ ] Run the canonical main-scene launch and verify actual physics blocking/clearance; the expanded ray test now exercises the shared camera-ray resolver from both sides and doorway clearance, but must pass before this gate is closed.
+- [x] Corrected the ray-test fixture to register the synthetic vault door in `system_interactable`, matching production registration. The prior run failed at target resolution because the fixture omitted that registration; rerun 44992375228 on commit `180d53521a60d0230fe6abad32483bd0a571d29b` is pending.
 - [ ] Integrate persistence with the authenticated world-state save service for cross-device/account synchronization; current ConfigFile persistence is local to this device only.
 - [ ] Validate doorway clearance, ray targeting from both sides, repeated interaction, and mobile-device behavior in the running game.
 
