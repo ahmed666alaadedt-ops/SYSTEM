@@ -1166,13 +1166,22 @@ func _run() -> void:
 	if int(operations.call("_calculate_bowling_score", spare_bowling_rolls)) != 150:
 		_fail("Bowling scoring engine did not calculate ten consecutive spares.")
 		return
+	if int(operations.call("_calculate_arcade_target_points", 2, 0)) != 12:
+		_fail("Arcade center target scoring did not award 12 base points.")
+		return
+	if int(operations.call("_calculate_arcade_target_points", 2, 4)) != 20:
+		_fail("Arcade combo scoring did not award the capped 8-point combo bonus.")
+		return
+	if int(operations.call("_calculate_arcade_target_points", -1, 4)) != 0:
+		_fail("Arcade invalid target IDs must not award points.")
+		return
 	var activity_cases := {
 		"swimming_pool": ["lap", 3],
 		"fitness_gym": ["rep", 8],
 		"sports_court": ["shot", 10],
 		"bowling": ["throw", 10],
 		"cinema": ["watch", 3],
-		"arcade": ["hit", 5],
+		"arcade": ["hit", 10],
 		"family_zone": ["discover", 3],
 		"rooftop_leisure": ["photo", 1],
 		"robotics_lab": ["assemble", 3],
@@ -1227,6 +1236,9 @@ func _run() -> void:
 		if str(activity_type) == "arcade" and (not final_activity_result.has("last_target_hit") or typeof(final_activity_result.get("last_target_hit")) != TYPE_BOOL or int(final_activity_result.get("last_target_id", -1)) < -1 or int(final_activity_result.get("last_target_id", -1)) > 4):
 			_fail("Arcade final attempt did not return a valid physical target-sensor result.")
 			return
+		if str(activity_type) == "arcade" and (int(final_activity_result.get("hits", -1)) < 1 or int(final_activity_result.get("lives_remaining", -1)) < 0 or int(final_activity_result.get("best_combo", -1)) < 1):
+			_fail("Arcade game did not preserve hit count, lives and combo results.")
+			return
 		if str(activity_type) == "sports_court" and (not final_activity_result.has("last_shot_scored") or typeof(final_activity_result.get("last_shot_scored")) != TYPE_BOOL):
 			_fail("Basketball final attempt did not return a physical hoop-sensor result.")
 			return
@@ -1252,7 +1264,7 @@ func _run() -> void:
 		_fail("Basketball physics test did not score a basket in five attempts.")
 		return
 	if arcade_hit_count <= 0:
-		_fail("Arcade physics test did not hit any target in five attempts. Last result: " + str(arcade_last_result))
+		_fail("Arcade physics test did not hit any target during the ten-shot game. Last result: " + str(arcade_last_result))
 		return
 	var pool_room := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 18) as Node3D
 	var pool_physics_facility := pool_room.get_node_or_null("SpecialFacility_swimming_pool") as Node3D if pool_room != null else null
