@@ -4,6 +4,7 @@ class_name BaghdadOSMDoorInteraction
 ## Source-verified Baghdad OSM door with a real hinged leaf and local building interior.
 
 var door_pivot: Node3D
+var player_override: CharacterBody3D
 var interior_root: Node3D
 var roof_node: MeshInstance3D
 var inward_direction := Vector3.FORWARD
@@ -60,6 +61,8 @@ func system_interact() -> void:
 
 
 func _find_player() -> CharacterBody3D:
+	if is_instance_valid(player_override):
+		return player_override
 	for player_value in get_tree().get_nodes_in_group("system_player"):
 		if player_value is CharacterBody3D and is_instance_valid(player_value):
 			return player_value as CharacterBody3D
