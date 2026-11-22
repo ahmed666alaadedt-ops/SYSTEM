@@ -12,6 +12,7 @@ func build(p_entrance_script: Script) -> void:
 	entrance_script = p_entrance_script
 	name = "HeadquartersInterior"
 	_build_room()
+	_build_service_room_partitions()
 	_build_furnishings()
 	_build_public_service_desks()
 	_build_exit_interaction()
@@ -56,6 +57,55 @@ func _build_room() -> void:
 	light.omni_range = 92.0
 	light.shadow_enabled = false
 	add_child(light)
+
+
+func _build_service_room_partitions() -> void:
+	var partition_material := _material(Color(0.045, 0.085, 0.13), 0.38, 0.62)
+	var trim_material := _material(Color(0.72, 0.49, 0.20), 0.28, 0.72)
+	var wall_specs: Array[Dictionary] = [
+		{"name": "ReceptionRoomFrontWall_Left", "position": Vector3(-49.0, 18.0, 8.0), "size": Vector3(10.0, 16.0, 1.0)},
+		{"name": "ReceptionRoomFrontWall_Right", "position": Vector3(-28.0, 18.0, 8.0), "size": Vector3(24.0, 16.0, 1.0)},
+		{"name": "RegistryRoomFrontWall_Left", "position": Vector3(28.0, 18.0, 8.0), "size": Vector3(24.0, 16.0, 1.0)},
+		{"name": "RegistryRoomFrontWall_Right", "position": Vector3(49.0, 18.0, 8.0), "size": Vector3(10.0, 16.0, 1.0)},
+		{"name": "MissionRoomFrontWall_Left", "position": Vector3(-49.0, 18.0, -8.0), "size": Vector3(10.0, 16.0, 1.0)},
+		{"name": "MissionRoomFrontWall_Right", "position": Vector3(-28.0, 18.0, -8.0), "size": Vector3(24.0, 16.0, 1.0)},
+		{"name": "ExaminerRoomFrontWall_Left", "position": Vector3(28.0, 18.0, -8.0), "size": Vector3(24.0, 16.0, 1.0)},
+		{"name": "ExaminerRoomFrontWall_Right", "position": Vector3(49.0, 18.0, -8.0), "size": Vector3(10.0, 16.0, 1.0)},
+		{"name": "ReceptionRoomSideWall_Lower", "position": Vector3(-16.0, 18.0, 12.0), "size": Vector3(1.0, 16.0, 8.0)},
+		{"name": "ReceptionRoomSideWall_Upper", "position": Vector3(-16.0, 18.0, 31.0), "size": Vector3(1.0, 16.0, 14.0)},
+		{"name": "RegistryRoomSideWall_Lower", "position": Vector3(16.0, 18.0, 12.0), "size": Vector3(1.0, 16.0, 8.0)},
+		{"name": "RegistryRoomSideWall_Upper", "position": Vector3(16.0, 18.0, 31.0), "size": Vector3(1.0, 16.0, 14.0)},
+		{"name": "MissionRoomSideWall_Lower", "position": Vector3(-16.0, 18.0, -30.0), "size": Vector3(1.0, 16.0, 16.0)},
+		{"name": "MissionRoomSideWall_Upper", "position": Vector3(-16.0, 18.0, -11.0), "size": Vector3(1.0, 16.0, 6.0)},
+		{"name": "ExaminerRoomSideWall_Lower", "position": Vector3(16.0, 18.0, -30.0), "size": Vector3(1.0, 16.0, 16.0)},
+		{"name": "ExaminerRoomSideWall_Upper", "position": Vector3(16.0, 18.0, -11.0), "size": Vector3(1.0, 16.0, 6.0)}
+	]
+	for wall in wall_specs:
+		_add_solid_box(str(wall["name"]), wall["position"], wall["size"], partition_material)
+	for room in [
+		{"name": "Reception", "position": Vector3(-42.0, 27.0, 8.0), "title": "الاستعلامات"},
+		{"name": "Registry", "position": Vector3(42.0, 27.0, 8.0), "title": "سجل الصيادين"},
+		{"name": "Mission", "position": Vector3(-42.0, 27.0, -8.0), "title": "المهام والعقود"},
+		{"name": "Examiner", "position": Vector3(42.0, 27.0, -8.0), "title": "مراقبة الاختبارات"}
+	]:
+		var header := MeshInstance3D.new()
+		header.name = "HQRoomDoorHeader_" + str(room["name"])
+		var header_mesh := BoxMesh.new()
+		header_mesh.size = Vector3(5.0, 0.35, 0.45)
+		header.mesh = header_mesh
+		header.position = room["position"]
+		header.material_override = trim_material
+		add_child(header)
+		var label := Label3D.new()
+		label.name = "HQRoomDoorSign_" + str(room["name"])
+		label.text = str(room["title"])
+		label.font_size = 20
+		label.position = room["position"] + Vector3(0.0, 2.0, 0.0)
+		label.pixel_size = 0.012
+		label.modulate = Color(0.82, 0.94, 1.0)
+		add_child(label)
+	set_meta("headquarters_service_rooms_count", 4)
+	set_meta("headquarters_service_room_partition_count", wall_specs.size())
 
 
 func _build_furnishings() -> void:
