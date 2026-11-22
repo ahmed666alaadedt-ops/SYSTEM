@@ -604,7 +604,7 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Add a circular landing deck, static deck collision, painted landing circle and H marking, eight perimeter lights, identity sign, and a collision-backed access bridge to the tower roof.
 - [x] Tag the facility with its Hunter Association owner ID and an explicit landing-zone radius for future helicopter runtime integration.
 - [x] Extend the Baghdad tower Godot validator to check pad ownership, deck/collision, markings, sign, bridge collision, and all eight perimeter lights.
-- [ ] Run Godot 4.3 parsing, scene startup and the extended tower validator; inspect any failures before treating the pad as validated.
+- [x] Pass Godot 4.3 parsing, headless scene startup and the extended tower validator on the current PR head.
 - [x] Attach a dedicated Hunter Association helicopter runtime controller to the pad; generate a parked helicopter model with animated main/tail rotors.
 - [x] Add pilot enter/exit flow, keyboard flight inputs, on-screen mobile ascend/descend/directional controls, and camera follow while piloting.
 - [x] Add approach-distance interaction, a defined 18 m landing radius, low-speed landing state, and exit restriction while airborne.
@@ -613,7 +613,8 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Pause the on-foot player movement loop while piloting so the character controller cannot fight the aircraft controller.
 - [x] Expose pilot authorization in the runtime status for automated verification.
 - [x] Track simultaneous touch-button presses independently so releasing one direction does not cancel another held direction.
-- [ ] Pass Godot 4.3 parsing, headless startup and the expanded helicopter runtime validator; then pass canonical Android APK export on the same commit.
+- [x] Pass Godot 4.3 parsing, headless startup and the expanded helicopter runtime validator on PR head `8edf22ac6551c9668e1e5da17c2a466bf06b06b7`.
+- [x] Pass canonical Android APK export on the same PR head; artifact `SYSTEM-WORLD-canonical-android-debug-apk` (35,802,382 bytes) uploaded successfully.
 - [ ] Add robust aircraft body collision, terrain-aware flight physics, emergency landing, aircraft parking persistence and flight safety validation.
 - [ ] Review rooftop approach clearance, touch layout, camera behavior, collision traversal, lighting and Android performance on a physical device.
 - Note: this is a first playable flight prototype using scripted movement and a procedural helicopter blockout. It is not yet a production aircraft physics model, and membership permissions and obstacle collision are still pending.
