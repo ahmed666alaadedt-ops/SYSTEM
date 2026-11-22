@@ -157,10 +157,10 @@ func _build_public_service_desks() -> void:
 	accent_material.emission = Color(0.015, 0.34, 0.72)
 	accent_material.emission_energy_multiplier = 1.2
 	var service_specs: Array[Dictionary] = [
-		{"id": "reception", "title": "استعلامات المقر", "description": "استقبال الصيادين والزوار وتوجيههم إلى أقسام نقابة الصيادين.", "position": Vector3(-32.0, 7.0, 23.0)},
-		{"id": "registry", "title": "سجل الصيادين", "description": "مكتب مراجعة بيانات الصيادين وطلبات التسجيل والعضوية.", "position": Vector3(32.0, 7.0, 23.0)},
-		{"id": "missions", "title": "مجلس المهام والعقود", "description": "نقطة معلومات لعرض المهام والعقود التي يتولاها اللاعب بنفسه.", "position": Vector3(-32.0, 7.0, -23.0)},
-		{"id": "examiner_control", "title": "مراقبة الاختبارات", "description": "مكتب المشرفين والممتحنين لمتابعة مراحل اختبار الصيادين؛ الشخصيات غير اللاعبة موظفون وممتحنون وليست مرشحين.", "position": Vector3(32.0, 7.0, -23.0)}
+		{"id": "reception", "location_id": "tower_service_hunter_headquarters_2", "title": "استعلامات المقر", "description": "استقبال الصيادين والزوار وتوجيههم إلى أقسام نقابة الصيادين.", "position": Vector3(-32.0, 7.0, 23.0)},
+		{"id": "registry", "location_id": "tower_service_hunter_headquarters_0", "title": "سجل الصيادين", "description": "مكتب مراجعة بيانات الصيادين وطلبات التسجيل والعضوية.", "position": Vector3(32.0, 7.0, 23.0)},
+		{"id": "missions", "location_id": "tower_service_hunter_headquarters_1", "title": "مجلس المهام والعقود", "description": "نقطة معلومات لعرض المهام والعقود التي يتولاها اللاعب بنفسه.", "position": Vector3(-32.0, 7.0, -23.0)},
+		{"id": "examiner_control", "location_id": "tower_service_hunter_headquarters_3", "title": "مراقبة الاختبارات", "description": "مكتب المشرفين والممتحنين لمتابعة مراحل اختبار الصيادين؛ الشخصيات غير اللاعبة موظفون وممتحنون وليست مرشحين.", "position": Vector3(32.0, 7.0, -23.0)}
 	]
 	for service in service_specs:
 		var service_id := str(service["id"])
@@ -177,7 +177,7 @@ func _build_public_service_desks() -> void:
 		add_child(sign)
 		var interaction: Area3D = entrance_script.new()
 		interaction.name = "HQServiceInteraction_" + service_id
-		interaction.configure("tower_service_hunter_headquarters_" + service_id, str(service["title"]), "region_baghdad")
+		interaction.configure(str(service["location_id"]), str(service["title"]), "region_baghdad")
 		interaction.set_meta("system_service_description", str(service["description"]))
 		interaction.set_meta("system_hq_service_id", service_id)
 		interaction.position = desk_position + Vector3(0.0, -0.2, 5.0)
