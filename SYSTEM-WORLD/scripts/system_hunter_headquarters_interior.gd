@@ -15,6 +15,7 @@ func build(p_entrance_script: Script) -> void:
 	_build_service_room_partitions()
 	_build_furnishings()
 	_build_public_service_desks()
+	_build_examiner_control_station()
 	_build_exit_interaction()
 	set_meta("playable_interior_blockout", true)
 
@@ -189,6 +190,53 @@ func _build_public_service_desks() -> void:
 		add_child(interaction)
 	set_meta("headquarters_public_service_count", service_specs.size())
 	set_meta("headquarters_service_interactions_ready", true)
+
+
+func _build_examiner_control_station() -> void:
+	var console_material := _material(Color(0.025, 0.07, 0.11), 0.28, 0.62)
+	var screen_material := _material(Color(0.015, 0.18, 0.27), 0.2, 0.42)
+	screen_material.emission_enabled = true
+	screen_material.emission = Color(0.01, 0.28, 0.46)
+	screen_material.emission_energy_multiplier = 1.3
+	var accent_material := _material(Color(0.72, 0.49, 0.20), 0.25, 0.72)
+	_add_solid_box("HQExaminerControlConsole", Vector3(32.0, 7.0, -31.0), Vector3(22.0, 3.0, 5.0), console_material)
+	_add_visual_box("HQExaminerControlConsoleAccent", Vector3(32.0, 8.58, -28.4), Vector3(21.0, 0.14, 0.18), accent_material)
+	var heading := Label3D.new()
+	heading.name = "HQExaminerControlHeading"
+	heading.text = "مركز مراقبة اختبار الصيادين"
+	heading.font_size = 28
+	heading.position = Vector3(32.0, 27.0, -38.2)
+	heading.pixel_size = 0.013
+	heading.modulate = Color(0.82, 0.94, 1.0)
+	add_child(heading)
+	for stage_index in range(7):
+		var stage_number := stage_index + 1
+		var screen := MeshInstance3D.new()
+		screen.name = "HQExaminerStageMonitor_%02d" % stage_number
+		var screen_mesh := BoxMesh.new()
+		screen_mesh.size = Vector3(3.4, 3.2, 0.38)
+		screen.mesh = screen_mesh
+		screen.position = Vector3(20.0 + float(stage_index) * 4.0, 20.5, -38.15)
+		screen.material_override = screen_material
+		add_child(screen)
+		var screen_label := Label3D.new()
+		screen_label.name = "HQExaminerStageLabel_%02d" % stage_number
+		screen_label.text = "المرحلة %02d\nلوحة ثابتة" % stage_number
+		screen_label.font_size = 18
+		screen_label.position = screen.position + Vector3(0.0, -2.2, 0.28)
+		screen_label.pixel_size = 0.012
+		screen_label.modulate = Color(0.76, 0.91, 1.0)
+		add_child(screen_label)
+	var notice := Label3D.new()
+	notice.name = "HQExaminerControlStaticFeedNotice"
+	notice.text = "عرض تجريبي ثابت — لا يوجد بث مباشر أو تحكم فعلي بالمراحل"
+	notice.font_size = 16
+	notice.position = Vector3(32.0, 13.0, -34.0)
+	notice.pixel_size = 0.012
+	notice.modulate = Color(1.0, 0.78, 0.48)
+	add_child(notice)
+	set_meta("examiner_stage_monitor_count", 7)
+	set_meta("examiner_status_feed_connected", false)
 
 
 func _build_exit_interaction() -> void:
