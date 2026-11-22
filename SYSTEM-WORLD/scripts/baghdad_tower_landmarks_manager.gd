@@ -194,6 +194,7 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	entrance.set_meta("system_tower_floor_count", floors)
 	entrance.set_meta("system_tower_height_m", height)
 	entrance.set_meta("system_tower_district_member", connect_to_district)
+	entrance.set_meta("system_tower_floor_directory", _get_tower_floor_directory(location_id))
 	var entrance_shape := CollisionShape3D.new()
 	var shape := SphereShape3D.new()
 	shape.radius = 3.5
@@ -216,6 +217,7 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	root.set_meta("tower_floor_count", floors)
 	root.set_meta("tower_height_m", height)
 	root.set_meta("tower_is_connected_district_member", connect_to_district)
+	root.set_meta("tower_floor_directory", _get_tower_floor_directory(location_id))
 	_create_tower_lobby(root, location_id, title, radius, floors, height, connect_to_district)
 	print("SYSTEM WORLD: landmark tower generated: ", title, " / ", floors, " floors / ", height, "m")
 
@@ -331,6 +333,7 @@ func _create_tower_lobby(root: Node3D, tower_id: String, title: String, radius: 
 	kiosk_area.set_meta("system_tower_floor_count", floors)
 	kiosk_area.set_meta("system_tower_height_m", height)
 	kiosk_area.set_meta("system_tower_district_member", connect_to_district)
+	kiosk_area.set_meta("system_tower_floor_directory", _get_tower_floor_directory(tower_id))
 	kiosk_area.set_meta("system_display_name", title)
 	kiosk_area.set_meta("system_interaction_prompt", "استخدم دليل " + title)
 	var kiosk_shape := CollisionShape3D.new()
@@ -339,6 +342,23 @@ func _create_tower_lobby(root: Node3D, tower_id: String, title: String, radius: 
 	kiosk_shape.shape = kiosk_sphere
 	kiosk_area.add_child(kiosk_shape)
 	lobby.add_child(kiosk_area)
+	var reception_position := Vector3(-radius * 0.62, 1.7, center_z + 5.0)
+	var reception := MeshInstance3D.new()
+	reception.name = "LobbyReceptionCounter"
+	var reception_mesh := BoxMesh.new()
+	reception_mesh.size = Vector3(11.0, 3.4, 3.0)
+	reception.mesh = reception_mesh
+	reception.position = reception_position
+	reception.material_override = trim_material
+	lobby.add_child(reception)
+	_add_static_box_collision(lobby, "LobbyReceptionCounter_Collision", reception_position, reception_mesh.size)
+	var security_z := center_z - depth * 0.5 + 8.0
+	for side in [-1.0, 1.0]:
+		var gate_post_position := Vector3(side * 5.0, 4.0, security_z)
+		_add_tower_identity_box(lobby, "LobbySecurityGatePost_%s" % str(side), gate_post_position, Vector3(0.8, 8.0, 0.8), emissive_material)
+		_add_static_box_collision(lobby, "LobbySecurityGatePostCollision_%s" % str(side), gate_post_position, Vector3(0.8, 8.0, 0.8))
+	var gate_header_position := Vector3(0.0, 8.0, security_z)
+	_add_tower_identity_box(lobby, "LobbySecurityGateHeader", gate_header_position, Vector3(10.8, 0.8, 0.8), trim_material)
 	var sign := Label3D.new()
 	sign.name = "LobbyDirectorySign"
 	sign.text = "SYSTEM TOWER DIRECTORY\\n" + title
@@ -349,6 +369,61 @@ func _create_tower_lobby(root: Node3D, tower_id: String, title: String, radius: 
 	lobby.add_child(sign)
 	lobby.set_meta("lobby_status", "accessible_pavilion_blockout")
 	lobby.set_meta("elevator_status", "not_implemented")
+
+
+func _get_tower_floor_directory(tower_id: String) -> PackedStringArray:
+	match tower_id:
+		"hunter_association_tower_baghdad":
+			return PackedStringArray([
+				"01-10: الاستقبال والتسجيل وخدمات الصيادين",
+				"11-40: قاعات المهمات والنقابات وسجلات الإنجاز",
+				"41-80: إدارة الاختبار العالمي والتدريب",
+				"81-140: البحث والتطوير والدعم الطبي والاجتماعات",
+				"141-200: الإدارة العليا وقاعة الشرف العالمية"
+			])
+		"weapons_equipment_elixirs_tower_baghdad":
+			return PackedStringArray([
+				"01-04: الاستقبال ومعرض الأسلحة",
+				"05-12: السيوف والرماح والفؤوس والأقواس والأسلحة النارية",
+				"13-18: الدروع والخوذ وبدلات القتال",
+				"19-24: تطوير المعدات والصيانة والتخصيص",
+				"25-30: مختبرات إكسيرات النِن والشفاء والقدرات",
+				"31-35: إكسيرات القوة والسرعة والتحمل والطاقة",
+				"36: خزنة الإكسيرات النادرة والأسطورية — دخول مشروط"
+			])
+		"shopping_tower_baghdad":
+			return PackedStringArray([
+				"01-08: السوق الرئيسي والمتاجر",
+				"09-14: المطاعم والمقاهي",
+				"15-22: الأزياء والإلكترونيات والخدمات",
+				"23-28: السينما والترفيه الداخلي",
+				"29-32: المطاعم الراقية وحدائق الإطلالة"
+			])
+		"entertainment_tower_baghdad":
+			return PackedStringArray([
+				"01-08: الاستقبال والأنشطة العائلية",
+				"09-16: الرياضات والصالات والبطولات",
+				"17-22: المسابح والألعاب المائية",
+				"23-30: الترفيه والألعاب والمهرجانات",
+				"31-34: منصات المشاهدة والفعاليات الكبرى"
+			])
+		"technology_tower_baghdad":
+			return PackedStringArray([
+				"01-06: الاستقبال والمعارض التقنية",
+				"07-14: الروبوتات والأنظمة الذكية",
+				"15-22: الهندسة والطاقة والمواد",
+				"23-30: المختبرات والبحث والتطوير",
+				"31-36: الخدمات الرقمية وحاضنات الابتكار",
+				"37-40: مركز القيادة والتجارب المتقدمة"
+			])
+		"power_tower_baghdad":
+			return PackedStringArray([
+				"001-009: ساحات التحديات المتدرجة",
+				"010: زعيم الطابق",
+				"011-199: دورات التحديات والبطولات",
+				"200: التحدي النهائي"
+			])
+	return PackedStringArray()
 
 
 func _create_tower_architecture(root: Node3D, node_name: String, title: String, height: float, radius: float, floors: int, beacon_color: Color) -> void:
