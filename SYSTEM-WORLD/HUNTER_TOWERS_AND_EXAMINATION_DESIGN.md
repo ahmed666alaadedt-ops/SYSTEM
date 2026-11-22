@@ -152,3 +152,7 @@ The five connected towers and the separate Power Tower now carry explicit floor-
 ## Enclosed tower lobby and lift-core shell — 22 November 2026
 
 The six tower landmarks now generate an enclosed ground-level lobby blockout with side walls, split front and rear walls, a clear front entrance, a reception counter, security-gate frame, directory kiosk, floor zoning sign, and a closed visual lift-core door. The lift door is deliberately non-functional and collidable until a real shaft opening, elevator car, floor scenes, and safe arrival/exit transitions are implemented.
+
+## Automated Baghdad tower validation and land-placement correction — 22 November 2026
+
+A dedicated Godot validation script now instantiates the canonical main scene and checks all six tower landmark IDs, exactly five connected district members, standalone 200-floor Power Tower, lobby floor/reception/lift-door collision blockouts, directory signs and interactable kiosks, floor-zoning metadata, Weapons/Elixirs categories, and Technology public display mapping. The first run found that the Shopping Tower's requested plot was on water; the tower manager now searches a wider local radius and places it on nearby land. The rerun passed in GitHub Actions run 45035977040. The Shopping Tower's 264 m relocation still needs visual review against the intended Baghdad district footprint and protected landmarks.
