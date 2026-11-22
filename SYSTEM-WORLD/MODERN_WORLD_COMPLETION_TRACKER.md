@@ -455,6 +455,9 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Re-run the structural validation successfully on commit `9f32efa09e64a51e5ff807b5634430ce2af5e4c7`, GitHub Actions run [45035977040](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45035977040): all six towers were generated, five remain connected, Power Tower remains separate at 200 floors, all six lobby kiosks/floor directories exist, and Technology is present on the public event board.
 - Note: the Shopping Tower plot was relocated by 264 m, Power Tower by 96 m, and Technology Tower by 48 m in this runtime layout. Godot visual review must confirm the final positions remain coherent with the Baghdad district, Tigris corridor, and protected Tahrir Square/Freedom Monument views.
 
+- [x] Canonical SYSTEM WORLD Android APK export and artifact upload passed on the same code commit in GitHub Actions run [45035977001](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45035977001).
+- [ ] Install and inspect that APK on a physical Android device; export success does not establish mobile visual quality, touch interaction, collision traversal, or frame-rate performance.
+
 - [ ] Visual review of the six tower lobbies, collision traversal, kiosk ray targeting, sign readability, and Baghdad landmark sightlines remains pending; headless launch does not verify visual quality or gameplay interaction.
 - [ ] Canonical Android APK export and physical-device review remain pending for the current branch head.
 
