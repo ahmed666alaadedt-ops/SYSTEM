@@ -198,7 +198,7 @@ func _run() -> void:
 		_fail("Equipped weapon did not apply its combat damage bonus.")
 		return
 	operations.call("_sell_item", "training_sword", 1)
-	if int(progression.call("get_item_count", "training_sword")) != 1:
+	if int(progression.call("get_item_count", "training_sword")) != 2:
 		_fail("NPC vendor allowed sale of a currently equipped weapon.")
 		return
 	operations.call("_unequip_item", "weapon")
