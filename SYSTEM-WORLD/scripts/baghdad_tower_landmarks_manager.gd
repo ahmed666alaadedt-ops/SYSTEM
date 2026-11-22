@@ -558,6 +558,8 @@ func _create_tower_architecture(root: Node3D, node_name: String, title: String, 
 	root.add_child(identity_ring)
 	_create_tower_identity_features(root, node_name, height, radius)
 	_create_tower_facade_glazing(root, height, radius, floors, beacon_color)
+	if node_name != "PowerTower":
+		_create_tower_exterior_detail_pass(root, title, height, radius, beacon_color, floors)
 
 
 func _create_connected_city_links() -> void:
@@ -922,6 +924,87 @@ func _create_tower_facade_glazing(root: Node3D, height: float, radius: float, fl
 	root.add_child(accent_light)
 	root.set_meta("facade_glass_panel_count", safe_floor_count * 4)
 	root.set_meta("facade_metal_frame_count", safe_floor_count * 4)
+
+
+func _create_tower_exterior_detail_pass(root: Node3D, title: String, height: float, radius: float, beacon_color: Color, floors: int) -> void:
+	# Second-pass exterior detailing for the five Baghdad civic towers.
+	# The independent Power Tower intentionally does not use this district facade package.
+	var rib_mesh := BoxMesh.new()
+	rib_mesh.size = Vector3(1.15, height * 0.86, 1.15)
+	var rib_batch := MultiMesh.new()
+	rib_batch.transform_format = MultiMesh.TRANSFORM_3D
+	rib_batch.mesh = rib_mesh
+	rib_batch.instance_count = 8
+	for rib_index in range(8):
+		var angle := TAU * float(rib_index) / 8.0
+		var rib_position := Vector3(cos(angle) * radius * 0.94, height * 0.5 + 7.0, sin(angle) * radius * 0.94)
+		rib_batch.set_instance_transform(rib_index, Transform3D(Basis(Vector3.UP, -angle), rib_position))
+	var facade_ribs := MultiMeshInstance3D.new()
+	facade_ribs.name = "TowerFacadeVerticalDetailRibs"
+	facade_ribs.multimesh = rib_batch
+	facade_ribs.material_override = trim_material
+	root.add_child(facade_ribs)
+
+	var arcade_mesh := CylinderMesh.new()
+	arcade_mesh.top_radius = 0.72
+	arcade_mesh.bottom_radius = 0.92
+	arcade_mesh.height = 11.0
+	var arcade_batch := MultiMesh.new()
+	arcade_batch.transform_format = MultiMesh.TRANSFORM_3D
+	arcade_batch.mesh = arcade_mesh
+	arcade_batch.instance_count = 8
+	for column_index in range(8):
+		var angle := TAU * float(column_index) / 8.0
+		var column_position := Vector3(cos(angle) * radius * 1.36, 8.5, sin(angle) * radius * 1.36)
+		arcade_batch.set_instance_transform(column_index, Transform3D(Basis.IDENTITY, column_position))
+	var arcade_columns := MultiMeshInstance3D.new()
+	arcade_columns.name = "TowerEntranceArcadeColumns"
+	arcade_columns.multimesh = arcade_batch
+	arcade_columns.material_override = trim_material
+	root.add_child(arcade_columns)
+
+	var entrance_canopy := MeshInstance3D.new()
+	entrance_canopy.name = "TowerGrandEntranceCanopy"
+	var canopy_mesh := BoxMesh.new()
+	canopy_mesh.size = Vector3(radius * 1.75, 1.35, 10.0)
+	entrance_canopy.mesh = canopy_mesh
+	entrance_canopy.position = Vector3(0.0, 14.2, radius * 1.48 + 7.0)
+	entrance_canopy.material_override = tower_material
+	root.add_child(entrance_canopy)
+
+	var canopy_edge := MeshInstance3D.new()
+	canopy_edge.name = "TowerGrandEntranceCanopyLight"
+	var edge_mesh := BoxMesh.new()
+	edge_mesh.size = Vector3(radius * 1.78, 0.32, 10.15)
+	canopy_edge.mesh = edge_mesh
+	canopy_edge.position = entrance_canopy.position + Vector3(0.0, -0.78, 0.0)
+	canopy_edge.material_override = emissive_material
+	root.add_child(canopy_edge)
+
+	var entrance_sign := Label3D.new()
+	entrance_sign.name = "TowerEntranceWayfinding"
+	entrance_sign.text = title + "\\nالمدخل الرئيسي  •  " + str(floors) + " طابق"
+	entrance_sign.font_size = 28
+	entrance_sign.pixel_size = 0.014
+	entrance_sign.modulate = beacon_color
+	entrance_sign.position = Vector3(0.0, 18.0, radius * 1.48 + 12.2)
+	root.add_child(entrance_sign)
+
+	var crown_ring := MeshInstance3D.new()
+	crown_ring.name = "TowerCrownDetailRing"
+	var crown_mesh := CylinderMesh.new()
+	crown_mesh.top_radius = radius * 0.42
+	crown_mesh.bottom_radius = radius * 0.48
+	crown_mesh.height = 1.1
+	crown_ring.mesh = crown_mesh
+	crown_ring.position.y = height + 7.0 + height * 0.075
+	crown_ring.material_override = emissive_material
+	root.add_child(crown_ring)
+
+	root.set_meta("exterior_detail_pass", 2)
+	root.set_meta("exterior_vertical_rib_count", 8)
+	root.set_meta("entrance_arcade_column_count", 8)
+	root.set_meta("grand_entrance_canopy_ready", true)
 
 
 func _create_republic_bridge_access() -> void:
