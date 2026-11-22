@@ -149,7 +149,49 @@ func _run() -> void:
 	if int(progression.call("get_item_count", "water_bottle")) != 0:
 		_fail("NPC shop sale did not remove the sold inventory item.")
 		return
-	print("Baghdad tower operations validation passed: six tower interiors, 24 NPC employees, internal/external NPC-managed ads, buy/sell inventory transactions, and generated 200th-floor boss arena.")
+	progression.call("add_item", "training_sword", 1)
+	var equip_result: Dictionary = progression.call("equip_item", "training_sword")
+	if not bool(equip_result.get("success", false)) or str(progression.call("get_equipped_item", "weapon")) != "training_sword":
+		_fail("Weapon equipment slot did not accept an owned training sword.")
+		return
+	if float(progression.call("get_combat_damage_bonus")) < 5.0:
+		_fail("Equipped weapon did not apply its combat damage bonus.")
+		return
+	progression.call("add_item", "strength_elixir", 1)
+	var strength_result: Dictionary = progression.call("consume_elixir", "strength_elixir")
+	if not bool(strength_result.get("success", false)) or float(progression.call("get_combat_damage_bonus")) < 20.0:
+		_fail("Strength elixir did not apply its timed combat damage effect.")
+		return
+	progression.call("add_item", "speed_elixir", 1)
+	progression.call("consume_elixir", "speed_elixir")
+	if float(progression.call("get_movement_multiplier")) <= 1.0:
+		_fail("Speed elixir did not increase the player movement multiplier.")
+		return
+	progression.call("add_item", "endurance_elixir", 1)
+	progression.call("consume_elixir", "endurance_elixir")
+	if float(progression.call("get_defense_bonus")) < 12.0:
+		_fail("Endurance elixir did not apply a defense bonus.")
+		return
+	progression.call("add_item", "energy_elixir", 1)
+	progression.call("consume_elixir", "energy_elixir")
+	if float(progression.call("get_attack_cooldown_multiplier")) >= 1.0:
+		_fail("Energy elixir did not reduce the attack cooldown multiplier.")
+		return
+	progression.call("add_item", "nen_acquisition_elixir", 1)
+	progression.call("consume_elixir", "nen_acquisition_elixir")
+	progression.call("add_item", "nen_control_elixir", 1)
+	progression.call("consume_elixir", "nen_control_elixir")
+	if not bool(progression.get("nen_unlocked")) or int(progression.get("nen_control_rank")) != 2:
+		_fail("Nen acquisition/control elixirs did not update the player's Nen state.")
+		return
+	var health_manager: Node = main.get("player_combat_health") as Node
+	health_manager.call("receive_damage", 150.0)
+	progression.call("add_item", "healing_elixir", 1)
+	var healing_result: Dictionary = progression.call("consume_elixir", "healing_elixir")
+	if not bool(healing_result.get("success", false)) or not bool(health_manager.get("is_wounded")) or float(health_manager.get("current_health")) <= 30.0:
+		_fail("Healing elixir must restore field health without clearing the persistent wound state.")
+		return
+	print("Baghdad tower operations validation passed: six tower interiors, 24 NPC employees, internal/external NPC-managed ads, buy/sell, equipment, timed elixir effects, Nen progression and the 200th-floor sovereign boss arena.")
 	main.queue_free()
 	await process_frame
 	quit(0)
