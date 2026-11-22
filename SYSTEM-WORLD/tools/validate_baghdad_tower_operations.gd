@@ -1354,7 +1354,7 @@ func _run() -> void:
 						return
 				var vr_sensor := vr_active_course.get_node("VRCheckpointGate_%02d/VRCheckpointSensor_%02d" % [_step, _step]) as Area3D
 				vr_sensor.body_entered.emit(player)
-					final_activity_result = {"success": true, "completed": operations.get("active_facility_activity").is_empty(), "step": _step + 1}
+				final_activity_result = {"success": true, "completed": operations.get("active_facility_activity").is_empty(), "step": _step + 1}
 				elif str(activity_type) in ["bowling", "sports_court", "arcade"]:
 				final_activity_result = await operations.call("perform_facility_activity", str(activity_case[0]))
 			else:
