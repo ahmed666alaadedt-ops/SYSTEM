@@ -394,15 +394,15 @@ func _run() -> void:
 	var final_boss_test := final_boss_script.new() as Node3D
 	root.add_child(final_boss_test)
 	final_boss_test.call("configure", tower_player, null, 100.0, 12.0, 2.5, true, true)
-	await process_frame
+	await physics_frame
 	final_boss_test.call("take_damage", 51.0, tower_player)
-	await process_frame
+	await physics_frame
 	if int(final_boss_test.get("boss_phase")) != 2:
 		_fail("Power Tower sovereign boss did not enter its second health phase.")
 		final_boss_test.queue_free()
 		return
 	final_boss_test.call("take_damage", 31.0, tower_player)
-	await process_frame
+	await physics_frame
 	if int(final_boss_test.get("boss_phase")) != 3:
 		_fail("Power Tower sovereign boss did not enter its final health phase.")
 		final_boss_test.queue_free()
