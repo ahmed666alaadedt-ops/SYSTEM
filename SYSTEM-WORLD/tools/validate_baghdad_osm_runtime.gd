@@ -66,6 +66,78 @@ func _run_validation() -> void:
 		_fail("Baghdad OSM building collision bodies were not created.")
 		return
 
+	if streamer.entrance_association_schema_version != 1:
+		_fail("Baghdad OSM runtime pack has no supported entrance association metadata.")
+		return
+	# Cell 0:2 is part of the verified 5x5 source sample and contains mapped
+	# entrance nodes. Keep the center-cell geometry checks above independent.
+	var entrance_cell_id := Vector2i(0, 2)
+	streamer._load_cell(entrance_cell_id)
+	var entrance_cell := streamer.get_cell_node(entrance_cell_id)
+	if entrance_cell == null:
+		_fail("Baghdad entrance sample cell 0:2 did not load.")
+		return
+	var entrance_cell_path := streamer.data_root.path_join("cells").path_join("0_2.json")
+	var entrance_tile: Variant = JSON.parse_string(FileAccess.get_file_as_string(entrance_cell_path))
+	if not entrance_tile is Dictionary:
+		_fail("Baghdad entrance sample cell JSON could not be read.")
+		return
+	var entrance_layers: Dictionary = entrance_tile.get("layers", {})
+	var source_entrances: Array = entrance_layers.get("entrances", [])
+	var expected_runtime_entrances := 0
+	for source_entrance in source_entrances:
+		var source_association: Dictionary = source_entrance.get("association", {})
+		if str(source_association.get("status", "")) in ["accepted", "restricted"]:
+			expected_runtime_entrances += 1
+	var runtime_entrance_roots := entrance_cell.find_children("OSMEntrance_*", "Node3D", true, false)
+	if runtime_entrance_roots.size() != expected_runtime_entrances or runtime_entrance_roots.is_empty():
+		_fail("Runtime entrance markers do not match accepted/restricted source associations.")
+		return
+	var accepted_runtime_entrances := 0
+	for entrance_root_value in runtime_entrance_roots:
+		var entrance_root := entrance_root_value as Node3D
+		var entrance_interaction := entrance_root.get_node_or_null("MappedEntranceInteraction") as StaticBody3D
+		if entrance_interaction == null:
+			_fail("A mapped entrance marker has no interaction collision body.")
+			return
+		var association_status := str(entrance_interaction.get_meta("system_association_status", ""))
+		if association_status not in ["accepted", "restricted"]:
+			_fail("An unreviewed entrance association was exposed to the runtime.")
+			return
+		var entrance_id := str(entrance_interaction.get_meta("osm_feature_id", ""))
+		var associated_building_id := str(entrance_interaction.get_meta("system_associated_building_id", ""))
+		if entrance_id.is_empty() or associated_building_id.is_empty():
+			_fail("A runtime entrance is missing its source ID or stable associated building ID.")
+			return
+		var linked_building_found := false
+		for building_body_value in entrance_cell.find_children("OSMBuildingCollision_*", "StaticBody3D", true, false):
+			var building_body := building_body_value as StaticBody3D
+			if str(building_body.get_meta("system_location_id", "")) != associated_building_id:
+				continue
+			var linked_ids: Array = building_body.get_meta("system_verified_entrance_ids", [])
+			if not linked_ids.has(entrance_id):
+				_fail("The associated building does not retain the source entrance ID.")
+				return
+			linked_building_found = true
+			break
+		if not linked_building_found:
+			_fail("A runtime entrance points to a building that is not present in its streamed cell.")
+			return
+		if association_status == "accepted":
+			accepted_runtime_entrances += 1
+			if str(entrance_interaction.get_meta("system_access_state", "")) != "verified_building_association_no_door_or_interior":
+				_fail("An accepted source entrance was incorrectly marked as an enterable door.")
+				return
+		else:
+			if str(entrance_interaction.get_meta("system_access_state", "")) != "restricted_no_public_entry":
+				_fail("A restricted source entrance was not kept inaccessible.")
+				return
+	if accepted_runtime_entrances == 0:
+		_fail("The Baghdad entrance sample cell contains no accepted building associations.")
+		return
+	print("Baghdad entrance association runtime passed: source_points=", source_entrances.size(), " linked_markers=", runtime_entrance_roots.size(), " accepted=", accepted_runtime_entrances)
+	streamer._unload_cell(entrance_cell_id)
+
 	var archaeological_feature := {
 		"id": "validator_archaeological_site",
 		"tags": {"historic": "archaeological_site", "name:ar": "موقع أثري اختباري"},
