@@ -253,6 +253,20 @@ func _run() -> void:
 			_fail("Interior floor collision is missing for " + tower_id)
 			return
 		if tower_id != "power_tower_baghdad":
+			var service_kiosk := room.get_node_or_null("ServiceKiosk_0/TowerServiceInteraction") as Area3D
+			if service_kiosk == null or str(service_kiosk.get_meta("system_tower_id", "")) != tower_id or int(service_kiosk.get_meta("system_tower_floor_number", 0)) != 1:
+				_fail("Tower floor service kiosk metadata is missing or incorrect for " + tower_id)
+				return
+			if not operations.has_method("open_floor_services"):
+				_fail("Tower floor kiosk service routing method is missing.")
+				return
+			operations.call("open_floor_services", tower_id, 1)
+			var service_panel := operations.get("panel") as Control
+			if service_panel == null or not service_panel.visible:
+				_fail("Tower floor kiosk did not open its assigned NPC service for " + tower_id)
+				return
+			service_panel.hide()
+		if tower_id != "power_tower_baghdad":
 			var theme_root := room.get_node_or_null("FloorThemeIdentity") as Node3D
 			var theme_props := theme_root.get_node_or_null("FloorThemeProps") as Node3D if theme_root != null else null
 			if theme_root == null or theme_props == null or theme_props.get_child_count() < 5 or str(room.get_meta("system_floor_theme_id", "")).is_empty():
