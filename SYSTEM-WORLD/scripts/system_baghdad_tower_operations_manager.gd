@@ -239,6 +239,8 @@ var npc_purchase_count := 0
 
 var facility_activity_stats: Dictionary = {}
 var active_facility_activity: Dictionary = {}
+var current_facility_root: Node3D
+var bowling_throw_in_progress := false
 
 func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_power_manager: Node, p_player_health: Node, p_region_manager: Node) -> void:
 	player = p_player
@@ -2205,7 +2207,44 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 				_add_facility_box(root, "CourtHoop_%s" % str(side), Vector3(side * 10.0, 3.0, 0.0), Vector3(0.25, 5.0, 0.25), highlight)
 		"bowling":
 			for index in range(3):
-				_add_facility_box(root, "BowlingLane_%02d" % index, Vector3(-7.0 + float(index) * 7.0, 0.15, -1.0), Vector3(5.0, 0.25, 14.0), accent)
+				_add_facility_box(root, "BowlingLane_%02d" % index, Vector3(-7.0 + float(index) * 7.0, 0.55, -1.0), Vector3(5.0, 0.25, 14.0), accent)
+			var lane_body := StaticBody3D.new()
+			lane_body.name = "BowlingLanePhysics"
+			lane_body.position = Vector3(0.0, 0.55, -1.0)
+			var lane_collision := CollisionShape3D.new()
+			var lane_shape := BoxShape3D.new()
+			lane_shape.size = Vector3(5.0, 0.25, 14.0)
+			lane_collision.shape = lane_shape
+			lane_body.add_child(lane_collision)
+			root.add_child(lane_body)
+			var pin_positions := [
+				Vector3(0.0, 1.48, -5.4),
+				Vector3(-0.48, 1.48, -6.2), Vector3(0.48, 1.48, -6.2),
+				Vector3(-0.96, 1.48, -7.0), Vector3(0.0, 1.48, -7.0), Vector3(0.96, 1.48, -7.0),
+				Vector3(-1.44, 1.48, -7.8), Vector3(-0.48, 1.48, -7.8), Vector3(0.48, 1.48, -7.8), Vector3(1.44, 1.48, -7.8)
+			]
+			for pin_index in range(pin_positions.size()):
+				var pin := RigidBody3D.new()
+				pin.name = "BowlingPin_%02d" % pin_index
+				pin.mass = 0.7
+				pin.continuous_cd = true
+				var pin_mesh := MeshInstance3D.new()
+				var pin_capsule := CapsuleMesh.new()
+				pin_capsule.radius = 0.28
+				pin_capsule.height = 1.35
+				pin_mesh.mesh = pin_capsule
+				var pin_material := StandardMaterial3D.new()
+				pin_material.albedo_color = Color(0.92, 0.92, 0.86)
+				pin_mesh.material_override = pin_material
+				pin.add_child(pin_mesh)
+				var pin_collision := CollisionShape3D.new()
+				var pin_shape := CapsuleShape3D.new()
+				pin_shape.radius = 0.28
+				pin_shape.height = 1.35
+				pin_collision.shape = pin_shape
+				pin.add_child(pin_collision)
+				pin.position = pin_positions[pin_index]
+				root.add_child(pin)
 		"cinema":
 			_add_facility_box(root, "CinemaScreen", Vector3(0.0, 3.0, -10.0), Vector3(20.0, 6.0, 0.35), highlight)
 			for row in range(3):
@@ -2283,6 +2322,8 @@ func open_facility_service(tower_id: String, floor_number: int, facility_type: S
 		return
 	current_tower_id = tower_id
 	current_staff_id = ""
+	var facility_room := _ensure_floor_room(tower_id, floor_number)
+	current_facility_root = facility_room.get_node_or_null("SpecialFacility_" + facility_type) as Node3D if facility_room != null else null
 	_clear_dynamic_controls()
 	var facility_names := {
 		"swimming_pool": "مسبح SYSTEM — تحدي السباحة",
@@ -2375,6 +2416,8 @@ func perform_facility_activity(action: String) -> Dictionary:
 	if action != str(active_facility_activity.get("action", "")):
 		return {"success": false, "reason": "هذا الإجراء لا يخص النشاط الحالي."}
 	var facility_type := str(active_facility_activity.get("type", ""))
+	if facility_type == "bowling":
+		return _launch_bowling_ball()
 	var step := int(active_facility_activity.get("step", 0)) + 1
 	var score_gain := 1
 	match facility_type:
@@ -2395,6 +2438,90 @@ func perform_facility_activity(action: String) -> Dictionary:
 		return _complete_facility_activity()
 	_set_status("النشاط مستمر — الخطوة %d من %d | النتيجة: %d" % [step, goal, int(active_facility_activity.get("score", 0))])
 	return {"success": true, "completed": false, "step": step, "score": int(active_facility_activity.get("score", 0))}
+
+
+func _launch_bowling_ball() -> Dictionary:
+	if bowling_throw_in_progress:
+		return {"success": false, "reason": "الكرة السابقة ما زالت تتحرك."}
+	if current_facility_root == null or not is_instance_valid(current_facility_root):
+		return {"success": false, "reason": "مسار البولينغ غير جاهز."}
+	var pins: Array[RigidBody3D] = []
+	for child in current_facility_root.get_children():
+		if child is RigidBody3D and str(child.name).begins_with("BowlingPin_"):
+			pins.append(child as RigidBody3D)
+	if pins.size() != 10:
+		return {"success": false, "reason": "لم تكتمل دبابيس البولينغ العشرة."}
+	bowling_throw_in_progress = true
+	var ball := RigidBody3D.new()
+	ball.name = "BowlingBall_Active"
+	ball.mass = 5.0
+	ball.continuous_cd = true
+	var ball_mesh := MeshInstance3D.new()
+	var sphere_mesh := SphereMesh.new()
+	sphere_mesh.radius = 0.38
+	sphere_mesh.height = 0.76
+	ball_mesh.mesh = sphere_mesh
+	var ball_material := StandardMaterial3D.new()
+	ball_material.albedo_color = Color(0.08, 0.72, 0.86)
+	ball_material.metallic = 0.32
+	ball_material.roughness = 0.24
+	ball_mesh.material_override = ball_material
+	ball.add_child(ball_mesh)
+	var ball_collision := CollisionShape3D.new()
+	var ball_shape := SphereShape3D.new()
+	ball_shape.radius = 0.38
+	ball_collision.shape = ball_shape
+	ball.add_child(ball_collision)
+	current_facility_root.add_child(ball)
+	ball.position = Vector3(0.0, 1.08, 4.2)
+	var aim := Input.get_axis("ui_left", "ui_right")
+	ball.apply_central_impulse(Vector3(aim * 2.4, 1.1, -15.5))
+	_set_status("الكرة انطلقت! راقب الدبابيس...")
+	await get_tree().create_timer(2.5).timeout
+	if not is_instance_valid(ball):
+		bowling_throw_in_progress = false
+		return {"success": false, "reason": "انتهت محاولة الرمي قبل تسجيل النتيجة."}
+	var knocked_down := 0
+	for pin in pins:
+		if not is_instance_valid(pin):
+			continue
+		var tilt := pin.rotation.x + pin.rotation.z
+		var displacement := Vector2(pin.position.x, pin.position.z).distance_to(Vector2(0.0, -6.6 + float(pins.find(pin)) * 0.0))
+		if absf(tilt) > 0.65 or displacement > 0.55 or pin.position.y < 0.8:
+			knocked_down += 1
+	ball.queue_free()
+	for pin_index in range(pins.size()):
+		var pin := pins[pin_index]
+		if not is_instance_valid(pin):
+			continue
+		pin.freeze = true
+		pin.linear_velocity = Vector3.ZERO
+		pin.angular_velocity = Vector3.ZERO
+		pin.rotation = Vector3.ZERO
+		pin.position = _bowling_pin_start_position(pin_index)
+		pin.freeze = false
+	var step := int(active_facility_activity.get("step", 0)) + 1
+	active_facility_activity["step"] = step
+	active_facility_activity["score"] = int(active_facility_activity.get("score", 0)) + knocked_down
+	bowling_throw_in_progress = false
+	var goal := int(active_facility_activity.get("goal", 10))
+	var score := int(active_facility_activity.get("score", 0))
+	if step >= goal:
+		var result := _complete_facility_activity()
+		result["last_throw"] = knocked_down
+		return result
+	_set_status("رميت %d دبابيس — الإطار %d/%d | المجموع: %d" % [knocked_down, step, goal, score])
+	return {"success": true, "completed": false, "step": step, "pins": knocked_down, "score": score}
+
+
+func _bowling_pin_start_position(pin_index: int) -> Vector3:
+	var positions := [
+		Vector3(0.0, 1.48, -5.4),
+		Vector3(-0.48, 1.48, -6.2), Vector3(0.48, 1.48, -6.2),
+		Vector3(-0.96, 1.48, -7.0), Vector3(0.0, 1.48, -7.0), Vector3(0.96, 1.48, -7.0),
+		Vector3(-1.44, 1.48, -7.8), Vector3(-0.48, 1.48, -7.8), Vector3(0.48, 1.48, -7.8), Vector3(1.44, 1.48, -7.8)
+	]
+	return positions[clampi(pin_index, 0, positions.size() - 1)]
 
 
 func _complete_facility_activity() -> Dictionary:
