@@ -981,3 +981,13 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Confirm the bowling 10-frame scoring engine, strike/spare bonus calculations, tenth-frame bonus rolls, physical pin rack persistence and all three deterministic score regressions are included in the validated source.
 - [x] Confirm the Shopping Tower restaurant dine-in tables, paid multi-item orders, chef/waiter order lifecycle and local save/load regression are included in the validated source.
 - [ ] Physical Android touch, collision feel, visuals, thermal load and frame-rate inspection remain outstanding.
+
+
+### Basketball 1v1 match loop — 22 November 2026
+
+- [x] Upgrade the five-shot basketball activity into a ten-possession 1v1 match with alternating player and AI-opponent shots.
+- [x] Make both player and opponent shots use physical rigid-body balls and the same hoop scoring sensor; track player/opponent scores separately.
+- [x] Add match result calculation (win/draw/loss) and small fair completion bonuses for wins/draws.
+- [x] Extend the operations validator to complete a full ten-possession match and assert both scores plus a valid final result.
+- [ ] Run Godot 4.3 full validation and canonical Android export on this match change before claiming it verified.
+- Note: this is a local single-player 1v1 prototype; online multiplayer, team roster rules, fouls and full tournament scheduling remain future work.
