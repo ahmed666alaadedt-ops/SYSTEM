@@ -846,6 +846,59 @@ func _run() -> void:
 	operations.set("credits", original_hotel_credits)
 	operations.call("_save_hotel_bookings")
 	operations.call("_save_wallet")
+	var restaurant_floor := operations.call("_ensure_floor_room", "shopping_tower_baghdad", 29) as Node3D
+	if restaurant_floor == null:
+		_fail("Shopping Tower restaurant floor 29 was not generated.")
+		return
+	var restaurant_table_count := 0
+	var restaurant_table_interaction: StaticBody3D
+	for table_index in range(4):
+		var table_root := restaurant_floor.get_node_or_null("RestaurantTable_%02d" % table_index) as Node3D
+		var table_body := table_root.get_node_or_null("RestaurantTableInteraction") as StaticBody3D if table_root != null else null
+		if table_body != null and table_body.has_meta("system_restaurant_table_id") and table_body.has_meta("system_interaction_prompt"):
+			restaurant_table_count += 1
+			if restaurant_table_interaction == null:
+				restaurant_table_interaction = table_body
+	if restaurant_table_count != 4 or restaurant_table_interaction == null:
+		_fail("Restaurant floor must generate four physical, interactable dining tables.")
+		return
+	if not operations.has_method("open_restaurant_table") or not operations.has_method("_place_restaurant_order") or not operations.has_method("_advance_restaurant_order") or not operations.has_method("_save_restaurant_orders") or not operations.has_method("_load_restaurant_orders"):
+		_fail("Restaurant table ordering and kitchen service lifecycle methods are missing.")
+		return
+	var restaurant_orders_snapshot: Dictionary = operations.get("restaurant_orders").duplicate(true)
+	var restaurant_history_snapshot: Array = operations.get("restaurant_order_history").duplicate(true)
+	var restaurant_drafts_snapshot: Dictionary = operations.get("restaurant_draft_items").duplicate(true)
+	var restaurant_credits_snapshot := int(operations.get("credits"))
+	var restaurant_test_table_id := "validator_restaurant_table"
+	operations.set("restaurant_orders", {})
+	operations.set("restaurant_order_history", [])
+	operations.set("restaurant_draft_items", {restaurant_test_table_id: [{"item_id": "restaurant_kebab", "name": "كباب عراقي", "price": 68}, {"item_id": "restaurant_fresh_juice", "name": "عصير طازج", "price": 22}]})
+	operations.set("credits", maxi(restaurant_credits_snapshot, 200))
+	operations.call("_place_restaurant_order", restaurant_test_table_id)
+	var restaurant_test_order: Dictionary = operations.get("restaurant_orders").get(restaurant_test_table_id, {})
+	var restaurant_order_ok := str(restaurant_test_order.get("status", "")) == "placed" and int(restaurant_test_order.get("total", 0)) == 90 and int(operations.get("credits")) == maxi(restaurant_credits_snapshot, 200) - 90
+	if restaurant_order_ok:
+		operations.call("_advance_restaurant_order", restaurant_test_table_id, "preparing")
+		operations.call("_save_restaurant_orders")
+		operations.set("restaurant_orders", {})
+		operations.call("_load_restaurant_orders")
+		restaurant_test_order = operations.get("restaurant_orders").get(restaurant_test_table_id, {})
+		restaurant_order_ok = str(restaurant_test_order.get("status", "")) == "preparing"
+	if restaurant_order_ok:
+		operations.call("_advance_restaurant_order", restaurant_test_table_id, "ready")
+		operations.call("_advance_restaurant_order", restaurant_test_table_id, "served")
+		operations.call("_advance_restaurant_order", restaurant_test_table_id, "completed")
+		var restaurant_history: Array = operations.get("restaurant_order_history")
+		restaurant_order_ok = not operations.get("restaurant_orders").has(restaurant_test_table_id) and not restaurant_history.is_empty() and str(restaurant_history[-1].get("status", "")) == "completed"
+	operations.set("restaurant_orders", restaurant_orders_snapshot)
+	operations.set("restaurant_order_history", restaurant_history_snapshot)
+	operations.set("restaurant_draft_items", restaurant_drafts_snapshot)
+	operations.set("credits", restaurant_credits_snapshot)
+	operations.call("_save_restaurant_orders")
+	operations.call("_save_wallet")
+	if not restaurant_order_ok:
+		_fail("Restaurant ordering failed payment, persisted kitchen preparation, serving and table-release lifecycle checks.")
+		return
 	var boss_room := operations.call("_ensure_floor_room", "power_tower_baghdad", 200) as Node3D
 	if boss_room == null or boss_room.get_node_or_null("BossTrialPlatform") == null:
 		_fail("Power Tower floor 200 boss arena was not generated.")
