@@ -612,6 +612,7 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Add a physics-space shape query before each flight movement step to block movement into collidable world geometry.
 - [x] Pause the on-foot player movement loop while piloting so the character controller cannot fight the aircraft controller.
 - [x] Expose pilot authorization in the runtime status for automated verification.
+- [x] Track simultaneous touch-button presses independently so releasing one direction does not cancel another held direction.
 - [ ] Pass Godot 4.3 parsing, headless startup and the expanded helicopter runtime validator; then pass canonical Android APK export on the same commit.
 - [ ] Add robust aircraft body collision, terrain-aware flight physics, emergency landing, aircraft parking persistence and flight safety validation.
 - [ ] Review rooftop approach clearance, touch layout, camera behavior, collision traversal, lighting and Android performance on a physical device.
