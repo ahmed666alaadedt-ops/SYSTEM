@@ -531,3 +531,13 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [ ] Pass the newest CI run after the vendor stock, crafting-station and lobby-lift extensions.
 - [ ] Add visual weapon/armour attachments, weapon-specific animations, real Nen abilities, crafting discovery/upgrade/repair systems and physical Android interaction/performance review.
 - [ ] Add online/server-authoritative wallet, vendor stock, player leaderboard and multiplayer Power Tower matchmaking; current economy/progression/records are local.
+
+
+### Power Tower challenge objective pass — 22 November 2026
+
+- [x] Survival arena floors now run timed survival objectives with sequential enemy waves; surviving until the timer ends clears the floor.
+- [x] Championship arena floors now require clearing all waves before their time limit; failure abandons the attempt and leaves the same floor available for retry.
+- [x] Arena signage displays the active objective and live countdown; the timer begins only after the elevator reaches the floor.
+- [x] Automated validator checks every floor from 1 to 200 for valid level gates, boss cadence, wave counts, rewards and timed objective profiles.
+- [x] Latest Godot 4.3 validation workflow passed on the current tested source revision, including all tower, NPC commerce, crafting, equipment/elixir/Nen, elevator and Power Tower checks.
+- [ ] Latest Android APK export workflow is still running; physical Android visual/touch/performance review remains outstanding.
