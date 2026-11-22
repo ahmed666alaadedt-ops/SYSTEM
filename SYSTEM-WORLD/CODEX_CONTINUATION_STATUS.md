@@ -122,5 +122,5 @@ Code validated on commit `83db22c01e7ecf1addd01ce01cbb1b341bd1fdc8`:
 - Added two interior advertising screens to each of the five connected tower lobbies; placements are on side walls to preserve the Hunter examination tunnel and lobby access.
 - Extended `validate_baghdad_tower_integration.gd` to require both exterior and interior screen structures and labels for all five connected towers.
 - Updated `MODERN_WORLD_COMPLETION_TRACKER.md` with the advertising-screen milestone and remaining runtime/mobile verification.
-- GitHub combined commit status currently reports no checks for this commit; Godot parser, full validator suite, headless scene startup and Android visual/performance checks have not yet been confirmed. Do not mark the tower district complete.
+- Godot 4.3 workflow run `45006710400` completed successfully on exact checkpoint `6440c249a29470028c8ad02f3cb97fb563f406ce`: resource import/script parsing, configured gameplay validators including Baghdad tower integration, missing-mesh scan, and headless main-scene launch all passed. Physical Android visual/performance checks remain open. Do not mark the tower district complete.
 - `main` remains untouched. Do not merge this work without the user's explicit approval.
