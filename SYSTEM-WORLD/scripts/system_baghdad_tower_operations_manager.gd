@@ -1963,7 +1963,7 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 	deck_collision.shape = deck_shape
 	body.add_child(deck_collision)
 	for segment in range(20):
-		if segment == 0 or segment == 10:
+		if segment == 0 or segment == 15:
 			continue
 		var angle := TAU * float(segment) / 20.0
 		var wall_mesh_instance := MeshInstance3D.new()
