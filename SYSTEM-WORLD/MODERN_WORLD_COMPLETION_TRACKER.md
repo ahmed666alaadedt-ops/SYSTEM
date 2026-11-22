@@ -695,6 +695,7 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Reject malformed saved transform values and out-of-bounds parking coordinates, falling back to the designated rooftop spawn.
 - [x] Extend the Baghdad tower operations validator to save a test parking transform, reload it, and assert that the parked position is restored.
 - [x] Expand swept-position clearance checks to cover the fuselage/tail boom, the full main-rotor disc, and the tail rotor instead of checking only the center body.
-- [ ] Pass the updated Godot 4.3 validator and Android APK export on the current PR head, including emergency-landing and main-rotor obstacle regression coverage.
+- [x] Pass Godot 4.3 parsing, headless startup, full Baghdad tower operations validation, helicopter parking position/orientation persistence, controlled emergency landing, and main-rotor obstacle-clearance regression on tested source HEAD `5253e8a5becbfc5745a95b13f82f2c58111d11a7` (workflow run `45052867549`).
+- [x] Pass canonical Android APK export on the same tested source HEAD; artifact `SYSTEM-WORLD-canonical-android-debug-apk`, 35,810,354 bytes, expires 6 December 2026 (workflow run `45052867541`).
 - [ ] Verify parking persistence across a real Android app force-close/relaunch cycle; CI uses an isolated test profile and does not prove device persistence.
 - Note: this is local-device parking persistence only. It does not synchronize the aircraft location between online players or across devices.
