@@ -149,3 +149,10 @@ Use the user's uploaded futuristic Baghdad skyline image as the current visual r
 The current procedural source pass adds named visual blockout facility zones by tower: Hunter registration, mission hall, Hall of Honor and clinic; business headquarters, investment exchange, conference center and hotel; shopping atrium, food court, restaurant/cafe gallery and a six-hall cinema layout with 24 visual seat markers per hall; entertainment atrium, esports/arcade, live-events hall, bowling/VR markers, observation-wheel and sky-pool markers; technology research labs, robotics/AI, innovation expo and digital library. It also adds a central SYSTEM spire marker and three shared sky-garden terrace meshes.
 
 Implementation boundary: these are visual blockout meshes, labels and metadata only. Cinema playback, seats as usable objects, shop transactions, hotel booking, rides, pools, sports activities, elevators, doors, NPC services, interior navigation, complete collisions, and the central sky-garden gameplay are not yet interactive or validated. Do not describe the five-tower district as finished until those are implemented and tested in Godot and on Android.
+
+
+## Tower podium and accessible facility shell update — 22 November 2026
+
+Each of the five towers receives a three-level public podium/arrival hall with visible cylindrical floor plates, static floor collision, glass-pillar markers, accent rings and a tower-specific arrival sign. Facility zones use open-front room shells rather than solid placeholder blocks: each shell has a floor plate and collision, left/right/rear walls, and a raised entrance lintel that leaves the front open. The cinema's six hall layouts also receive floor/collision markers.
+
+These are still blockout structures, not finished interiors. Functional elevators, emergency stairs, floor selection, service NPCs, interior navigation, retail/hotel/food transactions, cinema playback/tickets and recreation interactions remain to be implemented and validated.
