@@ -168,7 +168,6 @@ func _run() -> void:
 		_fail("Hunter rank progression script could not load.")
 		return
 	var rank_probe := rank_probe_script.new() as Node
-	main.add_child(rank_probe)
 	rank_probe.set("verified_hunter_mission_points", 0)
 	if str(rank_probe.call("get_hunter_rank")) != "F":
 		_fail("New hunters must begin at F rank.")
@@ -208,7 +207,7 @@ func _run() -> void:
 	if str(rank_probe.call("get_hunter_rank")) != "SSS":
 		_fail("SSS rank must require explicit Hunter Examination Board approval.")
 		return
-	rank_probe.queue_free()
+	rank_probe.free()
 	pilot_progression.set("current_level", 50)
 	exam_manager.set("completed_stage_ids", all_stage_ids)
 	if not helipad.has_method("_is_aircraft_position_clear"):
