@@ -2,62 +2,88 @@
 
 **Last updated:** 2026-11-22  
 **Active development branch:** `work/baghdad-system-integration`  
-**Latest source/workflow commit before this checkpoint refresh:** `980cb44ce641a77a1dbaae3dbb7f67bd9ac533cc`  
-**Canonical runtime:** `SYSTEM-WORLD/` (Godot 4.3)  
-**Main branch policy:** do not edit, merge into, rebase onto, or otherwise change `main` without the owner's explicit instruction.
+**Latest verified gameplay/code commit:** `83db22c01e7ecf1addd01ce01cbb1b341bd1fdc8`  
+**Latest tracker documentation commit:** `1c65159f6b8831c12897565ed716166dd104a6d0`  
+**Main branch SHA:** `dff4e9d377ffaae6845e6f401c47346e51ea5619`  
+**Canonical runtime:** `SYSTEM-WORLD/` (Godot 4.3)
 
 ## Branch integrity
 
-- The requested development branch exists and is the active work branch.
-- At the latest comparison, `work/baghdad-system-integration` was 532 commits ahead and 3 commits behind `main`, with a diverged history.
-- Do not merge or rebase automatically. Preserve the branch's existing work and continue only on this branch.
-- No files were deleted in the current work slice.
+- `work/baghdad-system-integration` is the active work branch.
+- Latest comparison after the tracker update: branch is **551 commits ahead and 3 commits behind** `main`; history remains diverged.
+- Do not merge, rebase, or synchronize automatically. The owner has not authorized any main-branch integration.
+- No files were deleted in this work slice.
+- No changes were made to `main`.
 
-## Last completed implementation slice
-
-The immediate queue item was evidence-based association of Baghdad's source-mapped entrance nodes with their actual OSM building footprints. The following source changes were committed on the active branch:
+## Completed Baghdad OSM source association
 
 1. `tools/geospatial/associate_baghdad_entrances.py`
-   - Added atomic ZIP annotation so each entrance feature carries its association status, building OSM ID, measured distance and reason in the exact runtime cell pack.
-   - Added manifest association schema version 1.
+   - Associates source entrance nodes with building footprints using the metric local coordinate system.
+   - Reassembles clipped building fragments before spatial matching.
+   - Writes association metadata into the exact runtime ZIP, including status, OSM building ID, distance, reason, and manifest schema version 1.
+   - Sets `runtime_pack_annotated` only after the ZIP annotation succeeds.
 2. `tools/geospatial/test_associate_baghdad_entrances.py`
-   - Added tests for embedding accepted/rejected associations and for preserving the original pack if an entrance lacks an association decision.
-3. `scripts/baghdad_osm_cell_streamer.gd`
-   - Requires association schema version 1 before creating entrance markers.
-   - Exposes only accepted or restricted associations; review/rejected candidates do not become runtime entrance interactions.
-   - Links each entrance to the matching building collision body in the same streamed cell and stores source entrance IDs on the building.
-   - Keeps restricted entrances non-public and preserves source access/wheelchair metadata.
-4. `tools/validate_baghdad_osm_runtime.gd`
-   - Adds a runtime validation pass for entrance-bearing cell 0:2, matching entrance markers to building IDs and checking restricted access behavior.
-5. `.github/workflows/verify-baghdad-osm-source.yml`
-   - Runs association and pack annotation, validates the annotated artifact, uploads the association report and cell pack, and listens to the active integration branch.
-6. `MODERN_WORLD_COMPLETION_TRACKER.md` and `ASSET_REGISTER.md`
-   - Record implementation status and explicitly keep physical doors/interiors and CI/device verification open.
+   - Covers accepted, ambiguous/review, restricted, rejected, successful ZIP annotation, and atomic failure behavior.
+3. Source workflow `44982341557`
+   - Passed the OSM boundary/cell-pack build, entrance association, and real-cell connectivity audit.
+   - Ran **30 Python unit tests successfully**.
+   - Sample 5×5 / 200 m cell pack: 30 source entrances; 25 accepted, 3 review, 2 rejected.
+   - Source artifacts: diagnostics `14738480893`; boundary candidate `14737529276`.
 
-## Evidence and validation boundary
+## Completed physical doors and building interiors
 
-- Earlier source association analysis on the 5×5 / 200 m sample contained 30 source entrance points: 25 accepted, 3 review and 2 rejected.
-- Earlier full municipal analysis contained 188 entrance points and 41,463 building footprints: 148 accepted, 11 review, 3 restricted and 26 rejected.
-- These earlier reports predate the new runtime-pack annotation and must not be presented as validation of the newly annotated pack.
-- The source workflow now triggers on `work/baghdad-system-integration`, watches the association tool/tests and runtime validator paths, and publishes the annotated pack/report. Its artifact should trigger the canonical Android workflow through the existing `workflow_run` handoff.
-- The new Python annotation tests and Godot entrance-runtime assertions still require confirmed GitHub Actions results on the updated branch head.
-- No local Godot executable is available in the current working environment; do not claim a local Godot run or Android device test.
-- The 5×5 cell pack covers only a 1 km × 1 km proof area, not all Baghdad.
+Code validated on commit `83db22c01e7ecf1addd01ce01cbb1b341bd1fdc8`:
 
-## Explicitly not complete
+1. `scripts/baghdad_osm_cell_streamer.gd`
+   - Exposes only accepted/restricted entrance associations; review/rejected points do not become public doors.
+   - Projects accepted source entrances onto suitable building wall edges and creates an actual wall opening only where placement clearance is available.
+   - Splits wall and roof meshes so the roof can be hidden while a player is inside.
+   - Builds frame posts, lintel, hinged leaf, moving collision body, interaction area, and stable links to the source entrance/building IDs.
+   - Creates category-based procedural interiors with a floor, collision, warm light, and furnishing layouts for detached houses, apartments, shops/commercial buildings, schools, healthcare buildings, hotels, mosques, churches, and general buildings.
+2. `scripts/baghdad_osm_door_interaction.gd`
+   - First interaction opens the door; the next enters the building.
+   - Entry activates interior collision and hides the roof.
+   - Interaction from inside exits, disables interior collision, restores the roof, and closes the door.
+   - Restricted doors remain closed and deny public access.
+3. `tools/validate_baghdad_osm_runtime.gd`
+   - Validates the source association, linked building, wall-opening evidence, physical leaf collision, and interaction area.
+   - Tests door open, enter, exit, roof restoration, and collision activation/deactivation.
+   - Includes a synthetic restricted-door denial test because the current sample cell has no restricted source door.
 
-- No physical door frame/leaf or wall opening has been built for these OSM entrances.
-- No open/close door animation, permission-enforced entry transition, interior scene, multi-floor apartment/shop, or full building enterability is established by this slice.
-- Baghdad's 5×5 OSM runtime sample is not the full municipal map.
-- Physical Android visual/performance inspection has not been performed.
+## Verified run evidence
+
+- Canonical Android workflow **44982486123** passed on exact checkout commit `83db22c`.
+- It passed Godot 4.3 import, Baghdad OSM runtime validation, main-scene headless launch, character companion checks, NPC society checks, and Android APK export.
+- Runtime marker from `baghdad-osm-runtime.log`:
+  - source points in cell 0:2: **21**
+  - linked runtime markers: **19**
+  - accepted associations: **19**
+  - physical doors: **19**
+  - successful interior entry/exit transitions: **19**
+  - synthetic restricted-door denial: passed
+- APK artifact: `14738163484`.
+- Validation log artifact: `14738088974`.
+- Canonical run: https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/44982486123
+
+## Evidence boundaries / not complete
+
+- The 5×5 metric cell pack is a 1 km × 1 km proof sample, not all Baghdad.
+- The 19 physical doors and transitions refer to entrance-bearing cell 0:2, not the whole municipal region.
+- The current sample had no restricted source door; restriction denial was validated with a synthetic runtime case and the Python association tests.
+- The current interiors are starter shells, not complete architectural interiors, multi-room layouts, multi-floor apartment simulations, or fully functional shops.
+- Player-camera ray-target selection and map discovery for the new physical door roots still need an explicit live-player integration test.
+- Cell boundary/unload/reload while a player is inside a building still needs validation.
+- No physical Android device visual/performance test has been performed.
+- The headless dummy renderer emits repeated `mesh_get_surface_count` null-mesh messages during teardown after the Baghdad success marker; the canonical workflow still exits successfully. Investigate if this appears in normal rendered gameplay; do not mistake it for a failed entrance/interior assertion.
 
 ## Exact next actions
 
-1. Inspect the GitHub Actions run created by the latest push to `work/baghdad-system-integration`.
-2. Confirm the source workflow's geospatial unit tests, association report, annotated pack validation and uploaded artifact.
-3. Confirm the canonical Android workflow downloaded that exact artifact and passed Godot 4.3 import, Baghdad entrance runtime validation, headless main-scene startup and APK export. Fix actual failures on this branch only.
-4. After CI passes, build the next safe gameplay slice: verified entrance geometry and doorway placement with wall openings, collision clearance, access restrictions, and a real enter/exit path. Do not fabricate entrances for buildings without accepted source/manual evidence.
-5. Continue the Baghdad landmark/tower, stadium, hunter examination, Power Tower, arena and motorsport work from the existing implementation and validators; inspect before modifying and do not repeat completed work.
-6. Update this checkpoint and the relevant tracker after each coherent verified stage.
+1. Continue on `work/baghdad-system-integration` only.
+2. Add and validate player-camera ray selection and map-discovery registration for the physical door interaction root.
+3. Validate streaming retention and state restoration when the player enters an interior near a cell boundary, then exits and the cell unloads/reloads.
+4. Expand category interiors into multi-room/multi-floor layouts and connect shop counters/inventories to the existing business/economy systems.
+5. Continue the remaining Baghdad queue from `MODERN_WORLD_COMPLETION_TRACKER.md`; inspect existing code and validators before changing anything.
+6. Update this checkpoint after the next coherent verified stage.
+7. Never merge into, rebase onto, or modify `main` without explicit owner approval.
 
-**Resume instruction:** continue from this file and the latest commit on `work/baghdad-system-integration`. Do not restart the project, do not ask the owner to repeat the vision, and do not modify `main`.
+**Resume instruction:** continue from this file and the latest commit on `work/baghdad-system-integration`. Do not restart the project, do not repeat completed work, and do not ask the owner to repeat the project vision.
