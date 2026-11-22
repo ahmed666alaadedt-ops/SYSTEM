@@ -1202,6 +1202,12 @@ func _run() -> void:
 	if bool(memory_invalid_cursor.get("valid", true)) or bool(memory_invalid_cursor.get("complete", true)):
 		_fail("Arcade memory cabinet must reject inputs after the sequence has ended.")
 		return
+	if int(operations.call("_calculate_arcade_mode_index", "shooter")) != 0 or int(operations.call("_calculate_arcade_mode_index", "memory")) != 1 or int(operations.call("_calculate_arcade_mode_index", "reflex")) != 2:
+		_fail("Arcade cabinet mode selector does not map all three playable games.")
+		return
+	if int(operations.call("_calculate_arcade_mode_index", "unknown")) != -1:
+		_fail("Arcade cabinet mode selector must reject unknown games.")
+		return
 	if int(operations.call("_calculate_arcade_reflex_score", 160)) != 23:
 		_fail("Arcade reflex cabinet should award 23 points for a 160 ms reaction.")
 		return
