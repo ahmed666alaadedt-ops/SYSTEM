@@ -937,7 +937,7 @@ func _create_osm_door(
 	root.set_meta("system_location_position", root.position)
 	root.set_meta("system_display_name", _building_display_name(building_kind, {}))
 	root.set_meta("system_associated_building_id", "baghdad_osm_building_" + building_id)
-root.set_meta("system_building_osm_id", building_id)
+	root.set_meta("system_building_osm_id", building_id)
 	root.set_meta("system_association_distance_m", float(door_spec.get("association_distance_m", -1.0)))
 	root.set_meta("system_association_status", str(door_spec.get("association_status", "")))
 	root.set_meta("system_wall_opening_built", true)
