@@ -392,3 +392,7 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Run the dedicated Godot headless lifecycle test and canonical project import/launch workflow; source changes alone are not runtime proof.
 - [ ] Persist the open/closed state across cell unload/reload through the world-state save service; this change deliberately does not claim persistence.
 - [ ] Validate doorway clearance, ray targeting from both sides, repeated interaction, and mobile-device behavior in the running game.
+
+- [x] Persist each Baghdad heritage-vault door's desired open/closed state in a local ConfigFile and restore the slab position/prompt when the heritage manager recreates its city sites.
+- [x] Connect door-state changes to the heritage manager so the saved state is updated when the player toggles the door, including during an active animation.
+- [ ] Verify local save/reload behavior in the dedicated Godot lifecycle workflow; this remains device-local persistence, not Firebase/cloud synchronization.
