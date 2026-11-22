@@ -491,6 +491,7 @@ jobs:
             ${{ runner.temp }}/baghdad-source/clipped_layers/clip-report.json
             ${{ runner.temp }}/baghdad-source/clipped_layers/*.geojson
             ${{ runner.temp }}/baghdad-source/baghdad-metric-cell-pack-5x5.zip
+            ${{ runner.temp }}/baghdad-source/baghdad-entrance-associations.json
             ${{ runner.temp }}/baghdad-source/baghdad-cell-connectivity-audit.json
             ${{ runner.temp }}/baghdad-source/ATTRIBUTION.txt
             ${{ runner.temp }}/baghdad-source/iraq.osm.pbf.sha256
