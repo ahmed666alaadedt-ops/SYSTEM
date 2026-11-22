@@ -688,6 +688,7 @@ func _create_tower_facility_blockout(root: Node3D, node_name: String, radius: fl
 			_add_facility_block(facility_root, "ConcertAndFestivalHall", Vector3(0.0, 5.0, -22.0), Vector3(38.0, 10.0, 14.0), interior, "LIVE EVENTS")
 			_add_facility_block(facility_root, "BowlingAndVRCenter", Vector3(0.0, 5.0, 22.0), Vector3(38.0, 8.0, 14.0), glass, "BOWLING • VR")
 			_create_recreation_feature_markers(facility_root, radius, glass, screen)
+			_create_entertainment_venue_layout(facility_root, glass, screen, interior)
 		"TechnologyInnovationTower":
 			facility_ids = PackedStringArray(["research_labs", "robotics_center", "ai_laboratories", "virtual_reality_lab", "innovation_incubator", "technology_exhibition", "digital_library", "prototype_workshops"])
 			_add_facility_block(facility_root, "ResearchLaboratories", Vector3(-14.0, 5.0, 0.0), Vector3(20.0, 9.0, 20.0), glass, "RESEARCH LABS")
@@ -781,6 +782,85 @@ func _add_facility_piece(parent: Node3D, node_name: String, local_position: Vect
 		collision.shape = shape
 		body.add_child(collision)
 		parent.add_child(body)
+
+
+
+func _create_entertainment_venue_layout(parent: Node3D, glass: Material, screen: Material, interior: Material) -> void:
+	var arcade := Node3D.new()
+	arcade.name = "ArcadeCabinetGallery_Blockout"
+	arcade.position = Vector3(18.0, 10.0, 0.0)
+	parent.add_child(arcade)
+	for machine_index in range(8):
+		var cabinet := Node3D.new()
+		cabinet.name = "ArcadeCabinet_%02d" % machine_index
+		cabinet.position = Vector3(-8.0 + float(machine_index) * 2.3, 0.0, 0.0)
+		arcade.add_child(cabinet)
+		_add_facility_piece(cabinet, "CabinetBody", Vector3(0.0, 1.0, 0.0), Vector3(1.25, 2.0, 0.9), interior, true)
+		_add_facility_piece(cabinet, "GlowingGameScreen", Vector3(0.0, 1.65, -0.48), Vector3(0.95, 0.65, 0.08), screen, false)
+		var title := Label3D.new()
+		title.name = "GameNumber"
+		title.text = "GAME %02d" % (machine_index + 1)
+		title.font_size = 12
+		title.position = Vector3(0.0, 2.3, -0.5)
+		title.modulate = Color(0.3, 0.9, 1.0)
+		cabinet.add_child(title)
+	var bowling := Node3D.new()
+	bowling.name = "BowlingLaneGallery_Blockout"
+	bowling.position = Vector3(0.0, 10.0, 22.0)
+	parent.add_child(bowling)
+	for lane_index in range(4):
+		var lane_x := -13.5 + float(lane_index) * 9.0
+		_add_facility_piece(bowling, "BowlingLane_%02d" % lane_index, Vector3(lane_x, 0.15, 0.0), Vector3(7.5, 0.3, 24.0), glass, true)
+		var pins := Node3D.new()
+		pins.name = "PinSet_%02d" % lane_index
+		pins.position = Vector3(lane_x, 0.45, -9.0)
+		bowling.add_child(pins)
+		for pin_index in range(10):
+			var pin := MeshInstance3D.new()
+			pin.name = "BowlingPin_%02d" % pin_index
+			var pin_mesh := CylinderMesh.new()
+			pin_mesh.top_radius = 0.08
+			pin_mesh.bottom_radius = 0.22
+			pin_mesh.height = 0.85
+			pin.mesh = pin_mesh
+			pin.position = Vector3((float(pin_index % 4) - 1.5) * 0.48, 0.45, float(pin_index / 4) * 0.52)
+			pin.material_override = interior
+			pins.add_child(pin)
+	var vr := Node3D.new()
+	vr.name = "VirtualRealityPodGallery_Blockout"
+	vr.position = Vector3(0.0, 10.0, 0.0)
+	parent.add_child(vr)
+	for pod_index in range(4):
+		var pod := MeshInstance3D.new()
+		pod.name = "VRPod_%02d" % pod_index
+		var pod_mesh := CylinderMesh.new()
+		pod_mesh.top_radius = 1.15
+		pod_mesh.bottom_radius = 1.35
+		pod_mesh.height = 2.2
+		pod.mesh = pod_mesh
+		pod.position = Vector3(-6.0 + float(pod_index) * 4.0, 1.1, 14.0)
+		pod.material_override = glass
+		vr.add_child(pod)
+	var concert := Node3D.new()
+	concert.name = "ConcertHallStageAndSeating_Blockout"
+	concert.position = Vector3(0.0, 10.0, -22.0)
+	parent.add_child(concert)
+	_add_facility_piece(concert, "ConcertStage", Vector3(0.0, 0.8, -3.5), Vector3(20.0, 1.6, 7.0), screen, true)
+	for row_index in range(4):
+		for seat_index in range(10):
+			var seat := MeshInstance3D.new()
+			seat.name = "ConcertSeat_%02d_%02d" % [row_index, seat_index]
+			var seat_mesh := BoxMesh.new()
+			seat_mesh.size = Vector3(0.8, 0.85, 0.75)
+			seat.mesh = seat_mesh
+			seat.position = Vector3(-8.0 + float(seat_index) * 1.8, 0.55, 2.0 + float(row_index) * 2.0)
+			seat.material_override = interior
+			concert.add_child(seat)
+	parent.set_meta("arcade_cabinets_visual", 8)
+	parent.set_meta("bowling_lanes_visual", 4)
+	parent.set_meta("vr_pods_visual", 4)
+	parent.set_meta("concert_seats_visual", 40)
+	parent.set_meta("venue_interactions_enabled", false)
 
 
 func _create_cinema_hall_layout(parent: Node3D, radius: float, seat_material: Material, screen_material: Material) -> void:
