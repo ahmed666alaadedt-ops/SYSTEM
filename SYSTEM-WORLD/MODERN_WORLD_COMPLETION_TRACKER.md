@@ -934,9 +934,10 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [ ] Full ten-frame bowling bonus scoring, complete team sports matches, licensed/original cinema programming and playback, full arcade cabinet gameplay, animated robotics construction and immersive VR remain open.
 
 
-## Current PR-head verification request — 22 November 2026
+## Latest Baghdad tower regression and Android export — 22 November 2026
 
-- [ ] Run the canonical Godot 4.3 validation and Android debug APK export on the current feature-branch head after the rank-board and hotel housekeeping additions.
-- [ ] Confirm the rank-board rendering, hotel checkout/housekeeping/inspection cycle, room-service order lifecycle, pool swimming, bowling pinfall, basketball scoring and arcade target detection on the same tested source commit.
-- [ ] Record the exact workflow run IDs, tested commit SHA and APK artifact only after both workflows complete successfully.
-- Note: prior Godot #1400 and Android #1137 results validate `8e3cbfce9b8184239ed2481c1043d6c8ce9075ae`, not later commits. No claim is made here that later changes have passed CI.
+- [x] Pass Godot 4.3 workflow #1405 (run ID `45065608679`) on tested source commit `976ffdf2a2b92dede330b617303ab847ae07c878`: resource import/parser, child-character safety checks, missing-mesh scan, headless main-scene launch, Baghdad tower landmark/lobby validation, and the full tower operations validator all succeeded.
+- [x] Pass canonical Android export workflow #1142 (run ID `45065608699`) on the same tested source commit; APK artifact `14770903782`, size 35,891,965 bytes, uploaded successfully and expires 6 December 2026.
+- [x] Confirm the only commit after the tested source (`06bb0ce4a3a7c7608f6ebd313274dd4e5c84992f`) changes this tracker documentation only; no gameplay source files changed after the tested code snapshot.
+- [ ] Physical Android inspection remains outstanding; automated CI does not prove touch feel, visuals, thermal behavior or frame rate on the user's device.
+- [ ] Remaining gameplay scope includes full ten-frame bowling bonus scoring, complete team sports matches, cinema programming/playback, full arcade cabinet gameplay, animated robotics construction, immersive VR and full NPC navigation.
