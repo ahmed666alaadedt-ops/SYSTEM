@@ -7,8 +7,9 @@
 - [x] Add touch-friendly horizontal aim sliders for bowling, basketball and arcade target shooting, so the player can adjust direction on a phone without keyboard input.
 - [x] Add five glowing arcade targets with Area3D hit sensors and physical energy projectiles; award points only when a projectile reaches a target sensor.
 - [x] Extend the Godot operations validator to check bowling lane/pin generation, await ten physical throws, check the basketball sensor and await five physical shots, then validate all five arcade target sensors and physical projectile attempts.
-- [ ] Run Godot 4.3 and Android export on this revision. The last confirmed successful runs (#1365/#1102) apply only to gameplay commit `bdbcf4e0c607d0aef37ca1d087163dc10ecc36a1`; these newer bowling/basketball changes remain unverified until fresh runs are available.
-- [ ] Tune physical ball trajectories, collision response and touch aiming after a real Android play session.
+- [x] Godot 4.3 full validation #1403 passed on exact gameplay commit `41fe553514b0f448bf4019ca39a2dceef6e0af0f` (run ID `45065541279`): import/parser, headless launch, tower landmarks and complete tower operations validator, including physical bowling pinfall, basketball baskets and arcade target hits.
+- [x] Canonical Android APK build #1140 passed on the same exact commit (run ID `45065541351`); APK size 35,892,104 bytes; SHA-256 `051c6b4e2d6c6bb9bb840da2baccc1fd140053caa454052428438ea6f9e7d355`; artifact expires 6 December 2026.
+- [ ] Tune physical ball trajectories, collision response and touch aiming after a real Android play session; the headless Godot physics validator now confirms at least one physical pinfall, basketball basket and arcade target hit.
 
 ## Baghdad pool movement integration — 22 November 2026
 
