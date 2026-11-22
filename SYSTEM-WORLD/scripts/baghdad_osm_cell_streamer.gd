@@ -145,13 +145,14 @@ func _ready() -> void:
 	ground_elevation_m = float(parsed.get("ground_elevation_m", NAN))
 	water_surface_elevation_m = float(parsed.get("water_surface_elevation_m", NAN))
 	bridge_deck_elevation_m = float(parsed.get("bridge_deck_elevation_m", NAN))
+	var tower_platform_source_elevation_m := float(parsed.get("bridge_tower_platform_elevation_m", NAN))
 	if ground_layer_schema_version != 1:
 		push_error("SYSTEM Baghdad OSM: verified municipal ground layer schema is required.")
 		return
-	if not is_finite(ground_elevation_m) or not is_finite(water_surface_elevation_m) or not is_finite(bridge_deck_elevation_m):
-		push_error("SYSTEM Baghdad OSM: ground, water, and bridge elevations must be finite.")
+	if not is_finite(ground_elevation_m) or not is_finite(water_surface_elevation_m) or not is_finite(bridge_deck_elevation_m) or not is_finite(tower_platform_source_elevation_m):
+		push_error("SYSTEM Baghdad OSM: ground, water, bridge, and tower-platform elevations must be finite.")
 		return
-	if not is_equal_approx(ground_elevation_m, 34.0) or not is_equal_approx(water_surface_elevation_m, 28.0) or not is_equal_approx(bridge_deck_elevation_m, 34.28):
+	if not is_equal_approx(ground_elevation_m, 34.0) or not is_equal_approx(water_surface_elevation_m, 28.0) or not is_equal_approx(bridge_deck_elevation_m, 34.28) or not is_equal_approx(tower_platform_source_elevation_m, 46.28):
 		push_error("SYSTEM Baghdad OSM: regional elevation contract does not match the verified Baghdad pack.")
 		return
 	terrain_manager = get_parent().get_node_or_null("ModernContinent")
@@ -164,7 +165,7 @@ func _ready() -> void:
 		world_ground_elevation_m = float(terrain_manager.get("baghdad_osm_world_ground_elevation_m"))
 	world_water_surface_elevation_m = world_ground_elevation_m + water_surface_elevation_m - ground_elevation_m
 	world_bridge_deck_elevation_m = world_ground_elevation_m + bridge_deck_elevation_m - ground_elevation_m
-	world_tower_platform_elevation_m = world_ground_elevation_m + float(parsed.get("bridge_tower_platform_elevation_m", 46.28)) - ground_elevation_m
+	world_tower_platform_elevation_m = world_ground_elevation_m + tower_platform_source_elevation_m - ground_elevation_m
 	add_to_group("baghdad_osm_cell_streamer")
 	_create_materials()
 	_add_attribution_overlay()
