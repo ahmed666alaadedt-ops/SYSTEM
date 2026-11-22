@@ -580,6 +580,65 @@ func _save_npc_sales_ledger() -> void:
 	config.save(NPC_SALES_SAVE_PATH)
 
 
+func _return_customer_visitors_to_lobbies() -> void:
+	for tower_id_value in customer_ids_by_tower.keys():
+		var tower_id := str(tower_id_value)
+		var tower := tower_nodes.get(tower_id) as Node3D
+		var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D if tower != null else null
+		if lobby == null:
+			continue
+		for customer_id_value in customer_ids_by_tower[tower_id]:
+			var customer_id := str(customer_id_value)
+			var visitor_name := "TowerCustomer_" + customer_id
+			var visitor: Node3D = null
+			if is_instance_valid(active_floor_root):
+				visitor = active_floor_root.get_node_or_null(visitor_name) as Node3D
+			if visitor == null:
+				continue
+			visitor.reparent(lobby, false)
+			var customer_index := int(visitor.get_meta("system_tower_customer_index", 0))
+			var radius := float(TOWER_CONFIG[tower_id].get("radius", 24.0))
+			visitor.position = Vector3((float(customer_index) - 1.5) * 3.6, 0.0, radius * 1.48 + 12.0 + float(customer_index % 2) * 3.0)
+
+
+func _place_customer_visitors_on_floor(tower_id: String, floor_number: int, room: Node3D) -> void:
+	if room == null or not customer_ids_by_tower.has(tower_id):
+		return
+	var tower := tower_nodes.get(tower_id) as Node3D
+	var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D if tower != null else null
+	if lobby == null:
+		return
+	var ids: Array = customer_ids_by_tower[tower_id]
+	if ids.is_empty():
+		return
+	var selected_count := mini(2, ids.size())
+	var floor_label := _department_for_floor(tower_id, floor_number, int(TOWER_CONFIG[tower_id].get("floors", 1)))
+	for slot in range(selected_count):
+		var customer_id := str(ids[posmod(floor_number + slot, ids.size())])
+		var visitor_name := "TowerCustomer_" + customer_id
+		var visitor := lobby.get_node_or_null(visitor_name) as Node3D
+		if visitor == null:
+			continue
+		visitor.reparent(room, false)
+		var angle := TAU * float(slot) / float(maxi(selected_count, 1))
+		var radius := float(TOWER_CONFIG[tower_id].get("radius", 24.0))
+		visitor.position = Vector3(cos(angle) * radius * 0.28, 0.0, sin(angle) * radius * 0.28)
+		visitor.set_meta("system_customer_current_floor", floor_number)
+		visitor.set_meta("system_customer_current_department", floor_label)
+		var customer_id_copy := customer_id
+		if is_instance_valid(society):
+			var customer: Dictionary = society.call("get_npc", customer_id_copy)
+			customer["current_location"] = "%s_floor_%d" % [tower_id, floor_number]
+			customer["current_action"] = "visiting_" + floor_label
+			customer["last_tower_visit"] = Time.get_datetime_string_from_system()
+			society.npcs[customer_id_copy] = customer
+		for visitor_child in visitor.get_children():
+			if visitor_child.has_method("set_activity"):
+				visitor_child.call("set_activity", "wander" if slot == 0 else "socialize")
+	if is_instance_valid(society) and society.has_method("save_society"):
+		society.call("save_society")
+
+
 func _move_customer_visitors() -> void:
 	for tower_id_value in customer_ids_by_tower.keys():
 		var tower_id := str(tower_id_value)
@@ -588,27 +647,32 @@ func _move_customer_visitors() -> void:
 		var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D if tower != null else null
 		if lobby == null:
 			continue
-		for visitor in lobby.get_children():
-			if not str(visitor.name).begins_with("TowerCustomer_"):
-				continue
-			var target_x := randf_range(-float(config.get("radius", 20.0)) * 0.9, float(config.get("radius", 20.0)) * 0.9)
-			var target_z := float(config.get("radius", 20.0)) * 1.48 + randf_range(5.0, 30.0)
-			var model: Node = null
-			for visitor_child in visitor.get_children():
-				if visitor_child.has_method("set_activity"):
-					model = visitor_child
-					break
-			if model != null:
-				model.call("set_activity", "walk")
-			var tween := create_tween()
-			tween.set_trans(Tween.TRANS_SINE)
-			tween.set_ease(Tween.EASE_IN_OUT)
-			tween.tween_property(visitor, "position", Vector3(target_x, 0.0, target_z), randf_range(3.0, 5.0))
-			if model != null:
-				tween.finished.connect(func():
-					if is_instance_valid(model):
-						model.call("set_activity", "socialize")
-				)
+		var visitor_parents: Array[Node3D] = [lobby]
+		if is_instance_valid(active_floor_root) and str(active_floor_root.get_meta("system_tower_id", "")) == tower_id:
+			visitor_parents.append(active_floor_root)
+		for visitor_parent in visitor_parents:
+			for visitor in visitor_parent.get_children():
+				if not str(visitor.name).begins_with("TowerCustomer_"):
+					continue
+				var radius := float(config.get("radius", 20.0))
+				var target_x := randf_range(-radius * 0.42, radius * 0.42)
+				var target_z := randf_range(-radius * 0.42, radius * 0.42) if visitor_parent == active_floor_root else radius * 1.48 + randf_range(5.0, 30.0)
+				var model: Node = null
+				for visitor_child in visitor.get_children():
+					if visitor_child.has_method("set_activity"):
+						model = visitor_child
+						break
+				if model != null:
+					model.call("set_activity", "walk")
+				var tween := create_tween()
+				tween.set_trans(Tween.TRANS_SINE)
+				tween.set_ease(Tween.EASE_IN_OUT)
+				tween.tween_property(visitor, "position", Vector3(target_x, 0.0, target_z), randf_range(3.0, 5.0))
+				if model != null:
+					tween.finished.connect(func():
+						if is_instance_valid(model):
+							model.call("set_activity", "socialize")
+					)
 
 
 func _simulate_customer_purchases() -> void:
@@ -2303,8 +2367,11 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 	if not is_instance_valid(active_floor_root):
 		player.global_position = tower.to_global(Vector3(0.0, start_y + 1.2, 0.0))
 	if is_instance_valid(active_floor_root) and active_floor_root != room:
+		_return_customer_visitors_to_lobbies()
 		active_floor_root.queue_free()
 	active_floor_root = room
+	active_floor_root.set_meta("system_tower_id", tower_id)
+	active_floor_root.set_meta("system_tower_floor_number", floor_number)
 	if tower_id == "power_tower_baghdad":
 		active_power_objective_label = room.get_node_or_null("PowerTowerObjectiveLabel") as Label3D
 	panel.hide()
@@ -2323,6 +2390,8 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 			player.velocity = Vector3.ZERO
 		if tower_id == "power_tower_baghdad" and power_floor_in_progress:
 			_begin_power_floor()
+		elif tower_id != "power_tower_baghdad":
+			_place_customer_visitors_on_floor(tower_id, floor_number, room)
 	)
 	_set_status("عربة المصعد تتحرك إلى الطابق %d..." % floor_number)
 
