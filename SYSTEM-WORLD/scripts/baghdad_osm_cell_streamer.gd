@@ -825,6 +825,31 @@ func _build_entrance_feature(parent: Node3D, feature: Dictionary) -> int:
 	var door_kind := str(tags.get("door", "")).to_lower()
 	if entrance_kind == "no" or door_kind == "no":
 		return 0
+	var association_value: Variant = feature.get("association", {})
+	if not association_value is Dictionary:
+		return 0
+	var association: Dictionary = association_value
+	var association_status := str(association.get("status", ""))
+	if association_status not in ["accepted", "restricted"]:
+		return 0
+	var building_id := str(association.get("building_id", "")).strip_edges()
+	if building_id.is_empty():
+		return 0
+
+	# Bind the source entrance to the actual building collision body in this
+	# streamed cell. Never expose a free-floating entrance marker when the
+	# associated building is absent from the same runtime cell.
+	var associated_building: StaticBody3D
+	for child in parent.get_children():
+		if child is StaticBody3D and str(child.get_meta("osm_feature_id", "")) == building_id:
+			associated_building = child as StaticBody3D
+			break
+	if associated_building == null:
+		push_warning("SYSTEM Baghdad OSM: skipped entrance %s because its associated building %s is not present in cell %s." % [
+			str(feature.get("id", "unknown")), building_id, parent.name
+		])
+		return 0
+
 	var coordinates: Array = geometry.get("coordinates", [])
 	if coordinates.size() < 2:
 		return 0
@@ -832,21 +857,29 @@ func _build_entrance_feature(parent: Node3D, feature: Dictionary) -> int:
 	var position := Vector3(point.x, _terrain_height(point), point.y)
 	var feature_id := str(feature.get("id", "unknown"))
 	var location_id := "baghdad_osm_entrance_" + feature_id
-	var entrance_label := "مدخل مبنى موثق من بيانات OpenStreetMap"
-	if entrance_kind == "main":
-		entrance_label = "مدخل رئيسي موثق من بيانات OpenStreetMap"
+	var restricted := association_status == "restricted"
+	var entrance_label := "مدخل موثق ومرتبط بمبناه — الباب والداخلية قيد التنفيذ"
+	if restricted:
+		entrance_label = "مدخل مبنى خاص أو مقيّد — لا يوجد دخول عام"
+	elif entrance_kind == "main":
+		entrance_label = "مدخل رئيسي موثق ومرتبط بمبناه"
 	elif entrance_kind == "service":
-		entrance_label = "مدخل خدمة موثق من بيانات OpenStreetMap"
+		entrance_label = "مدخل خدمة موثق ومرتبط بمبناه"
 	elif entrance_kind == "exit":
-		entrance_label = "مخرج موثق من بيانات OpenStreetMap"
+		entrance_label = "مخرج موثق ومرتبط بمبناه"
 	elif door_kind != "":
-		entrance_label = "باب موثق من بيانات OpenStreetMap"
+		entrance_label = "باب موثق ومرتبط بمبناه"
+
 	var root := Node3D.new()
 	root.name = "OSMEntrance_%s" % feature_id
 	root.position = position
 	root.set_meta("osm_feature_id", feature_id)
-	root.set_meta("system_access_state", "mapped_entrance_point_no_interior_scene")
+	root.set_meta("system_associated_building_id", "baghdad_osm_building_" + building_id)
+	root.set_meta("system_association_distance_m", float(association.get("distance_m", -1.0)))
+	root.set_meta("system_association_status", association_status)
+	root.set_meta("system_access_state", "restricted_no_public_entry" if restricted else "verified_building_association_no_door_or_interior")
 	parent.add_child(root)
+
 	var marker := MeshInstance3D.new()
 	marker.name = "MappedEntranceMarker"
 	var mesh := CylinderMesh.new()
@@ -858,6 +891,7 @@ func _build_entrance_feature(parent: Node3D, feature: Dictionary) -> int:
 	marker.material_override = amenity_material
 	marker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(marker)
+
 	var body := StaticBody3D.new()
 	body.name = "MappedEntranceInteraction"
 	body.add_to_group("system_interactable")
@@ -873,14 +907,29 @@ func _build_entrance_feature(parent: Node3D, feature: Dictionary) -> int:
 	body.set_meta("system_fast_travel", false)
 	body.set_meta("system_location_position", position)
 	body.set_meta("system_display_name", entrance_label)
-	body.set_meta("system_interaction_prompt", "مدخل محدد في بيانات الخريطة")
+	body.set_meta("system_interaction_prompt", "مدخل مقيّد — لا يوجد دخول عام" if restricted else "فحص مدخل المبنى المرتبط")
 	body.set_meta("system_entrance_type", entrance_kind if entrance_kind != "" else door_kind)
 	body.set_meta("system_access_tag", str(tags.get("access", "unknown")))
 	body.set_meta("system_wheelchair_tag", str(tags.get("wheelchair", "unknown")))
-	body.set_meta("system_access_state", "mapped_entrance_point_no_interior_scene")
+	body.set_meta("system_associated_building_id", "baghdad_osm_building_" + building_id)
+	body.set_meta("system_association_distance_m", float(association.get("distance_m", -1.0)))
+	body.set_meta("system_association_status", association_status)
+	body.set_meta("system_access_state", "restricted_no_public_entry" if restricted else "verified_building_association_no_door_or_interior")
 	root.add_child(body)
-	return 1
 
+	var linked_entrances: Array = associated_building.get_meta("system_verified_entrance_ids", [])
+	if not linked_entrances.has(feature_id):
+		linked_entrances.append(feature_id)
+	associated_building.set_meta("system_verified_entrance_ids", linked_entrances)
+	associated_building.set_meta("system_verified_entrance_count", linked_entrances.size())
+	if not restricted:
+		associated_building.set_meta("system_access_state", "verified_entrance_mapped_no_door_scene")
+	else:
+		var restricted_ids: Array = associated_building.get_meta("system_restricted_entrance_ids", [])
+		if not restricted_ids.has(feature_id):
+			restricted_ids.append(feature_id)
+		associated_building.set_meta("system_restricted_entrance_ids", restricted_ids)
+	return 1
 
 func _build_historic_site_feature(parent: Node3D, feature: Dictionary) -> int:
 	var tags: Dictionary = feature.get("tags", {})
