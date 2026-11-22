@@ -55,6 +55,17 @@ func _run() -> void:
 	if tower_manager == null:
 		_fail("BaghdadTowerLandmarksManager is missing.")
 		return
+	var exam_manager := main.get_node_or_null("HunterExamManager")
+	if exam_manager == null:
+		_fail("HunterExamManager is missing.")
+		return
+	exam_manager.set("registered", true)
+	exam_manager.set("exam_active", true)
+	exam_manager.set("current_stage_index", 0)
+	var resume_result: Dictionary = exam_manager.call("begin_exam")
+	if not bool(resume_result.get("success", false)) or not bool(resume_result.get("resumed", false)):
+		_fail("An in-progress Hunter examination must resume at its saved stage.")
+		return
 	var hunter_tower := tower_manager.get_node_or_null("HunterAssociationTower") as Node3D
 	var helipad := hunter_tower.get_node_or_null("HunterAssociationHelipad") as Node3D if hunter_tower != null else null
 	if helipad == null or str(helipad.get_meta("system_owner_tower_id", "")) != "hunter_association_tower_baghdad":
