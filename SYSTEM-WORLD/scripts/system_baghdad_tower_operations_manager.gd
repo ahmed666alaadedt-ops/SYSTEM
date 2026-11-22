@@ -8,6 +8,7 @@ const SAVE_PATH := "user://system_baghdad_tower_operations.cfg"
 const STOCK_SAVE_PATH := "user://system_tower_vendor_stock.cfg"
 const HOTEL_SAVE_PATH := "user://system_baghdad_hotel_bookings.cfg"
 const WORLD_ID := 2
+const STAFF_NAMES := ["أحمد", "سارة", "علي", "نور", "حسن", "مريم", "يوسف", "ليان", "عمر", "زينب", "مصطفى", "رنا"]
 
 const TOWER_CONFIG := {
 	"hunter_association_tower_baghdad": {"node": "HunterAssociationTower", "title": "برج جمعية الصيادين", "floors": 200, "height": 1000.0, "radius": 38.0, "roles": ["مدير النقابة", "موظف الاستقبال", "موظف المهمات", "مسؤول تسجيل الاختبارات", "مستشار الرتب", "منسق النقابات", "مسؤول العلاقات العامة", "مسؤول الإعلانات"], "jobs": ["association_director", "receptionist", "mission_clerk", "exam_registrar", "rank_advisor", "guild_coordinator", "public_relations", "advertising_manager"]},
@@ -287,11 +288,13 @@ func _get_or_create_staff(tower_id: String, index: int, config: Dictionary) -> S
 			existing = str(npc_id)
 			break
 	if existing.is_empty():
-		var display_name := str(config["roles"][index]) + " " + str(index + 1)
-		existing = str(society.call("create_npc", display_name, WORLD_ID, 24.0 + float(index * 7), "professional", str(config["jobs"][index])))
+		var display_name := str(STAFF_NAMES[posmod(index + tower_id.length(), STAFF_NAMES.size())])
+		existing = str(society.call("create_npc", display_name, WORLD_ID, 24.0 + float(index * 4), "professional", str(config["jobs"][index])))
 	if existing.is_empty():
 		return ""
 	var npc: Dictionary = society.call("get_npc", existing)
+	npc["name"] = str(STAFF_NAMES[posmod(index + tower_id.length(), STAFF_NAMES.size())])
+	npc["gender"] = "female" if posmod(index, 2) == 1 else "male"
 	npc["system_tower_staff_tower"] = tower_id
 	npc["system_tower_staff_index"] = index
 	npc["system_tower_staff_role"] = str(config["jobs"][index])
@@ -556,8 +559,9 @@ func _refresh_advertisements() -> void:
 	for tower_id in tower_nodes.keys():
 		var staff_ids: Array = staff_by_tower.get(tower_id, [])
 		var manager_name := "فريق الإعلان"
-		if staff_ids.size() > 3 and is_instance_valid(society):
-			var npc: Dictionary = society.call("get_npc", str(staff_ids[3]))
+		if not staff_ids.is_empty() and is_instance_valid(society):
+			var manager_index := staff_ids.size() - 1
+			var npc: Dictionary = society.call("get_npc", str(staff_ids[manager_index]))
 			manager_name = str(npc.get("name", manager_name))
 		var message := str(AD_CAMPAIGNS[ad_index])
 		for suffix in ["_internal", "_external"]:
