@@ -164,6 +164,34 @@ func _build_tower_theme(floor_number: int) -> void:
 						_add_box("ElectronicsIsland_%02d" % index, Vector3(x, 1.3, -12.0), Vector3(14.0, 2.6, 12.0), base, true)
 						_add_box("ElectronicsDisplay_%02d" % index, Vector3(x, 5.0, -18.0), Vector3(11.0, 5.5, 0.3), accent, false)
 					_add_box("ElectronicsDemoStage", Vector3(0.0, 1.0, 28.0), Vector3(32.0, 2.0, 10.0), accent, true)
+			# The former shopping tower now combines its retail identity with a full armory.
+			for rack_index in range(4):
+				var rack_x := -36.0 + float(rack_index) * 24.0
+				_add_box("ArmoryWeaponRack_%02d" % rack_index, Vector3(rack_x, 1.6, 35.0), Vector3(15.0, 3.2, 7.0), base, true)
+				_add_box("ArmoryWeaponDisplay_%02d" % rack_index, Vector3(rack_x, 4.2, 31.2), Vector3(12.0, 3.8, 0.35), accent, false)
+			_add_box("NenPotionLaboratoryBench", Vector3(0.0, 1.1, -38.0), Vector3(34.0, 2.2, 8.0), accent, true)
+			_add_box("NenPotionContainmentCabinet_Left", Vector3(-39.0, 3.8, -34.0), Vector3(8.0, 7.6, 12.0), base, true)
+			_add_box("NenPotionContainmentCabinet_Right", Vector3(39.0, 3.8, -34.0), Vector3(8.0, 7.6, 12.0), base, true)
+			_add_box("NenAwakeningDisplay", Vector3(0.0, 5.0, -47.0), Vector3(28.0, 8.0, 0.5), accent, false)
+			var armory_label := Label3D.new()
+			armory_label.name = "ArmoryFloorIdentity"
+			armory_label.text = "معرض الأسلحة — نارية / بيضاء / أقواس / طاقة"
+			armory_label.font_size = 22
+			armory_label.position = Vector3(0.0, 9.0, 43.0)
+			armory_label.pixel_size = 0.014
+			armory_label.modulate = Color(0.96, 0.82, 0.48)
+			active_floor_root.add_child(armory_label)
+			var nen_label := Label3D.new()
+			nen_label.name = "NenLaboratoryIdentity"
+			nen_label.text = "مختبر إيقاظ النِن — SYSTEM AURA LAB"
+			nen_label.font_size = 22
+			nen_label.position = Vector3(0.0, 9.0, -43.0)
+			nen_label.pixel_size = 0.014
+			nen_label.modulate = Color(0.38, 0.88, 1.0)
+			active_floor_root.add_child(nen_label)
+			active_floor_root.set_meta("armory_display_count", 4)
+			active_floor_root.set_meta("nen_potion_lab_ready", true)
+			active_floor_root.set_meta("weapon_categories", PackedStringArray(["firearms", "swords", "daggers", "spears", "axes", "bows", "crossbows", "arrows", "energy_weapons"]))
 		"entertainment_tower_baghdad":
 			match variant:
 				0:
@@ -318,7 +346,7 @@ func _tower_title() -> String:
 	match tower_id:
 		"hunter_association_tower_baghdad": return "برج نقابة الصيادين"
 		"business_tower_baghdad": return "برج الأعمال"
-		"shopping_tower_baghdad": return "برج التسوق"
+		"shopping_tower_baghdad": return "برج الأسلحة وإيقاظ النِن"
 		"entertainment_tower_baghdad": return "برج الترفيه"
 		"technology_tower_baghdad": return "برج التكنولوجيا والابتكار"
 		_: return "برج بغداد"
