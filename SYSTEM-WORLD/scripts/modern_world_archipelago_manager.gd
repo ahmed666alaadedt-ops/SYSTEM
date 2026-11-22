@@ -6,14 +6,14 @@ class_name ModernWorldArchipelagoManager
 ## core continent and its city coordinates remain unchanged.
 
 const ISLANDS := [
-	{"name": "Northwatch Isle", "position": Vector2(-1040.0, -1010.0), "scale": Vector3(118.0, 30.0, 82.0), "style": 0},
-	{"name": "Whispering Keys", "position": Vector2(-560.0, -1030.0), "scale": Vector3(92.0, 22.0, 66.0), "style": 1},
-	{"name": "Stormglass Isle", "position": Vector2(80.0, -1015.0), "scale": Vector3(145.0, 38.0, 88.0), "style": 2},
-	{"name": "Eastern Crown", "position": Vector2(900.0, -1000.0), "scale": Vector3(128.0, 34.0, 92.0), "style": 0},
-	{"name": "Sunset Atoll", "position": Vector2(1390.0, 420.0), "scale": Vector3(105.0, 18.0, 78.0), "style": 1},
-	{"name": "Southern Reach", "position": Vector2(420.0, 1010.0), "scale": Vector3(156.0, 42.0, 104.0), "style": 2},
-	{"name": "Farwind Isle", "position": Vector2(-760.0, 1010.0), "scale": Vector3(112.0, 26.0, 84.0), "style": 1},
-	{"name": "Bluewater Haven", "position": Vector2(1320.0, -40.0), "scale": Vector3(88.0, 20.0, 66.0), "style": 0}
+	{"name": "Northwatch Isle", "position": Vector2(-1040.0, -1010.0), "scale": Vector3(118.0, 30.0, 82.0), "style": 0, "biome": "alpine"},
+	{"name": "Whispering Keys", "position": Vector2(-560.0, -1030.0), "scale": Vector3(92.0, 22.0, 66.0), "style": 1, "biome": "tropical"},
+	{"name": "Stormglass Isle", "position": Vector2(80.0, -1015.0), "scale": Vector3(145.0, 38.0, 88.0), "style": 2, "biome": "volcanic"},
+	{"name": "Eastern Crown", "position": Vector2(900.0, -1000.0), "scale": Vector3(128.0, 34.0, 92.0), "style": 0, "biome": "temperate"},
+	{"name": "Sunset Atoll", "position": Vector2(1390.0, 420.0), "scale": Vector3(105.0, 18.0, 78.0), "style": 1, "biome": "atoll"},
+	{"name": "Southern Reach", "position": Vector2(420.0, 1010.0), "scale": Vector3(156.0, 42.0, 104.0), "style": 2, "biome": "highland"},
+	{"name": "Farwind Isle", "position": Vector2(-760.0, 1010.0), "scale": Vector3(112.0, 26.0, 84.0), "style": 1, "biome": "desert"},
+	{"name": "Bluewater Haven", "position": Vector2(1320.0, -40.0), "scale": Vector3(88.0, 20.0, 66.0), "style": 0, "biome": "rocky"}
 ]
 
 const ROCK_COLORS := [
@@ -74,7 +74,177 @@ func _build_islands() -> void:
 
 		_add_tree_cluster(island_root, dimensions, style)
 		_build_shoreline_details(island_root, dimensions, style)
+		_build_island_biome_feature(
+			island_root,
+			dimensions,
+			str(data.get("biome", "temperate"))
+		)
 		_build_island_harbor(island_root, dimensions, style, str(data["name"]))
+		island_root.set_meta("system_island_biome", str(data.get("biome", "temperate")))
+
+
+## Adds one readable landmark formation per island biome without changing
+## the island footprint, harbor coordinates or existing collision surface.
+func _build_island_biome_feature(
+	parent: Node3D,
+	dimensions: Vector3,
+	biome: String
+) -> void:
+	var base_y := dimensions.y * 0.82
+	var dark_rock := _make_material(Color(0.16, 0.19, 0.21), 0.96)
+	var pale_rock := _make_material(Color(0.52, 0.54, 0.52), 0.98)
+	var snow := _make_material(Color(0.88, 0.93, 0.97), 0.92)
+	var sand := _make_material(Color(0.76, 0.65, 0.43), 1.0)
+	var water := _make_material(Color(0.025, 0.40, 0.52), 0.18)
+	var lava := _make_material(Color(1.0, 0.22, 0.035), 0.28)
+	lava.emission_enabled = true
+	lava.emission = Color(1.0, 0.12, 0.015)
+	lava.emission_energy_multiplier = 2.0
+
+	match biome:
+		"alpine":
+			_add_island_cone(parent, "SnowPeak_Main", Vector3(0.0, base_y + 15.0, 0.0), 34.0, 30.0, pale_rock)
+			_add_island_cone(parent, "SnowCap_Main", Vector3(0.0, base_y + 27.0, 0.0), 15.0, 8.0, snow)
+			_add_island_cone(parent, "SnowPeak_West", Vector3(-34.0, base_y + 9.0, 12.0), 19.0, 18.0, pale_rock)
+			_add_island_cone(parent, "SnowPeak_East", Vector3(38.0, base_y + 8.0, -14.0), 17.0, 16.0, snow)
+		"volcanic":
+			_add_island_cone(parent, "StormglassVolcano", Vector3(0.0, base_y + 18.0, 0.0), 42.0, 36.0, dark_rock)
+			var crater := TorusMesh.new()
+			crater.inner_radius = 7.0
+			crater.outer_radius = 10.0
+			var crater_visual := MeshInstance3D.new()
+			crater_visual.name = "VolcanoCraterRim"
+			crater_visual.mesh = crater
+			crater_visual.position = Vector3(0.0, base_y + 35.0, 0.0)
+			crater_visual.material_override = lava
+			parent.add_child(crater_visual)
+			var lava_pool := MeshInstance3D.new()
+			lava_pool.name = "VolcanoLavaPool"
+			var pool_mesh := CylinderMesh.new()
+			pool_mesh.top_radius = 6.5
+			pool_mesh.bottom_radius = 6.5
+			pool_mesh.height = 0.35
+			lava_pool.mesh = pool_mesh
+			lava_pool.position = Vector3(0.0, base_y + 34.0, 0.0)
+			lava_pool.material_override = lava
+			parent.add_child(lava_pool)
+		"atoll":
+			var lagoon := MeshInstance3D.new()
+			lagoon.name = "ShallowBlueLagoon"
+			var lagoon_mesh := SphereMesh.new()
+			lagoon_mesh.radius = 1.0
+			lagoon_mesh.height = 2.0
+			lagoon.mesh = lagoon_mesh
+			lagoon.position = Vector3(0.0, dimensions.y * 0.77, 0.0)
+			lagoon.scale = Vector3(dimensions.x * 0.30, 0.45, dimensions.z * 0.30)
+			lagoon.material_override = water
+			lagoon.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			parent.add_child(lagoon)
+			for index in range(6):
+				var angle := TAU * float(index) / 6.0
+				_add_island_cone(
+					parent,
+					"AtollCoralRock_%02d" % index,
+					Vector3(cos(angle) * dimensions.x * 0.38, base_y + 2.5, sin(angle) * dimensions.z * 0.38),
+					5.0,
+					5.0 + float(index % 3) * 2.0,
+					pale_rock
+				)
+		"highland":
+			for index in range(4):
+				var angle := TAU * float(index) / 4.0
+				var radius := dimensions.x * 0.28
+				var peak_height := 20.0 + float(index % 2) * 9.0
+				_add_island_cone(
+					parent,
+					"SouthernReachRidge_%02d" % index,
+					Vector3(cos(angle) * radius, base_y + peak_height * 0.5, sin(angle) * radius * 0.62),
+					16.0 + float(index % 2) * 4.0,
+					peak_height,
+					pale_rock
+				)
+		"desert":
+			for index in range(4):
+				var dune := MeshInstance3D.new()
+				dune.name = "FarwindSandDune_%02d" % index
+				var dune_mesh := SphereMesh.new()
+				dune_mesh.radius = 1.0
+				dune_mesh.height = 2.0
+				dune.mesh = dune_mesh
+				dune.position = Vector3(
+					-float(index % 2) * 24.0 + 12.0,
+					base_y + 2.0,
+					-30.0 + float(index) * 18.0
+				)
+				dune.scale = Vector3(30.0, 5.0, 15.0)
+				dune.material_override = sand
+				dune.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+				parent.add_child(dune)
+		"rocky":
+			for index in range(5):
+				var angle := TAU * float(index) / 5.0
+				var height := 12.0 + float(index % 3) * 5.0
+				_add_island_cone(
+					parent,
+					"BluewaterSeaStack_%02d" % index,
+					Vector3(cos(angle) * dimensions.x * 0.34, base_y + height * 0.5, sin(angle) * dimensions.z * 0.34),
+					7.0 + float(index % 2) * 3.0,
+					height,
+					dark_rock
+				)
+		"tropical":
+			var palm_material := _make_material(Color(0.22, 0.15, 0.08), 1.0)
+			var palm_leaf := _make_material(Color(0.12, 0.36, 0.17), 1.0)
+			for index in range(5):
+				var angle := TAU * float(index) / 5.0
+				var palm := Node3D.new()
+				palm.name = "WhisperingPalm_%02d" % index
+				palm.position = Vector3(cos(angle) * dimensions.x * 0.32, base_y, sin(angle) * dimensions.z * 0.32)
+				parent.add_child(palm)
+				var trunk := MeshInstance3D.new()
+				var trunk_mesh := CylinderMesh.new()
+				trunk_mesh.top_radius = 0.16
+				trunk_mesh.bottom_radius = 0.24
+				trunk_mesh.height = 7.0
+				trunk.mesh = trunk_mesh
+				trunk.position.y = 3.5
+				trunk.rotation.z = -0.12
+				trunk.material_override = palm_material
+				palm.add_child(trunk)
+				var crown := MeshInstance3D.new()
+				var crown_mesh := SphereMesh.new()
+				crown_mesh.radius = 2.4
+				crown_mesh.height = 2.0
+				crown.mesh = crown_mesh
+				crown.position.y = 7.0
+				crown.scale = Vector3(1.8, 0.55, 1.8)
+				crown.material_override = palm_leaf
+				palm.add_child(crown)
+		_:
+			# Temperate islands retain their existing woodland and shoreline dressing.
+			pass
+
+
+func _add_island_cone(
+	parent: Node3D,
+	node_name: String,
+	local_position: Vector3,
+	radius: float,
+	height: float,
+	material: Material
+) -> void:
+	var instance := MeshInstance3D.new()
+	instance.name = node_name
+	var mesh := ConeMesh.new()
+	mesh.top_radius = 0.0
+	mesh.bottom_radius = radius
+	mesh.height = height
+	mesh.radial_segments = 20
+	instance.mesh = mesh
+	instance.position = local_position
+	instance.material_override = material
+	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	parent.add_child(instance)
 
 
 func _add_ellipsoid(parent: Node3D, node_name: String, local_position: Vector3,
