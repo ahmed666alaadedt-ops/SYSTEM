@@ -75,7 +75,7 @@ func _physics_process(delta: float) -> void:
 	var distance := offset.length()
 	if is_boss and special_attack_clock <= 0.0 and distance < (15.0 if is_final_boss else 10.0):
 		if is_instance_valid(player_health) and player_health.has_method("receive_damage"):
-			player_health.call("receive_damage", attack_damage * (2.0 if is_final_boss else 1.35), self)
+			player_health.call("receive_damage", attack_damage * (1.15 if is_final_boss else 1.35), self)
 		special_attack_clock = 3.5 if is_final_boss else 5.0
 	if distance > attack_distance:
 		var direction := offset.normalized()
