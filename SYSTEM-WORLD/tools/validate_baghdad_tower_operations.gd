@@ -55,6 +55,24 @@ func _run() -> void:
 	if tower_manager == null:
 		_fail("BaghdadTowerLandmarksManager is missing.")
 		return
+	var hunter_tower := tower_manager.get_node_or_null("HunterAssociationTower") as Node3D
+	var helipad := hunter_tower.get_node_or_null("HunterAssociationHelipad") as Node3D if hunter_tower != null else null
+	if helipad == null or str(helipad.get_meta("system_owner_tower_id", "")) != "hunter_association_tower_baghdad":
+		_fail("Hunter Association helicopter landing pad is missing or assigned to the wrong tower.")
+		return
+	if helipad.get_node_or_null("HelipadDeck") == null or helipad.get_node_or_null("HelipadDeckCollision") == null or helipad.get_node_or_null("LandingCircleMarking") == null or helipad.get_node_or_null("HelipadIdentitySign") == null:
+		_fail("Hunter Association helicopter landing pad deck, collision, markings or sign is incomplete.")
+		return
+	if helipad.get_node_or_null("HelipadAccessBridge") == null or helipad.get_node_or_null("HelipadAccessBridgeCollision") == null:
+		_fail("Hunter Association helicopter landing pad access bridge is missing collision.")
+		return
+	var helipad_lights := 0
+	for child in helipad.get_children():
+		if str(child.name).begins_with("HelipadPerimeterLight_"):
+			helipad_lights += 1
+	if helipad_lights != 8:
+		_fail("Hunter Association helicopter landing pad requires eight perimeter lights.")
+		return
 	for tower_id in TOWER_IDS:
 		var tower := tower_manager.get_node_or_null(str(NODE_NAMES[tower_id])) as Node3D
 		if tower == null:
