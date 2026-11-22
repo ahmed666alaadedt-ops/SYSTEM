@@ -149,6 +149,22 @@ func _run() -> void:
 	helicopter_node.position = parked_position
 	helicopter_node.rotation = parked_rotation
 	helipad.call("_save_parked_state")
+	var rotor_test_position := helicopter_node.global_position + Vector3.UP * 100.0
+	var rotor_obstacle := StaticBody3D.new()
+	var rotor_obstacle_shape := CollisionShape3D.new()
+	var rotor_obstacle_box := BoxShape3D.new()
+	rotor_obstacle_box.size = Vector3(0.6, 0.6, 0.6)
+	rotor_obstacle_shape.shape = rotor_obstacle_box
+	rotor_obstacle.add_child(rotor_obstacle_shape)
+	main.add_child(rotor_obstacle)
+	rotor_obstacle.global_position = rotor_test_position + helicopter_node.global_basis * Vector3(6.0, 1.8, 0.0)
+	await physics_frame
+	var main_rotor_blocked: bool = not bool(helipad.call("_is_aircraft_position_clear", rotor_test_position))
+	rotor_obstacle.queue_free()
+	await physics_frame
+	if not main_rotor_blocked:
+		_fail("Helicopter clearance query did not detect an obstacle at the main rotor disc edge.")
+		return
 	var helicopter_player: CharacterBody3D = main.get("player") as CharacterBody3D
 	if helicopter_player == null:
 		_fail("A player character is required for the helicopter takeoff/landing test.")
