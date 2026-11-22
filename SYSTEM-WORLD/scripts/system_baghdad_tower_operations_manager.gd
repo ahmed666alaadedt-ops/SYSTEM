@@ -7,12 +7,12 @@ const SAVE_PATH := "user://system_baghdad_tower_operations.cfg"
 const WORLD_ID := 2
 
 const TOWER_CONFIG := {
-	"hunter_association_tower_baghdad": {"node": "HunterAssociationTower", "title": "برج جمعية الصيادين", "floors": 200, "height": 1000.0, "radius": 38.0, "roles": ["موظف الاستقبال", "موظف المهمات", "موظف التسجيل"], "jobs": ["receptionist", "mission_clerk", "exam_registrar"]},
-	"weapons_equipment_elixirs_tower_baghdad": {"node": "WeaponsEquipmentElixirsTower", "title": "برج الأسلحة والمعدات والإكسير", "floors": 36, "height": 220.0, "radius": 26.0, "roles": ["تاجر الأسلحة", "خبير الدروع", "صيدلاني الإكسير"], "jobs": ["weapons_merchant", "armor_specialist", "elixir_pharmacist"]},
-	"shopping_tower_baghdad": {"node": "ShoppingTower", "title": "برج التسوق والتجارة", "floors": 32, "height": 190.0, "radius": 30.0, "roles": ["مدير المتجر", "موظف المبيعات", "موظف خدمة الزبائن"], "jobs": ["shop_manager", "sales_clerk", "customer_service"]},
-	"entertainment_tower_baghdad": {"node": "EntertainmentTower", "title": "برج الترفيه والرياضة", "floors": 34, "height": 205.0, "radius": 29.0, "roles": ["منظم الفعاليات", "موظف التذاكر", "موظف الأنشطة"], "jobs": ["event_coordinator", "ticket_clerk", "activity_host"]},
-	"technology_tower_baghdad": {"node": "TechnologyTower", "title": "برج التكنولوجيا والابتكار", "floors": 40, "height": 245.0, "radius": 27.0, "roles": ["موظف المختبر", "مهندس الأجهزة", "موظف الخدمات الرقمية"], "jobs": ["lab_receptionist", "device_engineer", "digital_services"]},
-	"power_tower_baghdad": {"node": "PowerTower", "title": "برج القوة", "floors": 200, "height": 820.0, "radius": 26.0, "roles": ["موظف تسجيل التحديات", "منظم الحلبة", "موظف الاستراحة الطبية"], "jobs": ["arena_registrar", "arena_coordinator", "arena_medic"]}
+	"hunter_association_tower_baghdad": {"node": "HunterAssociationTower", "title": "برج جمعية الصيادين", "floors": 200, "height": 1000.0, "radius": 38.0, "roles": ["موظف الاستقبال", "موظف المهمات", "موظف التسجيل"], "jobs": ["receptionist", "mission_clerk", "exam_registrar", "advertising_manager"]},
+	"weapons_equipment_elixirs_tower_baghdad": {"node": "WeaponsEquipmentElixirsTower", "title": "برج الأسلحة والمعدات والإكسير", "floors": 36, "height": 220.0, "radius": 26.0, "roles": ["تاجر الأسلحة", "خبير الدروع", "صيدلاني الإكسير"], "jobs": ["weapons_merchant", "armor_specialist", "elixir_pharmacist", "advertising_manager"]},
+	"shopping_tower_baghdad": {"node": "ShoppingTower", "title": "برج التسوق والتجارة", "floors": 32, "height": 190.0, "radius": 30.0, "roles": ["مدير المتجر", "موظف المبيعات", "موظف خدمة الزبائن"], "jobs": ["shop_manager", "sales_clerk", "customer_service", "advertising_manager"]},
+	"entertainment_tower_baghdad": {"node": "EntertainmentTower", "title": "برج الترفيه والرياضة", "floors": 34, "height": 205.0, "radius": 29.0, "roles": ["منظم الفعاليات", "موظف التذاكر", "موظف الأنشطة"], "jobs": ["event_coordinator", "ticket_clerk", "activity_host", "advertising_manager"]},
+	"technology_tower_baghdad": {"node": "TechnologyTower", "title": "برج التكنولوجيا والابتكار", "floors": 40, "height": 245.0, "radius": 27.0, "roles": ["موظف المختبر", "مهندس الأجهزة", "موظف الخدمات الرقمية"], "jobs": ["lab_receptionist", "device_engineer", "digital_services", "advertising_manager"]},
+	"power_tower_baghdad": {"node": "PowerTower", "title": "برج القوة", "floors": 200, "height": 820.0, "radius": 26.0, "roles": ["موظف تسجيل التحديات", "منظم الحلبة", "موظف الاستراحة الطبية"], "jobs": ["arena_registrar", "arena_coordinator", "arena_medic", "advertising_manager"]}
 }
 
 const PRODUCT_CATALOG := {
@@ -143,7 +143,7 @@ func _create_staff_for_all_towers() -> void:
 	for tower_id in tower_nodes.keys():
 		var config: Dictionary = TOWER_CONFIG[tower_id]
 		var staff_ids: Array[String] = []
-		for index in range(3):
+		for index in range(4):
 			var npc_id := _get_or_create_staff(str(tower_id), index, config)
 			if not npc_id.is_empty():
 				staff_ids.append(npc_id)
@@ -266,8 +266,8 @@ func _refresh_advertisements() -> void:
 	for tower_id in tower_nodes.keys():
 		var staff_ids: Array = staff_by_tower.get(tower_id, [])
 		var manager_name := "فريق الإعلان"
-		if not staff_ids.is_empty() and is_instance_valid(society):
-			var npc: Dictionary = society.call("get_npc", str(staff_ids[0]))
+		if staff_ids.size() > 3 and is_instance_valid(society):
+			var npc: Dictionary = society.call("get_npc", str(staff_ids[3]))
 			manager_name = str(npc.get("name", manager_name))
 		var message := str(AD_CAMPAIGNS[ad_index])
 		for suffix in ["_internal", "_external"]:
