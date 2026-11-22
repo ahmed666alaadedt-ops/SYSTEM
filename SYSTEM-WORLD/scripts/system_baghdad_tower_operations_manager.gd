@@ -1203,7 +1203,6 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 			return
 		active_power_floor_data = request.get("floor_data", {})
 		power_floor_in_progress = true
-		power_floor_started_at = Time.get_ticks_msec()
 	var room := _ensure_floor_room(tower_id, floor_number)
 	if room == null:
 		_set_status("تعذر تجهيز الطابق.")
@@ -1243,6 +1242,7 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 func _begin_power_floor() -> void:
 	if active_power_floor_data.is_empty() or active_floor_root == null:
 		return
+	power_floor_started_at = Time.get_ticks_msec()
 	current_wave = 0
 	total_waves = maxi(1, int(active_power_floor_data.get("wave_count", 1)))
 	opponents_per_wave = maxi(1, int(active_power_floor_data.get("opponent_count", 1)))
