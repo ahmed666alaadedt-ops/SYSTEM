@@ -477,12 +477,21 @@ func _start_tower_staff_waypoint_patrol(employee: Node3D, model: Node3D, staff_i
 
 
 func _get_floor_duty_staff_index(tower_id: String, floor_number: int) -> int:
+	if not TOWER_CONFIG.has(tower_id):
+		return -1
+	if floor_number < 1 or floor_number > int(TOWER_CONFIG[tower_id]["floors"]):
+		return -1
 	match tower_id:
 		"hunter_association_tower_baghdad":
-			if floor_number == 100:
-				return 4
-			if floor_number in [195, 200]:
+			if floor_number >= 191:
 				return 0
+			if floor_number == 100 or floor_number >= 101:
+				return 4 if floor_number <= 150 else 5
+			if floor_number >= 51:
+				return 3
+			if floor_number >= 11:
+				return 2
+			return 1
 		"business_investment_tower_baghdad":
 			if floor_number == 8:
 				return 1
@@ -490,6 +499,15 @@ func _get_floor_duty_staff_index(tower_id: String, floor_number: int) -> int:
 				return 3
 			if floor_number == 20:
 				return 5
+			if floor_number >= 33:
+				return 0
+			if floor_number >= 25:
+				return 4
+			if floor_number >= 17:
+				return 2
+			if floor_number >= 9:
+				return 3
+			return 1
 		"shopping_tower_baghdad":
 			if floor_number == 14:
 				return 2
@@ -501,6 +519,11 @@ func _get_floor_duty_staff_index(tower_id: String, floor_number: int) -> int:
 				return 4
 			if floor_number in [30, 32]:
 				return 5
+			if floor_number >= 17:
+				return 1
+			if floor_number >= 9:
+				return 2
+			return 0
 		"entertainment_tower_baghdad":
 			if floor_number == 18:
 				return 3
@@ -508,6 +531,13 @@ func _get_floor_duty_staff_index(tower_id: String, floor_number: int) -> int:
 				return 4
 			if floor_number == 24:
 				return 1
+			if floor_number >= 26:
+				return 6
+			if floor_number >= 21:
+				return 5
+			if floor_number >= 11:
+				return 2
+			return 0
 		"technology_tower_baghdad":
 			if floor_number == 12:
 				return 3
@@ -515,13 +545,23 @@ func _get_floor_duty_staff_index(tower_id: String, floor_number: int) -> int:
 				return 4
 			if floor_number == 30:
 				return 2
+			if floor_number >= 30:
+				return 2
+			if floor_number >= 20:
+				return 4
+			if floor_number >= 11:
+				return 3
+			return 1
 		"power_tower_baghdad":
 			if floor_number == 1:
 				return 0
-			if floor_number == 100:
+			if floor_number == 100 or floor_number >= 101:
 				return 1
 			if floor_number == 150:
 				return 2
+			if floor_number >= 51:
+				return 2
+			return 1
 	return -1
 
 
