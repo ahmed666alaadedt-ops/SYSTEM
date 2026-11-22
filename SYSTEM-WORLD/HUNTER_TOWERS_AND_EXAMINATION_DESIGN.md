@@ -216,3 +216,11 @@ The Weapons/Equipment/Elixirs Tower employee panel now exposes first-pass functi
 - All six lobby lift doors and generated public-floor service kiosks are interactive. The Power Tower lobby includes a local 200-floor progress board.
 - Final boss combat now includes a visible shockwave warning and three phases at 50% and 20% health thresholds.
 - The stock, wallet, progression and Power Tower records are local-device systems at this stage. Online transaction authority, cloud synchronization, cross-player leaderboards, matchmaking, visible equipment attachments, full Nen abilities and physical Android review remain unfinished.
+
+
+## Power Tower survival and championship objectives — 22 November 2026
+
+- Survival arena floors use a timed survival objective (50–120 seconds based on floor progression) with sequential enemy waves. Defeating the final wave early does not finish the floor; the player must survive until the timer ends.
+- Championship arena floors use a timed clear objective (110–200 seconds). All waves must be defeated before time expires; failure abandons the attempt and keeps the same floor available for retry.
+- Each arena shows its objective and live countdown on a 3D display. The challenge timer begins after the elevator reaches the arena, not while the player is travelling.
+- The Godot validator now iterates all 200 floor profiles and checks level gates, boss cadence, opponent/wave data, rewards and survival/championship objective timing.
