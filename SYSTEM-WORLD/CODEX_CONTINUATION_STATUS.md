@@ -135,3 +135,13 @@ Code validated on commit `83db22c01e7ecf1addd01ce01cbb1b341bd1fdc8`:
 - Godot 4.3 workflow run `45007184990` passed on exact commit `f7f9b63925778cadcecd9a9d3c65536ba6ce291a`: resource import/script parsing, all configured gameplay validators, missing-mesh scan, and headless main-scene launch passed.
 - Physical Android visual/performance testing remains open. The 200-floor express lift presentation uses a capped visible 72 m shaft travel; the current emergency stair geometry covers only the first four upper-floor blockouts, not all 200 floors.
 - Active branch: `work/baghdad-system-integration`. Do not merge into `main` without explicit user approval.
+
+
+## 22 November 2026 — Baghdad tower facade detailing validation
+
+- Added batched MultiMesh glass panels and metallic frames to all four sides of each tower facade, with one panel set per configured floor.
+- Added low-intensity, non-shadowing facade accent lighting using each tower's identity color.
+- Extended tower integration validation to require exact glass/frame instance coverage for every floor.
+- Godot 4.3 workflow run `45007450442` passed on exact facade commit `c2407f9927663cbdd4b87642af5fc01f736a788d`: parsing/import, all configured validators, missing-mesh scan, and headless main-scene launch passed.
+- Android device visual/performance validation remains outstanding; final authored architecture, glass transparency/interior room lighting and skyline art direction are not yet complete.
+- Active branch remains `work/baghdad-system-integration`; `main` is untouched and no merge is authorized.
