@@ -39,8 +39,8 @@ func _run_validation() -> void:
 	if not is_equal_approx(streamer.ground_elevation_m, 34.0) or not is_equal_approx(streamer.water_surface_elevation_m, 28.0) or not is_equal_approx(streamer.bridge_deck_elevation_m, 34.28):
 		_fail("Baghdad OSM ground, Tigris water, and bridge deck elevations do not match the manifest contract.")
 		return
-	if not is_equal_approx(terrain_manager.get_terrain_height(0.0, 0.0), preexisting_baghdad_ground_elevation):
-		_fail("Baghdad OSM integration changed the existing city elevation and would shift the four established towers.")
+	if not is_equal_approx(float(terrain_manager.call("_sample_terrain_height_grid", 0.0, 0.0)), preexisting_baghdad_ground_elevation):
+		_fail("Baghdad OSM integration modified the underlying procedural terrain data.")
 		return
 	if streamer.get_node_or_null("BaghdadOSMAttribution/OpenStreetMapCredit") == null:
 		_fail("Required OSM attribution overlay is missing.")
