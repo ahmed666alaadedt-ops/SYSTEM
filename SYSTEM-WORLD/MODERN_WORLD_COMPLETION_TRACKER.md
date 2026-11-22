@@ -1,3 +1,13 @@
+## SYSTEM ARCADE — timed reflex mini-game — 22 November 2026
+
+- [x] Added a third playable arcade mode, timed reaction challenge, alongside the physical target shooter and color-memory game.
+- [x] Each round waits a randomized 1.0–2.4 seconds before showing the signal; pressing early consumes one of three lives, while successful responses score by measured reaction time. Five successful rounds complete the session; exhausting lives ends without reward.
+- [x] Added session IDs to reflex timers so stale delayed signals cannot advance a newer round; updated cabinet mode routing so the six physical cabinets are distributed across shooter, memory and reflex modes.
+- [x] Extended deterministic validator coverage for mode mapping and reflex scoring at fast, slow and invalid reaction times; corrected the UI to show the active game's status/instructions and correct goal count.
+- [x] Godot 4.3 full validation #1449 passed (run `45069046046`) and Android export #1186 passed (run `45069046075`) on exact PR head `10ae1880b313627b985620063eb49542f194f0f5`.
+- [x] APK artifact `14772358338`, 35,919,755 bytes; SHA-256 `5ab08d9e259587db93a86d1549f8d406702b80fbd80e01f5e59d1b27fcf0a02c`; expires 6 December 2026.
+- [ ] Full cabinet-specific game variety beyond the three current modes, advanced cabinet visuals/audio and physical Android play testing remain open; full arcade feature remains in progress.
+
 ## SYSTEM ARCADE — direct cabinet interaction — 22 November 2026
 
 - [x] Added six individually addressable arcade cabinet interaction areas with collision shapes, SYSTEM interaction prompts, tower/floor metadata and cabinet IDs.
