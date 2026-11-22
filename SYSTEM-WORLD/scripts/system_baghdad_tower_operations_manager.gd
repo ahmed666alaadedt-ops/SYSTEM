@@ -91,6 +91,7 @@ var ad_index := 0
 var ui_layer: CanvasLayer
 var panel: PanelContainer
 var content: VBoxContainer
+var inventory_controls: VBoxContainer
 var title_label: Label
 var status_label: Label
 var credits_label: Label
@@ -319,6 +320,7 @@ func _build_ui() -> void:
 	content.add_child(close_button)
 
 func _clear_dynamic_controls() -> void:
+	inventory_controls = null
 	for child in content.get_children():
 		if child != title_label and child != credits_label and child != status_label:
 			child.queue_free()
@@ -412,17 +414,21 @@ func _add_catalog_controls(tower_id: String) -> void:
 		list.add_child(buy_button)
 
 func _add_sell_controls() -> void:
+	if is_instance_valid(inventory_controls):
+		inventory_controls.queue_free()
+	inventory_controls = VBoxContainer.new()
+	inventory_controls.name = "InventoryActionControls"
+	content.add_child(inventory_controls)
 	var heading := Label.new()
-	heading.text = "بيع أغراض الحقيبة إلى موظف البرج"
-	content.add_child(heading)
+	heading.text = "إدارة الحقيبة — بيع وتجهيز واستخدام"
+	inventory_controls.add_child(heading)
 	if not is_instance_valid(progression):
 		return
 	var items: Dictionary = progression.get("inventory_items")
 	if items.is_empty():
 		var empty := Label.new()
-		empty.text = "لا توجد أغراض قابلة للبيع حالياً."
-		content.add_child(empty)
-		return
+		empty.text = "الحقيبة فارغة حالياً."
+		inventory_controls.add_child(empty)
 	var equipped_slots: Dictionary = progression.get("equipment_slots")
 	for slot_value in equipped_slots.keys():
 		var slot := str(slot_value)
@@ -431,7 +437,7 @@ func _add_sell_controls() -> void:
 			var unequip_button := Button.new()
 			unequip_button.text = "إزالة تجهيز %s من خانة %s" % [equipped_item, slot]
 			unequip_button.pressed.connect(_unequip_item.bind(slot))
-			content.add_child(unequip_button)
+			inventory_controls.add_child(unequip_button)
 	for item_value in items.keys():
 		var item_id := str(item_value)
 		var count := int(items[item_id])
@@ -440,19 +446,19 @@ func _add_sell_controls() -> void:
 		var sell_button := Button.new()
 		sell_button.text = "بيع %s × %d" % [item_id, count]
 		sell_button.pressed.connect(_sell_item.bind(item_id, count))
-		content.add_child(sell_button)
+		inventory_controls.add_child(sell_button)
 		if progression.has_method("get_item_equipment_slot"):
 			var equipment_slot := str(progression.call("get_item_equipment_slot", item_id))
 			if not equipment_slot.is_empty():
 				var equip_button := Button.new()
 				equip_button.text = "تجهيز %s في خانة %s" % [item_id, equipment_slot]
 				equip_button.pressed.connect(_equip_item.bind(item_id))
-				content.add_child(equip_button)
+				inventory_controls.add_child(equip_button)
 		if item_id.ends_with("_elixir"):
 			var elixir_button := Button.new()
 			elixir_button.text = "استخدام " + item_id
 			elixir_button.pressed.connect(_consume_elixir.bind(item_id))
-			content.add_child(elixir_button)
+			inventory_controls.add_child(elixir_button)
 
 func _equip_item(item_id: String) -> void:
 	if not is_instance_valid(progression) or not progression.has_method("equip_item"):
@@ -462,6 +468,7 @@ func _equip_item(item_id: String) -> void:
 	if bool(result.get("success", false)):
 		var bonuses: Dictionary = progression.call("get_equipment_bonuses")
 		_set_status("تم تجهيز %s. زيادة الضرر: +%d | الدفاع: +%d" % [item_id, int(bonuses.get("damage_bonus", 0)), int(bonuses.get("defense_bonus", 0))])
+		_add_sell_controls()
 	else:
 		_set_status("تعذر التجهيز: " + str(result.get("reason", "غير معروف")))
 
@@ -470,6 +477,7 @@ func _unequip_item(slot: String) -> void:
 		return
 	if bool(progression.call("unequip_item", slot)):
 		_set_status("تمت إزالة التجهيز من خانة " + slot)
+		_add_sell_controls()
 
 
 func _consume_elixir(item_id: String) -> void:
@@ -479,6 +487,7 @@ func _consume_elixir(item_id: String) -> void:
 	var result: Dictionary = progression.call("consume_elixir", item_id)
 	if bool(result.get("success", false)):
 		_set_status("تم استخدام %s بنجاح." % item_id)
+		_add_sell_controls()
 	else:
 		_set_status("تعذر استخدام الإكسير: " + str(result.get("reason", "غير معروف")))
 
@@ -519,6 +528,7 @@ func _sell_item(item_id: String, requested_count: int) -> void:
 	_save_wallet()
 	credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
 	_set_status("اشترى الموظف %d من %s مقابل %d رصيد." % [quantity, item_id, unit_price * quantity])
+	_add_sell_controls()
 
 func _item_resale_price(item_id: String) -> int:
 	for tower_id in PRODUCT_CATALOG.keys():
