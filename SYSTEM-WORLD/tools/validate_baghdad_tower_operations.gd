@@ -206,6 +206,37 @@ func _run() -> void:
 	if restaurant_room == null or restaurant_room.get_node_or_null("RestaurantDiningSign") == null or restaurant_room.get_node_or_null("RestaurantTable_00") == null:
 		_fail("Shopping Tower restaurant dining hall is missing from floors 29–32.")
 		return
+
+	var emergency_exit_floors: Array[Node3D] = [
+		shopping_customer_floor,
+		entertainment_pool,
+		cinema_floor,
+		business_floor,
+		technology_floor,
+		hunter_honor_floor,
+		hunter_council_floor,
+		hunter_headquarters_floor,
+		restaurant_room
+	]
+	for floor_room in emergency_exit_floors:
+		var exit_root := floor_room.get_node_or_null("EmergencyEvacuationExit") as Node3D
+		var exit_sensor := floor_room.get_node_or_null("EmergencyExitSensor") as Area3D
+		var exit_sign := exit_root.get_node_or_null("EmergencyExitSign") as Label3D if exit_root != null else null
+		if exit_root == null or exit_sensor == null or exit_sign == null:
+			_fail("A generated Baghdad tower floor is missing its emergency evacuation exit, physical sensor or sign.")
+			return
+		if exit_root.get_node_or_null("EmergencyExitFramePillar_L") == null or exit_root.get_node_or_null("EmergencyExitFramePillar_R") == null or exit_root.get_node_or_null("EmergencyExitBeacon") == null or exit_root.get_node_or_null("EmergencyExitLight") == null:
+			_fail("A Baghdad floor emergency exit is missing its frame, illuminated beacon or safety light.")
+			return
+		if exit_sensor.get_node_or_null("CollisionShape3D") == null or not exit_sensor.monitoring or exit_sensor.get_signal_connection_list("body_entered").is_empty():
+			_fail("A Baghdad floor emergency exit is missing its active physical evacuation sensor connection.")
+			return
+		if not bool(exit_sensor.get_meta("system_emergency_exit", false)) or str(exit_sensor.get_meta("system_tower_id", "")) != str(floor_room.get_meta("system_tower_id", exit_sensor.get_meta("system_tower_id", ""))):
+			_fail("A Baghdad floor emergency exit has invalid tower ownership metadata.")
+			return
+		if exit_sign.text.is_empty() or not exit_sign.text.contains("مخرج الطوارئ"):
+			_fail("A Baghdad floor emergency exit sign is missing its Arabic evacuation direction.")
+			return
 	var exam_manager := main.get_node_or_null("SYSTEMHunterExamManager")
 	if exam_manager == null:
 		_fail("HunterExamManager is missing.")
