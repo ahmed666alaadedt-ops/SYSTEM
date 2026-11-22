@@ -370,7 +370,7 @@ jobs:
           print("Validated expanded Baghdad core-to-Republic Bridge cell pack:", path.stat().st_size, "bytes;", len(tile_names), "occupied cells.")
           PY
 
-      - name: Build flat Baghdad municipal ground with Tigris water cutout
+      - name: Build terrain-following Baghdad municipal ground with Tigris water cutout
         shell: bash
         run: |
           set -euo pipefail
