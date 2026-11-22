@@ -103,8 +103,15 @@ func _run() -> void:
 		if facade_windows.multimesh.instance_count != expected_window_count:
 			_fail("Tower facade window count mismatch for %s: expected %d, found %d." % [tower_id, expected_window_count, facade_windows.multimesh.instance_count])
 			return
-		if facade_windows.multimesh.get_instance_transform(0).origin.length() < 1.0:
-			_fail("Tower facade window transforms are not positioned on the exterior: " + tower_id)
+		var configured_window_count := int(facade_tower.get_meta("system_facade_window_count", 0))
+		var configured_segments := int(facade_tower.get_meta("system_facade_window_segments_per_floor", 0))
+		var configured_floors := int(facade_tower.get_meta("system_facade_window_floors", 0))
+		var glazing_box := facade_windows.multimesh.mesh as BoxMesh
+		if configured_window_count != expected_window_count or configured_segments != 20 or configured_floors != int(expected_facade_floors[tower_id]):
+			_fail("Tower facade glazing layout metadata is incorrect: " + tower_id)
+			return
+		if glazing_box == null or glazing_box.size.distance_to(Vector3(4.4, 1.45, 0.2)) > 0.01:
+			_fail("Tower facade glazing panel dimensions are incorrect: " + tower_id)
 			return
 	for tower_id in expected_tower_nodes.keys():
 		var tower_node := tower_manager.get_node_or_null(str(expected_tower_nodes[tower_id]))
