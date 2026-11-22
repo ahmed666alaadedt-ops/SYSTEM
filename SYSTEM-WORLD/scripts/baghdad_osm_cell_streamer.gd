@@ -152,7 +152,11 @@ func _ready() -> void:
 		return
 	terrain_manager = get_parent().get_node_or_null("ModernContinent")
 	if terrain_manager != null and terrain_manager.has_method("configure_baghdad_osm_ground"):
-		terrain_manager.call("configure_baghdad_osm_ground", ground_elevation_m)
+		var ground_already_configured := bool(terrain_manager.get("baghdad_osm_ground_enabled"))
+		if not ground_already_configured:
+			# Standalone runtime validation keeps the pre-existing world height as its local baseline.
+			var existing_world_ground := float(terrain_manager.call("get_terrain_height", 0.0, 0.0))
+			terrain_manager.call("configure_baghdad_osm_ground", existing_world_ground)
 	add_to_group("baghdad_osm_cell_streamer")
 	_create_materials()
 	_add_attribution_overlay()
