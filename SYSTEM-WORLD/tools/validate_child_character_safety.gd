@@ -162,12 +162,41 @@ func _run_validation() -> void:
 		quit(1)
 		return
 
+	var invalid_mesh_paths := _find_invalid_mesh_nodes(root)
+	print("SYSTEM NPC QA mesh integrity: null mesh nodes=", invalid_mesh_paths.size())
+	if not invalid_mesh_paths.is_empty():
+		push_error("SYSTEM NPC QA: test scene contains null mesh resources: " + ", ".join(invalid_mesh_paths.slice(0, 20)))
+		quit(1)
+		return
+
 	print("SYSTEM NPC QA PASS: civilians do not join missions or initiate combat; minors evade and adults defend/retreat when attacked")
-	child.queue_free()
-	adult.queue_free()
-	population.queue_free()
-	attacker.queue_free()
-	society.queue_free()
+	# Detach all test roots first so Godot unregisters their render instances
+	# while the nodes are still alive. Freeing imported GLB trees in-scene can
+	# make the headless dummy renderer query mesh handles during teardown.
+	var test_nodes: Array[Node] = [child, adult, population, attacker, society]
+	for test_node in test_nodes:
+		if is_instance_valid(test_node) and test_node.get_parent() == root:
+			root.remove_child(test_node)
+	await process_frame
+	for test_node in test_nodes:
+		if is_instance_valid(test_node):
+			test_node.free()
 	await process_frame
 	await process_frame
 	quit(0)
+
+
+func _find_invalid_mesh_nodes(start: Node) -> Array[String]:
+	var invalid_paths: Array[String] = []
+	var pending: Array[Node] = [start]
+	while not pending.is_empty():
+		var node: Node = pending.pop_back()
+		if node is MeshInstance3D and (node as MeshInstance3D).mesh == null:
+			invalid_paths.append(str(node.get_path()))
+		if node is MultiMeshInstance3D:
+			var instance := node as MultiMeshInstance3D
+			if instance.multimesh == null or instance.multimesh.mesh == null:
+				invalid_paths.append(str(node.get_path()))
+		for nested in node.get_children():
+			pending.append(nested)
+	return invalid_paths
