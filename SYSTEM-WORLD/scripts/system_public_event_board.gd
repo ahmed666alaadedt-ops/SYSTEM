@@ -166,7 +166,7 @@ func _build_baghdad_tower_displays() -> void:
 	var tower_nodes := {
 		"hunter_association_tower_baghdad": "HunterAssociationTower",
 		"power_tower_baghdad": "PowerTower",
-		"weapons_equipment_elixirs_tower_baghdad": "WeaponsEquipmentElixirsTower",
+		"business_investment_tower_baghdad": "BusinessInvestmentTower",
 		"shopping_tower_baghdad": "ShoppingTower",
 		"entertainment_tower_baghdad": "EntertainmentTower",
 		"technology_tower_baghdad": "TechnologyTower"
