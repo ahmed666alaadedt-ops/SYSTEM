@@ -224,3 +224,6 @@ The Weapons/Equipment/Elixirs Tower employee panel now exposes first-pass functi
 - Championship arena floors use a timed clear objective (110–200 seconds). All waves must be defeated before time expires; failure abandons the attempt and keeps the same floor available for retry.
 - Each arena shows its objective and live countdown on a 3D display. The challenge timer begins after the elevator reaches the arena, not while the player is travelling.
 - The Godot validator now iterates all 200 floor profiles and checks level gates, boss cadence, opponent/wave data, rewards and survival/championship objective timing.
+
+
+The Power Tower lobby board also shows the player's highest cleared floor, next floor, progression rank, completion percentage and personal best clear time. This is a local personal record; global online rankings remain a future server-backed feature.
