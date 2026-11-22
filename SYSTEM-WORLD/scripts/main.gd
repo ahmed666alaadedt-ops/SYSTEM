@@ -1287,6 +1287,8 @@ func update_camera_rotation() -> void:
 func _physics_process(delta: float) -> void:
 	if player == null:
 		return
+	if bool(player.get_meta("system_helicopter_piloting", false)):
+		return
 	if bool(player.get_meta("system_tower_elevator_active", false)):
 		player.velocity = Vector3.ZERO
 		return
