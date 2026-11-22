@@ -386,6 +386,73 @@ func _run() -> void:
 		return
 	progression_test_manager.queue_free()
 	reloaded_progression_manager.queue_free()
+	var tower_player: CharacterBody3D = main.get("player") as CharacterBody3D
+	var final_boss_script := load("res://scripts/system_tower_opponent.gd") as Script
+	if tower_player == null or final_boss_script == null:
+		_fail("Power Tower final boss combat fixture could not be created.")
+		return
+	var final_boss_test := final_boss_script.new() as Node3D
+	root.add_child(final_boss_test)
+	final_boss_test.call("configure", tower_player, null, 100.0, 12.0, 2.5, true, true)
+	await process_frame
+	final_boss_test.call("take_damage", 51.0, tower_player)
+	await process_frame
+	if int(final_boss_test.get("boss_phase")) != 2:
+		_fail("Power Tower sovereign boss did not enter its second health phase.")
+		final_boss_test.queue_free()
+		return
+	final_boss_test.call("take_damage", 31.0, tower_player)
+	await process_frame
+	if int(final_boss_test.get("boss_phase")) != 3:
+		_fail("Power Tower sovereign boss did not enter its final health phase.")
+		final_boss_test.queue_free()
+		return
+	final_boss_test.call("take_damage", 100.0, tower_player)
+	if not bool(final_boss_test.get("defeated_once")):
+		_fail("Power Tower sovereign boss did not register its defeat.")
+		final_boss_test.queue_free()
+		return
+	var tower_progression: Node = operations.get("progression") as Node
+	var original_highest_floor := int(power_manager.get("highest_cleared_floor"))
+	var original_active_floor := int(power_manager.get("active_floor"))
+	var original_clear_times: Dictionary = power_manager.get("floor_clear_times").duplicate(true)
+	var original_inventory: Dictionary = tower_progression.get("inventory_items").duplicate(true) if tower_progression != null else {}
+	var original_credits := int(operations.get("credits"))
+	if tower_progression == null:
+		_fail("Power Tower final reward test has no player progression manager.")
+		return
+	power_manager.set("highest_cleared_floor", 199)
+	power_manager.set("active_floor", 200)
+	operations.set("active_power_floor_data", boss_data.duplicate(true))
+	operations.set("power_floor_in_progress", true)
+	operations.set("power_floor_started_at", Time.get_ticks_msec() - 1500)
+	operations.set("active_opponents", {})
+	operations.call("_complete_power_floor")
+	var final_rewards_granted := true
+	for reward_id in final_rewards:
+		if int(tower_progression.call("get_item_count", str(reward_id))) <= int(original_inventory.get(str(reward_id), 0)):
+			final_rewards_granted = false
+	if int(power_manager.get("highest_cleared_floor")) != 200 or int(power_manager.get("active_floor")) != 0 or int(operations.get("credits")) <= original_credits or not final_rewards_granted:
+		_fail("Power Tower final boss clear did not grant the sovereign rewards, credits and completion record.")
+		power_manager.set("highest_cleared_floor", original_highest_floor)
+		power_manager.set("active_floor", original_active_floor)
+		power_manager.set("floor_clear_times", original_clear_times)
+		power_manager.call("_save_progress")
+		tower_progression.set("inventory_items", original_inventory)
+		tower_progression.call("save_progress")
+		operations.set("credits", original_credits)
+		operations.call("_save_wallet")
+		return
+	power_manager.set("highest_cleared_floor", original_highest_floor)
+	power_manager.set("active_floor", original_active_floor)
+	power_manager.set("floor_clear_times", original_clear_times)
+	power_manager.call("_save_progress")
+	tower_progression.set("inventory_items", original_inventory)
+	tower_progression.call("save_progress")
+	operations.set("credits", original_credits)
+	operations.call("_save_wallet")
+	operations.set("active_power_floor_data", {})
+	operations.set("power_floor_in_progress", false)
 	var weapons_room := operations.call("_ensure_floor_room", "weapons_equipment_elixirs_tower_baghdad", 1) as Node3D
 	if weapons_room.get_node_or_null("WeaponsForge") == null or weapons_room.get_node_or_null("ElixirLaboratory") == null:
 		_fail("Weapons Tower forge and elixir laboratory stations are missing.")
