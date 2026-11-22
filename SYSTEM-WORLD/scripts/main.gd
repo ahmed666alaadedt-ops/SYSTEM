@@ -860,7 +860,8 @@ func _on_interaction_performed(
 					interaction_prompt_label.text = "بدأ العلاج في المستشفى — يرجى الانتظار حتى اكتماله"
 			elif interaction_prompt_label != null:
 				interaction_prompt_label.text = "لا تحتاج إلى علاج حالياً أو أن العلاج جارٍ بالفعل"
-	if location_id in [
+	var tower_id := str(target.get_meta("system_tower_id", location_id))
+	if tower_id in [
 		"hunter_association_tower_baghdad",
 		"weapons_equipment_elixirs_tower_baghdad",
 		"shopping_tower_baghdad",
@@ -874,7 +875,7 @@ func _on_interaction_performed(
 		var connected := bool(target.get_meta("system_tower_district_member", false))
 		var network_label := "ضمن مجمع الأبراج الخمسة المترابط" if connected else "مستقل عن المجمع"
 		var directory := ""
-		match location_id:
+		match tower_id:
 			"hunter_association_tower_baghdad":
 				directory = "الأقسام: تسجيل الصيادين، المهمات، إدارة الاختبار العالمي، النقابات، قاعة الشرف."
 			"weapons_equipment_elixirs_tower_baghdad":
@@ -888,15 +889,15 @@ func _on_interaction_performed(
 			"power_tower_baghdad":
 				directory = "برج تحديات مستقل من 200 طابق؛ لا يتصل بجسور مجمع الأبراج."
 		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "%s\n%d طابق | ارتفاع تقريبي %.0f م\n%s\n%s\nملاحظة: هذا دليل البرج؛ الوصول إلى الطوابق والداخلية يحتاج إلى تنفيذ مستقل." % [
+			interaction_prompt_label.text = "%s\\n%d طابق | ارتفاع تقريبي %.0f م\\n%s\\n%s\\nملاحظة: الدليل يعرض الأقسام؛ الطوابق الداخلية والمصاعد التفاعلية قيد التنفيذ." % [
 				tower_name, floor_count, height_m, network_label, directory
 			]
-	if location_id == "power_tower_baghdad" and power_tower_manager != null:
+	if tower_id == "power_tower_baghdad" and power_tower_manager != null:
 		var next_floor := int(power_tower_manager.get_tower_status().get("next_floor", 1))
 		var level := int(player_progression.current_level) if player_progression != null else 1
 		var result: Dictionary = power_tower_manager.request_floor(next_floor, level)
 		if interaction_prompt_label != null:
-			interaction_prompt_label.text += "\nحالة طلب الطابق %d: %s" % [next_floor, str(result.get("reason", "تم طلب الدخول"))]
+			interaction_prompt_label.text += "\\nحالة طلب الطابق %d: %s" % [next_floor, str(result.get("reason", "تم طلب الدخول"))]
 
 
 func _on_location_discovered(
