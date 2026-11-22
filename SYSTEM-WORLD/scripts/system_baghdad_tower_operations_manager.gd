@@ -2452,7 +2452,7 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 				cabinet_interaction.set_meta("system_tower_floor_number", floor_number)
 				cabinet_interaction.set_meta("system_facility_type", "arcade")
 				cabinet_interaction.set_meta("system_arcade_cabinet_id", index)
-				cabinet_interaction.set_meta("system_arcade_cabinet_mode", ["shooter", "memory", "reflex", "shooter", "memory", "reflex"][index])
+				cabinet_interaction.set_meta("system_arcade_cabinet_mode", ["shooter", "memory", "reflex", "puzzle", "memory", "reflex"][index])
 				cabinet_interaction.set_meta("system_interaction_prompt", "جهاز SYSTEM ARCADE %d — اضغط للعب" % (index + 1))
 				var cabinet_shape_node := CollisionShape3D.new()
 				var cabinet_shape := BoxShape3D.new()
@@ -2650,11 +2650,82 @@ func open_facility_service(tower_id: String, floor_number: int, facility_type: S
 
 
 func _calculate_arcade_mode_index(cabinet_mode: String) -> int:
-	return ["shooter", "memory", "reflex"].find(cabinet_mode)
+	return ["shooter", "memory", "reflex", "puzzle"].find(cabinet_mode)
+
+
+func _arcade_puzzle_questions() -> Array:
+	return [
+		{"prompt": "3 + 4 = ؟", "answer": 7, "choices": [5, 7, 8, 9]},
+		{"prompt": "9 - 2 = ؟", "answer": 7, "choices": [6, 7, 5, 8]},
+		{"prompt": "3 × 3 = ؟", "answer": 9, "choices": [7, 8, 9, 6]},
+		{"prompt": "12 ÷ 3 = ؟", "answer": 4, "choices": [3, 4, 5, 6]},
+		{"prompt": "5 + 6 = ؟", "answer": 11, "choices": [9, 10, 11, 12]}
+	]
+
+
+func _evaluate_arcade_puzzle_answer(questions: Array, cursor: int, input_value: int) -> Dictionary:
+	if cursor < 0 or cursor >= questions.size():
+		return {"valid": false, "correct": false, "complete": false, "next_cursor": cursor}
+	var question: Dictionary = questions[cursor]
+	var correct := int(question.get("answer", -1)) == input_value
+	return {"valid": true, "correct": correct, "complete": correct and cursor + 1 >= questions.size(), "next_cursor": cursor + 1 if correct else cursor}
+
+
+func _show_arcade_puzzle_question() -> void:
+	if active_facility_activity.is_empty() or str(active_facility_activity.get("mode", "")) != "puzzle":
+		return
+	var questions: Array = active_facility_activity.get("puzzle_questions", [])
+	var cursor := int(active_facility_activity.get("puzzle_cursor", 0))
+	if cursor < 0 or cursor >= questions.size():
+		return
+	var question: Dictionary = questions[cursor]
+	var puzzle_status := content.get_node_or_null("ArcadePuzzleStatus") as Label
+	if puzzle_status != null:
+		puzzle_status.text = "%s  |  السؤال %d من %d" % [str(question.get("prompt", "حل اللغز")), cursor + 1, questions.size()]
+	var puzzle_buttons := content.get_node_or_null("ArcadePuzzleButtons") as HBoxContainer
+	if puzzle_buttons != null:
+		puzzle_buttons.visible = true
+		var choices: Array = question.get("choices", [])
+		for choice_index in range(puzzle_buttons.get_child_count()):
+			var choice_button := puzzle_buttons.get_child(choice_index) as Button
+			if choice_button == null:
+				continue
+			if choice_index < choices.size():
+				choice_button.text = str(choices[choice_index])
+				choice_button.set_meta("system_arcade_puzzle_answer", int(choices[choice_index]))
+				choice_button.visible = true
+			else:
+				choice_button.visible = false
+
+
+func _submit_arcade_puzzle_button(button: Button) -> void:
+	if button == null or active_facility_activity.is_empty() or str(active_facility_activity.get("mode", "")) != "puzzle":
+		return
+	var questions: Array = active_facility_activity.get("puzzle_questions", [])
+	var cursor := int(active_facility_activity.get("puzzle_cursor", 0))
+	var answer := int(button.get_meta("system_arcade_puzzle_answer", -1))
+	var result := _evaluate_arcade_puzzle_answer(questions, cursor, answer)
+	if not bool(result.get("correct", false)):
+		var lives := maxi(0, int(active_facility_activity.get("lives", 0)) - 1)
+		active_facility_activity["lives"] = lives
+		if lives <= 0:
+			active_facility_activity.clear()
+			_set_status("انتهت لعبة لغز الأرقام — نفدت المحاولات ولم تُمنح مكافأة.")
+			return
+		_set_status("إجابة غير صحيحة — بقيت %d محاولات. حاول مجدداً." % lives)
+		return
+	active_facility_activity["puzzle_cursor"] = int(result.get("next_cursor", cursor + 1))
+	active_facility_activity["step"] = int(active_facility_activity.get("step", 0)) + 1
+	active_facility_activity["score"] = int(active_facility_activity.get("score", 0)) + 20
+	if bool(result.get("complete", false)):
+		_complete_facility_activity()
+	else:
+		_show_arcade_puzzle_question()
+		_set_status("إجابة صحيحة! انتقل إلى اللغز التالي.")
 
 
 func open_arcade_cabinet(tower_id: String, floor_number: int, cabinet_id: int, cabinet_mode: String) -> void:
-	if cabinet_id < 0 or cabinet_id >= 6 or cabinet_mode not in ["shooter", "memory", "reflex"]:
+	if cabinet_id < 0 or cabinet_id >= 6 or cabinet_mode not in ["shooter", "memory", "reflex", "puzzle"]:
 		return
 	open_facility_service(tower_id, floor_number, "arcade")
 	selected_arcade_mode = cabinet_mode
@@ -2663,7 +2734,7 @@ func open_arcade_cabinet(tower_id: String, floor_number: int, cabinet_id: int, c
 	if selector != null:
 		selector.select(mode_index)
 	_on_arcade_mode_selected(mode_index)
-	var cabinet_game_title := "ذاكرة الألوان" if cabinet_mode == "memory" else ("سرعة الاستجابة" if cabinet_mode == "reflex" else "ميدان التصويب")
+	var cabinet_game_title := "لغز الأرقام" if cabinet_mode == "puzzle" else ("ذاكرة الألوان" if cabinet_mode == "memory" else ("سرعة الاستجابة" if cabinet_mode == "reflex" else "ميدان التصويب"))
 	title_label.text = "SYSTEM ARCADE — الجهاز %d | %s" % [cabinet_id + 1, cabinet_game_title]
 	_set_status("تم تشغيل الجهاز %d. اختر بدء الجولة عندما تكون مستعداً." % (cabinet_id + 1))
 
@@ -2693,7 +2764,7 @@ func _add_facility_activity_controls(facility_type: String) -> void:
 	description.name = "FacilityActivityInstructions"
 	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	if facility_type == "arcade":
-		description.text = "اختر جهازاً من أجهزة SYSTEM ARCADE ثم أكمل اللعبة. توجد ألعاب تصويب وذاكرة ألوان وسرعة استجابة."
+		description.text = "اختر جهازاً من أجهزة SYSTEM ARCADE ثم أكمل اللعبة. تتوفر ألعاب التصويب والذاكرة وسرعة الاستجابة وحل الأرقام."
 	elif facility_type == "vr_lab":
 		description.text = "ابدأ المحاكاة ثم تحرّك داخل المسار ثلاثي الأبعاد واعبر بوابات الطاقة الثلاث بالترتيب حتى تصل إلى منصة الخروج."
 	else:
@@ -2724,6 +2795,7 @@ func _add_facility_activity_controls(facility_type: String) -> void:
 		mode_selector.add_item("ميدان التصويب الفيزيائي")
 		mode_selector.add_item("تحدي ذاكرة الألوان")
 		mode_selector.add_item("اختبار سرعة الاستجابة")
+		mode_selector.add_item("تحدي لغز الأرقام")
 		mode_selector.item_selected.connect(_on_arcade_mode_selected)
 		content.add_child(mode_selector)
 		var memory_status := Label.new()
@@ -2738,6 +2810,23 @@ func _add_facility_activity_controls(facility_type: String) -> void:
 		reflex_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		reflex_status.visible = false
 		content.add_child(reflex_status)
+		var puzzle_status := Label.new()
+		puzzle_status.name = "ArcadePuzzleStatus"
+		puzzle_status.text = "حل خمسة ألغاز حسابية متتالية."
+		puzzle_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		puzzle_status.visible = false
+		content.add_child(puzzle_status)
+		var puzzle_buttons := HBoxContainer.new()
+		puzzle_buttons.name = "ArcadePuzzleButtons"
+		for puzzle_index in range(4):
+			var puzzle_button := Button.new()
+			puzzle_button.name = "ArcadePuzzleButton_%d" % puzzle_index
+			puzzle_button.text = "—"
+			puzzle_button.custom_minimum_size = Vector2(64.0, 54.0)
+			puzzle_button.pressed.connect(_submit_arcade_puzzle_button.bind(puzzle_button))
+			puzzle_buttons.add_child(puzzle_button)
+		puzzle_buttons.visible = false
+		content.add_child(puzzle_buttons)
 		var memory_buttons := HBoxContainer.new()
 		memory_buttons.name = "ArcadeMemoryButtons"
 		for color_index in range(4):
@@ -2770,7 +2859,7 @@ func _add_facility_activity_controls(facility_type: String) -> void:
 
 
 func _on_arcade_mode_selected(index: int) -> void:
-	selected_arcade_mode = ["shooter", "memory", "reflex"][clampi(index, 0, 2)]
+	selected_arcade_mode = ["shooter", "memory", "reflex", "puzzle"][clampi(index, 0, 3)]
 	var aim_slider := content.get_node_or_null("FacilityAimSlider") as HSlider
 	var aim_label := content.get_node_or_null("FacilityAimLabel") as Label
 	var memory_buttons := content.get_node_or_null("ArcadeMemoryButtons") as HBoxContainer
@@ -2786,6 +2875,12 @@ func _on_arcade_mode_selected(index: int) -> void:
 	var reflex_status := content.get_node_or_null("ArcadeReflexStatus") as Label
 	if reflex_status != null:
 		reflex_status.visible = selected_arcade_mode == "reflex"
+	var puzzle_status := content.get_node_or_null("ArcadePuzzleStatus") as Label
+	if puzzle_status != null:
+		puzzle_status.visible = selected_arcade_mode == "puzzle"
+	var puzzle_buttons := content.get_node_or_null("ArcadePuzzleButtons") as HBoxContainer
+	if puzzle_buttons != null:
+		puzzle_buttons.visible = selected_arcade_mode == "puzzle"
 	var action_button := content.get_node_or_null("FacilityActivityActionButton") as Button
 	if action_button != null:
 		action_button.visible = selected_arcade_mode in ["shooter", "reflex"]
@@ -2960,6 +3055,16 @@ func start_facility_activity(facility_type: String) -> bool:
 			if reflex_status != null:
 				reflex_status.visible = true
 			_schedule_arcade_reflex_signal()
+		elif selected_arcade_mode == "puzzle":
+			active_facility_activity["goal"] = 5
+			active_facility_activity["reward"] = 75
+			active_facility_activity["lives"] = 3
+			active_facility_activity["puzzle_questions"] = _arcade_puzzle_questions()
+			active_facility_activity["puzzle_cursor"] = 0
+			var puzzle_status := content.get_node_or_null("ArcadePuzzleStatus") as Label
+			if puzzle_status != null:
+				puzzle_status.visible = true
+			_show_arcade_puzzle_question()
 		else:
 			var reflex_status := content.get_node_or_null("ArcadeReflexStatus") as Label
 			if reflex_status != null:
@@ -2990,6 +3095,8 @@ func perform_facility_activity(action: String) -> Dictionary:
 			return {"success": false, "reason": "أدخل تسلسل الألوان من الأزرار الأربعة."}
 		if arcade_mode == "reflex":
 			return _submit_arcade_reflex_action()
+		if arcade_mode == "puzzle":
+			return {"success": false, "reason": "اختر الإجابة الصحيحة من لوحة الأرقام لإكمال اللغز."}
 		return await _launch_arcade_projectile()
 	var step := int(active_facility_activity.get("step", 0)) + 1
 	var score_gain := 1
