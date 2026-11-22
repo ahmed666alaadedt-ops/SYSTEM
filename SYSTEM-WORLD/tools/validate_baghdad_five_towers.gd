@@ -59,6 +59,12 @@ func _run_validation() -> void:
 			_expect(transport.get_node_or_null("PanoramicLiftShaft_00") != null, "panoramic lift shaft exists: " + tower_name)
 			_expect(transport.get_node_or_null("ProtectedStairCore_00") != null, "protected stair core exists: " + tower_name)
 			_expect(transport.get_node_or_null("FloorDirectoryMarkers") != null, "floor directory exists: " + tower_name)
+		var gardens := tower.get_node_or_null("SkyGardenTerraces")
+		_expect(gardens != null, "elevated sky gardens exist: " + tower_name)
+		if gardens != null:
+			_expect(gardens.get_node_or_null("ElevatedGardenDeck_00") != null, "lower sky garden deck exists: " + tower_name)
+			_expect(gardens.get_node_or_null("ElevatedGardenDeck_01") != null, "middle sky garden deck exists: " + tower_name)
+			_expect(gardens.get_node_or_null("ElevatedGardenDeck_02") != null, "upper sky garden deck exists: " + tower_name)
 		_expect(tower.get_node_or_null("PublicEntrance") != null, "public entrance trigger exists: " + tower_name)
 		_expect(int(tower.get_meta("transport_blockout_revision", 0)) == 1, "transport blockout revision is registered: " + tower_name)
 
@@ -78,8 +84,9 @@ func _run_validation() -> void:
 	var district := manager.get_node_or_null("FiveTowerConnectedDistrict")
 	_expect(district != null, "connected five-tower district exists")
 	if district != null:
-		var radial_count := _count_named_prefix(district, "CentralSYSTEMRadialSkybridge_")
-		_expect(radial_count == 5, "five radial skybridges connect towers to the central SYSTEM hub")
+		for bridge_index in range(5):
+			var bridge_name := "CentralSYSTEMRadialSkybridge_%d" % bridge_index
+			_expect(district.get_node_or_null(bridge_name) != null, "radial skybridge exists: " + bridge_name)
 
 	var amenities := manager.get_node_or_null("ConnectedCityPublicAmenities_Blockout")
 	_expect(amenities != null, "shared public amenities root exists")
