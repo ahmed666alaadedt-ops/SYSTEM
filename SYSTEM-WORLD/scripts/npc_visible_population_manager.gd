@@ -109,6 +109,10 @@ func _refresh_pedestrians() -> void:
 			continue
 		if bool(npc.get("jailed", false)):
 			continue
+		# Tower employees are rendered by their own lobby staff anchors. Keep
+		# them out of the roaming civilian pool to avoid duplicate characters.
+		if not str(npc.get("system_tower_staff_tower", "")).is_empty():
+			continue
 		visible_ids[npc_id] = true
 		if not pedestrians.has(npc_id):
 			_create_pedestrian(npc_id, npc, added)
