@@ -525,7 +525,7 @@ func _get_floor_duty_staff_index(tower_id: String, floor_number: int) -> int:
 				return 2
 			return 0
 		"entertainment_tower_baghdad":
-			if floor_number == 18:
+			if floor_number in [18, 19]:
 				return 3
 			if floor_number == 20:
 				return 4
@@ -555,10 +555,12 @@ func _get_floor_duty_staff_index(tower_id: String, floor_number: int) -> int:
 		"power_tower_baghdad":
 			if floor_number == 1:
 				return 0
-			if floor_number == 100 or floor_number >= 101:
+			if floor_number == 100:
 				return 1
 			if floor_number == 150:
 				return 2
+			if floor_number >= 101:
+				return 1
 			if floor_number >= 51:
 				return 2
 			return 1
