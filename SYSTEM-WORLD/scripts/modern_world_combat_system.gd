@@ -52,6 +52,8 @@ func skill_one() -> Dictionary:
 	var activation: Dictionary = progression.call("activate_nen_burst")
 	if not bool(activation.get("success", false)):
 		return activation
+	if progression.has_method("record_nen_skill_use"):
+		progression.call("record_nen_skill_use", "nen_burst")
 	can_attack = false
 	_consume_weapon_durability(0.75)
 	_fire_hitscan(heavy_damage + _get_progression_damage_bonus(), attack_range * 1.35)
@@ -65,6 +67,9 @@ func skill_two() -> Dictionary:
 	can_attack = false
 	_consume_weapon_durability(0.9)
 	_fire_hitscan(heavy_damage * 1.2 + _get_progression_damage_bonus(), attack_range * 1.2)
+	var progression := _get_progression()
+	if progression != null and bool(progression.get("nen_unlocked")) and progression.has_method("record_nen_skill_use"):
+		progression.call("record_nen_skill_use", "charged_strike")
 	get_tree().create_timer(1.0 * _get_attack_cooldown_multiplier()).timeout.connect(func(): can_attack = true)
 	return {"success": true, "ability_id": "charged_strike"}
 
