@@ -1629,8 +1629,7 @@ func _run() -> void:
 		_fail("Shopping Tower customer visitors did not return to the public lobby after emergency evacuation; found %d." % customers_after_evacuation)
 		return
 	print("Baghdad tower operations validation passed: five connected Baghdad towers, independent Power Tower, NPC commerce, hotel workflows, eleven playable leisure/technology activity loops, equipment, Nen progression and the 200th-floor sovereign boss arena.")
-	main.queue_free()
-	await process_frame
+	# This is a short-lived headless validation process; avoid forcing dummy-renderer teardown of placeholder meshes.
 	quit(0)
 
 func _fail(message: String) -> void:
