@@ -60,12 +60,14 @@ func begin_exam() -> Dictionary:
 		return {"success":false,"reason":"NOT_REGISTERED"}
 	if failed:
 		return {"success":false,"reason":"EXAM_FAILED"}
+	if completed_stage_ids.size() >= EXAM_STAGES.size():
+		exam_active = false
+		current_stage_index = EXAM_STAGES.size()
+		return {"success":false,"reason":"ALL_STAGES_COMPLETED"}
 	if exam_active:
 		return {"success":true,"candidate_number":candidate_number,"stage":get_current_stage(),"resumed":true}
 	exam_active = true
 	current_stage_index = completed_stage_ids.size()
-	if current_stage_index >= EXAM_STAGES.size():
-		return {"success":false,"reason":"ALL_STAGES_COMPLETED"}
 	_save_exam_state()
 	stage_started.emit(str(EXAM_STAGES[current_stage_index]["id"]),current_stage_index + 1)
 	return {"success":true,"candidate_number":candidate_number,"stage":get_current_stage()}
