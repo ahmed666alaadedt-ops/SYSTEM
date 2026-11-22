@@ -6,8 +6,8 @@ This status block is authoritative over older historical backlog notes below. Ol
 
 - The five connected Baghdad district towers and the independent 200-floor Power Tower remain on draft PR #38; nothing is merged into `main`.
 - The hotel is beyond a visual blockout: local-save room booking, rank-gated room selection, payment/refund, check-in/check-out, housekeeping plus inspection, and paid room-service orders with guarded `placed → preparing → delivered` transitions are implemented. This is a local prototype, not a server-authoritative online hotel.
-- Pool water-volume detection, swimming state, buoyancy and swim-stroke input are implemented and covered by the tower operations validator; full Godot validation #1405 and Android export #1142 passed on exact source commit `976ffdf2a2b92dede330b617303ab847ae07c878`. Physical Android inspection is still outstanding.
-- Physical bowling, basketball and arcade target gameplay also has automated regression coverage. Full sports match rules, bowling bonus scoring, cinema programming/playback, full arcade cabinet play, animated robotics, immersive VR, autonomous staff navigation and completed room interiors remain open.
+- Pool swimming physics, full ten-frame bowling with strike/spare/tenth-frame bonuses, physical basketball scoring, arcade target detection, Shopping Tower dine-in, and the hotel housekeeping/room-service flows are implemented and covered by the full tower operations validator. Godot validation #1421 (run `45066697522`) and Android export #1158 (run `45066697476`) passed on exact PR head `02cf161b75e3bd51afb3d924c40060ba588a6244`.
+- Bowling scoring regressions cover a perfect 300 game, a zero-pin game and ten consecutive spares (150). Physical Android inspection remains outstanding. Full sports match rules, cinema programming/playback, full arcade cabinet play, animated robotics, immersive VR, autonomous staff navigation and completed room interiors remain open.
 - Do not call the five-tower district fully complete while these explicitly open gameplay and physical-device checks remain. Keep PR #38 as draft and do not merge without the user's explicit approval.
 
 - Shopping Tower restaurant dine-in workflow is implemented and verified on source commit `6a9f1391581d408ca45b8ede9f6f9d4ddd530bdf`: four interactable tables per restaurant floor (29–32), multi-item paid orders, persisted order states, chef preparation controls, waiter serving controls and guest table release. Godot validation #1419 passed (run `45066493197`) and Android export #1156 passed (run `45066493084`) on that exact source commit. APK artifact `14771617600`, 35,903,279 bytes, SHA-256 `c6090d16e02e74edf34b11bac3b8fa18c0b00141bf993c462ec7e71b00746a3b`, expires 6 December 2026. Physical Android play inspection remains outstanding.
@@ -963,7 +963,7 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Keep fallen pins down between rolls in the same frame; reset the full rack only when a frame ends or a tenth-frame bonus rack is earned.
 - [x] Calculate official bowling score from the roll history, including strike and spare bonuses; cap the game at the legal 21-roll maximum.
 - [x] Add deterministic scoring regressions for a perfect 300 game, a zero-pin game and ten consecutive spares (150 points).
-- [ ] Run the full Godot 4.3 validator and Android export on this gameplay change before claiming it verified.
+- [x] Pass the full Godot 4.3 validator #1421 (run `45066697522`) and Android export #1158 (run `45066697476`) on exact PR head `02cf161b75e3bd51afb3d924c40060ba588a6244`; physical device feel remains outstanding.
 - Note: physical Android lane feel, ball control and real-device collision response still require device playtesting.
 
 
@@ -971,4 +971,13 @@ Implementation added on the feature branch; automated runtime validation is pend
 
 - [x] Diagnose Godot #1410 parser failure: the bowling completion assertion referenced `final_activity_result` outside its activity-loop scope.
 - [x] Move the bowling completion requirement into the per-activity validation scope and count physical results before breaking on the completed final throw.
-- [ ] Re-run Godot 4.3 full validation and canonical Android export on the corrected bowling implementation.
+- [x] Re-run Godot 4.3 full validation and canonical Android export on the corrected bowling implementation; both passed in #1421/#1158.
+
+
+## Latest full Baghdad tower verification — 22 November 2026
+
+- [x] Pass Godot 4.3 validation #1421 (run ID `45066697522`) on exact PR head `02cf161b75e3bd51afb3d924c40060ba588a6244`, including parser/import, headless launch, landmark/lobby checks and the complete Baghdad tower operations validator.
+- [x] Pass canonical Android export #1158 (run ID `45066697476`) on the same exact PR head; APK artifact `14771543150`, 35,903,207 bytes, uploaded successfully and expires 6 December 2026.
+- [x] Confirm the bowling 10-frame scoring engine, strike/spare bonus calculations, tenth-frame bonus rolls, physical pin rack persistence and all three deterministic score regressions are included in the validated source.
+- [x] Confirm the Shopping Tower restaurant dine-in tables, paid multi-item orders, chef/waiter order lifecycle and local save/load regression are included in the validated source.
+- [ ] Physical Android touch, collision feel, visuals, thermal load and frame-rate inspection remain outstanding.
