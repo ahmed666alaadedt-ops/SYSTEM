@@ -27,6 +27,8 @@ const TOWER_FLOOR_SCRIPT = preload("res://scripts/system_baghdad_tower_floor_wor
 const TOWER_LIFT_UI_SCRIPT = preload("res://scripts/system_baghdad_tower_lift_ui.gd")
 const LANDMARK_SCRIPT = preload("res://scripts/system_baghdad_landmark_integration.gd")
 const HUNTER_EXAM_MANAGER_SCRIPT = preload("res://scripts/system_hunter_exam_manager.gd")
+const PLAYER_PROGRESSION_SCRIPT = preload("res://scripts/system_player_progression.gd")
+const MODERN_COMBAT_SCRIPT = preload("res://scripts/modern_world_combat_system.gd")
 
 func _initialize() -> void:
 	call_deferred("_run")
@@ -260,6 +262,28 @@ func _run() -> void:
 			if not armory_menu_source.contains("add_discovery_insight") or not armory_menu_source.contains("tower_awakening_potion"):
 				_fail("Nen awakening potion is not connected to the Nen discovery progression.")
 				return
+			if not progression_source.contains("func equip_weapon(") or not progression_source.contains("func get_equipped_weapon("):
+				_fail("Player progression does not persist an equipped armory weapon.")
+				return
+			var weapon_progression: Node = PLAYER_PROGRESSION_SCRIPT.new() as Node
+			root.add_child(weapon_progression)
+			weapon_progression.call("add_item", "armory_long_sword", 1)
+			if not bool(weapon_progression.call("equip_weapon", "armory_long_sword")):
+				_fail("An owned armory sword could not be equipped.")
+				return
+			var weapon_combat: Node = MODERN_COMBAT_SCRIPT.new() as Node
+			root.add_child(weapon_combat)
+			weapon_combat.call("bind_actor", null, null, weapon_progression)
+			var sword_profile: Dictionary = weapon_combat.call("get_equipped_weapon_profile")
+			if str(sword_profile.get("weapon_class", "")) != "melee" or float(sword_profile.get("range", 99.0)) >= 10.0:
+				_fail("Equipped sword did not apply its melee combat profile.")
+				return
+			weapon_progression.call("remove_item", "armory_long_sword", 1)
+			if not str(weapon_progression.call("get_equipped_weapon")).is_empty():
+				_fail("Removing the final equipped weapon did not clear the active loadout.")
+				return
+			weapon_combat.queue_free()
+			weapon_progression.queue_free()
 		for floor_number in range(2, 6):
 			var selector := interior.get_node_or_null("LobbyLiftSelector_%02d" % floor_number) as Area3D
 			if selector == null or not selector.is_in_group("system_interactable"):
