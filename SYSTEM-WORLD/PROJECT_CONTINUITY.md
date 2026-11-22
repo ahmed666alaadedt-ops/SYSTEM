@@ -41,3 +41,13 @@ Last verified: 2026-11-22 (GitHub repository review)
 - This is source-level work only. No Godot run or Android visual check has yet validated the new tower changes. The earlier successful run 658 applies to commit 6c21a7d, not these later commits.
 - Continue only on qa/fix-deferred-test-cleanup-20261122; do not merge or modify main without explicit user approval.
 - Next action: verify the updated five-tower scene in Godot/CI, then finish the connected district details and proceed to the independent Power Tower. Do not start later requested facilities until the current ordered milestone is honestly complete.
+
+
+## Five-tower image-reference facility pass — 22 November 2026
+
+- User supplied a futuristic Baghdad skyline image and explicitly approved it as the visual reference for completing the five-tower district. Preserve the connected mega-district composition, elevated layered decks, five distinct towers, sculptural supports, central SYSTEM spire, landscaped sky terraces, blue/cyan glass with gold trim, river bridges and open Tigris corridor. Keep Tahrir Square and the Freedom Monument protected.
+- Latest source commit: e7b693f70fce40ea64177fa6e3468eeab9ea7525 on qa/fix-deferred-test-cleanup-20261122.
+- The tower manager now adds named visual facility blockouts by tower; Shopping Tower has a six-hall cinema visual layout with 24 seat markers per hall; Entertainment Tower has observation-wheel, sky-pool, esports/arcade, live-event, bowling and VR markers; the connected district has a central SYSTEM spire marker and three shared sky-garden terrace meshes.
+- These are visual meshes/labels/metadata only. They are not yet playable or interactive; cinema playback, transactions, services, rides, pools, elevators, doors, interior navigation and full collision validation remain outstanding.
+- No Godot parse/run or Android test has yet verified commit e7b693f70fce40ea64177fa6e3468eeab9ea7525. Earlier Build #658 does not include this commit.
+- Continue on qa/fix-deferred-test-cleanup-20261122 only; never merge to main without explicit user approval.
