@@ -26,6 +26,14 @@ This is the acceptance checklist for the modern-world map. The project must not 
 - [ ] Verify the new procedural identity geometry in Godot for scale, overlaps, silhouette, collision, readability, river/Tahrir view corridors, and Android rendering cost.
 - Note: this pass adds exterior identity blockout meshes and metadata only. No tower interior, elevator ride, shop transaction, equipment equip flow, elixir effect, or live online leaderboard is claimed complete.
 
+## Baghdad tower entrance directory metadata — 22 November 2026
+
+- [x] Attach floor count, approximate height, and connected-versus-standalone status to each tower entrance interaction marker.
+- [x] Extend the existing interaction response with a tower directory for Hunter Association, Weapons/Equipment/Elixirs, Shopping, Entertainment/Sports, Technology/Innovation, and the standalone Power Tower.
+- [x] Explicitly label floor directories as informational until real interior floors and elevator transitions exist; do not imply that selecting a tower entrance grants access to all floors.
+- [ ] Replace the text-only directory with a mobile-friendly interactive floor selector and validated elevator transitions after interior scenes and collision-safe arrival points exist.
+- [ ] Test entrance targeting and directory readability in Godot and on Android; no physical-device visual test is claimed.
+
 ## Current verified repository foundations
 
 - [x] Fourteen city labels and eight district labels per city are defined in modern_world_region_manager.gd; only Baghdad is currently connected to the provisional WGS84 registry anchor, while the other thirteen centers remain prototype-layout coordinates.
@@ -161,7 +169,7 @@ A checked repository foundation does not mean a finished gameplay feature. Visua
 - Note: collision-backed decks and parking slabs are source-level additions; no runtime or driving test was run in this update. Lift shafts and parking bay markings remain visual blockout, not interactive systems.
 
 ## Connected Baghdad district — vehicles and public life — 20 November 2026
-- [x] Record the five connected district identities: Hunter Association, Business and Investment, Shopping and Commerce, Entertainment and Sports, and Technology and Innovation; keep Power Tower separate.
+- [x] Record the five connected district identities: Hunter Association, Weapons/Equipment/Elixirs, Shopping and Commerce, Entertainment and Sports, and Technology and Innovation; keep Power Tower separate.
 - [x] Expand the separate Power Tower progression model to 200 floors; playable interiors, opponent encounters, and server-verified records remain open.
 - [x] Add an initial procedural five-tower district blockout with elevated promenade/vehicle-deck link geometry and ramp-segment placeholders; add the separate Power Tower landmark outside that connection loop.
 - [x] Add placeholder public amenity deck geometry and a planned facility inventory for recreation, hospitality, shopping, health support, parking, and emergency access.
@@ -386,7 +394,7 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 
 - [x] Add `scripts/system_public_event_board.gd` as a shared 3D display manager for the modern-world city map.
 - [x] Replace the previous detached demo billboard routine with a procedural skyscraper facade in each configured city, carrying a curated advertising panel and a separate public event-results panel.
-- [x] Add facade-mounted advertising and results panels to the five Baghdad landmark towers: Hunter Association, Power, Business, Shopping, and Entertainment.
+- [x] Add facade-mounted advertising and results panels to the five connected Baghdad towers plus the standalone Power Tower: Hunter Association, Weapons/Equipment/Elixirs, Shopping, Entertainment, Technology, and Power.
 - [x] Connect completed monster-gate clears to publish gate rank, gate ID, and XP to the public boards.
 - [x] Connect verified mission-reward events to the public boards.
 - [x] Connect Hunter Examination stage completion and final license-earned signals to the public boards.
