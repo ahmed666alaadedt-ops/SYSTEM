@@ -249,6 +249,7 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	_create_tower_advertising_screens(root, node_name, height, radius)
 
 	root.set_meta("tower_id", location_id)
+	root.set_meta("tower_floor_count", floors)
 	print("SYSTEM WORLD: landmark tower generated: ", title, " / ", floors, " floors / ", height, "m")
 
 func _nearest_land_position(origin: Vector2) -> Vector2:
@@ -435,6 +436,7 @@ func _create_tower_architecture(root: Node3D, node_name: String, title: String, 
 	identity_ring.material_override = emissive_material
 	root.add_child(identity_ring)
 	_create_tower_identity_features(root, node_name, height, radius)
+	_create_tower_facade_glazing(root, height, radius, floors, beacon_color)
 
 
 func _create_connected_city_links() -> void:
@@ -741,6 +743,64 @@ func _create_tower_advertising_screens(root: Node3D, node_name: String, height: 
 		screen_root.add_child(message)
 	root.set_meta("exterior_ad_screen_count", display_names.size())
 	root.set_meta("local_ad_content_only", true)
+
+
+func _create_tower_facade_glazing(root: Node3D, height: float, radius: float, floors: int, beacon_color: Color) -> void:
+	# Batched glass panels and metal frames add readable facade depth without
+	# creating hundreds of individual scene nodes per tower.
+	var safe_floor_count := maxi(1, floors)
+	var panel_width := radius * 0.68
+	var panel_height := clampf((height / float(safe_floor_count)) * 0.52, 0.9, 3.2)
+	var glass_material := StandardMaterial3D.new()
+	glass_material.albedo_color = beacon_color.darkened(0.68)
+	glass_material.metallic = 0.42
+	glass_material.roughness = 0.16
+	glass_material.emission_enabled = true
+	glass_material.emission = beacon_color * 0.08
+	glass_material.emission_energy_multiplier = 0.7
+	var frame_mesh := BoxMesh.new()
+	frame_mesh.size = Vector3(panel_width + 0.72, panel_height + 0.58, 0.34)
+	var glass_mesh := BoxMesh.new()
+	glass_mesh.size = Vector3(panel_width, panel_height, 0.16)
+	var frame_multimesh := MultiMesh.new()
+	frame_multimesh.transform_format = MultiMesh.TRANSFORM_3D
+	frame_multimesh.mesh = frame_mesh
+	frame_multimesh.instance_count = safe_floor_count * 4
+	var glass_multimesh := MultiMesh.new()
+	glass_multimesh.transform_format = MultiMesh.TRANSFORM_3D
+	glass_multimesh.mesh = glass_mesh
+	glass_multimesh.instance_count = safe_floor_count * 4
+	var instance_index := 0
+	for floor_index in range(safe_floor_count):
+		var floor_y := 9.0 + (height - 16.0) * (float(floor_index) + 0.5) / float(safe_floor_count)
+		for side in range(4):
+			var angle := TAU * float(side) / 4.0
+			var rotation := Basis(Vector3.UP, angle)
+			var frame_position := Vector3(sin(angle) * (radius * 0.895), floor_y, cos(angle) * (radius * 0.895))
+			var glass_position := Vector3(sin(angle) * (radius * 0.91), floor_y, cos(angle) * (radius * 0.91))
+			frame_multimesh.set_instance_transform(instance_index, Transform3D(rotation, frame_position))
+			glass_multimesh.set_instance_transform(instance_index, Transform3D(rotation, glass_position))
+			instance_index += 1
+	var frames := MultiMeshInstance3D.new()
+	frames.name = "TowerFacadeMetalFrames"
+	frames.multimesh = frame_multimesh
+	frames.material_override = trim_material
+	root.add_child(frames)
+	var glazing := MultiMeshInstance3D.new()
+	glazing.name = "TowerFacadeGlassPanels"
+	glazing.multimesh = glass_multimesh
+	glazing.material_override = glass_material
+	root.add_child(glazing)
+	var accent_light := OmniLight3D.new()
+	accent_light.name = "TowerFacadeAccentLight"
+	accent_light.position = Vector3(0.0, height * 0.56, 0.0)
+	accent_light.light_color = beacon_color
+	accent_light.light_energy = 0.35
+	accent_light.omni_range = radius * 2.4
+	accent_light.shadow_enabled = false
+	root.add_child(accent_light)
+	root.set_meta("facade_glass_panel_count", safe_floor_count * 4)
+	root.set_meta("facade_metal_frame_count", safe_floor_count * 4)
 
 
 func _create_tower_identity_features(root: Node3D, node_name: String, height: float, radius: float) -> void:
