@@ -589,3 +589,10 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [ ] Run the latest Godot 4.3 validator and Android APK export on the new commit; inspect any failures before claiming the theme pass validated.
 - [ ] Replace the current themed visual blockouts with finished art, fully interactive department activities, staff schedules, and physical-device visual/performance verification.
 - Note: this pass adds tower-specific visual identity and department set dressing. It does not claim that every floor has unique hand-authored geometry or that the displayed stations are all independently playable.
+
+### Godot validator correction — 22 November 2026
+
+- [x] Investigate the first tower-theme validation run. The new validator incorrectly required the five connected Baghdad department themes on the separate Power Tower.
+- [x] Keep the five-department theme assertion scoped to the five connected Baghdad towers.
+- [x] Validate the independent Power Tower against its own arena challenge display and arena metadata instead.
+- [ ] Re-run Godot validation and Android export on this corrected commit; do not treat the earlier failed Godot run as a pass.
