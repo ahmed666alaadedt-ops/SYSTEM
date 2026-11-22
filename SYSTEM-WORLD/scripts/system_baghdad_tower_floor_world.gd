@@ -20,11 +20,12 @@ func setup(p_tower_id: String, p_max_floors: int) -> void:
 func build_floor(floor_number: int, return_position: Vector3) -> Dictionary:
 	if tower_id.is_empty() or floor_number < 1 or floor_number > max_floors:
 		return {"success": false, "reason": "INVALID_TOWER_FLOOR"}
+	var saved_return_position := external_return_position if active_floor > 0 else return_position
 	if is_instance_valid(active_floor_root):
 		remove_child(active_floor_root)
 		active_floor_root.queue_free()
 	active_floor = floor_number
-	external_return_position = return_position
+	external_return_position = saved_return_position
 	active_floor_root = Node3D.new()
 	active_floor_root.name = "ActiveTowerFloor_%03d" % floor_number
 	active_floor_root.position = Vector3.ZERO
@@ -36,6 +37,7 @@ func build_floor(floor_number: int, return_position: Vector3) -> Dictionary:
 	active_floor_root.set_meta("floor_theme_variant", floor_variant)
 	_build_shell(floor_number)
 	_build_tower_theme(floor_number)
+	_build_stair_access()
 	_build_exit()
 	return {
 		"success": true,
@@ -239,6 +241,62 @@ func _build_tower_theme(floor_number: int) -> void:
 	floor_label.pixel_size = 0.012
 	floor_label.modulate = Color(0.82, 0.92, 1.0)
 	active_floor_root.add_child(floor_label)
+
+
+
+func _build_stair_access() -> void:
+	var stair_material := _material(Color(0.16, 0.22, 0.29), 0.42, 0.58)
+	var rail_material := _accent_material()
+	if active_floor < max_floors:
+		for step_index in range(15):
+			var step_z := 33.0 - (float(step_index) + 0.5) * 1.05
+			var step_y := 0.2 + float(step_index + 1) * 0.42
+			_add_box("EmergencyStairUpStep_%02d" % step_index, Vector3(28.0, step_y, step_z), Vector3(12.0, 0.42, 1.2), stair_material, true)
+		_add_box("EmergencyStairUpLanding", Vector3(28.0, 6.65, 16.5), Vector3(13.0, 0.5, 4.5), stair_material, true)
+		_add_box("EmergencyStairUpRail", Vector3(34.5, 3.6, 25.0), Vector3(0.25, 2.0, 17.0), rail_material, true)
+		_create_stair_interaction("StairUpInteraction", "tower_stair_up_" + tower_id + "_" + str(active_floor), "الصعود إلى الطابق %03d" % (active_floor + 1), Vector3(28.0, 8.0, 14.5), active_floor + 1)
+		var up_label := Label3D.new()
+		up_label.name = "EmergencyStairUpLabel"
+		up_label.text = "مخرج الطوارئ — صعود"
+		up_label.font_size = 22
+		up_label.position = Vector3(28.0, 10.0, 14.0)
+		up_label.pixel_size = 0.014
+		up_label.modulate = Color(0.85, 0.96, 1.0)
+		active_floor_root.add_child(up_label)
+	if active_floor > 1:
+		for step_index in range(15):
+			var step_z := -17.0 - (float(step_index) + 0.5) * 1.05
+			var step_y := 6.5 - float(step_index + 1) * 0.42
+			_add_box("EmergencyStairDownStep_%02d" % step_index, Vector3(-28.0, step_y, step_z), Vector3(12.0, 0.42, 1.2), stair_material, true)
+		_add_box("EmergencyStairDownLanding", Vector3(-28.0, 6.65, -16.5), Vector3(13.0, 0.5, 4.5), stair_material, true)
+		_add_box("EmergencyStairDownRail", Vector3(-34.5, 3.6, -25.0), Vector3(0.25, 2.0, 17.0), rail_material, true)
+		_create_stair_interaction("StairDownInteraction", "tower_stair_down_" + tower_id + "_" + str(active_floor), "النزول إلى الطابق %03d" % (active_floor - 1), Vector3(-28.0, 1.5, -34.0), active_floor - 1)
+		var down_label := Label3D.new()
+		down_label.name = "EmergencyStairDownLabel"
+		down_label.text = "مخرج الطوارئ — نزول"
+		down_label.font_size = 22
+		down_label.position = Vector3(-28.0, 8.0, -16.0)
+		down_label.pixel_size = 0.014
+		down_label.modulate = Color(0.85, 0.96, 1.0)
+		active_floor_root.add_child(down_label)
+	active_floor_root.set_meta("emergency_stair_up_available", active_floor < max_floors)
+	active_floor_root.set_meta("emergency_stair_down_available", active_floor > 1)
+
+
+func _create_stair_interaction(node_name: String, location_id: String, display_name: String, position: Vector3, target_floor: int) -> void:
+	var area: Area3D = EntranceScript.new()
+	area.name = node_name
+	area.configure(location_id, display_name, "region_baghdad")
+	area.position = position
+	area.set_meta("system_tower_id", tower_id)
+	area.set_meta("system_floor_number", target_floor)
+	area.set_meta("system_interaction_prompt", display_name)
+	var collision := CollisionShape3D.new()
+	var shape := SphereShape3D.new()
+	shape.radius = 3.2
+	collision.shape = shape
+	area.add_child(collision)
+	active_floor_root.add_child(area)
 
 
 func _build_exit() -> void:
