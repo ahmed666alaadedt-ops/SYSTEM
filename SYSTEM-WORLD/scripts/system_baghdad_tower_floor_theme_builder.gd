@@ -2,35 +2,35 @@ extends RefCounted
 class_name SYSTEMBaghdadTowerFloorThemeBuilder
 
 const THEMES := {
-	"weapons_equipment_elixirs_tower_baghdad": {
-		"id": "weapons_forge_and_elixir_lab",
-		"color": Color(0.16, 0.31, 0.38),
-		"accent": Color(0.95, 0.54, 0.18),
-		"stations": ["معرض الأسلحة", "منصة فحص المعدات", "مختبر الإكسير", "خزانة النِن"]
+	"hunter_association_tower_baghdad": {
+		"id": "global_hunter_association",
+		"color": Color(0.12, 0.22, 0.34),
+		"accent": Color(0.92, 0.76, 0.38),
+		"stations": ["مكتب المهمات", "قاعة التدريب", "سجل الصيادين", "قاعة الشرف"]
+	},
+	"business_investment_tower_baghdad": {
+		"id": "business_and_investment",
+		"color": Color(0.10, 0.27, 0.22),
+		"accent": Color(0.45, 0.82, 0.62),
+		"stations": ["مركز الشركات", "البنوك والعقود", "قاعة التداول", "مركز المؤتمرات"]
 	},
 	"shopping_tower_baghdad": {
-		"id": "shopping_gallery",
+		"id": "shopping_commerce_hospitality",
 		"color": Color(0.22, 0.20, 0.34),
 		"accent": Color(0.92, 0.68, 0.28),
-		"stations": ["سوق الأزياء", "متجر الاحتياجات", "منطقة العروض", "استراحة الزوار"]
+		"stations": ["معرض الأسلحة والدروع", "مختبر الإكسير والنِن", "سوق الملابس والتجهيزات", "فندق SYSTEM والمطاعم"]
 	},
 	"entertainment_tower_baghdad": {
-		"id": "sports_and_entertainment",
+		"id": "sports_leisure_and_family",
 		"color": Color(0.12, 0.29, 0.25),
 		"accent": Color(0.30, 0.88, 0.66),
-		"stations": ["منصة الفعاليات", "منطقة اللياقة", "قاعة الألعاب", "استراحة الجمهور"]
+		"stations": ["المسابح والمنتجع", "النادي الرياضي", "السينما والألعاب", "الفعاليات العائلية"]
 	},
 	"technology_tower_baghdad": {
 		"id": "technology_innovation_lab",
 		"color": Color(0.10, 0.22, 0.36),
 		"accent": Color(0.25, 0.82, 1.0),
-		"stations": ["مختبر الروبوتات", "منصة الاختبار", "مركز البيانات", "معرض الابتكار"]
-	},
-	"hunter_association_tower_baghdad": {
-		"id": "hunter_association_hall",
-		"color": Color(0.24, 0.19, 0.13),
-		"accent": Color(0.92, 0.76, 0.38),
-		"stations": ["مكتب المهمات", "قاعة التدريب", "سجل الصيادين", "قاعة الشرف"]
+		"stations": ["مختبر الروبوتات", "مختبر الذكاء الاصطناعي", "محاكاة الواقع الافتراضي", "منصة الابتكار"]
 	}
 }
 
@@ -107,7 +107,9 @@ static func build(room: Node3D, tower_id: String, floor_number: int, radius: flo
 			_add_sports_display(station, base_material, accent_material)
 		elif tower_id == "technology_tower_baghdad":
 			_add_tech_display(station, base_material, accent_material)
-		else:
+		elif tower_id == "business_investment_tower_baghdad":
+			_add_business_display(station, base_material, accent_material)
+		elif tower_id == "hunter_association_tower_baghdad":
 			_add_hunter_display(station, base_material, accent_material)
 
 static func _material(color: Color, metallic: float, roughness: float) -> StandardMaterial3D:
@@ -165,6 +167,22 @@ static func _add_tech_display(parent: Node3D, base: Material, accent: Material) 
 		node.position = Vector3(-0.9 + float(index) * 0.9, 1.55, 0.3)
 		node.material_override = accent if index == 1 else base
 		parent.add_child(node)
+
+static func _add_business_display(parent: Node3D, base: Material, accent: Material) -> void:
+	var desk := MeshInstance3D.new()
+	var desk_mesh := BoxMesh.new()
+	desk_mesh.size = Vector3(2.8, 1.0, 1.3)
+	desk.mesh = desk_mesh
+	desk.position = Vector3(0.0, 0.9, 0.25)
+	desk.material_override = base
+	parent.add_child(desk)
+	var display := MeshInstance3D.new()
+	var display_mesh := BoxMesh.new()
+	display_mesh.size = Vector3(2.2, 1.25, 0.12)
+	display.mesh = display_mesh
+	display.position = Vector3(0.0, 2.15, -0.55)
+	display.material_override = accent
+	parent.add_child(display)
 
 static func _add_hunter_display(parent: Node3D, base: Material, accent: Material) -> void:
 	var pillar := MeshInstance3D.new()
