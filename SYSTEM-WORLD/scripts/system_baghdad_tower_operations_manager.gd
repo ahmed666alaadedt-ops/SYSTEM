@@ -241,6 +241,7 @@ var facility_activity_stats: Dictionary = {}
 var active_facility_activity: Dictionary = {}
 var current_facility_root: Node3D
 var bowling_throw_in_progress := false
+var basketball_throw_in_progress := false
 
 func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_power_manager: Node, p_player_health: Node, p_region_manager: Node) -> void:
 	player = p_player
@@ -2202,9 +2203,41 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 			for index in range(5):
 				_add_facility_box(root, "GymMachine_%02d" % index, Vector3(-12.0 + float(index) * 6.0, 1.2, 0.0), Vector3(2.0, 2.4, 2.0), accent)
 		"sports_court":
-			_add_facility_box(root, "CourtSurface", Vector3(0.0, 0.12, 0.0), Vector3(24.0, 0.2, 15.0), accent)
+			_add_facility_box(root, "CourtSurface", Vector3(0.0, 0.55, 0.0), Vector3(24.0, 0.2, 15.0), accent)
+			var court_body := StaticBody3D.new()
+			court_body.name = "CourtPhysics"
+			court_body.position.y = 0.55
+			var court_collision := CollisionShape3D.new()
+			var court_shape := BoxShape3D.new()
+			court_shape.size = Vector3(24.0, 0.2, 15.0)
+			court_collision.shape = court_shape
+			court_body.add_child(court_collision)
+			root.add_child(court_body)
 			for side in [-1.0, 1.0]:
 				_add_facility_box(root, "CourtHoop_%s" % str(side), Vector3(side * 10.0, 3.0, 0.0), Vector3(0.25, 5.0, 0.25), highlight)
+			_add_facility_box(root, "BasketballBackboard", Vector3(0.0, 4.1, -6.65), Vector3(3.8, 2.0, 0.2), highlight)
+			var rim := MeshInstance3D.new()
+			rim.name = "BasketballRim"
+			var rim_mesh := TorusMesh.new()
+			rim_mesh.inner_radius = 0.58
+			rim_mesh.outer_radius = 0.72
+			rim.mesh = rim_mesh
+			rim.rotation.x = PI * 0.5
+			rim.position = Vector3(0.0, 3.05, -5.7)
+			rim.material_override = highlight
+			root.add_child(rim)
+			var scoring_sensor := Area3D.new()
+			scoring_sensor.name = "BasketballScoringSensor"
+			scoring_sensor.collision_layer = 0
+			scoring_sensor.collision_mask = 1
+			var sensor_shape := SphereShape3D.new()
+			sensor_shape.radius = 0.9
+			var sensor_collision := CollisionShape3D.new()
+			sensor_collision.shape = sensor_shape
+			scoring_sensor.add_child(sensor_collision)
+			scoring_sensor.position = Vector3(0.0, 3.0, -5.7)
+			scoring_sensor.body_entered.connect(_on_basketball_sensor_body_entered)
+			root.add_child(scoring_sensor)
 		"bowling":
 			for index in range(3):
 				_add_facility_box(root, "BowlingLane_%02d" % index, Vector3(-7.0 + float(index) * 7.0, 0.55, -1.0), Vector3(5.0, 0.25, 14.0), accent)
@@ -2419,6 +2452,8 @@ func perform_facility_activity(action: String) -> Dictionary:
 	var facility_type := str(active_facility_activity.get("type", ""))
 	if facility_type == "bowling":
 		return _launch_bowling_ball()
+	if facility_type == "sports_court":
+		return _launch_basketball()
 	var step := int(active_facility_activity.get("step", 0)) + 1
 	var score_gain := 1
 	match facility_type:
@@ -2439,6 +2474,63 @@ func perform_facility_activity(action: String) -> Dictionary:
 		return _complete_facility_activity()
 	_set_status("النشاط مستمر — الخطوة %d من %d | النتيجة: %d" % [step, goal, int(active_facility_activity.get("score", 0))])
 	return {"success": true, "completed": false, "step": step, "score": int(active_facility_activity.get("score", 0))}
+
+
+func _on_basketball_sensor_body_entered(body: Node3D) -> void:
+	if str(body.name).begins_with("Basketball_Active"):
+		body.set_meta("system_basketball_scored", true)
+
+
+func _launch_basketball() -> Dictionary:
+	if basketball_throw_in_progress:
+		return {"success": false, "reason": "المحاولة السابقة لم تنتهِ بعد."}
+	if current_facility_root == null or not is_instance_valid(current_facility_root):
+		return {"success": false, "reason": "ملعب كرة السلة غير جاهز."}
+	if current_facility_root.get_node_or_null("BasketballScoringSensor") == null:
+		return {"success": false, "reason": "حلقة التسجيل غير موجودة."}
+	basketball_throw_in_progress = true
+	var ball := RigidBody3D.new()
+	ball.name = "Basketball_Active"
+	ball.mass = 1.2
+	ball.continuous_cd = true
+	ball.set_meta("system_basketball_scored", false)
+	var ball_mesh := MeshInstance3D.new()
+	var sphere_mesh := SphereMesh.new()
+	sphere_mesh.radius = 0.27
+	sphere_mesh.height = 0.54
+	ball_mesh.mesh = sphere_mesh
+	var ball_material := StandardMaterial3D.new()
+	ball_material.albedo_color = Color(0.9, 0.34, 0.08)
+	ball_material.roughness = 0.62
+	ball_mesh.material_override = ball_material
+	ball.add_child(ball_mesh)
+	var collision := CollisionShape3D.new()
+	var sphere_shape := SphereShape3D.new()
+	sphere_shape.radius = 0.27
+	collision.shape = sphere_shape
+	ball.add_child(collision)
+	current_facility_root.add_child(ball)
+	ball.position = Vector3(0.0, 1.4, 1.5)
+	var aim := Input.get_axis("ui_left", "ui_right")
+	ball.apply_central_impulse(Vector3(aim * 1.2, 7.2, -10.0))
+	_set_status("التصويبة انطلقت — حاول تمرير الكرة داخل الحلقة!")
+	await get_tree().create_timer(1.45).timeout
+	var scored := is_instance_valid(ball) and bool(ball.get_meta("system_basketball_scored", false))
+	if is_instance_valid(ball):
+		ball.queue_free()
+	var step := int(active_facility_activity.get("step", 0)) + 1
+	var points := 2 if scored else 0
+	active_facility_activity["step"] = step
+	active_facility_activity["score"] = int(active_facility_activity.get("score", 0)) + points
+	basketball_throw_in_progress = false
+	var goal := int(active_facility_activity.get("goal", 5))
+	var score := int(active_facility_activity.get("score", 0))
+	if step >= goal:
+		var result := _complete_facility_activity()
+		result["last_shot_scored"] = scored
+		return result
+	_set_status(("سلة ناجحة! +2" if scored else "لم تدخل الكرة — حاول مرة ثانية.") + " المحاولة %d/%d | مجموع النقاط: %d" % [step, goal, score])
+	return {"success": true, "completed": false, "step": step, "scored": scored, "score": score}
 
 
 func _launch_bowling_ball() -> Dictionary:
