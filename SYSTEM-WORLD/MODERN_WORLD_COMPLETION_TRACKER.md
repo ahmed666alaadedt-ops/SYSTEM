@@ -575,3 +575,17 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Keep the awakening elixir in the Weapons/Equipment/Elixirs Tower catalog and crafting laboratory; the Nen strike demonstration belongs to the Hunter Association Tower.
 - [ ] Run the updated Godot validator and canonical Android APK export; physical-device touch/visual review remains pending.
 - Note: the pre-awakening preview is a visual training effect only; it does not unlock Nen, consume an item, or deal damage. The real combat strike still uses the existing combat system and its normal rank/cooldown requirements.
+
+### Baghdad tower interior identity pass — 22 November 2026
+
+- [x] Add a dedicated reusable floor-theme builder for the five connected Baghdad towers.
+- [x] Give the Weapons/Equipment/Elixirs Tower a forge, equipment-display and elixir-laboratory visual identity.
+- [x] Give the Shopping Tower retail display, market and visitor-rest areas.
+- [x] Give the Entertainment/Sports Tower event, fitness and audience-area visual identity.
+- [x] Give the Technology/Innovation Tower robotics, test-platform and data-lab visual identity.
+- [x] Give the Hunter Association Tower mission, training, registry and Hall-of-Honor visual identity.
+- [x] Attach stable floor-theme metadata and department labels to generated rooms; preserve on-demand floor generation and single-active-room memory behavior.
+- [x] Extend the Godot operations validator to require a distinct theme root and themed station props on each of the five connected tower floors.
+- [ ] Run the latest Godot 4.3 validator and Android APK export on the new commit; inspect any failures before claiming the theme pass validated.
+- [ ] Replace the current themed visual blockouts with finished art, fully interactive department activities, staff schedules, and physical-device visual/performance verification.
+- Note: this pass adds tower-specific visual identity and department set dressing. It does not claim that every floor has unique hand-authored geometry or that the displayed stations are all independently playable.
