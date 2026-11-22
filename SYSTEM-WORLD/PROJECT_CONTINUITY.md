@@ -121,3 +121,6 @@ Last verified: 2026-11-22 (GitHub repository review)
 - Validator commit `43e939c54c87c84c866693374b3074d627898fe6` asserts the separate landmark, 200 floors, 200 registry entries, and twenty boss trial floors.
 - This is a structural/progression-data pass only; actual combat, boss/enemy spawning, playable arena interiors, matchmaking, rewards, persistence and verified rankings remain outstanding.
 - Preserve the user-approved rule: Power Tower is independent from Baghdad's five-tower complex and must not be counted among those five.
+
+- Power Tower progression data follow-up: manager commit `b5a0acc540d8d0d7276a8c5f1c7a8dd821157819` adds per-floor labels, ten difficulty tiers, previous-floor-clear requirements and unique IDs for the twenty boss trials. Validator commit `604eb93f2d624ecbc3f0653cad4cac1b1b37dea2` checks the duel opening, floor 9/10 boss cadence and final floor/tier/lock metadata.
+- Power Tower validation run #890 (`44998123938`) and Android build #737 (`44998123948`) were triggered from the initial activation commit; they must be checked after the latest progression-data changes as well.
