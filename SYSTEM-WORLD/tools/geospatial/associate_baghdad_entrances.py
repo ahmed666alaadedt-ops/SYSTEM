@@ -184,12 +184,55 @@ def associate_features(building_features: list[dict[str, Any]],
     }
 
 
+def annotate_pack(pack_path: pathlib.Path, associations: list[dict[str, Any]]) -> None:
+    """Embed association decisions in each source entrance feature in the ZIP.
+
+    The runtime consumes this metadata directly from the same cell pack, so a
+    report cannot silently drift away from the data installed in the game.
+    """
+    by_id = {str(item.get("entrance_id", "")): item for item in associations}
+    temporary_path = pack_path.with_name(pack_path.name + ".tmp")
+    try:
+        with zipfile.ZipFile(pack_path, "r") as source, zipfile.ZipFile(
+            temporary_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9
+        ) as destination:
+            for name in source.namelist():
+                raw = source.read(name)
+                if name == "manifest.json":
+                    manifest = json.loads(raw)
+                    manifest["entrance_association_schema_version"] = 1
+                    raw = json.dumps(manifest, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+                elif name.startswith("cells/") and name.endswith(".json"):
+                    tile = json.loads(raw)
+                    layers = tile.get("layers", {})
+                    for entrance in layers.get("entrances", []):
+                        entrance_id = str(entrance.get("id", ""))
+                        decision = by_id.get(entrance_id)
+                        if decision is None:
+                            raise ValueError(f"Entrance {entrance_id!r} has no association decision.")
+                        entrance["association"] = {
+                            "schema_version": 1,
+                            "status": decision.get("status", "rejected"),
+                            "building_id": decision.get("building_id", ""),
+                            "distance_m": decision.get("distance_m"),
+                            "reason": decision.get("reason", "missing_association_reason"),
+                        }
+                    raw = json.dumps(tile, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+                destination.writestr(name, raw)
+        temporary_path.replace(pack_path)
+    except Exception:
+        temporary_path.unlink(missing_ok=True)
+        raise
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pack", required=True, type=pathlib.Path,
                         help="Generated Baghdad OSM cell-pack ZIP.")
     parser.add_argument("--output", required=True, type=pathlib.Path,
                         help="JSON report path.")
+    parser.add_argument("--annotate-pack", action="store_true",
+                        help="Embed the association decisions in the source cell pack for runtime use.")
     args = parser.parse_args()
     manifest, features = read_pack(args.pack)
     report = associate_features(features["buildings"], features["entrances"])
