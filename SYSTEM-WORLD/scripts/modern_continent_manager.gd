@@ -142,14 +142,21 @@ func _get_height(x: float, z: float) -> float:
 
 # Public terrain sampling API for world systems such as forests, paths and NPCs.
 func get_terrain_height(x: float, z: float) -> float:
-	# The four established core towers stay above the sea plane and keep their exact
-	# original heights. Low municipal land is raised only to the minimum visible ground
-	# datum; the OSM extension beyond the original grid blends to the river-safe baseline.
-	if baghdad_osm_ground_enabled and _is_baghdad_osm_region(x, z):
-		if _is_outside_terrain_grid(x, z):
-			return _get_baghdad_osm_extended_height(x, z)
-		return maxf(_sample_terrain_height_grid(x, z), SEA_LEVEL + 0.25)
+	# Preserve the original per-point terrain heights inside the existing continent grid.
+	# The extended Baghdad region beyond that grid uses the blended municipal baseline.
+	if baghdad_osm_ground_enabled and _is_baghdad_osm_region(x, z) and _is_outside_terrain_grid(x, z):
+		return _get_baghdad_osm_extended_height(x, z)
 	return _sample_terrain_height_grid(x, z)
+
+
+func get_baghdad_osm_ground_height(x: float, z: float) -> float:
+	# OSM municipal land must sit above the global ocean plane. This affects only the
+	# streamed ground/road/building surfaces; core tower placement still uses get_terrain_height.
+	if not baghdad_osm_ground_enabled or not _is_baghdad_osm_region(x, z):
+		return get_terrain_height(x, z)
+	if _is_outside_terrain_grid(x, z):
+		return _get_baghdad_osm_extended_height(x, z)
+	return maxf(_sample_terrain_height_grid(x, z), SEA_LEVEL + 0.25)
 
 
 func _sample_terrain_height_grid(x: float, z: float) -> float:
