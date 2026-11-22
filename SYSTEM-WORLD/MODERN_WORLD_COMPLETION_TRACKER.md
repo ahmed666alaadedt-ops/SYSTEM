@@ -702,3 +702,12 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Pass canonical Android APK export on the same tested source HEAD; artifact `SYSTEM-WORLD-canonical-android-debug-apk`, 35,810,354 bytes, expires 6 December 2026 (workflow run `45052867541`).
 - [ ] Verify parking persistence across a real Android app force-close/relaunch cycle; CI uses an isolated test profile and does not prove device persistence.
 - Note: this is local-device parking persistence only. It does not synchronize the aircraft location between online players or across devices.
+
+
+### Power Tower full progression and save/reload regression — 22 November 2026
+
+- [x] Extend the Godot operations validator to simulate sequential requests and confirmed clears for all 200 floors using a level-100 test profile.
+- [x] Verify that each floor can only be requested after the previous floor has been cleared and that every clear writes its personal clear-time record.
+- [x] Instantiate a fresh progression manager after the 200-floor run and verify that floor 200, completion status, and all 200 clear-time records reload from the saved profile.
+- [ ] Pass the new 200-floor progression regression on the latest PR head.
+- [ ] Complete real combat-flow tests for timed survival/championship failures, boss-floor victory, final sovereign boss rewards, and recovery after abandoning an active floor; physical Android gameplay review remains outstanding.
