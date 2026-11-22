@@ -370,6 +370,7 @@ func _build_ui() -> void:
 	panel.custom_minimum_size = Vector2(470.0, 530.0)
 	panel.visible = false
 	ui_layer.add_child(panel)
+	get_viewport().size_changed.connect(_resize_panel)
 	content = VBoxContainer.new()
 	content.add_theme_constant_override("separation", 8)
 	panel.add_child(content)
@@ -387,6 +388,24 @@ func _build_ui() -> void:
 	close_button.text = "إغلاق"
 	close_button.pressed.connect(func(): panel.hide())
 	content.add_child(close_button)
+	_resize_panel()
+
+
+func _get_responsive_panel_size(viewport_size: Vector2) -> Vector2:
+	return Vector2(
+		maxf(180.0, minf(470.0, viewport_size.x - 24.0)),
+		maxf(180.0, minf(530.0, viewport_size.y - 32.0))
+	)
+
+
+func _resize_panel() -> void:
+	if not is_instance_valid(panel):
+		return
+	var target_size := _get_responsive_panel_size(get_viewport_rect().size)
+	panel.custom_minimum_size = target_size
+	panel.size = target_size
+	panel.position = -target_size * 0.5
+
 
 func _clear_dynamic_controls() -> void:
 	catalog_controls = null
