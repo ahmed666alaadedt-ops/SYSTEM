@@ -139,7 +139,7 @@ func _run() -> void:
 		_fail("Authorized Hunter Association staff must receive helicopter access regardless of player level.")
 		return
 	pilot_player.remove_meta("system_hunter_association_role")
-	pilot_progression.set("current_level", 50)
+	pilot_progression.set("current_level", 1)
 	exam_manager.set("completed_stage_ids", all_stage_ids)
 	for rank in ["F", "E", "D", "C", "B"]:
 		pilot_player.set_meta("system_hunter_rank", rank)
