@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - feature/baghdad-streaming-lifecycle
+      - work/baghdad-system-integration
     paths:
       - ".github/workflows/verify-baghdad-osm-source.yml"
       - "SYSTEM-WORLD/data/geography/real_world_registry.json"

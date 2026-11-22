@@ -202,13 +202,25 @@ jobs:
 
 
 
-      - name: Validate Baghdad OSM runtime and historic landmarks when the candidate pack is installed
-        if: hashFiles('SYSTEM-WORLD/data/geography/baghdad/cell_pack/manifest.json') != ''
+      - name: Report Baghdad OSM runtime pack availability and validate when installed
         shell: bash
         run: |
           set -euo pipefail
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          MANIFEST="$PROJECT/data/geography/baghdad/cell_pack/manifest.json"
+          if [ ! -s "$MANIFEST" ]; then
+            echo "::warning::Baghdad OSM runtime validation NOT RUN: audited cell-pack manifest is absent from this checkout."
+            {
+              echo "### Baghdad OSM runtime validation"
+              echo "- Status: **NOT RUN — audited cell pack unavailable**"
+              echo "- Missing file: `SYSTEM-WORLD/data/geography/baghdad/cell_pack/manifest.json`"
+              echo "- The source workflow must generate and audit the 5×5 sample pack before the canonical Android handoff can install it."
+              echo "- No real Baghdad OSM runtime geometry is claimed as validated by this job."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "Baghdad OSM runtime validation not run: audited cell-pack manifest is missing."
+            exit 0
+          fi
           LOG="$RUNNER_TEMP/baghdad-osm-runtime-validation.log"
           "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_baghdad_osm_runtime.gd 2>&1 | tee "$LOG"
           if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Baghdad OSM runtime validation failed" "$LOG"; then
@@ -216,6 +228,11 @@ jobs:
             exit 1
           fi
           grep -q "Baghdad OSM runtime validation passed:" "$LOG"
+          {
+            echo "### Baghdad OSM runtime validation"
+            echo "- Status: **PASSED**"
+            echo "- Audited cell-pack manifest was present and the Godot runtime validator completed."
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Validate motorsport race entry, checkpoints, laps and local records
         shell: bash
