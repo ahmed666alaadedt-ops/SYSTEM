@@ -210,6 +210,9 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	_create_tower_architecture(root, node_name, title, height, radius, floors, beacon_color)
 
 	root.set_meta("tower_id", location_id)
+	root.set_meta("tower_floor_count", floors)
+	root.set_meta("tower_height_m", height)
+	root.set_meta("tower_is_connected_district_member", connect_to_district)
 	print("SYSTEM WORLD: landmark tower generated: ", title, " / ", floors, " floors / ", height, "m")
 
 func _nearest_land_position(origin: Vector2) -> Vector2:
@@ -300,6 +303,114 @@ func _create_tower_architecture(root: Node3D, node_name: String, title: String, 
 	identity_ring.position.y = height * 0.72 + 7.0
 	identity_ring.material_override = emissive_material
 	root.add_child(identity_ring)
+	_create_tower_identity_details(root, node_name, height, radius, beacon_color)
+
+
+func _create_tower_identity_details(root: Node3D, node_name: String, height: float, radius: float, accent_color: Color) -> void:
+	var accent := _make_surface_material(accent_color, 0.34, 0.72)
+	var glow := _make_surface_material(accent_color.lightened(0.24), 0.22, 0.48)
+	glow.emission_enabled = true
+	glow.emission = accent_color
+	glow.emission_energy_multiplier = 1.65
+	match node_name:
+		"HunterAssociationTower":
+			for side in [-1.0, 1.0]:
+				_add_tower_identity_box(root, "AssociationWing_%s" % str(side), Vector3(side * radius * 1.48, 15.0, 0.0), Vector3(radius * 0.62, 30.0, radius * 0.82), tower_material, Vector3(0.0, 0.0, side * -0.10))
+				_add_tower_identity_box(root, "HonorHallPillar_%s" % str(side), Vector3(side * radius * 1.12, 27.0, -radius * 0.62), Vector3(2.8, 54.0, 2.8), trim_material)
+			_add_tower_identity_box(root, "AssociationHonorLintel", Vector3(0.0, 54.0, -radius * 0.62), Vector3(radius * 2.35, 3.0, 3.0), glow)
+			_add_tower_identity_box(root, "AssociationCrownSpire", Vector3(0.0, height + 34.0, 0.0), Vector3(5.0, 68.0, 5.0), accent)
+		"WeaponsEquipmentElixirsTower":
+			# Crossed blade insignia and an armoury display podium make this tower distinct.
+			for side in [-1.0, 1.0]:
+				var blade := MeshInstance3D.new()
+				blade.name = "CrossedWeaponBlade_%s" % str(side)
+				var blade_mesh := BoxMesh.new()
+				blade_mesh.size = Vector3(2.2, 34.0, 1.2)
+				blade.mesh = blade_mesh
+				blade.position = Vector3(side * 7.0, 28.0, -radius * 1.55)
+				blade.rotation.z = side * deg_to_rad(34.0)
+				blade.material_override = accent
+				root.add_child(blade)
+				_add_tower_identity_box(root, "WeaponHilt_%s" % str(side), Vector3(side * 7.0, 14.0, -radius * 1.55), Vector3(8.0, 1.8, 2.0), glow)
+			for display_index in range(4):
+				var display := MeshInstance3D.new()
+				display.name = "ArmouryShowcase_%02d" % display_index
+				var display_mesh := CylinderMesh.new()
+				display_mesh.top_radius = 2.2
+				display_mesh.bottom_radius = 2.8
+				display_mesh.height = 2.0
+				display.mesh = display_mesh
+				var angle := TAU * float(display_index) / 4.0
+				display.position = Vector3(cos(angle) * radius * 1.08, 15.0, sin(angle) * radius * 1.08)
+				display.material_override = glow if display_index % 2 == 0 else trim_material
+				root.add_child(display)
+			_add_tower_identity_box(root, "ElixirResearchBeacon", Vector3(0.0, 42.0, radius * 1.48), Vector3(13.0, 2.2, 2.2), glow)
+		"ShoppingTower":
+			for level in range(3):
+				var retail_ring := MeshInstance3D.new()
+				retail_ring.name = "RetailGalleryRing_%02d" % level
+				var ring_mesh := CylinderMesh.new()
+				ring_mesh.top_radius = radius * (1.65 + float(level) * 0.16)
+				ring_mesh.bottom_radius = radius * (1.65 + float(level) * 0.16)
+				ring_mesh.height = 1.8
+				retail_ring.mesh = ring_mesh
+				retail_ring.position.y = 16.0 + float(level) * 8.0
+				retail_ring.material_override = glow if level == 1 else accent
+				root.add_child(retail_ring)
+			_add_tower_identity_box(root, "ShoppingAtriumSign", Vector3(0.0, 35.0, -radius * 1.55), Vector3(radius * 1.7, 5.0, 1.0), glow)
+		"EntertainmentTower":
+			var arena_bowl := MeshInstance3D.new()
+			arena_bowl.name = "EntertainmentArenaBowl"
+			var bowl_mesh := CylinderMesh.new()
+			bowl_mesh.top_radius = radius * 1.9
+			bowl_mesh.bottom_radius = radius * 1.45
+			bowl_mesh.height = 5.0
+			arena_bowl.mesh = bowl_mesh
+			arena_bowl.position.y = 13.0
+			arena_bowl.material_override = accent
+			root.add_child(arena_bowl)
+			_add_tower_identity_box(root, "EntertainmentEventScreen", Vector3(0.0, 31.0, -radius * 1.7), Vector3(radius * 1.5, 9.0, 1.0), glow)
+			for side in [-1.0, 1.0]:
+				_add_tower_identity_box(root, "RecreationArch_%s" % str(side), Vector3(side * radius * 1.2, 20.0, radius * 0.9), Vector3(2.0, 40.0, 2.0), glow)
+		"TechnologyTower":
+			for index in range(3):
+				var antenna := MeshInstance3D.new()
+				antenna.name = "InnovationAntenna_%02d" % index
+				var antenna_mesh := CylinderMesh.new()
+				antenna_mesh.top_radius = 0.55
+				antenna_mesh.bottom_radius = 1.1
+				antenna_mesh.height = 28.0 + float(index) * 7.0
+				antenna.mesh = antenna_mesh
+				antenna.position = Vector3((float(index) - 1.0) * radius * 0.7, height + 18.0 + float(index) * 3.0, 0.0)
+				antenna.material_override = glow
+				root.add_child(antenna)
+			_add_tower_identity_box(root, "InnovationLabSkyRibbon", Vector3(0.0, height * 0.62, -radius * 1.4), Vector3(radius * 1.7, 2.0, 2.0), glow)
+		"PowerTower":
+			for side in [-1.0, 1.0]:
+				_add_tower_identity_box(root, "TournamentBlade_%s" % str(side), Vector3(side * radius * 1.25, height * 0.48, 0.0), Vector3(3.0, height * 0.82, 3.0), accent)
+			var champion_ring := MeshInstance3D.new()
+			champion_ring.name = "PowerTowerChampionCrown"
+			var champion_mesh := CylinderMesh.new()
+			champion_mesh.top_radius = radius * 1.25
+			champion_mesh.bottom_radius = radius * 1.25
+			champion_mesh.height = 2.0
+			champion_ring.mesh = champion_mesh
+			champion_ring.position.y = height * 0.88
+			champion_ring.material_override = glow
+			root.add_child(champion_ring)
+
+
+func _add_tower_identity_box(parent: Node3D, node_name: String, position: Vector3, size: Vector3, material: Material, rotation: Vector3 = Vector3.ZERO) -> void:
+	var instance := MeshInstance3D.new()
+	instance.name = node_name
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	instance.mesh = mesh
+	instance.position = position
+	instance.rotation = rotation
+	instance.material_override = material
+	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(instance)
 
 
 func _create_connected_city_links() -> void:
