@@ -473,7 +473,7 @@ func _run() -> void:
 
 	var connected_district := towers.get_node_or_null("FiveTowerConnectedDistrict")
 	if connected_district == null:
-		_fail("The five connected towers have no shared district bridge network.")
+		_fail("The four core towers have no shared district bridge network.")
 		return
 	for index in range(expected_core_tower_count):
 		var ramp_root := connected_district.get_node_or_null("VehicleAccessRamp_%d" % index)
