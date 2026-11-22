@@ -2307,6 +2307,7 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 				target_sensor.name = "ArcadeTargetSensor_%02d" % target_index
 				target_sensor.collision_layer = 0
 				target_sensor.collision_mask = 1
+				target_sensor.monitoring = true
 				var target_collision := CollisionShape3D.new()
 				var target_shape := SphereShape3D.new()
 				target_shape.radius = 0.7
@@ -2580,8 +2581,8 @@ func _launch_arcade_projectile() -> Dictionary:
 	projectile_collision.shape = projectile_shape
 	projectile.add_child(projectile_collision)
 	current_facility_root.add_child(projectile)
-	projectile.position = Vector3(facility_aim * 4.0, 3.0, 4.0)
-	projectile.apply_central_impulse(Vector3(0.0, 0.0, -10.0))
+	projectile.position = Vector3(facility_aim * 4.0, 2.0, 4.0)
+	projectile.apply_central_impulse(Vector3(0.0, 1.45, -8.0))
 	_set_status("انطلقت الكرة الضوئية — أصب الهدف المحدد!")
 	await get_tree().create_timer(1.0).timeout
 	var hit := is_instance_valid(projectile) and bool(projectile.get_meta("system_arcade_hit", false))
