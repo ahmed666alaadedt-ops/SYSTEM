@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - work/baghdad-system-integration
       - feature/baghdad-streaming-lifecycle
       - work/baghdad-system-integration
     paths:
