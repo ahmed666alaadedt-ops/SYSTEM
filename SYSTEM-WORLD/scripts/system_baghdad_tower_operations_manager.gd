@@ -2690,7 +2690,7 @@ func _launch_bowling_ball() -> Dictionary:
 	ball.add_child(ball_collision)
 	current_facility_root.add_child(ball)
 	ball.position = Vector3(0.0, 1.08, 4.2)
-	var aim := Input.get_axis("ui_left", "ui_right")
+	var aim := facility_aim
 	ball.apply_central_impulse(Vector3(aim * 2.4, 1.1, -45.0))
 	_set_status("الكرة انطلقت! راقب الدبابيس...")
 	await get_tree().create_timer(2.5).timeout
