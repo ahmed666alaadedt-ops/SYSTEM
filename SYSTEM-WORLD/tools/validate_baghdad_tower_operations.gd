@@ -266,11 +266,43 @@ func _run() -> void:
 	if int(progression.get("nen_control_rank")) != 4:
 		_fail("Nen control elixirs did not unlock the rank-four ability threshold.")
 		return
-	var nen_burst_result: Dictionary = progression.call("activate_nen_burst")
+	var combat_system: Node = main.get("modern_world_combat_system") as Node
+	if combat_system == null or not combat_system.has_method("light_attack") or not combat_system.has_method("skill_one") or not combat_system.has_method("skill_two") or not combat_system.has_method("dodge"):
+		_fail("Modern World combat system was not created or is missing mobile combat actions.")
+		return
+	if combat_system.get("actor") != player:
+		_fail("Modern World combat system is not bound to the active player.")
+		return
+	var mobile_controls: Node = main.get("mobile_controls") as Node
+	if mobile_controls == null:
+		_fail("Mobile controls were not created.")
+		return
+	var mobile_callbacks := {
+		"attack_pressed": "_on_mobile_attack_pressed",
+		"skill_one_pressed": "_on_mobile_skill_one_pressed",
+		"skill_two_pressed": "_on_mobile_skill_two_pressed",
+		"dodge_pressed": "_on_mobile_dodge_pressed"
+	}
+	for signal_name in mobile_callbacks.keys():
+		if not mobile_controls.is_connected(str(signal_name), Callable(main, str(mobile_callbacks[signal_name]))):
+			_fail("Mobile combat signal is not connected: " + str(signal_name))
+			return
+	var nen_burst_result: Dictionary = combat_system.call("skill_one")
 	var nen_button: Button = progression.get("nen_burst_button") as Button
 	if not bool(nen_burst_result.get("success", false)) or not progression.get("active_elixir_effects").has("nen_burst") or nen_button == null or not nen_button.visible:
-		_fail("Rank-four Nen Burst did not activate or expose its mobile HUD button.")
+		_fail("Mobile Nen Burst skill did not activate or expose its cooldown HUD.")
 		return
+	await create_timer(0.85).timeout
+	var charged_result: Dictionary = combat_system.call("skill_two")
+	if not bool(charged_result.get("success", false)) or str(charged_result.get("ability_id", "")) != "charged_strike":
+		_fail("Second mobile combat skill did not perform a charged strike.")
+		return
+	var dodge_position_before: Vector3 = player.global_position
+	main.call("_on_mobile_dodge_pressed")
+	if player.global_position.distance_to(dodge_position_before) < 2.0:
+		_fail("Mobile dodge input did not move the player.")
+		return
+
 	var credits_before := int(operations.call("get_operations_status").get("credits", 0))
 	var final_credit_reward := int(operations.call("grant_power_tower_credits", 200, true))
 	var credits_after := int(operations.call("get_operations_status").get("credits", 0))
