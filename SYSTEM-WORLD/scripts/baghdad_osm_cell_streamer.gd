@@ -2157,6 +2157,8 @@ func _extract_polygons(geometry: Dictionary) -> Array:
 
 
 func _terrain_height(point: Vector2) -> float:
+	if is_instance_valid(terrain_manager) and terrain_manager.has_method("get_baghdad_osm_ground_height"):
+		return float(terrain_manager.call("get_baghdad_osm_ground_height", point.x, point.y))
 	if is_instance_valid(terrain_manager) and terrain_manager.has_method("get_terrain_height"):
 		return float(terrain_manager.call("get_terrain_height", point.x, point.y))
 	return 0.0
