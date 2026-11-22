@@ -114,6 +114,7 @@ func _run() -> void:
 	if not operations.has_method("_buy_product") or not operations.has_method("_sell_item"):
 		_fail("NPC-supervised buy/sell transaction methods are missing.")
 		return
+	var shopping_tower := tower_manager.get_node_or_null("ShoppingTower") as Node3D
 	operations.call("open_tower", "shopping_tower_baghdad")
 	operations.call("_travel_to_floor", "shopping_tower_baghdad", 1)
 	await create_timer(2.8).timeout
@@ -131,7 +132,6 @@ func _run() -> void:
 		return
 	var progression: Node = main.get("player_progression") as Node
 	var shop_employee: Node = null
-	var shopping_tower := tower_manager.get_node_or_null("ShoppingTower") as Node3D
 	var shopping_lobby := shopping_tower.get_node_or_null("PublicLobby_Blockout")
 	for child in shopping_lobby.get_children():
 		if child.has_meta("system_tower_staff_id"):
