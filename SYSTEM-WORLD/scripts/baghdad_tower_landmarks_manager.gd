@@ -373,6 +373,10 @@ func _create_connected_city_links() -> void:
 	var link_root := Node3D.new()
 	link_root.name = "FiveTowerConnectedDistrict"
 	add_child(link_root)
+	var central_hub := city_anchor + Vector3(0.0, 52.0, 0.0)
+	for index in range(tower_positions.size()):
+		var tower_position: Vector3 = tower_positions[index]["position"]
+		_create_link_deck(link_root, central_hub, tower_position + Vector3(0.0, 52.0, 0.0), "CentralSYSTEMRadialSkybridge_%d" % index, 22.0, 1.2, trim_material)
 	for index in range(tower_positions.size()):
 		var first: Vector3 = tower_positions[index]["position"]
 		var second: Vector3 = tower_positions[(index + 1) % tower_positions.size()]["position"]
@@ -613,7 +617,7 @@ func _create_shared_sky_terraces(parent: Node3D) -> void:
 		terrace.position = city_anchor + Vector3(0.0, 28.0 + float(level) * 13.0, 0.0)
 		terrace.material_override = terrace_material
 		parent.add_child(terrace)
-		_add_static_box_collision(parent, "SharedSkyGardenCollision_%02d" % level, terrace.position, Vector3(180.0, 2.2, 180.0))
+		_add_static_box_collision(parent, "SharedSkyGardenCollision_%02d" % level, terrace.position, Vector3(252.0, 2.2, 252.0))
 		terrace.set_meta("amenities", PackedStringArray(["gardens", "cafes", "viewing_decks", "family_seating", "public_art"]))
 
 
