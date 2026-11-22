@@ -10,25 +10,39 @@ const WORLD_ID := 2
 
 const TOWER_CONFIG := {
 	"hunter_association_tower_baghdad": {"node": "HunterAssociationTower", "title": "برج جمعية الصيادين", "floors": 200, "height": 1000.0, "radius": 38.0, "roles": ["موظف الاستقبال", "موظف المهمات", "موظف التسجيل", "مسؤول الإعلانات"], "jobs": ["receptionist", "mission_clerk", "exam_registrar", "advertising_manager"]},
-	"weapons_equipment_elixirs_tower_baghdad": {"node": "WeaponsEquipmentElixirsTower", "title": "برج الأسلحة والمعدات والإكسير", "floors": 36, "height": 220.0, "radius": 26.0, "roles": ["تاجر الأسلحة", "خبير الدروع", "صيدلاني الإكسير", "مسؤول الإعلانات"], "jobs": ["weapons_merchant", "armor_specialist", "elixir_pharmacist", "advertising_manager"]},
-	"shopping_tower_baghdad": {"node": "ShoppingTower", "title": "برج التسوق والتجارة", "floors": 32, "height": 190.0, "radius": 30.0, "roles": ["مدير المتجر", "موظف المبيعات", "موظف خدمة الزبائن", "مسؤول الإعلانات"], "jobs": ["shop_manager", "sales_clerk", "customer_service", "advertising_manager"]},
+
+	"shopping_tower_baghdad": {"node": "ShoppingTower", "title": "برج التسوق والتجارة", "floors": 32, "height": 190.0, "radius": 30.0, "roles": ["مدير البرج", "تاجر الأسلحة والدروع", "صيدلاني الإكسير", "مدير المطاعم والمقاهي"], "jobs": ["shop_manager", "weapons_merchant", "elixir_pharmacist", "restaurant_manager"]},
 	"entertainment_tower_baghdad": {"node": "EntertainmentTower", "title": "برج الترفيه والرياضة", "floors": 34, "height": 205.0, "radius": 29.0, "roles": ["منظم الفعاليات", "موظف التذاكر", "موظف الأنشطة", "مسؤول الإعلانات"], "jobs": ["event_coordinator", "ticket_clerk", "activity_host", "advertising_manager"]},
 	"technology_tower_baghdad": {"node": "TechnologyTower", "title": "برج التكنولوجيا والابتكار", "floors": 40, "height": 245.0, "radius": 27.0, "roles": ["موظف المختبر", "مهندس الأجهزة", "موظف الخدمات الرقمية", "مسؤول الإعلانات"], "jobs": ["lab_receptionist", "device_engineer", "digital_services", "advertising_manager"]},
 	"power_tower_baghdad": {"node": "PowerTower", "title": "برج القوة", "floors": 200, "height": 820.0, "radius": 26.0, "roles": ["موظف تسجيل التحديات", "منظم الحلبة", "موظف الاستراحة الطبية", "مسؤول الإعلانات"], "jobs": ["arena_registrar", "arena_coordinator", "arena_medic", "advertising_manager"]}
 }
 
 const PRODUCT_CATALOG := {
-	"weapons_equipment_elixirs_tower_baghdad": [
-		{"id":"training_sword","name":"سيف تدريبي","price":180},
-		{"id":"steel_sword","name":"سيف فولاذي","price":950},
-		{"id":"hunter_spear","name":"رمح صياد","price":780},
-		{"id":"battle_axe","name":"فأس قتالي","price":820},
-		{"id":"composite_bow","name":"قوس مركب","price":1100},
-		{"id":"system_firearm","name":"سلاح ناري حديث","price":2400},
-		{"id":"hunter_shield","name":"درع صياد","price":650},
-		{"id":"hunter_armor","name":"درع واقٍ","price":1450},
-		{"id":"hunter_helmet","name":"خوذة صياد","price":450},
-		{"id":"combat_outfit","name":"زي قتالي","price":950},
+	"shopping_tower_baghdad": [
+		{"id":"food_ration","name":"وجبة ميدانية","price":35},
+		{"id":"water_bottle","name":"قارورة ماء","price":12},
+		{"id":"casual_outfit","name":"ملابس يومية","price":220},
+		{"id":"hunter_backpack","name":"حقيبة صياد","price":340},
+		{"id":"travel_kit","name":"عدة سفر","price":190},
+		{"id":"cosmetic_light","name":"زينة ضوئية","price":500},
+		{"id":"training_sword","name":"سيف تدريبي","price":180,"required_rank":"F"},
+		{"id":"steel_sword","name":"سيف فولاذي","price":950,"required_rank":"D"},
+		{"id":"hunter_spear","name":"رمح صياد","price":780,"required_rank":"D"},
+		{"id":"battle_axe","name":"فأس قتالي","price":820,"required_rank":"C"},
+		{"id":"composite_bow","name":"قوس مركب وسهام","price":1100,"required_rank":"C"},
+		{"id":"system_firearm","name":"سلاح ناري حديث","price":2400,"required_rank":"B"},
+		{"id":"hunter_shield","name":"درع صياد","price":650,"required_rank":"D"},
+		{"id":"hunter_armor","name":"درع واقٍ","price":1450,"required_rank":"C"},
+		{"id":"hunter_helmet","name":"خوذة صياد","price":450,"required_rank":"C"},
+		{"id":"combat_outfit","name":"بدلة قتالية أساسية — رتبة F","price":950,"required_rank":"F"},
+		{"id":"hunter_outfit_e","name":"بدلة الصياد — رتبة E","price":1250,"required_rank":"E"},
+		{"id":"hunter_outfit_d","name":"بدلة الصياد — رتبة D","price":1750,"required_rank":"D"},
+		{"id":"hunter_outfit_c","name":"بدلة الصياد — رتبة C","price":2600,"required_rank":"C"},
+		{"id":"hunter_outfit_b","name":"بدلة الصياد — رتبة B","price":3900,"required_rank":"B"},
+		{"id":"hunter_outfit_a","name":"بدلة الصياد — رتبة A","price":5800,"required_rank":"A"},
+		{"id":"hunter_outfit_s","name":"بدلة الصياد — رتبة S","price":9000,"required_rank":"S"},
+		{"id":"hunter_outfit_ss","name":"بدلة الصياد — رتبة SS","price":16000,"required_rank":"SS"},
+		{"id":"hunter_outfit_sss","name":"بدلة الصياد — رتبة SSS","price":30000,"required_rank":"SSS"},
 		{"id":"healing_elixir","name":"إكسير الشفاء","price":280},
 		{"id":"strength_elixir","name":"إكسير القوة","price":420},
 		{"id":"speed_elixir","name":"إكسير السرعة","price":420},
@@ -46,15 +60,14 @@ const PRODUCT_CATALOG := {
 		{"id":"monster_core","name":"نواة وحش","price":150},
 		{"id":"nen_fragment","name":"شظية نِن","price":300},
 		{"id":"energy_crystal","name":"كريستال طاقة","price":450},
-		{"id":"rare_core","name":"نواة نادرة","price":1200}
-	],
-	"shopping_tower_baghdad": [
-		{"id":"food_ration","name":"وجبة ميدانية","price":35},
-		{"id":"water_bottle","name":"قارورة ماء","price":12},
-		{"id":"casual_outfit","name":"ملابس يومية","price":220},
-		{"id":"hunter_backpack","name":"حقيبة صياد","price":340},
-		{"id":"travel_kit","name":"عدة سفر","price":190},
-		{"id":"cosmetic_light","name":"زينة ضوئية","price":500}
+		{"id":"rare_core","name":"نواة نادرة","price":1200},
+		{"id":"restaurant_grilled_meal","name":"وجبة مشاوي بغدادية","price":75},
+		{"id":"restaurant_rice_meal","name":"وجبة رز ولحم","price":65},
+		{"id":"restaurant_hunter_meal","name":"وجبة الصياد المتكاملة","price":110},
+		{"id":"restaurant_fresh_juice","name":"عصير طازج","price":22},
+		{"id":"restaurant_tea_coffee","name":"شاي وقهوة","price":15},
+		{"id":"restaurant_dessert","name":"حلويات شرقية","price":30},
+		{"id":"restaurant_family_combo","name":"وجبة عائلية","price":180}
 	],
 	"entertainment_tower_baghdad": [
 		{"id":"sports_ticket","name":"تذكرة رياضية","price":65},
@@ -74,7 +87,6 @@ const PRODUCT_CATALOG := {
 		{"id":"exam_application_pack","name":"حزمة التسجيل للاختبار","price":100}
 	]
 }
-
 const AD_CAMPAIGNS := [
 	"معدات الصيادين — جهّز نفسك قبل البوابة",
 	"إكسير الشفاء والطاقة متوفر لدى الصيدلاني",
@@ -462,7 +474,7 @@ func open_tower(tower_id: String) -> void:
 		nen_demo_button.pressed.connect(_run_nen_training_demo)
 		content.add_child(nen_demo_button)
 		var nen_note := Label.new()
-		nen_note.text = "الإكسير يوقظ النِن في برج الأسلحة والإكسير؛ أما ضربة النِن فتُستعرض هنا داخل جمعية الصيادين."
+		nen_note.text = "الأكاسير والأسلحة والدروع والبدلات والمطاعم كلها في برج التسوق والتجارة؛ أما استعراض مهارات النِن فيكون هنا داخل جمعية الصيادين."
 		nen_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		content.add_child(nen_note)
 	panel.show()
@@ -542,7 +554,7 @@ func _run_nen_training_demo() -> void:
 				_set_status("تعذر تنفيذ الضربة الآن: " + str(result.get("reason", "النظام مشغول")))
 			return
 	_spawn_nen_training_preview()
-	_set_status("استعراض تدريبي لضربة النِن: عرض للقوة فقط، لا يستهلك إكسيراً ولا يوقظ النِن. إكسير الإيقاظ يُشترى أو يُصنع في برج الأسلحة والمعدات والإكسير.")
+	_set_status("استعراض تدريبي لضربة النِن: عرض للقوة فقط، لا يستهلك إكسيراً ولا يوقظ النِن. إكسير الإيقاظ يُشترى أو يُصنع في برج التسوق والتجارة.")
 
 
 func _spawn_nen_training_preview() -> void:
@@ -666,13 +678,14 @@ func _add_catalog_controls(tower_id: String) -> void:
 		var price := _get_current_price(item_id)
 		var stock := get_vendor_stock(item_id)
 		var buy_button := Button.new()
-		buy_button.text = "%s — %d رصيد | المخزون: %d" % [item_name, price, stock]
-		buy_button.disabled = stock <= 0
-		buy_button.pressed.connect(_buy_product.bind(item_id, item_name, price))
+		var required_rank := str(product.get("required_rank", "F"))
+		buy_button.text = "%s — %d رصيد | رتبة %s | المخزون: %d" % [item_name, price, required_rank, stock]
+		buy_button.disabled = stock <= 0 or not _meets_hunter_rank(required_rank)
+		buy_button.pressed.connect(_buy_product.bind(item_id, item_name, price, required_rank))
 		catalog_controls.add_child(buy_button)
 
 func _add_crafting_controls(tower_id: String) -> void:
-	if tower_id != "weapons_equipment_elixirs_tower_baghdad" or not is_instance_valid(progression) or not progression.has_method("get_crafting_recipe_list"):
+	if tower_id != "shopping_tower_baghdad" or not is_instance_valid(progression) or not progression.has_method("get_crafting_recipe_list"):
 		return
 	if is_instance_valid(crafting_controls):
 		var old_scroll := crafting_controls.get_parent()
@@ -836,7 +849,10 @@ func _consume_elixir(item_id: String) -> void:
 	else:
 		_set_status("تعذر استخدام الإكسير: " + str(result.get("reason", "غير معروف")))
 
-func _buy_product(item_id: String, item_name: String, _listed_price: int) -> void:
+func _buy_product(item_id: String, item_name: String, _listed_price: int, required_rank: String = "F") -> void:
+	if not _meets_hunter_rank(required_rank):
+		_set_status("هذا التجهيز يتطلب رتبة صياد %s أو أعلى. لا يمكن تجاوز الرتبة بالشراء." % required_rank)
+		return
 	var stock := get_vendor_stock(item_id)
 	if stock <= 0:
 		_set_status("نفد مخزون هذا المنتج. سيعيد الموظفون تعبئته بعد دورة التوريد.")
@@ -856,9 +872,21 @@ func _buy_product(item_id: String, item_name: String, _listed_price: int) -> voi
 	credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
 	_set_status("تم شراء %s من موظف البرج وإضافته إلى حقيبتك. السعر الحالي: %d" % [item_name, price])
 	_add_catalog_controls(current_tower_id)
-	if current_tower_id == "weapons_equipment_elixirs_tower_baghdad":
+	if current_tower_id == "shopping_tower_baghdad":
 		_add_crafting_controls(current_tower_id)
 	_add_sell_controls()
+
+
+func _meets_hunter_rank(required_rank: String) -> bool:
+	if required_rank.is_empty() or required_rank == "F":
+		return true
+	if not is_instance_valid(progression) or not progression.has_method("get_hunter_rank_progress"):
+		return false
+	var rank_data: Dictionary = progression.call("get_hunter_rank_progress")
+	var order: Array = rank_data.get("rank_order", ["F", "E", "D", "C", "B", "A", "S", "SS", "SSS"])
+	var current_index := order.find(str(rank_data.get("rank", "F")))
+	var required_index := order.find(required_rank)
+	return current_index >= 0 and required_index >= 0 and current_index >= required_index
 
 func _sell_item(item_id: String, requested_count: int) -> void:
 	if not is_instance_valid(progression):
@@ -1191,12 +1219,15 @@ func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) 
 func _department_for_floor(tower_id: String, floor_number: int, total: int) -> String:
 	var ratio := float(floor_number) / float(maxi(total, 1))
 	match tower_id:
-		"weapons_equipment_elixirs_tower_baghdad":
-			if ratio > 0.92: return "مخزن الإكسير النادر والأسطوري — وصول مقيّد"
-			if ratio > 0.72: return "مختبر النِن وتطوير القدرات"
-			if ratio > 0.48: return "صيدلية الإكسير والشفاء"
-			if ratio > 0.25: return "الدروع والخوذ وتطوير المعدات"
-			return "معرض الأسلحة والبيع"
+		"shopping_tower_baghdad":
+			if ratio > 0.90: return "المطاعم الراقية وصالات الطعام والمقاهي"
+			if ratio > 0.80: return "مطاعم الوجبات السريعة والحلويات والمشروبات"
+			if ratio > 0.68: return "مخزن الإكسير النادر والأسطوري — وصول مقيّد"
+			if ratio > 0.58: return "مختبر النِن وتحضير الأكاسير والعلاج"
+			if ratio > 0.46: return "صيدلية الإكسير والشفاء والطاقة"
+			if ratio > 0.34: return "الدروع والخوذ والبدلات حسب رتب الصيادين"
+			if ratio > 0.20: return "معرض الأسلحة الحديثة والسيوف والأقواس والسهام"
+			return "الردهة التجارية والأسواق والاحتياجات اليومية"
 		"shopping_tower_baghdad":
 			if ratio > 0.8: return "المطاعم والمقاهي"
 			if ratio > 0.55: return "الأزياء والاحتياجات"
@@ -1258,11 +1289,11 @@ func _create_floor_facilities(room: Node3D, tower_id: String, floor_number: int,
 		kiosk_shape.position.y = 1.1
 		kiosk_area.add_child(kiosk_shape)
 		kiosk.add_child(kiosk_area)
-	if tower_id == "weapons_equipment_elixirs_tower_baghdad" and floor_number == 1:
+	if tower_id == "shopping_tower_baghdad" and floor_number == 14:
 		var staff_ids: Array = staff_by_tower.get(tower_id, [])
 		if staff_ids.size() >= 3:
-			_create_workshop_station(room, "WeaponsForge", "ورشة الحدادة وصناعة الأسلحة", Vector3(-radius * 0.32, 0.0, -radius * 0.42), str(staff_ids[0]), "weapons_merchant")
-			_create_workshop_station(room, "ElixirLaboratory", "مختبر تحضير الإكسير والنِن", Vector3(radius * 0.32, 0.0, -radius * 0.42), str(staff_ids[2]), "elixir_pharmacist")
+			_create_workshop_station(room, "WeaponsForge", "ورشة الحدادة وصناعة الأسلحة الحديثة والتقليدية", Vector3(-radius * 0.32, 0.0, -radius * 0.42), str(staff_ids[1]), "weapons_merchant")
+			_create_workshop_station(room, "ElixirLaboratory", "مختبر تحضير الأكاسير وإيقاظ النِن والعلاج", Vector3(radius * 0.32, 0.0, -radius * 0.42), str(staff_ids[2]), "elixir_pharmacist")
 	room.set_meta("system_tower_id", tower_id)
 	room.set_meta("system_tower_floor_number", floor_number)
 	room.set_meta("system_tower_department", department)
@@ -1303,7 +1334,7 @@ func _create_workshop_station(room: Node3D, station_id: String, station_title: S
 	var interaction := Area3D.new()
 	interaction.name = "CraftingStationInteraction"
 	interaction.add_to_group("system_interactable")
-	interaction.set_meta("system_tower_id", "weapons_equipment_elixirs_tower_baghdad")
+	interaction.set_meta("system_tower_id", "shopping_tower_baghdad")
 	interaction.set_meta("system_tower_staff_id", staff_id)
 	interaction.set_meta("system_tower_staff_role", staff_role)
 	interaction.set_meta("system_display_name", station_title)
