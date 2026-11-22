@@ -81,5 +81,7 @@ func _run_tests() -> void:
 	assert(continent.get_node_or_null("ContinentTerrainVisual") == null, "Monolithic terrain visual is still active.")
 	assert(continent.get_node_or_null("ContinentTerrainCollision") == null, "Monolithic terrain collision is still active.")
 	continent.queue_free()
+	await process_frame
+	await process_frame
 	print("Terrain cell streaming checks passed: lifecycle, shared edges, collision and canonical continent integration and deterministic road/river clipping.")
 	quit(0)
