@@ -205,3 +205,14 @@ The Weapons/Equipment/Elixirs Tower employee panel now exposes first-pass functi
 - Nen acquisition elixir unlocks Nen and starts control rank 1. Nen control elixirs advance the rank up to 5. This stores progression state only; actual Nen aura techniques, personalized abilities and skill trees remain future work.
 - Equipped items cannot be sold until unequipped. Equipment slots, Nen state and active effects are included in progression save data.
 - All current prices/effects are first-pass local balance values. Crafting, recipe discovery, stock supply chains, online transaction authority and final gameplay balance remain open.
+
+
+## NPC vendor economy, crafting and Power Tower final challenge — 22 November 2026
+
+- Vendor stock is saved locally per product. Purchases reduce stock; sales return accepted items to the NPC vendor's stock. Prices respond to stock levels, and vendors restock every five real-time minutes.
+- The Weapons Tower first floor now contains an interactive blacksmith forge and elixir laboratory, each connected to the assigned NPC employee service.
+- NPC staff panels expose recipes and ingredient counts. Players can buy raw materials and craft weapons, shields, armour, helmets, outfits and core elixirs. Nen-control and rare/legendary recipes have level/Nen requirements.
+- Power Tower milestones and bosses provide crafting materials; the 200th-floor sovereign trial grants the unique crown, sovereign core, rare core and Nen fragment, plus a large SYSTEM credit reward.
+- All six lobby lift doors and generated public-floor service kiosks are interactive. The Power Tower lobby includes a local 200-floor progress board.
+- Final boss combat now includes a visible shockwave warning and three phases at 50% and 20% health thresholds.
+- The stock, wallet, progression and Power Tower records are local-device systems at this stage. Online transaction authority, cloud synchronization, cross-player leaderboards, matchmaking, visible equipment attachments, full Nen abilities and physical Android review remain unfinished.
