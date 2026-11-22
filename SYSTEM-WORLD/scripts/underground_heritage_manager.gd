@@ -494,9 +494,10 @@ func _create_vault_door_interaction(parent: Node3D) -> void:
 	target.set_meta("system_interaction_prompt", "اسحب الرافعة لفتح الباب الحجري")
 	parent.add_child(target)
 
-	var door_body := StaticBody3D.new()
+	var door_body := AnimatableBody3D.new()
 	door_body.name = "DoorBody"
 	door_body.position = Vector3(0, 1.9, -7.0)
+	door_body.sync_to_physics = true
 	target.add_child(door_body)
 
 	var door_visual := MeshInstance3D.new()
