@@ -806,7 +806,9 @@ func _ensure_elevator_car(tower_id: String, start_y: float) -> Node3D:
 	_add_elevator_panel(car, "ElevatorCabinBackWall", Vector3(width, 4.5, 0.25), Vector3(0.0, 2.25, -depth * 0.5), metal)
 	var left_door := _add_elevator_panel(car, "ElevatorLeftDoor", Vector3(width * 0.44, 4.35, 0.18), Vector3(-width * 0.22, 2.2, depth * 0.5), glass)
 	var right_door := _add_elevator_panel(car, "ElevatorRightDoor", Vector3(width * 0.44, 4.35, 0.18), Vector3(width * 0.22, 2.2, depth * 0.5), glass)
-	active_elevator_doors = [left_door, right_door]
+	active_elevator_doors.clear()
+	active_elevator_doors.append(left_door)
+	active_elevator_doors.append(right_door)
 	var lift_label := Label3D.new()
 	lift_label.text = "SYSTEM LIFT"
 	lift_label.position = Vector3(0.0, 3.9, -depth * 0.5 + 0.2)
