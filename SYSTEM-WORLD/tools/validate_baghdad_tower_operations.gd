@@ -226,6 +226,12 @@ func _run() -> void:
 	if not bool(progression.get("nen_unlocked")) or int(progression.get("nen_control_rank")) != 2:
 		_fail("Nen acquisition/control elixirs did not update the player's Nen state.")
 		return
+	var credits_before := int(operations.call("get_operations_status").get("credits", 0))
+	var final_credit_reward := int(operations.call("grant_power_tower_credits", 200, true))
+	var credits_after := int(operations.call("get_operations_status").get("credits", 0))
+	if final_credit_reward != 8075 or credits_after - credits_before != 8075:
+		_fail("Power Tower floor 200 did not grant the unique SYSTEM credit reward.")
+		return
 	var health_manager: Node = main.get("player_combat_health") as Node
 	health_manager.call("receive_damage", 150.0, null)
 	progression.call("add_item", "healing_elixir", 1)
