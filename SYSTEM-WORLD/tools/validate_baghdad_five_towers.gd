@@ -2,6 +2,8 @@ extends SceneTree
 
 const TowerManager = preload("res://scripts/baghdad_tower_landmarks_manager.gd")
 
+var failures := 0
+
 
 class MockTerrain extends Node:
 	func is_land_position(_x: float, _z: float) -> bool:
@@ -84,8 +86,12 @@ func _run_validation() -> void:
 
 	region.queue_free()
 	await process_frame
-	print("Baghdad five-tower landmark validation passed.")
-	quit(0)
+	if failures == 0:
+		print("Baghdad five-tower landmark validation passed.")
+		quit(0)
+	else:
+		push_error("Baghdad five-tower landmark validation failed: %d check(s)." % failures)
+		quit(1)
 
 
 func _expect(condition: bool, description: String) -> void:
@@ -93,4 +99,4 @@ func _expect(condition: bool, description: String) -> void:
 		print("PASS: ", description)
 	else:
 		push_error("FAIL: " + description)
-		quit(1)
+		failures += 1
