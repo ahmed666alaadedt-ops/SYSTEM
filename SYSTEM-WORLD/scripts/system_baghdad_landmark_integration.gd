@@ -201,15 +201,15 @@ func _build_tunnel(root: Node3D, site: Dictionary) -> void:
 		stage_gate.name = "StageGate_%02d" % stage_number
 		stage_gate.position.z = -size.z*0.25 + float(stage_index)*(size.z*0.5/6.0)
 		root.add_child(stage_gate)
-		_add_box(stage_gate,"StageGateLeftPost",Vector3(-17.0,4.0,0.0),Vector3(1.2,8.0,1.2),gate_frame,true)
-		_add_box(stage_gate,"StageGateRightPost",Vector3(17.0,4.0,0.0),Vector3(1.2,8.0,1.2),gate_frame,true)
-		_add_box(stage_gate,"StageGateHeader",Vector3(0.0,8.4,0.0),Vector3(35.0,1.2,1.2),gate_frame,true)
-		_add_box(stage_gate,"StageGateAccent",Vector3(0.0,8.9,0.0),Vector3(30.0,0.12,1.3),gate_accent,false)
+		_add_box(stage_gate,"StageGateLeftPost",Vector3(-17.0,3.7,0.0),Vector3(1.2,7.4,1.2),gate_frame,true)
+		_add_box(stage_gate,"StageGateRightPost",Vector3(17.0,3.7,0.0),Vector3(1.2,7.4,1.2),gate_frame,true)
+		_add_box(stage_gate,"StageGateHeader",Vector3(0.0,8.0,0.0),Vector3(35.0,1.0,1.2),gate_frame,true)
+		_add_box(stage_gate,"StageGateAccent",Vector3(0.0,8.55,0.0),Vector3(30.0,0.12,1.3),gate_accent,false)
 		var stage_sign := Label3D.new()
 		stage_sign.name = "StageNumberSign_%02d" % stage_number
 		stage_sign.text = "بوابة المرحلة %02d" % stage_number
 		stage_sign.font_size = 25
-		stage_sign.position = Vector3(0.0,10.1,-0.8)
+		stage_sign.position = Vector3(0.0,8.8,-0.8)
 		stage_sign.pixel_size = 0.014
 		stage_sign.modulate = Color(0.86,0.94,1.0)
 		stage_gate.add_child(stage_sign)
