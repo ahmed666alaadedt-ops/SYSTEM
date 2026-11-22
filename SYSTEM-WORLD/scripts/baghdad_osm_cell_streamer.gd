@@ -937,6 +937,7 @@ func _create_osm_door(
 	root.set_meta("system_location_position", root.position)
 	root.set_meta("system_display_name", _building_display_name(building_kind, {}))
 	root.set_meta("system_associated_building_id", "baghdad_osm_building_" + building_id)
+root.set_meta("system_building_osm_id", building_id)
 	root.set_meta("system_association_distance_m", float(door_spec.get("association_distance_m", -1.0)))
 	root.set_meta("system_association_status", str(door_spec.get("association_status", "")))
 	root.set_meta("system_wall_opening_built", true)
@@ -2083,10 +2084,16 @@ func _add_triangle(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> 
 	surface.add_vertex(c)
 
 
-func _unload_cell(cell: Vector2i) -> void:
+func _unload_cell(cell: Vector2i) -> bool:
 	if not loaded_cells.has(cell):
-		return
+		return false
 	var node: Node3D = loaded_cells[cell]
+	if _cell_has_active_player_interior(node):
+		# Keep the complete cell alive until its occupant exits. The request is
+		# retried by the normal one-operation-per-frame queue.
+		if not pending_unloads.has(cell):
+			pending_unloads.append(cell)
+		return false
 	var cell_id := str(node.get_meta("cell_id", "%d:%d" % [cell.x, cell.y]))
 	cell_unloading.emit(cell, node)
 	loaded_cells.erase(cell)
@@ -2094,6 +2101,26 @@ func _unload_cell(cell: Vector2i) -> void:
 	cell_unloaded.emit(cell, cell_id)
 	if is_instance_valid(node):
 		node.queue_free()
+	return true
+
+
+func _cell_has_active_player_interior(cell_root: Node3D) -> bool:
+	if not is_instance_valid(cell_root):
+		return false
+	for player_value in get_tree().get_nodes_in_group("system_player"):
+		if not player_value is CharacterBody3D or not is_instance_valid(player_value):
+			continue
+		var building_id := str(player_value.get_meta("system_inside_building_id", ""))
+		if building_id.is_empty():
+			continue
+		var pending_nodes: Array[Node] = [cell_root]
+		while not pending_nodes.is_empty():
+			var candidate: Node = pending_nodes.pop_back()
+			if str(candidate.get_meta("system_building_osm_id", "")) == building_id:
+				return true
+			for child in candidate.get_children():
+				pending_nodes.append(child)
+	return false
 
 
 func get_streaming_status() -> Dictionary:
