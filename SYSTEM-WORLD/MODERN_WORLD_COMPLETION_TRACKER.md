@@ -5,8 +5,11 @@
 - [x] On floor changes, the previous duty employee is safely returned to the correct lobby before its floor is replaced. On lobby return, the active employee rides the elevator back, resumes the original four-waypoint lobby patrol and retains the same NPC identity.
 - [x] Return-to-lobby now restores customer visitors to their correct public lobby before the active floor is removed.
 - [x] Extended the tower operations validator to exercise the Shopping Tower chef's elevator boarding, arrival at the floor-29 workstation, physical emergency-exit evacuation, staff return to lobby patrol and restoration of all four persistent Shopping Tower customers.
-- [ ] Run the updated canonical tower operations validator and Android export on the final checkpoint commit; physical Android inspection remains outstanding.
+- [x] Focused tower elevator/emergency validation passed in canonical Godot run #456 (run ID `45078571741`) on exact HEAD `77f2d02b1aff937bf2d6bee061fb581e8f9394a1`.
+- [x] Android build #1240 passed on the same exact HEAD. APK artifact `14775914279`, 35,957,009 bytes, SHA-256 `cd910faa4ee7cc9fa45a705edfa4ee6f95b53220bf9384acb1039b1a9bc079b3`; expires 6 December 2026.
+- [ ] Physical Android inspection of elevator staff boarding/arrival, emergency-exit trigger and lobby restoration remains outstanding.
 - [ ] Extend staff duty schedules from the currently mapped signature service floors to every floor and multi-stop autonomous work routes.
+- [ ] Full PR validation #1503 (run ID `45078548523`) still fails at the existing VR-course floor collision assertion (`VR course floor is missing its physical collision surface`). No VR course, arcade or robot gameplay code was changed as part of this Baghdad tower work; the focused canonical tower checks passed.
 
 ## Baghdad tower floor emergency evacuation — 23 November 2026
 
