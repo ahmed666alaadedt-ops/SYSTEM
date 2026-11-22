@@ -2457,7 +2457,7 @@ func _facility_activity_definition(facility_type: String) -> Dictionary:
 		"sports_court": {"action": "shot", "action_label": "تنفيذ دور المباراة", "goal": 10, "reward": 70, "title": "مباراة كرة السلة 1 ضد 1"},
 		"bowling": {"action": "throw", "action_label": "رمي كرة البولينغ", "goal": 10, "reward": 70, "title": "البولينغ"},
 		"cinema": {"action": "watch", "action_label": "مشاهدة المشهد التالي", "goal": 3, "reward": 15, "title": "جلسة السينما — ثلاثة مشاهد"},
-		"arcade": {"action": "hit", "action_label": "إصابة الهدف المضيء", "goal": 5, "reward": 45, "title": "الألعاب الإلكترونية"},
+		"arcade": {"action": "hit", "action_label": "إطلاق الكرة الضوئية", "goal": 10, "reward": 55, "title": "SYSTEM ARCADE — تحدي الأهداف"},
 		"family_zone": {"action": "discover", "action_label": "اكتشاف محطة عائلية", "goal": 3, "reward": 30, "title": "استكشاف العائلة"},
 		"rooftop_leisure": {"action": "photo", "action_label": "التقاط صورة للسطح", "goal": 1, "reward": 20, "title": "استكشاف السطح"},
 		"robotics_lab": {"action": "assemble", "action_label": "تركيب القطعة التالية", "goal": 3, "reward": 75, "title": "تركيب الروبوت"},
@@ -2537,6 +2537,12 @@ func start_facility_activity(facility_type: String) -> bool:
 	}
 	if facility_type == "sports_court":
 		active_facility_activity["opponent_score"] = 0
+	if facility_type == "arcade":
+		active_facility_activity["lives"] = 3
+		active_facility_activity["combo"] = 0
+		active_facility_activity["best_combo"] = 0
+		active_facility_activity["hits"] = 0
+		active_facility_activity["targets_hit"] = []
 	if facility_type == "cinema":
 		_update_cinema_program_screen(0)
 	_set_status("%s بدأت. التقدم: 0/%d" % [str(definition["title"]), int(definition["goal"])])
@@ -2628,7 +2634,7 @@ func _launch_arcade_projectile() -> Dictionary:
 	current_facility_root.add_child(projectile)
 	projectile.position = Vector3(facility_aim * 4.0, 3.5, 4.0)
 	projectile.apply_central_impulse(Vector3(0.0, 0.0, -8.0))
-	_set_status("انطلقت الكرة الضوئية — أصب الهدف المحدد!")
+	_set_status("SYSTEM ARCADE — انطلقت الكرة الضوئية!")
 	var hit := false
 	var target_id := -1
 	var nearest_target_distance := INF
@@ -2660,13 +2666,33 @@ func _launch_arcade_projectile() -> Dictionary:
 	if is_instance_valid(projectile):
 		projectile.queue_free()
 	var step := int(active_facility_activity.get("step", 0)) + 1
-	var points := 1 if hit else 0
+	var combo := int(active_facility_activity.get("combo", 0))
+	var lives := int(active_facility_activity.get("lives", 3))
+	var hits := int(active_facility_activity.get("hits", 0))
+	var points := 0
+	if hit:
+		points = _calculate_arcade_target_points(target_id, combo)
+		combo += 1
+		hits += 1
+	else:
+		combo = 0
+		lives = maxi(0, lives - 1)
+	var best_combo := maxi(int(active_facility_activity.get("best_combo", 0)), combo)
+	var targets_hit: Array = active_facility_activity.get("targets_hit", []).duplicate()
+	if hit and not targets_hit.has(target_id):
+		targets_hit.append(target_id)
 	active_facility_activity["step"] = step
 	active_facility_activity["score"] = int(active_facility_activity.get("score", 0)) + points
+	active_facility_activity["combo"] = combo
+	active_facility_activity["best_combo"] = best_combo
+	active_facility_activity["lives"] = lives
+	active_facility_activity["hits"] = hits
+	active_facility_activity["targets_hit"] = targets_hit
 	facility_projectile_in_progress = false
-	var goal := int(active_facility_activity.get("goal", 5))
+	var goal := int(active_facility_activity.get("goal", 10))
 	var score := int(active_facility_activity.get("score", 0))
-	if step >= goal:
+	var completed_game := step >= goal or lives <= 0
+	if completed_game:
 		var result := _complete_facility_activity()
 		result["last_target_hit"] = hit
 		result["last_target_id"] = target_id
@@ -2674,9 +2700,21 @@ func _launch_arcade_projectile() -> Dictionary:
 		result["last_projectile_position"] = projectile_end_position
 		result["nearest_projectile_position"] = nearest_projectile_position
 		result["nearest_target_position"] = nearest_target_position
+		result["hits"] = hits
+		result["lives_remaining"] = lives
+		result["best_combo"] = best_combo
+		result["targets_hit"] = targets_hit
+		result["last_target_points"] = points
 		return result
-	_set_status(("أصبت الهدف %d!" % (target_id + 1) if hit else "لم تصب الهدف — عدّل الاتجاه وحاول.") + " المحاولة %d/%d | النقاط: %d" % [step, goal, score])
-	return {"success": true, "completed": false, "step": step, "hit": hit, "target_id": target_id, "score": score, "nearest_target_distance": nearest_target_distance, "projectile_end_position": projectile_end_position, "nearest_projectile_position": nearest_projectile_position, "nearest_target_position": nearest_target_position}
+	_set_status(("أصبت الهدف %d! +%d" % [target_id + 1, points] if hit else "ضاعت الكرة — خسرت محاولة حياة.") + " | المحاولة %d/%d | حياة: %d | كومبو: %d | النقاط: %d" % [step, goal, lives, combo, score])
+	return {"success": true, "completed": false, "step": step, "hit": hit, "target_id": target_id, "score": score, "lives_remaining": lives, "combo": combo, "best_combo": best_combo, "hits": hits, "last_target_points": points, "nearest_target_distance": nearest_target_distance, "projectile_end_position": projectile_end_position, "nearest_projectile_position": nearest_projectile_position, "nearest_target_position": nearest_target_position}
+
+
+func _calculate_arcade_target_points(target_id: int, combo: int) -> int:
+	var target_scores := [5, 8, 12, 8, 5]
+	if target_id < 0 or target_id >= target_scores.size():
+		return 0
+	return int(target_scores[target_id]) + mini(maxi(combo, 0), 4) * 2
 
 
 func _launch_basketball() -> Dictionary:
