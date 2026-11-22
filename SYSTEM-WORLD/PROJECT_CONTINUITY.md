@@ -84,3 +84,11 @@ Last verified: 2026-11-22 (GitHub repository review)
 - Continue on `qa/fix-deferred-test-cleanup-20261122`; do not merge to `main` without explicit user approval.
 
 - Latest tower interiors pass: manager commit `2f38818d693c320a269da698754dc465528c1c1e` adds aisle guidance lights, emergency-exit signs, screen numbering and ticket-kiosk visual markers to each of the six cinema halls. These are visual wayfinding/kiosk placeholders only; ticket sales, entry checks, film playback, seating interaction and emergency logic are not implemented. Previous Godot run #860 was based on an earlier validator commit and still failed its earlier radial-bridge assertion; a fresh run against the latest validator is required before marking tower validation successful.
+
+
+## Tower facility interior detail pass — 22 November 2026
+
+- Manager commit `033e04f3d71f832b74a4d6937ead22d55523ae8b` added reception counter visuals, visitor waiting seats, service directory signs and entrance threshold markers to each public facility shell generated for the five towers. Commit `cea3bf9303d3e41d99fc64f7cdf7f42f515162f5` corrected directory line formatting. Manager commit `3016fae7e417a6fa8e642b0af67f9363e29e0ac1` registers service furniture revision 1 on every tower.
+- Validator commit `e6906cfc4ed27d17fcc6e07b48ccc5a609d90b8c` checks that each tower has reception and service-directory fixtures and checks wayfinding/exit/ticket-kiosk markers in each of the six cinema halls. Validator commit `56a34499cc13d1093a06bc571c94280aae65e212` asserts service-furniture revision metadata.
+- The previous CI run #867 / Android build #714 succeeded for the prior cinema visual pass. A fresh run against the service-furniture changes is required. Fixtures remain static; they do not implement functioning staff, queues, ticket sales, playback or navigation.
+- Continue on `qa/fix-deferred-test-cleanup-20261122`; do not merge to `main` without explicit user approval.
