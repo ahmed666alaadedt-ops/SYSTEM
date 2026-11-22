@@ -1074,6 +1074,8 @@ func open_staff_service(staff_node: Node) -> void:
 		return
 	current_tower_id = str(staff_node.get_meta("system_tower_id", ""))
 	current_staff_id = str(staff_node.get_meta("system_tower_staff_id", ""))
+	current_restaurant_table_id = ""
+	current_restaurant_table_node = null
 	if not tower_nodes.has(current_tower_id):
 		return
 	var config: Dictionary = TOWER_CONFIG[current_tower_id]
@@ -3200,8 +3202,14 @@ func _advance_restaurant_order(table_id: String, next_status: String) -> void:
 		restaurant_orders[table_id] = order
 	_save_restaurant_orders()
 	_set_status("تم تحديث حالة طلب المطعم: " + next_status)
-	if is_instance_valid(current_restaurant_table_node) and current_restaurant_table_id == table_id:
+	if panel.visible and is_instance_valid(current_restaurant_table_node) and current_restaurant_table_id == table_id:
 		open_restaurant_table(current_restaurant_table_node)
+	elif panel.visible and current_tower_id == "shopping_tower_baghdad" and not current_staff_id.is_empty():
+		var shopping_tower := tower_nodes.get("shopping_tower_baghdad") as Node3D
+		var lobby := shopping_tower.get_node_or_null("PublicLobby_Blockout") as Node3D if shopping_tower != null else null
+		var staff_node := lobby.get_node_or_null("TowerStaff_" + current_staff_id) if lobby != null else null
+		if staff_node != null:
+			open_staff_service(staff_node)
 
 
 func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: int) -> void:
