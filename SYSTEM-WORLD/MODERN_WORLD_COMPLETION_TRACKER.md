@@ -434,12 +434,12 @@ A checked repository foundation does not mean a finished gameplay feature. Visua
 - [x] Keep the interaction honest: a mapped entrance point is not a built door mesh, verified building-to-door association, openable door, interior scene, or permission to enter; private/no access tags are surfaced as restricted.
 - [x] Add a GitHub Actions cell-pack assertion that every emitted entrance feature is a Point with a source entrance/door/building tag.
 - [x] Run the updated OSM workflow successfully (run 44736344496; artifact 14629100933): the Baghdad boundary clip contains 188 mapped entrance points, and the initial 5×5 / 200 m sample cell pack contains 30 entrance points. This confirms source coverage in the sample, not that every building has a mapped entrance.
-- [ ] Associate entrance nodes with their correct building footprints and building IDs using spatial/topological validation; the current runtime marker is independently discoverable.
-- [ ] Build door visuals, access checks, enter/exit transitions, interiors, floors, and apartment/shop functionality only after source-to-building associations and scene integration are validated.
+- [x] Associate entrance nodes with their correct OSM building footprints and IDs using spatial validation; runtime markers and physical door roots retain stable source/building IDs.
+- [x] Build source-verified door frames/leaves, wall openings, access checks, enter/exit transitions and procedural category interiors after source-to-building association validation. Multi-room/multi-floor apartment and shop gameplay remains open.
 - [x] Canonical Godot 4.3 validation workflow 44736373468 passed project import/script parsing and headless main-scene launch after the entrance-loader changes; project validation workflow 44736373505 also passed.
 - [x] Android debug APK workflows passed: canonical SYSTEM WORLD build 44736373661 (artifact 14628179091), SYSTEM WORLD export 44736373583 (artifact 14629175553), and SYSTEM build 44736373546 (artifact 14628741580).
 - [x] Follow-up canonical build 44736784123 downloaded the new successful entrance-enabled OSM pack (source run 44736344496; artifact 14629100933), installed all 25 sample metric cells into the project, passed the Baghdad OSM runtime-cell validation, and exported APK artifact 14628622619.
-- [ ] Run entrance-specific ray-target, location discovery, cell boundary/unload, and marker-to-building association tests; inspect the APK on a physical Android device. A successful APK export is not a physical-device gameplay test.
+- [ ] Complete player-camera ray-target and map-discovery checks, test cell boundary/unload while a player is inside, and inspect the APK on a physical Android device. APK export is not a physical-device gameplay test.
 
 
 ## Evidence-based entrance association tooling — 20 November 2026
@@ -449,8 +449,8 @@ A checked repository foundation does not mean a finished gameplay feature. Visua
 - [x] Produces explicit accepted, review, restricted, and rejected outcomes with OSM IDs, distances, source tags, candidate ambiguity information, and summary counts. The tool does not generate or claim an unverified physical door.
 - [x] Preserves access restrictions: `access=no/private` is reported as restricted, and explicit `entrance=no` / `door=no` points are rejected as non-entry points.
 - [x] Added unit tests for contained entrances, ambiguous neighboring buildings, private access, and no-nearby-building rejection in `tools/geospatial/test_associate_baghdad_entrances.py`.
-- [ ] The association report has not yet been run against the latest Actions artifact in this session; test execution and report output remain pending.
-- [ ] The report is not yet consumed by `baghdad_osm_cell_streamer.gd`; runtime door/interior transitions remain unimplemented. Do not mark mapped entrances as enterable until that integration and its Godot tests pass.
+- [x] Latest source workflow run 44982341557 generated and validated the annotated runtime pack/report: 25 accepted, 3 review and 2 rejected entrance associations in the 5×5 sample.
+- [x] `baghdad_osm_cell_streamer.gd` consumes association metadata and generates physical doors/interiors only for accepted/restricted source links; canonical Godot 4.3 runtime validation passed on the exact annotated pack.
 
 Run from `SYSTEM-WORLD/` after installing the same Shapely dependency used by the cell-pack generator:
 
@@ -923,3 +923,20 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Inspect the resulting APK on a physical Android device for doorway placement, clearance, readability, streaming and frame-time impact.
 
 **Evidence boundary:** the earlier local association run on the 5×5 sample contained 30 source entrances and classified 25 as accepted, 3 for review and 2 as rejected. That earlier report predates the runtime-pack annotation change; do not treat it as validation of the new annotated artifact. The municipal source layer contains 188 entrance nodes, but the installed 5×5 runtime sample is only a 1 km × 1 km proof area.
+
+
+## Baghdad OSM physical doors, interior scenes and entry/exit — 22 November 2026
+
+- [x] Use the annotated OSM runtime pack as the only source for accepted/restricted doorway candidates; review/rejected candidates remain non-enterable.
+- [x] Project each accepted entrance onto a suitable building-footprint wall edge, requiring a bounded source-to-wall distance and a usable wall segment; skip placements that cannot support a real opening.
+- [x] Split exterior wall and roof meshes so each verified door has a real ground-to-lintel wall opening and the roof can be hidden while the player is inside.
+- [x] Generate a physical door frame, lintel, hinged leaf with collision, interaction area, and stable entrance/building linkage; door leaf opens/closes through the world interaction path.
+- [x] Enforce restricted access in the door controller. A synthetic restricted-door runtime test confirms a private/no-public door cannot open.
+- [x] Generate a procedural interior floor, collision, lighting, and category-selected furnishing layout for detached houses, apartments, commercial shops, schools, healthcare buildings, hotels, mosques, churches, and general buildings.
+- [x] Add an entry/exit flow: first interaction opens the door, next interaction enters; the interior activates its floor/furniture collision and hides the roof; interacting from inside exits, disables interior collision, restores the roof, and closes the door.
+- [x] Canonical Godot 4.3 validation against the exact source-generated Baghdad pack passed: cell 0:2 contained 21 source entrance points, 19 accepted runtime links, 19 physical doors, and 19 successful interior entry/exit transitions. The synthetic restricted-door denial test also passed.
+- [x] Source association/connectivity workflow 44982341557 passed, including 30 Python unit tests; canonical Android workflow 44982486123 passed import, Baghdad OSM runtime validation, headless main-scene launch and APK export. APK artifact: 14738163484.
+- [ ] Verify camera-ray selection and map discovery for physical doors in the live player scene; validate streaming boundaries and cell unload/reload while inside a building.
+- [ ] Expand the procedural interiors into detailed multi-room layouts, multi-floor apartments, functional shop inventories/counters, and business/economy interactions. The current interiors are starter shells, not full building simulations.
+- [ ] Inspect the exported APK visually and for performance on a physical Android device.
+
