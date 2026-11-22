@@ -190,6 +190,9 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	var entrance := EntranceScript.new()
 	entrance.name = "PublicEntrance"
 	entrance.configure(location_id, title, "region_baghdad")
+	entrance.set_meta("system_tower_floor_count", floors)
+	entrance.set_meta("system_tower_height_m", height)
+	entrance.set_meta("system_tower_district_member", connect_to_district)
 	var entrance_shape := CollisionShape3D.new()
 	var shape := SphereShape3D.new()
 	shape.radius = 3.5
