@@ -121,8 +121,8 @@ func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_po
 	_build_ui()
 	if is_instance_valid(player_health) and player_health.has_signal("player_wounded"):
 		var wounded_callback := Callable(self, "_on_player_wounded")
-		if not player_health.player_wounded.is_connected(wounded_callback):
-			player_health.player_wounded.connect(wounded_callback)
+		if not player_health.is_connected("player_wounded", wounded_callback):
+			player_health.connect("player_wounded", wounded_callback)
 	_resolve_towers()
 	_create_staff_for_all_towers()
 	_create_advertising_surfaces()
