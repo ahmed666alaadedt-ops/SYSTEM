@@ -50,7 +50,7 @@ func get_floor_data(floor_number: int) -> Dictionary:
 		"wave_count": 1 if arena_type == "DUEL" or boss_floor else mini(2 + int(floor_number / 12), 10),
 		"reward_xp": reward_xp,
 		"rank": _rank_for_floor(floor_number),
-		"challenge_type": "BOSS" if boss_floor else ("ELITE" if floor_number % 5 == 0 else "COMBAT_TRIAL"),
+		"challenge_type": "FINAL_BOSS" if final_boss else ("BOSS" if boss_floor else ("ELITE" if floor_number % 5 == 0 else "COMBAT_TRIAL")),
 		"arena_type": arena_type,
 		"arena_name": "SYSTEM SOVEREIGN — FINAL TRIAL" if final_boss else ("BOSS TRIAL ARENA" if boss_floor else str(arena_names[arena_cycle])),
 		"arena_rules": "المواجهة النهائية: اهزم حارس برج القوة الأخير لإتمام الطوابق الـ200" if final_boss else ("مواجهة زعيم الطابق — اهزم الخصم الرئيسي" if boss_floor else str(arena_rules[arena_cycle])),
