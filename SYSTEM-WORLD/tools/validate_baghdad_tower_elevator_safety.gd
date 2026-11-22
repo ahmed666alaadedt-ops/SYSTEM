@@ -109,8 +109,12 @@ func _run() -> void:
 		return
 	await create_timer(3.8).timeout
 	var workstation := restaurant_room.get_node_or_null("StaffWorkstation_restaurant_chef") as Node3D
-	if restaurant_chef.get_parent() != restaurant_room or workstation == null or not bool(restaurant_chef.get_meta("system_staff_workstation_active", false)):
-		_fail("The restaurant chef did not arrive at the floor-29 workstation after riding the elevator.")
+	var service_point := restaurant_room.get_node_or_null("StaffServicePoint_restaurant_chef") as Node3D
+	var information_point := restaurant_room.get_node_or_null("StaffInformationPoint_restaurant_chef") as Node3D
+	var work_route: Array = restaurant_chef.get_meta("system_staff_work_route", [])
+	var work_tween: Variant = restaurant_chef.get_meta("system_staff_patrol_tween", null)
+	if restaurant_chef.get_parent() != restaurant_room or workstation == null or service_point == null or information_point == null or not bool(restaurant_chef.get_meta("system_staff_workstation_active", false)) or work_route.size() < 3 or not (work_tween is Tween) or not (work_tween as Tween).is_running():
+		_fail("The restaurant chef did not reach the floor-29 workstation and start the three-stop autonomous work route.")
 		return
 
 	var emergency_sensor := restaurant_room.get_node_or_null("EmergencyExitSensor") as Area3D
@@ -122,7 +126,7 @@ func _run() -> void:
 	if operations.get("active_floor_root") != null or bool(player.get_meta("system_tower_elevator_active", false)):
 		_fail("The physical emergency-exit trigger did not complete the safe return to the public lobby.")
 		return
-	if restaurant_chef.get_parent() != shopping_lobby or restaurant_chef.has_meta("system_staff_duty_floor") or not bool(restaurant_chef.get_meta("system_staff_navigation_enabled", false)) or restaurant_chef.get_meta("system_staff_patrol_waypoints", []).size() < 4:
+	if restaurant_chef.get_parent() != shopping_lobby or restaurant_chef.has_meta("system_staff_duty_floor") or restaurant_chef.has_meta("system_staff_work_route") or not bool(restaurant_chef.get_meta("system_staff_navigation_enabled", false)) or restaurant_chef.get_meta("system_staff_patrol_waypoints", []).size() < 4:
 		_fail("The chef did not ride the elevator back and resume the original lobby patrol.")
 		return
 	var lobby_customer_count := 0
