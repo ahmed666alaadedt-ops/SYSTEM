@@ -40,6 +40,12 @@ func get_floor_data(floor_number: int) -> Dictionary:
 		"بطولة تصنيفية — سلسلة مواجهات بأداء ووقت محسوبين"
 	]
 	var arena_type := "BOSS_TRIAL" if boss_floor else str(["DUEL", "TEAM", "SURVIVAL", "ELITE", "CHAMPIONSHIP"][arena_cycle])
+	var objective_type := "DEFEAT_BOSS" if boss_floor else ("SURVIVE_TIMER" if arena_type == "SURVIVAL" else ("CLEAR_WITHIN_TIME" if arena_type == "CHAMPIONSHIP" else "ELIMINATE_WAVES"))
+	var time_limit_seconds := 0
+	if objective_type == "SURVIVE_TIMER":
+		time_limit_seconds = clampi(50 + int(float(floor_number) * 0.35), 50, 120)
+	elif objective_type == "CLEAR_WITHIN_TIME":
+		time_limit_seconds = clampi(110 + int(float(floor_number) * 0.45), 110, 200)
 	return {
 		"floor": floor_number,
 		"difficulty": difficulty,
@@ -52,6 +58,8 @@ func get_floor_data(floor_number: int) -> Dictionary:
 		"rank": _rank_for_floor(floor_number),
 		"challenge_type": "FINAL_BOSS" if final_boss else ("BOSS" if boss_floor else ("ELITE" if floor_number % 5 == 0 else "COMBAT_TRIAL")),
 		"arena_type": arena_type,
+		"objective_type": objective_type,
+		"time_limit_seconds": time_limit_seconds,
 		"arena_name": "SYSTEM SOVEREIGN — FINAL TRIAL" if final_boss else ("BOSS TRIAL ARENA" if boss_floor else str(arena_names[arena_cycle])),
 		"arena_rules": "المواجهة النهائية: اهزم حارس برج القوة الأخير لإتمام الطوابق الـ200" if final_boss else ("مواجهة زعيم الطابق — اهزم الخصم الرئيسي" if boss_floor else str(arena_rules[arena_cycle])),
 		"clear_time_recorded": true,
