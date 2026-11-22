@@ -1151,7 +1151,7 @@ func _run() -> void:
 		if int(cabinet_interaction.get_meta("system_arcade_cabinet_id", -1)) != cabinet_index:
 			_fail("Arcade cabinet interaction metadata does not match its cabinet ID.")
 			return
-		if str(cabinet_interaction.get_meta("system_arcade_cabinet_mode", "")) not in ["shooter", "memory"]:
+		if str(cabinet_interaction.get_meta("system_arcade_cabinet_mode", "")) not in ["shooter", "memory", "reflex"]:
 			_fail("Arcade cabinet must route to a supported playable game mode.")
 			return
 		arcade_interaction_count += 1
@@ -1201,6 +1201,15 @@ func _run() -> void:
 		return
 	if bool(memory_invalid_cursor.get("valid", true)) or bool(memory_invalid_cursor.get("complete", true)):
 		_fail("Arcade memory cabinet must reject inputs after the sequence has ended.")
+		return
+	if int(operations.call("_calculate_arcade_reflex_score", 160)) != 23:
+		_fail("Arcade reflex cabinet should award 23 points for a 160 ms reaction.")
+		return
+	if int(operations.call("_calculate_arcade_reflex_score", 800)) != 15:
+		_fail("Arcade reflex cabinet should award fewer points for a slower reaction.")
+		return
+	if int(operations.call("_calculate_arcade_reflex_score", 6000)) != 0:
+		_fail("Arcade reflex cabinet must reject reaction times beyond five seconds.")
 		return
 	if int(operations.call("_calculate_arcade_target_points", 2, 0)) != 12:
 		_fail("Arcade center target scoring did not award 12 base points.")
