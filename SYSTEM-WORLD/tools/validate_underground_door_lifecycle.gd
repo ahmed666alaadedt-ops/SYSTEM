@@ -2,6 +2,7 @@ extends SceneTree
 
 const DOOR_INTERACTABLE = preload("res://scripts/underground_interactable.gd")
 const HERITAGE_MANAGER = preload("res://scripts/underground_heritage_manager.gd")
+const WORLD_INTERACTION_MANAGER = preload("res://scripts/world_interaction_manager.gd")
 const CLOSED_POSITION := Vector3(0.0, 1.9, -7.0)
 const OPEN_POSITION := Vector3(0.0, 6.1, -7.0)
 
@@ -37,7 +38,32 @@ func _run_validation() -> void:
 	door.add_child(collision)
 
 	root.add_child(target)
-	await process_frame
+
+	# Exercise the actual shared camera-ray resolver against the door body.
+	var ray_manager: Node = WORLD_INTERACTION_MANAGER.new()
+	var ray_camera := Camera3D.new()
+	root.add_child(ray_manager)
+	root.add_child(ray_camera)
+	ray_manager.set("camera", ray_camera)
+	await physics_frame
+
+	ray_camera.global_position = Vector3(0.0, 1.9, 0.0)
+	ray_camera.look_at(Vector3(0.0, 1.9, -7.0), Vector3.UP)
+	await physics_frame
+	if ray_manager.call("_find_target_in_front") != target:
+		_fail("Front-side camera ray did not resolve the moving door body to its interactable parent.")
+		return
+
+	ray_camera.global_position = Vector3(0.0, 1.9, -14.0)
+	ray_camera.look_at(Vector3(0.0, 1.9, -7.0), Vector3.UP)
+	await physics_frame
+	if ray_manager.call("_find_target_in_front") != target:
+		_fail("Rear-side camera ray did not resolve the moving door body to its interactable parent.")
+		return
+
+	ray_camera.global_position = Vector3(0.0, 1.9, 0.0)
+	ray_camera.look_at(Vector3(0.0, 1.9, -7.0), Vector3.UP)
+	await physics_frame
 
 	# Opening must animate the physical slab upward without disabling collision.
 	target.call("system_interact")
@@ -48,6 +74,9 @@ func _run_validation() -> void:
 	if collision.disabled:
 		_fail("Stone door collision was disabled while opening.")
 		return
+	if ray_manager.call("_find_target_in_front") != target:
+		_fail("Door collision stopped blocking the camera ray during the opening animation.")
+		return
 	await create_timer(1.1).timeout
 	if door.position.distance_to(OPEN_POSITION) > 0.03:
 		_fail("Stone door did not reach its fully open position.")
@@ -57,6 +86,9 @@ func _run_validation() -> void:
 		return
 	if str(target.get_meta("system_interaction_prompt", "")) != "أغلق الباب الحجري":
 		_fail("Open-state interaction prompt is incorrect.")
+		return
+	if ray_manager.call("_find_target_in_front") != null:
+		_fail("Fully open vault doorway is still blocked by the raised slab at player height.")
 		return
 
 	# Closing must return the same slab and retain its physical collision.
