@@ -76,12 +76,16 @@ var equipment_durability: Dictionary = {}
 var active_elixir_effects: Dictionary = {}
 var nen_unlocked := false
 var nen_control_rank := 0
+var nen_burst_cooldown_remaining := 0.0
+var nen_button_refresh_clock := 0.0
+var nen_burst_button: Button
 
 
 func _ready() -> void:
 	load_progress()
 	_emit_progress()
 	set_process(true)
+	_create_nen_burst_button()
 
 
 func _process(delta: float) -> void:
@@ -95,8 +99,77 @@ func _process(delta: float) -> void:
 		else:
 			effect["remaining_seconds"] = remaining
 			active_elixir_effects[effect_id] = effect
+	if nen_burst_cooldown_remaining > 0.0:
+		nen_burst_cooldown_remaining = maxf(0.0, nen_burst_cooldown_remaining - delta)
+		nen_button_refresh_clock -= delta
+		if nen_button_refresh_clock <= 0.0:
+			nen_button_refresh_clock = 1.0
+			_refresh_nen_burst_button()
+		if nen_burst_cooldown_remaining <= 0.0:
+			save_progress()
+			_refresh_nen_burst_button()
 	if expired:
 		save_progress()
+
+
+func _create_nen_burst_button() -> void:
+	var canvas := CanvasLayer.new()
+	canvas.name = "NenAbilityHUD"
+	canvas.layer = 30
+	var hud := Control.new()
+	hud.set_anchors_preset(Control.PRESET_FULL_RECT)
+	canvas.add_child(hud)
+	nen_burst_button = Button.new()
+	nen_burst_button.name = "NenBurstButton"
+	nen_burst_button.anchor_left = 0.83
+	nen_burst_button.anchor_top = 0.82
+	nen_burst_button.anchor_right = 0.98
+	nen_burst_button.anchor_bottom = 0.96
+	nen_burst_button.offset_left = 0.0
+	nen_burst_button.offset_top = 0.0
+	nen_burst_button.offset_right = 0.0
+	nen_burst_button.offset_bottom = 0.0
+	nen_burst_button.text = "نِن"
+	nen_burst_button.pressed.connect(activate_nen_burst)
+	hud.add_child(nen_burst_button)
+	add_child(canvas)
+	_refresh_nen_burst_button()
+
+
+func _refresh_nen_burst_button() -> void:
+	if not is_instance_valid(nen_burst_button):
+		return
+	nen_burst_button.visible = nen_unlocked
+	if not nen_unlocked:
+		return
+	if nen_control_rank < 4:
+		nen_burst_button.text = "النِن — رتبة %d/4" % nen_control_rank
+		nen_burst_button.disabled = true
+		return
+	var active_effect: Dictionary = active_elixir_effects.get("nen_burst", {})
+	var active_remaining := float(active_effect.get("remaining_seconds", 0.0))
+	if active_remaining > 0.0:
+		nen_burst_button.text = "النِن فعال %dث" % int(ceil(active_remaining))
+		nen_burst_button.disabled = true
+	elif nen_burst_cooldown_remaining > 0.0:
+		nen_burst_button.text = "النِن %dث" % int(ceil(nen_burst_cooldown_remaining))
+		nen_burst_button.disabled = true
+	else:
+		nen_burst_button.text = "تفعيل النِن"
+		nen_burst_button.disabled = false
+
+
+func activate_nen_burst() -> Dictionary:
+	if not nen_unlocked or nen_control_rank < 4:
+		return {"success": false, "reason": "NEN_RANK_FOUR_REQUIRED"}
+	if nen_burst_cooldown_remaining > 0.0:
+		return {"success": false, "reason": "NEN_BURST_ON_COOLDOWN"}
+	active_elixir_effects["nen_burst"] = {"remaining_seconds": 20.0, "damage_bonus": 30.0, "defense_bonus": 20.0, "movement_multiplier": 1.1, "attack_cooldown_multiplier": 0.85}
+	nen_burst_cooldown_remaining = 60.0
+	nen_button_refresh_clock = 0.0
+	save_progress()
+	_refresh_nen_burst_button()
+	return {"success": true, "duration_seconds": 20, "cooldown_seconds": 60}
 
 
 func get_xp_required_for_next_level() -> int:
@@ -358,6 +431,8 @@ func get_combat_damage_bonus() -> float:
 	var result := float(bonuses.get("damage_bonus", 0.0))
 	for effect in active_elixir_effects.values():
 		result += float(effect.get("damage_bonus", 0.0))
+	if nen_unlocked and nen_control_rank >= 3:
+		result += float(nen_control_rank - 2) * 2.0
 	return result
 
 
@@ -366,6 +441,8 @@ func get_defense_bonus() -> float:
 	var result := float(bonuses.get("defense_bonus", 0.0))
 	for effect in active_elixir_effects.values():
 		result += float(effect.get("defense_bonus", 0.0))
+	if nen_unlocked:
+		result += float(nen_control_rank) * 1.5
 	return result
 
 
@@ -373,6 +450,8 @@ func get_movement_multiplier() -> float:
 	var result := 1.0
 	var equipment_bonus := get_equipment_bonuses()
 	result *= float(equipment_bonus.get("movement_multiplier", 1.0))
+	if nen_unlocked:
+		result *= 1.0 + float(nen_control_rank) * 0.005
 	for effect in active_elixir_effects.values():
 		result *= float(effect.get("movement_multiplier", 1.0))
 	return clampf(result, 0.65, 1.6)
@@ -382,6 +461,8 @@ func get_attack_cooldown_multiplier() -> float:
 	var result := 1.0
 	for effect in active_elixir_effects.values():
 		result *= float(effect.get("attack_cooldown_multiplier", 1.0))
+	if nen_unlocked:
+		result *= 1.0 - float(nen_control_rank) * 0.01
 	return clampf(result, 0.6, 1.2)
 
 
@@ -433,6 +514,7 @@ func consume_elixir(item_id: String) -> Dictionary:
 	else:
 		inventory_items[item_id] = remaining
 	save_progress()
+	_refresh_nen_burst_button()
 	return {"success": true, "item_id": item_id, "nen_unlocked": nen_unlocked, "nen_control_rank": nen_control_rank}
 
 
@@ -481,6 +563,7 @@ func get_progress_data() -> Dictionary:
 		"active_elixir_effects": active_elixir_effects.duplicate(true),
 		"nen_unlocked": nen_unlocked,
 		"nen_control_rank": nen_control_rank,
+		"nen_burst_cooldown_remaining": nen_burst_cooldown_remaining,
 		"greed_island_seal_ready": bool(get_world_fragment_data().get("all_world_keys_ready", false)),
 		"world_keys": get_world_fragment_data()
 	}
@@ -516,6 +599,7 @@ func save_progress() -> void:
 	config.set_value("effects", "active_elixirs", active_elixir_effects.duplicate(true))
 	config.set_value("nen", "unlocked", nen_unlocked)
 	config.set_value("nen", "control_rank", nen_control_rank)
+	config.set_value("nen", "burst_cooldown_remaining", nen_burst_cooldown_remaining)
 
 	var error := config.save(SAVE_PATH)
 
@@ -593,6 +677,7 @@ func load_progress() -> void:
 			active_elixir_effects[str(effect_id)] = effect
 	nen_unlocked = bool(config.get_value("nen", "unlocked", false))
 	nen_control_rank = clampi(int(config.get_value("nen", "control_rank", 0)), 0, 5)
+	nen_burst_cooldown_remaining = maxf(0.0, float(config.get_value("nen", "burst_cooldown_remaining", 0.0)))
 
 	var saved_world_fragments: Dictionary = config.get_value("world_keys", "fragments", {})
 	world_fragments = {"modern": [], "historical": [], "fantasy": []}
@@ -712,6 +797,7 @@ func _reset_progress() -> void:
 	active_elixir_effects.clear()
 	nen_unlocked = false
 	nen_control_rank = 0
+	nen_burst_cooldown_remaining = 0.0
 
 
 func _emit_progress() -> void:
