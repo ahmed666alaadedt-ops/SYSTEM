@@ -226,9 +226,9 @@ Read and implement `SYSTEM-WORLD/REAL_WORLD_ADVERTISING_AND_CHAMPION_DISPLAY_SYS
 - Added a catalog covering firearms, swords, daggers, spears, axes, bows, crossbows, arrows, energy weapons, Nen awakening vials and Nen control elixirs.
 - Connected awakening vials to the existing SYSTEMNenManager discovery-insight progression; each vial contributes one insight, and the normal three-insight discovery rule remains in force.
 - Connected the control elixir to TEN training; failed uses refund the consumed item.
-- Added four lobby service desks: armory, Nen potion laboratory, Baghdad market/souvenirs and player collection.
+- Added five lobby service desks: Baghdad market, shopping catalog, player collection, armory and Nen potion laboratory.
 - Added procedural armory racks and Nen potion-laboratory fixtures to the shopping tower's generated floor variants.
-- Added validator checks for service desks, floor fixtures, catalog coverage, safe potion consumption and Republic Bridge target metadata.
+- Added validator checks for service desks, floor fixtures, catalog coverage, safe potion consumption, weapon equipping/combat profiles and Republic Bridge target metadata.
 - Documented the Republic Bridge geographic target in the five-tower design and Baghdad map status files.
 
 **Geographic blocker — do not bypass:**
@@ -240,7 +240,10 @@ Read and implement `SYSTEM-WORLD/REAL_WORLD_ADVERTISING_AND_CHAMPION_DISPLAY_SYS
 **Not yet implemented:**
 1. Real geographic placement of the tower and the spanning bridge structure over the Tigris.
 2. Integration of verified Baghdad riverbanks, waterway and bridge deck/crossings, including keeping the waterway clear below.
-3. Actual weapon equip/unequip, animations, ammo, damage, balancing and combat integration. Current catalog purchases are stored in inventory only.
+3. Weapon equip/unequip, persistent player loadout, weapon-specific damage/range profiles and modern combat integration are implemented. Still missing held weapon models, animations, recoil, ammunition/reloading, projectile physics and final balance.
 4. In-world visual review and Android performance/playability test.
 
 **Next single task:** obtain/import and validate the approved Baghdad geographic data pack (including Tigris waterway and Republic Bridge), then move only the armory/Nen tower to the exact bridge span and test both bank entrances. Keep all work on the existing feature branch; do not merge into main without explicit user approval.
+
+
+**Latest code verification:** GitHub Actions run 45015013231 passed on code commit 22dec568e2e6fd99ad7b8fca7b7ef0c819c83709. This run included Godot 4.3 import/parser, Baghdad five-tower and Power Tower validation, Shopping Tower legacy catalog/purchase compatibility, Nen validation, weapon loadout/combat-profile validation, Hunter Examination, remaining listed validators, missing-mesh scan and headless main-scene launch. This is CI/headless evidence only, not Android device or visual playtesting. The current documentation checkpoint is newer than that tested code commit; no code changes were made after the passing run. PR 37 remains open against main and is not merged.
