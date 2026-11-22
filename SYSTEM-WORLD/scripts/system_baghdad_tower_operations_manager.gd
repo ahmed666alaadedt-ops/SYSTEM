@@ -1417,6 +1417,8 @@ func _add_hotel_controls() -> void:
 			check_in_button.text = "تسجيل الدخول إلى الغرفة"
 			check_in_button.pressed.connect(_check_in_hotel_room)
 			controls.add_child(check_in_button)
+		if int(active.get("check_in_unix", 0)) > 0:
+			_add_hotel_room_service_controls(controls, active)
 		var checkout_button := Button.new()
 		checkout_button.text = "تسجيل الخروج وإنهاء الإقامة"
 		checkout_button.pressed.connect(_checkout_hotel_room)
@@ -1465,6 +1467,94 @@ func _add_hotel_controls() -> void:
 			booking_button.disabled = not _meets_hunter_rank(required_rank) or credits < rate * nights
 			booking_button.pressed.connect(_book_hotel_room.bind(room_id, room_name, rate, required_rank, nights))
 			controls.add_child(booking_button)
+
+
+func _add_hotel_room_service_controls(parent: VBoxContainer, booking: Dictionary) -> void:
+	var heading := Label.new()
+	heading.text = "خدمة الغرف — طلب الطعام والشراب"
+	parent.add_child(heading)
+	var menu := [
+		{"id": "restaurant_baghdad_breakfast", "name": "فطور بغدادي", "price": 42},
+		{"id": "restaurant_kebab", "name": "كباب عراقي", "price": 68},
+		{"id": "restaurant_masگوف", "name": "مسگوف", "price": 95},
+		{"id": "restaurant_fresh_juice", "name": "عصير طازج", "price": 22},
+		{"id": "restaurant_specialty_coffee", "name": "قهوة مختصة", "price": 28},
+		{"id": "restaurant_dessert", "name": "حلويات شرقية", "price": 30}
+	]
+	for item in menu:
+		var order_button := Button.new()
+		order_button.text = "طلب %s — %d رصيد" % [str(item.name), int(item.price)]
+		order_button.disabled = credits < int(item.price)
+		order_button.pressed.connect(_place_hotel_room_service_order.bind(str(item.id), str(item.name), int(item.price)))
+		parent.add_child(order_button)
+	var orders: Array = booking.get("room_service_orders", [])
+	for index in range(orders.size()):
+		var order: Dictionary = orders[index]
+		var state := str(order.get("status", "placed"))
+		var order_label := Label.new()
+		order_label.text = "%s — %s" % [str(order.get("item_name", "طلب")), {"placed": "تم استلام الطلب", "preparing": "قيد التحضير", "delivered": "تم التوصيل"} .get(state, state)]
+		parent.add_child(order_label)
+		if state == "placed":
+			var prepare_button := Button.new()
+			prepare_button.text = "بدء تحضير الطلب"
+			prepare_button.pressed.connect(_update_hotel_room_service_order.bind(index, "preparing"))
+			parent.add_child(prepare_button)
+		elif state == "preparing":
+			var deliver_button := Button.new()
+			deliver_button.text = "تأكيد توصيل الطلب إلى الغرفة"
+			deliver_button.pressed.connect(_update_hotel_room_service_order.bind(index, "delivered"))
+			parent.add_child(deliver_button)
+
+
+func _place_hotel_room_service_order(item_id: String, item_name: String, price: int) -> void:
+	var booking := _get_active_hotel_booking()
+	if booking.is_empty() or int(booking.get("check_in_unix", 0)) <= 0:
+		_set_status("يجب تسجيل الدخول إلى الفندق قبل طلب خدمة الغرف.")
+		return
+	if price <= 0 or credits < price:
+		_set_status("رصيدك لا يكفي لطلب خدمة الغرف.")
+		return
+	var room_id := str(booking.get("room_id", ""))
+	if not hotel_bookings.has(room_id):
+		return
+	credits -= price
+	var stored: Dictionary = hotel_bookings[room_id]
+	var orders: Array = stored.get("room_service_orders", [])
+	orders.append({"item_id": item_id, "item_name": item_name, "price": price, "status": "placed", "ordered_at_unix": int(Time.get_unix_time_from_system())})
+	stored["room_service_orders"] = orders
+	hotel_bookings[room_id] = stored
+	_save_hotel_bookings()
+	_save_wallet()
+	credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
+	_set_status("وصل طلب %s إلى موظف خدمة الغرف. تمت إضافة قيمته إلى الفاتورة." % item_name)
+	_add_hotel_controls()
+
+
+func _update_hotel_room_service_order(order_index: int, next_status: String) -> void:
+	if next_status not in ["preparing", "delivered"]:
+		return
+	var booking := _get_active_hotel_booking()
+	if booking.is_empty():
+		return
+	var room_id := str(booking.get("room_id", ""))
+	if not hotel_bookings.has(room_id):
+		return
+	var stored: Dictionary = hotel_bookings[room_id]
+	var orders: Array = stored.get("room_service_orders", [])
+	if order_index < 0 or order_index >= orders.size():
+		return
+	var order: Dictionary = orders[order_index]
+	var current := str(order.get("status", "placed"))
+	if (next_status == "preparing" and current != "placed") or (next_status == "delivered" and current != "preparing"):
+		return
+	order["status"] = next_status
+	order["updated_at_unix"] = int(Time.get_unix_time_from_system())
+	orders[order_index] = order
+	stored["room_service_orders"] = orders
+	hotel_bookings[room_id] = stored
+	_save_hotel_bookings()
+	_set_status("تم تحديث حالة طلب خدمة الغرف.")
+	_add_hotel_controls()
 
 
 func _book_hotel_room(room_id: String, room_name: String, nightly_rate: int, required_rank: String, nights: int) -> void:
