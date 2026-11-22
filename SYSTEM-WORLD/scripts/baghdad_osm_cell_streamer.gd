@@ -30,6 +30,10 @@ var canonical_origin_frame_valid := false
 var source_snapshot := ""
 var manifest_schema_version := 0
 var entrance_association_schema_version := 0
+var ground_layer_schema_version := 0
+var ground_elevation_m := 34.0
+var water_surface_elevation_m := 28.0
+var bridge_deck_elevation_m := 34.28
 var _last_center_cell := Vector2i(2147483647, 2147483647)
 
 var road_material: StandardMaterial3D
@@ -132,7 +136,24 @@ func _ready() -> void:
 	if min_cell_x > max_cell_x or min_cell_z > max_cell_z:
 		push_error("SYSTEM Baghdad OSM: cell bounds are inverted.")
 		return
+
+	ground_layer_schema_version = int(parsed.get("ground_layer_schema_version", 0))
+	ground_elevation_m = float(parsed.get("ground_elevation_m", NAN))
+	water_surface_elevation_m = float(parsed.get("water_surface_elevation_m", NAN))
+	bridge_deck_elevation_m = float(parsed.get("bridge_deck_elevation_m", NAN))
+	if ground_layer_schema_version != 1:
+		push_error("SYSTEM Baghdad OSM: verified municipal ground layer schema is required.")
+		return
+	if not is_finite(ground_elevation_m) or not is_finite(water_surface_elevation_m) or not is_finite(bridge_deck_elevation_m):
+		push_error("SYSTEM Baghdad OSM: ground, water, and bridge elevations must be finite.")
+		return
+	if not is_equal_approx(ground_elevation_m, 34.0) or not is_equal_approx(water_surface_elevation_m, 28.0) or not is_equal_approx(bridge_deck_elevation_m, 34.28):
+		push_error("SYSTEM Baghdad OSM: regional elevation contract does not match the verified Baghdad pack.")
+		return
 	terrain_manager = get_parent().get_node_or_null("ModernContinent")
+	if terrain_manager != null and terrain_manager.has_method("configure_baghdad_osm_ground"):
+		terrain_manager.call("configure_baghdad_osm_ground", ground_elevation_m)
+	add_to_group("baghdad_osm_cell_streamer")
 	_create_materials()
 	_add_attribution_overlay()
 	source_snapshot = str(parsed.get("source_snapshot", ""))
@@ -283,6 +304,12 @@ func _load_cell(cell: Vector2i) -> void:
 	cell_root.set_meta("schema_version", manifest_schema_version)
 	cell_root.set_meta("source_snapshot", source_snapshot)
 	var counts := {}
+	var ground_polygons: Array = []
+	var ground_count := 0
+	for ground_feature in layers.get("ground", []):
+		ground_count += _build_ground_feature(cell_root, ground_feature, ground_polygons)
+	cell_root.set_meta("baghdad_ground_polygons", ground_polygons)
+	counts["ground"] = ground_count
 	var road_features: Array = layers.get("roads", [])
 	var road_navigation_segments: Array[Dictionary] = []
 	var road_count := 0
@@ -297,7 +324,9 @@ func _load_cell(cell: Vector2i) -> void:
 						"highway": highway_kind,
 						"points": road_line
 					})
-		road_count += _build_line_feature(cell_root, feature, _road_width(road_tags), road_material, 0.16, "OSMRoad")
+		var bridge_road := str(road_tags.get("bridge", "")).to_lower() == "yes" or str(road_tags.get("layer", "0")).to_int() > 0
+		if not bridge_road:
+			road_count += _build_line_feature(cell_root, feature, _road_width(road_tags), road_material, 0.16, "OSMRoad", true)
 	cell_root.set_meta("road_navigation_segments", road_navigation_segments)
 	var entrance_features: Array = layers.get("entrances", [])
 	cell_root.set_meta("source_entrance_features", entrance_features)
@@ -306,17 +335,22 @@ func _load_cell(cell: Vector2i) -> void:
 		building_count += _build_building_feature(cell_root, feature, road_features)
 	counts["buildings"] = building_count
 	var water_count := 0
+	var water_line_lift := water_surface_elevation_m - ground_elevation_m + 0.10
 	for feature in layers.get("waterways", []):
-		water_count += _build_line_feature(cell_root, feature, _water_width(feature.get("tags", {})), water_material, 0.10, "OSMWaterway")
+		water_count += _build_line_feature(cell_root, feature, _water_width(feature.get("tags", {})), water_material, water_line_lift, "OSMWaterway")
 	var bridge_count := 0
+	var bridge_deck_lift := bridge_deck_elevation_m - ground_elevation_m
 	for feature in layers.get("bridges", []):
-		bridge_count += _build_line_feature(cell_root, feature, maxf(_road_width(feature.get("tags", {})), 3.0), bridge_material, 0.28, "OSMBridge")
+		if not _extract_polygons(feature.get("geometry", {})).is_empty():
+			bridge_count += _build_area_feature(cell_root, feature, bridge_material, bridge_deck_lift, "OSMBridgeDeck", true)
+		bridge_count += _build_line_feature(cell_root, feature, maxf(_road_width(feature.get("tags", {})), 3.0), bridge_material, bridge_deck_lift + 0.04, "OSMBridge", true)
 	for feature in layers.get("railway", []):
 		_build_line_feature(cell_root, feature, 2.2, bridge_material, 0.20, "OSMRailway")
 	for feature in layers.get("landuse", []):
 		_build_area_feature(cell_root, feature, land_material, 0.035, "OSMLanduse")
+	var water_area_lift := water_surface_elevation_m - ground_elevation_m + 0.08
 	for feature in layers.get("natural-water", []):
-		_build_area_feature(cell_root, feature, water_material, 0.08, "OSMNaturalWater")
+		_build_area_feature(cell_root, feature, water_material, water_area_lift, "OSMNaturalWater")
 	var amenity_count := 0
 	for feature in layers.get("amenities", []):
 		amenity_count += _build_amenity_feature(cell_root, feature)
@@ -448,6 +482,23 @@ func _nearest_road_graph_point(position: Vector2, max_distance: float) -> int:
 
 func get_cell_node(cell: Vector2i) -> Node3D:
 	return loaded_cells.get(cell) as Node3D
+
+
+func is_ground_position(x: float, z: float) -> bool:
+	if not enabled:
+		return false
+	var cell := Vector2i(floori(x / cell_size), floori(z / cell_size))
+	var cell_root := loaded_cells.get(cell) as Node3D
+	if cell_root == null:
+		return false
+	var polygons_value: Variant = cell_root.get_meta("baghdad_ground_polygons", [])
+	if not polygons_value is Array:
+		return false
+	var point := Vector2(x, z)
+	for polygon_value in polygons_value:
+		if polygon_value is PackedVector2Array and Geometry2D.is_point_in_polygon(point, polygon_value):
+			return true
+	return false
 
 
 func _build_building_feature(parent: Node3D, feature: Dictionary, road_features: Array) -> int:
@@ -1212,7 +1263,7 @@ func _add_polygon_worship_detail(parent: Node3D, ring: PackedVector2Array, heigh
 		detail_root.add_child(cross_arm)
 
 
-func _build_line_feature(parent: Node3D, feature: Dictionary, width: float, material: Material, lift: float, prefix: String) -> int:
+func _build_line_feature(parent: Node3D, feature: Dictionary, width: float, material: Material, lift: float, prefix: String, create_collision: bool = false) -> int:
 	var geometry: Dictionary = feature.get("geometry", {})
 	var lines := _extract_lines(geometry)
 	var built := 0
@@ -1242,19 +1293,89 @@ func _build_line_feature(parent: Node3D, feature: Dictionary, width: float, mate
 		var mesh := surface.commit()
 		if mesh == null or mesh.get_surface_count() == 0:
 			continue
+		var feature_id := str(feature.get("id", "unknown"))
 		var instance := MeshInstance3D.new()
-		instance.name = "%s_%s_%02d" % [prefix, str(feature.get("id", "unknown")), built]
+		instance.name = "%s_%s_%02d" % [prefix, feature_id, built]
 		instance.mesh = mesh
 		instance.material_override = material
 		instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		instance.set_meta("osm_feature_id", str(feature.get("id", "")))
+		instance.set_meta("osm_feature_id", feature_id)
 		parent.add_child(instance)
+		if create_collision:
+			_add_static_mesh_collision(parent, mesh, "%sCollision_%s_%02d" % [prefix, feature_id, built], feature_id)
 		built += 1
 	return built
 
 
-func _build_area_feature(parent: Node3D, feature: Dictionary, material: Material, lift: float, prefix: String) -> void:
+func _add_static_mesh_collision(parent: Node3D, mesh: Mesh, node_name: String, feature_id: String) -> void:
+	if mesh == null:
+		return
+	var faces := mesh.get_faces()
+	if faces.is_empty():
+		return
+	var body := StaticBody3D.new()
+	body.name = node_name
+	body.add_to_group("system_world_collision")
+	body.set_meta("osm_feature_id", feature_id)
+	body.set_meta("baghdad_osm_surface_collision", true)
+	var shape := ConcavePolygonShape3D.new()
+	shape.set_faces(faces)
+	var collision := CollisionShape3D.new()
+	collision.shape = shape
+	body.add_child(collision)
+	parent.add_child(body)
+
+
+func _build_ground_feature(parent: Node3D, feature: Dictionary, output_polygons: Array) -> int:
 	var geometry: Dictionary = feature.get("geometry", {})
+	var polygons := _extract_polygons(geometry)
+	if polygons.is_empty():
+		return 0
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var triangle_count := 0
+	for polygon in polygons:
+		var ring := PackedVector2Array()
+		for coordinate in polygon:
+			if coordinate is Array and coordinate.size() >= 2:
+				ring.append(Vector2(float(coordinate[0]), float(coordinate[1])))
+		if ring.size() > 2 and ring[0].is_equal_approx(ring[ring.size() - 1]):
+			ring.remove_at(ring.size() - 1)
+		if ring.size() < 3:
+			continue
+		output_polygons.append(ring)
+		var triangulation := Geometry2D.triangulate_polygon(ring)
+		for index in range(0, triangulation.size(), 3):
+			var p0 := ring[triangulation[index]]
+			var p1 := ring[triangulation[index + 1]]
+			var p2 := ring[triangulation[index + 2]]
+			_add_triangle(
+				surface,
+				Vector3(p0.x, _terrain_height(p0), p0.y),
+				Vector3(p1.x, _terrain_height(p1), p1.y),
+				Vector3(p2.x, _terrain_height(p2), p2.y)
+			)
+			triangle_count += 1
+	if triangle_count == 0:
+		return 0
+	surface.generate_normals()
+	var mesh := surface.commit()
+	if mesh == null or mesh.get_surface_count() == 0:
+		return 0
+	var feature_id := str(feature.get("id", "baghdad_ground"))
+	var instance := MeshInstance3D.new()
+	instance.name = "OSMBaghdadGround_%s" % feature_id
+	instance.mesh = mesh
+	instance.material_override = land_material
+	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(instance)
+	_add_static_mesh_collision(parent, mesh, "OSMBaghdadGroundCollision_%s" % feature_id, feature_id)
+	return 1
+
+
+func _build_area_feature(parent: Node3D, feature: Dictionary, material: Material, lift: float, prefix: String, create_collision: bool = false) -> int:
+	var geometry: Dictionary = feature.get("geometry", {})
+	var built := 0
 	for polygon in _extract_polygons(geometry):
 		if polygon.size() < 4:
 			continue
@@ -1285,12 +1406,17 @@ func _build_area_feature(parent: Node3D, feature: Dictionary, material: Material
 		var mesh := surface.commit()
 		if mesh == null or mesh.get_surface_count() == 0:
 			continue
+		var feature_id := str(feature.get("id", "unknown"))
 		var instance := MeshInstance3D.new()
-		instance.name = "%s_%s" % [prefix, str(feature.get("id", "unknown"))]
+		instance.name = "%s_%s_%02d" % [prefix, feature_id, built]
 		instance.mesh = mesh
 		instance.material_override = material
 		instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		parent.add_child(instance)
+		if create_collision:
+			_add_static_mesh_collision(parent, mesh, "%sCollision_%s_%02d" % [prefix, feature_id, built], feature_id)
+		built += 1
+	return built
 
 
 func _build_entrance_feature(parent: Node3D, feature: Dictionary) -> int:
