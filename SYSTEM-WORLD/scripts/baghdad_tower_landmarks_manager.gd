@@ -27,7 +27,7 @@ func _ready() -> void:
 	_create_materials()
 	_build_hunter_tower()
 	_build_power_tower()
-	_build_business_tower()
+	_build_weapons_equipment_elixirs_tower()
 	_build_shopping_tower()
 	_build_entertainment_tower()
 	_build_technology_tower()
@@ -230,8 +230,29 @@ func get_tower_positions() -> Array[Dictionary]:
 
 
 
-func _build_business_tower() -> void:
-	_build_tower("BusinessTower", "برج الأعمال", "business_tower_baghdad", city_anchor + Vector3(-350.0, 0.0, 350.0), 220.0, 26.0, 36, Color(0.24, 0.78, 0.72))
+func _build_weapons_equipment_elixirs_tower() -> void:
+	_build_tower(
+		"WeaponsEquipmentElixirsTower",
+		"برج الأسلحة والمعدات والإكسيرات",
+		"weapons_equipment_elixirs_tower_baghdad",
+		city_anchor + Vector3(-350.0, 0.0, 350.0),
+		220.0,
+		26.0,
+		36,
+		Color(0.82, 0.34, 0.16)
+	)
+	var tower := get_node_or_null("WeaponsEquipmentElixirsTower")
+	if tower != null:
+		tower.set_meta("facility_categories", PackedStringArray([
+			"weapons_all_types", "swords", "spears", "axes", "bows", "firearms",
+			"shields", "helmets", "armor", "combat_outfits", "equipment_upgrades"
+		]))
+		tower.set_meta("elixir_categories", PackedStringArray([
+			"nen_acquisition", "nen_control", "nen_ability_development",
+			"healing", "strength", "speed", "endurance", "energy",
+			"rare_and_legendary_elixirs"
+		]))
+		tower.set_meta("gameplay_status", "design_and_landmark_blockout_only")
 
 
 func _build_shopping_tower() -> void:
