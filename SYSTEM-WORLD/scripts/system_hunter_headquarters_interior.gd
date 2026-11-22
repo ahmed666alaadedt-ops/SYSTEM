@@ -13,6 +13,7 @@ func build(p_entrance_script: Script) -> void:
 	name = "HeadquartersInterior"
 	_build_room()
 	_build_furnishings()
+	_build_public_service_desks()
 	_build_exit_interaction()
 	set_meta("playable_interior_blockout", true)
 
@@ -94,6 +95,50 @@ func _build_furnishings() -> void:
 		display.position = Vector3(-30.0 + float(index) * 20.0, 20.0, -38.2)
 		display.material_override = cyan
 		add_child(display)
+
+
+func _build_public_service_desks() -> void:
+	if entrance_script == null:
+		push_warning("SYSTEM HQ: public service desk interactions are unavailable.")
+		return
+	var desk_material := _material(Color(0.68, 0.46, 0.19), 0.3, 0.72)
+	var accent_material := _material(Color(0.04, 0.58, 0.82), 0.22, 0.42)
+	accent_material.emission_enabled = true
+	accent_material.emission = Color(0.015, 0.34, 0.72)
+	accent_material.emission_energy_multiplier = 1.2
+	var service_specs: Array[Dictionary] = [
+		{"id": "reception", "title": "استعلامات المقر", "description": "استقبال الصيادين والزوار وتوجيههم إلى أقسام نقابة الصيادين.", "position": Vector3(-32.0, 7.0, 23.0)},
+		{"id": "registry", "title": "سجل الصيادين", "description": "مكتب مراجعة بيانات الصيادين وطلبات التسجيل والعضوية.", "position": Vector3(32.0, 7.0, 23.0)},
+		{"id": "missions", "title": "مجلس المهام والعقود", "description": "نقطة معلومات لعرض المهام والعقود التي يتولاها اللاعب بنفسه.", "position": Vector3(-32.0, 7.0, -23.0)},
+		{"id": "examiner_control", "title": "مراقبة الاختبارات", "description": "مكتب المشرفين والممتحنين لمتابعة مراحل اختبار الصيادين؛ الشخصيات غير اللاعبة موظفون وممتحنون وليست مرشحين.", "position": Vector3(32.0, 7.0, -23.0)}
+	]
+	for service in service_specs:
+		var service_id := str(service["id"])
+		var desk_position: Vector3 = service["position"]
+		_add_solid_box("HQServiceDeskCollision_" + service_id, desk_position, Vector3(14.0, 3.0, 5.0), desk_material)
+		_add_visual_box("HQServiceDeskAccent_" + service_id, desk_position + Vector3(0.0, 1.58, 0.0), Vector3(13.2, 0.12, 4.5), accent_material)
+		var sign := Label3D.new()
+		sign.name = "HQServiceSign_" + service_id
+		sign.text = str(service["title"])
+		sign.font_size = 24
+		sign.position = desk_position + Vector3(0.0, 5.0, -1.0)
+		sign.pixel_size = 0.014
+		sign.modulate = Color(0.78, 0.92, 1.0)
+		add_child(sign)
+		var interaction: Area3D = entrance_script.new()
+		interaction.name = "HQServiceInteraction_" + service_id
+		interaction.configure("tower_service_hunter_headquarters_" + service_id, str(service["title"]), "region_baghdad")
+		interaction.set_meta("system_service_description", str(service["description"]))
+		interaction.set_meta("system_hq_service_id", service_id)
+		interaction.position = desk_position + Vector3(0.0, -0.2, 5.0)
+		var collision := CollisionShape3D.new()
+		var shape := SphereShape3D.new()
+		shape.radius = 3.4
+		collision.shape = shape
+		interaction.add_child(collision)
+		add_child(interaction)
+	set_meta("headquarters_public_service_count", service_specs.size())
+	set_meta("headquarters_service_interactions_ready", true)
 
 
 func _build_exit_interaction() -> void:
