@@ -64,7 +64,13 @@ func refresh_inventory() -> void:
 	var effects: Dictionary = data.get("active_elixir_effects", {})
 	var upgrade_levels: Dictionary = data.get("equipment_upgrade_levels", {})
 	var durability: Dictionary = data.get("equipment_durability", {})
+	var rank_data: Dictionary = data.get("hunter_rank_progress", {})
 	var lines := PackedStringArray()
+	lines.append("رتبة الصياد: " + str(rank_data.get("rank", data.get("hunter_rank", "F"))))
+	lines.append("نقاط المهمات الموثقة: %d" % int(rank_data.get("verified_mission_points", 0)))
+	lines.append("مهارات النِن المستخدمة: %d | مهارات مختلفة: %d" % [int(rank_data.get("nen_skill_uses", 0)), int(rank_data.get("distinct_nen_abilities", 0))])
+	lines.append("الموافقة الخاصة لرتبة SSS: " + ("معتمدة" if bool(rank_data.get("sss_board_approved", false)) else "غير معتمدة"))
+	lines.append("")
 	lines.append("المعدات المجهزة")
 	for slot in equipment.keys():
 		var item_id := str(equipment[slot])
