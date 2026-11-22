@@ -444,3 +444,11 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Tag each generated passage as a cave landmark and mark it explicitly as geometry blockout requiring runtime validation.
 - [ ] Add validated entrance-to-building association, proper terrain excavation, complete chamber wall/ceiling collision, cave lighting, audio, navigation, discovery persistence, and player interaction.
 - [ ] Run Godot parser/import, scene startup, collision traversal, and Android performance tests. The new geometry is committed source code and has not yet been run in Godot or on a device.
+
+## Baghdad tower lobby Godot validation — 22 November 2026
+
+- [x] Godot 4.3 resource import and GDScript parse passed on branch commit `f97aebce63ac06076bb622f5c0b32a619e3a3b81` in GitHub Actions run [45035625980](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45035625980).
+- [x] Runtime scene missing-mesh scan and headless main-scene launch passed in the same run.
+- [ ] Visual review of the six tower lobbies, collision traversal, kiosk ray targeting, sign readability, and Baghdad landmark sightlines remains pending; headless launch does not verify visual quality or gameplay interaction.
+- [ ] Canonical Android APK export and physical-device review remain pending for the current branch head.
+
