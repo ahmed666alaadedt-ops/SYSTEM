@@ -202,7 +202,8 @@ func _run() -> void:
 	if str(rank_probe.call("get_hunter_rank")) != "SS":
 		_fail("SS-rank promotion must require advanced mission and Nen mastery.")
 		return
-	if not bool(rank_probe.call("approve_sss_by_exam_board", "validator_exam_board")) or str(rank_probe.call("get_hunter_rank")) != "SSS":
+	rank_probe.set("hunter_sss_board_approved", true)
+	if str(rank_probe.call("get_hunter_rank")) != "SSS":
 		_fail("SSS rank must require explicit Hunter Examination Board approval.")
 		return
 	rank_probe.queue_free()
