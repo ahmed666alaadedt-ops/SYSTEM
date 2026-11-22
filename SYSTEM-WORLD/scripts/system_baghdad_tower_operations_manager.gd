@@ -3225,6 +3225,7 @@ func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: i
 		interaction_body.name = "RestaurantTableInteraction"
 		interaction_body.collision_layer = 1
 		interaction_body.collision_mask = 0
+		interaction_body.add_to_group("system_interactable")
 		interaction_body.set_meta("system_restaurant_table_id", str(table_root.get_meta("system_restaurant_table_id")))
 		interaction_body.set_meta("system_restaurant_table_name", str(table_root.get_meta("system_restaurant_table_name")))
 		interaction_body.set_meta("system_interaction_prompt", "مطعم SYSTEM — اجلس واطلب الطعام")
