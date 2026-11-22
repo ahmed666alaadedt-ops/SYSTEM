@@ -39,7 +39,7 @@ func _run_validation() -> void:
 	await process_frame
 
 	# Opening must animate the physical slab upward without disabling collision.
-	target.system_interact()
+	target.call("system_interact")
 	await create_timer(0.25).timeout
 	if door.position.y <= CLOSED_POSITION.y + 0.05 or door.position.y >= OPEN_POSITION.y:
 		_fail("Stone door did not move during its opening animation.")
@@ -59,7 +59,7 @@ func _run_validation() -> void:
 		return
 
 	# Closing must return the same slab and retain its physical collision.
-	target.system_interact()
+	target.call("system_interact")
 	await create_timer(1.4).timeout
 	if door.position.distance_to(CLOSED_POSITION) > 0.03:
 		_fail("Stone door did not return to its closed position.")
@@ -72,9 +72,9 @@ func _run_validation() -> void:
 		return
 
 	# A second interaction during motion must reverse the active tween safely.
-	target.system_interact()
+	target.call("system_interact")
 	await create_timer(0.2).timeout
-	target.system_interact()
+	target.call("system_interact")
 	await create_timer(1.4).timeout
 	if door.position.distance_to(CLOSED_POSITION) > 0.03:
 		_fail("Door failed to reverse safely during an active animation.")
