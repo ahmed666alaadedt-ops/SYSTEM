@@ -1330,6 +1330,8 @@ func _fail_power_floor(reason: String) -> void:
 	power_floor_in_progress = false
 	power_floor_timer_remaining = 0.0
 	active_power_floor_data.clear()
+	if is_instance_valid(active_power_objective_label):
+		active_power_objective_label.text = "انتهى الوقت — أعد المحاولة من المصعد"
 	_set_status("لم تنجح في التحدي: " + reason + " حاول مرة أخرى من المصعد.")
 
 
@@ -1361,6 +1363,8 @@ func _complete_power_floor() -> void:
 		var loot_text := " | الغنائم: " + ", ".join(loot_names) if not loot_names.is_empty() else ""
 		var credit_reward := grant_power_tower_credits(floor_number, final_boss)
 		_refresh_power_tower_progress_board()
+		if is_instance_valid(active_power_objective_label):
+			active_power_objective_label.text = "تم اجتياز الطابق %d" % floor_number
 		_set_status("تم اجتياز الطابق %d!\nالتصنيف: %s | XP: %d | رصيد: %d%s\nالطابق التالي أصبح متاحاً." % [floor_number, str(result.get("rank", "E")), int(result.get("reward_xp", 0)), credit_reward, loot_text])
 	else:
 		_set_status("انتهى القتال لكن تعذر اعتماد النتيجة: " + str(result.get("reason", "غير معروف")))
