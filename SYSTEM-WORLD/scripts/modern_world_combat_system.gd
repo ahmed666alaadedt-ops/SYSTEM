@@ -25,6 +25,7 @@ func light_attack() -> void:
 	if not can_attack or not is_instance_valid(actor):
 		return
 	can_attack = false
+	_consume_weapon_durability(0.35)
 	_fire_hitscan(attack_damage + _get_progression_damage_bonus(),attack_range)
 	await get_tree().create_timer(0.38 * _get_attack_cooldown_multiplier()).timeout
 	can_attack = true
@@ -34,9 +35,16 @@ func heavy_attack() -> void:
 	if not can_attack or not is_instance_valid(actor):
 		return
 	can_attack = false
+	_consume_weapon_durability(0.75)
 	_fire_hitscan(heavy_damage + _get_progression_damage_bonus(),attack_range * 1.35)
 	await get_tree().create_timer(1.1 * _get_attack_cooldown_multiplier()).timeout
 	can_attack = true
+
+
+func _consume_weapon_durability(amount: float) -> void:
+	var progression := get_tree().root.find_child("PlayerProgression", true, false)
+	if progression != null and progression.has_method("consume_equipment_durability"):
+		progression.call("consume_equipment_durability", "weapon", amount)
 
 
 func _get_progression_damage_bonus() -> float:
