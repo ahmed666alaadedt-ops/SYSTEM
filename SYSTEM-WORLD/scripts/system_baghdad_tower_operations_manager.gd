@@ -1092,6 +1092,8 @@ func open_staff_service(staff_node: Node) -> void:
 	_add_sell_controls()
 	if role in ["hospitality_manager", "hotel_receptionist", "hotel_housekeeping"]:
 		_add_hotel_controls()
+	if role in ["restaurant_chef", "restaurant_waiter"]:
+		_add_restaurant_staff_controls(role)
 	var elevator_button := Button.new()
 	elevator_button.text = "فتح دليل الطوابق والمصعد"
 	elevator_button.pressed.connect(func(): open_tower(current_tower_id))
@@ -3000,6 +3002,47 @@ func _create_hotel_facilities(room: Node3D, radius: float, floor_number: int, ho
 
 
 
+func _add_restaurant_staff_controls(role: String) -> void:
+	var heading := Label.new()
+	heading.text = "طلبات المطاعم — " + ("مهام الشيف والمطبخ" if role == "restaurant_chef" else "مهام النادل والتقديم")
+	content.add_child(heading)
+	var visible_orders := 0
+	for table_id_value in restaurant_orders.keys():
+		var table_id := str(table_id_value)
+		var order: Dictionary = restaurant_orders[table_id]
+		var state := str(order.get("status", ""))
+		var next_status := ""
+		var action_text := ""
+		if role == "restaurant_chef" and state == "placed":
+			next_status = "preparing"
+			action_text = "قبول الطلب وبدء التحضير"
+		elif role == "restaurant_chef" and state == "preparing":
+			next_status = "ready"
+			action_text = "تأكيد جاهزية الوجبة"
+		elif role == "restaurant_waiter" and state == "ready":
+			next_status = "served"
+			action_text = "توصيل الوجبة إلى الطاولة"
+		if next_status.is_empty():
+			continue
+		visible_orders += 1
+		var order_items: Array = order.get("items", [])
+		var names: Array[String] = []
+		for item_value in order_items:
+			var item: Dictionary = item_value
+			names.append(str(item.get("name", "وجبة")))
+		var order_label := Label.new()
+		order_label.text = "%s — %s — %d رصيد" % [table_id, "، ".join(PackedStringArray(names)), int(order.get("total", 0))]
+		order_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		content.add_child(order_label)
+		var action_button := Button.new()
+		action_button.text = action_text
+		action_button.pressed.connect(_advance_restaurant_order.bind(table_id, next_status))
+		content.add_child(action_button)
+	if visible_orders == 0:
+		var empty_label := Label.new()
+		empty_label.text = "لا توجد طلبات تحتاج إلى إجراء من هذا الموظف حالياً."
+		content.add_child(empty_label)
+
 func _load_restaurant_orders() -> void:
 	var config := ConfigFile.new()
 	if config.load(RESTAURANT_SAVE_PATH) != OK:
@@ -3051,18 +3094,15 @@ func open_restaurant_table(table_node: Node) -> void:
 			var item: Dictionary = item_value
 			item_names.append(str(item.get("name", "وجبة")))
 		status_label.text = "%s\n%s\nالإجمالي: %d رصيد" % [str(state_names.get(state, state)), "، ".join(PackedStringArray(item_names)), int(active_order.get("total", 0))]
-		var next_states := {
-			"placed": ["preparing", "إرسال الطلب إلى الشيف لبدء التحضير"],
-			"preparing": ["ready", "تأكيد جاهزية الوجبة"],
-			"ready": ["served", "النادل يقدّم الطلب إلى الطاولة"],
-			"served": ["completed", "إنهاء الوجبة ومغادرة الطاولة"]
-		}
-		if next_states.has(state):
-			var transition: Array = next_states[state]
-			var action_button := Button.new()
-			action_button.text = str(transition[1])
-			action_button.pressed.connect(_advance_restaurant_order.bind(current_restaurant_table_id, str(transition[0])))
-			content.add_child(action_button)
+		if state == "served":
+			var finish_button := Button.new()
+			finish_button.text = "إنهاء الوجبة ومغادرة الطاولة"
+			finish_button.pressed.connect(_advance_restaurant_order.bind(current_restaurant_table_id, "completed"))
+			content.add_child(finish_button)
+		else:
+			var waiting_label := Label.new()
+			waiting_label.text = "طلبك قيد الخدمة. يتولى الشيف التحضير والنادل التقديم."
+			content.add_child(waiting_label)
 	else:
 		status_label.text = "اختر أطباقك ومشروباتك. تُخصم القيمة عند إرسال الطلب إلى المطبخ."
 		var draft: Array = restaurant_draft_items.get(current_restaurant_table_id, [])
