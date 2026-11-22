@@ -28,7 +28,7 @@ The immediate building-completion milestone is specifically the set of Baghdad l
 
 ## Required Baghdad landmarks and venues
 
-- [ ] **Five connected Baghdad towers and shared district:** Hunter Association, Business, Shopping, Entertainment, and Technology & Innovation towers; complete recognizable exterior architecture, district connections, accessible entrances, tower-specific interiors, vertical circulation, collision/navigation, and map location registration.
+- [ ] **Five-tower Baghdad network:** four core towers (Hunter Association, Business, Entertainment, Technology & Innovation) around the local sky-ring, plus the Shopping/Weapon-and-Nen tower as a Republic Bridge outpost connected by an elevated express skyway and two bank approaches; complete recognizable exterior architecture, accessible entrances, tower-specific interiors, vertical circulation, collision/navigation, and map registration.
 - [ ] **Hunter Association headquarters:** retain its elevated position above the five-tower complex; finish the headquarters rooms, public services, examiner spaces, and the Hunter Examination tunnel connection. NPCs are examiners and staff, never exam candidates.
 - [ ] **Independent Power Tower:** keep it detached from the five-tower complex; preserve the 200-floor design, and build the physical playable floor environments, entrance/lobby, vertical transition, checkpoints, and exploration spaces. The 200-floor progression data alone does not mean the 200 physical floors are built.
 - [ ] **Football stadium:** complete the venue around the pitch with stands, access gates, concourses, locker rooms, officials/media spaces, lighting, spectator circulation, and playable match access.
@@ -49,7 +49,7 @@ The immediate building-completion milestone is specifically the set of Baghdad l
 
 # Tower layout decision update — 21 November 2026
 
-The current approved Baghdad layout supersedes older five-tower identity lists below: the connected district contains Hunter Association, Business, Shopping, Entertainment, and Technology & Innovation towers. Power Tower is a separate detached landmark and is excluded from all district connection loops. The Global Hunter Association headquarters is an elevated building above the shared district; it is not on Power Tower and is not counted as a sixth primary tower. Source changes are committed, but Godot/runtime/Android verification remains open.
+The current approved Baghdad layout is a five-tower connected network: Hunter Association, Business, Entertainment and Technology & Innovation remain the four core towers around the local sky-ring; the Shopping/Weapon-and-Nen tower is the Republic Bridge outpost, connected to that ring by an elevated express skyway and approached from both riverbanks. Power Tower remains a separate detached landmark and is excluded from all district loops. The Global Hunter Association headquarters remains an elevated headquarters above the core district, not on Power Tower and not a sixth primary tower. The Republic Bridge implementation is committed on the QA/work branch; current-head Godot validation, visual review and Android verification remain open.
 
 # SYSTEM WORLD — Modern World Completion Tracker
 
@@ -220,15 +220,15 @@ A checked repository foundation does not mean a finished gameplay feature. Visua
 
 ## Baghdad connected five-tower city — design direction recorded 20 November 2026
 
-- [ ] Build the five distinct landmark towers as one connected vertical urban district spanning central Baghdad's Karkh–Rusafa corridor.
+- [ ] Build the five distinct landmark towers as one connected network across central Baghdad: four core towers on the local sky-ring and the Shopping/Weapon-and-Nen outpost above Republic Bridge, linked by an elevated express skyway and bank access corridors.
 - [ ] Keep the Tigris visibly open and flowing beneath the district; preserve the river channel, riverfront access, navigation clearance, and views.
 - [ ] Preserve Tahrir Square and the Freedom Monument as recognizable, explorable public landmarks on the Rusafa side; do not cover, replace, or overwhelm them.
-- [ ] Connect the five towers with skybridges, elevated promenades, public terraces, and carefully designed cross-river links while keeping the river unobstructed below.
+- [ ] Connect the four core towers with the local sky-ring and connect the Republic Bridge outpost with the elevated express skyway and two bank ramps; keep the Tigris navigation corridor unobstructed below.
 - [ ] Create a multi-level public district with ground streets/plazas, mid-level shopping and services, and upper sky gardens/recreation decks.
-- [ ] Implement the five identities: Power Tower, Hunter Association Tower, Business Tower, Shopping Tower, and Entertainment Tower.
+- [ ] Implement the five primary identities: Hunter Association Tower, Business Tower, Shopping/Weapon-and-Nen Tower, Entertainment Tower, and Technology & Innovation Tower. Keep Power Tower independent and detached.
 - [ ] Add accessible pedestrian routes, transit access, emergency/service circulation, wayfinding, and clear public connections to the existing Baghdad street network.
 - [ ] Validate the district in Godot from Karkh, Rusafa, Tigris riverfront, and Tahrir Square viewpoints; ensure the Freedom Monument and river remain visually legible.
-- Design approval/documentation is recorded in `HUNTER_TOWERS_AND_EXAMINATION_DESIGN.md`. The connected city, bridges, detailed interiors, and river engineering are not yet implemented or runtime-tested.
+- Design approval/documentation is recorded in `HUNTER_TOWERS_AND_EXAMINATION_DESIGN.md`. First-pass OSM ground/bridge integration and the Republic Bridge outpost access are now implemented on the work branch, but current-head Godot/runtime/visual validation remains pending.
 
 
 ## Vehicle physics foundation — 20 November 2026
@@ -509,7 +509,7 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 
 ## Baghdad five-tower lobby implementation — 21 November 2026
 
-- [x] Add a shared procedural first-pass lobby interior for the five connected Baghdad towers: Hunter Association, Business, Shopping, Entertainment, and Technology & Innovation.
+- [x] Add a shared procedural first-pass lobby interior for all five primary Baghdad towers: four core towers plus the Shopping/Weapon-and-Nen Republic Bridge outpost.
 - [x] Give each lobby a distinct service-desk identity and Arabic information labels matching its tower purpose.
 - [x] Add discoverable entry, exit, and service-information interaction areas to the four public service lobbies and the Hunter Association Tower lobby.
 - [x] Wire lobby entry/exit transitions through the main interaction handler and clear the player velocity on transitions.
@@ -518,7 +518,7 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Replace the current lobby/service-desk blockouts with final art, working elevators/floor access, staffed NPCs, and complete tower-specific service workflows.
 - [ ] Add real shop/business/technology/entertainment activity systems and persistent ownership/transactions where applicable.
 - [ ] Run Godot 4.3 parser and headless scene validation on this commit; test player entry, service prompts, and exit on Android.
-- [ ] Validate the complete five-tower sky district, river clearance, bridge connections, navigation, and mobile performance in a live build.
+- [ ] Validate the four-core sky-ring plus Republic Bridge outpost network, both bank ramps, Tigris clearance, bridge traffic/navigation, streamed terrain seams, and mobile performance in a live build.
 - Note: these are first playable lobby blockouts and local information interactions. They do not mean the five towers or their business services are fully complete. Power Tower remains separate and unchanged.
 
 
@@ -563,7 +563,7 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 
 - [x] Preserve the five existing tower identities and their current independent tower roots.
 - [x] Keep the Power Tower separate from the five-tower district and its sky-promenade loop.
-- [x] Add a first-pass 12-segment elevated ring promenade around the five-tower district, aligned with the existing elevated-link level.
+- [x] Add a first-pass 12-segment elevated ring promenade around the four core towers, aligned with the existing elevated-link level; the fifth primary tower now connects as the Republic Bridge outpost via a separate express skyway.
 - [x] Add walkable deck collision, glass-style safety rails, cyan emissive rail accents, and six simple sky-garden planter/tree blockouts.
 - [x] Tag the generated promenade with explicit prototype metadata and a note that final art and runtime validation are still pending.
 - [ ] Run Godot 4.3 project import/script parsing and headless startup against the new commit; the latest code change has no confirmed workflow run yet.
@@ -1063,3 +1063,19 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Connect each of the seven stage frames to its actual challenge scene and sequential stage-unlock state; build the seven challenge environments and their verified evidence routes.
 - [ ] Review tunnel scale, collision clearance, lighting and stage-sign readability in the rendered game and on Android.
 - Note: the seven stage gates are currently physical frames/signage, not seven completed challenge doors. The entrance barrier is the only functional access gate in this pass.
+
+## Baghdad Republic Bridge Weapon/Nen outpost — OSM ground, two-bank access and express skyway — 22 November 2026
+
+- [x] Add a terrain-following ground-layer builder using the verified Baghdad municipal boundary minus mapped natural-water polygons, clipped into the 200 m OSM cell pack.
+- [x] Record the Republic Bridge/Tigris OSM feature IDs, projected tower anchor, bridge centerline, two bank approach points, and land-only express-skyway support points in the runtime manifest.
+- [x] Keep the bank approach points 12 m outside the bridge centerline/traffic lane; provide one access ramp from Al-Karkh and one from Al-Rusafa.
+- [x] Extend the Baghdad OSM ground height beyond the original terrain grid with a 600 m smooth blend to the existing city baseline; preserve the original per-point heights of all four core towers inside the original terrain grid.
+- [x] Keep OSM roads/ground terrain-following and apply the dedicated source-relative water/bridge elevations only to the verified Tigris and Republic Bridge features; other water/bridge features retain local terrain placement.
+- [x] Make the Shopping/Weapon-and-Nen tower relocation conditional on the verified manifest; retain its playable lobby/interior and keep the four core towers and independent Power Tower unchanged.
+- [x] Add a raised tower platform, collision-backed two-bank ramps, and an elevated express skyway from the core ring; skyway support locations are selected on mapped land, with no supports in the immediate bridge/Tigris corridor.
+- [x] Add a Godot integration validator for unchanged core-tower transforms, bridge anchor/platform, both bank ramps, walkable collisions, express skyway, clearance metadata and retained playable interior.
+- [x] Add the tower integration validator to the canonical Godot workflow after the OSM pack artifact is supplied.
+- [ ] Run the OSM source-pack generation, geometry/support-point audit, Godot import/parser, OSM runtime validator and tower integration validator on the exact current PR head; no successful current-head run has been confirmed yet.
+- [ ] Review the rendered result from Al-Karkh, Al-Rusafa, the bridge and the river; verify ramp grades, bridge traffic clearance, navigation, water visibility, landmark sightlines and streaming seams.
+- [ ] Verify player traversal and Android build/performance on a device.
+- Note: OSM verifies the horizontal municipal, bridge, river and land geometry. The 34.0 m ground, 28.0 m water, 34.28 m bridge deck and 46.28 m tower platform values are explicit game-world elevation assumptions until a reliable DEM/survey is integrated. Do not describe them as measured real-world elevations. The work remains on the QA branch and is not merged into `main`.
