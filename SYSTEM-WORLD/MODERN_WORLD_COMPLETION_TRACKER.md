@@ -390,11 +390,14 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Allow the door to reverse direction safely if the player interacts while its tween is running; expose the current open state and matching Arabic prompt on the interaction root.
 - [x] Use an AnimatableBody3D for the moving door slab so its physical motion can be synchronized with the physics engine.
 - [x] Godot 4.3 headless project import/parser and dedicated vault-door lifecycle test passed in GitHub Actions run 44990348872 on commit `ed5ea163b54bb92a34b323449d84c448520ab1d2`; the test covers animated open/close, collision remaining enabled, Arabic prompts/state metadata, tween reversal, and local state restoration after manager recreation.
-- [ ] Run the canonical main-scene launch and verify actual physics blocking/clearance; the expanded ray test now exercises the shared camera-ray resolver from both sides and doorway clearance, but must pass before this gate is closed.
+- [x] Expanded Godot 4.3 lifecycle run 44992857584 passed on commit `373f82954546e2844b47a692bd015b1c8563a189`: shared camera-ray targeting resolves the door from both sides, the closed/moving slab blocks the ray, the fully raised slab clears the doorway at player height, and local save/reload restores the open transform after a physics frame.
+- [ ] Run the canonical main scene and verify actual player-body traversal/physical clearance in gameplay; the automated ray test does not replace a full character-controller traversal test.
 - [x] Corrected the ray-test fixture to register the synthetic vault door in `system_interactable`, matching production registration. The previous run progressed through camera-ray targeting and door animation, then exposed a restore-baseline bug: repeated `restore_stone_door_state()` calls recaptured the already-open body position as the closed baseline. Fixed by capturing the original closed position only once per interactable instance (commit `efbe5a41e7452c807056d21593f6bcb1dbf5bb56`).
 - [ ] Integrate persistence with the authenticated world-state save service for cross-device/account synchronization; current ConfigFile persistence is local to this device only.
-- [ ] Validate doorway clearance, ray targeting from both sides, repeated interaction, and mobile-device behavior in the running game.
+- [ ] Validate actual player-body traversal through the opened doorway, repeated interaction in the running game, and mobile-device behavior.
+- [ ] Verify independent saved state for Baghdad Old Souk and Baghdad River Catacombs; a dedicated two-site isolation assertion was added on commit `22e390432ce856395e2dff286ba70471b9c0b7e0` and is awaiting CI.
 
 - [x] Persist each Baghdad heritage-vault door's desired open/closed state in a local ConfigFile and restore the slab position/prompt when the heritage manager recreates its city sites.
 - [x] Connect door-state changes to the heritage manager so the saved state is updated when the player toggles the door, including during an active animation.
-- [ ] Verify local save/reload behavior in the dedicated Godot lifecycle workflow; this remains device-local persistence, not Firebase/cloud synchronization.
+- [x] Verify local save/reload behavior in Godot 4.3 workflow run 44992857584 on commit `373f82954546e2844b47a692bd015b1c8563a189`; saved open state restores the raised slab after manager recreation and a physics frame.
+- [ ] Verify independent per-site state in the two Baghdad vaults; this remains device-local persistence, not Firebase/cloud synchronization.
