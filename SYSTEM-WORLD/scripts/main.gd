@@ -930,6 +930,16 @@ func _enter_baghdad_tower_floor(tower_id: String, floor_number: int) -> void:
 		if interaction_prompt_label != null:
 			interaction_prompt_label.text = "عالم طوابق هذا البرج غير متاح."
 		return
+	var tower_interior := tower_root.get_node_or_null("TowerInterior")
+	if tower_interior == null or not tower_interior.has_method("animate_lift_to_floor"):
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "مصعد البرج غير جاهز لهذه الرحلة."
+		return
+	var lift_completed: bool = await tower_interior.call("animate_lift_to_floor", floor_number)
+	if not lift_completed:
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "تعذر إكمال رحلة المصعد."
+		return
 	var return_position := player.global_position
 	var result: Dictionary = floor_world.call("build_floor", floor_number, return_position)
 	if not bool(result.get("success", false)):
