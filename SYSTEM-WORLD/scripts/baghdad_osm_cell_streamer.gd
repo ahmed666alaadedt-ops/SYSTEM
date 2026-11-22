@@ -357,7 +357,7 @@ func _load_cell(cell: Vector2i) -> void:
 		else:
 			water_count += _build_line_feature(
 				cell_root, feature, _water_width(feature.get("tags", {})),
-				water_material, 0.10, "OSMWaterway"
+				water_material, -0.25, "OSMWaterway"
 			)
 	var bridge_count := 0
 	for feature in layers.get("bridges", []):
@@ -390,7 +390,7 @@ func _load_cell(cell: Vector2i) -> void:
 		if str(feature.get("id", "")) == "1145641":
 			_build_area_feature(cell_root, feature, water_material, 0.0, "OSMNaturalWater", false, world_water_surface_elevation_m)
 		else:
-			_build_area_feature(cell_root, feature, water_material, 0.08, "OSMNaturalWater")
+			_build_area_feature(cell_root, feature, water_material, -0.35, "OSMNaturalWater")
 	var amenity_count := 0
 	for feature in layers.get("amenities", []):
 		amenity_count += _build_amenity_feature(cell_root, feature)
