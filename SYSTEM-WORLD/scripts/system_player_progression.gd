@@ -217,7 +217,7 @@ func craft_recipe(recipe_id: String) -> Dictionary:
 	var output_id := str(recipe.get("output", ""))
 	if output_id.is_empty():
 		return {"success": false, "reason": "INVALID_RECIPE_OUTPUT"}
-	inventory_items[output_id] = get_item_count(output_id) + 1
+	add_item(output_id, 1)
 	save_progress()
 	return {"success": true, "recipe_id": recipe_id, "output": output_id, "output_count": 1}
 
