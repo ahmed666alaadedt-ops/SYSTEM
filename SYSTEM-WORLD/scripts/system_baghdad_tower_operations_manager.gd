@@ -628,13 +628,14 @@ func _place_floor_duty_staff_on_floor(trip: Dictionary, room: Node3D, radius: fl
 		station.add_child(role_sign)
 	employee.reparent(room, false)
 	employee.position = Vector3.ZERO
-	employee.rotation.y = PI
+	employee.rotation.y = 0.0
 	employee.set_meta("system_staff_in_elevator", false)
 	employee.set_meta("system_staff_current_location", tower_id + "_floor_" + str(floor_number))
 	employee.set_meta("system_staff_workstation_position", target_position)
 	employee.set_meta("system_staff_workstation_active", false)
 	model.call("set_activity", "walk")
 	var walk_tween := employee.create_tween()
+	employee.set_meta("system_staff_patrol_tween", walk_tween)
 	walk_tween.tween_property(employee, "position", target_position, 1.15).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	walk_tween.tween_callback(func():
 		if is_instance_valid(employee) and employee.get_parent() == room:
