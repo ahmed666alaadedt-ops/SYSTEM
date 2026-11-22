@@ -423,6 +423,15 @@ func _add_sell_controls() -> void:
 		empty.text = "لا توجد أغراض قابلة للبيع حالياً."
 		content.add_child(empty)
 		return
+	var equipped_slots: Dictionary = progression.get("equipment_slots")
+	for slot_value in equipped_slots.keys():
+		var slot := str(slot_value)
+		var equipped_item := str(equipped_slots[slot])
+		if not equipped_item.is_empty():
+			var unequip_button := Button.new()
+			unequip_button.text = "إزالة تجهيز %s من خانة %s" % [equipped_item, slot]
+			unequip_button.pressed.connect(_unequip_item.bind(slot))
+			content.add_child(unequip_button)
 	for item_value in items.keys():
 		var item_id := str(item_value)
 		var count := int(items[item_id])
@@ -456,6 +465,13 @@ func _equip_item(item_id: String) -> void:
 	else:
 		_set_status("تعذر التجهيز: " + str(result.get("reason", "غير معروف")))
 
+func _unequip_item(slot: String) -> void:
+	if not is_instance_valid(progression) or not progression.has_method("unequip_item"):
+		return
+	if bool(progression.call("unequip_item", slot)):
+		_set_status("تمت إزالة التجهيز من خانة " + slot)
+
+
 func _consume_elixir(item_id: String) -> void:
 	if not is_instance_valid(progression) or not progression.has_method("consume_elixir"):
 		_set_status("نظام الإكسير غير متاح.")
@@ -482,6 +498,9 @@ func _buy_product(item_id: String, item_name: String, price: int) -> void:
 
 func _sell_item(item_id: String, requested_count: int) -> void:
 	if not is_instance_valid(progression):
+		return
+	if progression.has_method("is_item_equipped") and bool(progression.call("is_item_equipped", item_id)):
+		_set_status("لا يمكن بيع غرض مجهّز. أزل تجهيزه أولاً.")
 		return
 	var items: Dictionary = progression.get("inventory_items")
 	var available := int(items.get(item_id, 0))
