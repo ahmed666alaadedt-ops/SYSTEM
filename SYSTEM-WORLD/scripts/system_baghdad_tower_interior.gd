@@ -96,6 +96,11 @@ func _build_hunter_exam_tunnel() -> void:
 	gold_mat.emission_enabled = true
 	gold_mat.emission = Color(0.24, 0.11, 0.015)
 	gold_mat.emission_energy_multiplier = 0.8
+	var gate_panel_material := _material(Color(0.035, 0.34, 0.52, 0.42), 0.2, 0.42)
+	gate_panel_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	gate_panel_material.emission_enabled = true
+	gate_panel_material.emission = Color(0.015, 0.28, 0.55)
+	gate_panel_material.emission_energy_multiplier = 1.4
 
 	# Open threshold from the Hunter lobby into a dedicated, physically enclosed passage.
 	_add_solid_box("ExamTunnelFloor", Vector3(0.0, -0.35, -49.0), Vector3(18.0, 0.7, 58.0), floor_mat)
@@ -158,18 +163,33 @@ func _build_hunter_exam_tunnel() -> void:
 		stage_label.pixel_size = 0.012
 		stage_label.modulate = Color(0.84, 0.94, 1.0)
 		add_child(stage_label)
+		_create_hunter_exam_gate_barrier(
+			"HunterExamStageGateBarrier_%02d" % (stage_index + 1),
+			Vector3(0.0, 4.5, stage_z),
+			Vector3(17.6, 8.8, 0.32),
+			gate_panel_material
+		)
+
+	_create_hunter_exam_gate_barrier(
+		"HunterExamStagingGateBarrier",
+		Vector3(0.0, 4.5, -86.45),
+		Vector3(8.6, 8.6, 0.32),
+		gate_panel_material
+	)
 
 	if entrance_script != null:
 		var start_area: Area3D = entrance_script.new()
 		start_area.name = "HunterExamTunnelStart"
 		start_area.configure("hunter_exam_tunnel_start_baghdad", "بدء اختبار الصيادين من نفق الانطلاق", "region_baghdad")
-		start_area.position = Vector3(0.0, 1.5, -78.0)
+		# The candidate must begin or resume the exam at the lobby-side threshold,
+		# before reaching any of the seven physical stage gates.
+		start_area.position = Vector3(0.0, 1.5, -22.5)
 		start_area.set_meta("system_display_name", "بوابة انطلاق اختبار الصيادين")
 		start_area.set_meta("system_service_description", "بوابة الانطلاق الرسمية لاختبارات الصيادين داخل برج الجمعية.")
 		start_area.set_meta("system_interaction_prompt", "بدء / استئناف اختبار الصيادين")
 		var start_collision := CollisionShape3D.new()
 		var start_shape := SphereShape3D.new()
-		start_shape.radius = 3.2
+		start_shape.radius = 2.0
 		start_collision.shape = start_shape
 		start_area.add_child(start_collision)
 		add_child(start_area)
@@ -177,6 +197,51 @@ func _build_hunter_exam_tunnel() -> void:
 	set_meta("hunter_exam_tunnel_built", true)
 	set_meta("hunter_exam_tunnel_length", 58.0)
 	set_meta("hunter_exam_tunnel_staging_chamber", true)
+	set_meta("hunter_exam_stage_gate_count", 7)
+	set_hunter_exam_tunnel_access(false)
+
+
+func _create_hunter_exam_gate_barrier(node_name: String, position: Vector3, size: Vector3, material: Material) -> void:
+	var barrier := StaticBody3D.new()
+	barrier.name = node_name
+	barrier.position = position
+	var visual := MeshInstance3D.new()
+	visual.name = "GatePanelVisual"
+	var panel_mesh := BoxMesh.new()
+	panel_mesh.size = size
+	visual.mesh = panel_mesh
+	visual.material_override = material
+	barrier.add_child(visual)
+	var collision := CollisionShape3D.new()
+	collision.name = "GatePanelCollision"
+	var collision_shape := BoxShape3D.new()
+	collision_shape.size = size
+	collision.shape = collision_shape
+	barrier.add_child(collision)
+	add_child(barrier)
+
+
+func set_hunter_exam_tunnel_access(open_access: bool) -> void:
+	for stage_number in range(1, 8):
+		var barrier := get_node_or_null("HunterExamStageGateBarrier_%02d" % stage_number) as StaticBody3D
+		if barrier == null:
+			continue
+		var collision := barrier.get_node_or_null("GatePanelCollision") as CollisionShape3D
+		var visual := barrier.get_node_or_null("GatePanelVisual") as MeshInstance3D
+		if collision != null:
+			collision.disabled = open_access
+		if visual != null:
+			visual.visible = not open_access
+	var staging_barrier := get_node_or_null("HunterExamStagingGateBarrier") as StaticBody3D
+	if staging_barrier != null:
+		var staging_collision := staging_barrier.get_node_or_null("GatePanelCollision") as CollisionShape3D
+		var staging_visual := staging_barrier.get_node_or_null("GatePanelVisual") as MeshInstance3D
+		if staging_collision != null:
+			staging_collision.disabled = open_access
+		if staging_visual != null:
+			staging_visual.visible = not open_access
+	set_meta("hunter_exam_tunnel_access_open", open_access)
+	set_meta("hunter_exam_access_state", "open_for_registered_candidate" if open_access else "registration_and_exam_start_required")
 
 
 func _build_hunter_exam_public_announcement() -> void:
