@@ -37,7 +37,24 @@ func _run_validation() -> void:
 
 	var towers := manager.get_tower_positions()
 	_expect(towers.size() == 5, "exactly five Baghdad district towers are generated")
-	_expect(manager.get_node_or_null("PowerTower") == null, "Power Tower remains separate from the five-tower district")
+	var power_tower := manager.get_node_or_null("PowerTower")
+	_expect(power_tower != null, "separate Power Tower landmark exists outside the five-tower district")
+	if power_tower != null:
+		_expect(bool(power_tower.get_meta("is_separate_landmark", false)), "Power Tower is tagged as a separate landmark")
+		_expect(int(power_tower.get_meta("floor_count", 0)) == 200, "Power Tower has 200 floors")
+		var challenge_system := power_tower.get_node_or_null("PowerTower200FloorChallengeSystem")
+		_expect(challenge_system != null, "Power Tower challenge system exists")
+		if challenge_system != null:
+			_expect(int(challenge_system.get_meta("floor_count", 0)) == 200, "Power Tower challenge registry contains 200 floors")
+			_expect(int(challenge_system.get_meta("boss_trial_count", 0)) == 20, "Power Tower has 20 boss trial floors")
+			_expect(challenge_system.get_child_count() == 40, "Power Tower has a boss arena and floor label for each tenth floor")
+			var registry: Array = challenge_system.get_meta("floor_registry", [])
+			_expect(registry.size() == 200, "Power Tower floor registry has 200 challenge entries")
+			var boss_count := 0
+			for floor_entry in registry:
+				if bool(floor_entry.get("boss_trial", false)):
+					boss_count += 1
+			_expect(boss_count == 20, "Power Tower registry marks every tenth floor as a boss trial")
 
 	var expected_towers := [
 		"HunterAssociationTower",
