@@ -1344,6 +1344,18 @@ func _on_interaction_performed(
 					service_description = "تم فتح لوحة مهام النقابة."
 				elif location_id.ends_with("_2"):
 					service_description = "تم فتح مكتب معلومات النقابة."
+		elif location_id.begins_with("tower_service_hunter_headquarters_"):
+			var headquarters_hunter_menu := get_node_or_null("HunterGuildMenu")
+			if not location_id.ends_with("_3") and headquarters_hunter_menu != null and headquarters_hunter_menu.has_method("open_service_view"):
+				headquarters_hunter_menu.call("open_service_view", location_id)
+			if location_id.ends_with("_0"):
+				service_description = "تم فتح سجل الصيادين وواجهة التسجيل في اختبار الصيادين."
+			elif location_id.ends_with("_1"):
+				service_description = "تم فتح لوحة مهام النقابة؛ قبول المهمة يبقى بقرار اللاعب."
+			elif location_id.ends_with("_2"):
+				service_description = "تم فتح معلومات المقر وخدمات نقابة الصيادين."
+			elif location_id.ends_with("_3"):
+				service_description = "منطقة عمل الممتحنين والمشرفين؛ الشخصيات غير اللاعبة موظفون وليست مرشحين للاختبار."
 		elif location_id.begins_with("tower_service_business_tower_baghdad_"):
 			if is_instance_valid(business_services_menu) and business_services_menu.has_method("open_service_view"):
 				business_services_menu.call("open_service_view", location_id)
