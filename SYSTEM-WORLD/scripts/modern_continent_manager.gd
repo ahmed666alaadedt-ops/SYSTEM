@@ -208,14 +208,13 @@ func configure_baghdad_osm_ground(world_ground_elevation_m: float) -> void:
 
 
 func _is_baghdad_osm_region(x: float, z: float) -> bool:
-	var cell_x := floori(x / BAGHDAD_OSM_CELL_SIZE)
-	var cell_z := floori(z / BAGHDAD_OSM_CELL_SIZE)
-	return (
-		cell_x >= BAGHDAD_OSM_MIN_CELL_X
-		and cell_x <= BAGHDAD_OSM_MAX_CELL_X
-		and cell_z >= BAGHDAD_OSM_MIN_CELL_Z
-		and cell_z <= BAGHDAD_OSM_MAX_CELL_Z
-	)
+	# Include the outer cell edges for height blending; the streamer still rejects
+	# positions whose floor-index lies outside the actual manifest cell bounds.
+	var min_x := float(BAGHDAD_OSM_MIN_CELL_X) * BAGHDAD_OSM_CELL_SIZE
+	var max_x := float(BAGHDAD_OSM_MAX_CELL_X + 1) * BAGHDAD_OSM_CELL_SIZE
+	var min_z := float(BAGHDAD_OSM_MIN_CELL_Z) * BAGHDAD_OSM_CELL_SIZE
+	var max_z := float(BAGHDAD_OSM_MAX_CELL_Z + 1) * BAGHDAD_OSM_CELL_SIZE
+	return x >= min_x and x <= max_x and z >= min_z and z <= max_z
 
 
 func _terrain_color(height: float, x: float, z: float) -> Color:
