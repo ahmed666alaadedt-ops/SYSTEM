@@ -916,7 +916,7 @@ func _on_baghdad_tower_floor_selected(tower_id: String, floor_number: int) -> vo
 	_enter_baghdad_tower_floor(tower_id, floor_number)
 
 
-func _enter_baghdad_tower_floor(tower_id: String, floor_number: int) -> void:
+func _enter_baghdad_tower_floor(tower_id: String, floor_number: int, use_elevator: bool = true) -> void:
 	if player == null or active_world_root == null:
 		return
 	var tower_manager := active_world_root.find_child("BaghdadTowerLandmarksManager", true, false)
@@ -930,16 +930,17 @@ func _enter_baghdad_tower_floor(tower_id: String, floor_number: int) -> void:
 		if interaction_prompt_label != null:
 			interaction_prompt_label.text = "عالم طوابق هذا البرج غير متاح."
 		return
-	var tower_interior := tower_root.get_node_or_null("TowerInterior")
-	if tower_interior == null or not tower_interior.has_method("animate_lift_to_floor"):
-		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "مصعد البرج غير جاهز لهذه الرحلة."
-		return
-	var lift_completed: bool = await tower_interior.call("animate_lift_to_floor", floor_number)
-	if not lift_completed:
-		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "تعذر إكمال رحلة المصعد."
-		return
+	if use_elevator:
+		var tower_interior := tower_root.get_node_or_null("TowerInterior")
+		if tower_interior == null or not tower_interior.has_method("animate_lift_to_floor"):
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "مصعد البرج غير جاهز لهذه الرحلة."
+			return
+		var lift_completed: bool = await tower_interior.call("animate_lift_to_floor", floor_number)
+		if not lift_completed:
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "تعذر إكمال رحلة المصعد."
+			return
 	var return_position := player.global_position
 	var result: Dictionary = floor_world.call("build_floor", floor_number, return_position)
 	if not bool(result.get("success", false)):
@@ -1606,6 +1607,13 @@ func _on_interaction_performed(
 			baghdad_tower_lift_ui.call("open_for_tower", str(target.get_meta("system_tower_id", "")), str(target.get_meta("system_tower_title", "برج بغداد")), int(target.get_meta("system_tower_floor_count", 1)))
 		elif interaction_prompt_label != null:
 			interaction_prompt_label.text = "واجهة مصعد البرج غير متاحة."
+		elif location_id.begins_with("tower_stair_"):
+			var tower_id := str(target.get_meta("system_tower_id", ""))
+			var floor_number := int(target.get_meta("system_floor_number", 0))
+			if not tower_id.is_empty() and floor_number > 0:
+				_enter_baghdad_tower_floor(tower_id, floor_number, false)
+			elif interaction_prompt_label != null:
+				interaction_prompt_label.text = "تعذر تحديد الطابق المرتبط بمدرج الطوارئ."
 	elif location_id.begins_with("tower_floor_") and not location_id.begins_with("tower_floor_exit_"):
 		var tower_id := str(target.get_meta("system_tower_id", ""))
 		var floor_number := int(target.get_meta("system_floor_number", 0))
