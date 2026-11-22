@@ -1,3 +1,13 @@
+## SYSTEM Hotel booking gameplay — 22 November 2026
+
+- [x] Add eight persistent room records to the Shopping Tower hotel catalog: four standard rooms, two deluxe rooms, a Hunter Suite (A rank), and an Elite VIP Suite (S rank).
+- [x] Add local ConfigFile persistence for reservations, including room identity, guest, nightly rate, booking time, check-in time, check-out time and reservation status.
+- [x] Add 1-, 3- and 7-night booking controls with availability checks, rank eligibility and SYSTEM-credit payment.
+- [x] Add hotel receptionist interaction controls for booking, guest check-in and checkout; checkout releases the room and refunds unused nights beyond the first night.
+- [x] Add validator coverage for reservation payment, check-in state persistence and checkout room release, restoring test wallet/booking fixtures after the test.
+- [ ] Hotel persistence is currently local to the device/save. Server-authoritative shared room inventory, real-world calendar dates, guest NPC occupancy, room-service delivery and housekeeping schedules remain future integration work.
+- [ ] Run Godot 4.3 parser/import and the updated hotel/Baghdad validators on the exact latest PR head. No fresh green run has been returned by GitHub Actions yet.
+
 ## Baghdad public event-board tower map alignment — 22 November 2026
 
 - [x] Replace the obsolete Weapons/Equipment/Elixirs tower entry in the public event-board tower map with Business & Investment Tower.
