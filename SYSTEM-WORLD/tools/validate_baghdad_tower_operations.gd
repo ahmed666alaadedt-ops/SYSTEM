@@ -124,6 +124,7 @@ func _run() -> void:
 	if hunter_staff_sample == null or hunter_staff_model == null:
 		_fail("Hunter staff patrol sample could not be resolved.")
 		return
+	operations.call("_start_tower_staff_waypoint_patrol", hunter_staff_sample, hunter_staff_model, 0)
 	var staff_start_position := hunter_staff_sample.position
 	await create_timer(0.65).timeout
 	if hunter_staff_sample.position.distance_to(staff_start_position) < 0.1:
