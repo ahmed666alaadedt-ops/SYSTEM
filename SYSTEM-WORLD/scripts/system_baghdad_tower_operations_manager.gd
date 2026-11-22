@@ -820,6 +820,21 @@ func _create_floor_facilities(room: Node3D, tower_id: String, floor_number: int,
 		label.font_size = 16
 		label.pixel_size = 0.012
 		kiosk.add_child(label)
+		var kiosk_area := Area3D.new()
+		kiosk_area.name = "TowerServiceInteraction"
+		kiosk_area.add_to_group("system_interactable")
+		kiosk_area.set_meta("system_tower_id", tower_id)
+		kiosk_area.set_meta("system_tower_floor_number", floor_number)
+		kiosk_area.set_meta("system_interaction_prompt", "خدمات " + department + " — فتح خدمات البرج")
+		kiosk_area.collision_layer = 1
+		kiosk_area.collision_mask = 0
+		var kiosk_shape := CollisionShape3D.new()
+		var kiosk_sphere := SphereShape3D.new()
+		kiosk_sphere.radius = 2.0
+		kiosk_shape.shape = kiosk_sphere
+		kiosk_shape.position.y = 1.1
+		kiosk_area.add_child(kiosk_shape)
+		kiosk.add_child(kiosk_area)
 	room.set_meta("system_tower_id", tower_id)
 	room.set_meta("system_tower_floor_number", floor_number)
 	room.set_meta("system_tower_department", department)
