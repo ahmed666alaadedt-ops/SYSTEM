@@ -145,3 +145,12 @@ Code validated on commit `83db22c01e7ecf1addd01ce01cbb1b341bd1fdc8`:
 - Godot 4.3 workflow run `45007450442` passed on exact facade commit `c2407f9927663cbdd4b87642af5fc01f736a788d`: parsing/import, all configured validators, missing-mesh scan, and headless main-scene launch passed.
 - Android device visual/performance validation remains outstanding; final authored architecture, glass transparency/interior room lighting and skyline art direction are not yet complete.
 - Active branch remains `work/baghdad-system-integration`; `main` is untouched and no merge is authorized.
+
+
+## 22 November 2026 — Procedural tower stair collision fix verified
+
+- Diagnosed the failing top-floor stair check: each generated stair step had a `StaticBody3D` and collision shape, but the child `CollisionShape3D` relied on Godot's generated node name while the validator looked up the explicit name `CollisionShape3D`.
+- Updated `system_baghdad_tower_floor_world.gd` to assign that explicit name when creating each box collider. Fix commit: `992991fd4ebe584dc4e501523ab4f1ba0d67aa7e`.
+- Godot 4.3 workflow `45010467260` passed on the exact fix commit: resource import/script parsing, Baghdad five-tower + independent Power Tower integration, all remaining gameplay validators, missing-mesh scan, and headless main-scene launch all succeeded.
+- The procedural stair validator now passes its top-floor descent and collision checks. Live player traversal, landing alignment and Android visual/performance checks are still outstanding; CI success does not replace in-game movement testing.
+- Validation draft PR: https://github.com/ahmed666alaadedt-ops/SYSTEM/pull/37. It remains unmerged. Active branch remains `work/baghdad-system-integration`; `main` remains untouched and no merge is authorized.
