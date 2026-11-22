@@ -815,7 +815,10 @@ func _run() -> void:
 	var hotel_preview_content := operations.get("content") as VBoxContainer
 	var hotel_preview_button: Button
 	if hotel_preview_content != null:
-		hotel_preview_button = hotel_preview_content.find_child("Button", true, false) as Button
+		for preview_child in hotel_preview_content.get_children():
+			if preview_child is Button:
+				hotel_preview_button = preview_child as Button
+				break
 	var hotel_preview_valid := hotel_preview_title != null and hotel_preview_title.text.contains("غرفة قياسية 01") and hotel_preview_button != null and not hotel_preview_button.disabled
 	operations.set("hotel_bookings", preview_booking_snapshot)
 	operations.set("credits", preview_credits_snapshot)
