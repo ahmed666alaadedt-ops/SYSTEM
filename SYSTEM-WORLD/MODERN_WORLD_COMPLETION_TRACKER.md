@@ -1,3 +1,11 @@
+## Baghdad pool movement integration — 22 November 2026
+
+- [x] Add a dedicated 3D water-volume Area3D inside the pool, with player body enter/exit detection.
+- [x] Set and clear the player's swimming state and water-surface height when entering/leaving the pool.
+- [x] Add reduced horizontal swim speed, buoyancy toward the water surface and a jump/swim-stroke impulse in the main player physics loop.
+- [x] Extend the tower operations validator to check water-volume generation, swimming-state entry/exit and the swim-stroke impulse.
+- [ ] Run Godot and Android workflows on the swim-physics revision and inspect the pool in a real Android session; until those checks pass, this implementation remains unverified.
+
 ## Baghdad tower facility activity loops — 22 November 2026
 
 - [x] Route specialized facility interaction targets to their own activity panel before the generic floor-services handler.
