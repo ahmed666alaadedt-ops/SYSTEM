@@ -4,6 +4,8 @@ const BAGHDAD_STREAMER = preload("res://scripts/baghdad_osm_cell_streamer.gd")
 const CITY_STATE_STORE = preload("res://scripts/baghdad_city_state_store.gd")
 const CITY_NAVIGATION = preload("res://scripts/npc_city_navigation_manager.gd")
 const BAGHDAD_OSM_DOOR = preload("res://scripts/baghdad_osm_door_interaction.gd")
+const WORLD_INTERACTION_MANAGER = preload("res://scripts/world_interaction_manager.gd")
+const WORLD_MAP_MANAGER = preload("res://scripts/world_map_manager.gd")
 
 
 func _initialize() -> void:
@@ -101,6 +103,7 @@ func _run_validation() -> void:
 	var accepted_runtime_entrances := 0
 	var physical_door_count := 0
 	var interior_transition_count := 0
+	var retention_test_door: Node3D
 	for entrance_root_value in runtime_entrance_roots:
 		var entrance_root := entrance_root_value as Node3D
 		var entrance_interaction := entrance_root.get_node_or_null("MappedEntranceInteraction") as StaticBody3D
@@ -163,6 +166,8 @@ func _run_validation() -> void:
 			_fail("A Baghdad building roof was hidden before the player entered.")
 			return
 		if association_status == "accepted":
+			if retention_test_door == null:
+				retention_test_door = door_root
 			accepted_runtime_entrances += 1
 			physical_door_count += 1
 			if str(entrance_interaction.get_meta("system_access_state", "")) != "verified_physical_door_created":
@@ -207,6 +212,59 @@ func _run_validation() -> void:
 			if bool(door_root.get_meta("system_door_open", true)) or interior_root.visible:
 				_fail("A restricted physical door opened or activated its interior through public interaction.")
 				return
+	# Verify the real player-interaction resolver reaches the door root from
+	# the moving leaf collider, then register/discover the same door on the map.
+	if retention_test_door == null:
+		_fail("No accepted physical door was available for player integration checks.")
+		return
+	var interaction_test_manager = WORLD_INTERACTION_MANAGER.new()
+	root.add_child(interaction_test_manager)
+	var map_test_manager = WORLD_MAP_MANAGER.new()
+	root.add_child(map_test_manager)
+	interaction_test_manager.world_map_manager = map_test_manager
+	var retention_leaf := retention_test_door.get_node_or_null("DoorHinge/DoorLeafBody") as AnimatableBody3D
+	if interaction_test_manager.call("_resolve_interactable", retention_leaf) != retention_test_door:
+		_fail("The player interaction resolver did not climb from the physical door collider to its interactable root.")
+		return
+	var retention_location_id := str(retention_test_door.get_meta("system_location_id", ""))
+	interaction_test_manager.call(
+		"_register_and_discover_location",
+		retention_test_door,
+		"2",
+		retention_location_id
+	)
+	var discovered_door := false
+	for map_location in map_test_manager.get_discovered_locations("2"):
+		if str(map_location.get("id", "")) == retention_location_id:
+			discovered_door = true
+			break
+	if not discovered_door:
+		_fail("The physical Baghdad door was not registered and discovered by the world map manager.")
+		return
+
+	# A cell containing the player's active interior must survive an unload
+	# request and unload only after the player exits.
+	retention_test_door.call("system_interact")
+	retention_test_door.call("system_interact")
+	if str(door_test_player.get_meta("system_inside_building_id", "")) != str(retention_test_door.get("building_osm_id")):
+		_fail("The cell-retention test player did not enter the selected building.")
+		return
+	streamer._unload_cell(entrance_cell_id)
+	if not streamer.loaded_cells.has(entrance_cell_id) or not streamer.pending_unloads.has(entrance_cell_id):
+		_fail("A Baghdad cell was removed while its player remained inside a building.")
+		return
+	retention_test_door.call("system_interact")
+	if door_test_player.has_meta("system_inside_building_id"):
+		_fail("The player could not exit the building after its cell unload was deferred.")
+		return
+	streamer._process_cell_queue()
+	if streamer.loaded_cells.has(entrance_cell_id):
+		_fail("A deferred Baghdad cell did not unload after the player exited its building.")
+		return
+	interaction_test_manager.queue_free()
+	map_test_manager.queue_free()
+	print("Baghdad door interaction target resolution, map discovery and occupied-cell retention passed.")
+
 	var restricted_door_test := Node3D.new()
 	restricted_door_test.name = "RestrictedBaghdadDoorPolicyTest"
 	restricted_door_test.set_script(BAGHDAD_OSM_DOOR)
