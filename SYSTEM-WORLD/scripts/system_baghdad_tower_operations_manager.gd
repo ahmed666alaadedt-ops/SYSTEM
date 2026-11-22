@@ -2495,7 +2495,10 @@ func start_facility_activity(facility_type: String) -> bool:
 		"score": 0,
 		"goal": int(definition["goal"]),
 		"reward": int(definition["reward"]),
-		"started": true
+		"started": true,
+		"frame": 1,
+		"frame_rolls": [],
+		"rolls": []
 	}
 	_set_status("%s بدأت. التقدم: 0/%d" % [str(definition["title"]), int(definition["goal"])])
 	return true
@@ -2698,6 +2701,11 @@ func _launch_bowling_ball() -> Dictionary:
 	if pins.size() != 10:
 		return {"success": false, "reason": "لم تكتمل دبابيس البولينغ العشرة."}
 	bowling_throw_in_progress = true
+	for pin in pins:
+		if not pin.has_meta("system_bowling_start_position"):
+			pin.set_meta("system_bowling_start_position", pin.position)
+		if not pin.has_meta("system_bowling_down"):
+			pin.set_meta("system_bowling_down", false)
 	var ball := RigidBody3D.new()
 	ball.name = "BowlingBall_Active"
 	ball.mass = 5.0
@@ -2734,11 +2742,70 @@ func _launch_bowling_ball() -> Dictionary:
 		var tilt := pin.rotation.x + pin.rotation.z
 		var start_position: Vector3 = pin.get_meta("system_bowling_start_position", pin.position)
 		var displacement := pin.position.distance_to(start_position)
-		if absf(tilt) > 0.65 or displacement > 0.55 or pin.position.y < 0.8:
+		var is_down := absf(tilt) > 0.65 or displacement > 0.55 or pin.position.y < 0.8
+		if is_down and not bool(pin.get_meta("system_bowling_down", false)):
+			pin.set_meta("system_bowling_down", true)
 			knocked_down += 1
 	ball.queue_free()
+	var frame := int(active_facility_activity.get("frame", 1))
+	var frame_rolls: Array = active_facility_activity.get("frame_rolls", []).duplicate()
+	frame_rolls.append(knocked_down)
+	var rolls: Array = active_facility_activity.get("rolls", []).duplicate()
+	rolls.append(knocked_down)
+	var frame_complete := false
+	var reset_for_bonus := false
+	if frame < 10:
+		frame_complete = int(frame_rolls[0]) == 10 or frame_rolls.size() >= 2
+	else:
+		if frame_rolls.size() == 1:
+			reset_for_bonus = int(frame_rolls[0]) == 10
+		elif frame_rolls.size() == 2:
+			var first_roll := int(frame_rolls[0])
+			var second_roll := int(frame_rolls[1])
+			if first_roll == 10:
+				reset_for_bonus = second_roll == 10
+			else:
+				if first_roll + second_roll >= 10:
+					reset_for_bonus = true
+				else:
+					frame_complete = true
+		elif frame_rolls.size() >= 3:
+			frame_complete = true
+	active_facility_activity["rolls"] = rolls
+	active_facility_activity["step"] = int(active_facility_activity.get("step", 0)) + 1
+	var score := _calculate_bowling_score(rolls)
+	active_facility_activity["score"] = score
+	var total_down := 0
+	for pin in pins:
+		if not is_instance_valid(pin):
+			continue
+		if bool(pin.get_meta("system_bowling_down", false)):
+			total_down += 1
+			pin.freeze = true
+	if frame_complete:
+		if frame >= 10:
+			bowling_throw_in_progress = false
+			var completed := _complete_facility_activity()
+			completed["last_throw"] = knocked_down
+			completed["frame"] = 10
+			completed["score"] = score
+			return completed
+		frame += 1
+		frame_rolls.clear()
+		_reset_bowling_pin_rack(pins)
+	elif reset_for_bonus:
+		_reset_bowling_pin_rack(pins)
+	active_facility_activity["frame"] = frame
+	active_facility_activity["frame_rolls"] = frame_rolls
+	bowling_throw_in_progress = false
+	var throw_number := frame_rolls.size() + 1
+	_set_status("البولينغ — الإطار %d/10 | الرمية %d | سقط %d | المجموع: %d نقطة" % [frame, throw_number, knocked_down, score])
+	return {"success": true, "completed": false, "step": int(active_facility_activity.get("step", 0)), "pins": knocked_down, "frame_pins_down": total_down, "frame": frame, "throw": throw_number, "score": score}
+
+
+func _reset_bowling_pin_rack(pins: Array) -> void:
 	for pin_index in range(pins.size()):
-		var pin := pins[pin_index]
+		var pin := pins[pin_index] as RigidBody3D
 		if not is_instance_valid(pin):
 			continue
 		pin.freeze = true
@@ -2747,19 +2814,34 @@ func _launch_bowling_ball() -> Dictionary:
 		pin.rotation = Vector3.ZERO
 		pin.position = _bowling_pin_start_position(pin_index)
 		pin.set_meta("system_bowling_start_position", pin.position)
+		pin.set_meta("system_bowling_down", false)
 		pin.freeze = false
-	var step := int(active_facility_activity.get("step", 0)) + 1
-	active_facility_activity["step"] = step
-	active_facility_activity["score"] = int(active_facility_activity.get("score", 0)) + knocked_down
-	bowling_throw_in_progress = false
-	var goal := int(active_facility_activity.get("goal", 10))
-	var score := int(active_facility_activity.get("score", 0))
-	if step >= goal:
-		var result := _complete_facility_activity()
-		result["last_throw"] = knocked_down
-		return result
-	_set_status("رميت %d دبابيس — الإطار %d/%d | المجموع: %d" % [knocked_down, step, goal, score])
-	return {"success": true, "completed": false, "step": step, "pins": knocked_down, "score": score}
+
+
+func _calculate_bowling_score(rolls: Array) -> int:
+	var total := 0
+	var roll_index := 0
+	for frame_index in range(10):
+		if roll_index >= rolls.size():
+			break
+		var first_roll := int(rolls[roll_index])
+		if first_roll == 10:
+			if roll_index + 2 >= rolls.size():
+				break
+			total += 10 + int(rolls[roll_index + 1]) + int(rolls[roll_index + 2])
+			roll_index += 1
+		else:
+			if roll_index + 1 >= rolls.size():
+				break
+			var second_roll := int(rolls[roll_index + 1])
+			if first_roll + second_roll == 10:
+				if roll_index + 2 >= rolls.size():
+					break
+				total += 10 + int(rolls[roll_index + 2])
+			else:
+				total += first_roll + second_roll
+			roll_index += 2
+	return total
 
 
 func _bowling_pin_start_position(pin_index: int) -> Vector3:
