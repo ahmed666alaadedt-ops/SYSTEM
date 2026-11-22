@@ -4134,6 +4134,7 @@ func _build_vr_simulation_course(root: Node3D, highlight: Material, accent: Mate
 	floor_body.name = "VRSimulationFloorPhysics"
 	floor_body.position = Vector3(0.0, 0.12, 0.0)
 	var floor_collision := CollisionShape3D.new()
+	floor_collision.name = "CollisionShape3D"
 	var floor_shape := BoxShape3D.new()
 	floor_shape.size = Vector3(12.0, 0.24, 23.0)
 	floor_collision.shape = floor_shape
