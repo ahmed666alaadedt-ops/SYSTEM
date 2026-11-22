@@ -38,6 +38,14 @@ func _run() -> void:
 		_fail("BaghdadTowerOperationsManager was not initialized.")
 		return
 	var status: Dictionary = operations.call("get_operations_status")
+	var portrait_panel_size: Vector2 = operations.call("_get_responsive_panel_size", Vector2(360.0, 780.0))
+	if portrait_panel_size.x > 336.0 or portrait_panel_size.y > 530.0:
+		_fail("Baghdad tower operations panel exceeds a 360x780 phone portrait viewport.")
+		return
+	var landscape_panel_size: Vector2 = operations.call("_get_responsive_panel_size", Vector2(780.0, 360.0))
+	if landscape_panel_size.x > 470.0 or landscape_panel_size.y > 328.0:
+		_fail("Baghdad tower operations panel exceeds a 780x360 phone landscape viewport.")
+		return
 	if int(status.get("tower_count", 0)) != 6:
 		_fail("Operations manager did not resolve all six towers.")
 		return
