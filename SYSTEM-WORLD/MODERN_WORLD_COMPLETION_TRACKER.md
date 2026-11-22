@@ -10,7 +10,8 @@
 - [x] Add three-step robotics assembly, AI signal-analysis and VR checkpoint challenges.
 - [x] Persist completed rounds, best scores, cumulative scores and rewards locally; extend the operations validator to exercise every activity and verify save/load persistence.
 - [ ] Replace the prototype activity controls with full movement-driven gameplay: swimming physics and water entry/exit, ball/physics bowling, full sports matches, actual cinema playback, playable arcade machines, animated robotics assembly and immersive VR simulation.
-- [ ] Run Godot validation and Android export on this exact feature-branch revision. Current canonical workflows only run on main pushes or manual dispatch; no feature-branch result is claimed.
+- [x] Godot 4.3 full validation passed on gameplay commit `bdbcf4e0c607d0aef37ca1d087163dc10ecc36a1`: validation run #1365 (run ID `45062732609`), including script import/parser, headless launch, Baghdad tower landmark checks, and the complete tower operations validator with all eleven activity loops plus local save/load regression.
+- [x] Canonical Android APK export passed on the same exact gameplay commit: build #1102 (run ID `45062732606`); APK size 35,877,768 bytes; SHA-256 `52aeb1e53e558922eda631ade2f4a856ac1451415981022ddb449838a9fd4630`; artifact expires 6 December 2026.
 - [ ] Inspect the exported build on a physical Android device after a fresh export.
 
 ## SYSTEM Hotel room-service workflow — 22 November 2026
