@@ -130,6 +130,10 @@ func _run_validation() -> void:
 	if not bool(managed_door.get_meta("system_door_open", false)):
 		_fail("Managed Baghdad vault door did not open.")
 		return
+	var independent_door := manager.get_node("BaghdadRiverCatacombs/UndergroundChambers/VaultStoneDoorInteraction")
+	if bool(independent_door.get_meta("system_door_open", false)):
+		_fail("Opening the Old Souk vault incorrectly changed the River Catacombs door state.")
+		return
 	manager.queue_free()
 	await process_frame
 	var restored_manager: Node3D = HERITAGE_MANAGER.new()
@@ -142,6 +146,14 @@ func _run_validation() -> void:
 		return
 	if restored_body.position.distance_to(OPEN_POSITION) > 0.03:
 		_fail("Restored vault door body position mismatch. actual=" + str(restored_body.position) + " expected=" + str(OPEN_POSITION) + " target=" + str(restored_door.position) + " saved_states=" + str(restored_manager.get("_door_states")))
+		return
+	var restored_independent_door := restored_manager.get_node("BaghdadRiverCatacombs/UndergroundChambers/VaultStoneDoorInteraction")
+	var independent_body := restored_independent_door.get_node("DoorBody") as Node3D
+	if bool(restored_independent_door.get_meta("system_door_open", true)):
+		_fail("River Catacombs door state was not isolated from Old Souk persistence.")
+		return
+	if independent_body.position.distance_to(CLOSED_POSITION) > 0.03:
+		_fail("River Catacombs door did not remain closed after Old Souk state restoration.")
 		return
 	world_root.queue_free()
 	await process_frame
