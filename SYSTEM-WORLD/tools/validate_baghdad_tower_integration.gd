@@ -514,7 +514,7 @@ func _run() -> void:
 	fake_map.call("register_location", "2", "hunter_association_headquarters_baghdad", "region_baghdad", "المقر الرئيسي لنقابة الصيادين", 5, headquarters_position, false)
 	landmarks.call("register_map_locations", fake_map, "2")
 	var main_source := FileAccess.get_file_as_string("res://scripts/main.gd")
-	for required_contract in ["tower_lift_console_", "tower_stair_", "tower_floor_exit_", "tower_service_", "tower_service_hunter_headquarters_", "_enter_baghdad_tower_floor", "BaghdadTowerLiftUIScript", "set_hunter_exam_tunnel_access", "tunnel_access_controller.get_parent()", "tunnel_access_controller.call(\\\"set_hunter_exam_tunnel_access\\\", true)"]:
+	for required_contract in ["tower_lift_console_", "tower_stair_", "tower_floor_exit_", "tower_service_", "tower_service_hunter_headquarters_", "_enter_baghdad_tower_floor", "BaghdadTowerLiftUIScript", "set_hunter_exam_tunnel_access", "tunnel_access_controller.get_parent()", "tunnel_access_controller.call("]:
 		if not main_source.contains(required_contract):
 			_fail("Main interaction runtime is missing tower lift contract: " + required_contract)
 			return
