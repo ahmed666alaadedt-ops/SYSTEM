@@ -730,7 +730,7 @@ func _add_facility_block(parent: Node3D, node_name: String, local_position: Vect
 	shell.add_child(reception)
 	var directory := Label3D.new()
 	directory.name = "FacilityServiceDirectory"
-	directory.text = sign_text + "\\nWELCOME • INFORMATION • ACCESS"
+	directory.text = sign_text + "\nWELCOME • INFORMATION • ACCESS"
 	directory.font_size = 15
 	directory.position = Vector3(0.0, 3.1, size.z * 0.5 - 0.9)
 	directory.modulate = Color(0.35, 0.9, 1.0)
