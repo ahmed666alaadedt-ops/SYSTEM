@@ -134,7 +134,7 @@ func _run_validation() -> void:
 	await process_frame
 	var restored_manager: Node3D = HERITAGE_MANAGER.new()
 	world_root.add_child(restored_manager)
-	await process_frame
+	await physics_frame
 	var restored_door := restored_manager.get_node("BaghdadOldSouk/UndergroundChambers/VaultStoneDoorInteraction")
 	var restored_body := restored_door.get_node("DoorBody") as Node3D
 	if not bool(restored_door.get_meta("system_door_open", false)):
