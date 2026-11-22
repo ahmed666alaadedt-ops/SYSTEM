@@ -149,12 +149,12 @@ func complete_current_stage(stage_id: String, verified_evidence: Variant) -> Dic
 		return {"success":false,"reason":"STAGE_ORDER_MISMATCH"}
 	if completed_stage_ids.has(stage_id):
 		return {"success":false,"reason":"STAGE_ALREADY_COMPLETED"}
-	if stage_id == "endurance_pursuit" and stage_one_checkpoint_ids.size() != STAGE_ONE_CHECKPOINT_IDS.size():
-		return {"success":false,"reason":"STAGE_ONE_CHECKPOINTS_INCOMPLETE","progress":stage_one_checkpoint_ids.size(),"total":STAGE_ONE_CHECKPOINT_IDS.size()}
 	if not verified_evidence is Dictionary:
 		return {"success":false,"reason":"LEGACY_UNTRUSTED_EVIDENCE"}
 	if not evidence_verifier.is_valid():
 		return {"success":false,"reason":"TRUSTED_EVIDENCE_VERIFIER_UNAVAILABLE"}
+	if stage_id == "endurance_pursuit" and stage_one_checkpoint_ids.size() != STAGE_ONE_CHECKPOINT_IDS.size():
+		return {"success":false,"reason":"STAGE_ONE_CHECKPOINTS_INCOMPLETE","progress":stage_one_checkpoint_ids.size(),"total":STAGE_ONE_CHECKPOINT_IDS.size()}
 	var evidence_accepted := bool(evidence_verifier.call(verified_evidence, stage_id, candidate_number))
 	if not evidence_accepted:
 		return {"success":false,"reason":"EVIDENCE_VERIFICATION_FAILED"}
