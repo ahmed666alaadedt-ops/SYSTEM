@@ -16,6 +16,7 @@ on:
       - "SYSTEM-WORLD/tools/validate_baghdad_osm_runtime.gd"
       - "SYSTEM-WORLD/tools/geospatial/audit_baghdad_cell_connectivity.py"
       - "SYSTEM-WORLD/tools/geospatial/test_audit_baghdad_cell_connectivity.py"
+      - "SYSTEM-WORLD/tools/geospatial/verify_baghdad_republic_bridge_pack.py"
       - ".github/workflows/canonical-godot-android.yml"
       - "SYSTEM-WORLD/scripts/baghdad_osm_cell_streamer.gd"
       - "SYSTEM-WORLD/scripts/baghdad_city_state_store.gd"
@@ -33,6 +34,7 @@ on:
       - "SYSTEM-WORLD/tools/validate_baghdad_osm_runtime.gd"
       - "SYSTEM-WORLD/tools/geospatial/audit_baghdad_cell_connectivity.py"
       - "SYSTEM-WORLD/tools/geospatial/test_audit_baghdad_cell_connectivity.py"
+      - "SYSTEM-WORLD/tools/geospatial/verify_baghdad_republic_bridge_pack.py"
       - ".github/workflows/canonical-godot-android.yml"
       - "SYSTEM-WORLD/scripts/baghdad_osm_cell_streamer.gd"
       - "SYSTEM-WORLD/scripts/baghdad_city_state_store.gd"
@@ -299,7 +301,7 @@ jobs:
           )
           PY
 
-      - name: Build initial 5x5 Baghdad metric cell pack
+      - name: Build expanded Baghdad core-to-Republic Bridge metric cell pack
         shell: bash
         run: |
           set -euo pipefail
@@ -307,25 +309,26 @@ jobs:
           python3 -m pip install --disable-pip-version-check "shapely==2.1.2"
           python3 "$GITHUB_WORKSPACE/SYSTEM-WORLD/tools/geospatial/build_baghdad_metric_cell_pack.py" \
             --input-dir "$RUNNER_TEMP/baghdad-source/clipped_layers" \
-            --output "$RUNNER_TEMP/baghdad-source/baghdad-metric-cell-pack-5x5.zip" \
+            --output "$RUNNER_TEMP/baghdad-source/baghdad-metric-cell-pack-baghdad-core-and-republic-bridge.zip" \
             --cell-size 200 \
             --source-timestamp "$(python3 -c 'import json; print(json.load(open("baghdad-source-verification.json"))["snapshot_timestamp"])')" \
-            --cell-bounds=-2,2,-2,2
+            --cell-bounds=-2,20,-8,2
+          cp "$RUNNER_TEMP/baghdad-source/baghdad-metric-cell-pack-baghdad-core-and-republic-bridge.zip" "$RUNNER_TEMP/baghdad-source/baghdad-metric-cell-pack-5x5.zip"
           python3 - <<'PY'
           import json
           import zipfile
           from pathlib import Path
 
-          path = Path("baghdad-metric-cell-pack-5x5.zip")
+          path = Path("baghdad-metric-cell-pack-baghdad-core-and-republic-bridge.zip")
           with zipfile.ZipFile(path) as archive:
               manifest = json.loads(archive.read("manifest.json"))
               tile_names = [name for name in archive.namelist() if name.startswith("cells/")]
               assert manifest["region_id"] == "iraq_baghdad_region"
               assert manifest["coordinate_system"] == "SYSTEM_LOCAL_ECEF_TANGENT"
               assert manifest["cell_size_m"] == 200.0
-              assert manifest["cell_bounds_inclusive"] == [-2, 2, -2, 2]
+              assert manifest["cell_bounds_inclusive"] == [-2, 20, -8, 2]
               assert len(tile_names) == manifest["cell_count"]
-              assert 1 <= len(tile_names) <= 25
+              assert 25 <= len(tile_names) <= 253
               for name in tile_names:
                   tile = json.loads(archive.read(name))
                   assert tile["region_id"] == manifest["region_id"]
@@ -343,17 +346,30 @@ jobs:
                   len(json.loads(archive.read(name)).get("layers", {}).get("historic-sites", []))
                   for name in tile_names
               )
-              print("Mapped entrance points in sample pack:", entrance_count)
-              print("Historic/archaeological OSM features in sample pack:", historic_count)
-          print("Validated Baghdad 5x5 metric cell pack:", path.stat().st_size, "bytes;", len(tile_names), "occupied cells.")
+              print("Mapped entrance points in Baghdad core-to-bridge corridor:", entrance_count)
+              print("Historic/archaeological OSM features in Baghdad corridor:", historic_count)
+          print("Validated expanded Baghdad core-to-Republic Bridge cell pack:", path.stat().st_size, "bytes;", len(tile_names), "occupied cells.")
           PY
+
+      - name: Verify Tigris and Republic Bridge coverage in the runtime cell pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          SOURCE_DIR="$RUNNER_TEMP/baghdad-source/clipped_layers"
+          CELL_PACK="$RUNNER_TEMP/baghdad-source/baghdad-metric-cell-pack-baghdad-core-and-republic-bridge.zip"
+          REPORT="$RUNNER_TEMP/baghdad-source/baghdad-republic-bridge-verification.json"
+          python3 "$PROJECT/tools/geospatial/verify_baghdad_republic_bridge_pack.py" \
+            --input-dir "$SOURCE_DIR" \
+            --pack "$CELL_PACK" \
+            --report "$REPORT"
 
       - name: Associate mapped Baghdad entrances with source building footprints
         shell: bash
         run: |
           set -euo pipefail
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
-          CELL_PACK="$RUNNER_TEMP/baghdad-source/baghdad-metric-cell-pack-5x5.zip"
+          CELL_PACK="$RUNNER_TEMP/baghdad-source/baghdad-metric-cell-pack-baghdad-core-and-republic-bridge.zip"
           REPORT="$RUNNER_TEMP/baghdad-source/baghdad-entrance-associations.json"
           cd "$PROJECT"
           python3 tools/geospatial/associate_baghdad_entrances.py \
@@ -399,7 +415,7 @@ jobs:
           set -euo pipefail
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
           SOURCE_DIR="$RUNNER_TEMP/baghdad-source/clipped_layers"
-          CELL_PACK="$RUNNER_TEMP/baghdad-source/baghdad-metric-cell-pack-5x5.zip"
+          CELL_PACK="$RUNNER_TEMP/baghdad-source/baghdad-metric-cell-pack-baghdad-core-and-republic-bridge.zip"
           AUDIT_REPORT="$RUNNER_TEMP/baghdad-source/baghdad-cell-connectivity-audit.json"
           test -s "$CELL_PACK"
           test -d "$SOURCE_DIR"
@@ -460,7 +476,7 @@ jobs:
           name: SYSTEM-WORLD-Baghdad-OSM-audit-diagnostics-${{ github.run_id }}
           path: |
             ${{ runner.temp }}/baghdad-source/baghdad-cell-connectivity-audit.json
-            ${{ runner.temp }}/baghdad-source/baghdad-metric-cell-pack-5x5.zip
+            ${{ runner.temp }}/baghdad-source/baghdad-metric-cell-pack-baghdad-core-and-republic-bridge.zip
             ${{ runner.temp }}/baghdad-source/baghdad-entrance-associations.json
             ${{ runner.temp }}/baghdad-source/clipped_layers/clip-report.json
             ${{ runner.temp }}/baghdad-source/clipped_layers/*.geojson
@@ -494,7 +510,7 @@ jobs:
             ${{ runner.temp }}/baghdad-source/baghdad-source-verification.json
             ${{ runner.temp }}/baghdad-source/clipped_layers/clip-report.json
             ${{ runner.temp }}/baghdad-source/clipped_layers/*.geojson
-            ${{ runner.temp }}/baghdad-source/baghdad-metric-cell-pack-5x5.zip
+            ${{ runner.temp }}/baghdad-source/baghdad-metric-cell-pack-baghdad-core-and-republic-bridge.zip
             ${{ runner.temp }}/baghdad-source/baghdad-entrance-associations.json
             ${{ runner.temp }}/baghdad-source/baghdad-cell-connectivity-audit.json
             ${{ runner.temp }}/baghdad-source/ATTRIBUTION.txt
