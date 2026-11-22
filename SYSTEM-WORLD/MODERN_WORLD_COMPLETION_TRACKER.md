@@ -44,6 +44,16 @@ This is the acceptance checklist for the modern-world map. The project must not 
 - [ ] Implement elevator cars, floor selection, travel transitions, interior floor scenes, emergency stairs, and validated collision/navigation.
 - [ ] Verify all lobby geometry and interactions in Godot and on Android; current code is source-level and automated validation is pending.
 
+## Baghdad tower floor zoning and reception blockouts — 22 November 2026
+
+- [x] Define floor zoning for the Hunter Association headquarters, Weapons/Equipment/Elixirs, Shopping/Commerce, Entertainment/Sports, Technology/Innovation, and standalone Power Tower.
+- [x] Attach floor zoning data to the tower root, public entrance, and lobby directory kiosk.
+- [x] Display the floor ranges and department labels on each lobby's 3D directory sign.
+- [x] Add a first-pass reception counter and security-gate frame to each public lobby pavilion, with collision on the counter and gate posts.
+- [ ] Turn the reception/security blockouts into staffed, functional access control with faction/rank/permit checks, NPC staff, queues, and accessibility support.
+- [ ] Implement floor-specific interior scenes, real elevator travel, stairwells, floor arrival points, and safe return/exit transitions.
+- [ ] Validate lobby collision, sign legibility, interaction reach, and mobile performance in Godot and on Android.
+
 ## Current verified repository foundations
 
 - [x] Fourteen city labels and eight district labels per city are defined in modern_world_region_manager.gd; only Baghdad is currently connected to the provisional WGS84 registry anchor, while the other thirteen centers remain prototype-layout coordinates.
