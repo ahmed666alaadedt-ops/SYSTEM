@@ -207,3 +207,10 @@ The progression manager now supports 200-floor metadata, ten 20-floor region ban
 
 - NPC crowd prediction now drives a lightweight cheering/sway response in the visible crowd blockout.
 - If a match ends with no winning spectator tickets, accepted local virtual stakes are refunded rather than retained by the venue.
+
+
+## Implementation checkpoint — Baghdad examination tunnel entrance — 22 November 2026
+
+The Baghdad landmark tunnel now has a collision-backed floor, side walls and roof, ceiling lighting, a guide line, and seven numbered stage-gate frames. Its candidate entrance barrier starts closed and is opened only after the existing `HunterExamManager.begin_exam()` reports success; the main interaction resolves the access controller through the tunnel root's parent landmark manager. The integration validator exercises the closed → open → closed barrier state and verifies all seven numbered frames.
+
+**Scope boundary:** the seven frames are currently physical stage markers, not completed challenge doors or challenge environments. Sequential stage progression, challenge-scene loading, trusted evidence verification, examiner operations, live traversal and Android visual review remain future work. Godot 4.3 workflow `45013118196` passed on code commit `cb14ed58fa84a8c5d9b37fc3a12661cb1281d638`.
