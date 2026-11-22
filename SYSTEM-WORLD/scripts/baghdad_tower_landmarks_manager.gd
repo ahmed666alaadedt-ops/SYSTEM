@@ -983,7 +983,7 @@ func _create_tower_exterior_detail_pass(root: Node3D, title: String, height: flo
 
 	var entrance_sign := Label3D.new()
 	entrance_sign.name = "TowerEntranceWayfinding"
-	entrance_sign.text = title + "\\nالمدخل الرئيسي  •  " + str(floors) + " طابق"
+	entrance_sign.text = title + "\nالمدخل الرئيسي  •  " + str(floors) + " طابق"
 	entrance_sign.font_size = 28
 	entrance_sign.pixel_size = 0.014
 	entrance_sign.modulate = beacon_color
