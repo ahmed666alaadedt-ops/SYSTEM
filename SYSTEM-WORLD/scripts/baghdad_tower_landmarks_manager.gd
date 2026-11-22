@@ -208,6 +208,8 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	_create_tower_facility_blockout(root, node_name, radius)
 
 	root.set_meta("tower_id", location_id)
+	root.set_meta("transport_blockout_revision", 1)
+	root.set_meta("facility_blockout_revision", 2)
 	print("SYSTEM WORLD: landmark tower generated: ", title, " / ", floors, " floors / ", height, "m")
 
 func _nearest_land_position(origin: Vector2) -> Vector2:
