@@ -3,7 +3,7 @@ class_name BaghdadTowerLandmarksManager
 
 const EntranceScript = preload("res://scripts/system_tower_entrance.gd")
 const HUNTER_TOWER_HEIGHT := 1000.0
-const POWER_TOWER_HEIGHT := 168.0
+const POWER_TOWER_HEIGHT := 820.0
 
 var terrain: Node
 var city_anchor := Vector3.ZERO
@@ -11,6 +11,7 @@ var tower_material: StandardMaterial3D
 var trim_material: StandardMaterial3D
 var emissive_material: StandardMaterial3D
 var tower_positions: Array[Dictionary] = []
+var district_tower_positions: Array[Dictionary] = []
 
 func _ready() -> void:
 	name = "BaghdadTowerLandmarksManager"
@@ -29,6 +30,7 @@ func _ready() -> void:
 	_build_business_tower()
 	_build_shopping_tower()
 	_build_entertainment_tower()
+	_build_technology_tower()
 	_create_connected_city_links()
 	_create_public_amenities()
 
@@ -61,19 +63,21 @@ func _build_hunter_tower() -> void:
 	)
 
 func _build_power_tower() -> void:
-	var position := city_anchor + Vector3(355.0, 0.0, 350.0)
+	# Standalone challenge destination: deliberately outside the five-tower district.
+	var position := city_anchor + Vector3(780.0, 0.0, 760.0)
 	_build_tower(
 		"PowerTower",
 		"برج القوة",
 		"power_tower_baghdad",
 		position,
 		POWER_TOWER_HEIGHT,
-		22.0,
-		28,
-		Color(0.95, 0.55, 0.16)
+		26.0,
+		200,
+		Color(0.95, 0.55, 0.16),
+		false
 	)
 
-func _build_tower(node_name: String, title: String, location_id: String, world_position: Vector3, height: float, radius: float, floors: int, beacon_color: Color) -> void:
+func _build_tower(node_name: String, title: String, location_id: String, world_position: Vector3, height: float, radius: float, floors: int, beacon_color: Color, connect_to_district: bool = true) -> void:
 	var resolved := _nearest_land_position(Vector2(world_position.x, world_position.z))
 	if resolved == Vector2.INF:
 		push_warning("SYSTEM WORLD: no suitable land for tower " + title)
@@ -82,7 +86,10 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	root.name = node_name
 	root.position = Vector3(resolved.x, float(terrain.call("get_terrain_height", resolved.x, resolved.y)), resolved.y)
 	add_child(root)
-	tower_positions.append({"id": location_id, "name": title, "position": root.position, "height": height, "radius": radius})
+	var tower_record := {"id": location_id, "name": title, "position": root.position, "height": height, "radius": radius}
+	tower_positions.append(tower_record)
+	if connect_to_district:
+		district_tower_positions.append(tower_record)
 
 	var base := MeshInstance3D.new()
 	base.name = "MonumentalFoundation"
@@ -232,7 +239,11 @@ func _build_shopping_tower() -> void:
 
 
 func _build_entertainment_tower() -> void:
-	_build_tower("EntertainmentTower", "برج الترفيه", "entertainment_tower_baghdad", city_anchor + Vector3(355.0, 0.0, -350.0), 205.0, 29.0, 34, Color(0.75, 0.38, 0.95))
+	_build_tower("EntertainmentTower", "برج الترفيه والرياضة", "entertainment_tower_baghdad", city_anchor + Vector3(355.0, 0.0, -350.0), 205.0, 29.0, 34, Color(0.75, 0.38, 0.95))
+
+
+func _build_technology_tower() -> void:
+	_build_tower("TechnologyTower", "برج التكنولوجيا والابتكار", "technology_tower_baghdad", city_anchor + Vector3(0.0, 0.0, -365.0), 245.0, 27.0, 40, Color(0.20, 0.82, 0.98))
 
 
 func _create_tower_architecture(root: Node3D, node_name: String, title: String, height: float, radius: float, floors: int, beacon_color: Color) -> void:
@@ -271,15 +282,16 @@ func _create_tower_architecture(root: Node3D, node_name: String, title: String, 
 
 
 func _create_connected_city_links() -> void:
-	# Elevated pedestrian/vehicle corridor blockout linking all five tower podiums.
-	if tower_positions.size() < 2:
+	# Elevated pedestrian/vehicle corridor blockout linking only the five district towers.
+	# The standalone Power Tower is deliberately excluded from this network.
+	if district_tower_positions.size() < 2:
 		return
 	var link_root := Node3D.new()
-	link_root.name = "FiveTowerConnectedDistrict"
+	link_root.name = "BaghdadFiveTowerConnectedDistrict"
 	add_child(link_root)
-	for index in range(tower_positions.size()):
-		var first: Vector3 = tower_positions[index]["position"]
-		var second: Vector3 = tower_positions[(index + 1) % tower_positions.size()]["position"]
+	for index in range(district_tower_positions.size()):
+		var first: Vector3 = district_tower_positions[index]["position"]
+		var second: Vector3 = district_tower_positions[(index + 1) % district_tower_positions.size()]["position"]
 		_create_link_deck(link_root, first + Vector3(0.0, 34.0, 0.0), second + Vector3(0.0, 34.0, 0.0), "SkyPromenade_%d" % index, 12.0, 0.65, trim_material)
 		_create_link_deck(link_root, first + Vector3(0.0, 23.0, 0.0), second + Vector3(0.0, 23.0, 0.0), "VehicleDeck_%d" % index, 18.0, 1.1, tower_material)
 		_create_vehicle_access_ramp(link_root, first, index)
