@@ -1186,3 +1186,5 @@ Implementation added on the feature branch; automated runtime validation is pend
 
 - [x] Replace the vehicle follow camera and police pursuit tree-dependent look_at calls with look_at_from_position, matching the companion safety fix.
 - [ ] Confirm Godot runtime startup and the full tower validator no longer emit Node not inside tree warnings on the latest branch head.
+
+- [x] Fix the vehicle showroom SubViewport camera, which was calling look_at() before being attached to its viewport tree; use look_at_from_position() instead.
