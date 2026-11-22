@@ -37,6 +37,17 @@ const EQUIPMENT_DAMAGE_BONUS := {
 }
 const EQUIPMENT_DEFENSE_BONUS := {"hunter_shield": 8.0, "hunter_armor": 12.0, "hunter_helmet": 4.0}
 
+const CRAFTING_RECIPES := {
+	"training_sword": {"name": "صناعة سيف تدريبي", "ingredients": {"iron_ingot": 1, "wood_plank": 2}, "output": "training_sword", "required_level": 1},
+	"steel_sword": {"name": "صناعة سيف فولاذي", "ingredients": {"iron_ingot": 3, "wood_plank": 2}, "output": "steel_sword", "required_level": 5},
+	"hunter_armor": {"name": "صناعة درع صياد", "ingredients": {"iron_ingot": 5, "leather_roll": 4}, "output": "hunter_armor", "required_level": 10},
+	"healing_elixir": {"name": "تحضير إكسير الشفاء", "ingredients": {"medicinal_herb": 2, "crystal_dust": 1}, "output": "healing_elixir", "required_level": 1},
+	"strength_elixir": {"name": "تحضير إكسير القوة", "ingredients": {"medicinal_herb": 2, "monster_core": 1}, "output": "strength_elixir", "required_level": 5},
+	"nen_control_elixir": {"name": "تحضير إكسير التحكم بالنِن", "ingredients": {"nen_fragment": 2, "energy_crystal": 1}, "output": "nen_control_elixir", "required_level": 20, "requires_nen": true},
+	"rare_legendary_elixir": {"name": "تحضير الإكسير النادر/الأسطوري", "ingredients": {"rare_core": 3, "nen_fragment": 5, "energy_crystal": 3}, "output": "rare_legendary_elixir", "required_level": 80, "requires_nen": true}
+}
+
+
 var current_level: int = 1
 var total_xp: int = 0
 var xp_in_level: int = 0
@@ -156,6 +167,38 @@ func add_item(item_id: String, amount: int = 1) -> bool:
 
 func get_item_count(item_id: String) -> int:
 	return int(inventory_items.get(item_id,0))
+
+
+func get_crafting_recipe_list() -> Dictionary:
+	return CRAFTING_RECIPES.duplicate(true)
+
+
+func craft_recipe(recipe_id: String) -> Dictionary:
+	if not CRAFTING_RECIPES.has(recipe_id):
+		return {"success": false, "reason": "UNKNOWN_RECIPE"}
+	var recipe: Dictionary = CRAFTING_RECIPES[recipe_id]
+	var required_level := int(recipe.get("required_level", 1))
+	if current_level < required_level:
+		return {"success": false, "reason": "LEVEL_REQUIREMENT", "required_level": required_level}
+	if bool(recipe.get("requires_nen", false)) and not nen_unlocked:
+		return {"success": false, "reason": "NEN_REQUIRED"}
+	var ingredients: Dictionary = recipe.get("ingredients", {})
+	for ingredient_id in ingredients.keys():
+		var required_count := int(ingredients[ingredient_id])
+		if get_item_count(str(ingredient_id)) < required_count:
+			return {"success": false, "reason": "MISSING_INGREDIENTS", "ingredient": str(ingredient_id), "required": required_count}
+	for ingredient_id in ingredients.keys():
+		var remaining := get_item_count(str(ingredient_id)) - int(ingredients[ingredient_id])
+		if remaining <= 0:
+			inventory_items.erase(str(ingredient_id))
+		else:
+			inventory_items[str(ingredient_id)] = remaining
+	var output_id := str(recipe.get("output", ""))
+	if output_id.is_empty():
+		return {"success": false, "reason": "INVALID_RECIPE_OUTPUT"}
+	inventory_items[output_id] = get_item_count(output_id) + 1
+	save_progress()
+	return {"success": true, "recipe_id": recipe_id, "output": output_id, "output_count": 1}
 
 
 func get_item_equipment_slot(item_id: String) -> String:
