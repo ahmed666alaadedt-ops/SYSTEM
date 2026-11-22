@@ -2310,7 +2310,7 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 				target_sensor.monitoring = true
 				var target_collision := CollisionShape3D.new()
 				var target_shape := SphereShape3D.new()
-				target_shape.radius = 0.7
+				target_shape.radius = 1.25
 				target_collision.shape = target_shape
 				target_sensor.add_child(target_collision)
 				target_sensor.position = Vector3(target_x, 2.0, -5.4)
@@ -2605,7 +2605,7 @@ func _launch_arcade_projectile() -> Dictionary:
 					nearest_target_distance = target_distance
 					nearest_projectile_position = projectile.global_position
 					nearest_target_position = target_sensor.global_position
-				if target_distance <= 0.95:
+				if target_distance <= 1.6:
 					hit = true
 					target_id = sensor_index
 					break
