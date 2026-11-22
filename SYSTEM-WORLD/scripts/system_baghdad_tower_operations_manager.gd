@@ -515,7 +515,7 @@ func _open_hunter_rank_board() -> void:
 		rows.add_child(row)
 	var details := Label.new()
 	details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	details.text = "المهمات الموثقة: %d نقطة / %d مهمة\\nالنِن: %s | رتبة التحكم: %d\\nاستخدام المهارات: %d | قدرات مختلفة: %d\\nاعتماد SSS: %s" % [mission_points, mission_count, "مستيقظ" if nen_unlocked_value else "غير مستيقظ", nen_control, nen_uses, distinct_abilities, "موجود" if bool(rank_data.get("sss_board_approved", false)) else "يتطلب قرار المجلس"]
+	details.text = "المهمات الموثقة: %d نقطة / %d مهمة\nالنِن: %s | رتبة التحكم: %d\nاستخدام المهارات: %d | قدرات مختلفة: %d\nاعتماد SSS: %s" % [mission_points, mission_count, "مستيقظ" if nen_unlocked_value else "غير مستيقظ", nen_control, nen_uses, distinct_abilities, "موجود" if bool(rank_data.get("sss_board_approved", false)) else "يتطلب قرار المجلس"]
 	rows.add_child(details)
 	var policy := Label.new()
 	policy.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
