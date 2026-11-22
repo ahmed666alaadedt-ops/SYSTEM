@@ -565,3 +565,13 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Latest Godot 4.3 validation passed after durability/upgrade/repair integration.
 - [x] Latest canonical Android debug APK export passed at HEAD \`3646251e0d9834e885d845656bb52e92a8fc1c12\`; artifact \`SYSTEM-WORLD-canonical-android-debug-apk\` expires 6 December 2026.
 - [ ] Physical Android device gameplay/touch/performance review remains pending.
+
+
+### Nen awakening elixir and Hunter Association strike demonstration — 22 November 2026
+
+- [x] Rename the player-facing item and crafting recipe to **إكسير إيقاظ النِن**; it awakens Nen and is not an attack or combat skill.
+- [x] Preserve existing saves by migrating the old `nen_acquisition_elixir` inventory key to `nen_awakening_elixir`; the old item ID remains accepted by the consume method for compatibility.
+- [x] Keep the actual Nen strike as a separate combat ability. The Hunter Association Tower now exposes a dedicated training-demo entry, with a visual preview before awakening and the real strike after Nen reaches control rank 4.
+- [x] Keep the awakening elixir in the Weapons/Equipment/Elixirs Tower catalog and crafting laboratory; the Nen strike demonstration belongs to the Hunter Association Tower.
+- [ ] Run the updated Godot validator and canonical Android APK export; physical-device touch/visual review remains pending.
+- Note: the pre-awakening preview is a visual training effect only; it does not unlock Nen, consume an item, or deal damage. The real combat strike still uses the existing combat system and its normal rank/cooldown requirements.
