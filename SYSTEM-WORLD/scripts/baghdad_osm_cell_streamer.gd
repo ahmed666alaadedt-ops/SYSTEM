@@ -348,27 +348,49 @@ func _load_cell(cell: Vector2i) -> void:
 	counts["buildings"] = building_count
 	var water_count := 0
 	for feature in layers.get("waterways", []):
-		water_count += _build_line_feature(
-			cell_root, feature, _water_width(feature.get("tags", {})),
-			water_material, 0.0, "OSMWaterway", false, world_water_surface_elevation_m + 0.10
-		)
+		var waterway_id := str(feature.get("id", ""))
+		if waterway_id == "24709603":
+			water_count += _build_line_feature(
+				cell_root, feature, _water_width(feature.get("tags", {})),
+				water_material, 0.0, "OSMWaterway", false, world_water_surface_elevation_m + 0.10
+			)
+		else:
+			water_count += _build_line_feature(
+				cell_root, feature, _water_width(feature.get("tags", {})),
+				water_material, 0.10, "OSMWaterway"
+			)
 	var bridge_count := 0
 	for feature in layers.get("bridges", []):
+		var bridge_id := str(feature.get("id", ""))
 		if not _extract_polygons(feature.get("geometry", {})).is_empty():
-			bridge_count += _build_area_feature(
-				cell_root, feature, bridge_material, 0.0, "OSMBridgeDeck",
-				true, world_bridge_deck_elevation_m
+			if bridge_id == "1077808833":
+				bridge_count += _build_area_feature(
+					cell_root, feature, bridge_material, 0.0, "OSMBridgeDeck",
+					true, world_bridge_deck_elevation_m
+				)
+			else:
+				bridge_count += _build_area_feature(
+					cell_root, feature, bridge_material, 0.28, "OSMBridgeDeck", true
+				)
+		if bridge_id == "754157537":
+			bridge_count += _build_line_feature(
+				cell_root, feature, maxf(_road_width(feature.get("tags", {})), 3.0),
+				bridge_material, 0.0, "OSMBridge", true, world_bridge_deck_elevation_m + 0.04
 			)
-		bridge_count += _build_line_feature(
-			cell_root, feature, maxf(_road_width(feature.get("tags", {})), 3.0),
-			bridge_material, 0.0, "OSMBridge", true, world_bridge_deck_elevation_m + 0.04
-		)
+		else:
+			bridge_count += _build_line_feature(
+				cell_root, feature, maxf(_road_width(feature.get("tags", {})), 3.0),
+				bridge_material, 0.32, "OSMBridge", true
+			)
 	for feature in layers.get("railway", []):
 		_build_line_feature(cell_root, feature, 2.2, bridge_material, 0.20, "OSMRailway")
 	for feature in layers.get("landuse", []):
 		_build_area_feature(cell_root, feature, land_material, 0.035, "OSMLanduse")
 	for feature in layers.get("natural-water", []):
-		_build_area_feature(cell_root, feature, water_material, 0.0, "OSMNaturalWater", false, world_water_surface_elevation_m)
+		if str(feature.get("id", "")) == "1145641":
+			_build_area_feature(cell_root, feature, water_material, 0.0, "OSMNaturalWater", false, world_water_surface_elevation_m)
+		else:
+			_build_area_feature(cell_root, feature, water_material, 0.08, "OSMNaturalWater")
 	var amenity_count := 0
 	for feature in layers.get("amenities", []):
 		amenity_count += _build_amenity_feature(cell_root, feature)
