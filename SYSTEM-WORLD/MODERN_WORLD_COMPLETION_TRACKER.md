@@ -1014,3 +1014,13 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Pass Godot 4.3 validation #1428 (run ID `45067209969`) on exact PR head `b6b8fabaacc89dc3a65ce8347a69832811f70c7d`; the full tower operations validator includes the ten-possession basketball match and cinema scene progression checks.
 - [x] Pass Android export #1165 (run ID `45067210032`) on the same exact PR head; APK artifact `14771728504`, 35,906,678 bytes, uploaded successfully and expires 6 December 2026.
 - [ ] Physical Android device testing remains outstanding.
+
+
+### SYSTEM ARCADE score-and-lives game — 22 November 2026
+
+- [x] Expand the physical target activity into a ten-shot arcade round with three lives; the game ends after ten shots or when lives are exhausted.
+- [x] Score five targets by difficulty (outer targets 5, inner targets 8, center target 12) and award a capped combo bonus for consecutive hits.
+- [x] Persist score, hits, best combo, remaining lives and distinct targets hit in the completed activity result and local activity statistics.
+- [x] Add deterministic scoring tests for center hits, capped combo bonuses and invalid target IDs; extend the physical validator to run the ten-shot game.
+- [ ] Run Godot 4.3 full validation and canonical Android export on this arcade update before claiming it verified.
+- Note: this is a playable physical target mini-game; full cabinet-specific games, animated cabinet controls and online leaderboards remain open.
