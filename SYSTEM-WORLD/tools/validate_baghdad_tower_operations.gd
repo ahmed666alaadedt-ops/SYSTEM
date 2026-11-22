@@ -253,12 +253,20 @@ func _run() -> void:
 	if float(progression.call("get_attack_cooldown_multiplier")) >= 1.0:
 		_fail("Energy elixir did not reduce the attack cooldown multiplier.")
 		return
-	progression.call("add_item", "nen_acquisition_elixir", 1)
-	progression.call("consume_elixir", "nen_acquisition_elixir")
+	progression.call("add_item", "nen_awakening_elixir", 1)
+	var awakening_result: Dictionary = progression.call("consume_elixir", "nen_awakening_elixir")
+	if not bool(awakening_result.get("success", false)):
+		_fail("Nen Awakening Elixir did not awaken Nen: " + str(awakening_result))
+		return
 	progression.call("add_item", "nen_control_elixir", 1)
 	progression.call("consume_elixir", "nen_control_elixir")
 	if not bool(progression.get("nen_unlocked")) or int(progression.get("nen_control_rank")) != 2:
-		_fail("Nen acquisition/control elixirs did not update the player's Nen state.")
+		_fail("Nen Awakening/Control elixirs did not update the player's Nen state.")
+		return
+	operations.call("open_tower", "hunter_association_tower_baghdad")
+	var demo_button := operations.get("content").get_node_or_null("NenTrainingDemoButton") as Button
+	if demo_button == null or not demo_button.text.contains("ضربة النِن"):
+		_fail("Hunter Association Tower is missing its Nen strike training demonstration.")
 		return
 	progression.call("add_item", "nen_control_elixir", 2)
 	progression.call("consume_elixir", "nen_control_elixir")
