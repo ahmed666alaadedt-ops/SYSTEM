@@ -124,3 +124,14 @@ Code validated on commit `83db22c01e7ecf1addd01ce01cbb1b341bd1fdc8`:
 - Updated `MODERN_WORLD_COMPLETION_TRACKER.md` with the advertising-screen milestone and remaining runtime/mobile verification.
 - Godot 4.3 workflow run `45006710400` completed successfully on exact checkpoint `6440c249a29470028c8ad02f3cb97fb563f406ce`: resource import/script parsing, configured gameplay validators including Baghdad tower integration, missing-mesh scan, and headless main-scene launch all passed. Physical Android visual/performance checks remain open. Do not mark the tower district complete.
 - `main` remains untouched. Do not merge this work without the user's explicit approval.
+
+
+## 22 November 2026 — Baghdad elevator and emergency stairwell validation
+
+- Added animated express elevator cabins with collision-backed cabin floors/walls, sliding door panels, floor indicators, travel tween, and open/close cycle for the five connected towers.
+- Main tower floor entry now awaits the elevator travel cycle before creating and entering the selected procedural floor.
+- Added two-flight emergency stair geometry with 200 collision-backed steps and intermediate landings per connected tower, covering the lobby and first four upper-floor blockouts.
+- Extended the Baghdad tower validator to verify cabin/door presence, stairwell metadata, and actual elevator travel to the third-floor shaft position.
+- Godot 4.3 workflow run `45007184990` passed on exact commit `f7f9b63925778cadcecd9a9d3c65536ba6ce291a`: resource import/script parsing, all configured gameplay validators, missing-mesh scan, and headless main-scene launch passed.
+- Physical Android visual/performance testing remains open. The 200-floor express lift presentation uses a capped visible 72 m shaft travel; the current emergency stair geometry covers only the first four upper-floor blockouts, not all 200 floors.
+- Active branch: `work/baghdad-system-integration`. Do not merge into `main` without explicit user approval.
