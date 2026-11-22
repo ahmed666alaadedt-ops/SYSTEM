@@ -2353,6 +2353,8 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 
 
 func open_facility_service(tower_id: String, floor_number: int, facility_type: String) -> void:
+	if bowling_throw_in_progress or basketball_throw_in_progress:
+		return
 	if not TOWER_CONFIG.has(tower_id) or _facility_activity_definition(facility_type).is_empty():
 		return
 	current_tower_id = tower_id
@@ -2453,6 +2455,8 @@ func _on_facility_aim_changed(value: float) -> void:
 
 
 func start_facility_activity(facility_type: String) -> bool:
+	if bowling_throw_in_progress or basketball_throw_in_progress:
+		return false
 	var definition := _facility_activity_definition(facility_type)
 	if definition.is_empty():
 		return false
