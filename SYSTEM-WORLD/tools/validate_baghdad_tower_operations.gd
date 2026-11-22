@@ -66,6 +66,19 @@ func _run() -> void:
 	if not bool(resume_result.get("success", false)) or not bool(resume_result.get("resumed", false)):
 		_fail("An in-progress Hunter examination must resume at its saved stage.")
 		return
+	var exam_overview: Dictionary = exam_manager.call("get_exam_overview")
+	var all_stage_ids: Array[String] = []
+	for stage_value in exam_overview.get("stages", []):
+		all_stage_ids.append(str(stage_value.get("id", "")))
+	exam_manager.set("completed_stage_ids", all_stage_ids)
+	exam_manager.set("exam_active", false)
+	var completed_exam_result: Dictionary = exam_manager.call("begin_exam")
+	if str(completed_exam_result.get("reason", "")) != "ALL_STAGES_COMPLETED" or bool(exam_manager.get("exam_active")):
+		_fail("A completed Hunter examination must not reopen or remain marked active.")
+		return
+	exam_manager.set("completed_stage_ids", [])
+	exam_manager.set("exam_active", true)
+	exam_manager.set("current_stage_index", 0)
 	var hunter_tower := tower_manager.get_node_or_null("HunterAssociationTower") as Node3D
 	var helipad := hunter_tower.get_node_or_null("HunterAssociationHelipad") as Node3D if hunter_tower != null else null
 	if helipad == null or str(helipad.get_meta("system_owner_tower_id", "")) != "hunter_association_tower_baghdad":
