@@ -502,3 +502,17 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [ ] Pass the latest CI run covering elevator cabin travel/return, final boss metadata/rewards, NPC staff, trading and ads.
 - [ ] Inspect elevator camera clearance, cabin door alignment, player landing/collision and floor-room visibility on a physical Android device.
 - [ ] Complete individual arena art, final boss attack telegraphs/animations, boss phase changes, reward balance, online leaderboard verification and spectator/matchmaking features.
+
+
+### Equipment, elixir and Nen first-pass functionality — 22 November 2026
+
+- [x] Add persistent weapon, shield, armour, helmet and outfit equipment slots.
+- [x] Apply equipped weapon damage bonuses to the existing light/heavy combat hitscan.
+- [x] Apply equipped shield/armour/helmet defense bonuses to incoming combat damage, with a bounded reduction so attacks cannot become zero-damage.
+- [x] Add timed strength, speed, endurance, energy and rare/legendary elixir effects to damage, movement, defense and attack cadence.
+- [x] Add healing elixir field recovery while preserving the existing persistent wounded state; a healing elixir cannot replace hospital treatment.
+- [x] Add Nen acquisition unlock and control rank progression (rank 1–5) through the corresponding elixirs.
+- [x] Add NPC employee service controls to equip owned gear, consume owned elixirs, unequip items and prevent sale of currently equipped gear.
+- [ ] Pass current Godot validation for progression save/load, combat integration and the extended tower/elevator transaction validator.
+- [ ] Add visible 3D weapon/armour attachment models, weapon-specific attack animations, shield blocking integration, and real Nen abilities/aura techniques.
+- [ ] Add elixir crafting, ingredient sourcing, recipes, cooldown/stacking rules, balance and anti-exploit validation.
