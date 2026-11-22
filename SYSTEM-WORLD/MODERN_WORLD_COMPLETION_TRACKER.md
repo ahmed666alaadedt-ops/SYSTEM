@@ -1180,3 +1180,9 @@ Implementation added on the feature branch; automated runtime validation is pend
 
 - [x] Replace the companion's tree-dependent look_at() call with look_at_from_position() so Miyar and Adam can orient safely during setup/reparenting.
 - [ ] Re-run Godot runtime validation to confirm the startup Node not inside tree warning is gone.
+
+
+### Remaining startup orientation safety — 23 November 2026
+
+- [x] Replace the vehicle follow camera and police pursuit tree-dependent look_at calls with look_at_from_position, matching the companion safety fix.
+- [ ] Confirm Godot runtime startup and the full tower validator no longer emit Node not inside tree warnings on the latest branch head.
