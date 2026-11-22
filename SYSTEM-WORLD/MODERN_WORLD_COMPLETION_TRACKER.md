@@ -1,3 +1,13 @@
+## SYSTEM ARCADE — direct cabinet interaction — 22 November 2026
+
+- [x] Added six individually addressable arcade cabinet interaction areas with collision shapes, SYSTEM interaction prompts, tower/floor metadata and cabinet IDs.
+- [x] Added emissive cabinet display panels and assigned the six cabinets to the currently playable physical target-shooter or color-memory mode.
+- [x] Routed direct world interaction from each cabinet through `main.gd` to `open_arcade_cabinet`, which opens the correct facility panel and selects the cabinet's game mode.
+- [x] Extended the full tower validator to verify all six cabinet interaction areas, their interactable group membership, stable IDs and supported mode metadata.
+- [x] Godot 4.3 full validation #1440 passed (run `45068515109`) and Android export #1177 passed (run `45068515127`) on exact gameplay/validator HEAD `610bc56d5f6a29f16b9241786a7ebe23795762e0`.
+- [x] APK artifact `14772695982`, 35,916,791 bytes; SHA-256 `ee77964c4a9f54cc672675accb10f59f1f86ac751caceb92208be0158511b948`; expires 6 December 2026.
+- [ ] Distinct full games for all six cabinets, additional cabinet-specific mechanics and physical Android interaction testing remain open; do not mark the complete arcade system finished.
+
 ## SYSTEM ARCADE — color-memory cabinet mini-game — 22 November 2026
 
 - [x] Added an arcade game-mode selector with the existing physical projectile target challenge and a distinct color-memory cabinet mini-game.
