@@ -1061,7 +1061,23 @@ func _place_customer_visitors_on_floor(tower_id: String, floor_number: int, room
 		society.call("save_society")
 
 
+func get_customer_schedule_phase(hour: int) -> String:
+	var normalized_hour := posmod(hour, 24)
+	if normalized_hour >= 7 and normalized_hour < 10:
+		return "cafe"
+	if normalized_hour >= 10 and normalized_hour < 14:
+		return "browse"
+	if normalized_hour >= 14 and normalized_hour < 18:
+		return "social"
+	if normalized_hour >= 18 and normalized_hour < 22:
+		return "leisure"
+	return "quiet"
+
+
 func _move_customer_visitors() -> void:
+	var hour := int(Time.get_datetime_dict_from_system().get("hour", 12))
+	var phase := get_customer_schedule_phase(hour)
+	var society_changed := false
 	for tower_id_value in customer_ids_by_tower.keys():
 		var tower_id := str(tower_id_value)
 		var config: Dictionary = TOWER_CONFIG.get(tower_id, {})
@@ -1074,27 +1090,82 @@ func _move_customer_visitors() -> void:
 			visitor_parents.append(active_floor_root)
 		for visitor_parent in visitor_parents:
 			for visitor in visitor_parent.get_children():
-				if not str(visitor.name).begins_with("TowerCustomer_"):
+				if not str(visitor.name).begins_with("TowerCustomer_") or not visitor is Node3D:
 					continue
+				var visitor_node := visitor as Node3D
+				var customer_index := int(visitor_node.get_meta("system_tower_customer_index", 0))
 				var radius := float(config.get("radius", 20.0))
-				var target_x := randf_range(-radius * 0.42, radius * 0.42)
-				var target_z := randf_range(-radius * 0.42, radius * 0.42) if visitor_parent == active_floor_root else radius * 1.48 + randf_range(5.0, 30.0)
-				var model: Node = null
-				for visitor_child in visitor.get_children():
-					if visitor_child.has_method("set_activity"):
-						model = visitor_child
-						break
-				if model != null:
-					model.call("set_activity", "walk")
-				var tween := create_tween()
-				tween.set_trans(Tween.TRANS_SINE)
-				tween.set_ease(Tween.EASE_IN_OUT)
-				tween.tween_property(visitor, "position", Vector3(target_x, 0.0, target_z), randf_range(3.0, 5.0))
-				if model != null:
-					tween.finished.connect(func():
-						if is_instance_valid(model):
-							model.call("set_activity", "socialize")
+				var target := Vector3.ZERO
+				var action := "socializing"
+				var location := tower_id + "_public_lobby"
+				if visitor_parent == active_floor_root:
+					var floor_number := int(active_floor_root.get_meta("system_tower_floor_number", 1))
+					target = Vector3(
+						(float(customer_index % 2) * 2.0 - 1.0) * radius * 0.20,
+						0.0,
+						(float(customer_index / 2) - 0.5) * radius * 0.24
 					)
+					action = "visiting_" + str(visitor_node.get_meta("system_customer_current_department", "department"))
+					location = "%s_floor_%d" % [tower_id, floor_number]
+				else:
+					match phase:
+						"cafe":
+							target = Vector3(radius * 0.78 + float(customer_index % 2) * 2.0, 0.0, radius * 1.48 + 15.0 + float(customer_index / 2) * 2.4)
+							action = "having_breakfast"
+							location = tower_id + "_lobby_cafe"
+						"browse":
+							target = Vector3((float(customer_index) - 1.5) * 3.0, 0.0, radius * 1.48 + 10.0)
+							action = "browsing_services"
+						"social":
+							target = Vector3((float(customer_index) - 1.5) * 2.8, 0.0, radius * 1.48 + 20.0)
+							action = "socializing"
+						"leisure":
+							target = Vector3(-radius * 0.72 + float(customer_index % 2) * 2.0, 0.0, radius * 1.48 + 15.0)
+							action = "evening_leisure"
+							location = tower_id + "_public_lounge"
+						_:
+							target = Vector3((float(customer_index) - 1.5) * 3.6, 0.0, radius * 1.48 + 12.0)
+							action = "waiting_in_lobby"
+				var previous_phase := str(visitor_node.get_meta("system_customer_schedule_phase", ""))
+				visitor_node.set_meta("system_customer_schedule_phase", phase)
+				visitor_node.set_meta("system_customer_schedule_action", action)
+				visitor_node.set_meta("system_customer_schedule_target", target)
+				var customer_id := str(visitor_node.get_meta("system_tower_customer_id", ""))
+				if not customer_id.is_empty() and is_instance_valid(society) and previous_phase != phase:
+					var customer: Dictionary = society.call("get_npc", customer_id)
+					if not customer.is_empty():
+						customer["current_action"] = action
+						customer["current_location"] = location
+						customer["daily_schedule_phase"] = phase
+						customer["daily_schedule_updated_at"] = Time.get_datetime_string_from_system()
+						society.npcs[customer_id] = customer
+						society_changed = true
+				var model: Node3D = null
+				for visitor_child in visitor_node.get_children():
+					if visitor_child.has_method("set_activity"):
+						model = visitor_child as Node3D
+						break
+				var previous_tween: Variant = visitor_node.get_meta("system_customer_move_tween", null)
+				if previous_tween is Tween and (previous_tween as Tween).is_running():
+					continue
+				if visitor_node.position.distance_to(target) <= 0.35:
+					if is_instance_valid(model):
+						model.call("set_activity", "socialize" if action in ["socializing", "evening_leisure"] else "idle")
+					continue
+				if is_instance_valid(model):
+					model.call("set_activity", "walk")
+				var move_tween := create_tween()
+				visitor_node.set_meta("system_customer_move_tween", move_tween)
+				move_tween.set_trans(Tween.TRANS_SINE)
+				move_tween.set_ease(Tween.EASE_IN_OUT)
+				var travel_duration := clampf(visitor_node.position.distance_to(target) / 1.6, 1.2, 4.0)
+				move_tween.tween_property(visitor_node, "position", target, travel_duration)
+				move_tween.tween_callback(func():
+					if is_instance_valid(model):
+						model.call("set_activity", "socialize" if action in ["socializing", "evening_leisure"] else "idle")
+				)
+	if society_changed and is_instance_valid(society) and society.has_method("save_society"):
+		society.call("save_society")
 
 
 func _simulate_customer_purchases() -> void:
