@@ -30,6 +30,8 @@ var registered := false
 var exam_active := false
 var current_stage_index := -1
 var completed_stage_ids: Array[String] = []
+var stage_one_checkpoint_ids: Array[String] = []
+const STAGE_ONE_CHECKPOINT_IDS := ["checkpoint_01", "checkpoint_02", "checkpoint_03"]
 var failed := false
 var failure_reason := ""
 
@@ -74,6 +76,7 @@ func apply_for_exam(player_id: String) -> Dictionary:
 	exam_active = false
 	current_stage_index = -1
 	completed_stage_ids.clear()
+	stage_one_checkpoint_ids.clear()
 	failed = false
 	failure_reason = ""
 	exam_registered.emit(candidate_number)
@@ -97,6 +100,33 @@ func begin_exam() -> Dictionary:
 	stage_started.emit(str(EXAM_STAGES[current_stage_index]["id"]),current_stage_index + 1)
 	return {"success":true,"candidate_number":candidate_number,"stage":get_current_stage()}
 
+func reset_stage_one_route() -> Dictionary:
+	if not exam_active or str(get_current_stage().get("id", "")) != "endurance_pursuit":
+		return {"success":false,"reason":"STAGE_ONE_NOT_ACTIVE"}
+	stage_one_checkpoint_ids.clear()
+	_save_exam_state()
+	return {"success":true,"progress":0,"total":STAGE_ONE_CHECKPOINT_IDS.size()}
+
+
+func record_stage_one_checkpoint(checkpoint_id: String) -> Dictionary:
+	if not exam_active or str(get_current_stage().get("id", "")) != "endurance_pursuit":
+		return {"success":false,"reason":"STAGE_ONE_NOT_ACTIVE"}
+	if not STAGE_ONE_CHECKPOINT_IDS.has(checkpoint_id):
+		return {"success":false,"reason":"UNKNOWN_CHECKPOINT"}
+	if stage_one_checkpoint_ids.has(checkpoint_id):
+		return {"success":false,"reason":"CHECKPOINT_ALREADY_RECORDED","progress":stage_one_checkpoint_ids.size()}
+	var expected_index := stage_one_checkpoint_ids.size()
+	if expected_index >= STAGE_ONE_CHECKPOINT_IDS.size() or checkpoint_id != STAGE_ONE_CHECKPOINT_IDS[expected_index]:
+		return {"success":false,"reason":"CHECKPOINT_ORDER_MISMATCH","progress":stage_one_checkpoint_ids.size(),"total":STAGE_ONE_CHECKPOINT_IDS.size()}
+	stage_one_checkpoint_ids.append(checkpoint_id)
+	_save_exam_state()
+	return {"success":true,"checkpoint_id":checkpoint_id,"progress":stage_one_checkpoint_ids.size(),"total":STAGE_ONE_CHECKPOINT_IDS.size(),"route_complete":stage_one_checkpoint_ids.size() == STAGE_ONE_CHECKPOINT_IDS.size()}
+
+
+func get_stage_one_route_status() -> Dictionary:
+	return {"active":exam_active and str(get_current_stage().get("id", "")) == "endurance_pursuit","checkpoint_ids":stage_one_checkpoint_ids.duplicate(),"progress":stage_one_checkpoint_ids.size(),"total":STAGE_ONE_CHECKPOINT_IDS.size(),"complete":stage_one_checkpoint_ids.size() == STAGE_ONE_CHECKPOINT_IDS.size()}
+
+
 func get_current_stage() -> Dictionary:
 	if not exam_active or current_stage_index < 0 or current_stage_index >= EXAM_STAGES.size():
 		return {}
@@ -117,6 +147,8 @@ func complete_current_stage(stage_id: String, verified_evidence: Variant) -> Dic
 		return {"success":false,"reason":"STAGE_ORDER_MISMATCH"}
 	if completed_stage_ids.has(stage_id):
 		return {"success":false,"reason":"STAGE_ALREADY_COMPLETED"}
+	if stage_id == "endurance_pursuit" and stage_one_checkpoint_ids.size() != STAGE_ONE_CHECKPOINT_IDS.size():
+		return {"success":false,"reason":"STAGE_ONE_CHECKPOINTS_INCOMPLETE","progress":stage_one_checkpoint_ids.size(),"total":STAGE_ONE_CHECKPOINT_IDS.size()}
 	if not verified_evidence is Dictionary:
 		return {"success":false,"reason":"LEGACY_UNTRUSTED_EVIDENCE"}
 	if not evidence_verifier.is_valid():
@@ -151,7 +183,7 @@ func withdraw_or_fail(reason: String) -> void:
 
 func get_exam_overview() -> Dictionary:
 	var retry_at := last_failure_unix + RETRY_CYCLE_SECONDS if failed and last_failure_unix > 0 else 0
-	return {"candidate_number":candidate_number,"player_id":player_id,"attempt_number":attempt_number,"registered":registered,"active":exam_active,"current_stage_index":current_stage_index,"completed_stages":completed_stage_ids.duplicate(),"total_stages":EXAM_STAGES.size(),"failed":failed,"failure_reason":failure_reason,"retry_at":retry_at,"license_earned_permanently":license_earned_permanently,"stages":EXAM_STAGES.duplicate(true)}
+	return {"candidate_number":candidate_number,"player_id":player_id,"attempt_number":attempt_number,"registered":registered,"active":exam_active,"current_stage_index":current_stage_index,"completed_stages":completed_stage_ids.duplicate(),"total_stages":EXAM_STAGES.size(),"failed":failed,"failure_reason":failure_reason,"retry_at":retry_at,"license_earned_permanently":license_earned_permanently,"stage_one_checkpoint_ids":stage_one_checkpoint_ids.duplicate(),"stages":EXAM_STAGES.duplicate(true)}
 
 
 func _load_exam_state() -> void:
@@ -170,6 +202,9 @@ func _load_exam_state() -> void:
 	completed_stage_ids.clear()
 	for stage_id in config.get_value("exam", "completed_stage_ids", []):
 		completed_stage_ids.append(str(stage_id))
+	stage_one_checkpoint_ids.clear()
+	for checkpoint_id in config.get_value("exam", "stage_one_checkpoint_ids", []):
+		stage_one_checkpoint_ids.append(str(checkpoint_id))
 	current_stage_index = completed_stage_ids.size() if exam_active else -1
 
 
@@ -182,6 +217,7 @@ func _save_exam_state() -> void:
 	config.set_value("exam", "last_failure_unix", last_failure_unix)
 	config.set_value("exam", "license_earned_permanently", license_earned_permanently)
 	config.set_value("exam", "completed_stage_ids", completed_stage_ids)
+	config.set_value("exam", "stage_one_checkpoint_ids", stage_one_checkpoint_ids)
 	config.set_value("exam", "exam_active", exam_active)
 	config.set_value("exam", "current_stage_index", current_stage_index)
 	config.set_value("exam", "failed", failed)
