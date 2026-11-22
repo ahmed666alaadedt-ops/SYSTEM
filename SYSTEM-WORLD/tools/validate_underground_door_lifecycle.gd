@@ -89,6 +89,7 @@ func _run_validation() -> void:
 	world_root.add_child(manager)
 	await process_frame
 	var managed_door := manager.get_node("BaghdadOldSouk/UndergroundChambers/VaultStoneDoorInteraction")
+	managed_door.call("restore_stone_door_state", false)
 	managed_door.call("system_interact")
 	await create_timer(1.4).timeout
 	if not bool(managed_door.get_meta("system_door_open", false)):
