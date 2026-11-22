@@ -1165,7 +1165,7 @@ func _run() -> void:
 	var activity_cases := {
 		"swimming_pool": ["lap", 3],
 		"fitness_gym": ["rep", 8],
-		"sports_court": ["shot", 5],
+		"sports_court": ["shot", 10],
 		"bowling": ["throw", 10],
 		"cinema": ["watch", 1],
 		"arcade": ["hit", 5],
@@ -1216,6 +1216,9 @@ func _run() -> void:
 			return
 		if str(activity_type) == "sports_court" and (not final_activity_result.has("last_shot_scored") or typeof(final_activity_result.get("last_shot_scored")) != TYPE_BOOL):
 			_fail("Basketball final attempt did not return a physical hoop-sensor result.")
+			return
+		if str(activity_type) == "sports_court" and (not final_activity_result.has("player_score") or not final_activity_result.has("opponent_score") or not str(final_activity_result.get("match_result", "") ) in ["win", "draw", "loss"]):
+			_fail("Basketball 1v1 match did not return both scores and a valid match result.")
 			return
 		if str(activity_type) == "bowling" and (int(final_activity_result.get("last_throw", -1)) < 0 or int(final_activity_result.get("last_throw", -1)) > 10):
 			_fail("Bowling final frame did not report physical pinfall results.")
