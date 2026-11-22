@@ -113,22 +113,28 @@ func build(tower: Node3D, city_anchor: Vector3, route: Dictionary, terrain_manag
 	express_skyway.name = "RepublicBridgeExpressSkyway"
 	add_child(express_skyway)
 	var city_direction := Vector2(target.x - city_anchor.x, target.y - city_anchor.z).normalized()
-	var ring_start := Vector2(city_anchor.x, city_anchor.z) + city_direction * 580.0
+	var actual_ring_start := Vector2(city_anchor.x, city_anchor.z) + city_direction * 580.0
+	var manifest_start := Vector2(float(manifest_skyway_start[0]), float(manifest_skyway_start[1]))
 	var ring_elevation := city_anchor.y + 34.0
+	# Keep all pylons on the exact OSM-verified land points. If the procedural city
+	# anchor was nudged to nearby land, bridge only the short ring-to-manifest offset.
+	var connector_length := _create_sloped_corridor(
+		express_skyway, [actual_ring_start, manifest_start], ring_elevation, ring_elevation,
+		EXPRESS_SKYWAY_WIDTH, EXPRESS_SKYWAY_THICKNESS, "SkyRailRingConnector"
+	)
 	var skyway_points: Array[Vector2] = []
-	var skyway_length := ring_start.distance_to(target)
+	var skyway_length := manifest_start.distance_to(target)
 	var skyway_steps := maxi(2, int(ceil(skyway_length / EXPRESS_SKYWAY_SEGMENT_LENGTH)))
 	for index in range(skyway_steps + 1):
-		skyway_points.append(ring_start.lerp(target, float(index) / float(skyway_steps)))
-	var express_length := _create_sloped_corridor(
+		skyway_points.append(manifest_start.lerp(target, float(index) / float(skyway_steps)))
+	var main_skyway_length := _create_sloped_corridor(
 		express_skyway, skyway_points, ring_elevation, platform_y,
 		EXPRESS_SKYWAY_WIDTH, EXPRESS_SKYWAY_THICKNESS, "SkyRailDeck"
 	)
+	var express_length := connector_length + main_skyway_length
 	var support_count := _create_skyway_supports(
-		express_skyway,
-		Vector2(float(manifest_skyway_start[0]), float(manifest_skyway_start[1])),
-		ring_start, target, ring_elevation, platform_y, ground_y,
-		support_points, terrain_manager
+		express_skyway, manifest_start, target, ring_elevation, platform_y,
+		ground_y, support_points, terrain_manager
 	)
 	if support_count < 5:
 		push_warning("SYSTEM Baghdad bridge access: fewer than five land-verified express skyway supports were built.")
@@ -286,7 +292,6 @@ func _create_sloped_corridor(
 func _create_skyway_supports(
 	parent: Node3D,
 	manifest_start: Vector2,
-	actual_start: Vector2,
 	finish: Vector2,
 	start_y: float,
 	end_y: float,
@@ -301,9 +306,10 @@ func _create_skyway_supports(
 	for support_value in support_points:
 		if not support_value is Array or support_value.size() != 2:
 			continue
-		var manifest_point := Vector2(float(support_value[0]), float(support_value[1]))
-		var progress := clampf(manifest_start.distance_to(manifest_point) / manifest_length, 0.0, 1.0)
-		var point := actual_start.lerp(finish, progress)
+		# These coordinates are already verified against the OSM land mask; do not
+		# translate them when the procedural city anchor is slightly offset.
+		var point := Vector2(float(support_value[0]), float(support_value[1]))
+		var progress := clampf(manifest_start.distance_to(point) / manifest_length, 0.0, 1.0)
 		if point.distance_to(finish) < EXPRESS_SKYWAY_NO_PYLON_RADIUS:
 			continue
 		var local_ground_y := fallback_ground_y
