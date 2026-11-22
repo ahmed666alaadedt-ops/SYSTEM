@@ -1217,7 +1217,7 @@ func _run() -> void:
 		if str(activity_type) == "sports_court" and (not final_activity_result.has("last_shot_scored") or typeof(final_activity_result.get("last_shot_scored")) != TYPE_BOOL):
 			_fail("Basketball final attempt did not return a physical hoop-sensor result.")
 			return
-		if str(activity_type) == "sports_court" and (not final_activity_result.has("player_score") or not final_activity_result.has("opponent_score") or not str(final_activity_result.get("match_result", "") ) in ["win", "draw", "loss"]):
+		if str(activity_type) == "sports_court" and (not final_activity_result.has("player_score") or not final_activity_result.has("opponent_score") or not ["win", "draw", "loss"].has(str(final_activity_result.get("match_result", "")))):
 			_fail("Basketball 1v1 match did not return both scores and a valid match result.")
 			return
 		if str(activity_type) == "bowling" and (int(final_activity_result.get("last_throw", -1)) < 0 or int(final_activity_result.get("last_throw", -1)) > 10):
