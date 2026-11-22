@@ -127,3 +127,49 @@ The five-tower concept is a connected urban district, not five isolated landmark
 - The vehicle ramps and elevated decks added to the procedural manager are architectural blockout geometry only. They do not yet provide drivable road navigation, vehicle physics, traffic rules, parking interactions, or tested collision/clearance.
 - Amenity decks are placeholder geometry and metadata, not finished pools, rides, shops, hotels, or interactive interiors.
 - The Tigris river channel and navigation corridor must remain open below cross-river connections. Tahrir Square and the Freedom Monument remain protected, recognizable, explorable landmarks; no tower deck or bridge may cover or visually erase them.
+
+
+## Canonical correction — Baghdad five towers versus the separate Power Tower — 22 November 2026
+
+The older five-tower list above is superseded where it conflicts with this correction:
+
+1. Hunter Association Tower.
+2. Business & Investment Tower.
+3. Shopping & Commerce Tower.
+4. Entertainment & Sports Tower.
+5. Technology & Innovation Tower.
+
+The Power Tower is a separate optional challenge landmark and is not one of the five connected Baghdad district towers. The Hunter Guild headquarters remains positioned above the five-tower complex as a distinct elevated headquarters feature. The five-tower district must be completed first; the separate Power Tower is the next work phase afterward. The current source update changes the five-tower build sequence and adds distinct procedural skyline identity features, but it remains a visual blockout until interiors, access, gameplay interactions, navigation, collision, and Godot/Android verification are completed.
+
+
+## User-approved skyline image reference and expanded tower facilities — 22 November 2026
+
+Use the user's uploaded futuristic Baghdad skyline image as the current visual reference for the connected five-tower district: five clearly identifiable primary towers integrated into one immense elevated city; broad layered sky platforms and curved podium decks; multiple sculptural structural supports; landscaped roof terraces; luminous blue glass and cyan lighting with restrained gold trim; a central tall SYSTEM emblem/spire; multi-level pedestrian and vehicle links; and a wide open river corridor with bridges and the Baghdad skyline visible beyond. Treat the image as a style/composition reference, not a literal replacement of Baghdad geography. Keep the Tigris open and navigable, preserve Karkh/Rusafa identity, and protect Tahrir Square and the Freedom Monument.
+
+The current procedural source pass adds named visual blockout facility zones by tower: Hunter registration, mission hall, Hall of Honor and clinic; business headquarters, investment exchange, conference center and hotel; shopping atrium, food court, restaurant/cafe gallery and a six-hall cinema layout with 24 visual seat markers per hall; entertainment atrium, esports/arcade, live-events hall, bowling/VR markers, observation-wheel and sky-pool markers; technology research labs, robotics/AI, innovation expo and digital library. It also adds a central SYSTEM spire marker and three shared sky-garden terrace meshes.
+
+Implementation boundary: these are visual blockout meshes, labels and metadata only. Cinema playback, seats as usable objects, shop transactions, hotel booking, rides, pools, sports activities, elevators, doors, NPC services, interior navigation, complete collisions, and the central sky-garden gameplay are not yet interactive or validated. Do not describe the five-tower district as finished until those are implemented and tested in Godot and on Android.
+
+
+## Tower podium and accessible facility shell update — 22 November 2026
+
+Each of the five towers receives a three-level public podium/arrival hall with visible cylindrical floor plates, static floor collision, glass-pillar markers, accent rings and a tower-specific arrival sign. Facility zones use open-front room shells rather than solid placeholder blocks: each shell has a floor plate and collision, left/right/rear walls, and a raised entrance lintel that leaves the front open. The cinema's six hall layouts also receive floor/collision markers.
+
+These are still blockout structures, not finished interiors. Functional elevators, emergency stairs, floor selection, service NPCs, interior navigation, retail/hotel/food transactions, cinema playback/tickets and recreation interactions remain to be implemented and validated.
+
+
+## Vertical transport and floor wayfinding visuals — 22 November 2026
+
+All five tower roots now include a visual vertical-transport blockout: four panoramic lift shafts with cabin markers, two protected stair-core markers, and a floor directory. Directory markers appear every 10 floors in tall towers and every 5 floors in shorter towers. These structures are not functional elevators or traversable emergency stairs; movement, floor selection, navigation, access control and emergency routing remain outstanding.
+
+
+## User-approved futuristic Baghdad five-tower skyline reference — 22 November 2026
+
+The user's supplied image is the approved visual target for the five-tower district in Baghdad. The intended skyline includes five distinctive landmark towers, broad layered elevated decks, suspended sky gardens, glass-and-metal architecture, illuminated cyan/blue accents with warm gold structural trim, connecting skybridges and a central SYSTEM-branded spire, all framed by the Tigris and Baghdad's cityscape. Preserve the five independent tower identities and keep the Power Tower separate from this five-tower complex.
+
+The procedural manager now adds three elevated sky-garden decks per tower, each with a collision-bearing floor plate, glass perimeter ring, twelve planter bays and a level sign. This is a blockout step toward the reference, not a completed visual match. Production-grade 3D architecture, facade detailing, landscaping, fully traversable decks/bridges, functioning lifts/stairs, detailed interiors, and visual Android verification remain outstanding.
+
+
+## Separate Power Tower — 200 floors
+
+The Power Tower is an independent Baghdad landmark, not one of the five district towers. The current implementation activates it separately, sets a 200-floor / 1,200 m structure, and records a repeating challenge profile sequence (duel, team, survival, elite gauntlet, championship). Every tenth floor is marked as a boss trial, with twenty major arena platform and floor-label markers. The 200-entry registry and boss-trial metadata are not yet playable encounters; arena rooms, enemy and boss spawning, combat, matchmaking, rewards, persistence and verified rankings remain to be implemented.

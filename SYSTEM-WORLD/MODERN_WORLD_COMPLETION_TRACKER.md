@@ -381,3 +381,129 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Tag each generated passage as a cave landmark and mark it explicitly as geometry blockout requiring runtime validation.
 - [ ] Add validated entrance-to-building association, proper terrain excavation, complete chamber wall/ceiling collision, cave lighting, audio, navigation, discovery persistence, and player interaction.
 - [ ] Run Godot parser/import, scene startup, collision traversal, and Android performance tests. The new geometry is committed source code and has not yet been run in Godot or on a device.
+
+
+## Baghdad five-tower identity correction — 22 November 2026
+
+- [x] Correct the five-tower district roster to: Hunter Association, Business & Investment, Shopping & Commerce, Entertainment & Sports, and Technology & Innovation.
+- [x] Remove Power Tower from the five-tower district build sequence; it is a separate optional landmark and the next major work phase after the five-tower district.
+- [x] Add distinct procedural skyline identity features for the five tower roles and keep the five-tower connected-district links.
+- [ ] Add the separate Power Tower landmark at its own location with its independent playable progression.
+- [ ] Validate five distinct placements against approved Baghdad geography, Tigris clearance, Karkh/Rusafa links, Tahrir Square and the Freedom Monument.
+- [ ] Run Godot import/parser, main-scene startup, tower node-count/identity checks, collision traversal, and Android visual/performance validation.
+- Note: this is a source-level correction and visual blockout expansion only. It has not yet been run in Godot or visually inspected on Android. Do not call the five towers complete until their interiors, interactions, navigation, and runtime checks pass.
+
+
+## Five-tower connected-city facilities and cinema visual pass — 22 November 2026
+
+- [x] Use the user's uploaded skyline image as the connected-district visual reference: elevated multi-level platforms, five distinct towers, sculptural supports, landscaped sky terraces, cyan/blue glass with gold accents, central SYSTEM spire, river corridor and bridges.
+- [x] Add named facility blockout zones for Hunter Association, Business, Shopping, Entertainment, and Technology towers.
+- [x] Add a Shopping Tower cinema multiplex visual layout with six halls and 24 seat markers per hall.
+- [x] Add entertainment visual markers for an observation wheel, sky pool, esports/arcade, live events, bowling and VR.
+- [x] Add central SYSTEM spire marker and three shared sky-garden terrace meshes.
+- [ ] Replace the visual blockouts with navigable interior scenes, working doors/elevators, usable seating, cinema playback/scheduling, shopping and restaurant transactions, hotel services, ride/pool/sports interactions, NPC staffing, and validated collision/navigation.
+- [ ] Verify five-tower placements against Tigris navigation, Karkh/Rusafa connections, Tahrir Square and the Freedom Monument; refine the overall skyline to match the reference without obscuring protected geography.
+- [ ] Run Godot 4.3 import/parser, main-scene startup, node/collision checks, and Android APK/visual performance validation for commit e7b693f70fce40ea64177fa6e3468eeab9ea7525.
+- Note: the new geometry is source-level visual blockout only. It has not yet been parsed/run by Godot or visually inspected on an Android device.
+
+- [x] Add five radial elevated skybridges from the central SYSTEM hub to the five tower podiums, in addition to the perimeter pedestrian/vehicle links.
+- [x] Align shared sky-garden collision bounds with the 252 m terrace diameter.
+
+
+## Tower podium and walkable facility shell pass — 22 November 2026
+
+- [x] Add a three-level public podium/arrival hall visual structure to each of the five towers, with floor plate collision, glass-pillar markers, accent rings, and tower-specific arrival signage.
+- [x] Change tower facility rooms from solid placeholder boxes to open-front room shells with a floor plate and collision, side/rear walls, and a clear entrance opening.
+- [x] Add a walkable floor/collision marker to each cinema hall layout.
+- [ ] Implement functional elevator calls, floor selection, safe vertical movement, access permissions, and emergency stairs; current podiums and shafts are still visual geometry.
+- [ ] Build actual room scenes and interactive service loops (registration, missions, medical clinic, bank/investment, retail purchases, food service, hotel booking, cinema schedules/playback/tickets, arcade/VR/bowling/events, labs/library/exhibitions).
+- [ ] Add interior navigation meshes, doorway triggers, NPC staffing, save/load, and per-floor discovery; current facility shells are not yet wired into those systems.
+- [ ] Validate all five towers' positions and the elevated district against Baghdad's real geographic constraints and preserve the Tigris corridor.
+- [ ] Run canonical Godot import/parse, tower-manager scene test, headless main-scene startup, Android export, and on-device visual/performance checks for the latest QA branch head.
+
+
+## Vertical transport visual pass and test correction — 22 November 2026
+
+- [x] Add four panoramic lift shaft visuals and four lift cabin markers to each tower.
+- [x] Add two protected stair-core visual markers to each tower.
+- [x] Add floor directory labels at regular intervals (every 10 floors for tall towers; every 5 floors for shorter towers).
+- [x] Extend the Godot five-tower validation to assert lift shafts, stair cores and floor directories exist on all five towers.
+- [x] Make the radial skybridge count assertion recursive to inspect nested scene nodes.
+- [ ] Runtime revalidation after these exact latest source/test commits; the preceding validation run failed only the radial skybridge assertion, while tower existence, podiums, facility zones, entrances, six cinema halls/floors, central spire and three sky gardens passed.
+- [ ] Remove/resolve non-fatal null-mesh cleanup diagnostics if they remain after the next validation run.
+- [ ] All lift/stair visuals remain non-interactive blockouts: no lift movement, floor selection, stair navigation, emergency routing or access control yet.
+
+
+## Approved five-tower skyline reference alignment — 22 November 2026
+
+- [x] Record the user's supplied futuristic Baghdad five-tower skyline image as the visual target for the five-tower district: five distinct landmark towers, large elevated public decks, layered sky gardens, glass-and-metal architecture, illuminated cyan/blue accents, warm gold structural trim, connecting skybridges and a central SYSTEM-branded spire.
+- [x] Add three elevated sky-garden decks to every tower root, each with floor collision, glass perimeter ring, twelve planter bays and a level sign.
+- [x] Extend the Godot validator to assert each of the five radial skybridge node names directly, and to check all three elevated garden decks and the sky-garden revision on every tower.
+- [ ] Run the latest validator after both the sky-garden manager change and the exact-name assertion change; earlier run #857 passed project parse and main-scene launch but the tower validation job failed its skybridge assertion.
+- [ ] Replace the procedural blockout with detailed production-grade 3D tower/skydeck assets and complete the exact reference silhouette, façade glazing, bridges, landscaping, lighting, Baghdad/Tigris context and scale.
+- [ ] Make all decks and bridges traversable with navigation/collision, connect them to elevators and stairs, and finish service interiors and interactive amenities.
+- [ ] Verify appearance in a rendered Godot viewport and on an Android device; headless CI does not establish visual fidelity to the reference.
+
+
+## Cinema hall interior wayfinding pass — 22 November 2026
+
+- [x] Add aisle guidance light markers to each of the six cinema halls.
+- [x] Add emergency-exit signage to each hall.
+- [x] Add hall number signage and ticket kiosk visual markers.
+- [ ] Implement ticket purchase, booking, entry validation, film playback, seat interaction and emergency-exit behavior; current additions are visual placeholders only.
+- [ ] Verify the latest Godot and Android CI runs after these changes.
+
+
+## Tower public-service interiors and cinema wayfinding — 22 November 2026
+
+- [x] Add reception counter visuals to every public facility shell in all five towers.
+- [x] Add visitor waiting seats and a service directory sign to every public facility shell.
+- [x] Add entrance threshold markers to clarify access points.
+- [x] Extend the validator to check service directories and reception counters in every tower, plus aisle guidance, exit signage, hall numbering and ticket kiosk visuals in all six cinema halls.
+- [ ] These are still static visual fixtures: service NPCs, queueing, purchases, ticket validation, cinema playback and facility navigation are not yet implemented.
+- [ ] Confirm fresh Godot tower validation and Android APK build for the exact latest commits.
+
+
+## Entertainment Tower venue-detail pass — 22 November 2026
+
+- [x] Add eight arcade cabinet visual stations with screen panels and labels.
+- [x] Add four bowling lanes with pin-set visuals.
+- [x] Add four VR pod visual stations.
+- [x] Add a concert stage and forty audience seat markers.
+- [x] Extend the five-tower Godot validator to assert arcade, bowling, VR and concert venue roots and the entertainment revision marker.
+- [ ] Implement playable arcade games, bowling ball/pin physics and scoring, VR activities, event scheduling, concert audio/stage interactions and venue staff; current additions are static 3D blockouts.
+- [ ] Re-run Godot validation and Android export against the exact latest source and validator commits.
+
+
+## Shopping Tower retail and food-court interior pass — 22 November 2026
+
+- [x] Add eight numbered retail storefront display bays.
+- [x] Add six food-vendor counters with menu display panels.
+- [x] Add a dining court with twelve tables and forty-eight chair visuals.
+- [x] Extend Godot validation for retail, food-vendor and dining-area roots and revision metadata.
+- [ ] Implement stock, shopkeeper NPCs, buying/selling, inventory, prices, payment and food ordering; current fixtures are static visual layouts.
+- [ ] Re-run Godot and Android CI against the latest shopping manager and validator commits.
+
+
+## Specialized tower interiors — 22 November 2026
+
+- [x] Hunter Association Tower: mission board gallery, four training dummy visuals and three clinic treatment beds.
+- [x] Business Tower: conference table with sixteen seats, investment market ticker and four hotel guest-room door markers.
+- [x] Technology Innovation Tower: six research benches, four AI research pods and six digital library shelf markers.
+- [x] Extend Godot validation to check all specialized interior roots and the revision marker on all five towers.
+- [ ] Implement actual hunter mission board interactions, training combat, clinic treatment, business market data/conference actions, hotel room booking, lab simulation, AI interactions and digital library content; present geometry is visual blockout.
+- [ ] Re-run Godot validation and Android export against the latest specialized-interior commits.
+
+
+## Separate Power Tower 200-floor activation — 22 November 2026
+
+- [x] Activate the Power Tower as a separate Baghdad landmark after the five-tower district is generated; it is not counted as one of the five district towers.
+- [x] Set the tower model to 200 floors and 1,200 m structural height.
+- [x] Add a 200-entry floor challenge registry cycling duel, team, survival, elite gauntlet and championship challenge profiles.
+- [x] Mark every tenth floor as a boss trial and add twenty major arena platform/label markers.
+- [x] Extend the Godot validator to require the separate Power Tower, 200 floors, 200 registry entries and twenty boss trial floors.
+- [ ] Implement actual arena rooms, combat encounters, enemy/boss spawning, matchmaking, rewards, persistence and server-verified rankings; current additions are progression metadata and visual arena markers.
+- [ ] Run Godot validation and Android export against the exact Power Tower activation commits.
+
+- [x] Enrich every Power Tower floor record with a floor label, 1–10 difficulty tier, previous-floor-clear requirement and a unique boss-trial ID on every tenth floor.
+- [x] Extend validation to check the opening challenge type, ninth/tenth-floor boss cadence, 200th-floor label, final difficulty tier and progression lock metadata.
