@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-11-22  
 **Active development branch:** `work/baghdad-system-integration`  
-**Latest verified gameplay/code commit:** `aad51b4555eb613c510a15602421a8a6577b360f`  
-**Latest tracker documentation commit:** `c4ba0b64ec02a4e30752d745840b6d99b945c78f`  
+**Latest verified gameplay/code commit:** `cb14ed58fa84a8c5d9b37fc3a12661cb1281d638`  
+**Latest tracker documentation commit:** `3737418ad24b2c1b29638d849c8cb56796029341`  
 **Main branch SHA:** `dff4e9d377ffaae6845e6f401c47346e51ea5619`  
 **Canonical runtime:** `SYSTEM-WORLD/` (Godot 4.3)
 
@@ -217,3 +217,21 @@ Code validated on commit `83db22c01e7ecf1addd01ce01cbb1b341bd1fdc8`:
 - Previous checkpoints remain verified: HQ room/service routing workflow `45011989736`; HQ room partitions workflow `45011701570`; stair routing workflow `45011123115`; stair collision workflow `45010467260`.
 - `main` remains unchanged at `dff4e9d377ffaae6845e6f401c47346e51ea5619`. PR #37 remains draft and unmerged. Do not merge, rebase or synchronize without explicit owner approval.
 - Next: continue the Baghdad landmark priority list with authorized examiner workflows/staff behavior or the remaining five-tower playable interiors; do not claim the current examiner display is live.
+
+
+## Latest continuation checkpoint — Baghdad Hunter Examination tunnel entrance and seven stage-gate blockout
+
+- Active branch: `work/baghdad-system-integration`.
+- Latest verified gameplay/code commit: `cb14ed58fa84a8c5d9b37fc3a12661cb1281d638`.
+- Updated `scripts/system_baghdad_landmark_integration.gd` to build the Baghdad examination tunnel with a physical floor, side walls, roof, portal glow, five ceiling lights, floor guide line and seven numbered stage-gate frames/signs.
+- Added a full-width candidate access barrier with physical collision. It starts closed and is opened only after `HunterExamManager.begin_exam()` returns success.
+- Updated `scripts/main.gd` so the entrance interaction resolves the access controller on the parent Baghdad landmark manager when the immediate tunnel root does not own the method.
+- Added `set_hunter_exam_tunnel_access(enabled)` to toggle both the barrier mesh visibility and its collision shape. The validator checks the closed → open → closed state transition.
+- The first validator run exposed that the landmark box helper did not explicitly name its collision-shape child. Added explicit `CollisionShape3D` naming and reran the full workflow successfully.
+- Godot 4.3 workflow `45013118196` passed on exact code commit `cb14ed58fa84a8c5d9b37fc3a12661cb1281d638`: import/script parsing, Baghdad tower/HQ/Power Tower integration, seven-stage tunnel and access barrier tests, configured gameplay validators, missing-mesh scan and headless main-scene launch all passed.
+- Tracker update commit: `3737418ad24b2c1b29638d849c8cb56796029341`.
+- Asset register update commit: `fd9e21ec0b2237351ee676c8a1b20101afdc0df3`.
+- Examination tunnel scope boundary: the seven stage frames are physical markers only, not seven functional challenge doors or environments. Sequential challenge progression, challenge-scene loading, trusted evidence verification, live traversal and Android visual review remain open.
+- Previous verified work remains: HQ service/room routing workflow `45011989736`; examiner control blockout workflow `45012275446`; stair routing workflow `45011123115`; tower stair collision workflow `45010467260`.
+- `main` remains unchanged at `dff4e9d377ffaae6845e6f401c47346e51ea5619`. PR #37 remains draft and unmerged. Do not merge, rebase or synchronize without explicit owner approval.
+- Next: continue the examination flow from tunnel entry into stage-one challenge setup and candidate progression, while preserving the requirement for trusted evidence verification; do not mark the seven challenges complete until their scenes and verification routes exist.
