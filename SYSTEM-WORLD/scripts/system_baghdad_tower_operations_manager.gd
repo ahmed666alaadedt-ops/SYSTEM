@@ -2568,7 +2568,10 @@ func _add_facility_activity_controls(facility_type: String) -> void:
 	var description := Label.new()
 	description.name = "FacilityActivityInstructions"
 	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	description.text = "%s: أكمل %d خطوات. تُحفظ أفضل نتيجة وعدد الجولات على هذا الجهاز." % [str(definition["title"]), int(definition["goal"])]
+	if facility_type == "arcade":
+		description.text = "اختر جهازاً من أجهزة SYSTEM ARCADE ثم أكمل اللعبة. توجد ألعاب تصويب وذاكرة ألوان وسرعة استجابة."
+	else:
+		description.text = "%s: أكمل %d خطوات. تُحفظ أفضل نتيجة وعدد الجولات على هذا الجهاز." % [str(definition["title"]), int(definition["goal"])]
 	content.add_child(description)
 	if facility_type in ["bowling", "sports_court"] or (facility_type == "arcade" and selected_arcade_mode == "shooter"):
 		var aim_label := Label.new()
@@ -2838,7 +2841,8 @@ func start_facility_activity(facility_type: String) -> bool:
 				memory_buttons.visible = false
 	if facility_type == "cinema":
 		_update_cinema_program_screen(0)
-	_set_status("%s بدأت. التقدم: 0/%d" % [str(definition["title"]), int(definition["goal"])])
+	var active_goal := int(active_facility_activity.get("goal", definition["goal"]))
+	_set_status("%s بدأت. التقدم: 0/%d" % [str(definition["title"]), active_goal])
 	return true
 
 
