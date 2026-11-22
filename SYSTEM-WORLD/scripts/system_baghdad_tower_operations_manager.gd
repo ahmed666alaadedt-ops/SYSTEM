@@ -1492,7 +1492,8 @@ func _add_hotel_room_service_controls(parent: VBoxContainer, booking: Dictionary
 		var order: Dictionary = orders[index]
 		var state := str(order.get("status", "placed"))
 		var order_label := Label.new()
-		order_label.text = "%s — %s" % [str(order.get("item_name", "طلب")), {"placed": "تم استلام الطلب", "preparing": "قيد التحضير", "delivered": "تم التوصيل"} .get(state, state)]
+		var state_labels := {"placed": "تم استلام الطلب", "preparing": "قيد التحضير", "delivered": "تم التوصيل"}
+		order_label.text = "%s — %s" % [str(order.get("item_name", "طلب")), str(state_labels.get(state, state))]
 		parent.add_child(order_label)
 		if state == "placed":
 			var prepare_button := Button.new()
