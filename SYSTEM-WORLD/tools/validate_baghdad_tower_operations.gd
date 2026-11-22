@@ -121,25 +121,25 @@ func _run() -> void:
 	exam_manager.set("registered", true)
 	exam_manager.set("completed_stage_ids", all_stage_ids)
 	var pilot_player := main.get("player") as CharacterBody3D
-	var progression := main.get_node_or_null("PlayerProgression")
-	if pilot_player == null or progression == null:
+	var pilot_progression := main.get_node_or_null("PlayerProgression")
+	if pilot_player == null or pilot_progression == null:
 		_fail("Player and progression data are required for helicopter authorization tests.")
 		return
 	if helipad.call("_can_pilot"):
 		_fail("A completed Hunter License alone must not grant helicopter access.")
 		return
-	progression.set("current_level", 50)
+	pilot_progression.set("current_level", 50)
 	if not helipad.call("_can_pilot"):
 		_fail("A level 50 hunter with a completed Hunter License must receive pilot authorization.")
 		return
-	progression.set("current_level", 1)
+	pilot_progression.set("current_level", 1)
 	exam_manager.set("completed_stage_ids", empty_stage_ids)
 	pilot_player.set_meta("system_hunter_association_role", "mission_clerk")
 	if not helipad.call("_can_pilot"):
 		_fail("Authorized Hunter Association staff must receive helicopter access regardless of player level.")
 		return
 	pilot_player.remove_meta("system_hunter_association_role")
-	progression.set("current_level", 50)
+	pilot_progression.set("current_level", 50)
 	exam_manager.set("completed_stage_ids", all_stage_ids)
 	for rank in ["F", "E", "D", "C", "B"]:
 		pilot_player.set_meta("system_hunter_rank", rank)
@@ -152,7 +152,7 @@ func _run() -> void:
 			_fail("A %s notable hunter must receive helicopter access without the level 50 threshold." % rank)
 			return
 	pilot_player.remove_meta("system_hunter_rank")
-	progression.set("current_level", 50)
+	pilot_progression.set("current_level", 50)
 	exam_manager.set("completed_stage_ids", all_stage_ids)
 	if not helipad.has_method("_is_aircraft_position_clear"):
 		_fail("Hunter Association helicopter obstacle-clearance query is missing.")
@@ -447,9 +447,9 @@ func _run() -> void:
 	var original_highest_floor := int(power_manager.get("highest_cleared_floor"))
 	var original_active_floor := int(power_manager.get("active_floor"))
 	var original_clear_times: Dictionary = power_manager.get("floor_clear_times").duplicate(true)
-	var original_inventory: Dictionary = tower_progression.get("inventory_items").duplicate(true) if tower_progression != null else {}
+	var original_inventory: Dictionary = tower_pilot_progression.get("inventory_items").duplicate(true) if tower_progression != null else {}
 	var original_credits := int(operations.get("credits"))
-	if tower_progression == null:
+	if tower_pilot_progression == null:
 		_fail("Power Tower final reward test has no player progression manager.")
 		return
 	power_manager.set("highest_cleared_floor", 199)
@@ -461,7 +461,7 @@ func _run() -> void:
 	operations.call("_complete_power_floor")
 	var final_rewards_granted := true
 	for reward_id in final_rewards:
-		if int(tower_player_progression_manager.call("get_item_count", str(reward_id))) <= int(original_inventory.get(str(reward_id), 0)):
+		if int(tower_progression.call("get_item_count", str(reward_id))) <= int(original_inventory.get(str(reward_id), 0)):
 			final_rewards_granted = false
 	if int(power_manager.get("highest_cleared_floor")) != 200 or int(power_manager.get("active_floor")) != 0 or int(operations.get("credits")) <= original_credits or not final_rewards_granted:
 		_fail("Power Tower final boss clear did not grant the sovereign rewards, credits and completion record.")
@@ -469,8 +469,8 @@ func _run() -> void:
 		power_manager.set("active_floor", original_active_floor)
 		power_manager.set("floor_clear_times", original_clear_times)
 		power_manager.call("_save_progress")
-		tower_progression.set("inventory_items", original_inventory)
-		tower_progression.call("save_progress")
+		tower_pilot_progression.set("inventory_items", original_inventory)
+		tower_pilot_progression.call("save_progress")
 		operations.set("credits", original_credits)
 		operations.call("_save_wallet")
 		return
@@ -478,8 +478,8 @@ func _run() -> void:
 	power_manager.set("active_floor", original_active_floor)
 	power_manager.set("floor_clear_times", original_clear_times)
 	power_manager.call("_save_progress")
-	tower_progression.set("inventory_items", original_inventory)
-	tower_progression.call("save_progress")
+	tower_pilot_progression.set("inventory_items", original_inventory)
+	tower_pilot_progression.call("save_progress")
 	operations.set("credits", original_credits)
 	operations.call("_save_wallet")
 	operations.set("active_power_floor_data", {})
@@ -497,8 +497,8 @@ func _run() -> void:
 		power_manager.set("active_floor", original_active_floor)
 		power_manager.set("floor_clear_times", original_clear_times)
 		power_manager.call("_save_progress")
-		tower_progression.set("inventory_items", original_inventory)
-		tower_progression.call("save_progress")
+		tower_pilot_progression.set("inventory_items", original_inventory)
+		tower_pilot_progression.call("save_progress")
 		operations.set("credits", original_credits)
 		operations.call("_save_wallet")
 		return
@@ -515,8 +515,8 @@ func _run() -> void:
 		power_manager.set("active_floor", original_active_floor)
 		power_manager.set("floor_clear_times", original_clear_times)
 		power_manager.call("_save_progress")
-		tower_progression.set("inventory_items", original_inventory)
-		tower_progression.call("save_progress")
+		tower_pilot_progression.set("inventory_items", original_inventory)
+		tower_pilot_progression.call("save_progress")
 		operations.set("credits", original_credits)
 		operations.call("_save_wallet")
 		return
@@ -533,8 +533,8 @@ func _run() -> void:
 		power_manager.set("active_floor", original_active_floor)
 		power_manager.set("floor_clear_times", original_clear_times)
 		power_manager.call("_save_progress")
-		tower_progression.set("inventory_items", original_inventory)
-		tower_progression.call("save_progress")
+		tower_pilot_progression.set("inventory_items", original_inventory)
+		tower_pilot_progression.call("save_progress")
 		operations.set("credits", original_credits)
 		operations.call("_save_wallet")
 		return
@@ -542,8 +542,8 @@ func _run() -> void:
 	power_manager.set("active_floor", original_active_floor)
 	power_manager.set("floor_clear_times", original_clear_times)
 	power_manager.call("_save_progress")
-	tower_progression.set("inventory_items", original_inventory)
-	tower_progression.call("save_progress")
+	tower_pilot_progression.set("inventory_items", original_inventory)
+	tower_pilot_progression.call("save_progress")
 	operations.set("credits", original_credits)
 	operations.call("_save_wallet")
 	operations.set("active_power_floor_data", {})
@@ -585,7 +585,6 @@ func _run() -> void:
 	if shopping_tower.get_node_or_null("ActiveTowerElevatorCar") != null:
 		_fail("Elevator cabin was not cleaned up after returning to the lobby.")
 		return
-	var player_progression_manager: Node = main.get("player_progression") as Node
 	var shop_employee: Node = null
 	var shopping_lobby := shopping_tower.get_node_or_null("PublicLobby_Blockout")
 	for child in shopping_lobby.get_children():
@@ -598,84 +597,84 @@ func _run() -> void:
 	operations.call("open_staff_service", shop_employee)
 	var water_stock_before := int(operations.call("get_vendor_stock", "water_bottle"))
 	operations.call("_buy_product", "water_bottle", "قارورة ماء", 12)
-	if int(progression.call("get_item_count", "water_bottle")) < 1:
+	if int(pilot_progression.call("get_item_count", "water_bottle")) < 1:
 		_fail("NPC shop purchase did not add the item to player inventory.")
 		return
 	if int(operations.call("get_vendor_stock", "water_bottle")) != water_stock_before - 1:
 		_fail("NPC shop purchase did not reduce vendor stock.")
 		return
 	operations.call("_sell_item", "water_bottle", 1)
-	if int(progression.call("get_item_count", "water_bottle")) != 0:
+	if int(pilot_progression.call("get_item_count", "water_bottle")) != 0:
 		_fail("NPC shop sale did not remove the sold inventory item.")
 		return
 	if int(operations.call("get_vendor_stock", "water_bottle")) != water_stock_before:
 		_fail("NPC shop sale did not return the item to vendor stock.")
 		return
-	progression.call("add_item", "iron_ingot", 1)
-	progression.call("add_item", "wood_plank", 2)
-	var craft_result: Dictionary = progression.call("craft_recipe", "training_sword")
-	if not bool(craft_result.get("success", false)) or int(progression.call("get_item_count", "training_sword")) < 1 or int(progression.call("get_item_count", "iron_ingot")) != 0 or int(progression.call("get_item_count", "wood_plank")) != 0:
+	pilot_progression.call("add_item", "iron_ingot", 1)
+	pilot_progression.call("add_item", "wood_plank", 2)
+	var craft_result: Dictionary = pilot_progression.call("craft_recipe", "training_sword")
+	if not bool(craft_result.get("success", false)) or int(pilot_progression.call("get_item_count", "training_sword")) < 1 or int(pilot_progression.call("get_item_count", "iron_ingot")) != 0 or int(pilot_progression.call("get_item_count", "wood_plank")) != 0:
 		_fail("NPC-supervised crafting did not consume ingredients and create the requested weapon.")
 		return
-	progression.call("add_item", "training_sword", 1)
-	var equip_result: Dictionary = progression.call("equip_item", "training_sword")
-	if not bool(equip_result.get("success", false)) or str(progression.call("get_equipped_item", "weapon")) != "training_sword":
+	pilot_progression.call("add_item", "training_sword", 1)
+	var equip_result: Dictionary = pilot_progression.call("equip_item", "training_sword")
+	if not bool(equip_result.get("success", false)) or str(pilot_progression.call("get_equipped_item", "weapon")) != "training_sword":
 		_fail("Weapon equipment slot did not accept an owned training sword.")
 		return
-	if float(progression.call("get_combat_damage_bonus")) < 5.0:
+	if float(pilot_progression.call("get_combat_damage_bonus")) < 5.0:
 		_fail("Equipped weapon did not apply its combat damage bonus.")
 		return
 	operations.call("_sell_item", "training_sword", 1)
-	if int(progression.call("get_item_count", "training_sword")) != 2:
+	if int(pilot_progression.call("get_item_count", "training_sword")) != 2:
 		_fail("NPC vendor allowed sale of a currently equipped weapon.")
 		return
 	operations.call("_unequip_item", "weapon")
-	if not str(progression.call("get_equipped_item", "weapon")).is_empty():
+	if not str(pilot_progression.call("get_equipped_item", "weapon")).is_empty():
 		_fail("NPC service did not remove the weapon from its equipment slot.")
 		return
-	progression.call("add_item", "iron_ingot", 2)
-	var upgrade_result: Dictionary = progression.call("upgrade_item", "training_sword")
-	if not bool(upgrade_result.get("success", false)) or int(progression.call("get_item_upgrade_level", "training_sword")) != 1:
+	pilot_progression.call("add_item", "iron_ingot", 2)
+	var upgrade_result: Dictionary = pilot_progression.call("upgrade_item", "training_sword")
+	if not bool(upgrade_result.get("success", false)) or int(pilot_progression.call("get_item_upgrade_level", "training_sword")) != 1:
 		_fail("NPC weapon upgrade service did not apply the first equipment upgrade.")
 		return
-	progression.call("equip_item", "training_sword")
-	progression.call("consume_equipment_durability", "weapon", 100.0)
-	if float(progression.call("get_item_durability", "training_sword")) > 0.0 or float(progression.call("get_combat_damage_bonus")) > 0.0:
+	pilot_progression.call("equip_item", "training_sword")
+	pilot_progression.call("consume_equipment_durability", "weapon", 100.0)
+	if float(pilot_progression.call("get_item_durability", "training_sword")) > 0.0 or float(pilot_progression.call("get_combat_damage_bonus")) > 0.0:
 		_fail("Broken weapon durability did not disable its equipment damage bonus.")
 		return
-	progression.call("add_item", "repair_kit", 1)
-	var repair_result: Dictionary = progression.call("repair_item", "training_sword")
-	if not bool(repair_result.get("success", false)) or float(progression.call("get_item_durability", "training_sword")) < 99.9 or float(progression.call("get_combat_damage_bonus")) < 7.0:
+	pilot_progression.call("add_item", "repair_kit", 1)
+	var repair_result: Dictionary = pilot_progression.call("repair_item", "training_sword")
+	if not bool(repair_result.get("success", false)) or float(pilot_progression.call("get_item_durability", "training_sword")) < 99.9 or float(pilot_progression.call("get_combat_damage_bonus")) < 7.0:
 		_fail("NPC repair service did not restore the upgraded weapon and its damage bonus.")
 		return
-	progression.call("add_item", "strength_elixir", 1)
-	var strength_result: Dictionary = progression.call("consume_elixir", "strength_elixir")
-	if not bool(strength_result.get("success", false)) or float(progression.call("get_combat_damage_bonus")) < 22.0:
+	pilot_progression.call("add_item", "strength_elixir", 1)
+	var strength_result: Dictionary = pilot_progression.call("consume_elixir", "strength_elixir")
+	if not bool(strength_result.get("success", false)) or float(pilot_progression.call("get_combat_damage_bonus")) < 22.0:
 		_fail("Strength elixir did not stack with the upgraded weapon's timed combat bonus.")
 		return
-	progression.call("add_item", "speed_elixir", 1)
-	progression.call("consume_elixir", "speed_elixir")
-	if float(progression.call("get_movement_multiplier")) <= 1.0:
+	pilot_progression.call("add_item", "speed_elixir", 1)
+	pilot_progression.call("consume_elixir", "speed_elixir")
+	if float(pilot_progression.call("get_movement_multiplier")) <= 1.0:
 		_fail("Speed elixir did not increase the player movement multiplier.")
 		return
-	progression.call("add_item", "endurance_elixir", 1)
-	progression.call("consume_elixir", "endurance_elixir")
-	if float(progression.call("get_defense_bonus")) < 12.0:
+	pilot_progression.call("add_item", "endurance_elixir", 1)
+	pilot_progression.call("consume_elixir", "endurance_elixir")
+	if float(pilot_progression.call("get_defense_bonus")) < 12.0:
 		_fail("Endurance elixir did not apply a defense bonus.")
 		return
-	progression.call("add_item", "energy_elixir", 1)
-	progression.call("consume_elixir", "energy_elixir")
-	if float(progression.call("get_attack_cooldown_multiplier")) >= 1.0:
+	pilot_progression.call("add_item", "energy_elixir", 1)
+	pilot_progression.call("consume_elixir", "energy_elixir")
+	if float(pilot_progression.call("get_attack_cooldown_multiplier")) >= 1.0:
 		_fail("Energy elixir did not reduce the attack cooldown multiplier.")
 		return
-	progression.call("add_item", "nen_awakening_elixir", 1)
-	var awakening_result: Dictionary = progression.call("consume_elixir", "nen_awakening_elixir")
+	pilot_progression.call("add_item", "nen_awakening_elixir", 1)
+	var awakening_result: Dictionary = pilot_progression.call("consume_elixir", "nen_awakening_elixir")
 	if not bool(awakening_result.get("success", false)):
 		_fail("Nen Awakening Elixir did not awaken Nen: " + str(awakening_result))
 		return
-	progression.call("add_item", "nen_control_elixir", 1)
-	progression.call("consume_elixir", "nen_control_elixir")
-	if not bool(progression.get("nen_unlocked")) or int(progression.get("nen_control_rank")) != 2:
+	pilot_progression.call("add_item", "nen_control_elixir", 1)
+	pilot_progression.call("consume_elixir", "nen_control_elixir")
+	if not bool(pilot_progression.get("nen_unlocked")) or int(pilot_progression.get("nen_control_rank")) != 2:
 		_fail("Nen Awakening/Control elixirs did not update the player's Nen state.")
 		return
 	operations.call("open_tower", "hunter_association_tower_baghdad")
@@ -683,17 +682,17 @@ func _run() -> void:
 	if demo_button == null or not demo_button.text.contains("ضربة النِن"):
 		_fail("Hunter Association Tower is missing its Nen strike training demonstration.")
 		return
-	progression.call("add_item", "nen_control_elixir", 2)
-	progression.call("consume_elixir", "nen_control_elixir")
-	progression.call("consume_elixir", "nen_control_elixir")
-	if int(progression.get("nen_control_rank")) != 4:
+	pilot_progression.call("add_item", "nen_control_elixir", 2)
+	pilot_progression.call("consume_elixir", "nen_control_elixir")
+	pilot_progression.call("consume_elixir", "nen_control_elixir")
+	if int(pilot_progression.get("nen_control_rank")) != 4:
 		_fail("Nen control elixirs did not unlock the rank-four ability threshold.")
 		return
 	var combat_system: Node = main.get("modern_world_combat_system") as Node
 	if combat_system == null or not combat_system.has_method("light_attack") or not combat_system.has_method("skill_one") or not combat_system.has_method("skill_two") or not combat_system.has_method("dodge"):
 		_fail("Modern World combat system was not created or is missing mobile combat actions.")
 		return
-	if combat_system.get("actor") != player or combat_system.get("progression") != progression:
+	if combat_system.get("actor") != player or combat_system.get("progression") != pilot_progression:
 		_fail("Modern World combat system is not bound to the active player and progression manager.")
 		return
 	var mobile_controls: Node = main.get("mobile_controls") as Node
@@ -710,17 +709,17 @@ func _run() -> void:
 		if not mobile_controls.is_connected(str(signal_name), Callable(main, str(mobile_callbacks[signal_name]))):
 			_fail("Mobile combat signal is not connected: " + str(signal_name))
 			return
-	progression.set("nen_burst_cooldown_remaining", 0.0)
-	var clean_effects: Dictionary = progression.get("active_elixir_effects")
+	pilot_progression.set("nen_burst_cooldown_remaining", 0.0)
+	var clean_effects: Dictionary = pilot_progression.get("active_elixir_effects")
 	clean_effects.erase("nen_burst")
-	progression.set("active_elixir_effects", clean_effects)
-	progression.call("_refresh_nen_burst_button")
+	pilot_progression.set("active_elixir_effects", clean_effects)
+	pilot_progression.call("_refresh_nen_burst_button")
 	var nen_burst_result: Dictionary = combat_system.call("skill_one")
-	var nen_button: Button = progression.get("nen_burst_button") as Button
+	var nen_button: Button = pilot_progression.get("nen_burst_button") as Button
 	if not bool(nen_burst_result.get("success", false)):
 		_fail("Mobile Nen Burst skill activation failed: " + str(nen_burst_result))
 		return
-	if not progression.get("active_elixir_effects").has("nen_burst"):
+	if not pilot_progression.get("active_elixir_effects").has("nen_burst"):
 		_fail("Mobile Nen Burst did not apply its timed combat effect.")
 		return
 	if nen_button == null or not nen_button.visible:
@@ -745,8 +744,8 @@ func _run() -> void:
 		return
 	var health_manager: Node = main.get("player_combat_health") as Node
 	health_manager.call("receive_damage", 150.0, null)
-	progression.call("add_item", "healing_elixir", 1)
-	var healing_result: Dictionary = progression.call("consume_elixir", "healing_elixir")
+	pilot_progression.call("add_item", "healing_elixir", 1)
+	var healing_result: Dictionary = pilot_progression.call("consume_elixir", "healing_elixir")
 	if not bool(healing_result.get("success", false)) or not bool(health_manager.get("is_wounded")) or float(health_manager.get("current_health")) <= 30.0:
 		_fail("Healing elixir must restore field health without clearing the persistent wound state.")
 		return
