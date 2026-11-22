@@ -1,6 +1,8 @@
 extends Node3D
 class_name UndergroundInteractable
 
+signal door_state_changed(is_open: bool)
+
 ## Small interaction endpoint used by the shared SystemWorldInteractionManager.
 @export_enum("stone_door", "relic", "strongbox", "rune", "greed_fragment", "world_fragment") var action_type: String = "stone_door"
 @export var action_target_path: NodePath = ^"DoorBody"
@@ -67,11 +69,36 @@ func _toggle_stone_door() -> void:
 	)
 
 	set_meta("system_door_open", _opened)
+	door_state_changed.emit(_opened)
 	set_meta(
 		"system_interaction_prompt",
 		"أغلق الباب الحجري" if _opened else "افتح الباب الحجري"
 	)
 	print("SYSTEM underground stone door transition started; open: ", _opened)
+
+
+
+func restore_stone_door_state(opened: bool) -> void:
+	if action_type != "stone_door":
+		return
+	var door := get_node_or_null(action_target_path) as Node3D
+	if door == null:
+		push_warning("SYSTEM underground: cannot restore door state; target is missing.")
+		return
+
+	_closed_door_position = door.position
+	_door_position_captured = true
+	_opened = opened
+	var restored_position := _closed_door_position
+	if _opened:
+		restored_position += DOOR_OPEN_OFFSET
+	door.position = restored_position
+	door.visible = true
+	set_meta("system_door_open", _opened)
+	set_meta(
+		"system_interaction_prompt",
+		"أغلق الباب الحجري" if _opened else "افتح الباب الحجري"
+	)
 
 
 func _claim_discovery() -> void:
