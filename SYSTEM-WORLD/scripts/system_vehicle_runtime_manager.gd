@@ -222,4 +222,4 @@ func _update_follow_camera() -> void:
 		return
 	var behind := active_vehicle.global_transform.basis * Vector3(0.0, 3.0, 7.0)
 	camera.global_position = active_vehicle.global_position + behind
-	camera.look_at(active_vehicle.global_position + Vector3.UP * 1.0, Vector3.UP)
+	camera.look_at_from_position(camera.global_position, active_vehicle.global_position + Vector3.UP * 1.0, Vector3.UP)
