@@ -322,10 +322,10 @@ func _add_exam_course_edge(parent: Node3D, node_name: String, start: Vector2, fi
 		return
 	var side := Vector2(delta.y,-delta.x).normalized() * offset
 	for side_index in [-1.0,1.0]:
-		var edge_start := start + side * side_index
-		var edge_finish := finish + side * side_index
-		var edge_delta := edge_finish - edge_start
-		var midpoint := (edge_start + edge_finish) * 0.5
+		var edge_start: Vector2 = start + side * float(side_index)
+		var edge_finish: Vector2 = finish + side * float(side_index)
+		var edge_delta: Vector2 = edge_finish - edge_start
+		var midpoint: Vector2 = (edge_start + edge_finish) * 0.5
 		var edge := MeshInstance3D.new()
 		edge.name = node_name + ("_Left" if side_index < 0.0 else "_Right")
 		var edge_mesh := BoxMesh.new()
