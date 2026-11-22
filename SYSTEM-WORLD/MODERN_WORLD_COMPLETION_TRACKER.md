@@ -493,3 +493,14 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Extend Godot validation to check all specialized interior roots and the revision marker on all five towers.
 - [ ] Implement actual hunter mission board interactions, training combat, clinic treatment, business market data/conference actions, hotel room booking, lab simulation, AI interactions and digital library content; present geometry is visual blockout.
 - [ ] Re-run Godot validation and Android export against the latest specialized-interior commits.
+
+
+## Separate Power Tower 200-floor activation — 22 November 2026
+
+- [x] Activate the Power Tower as a separate Baghdad landmark after the five-tower district is generated; it is not counted as one of the five district towers.
+- [x] Set the tower model to 200 floors and 1,200 m structural height.
+- [x] Add a 200-entry floor challenge registry cycling duel, team, survival, elite gauntlet and championship challenge profiles.
+- [x] Mark every tenth floor as a boss trial and add twenty major arena platform/label markers.
+- [x] Extend the Godot validator to require the separate Power Tower, 200 floors, 200 registry entries and twenty boss trial floors.
+- [ ] Implement actual arena rooms, combat encounters, enemy/boss spawning, matchmaking, rewards, persistence and server-verified rankings; current additions are progression metadata and visual arena markers.
+- [ ] Run Godot validation and Android export against the exact Power Tower activation commits.
