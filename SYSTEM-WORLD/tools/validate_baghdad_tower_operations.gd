@@ -135,6 +135,18 @@ func _run() -> void:
 	if hunter_honor_floor == null or hunter_honor_floor.find_child("HonorPillar_00", true, false) == null:
 		_fail("Hunter Association Tower Hall of Honor floor is missing its pillars.")
 		return
+	var hunter_headquarters_floor := operations.call("_ensure_floor_room", "hunter_association_tower_baghdad", 200) as Node3D
+	if hunter_headquarters_floor == null or hunter_headquarters_floor.find_child("GlobalOperationsDisplay", true, false) == null or hunter_headquarters_floor.find_child("AssociationDirectorDesk", true, false) == null:
+		_fail("The Global Hunter Association headquarters must occupy the top floor of the Hunter Association Tower.")
+		return
+	var hunter_council_floor := operations.call("_ensure_floor_room", "hunter_association_tower_baghdad", 195) as Node3D
+	if hunter_council_floor == null or hunter_council_floor.find_child("GlobalCouncilTable", true, false) == null:
+		_fail("The Global Hunter Association Council chamber is missing from floor 195.")
+		return
+	var restaurant_room := operations.call("_ensure_floor_room", "shopping_tower_baghdad", 29) as Node3D
+	if restaurant_room == null or restaurant_room.get_node_or_null("RestaurantDiningSign") == null or restaurant_room.get_node_or_null("RestaurantTable_00") == null:
+		_fail("Shopping Tower restaurant dining hall is missing from floors 29–32.")
+		return
 	var exam_manager := main.get_node_or_null("SYSTEMHunterExamManager")
 	if exam_manager == null:
 		_fail("HunterExamManager is missing.")
@@ -705,8 +717,8 @@ func _run() -> void:
 		_fail("SYSTEM Hotel reception or guest-suite booking area is missing from Shopping Tower floors 27–28.")
 		return
 	var shopping_staff: Array = operations.get("staff_by_tower").get("shopping_tower_baghdad", [])
-	if shopping_staff.size() != 8:
-		_fail("Shopping Tower must create all eight shop, workshop, restaurant and hotel staff roles.")
+	if shopping_staff.size() != 9:
+		_fail("Shopping Tower must create all nine management, shop, workshop, restaurant, hotel and advertising staff roles.")
 		return
 	if not operations.has_method("_book_hotel_room") or not operations.has_method("_check_in_hotel_room") or not operations.has_method("_checkout_hotel_room") or not operations.has_method("_save_hotel_bookings"):
 		_fail("SYSTEM Hotel reservation/check-in/check-out persistence methods are missing.")
