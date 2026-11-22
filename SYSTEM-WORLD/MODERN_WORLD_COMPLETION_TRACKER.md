@@ -1188,3 +1188,16 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [ ] Confirm Godot runtime startup and the full tower validator no longer emit Node not inside tree warnings on the latest branch head.
 
 - [x] Fix the vehicle showroom SubViewport camera, which was calling look_at() before being attached to its viewport tree; use look_at_from_position() instead.
+
+
+### Baghdad tower exterior glazing pass — 23 November 2026
+
+- [x] Add a dedicated MultiMesh glass-window layer to every floor of the five district towers and the independent Power Tower.
+- [x] Distribute 20 exterior glazing panels around each floor, following the tower shaft taper and accent lighting.
+- [x] Extend the tower operations validator to assert the correct window count for all six towers, valid mesh resources and exterior transforms.
+- [ ] Godot 4.3 full validation and Android export for the facade pass are pending.
+
+### SceneTree orientation and full tower regression — 23 November 2026
+
+- [x] Pass full Godot 4.3 validation #1522 (run ID 45083924507) on source HEAD d7d174cc21d2e0bb0c7adbb94ffc62ccf7268439; tower operations passed and runtime log contained zero Node not inside tree warnings.
+- [x] Pass canonical Android export #1259 (run ID 45083924528) on the same source HEAD; APK artifact 14778229274, 35,967,083 bytes, SHA-256 f590967987150f59fc46fcae491f59793264b0ef864aa334810e3b7f14edcf71, expires 6 December 2026.
