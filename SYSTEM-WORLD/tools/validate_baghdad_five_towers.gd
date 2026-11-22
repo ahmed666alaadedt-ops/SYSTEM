@@ -101,6 +101,8 @@ func _run_validation() -> void:
 	var entertainment := manager.get_node_or_null("EntertainmentTower")
 	var entertainment_facilities := entertainment.get_node_or_null("TowerFacilities_Blockout") if entertainment != null else null
 	_expect(entertainment_facilities != null, "Entertainment Tower facility layout exists")
+	if entertainment != null:
+		_expect(int(entertainment.get_meta("entertainment_venue_revision", 0)) == 1, "entertainment venue revision is registered")
 	if entertainment_facilities != null:
 		_expect(entertainment_facilities.get_node_or_null("ArcadeCabinetGallery_Blockout") != null, "arcade cabinet gallery exists")
 		_expect(entertainment_facilities.get_node_or_null("BowlingLaneGallery_Blockout") != null, "bowling lane gallery exists")
