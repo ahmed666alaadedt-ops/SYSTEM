@@ -38,6 +38,35 @@ func _run() -> void:
 		_fail("BaghdadTowerOperationsManager was not initialized.")
 		return
 	var status: Dictionary = operations.call("get_operations_status")
+	var schedule_expectations := {
+		8: "cafe",
+		11: "browse",
+		15: "social",
+		19: "leisure",
+		23: "quiet"
+	}
+	for schedule_hour in schedule_expectations.keys():
+		var actual_phase := str(operations.call("get_customer_schedule_phase", int(schedule_hour)))
+		if actual_phase != str(schedule_expectations[schedule_hour]):
+			_fail("Baghdad customer daily routine phase is incorrect at hour %d: %s." % [int(schedule_hour), actual_phase])
+			return
+	operations.call("_move_customer_visitors")
+	var scheduled_customer_count := 0
+	for tower_id in ["hunter_association_tower_baghdad", "business_investment_tower_baghdad", "shopping_tower_baghdad", "entertainment_tower_baghdad", "technology_tower_baghdad"]:
+		var customer_tower := operations.get("tower_nodes").get(tower_id) as Node3D
+		var customer_lobby := customer_tower.get_node_or_null("PublicLobby_Blockout") as Node3D if customer_tower != null else null
+		if customer_lobby == null:
+			_fail("Customer daily routine test could not find lobby for " + tower_id)
+			return
+		for customer_node in customer_lobby.get_children():
+			if str(customer_node.name).begins_with("TowerCustomer_"):
+				if not customer_node.has_meta("system_customer_schedule_phase") or not customer_node.has_meta("system_customer_schedule_target") or not customer_node.has_meta("system_customer_schedule_action"):
+					_fail("Customer NPC is missing its daily schedule state: " + str(customer_node.name))
+					return
+				scheduled_customer_count += 1
+	if scheduled_customer_count != 20:
+		_fail("Expected 20 customer NPCs with active daily routine states; found %d." % scheduled_customer_count)
+		return
 	var portrait_panel_size: Vector2 = operations.call("_get_responsive_panel_size", Vector2(360.0, 780.0))
 	if portrait_panel_size.x > 336.0 or portrait_panel_size.y > 530.0:
 		_fail("Baghdad tower operations panel exceeds a 360x780 phone portrait viewport.")
