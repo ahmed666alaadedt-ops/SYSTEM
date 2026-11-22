@@ -3,7 +3,7 @@ class_name BaghdadTowerLandmarksManager
 
 const EntranceScript = preload("res://scripts/system_tower_entrance.gd")
 const HUNTER_TOWER_HEIGHT := 1000.0
-const POWER_TOWER_HEIGHT := 168.0
+const POWER_TOWER_HEIGHT := 1200.0
 
 var terrain: Node
 var city_anchor := Vector3.ZERO
@@ -30,6 +30,7 @@ func _ready() -> void:
 	_build_shopping_tower()
 	_build_entertainment_tower()
 	_build_technology_tower()
+	_build_power_tower()
 	_create_connected_city_links()
 	_create_public_amenities()
 
@@ -69,12 +70,61 @@ func _build_power_tower() -> void:
 		"power_tower_baghdad",
 		position,
 		POWER_TOWER_HEIGHT,
-		22.0,
-		28,
-		Color(0.95, 0.55, 0.16)
+		34.0,
+		200,
+		Color(0.95, 0.55, 0.16),
+		false
 	)
+	var power_tower := get_node_or_null("PowerTower")
+	if power_tower != null:
+		_create_power_tower_challenge_layout(power_tower, 200, POWER_TOWER_HEIGHT, 34.0)
 
-func _build_tower(node_name: String, title: String, location_id: String, world_position: Vector3, height: float, radius: float, floors: int, beacon_color: Color) -> void:
+
+func _create_power_tower_challenge_layout(root: Node3D, floor_count: int, tower_height: float, radius: float) -> void:
+	var challenge_root := Node3D.new()
+	challenge_root.name = "PowerTower200FloorChallengeSystem"
+	root.add_child(challenge_root)
+	var challenge_types := ["DUEL", "TEAM", "SURVIVAL", "ELITE_GAUNTLET", "CHAMPIONSHIP"]
+	var floor_registry: Array[Dictionary] = []
+	var boss_material := _make_surface_material(Color(0.95, 0.42, 0.12), 0.42, 0.38)
+	for floor_number in range(1, floor_count + 1):
+		var challenge_type: String = challenge_types[(floor_number - 1) % challenge_types.size()]
+		var boss_trial := floor_number % 10 == 0
+		floor_registry.append({
+			"floor": floor_number,
+			"challenge": challenge_type,
+			"boss_trial": boss_trial,
+			"arena_scale": "major" if boss_trial else "standard"
+		})
+		if boss_trial:
+			var arena := MeshInstance3D.new()
+			arena.name = "BossTrialArena_%03d" % floor_number
+			var arena_mesh := CylinderMesh.new()
+			arena_mesh.top_radius = radius * 1.28
+			arena_mesh.bottom_radius = radius * 1.28
+			arena_mesh.height = 1.4
+			arena.mesh = arena_mesh
+			arena.position.y = 9.0 + (tower_height - 16.0) * float(floor_number - 1) / float(maxi(floor_count - 1, 1))
+			arena.material_override = boss_material
+			challenge_root.add_child(arena)
+			var label := Label3D.new()
+			label.name = "BossTrialFloorLabel_%03d" % floor_number
+			label.text = "BOSS TRIAL • FLOOR %03d" % floor_number
+			label.font_size = 24
+			label.position = Vector3(0.0, arena.position.y + 3.0, radius * 1.15)
+			label.modulate = Color(1.0, 0.58, 0.22)
+			challenge_root.add_child(label)
+	challenge_root.set_meta("floor_count", floor_count)
+	challenge_root.set_meta("boss_trial_count", floor_count / 10)
+	challenge_root.set_meta("challenge_rotation", PackedStringArray(challenge_types))
+	challenge_root.set_meta("floor_registry", floor_registry)
+	challenge_root.set_meta("matchmaking_enabled", false)
+	challenge_root.set_meta("combat_spawning_enabled", false)
+	challenge_root.set_meta("ranking_verification_enabled", false)
+	root.set_meta("challenge_system_revision", 1)
+
+
+func _build_tower(node_name: String, title: String, location_id: String, world_position: Vector3, height: float, radius: float, floors: int, beacon_color: Color, register_in_district: bool = true) -> void:
 	var resolved := _nearest_land_position(Vector2(world_position.x, world_position.z))
 	if resolved == Vector2.INF:
 		push_warning("SYSTEM WORLD: no suitable land for tower " + title)
@@ -83,7 +133,10 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	root.name = node_name
 	root.position = Vector3(resolved.x, float(terrain.call("get_terrain_height", resolved.x, resolved.y)), resolved.y)
 	add_child(root)
-	tower_positions.append({"id": location_id, "name": title, "position": root.position, "height": height, "radius": radius})
+	if register_in_district:
+		tower_positions.append({"id": location_id, "name": title, "position": root.position, "height": height, "radius": radius})
+	root.set_meta("floor_count", floors)
+	root.set_meta("is_separate_landmark", not register_in_district)
 
 	var base := MeshInstance3D.new()
 	base.name = "MonumentalFoundation"
