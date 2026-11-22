@@ -7,6 +7,7 @@ class_name BaghdadOSMCellStreamer
 const DEFAULT_DATA_ROOT := "res://data/geography/baghdad/cell_pack"
 const DEFAULT_CELL_SIZE := 200.0
 const MAX_CELL_OPERATIONS_PER_FRAME := 1
+const BAGHDAD_OSM_DOOR_SCRIPT = preload("res://scripts/baghdad_osm_door_interaction.gd")
 
 signal cell_loaded(cell: Vector2i, cell_root: Node3D)
 signal cell_unloading(cell: Vector2i, cell_root: Node3D)
@@ -298,6 +299,8 @@ func _load_cell(cell: Vector2i) -> void:
 					})
 		road_count += _build_line_feature(cell_root, feature, _road_width(road_tags), road_material, 0.16, "OSMRoad")
 	cell_root.set_meta("road_navigation_segments", road_navigation_segments)
+	var entrance_features: Array = layers.get("entrances", [])
+	cell_root.set_meta("source_entrance_features", entrance_features)
 	var building_count := 0
 	for feature in layers.get("buildings", []):
 		building_count += _build_building_feature(cell_root, feature, road_features)
@@ -468,18 +471,20 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 			ring.remove_at(ring.size() - 1)
 		if ring.size() < 3:
 			continue
+		var door_specs := _find_osm_entrance_wall_placements(
+			feature_id_from_building(feature),
+			ring,
+			parent.get_meta("source_entrance_features", [])
+		)
 		var surface := SurfaceTool.new()
 		surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 		for index in range(ring.size()):
 			var next_index := (index + 1) % ring.size()
-			var p0 := ring[index]
-			var p1 := ring[next_index]
-			var base0 := Vector3(p0.x, _terrain_height(p0) + 0.04, p0.y)
-			var base1 := Vector3(p1.x, _terrain_height(p1) + 0.04, p1.y)
-			var top0 := base0 + Vector3.UP * height
-			var top1 := base1 + Vector3.UP * height
-			_add_triangle(surface, base0, top0, base1)
-			_add_triangle(surface, base1, top0, top1)
+			var edge_openings: Array[Dictionary] = []
+			for door_spec in door_specs:
+				if int(door_spec.get("edge_index", -1)) == index:
+					edge_openings.append(door_spec)
+			_add_building_wall_edge(surface, ring[index], ring[next_index], height, edge_openings)
 		var triangulation := Geometry2D.triangulate_polygon(ring)
 		for index in range(0, triangulation.size(), 3):
 			var p0 := ring[triangulation[index]]
@@ -537,6 +542,17 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 		collision.shape = shape
 		body.add_child(collision)
 		parent.add_child(body)
+		var verified_door_ids: Array[String] = []
+		for door_spec in door_specs:
+			if not bool(door_spec.get("wall_opening_built", false)):
+				continue
+			var door_root := _create_osm_door(parent, body, feature_id, kind, door_spec)
+			if door_root != null:
+				verified_door_ids.append(str(door_spec.get("entrance_id", "")))
+		if not verified_door_ids.is_empty():
+			body.set_meta("system_verified_door_ids", verified_door_ids)
+			body.set_meta("system_verified_door_count", verified_door_ids.size())
+			body.set_meta("system_access_state", "verified_physical_doors_mapped")
 		var historic_landmark_kind := _historic_landmark_kind(tags)
 		if not historic_landmark_kind.is_empty():
 			building.set_meta("landmark_type", historic_landmark_kind)
@@ -553,6 +569,267 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 		if kind == "church" or kind == "mosque":
 			_add_polygon_worship_detail(parent, ring, height, kind, feature_id)
 	return built
+
+
+func feature_id_from_building(feature: Dictionary) -> String:
+	return str(feature.get("id", "unknown"))
+
+
+func _find_osm_entrance_wall_placements(
+	building_id: String,
+	ring: PackedVector2Array,
+	entrance_features: Array
+) -> Array[Dictionary]:
+	var placements: Array[Dictionary] = []
+	if ring.size() < 3:
+		return placements
+	var centroid := Vector2.ZERO
+	for point in ring:
+		centroid += point
+	centroid /= float(ring.size())
+	var door_width := 1.0
+	var max_source_to_wall_distance := 2.75
+	for entrance_value in entrance_features:
+		if not entrance_value is Dictionary:
+			continue
+		var entrance: Dictionary = entrance_value
+		var association_value: Variant = entrance.get("association", {})
+		if not association_value is Dictionary:
+			continue
+		var association: Dictionary = association_value
+		var status := str(association.get("status", ""))
+		if status not in ["accepted", "restricted"] or str(association.get("building_id", "")) != building_id:
+			continue
+		var geometry: Dictionary = entrance.get("geometry", {})
+		if str(geometry.get("type", "")) != "Point":
+			continue
+		var coordinates: Array = geometry.get("coordinates", [])
+		if coordinates.size() < 2:
+			continue
+		var source_point := Vector2(float(coordinates[0]), float(coordinates[1]))
+		var best: Dictionary = {}
+		var best_distance := INF
+		for edge_index in range(ring.size()):
+			var edge_start := ring[edge_index]
+			var edge_end := ring[(edge_index + 1) % ring.size()]
+			var edge := edge_end - edge_start
+			var edge_length := edge.length()
+			if edge_length < door_width + 0.12:
+				continue
+			var margin_t := (door_width * 0.5 + 0.06) / edge_length
+			if margin_t >= 0.48:
+				continue
+			var raw_t := clampf((source_point - edge_start).dot(edge) / edge.length_squared(), 0.0, 1.0)
+			var center_t := clampf(raw_t, margin_t, 1.0 - margin_t)
+			var wall_point := edge_start.lerp(edge_end, center_t)
+			var distance := source_point.distance_to(wall_point)
+			if distance < best_distance:
+				var tangent := edge.normalized()
+				var inward := Vector2(-tangent.y, tangent.x)
+				if inward.dot(centroid - wall_point) < 0.0:
+					inward = -inward
+				best_distance = distance
+				best = {
+					"entrance_id": str(entrance.get("id", "")),
+					"building_id": building_id,
+					"association_status": status,
+					"association_distance_m": float(association.get("distance_m", -1.0)),
+					"edge_index": edge_index,
+					"center_t": center_t,
+					"edge_length": edge_length,
+					"wall_point": wall_point,
+					"tangent": tangent,
+					"inward": inward,
+					"width": door_width,
+					"door_height": 2.05,
+					"entrance_tags": entrance.get("tags", {})
+				}
+		if best.is_empty() or best_distance > max_source_to_wall_distance:
+			continue
+		var overlaps_existing := false
+		for existing in placements:
+			if int(existing.get("edge_index", -1)) != int(best.get("edge_index", -2)):
+				continue
+			var separation := absf(float(existing.get("center_t", 0.0)) - float(best.get("center_t", 0.0))) * float(best.get("edge_length", 1.0))
+			if separation < door_width + 0.18:
+				overlaps_existing = true
+				break
+		if not overlaps_existing:
+			placements.append(best)
+	return placements
+
+
+func _add_building_wall_quad(
+	surface: SurfaceTool,
+	start: Vector2,
+	finish: Vector2,
+	lower_height: float,
+	upper_height: float
+) -> void:
+	if finish.distance_squared_to(start) < 0.000001 or upper_height <= lower_height:
+		return
+	var base0 := Vector3(start.x, _terrain_height(start) + 0.04 + lower_height, start.y)
+	var base1 := Vector3(finish.x, _terrain_height(finish) + 0.04 + lower_height, finish.y)
+	var top0 := Vector3(start.x, _terrain_height(start) + 0.04 + upper_height, start.y)
+	var top1 := Vector3(finish.x, _terrain_height(finish) + 0.04 + upper_height, finish.y)
+	_add_triangle(surface, base0, top0, base1)
+	_add_triangle(surface, base1, top0, top1)
+
+
+func _add_building_wall_edge(
+	surface: SurfaceTool,
+	p0: Vector2,
+	p1: Vector2,
+	wall_height: float,
+	openings: Array[Dictionary]
+) -> void:
+	var edge_length := p0.distance_to(p1)
+	if openings.is_empty() or edge_length < 0.01:
+		_add_building_wall_quad(surface, p0, p1, 0.0, wall_height)
+		return
+	openings.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return float(a.get("center_t", 0.0)) < float(b.get("center_t", 0.0))
+	)
+	var cursor_t := 0.0
+	for opening in openings:
+		var half_t := float(opening.get("width", 1.0)) * 0.5 / edge_length
+		var start_t := clampf(float(opening.get("center_t", 0.5)) - half_t, 0.0, 1.0)
+		var end_t := clampf(float(opening.get("center_t", 0.5)) + half_t, 0.0, 1.0)
+		if end_t <= cursor_t or end_t <= start_t:
+			continue
+		start_t = maxf(start_t, cursor_t)
+		_add_building_wall_quad(surface, p0.lerp(p1, cursor_t), p0.lerp(p1, start_t), 0.0, wall_height)
+		var lintel_height := minf(float(opening.get("door_height", 2.05)), wall_height - 0.12)
+		_add_building_wall_quad(surface, p0.lerp(p1, start_t), p0.lerp(p1, end_t), lintel_height, wall_height)
+		opening["wall_opening_built"] = lintel_height > 0.0 and end_t > start_t
+		cursor_t = end_t
+	_add_building_wall_quad(surface, p0.lerp(p1, cursor_t), p1, 0.0, wall_height)
+
+
+func _create_osm_door(
+	parent: Node3D,
+	building_body: StaticBody3D,
+	building_id: String,
+	building_kind: String,
+	door_spec: Dictionary
+) -> Node3D:
+	var entrance_id := str(door_spec.get("entrance_id", ""))
+	if entrance_id.is_empty():
+		return null
+	var wall_point: Vector2 = door_spec.get("wall_point", Vector2.ZERO)
+	var tangent: Vector2 = door_spec.get("tangent", Vector2.RIGHT)
+	var inward: Vector2 = door_spec.get("inward", Vector2.UP)
+	var width := float(door_spec.get("width", 1.0))
+	var door_height := float(door_spec.get("door_height", 2.05))
+	var restricted := str(door_spec.get("association_status", "")) == "restricted"
+	var tangent_3d := Vector3(tangent.x, 0.0, tangent.y)
+	var inward_3d := Vector3(inward.x, 0.0, inward.y)
+	var root := Node3D.new()
+	root.name = "OSMDoor_" + entrance_id
+	root.transform = Transform3D(
+		Basis(tangent_3d, Vector3.UP, inward_3d),
+		Vector3(wall_point.x, _terrain_height(wall_point) + 0.04, wall_point.y)
+	)
+	root.set_script(BAGHDAD_OSM_DOOR_SCRIPT)
+	root.add_to_group("system_interactable")
+	root.set_meta("osm_feature_id", entrance_id)
+	root.set_meta("system_location_id", "baghdad_osm_entrance_" + entrance_id)
+	root.set_meta("system_region_id", "region_baghdad")
+	root.set_meta("system_location_type", 7)
+	root.set_meta("system_fast_travel", false)
+	root.set_meta("system_location_position", root.position)
+	root.set_meta("system_display_name", _building_display_name(building_kind, {}))
+	root.set_meta("system_associated_building_id", "baghdad_osm_building_" + building_id)
+	root.set_meta("system_association_distance_m", float(door_spec.get("association_distance_m", -1.0)))
+	root.set_meta("system_association_status", str(door_spec.get("association_status", "")))
+	root.set_meta("system_wall_opening_built", true)
+	root.set_meta("system_access_state", "restricted_no_public_entry" if restricted else "verified_door_closed")
+	root.set_meta("system_interaction_prompt", "باب خاص — الدخول ممنوع" if restricted else "افتح الباب")
+	parent.add_child(root)
+
+	var frame_material := StandardMaterial3D.new()
+	frame_material.albedo_color = Color(0.25, 0.16, 0.09)
+	frame_material.roughness = 0.82
+	var leaf_material := StandardMaterial3D.new()
+	leaf_material.albedo_color = Color(0.34, 0.20, 0.10)
+	leaf_material.roughness = 0.88
+	var frame_width := 0.12
+	_add_osm_door_frame_piece(root, "DoorFrameLeft", Vector3(-width * 0.5, door_height * 0.5, 0.0), Vector3(frame_width, door_height, 0.18), frame_material)
+	_add_osm_door_frame_piece(root, "DoorFrameRight", Vector3(width * 0.5, door_height * 0.5, 0.0), Vector3(frame_width, door_height, 0.18), frame_material)
+	_add_osm_door_frame_piece(root, "DoorFrameLintel", Vector3(0.0, door_height, 0.0), Vector3(width + frame_width, 0.12, 0.18), frame_material)
+
+	var hinge := Node3D.new()
+	hinge.name = "DoorHinge"
+	hinge.position = Vector3(-width * 0.5 + 0.08, 0.0, 0.0)
+	root.add_child(hinge)
+	var leaf_body := AnimatableBody3D.new()
+	leaf_body.name = "DoorLeafBody"
+	leaf_body.position = Vector3((width - 0.16) * 0.5, door_height * 0.5, 0.0)
+	var leaf_size := Vector3(width - 0.16, door_height - 0.08, 0.08)
+	var leaf_shape := BoxShape3D.new()
+	leaf_shape.size = leaf_size
+	var leaf_collision := CollisionShape3D.new()
+	leaf_collision.shape = leaf_shape
+	leaf_body.add_child(leaf_collision)
+	var leaf_visual := MeshInstance3D.new()
+	leaf_visual.name = "DoorLeafVisual"
+	var leaf_mesh := BoxMesh.new()
+	leaf_mesh.size = leaf_size
+	leaf_visual.mesh = leaf_mesh
+	leaf_visual.material_override = leaf_material
+	leaf_body.add_child(leaf_visual)
+	hinge.add_child(leaf_body)
+
+	var interaction_area := Area3D.new()
+	interaction_area.name = "DoorInteractionArea"
+	interaction_area.position = Vector3(0.0, door_height * 0.5, 0.12)
+	interaction_area.collision_layer = 1
+	interaction_area.collision_mask = 0
+	interaction_area.monitoring = false
+	interaction_area.monitorable = true
+	var interaction_shape := CollisionShape3D.new()
+	var interaction_sphere := SphereShape3D.new()
+	interaction_sphere.radius = 1.05
+	interaction_shape.shape = interaction_sphere
+	interaction_area.add_child(interaction_shape)
+	root.add_child(interaction_area)
+	root.call("configure", hinge, restricted, building_id, entrance_id)
+
+	var linked_ids: Array = building_body.get_meta("system_verified_door_ids", [])
+	if not linked_ids.has(entrance_id):
+		linked_ids.append(entrance_id)
+	building_body.set_meta("system_verified_door_ids", linked_ids)
+	if restricted:
+		var restricted_ids: Array = building_body.get_meta("system_restricted_door_ids", [])
+		if not restricted_ids.has(entrance_id):
+			restricted_ids.append(entrance_id)
+		building_body.set_meta("system_restricted_door_ids", restricted_ids)
+	return root
+
+
+func _add_osm_door_frame_piece(
+	parent: Node3D,
+	node_name: String,
+	position: Vector3,
+	size: Vector3,
+	material: Material
+) -> void:
+	var body := StaticBody3D.new()
+	body.name = node_name + "Body"
+	body.position = position
+	var shape := BoxShape3D.new()
+	shape.size = size
+	var collision := CollisionShape3D.new()
+	collision.shape = shape
+	body.add_child(collision)
+	var visual := MeshInstance3D.new()
+	visual.name = node_name + "Visual"
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	visual.mesh = mesh
+	visual.material_override = material
+	body.add_child(visual)
+	parent.add_child(body)
 
 
 func _find_building_approach_point(ring: PackedVector2Array, road_features: Array) -> Dictionary:
@@ -881,7 +1158,9 @@ func _build_entrance_feature(parent: Node3D, feature: Dictionary) -> int:
 	root.set_meta("system_associated_building_id", "baghdad_osm_building_" + building_id)
 	root.set_meta("system_association_distance_m", float(association.get("distance_m", -1.0)))
 	root.set_meta("system_association_status", association_status)
-	root.set_meta("system_access_state", "restricted_no_public_entry" if restricted else "verified_building_association_no_door_or_interior")
+	var physical_door := parent.get_node_or_null("OSMDoor_" + feature_id)
+	var has_physical_door := physical_door != null
+	root.set_meta("system_access_state", "restricted_no_public_entry" if restricted else ("verified_physical_door_created" if has_physical_door else "verified_building_association_no_door_or_interior"))
 	parent.add_child(root)
 
 	var marker := MeshInstance3D.new()
@@ -918,7 +1197,10 @@ func _build_entrance_feature(parent: Node3D, feature: Dictionary) -> int:
 	body.set_meta("system_associated_building_id", "baghdad_osm_building_" + building_id)
 	body.set_meta("system_association_distance_m", float(association.get("distance_m", -1.0)))
 	body.set_meta("system_association_status", association_status)
-	body.set_meta("system_access_state", "restricted_no_public_entry" if restricted else "verified_building_association_no_door_or_interior")
+	body.set_meta("system_access_state", "restricted_no_public_entry" if restricted else ("verified_physical_door_created" if has_physical_door else "verified_building_association_no_door_or_interior"))
+	if has_physical_door:
+		marker.visible = false
+		body.collision_layer = 0
 	root.add_child(body)
 
 	var linked_entrances: Array = associated_building.get_meta("system_verified_entrance_ids", [])
