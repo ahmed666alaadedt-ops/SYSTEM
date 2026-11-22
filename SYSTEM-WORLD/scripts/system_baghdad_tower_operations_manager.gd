@@ -2525,12 +2525,16 @@ func open_facility_service(tower_id: String, floor_number: int, facility_type: S
 	panel.show()
 
 
+func _calculate_arcade_mode_index(cabinet_mode: String) -> int:
+	return ["shooter", "memory", "reflex"].find(cabinet_mode)
+
+
 func open_arcade_cabinet(tower_id: String, floor_number: int, cabinet_id: int, cabinet_mode: String) -> void:
 	if cabinet_id < 0 or cabinet_id >= 6 or cabinet_mode not in ["shooter", "memory", "reflex"]:
 		return
 	open_facility_service(tower_id, floor_number, "arcade")
 	selected_arcade_mode = cabinet_mode
-	var mode_index := 2 if cabinet_mode == "reflex" else (1 if cabinet_mode == "memory" else 0)
+	var mode_index := _calculate_arcade_mode_index(cabinet_mode)
 	var selector := content.get_node_or_null("ArcadeModeSelector") as OptionButton
 	if selector != null:
 		selector.select(mode_index)
