@@ -73,3 +73,12 @@ Last verified: 2026-11-22 (GitHub repository review)
 - Continue only on qa/fix-deferred-test-cleanup-20261122; do not merge into main without explicit user approval.
 
 - Validation revision follow-up: manager commit `62af11089d48707052ed8bde6ee99fb6e37c8e7f` registers transport/facility blockout revision metadata on every tower; validator commit `d2aa21c7b608612d3eda30a222b7767b770c64c0` asserts the transport revision and recursively counts skybridges. Fresh validation run #857 (`44996334560`) and Android build #704 (`44996334554`) were triggered from the manager change and are pending; check their final conclusions before reporting a pass.
+
+
+## User-approved tower skyline reference and sky-garden pass — 22 November 2026
+
+- The user re-supplied the futuristic five-tower Baghdad skyline image and confirmed this is the desired in-game design. Treat it as the visual target: five distinctive towers; wide layered elevated decks; green sky gardens; glass/metal façades; cyan-blue illumination and warm gold trim; skybridges; central SYSTEM spire; Tigris and Baghdad city context.
+- Manager commit `8f7b458ffe74d1bc61ac88c39c58903e30d8b2fe` added three elevated sky-garden deck levels to each tower, each with static floor collision, glass ring, twelve planter bays and signage. Manager commit `3d856783e7b8b6996d81cc609da8db1fd624f87f` registers sky-garden revision metadata. Validator commit `070af85268fa8a2a366fda6efb3be617bbe31db0` checks the three decks and replaces recursive bridge counting with exact node-name lookups; validator commit `d6a53113681eeb96c7b0949e36514ad54e98a104` asserts sky-garden revision metadata.
+- Latest confirmed Godot run #860 (`44996929978`) completed project parse and headless main-scene launch successfully, but its separate tower-validation job is not yet confirmed against the latest exact-name validator. Previous tower test failure was the radial-bridge assertion; logs showed all five tower roots, podiums, transport blockouts, public entrance triggers, six cinema halls/floors, central SYSTEM spire and three shared sky gardens passing. Null-mesh cleanup diagnostics also appeared and still need investigation.
+- This remains procedural blockout geometry. It is not yet a visually matched, production-grade implementation of the supplied reference, and the latest additions have not been visually inspected in Godot or tested on the user's phone.
+- Continue on `qa/fix-deferred-test-cleanup-20261122`; do not merge to `main` without explicit user approval.
