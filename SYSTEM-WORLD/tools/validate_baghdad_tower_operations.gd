@@ -168,6 +168,14 @@ func _run() -> void:
 	if float(progression.call("get_combat_damage_bonus")) < 5.0:
 		_fail("Equipped weapon did not apply its combat damage bonus.")
 		return
+	operations.call("_sell_item", "training_sword", 1)
+	if int(progression.call("get_item_count", "training_sword")) != 1:
+		_fail("NPC vendor allowed sale of a currently equipped weapon.")
+		return
+	operations.call("_unequip_item", "weapon")
+	if not str(progression.call("get_equipped_item", "weapon")).is_empty():
+		_fail("NPC service did not remove the weapon from its equipment slot.")
+		return
 	progression.call("add_item", "strength_elixir", 1)
 	var strength_result: Dictionary = progression.call("consume_elixir", "strength_elixir")
 	if not bool(strength_result.get("success", false)) or float(progression.call("get_combat_damage_bonus")) < 20.0:
