@@ -19,6 +19,7 @@ var interact_button: Button
 var control_buttons: Dictionary = {}
 var pressed_controls: Dictionary = {}
 var pilot_active := false
+var player_physics_was_enabled := true
 var landed := true
 var horizontal_velocity := Vector3.ZERO
 var vertical_velocity := 0.0
@@ -157,6 +158,7 @@ func _toggle_pilot() -> void:
 		_enter_aircraft()
 
 func _enter_aircraft() -> void:
+	player_physics_was_enabled = player.is_physics_processing()
 	pilot_active = true
 	landed = true
 	heli_position = global_position + Vector3(0.0, 2.8, 0.0)
@@ -175,7 +177,7 @@ func _exit_aircraft() -> void:
 	pilot_active = false
 	player.set_meta("system_helicopter_piloting", false)
 	player.visible = true
-	player.set_physics_process(true)
+	player.set_physics_process(player_physics_was_enabled)
 	player.global_position = global_position + Vector3(-22.0, 3.0, 0.0)
 	player.velocity = Vector3.ZERO
 	for key in control_buttons:
