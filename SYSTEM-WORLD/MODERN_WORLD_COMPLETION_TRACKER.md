@@ -54,6 +54,15 @@ This is the acceptance checklist for the modern-world map. The project must not 
 - [ ] Implement floor-specific interior scenes, real elevator travel, stairwells, floor arrival points, and safe return/exit transitions.
 - [ ] Validate lobby collision, sign legibility, interaction reach, and mobile performance in Godot and on Android.
 
+## Baghdad enclosed lobby and lift-core blockout — 22 November 2026
+
+- [x] Enclose the public lobby with collidable side walls and split back/front wall sections while preserving a clear walk-in entrance.
+- [x] Add a lift-core door visual and collision panel at the back of each lobby; explicitly mark it as a visual-only placeholder.
+- [x] Preserve the separate reception counter, security gate, directory kiosk, floor zoning sign, and walkable floor.
+- [ ] Cut a real lift-core opening into the tower shell and connect it to safe, navigable interior floor scenes; the current lift door is closed and non-functional.
+- [ ] Add glazing, automatic doors, accessibility routes, lighting, interior materials, and detailed architecture after the collision layout is validated.
+- [ ] Run Godot interaction/collision traversal and Android visual/performance tests for all six lobbies.
+
 ## Current verified repository foundations
 
 - [x] Fourteen city labels and eight district labels per city are defined in modern_world_region_manager.gd; only Baghdad is currently connected to the provisional WGS84 registry anchor, while the other thirteen centers remain prototype-layout coordinates.
