@@ -1220,7 +1220,7 @@ func _run() -> void:
 		if int(cabinet_interaction.get_meta("system_arcade_cabinet_id", -1)) != cabinet_index:
 			_fail("Arcade cabinet interaction metadata does not match its cabinet ID.")
 			return
-		if str(cabinet_interaction.get_meta("system_arcade_cabinet_mode", "")) not in ["shooter", "memory", "reflex"]:
+		if str(cabinet_interaction.get_meta("system_arcade_cabinet_mode", "")) not in ["shooter", "memory", "reflex", "puzzle"]:
 			_fail("Arcade cabinet must route to a supported playable game mode.")
 			return
 		arcade_interaction_count += 1
@@ -1271,11 +1271,25 @@ func _run() -> void:
 	if bool(memory_invalid_cursor.get("valid", true)) or bool(memory_invalid_cursor.get("complete", true)):
 		_fail("Arcade memory cabinet must reject inputs after the sequence has ended.")
 		return
-	if int(operations.call("_calculate_arcade_mode_index", "shooter")) != 0 or int(operations.call("_calculate_arcade_mode_index", "memory")) != 1 or int(operations.call("_calculate_arcade_mode_index", "reflex")) != 2:
-		_fail("Arcade cabinet mode selector does not map all three playable games.")
+	if int(operations.call("_calculate_arcade_mode_index", "shooter")) != 0 or int(operations.call("_calculate_arcade_mode_index", "memory")) != 1 or int(operations.call("_calculate_arcade_mode_index", "reflex")) != 2 or int(operations.call("_calculate_arcade_mode_index", "puzzle")) != 3:
+		_fail("Arcade cabinet mode selector does not map all four playable games.")
 		return
 	if int(operations.call("_calculate_arcade_mode_index", "unknown")) != -1:
 		_fail("Arcade cabinet mode selector must reject unknown games.")
+		return
+	var puzzle_questions: Array = operations.call("_arcade_puzzle_questions")
+	var puzzle_correct: Dictionary = operations.call("_evaluate_arcade_puzzle_answer", puzzle_questions, 0, 7)
+	var puzzle_wrong: Dictionary = operations.call("_evaluate_arcade_puzzle_answer", puzzle_questions, 0, 6)
+	var puzzle_last: Dictionary = operations.call("_evaluate_arcade_puzzle_answer", puzzle_questions, 4, 11)
+	var puzzle_invalid: Dictionary = operations.call("_evaluate_arcade_puzzle_answer", puzzle_questions, 5, 11)
+	if puzzle_questions.size() != 5 or not bool(puzzle_correct.get("correct", false)) or int(puzzle_correct.get("next_cursor", -1)) != 1:
+		_fail("Arcade number-puzzle cabinet did not accept a correct first answer.")
+		return
+	if bool(puzzle_wrong.get("correct", true)) or int(puzzle_wrong.get("next_cursor", -1)) != 0:
+		_fail("Arcade number-puzzle cabinet must not advance on a wrong answer.")
+		return
+	if not bool(puzzle_last.get("complete", false)) or bool(puzzle_invalid.get("valid", true)):
+		_fail("Arcade number-puzzle cabinet did not complete or correctly reject an invalid cursor.")
 		return
 	if int(operations.call("_calculate_arcade_reflex_score", 160)) != 23:
 		_fail("Arcade reflex cabinet should award 23 points for a 160 ms reaction.")
