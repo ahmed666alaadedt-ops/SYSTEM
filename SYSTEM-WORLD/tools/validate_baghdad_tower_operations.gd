@@ -154,6 +154,37 @@ func _run() -> void:
 	if power_manager == null:
 		_fail("Power Tower progression manager is missing.")
 		return
+	var power_probe_script := load("res://scripts/system_power_tower_manager.gd") as Script
+	if power_probe_script == null:
+		_fail("Power Tower progression manager script could not load for regression tests.")
+		return
+	var power_probe := power_probe_script.new() as Node
+	main.add_child(power_probe)
+	power_probe.set("highest_cleared_floor", 0)
+	power_probe.set("active_floor", 0)
+	power_probe.set("floor_clear_times", {})
+	var skipped_floor: Dictionary = power_probe.call("request_floor", 2, 1)
+	if str(skipped_floor.get("reason", "")) != "PREVIOUS_FLOOR_REQUIRED":
+		_fail("Power Tower allowed a player to skip the previous floor.")
+		return
+	var low_level: Dictionary = power_probe.call("request_floor", 1, 0)
+	if str(low_level.get("reason", "")) != "PLAYER_LEVEL_TOO_LOW":
+		_fail("Power Tower allowed a player below the required level to enter.")
+		return
+	var first_floor: Dictionary = power_probe.call("request_floor", 1, 1)
+	if not bool(first_floor.get("success", false)):
+		_fail("Power Tower rejected a valid first-floor request.")
+		return
+	var duplicate_active: Dictionary = power_probe.call("request_floor", 1, 1)
+	if str(duplicate_active.get("reason", "")) != "ANOTHER_FLOOR_IS_ACTIVE":
+		_fail("Power Tower allowed a second concurrent active floor.")
+		return
+	var forged_clear: Dictionary = power_probe.call("confirm_floor_clear", 2, 30.0)
+	if str(forged_clear.get("reason", "")) != "FLOOR_NOT_ACTIVE":
+		_fail("Power Tower accepted a clear report for a floor that was never activated.")
+		return
+	power_probe.call("abandon_active_floor")
+	power_probe.queue_free()
 	for floor_number in range(1, 201):
 		var floor_data: Dictionary = power_manager.call("get_floor_data", floor_number)
 		if int(floor_data.get("floor", 0)) != floor_number or int(floor_data.get("required_level", 999)) > 100:
