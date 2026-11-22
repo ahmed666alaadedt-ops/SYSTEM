@@ -1183,6 +1183,7 @@ func _run() -> void:
 	var basketball_made_count := 0
 	var arcade_hit_count := 0
 	var arcade_last_result: Dictionary = {}
+	var cinema_scene_count := 0
 	for activity_type in activity_cases.keys():
 		var activity_case: Array = activity_cases[activity_type]
 		if str(activity_type) == "sports_court":
@@ -1207,9 +1208,9 @@ func _run() -> void:
 				_fail("Facility activity action failed: " + str(activity_type) + " / " + str(final_activity_result))
 				return
 			if str(activity_type) == "cinema":
+				cinema_scene_count += 1
 				var cinema_title := cinema_facility.get_node_or_null("CinemaProgramTitle") as Label3D
-				var expected_scene := int(final_activity_result.get("step", 0))
-				if cinema_title == null or not cinema_title.text.contains("المشهد %d" % expected_scene):
+				if cinema_title == null or not cinema_title.text.contains("المشهد %d" % cinema_scene_count):
 					_fail("Cinema scene progression did not update the screen for scene %d." % expected_scene)
 					return
 			if str(activity_type) == "bowling":
