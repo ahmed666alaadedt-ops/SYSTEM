@@ -1,3 +1,13 @@
+
+## SYSTEM Hotel inside the Baghdad Shopping and Commerce Tower — 22 November 2026
+
+- [x] Reserve floors 27–28 for the hotel within the existing Shopping Tower: floor 27 reception/lounge and floor 28 guest rooms/suites; restaurant floors remain 29–32.
+- [x] Add a hospitality manager staff role and attach hotel reception/booking interaction metadata to both hotel floors.
+- [x] Add first-pass 3D reception desk, lounge feature, suite-door visuals, and interaction areas; no separate tower is created.
+- [ ] Implement actual room inventory/availability, reservation, check-in/check-out, pricing, room service, guest persistence, and server-authoritative payment.
+- [ ] Replace hotel blockout geometry with complete room interiors, beds, bathrooms, lighting, accessibility, fire exits, and staff navigation.
+- [ ] Run Godot parser/import, scene interaction, save/load, economy, visual, and Android-device tests. This source change is not runtime-verified yet.
+
 # SYSTEM WORLD — Modern World Completion Tracker
 
 ## Baghdad tower mobile combat integration — 22 November 2026
