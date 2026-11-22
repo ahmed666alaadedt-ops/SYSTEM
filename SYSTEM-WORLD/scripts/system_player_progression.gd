@@ -254,6 +254,10 @@ func add_experience(amount: int, reason: String = "") -> Dictionary:
 	}
 
 
+func has_verified_hunter_mission(mission_id: String) -> bool:
+	return verified_hunter_mission_ids.has(mission_id.strip_edges())
+
+
 func record_verified_hunter_mission(mission_id: String, mission_points: int, used_nen: bool = false, ability_id: String = "") -> Dictionary:
 	var normalized_id := mission_id.strip_edges()
 	if normalized_id.is_empty() or mission_points <= 0:
