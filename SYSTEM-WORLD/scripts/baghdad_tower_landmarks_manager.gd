@@ -277,7 +277,7 @@ func _build_technology_tower() -> void:
 		"TechnologyInnovationTower",
 		"برج التكنولوجيا والابتكار",
 		"technology_innovation_tower_baghdad",
-		city_anchor + Vector3(-355.0, 0.0, -350.0),
+		city_anchor + Vector3(355.0, 0.0, 350.0),
 		235.0,
 		28.0,
 		40,
