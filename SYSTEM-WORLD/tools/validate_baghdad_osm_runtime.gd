@@ -1,6 +1,7 @@
 extends SceneTree
 
 const BAGHDAD_STREAMER = preload("res://scripts/baghdad_osm_cell_streamer.gd")
+const MODERN_CONTINENT = preload("res://scripts/modern_continent_manager.gd")
 const CITY_STATE_STORE = preload("res://scripts/baghdad_city_state_store.gd")
 const CITY_NAVIGATION = preload("res://scripts/npc_city_navigation_manager.gd")
 const BAGHDAD_OSM_DOOR = preload("res://scripts/baghdad_osm_door_interaction.gd")
@@ -13,6 +14,9 @@ func _initialize() -> void:
 
 
 func _run_validation() -> void:
+	var terrain_manager = MODERN_CONTINENT.new()
+	terrain_manager.name = "ModernContinent"
+	root.add_child(terrain_manager)
 	var streamer = BAGHDAD_STREAMER.new()
 	root.add_child(streamer)
 	print("Baghdad OSM validation: streamer added; checking manifest and origin.")
@@ -25,6 +29,16 @@ func _run_validation() -> void:
 		return
 	if int(streaming_status.get("manifest_schema_version", 0)) != 1:
 		_fail("Baghdad OSM manifest schema version was not validated.")
+		return
+
+	if streamer.ground_layer_schema_version != 1:
+		_fail("Baghdad OSM runtime pack has no verified municipal ground layer.")
+		return
+	if not is_equal_approx(streamer.ground_elevation_m, 34.0) or not is_equal_approx(streamer.water_surface_elevation_m, 28.0) or not is_equal_approx(streamer.bridge_deck_elevation_m, 34.28):
+		_fail("Baghdad OSM ground, Tigris water, and bridge deck elevations do not match the manifest contract.")
+		return
+	if not is_equal_approx(terrain_manager.get_terrain_height(0.0, 0.0), 34.0):
+		_fail("ModernContinentManager did not adopt the verified Baghdad ground elevation.")
 		return
 	if streamer.get_node_or_null("BaghdadOSMAttribution/OpenStreetMapCredit") == null:
 		_fail("Required OSM attribution overlay is missing.")
@@ -40,6 +54,16 @@ func _run_validation() -> void:
 	if not cell_feature_counts.has("historic-sites"):
 		_fail("Baghdad OSM cell did not report its dedicated historic-sites layer.")
 		return
+
+	if int(cell_feature_counts.get("ground", 0)) < 1:
+		_fail("Baghdad center cell has no generated municipal ground feature.")
+		return
+	var ground_meshes := cell_root.find_children("OSMBaghdadGround_*", "MeshInstance3D", true, false)
+	var ground_collisions := cell_root.find_children("OSMBaghdadGroundCollision_*", "StaticBody3D", true, false)
+	var road_collisions := cell_root.find_children("OSMRoadCollision_*", "StaticBody3D", true, false)
+	if ground_meshes.is_empty() or ground_collisions.is_empty() or road_collisions.is_empty():
+		_fail("Baghdad OSM land or road collision surfaces were not generated.")
+		return
 	if str(cell_root.get_meta("region_id", "")) != "iraq_baghdad_region":
 		_fail("Loaded cell does not expose its canonical region ID.")
 		return
@@ -52,6 +76,54 @@ func _run_validation() -> void:
 		_fail("Baghdad OSM generated null-mesh scene nodes: " + ", ".join(invalid_mesh_paths.slice(0, 12)))
 		return
 	print("Baghdad OSM mesh integrity: no null MeshInstance3D or MultiMeshInstance3D resources in loaded center cell.")
+
+	var manifest_path := streamer.data_root.path_join("manifest.json")
+	var manifest_value: Variant = JSON.parse_string(FileAccess.get_file_as_string(manifest_path))
+	if not manifest_value is Dictionary:
+		_fail("Baghdad OSM manifest could not be read for Republic Bridge integration.")
+		return
+	var republic_route: Dictionary = manifest_value.get("landmark_routes", {}).get("republic_bridge", {})
+	var bridge_anchor: Array = republic_route.get("tower_anchor_local_m", [])
+	var bank_points: Array = republic_route.get("bank_access_points_local_m", [])
+	if bridge_anchor.size() != 2 or bank_points.size() != 2:
+		_fail("Republic Bridge route is missing its tower anchor or both bank approaches.")
+		return
+	var bridge_cell_id := Vector2i(floori(float(bridge_anchor[0]) / streamer.cell_size), floori(float(bridge_anchor[1]) / streamer.cell_size))
+	streamer._load_cell(bridge_cell_id)
+	var bridge_cell := streamer.get_cell_node(bridge_cell_id)
+	if bridge_cell == null:
+		_fail("Republic Bridge runtime cell did not load.")
+		return
+	var bridge_deck_meshes := bridge_cell.find_children("OSMBridgeDeck_*", "MeshInstance3D", true, false)
+	var bridge_line_meshes := bridge_cell.find_children("OSMBridge_*", "MeshInstance3D", true, false)
+	var river_meshes := bridge_cell.find_children("OSMNaturalWater_*", "MeshInstance3D", true, false)
+	var bridge_deck_collisions := bridge_cell.find_children("OSMBridgeDeckCollision_*", "StaticBody3D", true, false)
+	var bridge_line_collisions := bridge_cell.find_children("OSMBridgeCollision_*", "StaticBody3D", true, false)
+	if bridge_deck_meshes.is_empty() or bridge_line_meshes.is_empty() or river_meshes.is_empty():
+		_fail("Republic Bridge deck/centerline or Tigris water surface did not render in its real OSM cell.")
+		return
+	if bridge_deck_collisions.is_empty() or bridge_line_collisions.is_empty():
+		_fail("Republic Bridge deck and centerline are missing physical collision.")
+		return
+	if streamer.is_ground_position(float(bridge_anchor[0]), float(bridge_anchor[1])):
+		_fail("The tower anchor is incorrectly classified as solid ground inside the Tigris water cutout.")
+		return
+	if terrain_manager.is_land_position(float(bridge_anchor[0]), float(bridge_anchor[1])):
+		_fail("ModernContinentManager incorrectly classifies the Tigris bridge anchor as land.")
+		return
+	if not is_equal_approx(terrain_manager.get_terrain_height(float(bridge_anchor[0]), float(bridge_anchor[1])), 34.0):
+		_fail("Baghdad OSM regional height sampling is inconsistent at Republic Bridge.")
+		return
+	for bank_point in bank_points:
+		var bank_cell := Vector2i(floori(float(bank_point[0]) / streamer.cell_size), floori(float(bank_point[1]) / streamer.cell_size))
+		streamer._load_cell(bank_cell)
+		if not streamer.is_ground_position(float(bank_point[0]), float(bank_point[1])):
+			_fail("One of the two Republic Bridge bank approaches has no generated walkable ground.")
+			return
+		if not terrain_manager.is_land_position(float(bank_point[0]), float(bank_point[1])):
+			_fail("ModernContinentManager does not recognize a verified Republic Bridge bank as land.")
+			return
+	print("Baghdad Republic Bridge runtime passed: deck collision, Tigris water clearance, and both bank ground approaches.")
 	var roads := cell_root.find_children("OSMRoad_*", "MeshInstance3D", true, false)
 	var buildings := cell_root.find_children("OSMBuilding_*", "MeshInstance3D", true, false)
 	var landuse := cell_root.find_children("OSMLanduse_*", "MeshInstance3D", true, false)
@@ -503,7 +575,8 @@ func _run_validation() -> void:
 		return
 	streamer._unload_cell(Vector2i(9, 9))
 	streamer.queue_free()
-	print("Baghdad OSM runtime validation passed: historic landmarks, Kadhimiya exclusion, player routing and cell persistence.")
+	terrain_manager.queue_free()
+	print("Baghdad OSM runtime validation passed: real ground/water/bridge geometry, two-bank access, historic landmarks, Kadhimiya exclusion, player routing and cell persistence.")
 	# queue_free() is deferred. Let SceneTree process every queued deletion before
 	# quitting so the headless renderer never observes partially torn-down meshes.
 	await process_frame
