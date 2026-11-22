@@ -640,7 +640,7 @@ func _run() -> void:
 	if shopping_tower.get_node_or_null("ActiveTowerElevatorCar") != null:
 		_fail("Elevator cabin was not cleaned up after returning to the lobby.")
 		return
-	var shop_progression: Node = main.get("player_progression") as Node
+	var shop_progression: Node = operations.get("progression") as Node
 	if shop_progression == null:
 		_fail("Shopping tower purchase test has no player progression reference.")
 		return
@@ -653,21 +653,32 @@ func _run() -> void:
 	if shop_employee == null:
 		_fail("No NPC shop employee can be interacted with.")
 		return
+	var shop_inventory_snapshot: Dictionary = shop_progression.get("inventory_items").duplicate(true)
+	var shop_inventory_fixture: Dictionary = shop_inventory_snapshot.duplicate(true)
+	shop_inventory_fixture.erase("water_bottle")
+	var shop_stock_snapshot: Dictionary = operations.get("vendor_stock").duplicate(true)
+	var shop_stock_fixture: Dictionary = shop_stock_snapshot.duplicate(true)
+	shop_stock_fixture["water_bottle"] = int(operations.call("_get_stock_cap", "water_bottle"))
+	var shop_credits_snapshot := int(operations.get("credits"))
+	shop_progression.set("inventory_items", shop_inventory_fixture)
+	operations.set("vendor_stock", shop_stock_fixture)
+	operations.set("credits", maxi(shop_credits_snapshot, 100))
 	operations.call("open_staff_service", shop_employee)
 	var water_stock_before := int(operations.call("get_vendor_stock", "water_bottle"))
 	operations.call("_buy_product", "water_bottle", "قارورة ماء", 12)
-	if int(shop_progression.call("get_item_count", "water_bottle")) < 1:
-		_fail("NPC shop purchase did not add the item to player inventory.")
-		return
-	if int(operations.call("get_vendor_stock", "water_bottle")) != water_stock_before - 1:
-		_fail("NPC shop purchase did not reduce vendor stock.")
-		return
+	var shop_purchase_succeeded := int(shop_progression.call("get_item_count", "water_bottle")) == 1
+	var shop_stock_decreased := int(operations.call("get_vendor_stock", "water_bottle")) == water_stock_before - 1
 	operations.call("_sell_item", "water_bottle", 1)
-	if int(shop_progression.call("get_item_count", "water_bottle")) != 0:
-		_fail("NPC shop sale did not remove the sold inventory item.")
-		return
-	if int(operations.call("get_vendor_stock", "water_bottle")) != water_stock_before:
-		_fail("NPC shop sale did not return the item to vendor stock.")
+	var shop_sale_succeeded := int(shop_progression.call("get_item_count", "water_bottle")) == 0
+	var shop_stock_restored := int(operations.call("get_vendor_stock", "water_bottle")) == water_stock_before
+	shop_progression.set("inventory_items", shop_inventory_snapshot)
+	shop_progression.call("save_progress")
+	operations.set("vendor_stock", shop_stock_snapshot)
+	operations.call("_save_vendor_stock")
+	operations.set("credits", shop_credits_snapshot)
+	operations.call("_save_wallet")
+	if not shop_purchase_succeeded or not shop_stock_decreased or not shop_sale_succeeded or not shop_stock_restored:
+		_fail("NPC shop buy/sell regression failed. Purchase status: " + str(operations.get("status_label").text))
 		return
 	pilot_progression.call("add_item", "iron_ingot", 1)
 	pilot_progression.call("add_item", "wood_plank", 2)
