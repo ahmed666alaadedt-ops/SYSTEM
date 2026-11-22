@@ -649,6 +649,10 @@ func _create_tower_facade_glazing(root: Node3D, height: float, radius: float, fl
 			var panel_position := outward * facade_radius + Vector3.UP * floor_height
 			glazing_multimesh.set_instance_transform(instance_index, Transform3D(orientation, panel_position))
 			instance_index += 1
+	root.set_meta("system_facade_window_count", instance_index)
+	root.set_meta("system_facade_window_segments_per_floor", WINDOW_SEGMENTS)
+	root.set_meta("system_facade_window_floors", floors)
+	root.set_meta("system_facade_window_base_radius", radius)
 	var glass_material := _make_surface_material(Color(0.08, 0.34, 0.48, 0.78), 0.52, 0.2)
 	glass_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	glass_material.emission_enabled = true
