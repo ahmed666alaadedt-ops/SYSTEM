@@ -50,6 +50,7 @@ const CRAFTING_RECIPES := {
 	"hunter_helmet": {"name": "صناعة خوذة صياد", "ingredients": {"iron_ingot": 2, "leather_roll": 1}, "output": "hunter_helmet", "required_level": 8},
 	"combat_outfit": {"name": "خياطة زي قتالي", "ingredients": {"leather_roll": 4, "energy_crystal": 1}, "output": "combat_outfit", "required_level": 12},
 	"healing_elixir": {"name": "تحضير إكسير الشفاء", "ingredients": {"medicinal_herb": 2, "crystal_dust": 1}, "output": "healing_elixir", "required_level": 1},
+	"repair_kit": {"name": "صناعة عدة إصلاح", "ingredients": {"iron_ingot": 2, "crystal_dust": 1}, "output": "repair_kit", "required_level": 1},
 	"strength_elixir": {"name": "تحضير إكسير القوة", "ingredients": {"medicinal_herb": 2, "monster_core": 1}, "output": "strength_elixir", "required_level": 5},
 	"speed_elixir": {"name": "تحضير إكسير السرعة", "ingredients": {"medicinal_herb": 2, "energy_crystal": 1}, "output": "speed_elixir", "required_level": 5},
 	"endurance_elixir": {"name": "تحضير إكسير التحمل", "ingredients": {"medicinal_herb": 2, "leather_roll": 1}, "output": "endurance_elixir", "required_level": 5},
