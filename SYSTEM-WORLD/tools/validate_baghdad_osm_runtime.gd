@@ -44,11 +44,37 @@ func _run_validation() -> void:
 	if building_collisions.is_empty():
 		_fail("Baghdad OSM building collision bodies were not created.")
 		return
+
+	var invalid_mesh_paths := _find_invalid_mesh_nodes(cell_root)
+	print("Baghdad OSM mesh integrity: null mesh nodes=", invalid_mesh_paths.size())
+	if not invalid_mesh_paths.is_empty():
+		_fail("Baghdad OSM cell contains nodes without valid mesh resources: " + ", ".join(invalid_mesh_paths.slice(0, 20)))
+		return
+
 	print("Baghdad OSM runtime cell passed: roads=", roads.size(), " buildings=", buildings.size(), " landuse=", landuse.size(), " building_collisions=", building_collisions.size())
+	print("Baghdad OSM cleanup: queueing cell and streamer for deletion.")
 	streamer.queue_free()
 	await process_frame
+	print("Baghdad OSM cleanup: first process frame completed.")
 	await process_frame
+	print("Baghdad OSM cleanup: second process frame completed.")
 	quit(0)
+
+
+func _find_invalid_mesh_nodes(start: Node) -> Array[String]:
+	var invalid_paths: Array[String] = []
+	var pending: Array[Node] = [start]
+	while not pending.is_empty():
+		var node: Node = pending.pop_back()
+		if node is MeshInstance3D and (node as MeshInstance3D).mesh == null:
+			invalid_paths.append(str(node.get_path()))
+		if node is MultiMeshInstance3D:
+			var instance := node as MultiMeshInstance3D
+			if instance.multimesh == null or instance.multimesh.mesh == null:
+				invalid_paths.append(str(node.get_path()))
+		for child in node.get_children():
+			pending.append(child)
+	return invalid_paths
 
 
 func _fail(message: String) -> void:
