@@ -395,6 +395,7 @@ func open_staff_service(staff_node: Node) -> void:
 	close_button.pressed.connect(func(): panel.hide())
 	content.add_child(close_button)
 	_add_catalog_controls(current_tower_id)
+	_add_crafting_controls(current_tower_id)
 	_add_sell_controls()
 	var elevator_button := Button.new()
 	elevator_button.text = "فتح دليل الطوابق والمصعد"
@@ -421,6 +422,43 @@ func _add_catalog_controls(tower_id: String) -> void:
 		buy_button.text = "%s — %d رصيد" % [item_name, price]
 		buy_button.pressed.connect(_buy_product.bind(item_id, item_name, price))
 		list.add_child(buy_button)
+
+func _add_crafting_controls(tower_id: String) -> void:
+	if tower_id != "weapons_equipment_elixirs_tower_baghdad" or not is_instance_valid(progression) or not progression.has_method("get_crafting_recipe_list"):
+		return
+	var recipes: Dictionary = progression.call("get_crafting_recipe_list")
+	var heading := Label.new()
+	heading.text = "ورشة الحدادة ومختبر الإكسير — التصنيع بإشراف الموظفين"
+	content.add_child(heading)
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(0.0, 150.0)
+	content.add_child(scroll)
+	var recipe_list := VBoxContainer.new()
+	scroll.add_child(recipe_list)
+	for recipe_value in recipes.keys():
+		var recipe_id := str(recipe_value)
+		var recipe: Dictionary = recipes[recipe_id]
+		var ingredients: Dictionary = recipe.get("ingredients", {})
+		var parts := PackedStringArray()
+		for ingredient_id in ingredients.keys():
+			parts.append("%s × %d (لديك %d)" % [str(ingredient_id), int(ingredients[ingredient_id]), int(progression.call("get_item_count", str(ingredient_id)))])
+		var craft_button := Button.new()
+		craft_button.text = str(recipe.get("name", recipe_id)) + "\n" + ", ".join(parts)
+		craft_button.pressed.connect(_craft_recipe.bind(recipe_id))
+		recipe_list.add_child(craft_button)
+
+
+func _craft_recipe(recipe_id: String) -> void:
+	if not is_instance_valid(progression) or not progression.has_method("craft_recipe"):
+		_set_status("نظام التصنيع غير متاح.")
+		return
+	var result: Dictionary = progression.call("craft_recipe", recipe_id)
+	if bool(result.get("success", false)):
+		_set_status("اكتمل التصنيع: " + str(result.get("output", recipe_id)))
+		_add_sell_controls()
+	else:
+		_set_status("تعذر التصنيع: " + str(result.get("reason", "تحقق من المستوى والمواد المطلوبة")))
+
 
 func _add_sell_controls() -> void:
 	if is_instance_valid(inventory_controls):
