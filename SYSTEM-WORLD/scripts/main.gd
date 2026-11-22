@@ -23,6 +23,7 @@ const WorldTimeManagerScript = preload("res://scripts/world_time_manager.gd")
 const WildlifeManagerScript = preload("res://scripts/wildlife_manager.gd")
 const MissionRewardManagerScript = preload("res://scripts/system_mission_reward_manager.gd")
 const PlayerProgressionScript = preload("res://scripts/system_player_progression.gd")
+const ModernWorldCombatSystemScript = preload("res://scripts/modern_world_combat_system.gd")
 const PlayerVehicleManagerScript = preload("res://scripts/system_player_vehicle_manager.gd")
 const VehicleRuntimeManagerScript = preload("res://scripts/system_vehicle_runtime_manager.gd")
 const MotorsportManagerScript = preload("res://scripts/system_motorsport_manager.gd")
@@ -50,6 +51,7 @@ var world_time_manager
 var wildlife_manager
 var mission_reward_manager
 var player_progression
+var modern_world_combat_system: Node
 var player_vehicle_manager
 var vehicle_runtime_manager
 var motorsport_manager
@@ -104,6 +106,7 @@ func _ready() -> void:
 	create_system_companions()
 	register_modern_world_map_locations()
 	create_player_progression()
+	create_modern_world_combat_system()
 	create_inventory_panel()
 	create_player_vehicle_manager()
 	create_vehicle_runtime_manager()
@@ -457,6 +460,13 @@ func create_power_tower_manager() -> void:
 	add_child(power_tower_manager)
 	power_tower_manager.floor_cleared.connect(_on_power_tower_floor_cleared)
 	power_tower_manager.floor_cleared.connect(_on_public_power_tower_floor_cleared)
+
+
+func create_modern_world_combat_system() -> void:
+	modern_world_combat_system = ModernWorldCombatSystemScript.new()
+	modern_world_combat_system.name = "ModernWorldCombatSystem"
+	add_child(modern_world_combat_system)
+	modern_world_combat_system.call("bind_actor", player, camera)
 
 
 func create_baghdad_tower_operations_manager() -> void:
@@ -1179,6 +1189,38 @@ func create_mobile_controls() -> void:
 	mobile_controls.camera_toggle_pressed.connect(_on_camera_toggle_pressed)
 	mobile_controls.interact_pressed.connect(_on_mobile_interact_pressed)
 	mobile_controls.flight_vertical_changed.connect(_on_flight_vertical_changed)
+	mobile_controls.attack_pressed.connect(_on_mobile_attack_pressed)
+	mobile_controls.skill_one_pressed.connect(_on_mobile_skill_one_pressed)
+	mobile_controls.skill_two_pressed.connect(_on_mobile_skill_two_pressed)
+	mobile_controls.dodge_pressed.connect(_on_mobile_dodge_pressed)
+
+
+func _on_mobile_attack_pressed() -> void:
+	if vehicle_runtime_manager != null and vehicle_runtime_manager.is_driving:
+		return
+	if is_instance_valid(modern_world_combat_system):
+		modern_world_combat_system.call("light_attack")
+
+
+func _on_mobile_skill_one_pressed() -> void:
+	if vehicle_runtime_manager != null and vehicle_runtime_manager.is_driving:
+		return
+	if is_instance_valid(modern_world_combat_system):
+		modern_world_combat_system.call("skill_one")
+
+
+func _on_mobile_skill_two_pressed() -> void:
+	if vehicle_runtime_manager != null and vehicle_runtime_manager.is_driving:
+		return
+	if is_instance_valid(modern_world_combat_system):
+		modern_world_combat_system.call("skill_two")
+
+
+func _on_mobile_dodge_pressed() -> void:
+	if vehicle_runtime_manager != null and vehicle_runtime_manager.is_driving:
+		return
+	if is_instance_valid(modern_world_combat_system):
+		modern_world_combat_system.call("dodge")
 
 
 func _on_movement_changed(direction: Vector2) -> void:
