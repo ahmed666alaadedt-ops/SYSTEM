@@ -19,7 +19,7 @@ If context/time limits prevent finishing the whole queue, leave an exact handoff
 4. Exactly four independent worlds must remain: Modern, Historical/Civilizations, Fantasy/Mythical, and Greed Island. Shared code is allowed; world identity, content, rules, geography and progression remain distinct.
 5. Baghdad is the only star-gate hub for travel between worlds. No inter-world star gates in other cities. Monster gates may appear in any city/world where specified. Greed Island is reached through its Baghdad star gate and retains its seasonal/ticket access design.
 6. Modern-world real cities/countries retain their real names, geographic placement, cultural identity and recognizable landmarks. Do not present prototype coordinates as accurate real geography. Expand the real-world registry only with verified geographic data.
-7. Baghdad must preserve the Tigris as an open flowing navigable river; preserve Karkh/Rusafa, Tahrir Square and the Freedom Monument. The five-tower vertical city is one connected district across the Karkh–Rusafa corridor, with five distinct identities: Power, Hunter Association, Business, Shopping, Entertainment. Do not bury or overwhelm protected landmarks or obstruct the river.
+7. Baghdad must preserve the Tigris as an open flowing navigable river; preserve Karkh/Rusafa, Tahrir Square and the Freedom Monument. The five primary towers form one connected network: four core towers around the local sky-ring, plus the Shopping/Weapon-and-Nen tower as a Republic Bridge outpost connected by an elevated express skyway and two bank approaches. Power Tower remains a separate independent landmark. Do not bury or overwhelm protected landmarks or obstruct the river.
 8. AI NPCs may live, work, travel, trade, gather information, communicate, form relationships, marry and have families. They must not autonomously complete the player's main quests, solve player puzzles, fight the player's battles, or take over player organizations.
 9. No fake features: a UI, marker, data model, placeholder mesh, signal, or source-code connection is not a finished gameplay feature. Clearly distinguish implemented, connected, tested, visually reviewed, and device-verified states.
 10. No paid services/dependencies without explicit approval. No secrets, credentials, private data, or unsafe client-authoritative economy. Real-money rewards/payments and shared ownership require approved secure server-side design; do not simulate them as live.
@@ -55,7 +55,7 @@ Current starting evidence in the tracker: an OSM Baghdad boundary pack and a sou
 
 - Continue from the existing metric-cell OSM streamer and current map foundation. Expand coverage through staged geographic packs; do not load the entire municipal area as one unbounded scene.
 - Validate official boundary, roads, district data, elevation, hydrology and land/water alignment before production promotion.
-- Build the five connected district towers: Hunter Association, Business, Shopping, Entertainment, and Technology & Innovation. Keep Power Tower physically detached and excluded from all district skybridge/vehicle-deck loops.
+- Build the five primary tower network: Hunter Association, Business, Shopping/Weapon-and-Nen, Entertainment, and Technology & Innovation. Keep four core towers on the local sky-ring; place the Shopping/Weapon-and-Nen outpost above Republic Bridge only when the verified OSM pack is present, then connect it with the express skyway and two bank access ramps. Keep Power Tower physically detached and excluded from all district loops.
 - Place the Global Hunter Association headquarters as a separate elevated headquarters above the shared five-tower district; do not place it on Power Tower or count it as a sixth primary tower.
 - Keep the Tigris visibly open below/through the district, preserve river navigation and riverfront access, and protect Tahrir Square/Freedom Monument sightlines.
 - Add tested skybridges, promenades, ramps, elevators, pedestrian paths, accessible routes, service/emergency access, parking and public transit links. Visual shafts and ramp blocks are not working lifts/roads.
@@ -218,32 +218,38 @@ Read and implement `SYSTEM-WORLD/REAL_WORLD_ADVERTISING_AND_CHAMPION_DISPLAY_SYS
 
 ## Baghdad weapon and Nen tower continuation checkpoint — 22 November 2026
 
-**Scope:** one of the five Baghdad towers is assigned the combined Weapon Armory & Nen Awakening role. The existing shopping tower is the selected building because it preserves the commerce/retail function while adding armory and potion services. The separate Power Tower remains unchanged.
+**Scope:** the Shopping Tower is the selected one of the five primary towers for the combined Weapon Armory & Nen Awakening role. It remains a playable tower with its existing lobby, catalog and floor services. The separate Power Tower remains unchanged and independent.
 
-**Implemented on work/baghdad-system-integration:**
-- Added safe inventory item consumption to SYSTEMPlayerProgression.
-- Expanded the Baghdad shopping-tower menu into weapon, potion, souvenir-market and player-collection views.
-- Added a catalog covering firearms, swords, daggers, spears, axes, bows, crossbows, arrows, energy weapons, Nen awakening vials and Nen control elixirs.
-- Connected awakening vials to the existing SYSTEMNenManager discovery-insight progression; each vial contributes one insight, and the normal three-insight discovery rule remains in force.
-- Connected the control elixir to TEN training; failed uses refund the consumed item.
-- Added five lobby service desks: Baghdad market, shopping catalog, player collection, armory and Nen potion laboratory.
-- Added procedural armory racks and Nen potion-laboratory fixtures to the shopping tower's generated floor variants.
-- Added validator checks for service desks, floor fixtures, catalog coverage, safe potion consumption, weapon equipping/combat profiles and Republic Bridge target metadata.
-- Documented the Republic Bridge geographic target in the five-tower design and Baghdad map status files.
+**Previously implemented and retained on `work/baghdad-system-integration`:**
+- Safe inventory item consumption and the Baghdad shopping-tower weapon, potion, souvenir-market and player-collection views.
+- Catalog coverage for firearms, swords, daggers, spears, axes, bows, crossbows, arrows, energy weapons, Nen awakening vials and Nen control elixirs.
+- Awakening vials connected to SYSTEMNenManager discovery insight; the three-insight discovery rule remains unchanged.
+- Control elixir connected to TEN training, with failed uses refunding the consumed item.
+- Five lobby service desks and procedural armory/potion-laboratory fixtures.
+- Validator coverage for service desks, floor fixtures, catalog coverage, safe potion consumption, weapon profiles and bridge target metadata.
 
-**Geographic blocker — do not bypass:**
-- Republic Bridge reference point: 33.32495°N, 44.40483°E; the bridge crosses the Tigris and connects Al-Karkh and Al-Rusafa.
-- Relative to the current Baghdad registry origin (33.3152°N, 44.3661°E), the projected local offset is approximately +3606.1 m east and -1082.0 m north.
-- The current procedural continent width is 3000 m, and the verified Baghdad OSM/cell pack with real Tigris/bridge geometry is not available in this branch. The tower is marked with target coordinates and geospatial_relocation_pending=true; it has NOT been moved to the Republic Bridge. Do not claim it is physically above the river until the real regional map/cell pack is integrated and validated.
-- Do not generate fake Karkh/Rusafa banks or an invented Tigris channel to make the target look complete.
+**New implementation committed on the work branch — validation pending:**
+- Added a terrain-following Baghdad municipal ground-layer builder from the verified municipal boundary minus mapped natural-water polygons, clipped into the existing 200 m OSM cell pack.
+- Added the Republic Bridge and Tigris source-feature contract, exact projected tower anchor, bridge centerline, two bank access points, and express-skyway support points selected only where mapped land exists.
+- Offset the two bank approach points 12 m outside the bridge centerline/traffic lane; the approaches are planned from both Al-Karkh and Al-Rusafa sides.
+- Added a runtime terrain extension beyond the original 3 km x 2.2 km continent grid. It blends from the existing terrain edge to Baghdad's resolved local baseline over 600 m; heights inside the original grid remain unchanged so the four core towers retain their established transforms.
+- Updated OSM streaming so ground/roads follow the local terrain profile. Only the verified Tigris water polygon/centerline and Republic Bridge deck use their dedicated relative-elevation values; other Baghdad waterways and bridges continue to follow local terrain.
+- Changed the Shopping/Weapon-and-Nen tower manager to relocate only that tower to the verified Republic Bridge anchor when the validated pack is present. Its playable lobby/interior remains enabled; the four core towers retain their previous locations; Power Tower remains separate.
+- Added a 64 m-radius elevated tower platform, collision-backed access ramps from both banks, and an elevated express skyway from the four-tower ring. Skyway support points are constrained to mapped land, with a no-pylon zone around the bridge/Tigris corridor.
+- Added Godot integration checks for the four unchanged core-tower positions, bridge anchor/platform, both bank ramps, walkable collisions, express skyway, river clearance and the relocated tower's playable interior.
+- Added the tower integration validator to the canonical Godot workflow after the OSM pack artifact is supplied.
 
-**Not yet implemented:**
-1. Real geographic placement of the tower and the spanning bridge structure over the Tigris.
-2. Integration of verified Baghdad riverbanks, waterway and bridge deck/crossings, including keeping the waterway clear below.
-3. Weapon equip/unequip, persistent player loadout, weapon-specific damage/range profiles and modern combat integration are implemented. Still missing held weapon models, animations, recoil, ammunition/reloading, projectile physics and final balance.
-4. In-world visual review and Android performance/playability test.
+**Geographic/elevation caution — do not overstate verification:**
+- Republic Bridge target: 33.32495°N, 44.40483°E; projected local offset approximately +3606.1 m east and -1082.0 m north from the Baghdad registry origin (33.3152°N, 44.3661°E).
+- OSM verifies the horizontal boundary, waterway, bridge geometry and land access. The current ground/water/bridge/platform elevations (34.0 m, 28.0 m, 34.28 m and 46.28 m source-relative respectively) are explicit game-world assumptions, not surveyed/DEM measurements. Keep the river clear and replace these assumptions when authoritative elevation data is available.
+- The OSM pack is generated and checked by the source workflow; the current runtime relocation is conditional on the verified manifest being present. If it is absent or invalid, the Shopping Tower stays at its previous location and retains a pending marker. Never force the tower to the bridge using guessed coordinates alone.
 
-**Next single task:** obtain/import and validate the approved Baghdad geographic data pack (including Tigris waterway and Republic Bridge), then move only the armory/Nen tower to the exact bridge span and test both bank entrances. Keep all work on the existing feature branch; do not merge into main without explicit user approval.
+**Not yet verified:**
+1. The OSM source-pack generation, geometry audit and support-point verifier on the current PR head.
+2. Godot 4.3 import/parser, OSM runtime-cell validation and the new tower/bridge integration validator on the same exact head.
+3. Live visual review from both banks and the river, including bridge traffic clearance, navigation, ramp grades, city sightlines and streaming seams.
+4. Android build/device traversal and performance.
 
+**Next single task:** obtain a successful source-pack audit and canonical Godot validation for the exact current branch head; fix any failures on this branch only. Do not merge into `main` without explicit user approval.
 
-**Latest code verification:** GitHub Actions run 45015013231 passed on code commit 22dec568e2e6fd99ad7b8fca7b7ef0c819c83709. This run included Godot 4.3 import/parser, Baghdad five-tower and Power Tower validation, Shopping Tower legacy catalog/purchase compatibility, Nen validation, weapon loadout/combat-profile validation, Hunter Examination, remaining listed validators, missing-mesh scan and headless main-scene launch. This is CI/headless evidence only, not Android device or visual playtesting. The current documentation checkpoint is newer than that tested code commit; no code changes were made after the passing run. PR 37 remains open against main and is not merged.
+**Latest verification boundary:** the earlier Godot workflow run 45015013231 passed on commit 22dec568e2e6fd99ad7b8fca7b7ef0c819c83709, before this Republic Bridge outpost implementation. No passing CI result has yet been confirmed for the new bridge-outpost commits. This is not Android-device or visual-playtest evidence. PR 37 remains unmerged.
