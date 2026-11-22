@@ -28,7 +28,7 @@ func _ready() -> void:
 	_create_materials()
 	_build_hunter_tower()
 	_build_power_tower()
-	_build_weapons_equipment_elixirs_tower()
+	_build_business_tower()
 	_build_shopping_tower()
 	_build_entertainment_tower()
 	_build_technology_tower()
@@ -353,34 +353,42 @@ func get_tower_positions() -> Array[Dictionary]:
 
 
 
-func _build_weapons_equipment_elixirs_tower() -> void:
+func _build_business_tower() -> void:
 	_build_tower(
-		"WeaponsEquipmentElixirsTower",
-		"برج الأسلحة والمعدات والإكسير",
-		"weapons_equipment_elixirs_tower_baghdad",
-		city_anchor + Vector3(-350.0, 0.0, 350.0),
+		"BusinessInvestmentTower",
+		"برج الأعمال والاستثمار",
+		"business_investment_tower_baghdad",
+		city_anchor + Vector3(355.0, 0.0, 365.0),
 		220.0,
 		26.0,
 		36,
-		Color(0.82, 0.30, 0.22)
+		Color(0.22, 0.76, 0.52)
 	)
-	var tower := get_node_or_null("WeaponsEquipmentElixirsTower")
-	if tower != null:
-		tower.set_meta("facility_categories", PackedStringArray([
-			"weapons", "swords", "spears", "axes", "bows", "firearms",
-			"shields", "armor", "armour", "helmets", "equipment_upgrades", "repair",
-			"nen_research", "healing_elixirs", "strength_elixirs", "speed_elixirs",
-			"endurance_elixirs", "energy_elixirs", "rare_legendary_elixirs"
-		]))
-		tower.set_meta("elixir_categories", PackedStringArray([
-			"nen_acquisition", "nen_control", "healing", "strength", "speed",
-			"endurance", "energy", "rare_and_legendary_elixirs"
-		]))
-		tower.set_meta("gameplay_status", "weapons_equipment_elixirs_tower_blockout")
 
 
 func _build_shopping_tower() -> void:
-	_build_tower("ShoppingTower", "برج التسوق", "shopping_tower_baghdad", city_anchor + Vector3(-355.0, 0.0, -350.0), 190.0, 30.0, 32, Color(0.95, 0.72, 0.28))
+	_build_tower("ShoppingTower", "برج التسوق والتجارة", "shopping_tower_baghdad", city_anchor + Vector3(-355.0, 0.0, -350.0), 190.0, 30.0, 32, Color(0.95, 0.72, 0.28))
+	var tower := get_node_or_null("ShoppingTower")
+	if tower != null:
+		tower.set_meta("facility_categories", PackedStringArray([
+			"retail", "weapons", "swords", "spears", "axes", "bows", "firearms",
+			"shields", "armor", "armour", "helmets", "ranked_hunter_outfits",
+			"equipment_upgrades", "repair", "crafting", "nen_research",
+			"healing_elixirs", "strength_elixirs", "speed_elixirs",
+			"endurance_elixirs", "energy_elixirs", "rare_legendary_elixirs",
+			"restaurants", "cafes", "bakeries", "hotel", "guest_suites"
+		]))
+		tower.set_meta("elixir_categories", PackedStringArray([
+			"nen_acquisition", "nen_control", "nen_stabilization", "healing",
+			"regeneration", "strength", "speed", "endurance", "energy",
+			"antidotes", "rare_and_legendary_elixirs"
+		]))
+		tower.set_meta("hospitality_categories", PackedStringArray([
+			"iraqi_restaurants", "arab_restaurants", "international_restaurants",
+			"cafes", "dessert_shops", "bakeries", "hotel_reception",
+			"guest_rooms", "suites", "room_service"
+		]))
+		tower.set_meta("gameplay_status", "shopping_commerce_hospitality_hotel_and_equipment_blockout")
 
 
 func _build_entertainment_tower() -> void:
@@ -537,23 +545,24 @@ func _get_tower_floor_directory(tower_id: String) -> PackedStringArray:
 				"81-140: البحث والتطوير والدعم الطبي والاجتماعات",
 				"141-200: الإدارة العليا وقاعة الشرف العالمية"
 			])
-		"weapons_equipment_elixirs_tower_baghdad":
+		"business_investment_tower_baghdad":
 			return PackedStringArray([
-				"01-04: الاستقبال ومعرض الأسلحة",
-				"05-12: السيوف والرماح والفؤوس والأقواس والأسلحة النارية",
-				"13-18: الدروع والخوذ وبدلات القتال",
-				"19-24: تطوير المعدات والصيانة والتخصيص",
-				"25-30: مختبرات إكسيرات النِن والشفاء والقدرات",
-				"31-35: إكسيرات القوة والسرعة والتحمل والطاقة",
-				"36: خزنة الإكسيرات النادرة والأسطورية — دخول مشروط"
+				"01-08: الاستقبال والخدمات المصرفية",
+				"09-16: تأسيس الشركات والمكاتب التجارية",
+				"17-24: الاستثمار والعقود وإدارة الأصول",
+				"25-32: قاعات الصفقات ومراكز الأعمال",
+				"33-36: مجلس الاستثمار والشركات الكبرى"
 			])
 		"shopping_tower_baghdad":
 			return PackedStringArray([
-				"01-08: السوق الرئيسي والمتاجر",
-				"09-14: المطاعم والمقاهي",
-				"15-22: الأزياء والإلكترونيات والخدمات",
-				"23-28: السينما والترفيه الداخلي",
-				"29-32: المطاعم الراقية وحدائق الإطلالة"
+				"01-06: السوق الرئيسي والاحتياجات والمتاجر",
+				"07-14: الأسلحة الحديثة والتقليدية والدروع والورش",
+				"15-20: الأزياء والتجهيزات والتطوير والصيانة",
+				"21-26: صيدليات الإكسير ومختبرات النِن والعلاج",
+				"27: فندق SYSTEM — الاستقبال والحجوزات والصالة",
+				"28: فندق SYSTEM — الغرف والأجنحة",
+				"29-30: المطاعم العراقية والعربية والعالمية والمقاهي",
+				"31-32: المطاعم الراقية والحلويات والمخابز"
 			])
 		"entertainment_tower_baghdad":
 			return PackedStringArray([
@@ -631,32 +640,6 @@ func _create_tower_identity_details(root: Node3D, node_name: String, height: flo
 				_add_tower_identity_box(root, "HonorHallPillar_%s" % str(side), Vector3(side * radius * 1.12, 27.0, -radius * 0.62), Vector3(2.8, 54.0, 2.8), trim_material)
 			_add_tower_identity_box(root, "AssociationHonorLintel", Vector3(0.0, 54.0, -radius * 0.62), Vector3(radius * 2.35, 3.0, 3.0), glow)
 			_add_tower_identity_box(root, "AssociationCrownSpire", Vector3(0.0, height + 34.0, 0.0), Vector3(5.0, 68.0, 5.0), accent)
-		"WeaponsEquipmentElixirsTower":
-			# Crossed blade insignia and an armoury display podium make this tower distinct.
-			for side in [-1.0, 1.0]:
-				var blade := MeshInstance3D.new()
-				blade.name = "CrossedWeaponBlade_%s" % str(side)
-				var blade_mesh := BoxMesh.new()
-				blade_mesh.size = Vector3(2.2, 34.0, 1.2)
-				blade.mesh = blade_mesh
-				blade.position = Vector3(side * 7.0, 28.0, -radius * 1.55)
-				blade.rotation.z = side * deg_to_rad(34.0)
-				blade.material_override = accent
-				root.add_child(blade)
-				_add_tower_identity_box(root, "WeaponHilt_%s" % str(side), Vector3(side * 7.0, 14.0, -radius * 1.55), Vector3(8.0, 1.8, 2.0), glow)
-			for display_index in range(4):
-				var display := MeshInstance3D.new()
-				display.name = "ArmouryShowcase_%02d" % display_index
-				var display_mesh := CylinderMesh.new()
-				display_mesh.top_radius = 2.2
-				display_mesh.bottom_radius = 2.8
-				display_mesh.height = 2.0
-				display.mesh = display_mesh
-				var angle := TAU * float(display_index) / 4.0
-				display.position = Vector3(cos(angle) * radius * 1.08, 15.0, sin(angle) * radius * 1.08)
-				display.material_override = glow if display_index % 2 == 0 else trim_material
-				root.add_child(display)
-			_add_tower_identity_box(root, "ElixirResearchBeacon", Vector3(0.0, 42.0, radius * 1.48), Vector3(13.0, 2.2, 2.2), glow)
 		"ShoppingTower":
 			for level in range(3):
 				var retail_ring := MeshInstance3D.new()
@@ -670,6 +653,18 @@ func _create_tower_identity_details(root: Node3D, node_name: String, height: flo
 				retail_ring.material_override = glow if level == 1 else accent
 				root.add_child(retail_ring)
 			_add_tower_identity_box(root, "ShoppingAtriumSign", Vector3(0.0, 35.0, -radius * 1.55), Vector3(radius * 1.7, 5.0, 1.0), glow)
+			# The same tower showcases the armoury, elixir research and retail identity.
+			for side in [-1.0, 1.0]:
+				var blade := MeshInstance3D.new()
+				blade.name = "ShoppingTowerWeaponBlade_%s" % str(side)
+				var blade_mesh := BoxMesh.new()
+				blade_mesh.size = Vector3(2.0, 24.0, 1.0)
+				blade.mesh = blade_mesh
+				blade.position = Vector3(side * 7.0, 24.0, -radius * 1.55)
+				blade.rotation.z = side * deg_to_rad(30.0)
+				blade.material_override = accent
+				root.add_child(blade)
+			_add_tower_identity_box(root, "ShoppingTowerElixirBeacon", Vector3(0.0, 44.0, radius * 1.48), Vector3(12.0, 2.0, 2.0), glow)
 		"EntertainmentTower":
 			var arena_bowl := MeshInstance3D.new()
 			arena_bowl.name = "EntertainmentArenaBowl"
