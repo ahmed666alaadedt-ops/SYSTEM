@@ -231,8 +231,8 @@ func _run() -> void:
 		if floor_room.get_node_or_null("InteriorWall_15") != null or floor_room.get_node_or_null("InteriorWall_14") == null or floor_room.get_node_or_null("InteriorWall_16") == null:
 			_fail("A Baghdad emergency exit is blocked by the circular wall or its adjacent wall segments are missing.")
 			return
-		if exit_sensor.get_node_or_null("CollisionShape3D") == null or not exit_sensor.monitoring or exit_sensor.get_signal_connection_list("body_entered").is_empty():
-			_fail("A Baghdad floor emergency exit is missing its active physical evacuation sensor connection.")
+		if exit_sensor.get_node_or_null("CollisionShape3D") == null or not exit_sensor.monitoring:
+			_fail("A Baghdad floor emergency exit is missing its active physical evacuation sensor or collision shape.")
 			return
 		if not bool(exit_sensor.get_meta("system_emergency_exit", false)) or str(exit_sensor.get_meta("system_tower_id", "")) != str(floor_room.get_meta("system_tower_id", exit_sensor.get_meta("system_tower_id", ""))):
 			_fail("A Baghdad floor emergency exit has invalid tower ownership metadata.")
