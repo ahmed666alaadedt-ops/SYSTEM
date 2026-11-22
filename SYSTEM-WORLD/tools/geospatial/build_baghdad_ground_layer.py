@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Add a flat, water-cut Baghdad municipal ground surface to the streamed OSM cell pack.
+"""Add a terrain-following, water-cut Baghdad municipal ground surface to the OSM cell pack.
 
 The source is the verified Baghdad municipal boundary minus mapped natural-water
-polygons. Elevations are explicit game-world assumptions until a DEM is added.
+polygons. Source elevations are explicit game-world assumptions until a DEM is added.
 """
 
 from __future__ import annotations
