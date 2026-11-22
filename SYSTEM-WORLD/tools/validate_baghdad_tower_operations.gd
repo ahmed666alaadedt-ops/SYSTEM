@@ -90,6 +90,11 @@ func _run() -> void:
 		if room.get_node_or_null("FloorCollision") == null:
 			_fail("Interior floor collision is missing for " + tower_id)
 			return
+		var theme_root := room.get_node_or_null("FloorThemeIdentity") as Node3D
+		var theme_props := theme_root.get_node_or_null("FloorThemeProps") as Node3D if theme_root != null else null
+		if theme_root == null or theme_props == null or theme_props.get_child_count() < 5 or str(room.get_meta("system_floor_theme_id", "")).is_empty():
+			_fail("Distinct department floor theme is missing or incomplete for " + tower_id)
+			return
 		if tower_id != "power_tower_baghdad":
 			var service_area := room.find_child("TowerServiceInteraction", true, false) as Area3D
 			if service_area == null or not service_area.is_in_group("system_interactable") or str(service_area.get_meta("system_tower_id", "")) != tower_id:
