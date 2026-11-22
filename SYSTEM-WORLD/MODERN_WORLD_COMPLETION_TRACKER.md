@@ -4,8 +4,9 @@
 - [x] Add ten scored bowling frames with per-frame pinfall, cumulative score, a lock while the ball is moving and completion rewards.
 - [x] Upgrade the basketball court with a collidable court surface, backboard, visible rim, scoring Area3D and a launched rigid-body basketball; score only when the ball enters the hoop sensor.
 - [x] Add five basketball attempts with two points per detected basket and a final result that records whether the last shot scored.
-- [x] Add touch-friendly horizontal aim sliders for both bowling and basketball, so the player can adjust the throw direction on a phone without keyboard input.
-- [x] Extend the Godot operations validator to check bowling lane/pin generation, await ten physical throws, check the basketball sensor and await five physical shots.
+- [x] Add touch-friendly horizontal aim sliders for bowling, basketball and arcade target shooting, so the player can adjust direction on a phone without keyboard input.
+- [x] Add five glowing arcade targets with Area3D hit sensors and physical energy projectiles; award points only when a projectile reaches a target sensor.
+- [x] Extend the Godot operations validator to check bowling lane/pin generation, await ten physical throws, check the basketball sensor and await five physical shots, then validate all five arcade target sensors and physical projectile attempts.
 - [ ] Run Godot 4.3 and Android export on this revision. The last confirmed successful runs (#1365/#1102) apply only to gameplay commit `bdbcf4e0c607d0aef37ca1d087163dc10ecc36a1`; these newer bowling/basketball changes remain unverified until fresh runs are available.
 - [ ] Tune physical ball trajectories, collision response and touch aiming after a real Android play session.
 
