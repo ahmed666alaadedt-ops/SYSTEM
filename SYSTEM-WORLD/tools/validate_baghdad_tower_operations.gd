@@ -120,9 +120,36 @@ func _run() -> void:
 		return
 	exam_manager.set("registered", true)
 	exam_manager.set("completed_stage_ids", all_stage_ids)
-	if not helipad.call("_can_pilot"):
-		_fail("A candidate who completed all Hunter examination stages must receive pilot authorization.")
+	var pilot_player := main.get("player") as CharacterBody3D
+	var progression := main.get_node_or_null("PlayerProgression")
+	if pilot_player == null or progression == null:
+		_fail("Player and progression data are required for helicopter authorization tests.")
 		return
+	if helipad.call("_can_pilot"):
+		_fail("A completed Hunter License alone must not grant helicopter access.")
+		return
+	progression.set("current_level", 50)
+	if not helipad.call("_can_pilot"):
+		_fail("A level 50 hunter with a completed Hunter License must receive pilot authorization.")
+		return
+	progression.set("current_level", 1)
+	exam_manager.set("completed_stage_ids", empty_stage_ids)
+	pilot_player.set_meta("system_hunter_association_role", "mission_clerk")
+	if not helipad.call("_can_pilot"):
+		_fail("Authorized Hunter Association staff must receive helicopter access regardless of player level.")
+		return
+	pilot_player.remove_meta("system_hunter_association_role")
+	progression.set("current_level", 50)
+	exam_manager.set("completed_stage_ids", all_stage_ids)
+	pilot_player.set_meta("system_hunter_rank", "A")
+	progression.set("current_level", 1)
+	exam_manager.set("completed_stage_ids", empty_stage_ids)
+	if not helipad.call("_can_pilot"):
+		_fail("An A-rank notable hunter must receive helicopter access without the level 50 threshold.")
+		return
+	pilot_player.remove_meta("system_hunter_rank")
+	progression.set("current_level", 50)
+	exam_manager.set("completed_stage_ids", all_stage_ids)
 	if not helipad.has_method("_is_aircraft_position_clear"):
 		_fail("Hunter Association helicopter obstacle-clearance query is missing.")
 		return
