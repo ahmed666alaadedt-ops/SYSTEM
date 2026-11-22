@@ -88,18 +88,33 @@ func _ready() -> void:
 		var manifest_value: Variant = JSON.parse_string(FileAccess.get_file_as_string(manifest_path))
 		if manifest_value is Dictionary:
 			var manifest: Dictionary = manifest_value
+			var route: Dictionary = manifest.get("landmark_routes", {}).get("republic_bridge", {})
 			var ground_schema := int(manifest.get("ground_layer_schema_version", 0))
 			var ground_elevation := float(manifest.get("ground_elevation_m", NAN))
-			if ground_schema == 1 and is_finite(ground_elevation) and terrain.has_method("configure_baghdad_osm_ground"):
-				terrain.call("configure_baghdad_osm_ground", ground_elevation)
+			var water_elevation := float(manifest.get("water_surface_elevation_m", NAN))
+			var bridge_elevation := float(manifest.get("bridge_deck_elevation_m", NAN))
+			var route_valid := (
+				str(route.get("osm_bridge_centerline_id", "")) == "754157537"
+				and str(route.get("osm_tigris_centerline_id", "")) == "24709603"
+				and str(route.get("osm_tigris_water_polygon_id", "")) == "1145641"
+				and route.get("tower_anchor_local_m", []).size() == 2
+				and route.get("bank_access_points_local_m", []).size() == 2
+			)
+			if ground_schema == 1 and is_finite(ground_elevation) and is_finite(water_elevation) and is_finite(bridge_elevation) and route_valid:
+				pass
 			else:
-				push_warning("SYSTEM WORLD: Baghdad OSM pack lacks the verified ground layer; procedural fallback remains active.")
+				push_warning("SYSTEM WORLD: Baghdad OSM pack lacks the verified ground/bridge route contract; procedural fallback remains active.")
 				use_baghdad_osm_cells = false
 		else:
 			push_warning("SYSTEM WORLD: Baghdad OSM manifest is invalid; procedural fallback remains active.")
 			use_baghdad_osm_cells = false
 	_create_materials()
 	_resolve_city_anchors()
+	if use_baghdad_osm_cells and city_anchors.has("Baghdad") and terrain.has_method("configure_baghdad_osm_ground"):
+		# Preserve the already-resolved Baghdad terrain height so the four existing towers do not move vertically.
+		var baghdad_anchor: Vector2 = city_anchors["Baghdad"]
+		var existing_world_ground := terrain.get_terrain_height(baghdad_anchor.x, baghdad_anchor.y)
+		terrain.call("configure_baghdad_osm_ground", existing_world_ground)
 	_build_city_districts()
 	_build_city_roads()
 	_create_city_street_furniture()
