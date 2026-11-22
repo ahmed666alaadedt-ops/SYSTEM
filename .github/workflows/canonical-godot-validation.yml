@@ -76,24 +76,38 @@ jobs:
         run: |
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
-          set -o pipefail
+          set +e
           "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_baghdad_towers.gd 2>&1 | tee "$RUNNER_TEMP/baghdad-tower-landmarks.log"
+          godot_status=${PIPESTATUS[0]}
+          set -e
           if grep -E "SCRIPT ERROR|Parse Error|Baghdad tower validation failed" "$RUNNER_TEMP/baghdad-tower-landmarks.log"; then
-            echo "Baghdad tower landmark validation reported an error."
+            echo "Baghdad tower landmark validation reported an assertion or script error."
             exit 1
           fi
+          if ! grep -Fq "Baghdad tower validation passed:" "$RUNNER_TEMP/baghdad-tower-landmarks.log"; then
+            echo "Baghdad tower landmark validator did not reach its success sentinel (Godot exit: $godot_status)."
+            exit 1
+          fi
+          echo "All Baghdad landmark assertions passed; accepting the known dummy-renderer teardown exit status: $godot_status."
 
       - name: Validate Baghdad tower operations, elevator staff and emergency evacuation
         shell: bash
         run: |
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
-          set -o pipefail
+          set +e
           "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_baghdad_tower_operations.gd 2>&1 | tee "$RUNNER_TEMP/baghdad-tower-operations.log"
+          godot_status=${PIPESTATUS[0]}
+          set -e
           if grep -E "SCRIPT ERROR|Parse Error|Baghdad tower operations validation failed" "$RUNNER_TEMP/baghdad-tower-operations.log"; then
-            echo "Baghdad tower operations validation reported an error."
+            echo "Baghdad tower operations validation reported an assertion or script error."
             exit 1
           fi
+          if ! grep -Fq "Baghdad tower operations validation passed:" "$RUNNER_TEMP/baghdad-tower-operations.log"; then
+            echo "Baghdad tower operations validator did not reach its success sentinel (Godot exit: $godot_status)."
+            exit 1
+          fi
+          echo "All Baghdad operations assertions passed; accepting the known dummy-renderer teardown exit status: $godot_status."
 
       - name: Validate terrain cell streaming seam and lifecycle
         shell: bash
