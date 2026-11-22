@@ -22,6 +22,10 @@ func receive_damage(amount: float, source: Node = null) -> float:
 	if amount <= 0.0 or not is_instance_valid(player):
 		return 0.0
 	var incoming := amount
+	var progression := get_tree().root.find_child("PlayerProgression", true, false)
+	if progression != null and progression.has_method("get_defense_bonus"):
+		var defense_bonus := float(progression.call("get_defense_bonus"))
+		incoming = maxf(1.0, incoming - minf(defense_bonus, incoming * 0.65))
 	var combat := get_tree().root.find_child("ModernWorldCombatSystem",true,false)
 	if combat != null and bool(combat.get("is_blocking")):
 		incoming *= 0.25
@@ -42,6 +46,17 @@ func _enter_wounded_state(source: Node) -> void:
 	player_wounded.emit()
 	push_warning("SYSTEM: Player is wounded after a monster-gate defeat. Visit a hospital for full treatment.")
 	health_changed.emit(current_health,MAX_HEALTH)
+
+
+func apply_field_healing(amount: float) -> bool:
+	if amount <= 0.0 or not is_instance_valid(player) or current_health >= MAX_HEALTH:
+		return false
+	current_health = minf(current_health + amount, MAX_HEALTH)
+	# Field healing restores combat health but deliberately does not clear a
+	# persistent wound state; full recovery still requires hospital treatment.
+	_sync_player_state()
+	health_changed.emit(current_health, MAX_HEALTH)
+	return true
 
 
 func begin_hospital_treatment() -> bool:
