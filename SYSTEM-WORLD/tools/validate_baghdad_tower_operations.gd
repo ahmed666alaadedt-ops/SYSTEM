@@ -1094,7 +1094,7 @@ func _run() -> void:
 			if not bool(final_activity_result.get("success", false)):
 				_fail("Facility activity action failed: " + str(activity_type) + " / " + str(final_activity_result))
 				return
-		if str(activity_type) == "bowling" and int(final_activity_result.get("last_throw", -1)) < 0:
+		if str(activity_type) == "bowling" and (int(final_activity_result.get("last_throw", -1)) < 0 or int(final_activity_result.get("last_throw", -1)) > 10):
 			_fail("Bowling final frame did not report physical pinfall results.")
 			return
 		if not bool(final_activity_result.get("completed", false)):
