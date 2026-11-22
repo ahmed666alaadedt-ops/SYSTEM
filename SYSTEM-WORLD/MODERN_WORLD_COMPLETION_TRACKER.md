@@ -1,3 +1,18 @@
+## Baghdad tower facility activity loops — 22 November 2026
+
+- [x] Route specialized facility interaction targets to their own activity panel before the generic floor-services handler.
+- [x] Add a repeatable three-lap pool session with progress, completion and local reward tracking; this is a lap-count activity, not swimming physics.
+- [x] Add an eight-set fitness session and a five-shot sports-court scoring challenge.
+- [x] Add a ten-frame bowling scoring loop with a recorded score and completion reward.
+- [x] Add a cinema attendance/session confirmation interaction; actual film playback, licensed programming and seating occupancy remain open.
+- [x] Add a five-target arcade challenge and a three-station family-zone discovery activity.
+- [x] Add a rooftop photo/exploration completion activity.
+- [x] Add three-step robotics assembly, AI signal-analysis and VR checkpoint challenges.
+- [x] Persist completed rounds, best scores, cumulative scores and rewards locally; extend the operations validator to exercise every activity and verify save/load persistence.
+- [ ] Replace the prototype activity controls with full movement-driven gameplay: swimming physics and water entry/exit, ball/physics bowling, full sports matches, actual cinema playback, playable arcade machines, animated robotics assembly and immersive VR simulation.
+- [ ] Run Godot validation and Android export on this exact feature-branch revision. Current canonical workflows only run on main pushes or manual dispatch; no feature-branch result is claimed.
+- [ ] Inspect the exported build on a physical Android device after a fresh export.
+
 ## SYSTEM Hotel room-service workflow — 22 November 2026
 
 - [x] Add a room-service menu for checked-in hotel guests with Iraqi food, drinks and desserts.
