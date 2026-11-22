@@ -14,7 +14,7 @@ The Hunter examination is a separate seven-stage global qualification journey. I
 - `scripts/system_tower_entrance.gd` provides a ray-interactable entrance marker for each tower.
 - `scripts/modern_world_region_manager.gd` creates the tower manager and registers both landmarks in the existing modern-world map manager as `LocationType.LANDMARK` (enum value 5).
 - `scripts/system_hunter_exam_manager.gd` defines a seven-stage examination, candidate numbering, registration, sequential progression, save-state fields, and completion/failure signals.
-- `scripts/system_power_tower_manager.gd` defines a separate 100-floor progression track, level requirements, boss/elite floor cadence, rank bands, clear-time records, and XP reward events. `scripts/main.gd` connects its floor-clear reward event to the existing player progression.
+- `scripts/system_power_tower_manager.gd` defines a separate 200-floor progression track, level requirements, boss/elite floor cadence, rank bands, clear-time records, and XP reward events. `scripts/main.gd` connects its floor-clear reward event to the existing player progression.
 - `scripts/hunter_guild_menu.gd` adds registration and start controls.
 - `scripts/main.gd` creates the examination manager and connects the guild menu signals.
 
@@ -24,12 +24,12 @@ The Hunter examination is a separate seven-stage global qualification journey. I
 - The Power Tower exterior now has four tournament/champion display blades and three concentric arena terraces at its base, reinforcing its identity as a public combat venue.
 - The Hunter Association Tower exterior now has two monumental association wings, a Hall of Honor display, and a crown spire.
 - These are procedural architectural blockout elements, not final high-detail art assets. The champion boards currently display static titles; they are not yet connected to live player rankings or verified gate-clearing records.
-- The Power Tower's 100-floor progression manager remains separate from the exterior. The arena terraces do not yet constitute explorable interior arenas. A later interior-scene milestone must provide multiple distinct arenas (duel, team combat, survival, boss trial, and ranked championship), spectator galleries, training halls, matchmaking, and verified reward/record flows.
+- The Power Tower's 200-floor progression manager remains separate from the exterior. The arena terraces do not yet constitute explorable interior arenas. A later interior-scene milestone must provide multiple distinct arenas (duel, team combat, survival, boss trial, and ranked championship), spectator galleries, training halls, matchmaking, and verified reward/record flows.
 - The Hunter Association interior likewise still needs navigable reception, registration, mission hall, examination administration, training, research, medical support, meeting rooms, and a dynamically updated global hunter honor gallery.
 
 ## Power Tower arena progression data
 
-The 100-floor progression now assigns a distinct challenge profile by floor cycle:
+The 200-floor progression now assigns a distinct challenge profile by floor cycle:
 - Duel arena: one-on-one combat.
 - Team battle arena: multi-opponent/team encounter.
 - Survival arena: escalating waves.
