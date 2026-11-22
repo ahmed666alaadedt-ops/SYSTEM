@@ -202,6 +202,7 @@ var current_staff_id := ""
 var credits := 1200
 var vendor_stock: Dictionary = {}
 var hotel_bookings: Dictionary = {}
+var current_hotel_room_id := ""
 var restaurant_orders: Dictionary = {}
 var restaurant_order_history: Array = []
 var restaurant_draft_items: Dictionary = {}
