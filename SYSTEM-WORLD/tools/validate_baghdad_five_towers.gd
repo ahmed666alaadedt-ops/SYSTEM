@@ -50,6 +50,13 @@ func _run_validation() -> void:
 			_expect(challenge_system.get_child_count() == 40, "Power Tower has a boss arena and floor label for each tenth floor")
 			var registry: Array = challenge_system.get_meta("floor_registry", [])
 			_expect(registry.size() == 200, "Power Tower floor registry has 200 challenge entries")
+			if registry.size() == 200:
+				_expect(registry[0].get("challenge", "") == "DUEL", "Power Tower first floor begins with a duel challenge")
+				_expect(registry[9].get("boss_trial", false), "Power Tower tenth floor is a boss trial")
+				_expect(not registry[8].get("boss_trial", false), "Power Tower ninth floor is not a boss trial")
+				_expect(registry[199].get("floor_label", "") == "POWER TOWER — FLOOR 200", "Power Tower final floor is labelled")
+				_expect(int(registry[199].get("difficulty_tier", 0)) == 10, "Power Tower final floor reaches difficulty tier ten")
+				_expect(bool(registry[199].get("requires_previous_floor_clear", false)), "Power Tower progression requires previous floor clear")
 			var boss_count := 0
 			for floor_entry in registry:
 				if bool(floor_entry.get("boss_trial", false)):
