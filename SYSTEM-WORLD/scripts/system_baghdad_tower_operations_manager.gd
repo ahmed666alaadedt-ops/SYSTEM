@@ -2350,7 +2350,7 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 				cabinet_interaction.set_meta("system_tower_floor_number", floor_number)
 				cabinet_interaction.set_meta("system_facility_type", "arcade")
 				cabinet_interaction.set_meta("system_arcade_cabinet_id", index)
-				cabinet_interaction.set_meta("system_arcade_cabinet_mode", "shooter" if index % 2 == 0 else "memory")
+				cabinet_interaction.set_meta("system_arcade_cabinet_mode", ["shooter", "memory", "reflex", "shooter", "memory", "reflex"][index])
 				cabinet_interaction.set_meta("system_interaction_prompt", "جهاز SYSTEM ARCADE %d — اضغط للعب" % (index + 1))
 				var cabinet_shape_node := CollisionShape3D.new()
 				var cabinet_shape := BoxShape3D.new()
@@ -2526,7 +2526,7 @@ func open_facility_service(tower_id: String, floor_number: int, facility_type: S
 
 
 func open_arcade_cabinet(tower_id: String, floor_number: int, cabinet_id: int, cabinet_mode: String) -> void:
-	if cabinet_id < 0 or cabinet_id >= 6 or cabinet_mode not in ["shooter", "memory"]:
+	if cabinet_id < 0 or cabinet_id >= 6 or cabinet_mode not in ["shooter", "memory", "reflex"]:
 		return
 	open_facility_service(tower_id, floor_number, "arcade")
 	selected_arcade_mode = cabinet_mode
@@ -2589,6 +2589,7 @@ func _add_facility_activity_controls(facility_type: String) -> void:
 		mode_selector.name = "ArcadeModeSelector"
 		mode_selector.add_item("ميدان التصويب الفيزيائي")
 		mode_selector.add_item("تحدي ذاكرة الألوان")
+		mode_selector.add_item("اختبار سرعة الاستجابة")
 		mode_selector.item_selected.connect(_on_arcade_mode_selected)
 		content.add_child(mode_selector)
 		var memory_status := Label.new()
@@ -2596,6 +2597,11 @@ func _add_facility_activity_controls(facility_type: String) -> void:
 		memory_status.text = "اختر تحدي الذاكرة ثم ابدأ الجولة."
 		memory_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		content.add_child(memory_status)
+		var reflex_status := Label.new()
+		reflex_status.name = "ArcadeReflexStatus"
+		reflex_status.text = "انتظر الإشارة ثم اضغط بأسرع ما تستطيع."
+		reflex_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		content.add_child(reflex_status)
 		var memory_buttons := HBoxContainer.new()
 		memory_buttons.name = "ArcadeMemoryButtons"
 		for color_index in range(4):
@@ -2626,7 +2632,7 @@ func _add_facility_activity_controls(facility_type: String) -> void:
 
 
 func _on_arcade_mode_selected(index: int) -> void:
-	selected_arcade_mode = "memory" if index == 1 else "shooter"
+	selected_arcade_mode = ["shooter", "memory", "reflex"][clampi(index, 0, 2)]
 	var aim_slider := content.get_node_or_null("FacilityAimSlider") as HSlider
 	var aim_label := content.get_node_or_null("FacilityAimLabel") as Label
 	var memory_buttons := content.get_node_or_null("ArcadeMemoryButtons") as HBoxContainer
@@ -2636,9 +2642,13 @@ func _on_arcade_mode_selected(index: int) -> void:
 		aim_label.visible = selected_arcade_mode == "shooter"
 	if memory_buttons != null:
 		memory_buttons.visible = selected_arcade_mode == "memory"
+	var reflex_status := content.get_node_or_null("ArcadeReflexStatus") as Label
+	if reflex_status != null:
+		reflex_status.visible = selected_arcade_mode == "reflex"
 	var action_button := content.get_node_or_null("FacilityActivityActionButton") as Button
 	if action_button != null:
-		action_button.visible = selected_arcade_mode == "shooter"
+		action_button.visible = selected_arcade_mode in ["shooter", "reflex"]
+		action_button.text = "إطلاق الكرة الضوئية" if selected_arcade_mode == "shooter" else "ضغط عند الإشارة"
 
 
 func _start_arcade_memory_preview() -> void:
@@ -2699,6 +2709,62 @@ func _submit_arcade_memory_input(input_index: int) -> void:
 		_set_status("تحدي الذاكرة — تقدمك %d/%d" % [next_cursor, sequence.size()])
 
 
+func _schedule_arcade_reflex_signal() -> void:
+	if active_facility_activity.is_empty() or str(active_facility_activity.get("mode", "")) != "reflex":
+		return
+	active_facility_activity["reflex_ready"] = false
+	var reflex_status := content.get_node_or_null("ArcadeReflexStatus") as Label
+	if reflex_status != null:
+		reflex_status.text = "استعد... لا تضغط قبل الإشارة!"
+	var wait_seconds := randf_range(1.0, 2.4)
+	get_tree().create_timer(wait_seconds).timeout.connect(_on_arcade_reflex_signal)
+
+
+func _on_arcade_reflex_signal() -> void:
+	if active_facility_activity.is_empty() or str(active_facility_activity.get("mode", "")) != "reflex":
+		return
+	active_facility_activity["reflex_ready"] = true
+	active_facility_activity["reflex_signal_at"] = Time.get_ticks_msec()
+	var reflex_status := content.get_node_or_null("ArcadeReflexStatus") as Label
+	if reflex_status != null:
+		reflex_status.text = "الإشارة ظهرت! اضغط الآن بسرعة!"
+
+
+func _calculate_arcade_reflex_score(reaction_ms: int) -> int:
+	if reaction_ms < 0 or reaction_ms > 5000:
+		return 0
+	return clampi(25 - int(reaction_ms / 80), 1, 25)
+
+
+func _submit_arcade_reflex_action() -> Dictionary:
+	if active_facility_activity.is_empty() or str(active_facility_activity.get("mode", "")) != "reflex":
+		return {"success": false, "reason": "اختبار الاستجابة غير نشط."}
+	if not bool(active_facility_activity.get("reflex_ready", false)):
+		var lives := maxi(0, int(active_facility_activity.get("lives", 0)) - 1)
+		active_facility_activity["lives"] = lives
+		if lives <= 0:
+			active_facility_activity.clear()
+			_set_status("انتهى اختبار الاستجابة — ضغطت مبكراً ونفدت المحاولات.")
+			return {"success": false, "completed": true, "lives_remaining": 0}
+		_set_status("ضغطت قبل الإشارة! بقيت %d محاولات." % lives)
+		_schedule_arcade_reflex_signal()
+		return {"success": false, "completed": false, "lives_remaining": lives}
+	var reaction_ms := maxi(0, Time.get_ticks_msec() - int(active_facility_activity.get("reflex_signal_at", Time.get_ticks_msec())))
+	var gained := _calculate_arcade_reflex_score(reaction_ms)
+	var step := int(active_facility_activity.get("step", 0)) + 1
+	active_facility_activity["step"] = step
+	active_facility_activity["score"] = int(active_facility_activity.get("score", 0)) + gained
+	active_facility_activity["reflex_ready"] = false
+	var goal := int(active_facility_activity.get("goal", 5))
+	if step >= goal:
+		var final_result := _complete_facility_activity()
+		final_result["last_reaction_ms"] = reaction_ms
+		return final_result
+	_set_status("زمن الاستجابة: %d ms | +%d نقطة | الجولة %d/%d" % [reaction_ms, gained, step, goal])
+	_schedule_arcade_reflex_signal()
+	return {"success": true, "completed": false, "step": step, "reaction_ms": reaction_ms, "score_gain": gained, "score": int(active_facility_activity.get("score", 0))}
+
+
 func _on_facility_aim_changed(value: float) -> void:
 	facility_aim = clampf(value, -1.0, 1.0)
 	var aim_label := content.get_node_or_null("FacilityAimLabel") as Label
@@ -2742,7 +2808,17 @@ func start_facility_activity(facility_type: String) -> bool:
 			if memory_buttons != null:
 				memory_buttons.visible = true
 			_start_arcade_memory_preview()
+		elif selected_arcade_mode == "reflex":
+			active_facility_activity["goal"] = 5
+			active_facility_activity["reward"] = 60
+			var reflex_status := content.get_node_or_null("ArcadeReflexStatus") as Label
+			if reflex_status != null:
+				reflex_status.visible = true
+			_schedule_arcade_reflex_signal()
 		else:
+			var reflex_status := content.get_node_or_null("ArcadeReflexStatus") as Label
+			if reflex_status != null:
+				reflex_status.visible = false
 			var memory_buttons := content.get_node_or_null("ArcadeMemoryButtons") as HBoxContainer
 			if memory_buttons != null:
 				memory_buttons.visible = false
@@ -2763,8 +2839,11 @@ func perform_facility_activity(action: String) -> Dictionary:
 	if facility_type == "sports_court":
 		return await _launch_basketball()
 	if facility_type == "arcade":
-		if str(active_facility_activity.get("mode", "shooter")) == "memory":
+		var arcade_mode := str(active_facility_activity.get("mode", "shooter"))
+		if arcade_mode == "memory":
 			return {"success": false, "reason": "أدخل تسلسل الألوان من الأزرار الأربعة."}
+		if arcade_mode == "reflex":
+			return _submit_arcade_reflex_action()
 		return await _launch_arcade_projectile()
 	var step := int(active_facility_activity.get("step", 0)) + 1
 	var score_gain := 1
