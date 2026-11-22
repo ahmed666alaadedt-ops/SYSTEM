@@ -190,6 +190,7 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	var entrance := EntranceScript.new()
 	entrance.name = "PublicEntrance"
 	entrance.configure(location_id, title, "region_baghdad")
+	entrance.set_meta("system_tower_id", location_id)
 	entrance.set_meta("system_tower_floor_count", floors)
 	entrance.set_meta("system_tower_height_m", height)
 	entrance.set_meta("system_tower_district_member", connect_to_district)
@@ -211,6 +212,7 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	root.add_child(label)
 
 	_create_tower_architecture(root, node_name, title, height, radius, floors, beacon_color)
+	_create_tower_lobby(root, location_id, title, radius, floors)
 
 	root.set_meta("tower_id", location_id)
 	root.set_meta("tower_floor_count", floors)
@@ -271,6 +273,83 @@ func _build_entertainment_tower() -> void:
 
 func _build_technology_tower() -> void:
 	_build_tower("TechnologyTower", "برج التكنولوجيا والابتكار", "technology_tower_baghdad", city_anchor + Vector3(0.0, 0.0, -365.0), 245.0, 27.0, 40, Color(0.20, 0.82, 0.98))
+
+
+func _create_tower_lobby(root: Node3D, tower_id: String, title: String, radius: float, floors: int) -> void:
+	# Ground-level open lobby pavilion sits outside the tower shaft, avoiding the
+	# full-height shaft collision while providing a reachable public directory kiosk.
+	var lobby := Node3D.new()
+	lobby.name = "PublicLobby_Blockout"
+	root.add_child(lobby)
+	var width := radius * 2.8
+	var depth := 36.0
+	var center_z := radius * 1.48 + depth * 0.5
+	var floor_material := _make_surface_material(Color(0.16, 0.20, 0.24), 0.62, 0.38)
+	var canopy_material := _make_surface_material(Color(0.045, 0.12, 0.18), 0.34, 0.58)
+	var floor := MeshInstance3D.new()
+	floor.name = "LobbyFloor"
+	var floor_mesh := BoxMesh.new()
+	floor_mesh.size = Vector3(width, 1.0, depth)
+	floor.mesh = floor_mesh
+	floor.position = Vector3(0.0, 0.5, center_z)
+	floor.material_override = floor_material
+	lobby.add_child(floor)
+	_add_static_box_collision(lobby, "LobbyFloorCollision", floor.position, floor_mesh.size)
+	var canopy := MeshInstance3D.new()
+	canopy.name = "LobbyCanopy"
+	var canopy_mesh := BoxMesh.new()
+	canopy_mesh.size = Vector3(width, 1.2, depth)
+	canopy.mesh = canopy_mesh
+	canopy.position = Vector3(0.0, 13.0, center_z)
+	canopy.material_override = canopy_material
+	lobby.add_child(canopy)
+	for side in [-1.0, 1.0]:
+		for front_back in [-1.0, 1.0]:
+			var column_position := Vector3(side * (width * 0.5 - 2.0), 6.5, center_z + front_back * (depth * 0.5 - 2.0))
+			var column := MeshInstance3D.new()
+			column.name = "LobbyColumn_%s_%s" % [str(side), str(front_back)]
+			var column_mesh := BoxMesh.new()
+			column_mesh.size = Vector3(2.0, 13.0, 2.0)
+			column.mesh = column_mesh
+			column.position = column_position
+			column.material_override = trim_material
+			lobby.add_child(column)
+			_add_static_box_collision(lobby, column.name + "_Collision", column_position, column_mesh.size)
+	var kiosk_position := Vector3(radius * 0.62, 3.5, center_z)
+	var kiosk := MeshInstance3D.new()
+	kiosk.name = "TowerDirectoryKiosk"
+	var kiosk_mesh := BoxMesh.new()
+	kiosk_mesh.size = Vector3(4.0, 7.0, 3.0)
+	kiosk.mesh = kiosk_mesh
+	kiosk.position = kiosk_position
+	kiosk.material_override = emissive_material
+	lobby.add_child(kiosk)
+	var kiosk_area := Area3D.new()
+	kiosk_area.name = "TowerDirectoryInteraction"
+	kiosk_area.position = kiosk_position + Vector3(0.0, 0.5, 2.2)
+	kiosk_area.add_to_group("system_interactable")
+	kiosk_area.set_meta("system_tower_id", tower_id)
+	kiosk_area.set_meta("system_tower_floor_count", floors)
+	kiosk_area.set_meta("system_tower_height_m", float(root.get_meta("tower_height_m", 0.0)))
+	kiosk_area.set_meta("system_tower_district_member", bool(root.get_meta("tower_is_connected_district_member", tower_id != "power_tower_baghdad")))
+	kiosk_area.set_meta("system_display_name", title)
+	kiosk_area.set_meta("system_interaction_prompt", "استخدم دليل " + title)
+	var kiosk_shape := CollisionShape3D.new()
+	var kiosk_sphere := SphereShape3D.new()
+	kiosk_sphere.radius = 3.4
+	kiosk_shape.shape = kiosk_sphere
+	kiosk_area.add_child(kiosk_shape)
+	lobby.add_child(kiosk_area)
+	var sign := Label3D.new()
+	sign.name = "LobbyDirectorySign"
+	sign.text = "SYSTEM TOWER DIRECTORY\\n" + title
+	sign.font_size = 30
+	sign.pixel_size = 0.012
+	sign.position = Vector3(0.0, 10.0, center_z - depth * 0.5 + 4.0)
+	sign.modulate = Color(0.78, 0.94, 1.0)
+	lobby.add_child(sign)
+	lobby.set_meta("lobby_status", "accessible_pavilion_blockout")
+	lobby.set_meta("elevator_status", "not_implemented")
 
 
 func _create_tower_architecture(root: Node3D, node_name: String, title: String, height: float, radius: float, floors: int, beacon_color: Color) -> void:
