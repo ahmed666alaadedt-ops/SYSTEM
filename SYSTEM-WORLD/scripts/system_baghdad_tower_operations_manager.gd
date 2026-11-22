@@ -6,6 +6,7 @@ const TowerOpponentScript = preload("res://scripts/system_tower_opponent.gd")
 const TowerFloorThemeBuilder = preload("res://scripts/system_baghdad_tower_floor_theme_builder.gd")
 const SAVE_PATH := "user://system_baghdad_tower_operations.cfg"
 const STOCK_SAVE_PATH := "user://system_tower_vendor_stock.cfg"
+const HOTEL_SAVE_PATH := "user://system_baghdad_hotel_bookings.cfg"
 const WORLD_ID := 2
 
 const TOWER_CONFIG := {
@@ -127,6 +128,17 @@ const PRODUCT_CATALOG := {
 		{"id":"exam_application_pack","name":"حزمة التسجيل للاختبار","price":100}
 	]
 }
+const HOTEL_ROOM_CATALOG := [
+	{"id":"hotel_standard_01","name":"غرفة قياسية 01","rate":180,"required_rank":"F"},
+	{"id":"hotel_standard_02","name":"غرفة قياسية 02","rate":180,"required_rank":"F"},
+	{"id":"hotel_standard_03","name":"غرفة قياسية 03","rate":180,"required_rank":"F"},
+	{"id":"hotel_standard_04","name":"غرفة قياسية 04","rate":180,"required_rank":"F"},
+	{"id":"hotel_deluxe_01","name":"غرفة ديلوكس 01","rate":320,"required_rank":"E"},
+	{"id":"hotel_deluxe_02","name":"غرفة ديلوكس 02","rate":320,"required_rank":"E"},
+	{"id":"hotel_hunter_suite","name":"جناح الصيادين","rate":850,"required_rank":"A"},
+	{"id":"hotel_elite_vip","name":"جناح النخبة VIP","rate":1500,"required_rank":"S"}
+]
+
 const AD_CAMPAIGNS := [
 	"معدات الصيادين — جهّز نفسك قبل البوابة",
 	"إكسير الشفاء والطاقة متوفر لدى الصيدلاني",
@@ -151,6 +163,7 @@ var current_tower_id := ""
 var current_staff_id := ""
 var credits := 1200
 var vendor_stock: Dictionary = {}
+var hotel_bookings: Dictionary = {}
 var stock_refresh_clock := 300.0
 var ad_clock := 0.0
 var ad_index := 0
@@ -198,6 +211,7 @@ func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_po
 		return
 	_load_wallet()
 	_load_vendor_stock()
+	_load_hotel_bookings()
 	_build_ui()
 	if is_instance_valid(player_health) and player_health.has_signal("player_wounded"):
 		var wounded_callback := Callable(self, "_on_player_wounded")
@@ -684,6 +698,8 @@ func open_staff_service(staff_node: Node) -> void:
 	_add_catalog_controls(current_tower_id)
 	_add_crafting_controls(current_tower_id)
 	_add_sell_controls()
+	if role in ["hospitality_manager", "hotel_receptionist", "hotel_housekeeping"]:
+		_add_hotel_controls()
 	var elevator_button := Button.new()
 	elevator_button.text = "فتح دليل الطوابق والمصعد"
 	elevator_button.pressed.connect(func(): open_tower(current_tower_id))
@@ -956,6 +972,159 @@ func _sell_item(item_id: String, requested_count: int) -> void:
 	_set_status("اشترى الموظف %d من %s مقابل %d رصيد." % [quantity, item_id, unit_price * quantity])
 	_add_catalog_controls(current_tower_id)
 	_add_sell_controls()
+
+func _load_hotel_bookings() -> void:
+	var config := ConfigFile.new()
+	if config.load(HOTEL_SAVE_PATH) != OK:
+		hotel_bookings = {}
+		return
+	var saved: Variant = config.get_value("hotel", "bookings", {})
+	hotel_bookings = saved.duplicate(true) if saved is Dictionary else {}
+
+
+func _save_hotel_bookings() -> void:
+	var config := ConfigFile.new()
+	config.set_value("hotel", "bookings", hotel_bookings)
+	var result := config.save(HOTEL_SAVE_PATH)
+	if result != OK:
+		push_warning("SYSTEM Hotel: could not persist room reservations.")
+
+
+func _get_active_hotel_booking() -> Dictionary:
+	var now := int(Time.get_unix_time_from_system())
+	for room_id in hotel_bookings.keys():
+		var booking: Dictionary = hotel_bookings[room_id]
+		if str(booking.get("guest_id", "")) == "local_player" and int(booking.get("check_out_unix", 0)) > now:
+			return booking
+	return {}
+
+
+func _is_hotel_room_available(room_id: String) -> bool:
+	var booking: Dictionary = hotel_bookings.get(room_id, {})
+	return booking.is_empty() or int(booking.get("check_out_unix", 0)) <= int(Time.get_unix_time_from_system())
+
+
+func _add_hotel_controls() -> void:
+	var previous := content.get_node_or_null("HotelReservationControls")
+	if previous != null:
+		previous.queue_free()
+	var controls := VBoxContainer.new()
+	controls.name = "HotelReservationControls"
+	content.add_child(controls)
+	var heading := Label.new()
+	heading.text = "فندق SYSTEM — الحجز والإقامة"
+	controls.add_child(heading)
+	var active := _get_active_hotel_booking()
+	if not active.is_empty():
+		var room_name := str(active.get("room_name", "غرفة فندقية"))
+		var checkout_time := Time.get_datetime_string_from_unix_time(int(active.get("check_out_unix", 0)), true)
+		var active_label := Label.new()
+		active_label.text = "حجزك الحالي: %s\nموعد انتهاء الإقامة: %s\nالحالة: %s" % [room_name, checkout_time, "تم تسجيل الدخول" if int(active.get("check_in_unix", 0)) > 0 else "بانتظار تسجيل الدخول"]
+		controls.add_child(active_label)
+		if int(active.get("check_in_unix", 0)) == 0:
+			var check_in_button := Button.new()
+			check_in_button.text = "تسجيل الدخول إلى الغرفة"
+			check_in_button.pressed.connect(_check_in_hotel_room)
+			controls.add_child(check_in_button)
+		var checkout_button := Button.new()
+		checkout_button.text = "تسجيل الخروج وإنهاء الإقامة"
+		checkout_button.pressed.connect(_checkout_hotel_room)
+		controls.add_child(checkout_button)
+		return
+	var hint := Label.new()
+	hint.text = "اختر الغرفة ومدة الإقامة. الأجنحة الخاصة تتطلب رتبة صياد مناسبة."
+	controls.add_child(hint)
+	for room_value in HOTEL_ROOM_CATALOG:
+		var room: Dictionary = room_value
+		var room_id := str(room["id"])
+		var room_name := str(room["name"])
+		var rate := int(room["rate"])
+		var required_rank := str(room["required_rank"])
+		if not _is_hotel_room_available(room_id):
+			var occupied := Label.new()
+			occupied.text = "%s — محجوز حالياً" % room_name
+			controls.add_child(occupied)
+			continue
+		var room_label := Label.new()
+		room_label.text = "%s — %d رصيد/ليلة — رتبة %s" % [room_name, rate, required_rank]
+		controls.add_child(room_label)
+		for nights in [1, 3, 7]:
+			var booking_button := Button.new()
+			booking_button.text = "حجز %d ليلة — %d رصيد" % [nights, rate * nights]
+			booking_button.disabled = not _meets_hunter_rank(required_rank) or credits < rate * nights
+			booking_button.pressed.connect(_book_hotel_room.bind(room_id, room_name, rate, required_rank, nights))
+			controls.add_child(booking_button)
+
+
+func _book_hotel_room(room_id: String, room_name: String, nightly_rate: int, required_rank: String, nights: int) -> void:
+	if not _get_active_hotel_booking().is_empty():
+		_set_status("لديك حجز فندقي نشط بالفعل. أنهِ الإقامة الحالية أولاً.")
+		return
+	if not _meets_hunter_rank(required_rank):
+		_set_status("هذا النوع من الغرف يتطلب رتبة %s أو أعلى." % required_rank)
+		return
+	if not _is_hotel_room_available(room_id):
+		_set_status("هذه الغرفة محجوزة حالياً. اختر غرفة أخرى.")
+		return
+	var safe_nights := clampi(nights, 1, 7)
+	var total_price := nightly_rate * safe_nights
+	if credits < total_price:
+		_set_status("رصيدك لا يكفي لإتمام حجز الفندق.")
+		return
+	credits -= total_price
+	var now := int(Time.get_unix_time_from_system())
+	hotel_bookings[room_id] = {
+		"room_id": room_id,
+		"room_name": room_name,
+		"guest_id": "local_player",
+		"nightly_rate": nightly_rate,
+		"nights": safe_nights,
+		"booked_at_unix": now,
+		"check_in_unix": 0,
+		"check_out_unix": now + safe_nights * 86400,
+		"status": "reserved"
+	}
+	_save_hotel_bookings()
+	_save_wallet()
+	credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
+	_set_status("تم حجز %s لمدة %d ليلة. راجع موظف الاستقبال لتسجيل الدخول." % [room_name, safe_nights])
+	_add_hotel_controls()
+
+
+func _check_in_hotel_room() -> void:
+	var booking := _get_active_hotel_booking()
+	if booking.is_empty():
+		_set_status("لا يوجد حجز نشط لتسجيل الدخول.")
+		return
+	var room_id := str(booking.get("room_id", ""))
+	if not hotel_bookings.has(room_id):
+		return
+	var stored: Dictionary = hotel_bookings[room_id]
+	stored["check_in_unix"] = int(Time.get_unix_time_from_system())
+	stored["status"] = "checked_in"
+	hotel_bookings[room_id] = stored
+	_save_hotel_bookings()
+	_set_status("تم تسجيل الدخول إلى " + str(stored.get("room_name", "الغرفة")) + ". نتمنى لك إقامة سعيدة.")
+	_add_hotel_controls()
+
+
+func _checkout_hotel_room() -> void:
+	var booking := _get_active_hotel_booking()
+	if booking.is_empty():
+		_set_status("لا يوجد حجز نشط لتسجيل الخروج.")
+		return
+	var room_id := str(booking.get("room_id", ""))
+	var checkout_unix := int(booking.get("check_out_unix", 0))
+	var remaining_nights := maxi(0, int(ceil(float(checkout_unix - int(Time.get_unix_time_from_system())) / 86400.0)) - 1)
+	var refund := remaining_nights * int(booking.get("nightly_rate", 0))
+	credits += refund
+	hotel_bookings.erase(room_id)
+	_save_hotel_bookings()
+	_save_wallet()
+	credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
+	_set_status("تم تسجيل الخروج. أُعيد إلى رصيدك %d عن الليالي غير المستخدمة." % refund)
+	_add_hotel_controls()
+
 
 func _item_resale_price(item_id: String) -> int:
 	return maxi(1, int(_get_current_price(item_id) / 2))
@@ -1340,7 +1509,7 @@ func _create_floor_facilities(room: Node3D, tower_id: String, floor_number: int,
 		_create_restaurant_dining_area(room, radius, floor_number)
 	if tower_id == "shopping_tower_baghdad" and floor_number in [27, 28]:
 		var hotel_staff: Array = staff_by_tower.get(tower_id, [])
-		var hospitality_staff_id := str(hotel_staff[3]) if hotel_staff.size() > 3 else ""
+		var hospitality_staff_id := str(hotel_staff[6]) if hotel_staff.size() > 6 else (str(hotel_staff[3]) if hotel_staff.size() > 3 else "")
 		_create_hotel_facilities(room, radius, floor_number, hospitality_staff_id)
 	room.set_meta("system_tower_id", tower_id)
 	room.set_meta("system_tower_floor_number", floor_number)
@@ -1404,7 +1573,7 @@ func _create_hotel_facilities(room: Node3D, radius: float, floor_number: int, ho
 	interaction.set_meta("system_tower_floor_number", floor_number)
 	interaction.set_meta("system_hotel_service", "reception_booking" if floor_number == 27 else "room_and_suite_booking")
 	interaction.set_meta("system_tower_staff_id", hospitality_staff_id)
-	interaction.set_meta("system_tower_staff_role", "hospitality_manager")
+	interaction.set_meta("system_tower_staff_role", "hotel_receptionist")
 	interaction.set_meta("system_display_name", "استقبال فندق SYSTEM" if floor_number == 27 else "حجز الغرف والأجنحة")
 	interaction.set_meta("system_interaction_prompt", "فندق SYSTEM — " + ("حجز غرفة أو جناح وتسجيل الدخول" if floor_number == 27 else "اختيار غرفة أو جناح ومعاينة خيارات الإقامة"))
 	interaction.collision_layer = 1
