@@ -110,6 +110,12 @@ func _run() -> void:
 		if int(floor_data.get("opponent_count", 0)) < 1 or int(floor_data.get("wave_count", 0)) < 1 or int(floor_data.get("reward_xp", 0)) <= 0:
 			_fail("Power Tower challenge data is incomplete at floor %d." % floor_number)
 			return
+		if str(floor_data.get("arena_type", "")) == "SURVIVAL" and (str(floor_data.get("objective_type", "")) != "SURVIVE_TIMER" or int(floor_data.get("time_limit_seconds", 0)) <= 0):
+			_fail("Power Tower survival floor is missing its timed survival objective at floor %d." % floor_number)
+			return
+		if str(floor_data.get("arena_type", "")) == "CHAMPIONSHIP" and (str(floor_data.get("objective_type", "")) != "CLEAR_WITHIN_TIME" or int(floor_data.get("time_limit_seconds", 0)) <= 0):
+			_fail("Power Tower championship floor is missing its timed clear objective at floor %d." % floor_number)
+			return
 	var power_tower := tower_manager.get_node_or_null("PowerTower") as Node3D
 	var power_lobby := power_tower.get_node_or_null("PublicLobby_Blockout") as Node3D
 	var progress_board := power_lobby.get_node_or_null("PowerTowerProgressBoard") as Label3D
