@@ -1166,3 +1166,17 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Pass Godot 4.3 validation workflow #1479 (run ID 45075559321) on PR merge commit 814b30146cc5da89083b64bdbea102604a94db31.
 - [x] Pass canonical Android export workflow #1216 (run ID 45075559263) on source commit a5c44974a5175fcd208bebaa8a295b91310d4f0d; APK artifact 14774657998, 35,938,599 bytes, expires 6 December 2026.
 - [ ] Physical Android testing remains outstanding, including touch response, visuals, collision feel, frame rate and thermal behavior.
+
+
+### Baghdad VR course physical collision regression — 23 November 2026
+
+- [x] Give the VR simulation floor, exit sensor, three checkpoint sensors and four hologram obstacle colliders explicit stable node names.
+- [x] Validate the VR floor, exit platform, arrival sensor, checkpoint sensors and obstacle bodies as real BoxShape3D collision shapes with expected dimensions.
+- [x] Pass full Godot 4.3 validation #1519 (run ID 45082994135) on exact PR source HEAD 5d2f11b435baa5ba0fc983fe61d68b15d0767860; all Baghdad tower operations, VR course, NPC commerce, hotel/restaurant workflows, activities and Power Tower regressions passed.
+- [x] Pass canonical Android APK export #1256 (run ID 45082994136) on the same exact source HEAD; APK artifact 14777863471, 35,966,995 bytes, SHA-256 7273f78c882e6b195f6368ad23d752e9e80fce71e2d82110d9abb59bf91d4ea0, expires 6 December 2026.
+- [ ] Physical Android interaction and visual inspection remain outstanding.
+
+### Companion orientation safety — 23 November 2026
+
+- [x] Replace the companion's tree-dependent look_at() call with look_at_from_position() so Miyar and Adam can orient safely during setup/reparenting.
+- [ ] Re-run Godot runtime validation to confirm the startup Node not inside tree warning is gone.
