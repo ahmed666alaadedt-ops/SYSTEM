@@ -45,6 +45,7 @@ func _run_validation() -> void:
 	root.add_child(ray_manager)
 	root.add_child(ray_camera)
 	ray_manager.set("camera", ray_camera)
+	ray_manager.set("interaction_distance", 12.0)
 	await physics_frame
 
 	ray_camera.global_position = Vector3(0.0, 1.9, 0.0)
