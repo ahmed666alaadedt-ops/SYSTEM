@@ -14,6 +14,8 @@ func _initialize() -> void:
 func _run_validation() -> void:
 	var target: Node3D = DOOR_INTERACTABLE.new()
 	target.name = "VaultStoneDoorInteraction"
+	target.add_to_group("system_interactable")
+	target.set_meta("system_interaction_prompt", "افتح الباب الحجري")
 	target.set("action_type", "stone_door")
 	target.set("action_target_path", ^"DoorBody")
 
