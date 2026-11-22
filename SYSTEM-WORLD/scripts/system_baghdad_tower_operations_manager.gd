@@ -4960,6 +4960,7 @@ func return_to_lobby() -> void:
 	if not is_instance_valid(active_floor_root):
 		panel.hide()
 		return
+	_return_customer_visitors_to_lobbies()
 	if current_tower_id == "power_tower_baghdad" and power_floor_in_progress:
 		for opponent in active_opponents.values():
 			if is_instance_valid(opponent):
