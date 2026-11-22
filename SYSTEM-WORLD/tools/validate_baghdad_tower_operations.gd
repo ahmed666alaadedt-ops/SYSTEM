@@ -122,23 +122,23 @@ func _run() -> void:
 	if helicopter_player == null:
 		_fail("A player character is required for the helicopter takeoff/landing test.")
 		return
-	hel ipad.call("_enter_aircraft")
+	helipad.call("_enter_aircraft")
 	if not bool(helipad.get("pilot_active")) or helicopter_player.visible or helicopter_player.is_physics_processing():
 		_fail("Authorized pilot entry did not transfer control from the on-foot character.")
 		return
-	hel ipad.set("vertical_input", 1.0)
-	hel ipad.call("_update_flight", 0.5)
+	helipad.set("vertical_input", 1.0)
+	helipad.call("_update_flight", 0.5)
 	var takeoff_height := float(helipad.get("heli_position").y)
 	if takeoff_height <= helipad.global_position.y + 2.8:
 		_fail("Authorized helicopter pilot could not lift off from the landing pad.")
 		return
-	hel ipad.set("vertical_input", -1.0)
-	hel ipad.call("_update_flight", 0.5)
-	hel ipad.call("_update_flight", 0.5)
+	helipad.set("vertical_input", -1.0)
+	helipad.call("_update_flight", 0.5)
+	helipad.call("_update_flight", 0.5)
 	if not bool(helipad.get("landed")):
 		_fail("Helicopter could not complete a controlled landing inside its marked pad.")
 		return
-	hel ipad.call("_exit_aircraft")
+	helipad.call("_exit_aircraft")
 	if bool(helipad.get("pilot_active")) or not helicopter_player.visible or helicopter_player.is_physics_processing():
 		_fail("Helicopter exit did not restore the on-foot player controls.")
 		return
