@@ -79,8 +79,9 @@ func _run() -> void:
 		_fail("A completed Hunter examination must not reopen or remain marked active.")
 		return
 	exam_manager.set("completed_stage_ids", empty_stage_ids)
-	exam_manager.set("exam_active", true)
-	exam_manager.set("current_stage_index", 0)
+	exam_manager.set("registered", false)
+	exam_manager.set("exam_active", false)
+	exam_manager.set("current_stage_index", -1)
 	var hunter_tower := tower_manager.get_node_or_null("HunterAssociationTower") as Node3D
 	var helipad := hunter_tower.get_node_or_null("HunterAssociationHelipad") as Node3D if hunter_tower != null else null
 	if helipad == null or str(helipad.get_meta("system_owner_tower_id", "")) != "hunter_association_tower_baghdad":
