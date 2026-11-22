@@ -85,6 +85,27 @@ func _run() -> void:
 		"entertainment_tower_baghdad": 8,
 		"technology_tower_baghdad": 8
 	}
+	var expected_facade_floors := {
+		"hunter_association_tower_baghdad": 200,
+		"business_investment_tower_baghdad": 36,
+		"shopping_tower_baghdad": 32,
+		"entertainment_tower_baghdad": 34,
+		"technology_tower_baghdad": 40,
+		"power_tower_baghdad": 200
+	}
+	for tower_id in TOWER_IDS:
+		var facade_tower := tower_manager.get_node_or_null(str(NODE_NAMES[tower_id])) as Node3D
+		var facade_windows := facade_tower.get_node_or_null("FacadeGlazingPanels") as MultiMeshInstance3D if facade_tower != null else null
+		if facade_windows == null or facade_windows.multimesh == null or facade_windows.multimesh.mesh == null:
+			_fail("Tower facade glazing is missing a valid MultiMesh window surface: " + tower_id)
+			return
+		var expected_window_count := int(expected_facade_floors[tower_id]) * 20
+		if facade_windows.multimesh.instance_count != expected_window_count:
+			_fail("Tower facade window count mismatch for %s: expected %d, found %d." % [tower_id, expected_window_count, facade_windows.multimesh.instance_count])
+			return
+		if facade_windows.multimesh.get_instance_transform(0).origin.length() < 1.0:
+			_fail("Tower facade window transforms are not positioned on the exterior: " + tower_id)
+			return
 	for tower_id in expected_tower_nodes.keys():
 		var tower_node := tower_manager.get_node_or_null(str(expected_tower_nodes[tower_id]))
 		var lobby := tower_node.get_node_or_null("PublicLobby_Blockout") if tower_node != null else null
