@@ -644,6 +644,43 @@ func _run() -> void:
 	if shopping_staff.size() != 8:
 		_fail("Shopping Tower must create all eight shop, workshop, restaurant and hotel staff roles.")
 		return
+	if not operations.has_method("_book_hotel_room") or not operations.has_method("_check_in_hotel_room") or not operations.has_method("_checkout_hotel_room") or not operations.has_method("_save_hotel_bookings"):
+		_fail("SYSTEM Hotel reservation/check-in/check-out persistence methods are missing.")
+		return
+	var original_hotel_bookings: Dictionary = operations.get("hotel_bookings").duplicate(true)
+	var original_hotel_credits := int(operations.get("credits"))
+	operations.set("hotel_bookings", {})
+	operations.set("credits", maxi(original_hotel_credits, 500))
+	operations.call("_book_hotel_room", "hotel_standard_01", "غرفة قياسية 01", 180, "F", 1)
+	var hotel_booking_fixture: Dictionary = operations.get("hotel_bookings").get("hotel_standard_01", {})
+	if hotel_booking_fixture.is_empty() or int(operations.get("credits")) != maxi(original_hotel_credits, 500) - 180:
+		_fail("SYSTEM Hotel did not reserve an available room or deduct the correct one-night rate.")
+		operations.set("hotel_bookings", original_hotel_bookings)
+		operations.set("credits", original_hotel_credits)
+		operations.call("_save_hotel_bookings")
+		operations.call("_save_wallet")
+		return
+	operations.call("_check_in_hotel_room")
+	var checked_in_fixture: Dictionary = operations.get("hotel_bookings").get("hotel_standard_01", {})
+	if int(checked_in_fixture.get("check_in_unix", 0)) <= 0 or str(checked_in_fixture.get("status", "")) != "checked_in":
+		_fail("SYSTEM Hotel check-in did not persist the guest arrival state.")
+		operations.set("hotel_bookings", original_hotel_bookings)
+		operations.set("credits", original_hotel_credits)
+		operations.call("_save_hotel_bookings")
+		operations.call("_save_wallet")
+		return
+	operations.call("_checkout_hotel_room")
+	if operations.get("hotel_bookings").has("hotel_standard_01"):
+		_fail("SYSTEM Hotel checkout did not release the booked room.")
+		operations.set("hotel_bookings", original_hotel_bookings)
+		operations.set("credits", original_hotel_credits)
+		operations.call("_save_hotel_bookings")
+		operations.call("_save_wallet")
+		return
+	operations.set("hotel_bookings", original_hotel_bookings)
+	operations.set("credits", original_hotel_credits)
+	operations.call("_save_hotel_bookings")
+	operations.call("_save_wallet")
 	var boss_room := operations.call("_ensure_floor_room", "power_tower_baghdad", 200) as Node3D
 	if boss_room == null or boss_room.get_node_or_null("BossTrialPlatform") == null:
 		_fail("Power Tower floor 200 boss arena was not generated.")
