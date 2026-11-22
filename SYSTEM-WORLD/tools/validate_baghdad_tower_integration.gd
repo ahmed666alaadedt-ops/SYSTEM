@@ -295,6 +295,27 @@ func _run() -> void:
 	if not bool(hunter_tower_interior.get_meta("hunter_exam_tunnel_access_open", false)):
 		_fail("Hunter exam tunnel did not record its authorized open state.")
 		return
+	var out_of_order_checkpoint: Dictionary = exam_manager.record_stage_one_checkpoint("checkpoint_02")
+	if str(out_of_order_checkpoint.get("reason", "")) != "CHECKPOINT_ORDER_MISMATCH":
+		_fail("Hunter stage one accepted a checkpoint out of sequence.")
+		return
+	for checkpoint_id in ["checkpoint_01", "checkpoint_02", "checkpoint_03"]:
+		var checkpoint_result: Dictionary = exam_manager.record_stage_one_checkpoint(checkpoint_id)
+		if not bool(checkpoint_result.get("success", false)):
+			_fail("Hunter stage one rejected the expected checkpoint: " + checkpoint_id)
+			return
+	var stage_one_status: Dictionary = exam_manager.get_stage_one_route_status()
+	if not bool(stage_one_status.get("complete", false)) or int(stage_one_status.get("progress", 0)) != 3:
+		_fail("Hunter stage one did not retain all three ordered route checkpoints.")
+		return
+	var route_resume: Dictionary = exam_manager.reset_stage_one_route()
+	if not bool(route_resume.get("resumed", false)) or int(route_resume.get("progress", 0)) != 3:
+		_fail("Hunter stage one route reset discarded existing candidate progress.")
+		return
+	var unverified_stage_completion: Dictionary = exam_manager.complete_current_stage("endurance_pursuit", {"client_claim":true})
+	if str(unverified_stage_completion.get("reason", "")) != "TRUSTED_EVIDENCE_VERIFIER_UNAVAILABLE" or not exam_manager.exam_active or not exam_manager.completed_stage_ids.is_empty():
+		_fail("Hunter stage one completed without a trusted evidence verifier.")
+		return
 	exam_manager.free()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(validation_save_path))
 	print("Hunter exam tunnel access passed: seven physical stage gates and staging barrier stay locked until registered exam start.")
@@ -486,6 +507,23 @@ func _run() -> void:
 	var landmarks = LANDMARK_SCRIPT.new()
 	region.add_child(landmarks)
 	landmarks.call("build", terrain)
+	var hunter_stage_one_root := landmarks.get_node_or_null("hunter_exam_stage_one_course_baghdad") as Node3D
+	if hunter_stage_one_root == null or str(hunter_stage_one_root.get_meta("hunter_exam_stage_id", "")) != "endurance_pursuit" or int(hunter_stage_one_root.get_meta("hunter_exam_checkpoint_count", 0)) != 3:
+		_fail("Baghdad Hunter stage one endurance course is missing or incomplete.")
+		return
+	for stage_marker_name in ["StageOneStartGate", "StageOneCheckpoint_01", "StageOneCheckpoint_02", "StageOneCheckpoint_03", "StageOneFinishGate"]:
+		var stage_marker_root := hunter_stage_one_root.get_node_or_null(stage_marker_name) as Node3D
+		var stage_marker_interaction := stage_marker_root.get_node_or_null("StageMarkerInteraction") as Area3D if stage_marker_root != null else null
+		var stage_marker_collision := stage_marker_interaction.get_node_or_null("CollisionShape3D") as CollisionShape3D if stage_marker_interaction != null else null
+		if stage_marker_interaction == null or not stage_marker_interaction.is_in_group("system_interactable") or stage_marker_collision == null or stage_marker_collision.shape == null:
+			_fail("Baghdad Hunter stage one marker is missing its interaction or collision: " + stage_marker_name)
+			return
+	for route_segment_index in range(1, 5):
+		var route_segment_body := hunter_stage_one_root.get_node_or_null("StageOneRoute_%02dCollision" % route_segment_index) as StaticBody3D
+		var route_segment_collision := route_segment_body.get_node_or_null("CollisionShape3D") as CollisionShape3D if route_segment_body != null else null
+		if route_segment_collision == null or route_segment_collision.shape == null or route_segment_collision.disabled:
+			_fail("Baghdad Hunter stage one route segment is missing active collision: %d" % route_segment_index)
+			return
 	var hunter_tunnel_root := landmarks.get_node_or_null("hunter_exam_tunnel_start_baghdad") as Node3D
 	var hunter_tunnel_floor := hunter_tunnel_root.find_child("TunnelFloor", true, false) as MeshInstance3D if hunter_tunnel_root != null else null
 	var hunter_tunnel_floor_body := hunter_tunnel_root.find_child("TunnelFloorCollision", true, false) as StaticBody3D if hunter_tunnel_root != null else null
@@ -540,7 +578,7 @@ func _run() -> void:
 	fake_map.call("register_location", "2", "hunter_association_headquarters_baghdad", "region_baghdad", "المقر الرئيسي لنقابة الصيادين", 5, headquarters_position, false)
 	landmarks.call("register_map_locations", fake_map, "2")
 	var main_source := FileAccess.get_file_as_string("res://scripts/main.gd")
-	for required_contract in ["tower_lift_console_", "tower_stair_", "tower_floor_exit_", "tower_service_", "tower_service_hunter_headquarters_", "_enter_baghdad_tower_floor", "BaghdadTowerLiftUIScript", "set_hunter_exam_tunnel_access", "tunnel_access_controller.get_parent()", "tunnel_access_controller.call("]:
+	for required_contract in ["tower_lift_console_", "tower_stair_", "tower_floor_exit_", "tower_service_", "tower_service_hunter_headquarters_", "hunter_exam_stage_one_start_baghdad", "record_stage_one_checkpoint", "hunter_exam_stage_one_finish_baghdad", "_enter_baghdad_tower_floor", "BaghdadTowerLiftUIScript", "set_hunter_exam_tunnel_access", "tunnel_access_controller.get_parent()", "tunnel_access_controller.call("]:
 		if not main_source.contains(required_contract):
 			_fail("Main interaction runtime is missing tower lift contract: " + required_contract)
 			return
@@ -556,7 +594,7 @@ func _run() -> void:
 	if not fake_map.entries.has("hunter_association_headquarters_baghdad"):
 		_fail("Hunter Association headquarters is missing from the world map.")
 		return
-	for location_id in ["hunter_exam_tunnel_start_baghdad", "hunter_exam_public_notice_baghdad", "baghdad_archaeological_ruins", "baghdad_international_motorsport_park"]:
+	for location_id in ["hunter_exam_tunnel_start_baghdad", "hunter_exam_stage_one_course_baghdad", "hunter_exam_public_notice_baghdad", "baghdad_archaeological_ruins", "baghdad_international_motorsport_park"]:
 		if not fake_map.entries.has(location_id):
 			_fail("Baghdad civic/sport landmark is missing from the world map: " + location_id)
 			return
