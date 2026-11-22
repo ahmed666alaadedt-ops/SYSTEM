@@ -1147,8 +1147,6 @@ func _run() -> void:
 			if not bool(final_activity_result.get("success", false)):
 				_fail("Facility activity action failed: " + str(activity_type) + " / " + str(final_activity_result))
 				return
-			if bool(final_activity_result.get("completed", false)):
-				break
 			if str(activity_type) == "bowling":
 				bowling_total_pinfall += int(final_activity_result.get("pins", final_activity_result.get("last_throw", 0)))
 			elif str(activity_type) == "sports_court":
@@ -1158,6 +1156,8 @@ func _run() -> void:
 				arcade_last_result = final_activity_result.duplicate(true)
 				if bool(final_activity_result.get("hit", final_activity_result.get("last_target_hit", false))):
 					arcade_hit_count += 1
+			if bool(final_activity_result.get("completed", false)):
+				break
 		if str(activity_type) == "arcade" and (not final_activity_result.has("last_target_hit") or typeof(final_activity_result.get("last_target_hit")) != TYPE_BOOL or int(final_activity_result.get("last_target_id", -1)) < -1 or int(final_activity_result.get("last_target_id", -1)) > 4):
 			_fail("Arcade final attempt did not return a valid physical target-sensor result.")
 			return
@@ -1168,14 +1168,14 @@ func _run() -> void:
 			_fail("Bowling final frame did not report physical pinfall results.")
 			return
 		if not bool(final_activity_result.get("completed", false)):
-			_fail("Facility activity did not complete its required steps: " + str(activity_type))
+			if str(activity_type) == "bowling":
+				_fail("Bowling did not complete all ten frames and tenth-frame bonus rolls within 21 throws.")
+			else:
+				_fail("Facility activity did not complete its required steps: " + str(activity_type))
 			return
 		if not operations.get("facility_activity_stats").has(activity_type):
 			_fail("Facility activity result was not recorded: " + str(activity_type))
 			return
-	if not bool(final_activity_result.get("completed", false)):
-		_fail("Bowling did not complete all ten frames and tenth-frame bonus rolls within 21 throws.")
-		return
 	if bowling_total_pinfall <= 0:
 		_fail("Bowling physics test did not knock down any pins across the ten-frame game.")
 		return
