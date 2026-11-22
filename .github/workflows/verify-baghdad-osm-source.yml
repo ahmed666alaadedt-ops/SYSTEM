@@ -17,6 +17,7 @@ on:
       - "SYSTEM-WORLD/tools/geospatial/audit_baghdad_cell_connectivity.py"
       - "SYSTEM-WORLD/tools/geospatial/test_audit_baghdad_cell_connectivity.py"
       - "SYSTEM-WORLD/tools/geospatial/verify_baghdad_republic_bridge_pack.py"
+      - "SYSTEM-WORLD/tools/geospatial/build_baghdad_ground_layer.py"
       - ".github/workflows/canonical-godot-android.yml"
       - "SYSTEM-WORLD/scripts/baghdad_osm_cell_streamer.gd"
       - "SYSTEM-WORLD/scripts/baghdad_city_state_store.gd"
@@ -35,6 +36,7 @@ on:
       - "SYSTEM-WORLD/tools/geospatial/audit_baghdad_cell_connectivity.py"
       - "SYSTEM-WORLD/tools/geospatial/test_audit_baghdad_cell_connectivity.py"
       - "SYSTEM-WORLD/tools/geospatial/verify_baghdad_republic_bridge_pack.py"
+      - "SYSTEM-WORLD/tools/geospatial/build_baghdad_ground_layer.py"
       - ".github/workflows/canonical-godot-android.yml"
       - "SYSTEM-WORLD/scripts/baghdad_osm_cell_streamer.gd"
       - "SYSTEM-WORLD/scripts/baghdad_city_state_store.gd"
@@ -350,6 +352,21 @@ jobs:
           print("Validated expanded Baghdad core-to-Republic Bridge cell pack:", path.stat().st_size, "bytes;", len(tile_names), "occupied cells.")
           PY
 
+      - name: Build flat Baghdad municipal ground with Tigris water cutout
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          SOURCE_DIR="$RUNNER_TEMP/baghdad-source/clipped_layers"
+          CELL_PACK="$RUNNER_TEMP/baghdad-source/baghdad-metric-cell-pack-baghdad-core-and-republic-bridge.zip"
+          REPORT="$RUNNER_TEMP/baghdad-source/baghdad-ground-layer-report.json"
+          python3 "$PROJECT/tools/geospatial/build_baghdad_ground_layer.py" \
+            --boundary "$RUNNER_TEMP/baghdad-source/baghdad-boundary.geojson" \
+            --water-layer "$SOURCE_DIR/natural-water.geojson" \
+            --bridge-layer "$SOURCE_DIR/bridges.geojson" \
+            --pack "$CELL_PACK" \
+            --report "$REPORT"
+
       - name: Verify Tigris and Republic Bridge coverage in the runtime cell pack
         shell: bash
         run: |
@@ -477,6 +494,7 @@ jobs:
           path: |
             ${{ runner.temp }}/baghdad-source/baghdad-cell-connectivity-audit.json
             ${{ runner.temp }}/baghdad-source/baghdad-republic-bridge-verification.json
+            ${{ runner.temp }}/baghdad-source/baghdad-ground-layer-report.json
             ${{ runner.temp }}/baghdad-source/baghdad-metric-cell-pack-baghdad-core-and-republic-bridge.zip
             ${{ runner.temp }}/baghdad-source/baghdad-metric-cell-pack-5x5.zip
             ${{ runner.temp }}/baghdad-source/baghdad-entrance-associations.json
