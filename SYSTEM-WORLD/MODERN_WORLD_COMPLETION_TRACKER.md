@@ -848,3 +848,14 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Extend the Baghdad operations validator to open the Hunter Association menu and assert that the rank-board entry and progression rows are generated.
 - [ ] Run Godot 4.3 import/parse, the full Baghdad tower operations validator, and canonical Android APK export on the latest branch head; this UI addition is not yet marked tested.
 - [ ] Implement the separate multi-stage SSS examination/board decision workflow; the current board is a transparent progress display, not the final SSS approval workflow.
+
+
+### SYSTEM Hotel housekeeping turnover — 22 November 2026
+
+- [x] Preserve checked-out room records as occupied by housekeeping instead of releasing them immediately.
+- [x] Add persisted room states: `needs_cleaning`, `cleaning`, and `ready`.
+- [x] Add staff controls to start housekeeping, then complete cleaning and record the room inspection.
+- [x] Keep rooms unavailable for new bookings until cleaning and inspection pass.
+- [x] Extend the Godot operations validator to cover checkout, cleaning-state transition, inspection, and room re-availability.
+- [ ] Run Godot 4.3 validation and canonical Android APK export on the updated PR head; do not claim this pass validated until both results are confirmed.
+- Note: housekeeping workflow is a local-save prototype. Staff navigation/animation and online shared hotel occupancy remain future work.
