@@ -2377,6 +2377,7 @@ func get_streaming_status() -> Dictionary:
 	return {
 		"enabled": enabled,
 		"loaded_cell_count": loaded_cells.size(),
+		"pinned_cell_count": pinned_cells.size(),
 		"queued_load_count": pending_loads.size(),
 		"queued_unload_count": pending_unloads.size(),
 		"cell_size_m": cell_size,
