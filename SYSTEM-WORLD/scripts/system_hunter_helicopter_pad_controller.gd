@@ -17,6 +17,7 @@ var hud: CanvasLayer
 var status_label: Label
 var interact_button: Button
 var control_buttons: Dictionary = {}
+var pressed_controls: Dictionary = {}
 var pilot_active := false
 var landed := true
 var horizontal_velocity := Vector3.ZERO
@@ -126,13 +127,10 @@ func _add_hold_button(key: String, caption: String, offset: Vector2, size: Vecto
 	control_buttons[key] = button
 
 func _set_control(key: String, active: bool) -> void:
-	match key:
-		"forward": input_vector.y = -1.0 if active else 0.0
-		"back": input_vector.y = 1.0 if active else 0.0
-		"left": input_vector.x = -1.0 if active else 0.0
-		"right": input_vector.x = 1.0 if active else 0.0
-		"up": vertical_input = 1.0 if active else 0.0
-		"down": vertical_input = -1.0 if active else 0.0
+	pressed_controls[key] = active
+	input_vector.x = float(bool(pressed_controls.get("right", false))) - float(bool(pressed_controls.get("left", false)))
+	input_vector.y = float(bool(pressed_controls.get("back", false))) - float(bool(pressed_controls.get("forward", false)))
+	vertical_input = float(bool(pressed_controls.get("up", false))) - float(bool(pressed_controls.get("down", false)))
 
 func _update_proximity() -> void:
 	if not is_instance_valid(player) or not is_instance_valid(interact_button):
@@ -219,7 +217,7 @@ func _update_flight(delta: float) -> void:
 		landed = false
 		if not _is_aircraft_position_clear(candidate_position):
 			horizontal_velocity = Vector3.ZERO
-			vertical_velocity = minf(vertical_velocity, 0.0)
+			vertical_velocity = 0.0
 			status_label.text = "OBSTACLE — flight path blocked"
 			_update_camera()
 			return
