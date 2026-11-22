@@ -1067,6 +1067,11 @@ func _run() -> void:
 		_fail("Bowling lane must spawn ten physical rigid-body pins.")
 		return
 	operations.set("current_facility_root", bowling_facility)
+	var court_room := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 22) as Node3D
+	var court_facility := court_room.get_node_or_null("SpecialFacility_sports_court") as Node3D if court_room != null else null
+	if court_facility == null or court_facility.get_node_or_null("BasketballScoringSensor") == null:
+		_fail("Basketball scoring sensor was not generated.")
+		return
 	var activity_cases := {
 		"swimming_pool": ["lap", 3],
 		"fitness_gym": ["rep", 8],
@@ -1082,18 +1087,25 @@ func _run() -> void:
 	}
 	for activity_type in activity_cases.keys():
 		var activity_case: Array = activity_cases[activity_type]
+		if str(activity_type) == "sports_court":
+			operations.set("current_facility_root", court_facility)
+		elif str(activity_type) == "bowling":
+			operations.set("current_facility_root", bowling_facility)
 		if not bool(operations.call("start_facility_activity", str(activity_type))):
 			_fail("Facility activity could not start: " + str(activity_type))
 			return
 		var final_activity_result: Dictionary = {}
 		for _step in range(int(activity_case[1])):
-			if str(activity_type) == "bowling":
+			if str(activity_type) == "bowling" or str(activity_type) == "sports_court":
 				final_activity_result = await operations.call("perform_facility_activity", str(activity_case[0]))
 			else:
 				final_activity_result = operations.call("perform_facility_activity", str(activity_case[0]))
 			if not bool(final_activity_result.get("success", false)):
 				_fail("Facility activity action failed: " + str(activity_type) + " / " + str(final_activity_result))
 				return
+		if str(activity_type) == "sports_court" and not final_activity_result.has("last_shot_scored"):
+			_fail("Basketball final attempt did not return a physical hoop-sensor result.")
+			return
 		if str(activity_type) == "bowling" and (int(final_activity_result.get("last_throw", -1)) < 0 or int(final_activity_result.get("last_throw", -1)) > 10):
 			_fail("Bowling final frame did not report physical pinfall results.")
 			return
