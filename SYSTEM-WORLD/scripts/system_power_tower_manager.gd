@@ -19,10 +19,11 @@ func _ready() -> void:
 func get_floor_data(floor_number: int) -> Dictionary:
 	if floor_number < 1 or floor_number > MAX_FLOORS:
 		return {}
+	var final_boss := floor_number == MAX_FLOORS
 	var boss_floor := floor_number % 10 == 0
 	var difficulty := clampi(1 + int((floor_number - 1) / 5), 1, 40)
 	var required_level := clampi(int(ceil(float(floor_number) * 0.45)), 1, 100)
-	var reward_xp := 100 + floor_number * floor_number * 12
+	var reward_xp := 100 + floor_number * floor_number * 12 + (250000 if final_boss else 0)
 	var arena_cycle := (floor_number - 1) % 5
 	var arena_names := [
 		"DUEL ARENA",
@@ -51,10 +52,11 @@ func get_floor_data(floor_number: int) -> Dictionary:
 		"rank": _rank_for_floor(floor_number),
 		"challenge_type": "BOSS" if boss_floor else ("ELITE" if floor_number % 5 == 0 else "COMBAT_TRIAL"),
 		"arena_type": arena_type,
-		"arena_name": "BOSS TRIAL ARENA" if boss_floor else str(arena_names[arena_cycle]),
-		"arena_rules": "مواجهة زعيم الطابق — اهزم الخصم الرئيسي" if boss_floor else str(arena_rules[arena_cycle]),
+		"arena_name": "SYSTEM SOVEREIGN — FINAL TRIAL" if final_boss else ("BOSS TRIAL ARENA" if boss_floor else str(arena_names[arena_cycle])),
+		"arena_rules": "المواجهة النهائية: اهزم حارس برج القوة الأخير لإتمام الطوابق الـ200" if final_boss else ("مواجهة زعيم الطابق — اهزم الخصم الرئيسي" if boss_floor else str(arena_rules[arena_cycle])),
 		"clear_time_recorded": true,
-		"ranked": arena_type == "CHAMPIONSHIP" or boss_floor
+		"ranked": arena_type == "CHAMPIONSHIP" or boss_floor,
+		"final_boss": final_boss
 	}
 
 func request_floor(floor_number: int, player_level: int) -> Dictionary:
