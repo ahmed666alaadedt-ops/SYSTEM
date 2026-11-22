@@ -71,10 +71,7 @@ func _run_validation() -> void:
 	var district := manager.get_node_or_null("FiveTowerConnectedDistrict")
 	_expect(district != null, "connected five-tower district exists")
 	if district != null:
-		var radial_count := 0
-		for child in district.get_children():
-			if child.name.begins_with("CentralSYSTEMRadialSkybridge_"):
-				radial_count += 1
+		var radial_count := _count_named_prefix(district, "CentralSYSTEMRadialSkybridge_")
 		_expect(radial_count == 5, "five radial skybridges connect towers to the central SYSTEM hub")
 
 	var amenities := manager.get_node_or_null("ConnectedCityPublicAmenities_Blockout")
@@ -100,3 +97,12 @@ func _expect(condition: bool, description: String) -> void:
 	else:
 		push_error("FAIL: " + description)
 		failures += 1
+
+
+func _count_named_prefix(node: Node, prefix: String) -> int:
+	var count := 0
+	for child in node.get_children():
+		if child.name.begins_with(prefix):
+			count += 1
+		count += _count_named_prefix(child, prefix)
+	return count
