@@ -1211,7 +1211,7 @@ func _run() -> void:
 				cinema_scene_count += 1
 				var cinema_title := cinema_facility.get_node_or_null("CinemaProgramTitle") as Label3D
 				if cinema_title == null or not cinema_title.text.contains("المشهد %d" % cinema_scene_count):
-					_fail("Cinema scene progression did not update the screen for scene %d." % expected_scene)
+					_fail("Cinema scene progression did not update the screen for scene %d." % cinema_scene_count)
 					return
 			if str(activity_type) == "bowling":
 				bowling_total_pinfall += int(final_activity_result.get("pins", final_activity_result.get("last_throw", 0)))
