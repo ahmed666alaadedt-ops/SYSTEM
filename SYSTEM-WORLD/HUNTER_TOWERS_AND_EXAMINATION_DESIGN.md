@@ -236,3 +236,12 @@ The Power Tower lobby board also shows the player's highest cleared floor, next 
 - Repair kits are sold by NPC vendors and can also be crafted. NPC service staff restore a damaged item to full durability when a repair kit is available.
 - The inventory UI shows each equipped item's upgrade tier and remaining durability.
 - These item records are saved locally with player progression; unique per-instance item rolls and cloud-authoritative inventory are future work.
+
+
+### Official Hunter rank ladder — 22 November 2026
+
+- Official hunter grades progress from lowest to highest as **F → E → D → C → B → A → S → SS → SSS**.
+- SSS is the highest and exceptionally rare grade; it is not awarded by player level alone.
+- Rank evaluation is intended to require multiple difficult examinations and verified demonstrations of combat skill, control, judgment, consistency and exceptional ability. SSS promotion must be an explicit examination-board decision, not an automatic XP threshold.
+- The helicopter authorization controller recognizes A, S, SS and SSS as notable hunter grades; F through B do not qualify by grade alone. Association staff roles and the separate level-50-plus completed-license route remain independent authorization paths.
+- Note: this documents the rank ladder and applies the high-rank access check. A complete rank-award/examination-board progression and NPC staff pilot automation are separate implementation tasks and are not claimed complete by this change.
