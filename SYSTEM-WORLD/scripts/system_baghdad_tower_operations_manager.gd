@@ -2584,9 +2584,24 @@ func _launch_arcade_projectile() -> Dictionary:
 	projectile.position = Vector3(facility_aim * 4.0, 2.0, 4.0)
 	projectile.apply_central_impulse(Vector3(0.0, 1.45, -8.0))
 	_set_status("انطلقت الكرة الضوئية — أصب الهدف المحدد!")
-	await get_tree().create_timer(1.0).timeout
-	var hit := is_instance_valid(projectile) and bool(projectile.get_meta("system_arcade_hit", false))
-	var target_id := int(projectile.get_meta("system_arcade_target", -1)) if is_instance_valid(projectile) else -1
+	var hit := false
+	var target_id := -1
+	for _physics_step in range(90):
+		await get_tree().physics_frame
+		if not is_instance_valid(projectile):
+			break
+		if bool(projectile.get_meta("system_arcade_hit", false)):
+			hit = true
+			target_id = int(projectile.get_meta("system_arcade_target", -1))
+			break
+		for sensor_index in range(5):
+			var target_sensor := current_facility_root.get_node_or_null("ArcadeTargetSensor_%02d" % sensor_index) as Area3D
+			if target_sensor != null and projectile.global_position.distance_to(target_sensor.global_position) <= 0.95:
+				hit = true
+				target_id = sensor_index
+				break
+		if hit:
+			break
 	if is_instance_valid(projectile):
 		projectile.queue_free()
 	var step := int(active_facility_activity.get("step", 0)) + 1
