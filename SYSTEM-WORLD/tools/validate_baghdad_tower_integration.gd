@@ -36,6 +36,27 @@ func _fail(message: String) -> void:
 	quit(1)
 
 func _run() -> void:
+	# Keep tower stair routing as a top-level interaction branch. If it is nested
+	# under the lift-console branch, the player can never reach it from a stair.
+	var main_source := FileAccess.get_file_as_string("res://scripts/main.gd")
+	var main_lines := main_source.split("\n")
+	var lift_branch_line := -1
+	var stair_branch_line := -1
+	var floor_branch_line := -1
+	for line_index in range(main_lines.size()):
+		var source_line: String = str(main_lines[line_index])
+		if source_line == "\telif location_id.begins_with(\"tower_lift_console_\"):":
+			lift_branch_line = line_index
+		elif source_line == "\telif location_id.begins_with(\"tower_stair_\"):":
+			stair_branch_line = line_index
+		elif source_line == "\telif location_id.begins_with(\"tower_floor_\") and not location_id.begins_with(\"tower_floor_exit_\"):":
+			floor_branch_line = line_index
+	if lift_branch_line < 0 or stair_branch_line < 0 or floor_branch_line < 0:
+		_fail("Main interaction handler is missing a tower lift, stair or floor branch.")
+		return
+	if not (lift_branch_line < stair_branch_line and stair_branch_line < floor_branch_line):
+		_fail("Tower stair interaction is not a separate top-level branch between lift and floor interactions.")
+		return
 	var region := FakeRegion.new()
 	region.name = "FakeModernWorldRegionManager"
 	var terrain := FakeTerrain.new()
