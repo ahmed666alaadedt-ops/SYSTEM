@@ -176,3 +176,12 @@ Until then, label it as source, prototype, blockout, generated candidate, or pen
 The 5×5 pack is only a 1 km × 1 km initial proof area. It is not the full Baghdad municipal map, and no physical Android visual/performance test has been performed.
 
 - `system_public_event_board.gd` — procedural facade-mounted advertising and public event-result displays for configured modern-world cities and the five connected Baghdad district towers (Hunter Association, Business, Shopping, Entertainment, Technology & Innovation), plus the separate Power Tower; listens to verified local gameplay completion events and persists local result history. Real ad delivery and authoritative global rankings remain unimplemented.
+
+## Baghdad source-mapped entrance association — 2026-11-22
+
+- Association tool: `tools/geospatial/associate_baghdad_entrances.py`; it now embeds its reviewed decisions into the generated ZIP cell pack under association schema version 1.
+- Runtime consumer: `scripts/baghdad_osm_cell_streamer.gd`; accepted and restricted entrance points are linked to the matching `OSMBuildingCollision` body in the same streamed cell.
+- Runtime validator: `tools/validate_baghdad_osm_runtime.gd`; it checks the entrance-bearing 0:2 sample cell, stable building IDs, entrance ID retention and restricted access state.
+- Source workflow: `.github/workflows/verify-baghdad-osm-source.yml`; association report and annotated cell pack are included in the published artifacts. The workflow now also listens to the integration branch.
+- Evidence status: source-level implementation committed; GitHub Actions verification of the new annotated pack/runtime path is pending. The 5×5 sample is still only a 1 km × 1 km proof area, not full Baghdad.
+- Limitation: no physical door mesh/opening, door animation, interior transition or enterable apartment/shop scene is claimed by this integration.
