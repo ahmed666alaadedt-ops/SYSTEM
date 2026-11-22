@@ -27,6 +27,28 @@ func _run() -> void:
 		_fail("The active player reference is missing from tower operations.")
 		return
 
+	var staff_by_tower: Dictionary = operations.get("staff_by_tower")
+	var tower_floor_counts := {
+		"hunter_association_tower_baghdad": 200,
+		"business_investment_tower_baghdad": 36,
+		"shopping_tower_baghdad": 32,
+		"entertainment_tower_baghdad": 34,
+		"technology_tower_baghdad": 40,
+		"power_tower_baghdad": 200
+	}
+	for tower_id_value in tower_floor_counts.keys():
+		var tower_id := str(tower_id_value)
+		var staff_ids_for_tower: Array = staff_by_tower.get(tower_id, [])
+		var total_floors := int(tower_floor_counts[tower_id])
+		if staff_ids_for_tower.is_empty():
+			_fail("Tower %s has no persistent duty staff." % tower_id)
+			return
+		for floor_number in range(1, total_floors + 1):
+			var assigned_staff_index := int(operations.call("_get_floor_duty_staff_index", tower_id, floor_number))
+			if assigned_staff_index < 0 or assigned_staff_index >= staff_ids_for_tower.size():
+				_fail("Tower %s floor %d has no valid persistent duty-staff assignment." % [tower_id, floor_number])
+				return
+
 	var floor_specs := [
 		["hunter_association_tower_baghdad", 100],
 		["business_investment_tower_baghdad", 8],
@@ -71,7 +93,6 @@ func _run() -> void:
 	var restaurant_room := operations.call("_ensure_floor_room", "shopping_tower_baghdad", 29) as Node3D
 	var shopping_tower := tower_manager.get_node_or_null("ShoppingTower") as Node3D
 	var shopping_lobby := shopping_tower.get_node_or_null("PublicLobby_Blockout") as Node3D if shopping_tower != null else null
-	var staff_by_tower: Dictionary = operations.get("staff_by_tower")
 	var staff_ids: Array = staff_by_tower.get("shopping_tower_baghdad", [])
 	if restaurant_room == null or shopping_lobby == null or staff_ids.size() <= 4:
 		_fail("Shopping Tower floor 29, lobby or chef staff record is missing.")
