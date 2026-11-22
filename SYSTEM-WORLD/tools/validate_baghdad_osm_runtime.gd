@@ -133,6 +133,7 @@ func _run_validation() -> void:
 		if door_root == null:
 			_fail("A reviewed entrance has no physical door and wall opening: " + entrance_id)
 			return
+		door_root.set("player_override", door_test_player)
 		if not door_root.is_in_group("system_interactable") or not bool(door_root.get_meta("system_wall_opening_built", false)):
 			_fail("A physical Baghdad door is missing its interaction group or wall opening evidence.")
 			return
