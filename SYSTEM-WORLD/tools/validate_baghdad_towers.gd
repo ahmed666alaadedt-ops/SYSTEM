@@ -147,8 +147,7 @@ func _run_validation() -> void:
 		return
 
 	print("Baghdad tower validation passed: five connected towers, standalone 200-floor Power Tower, six lobby kiosks, Shopping Tower weapons/elixirs/restaurants/hotel, floor zoning, and Technology public display.")
-	main_scene.queue_free()
-	await process_frame
+	# This is a short-lived headless validation process; avoid forcing dummy-renderer teardown of placeholder meshes.
 	quit(0)
 
 
