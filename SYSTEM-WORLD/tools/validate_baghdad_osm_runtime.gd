@@ -3,6 +3,7 @@ extends SceneTree
 const BAGHDAD_STREAMER = preload("res://scripts/baghdad_osm_cell_streamer.gd")
 const CITY_STATE_STORE = preload("res://scripts/baghdad_city_state_store.gd")
 const CITY_NAVIGATION = preload("res://scripts/npc_city_navigation_manager.gd")
+const BAGHDAD_OSM_DOOR = preload("res://scripts/baghdad_osm_door_interaction.gd")
 
 
 func _initialize() -> void:
@@ -206,6 +207,29 @@ func _run_validation() -> void:
 			if bool(door_root.get_meta("system_door_open", true)) or interior_root.visible:
 				_fail("A restricted physical door opened or activated its interior through public interaction.")
 				return
+	var restricted_door_test := Node3D.new()
+	restricted_door_test.name = "RestrictedBaghdadDoorPolicyTest"
+	restricted_door_test.set_script(BAGHDAD_OSM_DOOR)
+	var restricted_hinge := Node3D.new()
+	restricted_hinge.name = "DoorHinge"
+	restricted_door_test.add_child(restricted_hinge)
+	root.add_child(restricted_door_test)
+	restricted_door_test.call(
+		"configure", restricted_hinge, true,
+		"synthetic_restricted_building", "node/restricted_policy_test",
+		null, null, Vector3.FORWARD
+	)
+	restricted_door_test.call("system_interact")
+	if bool(restricted_door_test.get_meta("system_door_open", true)):
+		_fail("A synthetic restricted Baghdad door opened through public interaction.")
+		return
+	if str(restricted_door_test.get_meta("system_access_state", "")) != "restricted_no_public_entry":
+		_fail("A synthetic restricted Baghdad door lost its access restriction.")
+		return
+	if bool(restricted_door_test.call("is_publicly_accessible")):
+		_fail("A synthetic restricted Baghdad door reports public access.")
+		return
+	restricted_door_test.queue_free()
 	if accepted_runtime_entrances == 0 or physical_door_count != accepted_runtime_entrances or interior_transition_count != accepted_runtime_entrances:
 		_fail("Baghdad accepted entrance, physical door and interior transition counts do not match.")
 		return
