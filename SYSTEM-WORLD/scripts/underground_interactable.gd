@@ -86,8 +86,9 @@ func restore_stone_door_state(opened: bool) -> void:
 		push_warning("SYSTEM underground: cannot restore door state; target is missing.")
 		return
 
-	_closed_door_position = door.position
-	_door_position_captured = true
+	if not _door_position_captured:
+		_closed_door_position = door.position
+		_door_position_captured = true
 	_opened = opened
 	var restored_position := _closed_door_position
 	if _opened:
