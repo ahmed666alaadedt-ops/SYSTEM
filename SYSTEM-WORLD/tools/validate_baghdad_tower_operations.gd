@@ -63,6 +63,14 @@ func _run() -> void:
 	if int(status.get("customer_count", 0)) != 20:
 		_fail("Expected four persistent customer NPCs in each of the five Baghdad district towers; found %d." % int(status.get("customer_count", 0)))
 		return
+	var region := main.find_child("ModernWorldRegionManager", true, false)
+	if region == null:
+		_fail("ModernWorldRegionManager is missing.")
+		return
+	var tower_manager := region.get_node_or_null("BaghdadTowerLandmarksManager")
+	if tower_manager == null:
+		_fail("BaghdadTowerLandmarksManager is missing.")
+		return
 	var expected_tower_nodes := {
 		"hunter_association_tower_baghdad": "HunterAssociationTower",
 		"business_investment_tower_baghdad": "BusinessInvestmentTower",
@@ -99,19 +107,12 @@ func _run() -> void:
 			_fail("Tower %s requires %d uniformed visible staff and 4 visible customer NPCs; found staff=%d uniformed=%d customers=%d." % [tower_id, expected_staff, visible_staff, uniformed_staff, visible_customers])
 			return
 	operations.call("_simulate_customer_purchases")
-	if int(operations.call("get_operations_status").get("npc_purchase_count", 0)) <= 0:
+	var post_purchase_status: Dictionary = operations.call("get_operations_status")
+	if int(post_purchase_status.get("npc_purchase_count", 0)) <= 0:
 		_fail("NPC customer purchasing did not complete a transaction.")
 		return
 	if str(status.get("advertising_mode", "")) != "npc_staff_managed_internal_external":
 		_fail("NPC-managed internal/external advertising is not active.")
-		return
-	var region := main.find_child("ModernWorldRegionManager", true, false)
-	if region == null:
-		_fail("ModernWorldRegionManager is missing.")
-		return
-	var tower_manager := region.get_node_or_null("BaghdadTowerLandmarksManager")
-	if tower_manager == null:
-		_fail("BaghdadTowerLandmarksManager is missing.")
 		return
 	var entertainment_pool := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 18) as Node3D
 	var pool_facility := entertainment_pool.get_node_or_null("SpecialFacility_swimming_pool") if entertainment_pool != null else null
