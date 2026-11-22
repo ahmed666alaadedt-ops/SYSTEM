@@ -155,6 +155,23 @@ func _run_validation() -> void:
 	if independent_body.position.distance_to(CLOSED_POSITION) > 0.03:
 		_fail("River Catacombs door did not remain closed after Old Souk state restoration.")
 		return
+
+	# Closing the restored door must persist just as reliably as opening it.
+	restored_door.call("system_interact")
+	await create_timer(1.4).timeout
+	restored_manager.queue_free()
+	await process_frame
+	var closed_manager: Node3D = HERITAGE_MANAGER.new()
+	world_root.add_child(closed_manager)
+	await physics_frame
+	var closed_door := closed_manager.get_node("BaghdadOldSouk/UndergroundChambers/VaultStoneDoorInteraction")
+	var closed_body := closed_door.get_node("DoorBody") as Node3D
+	if bool(closed_door.get_meta("system_door_open", true)):
+		_fail("Closed vault state was not restored after a second manager recreation.")
+		return
+	if closed_body.position.distance_to(CLOSED_POSITION) > 0.03:
+		_fail("Closed vault slab did not return to its saved closed position after manager recreation.")
+		return
 	world_root.queue_free()
 	await process_frame
 
