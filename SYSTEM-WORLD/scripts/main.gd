@@ -858,6 +858,14 @@ func _on_interaction_performed(
 	if target.has_meta("system_tower_staff_id") and tower_operations_manager != null:
 		tower_operations_manager.call("open_staff_service", target)
 		return
+	if target.has_meta("system_facility_type") and target.has_meta("system_tower_floor_number") and target.has_meta("system_tower_id") and tower_operations_manager != null:
+		tower_operations_manager.call(
+			"open_facility_service",
+			str(target.get_meta("system_tower_id", "")),
+			int(target.get_meta("system_tower_floor_number", 0)),
+			str(target.get_meta("system_facility_type", ""))
+		)
+		return
 	if target.has_meta("system_tower_floor_number") and target.has_meta("system_tower_id") and tower_operations_manager != null:
 		tower_operations_manager.call(
 			"open_floor_services",
