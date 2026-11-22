@@ -92,7 +92,7 @@ func _run() -> void:
 		if elevator_cabin == null or interior.get_node_or_null("AnimatedElevatorCabin/CabinDoorLeft") == null or interior.get_node_or_null("AnimatedElevatorCabin/CabinDoorRight") == null:
 			_fail("Animated elevator cabin or sliding doors are missing for " + root_name)
 			return
-		if not bool(interior.get_meta("emergency_stairwell_ready", false)) or int(interior.get_meta("emergency_stairwell_step_count", 0)) != 80:
+		if not bool(interior.get_meta("emergency_stairwell_ready", false)) or int(interior.get_meta("emergency_stairwell_step_count", 0)) != 200:
 			_fail("Physical emergency stairwell steps are incomplete for " + root_name)
 			return
 		if root_name == "HunterAssociationTower":
