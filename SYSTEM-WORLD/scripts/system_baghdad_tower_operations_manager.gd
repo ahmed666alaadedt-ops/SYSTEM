@@ -401,7 +401,7 @@ func _get_responsive_panel_size(viewport_size: Vector2) -> Vector2:
 func _resize_panel() -> void:
 	if not is_instance_valid(panel):
 		return
-	var target_size := _get_responsive_panel_size(get_viewport_rect().size)
+	var target_size := _get_responsive_panel_size(get_viewport().get_visible_rect().size)
 	panel.custom_minimum_size = target_size
 	panel.size = target_size
 	panel.position = -target_size * 0.5
