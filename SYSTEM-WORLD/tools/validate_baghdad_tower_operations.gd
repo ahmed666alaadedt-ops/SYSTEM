@@ -810,6 +810,7 @@ func _run() -> void:
 	operations.set("hotel_bookings", {})
 	operations.set("credits", maxi(preview_credits_snapshot, 500))
 	operations.call("open_hotel_room_preview", "hotel_standard_01")
+	await process_frame
 	var hotel_preview_title := operations.get("title_label") as Label
 	var hotel_preview_content := operations.get("content") as VBoxContainer
 	var hotel_preview_button: Button
