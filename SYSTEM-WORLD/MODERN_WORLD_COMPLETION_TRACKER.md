@@ -1007,3 +1007,11 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Fix the validator's collision-node lookup by explicitly naming each generated stair `CollisionShape3D` under its `StaticBody3D`; the top-floor stair collider checks now pass.
 - [ ] Validate actual player traversal, stair landing alignment and floor-to-floor transitions in the live game and on Android.
 - Note: stair geometry is generated per active floor and only one floor environment is loaded at a time; transition areas swap the active floor while preserving the lobby return point.
+
+
+## Baghdad connected tower stair interaction routing — 22 November 2026
+
+- [x] Correct the main interaction handler so `tower_stair_` is a separate top-level branch rather than an unreachable nested branch inside `tower_lift_console_`; stair interactions now route to the adjacent floor without invoking the elevator animation.
+- [x] Extend the Baghdad tower integration validator to assert that lift, stair and generated-floor interaction branches remain separate top-level branches in the required order.
+- [x] Godot 4.3 workflow run `45011123115` passed on exact commit `666eec44bf2bdf97fa4b4c76d3404e9dd70c3672`, including import/script parsing, the five connected tower + independent Power Tower validator, the new stair-routing regression assertion, all configured gameplay validators, missing-mesh scan and headless main-scene launch.
+- [ ] Validate actual player traversal, stair landing alignment, adjacent-floor transitions and return to the lobby in the live game and on Android; CI verifies the interaction branch structure and procedural floor contracts, not physical player movement.
