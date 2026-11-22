@@ -52,13 +52,27 @@ func _run_validation() -> void:
 		return
 
 	print("Baghdad OSM runtime cell passed: roads=", roads.size(), " buildings=", buildings.size(), " landuse=", landuse.size(), " building_collisions=", building_collisions.size())
-	print("Baghdad OSM cleanup: queueing cell and streamer for deletion.")
+	print("Baghdad OSM cleanup: releasing render resources before deleting the test scene.")
+	_release_render_resources(streamer)
 	streamer.queue_free()
 	await process_frame
 	print("Baghdad OSM cleanup: first process frame completed.")
 	await process_frame
 	print("Baghdad OSM cleanup: second process frame completed.")
 	quit(0)
+
+
+func _release_render_resources(start: Node) -> void:
+	for child in start.get_children():
+		_release_render_resources(child)
+	if start is MeshInstance3D:
+		var mesh_instance := start as MeshInstance3D
+		mesh_instance.mesh = null
+		mesh_instance.material_override = null
+	elif start is MultiMeshInstance3D:
+		var multimesh_instance := start as MultiMeshInstance3D
+		multimesh_instance.multimesh = null
+		multimesh_instance.material_override = null
 
 
 func _find_invalid_mesh_nodes(start: Node) -> Array[String]:
