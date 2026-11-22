@@ -59,6 +59,8 @@ func _run() -> void:
 	if exam_manager == null:
 		_fail("HunterExamManager is missing.")
 		return
+	var empty_stage_ids: Array[String] = []
+	exam_manager.set("completed_stage_ids", empty_stage_ids)
 	exam_manager.set("registered", true)
 	exam_manager.set("exam_active", true)
 	exam_manager.set("current_stage_index", 0)
@@ -76,7 +78,7 @@ func _run() -> void:
 	if str(completed_exam_result.get("reason", "")) != "ALL_STAGES_COMPLETED" or bool(exam_manager.get("exam_active")):
 		_fail("A completed Hunter examination must not reopen or remain marked active.")
 		return
-	exam_manager.set("completed_stage_ids", [])
+	exam_manager.set("completed_stage_ids", empty_stage_ids)
 	exam_manager.set("exam_active", true)
 	exam_manager.set("current_stage_index", 0)
 	var hunter_tower := tower_manager.get_node_or_null("HunterAssociationTower") as Node3D
