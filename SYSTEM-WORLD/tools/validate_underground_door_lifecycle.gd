@@ -73,6 +73,7 @@ func _run_validation() -> void:
 	player_body_shape.shape = character_capsule
 	player_body.add_child(player_body_shape)
 	root.add_child(player_body)
+	player_clearance_cast.add_exception(player_body)
 	await physics_frame
 	var closed_body_motion := player_body.move_and_collide(Vector3(0.0, 0.0, -14.0))
 	if closed_body_motion == null or player_body.global_position.z <= -7.0:
