@@ -51,3 +51,5 @@ Last verified: 2026-11-22 (GitHub repository review)
 - These are visual meshes/labels/metadata only. They are not yet playable or interactive; cinema playback, transactions, services, rides, pools, elevators, doors, interior navigation and full collision validation remain outstanding.
 - No Godot parse/run or Android test has yet verified commit e7b693f70fce40ea64177fa6e3468eeab9ea7525. Earlier Build #658 does not include this commit.
 - Continue on qa/fix-deferred-test-cleanup-20261122 only; never merge to main without explicit user approval.
+
+- Follow-up geometry commit: 48c85425ee7961457ee1c066e9a780a3f6c47bfd adds five radial skybridges between the central SYSTEM hub and the five tower positions, and aligns the shared sky-garden collision bounds with the 252 m terrace diameter. This remains untested source geometry.
