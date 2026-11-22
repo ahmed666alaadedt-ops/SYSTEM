@@ -10,6 +10,8 @@ This status block is authoritative over older historical backlog notes below. Ol
 - Physical bowling, basketball and arcade target gameplay also has automated regression coverage. Full sports match rules, bowling bonus scoring, cinema programming/playback, full arcade cabinet play, animated robotics, immersive VR, autonomous staff navigation and completed room interiors remain open.
 - Do not call the five-tower district fully complete while these explicitly open gameplay and physical-device checks remain. Keep PR #38 as draft and do not merge without the user's explicit approval.
 
+- Shopping Tower restaurant dine-in workflow is now implemented in source HEAD `6a9f1391581d408ca45b8ede9f6f9d4ddd530bdf`: four interactable tables per restaurant floor (29–32), multi-item paid orders, persisted order states, chef preparation controls, waiter serving controls and guest table release. The validator now checks table interaction registration, payment, kitchen/waiter transitions and save/load persistence. Godot validation #1419 and Android export #1156 are pending; this feature is not marked verified until both finish.
+
 ---
 
 - [x] Upgrade the bowling floor with a collidable lane, one physical bowling ball per throw, ten rigid-body pins, collision-driven pinfall scoring and pin reset between frames.
