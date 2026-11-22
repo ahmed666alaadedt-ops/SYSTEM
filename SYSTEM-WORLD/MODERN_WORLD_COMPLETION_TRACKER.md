@@ -648,3 +648,9 @@ Implementation added on the feature branch; automated runtime validation is pend
 
 - [x] Correct the automated test fixture to use a typed empty stage-ID array when switching from the completed-candidate test profile back to the unlicensed profile; this prevents stale completed-stage data from contaminating the helicopter authorization assertion.
 - [ ] Re-run the full Godot operations validator and Android export on the corrected head.
+
+
+### Hunter helicopter authorization test isolation — 22 November 2026
+
+- [x] Explicitly mark the helicopter regression-test profile as unregistered after the completed-exam regression case, so the negative pilot-authorization test cannot inherit the prior candidate's completed-stage state.
+- [ ] Re-run Godot 4.3 operations validation and canonical Android export on the isolated test profile.
