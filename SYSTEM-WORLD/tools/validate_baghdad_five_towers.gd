@@ -98,6 +98,28 @@ func _run_validation() -> void:
 					_expect(hall.get_node_or_null("TicketKioskVisual") != null, "cinema hall %02d has ticket kiosk visual" % hall_index)
 					_expect(hall.get_node_or_null("HallNumberSign") != null, "cinema hall %02d has hall numbering" % hall_index)
 
+	var hunter_tower := manager.get_node_or_null("HunterAssociationTower")
+	var hunter_details := hunter_tower.get_node_or_null("TowerFacilities_Blockout/SpecializedInteriorDetails_Blockout") if hunter_tower != null else null
+	_expect(hunter_details != null, "Hunter Association specialized interior exists")
+	if hunter_details != null:
+		_expect(hunter_details.get_node_or_null("HunterMissionBoardGallery") != null, "hunter mission board gallery exists")
+		_expect(hunter_details.get_node_or_null("HunterTrainingDummyGallery") != null, "hunter training dummy gallery exists")
+		_expect(hunter_details.get_node_or_null("HunterClinicTreatmentStations") != null, "hunter clinic treatment stations exist")
+	var business_tower := manager.get_node_or_null("BusinessTower")
+	var business_details := business_tower.get_node_or_null("TowerFacilities_Blockout/SpecializedInteriorDetails_Blockout") if business_tower != null else null
+	_expect(business_details != null, "Business Tower specialized interior exists")
+	if business_details != null:
+		_expect(business_details.get_node_or_null("ExecutiveConferenceTableAndSeating") != null, "business conference room layout exists")
+		_expect(business_details.get_node_or_null("InvestmentMarketTicker") != null, "investment market ticker exists")
+		_expect(business_details.get_node_or_null("BusinessHotelGuestRoomGallery") != null, "business hotel guest room gallery exists")
+	var technology_tower := manager.get_node_or_null("TechnologyInnovationTower")
+	var technology_details := technology_tower.get_node_or_null("TowerFacilities_Blockout/SpecializedInteriorDetails_Blockout") if technology_tower != null else null
+	_expect(technology_details != null, "Technology Tower specialized interior exists")
+	if technology_details != null:
+		_expect(technology_details.get_node_or_null("RoboticsResearchBenchGallery") != null, "robotics research benches exist")
+		_expect(technology_details.get_node_or_null("ArtificialIntelligenceResearchPods") != null, "AI research pods exist")
+		_expect(technology_details.get_node_or_null("DigitalLibraryShelfGallery") != null, "digital library shelves exist")
+
 	var shopping_tower := manager.get_node_or_null("ShoppingTower")
 	var shopping_facilities := shopping_tower.get_node_or_null("TowerFacilities_Blockout") if shopping_tower != null else null
 	_expect(shopping_facilities != null, "Shopping Tower facility layout exists")
