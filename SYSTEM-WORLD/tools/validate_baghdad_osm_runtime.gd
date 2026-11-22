@@ -115,6 +115,9 @@ func _run_validation() -> void:
 	if not is_finite(terrain_manager.get_terrain_height(float(bridge_anchor[0]), float(bridge_anchor[1]))):
 		_fail("ModernContinentManager returned a non-finite terrain height at Republic Bridge.")
 		return
+	if absf(terrain_manager.get_terrain_height(float(bridge_anchor[0]), float(bridge_anchor[1])) - streamer.world_ground_elevation_m) > 0.1:
+		_fail("Baghdad terrain extension did not reach the resolved ground baseline at Republic Bridge.")
+		return
 	if not is_equal_approx(streamer.world_ground_elevation_m, preexisting_baghdad_ground_elevation):
 		_fail("OSM runtime baseline does not preserve the existing Baghdad world elevation.")
 		return
@@ -122,6 +125,9 @@ func _run_validation() -> void:
 		_fail("Tigris and Republic Bridge surfaces do not match their verified relative elevations.")
 		return
 	for bank_point in bank_points:
+		if absf(terrain_manager.get_terrain_height(float(bank_point[0]), float(bank_point[1])) - streamer.world_ground_elevation_m) > 0.1:
+			_fail("One of the verified bank approaches does not meet the resolved Baghdad ground baseline.")
+			return
 		var bank_cell := Vector2i(floori(float(bank_point[0]) / streamer.cell_size), floori(float(bank_point[1]) / streamer.cell_size))
 		streamer._load_cell(bank_cell)
 		if not streamer.is_ground_position(float(bank_point[0]), float(bank_point[1])):
