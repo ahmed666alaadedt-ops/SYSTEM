@@ -8,7 +8,7 @@ This is the acceptance checklist for the modern-world map. The project must not 
 - [x] Each city style index generates a distinct original civic landmark silhouette to improve skyline and local identity.
 - [x] Ten rural settlement seeds are defined.
 - [x] City road strips, plaza markers, green-belt markers, airport/rail visual hubs, and map discovery registration exist.
-- [x] Baghdad tower landmarks are created by the region manager.\n- [x] Tower exteriors now include stepped podiums, facade fins and illuminated crowns; the Power Tower adds tournament display blades and concentric arena terraces, while the Hunter Association Tower adds monumental wings and a Hall of Honor display. These remain architectural blockouts; interior arenas, live champion data and playable headquarters rooms are not complete.\n- [x] Power Tower's 100-floor data model now cycles through duel, team, survival, elite-gauntlet and championship challenge profiles, with every tenth floor assigned a boss trial. This is challenge metadata; spawning, playable arena rooms, matchmaking and server-verified rankings remain open.
+- [x] Baghdad tower landmarks are created by the region manager.\n- [x] Tower exteriors now include stepped podiums, facade fins and illuminated crowns; the Power Tower adds tournament display blades and concentric arena terraces, while the Hunter Association Tower adds monumental wings and a Hall of Honor display. These remain architectural blockouts; interior arenas, live champion data and playable headquarters rooms are not complete.\n- [x] Power Tower's 200-floor data model now cycles through duel, team, survival, elite-gauntlet and championship challenge profiles, with every tenth floor assigned a boss trial. This is challenge metadata; spawning, playable arena rooms, matchmaking and server-verified rankings remain open.
 - [x] City road-tunnel visual prototypes are generated where terrain sampling finds a continuous, sufficiently level land alignment; rejected sites are skipped.
 - [x] Rural village anchors are retained and first-pass access-road meshes are generated when a continuous all-land route to a city is found.
 - [x] Every resolved district receives batched visual road-grid, sidewalk, and pedestrian-crossing meshes.
@@ -99,17 +99,18 @@ A checked repository foundation does not mean a finished gameplay feature. Visua
 - Expanded modern-city service prototypes to include schools, university, football stadium, shopping street, restaurant, bank and mall alongside existing hospital, police, fire, hotel, market and garage. Added city service interaction markers, a visible stadium pitch/stands/goals, school courtyards and shopfronts. Functional gameplay and Godot/Android runtime validation remain outstanding.
 
 
-## Baghdad connected five-tower city — design direction recorded 20 November 2026
+## Baghdad connected five-tower district plus separate Power Tower — design direction updated 22 November 2026
 
-- [ ] Build the five distinct landmark towers as one connected vertical urban district spanning central Baghdad's Karkh–Rusafa corridor.
+- [ ] Build the five distinct district landmark towers as one connected vertical urban district spanning central Baghdad's Karkh–Rusafa corridor; build the standalone Power Tower as a separate destination outside that network.
 - [ ] Keep the Tigris visibly open and flowing beneath the district; preserve the river channel, riverfront access, navigation clearance, and views.
 - [ ] Preserve Tahrir Square and the Freedom Monument as recognizable, explorable public landmarks on the Rusafa side; do not cover, replace, or overwhelm them.
 - [ ] Connect the five towers with skybridges, elevated promenades, public terraces, and carefully designed cross-river links while keeping the river unobstructed below.
 - [ ] Create a multi-level public district with ground streets/plazas, mid-level shopping and services, and upper sky gardens/recreation decks.
-- [ ] Implement the five identities: Power Tower, Hunter Association Tower, Business Tower, Shopping Tower, and Entertainment Tower.
+- [ ] Implement the five connected district identities: Hunter Association, Business and Investment, Shopping and Commerce, Entertainment and Sports, and Technology and Innovation.
+- [ ] Keep the 200-floor Power Tower separate, with its own entrance/map marker; exclude it from the five-tower skybridge and vehicle-deck loop.
 - [ ] Add accessible pedestrian routes, transit access, emergency/service circulation, wayfinding, and clear public connections to the existing Baghdad street network.
 - [ ] Validate the district in Godot from Karkh, Rusafa, Tigris riverfront, and Tahrir Square viewpoints; ensure the Freedom Monument and river remain visually legible.
-- Design approval/documentation is recorded in `HUNTER_TOWERS_AND_EXAMINATION_DESIGN.md`. The connected city, bridges, detailed interiors, and river engineering are not yet implemented or runtime-tested.
+- Design approval/documentation is recorded in `HUNTER_TOWERS_AND_EXAMINATION_DESIGN.md`. The connected city, bridges, detailed interiors, and river engineering are not yet implemented or runtime-tested; the six-landmark source correction is on a feature branch pending Godot validation.
 
 
 ## Vehicle physics foundation — 20 November 2026
