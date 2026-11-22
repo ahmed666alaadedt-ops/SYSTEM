@@ -348,7 +348,7 @@ func open_tower(tower_id: String) -> void:
 	lobby_button.pressed.connect(return_to_lobby)
 	content.add_child(lobby_button)
 	if tower_id == "power_tower_baghdad":
-		var power_status := power_tower_manager.call("get_tower_status") if is_instance_valid(power_tower_manager) else {}
+		var power_status: Dictionary = power_tower_manager.call("get_tower_status") if is_instance_valid(power_tower_manager) else {}
 		status_label.text = "برج مستقل — 200 طابق\nأعلى طابق مكتمل: %d | الطابق التالي: %d\nكل طابق تحدٍ فعلي، والطابق العاشر ومضاعفاته اختبار زعيم." % [int(power_status.get("highest_cleared_floor", 0)), int(power_status.get("next_floor", 1))]
 	panel.show()
 
