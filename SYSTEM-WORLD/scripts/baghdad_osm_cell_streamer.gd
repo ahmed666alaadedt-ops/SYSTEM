@@ -352,7 +352,7 @@ func _load_cell(cell: Vector2i) -> void:
 		_build_line_feature(cell_root, feature, 2.2, bridge_material, 0.20, "OSMRailway")
 	for feature in layers.get("landuse", []):
 		_build_area_feature(cell_root, feature, land_material, 0.035, "OSMLanduse")
-	var water_area_lift := water_surface_elevation_m - ground_elevation_m + 0.08
+	var water_area_lift := water_surface_elevation_m - ground_elevation_m
 	for feature in layers.get("natural-water", []):
 		_build_area_feature(cell_root, feature, water_material, water_area_lift, "OSMNaturalWater")
 	var amenity_count := 0
