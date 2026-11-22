@@ -805,6 +805,13 @@ func _run() -> void:
 	if hotel_suite_room.get_node_or_null("SYSTEMHotelFacilities/HotelRoomInterior_hotel_hunter_suite/HotelRoomHunterGearRack") == null or hotel_suite_room.get_node_or_null("SYSTEMHotelFacilities/HotelRoomInterior_hotel_elite_vip/HotelRoomVIPDiningTable") == null:
 		_fail("Hunter suite or VIP hotel room is missing its signature furnishings.")
 		return
+	operations.call("open_hotel_room_preview", "hotel_standard_01")
+	var hotel_preview_title := operations.get("title_label") as Label
+	var hotel_preview_content := operations.get("content") as VBoxContainer
+	var hotel_preview_button := hotel_preview_content.find_child("Button", true, false) as Button if hotel_preview_content != null else null
+	if hotel_preview_title == null or not hotel_preview_title.text.contains("غرفة قياسية 01") or hotel_preview_button == null or hotel_preview_button.disabled:
+		_fail("Hotel room door preview did not display an available, rank-eligible booking action.")
+		return
 	var shopping_staff: Array = operations.get("staff_by_tower").get("shopping_tower_baghdad", [])
 	if shopping_staff.size() != 9:
 		_fail("Shopping Tower must create all nine management, shop, workshop, restaurant, hotel and advertising staff roles.")
