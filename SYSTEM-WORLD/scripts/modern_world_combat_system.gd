@@ -41,6 +41,34 @@ func heavy_attack() -> void:
 	can_attack = true
 
 
+func skill_one() -> Dictionary:
+	if not can_attack or not is_instance_valid(actor):
+		return {"success": false, "reason": "COMBAT_BUSY"}
+	var progression := get_tree().root.find_child("PlayerProgression", true, false)
+	if progression == null or not progression.has_method("activate_nen_burst"):
+		return {"success": false, "reason": "NEN_SYSTEM_UNAVAILABLE"}
+	var activation: Dictionary = progression.call("activate_nen_burst")
+	if not bool(activation.get("success", false)):
+		return activation
+	can_attack = false
+	_consume_weapon_durability(0.75)
+	_fire_hitscan(heavy_damage + _get_progression_damage_bonus(), attack_range * 1.35)
+	get_tree().create_timer(0.75).timeout.connect(func(): can_attack = true)
+	return activation
+
+
+func skill_two() -> Dictionary:
+	if not can_attack or not is_instance_valid(actor):
+		return {"success": false, "reason": "COMBAT_BUSY"}
+	can_attack = false
+	_consume_weapon_durability(0.9)
+	_fire_hitscan(heavy_damage * 1.2 + _get_progression_damage_bonus(), attack_range * 1.2)
+	get_tree().create_timer(1.0 * _get_attack_cooldown_multiplier()).timeout.connect(func(): can_attack = true)
+	return {"success": true, "ability_id": "charged_strike"}
+
+
+
+
 func _consume_weapon_durability(amount: float) -> void:
 	var progression := get_tree().root.find_child("PlayerProgression", true, false)
 	if progression != null and progression.has_method("consume_equipment_durability"):
