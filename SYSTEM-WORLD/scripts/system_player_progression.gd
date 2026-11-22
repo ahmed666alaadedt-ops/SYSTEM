@@ -31,13 +31,13 @@ const EQUIPMENT_SLOTS_BY_ITEM := {
 	"training_sword": "weapon", "steel_sword": "weapon", "hunter_spear": "weapon",
 	"battle_axe": "weapon", "composite_bow": "weapon", "system_firearm": "weapon",
 	"hunter_shield": "shield", "hunter_armor": "armor", "hunter_helmet": "helmet",
-	"combat_outfit": "outfit", "casual_outfit": "outfit"
+	"combat_outfit": "outfit", "casual_outfit": "outfit", "hunter_outfit_e": "outfit", "hunter_outfit_d": "outfit", "hunter_outfit_c": "outfit", "hunter_outfit_b": "outfit", "hunter_outfit_a": "outfit", "hunter_outfit_s": "outfit", "hunter_outfit_ss": "outfit", "hunter_outfit_sss": "outfit"
 }
 const EQUIPMENT_DAMAGE_BONUS := {
 	"training_sword": 5.0, "steel_sword": 12.0, "hunter_spear": 10.0,
 	"battle_axe": 14.0, "composite_bow": 8.0, "system_firearm": 16.0
 }
-const EQUIPMENT_DEFENSE_BONUS := {"hunter_shield": 8.0, "hunter_armor": 12.0, "hunter_helmet": 4.0}
+const EQUIPMENT_DEFENSE_BONUS := {"hunter_shield": 8.0, "hunter_armor": 12.0, "hunter_helmet": 4.0, "hunter_outfit_e": 5.0, "hunter_outfit_d": 7.0, "hunter_outfit_c": 10.0, "hunter_outfit_b": 14.0, "hunter_outfit_a": 19.0, "hunter_outfit_s": 25.0, "hunter_outfit_ss": 32.0, "hunter_outfit_sss": 42.0}
 
 const CRAFTING_RECIPES := {
 	"training_sword": {"name": "صناعة سيف تدريبي", "ingredients": {"iron_ingot": 1, "wood_plank": 2}, "output": "training_sword", "required_level": 1},
