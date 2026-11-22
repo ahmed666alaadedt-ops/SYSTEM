@@ -78,10 +78,13 @@ func _build_power_tower() -> void:
 	)
 
 func _build_tower(node_name: String, title: String, location_id: String, world_position: Vector3, height: float, radius: float, floors: int, beacon_color: Color, connect_to_district: bool = true) -> void:
-	var resolved := _nearest_land_position(Vector2(world_position.x, world_position.z))
+	var requested_position := Vector2(world_position.x, world_position.z)
+	var resolved := _nearest_land_position(requested_position)
 	if resolved == Vector2.INF:
 		push_warning("SYSTEM WORLD: no suitable land for tower " + title)
 		return
+	if resolved.distance_to(requested_position) > 0.5:
+		print("SYSTEM WORLD: tower plot relocated to nearby land: ", title, " / offset ", snappedf(resolved.distance_to(requested_position), 0.1), "m")
 	var root := Node3D.new()
 	root.name = node_name
 	root.position = Vector3(resolved.x, float(terrain.call("get_terrain_height", resolved.x, resolved.y)), resolved.y)
@@ -224,10 +227,14 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 func _nearest_land_position(origin: Vector2) -> Vector2:
 	if terrain.call("is_land_position", origin.x, origin.y):
 		return origin
-	for radius_step in range(1, 17):
+	# Baghdad tower sites may fall beside the Tigris or on a generated water
+	# channel. Search a wider local radius so one unsuitable plot cannot remove
+	# a required tower from the five-tower district.
+	for radius_step in range(1, 49):
 		var radius := float(radius_step) * 12.0
-		for sample in range(32):
-			var angle := TAU * float(sample) / 32.0
+		var sample_count := 32 if radius_step <= 16 else 48
+		for sample in range(sample_count):
+			var angle := TAU * float(sample) / float(sample_count)
 			var candidate := origin + Vector2(cos(angle), sin(angle)) * radius
 			if terrain.call("is_land_position", candidate.x, candidate.y):
 				return candidate
