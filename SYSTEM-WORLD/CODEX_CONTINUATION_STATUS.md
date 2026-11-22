@@ -87,3 +87,18 @@ Code validated on commit `83db22c01e7ecf1addd01ce01cbb1b341bd1fdc8`:
 7. Never merge into, rebase onto, or modify `main` without explicit owner approval.
 
 **Resume instruction:** continue from this file and the latest commit on `work/baghdad-system-integration`. Do not restart the project, do not repeat completed work, and do not ask the owner to repeat the project vision.
+
+
+## Latest continuation checkpoint — Baghdad door targeting and cell retention
+
+- Active branch: `work/baghdad-system-integration`.
+- Latest code commit under validation: `59807d68386e46307ac8805e27bc6bd16244afb9`.
+- Tracker update commit: `1529e649873eb77aed92b81456cbb3c5d0436967`.
+- Baghdad door roots now expose `system_building_osm_id`; the OSM cell streamer refuses to unload a cell while a grouped player is inside a building from that cell, and retries the pending unload after exit.
+- Runtime validator now tests collider-to-door-root resolution, an actual camera physics ray, world-map location registration/discovery, and occupied-cell unload deferral/retry.
+- Exact-commit general Godot validation: workflow `44985396517` passed.
+- Exact-commit Baghdad OSM source/association/connectivity workflow: `44985396507` passed.
+- Canonical Android workflow `44985543020` is in progress and is the decisive check for the actual OSM runtime validator plus APK export. Do not mark the new camera/cell-retention tests passed until that run finishes successfully.
+- An earlier intermediate commit `0f46a14` failed Godot parsing due to a missing indentation on the new metadata line; fixed in `59807d6`. The current branch includes the correction.
+- Main remains unchanged at `dff4e9d377ffaae6845e6f401c47346e51ea5619`. Branch comparison: 556 ahead, 3 behind, diverged. Do not merge/rebase/synchronize.
+- Next: inspect workflow `44985543020` logs and result; if the runtime validator fails, fix only the demonstrated issue and rerun. If it passes, record the final evidence and resume remaining Baghdad landmark queue. No user device visual/performance test has been performed.
