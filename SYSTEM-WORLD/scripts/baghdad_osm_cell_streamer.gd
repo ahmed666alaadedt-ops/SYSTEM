@@ -708,12 +708,30 @@ func _create_osm_building_interior(
 				_add_osm_interior_box(interior, "PrayerHallRug", Vector3(center.x, base_y + 0.025, center.y), Vector3(minf(2.6, width * 0.7), 0.05, minf(3.2, depth * 0.7)), accent_material)
 			"church":
 				_add_osm_interior_box(interior, "ChurchBench", Vector3(center.x, base_y + 0.35, center.y + depth * 0.12), Vector3(minf(2.0, width * 0.6), 0.7, 0.42), furniture_material)
+			"school":
+				_add_osm_interior_box(interior, "SchoolTeacherDesk", Vector3(center.x, base_y + 0.42, center.y - depth * 0.28), Vector3(minf(1.5, width * 0.42), 0.82, 0.72), furniture_material)
+				_add_osm_interior_box(interior, "SchoolBoard", Vector3(center.x, base_y + 1.35, center.y + depth * 0.38), Vector3(minf(2.2, width * 0.68), 1.25, 0.12), accent_material)
+				_add_osm_interior_box(interior, "ClassroomDesk", Vector3(center.x - width * 0.2, base_y + 0.36, center.y + depth * 0.05), Vector3(minf(0.9, width * 0.24), 0.68, 0.62), furniture_material)
+			"healthcare":
+				_add_osm_interior_box(interior, "TreatmentBed", Vector3(center.x - width * 0.18, base_y + 0.34, center.y), Vector3(minf(1.2, width * 0.32), 0.64, minf(2.0, depth * 0.42)), accent_material)
+				_add_osm_interior_box(interior, "MedicalReception", Vector3(center.x + width * 0.2, base_y + 0.5, center.y - depth * 0.25), Vector3(minf(1.6, width * 0.42), 0.95, 0.55), furniture_material)
+			"hotel":
+				_add_osm_interior_box(interior, "HotelReception", Vector3(center.x, base_y + 0.5, center.y - depth * 0.28), Vector3(minf(1.8, width * 0.55), 0.95, 0.55), furniture_material)
+				_add_osm_interior_box(interior, "HotelGuestBed", Vector3(center.x, base_y + 0.36, center.y + depth * 0.18), Vector3(minf(1.5, width * 0.42), 0.68, minf(1.9, depth * 0.38)), accent_material)
 			_:
 				_add_osm_interior_box(interior, "PublicServiceCounter", Vector3(center.x, base_y + 0.5, center.y - depth * 0.25), Vector3(minf(1.8, width * 0.55), 0.95, 0.55), furniture_material)
 
 	var sign := Label3D.new()
 	sign.name = "InteriorCategorySign"
-	sign.text = "متجر بغداد" if building_kind == "commercial_building" else ("منزل بغداد" if building_kind in ["detached_house", "apartment_block"] else "مبنى بغداد")
+	var interior_names := {
+		"commercial_building": "متجر بغداد",
+		"detached_house": "منزل بغداد",
+		"apartment_block": "شقة بغداد",
+		"school": "مدرسة بغداد",
+		"healthcare": "مركز صحي بغداد",
+		"hotel": "فندق بغداد"
+	}
+	sign.text = str(interior_names.get(building_kind, "مبنى بغداد"))
 	sign.position = Vector3(center.x, base_y + 2.2, center.y)
 	sign.font_size = 24
 	sign.outline_size = 4
@@ -2020,8 +2038,14 @@ func _building_kind(tags: Dictionary) -> String:
 		return "detached_house"
 	if kind in ["apartments", "residential", "dormitory"]:
 		return "apartment_block"
-	if kind in ["commercial", "office", "retail", "industrial"]:
+	if kind in ["commercial", "office", "retail", "industrial", "supermarket"]:
 		return "commercial_building"
+	if kind in ["school", "university", "college", "kindergarten"]:
+		return "school"
+	if kind in ["hospital", "clinic", "doctors"]:
+		return "healthcare"
+	if kind in ["hotel", "hostel", "guest_house"]:
+		return "hotel"
 	return "general_building"
 
 
