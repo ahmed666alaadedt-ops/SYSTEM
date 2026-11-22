@@ -1,3 +1,14 @@
+## Correct Baghdad tower count and integrated Shopping Tower — 22 November 2026
+
+- [x] Replace the obsolete standalone Weapons/Equipment/Elixirs landmark with the missing Business & Investment Tower; Baghdad now generates the intended five connected towers: Hunter Association, Business & Investment, Shopping & Commerce, Entertainment & Sports, and Technology & Innovation.
+- [x] Keep the 200-floor Power Tower as a separate landmark outside the five-tower district.
+- [x] Move weapons, armour, equipment, Nen research and elixir facility metadata onto Shopping Tower; add restaurant, cafe, bakery and hotel/guest-suite department metadata there.
+- [x] Update Shopping Tower's floor directory to include weapons/workshops, elixir laboratories, SYSTEM Hotel on floors 27–28, and restaurants on floors 29–32.
+- [x] Update the landmark validator to require the five correct connected towers, assert integrated Shopping Tower facility categories, and reject the obsolete standalone weapons tower.
+- [x] Update the operations validator to check the Shopping Tower forge/elixir lab, hotel reception/suites and eight staff roles.
+- [ ] Run the updated Godot 4.3 landmark and operations validators on the latest branch head. Earlier CI run failed because the old landmark validator still expected the obsolete weapons tower; the validator and landmark manager have since been corrected, but a fresh green run is still required.
+- [ ] Verify the complete Android APK export and physical device runtime after the fresh CI run.
+
 ## Shopping Tower inventory expansion — 22 November 2026
 
 - [x] Expand the shared Shopping Tower catalog with additional nen stabilization/focus/recovery elixirs, deep-wound treatment, regeneration, antidotes, resistance and rank-gated elite elixirs.
