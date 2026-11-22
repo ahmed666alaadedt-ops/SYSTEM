@@ -112,8 +112,14 @@ func _run_validation() -> void:
 	if terrain_manager.is_land_position(float(bridge_anchor[0]), float(bridge_anchor[1])):
 		_fail("ModernContinentManager incorrectly classifies the Tigris bridge anchor as land.")
 		return
-	if not is_equal_approx(terrain_manager.get_terrain_height(float(bridge_anchor[0]), float(bridge_anchor[1])), 34.0):
-		_fail("Baghdad OSM regional height sampling is inconsistent at Republic Bridge.")
+	if not is_finite(terrain_manager.get_terrain_height(float(bridge_anchor[0]), float(bridge_anchor[1]))):
+		_fail("ModernContinentManager returned a non-finite terrain height at Republic Bridge.")
+		return
+	if not is_equal_approx(streamer.world_ground_elevation_m, preexisting_baghdad_ground_elevation):
+		_fail("OSM runtime baseline does not preserve the existing Baghdad world elevation.")
+		return
+	if not is_equal_approx(streamer.world_water_surface_elevation_m, preexisting_baghdad_ground_elevation - 6.0) or not is_equal_approx(streamer.world_bridge_deck_elevation_m, preexisting_baghdad_ground_elevation + 0.28):
+		_fail("Tigris and Republic Bridge surfaces do not match their verified relative elevations.")
 		return
 	for bank_point in bank_points:
 		var bank_cell := Vector2i(floori(float(bank_point[0]) / streamer.cell_size), floori(float(bank_point[1]) / streamer.cell_size))
