@@ -991,6 +991,6 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Add batched glass facade panels and metallic frames around all four tower faces, repeated by the tower's configured floor count.
 - [x] Use each tower's identity color for low-intensity emissive glazing and a dedicated non-shadowing facade accent light.
 - [x] Store facade instance counts and extend the tower validator to verify glass/frame coverage across every configured floor.
-- [ ] Run Godot 4.3 parsing, full tower/gameplay validators, null-mesh scan and headless main-scene launch on the exact facade commit.
+- [x] Godot 4.3 workflow run `45007450442` passed on exact facade commit `c2407f9927663cbdd4b87642af5fc01f736a788d`: resource import/script parsing, all configured gameplay validators including facade coverage, missing-mesh scan, and headless main-scene launch succeeded.
 - [ ] Review the glass placement against the exterior shell and billboard positions in a live camera view; tune reflections, nighttime visibility and Android performance.
 - Note: this is a batched procedural facade-detail pass; final authored materials, true transparent window interiors, interior room lighting and skyline art direction remain open.
