@@ -123,8 +123,16 @@ The Power Tower is a standalone 200-floor challenge destination outside the five
 
 ### Vehicle circulation, comfort, and recreation expansion — 20 November 2026
 - The district is intended to support cars entering from Baghdad streets, climbing dedicated ramps, crossing elevated vehicle decks, and reaching tower parking/drop-off levels. Separate pedestrian promenades and sky gardens keep walking routes safe and pleasant.
-- The five primary identities in the connected district are Hunter Association, Weapons, Equipment and Elixirs, Shopping and Commerce, Entertainment and Sports, and Technology and Innovation. The Power Tower is a separate standalone destination outside this district; it is not one of the five and is not linked by the district skybridges or vehicle decks.
+- The five connected identities are Hunter Association, Weapons/Equipment/Elixirs, Shopping/Commerce, Entertainment/Sports, and Technology/Innovation. The former Business and Investment Tower was replaced by the Weapons, Equipment and Elixirs Tower on 22 November 2026. The Power Tower remains a standalone destination outside the five-tower skybridge/vehicle-deck network.
 - The connected district's eventual facilities include hotels, rest areas, clinics/medical support, restaurants, cafes, retail, cinemas, amusement rides, water attractions, swimming pools, rooftop gardens, sports courts, family spaces, public plazas, parking, emergency access, and service routes.
 - The vehicle ramps and elevated decks added to the procedural manager are architectural blockout geometry only. They do not yet provide drivable road navigation, vehicle physics, traffic rules, parking interactions, or tested collision/clearance.
 - Amenity decks are placeholder geometry and metadata, not finished pools, rides, shops, hotels, or interactive interiors.
 - The Tigris river channel and navigation corridor must remain open below cross-river connections. Tahrir Square and the Freedom Monument remain protected, recognizable, explorable landmarks; no tower deck or bridge may cover or visually erase them.
+
+
+## Baghdad tower identity architecture pass — 22 November 2026
+
+- Add distinct procedural exterior identity details to the five connected towers: Hunter Association wings and Hall of Honor frame; crossed-blade armoury insignia and equipment display plinths; stepped retail gallery rings; entertainment arena bowl and event screen; technology antennae and innovation ribbon.
+- Preserve the Power Tower as a separate landmark with tournament blades and a champion crown ring; it is not part of the five-tower connection loop.
+- Store floor count, approximate height and connected-district membership as tower metadata for later directory/elevator integration.
+- These identity structures remain procedural blockout geometry. They do not create finished interiors, elevators, shops, equipment inventories, elixir crafting, or playable arena floors.
