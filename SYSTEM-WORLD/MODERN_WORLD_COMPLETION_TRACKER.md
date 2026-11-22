@@ -1003,6 +1003,7 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Preserve the original lobby return position while moving between generated floors, so the floor exit always returns to the tower lobby rather than an unloaded previous floor.
 - [x] Route stair transitions through the normal tower floor loader without playing the elevator animation.
 - [x] Extend the tower validator to check the top-floor down route, reject an invalid top-floor up route, inspect all 15 top-floor stair-step colliders, and verify up/down access on the first four layout variants.
-- [ ] Run Godot 4.3 parser, tower/gameplay validators, missing-mesh scan and headless main-scene startup on the exact procedural-stair commit.
+- [x] Run Godot 4.3 parser, tower/gameplay validators, missing-mesh scan and headless main-scene startup on exact collision-fix commit `992991fd4ebe584dc4e501523ab4f1ba0d67aa7e`; workflow `45010467260` passed all steps.
+- [x] Fix the validator's collision-node lookup by explicitly naming each generated stair `CollisionShape3D` under its `StaticBody3D`; the top-floor stair collider checks now pass.
 - [ ] Validate actual player traversal, stair landing alignment and floor-to-floor transitions in the live game and on Android.
 - Note: stair geometry is generated per active floor and only one floor environment is loaded at a time; transition areas swap the active floor while preserving the lobby return point.
