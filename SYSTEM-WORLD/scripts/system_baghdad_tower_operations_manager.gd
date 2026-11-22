@@ -153,6 +153,8 @@ func _create_staff_for_all_towers() -> void:
 				staff_ids.append(npc_id)
 				_create_visible_staff(str(tower_id), npc_id, index, config)
 		staff_by_tower[tower_id] = staff_ids
+	if is_instance_valid(society) and society.has_method("save_society"):
+		society.call("save_society")
 
 func _get_or_create_staff(tower_id: String, index: int, config: Dictionary) -> String:
 	if not is_instance_valid(society):
