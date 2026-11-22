@@ -190,6 +190,9 @@ func _run() -> void:
 	if bool(helipad.get("pilot_active")) or not helicopter_player.visible or bool(helicopter_player.get_meta("system_helicopter_piloting", true)) or helicopter_player.is_physics_processing() != player_physics_before_flight:
 		_fail("Helicopter exit did not restore the on-foot player controls.")
 		return
+	if helicopter_player.global_position.distance_to(helicopter_node.global_position) > 12.0:
+		_fail("Helicopter exit did not place the pilot beside the parked aircraft.")
+		return
 	helipad.call("_enter_aircraft")
 	helipad.set("vertical_input", 1.0)
 	helipad.call("_update_flight", 0.5)
