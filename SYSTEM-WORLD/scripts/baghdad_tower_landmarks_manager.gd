@@ -246,6 +246,7 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	root.add_child(label)
 
 	_create_tower_architecture(root, node_name, title, height, radius, floors, beacon_color)
+	_create_tower_advertising_screens(root, node_name, height, radius)
 
 	root.set_meta("tower_id", location_id)
 	print("SYSTEM WORLD: landmark tower generated: ", title, " / ", floors, " floors / ", height, "m")
@@ -689,6 +690,57 @@ func _create_reference_sky_district() -> void:
 	district.set_meta("safety_rail_collision", true)
 	district.set_meta("final_art_assets_ready", false)
 	district.set_meta("note", "Procedural first-pass sky promenade; validate land clearance, navigation, collision and Android performance before final art.")
+
+
+func _create_tower_advertising_screens(root: Node3D, node_name: String, height: float, radius: float) -> void:
+	# Two large emissive public advertising displays on every connected tower facade.
+	# Content is local placeholder material; no live ad provider or tracking is enabled.
+	var screen_material := StandardMaterial3D.new()
+	screen_material.albedo_color = Color(0.015, 0.12, 0.19)
+	screen_material.roughness = 0.24
+	screen_material.metallic = 0.32
+	screen_material.emission_enabled = true
+	screen_material.emission = Color(0.015, 0.32, 0.58)
+	screen_material.emission_energy_multiplier = 1.8
+	var frame_material := trim_material
+	var display_names := ["ExteriorAdScreen_00", "ExteriorAdScreen_01"]
+	var display_heights := [18.0, maxf(34.0, height * 0.42)]
+	var display_angles := [0.0, PI * 0.5]
+	for index in range(display_names.size()):
+		var angle: float = display_angles[index]
+		var width := maxf(22.0, radius * 1.45)
+		var screen_height := maxf(10.0, radius * 0.42)
+		var screen_position := Vector3(sin(angle) * (radius + 1.6), display_heights[index], cos(angle) * (radius + 1.6))
+		var screen_root := Node3D.new()
+		screen_root.name = display_names[index]
+		screen_root.position = screen_position
+		screen_root.rotation.y = angle
+		root.add_child(screen_root)
+		var frame := MeshInstance3D.new()
+		frame.name = "AdScreenFrame"
+		var frame_mesh := BoxMesh.new()
+		frame_mesh.size = Vector3(width + 1.4, screen_height + 1.4, 0.9)
+		frame.mesh = frame_mesh
+		frame.material_override = frame_material
+		screen_root.add_child(frame)
+		var panel := MeshInstance3D.new()
+		panel.name = "AdScreenDisplay"
+		var panel_mesh := BoxMesh.new()
+		panel_mesh.size = Vector3(width, screen_height, 0.16)
+		panel.mesh = panel_mesh
+		panel.position.z = -0.52
+		panel.material_override = screen_material
+		screen_root.add_child(panel)
+		var message := Label3D.new()
+		message.name = "AdScreenMessage"
+		message.text = "إعلانات بغداد\nفعاليات وعروض المدينة\nSYSTEM AD NETWORK"
+		message.font_size = 30
+		message.position = Vector3(0.0, 0.0, -0.64)
+		message.pixel_size = 0.018
+		message.modulate = Color(0.82, 0.94, 1.0)
+		screen_root.add_child(message)
+	root.set_meta("exterior_ad_screen_count", display_names.size())
+	root.set_meta("local_ad_content_only", true)
 
 
 func _create_tower_identity_features(root: Node3D, node_name: String, height: float, radius: float) -> void:
