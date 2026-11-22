@@ -1397,12 +1397,16 @@ func _physics_process(delta: float) -> void:
 		if is_swimming:
 			var swim_surface_y := float(player.get_meta("system_swim_surface_y", player.global_position.y + 0.25))
 			var swim_target_y := swim_surface_y - 0.25
-			if not is_in_hospital_treatment and (jump_requested or Input.is_action_just_pressed("ui_accept")):
+			var swim_stroke_requested := not is_in_hospital_treatment and (jump_requested or Input.is_action_just_pressed("ui_accept"))
+			if swim_stroke_requested:
 				player.velocity.y = 2.6
+				player.set_meta("system_swim_last_stroke_force", 2.6)
 			else:
+				player.remove_meta("system_swim_last_stroke_force")
 				var buoyancy_error := swim_target_y - player.global_position.y
 				player.velocity.y = clampf(buoyancy_error * 3.2, -2.0, 2.0)
 		elif not player.is_on_floor():
+			player.remove_meta("system_swim_last_stroke_force")
 			player.velocity.y -= GRAVITY * delta
 		elif not is_in_hospital_treatment and (jump_requested or Input.is_key_pressed(KEY_SPACE)):
 			player.velocity.y = JUMP_FORCE
