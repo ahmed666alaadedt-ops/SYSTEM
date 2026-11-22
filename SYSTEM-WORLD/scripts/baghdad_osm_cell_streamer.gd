@@ -471,45 +471,63 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 			ring.remove_at(ring.size() - 1)
 		if ring.size() < 3:
 			continue
+		var feature_id := str(feature.get("id", "unknown"))
 		var door_specs := _find_osm_entrance_wall_placements(
-			feature_id_from_building(feature),
+			feature_id,
 			ring,
 			parent.get_meta("source_entrance_features", [])
 		)
-		var surface := SurfaceTool.new()
-		surface.begin(Mesh.PRIMITIVE_TRIANGLES)
-		for index in range(ring.size()):
-			var next_index := (index + 1) % ring.size()
+		var wall_surface := SurfaceTool.new()
+		wall_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+		for edge_index in range(ring.size()):
+			var next_index := (edge_index + 1) % ring.size()
 			var edge_openings: Array[Dictionary] = []
 			for door_spec in door_specs:
-				if int(door_spec.get("edge_index", -1)) == index:
+				if int(door_spec.get("edge_index", -1)) == edge_index:
 					edge_openings.append(door_spec)
-			_add_building_wall_edge(surface, ring[index], ring[next_index], height, edge_openings)
+			_add_building_wall_edge(wall_surface, ring[edge_index], ring[next_index], height, edge_openings)
+
+		var roof_mesh: ArrayMesh
+		var roof_surface := SurfaceTool.new()
+		roof_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 		var triangulation := Geometry2D.triangulate_polygon(ring)
-		for index in range(0, triangulation.size(), 3):
-			var p0 := ring[triangulation[index]]
-			var p1 := ring[triangulation[index + 1]]
-			var p2 := ring[triangulation[index + 2]]
+		for triangle_index in range(0, triangulation.size(), 3):
+			var p0 := ring[triangulation[triangle_index]]
+			var p1 := ring[triangulation[triangle_index + 1]]
+			var p2 := ring[triangulation[triangle_index + 2]]
 			_add_triangle(
-				surface,
+				roof_surface,
 				Vector3(p0.x, _terrain_height(p0) + height, p0.y),
 				Vector3(p1.x, _terrain_height(p1) + height, p1.y),
 				Vector3(p2.x, _terrain_height(p2) + height, p2.y)
 			)
-		surface.generate_normals()
-		var mesh := surface.commit()
-		if mesh == null or mesh.get_surface_count() == 0:
+		wall_surface.generate_normals()
+		var wall_mesh := wall_surface.commit()
+		if wall_mesh == null or wall_mesh.get_surface_count() == 0:
 			continue
-		var feature_id := str(feature.get("id", "unknown"))
+		if triangulation.size() >= 3:
+			roof_surface.generate_normals()
+			roof_mesh = roof_surface.commit()
+
 		var building := MeshInstance3D.new()
 		building.name = "OSMBuilding_%s_%s" % [kind, feature_id]
-		building.mesh = mesh
+		building.mesh = wall_mesh
 		building.material_override = _building_material_for(kind)
 		building.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 		building.set_meta("osm_feature_id", feature_id)
 		building.set_meta("baghdad_building_type", kind)
 		building.set_meta("osm_building_tag", str(tags.get("building", "yes")))
 		parent.add_child(building)
+
+		var roof_instance: MeshInstance3D
+		if roof_mesh != null and roof_mesh.get_surface_count() > 0:
+			roof_instance = MeshInstance3D.new()
+			roof_instance.name = "OSMBuildingRoof_%s" % feature_id
+			roof_instance.mesh = roof_mesh
+		roof_instance.material_override = building.material_override
+		roof_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+		parent.add_child(roof_instance)
+
 		var body := StaticBody3D.new()
 		body.name = "OSMBuildingCollision_%s" % feature_id
 		body.add_to_group("system_interactable")
@@ -517,8 +535,16 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 		body.set_meta("baghdad_building_type", kind)
 		body.set_meta("osm_building_tag", str(tags.get("building", "yes")))
 		var footprint_center := Vector2.ZERO
+		var min_x := INF
+		var max_x := -INF
+		var min_z := INF
+		var max_z := -INF
 		for footprint_point in ring:
 			footprint_center += footprint_point
+			min_x = minf(min_x, footprint_point.x)
+			max_x = maxf(max_x, footprint_point.x)
+			min_z = minf(min_z, footprint_point.y)
+			max_z = maxf(max_z, footprint_point.y)
 		footprint_center /= float(ring.size())
 		var footprint_position := Vector3(
 			footprint_center.x,
@@ -536,23 +562,44 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 		body.set_meta("system_fast_travel", false)
 		body.set_meta("system_display_name", _building_display_name(kind, tags))
 		body.set_meta("system_interaction_prompt", "استكشاف معلومات المبنى")
+		var collision_faces := wall_mesh.get_faces()
+		if roof_mesh != null:
+			collision_faces.append_array(roof_mesh.get_faces())
 		var shape := ConcavePolygonShape3D.new()
-		shape.set_faces(mesh.get_faces())
+		shape.set_faces(collision_faces)
 		var collision := CollisionShape3D.new()
 		collision.shape = shape
 		body.add_child(collision)
 		parent.add_child(body)
+
+		var has_wall_opening := false
+		for door_spec in door_specs:
+			if bool(door_spec.get("wall_opening_built", false)):
+				has_wall_opening = true
+				break
+		var interior_root: Node3D
+		if has_wall_opening:
+			interior_root = _create_osm_building_interior(
+				parent, feature_id, kind, ring, footprint_center,
+				min_x, max_x, min_z, max_z
+			)
 		var verified_door_ids: Array[String] = []
 		for door_spec in door_specs:
 			if not bool(door_spec.get("wall_opening_built", false)):
 				continue
-			var door_root := _create_osm_door(parent, body, feature_id, kind, door_spec)
+			var door_root := _create_osm_door(
+				parent, body, feature_id, kind, door_spec,
+				interior_root, roof_instance
+			)
 			if door_root != null:
 				verified_door_ids.append(str(door_spec.get("entrance_id", "")))
 		if not verified_door_ids.is_empty():
 			body.set_meta("system_verified_door_ids", verified_door_ids)
 			body.set_meta("system_verified_door_count", verified_door_ids.size())
 			body.set_meta("system_access_state", "verified_physical_doors_mapped")
+			body.set_meta("system_interior_category", kind)
+			body.set_meta("system_interior_available", interior_root != null)
+
 		var historic_landmark_kind := _historic_landmark_kind(tags)
 		if not historic_landmark_kind.is_empty():
 			building.set_meta("landmark_type", historic_landmark_kind)
@@ -569,6 +616,136 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 		if kind == "church" or kind == "mosque":
 			_add_polygon_worship_detail(parent, ring, height, kind, feature_id)
 	return built
+
+
+func _create_osm_building_interior(
+	parent: Node3D,
+	building_id: String,
+	building_kind: String,
+	ring: PackedVector2Array,
+	center: Vector2,
+	min_x: float,
+	max_x: float,
+	min_z: float,
+	max_z: float
+) -> Node3D:
+	var interior := Node3D.new()
+	interior.name = "OSMInterior_" + building_id
+	interior.visible = false
+	interior.set_meta("system_building_osm_id", building_id)
+	interior.set_meta("system_interior_category", building_kind)
+	interior.set_meta("system_interior_state", "inactive")
+	parent.add_child(interior)
+
+	var floor_surface := SurfaceTool.new()
+	floor_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var floor_triangulation := Geometry2D.triangulate_polygon(ring)
+	for triangle_index in range(0, floor_triangulation.size(), 3):
+		var p0 := ring[floor_triangulation[triangle_index]]
+		var p1 := ring[floor_triangulation[triangle_index + 1]]
+		var p2 := ring[floor_triangulation[triangle_index + 2]]
+		_add_triangle(
+			floor_surface,
+			Vector3(p0.x, _terrain_height(p0) + 0.08, p0.y),
+			Vector3(p1.x, _terrain_height(p1) + 0.08, p1.y),
+			Vector3(p2.x, _terrain_height(p2) + 0.08, p2.y)
+		)
+	if floor_triangulation.size() >= 3:
+		floor_surface.generate_normals()
+		var floor_mesh := floor_surface.commit()
+		if floor_mesh != null:
+			var floor_visual := MeshInstance3D.new()
+			floor_visual.name = "InteriorFloorVisual"
+			floor_visual.mesh = floor_mesh
+			var floor_material := StandardMaterial3D.new()
+			floor_material.albedo_color = Color(0.36, 0.29, 0.21) if building_kind in ["detached_house", "apartment_block"] else Color(0.31, 0.34, 0.34)
+			floor_material.roughness = 0.94
+			floor_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+			floor_visual.material_override = floor_material
+			interior.add_child(floor_visual)
+			var floor_body := StaticBody3D.new()
+			floor_body.name = "InteriorFloorBody"
+			floor_body.collision_layer = 0
+			var floor_collision_shape := ConcavePolygonShape3D.new()
+			floor_collision_shape.set_faces(floor_mesh.get_faces())
+			var floor_collision := CollisionShape3D.new()
+			floor_collision.shape = floor_collision_shape
+			floor_body.add_child(floor_collision)
+			interior.add_child(floor_body)
+
+	var width := maxf(1.0, max_x - min_x)
+	var depth := maxf(1.0, max_z - min_z)
+	var base_y := _terrain_height(center) + 0.08
+	var light := OmniLight3D.new()
+	light.name = "InteriorWarmLight"
+	light.position = Vector3(center.x, base_y + 2.5, center.y)
+	light.light_color = Color(1.0, 0.79, 0.58)
+	light.light_energy = 0.8
+	light.omni_range = maxf(5.0, maxf(width, depth) * 1.3)
+	light.shadow_enabled = false
+	interior.add_child(light)
+
+	var furniture_material := StandardMaterial3D.new()
+	furniture_material.albedo_color = Color(0.30, 0.18, 0.10)
+	furniture_material.roughness = 0.88
+	var accent_material := StandardMaterial3D.new()
+	accent_material.albedo_color = Color(0.46, 0.36, 0.23)
+	accent_material.roughness = 0.9
+	if width >= 2.8 and depth >= 2.8:
+		match building_kind:
+			"detached_house":
+				_add_osm_interior_box(interior, "HomeBed", Vector3(center.x - width * 0.2, base_y + 0.38, center.y - depth * 0.18), Vector3(minf(1.65, width * 0.42), 0.72, minf(1.9, depth * 0.38)), accent_material)
+				_add_osm_interior_box(interior, "HomeTable", Vector3(center.x + width * 0.2, base_y + 0.42, center.y + depth * 0.16), Vector3(minf(1.1, width * 0.28), 0.82, minf(0.9, depth * 0.24)), furniture_material)
+				_add_osm_interior_box(interior, "HomeStorage", Vector3(center.x, base_y + 0.8, center.y - depth * 0.36), Vector3(minf(1.0, width * 0.3), 1.55, 0.42), furniture_material)
+			"apartment_block":
+				_add_osm_interior_box(interior, "ApartmentBed", Vector3(center.x - width * 0.2, base_y + 0.36, center.y - depth * 0.16), Vector3(minf(1.5, width * 0.4), 0.68, minf(1.8, depth * 0.36)), accent_material)
+				_add_osm_interior_box(interior, "ApartmentDiningTable", Vector3(center.x + width * 0.2, base_y + 0.4, center.y + depth * 0.18), Vector3(minf(1.0, width * 0.26), 0.76, minf(0.85, depth * 0.22)), furniture_material)
+			"commercial_building":
+				_add_osm_interior_box(interior, "ShopCounter", Vector3(center.x, base_y + 0.52, center.y - depth * 0.28), Vector3(minf(2.0, width * 0.58), 1.0, 0.62), furniture_material)
+				_add_osm_interior_box(interior, "ShopShelfLeft", Vector3(center.x - width * 0.34, base_y + 0.85, center.y + depth * 0.05), Vector3(0.38, 1.7, minf(1.8, depth * 0.42)), accent_material)
+				_add_osm_interior_box(interior, "ShopShelfRight", Vector3(center.x + width * 0.34, base_y + 0.85, center.y + depth * 0.05), Vector3(0.38, 1.7, minf(1.8, depth * 0.42)), accent_material)
+			"mosque":
+				_add_osm_interior_box(interior, "PrayerHallRug", Vector3(center.x, base_y + 0.025, center.y), Vector3(minf(2.6, width * 0.7), 0.05, minf(3.2, depth * 0.7)), accent_material)
+			"church":
+				_add_osm_interior_box(interior, "ChurchBench", Vector3(center.x, base_y + 0.35, center.y + depth * 0.12), Vector3(minf(2.0, width * 0.6), 0.7, 0.42), furniture_material)
+			_:
+				_add_osm_interior_box(interior, "PublicServiceCounter", Vector3(center.x, base_y + 0.5, center.y - depth * 0.25), Vector3(minf(1.8, width * 0.55), 0.95, 0.55), furniture_material)
+
+	var sign := Label3D.new()
+	sign.name = "InteriorCategorySign"
+	sign.text = "متجر بغداد" if building_kind == "commercial_building" else ("منزل بغداد" if building_kind in ["detached_house", "apartment_block"] else "مبنى بغداد")
+	sign.position = Vector3(center.x, base_y + 2.2, center.y)
+	sign.font_size = 24
+	sign.outline_size = 4
+	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	interior.add_child(sign)
+	return interior
+
+
+func _add_osm_interior_box(
+	parent: Node3D,
+	node_name: String,
+	position: Vector3,
+	size: Vector3,
+	material: Material
+) -> void:
+	var body := StaticBody3D.new()
+	body.name = node_name + "Body"
+	body.position = position
+	body.collision_layer = 0
+	var collision_shape := BoxShape3D.new()
+	collision_shape.size = size
+	var collision := CollisionShape3D.new()
+	collision.shape = collision_shape
+	body.add_child(collision)
+	var visual := MeshInstance3D.new()
+	visual.name = node_name
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	visual.mesh = mesh
+	visual.material_override = material
+	body.add_child(visual)
+	parent.add_child(body)
 
 
 func feature_id_from_building(feature: Dictionary) -> String:
@@ -711,7 +888,9 @@ func _create_osm_door(
 	building_body: StaticBody3D,
 	building_id: String,
 	building_kind: String,
-	door_spec: Dictionary
+	door_spec: Dictionary,
+	interior_root: Node3D,
+	roof_node: MeshInstance3D
 ) -> Node3D:
 	var entrance_id := str(door_spec.get("entrance_id", ""))
 	if entrance_id.is_empty():
@@ -793,7 +972,7 @@ func _create_osm_door(
 	interaction_shape.shape = interaction_sphere
 	interaction_area.add_child(interaction_shape)
 	root.add_child(interaction_area)
-	root.call("configure", hinge, restricted, building_id, entrance_id)
+	root.call("configure", hinge, restricted, building_id, entrance_id, interior_root, roof_node, inward_3d)
 
 	var linked_ids: Array = building_body.get_meta("system_verified_door_ids", [])
 	if not linked_ids.has(entrance_id):
