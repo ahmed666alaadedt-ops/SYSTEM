@@ -120,6 +120,14 @@ func _run() -> void:
 	if int(boss_data.get("required_level", 999)) > 100:
 		_fail("Power Tower floor 200 is unreachable under the 100-level player progression cap.")
 		return
+	var weapons_room := operations.call("_ensure_floor_room", "weapons_equipment_elixirs_tower_baghdad", 1) as Node3D
+	if weapons_room.get_node_or_null("WeaponsForge") == null or weapons_room.get_node_or_null("ElixirLaboratory") == null:
+		_fail("Weapons Tower forge and elixir laboratory stations are missing.")
+		return
+	var forge_area := weapons_room.get_node("WeaponsForge/CraftingStationInteraction") as Area3D
+	if forge_area == null or not forge_area.is_in_group("system_interactable") or not forge_area.has_meta("system_tower_staff_id"):
+		_fail("Weapons Tower crafting station is not connected to its NPC employee.")
+		return
 	var boss_room := operations.call("_ensure_floor_room", "power_tower_baghdad", 200) as Node3D
 	if boss_room == null or boss_room.get_node_or_null("BossTrialPlatform") == null:
 		_fail("Power Tower floor 200 boss arena was not generated.")
@@ -164,6 +172,12 @@ func _run() -> void:
 	operations.call("_sell_item", "water_bottle", 1)
 	if int(progression.call("get_item_count", "water_bottle")) != 0:
 		_fail("NPC shop sale did not remove the sold inventory item.")
+		return
+	progression.call("add_item", "iron_ingot", 1)
+	progression.call("add_item", "wood_plank", 2)
+	var craft_result: Dictionary = progression.call("craft_recipe", "training_sword")
+	if not bool(craft_result.get("success", false)) or int(progression.call("get_item_count", "training_sword")) < 1 or int(progression.call("get_item_count", "iron_ingot")) != 0 or int(progression.call("get_item_count", "wood_plank")) != 0:
+		_fail("NPC-supervised crafting did not consume ingredients and create the requested weapon.")
 		return
 	progression.call("add_item", "training_sword", 1)
 	var equip_result: Dictionary = progression.call("equip_item", "training_sword")
