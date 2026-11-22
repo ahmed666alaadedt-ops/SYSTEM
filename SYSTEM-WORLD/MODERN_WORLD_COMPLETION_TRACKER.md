@@ -392,3 +392,16 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Validate five distinct placements against approved Baghdad geography, Tigris clearance, Karkh/Rusafa links, Tahrir Square and the Freedom Monument.
 - [ ] Run Godot import/parser, main-scene startup, tower node-count/identity checks, collision traversal, and Android visual/performance validation.
 - Note: this is a source-level correction and visual blockout expansion only. It has not yet been run in Godot or visually inspected on Android. Do not call the five towers complete until their interiors, interactions, navigation, and runtime checks pass.
+
+
+## Five-tower connected-city facilities and cinema visual pass — 22 November 2026
+
+- [x] Use the user's uploaded skyline image as the connected-district visual reference: elevated multi-level platforms, five distinct towers, sculptural supports, landscaped sky terraces, cyan/blue glass with gold accents, central SYSTEM spire, river corridor and bridges.
+- [x] Add named facility blockout zones for Hunter Association, Business, Shopping, Entertainment, and Technology towers.
+- [x] Add a Shopping Tower cinema multiplex visual layout with six halls and 24 seat markers per hall.
+- [x] Add entertainment visual markers for an observation wheel, sky pool, esports/arcade, live events, bowling and VR.
+- [x] Add central SYSTEM spire marker and three shared sky-garden terrace meshes.
+- [ ] Replace the visual blockouts with navigable interior scenes, working doors/elevators, usable seating, cinema playback/scheduling, shopping and restaurant transactions, hotel services, ride/pool/sports interactions, NPC staffing, and validated collision/navigation.
+- [ ] Verify five-tower placements against Tigris navigation, Karkh/Rusafa connections, Tahrir Square and the Freedom Monument; refine the overall skyline to match the reference without obscuring protected geography.
+- [ ] Run Godot 4.3 import/parser, main-scene startup, node/collision checks, and Android APK/visual performance validation for commit e7b693f70fce40ea64177fa6e3468eeab9ea7525.
+- Note: the new geometry is source-level visual blockout only. It has not yet been parsed/run by Godot or visually inspected on an Android device.
