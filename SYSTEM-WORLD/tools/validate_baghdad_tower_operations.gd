@@ -170,10 +170,39 @@ func _run() -> void:
 		_fail("NPC-managed internal/external advertising is not active.")
 		return
 	var entertainment_pool := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 18) as Node3D
-	var pool_facility := entertainment_pool.get_node_or_null("SpecialFacility_swimming_pool") if entertainment_pool != null else null
+	var pool_facility := entertainment_pool.get_node_or_null("SpecialFacility_swimming_pool") as Node3D if entertainment_pool != null else null
 	if pool_facility == null or pool_facility.get_node_or_null("PoolWater") == null:
 		_fail("Entertainment Tower swimming pool floor is missing its pool and water surface.")
 		return
+	for pool_floor_number in [18, 19, 20]:
+		var pool_floor_room := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", pool_floor_number) as Node3D
+		var pool_floor_facility := pool_floor_room.get_node_or_null("SpecialFacility_swimming_pool") as Node3D if pool_floor_room != null else null
+		if pool_floor_facility == null:
+			_fail("Entertainment Tower aquatic facility is missing from floor %d." % pool_floor_number)
+			return
+		for required_pool_node in ["MensChangingSuite", "WomensChangingSuite", "PoolLifeguardStation", "PoolWaterVolume"]:
+			if pool_floor_facility.get_node_or_null(required_pool_node) == null:
+				_fail("Pool floor %d is missing required indoor facility %s." % [pool_floor_number, required_pool_node])
+				return
+		var mens_suite := pool_floor_facility.get_node("MensChangingSuite")
+		var womens_suite := pool_floor_facility.get_node("WomensChangingSuite")
+		if mens_suite.get_node_or_null("Locker_00") == null or mens_suite.get_node_or_null("ShowerHead_00") == null or womens_suite.get_node_or_null("Locker_05") == null or womens_suite.get_node_or_null("ShowerDrain_02") == null:
+			_fail("Pool floor %d changing suites are missing lockers or shower fixtures." % pool_floor_number)
+			return
+	if pool_facility.find_child("LapLaneDivider_00", true, false) == null or pool_facility.find_child("LapStartBlock_00", true, false) == null:
+		_fail("Pool floor 18 is missing its lap lanes and starting blocks.")
+		return
+	var family_pool_room := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 19) as Node3D
+	var family_pool_facility := family_pool_room.get_node("SpecialFacility_swimming_pool") as Node3D
+	if family_pool_facility.find_child("FamilySplashPoolWater", true, false) == null or family_pool_facility.find_child("SplashFountain_00", true, false) == null:
+		_fail("Pool floor 19 is missing its family splash pool and fountains.")
+		return
+	var spa_pool_room := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 20) as Node3D
+	var spa_pool_facility := spa_pool_room.get_node("SpecialFacility_swimming_pool") as Node3D
+	for spa_node in ["SpaHotTubWater", "ThermalPoolWater", "SaunaCabin", "SteamRoomCabin"]:
+		if spa_pool_facility.find_child(spa_node, true, false) == null:
+			_fail("Pool floor 20 is missing its spa feature: " + spa_node)
+			return
 	var cinema_floor := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 24) as Node3D
 	var cinema_facility := cinema_floor.get_node_or_null("SpecialFacility_cinema") as Node3D if cinema_floor != null else null
 	if cinema_facility == null or cinema_facility.find_child("CinemaScreen", true, false) == null:
