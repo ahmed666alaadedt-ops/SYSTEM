@@ -353,5 +353,8 @@ func _run_validation() -> void:
 		return
 	print("SYSTEM NPC QA PASS: age groups, family records, safe child rules, dynamic residents and body profiles initialized")
 	society_world.queue_free()
+	showcase.queue_free()
+	await process_frame
+	await process_frame
 	print("SYSTEM CHARACTER QA PASS: six age/gender character models loaded and inspected")
 	quit(0)
