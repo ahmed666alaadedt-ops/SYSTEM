@@ -1,3 +1,13 @@
+## SYSTEM Hotel room-service workflow — 22 November 2026
+
+- [x] Add a room-service menu for checked-in hotel guests with Iraqi food, drinks and desserts.
+- [x] Charge the guest wallet when an order is placed and persist the order with its item, price and timestamp in the room booking record.
+- [x] Add explicit order states: placed, preparing, delivered; only allow the valid forward transitions.
+- [x] Expose preparation and delivery confirmation controls in the active hotel stay interface.
+- [x] Extend the Baghdad operations validator with a paid order lifecycle regression and restore the original hotel booking/wallet fixtures after the test.
+- [ ] Room-service processing is currently local and staff-confirmed through the hotel interface; server-backed kitchen dispatch, autonomous waiter navigation and physical table/room occupancy are not implemented.
+- [ ] Run the updated Godot validator and Android export on this exact branch head. The existing workflows trigger on pushes to main or manual dispatch, not pushes to this feature branch; no fresh run is claimed.
+
 # Baghdad living tower district — canonical implementation update — 22 November 2026
 
 This section supersedes older tower-role notes below wherever they describe the obsolete standalone weapons tower or an earlier four-staff roster.
