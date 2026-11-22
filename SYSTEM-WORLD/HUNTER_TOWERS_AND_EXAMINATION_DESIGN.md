@@ -227,3 +227,12 @@ The Weapons/Equipment/Elixirs Tower employee panel now exposes first-pass functi
 
 
 The Power Tower lobby board also shows the player's highest cleared floor, next floor, progression rank, completion percentage and personal best clear time. This is a local personal record; global online rankings remain a future server-backed feature.
+
+
+## Equipment durability, upgrades and repair — 22 November 2026
+
+- Equipped weapons lose durability during attacks; armour and helmets lose durability when the player is hit; shields lose durability while blocking.
+- Broken equipment no longer contributes its combat bonus. Equipment can be upgraded through +10 using iron, rare cores and, at high tiers, Nen fragments plus Nen control progression.
+- Repair kits are sold by NPC vendors and can also be crafted. NPC service staff restore a damaged item to full durability when a repair kit is available.
+- The inventory UI shows each equipped item's upgrade tier and remaining durability.
+- These item records are saved locally with player progression; unique per-instance item rolls and cloud-authoritative inventory are future work.
