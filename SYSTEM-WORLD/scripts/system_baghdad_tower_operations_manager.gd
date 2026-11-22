@@ -1133,6 +1133,13 @@ func _on_power_opponent_defeated(opponent: Node) -> void:
 	else:
 		_complete_power_floor()
 
+func grant_power_tower_credits(floor_number: int, final_boss: bool = false) -> int:
+	var reward := 75 + floor_number * 15 + (5000 if final_boss else 0)
+	credits += reward
+	_save_wallet()
+	return reward
+
+
 func _complete_power_floor() -> void:
 	if not power_floor_in_progress:
 		return
@@ -1149,7 +1156,8 @@ func _complete_power_floor() -> void:
 				progression.call("add_item", str(item_id), 1)
 				loot_names.append(str(item_id))
 		var loot_text := " | الغنائم: " + ", ".join(loot_names) if not loot_names.is_empty() else ""
-		_set_status("تم اجتياز الطابق %d!\nالتصنيف: %s | XP: %d%s\nالطابق التالي أصبح متاحاً." % [floor_number, str(result.get("rank", "E")), int(result.get("reward_xp", 0)), loot_text])
+		var credit_reward := grant_power_tower_credits(floor_number, bool(active_power_floor_data.get("final_boss", false)))
+		_set_status("تم اجتياز الطابق %d!\nالتصنيف: %s | XP: %d | رصيد: %d%s\nالطابق التالي أصبح متاحاً." % [floor_number, str(result.get("rank", "E")), int(result.get("reward_xp", 0)), credit_reward, loot_text])
 	else:
 		_set_status("انتهى القتال لكن تعذر اعتماد النتيجة: " + str(result.get("reason", "غير معروف")))
 
