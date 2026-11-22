@@ -713,5 +713,6 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Pass canonical Android APK export on the same tested source HEAD; artifact `SYSTEM-WORLD-canonical-android-debug-apk`, 35,812,958 bytes, expires 6 December 2026 (workflow run `45053457094`).
 - [x] Add a final-boss regression that checks the sovereign boss transitions through all three health phases and registers defeat.
 - [x] Exercise the operations manager's final-floor clear integration and verify that the sovereign crown/core, rare core, Nen fragment, SYSTEM credits, and floor-200 completion record are granted; restore the validator's original local profile afterward.
-- [ ] Pass the final-boss phase and reward integration regression on the latest PR head.
+- [x] Pass the sovereign final-boss three-phase/defeat regression and final reward integration on tested source HEAD `8d37b28105c5f52a8a2b2b5f44de35e45012919f` (Godot run `45053818855`).
+- [x] Pass canonical Android APK export on the same tested source HEAD; artifact `SYSTEM-WORLD-canonical-android-debug-apk`, 35,815,543 bytes, expires 6 December 2026 (Android run `45053818923`).
 - [ ] Test timed survival/championship failure and active-floor abandon recovery through automated gameplay and physical Android play.
