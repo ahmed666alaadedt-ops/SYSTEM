@@ -2,7 +2,7 @@
 
 ## Baghdad tower mobile combat integration — 22 November 2026
 
-- [x] Instantiate the existing ModernWorldCombatSystem in the live modern-world startup and bind it to the active player and camera.
+- [x] Instantiate the existing ModernWorldCombatSystem in the live modern-world startup and explicitly bind it to the active player, camera, and progression manager.
 - [x] Connect mobile attack, skill-one, skill-two, and dodge signals to real combat actions; ignore combat actions while driving.
 - [x] Connect skill one to the existing rank-four Nen Burst, applying its timed damage/defense/movement/cooldown effects before the empowered strike.
 - [x] Connect skill two to a charged heavy strike that consumes weapon durability and uses progression/elixir damage bonuses.
