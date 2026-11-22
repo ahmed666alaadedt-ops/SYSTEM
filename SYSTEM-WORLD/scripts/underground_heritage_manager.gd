@@ -554,6 +554,7 @@ func _create_vault_door_interaction(parent: Node3D) -> void:
 	door_body.add_child(door_visual)
 
 	var door_collision := CollisionShape3D.new()
+	door_collision.name = "DoorCollision"
 	var door_shape := BoxShape3D.new()
 	door_shape.size = door_mesh.size
 	door_collision.shape = door_shape
