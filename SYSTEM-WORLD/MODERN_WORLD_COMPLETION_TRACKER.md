@@ -994,3 +994,15 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Godot 4.3 workflow run `45007450442` passed on exact facade commit `c2407f9927663cbdd4b87642af5fc01f736a788d`: resource import/script parsing, all configured gameplay validators including facade coverage, missing-mesh scan, and headless main-scene launch succeeded.
 - [ ] Review the glass placement against the exterior shell and billboard positions in a live camera view; tune reflections, nighttime visibility and Android performance.
 - Note: this is a batched procedural facade-detail pass; final authored materials, true transparent window interiors, interior room lighting and skyline art direction remain open.
+
+
+## SYSTEM WORLD tower procedural-floor emergency stairs — 22 November 2026
+
+- [x] Add walkable, collision-backed stair flights and landings to each generated procedural tower floor.
+- [x] Add up/down transition interactions for adjacent floors, automatically omitting the route above the top floor and below floor one.
+- [x] Preserve the original lobby return position while moving between generated floors, so the floor exit always returns to the tower lobby rather than an unloaded previous floor.
+- [x] Route stair transitions through the normal tower floor loader without playing the elevator animation.
+- [x] Extend the tower validator to check the top-floor down route, reject an invalid top-floor up route, inspect all 15 top-floor stair-step colliders, and verify up/down access on the first four layout variants.
+- [ ] Run Godot 4.3 parser, tower/gameplay validators, missing-mesh scan and headless main-scene startup on the exact procedural-stair commit.
+- [ ] Validate actual player traversal, stair landing alignment and floor-to-floor transitions in the live game and on Android.
+- Note: stair geometry is generated per active floor and only one floor environment is loaded at a time; transition areas swap the active floor while preserving the lobby return point.
