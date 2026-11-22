@@ -113,6 +113,7 @@ var active_elevator_tower_id := ""
 var active_elevator_doors: Array[Node3D] = []
 var active_elevator_car_width := 0.0
 var active_opponents: Dictionary = {}
+var power_tower_progress_board: Label3D
 var current_wave := 0
 var total_waves := 0
 var opponents_per_wave := 0
@@ -142,6 +143,7 @@ func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_po
 	_resolve_towers()
 	_create_staff_for_all_towers()
 	_create_advertising_surfaces()
+	_create_power_tower_progress_board()
 	set_process(true)
 	print("SYSTEM tower operations: staff, local trading, floor interiors and advertising initialized.")
 
@@ -255,6 +257,34 @@ func _create_visible_staff(tower_id: String, npc_id: String, index: int, config:
 	var lobby_depth := 36.0
 	var lobby_center_z := float(config["radius"]) * 1.48 + lobby_depth * 0.5
 	employee.position = Vector3((float(index) - 1.0) * 7.0, 0.0, lobby_center_z - 4.0)
+
+func _create_power_tower_progress_board() -> void:
+	var tower := tower_nodes.get("power_tower_baghdad") as Node3D
+	if tower == null:
+		return
+	var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D
+	if lobby == null:
+		return
+	power_tower_progress_board = lobby.get_node_or_null("PowerTowerProgressBoard") as Label3D
+	if power_tower_progress_board == null:
+		power_tower_progress_board = Label3D.new()
+		power_tower_progress_board.name = "PowerTowerProgressBoard"
+		power_tower_progress_board.position = Vector3(0.0, 8.2, -6.0)
+		power_tower_progress_board.font_size = 26
+		power_tower_progress_board.pixel_size = 0.012
+		power_tower_progress_board.modulate = Color(1.0, 0.78, 0.36)
+		lobby.add_child(power_tower_progress_board)
+	_refresh_power_tower_progress_board()
+
+
+func _refresh_power_tower_progress_board() -> void:
+	if not is_instance_valid(power_tower_progress_board) or not is_instance_valid(power_tower_manager):
+		return
+	var status: Dictionary = power_tower_manager.call("get_tower_status")
+	var highest := int(status.get("highest_cleared_floor", 0))
+	var next_floor := int(status.get("next_floor", 1))
+	power_tower_progress_board.text = "SYSTEM POWER TOWER\nالطوابق المنجزة: %d / 200\nالطابق التالي: %s\nالتقدم: %d%%" % [highest, "اكتمل البرج" if next_floor == 0 else str(next_floor), int(round(float(highest) / 200.0 * 100.0))]
+
 
 func _create_advertising_surfaces() -> void:
 	for tower_id in tower_nodes.keys():
@@ -1158,6 +1188,7 @@ func _complete_power_floor() -> void:
 				loot_names.append(str(item_id))
 		var loot_text := " | الغنائم: " + ", ".join(loot_names) if not loot_names.is_empty() else ""
 		var credit_reward := grant_power_tower_credits(floor_number, final_boss)
+		_refresh_power_tower_progress_board()
 		_set_status("تم اجتياز الطابق %d!\nالتصنيف: %s | XP: %d | رصيد: %d%s\nالطابق التالي أصبح متاحاً." % [floor_number, str(result.get("rank", "E")), int(result.get("reward_xp", 0)), credit_reward, loot_text])
 	else:
 		_set_status("انتهى القتال لكن تعذر اعتماد النتيجة: " + str(result.get("reason", "غير معروف")))
