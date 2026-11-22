@@ -226,6 +226,17 @@ func _run_validation() -> void:
 	if interaction_test_manager.call("_resolve_interactable", retention_leaf) != retention_test_door:
 		_fail("The player interaction resolver did not climb from the physical door collider to its interactable root.")
 		return
+	var interaction_test_camera := Camera3D.new()
+	interaction_test_camera.name = "BaghdadDoorRayTestCamera"
+	root.add_child(interaction_test_camera)
+	var ray_inward := retention_test_door.global_transform.basis.z.normalized()
+	interaction_test_camera.global_position = retention_test_door.global_position - ray_inward * 2.0 + Vector3.UP
+	interaction_test_camera.look_at(retention_test_door.global_position + Vector3.UP, Vector3.UP)
+	interaction_test_manager.setup(door_test_player, interaction_test_camera, map_test_manager, null)
+	await physics_frame
+	if interaction_test_manager.call("_find_target_in_front") != retention_test_door:
+		_fail("The live camera physics ray did not resolve the closed physical Baghdad door as its interaction target.")
+		return
 	var retention_location_id := str(retention_test_door.get_meta("system_location_id", ""))
 	interaction_test_manager.call(
 		"_register_and_discover_location",
