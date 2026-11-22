@@ -624,7 +624,41 @@ func _create_tower_architecture(root: Node3D, node_name: String, title: String, 
 	identity_ring.position.y = height * 0.72 + 7.0
 	identity_ring.material_override = emissive_material
 	root.add_child(identity_ring)
+	_create_tower_facade_glazing(root, height, radius, floors, beacon_color)
 	_create_tower_identity_details(root, node_name, height, radius, beacon_color)
+
+
+func _create_tower_facade_glazing(root: Node3D, height: float, radius: float, floors: int, accent_color: Color) -> void:
+	const WINDOW_SEGMENTS := 20
+	var glazing_mesh := BoxMesh.new()
+	glazing_mesh.size = Vector3(4.4, 1.45, 0.2)
+	var glazing_multimesh := MultiMesh.new()
+	glazing_multimesh.transform_format = MultiMesh.TRANSFORM_3D
+	glazing_multimesh.mesh = glazing_mesh
+	glazing_multimesh.instance_count = floors * WINDOW_SEGMENTS
+	var instance_index := 0
+	for floor_index in range(floors):
+		var progress := float(floor_index) / float(maxi(floors - 1, 1))
+		var taper := lerpf(1.0, 0.62, progress)
+		var floor_height := 9.0 + (height - 16.0) * progress + 1.0
+		var facade_radius := radius * taper + 0.16
+		for segment_index in range(WINDOW_SEGMENTS):
+			var angle := TAU * float(segment_index) / float(WINDOW_SEGMENTS)
+			var outward := Vector3(cos(angle), 0.0, sin(angle))
+			var orientation := Basis.looking_at(outward, Vector3.UP)
+			var panel_position := outward * facade_radius + Vector3.UP * floor_height
+			glazing_multimesh.set_instance_transform(instance_index, Transform3D(orientation, panel_position))
+			instance_index += 1
+	var glass_material := _make_surface_material(Color(0.08, 0.34, 0.48, 0.78), 0.52, 0.2)
+	glass_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	glass_material.emission_enabled = true
+	glass_material.emission = accent_color.darkened(0.48)
+	glass_material.emission_energy_multiplier = 0.18
+	var glazing := MultiMeshInstance3D.new()
+	glazing.name = "FacadeGlazingPanels"
+	glazing.multimesh = glazing_multimesh
+	glazing.material_override = glass_material
+	root.add_child(glazing)
 
 
 func _create_tower_identity_details(root: Node3D, node_name: String, height: float, radius: float, accent_color: Color) -> void:
