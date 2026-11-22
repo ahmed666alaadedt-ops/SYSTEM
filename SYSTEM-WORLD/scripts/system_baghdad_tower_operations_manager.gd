@@ -2293,6 +2293,30 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 				root.add_child(pin)
 		"cinema":
 			_add_facility_box(root, "CinemaScreen", Vector3(0.0, 3.0, -10.0), Vector3(20.0, 6.0, 0.35), highlight)
+			var program_screen := MeshInstance3D.new()
+			program_screen.name = "CinemaProgramScreen"
+			var program_mesh := QuadMesh.new()
+			program_mesh.size = Vector2(18.0, 5.0)
+			program_screen.mesh = program_mesh
+			program_screen.position = Vector3(0.0, 3.0, -9.78)
+			program_screen.rotation.y = PI
+			var program_material := StandardMaterial3D.new()
+			program_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+			program_material.albedo_color = Color(0.025, 0.08, 0.15)
+			program_material.emission_enabled = true
+			program_material.emission = Color(0.02, 0.22, 0.42)
+			program_material.emission_energy_multiplier = 1.4
+			program_screen.material_override = program_material
+			root.add_child(program_screen)
+			var program_title := Label3D.new()
+			program_title.name = "CinemaProgramTitle"
+			program_title.text = "SYSTEM ORIGINALS\nالمشهد 1 | نداء بغداد\nتبدأ الحكاية عند بوابة دجلة"
+			program_title.position = Vector3(0.0, 3.0, -9.70)
+			program_title.rotation.y = PI
+			program_title.font_size = 42
+			program_title.pixel_size = 0.006
+			program_title.modulate = Color(0.82, 0.94, 1.0)
+			root.add_child(program_title)
 			for row in range(3):
 				for seat in range(6):
 					_add_facility_box(root, "CinemaSeat_%02d_%02d" % [row, seat], Vector3(-9.0 + float(seat) * 3.6, 0.65, 1.0 + float(row) * 3.0), Vector3(1.4, 1.3, 1.2), accent)
@@ -2432,7 +2456,7 @@ func _facility_activity_definition(facility_type: String) -> Dictionary:
 		"fitness_gym": {"action": "rep", "action_label": "إكمال مجموعة تمارين", "goal": 8, "reward": 35, "title": "اللياقة"},
 		"sports_court": {"action": "shot", "action_label": "تنفيذ دور المباراة", "goal": 10, "reward": 70, "title": "مباراة كرة السلة 1 ضد 1"},
 		"bowling": {"action": "throw", "action_label": "رمي كرة البولينغ", "goal": 10, "reward": 70, "title": "البولينغ"},
-		"cinema": {"action": "watch", "action_label": "تأكيد مشاهدة العرض", "goal": 1, "reward": 15, "title": "جلسة السينما"},
+		"cinema": {"action": "watch", "action_label": "مشاهدة المشهد التالي", "goal": 3, "reward": 15, "title": "جلسة السينما — ثلاثة مشاهد"},
 		"arcade": {"action": "hit", "action_label": "إصابة الهدف المضيء", "goal": 5, "reward": 45, "title": "الألعاب الإلكترونية"},
 		"family_zone": {"action": "discover", "action_label": "اكتشاف محطة عائلية", "goal": 3, "reward": 30, "title": "استكشاف العائلة"},
 		"rooftop_leisure": {"action": "photo", "action_label": "التقاط صورة للسطح", "goal": 1, "reward": 20, "title": "استكشاف السطح"},
@@ -2513,6 +2537,8 @@ func start_facility_activity(facility_type: String) -> bool:
 	}
 	if facility_type == "sports_court":
 		active_facility_activity["opponent_score"] = 0
+	if facility_type == "cinema":
+		_update_cinema_program_screen(0)
 	_set_status("%s بدأت. التقدم: 0/%d" % [str(definition["title"]), int(definition["goal"])])
 	return true
 
@@ -2538,6 +2564,9 @@ func perform_facility_activity(action: String) -> Dictionary:
 			score_gain = 2 if posmod(step * 2 + 1, 3) != 0 else 0
 		"arcade":
 			score_gain = 2 if posmod(step + 1, 4) != 0 else 0
+		"cinema":
+			score_gain = 5
+			_update_cinema_program_screen(step)
 		"robotics_lab":
 			score_gain = 2
 		"ai_lab", "vr_lab":
@@ -2911,6 +2940,35 @@ func _bowling_pin_start_position(pin_index: int) -> Vector3:
 		Vector3(-1.44, 1.35, -7.8), Vector3(-0.48, 1.35, -7.8), Vector3(0.48, 1.35, -7.8), Vector3(1.44, 1.35, -7.8)
 	]
 	return positions[clampi(pin_index, 0, positions.size() - 1)]
+
+
+func _update_cinema_program_screen(scene_number: int) -> void:
+	if not is_instance_valid(current_facility_root):
+		return
+	var title_label := current_facility_root.get_node_or_null("CinemaProgramTitle") as Label3D
+	var screen := current_facility_root.get_node_or_null("CinemaProgramScreen") as MeshInstance3D
+	if title_label == null or screen == null:
+		return
+	var scene_titles := [
+		"نداء بغداد",
+		"أسرار برج النور",
+		"رحلة الصياد الأول"
+	]
+	var scene_descriptions := [
+		"تبدأ الحكاية عند بوابة دجلة",
+		"إشارة غامضة تكشف سر البرج",
+		"قرار شجاع يفتح طريقاً جديداً"
+	]
+	var scene_colors := [
+		Color(0.02, 0.28, 0.52),
+		Color(0.30, 0.12, 0.48),
+		Color(0.48, 0.22, 0.06)
+	]
+	var index := clampi(scene_number - 1, 0, scene_titles.size() - 1)
+	title_label.text = "SYSTEM ORIGINALS\nالمشهد %d | %s\n%s" % [scene_number if scene_number > 0 else 1, scene_titles[index], scene_descriptions[index]]
+	var material := screen.material_override as StandardMaterial3D
+	if material != null:
+		material.emission = scene_colors[index]
 
 
 func _complete_facility_activity() -> Dictionary:
