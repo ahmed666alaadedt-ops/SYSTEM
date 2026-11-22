@@ -2600,6 +2600,7 @@ func _add_facility_activity_controls(facility_type: String) -> void:
 		memory_status.name = "ArcadeMemoryStatus"
 		memory_status.text = "اختر تحدي الذاكرة ثم ابدأ الجولة."
 		memory_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		memory_status.visible = false
 		content.add_child(memory_status)
 		var reflex_status := Label.new()
 		reflex_status.name = "ArcadeReflexStatus"
@@ -2641,6 +2642,9 @@ func _on_arcade_mode_selected(index: int) -> void:
 	var aim_slider := content.get_node_or_null("FacilityAimSlider") as HSlider
 	var aim_label := content.get_node_or_null("FacilityAimLabel") as Label
 	var memory_buttons := content.get_node_or_null("ArcadeMemoryButtons") as HBoxContainer
+	var memory_status := content.get_node_or_null("ArcadeMemoryStatus") as Label
+	if memory_status != null:
+		memory_status.visible = selected_arcade_mode == "memory"
 	if aim_slider != null:
 		aim_slider.visible = selected_arcade_mode == "shooter"
 	if aim_label != null:
