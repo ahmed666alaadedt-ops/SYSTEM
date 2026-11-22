@@ -203,6 +203,7 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 
 	_create_tower_architecture(root, node_name, title, height, radius, floors, beacon_color)
 	_create_tower_identity_features(root, node_name, height, radius, beacon_color)
+	_create_tower_facility_blockout(root, node_name, radius)
 
 	root.set_meta("tower_id", location_id)
 	print("SYSTEM WORLD: landmark tower generated: ", title, " / ", floors, " floors / ", height, "m")
@@ -438,8 +439,184 @@ func _create_public_amenities() -> void:
 		deck.material_override = spec["material"]
 		amenities.add_child(deck)
 	amenities.set_meta("planned_facilities", PackedStringArray(["parks", "restaurants", "cafes", "hotels", "cinema", "amusement_park", "water_park", "swimming_pools", "sports_courts", "family_services", "parking", "emergency_access"]))
+	_create_central_system_spire(amenities)
+	_create_shared_sky_terraces(amenities)
 	_create_multilevel_parking_blockout(amenities)
 	_create_vertical_access_blockout(amenities)
+
+
+
+func _create_tower_facility_blockout(root: Node3D, node_name: String, radius: float) -> void:
+	# Facility shells and interior layout markers are a readable 3D blockout.
+	# They are deliberately tagged non-interactive until dedicated scenes are connected.
+	var facility_root := Node3D.new()
+	facility_root.name = "TowerFacilities_Blockout"
+	facility_root.position = Vector3(0.0, 10.0, 0.0)
+	root.add_child(facility_root)
+	var glass := _make_surface_material(Color(0.08, 0.28, 0.38), 0.2, 0.72)
+	var interior := _make_surface_material(Color(0.16, 0.19, 0.23), 0.42, 0.28)
+	var screen := _make_surface_material(Color(0.025, 0.16, 0.24), 0.18, 0.3)
+	screen.emission_enabled = true
+	screen.emission = Color(0.02, 0.3, 0.52)
+	screen.emission_energy_multiplier = 1.4
+	var facility_ids := PackedStringArray()
+	match node_name:
+		"HunterAssociationTower":
+			facility_ids = PackedStringArray(["hunter_registration", "mission_hall", "guild_services", "hunter_training", "medical_clinic", "hall_of_honor", "examination_admin", "hunter_restaurant"])
+			_add_facility_block(facility_root, "HunterRegistrationHall", Vector3(-10.0, 5.0, 0.0), Vector3(18.0, 8.0, 16.0), glass, "HUNTER REGISTRATION")
+			_add_facility_block(facility_root, "MissionHall", Vector3(12.0, 5.0, 0.0), Vector3(18.0, 8.0, 16.0), interior, "MISSION HALL")
+			_add_facility_block(facility_root, "HallOfHonorGallery", Vector3(0.0, 5.0, -19.0), Vector3(34.0, 8.0, 10.0), screen, "HALL OF HONOR")
+			_add_facility_block(facility_root, "HunterMedicalClinic", Vector3(0.0, 5.0, 19.0), Vector3(20.0, 8.0, 10.0), glass, "HUNTER CLINIC")
+		"BusinessTower":
+			facility_ids = PackedStringArray(["company_headquarters", "investment_exchange", "conference_center", "business_hotel", "banking_services", "coworking_hub", "business_restaurants"])
+			_add_facility_block(facility_root, "CorporateHeadquarters", Vector3(-12.0, 5.0, 0.0), Vector3(18.0, 9.0, 18.0), glass, "CORPORATE HQ")
+			_add_facility_block(facility_root, "InvestmentExchange", Vector3(12.0, 5.0, 0.0), Vector3(18.0, 9.0, 18.0), screen, "INVESTMENT EXCHANGE")
+			_add_facility_block(facility_root, "ConferenceCenter", Vector3(0.0, 5.0, -20.0), Vector3(34.0, 9.0, 12.0), interior, "CONFERENCE CENTER")
+			_add_facility_block(facility_root, "BusinessHotel", Vector3(0.0, 5.0, 20.0), Vector3(34.0, 9.0, 12.0), glass, "BUSINESS HOTEL")
+		"ShoppingTower":
+			facility_ids = PackedStringArray(["multi_level_mall", "retail_shops", "luxury_stores", "food_court", "restaurants", "cafes", "cinema_multiplex", "family_entertainment", "indoor_promenade"])
+			_add_facility_block(facility_root, "GrandMallAtrium", Vector3(0.0, 5.0, 0.0), Vector3(40.0, 8.0, 34.0), glass, "GRAND MALL")
+			_add_facility_block(facility_root, "FoodCourt", Vector3(-22.0, 5.0, 0.0), Vector3(12.0, 7.0, 26.0), interior, "FOOD COURT")
+			_add_facility_block(facility_root, "RestaurantAndCafeGallery", Vector3(22.0, 5.0, 0.0), Vector3(12.0, 7.0, 26.0), interior, "RESTAURANTS • CAFES")
+			_add_facility_block(facility_root, "CinemaMultiplex", Vector3(0.0, 5.0, -25.0), Vector3(38.0, 9.0, 14.0), screen, "CINEMA MULTIPLEX")
+			_create_cinema_hall_layout(facility_root, radius, interior, screen)
+		"EntertainmentTower":
+			facility_ids = PackedStringArray(["amusement_park", "family_entertainment", "concert_hall", "esports_arena", "bowling", "arcade", "virtual_reality", "water_park", "swimming_pools", "sports_courts", "festival_plaza", "cinema_outdoor"])
+			_add_facility_block(facility_root, "IndoorAmusementAtrium", Vector3(-18.0, 5.0, 0.0), Vector3(22.0, 9.0, 22.0), glass, "FAMILY AMUSEMENT")
+			_add_facility_block(facility_root, "EsportsAndArcade", Vector3(18.0, 5.0, 0.0), Vector3(22.0, 9.0, 22.0), screen, "ESPORTS • ARCADE")
+			_add_facility_block(facility_root, "ConcertAndFestivalHall", Vector3(0.0, 5.0, -22.0), Vector3(38.0, 10.0, 14.0), interior, "LIVE EVENTS")
+			_add_facility_block(facility_root, "BowlingAndVRCenter", Vector3(0.0, 5.0, 22.0), Vector3(38.0, 8.0, 14.0), glass, "BOWLING • VR")
+			_create_recreation_feature_markers(facility_root, radius, glass, screen)
+		"TechnologyInnovationTower":
+			facility_ids = PackedStringArray(["research_labs", "robotics_center", "ai_laboratories", "virtual_reality_lab", "innovation_incubator", "technology_exhibition", "digital_library", "prototype_workshops"])
+			_add_facility_block(facility_root, "ResearchLaboratories", Vector3(-14.0, 5.0, 0.0), Vector3(20.0, 9.0, 20.0), glass, "RESEARCH LABS")
+			_add_facility_block(facility_root, "RoboticsAndAI", Vector3(14.0, 5.0, 0.0), Vector3(20.0, 9.0, 20.0), screen, "ROBOTICS • AI")
+			_add_facility_block(facility_root, "InnovationExhibition", Vector3(0.0, 5.0, -22.0), Vector3(38.0, 9.0, 14.0), interior, "INNOVATION EXPO")
+			_add_facility_block(facility_root, "DigitalLibrary", Vector3(0.0, 5.0, 22.0), Vector3(38.0, 9.0, 14.0), glass, "DIGITAL LIBRARY")
+	facility_root.set_meta("facility_ids", facility_ids)
+	facility_root.set_meta("geometry_status", "visual_blockout")
+	facility_root.set_meta("interactive", false)
+
+
+func _add_facility_block(parent: Node3D, node_name: String, local_position: Vector3, size: Vector3, material: Material, sign_text: String) -> void:
+	var block := MeshInstance3D.new()
+	block.name = node_name
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	block.mesh = mesh
+	block.position = local_position
+	block.material_override = material
+	parent.add_child(block)
+	var sign := Label3D.new()
+	sign.name = node_name + "_Sign"
+	sign.text = sign_text
+	sign.font_size = 22
+	sign.pixel_size = 0.014
+	sign.position = local_position + Vector3(0.0, size.y * 0.58, size.z * 0.5 + 0.3)
+	sign.modulate = Color(0.55, 0.88, 1.0)
+	parent.add_child(sign)
+
+
+func _create_cinema_hall_layout(parent: Node3D, radius: float, seat_material: Material, screen_material: Material) -> void:
+	var cinema := Node3D.new()
+	cinema.name = "CinemaSixHallLayout_Blockout"
+	cinema.position = Vector3(0.0, 10.0, -25.0)
+	parent.add_child(cinema)
+	for hall_index in range(6):
+		var hall := Node3D.new()
+		hall.name = "CinemaHall_%02d" % (hall_index + 1)
+		var column := hall_index % 3
+		var row := hall_index / 3
+		hall.position = Vector3(float(column - 1) * 13.0, 0.0, float(row) * 13.0)
+		cinema.add_child(hall)
+		var screen_panel := MeshInstance3D.new()
+		screen_panel.name = "ProjectionScreen"
+		var screen_mesh := BoxMesh.new()
+		screen_mesh.size = Vector3(8.0, 4.5, 0.35)
+		screen_panel.mesh = screen_mesh
+		screen_panel.position = Vector3(0.0, 3.8, -4.5)
+		screen_panel.material_override = screen_material
+		hall.add_child(screen_panel)
+		for seat_row in range(4):
+			for seat_column in range(6):
+				var seat := MeshInstance3D.new()
+				seat.name = "Seat_%02d_%02d" % [seat_row, seat_column]
+				var seat_mesh := BoxMesh.new()
+				seat_mesh.size = Vector3(0.8, 0.9, 0.8)
+				seat.mesh = seat_mesh
+				seat.position = Vector3(-2.5 + float(seat_column), 0.55 + float(seat_row) * 0.18, 1.0 + float(seat_row) * 1.6)
+				seat.material_override = seat_material
+				hall.add_child(seat)
+	cinema.set_meta("hall_count", 6)
+	cinema.set_meta("seats_per_hall_visual", 24)
+	cinema.set_meta("playback_enabled", false)
+	cinema.set_meta("status", "visual_blockout_only")
+
+
+func _create_recreation_feature_markers(parent: Node3D, radius: float, material: Material, accent: Material) -> void:
+	var wheel := MeshInstance3D.new()
+	wheel.name = "ObservationWheel_Blockout"
+	var wheel_mesh := TorusMesh.new()
+	wheel_mesh.inner_radius = 8.0
+	wheel_mesh.outer_radius = 9.0
+	wheel.mesh = wheel_mesh
+	wheel.position = Vector3(0.0, 13.0, -radius * 0.72)
+	wheel.material_override = accent
+	parent.add_child(wheel)
+	var pool := MeshInstance3D.new()
+	pool.name = "SkyPool_Blockout"
+	var pool_mesh := BoxMesh.new()
+	pool_mesh.size = Vector3(18.0, 0.4, 8.0)
+	pool.mesh = pool_mesh
+	pool.position = Vector3(0.0, 11.0, radius * 0.72)
+	pool.material_override = material
+	parent.add_child(pool)
+	parent.set_meta("ride_interactions_enabled", false)
+
+
+func _create_central_system_spire(parent: Node3D) -> void:
+	var spire := Node3D.new()
+	spire.name = "CentralSYSTEMSkySpire_Blockout"
+	spire.position = city_anchor + Vector3(0.0, 0.0, 0.0)
+	parent.add_child(spire)
+	var core := MeshInstance3D.new()
+	core.name = "CentralBlueGlassSpire"
+	var core_mesh := CylinderMesh.new()
+	core_mesh.top_radius = 5.0
+	core_mesh.bottom_radius = 18.0
+	core_mesh.height = 150.0
+	core.mesh = core_mesh
+	core.position.y = 75.0
+	core.material_override = emissive_material
+	spire.add_child(core)
+	var logo := Label3D.new()
+	logo.name = "SYSTEMSkylineEmblem"
+	logo.text = "S"
+	logo.font_size = 220
+	logo.position = Vector3(0.0, 86.0, 18.5)
+	logo.modulate = Color(0.25, 0.88, 1.0)
+	spire.add_child(logo)
+	spire.set_meta("identity", "SYSTEM central landmark")
+	spire.set_meta("status", "visual_blockout_only")
+
+
+func _create_shared_sky_terraces(parent: Node3D) -> void:
+	var terrace_material := _make_surface_material(Color(0.08, 0.22, 0.20), 0.36, 0.36)
+	for level in range(3):
+		var terrace := MeshInstance3D.new()
+		terrace.name = "SharedSkyGardenTerrace_%02d" % level
+		var mesh := CylinderMesh.new()
+		mesh.top_radius = 118.0 - float(level) * 18.0
+		mesh.bottom_radius = 126.0 - float(level) * 18.0
+		mesh.height = 2.2
+		terrace.mesh = mesh
+		terrace.position = city_anchor + Vector3(0.0, 28.0 + float(level) * 13.0, 0.0)
+		terrace.material_override = terrace_material
+		parent.add_child(terrace)
+		_add_static_box_collision(parent, "SharedSkyGardenCollision_%02d" % level, terrace.position, Vector3(180.0, 2.2, 180.0))
+		terrace.set_meta("amenities", PackedStringArray(["gardens", "cafes", "viewing_decks", "family_seating", "public_art"]))
+
+
 
 
 func _create_multilevel_parking_blockout(parent: Node3D) -> void:
