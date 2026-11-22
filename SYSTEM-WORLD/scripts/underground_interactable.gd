@@ -93,8 +93,9 @@ func restore_stone_door_state(opened: bool) -> void:
 	var restored_position := _closed_door_position
 	if _opened:
 		restored_position += DOOR_OPEN_OFFSET
-	door.position = restored_position
-	print("SYSTEM underground door restore: opened=", _opened, " body_position=", door.position, " closed_baseline=", _closed_door_position)
+	# The door is an AnimatableBody3D registered with physics; defer the
+	# restored transform until the current scene-tree setup has completed.
+	door.set_deferred("position", restored_position)
 	door.visible = true
 	set_meta("system_door_open", _opened)
 	set_meta(
