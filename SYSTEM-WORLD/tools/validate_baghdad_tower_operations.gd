@@ -1077,6 +1077,18 @@ func _run() -> void:
 	if court_facility == null or court_facility.get_node_or_null("BasketballScoringSensor") == null:
 		_fail("Basketball scoring sensor was not generated.")
 		return
+	var arcade_room := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 25) as Node3D
+	var arcade_facility := arcade_room.get_node_or_null("SpecialFacility_arcade") as Node3D if arcade_room != null else null
+	if arcade_facility == null:
+		_fail("Arcade facility was not generated.")
+		return
+	var arcade_sensor_count := 0
+	for arcade_child in arcade_facility.get_children():
+		if arcade_child is Area3D and str(arcade_child.name).begins_with("ArcadeTargetSensor_"):
+			arcade_sensor_count += 1
+	if arcade_sensor_count != 5:
+		_fail("Arcade gallery must have five physical target sensors.")
+		return
 	var activity_cases := {
 		"swimming_pool": ["lap", 3],
 		"fitness_gym": ["rep", 8],
@@ -1096,18 +1108,23 @@ func _run() -> void:
 			operations.set("current_facility_root", court_facility)
 		elif str(activity_type) == "bowling":
 			operations.set("current_facility_root", bowling_facility)
+		elif str(activity_type) == "arcade":
+			operations.set("current_facility_root", arcade_facility)
 		if not bool(operations.call("start_facility_activity", str(activity_type))):
 			_fail("Facility activity could not start: " + str(activity_type))
 			return
 		var final_activity_result: Dictionary = {}
 		for _step in range(int(activity_case[1])):
-			if str(activity_type) == "bowling" or str(activity_type) == "sports_court":
+			if str(activity_type) in ["bowling", "sports_court", "arcade"]:
 				final_activity_result = await operations.call("perform_facility_activity", str(activity_case[0]))
 			else:
 				final_activity_result = operations.call("perform_facility_activity", str(activity_case[0]))
 			if not bool(final_activity_result.get("success", false)):
 				_fail("Facility activity action failed: " + str(activity_type) + " / " + str(final_activity_result))
 				return
+		if str(activity_type) == "arcade" and (not final_activity_result.has("last_target_hit") or typeof(final_activity_result.get("last_target_hit")) != TYPE_BOOL or int(final_activity_result.get("last_target_id", -1)) < -1 or int(final_activity_result.get("last_target_id", -1)) > 4):
+			_fail("Arcade final attempt did not return a valid physical target-sensor result.")
+			return
 		if str(activity_type) == "sports_court" and (not final_activity_result.has("last_shot_scored") or typeof(final_activity_result.get("last_shot_scored")) != TYPE_BOOL):
 			_fail("Basketball final attempt did not return a physical hoop-sensor result.")
 			return
