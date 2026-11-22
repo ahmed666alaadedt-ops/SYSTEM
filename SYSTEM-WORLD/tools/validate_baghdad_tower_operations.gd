@@ -808,7 +808,9 @@ func _run() -> void:
 	operations.call("open_hotel_room_preview", "hotel_standard_01")
 	var hotel_preview_title := operations.get("title_label") as Label
 	var hotel_preview_content := operations.get("content") as VBoxContainer
-	var hotel_preview_button := hotel_preview_content.find_child("Button", true, false) as Button if hotel_preview_content != null else null
+	var hotel_preview_button: Button
+	if hotel_preview_content != null:
+		hotel_preview_button = hotel_preview_content.find_child("Button", true, false) as Button
 	if hotel_preview_title == null or not hotel_preview_title.text.contains("غرفة قياسية 01") or hotel_preview_button == null or hotel_preview_button.disabled:
 		_fail("Hotel room door preview did not display an available, rank-eligible booking action.")
 		return
