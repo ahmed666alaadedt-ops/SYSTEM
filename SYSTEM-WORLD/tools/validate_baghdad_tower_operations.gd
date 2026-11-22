@@ -1173,6 +1173,7 @@ func _run() -> void:
 	var memory_first := operations.call("_evaluate_arcade_memory_input", memory_sequence, 0, 2) as Dictionary
 	var memory_wrong := operations.call("_evaluate_arcade_memory_input", memory_sequence, 1, 3) as Dictionary
 	var memory_last := operations.call("_evaluate_arcade_memory_input", memory_sequence, 4, 2) as Dictionary
+	var memory_invalid_cursor := operations.call("_evaluate_arcade_memory_input", memory_sequence, 5, 0) as Dictionary
 	if not bool(memory_first.get("valid", false)) or int(memory_first.get("next_cursor", -1)) != 1:
 		_fail("Arcade memory cabinet did not accept a correct first color.")
 		return
@@ -1181,6 +1182,9 @@ func _run() -> void:
 		return
 	if not bool(memory_last.get("complete", false)):
 		_fail("Arcade memory cabinet did not complete the five-color sequence.")
+		return
+	if bool(memory_invalid_cursor.get("valid", true)) or bool(memory_invalid_cursor.get("complete", true)):
+		_fail("Arcade memory cabinet must reject inputs after the sequence has ended.")
 		return
 	if int(operations.call("_calculate_arcade_target_points", 2, 0)) != 12:
 		_fail("Arcade center target scoring did not award 12 base points.")
