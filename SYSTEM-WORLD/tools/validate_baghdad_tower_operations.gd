@@ -1139,6 +1139,9 @@ func _run() -> void:
 	if arcade_facility == null:
 		_fail("Arcade facility was not generated.")
 		return
+	if arcade_facility.get_node_or_null("ArcadeCabinet_00") == null or arcade_facility.get_node_or_null("ArcadeCabinet_05") == null:
+		_fail("Arcade gallery must generate six individually addressable cabinets.")
+		return
 	var arcade_sensor_count := 0
 	for arcade_child in arcade_facility.get_children():
 		if arcade_child is Area3D and str(arcade_child.name).begins_with("ArcadeTargetSensor_"):
@@ -1165,6 +1168,19 @@ func _run() -> void:
 	spare_bowling_rolls.append_array([5, 5, 5])
 	if int(operations.call("_calculate_bowling_score", spare_bowling_rolls)) != 150:
 		_fail("Bowling scoring engine did not calculate ten consecutive spares.")
+		return
+	var memory_sequence := [2, 0, 3, 1, 2]
+	var memory_first := operations.call("_evaluate_arcade_memory_input", memory_sequence, 0, 2) as Dictionary
+	var memory_wrong := operations.call("_evaluate_arcade_memory_input", memory_sequence, 1, 3) as Dictionary
+	var memory_last := operations.call("_evaluate_arcade_memory_input", memory_sequence, 4, 2) as Dictionary
+	if not bool(memory_first.get("valid", false)) or int(memory_first.get("next_cursor", -1)) != 1:
+		_fail("Arcade memory cabinet did not accept a correct first color.")
+		return
+	if bool(memory_wrong.get("valid", true)) or int(memory_wrong.get("next_cursor", -1)) != 0:
+		_fail("Arcade memory cabinet must reset the sequence after a wrong color.")
+		return
+	if not bool(memory_last.get("complete", false)):
+		_fail("Arcade memory cabinet did not complete the five-color sequence.")
 		return
 	if int(operations.call("_calculate_arcade_target_points", 2, 0)) != 12:
 		_fail("Arcade center target scoring did not award 12 base points.")
