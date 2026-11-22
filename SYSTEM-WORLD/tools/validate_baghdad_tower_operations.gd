@@ -110,6 +110,21 @@ func _run() -> void:
 	if not operations.has_method("_buy_product") or not operations.has_method("_sell_item"):
 		_fail("NPC-supervised buy/sell transaction methods are missing.")
 		return
+	operations.call("open_tower", "shopping_tower_baghdad")
+	operations.call("_travel_to_floor", "shopping_tower_baghdad", 1)
+	await create_timer(2.8).timeout
+	if shopping_tower.get_node_or_null("ActiveTowerElevatorCar") == null:
+		_fail("Visible elevator cabin was not created for tower travel.")
+		return
+	var player: CharacterBody3D = main.get("player") as CharacterBody3D
+	if bool(player.get_meta("system_tower_elevator_active", true)):
+		_fail("Elevator transition did not complete.")
+		return
+	operations.call("return_to_lobby")
+	await create_timer(3.0).timeout
+	if shopping_tower.get_node_or_null("ActiveTowerElevatorCar") != null:
+		_fail("Elevator cabin was not cleaned up after returning to the lobby.")
+		return
 	var progression: Node = main.get("player_progression") as Node
 	var shop_employee: Node = null
 	var shopping_tower := tower_manager.get_node_or_null("ShoppingTower") as Node3D
