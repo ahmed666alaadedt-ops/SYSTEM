@@ -1592,14 +1592,34 @@ func _run() -> void:
 	if not operations.has_method("open_facility_service"):
 		_fail("Facility interaction service entry point is missing.")
 		return
-	operations.set("current_tower_id", "entertainment_tower_baghdad")
-	operations.set("active_floor_root", pool_room)
-	pool_room.set_meta("system_tower_id", "entertainment_tower_baghdad")
-	var pool_emergency_sensor := pool_room.get_node("EmergencyExitSensor") as Area3D
-	pool_emergency_sensor.body_entered.emit(player)
+	if int(operations.call("_get_floor_duty_staff_index", "shopping_tower_baghdad", 29)) != 4 or int(operations.call("_get_floor_duty_staff_index", "shopping_tower_baghdad", 27)) != 6 or int(operations.call("_get_floor_duty_staff_index", "technology_tower_baghdad", 20)) != 4:
+		_fail("Baghdad floor-to-staff duty assignments are incorrect.")
+		return
+	operations.set("current_tower_id", "shopping_tower_baghdad")
+	operations.call("_travel_to_floor", "shopping_tower_baghdad", 29)
+	var shopping_staff_ids: Array = operations.get("staff_by_tower").get("shopping_tower_baghdad", [])
+	if shopping_staff_ids.size() <= 4:
+		_fail("Shopping Tower restaurant chef staff record is missing.")
+		return
+	var shopping_tower_node := tower_manager.get_node("ShoppingTower") as Node3D
+	var restaurant_chef := shopping_tower_node.find_child("TowerStaff_" + str(shopping_staff_ids[4]), true, false) as Node3D
+	var staff_elevator_car := operations.get("active_elevator_car") as Node3D
+	if restaurant_chef == null or staff_elevator_car == null or restaurant_chef.get_parent() != staff_elevator_car or not bool(restaurant_chef.get_meta("system_staff_in_elevator", false)):
+		_fail("The assigned Shopping Tower restaurant chef did not board the physical tower elevator.")
+		return
+	await create_timer(3.8).timeout
+	var chef_workstation := restaurant_room.get_node_or_null("StaffWorkstation_restaurant_chef") as Node3D
+	if restaurant_chef.get_parent() != restaurant_room or chef_workstation == null or not bool(restaurant_chef.get_meta("system_staff_workstation_active", false)):
+		_fail("The restaurant chef did not travel to floor 29 and reach the active workstation.")
+		return
+	var restaurant_emergency_sensor := restaurant_room.get_node("EmergencyExitSensor") as Area3D
+	restaurant_emergency_sensor.body_entered.emit(player)
 	await create_timer(3.1).timeout
 	if operations.get("active_floor_root") != null or bool(player.get_meta("system_tower_elevator_active", false)):
 		_fail("Physically entering the tower emergency exit did not complete the evacuation return to the public lobby.")
+		return
+	if restaurant_chef.get_parent() != shopping_customer_lobby or restaurant_chef.has_meta("system_staff_duty_floor") or not bool(restaurant_chef.get_meta("system_staff_navigation_enabled", false)) or restaurant_chef.get_meta("system_staff_patrol_waypoints", []).size() < 4:
+		_fail("The restaurant chef did not ride the elevator back to the lobby and resume the persistent lobby patrol.")
 		return
 	print("Baghdad tower operations validation passed: five connected Baghdad towers, independent Power Tower, NPC commerce, hotel workflows, eleven playable leisure/technology activity loops, equipment, Nen progression and the 200th-floor sovereign boss arena.")
 	main.queue_free()
