@@ -8,7 +8,7 @@ const MAX_VERTICAL_SPEED := 8.0
 const ACCELERATION := 10.0
 const DRAG := 5.5
 
-var player: Node3D
+var player: CharacterBody3D
 var aircraft: Node3D
 var aircraft_body: MeshInstance3D
 var main_rotor: Node3D
@@ -35,7 +35,7 @@ func _process(delta: float) -> void:
 	if not is_instance_valid(player):
 		var players := get_tree().get_nodes_in_group("system_player")
 		if not players.is_empty():
-			player = players[0] as Node3D
+			player = players[0] as CharacterBody3D
 	if pilot_active:
 		_update_flight(delta)
 	else:
