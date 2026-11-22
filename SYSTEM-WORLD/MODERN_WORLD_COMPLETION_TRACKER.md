@@ -659,5 +659,6 @@ Implementation added on the feature branch; automated runtime validation is pend
 ### Helicopter flight-loop regression coverage — 22 November 2026
 
 - [x] Extend the Godot operations validator to grant a test-only completed Hunter license, enter the aircraft, verify player-control handoff, command takeoff, command a controlled landing inside the pad radius, and verify safe exit restores on-foot controls.
+- [x] Capture the player's prior physics-processing state when boarding and restore that exact state on exit instead of assuming it was always enabled.
 - [ ] Pass the flight-loop regression test and canonical Android APK export on the latest PR head.
 - [ ] Perform physical Android touch-control, rotor/clearance, flight feel, and performance testing; automated headless checks do not replace device inspection.
