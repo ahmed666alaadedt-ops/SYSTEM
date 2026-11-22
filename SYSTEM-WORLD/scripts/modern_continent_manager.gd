@@ -213,9 +213,9 @@ func configure_baghdad_osm_ground(world_ground_elevation_m: float) -> void:
 	if not is_finite(world_ground_elevation_m):
 		push_warning("SYSTEM Baghdad OSM: rejected non-finite world ground baseline.")
 		return
-	# Keep the Tigris water surface above the global ocean plane while preserving the
+	# Keep the Tigris water surface at the 28 m source datum or higher while preserving the
 	# original heights of the four core towers inside the terrain grid.
-	baghdad_osm_world_ground_elevation_m = maxf(world_ground_elevation_m, SEA_LEVEL + 6.25)
+	baghdad_osm_world_ground_elevation_m = maxf(world_ground_elevation_m, SEA_LEVEL + 34.0)
 	baghdad_osm_ground_enabled = true
 
 
