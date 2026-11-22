@@ -239,7 +239,7 @@ func _run() -> void:
 				return
 
 		if root_name == "ShoppingTower":
-			for service_index in range(4):
+			for service_index in range(5):
 				var armory_service := interior.get_node_or_null("ServiceInteraction_%d" % service_index) as Area3D
 				if armory_service == null or not armory_service.is_in_group("system_interactable"):
 					_fail("Weapon/Nen tower lobby is missing service interaction %d." % service_index)
