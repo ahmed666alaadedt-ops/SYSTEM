@@ -1462,17 +1462,29 @@ func _run() -> void:
 			if vr_floor_shape.size.distance_to(Vector3(12.0, 0.24, 23.0)) > 0.01:
 				_fail("VR course floor collider dimensions do not cover the full 12x23m course.")
 				return
-			if vr_course.get_node_or_null("VRSimulationExitPlatform") == null or vr_course.get_node_or_null("VRSimulationExitSensor/CollisionShape3D") == null:
-				_fail("VR course exit platform or its physical arrival sensor is missing.")
+			var vr_exit_platform := vr_course.get_node_or_null("VRSimulationExitPlatform") as MeshInstance3D
+			var vr_exit_sensor := vr_course.get_node_or_null("VRSimulationExitSensor") as Area3D
+			var vr_exit_collision := vr_exit_sensor.get_node_or_null("CollisionShape3D") as CollisionShape3D if vr_exit_sensor != null else null
+			if vr_exit_platform == null or vr_exit_collision == null or not (vr_exit_collision.shape is BoxShape3D):
+				_fail("VR course exit platform or its named physical BoxShape3D arrival sensor is missing.")
+				return
+			if (vr_exit_collision.shape as BoxShape3D).size.distance_to(Vector3(4.2, 3.0, 2.4)) > 0.01:
+				_fail("VR course exit sensor does not cover the arrival platform.")
 				return
 			for checkpoint_index in range(3):
 				var checkpoint_sensor := vr_course.get_node_or_null("VRCheckpointGate_%02d/VRCheckpointSensor_%02d" % [checkpoint_index, checkpoint_index]) as Area3D
-				if checkpoint_sensor == null or checkpoint_sensor.get_node_or_null("CollisionShape3D") == null or not checkpoint_sensor.monitoring:
-					_fail("VR course checkpoint %d is missing its active physical sensor." % checkpoint_index)
+				var checkpoint_collision := checkpoint_sensor.get_node_or_null("CollisionShape3D") as CollisionShape3D if checkpoint_sensor != null else null
+				if checkpoint_sensor == null or checkpoint_collision == null or not (checkpoint_collision.shape is BoxShape3D) or not checkpoint_sensor.monitoring:
+					_fail("VR course checkpoint %d is missing its active physical BoxShape3D sensor." % checkpoint_index)
+					return
+				if (checkpoint_collision.shape as BoxShape3D).size.distance_to(Vector3(3.8, 3.0, 1.2)) > 0.01:
+					_fail("VR course checkpoint %d sensor dimensions are incorrect." % checkpoint_index)
 					return
 			for obstacle_index in range(4):
-				if vr_course.get_node_or_null("VRHologramObstaclePhysics_%02d/CollisionShape3D" % obstacle_index) == null:
-					_fail("VR hologram obstacle %d is missing its physical collision body." % obstacle_index)
+				var obstacle_body := vr_course.get_node_or_null("VRHologramObstaclePhysics_%02d" % obstacle_index) as StaticBody3D
+				var obstacle_collision := obstacle_body.get_node_or_null("CollisionShape3D") as CollisionShape3D if obstacle_body != null else null
+				if obstacle_collision == null or not (obstacle_collision.shape is BoxShape3D):
+					_fail("VR hologram obstacle %d is missing its named physical BoxShape3D collision body." % obstacle_index)
 					return
 			operations.set("current_facility_root", vr_facility)
 		if not bool(operations.call("start_facility_activity", str(activity_type))):
