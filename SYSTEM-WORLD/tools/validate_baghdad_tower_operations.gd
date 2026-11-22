@@ -57,8 +57,8 @@ func _run() -> void:
 	if operations.find_child("HunterRankProgressRows", true, false) == null:
 		_fail("Hunter rank board did not render its F-to-SSS progression requirements.")
 		return
-	if int(status.get("staff_count", 0)) != 44:
-		_fail("Expected eight professional NPC staff members in each of the five district towers plus four Power Tower staff; found %d." % int(status.get("staff_count", 0)))
+	if int(status.get("staff_count", 0)) != 45:
+		_fail("Expected eight professional NPC staff members in four district towers, nine in Shopping Tower, plus four Power Tower staff; found %d." % int(status.get("staff_count", 0)))
 		return
 	if int(status.get("customer_count", 0)) != 20:
 		_fail("Expected four persistent customer NPCs in each of the five Baghdad district towers; found %d." % int(status.get("customer_count", 0)))
@@ -69,6 +69,13 @@ func _run() -> void:
 		"shopping_tower_baghdad": "ShoppingTower",
 		"entertainment_tower_baghdad": "EntertainmentTower",
 		"technology_tower_baghdad": "TechnologyTower"
+	}
+	var expected_staff_per_tower := {
+		"hunter_association_tower_baghdad": 8,
+		"business_investment_tower_baghdad": 8,
+		"shopping_tower_baghdad": 9,
+		"entertainment_tower_baghdad": 8,
+		"technology_tower_baghdad": 8
 	}
 	for tower_id in expected_tower_nodes.keys():
 		var tower_node := tower_manager.get_node_or_null(str(expected_tower_nodes[tower_id]))
@@ -87,8 +94,9 @@ func _run() -> void:
 						uniformed_staff += 1
 			elif str(lobby_child.name).begins_with("TowerCustomer_"):
 				visible_customers += 1
-		if visible_staff != 8 or uniformed_staff != 8 or visible_customers != 4:
-			_fail("Tower %s requires 8 uniformed visible staff and 4 visible customer NPCs; found staff=%d uniformed=%d customers=%d." % [tower_id, visible_staff, uniformed_staff, visible_customers])
+		var expected_staff := int(expected_staff_per_tower[tower_id])
+		if visible_staff != expected_staff or uniformed_staff != expected_staff or visible_customers != 4:
+			_fail("Tower %s requires %d uniformed visible staff and 4 visible customer NPCs; found staff=%d uniformed=%d customers=%d." % [tower_id, expected_staff, visible_staff, uniformed_staff, visible_customers])
 			return
 	operations.call("_simulate_customer_purchases")
 	if int(operations.call("get_operations_status").get("npc_purchase_count", 0)) <= 0:
