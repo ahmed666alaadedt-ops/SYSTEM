@@ -2264,10 +2264,7 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 
 
 func open_facility_service(tower_id: String, floor_number: int, facility_type: String) -> void:
-	if not TOWER_CONFIG.has(tower_id) or not _facility_activity_definition(facility_type).is_empty():
-		if not TOWER_CONFIG.has(tower_id):
-			return
-	else:
+	if not TOWER_CONFIG.has(tower_id) or _facility_activity_definition(facility_type).is_empty():
 		return
 	current_tower_id = tower_id
 	current_staff_id = ""
