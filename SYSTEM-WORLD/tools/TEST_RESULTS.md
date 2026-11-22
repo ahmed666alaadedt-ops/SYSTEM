@@ -146,3 +146,15 @@ device profiling remain separate, pending acceptance checks.
 - A pipeline acceptance runner exists in GitHub.
 - Blender execution and Blender export remain blocked until Blender 4.x is installed in an accessible execution environment.
 - Godot import and Android performance acceptance remain pending.
+
+
+## Hunter rank and helicopter authorization — 22 November 2026
+
+- Verified on feature branch commit `58c2888a8607c1815a1437cfb529a5ab694a7040`.
+- Godot 4.3 workflow #1299 passed: resource import/script parsing, safety checks, headless main-scene launch, Baghdad tower landmark checks and the complete Baghdad tower operations validator.
+- Rank regression coverage passed for F, B, A, S, SS and SSS. Promotion requires verified mission points and increasing Nen control/skill practice; SSS requires explicit examination-board approval.
+- Helicopter authorization coverage passed: S/SS/SSS hunters and approved senior/professional Association staff qualify; F through A, ordinary clerks, level-only and license-only profiles do not qualify.
+- Fixed the duplicate progression node: `MainScene.tscn` already contains `PlayerProgression`; main.gd now reuses that canonical node instead of creating a second instance. The tower operations manager, inventory and combat now share the same progression reference.
+- Canonical Android APK export workflow #1036 passed on the same commit. Artifact `SYSTEM-WORLD-canonical-android-debug-apk`: 35,827,982 bytes (about 35.8 MB), available until 6 December 2026.
+- Workflow: https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45055746550
+- Scope limitation: the starter guild mission catalog still has only three unique verified missions (100/250/500 points), so ordinary play currently tops out at B. Additional mission content and more distinct Nen abilities are required to earn A–SS in normal gameplay; SSS still needs a full in-world board workflow.
