@@ -16,6 +16,8 @@ var tail_rotor: Node3D
 var hud: CanvasLayer
 var status_label: Label
 var interact_button: Button
+var emergency_landing_button: Button
+var emergency_landing_active := false
 var control_buttons: Dictionary = {}
 var pressed_controls: Dictionary = {}
 var pilot_active := false
@@ -106,6 +108,13 @@ func _create_touch_hud() -> void:
 	interact_button.visible = false
 	interact_button.pressed.connect(_toggle_pilot)
 	hud.add_child(interact_button)
+	emergency_landing_button = Button.new()
+	emergency_landing_button.text = "Emergency Landing"
+	emergency_landing_button.position = Vector2(18.0, 120.0)
+	emergency_landing_button.size = Vector2(210.0, 54.0)
+	emergency_landing_button.visible = false
+	emergency_landing_button.pressed.connect(_begin_emergency_landing)
+	hud.add_child(emergency_landing_button)
 	_add_hold_button("forward", "Forward", Vector2(-220.0, -150.0), Vector2(100.0, 54.0))
 	_add_hold_button("back", "Back", Vector2(-220.0, -88.0), Vector2(100.0, 54.0))
 	_add_hold_button("left", "Left", Vector2(-326.0, -88.0), Vector2(100.0, 54.0))
@@ -168,6 +177,7 @@ func _enter_aircraft() -> void:
 	player.set_physics_process(false)
 	interact_button.text = "Exit Helicopter"
 	interact_button.visible = true
+	emergency_landing_button.visible = true
 	for key in control_buttons:
 		control_buttons[key].visible = true
 	status_label.text = "Pilot controls: WASD / arrows, Space ascend, Shift descend"
@@ -175,6 +185,8 @@ func _enter_aircraft() -> void:
 
 func _exit_aircraft() -> void:
 	pilot_active = false
+	emergency_landing_active = false
+	emergency_landing_button.visible = false
 	player.set_meta("system_helicopter_piloting", false)
 	player.visible = true
 	player.set_physics_process(player_physics_was_enabled)
@@ -184,6 +196,35 @@ func _exit_aircraft() -> void:
 		control_buttons[key].visible = false
 	interact_button.text = "Enter Helicopter"
 	status_label.text = "Helicopter parked at Hunter Association"
+
+func _begin_emergency_landing() -> void:
+	if not pilot_active or landed:
+		return
+	if _get_ground_landing_height(heli_position) == null:
+		status_label.text = "EMERGENCY LANDING UNAVAILABLE — no safe ground detected"
+		return
+	emergency_landing_active = true
+	horizontal_velocity = Vector3.ZERO
+	vertical_input = 0.0
+	status_label.text = "EMERGENCY LANDING — descending to nearest detected ground"
+
+
+func _get_ground_landing_height(from_position: Vector3) -> Variant:
+	var world := get_world_3d()
+	if world == null:
+		return null
+	var query := PhysicsRayQueryParameters3D.create(
+		from_position + Vector3.UP * 4.0,
+		from_position - Vector3.UP * 100.0
+	)
+	query.collision_mask = 1
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+	var hit := world.direct_space_state.intersect_ray(query)
+	if hit.is_empty():
+		return null
+	return float(hit.position.y) + 2.8
+
 
 func _update_flight(delta: float) -> void:
 	var forward_input := Input.get_action_strength("ui_up") - Input.get_action_strength("ui_down")
@@ -197,6 +238,10 @@ func _update_flight(delta: float) -> void:
 		lift = 1.0
 	elif Input.is_key_pressed(KEY_SHIFT):
 		lift = -1.0
+	if emergency_landing_active:
+		forward_input = 0.0
+		side_input = 0.0
+		lift = -0.45
 	var desired := (-aircraft.global_basis.z * forward_input + aircraft.global_basis.x * side_input).normalized() * MAX_HORIZONTAL_SPEED
 	if Vector2(forward_input, side_input).length() < 0.05:
 		horizontal_velocity = horizontal_velocity.move_toward(Vector3.ZERO, DRAG * delta)
@@ -209,7 +254,20 @@ func _update_flight(delta: float) -> void:
 	var pad_center := global_position + Vector3(0.0, 2.8, 0.0)
 	var horizontal_distance := Vector2(candidate_position.x - pad_center.x, candidate_position.z - pad_center.z).length()
 	var altitude := candidate_position.y - pad_center.y
-	if horizontal_distance <= LANDING_RADIUS and altitude <= 0.0:
+	if emergency_landing_active:
+		var ground_height: Variant = _get_ground_landing_height(heli_position)
+		if ground_height == null:
+			emergency_landing_active = false
+			status_label.text = "EMERGENCY LANDING ABORTED — ground not detected"
+		else:
+			candidate_position.y = maxf(candidate_position.y, float(ground_height))
+			if heli_position.y <= float(ground_height) + 0.35:
+				candidate_position.y = float(ground_height)
+				vertical_velocity = 0.0
+				horizontal_velocity = Vector3.ZERO
+				landed = true
+				emergency_landing_active = false
+	elif horizontal_distance <= LANDING_RADIUS and altitude <= 0.0:
 		candidate_position.y = pad_center.y
 		vertical_velocity = 0.0
 		if horizontal_velocity.length() < 2.0:
@@ -217,15 +275,15 @@ func _update_flight(delta: float) -> void:
 			landed = true
 	else:
 		landed = false
-		if not _is_aircraft_position_clear(candidate_position):
-			horizontal_velocity = Vector3.ZERO
-			vertical_velocity = 0.0
-			status_label.text = "OBSTACLE — flight path blocked"
-			_update_camera()
-			return
+	if not landed and not _is_aircraft_position_clear(candidate_position):
+		horizontal_velocity = Vector3.ZERO
+		vertical_velocity = 0.0
+		status_label.text = "OBSTACLE — full aircraft clearance blocked"
+		_update_camera()
+		return
 	heli_position = candidate_position
 	aircraft.global_position = heli_position
-	status_label.text = "LANDED — safe to exit" if landed else "FLIGHT — land inside the marked pad to exit"
+	status_label.text = "LANDED — safe to exit" if landed else ("EMERGENCY LANDING — controlled descent" if emergency_landing_active else "FLIGHT — land inside the marked pad to exit")
 	_update_camera()
 
 func _can_pilot() -> bool:
@@ -240,15 +298,15 @@ func _is_aircraft_position_clear(candidate_position: Vector3) -> bool:
 	var world := get_world_3d()
 	if world == null:
 		return false
-	var sphere := SphereShape3D.new()
-	sphere.radius = 0.8
+	var aircraft_clearance := BoxShape3D.new()
+	aircraft_clearance.size = Vector3(5.0, 5.0, 14.0)
 	var query := PhysicsShapeQueryParameters3D.new()
-	query.shape = sphere
-	query.transform = Transform3D(Basis.IDENTITY, candidate_position)
+	query.shape = aircraft_clearance
+	query.transform = Transform3D(aircraft.global_basis, candidate_position)
 	query.collision_mask = 1
 	query.collide_with_areas = false
 	query.collide_with_bodies = true
-	return world.direct_space_state.intersect_shape(query, 8).is_empty()
+	return world.direct_space_state.intersect_shape(query, 12).is_empty()
 
 func _update_camera() -> void:
 	var active_camera := get_viewport().get_camera_3d()
