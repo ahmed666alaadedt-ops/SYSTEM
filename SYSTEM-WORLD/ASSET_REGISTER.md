@@ -203,3 +203,11 @@ The 5×5 pack is only a 1 km × 1 km initial proof area. It is not the full Bagh
 - Four collision-backed service desks expose stable IDs under `tower_service_hunter_headquarters_*`. Reception, registry and mission points reuse the existing `HunterGuildMenu.open_service_view` information/registration/missions views; examiner control remains an informational staff-only point.
 - Godot 4.3 workflow `45011989736` passed on exact code commit `9844fc6490ea0d432c5be1b7f3c932133a1a0daa`, including the extended headquarters/tower validator and headless main-scene launch.
 - Classification: procedural playable blockout, not production architecture. Door leaves, finished furnishings, staffed NPC schedules, authoritative service transactions, lighting/acoustic polish, and Android visual/performance review remain outstanding.
+
+
+## Hunter Association headquarters — examiner control-room blockout — 22 November 2026
+
+- Runtime source: `scripts/system_hunter_headquarters_interior.gd`; validation: `tools/validate_baghdad_tower_integration.gd`.
+- The examiner room includes a collision-backed control console, seven stage-monitor meshes and Arabic stage labels, plus a notice that the display is static and has no live feed or stage-control connection.
+- Godot 4.3 workflow `45012275446` passed on code commit `aad51b4555eb613c510a15602421a8a6577b360f`, including the extended examiner-room validator and headless main-scene launch.
+- Classification: physical/visual blockout only. Live exam-manager data, staff-role access control, examiner actions, staff NPCs, finished interface art and target-device review are not implemented.
