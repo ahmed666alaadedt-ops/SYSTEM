@@ -2181,6 +2181,21 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 			_add_facility_box(root, "PoolDeckRight", Vector3(14.0, 0.3, 0.0), Vector3(4.0, 0.6, 18.0), accent)
 			for index in range(4):
 				_add_facility_box(root, "SunLounger_%02d" % index, Vector3(-13.0 + float(index) * 2.0, 0.8, 11.0), Vector3(1.5, 0.35, 3.0), highlight)
+			var water_volume := Area3D.new()
+			water_volume.name = "PoolWaterVolume"
+			water_volume.collision_layer = 0
+			water_volume.collision_mask = 1
+			water_volume.monitoring = true
+			water_volume.monitorable = false
+			water_volume.position = Vector3(0.0, 1.0, 0.0)
+			var water_collision := CollisionShape3D.new()
+			var water_shape := BoxShape3D.new()
+			water_shape.size = Vector3(20.0, 2.2, 12.0)
+			water_collision.shape = water_shape
+			water_volume.add_child(water_collision)
+			water_volume.body_entered.connect(_on_pool_water_body_entered.bind(root.global_position.y + 1.12))
+			water_volume.body_exited.connect(_on_pool_water_body_exited)
+			root.add_child(water_volume)
 		"fitness_gym":
 			for index in range(5):
 				_add_facility_box(root, "GymMachine_%02d" % index, Vector3(-12.0 + float(index) * 6.0, 1.2, 0.0), Vector3(2.0, 2.4, 2.0), accent)
@@ -2416,6 +2431,24 @@ func _save_facility_activity_stats() -> void:
 	var error := config.save(FACILITY_ACTIVITY_SAVE_PATH)
 	if error != OK:
 		push_warning("SYSTEM facility activity stats could not be saved: " + str(error))
+
+
+func _on_pool_water_body_entered(body: Node3D, surface_y: float) -> void:
+	if body != player:
+		return
+	body.set_meta("system_swimming", true)
+	body.set_meta("system_swim_surface_y", surface_y)
+	body.set_meta("system_swim_source", "Baghdad SYSTEM pool")
+
+
+func _on_pool_water_body_exited(body: Node3D) -> void:
+	if body != player:
+		return
+	body.set_meta("system_swimming", false)
+	body.remove_meta("system_swim_surface_y")
+	body.remove_meta("system_swim_source")
+	if is_instance_valid(status_label):
+		status_label.text = "خرجت من المسبح — عادت حركة اللاعب الطبيعية."
 
 
 func _add_facility_box(parent: Node3D, object_name: String, object_position: Vector3, object_size: Vector3, material: Material) -> void:
