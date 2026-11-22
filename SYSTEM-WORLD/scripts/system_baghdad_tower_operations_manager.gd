@@ -12,7 +12,7 @@ const TOWER_CONFIG := {
 	"hunter_association_tower_baghdad": {"node": "HunterAssociationTower", "title": "برج جمعية الصيادين", "floors": 200, "height": 1000.0, "radius": 38.0, "roles": ["موظف الاستقبال", "موظف المهمات", "موظف التسجيل", "مسؤول الإعلانات"], "jobs": ["receptionist", "mission_clerk", "exam_registrar", "advertising_manager"]},
 
 	"business_investment_tower_baghdad": {"node": "BusinessInvestmentTower", "title": "برج الأعمال والاستثمار", "floors": 36, "height": 220.0, "radius": 26.0, "roles": ["مدير الاستثمار", "مستشار الشركات", "موظف البنوك والعقود", "مسؤول الإعلانات"], "jobs": ["investment_manager", "business_advisor", "bank_contract_clerk", "advertising_manager"]},
-	"shopping_tower_baghdad": {"node": "ShoppingTower", "title": "برج التسوق والتجارة", "floors": 32, "height": 190.0, "radius": 30.0, "roles": ["مدير البرج", "تاجر الأسلحة والدروع", "صيدلاني الإكسير", "مدير المطاعم والفندق"], "jobs": ["shop_manager", "weapons_merchant", "elixir_pharmacist", "hospitality_manager"]},
+	"shopping_tower_baghdad": {"node": "ShoppingTower", "title": "برج التسوق والتجارة", "floors": 32, "height": 190.0, "radius": 30.0, "roles": ["مدير البرج", "تاجر الأسلحة والدروع", "صيدلاني الإكسير", "مدير الضيافة والفندق", "شيف المطاعم", "نادل وخدمة الزبائن", "موظف استقبال الفندق", "مشرف الغرف والتنظيف"], "jobs": ["shop_manager", "weapons_merchant", "elixir_pharmacist", "hospitality_manager", "restaurant_chef", "restaurant_waiter", "hotel_receptionist", "hotel_housekeeping"]},
 	"entertainment_tower_baghdad": {"node": "EntertainmentTower", "title": "برج الترفيه والرياضة", "floors": 34, "height": 205.0, "radius": 29.0, "roles": ["منظم الفعاليات", "موظف التذاكر", "موظف الأنشطة", "مسؤول الإعلانات"], "jobs": ["event_coordinator", "ticket_clerk", "activity_host", "advertising_manager"]},
 	"technology_tower_baghdad": {"node": "TechnologyTower", "title": "برج التكنولوجيا والابتكار", "floors": 40, "height": 245.0, "radius": 27.0, "roles": ["موظف المختبر", "مهندس الأجهزة", "موظف الخدمات الرقمية", "مسؤول الإعلانات"], "jobs": ["lab_receptionist", "device_engineer", "digital_services", "advertising_manager"]},
 	"power_tower_baghdad": {"node": "PowerTower", "title": "برج القوة", "floors": 200, "height": 820.0, "radius": 26.0, "roles": ["موظف تسجيل التحديات", "منظم الحلبة", "موظف الاستراحة الطبية", "مسؤول الإعلانات"], "jobs": ["arena_registrar", "arena_coordinator", "arena_medic", "advertising_manager"]}
@@ -206,7 +206,7 @@ func _create_staff_for_all_towers() -> void:
 	for tower_id in tower_nodes.keys():
 		var config: Dictionary = TOWER_CONFIG[tower_id]
 		var staff_ids: Array[String] = []
-		for index in range(4):
+		for index in range(config["roles"].size()):
 			var npc_id := _get_or_create_staff(str(tower_id), index, config)
 			if not npc_id.is_empty():
 				staff_ids.append(npc_id)
@@ -297,7 +297,7 @@ func _create_visible_staff(tower_id: String, npc_id: String, index: int, config:
 	interaction_area.add_child(area_shape)
 	var lobby_depth := 36.0
 	var lobby_center_z := float(config["radius"]) * 1.48 + lobby_depth * 0.5
-	employee.position = Vector3((float(index) - 1.0) * 7.0, 0.0, lobby_center_z - 4.0)
+	employee.position = Vector3((float(index) - float(config["roles"].size() - 1) * 0.5) * 5.0, 0.0, lobby_center_z - 4.0)
 
 func _create_power_tower_progress_board() -> void:
 	var tower := tower_nodes.get("power_tower_baghdad") as Node3D
