@@ -17,6 +17,7 @@ func build(p_tower_id: String, p_title: String, p_entrance_script: Script, p_ext
 	floor_count = maxi(1, p_floor_count)
 	name = "TowerInterior"
 	_build_lobby()
+	_build_advertising_screens()
 	_build_service_desks()
 	if tower_id == "hunter_association_tower_baghdad":
 		_build_hunter_exam_tunnel()
@@ -32,6 +33,7 @@ func build(p_tower_id: String, p_title: String, p_entrance_script: Script, p_ext
 	set_meta("procedural_floor_world_available", true)
 	set_meta("interactive_floor_selection", true)
 	set_meta("tower_identity_feature_ready", true)
+	set_meta("interior_ad_screen_count", 2)
 	set_meta("service_desks_have_collision", true)
 	set_meta("tower_id", tower_id)
 
@@ -84,6 +86,50 @@ func _build_lobby() -> void:
 	light.omni_range = 48.0
 	light.shadow_enabled = false
 	add_child(light)
+
+
+func _build_advertising_screens() -> void:
+	# Two readable lobby displays, mounted on the side walls so they never block
+	# the Hunter examination tunnel or the central tower entrance.
+	var screen_material := _material(Color(0.015, 0.12, 0.19), 0.24, 0.32)
+	screen_material.emission_enabled = true
+	screen_material.emission = Color(0.015, 0.32, 0.58)
+	screen_material.emission_energy_multiplier = 1.8
+	var frame_material := _material(Color(0.72, 0.52, 0.22), 0.25, 0.72)
+	var wall_positions := [Vector3(-20.25, 6.4, -2.0), Vector3(20.25, 6.4, -2.0)]
+	var wall_rotations := [PI * 0.5, -PI * 0.5]
+	for index in range(wall_positions.size()):
+		var screen_root := Node3D.new()
+		screen_root.name = "InteriorAdScreen_%02d" % index
+		screen_root.position = wall_positions[index]
+		screen_root.rotation.y = wall_rotations[index]
+		add_child(screen_root)
+		var frame := MeshInstance3D.new()
+		frame.name = "AdScreenFrame"
+		var frame_mesh := BoxMesh.new()
+		frame_mesh.size = Vector3(10.8, 5.8, 0.65)
+		frame.mesh = frame_mesh
+		frame.material_override = frame_material
+		screen_root.add_child(frame)
+		var panel := MeshInstance3D.new()
+		panel.name = "AdScreenDisplay"
+		var panel_mesh := BoxMesh.new()
+		panel_mesh.size = Vector3(10.0, 5.0, 0.12)
+		panel.mesh = panel_mesh
+		panel.position.z = -0.4
+		panel.material_override = screen_material
+		screen_root.add_child(panel)
+		var message := Label3D.new()
+		message.name = "AdScreenMessage"
+		message.text = "إعلانات البرج\nالفعاليات والخدمات\nSYSTEM AD NETWORK"
+		message.font_size = 24
+		message.position = Vector3(0.0, 0.0, -0.5)
+		message.pixel_size = 0.012
+		message.modulate = Color(0.84, 0.95, 1.0)
+		screen_root.add_child(message)
+	set_meta("interior_ad_screen_count", wall_positions.size())
+	set_meta("local_ad_content_only", true)
+
 
 func _build_hunter_exam_tunnel() -> void:
 	var shell_mat := _material(Color(0.035, 0.065, 0.095), 0.3, 0.78)
