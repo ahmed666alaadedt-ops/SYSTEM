@@ -33,6 +33,9 @@ var completed_stage_ids: Array[String] = []
 var failed := false
 var failure_reason := ""
 
+# Must be supplied by a trusted backend integration. Never accept client-generated prefix strings.
+var evidence_verifier: Callable
+
 func _ready() -> void:
 	name = "SYSTEMHunterExamManager"
 	_load_exam_state()
@@ -99,16 +102,28 @@ func get_current_stage() -> Dictionary:
 		return {}
 	return EXAM_STAGES[current_stage_index].duplicate(true)
 
-func complete_current_stage(stage_id: String, verified_evidence: String) -> Dictionary:
+## Configure only with a verifier backed by a trusted service.
+## The verifier receives (evidence, stage_id, candidate_number) and must return true only
+## after validating a server-issued, stage-bound proof. The client has no verifier by default.
+func configure_evidence_verifier(verifier: Callable) -> void:
+	evidence_verifier = verifier
+
+
+func complete_current_stage(stage_id: String, verified_evidence: Variant) -> Dictionary:
 	if not exam_active or current_stage_index < 0:
 		return {"success":false,"reason":"NO_ACTIVE_STAGE"}
 	var stage: Dictionary = EXAM_STAGES[current_stage_index]
 	if stage_id != str(stage["id"]):
 		return {"success":false,"reason":"STAGE_ORDER_MISMATCH"}
-	if not verified_evidence.begins_with("SYSTEM_VERIFIED:") or verified_evidence.length() <= "SYSTEM_VERIFIED:".length():
-		return {"success":false,"reason":"VERIFIED_EVIDENCE_REQUIRED"}
 	if completed_stage_ids.has(stage_id):
 		return {"success":false,"reason":"STAGE_ALREADY_COMPLETED"}
+	if not verified_evidence is Dictionary:
+		return {"success":false,"reason":"LEGACY_UNTRUSTED_EVIDENCE"}
+	if not evidence_verifier.is_valid():
+		return {"success":false,"reason":"TRUSTED_EVIDENCE_VERIFIER_UNAVAILABLE"}
+	var evidence_accepted := bool(evidence_verifier.call(verified_evidence, stage_id, candidate_number))
+	if not evidence_accepted:
+		return {"success":false,"reason":"EVIDENCE_VERIFICATION_FAILED"}
 	completed_stage_ids.append(stage_id)
 	stage_completed.emit(stage_id,current_stage_index + 1)
 	current_stage_index += 1

@@ -30,6 +30,7 @@ func _initialize() -> void:
 			push_error("Hunter exam validation failed: stage has no meaningful objectives.")
 			quit(1)
 			return
+
 	var registration: Dictionary = manager.apply_for_exam("validator_candidate")
 	if not bool(registration.get("success", false)):
 		push_error("Hunter exam validation failed: could not register a fresh candidate: " + str(registration))
@@ -40,6 +41,32 @@ func _initialize() -> void:
 		push_error("Hunter exam validation failed: candidate could not begin.")
 		quit(1)
 		return
+
+	var first_stage: Dictionary = manager.get_current_stage()
+	var forged_prefix: Dictionary = manager.complete_current_stage(
+		str(first_stage.get("id", "")),
+		"SYSTEM_VERIFIED:forged-by-client"
+	)
+	if str(forged_prefix.get("reason", "")) != "LEGACY_UNTRUSTED_EVIDENCE":
+		push_error("Hunter exam validation failed: a forged legacy prefix was not rejected.")
+		quit(1)
+		return
+	if manager.completed_stage_ids.size() != 0:
+		push_error("Hunter exam validation failed: forged evidence changed progression.")
+		quit(1)
+		return
+
+	var no_verifier: Dictionary = manager.complete_current_stage(
+		str(first_stage.get("id", "")),
+		{"issuer":"SYSTEM_TEST_VALIDATOR","token":"test"}
+	)
+	if str(no_verifier.get("reason", "")) != "TRUSTED_EVIDENCE_VERIFIER_UNAVAILABLE":
+		push_error("Hunter exam validation failed: completion did not fail closed without a verifier.")
+		quit(1)
+		return
+
+	# Test-only verifier: production runtime must be configured by a trusted backend.
+	manager.configure_evidence_verifier(Callable(self, "_verify_test_evidence"))
 	for stage_index in range(EXAM_SCRIPT.EXAM_STAGES.size()):
 		var current: Dictionary = manager.get_current_stage()
 		var expected: Dictionary = EXAM_SCRIPT.EXAM_STAGES[stage_index]
@@ -47,16 +74,22 @@ func _initialize() -> void:
 			push_error("Hunter exam validation failed: progression skipped or repeated a stage.")
 			quit(1)
 			return
-		var completion: Dictionary = manager.complete_current_stage(str(expected.get("id", "")), "SYSTEM_VERIFIED:validator")
+		var evidence := {
+			"issuer":"SYSTEM_TEST_VALIDATOR",
+			"token":"test:%s:%d" % [str(expected.get("id", "")), manager.candidate_number]
+		}
+		var completion: Dictionary = manager.complete_current_stage(str(expected.get("id", "")), evidence)
 		if not bool(completion.get("success", false)):
-			push_error("Hunter exam validation failed: stage completion rejected: " + str(completion))
+			push_error("Hunter exam validation failed: verified stage completion rejected: " + str(completion))
 			quit(1)
 			return
+
 	var overview: Dictionary = manager.get_exam_overview()
 	if not bool(overview.get("license_earned_permanently", false)) or bool(overview.get("active", true)):
-		push_error("Hunter exam validation failed: permanent license was not recorded.")
+		push_error("Hunter exam validation failed: permanent license was not recorded after test verification.")
 		quit(1)
 		return
+
 	var retry_probe = EXAM_SCRIPT.new()
 	retry_probe.save_path = validation_save_path
 	root.add_child(retry_probe)
@@ -73,5 +106,13 @@ func _initialize() -> void:
 		return
 	retry_probe.queue_free()
 	manager.queue_free()
-	print("Hunter exam validation passed: seven ordered stages, progression persistence and permanent license.")
+	print("Hunter exam validation passed: forged-prefix rejection, fail-closed verifier gate, seven-stage progression and permanent test license.")
 	quit(0)
+
+
+func _verify_test_evidence(evidence: Variant, stage_id: String, candidate_number: int) -> bool:
+	if not evidence is Dictionary:
+		return false
+	if str(evidence.get("issuer", "")) != "SYSTEM_TEST_VALIDATOR":
+		return false
+	return str(evidence.get("token", "")) == "test:%s:%d" % [stage_id, candidate_number]
