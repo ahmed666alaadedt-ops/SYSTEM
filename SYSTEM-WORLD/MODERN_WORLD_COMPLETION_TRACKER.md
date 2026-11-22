@@ -671,3 +671,9 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Recalculate panel dimensions when the viewport changes orientation or size.
 - [x] Add automated sizing assertions for 360×780 portrait and 780×360 landscape viewports.
 - [ ] Pass Godot 4.3 operations validation and canonical Android APK export on the latest UI head; inspect the actual panel on the HONOR 50 after installation.
+
+
+### Responsive panel viewport API correction — 22 November 2026
+
+- [x] Use Viewport.get_visible_rect().size from the Node-based operations manager; get_viewport_rect() belongs to Control/CanvasItem and is not available on this Node.
+- [ ] Re-run Godot parser, responsive-size assertions, full tower operations validator and Android APK export.
