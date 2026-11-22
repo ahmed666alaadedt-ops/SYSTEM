@@ -110,9 +110,41 @@ func _run() -> void:
 	if not helicopter_status.has("pilot_authorized") or helipad.call("_can_pilot"):
 		_fail("Unlicensed test profile must not be granted helicopter pilot access.")
 		return
+	exam_manager.set("registered", true)
+	exam_manager.set("completed_stage_ids", all_stage_ids)
+	if not helipad.call("_can_pilot"):
+		_fail("A candidate who completed all Hunter examination stages must receive pilot authorization.")
+		return
 	if not helipad.has_method("_is_aircraft_position_clear"):
 		_fail("Hunter Association helicopter obstacle-clearance query is missing.")
 		return
+	var helicopter_player: CharacterBody3D = main.get("player") as CharacterBody3D
+	if helicopter_player == null:
+		_fail("A player character is required for the helicopter takeoff/landing test.")
+		return
+	hel ipad.call("_enter_aircraft")
+	if not bool(helipad.get("pilot_active")) or helicopter_player.visible or helicopter_player.is_physics_processing():
+		_fail("Authorized pilot entry did not transfer control from the on-foot character.")
+		return
+	hel ipad.set("vertical_input", 1.0)
+	hel ipad.call("_update_flight", 0.5)
+	var takeoff_height := float(helipad.get("heli_position").y)
+	if takeoff_height <= helipad.global_position.y + 2.8:
+		_fail("Authorized helicopter pilot could not lift off from the landing pad.")
+		return
+	hel ipad.set("vertical_input", -1.0)
+	hel ipad.call("_update_flight", 0.5)
+	hel ipad.call("_update_flight", 0.5)
+	if not bool(helipad.get("landed")):
+		_fail("Helicopter could not complete a controlled landing inside its marked pad.")
+		return
+	hel ipad.call("_exit_aircraft")
+	if bool(helipad.get("pilot_active")) or not helicopter_player.visible or helicopter_player.is_physics_processing():
+		_fail("Helicopter exit did not restore the on-foot player controls.")
+		return
+	exam_manager.set("registered", false)
+	exam_manager.set("completed_stage_ids", empty_stage_ids)
+	exam_manager.set("exam_active", false)
 	if helipad.get_node_or_null("HunterAssociationHelicopter") == null or helipad.get_node_or_null("HunterHelicopterTouchHUD") == null:
 		_fail("Hunter Association helicopter aircraft model or touch-control HUD was not generated.")
 		return
