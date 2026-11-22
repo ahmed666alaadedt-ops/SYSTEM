@@ -1145,6 +1145,7 @@ func _complete_power_floor() -> void:
 		return
 	var floor_number := int(active_power_floor_data.get("floor", 0))
 	var reward_items: Array = active_power_floor_data.get("reward_items", []).duplicate()
+	var final_boss := bool(active_power_floor_data.get("final_boss", false))
 	var elapsed := maxf(1.0, float(Time.get_ticks_msec() - power_floor_started_at) / 1000.0)
 	var result: Dictionary = power_tower_manager.call("confirm_floor_clear", floor_number, elapsed)
 	power_floor_in_progress = false
@@ -1156,7 +1157,7 @@ func _complete_power_floor() -> void:
 				progression.call("add_item", str(item_id), 1)
 				loot_names.append(str(item_id))
 		var loot_text := " | الغنائم: " + ", ".join(loot_names) if not loot_names.is_empty() else ""
-		var credit_reward := grant_power_tower_credits(floor_number, bool(active_power_floor_data.get("final_boss", false)))
+		var credit_reward := grant_power_tower_credits(floor_number, final_boss)
 		_set_status("تم اجتياز الطابق %d!\nالتصنيف: %s | XP: %d | رصيد: %d%s\nالطابق التالي أصبح متاحاً." % [floor_number, str(result.get("rank", "E")), int(result.get("reward_xp", 0)), credit_reward, loot_text])
 	else:
 		_set_status("انتهى القتال لكن تعذر اعتماد النتيجة: " + str(result.get("reason", "غير معروف")))
