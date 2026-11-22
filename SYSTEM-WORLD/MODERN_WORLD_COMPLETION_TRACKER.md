@@ -405,3 +405,6 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Verify five-tower placements against Tigris navigation, Karkh/Rusafa connections, Tahrir Square and the Freedom Monument; refine the overall skyline to match the reference without obscuring protected geography.
 - [ ] Run Godot 4.3 import/parser, main-scene startup, node/collision checks, and Android APK/visual performance validation for commit e7b693f70fce40ea64177fa6e3468eeab9ea7525.
 - Note: the new geometry is source-level visual blockout only. It has not yet been parsed/run by Godot or visually inspected on an Android device.
+
+- [x] Add five radial elevated skybridges from the central SYSTEM hub to the five tower podiums, in addition to the perimeter pedestrian/vehicle links.
+- [x] Align shared sky-garden collision bounds with the 252 m terrace diameter.
