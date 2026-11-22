@@ -461,3 +461,31 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Visual review of the six tower lobbies, collision traversal, kiosk ray targeting, sign readability, and Baghdad landmark sightlines remains pending; headless launch does not verify visual quality or gameplay interaction.
 - [ ] Canonical Android APK export and physical-device review remain pending for the current branch head.
 
+
+
+## Baghdad tower operations, NPC workforce, commerce, interiors and Power Tower runtime — 22 November 2026
+
+Implementation added on the feature branch; automated runtime validation is pending.
+
+- [x] Add system_baghdad_tower_operations_manager.gd and connect it to the canonical main scene.
+- [x] Generate four persistent civilian NPC employees for each of the six Baghdad towers (24 staff total): tower-specific service roles plus a dedicated advertising manager. Staff identity and employer/location data are stored in the existing NPC society records.
+- [x] Add visible, ray-interactable employee characters in each public lobby. Interacting with an employee opens the relevant service panel.
+- [x] Add local-session player credits, persistent wallet storage, NPC-supervised purchase transactions, inventory item grants, and sale of owned inventory items back to tower staff.
+- [x] Add initial catalogs for weapons, armour, shields, Nen/elixir items, shopping supplies, entertainment tickets, technology devices, and Hunter supplies.
+- [x] Add rotating NPC-managed advertising text to internal lobby displays and external tower advertising displays; each tower's advertising manager is identified in the campaign label.
+- [x] Add on-demand procedural interior floor rooms for all six towers, with floor collision, perimeter walls, department signage, service kiosks, and elevator return markers.
+- [x] Add an elevator travel transition between the lobby and selected floor; generated floor rooms are unloaded when leaving to limit mobile memory/render cost.
+- [x] Keep Power Tower progression independent and sequential across 200 floors; the operations manager requests the next floor through the existing progression manager.
+- [x] Add a reusable Power Tower opponent actor with health, pursuit movement, close-range attacks, and damage handling compatible with the modern combat raycast.
+- [x] Spawn opponent waves from each floor's challenge data; boss floors spawn a stronger boss opponent. Completing the final wave calls the existing trusted floor-clear integration hook and awards the configured XP/rank.
+- [x] Generate distinct first-pass arena obstacle layouts from duel, team, survival, elite, championship, and boss-trial floor profiles; floor 200 is configured as a boss trial.
+- [x] Abandon an active Power Tower attempt without crediting a clear if the player is wounded; return the player to the lobby for hospital treatment.
+- [ ] Pass the new Godot 4.3 operations validator and inspect any runtime errors from the current CI run.
+- [ ] Review the generated interiors, NPC models, elevator movement, arena combat and mobile frame rate in a physical Android build.
+- [ ] Expand the generic procedural floor rooms into individually authored, themed floors with complete department-specific activities and interactive furnishings.
+- [ ] Add actual equipment/equip slots and balanced, functional Nen/elixir effects; current purchases are inventory items only and do not yet grant combat/stat effects.
+- [ ] Add crafting recipes/stations, upgrade materials, stock refresh, NPC vendor restocking, and supply-chain/economy simulation.
+- [ ] Replace the local wallet with server-authoritative currency, inventory, trade validation, anti-duplication and cloud save before enabling online trade or real-value purchases.
+- [ ] Connect advertisements to a governed campaign system with campaign ownership, pricing, moderation, display scheduling, and any future revenue accounting. Current campaigns are local in-game display content, not paid external ad inventory.
+- [ ] Build authoritative online matchmaking, player rankings, anti-cheat verification and multiplayer spectator systems for Power Tower. Current floor records and rewards use the existing local save path.
+- Note: the current commit implements a playable first-pass systems layer and generated floor geometry, not a production-complete commercial economy or 200 individually handcrafted arena scenes. The PR remains draft and must not be merged into main without explicit user approval.
