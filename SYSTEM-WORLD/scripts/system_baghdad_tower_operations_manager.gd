@@ -101,6 +101,7 @@ var ui_layer: CanvasLayer
 var panel: PanelContainer
 var content: VBoxContainer
 var inventory_controls: VBoxContainer
+var crafting_controls: VBoxContainer
 var title_label: Label
 var status_label: Label
 var credits_label: Label
@@ -360,6 +361,7 @@ func _build_ui() -> void:
 
 func _clear_dynamic_controls() -> void:
 	inventory_controls = null
+	crafting_controls = null
 	for child in content.get_children():
 		if child != title_label and child != credits_label and child != status_label:
 			child.queue_free()
@@ -456,15 +458,21 @@ func _add_catalog_controls(tower_id: String) -> void:
 func _add_crafting_controls(tower_id: String) -> void:
 	if tower_id != "weapons_equipment_elixirs_tower_baghdad" or not is_instance_valid(progression) or not progression.has_method("get_crafting_recipe_list"):
 		return
-	var recipes: Dictionary = progression.call("get_crafting_recipe_list")
-	var heading := Label.new()
-	heading.text = "ورشة الحدادة ومختبر الإكسير — التصنيع بإشراف الموظفين"
-	content.add_child(heading)
+	if is_instance_valid(crafting_controls):
+		var old_scroll := crafting_controls.get_parent()
+		if old_scroll != null:
+			old_scroll.queue_free()
 	var scroll := ScrollContainer.new()
+	scroll.name = "CraftingRecipeScroll"
 	scroll.custom_minimum_size = Vector2(0.0, 120.0)
 	content.add_child(scroll)
-	var recipe_list := VBoxContainer.new()
-	scroll.add_child(recipe_list)
+	crafting_controls = VBoxContainer.new()
+	crafting_controls.name = "CraftingRecipeControls"
+	scroll.add_child(crafting_controls)
+	var heading := Label.new()
+	heading.text = "ورشة الحدادة ومختبر الإكسير — التصنيع بإشراف الموظفين"
+	crafting_controls.add_child(heading)
+	var recipes: Dictionary = progression.call("get_crafting_recipe_list")
 	for recipe_value in recipes.keys():
 		var recipe_id := str(recipe_value)
 		var recipe: Dictionary = recipes[recipe_id]
@@ -475,7 +483,7 @@ func _add_crafting_controls(tower_id: String) -> void:
 		var craft_button := Button.new()
 		craft_button.text = str(recipe.get("name", recipe_id)) + "\n" + ", ".join(parts)
 		craft_button.pressed.connect(_craft_recipe.bind(recipe_id))
-		recipe_list.add_child(craft_button)
+		crafting_controls.add_child(craft_button)
 
 
 func _craft_recipe(recipe_id: String) -> void:
@@ -485,6 +493,7 @@ func _craft_recipe(recipe_id: String) -> void:
 	var result: Dictionary = progression.call("craft_recipe", recipe_id)
 	if bool(result.get("success", false)):
 		_set_status("اكتمل التصنيع: " + str(result.get("output", recipe_id)))
+		_add_crafting_controls(current_tower_id)
 		_add_sell_controls()
 	else:
 		_set_status("تعذر التصنيع: " + str(result.get("reason", "تحقق من المستوى والمواد المطلوبة")))
