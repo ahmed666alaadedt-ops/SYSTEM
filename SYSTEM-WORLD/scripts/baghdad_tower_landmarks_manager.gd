@@ -61,6 +61,111 @@ func _build_hunter_tower() -> void:
 		200,
 		Color(0.08, 0.62, 0.92)
 	)
+	var hunter_tower := get_node_or_null("HunterAssociationTower") as Node3D
+	if hunter_tower != null:
+		_create_hunter_helipad(hunter_tower, 38.0)
+
+
+func _create_hunter_helipad(tower: Node3D, tower_radius: float) -> void:
+	# A dedicated rooftop helicopter pad attached to the Hunter Association only.
+	var pad_root := Node3D.new()
+	pad_root.name = "HunterAssociationHelipad"
+	pad_root.position = Vector3(tower_radius * 1.42, HUNTER_TOWER_HEIGHT + 8.2, 0.0)
+	pad_root.set_meta("system_facility_type", "helicopter_landing_pad")
+	pad_root.set_meta("system_owner_tower_id", "hunter_association_tower_baghdad")
+	pad_root.set_meta("system_landing_zone_radius_m", 18.0)
+	pad_root.set_meta("system_landing_zone_status", "geometry_blockout_pending_helicopter_runtime_integration")
+	tower.add_child(pad_root)
+
+	var deck := MeshInstance3D.new()
+	deck.name = "HelipadDeck"
+	var deck_mesh := CylinderMesh.new()
+	deck_mesh.top_radius = 22.0
+	deck_mesh.bottom_radius = 22.0
+	deck_mesh.height = 2.4
+	deck.mesh = deck_mesh
+	deck.material_override = _make_surface_material(Color(0.12, 0.17, 0.21), 0.72, 0.34)
+	pad_root.add_child(deck)
+
+	var deck_body := StaticBody3D.new()
+	deck_body.name = "HelipadDeckCollision"
+	var deck_collision := CollisionShape3D.new()
+	var deck_shape := CylinderShape3D.new()
+	deck_shape.radius = 22.0
+	deck_shape.height = 2.4
+	deck_collision.shape = deck_shape
+	deck_body.add_child(deck_collision)
+	pad_root.add_child(deck_body)
+
+	var ring := MeshInstance3D.new()
+	ring.name = "LandingCircleMarking"
+	var ring_mesh := TorusMesh.new()
+	ring_mesh.inner_radius = 15.8
+	ring_mesh.outer_radius = 16.5
+	ring.mesh = ring_mesh
+	ring.position.y = 1.24
+	ring.material_override = _make_surface_material(Color(0.92, 0.94, 0.91), 0.88, 0.02)
+	pad_root.add_child(ring)
+
+	var marking_material := _make_surface_material(Color(0.96, 0.96, 0.90), 0.86, 0.0)
+	for marking in [
+		{"name": "HelipadH_Left", "position": Vector3(-3.2, 1.27, 0.0), "size": Vector3(1.15, 0.12, 8.0)},
+		{"name": "HelipadH_Right", "position": Vector3(3.2, 1.27, 0.0), "size": Vector3(1.15, 0.12, 8.0)},
+		{"name": "HelipadH_Crossbar", "position": Vector3(0.0, 1.27, 0.0), "size": Vector3(7.4, 0.12, 1.15)}
+	]:
+		var stripe := MeshInstance3D.new()
+		stripe.name = str(marking["name"])
+		var stripe_mesh := BoxMesh.new()
+		stripe_mesh.size = marking["size"]
+		stripe.mesh = stripe_mesh
+		stripe.position = marking["position"]
+		stripe.material_override = marking_material
+		pad_root.add_child(stripe)
+
+	var beacon_material := _make_surface_material(Color(0.25, 0.92, 0.72), 0.28, 0.42)
+	beacon_material.emission_enabled = true
+	beacon_material.emission = Color(0.12, 0.9, 0.62)
+	beacon_material.emission_energy_multiplier = 2.0
+	for index in range(8):
+		var angle := TAU * float(index) / 8.0
+		var light := MeshInstance3D.new()
+		light.name = "HelipadPerimeterLight_%02d" % index
+		var light_mesh := SphereMesh.new()
+		light_mesh.radius = 0.48
+		light_mesh.height = 0.96
+		light.mesh = light_mesh
+		light.position = Vector3(cos(angle) * 20.0, 1.55, sin(angle) * 20.0)
+		light.material_override = beacon_material
+		pad_root.add_child(light)
+
+	# A short elevated connector makes the landing deck visibly part of the tower.
+	var connector := MeshInstance3D.new()
+	connector.name = "HelipadAccessBridge"
+	var connector_mesh := BoxMesh.new()
+	connector_mesh.size = Vector3(25.0, 1.6, 8.0)
+	connector.mesh = connector_mesh
+	connector.position = Vector3(-22.0, -0.25, 0.0)
+	connector.material_override = trim_material
+	pad_root.add_child(connector)
+	var connector_body := StaticBody3D.new()
+	connector_body.name = "HelipadAccessBridgeCollision"
+	var connector_collision := CollisionShape3D.new()
+	var connector_shape := BoxShape3D.new()
+	connector_shape.size = connector_mesh.size
+	connector_collision.shape = connector_shape
+	connector_body.position = connector.position
+	connector_body.add_child(connector_collision)
+	pad_root.add_child(connector_body)
+
+	var sign := Label3D.new()
+	sign.name = "HelipadIdentitySign"
+	sign.text = "HUNTER ASSOCIATION\nHELICOPTER LANDING"
+	sign.font_size = 24
+	sign.pixel_size = 0.012
+	sign.position = Vector3(0.0, 4.0, 23.5)
+	sign.modulate = Color(0.72, 0.96, 1.0)
+	pad_root.add_child(sign)
+	print("SYSTEM WORLD: dedicated Hunter Association rooftop helicopter pad generated.")
 
 func _build_power_tower() -> void:
 	# Standalone challenge destination: deliberately outside the five-tower district.
