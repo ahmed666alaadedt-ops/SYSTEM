@@ -214,3 +214,33 @@ Read and implement `SYSTEM-WORLD/REAL_WORLD_ADVERTISING_AND_CHAMPION_DISPLAY_SYS
 - Add verified champion/result boards for monster gates, missions, Power Tower events, and Hunter Examination stages/finals. Use authoritative server records, privacy-safe display names, anti-cheat, and separate provisional from final standings.
 - The Hunter Examination must publish stage qualifiers, finalists, and the verified overall winner in the Hunter Association Hall of Honor and selected public displays. Do not expose puzzle solutions or private player data.
 - Ads must not grant gameplay power, progression, competitive advantage, or exclusive ranking rewards.
+
+
+## Baghdad weapon and Nen tower continuation checkpoint — 22 November 2026
+
+**Scope:** one of the five Baghdad towers is assigned the combined Weapon Armory & Nen Awakening role. The existing shopping tower is the selected building because it preserves the commerce/retail function while adding armory and potion services. The separate Power Tower remains unchanged.
+
+**Implemented on work/baghdad-system-integration:**
+- Added safe inventory item consumption to SYSTEMPlayerProgression.
+- Expanded the Baghdad shopping-tower menu into weapon, potion, souvenir-market and player-collection views.
+- Added a catalog covering firearms, swords, daggers, spears, axes, bows, crossbows, arrows, energy weapons, Nen awakening vials and Nen control elixirs.
+- Connected awakening vials to the existing SYSTEMNenManager discovery-insight progression; each vial contributes one insight, and the normal three-insight discovery rule remains in force.
+- Connected the control elixir to TEN training; failed uses refund the consumed item.
+- Added four lobby service desks: armory, Nen potion laboratory, Baghdad market/souvenirs and player collection.
+- Added procedural armory racks and Nen potion-laboratory fixtures to the shopping tower's generated floor variants.
+- Added validator checks for service desks, floor fixtures, catalog coverage, safe potion consumption and Republic Bridge target metadata.
+- Documented the Republic Bridge geographic target in the five-tower design and Baghdad map status files.
+
+**Geographic blocker — do not bypass:**
+- Republic Bridge reference point: 33.32495°N, 44.40483°E; the bridge crosses the Tigris and connects Al-Karkh and Al-Rusafa.
+- Relative to the current Baghdad registry origin (33.3152°N, 44.3661°E), the projected local offset is approximately +3606.1 m east and -1082.0 m north.
+- The current procedural continent width is 3000 m, and the verified Baghdad OSM/cell pack with real Tigris/bridge geometry is not available in this branch. The tower is marked with target coordinates and geospatial_relocation_pending=true; it has NOT been moved to the Republic Bridge. Do not claim it is physically above the river until the real regional map/cell pack is integrated and validated.
+- Do not generate fake Karkh/Rusafa banks or an invented Tigris channel to make the target look complete.
+
+**Not yet implemented:**
+1. Real geographic placement of the tower and the spanning bridge structure over the Tigris.
+2. Integration of verified Baghdad riverbanks, waterway and bridge deck/crossings, including keeping the waterway clear below.
+3. Actual weapon equip/unequip, animations, ammo, damage, balancing and combat integration. Current catalog purchases are stored in inventory only.
+4. In-world visual review and Android performance/playability test.
+
+**Next single task:** obtain/import and validate the approved Baghdad geographic data pack (including Tigris waterway and Republic Bridge), then move only the armory/Nen tower to the exact bridge span and test both bank entrances. Keep all work on the existing feature branch; do not merge into main without explicit user approval.
