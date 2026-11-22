@@ -694,6 +694,7 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Restore the saved parked transform when the Hunter Association helicopter controller is initialized after an app restart.
 - [x] Reject malformed saved transform values and out-of-bounds parking coordinates, falling back to the designated rooftop spawn.
 - [x] Extend the Baghdad tower operations validator to save a test parking transform, reload it, and assert that the parked position is restored.
+- [x] Expand swept-position clearance checks to cover the fuselage/tail boom, the full main-rotor disc, and the tail rotor instead of checking only the center body.
 - [ ] Pass the updated Godot 4.3 validator and Android APK export on the current PR head.
 - [ ] Verify parking persistence across a real Android app force-close/relaunch cycle; CI uses an isolated test profile and does not prove device persistence.
 - Note: this is local-device parking persistence only. It does not synchronize the aircraft location between online players or across devices.
