@@ -4,6 +4,7 @@ class_name SYSTEMBaghdadTowerOperationsManager
 const NPCCharacterModelScript = preload("res://scripts/npc_character_model.gd")
 const TowerOpponentScript = preload("res://scripts/system_tower_opponent.gd")
 const SAVE_PATH := "user://system_baghdad_tower_operations.cfg"
+const STOCK_SAVE_PATH := "user://system_tower_vendor_stock.cfg"
 const WORLD_ID := 2
 
 const TOWER_CONFIG := {
@@ -95,11 +96,14 @@ var prepared_towers: Dictionary = {}
 var current_tower_id := ""
 var current_staff_id := ""
 var credits := 1200
+var vendor_stock: Dictionary = {}
+var stock_refresh_clock := 300.0
 var ad_clock := 0.0
 var ad_index := 0
 var ui_layer: CanvasLayer
 var panel: PanelContainer
 var content: VBoxContainer
+var catalog_controls: VBoxContainer
 var inventory_controls: VBoxContainer
 var crafting_controls: VBoxContainer
 var title_label: Label
@@ -136,6 +140,7 @@ func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_po
 		push_warning("SYSTEM tower operations: Baghdad tower landmarks unavailable.")
 		return
 	_load_wallet()
+	_load_vendor_stock()
 	_build_ui()
 	if is_instance_valid(player_health) and player_health.has_signal("player_wounded"):
 		var wounded_callback := Callable(self, "_on_player_wounded")
@@ -154,6 +159,10 @@ func _process(delta: float) -> void:
 		ad_clock = 0.0
 		ad_index = (ad_index + 1) % AD_CAMPAIGNS.size()
 		_refresh_advertisements()
+	stock_refresh_clock -= delta
+	if stock_refresh_clock <= 0.0:
+		stock_refresh_clock = 300.0
+		_restock_vendor_stock()
 
 func _resolve_towers() -> void:
 	for tower_id in TOWER_CONFIG.keys():
@@ -360,6 +369,7 @@ func _build_ui() -> void:
 	content.add_child(close_button)
 
 func _clear_dynamic_controls() -> void:
+	catalog_controls = null
 	inventory_controls = null
 	crafting_controls = null
 	for child in content.get_children():
@@ -643,6 +653,67 @@ func _save_wallet() -> void:
 	var config := ConfigFile.new()
 	config.set_value("wallet", "credits", credits)
 	config.save(SAVE_PATH)
+
+func _load_vendor_stock() -> void:
+	var config := ConfigFile.new()
+	if config.load(STOCK_SAVE_PATH) == OK:
+		vendor_stock = config.get_value("vendors", "stock", {}).duplicate(true)
+	for tower_id in PRODUCT_CATALOG.keys():
+		for product_value in PRODUCT_CATALOG[tower_id]:
+			var product: Dictionary = product_value
+			var item_id := str(product["id"])
+			if not vendor_stock.has(item_id):
+				vendor_stock[item_id] = _get_stock_cap(item_id)
+	_save_vendor_stock()
+
+
+func _save_vendor_stock() -> void:
+	var config := ConfigFile.new()
+	config.set_value("vendors", "stock", vendor_stock.duplicate(true))
+	config.save(STOCK_SAVE_PATH)
+
+
+func _get_stock_cap(item_id: String) -> int:
+	if item_id in ["rare_legendary_elixir", "rare_core"]:
+		return 3
+	if item_id in ["nen_acquisition_elixir", "nen_control_elixir", "nen_fragment", "sovereign_core"]:
+		return 8
+	if item_id in ["iron_ingot", "wood_plank", "leather_roll", "medicinal_herb", "crystal_dust", "monster_core", "energy_crystal"]:
+		return 60
+	return 25
+
+
+func get_vendor_stock(item_id: String) -> int:
+	return int(vendor_stock.get(item_id, 0))
+
+
+func _get_current_price(item_id: String) -> int:
+	var base_price := 10
+	for tower_id in PRODUCT_CATALOG.keys():
+		for product_value in PRODUCT_CATALOG[tower_id]:
+			var product: Dictionary = product_value
+			if str(product["id"]) == item_id:
+				base_price = int(product["price"])
+				break
+	var stock := get_vendor_stock(item_id)
+	var cap := _get_stock_cap(item_id)
+	if stock <= 2:
+		return maxi(1, int(round(float(base_price) * 1.35)))
+	if stock >= int(float(cap) * 0.75):
+		return maxi(1, int(round(float(base_price) * 0.9)))
+	return base_price
+
+
+func _restock_vendor_stock() -> void:
+	for item_id in vendor_stock.keys():
+		var item_key := str(item_id)
+		var increment := 2 if _get_stock_cap(item_key) <= 8 else 8
+		vendor_stock[item_key] = mini(_get_stock_cap(item_key), int(vendor_stock[item_key]) + increment)
+	_save_vendor_stock()
+	if current_tower_id in PRODUCT_CATALOG:
+		_add_catalog_controls(current_tower_id)
+		_set_status("وصلت شحنة جديدة إلى مخازن البرج. تم تحديث الأسعار والكميات.")
+
 
 func _prepare_tower_interior(tower_id: String) -> void:
 	if prepared_towers.has(tower_id):
