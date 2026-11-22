@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-11-22  
 **Active development branch:** `work/baghdad-system-integration`  
-**Latest verified gameplay/code commit:** `1a2c9321dc41522e0c9fb8d6a8f1b777feac3363`  
-**Latest tracker documentation commit:** `001211aa5a8e0c37ba3dc2640a0aaf777543e54c`  
+**Latest verified gameplay/code commit:** `9844fc6490ea0d432c5be1b7f3c932133a1a0daa`  
+**Latest tracker documentation commit:** `adc5c92f82e28958d6d6dfda3604f406867fcd4b`  
 **Main branch SHA:** `dff4e9d377ffaae6845e6f401c47346e51ea5619`  
 **Canonical runtime:** `SYSTEM-WORLD/` (Godot 4.3)
 
@@ -186,3 +186,19 @@ Code validated on commit `83db22c01e7ecf1addd01ce01cbb1b341bd1fdc8`:
 - Previous completed checkpoint remains: tower stair interaction routing fix and regression assertion passed in workflow `45011123115` on `666eec44bf2bdf97fa4b4c76d3404e9dd70c3672`.
 - `main` remains unchanged at `dff4e9d377ffaae6845e6f401c47346e51ea5619`; PR #37 remains draft and unmerged. Do not merge, rebase or synchronize without explicit owner approval.
 - Next: continue the Baghdad landmark priority list with the remaining physical HQ rooms/examiner spaces and the five-tower district's playable interiors; keep the open visual/device checks separate from CI validation.
+
+
+## Latest continuation checkpoint — Hunter headquarters partitioned service rooms and guild views
+
+- Active branch: `work/baghdad-system-integration`.
+- Latest verified gameplay/code commit: `9844fc6490ea0d432c5be1b7f3c932133a1a0daa`.
+- Built four first-pass partitioned rooms inside the elevated Global Hunter Association headquarters: reception, Hunter registry, mission/contract information, and examiner operations/control. Sixteen collision-backed partition wall segments preserve deliberate doorway openings and central circulation.
+- Added Arabic room signage and four collision-backed desk interactions with stable IDs. Reception opens the existing Hunter Guild information view, registry opens registration, mission desk opens the mission list, and examiner control remains a staff-only information point. NPCs remain staff/examiners, not exam candidates.
+- Extended the tower validator to check all 16 partition colliders, four room signs, service desk colliders, stable service IDs and the main `tower_service_` handler route.
+- Godot 4.3 workflow `45011989736` passed on exact code commit `9844fc6490ea0d432c5be1b7f3c932133a1a0daa`: resource/script parsing, Baghdad five-tower + Hunter HQ + independent Power Tower integration, all configured gameplay validators, missing-mesh scan and headless main-scene launch succeeded.
+- Tracker update commit: `adc5c92f82e28958d6d6dfda3604f406867fcd4b`.
+- Asset register update commit: `8e993abcd04d075af9fff2332b97e0f5019d0dd9`.
+- Evidence boundary: the HQ rooms remain procedural blockouts. Complete doors, furniture/art, staff NPC schedules, authoritative registration/license/mission transactions, final lighting/acoustics and Android visual/performance checks remain open.
+- Previous stair routing fix remains verified by workflow `45011123115`; generated stair collision fix remains verified by workflow `45010467260`.
+- `main` remains unchanged at `dff4e9d377ffaae6845e6f401c47346e51ea5619`. PR #37 remains draft and unmerged. Do not merge, rebase or synchronize without explicit owner approval.
+- Next: continue the authoritative Baghdad landmark queue, finishing the HQ examiner spaces and remaining tower-specific interior interactions before shifting to unrelated systems. Keep all live visual/device checks explicitly open.
