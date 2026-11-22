@@ -503,22 +503,49 @@ func _create_tower_facility_blockout(root: Node3D, node_name: String, radius: fl
 
 
 func _add_facility_block(parent: Node3D, node_name: String, local_position: Vector3, size: Vector3, material: Material, sign_text: String) -> void:
-	var block := MeshInstance3D.new()
-	block.name = node_name
-	var mesh := BoxMesh.new()
-	mesh.size = size
-	block.mesh = mesh
-	block.position = local_position
-	block.material_override = material
-	parent.add_child(block)
+	# Open-front architectural shell: a walkable floor plate, two side walls,
+	# a rear wall and a high lintel leave a clear entrance into each facility.
+	var shell := Node3D.new()
+	shell.name = node_name
+	shell.position = local_position
+	parent.add_child(shell)
+	var wall_thickness := 0.65
+	_add_facility_piece(shell, "WalkableFloor", Vector3(0.0, 0.0, 0.0), Vector3(size.x, 0.45, size.z), material, true)
+	_add_facility_piece(shell, "RearWall", Vector3(0.0, size.y * 0.5, -size.z * 0.5), Vector3(size.x, size.y, wall_thickness), material, true)
+	_add_facility_piece(shell, "LeftWall", Vector3(-size.x * 0.5, size.y * 0.5, 0.0), Vector3(wall_thickness, size.y, size.z), material, true)
+	_add_facility_piece(shell, "RightWall", Vector3(size.x * 0.5, size.y * 0.5, 0.0), Vector3(wall_thickness, size.y, size.z), material, true)
+	_add_facility_piece(shell, "EntranceLintel", Vector3(0.0, size.y - 0.6, size.z * 0.5), Vector3(size.x, 1.2, wall_thickness), material, true)
 	var sign := Label3D.new()
 	sign.name = node_name + "_Sign"
 	sign.text = sign_text
 	sign.font_size = 22
 	sign.pixel_size = 0.014
-	sign.position = local_position + Vector3(0.0, size.y * 0.58, size.z * 0.5 + 0.3)
+	sign.position = Vector3(0.0, size.y + 1.0, size.z * 0.5 + 0.3)
 	sign.modulate = Color(0.55, 0.88, 1.0)
-	parent.add_child(sign)
+	shell.add_child(sign)
+	shell.set_meta("entrance_open", true)
+	shell.set_meta("navigation_ready", false)
+
+
+func _add_facility_piece(parent: Node3D, node_name: String, local_position: Vector3, size: Vector3, material: Material, add_collision: bool) -> void:
+	var piece := MeshInstance3D.new()
+	piece.name = node_name
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	piece.mesh = mesh
+	piece.position = local_position
+	piece.material_override = material
+	parent.add_child(piece)
+	if add_collision:
+		var body := StaticBody3D.new()
+		body.name = node_name + "_Collision"
+		body.position = local_position
+		var collision := CollisionShape3D.new()
+		var shape := BoxShape3D.new()
+		shape.size = size
+		collision.shape = shape
+		body.add_child(collision)
+		parent.add_child(body)
 
 
 func _create_cinema_hall_layout(parent: Node3D, radius: float, seat_material: Material, screen_material: Material) -> void:
@@ -533,6 +560,7 @@ func _create_cinema_hall_layout(parent: Node3D, radius: float, seat_material: Ma
 		var row := hall_index / 3
 		hall.position = Vector3(float(column - 1) * 13.0, 0.0, float(row) * 13.0)
 		cinema.add_child(hall)
+		_add_facility_piece(hall, "CinemaWalkableFloor", Vector3(0.0, 0.0, 0.0), Vector3(12.0, 0.35, 12.0), seat_material, true)
 		var screen_panel := MeshInstance3D.new()
 		screen_panel.name = "ProjectionScreen"
 		var screen_mesh := BoxMesh.new()
