@@ -2782,6 +2782,35 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 			_add_facility_box(root, "PoolDeckRight", Vector3(14.0, 0.3, 0.0), Vector3(4.0, 0.6, 18.0), accent)
 			for index in range(4):
 				_add_facility_box(root, "SunLounger_%02d" % index, Vector3(-13.0 + float(index) * 2.0, 0.8, 11.0), Vector3(1.5, 0.35, 3.0), highlight)
+			_add_pool_changing_suite(root, "MensChangingSuite", Vector3(-21.0, 0.0, -2.0), accent, highlight, "MEN / تبديل ملابس الرجال")
+			_add_pool_changing_suite(root, "WomensChangingSuite", Vector3(21.0, 0.0, -2.0), accent, highlight, "WOMEN / تبديل ملابس النساء")
+			_add_pool_lifeguard_station(root, accent, highlight)
+			for ladder_side in [-1.0, 1.0]:
+				_add_facility_box(root, "PoolLadderRail_%s_A" % str(ladder_side), Vector3(ladder_side * 10.7, 1.45, -1.2), Vector3(0.16, 2.1, 0.16), highlight)
+				_add_facility_box(root, "PoolLadderRail_%s_B" % str(ladder_side), Vector3(ladder_side * 10.7, 1.45, 1.2), Vector3(0.16, 2.1, 0.16), highlight)
+				_add_facility_box(root, "PoolLadderStep_%s" % str(ladder_side), Vector3(ladder_side * 10.2, 0.55, 0.0), Vector3(1.1, 0.14, 2.4), accent)
+			if floor_number == 18:
+				for lane_index in range(5):
+					_add_facility_box(root, "LapLaneDivider_%02d" % lane_index, Vector3(0.0, 1.24, -5.0 + float(lane_index) * 2.5), Vector3(19.2, 0.035, 0.045), highlight)
+				for start_index in range(4):
+					_add_facility_box(root, "LapStartBlock_%02d" % start_index, Vector3(-9.0, 0.72, -4.5 + float(start_index) * 3.0), Vector3(1.0, 0.8, 1.0), accent)
+				_add_pool_room_sign(root, "PoolZoneSign", "المسبح الأولمبي — مسارات تدريب وسباحة", Vector3(0.0, 3.0, -9.0), Color(0.72, 0.94, 1.0))
+			elif floor_number == 19:
+				_add_facility_box(root, "FamilySplashPoolRim", Vector3(0.0, 0.42, 20.0), Vector3(12.0, 0.84, 8.0), accent)
+				_add_facility_box(root, "FamilySplashPoolWater", Vector3(0.0, 0.88, 20.0), Vector3(10.6, 0.08, 6.6), highlight)
+				_add_facility_box(root, "SplashPoolShallowStep", Vector3(-7.0, 0.2, 20.0), Vector3(2.0, 0.4, 8.0), accent)
+				for fountain_index in range(3):
+					_add_facility_box(root, "SplashFountain_%02d" % fountain_index, Vector3(-3.0 + float(fountain_index) * 3.0, 1.45, 20.0), Vector3(0.22, 1.0, 0.22), highlight)
+				_add_pool_room_sign(root, "PoolZoneSign", "المسبح العائلي — منطقة المياه الضحلة", Vector3(0.0, 3.0, 15.0), Color(0.72, 0.94, 1.0))
+			else:
+				_add_facility_box(root, "SpaHotTubRim", Vector3(-5.0, 0.55, 20.0), Vector3(9.0, 1.1, 7.0), accent)
+				_add_facility_box(root, "SpaHotTubWater", Vector3(-5.0, 1.12, 20.0), Vector3(7.8, 0.1, 5.8), highlight)
+				_add_facility_box(root, "ThermalPoolRim", Vector3(7.0, 0.55, 20.0), Vector3(9.0, 1.1, 7.0), accent)
+				_add_facility_box(root, "ThermalPoolWater", Vector3(7.0, 1.12, 20.0), Vector3(7.8, 0.1, 5.8), highlight)
+				_add_facility_box(root, "SaunaCabin", Vector3(-15.0, 1.5, 19.0), Vector3(7.0, 3.0, 7.0), accent)
+				_add_facility_box(root, "SaunaBench", Vector3(-15.0, 0.9, 20.5), Vector3(5.0, 0.5, 1.0), highlight)
+				_add_facility_box(root, "SteamRoomCabin", Vector3(17.0, 1.5, 19.0), Vector3(7.0, 3.0, 7.0), accent)
+				_add_pool_room_sign(root, "PoolZoneSign", "مركز السبا — جاكوزي وساونا وغرفة بخار", Vector3(0.0, 3.0, 14.0), Color(0.72, 0.94, 1.0))
 			var water_volume := Area3D.new()
 			water_volume.name = "PoolWaterVolume"
 			water_volume.collision_layer = 0
@@ -4285,6 +4314,54 @@ func _on_pool_water_body_exited(body: Node3D) -> void:
 	body.remove_meta("system_swim_source")
 	if is_instance_valid(status_label):
 		status_label.text = "خرجت من المسبح — عادت حركة اللاعب الطبيعية."
+
+
+
+func _add_pool_room_sign(parent: Node3D, node_name: String, label_text: String, position: Vector3, color: Color) -> void:
+	var sign := Label3D.new()
+	sign.name = node_name
+	sign.text = label_text
+	sign.position = position
+	sign.font_size = 17
+	sign.pixel_size = 0.012
+	sign.modulate = color
+	parent.add_child(sign)
+
+
+func _add_pool_changing_suite(parent: Node3D, suite_name: String, center: Vector3, accent: Material, highlight: Material, label_text: String) -> void:
+	var suite := Node3D.new()
+	suite.name = suite_name
+	suite.position = center
+	parent.add_child(suite)
+	_add_facility_box(suite, "ChangingSuiteFloor", Vector3(0.0, 0.12, 0.0), Vector3(8.0, 0.24, 11.0), accent)
+	_add_facility_box(suite, "ChangingSuiteBackWall", Vector3(0.0, 1.7, -5.3), Vector3(8.0, 3.4, 0.25), accent)
+	_add_facility_box(suite, "ChangingSuiteLeftWall", Vector3(-3.9, 1.7, 0.0), Vector3(0.25, 3.4, 10.5), accent)
+	_add_facility_box(suite, "ChangingSuiteRightWall", Vector3(3.9, 1.7, 0.0), Vector3(0.25, 3.4, 10.5), accent)
+	_add_pool_room_sign(suite, "ChangingSuiteSign", label_text, Vector3(0.0, 4.0, -4.8), Color(0.95, 0.86, 0.62))
+	for locker_index in range(6):
+		var locker_x := -2.7 + float(locker_index) * 1.08
+		_add_facility_box(suite, "Locker_%02d" % locker_index, Vector3(locker_x, 1.15, -3.9), Vector3(0.86, 2.3, 0.72), highlight)
+		_add_facility_box(suite, "LockerHandle_%02d" % locker_index, Vector3(locker_x + 0.25, 1.15, -3.48), Vector3(0.08, 0.24, 0.06), accent)
+	_add_facility_box(suite, "ChangingBench", Vector3(0.0, 0.58, -1.8), Vector3(5.6, 0.3, 0.9), highlight)
+	for shower_index in range(3):
+		var shower_x := -2.4 + float(shower_index) * 2.4
+		_add_facility_box(suite, "ShowerPartition_%02d" % shower_index, Vector3(shower_x + 1.0, 1.35, 2.6), Vector3(0.12, 2.7, 3.0), highlight)
+		_add_facility_box(suite, "ShowerColumn_%02d" % shower_index, Vector3(shower_x, 1.2, 3.4), Vector3(0.18, 2.4, 0.18), accent)
+		_add_facility_box(suite, "ShowerHead_%02d" % shower_index, Vector3(shower_x, 2.35, 3.4), Vector3(0.72, 0.12, 0.42), highlight)
+		_add_facility_box(suite, "ShowerDrain_%02d" % shower_index, Vector3(shower_x, 0.26, 3.4), Vector3(0.8, 0.04, 0.8), accent)
+
+
+func _add_pool_lifeguard_station(parent: Node3D, accent: Material, highlight: Material) -> void:
+	var station := Node3D.new()
+	station.name = "PoolLifeguardStation"
+	station.position = Vector3(0.0, 0.0, -17.0)
+	parent.add_child(station)
+	_add_facility_box(station, "LifeguardPlatform", Vector3(0.0, 1.0, 0.0), Vector3(3.2, 0.45, 2.8), accent)
+	_add_facility_box(station, "LifeguardSeat", Vector3(0.0, 2.1, -0.2), Vector3(1.2, 1.8, 1.0), highlight)
+	_add_facility_box(station, "LifeguardUmbrellaPole", Vector3(0.0, 3.4, 1.3), Vector3(0.14, 3.0, 0.14), accent)
+	_add_facility_box(station, "LifeguardUmbrella", Vector3(0.0, 5.0, 1.3), Vector3(3.2, 0.22, 3.2), highlight)
+	_add_facility_box(station, "RescueRing", Vector3(1.9, 1.6, 0.0), Vector3(0.8, 0.8, 0.2), highlight)
+	_add_pool_room_sign(station, "LifeguardSign", "منقذ السباحة — إسعاف أولي", Vector3(0.0, 5.8, -1.4), Color(1.0, 0.86, 0.62))
 
 
 func _add_facility_box(parent: Node3D, object_name: String, object_position: Vector3, object_size: Vector3, material: Material) -> void:
