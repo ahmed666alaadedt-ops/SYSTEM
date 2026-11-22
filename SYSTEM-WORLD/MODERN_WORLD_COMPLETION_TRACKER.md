@@ -449,6 +449,12 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 
 - [x] Godot 4.3 resource import and GDScript parse passed on branch commit `f97aebce63ac06076bb622f5c0b32a619e3a3b81` in GitHub Actions run [45035625980](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45035625980).
 - [x] Runtime scene missing-mesh scan and headless main-scene launch passed in the same run.
+
+- [x] Add a dedicated Godot SceneTree validation script and CI step for six tower landmarks, exactly five connected towers, Power Tower separation/200 floors, lobby collision/kiosks/signs, floor zoning, weapon/elixir categories, and Technology public-display mapping.
+- [x] First structural validation exposed that the original Shopping Tower plot had no nearby land inside the initial 192 m search radius; widen the local land search and relocate the Shopping Tower to the nearest generated land point.
+- [x] Re-run the structural validation successfully on commit `9f32efa09e64a51e5ff807b5634430ce2af5e4c7`, GitHub Actions run [45035977040](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45035977040): all six towers were generated, five remain connected, Power Tower remains separate at 200 floors, all six lobby kiosks/floor directories exist, and Technology is present on the public event board.
+- Note: the Shopping Tower plot was relocated by 264 m, Power Tower by 96 m, and Technology Tower by 48 m in this runtime layout. Godot visual review must confirm the final positions remain coherent with the Baghdad district, Tigris corridor, and protected Tahrir Square/Freedom Monument views.
+
 - [ ] Visual review of the six tower lobbies, collision traversal, kiosk ray targeting, sign readability, and Baghdad landmark sightlines remains pending; headless launch does not verify visual quality or gameplay interaction.
 - [ ] Canonical Android APK export and physical-device review remain pending for the current branch head.
 
