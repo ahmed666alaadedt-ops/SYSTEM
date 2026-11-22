@@ -2,7 +2,7 @@
 
 ## Canonical design
 
-Baghdad has **five connected district towers plus one separate Power Tower**. The five connected towers are Hunter Association, Business and Investment, Shopping and Commerce, Entertainment and Sports, and Technology and Innovation. The Power Tower is a separate destination, is not counted among those five, and must not join their skybridge or vehicle-deck loop.
+Baghdad has **five connected district towers plus one separate Power Tower**. The five connected towers are Hunter Association, Weapons, Equipment and Elixirs, Shopping and Commerce, Entertainment and Sports, and Technology and Innovation. The Power Tower is a separate destination, is not counted among those five, and must not join their skybridge or vehicle-deck loop.
 
 The World Hunter Association Tower is the global Hunter headquarters and public symbol of the organization. It remains the tallest tower in the five-tower district (approximately 1,000 m in the current blockout). The separate Power Tower is a 200-floor challenge destination with its own entrance, progression, arenas, spectator facilities, and rewards. Its current exterior blockout is approximately 820 m tall with 200 visible floor bands, keeping the Hunter headquarters taller.
 
@@ -106,7 +106,7 @@ The five-tower concept is a connected urban district, not five isolated landmark
 
 ### Five tower identities
 1. Hunter Association Tower — hunter registration, mission hall, examination administration, guild services, and Hall of Honor.
-2. Business and Investment Tower — company headquarters, offices, investment, trade, and professional services.
+2. Weapons, Equipment and Elixirs Tower — all weapon classes, swords, spears, axes, bows, firearms, shields, helmets, armor, combat outfits, equipment upgrades, Nen-acquisition and Nen-development elixirs, healing elixirs, and strength, speed, endurance, and energy elixirs.
 3. Shopping and Commerce Tower — connected malls, shops, restaurants, cinemas, and indoor public promenades.
 4. Entertainment and Sports Tower — amusement, sports, pools, family activities, festivals, and recreation.
 5. Technology and Innovation Tower — research campuses, laboratories, robotics, engineering, digital services, startup incubators, and technology exhibitions.
@@ -123,7 +123,7 @@ The Power Tower is a standalone 200-floor challenge destination outside the five
 
 ### Vehicle circulation, comfort, and recreation expansion — 20 November 2026
 - The district is intended to support cars entering from Baghdad streets, climbing dedicated ramps, crossing elevated vehicle decks, and reaching tower parking/drop-off levels. Separate pedestrian promenades and sky gardens keep walking routes safe and pleasant.
-- The five primary identities in the connected district are Hunter Association, Business and Investment, Shopping and Commerce, Entertainment and Sports, and Technology and Innovation. The Power Tower is a separate standalone destination outside this district; it is not one of the five and is not linked by the district skybridges or vehicle decks.
+- The five primary identities in the connected district are Hunter Association, Weapons, Equipment and Elixirs, Shopping and Commerce, Entertainment and Sports, and Technology and Innovation. The Power Tower is a separate standalone destination outside this district; it is not one of the five and is not linked by the district skybridges or vehicle decks.
 - The connected district's eventual facilities include hotels, rest areas, clinics/medical support, restaurants, cafes, retail, cinemas, amusement rides, water attractions, swimming pools, rooftop gardens, sports courts, family spaces, public plazas, parking, emergency access, and service routes.
 - The vehicle ramps and elevated decks added to the procedural manager are architectural blockout geometry only. They do not yet provide drivable road navigation, vehicle physics, traffic rules, parking interactions, or tested collision/clearance.
 - Amenity decks are placeholder geometry and metadata, not finished pools, rides, shops, hotels, or interactive interiors.
