@@ -1084,6 +1084,13 @@ func _run() -> void:
 		if not operations.get("facility_activity_stats").has(activity_type):
 			_fail("Facility activity result was not recorded: " + str(activity_type))
 			return
+	var completed_activity_stats: Dictionary = operations.get("facility_activity_stats").duplicate(true)
+	operations.call("_save_facility_activity_stats")
+	operations.set("facility_activity_stats", {})
+	operations.call("_load_facility_activity_stats")
+	if operations.get("facility_activity_stats") != completed_activity_stats:
+		_fail("Facility activity statistics did not survive a save/load cycle.")
+		return
 	operations.set("facility_activity_stats", activity_stats_snapshot)
 	operations.set("credits", activity_credits_snapshot)
 	operations.call("_save_facility_activity_stats")
