@@ -10,12 +10,12 @@ const HOTEL_SAVE_PATH := "user://system_baghdad_hotel_bookings.cfg"
 const WORLD_ID := 2
 
 const TOWER_CONFIG := {
-	"hunter_association_tower_baghdad": {"node": "HunterAssociationTower", "title": "برج جمعية الصيادين", "floors": 200, "height": 1000.0, "radius": 38.0, "roles": ["موظف الاستقبال", "موظف المهمات", "موظف التسجيل", "مسؤول الإعلانات"], "jobs": ["receptionist", "mission_clerk", "exam_registrar", "advertising_manager"]},
+	"hunter_association_tower_baghdad": {"node": "HunterAssociationTower", "title": "برج جمعية الصيادين", "floors": 200, "height": 1000.0, "radius": 38.0, "roles": ["مدير النقابة", "موظف الاستقبال", "موظف المهمات", "مسؤول تسجيل الاختبارات", "مستشار الرتب", "منسق النقابات", "مسؤول العلاقات العامة", "مسؤول الإعلانات"], "jobs": ["association_director", "receptionist", "mission_clerk", "exam_registrar", "rank_advisor", "guild_coordinator", "public_relations", "advertising_manager"]},
 
-	"business_investment_tower_baghdad": {"node": "BusinessInvestmentTower", "title": "برج الأعمال والاستثمار", "floors": 36, "height": 220.0, "radius": 26.0, "roles": ["مدير الاستثمار", "مستشار الشركات", "موظف البنوك والعقود", "مسؤول الإعلانات"], "jobs": ["investment_manager", "business_advisor", "bank_contract_clerk", "advertising_manager"]},
+	"business_investment_tower_baghdad": {"node": "BusinessInvestmentTower", "title": "برج الأعمال والاستثمار", "floors": 36, "height": 220.0, "radius": 26.0, "roles": ["مدير البرج", "مدير الاستثمار", "مستشار الشركات", "موظف البنوك والعقود", "محاسب البرج", "مسؤول التوظيف", "خدمة المستثمرين", "مسؤول الإعلانات"], "jobs": ["tower_director", "investment_manager", "business_advisor", "bank_contract_clerk", "accountant", "recruitment_manager", "investor_relations", "advertising_manager"]},
 	"shopping_tower_baghdad": {"node": "ShoppingTower", "title": "برج التسوق والتجارة", "floors": 32, "height": 190.0, "radius": 30.0, "roles": ["مدير البرج", "تاجر الأسلحة والدروع", "صيدلاني الإكسير", "مدير الضيافة والفندق", "شيف المطاعم", "نادل وخدمة الزبائن", "موظف استقبال الفندق", "مشرف الغرف والتنظيف"], "jobs": ["shop_manager", "weapons_merchant", "elixir_pharmacist", "hospitality_manager", "restaurant_chef", "restaurant_waiter", "hotel_receptionist", "hotel_housekeeping"]},
-	"entertainment_tower_baghdad": {"node": "EntertainmentTower", "title": "برج الترفيه والرياضة", "floors": 34, "height": 205.0, "radius": 29.0, "roles": ["منظم الفعاليات", "موظف التذاكر", "موظف الأنشطة", "مسؤول الإعلانات"], "jobs": ["event_coordinator", "ticket_clerk", "activity_host", "advertising_manager"]},
-	"technology_tower_baghdad": {"node": "TechnologyTower", "title": "برج التكنولوجيا والابتكار", "floors": 40, "height": 245.0, "radius": 27.0, "roles": ["موظف المختبر", "مهندس الأجهزة", "موظف الخدمات الرقمية", "مسؤول الإعلانات"], "jobs": ["lab_receptionist", "device_engineer", "digital_services", "advertising_manager"]},
+	"entertainment_tower_baghdad": {"node": "EntertainmentTower", "title": "برج الترفيه والرياضة", "floors": 34, "height": 205.0, "radius": 29.0, "roles": ["مدير الترفيه", "منظم الفعاليات", "موظف التذاكر", "مشرف المسابح", "مدرب اللياقة", "منظم الألعاب", "خدمة الزوار", "مسؤول الإعلانات"], "jobs": ["entertainment_director", "event_coordinator", "ticket_clerk", "pool_supervisor", "fitness_trainer", "game_host", "guest_services", "advertising_manager"]},
+	"technology_tower_baghdad": {"node": "TechnologyTower", "title": "برج التكنولوجيا والابتكار", "floors": 40, "height": 245.0, "radius": 27.0, "roles": ["مدير الابتكار", "موظف المختبر", "مهندس الأجهزة", "مهندس الروبوتات", "باحث الذكاء الاصطناعي", "موظف الخدمات الرقمية", "مسؤول الصيانة", "مسؤول الإعلانات"], "jobs": ["innovation_director", "lab_receptionist", "device_engineer", "robotics_engineer", "ai_researcher", "digital_services", "maintenance_engineer", "advertising_manager"]},
 	"power_tower_baghdad": {"node": "PowerTower", "title": "برج القوة", "floors": 200, "height": 820.0, "radius": 26.0, "roles": ["موظف تسجيل التحديات", "منظم الحلبة", "موظف الاستراحة الطبية", "مسؤول الإعلانات"], "jobs": ["arena_registrar", "arena_coordinator", "arena_medic", "advertising_manager"]}
 }
 
@@ -194,6 +194,10 @@ var total_waves := 0
 var opponents_per_wave := 0
 var defeated_in_wave := 0
 var power_floor_in_progress := false
+var customer_ids_by_tower: Dictionary = {}
+var customer_purchase_clock := 0.0
+var npc_sales_total := 0
+var npc_purchase_count := 0
 
 func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_power_manager: Node, p_player_health: Node, p_region_manager: Node) -> void:
 	player = p_player
@@ -219,6 +223,7 @@ func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_po
 			player_health.connect("player_wounded", wounded_callback)
 	_resolve_towers()
 	_create_staff_for_all_towers()
+	_create_customer_population()
 	_create_advertising_surfaces()
 	_create_power_tower_progress_board()
 	set_process(true)
@@ -234,6 +239,10 @@ func _process(delta: float) -> void:
 	if stock_refresh_clock <= 0.0:
 		stock_refresh_clock = 300.0
 		_restock_vendor_stock()
+	customer_purchase_clock += delta
+	if customer_purchase_clock >= 42.0:
+		customer_purchase_clock = 0.0
+		_simulate_customer_purchases()
 	if power_floor_in_progress and power_floor_timer_remaining > 0.0:
 		power_floor_timer_remaining = maxf(0.0, power_floor_timer_remaining - delta)
 		power_floor_timer_display_clock -= delta
@@ -320,14 +329,25 @@ func _create_visible_staff(tower_id: String, npc_id: String, index: int, config:
 	var model = NPCCharacterModelScript.new()
 	model.configure({
 		"name": str(npc.get("name", "موظف SYSTEM")),
-		"gender": "female" if index == 1 else "male",
+		"gender": "female" if posmod(index, 2) == 1 else "male",
 		"age": float(npc.get("age_years", 28.0)),
 		"job": str(config["jobs"][index]),
 		"occupation": str(config["jobs"][index]),
 		"world_id": "modern",
-		"hair_style": "short" if index != 1 else "long",
+		"hair_style": "short" if posmod(index, 2) == 0 else "long",
 		"body_type": "average"
 	}, index)
+	var uniform_id := "modern"
+	match tower_id:
+		"hunter_association_tower_baghdad": uniform_id = "hunter_staff"
+		"business_investment_tower_baghdad": uniform_id = "business_staff"
+		"shopping_tower_baghdad":
+			uniform_id = "hotel_staff" if str(config["jobs"][index]) in ["hospitality_manager", "hotel_receptionist", "hotel_housekeeping"] else ("restaurant_staff" if str(config["jobs"][index]) in ["restaurant_chef", "restaurant_waiter"] else "shopping_staff")
+		"entertainment_tower_baghdad": uniform_id = "entertainment_staff"
+		"technology_tower_baghdad": uniform_id = "technology_staff"
+		"power_tower_baghdad": uniform_id = "power_staff"
+	if model.has_method("set_outfit"):
+		model.call("set_outfit", uniform_id, index)
 	model.scale = Vector3.ONE * 0.78
 	employee.add_child(model)
 	var name_label := Label3D.new()
@@ -351,6 +371,127 @@ func _create_visible_staff(tower_id: String, npc_id: String, index: int, config:
 	var lobby_depth := 36.0
 	var lobby_center_z := float(config["radius"]) * 1.48 + lobby_depth * 0.5
 	employee.position = Vector3((float(index) - float(config["roles"].size() - 1) * 0.5) * 5.0, 0.0, lobby_center_z - 4.0)
+
+func _create_customer_population() -> void:
+	if not is_instance_valid(society):
+		return
+	var public_towers := [
+		"hunter_association_tower_baghdad",
+		"business_investment_tower_baghdad",
+		"shopping_tower_baghdad",
+		"entertainment_tower_baghdad",
+		"technology_tower_baghdad"
+	]
+	for tower_index in range(public_towers.size()):
+		var tower_id := str(public_towers[tower_index])
+		if not tower_nodes.has(tower_id):
+			continue
+		var config: Dictionary = TOWER_CONFIG[tower_id]
+		var tower := tower_nodes[tower_id] as Node3D
+		var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D
+		if lobby == null:
+			continue
+		var ids: Array[String] = []
+		for index in range(4):
+			var existing_id := ""
+			for candidate_id in society.npcs.keys():
+				var candidate: Dictionary = society.npcs[candidate_id]
+				if str(candidate.get("system_tower_customer_tower", "")) == tower_id and int(candidate.get("system_tower_customer_index", -1)) == index and bool(candidate.get("alive", false)):
+					existing_id = str(candidate_id)
+					break
+			var gender := "female" if posmod(index, 2) == 1 else "male"
+			var customer_name := "زائر " + str(tower_index + 1) + "-" + str(index + 1)
+			if existing_id.is_empty():
+				existing_id = str(society.call("create_npc", customer_name, WORLD_ID, 22.0 + float(index * 6), "visitor", "customer"))
+			if existing_id.is_empty():
+				continue
+			var customer: Dictionary = society.call("get_npc", existing_id)
+			customer["gender"] = gender
+			customer["system_tower_customer_tower"] = tower_id
+			customer["system_tower_customer_index"] = index
+			customer["current_location"] = tower_id + "_public_area"
+			customer["home_location"] = "baghdad_residential_district"
+			customer["wallet"] = float(customer.get("wallet", 1800.0 + index * 450.0))
+			customer["schedule_profile"] = "tower_customer"
+			customer["current_action"] = "shopping"
+			customer["last_tower_visit"] = Time.get_datetime_string_from_system()
+			society.npcs[existing_id] = customer
+			ids.append(existing_id)
+			var node_name := "TowerCustomer_" + existing_id
+			if lobby.get_node_or_null(node_name) == null:
+				var visitor := Node3D.new()
+				visitor.name = node_name
+				visitor.set_meta("system_tower_customer_id", existing_id)
+				visitor.set_meta("system_tower_id", tower_id)
+				visitor.set_meta("system_display_name", str(customer.get("name", customer_name)))
+				lobby.add_child(visitor)
+				var model = NPCCharacterModelScript.new()
+				model.configure({
+					"name": str(customer.get("name", customer_name)),
+					"gender": gender,
+					"age": float(customer.get("age_years", 26.0)),
+					"job": "customer",
+					"occupation": "customer",
+					"world_id": "modern",
+					"hair_style": "medium" if gender == "female" else "short",
+					"body_type": "average"
+				}, tower_index * 11 + index + 40)
+				model.scale = Vector3.ONE * 0.74
+				visitor.add_child(model)
+				var name_label := Label3D.new()
+				name_label.text = str(customer.get("name", customer_name))
+				name_label.position.y = 2.3
+				name_label.font_size = 15
+				name_label.pixel_size = 0.011
+				name_label.modulate = Color(0.82, 0.88, 0.94)
+				visitor.add_child(name_label)
+				visitor.position = Vector3((float(index) - 1.5) * 3.6, 0.0, float(config["radius"]) * 1.48 + 12.0 + float(index % 2) * 3.0)
+				if model.has_method("set_activity"):
+					model.call("set_activity", "socialize" if posmod(index, 2) == 0 else "wander")
+		customer_ids_by_tower[tower_id] = ids
+	if society.has_method("save_society"):
+		society.call("save_society")
+	print("SYSTEM Baghdad towers: customer NPC population initialized.")
+
+func _simulate_customer_purchases() -> void:
+	for tower_id_value in customer_ids_by_tower.keys():
+		var tower_id := str(tower_id_value)
+		var catalog: Array = PRODUCT_CATALOG.get(tower_id, [])
+		if catalog.is_empty():
+			continue
+		var customer_ids: Array = customer_ids_by_tower[tower_id]
+		if customer_ids.is_empty():
+			continue
+		var customer_id := str(customer_ids[randi_range(0, customer_ids.size() - 1)])
+		var customer: Dictionary = society.call("get_npc", customer_id)
+		if customer.is_empty() or not bool(customer.get("alive", false)):
+			continue
+		var affordable: Array[Dictionary] = []
+		for product_value in catalog:
+			var product: Dictionary = product_value
+			if not str(product.get("required_rank", "F")) in ["F", "E"]:
+				continue
+			var item_id := str(product.get("id", ""))
+			var price := _get_current_price(item_id)
+			if price <= float(customer.get("wallet", 0.0)) and get_vendor_stock(item_id) > 0:
+				affordable.append(product)
+		if affordable.is_empty():
+			continue
+		var purchased: Dictionary = affordable[randi_range(0, affordable.size() - 1)]
+		var purchased_id := str(purchased.get("id", ""))
+		var paid := _get_current_price(purchased_id)
+		vendor_stock[purchased_id] = maxi(0, get_vendor_stock(purchased_id) - 1)
+		customer["wallet"] = maxf(0.0, float(customer.get("wallet", 0.0)) - float(paid))
+		customer["last_purchase"] = purchased_id
+		customer["last_purchase_price"] = paid
+		customer["last_purchase_at"] = Time.get_datetime_string_from_system()
+		customer["current_action"] = "shopping"
+		society.npcs[customer_id] = customer
+		npc_sales_total += paid
+		npc_purchase_count += 1
+	_save_vendor_stock()
+	if is_instance_valid(society) and society.has_method("save_society"):
+		society.call("save_society")
 
 func _create_power_tower_progress_board() -> void:
 	var tower := tower_nodes.get("power_tower_baghdad") as Node3D
@@ -2004,7 +2145,10 @@ func _on_player_wounded() -> void:
 
 func get_operations_status() -> Dictionary:
 	var total_staff := 0
+	var total_customers := 0
 	for ids in staff_by_tower.values():
 		total_staff += ids.size()
-	return {"tower_count": tower_nodes.size(), "staff_count": total_staff, "credits": credits, "interior_tower_count": prepared_towers.size(), "power_floor_active": power_floor_in_progress, "advertising_mode": "npc_staff_managed_internal_external"}
+	for ids in customer_ids_by_tower.values():
+		total_customers += ids.size()
+	return {"tower_count": tower_nodes.size(), "staff_count": total_staff, "customer_count": total_customers, "npc_purchase_count": npc_purchase_count, "npc_sales_total": npc_sales_total, "credits": credits, "interior_tower_count": prepared_towers.size(), "power_floor_active": power_floor_in_progress, "advertising_mode": "npc_staff_managed_internal_external"}
 
