@@ -591,6 +591,18 @@ func _add_sell_controls() -> void:
 				equip_button.text = "تجهيز %s في خانة %s" % [item_id, equipment_slot]
 				equip_button.pressed.connect(_equip_item.bind(item_id))
 				inventory_controls.add_child(equip_button)
+				var upgrade_level := int(progression.call("get_item_upgrade_level", item_id))
+				var durability := float(progression.call("get_item_durability", item_id))
+				var upgrade_button := Button.new()
+				upgrade_button.text = "ترقية %s — المستوى +%d/10" % [item_id, upgrade_level]
+				upgrade_button.disabled = upgrade_level >= 10
+				upgrade_button.pressed.connect(_upgrade_item.bind(item_id))
+				inventory_controls.add_child(upgrade_button)
+				var repair_button := Button.new()
+				repair_button.text = "إصلاح %s — المتانة %.0f/100" % [item_id, durability]
+				repair_button.disabled = durability >= 99.9
+				repair_button.pressed.connect(_repair_item.bind(item_id))
+				inventory_controls.add_child(repair_button)
 		if item_id.ends_with("_elixir"):
 			var elixir_button := Button.new()
 			elixir_button.text = "استخدام " + item_id
@@ -615,6 +627,28 @@ func _unequip_item(slot: String) -> void:
 	if bool(progression.call("unequip_item", slot)):
 		_set_status("تمت إزالة التجهيز من خانة " + slot)
 		_add_sell_controls()
+
+
+func _upgrade_item(item_id: String) -> void:
+	if not is_instance_valid(progression) or not progression.has_method("upgrade_item"):
+		return
+	var result: Dictionary = progression.call("upgrade_item", item_id)
+	if bool(result.get("success", false)):
+		_set_status("تمت ترقية %s إلى المستوى +%d." % [item_id, int(result.get("upgrade_level", 0))])
+	else:
+		_set_status("تعذرت الترقية: " + str(result.get("reason", "تحقق من المستوى والمواد")))
+	_add_sell_controls()
+
+
+func _repair_item(item_id: String) -> void:
+	if not is_instance_valid(progression) or not progression.has_method("repair_item"):
+		return
+	var result: Dictionary = progression.call("repair_item", item_id)
+	if bool(result.get("success", false)):
+		_set_status("تم إصلاح %s واستعادة المتانة بالكامل." % item_id)
+	else:
+		_set_status("تعذر الإصلاح: " + str(result.get("reason", "تحتاج عدة إصلاح")))
+	_add_sell_controls()
 
 
 func _consume_elixir(item_id: String) -> void:
