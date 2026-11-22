@@ -2,7 +2,7 @@ extends SceneTree
 
 const TOWER_IDS := [
 	"hunter_association_tower_baghdad",
-	"weapons_equipment_elixirs_tower_baghdad",
+	"business_investment_tower_baghdad",
 	"shopping_tower_baghdad",
 	"entertainment_tower_baghdad",
 	"technology_tower_baghdad",
@@ -11,7 +11,7 @@ const TOWER_IDS := [
 
 const NODE_NAMES := {
 	"hunter_association_tower_baghdad": "HunterAssociationTower",
-	"weapons_equipment_elixirs_tower_baghdad": "WeaponsEquipmentElixirsTower",
+	"business_investment_tower_baghdad": "BusinessInvestmentTower",
 	"shopping_tower_baghdad": "ShoppingTower",
 	"entertainment_tower_baghdad": "EntertainmentTower",
 	"technology_tower_baghdad": "TechnologyTower",
@@ -627,13 +627,22 @@ func _run() -> void:
 	operations.set("power_floor_timer_remaining", 0.0)
 	operations.set("active_opponents", {})
 	operations.call("_refresh_power_tower_progress_board")
-	var weapons_room := operations.call("_ensure_floor_room", "weapons_equipment_elixirs_tower_baghdad", 1) as Node3D
-	if weapons_room.get_node_or_null("WeaponsForge") == null or weapons_room.get_node_or_null("ElixirLaboratory") == null:
-		_fail("Weapons Tower forge and elixir laboratory stations are missing.")
+	var shopping_workshop_room := operations.call("_ensure_floor_room", "shopping_tower_baghdad", 14) as Node3D
+	if shopping_workshop_room == null or shopping_workshop_room.get_node_or_null("WeaponsForge") == null or shopping_workshop_room.get_node_or_null("ElixirLaboratory") == null:
+		_fail("Shopping Tower weapon forge and elixir laboratory stations are missing.")
 		return
-	var forge_area := weapons_room.get_node("WeaponsForge/CraftingStationInteraction") as Area3D
+	var forge_area := shopping_workshop_room.get_node("WeaponsForge/CraftingStationInteraction") as Area3D
 	if forge_area == null or not forge_area.is_in_group("system_interactable") or not forge_area.has_meta("system_tower_staff_id"):
-		_fail("Weapons Tower crafting station is not connected to its NPC employee.")
+		_fail("Shopping Tower crafting station is not connected to its NPC employee.")
+		return
+	var hotel_reception_room := operations.call("_ensure_floor_room", "shopping_tower_baghdad", 27) as Node3D
+	var hotel_suite_room := operations.call("_ensure_floor_room", "shopping_tower_baghdad", 28) as Node3D
+	if hotel_reception_room == null or hotel_suite_room == null or hotel_reception_room.get_node_or_null("SYSTEMHotelFacilities/HotelReceptionInteraction") == null or hotel_suite_room.get_node_or_null("SYSTEMHotelFacilities/HotelSuiteBookingInteraction") == null:
+		_fail("SYSTEM Hotel reception or guest-suite booking area is missing from Shopping Tower floors 27–28.")
+		return
+	var shopping_staff: Array = operations.get("staff_by_tower").get("shopping_tower_baghdad", [])
+	if shopping_staff.size() != 8:
+		_fail("Shopping Tower must create all eight shop, workshop, restaurant and hotel staff roles.")
 		return
 	var boss_room := operations.call("_ensure_floor_room", "power_tower_baghdad", 200) as Node3D
 	if boss_room == null or boss_room.get_node_or_null("BossTrialPlatform") == null:
