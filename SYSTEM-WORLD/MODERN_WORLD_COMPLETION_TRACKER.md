@@ -663,3 +663,11 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Pass the Godot 4.3 flight-loop regression test on commit `999431189fa50161d09f6cd95e964b4596e510d4`.
 - [x] Pass canonical Android APK export on the same tested source head; artifact `SYSTEM-WORLD-canonical-android-debug-apk` (35,805,824 bytes) uploaded successfully.
 - [ ] Perform physical Android touch-control, rotor/clearance, flight feel, and performance testing; automated headless checks do not replace device inspection.
+
+
+### Mobile-responsive Baghdad tower operations UI — 22 November 2026
+
+- [x] Resize the tower operations panel to the current viewport, keeping it centered and bounded for phone portrait and landscape layouts.
+- [x] Recalculate panel dimensions when the viewport changes orientation or size.
+- [x] Add automated sizing assertions for 360×780 portrait and 780×360 landscape viewports.
+- [ ] Pass Godot 4.3 operations validation and canonical Android APK export on the latest UI head; inspect the actual panel on the HONOR 50 after installation.
