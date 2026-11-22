@@ -432,3 +432,14 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Runtime revalidation after these exact latest source/test commits; the preceding validation run failed only the radial skybridge assertion, while tower existence, podiums, facility zones, entrances, six cinema halls/floors, central spire and three sky gardens passed.
 - [ ] Remove/resolve non-fatal null-mesh cleanup diagnostics if they remain after the next validation run.
 - [ ] All lift/stair visuals remain non-interactive blockouts: no lift movement, floor selection, stair navigation, emergency routing or access control yet.
+
+
+## Approved five-tower skyline reference alignment — 22 November 2026
+
+- [x] Record the user's supplied futuristic Baghdad five-tower skyline image as the visual target for the five-tower district: five distinct landmark towers, large elevated public decks, layered sky gardens, glass-and-metal architecture, illuminated cyan/blue accents, warm gold structural trim, connecting skybridges and a central SYSTEM-branded spire.
+- [x] Add three elevated sky-garden decks to every tower root, each with floor collision, glass perimeter ring, twelve planter bays and a level sign.
+- [x] Extend the Godot validator to assert each of the five radial skybridge node names directly, and to check all three elevated garden decks and the sky-garden revision on every tower.
+- [ ] Run the latest validator after both the sky-garden manager change and the exact-name assertion change; earlier run #857 passed project parse and main-scene launch but the tower validation job failed its skybridge assertion.
+- [ ] Replace the procedural blockout with detailed production-grade 3D tower/skydeck assets and complete the exact reference silhouette, façade glazing, bridges, landscaping, lighting, Baghdad/Tigris context and scale.
+- [ ] Make all decks and bridges traversable with navigation/collision, connect them to elevators and stairs, and finish service interiors and interactive amenities.
+- [ ] Verify appearance in a rendered Godot viewport and on an Android device; headless CI does not establish visual fidelity to the reference.
