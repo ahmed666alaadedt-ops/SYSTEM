@@ -5,6 +5,7 @@ signal attack_performed(damage: float, hit_target: Node)
 
 var actor: CharacterBody3D
 var camera: Camera3D
+var progression: Node
 var can_attack := true
 var is_blocking := false
 var attack_damage := 34.0
@@ -12,9 +13,10 @@ var heavy_damage := 90.0
 var attack_range := 65.0
 
 
-func bind_actor(player: CharacterBody3D, combat_camera: Camera3D) -> void:
+func bind_actor(player: CharacterBody3D, combat_camera: Camera3D, player_progression: Node = null) -> void:
 	actor = player
 	camera = combat_camera
+	progression = player_progression
 
 
 func set_combat_camera(combat_camera: Camera3D) -> void:
@@ -44,7 +46,7 @@ func heavy_attack() -> void:
 func skill_one() -> Dictionary:
 	if not can_attack or not is_instance_valid(actor):
 		return {"success": false, "reason": "COMBAT_BUSY"}
-	var progression := get_tree().root.find_child("PlayerProgression", true, false)
+	var progression := _get_progression()
 	if progression == null or not progression.has_method("activate_nen_burst"):
 		return {"success": false, "reason": "NEN_SYSTEM_UNAVAILABLE"}
 	var activation: Dictionary = progression.call("activate_nen_burst")
@@ -69,21 +71,27 @@ func skill_two() -> Dictionary:
 
 
 
+func _get_progression() -> Node:
+	if is_instance_valid(progression):
+		return progression
+	return get_tree().root.find_child("PlayerProgression", true, false)
+
+
 func _consume_weapon_durability(amount: float) -> void:
-	var progression := get_tree().root.find_child("PlayerProgression", true, false)
+	var progression := _get_progression()
 	if progression != null and progression.has_method("consume_equipment_durability"):
 		progression.call("consume_equipment_durability", "weapon", amount)
 
 
 func _get_progression_damage_bonus() -> float:
-	var progression := get_tree().root.find_child("PlayerProgression", true, false)
+	var progression := _get_progression()
 	if progression != null and progression.has_method("get_combat_damage_bonus"):
 		return float(progression.call("get_combat_damage_bonus"))
 	return 0.0
 
 
 func _get_attack_cooldown_multiplier() -> float:
-	var progression := get_tree().root.find_child("PlayerProgression", true, false)
+	var progression := _get_progression()
 	if progression != null and progression.has_method("get_attack_cooldown_multiplier"):
 		return float(progression.call("get_attack_cooldown_multiplier"))
 	return 1.0
