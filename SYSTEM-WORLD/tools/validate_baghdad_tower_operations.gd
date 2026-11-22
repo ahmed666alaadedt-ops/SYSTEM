@@ -64,6 +64,10 @@ func _run() -> void:
 		if lobby == null:
 			_fail("Missing lobby for " + tower_id)
 			return
+		var lobby_lift := lobby.get_node_or_null("LobbyElevatorInteraction") as Area3D
+		if lobby_lift == null or not lobby_lift.is_in_group("system_interactable") or str(lobby_lift.get_meta("system_tower_id", "")) != tower_id:
+			_fail("Lobby elevator selector is not interactable for " + tower_id)
+			return
 		var staff_count := 0
 		for child in lobby.get_children():
 			if child.has_meta("system_tower_staff_id"):
