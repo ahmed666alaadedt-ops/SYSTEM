@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-11-22  
 **Active development branch:** `work/baghdad-system-integration`  
-**Latest source/workflow commit before this checkpoint refresh:** `fdbf3d02f2f25f07870db151dc412bf5a903ea3d`  
+**Latest source/workflow commit before this checkpoint refresh:** `980cb44ce641a77a1dbaae3dbb7f67bd9ac533cc`  
 **Canonical runtime:** `SYSTEM-WORLD/` (Godot 4.3)  
 **Main branch policy:** do not edit, merge into, rebase onto, or otherwise change `main` without the owner's explicit instruction.
 
