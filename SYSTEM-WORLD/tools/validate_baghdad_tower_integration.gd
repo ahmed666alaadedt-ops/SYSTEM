@@ -140,6 +140,19 @@ func _run() -> void:
 		if not has_ground_collision:
 			_fail("Generated floor has no collision-backed ground for " + root_name)
 			return
+		var stair_down := generated_root.get_node_or_null("StairDownInteraction") as Area3D
+		if configured_floor_count > 1 and (stair_down == null or not stair_down.is_in_group("system_interactable")):
+			_fail("Top floor has no usable emergency stair descent for " + root_name)
+			return
+		if generated_root.get_node_or_null("StairUpInteraction") != null:
+			_fail("Top floor incorrectly exposes an emergency stair leading above the tower.")
+			return
+		for stair_step_index in range(15):
+			var stair_body := generated_root.get_node_or_null("EmergencyStairDownStep_%02d_Collision" % stair_step_index) as StaticBody3D
+			var stair_collision := stair_body.get_node_or_null("CollisionShape3D") as CollisionShape3D if stair_body != null else null
+			if stair_collision == null or stair_collision.shape == null or stair_collision.disabled:
+				_fail("Top floor emergency stair step is missing physical collision: %d" % stair_step_index)
+				return
 		var floor_exit := generated_root.get_node_or_null("TowerFloorExit") as Area3D
 		if floor_exit == null or not floor_exit.is_in_group("system_interactable"):
 			_fail("Generated tower floor has no usable return gate for " + root_name)
@@ -169,6 +182,12 @@ func _run() -> void:
 				return
 			if variant_root.get_node_or_null(str(expected_variant_nodes[variant_index])) == null:
 				_fail("Tower %s is missing its unique floor layout feature: %s" % [root_name, str(expected_variant_nodes[variant_index])])
+				return
+			if variant_index + 1 < configured_floor_count and variant_root.get_node_or_null("StairUpInteraction") == null:
+				_fail("Tower floor variant is missing its emergency stair-up route: " + root_name)
+				return
+			if variant_index + 1 > 1 and variant_root.get_node_or_null("StairDownInteraction") == null:
+				_fail("Tower floor variant is missing its emergency stair-down route: " + root_name)
 				return
 
 		for floor_number in range(2, 6):
