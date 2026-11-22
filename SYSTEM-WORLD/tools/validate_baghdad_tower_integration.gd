@@ -208,6 +208,17 @@ func _run() -> void:
 			if variant_root.get_node_or_null(str(expected_variant_nodes[variant_index])) == null:
 				_fail("Tower %s is missing its unique floor layout feature: %s" % [root_name, str(expected_variant_nodes[variant_index])])
 				return
+			if root_name == "ShoppingTower":
+				if int(variant_root.get_meta("armory_display_count", 0)) != 4:
+					_fail("Weapon armory display racks are missing from the Baghdad weapon/Nen tower floor.")
+					return
+				if not bool(variant_root.get_meta("nen_potion_lab_ready", false)):
+					_fail("Nen potion laboratory is missing from the Baghdad weapon/Nen tower floor.")
+					return
+				for armory_node in ["ArmoryWeaponRack_00", "ArmoryWeaponRack_01", "ArmoryWeaponRack_02", "ArmoryWeaponRack_03", "NenPotionLaboratoryBench", "NenPotionContainmentCabinet_Left", "NenPotionContainmentCabinet_Right"]:
+					if variant_root.get_node_or_null(armory_node) == null:
+						_fail("Baghdad weapon/Nen tower floor is missing: " + armory_node)
+						return
 			if variant_index + 1 < configured_floor_count and variant_root.get_node_or_null("StairUpInteraction") == null:
 				_fail("Tower floor variant is missing its emergency stair-up route: " + root_name)
 				return
@@ -227,6 +238,28 @@ func _run() -> void:
 			if not _validate_stair_geometry(stair_sample_root, root_name, stair_sample_floor, configured_floor_count):
 				return
 
+		if root_name == "ShoppingTower":
+			for service_index in range(4):
+				var armory_service := interior.get_node_or_null("ServiceInteraction_%d" % service_index) as Area3D
+				if armory_service == null or not armory_service.is_in_group("system_interactable"):
+					_fail("Weapon/Nen tower lobby is missing service interaction %d." % service_index)
+					return
+			var armory_meta := tower_root.get_meta("geospatial_relocation_pending", false)
+			if not bool(armory_meta) or not is_equal_approx(float(tower_root.get_meta("target_latitude", 0.0)), 33.32495) or not is_equal_approx(float(tower_root.get_meta("target_longitude", 0.0)), 44.40483):
+				_fail("Weapon/Nen tower is missing the verified Republic Bridge target coordinates or relocation-pending marker.")
+				return
+			var armory_menu_source := FileAccess.get_file_as_string("res://scripts/system_shopping_tower_menu.gd")
+			for catalog_id in ["armory_sidearm", "armory_assault_rifle", "armory_precision_rifle", "armory_long_sword", "armory_dual_daggers", "armory_spear", "armory_battle_axe", "armory_recurve_bow", "armory_crossbow", "armory_arrow_bundle", "armory_energy_rifle", "nen_awakening_vial", "nen_control_elixir"]:
+				if not armory_menu_source.contains(catalog_id):
+					_fail("Weapon/Nen tower catalog is missing item: " + catalog_id)
+					return
+			var progression_source := FileAccess.get_file_as_string("res://scripts/system_player_progression.gd")
+			if not progression_source.contains("func remove_item("):
+				_fail("Player inventory does not expose safe item consumption for Nen potions.")
+				return
+			if not armory_menu_source.contains("add_discovery_insight") or not armory_menu_source.contains("tower_awakening_potion"):
+				_fail("Nen awakening potion is not connected to the Nen discovery progression.")
+				return
 		for floor_number in range(2, 6):
 			var selector := interior.get_node_or_null("LobbyLiftSelector_%02d" % floor_number) as Area3D
 			if selector == null or not selector.is_in_group("system_interactable"):
