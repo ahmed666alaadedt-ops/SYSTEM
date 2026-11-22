@@ -238,10 +238,12 @@ The Power Tower lobby board also shows the player's highest cleared floor, next 
 - These item records are saved locally with player progression; unique per-instance item rolls and cloud-authoritative inventory are future work.
 
 
-### Official Hunter rank ladder — 22 November 2026
+### Official Hunter rank ladder and helicopter authorization — 22 November 2026
 
-- Official hunter grades progress from lowest to highest as **F → E → D → C → B → A → S → SS → SSS**.
-- SSS is the highest and exceptionally rare grade; it is not awarded by player level alone.
-- Rank evaluation is intended to require multiple difficult examinations and verified demonstrations of combat skill, control, judgment, consistency and exceptional ability. SSS promotion must be an explicit examination-board decision, not an automatic XP threshold.
-- The helicopter authorization controller recognizes A, S, SS and SSS as notable hunter grades; F through B do not qualify by grade alone. Association staff roles and the separate level-50-plus completed-license route remain independent authorization paths.
-- Note: this documents the rank ladder and applies the high-rank access check. A complete rank-award/examination-board progression and NPC staff pilot automation are separate implementation tasks and are not claimed complete by this change.
+- Official grades ascend as **F → E → D → C → B → A → S → SS → SSS**. F is the starting grade; SSS is the rarest grade.
+- Verified guild missions add persistent hunter mission points. Current promotion score thresholds are E=100, D=250, C=500, B=850, A=1,500, S=2,500 and SS=5,000.
+- A promotion to A also requires awakened Nen, control rank 2 and at least 10 successful Nen skill uses. S requires Nen control rank 4, at least 50 successful skill uses and at least two distinct abilities. SS requires Nen control rank 5, at least 150 successful skill uses and at least three distinct abilities.
+- SSS is never granted by points or player level: it requires explicit approval from the Hunter Examination Board after the candidate has reached SS.
+- Verified mission completions are recorded once per mission ID. Successful Nen Burst and charged-strike activations contribute to Nen practice; failed activations do not.
+- Baghdad helicopter access begins at **S** and includes SS/SSS. A completed license or high player level alone is not enough. Independent access is limited to senior Association officials (director, official, chief hunter, helicopter pilot) and employees explicitly marked as professional in approved professional roles. Standard clerks, receptionists and advertising staff do not qualify by job title alone.
+- The current starter guild mission catalog contains only three unique mission IDs (100, 250 and 500 points), so its present maximum is 850 points/B rank. Additional verified mission content is required before A–SS promotion can be earned in normal play. The progression API and validation fixtures support the full ladder; the mission catalog expansion and formal board workflow remain future content work.
