@@ -2786,9 +2786,10 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 			_add_pool_changing_suite(root, "WomensChangingSuite", Vector3(21.0, 0.0, -2.0), accent, highlight, "WOMEN / تبديل ملابس النساء")
 			_add_pool_lifeguard_station(root, accent, highlight)
 			for ladder_side in [-1.0, 1.0]:
-				_add_facility_box(root, "PoolLadderRail_%s_A" % str(ladder_side), Vector3(ladder_side * 10.7, 1.45, -1.2), Vector3(0.16, 2.1, 0.16), highlight)
-				_add_facility_box(root, "PoolLadderRail_%s_B" % str(ladder_side), Vector3(ladder_side * 10.7, 1.45, 1.2), Vector3(0.16, 2.1, 0.16), highlight)
-				_add_facility_box(root, "PoolLadderStep_%s" % str(ladder_side), Vector3(ladder_side * 10.2, 0.55, 0.0), Vector3(1.1, 0.14, 2.4), accent)
+				var ladder_label := "Left" if ladder_side < 0.0 else "Right"
+				_add_facility_box(root, "PoolLadderRail_%s_A" % ladder_label, Vector3(ladder_side * 10.7, 1.45, -1.2), Vector3(0.16, 2.1, 0.16), highlight)
+				_add_facility_box(root, "PoolLadderRail_%s_B" % ladder_label, Vector3(ladder_side * 10.7, 1.45, 1.2), Vector3(0.16, 2.1, 0.16), highlight)
+				_add_facility_box(root, "PoolLadderStep_%s" % ladder_label, Vector3(ladder_side * 10.2, 0.55, 0.0), Vector3(1.1, 0.14, 2.4), accent)
 			if floor_number == 18:
 				for lane_index in range(5):
 					_add_facility_box(root, "LapLaneDivider_%02d" % lane_index, Vector3(0.0, 1.24, -5.0 + float(lane_index) * 2.5), Vector3(19.2, 0.035, 0.045), highlight)
@@ -2807,9 +2808,9 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 				_add_facility_box(root, "SpaHotTubWater", Vector3(-5.0, 1.12, 20.0), Vector3(7.8, 0.1, 5.8), highlight)
 				_add_facility_box(root, "ThermalPoolRim", Vector3(7.0, 0.55, 20.0), Vector3(9.0, 1.1, 7.0), accent)
 				_add_facility_box(root, "ThermalPoolWater", Vector3(7.0, 1.12, 20.0), Vector3(7.8, 0.1, 5.8), highlight)
-				_add_facility_box(root, "SaunaCabin", Vector3(-15.0, 1.5, 19.0), Vector3(7.0, 3.0, 7.0), accent)
-				_add_facility_box(root, "SaunaBench", Vector3(-15.0, 0.9, 20.5), Vector3(5.0, 0.5, 1.0), highlight)
-				_add_facility_box(root, "SteamRoomCabin", Vector3(17.0, 1.5, 19.0), Vector3(7.0, 3.0, 7.0), accent)
+				_add_facility_box(root, "SaunaCabin", Vector3(-14.0, 1.5, 16.0), Vector3(7.0, 3.0, 7.0), accent)
+				_add_facility_box(root, "SaunaBench", Vector3(-14.0, 0.9, 17.5), Vector3(5.0, 0.5, 1.0), highlight)
+				_add_facility_box(root, "SteamRoomCabin", Vector3(14.0, 1.5, 16.0), Vector3(7.0, 3.0, 7.0), accent)
 				_add_pool_room_sign(root, "PoolZoneSign", "مركز السبا — جاكوزي وساونا وغرفة بخار", Vector3(0.0, 3.0, 14.0), Color(0.72, 0.94, 1.0))
 			var water_volume := Area3D.new()
 			water_volume.name = "PoolWaterVolume"
