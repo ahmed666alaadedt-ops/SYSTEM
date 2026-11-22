@@ -24,6 +24,19 @@ const DEFAULT_ATTRIBUTES := {
 	"discipline": 1
 }
 
+const DEFAULT_EQUIPMENT_SLOTS := {"weapon": "", "shield": "", "armor": "", "helmet": "", "outfit": ""}
+const EQUIPMENT_SLOTS_BY_ITEM := {
+	"training_sword": "weapon", "steel_sword": "weapon", "hunter_spear": "weapon",
+	"battle_axe": "weapon", "composite_bow": "weapon", "system_firearm": "weapon",
+	"hunter_shield": "shield", "hunter_armor": "armor", "hunter_helmet": "helmet",
+	"combat_outfit": "outfit", "casual_outfit": "outfit"
+}
+const EQUIPMENT_DAMAGE_BONUS := {
+	"training_sword": 5.0, "steel_sword": 12.0, "hunter_spear": 10.0,
+	"battle_axe": 14.0, "composite_bow": 8.0, "system_firearm": 16.0
+}
+const EQUIPMENT_DEFENSE_BONUS := {"hunter_shield": 8.0, "hunter_armor": 12.0, "hunter_helmet": 4.0}
+
 var current_level: int = 1
 var total_xp: int = 0
 var xp_in_level: int = 0
@@ -33,11 +46,31 @@ var attributes: Dictionary = DEFAULT_ATTRIBUTES.duplicate(true)
 var greed_fragments: Array[String] = []
 var inventory_items: Dictionary = {}
 var world_fragments: Dictionary = {"modern": [], "historical": [], "fantasy": []}
+var equipment_slots: Dictionary = DEFAULT_EQUIPMENT_SLOTS.duplicate(true)
+var active_elixir_effects: Dictionary = {}
+var nen_unlocked := false
+var nen_control_rank := 0
 
 
 func _ready() -> void:
 	load_progress()
 	_emit_progress()
+	set_process(true)
+
+
+func _process(delta: float) -> void:
+	var expired := false
+	for effect_id in active_elixir_effects.keys():
+		var effect: Dictionary = active_elixir_effects[effect_id]
+		var remaining := maxf(0.0, float(effect.get("remaining_seconds", 0.0)) - delta)
+		if remaining <= 0.0:
+			active_elixir_effects.erase(effect_id)
+			expired = true
+		else:
+			effect["remaining_seconds"] = remaining
+			active_elixir_effects[effect_id] = effect
+	if expired:
+		save_progress()
 
 
 func get_xp_required_for_next_level() -> int:
@@ -125,6 +158,123 @@ func get_item_count(item_id: String) -> int:
 	return int(inventory_items.get(item_id,0))
 
 
+func get_item_equipment_slot(item_id: String) -> String:
+	return str(EQUIPMENT_SLOTS_BY_ITEM.get(item_id, ""))
+
+
+func equip_item(item_id: String) -> Dictionary:
+	var slot := get_item_equipment_slot(item_id)
+	if slot.is_empty():
+		return {"success": false, "reason": "ITEM_NOT_EQUIPPABLE"}
+	if get_item_count(item_id) <= 0:
+		return {"success": false, "reason": "ITEM_NOT_OWNED"}
+	equipment_slots[slot] = item_id
+	save_progress()
+	return {"success": true, "slot": slot, "item_id": item_id}
+
+
+func unequip_item(slot: String) -> bool:
+	if not DEFAULT_EQUIPMENT_SLOTS.has(slot):
+		return false
+	equipment_slots[slot] = ""
+	save_progress()
+	return true
+
+
+func get_equipped_item(slot: String) -> String:
+	return str(equipment_slots.get(slot, ""))
+
+
+func get_equipment_bonuses() -> Dictionary:
+	var damage := 0.0
+	var defense := 0.0
+	for item_id in equipment_slots.values():
+		damage += float(EQUIPMENT_DAMAGE_BONUS.get(str(item_id), 0.0))
+		defense += float(EQUIPMENT_DEFENSE_BONUS.get(str(item_id), 0.0))
+	return {"damage_bonus": damage, "defense_bonus": defense}
+
+
+func get_combat_damage_bonus() -> float:
+	var bonuses := get_equipment_bonuses()
+	var result := float(bonuses.get("damage_bonus", 0.0))
+	for effect in active_elixir_effects.values():
+		result += float(effect.get("damage_bonus", 0.0))
+	return result
+
+
+func get_defense_bonus() -> float:
+	var bonuses := get_equipment_bonuses()
+	var result := float(bonuses.get("defense_bonus", 0.0))
+	for effect in active_elixir_effects.values():
+		result += float(effect.get("defense_bonus", 0.0))
+	return result
+
+
+func get_movement_multiplier() -> float:
+	var result := 1.0
+	for effect in active_elixir_effects.values():
+		result *= float(effect.get("movement_multiplier", 1.0))
+	return clampf(result, 0.65, 1.6)
+
+
+func get_attack_cooldown_multiplier() -> float:
+	var result := 1.0
+	for effect in active_elixir_effects.values():
+		result *= float(effect.get("attack_cooldown_multiplier", 1.0))
+	return clampf(result, 0.6, 1.2)
+
+
+func consume_elixir(item_id: String) -> Dictionary:
+	if get_item_count(item_id) <= 0:
+		return {"success": false, "reason": "ELIXIR_NOT_OWNED"}
+	if item_id == "nen_acquisition_elixir":
+		if nen_unlocked:
+			return {"success": false, "reason": "NEN_ALREADY_UNLOCKED"}
+		nen_unlocked = true
+		nen_control_rank = 1
+	elif item_id == "nen_control_elixir":
+		if not nen_unlocked:
+			return {"success": false, "reason": "NEN_NOT_UNLOCKED"}
+		if nen_control_rank >= 5:
+			return {"success": false, "reason": "NEN_CONTROL_MAXED"}
+		nen_control_rank += 1
+	elif item_id == "healing_elixir":
+		var health := get_tree().root.find_child("PlayerCombatHealth", true, false)
+		if health == null or not health.has_method("apply_field_healing"):
+			return {"success": false, "reason": "HEALTH_SYSTEM_UNAVAILABLE"}
+		if not bool(health.call("apply_field_healing", 30.0)):
+			return {"success": false, "reason": "HEALING_NOT_NEEDED"}
+	else:
+		var effect_id := ""
+		var effect: Dictionary = {}
+		match item_id:
+			"strength_elixir":
+				effect_id = "strength"
+				effect = {"remaining_seconds": 120.0, "damage_bonus": 15.0}
+			"speed_elixir":
+				effect_id = "speed"
+				effect = {"remaining_seconds": 120.0, "movement_multiplier": 1.25}
+			"endurance_elixir":
+				effect_id = "endurance"
+				effect = {"remaining_seconds": 120.0, "defense_bonus": 12.0}
+			"energy_elixir":
+				effect_id = "energy"
+				effect = {"remaining_seconds": 120.0, "attack_cooldown_multiplier": 0.82}
+			"rare_legendary_elixir":
+				effect_id = "sovereign"
+				effect = {"remaining_seconds": 180.0, "damage_bonus": 25.0, "defense_bonus": 15.0, "movement_multiplier": 1.15, "attack_cooldown_multiplier": 0.9}
+			_:
+				return {"success": false, "reason": "UNKNOWN_ELIXIR"}
+		active_elixir_effects[effect_id] = effect
+	var remaining := get_item_count(item_id) - 1
+	if remaining <= 0:
+		inventory_items.erase(item_id)
+	else:
+		inventory_items[item_id] = remaining
+	save_progress()
+	return {"success": true, "item_id": item_id, "nen_unlocked": nen_unlocked, "nen_control_rank": nen_control_rank}
+
+
 func spend_attribute_point(attribute: String) -> bool:
 	if available_attribute_points <= 0:
 		return false
@@ -163,6 +313,11 @@ func get_progress_data() -> Dictionary:
 		"greed_fragments": greed_fragments.duplicate(),
 		"greed_fragments_count": greed_fragments.size(),
 		"inventory_items": inventory_items.duplicate(true),
+		"equipment_slots": equipment_slots.duplicate(true),
+		"equipment_bonuses": get_equipment_bonuses(),
+		"active_elixir_effects": active_elixir_effects.duplicate(true),
+		"nen_unlocked": nen_unlocked,
+		"nen_control_rank": nen_control_rank,
 		"greed_island_seal_ready": bool(get_world_fragment_data().get("all_world_keys_ready", false)),
 		"world_keys": get_world_fragment_data()
 	}
@@ -192,6 +347,10 @@ func save_progress() -> void:
 	)
 	config.set_value("world_keys", "fragments", world_fragments.duplicate(true))
 	config.set_value("inventory", "items", inventory_items.duplicate(true))
+	config.set_value("equipment", "slots", equipment_slots.duplicate(true))
+	config.set_value("effects", "active_elixirs", active_elixir_effects.duplicate(true))
+	config.set_value("nen", "unlocked", nen_unlocked)
+	config.set_value("nen", "control_rank", nen_control_rank)
 
 	var error := config.save(SAVE_PATH)
 
@@ -241,6 +400,21 @@ func load_progress() -> void:
 		var item_count := maxi(0,int(saved_inventory[item_id]))
 		if item_count > 0:
 			inventory_items[str(item_id)] = item_count
+
+	var saved_equipment: Dictionary = config.get_value("equipment", "slots", {})
+	equipment_slots = DEFAULT_EQUIPMENT_SLOTS.duplicate(true)
+	for slot in DEFAULT_EQUIPMENT_SLOTS.keys():
+		var item_id := str(saved_equipment.get(slot, ""))
+		if item_id.is_empty() or str(EQUIPMENT_SLOTS_BY_ITEM.get(item_id, "")) == str(slot):
+			equipment_slots[slot] = item_id
+	var saved_effects: Dictionary = config.get_value("effects", "active_elixirs", {})
+	active_elixir_effects = {}
+	for effect_id in saved_effects.keys():
+		var effect: Dictionary = saved_effects[effect_id].duplicate(true)
+		if float(effect.get("remaining_seconds", 0.0)) > 0.0:
+			active_elixir_effects[str(effect_id)] = effect
+	nen_unlocked = bool(config.get_value("nen", "unlocked", false))
+	nen_control_rank = clampi(int(config.get_value("nen", "control_rank", 0)), 0, 5)
 
 	var saved_world_fragments: Dictionary = config.get_value("world_keys", "fragments", {})
 	world_fragments = {"modern": [], "historical": [], "fantasy": []}
@@ -354,6 +528,10 @@ func _reset_progress() -> void:
 	xp_in_level = 0
 	available_attribute_points = 0
 	attributes = DEFAULT_ATTRIBUTES.duplicate(true)
+	equipment_slots = DEFAULT_EQUIPMENT_SLOTS.duplicate(true)
+	active_elixir_effects.clear()
+	nen_unlocked = false
+	nen_control_rank = 0
 
 
 func _emit_progress() -> void:
