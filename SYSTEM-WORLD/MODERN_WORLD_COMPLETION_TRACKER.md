@@ -715,4 +715,5 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Exercise the operations manager's final-floor clear integration and verify that the sovereign crown/core, rare core, Nen fragment, SYSTEM credits, and floor-200 completion record are granted; restore the validator's original local profile afterward.
 - [x] Pass the sovereign final-boss three-phase/defeat regression and final reward integration on tested source HEAD `8d37b28105c5f52a8a2b2b5f44de35e45012919f` (Godot run `45053818855`).
 - [x] Pass canonical Android APK export on the same tested source HEAD; artifact `SYSTEM-WORLD-canonical-android-debug-apk`, 35,815,543 bytes, expires 6 December 2026 (Android run `45053818923`).
-- [ ] Test timed survival/championship failure and active-floor abandon recovery through automated gameplay and physical Android play.
+- [x] Add validator coverage for survival-timer completion, championship timeout abandonment without a clear, and wound-triggered active-floor abandonment/recovery.
+- [ ] Pass the extended survival/championship/abandon regression on the latest PR head; physical Android gameplay review remains outstanding.
