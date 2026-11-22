@@ -146,7 +146,8 @@ func _set_control(key: String, active: bool) -> void:
 func _update_proximity() -> void:
 	if not is_instance_valid(player) or not is_instance_valid(interact_button):
 		return
-	var distance := player.global_position.distance_to(global_position)
+	var interaction_anchor := aircraft.global_position if is_instance_valid(aircraft) else global_position
+	var distance := player.global_position.distance_to(interaction_anchor)
 	interact_button.visible = distance <= APPROACH_DISTANCE
 	if interact_button.visible:
 		interact_button.text = "Enter Helicopter" if landed else "Helicopter unavailable"
@@ -160,7 +161,8 @@ func _toggle_pilot() -> void:
 			return
 		_exit_aircraft()
 	else:
-		if not is_instance_valid(player) or player.global_position.distance_to(global_position) > APPROACH_DISTANCE:
+		var interaction_anchor := aircraft.global_position if is_instance_valid(aircraft) else global_position
+		if not is_instance_valid(player) or player.global_position.distance_to(interaction_anchor) > APPROACH_DISTANCE:
 			return
 		if not _can_pilot():
 			status_label.text = "Hunter Association pilot access requires a completed Hunter License."
@@ -171,8 +173,7 @@ func _enter_aircraft() -> void:
 	player_physics_was_enabled = player.is_physics_processing()
 	pilot_active = true
 	landed = true
-	heli_position = global_position + Vector3(0.0, 2.8, 0.0)
-	aircraft.global_position = heli_position
+	heli_position = aircraft.global_position
 	player.set_meta("system_helicopter_piloting", true)
 	player.visible = false
 	player.set_physics_process(false)
@@ -191,7 +192,12 @@ func _exit_aircraft() -> void:
 	player.set_meta("system_helicopter_piloting", false)
 	player.visible = true
 	player.set_physics_process(player_physics_was_enabled)
-	player.global_position = global_position + Vector3(-22.0, 3.0, 0.0)
+	var exit_anchor := aircraft.global_position + aircraft.global_basis.x * -8.0
+	var exit_ground_height: Variant = _get_ground_landing_height(exit_anchor)
+	if exit_ground_height != null:
+		player.global_position = Vector3(exit_anchor.x, float(exit_ground_height) - 1.8, exit_anchor.z)
+	else:
+		player.global_position = aircraft.global_position + Vector3(-8.0, -1.8, 0.0)
 	player.velocity = Vector3.ZERO
 	heli_position = aircraft.global_position
 	_save_parked_state()
