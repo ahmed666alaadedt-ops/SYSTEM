@@ -324,13 +324,26 @@ func _create_animal(
 			dark_material
 		)
 
+	# Expose lightweight habitat data to discovery and ecology systems.
+	animal.add_to_group("system_wildlife")
+	animal.set_meta("wildlife_species", species)
+	animal.set_meta("wildlife_habitat", "woodland_edge" if species != "Rabbit" else "grassland_edge")
+
+	var species_speed := 0.55
+	if species == "Fox":
+		species_speed = 0.78
+	elif species == "Rabbit":
+		species_speed = 0.68
+
 	animals.append({
 		"node": animal,
 		"species": species,
 		"origin": start_position,
 		"direction": Vector3.FORWARD,
-		"speed": 0.45 + randf() * 0.35,
+		"speed": species_speed,
 		"change_timer": randf_range(1.5, 4.0),
+		"activity": "wander",
+		"activity_timer": randf_range(3.0, 7.0),
 		"phase": randf() * TAU
 	})
 
@@ -342,67 +355,79 @@ func _update_animals(delta: float) -> void:
 		if not is_instance_valid(animal):
 			continue
 
-		animal_data["change_timer"] -= delta
 		animal_data["phase"] += delta
+		animal_data["activity_timer"] -= delta
 
-		if animal_data["change_timer"] <= 0.0:
-			var angle := randf_range(-PI, PI)
+		# Natural activity cycle: animals alternate between wandering,
+		# grazing and resting instead of moving constantly.
+		if animal_data["activity_timer"] <= 0.0:
+			var species: String = animal_data["species"]
+			var choices := ["wander", "graze", "rest"]
+			if species == "Fox":
+				choices = ["wander", "rest", "wander"]
+			elif species == "Rabbit":
+				choices = ["wander", "graze", "rest", "graze"]
 
-			animal_data["direction"] = Vector3(
-				sin(angle),
-				0.0,
-				cos(angle)
+			animal_data["activity"] = choices.pick_random()
+			animal_data["activity_timer"] = randf_range(2.5, 6.5)
+
+			if animal_data["activity"] == "wander":
+				var angle := randf_range(-PI, PI)
+				animal_data["direction"] = Vector3(
+					sin(angle),
+					0.0,
+					cos(angle)
+				)
+				animal_data["change_timer"] = randf_range(2.0, 5.0)
+
+		var activity: String = animal_data["activity"]
+		if activity == "wander":
+			animal_data["change_timer"] -= delta
+			if animal_data["change_timer"] <= 0.0:
+				var angle := randf_range(-PI, PI)
+				animal_data["direction"] = Vector3(
+					sin(angle),
+					0.0,
+					cos(angle)
+				)
+				animal_data["change_timer"] = randf_range(2.0, 5.0)
+
+			var direction: Vector3 = animal_data["direction"]
+			var speed: float = animal_data["speed"]
+			animal.position += direction * speed * delta
+
+			# Keep each animal close to its original habitat patch.
+			var origin: Vector3 = animal_data["origin"]
+			var offset := animal.position - origin
+			if offset.length() > 9.0:
+				animal_data["direction"] = -offset.normalized()
+
+			animal.position.x = clampf(
+				animal.position.x,
+				-WORLD_BOUNDS_X,
+				WORLD_BOUNDS_X
+			)
+			animal.position.z = clampf(
+				animal.position.z,
+				WORLD_BOUNDS_Z_MIN,
+				WORLD_BOUNDS_Z_MAX
 			)
 
-			animal_data["change_timer"] = randf_range(
-				2.0,
-				5.0
-			)
+			if direction.length() > 0.01:
+				var target_angle := atan2(direction.x, direction.z)
+				animal.rotation.y = lerp_angle(
+					animal.rotation.y,
+					target_angle,
+					delta * 2.0
+				)
+		elif activity == "graze":
+			# A small head/body dip suggests feeding without extra skeletons.
+			animal.rotation.x = lerp_angle(animal.rotation.x, 0.10, delta * 2.0)
+		else:
+			animal.rotation.x = lerp_angle(animal.rotation.x, 0.0, delta * 1.5)
 
-		var direction: Vector3 = animal_data["direction"]
-		var speed: float = animal_data["speed"]
-
-		var movement := direction * speed * delta
-
-		animal.position += movement
-
-		# إبقاء الحيوان ضمن المنطقة المخصصة له.
-		var origin: Vector3 = animal_data["origin"]
-
-		var offset := animal.position - origin
-
-		if offset.length() > 9.0:
-			animal_data["direction"] = (
-				-origin.direction_to(animal.position)
-			)
-
-		animal.position.x = clampf(
-			animal.position.x,
-			-WORLD_BOUNDS_X,
-			WORLD_BOUNDS_X
-		)
-
-		animal.position.z = clampf(
-			animal.position.z,
-			WORLD_BOUNDS_Z_MIN,
-			WORLD_BOUNDS_Z_MAX
-		)
-
-		if direction.length() > 0.01:
-			var target_angle := atan2(
-				direction.x,
-				direction.z
-			)
-
-			animal.rotation.y = lerp_angle(
-				animal.rotation.y,
-				target_angle,
-				delta * 2.0
-			)
-
-		# حركة بسيطة للجسم أثناء المشي.
-		var bob := sin(
-			float(animal_data["phase"]) * 5.0
-		) * 0.025
-
+		# Subtle idle motion remains visible while grazing or resting.
+		var bob := sin(float(animal_data["phase"]) * 2.2) * 0.018
+		if activity == "wander":
+			bob = sin(float(animal_data["phase"]) * 5.0) * 0.025
 		animal.position.y = bob
