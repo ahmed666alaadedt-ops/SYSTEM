@@ -1377,7 +1377,9 @@ func _get_active_hotel_booking() -> Dictionary:
 
 func _is_hotel_room_available(room_id: String) -> bool:
 	var booking: Dictionary = hotel_bookings.get(room_id, {})
-	return booking.is_empty() or int(booking.get("check_out_unix", 0)) <= int(Time.get_unix_time_from_system())
+	if booking.is_empty():
+		return true
+	return str(booking.get("status", "")) == "ready"
 
 
 func _add_hotel_controls() -> void:
@@ -1410,6 +1412,26 @@ func _add_hotel_controls() -> void:
 	var hint := Label.new()
 	hint.text = "اختر الغرفة ومدة الإقامة. الأجنحة الخاصة تتطلب رتبة صياد مناسبة."
 	controls.add_child(hint)
+	var housekeeping_heading := Label.new()
+	housekeeping_heading.text = "إدارة تجهيز الغرف — التنظيف والفحص"
+	controls.add_child(housekeeping_heading)
+	for room_id_value in hotel_bookings.keys():
+		var room_id := str(room_id_value)
+		var room_state: Dictionary = hotel_bookings[room_id]
+		var room_status := str(room_state.get("status", ""))
+		if room_status not in ["needs_cleaning", "cleaning"]:
+			continue
+		var state_label := Label.new()
+		state_label.text = "%s — %s" % [str(room_state.get("room_name", room_id)), "بانتظار التنظيف" if room_status == "needs_cleaning" else "قيد التنظيف"]
+		controls.add_child(state_label)
+		var housekeeping_button := Button.new()
+		if room_status == "needs_cleaning":
+			housekeeping_button.text = "بدء تنظيف " + str(room_state.get("room_name", room_id))
+			housekeeping_button.pressed.connect(_start_hotel_room_cleaning.bind(room_id))
+		else:
+			housekeeping_button.text = "إنهاء التنظيف وفحص " + str(room_state.get("room_name", room_id))
+			housekeeping_button.pressed.connect(_complete_hotel_room_cleaning.bind(room_id))
+		controls.add_child(housekeeping_button)
 	for room_value in HOTEL_ROOM_CATALOG:
 		var room: Dictionary = room_value
 		var room_id := str(room["id"])
@@ -1494,11 +1516,54 @@ func _checkout_hotel_room() -> void:
 	var remaining_nights := maxi(0, int(ceil(float(checkout_unix - int(Time.get_unix_time_from_system())) / 86400.0)) - 1)
 	var refund := remaining_nights * int(booking.get("nightly_rate", 0))
 	credits += refund
-	hotel_bookings.erase(room_id)
+	var released_room: Dictionary = hotel_bookings.get(room_id, {}).duplicate(true)
+	released_room["guest_id"] = ""
+	released_room["check_in_unix"] = 0
+	released_room["check_out_unix"] = 0
+	released_room["status"] = "needs_cleaning"
+	released_room["housekeeping_started_unix"] = 0
+	released_room["housekeeping_completed_unix"] = 0
+	released_room["inspection_passed"] = false
+	hotel_bookings[room_id] = released_room
 	_save_hotel_bookings()
 	_save_wallet()
 	credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
-	_set_status("تم تسجيل الخروج. أُعيد إلى رصيدك %d عن الليالي غير المستخدمة." % refund)
+	_set_status("تم تسجيل الخروج. أُعيد إلى رصيدك %d عن الليالي غير المستخدمة. الغرفة الآن بانتظار فريق التنظيف والفحص." % refund)
+	_add_hotel_controls()
+
+
+func _start_hotel_room_cleaning(room_id: String) -> void:
+	if not hotel_bookings.has(room_id):
+		_set_status("سجل الغرفة غير موجود.")
+		return
+	var room: Dictionary = hotel_bookings[room_id]
+	if str(room.get("status", "")) != "needs_cleaning":
+		_set_status("هذه الغرفة ليست بانتظار التنظيف.")
+		return
+	room["status"] = "cleaning"
+	room["housekeeping_started_unix"] = int(Time.get_unix_time_from_system())
+	hotel_bookings[room_id] = room
+	_save_hotel_bookings()
+	_set_status("بدأ فريق التدبير الفندقي تنظيف %s. بعده يلزم فحص الغرفة." % str(room.get("room_name", room_id)))
+	_add_hotel_controls()
+
+
+func _complete_hotel_room_cleaning(room_id: String) -> void:
+	if not hotel_bookings.has(room_id):
+		_set_status("سجل الغرفة غير موجود.")
+		return
+	var room: Dictionary = hotel_bookings[room_id]
+	if str(room.get("status", "")) != "cleaning":
+		_set_status("يجب بدء تنظيف الغرفة قبل إكماله.")
+		return
+	var now := int(Time.get_unix_time_from_system())
+	room["status"] = "ready"
+	room["housekeeping_completed_unix"] = now
+	room["inspection_unix"] = now
+	room["inspection_passed"] = true
+	hotel_bookings[room_id] = room
+	_save_hotel_bookings()
+	_set_status("اكتمل تنظيف وفحص %s. أصبحت الغرفة جاهزة للحجز." % str(room.get("room_name", room_id)))
 	_add_hotel_controls()
 
 
