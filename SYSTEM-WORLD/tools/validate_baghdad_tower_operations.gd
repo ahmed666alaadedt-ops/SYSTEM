@@ -1105,6 +1105,7 @@ func _run() -> void:
 	var bowling_total_pinfall := 0
 	var basketball_made_count := 0
 	var arcade_hit_count := 0
+	var arcade_last_result: Dictionary = {}
 	for activity_type in activity_cases.keys():
 		var activity_case: Array = activity_cases[activity_type]
 		if str(activity_type) == "sports_court":
@@ -1131,6 +1132,7 @@ func _run() -> void:
 				if bool(final_activity_result.get("scored", final_activity_result.get("last_shot_scored", false))):
 					basketball_made_count += 1
 			elif str(activity_type) == "arcade":
+				arcade_last_result = final_activity_result.duplicate(true)
 				if bool(final_activity_result.get("hit", final_activity_result.get("last_target_hit", false))):
 					arcade_hit_count += 1
 		if str(activity_type) == "arcade" and (not final_activity_result.has("last_target_hit") or typeof(final_activity_result.get("last_target_hit")) != TYPE_BOOL or int(final_activity_result.get("last_target_id", -1)) < -1 or int(final_activity_result.get("last_target_id", -1)) > 4):
@@ -1155,7 +1157,7 @@ func _run() -> void:
 		_fail("Basketball physics test did not score a basket in five attempts.")
 		return
 	if arcade_hit_count <= 0:
-		_fail("Arcade physics test did not hit any target in five attempts.")
+		_fail("Arcade physics test did not hit any target in five attempts. Last result: " + str(arcade_last_result))
 		return
 	var pool_room := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 18) as Node3D
 	var pool_physics_facility := pool_room.get_node_or_null("SpecialFacility_swimming_pool") as Node3D if pool_room != null else null
