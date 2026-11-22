@@ -1235,7 +1235,7 @@ func _run() -> void:
 		"arcade": ["hit", 10],
 		"family_zone": ["discover", 3],
 		"rooftop_leisure": ["photo", 1],
-		"robotics_lab": ["assemble", 3],
+		"robotics_lab": ["assemble", 5],
 		"ai_lab": ["analyze", 3],
 		"vr_lab": ["checkpoint", 3]
 	}
@@ -1315,11 +1315,14 @@ func _run() -> void:
 			if assembly == null:
 				_fail("Robotics assembly display was not generated.")
 				return
-			for part_index in range(3):
+			for part_index in range(5):
 				var part := assembly.get_node_or_null("RobotAssemblyPart_%02d" % part_index) as MeshInstance3D
 				if part == null or not part.visible or not bool(part.get_meta("system_robot_assembled", false)):
 					_fail("Robotics assembly part %d did not animate into its completed position." % part_index)
 					return
+			if not bool(assembly.get_meta("system_robot_idle_animation", false)):
+				_fail("Completed SYSTEM robot did not start its autonomous idle animation.")
+				return
 		if not operations.get("facility_activity_stats").has(activity_type):
 			_fail("Facility activity result was not recorded: " + str(activity_type))
 			return
