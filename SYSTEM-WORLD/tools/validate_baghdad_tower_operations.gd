@@ -94,6 +94,9 @@ func _run() -> void:
 	if not bool(boss_data.get("boss_floor", false)) or str(boss_data.get("arena_type", "")) != "BOSS_TRIAL":
 		_fail("Power Tower floor 200 is not configured as a boss trial.")
 		return
+	if not bool(boss_data.get("final_boss", false)) or str(boss_data.get("challenge_type", "")) != "FINAL_BOSS":
+		_fail("Power Tower floor 200 is missing its unique final sovereign boss profile.")
+		return
 	if int(boss_data.get("required_level", 999)) > 100:
 		_fail("Power Tower floor 200 is unreachable under the 100-level player progression cap.")
 		return
