@@ -1015,3 +1015,14 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Extend the Baghdad tower integration validator to assert that lift, stair and generated-floor interaction branches remain separate top-level branches in the required order.
 - [x] Godot 4.3 workflow run `45011123115` passed on exact commit `666eec44bf2bdf97fa4b4c76d3404e9dd70c3672`, including import/script parsing, the five connected tower + independent Power Tower validator, the new stair-routing regression assertion, all configured gameplay validators, missing-mesh scan and headless main-scene launch.
 - [ ] Validate actual player traversal, stair landing alignment, adjacent-floor transitions and return to the lobby in the live game and on Android; CI verifies the interaction branch structure and procedural floor contracts, not physical player movement.
+
+
+## Hunter Association headquarters — public service desk blockout — 22 November 2026
+
+- [x] Add four distinct physical desk stations inside the elevated Global Hunter Association headquarters: reception, Hunter registry, player-owned mission/contract information, and examiner operations/control.
+- [x] Give each desk collision-backed geometry, Arabic signage, a dedicated interactable Area3D, a stable service ID and a service description; route through the existing generic `tower_service_` interaction prompt.
+- [x] Extend the Baghdad tower integration validator to require all four service stations, their interaction groups, descriptions, signage and physical desk collision.
+- [x] Godot 4.3 workflow run `45011432072` passed on exact code commit `1a2c9321dc41522e0c9fb8d6a8f1b777feac3363`, including script/resource parsing, Baghdad tower/Hunter HQ/Power Tower integration, all configured gameplay validators, missing-mesh scan and headless main-scene launch.
+- [ ] Build separate fully enclosed service rooms and examiner operations spaces, add staffed NPC schedules and connect registration, mission acceptance and license services to their authoritative systems.
+- [ ] Review room layout, service-desk scale, collision clearance and text readability in the rendered game and on Android.
+- Note: these are first-pass physical service desks and information interactions inside the existing HQ hall. They are not complete service workflows or finished architectural interiors; the headquarters milestone remains open.
