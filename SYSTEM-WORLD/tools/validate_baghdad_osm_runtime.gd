@@ -18,6 +18,7 @@ func _run_validation() -> void:
 	terrain_manager.name = "ModernContinent"
 	root.add_child(terrain_manager)
 	var preexisting_baghdad_ground_elevation := terrain_manager.get_terrain_height(0.0, 0.0)
+	var expected_osm_ground_baseline := maxf(preexisting_baghdad_ground_elevation, 6.25)
 	var streamer = BAGHDAD_STREAMER.new()
 	root.add_child(streamer)
 	print("Baghdad OSM validation: streamer added; checking manifest and origin.")
@@ -115,23 +116,26 @@ func _run_validation() -> void:
 	if not is_finite(terrain_manager.get_terrain_height(float(bridge_anchor[0]), float(bridge_anchor[1]))):
 		_fail("ModernContinentManager returned a non-finite terrain height at Republic Bridge.")
 		return
-	if absf(terrain_manager.get_terrain_height(float(bridge_anchor[0]), float(bridge_anchor[1])) - streamer.world_ground_elevation_m) > 0.1:
+	if absf(terrain_manager.get_baghdad_osm_ground_height(float(bridge_anchor[0]), float(bridge_anchor[1])) - streamer.world_ground_elevation_m) > 0.1:
 		_fail("Baghdad terrain extension did not reach the resolved ground baseline at Republic Bridge.")
 		return
-	if not is_equal_approx(streamer.world_ground_elevation_m, preexisting_baghdad_ground_elevation):
-		_fail("OSM runtime baseline does not preserve the existing Baghdad world elevation.")
+	if not is_equal_approx(streamer.world_ground_elevation_m, expected_osm_ground_baseline):
+		_fail("OSM runtime baseline does not preserve the city anchor or the minimum river-safe datum.")
 		return
-	if not is_equal_approx(streamer.world_water_surface_elevation_m, preexisting_baghdad_ground_elevation - 6.0) or not is_equal_approx(streamer.world_bridge_deck_elevation_m, preexisting_baghdad_ground_elevation + 0.28):
+	if not is_equal_approx(streamer.world_water_surface_elevation_m, expected_osm_ground_baseline - 6.0) or not is_equal_approx(streamer.world_bridge_deck_elevation_m, expected_osm_ground_baseline + 0.28):
 		_fail("Tigris and Republic Bridge surfaces do not match their verified relative elevations.")
 		return
-	if not is_equal_approx(streamer.world_tower_platform_elevation_m, preexisting_baghdad_ground_elevation + 12.28):
+	if not is_equal_approx(streamer.world_tower_platform_elevation_m, expected_osm_ground_baseline + 12.28):
 		_fail("Republic Bridge tower platform does not preserve the required vertical separation above the Tigris.")
+		return
+	if streamer.world_water_surface_elevation_m < 0.25 or terrain_manager.get_baghdad_osm_ground_height(0.0, 0.0) < 0.25:
+		_fail("Baghdad OSM land or Tigris water would be hidden below the global ocean plane.")
 		return
 	if not is_equal_approx(streamer.world_bridge_deck_elevation_m - streamer.world_water_surface_elevation_m, 6.28) or not is_equal_approx(streamer.world_tower_platform_elevation_m - streamer.world_water_surface_elevation_m, 18.28):
 		_fail("Republic Bridge/Tigris vertical-clearance metadata is inconsistent.")
 		return
 	for bank_point in bank_points:
-		if absf(terrain_manager.get_terrain_height(float(bank_point[0]), float(bank_point[1])) - streamer.world_ground_elevation_m) > 0.1:
+		if absf(terrain_manager.get_baghdad_osm_ground_height(float(bank_point[0]), float(bank_point[1])) - streamer.world_ground_elevation_m) > 0.1:
 			_fail("One of the verified bank approaches does not meet the resolved Baghdad ground baseline.")
 			return
 		var bank_cell := Vector2i(floori(float(bank_point[0]) / streamer.cell_size), floori(float(bank_point[1]) / streamer.cell_size))
