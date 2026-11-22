@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-11-22  
 **Active development branch:** `work/baghdad-system-integration`  
-**Latest verified gameplay/code commit:** `9844fc6490ea0d432c5be1b7f3c932133a1a0daa`  
-**Latest tracker documentation commit:** `adc5c92f82e28958d6d6dfda3604f406867fcd4b`  
+**Latest verified gameplay/code commit:** `aad51b4555eb613c510a15602421a8a6577b360f`  
+**Latest tracker documentation commit:** `c4ba0b64ec02a4e30752d745840b6d99b945c78f`  
 **Main branch SHA:** `dff4e9d377ffaae6845e6f401c47346e51ea5619`  
 **Canonical runtime:** `SYSTEM-WORLD/` (Godot 4.3)
 
@@ -202,3 +202,18 @@ Code validated on commit `83db22c01e7ecf1addd01ce01cbb1b341bd1fdc8`:
 - Previous stair routing fix remains verified by workflow `45011123115`; generated stair collision fix remains verified by workflow `45010467260`.
 - `main` remains unchanged at `dff4e9d377ffaae6845e6f401c47346e51ea5619`. PR #37 remains draft and unmerged. Do not merge, rebase or synchronize without explicit owner approval.
 - Next: continue the authoritative Baghdad landmark queue, finishing the HQ examiner spaces and remaining tower-specific interior interactions before shifting to unrelated systems. Keep all live visual/device checks explicitly open.
+
+
+## Latest continuation checkpoint — Hunter headquarters examiner control room
+
+- Active branch: `work/baghdad-system-integration`.
+- Latest verified gameplay/code commit: `aad51b4555eb613c510a15602421a8a6577b360f`.
+- Added a collision-backed examiner control console, seven stage-monitor display panels and Arabic labels inside the examiner room. A visible notice explicitly states that the screens are static placeholders with no live feed or stage-control capability.
+- Extended the validator to require the console collision, all seven monitor meshes/labels and the static-feed disclosure; it rejects any claim that a live feed is connected.
+- Godot 4.3 workflow `45012275446` passed on exact code commit `aad51b4555eb613c510a15602421a8a6577b360f`: script/resource parsing, Baghdad five-tower/Hunter HQ/independent Power Tower integration, configured gameplay validators, missing-mesh scan and headless main-scene launch succeeded.
+- Tracker update commit: `c4ba0b64ec02a4e30752d745840b6d99b945c78f`.
+- Asset register update commit: `925ac4afc7f150e285b390bc9800b3424a60b353`.
+- HQ status: four partitioned service rooms, four interactable service desks and the seven-panel examiner control-room blockout are now present and validator-checked. Existing guild menu views are reused for reception/info, registration and missions. The headquarters is not complete: live examiner operations, staff NPCs, authoritative transactions, finished art, doors, lighting/acoustics and Android visual checks remain open.
+- Previous checkpoints remain verified: HQ room/service routing workflow `45011989736`; HQ room partitions workflow `45011701570`; stair routing workflow `45011123115`; stair collision workflow `45010467260`.
+- `main` remains unchanged at `dff4e9d377ffaae6845e6f401c47346e51ea5619`. PR #37 remains draft and unmerged. Do not merge, rebase or synchronize without explicit owner approval.
+- Next: continue the Baghdad landmark priority list with authorized examiner workflows/staff behavior or the remaining five-tower playable interiors; do not claim the current examiner display is live.
