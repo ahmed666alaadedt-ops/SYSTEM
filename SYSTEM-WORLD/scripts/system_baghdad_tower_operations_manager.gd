@@ -896,7 +896,8 @@ func _on_player_wounded() -> void:
 		power_tower_manager.call("abandon_active_floor")
 	power_floor_in_progress = false
 	active_power_floor_data.clear()
-	_set_status("تعرضت للإصابة، وتم إيقاف تحدي برج القوة دون احتساب الطابق. توجه إلى المستشفى للعلاج.")
+	_set_status("تعرضت للإصابة، وتم إيقاف تحدي برج القوة دون احتساب الطابق. عُدت إلى البهو؛ توجه إلى المستشفى للعلاج.")
+	return_to_lobby()
 
 func get_operations_status() -> Dictionary:
 	var total_staff := 0
