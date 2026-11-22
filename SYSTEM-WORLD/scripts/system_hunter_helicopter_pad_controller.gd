@@ -141,6 +141,8 @@ func _update_proximity() -> void:
 	interact_button.visible = distance <= APPROACH_DISTANCE
 	if interact_button.visible:
 		interact_button.text = "Enter Helicopter" if landed else "Helicopter unavailable"
+		if not _can_pilot():
+			interact_button.text = "Hunter License Required"
 	status_label.text = "Hunter Association — Helicopter Pad" if distance <= APPROACH_DISTANCE else ""
 
 func _toggle_pilot() -> void:
@@ -151,12 +153,15 @@ func _toggle_pilot() -> void:
 	else:
 		if not is_instance_valid(player) or player.global_position.distance_to(global_position) > APPROACH_DISTANCE:
 			return
+		if not _can_pilot():
+			status_label.text = "Hunter Association pilot access requires a completed Hunter License."
+			return
 		_enter_aircraft()
 
 func _enter_aircraft() -> void:
 	pilot_active = true
 	landed = true
-	heli_position = global_position + Vector3(0.0, 2.0, 0.0)
+	heli_position = global_position + Vector3(0.0, 2.8, 0.0)
 	aircraft.global_position = heli_position
 	player.visible = false
 	player.set_physics_process(false)
@@ -198,21 +203,50 @@ func _update_flight(delta: float) -> void:
 	vertical_velocity = move_toward(vertical_velocity, lift * MAX_VERTICAL_SPEED, ACCELERATION * delta)
 	var turn := side_input * delta * 0.85
 	aircraft.rotate_y(-turn)
-	heli_position += (horizontal_velocity + Vector3.UP * vertical_velocity) * delta
-	var pad_center := global_position + Vector3(0.0, 2.0, 0.0)
-	var horizontal_distance := Vector2(heli_position.x - pad_center.x, heli_position.z - pad_center.z).length()
-	var altitude := heli_position.y - pad_center.y
+	var candidate_position := heli_position + (horizontal_velocity + Vector3.UP * vertical_velocity) * delta
+	var pad_center := global_position + Vector3(0.0, 2.8, 0.0)
+	var horizontal_distance := Vector2(candidate_position.x - pad_center.x, candidate_position.z - pad_center.z).length()
+	var altitude := candidate_position.y - pad_center.y
 	if horizontal_distance <= LANDING_RADIUS and altitude <= 0.0:
-		heli_position.y = pad_center.y
+		candidate_position.y = pad_center.y
 		vertical_velocity = 0.0
 		if horizontal_velocity.length() < 2.0:
 			horizontal_velocity = Vector3.ZERO
 			landed = true
 	else:
 		landed = false
+		if not _is_aircraft_position_clear(candidate_position):
+			horizontal_velocity = Vector3.ZERO
+			vertical_velocity = minf(vertical_velocity, 0.0)
+			status_label.text = "OBSTACLE — flight path blocked"
+			_update_camera()
+			return
+	heli_position = candidate_position
 	aircraft.global_position = heli_position
 	status_label.text = "LANDED — safe to exit" if landed else "FLIGHT — land inside the marked pad to exit"
 	_update_camera()
+
+func _can_pilot() -> bool:
+	var exam_manager := get_tree().root.find_child("HunterExamManager", true, false)
+	if exam_manager == null or not exam_manager.has_method("get_exam_overview"):
+		return false
+	var overview: Dictionary = exam_manager.call("get_exam_overview")
+	var completed: Array = overview.get("completed_stages", [])
+	return bool(overview.get("registered", false)) and completed.size() >= int(overview.get("total_stages", 7))
+
+func _is_aircraft_position_clear(candidate_position: Vector3) -> bool:
+	var world := get_world_3d()
+	if world == null:
+		return false
+	var sphere := SphereShape3D.new()
+	sphere.radius = 0.8
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = sphere
+	query.transform = Transform3D(Basis.IDENTITY, candidate_position)
+	query.collision_mask = 1
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+	return world.direct_space_state.intersect_shape(query, 8).is_empty()
 
 func _update_camera() -> void:
 	var active_camera := get_viewport().get_camera_3d()
