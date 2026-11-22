@@ -953,3 +953,13 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Confirm the only commit after the tested source (`06bb0ce4a3a7c7608f6ebd313274dd4e5c84992f`) changes this tracker documentation only; no gameplay source files changed after the tested code snapshot.
 - [ ] Physical Android inspection remains outstanding; automated CI does not prove touch feel, visuals, thermal behavior or frame rate on the user's device.
 - [ ] Remaining gameplay scope includes full ten-frame bowling bonus scoring, complete team sports matches, cinema programming/playback, full arcade cabinet gameplay, animated robotics construction, immersive VR and full NPC navigation.
+
+
+### Ten-frame bowling scoring and rack-state implementation — 22 November 2026
+
+- [x] Replace the simplified one-ball-per-frame counter with standard ten-frame play: two rolls per frame, strike completion, spare completion and tenth-frame bonus rolls.
+- [x] Keep fallen pins down between rolls in the same frame; reset the full rack only when a frame ends or a tenth-frame bonus rack is earned.
+- [x] Calculate official bowling score from the roll history, including strike and spare bonuses; cap the game at the legal 21-roll maximum.
+- [x] Add deterministic scoring regressions for a perfect 300 game, a zero-pin game and ten consecutive spares (150 points).
+- [ ] Run the full Godot 4.3 validator and Android export on this gameplay change before claiming it verified.
+- Note: physical Android lane feel, ball control and real-device collision response still require device playtesting.
