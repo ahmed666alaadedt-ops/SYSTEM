@@ -951,3 +951,14 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Baghdad OSM source workflow on the same commit passed, including the 5×5 metric cell pack, entrance association and real-cell connectivity audit (workflow `44985396507`).
 - [x] Canonical Android workflow `44985543020` passed on exact checkout `59807d68386e46307ac8805e27bc6bd16244afb9`: audited OSM runtime validator, child-character safety, main-scene launch, companion/NPC checks, and Android APK export all succeeded. Runtime log confirms camera target resolution, map discovery, occupied-cell retention, 19 physical doors and 19 entry/exit transitions. APK artifact `14739369539` (36,080,165 bytes); validation logs artifact `14739294911`.
 - Note: an earlier intermediate commit had a GDScript indentation parse error in the new metadata line. It was corrected in `59807d68386e46307ac8805e27bc6bd16244afb9`; the successful general Godot validation is on that corrected commit.
+
+
+## Hunter Association exam tunnel physical access control — 22 November 2026
+
+- [x] Added seven full-width physical stage-gate panels with collision and visible locked-state visuals inside the Hunter examination tunnel.
+- [x] Added a physical staging-chamber barrier.
+- [x] Moved the Hunter exam start interaction to the lobby-side threshold before the first gate; candidates no longer have to cross the tunnel before beginning the exam.
+- [x] Connected the main interaction handler so the tunnel opens only when `HunterExamManager.begin_exam()` returns success (registered and eligible candidate). An unregistered attempt leaves every barrier closed.
+- [x] Added deterministic validation for all seven gate colliders, staging barrier, lobby-side start point, unregistered denial, successful candidate registration/start, and opening all gate panels.
+- [x] Godot 4.3 full validation workflow `44986054107` passed on code commit `9f85abd7748f8fccd4244e8f356cd0f2c00c2f09`, including tower integration, all existing gameplay validators, missing-mesh scan and headless main-scene launch.
+- Remaining: actual seven-stage challenge locations/gameplay and trusted server-side evidence verification are still not implemented; the tunnel gate system does not grant stage completion or a Hunter license. No physical Android device test has been performed.
