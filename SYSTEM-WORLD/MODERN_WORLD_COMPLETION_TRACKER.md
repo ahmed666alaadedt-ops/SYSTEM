@@ -544,3 +544,15 @@ Implementation added on the feature branch; automated runtime validation is pend
 
 
 - [x] Power Tower lobby board now shows the player's highest cleared floor, next floor, progression rank, completion percentage and personal best clear time. This is a local personal record, not a global online leaderboard.
+
+
+### Equipment durability, upgrades and repair — 22 November 2026
+
+- [x] Equipment durability decreases when weapons are used and armour/helmets absorb hits; shields wear while actively blocking.
+- [x] Broken equipment stops contributing its damage/defense bonus until repaired.
+- [x] NPC employees offer equipment upgrades through +10, with level and material costs; higher upgrades require rare cores and Nen control rank.
+- [x] Repair kits can be purchased or crafted; the NPC repair service restores equipment durability.
+- [x] Player inventory displays equipped item upgrade levels and durability.
+- [x] Latest Godot 4.3 validation passed after durability/upgrade/repair integration.
+- [x] Latest canonical Android debug APK export passed at HEAD \`3646251e0d9834e885d845656bb52e92a8fc1c12\`; artifact \`SYSTEM-WORLD-canonical-android-debug-apk\` expires 6 December 2026.
+- [ ] Physical Android device gameplay/touch/performance review remains pending.
