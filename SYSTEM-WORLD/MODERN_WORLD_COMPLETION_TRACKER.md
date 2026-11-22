@@ -541,3 +541,6 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Automated validator checks every floor from 1 to 200 for valid level gates, boss cadence, wave counts, rewards and timed objective profiles.
 - [x] Latest Godot 4.3 validation workflow passed on the current tested source revision, including all tower, NPC commerce, crafting, equipment/elixir/Nen, elevator and Power Tower checks.
 - [ ] Latest Android APK export workflow is still running; physical Android visual/touch/performance review remains outstanding.
+
+
+- [x] Power Tower lobby board now shows the player's highest cleared floor, next floor, progression rank, completion percentage and personal best clear time. This is a local personal record, not a global online leaderboard.
