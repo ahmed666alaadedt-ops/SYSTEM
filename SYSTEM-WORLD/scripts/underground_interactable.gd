@@ -13,6 +13,12 @@ class_name UndergroundInteractable
 
 var _used := false
 var _opened := false
+var _door_tween: Tween
+var _closed_door_position := Vector3.ZERO
+var _door_position_captured := false
+
+const DOOR_OPEN_OFFSET := Vector3(0.0, 4.2, 0.0)
+const DOOR_ANIMATION_SECONDS := 1.25
 
 
 func system_interact() -> void:
@@ -35,22 +41,37 @@ func _toggle_stone_door() -> void:
 		push_warning("SYSTEM underground: door target is missing.")
 		return
 
+	if not _door_position_captured:
+		_closed_door_position = door.position
+		_door_position_captured = true
+
+	if _door_tween != null and _door_tween.is_running():
+		_door_tween.kill()
+
 	_opened = not _opened
-	door.visible = not _opened
-	_set_collision_enabled(door, not _opened)
+	door.visible = true
+	var destination := _closed_door_position
+	if _opened:
+		destination += DOOR_OPEN_OFFSET
+
+	# Keep the collision attached to the moving slab. Raising the slab clears
+	# the doorway physically; hiding/disabling its collision would be a fake open.
+	_door_tween = create_tween()
+	_door_tween.set_trans(Tween.TRANS_CUBIC)
+	_door_tween.set_ease(Tween.EASE_IN_OUT)
+	_door_tween.tween_property(
+		door,
+		"position",
+		destination,
+		DOOR_ANIMATION_SECONDS
+	)
+
+	set_meta("system_door_open", _opened)
 	set_meta(
 		"system_interaction_prompt",
 		"أغلق الباب الحجري" if _opened else "افتح الباب الحجري"
 	)
-	print("SYSTEM underground stone door opened: ", _opened)
-
-
-func _set_collision_enabled(node: Node, enabled: bool) -> void:
-	if node is CollisionShape3D:
-		(node as CollisionShape3D).disabled = not enabled
-
-	for child in node.get_children():
-		_set_collision_enabled(child, enabled)
+	print("SYSTEM underground stone door transition started; open: ", _opened)
 
 
 func _claim_discovery() -> void:
