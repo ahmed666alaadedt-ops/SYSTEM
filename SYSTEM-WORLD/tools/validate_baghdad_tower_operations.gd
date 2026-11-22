@@ -270,8 +270,8 @@ func _run() -> void:
 	if combat_system == null or not combat_system.has_method("light_attack") or not combat_system.has_method("skill_one") or not combat_system.has_method("skill_two") or not combat_system.has_method("dodge"):
 		_fail("Modern World combat system was not created or is missing mobile combat actions.")
 		return
-	if combat_system.get("actor") != player:
-		_fail("Modern World combat system is not bound to the active player.")
+	if combat_system.get("actor") != player or combat_system.get("progression") != progression:
+		_fail("Modern World combat system is not bound to the active player and progression manager.")
 		return
 	var mobile_controls: Node = main.get("mobile_controls") as Node
 	if mobile_controls == null:
@@ -287,10 +287,21 @@ func _run() -> void:
 		if not mobile_controls.is_connected(str(signal_name), Callable(main, str(mobile_callbacks[signal_name]))):
 			_fail("Mobile combat signal is not connected: " + str(signal_name))
 			return
+	progression.set("nen_burst_cooldown_remaining", 0.0)
+	var clean_effects: Dictionary = progression.get("active_elixir_effects")
+	clean_effects.erase("nen_burst")
+	progression.set("active_elixir_effects", clean_effects)
+	progression.call("_refresh_nen_burst_button")
 	var nen_burst_result: Dictionary = combat_system.call("skill_one")
 	var nen_button: Button = progression.get("nen_burst_button") as Button
-	if not bool(nen_burst_result.get("success", false)) or not progression.get("active_elixir_effects").has("nen_burst") or nen_button == null or not nen_button.visible:
-		_fail("Mobile Nen Burst skill did not activate or expose its cooldown HUD.")
+	if not bool(nen_burst_result.get("success", false)):
+		_fail("Mobile Nen Burst skill activation failed: " + str(nen_burst_result))
+		return
+	if not progression.get("active_elixir_effects").has("nen_burst"):
+		_fail("Mobile Nen Burst did not apply its timed combat effect.")
+		return
+	if nen_button == null or not nen_button.visible:
+		_fail("Mobile Nen Burst did not expose its cooldown HUD button.")
 		return
 	await create_timer(0.85).timeout
 	var charged_result: Dictionary = combat_system.call("skill_two")
