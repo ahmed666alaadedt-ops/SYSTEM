@@ -931,3 +931,11 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Export the Android debug APK from the same exact commit: workflow run ID `45065179082`; export and artifact upload passed. APK artifact `14771151265`, 35,892,247 bytes, SHA-256 artifact digest `07749131fc4c959c367aa172b602a7a30055c0387a942b809e48dad71da07cae`, expires 6 December 2026.
 - [ ] Physical Android playtest remains required; automated headless checks do not verify touch feel, visual quality, thermal load or device frame rate.
 - [ ] Full ten-frame bowling bonus scoring, complete team sports matches, licensed/original cinema programming and playback, full arcade cabinet gameplay, animated robotics construction and immersive VR remain open.
+
+
+## Current PR-head verification request — 22 November 2026
+
+- [ ] Run the canonical Godot 4.3 validation and Android debug APK export on the current feature-branch head after the rank-board and hotel housekeeping additions.
+- [ ] Confirm the rank-board rendering, hotel checkout/housekeeping/inspection cycle, room-service order lifecycle, pool swimming, bowling pinfall, basketball scoring and arcade target detection on the same tested source commit.
+- [ ] Record the exact workflow run IDs, tested commit SHA and APK artifact only after both workflows complete successfully.
+- Note: prior Godot #1400 and Android #1137 results validate `8e3cbfce9b8184239ed2481c1043d6c8ce9075ae`, not later commits. No claim is made here that later changes have passed CI.
