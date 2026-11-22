@@ -2606,6 +2606,7 @@ func _launch_arcade_projectile() -> Dictionary:
 					break
 		if hit:
 			break
+	var projectile_end_position := projectile.global_position if is_instance_valid(projectile) else Vector3.ZERO
 	if is_instance_valid(projectile):
 		projectile.queue_free()
 	var step := int(active_facility_activity.get("step", 0)) + 1
