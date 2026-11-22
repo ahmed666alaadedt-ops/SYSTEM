@@ -102,6 +102,17 @@ func _run() -> void:
 			if exterior_shape == null or exterior_shape.shape == null or exterior_shape.disabled:
 				_fail("Tower exterior shell collision is missing or disabled for " + root_name + ": " + collider_name)
 				return
+		var exterior_detail_ribs := tower_root.get_node_or_null("TowerFacadeVerticalDetailRibs") as MultiMeshInstance3D
+		var entrance_arcade := tower_root.get_node_or_null("TowerEntranceArcadeColumns") as MultiMeshInstance3D
+		if int(tower_root.get_meta("exterior_detail_pass", 0)) != 2 or exterior_detail_ribs == null or exterior_detail_ribs.multimesh == null or exterior_detail_ribs.multimesh.instance_count != 8:
+			_fail("Second-pass facade vertical detailing is missing or incomplete on " + root_name)
+			return
+		if entrance_arcade == null or entrance_arcade.multimesh == null or entrance_arcade.multimesh.instance_count != 8:
+			_fail("Tower entrance arcade columns are missing or incomplete on " + root_name)
+			return
+		if tower_root.get_node_or_null("TowerGrandEntranceCanopy") == null or tower_root.get_node_or_null("TowerGrandEntranceCanopyLight") == null or tower_root.get_node_or_null("TowerEntranceWayfinding") == null:
+			_fail("Grand entrance canopy, lighting or wayfinding is missing on " + root_name)
+			return
 		var interior := tower_root.get_node_or_null("TowerInterior")
 		if interior == null:
 			_fail("Missing playable lobby for " + root_name)
