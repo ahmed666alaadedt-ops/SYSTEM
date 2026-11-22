@@ -99,3 +99,10 @@ Last verified: 2026-11-22 (GitHub repository review)
 - Manager commit `294dc0f003b9e4b61600b23d2ab3c170f6307fc7` adds eight arcade cabinet visuals, four bowling lane/pin layouts, four VR pod visuals, and a concert stage with forty seat markers inside the Entertainment Tower. Manager commit `ca24eafafc0c72442b7007fe6a949b73e0074467` registers the entertainment venue revision.
 - Validator commit `cac3ab87d4d188639fe592e156ccad696bb56918` checks the four venue roots; validator commit `7ef5ce005c3cfb5c5cb03877829c6d1e213cbbf0` checks the revision marker.
 - All are static visual layouts only. Playable arcade/bowling/VR/concert interactions and audio are outstanding. Keep the work on `qa/fix-deferred-test-cleanup-20261122`; do not merge to `main` without explicit user approval.
+
+
+## Shopping Tower mall interior visual pass — 22 November 2026
+
+- Manager commit `7740c0b1c154be49c12f195eeef0bff9270c3dce` adds eight retail storefront display bays, six food vendor counters/menu panels, and a dining area with twelve tables and forty-eight chair visuals. Manager commit `53585bdbc46ff779a51f9e33db8df9380ed3465d` registers shopping mall revision 1.
+- Validator commit `280f4efba18f12e00b8264b03803b2a925215eae` checks retail, food vendor and dining area roots; validator commit `114347c8062400dfc43162d285e56101e631ba98` checks the revision marker.
+- Static visuals only; shops, stock, NPC vendors, payments, purchases and food orders are not functional yet.
