@@ -7,6 +7,11 @@ signal level_up(new_level: int)
 signal attribute_changed(attribute: String, new_value: int)
 
 const MAX_LEVEL := 100
+const EQUIPABLE_WEAPONS := [
+	"armory_sidearm", "armory_assault_rifle", "armory_precision_rifle", "armory_scattergun",
+	"armory_support_gun", "armory_energy_rifle", "armory_long_sword", "armory_dual_daggers",
+	"armory_spear", "armory_battle_axe", "armory_recurve_bow", "armory_crossbow"
+]
 const SAVE_PATH := "user://system_player_progress.cfg"
 
 const WORLD_FRAGMENT_REQUIREMENTS := {
@@ -32,6 +37,7 @@ var available_attribute_points: int = 0
 var attributes: Dictionary = DEFAULT_ATTRIBUTES.duplicate(true)
 var greed_fragments: Array[String] = []
 var inventory_items: Dictionary = {}
+var equipped_weapon_id := ""
 var world_fragments: Dictionary = {"modern": [], "historical": [], "fantasy": []}
 
 
@@ -131,6 +137,8 @@ func remove_item(item_id: String, amount: int = 1) -> bool:
 	var remaining := owned - amount
 	if remaining <= 0:
 		inventory_items.erase(normalized_id)
+		if equipped_weapon_id == normalized_id:
+			equipped_weapon_id = ""
 	else:
 		inventory_items[normalized_id] = remaining
 	save_progress()
@@ -139,6 +147,19 @@ func remove_item(item_id: String, amount: int = 1) -> bool:
 
 func get_item_count(item_id: String) -> int:
 	return int(inventory_items.get(item_id,0))
+
+
+func equip_weapon(item_id: String) -> bool:
+	var normalized_id := item_id.strip_edges()
+	if not EQUIPABLE_WEAPONS.has(normalized_id) or get_item_count(normalized_id) <= 0:
+		return false
+	equipped_weapon_id = normalized_id
+	save_progress()
+	return true
+
+
+func get_equipped_weapon() -> String:
+	return equipped_weapon_id
 
 
 func spend_attribute_point(attribute: String) -> bool:
@@ -179,6 +200,7 @@ func get_progress_data() -> Dictionary:
 		"greed_fragments": greed_fragments.duplicate(),
 		"greed_fragments_count": greed_fragments.size(),
 		"inventory_items": inventory_items.duplicate(true),
+		"equipped_weapon_id": equipped_weapon_id,
 		"greed_island_seal_ready": bool(get_world_fragment_data().get("all_world_keys_ready", false)),
 		"world_keys": get_world_fragment_data()
 	}
@@ -208,6 +230,7 @@ func save_progress() -> void:
 	)
 	config.set_value("world_keys", "fragments", world_fragments.duplicate(true))
 	config.set_value("inventory", "items", inventory_items.duplicate(true))
+	config.set_value("inventory", "equipped_weapon_id", equipped_weapon_id)
 
 	var error := config.save(SAVE_PATH)
 
@@ -257,6 +280,9 @@ func load_progress() -> void:
 		var item_count := maxi(0,int(saved_inventory[item_id]))
 		if item_count > 0:
 			inventory_items[str(item_id)] = item_count
+	equipped_weapon_id = str(config.get_value("inventory", "equipped_weapon_id", ""))
+	if not EQUIPABLE_WEAPONS.has(equipped_weapon_id) or get_item_count(equipped_weapon_id) <= 0:
+		equipped_weapon_id = ""
 
 	var saved_world_fragments: Dictionary = config.get_value("world_keys", "fragments", {})
 	world_fragments = {"modern": [], "historical": [], "fantasy": []}
@@ -364,6 +390,8 @@ func get_greed_fragment_data() -> Dictionary:
 
 func _reset_progress() -> void:
 	greed_fragments.clear()
+	inventory_items.clear()
+	equipped_weapon_id = ""
 	world_fragments = {"modern": [], "historical": [], "fantasy": []}
 	current_level = 1
 	total_xp = 0
