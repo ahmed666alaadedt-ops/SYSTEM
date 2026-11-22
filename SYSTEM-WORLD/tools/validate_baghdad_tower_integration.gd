@@ -78,6 +78,15 @@ func _run() -> void:
 			_fail("Missing playable lobby for " + root_name)
 			return
 
+		var expected_facade_panels := int(tower_root.get_meta("tower_floor_count", 0)) * 4
+		var facade_glass := tower_root.get_node_or_null("TowerFacadeGlassPanels") as MultiMeshInstance3D
+		var facade_frames := tower_root.get_node_or_null("TowerFacadeMetalFrames") as MultiMeshInstance3D
+		if facade_glass == null or facade_glass.multimesh == null or facade_glass.multimesh.instance_count != expected_facade_panels:
+			_fail("Tower facade glass panels do not cover every floor on " + root_name)
+			return
+		if facade_frames == null or facade_frames.multimesh == null or facade_frames.multimesh.instance_count != expected_facade_panels:
+			_fail("Tower facade metal frames do not cover every floor on " + root_name)
+			return
 		for screen_name in ["ExteriorAdScreen_00", "ExteriorAdScreen_01"]:
 			var exterior_screen := tower_root.get_node_or_null(screen_name)
 			if exterior_screen == null or exterior_screen.get_node_or_null("AdScreenDisplay") == null or exterior_screen.get_node_or_null("AdScreenMessage") == null:
