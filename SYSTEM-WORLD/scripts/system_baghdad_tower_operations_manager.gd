@@ -2589,8 +2589,8 @@ func _launch_arcade_projectile() -> Dictionary:
 	var nearest_target_distance := INF
 	var nearest_projectile_position := Vector3.ZERO
 	var nearest_target_position := Vector3.ZERO
-	for _physics_step in range(90):
-		await get_tree().physics_frame
+	for _physics_step in range(30):
+		await get_tree().create_timer(0.05).timeout
 		if not is_instance_valid(projectile):
 			break
 		if bool(projectile.get_meta("system_arcade_hit", false)):
