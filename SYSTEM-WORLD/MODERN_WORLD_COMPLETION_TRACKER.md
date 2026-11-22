@@ -462,3 +462,14 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Extend the validator to check service directories and reception counters in every tower, plus aisle guidance, exit signage, hall numbering and ticket kiosk visuals in all six cinema halls.
 - [ ] These are still static visual fixtures: service NPCs, queueing, purchases, ticket validation, cinema playback and facility navigation are not yet implemented.
 - [ ] Confirm fresh Godot tower validation and Android APK build for the exact latest commits.
+
+
+## Entertainment Tower venue-detail pass — 22 November 2026
+
+- [x] Add eight arcade cabinet visual stations with screen panels and labels.
+- [x] Add four bowling lanes with pin-set visuals.
+- [x] Add four VR pod visual stations.
+- [x] Add a concert stage and forty audience seat markers.
+- [x] Extend the five-tower Godot validator to assert arcade, bowling, VR and concert venue roots and the entertainment revision marker.
+- [ ] Implement playable arcade games, bowling ball/pin physics and scoring, VR activities, event scheduling, concert audio/stage interactions and venue staff; current additions are static 3D blockouts.
+- [ ] Re-run Godot validation and Android export against the exact latest source and validator commits.
