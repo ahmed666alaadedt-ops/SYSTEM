@@ -1382,9 +1382,20 @@ func _run() -> void:
 			if vr_course == null:
 				_fail("VR simulation course geometry was not generated.")
 				return
+			if vr_course.get_node_or_null("VRSimulationFloorPhysics/CollisionShape3D") == null:
+				_fail("VR course floor is missing its physical collision surface.")
+				return
+			if vr_course.get_node_or_null("VRSimulationExitPlatform") == null or vr_course.get_node_or_null("VRSimulationExitSensor/CollisionShape3D") == null:
+				_fail("VR course exit platform or its physical arrival sensor is missing.")
+				return
 			for checkpoint_index in range(3):
-				if vr_course.get_node_or_null("VRCheckpointGate_%02d/VRCheckpointSensor_%02d" % [checkpoint_index, checkpoint_index]) == null:
-					_fail("VR course checkpoint %d is missing its physical sensor." % checkpoint_index)
+				var checkpoint_sensor := vr_course.get_node_or_null("VRCheckpointGate_%02d/VRCheckpointSensor_%02d" % [checkpoint_index, checkpoint_index]) as Area3D
+				if checkpoint_sensor == null or checkpoint_sensor.get_node_or_null("CollisionShape3D") == null or not checkpoint_sensor.monitoring:
+					_fail("VR course checkpoint %d is missing its active physical sensor." % checkpoint_index)
+					return
+			for obstacle_index in range(4):
+				if vr_course.get_node_or_null("VRHologramObstaclePhysics_%02d/CollisionShape3D" % obstacle_index) == null:
+					_fail("VR hologram obstacle %d is missing its physical collision body." % obstacle_index)
 					return
 			operations.set("current_facility_root", vr_facility)
 		if not bool(operations.call("start_facility_activity", str(activity_type))):
@@ -1395,7 +1406,16 @@ func _run() -> void:
 		for _step in range(activity_attempt_limit):
 			if str(activity_type) == "vr_lab":
 				var vr_active_course := (operations.get("current_facility_root") as Node3D).get_node("VRSimulationCourse") as Node3D
+				var vr_exit_sensor := vr_active_course.get_node("VRSimulationExitSensor") as Area3D
 				if _step == 0:
+					var manual_action_result: Dictionary = operations.call("perform_facility_activity", "checkpoint")
+					if bool(manual_action_result.get("success", false)) or int(operations.get("active_facility_activity").get("step", -1)) != 0:
+						_fail("VR course incorrectly advanced from a button/action without physical gate traversal.")
+						return
+					vr_exit_sensor.body_entered.emit(player)
+					if operations.get("active_facility_activity").is_empty():
+						_fail("VR exit platform completed the course while still locked.")
+						return
 					var out_of_order_sensor := vr_active_course.get_node("VRCheckpointGate_01/VRCheckpointSensor_01") as Area3D
 					out_of_order_sensor.body_entered.emit(player)
 					if int(operations.get("active_facility_activity").get("step", -1)) != 0:
@@ -1403,7 +1423,26 @@ func _run() -> void:
 						return
 				var vr_sensor := vr_active_course.get_node("VRCheckpointGate_%02d/VRCheckpointSensor_%02d" % [_step, _step]) as Area3D
 				vr_sensor.body_entered.emit(player)
-				final_activity_result = {"success": true, "completed": operations.get("active_facility_activity").is_empty(), "step": _step + 1}
+				var vr_activity_state: Dictionary = operations.get("active_facility_activity")
+				if int(vr_activity_state.get("step", -1)) != _step + 1:
+					_fail("VR course did not record the physical crossing of gate %d." % (_step + 1))
+					return
+				if _step < 2:
+					if bool(vr_activity_state.get("exit_unlocked", false)) or vr_exit_sensor.monitoring:
+						_fail("VR exit platform unlocked before all three energy gates were crossed.")
+						return
+					final_activity_result = {"success": true, "completed": false, "step": _step + 1}
+				else:
+					var exit_platform := vr_active_course.get_node("VRSimulationExitPlatform") as MeshInstance3D
+					if not bool(vr_activity_state.get("exit_unlocked", false)) or not vr_exit_sensor.monitoring or bool(exit_platform.get_meta("system_vr_exit_locked", true)):
+						_fail("VR exit platform did not unlock after the third physical energy gate.")
+						return
+					if operations.get("active_facility_activity").is_empty():
+						_fail("VR course completed at the third gate without reaching the exit platform.")
+						return
+					vr_exit_sensor.body_entered.emit(player)
+					final_activity_result = {"success": true, "completed": operations.get("active_facility_activity").is_empty(), "step": 3}
+
 			elif str(activity_type) in ["bowling", "sports_court", "arcade"]:
 				final_activity_result = await operations.call("perform_facility_activity", str(activity_case[0]))
 			else:
