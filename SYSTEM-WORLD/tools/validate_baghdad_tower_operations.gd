@@ -49,6 +49,14 @@ func _run() -> void:
 	if int(status.get("tower_count", 0)) != 6:
 		_fail("Operations manager did not resolve all six towers.")
 		return
+	operations.call("open_tower", "hunter_association_tower_baghdad")
+	if operations.find_child("HunterRankBoardButton", true, false) == null:
+		_fail("Hunter Association lobby menu is missing the hunter rank board entry.")
+		return
+	operations.call("_open_hunter_rank_board")
+	if operations.find_child("HunterRankProgressRows", true, false) == null:
+		_fail("Hunter rank board did not render its F-to-SSS progression requirements.")
+		return
 	if int(status.get("staff_count", 0)) != 24:
 		_fail("Expected four persistent NPC staff members per tower; found %d." % int(status.get("staff_count", 0)))
 		return
