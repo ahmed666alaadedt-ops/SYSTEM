@@ -94,6 +94,9 @@ func _run() -> void:
 	if not bool(boss_data.get("boss_floor", false)) or str(boss_data.get("arena_type", "")) != "BOSS_TRIAL":
 		_fail("Power Tower floor 200 is not configured as a boss trial.")
 		return
+	if int(boss_data.get("required_level", 999)) > 100:
+		_fail("Power Tower floor 200 is unreachable under the 100-level player progression cap.")
+		return
 	var boss_room := operations.call("_ensure_floor_room", "power_tower_baghdad", 200) as Node3D
 	if boss_room == null or boss_room.get_node_or_null("BossTrialPlatform") == null:
 		_fail("Power Tower floor 200 boss arena was not generated.")
@@ -104,7 +107,27 @@ func _run() -> void:
 	if not operations.has_method("_buy_product") or not operations.has_method("_sell_item"):
 		_fail("NPC-supervised buy/sell transaction methods are missing.")
 		return
-	print("Baghdad tower operations validation passed: six tower interiors, 24 NPC employees, internal/external NPC-managed ads, trading handlers, and generated 200th-floor boss arena.")
+	var progression: Node = main.get("player_progression") as Node
+	var shop_employee: Node = null
+	var shopping_tower := tower_manager.get_node_or_null("ShoppingTower") as Node3D
+	var shopping_lobby := shopping_tower.get_node_or_null("PublicLobby_Blockout")
+	for child in shopping_lobby.get_children():
+		if child.has_meta("system_tower_staff_id"):
+			shop_employee = child
+			break
+	if shop_employee == null:
+		_fail("No NPC shop employee can be interacted with.")
+		return
+	operations.call("open_staff_service", shop_employee)
+	operations.call("_buy_product", "water_bottle", "قارورة ماء", 12)
+	if int(progression.call("get_item_count", "water_bottle")) < 1:
+		_fail("NPC shop purchase did not add the item to player inventory.")
+		return
+	operations.call("_sell_item", "water_bottle", 1)
+	if int(progression.call("get_item_count", "water_bottle")) != 0:
+		_fail("NPC shop sale did not remove the sold inventory item.")
+		return
+	print("Baghdad tower operations validation passed: six tower interiors, 24 NPC employees, internal/external NPC-managed ads, buy/sell inventory transactions, and generated 200th-floor boss arena.")
 	main.queue_free()
 	await process_frame
 	quit(0)
