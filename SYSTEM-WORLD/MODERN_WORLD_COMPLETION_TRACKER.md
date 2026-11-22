@@ -389,8 +389,9 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Replace instant hide/collision-disable behavior with a 1.25-second vertical stone-slab movement; the slab retains its collision while moving and clears the doorway by rising 4.2 m.
 - [x] Allow the door to reverse direction safely if the player interacts while its tween is running; expose the current open state and matching Arabic prompt on the interaction root.
 - [x] Use an AnimatableBody3D for the moving door slab so its physical motion can be synchronized with the physics engine.
-- [ ] Run the dedicated Godot headless lifecycle test and canonical project import/launch workflow; source changes alone are not runtime proof.
-- [ ] Persist the open/closed state across cell unload/reload through the world-state save service; this change deliberately does not claim persistence.
+- [x] Godot 4.3 headless project import/parser and dedicated vault-door lifecycle test passed in GitHub Actions run 44990348872 on commit `ed5ea163b54bb92a34b323449d84c448520ab1d2`; the test covers animated open/close, collision remaining enabled, Arabic prompts/state metadata, tween reversal, and local state restoration after manager recreation.
+- [ ] Run the canonical main-scene launch and verify actual physics blocking/clearance; the current lifecycle test checks that the collision shape remains enabled but does not yet assert a physics collision query against the moving slab.
+- [ ] Integrate persistence with the authenticated world-state save service for cross-device/account synchronization; current ConfigFile persistence is local to this device only.
 - [ ] Validate doorway clearance, ray targeting from both sides, repeated interaction, and mobile-device behavior in the running game.
 
 - [x] Persist each Baghdad heritage-vault door's desired open/closed state in a local ConfigFile and restore the slab position/prompt when the heritage manager recreates its city sites.
