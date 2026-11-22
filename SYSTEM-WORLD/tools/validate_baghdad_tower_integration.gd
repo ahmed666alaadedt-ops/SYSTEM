@@ -392,6 +392,12 @@ func _run() -> void:
 	if not bool(headquarters_interior.get_meta("headquarters_service_interactions_ready", false)) or int(headquarters_interior.get_meta("headquarters_public_service_count", 0)) != 4:
 		_fail("Hunter Association headquarters does not expose all four public service interaction points.")
 		return
+	var hq_service_location_ids := {
+		"reception": "tower_service_hunter_headquarters_2",
+		"registry": "tower_service_hunter_headquarters_0",
+		"missions": "tower_service_hunter_headquarters_1",
+		"examiner_control": "tower_service_hunter_headquarters_3"
+	}
 	for service_id in ["reception", "registry", "missions", "examiner_control"]:
 		var service_marker := headquarters_interior.get_node_or_null("HQServiceInteraction_" + service_id) as Area3D
 		var service_desk := headquarters_interior.get_node_or_null("HQServiceDeskCollision_" + service_id) as StaticBody3D
@@ -405,7 +411,7 @@ func _run() -> void:
 		if service_marker == null or not service_marker.is_in_group("system_interactable"):
 			_fail("Hunter HQ service interaction is missing or not interactable: " + service_id)
 			return
-		if str(service_marker.get_meta("system_hq_service_id", "")) != service_id or str(service_marker.get_meta("system_service_description", "")).is_empty():
+		if str(service_marker.get_meta("system_hq_service_id", "")) != service_id or str(service_marker.get_meta("system_location_id", "")) != str(hq_service_location_ids[service_id]) or str(service_marker.get_meta("system_service_description", "")).is_empty():
 			_fail("Hunter HQ service interaction metadata is incomplete: " + service_id)
 			return
 		if not service_collision_ready or service_sign == null or service_sign.text.is_empty():
@@ -454,7 +460,7 @@ func _run() -> void:
 	fake_map.call("register_location", "2", "hunter_association_headquarters_baghdad", "region_baghdad", "المقر الرئيسي لنقابة الصيادين", 5, headquarters_position, false)
 	landmarks.call("register_map_locations", fake_map, "2")
 	var main_source := FileAccess.get_file_as_string("res://scripts/main.gd")
-	for required_contract in ["tower_lift_console_", "tower_stair_", "tower_floor_exit_", "tower_service_", "_enter_baghdad_tower_floor", "BaghdadTowerLiftUIScript", "set_hunter_exam_tunnel_access"]:
+	for required_contract in ["tower_lift_console_", "tower_stair_", "tower_floor_exit_", "tower_service_", "tower_service_hunter_headquarters_", "_enter_baghdad_tower_floor", "BaghdadTowerLiftUIScript", "set_hunter_exam_tunnel_access"]:
 		if not main_source.contains(required_contract):
 			_fail("Main interaction runtime is missing tower lift contract: " + required_contract)
 			return
