@@ -34,7 +34,16 @@ const PRODUCT_CATALOG := {
 		{"id":"energy_elixir","name":"إكسير الطاقة","price":360},
 		{"id":"nen_acquisition_elixir","name":"إكسير اكتساب النِن","price":1800},
 		{"id":"nen_control_elixir","name":"إكسير التحكم بالنِن","price":2600},
-		{"id":"rare_legendary_elixir","name":"إكسير نادر/أسطوري","price":12000}
+		{"id":"rare_legendary_elixir","name":"إكسير نادر/أسطوري","price":12000},
+		{"id":"iron_ingot","name":"سبيكة حديد","price":45},
+		{"id":"wood_plank","name":"لوح خشب مصقول","price":20},
+		{"id":"leather_roll","name":"لفافة جلد","price":35},
+		{"id":"medicinal_herb","name":"عشبة طبية","price":25},
+		{"id":"crystal_dust","name":"غبار كريستالي","price":80},
+		{"id":"monster_core","name":"نواة وحش","price":150},
+		{"id":"nen_fragment","name":"شظية نِن","price":300},
+		{"id":"energy_crystal","name":"كريستال طاقة","price":450},
+		{"id":"rare_core","name":"نواة نادرة","price":1200}
 	],
 	"shopping_tower_baghdad": [
 		{"id":"food_ration","name":"وجبة ميدانية","price":35},
