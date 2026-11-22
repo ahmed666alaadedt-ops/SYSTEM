@@ -2423,8 +2423,8 @@ func _add_facility_activity_controls(facility_type: String) -> void:
 		aim_slider.step = 0.05
 		aim_slider.value = 0.0
 		aim_slider.custom_minimum_size = Vector2(260.0, 38.0)
-		 aim_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		 aim_slider.value_changed.connect(_on_facility_aim_changed)
+		aim_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		aim_slider.value_changed.connect(_on_facility_aim_changed)
 		content.add_child(aim_slider)
 	var start_button := Button.new()
 	start_button.name = "StartFacilityActivityButton"
