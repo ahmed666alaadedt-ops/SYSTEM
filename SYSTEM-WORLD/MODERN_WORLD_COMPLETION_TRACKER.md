@@ -711,4 +711,7 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Instantiate a fresh progression manager after the 200-floor run and verify that floor 200, completion status, and all 200 clear-time records reload from the saved profile.
 - [x] Pass the full 200-floor progression and save/reload regression on tested source HEAD `ad479c3704bd9f9955f908007dff07681c93a307`; the Godot validator completed successfully (workflow run `45053457072`).
 - [x] Pass canonical Android APK export on the same tested source HEAD; artifact `SYSTEM-WORLD-canonical-android-debug-apk`, 35,812,958 bytes, expires 6 December 2026 (workflow run `45053457094`).
-- [ ] Complete real combat-flow tests for timed survival/championship failures, boss-floor victory, final sovereign boss rewards, and recovery after abandoning an active floor; physical Android gameplay review remains outstanding.
+- [x] Add a final-boss regression that checks the sovereign boss transitions through all three health phases and registers defeat.
+- [x] Exercise the operations manager's final-floor clear integration and verify that the sovereign crown/core, rare core, Nen fragment, SYSTEM credits, and floor-200 completion record are granted; restore the validator's original local profile afterward.
+- [ ] Pass the final-boss phase and reward integration regression on the latest PR head.
+- [ ] Test timed survival/championship failure and active-floor abandon recovery through automated gameplay and physical Android play.
