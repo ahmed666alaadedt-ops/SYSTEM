@@ -80,6 +80,16 @@ var nen_burst_cooldown_remaining := 0.0
 var nen_button_refresh_clock := 0.0
 var nen_burst_button: Button
 
+# Hunter grades are earned from verified guild work and demonstrated Nen practice.
+const HUNTER_RANK_ORDER := ["F", "E", "D", "C", "B", "A", "S", "SS", "SSS"]
+const HUNTER_RANK_MISSION_POINTS := {"E": 100, "D": 250, "C": 500, "B": 850, "A": 1500, "S": 2500, "SS": 5000}
+var verified_hunter_mission_points := 0
+var verified_hunter_mission_count := 0
+var verified_hunter_mission_ids: Array[String] = []
+var nen_skill_use_count := 0
+var nen_skill_ids: Array[String] = []
+var hunter_sss_board_approved := false
+
 
 func _ready() -> void:
 	load_progress()
@@ -242,6 +252,72 @@ func add_experience(amount: int, reason: String = "") -> Dictionary:
 		"attribute_points": available_attribute_points,
 		"reason": reason
 	}
+
+
+func record_verified_hunter_mission(mission_id: String, mission_points: int, used_nen: bool = false, ability_id: String = "") -> Dictionary:
+	var normalized_id := mission_id.strip_edges()
+	if normalized_id.is_empty() or mission_points <= 0:
+		return {"success": false, "reason": "INVALID_VERIFIED_MISSION"}
+	if verified_hunter_mission_ids.has(normalized_id):
+		return {"success": false, "reason": "MISSION_ALREADY_COUNTED"}
+	verified_hunter_mission_ids.append(normalized_id)
+	verified_hunter_mission_count += 1
+	verified_hunter_mission_points += mission_points
+	if used_nen and not ability_id.strip_edges().is_empty():
+		record_nen_skill_use(ability_id)
+	save_progress()
+	return {"success": true, "rank": get_hunter_rank(), "mission_points": verified_hunter_mission_points, "mission_count": verified_hunter_mission_count}
+
+
+func record_nen_skill_use(ability_id: String) -> Dictionary:
+	var normalized_id := ability_id.strip_edges().to_lower()
+	if not nen_unlocked or nen_control_rank <= 0:
+		return {"success": false, "reason": "NEN_NOT_READY"}
+	if normalized_id.is_empty():
+		return {"success": false, "reason": "ABILITY_ID_REQUIRED"}
+	nen_skill_use_count += 1
+	if not nen_skill_ids.has(normalized_id):
+		nen_skill_ids.append(normalized_id)
+	save_progress()
+	return {"success": true, "uses": nen_skill_use_count, "distinct_abilities": nen_skill_ids.size(), "rank": get_hunter_rank()}
+
+
+func get_hunter_rank() -> String:
+	var rank := "F"
+	for candidate in ["E", "D", "C", "B"]:
+		if verified_hunter_mission_points >= int(HUNTER_RANK_MISSION_POINTS[candidate]):
+			rank = candidate
+	if verified_hunter_mission_points >= 1500 and nen_unlocked and nen_control_rank >= 2 and nen_skill_use_count >= 10:
+		rank = "A"
+	if verified_hunter_mission_points >= 2500 and nen_unlocked and nen_control_rank >= 4 and nen_skill_use_count >= 50 and nen_skill_ids.size() >= 2:
+		rank = "S"
+	if verified_hunter_mission_points >= 5000 and nen_unlocked and nen_control_rank >= 5 and nen_skill_use_count >= 150 and nen_skill_ids.size() >= 3:
+		rank = "SS"
+	if hunter_sss_board_approved and rank == "SS":
+		rank = "SSS"
+	return rank
+
+
+func get_hunter_rank_progress() -> Dictionary:
+	return {
+		"rank": get_hunter_rank(),
+		"rank_order": HUNTER_RANK_ORDER.duplicate(),
+		"verified_mission_points": verified_hunter_mission_points,
+		"verified_mission_count": verified_hunter_mission_count,
+		"nen_unlocked": nen_unlocked,
+		"nen_control_rank": nen_control_rank,
+		"nen_skill_uses": nen_skill_use_count,
+		"distinct_nen_abilities": nen_skill_ids.size(),
+		"sss_board_approved": hunter_sss_board_approved
+	}
+
+
+func approve_sss_by_exam_board(approval_id: String) -> bool:
+	if approval_id.strip_edges().is_empty() or get_hunter_rank() != "SS":
+		return false
+	hunter_sss_board_approved = true
+	save_progress()
+	return true
 
 
 func add_item(item_id: String, amount: int = 1) -> bool:
@@ -600,6 +676,12 @@ func save_progress() -> void:
 	config.set_value("nen", "unlocked", nen_unlocked)
 	config.set_value("nen", "control_rank", nen_control_rank)
 	config.set_value("nen", "burst_cooldown_remaining", nen_burst_cooldown_remaining)
+	config.set_value("hunter_rank", "verified_mission_points", verified_hunter_mission_points)
+	config.set_value("hunter_rank", "verified_mission_count", verified_hunter_mission_count)
+	config.set_value("hunter_rank", "verified_mission_ids", verified_hunter_mission_ids)
+	config.set_value("hunter_rank", "nen_skill_use_count", nen_skill_use_count)
+	config.set_value("hunter_rank", "nen_skill_ids", nen_skill_ids)
+	config.set_value("hunter_rank", "sss_board_approved", hunter_sss_board_approved)
 
 	var error := config.save(SAVE_PATH)
 
@@ -679,6 +761,20 @@ func load_progress() -> void:
 	nen_unlocked = bool(config.get_value("nen", "unlocked", false))
 	nen_control_rank = clampi(int(config.get_value("nen", "control_rank", 0)), 0, 5)
 	nen_burst_cooldown_remaining = maxf(0.0, float(config.get_value("nen", "burst_cooldown_remaining", 0.0)))
+	verified_hunter_mission_points = maxi(0, int(config.get_value("hunter_rank", "verified_mission_points", 0)))
+	verified_hunter_mission_count = maxi(0, int(config.get_value("hunter_rank", "verified_mission_count", 0)))
+	verified_hunter_mission_ids.clear()
+	for mission_id in config.get_value("hunter_rank", "verified_mission_ids", []):
+		var normalized_mission_id := str(mission_id).strip_edges()
+		if not normalized_mission_id.is_empty() and not verified_hunter_mission_ids.has(normalized_mission_id):
+			verified_hunter_mission_ids.append(normalized_mission_id)
+	nen_skill_use_count = maxi(0, int(config.get_value("hunter_rank", "nen_skill_use_count", 0)))
+	nen_skill_ids.clear()
+	for ability_id in config.get_value("hunter_rank", "nen_skill_ids", []):
+		var normalized_ability_id := str(ability_id).strip_edges().to_lower()
+		if not normalized_ability_id.is_empty() and not nen_skill_ids.has(normalized_ability_id):
+			nen_skill_ids.append(normalized_ability_id)
+	hunter_sss_board_approved = bool(config.get_value("hunter_rank", "sss_board_approved", false))
 
 	var saved_world_fragments: Dictionary = config.get_value("world_keys", "fragments", {})
 	world_fragments = {"modern": [], "historical": [], "fantasy": []}
