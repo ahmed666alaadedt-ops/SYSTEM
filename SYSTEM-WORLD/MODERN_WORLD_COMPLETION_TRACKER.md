@@ -940,3 +940,14 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Expand the procedural interiors into detailed multi-room layouts, multi-floor apartments, functional shop inventories/counters, and business/economy interactions. The current interiors are starter shells, not full building simulations.
 - [ ] Inspect the exported APK visually and for performance on a physical Android device.
 
+
+
+## Baghdad physical-door camera targeting and occupied-cell retention — 22 November 2026
+
+- [x] Record the OSM building feature ID directly on each physical door root so the streamer can identify which cell owns the player's active interior.
+- [x] Defer unloading a Baghdad OSM cell while a player in the `system_player` group has `system_inside_building_id` matching a door/building in that cell; retain the unload request and retry it on later queue processing.
+- [x] Extend the runtime validator to resolve the physical door root from its moving leaf collider, run the actual player-camera physics ray, register/discover the door through the world map manager, and verify that an occupied cell stays loaded until the player exits.
+- [x] General Godot project validation on exact code commit `59807d68386e46307ac8805e27bc6bd16244afb9` passed: import/parse, existing gameplay validators, null-mesh scan, and headless main-scene launch (workflow `44985396517`).
+- [x] Baghdad OSM source workflow on the same commit passed, including the 5×5 metric cell pack, entrance association and real-cell connectivity audit (workflow `44985396507`).
+- [ ] Canonical Android workflow `44985543020` is still running. The audited OSM runtime validator (camera ray, map discovery, occupied-cell retention) and Android export must pass before this milestone is marked runtime-verified.
+- Note: an earlier intermediate commit had a GDScript indentation parse error in the new metadata line. It was corrected in `59807d68386e46307ac8805e27bc6bd16244afb9`; the successful general Godot validation is on that corrected commit.
