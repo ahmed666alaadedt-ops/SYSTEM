@@ -596,6 +596,10 @@ func _run() -> void:
 	if shopping_tower.get_node_or_null("ActiveTowerElevatorCar") != null:
 		_fail("Elevator cabin was not cleaned up after returning to the lobby.")
 		return
+	var shop_progression: Node = main.get("player_progression") as Node
+	if shop_progression == null:
+		_fail("Shopping tower purchase test has no player progression reference.")
+		return
 	var shop_employee: Node = null
 	var shopping_lobby := shopping_tower.get_node_or_null("PublicLobby_Blockout")
 	for child in shopping_lobby.get_children():
@@ -608,14 +612,14 @@ func _run() -> void:
 	operations.call("open_staff_service", shop_employee)
 	var water_stock_before := int(operations.call("get_vendor_stock", "water_bottle"))
 	operations.call("_buy_product", "water_bottle", "قارورة ماء", 12)
-	if int(pilot_progression.call("get_item_count", "water_bottle")) < 1:
+	if int(shop_progression.call("get_item_count", "water_bottle")) < 1:
 		_fail("NPC shop purchase did not add the item to player inventory.")
 		return
 	if int(operations.call("get_vendor_stock", "water_bottle")) != water_stock_before - 1:
 		_fail("NPC shop purchase did not reduce vendor stock.")
 		return
 	operations.call("_sell_item", "water_bottle", 1)
-	if int(pilot_progression.call("get_item_count", "water_bottle")) != 0:
+	if int(shop_progression.call("get_item_count", "water_bottle")) != 0:
 		_fail("NPC shop sale did not remove the sold inventory item.")
 		return
 	if int(operations.call("get_vendor_stock", "water_bottle")) != water_stock_before:
