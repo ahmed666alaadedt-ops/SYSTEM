@@ -919,3 +919,15 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Confirm Android export on the same corrected HEAD; workflow run #1137 (`45065179082`) passed and uploaded APK artifact `14771151265` (35,892,247 bytes; APK SHA-256 `b99558deef44b5d1bb9991444a01013990df08d44efc7cb4fb7e9c4b91d0e01a`).
 - [ ] Inspect the new APK on a physical Android device; automated CI does not replace touch, visuals, collision feel or performance testing.
 - Note: the preceding Android export #1134 succeeded on `e552608b342ad8257d2d410dfdb2704b7c57d86b`, but the Godot operations run #1397 failed only at the arcade hit assertion. Neither result validates this correction.
+
+
+## Latest Baghdad recreation physics verification — 22 November 2026
+
+- [x] Validate the pool water-volume trigger, player swim state, buoyancy and swim-stroke input on the latest branch head.
+- [x] Validate the bowling lane collision body, ten rigid-body pins, physical ball throws, pinfall detection and completed ten-attempt activity loop.
+- [x] Validate basketball rigid-body throws, hoop scoring sensor and the five-shot activity loop.
+- [x] Validate five arcade target sensors, projectile collision detection, target identity and the five-attempt activity loop after widening the target sensor to resolve the measured near-miss.
+- [x] Run the full Godot 4.3 validation against exact branch commit `8e3cbfce9b8184239ed2481c1043d6c8ce9075ae`: workflow run ID `45065179104`; all import/parser, headless startup, Baghdad landmark, tower operations and activity regression steps passed.
+- [x] Export the Android debug APK from the same exact commit: workflow run ID `45065179082`; export and artifact upload passed. APK artifact `14771151265`, 35,892,247 bytes, SHA-256 artifact digest `07749131fc4c959c367aa172b602a7a30055c0387a942b809e48dad71da07cae`, expires 6 December 2026.
+- [ ] Physical Android playtest remains required; automated headless checks do not verify touch feel, visual quality, thermal load or device frame rate.
+- [ ] Full ten-frame bowling bonus scoring, complete team sports matches, licensed/original cinema programming and playback, full arcade cabinet gameplay, animated robotics construction and immersive VR remain open.
