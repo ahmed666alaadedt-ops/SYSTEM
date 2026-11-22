@@ -382,7 +382,9 @@ func _read_verified_republic_bridge_route() -> Dictionary:
 	var source_deck := float(route.get("bridge_deck_elevation_m", NAN))
 	if not is_finite(source_platform) or not is_finite(top_level_platform) or not is_finite(source_river) or not is_finite(source_deck):
 		return {}
-	if not is_equal_approx(source_platform, top_level_platform) or source_platform - source_river < 18.0 or source_platform <= source_deck:
+	if not is_equal_approx(source_platform, top_level_platform) or not is_equal_approx(source_river, source_water) or not is_equal_approx(source_deck, source_bridge):
+		return {}
+	if source_platform - source_river < 18.0 or source_platform <= source_deck:
 		return {}
 	var world_ground := float(terrain.call("get_terrain_height", city_anchor.x, city_anchor.z))
 	var karkh_bank: Array = bank_points[0]
