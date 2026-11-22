@@ -133,8 +133,10 @@ func _run() -> void:
 	if pilot_player == null or pilot_progression == null:
 		_fail("Player and progression data are required for helicopter authorization tests.")
 		return
-	if operations.get("progression") != pilot_progression:
-		_fail("Baghdad operations manager is not bound to the live PlayerProgression instance.")
+	var operations_progression := operations.get("progression") as Node
+	var main_progression := main.get("player_progression") as Node
+	if operations_progression != pilot_progression:
+		_fail("Baghdad progression binding mismatch: operations=%s#%d, named=%s#%d, main_var=%s#%d." % [str(operations_progression), operations_progression.get_instance_id() if is_instance_valid(operations_progression) else -1, str(pilot_progression), pilot_progression.get_instance_id() if is_instance_valid(pilot_progression) else -1, str(main_progression), main_progression.get_instance_id() if is_instance_valid(main_progression) else -1])
 		return
 	if helipad.call("_can_pilot"):
 		_fail("A completed Hunter License alone must not grant helicopter access.")
