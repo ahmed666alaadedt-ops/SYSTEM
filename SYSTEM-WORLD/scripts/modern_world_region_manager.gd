@@ -99,8 +99,14 @@ func _ready() -> void:
 				and str(route.get("osm_tigris_water_polygon_id", "")) == "1145641"
 				and route.get("tower_anchor_local_m", []).size() == 2
 				and route.get("bank_access_points_local_m", []).size() == 2
+				and route.get("centerline_local_m", []).size() >= 2
+				and route.get("express_skyway_start_local_m", []).size() == 2
+				and route.get("express_skyway_support_points_local_m", []).size() >= 5
 			)
-			if ground_schema == 1 and is_finite(ground_elevation) and is_finite(water_elevation) and is_finite(bridge_elevation) and route_valid:
+			var platform_elevation := float(route.get("tower_platform_elevation_m", NAN))
+			var river_elevation := float(route.get("river_surface_elevation_m", NAN))
+			route_valid = route_valid and is_finite(platform_elevation) and is_finite(river_elevation) and platform_elevation - river_elevation >= 18.0
+			if ground_schema == 1 and is_finite(ground_elevation) and is_finite(water_elevation) and is_finite(bridge_elevation) and is_equal_approx(ground_elevation, 34.0) and is_equal_approx(water_elevation, 28.0) and is_equal_approx(bridge_elevation, 34.28) and route_valid:
 				pass
 			else:
 				push_warning("SYSTEM WORLD: Baghdad OSM pack lacks the verified ground/bridge route contract; procedural fallback remains active.")
