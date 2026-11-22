@@ -2401,7 +2401,8 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 						arm_mesh.size = Vector3(2.1, 0.24, 0.34)
 						part.mesh = arm_mesh
 					part.material_override = part_material
-					var target_position := [Vector3(0.0, 0.3, 0.0), Vector3(0.0, 1.25, 0.0), Vector3(0.0, 2.25, 0.0)][part_index]
+					var target_positions: Array[Vector3] = [Vector3(0.0, 0.3, 0.0), Vector3(0.0, 1.25, 0.0), Vector3(0.0, 2.25, 0.0)]
+					var target_position: Vector3 = target_positions[part_index]
 					part.set_meta("system_robot_target_position", target_position)
 					part.set_meta("system_robot_assembled", assembly_complete)
 					part.position = target_position
