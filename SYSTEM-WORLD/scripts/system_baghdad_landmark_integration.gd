@@ -192,7 +192,7 @@ func _build_tunnel(root: Node3D, site: Dictionary) -> void:
 	var access_gate := Node3D.new()
 	access_gate.name = "CandidateAccessGate"
 	root.add_child(access_gate)
-	_add_box(access_gate,"CandidateAccessBarrier",Vector3(0.0,size.y*0.5,-size.z*0.31),Vector3(size.x*0.78,size.y*0.72,0.8),access_barrier,true)
+	_add_box(access_gate,"CandidateAccessBarrier",Vector3(0.0,size.y*0.36,-size.z*0.31),Vector3(size.x-3.0,size.y*0.65,0.8),access_barrier,true)
 	access_gate.set_meta("candidate_access_open",false)
 
 	for stage_index in range(7):
