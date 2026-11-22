@@ -368,9 +368,13 @@ func _build_weapons_equipment_elixirs_tower() -> void:
 	if tower != null:
 		tower.set_meta("facility_categories", PackedStringArray([
 			"weapons", "swords", "spears", "axes", "bows", "firearms",
-			"shields", "armour", "helmets", "equipment_upgrades", "repair",
+			"shields", "armor", "armour", "helmets", "equipment_upgrades", "repair",
 			"nen_research", "healing_elixirs", "strength_elixirs", "speed_elixirs",
 			"endurance_elixirs", "energy_elixirs", "rare_legendary_elixirs"
+		]))
+		tower.set_meta("elixir_categories", PackedStringArray([
+			"nen_acquisition", "nen_control", "healing", "strength", "speed",
+			"endurance", "energy", "rare_and_legendary_elixirs"
 		]))
 		tower.set_meta("gameplay_status", "weapons_equipment_elixirs_tower_blockout")
 
