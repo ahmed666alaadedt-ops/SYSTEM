@@ -133,6 +133,7 @@ func _run() -> void:
 	var parked_position := helicopter_node.position
 	var parked_rotation := helicopter_node.rotation
 	helicopter_node.position = parked_position + Vector3(1.0, 0.0, 0.0)
+	helicopter_node.rotation = parked_rotation + Vector3(0.0, 0.15, 0.0)
 	if not bool(helipad.call("_save_parked_state")):
 		_fail("Hunter Association helicopter could not save its parked state.")
 		return
@@ -141,6 +142,9 @@ func _run() -> void:
 	helipad.call("_load_parked_state")
 	if not helicopter_node.position.is_equal_approx(parked_position + Vector3(1.0, 0.0, 0.0)):
 		_fail("Hunter Association helicopter parked position did not survive reload.")
+		return
+	if not helicopter_node.rotation.is_equal_approx(parked_rotation + Vector3(0.0, 0.15, 0.0)):
+		_fail("Hunter Association helicopter parked orientation did not survive reload.")
 		return
 	helicopter_node.position = parked_position
 	helicopter_node.rotation = parked_rotation
