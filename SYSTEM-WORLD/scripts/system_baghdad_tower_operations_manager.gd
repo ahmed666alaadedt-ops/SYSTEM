@@ -1672,13 +1672,24 @@ func _department_for_floor(tower_id: String, floor_number: int, total: int) -> S
 			if ratio > 0.20: return "معرض الأسلحة الحديثة والسيوف والأقواس والسهام"
 			return "الردهة التجارية والأسواق والاحتياجات اليومية"
 		"business_investment_tower_baghdad":
+			if floor_number == 8: return "قاعة التداول والبورصة"
+			if floor_number == 16: return "مركز المؤتمرات والاجتماعات"
+			if floor_number == 24: return "نادي المستثمرين وصالة الأعمال"
 			if ratio > 0.8: return "مكاتب الاستثمار والشركات الكبرى"
 			if ratio > 0.55: return "البنوك والتمويل والعقود التجارية"
 			if ratio > 0.3: return "مكاتب تأسيس الشركات والتوظيف"
 			return "ردهة الأعمال والاستشارات"
 		"entertainment_tower_baghdad":
+			if floor_number in [18, 19, 20]: return "المسابح والمنتجع المائي"
+			if floor_number == 21: return "النادي الرياضي واللياقة"
+			if floor_number == 22: return "الملاعب والأنشطة الجماعية"
+			if floor_number == 23: return "البولينغ والألعاب"
+			if floor_number == 24: return "السينما والعروض"
+			if floor_number == 25: return "الألعاب الإلكترونية"
+			if floor_number == 26: return "منطقة العائلات والأطفال"
+			if floor_number >= 33: return "حدائق السطح والفعاليات المفتوحة"
 			if ratio > 0.8: return "المهرجانات والفعاليات"
-			if ratio > 0.55: return "المسابح والرياضة"
+			if ratio > 0.55: return "الرياضة والترفيه"
 			if ratio > 0.3: return "الأنشطة العائلية"
 			return "مركز الترفيه"
 		"technology_tower_baghdad":
@@ -1814,6 +1825,12 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 			elif floor_number == 100:
 				facility_type = "hunter_hall_of_honor"
 				facility_title = "قاعة الشرف العالمية"
+			elif floor_number == 195:
+				facility_type = "hunter_council"
+				facility_title = "مجلس نقابة الصيادين العالمي"
+			elif floor_number == 200:
+				facility_type = "hunter_headquarters"
+				facility_title = "المقر العالمي الأعلى لنقابة الصيادين"
 	if facility_type.is_empty():
 		return
 	var root := Node3D.new()
@@ -1898,6 +1915,18 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 		"hunter_hall_of_honor":
 			for index in range(6):
 				_add_facility_box(root, "HonorPillar_%02d" % index, Vector3(-15.0 + float(index) * 6.0, 2.5, 0.0), Vector3(1.2, 5.0, 1.2), highlight)
+		"hunter_council":
+			_add_facility_box(root, "GlobalCouncilTable", Vector3(0.0, 0.8, 0.0), Vector3(18.0, 1.4, 5.0), accent)
+			_add_facility_box(root, "CouncilWorldDisplay", Vector3(0.0, 4.0, -10.0), Vector3(22.0, 6.0, 0.35), highlight)
+			for index in range(8):
+				_add_facility_box(root, "CouncilSeat_%02d" % index, Vector3(-12.0 + float(index) * 3.4, 0.7, 4.0), Vector3(1.4, 1.4, 1.4), accent)
+		"hunter_headquarters":
+			_add_facility_box(root, "AssociationDirectorDesk", Vector3(0.0, 0.8, -5.0), Vector3(8.0, 1.6, 2.6), accent)
+			_add_facility_box(root, "GlobalOperationsDisplay", Vector3(0.0, 4.5, -13.0), Vector3(24.0, 7.0, 0.35), highlight)
+			_add_facility_box(root, "AssociationFlagLeft", Vector3(-15.0, 4.0, 0.0), Vector3(0.3, 8.0, 0.3), accent)
+			_add_facility_box(root, "AssociationFlagRight", Vector3(15.0, 4.0, 0.0), Vector3(0.3, 8.0, 0.3), accent)
+			for index in range(4):
+				_add_facility_box(root, "ExecutiveSeat_%02d" % index, Vector3(-6.0 + float(index) * 4.0, 0.7, 1.5), Vector3(2.0, 1.4, 1.6), accent)
 	var interaction := Area3D.new()
 	interaction.name = "FacilityServiceInteraction"
 	interaction.add_to_group("system_interactable")
