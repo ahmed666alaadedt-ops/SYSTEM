@@ -34,6 +34,7 @@ const NPCSocialInteractionManagerScript = preload("res://scripts/npc_social_inte
 const NPCCityNavigationManagerScript = preload("res://scripts/npc_city_navigation_manager.gd")
 const HunterExamManagerScript = preload("res://scripts/system_hunter_exam_manager.gd")
 const PowerTowerManagerScript = preload("res://scripts/system_power_tower_manager.gd")
+const BaghdadTowerOperationsManagerScript = preload("res://scripts/system_baghdad_tower_operations_manager.gd")
 const PlayerCombatHealthScript = preload("res://scripts/system_player_combat_health.gd")
 const InventoryPanelScript = preload("res://scripts/system_inventory_panel.gd")
 const PlayerCharacterModelScript = preload("res://scripts/npc_character_model.gd")
@@ -60,6 +61,7 @@ var npc_social_interaction_manager
 var npc_city_navigation_manager
 var hunter_exam_manager
 var power_tower_manager
+var tower_operations_manager
 var player_combat_health: Node
 var inventory_panel: CanvasLayer
 
@@ -121,6 +123,7 @@ func _ready() -> void:
 	create_interaction_manager()
 	create_mobile_controls()
 	create_interaction_prompt()
+	create_baghdad_tower_operations_manager()
 
 	update_camera_mode()
 	connect_android_runtime_bridge()
@@ -454,6 +457,27 @@ func create_power_tower_manager() -> void:
 	add_child(power_tower_manager)
 	power_tower_manager.floor_cleared.connect(_on_power_tower_floor_cleared)
 	power_tower_manager.floor_cleared.connect(_on_public_power_tower_floor_cleared)
+
+
+func create_baghdad_tower_operations_manager() -> void:
+	if active_world_root == null:
+		return
+	var region_manager := active_world_root.get_node_or_null("ModernWorldRegionManager")
+	if region_manager == null:
+		push_warning("SYSTEM: Baghdad tower operations require the modern region manager.")
+		return
+	tower_operations_manager = BaghdadTowerOperationsManagerScript.new()
+	tower_operations_manager.name = "BaghdadTowerOperationsManager"
+	add_child(tower_operations_manager)
+	tower_operations_manager.call(
+		"setup",
+		player,
+		player_progression,
+		ai_npc_society_manager,
+		power_tower_manager,
+		player_combat_health,
+		region_manager
+	)
 
 
 func _on_power_tower_floor_cleared(floor_number: int, reward_xp: int, rank: String) -> void:
@@ -815,6 +839,12 @@ func _on_interaction_performed(
 		" / ",
 		location_id
 	)
+	if target.has_meta("system_tower_staff_id") and tower_operations_manager != null:
+		tower_operations_manager.call("open_staff_service", target)
+		return
+	if bool(target.get_meta("system_tower_elevator_return", false)) and tower_operations_manager != null:
+		tower_operations_manager.call("return_to_lobby")
+		return
 	if location_id.begins_with("baghdad_osm_entrance_"):
 		var entrance_name := str(target.get_meta("system_display_name", "مدخل محدد على الخريطة"))
 		var entrance_kind := str(target.get_meta("system_entrance_type", "غير محدد"))
@@ -892,12 +922,8 @@ func _on_interaction_performed(
 			interaction_prompt_label.text = "%s\n%d طابق | ارتفاع تقريبي %.0f م\n%s\n%s\nملاحظة: الدليل يعرض الأقسام؛ الطوابق الداخلية والمصاعد التفاعلية قيد التنفيذ." % [
 				tower_name, floor_count, height_m, network_label, directory
 			]
-	if tower_id == "power_tower_baghdad" and power_tower_manager != null:
-		var next_floor := int(power_tower_manager.get_tower_status().get("next_floor", 1))
-		var level := int(player_progression.current_level) if player_progression != null else 1
-		var result: Dictionary = power_tower_manager.request_floor(next_floor, level)
-		if interaction_prompt_label != null:
-			interaction_prompt_label.text += "\nحالة طلب الطابق %d: %s" % [next_floor, str(result.get("reason", "تم طلب الدخول"))]
+	if tower_operations_manager != null:
+		tower_operations_manager.call("open_tower", tower_id)
 
 
 func _on_location_discovered(
@@ -1218,6 +1244,9 @@ func update_camera_rotation() -> void:
 
 func _physics_process(delta: float) -> void:
 	if player == null:
+		return
+	if bool(player.get_meta("system_tower_elevator_active", false)):
+		player.velocity = Vector3.ZERO
 		return
 	if vehicle_runtime_manager != null and vehicle_runtime_manager.is_driving:
 		return
