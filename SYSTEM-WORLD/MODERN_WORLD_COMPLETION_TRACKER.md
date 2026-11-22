@@ -970,6 +970,6 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Add two framed advertising displays inside each tower lobby, mounted on side walls so the Hunter examination tunnel and main entrance remain unobstructed.
 - [x] Give every screen a readable Arabic/English SYSTEM advertising identity and local placeholder content.
 - [x] Extend the Baghdad tower integration validator to require both exterior and interior displays on all five connected towers.
-- [ ] Run Godot 4.3 parser, full tower/gameplay validation and headless scene startup on the exact advertising-screen commit.
+- [x] Godot 4.3 workflow run 45006710400 passed on exact advertising-screen checkpoint commit `6440c249a29470028c8ad02f3cb97fb563f406ce`: resource import/script parsing, all configured gameplay validators including Baghdad tower integration, missing-mesh scan, and headless main-scene launch succeeded.
 - [ ] Inspect screen scale, text orientation, visibility, lighting and mobile performance in the live scene and on Android.
 - Note: this pass creates the physical display assets and placeholder content only. Live advertising, campaign scheduling, moderation, consent, analytics and provider integration remain disabled until designed and secured.
