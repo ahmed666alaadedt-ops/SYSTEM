@@ -1,3 +1,13 @@
+## Baghdad Shopping Tower hospitality and validator alignment — 22 November 2026
+
+- [x] Expand Shopping Tower staffing to eight dedicated NPC roles: tower manager, weapons merchant, elixir pharmacist, hospitality manager, chef, waiter/customer service, hotel receptionist, and housekeeping supervisor.
+- [x] Arrange the eight visible lobby staff in a centered formation that fits the expanded roster.
+- [x] Keep SYSTEM Hotel inside Shopping Tower floors 27–28: reception/lounge and reservation interaction on floor 27; eight guest-suite doors and suite-booking interaction on floor 28.
+- [x] Keep restaurants/dining areas on floors 29–32; the existing food-hall furniture and restaurant catalog remain within Shopping Tower.
+- [x] Align the Baghdad tower validator to the five connected towers plus the independent Power Tower; move forge/elixir lab checks to Shopping Tower floor 14 and add hotel/staff assertions.
+- [ ] Functional hotel backend still required: persistent room inventory, date-based reservation, rates, payment/refund, check-in/check-out, housekeeping schedule, room service and guest NPC routines. Current hotel content is a 3D blockout plus interaction metadata, not a complete reservation system.
+- [ ] Run Godot 4.3 import/parser and the full Baghdad tower validator on the latest branch head; then build and test the Android APK. No test pass is claimed yet.
+
 
 ## SYSTEM Hotel inside the Baghdad Shopping and Commerce Tower — 22 November 2026
 
