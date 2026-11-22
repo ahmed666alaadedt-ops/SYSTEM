@@ -129,13 +129,14 @@ func _run() -> void:
 	exam_manager.set("registered", true)
 	exam_manager.set("completed_stage_ids", all_stage_ids)
 	var pilot_player := main.get("player") as CharacterBody3D
-	var pilot_progression := main.get_node_or_null("PlayerProgression")
+	var pilot_progression := main.get("player_progression") as Node
 	if pilot_player == null or pilot_progression == null:
 		_fail("Player and progression data are required for helicopter authorization tests.")
 		return
 	var operations_progression := operations.get("progression") as Node
+	var named_progression := main.get_node_or_null("PlayerProgression") as Node
 	var main_progression := main.get("player_progression") as Node
-	if operations_progression != pilot_progression:
+	if operations_progression != pilot_progression or named_progression != pilot_progression:
 		_fail("Baghdad progression binding mismatch: operations=%s#%d, named=%s#%d, main_var=%s#%d." % [str(operations_progression), operations_progression.get_instance_id() if is_instance_valid(operations_progression) else -1, str(pilot_progression), pilot_progression.get_instance_id() if is_instance_valid(pilot_progression) else -1, str(main_progression), main_progression.get_instance_id() if is_instance_valid(main_progression) else -1])
 		return
 	if helipad.call("_can_pilot"):
