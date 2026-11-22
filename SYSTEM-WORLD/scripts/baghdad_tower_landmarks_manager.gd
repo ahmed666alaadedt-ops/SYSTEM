@@ -387,8 +387,11 @@ func _read_verified_republic_bridge_route() -> Dictionary:
 	if source_platform - source_river < 18.0 or source_platform <= source_deck:
 		return {}
 	var world_ground := float(terrain.call("get_terrain_height", city_anchor.x, city_anchor.z))
-	if terrain.has_method("configure_baghdad_osm_ground") and bool(terrain.get("baghdad_osm_ground_enabled")):
-		world_ground = float(terrain.get("baghdad_osm_world_ground_elevation_m"))
+	if terrain.has_method("configure_baghdad_osm_ground"):
+		if not bool(terrain.get("baghdad_osm_ground_enabled")):
+			terrain.call("configure_baghdad_osm_ground", world_ground)
+		if bool(terrain.get("baghdad_osm_ground_enabled")):
+			world_ground = float(terrain.get("baghdad_osm_world_ground_elevation_m"))
 	var karkh_bank: Array = bank_points[0]
 	var rusafa_bank: Array = bank_points[1]
 	if karkh_bank.size() != 2 or rusafa_bank.size() != 2:
