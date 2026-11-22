@@ -21,7 +21,7 @@ func get_floor_data(floor_number: int) -> Dictionary:
 		return {}
 	var boss_floor := floor_number % 10 == 0
 	var difficulty := clampi(1 + int((floor_number - 1) / 5), 1, 40)
-	var required_level := maxi(1, int(ceil(float(floor_number) * 0.72)))
+	var required_level := clampi(int(ceil(float(floor_number) * 0.45)), 1, 100)
 	var reward_xp := 100 + floor_number * floor_number * 12
 	var arena_cycle := (floor_number - 1) % 5
 	var arena_names := [
