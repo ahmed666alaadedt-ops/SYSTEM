@@ -126,6 +126,25 @@ func _run() -> void:
 	if not helipad.has_method("_is_aircraft_position_clear"):
 		_fail("Hunter Association helicopter obstacle-clearance query is missing.")
 		return
+	if not helipad.has_method("_save_parked_state") or not helipad.has_method("_load_parked_state"):
+		_fail("Hunter Association helicopter parking persistence methods are missing.")
+		return
+	var helicopter_node := helipad.get_node_or_null("HunterAssociationHelicopter") as Node3D
+	var parked_position := helicopter_node.position
+	var parked_rotation := helicopter_node.rotation
+	helicopter_node.position = parked_position + Vector3(1.0, 0.0, 0.0)
+	if not bool(helipad.call("_save_parked_state")):
+		_fail("Hunter Association helicopter could not save its parked state.")
+		return
+	helicopter_node.position = parked_position
+	helicopter_node.rotation = Vector3.ZERO
+	helipad.call("_load_parked_state")
+	if not helicopter_node.position.is_equal_approx(parked_position + Vector3(1.0, 0.0, 0.0)):
+		_fail("Hunter Association helicopter parked position did not survive reload.")
+		return
+	helicopter_node.position = parked_position
+	helicopter_node.rotation = parked_rotation
+	helipad.call("_save_parked_state")
 	var helicopter_player: CharacterBody3D = main.get("player") as CharacterBody3D
 	if helicopter_player == null:
 		_fail("A player character is required for the helicopter takeoff/landing test.")
