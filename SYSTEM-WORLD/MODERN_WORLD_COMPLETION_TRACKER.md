@@ -1049,3 +1049,17 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Connect the examiner room to authorized exam-manager state and real stage status only after access control and staff-role rules are implemented; add staff NPCs and actual examiner workflows.
 - [ ] Replace static monitor panels with functional interfaces and complete the room's production art, lighting, acoustics and Android visual/performance review.
 - Note: this is a visual/physical control-room blockout only; no live exam monitoring or stage-control functionality is claimed.
+
+
+## Baghdad Hunter Examination tunnel — candidate access and seven stage-gate blockout — 22 November 2026
+
+- [x] Build a collision-backed tunnel floor, side walls and roof, portal lighting, ceiling lights and a central guide line.
+- [x] Add seven numbered physical stage-gate frames with collision-backed side posts/headers and Arabic stage labels.
+- [x] Add a full-width candidate access barrier that starts visible and collision-enabled (closed); open it only after `HunterExamManager.begin_exam()` returns success.
+- [x] Route the successful exam-start interaction from the tunnel entrance area to the parent Baghdad landmark manager, where `set_hunter_exam_tunnel_access(true)` controls the barrier. Failed/unregistered starts leave it closed.
+- [x] Extend the integration validator to verify the tunnel floor collision, all seven stage gates/signs, closed-by-default barrier, open/close behavior, and the main interaction's parent-controller route.
+- [x] Explicitly name collision-shape children in the Baghdad landmark box helper so tunnel collision nodes can be found and validated reliably.
+- [x] Godot 4.3 workflow run `45013118196` passed on exact code commit `cb14ed58fa84a8c5d9b37fc3a12661cb1281d638`, including import/script parsing, Baghdad tower/HQ/Power Tower integration, tunnel gate/access validation, all configured gameplay validators, missing-mesh scan and headless main-scene launch.
+- [ ] Connect each of the seven stage frames to its actual challenge scene and sequential stage-unlock state; build the seven challenge environments and their verified evidence routes.
+- [ ] Review tunnel scale, collision clearance, lighting and stage-sign readability in the rendered game and on Android.
+- Note: the seven stage gates are currently physical frames/signage, not seven completed challenge doors. The entrance barrier is the only functional access gate in this pass.
