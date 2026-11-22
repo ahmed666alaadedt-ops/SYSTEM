@@ -1323,13 +1323,39 @@ func _run() -> void:
 			var robotics_room := operations.call("_ensure_floor_room", "technology_tower_baghdad", 10) as Node3D
 			var robotics_facility := robotics_room.get_node_or_null("SpecialFacility_robotics_lab") as Node3D if robotics_room != null else null
 			operations.set("current_facility_root", robotics_facility)
+		elif str(activity_type) == "vr_lab":
+			var vr_room := operations.call("_ensure_floor_room", "technology_tower_baghdad", 30) as Node3D
+			var vr_facility := vr_room.get_node_or_null("SpecialFacility_vr_lab") as Node3D if vr_room != null else null
+			if vr_facility == null:
+				_fail("VR simulation facility was not generated.")
+				return
+			var vr_course := vr_facility.get_node_or_null("VRSimulationCourse") as Node3D
+			if vr_course == null:
+				_fail("VR simulation course geometry was not generated.")
+				return
+			for checkpoint_index in range(3):
+				if vr_course.get_node_or_null("VRCheckpointGate_%02d/VRCheckpointSensor_%02d" % [checkpoint_index, checkpoint_index]) == null:
+					_fail("VR course checkpoint %d is missing its physical sensor." % checkpoint_index)
+					return
+			operations.set("current_facility_root", vr_facility)
 		if not bool(operations.call("start_facility_activity", str(activity_type))):
 			_fail("Facility activity could not start: " + str(activity_type))
 			return
 		var final_activity_result: Dictionary = {}
 		var activity_attempt_limit := 21 if str(activity_type) == "bowling" else int(activity_case[1])
 		for _step in range(activity_attempt_limit):
-			if str(activity_type) in ["bowling", "sports_court", "arcade"]:
+			if str(activity_type) == "vr_lab":
+				var vr_course := (operations.get("current_facility_root") as Node3D).get_node("VRSimulationCourse") as Node3D
+				if _step == 0:
+					var out_of_order_sensor := vr_course.get_node("VRCheckpointGate_01/VRCheckpointSensor_01") as Area3D
+					out_of_order_sensor.body_entered.emit(player)
+					if int(operations.get("active_facility_activity").get("step", -1)) != 0:
+						_fail("VR course accepted a checkpoint out of sequence.")
+						return
+				var vr_sensor := vr_course.get_node("VRCheckpointGate_%02d/VRCheckpointSensor_%02d" % [_step, _step]) as Area3D
+				vr_sensor.body_entered.emit(player)
+					final_activity_result = {"success": true, "completed": operations.get("active_facility_activity").is_empty(), "step": _step + 1}
+				elif str(activity_type) in ["bowling", "sports_court", "arcade"]:
 				final_activity_result = await operations.call("perform_facility_activity", str(activity_case[0]))
 			else:
 				final_activity_result = operations.call("perform_facility_activity", str(activity_case[0]))
