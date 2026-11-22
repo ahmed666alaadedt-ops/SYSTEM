@@ -107,6 +107,34 @@ func _run() -> void:
 			_fail("Tower %s requires %d uniformed visible staff and 4 visible customer NPCs; found staff=%d uniformed=%d customers=%d." % [tower_id, expected_staff, visible_staff, uniformed_staff, visible_customers])
 			return
 	operations.call("_simulate_customer_purchases")
+	var shopping_customer_floor := operations.call("_ensure_floor_room", "shopping_tower_baghdad", 29) as Node3D
+	var shopping_customer_lobby := tower_manager.get_node("ShoppingTower/PublicLobby_Blockout") as Node3D
+	if shopping_customer_floor == null or shopping_customer_lobby == null:
+		_fail("Shopping Tower restaurant floor or customer lobby could not be prepared.")
+		return
+	operations.set("active_floor_root", shopping_customer_floor)
+	shopping_customer_floor.set_meta("system_tower_id", "shopping_tower_baghdad")
+	operations.call("_place_customer_visitors_on_floor", "shopping_tower_baghdad", 29, shopping_customer_floor)
+	var floor_visitors := 0
+	for floor_child in shopping_customer_floor.get_children():
+		if str(floor_child.name).begins_with("TowerCustomer_"):
+			floor_visitors += 1
+	var lobby_visitors_during_visit := 0
+	for lobby_child in shopping_customer_lobby.get_children():
+		if str(lobby_child.name).begins_with("TowerCustomer_"):
+			lobby_visitors_during_visit += 1
+	if floor_visitors != 2 or lobby_visitors_during_visit != 2:
+		_fail("Shopping Tower customers did not split between the lobby and restaurant floor; floor=%d lobby=%d." % [floor_visitors, lobby_visitors_during_visit])
+		return
+	operations.call("_return_customer_visitors_to_lobbies")
+	operations.set("active_floor_root", null)
+	var lobby_visitors_after_return := 0
+	for lobby_child in shopping_customer_lobby.get_children():
+		if str(lobby_child.name).begins_with("TowerCustomer_"):
+			lobby_visitors_after_return += 1
+	if lobby_visitors_after_return != 4:
+		_fail("Shopping Tower restaurant visitors did not return to the public lobby; found %d." % lobby_visitors_after_return)
+		return
 	var post_purchase_status: Dictionary = operations.call("get_operations_status")
 	if int(post_purchase_status.get("npc_purchase_count", 0)) <= 0:
 		_fail("NPC customer purchasing did not complete a transaction.")
