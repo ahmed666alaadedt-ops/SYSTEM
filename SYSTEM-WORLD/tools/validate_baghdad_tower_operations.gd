@@ -122,8 +122,9 @@ func _run() -> void:
 	if helicopter_player == null:
 		_fail("A player character is required for the helicopter takeoff/landing test.")
 		return
+	var player_physics_before_flight := helicopter_player.is_physics_processing()
 	helipad.call("_enter_aircraft")
-	if not bool(helipad.get("pilot_active")) or helicopter_player.visible or helicopter_player.is_physics_processing():
+	if not bool(helipad.get("pilot_active")) or helicopter_player.visible or (player_physics_before_flight and helicopter_player.is_physics_processing()):
 		_fail("Authorized pilot entry did not transfer control from the on-foot character.")
 		return
 	helipad.set("vertical_input", 1.0)
@@ -139,7 +140,7 @@ func _run() -> void:
 		_fail("Helicopter could not complete a controlled landing inside its marked pad.")
 		return
 	helipad.call("_exit_aircraft")
-	if bool(helipad.get("pilot_active")) or not helicopter_player.visible or helicopter_player.is_physics_processing():
+	if bool(helipad.get("pilot_active")) or not helicopter_player.visible or bool(helicopter_player.get_meta("system_helicopter_piloting", true)) or helicopter_player.is_physics_processing() != player_physics_before_flight:
 		_fail("Helicopter exit did not restore the on-foot player controls.")
 		return
 	exam_manager.set("registered", false)
