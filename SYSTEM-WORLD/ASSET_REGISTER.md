@@ -194,3 +194,12 @@ The 5×5 pack is only a 1 km × 1 km initial proof area. It is not the full Bagh
 - Each station has a collision-backed desk body, emissive accent, Arabic `Label3D` sign, and an `Area3D` interaction registered through the existing `tower_service_` prompt path.
 - `tools/validate_baghdad_tower_integration.gd` verifies all four stations, stable service IDs, descriptions, interaction groups, signage and desk collision. Godot 4.3 workflow `45011432072` passed on code commit `1a2c9321dc41522e0c9fb8d6a8f1b777feac3363`.
 - Asset classification: procedural first-pass blockout, not finished art. These prompts provide service information only; they do not yet execute registration, mission acceptance, licensing or examiner workflows. Separate enclosed rooms, NPC staffing, visual review and Android checks remain open.
+
+
+## Hunter Association headquarters — partitioned service rooms and connected guild views — 22 November 2026
+
+- Runtime source: `scripts/system_hunter_headquarters_interior.gd`; interaction routing: `scripts/main.gd`; validator: `tools/validate_baghdad_tower_integration.gd`.
+- The headquarters hall now has four first-pass partitioned rooms for reception, Hunter registry, mission/contract information and examiner operations/control. Sixteen static partition segments carry physical collision and leave intentional doorway gaps; each room has an Arabic doorway sign.
+- Four collision-backed service desks expose stable IDs under `tower_service_hunter_headquarters_*`. Reception, registry and mission points reuse the existing `HunterGuildMenu.open_service_view` information/registration/missions views; examiner control remains an informational staff-only point.
+- Godot 4.3 workflow `45011989736` passed on exact code commit `9844fc6490ea0d432c5be1b7f3c932133a1a0daa`, including the extended headquarters/tower validator and headless main-scene launch.
+- Classification: procedural playable blockout, not production architecture. Door leaves, finished furnishings, staffed NPC schedules, authoritative service transactions, lighting/acoustic polish, and Android visual/performance review remain outstanding.
