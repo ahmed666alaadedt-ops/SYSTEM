@@ -287,15 +287,15 @@ func _create_tower_lobby(root: Node3D, tower_id: String, title: String, radius: 
 	var center_z := radius * 1.48 + depth * 0.5
 	var floor_material := _make_surface_material(Color(0.16, 0.20, 0.24), 0.62, 0.38)
 	var canopy_material := _make_surface_material(Color(0.045, 0.12, 0.18), 0.34, 0.58)
-	var floor := MeshInstance3D.new()
-	floor.name = "LobbyFloor"
+	var lobby_floor := MeshInstance3D.new()
+	lobby_floor.name = "LobbyFloor"
 	var floor_mesh := BoxMesh.new()
 	floor_mesh.size = Vector3(width, 1.0, depth)
-	floor.mesh = floor_mesh
-	floor.position = Vector3(0.0, 0.5, center_z)
-	floor.material_override = floor_material
-	lobby.add_child(floor)
-	_add_static_box_collision(lobby, "LobbyFloorCollision", floor.position, floor_mesh.size)
+	lobby_floor.mesh = floor_mesh
+	lobby_floor.position = Vector3(0.0, 0.5, center_z)
+	lobby_floor.material_override = floor_material
+	lobby.add_child(lobby_floor)
+	_add_static_box_collision(lobby, "LobbyFloorCollision", lobby_floor.position, floor_mesh.size)
 	var wall_material := _make_surface_material(Color(0.075, 0.13, 0.18), 0.48, 0.42)
 	var wall_height := 11.0
 	var wall_y := wall_height * 0.5
