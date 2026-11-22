@@ -2587,6 +2587,8 @@ func _launch_arcade_projectile() -> Dictionary:
 	var hit := false
 	var target_id := -1
 	var nearest_target_distance := INF
+	var nearest_projectile_position := Vector3.ZERO
+	var nearest_target_position := Vector3.ZERO
 	for _physics_step in range(90):
 		await get_tree().physics_frame
 		if not is_instance_valid(projectile):
@@ -2599,7 +2601,10 @@ func _launch_arcade_projectile() -> Dictionary:
 			var target_sensor := current_facility_root.get_node_or_null("ArcadeTargetSensor_%02d" % sensor_index) as Area3D
 			if target_sensor != null:
 				var target_distance := projectile.global_position.distance_to(target_sensor.global_position)
-				nearest_target_distance = minf(nearest_target_distance, target_distance)
+				if target_distance < nearest_target_distance:
+					nearest_target_distance = target_distance
+					nearest_projectile_position = projectile.global_position
+					nearest_target_position = target_sensor.global_position
 				if target_distance <= 0.95:
 					hit = true
 					target_id = sensor_index
@@ -2622,9 +2627,11 @@ func _launch_arcade_projectile() -> Dictionary:
 		result["last_target_id"] = target_id
 		result["last_target_distance"] = nearest_target_distance
 		result["last_projectile_position"] = projectile_end_position
+		result["nearest_projectile_position"] = nearest_projectile_position
+		result["nearest_target_position"] = nearest_target_position
 		return result
 	_set_status(("أصبت الهدف %d!" % (target_id + 1) if hit else "لم تصب الهدف — عدّل الاتجاه وحاول.") + " المحاولة %d/%d | النقاط: %d" % [step, goal, score])
-	return {"success": true, "completed": false, "step": step, "hit": hit, "target_id": target_id, "score": score, "nearest_target_distance": nearest_target_distance, "projectile_end_position": projectile_end_position}
+	return {"success": true, "completed": false, "step": step, "hit": hit, "target_id": target_id, "score": score, "nearest_target_distance": nearest_target_distance, "projectile_end_position": projectile_end_position, "nearest_projectile_position": nearest_projectile_position, "nearest_target_position": nearest_target_position}
 
 
 func _launch_basketball() -> Dictionary:
