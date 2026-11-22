@@ -682,6 +682,7 @@ func _create_tower_facility_blockout(root: Node3D, node_name: String, radius: fl
 			_add_facility_block(facility_root, "RestaurantAndCafeGallery", Vector3(22.0, 5.0, 0.0), Vector3(12.0, 7.0, 26.0), interior, "RESTAURANTS • CAFES")
 			_add_facility_block(facility_root, "CinemaMultiplex", Vector3(0.0, 5.0, -25.0), Vector3(38.0, 9.0, 14.0), screen, "CINEMA MULTIPLEX")
 			_create_cinema_hall_layout(facility_root, radius, interior, screen)
+			_create_shopping_mall_interior_layout(facility_root, glass, screen, interior)
 		"EntertainmentTower":
 			facility_ids = PackedStringArray(["amusement_park", "family_entertainment", "concert_hall", "esports_arena", "bowling", "arcade", "virtual_reality", "water_park", "swimming_pools", "sports_courts", "festival_plaza", "cinema_outdoor"])
 			_add_facility_block(facility_root, "IndoorAmusementAtrium", Vector3(-18.0, 5.0, 0.0), Vector3(22.0, 9.0, 22.0), glass, "FAMILY AMUSEMENT")
@@ -784,6 +785,68 @@ func _add_facility_piece(parent: Node3D, node_name: String, local_position: Vect
 		body.add_child(collision)
 		parent.add_child(body)
 
+
+
+
+func _create_shopping_mall_interior_layout(parent: Node3D, glass: Material, screen: Material, interior: Material) -> void:
+	var retail := Node3D.new()
+	retail.name = "RetailStorefrontGallery_Blockout"
+	retail.position = Vector3(0.0, 10.0, 18.0)
+	parent.add_child(retail)
+	for shop_index in range(8):
+		var shop := Node3D.new()
+		shop.name = "RetailStorefront_%02d" % shop_index
+		shop.position = Vector3(-24.5 + float(shop_index) * 7.0, 0.0, 0.0)
+		retail.add_child(shop)
+		_add_facility_piece(shop, "DisplayPlinth", Vector3(0.0, 0.55, 0.0), Vector3(4.6, 1.1, 2.2), interior, true)
+		_add_facility_piece(shop, "IlluminatedStoreSign", Vector3(0.0, 3.0, -1.0), Vector3(5.2, 0.65, 0.18), screen, false)
+		var sign := Label3D.new()
+		sign.name = "StoreNumber"
+		sign.text = "STORE %02d" % (shop_index + 1)
+		sign.font_size = 15
+		sign.position = Vector3(0.0, 3.1, -1.15)
+		sign.modulate = Color(0.45, 0.9, 1.0)
+		shop.add_child(sign)
+	var food := Node3D.new()
+	food.name = "FoodCourtVendorGallery_Blockout"
+	food.position = Vector3(-22.0, 10.0, 0.0)
+	parent.add_child(food)
+	for vendor_index in range(6):
+		var vendor := Node3D.new()
+		vendor.name = "FoodVendor_%02d" % vendor_index
+		vendor.position = Vector3(0.0, 0.0, -12.0 + float(vendor_index) * 4.8)
+		food.add_child(vendor)
+		_add_facility_piece(vendor, "ServiceCounter", Vector3(0.0, 1.0, 0.0), Vector3(8.0, 2.0, 2.0), glass, true)
+		_add_facility_piece(vendor, "MenuDisplay", Vector3(0.0, 2.5, -1.1), Vector3(5.0, 1.2, 0.12), screen, false)
+	var dining := Node3D.new()
+	dining.name = "FoodCourtDiningArea_Blockout"
+	dining.position = Vector3(-22.0, 10.0, 19.0)
+	parent.add_child(dining)
+	for table_index in range(12):
+		var table := MeshInstance3D.new()
+		table.name = "DiningTable_%02d" % table_index
+		var table_mesh := CylinderMesh.new()
+		table_mesh.top_radius = 0.9
+		table_mesh.bottom_radius = 0.9
+		table_mesh.height = 0.18
+		table.mesh = table_mesh
+		table.position = Vector3(float(table_index % 4) * 5.0 - 7.5, 0.9, float(table_index / 4) * 5.0 - 5.0)
+		table.material_override = interior
+		dining.add_child(table)
+		for chair_index in range(4):
+			var chair := MeshInstance3D.new()
+			chair.name = "DiningChair_%02d_%02d" % [table_index, chair_index]
+			var chair_mesh := BoxMesh.new()
+			chair_mesh.size = Vector3(0.7, 0.85, 0.7)
+			chair.mesh = chair_mesh
+			var angle := TAU * float(chair_index) / 4.0
+			chair.position = table.position + Vector3(cos(angle) * 1.5, -0.35, sin(angle) * 1.5)
+			chair.material_override = glass
+			dining.add_child(chair)
+	parent.set_meta("retail_storefronts_visual", 8)
+	parent.set_meta("food_vendors_visual", 6)
+	parent.set_meta("food_court_tables_visual", 12)
+	parent.set_meta("shopping_interactions_enabled", false)
 
 
 func _create_entertainment_venue_layout(parent: Node3D, glass: Material, screen: Material, interior: Material) -> void:
