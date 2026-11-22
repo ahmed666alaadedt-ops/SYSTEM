@@ -614,9 +614,82 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 	if tower_id == "power_tower_baghdad":
 		room.set_meta("system_power_tower_floor", floor_number)
 		room.set_meta("system_power_tower_department", "arena")
+		_create_power_arena_layout(room, radius, floor_number)
 	else:
 		_create_floor_facilities(room, tower_id, floor_number, radius, department)
 	return room
+
+
+func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) -> void:
+	var data: Dictionary = power_tower_manager.call("get_floor_data", floor_number) if is_instance_valid(power_tower_manager) else {}
+	var arena_type := str(data.get("arena_type", "DUEL"))
+	var rules := str(data.get("arena_rules", "اهزم خصوم الطابق"))
+	room.set_meta("system_power_tower_arena_type", arena_type)
+	room.set_meta("system_power_tower_rules", rules)
+	var arena_label := Label3D.new()
+	arena_label.name = "ArenaChallengeDisplay"
+	arena_label.text = "%s\\nالطابق %d\\n%s" % [str(data.get("arena_name", "POWER ARENA")), floor_number, rules]
+	arena_label.position = Vector3(0.0, 5.4, -radius * 0.48)
+	arena_label.font_size = 22
+	arena_label.pixel_size = 0.014
+	arena_label.modulate = Color(1.0, 0.78, 0.42)
+	room.add_child(arena_label)
+	var obstacle_count := 2
+	match arena_type:
+		"TEAM":
+			obstacle_count = 6
+		" SURVIVAL":
+			obstacle_count = 8
+		"ELITE":
+			obstacle_count = 5
+		"CHAMPIONSHIP":
+			obstacle_count = 4
+		"BOSS_TRIAL":
+			obstacle_count = 8
+		_:
+			obstacle_count = 2
+	var obstacle_material := StandardMaterial3D.new()
+	obstacle_material.albedo_color = Color(0.20, 0.24, 0.29) if arena_type != "BOSS_TRIAL" else Color(0.34, 0.075, 0.045)
+	obstacle_material.metallic = 0.62
+	obstacle_material.roughness = 0.36
+	for index in range(obstacle_count):
+		var angle := TAU * float(index) / float(maxi(obstacle_count, 1))
+		var obstacle := MeshInstance3D.new()
+		obstacle.name = "ArenaObstacle_%02d" % index
+		var obstacle_mesh := BoxMesh.new()
+		var obstacle_size := Vector3(2.4, 3.2, 1.2)
+		if arena_type == "BOSS_TRIAL":
+			obstacle_size = Vector3(2.0, 5.0, 2.0)
+		elif arena_type == "SURVIVAL":
+			obstacle_size = Vector3(3.2, 2.0, 1.0)
+		obstacle_mesh.size = obstacle_size
+		obstacle.mesh = obstacle_mesh
+		obstacle.position = Vector3(cos(angle) * radius * 0.43, obstacle_size.y * 0.5, sin(angle) * radius * 0.43)
+		obstacle.rotation.y = -angle
+		obstacle.material_override = obstacle_material
+		room.add_child(obstacle)
+		var collision_body := StaticBody3D.new()
+		collision_body.name = "ArenaObstacleCollision_%02d" % index
+		room.add_child(collision_body)
+		var collision := CollisionShape3D.new()
+		var collision_shape := BoxShape3D.new()
+		collision_shape.size = obstacle_size
+		collision.shape = collision_shape
+		collision.position = obstacle.position
+		collision.rotation = obstacle.rotation
+		collision_body.add_child(collision)
+	if arena_type == "BOSS_TRIAL":
+		var boss_platform := MeshInstance3D.new()
+		boss_platform.name = "BossTrialPlatform"
+		var platform_mesh := CylinderMesh.new()
+		platform_mesh.top_radius = 6.0
+		platform_mesh.bottom_radius = 6.5
+		platform_mesh.height = 0.8
+		boss_platform.mesh = platform_mesh
+		boss_platform.position.y = 0.8
+		boss_platform.material_override = obstacle_material
+		room.add_child(boss_platform)
+
 
 func _department_for_floor(tower_id: String, floor_number: int, total: int) -> String:
 	var ratio := float(floor_number) / float(maxi(total, 1))
