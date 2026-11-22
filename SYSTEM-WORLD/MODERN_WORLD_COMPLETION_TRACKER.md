@@ -6,8 +6,8 @@ This status block is authoritative over older historical backlog notes below. Ol
 
 - The five connected Baghdad district towers and the independent 200-floor Power Tower remain on draft PR #38; nothing is merged into `main`.
 - The hotel is beyond a visual blockout: local-save room booking, rank-gated room selection, payment/refund, check-in/check-out, housekeeping plus inspection, and paid room-service orders with guarded `placed → preparing → delivered` transitions are implemented. This is a local prototype, not a server-authoritative online hotel.
-- Pool swimming physics, full ten-frame bowling with strike/spare/tenth-frame bonuses, physical basketball scoring, arcade target detection, Shopping Tower dine-in, and the hotel housekeeping/room-service flows are implemented and covered by the full tower operations validator. Godot validation #1421 (run `45066697522`) and Android export #1158 (run `45066697476`) passed on exact PR head `02cf161b75e3bd51afb3d924c40060ba588a6244`.
-- Bowling scoring regressions cover a perfect 300 game, a zero-pin game and ten consecutive spares (150). Physical Android inspection remains outstanding. Full sports match rules, cinema programming/playback, full arcade cabinet play, animated robotics, immersive VR, autonomous staff navigation and completed room interiors remain open.
+- Pool swimming physics, full ten-frame bowling with strike/spare/tenth-frame bonuses, a ten-possession basketball 1v1 match against a physical-shot AI opponent, arcade target detection, Shopping Tower dine-in, hotel housekeeping/room-service, and original cinema scene progression are implemented and covered by the full tower operations validator. Godot validation #1428 (run `45067209969`) and Android export #1165 (run `45067210032`) passed on exact PR head `b6b8fabaacc89dc3a65ce8347a69832811f70c7d`.
+- Bowling scoring regressions cover a perfect 300 game, a zero-pin game and ten consecutive spares (150). Basketball match regression covers ten alternating possessions, player/opponent score tracking and win/draw/loss result. Cinema now advances through three original SYSTEM story scenes; actual video playback remains open. Physical Android inspection remains outstanding. Online/team sports, full arcade cabinet play, animated robotics, immersive VR, autonomous staff navigation and completed room interiors remain open.
 - Do not call the five-tower district fully complete while these explicitly open gameplay and physical-device checks remain. Keep PR #38 as draft and do not merge without the user's explicit approval.
 
 - Shopping Tower restaurant dine-in workflow is implemented and verified on source commit `6a9f1391581d408ca45b8ede9f6f9d4ddd530bdf`: four interactable tables per restaurant floor (29–32), multi-item paid orders, persisted order states, chef preparation controls, waiter serving controls and guest table release. Godot validation #1419 passed (run `45066493197`) and Android export #1156 passed (run `45066493084`) on that exact source commit. APK artifact `14771617600`, 35,903,279 bytes, SHA-256 `c6090d16e02e74edf34b11bac3b8fa18c0b00141bf993c462ec7e71b00746a3b`, expires 6 December 2026. Physical Android play inspection remains outstanding.
@@ -989,5 +989,18 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Make both player and opponent shots use physical rigid-body balls and the same hoop scoring sensor; track player/opponent scores separately.
 - [x] Add match result calculation (win/draw/loss) and small fair completion bonuses for wins/draws.
 - [x] Extend the operations validator to complete a full ten-possession match and assert both scores plus a valid final result.
-- [ ] Run Godot 4.3 full validation and canonical Android export on this match change before claiming it verified.
+- [x] Pass Godot 4.3 full validation #1428 (run `45067209969`) and canonical Android export #1165 (run `45067210032`) on exact PR head `b6b8fabaacc89dc3a65ce8347a69832811f70c7d`.
 - Note: this is a local single-player 1v1 prototype; online multiplayer, team roster rules, fouls and full tournament scheduling remain future work.
+
+
+### Cinema original-scene programming — 22 November 2026
+
+- [x] Add three original SYSTEM story scenes to the cinema screen with distinct titles, descriptions and lighting palettes.
+- [x] Advance the visible scene as the cinema session progresses and validate each scene title/screen update.
+- [ ] Actual video playback, licensed media pipeline, seat booking and scheduled showtimes remain open; the current feature is an original storyboard-style scene progression, not a movie player.
+
+### Basketball 1v1 and cinema progression verification — 22 November 2026
+
+- [x] Pass Godot 4.3 validation #1428 (run ID `45067209969`) on exact PR head `b6b8fabaacc89dc3a65ce8347a69832811f70c7d`; the full tower operations validator includes the ten-possession basketball match and cinema scene progression checks.
+- [x] Pass Android export #1165 (run ID `45067210032`) on the same exact PR head; APK artifact `14771728504`, 35,906,678 bytes, uploaded successfully and expires 6 December 2026.
+- [ ] Physical Android device testing remains outstanding.
