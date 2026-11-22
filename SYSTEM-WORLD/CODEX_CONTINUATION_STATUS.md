@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-11-22  
 **Active development branch:** `work/baghdad-system-integration`  
-**Latest verified gameplay/code commit:** `83db22c01e7ecf1addd01ce01cbb1b341bd1fdc8`  
-**Latest tracker documentation commit:** `1c65159f6b8831c12897565ed716166dd104a6d0`  
+**Latest verified gameplay/code commit:** `666eec44bf2bdf97fa4b4c76d3404e9dd70c3672`  
+**Latest tracker documentation commit:** `073bd53af92384ee658c96475084de03f3a8cfda`  
 **Main branch SHA:** `dff4e9d377ffaae6845e6f401c47346e51ea5619`  
 **Canonical runtime:** `SYSTEM-WORLD/` (Godot 4.3)
 
@@ -154,3 +154,19 @@ Code validated on commit `83db22c01e7ecf1addd01ce01cbb1b341bd1fdc8`:
 - Godot 4.3 workflow `45010467260` passed on the exact fix commit: resource import/script parsing, Baghdad five-tower + independent Power Tower integration, all remaining gameplay validators, missing-mesh scan, and headless main-scene launch all succeeded.
 - The procedural stair validator now passes its top-floor descent and collision checks. Live player traversal, landing alignment and Android visual/performance checks are still outstanding; CI success does not replace in-game movement testing.
 - Validation draft PR: https://github.com/ahmed666alaadedt-ops/SYSTEM/pull/37. It remains unmerged. Active branch remains `work/baghdad-system-integration`; `main` remains untouched and no merge is authorized.
+
+
+## Latest continuation checkpoint — Baghdad tower stair interaction routing
+
+- Active branch: `work/baghdad-system-integration`.
+- Gameplay fix commit: `059fb402d69880e0df02771f7a2452c022d241dd`.
+- Regression validator commit: `666eec44bf2bdf97fa4b4c76d3404e9dd70c3672`.
+- Root cause: the `tower_stair_` condition was indented as an `elif` inside the `tower_lift_console_` branch. Stair interactions could therefore fail to reach their floor-transition handler.
+- Fixed the branch indentation so stair interactions are a sibling top-level interaction route between lift-console and tower-floor routes. It calls `_enter_baghdad_tower_floor(tower_id, floor_number, false)`, preserving direct stair travel without elevator animation.
+- Added a source-structure regression assertion to `validate_baghdad_tower_integration.gd` that verifies lift, stair and floor branches are separate top-level branches and ordered correctly.
+- Godot 4.3 workflow `45011123115` passed on exact final checkpoint `666eec44bf2bdf97fa4b4c76d3404e9dd70c3672`: import/script parsing, Baghdad tower + independent Power Tower integration, all configured gameplay validators, missing-mesh scan and headless main-scene launch passed.
+- An intermediate validator commit had a duplicate local-variable parse error; it was corrected before the successful workflow above. Do not treat the failed intermediate runs as the final result.
+- Tracker update commit: `073bd53af92384ee658c96475084de03f3a8cfda`.
+- Remaining: live player traversal, stair landing alignment, actual adjacent-floor movement and return to the lobby have not been tested in the rendered game or on Android. Do not mark these complete based on CI.
+- `main` remains `dff4e9d377ffaae6845e6f401c47346e51ea5619`; PR #37 remains draft and unmerged. No merge, rebase or synchronization is authorized.
+- Next: continue the Baghdad landmark queue from the current tracker, without repeating the completed stair-routing or collision fixes; prioritize the remaining physical tower/Hunter headquarters integration work and keep device-only checks explicitly open.
