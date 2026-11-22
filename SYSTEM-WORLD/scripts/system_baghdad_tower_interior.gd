@@ -8,6 +8,11 @@ var display_title := ""
 var entrance_script: Script
 var external_return_position := Vector3.ZERO
 var floor_count := 1
+var _lift_cabin: Node3D
+var _lift_door_left: MeshInstance3D
+var _lift_door_right: MeshInstance3D
+var _lift_status_label: Label3D
+var _elevator_traveling := false
 
 func build(p_tower_id: String, p_title: String, p_entrance_script: Script, p_external_return_position: Vector3, p_floor_count: int = 1) -> void:
 	tower_id = p_tower_id
@@ -26,7 +31,9 @@ func build(p_tower_id: String, p_title: String, p_entrance_script: Script, p_ext
 	_build_tower_identity_feature()
 	_build_lobby_wayfinding()
 	_build_upper_floor_access()
+	_build_emergency_stairwell()
 	_build_lift_console()
+	_build_elevator_cabin()
 	set_meta("playable_interior_blockout", true)
 	set_meta("upper_floor_blockout_count", mini(4, maxi(0, floor_count - 1)))
 	set_meta("total_floor_count", floor_count)
@@ -34,6 +41,10 @@ func build(p_tower_id: String, p_title: String, p_entrance_script: Script, p_ext
 	set_meta("interactive_floor_selection", true)
 	set_meta("tower_identity_feature_ready", true)
 	set_meta("interior_ad_screen_count", 2)
+	set_meta("emergency_stairwell_ready", true)
+	set_meta("emergency_stairwell_step_count", 80)
+	set_meta("emergency_stairwell_step_count", 80)
+	set_meta("animated_elevator_ready", true)
 	set_meta("service_desks_have_collision", true)
 	set_meta("tower_id", tower_id)
 
@@ -585,6 +596,121 @@ func _build_lift_console() -> void:
 	area.add_child(collision)
 	area.position = Vector3(0.0, 1.5, 4.5)
 	add_child(area)
+
+
+
+func _build_elevator_cabin() -> void:
+	var cabin_material := _material(Color(0.12, 0.18, 0.24), 0.28, 0.72)
+	var glass_material := _material(Color(0.035, 0.34, 0.48), 0.2, 0.42)
+	glass_material.emission_enabled = true
+	glass_material.emission = Color(0.02, 0.28, 0.52)
+	glass_material.emission_energy_multiplier = 1.3
+	var door_material := _material(Color(0.18, 0.31, 0.39), 0.24, 0.78)
+	_lift_cabin = Node3D.new()
+	_lift_cabin.name = "AnimatedElevatorCabin"
+	_lift_cabin.position = Vector3(10.0, 0.0, 12.0)
+	add_child(_lift_cabin)
+	_add_cabin_box(_lift_cabin, "CabinFloor", Vector3(0.0, 0.25, 0.0), Vector3(4.4, 0.5, 4.4), cabin_material, true)
+	_add_cabin_box(_lift_cabin, "CabinRearWall", Vector3(0.0, 2.8, -2.05), Vector3(4.4, 5.1, 0.22), glass_material, true)
+	_add_cabin_box(_lift_cabin, "CabinLeftWall", Vector3(-2.08, 2.8, 0.0), Vector3(0.22, 5.1, 4.0), glass_material, true)
+	_add_cabin_box(_lift_cabin, "CabinRightWall", Vector3(2.08, 2.8, 0.0), Vector3(0.22, 5.1, 4.0), glass_material, true)
+	_add_cabin_box(_lift_cabin, "CabinCeiling", Vector3(0.0, 5.4, 0.0), Vector3(4.4, 0.25, 4.4), cabin_material, true)
+	_lift_door_left = _add_cabin_box(_lift_cabin, "CabinDoorLeft", Vector3(-1.0, 2.8, 2.05), Vector3(1.95, 5.0, 0.18), door_material, false)
+	_lift_door_right = _add_cabin_box(_lift_cabin, "CabinDoorRight", Vector3(1.0, 2.8, 2.05), Vector3(1.95, 5.0, 0.18), door_material, false)
+	var status := Label3D.new()
+	status.name = "ElevatorFloorIndicator"
+	status.text = "SYSTEM LIFT — 001"
+	status.font_size = 24
+	status.position = Vector3(0.0, 4.85, 1.88)
+	status.pixel_size = 0.012
+	status.modulate = Color(0.82, 0.95, 1.0)
+	_lift_cabin.add_child(status)
+	_lift_status_label = status
+	var cabin_light := OmniLight3D.new()
+	cabin_light.name = "ElevatorCabinLight"
+	cabin_light.position = Vector3(0.0, 4.7, 0.0)
+	cabin_light.light_color = Color(0.34, 0.72, 1.0)
+	cabin_light.light_energy = 1.0
+	cabin_light.omni_range = 8.0
+	cabin_light.shadow_enabled = false
+	_lift_cabin.add_child(cabin_light)
+
+
+func _add_cabin_box(parent: Node3D, node_name: String, position: Vector3, size: Vector3, material: Material, with_collision: bool) -> MeshInstance3D:
+	var visual := MeshInstance3D.new()
+	visual.name = node_name
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	visual.mesh = mesh
+	visual.position = position
+	visual.material_override = material
+	parent.add_child(visual)
+	if with_collision:
+		var body := StaticBody3D.new()
+		body.name = node_name + "_Collision"
+		body.position = position
+		var collision := CollisionShape3D.new()
+		var shape := BoxShape3D.new()
+		shape.size = size
+		collision.shape = shape
+		body.add_child(collision)
+		parent.add_child(body)
+	return visual
+
+
+func animate_lift_to_floor(floor_number: int) -> bool:
+	if floor_number < 1 or floor_number > floor_count or _elevator_traveling:
+		return false
+	if not is_instance_valid(_lift_cabin) or not is_instance_valid(_lift_door_left) or not is_instance_valid(_lift_door_right):
+		return false
+	_elevator_traveling = true
+	var target_height := minf(float(floor_number - 1) * 18.0, 72.0)
+	var travel_duration := clampf(absf(_lift_cabin.position.y - target_height) / 36.0, 0.35, 1.6)
+	var travel_tween := create_tween()
+	travel_tween.set_trans(Tween.TRANS_SINE)
+	travel_tween.set_ease(Tween.EASE_IN_OUT)
+	travel_tween.tween_property(_lift_cabin, "position:y", target_height, travel_duration)
+	await travel_tween.finished
+	if is_instance_valid(_lift_status_label):
+		_lift_status_label.text = "SYSTEM LIFT — %03d" % floor_number
+	var open_tween := create_tween()
+	open_tween.set_trans(Tween.TRANS_SINE)
+	open_tween.set_ease(Tween.EASE_OUT)
+	open_tween.tween_property(_lift_door_left, "position:x", -1.85, 0.28)
+	open_tween.parallel().tween_property(_lift_door_right, "position:x", 1.85, 0.28)
+	await open_tween.finished
+	var close_tween := create_tween()
+	close_tween.set_trans(Tween.TRANS_SINE)
+	close_tween.set_ease(Tween.EASE_IN)
+	close_tween.tween_property(_lift_door_left, "position:x", -1.0, 0.28)
+	close_tween.parallel().tween_property(_lift_door_right, "position:x", 1.0, 0.28)
+	await close_tween.finished
+	_elevator_traveling = false
+	return true
+
+
+func _build_emergency_stairwell() -> void:
+	var step_material := _material(Color(0.16, 0.21, 0.27), 0.46, 0.58)
+	var rail_material := _material(Color(0.72, 0.52, 0.22), 0.28, 0.72)
+	for floor_number in range(2, 6):
+		var floor_y := 18.0 * float(floor_number - 1)
+		for flight in range(2):
+			for step_index in range(10):
+				var step_x := -15.0 if flight == 0 else -9.0
+				var step_z := 5.0 + float(step_index) * 0.9 if flight == 0 else 14.0 - float(step_index) * 0.9
+				var step_y := floor_y - 18.0 + float(flight * 10 + step_index + 1) * 0.9
+				_add_solid_box("EmergencyStair_%02d_%02d_%02d" % [floor_number, flight, step_index], Vector3(step_x, step_y, step_z), Vector3(4.6, 0.9, 1.05), step_material)
+			var rail_x := -17.6 if flight == 0 else -6.4
+			_add_visual_box("EmergencyStairRail_%02d_%02d" % [floor_number, flight], Vector3(rail_x, floor_y - 13.5 + float(flight) * 9.0, 9.5), Vector3(0.18, 2.2, 10.5), rail_material)
+		_add_solid_box("EmergencyStairLanding_%02d" % floor_number, Vector3(-12.0, floor_y - 9.0, 9.5), Vector3(10.5, 0.7, 5.0), step_material)
+		var sign := Label3D.new()
+		sign.name = "EmergencyStairSign_%02d" % floor_number
+		sign.text = "مخرج طوارئ — الطابق %02d" % floor_number
+		sign.font_size = 18
+		sign.position = Vector3(-12.0, floor_y - 8.0, 12.0)
+		sign.pixel_size = 0.012
+		sign.modulate = Color(1.0, 0.72, 0.35)
+		add_child(sign)
 
 
 func _create_floor_selector(floor_number: int, floor_y: float) -> void:
