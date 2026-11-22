@@ -185,7 +185,15 @@ func _show_owned_items() -> void:
 		label.text = "%s × %d" % [str(item["name"]), count]
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		column.add_child(label)
-		if str(item.get("category", "")) == "potion":
+		var item_category := str(item.get("category", ""))
+		if item_category == "weapon" and str(item["id"]) != "armory_arrow_bundle":
+			var equipped_id := str(progression.call("get_equipped_weapon")) if progression.has_method("get_equipped_weapon") else ""
+			var equip_button := Button.new()
+			equip_button.text = "مجهز حالياً" if equipped_id == str(item["id"]) else "تجهيز السلاح"
+			equip_button.disabled = equipped_id == str(item["id"])
+			equip_button.pressed.connect(_equip_weapon.bind(str(item["id"])))
+			column.add_child(equip_button)
+		elif item_category == "potion":
 			var use_button := Button.new()
 			use_button.text = "استخدام الجرعة"
 			use_button.pressed.connect(_use_potion.bind(str(item["id"])))
@@ -218,6 +226,18 @@ func _purchase_item(item_id: String) -> void:
 	_refresh_view()
 	status_label.text = "تم شراء %s وإضافته إلى حقيبتك." % str(selected["name"])
 	item_purchased.emit(item_id, str(selected["name"]), price)
+
+
+
+func _equip_weapon(item_id: String) -> void:
+	if not progression.has_method("equip_weapon"):
+		status_label.text = "نظام تجهيز الأسلحة غير متاح."
+		return
+	if not bool(progression.call("equip_weapon", item_id)):
+		status_label.text = "لا تملك هذا السلاح أو لا يمكن تجهيزه."
+		return
+	_refresh_view()
+	status_label.text = "تم تجهيز السلاح: %s" % item_id
 
 
 func _use_potion(item_id: String) -> void:
