@@ -61,8 +61,6 @@ func begin_exam() -> Dictionary:
 	if failed:
 		return {"success":false,"reason":"EXAM_FAILED"}
 	if exam_active:
-		return {"success":false,"reason":"EXAM_ALREADY_ACTIVE"}
-	if exam_active:
 		return {"success":true,"candidate_number":candidate_number,"stage":get_current_stage(),"resumed":true}
 	exam_active = true
 	current_stage_index = completed_stage_ids.size()
