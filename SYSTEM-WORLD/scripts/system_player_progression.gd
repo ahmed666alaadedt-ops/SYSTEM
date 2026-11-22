@@ -121,6 +121,22 @@ func add_item(item_id: String, amount: int = 1) -> bool:
 	return true
 
 
+func remove_item(item_id: String, amount: int = 1) -> bool:
+	var normalized_id := item_id.strip_edges()
+	if normalized_id.is_empty() or amount <= 0:
+		return false
+	var owned := int(inventory_items.get(normalized_id, 0))
+	if owned < amount:
+		return false
+	var remaining := owned - amount
+	if remaining <= 0:
+		inventory_items.erase(normalized_id)
+	else:
+		inventory_items[normalized_id] = remaining
+	save_progress()
+	return true
+
+
 func get_item_count(item_id: String) -> int:
 	return int(inventory_items.get(item_id,0))
 
