@@ -1304,6 +1304,10 @@ func _on_interaction_performed(
 	elif location_id == "hunter_exam_tunnel_start_baghdad":
 		if hunter_exam_manager != null:
 			var start_result: Dictionary = hunter_exam_manager.begin_exam()
+			if bool(start_result.get("success", false)):
+				var tunnel_interior := target.get_parent()
+				if tunnel_interior != null and tunnel_interior.has_method("set_hunter_exam_tunnel_access"):
+					tunnel_interior.call("set_hunter_exam_tunnel_access", true)
 			var guild_menu := get_node_or_null("HunterGuildMenu")
 			if guild_menu != null and guild_menu.has_method("show_exam_tunnel_result"):
 				guild_menu.call("show_exam_tunnel_result", start_result)
