@@ -313,7 +313,6 @@ jobs:
             --cell-size 200 \
             --source-timestamp "$(python3 -c 'import json; print(json.load(open("baghdad-source-verification.json"))["snapshot_timestamp"])')" \
             --cell-bounds=-2,20,-8,2
-          cp "$RUNNER_TEMP/baghdad-source/baghdad-metric-cell-pack-baghdad-core-and-republic-bridge.zip" "$RUNNER_TEMP/baghdad-source/baghdad-metric-cell-pack-5x5.zip"
           python3 - <<'PY'
           import json
           import zipfile
@@ -408,6 +407,7 @@ jobs:
                   raise SystemExit("Annotated pack entrance count differs from the association report.")
           print("Verified entrance associations embedded in runtime pack:", seen, "accepted:", accepted)
           PY
+          cp "$CELL_PACK" "$RUNNER_TEMP/baghdad-source/baghdad-metric-cell-pack-5x5.zip"
 
       - name: Audit real OSM connectivity across every generated Baghdad cell
         shell: bash
@@ -476,7 +476,9 @@ jobs:
           name: SYSTEM-WORLD-Baghdad-OSM-audit-diagnostics-${{ github.run_id }}
           path: |
             ${{ runner.temp }}/baghdad-source/baghdad-cell-connectivity-audit.json
+            ${{ runner.temp }}/baghdad-source/baghdad-republic-bridge-verification.json
             ${{ runner.temp }}/baghdad-source/baghdad-metric-cell-pack-baghdad-core-and-republic-bridge.zip
+            ${{ runner.temp }}/baghdad-source/baghdad-metric-cell-pack-5x5.zip
             ${{ runner.temp }}/baghdad-source/baghdad-entrance-associations.json
             ${{ runner.temp }}/baghdad-source/clipped_layers/clip-report.json
             ${{ runner.temp }}/baghdad-source/clipped_layers/*.geojson
@@ -511,6 +513,8 @@ jobs:
             ${{ runner.temp }}/baghdad-source/clipped_layers/clip-report.json
             ${{ runner.temp }}/baghdad-source/clipped_layers/*.geojson
             ${{ runner.temp }}/baghdad-source/baghdad-metric-cell-pack-baghdad-core-and-republic-bridge.zip
+            ${{ runner.temp }}/baghdad-source/baghdad-metric-cell-pack-5x5.zip
+            ${{ runner.temp }}/baghdad-source/baghdad-republic-bridge-verification.json
             ${{ runner.temp }}/baghdad-source/baghdad-entrance-associations.json
             ${{ runner.temp }}/baghdad-source/baghdad-cell-connectivity-audit.json
             ${{ runner.temp }}/baghdad-source/ATTRIBUTION.txt
