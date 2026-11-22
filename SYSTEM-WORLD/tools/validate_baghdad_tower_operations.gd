@@ -228,6 +228,9 @@ func _run() -> void:
 		if exit_root.get_node_or_null("EmergencyExitFramePillar_L") == null or exit_root.get_node_or_null("EmergencyExitFramePillar_R") == null or exit_root.get_node_or_null("EmergencyExitBeacon") == null or exit_root.get_node_or_null("EmergencyExitLight") == null:
 			_fail("A Baghdad floor emergency exit is missing its frame, illuminated beacon or safety light.")
 			return
+		if floor_room.get_node_or_null("InteriorWall_15") != null or floor_room.get_node_or_null("InteriorWall_14") == null or floor_room.get_node_or_null("InteriorWall_16") == null:
+			_fail("A Baghdad emergency exit is blocked by the circular wall or its adjacent wall segments are missing.")
+			return
 		if exit_sensor.get_node_or_null("CollisionShape3D") == null or not exit_sensor.monitoring or exit_sensor.get_signal_connection_list("body_entered").is_empty():
 			_fail("A Baghdad floor emergency exit is missing its active physical evacuation sensor connection.")
 			return
