@@ -77,6 +77,17 @@ func _run() -> void:
 		if interior == null:
 			_fail("Missing playable lobby for " + root_name)
 			return
+
+		for screen_name in ["ExteriorAdScreen_00", "ExteriorAdScreen_01"]:
+			var exterior_screen := tower_root.get_node_or_null(screen_name)
+			if exterior_screen == null or exterior_screen.get_node_or_null("AdScreenDisplay") == null or exterior_screen.get_node_or_null("AdScreenMessage") == null:
+				_fail("Missing public-facing advertising display on " + root_name + ": " + screen_name)
+				return
+		for screen_name in ["InteriorAdScreen_00", "InteriorAdScreen_01"]:
+			var interior_screen := interior.get_node_or_null(screen_name)
+			if interior_screen == null or interior_screen.get_node_or_null("AdScreenDisplay") == null or interior_screen.get_node_or_null("AdScreenMessage") == null:
+				_fail("Missing lobby advertising display on " + root_name + ": " + screen_name)
+				return
 		if root_name == "HunterAssociationTower":
 			hunter_tower_interior = interior as Node3D
 		var lift_console := interior.get_node_or_null("CentralLiftConsoleInteraction") as Area3D
