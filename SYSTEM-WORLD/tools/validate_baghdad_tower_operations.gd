@@ -1102,6 +1102,9 @@ func _run() -> void:
 		"ai_lab": ["analyze", 3],
 		"vr_lab": ["checkpoint", 3]
 	}
+	var bowling_total_pinfall := 0
+	var basketball_made_count := 0
+	var arcade_hit_count := 0
 	for activity_type in activity_cases.keys():
 		var activity_case: Array = activity_cases[activity_type]
 		if str(activity_type) == "sports_court":
@@ -1122,6 +1125,14 @@ func _run() -> void:
 			if not bool(final_activity_result.get("success", false)):
 				_fail("Facility activity action failed: " + str(activity_type) + " / " + str(final_activity_result))
 				return
+			if str(activity_type) == "bowling":
+				bowling_total_pinfall += int(final_activity_result.get("pins", final_activity_result.get("last_throw", 0)))
+			elif str(activity_type) == "sports_court":
+				if bool(final_activity_result.get("scored", final_activity_result.get("last_shot_scored", false))):
+					basketball_made_count += 1
+			elif str(activity_type) == "arcade":
+				if bool(final_activity_result.get("hit", final_activity_result.get("last_target_hit", false))):
+					arcade_hit_count += 1
 		if str(activity_type) == "arcade" and (not final_activity_result.has("last_target_hit") or typeof(final_activity_result.get("last_target_hit")) != TYPE_BOOL or int(final_activity_result.get("last_target_id", -1)) < -1 or int(final_activity_result.get("last_target_id", -1)) > 4):
 			_fail("Arcade final attempt did not return a valid physical target-sensor result.")
 			return
@@ -1137,6 +1148,15 @@ func _run() -> void:
 		if not operations.get("facility_activity_stats").has(activity_type):
 			_fail("Facility activity result was not recorded: " + str(activity_type))
 			return
+	if bowling_total_pinfall <= 0:
+		_fail("Bowling physics test did not knock down any pins across ten frames.")
+		return
+	if basketball_made_count <= 0:
+		_fail("Basketball physics test did not score a basket in five attempts.")
+		return
+	if arcade_hit_count <= 0:
+		_fail("Arcade physics test did not hit any target in five attempts.")
+		return
 	var pool_room := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 18) as Node3D
 	var pool_physics_facility := pool_room.get_node_or_null("SpecialFacility_swimming_pool") as Node3D if pool_room != null else null
 	var pool_water := pool_physics_facility.get_node_or_null("PoolWaterVolume") as Area3D if pool_physics_facility != null else null
