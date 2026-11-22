@@ -97,6 +97,10 @@ func _run() -> void:
 		for lobby_child in lobby.get_children():
 			if str(lobby_child.name).begins_with("TowerStaff_"):
 				visible_staff += 1
+				var staff_waypoints: Array = lobby_child.get_meta("system_staff_patrol_waypoints", [])
+				if not bool(lobby_child.get_meta("system_staff_navigation_enabled", false)) or staff_waypoints.size() < 4:
+					_fail("Tower staff member is missing an autonomous lobby patrol route: " + str(lobby_child.name))
+					return
 				for staff_child in lobby_child.get_children():
 					if staff_child.has_meta("system_uniform_id") and not str(staff_child.get_meta("system_uniform_id", "")).is_empty():
 						uniformed_staff += 1
@@ -106,6 +110,28 @@ func _run() -> void:
 		if visible_staff != expected_staff or uniformed_staff != expected_staff or visible_customers != 4:
 			_fail("Tower %s requires %d uniformed visible staff and 4 visible customer NPCs; found staff=%d uniformed=%d customers=%d." % [tower_id, expected_staff, visible_staff, uniformed_staff, visible_customers])
 			return
+	var hunter_staff_sample: Node3D
+	var hunter_staff_model: Node3D
+	var hunter_lobby := tower_manager.get_node("HunterAssociationTower/PublicLobby_Blockout") as Node3D
+	for lobby_child in hunter_lobby.get_children():
+		if str(lobby_child.name).begins_with("TowerStaff_"):
+			hunter_staff_sample = lobby_child as Node3D
+			for staff_child in lobby_child.get_children():
+				if staff_child.has_method("set_activity"):
+					hunter_staff_model = staff_child as Node3D
+					break
+			break
+	if hunter_staff_sample == null or hunter_staff_model == null:
+		_fail("Hunter staff patrol sample could not be resolved.")
+		return
+	var staff_start_position := hunter_staff_sample.position
+	await create_timer(0.65).timeout
+	if hunter_staff_sample.position.distance_to(staff_start_position) < 0.1:
+		_fail("Tower staff waypoint patrol did not move the employee.")
+		return
+	if str(hunter_staff_model.get("current_activity")) != "walk":
+		_fail("Tower staff waypoint patrol did not trigger the walk animation.")
+		return
 	operations.call("_simulate_customer_purchases")
 	var shopping_customer_floor := operations.call("_ensure_floor_room", "shopping_tower_baghdad", 29) as Node3D
 	var shopping_customer_lobby := tower_manager.get_node("ShoppingTower/PublicLobby_Blockout") as Node3D
