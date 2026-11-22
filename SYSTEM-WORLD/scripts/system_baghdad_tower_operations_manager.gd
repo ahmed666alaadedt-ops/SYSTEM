@@ -36,6 +36,7 @@ const PRODUCT_CATALOG := {
 		{"id":"nen_acquisition_elixir","name":"إكسير اكتساب النِن","price":1800},
 		{"id":"nen_control_elixir","name":"إكسير التحكم بالنِن","price":2600},
 		{"id":"rare_legendary_elixir","name":"إكسير نادر/أسطوري","price":12000},
+		{"id":"repair_kit","name":"عدة إصلاح المعدات","price":250},
 		{"id":"iron_ingot","name":"سبيكة حديد","price":45},
 		{"id":"wood_plank","name":"لوح خشب مصقول","price":20},
 		{"id":"leather_roll","name":"لفافة جلد","price":35},
