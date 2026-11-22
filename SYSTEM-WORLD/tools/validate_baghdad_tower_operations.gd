@@ -1621,6 +1621,13 @@ func _run() -> void:
 	if restaurant_chef.get_parent() != shopping_customer_lobby or restaurant_chef.has_meta("system_staff_duty_floor") or not bool(restaurant_chef.get_meta("system_staff_navigation_enabled", false)) or restaurant_chef.get_meta("system_staff_patrol_waypoints", []).size() < 4:
 		_fail("The restaurant chef did not ride the elevator back to the lobby and resume the persistent lobby patrol.")
 		return
+	var customers_after_evacuation := 0
+	for lobby_child in shopping_customer_lobby.get_children():
+		if str(lobby_child.name).begins_with("TowerCustomer_"):
+			customers_after_evacuation += 1
+	if customers_after_evacuation != 4:
+		_fail("Shopping Tower customer visitors did not return to the public lobby after emergency evacuation; found %d." % customers_after_evacuation)
+		return
 	print("Baghdad tower operations validation passed: five connected Baghdad towers, independent Power Tower, NPC commerce, hotel workflows, eleven playable leisure/technology activity loops, equipment, Nen progression and the 200th-floor sovereign boss arena.")
 	main.queue_free()
 	await process_frame
