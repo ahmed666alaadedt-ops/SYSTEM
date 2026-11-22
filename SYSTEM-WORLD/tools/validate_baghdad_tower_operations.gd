@@ -417,8 +417,14 @@ func _run() -> void:
 		for child in lobby.get_children():
 			if child.has_meta("system_tower_staff_id"):
 				staff_count += 1
-		if staff_count != 4:
-			_fail("Expected four visible NPC employees in " + tower_id + "; found %d." % staff_count)
+		var expected_staff_count := 4
+		match tower_id:
+			"hunter_association_tower_baghdad", "business_investment_tower_baghdad", "entertainment_tower_baghdad", "technology_tower_baghdad":
+				expected_staff_count = 8
+			"shopping_tower_baghdad":
+				expected_staff_count = 9
+		if staff_count != expected_staff_count:
+			_fail("Expected %d visible NPC employees in %s; found %d." % [expected_staff_count, tower_id, staff_count])
 			return
 		var internal_ad := lobby.get_node_or_null("NPCManagedInternalCampaign") as Label3D
 		if internal_ad == null or not internal_ad.text.contains("بإدارة"):
