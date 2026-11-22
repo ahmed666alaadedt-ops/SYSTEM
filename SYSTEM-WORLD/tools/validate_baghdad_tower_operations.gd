@@ -812,6 +812,9 @@ func _run() -> void:
 	if not operations.has_method("_book_hotel_room") or not operations.has_method("_check_in_hotel_room") or not operations.has_method("_checkout_hotel_room") or not operations.has_method("_save_hotel_bookings") or not operations.has_method("_start_hotel_room_cleaning") or not operations.has_method("_complete_hotel_room_cleaning") or not operations.has_method("_is_hotel_room_available"):
 		_fail("SYSTEM Hotel reservation/check-in/check-out persistence methods are missing.")
 		return
+	if not operations.has_method("open_hotel_room_preview"):
+		_fail("Hotel room door preview and booking entry point is missing.")
+		return
 	if not operations.has_method("_place_hotel_room_service_order") or not operations.has_method("_update_hotel_room_service_order"):
 		_fail("SYSTEM Hotel room-service order lifecycle methods are missing.")
 		return
