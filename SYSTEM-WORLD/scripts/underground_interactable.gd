@@ -94,6 +94,7 @@ func restore_stone_door_state(opened: bool) -> void:
 	if _opened:
 		restored_position += DOOR_OPEN_OFFSET
 	door.position = restored_position
+	print("SYSTEM underground door restore: opened=", _opened, " body_position=", door.position, " closed_baseline=", _closed_door_position)
 	door.visible = true
 	set_meta("system_door_open", _opened)
 	set_meta(
