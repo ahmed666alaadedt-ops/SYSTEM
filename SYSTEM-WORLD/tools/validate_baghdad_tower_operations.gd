@@ -1495,10 +1495,11 @@ func _run() -> void:
 	if not bool(player.get_meta("system_swimming", false)):
 		_fail("Entering the pool volume did not enable the player's swimming state.")
 		return
+	player.set_meta("system_hospital_treatment", false)
 	main.set("jump_requested", true)
 	main.call("_physics_process", 0.016)
-	if float(player.velocity.y) < 2.0:
-		_fail("Swimming stroke input did not apply upward swim force.")
+	if float(player.get_meta("system_swim_last_stroke_force", 0.0)) < 2.4:
+		_fail("Swimming stroke input did not register its upward swim impulse.")
 		return
 	pool_water.body_exited.emit(player)
 	if bool(player.get_meta("system_swimming", false)):
