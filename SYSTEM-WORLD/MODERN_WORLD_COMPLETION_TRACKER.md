@@ -627,3 +627,11 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Correct the helicopter pilot-authorization lookup and validator to use the actual runtime node name `SYSTEMHunterExamManager`, discovered by the first regression run.
 - [ ] Pass the updated Godot 4.3 validator and canonical Android APK export on the latest PR head.
 - [ ] Test the full seven-stage examination, app restart/resume, license persistence, and pilot-permission unlock on an Android device.
+
+
+### Power Tower entry safety and progression gates — 22 November 2026
+
+- [x] Prepare the selected floor room and elevator cabin before reserving an active Power Tower challenge, preventing a failed room/cabin setup from leaving the progression manager locked on an active floor.
+- [x] Add automated progression regression checks for sequential floor access, player-level requirements, duplicate active-floor requests, and rejection of clear reports for floors that were never activated.
+- [ ] Pass Godot 4.3 parser, complete Baghdad tower operations validator, and canonical Android APK export on the latest PR head.
+- [ ] Verify the full 200-floor progression, save/reload continuity, boss floors, rewards and failure/abandon recovery through extended automated gameplay tests and Android device testing.
