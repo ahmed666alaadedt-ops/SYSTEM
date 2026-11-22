@@ -32,8 +32,8 @@ This section supersedes older tower-role notes below wherever they describe the 
 
 ## Validation status for this revision
 - [x] Extend the Godot operations validator for the five connected towers plus independent Power Tower, 45 staff, 20 customers, uniform presence, staffed cafes, NPC purchases, pools, cinema, trading hall, AI lab, Hall of Honor, Global Council, Global Headquarters, Shopping Tower forge/lab, hotel and dining.
-- [ ] Run the complete Godot 4.3 import/parser, main-scene launch, tower landmark and tower operations validators on the latest branch head.
-- [ ] Confirm the fresh GitHub Actions result is green; source edits are not a substitute for a passing run.
+- [x] Run the complete Godot 4.3 import/parser, main-scene launch, tower landmark and tower operations validators on the latest branch head — passed in GitHub Actions validation run #1343 (22 November 2026).
+- [x] Confirm the fresh GitHub Actions Godot validation result is green (run #1343); Android export remains a separate pending check.
 - [ ] Export the Android APK from the exact validated head and inspect all five towers on a physical Android device.
 - [ ] Keep PR #38 as draft and do not merge to main without the user's explicit approval.
 
