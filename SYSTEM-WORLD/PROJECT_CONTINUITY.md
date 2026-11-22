@@ -92,3 +92,10 @@ Last verified: 2026-11-22 (GitHub repository review)
 - Validator commit `e6906cfc4ed27d17fcc6e07b48ccc5a609d90b8c` checks that each tower has reception and service-directory fixtures and checks wayfinding/exit/ticket-kiosk markers in each of the six cinema halls. Validator commit `56a34499cc13d1093a06bc571c94280aae65e212` asserts service-furniture revision metadata.
 - The previous CI run #867 / Android build #714 succeeded for the prior cinema visual pass. A fresh run against the service-furniture changes is required. Fixtures remain static; they do not implement functioning staff, queues, ticket sales, playback or navigation.
 - Continue on `qa/fix-deferred-test-cleanup-20261122`; do not merge to `main` without explicit user approval.
+
+
+## Entertainment Tower venue visual pass — 22 November 2026
+
+- Manager commit `294dc0f003b9e4b61600b23d2ab3c170f6307fc7` adds eight arcade cabinet visuals, four bowling lane/pin layouts, four VR pod visuals, and a concert stage with forty seat markers inside the Entertainment Tower. Manager commit `ca24eafafc0c72442b7007fe6a949b73e0074467` registers the entertainment venue revision.
+- Validator commit `cac3ab87d4d188639fe592e156ccad696bb56918` checks the four venue roots; validator commit `7ef5ce005c3cfb5c5cb03877829c6d1e213cbbf0` checks the revision marker.
+- All are static visual layouts only. Playable arcade/bowling/VR/concert interactions and audio are outstanding. Keep the work on `qa/fix-deferred-test-cleanup-20261122`; do not merge to `main` without explicit user approval.
