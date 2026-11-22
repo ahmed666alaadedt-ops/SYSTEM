@@ -2519,10 +2519,10 @@ func _launch_bowling_ball() -> Dictionary:
 
 func _bowling_pin_start_position(pin_index: int) -> Vector3:
 	var positions := [
-		Vector3(0.0, 1.48, -5.4),
-		Vector3(-0.48, 1.48, -6.2), Vector3(0.48, 1.48, -6.2),
-		Vector3(-0.96, 1.48, -7.0), Vector3(0.0, 1.48, -7.0), Vector3(0.96, 1.48, -7.0),
-		Vector3(-1.44, 1.48, -7.8), Vector3(-0.48, 1.48, -7.8), Vector3(0.48, 1.48, -7.8), Vector3(1.44, 1.48, -7.8)
+		Vector3(0.0, 1.35, -5.4),
+		Vector3(-0.48, 1.35, -6.2), Vector3(0.48, 1.35, -6.2),
+		Vector3(-0.96, 1.35, -7.0), Vector3(0.0, 1.35, -7.0), Vector3(0.96, 1.35, -7.0),
+		Vector3(-1.44, 1.35, -7.8), Vector3(-0.48, 1.35, -7.8), Vector3(0.48, 1.35, -7.8), Vector3(1.44, 1.35, -7.8)
 	]
 	return positions[clampi(pin_index, 0, positions.size() - 1)]
 
