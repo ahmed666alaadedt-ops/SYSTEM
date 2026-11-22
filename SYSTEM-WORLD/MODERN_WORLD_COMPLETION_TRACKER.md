@@ -654,3 +654,10 @@ Implementation added on the feature branch; automated runtime validation is pend
 
 - [x] Explicitly mark the helicopter regression-test profile as unregistered after the completed-exam regression case, so the negative pilot-authorization test cannot inherit the prior candidate's completed-stage state.
 - [ ] Re-run Godot 4.3 operations validation and canonical Android export on the isolated test profile.
+
+
+### Helicopter flight-loop regression coverage — 22 November 2026
+
+- [x] Extend the Godot operations validator to grant a test-only completed Hunter license, enter the aircraft, verify player-control handoff, command takeoff, command a controlled landing inside the pad radius, and verify safe exit restores on-foot controls.
+- [ ] Pass the flight-loop regression test and canonical Android APK export on the latest PR head.
+- [ ] Perform physical Android touch-control, rotor/clearance, flight feel, and performance testing; automated headless checks do not replace device inspection.
