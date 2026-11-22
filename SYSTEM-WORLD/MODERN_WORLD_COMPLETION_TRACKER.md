@@ -1,3 +1,13 @@
+## SYSTEM VR Lab — traversable three-gate simulation course — 22 November 2026
+
+- [x] Replaced the VR lab's generic checkpoint-only room with a generated 3D simulation course containing a marked floor route, start/finish markers, three framed energy gates with physical Area3D checkpoint sensors, four holographic obstacles and an illuminated exit beacon.
+- [x] Checkpoints now advance only when the player enters the expected physical sensor in sequence; out-of-order gates are rejected, and the session reward is granted only after all three gates are crossed.
+- [x] The VR activity panel now instructs the player to traverse the course and hides the manual checkpoint button, so the activity is completed through movement rather than repeated UI taps.
+- [x] Extended the Baghdad tower operations validator to require all three checkpoint sensors and exercise out-of-order rejection plus successful ordered traversal through all gates.
+- [x] Godot 4.3 full validation #1473 passed (run `45072078820`) and canonical Android export #1210 passed (run `45072078816`) on exact PR HEAD `225a8888445006eaaa0f57153ce80c4b1f730ef7`.
+- [x] Android APK artifact `14773292675`, 35,934,311 bytes; expires 6 December 2026.
+- [ ] Native immersive headset support (OpenXR, stereoscopic rendering, tracked head/controllers or hand input), comfort testing and physical Android/headset playtesting remain open. This milestone completes the traversable 3D simulation-course prototype, not full VR hardware immersion.
+
 ## SYSTEM tower staff — autonomous lobby waypoint patrols — 22 November 2026
 
 - [x] All 45 tower employees now receive four safe local lobby waypoints around their assigned service area; patrol paths alternate direction by staff index to reduce overlap between adjacent staff.
