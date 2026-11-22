@@ -929,7 +929,7 @@ func _on_interaction_performed(
 			"power_tower_baghdad":
 				directory = "برج تحديات مستقل من 200 طابق؛ لا يتصل بجسور مجمع الأبراج."
 		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "%s\n%d طابق | ارتفاع تقريبي %.0f م\n%s\n%s\nملاحظة: الدليل يعرض الأقسام؛ الطوابق الداخلية والمصاعد التفاعلية قيد التنفيذ." % [
+			interaction_prompt_label.text = "%s\n%d طابق | ارتفاع تقريبي %.0f م\n%s\n%s\nملاحظة: اختيار الطابق والمصعد التفاعلي متاحان؛ بعض الخدمات والتفاصيل الداخلية ما زالت قيد التطوير." % [
 				tower_name, floor_count, height_m, network_label, directory
 			]
 	if tower_operations_manager != null:
