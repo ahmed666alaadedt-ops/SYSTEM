@@ -4164,6 +4164,7 @@ func _build_vr_simulation_course(root: Node3D, highlight: Material, accent: Mate
 	exit_sensor.monitorable = true
 	exit_sensor.position = Vector3(0.0, 1.5, 10.0)
 	var exit_collision := CollisionShape3D.new()
+	exit_collision.name = "CollisionShape3D"
 	var exit_shape := BoxShape3D.new()
 	exit_shape.size = Vector3(4.2, 3.0, 2.4)
 	exit_collision.shape = exit_shape
@@ -4189,6 +4190,7 @@ func _build_vr_simulation_course(root: Node3D, highlight: Material, accent: Mate
 		sensor.monitoring = true
 		sensor.position = Vector3(0.0, 1.5, 0.0)
 		var sensor_collision := CollisionShape3D.new()
+		sensor_collision.name = "CollisionShape3D"
 		var sensor_shape := BoxShape3D.new()
 		sensor_shape.size = Vector3(3.8, 3.0, 1.2)
 		sensor_collision.shape = sensor_shape
@@ -4203,6 +4205,7 @@ func _build_vr_simulation_course(root: Node3D, highlight: Material, accent: Mate
 		obstacle_body.name = "VRHologramObstaclePhysics_%02d" % obstacle_index
 		obstacle_body.position = obstacle_position
 		var obstacle_collision := CollisionShape3D.new()
+		obstacle_collision.name = "CollisionShape3D"
 		var obstacle_shape := BoxShape3D.new()
 		obstacle_shape.size = Vector3(0.7, 2.6, 0.7)
 		obstacle_collision.shape = obstacle_shape
