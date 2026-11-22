@@ -491,7 +491,7 @@ func _create_vault_door_interaction(parent: Node3D) -> void:
 	target.set("action_target_path", ^"DoorBody")
 	target.position = Vector3(0, 0, -39.0)
 	target.add_to_group("system_interactable")
-	target.set_meta("system_interaction_prompt", "اسحب الرافعة لفتح الباب الحجري")
+	target.set_meta("system_interaction_prompt", "افتح الباب الحجري")
 	parent.add_child(target)
 
 	var door_body := AnimatableBody3D.new()
