@@ -80,6 +80,12 @@ func _run() -> void:
 	if not bool(helicopter_status.get("available", false)) or str(helicopter_status.get("owner_tower_id", "")) != "hunter_association_tower_baghdad" or float(helicopter_status.get("landing_radius_m", 0.0)) != 18.0:
 		_fail("Hunter Association helicopter controller ownership or landing-zone configuration is invalid.")
 		return
+	if not helicopter_status.has("pilot_authorized") or helipad.call("_can_pilot"):
+		_fail("Unlicensed test profile must not be granted helicopter pilot access.")
+		return
+	if not helipad.has_method("_is_aircraft_position_clear"):
+		_fail("Hunter Association helicopter obstacle-clearance query is missing.")
+		return
 	if helipad.get_node_or_null("HunterAssociationHelicopter") == null or helipad.get_node_or_null("HunterHelicopterTouchHUD") == null:
 		_fail("Hunter Association helicopter aircraft model or touch-control HUD was not generated.")
 		return
