@@ -1379,7 +1379,20 @@ func _is_hotel_room_available(room_id: String) -> bool:
 	var booking: Dictionary = hotel_bookings.get(room_id, {})
 	if booking.is_empty():
 		return true
-	return str(booking.get("status", "")) == "ready"
+	var status := str(booking.get("status", ""))
+	if status == "ready":
+		return true
+	var checkout_unix := int(booking.get("check_out_unix", 0))
+	if status in ["reserved", "checked_in"] and checkout_unix > 0 and checkout_unix <= int(Time.get_unix_time_from_system()):
+		booking["guest_id"] = ""
+		booking["status"] = "needs_cleaning"
+		booking["check_in_unix"] = 0
+		booking["housekeeping_started_unix"] = 0
+		booking["housekeeping_completed_unix"] = 0
+		booking["inspection_passed"] = false
+		hotel_bookings[room_id] = booking
+		_save_hotel_bookings()
+	return false
 
 
 func _add_hotel_controls() -> void:
