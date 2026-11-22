@@ -408,3 +408,15 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 
 - [x] Add five radial elevated skybridges from the central SYSTEM hub to the five tower podiums, in addition to the perimeter pedestrian/vehicle links.
 - [x] Align shared sky-garden collision bounds with the 252 m terrace diameter.
+
+
+## Tower podium and walkable facility shell pass — 22 November 2026
+
+- [x] Add a three-level public podium/arrival hall visual structure to each of the five towers, with floor plate collision, glass-pillar markers, accent rings, and tower-specific arrival signage.
+- [x] Change tower facility rooms from solid placeholder boxes to open-front room shells with a floor plate and collision, side/rear walls, and a clear entrance opening.
+- [x] Add a walkable floor/collision marker to each cinema hall layout.
+- [ ] Implement functional elevator calls, floor selection, safe vertical movement, access permissions, and emergency stairs; current podiums and shafts are still visual geometry.
+- [ ] Build actual room scenes and interactive service loops (registration, missions, medical clinic, bank/investment, retail purchases, food service, hotel booking, cinema schedules/playback/tickets, arcade/VR/bowling/events, labs/library/exhibitions).
+- [ ] Add interior navigation meshes, doorway triggers, NPC staffing, save/load, and per-floor discovery; current facility shells are not yet wired into those systems.
+- [ ] Validate all five towers' positions and the elevated district against Baghdad's real geographic constraints and preserve the Tigris corridor.
+- [ ] Run canonical Godot import/parse, tower-manager scene test, headless main-scene startup, Android export, and on-device visual/performance checks for the latest QA branch head.
