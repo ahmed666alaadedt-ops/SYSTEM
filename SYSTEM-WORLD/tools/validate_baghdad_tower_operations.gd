@@ -191,14 +191,16 @@ func _run() -> void:
 	rank_probe.set("verified_hunter_mission_points", 2500)
 	rank_probe.set("nen_control_rank", 4)
 	rank_probe.set("nen_skill_use_count", 50)
-	rank_probe.set("nen_skill_ids", ["nen_burst", "charged_strike"])
+	var s_rank_skills: Array[String] = ["nen_burst", "charged_strike"]
+	rank_probe.set("nen_skill_ids", s_rank_skills)
 	if str(rank_probe.call("get_hunter_rank")) != "S":
 		_fail("S-rank promotion must require high mission score and demonstrated Nen mastery.")
 		return
 	rank_probe.set("verified_hunter_mission_points", 5000)
 	rank_probe.set("nen_control_rank", 5)
 	rank_probe.set("nen_skill_use_count", 150)
-	rank_probe.set("nen_skill_ids", ["nen_burst", "charged_strike", "aura_guard"])
+	var ss_rank_skills: Array[String] = ["nen_burst", "charged_strike", "aura_guard"]
+	rank_probe.set("nen_skill_ids", ss_rank_skills)
 	if str(rank_probe.call("get_hunter_rank")) != "SS":
 		_fail("SS-rank promotion must require advanced mission and Nen mastery.")
 		return
