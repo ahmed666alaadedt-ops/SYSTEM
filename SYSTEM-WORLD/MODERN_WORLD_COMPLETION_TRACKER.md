@@ -452,3 +452,13 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Add hall number signage and ticket kiosk visual markers.
 - [ ] Implement ticket purchase, booking, entry validation, film playback, seat interaction and emergency-exit behavior; current additions are visual placeholders only.
 - [ ] Verify the latest Godot and Android CI runs after these changes.
+
+
+## Tower public-service interiors and cinema wayfinding — 22 November 2026
+
+- [x] Add reception counter visuals to every public facility shell in all five towers.
+- [x] Add visitor waiting seats and a service directory sign to every public facility shell.
+- [x] Add entrance threshold markers to clarify access points.
+- [x] Extend the validator to check service directories and reception counters in every tower, plus aisle guidance, exit signage, hall numbering and ticket kiosk visuals in all six cinema halls.
+- [ ] These are still static visual fixtures: service NPCs, queueing, purchases, ticket validation, cinema playback and facility navigation are not yet implemented.
+- [ ] Confirm fresh Godot tower validation and Android APK build for the exact latest commits.
