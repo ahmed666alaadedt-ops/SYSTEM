@@ -1,3 +1,11 @@
+## Shopping Tower inventory expansion — 22 November 2026
+
+- [x] Expand the shared Shopping Tower catalog with additional nen stabilization/focus/recovery elixirs, deep-wound treatment, regeneration, antidotes, resistance and rank-gated elite elixirs.
+- [x] Add modern sidearms/rifles/shotguns, traditional blades, dual blades, great sword, crossbow, reinforced arrows and war hammer.
+- [x] Add armor progression from E through SSS in addition to the existing F–SSS hunter outfit series; rank checks remain enforced by the existing purchase flow.
+- [x] Add Iraqi, Arab, international and premium dining choices, bakery goods and specialty coffee to the Shopping Tower food catalog.
+- [ ] Validate unique catalog IDs, stock generation, rank restrictions, buy/sell behavior and save/load through Godot 4.3. This is source expansion, not a verified gameplay test yet.
+
 ## Baghdad Shopping Tower hospitality and validator alignment — 22 November 2026
 
 - [x] Expand Shopping Tower staffing to eight dedicated NPC roles: tower manager, weapons merchant, elixir pharmacist, hospitality manager, chef, waiter/customer service, hotel receptionist, and housekeeping supervisor.
