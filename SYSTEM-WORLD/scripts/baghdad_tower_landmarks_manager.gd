@@ -296,6 +296,30 @@ func _create_tower_lobby(root: Node3D, tower_id: String, title: String, radius: 
 	floor.material_override = floor_material
 	lobby.add_child(floor)
 	_add_static_box_collision(lobby, "LobbyFloorCollision", floor.position, floor_mesh.size)
+	var wall_material := _make_surface_material(Color(0.075, 0.13, 0.18), 0.48, 0.42)
+	var wall_height := 11.0
+	var wall_y := wall_height * 0.5
+	var back_z := center_z - depth * 0.5
+	var front_z := center_z + depth * 0.5
+	for side in [-1.0, 1.0]:
+		var side_wall_position := Vector3(side * (width * 0.5), wall_y, center_z)
+		_add_tower_identity_box(lobby, "LobbySideWall_%s" % str(side), side_wall_position, Vector3(0.8, wall_height, depth), wall_material)
+		_add_static_box_collision(lobby, "LobbySideWallCollision_%s" % str(side), side_wall_position, Vector3(0.8, wall_height, depth))
+	var back_segment_width := (width - 12.0) * 0.5
+	for side in [-1.0, 1.0]:
+		var back_wall_position := Vector3(side * (6.0 + back_segment_width * 0.5), wall_y, back_z)
+		_add_tower_identity_box(lobby, "LobbyBackWall_%s" % str(side), back_wall_position, Vector3(back_segment_width, wall_height, 0.8), wall_material)
+		_add_static_box_collision(lobby, "LobbyBackWallCollision_%s" % str(side), back_wall_position, Vector3(back_segment_width, wall_height, 0.8))
+	var lift_door_position := Vector3(0.0, 4.5, back_z + 0.55)
+	_add_tower_identity_box(lobby, "LobbyLiftDoor_Blockout", lift_door_position, Vector3(11.2, 9.0, 0.55), emissive_material)
+	_add_static_box_collision(lobby, "LobbyLiftDoorCollision", lift_door_position, Vector3(11.2, 9.0, 0.55))
+	var front_segment_width := (width - 14.0) * 0.5
+	for side in [-1.0, 1.0]:
+		var front_wall_position := Vector3(side * (7.0 + front_segment_width * 0.5), wall_y, front_z)
+		_add_tower_identity_box(lobby, "LobbyFrontWall_%s" % str(side), front_wall_position, Vector3(front_segment_width, wall_height, 0.8), wall_material)
+		_add_static_box_collision(lobby, "LobbyFrontWallCollision_%s" % str(side), front_wall_position, Vector3(front_segment_width, wall_height, 0.8))
+	var entrance_header_position := Vector3(0.0, 10.5, front_z)
+	_add_tower_identity_box(lobby, "LobbyEntranceHeader", entrance_header_position, Vector3(14.0, 1.0, 0.8), trim_material)
 	var canopy := MeshInstance3D.new()
 	canopy.name = "LobbyCanopy"
 	var canopy_mesh := BoxMesh.new()
@@ -367,8 +391,9 @@ func _create_tower_lobby(root: Node3D, tower_id: String, title: String, radius: 
 	sign.position = Vector3(0.0, 10.0, center_z - depth * 0.5 + 4.0)
 	sign.modulate = Color(0.78, 0.94, 1.0)
 	lobby.add_child(sign)
-	lobby.set_meta("lobby_status", "accessible_pavilion_blockout")
+	lobby.set_meta("lobby_status", "enclosed_reception_lobby_blockout")
 	lobby.set_meta("elevator_status", "not_implemented")
+	lobby.set_meta("lift_door_visual_only", true)
 
 
 func _get_tower_floor_directory(tower_id: String) -> PackedStringArray:
