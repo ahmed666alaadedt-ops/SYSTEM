@@ -102,3 +102,15 @@ Code validated on commit `83db22c01e7ecf1addd01ce01cbb1b341bd1fdc8`:
 - An earlier intermediate commit `0f46a14` failed Godot parsing due to a missing indentation on the new metadata line; fixed in `59807d6`. The current branch includes the correction.
 - Main remains unchanged at `dff4e9d377ffaae6845e6f401c47346e51ea5619`. Branch comparison: 556 ahead, 3 behind, diverged. Do not merge/rebase/synchronize.
 - Next: continue from the remaining Baghdad landmark queue, prioritizing the five connected towers and Hunter Association headquarters. Do not repeat completed door/cell-retention work. No physical Android device visual/performance test has been performed.
+
+
+## Latest continuation checkpoint — Hunter exam tunnel access gates
+
+- Latest validated code commit: `9f85abd7748f8fccd4244e8f356cd0f2c00c2f09`.
+- Latest full Godot 4.3 validation: workflow `44986054107` passed, including the new Hunter tunnel access-control test.
+- Seven stage-gate panels and the staging-chamber barrier now have real collision. The start interaction sits at the lobby-side threshold before gate 1. The main interaction handler opens the barriers only after `HunterExamManager.begin_exam()` succeeds.
+- Validator proves: unregistered start is denied; all seven barriers and staging barrier begin closed; registered candidate can begin; all gate collision is then disabled and panels hidden.
+- Tracker update commit: `f4aa7b1ca523b580c818b94a58e9839d6082904f`.
+- Remaining Hunter Exam work is the actual seven challenge locations/gameplay and trusted server-side evidence verification. Do not bypass the verifier or award exam completion/license locally.
+- Next queue: inspect the next unchecked Baghdad landmark integration task after this tunnel milestone, while preserving the five connected towers, Hunter HQ, and independent 200-floor Power Tower structure. No physical Android device visual/performance test has been performed.
+- Branch remains `work/baghdad-system-integration`; main has not been modified or merged.
