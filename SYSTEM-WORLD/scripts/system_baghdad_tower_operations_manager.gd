@@ -8,6 +8,7 @@ const SAVE_PATH := "user://system_baghdad_tower_operations.cfg"
 const STOCK_SAVE_PATH := "user://system_tower_vendor_stock.cfg"
 const HOTEL_SAVE_PATH := "user://system_baghdad_hotel_bookings.cfg"
 const NPC_SALES_SAVE_PATH := "user://system_baghdad_npc_sales.cfg"
+const FACILITY_ACTIVITY_SAVE_PATH := "user://system_baghdad_facility_activity.cfg"
 const WORLD_ID := 2
 const STAFF_NAMES := ["أحمد", "سارة", "علي", "نور", "حسن", "مريم", "يوسف", "ليان", "عمر", "زينب", "مصطفى", "رنا"]
 
@@ -236,6 +237,9 @@ var customer_walk_clock := 0.0
 var npc_sales_total := 0
 var npc_purchase_count := 0
 
+var facility_activity_stats: Dictionary = {}
+var active_facility_activity: Dictionary = {}
+
 func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_power_manager: Node, p_player_health: Node, p_region_manager: Node) -> void:
 	player = p_player
 	progression = p_progression
@@ -254,6 +258,7 @@ func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_po
 	_load_vendor_stock()
 	_load_hotel_bookings()
 	_load_npc_sales_ledger()
+	_load_facility_activity_stats()
 	_build_ui()
 	if is_instance_valid(player_health) and player_health.has_signal("player_wounded"):
 		var wounded_callback := Callable(self, "_on_player_wounded")
@@ -2256,6 +2261,164 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 	shape.position = Vector3(0.0, 1.2, 0.0)
 	interaction.add_child(shape)
 	root.add_child(interaction)
+
+
+func open_facility_service(tower_id: String, floor_number: int, facility_type: String) -> void:
+	if not TOWER_CONFIG.has(tower_id) or not _facility_activity_definition(facility_type).is_empty():
+		if not TOWER_CONFIG.has(tower_id):
+			return
+	else:
+		return
+	current_tower_id = tower_id
+	current_staff_id = ""
+	_clear_dynamic_controls()
+	var facility_names := {
+		"swimming_pool": "مسبح SYSTEM — تحدي السباحة",
+		"fitness_gym": "نادي اللياقة — تحدي التمارين",
+		"sports_court": "الملعب — تحدي التصويب",
+		"bowling": "صالة البولينغ — جولة النقاط",
+		"cinema": "سينما SYSTEM — جلسة العرض",
+		"arcade": "مركز الألعاب — تحدي الأهداف",
+		"family_zone": "منطقة العائلات — رحلة الاستكشاف",
+		"rooftop_leisure": "حدائق السطح — تحدي التصوير",
+		"robotics_lab": "مختبر الروبوتات — تركيب النموذج",
+		"ai_lab": "مختبر الذكاء الاصطناعي — تحليل الإشارات",
+		"vr_lab": "مختبر الواقع الافتراضي — مسار المحاكاة"
+	}
+	title_label.text = str(facility_names.get(facility_type, "نشاط SYSTEM"))
+	credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
+	status_label.text = "الطابق %d — ابدأ النشاط ثم أكمل خطواته لتحصل على مكافأة." % floor_number
+	var close_button := Button.new()
+	close_button.text = "إغلاق النشاط"
+	close_button.pressed.connect(func(): panel.hide())
+	content.add_child(close_button)
+	_add_facility_activity_controls(facility_type)
+	panel.show()
+
+
+func _facility_activity_definition(facility_type: String) -> Dictionary:
+	var definitions := {
+		"swimming_pool": {"action": "lap", "action_label": "إكمال لفة سباحة", "goal": 3, "reward": 45, "title": "السباحة"},
+		"fitness_gym": {"action": "rep", "action_label": "إكمال مجموعة تمارين", "goal": 8, "reward": 35, "title": "اللياقة"},
+		"sports_court": {"action": "shot", "action_label": "تنفيذ تصويبة", "goal": 5, "reward": 55, "title": "التصويب الرياضي"},
+		"bowling": {"action": "throw", "action_label": "رمي كرة البولينغ", "goal": 10, "reward": 70, "title": "البولينغ"},
+		"cinema": {"action": "watch", "action_label": "تأكيد مشاهدة العرض", "goal": 1, "reward": 15, "title": "جلسة السينما"},
+		"arcade": {"action": "hit", "action_label": "إصابة الهدف المضيء", "goal": 5, "reward": 45, "title": "الألعاب الإلكترونية"},
+		"family_zone": {"action": "discover", "action_label": "اكتشاف محطة عائلية", "goal": 3, "reward": 30, "title": "استكشاف العائلة"},
+		"rooftop_leisure": {"action": "photo", "action_label": "التقاط صورة للسطح", "goal": 1, "reward": 20, "title": "استكشاف السطح"},
+		"robotics_lab": {"action": "assemble", "action_label": "تركيب القطعة التالية", "goal": 3, "reward": 75, "title": "تركيب الروبوت"},
+		"ai_lab": {"action": "analyze", "action_label": "تحليل إشارة جديدة", "goal": 3, "reward": 65, "title": "تحليل الذكاء الاصطناعي"},
+		"vr_lab": {"action": "checkpoint", "action_label": "اجتياز نقطة المحاكاة", "goal": 3, "reward": 60, "title": "محاكاة الواقع الافتراضي"}
+	}
+	return definitions.get(facility_type, {})
+
+
+func _add_facility_activity_controls(facility_type: String) -> void:
+	var definition := _facility_activity_definition(facility_type)
+	if definition.is_empty():
+		return
+	var description := Label.new()
+	description.name = "FacilityActivityInstructions"
+	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	description.text = "%s: أكمل %d خطوات. تُحفظ أفضل نتيجة وعدد الجولات على هذا الجهاز." % [str(definition["title"]), int(definition["goal"])]
+	content.add_child(description)
+	var start_button := Button.new()
+	start_button.name = "StartFacilityActivityButton"
+	start_button.text = "بدء النشاط"
+	start_button.pressed.connect(start_facility_activity.bind(facility_type))
+	content.add_child(start_button)
+	var action_button := Button.new()
+	action_button.name = "FacilityActivityActionButton"
+	action_button.text = str(definition["action_label"])
+	action_button.pressed.connect(perform_facility_activity.bind(str(definition["action"])))
+	content.add_child(action_button)
+	var stats := Dictionary(facility_activity_stats.get(facility_type, {}))
+	var stats_label := Label.new()
+	stats_label.name = "FacilityActivityStats"
+	stats_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	stats_label.text = "الجولات المكتملة: %d | أفضل نتيجة: %d" % [int(stats.get("plays", 0)), int(stats.get("best_score", 0))]
+	content.add_child(stats_label)
+
+
+func start_facility_activity(facility_type: String) -> bool:
+	var definition := _facility_activity_definition(facility_type)
+	if definition.is_empty():
+		return false
+	active_facility_activity = {
+		"type": facility_type,
+		"action": str(definition["action"]),
+		"step": 0,
+		"score": 0,
+		"goal": int(definition["goal"]),
+		"reward": int(definition["reward"]),
+		"started": true
+	}
+	_set_status("%s بدأت. التقدم: 0/%d" % [str(definition["title"]), int(definition["goal"])])
+	return true
+
+
+func perform_facility_activity(action: String) -> Dictionary:
+	if active_facility_activity.is_empty() or not bool(active_facility_activity.get("started", false)):
+		return {"success": false, "reason": "لا يوجد نشاط بدأ بعد."}
+	if action != str(active_facility_activity.get("action", "")):
+		return {"success": false, "reason": "هذا الإجراء لا يخص النشاط الحالي."}
+	var facility_type := str(active_facility_activity.get("type", ""))
+	var step := int(active_facility_activity.get("step", 0)) + 1
+	var score_gain := 1
+	match facility_type:
+		"bowling":
+			score_gain = clampi(10 - absi(posmod(step * 3 + 2, 9) - 4), 0, 10)
+		"sports_court":
+			score_gain = 2 if posmod(step * 2 + 1, 3) != 0 else 0
+		"arcade":
+			score_gain = 2 if posmod(step + 1, 4) != 0 else 0
+		"robotics_lab":
+			score_gain = 2
+		"ai_lab", "vr_lab":
+			score_gain = 2 if posmod(step, 2) == 1 else 1
+	active_facility_activity["step"] = step
+	active_facility_activity["score"] = int(active_facility_activity.get("score", 0)) + score_gain
+	var goal := int(active_facility_activity.get("goal", 1))
+	if step >= goal:
+		return _complete_facility_activity()
+	_set_status("النشاط مستمر — الخطوة %d من %d | النتيجة: %d" % [step, goal, int(active_facility_activity.get("score", 0))])
+	return {"success": true, "completed": false, "step": step, "score": int(active_facility_activity.get("score", 0))}
+
+
+func _complete_facility_activity() -> Dictionary:
+	var facility_type := str(active_facility_activity.get("type", ""))
+	var score := int(active_facility_activity.get("score", 0))
+	var reward := int(active_facility_activity.get("reward", 0)) + score
+	var stats: Dictionary = facility_activity_stats.get(facility_type, {})
+	stats["plays"] = int(stats.get("plays", 0)) + 1
+	stats["best_score"] = maxi(int(stats.get("best_score", 0)), score)
+	stats["total_score"] = int(stats.get("total_score", 0)) + score
+	stats["total_rewards"] = int(stats.get("total_rewards", 0)) + reward
+	facility_activity_stats[facility_type] = stats
+	credits += reward
+	_save_wallet()
+	_save_facility_activity_stats()
+	active_facility_activity.clear()
+	credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
+	_set_status("اكتمل النشاط بنجاح! النتيجة: %d — مكافأتك: %d رصيد SYSTEM." % [score, reward])
+	return {"success": true, "completed": true, "score": score, "reward": reward}
+
+
+func _load_facility_activity_stats() -> void:
+	var config := ConfigFile.new()
+	if config.load(FACILITY_ACTIVITY_SAVE_PATH) != OK:
+		facility_activity_stats = {}
+		return
+	var stored: Variant = config.get_value("activities", "stats", {})
+	facility_activity_stats = stored if stored is Dictionary else {}
+
+
+func _save_facility_activity_stats() -> void:
+	var config := ConfigFile.new()
+	config.set_value("activities", "stats", facility_activity_stats)
+	var error := config.save(FACILITY_ACTIVITY_SAVE_PATH)
+	if error != OK:
+		push_warning("SYSTEM facility activity stats could not be saved: " + str(error))
 
 
 func _add_facility_box(parent: Node3D, object_name: String, object_position: Vector3, object_size: Vector3, material: Material) -> void:
