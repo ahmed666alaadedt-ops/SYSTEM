@@ -204,6 +204,7 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	_create_tower_podium(root, node_name, radius, beacon_color)
 	_create_tower_architecture(root, node_name, title, height, radius, floors, beacon_color)
 	_create_tower_identity_features(root, node_name, height, radius, beacon_color)
+	_create_tower_vertical_transport_blockout(root, height, radius, floors, beacon_color)
 	_create_tower_facility_blockout(root, node_name, radius)
 
 	root.set_meta("tower_id", location_id)
@@ -449,6 +450,69 @@ func _create_public_amenities() -> void:
 	_create_multilevel_parking_blockout(amenities)
 	_create_vertical_access_blockout(amenities)
 
+
+
+func _create_tower_vertical_transport_blockout(root: Node3D, height: float, radius: float, floors: int, accent: Color) -> void:
+	# Visual-only lift banks and protected stair cores. Movement, floor selection,
+	# access control and emergency routing are deliberately not implied here.
+	var transport := Node3D.new()
+	transport.name = "VerticalTransport_Blockout"
+	root.add_child(transport)
+	var glass := StandardMaterial3D.new()
+	glass.albedo_color = Color(0.12, 0.58, 0.76, 0.32)
+	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	glass.metallic = 0.52
+	glass.roughness = 0.18
+	var cabin_material := _make_surface_material(accent, 0.35, 0.24)
+	var lift_positions := [
+		Vector3(radius * 0.34, 0.0, radius * 0.34),
+		Vector3(-radius * 0.34, 0.0, radius * 0.34),
+		Vector3(radius * 0.34, 0.0, -radius * 0.34),
+		Vector3(-radius * 0.34, 0.0, -radius * 0.34)
+	]
+	for index in range(lift_positions.size()):
+		var lift := MeshInstance3D.new()
+		lift.name = "PanoramicLiftShaft_%02d" % index
+		var shaft_mesh := BoxMesh.new()
+		shaft_mesh.size = Vector3(3.8, height * 0.88, 3.8)
+		lift.mesh = shaft_mesh
+		lift.position = lift_positions[index] + Vector3(0.0, height * 0.44 + 7.0, 0.0)
+		lift.material_override = glass
+		transport.add_child(lift)
+		var cabin := MeshInstance3D.new()
+		cabin.name = "LiftCabinVisual_%02d" % index
+		var cabin_mesh := BoxMesh.new()
+		cabin_mesh.size = Vector3(3.1, 3.2, 3.1)
+		cabin.mesh = cabin_mesh
+		cabin.position = lift_positions[index] + Vector3(0.0, 8.6, 0.0)
+		cabin.material_override = cabin_material
+		transport.add_child(cabin)
+	for side in range(2):
+		var stair_core := MeshInstance3D.new()
+		stair_core.name = "ProtectedStairCore_%02d" % side
+		var core_mesh := BoxMesh.new()
+		core_mesh.size = Vector3(5.0, height * 0.88, 5.0)
+		stair_core.mesh = core_mesh
+		stair_core.position = Vector3(0.0, height * 0.44 + 7.0, radius * (0.78 if side == 0 else -0.78))
+		stair_core.material_override = tower_material
+		transport.add_child(stair_core)
+	var directory := Node3D.new()
+	directory.name = "FloorDirectoryMarkers"
+	transport.add_child(directory)
+	var marker_step := 10 if floors >= 40 else 5
+	for floor_number in range(1, floors + 1, marker_step):
+		var marker := Label3D.new()
+		marker.name = "FloorMarker_%03d" % floor_number
+		marker.text = "FLOOR %03d" % floor_number
+		marker.font_size = 12
+		marker.pixel_size = 0.018
+		marker.position = Vector3(radius * 1.12, 9.0 + (height - 16.0) * float(floor_number - 1) / float(maxi(floors - 1, 1)), 0.0)
+		marker.modulate = accent
+		directory.add_child(marker)
+	transport.set_meta("lift_count_visual", lift_positions.size())
+	transport.set_meta("protected_stair_cores_visual", 2)
+	transport.set_meta("floor_directory_interval", marker_step)
+	transport.set_meta("interactive", false)
 
 
 func _create_tower_podium(root: Node3D, node_name: String, radius: float, accent: Color) -> void:
