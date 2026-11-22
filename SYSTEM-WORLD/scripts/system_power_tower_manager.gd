@@ -56,7 +56,8 @@ func get_floor_data(floor_number: int) -> Dictionary:
 		"arena_rules": "المواجهة النهائية: اهزم حارس برج القوة الأخير لإتمام الطوابق الـ200" if final_boss else ("مواجهة زعيم الطابق — اهزم الخصم الرئيسي" if boss_floor else str(arena_rules[arena_cycle])),
 		"clear_time_recorded": true,
 		"ranked": arena_type == "CHAMPIONSHIP" or boss_floor,
-		"final_boss": final_boss
+		"final_boss": final_boss,
+		"reward_items": ["power_tower_sovereign_crown", "sovereign_core"] if final_boss else (["boss_core"] if boss_floor else (["power_tower_fragment"] if floor_number % 5 == 0 else ["power_tower_token"]))
 	}
 
 func request_floor(floor_number: int, player_level: int) -> Dictionary:
