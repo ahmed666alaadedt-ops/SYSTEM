@@ -83,6 +83,21 @@ func _ready() -> void:
 	if terrain == null:
 		push_warning("SYSTEM WORLD: region manager requires ModernContinent.")
 		return
+	if use_baghdad_osm_cells:
+		var manifest_path := "res://data/geography/baghdad/cell_pack/manifest.json"
+		var manifest_value: Variant = JSON.parse_string(FileAccess.get_file_as_string(manifest_path))
+		if manifest_value is Dictionary:
+			var manifest: Dictionary = manifest_value
+			var ground_schema := int(manifest.get("ground_layer_schema_version", 0))
+			var ground_elevation := float(manifest.get("ground_elevation_m", NAN))
+			if ground_schema == 1 and is_finite(ground_elevation) and terrain.has_method("configure_baghdad_osm_ground"):
+				terrain.call("configure_baghdad_osm_ground", ground_elevation)
+			else:
+				push_warning("SYSTEM WORLD: Baghdad OSM pack lacks the verified ground layer; procedural fallback remains active.")
+				use_baghdad_osm_cells = false
+		else:
+			push_warning("SYSTEM WORLD: Baghdad OSM manifest is invalid; procedural fallback remains active.")
+			use_baghdad_osm_cells = false
 	_create_materials()
 	_resolve_city_anchors()
 	_build_city_districts()
