@@ -119,6 +119,10 @@ func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_po
 		return
 	_load_wallet()
 	_build_ui()
+	if is_instance_valid(player_health) and player_health.has_signal("player_wounded"):
+		var wounded_callback := Callable(self, "_on_player_wounded")
+		if not player_health.player_wounded.is_connected(wounded_callback):
+			player_health.player_wounded.connect(wounded_callback)
 	_resolve_towers()
 	_create_staff_for_all_towers()
 	_create_advertising_surfaces()
@@ -776,6 +780,8 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 	if room == null:
 		_set_status("تعذر تجهيز الطابق.")
 		return
+	if is_instance_valid(active_floor_root) and active_floor_root != room:
+		active_floor_root.queue_free()
 	active_floor_root = room
 	panel.hide()
 	player.set_meta("system_tower_elevator_active", true)
@@ -874,7 +880,23 @@ func return_to_lobby() -> void:
 		if is_instance_valid(player):
 			player.set_meta("system_tower_elevator_active", false)
 			player.velocity = Vector3.ZERO
+		if is_instance_valid(active_floor_root):
+			active_floor_root.queue_free()
+		active_floor_root = null
 	)
+
+func _on_player_wounded() -> void:
+	if not power_floor_in_progress:
+		return
+	for opponent in active_opponents.values():
+		if is_instance_valid(opponent):
+			opponent.queue_free()
+	active_opponents.clear()
+	if is_instance_valid(power_tower_manager):
+		power_tower_manager.call("abandon_active_floor")
+	power_floor_in_progress = false
+	active_power_floor_data.clear()
+	_set_status("تعرضت للإصابة، وتم إيقاف تحدي برج القوة دون احتساب الطابق. توجه إلى المستشفى للعلاج.")
 
 func get_operations_status() -> Dictionary:
 	var total_staff := 0
