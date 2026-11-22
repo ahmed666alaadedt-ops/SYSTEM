@@ -2463,6 +2463,8 @@ func open_facility_service(tower_id: String, floor_number: int, facility_type: S
 	var facility_room := _ensure_floor_room(tower_id, floor_number)
 	current_facility_root = facility_room.get_node_or_null("SpecialFacility_" + facility_type) as Node3D if facility_room != null else null
 	facility_aim = 0.0
+	if facility_type == "arcade":
+		selected_arcade_mode = "shooter"
 	_clear_dynamic_controls()
 	var facility_names := {
 		"swimming_pool": "مسبح SYSTEM — تحدي السباحة",
@@ -2590,6 +2592,14 @@ func _on_arcade_mode_selected(index: int) -> void:
 		action_button.visible = selected_arcade_mode == "shooter"
 
 
+func _start_arcade_memory_preview() -> void:
+	active_facility_activity["memory_preview"] = true
+	var memory_status := content.get_node_or_null("ArcadeMemoryStatus") as Label
+	if memory_status != null:
+		memory_status.text = "احفظ التسلسل: أخضر ← أزرق ← ذهبي ← أحمر ← أخضر"
+	get_tree().create_timer(2.8).timeout.connect(_on_arcade_memory_preview_finished)
+
+
 func _on_arcade_memory_preview_finished() -> void:
 	if active_facility_activity.is_empty() or str(active_facility_activity.get("mode", "")) != "memory":
 		return
@@ -2617,16 +2627,15 @@ func _submit_arcade_memory_input(input_index: int) -> void:
 	var cursor := int(active_facility_activity.get("memory_cursor", 0))
 	var result := _evaluate_arcade_memory_input(sequence, cursor, input_index)
 	if not bool(result.get("valid", false)):
-		var lives := maxi(0, int(active_facility_activity.get("lives", 3)) - 1)
+		var lives := maxi(0, int(active_facility_activity.get("lives", 0)) - 1)
 		active_facility_activity["lives"] = lives
 		active_facility_activity["memory_cursor"] = 0
 		if lives <= 0:
-			_complete_facility_activity()
+			active_facility_activity.clear()
+			_set_status("انتهت لعبة الذاكرة — نفدت المحاولات ولم تُمنح مكافأة.")
 			return
-		var memory_status := content.get_node_or_null("ArcadeMemoryStatus") as Label
-		if memory_status != null:
-			memory_status.text = "ترتيب غير صحيح! بقيت %d محاولات. أعد التسلسل." % lives
-		_set_status("خطأ في تسلسل الذاكرة — المحاولات المتبقية: %d" % lives)
+		_set_status("خطأ في تسلسل الذاكرة — المحاولات المتبقية: %d. أعد الحفظ." % lives)
+		_start_arcade_memory_preview()
 		return
 	var next_cursor := int(result.get("next_cursor", cursor))
 	active_facility_activity["memory_cursor"] = next_cursor
@@ -2680,14 +2689,10 @@ func start_facility_activity(facility_type: String) -> bool:
 			active_facility_activity["goal"] = 5
 			active_facility_activity["memory_sequence"] = [2, 0, 3, 1, 2]
 			active_facility_activity["memory_cursor"] = 0
-			active_facility_activity["memory_preview"] = true
-			var memory_status := content.get_node_or_null("ArcadeMemoryStatus") as Label
-			if memory_status != null:
-				memory_status.text = "احفظ التسلسل: أخضر ← أزرق ← ذهبي ← أحمر ← أخضر"
 			var memory_buttons := content.get_node_or_null("ArcadeMemoryButtons") as HBoxContainer
 			if memory_buttons != null:
 				memory_buttons.visible = true
-			get_tree().create_timer(2.8).timeout.connect(_on_arcade_memory_preview_finished)
+			_start_arcade_memory_preview()
 		else:
 			var memory_buttons := content.get_node_or_null("ArcadeMemoryButtons") as HBoxContainer
 			if memory_buttons != null:
