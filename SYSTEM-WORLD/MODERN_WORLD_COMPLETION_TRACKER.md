@@ -660,5 +660,6 @@ Implementation added on the feature branch; automated runtime validation is pend
 
 - [x] Extend the Godot operations validator to grant a test-only completed Hunter license, enter the aircraft, verify player-control handoff, command takeoff, command a controlled landing inside the pad radius, and verify safe exit restores on-foot controls.
 - [x] Capture the player's prior physics-processing state when boarding and restore that exact state on exit instead of assuming it was always enabled.
-- [ ] Pass the flight-loop regression test and canonical Android APK export on the latest PR head.
+- [x] Pass the Godot 4.3 flight-loop regression test on commit `999431189fa50161d09f6cd95e964b4596e510d4`.
+- [x] Pass canonical Android APK export on the same tested source head; artifact `SYSTEM-WORLD-canonical-android-debug-apk` (35,805,824 bytes) uploaded successfully.
 - [ ] Perform physical Android touch-control, rotor/clearance, flight feel, and performance testing; automated headless checks do not replace device inspection.
