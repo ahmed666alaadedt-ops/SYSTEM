@@ -38,7 +38,6 @@ on:
       - "SYSTEM-WORLD/scripts/baghdad_city_state_store.gd"
       - "SYSTEM-WORLD/scripts/world_manager.gd"
       - "SYSTEM-WORLD/scripts/modern_world_region_manager.gd"
-      - "SYSTEM-WORLD/tools/validate_baghdad_osm_runtime.gd"
   workflow_dispatch:
 
 permissions:
