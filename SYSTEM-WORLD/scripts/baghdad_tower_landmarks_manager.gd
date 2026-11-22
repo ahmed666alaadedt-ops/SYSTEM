@@ -201,6 +201,7 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	label.modulate = beacon_color
 	root.add_child(label)
 
+	_create_tower_podium(root, node_name, radius, beacon_color)
 	_create_tower_architecture(root, node_name, title, height, radius, floors, beacon_color)
 	_create_tower_identity_features(root, node_name, height, radius, beacon_color)
 	_create_tower_facility_blockout(root, node_name, radius)
@@ -448,6 +449,65 @@ func _create_public_amenities() -> void:
 	_create_multilevel_parking_blockout(amenities)
 	_create_vertical_access_blockout(amenities)
 
+
+
+func _create_tower_podium(root: Node3D, node_name: String, radius: float, accent: Color) -> void:
+	var podium := Node3D.new()
+	podium.name = "PublicPodiumAndArrivalHall"
+	root.add_child(podium)
+	var glass := _make_surface_material(Color(0.035, 0.22, 0.30, 0.82), 0.18, 0.68)
+	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	var accent_material := _make_surface_material(accent, 0.24, 0.62)
+	for level in range(3):
+		var y := 8.0 + float(level) * 5.0
+		var deck := MeshInstance3D.new()
+		deck.name = "PodiumPublicFloor_%02d" % (level + 1)
+		var deck_mesh := CylinderMesh.new()
+		deck_mesh.top_radius = radius * (1.42 - float(level) * 0.08)
+		deck_mesh.bottom_radius = radius * (1.42 - float(level) * 0.08)
+		deck_mesh.height = 0.8
+		deck.mesh = deck_mesh
+		deck.position.y = y
+		deck.material_override = trim_material
+		podium.add_child(deck)
+		var body := StaticBody3D.new()
+		body.name = deck.name + "_Collision"
+		body.position.y = y
+		var collision := CollisionShape3D.new()
+		var shape := CylinderShape3D.new()
+		shape.radius = deck_mesh.top_radius
+		shape.height = deck_mesh.height
+		collision.shape = shape
+		body.add_child(collision)
+		podium.add_child(body)
+		for pillar_index in range(12):
+			var angle := TAU * float(pillar_index) / 12.0
+			var pillar := MeshInstance3D.new()
+			pillar.name = "PodiumGlassPillar_%02d_%02d" % [level, pillar_index]
+			var pillar_mesh := BoxMesh.new()
+			pillar_mesh.size = Vector3(1.2, 4.6, 1.2)
+			pillar.mesh = pillar_mesh
+			pillar.position = Vector3(cos(angle) * deck_mesh.top_radius * 0.91, y + 2.7, sin(angle) * deck_mesh.top_radius * 0.91)
+			pillar.material_override = glass
+			podium.add_child(pillar)
+		var ring := MeshInstance3D.new()
+		ring.name = "PodiumAccentRing_%02d" % level
+		var ring_mesh := TorusMesh.new()
+		ring_mesh.inner_radius = deck_mesh.top_radius * 0.88
+		ring_mesh.outer_radius = deck_mesh.top_radius * 0.92
+		ring.mesh = ring_mesh
+		ring.position.y = y + 2.5
+		ring.material_override = accent_material
+		podium.add_child(ring)
+	var arrival := Label3D.new()
+	arrival.name = "PublicArrivalHallSign"
+	arrival.text = "SYSTEM • " + node_name.replace("Tower", " TOWER")
+	arrival.font_size = 30
+	arrival.position = Vector3(0.0, 15.0, radius * 1.5)
+	arrival.modulate = accent
+	podium.add_child(arrival)
+	podium.set_meta("public_levels", 3)
+	podium.set_meta("arrival_hall_status", "visual_blockout")
 
 
 func _create_tower_facility_blockout(root: Node3D, node_name: String, radius: float) -> void:
