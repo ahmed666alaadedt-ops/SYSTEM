@@ -63,9 +63,15 @@ func _run() -> void:
 	if int(status.get("customer_count", 0)) != 20:
 		_fail("Expected four persistent customer NPCs in each of the five Baghdad district towers; found %d." % int(status.get("customer_count", 0)))
 		return
-	for tower_id in ["hunter_association_tower_baghdad", "business_investment_tower_baghdad", "shopping_tower_baghdad", "entertainment_tower_baghdad", "technology_tower_baghdad"]:
-		var tower_config: Dictionary = operations.get("TOWER_CONFIG")[tower_id]
-		var tower_node := tower_manager.get_node_or_null(str(tower_config.get("node", "")))
+	var expected_tower_nodes := {
+		"hunter_association_tower_baghdad": "HunterAssociationTower",
+		"business_investment_tower_baghdad": "BusinessInvestmentTower",
+		"shopping_tower_baghdad": "ShoppingTower",
+		"entertainment_tower_baghdad": "EntertainmentTower",
+		"technology_tower_baghdad": "TechnologyTower"
+	}
+	for tower_id in expected_tower_nodes.keys():
+		var tower_node := tower_manager.get_node_or_null(str(expected_tower_nodes[tower_id]))
 		var lobby := tower_node.get_node_or_null("PublicLobby_Blockout") if tower_node != null else null
 		if lobby == null:
 			_fail("Tower lobby missing for staff/customer validation: " + tower_id)
