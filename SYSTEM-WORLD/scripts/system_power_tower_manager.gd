@@ -6,7 +6,7 @@ signal floor_cleared(floor_number: int, reward_xp: int, rank: String)
 signal tower_record_updated(highest_floor: int)
 
 const SAVE_PATH := "user://system_power_tower.cfg"
-const MAX_FLOORS := 100
+const MAX_FLOORS := 200
 
 var highest_cleared_floor := 0
 var active_floor := 0
@@ -20,7 +20,7 @@ func get_floor_data(floor_number: int) -> Dictionary:
 	if floor_number < 1 or floor_number > MAX_FLOORS:
 		return {}
 	var boss_floor := floor_number % 10 == 0
-	var difficulty := clampi(1 + int((floor_number - 1) / 5), 1, 20)
+	var difficulty := clampi(1 + int((floor_number - 1) / 5), 1, 40)
 	var required_level := maxi(1, int(ceil(float(floor_number) * 0.72)))
 	var reward_xp := 100 + floor_number * floor_number * 12
 	var arena_cycle := (floor_number - 1) % 5
@@ -99,11 +99,11 @@ func get_tower_status() -> Dictionary:
 	return {"highest_cleared_floor": highest_cleared_floor, "active_floor": active_floor, "max_floors": MAX_FLOORS, "next_floor": 0 if highest_cleared_floor >= MAX_FLOORS else highest_cleared_floor + 1}
 
 func _rank_for_floor(floor_number: int) -> String:
-	if floor_number >= 90: return "S"
-	if floor_number >= 70: return "A"
-	if floor_number >= 50: return "B"
-	if floor_number >= 30: return "C"
-	if floor_number >= 15: return "D"
+	if floor_number >= 180: return "S"
+	if floor_number >= 150: return "A"
+	if floor_number >= 110: return "B"
+	if floor_number >= 70: return "C"
+	if floor_number >= 30: return "D"
 	return "E"
 
 func _save_progress() -> void:
