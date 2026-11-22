@@ -152,7 +152,7 @@ func _update_proximity() -> void:
 	if interact_button.visible:
 		interact_button.text = "Enter Helicopter" if landed else "Helicopter unavailable"
 		if not _can_pilot():
-			interact_button.text = "Hunter License Required"
+			interact_button.text = "Association Staff / A-S Rank / Level 50+ Required"
 	status_label.text = "Hunter Association — Helicopter Pad" if distance <= APPROACH_DISTANCE else ""
 
 func _toggle_pilot() -> void:
@@ -165,7 +165,7 @@ func _toggle_pilot() -> void:
 		if not is_instance_valid(player) or player.global_position.distance_to(interaction_anchor) > APPROACH_DISTANCE:
 			return
 		if not _can_pilot():
-			status_label.text = "Hunter Association pilot access requires a completed Hunter License."
+			status_label.text = "Pilot access is restricted to Association staff, A/S hunters, or level 50+ licensed hunters."
 			return
 		_enter_aircraft()
 
@@ -296,6 +296,25 @@ func _update_flight(delta: float) -> void:
 	_update_camera()
 
 func _can_pilot() -> bool:
+	if not is_instance_valid(player):
+		return false
+
+	# Explicit association staff and officials receive access through their assigned role.
+	if bool(player.get_meta("system_hunter_helicopter_access", false)):
+		return true
+	var association_role := str(player.get_meta("system_hunter_association_role", "")).strip_edges().to_lower()
+	if association_role in ["association_director", "association_official", "chief_hunter", "helicopter_pilot", "receptionist", "mission_clerk", "exam_registrar", "advertising_manager"]:
+		return true
+
+	# Exceptional hunters may pilot only after earning a high hunter rank.
+	var hunter_rank := str(player.get_meta("system_hunter_rank", "")).strip_edges().to_upper()
+	if hunter_rank in ["A", "S"]:
+		return true
+
+	# A completed Hunter License alone is not enough: the hunter must also reach level 50.
+	var progression := get_tree().root.find_child("PlayerProgression", true, false)
+	if progression == null or int(progression.get("current_level")) < 50:
+		return false
 	var exam_manager := get_tree().root.find_child("SYSTEMHunterExamManager", true, false)
 	if exam_manager == null or not exam_manager.has_method("get_exam_overview"):
 		return false
