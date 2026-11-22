@@ -855,7 +855,7 @@ func _run() -> void:
 	for table_index in range(4):
 		var table_root := restaurant_floor.get_node_or_null("RestaurantTable_%02d" % table_index) as Node3D
 		var table_body := table_root.get_node_or_null("RestaurantTableInteraction") as StaticBody3D if table_root != null else null
-		if table_body != null and table_body.has_meta("system_restaurant_table_id") and table_body.has_meta("system_interaction_prompt"):
+		if table_body != null and table_body.is_in_group("system_interactable") and table_body.has_meta("system_restaurant_table_id") and table_body.has_meta("system_interaction_prompt"):
 			restaurant_table_count += 1
 			if restaurant_table_interaction == null:
 				restaurant_table_interaction = table_body
