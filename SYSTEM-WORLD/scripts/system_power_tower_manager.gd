@@ -57,7 +57,7 @@ func get_floor_data(floor_number: int) -> Dictionary:
 		"clear_time_recorded": true,
 		"ranked": arena_type == "CHAMPIONSHIP" or boss_floor,
 		"final_boss": final_boss,
-		"reward_items": ["power_tower_sovereign_crown", "sovereign_core"] if final_boss else (["boss_core"] if boss_floor else (["power_tower_fragment"] if floor_number % 5 == 0 else ["power_tower_token"]))
+		"reward_items": ["power_tower_sovereign_crown", "sovereign_core", "rare_core", "nen_fragment"] if final_boss else (["boss_core", "monster_core"] if boss_floor else (["power_tower_fragment", "monster_core"] if floor_number % 5 == 0 else ["power_tower_token"]))
 	}
 
 func request_floor(floor_number: int, player_level: int) -> Dictionary:
