@@ -133,6 +133,9 @@ func _run() -> void:
 	if pilot_player == null or pilot_progression == null:
 		_fail("Player and progression data are required for helicopter authorization tests.")
 		return
+	if operations.get("progression") != pilot_progression:
+		_fail("Baghdad operations manager is not bound to the live PlayerProgression instance.")
+		return
 	if helipad.call("_can_pilot"):
 		_fail("A completed Hunter License alone must not grant helicopter access.")
 		return
