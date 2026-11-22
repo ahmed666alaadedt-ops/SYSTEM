@@ -489,3 +489,16 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [ ] Connect advertisements to a governed campaign system with campaign ownership, pricing, moderation, display scheduling, and any future revenue accounting. Current campaigns are local in-game display content, not paid external ad inventory.
 - [ ] Build authoritative online matchmaking, player rankings, anti-cheat verification and multiplayer spectator systems for Power Tower. Current floor records and rewards use the existing local save path.
 - Note: the current commit implements a playable first-pass systems layer and generated floor geometry, not a production-complete commercial economy or 200 individually handcrafted arena scenes. The PR remains draft and must not be merged into main without explicit user approval.
+
+
+### Elevator cabin and Power Tower final sovereign trial extension — 22 November 2026
+
+- [x] Add a visible elevator cabin with floor/roof panels, glass side walls, sliding doors and an animated car/player transition between lobby and selected tower floor.
+- [x] Allow the floor directory/elevator marker inside a generated floor to reopen the floor selector; the player can choose another floor or return to the lobby.
+- [x] Keep only the active generated floor room loaded during normal tower traversal; free the cabin after a return to the lobby.
+- [x] Mark Power Tower floor 200 as the unique FINAL_BOSS/SYSTEM SOVEREIGN trial, with a distinct large gold boss visual, stronger health profile, shockwave attack, special arena platform and completion reward.
+- [x] Add Power Tower loot items: routine tokens, milestone fragments, boss cores, and the unique sovereign crown/core reward on floor 200.
+- [x] Ensure floor 200's level requirement is 90, within the existing 100-level player cap.
+- [ ] Pass the latest CI run covering elevator cabin travel/return, final boss metadata/rewards, NPC staff, trading and ads.
+- [ ] Inspect elevator camera clearance, cabin door alignment, player landing/collision and floor-room visibility on a physical Android device.
+- [ ] Complete individual arena art, final boss attack telegraphs/animations, boss phase changes, reward balance, online leaderboard verification and spectator/matchmaking features.
