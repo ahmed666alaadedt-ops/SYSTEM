@@ -249,6 +249,7 @@ var current_facility_root: Node3D
 var bowling_throw_in_progress := false
 var facility_projectile_in_progress := false
 var facility_aim := 0.0
+var selected_arcade_mode := "shooter"
 
 func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_power_manager: Node, p_player_health: Node, p_region_manager: Node) -> void:
 	player = p_player
@@ -2513,7 +2514,7 @@ func _add_facility_activity_controls(facility_type: String) -> void:
 	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	description.text = "%s: أكمل %d خطوات. تُحفظ أفضل نتيجة وعدد الجولات على هذا الجهاز." % [str(definition["title"]), int(definition["goal"])]
 	content.add_child(description)
-	if facility_type in ["bowling", "sports_court", "arcade"]:
+	if facility_type in ["bowling", "sports_court"] or (facility_type == "arcade" and selected_arcade_mode == "shooter"):
 		var aim_label := Label.new()
 		aim_label.name = "FacilityAimLabel"
 		aim_label.text = "اتجاه الرمية: وسط"
@@ -2528,6 +2529,33 @@ func _add_facility_activity_controls(facility_type: String) -> void:
 		aim_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		aim_slider.value_changed.connect(_on_facility_aim_changed)
 		content.add_child(aim_slider)
+	if facility_type == "arcade":
+		var mode_label := Label.new()
+		mode_label.name = "ArcadeModeLabel"
+		mode_label.text = "اختر لعبة الجهاز:"
+		content.add_child(mode_label)
+		var mode_selector := OptionButton.new()
+		mode_selector.name = "ArcadeModeSelector"
+		mode_selector.add_item("ميدان التصويب الفيزيائي")
+		mode_selector.add_item("تحدي ذاكرة الألوان")
+		mode_selector.item_selected.connect(_on_arcade_mode_selected)
+		content.add_child(mode_selector)
+		var memory_status := Label.new()
+		memory_status.name = "ArcadeMemoryStatus"
+		memory_status.text = "اختر تحدي الذاكرة ثم ابدأ الجولة."
+		memory_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		content.add_child(memory_status)
+		var memory_buttons := HBoxContainer.new()
+		memory_buttons.name = "ArcadeMemoryButtons"
+		for color_index in range(4):
+			var memory_button := Button.new()
+			memory_button.name = "ArcadeMemoryButton_%d" % color_index
+			memory_button.text = ["أزرق", "أحمر", "أخضر", "ذهبي"][color_index]
+			memory_button.custom_minimum_size = Vector2(72.0, 54.0)
+			memory_button.pressed.connect(_submit_arcade_memory_input.bind(color_index))
+			memory_buttons.add_child(memory_button)
+		memory_buttons.visible = false
+		content.add_child(memory_buttons)
 	var start_button := Button.new()
 	start_button.name = "StartFacilityActivityButton"
 	start_button.text = "بدء النشاط"
@@ -2544,6 +2572,73 @@ func _add_facility_activity_controls(facility_type: String) -> void:
 	stats_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	stats_label.text = "الجولات المكتملة: %d | أفضل نتيجة: %d" % [int(stats.get("plays", 0)), int(stats.get("best_score", 0))]
 	content.add_child(stats_label)
+
+
+func _on_arcade_mode_selected(index: int) -> void:
+	selected_arcade_mode = "memory" if index == 1 else "shooter"
+	var aim_slider := content.get_node_or_null("FacilityAimSlider") as HSlider
+	var aim_label := content.get_node_or_null("FacilityAimLabel") as Label
+	var memory_buttons := content.get_node_or_null("ArcadeMemoryButtons") as HBoxContainer
+	if aim_slider != null:
+		aim_slider.visible = selected_arcade_mode == "shooter"
+	if aim_label != null:
+		aim_label.visible = selected_arcade_mode == "shooter"
+	if memory_buttons != null:
+		memory_buttons.visible = selected_arcade_mode == "memory"
+	var action_button := content.get_node_or_null("FacilityActivityActionButton") as Button
+	if action_button != null:
+		action_button.visible = selected_arcade_mode == "shooter"
+
+
+func _on_arcade_memory_preview_finished() -> void:
+	if active_facility_activity.is_empty() or str(active_facility_activity.get("mode", "")) != "memory":
+		return
+	active_facility_activity["memory_preview"] = false
+	var memory_status := content.get_node_or_null("ArcadeMemoryStatus") as Label
+	if memory_status != null:
+		memory_status.text = "انتهى العرض! أعد ترتيب الألوان بالضغط على الأزرار."
+
+
+func _evaluate_arcade_memory_input(sequence: Array, cursor: int, input_index: int) -> Dictionary:
+	if cursor < 0 or cursor >= sequence.size():
+		return {"valid": false, "complete": false, "next_cursor": cursor}
+	var correct := int(sequence[cursor]) == input_index
+	var next_cursor := cursor + 1 if correct else 0
+	return {"valid": correct, "complete": correct and next_cursor >= sequence.size(), "next_cursor": next_cursor}
+
+
+func _submit_arcade_memory_input(input_index: int) -> void:
+	if active_facility_activity.is_empty() or str(active_facility_activity.get("mode", "")) != "memory":
+		return
+	if bool(active_facility_activity.get("memory_preview", true)):
+		_set_status("انتظر انتهاء عرض التسلسل أولاً.")
+		return
+	var sequence: Array = active_facility_activity.get("memory_sequence", [])
+	var cursor := int(active_facility_activity.get("memory_cursor", 0))
+	var result := _evaluate_arcade_memory_input(sequence, cursor, input_index)
+	if not bool(result.get("valid", false)):
+		var lives := maxi(0, int(active_facility_activity.get("lives", 3)) - 1)
+		active_facility_activity["lives"] = lives
+		active_facility_activity["memory_cursor"] = 0
+		if lives <= 0:
+			_complete_facility_activity()
+			return
+		var memory_status := content.get_node_or_null("ArcadeMemoryStatus") as Label
+		if memory_status != null:
+			memory_status.text = "ترتيب غير صحيح! بقيت %d محاولات. أعد التسلسل." % lives
+		_set_status("خطأ في تسلسل الذاكرة — المحاولات المتبقية: %d" % lives)
+		return
+	var next_cursor := int(result.get("next_cursor", cursor))
+	active_facility_activity["memory_cursor"] = next_cursor
+	active_facility_activity["step"] = next_cursor
+	active_facility_activity["score"] = int(active_facility_activity.get("score", 0)) + 10
+	var memory_status := content.get_node_or_null("ArcadeMemoryStatus") as Label
+	if memory_status != null:
+		memory_status.text = "إجابة صحيحة: %d/%d" % [next_cursor, sequence.size()]
+	if bool(result.get("complete", false)):
+		_complete_facility_activity()
+	else:
+		_set_status("تحدي الذاكرة — تقدمك %d/%d" % [next_cursor, sequence.size()])
 
 
 func _on_facility_aim_changed(value: float) -> void:
@@ -2575,11 +2670,28 @@ func start_facility_activity(facility_type: String) -> bool:
 	if facility_type == "sports_court":
 		active_facility_activity["opponent_score"] = 0
 	if facility_type == "arcade":
+		active_facility_activity["mode"] = selected_arcade_mode
 		active_facility_activity["lives"] = 3
 		active_facility_activity["combo"] = 0
 		active_facility_activity["best_combo"] = 0
 		active_facility_activity["hits"] = 0
 		active_facility_activity["targets_hit"] = []
+		if selected_arcade_mode == "memory":
+			active_facility_activity["goal"] = 5
+			active_facility_activity["memory_sequence"] = [2, 0, 3, 1, 2]
+			active_facility_activity["memory_cursor"] = 0
+			active_facility_activity["memory_preview"] = true
+			var memory_status := content.get_node_or_null("ArcadeMemoryStatus") as Label
+			if memory_status != null:
+				memory_status.text = "احفظ التسلسل: أخضر ← أزرق ← ذهبي ← أحمر ← أخضر"
+			var memory_buttons := content.get_node_or_null("ArcadeMemoryButtons") as HBoxContainer
+			if memory_buttons != null:
+				memory_buttons.visible = true
+			get_tree().create_timer(2.8).timeout.connect(_on_arcade_memory_preview_finished)
+		else:
+			var memory_buttons := content.get_node_or_null("ArcadeMemoryButtons") as HBoxContainer
+			if memory_buttons != null:
+				memory_buttons.visible = false
 	if facility_type == "cinema":
 		_update_cinema_program_screen(0)
 	_set_status("%s بدأت. التقدم: 0/%d" % [str(definition["title"]), int(definition["goal"])])
@@ -2597,6 +2709,8 @@ func perform_facility_activity(action: String) -> Dictionary:
 	if facility_type == "sports_court":
 		return await _launch_basketball()
 	if facility_type == "arcade":
+		if str(active_facility_activity.get("mode", "shooter")) == "memory":
+			return {"success": false, "reason": "أدخل تسلسل الألوان من الأزرار الأربعة."}
 		return await _launch_arcade_projectile()
 	var step := int(active_facility_activity.get("step", 0)) + 1
 	var score_gain := 1
