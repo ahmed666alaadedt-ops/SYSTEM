@@ -760,7 +760,7 @@ func _run() -> void:
 	if shopping_staff.size() != 9:
 		_fail("Shopping Tower must create all nine management, shop, workshop, restaurant, hotel and advertising staff roles.")
 		return
-	if not operations.has_method("_book_hotel_room") or not operations.has_method("_check_in_hotel_room") or not operations.has_method("_checkout_hotel_room") or not operations.has_method("_save_hotel_bookings"):
+	if not operations.has_method("_book_hotel_room") or not operations.has_method("_check_in_hotel_room") or not operations.has_method("_checkout_hotel_room") or not operations.has_method("_save_hotel_bookings") or not operations.has_method("_start_hotel_room_cleaning") or not operations.has_method("_complete_hotel_room_cleaning") or not operations.has_method("_is_hotel_room_available"):
 		_fail("SYSTEM Hotel reservation/check-in/check-out persistence methods are missing.")
 		return
 	var original_hotel_bookings: Dictionary = operations.get("hotel_bookings").duplicate(true)
@@ -786,12 +786,31 @@ func _run() -> void:
 		_fail("SYSTEM Hotel check-in did not persist the guest arrival state.")
 		return
 	operations.call("_checkout_hotel_room")
-	if operations.get("hotel_bookings").has("hotel_standard_01"):
+	var checked_out_fixture: Dictionary = operations.get("hotel_bookings").get("hotel_standard_01", {})
+	if str(checked_out_fixture.get("status", "")) != "needs_cleaning" or operations.call("_is_hotel_room_available", "hotel_standard_01"):
 		operations.set("hotel_bookings", original_hotel_bookings)
 		operations.set("credits", original_hotel_credits)
 		operations.call("_save_hotel_bookings")
 		operations.call("_save_wallet")
-		_fail("SYSTEM Hotel checkout did not release the booked room.")
+		_fail("SYSTEM Hotel checkout must retain the room as unavailable until housekeeping.")
+		return
+	operations.call("_start_hotel_room_cleaning", "hotel_standard_01")
+	var cleaning_fixture: Dictionary = operations.get("hotel_bookings").get("hotel_standard_01", {})
+	if str(cleaning_fixture.get("status", "")) != "cleaning":
+		operations.set("hotel_bookings", original_hotel_bookings)
+		operations.set("credits", original_hotel_credits)
+		operations.call("_save_hotel_bookings")
+		operations.call("_save_wallet")
+		_fail("SYSTEM Hotel housekeeping did not enter the cleaning state.")
+		return
+	operations.call("_complete_hotel_room_cleaning", "hotel_standard_01")
+	var ready_fixture: Dictionary = operations.get("hotel_bookings").get("hotel_standard_01", {})
+	if str(ready_fixture.get("status", "")) != "ready" or not bool(ready_fixture.get("inspection_passed", false)) or not operations.call("_is_hotel_room_available", "hotel_standard_01"):
+		operations.set("hotel_bookings", original_hotel_bookings)
+		operations.set("credits", original_hotel_credits)
+		operations.call("_save_hotel_bookings")
+		operations.call("_save_wallet")
+		_fail("SYSTEM Hotel room did not become bookable after cleaning and inspection.")
 		return
 	operations.set("hotel_bookings", original_hotel_bookings)
 	operations.set("credits", original_hotel_credits)
