@@ -888,7 +888,7 @@ func _on_interaction_performed(
 			"power_tower_baghdad":
 				directory = "برج تحديات مستقل من 200 طابق؛ لا يتصل بجسور مجمع الأبراج."
 		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "%s\\n%d طابق | ارتفاع تقريبي %.0f م\\n%s\\n%s\\nملاحظة: هذا دليل البرج؛ الوصول إلى الطوابق والداخلية يحتاج إلى تنفيذ مستقل." % [
+			interaction_prompt_label.text = "%s\n%d طابق | ارتفاع تقريبي %.0f م\n%s\n%s\nملاحظة: هذا دليل البرج؛ الوصول إلى الطوابق والداخلية يحتاج إلى تنفيذ مستقل." % [
 				tower_name, floor_count, height_m, network_label, directory
 			]
 	if location_id == "power_tower_baghdad" and power_tower_manager != null:
@@ -896,7 +896,7 @@ func _on_interaction_performed(
 		var level := int(player_progression.current_level) if player_progression != null else 1
 		var result: Dictionary = power_tower_manager.request_floor(next_floor, level)
 		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "برج القوة: " + str(result.get("reason", "تم طلب دخول الطابق"))
+			interaction_prompt_label.text += "\nحالة طلب الطابق %d: %s" % [next_floor, str(result.get("reason", "تم طلب الدخول"))]
 
 
 func _on_location_discovered(
