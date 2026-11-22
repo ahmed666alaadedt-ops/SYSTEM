@@ -63,6 +63,21 @@ func _run_validation() -> void:
 	if player_clearance_cast.get_collision_count() == 0:
 		_fail("Player-sized capsule sweep passed through the closed stone door; physical blocking is missing.")
 		return
+	var player_body := CharacterBody3D.new()
+	player_body.position = Vector3(0.0, 1.0, 0.0)
+	player_body.collision_mask = 1
+	var player_body_shape := CollisionShape3D.new()
+	var character_capsule := CapsuleShape3D.new()
+	character_capsule.radius = 0.35
+	character_capsule.height = 1.8
+	player_body_shape.shape = character_capsule
+	player_body.add_child(player_body_shape)
+	root.add_child(player_body)
+	await physics_frame
+	var closed_body_motion := player_body.move_and_collide(Vector3(0.0, 0.0, -14.0))
+	if closed_body_motion == null or player_body.global_position.z <= -7.0:
+		_fail("CharacterBody3D crossed the closed vault slab instead of being physically blocked.")
+		return
 
 	ray_camera.global_position = Vector3(0.0, 1.9, 0.0)
 	ray_camera.look_at(Vector3(0.0, 1.9, -7.0), Vector3.UP)
@@ -98,6 +113,12 @@ func _run_validation() -> void:
 	if player_clearance_cast.get_collision_count() == 0:
 		_fail("Player-sized capsule passed through the slab before the opening animation completed.")
 		return
+	player_body.global_position = Vector3(0.0, 1.0, 0.0)
+	await physics_frame
+	var moving_body_motion := player_body.move_and_collide(Vector3(0.0, 0.0, -14.0))
+	if moving_body_motion == null or player_body.global_position.z <= -7.0:
+		_fail("CharacterBody3D crossed the slab before the opening animation completed.")
+		return
 	await create_timer(1.1).timeout
 	if door.position.distance_to(OPEN_POSITION) > 0.03:
 		_fail("Stone door did not reach its fully open position.")
@@ -115,6 +136,12 @@ func _run_validation() -> void:
 	if player_clearance_cast.get_collision_count() != 0:
 		_fail("Player-sized capsule cannot pass through the fully opened vault doorway.")
 		return
+	player_body.global_position = Vector3(0.0, 1.0, 0.0)
+	await physics_frame
+	var open_body_motion := player_body.move_and_collide(Vector3(0.0, 0.0, -14.0))
+	if open_body_motion != null or player_body.global_position.z > -13.9:
+		_fail("CharacterBody3D could not traverse the fully opened vault doorway.")
+		return
 
 	# Closing must return the same slab and retain its physical collision.
 	target.call("system_interact")
@@ -128,6 +155,12 @@ func _run_validation() -> void:
 	player_clearance_cast.force_shapecast_update()
 	if player_clearance_cast.get_collision_count() == 0:
 		_fail("Player-sized capsule passed through the door after it closed.")
+		return
+	player_body.global_position = Vector3(0.0, 1.0, 0.0)
+	await physics_frame
+	var reclosed_body_motion := player_body.move_and_collide(Vector3(0.0, 0.0, -14.0))
+	if reclosed_body_motion == null or player_body.global_position.z <= -7.0:
+		_fail("CharacterBody3D crossed the vault slab after it closed again.")
 		return
 	if bool(target.get_meta("system_door_open", true)):
 		_fail("Closed state metadata was not updated.")
