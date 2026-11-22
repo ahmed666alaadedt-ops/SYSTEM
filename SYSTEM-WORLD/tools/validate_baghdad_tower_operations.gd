@@ -1449,8 +1449,18 @@ func _run() -> void:
 			if vr_course == null:
 				_fail("VR simulation course geometry was not generated.")
 				return
-			if vr_course.get_node_or_null("VRSimulationFloorPhysics/CollisionShape3D") == null:
-				_fail("VR course floor is missing its physical collision surface.")
+			var vr_floor_body := vr_course.get_node_or_null("VRSimulationFloorPhysics") as StaticBody3D
+			var vr_floor_collision := vr_floor_body.get_node_or_null("CollisionShape3D") as CollisionShape3D if vr_floor_body != null else null
+			if vr_floor_collision == null or not (vr_floor_collision.shape is BoxShape3D):
+				var floor_child_names := PackedStringArray()
+				if vr_floor_body != null:
+					for floor_child in vr_floor_body.get_children():
+						floor_child_names.append(str(floor_child.name))
+				_fail("VR course floor is missing its named physical BoxShape3D collider. Children: %s" % ", ".join(floor_child_names))
+				return
+			var vr_floor_shape := vr_floor_collision.shape as BoxShape3D
+			if vr_floor_shape.size.distance_to(Vector3(12.0, 0.24, 23.0)) > 0.01:
+				_fail("VR course floor collider dimensions do not cover the full 12x23m course.")
 				return
 			if vr_course.get_node_or_null("VRSimulationExitPlatform") == null or vr_course.get_node_or_null("VRSimulationExitSensor/CollisionShape3D") == null:
 				_fail("VR course exit platform or its physical arrival sensor is missing.")
