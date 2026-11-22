@@ -1,0 +1,811 @@
+extends Node
+class_name SYSTEMBaghdadTowerOperationsManager
+
+const NPCCharacterModelScript = preload("res://scripts/npc_character_model.gd")
+const TowerOpponentScript = preload("res://scripts/system_tower_opponent.gd")
+const SAVE_PATH := "user://system_baghdad_tower_operations.cfg"
+const WORLD_ID := 2
+
+const TOWER_CONFIG := {
+	"hunter_association_tower_baghdad": {"node": "HunterAssociationTower", "title": "برج جمعية الصيادين", "floors": 200, "height": 1000.0, "radius": 38.0, "roles": ["موظف الاستقبال", "موظف المهمات", "موظف التسجيل"], "jobs": ["receptionist", "mission_clerk", "exam_registrar"]},
+	"weapons_equipment_elixirs_tower_baghdad": {"node": "WeaponsEquipmentElixirsTower", "title": "برج الأسلحة والمعدات والإكسير", "floors": 36, "height": 220.0, "radius": 26.0, "roles": ["تاجر الأسلحة", "خبير الدروع", "صيدلاني الإكسير"], "jobs": ["weapons_merchant", "armor_specialist", "elixir_pharmacist"]},
+	"shopping_tower_baghdad": {"node": "ShoppingTower", "title": "برج التسوق والتجارة", "floors": 32, "height": 190.0, "radius": 30.0, "roles": ["مدير المتجر", "موظف المبيعات", "موظف خدمة الزبائن"], "jobs": ["shop_manager", "sales_clerk", "customer_service"]},
+	"entertainment_tower_baghdad": {"node": "EntertainmentTower", "title": "برج الترفيه والرياضة", "floors": 34, "height": 205.0, "radius": 29.0, "roles": ["منظم الفعاليات", "موظف التذاكر", "موظف الأنشطة"], "jobs": ["event_coordinator", "ticket_clerk", "activity_host"]},
+	"technology_tower_baghdad": {"node": "TechnologyTower", "title": "برج التكنولوجيا والابتكار", "floors": 40, "height": 245.0, "radius": 27.0, "roles": ["موظف المختبر", "مهندس الأجهزة", "موظف الخدمات الرقمية"], "jobs": ["lab_receptionist", "device_engineer", "digital_services"]},
+	"power_tower_baghdad": {"node": "PowerTower", "title": "برج القوة", "floors": 200, "height": 820.0, "radius": 26.0, "roles": ["موظف تسجيل التحديات", "منظم الحلبة", "موظف الاستراحة الطبية"], "jobs": ["arena_registrar", "arena_coordinator", "arena_medic"]}
+}
+
+const PRODUCT_CATALOG := {
+	"weapons_equipment_elixirs_tower_baghdad": [
+		{"id":"training_sword","name":"سيف تدريبي","price":180},
+		{"id":"steel_sword","name":"سيف فولاذي","price":950},
+		{"id":"hunter_spear","name":"رمح صياد","price":780},
+		{"id":"battle_axe","name":"فأس قتالي","price":820},
+		{"id":"composite_bow","name":"قوس مركب","price":1100},
+		{"id":"system_firearm","name":"سلاح ناري حديث","price":2400},
+		{"id":"hunter_shield","name":"درع صياد","price":650},
+		{"id":"hunter_armor","name":"درع واقٍ","price":1450},
+		{"id":"healing_elixir","name":"إكسير الشفاء","price":280},
+		{"id":"strength_elixir","name":"إكسير القوة","price":420},
+		{"id":"speed_elixir","name":"إكسير السرعة","price":420},
+		{"id":"endurance_elixir","name":"إكسير التحمل","price":450},
+		{"id":"energy_elixir","name":"إكسير الطاقة","price":360},
+		{"id":"nen_acquisition_elixir","name":"إكسير اكتساب النِن","price":1800},
+		{"id":"nen_control_elixir","name":"إكسير التحكم بالنِن","price":2600},
+		{"id":"rare_legendary_elixir","name":"إكسير نادر/أسطوري","price":12000}
+	],
+	"shopping_tower_baghdad": [
+		{"id":"food_ration","name":"وجبة ميدانية","price":35},
+		{"id":"water_bottle","name":"قارورة ماء","price":12},
+		{"id":"casual_outfit","name":"ملابس يومية","price":220},
+		{"id":"hunter_backpack","name":"حقيبة صياد","price":340},
+		{"id":"travel_kit","name":"عدة سفر","price":190},
+		{"id":"cosmetic_light","name":"زينة ضوئية","price":500}
+	],
+	"entertainment_tower_baghdad": [
+		{"id":"sports_ticket","name":"تذكرة رياضية","price":65},
+		{"id":"pool_ticket","name":"تذكرة المسبح","price":45},
+		{"id":"festival_ticket","name":"تذكرة مهرجان","price":90},
+		{"id":"arena_spectator_ticket","name":"تذكرة مشاهدة الحلبة","price":120}
+	],
+	"technology_tower_baghdad": [
+		{"id":"scanner_device","name":"جهاز ماسح","price":750},
+		{"id":"repair_kit","name":"عدة صيانة","price":160},
+		{"id":"drone_camera","name":"كاميرا مسيّرة","price":1250},
+		{"id":"energy_cell","name":"خلية طاقة","price":240}
+	],
+	"hunter_association_tower_baghdad": [
+		{"id":"mission_supply_pack","name":"حزمة تجهيز المهمات","price":160},
+		{"id":"hunter_medical_kit","name":"حقيبة إسعاف صياد","price":230},
+		{"id":"exam_application_pack","name":"حزمة التسجيل للاختبار","price":100}
+	]
+}
+
+const AD_CAMPAIGNS := [
+	"معدات الصيادين — جهّز نفسك قبل البوابة",
+	"إكسير الشفاء والطاقة متوفر لدى الصيدلاني",
+	"عروض التسوق والخدمات اليومية داخل مجمع بغداد",
+	"الرياضة والترفيه — فعاليات جديدة بانتظارك",
+	"مختبرات SYSTEM — أدوات وتقنيات للاستكشاف",
+	"برج القوة — سجّل تحديك القادم واصعد بالرتب"
+]
+
+var player: CharacterBody3D
+var progression: Node
+var society: Node
+var power_tower_manager: Node
+var player_health: Node
+var region_manager: Node
+var tower_manager: Node
+var tower_nodes: Dictionary = {}
+var staff_by_tower: Dictionary = {}
+var ad_labels: Dictionary = {}
+var prepared_towers: Dictionary = {}
+var current_tower_id := ""
+var current_staff_id := ""
+var credits := 1200
+var ad_clock := 0.0
+var ad_index := 0
+var ui_layer: CanvasLayer
+var panel: PanelContainer
+var content: VBoxContainer
+var title_label: Label
+var status_label: Label
+var credits_label: Label
+var floor_selector: SpinBox
+var power_floor_started_at := 0
+var active_power_floor_data: Dictionary = {}
+var active_floor_root: Node3D
+var active_opponents: Dictionary = {}
+var current_wave := 0
+var total_waves := 0
+var opponents_per_wave := 0
+var defeated_in_wave := 0
+var power_floor_in_progress := false
+
+func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_power_manager: Node, p_player_health: Node, p_region_manager: Node) -> void:
+	player = p_player
+	progression = p_progression
+	society = p_society
+	power_tower_manager = p_power_manager
+	player_health = p_player_health
+	region_manager = p_region_manager
+	if region_manager == null:
+		push_warning("SYSTEM tower operations: Baghdad region manager unavailable.")
+		return
+	tower_manager = region_manager.get_node_or_null("BaghdadTowerLandmarksManager")
+	if tower_manager == null:
+		push_warning("SYSTEM tower operations: Baghdad tower landmarks unavailable.")
+		return
+	_load_wallet()
+	_build_ui()
+	_resolve_towers()
+	_create_staff_for_all_towers()
+	_create_advertising_surfaces()
+	set_process(true)
+	print("SYSTEM tower operations: staff, local trading, floor interiors and advertising initialized.")
+
+func _process(delta: float) -> void:
+	ad_clock += delta
+	if ad_clock >= 38.0:
+		ad_clock = 0.0
+		ad_index = (ad_index + 1) % AD_CAMPAIGNS.size()
+		_refresh_advertisements()
+
+func _resolve_towers() -> void:
+	for tower_id in TOWER_CONFIG.keys():
+		var config: Dictionary = TOWER_CONFIG[tower_id]
+		var tower := tower_manager.get_node_or_null(str(config["node"])) as Node3D
+		if tower != null:
+			tower_nodes[tower_id] = tower
+
+func _create_staff_for_all_towers() -> void:
+	for tower_id in tower_nodes.keys():
+		var config: Dictionary = TOWER_CONFIG[tower_id]
+		var staff_ids: Array[String] = []
+		for index in range(3):
+			var npc_id := _get_or_create_staff(str(tower_id), index, config)
+			if not npc_id.is_empty():
+				staff_ids.append(npc_id)
+				_create_visible_staff(str(tower_id), npc_id, index, config)
+		staff_by_tower[tower_id] = staff_ids
+
+func _get_or_create_staff(tower_id: String, index: int, config: Dictionary) -> String:
+	if not is_instance_valid(society):
+		return ""
+	var existing: String = ""
+	for npc_id in society.npcs.keys():
+		var npc: Dictionary = society.npcs[npc_id]
+		if str(npc.get("system_tower_staff_tower", "")) == tower_id and int(npc.get("system_tower_staff_index", -1)) == index and bool(npc.get("alive", false)):
+			existing = str(npc_id)
+			break
+	if existing.is_empty():
+		var display_name := str(config["roles"][index]) + " " + str(index + 1)
+		existing = str(society.call("create_npc", display_name, WORLD_ID, 24.0 + float(index * 7), "professional", str(config["jobs"][index])))
+	if existing.is_empty():
+		return ""
+	var npc: Dictionary = society.call("get_npc", existing)
+	npc["system_tower_staff_tower"] = tower_id
+	npc["system_tower_staff_index"] = index
+	npc["system_tower_staff_role"] = str(config["jobs"][index])
+	npc["employer_id"] = tower_id
+	npc["home_location"] = "baghdad_staff_residence"
+	npc["current_location"] = tower_id + "_lobby"
+	npc["wallet"] = float(npc.get("wallet", 120.0))
+	npc["daily_wage"] = 18.0 + float(index * 4)
+	npc["schedule_profile"] = "tower_shift"
+	npc["current_action"] = "working"
+	society.npcs[existing] = npc
+	if society.has_method("set_activity"):
+		society.call("set_activity", existing, "work", tower_id + "_lobby")
+	return existing
+
+func _create_visible_staff(tower_id: String, npc_id: String, index: int, config: Dictionary) -> void:
+	var tower := tower_nodes.get(tower_id) as Node3D
+	if tower == null:
+		return
+	var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D
+	if lobby == null:
+		return
+	if lobby.get_node_or_null("TowerStaff_" + npc_id) != null:
+		return
+	var npc: Dictionary = society.call("get_npc", npc_id)
+	var employee := Node3D.new()
+	employee.name = "TowerStaff_" + npc_id
+	employee.add_to_group("system_interactable")
+	employee.set_meta("system_tower_staff_id", npc_id)
+	employee.set_meta("system_tower_id", tower_id)
+	employee.set_meta("system_tower_staff_role", str(config["jobs"][index]))
+	employee.set_meta("system_display_name", str(npc.get("name", config["roles"][index])))
+	employee.set_meta("system_interaction_prompt", str(config["roles"][index]) + " — اضغط للتعامل")
+	lobby.add_child(employee)
+	var model = NPCCharacterModelScript.new()
+	model.configure({
+		"name": str(npc.get("name", "موظف SYSTEM")),
+		"gender": "female" if index == 1 else "male",
+		"age": float(npc.get("age_years", 28.0)),
+		"job": str(config["jobs"][index]),
+		"occupation": str(config["jobs"][index]),
+		"world_id": "modern",
+		"hair_style": "short" if index != 1 else "long",
+		"body_type": "average"
+	}, index)
+	model.scale = Vector3.ONE * 0.78
+	employee.add_child(model)
+	var name_label := Label3D.new()
+	name_label.text = str(npc.get("name", config["roles"][index])) + "\n" + str(config["roles"][index])
+	name_label.position.y = 2.45
+	name_label.font_size = 22
+	name_label.pixel_size = 0.012
+	name_label.modulate = Color(0.82, 0.96, 1.0)
+	employee.add_child(name_label)
+	var interaction_area := Area3D.new()
+	interaction_area.name = "StaffInteractionArea"
+	interaction_area.collision_layer = 1
+	interaction_area.collision_mask = 0
+	employee.add_child(interaction_area)
+	var area_shape := CollisionShape3D.new()
+	var sphere := SphereShape3D.new()
+	sphere.radius = 1.45
+	area_shape.shape = sphere
+	area_shape.position.y = 1.05
+	interaction_area.add_child(area_shape)
+	var lobby_depth := 36.0
+	var lobby_center_z := float(config["radius"]) * 1.48 + lobby_depth * 0.5
+	employee.position = Vector3((float(index) - 1.0) * 7.0, 0.0, lobby_center_z - 4.0)
+
+func _create_advertising_surfaces() -> void:
+	for tower_id in tower_nodes.keys():
+		var tower := tower_nodes[tower_id] as Node3D
+		var config: Dictionary = TOWER_CONFIG[tower_id]
+		var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D
+		if lobby != null:
+			var inside := Label3D.new()
+			inside.name = "NPCManagedInternalCampaign"
+			inside.text = "SYSTEM — إعلان داخلي"
+			inside.position = Vector3(0.0, 7.5, float(config["radius"]) * 1.48 + 3.0)
+			inside.font_size = 26
+			inside.pixel_size = 0.012
+			inside.modulate = Color(0.5, 0.92, 1.0)
+			lobby.add_child(inside)
+			ad_labels[tower_id + "_internal"] = inside
+		var outside := tower.get_node_or_null("TowerCampaignText") as Label3D
+		if outside == null:
+			outside = Label3D.new()
+			outside.name = "NPCManagedExternalCampaign"
+			outside.position = Vector3(0.0, float(config["height"]) * 0.55, float(config["radius"]) + 1.2)
+			outside.font_size = 32
+			outside.pixel_size = 0.012
+			outside.modulate = Color(0.72, 0.96, 1.0)
+			tower.add_child(outside)
+		ad_labels[tower_id + "_external"] = outside
+		tower.set_meta("system_advertising_mode", "npc_staff_managed_local_campaign")
+	_refresh_advertisements()
+
+func _refresh_advertisements() -> void:
+	for tower_id in tower_nodes.keys():
+		var staff_ids: Array = staff_by_tower.get(tower_id, [])
+		var manager_name := "فريق الإعلان"
+		if not staff_ids.is_empty() and is_instance_valid(society):
+			var npc: Dictionary = society.call("get_npc", str(staff_ids[0]))
+			manager_name = str(npc.get("name", manager_name))
+		var message := str(AD_CAMPAIGNS[ad_index])
+		for suffix in ["_internal", "_external"]:
+			var label := ad_labels.get(str(tower_id) + suffix) as Label3D
+			if label != null:
+				label.text = "SYSTEM | " + message + "\nبإدارة " + manager_name
+				label.visible = true
+
+func _build_ui() -> void:
+	ui_layer = CanvasLayer.new()
+	ui_layer.name = "BaghdadTowerOperationsUI"
+	ui_layer.layer = 35
+	add_child(ui_layer)
+	panel = PanelContainer.new()
+	panel.name = "TowerOperationsPanel"
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.position = Vector2(-235.0, -265.0)
+	panel.custom_minimum_size = Vector2(470.0, 530.0)
+	panel.visible = false
+	ui_layer.add_child(panel)
+	content = VBoxContainer.new()
+	content.add_theme_constant_override("separation", 8)
+	panel.add_child(content)
+	title_label = Label.new()
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label.add_theme_font_size_override("font_size", 23)
+	content.add_child(title_label)
+	credits_label = Label.new()
+	credits_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	content.add_child(credits_label)
+	status_label = Label.new()
+	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(status_label)
+	var close_button := Button.new()
+	close_button.text = "إغلاق"
+	close_button.pressed.connect(func(): panel.hide())
+	content.add_child(close_button)
+
+func _clear_dynamic_controls() -> void:
+	for child in content.get_children():
+		if child != title_label and child != credits_label and child != status_label:
+			child.queue_free()
+
+func open_tower(tower_id: String) -> void:
+	if not tower_nodes.has(tower_id):
+		return
+	current_tower_id = tower_id
+	current_staff_id = ""
+	var config: Dictionary = TOWER_CONFIG[tower_id]
+	_clear_dynamic_controls()
+	title_label.text = str(config["title"])
+	credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
+	status_label.text = "اختر الطابق من المصعد. الطوابق تُنشأ عند الوصول إليها، ولا تُفتح قبل استيفاء شروطها."
+	var close_button := Button.new()
+	close_button.text = "إغلاق"
+	close_button.pressed.connect(func(): panel.hide())
+	content.add_child(close_button)
+	var floor_label := Label.new()
+	floor_label.text = "الطابق المطلوب"
+	content.add_child(floor_label)
+	floor_selector = SpinBox.new()
+	floor_selector.min_value = 1
+	floor_selector.max_value = int(config["floors"])
+	floor_selector.step = 1
+	floor_selector.value = 1
+	floor_selector.rounded = true
+	content.add_child(floor_selector)
+	var travel_button := Button.new()
+	travel_button.text = "استدعاء المصعد والانتقال"
+	travel_button.pressed.connect(_on_travel_button_pressed)
+	content.add_child(travel_button)
+	var lobby_button := Button.new()
+	lobby_button.text = "العودة إلى بهو البرج"
+	lobby_button.pressed.connect(return_to_lobby)
+	content.add_child(lobby_button)
+	if tower_id == "power_tower_baghdad":
+		var power_status := power_tower_manager.call("get_tower_status") if is_instance_valid(power_tower_manager) else {}
+		status_label.text = "برج مستقل — 200 طابق\nأعلى طابق مكتمل: %d | الطابق التالي: %d\nكل طابق تحدٍ فعلي، والطابق العاشر ومضاعفاته اختبار زعيم." % [int(power_status.get("highest_cleared_floor", 0)), int(power_status.get("next_floor", 1))]
+	panel.show()
+
+func _on_travel_button_pressed() -> void:
+	if floor_selector == null:
+		return
+	_travel_to_floor(current_tower_id, int(floor_selector.value))
+
+func open_staff_service(staff_node: Node) -> void:
+	if staff_node == null:
+		return
+	current_tower_id = str(staff_node.get_meta("system_tower_id", ""))
+	current_staff_id = str(staff_node.get_meta("system_tower_staff_id", ""))
+	if not tower_nodes.has(current_tower_id):
+		return
+	var config: Dictionary = TOWER_CONFIG[current_tower_id]
+	var staff_name := str(staff_node.get_meta("system_display_name", "موظف"))
+	var role := str(staff_node.get_meta("system_tower_staff_role", "service"))
+	_clear_dynamic_controls()
+	title_label.text = staff_name + " — " + str(config["title"])
+	credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
+	status_label.text = "خدمة الموظف: " + role
+	var close_button := Button.new()
+	close_button.text = "إغلاق"
+	close_button.pressed.connect(func(): panel.hide())
+	content.add_child(close_button)
+	_add_catalog_controls(current_tower_id)
+	_add_sell_controls()
+	var elevator_button := Button.new()
+	elevator_button.text = "فتح دليل الطوابق والمصعد"
+	elevator_button.pressed.connect(func(): open_tower(current_tower_id))
+	content.add_child(elevator_button)
+	panel.show()
+
+func _add_catalog_controls(tower_id: String) -> void:
+	var catalog: Array = PRODUCT_CATALOG.get(tower_id, [])
+	var heading := Label.new()
+	heading.text = "المعروض للبيع — بإشراف موظفي البرج"
+	content.add_child(heading)
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(0.0, 245.0)
+	content.add_child(scroll)
+	var list := VBoxContainer.new()
+	scroll.add_child(list)
+	for product_value in catalog:
+		var product: Dictionary = product_value
+		var item_id := str(product["id"])
+		var item_name := str(product["name"])
+		var price := int(product["price"])
+		var buy_button := Button.new()
+		buy_button.text = "%s — %d رصيد" % [item_name, price]
+		buy_button.pressed.connect(_buy_product.bind(item_id, item_name, price))
+		list.add_child(buy_button)
+
+func _add_sell_controls() -> void:
+	var heading := Label.new()
+	heading.text = "بيع أغراض الحقيبة إلى موظف البرج"
+	content.add_child(heading)
+	if not is_instance_valid(progression):
+		return
+	var items: Dictionary = progression.get("inventory_items")
+	if items.is_empty():
+		var empty := Label.new()
+		empty.text = "لا توجد أغراض قابلة للبيع حالياً."
+		content.add_child(empty)
+		return
+	for item_value in items.keys():
+		var item_id := str(item_value)
+		var count := int(items[item_id])
+		if count <= 0:
+			continue
+		var sell_button := Button.new()
+		sell_button.text = "بيع %s × %d" % [item_id, count]
+		sell_button.pressed.connect(_sell_item.bind(item_id, count))
+		content.add_child(sell_button)
+
+func _buy_product(item_id: String, item_name: String, price: int) -> void:
+	if credits < price:
+		_set_status("رصيدك غير كافٍ لشراء " + item_name)
+		return
+	if not is_instance_valid(progression) or not progression.has_method("add_item"):
+		_set_status("الحقيبة غير متاحة حالياً.")
+		return
+	credits -= price
+	progression.call("add_item", item_id, 1)
+	_save_wallet()
+	credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
+	_set_status("تم شراء %s من موظف البرج وإضافته إلى حقيبتك." % item_name)
+	_add_sell_controls()
+
+func _sell_item(item_id: String, requested_count: int) -> void:
+	if not is_instance_valid(progression):
+		return
+	var items: Dictionary = progression.get("inventory_items")
+	var available := int(items.get(item_id, 0))
+	var quantity := mini(available, requested_count)
+	if quantity <= 0:
+		_set_status("لم تعد هذه الكمية متوفرة في الحقيبة.")
+		return
+	var unit_price := _item_resale_price(item_id)
+	items[item_id] = available - quantity
+	if int(items[item_id]) <= 0:
+		items.erase(item_id)
+	progression.set("inventory_items", items)
+	if progression.has_method("save_progress"):
+		progression.call("save_progress")
+	credits += unit_price * quantity
+	_save_wallet()
+	credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
+	_set_status("اشترى الموظف %d من %s مقابل %d رصيد." % [quantity, item_id, unit_price * quantity])
+
+func _item_resale_price(item_id: String) -> int:
+	for tower_id in PRODUCT_CATALOG.keys():
+		for product_value in PRODUCT_CATALOG[tower_id]:
+			var product: Dictionary = product_value
+			if str(product["id"]) == item_id:
+				return maxi(1, int(product["price"]) / 2)
+	return 10
+
+func _set_status(message: String) -> void:
+	if status_label != null:
+		status_label.text = message
+
+func _load_wallet() -> void:
+	var config := ConfigFile.new()
+	if config.load(SAVE_PATH) == OK:
+		credits = maxi(0, int(config.get_value("wallet", "credits", 1200)))
+
+func _save_wallet() -> void:
+	var config := ConfigFile.new()
+	config.set_value("wallet", "credits", credits)
+	config.save(SAVE_PATH)
+
+func _prepare_tower_interior(tower_id: String) -> void:
+	if prepared_towers.has(tower_id):
+		return
+	var tower := tower_nodes.get(tower_id) as Node3D
+	if tower == null:
+		return
+	var config: Dictionary = TOWER_CONFIG[tower_id]
+	var radius := float(config["radius"])
+	var height := float(config["height"])
+	var structure := tower.get_node_or_null("TowerStructureCollision")
+	if structure != null:
+		for child in structure.get_children():
+			if child is CollisionShape3D and child.shape is CylinderShape3D:
+				var cylinder := child.shape as CylinderShape3D
+				if cylinder.height > height * 0.8:
+					child.disabled = true
+	var boundary := StaticBody3D.new()
+	boundary.name = "TowerInteriorBoundary"
+	tower.add_child(boundary)
+	for segment in range(24):
+		var angle := TAU * float(segment) / 24.0
+		var shape_node := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size = Vector3(4.2, height, 1.4)
+		shape_node.shape = box
+		shape_node.position = Vector3(cos(angle) * radius * 0.86, height * 0.5 + 7.0, sin(angle) * radius * 0.86)
+		shape_node.rotation.y = -angle
+		boundary.add_child(shape_node)
+	var inner_wall := MeshInstance3D.new()
+	inner_wall.name = "TowerInteriorInnerWall"
+	var wall_mesh := CylinderMesh.new()
+	wall_mesh.top_radius = radius * 0.88
+	wall_mesh.bottom_radius = radius * 0.88
+	wall_mesh.height = height
+	inner_wall.mesh = wall_mesh
+	inner_wall.position.y = height * 0.5 + 7.0
+	var wall_material := StandardMaterial3D.new()
+	wall_material.albedo_color = Color(0.045, 0.11, 0.15)
+	wall_material.metallic = 0.62
+	wall_material.roughness = 0.35
+	wall_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	inner_wall.material_override = wall_material
+	tower.add_child(inner_wall)
+	var floor_container := Node3D.new()
+	floor_container.name = "TowerInteriorFloors"
+	tower.add_child(floor_container)
+	prepared_towers[tower_id] = floor_container
+
+func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
+	_prepare_tower_interior(tower_id)
+	var floors := prepared_towers.get(tower_id) as Node3D
+	if floors == null:
+		return null
+	var room_name := "InteriorFloor_%03d" % floor_number
+	var existing := floors.get_node_or_null(room_name) as Node3D
+	if existing != null:
+		return existing
+	var tower := tower_nodes.get(tower_id) as Node3D
+	var config: Dictionary = TOWER_CONFIG[tower_id]
+	var height := float(config["height"])
+	var radius := float(config["radius"])
+	var count := int(config["floors"])
+	var floor_y := 9.0 + (height - 16.0) * float(floor_number - 1) / float(maxi(count - 1, 1))
+	var room := Node3D.new()
+	room.name = room_name
+	room.position.y = floor_y
+	floors.add_child(room)
+	var body := StaticBody3D.new()
+	body.name = "FloorCollision"
+	room.add_child(body)
+	var floor_visual := MeshInstance3D.new()
+	floor_visual.name = "FloorDeck"
+	var deck := CylinderMesh.new()
+	deck.top_radius = radius * 0.82
+	deck.bottom_radius = radius * 0.82
+	deck.height = 0.8
+	floor_visual.mesh = deck
+	floor_visual.position.y = 0.0
+	var deck_material := StandardMaterial3D.new()
+	deck_material.albedo_color = Color(0.12, 0.17, 0.21)
+	deck_material.metallic = 0.38
+	deck_material.roughness = 0.48
+	floor_visual.material_override = deck_material
+	room.add_child(floor_visual)
+	var deck_collision := CollisionShape3D.new()
+	var deck_shape := CylinderShape3D.new()
+	deck_shape.radius = radius * 0.82
+	deck_shape.height = 0.8
+	deck_collision.shape = deck_shape
+	body.add_child(deck_collision)
+	for segment in range(20):
+		if segment == 0 or segment == 1:
+			continue
+		var angle := TAU * float(segment) / 20.0
+		var wall_mesh_instance := MeshInstance3D.new()
+		wall_mesh_instance.name = "InteriorWall_%02d" % segment
+		var wall_mesh := BoxMesh.new()
+		var arc_width := radius * 2.0 * PI / 20.0 * 0.9
+		wall_mesh.size = Vector3(arc_width, 5.2, 0.8)
+		wall_mesh_instance.mesh = wall_mesh
+		wall_mesh_instance.position = Vector3(cos(angle) * radius * 0.80, 2.6, sin(angle) * radius * 0.80)
+		wall_mesh_instance.rotation.y = -angle
+		wall_mesh_instance.material_override = deck_material
+		room.add_child(wall_mesh_instance)
+		var wall_collision := CollisionShape3D.new()
+		var wall_shape := BoxShape3D.new()
+		wall_shape.size = wall_mesh.size
+		wall_collision.shape = wall_shape
+		wall_collision.position = wall_mesh_instance.position
+		wall_collision.rotation = wall_mesh_instance.rotation
+		body.add_child(wall_collision)
+	var department := _department_for_floor(tower_id, floor_number, count)
+	var sign := Label3D.new()
+	sign.name = "FloorDepartmentSign"
+	sign.text = "%s\nالطابق %d / %d" % [department, floor_number, count]
+	sign.position = Vector3(0.0, 3.4, -radius * 0.55)
+	sign.font_size = 34
+	sign.pixel_size = 0.012
+	sign.modulate = Color(0.8, 0.94, 1.0)
+	room.add_child(sign)
+	var elevator_marker := Area3D.new()
+	elevator_marker.name = "ElevatorReturnMarker"
+	elevator_marker.add_to_group("system_interactable")
+	elevator_marker.set_meta("system_tower_id", tower_id)
+	elevator_marker.set_meta("system_tower_elevator_return", true)
+	elevator_marker.set_meta("system_interaction_prompt", "مصعد البرج — العودة إلى البهو")
+	var marker_shape := CollisionShape3D.new()
+	var marker_sphere := SphereShape3D.new()
+	marker_sphere.radius = 2.2
+	marker_shape.shape = marker_sphere
+	elevator_marker.add_child(marker_shape)
+	elevator_marker.position = Vector3(0.0, 1.1, radius * 0.36)
+	room.add_child(elevator_marker)
+	if tower_id == "power_tower_baghdad":
+		room.set_meta("system_power_tower_floor", floor_number)
+		room.set_meta("system_power_tower_department", "arena")
+	else:
+		_create_floor_facilities(room, tower_id, floor_number, radius, department)
+	return room
+
+func _department_for_floor(tower_id: String, floor_number: int, total: int) -> String:
+	var ratio := float(floor_number) / float(maxi(total, 1))
+	match tower_id:
+		"weapons_equipment_elixirs_tower_baghdad":
+			if ratio > 0.92: return "مخزن الإكسير النادر والأسطوري — وصول مقيّد"
+			if ratio > 0.72: return "مختبر النِن وتطوير القدرات"
+			if ratio > 0.48: return "صيدلية الإكسير والشفاء"
+			if ratio > 0.25: return "الدروع والخوذ وتطوير المعدات"
+			return "معرض الأسلحة والبيع"
+		"shopping_tower_baghdad":
+			if ratio > 0.8: return "المطاعم والمقاهي"
+			if ratio > 0.55: return "الأزياء والاحتياجات"
+			if ratio > 0.3: return "الأسواق والمتاجر"
+			return "الردهة التجارية"
+		"entertainment_tower_baghdad":
+			if ratio > 0.8: return "المهرجانات والفعاليات"
+			if ratio > 0.55: return "المسابح والرياضة"
+			if ratio > 0.3: return "الأنشطة العائلية"
+			return "مركز الترفيه"
+		"technology_tower_baghdad":
+			if ratio > 0.75: return "مختبرات الابتكار المتقدم"
+			if ratio > 0.5: return "الروبوتات والهندسة"
+			if ratio > 0.25: return "الخدمات الرقمية"
+			return "معارض التكنولوجيا"
+		"hunter_association_tower_baghdad":
+			if ratio > 0.85: return "قاعة الشرف والسجل العالمي"
+			if ratio > 0.65: return "إدارة الاختبار العالمي"
+			if ratio > 0.4: return "قاعات التدريب والبحث"
+			if ratio > 0.2: return "مكاتب المهمات والنقابات"
+			return "الاستقبال وتسجيل الصيادين"
+		_:
+			return "حلبة التحديات — " + str(floor_number)
+
+func _create_floor_facilities(room: Node3D, tower_id: String, floor_number: int, radius: float, department: String) -> void:
+	for index in range(3):
+		var kiosk := Node3D.new()
+		kiosk.name = "ServiceKiosk_%d" % index
+		kiosk.position = Vector3((float(index) - 1.0) * radius * 0.35, 0.0, -radius * 0.2)
+		room.add_child(kiosk)
+		var plinth := MeshInstance3D.new()
+		var mesh := BoxMesh.new()
+		mesh.size = Vector3(2.2, 1.5, 1.4)
+		plinth.mesh = mesh
+		plinth.position.y = 0.75
+		var material := StandardMaterial3D.new()
+		material.albedo_color = Color(0.10, 0.28, 0.36)
+		material.metallic = 0.5
+		plinth.material_override = material
+		kiosk.add_child(plinth)
+		var label := Label3D.new()
+		label.text = department
+		label.position.y = 2.2
+		label.font_size = 16
+		label.pixel_size = 0.012
+		kiosk.add_child(label)
+	room.set_meta("system_tower_id", tower_id)
+	room.set_meta("system_tower_floor_number", floor_number)
+	room.set_meta("system_tower_department", department)
+
+func _travel_to_floor(tower_id: String, floor_number: int) -> void:
+	if not tower_nodes.has(tower_id) or not is_instance_valid(player):
+		return
+	var config: Dictionary = TOWER_CONFIG[tower_id]
+	if floor_number < 1 or floor_number > int(config["floors"]):
+		_set_status("رقم الطابق خارج حدود البرج.")
+		return
+	if tower_id == "power_tower_baghdad":
+		if not is_instance_valid(power_tower_manager):
+			_set_status("نظام برج القوة غير متاح.")
+			return
+		var state: Dictionary = power_tower_manager.call("get_tower_status")
+		if floor_number != int(state.get("next_floor", 1)):
+			_set_status("برج القوة يتطلب اجتياز الطوابق بالترتيب. الطابق التالي هو %d." % int(state.get("next_floor", 1)))
+			return
+		var request: Dictionary = power_tower_manager.call("request_floor", floor_number, int(progression.get("current_level")) if is_instance_valid(progression) else 1)
+		if not bool(request.get("success", false)):
+			_set_status("تعذر بدء التحدي: " + str(request.get("reason", "غير معروف")))
+			return
+		active_power_floor_data = request.get("floor_data", {})
+		power_floor_in_progress = true
+		power_floor_started_at = Time.get_ticks_msec()
+	var room := _ensure_floor_room(tower_id, floor_number)
+	if room == null:
+		_set_status("تعذر تجهيز الطابق.")
+		return
+	active_floor_root = room
+	panel.hide()
+	player.set_meta("system_tower_elevator_active", true)
+	var target_position := (tower_nodes[tower_id] as Node3D).to_global(Vector3(0.0, room.position.y + 1.25, 0.0))
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_SINE)
+	tween.set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(player, "global_position", target_position, 2.4)
+	tween.finished.connect(func():
+		if is_instance_valid(player):
+			player.set_meta("system_tower_elevator_active", false)
+			player.velocity = Vector3.ZERO
+		if tower_id == "power_tower_baghdad" and power_floor_in_progress:
+			_begin_power_floor()
+	)
+	_set_status("المصعد يتحرك إلى الطابق %d..." % floor_number)
+
+func _begin_power_floor() -> void:
+	if active_power_floor_data.is_empty() or active_floor_root == null:
+		return
+	current_wave = 0
+	total_waves = maxi(1, int(active_power_floor_data.get("wave_count", 1)))
+	opponents_per_wave = maxi(1, int(active_power_floor_data.get("opponent_count", 1)))
+	_spawn_power_wave()
+
+func _spawn_power_wave() -> void:
+	if active_floor_root == null:
+		return
+	current_wave += 1
+	var difficulty := int(active_power_floor_data.get("difficulty", 1))
+	var boss := bool(active_power_floor_data.get("boss_floor", false))
+	var count := 1 if boss else opponents_per_wave
+	for index in range(count):
+		var opponent = TowerOpponentScript.new()
+		var multiplier := 8.0 if boss else 1.0
+		opponent.configure(
+			player,
+			player_health,
+			(105.0 + float(difficulty) * 34.0) * multiplier,
+			(7.0 + float(difficulty) * 1.8) * (2.0 if boss else 1.0),
+			2.1 + float(difficulty) * 0.025,
+			boss
+		)
+		opponent.defeated.connect(_on_power_opponent_defeated)
+		active_floor_root.add_child(opponent)
+		var angle := TAU * float(index) / float(maxi(count, 1))
+		opponent.position = Vector3(cos(angle) * 9.0, 1.1, sin(angle) * 9.0)
+		active_opponents[opponent.get_instance_id()] = opponent
+	_set_status("برج القوة — الطابق %d\nالموجة %d من %d | خصوم: %d" % [int(active_power_floor_data.get("floor", 1)), current_wave, total_waves, count])
+
+func _on_power_opponent_defeated(opponent: Node) -> void:
+	if opponent == null:
+		return
+	active_opponents.erase(opponent.get_instance_id())
+	if not power_floor_in_progress or not active_opponents.is_empty():
+		return
+	if current_wave < total_waves:
+		_spawn_power_wave()
+	else:
+		_complete_power_floor()
+
+func _complete_power_floor() -> void:
+	if not power_floor_in_progress:
+		return
+	var floor_number := int(active_power_floor_data.get("floor", 0))
+	var elapsed := maxf(1.0, float(Time.get_ticks_msec() - power_floor_started_at) / 1000.0)
+	var result: Dictionary = power_tower_manager.call("confirm_floor_clear", floor_number, elapsed)
+	power_floor_in_progress = false
+	active_power_floor_data.clear()
+	if bool(result.get("success", false)):
+		_set_status("تم اجتياز الطابق %d!\nالتصنيف: %s | XP: %d\nالطابق التالي أصبح متاحاً." % [floor_number, str(result.get("rank", "E")), int(result.get("reward_xp", 0))])
+	else:
+		_set_status("انتهى القتال لكن تعذر اعتماد النتيجة: " + str(result.get("reason", "غير معروف")))
+
+func return_to_lobby() -> void:
+	if current_tower_id.is_empty() or not tower_nodes.has(current_tower_id) or not is_instance_valid(player):
+		return
+	if current_tower_id == "power_tower_baghdad" and power_floor_in_progress:
+		for opponent in active_opponents.values():
+			if is_instance_valid(opponent):
+				opponent.queue_free()
+		active_opponents.clear()
+		power_tower_manager.call("abandon_active_floor")
+		power_floor_in_progress = false
+		active_power_floor_data.clear()
+	var tower := tower_nodes[current_tower_id] as Node3D
+	var config: Dictionary = TOWER_CONFIG[current_tower_id]
+	var lobby_position := tower.to_global(Vector3(0.0, 1.4, float(config["radius"]) * 1.48 + 10.0))
+	player.set_meta("system_tower_elevator_active", true)
+	panel.hide()
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_SINE)
+	tween.set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(player, "global_position", lobby_position, 2.0)
+	tween.finished.connect(func():
+		if is_instance_valid(player):
+			player.set_meta("system_tower_elevator_active", false)
+			player.velocity = Vector3.ZERO
+	)
+
+func get_operations_status() -> Dictionary:
+	var total_staff := 0
+	for ids in staff_by_tower.values():
+		total_staff += ids.size()
+	return {"tower_count": tower_nodes.size(), "staff_count": total_staff, "credits": credits, "interior_tower_count": prepared_towers.size(), "power_floor_active": power_floor_in_progress, "advertising_mode": "npc_staff_managed_internal_external"}
+
