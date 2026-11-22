@@ -1089,6 +1089,26 @@ func _run() -> void:
 	if arcade_sensor_count != 5:
 		_fail("Arcade gallery must have five physical target sensors.")
 		return
+	var perfect_bowling_rolls: Array = []
+	for _roll in range(12):
+		perfect_bowling_rolls.append(10)
+	if int(operations.call("_calculate_bowling_score", perfect_bowling_rolls)) != 300:
+		_fail("Bowling scoring engine did not calculate a perfect 300 game.")
+		return
+	var gutter_bowling_rolls: Array = []
+	for _roll in range(20):
+		gutter_bowling_rolls.append(0)
+	if int(operations.call("_calculate_bowling_score", gutter_bowling_rolls)) != 0:
+		_fail("Bowling scoring engine did not calculate a zero-pin game.")
+		return
+	var spare_bowling_rolls: Array = []
+	for _frame in range(9):
+		spare_bowling_rolls.append(5)
+		spare_bowling_rolls.append(5)
+	spare_bowling_rolls.append_array([5, 5, 5])
+	if int(operations.call("_calculate_bowling_score", spare_bowling_rolls)) != 150:
+		_fail("Bowling scoring engine did not calculate ten consecutive spares.")
+		return
 	var activity_cases := {
 		"swimming_pool": ["lap", 3],
 		"fitness_gym": ["rep", 8],
@@ -1118,7 +1138,8 @@ func _run() -> void:
 			_fail("Facility activity could not start: " + str(activity_type))
 			return
 		var final_activity_result: Dictionary = {}
-		for _step in range(int(activity_case[1])):
+		var activity_attempt_limit := 21 if str(activity_type) == "bowling" else int(activity_case[1])
+		for _step in range(activity_attempt_limit):
 			if str(activity_type) in ["bowling", "sports_court", "arcade"]:
 				final_activity_result = await operations.call("perform_facility_activity", str(activity_case[0]))
 			else:
@@ -1126,6 +1147,8 @@ func _run() -> void:
 			if not bool(final_activity_result.get("success", false)):
 				_fail("Facility activity action failed: " + str(activity_type) + " / " + str(final_activity_result))
 				return
+			if bool(final_activity_result.get("completed", false)):
+				break
 			if str(activity_type) == "bowling":
 				bowling_total_pinfall += int(final_activity_result.get("pins", final_activity_result.get("last_throw", 0)))
 			elif str(activity_type) == "sports_court":
@@ -1150,8 +1173,11 @@ func _run() -> void:
 		if not operations.get("facility_activity_stats").has(activity_type):
 			_fail("Facility activity result was not recorded: " + str(activity_type))
 			return
+	if not bool(final_activity_result.get("completed", false)):
+		_fail("Bowling did not complete all ten frames and tenth-frame bonus rolls within 21 throws.")
+		return
 	if bowling_total_pinfall <= 0:
-		_fail("Bowling physics test did not knock down any pins across ten frames.")
+		_fail("Bowling physics test did not knock down any pins across the ten-frame game.")
 		return
 	if basketball_made_count <= 0:
 		_fail("Basketball physics test did not score a basket in five attempts.")
