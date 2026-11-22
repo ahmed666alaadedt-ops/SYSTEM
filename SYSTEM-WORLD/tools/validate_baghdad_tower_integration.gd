@@ -151,7 +151,11 @@ func _run() -> void:
 			var stair_body := generated_root.get_node_or_null("EmergencyStairDownStep_%02d_Collision" % stair_step_index) as StaticBody3D
 			var stair_collision := stair_body.get_node_or_null("CollisionShape3D") as CollisionShape3D if stair_body != null else null
 			if stair_collision == null or stair_collision.shape == null or stair_collision.disabled:
-				_fail("Top floor emergency stair step is missing physical collision: %d" % stair_step_index)
+				var stair_debug: Array[String] = []
+				for child in generated_root.get_children():
+					if str(child.name).contains("EmergencyStair"):
+						stair_debug.append("%s:%s" % [str(child.name), child.get_class()])
+				_fail("Top floor emergency stair step is missing physical collision: %d; floor=%d/%d; active_floor=%d; children=%s" % [stair_step_index, configured_floor_count, int(floor_world.get("max_floors")), int(floor_world.get("active_floor")), ", ".join(stair_debug)])
 				return
 		var floor_exit := generated_root.get_node_or_null("TowerFloorExit") as Area3D
 		if floor_exit == null or not floor_exit.is_in_group("system_interactable"):
