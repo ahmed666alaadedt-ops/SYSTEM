@@ -322,17 +322,33 @@ func _save_parked_state() -> bool:
 
 
 func _is_aircraft_position_clear(candidate_position: Vector3) -> bool:
+	var fuselage_clearance := BoxShape3D.new()
+	fuselage_clearance.size = Vector3(5.0, 5.0, 14.0)
+	if not _flight_shape_is_clear(fuselage_clearance, Transform3D(aircraft.global_basis, candidate_position)):
+		return false
+	var rotor_clearance := BoxShape3D.new()
+	rotor_clearance.size = Vector3(13.2, 0.35, 13.2)
+	var rotor_origin := candidate_position + aircraft.global_basis * Vector3(0.0, 1.8, 0.0)
+	if not _flight_shape_is_clear(rotor_clearance, Transform3D(aircraft.global_basis, rotor_origin)):
+		return false
+	var tail_rotor_clearance := BoxShape3D.new()
+	tail_rotor_clearance.size = Vector3(0.35, 2.2, 2.2)
+	var tail_rotor_origin := candidate_position + aircraft.global_basis * Vector3(0.0, 0.65, 6.65)
+	return _flight_shape_is_clear(tail_rotor_clearance, Transform3D(aircraft.global_basis, tail_rotor_origin))
+
+
+func _flight_shape_is_clear(shape: Shape3D, shape_transform: Transform3D) -> bool:
 	var world := get_world_3d()
 	if world == null:
 		return false
-	var aircraft_clearance := BoxShape3D.new()
-	aircraft_clearance.size = Vector3(5.0, 5.0, 14.0)
 	var query := PhysicsShapeQueryParameters3D.new()
-	query.shape = aircraft_clearance
-	query.transform = Transform3D(aircraft.global_basis, candidate_position)
+	query.shape = shape
+	query.transform = shape_transform
 	query.collision_mask = 1
 	query.collide_with_areas = false
 	query.collide_with_bodies = true
+	if is_instance_valid(player):
+		query.exclude = [player.get_rid()]
 	return world.direct_space_state.intersect_shape(query, 12).is_empty()
 
 func _update_camera() -> void:
