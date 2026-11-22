@@ -94,6 +94,7 @@ func _run_validation() -> void:
 		_fail("Runtime entrance markers do not match accepted/restricted source associations.")
 		return
 	var accepted_runtime_entrances := 0
+	var physical_door_count := 0
 	for entrance_root_value in runtime_entrance_roots:
 		var entrance_root := entrance_root_value as Node3D
 		var entrance_interaction := entrance_root.get_node_or_null("MappedEntranceInteraction") as StaticBody3D
@@ -123,19 +124,54 @@ func _run_validation() -> void:
 		if not linked_building_found:
 			_fail("A runtime entrance points to a building that is not present in its streamed cell.")
 			return
+		var door_root := entrance_cell.get_node_or_null("OSMDoor_" + entrance_id) as Node3D
+		if door_root == null:
+			_fail("A reviewed entrance has no physical door and wall opening: " + entrance_id)
+			return
+		if not door_root.is_in_group("system_interactable") or not bool(door_root.get_meta("system_wall_opening_built", false)):
+			_fail("A physical Baghdad door is missing its interaction group or wall opening evidence.")
+			return
+		if door_root.get_node_or_null("DoorHinge/DoorLeafBody") as AnimatableBody3D == null:
+			_fail("A physical Baghdad door has no hinged leaf collision body.")
+			return
+		if door_root.get_node_or_null("DoorInteractionArea") as Area3D == null:
+			_fail("A physical Baghdad door has no interaction area.")
+			return
+		if str(door_root.get_meta("system_associated_building_id", "")) != associated_building_id:
+			_fail("A physical Baghdad door is linked to the wrong building.")
+			return
 		if association_status == "accepted":
 			accepted_runtime_entrances += 1
-			if str(entrance_interaction.get_meta("system_access_state", "")) != "verified_building_association_no_door_or_interior":
-				_fail("An accepted source entrance was incorrectly marked as an enterable door.")
+			physical_door_count += 1
+			if str(entrance_interaction.get_meta("system_access_state", "")) != "verified_physical_door_created":
+				_fail("An accepted source entrance was not promoted to its verified physical door.")
+				return
+			if bool(door_root.get_meta("system_door_open", true)) or str(door_root.get_meta("system_access_state", "")) != "verified_door_closed":
+				_fail("An accepted physical door did not start in its closed state.")
+				return
+			door_root.call("system_interact")
+			if not bool(door_root.get_meta("system_door_open", false)) or str(door_root.get_meta("system_access_state", "")) != "verified_door_open":
+				_fail("An accepted physical door did not open through its interaction.")
+				return
+			door_root.call("system_interact")
+			if bool(door_root.get_meta("system_door_open", true)) or str(door_root.get_meta("system_access_state", "")) != "verified_door_closed":
+				_fail("An accepted physical door did not close through its interaction.")
 				return
 		else:
 			if str(entrance_interaction.get_meta("system_access_state", "")) != "restricted_no_public_entry":
 				_fail("A restricted source entrance was not kept inaccessible.")
 				return
-	if accepted_runtime_entrances == 0:
-		_fail("The Baghdad entrance sample cell contains no accepted building associations.")
+			if str(door_root.get_meta("system_access_state", "")) != "restricted_no_public_entry" or bool(door_root.get_meta("system_door_open", true)):
+				_fail("A restricted physical door was not kept locked and closed.")
+				return
+			door_root.call("system_interact")
+			if bool(door_root.get_meta("system_door_open", true)):
+				_fail("A restricted physical door opened through public interaction.")
+				return
+	if accepted_runtime_entrances == 0 or physical_door_count != accepted_runtime_entrances:
+		_fail("Baghdad accepted entrance count does not match the generated physical door count.")
 		return
-	print("Baghdad entrance association runtime passed: source_points=", source_entrances.size(), " linked_markers=", runtime_entrance_roots.size(), " accepted=", accepted_runtime_entrances)
+	print("Baghdad entrance/door runtime passed: source_points=", source_entrances.size(), " linked_markers=", runtime_entrance_roots.size(), " accepted=", accepted_runtime_entrances, " physical_doors=", physical_door_count)
 	streamer._unload_cell(entrance_cell_id)
 
 	var archaeological_feature := {
