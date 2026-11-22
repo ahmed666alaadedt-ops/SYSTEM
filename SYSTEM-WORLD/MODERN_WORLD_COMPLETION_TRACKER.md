@@ -962,3 +962,14 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Added deterministic validation for all seven gate colliders, staging barrier, lobby-side start point, unregistered denial, successful candidate registration/start, and opening all gate panels.
 - [x] Godot 4.3 full validation workflow `44986054107` passed on code commit `9f85abd7748f8fccd4244e8f356cd0f2c00c2f09`, including tower integration, all existing gameplay validators, missing-mesh scan and headless main-scene launch.
 - Remaining: actual seven-stage challenge locations/gameplay and trusted server-side evidence verification are still not implemented; the tunnel gate system does not grant stage completion or a Hunter license. No physical Android device test has been performed.
+
+
+## Baghdad tower advertising screens — 22 November 2026
+
+- [x] Add two large emissive advertising display structures to the exterior facade of each of the five connected Baghdad towers.
+- [x] Add two framed advertising displays inside each tower lobby, mounted on side walls so the Hunter examination tunnel and main entrance remain unobstructed.
+- [x] Give every screen a readable Arabic/English SYSTEM advertising identity and local placeholder content.
+- [x] Extend the Baghdad tower integration validator to require both exterior and interior displays on all five connected towers.
+- [ ] Run Godot 4.3 parser, full tower/gameplay validation and headless scene startup on the exact advertising-screen commit.
+- [ ] Inspect screen scale, text orientation, visibility, lighting and mobile performance in the live scene and on Android.
+- Note: this pass creates the physical display assets and placeholder content only. Live advertising, campaign scheduling, moderation, consent, analytics and provider integration remain disabled until designed and secured.
