@@ -686,3 +686,14 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Godot 4.3 import/parse, headless main-scene startup, Baghdad tower landmark/lobby validation, and tower interior/NPC commerce/advertising/Power Tower boss-arena validation passed on `d3b92ded6a95a444f23c5bb849529af4e586d467` (workflow run `45047696991`).
 - [x] Canonical Android debug APK export and upload passed on the exact same PR head (workflow run `45047696994`); artifact `SYSTEM-WORLD-canonical-android-debug-apk`, 35,802,758 bytes, expires 6 December 2026.
 - [ ] Physical Android device testing remains outstanding; automated CI does not verify touch feel, visual alignment, frame rate, or real-device stability.
+
+
+### Hunter Association helicopter parking persistence — 22 November 2026
+
+- [x] Save the helicopter's parked local position and orientation to the local Godot user profile when the pilot safely exits after landing.
+- [x] Restore the saved parked transform when the Hunter Association helicopter controller is initialized after an app restart.
+- [x] Reject malformed saved transform values and out-of-bounds parking coordinates, falling back to the designated rooftop spawn.
+- [x] Extend the Baghdad tower operations validator to save a test parking transform, reload it, and assert that the parked position is restored.
+- [ ] Pass the updated Godot 4.3 validator and Android APK export on the current PR head.
+- [ ] Verify parking persistence across a real Android app force-close/relaunch cycle; CI uses an isolated test profile and does not prove device persistence.
+- Note: this is local-device parking persistence only. It does not synchronize the aircraft location between online players or across devices.
