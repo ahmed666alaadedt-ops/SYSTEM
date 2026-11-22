@@ -596,3 +596,15 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Keep the five-department theme assertion scoped to the five connected Baghdad towers.
 - [x] Validate the independent Power Tower against its own arena challenge display and arena metadata instead.
 - [ ] Re-run Godot validation and Android export on this corrected commit; do not treat the earlier failed Godot run as a pass.
+
+
+### Hunter Association rooftop helicopter landing pad — 22 November 2026
+
+- [x] Add a dedicated rooftop helicopter landing pad physically attached to the Hunter Association Tower; it is not a sixth tower and is not part of the standalone Power Tower.
+- [x] Add a circular landing deck, static deck collision, painted landing circle and H marking, eight perimeter lights, identity sign, and a collision-backed access bridge to the tower roof.
+- [x] Tag the facility with its Hunter Association owner ID and an explicit landing-zone radius for future helicopter runtime integration.
+- [x] Extend the Baghdad tower Godot validator to check pad ownership, deck/collision, markings, sign, bridge collision, and all eight perimeter lights.
+- [ ] Run Godot 4.3 parsing, scene startup and the extended tower validator; inspect any failures before treating the pad as validated.
+- [ ] Integrate helicopter spawn/approach/landing/takeoff controls, landing permissions, aircraft parking and mobile touch controls; the current change creates the physical landing-pad blockout only.
+- [ ] Review rooftop approach clearance, collision traversal, lighting and Android performance on a physical device.
+- Note: the pad is an initial 3D geometry and collision implementation. It does not claim that helicopter flight or landing gameplay is already implemented.
