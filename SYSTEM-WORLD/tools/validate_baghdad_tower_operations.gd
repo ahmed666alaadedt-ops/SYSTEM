@@ -1138,8 +1138,8 @@ func _run() -> void:
 			_fail("Facility activity result was not recorded: " + str(activity_type))
 			return
 	var pool_room := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 18) as Node3D
-	var pool_facility := pool_room.get_node_or_null("SpecialFacility_swimming_pool") as Node3D if pool_room != null else null
-	var pool_water := pool_facility.get_node_or_null("PoolWaterVolume") as Area3D if pool_facility != null else null
+	var pool_physics_facility := pool_room.get_node_or_null("SpecialFacility_swimming_pool") as Node3D if pool_room != null else null
+	var pool_water := pool_physics_facility.get_node_or_null("PoolWaterVolume") as Area3D if pool_physics_facility != null else null
 	if pool_water == null:
 		_fail("Swimming pool water volume was not generated.")
 		return
