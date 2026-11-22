@@ -692,6 +692,8 @@ Implementation added on the feature branch; automated runtime validation is pend
 
 - [x] Save the helicopter's parked local position and orientation to the local Godot user profile when the pilot safely exits after landing.
 - [x] Restore the saved parked transform when the Hunter Association helicopter controller is initialized after an app restart.
+- [x] Keep boarding anchored to the aircraft's actual saved parking location and place the pilot on detected ground beside the aircraft after landing, including emergency landing away from the rooftop pad.
+- [ ] Pass the extended Godot regression for re-boarding at the saved location and safe nearby exit placement.
 - [x] Reject malformed saved transform values and out-of-bounds parking coordinates, falling back to the designated rooftop spawn.
 - [x] Extend the Baghdad tower operations validator to save a test parking transform, reload it, and assert that the parked position is restored.
 - [x] Expand swept-position clearance checks to cover the fuselage/tail boom, the full main-rotor disc, and the tail rotor instead of checking only the center body.
