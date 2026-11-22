@@ -212,12 +212,11 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	root.add_child(label)
 
 	_create_tower_architecture(root, node_name, title, height, radius, floors, beacon_color)
-	_create_tower_lobby(root, location_id, title, radius, floors)
-
 	root.set_meta("tower_id", location_id)
 	root.set_meta("tower_floor_count", floors)
 	root.set_meta("tower_height_m", height)
 	root.set_meta("tower_is_connected_district_member", connect_to_district)
+	_create_tower_lobby(root, location_id, title, radius, floors, height, connect_to_district)
 	print("SYSTEM WORLD: landmark tower generated: ", title, " / ", floors, " floors / ", height, "m")
 
 func _nearest_land_position(origin: Vector2) -> Vector2:
@@ -275,7 +274,7 @@ func _build_technology_tower() -> void:
 	_build_tower("TechnologyTower", "برج التكنولوجيا والابتكار", "technology_tower_baghdad", city_anchor + Vector3(0.0, 0.0, -365.0), 245.0, 27.0, 40, Color(0.20, 0.82, 0.98))
 
 
-func _create_tower_lobby(root: Node3D, tower_id: String, title: String, radius: float, floors: int) -> void:
+func _create_tower_lobby(root: Node3D, tower_id: String, title: String, radius: float, floors: int, height: float, connect_to_district: bool) -> void:
 	# Ground-level open lobby pavilion sits outside the tower shaft, avoiding the
 	# full-height shaft collision while providing a reachable public directory kiosk.
 	var lobby := Node3D.new()
@@ -330,8 +329,8 @@ func _create_tower_lobby(root: Node3D, tower_id: String, title: String, radius: 
 	kiosk_area.add_to_group("system_interactable")
 	kiosk_area.set_meta("system_tower_id", tower_id)
 	kiosk_area.set_meta("system_tower_floor_count", floors)
-	kiosk_area.set_meta("system_tower_height_m", float(root.get_meta("tower_height_m", 0.0)))
-	kiosk_area.set_meta("system_tower_district_member", bool(root.get_meta("tower_is_connected_district_member", tower_id != "power_tower_baghdad")))
+	kiosk_area.set_meta("system_tower_height_m", height)
+	kiosk_area.set_meta("system_tower_district_member", connect_to_district)
 	kiosk_area.set_meta("system_display_name", title)
 	kiosk_area.set_meta("system_interaction_prompt", "استخدم دليل " + title)
 	var kiosk_shape := CollisionShape3D.new()
