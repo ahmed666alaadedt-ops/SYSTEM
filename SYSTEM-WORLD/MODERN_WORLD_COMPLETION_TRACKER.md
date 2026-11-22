@@ -381,3 +381,14 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Tag each generated passage as a cave landmark and mark it explicitly as geometry blockout requiring runtime validation.
 - [ ] Add validated entrance-to-building association, proper terrain excavation, complete chamber wall/ceiling collision, cave lighting, audio, navigation, discovery persistence, and player interaction.
 - [ ] Run Godot parser/import, scene startup, collision traversal, and Android performance tests. The new geometry is committed source code and has not yet been run in Godot or on a device.
+
+
+## Baghdad five-tower identity correction — 22 November 2026
+
+- [x] Correct the five-tower district roster to: Hunter Association, Business & Investment, Shopping & Commerce, Entertainment & Sports, and Technology & Innovation.
+- [x] Remove Power Tower from the five-tower district build sequence; it is a separate optional landmark and the next major work phase after the five-tower district.
+- [x] Add distinct procedural skyline identity features for the five tower roles and keep the five-tower connected-district links.
+- [ ] Add the separate Power Tower landmark at its own location with its independent playable progression.
+- [ ] Validate five distinct placements against approved Baghdad geography, Tigris clearance, Karkh/Rusafa links, Tahrir Square and the Freedom Monument.
+- [ ] Run Godot import/parser, main-scene startup, tower node-count/identity checks, collision traversal, and Android visual/performance validation.
+- Note: this is a source-level correction and visual blockout expansion only. It has not yet been run in Godot or visually inspected on Android. Do not call the five towers complete until their interiors, interactions, navigation, and runtime checks pass.
