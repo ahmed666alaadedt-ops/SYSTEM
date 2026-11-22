@@ -1084,6 +1084,25 @@ func _run() -> void:
 		if not operations.get("facility_activity_stats").has(activity_type):
 			_fail("Facility activity result was not recorded: " + str(activity_type))
 			return
+	var pool_room := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 18) as Node3D
+	var pool_facility := pool_room.get_node_or_null("SpecialFacility_swimming_pool") as Node3D if pool_room != null else null
+	var pool_water := pool_facility.get_node_or_null("PoolWaterVolume") as Area3D if pool_facility != null else null
+	if pool_water == null:
+		_fail("Swimming pool water volume was not generated.")
+		return
+	pool_water.body_entered.emit(player)
+	if not bool(player.get_meta("system_swimming", false)):
+		_fail("Entering the pool volume did not enable the player's swimming state.")
+		return
+	main.set("jump_requested", true)
+	main.call("_physics_process", 0.016)
+	if float(player.velocity.y) < 2.0:
+		_fail("Swimming stroke input did not apply upward swim force.")
+		return
+	pool_water.body_exited.emit(player)
+	if bool(player.get_meta("system_swimming", false)):
+		_fail("Leaving the pool volume did not restore normal movement state.")
+		return
 	var completed_activity_stats: Dictionary = operations.get("facility_activity_stats").duplicate(true)
 	operations.call("_save_facility_activity_stats")
 	operations.set("facility_activity_stats", {})
