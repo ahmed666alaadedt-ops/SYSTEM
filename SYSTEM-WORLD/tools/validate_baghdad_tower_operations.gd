@@ -998,6 +998,37 @@ func _run() -> void:
 	if shopping_tower.get_node_or_null("ActiveTowerElevatorCar") != null:
 		_fail("Elevator cabin was not cleaned up after returning to the lobby.")
 		return
+	var district_tower_lifts := {
+		"hunter_association_tower_baghdad": "HunterAssociationTower",
+		"business_investment_tower_baghdad": "BusinessInvestmentTower",
+		"shopping_tower_baghdad": "ShoppingTower",
+		"entertainment_tower_baghdad": "EntertainmentTower",
+		"technology_tower_baghdad": "TechnologyTower"
+	}
+	for district_tower_id in district_tower_lifts.keys():
+		var district_tower := tower_manager.get_node_or_null(str(district_tower_lifts[district_tower_id])) as Node3D
+		if district_tower == null:
+			_fail("District tower lift regression could not resolve: " + str(district_tower_id))
+			return
+		operations.call("open_tower", str(district_tower_id))
+		operations.call("_travel_to_floor", str(district_tower_id), 2)
+		await create_timer(2.8).timeout
+		var lift_floor := operations.get("active_floor_root") as Node3D
+		var lift_car := district_tower.get_node_or_null("ActiveTowerElevatorCar") as Node3D
+		if lift_floor == null or int(lift_floor.get_meta("system_tower_floor_number", 0)) != 2:
+			_fail("Elevator did not deliver the player to floor 2 of " + str(district_tower_id))
+			return
+		if lift_car == null or absf(lift_car.position.y - lift_floor.position.y) > 0.08:
+			_fail("Elevator cabin did not reach the selected floor in " + str(district_tower_id))
+			return
+		if bool(player.get_meta("system_tower_elevator_active", true)):
+			_fail("Elevator transition remained locked after reaching " + str(district_tower_id))
+			return
+		operations.call("return_to_lobby")
+		await create_timer(3.0).timeout
+		if district_tower.get_node_or_null("ActiveTowerElevatorCar") != null or operations.get("active_floor_root") != null:
+			_fail("Elevator did not cleanly return to the lobby in " + str(district_tower_id))
+			return
 	var shop_progression: Node = operations.get("progression") as Node
 	if shop_progression == null:
 		_fail("Shopping tower purchase test has no player progression reference.")
