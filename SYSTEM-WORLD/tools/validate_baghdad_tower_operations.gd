@@ -55,7 +55,7 @@ func _run() -> void:
 	if tower_manager == null:
 		_fail("BaghdadTowerLandmarksManager is missing.")
 		return
-	var exam_manager := main.get_node_or_null("HunterExamManager")
+	var exam_manager := main.get_node_or_null("SYSTEMHunterExamManager")
 	if exam_manager == null:
 		_fail("HunterExamManager is missing.")
 		return
