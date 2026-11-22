@@ -763,6 +763,39 @@ func _run() -> void:
 	if not operations.has_method("_book_hotel_room") or not operations.has_method("_check_in_hotel_room") or not operations.has_method("_checkout_hotel_room") or not operations.has_method("_save_hotel_bookings") or not operations.has_method("_start_hotel_room_cleaning") or not operations.has_method("_complete_hotel_room_cleaning") or not operations.has_method("_is_hotel_room_available"):
 		_fail("SYSTEM Hotel reservation/check-in/check-out persistence methods are missing.")
 		return
+	if not operations.has_method("_place_hotel_room_service_order") or not operations.has_method("_update_hotel_room_service_order"):
+		_fail("SYSTEM Hotel room-service order lifecycle methods are missing.")
+		return
+	var room_service_snapshot: Dictionary = operations.get("hotel_bookings").duplicate(true)
+	var room_service_credits := int(operations.get("credits"))
+	var service_room_id := "hotel_standard_01"
+	var service_now := int(Time.get_unix_time_from_system())
+	operations.set("hotel_bookings", {service_room_id: {"room_id": service_room_id, "room_name": "غرفة خدمة الاختبار", "guest_id": "local_player", "check_in_unix": service_now, "check_out_unix": service_now + 86400, "status": "checked_in", "room_service_orders": []}})
+	operations.set("credits", maxi(room_service_credits, 100))
+	operations.call("_place_hotel_room_service_order", "restaurant_kebab", "كباب عراقي", 68)
+	var service_booking: Dictionary = operations.get("hotel_bookings").get(service_room_id, {})
+	var service_orders: Array = service_booking.get("room_service_orders", [])
+	var service_order_ok := service_orders.size() == 1 and int(operations.get("credits")) == maxi(room_service_credits, 100) - 68 and str(service_orders[0].get("status", "")) == "placed"
+	if service_order_ok:
+		operations.call("_update_hotel_room_service_order", 0, "preparing")
+		service_booking = operations.get("hotel_bookings").get(service_room_id, {})
+		service_orders = service_booking.get("room_service_orders", [])
+		service_order_ok = service_orders.size() == 1 and str(service_orders[0].get("status", "")) == "preparing"
+	if service_order_ok:
+		operations.call("_update_hotel_room_service_order", 0, "delivered")
+		service_booking = operations.get("hotel_bookings").get(service_room_id, {})
+		service_orders = service_booking.get("room_service_orders", [])
+		service_order_ok = service_orders.size() == 1 and str(service_orders[0].get("status", "")) == "delivered"
+	operations.set("hotel_bookings", room_service_snapshot)
+	operations.set("credits", room_service_credits)
+	operations.call("_save_hotel_bookings")
+	operations.call("_save_wallet")
+	if not service_order_ok:
+		_fail("SYSTEM Hotel room service did not complete the paid placed/preparing/delivered lifecycle.")
+		return
+	if not operations.has_method("_book_hotel_room") or not operations.has_method("_check_in_hotel_room") or not operations.has_method("_checkout_hotel_room") or not operations.has_method("_save_hotel_bookings") or not operations.has_method("_start_hotel_room_cleaning") or not operations.has_method("_complete_hotel_room_cleaning") or not operations.has_method("_is_hotel_room_available"):
+		_fail("SYSTEM Hotel reservation/check-in/check-out persistence methods are missing.")
+		return
 	var original_hotel_bookings: Dictionary = operations.get("hotel_bookings").duplicate(true)
 	var original_hotel_credits := int(operations.get("credits"))
 	operations.set("hotel_bookings", {})
