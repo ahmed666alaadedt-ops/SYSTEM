@@ -136,3 +136,7 @@ The Power Tower is a standalone 200-floor challenge destination outside the five
 - Preserve the Power Tower as a separate landmark with tournament blades and a champion crown ring; it is not part of the five-tower connection loop.
 - Store floor count, approximate height and connected-district membership as tower metadata for later directory/elevator integration.
 - These identity structures remain procedural blockout geometry. They do not create finished interiors, elevators, shops, equipment inventories, elixir crafting, or playable arena floors.
+
+## Tower entrance directory data — 22 November 2026
+
+Every Baghdad tower entrance exposes its configured floor count, approximate exterior height, and whether it belongs to the connected district. Interacting with a tower displays a short Arabic directory for its planned departments. This is an information directory only; it does not create an explorable floor, elevator ride, or interior scene.
