@@ -24,6 +24,8 @@ const BAGHDAD_OSM_GROUND_ELEVATION_M := 34.0
 const TerrainCellStreamingManagerScript = preload("res://scripts/modern_world_cell_streaming_manager.gd")
 
 var terrain_height_data := PackedFloat32Array()
+var baghdad_osm_ground_enabled := false
+var baghdad_osm_ground_elevation_m := BAGHDAD_OSM_GROUND_ELEVATION_M
 var terrain_step_x := WORLD_WIDTH / float(GRID_X - 1)
 var terrain_step_z := WORLD_DEPTH / float(GRID_Z - 1)
 
@@ -140,8 +142,8 @@ func _get_height(x: float, z: float) -> float:
 
 # Public terrain sampling API for world systems such as forests, paths and NPCs.
 func get_terrain_height(x: float, z: float) -> float:
-	if _is_baghdad_osm_region(x, z):
-		return BAGHDAD_OSM_GROUND_ELEVATION_M
+	if baghdad_osm_ground_enabled and _is_baghdad_osm_region(x, z):
+		return baghdad_osm_ground_elevation_m
 	if terrain_height_data.size() != GRID_X * GRID_Z:
 		return _get_height(x, z)
 
@@ -162,13 +164,21 @@ func get_terrain_height(x: float, z: float) -> float:
 
 
 func is_land_position(x: float, z: float) -> bool:
-	if _is_baghdad_osm_region(x, z):
+	if baghdad_osm_ground_enabled and _is_baghdad_osm_region(x, z):
 		var streamers := get_tree().get_nodes_in_group("baghdad_osm_cell_streamer")
 		if not streamers.is_empty() and streamers[0].has_method("is_ground_position"):
 			return bool(streamers[0].call("is_ground_position", x, z))
 		# The cell streamer is added after the region manager creates its landmarks.
 		return true
 	return _get_height(x, z) > SEA_LEVEL + 0.5
+
+
+func configure_baghdad_osm_ground(elevation_m: float) -> void:
+	if not is_finite(elevation_m):
+		push_warning("SYSTEM Baghdad OSM: rejected non-finite ground elevation.")
+		return
+	baghdad_osm_ground_elevation_m = elevation_m
+	baghdad_osm_ground_enabled = true
 
 
 func _is_baghdad_osm_region(x: float, z: float) -> bool:
