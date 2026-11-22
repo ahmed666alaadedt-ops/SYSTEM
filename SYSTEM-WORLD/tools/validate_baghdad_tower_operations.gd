@@ -128,28 +128,39 @@ func _run() -> void:
 	if helipad.call("_can_pilot"):
 		_fail("A completed Hunter License alone must not grant helicopter access.")
 		return
-	pilot_progression.set("current_level", 50)
-	if not helipad.call("_can_pilot"):
-		_fail("A level 50 hunter with a completed Hunter License must receive pilot authorization.")
+	pilot_progression.set("current_level", 100)
+	exam_manager.set("completed_stage_ids", all_stage_ids)
+	if helipad.call("_can_pilot"):
+		_fail("Player level and a completed Hunter License must not replace S-rank helicopter authorization.")
 		return
 	pilot_progression.set("current_level", 1)
 	exam_manager.set("completed_stage_ids", empty_stage_ids)
+	for role in ["association_director", "association_official", "chief_hunter", "helicopter_pilot"]:
+		pilot_player.set_meta("system_hunter_association_role", role)
+		if not helipad.call("_can_pilot"):
+			_fail("Senior Association role %s must receive helicopter access." % role)
+			return
 	pilot_player.set_meta("system_hunter_association_role", "mission_clerk")
-	if not helipad.call("_can_pilot"):
-		_fail("Authorized Hunter Association staff must receive helicopter access regardless of player level.")
+	if helipad.call("_can_pilot"):
+		_fail("A standard mission clerk must not receive professional helicopter access.")
 		return
+	pilot_player.set_meta("system_hunter_staff_professional", true)
+	pilot_player.set_meta("system_hunter_association_role", "professional_employee")
+	if not helipad.call("_can_pilot"):
+		_fail("A certified professional Association employee must receive helicopter access.")
+		return
+	pilot_player.remove_meta("system_hunter_staff_professional")
 	pilot_player.remove_meta("system_hunter_association_role")
 	pilot_progression.set("current_level", 1)
-	exam_manager.set("completed_stage_ids", all_stage_ids)
-	for rank in ["F", "E", "D", "C", "B"]:
+	for rank in ["F", "E", "D", "C", "B", "A"]:
 		pilot_player.set_meta("system_hunter_rank", rank)
 		if helipad.call("_can_pilot"):
-			_fail("A %s hunter must not receive high-rank helicopter authorization." % rank)
+			_fail("A %s hunter must not receive S-rank helicopter authorization." % rank)
 			return
-	for rank in ["A", "S", "SS", "SSS"]:
+	for rank in ["S", "SS", "SSS"]:
 		pilot_player.set_meta("system_hunter_rank", rank)
 		if not helipad.call("_can_pilot"):
-			_fail("A %s notable hunter must receive helicopter access without the level 50 threshold." % rank)
+			_fail("A %s hunter must receive helicopter access." % rank)
 			return
 	pilot_player.remove_meta("system_hunter_rank")
 	pilot_progression.set("current_level", 50)
