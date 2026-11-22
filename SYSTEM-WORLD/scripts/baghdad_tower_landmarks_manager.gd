@@ -215,6 +215,7 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	root.set_meta("service_furniture_revision", 1)
 	root.set_meta("entertainment_venue_revision", 1)
 	root.set_meta("shopping_mall_revision", 1)
+	root.set_meta("specialized_interiors_revision", 1)
 	print("SYSTEM WORLD: landmark tower generated: ", title, " / ", floors, " floors / ", height, "m")
 
 func _nearest_land_position(origin: Vector2) -> Vector2:
