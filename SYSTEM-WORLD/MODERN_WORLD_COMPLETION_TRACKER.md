@@ -15,8 +15,10 @@ This section supersedes older tower-role notes below wherever they describe the 
 - [x] Alternate female and male employee appearances and apply distinct uniform palettes for the Hunter Association, business, shopping, hotel, restaurant, entertainment, technology and Power Tower teams.
 - [x] Create four persistent customer NPCs in each of the five connected towers (20 total), with visible character models, wallet data, visitor schedules and local tower locations.
 - [x] Move visible customer NPCs around tower public lobbies on a periodic local schedule.
+- [x] When the player arrives at an authored floor, bring two persistent tower customers into that floor as visitors; update their local society location/action data and let them wander/socialize there, including Shopping Tower dining and hotel floors.
+- [x] Return floor visitors safely to their public lobby before the active floor is replaced or the player travels to another tower.
 - [x] Simulate NPC purchases from each tower's catalog, deduct customer wallets and shared vendor stock, and persist the local NPC sales ledger. Player purchases continue to use the same tower vendor stock.
-- [ ] Expand customer navigation from the lobbies into every authored floor, shop, restaurant and hotel room; the current customer movement is a public-lobby simulation.
+- [ ] Expand customer navigation into independently scheduled multi-floor routes, every individual shop/restaurant/hotel room, and persistent queue/seating/room occupancy behaviors; current implementation brings two visitors into the active floor selected by the player.
 - [ ] Replace local-only economy and customer records with server-authoritative shared inventory, transactions, anti-duplication and cross-device synchronization before online multiplayer commerce.
 
 ## Tower departments and signature amenities
@@ -29,6 +31,15 @@ This section supersedes older tower-role notes below wherever they describe the 
 - [ ] Add full swimming movement/physics, water entry/exit, pool activities and lifeguard routines; current pool work is the authored 3D pool facility and its service interaction.
 - [ ] Add playable cinema programming, bowling/arcade minigames, full sports matches, live business-market simulation, and hands-on robotics/VR experiences; current additions establish their floor layouts, service points and catalog entries.
 - [ ] Complete floor-by-floor furniture, accessible routes, elevators, emergency exits, lighting, sound, staff navigation and visual polish across every tower floor.
+
+## Active-floor customer visits — 22 November 2026
+
+- [x] Add a floor-visit lifecycle for persistent customer NPCs: two customers from the visited tower are moved from its public lobby into the active floor after the elevator arrives.
+- [x] Update each visiting customer's local society location, current activity and last-visit timestamp; customer models wander/socialize inside the selected floor.
+- [x] Return all floor visitors to their correct public lobby before the previous active floor is removed or a different tower is entered.
+- [x] Extend the Godot operations validator to check the Shopping Tower restaurant floor receives two customers, the lobby retains two, and both visitors return safely so all four customers are visible in the lobby again.
+- [ ] Run the new floor-visit regression and exact-head Android export on this commit; no fresh CI result is claimed yet.
+- Note: this is active-floor visitor behavior, not an autonomous multi-floor schedule or full restaurant seating/room occupancy simulation.
 
 ## Validation status for this revision
 - [x] Extend the Godot operations validator for the five connected towers plus independent Power Tower, 45 staff, 20 customers, uniform presence, staffed cafes, NPC purchases, pools, cinema, trading hall, AI lab, Hall of Honor, Global Council, Global Headquarters, Shopping Tower forge/lab, hotel and dining.
