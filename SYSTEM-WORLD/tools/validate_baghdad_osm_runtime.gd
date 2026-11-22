@@ -77,7 +77,7 @@ func _run_validation() -> void:
 	if entrance_cell == null:
 		_fail("Baghdad entrance sample cell 0:2 did not load.")
 		return
-	var entrance_cell_path := streamer.data_root.path_join("cells").path_join("0_2.json")
+	var entrance_cell_path: String = streamer.data_root.path_join("cells").path_join("0_2.json")
 	var entrance_tile: Variant = JSON.parse_string(FileAccess.get_file_as_string(entrance_cell_path))
 	if not entrance_tile is Dictionary:
 		_fail("Baghdad entrance sample cell JSON could not be read.")
