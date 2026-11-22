@@ -1067,6 +1067,11 @@ func _run() -> void:
 		_fail("Bowling lane must spawn ten physical rigid-body pins.")
 		return
 	operations.set("current_facility_root", bowling_facility)
+	operations.call("_on_facility_aim_changed", 0.5)
+	if absf(float(operations.get("facility_aim")) - 0.5) > 0.001:
+		_fail("Touch aim control did not update the facility throw direction.")
+		return
+	operations.call("_on_facility_aim_changed", 0.0)
 	var court_room := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 22) as Node3D
 	var court_facility := court_room.get_node_or_null("SpecialFacility_sports_court") as Node3D if court_room != null else null
 	if court_facility == null or court_facility.get_node_or_null("BasketballScoringSensor") == null:
@@ -1103,7 +1108,7 @@ func _run() -> void:
 			if not bool(final_activity_result.get("success", false)):
 				_fail("Facility activity action failed: " + str(activity_type) + " / " + str(final_activity_result))
 				return
-		if str(activity_type) == "sports_court" and not final_activity_result.has("last_shot_scored"):
+		if str(activity_type) == "sports_court" and (not final_activity_result.has("last_shot_scored") or typeof(final_activity_result.get("last_shot_scored")) != TYPE_BOOL):
 			_fail("Basketball final attempt did not return a physical hoop-sensor result.")
 			return
 		if str(activity_type) == "bowling" and (int(final_activity_result.get("last_throw", -1)) < 0 or int(final_activity_result.get("last_throw", -1)) > 10):
