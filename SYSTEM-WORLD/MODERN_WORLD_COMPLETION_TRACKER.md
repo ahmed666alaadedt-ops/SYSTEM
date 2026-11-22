@@ -595,7 +595,7 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Investigate the first tower-theme validation run. The new validator incorrectly required the five connected Baghdad department themes on the separate Power Tower.
 - [x] Keep the five-department theme assertion scoped to the five connected Baghdad towers.
 - [x] Validate the independent Power Tower against its own arena challenge display and arena metadata instead.
-- [ ] Re-run Godot validation and Android export on this corrected commit; do not treat the earlier failed Godot run as a pass.
+- [x] Re-run Godot validation and Android export on this corrected commit; both passed on PR head `d3b92ded6a95a444f23c5bb849529af4e586d467`.
 
 
 ### Hunter Association rooftop helicopter landing pad — 22 November 2026
@@ -634,26 +634,26 @@ Implementation added on the feature branch; automated runtime validation is pend
 
 - [x] Prepare the selected floor room and elevator cabin before reserving an active Power Tower challenge, preventing a failed room/cabin setup from leaving the progression manager locked on an active floor.
 - [x] Add automated progression regression checks for sequential floor access, player-level requirements, duplicate active-floor requests, and rejection of clear reports for floors that were never activated.
-- [ ] Pass Godot 4.3 parser, complete Baghdad tower operations validator, and canonical Android APK export on the latest PR head.
+- [x] Pass Godot 4.3 parser, complete Baghdad tower operations validator, and canonical Android APK export on PR head `d3b92ded6a95a444f23c5bb849529af4e586d467`.
 - [ ] Verify the full 200-floor progression, save/reload continuity, boss floors, rewards and failure/abandon recovery through extended automated gameplay tests and Android device testing.
 
 
 ### Baghdad tower interaction prompt alignment — 22 November 2026
 
 - [x] Update the in-world tower interaction prompt: the floor selector and elevator travel are available, while unfinished tower services/interior details remain explicitly marked as in development.
-- [ ] Pass the latest Godot operations validation and canonical Android APK export after the Hunter exam, Power Tower and prompt updates.
+- [x] Pass the latest Godot operations validation and canonical Android APK export after the Hunter exam, Power Tower and prompt updates on PR head `d3b92ded6a95a444f23c5bb849529af4e586d467`.
 
 
 ### Hunter examination regression fixture correction — 22 November 2026
 
 - [x] Correct the automated test fixture to use a typed empty stage-ID array when switching from the completed-candidate test profile back to the unlicensed profile; this prevents stale completed-stage data from contaminating the helicopter authorization assertion.
-- [ ] Re-run the full Godot operations validator and Android export on the corrected head.
+- [x] Re-run the full Godot operations validator and Android export on the corrected head; both passed on PR head `d3b92ded6a95a444f23c5bb849529af4e586d467`.
 
 
 ### Hunter helicopter authorization test isolation — 22 November 2026
 
 - [x] Explicitly mark the helicopter regression-test profile as unregistered after the completed-exam regression case, so the negative pilot-authorization test cannot inherit the prior candidate's completed-stage state.
-- [ ] Re-run Godot 4.3 operations validation and canonical Android export on the isolated test profile.
+- [x] Re-run Godot 4.3 operations validation and canonical Android export on the isolated test profile; both passed on PR head `d3b92ded6a95a444f23c5bb849529af4e586d467`.
 
 
 ### Helicopter flight-loop regression coverage — 22 November 2026
@@ -676,4 +676,11 @@ Implementation added on the feature branch; automated runtime validation is pend
 ### Responsive panel viewport API correction — 22 November 2026
 
 - [x] Use Viewport.get_visible_rect().size from the Node-based operations manager; get_viewport_rect() belongs to Control/CanvasItem and is not available on this Node.
-- [ ] Re-run Godot parser, responsive-size assertions, full tower operations validator and Android APK export.
+- [x] Re-run Godot parser, responsive-size assertions, full tower operations validator and Android APK export; all passed on PR head `d3b92ded6a95a444f23c5bb849529af4e586d467`.
+
+
+### Latest verified PR-head CI — 22 November 2026
+
+- [x] Godot 4.3 import/parse, headless main-scene startup, Baghdad tower landmark/lobby validation, and tower interior/NPC commerce/advertising/Power Tower boss-arena validation passed on `d3b92ded6a95a444f23c5bb849529af4e586d467` (workflow run `45047696991`).
+- [x] Canonical Android debug APK export and upload passed on the exact same PR head (workflow run `45047696994`); artifact `SYSTEM-WORLD-canonical-android-debug-apk`, 35,802,758 bytes, expires 6 December 2026.
+- [ ] Physical Android device testing remains outstanding; automated CI does not verify touch feel, visual alignment, frame rate, or real-device stability.
