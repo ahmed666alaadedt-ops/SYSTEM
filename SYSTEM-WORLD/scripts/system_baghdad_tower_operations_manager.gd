@@ -655,7 +655,7 @@ func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) 
 		_:
 			obstacle_count = 2
 	var obstacle_material := StandardMaterial3D.new()
-	obstacle_material.albedo_color = Color(0.20, 0.24, 0.29) if arena_type != "BOSS_TRIAL" else Color(0.34, 0.075, 0.045)
+	obstacle_material.albedo_color = Color(0.20, 0.24, 0.29) if arena_type != "BOSS_TRIAL" else (Color(0.68, 0.43, 0.08) if bool(data.get("final_boss", false)) else Color(0.34, 0.075, 0.045))
 	obstacle_material.metallic = 0.62
 	obstacle_material.roughness = 0.36
 	for index in range(obstacle_count):
@@ -688,8 +688,8 @@ func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) 
 		var boss_platform := MeshInstance3D.new()
 		boss_platform.name = "BossTrialPlatform"
 		var platform_mesh := CylinderMesh.new()
-		platform_mesh.top_radius = 6.0
-		platform_mesh.bottom_radius = 6.5
+		platform_mesh.top_radius = 8.0 if bool(data.get("final_boss", false)) else 6.0
+		platform_mesh.bottom_radius = 8.5 if bool(data.get("final_boss", false)) else 6.5
 		platform_mesh.height = 0.8
 		boss_platform.mesh = platform_mesh
 		boss_platform.position.y = 0.8
@@ -815,17 +815,26 @@ func _spawn_power_wave() -> void:
 	current_wave += 1
 	var difficulty := int(active_power_floor_data.get("difficulty", 1))
 	var boss := bool(active_power_floor_data.get("boss_floor", false))
+	var final_boss := bool(active_power_floor_data.get("final_boss", false))
 	var count := 1 if boss else opponents_per_wave
 	for index in range(count):
 		var opponent = TowerOpponentScript.new()
-		var multiplier := 8.0 if boss else 1.0
+		var health_multiplier := 4.0 if boss else 1.0
+		if final_boss:
+			health_multiplier = 10.0
+		var damage_value := clampf(6.0 + float(difficulty) * 0.72, 6.0, 34.0)
+		if boss:
+			damage_value *= 1.35
+		if final_boss:
+			damage_value *= 1.25
 		opponent.configure(
 			player,
 			player_health,
-			(105.0 + float(difficulty) * 34.0) * multiplier,
-			(7.0 + float(difficulty) * 1.8) * (2.0 if boss else 1.0),
-			2.1 + float(difficulty) * 0.025,
-			boss
+			(110.0 + float(difficulty) * 28.0) * health_multiplier,
+			damage_value,
+			2.1 + float(difficulty) * 0.025 + (0.25 if final_boss else 0.0),
+			boss,
+			final_boss
 		)
 		opponent.defeated.connect(_on_power_opponent_defeated)
 		active_floor_root.add_child(opponent)
