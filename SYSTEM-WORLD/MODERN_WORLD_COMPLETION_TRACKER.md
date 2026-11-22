@@ -473,3 +473,13 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Extend the five-tower Godot validator to assert arcade, bowling, VR and concert venue roots and the entertainment revision marker.
 - [ ] Implement playable arcade games, bowling ball/pin physics and scoring, VR activities, event scheduling, concert audio/stage interactions and venue staff; current additions are static 3D blockouts.
 - [ ] Re-run Godot validation and Android export against the exact latest source and validator commits.
+
+
+## Shopping Tower retail and food-court interior pass — 22 November 2026
+
+- [x] Add eight numbered retail storefront display bays.
+- [x] Add six food-vendor counters with menu display panels.
+- [x] Add a dining court with twelve tables and forty-eight chair visuals.
+- [x] Extend Godot validation for retail, food-vendor and dining-area roots and revision metadata.
+- [ ] Implement stock, shopkeeper NPCs, buying/selling, inventory, prices, payment and food ordering; current fixtures are static visual layouts.
+- [ ] Re-run Godot and Android CI against the latest shopping manager and validator commits.
