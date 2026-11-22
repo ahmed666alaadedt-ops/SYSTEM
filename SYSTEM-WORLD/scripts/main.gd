@@ -1404,13 +1404,15 @@ func _on_interaction_performed(
 			if is_instance_valid(shopping_tower_menu) and shopping_tower_menu.has_method("open_service_view"):
 				shopping_tower_menu.call("open_service_view", location_id)
 				if location_id.ends_with("_0"):
-					service_description = "تم فتح معرض الأسلحة النارية والبيضاء والأقواس والسهام."
-				elif location_id.ends_with("_1"):
-					service_description = "تم فتح مختبر جرعات إيقاظ النِن وتطوير التحكم بالهالة."
-				elif location_id.ends_with("_2"):
 					service_description = "تم فتح سوق بغداد ومقتنيات مجمع الأبراج."
-				elif location_id.ends_with("_3"):
+				elif location_id.ends_with("_1"):
+					service_description = "تم فتح كتالوج المشتريات المحلية والمقتنيات."
+				elif location_id.ends_with("_2"):
 					service_description = "تم فتح حقيبة المشتريات والأسلحة والجرعات."
+				elif location_id.ends_with("_3"):
+					service_description = "تم فتح معرض الأسلحة النارية والبيضاء والأقواس والسهام."
+				elif location_id.ends_with("_4"):
+					service_description = "تم فتح مختبر جرعات إيقاظ النِن وتطوير التحكم بالهالة."
 		if interaction_prompt_label != null:
 			interaction_prompt_label.text = "%s\n%s" % [service_title, service_description]
 	elif location_id.begins_with("street_ad_"):
