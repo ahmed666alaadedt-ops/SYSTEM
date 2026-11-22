@@ -1298,6 +1298,16 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 	if floor_number < 1 or floor_number > int(config["floors"]):
 		_set_status("رقم الطابق خارج حدود البرج.")
 		return
+	var room := _ensure_floor_room(tower_id, floor_number)
+	if room == null:
+		_set_status("تعذر تجهيز الطابق.")
+		return
+	var tower := tower_nodes[tower_id] as Node3D
+	var start_y := active_floor_root.position.y if is_instance_valid(active_floor_root) else 9.0
+	var car := _ensure_elevator_car(tower_id, start_y)
+	if car == null:
+		_set_status("تعذر تجهيز عربة المصعد.")
+		return
 	if tower_id == "power_tower_baghdad":
 		if not is_instance_valid(power_tower_manager):
 			_set_status("نظام برج القوة غير متاح.")
@@ -1312,16 +1322,6 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 			return
 		active_power_floor_data = request.get("floor_data", {})
 		power_floor_in_progress = true
-	var room := _ensure_floor_room(tower_id, floor_number)
-	if room == null:
-		_set_status("تعذر تجهيز الطابق.")
-		return
-	var tower := tower_nodes[tower_id] as Node3D
-	var start_y := active_floor_root.position.y if is_instance_valid(active_floor_root) else 9.0
-	var car := _ensure_elevator_car(tower_id, start_y)
-	if car == null:
-		_set_status("تعذر تجهيز عربة المصعد.")
-		return
 	if not is_instance_valid(active_floor_root):
 		player.global_position = tower.to_global(Vector3(0.0, start_y + 1.2, 0.0))
 	if is_instance_valid(active_floor_root) and active_floor_root != room:
