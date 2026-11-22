@@ -352,6 +352,7 @@ func _add_box(node_name: String, position: Vector3, size: Vector3, material: Mat
 		body.name = node_name + "_Collision"
 		body.position = position
 		var collision := CollisionShape3D.new()
+		collision.name = "CollisionShape3D"
 		var shape := BoxShape3D.new()
 		shape.size = size
 		collision.shape = shape
