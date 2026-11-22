@@ -101,6 +101,8 @@ func _run_validation() -> void:
 	var shopping_tower := manager.get_node_or_null("ShoppingTower")
 	var shopping_facilities := shopping_tower.get_node_or_null("TowerFacilities_Blockout") if shopping_tower != null else null
 	_expect(shopping_facilities != null, "Shopping Tower facility layout exists")
+	if shopping_tower != null:
+		_expect(int(shopping_tower.get_meta("shopping_mall_revision", 0)) == 1, "shopping mall interior revision is registered")
 	if shopping_facilities != null:
 		_expect(shopping_facilities.get_node_or_null("RetailStorefrontGallery_Blockout") != null, "retail storefront gallery exists")
 		_expect(shopping_facilities.get_node_or_null("FoodCourtVendorGallery_Blockout") != null, "food court vendor gallery exists")
