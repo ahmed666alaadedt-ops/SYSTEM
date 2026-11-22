@@ -2430,7 +2430,7 @@ func _facility_activity_definition(facility_type: String) -> Dictionary:
 	var definitions := {
 		"swimming_pool": {"action": "lap", "action_label": "إكمال لفة سباحة", "goal": 3, "reward": 45, "title": "السباحة"},
 		"fitness_gym": {"action": "rep", "action_label": "إكمال مجموعة تمارين", "goal": 8, "reward": 35, "title": "اللياقة"},
-		"sports_court": {"action": "shot", "action_label": "تنفيذ تصويبة", "goal": 5, "reward": 55, "title": "التصويب الرياضي"},
+		"sports_court": {"action": "shot", "action_label": "تنفيذ دور المباراة", "goal": 10, "reward": 70, "title": "مباراة كرة السلة 1 ضد 1"},
 		"bowling": {"action": "throw", "action_label": "رمي كرة البولينغ", "goal": 10, "reward": 70, "title": "البولينغ"},
 		"cinema": {"action": "watch", "action_label": "تأكيد مشاهدة العرض", "goal": 1, "reward": 15, "title": "جلسة السينما"},
 		"arcade": {"action": "hit", "action_label": "إصابة الهدف المضيء", "goal": 5, "reward": 45, "title": "الألعاب الإلكترونية"},
@@ -2511,6 +2511,8 @@ func start_facility_activity(facility_type: String) -> bool:
 		"frame_rolls": [],
 		"rolls": []
 	}
+	if facility_type == "sports_court":
+		active_facility_activity["opponent_score"] = 0
 	_set_status("%s بدأت. التقدم: 0/%d" % [str(definition["title"]), int(definition["goal"])])
 	return true
 
@@ -2550,7 +2552,7 @@ func perform_facility_activity(action: String) -> Dictionary:
 
 
 func _on_basketball_sensor_body_entered(body: Node3D) -> void:
-	if str(body.name).begins_with("Basketball_Active"):
+	if str(body.name).begins_with("Basketball_"):
 		body.set_meta("system_basketball_scored", true)
 
 
@@ -2656,11 +2658,11 @@ func _launch_basketball() -> Dictionary:
 	if current_facility_root.get_node_or_null("BasketballScoringSensor") == null:
 		return {"success": false, "reason": "حلقة التسجيل غير موجودة."}
 	facility_projectile_in_progress = true
-	var ball := RigidBody3D.new()
-	ball.name = "Basketball_Active"
-	ball.mass = 1.2
-	ball.continuous_cd = true
-	ball.set_meta("system_basketball_scored", false)
+	var player_ball := RigidBody3D.new()
+	player_ball.name = "Basketball_Active_Player"
+	player_ball.mass = 1.2
+	player_ball.continuous_cd = true
+	player_ball.set_meta("system_basketball_scored", false)
 	var ball_mesh := MeshInstance3D.new()
 	var sphere_mesh := SphereMesh.new()
 	sphere_mesh.radius = 0.27
@@ -2670,6 +2672,64 @@ func _launch_basketball() -> Dictionary:
 	ball_material.albedo_color = Color(0.9, 0.34, 0.08)
 	ball_material.roughness = 0.62
 	ball_mesh.material_override = ball_material
+	player_ball.add_child(ball_mesh)
+	var collision := CollisionShape3D.new()
+	var sphere_shape := SphereShape3D.new()
+	sphere_shape.radius = 0.27
+	collision.shape = sphere_shape
+	player_ball.add_child(collision)
+	current_facility_root.add_child(player_ball)
+	player_ball.position = Vector3(0.0, 1.4, 1.5)
+	var player_aim := facility_aim
+	player_ball.apply_central_impulse(Vector3(player_aim * 1.2, 7.2, -10.0))
+	_set_status("مباراة كرة السلة — تصويبتك انطلقت!")
+	await get_tree().create_timer(1.45).timeout
+	var player_scored := is_instance_valid(player_ball) and bool(player_ball.get_meta("system_basketball_scored", false))
+	if is_instance_valid(player_ball):
+		player_ball.queue_free()
+	var step := int(active_facility_activity.get("step", 0)) + 1
+	var player_score := int(active_facility_activity.get("score", 0)) + (2 if player_scored else 0)
+	active_facility_activity["score"] = player_score
+	var opponent_scored := await _launch_basketball_opponent_shot(step)
+	var opponent_score := int(active_facility_activity.get("opponent_score", 0)) + (2 if opponent_scored else 0)
+	active_facility_activity["opponent_score"] = opponent_score
+	active_facility_activity["step"] = step
+	facility_projectile_in_progress = false
+	var goal := int(active_facility_activity.get("goal", 10))
+	if step >= goal:
+		var match_result := "win" if player_score > opponent_score else ("draw" if player_score == opponent_score else "loss")
+		if match_result == "win":
+			active_facility_activity["reward"] = int(active_facility_activity.get("reward", 0)) + 25
+		elif match_result == "draw":
+			active_facility_activity["reward"] = int(active_facility_activity.get("reward", 0)) + 10
+		var result := _complete_facility_activity()
+		result["last_shot_scored"] = player_scored
+		result["last_opponent_shot_scored"] = opponent_scored
+		result["player_score"] = player_score
+		result["opponent_score"] = opponent_score
+		result["match_result"] = match_result
+		return result
+	_set_status("مباراة 1 ضد 1 — الجولة %d/%d | أنت %d : %d الخصم | %s" % [step, goal, player_score, opponent_score, "سجلت" if player_scored else "أضعت التصويبة"])
+	return {"success": true, "completed": false, "step": step, "scored": player_scored, "opponent_scored": opponent_scored, "player_score": player_score, "opponent_score": opponent_score}
+
+
+func _launch_basketball_opponent_shot(step: int) -> bool:
+	if current_facility_root == null or not is_instance_valid(current_facility_root):
+		return false
+	var ball := RigidBody3D.new()
+	ball.name = "Basketball_Opponent_Active"
+	ball.mass = 1.2
+	ball.continuous_cd = true
+	ball.set_meta("system_basketball_scored", false)
+	var ball_mesh := MeshInstance3D.new()
+	var sphere_mesh := SphereMesh.new()
+	sphere_mesh.radius = 0.27
+	sphere_mesh.height = 0.54
+	ball_mesh.mesh = sphere_mesh
+	var ball_material := StandardMaterial3D.new()
+	ball_material.albedo_color = Color(0.2, 0.48, 0.92)
+	ball_material.roughness = 0.62
+	ball_mesh.material_override = ball_material
 	ball.add_child(ball_mesh)
 	var collision := CollisionShape3D.new()
 	var sphere_shape := SphereShape3D.new()
@@ -2677,27 +2737,15 @@ func _launch_basketball() -> Dictionary:
 	collision.shape = sphere_shape
 	ball.add_child(collision)
 	current_facility_root.add_child(ball)
-	ball.position = Vector3(0.0, 1.4, 1.5)
-	var aim := facility_aim
-	ball.apply_central_impulse(Vector3(aim * 1.2, 7.2, -10.0))
-	_set_status("التصويبة انطلقت — حاول تمرير الكرة داخل الحلقة!")
+	ball.position = Vector3(3.8, 1.4, 5.6)
+	var opponent_aim := sin(float(step) * 1.35) * 0.32
+	ball.apply_central_impulse(Vector3(opponent_aim * 1.2, 7.2, -10.0))
+	_set_status("دور الخصم — اللاعب الآلي يسدد الآن...")
 	await get_tree().create_timer(1.45).timeout
 	var scored := is_instance_valid(ball) and bool(ball.get_meta("system_basketball_scored", false))
 	if is_instance_valid(ball):
 		ball.queue_free()
-	var step := int(active_facility_activity.get("step", 0)) + 1
-	var points := 2 if scored else 0
-	active_facility_activity["step"] = step
-	active_facility_activity["score"] = int(active_facility_activity.get("score", 0)) + points
-	facility_projectile_in_progress = false
-	var goal := int(active_facility_activity.get("goal", 5))
-	var score := int(active_facility_activity.get("score", 0))
-	if step >= goal:
-		var result := _complete_facility_activity()
-		result["last_shot_scored"] = scored
-		return result
-	_set_status(("سلة ناجحة! +2" if scored else "لم تدخل الكرة — حاول مرة ثانية.") + " المحاولة %d/%d | مجموع النقاط: %d" % [step, goal, score])
-	return {"success": true, "completed": false, "step": step, "scored": scored, "score": score}
+	return scored
 
 
 func _launch_bowling_ball() -> Dictionary:
