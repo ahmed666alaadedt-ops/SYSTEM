@@ -98,6 +98,15 @@ func _run_validation() -> void:
 					_expect(hall.get_node_or_null("TicketKioskVisual") != null, "cinema hall %02d has ticket kiosk visual" % hall_index)
 					_expect(hall.get_node_or_null("HallNumberSign") != null, "cinema hall %02d has hall numbering" % hall_index)
 
+	var entertainment := manager.get_node_or_null("EntertainmentTower")
+	var entertainment_facilities := entertainment.get_node_or_null("TowerFacilities_Blockout") if entertainment != null else null
+	_expect(entertainment_facilities != null, "Entertainment Tower facility layout exists")
+	if entertainment_facilities != null:
+		_expect(entertainment_facilities.get_node_or_null("ArcadeCabinetGallery_Blockout") != null, "arcade cabinet gallery exists")
+		_expect(entertainment_facilities.get_node_or_null("BowlingLaneGallery_Blockout") != null, "bowling lane gallery exists")
+		_expect(entertainment_facilities.get_node_or_null("VirtualRealityPodGallery_Blockout") != null, "VR pod gallery exists")
+		_expect(entertainment_facilities.get_node_or_null("ConcertHallStageAndSeating_Blockout") != null, "concert hall stage and seating exist")
+
 	var district := manager.get_node_or_null("FiveTowerConnectedDistrict")
 	_expect(district != null, "connected five-tower district exists")
 	if district != null:
