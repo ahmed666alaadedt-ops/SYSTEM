@@ -973,3 +973,14 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Godot 4.3 workflow run 45006710400 passed on exact advertising-screen checkpoint commit `6440c249a29470028c8ad02f3cb97fb563f406ce`: resource import/script parsing, all configured gameplay validators including Baghdad tower integration, missing-mesh scan, and headless main-scene launch succeeded.
 - [ ] Inspect screen scale, text orientation, visibility, lighting and mobile performance in the live scene and on Android.
 - Note: this pass creates the physical display assets and placeholder content only. Live advertising, campaign scheduling, moderation, consent, analytics and provider integration remain disabled until designed and secured.
+
+
+## Baghdad towers — animated express elevator and emergency stairwells — 22 November 2026
+
+- [x] Add a collision-backed elevator cabin to each of the five connected tower lobbies, with paired sliding door panels and a floor indicator.
+- [x] Add a timed lift-travel animation and door-open/door-close cycle before the player enters the selected procedural floor environment.
+- [x] Add collision-backed emergency stair steps and intermediate landings connecting the lobby through the first four upper-floor blockouts (80 steps per tower).
+- [x] Extend the main floor-entry flow and tower validator to exercise the animated elevator and verify emergency stair geometry.
+- [ ] Run Godot 4.3 parsing, the complete configured validator suite, and headless main-scene startup on the exact elevator/stairwell commit.
+- [ ] Inspect elevator timing, cabin clearance, stair traversal, railings and Android frame-time in the live scene.
+- Note: the animated express lift travels through the visible 72 m shaft for floors 1–5; higher floors use the same express-travel presentation before loading their procedural floor environment. Stair geometry currently connects the lobby and four upper-floor blockouts; full 200-floor emergency stair cores remain future work.
