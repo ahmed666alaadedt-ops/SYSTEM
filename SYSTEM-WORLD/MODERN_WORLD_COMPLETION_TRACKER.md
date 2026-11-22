@@ -984,3 +984,13 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Godot 4.3 workflow run `45007184990` passed on exact elevator/stairwell commit `f7f9b63925778cadcecd9a9d3c65536ba6ce291a`: resource import/script parsing, all configured validators including animated elevator travel and tower integration, missing-mesh scan, and headless main-scene launch succeeded.
 - [ ] Inspect elevator timing, cabin clearance, stair traversal, railings and Android frame-time in the live scene.
 - Note: the animated express lift travels through the visible 72 m shaft for floors 1–5; higher floors use the same express-travel presentation before loading their procedural floor environment. Stair geometry currently connects the lobby and four upper-floor blockouts; full 200-floor emergency stair cores remain future work.
+
+
+## Baghdad tower facade glazing and skyline accents — 22 November 2026
+
+- [x] Add batched glass facade panels and metallic frames around all four tower faces, repeated by the tower's configured floor count.
+- [x] Use each tower's identity color for low-intensity emissive glazing and a dedicated non-shadowing facade accent light.
+- [x] Store facade instance counts and extend the tower validator to verify glass/frame coverage across every configured floor.
+- [ ] Run Godot 4.3 parsing, full tower/gameplay validators, null-mesh scan and headless main-scene launch on the exact facade commit.
+- [ ] Review the glass placement against the exterior shell and billboard positions in a live camera view; tune reflections, nighttime visibility and Android performance.
+- Note: this is a batched procedural facade-detail pass; final authored materials, true transparent window interiors, interior room lighting and skyline art direction remain open.
