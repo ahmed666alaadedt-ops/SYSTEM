@@ -90,6 +90,17 @@ func _run() -> void:
 	if power_manager == null:
 		_fail("Power Tower progression manager is missing.")
 		return
+	for floor_number in range(1, 201):
+		var floor_data: Dictionary = power_manager.call("get_floor_data", floor_number)
+		if int(floor_data.get("floor", 0)) != floor_number or int(floor_data.get("required_level", 999)) > 100:
+			_fail("Power Tower floor data or level gate is invalid at floor %d." % floor_number)
+			return
+		if bool(floor_data.get("boss_floor", false)) != (floor_number % 10 == 0):
+			_fail("Power Tower boss cadence is incorrect at floor %d." % floor_number)
+			return
+		if int(floor_data.get("opponent_count", 0)) < 1 or int(floor_data.get("wave_count", 0)) < 1 or int(floor_data.get("reward_xp", 0)) <= 0:
+			_fail("Power Tower challenge data is incomplete at floor %d." % floor_number)
+			return
 	var boss_data: Dictionary = power_manager.call("get_floor_data", 200)
 	if not bool(boss_data.get("boss_floor", false)) or str(boss_data.get("arena_type", "")) != "BOSS_TRIAL":
 		_fail("Power Tower floor 200 is not configured as a boss trial.")
@@ -185,7 +196,7 @@ func _run() -> void:
 		_fail("Nen acquisition/control elixirs did not update the player's Nen state.")
 		return
 	var health_manager: Node = main.get("player_combat_health") as Node
-	health_manager.call("receive_damage", 150.0)
+	health_manager.call("receive_damage", 150.0, null)
 	progression.call("add_item", "healing_elixir", 1)
 	var healing_result: Dictionary = progression.call("consume_elixir", "healing_elixir")
 	if not bool(healing_result.get("success", false)) or not bool(health_manager.get("is_wounded")) or float(health_manager.get("current_health")) <= 30.0:
