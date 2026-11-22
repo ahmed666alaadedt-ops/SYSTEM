@@ -23,6 +23,7 @@ var load_radius := 1
 var terrain_manager: Node
 var loaded_cells: Dictionary = {}
 var desired_cells: Dictionary = {}
+var pinned_cells: Dictionary = {}
 var pending_loads: Array[Vector2i] = []
 var pending_unloads: Array[Vector2i] = []
 var enabled := false
@@ -194,6 +195,7 @@ func _ready() -> void:
 	_add_attribution_overlay()
 	source_snapshot = str(parsed.get("source_snapshot", ""))
 	canonical_origin_frame_valid = true
+	_build_pinned_republic_bridge_cells(republic_bridge_route)
 	enabled = true
 	print("SYSTEM Baghdad OSM: metric cell pack ready; cell size ", cell_size, " m.")
 
@@ -266,6 +268,52 @@ func _create_materials() -> void:
 	amenity_material.emission_energy_multiplier = 0.45
 
 
+func _build_pinned_republic_bridge_cells(route: Dictionary) -> void:
+	pinned_cells.clear()
+	var target_value: Variant = route.get("tower_anchor_local_m", [])
+	var bank_values: Variant = route.get("bank_access_points_local_m", [])
+	var centerline_value: Variant = route.get("centerline_local_m", [])
+	var skyway_start_value: Variant = route.get("express_skyway_start_local_m", [])
+	var support_values: Variant = route.get("express_skyway_support_points_local_m", [])
+	if not target_value is Array or not bank_values is Array or not centerline_value is Array or not skyway_start_value is Array or not support_values is Array:
+		return
+	if target_value.size() != 2 or bank_values.size() != 2 or skyway_start_value.size() != 2:
+		return
+	_pin_osm_point_neighborhood(Vector2(float(target_value[0]), float(target_value[1])), 1)
+	_pin_osm_point_neighborhood(Vector2(float(skyway_start_value[0]), float(skyway_start_value[1])), 1)
+	for bank_value in bank_values:
+		if bank_value is Array and bank_value.size() == 2:
+			_pin_osm_point_neighborhood(Vector2(float(bank_value[0]), float(bank_value[1])), 1)
+	var previous_point := Vector2.ZERO
+	var has_previous := false
+	for point_value in centerline_value:
+		if not point_value is Array or point_value.size() != 2:
+			continue
+		var point := Vector2(float(point_value[0]), float(point_value[1]))
+		_pin_osm_point_neighborhood(point, 1)
+		if has_previous:
+			var segment_length := previous_point.distance_to(point)
+			var sample_count := maxi(1, int(ceil(segment_length / maxf(cell_size * 0.5, 50.0))))
+			for sample_index in range(sample_count + 1):
+				var sample_point := previous_point.lerp(point, float(sample_index) / float(sample_count))
+				_pin_osm_point_neighborhood(sample_point, 1)
+		previous_point = point
+		has_previous = true
+	for support_value in support_values:
+		if support_value is Array and support_value.size() == 2:
+			_pin_osm_point_neighborhood(Vector2(float(support_value[0]), float(support_value[1])), 0)
+
+
+func _pin_osm_point_neighborhood(point: Vector2, radius_cells: int) -> void:
+	var center := Vector2i(floori(point.x / cell_size), floori(point.y / cell_size))
+	for dz in range(-radius_cells, radius_cells + 1):
+		for dx in range(-radius_cells, radius_cells + 1):
+			var cell := Vector2i(center.x + dx, center.y + dz)
+			if cell.x < min_cell_x or cell.x > max_cell_x or cell.y < min_cell_z or cell.y > max_cell_z:
+				continue
+			pinned_cells[cell] = true
+
+
 func _refresh_desired_cells(center: Vector2i) -> void:
 	desired_cells.clear()
 	pending_loads.clear()
@@ -273,6 +321,12 @@ func _refresh_desired_cells(center: Vector2i) -> void:
 	for z in range(maxi(min_cell_z, center.y - load_radius), mini(max_cell_z, center.y + load_radius) + 1):
 		for x in range(maxi(min_cell_x, center.x - load_radius), mini(max_cell_x, center.x + load_radius) + 1):
 			var cell := Vector2i(x, z)
+			desired_cells[cell] = true
+			if not loaded_cells.has(cell):
+				pending_loads.append(cell)
+	for key in pinned_cells.keys():
+		var cell: Vector2i = key
+		if not desired_cells.has(cell):
 			desired_cells[cell] = true
 			if not loaded_cells.has(cell):
 				pending_loads.append(cell)
