@@ -110,6 +110,12 @@ func _run() -> void:
 		if int(floor_data.get("opponent_count", 0)) < 1 or int(floor_data.get("wave_count", 0)) < 1 or int(floor_data.get("reward_xp", 0)) <= 0:
 			_fail("Power Tower challenge data is incomplete at floor %d." % floor_number)
 			return
+	var power_tower := tower_manager.get_node_or_null("PowerTower") as Node3D
+	var power_lobby := power_tower.get_node_or_null("PublicLobby_Blockout") as Node3D
+	var progress_board := power_lobby.get_node_or_null("PowerTowerProgressBoard") as Label3D
+	if progress_board == null or not progress_board.text.contains("200"):
+		_fail("Power Tower lobby progress board is missing the 200-floor completion target.")
+		return
 	var boss_data: Dictionary = power_manager.call("get_floor_data", 200)
 	if not bool(boss_data.get("boss_floor", false)) or str(boss_data.get("arena_type", "")) != "BOSS_TRIAL":
 		_fail("Power Tower floor 200 is not configured as a boss trial.")
