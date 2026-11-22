@@ -628,7 +628,7 @@ func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) 
 	room.set_meta("system_power_tower_rules", rules)
 	var arena_label := Label3D.new()
 	arena_label.name = "ArenaChallengeDisplay"
-	arena_label.text = "%s\\nالطابق %d\\n%s" % [str(data.get("arena_name", "POWER ARENA")), floor_number, rules]
+	arena_label.text = "%s\nالطابق %d\n%s" % [str(data.get("arena_name", "POWER ARENA")), floor_number, rules]
 	arena_label.position = Vector3(0.0, 5.4, -radius * 0.48)
 	arena_label.font_size = 22
 	arena_label.pixel_size = 0.014
@@ -638,7 +638,7 @@ func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) 
 	match arena_type:
 		"TEAM":
 			obstacle_count = 6
-		" SURVIVAL":
+		"SURVIVAL":
 			obstacle_count = 8
 		"ELITE":
 			obstacle_count = 5
