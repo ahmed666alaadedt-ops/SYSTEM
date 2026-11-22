@@ -348,6 +348,7 @@ func _create_visible_staff(tower_id: String, npc_id: String, index: int, config:
 		"power_tower_baghdad": uniform_id = "power_staff"
 	if model.has_method("set_outfit"):
 		model.call("set_outfit", uniform_id, index)
+	model.set_meta("system_uniform_id", uniform_id)
 	model.scale = Vector3.ONE * 0.78
 	employee.add_child(model)
 	var name_label := Label3D.new()
@@ -469,7 +470,7 @@ func _simulate_customer_purchases() -> void:
 		var affordable: Array[Dictionary] = []
 		for product_value in catalog:
 			var product: Dictionary = product_value
-			if not str(product.get("required_rank", "F")) in ["F", "E"]:
+			if str(product.get("required_rank", "F")) not in ["F", "E"]:
 				continue
 			var item_id := str(product.get("id", ""))
 			var price := _get_current_price(item_id)
@@ -1655,6 +1656,185 @@ func _create_floor_facilities(room: Node3D, tower_id: String, floor_number: int,
 	room.set_meta("system_tower_id", tower_id)
 	room.set_meta("system_tower_floor_number", floor_number)
 	room.set_meta("system_tower_department", department)
+	_create_specialized_floor_facility(room, tower_id, floor_number, radius, department)
+
+
+func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_number: int, radius: float, department: String) -> void:
+	var facility_type := ""
+	var facility_title := ""
+	match tower_id:
+		"entertainment_tower_baghdad":
+			if floor_number in [18, 19, 20]:
+				facility_type = "swimming_pool"
+				facility_title = "مسبح SYSTEM — مسبح رئيسي ومنطقة استرخاء"
+			elif floor_number == 21:
+				facility_type = "fitness_gym"
+				facility_title = "نادي اللياقة والأجهزة الرياضية"
+			elif floor_number == 22:
+				facility_type = "sports_court"
+				facility_title = "ملعب كرة السلة والأنشطة الجماعية"
+			elif floor_number == 23:
+				facility_type = "bowling"
+				facility_title = "صالة البولينغ والألعاب"
+			elif floor_number == 24:
+				facility_type = "cinema"
+				facility_title = "سينما SYSTEM"
+			elif floor_number == 25:
+				facility_type = "arcade"
+				facility_title = "مركز الألعاب الإلكترونية"
+			elif floor_number == 26:
+				facility_type = "family_zone"
+				facility_title = "منطقة العائلات والأطفال"
+			elif floor_number in [33, 34]:
+				facility_type = "rooftop_leisure"
+				facility_title = "حديقة السطح والمطاعم المفتوحة"
+		"business_investment_tower_baghdad":
+			if floor_number == 8:
+				facility_type = "stock_exchange"
+				facility_title = "قاعة التداول والبورصة"
+			elif floor_number == 16:
+				facility_type = "conference_center"
+				facility_title = "مركز المؤتمرات والاجتماعات"
+			elif floor_number == 24:
+				facility_type = "business_lounge"
+				facility_title = "نادي رجال الأعمال وصالة المستثمرين"
+		"technology_tower_baghdad":
+			if floor_number == 10:
+				facility_type = "robotics_lab"
+				facility_title = "مختبر الروبوتات"
+			elif floor_number == 20:
+				facility_type = "ai_lab"
+				facility_title = "مختبر الذكاء الاصطناعي"
+			elif floor_number == 30:
+				facility_type = "vr_lab"
+				facility_title = "مختبر الواقع الافتراضي والمحاكاة"
+			elif floor_number == 40:
+				facility_type = "innovation_rooftop"
+				facility_title = "منصة الابتكار والرصد التقني"
+		"hunter_association_tower_baghdad":
+			if floor_number in [4, 5, 6]:
+				facility_type = "hunter_training"
+				facility_title = "قاعة تدريب الصيادين"
+			elif floor_number == 12:
+				facility_type = "guild_lounge"
+				facility_title = "صالة النقابات واجتماعات الصيادين"
+			elif floor_number == 30:
+				facility_type = "hunter_library"
+				facility_title = "مكتبة وأرشيف الصيادين"
+			elif floor_number == 100:
+				facility_type = "hunter_hall_of_honor"
+				facility_title = "قاعة الشرف العالمية"
+	if facility_type.is_empty():
+		return
+	var root := Node3D.new()
+	root.name = "SpecialFacility_" + facility_type
+	root.set_meta("system_facility_type", facility_type)
+	root.set_meta("system_facility_title", facility_title)
+	room.add_child(root)
+	var accent := StandardMaterial3D.new()
+	accent.albedo_color = Color(0.10, 0.52, 0.68) if tower_id == "technology_tower_baghdad" else Color(0.12, 0.42, 0.34)
+	accent.metallic = 0.38
+	accent.roughness = 0.3
+	var highlight := StandardMaterial3D.new()
+	highlight.albedo_color = Color(0.16, 0.72, 0.90, 0.72)
+	highlight.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	highlight.metallic = 0.2
+	highlight.roughness = 0.2
+	var title := Label3D.new()
+	title.name = "FacilityTitle"
+	title.text = facility_title
+	title.position = Vector3(0.0, 5.0, -radius * 0.42)
+	title.font_size = 23
+	title.pixel_size = 0.013
+	title.modulate = Color(0.92, 0.82, 0.55)
+	root.add_child(title)
+	match facility_type:
+		"swimming_pool":
+			_add_facility_box(root, "PoolRim", Vector3(0.0, 0.65, 0.0), Vector3(23.0, 1.3, 15.0), accent)
+			_add_facility_box(root, "PoolWater", Vector3(0.0, 1.12, 0.0), Vector3(20.8, 0.12, 12.8), highlight)
+			_add_facility_box(root, "PoolDeckLeft", Vector3(-14.0, 0.3, 0.0), Vector3(4.0, 0.6, 18.0), accent)
+			_add_facility_box(root, "PoolDeckRight", Vector3(14.0, 0.3, 0.0), Vector3(4.0, 0.6, 18.0), accent)
+			for index in range(4):
+				_add_facility_box(root, "SunLounger_%02d" % index, Vector3(-13.0 + float(index) * 2.0, 0.8, 11.0), Vector3(1.5, 0.35, 3.0), highlight)
+		"fitness_gym":
+			for index in range(5):
+				_add_facility_box(root, "GymMachine_%02d" % index, Vector3(-12.0 + float(index) * 6.0, 1.2, 0.0), Vector3(2.0, 2.4, 2.0), accent)
+		"sports_court":
+			_add_facility_box(root, "CourtSurface", Vector3(0.0, 0.12, 0.0), Vector3(24.0, 0.2, 15.0), accent)
+			for side in [-1.0, 1.0]:
+				_add_facility_box(root, "CourtHoop_%s" % str(side), Vector3(side * 10.0, 3.0, 0.0), Vector3(0.25, 5.0, 0.25), highlight)
+		"bowling":
+			for index in range(3):
+				_add_facility_box(root, "BowlingLane_%02d" % index, Vector3(-7.0 + float(index) * 7.0, 0.15, -1.0), Vector3(5.0, 0.25, 14.0), accent)
+		"cinema":
+			_add_facility_box(root, "CinemaScreen", Vector3(0.0, 3.0, -10.0), Vector3(20.0, 6.0, 0.35), highlight)
+			for row in range(3):
+				for seat in range(6):
+					_add_facility_box(root, "CinemaSeat_%02d_%02d" % [row, seat], Vector3(-9.0 + float(seat) * 3.6, 0.65, 1.0 + float(row) * 3.0), Vector3(1.4, 1.3, 1.2), accent)
+		"arcade":
+			for index in range(6):
+				_add_facility_box(root, "ArcadeCabinet_%02d" % index, Vector3(-12.0 + float(index) * 4.8, 1.4, -2.0), Vector3(2.0, 2.8, 1.4), highlight)
+		"family_zone":
+			for index in range(4):
+				_add_facility_box(root, "FamilyPlayUnit_%02d" % index, Vector3(-9.0 + float(index) * 6.0, 1.0, 1.0), Vector3(3.2, 2.0, 3.2), accent)
+		"rooftop_leisure":
+			for index in range(6):
+				_add_facility_box(root, "RooftopPlanter_%02d" % index, Vector3(-13.0 + float(index) * 5.2, 0.7, 7.0), Vector3(2.6, 1.4, 2.6), accent)
+		"stock_exchange":
+			_add_facility_box(root, "TradingDisplay", Vector3(0.0, 3.0, -8.0), Vector3(18.0, 5.0, 0.3), highlight)
+			for index in range(5):
+				_add_facility_box(root, "TradingDesk_%02d" % index, Vector3(-12.0 + float(index) * 6.0, 0.8, 1.0), Vector3(3.0, 1.6, 2.0), accent)
+		"conference_center":
+			for index in range(6):
+				_add_facility_box(root, "ConferenceTable_%02d" % index, Vector3(-10.0 + float(index % 3) * 10.0, 0.8, -3.0 + float(index / 3) * 7.0), Vector3(5.0, 1.4, 2.4), accent)
+		"business_lounge":
+			for index in range(4):
+				_add_facility_box(root, "LoungeSeat_%02d" % index, Vector3(-9.0 + float(index) * 6.0, 0.65, 1.0), Vector3(3.0, 1.3, 1.2), accent)
+		"robotics_lab", "ai_lab", "vr_lab":
+			for index in range(5):
+				_add_facility_box(root, "TechnologyPod_%02d" % index, Vector3(-12.0 + float(index) * 6.0, 1.2, 0.0), Vector3(2.4, 2.4, 2.4), highlight if index % 2 == 0 else accent)
+		"innovation_rooftop":
+			for index in range(5):
+				_add_facility_box(root, "InnovationConsole_%02d" % index, Vector3(-12.0 + float(index) * 6.0, 1.0, 1.0), Vector3(2.4, 2.0, 1.8), highlight)
+		"hunter_training":
+			for index in range(5):
+				_add_facility_box(root, "HunterTrainingTarget_%02d" % index, Vector3(-12.0 + float(index) * 6.0, 2.0, -1.0), Vector3(1.5, 4.0, 1.5), accent)
+		"guild_lounge":
+			for index in range(4):
+				_add_facility_box(root, "GuildTable_%02d" % index, Vector3(-9.0 + float(index) * 6.0, 0.8, 1.0), Vector3(3.0, 1.4, 2.0), accent)
+		"hunter_library":
+			for index in range(5):
+				_add_facility_box(root, "ArchiveShelf_%02d" % index, Vector3(-12.0 + float(index) * 6.0, 1.6, 0.0), Vector3(2.4, 3.2, 0.8), accent)
+		"hunter_hall_of_honor":
+			for index in range(6):
+				_add_facility_box(root, "HonorPillar_%02d" % index, Vector3(-15.0 + float(index) * 6.0, 2.5, 0.0), Vector3(1.2, 5.0, 1.2), highlight)
+	var interaction := Area3D.new()
+	interaction.name = "FacilityServiceInteraction"
+	interaction.add_to_group("system_interactable")
+	interaction.set_meta("system_tower_id", tower_id)
+	interaction.set_meta("system_tower_floor_number", floor_number)
+	interaction.set_meta("system_facility_type", facility_type)
+	interaction.set_meta("system_interaction_prompt", facility_title + " — اضغط للتعامل")
+	interaction.collision_layer = 1
+	interaction.collision_mask = 0
+	var shape := CollisionShape3D.new()
+	var sphere := SphereShape3D.new()
+	sphere.radius = 3.0
+	shape.shape = sphere
+	shape.position = Vector3(0.0, 1.2, 0.0)
+	interaction.add_child(shape)
+	root.add_child(interaction)
+
+
+func _add_facility_box(parent: Node3D, object_name: String, object_position: Vector3, object_size: Vector3, material: Material) -> void:
+	var visual := MeshInstance3D.new()
+	visual.name = object_name
+	var mesh := BoxMesh.new()
+	mesh.size = object_size
+	visual.mesh = mesh
+	visual.position = object_position
+	visual.material_override = material
+	parent.add_child(visual)
 
 
 func _create_hotel_facilities(room: Node3D, radius: float, floor_number: int, hospitality_staff_id: String) -> void:
