@@ -137,8 +137,9 @@ A checked repository foundation does not mean a finished gameplay feature. Visua
 - Note: collision-backed decks and parking slabs are source-level additions; no runtime or driving test was run in this update. Lift shafts and parking bay markings remain visual blockout, not interactive systems.
 
 ## Connected Baghdad district — vehicles and public life — 20 November 2026
-- [x] Record the five distinct tower identities as one connected district: Power, Hunter Association, Business, Shopping, and Entertainment.
-- [x] Add an initial procedural five-tower blockout with elevated promenade/vehicle-deck link geometry and ramp-segment placeholders.
+- [x] Record the five connected district identities: Hunter Association, Business and Investment, Shopping and Commerce, Entertainment and Sports, and Technology and Innovation; keep Power Tower separate.
+- [x] Expand the separate Power Tower progression model to 200 floors; playable interiors, opponent encounters, and server-verified records remain open.
+- [x] Add an initial procedural five-tower district blockout with elevated promenade/vehicle-deck link geometry and ramp-segment placeholders; add the separate Power Tower landmark outside that connection loop.
 - [x] Add placeholder public amenity deck geometry and a planned facility inventory for recreation, hospitality, shopping, health support, parking, and emergency access.
 - [ ] Implement validated drivable ramp paths, vehicle physics, lane widths, slope limits, collision barriers, traffic rules, and safe merges from Baghdad streets.
 - [ ] Implement parking garages, vehicle elevators/ramps, drop-off points, pedestrian crossings, and service/emergency circulation.
