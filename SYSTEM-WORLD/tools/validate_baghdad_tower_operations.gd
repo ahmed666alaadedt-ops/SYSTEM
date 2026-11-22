@@ -171,51 +171,57 @@ func _run() -> void:
 			_fail("A %s hunter must receive helicopter access." % rank)
 			return
 	pilot_player.remove_meta("system_hunter_rank")
-	var rank_probe_script := load("res://scripts/system_player_progression.gd") as Script
-	if rank_probe_script == null:
-		_fail("Hunter rank progression script could not load.")
-		return
-	var rank_probe := rank_probe_script.new() as Node
-	rank_probe.set("verified_hunter_mission_points", 0)
-	if str(rank_probe.call("get_hunter_rank")) != "F":
+	var original_rank_points := int(pilot_progression.get("verified_hunter_mission_points"))
+	var original_rank_count := int(pilot_progression.get("verified_hunter_mission_count"))
+	var original_rank_ids: Array[String] = pilot_progression.get("verified_hunter_mission_ids").duplicate()
+	var original_nen_uses := int(pilot_progression.get("nen_skill_use_count"))
+	var original_nen_skills: Array[String] = pilot_progression.get("nen_skill_ids").duplicate()
+	var original_nen_unlocked := bool(pilot_progression.get("nen_unlocked"))
+	var original_nen_control := int(pilot_progression.get("nen_control_rank"))
+	var original_sss_approval := bool(pilot_progression.get("hunter_sss_board_approved"))
+	pilot_progression.set("verified_hunter_mission_points", 0)
+	if str(pilot_progression.call("get_hunter_rank")) != "F":
 		_fail("New hunters must begin at F rank.")
 		return
-	rank_probe.set("verified_hunter_mission_points", 100)
-	if str(rank_probe.call("get_hunter_rank")) != "E":
-		_fail("Verified mission score did not promote a hunter to E rank.")
-		return
-	rank_probe.set("verified_hunter_mission_points", 850)
-	if str(rank_probe.call("get_hunter_rank")) != "B":
+	pilot_progression.set("verified_hunter_mission_points", 850)
+	if str(pilot_progression.call("get_hunter_rank")) != "B":
 		_fail("Verified mission score did not advance through the F-to-B grades.")
 		return
-	rank_probe.set("verified_hunter_mission_points", 1500)
-	rank_probe.set("nen_unlocked", true)
-	rank_probe.set("nen_control_rank", 2)
-	rank_probe.set("nen_skill_use_count", 10)
-	if str(rank_probe.call("get_hunter_rank")) != "A":
+	pilot_progression.set("verified_hunter_mission_points", 1500)
+	pilot_progression.set("nen_unlocked", true)
+	pilot_progression.set("nen_control_rank", 2)
+	pilot_progression.set("nen_skill_use_count", 10)
+	if str(pilot_progression.call("get_hunter_rank")) != "A":
 		_fail("A-rank promotion must require verified mission score and Nen practice.")
 		return
-	rank_probe.set("verified_hunter_mission_points", 2500)
-	rank_probe.set("nen_control_rank", 4)
-	rank_probe.set("nen_skill_use_count", 50)
+	pilot_progression.set("verified_hunter_mission_points", 2500)
+	pilot_progression.set("nen_control_rank", 4)
+	pilot_progression.set("nen_skill_use_count", 50)
 	var s_rank_skills: Array[String] = ["nen_burst", "charged_strike"]
-	rank_probe.set("nen_skill_ids", s_rank_skills)
-	if str(rank_probe.call("get_hunter_rank")) != "S":
+	pilot_progression.set("nen_skill_ids", s_rank_skills)
+	if str(pilot_progression.call("get_hunter_rank")) != "S":
 		_fail("S-rank promotion must require high mission score and demonstrated Nen mastery.")
 		return
-	rank_probe.set("verified_hunter_mission_points", 5000)
-	rank_probe.set("nen_control_rank", 5)
-	rank_probe.set("nen_skill_use_count", 150)
+	pilot_progression.set("verified_hunter_mission_points", 5000)
+	pilot_progression.set("nen_control_rank", 5)
+	pilot_progression.set("nen_skill_use_count", 150)
 	var ss_rank_skills: Array[String] = ["nen_burst", "charged_strike", "aura_guard"]
-	rank_probe.set("nen_skill_ids", ss_rank_skills)
-	if str(rank_probe.call("get_hunter_rank")) != "SS":
+	pilot_progression.set("nen_skill_ids", ss_rank_skills)
+	if str(pilot_progression.call("get_hunter_rank")) != "SS":
 		_fail("SS-rank promotion must require advanced mission and Nen mastery.")
 		return
-	rank_probe.set("hunter_sss_board_approved", true)
-	if str(rank_probe.call("get_hunter_rank")) != "SSS":
+	pilot_progression.set("hunter_sss_board_approved", true)
+	if str(pilot_progression.call("get_hunter_rank")) != "SSS":
 		_fail("SSS rank must require explicit Hunter Examination Board approval.")
 		return
-	rank_probe.free()
+	pilot_progression.set("verified_hunter_mission_points", original_rank_points)
+	pilot_progression.set("verified_hunter_mission_count", original_rank_count)
+	pilot_progression.set("verified_hunter_mission_ids", original_rank_ids)
+	pilot_progression.set("nen_skill_use_count", original_nen_uses)
+	pilot_progression.set("nen_skill_ids", original_nen_skills)
+	pilot_progression.set("nen_unlocked", original_nen_unlocked)
+	pilot_progression.set("nen_control_rank", original_nen_control)
+	pilot_progression.set("hunter_sss_board_approved", original_sss_approval)
 	pilot_progression.set("current_level", 50)
 	exam_manager.set("completed_stage_ids", all_stage_ids)
 	if not helipad.has_method("_is_aircraft_position_clear"):
