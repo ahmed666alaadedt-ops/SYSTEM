@@ -107,7 +107,21 @@ func abandon_active_floor() -> void:
 	active_floor = 0
 
 func get_tower_status() -> Dictionary:
-	return {"highest_cleared_floor": highest_cleared_floor, "active_floor": active_floor, "max_floors": MAX_FLOORS, "next_floor": 0 if highest_cleared_floor >= MAX_FLOORS else highest_cleared_floor + 1}
+	var best_clear_time := 0.0
+	for clear_time in floor_clear_times.values():
+		var value := float(clear_time)
+		if best_clear_time <= 0.0 or value < best_clear_time:
+			best_clear_time = value
+	var highest_floor_time := float(floor_clear_times.get(str(highest_cleared_floor), 0.0))
+	return {
+		"highest_cleared_floor": highest_cleared_floor,
+		"active_floor": active_floor,
+		"max_floors": MAX_FLOORS,
+		"next_floor": 0 if highest_cleared_floor >= MAX_FLOORS else highest_cleared_floor + 1,
+		"highest_rank": _rank_for_floor(highest_cleared_floor) if highest_cleared_floor > 0 else "-",
+		"best_clear_time": best_clear_time,
+		"highest_floor_clear_time": highest_floor_time
+	}
 
 func _rank_for_floor(floor_number: int) -> String:
 	if floor_number >= 180: return "S"
