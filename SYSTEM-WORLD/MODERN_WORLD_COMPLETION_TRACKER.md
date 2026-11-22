@@ -1,3 +1,13 @@
+## SYSTEM cinema original three-scene program — 22 November 2026
+
+- [x] Replace the cinema's single generic attendance confirmation with a three-scene in-game viewing sequence using original SYSTEM story cards: "نداء بغداد", "أسرار برج النور", and "رحلة الصياد الأول".
+- [x] Generate an emissive cinema screen and a visible 3D program title; advance the displayed scene and screen glow as the player progresses through the three viewing steps.
+- [x] Award the activity score/reward only after all three scenes have been viewed; retain the existing local activity-stat persistence.
+- [x] Extend the Baghdad tower operations validator to require the cinema screen/title nodes and verify all three displayed scene numbers in sequence.
+- [x] Godot 4.3 full validation #1428 passed (run `45067209969`) on exact gameplay/validator HEAD `b6b8fabaacc89dc3a65ce8347a69832811f70c7d`; script import/parser, main-scene launch, tower landmark checks and the complete tower operations validator all passed.
+- [x] Android export #1165 passed (run `45067210032`) on the same exact HEAD. APK artifact `14771728504`, 35,906,678 bytes, SHA-256 `b1a16cc656bc4127bfa17f3fd470bd20add6a439de567a1d961120f22c06cca0`; expires 6 December 2026.
+- [ ] Physical Android visual/touch inspection remains outstanding. This milestone is an original three-scene in-game program display, not licensed film playback or a full cinema media player; actual film programming/playback remains open.
+
 ## Baghdad sports gameplay physics — 22 November 2026
 
 ## Authoritative status and supersession note — 22 November 2026
