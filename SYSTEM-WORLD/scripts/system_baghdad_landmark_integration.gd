@@ -13,8 +13,10 @@ var terrain: Node
 var map_manager: Node
 var _registered := false
 var _hunter_exam_tunnel_root: Node3D
+var _hunter_exam_stage_one_root: Node3D
 var _sites: Array[Dictionary] = [
 	{"id":"hunter_exam_tunnel_start_baghdad","name":"نفق اختبار الصيادين","kind":"tunnel","offset":Vector2(0.0,245.0),"size":Vector3(42.0,12.0,28.0),"color":Color(0.10,0.19,0.27),"prompt":"دخول نفق اختبار الصيادين"},
+	{"id":"hunter_exam_stage_one_course_baghdad","name":"مسار المطاردة والتحمل","kind":"exam_stage_one","offset":Vector2(0.0,380.0),"size":Vector3(120.0,8.0,180.0),"color":Color(0.12,0.28,0.19),"prompt":"بدء مسار المرحلة الأولى"},
 	{"id":"hunter_exam_public_notice_baghdad","name":"إعلان اختبار الصيادين العام","kind":"advertising","offset":Vector2(0.0,90.0),"size":Vector3(32.0,20.0,10.0),"color":Color(0.08,0.35,0.48),"prompt":"عرض إعلان اختبار الصيادين ومراحله"},
 	{"id":"baghdad_archaeological_ruins","name":"موقع الآثار التاريخية في بغداد","kind":"ruins","offset":Vector2(-115.0,-85.0),"size":Vector3(48.0,7.0,38.0),"color":Color(0.52,0.39,0.24),"prompt":"استكشاف موقع الآثار التاريخية"}
 ]
@@ -28,6 +30,8 @@ func build(p_terrain: Node) -> void:
 	_build_connected_roads()
 	for site in _sites:
 		_build_site(site)
+	if _hunter_exam_tunnel_root != null and _hunter_exam_stage_one_root != null:
+		_add_road_segment("HunterExamTunnelToStageOneRoad", Vector2(0.0,259.0), Vector2(0.0,305.0))
 	set_meta("baghdad_landmarks_integrated", true)
 
 func register_map_locations(p_map_manager: Node, world_id: String = WORLD_ID) -> void:
@@ -121,10 +125,13 @@ func _build_site(site: Dictionary) -> void:
 	add_child(root)
 	if kind == "tunnel":
 		_hunter_exam_tunnel_root = root
+	elif kind == "exam_stage_one":
+		_hunter_exam_stage_one_root = root
 	match kind:
 		"stadium": _build_stadium(root, site)
 		"motorsport": _build_motorsport(root, site)
 		"tunnel": _build_tunnel(root, site)
+		"exam_stage_one": _build_exam_stage_one(root, site)
 		"power_tower": _build_power_tower(root, site)
 		"advertising": _build_advertising(root, site)
 		"ruins": _build_ruins(root, site)
@@ -243,6 +250,132 @@ func set_hunter_exam_tunnel_access(enabled: bool) -> void:
 	barrier_shape.disabled = enabled
 	access_gate.set_meta("candidate_access_open",enabled)
 	_hunter_exam_tunnel_root.set_meta("candidate_access_enabled",enabled)
+
+
+func _build_exam_stage_one(root: Node3D, site: Dictionary) -> void:
+	var size: Vector3 = site["size"]
+	var ground_material := _material(Color(0.11,0.17,0.14),0.92,0.0)
+	var route_material := _material(Color(0.055,0.065,0.07),0.96,0.0)
+	var edge_material := _material(Color(0.86,0.62,0.22),0.42,0.5)
+	var frame_material := _material(Color(0.07,0.15,0.21),0.34,0.62)
+	_add_box(root,"StageOneCourseGround",Vector3(0.0,-0.35,0.0),Vector3(size.x,0.7,size.z),ground_material,true)
+	var route_points: Array[Vector2] = [
+		Vector2(0.0,-75.0),
+		Vector2(0.0,-25.0),
+		Vector2(35.0,10.0),
+		Vector2(0.0,45.0),
+		Vector2(-20.0,75.0)
+	]
+	for segment_index in range(1,route_points.size()):
+		_add_exam_course_segment(root,"StageOneRoute_%02d" % segment_index,route_points[segment_index-1],route_points[segment_index],10.0,route_material)
+		_add_exam_course_edge(root,"StageOneRouteEdge_%02d" % segment_index,route_points[segment_index-1],route_points[segment_index],5.8,edge_material)
+	_add_exam_stage_marker(root,"StageOneStartGate","بداية المرحلة الأولى",route_points[0],"hunter_exam_stage_one_start_baghdad","")
+	_add_exam_stage_marker(root,"StageOneCheckpoint_01","نقطة التتبع الأولى",route_points[1],"hunter_exam_stage_one_checkpoint_01_baghdad","checkpoint_01")
+	_add_exam_stage_marker(root,"StageOneCheckpoint_02","نقطة التتبع الثانية",route_points[2],"hunter_exam_stage_one_checkpoint_02_baghdad","checkpoint_02")
+	_add_exam_stage_marker(root,"StageOneCheckpoint_03","نقطة التتبع الثالثة",route_points[3],"hunter_exam_stage_one_checkpoint_03_baghdad","checkpoint_03")
+	_add_exam_stage_marker(root,"StageOneFinishGate","نهاية مسار التحمل",route_points[4],"hunter_exam_stage_one_finish_baghdad","")
+	_add_sign(root,"المرحلة الأولى — المطاردة والتحمل",Vector3(0.0,9.0,-size.z*0.5+4.0))
+	var safety_notice := Label3D.new()
+	safety_notice.name = "StageOneCivilianSafetyNotice"
+	safety_notice.text = "حافظ على سلامة المدنيين — تجنب المخالفات"
+	safety_notice.font_size = 22
+	safety_notice.position = Vector3(0.0,5.0,0.0)
+	safety_notice.pixel_size = 0.014
+	safety_notice.modulate = Color(0.92,0.82,0.58)
+	root.add_child(safety_notice)
+	root.set_meta("hunter_exam_stage_id","endurance_pursuit")
+	root.set_meta("hunter_exam_checkpoint_count",3)
+
+
+func _add_exam_course_segment(parent: Node3D, node_name: String, start: Vector2, finish: Vector2, width: float, material: Material) -> void:
+	var delta := finish - start
+	var length := delta.length()
+	if length < 1.0:
+		return
+	var midpoint := (start + finish) * 0.5
+	var angle := -atan2(delta.x,delta.y)
+	var mesh_node := MeshInstance3D.new()
+	mesh_node.name = node_name
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(width,0.24,length)
+	mesh_node.mesh = mesh
+	mesh_node.position = Vector3(midpoint.x,0.18,midpoint.y)
+	mesh_node.rotation.y = angle
+	mesh_node.material_override = material
+	parent.add_child(mesh_node)
+	var body := StaticBody3D.new()
+	body.name = node_name + "Collision"
+	body.position = mesh_node.position
+	body.rotation.y = angle
+	var collision := CollisionShape3D.new()
+	collision.name = "CollisionShape3D"
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(width,0.24,length)
+	collision.shape = shape
+	body.add_child(collision)
+	parent.add_child(body)
+
+
+func _add_exam_course_edge(parent: Node3D, node_name: String, start: Vector2, finish: Vector2, offset: float, material: Material) -> void:
+	var delta := finish - start
+	if delta.length() < 1.0:
+		return
+	var side := Vector2(delta.y,-delta.x).normalized() * offset
+	for side_index in [-1.0,1.0]:
+		var edge_start := start + side * side_index
+		var edge_finish := finish + side * side_index
+		var edge_delta := edge_finish - edge_start
+		var midpoint := (edge_start + edge_finish) * 0.5
+		var edge := MeshInstance3D.new()
+		edge.name = node_name + ("_Left" if side_index < 0.0 else "_Right")
+		var edge_mesh := BoxMesh.new()
+		edge_mesh.size = Vector3(0.35,0.18,edge_delta.length())
+		edge.mesh = edge_mesh
+		edge.position = Vector3(midpoint.x,0.36,midpoint.y)
+		edge.rotation.y = -atan2(edge_delta.x,edge_delta.y)
+		edge.material_override = material
+		parent.add_child(edge)
+
+
+func _add_exam_stage_marker(parent: Node3D, node_name: String, title: String, local_position: Vector2, location_id: String, checkpoint_id: String) -> void:
+	var marker_root := Node3D.new()
+	marker_root.name = node_name
+	marker_root.position = Vector3(local_position.x,0.0,local_position.y)
+	parent.add_child(marker_root)
+	var frame_material := _material(Color(0.07,0.15,0.21),0.34,0.62)
+	var accent_material := _material(Color(0.08,0.54,0.78),0.24,0.45)
+	accent_material.emission_enabled = true
+	accent_material.emission = Color(0.02,0.24,0.48)
+	_add_box(marker_root,"MarkerLeftPost",Vector3(-5.0,3.5,0.0),Vector3(0.9,7.0,0.9),frame_material,true)
+	_add_box(marker_root,"MarkerRightPost",Vector3(5.0,3.5,0.0),Vector3(0.9,7.0,0.9),frame_material,true)
+	_add_box(marker_root,"MarkerHeader",Vector3(0.0,7.2,0.0),Vector3(10.8,0.9,0.9),frame_material,true)
+	_add_box(marker_root,"MarkerAccent",Vector3(0.0,7.72,0.0),Vector3(8.8,0.12,1.0),accent_material,false)
+	var sign := Label3D.new()
+	sign.name = "MarkerSign"
+	sign.text = title
+	sign.font_size = 23
+	sign.position = Vector3(0.0,8.5,-0.7)
+	sign.pixel_size = 0.013
+	sign.modulate = Color(0.84,0.94,1.0)
+	marker_root.add_child(sign)
+	var interaction := Area3D.new()
+	interaction.name = "StageMarkerInteraction"
+	interaction.add_to_group("system_interactable")
+	interaction.set_meta("system_location_id",location_id)
+	interaction.set_meta("system_region_id",REGION_ID)
+	interaction.set_meta("system_display_name",title)
+	interaction.set_meta("system_location_type",5)
+	interaction.set_meta("system_interaction_prompt",title)
+	interaction.set_meta("system_city_name","Baghdad")
+	interaction.set_meta("system_checkpoint_id",checkpoint_id)
+	var area_collision := CollisionShape3D.new()
+	area_collision.name = "CollisionShape3D"
+	var area_shape := SphereShape3D.new()
+	area_shape.radius = 4.5
+	area_collision.shape = area_shape
+	interaction.add_child(area_collision)
+	interaction.position = Vector3(0.0,1.5,0.0)
+	marker_root.add_child(interaction)
 
 
 func _build_power_tower(root: Node3D, site: Dictionary) -> void:
