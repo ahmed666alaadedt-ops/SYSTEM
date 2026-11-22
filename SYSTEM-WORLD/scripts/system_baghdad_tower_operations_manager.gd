@@ -2530,7 +2530,7 @@ func open_arcade_cabinet(tower_id: String, floor_number: int, cabinet_id: int, c
 		return
 	open_facility_service(tower_id, floor_number, "arcade")
 	selected_arcade_mode = cabinet_mode
-	var mode_index := 1 if cabinet_mode == "memory" else 0
+	var mode_index := 2 if cabinet_mode == "reflex" else (1 if cabinet_mode == "memory" else 0)
 	var selector := content.get_node_or_null("ArcadeModeSelector") as OptionButton
 	if selector != null:
 		selector.select(mode_index)
@@ -2717,12 +2717,16 @@ func _schedule_arcade_reflex_signal() -> void:
 	var reflex_status := content.get_node_or_null("ArcadeReflexStatus") as Label
 	if reflex_status != null:
 		reflex_status.text = "استعد... لا تضغط قبل الإشارة!"
+	var signal_id := int(active_facility_activity.get("reflex_signal_id", 0)) + 1
+	active_facility_activity["reflex_signal_id"] = signal_id
 	var wait_seconds := randf_range(1.0, 2.4)
-	get_tree().create_timer(wait_seconds).timeout.connect(_on_arcade_reflex_signal)
+	get_tree().create_timer(wait_seconds).timeout.connect(_on_arcade_reflex_signal.bind(signal_id))
 
 
-func _on_arcade_reflex_signal() -> void:
+func _on_arcade_reflex_signal(signal_id: int) -> void:
 	if active_facility_activity.is_empty() or str(active_facility_activity.get("mode", "")) != "reflex":
+		return
+	if int(active_facility_activity.get("reflex_signal_id", -1)) != signal_id:
 		return
 	active_facility_activity["reflex_ready"] = true
 	active_facility_activity["reflex_signal_at"] = Time.get_ticks_msec()
