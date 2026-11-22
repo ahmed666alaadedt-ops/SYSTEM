@@ -605,6 +605,11 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Tag the facility with its Hunter Association owner ID and an explicit landing-zone radius for future helicopter runtime integration.
 - [x] Extend the Baghdad tower Godot validator to check pad ownership, deck/collision, markings, sign, bridge collision, and all eight perimeter lights.
 - [ ] Run Godot 4.3 parsing, scene startup and the extended tower validator; inspect any failures before treating the pad as validated.
-- [ ] Integrate helicopter spawn/approach/landing/takeoff controls, landing permissions, aircraft parking and mobile touch controls; the current change creates the physical landing-pad blockout only.
-- [ ] Review rooftop approach clearance, collision traversal, lighting and Android performance on a physical device.
-- Note: the pad is an initial 3D geometry and collision implementation. It does not claim that helicopter flight or landing gameplay is already implemented.
+- [x] Attach a dedicated Hunter Association helicopter runtime controller to the pad; generate a parked helicopter model with animated main/tail rotors.
+- [x] Add pilot enter/exit flow, keyboard flight inputs, on-screen mobile ascend/descend/directional controls, and camera follow while piloting.
+- [x] Add approach-distance interaction, a defined 18 m landing radius, low-speed landing state, and exit restriction while airborne.
+- [x] Extend the Godot operations validator to require the runtime controller, aircraft model, touch HUD, owner ID and landing radius.
+- [ ] Pass Godot 4.3 parsing, headless startup and the expanded helicopter runtime validator; then pass canonical Android APK export on the same commit.
+- [ ] Add Hunter Association membership/rank permissions, robust collision/obstacle avoidance, terrain-aware flight physics, emergency landing, aircraft parking persistence and flight safety validation.
+- [ ] Review rooftop approach clearance, touch layout, camera behavior, collision traversal, lighting and Android performance on a physical device.
+- Note: this is a first playable flight prototype using scripted movement and a procedural helicopter blockout. It is not yet a production aircraft physics model, and membership permissions and obstacle collision are still pending.
