@@ -124,6 +124,12 @@ func _run_validation() -> void:
 	if not is_equal_approx(streamer.world_water_surface_elevation_m, preexisting_baghdad_ground_elevation - 6.0) or not is_equal_approx(streamer.world_bridge_deck_elevation_m, preexisting_baghdad_ground_elevation + 0.28):
 		_fail("Tigris and Republic Bridge surfaces do not match their verified relative elevations.")
 		return
+	if not is_equal_approx(streamer.world_tower_platform_elevation_m, preexisting_baghdad_ground_elevation + 12.28):
+		_fail("Republic Bridge tower platform does not preserve the required vertical separation above the Tigris.")
+		return
+	if not is_equal_approx(streamer.world_bridge_deck_elevation_m - streamer.world_water_surface_elevation_m, 6.28) or not is_equal_approx(streamer.world_tower_platform_elevation_m - streamer.world_water_surface_elevation_m, 18.28):
+		_fail("Republic Bridge/Tigris vertical-clearance metadata is inconsistent.")
+		return
 	for bank_point in bank_points:
 		if absf(terrain_manager.get_terrain_height(float(bank_point[0]), float(bank_point[1])) - streamer.world_ground_elevation_m) > 0.1:
 			_fail("One of the verified bank approaches does not meet the resolved Baghdad ground baseline.")
