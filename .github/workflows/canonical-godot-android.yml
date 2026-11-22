@@ -237,6 +237,16 @@ jobs:
           "$GODOT" --headless --editor --path "$PROJECT" --quit \
             2>&1 | tee "$RUNNER_TEMP/system-world-import.log"
 
+      - name: Validate Baghdad five-tower district and cinema
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" \\
+            --script res://tools/validate_baghdad_five_towers.gd \\
+            2>&1 | tee "$RUNNER_TEMP/baghdad-five-towers.log"
+
       - name: Validate Baghdad OSM cell runtime geometry
         if: success() && hashFiles('SYSTEM-WORLD/data/geography/baghdad/cell_pack/manifest.json') != ''
         shell: bash
