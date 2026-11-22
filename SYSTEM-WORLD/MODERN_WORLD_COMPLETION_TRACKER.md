@@ -483,3 +483,13 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Extend Godot validation for retail, food-vendor and dining-area roots and revision metadata.
 - [ ] Implement stock, shopkeeper NPCs, buying/selling, inventory, prices, payment and food ordering; current fixtures are static visual layouts.
 - [ ] Re-run Godot and Android CI against the latest shopping manager and validator commits.
+
+
+## Specialized tower interiors — 22 November 2026
+
+- [x] Hunter Association Tower: mission board gallery, four training dummy visuals and three clinic treatment beds.
+- [x] Business Tower: conference table with sixteen seats, investment market ticker and four hotel guest-room door markers.
+- [x] Technology Innovation Tower: six research benches, four AI research pods and six digital library shelf markers.
+- [x] Extend Godot validation to check all specialized interior roots and the revision marker on all five towers.
+- [ ] Implement actual hunter mission board interactions, training combat, clinic treatment, business market data/conference actions, hotel room booking, lab simulation, AI interactions and digital library content; present geometry is visual blockout.
+- [ ] Re-run Godot validation and Android export against the latest specialized-interior commits.
