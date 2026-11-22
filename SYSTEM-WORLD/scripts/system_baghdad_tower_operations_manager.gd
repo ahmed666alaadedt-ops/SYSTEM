@@ -1432,6 +1432,23 @@ func _get_active_hotel_booking() -> Dictionary:
 	return {}
 
 
+func _get_hotel_room_catalog() -> Array:
+	return HOTEL_ROOM_CATALOG.duplicate(true)
+
+
+func _add_hotel_room_collision_box(parent: Node3D, object_name: String, object_size: Vector3, object_position: Vector3) -> StaticBody3D:
+	var body := StaticBody3D.new()
+	body.name = object_name
+	body.position = object_position
+	var shape_node := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = object_size
+	shape_node.shape = shape
+	body.add_child(shape_node)
+	parent.add_child(body)
+	return body
+
+
 func _is_hotel_room_available(room_id: String) -> bool:
 	var booking: Dictionary = hotel_bookings.get(room_id, {})
 	if booking.is_empty():
@@ -3567,11 +3584,17 @@ func _create_hotel_room_interior(parent: Node3D, room_data: Dictionary, room_ind
 	var dark: Material = materials["dark"]
 	_add_hotel_room_box(room_root, "HotelRoomFloor", Vector3(5.4, 0.18, 5.8), Vector3(0.0, 0.09, 0.0), floor)
 	_add_hotel_room_box(room_root, "HotelRoomBackWall", Vector3(5.4, 3.2, 0.16), Vector3(0.0, 1.6, -2.9), wall)
+	_add_hotel_room_collision_box(room_root, "HotelRoomBackWallCollision", Vector3(5.4, 3.2, 0.16), Vector3(0.0, 1.6, -2.9))
 	_add_hotel_room_box(room_root, "HotelRoomLeftWall", Vector3(0.16, 3.2, 5.8), Vector3(-2.7, 1.6, 0.0), wall)
+	_add_hotel_room_collision_box(room_root, "HotelRoomLeftWallCollision", Vector3(0.16, 3.2, 5.8), Vector3(-2.7, 1.6, 0.0))
 	_add_hotel_room_box(room_root, "HotelRoomRightWall", Vector3(0.16, 3.2, 5.8), Vector3(2.7, 1.6, 0.0), wall)
+	_add_hotel_room_collision_box(room_root, "HotelRoomRightWallCollision", Vector3(0.16, 3.2, 5.8), Vector3(2.7, 1.6, 0.0))
 	_add_hotel_room_box(room_root, "HotelRoomFrontLeftWall", Vector3(1.65, 3.2, 0.16), Vector3(-1.88, 1.6, 2.9), wall)
+	_add_hotel_room_collision_box(room_root, "HotelRoomFrontLeftWallCollision", Vector3(1.65, 3.2, 0.16), Vector3(-1.88, 1.6, 2.9))
 	_add_hotel_room_box(room_root, "HotelRoomFrontRightWall", Vector3(1.65, 3.2, 0.16), Vector3(1.88, 1.6, 2.9), wall)
+	_add_hotel_room_collision_box(room_root, "HotelRoomFrontRightWallCollision", Vector3(1.65, 3.2, 0.16), Vector3(1.88, 1.6, 2.9))
 	_add_hotel_room_box(room_root, "HotelRoomDoorHeader", Vector3(2.1, 0.38, 0.18), Vector3(0.0, 3.02, 2.9), gold)
+	_add_hotel_room_collision_box(room_root, "HotelRoomDoorHeaderCollision", Vector3(2.1, 0.38, 0.18), Vector3(0.0, 3.02, 2.9))
 	var window := _add_hotel_room_box(room_root, "HotelRoomWindow", Vector3(2.25, 1.25, 0.08), Vector3(0.0, 2.0, -2.78), glass)
 	window.set_meta("system_hotel_room_window", true)
 	_add_hotel_room_box(room_root, "HotelRoomBed", Vector3(2.15, 0.48, 2.45), Vector3(-1.15, 0.42, -0.75), wood)
@@ -3584,6 +3607,7 @@ func _create_hotel_room_interior(parent: Node3D, room_data: Dictionary, room_ind
 	_add_hotel_room_box(room_root, "HotelRoomDeskChair", Vector3(0.68, 0.92, 0.68), Vector3(0.9, 0.52, 1.85), accent)
 	_add_hotel_room_box(room_root, "HotelRoomTelevision", Vector3(1.55, 0.92, 0.1), Vector3(0.9, 1.82, -2.78), dark)
 	_add_hotel_room_box(room_root, "HotelRoomBathroomPartition", Vector3(0.12, 2.45, 2.2), Vector3(0.55, 1.22, -1.72), wall)
+	_add_hotel_room_collision_box(room_root, "HotelRoomBathroomPartitionCollision", Vector3(0.12, 2.45, 2.2), Vector3(0.55, 1.22, -1.72))
 	var bathroom := Node3D.new()
 	bathroom.name = "HotelRoomBathroom"
 	bathroom.position = Vector3(1.55, 0.0, -1.72)
