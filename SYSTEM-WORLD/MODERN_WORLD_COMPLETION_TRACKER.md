@@ -1,5 +1,14 @@
 # SYSTEM WORLD — Modern World Completion Tracker
 
+## Baghdad tower mobile combat integration — 22 November 2026
+
+- [x] Instantiate the existing ModernWorldCombatSystem in the live modern-world startup and bind it to the active player and camera.
+- [x] Connect mobile attack, skill-one, skill-two, and dodge signals to real combat actions; ignore combat actions while driving.
+- [x] Connect skill one to the existing rank-four Nen Burst, applying its timed damage/defense/movement/cooldown effects before the empowered strike.
+- [x] Connect skill two to a charged heavy strike that consumes weapon durability and uses progression/elixir damage bonuses.
+- [x] Extend the Baghdad tower operations validator to verify combat-manager creation, player binding, mobile signal wiring, Nen Burst activation, charged strike, and dodge movement.
+- [ ] Inspect touch-control placement and combat feedback on a physical Android device; balance hit range, strike damage, and cooldown feel.
+
 This is the acceptance checklist for the modern-world map. The project must not be described as complete, and work must not move to the portal phase, until every required item is implemented, connected, and verified in Godot on the target platforms. A visual placeholder is not accepted as a completed gameplay system.
 
 
