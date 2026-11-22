@@ -1051,7 +1051,47 @@ func _run() -> void:
 	if not bool(healing_result.get("success", false)) or not bool(health_manager.get("is_wounded")) or float(health_manager.get("current_health")) <= 30.0:
 		_fail("Healing elixir must restore field health without clearing the persistent wound state.")
 		return
-	print("Baghdad tower operations validation passed: six tower interiors, 24 NPC employees, internal/external NPC-managed ads, buy/sell, equipment, timed elixir effects, Nen progression and the 200th-floor sovereign boss arena.")
+
+	var activity_stats_snapshot: Dictionary = operations.get("facility_activity_stats").duplicate(true)
+	var activity_credits_snapshot := int(operations.get("credits"))
+	var activity_cases := {
+		"swimming_pool": ["lap", 3],
+		"fitness_gym": ["rep", 8],
+		"sports_court": ["shot", 5],
+		"bowling": ["throw", 10],
+		"cinema": ["watch", 1],
+		"arcade": ["hit", 5],
+		"family_zone": ["discover", 3],
+		"rooftop_leisure": ["photo", 1],
+		"robotics_lab": ["assemble", 3],
+		"ai_lab": ["analyze", 3],
+		"vr_lab": ["checkpoint", 3]
+	}
+	for activity_type in activity_cases.keys():
+		var activity_case: Array = activity_cases[activity_type]
+		if not bool(operations.call("start_facility_activity", str(activity_type))):
+			_fail("Facility activity could not start: " + str(activity_type))
+			return
+		var final_activity_result: Dictionary = {}
+		for _step in range(int(activity_case[1])):
+			final_activity_result = operations.call("perform_facility_activity", str(activity_case[0]))
+			if not bool(final_activity_result.get("success", false)):
+				_fail("Facility activity action failed: " + str(activity_type) + " / " + str(final_activity_result))
+				return
+		if not bool(final_activity_result.get("completed", false)):
+			_fail("Facility activity did not complete its required steps: " + str(activity_type))
+			return
+		if not operations.get("facility_activity_stats").has(activity_type):
+			_fail("Facility activity result was not recorded: " + str(activity_type))
+			return
+	operations.set("facility_activity_stats", activity_stats_snapshot)
+	operations.set("credits", activity_credits_snapshot)
+	operations.call("_save_facility_activity_stats")
+	operations.call("_save_wallet")
+	if not operations.has_method("open_facility_service"):
+		_fail("Facility interaction service entry point is missing.")
+		return
+	print("Baghdad tower operations validation passed: five connected Baghdad towers, independent Power Tower, NPC commerce, hotel workflows, eleven playable leisure/technology activity loops, equipment, Nen progression and the 200th-floor sovereign boss arena.")
 	main.queue_free()
 	await process_frame
 	quit(0)
