@@ -10,7 +10,7 @@ import pathlib
 import zipfile
 
 from shapely.geometry import Point, shape
-from shapely.ops import transform as transform_geometry
+from shapely.ops import transform as transform_geometry, unary_union
 
 ORIGIN_LAT = 33.3152
 ORIGIN_LON = 44.3661
@@ -161,6 +161,38 @@ def _assert_runtime_pack(pack_path: pathlib.Path, source_report: dict) -> dict:
         if abs(float(origin.get("longitude", 0.0)) - ORIGIN_LON) > 0.000001:
             raise SystemExit("Runtime cell pack longitude origin differs from the canonical registry.")
 
+        if manifest.get("ground_layer_schema_version") != 1:
+            raise SystemExit("Runtime cell pack has no verified Baghdad ground layer.")
+        if float(manifest.get("ground_elevation_m", -999.0)) != 34.0:
+            raise SystemExit("Baghdad ground elevation does not match the current registry baseline.")
+        if float(manifest.get("water_surface_elevation_m", -999.0)) != 28.0:
+            raise SystemExit("Tigris water surface elevation is not 6 m below the municipal ground baseline.")
+        if float(manifest.get("bridge_deck_elevation_m", -999.0)) != 34.28:
+            raise SystemExit("Republic Bridge deck elevation is not aligned with the verified ground baseline.")
+        if float(manifest.get("bridge_tower_platform_elevation_m", -999.0)) != 46.28:
+            raise SystemExit("Bridge tower platform elevation does not preserve the planned 12 m clearance above the deck.")
+        route = (manifest.get("landmark_routes") or {}).get("republic_bridge", {})
+        if route.get("osm_bridge_centerline_id") != BRIDGE_LINE_ID:
+            raise SystemExit("Manifest Republic Bridge route does not reference the verified OSM centerline.")
+        if route.get("osm_tigris_centerline_id") != TIGRIS_WATERWAY_ID:
+            raise SystemExit("Manifest Republic Bridge route does not reference the verified Tigris centerline.")
+        if route.get("osm_tigris_water_polygon_id") != TIGRIS_WATER_POLYGON_ID:
+            raise SystemExit("Manifest Republic Bridge route does not reference the verified Tigris water polygon.")
+        if route.get("osm_bridge_polygon_id") != BRIDGE_POLYGON_ID:
+            raise SystemExit("Manifest Republic Bridge route does not reference the verified bridge polygon.")
+        route_anchor = route.get("tower_anchor_local_m", [])
+        if len(route_anchor) != 2:
+            raise SystemExit("Manifest Republic Bridge route has no local tower anchor.")
+        expected_anchor = [
+            float(source_report["target_local_east_m"]),
+            float(source_report["target_local_south_m"]),
+        ]
+        if math.dist(route_anchor, expected_anchor) > 0.5:
+            raise SystemExit("Manifest tower anchor differs from the verified geographic target.")
+        bank_points = route.get("bank_access_points_local_m", [])
+        if len(bank_points) != 2 or any(len(point) != 2 for point in bank_points):
+            raise SystemExit("Manifest Republic Bridge route must contain two bank access points.")
+
         cell_names = sorted(
             name for name in names
             if name.startswith("cells/") and name.endswith(".json")
@@ -176,6 +208,10 @@ def _assert_runtime_pack(pack_path: pathlib.Path, source_report: dict) -> dict:
             raise SystemExit(f"Republic Bridge target cell is missing: {target_name}")
 
         found = {"bridges": set(), "natural-water": set(), "waterways": set()}
+        ground_geometries = []
+        water_geometries = []
+        ground_feature_count = 0
+        ground_triangle_count = 0
         target_tile = json.loads(archive.read(target_name))
         target_layers = target_tile.get("layers", {})
         target_cell_ids = {
@@ -190,6 +226,16 @@ def _assert_runtime_pack(pack_path: pathlib.Path, source_report: dict) -> dict:
         for name in cell_names:
             tile = json.loads(archive.read(name))
             layers = tile.get("layers", {})
+            for feature in layers.get("ground", []):
+                geometry = feature.get("geometry", {})
+                if geometry:
+                    ground_geometries.append(shape(geometry))
+                    ground_feature_count += 1
+                    ground_triangle_count += len(geometry.get("coordinates", []))
+            for feature in layers.get("natural-water", []):
+                geometry = feature.get("geometry", {})
+                if geometry:
+                    water_geometries.append(shape(geometry))
             for layer, feature_ids in found.items():
                 for feature in layers.get(layer, []):
                     feature_id = str(feature.get("id", ""))
@@ -203,6 +249,24 @@ def _assert_runtime_pack(pack_path: pathlib.Path, source_report: dict) -> dict:
             raise SystemExit("Republic Bridge road centerline is missing from the expanded runtime pack.")
         if TIGRIS_WATERWAY_ID not in found["waterways"]:
             raise SystemExit("Tigris River centerline is missing from the expanded runtime pack.")
+        if not ground_geometries or ground_feature_count != int(manifest.get("ground_cell_count", -1)):
+            raise SystemExit("Generated Baghdad ground cells are missing or do not match the manifest.")
+        if ground_triangle_count != int(manifest.get("ground_triangle_count", -1)):
+            raise SystemExit("Generated Baghdad ground triangle count does not match the manifest.")
+        ground_union = unary_union(ground_geometries)
+        water_union = unary_union(water_geometries) if water_geometries else None
+        target_local = Point(
+            float(source_report["target_local_east_m"]),
+            float(source_report["target_local_south_m"]),
+        )
+        if ground_union.covers(target_local):
+            raise SystemExit("Generated ground covers the Tigris water at the Republic Bridge anchor.")
+        for bank_point in bank_points:
+            if not ground_union.covers(Point(float(bank_point[0]), float(bank_point[1]))):
+                raise SystemExit(f"Generated ground does not reach both bank access points: {bank_point}")
+        water_overlap_area = ground_union.intersection(water_union).area if water_union is not None else 0.0
+        if water_overlap_area > 0.5:
+            raise SystemExit(f"Generated ground overlaps mapped water by {water_overlap_area:.2f} m².")
 
         return {
             "cell_pack": str(pack_path),
@@ -216,6 +280,12 @@ def _assert_runtime_pack(pack_path: pathlib.Path, source_report: dict) -> dict:
                 "tigris_water_surface": TIGRIS_WATER_POLYGON_ID,
                 "tigris_centerline": TIGRIS_WATERWAY_ID,
             },
+            "ground_cell_count": ground_feature_count,
+            "ground_triangle_count": ground_triangle_count,
+            "ground_area_m2": round(float(manifest.get("ground_area_m2", 0.0)), 2),
+            "water_ground_overlap_m2": round(water_overlap_area, 3),
+            "bank_access_points_local_m": bank_points,
+            "tower_platform_elevation_m": float(manifest["bridge_tower_platform_elevation_m"]),
         }
 
 
