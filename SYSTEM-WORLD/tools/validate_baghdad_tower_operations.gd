@@ -1054,6 +1054,19 @@ func _run() -> void:
 
 	var activity_stats_snapshot: Dictionary = operations.get("facility_activity_stats").duplicate(true)
 	var activity_credits_snapshot := int(operations.get("credits"))
+	var bowling_room := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 23) as Node3D
+	var bowling_facility := bowling_room.get_node_or_null("SpecialFacility_bowling") as Node3D if bowling_room != null else null
+	if bowling_facility == null or bowling_facility.get_node_or_null("BowlingLanePhysics") == null:
+		_fail("Bowling lane physics body was not generated.")
+		return
+	var bowling_pin_count := 0
+	for bowling_child in bowling_facility.get_children():
+		if bowling_child is RigidBody3D and str(bowling_child.name).begins_with("BowlingPin_"):
+			bowling_pin_count += 1
+	if bowling_pin_count != 10:
+		_fail("Bowling lane must spawn ten physical rigid-body pins.")
+		return
+	operations.set("current_facility_root", bowling_facility)
 	var activity_cases := {
 		"swimming_pool": ["lap", 3],
 		"fitness_gym": ["rep", 8],
@@ -1074,10 +1087,16 @@ func _run() -> void:
 			return
 		var final_activity_result: Dictionary = {}
 		for _step in range(int(activity_case[1])):
-			final_activity_result = operations.call("perform_facility_activity", str(activity_case[0]))
+			if str(activity_type) == "bowling":
+				final_activity_result = await operations.call("perform_facility_activity", str(activity_case[0]))
+			else:
+				final_activity_result = operations.call("perform_facility_activity", str(activity_case[0]))
 			if not bool(final_activity_result.get("success", false)):
 				_fail("Facility activity action failed: " + str(activity_type) + " / " + str(final_activity_result))
 				return
+		if str(activity_type) == "bowling" and int(final_activity_result.get("last_throw", -1)) < 0:
+			_fail("Bowling final frame did not report physical pinfall results.")
+			return
 		if not bool(final_activity_result.get("completed", false)):
 			_fail("Facility activity did not complete its required steps: " + str(activity_type))
 			return
