@@ -639,6 +639,8 @@ func get_progress_data() -> Dictionary:
 		"active_elixir_effects": active_elixir_effects.duplicate(true),
 		"nen_unlocked": nen_unlocked,
 		"nen_control_rank": nen_control_rank,
+		"hunter_rank": get_hunter_rank(),
+		"hunter_rank_progress": get_hunter_rank_progress(),
 		"nen_burst_cooldown_remaining": nen_burst_cooldown_remaining,
 		"greed_island_seal_ready": bool(get_world_fragment_data().get("all_world_keys_ready", false)),
 		"world_keys": get_world_fragment_data()
