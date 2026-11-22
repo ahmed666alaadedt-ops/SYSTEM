@@ -12,6 +12,7 @@ const ROAD_WIDTH := 12.0
 var terrain: Node
 var map_manager: Node
 var _registered := false
+var _hunter_exam_tunnel_root: Node3D
 var _sites: Array[Dictionary] = [
 	{"id":"hunter_exam_tunnel_start_baghdad","name":"نفق اختبار الصيادين","kind":"tunnel","offset":Vector2(0.0,245.0),"size":Vector3(42.0,12.0,28.0),"color":Color(0.10,0.19,0.27),"prompt":"دخول نفق اختبار الصيادين"},
 	{"id":"hunter_exam_public_notice_baghdad","name":"إعلان اختبار الصيادين العام","kind":"advertising","offset":Vector2(0.0,90.0),"size":Vector3(32.0,20.0,10.0),"color":Color(0.08,0.35,0.48),"prompt":"عرض إعلان اختبار الصيادين ومراحله"},
@@ -118,6 +119,8 @@ func _build_site(site: Dictionary) -> void:
 	root.name = str(site["id"])
 	root.position = _site_position(site)
 	add_child(root)
+	if kind == "tunnel":
+		_hunter_exam_tunnel_root = root
 	match kind:
 		"stadium": _build_stadium(root, site)
 		"motorsport": _build_motorsport(root, site)
@@ -173,11 +176,74 @@ func _build_tunnel(root: Node3D, site: Dictionary) -> void:
 	var glow := _material(Color(0.04,0.52,0.76),0.28,0.25)
 	glow.emission_enabled = true
 	glow.emission = Color(0.02,0.28,0.62)
+	var gate_frame := _material(Color(0.12,0.20,0.28),0.32,0.68)
+	var gate_accent := _material(Color(0.82,0.58,0.24),0.26,0.72)
+	gate_accent.emission_enabled = true
+	gate_accent.emission = Color(0.34,0.18,0.035)
+	gate_accent.emission_energy_multiplier = 0.8
+	var access_barrier := _material(Color(0.48,0.08,0.07),0.42,0.38)
+	_add_box(root,"TunnelFloor",Vector3(0.0,0.0,0.0),Vector3(size.x-6.0,0.8,size.z),dark,true)
 	_add_box(root,"TunnelLeftWall",Vector3(-size.x*0.5,5.0,0.0),Vector3(3.0,10.0,size.z),dark,true)
 	_add_box(root,"TunnelRightWall",Vector3(size.x*0.5,5.0,0.0),Vector3(3.0,10.0,size.z),dark,true)
 	_add_box(root,"TunnelRoof",Vector3(0.0,10.0,0.0),Vector3(size.x,2.0,size.z),dark,true)
 	_add_box(root,"TunnelPortalGlow",Vector3(0.0,5.0,-size.z*0.5),Vector3(size.x*0.76,9.0,0.6),glow,false)
 	_add_sign(root,str(site["name"]),Vector3(0.0,14.0,-size.z*0.5-3.0))
+
+	var access_gate := Node3D.new()
+	access_gate.name = "CandidateAccessGate"
+	root.add_child(access_gate)
+	_add_box(access_gate,"CandidateAccessBarrier",Vector3(0.0,size.y*0.5,-size.z*0.31),Vector3(size.x*0.78,size.y*0.72,0.8),access_barrier,true)
+	access_gate.set_meta("candidate_access_open",false)
+
+	for stage_index in range(7):
+		var stage_number := stage_index + 1
+		var stage_gate := Node3D.new()
+		stage_gate.name = "StageGate_%02d" % stage_number
+		stage_gate.position.z = -size.z*0.25 + float(stage_index)*(size.z*0.5/6.0)
+		root.add_child(stage_gate)
+		_add_box(stage_gate,"StageGateLeftPost",Vector3(-17.0,4.0,0.0),Vector3(1.2,8.0,1.2),gate_frame,true)
+		_add_box(stage_gate,"StageGateRightPost",Vector3(17.0,4.0,0.0),Vector3(1.2,8.0,1.2),gate_frame,true)
+		_add_box(stage_gate,"StageGateHeader",Vector3(0.0,8.4,0.0),Vector3(35.0,1.2,1.2),gate_frame,true)
+		_add_box(stage_gate,"StageGateAccent",Vector3(0.0,8.9,0.0),Vector3(30.0,0.12,1.3),gate_accent,false)
+		var stage_sign := Label3D.new()
+		stage_sign.name = "StageNumberSign_%02d" % stage_number
+		stage_sign.text = "بوابة المرحلة %02d" % stage_number
+		stage_sign.font_size = 25
+		stage_sign.position = Vector3(0.0,10.1,-0.8)
+		stage_sign.pixel_size = 0.014
+		stage_sign.modulate = Color(0.86,0.94,1.0)
+		stage_gate.add_child(stage_sign)
+		stage_gate.set_meta("hunter_exam_stage_number",stage_number)
+
+	for light_index in range(5):
+		var tunnel_light := OmniLight3D.new()
+		tunnel_light.name = "TunnelCeilingLight_%02d" % light_index
+		tunnel_light.position = Vector3(0.0,8.8,-size.z*0.38+float(light_index)*(size.z*0.19))
+		tunnel_light.light_color = Color(0.24,0.66,1.0)
+		tunnel_light.light_energy = 1.15
+		tunnel_light.omni_range = 10.0
+		tunnel_light.shadow_enabled = false
+		root.add_child(tunnel_light)
+	_add_box(root,"TunnelFloorGuideLine",Vector3(0.0,0.43,0.0),Vector3(0.28,0.08,size.z*0.82),gate_accent,false)
+	root.set_meta("hunter_exam_stage_gate_count",7)
+	root.set_meta("candidate_access_enabled",false)
+
+
+func set_hunter_exam_tunnel_access(enabled: bool) -> void:
+	if _hunter_exam_tunnel_root == null:
+		return
+	var access_gate := _hunter_exam_tunnel_root.get_node_or_null("CandidateAccessGate")
+	var barrier_mesh := access_gate.get_node_or_null("CandidateAccessBarrier") as MeshInstance3D if access_gate != null else null
+	var barrier_body := access_gate.get_node_or_null("CandidateAccessBarrierCollision") as StaticBody3D if access_gate != null else null
+	var barrier_shape := barrier_body.get_node_or_null("CollisionShape3D") as CollisionShape3D if barrier_body != null else null
+	if barrier_mesh == null or barrier_shape == null:
+		push_warning("SYSTEM Hunter tunnel: candidate access barrier is incomplete.")
+		return
+	barrier_mesh.visible = not enabled
+	barrier_shape.disabled = enabled
+	access_gate.set_meta("candidate_access_open",enabled)
+	_hunter_exam_tunnel_root.set_meta("candidate_access_enabled",enabled)
+
 
 func _build_power_tower(root: Node3D, site: Dictionary) -> void:
 	var size: Vector3 = site["size"]
