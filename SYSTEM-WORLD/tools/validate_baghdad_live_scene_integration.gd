@@ -9,12 +9,14 @@ func _initialize() -> void:
 
 
 func _watchdog() -> void:
-	await create_timer(30.0).timeout
+	print("SYSTEM QA integration: watchdog armed.")
+	await create_timer(12.0).timeout
 	if not _validation_finished:
 		_fail("Live main-scene integration validation timed out before reaching its completion checkpoint.")
 
 
 func _run_validation() -> void:
+	print("SYSTEM QA integration: validation started.")
 	var packed_scene := load("res://MainScene.tscn") as PackedScene
 	if packed_scene == null:
 		_fail("Canonical MainScene.tscn could not be loaded.")
