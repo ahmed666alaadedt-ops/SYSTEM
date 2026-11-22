@@ -336,6 +336,23 @@ jobs:
           fi
           grep -q "Baghdad OSM runtime cell passed:" "$LOG"
 
+      - name: Validate Baghdad tower network and Republic Bridge outpost
+        if: success() && hashFiles('SYSTEM-WORLD/data/geography/baghdad/cell_pack/manifest.json') != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          LOG="$RUNNER_TEMP/baghdad-tower-runtime.log"
+          timeout 120s "$GODOT" --headless --path "$PROJECT" \
+            --script res://tools/validate_baghdad_tower_integration.gd \
+            2>&1 | tee "$LOG"
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" "$LOG"; then
+            echo "::error::Godot reported a script error during Baghdad tower bridge-outpost validation."
+            exit 1
+          fi
+          grep -q "Baghdad tower integration validation passed:" "$LOG"
+
       - name: Validate child character safety rules
         shell: bash
         run: |
@@ -439,5 +456,6 @@ jobs:
             ${{ runner.temp }}/system-companion-runtime.log
             ${{ runner.temp }}/system-npc-society-runtime.log
             ${{ runner.temp }}/baghdad-osm-runtime.log
+            ${{ runner.temp }}/baghdad-tower-runtime.log
           if-no-files-found: warn
           retention-days: 14
