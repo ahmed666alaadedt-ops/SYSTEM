@@ -2,6 +2,20 @@
 
 This is the acceptance checklist for the modern-world map. The project must not be described as complete, and work must not move to the portal phase, until every required item is implemented, connected, and verified in Godot on the target platforms. A visual placeholder is not accepted as a completed gameplay system.
 
+
+
+## Baghdad five-tower district role update — 22 November 2026
+
+- [x] Replace the former Business and Investment Tower identity with the Weapons, Equipment and Elixirs Tower; keep the district at exactly five connected primary towers.
+- [x] Preserve the existing tower site and connected-district membership for this replacement; update its stable landmark ID and the public event-board node mapping together.
+- [x] Define the tower's equipment scope: swords, spears, axes, bows, firearms, shields, helmets, armor, combat outfits, and equipment upgrades.
+- [x] Define its elixir scope: Nen acquisition, Nen control and ability development, healing, strength, speed, endurance, energy, and rare/legendary elixirs.
+- [ ] Build the tower's navigable interior, shops, crafting stations, inventories, purchase/equip flows, elixir recipes, and progression-safe unlock rules.
+- [ ] Implement and balance Nen-acquisition/development systems and elixir effects; no elixir or Nen gameplay is claimed to be playable by this landmark metadata.
+- [ ] Add server-authoritative inventory, trading, crafting, anti-duplication, and save synchronization before online economy use.
+- [ ] Run Godot parser/import, scene startup, interaction, visual inspection, Android performance, and physical-device tests; this role replacement is source-level only until those checks pass.
+- Note: the tower remains a procedural exterior landmark and connected-district member. Its actual interior and equipment/elixir gameplay are unfinished. The standalone 200-floor Power Tower remains separate and unchanged.
+
 ## Current verified repository foundations
 
 - [x] Fourteen city labels and eight district labels per city are defined in modern_world_region_manager.gd; only Baghdad is currently connected to the provisional WGS84 registry anchor, while the other thirteen centers remain prototype-layout coordinates.
