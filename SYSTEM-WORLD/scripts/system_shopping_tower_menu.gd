@@ -48,6 +48,15 @@ func _ready() -> void:
 
 
 func get_catalog() -> Array[Dictionary]:
+	# Preserve the original five-item local collectible catalog API for existing callers.
+	var result: Array[Dictionary] = []
+	for item in CATALOG:
+		if str(item.get("category", "")) == "souvenir":
+			result.append(item.duplicate(true))
+	return result
+
+
+func get_full_catalog() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for item in CATALOG:
 		result.append(item.duplicate(true))
@@ -57,14 +66,14 @@ func get_catalog() -> Array[Dictionary]:
 func open_service_view(service_id: String) -> void:
 	if not is_instance_valid(panel):
 		return
-	if service_id.ends_with("_0"):
+	if service_id.ends_with("_3"):
 		active_view = "weapons"
-	elif service_id.ends_with("_1"):
+	elif service_id.ends_with("_4"):
 		active_view = "potions"
 	elif service_id.ends_with("_2"):
-		active_view = "souvenir"
-	else:
 		active_view = "collection"
+	else:
+		active_view = "souvenir"
 	_refresh_view()
 	panel.show()
 
