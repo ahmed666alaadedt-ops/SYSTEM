@@ -762,7 +762,7 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Mark Power Tower floor 200 as the unique FINAL_BOSS/SYSTEM SOVEREIGN trial, with a distinct large gold boss visual, stronger health profile, shockwave attack, special arena platform and completion reward.
 - [x] Add Power Tower loot items: routine tokens, milestone fragments, boss cores, and the unique sovereign crown/core reward on floor 200.
 - [x] Ensure floor 200's level requirement is 90, within the existing 100-level player cap.
-- [ ] Pass the latest CI run covering elevator cabin travel/return, final boss metadata/rewards, NPC staff, trading and ads.
+- [x] Pass the latest CI run covering elevator cabin travel/return, final boss metadata/rewards, NPC staff, trading and ads (Godot workflow #1479).
 - [ ] Inspect elevator camera clearance, cabin door alignment, player landing/collision and floor-room visibility on a physical Android device.
 - [ ] Complete individual arena art, final boss attack telegraphs/animations, boss phase changes, reward balance, online leaderboard verification and spectator/matchmaking features.
 
@@ -776,7 +776,7 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Add healing elixir field recovery while preserving the existing persistent wounded state; a healing elixir cannot replace hospital treatment.
 - [x] Add Nen acquisition unlock and control rank progression (rank 1–5) through the corresponding elixirs.
 - [x] Add NPC employee service controls to equip owned gear, consume owned elixirs, unequip items and prevent sale of currently equipped gear.
-- [ ] Pass current Godot validation for progression save/load, combat integration and the extended tower/elevator transaction validator.
+- [x] Pass current Godot validation for progression save/load, combat integration and the extended tower/elevator transaction validator (Godot workflow #1479).
 - [ ] Add visible 3D weapon/armour attachment models, weapon-specific attack animations, shield blocking integration, and real Nen abilities/aura techniques.
 - [ ] Add elixir crafting, ingredient sourcing, recipes, cooldown/stacking rules, balance and anti-exploit validation.
 
@@ -791,7 +791,7 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Add interactive service kiosks on public tower floors and interactive lift doors in all six lobbies.
 - [x] Add a Power Tower lobby progress board showing cleared floors and the 200-floor target.
 - [x] Add final-boss shockwave warning and three combat phases; floor 200 also grants a unique crown, sovereign core, rare core, Nen fragment and bonus SYSTEM credits.
-- [ ] Pass the newest CI run after the vendor stock, crafting-station and lobby-lift extensions.
+- [x] Pass the newest CI run after the vendor stock, crafting-station and lobby-lift extensions (Godot workflow #1479).
 - [ ] Add visual weapon/armour attachments, weapon-specific animations, real Nen abilities, crafting discovery/upgrade/repair systems and physical Android interaction/performance review.
 - [ ] Add online/server-authoritative wallet, vendor stock, player leaderboard and multiplayer Power Tower matchmaking; current economy/progression/records are local.
 
@@ -827,7 +827,7 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Preserve existing saves by migrating the old `nen_acquisition_elixir` inventory key to `nen_awakening_elixir`; the old item ID remains accepted by the consume method for compatibility.
 - [x] Keep the actual Nen strike as a separate combat ability. The Hunter Association Tower now exposes a dedicated training-demo entry, with a visual preview before awakening and the real strike after Nen reaches control rank 4.
 - [x] Keep the Nen awakening elixir, equipment and crafting laboratory inside Shopping & Commerce Tower; the Nen strike demonstration belongs to the Hunter Association Tower.
-- [ ] Run the updated Godot validator and canonical Android APK export; physical-device touch/visual review remains pending.
+- [x] Run the updated Godot validator and canonical Android APK export; physical-device touch/visual review remains pending.
 - Note: the pre-awakening preview is a visual training effect only; it does not unlock Nen, consume an item, or deal damage. The real combat strike still uses the existing combat system and its normal rank/cooldown requirements.
 
 ### Baghdad tower interior identity pass — 22 November 2026
@@ -880,7 +880,7 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Prevent a fully completed examination from reopening with `exam_active = true`; completed candidates receive the explicit `ALL_STAGES_COMPLETED` result.
 - [x] Extend the Baghdad tower operations validator to test both active-exam resume and completed-exam closure.
 - [x] Correct the helicopter pilot-authorization lookup and validator to use the actual runtime node name `SYSTEMHunterExamManager`, discovered by the first regression run.
-- [ ] Pass the updated Godot 4.3 validator and canonical Android APK export on the latest PR head.
+- [x] Pass the updated Godot 4.3 validator and canonical Android APK export on the latest PR head (Godot #1479 / Android #1216).
 - [ ] Test the full seven-stage examination, app restart/resume, license persistence, and pilot-permission unlock on an Android device.
 
 
@@ -990,7 +990,7 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Display the player's current rank, verified mission points/count, Nen awakening/control rank, Nen skill-use count, and distinct abilities.
 - [x] Show the progression requirements for F, E, D, C, B, A, S, SS, and SSS; clearly state that SSS requires exceptional Hunter Association Board approval and cannot be self-awarded.
 - [x] Extend the Baghdad operations validator to open the Hunter Association menu and assert that the rank-board entry and progression rows are generated.
-- [ ] Run Godot 4.3 import/parse, the full Baghdad tower operations validator, and canonical Android APK export on the latest branch head; this UI addition is not yet marked tested.
+- [x] Run Godot 4.3 import/parse, the full Baghdad tower operations validator, and canonical Android APK export on the latest branch head (Godot #1479 / Android #1216).
 - [ ] Implement the separate multi-stage SSS examination/board decision workflow; the current board is a transparent progress display, not the final SSS approval workflow.
 
 
@@ -1001,7 +1001,7 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Add staff controls to start housekeeping, then complete cleaning and record the room inspection.
 - [x] Keep rooms unavailable for new bookings until cleaning and inspection pass.
 - [x] Extend the Godot operations validator to cover checkout, cleaning-state transition, inspection, and room re-availability.
-- [ ] Run Godot 4.3 validation and canonical Android APK export on the updated PR head; do not claim this pass validated until both results are confirmed.
+- [x] Run Godot 4.3 validation and canonical Android APK export on the updated PR head; both results confirmed in #1479/#1216.
 - Note: housekeeping workflow is a local-save prototype. Staff navigation/animation and online shared hotel occupancy remain future work.
 
 
@@ -1110,7 +1110,7 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Animate each part into its assembly position with eased position, scale and rotation tweens as the player completes each of the three build steps.
 - [x] Restore the completed robot display on later lab visits using the locally saved completed-activity record.
 - [x] Extend the tower operations validator to require all three parts to be visible and marked assembled after the robotics activity.
-- [ ] Run Godot 4.3 full validation and canonical Android export on this animated assembly change before claiming it verified.
+- [x] Run Godot 4.3 full validation and canonical Android export on this animated assembly change; both included in #1479/#1216.
 - Note: this is a local procedural assembly prototype; interactive component wiring, robot behavior programming and autonomous robot tasks remain open.
 
 
@@ -1123,3 +1123,13 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Pass Godot 4.3 validation workflow #1479 (run ID 45075559321) on PR merge commit 814b30146cc5da89083b64bdbea102604a94db31, including import/parser, headless launch, all Baghdad landmarks/lobbies, five-tower floor travel and complete tower operations checks.
 - [x] Pass canonical Android export workflow #1216 (run ID 45075559263) on source commit a5c44974a5175fcd208bebaa8a295b91310d4f0d; APK artifact 14774657998, 35,938,599 bytes, uploaded successfully and expires 6 December 2026.
 - [ ] Physical Android device inspection remains outstanding; automated CI does not verify touch feel, visuals, collision feel, thermal load or frame rate.
+
+
+## Latest full Baghdad towers validation and Android export — 22 November 2026
+
+- [x] Confirm all five connected district towers load their landmarks and lobby systems.
+- [x] Confirm floor-2 elevator travel, cabin/floor alignment, transition unlock and return cleanup across all five district towers.
+- [x] Confirm the full operations validator passes, including tower interiors, staff/customer populations, NPC commerce, advertising, hotel/restaurant workflows, leisure activities and the independent 200-floor Power Tower boss arena.
+- [x] Pass Godot 4.3 validation workflow #1479 (run ID 45075559321) on PR merge commit 814b30146cc5da89083b64bdbea102604a94db31.
+- [x] Pass canonical Android export workflow #1216 (run ID 45075559263) on source commit a5c44974a5175fcd208bebaa8a295b91310d4f0d; APK artifact 14774657998, 35,938,599 bytes, expires 6 December 2026.
+- [ ] Physical Android testing remains outstanding, including touch response, visuals, collision feel, frame rate and thermal behavior.
