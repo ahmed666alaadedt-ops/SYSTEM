@@ -72,6 +72,8 @@ func refresh_inventory() -> void:
 		if not item_id.is_empty():
 			lines.append("  ترقية +%d | متانة %.0f/100" % [int(upgrade_levels.get(item_id, 0)), float(durability.get(item_id, 100.0))])
 	lines.append("Nen: " + ("مفتوح — رتبة التحكم %d/5" % int(data.get("nen_control_rank", 0)) if bool(data.get("nen_unlocked", false)) else "غير مستيقظ"))
+	if bool(data.get("nen_unlocked", false)):
+		lines.append("تبريد ضربة النِن: %d ثانية" % int(ceil(float(data.get("nen_burst_cooldown_remaining", 0.0)))))
 	lines.append("")
 	lines.append("التأثيرات النشطة")
 	if effects.is_empty():
