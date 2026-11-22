@@ -516,3 +516,18 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [ ] Pass current Godot validation for progression save/load, combat integration and the extended tower/elevator transaction validator.
 - [ ] Add visible 3D weapon/armour attachment models, weapon-specific attack animations, shield blocking integration, and real Nen abilities/aura techniques.
 - [ ] Add elixir crafting, ingredient sourcing, recipes, cooldown/stacking rules, balance and anti-exploit validation.
+
+
+### NPC vendor economy, crafting stations and final Power Tower challenge — 22 November 2026
+
+- [x] Add persistent vendor stock by product, stock-sensitive buy/sell prices, restocking every five real-time minutes and stock persistence.
+- [x] NPC vendors reduce stock on purchase and take player items back into stock on sale.
+- [x] Add the Weapons Tower blacksmith and elixir laboratory benches, each linked to its assigned NPC employee service.
+- [x] Add recipe-based crafting for swords, spears, axes, bows, shields, armour, helmets, outfits, healing/strength/speed/endurance/energy elixirs and Nen/rare elixirs.
+- [x] Add raw material purchasing and Power Tower milestone/boss material drops to support crafting.
+- [x] Add interactive service kiosks on public tower floors and interactive lift doors in all six lobbies.
+- [x] Add a Power Tower lobby progress board showing cleared floors and the 200-floor target.
+- [x] Add final-boss shockwave warning and three combat phases; floor 200 also grants a unique crown, sovereign core, rare core, Nen fragment and bonus SYSTEM credits.
+- [ ] Pass the newest CI run after the vendor stock, crafting-station and lobby-lift extensions.
+- [ ] Add visual weapon/armour attachments, weapon-specific animations, real Nen abilities, crafting discovery/upgrade/repair systems and physical Android interaction/performance review.
+- [ ] Add online/server-authoritative wallet, vendor stock, player leaderboard and multiplayer Power Tower matchmaking; current economy/progression/records are local.
