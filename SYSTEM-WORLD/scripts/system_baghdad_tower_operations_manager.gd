@@ -111,6 +111,9 @@ var status_label: Label
 var credits_label: Label
 var floor_selector: SpinBox
 var power_floor_started_at := 0
+var power_floor_timer_remaining := 0.0
+var power_floor_timer_display_clock := 0.0
+var active_power_objective_label: Label3D
 var active_power_floor_data: Dictionary = {}
 var active_floor_root: Node3D
 var active_elevator_car: Node3D
@@ -163,6 +166,19 @@ func _process(delta: float) -> void:
 	if stock_refresh_clock <= 0.0:
 		stock_refresh_clock = 300.0
 		_restock_vendor_stock()
+	if power_floor_in_progress and power_floor_timer_remaining > 0.0:
+		power_floor_timer_remaining = maxf(0.0, power_floor_timer_remaining - delta)
+		power_floor_timer_display_clock -= delta
+		if power_floor_timer_remaining <= 0.0:
+			var objective := str(active_power_floor_data.get("objective_type", ""))
+			if objective == "SURVIVE_TIMER":
+				_clear_active_power_opponents()
+				_complete_power_floor()
+			elif objective == "CLEAR_WITHIN_TIME":
+				_fail_power_floor("انتهى الوقت قبل إكمال البطولة.")
+		elif power_floor_timer_display_clock <= 0.0:
+			power_floor_timer_display_clock = 1.0
+			_update_power_objective_display()
 
 func _resolve_towers() -> void:
 	for tower_id in TOWER_CONFIG.keys():
@@ -896,6 +912,13 @@ func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) 
 	arena_label.pixel_size = 0.014
 	arena_label.modulate = Color(1.0, 0.78, 0.42)
 	room.add_child(arena_label)
+	var objective_label := Label3D.new()
+	objective_label.name = "PowerTowerObjectiveLabel"
+	objective_label.position = Vector3(0.0, 7.0, radius * 0.20)
+	objective_label.font_size = 20
+	objective_label.pixel_size = 0.013
+	objective_label.modulate = Color(0.50, 0.94, 1.0)
+	room.add_child(objective_label)
 	var obstacle_count := 2
 	match arena_type:
 		"TEAM":
@@ -1196,6 +1219,8 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 	if is_instance_valid(active_floor_root) and active_floor_root != room:
 		active_floor_root.queue_free()
 	active_floor_root = room
+	if tower_id == "power_tower_baghdad":
+		active_power_objective_label = room.get_node_or_null("PowerTowerObjectiveLabel") as Label3D
 	panel.hide()
 	player.set_meta("system_tower_elevator_active", true)
 	var target_position := tower.to_global(Vector3(0.0, room.position.y + 1.25, 0.0))
@@ -1221,6 +1246,9 @@ func _begin_power_floor() -> void:
 	current_wave = 0
 	total_waves = maxi(1, int(active_power_floor_data.get("wave_count", 1)))
 	opponents_per_wave = maxi(1, int(active_power_floor_data.get("opponent_count", 1)))
+	power_floor_timer_remaining = float(active_power_floor_data.get("time_limit_seconds", 0))
+	power_floor_timer_display_clock = 0.0
+	_update_power_objective_display()
 	_spawn_power_wave()
 
 func _spawn_power_wave() -> void:
@@ -1263,10 +1291,47 @@ func _on_power_opponent_defeated(opponent: Node) -> void:
 	active_opponents.erase(opponent.get_instance_id())
 	if not power_floor_in_progress or not active_opponents.is_empty():
 		return
+	if str(active_power_floor_data.get("objective_type", "")) == "SURVIVE_TIMER":
+		if current_wave < total_waves:
+			_spawn_power_wave()
+		return
 	if current_wave < total_waves:
 		_spawn_power_wave()
 	else:
 		_complete_power_floor()
+
+func _update_power_objective_display() -> void:
+	if not is_instance_valid(active_power_objective_label) or active_power_floor_data.is_empty():
+		return
+	var objective := str(active_power_floor_data.get("objective_type", "ELIMINATE_WAVES"))
+	var seconds := int(ceil(power_floor_timer_remaining))
+	var objective_text := "أكمل موجات الخصوم"
+	if objective == "SURVIVE_TIMER":
+		objective_text = "اصمد حتى انتهاء الوقت"
+	elif objective == "CLEAR_WITHIN_TIME":
+		objective_text = "اهزم جميع الخصوم قبل انتهاء الوقت"
+	elif objective == "DEFEAT_BOSS":
+		objective_text = "اهزم زعيم الطابق"
+	active_power_objective_label.text = objective_text + ("\nالوقت المتبقي: %d ثانية" % seconds if power_floor_timer_remaining > 0.0 else "")
+
+
+func _clear_active_power_opponents() -> void:
+	for opponent in active_opponents.values():
+		if is_instance_valid(opponent):
+			opponent.queue_free()
+	active_opponents.clear()
+
+
+func _fail_power_floor(reason: String) -> void:
+	if not power_floor_in_progress:
+		return
+	_clear_active_power_opponents()
+	power_tower_manager.call("abandon_active_floor")
+	power_floor_in_progress = false
+	power_floor_timer_remaining = 0.0
+	active_power_floor_data.clear()
+	_set_status("لم تنجح في التحدي: " + reason + " حاول مرة أخرى من المصعد.")
+
 
 func grant_power_tower_credits(floor_number: int, final_boss: bool = false) -> int:
 	var reward := 75 + floor_number * 15 + (5000 if final_boss else 0)
@@ -1282,6 +1347,8 @@ func _complete_power_floor() -> void:
 	var reward_items: Array = active_power_floor_data.get("reward_items", []).duplicate()
 	var final_boss := bool(active_power_floor_data.get("final_boss", false))
 	var elapsed := maxf(1.0, float(Time.get_ticks_msec() - power_floor_started_at) / 1000.0)
+	_clear_active_power_opponents()
+	power_floor_timer_remaining = 0.0
 	var result: Dictionary = power_tower_manager.call("confirm_floor_clear", floor_number, elapsed)
 	power_floor_in_progress = false
 	active_power_floor_data.clear()
@@ -1312,6 +1379,8 @@ func return_to_lobby() -> void:
 		power_tower_manager.call("abandon_active_floor")
 		power_floor_in_progress = false
 		active_power_floor_data.clear()
+		power_floor_timer_remaining = 0.0
+		active_power_objective_label = null
 	var tower := tower_nodes[current_tower_id] as Node3D
 	var config: Dictionary = TOWER_CONFIG[current_tower_id]
 	var start_y := active_floor_root.position.y
@@ -1338,6 +1407,7 @@ func return_to_lobby() -> void:
 			if is_instance_valid(active_floor_root):
 				active_floor_root.queue_free()
 			active_floor_root = null
+			active_power_objective_label = null
 			if is_instance_valid(active_elevator_car):
 				active_elevator_car.queue_free()
 			active_elevator_car = null
