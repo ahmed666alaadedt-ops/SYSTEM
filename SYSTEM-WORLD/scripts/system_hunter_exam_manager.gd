@@ -103,9 +103,11 @@ func begin_exam() -> Dictionary:
 func reset_stage_one_route() -> Dictionary:
 	if not exam_active or str(get_current_stage().get("id", "")) != "endurance_pursuit":
 		return {"success":false,"reason":"STAGE_ONE_NOT_ACTIVE"}
+	if not stage_one_checkpoint_ids.is_empty():
+		return {"success":true,"progress":stage_one_checkpoint_ids.size(),"total":STAGE_ONE_CHECKPOINT_IDS.size(),"resumed":true}
 	stage_one_checkpoint_ids.clear()
 	_save_exam_state()
-	return {"success":true,"progress":0,"total":STAGE_ONE_CHECKPOINT_IDS.size()}
+	return {"success":true,"progress":0,"total":STAGE_ONE_CHECKPOINT_IDS.size(),"resumed":false}
 
 
 func record_stage_one_checkpoint(checkpoint_id: String) -> Dictionary:
