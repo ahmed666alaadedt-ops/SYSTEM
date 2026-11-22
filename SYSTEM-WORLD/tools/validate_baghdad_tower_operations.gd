@@ -1315,13 +1315,23 @@ func _run() -> void:
 			if assembly == null:
 				_fail("Robotics assembly display was not generated.")
 				return
+			await create_timer(1.0).timeout
 			for part_index in range(5):
 				var part := assembly.get_node_or_null("RobotAssemblyPart_%02d" % part_index) as MeshInstance3D
 				if part == null or not part.visible or not bool(part.get_meta("system_robot_assembled", false)):
 					_fail("Robotics assembly part %d did not animate into its completed position." % part_index)
 					return
+				var target_position: Vector3 = part.get_meta("system_robot_target_position", Vector3.ZERO)
+				if part.position.distance_to(target_position) > 0.08 or part.scale.distance_to(Vector3.ONE) > 0.08:
+					_fail("Robotics assembly part %d did not settle at its target position and scale." % part_index)
+					return
 			if not bool(assembly.get_meta("system_robot_idle_animation", false)):
 				_fail("Completed SYSTEM robot did not start its autonomous idle animation.")
+				return
+			var left_arm := assembly.get_node_or_null("RobotAssemblyPart_03") as MeshInstance3D
+			var right_arm := assembly.get_node_or_null("RobotAssemblyPart_04") as MeshInstance3D
+			if left_arm == null or right_arm == null or (left_arm.rotation.length() < 0.01 and right_arm.rotation.length() < 0.01):
+				_fail("Completed SYSTEM robot arms are not moving in their idle animation.")
 				return
 		if not operations.get("facility_activity_stats").has(activity_type):
 			_fail("Facility activity result was not recorded: " + str(activity_type))
