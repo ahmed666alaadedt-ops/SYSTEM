@@ -1,0 +1,49 @@
+name: QA Baghdad Vault Door Lifecycle
+
+on:
+  push:
+    branches:
+      - "qa/baghdad-vault-door-lifecycle-20261122"
+    paths:
+      - "SYSTEM-WORLD/**"
+      - ".github/workflows/qa-baghdad-vault-door.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-vault-door:
+    name: Godot 4.3 vault door lifecycle
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout SYSTEM
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.3 stable
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/godot"
+          curl -L --fail --retry 3 \
+            "https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip" \
+            -o "$RUNNER_TEMP/godot.zip"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP/godot"
+          chmod +x "$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          "$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64" --version
+
+      - name: Import and parse canonical project
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --editor --path "$PROJECT" --quit
+
+      - name: Validate vault door open-close lifecycle
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" \
+            --script res://tools/validate_underground_door_lifecycle.gd
