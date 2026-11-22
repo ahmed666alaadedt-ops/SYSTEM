@@ -67,6 +67,18 @@ func _initialize() -> void:
 
 	# Test-only verifier: production runtime must be configured by a trusted backend.
 	manager.configure_evidence_verifier(Callable(self, "_verify_test_evidence"))
+	# Stage one now requires the three ordered route checkpoints before completion.
+	var route_start: Dictionary = manager.reset_stage_one_route()
+	if not bool(route_start.get("success", false)):
+		push_error("Hunter exam validation failed: stage-one route could not be initialized: " + str(route_start))
+		quit(1)
+		return
+	for checkpoint_id in ["checkpoint_01", "checkpoint_02", "checkpoint_03"]:
+		var checkpoint_result: Dictionary = manager.record_stage_one_checkpoint(checkpoint_id)
+		if not bool(checkpoint_result.get("success", false)):
+			push_error("Hunter exam validation failed: ordered stage-one checkpoint was rejected: " + str(checkpoint_result))
+			quit(1)
+			return
 	for stage_index in range(EXAM_SCRIPT.EXAM_STAGES.size()):
 		var current: Dictionary = manager.get_current_stage()
 		var expected: Dictionary = EXAM_SCRIPT.EXAM_STAGES[stage_index]
