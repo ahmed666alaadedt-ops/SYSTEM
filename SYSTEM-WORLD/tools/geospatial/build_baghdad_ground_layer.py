@@ -155,9 +155,17 @@ def _load_source_geometry(boundary_path: pathlib.Path, water_path: pathlib.Path,
     if length < 100.0:
         raise SystemExit("Republic Bridge centerline is too short to define both bank approaches.")
     direction = (dx / length, dz / length)
+    side = (-direction[1], direction[0])
+    # Keep both pedestrian ramps outside the bridge road's central traffic lane.
     bank_points = [
-        [round(target_local.x - direction[0] * 350.0, 2), round(target_local.y - direction[1] * 350.0, 2)],
-        [round(target_local.x + direction[0] * 350.0, 2), round(target_local.y + direction[1] * 350.0, 2)],
+        [
+            round(target_local.x - direction[0] * 350.0 + side[0] * 12.0, 2),
+            round(target_local.y - direction[1] * 350.0 + side[1] * 12.0, 2),
+        ],
+        [
+            round(target_local.x + direction[0] * 350.0 - side[0] * 12.0, 2),
+            round(target_local.y + direction[1] * 350.0 - side[1] * 12.0, 2),
+        ],
     ]
     return {
         "boundary_geometry": boundary_geometry,
