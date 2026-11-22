@@ -2288,6 +2288,33 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 		"arcade":
 			for index in range(6):
 				_add_facility_box(root, "ArcadeCabinet_%02d" % index, Vector3(-12.0 + float(index) * 4.8, 1.4, -2.0), Vector3(2.0, 2.8, 1.4), highlight)
+			for target_index in range(5):
+				var target_x := -4.0 + float(target_index) * 2.0
+				var target_visual := MeshInstance3D.new()
+				target_visual.name = "ArcadeTarget_%02d" % target_index
+				var target_mesh := SphereMesh.new()
+				target_mesh.radius = 0.48
+				target_mesh.height = 0.96
+				target_visual.mesh = target_mesh
+				var target_material := StandardMaterial3D.new()
+				target_material.albedo_color = Color(0.1, 0.9, 0.58)
+				target_material.emission_enabled = true
+				target_material.emission = Color(0.05, 0.7, 0.35)
+				target_visual.material_override = target_material
+				target_visual.position = Vector3(target_x, 2.0, -5.4)
+				root.add_child(target_visual)
+				var target_sensor := Area3D.new()
+				target_sensor.name = "ArcadeTargetSensor_%02d" % target_index
+				target_sensor.collision_layer = 0
+				target_sensor.collision_mask = 1
+				var target_collision := CollisionShape3D.new()
+				var target_shape := SphereShape3D.new()
+				target_shape.radius = 0.7
+				target_collision.shape = target_shape
+				target_sensor.add_child(target_collision)
+				target_sensor.position = Vector3(target_x, 2.0, -5.4)
+				target_sensor.body_entered.connect(_on_arcade_target_body_entered.bind(target_index))
+				root.add_child(target_sensor)
 		"family_zone":
 			for index in range(4):
 				_add_facility_box(root, "FamilyPlayUnit_%02d" % index, Vector3(-9.0 + float(index) * 6.0, 1.0, 1.0), Vector3(3.2, 2.0, 3.2), accent)
@@ -2413,7 +2440,7 @@ func _add_facility_activity_controls(facility_type: String) -> void:
 	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	description.text = "%s: أكمل %d خطوات. تُحفظ أفضل نتيجة وعدد الجولات على هذا الجهاز." % [str(definition["title"]), int(definition["goal"])]
 	content.add_child(description)
-	if facility_type in ["bowling", "sports_court"]:
+	if facility_type in ["bowling", "sports_court", "arcade"]:
 		var aim_label := Label.new()
 		aim_label.name = "FacilityAimLabel"
 		aim_label.text = "اتجاه الرمية: وسط"
@@ -2483,6 +2510,8 @@ func perform_facility_activity(action: String) -> Dictionary:
 		return await _launch_bowling_ball()
 	if facility_type == "sports_court":
 		return await _launch_basketball()
+	if facility_type == "arcade":
+		return await _launch_arcade_projectile()
 	var step := int(active_facility_activity.get("step", 0)) + 1
 	var score_gain := 1
 	match facility_type:
@@ -2508,6 +2537,71 @@ func perform_facility_activity(action: String) -> Dictionary:
 func _on_basketball_sensor_body_entered(body: Node3D) -> void:
 	if str(body.name).begins_with("Basketball_Active"):
 		body.set_meta("system_basketball_scored", true)
+
+
+func _on_arcade_target_body_entered(body: Node3D, target_index: int) -> void:
+	if str(body.name).begins_with("ArcadeProjectile_"):
+		body.set_meta("system_arcade_hit", true)
+		body.set_meta("system_arcade_target", target_index)
+
+
+func _launch_arcade_projectile() -> Dictionary:
+	if bowling_throw_in_progress or basketball_throw_in_progress:
+		return {"success": false, "reason": "انتظر حتى تنتهي المحاولة الحالية."}
+	if current_facility_root == null or not is_instance_valid(current_facility_root):
+		return {"success": false, "reason": "مركز الألعاب غير جاهز."}
+	var target_count := 0
+	for child in current_facility_root.get_children():
+		if child is Area3D and str(child.name).begins_with("ArcadeTargetSensor_"):
+			target_count += 1
+	if target_count != 5:
+		return {"success": false, "reason": "أهداف مركز الألعاب غير مكتملة."}
+	basketball_throw_in_progress = true
+	var projectile := RigidBody3D.new()
+	projectile.name = "ArcadeProjectile_Active"
+	projectile.mass = 0.5
+	projectile.continuous_cd = true
+	projectile.set_meta("system_arcade_hit", false)
+	projectile.set_meta("system_arcade_target", -1)
+	var projectile_mesh := MeshInstance3D.new()
+	var projectile_sphere := SphereMesh.new()
+	projectile_sphere.radius = 0.2
+	projectile_sphere.height = 0.4
+	projectile_mesh.mesh = projectile_sphere
+	var projectile_material := StandardMaterial3D.new()
+	projectile_material.albedo_color = Color(0.1, 0.85, 1.0)
+	projectile_material.emission_enabled = true
+	projectile_material.emission = Color(0.05, 0.5, 0.9)
+	projectile_mesh.material_override = projectile_material
+	projectile.add_child(projectile_mesh)
+	var projectile_collision := CollisionShape3D.new()
+	var projectile_shape := SphereShape3D.new()
+	projectile_shape.radius = 0.2
+	projectile_collision.shape = projectile_shape
+	projectile.add_child(projectile_collision)
+	current_facility_root.add_child(projectile)
+	projectile.position = Vector3(facility_aim * 4.0, 3.0, 4.0)
+	projectile.apply_central_impulse(Vector3(0.0, 0.0, -10.0))
+	_set_status("انطلقت الكرة الضوئية — أصب الهدف المحدد!")
+	await get_tree().create_timer(1.0).timeout
+	var hit := is_instance_valid(projectile) and bool(projectile.get_meta("system_arcade_hit", false))
+	var target_id := int(projectile.get_meta("system_arcade_target", -1)) if is_instance_valid(projectile) else -1
+	if is_instance_valid(projectile):
+		projectile.queue_free()
+	var step := int(active_facility_activity.get("step", 0)) + 1
+	var points := 1 if hit else 0
+	active_facility_activity["step"] = step
+	active_facility_activity["score"] = int(active_facility_activity.get("score", 0)) + points
+	basketball_throw_in_progress = false
+	var goal := int(active_facility_activity.get("goal", 5))
+	var score := int(active_facility_activity.get("score", 0))
+	if step >= goal:
+		var result := _complete_facility_activity()
+		result["last_target_hit"] = hit
+		result["last_target_id"] = target_id
+		return result
+	_set_status(("أصبت الهدف %d!" % (target_id + 1) if hit else "لم تصب الهدف — عدّل الاتجاه وحاول.") + " المحاولة %d/%d | النقاط: %d" % [step, goal, score])
+	return {"success": true, "completed": false, "step": step, "hit": hit, "target_id": target_id, "score": score}
 
 
 func _launch_basketball() -> Dictionary:
