@@ -2,7 +2,7 @@ extends SceneTree
 
 const EXPECTED_TOWER_IDS := [
 	"hunter_association_tower_baghdad",
-	"weapons_equipment_elixirs_tower_baghdad",
+	"business_investment_tower_baghdad",
 	"shopping_tower_baghdad",
 	"entertainment_tower_baghdad",
 	"technology_tower_baghdad",
@@ -11,7 +11,7 @@ const EXPECTED_TOWER_IDS := [
 
 const TOWER_NODE_NAMES := {
 	"hunter_association_tower_baghdad": "HunterAssociationTower",
-	"weapons_equipment_elixirs_tower_baghdad": "WeaponsEquipmentElixirsTower",
+	"business_investment_tower_baghdad": "BusinessInvestmentTower",
 	"shopping_tower_baghdad": "ShoppingTower",
 	"entertainment_tower_baghdad": "EntertainmentTower",
 	"technology_tower_baghdad": "TechnologyTower",
@@ -109,14 +109,24 @@ func _run_validation() -> void:
 			_fail("Floor zoning metadata is missing for " + tower_id)
 			return
 
-	var weapons_tower := tower_manager.get_node_or_null("WeaponsEquipmentElixirsTower")
-	var weapon_categories: PackedStringArray = weapons_tower.get_meta("facility_categories", PackedStringArray())
-	var elixir_categories: PackedStringArray = weapons_tower.get_meta("elixir_categories", PackedStringArray())
-	if not weapon_categories.has("swords") or not weapon_categories.has("armor"):
-		_fail("Weapons tower is missing required weapon/armour categories.")
+	var shopping_tower := tower_manager.get_node_or_null("ShoppingTower") as Node3D
+	if shopping_tower == null:
+		_fail("Shopping and Commerce Tower is missing.")
+		return
+	var shopping_categories: PackedStringArray = shopping_tower.get_meta("facility_categories", PackedStringArray())
+	var elixir_categories: PackedStringArray = shopping_tower.get_meta("elixir_categories", PackedStringArray())
+	var hospitality_categories: PackedStringArray = shopping_tower.get_meta("hospitality_categories", PackedStringArray())
+	if not shopping_categories.has("swords") or not shopping_categories.has("armor") or not shopping_categories.has("hotel") or not shopping_categories.has("restaurants"):
+		_fail("Shopping Tower is missing weapons, armour, restaurant or hotel facility categories.")
 		return
 	if not elixir_categories.has("nen_acquisition") or not elixir_categories.has("healing") or not elixir_categories.has("rare_and_legendary_elixirs"):
-		_fail("Weapons tower is missing required Nen/healing/rare elixir categories.")
+		_fail("Shopping Tower is missing Nen/healing/rare elixir categories.")
+		return
+	if not hospitality_categories.has("hotel_reception") or not hospitality_categories.has("guest_rooms") or not hospitality_categories.has("room_service"):
+		_fail("Shopping Tower is missing hotel and hospitality departments.")
+		return
+	if tower_manager.get_node_or_null("WeaponsEquipmentElixirsTower") != null:
+		_fail("Obsolete standalone Weapons/Equipment/Elixirs Tower must not exist in Baghdad.")
 		return
 
 	var power_tower := tower_manager.get_node_or_null("PowerTower")
@@ -136,7 +146,7 @@ func _run_validation() -> void:
 		_fail("Technology Tower is missing from the public event-board node map.")
 		return
 
-	print("Baghdad tower validation passed: five connected towers, standalone 200-floor Power Tower, six lobby kiosks, floor zoning, weapons/elixir categories, and Technology public display.")
+	print("Baghdad tower validation passed: five connected towers, standalone 200-floor Power Tower, six lobby kiosks, Shopping Tower weapons/elixirs/restaurants/hotel, floor zoning, and Technology public display.")
 	main_scene.queue_free()
 	await process_frame
 	quit(0)
