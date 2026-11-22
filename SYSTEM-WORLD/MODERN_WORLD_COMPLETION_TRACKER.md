@@ -34,6 +34,16 @@ This is the acceptance checklist for the modern-world map. The project must not 
 - [ ] Replace the text-only directory with a mobile-friendly interactive floor selector and validated elevator transitions after interior scenes and collision-safe arrival points exist.
 - [ ] Test entrance targeting and directory readability in Godot and on Android; no physical-device visual test is claimed.
 
+## Baghdad public tower lobby pavilions — 22 November 2026
+
+- [x] Generate an accessible ground-level open lobby pavilion at each of the five connected towers and the standalone Power Tower.
+- [x] Add a walkable lobby floor with collision, a canopy, support columns, a directory kiosk, and a visible tower-name sign.
+- [x] Add ray-interactable directory kiosks carrying the tower ID, floor count, height, and district membership without registering duplicate map landmarks.
+- [x] Route both tower entrance markers and lobby kiosks through the same Arabic tower-directory response; keep the Power Tower floor-request status visible after the directory.
+- [ ] Replace pavilion blockouts with detailed architectural lobbies, security/reception, NPC staff, doors, accessible circulation, and real tower-core connections.
+- [ ] Implement elevator cars, floor selection, travel transitions, interior floor scenes, emergency stairs, and validated collision/navigation.
+- [ ] Verify all lobby geometry and interactions in Godot and on Android; current code is source-level and automated validation is pending.
+
 ## Current verified repository foundations
 
 - [x] Fourteen city labels and eight district labels per city are defined in modern_world_region_manager.gd; only Baghdad is currently connected to the provisional WGS84 registry anchor, while the other thirteen centers remain prototype-layout coordinates.
