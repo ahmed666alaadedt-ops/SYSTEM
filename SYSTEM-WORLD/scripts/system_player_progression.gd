@@ -260,9 +260,13 @@ func get_equipment_bonuses() -> Dictionary:
 	var damage := 0.0
 	var defense := 0.0
 	var movement := 1.0
+	var combat_system := get_tree().root.find_child("ModernWorldCombatSystem", true, false)
+	var is_blocking := combat_system != null and bool(combat_system.get("is_blocking"))
 	for slot in equipment_slots.keys():
 		var item_id := str(equipment_slots[slot])
 		if item_id.is_empty() or get_item_durability(item_id) <= 0.0:
+			continue
+		if slot == "shield" and not is_blocking:
 			continue
 		var upgrade_level := get_item_upgrade_level(item_id)
 		damage += float(EQUIPMENT_DAMAGE_BONUS.get(item_id, 0.0)) + (float(upgrade_level) * 2.0 if slot == "weapon" else 0.0)
