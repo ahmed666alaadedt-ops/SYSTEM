@@ -167,6 +167,25 @@ def _load_source_geometry(boundary_path: pathlib.Path, water_path: pathlib.Path,
             round(target_local.y + direction[1] * 350.0 - side[1] * 12.0, 2),
         ],
     ]
+    # The express skyway leaves the existing four-tower ring and approaches the bridge
+    # from the Baghdad core. Support locations are selected only where OSM ground exists.
+    target_length_from_origin = math.hypot(target_local.x, target_local.y)
+    if target_length_from_origin < 700.0:
+        raise SystemExit("Republic Bridge is too close to the map origin for the planned express skyway.")
+    skyway_direction = (target_local.x / target_length_from_origin, target_local.y / target_length_from_origin)
+    skyway_start = [round(skyway_direction[0] * 580.0, 2), round(skyway_direction[1] * 580.0, 2)]
+    skyway_length = math.dist(skyway_start, [target_local.x, target_local.y])
+    support_points = []
+    for distance in range(250, int(skyway_length - 700.0), 250):
+        progress = distance / skyway_length
+        point = [
+            skyway_start[0] + (target_local.x - skyway_start[0]) * progress,
+            skyway_start[1] + (target_local.y - skyway_start[1]) * progress,
+        ]
+        if ground_geometry.covers(Point(point)):
+            support_points.append([round(point[0], 2), round(point[1], 2)])
+    if len(support_points) < 5:
+        raise SystemExit(f"Only {len(support_points)} verified land supports exist for the Republic Bridge express skyway.")
     return {
         "boundary_geometry": boundary_geometry,
         "ground_geometry": ground_geometry,
@@ -174,6 +193,8 @@ def _load_source_geometry(boundary_path: pathlib.Path, water_path: pathlib.Path,
         "target_local": target_local,
         "centerline_local": [[round(x, 2), round(z, 2)] for x, z in centerline_local],
         "bank_points": bank_points,
+        "skyway_start": skyway_start,
+        "skyway_support_points": support_points,
         "water_feature_count": len(water_features),
         "bridge_distance_m": bridge_distance,
         "river_distance_m": river_distance,
@@ -299,6 +320,10 @@ def main() -> int:
             "tower_anchor_local_m": [round(target_local.x, 2), round(target_local.y, 2)],
             "centerline_local_m": source["centerline_local"],
             "bank_access_points_local_m": source["bank_points"],
+            "express_skyway_start_local_m": source["skyway_start"],
+            "express_skyway_support_points_local_m": source["skyway_support_points"],
+            "express_skyway_no_support_radius_m": 700.0,
+            "express_skyway_support_spacing_m": 250.0,
             "bridge_deck_elevation_m": BRIDGE_DECK_ELEVATION_M,
             "tower_platform_elevation_m": BRIDGE_DECK_ELEVATION_M + TOWER_PLATFORM_CLEARANCE_M,
             "river_surface_elevation_m": WATER_SURFACE_ELEVATION_M,
@@ -340,6 +365,7 @@ def main() -> int:
         "bridge_centerline_distance_m": round(source["bridge_distance_m"], 2),
         "tigris_centerline_distance_m": round(source["river_distance_m"], 2),
         "bank_access_points_local_m": source["bank_points"],
+        "express_skyway_support_count": len(source["skyway_support_points"]),
         "pack": str(args.pack),
     }
     args.report.parent.mkdir(parents=True, exist_ok=True)
