@@ -64,7 +64,7 @@ func _build_hunter_tower() -> void:
 
 func _build_power_tower() -> void:
 	# Standalone challenge destination: deliberately outside the five-tower district.
-	var position := city_anchor + Vector3(780.0, 0.0, 760.0)
+	var position := city_anchor + Vector3(650.0, 0.0, 620.0)
 	_build_tower(
 		"PowerTower",
 		"برج القوة",
