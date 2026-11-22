@@ -1526,6 +1526,54 @@ func _add_hotel_controls() -> void:
 			controls.add_child(booking_button)
 
 
+func open_hotel_room_preview(room_id: String) -> void:
+	var room_data: Dictionary = {}
+	for room_value in HOTEL_ROOM_CATALOG:
+		var candidate: Dictionary = room_value
+		if str(candidate.get("id", "")) == room_id:
+			room_data = candidate
+			break
+	if room_data.is_empty():
+		return
+	current_hotel_room_id = room_id
+	current_tower_id = "shopping_tower_baghdad"
+	panel.visible = true
+	title_label.text = "فندق SYSTEM — " + str(room_data.get("name", "غرفة فندقية"))
+	_clear_dynamic_controls()
+	var details := Label.new()
+	details.text = "معاينة داخلية للغرفة\\nالسعر: %d رصيد لليلة\\nالرتبة المطلوبة: %s\\nتتضمن سريراً وخزانة ومكتباً وحماماً خاصاً." % [int(room_data.get("rate", 0)), str(room_data.get("required_rank", "F"))]
+	details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(details)
+	var booking: Dictionary = hotel_bookings.get(room_id, {})
+	var status := str(booking.get("status", ""))
+	if booking.is_empty() or status == "ready":
+		var book_button := Button.new()
+		book_button.text = "حجز هذه الغرفة — ليلة واحدة"
+		book_button.disabled = not _meets_hunter_rank(str(room_data.get("required_rank", "F"))) or credits < int(room_data.get("rate", 0)) or not _get_active_hotel_booking().is_empty()
+		book_button.pressed.connect(_book_hotel_room.bind(room_id, str(room_data.get("name", "")), int(room_data.get("rate", 0)), str(room_data.get("required_rank", "F")), 1))
+		content.add_child(book_button)
+	elif str(booking.get("guest_id", "")) == "local_player":
+		var state := Label.new()
+		state.text = "حالتك في الغرفة: %s" % status
+		content.add_child(state)
+		if int(booking.get("check_in_unix", 0)) == 0:
+			var check_in_button := Button.new()
+			check_in_button.text = "تسجيل الدخول إلى هذه الغرفة"
+			check_in_button.pressed.connect(_check_in_hotel_room)
+			content.add_child(check_in_button)
+		else:
+			_add_hotel_room_service_controls(content, booking)
+		var checkout_button := Button.new()
+		checkout_button.text = "تسجيل الخروج وإنهاء الإقامة"
+		checkout_button.pressed.connect(_checkout_hotel_room)
+		content.add_child(checkout_button)
+	else:
+		var occupied := Label.new()
+		occupied.text = "هذه الغرفة مشغولة حالياً ولا يمكن حجزها."
+		content.add_child(occupied)
+	_set_status("معاينة %s — يمكنك الحجز من هنا أو من استقبال الفندق." % str(room_data.get("name", "الغرفة")))
+
+
 func _add_hotel_room_service_controls(parent: VBoxContainer, booking: Dictionary) -> void:
 	var heading := Label.new()
 	heading.text = "خدمة الغرف — طلب الطعام والشراب"
@@ -3486,6 +3534,107 @@ func _add_facility_box(parent: Node3D, object_name: String, object_position: Vec
 	parent.add_child(visual)
 
 
+func _add_hotel_room_box(parent: Node3D, object_name: String, object_size: Vector3, object_position: Vector3, material: Material) -> MeshInstance3D:
+	var visual := MeshInstance3D.new()
+	visual.name = object_name
+	var mesh := BoxMesh.new()
+	mesh.size = object_size
+	visual.mesh = mesh
+	visual.position = object_position
+	visual.material_override = material
+	parent.add_child(visual)
+	return visual
+
+
+func _create_hotel_room_interior(parent: Node3D, room_data: Dictionary, room_index: int, radius: float, materials: Dictionary) -> void:
+	var room_id := str(room_data.get("id", "hotel_room_%02d" % room_index))
+	var room_name := str(room_data.get("name", "غرفة فندقية"))
+	var angle := TAU * float(room_index) / float(HOTEL_ROOM_CATALOG.size())
+	var room_root := Node3D.new()
+	room_root.name = "HotelRoomInterior_" + room_id
+	room_root.position = Vector3(cos(angle) * radius * 0.34, 0.0, sin(angle) * radius * 0.34)
+	room_root.rotation.y = PI * 0.5 - angle
+	room_root.set_meta("system_hotel_room_id", room_id)
+	room_root.set_meta("system_hotel_room_type", "vip" if room_id == "hotel_elite_vip" else ("hunter_suite" if room_id == "hotel_hunter_suite" else ("deluxe" if room_id.begins_with("hotel_deluxe") else "standard")))
+	parent.add_child(room_root)
+	var wall: Material = materials["wall"]
+	var floor: Material = materials["floor"]
+	var wood: Material = materials["wood"]
+	var linen: Material = materials["linen"]
+	var accent: Material = materials["accent"]
+	var glass: Material = materials["glass"]
+	var gold: Material = materials["gold"]
+	var dark: Material = materials["dark"]
+	_add_hotel_room_box(room_root, "HotelRoomFloor", Vector3(5.4, 0.18, 5.8), Vector3(0.0, 0.09, 0.0), floor)
+	_add_hotel_room_box(room_root, "HotelRoomBackWall", Vector3(5.4, 3.2, 0.16), Vector3(0.0, 1.6, -2.9), wall)
+	_add_hotel_room_box(room_root, "HotelRoomLeftWall", Vector3(0.16, 3.2, 5.8), Vector3(-2.7, 1.6, 0.0), wall)
+	_add_hotel_room_box(room_root, "HotelRoomRightWall", Vector3(0.16, 3.2, 5.8), Vector3(2.7, 1.6, 0.0), wall)
+	_add_hotel_room_box(room_root, "HotelRoomFrontLeftWall", Vector3(1.65, 3.2, 0.16), Vector3(-1.88, 1.6, 2.9), wall)
+	_add_hotel_room_box(room_root, "HotelRoomFrontRightWall", Vector3(1.65, 3.2, 0.16), Vector3(1.88, 1.6, 2.9), wall)
+	_add_hotel_room_box(room_root, "HotelRoomDoorHeader", Vector3(2.1, 0.38, 0.18), Vector3(0.0, 3.02, 2.9), gold)
+	var window := _add_hotel_room_box(room_root, "HotelRoomWindow", Vector3(2.25, 1.25, 0.08), Vector3(0.0, 2.0, -2.78), glass)
+	window.set_meta("system_hotel_room_window", true)
+	_add_hotel_room_box(room_root, "HotelRoomBed", Vector3(2.15, 0.48, 2.45), Vector3(-1.15, 0.42, -0.75), wood)
+	_add_hotel_room_box(room_root, "HotelRoomMattress", Vector3(2.08, 0.22, 2.38), Vector3(-1.15, 0.77, -0.75), linen)
+	_add_hotel_room_box(room_root, "HotelRoomPillow", Vector3(1.6, 0.15, 0.48), Vector3(-1.15, 0.94, -1.68), linen)
+	_add_hotel_room_box(room_root, "HotelRoomHeadboard", Vector3(2.2, 1.0, 0.16), Vector3(-1.15, 0.92, -2.03), accent)
+	_add_hotel_room_box(room_root, "HotelRoomWardrobe", Vector3(0.9, 2.15, 0.95), Vector3(2.1, 1.08, 0.15), wood)
+	_add_hotel_room_box(room_root, "HotelRoomDesk", Vector3(1.65, 0.16, 0.78), Vector3(0.9, 0.78, 1.0), wood)
+	_add_hotel_room_box(room_root, "HotelRoomDeskLegs", Vector3(1.45, 0.72, 0.12), Vector3(0.9, 0.36, 1.0), dark)
+	_add_hotel_room_box(room_root, "HotelRoomDeskChair", Vector3(0.68, 0.92, 0.68), Vector3(0.9, 0.52, 1.85), accent)
+	_add_hotel_room_box(room_root, "HotelRoomTelevision", Vector3(1.55, 0.92, 0.1), Vector3(0.9, 1.82, -2.78), dark)
+	_add_hotel_room_box(room_root, "HotelRoomBathroomPartition", Vector3(0.12, 2.45, 2.2), Vector3(0.55, 1.22, -1.72), wall)
+	var bathroom := Node3D.new()
+	bathroom.name = "HotelRoomBathroom"
+	bathroom.position = Vector3(1.55, 0.0, -1.72)
+	room_root.add_child(bathroom)
+	_add_hotel_room_box(bathroom, "HotelBathroomFloor", Vector3(1.95, 0.12, 2.25), Vector3.ZERO, floor)
+	_add_hotel_room_box(bathroom, "HotelBathroomShower", Vector3(0.82, 1.9, 0.82), Vector3(0.52, 1.0, -0.55), glass)
+	_add_hotel_room_box(bathroom, "HotelBathroomSink", Vector3(0.72, 0.82, 0.55), Vector3(-0.52, 0.42, -0.55), linen)
+	_add_hotel_room_box(bathroom, "HotelBathroomToilet", Vector3(0.58, 0.62, 0.78), Vector3(0.48, 0.32, 0.58), linen)
+	var door := _add_hotel_room_box(room_root, "HotelRoomDoor", Vector3(1.45, 2.72, 0.14), Vector3(0.72, 1.36, 2.82), wood)
+	door.rotation.y = -0.42
+	_add_hotel_room_box(room_root, "HotelRoomDoorHandle", Vector3(0.08, 0.18, 0.08), Vector3(1.28, 1.36, 2.74), gold)
+	var lamp := _add_hotel_room_box(room_root, "HotelRoomBedsideLamp", Vector3(0.28, 0.72, 0.28), Vector3(-2.12, 1.08, -1.72), gold)
+	lamp.set_meta("system_hotel_room_lamp", true)
+	if room_id.begins_with("hotel_deluxe") or room_id == "hotel_hunter_suite" or room_id == "hotel_elite_vip":
+		_add_hotel_room_box(room_root, "HotelRoomSofa", Vector3(1.75, 0.72, 0.82), Vector3(0.45, 0.42, 0.25), accent)
+		_add_hotel_room_box(room_root, "HotelRoomCoffeeTable", Vector3(1.0, 0.18, 0.62), Vector3(0.45, 0.28, 0.95), wood)
+	if room_id == "hotel_hunter_suite":
+		_add_hotel_room_box(room_root, "HotelRoomHunterGearRack", Vector3(0.22, 1.75, 1.25), Vector3(2.25, 1.0, -1.2), gold)
+		_add_hotel_room_box(room_root, "HotelRoomHunterTrophyDisplay", Vector3(0.9, 1.05, 0.22), Vector3(1.35, 1.55, 1.85), dark)
+	elif room_id == "hotel_elite_vip":
+		_add_hotel_room_box(room_root, "HotelRoomVIPDiningTable", Vector3(1.65, 0.16, 1.0), Vector3(0.55, 0.78, 1.45), gold)
+		_add_hotel_room_box(room_root, "HotelRoomVIPChandelier", Vector3(0.8, 0.18, 0.8), Vector3(0.0, 3.05, 0.0), gold)
+	var room_label := Label3D.new()
+	room_label.name = "HotelRoomNameLabel"
+	room_label.text = room_name
+	room_label.position = Vector3(0.0, 3.25, 2.15)
+	room_label.font_size = 18
+	room_label.pixel_size = 0.009
+	room_label.modulate = Color(1.0, 0.86, 0.58)
+	room_root.add_child(room_label)
+	var interaction := Area3D.new()
+	interaction.name = "HotelRoomDoorInteraction"
+	interaction.add_to_group("system_interactable")
+	interaction.collision_layer = 1
+	interaction.collision_mask = 0
+	interaction.set_meta("system_tower_id", "shopping_tower_baghdad")
+	interaction.set_meta("system_tower_floor_number", 28)
+	interaction.set_meta("system_hotel_room_id", room_id)
+	interaction.set_meta("system_hotel_room_name", room_name)
+	interaction.set_meta("system_hotel_room_rate", int(room_data.get("rate", 0)))
+	interaction.set_meta("system_hotel_room_required_rank", str(room_data.get("required_rank", "F")))
+	interaction.set_meta("system_interaction_prompt", "معاينة وحجز " + room_name)
+	var interaction_shape := CollisionShape3D.new()
+	var interaction_sphere := SphereShape3D.new()
+	interaction_sphere.radius = 1.8
+	interaction_shape.shape = interaction_sphere
+	interaction_shape.position = Vector3(0.0, 1.2, 3.15)
+	interaction.add_child(interaction_shape)
+	room_root.add_child(interaction)
+
+
 func _create_hotel_facilities(room: Node3D, radius: float, floor_number: int, hospitality_staff_id: String) -> void:
 	var hotel := Node3D.new()
 	hotel.name = "SYSTEMHotelFacilities"
@@ -3497,6 +3646,35 @@ func _create_hotel_facilities(room: Node3D, radius: float, floor_number: int, ho
 	var dark := StandardMaterial3D.new()
 	dark.albedo_color = Color(0.07, 0.12, 0.16)
 	dark.metallic = 0.35
+	var wall_material := StandardMaterial3D.new()
+	wall_material.albedo_color = Color(0.74, 0.72, 0.66)
+	wall_material.roughness = 0.88
+	var floor_material := StandardMaterial3D.new()
+	floor_material.albedo_color = Color(0.22, 0.27, 0.29)
+	floor_material.roughness = 0.62
+	var wood_material := StandardMaterial3D.new()
+	wood_material.albedo_color = Color(0.34, 0.19, 0.10)
+	wood_material.roughness = 0.68
+	var linen_material := StandardMaterial3D.new()
+	linen_material.albedo_color = Color(0.82, 0.79, 0.71)
+	linen_material.roughness = 0.92
+	var accent_material := StandardMaterial3D.new()
+	accent_material.albedo_color = Color(0.08, 0.32, 0.39)
+	accent_material.metallic = 0.28
+	var glass_material := StandardMaterial3D.new()
+	glass_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	glass_material.albedo_color = Color(0.24, 0.62, 0.78, 0.34)
+	glass_material.roughness = 0.12
+	var room_materials := {
+		"wall": wall_material,
+		"floor": floor_material,
+		"wood": wood_material,
+		"linen": linen_material,
+		"accent": accent_material,
+		"glass": glass_material,
+		"gold": gold,
+		"dark": dark
+	}
 	var sign := Label3D.new()
 	sign.name = "HotelFloorSign"
 	sign.text = "فندق SYSTEM — " + ("الاستقبال والصالة" if floor_number == 27 else "الغرف والأجنحة")
@@ -3525,17 +3703,9 @@ func _create_hotel_facilities(room: Node3D, radius: float, floor_number: int, ho
 		lounge.material_override = dark
 		hotel.add_child(lounge)
 	else:
-		for index in range(8):
-			var angle := TAU * float(index) / 8.0
-			var door := MeshInstance3D.new()
-			door.name = "HotelSuiteDoor_%02d" % index
-			var door_mesh := BoxMesh.new()
-			door_mesh.size = Vector3(2.2, 3.4, 0.22)
-			door.mesh = door_mesh
-			door.position = Vector3(cos(angle) * radius * 0.48, 1.7, sin(angle) * radius * 0.48)
-			door.rotation.y = -angle
-			door.material_override = gold
-			hotel.add_child(door)
+		for index in range(HOTEL_ROOM_CATALOG.size()):
+			var room_data: Dictionary = HOTEL_ROOM_CATALOG[index]
+			_create_hotel_room_interior(hotel, room_data, index, radius, room_materials)
 	var interaction := Area3D.new()
 	interaction.name = "HotelReceptionInteraction" if floor_number == 27 else "HotelSuiteBookingInteraction"
 	interaction.add_to_group("system_interactable")
