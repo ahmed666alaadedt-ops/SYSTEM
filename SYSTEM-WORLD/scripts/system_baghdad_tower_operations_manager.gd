@@ -446,24 +446,37 @@ func open_staff_service(staff_node: Node) -> void:
 	panel.show()
 
 func _add_catalog_controls(tower_id: String) -> void:
+	if is_instance_valid(catalog_controls):
+		var old_scroll := catalog_controls.get_parent()
+		if old_scroll != null:
+			old_scroll.queue_free()
+	var scroll := ScrollContainer.new()
+	scroll.name = "VendorCatalogScroll"
+	scroll.custom_minimum_size = Vector2(0.0, 160.0)
+	content.add_child(scroll)
+	catalog_controls = VBoxContainer.new()
+	catalog_controls.name = "VendorCatalogControls"
+	scroll.add_child(catalog_controls)
 	var catalog: Array = PRODUCT_CATALOG.get(tower_id, [])
 	var heading := Label.new()
 	heading.text = "المعروض للبيع — بإشراف موظفي البرج"
-	content.add_child(heading)
-	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(0.0, 160.0)
-	content.add_child(scroll)
-	var list := VBoxContainer.new()
-	scroll.add_child(list)
+	catalog_controls.add_child(heading)
+	if catalog.is_empty():
+		var empty := Label.new()
+		empty.text = "لا توجد بضائع معروضة في هذا البرج."
+		catalog_controls.add_child(empty)
+		return
 	for product_value in catalog:
 		var product: Dictionary = product_value
 		var item_id := str(product["id"])
 		var item_name := str(product["name"])
-		var price := int(product["price"])
+		var price := _get_current_price(item_id)
+		var stock := get_vendor_stock(item_id)
 		var buy_button := Button.new()
-		buy_button.text = "%s — %d رصيد" % [item_name, price]
+		buy_button.text = "%s — %d رصيد | المخزون: %d" % [item_name, price, stock]
+		buy_button.disabled = stock <= 0
 		buy_button.pressed.connect(_buy_product.bind(item_id, item_name, price))
-		list.add_child(buy_button)
+		catalog_controls.add_child(buy_button)
 
 func _add_crafting_controls(tower_id: String) -> void:
 	if tower_id != "weapons_equipment_elixirs_tower_baghdad" or not is_instance_valid(progression) or not progression.has_method("get_crafting_recipe_list"):
