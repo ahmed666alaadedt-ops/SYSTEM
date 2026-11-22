@@ -608,8 +608,11 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Attach a dedicated Hunter Association helicopter runtime controller to the pad; generate a parked helicopter model with animated main/tail rotors.
 - [x] Add pilot enter/exit flow, keyboard flight inputs, on-screen mobile ascend/descend/directional controls, and camera follow while piloting.
 - [x] Add approach-distance interaction, a defined 18 m landing radius, low-speed landing state, and exit restriction while airborne.
-- [x] Extend the Godot operations validator to require the runtime controller, aircraft model, touch HUD, owner ID and landing radius.
+- [x] Require completion of all Hunter examination stages before allowing helicopter pilot access; unlicensed players receive a clear denial message.
+- [x] Add a physics-space shape query before each flight movement step to block movement into collidable world geometry.
+- [x] Pause the on-foot player movement loop while piloting so the character controller cannot fight the aircraft controller.
+- [x] Expose pilot authorization in the runtime status for automated verification.
 - [ ] Pass Godot 4.3 parsing, headless startup and the expanded helicopter runtime validator; then pass canonical Android APK export on the same commit.
-- [ ] Add Hunter Association membership/rank permissions, robust collision/obstacle avoidance, terrain-aware flight physics, emergency landing, aircraft parking persistence and flight safety validation.
+- [ ] Add robust aircraft body collision, terrain-aware flight physics, emergency landing, aircraft parking persistence and flight safety validation.
 - [ ] Review rooftop approach clearance, touch layout, camera behavior, collision traversal, lighting and Android performance on a physical device.
 - Note: this is a first playable flight prototype using scripted movement and a procedural helicopter blockout. It is not yet a production aircraft physics model, and membership permissions and obstacle collision are still pending.
