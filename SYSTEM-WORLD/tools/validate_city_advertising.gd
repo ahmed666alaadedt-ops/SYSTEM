@@ -4,6 +4,8 @@ const ADVERTISING_MANAGER = preload("res://scripts/system_city_advertising_manag
 const MAP_MANAGER = preload("res://scripts/world_map_manager.gd")
 const PUBLIC_BOARD = preload("res://scripts/system_public_event_board.gd")
 
+var _owned_test_nodes: Array[Node] = []
+
 
 func _initialize() -> void:
 	call_deferred("_run_validation")
@@ -11,15 +13,30 @@ func _initialize() -> void:
 
 func _fail(message: String) -> void:
 	push_error("City advertising validation failed: " + message)
+	await _release_test_scene()
 	quit(1)
+
+
+func _release_test_scene() -> void:
+	# These managers create many temporary 3D billboard meshes. Explicitly
+	# release them and let deferred deletion complete before SceneTree exits.
+	for index in range(_owned_test_nodes.size() - 1, -1, -1):
+		var node := _owned_test_nodes[index]
+		if is_instance_valid(node):
+			node.queue_free()
+	_owned_test_nodes.clear()
+	await process_frame
+	await process_frame
 
 
 func _run_validation() -> void:
 	var map_manager = MAP_MANAGER.new()
 	root.add_child(map_manager)
+	_owned_test_nodes.append(map_manager)
 
 	var public_board = PUBLIC_BOARD.new()
 	root.add_child(public_board)
+	_owned_test_nodes.append(public_board)
 	var anchors := {
 		"Baghdad": Vector2.ZERO,
 		"Tokyo": Vector2(120.0, 80.0)
@@ -28,6 +45,7 @@ func _run_validation() -> void:
 
 	var advertising_manager = ADVERTISING_MANAGER.new()
 	root.add_child(advertising_manager)
+	_owned_test_nodes.append(advertising_manager)
 	advertising_manager.setup(anchors, null)
 	advertising_manager.connect_map_manager(map_manager, "2")
 	public_board.connect_advertising_manager(advertising_manager)
@@ -74,4 +92,6 @@ func _run_validation() -> void:
 			return
 
 	print("City advertising validation passed: street_boards=", locations.size(), " map_markers=", map_ads.size(), " facade_screens=", public_board.ad_labels.size())
+	await _release_test_scene()
+	print("City advertising test scene cleanup flushed before SceneTree shutdown.")
 	quit(0)
