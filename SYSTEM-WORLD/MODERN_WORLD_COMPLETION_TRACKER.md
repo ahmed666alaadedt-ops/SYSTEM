@@ -979,7 +979,7 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 
 - [x] Add a collision-backed elevator cabin to each of the five connected tower lobbies, with paired sliding door panels and a floor indicator.
 - [x] Add a timed lift-travel animation and door-open/door-close cycle before the player enters the selected procedural floor environment.
-- [x] Add collision-backed emergency stair steps and intermediate landings connecting the lobby through the first four upper-floor blockouts (80 steps per tower).
+- [x] Add collision-backed emergency stair steps and intermediate landings connecting the lobby through the first four upper-floor blockouts (200 collision-backed steps per tower).
 - [x] Extend the main floor-entry flow and tower validator to exercise the animated elevator and verify emergency stair geometry.
 - [ ] Run Godot 4.3 parsing, the complete configured validator suite, and headless main-scene startup on the exact elevator/stairwell commit.
 - [ ] Inspect elevator timing, cabin clearance, stair traversal, railings and Android frame-time in the live scene.
