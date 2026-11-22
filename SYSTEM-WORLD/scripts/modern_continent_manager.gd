@@ -142,10 +142,11 @@ func _get_height(x: float, z: float) -> float:
 
 # Public terrain sampling API for world systems such as forests, paths and NPCs.
 func get_terrain_height(x: float, z: float) -> float:
-	# Preserve the original per-point terrain heights inside the existing continent grid.
-	# The extended Baghdad region beyond that grid uses the blended municipal baseline.
-	if baghdad_osm_ground_enabled and _is_baghdad_osm_region(x, z) and _is_outside_terrain_grid(x, z):
-		return _get_baghdad_osm_extended_height(x, z)
+	# In the Baghdad OSM region, all world systems sample the same visible municipal
+	# ground surface. Core tower points remain unchanged because their original land
+	# heights are already above the minimum visible-ground threshold.
+	if baghdad_osm_ground_enabled and _is_baghdad_osm_region(x, z):
+		return get_baghdad_osm_ground_height(x, z)
 	return _sample_terrain_height_grid(x, z)
 
 
