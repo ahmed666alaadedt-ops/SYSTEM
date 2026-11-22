@@ -2539,7 +2539,8 @@ func open_arcade_cabinet(tower_id: String, floor_number: int, cabinet_id: int, c
 	if selector != null:
 		selector.select(mode_index)
 	_on_arcade_mode_selected(mode_index)
-	title_label.text = "SYSTEM ARCADE — الجهاز %d | %s" % [cabinet_id + 1, "ذاكرة الألوان" if cabinet_mode == "memory" else "ميدان التصويب"]
+	var cabinet_game_title := "ذاكرة الألوان" if cabinet_mode == "memory" else ("سرعة الاستجابة" if cabinet_mode == "reflex" else "ميدان التصويب")
+	title_label.text = "SYSTEM ARCADE — الجهاز %d | %s" % [cabinet_id + 1, cabinet_game_title]
 	_set_status("تم تشغيل الجهاز %d. اختر بدء الجولة عندما تكون مستعداً." % (cabinet_id + 1))
 
 
