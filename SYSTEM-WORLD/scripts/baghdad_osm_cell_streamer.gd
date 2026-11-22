@@ -28,6 +28,7 @@ var enabled := false
 var canonical_origin_frame_valid := false
 var source_snapshot := ""
 var manifest_schema_version := 0
+var entrance_association_schema_version := 0
 var _last_center_cell := Vector2i(2147483647, 2147483647)
 
 var road_material: StandardMaterial3D
@@ -53,6 +54,7 @@ func _ready() -> void:
 		push_error("SYSTEM Baghdad OSM: manifest JSON must be an object.")
 		return
 	manifest_schema_version = int(parsed.get("schema_version", 0))
+	entrance_association_schema_version = int(parsed.get("entrance_association_schema_version", 0))
 	if manifest_schema_version != 1:
 		push_error("SYSTEM Baghdad OSM: unsupported manifest schema version.")
 		return
@@ -824,6 +826,8 @@ func _build_entrance_feature(parent: Node3D, feature: Dictionary) -> int:
 	var entrance_kind := str(tags.get("entrance", "")).to_lower()
 	var door_kind := str(tags.get("door", "")).to_lower()
 	if entrance_kind == "no" or door_kind == "no":
+		return 0
+	if entrance_association_schema_version != 1:
 		return 0
 	var association_value: Variant = feature.get("association", {})
 	if not association_value is Dictionary:
