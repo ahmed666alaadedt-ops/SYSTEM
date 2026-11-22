@@ -200,10 +200,10 @@ func _run() -> void:
 		return
 	hunter_tower_interior.call("set_hunter_exam_tunnel_access", true)
 	for stage_number in range(1, 8):
-		var barrier := hunter_tower_interior.get_node_or_null("HunterExamStageGateBarrier_%02d" % stage_number) as StaticBody3D
-		var barrier_collision := barrier.get_node_or_null("GatePanelCollision") as CollisionShape3D
-		var barrier_visual := barrier.get_node_or_null("GatePanelVisual") as MeshInstance3D
-		if not barrier_collision.disabled or barrier_visual.visible:
+		var opened_barrier := hunter_tower_interior.get_node_or_null("HunterExamStageGateBarrier_%02d" % stage_number) as StaticBody3D
+		var opened_collision := opened_barrier.get_node_or_null("GatePanelCollision") as CollisionShape3D
+		var opened_visual := opened_barrier.get_node_or_null("GatePanelVisual") as MeshInstance3D
+		if not opened_collision.disabled or opened_visual.visible:
 			_fail("A registered candidate could not open Hunter exam stage gate %02d." % stage_number)
 			return
 	if not staging_collision.disabled:
