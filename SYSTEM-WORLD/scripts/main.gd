@@ -400,7 +400,7 @@ func create_business_services() -> void:
 
 	shopping_tower_menu = SYSTEMShoppingTowerMenuScript.new()
 	shopping_tower_menu.name = "SYSTEMShoppingTowerMenu"
-	shopping_tower_menu.setup(player_vehicle_manager, player_progression)
+	shopping_tower_menu.setup(player_vehicle_manager, player_progression, nen_manager)
 	add_child(shopping_tower_menu)
 
 
@@ -1404,11 +1404,13 @@ func _on_interaction_performed(
 			if is_instance_valid(shopping_tower_menu) and shopping_tower_menu.has_method("open_service_view"):
 				shopping_tower_menu.call("open_service_view", location_id)
 				if location_id.ends_with("_0"):
-					service_description = "تم فتح دليل المقتنيات التذكارية في برج التسوق."
+					service_description = "تم فتح معرض الأسلحة النارية والبيضاء والأقواس والسهام."
 				elif location_id.ends_with("_1"):
-					service_description = "تم فتح كتالوج المشتريات المحلية."
+					service_description = "تم فتح مختبر جرعات إيقاظ النِن وتطوير التحكم بالهالة."
 				elif location_id.ends_with("_2"):
-					service_description = "تم فتح مجموعة مقتنياتك المحفوظة في الحقيبة."
+					service_description = "تم فتح سوق بغداد ومقتنيات مجمع الأبراج."
+				elif location_id.ends_with("_3"):
+					service_description = "تم فتح حقيبة المشتريات والأسلحة والجرعات."
 		if interaction_prompt_label != null:
 			interaction_prompt_label.text = "%s\n%s" % [service_title, service_description]
 	elif location_id.begins_with("street_ad_"):
