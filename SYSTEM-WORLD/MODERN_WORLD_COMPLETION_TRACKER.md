@@ -1,3 +1,13 @@
+## SYSTEM ARCADE — playable number-puzzle cabinet mode — 22 November 2026
+
+- [x] Added a fourth selectable arcade game mode, a five-question arithmetic puzzle, to the six-cabinet arcade gallery.
+- [x] Each question presents four answer choices; correct answers advance and add 20 points, wrong answers consume one of three lives, and the session completes only after all five questions are solved.
+- [x] Added a dedicated puzzle prompt and four answer buttons, routed cabinet 4 directly to the puzzle mode, and prevented the generic projectile action from bypassing the puzzle.
+- [x] Extended Godot regression coverage for four-mode selector mapping, valid/wrong/last/invalid puzzle answers and all six cabinet interaction routes.
+- [x] Godot 4.3 full validation #1475 passed (run `45072584636`) and canonical Android export #1212 passed (run `45072584567`) on exact PR HEAD `efb97b6b489073e02ef587f8b68c864901e2f332`.
+- [x] Android APK artifact `14773853528`, 35,937,509 bytes; expires 6 December 2026.
+- [ ] Six fully distinct cabinet games, cabinet-specific art/audio and physical Android playtesting remain open; the gallery currently offers four playable modes across six cabinets.
+
 ## SYSTEM VR Lab — traversable three-gate simulation course — 22 November 2026
 
 - [x] Replaced the VR lab's generic checkpoint-only room with a generated 3D simulation course containing a marked floor route, start/finish markers, three framed energy gates with physical Area3D checkpoint sensors, four holographic obstacles and an illuminated exit beacon.
