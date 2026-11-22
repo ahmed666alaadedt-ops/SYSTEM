@@ -3031,6 +3031,15 @@ func start_facility_activity(facility_type: String) -> bool:
 		"frame_rolls": [],
 		"rolls": []
 	}
+	if facility_type == "vr_lab":
+		active_facility_activity["exit_unlocked"] = false
+		var vr_course := current_facility_root.get_node_or_null("VRSimulationCourse") as Node3D if is_instance_valid(current_facility_root) else null
+		var exit_sensor := vr_course.get_node_or_null("VRSimulationExitSensor") as Area3D if vr_course != null else null
+		if exit_sensor != null:
+			exit_sensor.monitoring = false
+		var exit_platform := vr_course.get_node_or_null("VRSimulationExitPlatform") as MeshInstance3D if vr_course != null else null
+		if exit_platform != null:
+			exit_platform.set_meta("system_vr_exit_locked", true)
 	if facility_type == "sports_court":
 		active_facility_activity["opponent_score"] = 0
 	if facility_type == "arcade":
@@ -3085,6 +3094,8 @@ func perform_facility_activity(action: String) -> Dictionary:
 	if action != str(active_facility_activity.get("action", "")):
 		return {"success": false, "reason": "هذا الإجراء لا يخص النشاط الحالي."}
 	var facility_type := str(active_facility_activity.get("type", ""))
+	if facility_type == "vr_lab":
+		return {"success": false, "completed": false, "reason": "يجب اجتياز بوابات الطاقة الثلاث ثم لمس منصة الخروج؛ لا يمكن إكمال المحاكاة بزر."}
 	if facility_type == "bowling":
 		return await _launch_bowling_ball()
 	if facility_type == "sports_court":
@@ -3606,16 +3617,57 @@ func _build_vr_simulation_course(root: Node3D, highlight: Material, accent: Mate
 	course.position = Vector3(0.0, 0.0, -1.0)
 	root.add_child(course)
 	_add_facility_box(course, "VRSimulationFloor", Vector3(0.0, 0.12, 0.0), Vector3(12.0, 0.24, 23.0), accent)
+	var floor_body := StaticBody3D.new()
+	floor_body.name = "VRSimulationFloorPhysics"
+	floor_body.position = Vector3(0.0, 0.12, 0.0)
+	var floor_collision := CollisionShape3D.new()
+	var floor_shape := BoxShape3D.new()
+	floor_shape.size = Vector3(12.0, 0.24, 23.0)
+	floor_collision.shape = floor_shape
+	floor_body.add_child(floor_collision)
+	course.add_child(floor_body)
 	_add_facility_box(course, "VRSimulationStartMarker", Vector3(0.0, 0.28, -9.0), Vector3(4.0, 0.12, 1.0), highlight)
-	_add_facility_box(course, "VRSimulationFinishMarker", Vector3(0.0, 0.28, 9.0), Vector3(4.0, 0.12, 1.0), highlight)
+	var exit_platform := MeshInstance3D.new()
+	exit_platform.name = "VRSimulationExitPlatform"
+	var exit_platform_mesh := BoxMesh.new()
+	exit_platform_mesh.size = Vector3(4.4, 0.3, 2.6)
+	exit_platform.mesh = exit_platform_mesh
+	exit_platform.position = Vector3(0.0, 0.28, 10.0)
+	var exit_material := StandardMaterial3D.new()
+	exit_material.albedo_color = Color(0.08, 0.28, 0.38)
+	exit_material.emission_enabled = true
+	exit_material.emission = Color(0.02, 0.18, 0.28)
+	exit_material.emission_energy_multiplier = 0.6
+	exit_material.metallic = 0.5
+	exit_platform.material_override = exit_material
+	exit_platform.set_meta("system_vr_exit_locked", true)
+	course.add_child(exit_platform)
+	var exit_sensor := Area3D.new()
+	exit_sensor.name = "VRSimulationExitSensor"
+	exit_sensor.collision_layer = 0
+	exit_sensor.collision_mask = 1
+	exit_sensor.monitoring = false
+	exit_sensor.monitorable = true
+	exit_sensor.position = Vector3(0.0, 1.5, 10.0)
+	var exit_collision := CollisionShape3D.new()
+	var exit_shape := BoxShape3D.new()
+	exit_shape.size = Vector3(4.2, 3.0, 2.4)
+	exit_collision.shape = exit_shape
+	exit_sensor.add_child(exit_collision)
+	exit_sensor.body_entered.connect(_on_vr_exit_body_entered)
+	course.add_child(exit_sensor)
 	for checkpoint_index in range(3):
 		var gate := Node3D.new()
 		gate.name = "VRCheckpointGate_%02d" % checkpoint_index
 		gate.position = Vector3(0.0, 0.0, -6.0 + float(checkpoint_index) * 6.0)
 		course.add_child(gate)
-		_add_facility_box(gate, "GateLeft", Vector3(-2.0, 1.8, 0.0), Vector3(0.22, 3.6, 0.35), highlight)
-		_add_facility_box(gate, "GateRight", Vector3(2.0, 1.8, 0.0), Vector3(0.22, 3.6, 0.35), highlight)
-		_add_facility_box(gate, "GateTop", Vector3(0.0, 3.55, 0.0), Vector3(4.2, 0.22, 0.35), highlight)
+		var gate_material := highlight.duplicate() as StandardMaterial3D
+		gate_material.emission_enabled = true
+		gate_material.emission = Color(0.04, 0.62, 0.92)
+		gate_material.emission_energy_multiplier = 1.5
+		_add_facility_box(gate, "GateLeft", Vector3(-2.0, 1.8, 0.0), Vector3(0.22, 3.6, 0.35), gate_material)
+		_add_facility_box(gate, "GateRight", Vector3(2.0, 1.8, 0.0), Vector3(0.22, 3.6, 0.35), gate_material)
+		_add_facility_box(gate, "GateTop", Vector3(0.0, 3.55, 0.0), Vector3(4.2, 0.22, 0.35), gate_material)
 		var sensor := Area3D.new()
 		sensor.name = "VRCheckpointSensor_%02d" % checkpoint_index
 		sensor.collision_layer = 0
@@ -3631,13 +3683,22 @@ func _build_vr_simulation_course(root: Node3D, highlight: Material, accent: Mate
 		gate.add_child(sensor)
 	for obstacle_index in range(4):
 		var side := -1.0 if obstacle_index % 2 == 0 else 1.0
-		var obstacle_z := -3.0 + float(obstacle_index) * 2.0
-		_add_facility_box(course, "VRHologramObstacle_%02d" % obstacle_index, Vector3(side * 4.5, 1.3, obstacle_z), Vector3(0.7, 2.6, 0.7), highlight)
+		var obstacle_position := Vector3(side * 4.5, 1.3, -3.0 + float(obstacle_index) * 2.0)
+		_add_facility_box(course, "VRHologramObstacle_%02d" % obstacle_index, obstacle_position, Vector3(0.7, 2.6, 0.7), highlight)
+		var obstacle_body := StaticBody3D.new()
+		obstacle_body.name = "VRHologramObstaclePhysics_%02d" % obstacle_index
+		obstacle_body.position = obstacle_position
+		var obstacle_collision := CollisionShape3D.new()
+		var obstacle_shape := BoxShape3D.new()
+		obstacle_shape.size = Vector3(0.7, 2.6, 0.7)
+		obstacle_collision.shape = obstacle_shape
+		obstacle_body.add_child(obstacle_collision)
+		course.add_child(obstacle_body)
 	var exit_beacon := OmniLight3D.new()
 	exit_beacon.name = "VRSimulationExitBeacon"
 	exit_beacon.position = Vector3(0.0, 3.0, 10.0)
-	exit_beacon.light_color = Color(0.12, 0.85, 1.0)
-	exit_beacon.light_energy = 1.8
+	exit_beacon.light_color = Color(0.12, 0.45, 0.58)
+	exit_beacon.light_energy = 0.45
 	exit_beacon.omni_range = 12.0
 	course.add_child(exit_beacon)
 
@@ -3654,9 +3715,39 @@ func _on_vr_checkpoint_body_entered(body: Node3D, checkpoint_index: int) -> void
 	var next_step := expected_checkpoint + 1
 	active_facility_activity["step"] = next_step
 	active_facility_activity["score"] = int(active_facility_activity.get("score", 0)) + 20
-	_set_status("تم اجتياز بوابة المحاكاة %d من 3." % next_step)
 	if next_step >= int(active_facility_activity.get("goal", 3)):
-		_complete_facility_activity()
+		active_facility_activity["exit_unlocked"] = true
+		var course := current_facility_root.get_node_or_null("VRSimulationCourse") as Node3D if is_instance_valid(current_facility_root) else null
+		var exit_sensor := course.get_node_or_null("VRSimulationExitSensor") as Area3D if course != null else null
+		if exit_sensor != null:
+			exit_sensor.monitoring = true
+		var exit_platform := course.get_node_or_null("VRSimulationExitPlatform") as MeshInstance3D if course != null else null
+		if exit_platform != null:
+			exit_platform.set_meta("system_vr_exit_locked", false)
+			var platform_material := exit_platform.material_override as StandardMaterial3D
+			if platform_material != null:
+				platform_material.albedo_color = Color(0.08, 0.48, 0.25)
+				platform_material.emission = Color(0.02, 0.72, 0.22)
+				platform_material.emission_energy_multiplier = 1.8
+		var beacon := course.get_node_or_null("VRSimulationExitBeacon") as OmniLight3D if course != null else null
+		if beacon != null:
+			beacon.light_color = Color(0.12, 1.0, 0.38)
+			beacon.light_energy = 2.4
+		_set_status("اكتملت البوابات الثلاث. منصة الخروج فُتحت — تحرّك إليها لإنهاء المحاكاة.")
+		return
+	_set_status("تم اجتياز بوابة المحاكاة %d من 3." % next_step)
+
+
+func _on_vr_exit_body_entered(body: Node3D) -> void:
+	if body != player or active_facility_activity.is_empty():
+		return
+	if str(active_facility_activity.get("type", "")) != "vr_lab" or not bool(active_facility_activity.get("started", false)):
+		return
+	if not bool(active_facility_activity.get("exit_unlocked", false)) or int(active_facility_activity.get("step", 0)) < int(active_facility_activity.get("goal", 3)):
+		_set_status("منصة الخروج مغلقة. أكمل بوابات الطاقة الثلاث أولاً.")
+		return
+	active_facility_activity["exit_reached"] = true
+	_complete_facility_activity()
 
 
 func _complete_facility_activity() -> Dictionary:
