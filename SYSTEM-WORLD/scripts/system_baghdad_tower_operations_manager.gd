@@ -2476,9 +2476,9 @@ func perform_facility_activity(action: String) -> Dictionary:
 		return {"success": false, "reason": "هذا الإجراء لا يخص النشاط الحالي."}
 	var facility_type := str(active_facility_activity.get("type", ""))
 	if facility_type == "bowling":
-		return _launch_bowling_ball()
+		return await _launch_bowling_ball()
 	if facility_type == "sports_court":
-		return _launch_basketball()
+		return await _launch_basketball()
 	var step := int(active_facility_activity.get("step", 0)) + 1
 	var score_gain := 1
 	match facility_type:
