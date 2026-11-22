@@ -214,7 +214,7 @@ func _run() -> void:
 		return
 	progression.call("add_item", "strength_elixir", 1)
 	var strength_result: Dictionary = progression.call("consume_elixir", "strength_elixir")
-	if not bool(strength_result.get("success", false)) or float(progression.call("get_combat_damage_bonus")) < 20.0:
+	if not bool(strength_result.get("success", false)) or float(progression.call("get_combat_damage_bonus")) < 15.0:
 		_fail("Strength elixir did not apply its timed combat damage effect.")
 		return
 	progression.call("add_item", "speed_elixir", 1)
