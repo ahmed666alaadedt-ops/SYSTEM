@@ -38,23 +38,23 @@ func _fail(message: String) -> void:
 func _run() -> void:
 	# Keep tower stair routing as a top-level interaction branch. If it is nested
 	# under the lift-console branch, the player can never reach it from a stair.
-	var main_source := FileAccess.get_file_as_string("res://scripts/main.gd")
-	var main_lines := main_source.split("\n")
-	var lift_branch_line := -1
-	var stair_branch_line := -1
-	var floor_branch_line := -1
-	for line_index in range(main_lines.size()):
-		var source_line: String = str(main_lines[line_index])
+	var tower_interaction_source := FileAccess.get_file_as_string("res://scripts/main.gd")
+	var tower_interaction_lines := tower_interaction_source.split("\n")
+	var lift_branch_index := -1
+	var stair_branch_index := -1
+	var floor_branch_index := -1
+	for line_index in range(tower_interaction_lines.size()):
+		var source_line: String = str(tower_interaction_lines[line_index])
 		if source_line == "\telif location_id.begins_with(\"tower_lift_console_\"):":
-			lift_branch_line = line_index
+			lift_branch_index = line_index
 		elif source_line == "\telif location_id.begins_with(\"tower_stair_\"):":
-			stair_branch_line = line_index
+			stair_branch_index = line_index
 		elif source_line == "\telif location_id.begins_with(\"tower_floor_\") and not location_id.begins_with(\"tower_floor_exit_\"):":
-			floor_branch_line = line_index
-	if lift_branch_line < 0 or stair_branch_line < 0 or floor_branch_line < 0:
+			floor_branch_index = line_index
+	if lift_branch_index < 0 or stair_branch_index < 0 or floor_branch_index < 0:
 		_fail("Main interaction handler is missing a tower lift, stair or floor branch.")
 		return
-	if not (lift_branch_line < stair_branch_line and stair_branch_line < floor_branch_line):
+	if not (lift_branch_index < stair_branch_index and stair_branch_index < floor_branch_index):
 		_fail("Tower stair interaction is not a separate top-level branch between lift and floor interactions.")
 		return
 	var region := FakeRegion.new()
@@ -400,9 +400,9 @@ func _run() -> void:
 		fake_map.call("register_location", "2", str(record.get("id", "")), "region_baghdad", str(record.get("name", "")), 5, record.get("position", Vector3.ZERO), false)
 	fake_map.call("register_location", "2", "hunter_association_headquarters_baghdad", "region_baghdad", "المقر الرئيسي لنقابة الصيادين", 5, headquarters_position, false)
 	landmarks.call("register_map_locations", fake_map, "2")
-	var main_source := FileAccess.get_file_as_string("res://scripts/main.gd")
+	var tower_interaction_source := FileAccess.get_file_as_string("res://scripts/main.gd")
 	for required_contract in ["tower_lift_console_", "tower_floor_exit_", "_enter_baghdad_tower_floor", "BaghdadTowerLiftUIScript", "set_hunter_exam_tunnel_access"]:
-		if not main_source.contains(required_contract):
+		if not tower_interaction_source.contains(required_contract):
 			_fail("Main interaction runtime is missing tower lift contract: " + required_contract)
 			return
 	var region_source := FileAccess.get_file_as_string("res://scripts/modern_world_region_manager.gd")
