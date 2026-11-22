@@ -289,5 +289,6 @@ func get_helicopter_status() -> Dictionary:
 		"landed": landed,
 		"owner_tower_id": "hunter_association_tower_baghdad",
 		"landing_radius_m": LANDING_RADIUS,
+		"pilot_authorized": _can_pilot(),
 		"aircraft_node": aircraft
 	}
