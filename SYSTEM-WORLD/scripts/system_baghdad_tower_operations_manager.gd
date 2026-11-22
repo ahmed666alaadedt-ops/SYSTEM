@@ -2601,6 +2601,7 @@ func _add_facility_activity_controls(facility_type: String) -> void:
 		reflex_status.name = "ArcadeReflexStatus"
 		reflex_status.text = "انتظر الإشارة ثم اضغط بأسرع ما تستطيع."
 		reflex_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		reflex_status.visible = false
 		content.add_child(reflex_status)
 		var memory_buttons := HBoxContainer.new()
 		memory_buttons.name = "ArcadeMemoryButtons"
