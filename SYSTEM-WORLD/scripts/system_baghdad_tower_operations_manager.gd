@@ -11,6 +11,7 @@ const WORLD_ID := 2
 const TOWER_CONFIG := {
 	"hunter_association_tower_baghdad": {"node": "HunterAssociationTower", "title": "برج جمعية الصيادين", "floors": 200, "height": 1000.0, "radius": 38.0, "roles": ["موظف الاستقبال", "موظف المهمات", "موظف التسجيل", "مسؤول الإعلانات"], "jobs": ["receptionist", "mission_clerk", "exam_registrar", "advertising_manager"]},
 
+	"business_investment_tower_baghdad": {"node": "BusinessInvestmentTower", "title": "برج الأعمال والاستثمار", "floors": 36, "height": 220.0, "radius": 26.0, "roles": ["مدير الاستثمار", "مستشار الشركات", "موظف البنوك والعقود", "مسؤول الإعلانات"], "jobs": ["investment_manager", "business_advisor", "bank_contract_clerk", "advertising_manager"]},
 	"shopping_tower_baghdad": {"node": "ShoppingTower", "title": "برج التسوق والتجارة", "floors": 32, "height": 190.0, "radius": 30.0, "roles": ["مدير البرج", "تاجر الأسلحة والدروع", "صيدلاني الإكسير", "مدير المطاعم والمقاهي"], "jobs": ["shop_manager", "weapons_merchant", "elixir_pharmacist", "restaurant_manager"]},
 	"entertainment_tower_baghdad": {"node": "EntertainmentTower", "title": "برج الترفيه والرياضة", "floors": 34, "height": 205.0, "radius": 29.0, "roles": ["منظم الفعاليات", "موظف التذاكر", "موظف الأنشطة", "مسؤول الإعلانات"], "jobs": ["event_coordinator", "ticket_clerk", "activity_host", "advertising_manager"]},
 	"technology_tower_baghdad": {"node": "TechnologyTower", "title": "برج التكنولوجيا والابتكار", "floors": 40, "height": 245.0, "radius": 27.0, "roles": ["موظف المختبر", "مهندس الأجهزة", "موظف الخدمات الرقمية", "مسؤول الإعلانات"], "jobs": ["lab_receptionist", "device_engineer", "digital_services", "advertising_manager"]},
@@ -1228,11 +1229,11 @@ func _department_for_floor(tower_id: String, floor_number: int, total: int) -> S
 			if ratio > 0.34: return "الدروع والخوذ والبدلات حسب رتب الصيادين"
 			if ratio > 0.20: return "معرض الأسلحة الحديثة والسيوف والأقواس والسهام"
 			return "الردهة التجارية والأسواق والاحتياجات اليومية"
-		"shopping_tower_baghdad":
-			if ratio > 0.8: return "المطاعم والمقاهي"
-			if ratio > 0.55: return "الأزياء والاحتياجات"
-			if ratio > 0.3: return "الأسواق والمتاجر"
-			return "الردهة التجارية"
+		"business_investment_tower_baghdad":
+			if ratio > 0.8: return "مكاتب الاستثمار والشركات الكبرى"
+			if ratio > 0.55: return "البنوك والتمويل والعقود التجارية"
+			if ratio > 0.3: return "مكاتب تأسيس الشركات والتوظيف"
+			return "ردهة الأعمال والاستشارات"
 		"entertainment_tower_baghdad":
 			if ratio > 0.8: return "المهرجانات والفعاليات"
 			if ratio > 0.55: return "المسابح والرياضة"
@@ -1294,10 +1295,48 @@ func _create_floor_facilities(room: Node3D, tower_id: String, floor_number: int,
 		if staff_ids.size() >= 3:
 			_create_workshop_station(room, "WeaponsForge", "ورشة الحدادة وصناعة الأسلحة الحديثة والتقليدية", Vector3(-radius * 0.32, 0.0, -radius * 0.42), str(staff_ids[1]), "weapons_merchant")
 			_create_workshop_station(room, "ElixirLaboratory", "مختبر تحضير الأكاسير وإيقاظ النِن والعلاج", Vector3(radius * 0.32, 0.0, -radius * 0.42), str(staff_ids[2]), "elixir_pharmacist")
+	if tower_id == "shopping_tower_baghdad" and floor_number >= 29:
+		_create_restaurant_dining_area(room, radius, floor_number)
 	room.set_meta("system_tower_id", tower_id)
 	room.set_meta("system_tower_floor_number", floor_number)
 	room.set_meta("system_tower_department", department)
 
+
+
+func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: int) -> void:
+	var dining_sign := Label3D.new()
+	dining_sign.name = "RestaurantDiningSign"
+	dining_sign.text = "SYSTEM FOOD HALL — مطاعم ومقاهي وصالات طعام"
+	dining_sign.position = Vector3(0.0, 4.0, -radius * 0.42)
+	dining_sign.font_size = 22
+	dining_sign.pixel_size = 0.013
+	dining_sign.modulate = Color(1.0, 0.78, 0.42)
+	room.add_child(dining_sign)
+	for index in range(4):
+		var table_root := Node3D.new()
+		table_root.name = "RestaurantTable_%02d" % index
+		var angle := TAU * float(index) / 4.0
+		table_root.position = Vector3(cos(angle) * radius * 0.34, 0.0, sin(angle) * radius * 0.34)
+		room.add_child(table_root)
+		var table := MeshInstance3D.new()
+		var table_mesh := BoxMesh.new()
+		table_mesh.size = Vector3(2.8, 0.18, 1.8)
+		table.mesh = table_mesh
+		table.position.y = 1.0
+		var table_material := StandardMaterial3D.new()
+		table_material.albedo_color = Color(0.34, 0.19, 0.10)
+		table_material.roughness = 0.58
+		table.material_override = table_material
+		table_root.add_child(table)
+		for seat_index in range(4):
+			var seat := MeshInstance3D.new()
+			var seat_mesh := BoxMesh.new()
+			seat_mesh.size = Vector3(0.55, 0.9, 0.55)
+			seat.mesh = seat_mesh
+			var seat_angle := TAU * float(seat_index) / 4.0
+			seat.position = Vector3(cos(seat_angle) * 1.35, 0.45, sin(seat_angle) * 1.0)
+			seat.material_override = table_material
+			table_root.add_child(seat)
 
 func _create_workshop_station(room: Node3D, station_id: String, station_title: String, station_position: Vector3, staff_id: String, staff_role: String) -> void:
 	var station := Node3D.new()
