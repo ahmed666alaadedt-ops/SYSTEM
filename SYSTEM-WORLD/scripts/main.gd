@@ -1339,7 +1339,10 @@ func _on_interaction_performed(
 			if str(current_exam_stage.get("id", "")) == "endurance_pursuit":
 				var route_reset: Dictionary = hunter_exam_manager.reset_stage_one_route()
 				if interaction_prompt_label != null:
-					interaction_prompt_label.text = "بدأ مسار المطاردة والتحمل\\nاجتز نقاط التتبع الثلاث بالترتيب وتجنب إيذاء المدنيين."
+					if bool(route_reset.get("success", false)):
+						interaction_prompt_label.text = "بدأ مسار المطاردة والتحمل\nاجتز نقاط التتبع الثلاث بالترتيب وتجنب إيذاء المدنيين."
+					else:
+						interaction_prompt_label.text = "تعذر بدء المسار: " + str(route_reset.get("reason", "UNKNOWN"))
 			else:
 				if interaction_prompt_label != null:
 					interaction_prompt_label.text = "بوابة المرحلة الأولى — ابدأ الاختبار من نفق نقابة الصيادين أولاً."
@@ -1350,18 +1353,18 @@ func _on_interaction_performed(
 			var checkpoint_result: Dictionary = hunter_exam_manager.record_stage_one_checkpoint(checkpoint_id)
 			if interaction_prompt_label != null:
 				if bool(checkpoint_result.get("success", false)):
-					interaction_prompt_label.text = "نقطة تتبع مؤكدة\\nالتقدم: %d / %d" % [int(checkpoint_result.get("progress", 0)), int(checkpoint_result.get("total", 3))]
+					interaction_prompt_label.text = "نقطة تتبع مؤكدة\nالتقدم: %d / %d" % [int(checkpoint_result.get("progress", 0)), int(checkpoint_result.get("total", 3))]
 				else:
-					interaction_prompt_label.text = "نقطة التتبع\\n" + str(checkpoint_result.get("reason", "تعذر تسجيل النقطة"))
+					interaction_prompt_label.text = "نقطة التتبع\n" + str(checkpoint_result.get("reason", "تعذر تسجيل النقطة"))
 		return
 	elif location_id == "hunter_exam_stage_one_finish_baghdad":
 		if hunter_exam_manager != null:
 			var route_status: Dictionary = hunter_exam_manager.get_stage_one_route_status()
 			if interaction_prompt_label != null:
 				if bool(route_status.get("active", false)) and bool(route_status.get("complete", false)):
-					interaction_prompt_label.text = "اكتمل مسار التتبع\\nلم تُعتمد المرحلة بعد؛ يلزم إثبات موثوق من جهة التحقق."
+					interaction_prompt_label.text = "اكتمل مسار التتبع\nلم تُعتمد المرحلة بعد؛ يلزم إثبات موثوق من جهة التحقق."
 				else:
-					interaction_prompt_label.text = "نهاية المسار\\nالتقدم الحالي: %d / %d" % [int(route_status.get("progress", 0)), int(route_status.get("total", 3))]
+					interaction_prompt_label.text = "نهاية المسار\nالتقدم الحالي: %d / %d" % [int(route_status.get("progress", 0)), int(route_status.get("total", 3))]
 		return
 	if location_id.begins_with("tower_service_"):
 		var service_title := str(target.get_meta("system_interaction_prompt", "خدمات البرج"))
@@ -1407,7 +1410,7 @@ func _on_interaction_performed(
 				elif location_id.ends_with("_2"):
 					service_description = "تم فتح مجموعة مقتنياتك المحفوظة في الحقيبة."
 		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "%s\\n%s" % [service_title, service_description]
+			interaction_prompt_label.text = "%s\n%s" % [service_title, service_description]
 	elif location_id.begins_with("street_ad_"):
 		var advertising_manager: Node = target.get_parent().get_parent() if target.get_parent() != null else null
 		if advertising_manager != null and advertising_manager.has_method("get_campaign_details"):
