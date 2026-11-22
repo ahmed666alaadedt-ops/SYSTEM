@@ -504,7 +504,10 @@ func _add_crafting_controls(tower_id: String) -> void:
 		for ingredient_id in ingredients.keys():
 			parts.append("%s × %d (لديك %d)" % [str(ingredient_id), int(ingredients[ingredient_id]), int(progression.call("get_item_count", str(ingredient_id)))])
 		var craft_button := Button.new()
-		craft_button.text = str(recipe.get("name", recipe_id)) + "\n" + ", ".join(parts)
+		var requirements_text := "المستوى: %d" % int(recipe.get("required_level", 1))
+		if int(recipe.get("required_nen_rank", 0)) > 0:
+			requirements_text += " | رتبة النِن: %d" % int(recipe.get("required_nen_rank", 0))
+		craft_button.text = str(recipe.get("name", recipe_id)) + " — " + requirements_text + "\n" + ", ".join(parts)
 		craft_button.pressed.connect(_craft_recipe.bind(recipe_id))
 		crafting_controls.add_child(craft_button)
 
