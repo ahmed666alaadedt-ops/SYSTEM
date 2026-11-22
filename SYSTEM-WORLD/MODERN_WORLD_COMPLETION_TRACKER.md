@@ -1032,3 +1032,13 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Pass canonical Android export #1169 (run ID `45067580289`) on the same exact PR head; APK artifact `14772500063`, 35,908,010 bytes, uploaded successfully and expires 6 December 2026.
 - [x] Verify deterministic target score values (5/8/12/8/5), capped combo bonus, invalid target rejection and completion on ten shots or life exhaustion.
 - [ ] Physical Android controls, cabinet-specific game variety and online leaderboards remain open.
+
+
+### Animated robotics assembly prototype — 22 November 2026
+
+- [x] Add a persistent three-part robot assembly display (base, torso and arm module) to the Technology Tower robotics lab.
+- [x] Animate each part into its assembly position with eased position, scale and rotation tweens as the player completes each of the three build steps.
+- [x] Restore the completed robot display on later lab visits using the locally saved completed-activity record.
+- [x] Extend the tower operations validator to require all three parts to be visible and marked assembled after the robotics activity.
+- [ ] Run Godot 4.3 full validation and canonical Android export on this animated assembly change before claiming it verified.
+- Note: this is a local procedural assembly prototype; interactive component wiring, robot behavior programming and autonomous robot tasks remain open.
