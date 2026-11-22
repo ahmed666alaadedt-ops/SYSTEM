@@ -60,10 +60,27 @@ func refresh_inventory() -> void:
 		return
 	var data: Dictionary = progression.call("get_progress_data")
 	var items: Dictionary = data.get("inventory_items", {})
-	if items.is_empty():
-		item_list.text = "الحقيبة فارغة حالياً"
-		return
+	var equipment: Dictionary = data.get("equipment_slots", {})
+	var effects: Dictionary = data.get("active_elixir_effects", {})
 	var lines := PackedStringArray()
-	for item_id in items.keys():
-		lines.append("%s  × %d" % [str(item_id), int(items[item_id])])
+	lines.append("المعدات المجهزة")
+	for slot in equipment.keys():
+		var item_id := str(equipment[slot])
+		lines.append("%s: %s" % [str(slot), "غير مجهز" if item_id.is_empty() else item_id])
+	lines.append("Nen: " + ("مفتوح — رتبة التحكم %d/5" % int(data.get("nen_control_rank", 0)) if bool(data.get("nen_unlocked", false)) else "غير مستيقظ"))
+	lines.append("")
+	lines.append("التأثيرات النشطة")
+	if effects.is_empty():
+		lines.append("لا توجد تأثيرات إكسير نشطة")
+	else:
+		for effect_id in effects.keys():
+			var effect: Dictionary = effects[effect_id]
+			lines.append("%s — %d ثانية" % [str(effect_id), int(ceil(float(effect.get("remaining_seconds", 0.0))))])
+	lines.append("")
+	lines.append("محتويات الحقيبة")
+	if items.is_empty():
+		lines.append("الحقيبة فارغة حالياً")
+	else:
+		for item_id in items.keys():
+			lines.append("%s  × %d" % [str(item_id), int(items[item_id])])
 	item_list.text = "\n".join(lines)
