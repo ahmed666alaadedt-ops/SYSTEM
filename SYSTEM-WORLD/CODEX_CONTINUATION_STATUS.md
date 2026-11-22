@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-11-22  
 **Active development branch:** `work/baghdad-system-integration`  
-**Last implementation/documentation commit before this checkpoint:** `c64ac0ebded48ed5efac1ff7747779e6b88a74f4`  
+**Latest source/workflow commit before this checkpoint refresh:** `fdbf3d02f2f25f07870db151dc412bf5a903ea3d`  
 **Canonical runtime:** `SYSTEM-WORLD/` (Godot 4.3)  
 **Main branch policy:** do not edit, merge into, rebase onto, or otherwise change `main` without the owner's explicit instruction.
 
@@ -39,7 +39,7 @@ The immediate queue item was evidence-based association of Baghdad's source-mapp
 - Earlier source association analysis on the 5×5 / 200 m sample contained 30 source entrance points: 25 accepted, 3 review and 2 rejected.
 - Earlier full municipal analysis contained 188 entrance points and 41,463 building footprints: 148 accepted, 11 review, 3 restricted and 26 rejected.
 - These earlier reports predate the new runtime-pack annotation and must not be presented as validation of the newly annotated pack.
-- The source workflow was updated to trigger on `work/baghdad-system-integration`; its artifact should trigger the canonical Android workflow through the existing `workflow_run` handoff.
+- The source workflow now triggers on `work/baghdad-system-integration`, watches the association tool/tests and runtime validator paths, and publishes the annotated pack/report. Its artifact should trigger the canonical Android workflow through the existing `workflow_run` handoff.
 - The new Python annotation tests and Godot entrance-runtime assertions still require confirmed GitHub Actions results on the updated branch head.
 - No local Godot executable is available in the current working environment; do not claim a local Godot run or Android device test.
 - The 5×5 cell pack covers only a 1 km × 1 km proof area, not all Baghdad.
