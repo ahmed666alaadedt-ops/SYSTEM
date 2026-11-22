@@ -74,10 +74,16 @@ func _run() -> void:
 
 	var tower_records: Array = towers.get_tower_positions()
 	if tower_records.size() != 6:
-		_fail("Expected five connected towers plus one independent Power Tower; got %d." % tower_records.size())
+		_fail("Expected five primary Baghdad towers plus one independent Power Tower; got %d." % tower_records.size())
 		return
-	if towers.connected_tower_positions.size() != 5:
-		_fail("Power Tower was incorrectly included in the five-tower district.")
+	var armory_root_probe := towers.get_node_or_null("ShoppingTower") as Node3D
+	if armory_root_probe == null:
+		_fail("Weapon/Nen tower root is missing.")
+		return
+	var bridge_outpost_ready := bool(armory_root_probe.get_meta("bridge_tower_access_ready", false))
+	var expected_core_tower_count := 4 if bridge_outpost_ready else 5
+	if towers.connected_tower_positions.size() != expected_core_tower_count:
+		_fail("Local sky-ring membership does not match the verified bridge-outpost state.")
 		return
 
 	var expected_roots := ["HunterAssociationTower", "BusinessTower", "ShoppingTower", "EntertainmentTower", "TechnologyTower"]
@@ -246,10 +252,20 @@ func _run() -> void:
 				if armory_service == null or not armory_service.is_in_group("system_interactable"):
 					_fail("Weapon/Nen tower lobby is missing service interaction %d." % service_index)
 					return
-			var armory_meta: bool = bool(tower_root.get_meta("geospatial_relocation_pending", false))
-			if not bool(armory_meta) or not is_equal_approx(float(tower_root.get_meta("target_latitude", 0.0)), 33.32495) or not is_equal_approx(float(tower_root.get_meta("target_longitude", 0.0)), 44.40483):
-				_fail("Weapon/Nen tower is missing the verified Republic Bridge target coordinates or relocation-pending marker.")
+			var relocation_pending := bool(tower_root.get_meta("geospatial_relocation_pending", false))
+			if not is_equal_approx(float(tower_root.get_meta("target_latitude", 0.0)), 33.32495) or not is_equal_approx(float(tower_root.get_meta("target_longitude", 0.0)), 44.40483):
+				_fail("Weapon/Nen tower is missing the Republic Bridge geographic target coordinates.")
 				return
+			if bridge_outpost_ready:
+				if relocation_pending or not bool(tower_root.get_meta("real_world_anchor_verified", false)):
+					_fail("Weapon/Nen tower moved without clearing its verified relocation state.")
+					return
+				if tower_root.get_node_or_null("RepublicBridgeTowerSkyPlatform") == null or tower_root.get_node_or_null("RepublicBridgeTowerPlatformCollision") == null:
+					_fail("Republic Bridge weapon/Nen tower is missing its elevated platform or collision.")
+			else:
+				if not relocation_pending or bool(tower_root.get_meta("real_world_anchor_verified", false)):
+					_fail("Weapon/Nen tower must remain pending when the verified OSM bridge pack is absent.")
+					return
 			var armory_menu_source := FileAccess.get_file_as_string("res://scripts/system_shopping_tower_menu.gd")
 			for catalog_id in ["armory_sidearm", "armory_assault_rifle", "armory_precision_rifle", "armory_long_sword", "armory_dual_daggers", "armory_spear", "armory_battle_axe", "armory_recurve_bow", "armory_crossbow", "armory_arrow_bundle", "armory_energy_rifle", "nen_awakening_vial", "nen_control_elixir"]:
 				if not armory_menu_source.contains(catalog_id):
@@ -292,6 +308,69 @@ func _run() -> void:
 			if selector.get_meta("system_destination_position", Vector3.INF) == Vector3.INF:
 				_fail("Lobby lift selector has no destination in " + root_name)
 				return
+
+	# The four established core towers must retain their exact local anchors.
+	var expected_core_positions := {
+		"HunterAssociationTower": Vector3(100.0, 0.0, 465.0),
+		"BusinessTower": Vector3(-250.0, 0.0, 450.0),
+		"EntertainmentTower": Vector3(455.0, 0.0, -250.0),
+		"TechnologyTower": Vector3(455.0, 0.0, 450.0),
+	}
+	for core_name in expected_core_positions:
+		var core_root := towers.get_node_or_null(core_name) as Node3D
+		if core_root == null or core_root.position.distance_to(expected_core_positions[core_name]) > 0.1:
+			_fail("Existing core tower position changed during the Republic Bridge relocation: " + core_name)
+			return
+
+	if bridge_outpost_ready:
+		var manifest_path := "res://data/geography/baghdad/cell_pack/manifest.json"
+		var manifest_value: Variant = JSON.parse_string(FileAccess.get_file_as_string(manifest_path))
+		if not manifest_value is Dictionary:
+			_fail("Verified bridge outpost has no readable source manifest.")
+			return
+		var route: Dictionary = manifest_value.get("landmark_routes", {}).get("republic_bridge", {})
+		var anchor: Array = route.get("tower_anchor_local_m", [])
+		var source_ground := float(manifest_value.get("ground_elevation_m", 34.0))
+		var expected_platform_y := float(route.get("tower_platform_elevation_m", 46.28)) - source_ground
+		if anchor.size() != 2 or Vector2(armory_root_probe.position.x, armory_root_probe.position.z).distance_to(Vector2(float(anchor[0]), float(anchor[1]))) > 0.5:
+			_fail("Weapon/Nen tower is not centered over the verified Republic Bridge anchor.")
+			return
+		if absf(armory_root_probe.position.y - expected_platform_y) > 0.1:
+			_fail("Weapon/Nen tower platform does not preserve the verified bridge-relative elevation.")
+			return
+		var bridge_access := towers.get_node_or_null("RepublicBridgeTowerAccessManager")
+		if bridge_access == null or not bool(bridge_access.get_meta("republic_bridge_access_ready", false)):
+			_fail("Republic Bridge tower has no completed two-bank access manager.")
+			return
+		if int(bridge_access.get_meta("bank_access_corridor_count", 0)) != 2 or float(bridge_access.get_meta("river_clearance_to_tower_platform_m", 0.0)) < 18.0:
+			_fail("Republic Bridge tower access does not preserve both banks and the Tigris navigation clearance.")
+			return
+		if not bool(bridge_access.get_meta("traffic_lane_clear", false)) or not bool(bridge_access.get_meta("tigris_navigation_corridor_clear", false)):
+			_fail("Republic Bridge access corridors do not certify traffic-lane and river-navigation clearance.")
+			return
+		var bank_corridors := bridge_access.get_node_or_null("RepublicBridgeTwoBankAccessCorridors")
+		var karkh_ramps := bank_corridors.find_children("AlKarkhAccessRamp_*", "Node3D", true, false) if bank_corridors != null else []
+		var rusafa_ramps := bank_corridors.find_children("AlRusafaAccessRamp_*", "Node3D", true, false) if bank_corridors != null else []
+		if karkh_ramps.is_empty() or rusafa_ramps.is_empty():
+			_fail("Republic Bridge outpost is missing one of its Al-Karkh/Al-Rusafa access ramps.")
+			return
+		var bank_collision_count := bank_corridors.find_children("WalkableDeckCollision", "StaticBody3D", true, false).size()
+		var express_skyway := bridge_access.get_node_or_null("RepublicBridgeExpressSkyway")
+		var express_collision_count := express_skyway.find_children("WalkableDeckCollision", "StaticBody3D", true, false).size() if express_skyway != null else 0
+		if bank_collision_count < 2 or express_collision_count < 1:
+			_fail("Republic Bridge bank ramps or express skyway are missing walkable collision.")
+			return
+		if armory_root_probe.get_node_or_null("TowerInterior") == null or armory_root_probe.get_node_or_null("BaghdadTowerFloorWorld") == null:
+			_fail("Relocated Weapon/Nen tower lost its playable lobby or floor world.")
+			return
+	else:
+		if towers.connected_tower_positions.size() != 5:
+			_fail("Without a verified bridge pack, all five towers must remain in the original local district.")
+			return
+		var fallback_armory_position := Vector3(-255.0, 0.0, -250.0)
+		if armory_root_probe.position.distance_to(fallback_armory_position) > 0.1:
+			_fail("Weapon/Nen tower moved without the verified Republic Bridge OSM pack.")
+			return
 
 	# The Hunter tunnel starts on the lobby side of seven real collision-backed
 	# gates. An unregistered candidate cannot open the route; a valid exam start can.
@@ -393,7 +472,7 @@ func _run() -> void:
 	if connected_district == null:
 		_fail("The five connected towers have no shared district bridge network.")
 		return
-	for index in range(5):
+	for index in range(expected_core_tower_count):
 		var ramp_root := connected_district.get_node_or_null("VehicleAccessRamp_%d" % index)
 		var ramp_has_collision := false
 		if ramp_root != null:
