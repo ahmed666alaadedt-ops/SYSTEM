@@ -55,7 +55,7 @@ const CRAFTING_RECIPES := {
 	"speed_elixir": {"name": "تحضير إكسير السرعة", "ingredients": {"medicinal_herb": 2, "energy_crystal": 1}, "output": "speed_elixir", "required_level": 5},
 	"endurance_elixir": {"name": "تحضير إكسير التحمل", "ingredients": {"medicinal_herb": 2, "leather_roll": 1}, "output": "endurance_elixir", "required_level": 5},
 	"energy_elixir": {"name": "تحضير إكسير الطاقة", "ingredients": {"crystal_dust": 2, "energy_crystal": 1}, "output": "energy_elixir", "required_level": 8},
-	"nen_acquisition_elixir": {"name": "تحضير إكسير اكتساب النِن", "ingredients": {"monster_core": 2, "nen_fragment": 1}, "output": "nen_acquisition_elixir", "required_level": 15},
+	"nen_awakening_elixir": {"name": "تحضير إكسير إيقاظ النِن", "ingredients": {"monster_core": 2, "nen_fragment": 1}, "output": "nen_awakening_elixir", "required_level": 15},
 	"nen_control_elixir": {"name": "تحضير إكسير التحكم بالنِن", "ingredients": {"nen_fragment": 2, "energy_crystal": 1}, "output": "nen_control_elixir", "required_level": 20, "requires_nen": true},
 	"rare_legendary_elixir": {"name": "تحضير الإكسير النادر/الأسطوري", "ingredients": {"rare_core": 3, "nen_fragment": 5, "energy_crystal": 3}, "output": "rare_legendary_elixir", "required_level": 80, "requires_nen": true, "required_nen_rank": 5}
 }
@@ -469,7 +469,7 @@ func get_attack_cooldown_multiplier() -> float:
 func consume_elixir(item_id: String) -> Dictionary:
 	if get_item_count(item_id) <= 0:
 		return {"success": false, "reason": "ELIXIR_NOT_OWNED"}
-	if item_id == "nen_acquisition_elixir":
+	if item_id in ["nen_awakening_elixir", "nen_acquisition_elixir"]:
 		if nen_unlocked:
 			return {"success": false, "reason": "NEN_ALREADY_UNLOCKED"}
 		nen_unlocked = true
@@ -646,9 +646,10 @@ func load_progress() -> void:
 	var saved_inventory: Dictionary = config.get_value("inventory", "items", {})
 	inventory_items = {}
 	for item_id in saved_inventory.keys():
-		var item_count := maxi(0,int(saved_inventory[item_id]))
+		var normalized_item_id := "nen_awakening_elixir" if str(item_id) == "nen_acquisition_elixir" else str(item_id)
+		var item_count := maxi(0, int(saved_inventory[item_id]))
 		if item_count > 0:
-			inventory_items[str(item_id)] = item_count
+			inventory_items[normalized_item_id] = int(inventory_items.get(normalized_item_id, 0)) + item_count
 
 	var saved_equipment: Dictionary = config.get_value("equipment", "slots", {})
 	equipment_slots = DEFAULT_EQUIPMENT_SLOTS.duplicate(true)
