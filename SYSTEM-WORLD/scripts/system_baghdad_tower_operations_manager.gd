@@ -888,9 +888,66 @@ func _create_floor_facilities(room: Node3D, tower_id: String, floor_number: int,
 		kiosk_shape.position.y = 1.1
 		kiosk_area.add_child(kiosk_shape)
 		kiosk.add_child(kiosk_area)
+	if tower_id == "weapons_equipment_elixirs_tower_baghdad" and floor_number == 1:
+		var staff_ids: Array = staff_by_tower.get(tower_id, [])
+		if staff_ids.size() >= 3:
+			_create_workshop_station(room, "WeaponsForge", "ورشة الحدادة وصناعة الأسلحة", Vector3(-radius * 0.32, 0.0, -radius * 0.42), str(staff_ids[0]), "weapons_merchant")
+			_create_workshop_station(room, "ElixirLaboratory", "مختبر تحضير الإكسير والنِن", Vector3(radius * 0.32, 0.0, -radius * 0.42), str(staff_ids[2]), "elixir_pharmacist")
 	room.set_meta("system_tower_id", tower_id)
 	room.set_meta("system_tower_floor_number", floor_number)
 	room.set_meta("system_tower_department", department)
+
+
+func _create_workshop_station(room: Node3D, station_id: String, station_title: String, station_position: Vector3, staff_id: String, staff_role: String) -> void:
+	var station := Node3D.new()
+	station.name = station_id
+	station.position = station_position
+	room.add_child(station)
+	var bench := MeshInstance3D.new()
+	bench.name = "CraftingBenchVisual"
+	var bench_mesh := BoxMesh.new()
+	bench_mesh.size = Vector3(4.2, 1.1, 2.2)
+	bench.mesh = bench_mesh
+	bench.position.y = 0.55
+	var bench_material := StandardMaterial3D.new()
+	bench_material.albedo_color = Color(0.16, 0.20, 0.23)
+	bench_material.metallic = 0.62
+	bench.material_override = bench_material
+	station.add_child(bench)
+	var bench_collision := StaticBody3D.new()
+	bench_collision.name = "CraftingBenchCollision"
+	station.add_child(bench_collision)
+	var bench_shape := CollisionShape3D.new()
+	var bench_box := BoxShape3D.new()
+	bench_box.size = bench_mesh.size
+	bench_shape.shape = bench_box
+	bench_shape.position = bench.position
+	bench_collision.add_child(bench_shape)
+	var title := Label3D.new()
+	title.text = station_title
+	title.position.y = 2.0
+	title.font_size = 22
+	title.pixel_size = 0.012
+	title.modulate = Color(0.76, 0.94, 1.0)
+	station.add_child(title)
+	var interaction := Area3D.new()
+	interaction.name = "CraftingStationInteraction"
+	interaction.add_to_group("system_interactable")
+	interaction.set_meta("system_tower_id", "weapons_equipment_elixirs_tower_baghdad")
+	interaction.set_meta("system_tower_staff_id", staff_id)
+	interaction.set_meta("system_tower_staff_role", staff_role)
+	interaction.set_meta("system_display_name", station_title)
+	interaction.set_meta("system_interaction_prompt", station_title + " — تحدث مع الموظف")
+	interaction.collision_layer = 1
+	interaction.collision_mask = 0
+	var interaction_shape := CollisionShape3D.new()
+	var interaction_sphere := SphereShape3D.new()
+	interaction_sphere.radius = 2.8
+	interaction_shape.shape = interaction_sphere
+	interaction_shape.position.y = 1.1
+	interaction.add_child(interaction_shape)
+	station.add_child(interaction)
+
 
 func _add_elevator_panel(parent: Node3D, panel_name: String, size: Vector3, position: Vector3, material: Material) -> MeshInstance3D:
 	var panel_mesh := MeshInstance3D.new()
