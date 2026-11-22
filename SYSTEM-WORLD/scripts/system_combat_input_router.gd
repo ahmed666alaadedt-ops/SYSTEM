@@ -14,6 +14,7 @@ var controls: Object
 var world_manager: Node
 var player: CharacterBody3D
 var camera: Camera3D
+var progression: Node
 
 var historical_combat: Node
 var modern_combat: Node
@@ -45,6 +46,7 @@ func _unbind_previous_scene() -> void:
 	world_manager = null
 	player = null
 	camera = null
+	progression = null
 
 
 func _try_bind_current_scene() -> void:
@@ -57,6 +59,7 @@ func _try_bind_current_scene() -> void:
 	var found_manager = scene.get("world_manager")
 	var found_player = scene.get("player")
 	var found_camera = scene.get("camera")
+	var found_progression: Node = scene.get("player_progression") as Node
 
 	if (
 		found_controls == null
@@ -70,6 +73,7 @@ func _try_bind_current_scene() -> void:
 	world_manager = found_manager
 	player = found_player
 	camera = found_camera
+	progression = found_progression
 	bound_scene = scene
 
 	_connect_control_signals()
@@ -138,10 +142,10 @@ func _refresh_combat_system() -> void:
 			modern_combat = MODERN_COMBAT_SCRIPT.new()
 			modern_combat.name = "ModernWorldCombatSystem"
 			world_manager.add_child(modern_combat)
-			modern_combat.call("bind_actor", player, camera)
+			modern_combat.call("bind_actor", player, camera, progression)
 			print("SYSTEM: Modern-world combat system activated.")
 		else:
-			modern_combat.call("set_combat_camera", camera)
+			modern_combat.call("bind_actor", player, camera, progression)
 		return
 	_hide_modern_combat()
 
