@@ -2565,6 +2565,8 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 					assembly.add_child(part)
 				if assembly_complete:
 					_start_robot_idle_animation(assembly)
+			elif facility_type == "vr_lab":
+				_build_vr_simulation_course(root, highlight, accent)
 		"innovation_rooftop":
 			for index in range(5):
 				_add_facility_box(root, "InnovationConsole_%02d" % index, Vector3(-12.0 + float(index) * 6.0, 1.0, 1.0), Vector3(2.4, 2.0, 1.8), highlight)
@@ -2692,6 +2694,8 @@ func _add_facility_activity_controls(facility_type: String) -> void:
 	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	if facility_type == "arcade":
 		description.text = "اختر جهازاً من أجهزة SYSTEM ARCADE ثم أكمل اللعبة. توجد ألعاب تصويب وذاكرة ألوان وسرعة استجابة."
+	elif facility_type == "vr_lab":
+		description.text = "ابدأ المحاكاة ثم تحرّك داخل المسار ثلاثي الأبعاد واعبر بوابات الطاقة الثلاث بالترتيب حتى تصل إلى منصة الخروج."
 	else:
 		description.text = "%s: أكمل %d خطوات. تُحفظ أفضل نتيجة وعدد الجولات على هذا الجهاز." % [str(definition["title"]), int(definition["goal"])]
 	content.add_child(description)
@@ -2754,6 +2758,8 @@ func _add_facility_activity_controls(facility_type: String) -> void:
 	action_button.name = "FacilityActivityActionButton"
 	action_button.text = str(definition["action_label"])
 	action_button.pressed.connect(perform_facility_activity.bind(str(definition["action"])))
+	if facility_type == "vr_lab":
+		action_button.visible = false
 	content.add_child(action_button)
 	var stats := Dictionary(facility_activity_stats.get(facility_type, {}))
 	var stats_label := Label.new()
@@ -3485,6 +3491,65 @@ func _update_cinema_program_screen(scene_number: int) -> void:
 	var material := screen.material_override as StandardMaterial3D
 	if material != null:
 		material.emission = scene_colors[index]
+
+
+func _build_vr_simulation_course(root: Node3D, highlight: Material, accent: Material) -> void:
+	var course := Node3D.new()
+	course.name = "VRSimulationCourse"
+	course.position = Vector3(0.0, 0.0, -1.0)
+	root.add_child(course)
+	_add_facility_box(course, "VRSimulationFloor", Vector3(0.0, 0.12, 0.0), Vector3(12.0, 0.24, 23.0), accent)
+	_add_facility_box(course, "VRSimulationStartMarker", Vector3(0.0, 0.28, -9.0), Vector3(4.0, 0.12, 1.0), highlight)
+	_add_facility_box(course, "VRSimulationFinishMarker", Vector3(0.0, 0.28, 9.0), Vector3(4.0, 0.12, 1.0), highlight)
+	for checkpoint_index in range(3):
+		var gate := Node3D.new()
+		gate.name = "VRCheckpointGate_%02d" % checkpoint_index
+		gate.position = Vector3(0.0, 0.0, -6.0 + float(checkpoint_index) * 6.0)
+		course.add_child(gate)
+		_add_facility_box(gate, "GateLeft", Vector3(-2.0, 1.8, 0.0), Vector3(0.22, 3.6, 0.35), highlight)
+		_add_facility_box(gate, "GateRight", Vector3(2.0, 1.8, 0.0), Vector3(0.22, 3.6, 0.35), highlight)
+		_add_facility_box(gate, "GateTop", Vector3(0.0, 3.55, 0.0), Vector3(4.2, 0.22, 0.35), highlight)
+		var sensor := Area3D.new()
+		sensor.name = "VRCheckpointSensor_%02d" % checkpoint_index
+		sensor.collision_layer = 0
+		sensor.collision_mask = 1
+		sensor.monitoring = true
+		sensor.position = Vector3(0.0, 1.5, 0.0)
+		var sensor_collision := CollisionShape3D.new()
+		var sensor_shape := BoxShape3D.new()
+		sensor_shape.size = Vector3(3.8, 3.0, 1.2)
+		sensor_collision.shape = sensor_shape
+		sensor.add_child(sensor_collision)
+		sensor.body_entered.connect(_on_vr_checkpoint_body_entered.bind(checkpoint_index))
+		gate.add_child(sensor)
+	for obstacle_index in range(4):
+		var side := -1.0 if obstacle_index % 2 == 0 else 1.0
+		var obstacle_z := -3.0 + float(obstacle_index) * 2.0
+		_add_facility_box(course, "VRHologramObstacle_%02d" % obstacle_index, Vector3(side * 4.5, 1.3, obstacle_z), Vector3(0.7, 2.6, 0.7), highlight)
+	var exit_beacon := OmniLight3D.new()
+	exit_beacon.name = "VRSimulationExitBeacon"
+	exit_beacon.position = Vector3(0.0, 3.0, 10.0)
+	exit_beacon.light_color = Color(0.12, 0.85, 1.0)
+	exit_beacon.light_energy = 1.8
+	exit_beacon.omni_range = 12.0
+	course.add_child(exit_beacon)
+
+
+func _on_vr_checkpoint_body_entered(body: Node3D, checkpoint_index: int) -> void:
+	if body != player or active_facility_activity.is_empty():
+		return
+	if str(active_facility_activity.get("type", "")) != "vr_lab" or not bool(active_facility_activity.get("started", false)):
+		return
+	var expected_checkpoint := int(active_facility_activity.get("step", 0))
+	if checkpoint_index != expected_checkpoint:
+		_set_status("مسار المحاكاة: اعبر البوابة %d أولاً." % (expected_checkpoint + 1))
+		return
+	var next_step := expected_checkpoint + 1
+	active_facility_activity["step"] = next_step
+	active_facility_activity["score"] = int(active_facility_activity.get("score", 0)) + 20
+	_set_status("تم اجتياز بوابة المحاكاة %d من 3." % next_step)
+	if next_step >= int(active_facility_activity.get("goal", 3)):
+		_complete_facility_activity()
 
 
 func _complete_facility_activity() -> Dictionary:
