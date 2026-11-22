@@ -163,6 +163,7 @@ func _enter_aircraft() -> void:
 	landed = true
 	heli_position = global_position + Vector3(0.0, 2.8, 0.0)
 	aircraft.global_position = heli_position
+	player.set_meta("system_helicopter_piloting", true)
 	player.visible = false
 	player.set_physics_process(false)
 	interact_button.text = "Exit Helicopter"
@@ -174,6 +175,7 @@ func _enter_aircraft() -> void:
 
 func _exit_aircraft() -> void:
 	pilot_active = false
+	player.set_meta("system_helicopter_piloting", false)
 	player.visible = true
 	player.set_physics_process(true)
 	player.global_position = global_position + Vector3(-22.0, 3.0, 0.0)
