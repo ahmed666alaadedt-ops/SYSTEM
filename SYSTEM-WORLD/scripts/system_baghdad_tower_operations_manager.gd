@@ -606,7 +606,12 @@ func _consume_elixir(item_id: String) -> void:
 	else:
 		_set_status("تعذر استخدام الإكسير: " + str(result.get("reason", "غير معروف")))
 
-func _buy_product(item_id: String, item_name: String, price: int) -> void:
+func _buy_product(item_id: String, item_name: String, _listed_price: int) -> void:
+	var stock := get_vendor_stock(item_id)
+	if stock <= 0:
+		_set_status("نفد مخزون هذا المنتج. سيعيد الموظفون تعبئته بعد دورة التوريد.")
+		return
+	var price := _get_current_price(item_id)
 	if credits < price:
 		_set_status("رصيدك غير كافٍ لشراء " + item_name)
 		return
@@ -614,10 +619,15 @@ func _buy_product(item_id: String, item_name: String, price: int) -> void:
 		_set_status("الحقيبة غير متاحة حالياً.")
 		return
 	credits -= price
+	vendor_stock[item_id] = stock - 1
+	_save_vendor_stock()
 	progression.call("add_item", item_id, 1)
 	_save_wallet()
 	credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
-	_set_status("تم شراء %s من موظف البرج وإضافته إلى حقيبتك." % item_name)
+	_set_status("تم شراء %s من موظف البرج وإضافته إلى حقيبتك. السعر الحالي: %d" % [item_name, price])
+	_add_catalog_controls(current_tower_id)
+	if current_tower_id == "weapons_equipment_elixirs_tower_baghdad":
+		_add_crafting_controls(current_tower_id)
 	_add_sell_controls()
 
 func _sell_item(item_id: String, requested_count: int) -> void:
@@ -640,18 +650,17 @@ func _sell_item(item_id: String, requested_count: int) -> void:
 	if progression.has_method("save_progress"):
 		progression.call("save_progress")
 	credits += unit_price * quantity
+	if vendor_stock.has(item_id):
+		vendor_stock[item_id] = mini(_get_stock_cap(item_id), get_vendor_stock(item_id) + quantity)
+		_save_vendor_stock()
 	_save_wallet()
 	credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
 	_set_status("اشترى الموظف %d من %s مقابل %d رصيد." % [quantity, item_id, unit_price * quantity])
+	_add_catalog_controls(current_tower_id)
 	_add_sell_controls()
 
 func _item_resale_price(item_id: String) -> int:
-	for tower_id in PRODUCT_CATALOG.keys():
-		for product_value in PRODUCT_CATALOG[tower_id]:
-			var product: Dictionary = product_value
-			if str(product["id"]) == item_id:
-				return maxi(1, int(product["price"]) / 2)
-	return 10
+	return maxi(1, int(_get_current_price(item_id) / 2))
 
 func _set_status(message: String) -> void:
 	if status_label != null:
