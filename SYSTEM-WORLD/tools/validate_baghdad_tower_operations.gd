@@ -86,7 +86,7 @@ func _run() -> void:
 		if room.get_node_or_null("FloorCollision") == null:
 			_fail("Interior floor collision is missing for " + tower_id)
 			return
-	var power_manager := main.get("power_tower_manager")
+	var power_manager: Node = main.get("power_tower_manager") as Node
 	if power_manager == null:
 		_fail("Power Tower progression manager is missing.")
 		return
