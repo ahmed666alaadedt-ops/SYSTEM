@@ -861,6 +861,9 @@ func _on_interaction_performed(
 	if target.has_meta("system_restaurant_table_id") and tower_operations_manager != null:
 		tower_operations_manager.call("open_restaurant_table", target)
 		return
+	if target.has_meta("system_hotel_room_id") and tower_operations_manager != null:
+		tower_operations_manager.call("open_hotel_room_preview", str(target.get_meta("system_hotel_room_id", "")))
+		return
 	if target.has_meta("system_arcade_cabinet_id") and tower_operations_manager != null:
 		tower_operations_manager.call(
 			"open_arcade_cabinet",
