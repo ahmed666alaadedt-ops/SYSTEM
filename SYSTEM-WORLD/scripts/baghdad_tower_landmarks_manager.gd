@@ -282,7 +282,16 @@ func _build_business_tower() -> void:
 
 
 func _build_shopping_tower() -> void:
-	_build_tower("ShoppingTower", "برج التسوق", "shopping_tower_baghdad", city_anchor + Vector3(-355.0, 0.0, -350.0), 190.0, 30.0, 32, Color(0.95, 0.72, 0.28))
+	_build_tower("ShoppingTower", "برج الأسلحة وإيقاظ النِن", "shopping_tower_baghdad", city_anchor + Vector3(-355.0, 0.0, -350.0), 190.0, 30.0, 32, Color(0.95, 0.72, 0.28))
+	var armory_tower := get_node_or_null("ShoppingTower")
+	if armory_tower != null:
+		armory_tower.set_meta("tower_role", "weapon_armory_and_nen_awakening")
+		armory_tower.set_meta("target_latitude", 33.32495)
+		armory_tower.set_meta("target_longitude", 44.40483)
+		armory_tower.set_meta("target_landmark", "Republic Bridge / جسر الجمهورية")
+		armory_tower.set_meta("target_river", "Tigris / نهر دجلة")
+		armory_tower.set_meta("target_bank_connection", PackedStringArray(["Al-Karkh / الكرخ", "Al-Rusafa / الرصافة"]))
+		armory_tower.set_meta("geospatial_relocation_pending", true)
 
 
 func _build_entertainment_tower() -> void:
