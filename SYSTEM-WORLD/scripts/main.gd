@@ -1287,6 +1287,8 @@ func _physics_process(delta: float) -> void:
 	var movement_speed := PLAYER_SPEED
 	if bool(player.get_meta("system_wounded", false)):
 		movement_speed *= 0.7
+	if is_instance_valid(player_progression) and player_progression.has_method("get_movement_multiplier"):
+		movement_speed *= float(player_progression.call("get_movement_multiplier"))
 	if is_in_hospital_treatment:
 		move_direction = Vector3.ZERO
 		movement_speed = 0.0
