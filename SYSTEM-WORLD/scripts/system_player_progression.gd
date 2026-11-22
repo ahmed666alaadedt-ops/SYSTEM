@@ -40,9 +40,19 @@ const EQUIPMENT_DEFENSE_BONUS := {"hunter_shield": 8.0, "hunter_armor": 12.0, "h
 const CRAFTING_RECIPES := {
 	"training_sword": {"name": "صناعة سيف تدريبي", "ingredients": {"iron_ingot": 1, "wood_plank": 2}, "output": "training_sword", "required_level": 1},
 	"steel_sword": {"name": "صناعة سيف فولاذي", "ingredients": {"iron_ingot": 3, "wood_plank": 2}, "output": "steel_sword", "required_level": 5},
+	"hunter_spear": {"name": "صناعة رمح صياد", "ingredients": {"iron_ingot": 2, "wood_plank": 3}, "output": "hunter_spear", "required_level": 5},
+	"battle_axe": {"name": "صناعة فأس قتالي", "ingredients": {"iron_ingot": 4, "wood_plank": 2}, "output": "battle_axe", "required_level": 10},
+	"composite_bow": {"name": "صناعة قوس مركب", "ingredients": {"wood_plank": 4, "leather_roll": 2}, "output": "composite_bow", "required_level": 8},
+	"hunter_shield": {"name": "صناعة درع يدوي", "ingredients": {"iron_ingot": 3, "leather_roll": 1}, "output": "hunter_shield", "required_level": 8},
 	"hunter_armor": {"name": "صناعة درع صياد", "ingredients": {"iron_ingot": 5, "leather_roll": 4}, "output": "hunter_armor", "required_level": 10},
+	"hunter_helmet": {"name": "صناعة خوذة صياد", "ingredients": {"iron_ingot": 2, "leather_roll": 1}, "output": "hunter_helmet", "required_level": 8},
+	"combat_outfit": {"name": "خياطة زي قتالي", "ingredients": {"leather_roll": 4, "energy_crystal": 1}, "output": "combat_outfit", "required_level": 12},
 	"healing_elixir": {"name": "تحضير إكسير الشفاء", "ingredients": {"medicinal_herb": 2, "crystal_dust": 1}, "output": "healing_elixir", "required_level": 1},
 	"strength_elixir": {"name": "تحضير إكسير القوة", "ingredients": {"medicinal_herb": 2, "monster_core": 1}, "output": "strength_elixir", "required_level": 5},
+	"speed_elixir": {"name": "تحضير إكسير السرعة", "ingredients": {"medicinal_herb": 2, "energy_crystal": 1}, "output": "speed_elixir", "required_level": 5},
+	"endurance_elixir": {"name": "تحضير إكسير التحمل", "ingredients": {"medicinal_herb": 2, "leather_roll": 1}, "output": "endurance_elixir", "required_level": 5},
+	"energy_elixir": {"name": "تحضير إكسير الطاقة", "ingredients": {"crystal_dust": 2, "energy_crystal": 1}, "output": "energy_elixir", "required_level": 8},
+	"nen_acquisition_elixir": {"name": "تحضير إكسير اكتساب النِن", "ingredients": {"monster_core": 2, "nen_fragment": 1}, "output": "nen_acquisition_elixir", "required_level": 15},
 	"nen_control_elixir": {"name": "تحضير إكسير التحكم بالنِن", "ingredients": {"nen_fragment": 2, "energy_crystal": 1}, "output": "nen_control_elixir", "required_level": 20, "requires_nen": true},
 	"rare_legendary_elixir": {"name": "تحضير الإكسير النادر/الأسطوري", "ingredients": {"rare_core": 3, "nen_fragment": 5, "energy_crystal": 3}, "output": "rare_legendary_elixir", "required_level": 80, "requires_nen": true}
 }
