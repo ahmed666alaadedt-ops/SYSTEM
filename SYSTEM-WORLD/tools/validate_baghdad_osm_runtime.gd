@@ -93,8 +93,13 @@ func _run_validation() -> void:
 	if runtime_entrance_roots.size() != expected_runtime_entrances or runtime_entrance_roots.is_empty():
 		_fail("Runtime entrance markers do not match accepted/restricted source associations.")
 		return
+	var door_test_player := CharacterBody3D.new()
+	door_test_player.name = "Player"
+	door_test_player.add_to_group("system_player")
+	root.add_child(door_test_player)
 	var accepted_runtime_entrances := 0
 	var physical_door_count := 0
+	var interior_transition_count := 0
 	for entrance_root_value in runtime_entrance_roots:
 		var entrance_root := entrance_root_value as Node3D
 		var entrance_interaction := entrance_root.get_node_or_null("MappedEntranceInteraction") as StaticBody3D
@@ -131,14 +136,29 @@ func _run_validation() -> void:
 		if not door_root.is_in_group("system_interactable") or not bool(door_root.get_meta("system_wall_opening_built", false)):
 			_fail("A physical Baghdad door is missing its interaction group or wall opening evidence.")
 			return
-		if door_root.get_node_or_null("DoorHinge/DoorLeafBody") as AnimatableBody3D == null:
+		if (door_root.get_node_or_null("DoorHinge/DoorLeafBody") as AnimatableBody3D) == null:
 			_fail("A physical Baghdad door has no hinged leaf collision body.")
 			return
-		if door_root.get_node_or_null("DoorInteractionArea") as Area3D == null:
+		if (door_root.get_node_or_null("DoorInteractionArea") as Area3D) == null:
 			_fail("A physical Baghdad door has no interaction area.")
 			return
 		if str(door_root.get_meta("system_associated_building_id", "")) != associated_building_id:
 			_fail("A physical Baghdad door is linked to the wrong building.")
+			return
+		var interior_root := door_root.get("interior_root") as Node3D
+		var roof_node := door_root.get("roof_node") as MeshInstance3D
+		if interior_root == null or interior_root.get_node_or_null("InteriorFloorVisual") == null:
+			_fail("A source-verified Baghdad door has no category-specific interior floor.")
+			return
+		if interior_root.get_node_or_null("InteriorWarmLight") == null or str(interior_root.get_meta("system_interior_category", "")).is_empty():
+			_fail("A Baghdad building interior is missing its category metadata or lighting.")
+			return
+		var interior_floor_body := interior_root.get_node_or_null("InteriorFloorBody") as StaticBody3D
+		if interior_floor_body == null or interior_floor_body.collision_layer != 0:
+			_fail("An inactive Baghdad interior floor has invalid collision state.")
+			return
+		if roof_node != null and not roof_node.visible:
+			_fail("A Baghdad building roof was hidden before the player entered.")
 			return
 		if association_status == "accepted":
 			accepted_runtime_entrances += 1
@@ -149,14 +169,31 @@ func _run_validation() -> void:
 			if bool(door_root.get_meta("system_door_open", true)) or str(door_root.get_meta("system_access_state", "")) != "verified_door_closed":
 				_fail("An accepted physical door did not start in its closed state.")
 				return
+			var inward_direction := door_root.global_transform.basis.z.normalized()
+			door_test_player.global_position = door_root.global_position - inward_direction * 2.0 + Vector3.UP
 			door_root.call("system_interact")
 			if not bool(door_root.get_meta("system_door_open", false)) or str(door_root.get_meta("system_access_state", "")) != "verified_door_open":
 				_fail("An accepted physical door did not open through its interaction.")
 				return
 			door_root.call("system_interact")
-			if bool(door_root.get_meta("system_door_open", true)) or str(door_root.get_meta("system_access_state", "")) != "verified_door_closed":
-				_fail("An accepted physical door did not close through its interaction.")
+			var inside_building_id := str(door_root.get("building_osm_id"))
+			if str(door_test_player.get_meta("system_inside_building_id", "")) != inside_building_id:
+				_fail("The player did not enter the correct Baghdad building interior.")
 				return
+			if not interior_root.visible or (roof_node != null and roof_node.visible) or interior_floor_body.collision_layer == 0:
+				_fail("Entering a Baghdad building did not activate its interior and disable its roof.")
+				return
+			door_root.call("system_interact")
+			if door_test_player.has_meta("system_inside_building_id") or interior_root.visible:
+				_fail("The player did not exit the Baghdad building interior cleanly.")
+				return
+			if roof_node != null and not roof_node.visible:
+				_fail("The building roof was not restored after the player exited.")
+				return
+			if interior_floor_body.collision_layer != 0 or bool(door_root.get_meta("system_door_open", true)):
+				_fail("The Baghdad interior collision or door state was not restored on exit.")
+				return
+			interior_transition_count += 1
 		else:
 			if str(entrance_interaction.get_meta("system_access_state", "")) != "restricted_no_public_entry":
 				_fail("A restricted source entrance was not kept inaccessible.")
@@ -165,13 +202,14 @@ func _run_validation() -> void:
 				_fail("A restricted physical door was not kept locked and closed.")
 				return
 			door_root.call("system_interact")
-			if bool(door_root.get_meta("system_door_open", true)):
-				_fail("A restricted physical door opened through public interaction.")
+			if bool(door_root.get_meta("system_door_open", true)) or interior_root.visible:
+				_fail("A restricted physical door opened or activated its interior through public interaction.")
 				return
-	if accepted_runtime_entrances == 0 or physical_door_count != accepted_runtime_entrances:
-		_fail("Baghdad accepted entrance count does not match the generated physical door count.")
+	if accepted_runtime_entrances == 0 or physical_door_count != accepted_runtime_entrances or interior_transition_count != accepted_runtime_entrances:
+		_fail("Baghdad accepted entrance, physical door and interior transition counts do not match.")
 		return
-	print("Baghdad entrance/door runtime passed: source_points=", source_entrances.size(), " linked_markers=", runtime_entrance_roots.size(), " accepted=", accepted_runtime_entrances, " physical_doors=", physical_door_count)
+	door_test_player.queue_free()
+	print("Baghdad entrance/door/interior runtime passed: source_points=", source_entrances.size(), " linked_markers=", runtime_entrance_roots.size(), " accepted=", accepted_runtime_entrances, " physical_doors=", physical_door_count, " interior_transitions=", interior_transition_count)
 	streamer._unload_cell(entrance_cell_id)
 
 	var archaeological_feature := {
