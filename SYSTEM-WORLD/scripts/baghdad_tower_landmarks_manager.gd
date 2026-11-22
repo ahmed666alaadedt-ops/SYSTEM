@@ -719,8 +719,46 @@ func _add_facility_block(parent: Node3D, node_name: String, local_position: Vect
 	sign.position = Vector3(0.0, size.y + 1.0, size.z * 0.5 + 0.3)
 	sign.modulate = Color(0.55, 0.88, 1.0)
 	shell.add_child(sign)
+	# Shared public-service furniture makes every tower facility read as a usable venue.
+	var reception := MeshInstance3D.new()
+	reception.name = "ReceptionCounterVisual"
+	var counter_mesh := BoxMesh.new()
+	counter_mesh.size = Vector3(minf(size.x * 0.42, 7.0), 1.15, 1.1)
+	reception.mesh = counter_mesh
+	reception.position = Vector3(0.0, 0.78, size.z * 0.5 - 2.2)
+	reception.material_override = material
+	shell.add_child(reception)
+	var directory := Label3D.new()
+	directory.name = "FacilityServiceDirectory"
+	directory.text = sign_text + "\\nWELCOME • INFORMATION • ACCESS"
+	directory.font_size = 15
+	directory.position = Vector3(0.0, 3.1, size.z * 0.5 - 0.9)
+	directory.modulate = Color(0.35, 0.9, 1.0)
+	shell.add_child(directory)
+	var waiting_area := Node3D.new()
+	waiting_area.name = "VisitorWaitingArea"
+	shell.add_child(waiting_area)
+	for seat_index in range(3):
+		var seat := MeshInstance3D.new()
+		seat.name = "VisitorSeat_%02d" % seat_index
+		var seat_mesh := BoxMesh.new()
+		seat_mesh.size = Vector3(1.35, 0.65, 0.72)
+		seat.mesh = seat_mesh
+		seat.position = Vector3(-2.0 + float(seat_index) * 2.0, 0.48, -size.z * 0.22)
+		seat.material_override = material
+		waiting_area.add_child(seat)
+	var entry_marker := MeshInstance3D.new()
+	entry_marker.name = "EntranceThresholdMarker"
+	var marker_mesh := BoxMesh.new()
+	marker_mesh.size = Vector3(minf(size.x * 0.72, 12.0), 0.12, 0.28)
+	entry_marker.mesh = marker_mesh
+	entry_marker.position = Vector3(0.0, 0.3, size.z * 0.5 + 0.55)
+	entry_marker.material_override = material
+	shell.add_child(entry_marker)
 	shell.set_meta("entrance_open", true)
 	shell.set_meta("navigation_ready", false)
+	shell.set_meta("service_furniture_revision", 1)
+	shell.set_meta("interactive", false)
 
 
 func _add_facility_piece(parent: Node3D, node_name: String, local_position: Vector3, size: Vector3, material: Material, add_collision: bool) -> void:
