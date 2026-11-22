@@ -93,9 +93,16 @@ func restore_stone_door_state(opened: bool) -> void:
 	var restored_position := _closed_door_position
 	if _opened:
 		restored_position += DOOR_OPEN_OFFSET
-	# The door is an AnimatableBody3D registered with physics; defer the
-	# restored transform until the current scene-tree setup has completed.
-	door.set_deferred("position", restored_position)
+	# Temporarily release physics-frame synchronization while restoring the
+	# saved transform, then return the body to its normal animated-physics mode.
+	if door is AnimatableBody3D:
+		var animatable := door as AnimatableBody3D
+		var was_synced := animatable.sync_to_physics
+		animatable.sync_to_physics = false
+		animatable.position = restored_position
+		animatable.sync_to_physics = was_synced
+	else:
+		door.position = restored_position
 	door.visible = true
 	set_meta("system_door_open", _opened)
 	set_meta(
