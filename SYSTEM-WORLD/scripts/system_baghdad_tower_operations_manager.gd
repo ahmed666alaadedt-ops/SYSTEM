@@ -330,12 +330,12 @@ func _get_or_create_staff(tower_id: String, index: int, config: Dictionary) -> S
 			existing = str(npc_id)
 			break
 	if existing.is_empty():
-		var display_name := str(STAFF_NAMES[posmod(index + tower_id.length(), STAFF_NAMES.size())])
+		var display_name := str(STAFF_NAMES[posmod(index, STAFF_NAMES.size())])
 		existing = str(society.call("create_npc", display_name, WORLD_ID, 24.0 + float(index * 4), "professional", str(config["jobs"][index])))
 	if existing.is_empty():
 		return ""
 	var npc: Dictionary = society.call("get_npc", existing)
-	npc["name"] = str(STAFF_NAMES[posmod(index + tower_id.length(), STAFF_NAMES.size())])
+	npc["name"] = str(STAFF_NAMES[posmod(index, STAFF_NAMES.size())])
 	npc["gender"] = "female" if posmod(index, 2) == 1 else "male"
 	npc["system_tower_staff_tower"] = tower_id
 	npc["system_tower_staff_index"] = index
