@@ -1591,6 +1591,7 @@ func _run() -> void:
 	if arcade_hit_count <= 0:
 		_fail("Arcade physics test did not hit any target during the ten-shot game. Last result: " + str(arcade_last_result))
 		return
+	print("QA TRACE: activity loops completed; starting pool water regression.")
 	var pool_room := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 18) as Node3D
 	var pool_physics_facility := pool_room.get_node_or_null("SpecialFacility_swimming_pool") as Node3D if pool_room != null else null
 	var pool_water := pool_physics_facility.get_node_or_null("PoolWaterVolume") as Area3D if pool_physics_facility != null else null
@@ -1628,8 +1629,11 @@ func _run() -> void:
 	if int(operations.call("_get_floor_duty_staff_index", "shopping_tower_baghdad", 29)) != 4 or int(operations.call("_get_floor_duty_staff_index", "shopping_tower_baghdad", 27)) != 6 or int(operations.call("_get_floor_duty_staff_index", "technology_tower_baghdad", 20)) != 4:
 		_fail("Baghdad floor-to-staff duty assignments are incorrect.")
 		return
+	print("QA TRACE: pool movement and save/load regressions completed; starting staff elevator trip.")
 	operations.set("current_tower_id", "shopping_tower_baghdad")
+	print("QA TRACE: invoking floor 29 staff elevator trip.")
 	operations.call("_travel_to_floor", "shopping_tower_baghdad", 29)
+	print("QA TRACE: floor 29 elevator trip requested.")
 	var shopping_staff_ids: Array = operations.get("staff_by_tower").get("shopping_tower_baghdad", [])
 	if shopping_staff_ids.size() <= 4:
 		_fail("Shopping Tower restaurant chef staff record is missing.")
@@ -1640,14 +1644,18 @@ func _run() -> void:
 	if restaurant_chef == null or staff_elevator_car == null or restaurant_chef.get_parent() != staff_elevator_car or not bool(restaurant_chef.get_meta("system_staff_in_elevator", false)):
 		_fail("The assigned Shopping Tower restaurant chef did not board the physical tower elevator.")
 		return
+	print("QA TRACE: waiting for floor 29 elevator arrival.")
 	await create_timer(3.8).timeout
+	print("QA TRACE: floor 29 elevator wait completed.")
 	var chef_workstation := restaurant_room.get_node_or_null("StaffWorkstation_restaurant_chef") as Node3D
 	if restaurant_chef.get_parent() != restaurant_room or chef_workstation == null or not bool(restaurant_chef.get_meta("system_staff_workstation_active", false)):
 		_fail("The restaurant chef did not travel to floor 29 and reach the active workstation.")
 		return
 	var restaurant_emergency_sensor := restaurant_room.get_node("EmergencyExitSensor") as Area3D
+	print("QA TRACE: triggering restaurant emergency evacuation.")
 	restaurant_emergency_sensor.body_entered.emit(player)
 	await create_timer(3.1).timeout
+	print("QA TRACE: evacuation wait completed.")
 	if operations.get("active_floor_root") != null or bool(player.get_meta("system_tower_elevator_active", false)):
 		_fail("Physically entering the tower emergency exit did not complete the evacuation return to the public lobby.")
 		return
@@ -1661,6 +1669,7 @@ func _run() -> void:
 	if customers_after_evacuation != 4:
 		_fail("Shopping Tower customer visitors did not return to the public lobby after emergency evacuation; found %d." % customers_after_evacuation)
 		return
+	print("QA TRACE: final staff/customer assertions passed.")
 	print("Baghdad tower operations validation passed: five connected Baghdad towers, independent Power Tower, NPC commerce, hotel workflows, eleven playable leisure/technology activity loops, equipment, Nen progression and the 200th-floor sovereign boss arena.")
 	# This is a short-lived headless validation process; avoid forcing dummy-renderer teardown of placeholder meshes.
 	quit(0)
