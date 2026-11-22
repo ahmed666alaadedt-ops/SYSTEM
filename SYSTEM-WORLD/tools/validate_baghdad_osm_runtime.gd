@@ -18,7 +18,7 @@ func _run_validation() -> void:
 	terrain_manager.name = "ModernContinent"
 	root.add_child(terrain_manager)
 	var preexisting_baghdad_ground_elevation := terrain_manager.get_terrain_height(0.0, 0.0)
-	var expected_osm_ground_baseline := maxf(preexisting_baghdad_ground_elevation, 6.25)
+	var expected_osm_ground_baseline := maxf(preexisting_baghdad_ground_elevation, 34.0)
 	var streamer = BAGHDAD_STREAMER.new()
 	root.add_child(streamer)
 	print("Baghdad OSM validation: streamer added; checking manifest and origin.")
@@ -128,7 +128,7 @@ func _run_validation() -> void:
 	if not is_equal_approx(streamer.world_tower_platform_elevation_m, expected_osm_ground_baseline + 12.28):
 		_fail("Republic Bridge tower platform does not preserve the required vertical separation above the Tigris.")
 		return
-	if streamer.world_water_surface_elevation_m < 0.25 or terrain_manager.get_baghdad_osm_ground_height(0.0, 0.0) < 0.25:
+	if streamer.world_water_surface_elevation_m < 28.0 or terrain_manager.get_baghdad_osm_ground_height(0.0, 0.0) < 0.25:
 		_fail("Baghdad OSM land or Tigris water would be hidden below the global ocean plane.")
 		return
 	if not is_equal_approx(streamer.world_bridge_deck_elevation_m - streamer.world_water_surface_elevation_m, 6.28) or not is_equal_approx(streamer.world_tower_platform_elevation_m - streamer.world_water_surface_elevation_m, 18.28):
