@@ -205,6 +205,7 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	_create_tower_architecture(root, node_name, title, height, radius, floors, beacon_color)
 	_create_tower_identity_features(root, node_name, height, radius, beacon_color)
 	_create_tower_vertical_transport_blockout(root, height, radius, floors, beacon_color)
+	_create_tower_sky_garden_terraces(root, height, radius, beacon_color)
 	_create_tower_facility_blockout(root, node_name, radius)
 
 	root.set_meta("tower_id", location_id)
@@ -515,6 +516,74 @@ func _create_tower_vertical_transport_blockout(root: Node3D, height: float, radi
 	transport.set_meta("protected_stair_cores_visual", 2)
 	transport.set_meta("floor_directory_interval", marker_step)
 	transport.set_meta("interactive", false)
+
+
+func _create_tower_sky_garden_terraces(root: Node3D, height: float, radius: float, accent: Color) -> void:
+	# Signature elevated gardens echo the approved Baghdad skyline reference.
+	var gardens := Node3D.new()
+	gardens.name = "SkyGardenTerraces"
+	root.add_child(gardens)
+	var glass := StandardMaterial3D.new()
+	glass.albedo_color = Color(0.10, 0.48, 0.62, 0.46)
+	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	glass.metallic = 0.42
+	glass.roughness = 0.2
+	var planting := _make_surface_material(Color(0.12, 0.30, 0.19), 0.08, 0.82)
+	var accent_material := _make_surface_material(accent, 0.28, 0.3)
+	var levels := [0.24, 0.52, 0.78]
+	for index in range(levels.size()):
+		var terrace_y := 9.0 + height * float(levels[index])
+		var terrace_radius := radius * (2.0 if index == 0 else (1.62 if index == 1 else 1.34))
+		var deck := MeshInstance3D.new()
+		deck.name = "ElevatedGardenDeck_%02d" % index
+		var deck_mesh := CylinderMesh.new()
+		deck_mesh.top_radius = terrace_radius
+		deck_mesh.bottom_radius = terrace_radius * 1.04
+		deck_mesh.height = 2.4
+		deck.mesh = deck_mesh
+		deck.position.y = terrace_y
+		deck.material_override = tower_material
+		gardens.add_child(deck)
+		var deck_body := StaticBody3D.new()
+		deck_body.name = deck.name + "_Collision"
+		deck_body.position.y = terrace_y
+		var deck_collision := CollisionShape3D.new()
+		var deck_shape := CylinderShape3D.new()
+		deck_shape.radius = terrace_radius
+		deck_shape.height = 2.4
+		deck_collision.shape = deck_shape
+		deck_body.add_child(deck_collision)
+		gardens.add_child(deck_body)
+		var ring := MeshInstance3D.new()
+		ring.name = "GardenGlassRailing_%02d" % index
+		var ring_mesh := TorusMesh.new()
+		ring_mesh.inner_radius = terrace_radius * 0.965
+		ring_mesh.outer_radius = terrace_radius
+		ring.mesh = ring_mesh
+		ring.position.y = terrace_y + 2.1
+		ring.material_override = glass
+		gardens.add_child(ring)
+		for planter_index in range(12):
+			var angle := TAU * float(planter_index) / 12.0
+			var planter := MeshInstance3D.new()
+			planter.name = "GardenPlanter_%02d_%02d" % [index, planter_index]
+			var planter_mesh := BoxMesh.new()
+			planter_mesh.size = Vector3(5.0, 1.2, 3.2)
+			planter.mesh = planter_mesh
+			planter.position = Vector3(cos(angle) * terrace_radius * 0.78, terrace_y + 1.7, sin(angle) * terrace_radius * 0.78)
+			planter.rotation.y = -angle
+			planter.material_override = planting
+			gardens.add_child(planter)
+		var sign := Label3D.new()
+		sign.name = "SkyGardenLevelSign_%02d" % index
+		sign.text = "SYSTEM SKY GARDEN • %02d" % (index + 1)
+		sign.font_size = 18
+		sign.position = Vector3(0.0, terrace_y + 4.0, terrace_radius * 0.72)
+		sign.modulate = accent
+		gardens.add_child(sign)
+	gardens.set_meta("terrace_count", levels.size())
+	gardens.set_meta("walkable_collision_present", true)
+	gardens.set_meta("interactive_amenities", false)
 
 
 func _create_tower_podium(root: Node3D, node_name: String, radius: float, accent: Color) -> void:
