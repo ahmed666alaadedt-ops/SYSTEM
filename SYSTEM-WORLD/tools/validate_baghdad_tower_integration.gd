@@ -411,6 +411,36 @@ func _run() -> void:
 		if not service_collision_ready or service_sign == null or service_sign.text.is_empty():
 			_fail("Hunter HQ service desk is missing physical collision or readable signage: " + service_id)
 			return
+	var hq_partition_names := [
+		"ReceptionRoomFrontWall_Left", "ReceptionRoomFrontWall_Right",
+		"RegistryRoomFrontWall_Left", "RegistryRoomFrontWall_Right",
+		"MissionRoomFrontWall_Left", "MissionRoomFrontWall_Right",
+		"ExaminerRoomFrontWall_Left", "ExaminerRoomFrontWall_Right",
+		"ReceptionRoomSideWall_Lower", "ReceptionRoomSideWall_Upper",
+		"RegistryRoomSideWall_Lower", "RegistryRoomSideWall_Upper",
+		"MissionRoomSideWall_Lower", "MissionRoomSideWall_Upper",
+		"ExaminerRoomSideWall_Lower", "ExaminerRoomSideWall_Upper"
+	]
+	if int(headquarters_interior.get_meta("headquarters_service_rooms_count", 0)) != 4 or int(headquarters_interior.get_meta("headquarters_service_room_partition_count", 0)) != hq_partition_names.size():
+		_fail("Hunter HQ does not expose four partitioned service rooms with the expected wall count.")
+		return
+	for partition_name in hq_partition_names:
+		var partition_body := headquarters_interior.get_node_or_null(partition_name) as StaticBody3D
+		var partition_collision_ready := false
+		if partition_body != null:
+			for partition_child in partition_body.get_children():
+				if partition_child is CollisionShape3D and partition_child.shape != null and not partition_child.disabled:
+					partition_collision_ready = true
+					break
+		if not partition_collision_ready:
+			_fail("Hunter HQ service room partition is missing physical collision: " + partition_name)
+			return
+	for room_name in ["Reception", "Registry", "Mission", "Examiner"]:
+		var room_header := headquarters_interior.get_node_or_null("HQRoomDoorHeader_" + room_name) as MeshInstance3D
+		var room_sign := headquarters_interior.get_node_or_null("HQRoomDoorSign_" + room_name) as Label3D
+		if room_header == null or room_sign == null or room_sign.text.is_empty():
+			_fail("Hunter HQ service room is missing its doorway header or sign: " + room_name)
+			return
 
 	var landmarks = LANDMARK_SCRIPT.new()
 	region.add_child(landmarks)
