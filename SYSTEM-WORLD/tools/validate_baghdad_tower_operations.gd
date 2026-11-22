@@ -426,6 +426,12 @@ func _run() -> void:
 		if staff_count != expected_staff_count:
 			_fail("Expected %d visible NPC employees in %s; found %d." % [expected_staff_count, tower_id, staff_count])
 			return
+		if tower_id != "power_tower_baghdad":
+			var lobby_cafe := lobby.get_node_or_null("SYSTEMLobbyCafe") as Node3D
+			var cafe_interaction := lobby_cafe.get_node_or_null("CafeServiceInteraction") as Area3D if lobby_cafe != null else null
+			if cafe_interaction == null or not cafe_interaction.is_in_group("system_interactable") or not cafe_interaction.has_meta("system_tower_staff_id"):
+				_fail("A staffed public cafe and customer service interaction are missing from " + tower_id)
+				return
 		var internal_ad := lobby.get_node_or_null("NPCManagedInternalCampaign") as Label3D
 		if internal_ad == null or not internal_ad.text.contains("بإدارة"):
 			_fail("Internal NPC-managed advertising is missing for " + tower_id)
