@@ -447,9 +447,9 @@ func _run() -> void:
 	var original_highest_floor := int(power_manager.get("highest_cleared_floor"))
 	var original_active_floor := int(power_manager.get("active_floor"))
 	var original_clear_times: Dictionary = power_manager.get("floor_clear_times").duplicate(true)
-	var original_inventory: Dictionary = tower_pilot_progression.get("inventory_items").duplicate(true) if tower_progression != null else {}
+	var original_inventory: Dictionary = tower_progression.get("inventory_items").duplicate(true) if tower_progression != null else {}
 	var original_credits := int(operations.get("credits"))
-	if tower_pilot_progression == null:
+	if tower_progression == null:
 		_fail("Power Tower final reward test has no player progression manager.")
 		return
 	power_manager.set("highest_cleared_floor", 199)
@@ -469,8 +469,8 @@ func _run() -> void:
 		power_manager.set("active_floor", original_active_floor)
 		power_manager.set("floor_clear_times", original_clear_times)
 		power_manager.call("_save_progress")
-		tower_pilot_progression.set("inventory_items", original_inventory)
-		tower_pilot_progression.call("save_progress")
+		tower_progression.set("inventory_items", original_inventory)
+		tower_progression.call("save_progress")
 		operations.set("credits", original_credits)
 		operations.call("_save_wallet")
 		return
@@ -478,8 +478,8 @@ func _run() -> void:
 	power_manager.set("active_floor", original_active_floor)
 	power_manager.set("floor_clear_times", original_clear_times)
 	power_manager.call("_save_progress")
-	tower_pilot_progression.set("inventory_items", original_inventory)
-	tower_pilot_progression.call("save_progress")
+	tower_progression.set("inventory_items", original_inventory)
+	tower_progression.call("save_progress")
 	operations.set("credits", original_credits)
 	operations.call("_save_wallet")
 	operations.set("active_power_floor_data", {})
@@ -497,8 +497,8 @@ func _run() -> void:
 		power_manager.set("active_floor", original_active_floor)
 		power_manager.set("floor_clear_times", original_clear_times)
 		power_manager.call("_save_progress")
-		tower_pilot_progression.set("inventory_items", original_inventory)
-		tower_pilot_progression.call("save_progress")
+		tower_progression.set("inventory_items", original_inventory)
+		tower_progression.call("save_progress")
 		operations.set("credits", original_credits)
 		operations.call("_save_wallet")
 		return
@@ -515,8 +515,8 @@ func _run() -> void:
 		power_manager.set("active_floor", original_active_floor)
 		power_manager.set("floor_clear_times", original_clear_times)
 		power_manager.call("_save_progress")
-		tower_pilot_progression.set("inventory_items", original_inventory)
-		tower_pilot_progression.call("save_progress")
+		tower_progression.set("inventory_items", original_inventory)
+		tower_progression.call("save_progress")
 		operations.set("credits", original_credits)
 		operations.call("_save_wallet")
 		return
@@ -533,8 +533,8 @@ func _run() -> void:
 		power_manager.set("active_floor", original_active_floor)
 		power_manager.set("floor_clear_times", original_clear_times)
 		power_manager.call("_save_progress")
-		tower_pilot_progression.set("inventory_items", original_inventory)
-		tower_pilot_progression.call("save_progress")
+		tower_progression.set("inventory_items", original_inventory)
+		tower_progression.call("save_progress")
 		operations.set("credits", original_credits)
 		operations.call("_save_wallet")
 		return
@@ -542,8 +542,8 @@ func _run() -> void:
 	power_manager.set("active_floor", original_active_floor)
 	power_manager.set("floor_clear_times", original_clear_times)
 	power_manager.call("_save_progress")
-	tower_pilot_progression.set("inventory_items", original_inventory)
-	tower_pilot_progression.call("save_progress")
+	tower_progression.set("inventory_items", original_inventory)
+	tower_progression.call("save_progress")
 	operations.set("credits", original_credits)
 	operations.call("_save_wallet")
 	operations.set("active_power_floor_data", {})
