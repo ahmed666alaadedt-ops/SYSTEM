@@ -1026,3 +1026,15 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Build separate fully enclosed service rooms and examiner operations spaces, add staffed NPC schedules and connect registration, mission acceptance and license services to their authoritative systems.
 - [ ] Review room layout, service-desk scale, collision clearance and text readability in the rendered game and on Android.
 - Note: these are first-pass physical service desks and information interactions inside the existing HQ hall. They are not complete service workflows or finished architectural interiors; the headquarters milestone remains open.
+
+
+## Hunter Association headquarters — partitioned service rooms and guild-service routing — 22 November 2026
+
+- [x] Divide the elevated headquarters hall into four distinct first-pass service rooms: reception, Hunter registry, mission/contract information, and examiner operations/control.
+- [x] Add 16 collision-backed partition wall segments with deliberate doorway openings and Arabic room signage; preserve the central circulation route between the lobby entrance and exit.
+- [x] Route the reception, registry and mission stations to the existing `HunterGuildMenu` information, registration and mission views. Keep examiner-control as a staff-only information point; NPCs are not exam candidates.
+- [x] Extend the validator to verify the 16 partition colliders, four room signs, stable HQ service location IDs, interaction metadata and the shared `tower_service_`/HQ service handler contract.
+- [x] Godot 4.3 workflow run `45011989736` passed on exact code commit `9844fc6490ea0d432c5be1b7f3c932133a1a0daa`, including resource/script parsing, Baghdad tower/Hunter HQ/Power Tower integration, all configured gameplay validators, missing-mesh scan and headless main-scene launch.
+- [ ] Implement complete registration/license transactions, authoritative mission acceptance and progression, examiner tools and staffed NPC schedules; current service routes reuse existing guild views and do not complete every workflow.
+- [ ] Add proper architectural doors, detailed room furnishing, lighting/acoustics, production art, and live rendered/Android layout and collision review.
+- Note: the four service rooms remain a procedural blockout inside the elevated HQ. The headquarters landmark and the overall five-tower district are not complete.
