@@ -431,7 +431,7 @@ func _process(delta: float) -> void:
 		direction.y = 0.0
 		if direction.length() > 3.2:
 			police.global_position += direction.normalized() * float(unit["speed"]) * delta
-			police.look_at(Vector3(target.global_position.x, police.global_position.y, target.global_position.z), Vector3.UP)
+			police.look_at_from_position(police.global_position, Vector3(target.global_position.x, police.global_position.y, target.global_position.z), Vector3.UP)
 		else:
 			var target_id := str(unit["target_id"])
 			if bool(record.get("illegal_race", false)):
