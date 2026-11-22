@@ -96,6 +96,10 @@ var floor_selector: SpinBox
 var power_floor_started_at := 0
 var active_power_floor_data: Dictionary = {}
 var active_floor_root: Node3D
+var active_elevator_car: Node3D
+var active_elevator_tower_id := ""
+var active_elevator_doors: Array[Node3D] = []
+var active_elevator_car_width := 0.0
 var active_opponents: Dictionary = {}
 var current_wave := 0
 var total_waves := 0
@@ -608,7 +612,7 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 	elevator_marker.name = "ElevatorReturnMarker"
 	elevator_marker.add_to_group("system_interactable")
 	elevator_marker.set_meta("system_tower_id", tower_id)
-	elevator_marker.set_meta("system_tower_elevator_return", true)
+	elevator_marker.set_meta("system_tower_elevator_panel", true)
 	elevator_marker.set_meta("system_interaction_prompt", "مصعد البرج — العودة إلى البهو")
 	var marker_shape := CollisionShape3D.new()
 	var marker_sphere := SphereShape3D.new()
@@ -756,6 +760,79 @@ func _create_floor_facilities(room: Node3D, tower_id: String, floor_number: int,
 	room.set_meta("system_tower_floor_number", floor_number)
 	room.set_meta("system_tower_department", department)
 
+func _add_elevator_panel(parent: Node3D, panel_name: String, size: Vector3, position: Vector3, material: Material) -> MeshInstance3D:
+	var panel_mesh := MeshInstance3D.new()
+	panel_mesh.name = panel_name
+	var box := BoxMesh.new()
+	box.size = size
+	panel_mesh.mesh = box
+	panel_mesh.position = position
+	panel_mesh.material_override = material
+	parent.add_child(panel_mesh)
+	return panel_mesh
+
+func _ensure_elevator_car(tower_id: String, start_y: float) -> Node3D:
+	var tower := tower_nodes.get(tower_id) as Node3D
+	if tower == null:
+		return null
+	if is_instance_valid(active_elevator_car) and active_elevator_tower_id == tower_id:
+		active_elevator_car.position.y = start_y
+		_close_elevator_doors()
+		return active_elevator_car
+	if is_instance_valid(active_elevator_car):
+		active_elevator_car.queue_free()
+	active_elevator_doors.clear()
+	var config: Dictionary = TOWER_CONFIG[tower_id]
+	var width := clampf(float(config["radius"]) * 0.46, 7.0, 12.0)
+	var depth := width
+	active_elevator_car_width = width
+	var car := Node3D.new()
+	car.name = "ActiveTowerElevatorCar"
+	car.position = Vector3(0.0, start_y, 0.0)
+	tower.add_child(car)
+	var metal := StandardMaterial3D.new()
+	metal.albedo_color = Color(0.045, 0.13, 0.18)
+	metal.metallic = 0.78
+	metal.roughness = 0.24
+	var glass := StandardMaterial3D.new()
+	glass.albedo_color = Color(0.10, 0.42, 0.56, 0.38)
+	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	glass.metallic = 0.42
+	glass.roughness = 0.18
+	_add_elevator_panel(car, "ElevatorCabinFloor", Vector3(width, 0.28, depth), Vector3(0.0, 0.0, 0.0), metal)
+	_add_elevator_panel(car, "ElevatorCabinRoof", Vector3(width, 0.24, depth), Vector3(0.0, 4.5, 0.0), metal)
+	_add_elevator_panel(car, "ElevatorCabinLeftWall", Vector3(0.25, 4.5, depth), Vector3(-width * 0.5, 2.25, 0.0), glass)
+	_add_elevator_panel(car, "ElevatorCabinRightWall", Vector3(0.25, 4.5, depth), Vector3(width * 0.5, 2.25, 0.0), glass)
+	_add_elevator_panel(car, "ElevatorCabinBackWall", Vector3(width, 4.5, 0.25), Vector3(0.0, 2.25, -depth * 0.5), metal)
+	var left_door := _add_elevator_panel(car, "ElevatorLeftDoor", Vector3(width * 0.44, 4.35, 0.18), Vector3(-width * 0.22, 2.2, depth * 0.5), glass)
+	var right_door := _add_elevator_panel(car, "ElevatorRightDoor", Vector3(width * 0.44, 4.35, 0.18), Vector3(width * 0.22, 2.2, depth * 0.5), glass)
+	active_elevator_doors = [left_door, right_door]
+	var lift_label := Label3D.new()
+	lift_label.text = "SYSTEM LIFT"
+	lift_label.position = Vector3(0.0, 3.9, -depth * 0.5 + 0.2)
+	lift_label.font_size = 20
+	lift_label.pixel_size = 0.012
+	lift_label.modulate = Color(0.55, 0.94, 1.0)
+	car.add_child(lift_label)
+	active_elevator_car = car
+	active_elevator_tower_id = tower_id
+	_close_elevator_doors()
+	return car
+
+func _close_elevator_doors() -> void:
+	if active_elevator_doors.size() < 2:
+		return
+	active_elevator_doors[0].position.x = -active_elevator_car_width * 0.22
+	active_elevator_doors[1].position.x = active_elevator_car_width * 0.22
+
+func _open_elevator_doors() -> void:
+	if active_elevator_doors.size() < 2:
+		return
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(active_elevator_doors[0], "position:x", -active_elevator_car_width * 0.45, 0.35)
+	tween.tween_property(active_elevator_doors[1], "position:x", active_elevator_car_width * 0.45, 0.35)
+
 func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 	if not tower_nodes.has(tower_id) or not is_instance_valid(player):
 		return
@@ -782,24 +859,35 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 	if room == null:
 		_set_status("تعذر تجهيز الطابق.")
 		return
+	var tower := tower_nodes[tower_id] as Node3D
+	var start_y := active_floor_root.position.y if is_instance_valid(active_floor_root) else 9.0
+	var car := _ensure_elevator_car(tower_id, start_y)
+	if car == null:
+		_set_status("تعذر تجهيز عربة المصعد.")
+		return
+	if not is_instance_valid(active_floor_root):
+		player.global_position = tower.to_global(Vector3(0.0, start_y + 1.2, 0.0))
 	if is_instance_valid(active_floor_root) and active_floor_root != room:
 		active_floor_root.queue_free()
 	active_floor_root = room
 	panel.hide()
 	player.set_meta("system_tower_elevator_active", true)
-	var target_position := (tower_nodes[tower_id] as Node3D).to_global(Vector3(0.0, room.position.y + 1.25, 0.0))
+	var target_position := tower.to_global(Vector3(0.0, room.position.y + 1.25, 0.0))
 	var tween := create_tween()
 	tween.set_trans(Tween.TRANS_SINE)
 	tween.set_ease(Tween.EASE_IN_OUT)
+	tween.set_parallel(true)
 	tween.tween_property(player, "global_position", target_position, 2.4)
+	tween.tween_property(car, "position:y", room.position.y, 2.4)
 	tween.finished.connect(func():
+		_open_elevator_doors()
 		if is_instance_valid(player):
 			player.set_meta("system_tower_elevator_active", false)
 			player.velocity = Vector3.ZERO
 		if tower_id == "power_tower_baghdad" and power_floor_in_progress:
 			_begin_power_floor()
 	)
-	_set_status("المصعد يتحرك إلى الطابق %d..." % floor_number)
+	_set_status("عربة المصعد تتحرك إلى الطابق %d..." % floor_number)
 
 func _begin_power_floor() -> void:
 	if active_power_floor_data.is_empty() or active_floor_root == null:
@@ -870,6 +958,9 @@ func _complete_power_floor() -> void:
 func return_to_lobby() -> void:
 	if current_tower_id.is_empty() or not tower_nodes.has(current_tower_id) or not is_instance_valid(player):
 		return
+	if not is_instance_valid(active_floor_root):
+		panel.hide()
+		return
 	if current_tower_id == "power_tower_baghdad" and power_floor_in_progress:
 		for opponent in active_opponents.values():
 			if is_instance_valid(opponent):
@@ -880,20 +971,36 @@ func return_to_lobby() -> void:
 		active_power_floor_data.clear()
 	var tower := tower_nodes[current_tower_id] as Node3D
 	var config: Dictionary = TOWER_CONFIG[current_tower_id]
+	var start_y := active_floor_root.position.y
+	var car := _ensure_elevator_car(current_tower_id, start_y)
+	var first_floor_y := 9.0
 	var lobby_position := tower.to_global(Vector3(0.0, 1.4, float(config["radius"]) * 1.48 + 10.0))
 	player.set_meta("system_tower_elevator_active", true)
 	panel.hide()
 	var tween := create_tween()
 	tween.set_trans(Tween.TRANS_SINE)
 	tween.set_ease(Tween.EASE_IN_OUT)
-	tween.tween_property(player, "global_position", lobby_position, 2.0)
+	tween.set_parallel(true)
+	tween.tween_property(player, "global_position", tower.to_global(Vector3(0.0, first_floor_y + 1.2, 0.0)), 2.0)
+	if car != null:
+		tween.tween_property(car, "position:y", first_floor_y, 2.0)
 	tween.finished.connect(func():
-		if is_instance_valid(player):
-			player.set_meta("system_tower_elevator_active", false)
-			player.velocity = Vector3.ZERO
-		if is_instance_valid(active_floor_root):
-			active_floor_root.queue_free()
-		active_floor_root = null
+		_open_elevator_doors()
+		var exit_tween := create_tween()
+		exit_tween.tween_property(player, "global_position", lobby_position, 0.7)
+		exit_tween.finished.connect(func():
+			if is_instance_valid(player):
+				player.set_meta("system_tower_elevator_active", false)
+				player.velocity = Vector3.ZERO
+			if is_instance_valid(active_floor_root):
+				active_floor_root.queue_free()
+			active_floor_root = null
+			if is_instance_valid(active_elevator_car):
+				active_elevator_car.queue_free()
+			active_elevator_car = null
+			active_elevator_tower_id = ""
+			active_elevator_doors.clear()
+		)
 	)
 
 func _on_player_wounded() -> void:
