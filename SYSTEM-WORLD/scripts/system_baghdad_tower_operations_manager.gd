@@ -1963,7 +1963,7 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 	deck_collision.shape = deck_shape
 	body.add_child(deck_collision)
 	for segment in range(20):
-		if segment == 0:
+		if segment == 0 or segment == 10:
 			continue
 		var angle := TAU * float(segment) / 20.0
 		var wall_mesh_instance := MeshInstance3D.new()
@@ -2005,6 +2005,7 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 	elevator_marker.add_child(marker_shape)
 	elevator_marker.position = Vector3(0.0, 1.1, radius * 0.36)
 	room.add_child(elevator_marker)
+	_create_floor_emergency_exit(room, tower_id, floor_number, radius)
 	if tower_id == "power_tower_baghdad":
 		room.set_meta("system_power_tower_floor", floor_number)
 		room.set_meta("system_power_tower_department", "arena")
@@ -2013,6 +2014,121 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 		_create_floor_facilities(room, tower_id, floor_number, radius, department)
 		TowerFloorThemeBuilder.build(room, tower_id, floor_number, radius, department)
 	return room
+
+func _create_floor_emergency_exit(room: Node3D, tower_id: String, floor_number: int, radius: float) -> void:
+	var exit_root := Node3D.new()
+	exit_root.name = "EmergencyEvacuationExit"
+	exit_root.position = Vector3(0.0, 0.0, -radius * 0.78)
+	exit_root.set_meta("system_tower_id", tower_id)
+	exit_root.set_meta("system_floor_number", floor_number)
+	exit_root.set_meta("system_facility_type", "emergency_evacuation_exit")
+	room.add_child(exit_root)
+
+	var frame_material := StandardMaterial3D.new()
+	frame_material.albedo_color = Color(0.10, 0.22, 0.25)
+	frame_material.metallic = 0.72
+	frame_material.roughness = 0.28
+	var beacon_material := StandardMaterial3D.new()
+	beacon_material.albedo_color = Color(0.12, 0.92, 0.62)
+	beacon_material.emission_enabled = true
+	beacon_material.emission = Color(0.08, 1.0, 0.52)
+	beacon_material.emission_energy_multiplier = 2.4
+
+	for side in [-1.0, 1.0]:
+		var pillar := MeshInstance3D.new()
+		pillar.name = "EmergencyExitFramePillar_%s" % ("L" if side < 0.0 else "R")
+		var pillar_mesh := BoxMesh.new()
+		pillar_mesh.size = Vector3(0.38, 4.2, 0.55)
+		pillar.mesh = pillar_mesh
+		pillar.position = Vector3(side * 1.35, 2.1, 0.0)
+		pillar.material_override = frame_material
+		exit_root.add_child(pillar)
+	var lintel := MeshInstance3D.new()
+	lintel.name = "EmergencyExitFrameLintel"
+	var lintel_mesh := BoxMesh.new()
+	lintel_mesh.size = Vector3(3.08, 0.42, 0.62)
+	lintel.mesh = lintel_mesh
+	lintel.position = Vector3(0.0, 4.12, 0.0)
+	lintel.material_override = frame_material
+	exit_root.add_child(lintel)
+
+	var sign := Label3D.new()
+	sign.name = "EmergencyExitSign"
+	sign.text = "EMERGENCY EXIT\nمخرج الطوارئ — الطابق %d" % floor_number
+	sign.position = Vector3(0.0, 4.82, 0.12)
+	sign.font_size = 24
+	sign.pixel_size = 0.014
+	sign.modulate = Color(0.35, 1.0, 0.68)
+	exit_root.add_child(sign)
+
+	var beacon := MeshInstance3D.new()
+	beacon.name = "EmergencyExitBeacon"
+	var beacon_mesh := BoxMesh.new()
+	beacon_mesh.size = Vector3(2.25, 0.16, 0.22)
+	beacon.mesh = beacon_mesh
+	beacon.position = Vector3(0.0, 4.52, 0.16)
+	beacon.material_override = beacon_material
+	exit_root.add_child(beacon)
+
+	var exit_light := OmniLight3D.new()
+	exit_light.name = "EmergencyExitLight"
+	exit_light.position = Vector3(0.0, 3.6, 0.7)
+	exit_light.light_color = Color(0.16, 1.0, 0.62)
+	exit_light.light_energy = 0.8
+	exit_light.omni_range = 8.0
+	exit_root.add_child(exit_light)
+
+	var route_marking := MeshInstance3D.new()
+	route_marking.name = "EmergencyExitRouteMarking"
+	var route_mesh := BoxMesh.new()
+	route_mesh.size = Vector3(2.2, 0.035, radius * 0.34)
+	route_marking.mesh = route_mesh
+	route_marking.position = Vector3(0.0, 0.43, radius * 0.16)
+	route_marking.material_override = beacon_material
+	room.add_child(route_marking)
+
+	var alarm_panel := MeshInstance3D.new()
+	alarm_panel.name = "EmergencyAlarmCallPoint"
+	var alarm_mesh := BoxMesh.new()
+	alarm_mesh.size = Vector3(0.48, 0.72, 0.16)
+	alarm_panel.mesh = alarm_mesh
+	alarm_panel.position = Vector3(-radius * 0.52, 1.25, -radius * 0.34)
+	var alarm_material := StandardMaterial3D.new()
+	alarm_material.albedo_color = Color(0.72, 0.12, 0.10)
+	alarm_material.emission_enabled = true
+	alarm_material.emission = Color(0.85, 0.08, 0.04)
+	alarm_material.emission_energy_multiplier = 0.7
+	alarm_panel.material_override = alarm_material
+	room.add_child(alarm_panel)
+
+	var exit_sensor := Area3D.new()
+	exit_sensor.name = "EmergencyExitSensor"
+	exit_sensor.collision_layer = 0
+	exit_sensor.collision_mask = 1
+	exit_sensor.monitoring = true
+	exit_sensor.position = Vector3(0.0, 1.15, -radius * 0.66)
+	exit_sensor.set_meta("system_tower_id", tower_id)
+	exit_sensor.set_meta("system_floor_number", floor_number)
+	exit_sensor.set_meta("system_emergency_exit", true)
+	var sensor_shape := CollisionShape3D.new()
+	var sensor_box := BoxShape3D.new()
+	sensor_box.size = Vector3(2.5, 2.4, 2.2)
+	sensor_shape.shape = sensor_box
+	exit_sensor.add_child(sensor_shape)
+	exit_sensor.body_entered.connect(_on_floor_emergency_exit_body_entered.bind(exit_sensor))
+	room.add_child(exit_sensor)
+
+
+func _on_floor_emergency_exit_body_entered(body: Node3D, exit_sensor: Area3D) -> void:
+	if not is_instance_valid(player) or body != player or not is_instance_valid(exit_sensor):
+		return
+	if exit_sensor.get_parent() != active_floor_root:
+		return
+	if str(exit_sensor.get_meta("system_tower_id", "")) != current_tower_id:
+		return
+	_set_status("تم تفعيل مسار الإخلاء للطابق %d — العودة الآمنة إلى بهو البرج." % int(exit_sensor.get_meta("system_floor_number", 0)))
+	call_deferred("return_to_lobby")
+
 
 
 func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) -> void:
