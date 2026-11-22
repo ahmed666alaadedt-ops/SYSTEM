@@ -491,22 +491,31 @@ func _run() -> void:
 	var hunter_tunnel_floor_body := hunter_tunnel_root.find_child("TunnelFloorCollision", true, false) as StaticBody3D if hunter_tunnel_root != null else null
 	var hunter_tunnel_floor_collision := hunter_tunnel_floor_body.find_child("CollisionShape3D", true, false) as CollisionShape3D if hunter_tunnel_floor_body != null else null
 	if hunter_tunnel_floor == null or hunter_tunnel_floor.mesh == null or hunter_tunnel_floor_collision == null or hunter_tunnel_floor_collision.shape == null:
-		var tunnel_children := PackedStringArray()
-		if hunter_tunnel_root != null:
-			for tunnel_child in hunter_tunnel_root.get_children():
-				tunnel_children.append(str(tunnel_child.name))
-		print("Hunter tunnel floor diagnostic: root=", hunter_tunnel_root != null, " floor=", hunter_tunnel_floor != null, " body=", hunter_tunnel_floor_body != null, " collision=", hunter_tunnel_floor_collision != null, " children=", ", ".join(tunnel_children))
 		_fail("Hunter examination tunnel floor is missing its physical collision.")
 		return
+	for tunnel_structure_name in ["TunnelLeftWall", "TunnelRightWall", "TunnelRoof"]:
+		var tunnel_structure_body := hunter_tunnel_root.find_child(tunnel_structure_name + "Collision", true, false) as StaticBody3D
+		var tunnel_structure_shape := tunnel_structure_body.find_child("CollisionShape3D", true, false) as CollisionShape3D if tunnel_structure_body != null else null
+		if tunnel_structure_shape == null or tunnel_structure_shape.shape == null or tunnel_structure_shape.disabled:
+			_fail("Hunter examination tunnel structure is missing active collision: " + tunnel_structure_name)
+			return
 	if int(hunter_tunnel_root.get_meta("hunter_exam_stage_gate_count", 0)) != 7:
 		_fail("Hunter examination tunnel does not contain seven numbered stage gates.")
 		return
 	for stage_number in range(1, 8):
 		var hunter_stage_gate := hunter_tunnel_root.get_node_or_null("StageGate_%02d" % stage_number) as Node3D
 		var hunter_stage_sign := hunter_stage_gate.get_node_or_null("StageNumberSign_%02d" % stage_number) as Label3D if hunter_stage_gate != null else null
+		var hunter_stage_left_post := hunter_stage_gate.get_node_or_null("StageGateLeftPostCollision") as StaticBody3D if hunter_stage_gate != null else null
+		var hunter_stage_right_post := hunter_stage_gate.get_node_or_null("StageGateRightPostCollision") as StaticBody3D if hunter_stage_gate != null else null
+		var hunter_stage_header := hunter_stage_gate.get_node_or_null("StageGateHeaderCollision") as StaticBody3D if hunter_stage_gate != null else null
 		if hunter_stage_gate == null or hunter_stage_sign == null or not hunter_stage_sign.text.contains("بوابة المرحلة"):
 			_fail("Hunter examination tunnel stage gate or number sign is missing: %d" % stage_number)
 			return
+		for stage_frame_body in [hunter_stage_left_post, hunter_stage_right_post, hunter_stage_header]:
+			var stage_frame_shape := stage_frame_body.get_node_or_null("CollisionShape3D") as CollisionShape3D if stage_frame_body != null else null
+			if stage_frame_shape == null or stage_frame_shape.shape == null or stage_frame_shape.disabled:
+				_fail("Hunter examination stage gate frame is missing active collision: %d" % stage_number)
+				return
 	var hunter_access_gate := hunter_tunnel_root.get_node_or_null("CandidateAccessGate") as Node3D
 	var hunter_access_barrier := hunter_access_gate.get_node_or_null("CandidateAccessBarrier") as MeshInstance3D if hunter_access_gate != null else null
 	var hunter_access_body := hunter_access_gate.get_node_or_null("CandidateAccessBarrierCollision") as StaticBody3D if hunter_access_gate != null else null
