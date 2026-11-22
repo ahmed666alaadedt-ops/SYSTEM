@@ -161,3 +161,10 @@ These are still blockout structures, not finished interiors. Functional elevator
 ## Vertical transport and floor wayfinding visuals — 22 November 2026
 
 All five tower roots now include a visual vertical-transport blockout: four panoramic lift shafts with cabin markers, two protected stair-core markers, and a floor directory. Directory markers appear every 10 floors in tall towers and every 5 floors in shorter towers. These structures are not functional elevators or traversable emergency stairs; movement, floor selection, navigation, access control and emergency routing remain outstanding.
+
+
+## User-approved futuristic Baghdad five-tower skyline reference — 22 November 2026
+
+The user's supplied image is the approved visual target for the five-tower district in Baghdad. The intended skyline includes five distinctive landmark towers, broad layered elevated decks, suspended sky gardens, glass-and-metal architecture, illuminated cyan/blue accents with warm gold structural trim, connecting skybridges and a central SYSTEM-branded spire, all framed by the Tigris and Baghdad's cityscape. Preserve the five independent tower identities and keep the Power Tower separate from this five-tower complex.
+
+The procedural manager now adds three elevated sky-garden decks per tower, each with a collision-bearing floor plate, glass perimeter ring, twelve planter bays and a level sign. This is a blockout step toward the reference, not a completed visual match. Production-grade 3D architecture, facade detailing, landscaping, fully traversable decks/bridges, functioning lifts/stairs, detailed interiors, and visual Android verification remain outstanding.
