@@ -148,3 +148,7 @@ Each Baghdad tower landmark now creates an open ground-level lobby pavilion outs
 ## Floor zoning and public lobby directory — 22 November 2026
 
 The five connected towers and the separate Power Tower now carry explicit floor-range/department zoning data. The Weapons, Equipment and Elixirs Tower reserves its uppermost floor for restricted rare/legendary elixir storage and places Nen research, healing, equipment upgrading, armour and weapon departments on separate floor ranges. Each tower's lobby directory sign displays its own floor zoning. These are design metadata and exterior/lobby blockouts, not completed explorable floors, shops, staffed reception, or elevator gameplay.
+
+## Enclosed tower lobby and lift-core shell — 22 November 2026
+
+The six tower landmarks now generate an enclosed ground-level lobby blockout with side walls, split front and rear walls, a clear front entrance, a reception counter, security-gate frame, directory kiosk, floor zoning sign, and a closed visual lift-core door. The lift door is deliberately non-functional and collidable until a real shaft opening, elevator car, floor scenes, and safe arrival/exit transitions are implemented.
