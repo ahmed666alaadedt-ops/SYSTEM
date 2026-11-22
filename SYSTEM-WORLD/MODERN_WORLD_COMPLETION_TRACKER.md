@@ -1038,3 +1038,14 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Implement complete registration/license transactions, authoritative mission acceptance and progression, examiner tools and staffed NPC schedules; current service routes reuse existing guild views and do not complete every workflow.
 - [ ] Add proper architectural doors, detailed room furnishing, lighting/acoustics, production art, and live rendered/Android layout and collision review.
 - Note: the four service rooms remain a procedural blockout inside the elevated HQ. The headquarters landmark and the overall five-tower district are not complete.
+
+
+## Hunter Association headquarters — examiner control-room blockout — 22 November 2026
+
+- [x] Add a physical examiner control console with collision, a seven-panel stage-monitor wall, and Arabic labels for all seven examination stages.
+- [x] Add an explicit on-screen disclosure that the monitors are static placeholders with no live feed or actual stage-control capability.
+- [x] Extend the integration validator to check the console collision, all seven monitor meshes and labels, and the disconnected/static-feed metadata and disclosure.
+- [x] Godot 4.3 workflow run `45012275446` passed on exact code commit `aad51b4555eb613c510a15602421a8a6577b360f`, including import/script parsing, the Baghdad tower/HQ/Power Tower validator, all configured gameplay validators, missing-mesh scan and headless main-scene launch.
+- [ ] Connect the examiner room to authorized exam-manager state and real stage status only after access control and staff-role rules are implemented; add staff NPCs and actual examiner workflows.
+- [ ] Replace static monitor panels with functional interfaces and complete the room's production art, lighting, acoustics and Android visual/performance review.
+- Note: this is a visual/physical control-room blockout only; no live exam monitoring or stage-control functionality is claimed.
