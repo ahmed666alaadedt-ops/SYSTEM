@@ -88,6 +88,13 @@ func _run() -> void:
 			if interior_screen == null or interior_screen.get_node_or_null("AdScreenDisplay") == null or interior_screen.get_node_or_null("AdScreenMessage") == null:
 				_fail("Missing lobby advertising display on " + root_name + ": " + screen_name)
 				return
+		var elevator_cabin := interior.get_node_or_null("AnimatedElevatorCabin")
+		if elevator_cabin == null or interior.get_node_or_null("AnimatedElevatorCabin/CabinDoorLeft") == null or interior.get_node_or_null("AnimatedElevatorCabin/CabinDoorRight") == null:
+			_fail("Animated elevator cabin or sliding doors are missing for " + root_name)
+			return
+		if not bool(interior.get_meta("emergency_stairwell_ready", false)) or int(interior.get_meta("emergency_stairwell_step_count", 0)) != 80:
+			_fail("Physical emergency stairwell steps are incomplete for " + root_name)
+			return
 		if root_name == "HunterAssociationTower":
 			hunter_tower_interior = interior as Node3D
 		var lift_console := interior.get_node_or_null("CentralLiftConsoleInteraction") as Area3D
@@ -226,6 +233,18 @@ func _run() -> void:
 	exam_manager.free()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(validation_save_path))
 	print("Hunter exam tunnel access passed: seven physical stage gates and staging barrier stay locked until registered exam start.")
+
+	if hunter_tower_interior == null:
+		_fail("Hunter Association Tower interior is unavailable for elevator travel validation.")
+		return
+	var elevator_test_ok: bool = await hunter_tower_interior.call("animate_lift_to_floor", 3)
+	if not elevator_test_ok:
+		_fail("Animated elevator could not complete its floor-three travel cycle.")
+		return
+	var tested_cabin := hunter_tower_interior.get_node_or_null("AnimatedElevatorCabin") as Node3D
+	if tested_cabin == null or absf(tested_cabin.position.y - 36.0) > 0.1:
+		_fail("Animated elevator cabin did not reach the expected floor-three height.")
+		return
 
 	var connected_district := towers.get_node_or_null("FiveTowerConnectedDistrict")
 	if connected_district == null:
