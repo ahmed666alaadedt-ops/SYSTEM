@@ -156,3 +156,8 @@ Implementation boundary: these are visual blockout meshes, labels and metadata o
 Each of the five towers receives a three-level public podium/arrival hall with visible cylindrical floor plates, static floor collision, glass-pillar markers, accent rings and a tower-specific arrival sign. Facility zones use open-front room shells rather than solid placeholder blocks: each shell has a floor plate and collision, left/right/rear walls, and a raised entrance lintel that leaves the front open. The cinema's six hall layouts also receive floor/collision markers.
 
 These are still blockout structures, not finished interiors. Functional elevators, emergency stairs, floor selection, service NPCs, interior navigation, retail/hotel/food transactions, cinema playback/tickets and recreation interactions remain to be implemented and validated.
+
+
+## Vertical transport and floor wayfinding visuals — 22 November 2026
+
+All five tower roots now include a visual vertical-transport blockout: four panoramic lift shafts with cabin markers, two protected stair-core markers, and a floor directory. Directory markers appear every 10 floors in tall towers and every 5 floors in shorter towers. These structures are not functional elevators or traversable emergency stairs; movement, floor selection, navigation, access control and emergency routing remain outstanding.
