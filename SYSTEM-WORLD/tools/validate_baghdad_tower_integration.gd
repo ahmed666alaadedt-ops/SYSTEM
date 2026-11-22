@@ -215,6 +215,18 @@ func _run() -> void:
 				_fail("Tower floor variant is missing its emergency stair-down route: " + root_name)
 				return
 
+		# Exercise both emergency stair directions on bottom and middle floors.
+		# The top floor is checked above; these samples cover the lower boundary and both routes.
+		var stair_sample_floors: Array[int] = [1, int(ceil(float(configured_floor_count) / 2.0))]
+		for stair_sample_floor in stair_sample_floors:
+			var stair_sample_build: Dictionary = floor_world.call("build_floor", stair_sample_floor, Vector3(5.0, 0.0, 5.0))
+			if not bool(stair_sample_build.get("success", false)):
+				_fail("Could not generate emergency-stair sample floor %d for %s." % [stair_sample_floor, root_name])
+				return
+			var stair_sample_root := floor_world.get_node_or_null("ActiveTowerFloor_%03d" % stair_sample_floor) as Node3D
+			if not _validate_stair_geometry(stair_sample_root, root_name, stair_sample_floor, configured_floor_count):
+				return
+
 		for floor_number in range(2, 6):
 			var selector := interior.get_node_or_null("LobbyLiftSelector_%02d" % floor_number) as Area3D
 			if selector == null or not selector.is_in_group("system_interactable"):
@@ -546,3 +558,44 @@ func _run() -> void:
 	fake_map.free()
 	print("Baghdad tower integration validation passed: five connected playable towers, accessible lobby lifts, independent 200-floor Power Tower, arena, Hunter HQ and all tower/sport/exam map registrations.")
 	quit(0)
+
+
+func _validate_stair_geometry(floor_root: Node3D, tower_name: String, floor_number: int, floor_count: int) -> bool:
+	if floor_root == null:
+		_fail("Emergency stair sample floor root is missing for %s at floor %d." % [tower_name, floor_number])
+		return false
+	var tower_id := str(floor_root.get_meta("tower_id", ""))
+	if tower_id.is_empty():
+		_fail("Emergency stair sample floor has no tower identity: " + tower_name)
+		return false
+	for direction in ["Up", "Down"]:
+		var should_exist := floor_number < floor_count if direction == "Up" else floor_number > 1
+		var interaction := floor_root.get_node_or_null("Stair%sInteraction" % direction) as Area3D
+		if should_exist:
+			if interaction == null or not interaction.is_in_group("system_interactable"):
+				_fail("Missing usable %s stair interaction in %s floor %d." % [direction, tower_name, floor_number])
+				return false
+			var expected_target_floor := floor_number + 1 if direction == "Up" else floor_number - 1
+			if str(interaction.get_meta("system_tower_id", "")) != tower_id or int(interaction.get_meta("system_floor_number", -1)) != expected_target_floor:
+				_fail("%s stair in %s floor %d points to the wrong tower or destination floor." % [direction, tower_name, floor_number])
+				return false
+			for step_index in range(15):
+				var step_body := floor_root.get_node_or_null("EmergencyStair%sStep_%02d_Collision" % [direction, step_index]) as StaticBody3D
+				var step_collision := step_body.get_node_or_null("CollisionShape3D") as CollisionShape3D if step_body != null else null
+				if step_collision == null or step_collision.shape == null or not (step_collision.shape is BoxShape3D) or step_collision.disabled:
+					_fail("Missing physical %s stair-step collision %02d in %s floor %d." % [direction, step_index, tower_name, floor_number])
+					return false
+			for part_name in ["Landing", "Rail"]:
+				var part_body := floor_root.get_node_or_null("EmergencyStair%s%s_Collision" % [direction, part_name]) as StaticBody3D
+				var part_collision := part_body.get_node_or_null("CollisionShape3D") as CollisionShape3D if part_body != null else null
+				if part_collision == null or part_collision.shape == null or part_collision.disabled:
+					_fail("Missing physical %s stair %s collision in %s floor %d." % [direction, part_name, tower_name, floor_number])
+					return false
+		else:
+			if interaction != null:
+				_fail("Invalid %s stair interaction exists at boundary floor %d in %s." % [direction, floor_number, tower_name])
+				return false
+			if floor_root.get_node_or_null("EmergencyStair%sStep_00_Collision" % direction) != null:
+				_fail("Invalid %s stair geometry exists at boundary floor %d in %s." % [direction, floor_number, tower_name])
+				return false
+	return true
