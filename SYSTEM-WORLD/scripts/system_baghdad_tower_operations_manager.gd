@@ -435,6 +435,9 @@ func _create_visible_staff(tower_id: String, npc_id: String, index: int, config:
 	var lobby_depth := 36.0
 	var lobby_center_z := float(config["radius"]) * 1.48 + lobby_depth * 0.5
 	employee.position = Vector3((float(index) - float(config["roles"].size() - 1) * 0.5) * 5.0, 0.0, lobby_center_z - 4.0)
+	employee.set_meta("system_staff_home_tower_id", tower_id)
+	employee.set_meta("system_staff_home_position", employee.position)
+	employee.set_meta("system_staff_home_index", index)
 	_start_tower_staff_waypoint_patrol(employee, model, index)
 
 
@@ -469,7 +472,242 @@ func _start_tower_staff_waypoint_patrol(employee: Node3D, model: Node3D, staff_i
 		patrol_tween.tween_property(employee, "position", waypoint, travel_duration).set_trans(Tween.TRANS_LINEAR)
 		patrol_tween.tween_callback(Callable(model, "set_activity").bind("idle"))
 		patrol_tween.tween_interval(0.55)
+
 		previous_position = waypoint
+
+
+func _get_floor_duty_staff_index(tower_id: String, floor_number: int) -> int:
+	match tower_id:
+		"hunter_association_tower_baghdad":
+			if floor_number == 100:
+				return 4
+			if floor_number in [195, 200]:
+				return 0
+		"business_investment_tower_baghdad":
+			if floor_number == 8:
+				return 1
+			if floor_number == 12:
+				return 3
+			if floor_number == 20:
+				return 5
+		"shopping_tower_baghdad":
+			if floor_number == 14:
+				return 2
+			if floor_number == 27:
+				return 6
+			if floor_number == 28:
+				return 7
+			if floor_number in [29, 31]:
+				return 4
+			if floor_number in [30, 32]:
+				return 5
+		"entertainment_tower_baghdad":
+			if floor_number == 18:
+				return 3
+			if floor_number == 20:
+				return 4
+			if floor_number == 24:
+				return 1
+		"technology_tower_baghdad":
+			if floor_number == 12:
+				return 3
+			if floor_number == 20:
+				return 4
+			if floor_number == 30:
+				return 2
+		"power_tower_baghdad":
+			if floor_number == 1:
+				return 0
+			if floor_number == 100:
+				return 1
+			if floor_number == 150:
+				return 2
+	return -1
+
+
+func _find_tower_staff_model(employee: Node3D) -> Node3D:
+	if employee == null:
+		return null
+	for child in employee.get_children():
+		if child is Node3D and child.has_method("set_activity"):
+			return child as Node3D
+	return null
+
+
+func _board_floor_duty_staff(tower_id: String, floor_number: int, car: Node3D) -> Dictionary:
+	if not is_instance_valid(car) or not staff_by_tower.has(tower_id):
+		return {}
+	var staff_index := _get_floor_duty_staff_index(tower_id, floor_number)
+	var staff_ids: Array = staff_by_tower.get(tower_id, [])
+	if staff_index < 0 or staff_index >= staff_ids.size():
+		return {}
+	var npc_id := str(staff_ids[staff_index])
+	var tower := tower_nodes.get(tower_id) as Node3D
+	var employee := tower.find_child("TowerStaff_" + npc_id, true, false) as Node3D if tower != null else null
+	if employee == null:
+		return {}
+	var model := _find_tower_staff_model(employee)
+	if model == null:
+		return {}
+	var previous_tween: Variant = employee.get_meta("system_staff_patrol_tween", null)
+	if previous_tween is Tween:
+		(previous_tween as Tween).kill()
+	var home_position: Vector3 = employee.get_meta("system_staff_home_position", employee.position)
+	employee.set_meta("system_staff_in_elevator", true)
+	employee.set_meta("system_staff_duty_tower", tower_id)
+	employee.set_meta("system_staff_duty_floor", floor_number)
+	employee.set_meta("system_staff_current_location", tower_id + "_elevator_to_floor_" + str(floor_number))
+	employee.reparent(car, true)
+	employee.position = Vector3(0.0, 0.35, 0.0)
+	model.call("set_activity", "walk")
+	return {
+		"employee": employee,
+		"model": model,
+		"tower_id": tower_id,
+		"floor_number": floor_number,
+		"staff_index": staff_index,
+		"npc_id": npc_id,
+		"role": str(employee.get_meta("system_tower_staff_role", "tower_staff")),
+		"home_position": home_position
+	}
+
+
+func _place_floor_duty_staff_on_floor(trip: Dictionary, room: Node3D, radius: float) -> void:
+	if trip.is_empty() or not is_instance_valid(room):
+		return
+	var employee := trip.get("employee") as Node3D
+	var model := trip.get("model") as Node3D
+	if not is_instance_valid(employee) or not is_instance_valid(model):
+		return
+	var tower_id := str(trip.get("tower_id", ""))
+	var floor_number := int(trip.get("floor_number", 0))
+	var role := str(trip.get("role", "tower_staff"))
+	var station_name := "StaffWorkstation_" + role
+	var target_position := Vector3(radius * 0.34, 0.0, -radius * 0.16)
+	var station := room.get_node_or_null(station_name) as Node3D
+	if station == null:
+		station = Node3D.new()
+		station.name = station_name
+		station.position = target_position + Vector3(0.0, 0.0, -1.35)
+		station.set_meta("system_staff_role", role)
+		station.set_meta("system_tower_id", tower_id)
+		station.set_meta("system_floor_number", floor_number)
+		room.add_child(station)
+		var desk := MeshInstance3D.new()
+		desk.name = "WorkstationDesk"
+		var desk_mesh := BoxMesh.new()
+		desk_mesh.size = Vector3(2.2, 1.0, 0.9)
+		desk.mesh = desk_mesh
+		desk.position.y = 0.5
+		var desk_material := StandardMaterial3D.new()
+		desk_material.albedo_color = Color(0.075, 0.20, 0.25)
+		desk_material.metallic = 0.58
+		desk_material.roughness = 0.3
+		desk.material_override = desk_material
+		station.add_child(desk)
+		var terminal := MeshInstance3D.new()
+		terminal.name = "WorkstationTerminal"
+		var terminal_mesh := BoxMesh.new()
+		terminal_mesh.size = Vector3(0.9, 0.65, 0.12)
+		terminal.mesh = terminal_mesh
+		terminal.position = Vector3(0.0, 1.32, -0.18)
+		var terminal_material := StandardMaterial3D.new()
+		terminal_material.albedo_color = Color(0.08, 0.65, 0.78)
+		terminal_material.emission_enabled = true
+		terminal_material.emission = Color(0.04, 0.48, 0.72)
+		terminal_material.emission_energy_multiplier = 0.8
+		terminal.material_override = terminal_material
+		station.add_child(terminal)
+		var role_sign := Label3D.new()
+		role_sign.name = "WorkstationRoleSign"
+		role_sign.text = "%s\nالطابق %d" % [role, floor_number]
+		role_sign.position = Vector3(0.0, 2.15, 0.0)
+		role_sign.font_size = 20
+		role_sign.pixel_size = 0.012
+		role_sign.modulate = Color(0.72, 0.94, 1.0)
+		station.add_child(role_sign)
+	employee.reparent(room, false)
+	employee.position = Vector3.ZERO
+	employee.rotation.y = PI
+	employee.set_meta("system_staff_in_elevator", false)
+	employee.set_meta("system_staff_current_location", tower_id + "_floor_" + str(floor_number))
+	employee.set_meta("system_staff_workstation_position", target_position)
+	employee.set_meta("system_staff_workstation_active", false)
+	model.call("set_activity", "walk")
+	var walk_tween := employee.create_tween()
+	walk_tween.tween_property(employee, "position", target_position, 1.15).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	walk_tween.tween_callback(func():
+		if is_instance_valid(employee) and employee.get_parent() == room:
+			employee.set_meta("system_staff_workstation_active", true)
+			model.call("set_activity", "idle")
+	)
+
+
+func _return_one_tower_staff_to_lobby(employee: Node3D) -> void:
+	if not is_instance_valid(employee):
+		return
+	var tower_id := str(employee.get_meta("system_staff_home_tower_id", employee.get_meta("system_tower_id", "")))
+	if tower_id.is_empty() or not tower_nodes.has(tower_id):
+		return
+	var tower := tower_nodes[tower_id] as Node3D
+	var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D
+	if lobby == null:
+		return
+	var model := _find_tower_staff_model(employee)
+	var previous_tween: Variant = employee.get_meta("system_staff_patrol_tween", null)
+	if previous_tween is Tween:
+		(previous_tween as Tween).kill()
+	var staff_index := int(employee.get_meta("system_staff_home_index", 0))
+	var home_position: Vector3 = employee.get_meta("system_staff_home_position", Vector3.ZERO)
+	employee.reparent(lobby, false)
+	employee.position = home_position
+	employee.remove_meta("system_staff_in_elevator")
+	employee.remove_meta("system_staff_duty_tower")
+	employee.remove_meta("system_staff_duty_floor")
+	employee.remove_meta("system_staff_current_location")
+	employee.remove_meta("system_staff_workstation_position")
+	employee.remove_meta("system_staff_workstation_active")
+	if is_instance_valid(model):
+		model.call("set_activity", "idle")
+	_start_tower_staff_waypoint_patrol(employee, model, staff_index)
+
+
+func _return_floor_duty_staff_to_lobbies() -> void:
+	for tower_id_value in staff_by_tower.keys():
+		var tower_id := str(tower_id_value)
+		var tower := tower_nodes.get(tower_id) as Node3D
+		if tower == null:
+			continue
+		var staff_ids: Array = staff_by_tower.get(tower_id, [])
+		for npc_id_value in staff_ids:
+			var employee := tower.find_child("TowerStaff_" + str(npc_id_value), true, false) as Node3D
+			if employee != null and (employee.has_meta("system_staff_duty_floor") or bool(employee.get_meta("system_staff_in_elevator", false))):
+				_return_one_tower_staff_to_lobby(employee)
+
+
+func _board_active_floor_duty_staff_for_lobby_return(car: Node3D) -> Array[Node3D]:
+	var boarded: Array[Node3D] = []
+	if not is_instance_valid(car) or not is_instance_valid(active_floor_root):
+		return boarded
+	for child in active_floor_root.get_children():
+		if child is Node3D and child.has_meta("system_staff_duty_floor"):
+			var employee := child as Node3D
+			var model := _find_tower_staff_model(employee)
+			var previous_tween: Variant = employee.get_meta("system_staff_patrol_tween", null)
+			if previous_tween is Tween:
+				(previous_tween as Tween).kill()
+			employee.set_meta("system_staff_in_elevator", true)
+			employee.reparent(car, true)
+			employee.position = Vector3(0.0, 0.35, 0.0)
+			if is_instance_valid(model):
+				model.call("set_activity", "walk")
+			boarded.append(employee)
+	return boarded
+
+
+func _finish_staff_lobby_return(boarded: Array[Node3D]) -> void:
+	for employee in boarded:
+		_return_one_tower_staff_to_lobby(employee)
 
 
 func _create_customer_population() -> void:
@@ -4551,6 +4789,8 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 			return
 		active_power_floor_data = request.get("floor_data", {})
 		power_floor_in_progress = true
+	_return_floor_duty_staff_to_lobbies()
+	var duty_staff_trip := _board_floor_duty_staff(tower_id, floor_number, car)
 	if not is_instance_valid(active_floor_root):
 		player.global_position = tower.to_global(Vector3(0.0, start_y + 1.2, 0.0))
 	if is_instance_valid(active_floor_root) and active_floor_root != room:
@@ -4575,6 +4815,7 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 		if is_instance_valid(player):
 			player.set_meta("system_tower_elevator_active", false)
 			player.velocity = Vector3.ZERO
+		_place_floor_duty_staff_on_floor(duty_staff_trip, room, float(config["radius"]))
 		if tower_id == "power_tower_baghdad" and power_floor_in_progress:
 			_begin_power_floor()
 		elif tower_id != "power_tower_baghdad":
@@ -4732,6 +4973,7 @@ func return_to_lobby() -> void:
 	var config: Dictionary = TOWER_CONFIG[current_tower_id]
 	var start_y := active_floor_root.position.y
 	var car := _ensure_elevator_car(current_tower_id, start_y)
+	var returning_staff := _board_active_floor_duty_staff_for_lobby_return(car)
 	var first_floor_y := 9.0
 	var lobby_position := tower.to_global(Vector3(0.0, 1.4, float(config["radius"]) * 1.48 + 10.0))
 	player.set_meta("system_tower_elevator_active", true)
@@ -4748,6 +4990,7 @@ func return_to_lobby() -> void:
 		var exit_tween := create_tween()
 		exit_tween.tween_property(player, "global_position", lobby_position, 0.7)
 		exit_tween.finished.connect(func():
+			_finish_staff_lobby_return(returning_staff)
 			if is_instance_valid(player):
 				player.set_meta("system_tower_elevator_active", false)
 				player.velocity = Vector3.ZERO
