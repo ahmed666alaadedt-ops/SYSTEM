@@ -62,11 +62,15 @@ func refresh_inventory() -> void:
 	var items: Dictionary = data.get("inventory_items", {})
 	var equipment: Dictionary = data.get("equipment_slots", {})
 	var effects: Dictionary = data.get("active_elixir_effects", {})
+	var upgrade_levels: Dictionary = data.get("equipment_upgrade_levels", {})
+	var durability: Dictionary = data.get("equipment_durability", {})
 	var lines := PackedStringArray()
 	lines.append("المعدات المجهزة")
 	for slot in equipment.keys():
 		var item_id := str(equipment[slot])
 		lines.append("%s: %s" % [str(slot), "غير مجهز" if item_id.is_empty() else item_id])
+		if not item_id.is_empty():
+			lines.append("  ترقية +%d | متانة %.0f/100" % [int(upgrade_levels.get(item_id, 0)), float(durability.get(item_id, 100.0))])
 	lines.append("Nen: " + ("مفتوح — رتبة التحكم %d/5" % int(data.get("nen_control_rank", 0)) if bool(data.get("nen_unlocked", false)) else "غير مستيقظ"))
 	lines.append("")
 	lines.append("التأثيرات النشطة")
