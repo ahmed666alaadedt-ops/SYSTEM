@@ -1204,3 +1204,12 @@ Implementation added on the feature branch; automated runtime validation is pend
 
 - [x] Make facade layout QA deterministic in Godot headless mode by asserting the generated window count, floor/segment metadata and panel dimensions instead of relying on dummy-renderer MultiMesh transform readback.
 - [ ] Re-run Godot and Android workflows after the headless facade validator adjustment.
+
+
+### Baghdad facade correction — verified on current PR head — 23 November 2026
+
+- [x] Correct the headless facade-layout validation so it checks deterministic per-floor window count, segment/floor metadata and BoxMesh dimensions without reading renderer-only MultiMesh transforms.
+- [x] Pass the complete Godot 4.3 workflow #1526 (run ID 45084505558) on exact PR head `5b1f8f84910263fda0c4e112c3def77c8779d48d`; resource import/parser, child-character restrictions, missing-mesh scan, headless main-scene startup, Baghdad landmarks/lobbies and the complete tower operations validator all passed.
+- [x] Pass canonical Android export #1263 (run ID 45084505537) on the same exact PR head; APK artifact 14778453250, 35,969,051 bytes, SHA-256 `c3d960dfdbe720701dbde5c4d0daa21283bd4691903b056dca282061b5825f0c`, expires 6 December 2026.
+- [x] Confirm the Godot runtime and full tower regression completed without the facade assertion failure on this exact head.
+- [ ] Physical Android inspection remains outstanding; automated CI does not replace touch, visual, collision-feel, thermal or frame-rate testing.
