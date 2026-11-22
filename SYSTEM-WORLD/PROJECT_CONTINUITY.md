@@ -62,3 +62,12 @@ Last verified: 2026-11-22 (GitHub repository review)
 - Reworked each facility block from a solid box into an open-front shell with a floor plate and collision, two side walls, a rear wall and a high lintel, preserving an open entrance. Cinema hall layouts also receive floor/collision markers.
 - This is still a source-level blockout. Elevators, floor selection, emergency stairs, actual service scenes, cinema playback/tickets, retail/hotel transactions, NPC staffing, interior navigation and complete gameplay interactions are not implemented or tested.
 - No local Godot executable is available in the current workspace; latest changes still require the repository's Godot CI validation and Android export. Do not claim runtime validation until a run passes.
+
+
+## Tower vertical transport blockout and validation follow-up — 22 November 2026
+
+- Latest tower manager source commit: 93b2161bdd7975dd10c6df01a9e1be36cf2d0232. Added four panoramic lift-shaft visuals with cabin markers, two protected stair-core visuals, and floor directory labels to each of the five tower roots. These are explicitly visual blockouts, not working elevators or walkable stairs.
+- Latest validator commit: 5a809e5f164e2ddca75a4ff08eeb7ff6602a2772. It now checks transport blockouts on each tower and counts radial skybridges recursively (the previous validator incorrectly counted only direct children and failed that single assertion).
+- Previous validation run 44996034310 completed with failure at the radial bridge assertion. All five tower roots, public podiums, facility zones, public entrances, six cinema halls and their floor collision markers, connected district root, central SYSTEM spire and three sky gardens passed. The run also printed null-mesh cleanup diagnostics; their cause is not yet established.
+- A Godot validation run triggered from the tower manager source commit is running, but it predates the latest validator-only commit. Ensure a fresh run covers commit 5a809e5f164e2ddca75a4ff08eeb7ff6602a2772 before declaring the validator pass.
+- Continue only on qa/fix-deferred-test-cleanup-20261122; do not merge into main without explicit user approval.
