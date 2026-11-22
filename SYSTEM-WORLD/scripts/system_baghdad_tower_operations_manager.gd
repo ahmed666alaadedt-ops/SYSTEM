@@ -2370,6 +2370,43 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 		"robotics_lab", "ai_lab", "vr_lab":
 			for index in range(5):
 				_add_facility_box(root, "TechnologyPod_%02d" % index, Vector3(-12.0 + float(index) * 6.0, 1.2, 0.0), Vector3(2.4, 2.4, 2.4), highlight if index % 2 == 0 else accent)
+			if facility_type == "robotics_lab":
+				var assembly := Node3D.new()
+				assembly.name = "RobotAssemblyDisplay"
+				assembly.position = Vector3(0.0, 0.5, -4.0)
+				root.add_child(assembly)
+				var robotics_stats: Dictionary = facility_activity_stats.get("robotics_lab", {})
+				var assembly_complete := int(robotics_stats.get("plays", 0)) > 0
+				for part_index in range(3):
+					var part := MeshInstance3D.new()
+					part.name = "RobotAssemblyPart_%02d" % part_index
+					var part_material := StandardMaterial3D.new()
+					part_material.albedo_color = [Color(0.12, 0.72, 0.86), Color(0.78, 0.82, 0.88), Color(0.95, 0.62, 0.18)][part_index]
+					part_material.metallic = 0.62
+					part_material.roughness = 0.28
+					part_material.emission_enabled = true
+					part_material.emission = part_material.albedo_color * 0.18
+					if part_index == 0:
+						var base_mesh := BoxMesh.new()
+						base_mesh.size = Vector3(1.9, 0.45, 1.5)
+						part.mesh = base_mesh
+					elif part_index == 1:
+						var torso_mesh := CapsuleMesh.new()
+						torso_mesh.radius = 0.52
+						torso_mesh.height = 1.55
+						part.mesh = torso_mesh
+					else:
+						var arm_mesh := BoxMesh.new()
+						arm_mesh.size = Vector3(2.1, 0.24, 0.34)
+						part.mesh = arm_mesh
+					part.material_override = part_material
+					var target_position := [Vector3(0.0, 0.3, 0.0), Vector3(0.0, 1.25, 0.0), Vector3(0.0, 2.25, 0.0)][part_index]
+					part.set_meta("system_robot_target_position", target_position)
+					part.set_meta("system_robot_assembled", assembly_complete)
+					part.position = target_position
+					part.visible = assembly_complete
+					part.scale = Vector3.ONE if assembly_complete else Vector3.ZERO
+					assembly.add_child(part)
 		"innovation_rooftop":
 			for index in range(5):
 				_add_facility_box(root, "InnovationConsole_%02d" % index, Vector3(-12.0 + float(index) * 6.0, 1.0, 1.0), Vector3(2.4, 2.0, 1.8), highlight)
@@ -2575,6 +2612,7 @@ func perform_facility_activity(action: String) -> Dictionary:
 			_update_cinema_program_screen(step)
 		"robotics_lab":
 			score_gain = 2
+			_advance_robotics_assembly(step)
 		"ai_lab", "vr_lab":
 			score_gain = 2 if posmod(step, 2) == 1 else 1
 	active_facility_activity["step"] = step
@@ -2978,6 +3016,29 @@ func _bowling_pin_start_position(pin_index: int) -> Vector3:
 		Vector3(-1.44, 1.35, -7.8), Vector3(-0.48, 1.35, -7.8), Vector3(0.48, 1.35, -7.8), Vector3(1.44, 1.35, -7.8)
 	]
 	return positions[clampi(pin_index, 0, positions.size() - 1)]
+
+
+func _advance_robotics_assembly(step: int) -> void:
+	if not is_instance_valid(current_facility_root):
+		return
+	var assembly := current_facility_root.get_node_or_null("RobotAssemblyDisplay") as Node3D
+	if assembly == null:
+		return
+	var part_index := clampi(step - 1, 0, 2)
+	var part := assembly.get_node_or_null("RobotAssemblyPart_%02d" % part_index) as MeshInstance3D
+	if part == null:
+		return
+	var target_position: Vector3 = part.get_meta("system_robot_target_position", part.position)
+	part.visible = true
+	part.position = target_position + Vector3(0.0, 1.6, 0.0)
+	part.scale = Vector3(0.12, 0.12, 0.12)
+	part.rotation = Vector3(0.0, PI, 0.0)
+	part.set_meta("system_robot_assembled", true)
+	var assembly_tween := create_tween().set_parallel(true)
+	assembly_tween.tween_property(part, "position", target_position, 0.72).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	assembly_tween.tween_property(part, "scale", Vector3.ONE, 0.72).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	assembly_tween.tween_property(part, "rotation", Vector3.ZERO, 0.72).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_set_status("تركيب الروبوت: تم تثبيت الجزء %d من 3" % (part_index + 1))
 
 
 func _update_cinema_program_screen(scene_number: int) -> void:
