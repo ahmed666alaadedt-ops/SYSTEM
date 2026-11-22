@@ -185,3 +185,12 @@ The 5×5 pack is only a 1 km × 1 km initial proof area. It is not the full Bagh
 - Source workflow: `.github/workflows/verify-baghdad-osm-source.yml`; association report and annotated cell pack are included in the published artifacts. The workflow now also listens to the integration branch.
 - Evidence status: source-level implementation committed; GitHub Actions verification of the new annotated pack/runtime path is pending. The 5×5 sample is still only a 1 km × 1 km proof area, not full Baghdad.
 - Limitation: no physical door mesh/opening, door animation, interior transition or enterable apartment/shop scene is claimed by this integration.
+
+
+## Hunter Association headquarters service-desk blockout — 22 November 2026
+
+- Runtime source: `scripts/system_hunter_headquarters_interior.gd`.
+- Four generated desk stations are present in the elevated headquarters interior: reception, Hunter registry, mission/contract information, and examiner operations/control.
+- Each station has a collision-backed desk body, emissive accent, Arabic `Label3D` sign, and an `Area3D` interaction registered through the existing `tower_service_` prompt path.
+- `tools/validate_baghdad_tower_integration.gd` verifies all four stations, stable service IDs, descriptions, interaction groups, signage and desk collision. Godot 4.3 workflow `45011432072` passed on code commit `1a2c9321dc41522e0c9fb8d6a8f1b777feac3363`.
+- Asset classification: procedural first-pass blockout, not finished art. These prompts provide service information only; they do not yet execute registration, mission acceptance, licensing or examiner workflows. Separate enclosed rooms, NPC staffing, visual review and Android checks remain open.
