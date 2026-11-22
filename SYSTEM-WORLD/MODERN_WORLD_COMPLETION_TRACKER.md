@@ -1,3 +1,43 @@
+# Baghdad living tower district — canonical implementation update — 22 November 2026
+
+This section supersedes older tower-role notes below wherever they describe the obsolete standalone weapons tower or an earlier four-staff roster.
+
+## Canonical district
+- [x] Keep exactly five connected Baghdad towers: Hunter Association, Business & Investment, Shopping & Commerce, Entertainment & Sports, and Technology & Innovation.
+- [x] Keep Power Tower separate from the district, with its own 200-floor progression and four dedicated operations staff.
+- [x] Keep weapons, armour, equipment, Nen research, elixirs, hotel and restaurants inside Shopping & Commerce Tower; no separate weapons tower is generated.
+- [x] Put the Global Hunter Association headquarters on floor 200 of the Hunter Association Tower, with the Global Council chamber on floor 195 and Hall of Honor on floor 100.
+
+## Staff, uniforms and customers
+- [x] Expand the four non-shopping district towers to eight professional NPC employees each: tower director/management, reception, department specialists, customer relations and advertising.
+- [x] Expand Shopping Tower to nine employees: tower manager, weapons merchant, elixir pharmacist, hospitality manager, chef, waiter/customer service, hotel receptionist, housekeeping supervisor and advertising manager.
+- [x] Retain four separate Power Tower employees. Current expected total: 45 persistent tower employees.
+- [x] Alternate female and male employee appearances and apply distinct uniform palettes for the Hunter Association, business, shopping, hotel, restaurant, entertainment, technology and Power Tower teams.
+- [x] Create four persistent customer NPCs in each of the five connected towers (20 total), with visible character models, wallet data, visitor schedules and local tower locations.
+- [x] Move visible customer NPCs around tower public lobbies on a periodic local schedule.
+- [x] Simulate NPC purchases from each tower's catalog, deduct customer wallets and shared vendor stock, and persist the local NPC sales ledger. Player purchases continue to use the same tower vendor stock.
+- [ ] Expand customer navigation from the lobbies into every authored floor, shop, restaurant and hotel room; the current customer movement is a public-lobby simulation.
+- [ ] Replace local-only economy and customer records with server-authoritative shared inventory, transactions, anti-duplication and cross-device synchronization before online multiplayer commerce.
+
+## Tower departments and signature amenities
+- [x] Business Tower: add a purchasable service catalog for company registration, business banking, consultations, office passes, investment certificates, market participation and recruitment listings; add a trading hall, conference center and investor lounge floor builds.
+- [x] Shopping Tower: retain the weapons/armour/outfit and Nen/elixir catalogs, forge and elixir laboratory on floor 14, SYSTEM Hotel on floors 27–28, and restaurants/dining on floors 29–32; add the dedicated ninth advertising/marketing employee.
+- [x] Entertainment Tower: add ticket products for pools, sport, cinema, bowling, arcade, fitness, spa, family areas and rooftop events; generate pool, gym, sports court, bowling, cinema, arcade, family-zone and rooftop-leisure floor props.
+- [x] Technology Tower: expand the catalog for robotics kits, AI compute access, VR simulation, prototype-lab access and diagnostics; generate robotics, AI, VR and rooftop innovation floor props.
+- [x] Hunter Association Tower: add training rooms, guild lounge, archive/library, Hall of Honor, Global Council and top-floor Global Headquarters facilities.
+- [ ] Add full swimming movement/physics, water entry/exit, pool activities and lifeguard routines; current pool work is the authored 3D pool facility and its service interaction.
+- [ ] Add playable cinema programming, bowling/arcade minigames, full sports matches, live business-market simulation, and hands-on robotics/VR experiences; current additions establish their floor layouts, service points and catalog entries.
+- [ ] Complete floor-by-floor furniture, accessible routes, elevators, emergency exits, lighting, sound, staff navigation and visual polish across every tower floor.
+
+## Validation status for this revision
+- [x] Extend the Godot operations validator for the five connected towers plus independent Power Tower, 45 staff, 20 customers, uniform presence, NPC purchases, pools, cinema, trading hall, AI lab, Hall of Honor, Global Council, Global Headquarters, Shopping Tower forge/lab, hotel and dining.
+- [ ] Run the complete Godot 4.3 import/parser, main-scene launch, tower landmark and tower operations validators on the latest branch head.
+- [ ] Confirm the fresh GitHub Actions result is green; source edits are not a substitute for a passing run.
+- [ ] Export the Android APK from the exact validated head and inspect all five towers on a physical Android device.
+- [ ] Keep PR #38 as draft and do not merge to main without the user's explicit approval.
+
+---
+
 ## SYSTEM Hotel booking gameplay — 22 November 2026
 
 - [x] Add eight persistent room records to the Shopping Tower hotel catalog: four standard rooms, two deluxe rooms, a Hunter Suite (A rank), and an Elite VIP Suite (S rank).
