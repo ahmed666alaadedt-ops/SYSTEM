@@ -111,17 +111,39 @@ const PRODUCT_CATALOG := {
 		{"id":"restaurant_dessert","name":"حلويات شرقية","price":30},
 		{"id":"restaurant_family_combo","name":"وجبة عائلية","price":180}
 	],
+	"business_investment_tower_baghdad": [
+		{"id":"business_registration_package","name":"حزمة تأسيس شركة","price":420},
+		{"id":"business_bank_account_service","name":"فتح حساب تجاري","price":95},
+		{"id":"business_consultation","name":"استشارة أعمال واستثمار","price":180},
+		{"id":"business_office_day_pass","name":"تصريح استخدام مكتب ليوم واحد","price":140},
+		{"id":"business_office_week_pass","name":"تصريح مكتب لأسبوع","price":720},
+		{"id":"business_investment_certificate","name":"شهادة استثمار تجريبية","price":850},
+		{"id":"business_market_share_unit","name":"وحدة مشاركة في محفظة السوق","price":1250},
+		{"id":"business_recruitment_listing","name":"إعلان توظيف للشركات","price":120}
+	],
 	"entertainment_tower_baghdad": [
 		{"id":"sports_ticket","name":"تذكرة رياضية","price":65},
 		{"id":"pool_ticket","name":"تذكرة المسبح","price":45},
 		{"id":"festival_ticket","name":"تذكرة مهرجان","price":90},
-		{"id":"arena_spectator_ticket","name":"تذكرة مشاهدة الحلبة","price":120}
+		{"id":"arena_spectator_ticket","name":"تذكرة مشاهدة الحلبة","price":120},
+		{"id":"cinema_ticket","name":"تذكرة سينما","price":55},
+		{"id":"bowling_ticket","name":"تذكرة بولينغ","price":70},
+		{"id":"arcade_credit_pack","name":"رصيد ألعاب إلكترونية","price":30},
+		{"id":"fitness_day_pass","name":"تذكرة النادي الرياضي","price":50},
+		{"id":"spa_relaxation_ticket","name":"تذكرة الاسترخاء والسبا","price":95},
+		{"id":"family_zone_pass","name":"تذكرة منطقة العائلات","price":80},
+		{"id":"rooftop_event_ticket","name":"تذكرة فعالية السطح","price":120}
 	],
 	"technology_tower_baghdad": [
 		{"id":"scanner_device","name":"جهاز ماسح","price":750},
 		{"id":"repair_kit","name":"عدة صيانة","price":160},
 		{"id":"drone_camera","name":"كاميرا مسيّرة","price":1250},
-		{"id":"energy_cell","name":"خلية طاقة","price":240}
+		{"id":"energy_cell","name":"خلية طاقة","price":240},
+		{"id":"robotics_kit","name":"عدة روبوتات تعليمية","price":620},
+		{"id":"ai_compute_access_pass","name":"تصريح استخدام حوسبة الذكاء الاصطناعي","price":180},
+		{"id":"vr_simulation_pass","name":"تذكرة محاكاة الواقع الافتراضي","price":90},
+		{"id":"prototype_lab_pass","name":"تصريح دخول مختبر النماذج الأولية","price":240},
+		{"id":"device_diagnostic_service","name":"فحص وتشخيص جهاز","price":110}
 	],
 	"hunter_association_tower_baghdad": [
 		{"id":"mission_supply_pack","name":"حزمة تجهيز المهمات","price":160},
