@@ -2,7 +2,7 @@ extends SceneTree
 
 const TOWER_IDS := [
 	"hunter_association_tower_baghdad",
-	"weapons_equipment_elixirs_tower_baghdad",
+	"business_investment_tower_baghdad",
 	"shopping_tower_baghdad",
 	"entertainment_tower_baghdad",
 	"technology_tower_baghdad",
@@ -11,7 +11,7 @@ const TOWER_IDS := [
 
 const NODE_NAMES := {
 	"hunter_association_tower_baghdad": "HunterAssociationTower",
-	"weapons_equipment_elixirs_tower_baghdad": "WeaponsEquipmentElixirsTower",
+	"business_investment_tower_baghdad": "BusinessInvestmentTower",
 	"shopping_tower_baghdad": "ShoppingTower",
 	"entertainment_tower_baghdad": "EntertainmentTower",
 	"technology_tower_baghdad": "TechnologyTower",
@@ -627,7 +627,7 @@ func _run() -> void:
 	operations.set("power_floor_timer_remaining", 0.0)
 	operations.set("active_opponents", {})
 	operations.call("_refresh_power_tower_progress_board")
-	var weapons_room := operations.call("_ensure_floor_room", "weapons_equipment_elixirs_tower_baghdad", 1) as Node3D
+	var weapons_room := operations.call("_ensure_floor_room", "business_investment_tower_baghdad", 1) as Node3D
 	if weapons_room.get_node_or_null("WeaponsForge") == null or weapons_room.get_node_or_null("ElixirLaboratory") == null:
 		_fail("Weapons Tower forge and elixir laboratory stations are missing.")
 		return
