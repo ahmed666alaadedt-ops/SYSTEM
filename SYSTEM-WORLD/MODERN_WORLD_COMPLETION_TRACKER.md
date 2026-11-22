@@ -963,3 +963,10 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Add deterministic scoring regressions for a perfect 300 game, a zero-pin game and ten consecutive spares (150 points).
 - [ ] Run the full Godot 4.3 validator and Android export on this gameplay change before claiming it verified.
 - Note: physical Android lane feel, ball control and real-device collision response still require device playtesting.
+
+
+### Bowling validator scope correction — 22 November 2026
+
+- [x] Diagnose Godot #1410 parser failure: the bowling completion assertion referenced `final_activity_result` outside its activity-loop scope.
+- [x] Move the bowling completion requirement into the per-activity validation scope and count physical results before breaking on the completed final throw.
+- [ ] Re-run Godot 4.3 full validation and canonical Android export on the corrected bowling implementation.
