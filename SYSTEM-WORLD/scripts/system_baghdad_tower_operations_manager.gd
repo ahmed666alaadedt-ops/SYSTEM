@@ -434,6 +434,36 @@ func _create_visible_staff(tower_id: String, npc_id: String, index: int, config:
 	var lobby_depth := 36.0
 	var lobby_center_z := float(config["radius"]) * 1.48 + lobby_depth * 0.5
 	employee.position = Vector3((float(index) - float(config["roles"].size() - 1) * 0.5) * 5.0, 0.0, lobby_center_z - 4.0)
+	_start_tower_staff_waypoint_patrol(employee, model, index)
+
+
+func _start_tower_staff_waypoint_patrol(employee: Node3D, model: Node3D, staff_index: int) -> void:
+	if not is_instance_valid(employee) or not is_instance_valid(model):
+		return
+	var origin := employee.position
+	var side := -1.0 if posmod(staff_index, 2) == 1 else 1.0
+	var waypoints: Array[Vector3] = [
+		origin + Vector3(0.0, 0.0, -1.4),
+		origin + Vector3(side * 1.1, 0.0, -1.4),
+		origin + Vector3(side * 1.1, 0.0, 0.2),
+		origin
+	]
+	employee.set_meta("system_staff_navigation_enabled", true)
+	employee.set_meta("system_staff_patrol_waypoints", waypoints)
+	employee.set_meta("system_staff_navigation_speed", 1.8)
+	var patrol_tween := employee.create_tween().set_loops()
+	var previous_position := origin
+	for waypoint in waypoints:
+		var direction := waypoint - previous_position
+		var yaw := atan2(direction.x, direction.z)
+		var travel_duration := maxf(direction.length() / 1.8, 0.35)
+		patrol_tween.tween_callback(Callable(model, "set_activity").bind("walk"))
+		patrol_tween.tween_property(employee, "rotation:y", yaw, 0.18).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		patrol_tween.tween_property(employee, "position", waypoint, travel_duration).set_trans(Tween.TRANS_LINEAR)
+		patrol_tween.tween_callback(Callable(model, "set_activity").bind("idle"))
+		patrol_tween.tween_interval(0.55)
+		previous_position = waypoint
+
 
 func _create_customer_population() -> void:
 	if not is_instance_valid(society):
