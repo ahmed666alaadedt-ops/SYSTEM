@@ -787,6 +787,24 @@ func _run() -> void:
 	if hotel_reception_room == null or hotel_suite_room == null or hotel_reception_room.get_node_or_null("SYSTEMHotelFacilities/HotelReceptionInteraction") == null or hotel_suite_room.get_node_or_null("SYSTEMHotelFacilities/HotelSuiteBookingInteraction") == null:
 		_fail("SYSTEM Hotel reception or guest-suite booking area is missing from Shopping Tower floors 27–28.")
 		return
+	for room_value in operations.get("HOTEL_ROOM_CATALOG"):
+		var room_data: Dictionary = room_value
+		var room_id := str(room_data.get("id", ""))
+		var interior := hotel_suite_room.get_node_or_null("SYSTEMHotelFacilities/HotelRoomInterior_" + room_id) as Node3D
+		if interior == null:
+			_fail("Hotel room interior is missing: " + room_id)
+			return
+		for required_part in ["HotelRoomFloor", "HotelRoomBed", "HotelRoomWardrobe", "HotelRoomDesk", "HotelRoomBathroom", "HotelRoomDoor", "HotelRoomWindow", "HotelRoomDoorInteraction"]:
+			if interior.get_node_or_null(required_part) == null:
+				_fail("Hotel room %s is missing interior component %s." % [room_id, required_part])
+				return
+		var room_interaction := interior.get_node_or_null("HotelRoomDoorInteraction") as Area3D
+		if room_interaction == null or not room_interaction.is_in_group("system_interactable") or str(room_interaction.get_meta("system_hotel_room_id", "")) != room_id:
+			_fail("Hotel room door interaction is not linked to its catalog room.")
+			return
+	if hotel_suite_room.get_node_or_null("SYSTEMHotelFacilities/HotelRoomInterior_hotel_hunter_suite/HotelRoomHunterGearRack") == null or hotel_suite_room.get_node_or_null("SYSTEMHotelFacilities/HotelRoomInterior_hotel_elite_vip/HotelRoomVIPDiningTable") == null:
+		_fail("Hunter suite or VIP hotel room is missing its signature furnishings.")
+		return
 	var shopping_staff: Array = operations.get("staff_by_tower").get("shopping_tower_baghdad", [])
 	if shopping_staff.size() != 9:
 		_fail("Shopping Tower must create all nine management, shop, workshop, restaurant, hotel and advertising staff roles.")
