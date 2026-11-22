@@ -26,6 +26,7 @@ const TOWER_SCRIPT = preload("res://scripts/baghdad_tower_landmarks_manager.gd")
 const TOWER_FLOOR_SCRIPT = preload("res://scripts/system_baghdad_tower_floor_world.gd")
 const TOWER_LIFT_UI_SCRIPT = preload("res://scripts/system_baghdad_tower_lift_ui.gd")
 const LANDMARK_SCRIPT = preload("res://scripts/system_baghdad_landmark_integration.gd")
+const HUNTER_EXAM_MANAGER_SCRIPT = preload("res://scripts/system_hunter_exam_manager.gd")
 
 func _initialize() -> void:
 	call_deferred("_run")
@@ -57,6 +58,7 @@ func _run() -> void:
 		return
 
 	var expected_roots := ["HunterAssociationTower", "BusinessTower", "ShoppingTower", "EntertainmentTower", "TechnologyTower"]
+	var hunter_tower_interior: Node3D
 	for root_name in expected_roots:
 		var tower_root := towers.get_node_or_null(root_name)
 		if tower_root == null:
@@ -75,6 +77,8 @@ func _run() -> void:
 		if interior == null:
 			_fail("Missing playable lobby for " + root_name)
 			return
+		if root_name == "HunterAssociationTower":
+			hunter_tower_interior = interior as Node3D
 		var lift_console := interior.get_node_or_null("CentralLiftConsoleInteraction") as Area3D
 		if lift_console == null or not lift_console.is_in_group("system_interactable"):
 			_fail("Missing full-range central lift console for " + root_name)
@@ -148,6 +152,69 @@ func _run() -> void:
 			if selector.get_meta("system_destination_position", Vector3.INF) == Vector3.INF:
 				_fail("Lobby lift selector has no destination in " + root_name)
 				return
+
+	# The Hunter tunnel starts on the lobby side of seven real collision-backed
+	# gates. An unregistered candidate cannot open the route; a valid exam start can.
+	if hunter_tower_interior == null:
+		_fail("Hunter Association tower interior is missing for tunnel access validation.")
+		return
+	var tunnel_start := hunter_tower_interior.get_node_or_null("HunterExamTunnelStart") as Area3D
+	if tunnel_start == null or not tunnel_start.is_in_group("system_interactable"):
+		_fail("Hunter exam start interaction is missing from the lobby-side tunnel threshold.")
+		return
+	var first_exam_gate := hunter_tower_interior.get_node_or_null("HunterExamStageGateBarrier_01") as StaticBody3D
+	if first_exam_gate == null or tunnel_start.position.z <= first_exam_gate.position.z:
+		_fail("Hunter exam start interaction is not positioned before the first stage gate.")
+		return
+	for stage_number in range(1, 8):
+		var barrier := hunter_tower_interior.get_node_or_null("HunterExamStageGateBarrier_%02d" % stage_number) as StaticBody3D
+		var barrier_collision := barrier.get_node_or_null("GatePanelCollision") as CollisionShape3D if barrier != null else null
+		var barrier_visual := barrier.get_node_or_null("GatePanelVisual") as MeshInstance3D if barrier != null else null
+		if barrier_collision == null or barrier_collision.shape == null or barrier_collision.disabled:
+			_fail("Hunter exam stage gate %02d is not physically closed before exam start." % stage_number)
+			return
+		if barrier_visual == null or not barrier_visual.visible:
+			_fail("Hunter exam stage gate %02d has no visible locked panel." % stage_number)
+			return
+	var staging_barrier := hunter_tower_interior.get_node_or_null("HunterExamStagingGateBarrier") as StaticBody3D
+	var staging_collision := staging_barrier.get_node_or_null("GatePanelCollision") as CollisionShape3D if staging_barrier != null else null
+	if staging_collision == null or staging_collision.shape == null or staging_collision.disabled:
+		_fail("Hunter exam staging chamber is not physically secured before exam start.")
+		return
+
+	var exam_manager = HUNTER_EXAM_MANAGER_SCRIPT.new()
+	var validation_save_path := "user://hunter_tunnel_gate_validator_%d.cfg" % int(Time.get_unix_time_from_system())
+	exam_manager.save_path = validation_save_path
+	root.add_child(exam_manager)
+	var unregistered_start: Dictionary = exam_manager.begin_exam()
+	if str(unregistered_start.get("reason", "")) != "NOT_REGISTERED":
+		_fail("An unregistered player was allowed to start the Hunter examination.")
+		return
+	var registration: Dictionary = exam_manager.apply_for_exam("hunter_tunnel_gate_validator")
+	if not bool(registration.get("success", false)):
+		_fail("A fresh Hunter exam candidate could not register for the tunnel access test.")
+		return
+	var authorized_start: Dictionary = exam_manager.begin_exam()
+	if not bool(authorized_start.get("success", false)):
+		_fail("A registered Hunter exam candidate could not begin the examination.")
+		return
+	hunter_tower_interior.call("set_hunter_exam_tunnel_access", true)
+	for stage_number in range(1, 8):
+		var barrier := hunter_tower_interior.get_node_or_null("HunterExamStageGateBarrier_%02d" % stage_number) as StaticBody3D
+		var barrier_collision := barrier.get_node_or_null("GatePanelCollision") as CollisionShape3D
+		var barrier_visual := barrier.get_node_or_null("GatePanelVisual") as MeshInstance3D
+		if not barrier_collision.disabled or barrier_visual.visible:
+			_fail("A registered candidate could not open Hunter exam stage gate %02d." % stage_number)
+			return
+	if not staging_collision.disabled:
+		_fail("A registered candidate could not open the Hunter exam staging gate.")
+		return
+	if not bool(hunter_tower_interior.get_meta("hunter_exam_tunnel_access_open", false)):
+		_fail("Hunter exam tunnel did not record its authorized open state.")
+		return
+	exam_manager.free()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(validation_save_path))
+	print("Hunter exam tunnel access passed: seven physical stage gates and staging barrier stay locked until registered exam start.")
 
 	var connected_district := towers.get_node_or_null("FiveTowerConnectedDistrict")
 	if connected_district == null:
@@ -251,7 +318,7 @@ func _run() -> void:
 	fake_map.call("register_location", "2", "hunter_association_headquarters_baghdad", "region_baghdad", "المقر الرئيسي لنقابة الصيادين", 5, headquarters_position, false)
 	landmarks.call("register_map_locations", fake_map, "2")
 	var main_source := FileAccess.get_file_as_string("res://scripts/main.gd")
-	for required_contract in ["tower_lift_console_", "tower_floor_exit_", "_enter_baghdad_tower_floor", "BaghdadTowerLiftUIScript"]:
+	for required_contract in ["tower_lift_console_", "tower_floor_exit_", "_enter_baghdad_tower_floor", "BaghdadTowerLiftUIScript", "set_hunter_exam_tunnel_access"]:
 		if not main_source.contains(required_contract):
 			_fail("Main interaction runtime is missing tower lift contract: " + required_contract)
 			return
