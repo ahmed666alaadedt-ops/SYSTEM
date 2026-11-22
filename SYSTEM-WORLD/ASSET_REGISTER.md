@@ -211,3 +211,13 @@ The 5×5 pack is only a 1 km × 1 km initial proof area. It is not the full Bagh
 - The examiner room includes a collision-backed control console, seven stage-monitor meshes and Arabic stage labels, plus a notice that the display is static and has no live feed or stage-control connection.
 - Godot 4.3 workflow `45012275446` passed on code commit `aad51b4555eb613c510a15602421a8a6577b360f`, including the extended examiner-room validator and headless main-scene launch.
 - Classification: physical/visual blockout only. Live exam-manager data, staff-role access control, examiner actions, staff NPCs, finished interface art and target-device review are not implemented.
+
+
+## Baghdad Hunter Examination tunnel — candidate access blockout — 22 November 2026
+
+- Runtime source: `scripts/system_baghdad_landmark_integration.gd`; interaction route: `scripts/main.gd`; validator: `tools/validate_baghdad_tower_integration.gd`.
+- Physical layout includes a collision-backed floor, walls and roof, five ceiling lights, a central floor guide line, and seven numbered stage-gate frames with collision-backed posts/headers and Arabic signs.
+- A full-width entrance barrier starts closed and collision-enabled. A successful `HunterExamManager.begin_exam()` opens it through `SYSTEMBaghdadLandmarkIntegration.set_hunter_exam_tunnel_access`; unsuccessful registration/start leaves it closed.
+- The generic Baghdad landmark box helper now explicitly names its `CollisionShape3D` child, allowing collision validation and stable node lookup.
+- Godot 4.3 workflow `45013118196` passed on code commit `cb14ed58fa84a8c5d9b37fc3a12661cb1281d638`.
+- Classification: candidate entrance/tunnel blockout. Seven stage frames are not yet functional challenge doors; actual challenge scenes, sequential stage state, evidence validation, live traversal and Android review remain open.
