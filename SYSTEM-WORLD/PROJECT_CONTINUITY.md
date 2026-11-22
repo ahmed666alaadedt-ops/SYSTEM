@@ -113,3 +113,11 @@ Last verified: 2026-11-22 (GitHub repository review)
 - Manager commit `34f7450713f61cd364f3d9ec6d2145d939959e73` adds the Hunter mission board gallery, training dummy gallery and clinic treatment beds; Business conference table with sixteen seats, investment ticker and guest-room gallery; Technology research benches, AI pods and digital library shelf gallery. Manager commit `349894251d842f907a0911dc7ccf90dc1fd30ee2` registers specialized interior revision 1 on all towers.
 - Validator commit `644f2c4ce4336675b69b741fc11792e34707b99b` checks the three specialized tower layouts; validator commit `576872a060a5bd34865e2fedee45c1a57a22820d` asserts the revision marker on every tower.
 - These are static visual blockouts. Their actual gameplay/services and NPC interactions remain outstanding. Continue on QA branch only; do not merge into `main` without user approval.
+
+
+## Power Tower activation — 22 November 2026
+
+- Manager commit `26359a8ede47735ddef92a17fabf690fecf95936` now calls the Power Tower builder separately after the five district towers, does not add it to the five-tower district position list, sets 200 floors and 1,200 m height, and adds a 200-entry challenge registry cycling duel/team/survival/elite-gauntlet/championship profiles. Every tenth floor is tagged as a boss trial with twenty arena platform/label markers.
+- Validator commit `43e939c54c87c84c866693374b3074d627898fe6` asserts the separate landmark, 200 floors, 200 registry entries, and twenty boss trial floors.
+- This is a structural/progression-data pass only; actual combat, boss/enemy spawning, playable arena interiors, matchmaking, rewards, persistence and verified rankings remain outstanding.
+- Preserve the user-approved rule: Power Tower is independent from Baghdad's five-tower complex and must not be counted among those five.
