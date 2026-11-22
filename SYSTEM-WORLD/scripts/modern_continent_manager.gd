@@ -16,6 +16,7 @@ const OCEAN_FLOOR := -24.0
 # Real Baghdad OSM coverage: 200 m cells x[-2..20], z[-8..2].
 # The city elevation is the registry baseline; detailed relief can be replaced by DEM data later.
 const BAGHDAD_OSM_CELL_SIZE := 200.0
+const BAGHDAD_OSM_EDGE_BLEND_DISTANCE_M := 600.0
 const BAGHDAD_OSM_MIN_CELL_X := -2
 const BAGHDAD_OSM_MAX_CELL_X := 20
 const BAGHDAD_OSM_MIN_CELL_Z := -8
@@ -141,10 +142,17 @@ func _get_height(x: float, z: float) -> float:
 
 # Public terrain sampling API for world systems such as forests, paths and NPCs.
 func get_terrain_height(x: float, z: float) -> float:
-	# Keep the established procedural terrain profile; the OSM ground mesh is draped onto it.
+	# The four established core towers keep their original per-point terrain heights.
+	# Baghdad's OSM extension beyond the original 3 km x 2.2 km terrain grid blends
+	# smoothly from the existing edge into the city's resolved ground baseline.
+	if baghdad_osm_ground_enabled and _is_baghdad_osm_region(x, z) and _is_outside_terrain_grid(x, z):
+		return _get_baghdad_osm_extended_height(x, z)
+	return _sample_terrain_height_grid(x, z)
+
+
+func _sample_terrain_height_grid(x: float, z: float) -> float:
 	if terrain_height_data.size() != GRID_X * GRID_Z:
 		return _get_height(x, z)
-
 	var grid_x := clampf((x + WORLD_WIDTH * 0.5) / terrain_step_x, 0.0, float(GRID_X - 1))
 	var grid_z := clampf((z + WORLD_DEPTH * 0.5) / terrain_step_z, 0.0, float(GRID_Z - 1))
 	var x0 := int(floor(grid_x))
@@ -153,12 +161,31 @@ func get_terrain_height(x: float, z: float) -> float:
 	var z1 := mini(z0 + 1, GRID_Z - 1)
 	var tx := grid_x - float(x0)
 	var tz := grid_z - float(z0)
-
 	var h00 := terrain_height_data[z0 * GRID_X + x0]
 	var h10 := terrain_height_data[z0 * GRID_X + x1]
 	var h01 := terrain_height_data[z1 * GRID_X + x0]
 	var h11 := terrain_height_data[z1 * GRID_X + x1]
 	return lerpf(lerpf(h00, h10, tx), lerpf(h01, h11, tx), tz)
+
+
+func _is_outside_terrain_grid(x: float, z: float) -> bool:
+	return (
+		x < -WORLD_WIDTH * 0.5 or x > WORLD_WIDTH * 0.5
+		or z < -WORLD_DEPTH * 0.5 or z > WORLD_DEPTH * 0.5
+	)
+
+
+func _get_baghdad_osm_extended_height(x: float, z: float) -> float:
+	var edge_x := clampf(x, -WORLD_WIDTH * 0.5, WORLD_WIDTH * 0.5)
+	var edge_z := clampf(z, -WORLD_DEPTH * 0.5, WORLD_DEPTH * 0.5)
+	var edge_height := _sample_terrain_height_grid(edge_x, edge_z)
+	var outside_distance := maxf(
+		maxf(absf(x) - WORLD_WIDTH * 0.5, 0.0),
+		maxf(absf(z) - WORLD_DEPTH * 0.5, 0.0)
+	)
+	var blend := clampf(outside_distance / BAGHDAD_OSM_EDGE_BLEND_DISTANCE_M, 0.0, 1.0)
+	blend = blend * blend * (3.0 - 2.0 * blend)
+	return lerpf(edge_height, baghdad_osm_world_ground_elevation_m, blend)
 
 
 func is_land_position(x: float, z: float) -> bool:
