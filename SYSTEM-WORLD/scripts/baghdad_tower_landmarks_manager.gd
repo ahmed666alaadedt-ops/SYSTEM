@@ -775,10 +775,49 @@ func _create_cinema_hall_layout(parent: Node3D, radius: float, seat_material: Ma
 				seat.position = Vector3(-2.5 + float(seat_column), 0.55 + float(seat_row) * 0.18, 1.0 + float(seat_row) * 1.6)
 				seat.material_override = seat_material
 				hall.add_child(seat)
+		_add_cinema_wayfinding(hall, hall_index, screen_material)
 	cinema.set_meta("hall_count", 6)
 	cinema.set_meta("seats_per_hall_visual", 24)
 	cinema.set_meta("playback_enabled", false)
 	cinema.set_meta("status", "visual_blockout_only")
+
+
+
+func _add_cinema_wayfinding(hall: Node3D, hall_index: int, accent: Material) -> void:
+	var aisle_lights := Node3D.new()
+	aisle_lights.name = "AisleGuidanceLights"
+	hall.add_child(aisle_lights)
+	for light_index in range(6):
+		var aisle_light := MeshInstance3D.new()
+		aisle_light.name = "AisleLight_%02d" % light_index
+		var light_mesh := BoxMesh.new()
+		light_mesh.size = Vector3(0.18, 0.12, 0.75)
+		aisle_light.mesh = light_mesh
+		aisle_light.position = Vector3(-3.65 if light_index % 2 == 0 else 3.65, 0.22, -1.0 + float(light_index / 2) * 2.1)
+		aisle_light.material_override = accent
+		aisle_lights.add_child(aisle_light)
+	var exit_sign := Label3D.new()
+	exit_sign.name = "EmergencyExitSign"
+	exit_sign.text = "EXIT"
+	exit_sign.font_size = 22
+	exit_sign.position = Vector3(0.0, 2.5, 5.5)
+	exit_sign.modulate = Color(0.3, 1.0, 0.55)
+	hall.add_child(exit_sign)
+	var ticket_kiosk := MeshInstance3D.new()
+	ticket_kiosk.name = "TicketKioskVisual"
+	var kiosk_mesh := BoxMesh.new()
+	kiosk_mesh.size = Vector3(0.9, 1.6, 0.55)
+	ticket_kiosk.mesh = kiosk_mesh
+	ticket_kiosk.position = Vector3(4.6, 0.8, 5.2)
+	ticket_kiosk.material_override = accent
+	hall.add_child(ticket_kiosk)
+	var hall_label := Label3D.new()
+	hall_label.name = "HallNumberSign"
+	hall_label.text = "SCREEN %02d" % (hall_index + 1)
+	hall_label.font_size = 20
+	hall_label.position = Vector3(0.0, 5.2, 5.7)
+	hall_label.modulate = Color(0.35, 0.9, 1.0)
+	hall.add_child(hall_label)
 
 
 func _create_recreation_feature_markers(parent: Node3D, radius: float, material: Material, accent: Material) -> void:
