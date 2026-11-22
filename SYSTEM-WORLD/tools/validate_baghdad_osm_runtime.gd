@@ -46,6 +46,8 @@ func _run_validation() -> void:
 		return
 	print("Baghdad OSM runtime cell passed: roads=", roads.size(), " buildings=", buildings.size(), " landuse=", landuse.size(), " building_collisions=", building_collisions.size())
 	streamer.queue_free()
+	await process_frame
+	await process_frame
 	quit(0)
 
 
