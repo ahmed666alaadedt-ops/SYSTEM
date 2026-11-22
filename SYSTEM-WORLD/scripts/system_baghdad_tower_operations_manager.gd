@@ -2581,8 +2581,8 @@ func _launch_arcade_projectile() -> Dictionary:
 	projectile_collision.shape = projectile_shape
 	projectile.add_child(projectile_collision)
 	current_facility_root.add_child(projectile)
-	projectile.position = Vector3(facility_aim * 4.0, 2.0, 4.0)
-	projectile.apply_central_impulse(Vector3(0.0, 1.45, -8.0))
+	projectile.position = Vector3(facility_aim * 4.0, 3.5, 4.0)
+	projectile.apply_central_impulse(Vector3(0.0, 0.0, -8.0))
 	_set_status("انطلقت الكرة الضوئية — أصب الهدف المحدد!")
 	var hit := false
 	var target_id := -1
