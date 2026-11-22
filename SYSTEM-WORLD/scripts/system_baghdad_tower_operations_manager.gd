@@ -3,6 +3,7 @@ class_name SYSTEMBaghdadTowerOperationsManager
 
 const NPCCharacterModelScript = preload("res://scripts/npc_character_model.gd")
 const TowerOpponentScript = preload("res://scripts/system_tower_opponent.gd")
+const TowerFloorThemeBuilder = preload("res://scripts/system_baghdad_tower_floor_theme_builder.gd")
 const SAVE_PATH := "user://system_baghdad_tower_operations.cfg"
 const STOCK_SAVE_PATH := "user://system_tower_vendor_stock.cfg"
 const WORLD_ID := 2
@@ -1002,6 +1003,7 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 		_create_power_arena_layout(room, radius, floor_number)
 	else:
 		_create_floor_facilities(room, tower_id, floor_number, radius, department)
+		TowerFloorThemeBuilder.build(room, tower_id, floor_number, radius, department)
 	return room
 
 
