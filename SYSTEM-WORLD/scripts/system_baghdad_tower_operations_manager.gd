@@ -2218,10 +2218,10 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 			lane_body.add_child(lane_collision)
 			root.add_child(lane_body)
 			var pin_positions := [
-				Vector3(0.0, 1.48, -5.4),
-				Vector3(-0.48, 1.48, -6.2), Vector3(0.48, 1.48, -6.2),
-				Vector3(-0.96, 1.48, -7.0), Vector3(0.0, 1.48, -7.0), Vector3(0.96, 1.48, -7.0),
-				Vector3(-1.44, 1.48, -7.8), Vector3(-0.48, 1.48, -7.8), Vector3(0.48, 1.48, -7.8), Vector3(1.44, 1.48, -7.8)
+				Vector3(0.0, 1.35, -5.4),
+				Vector3(-0.48, 1.35, -6.2), Vector3(0.48, 1.35, -6.2),
+				Vector3(-0.96, 1.35, -7.0), Vector3(0.0, 1.35, -7.0), Vector3(0.96, 1.35, -7.0),
+				Vector3(-1.44, 1.35, -7.8), Vector3(-0.48, 1.35, -7.8), Vector3(0.48, 1.35, -7.8), Vector3(1.44, 1.35, -7.8)
 			]
 			for pin_index in range(pin_positions.size()):
 				var pin := RigidBody3D.new()
@@ -2244,6 +2244,7 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 				pin_collision.shape = pin_shape
 				pin.add_child(pin_collision)
 				pin.position = pin_positions[pin_index]
+				pin.set_meta("system_bowling_start_position", pin_positions[pin_index])
 				root.add_child(pin)
 		"cinema":
 			_add_facility_box(root, "CinemaScreen", Vector3(0.0, 3.0, -10.0), Vector3(20.0, 6.0, 0.35), highlight)
@@ -2475,7 +2476,7 @@ func _launch_bowling_ball() -> Dictionary:
 	current_facility_root.add_child(ball)
 	ball.position = Vector3(0.0, 1.08, 4.2)
 	var aim := Input.get_axis("ui_left", "ui_right")
-	ball.apply_central_impulse(Vector3(aim * 2.4, 1.1, -15.5))
+	ball.apply_central_impulse(Vector3(aim * 2.4, 1.1, -45.0))
 	_set_status("الكرة انطلقت! راقب الدبابيس...")
 	await get_tree().create_timer(2.5).timeout
 	if not is_instance_valid(ball):
@@ -2486,7 +2487,8 @@ func _launch_bowling_ball() -> Dictionary:
 		if not is_instance_valid(pin):
 			continue
 		var tilt := pin.rotation.x + pin.rotation.z
-		var displacement := Vector2(pin.position.x, pin.position.z).distance_to(Vector2(0.0, -6.6 + float(pins.find(pin)) * 0.0))
+		var start_position: Vector3 = pin.get_meta("system_bowling_start_position", pin.position)
+		var displacement := pin.position.distance_to(start_position)
 		if absf(tilt) > 0.65 or displacement > 0.55 or pin.position.y < 0.8:
 			knocked_down += 1
 	ball.queue_free()
@@ -2499,6 +2501,7 @@ func _launch_bowling_ball() -> Dictionary:
 		pin.angular_velocity = Vector3.ZERO
 		pin.rotation = Vector3.ZERO
 		pin.position = _bowling_pin_start_position(pin_index)
+		pin.set_meta("system_bowling_start_position", pin.position)
 		pin.freeze = false
 	var step := int(active_facility_activity.get("step", 0)) + 1
 	active_facility_activity["step"] = step
