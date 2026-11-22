@@ -394,8 +394,9 @@ func _read_verified_republic_bridge_route() -> Dictionary:
 	if karkh_bank.size() != 2 or rusafa_bank.size() != 2:
 		return {}
 	route["world_ground_elevation_m"] = world_ground
-	route["world_karkh_bank_elevation_m"] = float(terrain.call("get_terrain_height", float(karkh_bank[0]), float(karkh_bank[1])))
-	route["world_rusafa_bank_elevation_m"] = float(terrain.call("get_terrain_height", float(rusafa_bank[0]), float(rusafa_bank[1])))
+	var bank_height_method := "get_baghdad_osm_ground_height" if terrain.has_method("get_baghdad_osm_ground_height") else "get_terrain_height"
+	route["world_karkh_bank_elevation_m"] = float(terrain.call(bank_height_method, float(karkh_bank[0]), float(karkh_bank[1])))
+	route["world_rusafa_bank_elevation_m"] = float(terrain.call(bank_height_method, float(rusafa_bank[0]), float(rusafa_bank[1])))
 	route["world_bridge_deck_elevation_m"] = world_ground + source_deck - source_ground
 	route["world_river_surface_elevation_m"] = world_ground + source_river - source_ground
 	route["world_tower_platform_elevation_m"] = world_ground + source_platform - source_ground
