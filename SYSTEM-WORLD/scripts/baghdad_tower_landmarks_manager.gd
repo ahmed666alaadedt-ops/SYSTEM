@@ -24,11 +24,12 @@ func _ready() -> void:
 		push_warning("SYSTEM WORLD: Baghdad anchor is unavailable; towers were not built.")
 		return
 	_create_materials()
+	# Canonical Baghdad five-tower district. Power Tower is a separate landmark.
 	_build_hunter_tower()
-	_build_power_tower()
 	_build_business_tower()
 	_build_shopping_tower()
 	_build_entertainment_tower()
+	_build_technology_tower()
 	_create_connected_city_links()
 	_create_public_amenities()
 
@@ -201,6 +202,7 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	root.add_child(label)
 
 	_create_tower_architecture(root, node_name, title, height, radius, floors, beacon_color)
+	_create_tower_identity_features(root, node_name, height, radius, beacon_color)
 
 	root.set_meta("tower_id", location_id)
 	print("SYSTEM WORLD: landmark tower generated: ", title, " / ", floors, " floors / ", height, "m")
@@ -268,6 +270,99 @@ func _create_tower_architecture(root: Node3D, node_name: String, title: String, 
 	identity_ring.position.y = height * 0.72 + 7.0
 	identity_ring.material_override = emissive_material
 	root.add_child(identity_ring)
+
+
+func _build_technology_tower() -> void:
+	_build_tower(
+		"TechnologyInnovationTower",
+		"برج التكنولوجيا والابتكار",
+		"technology_innovation_tower_baghdad",
+		city_anchor + Vector3(-355.0, 0.0, -350.0),
+		235.0,
+		28.0,
+		40,
+		Color(0.22, 0.88, 0.82)
+	)
+
+
+func _create_tower_identity_features(root: Node3D, node_name: String, height: float, radius: float, beacon_color: Color) -> void:
+	# Distinctive skyline signatures for the five approved Baghdad towers.
+	match node_name:
+		"HunterAssociationTower":
+			for side in [-1.0, 1.0]:
+				var wing := MeshInstance3D.new()
+				wing.name = "HunterGuildMonumentalWing_%s" % str(side)
+				var wing_mesh := BoxMesh.new()
+				wing_mesh.size = Vector3(9.0, height * 0.42, 18.0)
+				wing.mesh = wing_mesh
+				wing.position = Vector3(side * radius * 0.92, height * 0.48 + 7.0, 0.0)
+				wing.material_override = trim_material
+				root.add_child(wing)
+			var honor := Label3D.new()
+			honor.name = "HallOfHonorSkySign"
+			honor.text = "HUNTER GUILD • HALL OF HONOR"
+			honor.font_size = 30
+			honor.position = Vector3(0.0, height * 0.78, radius * 0.9)
+			honor.modulate = beacon_color
+			root.add_child(honor)
+		"BusinessTower":
+			for level in range(5):
+				var belt := MeshInstance3D.new()
+				belt.name = "BusinessSkyOfficeBelt_%02d" % level
+				var belt_mesh := CylinderMesh.new()
+				belt_mesh.top_radius = radius * (0.92 - float(level) * 0.035)
+				belt_mesh.bottom_radius = radius * (0.92 - float(level) * 0.035)
+				belt_mesh.height = 2.2
+				belt.mesh = belt_mesh
+				belt.position.y = height * (0.18 + float(level) * 0.14) + 7.0
+				belt.material_override = trim_material
+				root.add_child(belt)
+		"ShoppingTower":
+			for side in range(4):
+				var arcade := MeshInstance3D.new()
+				arcade.name = "ShoppingArcadePortal_%d" % side
+				var arcade_mesh := BoxMesh.new()
+				arcade_mesh.size = Vector3(radius * 0.72, 12.0, 2.0)
+				arcade.mesh = arcade_mesh
+				var angle := TAU * float(side) / 4.0
+				arcade.position = Vector3(cos(angle) * radius * 1.12, 9.0, sin(angle) * radius * 1.12)
+				arcade.rotation.y = angle
+				arcade.material_override = trim_material
+				root.add_child(arcade)
+		"EntertainmentTower":
+			for ring_index in range(3):
+				var event_ring := MeshInstance3D.new()
+				event_ring.name = "EntertainmentEventRing_%d" % ring_index
+				var ring_mesh := CylinderMesh.new()
+				ring_mesh.top_radius = radius * (1.28 + float(ring_index) * 0.12)
+				ring_mesh.bottom_radius = ring_mesh.top_radius
+				ring_mesh.height = 1.8
+				event_ring.mesh = ring_mesh
+				event_ring.position.y = height * (0.28 + float(ring_index) * 0.2) + 7.0
+				event_ring.material_override = emissive_material
+				root.add_child(event_ring)
+		"TechnologyInnovationTower":
+			var data_spire := MeshInstance3D.new()
+			data_spire.name = "TechnologyCentralDataSpire"
+			var spire_mesh := CylinderMesh.new()
+			spire_mesh.top_radius = 1.2
+			spire_mesh.bottom_radius = 4.5
+			spire_mesh.height = height * 0.28
+			data_spire.mesh = spire_mesh
+			data_spire.position.y = height * 0.82 + 7.0
+			data_spire.material_override = emissive_material
+			root.add_child(data_spire)
+			for side in range(8):
+				var node := MeshInstance3D.new()
+				node.name = "InnovationNode_%02d" % side
+				var node_mesh := SphereMesh.new()
+				node_mesh.radius = 2.0
+				node_mesh.height = 4.0
+				node.mesh = node_mesh
+				var angle := TAU * float(side) / 8.0
+				node.position = Vector3(cos(angle) * radius * 1.45, height * 0.58 + 7.0, sin(angle) * radius * 1.45)
+				node.material_override = emissive_material
+				root.add_child(node)
 
 
 func _create_connected_city_links() -> void:
