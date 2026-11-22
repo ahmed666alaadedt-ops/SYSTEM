@@ -447,6 +447,29 @@ func _run() -> void:
 		if room_header == null or room_sign == null or room_sign.text.is_empty():
 			_fail("Hunter HQ service room is missing its doorway header or sign: " + room_name)
 			return
+	var examiner_console := headquarters_interior.get_node_or_null("HQExaminerControlConsole") as StaticBody3D
+	var examiner_console_collision := false
+	if examiner_console != null:
+		for console_child in examiner_console.get_children():
+			if console_child is CollisionShape3D and console_child.shape != null and not console_child.disabled:
+				examiner_console_collision = true
+				break
+	if not examiner_console_collision or int(headquarters_interior.get_meta("examiner_stage_monitor_count", 0)) != 7:
+		_fail("Hunter HQ examiner control station is missing its physical console or seven stage monitors.")
+		return
+	if bool(headquarters_interior.get_meta("examiner_status_feed_connected", true)):
+		_fail("Static Hunter examiner monitor blockout must not claim a live stage-status feed.")
+		return
+	for stage_number in range(1, 8):
+		var stage_monitor := headquarters_interior.get_node_or_null("HQExaminerStageMonitor_%02d" % stage_number) as MeshInstance3D
+		var stage_label := headquarters_interior.get_node_or_null("HQExaminerStageLabel_%02d" % stage_number) as Label3D
+		if stage_monitor == null or stage_monitor.mesh == null or stage_label == null or not stage_label.text.contains("المرحلة"):
+			_fail("Hunter HQ examiner stage monitor or label is missing: %d" % stage_number)
+			return
+	var examiner_feed_notice := headquarters_interior.get_node_or_null("HQExaminerControlStaticFeedNotice") as Label3D
+	if examiner_feed_notice == null or not examiner_feed_notice.text.contains("لا يوجد بث مباشر"):
+		_fail("Hunter HQ examiner console does not disclose that its monitor feed is static.")
+		return
 
 	var landmarks = LANDMARK_SCRIPT.new()
 	region.add_child(landmarks)
