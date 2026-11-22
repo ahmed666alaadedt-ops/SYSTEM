@@ -5,6 +5,23 @@ signal attack_performed(damage: float, hit_target: Node)
 
 var actor: CharacterBody3D
 var camera: Camera3D
+var progression: Node
+
+const DEFAULT_WEAPON_PROFILE := {"light_damage":34.0,"heavy_damage":90.0,"range":65.0,"weapon_class":"unarmed"}
+const WEAPON_PROFILES := {
+	"armory_sidearm":{"light_damage":24.0,"heavy_damage":38.0,"range":40.0,"weapon_class":"firearm"},
+	"armory_assault_rifle":{"light_damage":30.0,"heavy_damage":45.0,"range":70.0,"weapon_class":"firearm"},
+	"armory_precision_rifle":{"light_damage":75.0,"heavy_damage":125.0,"range":160.0,"weapon_class":"firearm"},
+	"armory_scattergun":{"light_damage":48.0,"heavy_damage":70.0,"range":18.0,"weapon_class":"firearm"},
+	"armory_support_gun":{"light_damage":34.0,"heavy_damage":52.0,"range":85.0,"weapon_class":"firearm"},
+	"armory_energy_rifle":{"light_damage":46.0,"heavy_damage":80.0,"range":105.0,"weapon_class":"energy"},
+	"armory_long_sword":{"light_damage":38.0,"heavy_damage":68.0,"range":4.8,"weapon_class":"melee"},
+	"armory_dual_daggers":{"light_damage":25.0,"heavy_damage":46.0,"range":3.6,"weapon_class":"melee"},
+	"armory_spear":{"light_damage":34.0,"heavy_damage":62.0,"range":6.5,"weapon_class":"melee"},
+	"armory_battle_axe":{"light_damage":48.0,"heavy_damage":86.0,"range":4.2,"weapon_class":"melee"},
+	"armory_recurve_bow":{"light_damage":32.0,"heavy_damage":58.0,"range":58.0,"weapon_class":"projectile"},
+	"armory_crossbow":{"light_damage":44.0,"heavy_damage":76.0,"range":72.0,"weapon_class":"projectile"}
+}
 var can_attack := true
 var is_blocking := false
 var attack_damage := 34.0
@@ -12,9 +29,10 @@ var heavy_damage := 90.0
 var attack_range := 65.0
 
 
-func bind_actor(player: CharacterBody3D, combat_camera: Camera3D) -> void:
+func bind_actor(player: CharacterBody3D, combat_camera: Camera3D, player_progression: Node = null) -> void:
 	actor = player
 	camera = combat_camera
+	progression = player_progression
 
 
 func set_combat_camera(combat_camera: Camera3D) -> void:
@@ -25,7 +43,8 @@ func light_attack() -> void:
 	if not can_attack or not is_instance_valid(actor):
 		return
 	can_attack = false
-	_fire_hitscan(attack_damage,attack_range)
+	var profile := get_equipped_weapon_profile()
+	_fire_hitscan(float(profile.get("light_damage", attack_damage)), float(profile.get("range", attack_range)))
 	await get_tree().create_timer(0.38).timeout
 	can_attack = true
 
@@ -34,9 +53,20 @@ func heavy_attack() -> void:
 	if not can_attack or not is_instance_valid(actor):
 		return
 	can_attack = false
-	_fire_hitscan(heavy_damage,attack_range * 1.35)
+	var profile := get_equipped_weapon_profile()
+	_fire_hitscan(float(profile.get("heavy_damage", heavy_damage)), float(profile.get("range", attack_range)) * 1.15)
 	await get_tree().create_timer(1.1).timeout
 	can_attack = true
+
+
+
+func get_equipped_weapon_profile() -> Dictionary:
+	if not is_instance_valid(progression) or not progression.has_method("get_equipped_weapon"):
+		return DEFAULT_WEAPON_PROFILE.duplicate(true)
+	var weapon_id := str(progression.call("get_equipped_weapon"))
+	if weapon_id.is_empty():
+		return DEFAULT_WEAPON_PROFILE.duplicate(true)
+	return (WEAPON_PROFILES.get(weapon_id, DEFAULT_WEAPON_PROFILE) as Dictionary).duplicate(true)
 
 
 func _fire_hitscan(damage: float, distance: float) -> void:
