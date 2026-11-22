@@ -378,6 +378,8 @@ func _build_service_desks() -> void:
 	screen_mat.emission = Color(0.02, 0.35, 0.62)
 	screen_mat.emission_energy_multiplier = 1.4
 	var desk_positions := [Vector3(-12.0, 1.2, -8.0), Vector3(0.0, 1.2, -8.0), Vector3(12.0, 1.2, -8.0)]
+	if tower_id == "shopping_tower_baghdad":
+		desk_positions = [Vector3(-15.0, 1.2, -8.0), Vector3(-5.0, 1.2, -8.0), Vector3(5.0, 1.2, -8.0), Vector3(15.0, 1.2, -8.0)]
 	var desk_titles := _service_titles()
 	for index in range(desk_positions.size()):
 		_add_solid_box("ServiceDesk_%d" % index, desk_positions[index], Vector3(7.0, 2.4, 3.0), desk_mat)
@@ -409,7 +411,7 @@ func _service_titles() -> Array[String]:
 		"business_tower_baghdad":
 			return ["استشارات الأعمال", "مكاتب الاستثمار", "خدمات الشركات"]
 		"shopping_tower_baghdad":
-			return ["دليل المتاجر", "السوق والتجارة", "خدمات العملاء"]
+			return ["معرض الأسلحة", "مختبر جرعات إيقاظ النِن", "سوق ومقتنيات بغداد", "حقيبة المشتريات"]
 		"entertainment_tower_baghdad":
 			return ["الفعاليات", "الرياضة والترفيه", "حجز الأنشطة"]
 		"technology_tower_baghdad":
@@ -478,7 +480,7 @@ func _build_tower_identity_feature() -> void:
 			feature_title = "BUSINESS & INVESTMENT"
 		"shopping_tower_baghdad":
 			accent_color = Color(0.95, 0.72, 0.28)
-			feature_title = "CITY MARKET DIRECTORY"
+			feature_title = "WEAPON ARMORY & NEN AWAKENING"
 		"entertainment_tower_baghdad":
 			accent_color = Color(0.75, 0.38, 0.95)
 			feature_title = "EVENTS & ARENA HUB"
