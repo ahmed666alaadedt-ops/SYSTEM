@@ -106,3 +106,10 @@ Last verified: 2026-11-22 (GitHub repository review)
 - Manager commit `7740c0b1c154be49c12f195eeef0bff9270c3dce` adds eight retail storefront display bays, six food vendor counters/menu panels, and a dining area with twelve tables and forty-eight chair visuals. Manager commit `53585bdbc46ff779a51f9e33db8df9380ed3465d` registers shopping mall revision 1.
 - Validator commit `280f4efba18f12e00b8264b03803b2a925215eae` checks retail, food vendor and dining area roots; validator commit `114347c8062400dfc43162d285e56101e631ba98` checks the revision marker.
 - Static visuals only; shops, stock, NPC vendors, payments, purchases and food orders are not functional yet.
+
+
+## Specialized Hunter, Business and Technology Tower interiors — 22 November 2026
+
+- Manager commit `34f7450713f61cd364f3d9ec6d2145d939959e73` adds the Hunter mission board gallery, training dummy gallery and clinic treatment beds; Business conference table with sixteen seats, investment ticker and guest-room gallery; Technology research benches, AI pods and digital library shelf gallery. Manager commit `349894251d842f907a0911dc7ccf90dc1fd30ee2` registers specialized interior revision 1 on all towers.
+- Validator commit `644f2c4ce4336675b69b741fc11792e34707b99b` checks the three specialized tower layouts; validator commit `576872a060a5bd34865e2fedee45c1a57a22820d` asserts the revision marker on every tower.
+- These are static visual blockouts. Their actual gameplay/services and NPC interactions remain outstanding. Continue on QA branch only; do not merge into `main` without user approval.
