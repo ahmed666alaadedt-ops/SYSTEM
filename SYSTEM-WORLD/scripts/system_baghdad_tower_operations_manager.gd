@@ -7,6 +7,7 @@ const TowerFloorThemeBuilder = preload("res://scripts/system_baghdad_tower_floor
 const SAVE_PATH := "user://system_baghdad_tower_operations.cfg"
 const STOCK_SAVE_PATH := "user://system_tower_vendor_stock.cfg"
 const HOTEL_SAVE_PATH := "user://system_baghdad_hotel_bookings.cfg"
+const RESTAURANT_SAVE_PATH := "user://system_baghdad_restaurant_orders.cfg"
 const NPC_SALES_SAVE_PATH := "user://system_baghdad_npc_sales.cfg"
 const FACILITY_ACTIVITY_SAVE_PATH := "user://system_baghdad_facility_activity.cfg"
 const WORLD_ID := 2
@@ -201,6 +202,11 @@ var current_staff_id := ""
 var credits := 1200
 var vendor_stock: Dictionary = {}
 var hotel_bookings: Dictionary = {}
+var restaurant_orders: Dictionary = {}
+var restaurant_order_history: Array = []
+var restaurant_draft_items: Dictionary = {}
+var current_restaurant_table_id := ""
+var current_restaurant_table_node: Node
 var stock_refresh_clock := 300.0
 var ad_clock := 0.0
 var ad_index := 0
@@ -261,6 +267,7 @@ func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_po
 	_load_wallet()
 	_load_vendor_stock()
 	_load_hotel_bookings()
+	_load_restaurant_orders()
 	_load_npc_sales_ledger()
 	_load_facility_activity_stats()
 	_build_ui()
@@ -2992,6 +2999,170 @@ func _create_hotel_facilities(room: Node3D, radius: float, floor_number: int, ho
 	room.set_meta("system_hotel_staff_id", hospitality_staff_id)
 
 
+
+func _load_restaurant_orders() -> void:
+	var config := ConfigFile.new()
+	if config.load(RESTAURANT_SAVE_PATH) != OK:
+		restaurant_orders = {}
+		restaurant_order_history = []
+		return
+	var saved_orders: Variant = config.get_value("restaurant", "active_orders", {})
+	var saved_history: Variant = config.get_value("restaurant", "order_history", [])
+	restaurant_orders = saved_orders.duplicate(true) if saved_orders is Dictionary else {}
+	restaurant_order_history = saved_history.duplicate(true) if saved_history is Array else []
+
+
+func _save_restaurant_orders() -> void:
+	var config := ConfigFile.new()
+	config.set_value("restaurant", "active_orders", restaurant_orders)
+	config.set_value("restaurant", "order_history", restaurant_order_history)
+	var result := config.save(RESTAURANT_SAVE_PATH)
+	if result != OK:
+		push_warning("SYSTEM restaurants: could not persist dining orders.")
+
+
+func open_restaurant_table(table_node: Node) -> void:
+	if table_node == null or not table_node.has_meta("system_restaurant_table_id"):
+		return
+	current_tower_id = "shopping_tower_baghdad"
+	current_restaurant_table_node = table_node
+	current_restaurant_table_id = str(table_node.get_meta("system_restaurant_table_id", ""))
+	if current_restaurant_table_id.is_empty():
+		return
+	_clear_dynamic_controls()
+	title_label.text = "مطاعم برج التسوق — " + str(table_node.get_meta("system_restaurant_table_name", "طاولة الطعام"))
+	credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
+	var close_button := Button.new()
+	close_button.text = "إغلاق"
+	close_button.pressed.connect(func(): panel.hide())
+	content.add_child(close_button)
+	var active_order: Dictionary = restaurant_orders.get(current_restaurant_table_id, {})
+	if not active_order.is_empty():
+		var state := str(active_order.get("status", "placed"))
+		var state_names := {
+			"placed": "وصل الطلب إلى المطبخ",
+			"preparing": "الشيف يحضّر الوجبة",
+			"ready": "الوجبة جاهزة للتقديم",
+			"served": "النادل قدّم الوجبة — استمتع بوجبتك"
+		}
+		var items: Array = active_order.get("items", [])
+		var item_names: Array[String] = []
+		for item_value in items:
+			var item: Dictionary = item_value
+			item_names.append(str(item.get("name", "وجبة")))
+		status_label.text = "%s\n%s\nالإجمالي: %d رصيد" % [str(state_names.get(state, state)), "، ".join(item_names), int(active_order.get("total", 0))]
+		var next_states := {
+			"placed": ["preparing", "إرسال الطلب إلى الشيف لبدء التحضير"],
+			"preparing": ["ready", "تأكيد جاهزية الوجبة"],
+			"ready": ["served", "النادل يقدّم الطلب إلى الطاولة"],
+			"served": ["completed", "إنهاء الوجبة ومغادرة الطاولة"]
+		}
+		if next_states.has(state):
+			var transition: Array = next_states[state]
+			var action_button := Button.new()
+			action_button.text = str(transition[1])
+			action_button.pressed.connect(_advance_restaurant_order.bind(current_restaurant_table_id, str(transition[0])))
+			content.add_child(action_button)
+	else:
+		status_label.text = "اختر أطباقك ومشروباتك. تُخصم القيمة عند إرسال الطلب إلى المطبخ."
+		var draft: Array = restaurant_draft_items.get(current_restaurant_table_id, [])
+		for product_value in PRODUCT_CATALOG["shopping_tower_baghdad"]:
+			var product: Dictionary = product_value
+			var item_id := str(product.get("id", ""))
+			if not item_id.begins_with("restaurant_"):
+				continue
+			var item_button := Button.new()
+			item_button.text = "إضافة %s — %d رصيد" % [str(product.get("name", "وجبة")), int(product.get("price", 0))]
+			item_button.disabled = credits < int(product.get("price", 0))
+			item_button.pressed.connect(_add_restaurant_draft_item.bind(current_restaurant_table_id, item_id, str(product.get("name", "وجبة")), int(product.get("price", 0))))
+			content.add_child(item_button)
+		var draft_total := 0
+		var draft_names: Array[String] = []
+		for item_value in draft:
+			var item: Dictionary = item_value
+			draft_total += int(item.get("price", 0))
+			draft_names.append(str(item.get("name", "وجبة")))
+		var draft_label := Label.new()
+		draft_label.text = "طلبك: %s\nالمجموع: %d رصيد" % ["، ".join(draft_names) if not draft_names.is_empty() else "لم تختر شيئاً", draft_total]
+		draft_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		content.add_child(draft_label)
+		var place_button := Button.new()
+		place_button.text = "إرسال الطلب إلى المطبخ والدفع"
+		place_button.disabled = draft.is_empty() or credits < draft_total
+		place_button.pressed.connect(_place_restaurant_order.bind(current_restaurant_table_id))
+		content.add_child(place_button)
+	panel.show()
+
+
+func _add_restaurant_draft_item(table_id: String, item_id: String, item_name: String, price: int) -> void:
+	if table_id.is_empty() or price <= 0 or not restaurant_orders.get(table_id, {}).is_empty():
+		return
+	var draft: Array = restaurant_draft_items.get(table_id, [])
+	draft.append({"item_id": item_id, "name": item_name, "price": price})
+	restaurant_draft_items[table_id] = draft
+	if is_instance_valid(current_restaurant_table_node):
+		open_restaurant_table(current_restaurant_table_node)
+
+
+func _place_restaurant_order(table_id: String) -> void:
+	if table_id.is_empty() or restaurant_orders.has(table_id):
+		return
+	var draft: Array = restaurant_draft_items.get(table_id, [])
+	if draft.is_empty():
+		_set_status("اختر طبقاً أو مشروباً قبل إرسال الطلب.")
+		return
+	var total := 0
+	for item_value in draft:
+		var item: Dictionary = item_value
+		total += int(item.get("price", 0))
+	if total <= 0 or credits < total:
+		_set_status("رصيدك لا يكفي لإتمام طلب المطعم.")
+		return
+	credits -= total
+	restaurant_orders[table_id] = {
+		"table_id": table_id,
+		"items": draft.duplicate(true),
+		"total": total,
+		"status": "placed",
+		"created_at_unix": int(Time.get_unix_time_from_system()),
+		"tower_id": "shopping_tower_baghdad"
+	}
+	restaurant_draft_items.erase(table_id)
+	_save_restaurant_orders()
+	_save_wallet()
+	credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
+	_set_status("تم إرسال طلبك إلى مطبخ المطعم. بدأ مسار تجهيز الوجبة.")
+	if is_instance_valid(current_restaurant_table_node):
+		open_restaurant_table(current_restaurant_table_node)
+
+
+func _advance_restaurant_order(table_id: String, next_status: String) -> void:
+	if not restaurant_orders.has(table_id):
+		return
+	var order: Dictionary = restaurant_orders[table_id]
+	var current := str(order.get("status", ""))
+	var allowed := {
+		"placed": "preparing",
+		"preparing": "ready",
+		"ready": "served",
+		"served": "completed"
+	}
+	if str(allowed.get(current, "")) != next_status:
+		_set_status("لا يمكن تجاوز مراحل تجهيز وتقديم الطلب.")
+		return
+	order["status"] = next_status
+	order["updated_at_unix"] = int(Time.get_unix_time_from_system())
+	if next_status == "completed":
+		restaurant_order_history.append(order.duplicate(true))
+		restaurant_orders.erase(table_id)
+	else:
+		restaurant_orders[table_id] = order
+	_save_restaurant_orders()
+	_set_status("تم تحديث حالة طلب المطعم: " + next_status)
+	if is_instance_valid(current_restaurant_table_node) and current_restaurant_table_id == table_id:
+		open_restaurant_table(current_restaurant_table_node)
+
+
 func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: int) -> void:
 	var dining_sign := Label3D.new()
 	dining_sign.name = "RestaurantDiningSign"
@@ -3006,7 +3177,23 @@ func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: i
 		table_root.name = "RestaurantTable_%02d" % index
 		var angle := TAU * float(index) / 4.0
 		table_root.position = Vector3(cos(angle) * radius * 0.34, 0.0, sin(angle) * radius * 0.34)
+		table_root.set_meta("system_restaurant_table_id", "shopping_floor_%02d_table_%02d" % [floor_number, index])
+		table_root.set_meta("system_restaurant_table_name", "طاولة %d — الطابق %d" % [index + 1, floor_number])
 		room.add_child(table_root)
+		var interaction_body := StaticBody3D.new()
+		interaction_body.name = "RestaurantTableInteraction"
+		interaction_body.collision_layer = 1
+		interaction_body.collision_mask = 0
+		interaction_body.set_meta("system_restaurant_table_id", str(table_root.get_meta("system_restaurant_table_id")))
+		interaction_body.set_meta("system_restaurant_table_name", str(table_root.get_meta("system_restaurant_table_name")))
+		interaction_body.set_meta("system_interaction_prompt", "مطعم SYSTEM — اجلس واطلب الطعام")
+		var interaction_shape := CollisionShape3D.new()
+		var interaction_box := BoxShape3D.new()
+		interaction_box.size = Vector3(2.8, 1.25, 1.8)
+		interaction_shape.shape = interaction_box
+		interaction_shape.position.y = 1.0
+		interaction_body.add_child(interaction_shape)
+		table_root.add_child(interaction_body)
 		var table := MeshInstance3D.new()
 		var table_mesh := BoxMesh.new()
 		table_mesh.size = Vector3(2.8, 0.18, 1.8)
