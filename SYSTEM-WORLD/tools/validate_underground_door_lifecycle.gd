@@ -141,7 +141,7 @@ func _run_validation() -> void:
 		_fail("Vault door state was not restored after manager recreation.")
 		return
 	if restored_body.position.distance_to(OPEN_POSITION) > 0.03:
-		_fail("Restored vault door body did not return to the saved open position.")
+		_fail("Restored vault door body position mismatch. actual=" + str(restored_body.position) + " expected=" + str(OPEN_POSITION) + " target=" + str(restored_door.position) + " saved_states=" + str(restored_manager.get("_door_states")))
 		return
 	world_root.queue_free()
 	await process_frame
