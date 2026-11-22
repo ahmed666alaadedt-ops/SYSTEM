@@ -54,7 +54,7 @@ const CRAFTING_RECIPES := {
 	"energy_elixir": {"name": "تحضير إكسير الطاقة", "ingredients": {"crystal_dust": 2, "energy_crystal": 1}, "output": "energy_elixir", "required_level": 8},
 	"nen_acquisition_elixir": {"name": "تحضير إكسير اكتساب النِن", "ingredients": {"monster_core": 2, "nen_fragment": 1}, "output": "nen_acquisition_elixir", "required_level": 15},
 	"nen_control_elixir": {"name": "تحضير إكسير التحكم بالنِن", "ingredients": {"nen_fragment": 2, "energy_crystal": 1}, "output": "nen_control_elixir", "required_level": 20, "requires_nen": true},
-	"rare_legendary_elixir": {"name": "تحضير الإكسير النادر/الأسطوري", "ingredients": {"rare_core": 3, "nen_fragment": 5, "energy_crystal": 3}, "output": "rare_legendary_elixir", "required_level": 80, "requires_nen": true}
+	"rare_legendary_elixir": {"name": "تحضير الإكسير النادر/الأسطوري", "ingredients": {"rare_core": 3, "nen_fragment": 5, "energy_crystal": 3}, "output": "rare_legendary_elixir", "required_level": 80, "requires_nen": true, "required_nen_rank": 5}
 }
 
 
@@ -192,6 +192,9 @@ func craft_recipe(recipe_id: String) -> Dictionary:
 		return {"success": false, "reason": "LEVEL_REQUIREMENT", "required_level": required_level}
 	if bool(recipe.get("requires_nen", false)) and not nen_unlocked:
 		return {"success": false, "reason": "NEN_REQUIRED"}
+	var required_nen_rank := int(recipe.get("required_nen_rank", 0))
+	if nen_control_rank < required_nen_rank:
+		return {"success": false, "reason": "NEN_CONTROL_RANK_REQUIRED", "required_nen_rank": required_nen_rank}
 	var ingredients: Dictionary = recipe.get("ingredients", {})
 	for ingredient_id in ingredients.keys():
 		var required_count := int(ingredients[ingredient_id])
