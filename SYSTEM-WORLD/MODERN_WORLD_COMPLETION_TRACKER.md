@@ -1,3 +1,13 @@
+## Baghdad tower floor emergency evacuation — 23 November 2026
+
+- [x] Added a marked emergency exit doorway to every generated tower floor, with a clear wall opening, bilingual Arabic/English floor-specific signage, illuminated beacon, emergency light, route marking and alarm call point.
+- [x] Added a physical Area3D exit sensor; the player must enter the exit volume to trigger evacuation back to the public lobby through the tower elevator return sequence. Leaving an active Power Tower floor through this route safely abandons that floor rather than awarding a clear.
+- [x] Extended the tower operations validator to inspect emergency exits across representative floors in all six Baghdad towers, verify the sensor/collision/signal and lighting, assert that the doorway is not blocked by the circular wall, and exercise the physical evacuation-to-lobby lifecycle.
+- [x] Canonical Godot runtime validation #439 passed (run ID `45076778138`) on exact HEAD `037c937cfb88944089eb4b260dc0ca38b812aa64`.
+- [x] Android export #513 passed (run ID `45076777972`) on the same exact HEAD. APK artifact `14775691617`, 35,851,988 bytes, SHA-256 `2f370b4ab223fdd5bcbc86ee7d9c875847c049d96d4b163afc64699d6dbfecb2`; expires 6 December 2026.
+- [ ] Physical Android inspection of the new exit collision, touch-free trigger, evacuation transition and tower-floor visuals remains outstanding.
+- [ ] PR-wide Godot validation #1487 (run ID `45076724851`, earlier head `6490a87b396bb1a8bc9b1b3a86a154c18bdf16c0`) failed in the pre-existing child-character safety QA step after its PASS message, with repeated engine errors `Parameter "m" is null` from `mesh_get_surface_count`; the separate canonical runtime validation on current HEAD passed. Investigate that QA teardown issue before declaring the full PR workflow green.
+
 ## SYSTEM ARCADE — playable number-puzzle cabinet mode — 22 November 2026
 
 - [x] Added a fourth selectable arcade game mode, a five-question arithmetic puzzle, to the six-cabinet arcade gallery.
