@@ -2323,7 +2323,41 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 					_add_facility_box(root, "CinemaSeat_%02d_%02d" % [row, seat], Vector3(-9.0 + float(seat) * 3.6, 0.65, 1.0 + float(row) * 3.0), Vector3(1.4, 1.3, 1.2), accent)
 		"arcade":
 			for index in range(6):
-				_add_facility_box(root, "ArcadeCabinet_%02d" % index, Vector3(-12.0 + float(index) * 4.8, 1.4, -2.0), Vector3(2.0, 2.8, 1.4), highlight)
+				var cabinet_position := Vector3(-12.0 + float(index) * 4.8, 1.4, -2.0)
+				_add_facility_box(root, "ArcadeCabinet_%02d" % index, cabinet_position, Vector3(2.0, 2.8, 1.4), highlight)
+				var cabinet_screen := MeshInstance3D.new()
+				cabinet_screen.name = "ArcadeCabinetScreen_%02d" % index
+				var cabinet_screen_mesh := QuadMesh.new()
+				cabinet_screen_mesh.size = Vector2(1.35, 0.95)
+				cabinet_screen.mesh = cabinet_screen_mesh
+				cabinet_screen.position = cabinet_position + Vector3(0.0, 0.25, 0.72)
+				var cabinet_screen_material := StandardMaterial3D.new()
+				cabinet_screen_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+				cabinet_screen_material.albedo_color = Color(0.02, 0.08, 0.13)
+				cabinet_screen_material.emission_enabled = true
+				cabinet_screen_material.emission = Color(0.02, 0.34, 0.62) if index % 2 == 0 else Color(0.18, 0.34, 0.08)
+				cabinet_screen_material.emission_energy_multiplier = 1.8
+				cabinet_screen.material_override = cabinet_screen_material
+				root.add_child(cabinet_screen)
+				var cabinet_interaction := Area3D.new()
+				cabinet_interaction.name = "ArcadeCabinetInteraction_%02d" % index
+				cabinet_interaction.add_to_group("system_interactable")
+				cabinet_interaction.collision_layer = 1
+				cabinet_interaction.collision_mask = 0
+				cabinet_interaction.monitoring = true
+				cabinet_interaction.position = cabinet_position
+				cabinet_interaction.set_meta("system_tower_id", tower_id)
+				cabinet_interaction.set_meta("system_tower_floor_number", floor_number)
+				cabinet_interaction.set_meta("system_facility_type", "arcade")
+				cabinet_interaction.set_meta("system_arcade_cabinet_id", index)
+				cabinet_interaction.set_meta("system_arcade_cabinet_mode", "shooter" if index % 2 == 0 else "memory")
+				cabinet_interaction.set_meta("system_interaction_prompt", "جهاز SYSTEM ARCADE %d — اضغط للعب" % (index + 1))
+				var cabinet_shape_node := CollisionShape3D.new()
+				var cabinet_shape := BoxShape3D.new()
+				cabinet_shape.size = Vector3(2.4, 3.0, 2.0)
+				cabinet_shape_node.shape = cabinet_shape
+				cabinet_interaction.add_child(cabinet_shape_node)
+				root.add_child(cabinet_interaction)
 			for target_index in range(5):
 				var target_x := -4.0 + float(target_index) * 2.0
 				var target_visual := MeshInstance3D.new()
@@ -2489,6 +2523,20 @@ func open_facility_service(tower_id: String, floor_number: int, facility_type: S
 	content.add_child(close_button)
 	_add_facility_activity_controls(facility_type)
 	panel.show()
+
+
+func open_arcade_cabinet(tower_id: String, floor_number: int, cabinet_id: int, cabinet_mode: String) -> void:
+	if cabinet_id < 0 or cabinet_id >= 6 or cabinet_mode not in ["shooter", "memory"]:
+		return
+	open_facility_service(tower_id, floor_number, "arcade")
+	selected_arcade_mode = cabinet_mode
+	var mode_index := 1 if cabinet_mode == "memory" else 0
+	var selector := content.get_node_or_null("ArcadeModeSelector") as OptionButton
+	if selector != null:
+		selector.select(mode_index)
+	_on_arcade_mode_selected(mode_index)
+	title_label.text = "SYSTEM ARCADE — الجهاز %d | %s" % [cabinet_id + 1, "ذاكرة الألوان" if cabinet_mode == "memory" else "ميدان التصويب"]
+	_set_status("تم تشغيل الجهاز %d. اختر بدء الجولة عندما تكون مستعداً." % (cabinet_id + 1))
 
 
 func _facility_activity_definition(facility_type: String) -> Dictionary:
