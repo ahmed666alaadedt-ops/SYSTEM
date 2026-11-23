@@ -2719,15 +2719,24 @@ func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) 
 	room.set_meta("system_power_tower_theme", theme_id)
 	var theme_color := Color(0.18, 0.30, 0.40)
 	match theme_id:
-		"DESERT": theme_color = Color(0.58, 0.38, 0.16)
-		"FROST": theme_color = Color(0.32, 0.72, 0.88)
-		"VOLCANIC": theme_color = Color(0.58, 0.12, 0.055)
-		"JUNGLE": theme_color = Color(0.12, 0.40, 0.20)
-		"RUINS": theme_color = Color(0.38, 0.34, 0.27)
-		"STORM": theme_color = Color(0.24, 0.26, 0.62)
-		"SHADOW": theme_color = Color(0.20, 0.10, 0.28)
-		"CELESTIAL": theme_color = Color(0.66, 0.54, 0.20)
-		"SOVEREIGN": theme_color = Color(0.78, 0.48, 0.08)
+		"DESERT":
+			theme_color = Color(0.58, 0.38, 0.16)
+		"FROST":
+			theme_color = Color(0.32, 0.72, 0.88)
+		"VOLCANIC":
+			theme_color = Color(0.58, 0.12, 0.055)
+		"JUNGLE":
+			theme_color = Color(0.12, 0.40, 0.20)
+		"RUINS":
+			theme_color = Color(0.38, 0.34, 0.27)
+		"STORM":
+			theme_color = Color(0.24, 0.26, 0.62)
+		"SHADOW":
+			theme_color = Color(0.20, 0.10, 0.28)
+		"CELESTIAL":
+			theme_color = Color(0.66, 0.54, 0.20)
+		"SOVEREIGN":
+			theme_color = Color(0.78, 0.48, 0.08)
 	var theme_material := StandardMaterial3D.new()
 	theme_material.albedo_color = theme_color
 	theme_material.metallic = 0.58
