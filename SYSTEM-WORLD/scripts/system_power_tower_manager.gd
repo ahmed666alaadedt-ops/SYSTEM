@@ -7,6 +7,8 @@ signal tower_record_updated(highest_floor: int)
 
 const SAVE_PATH := "user://system_power_tower.cfg"
 const MAX_FLOORS := 200
+const FLOOR_THEME_IDS := ["IRON", "DESERT", "FROST", "VOLCANIC", "JUNGLE", "RUINS", "STORM", "SHADOW", "CELESTIAL", "SOVEREIGN"]
+const FLOOR_THEME_NAMES := ["قاعة الحديد", "ساحة الصحراء", "ميدان الجليد", "حلبة البركان", "غابة المحاربين", "أطلال الملوك", "ساحة العاصفة", "ميدان الظلال", "الحلبة السماوية", "عرش السيادة"]
 
 var highest_cleared_floor := 0
 var active_floor := 0
@@ -31,6 +33,9 @@ func get_floor_data(floor_number: int) -> Dictionary:
 	var required_level := clampi(int(ceil(float(floor_number) * 0.45)), 1, 100)
 	var reward_xp := 100 + floor_number * floor_number * 12 + (250000 if final_boss else 0)
 	var reward_credits := 75 + floor_number * 15 + (5000 if final_boss else 0)
+	var theme_index := clampi(int((floor_number - 1) / 20), 0, FLOOR_THEME_IDS.size() - 1)
+	var arena_theme_id := str(FLOOR_THEME_IDS[theme_index])
+	var arena_theme_name := str(FLOOR_THEME_NAMES[theme_index])
 	var arena_type := "BOSS_TRIAL" if boss_floor else ("ELITE_DUEL" if elite_floor else "DUEL")
 	var objective_type := "DEFEAT_BOSS" if boss_floor else "DEFEAT_OPPONENT"
 	var arena_name := "SYSTEM SOVEREIGN — FINAL DUEL" if final_boss else ("BOSS DUEL ARENA" if boss_floor else ("ELITE DUEL ARENA" if elite_floor else "1 VS 1 DUEL ARENA"))
@@ -49,6 +54,9 @@ func get_floor_data(floor_number: int) -> Dictionary:
 		"rank": _rank_for_floor(floor_number),
 		"challenge_type": "FINAL_BOSS" if final_boss else ("BOSS" if boss_floor else ("ELITE_DUEL" if elite_floor else "SINGLE_DUEL")),
 		"arena_type": arena_type,
+		"arena_theme_index": theme_index,
+		"arena_theme_id": arena_theme_id,
+		"arena_theme_name": arena_theme_name,
 		"objective_type": objective_type,
 		"time_limit_seconds": 0,
 		"arena_name": arena_name,
