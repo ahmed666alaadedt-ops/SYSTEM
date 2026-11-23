@@ -905,9 +905,13 @@ func _run() -> void:
 			progression_test_manager.queue_free()
 			reloaded_progression_manager.queue_free()
 			return
+	var automatic_spectator_match: Dictionary = judge_test_manager.call("get_spectator_match", "validator_judged_tko")
+	var correct_fan_ticket: Dictionary = judge_test_manager.call("submit_spectator_prediction", "validator_judged_tko", "referee_test_fan", "player_test", 10)
+	var losing_fan_ticket: Dictionary = judge_test_manager.call("submit_spectator_prediction", "validator_judged_tko", "referee_test_fan_two", "opponent_test", 20)
 	var duplicate_hit: Dictionary = judge_test_manager.call("record_judged_duel_event", "validator_judged_tko", "HEAD_REFEREE", "player_test", "CLEAN_HIT", "critical_hit_00")
 	var tko_result: Dictionary = judge_test_manager.call("finish_judged_duel", "validator_judged_tko", "player_test", "TKO", "LOCAL_COMBAT_AUTHORITY")
-	if str(duplicate_hit.get("reason", "")) != "DUPLICATE_JUDGE_EVENT" or not bool(tko_result.get("success", false)) or int(tko_result.get("score", {}).get("player_test", 0)) != 10:
+	var automatically_settled_pool: Dictionary = judge_test_manager.call("get_spectator_match", "validator_judged_tko")
+	if str(automatic_spectator_match.get("state", "")) != "open" or not bool(correct_fan_ticket.get("success", false)) or not bool(losing_fan_ticket.get("success", false)) or str(duplicate_hit.get("reason", "")) != "DUPLICATE_JUDGE_EVENT" or not bool(tko_result.get("success", false)) or int(tko_result.get("score", {}).get("player_test", 0)) != 10 or str(automatically_settled_pool.get("state", "")) != "settled" or int(automatically_settled_pool.get("total_pool", 0)) != 30 or int(automatically_settled_pool.get("payouts", {}).get("referee_test_fan", 0)) != 30 or int(automatically_settled_pool.get("payouts", {}).get("referee_test_fan_two", 0)) != 0:
 		_fail("Referee scoring must award 1 clean/2 critical points and end at the ten-point TKO threshold without duplicate events.")
 		judge_test_manager.queue_free()
 		progression_test_manager.queue_free()
