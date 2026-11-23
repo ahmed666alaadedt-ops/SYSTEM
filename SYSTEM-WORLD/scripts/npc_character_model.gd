@@ -469,8 +469,14 @@ func _sanitize_empty_mesh_instances(root: Node) -> void:
 	for child in root.get_children():
 		if child is MeshInstance3D:
 			var mesh_node := child as MeshInstance3D
-			if mesh_node.mesh == null:
+			var replace_mesh := mesh_node.mesh == null
+			if not replace_mesh:
+				var mesh_rid: RID = mesh_node.mesh.get_rid()
+				replace_mesh = not mesh_rid.is_valid()
+			if replace_mesh:
 				mesh_node.mesh = ArrayMesh.new()
+				mesh_node.visible = false
+				print("SYSTEM NPC: sanitized empty or invalid mesh handle: ", str(mesh_node.get_path()))
 		_sanitize_empty_mesh_instances(child)
 
 func _collect_mesh_nodes(root: Node) -> Array[Node]:
@@ -478,9 +484,11 @@ func _collect_mesh_nodes(root: Node) -> Array[Node]:
 	for child in root.get_children():
 		if child is MeshInstance3D:
 			var mesh_node := child as MeshInstance3D
-			# Ignore zero-surface placeholders when applying appearance materials.
-			if mesh_node.mesh != null and mesh_node.mesh.get_surface_count() > 0:
-				result.append(mesh_node)
+			# Never query renderer surface data through an invalid mesh RID.
+			if mesh_node.mesh != null:
+				var mesh_rid: RID = mesh_node.mesh.get_rid()
+				if mesh_rid.is_valid() and mesh_node.mesh.get_surface_count() > 0:
+					result.append(mesh_node)
 		result.append_array(_collect_mesh_nodes(child))
 	return result
 
