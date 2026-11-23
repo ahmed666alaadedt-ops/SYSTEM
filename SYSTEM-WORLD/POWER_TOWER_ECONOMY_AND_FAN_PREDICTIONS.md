@@ -1,57 +1,42 @@
-# SYSTEM WORLD — Power Tower Economy and Fan Predictions
+# SYSTEM WORLD — Power Tower Economy and Fan Ticket Pools
 
 ## Approved economy rules
 
-The Power Tower is part of the shared SYSTEM world economy. Its floor-clear rewards use the same virtual SYSTEM credits wallet already used by the player's shopping, food, hotel, service and activity systems.
+The Power Tower uses the shared SYSTEM virtual-credit wallet already used for shopping, food, hotel stays, services and activity rewards.
 
-- A successful floor clear awards XP, floor loot and virtual SYSTEM credits.
-- Credit rewards scale with floor number and include a special completion bonus for floor 200.
-- Credits are earned through gameplay. Charging is optional and must never be required to enter, clear or progress through the tower.
-- The wallet is virtual and local in the current prototype. It is not cash, has no cash-out value and cannot be transferred to another player's real-money account.
-- A failed, abandoned, timed-out or wounded attempt earns no floor-clear credit reward.
-- Paid options, if added later, may offer cosmetics or convenience only; they must not buy guaranteed combat wins or exclusive competitive power.
+- A verified floor clear awards XP, loot and virtual SYSTEM credits to the fighter.
+- Credits are earned through gameplay. Free players can earn enough for ordinary food, drink, shelter, repairs, equipment and progression; charging is optional.
+- Paid options, if introduced, cannot buy combat wins, rank skips, floor qualification or competitive power.
+- SYSTEM credits and all fan ticket-pool payouts are fictional in-world value only: no cash deposits, withdrawals, cash-out, real-money transfer or real-world monetary prize.
 
-## Spectator predictions
+## Fan ticket pools — approved rules
 
-The intended audience feature is prediction of match outcomes, not real-money gambling.
+Fans participate in a match by selecting one of its two fighters and committing a stake of virtual SYSTEM credits as a Power Tower ticket.
 
-Eligible events may include:
-- NPC fighter versus NPC fighter.
-- Player fighter versus NPC fighter.
-- Player fighter versus player fighter after authoritative multiplayer is available.
+1. Every event is an individual 1v1 duel. No team, squad or group combat formats.
+2. A fan chooses exactly one of the two registered fighters and stakes 1–500 virtual SYSTEM credits per match.
+3. The stake is deducted from the fan's SYSTEM wallet immediately and added to that match's visible pool.
+4. A fan may submit only one ticket per match; a fighter cannot enter a ticket on their own match. The daily cap is 20 match tickets per fan.
+5. Tickets lock before combat begins. Late changes and submissions are rejected.
+6. When a trusted match result is confirmed, the complete pool is shared proportionally among fans who selected the winner. Each winning fan receives their original stake back plus their share of the losing side's stakes; the UI shows gross payout and net virtual profit separately.
+7. Integer rounding remainder is assigned to the final winning ticket in the settlement order, so the recorded payouts equal the pool exactly.
+8. If nobody selected the actual winner, all stakes are refunded. A cancelled or invalid match must also be voided/refunded before production launch.
+9. Incorrect tickets lose only their committed virtual SYSTEM credits. Correct tickets do not create new credits beyond the existing pool.
+10. No purchase, transfer, gifting, withdrawal or cash conversion of tickets or winnings. Paid currency cannot be used to gain a competitive prediction advantage; the current prototype uses the same earned/spendable SYSTEM wallet balance.
+11. NPC spectators may be added only as clearly labelled simulated participants with a documented virtual ticket budget. They must never be presented as real users or as live global activity.
+12. Global user participation, cross-device balances, account ownership, anti-collusion checks, match pairing and result settlement require an authenticated server-authoritative service.
 
-Fans may forecast the winner or a supported match outcome before the match locks. A correct forecast can earn non-purchasable prediction points and a published fan achievement. A wrong forecast does not deduct wallet credits or other purchased value.
+## Current implementation
 
-Prediction rules:
-1. No real-money stakes, deposits, withdrawals, cash prizes, or player-to-player money transfers.
-2. Prediction points are earned through free participation and cannot be purchased, gifted, traded or converted to cash.
-3. A prediction locks when the match begins; it cannot be edited after the result is known.
-4. The match result must come from the trusted combat/match authority, not a client-submitted claim.
-5. Reward rates and daily limits must be transparent and identical for paying and non-paying users.
-6. NPC fan predictions are simulated audience activity and must be labelled as NPC activity, never presented as real users.
-7. Any later virtual-credit reward for correct predictions must be capped, non-exploitable and validated server-side.
+- The shared SYSTEM wallet exposes local prototype operations to debit a virtual ticket stake and grant a virtual pool payout.
+- Power Tower match records store the 1v1 fighters, per-fan selection, stake, total pool, result, gross payouts and net profit.
+- The local settlement distributes the whole pool proportionally to correct fans; if there are no correct fans, all tickets are refunded.
+- Match lock, duplicate prevention, self-prediction prevention, the 20-per-day cap and local persistence remain enforced.
+- Regression coverage checks stake debits, proportional payout, losing-stake accounting, no cash value, persistence and daily limits.
 
-## Implementation status
+## Remaining limitations
 
-### Implemented in the current source branch
-- The shared SYSTEM credits wallet already funds shopping and other world services.
-- Power Tower progression already awards floor XP and loot after its floor-clear confirmation.
-- This update defines the floor's virtual-credit reward in system_power_tower_manager.gd and returns it only with a successful clear result.
-- system_baghdad_tower_operations_manager.gd credits the shared wallet using that successful result.
-- The public event board can publish local Power Tower clear records.
-
-### Implemented local prototype lifecycle
-- Added match registration for exactly two distinct fighters, with a stable match ID and floor identity.
-- Added free fan predictions that reject fighters predicting their own match, duplicate submissions, invalid fighters and submissions after the match locks.
-- Added a 20-prediction daily limit per spectator (UTC) and one non-transferable, non-purchasable point for each correct prediction. Incorrect predictions lose no credits or points.
-- Added one-time settlement that accepts only the local combat-authority settlement source, rejects invalid winners and prevents repeat settlement.
-- Prediction points, match state and daily counts persist in a separate local-save file. This is a local prototype guard, not cryptographic or server authority.
-- Regression coverage was added to `tools/validate_baghdad_tower_operations.gd` for self-prediction rejection, duplicates, locking, untrusted/repeated settlement, correct/incorrect rewards, daily limits and save/reload.
-
-### Not yet implemented
-- A playable spectator prediction interface and prediction lock/settlement lifecycle.
-- Distinct NPC and player fighter matchmaking.
-- Global fan pools, cross-device results, global fan rankings and trusted anti-cheat settlement.
-- Production account-backed wallet synchronization.
-
-The public event board is currently a local-session prototype. Do not claim that its entries represent global users or live cross-device competition. Global predictions must wait for an authoritative online service; do not simulate real users locally.
+- This is a local single-player prototype using the current local SYSTEM wallet. It is not a shared online wallet and does not yet authenticate individual spectator accounts.
+- Live match scheduling, spectator interface, NPC fan ticket budgets, online matchmaking, server-authoritative result settlement, anti-cheat/anti-collusion, global rankings and cross-device persistence remain pending.
+- Do not display invented live matches, simulated NPCs as real users, or global pools until those systems exist.
+- The prototype is not production-ready for real-money gambling or cash payouts; no such features are part of the approved design.
