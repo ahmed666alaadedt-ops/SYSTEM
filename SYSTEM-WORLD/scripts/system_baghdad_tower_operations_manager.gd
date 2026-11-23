@@ -5327,7 +5327,7 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 	if car == null:
 		_set_status("تعذر تجهيز عربة المصعد.")
 		return
-	var customer_passenger_count := _board_customer_visitors_into_elevator(tower_id, floor_number, car)
+	_board_customer_visitors_into_elevator(tower_id, floor_number, car)
 	if tower_id == "power_tower_baghdad":
 		if not is_instance_valid(power_tower_manager):
 			_set_status("نظام برج القوة غير متاح.")
