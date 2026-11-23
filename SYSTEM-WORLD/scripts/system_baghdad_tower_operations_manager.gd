@@ -6370,6 +6370,27 @@ func grant_power_tower_credits(reward_amount: int) -> int:
 	_save_wallet()
 	return reward_amount
 
+# Spectator tickets use only virtual SYSTEM credits; no cash value, withdrawal or real-money transfer exists.
+func spend_spectator_stake(amount: int) -> bool:
+	if amount <= 0 or credits < amount:
+		return false
+	credits -= amount
+	_save_wallet()
+	if is_instance_valid(credits_label):
+		credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
+	return true
+
+
+func grant_spectator_payout(amount: int) -> int:
+	if amount <= 0:
+		return 0
+	credits += amount
+	_save_wallet()
+	if is_instance_valid(credits_label):
+		credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
+	return amount
+
+
 func get_spectator_wallet_balance() -> int:
 	return credits
 
