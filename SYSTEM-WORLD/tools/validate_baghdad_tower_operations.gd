@@ -966,7 +966,6 @@ func _run() -> void:
 	operations.call("_save_wallet")
 	operations.set("active_power_floor_data", {})
 	operations.set("power_floor_in_progress", false)
-	operations.set("power_floor_timer_remaining", 0.0)
 	operations.set("active_opponents", {})
 	operations.call("_refresh_power_tower_progress_board")
 	var shopping_workshop_room := operations.call("_ensure_floor_room", "shopping_tower_baghdad", 14) as Node3D
