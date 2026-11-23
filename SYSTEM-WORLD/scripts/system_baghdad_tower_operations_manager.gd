@@ -2,6 +2,7 @@ extends Node
 class_name SYSTEMBaghdadTowerOperationsManager
 
 const NPCCharacterModelScript = preload("res://scripts/npc_character_model.gd")
+const TowerOpponentScript = preload("res://scripts/system_tower_opponent.gd")
 const TowerFloorThemeBuilder = preload("res://scripts/system_baghdad_tower_floor_theme_builder.gd")
 const SAVE_PATH := "user://system_baghdad_tower_operations.cfg"
 const STOCK_SAVE_PATH := "user://system_tower_vendor_stock.cfg"
@@ -5473,8 +5474,8 @@ func _seat_player_at_restaurant(table_node: Node) -> void:
 	var seating_manager_ref := weakref(self)
 	var seating_player_ref := weakref(player)
 	seating_tween.finished.connect(func():
-		var seating_manager := seating_manager_ref.get_ref() as Node
-		var seated_player := seating_player_ref.get_ref() as CharacterBody3D
+		var seating_manager: Node = seating_manager_ref.get_ref() as Node
+		var seated_player: CharacterBody3D = seating_player_ref.get_ref() as CharacterBody3D
 		if seating_manager == null or seated_player == null:
 			return
 		seated_player.set_meta("system_restaurant_seating_transition", false)
