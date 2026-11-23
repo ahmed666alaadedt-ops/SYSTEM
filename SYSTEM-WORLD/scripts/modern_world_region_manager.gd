@@ -59,7 +59,7 @@ const DISTRICT_OFFSETS := [
 	Vector2(0.0, 112.0), Vector2(0.0, 170.0)
 ]
 
-var terrain: ModernContinentManager
+var terrain: Variant
 var rng := RandomNumberGenerator.new()
 var city_anchors: Dictionary = {}
 var village_anchors: Dictionary = {}
@@ -75,7 +75,7 @@ func _ready() -> void:
 	name = "ModernWorldRegionManager"
 	rng.seed = 20261118
 	use_baghdad_osm_cells = FileAccess.file_exists("res://data/geography/baghdad/cell_pack/manifest.json")
-	terrain = get_parent().get_node_or_null("ModernContinent") as ModernContinentManager
+	terrain = get_parent().get_node_or_null("ModernContinent")
 	if terrain == null:
 		push_warning("SYSTEM WORLD: region manager requires ModernContinent.")
 		return
@@ -326,8 +326,8 @@ func _build_district(parent: Node3D, city_name: String, district_index: int, cen
 			var world_z := center.y + float(z_index) * CITY_SPACING
 			if not terrain.is_land_position(world_x, world_z):
 				continue
-			var ground_y := terrain.get_terrain_height(world_x, world_z)
-			var district_base := terrain.get_terrain_height(center.x, center.y)
+			var ground_y: float = float(terrain.get_terrain_height(world_x, world_z))
+			var district_base: float = float(terrain.get_terrain_height(center.x, center.y))
 			if absf(ground_y - district_base) > 13.0:
 				continue
 			var seed_value := absf(sin(float(district_index * 83 + x_index * 29 + z_index * 47 + city_name.length() * 11)))
@@ -336,7 +336,7 @@ func _build_district(parent: Node3D, city_name: String, district_index: int, cen
 			var height := _building_height(district_index, seed_value)
 			var local_x := world_x - center.x
 			var local_z := world_z - center.y
-			var local_y := ground_y - district_base + height * 0.5
+			var local_y: float = ground_y - district_base + height * 0.5
 			var basis := Basis.from_scale(Vector3(width, height, depth))
 			var transform := Transform3D(basis, Vector3(local_x, local_y, local_z))
 			transforms.append(transform)
