@@ -7,6 +7,9 @@ signal tower_record_updated(highest_floor: int)
 
 const SAVE_PATH := "user://system_power_tower.cfg"
 const MAX_FLOORS := 200
+const SPECTATOR_DAILY_PREDICTION_LIMIT := 20
+const SPECTATOR_POINTS_PER_CORRECT_PREDICTION := 1
+const LOCAL_MATCH_AUTHORITY := "LOCAL_COMBAT_AUTHORITY"
 const FLOOR_THEME_IDS := ["IRON", "DESERT", "FROST", "VOLCANIC", "JUNGLE", "RUINS", "STORM", "SHADOW", "CELESTIAL", "SOVEREIGN"]
 const FLOOR_THEME_NAMES := ["قاعة الحديد", "ساحة الصحراء", "ميدان الجليد", "حلبة البركان", "غابة المحاربين", "أطلال الملوك", "ساحة العاصفة", "ميدان الظلال", "الحلبة السماوية", "عرش السيادة"]
 
@@ -18,10 +21,15 @@ var elite_duels_won := 0
 var boss_duels_won := 0
 var total_xp_earned := 0
 var total_credits_earned := 0
+var spectator_save_path := "user://system_power_tower_spectator_predictions.cfg"
+var spectator_matches: Dictionary = {}
+var spectator_prediction_points: Dictionary = {}
+var spectator_daily_counts: Dictionary = {}
 
 func _ready() -> void:
 	name = "SYSTEMPowerTowerManager"
 	_load_progress()
+	_load_spectator_data()
 
 func get_floor_data(floor_number: int) -> Dictionary:
 	if floor_number < 1 or floor_number > MAX_FLOORS:
@@ -148,6 +156,145 @@ func get_tower_status() -> Dictionary:
 		"total_xp_earned": total_xp_earned,
 		"total_credits_earned": total_credits_earned
 	}
+
+
+## Local prototype lifecycle for free fan predictions. Online settlement must move to a trusted server.
+func register_spectator_match(match_id: String, fighter_a_id: String, fighter_b_id: String, floor_number: int) -> Dictionary:
+	if match_id.strip_edges().is_empty() or fighter_a_id.strip_edges().is_empty() or fighter_b_id.strip_edges().is_empty():
+		return {"success": false, "reason": "INVALID_MATCH_IDENTITY"}
+	if fighter_a_id == fighter_b_id:
+		return {"success": false, "reason": "FIGHTERS_MUST_BE_DISTINCT"}
+	if floor_number < 1 or floor_number > MAX_FLOORS:
+		return {"success": false, "reason": "INVALID_FLOOR"}
+	if spectator_matches.has(match_id):
+		return {"success": false, "reason": "MATCH_ALREADY_REGISTERED"}
+	spectator_matches[match_id] = {
+		"match_id": match_id,
+		"fighter_a_id": fighter_a_id,
+		"fighter_b_id": fighter_b_id,
+		"floor": floor_number,
+		"competition_format": "INDIVIDUAL_1V1",
+		"state": "open",
+		"predictions": {},
+		"created_at_unix": int(Time.get_unix_time_from_system())
+	}
+	_save_spectator_data()
+	return {"success": true, "match_id": match_id, "state": "open"}
+
+func submit_spectator_prediction(match_id: String, spectator_id: String, predicted_winner_id: String) -> Dictionary:
+	if spectator_id.strip_edges().is_empty():
+		return {"success": false, "reason": "INVALID_SPECTATOR"}
+	if not spectator_matches.has(match_id):
+		return {"success": false, "reason": "MATCH_NOT_FOUND"}
+	var match_record: Dictionary = spectator_matches[match_id]
+	if str(match_record.get("state", "")) != "open":
+		return {"success": false, "reason": "PREDICTIONS_LOCKED"}
+	var fighter_a := str(match_record.get("fighter_a_id", ""))
+	var fighter_b := str(match_record.get("fighter_b_id", ""))
+	if spectator_id == fighter_a or spectator_id == fighter_b:
+		return {"success": false, "reason": "FIGHTERS_CANNOT_PREDICT_OWN_MATCH"}
+	if predicted_winner_id != fighter_a and predicted_winner_id != fighter_b:
+		return {"success": false, "reason": "PREDICTION_MUST_SELECT_A_MATCH_FIGHTER"}
+	var predictions: Dictionary = match_record.get("predictions", {})
+	if predictions.has(spectator_id):
+		return {"success": false, "reason": "PREDICTION_ALREADY_SUBMITTED"}
+	var today := Time.get_date_string_from_system(true)
+	var daily_record: Dictionary = spectator_daily_counts.get(spectator_id, {})
+	var daily_count := int(daily_record.get("count", 0)) if str(daily_record.get("date", "")) == today else 0
+	if daily_count >= SPECTATOR_DAILY_PREDICTION_LIMIT:
+		return {"success": false, "reason": "DAILY_PREDICTION_LIMIT_REACHED"}
+	predictions[spectator_id] = {
+		"predicted_winner_id": predicted_winner_id,
+		"submitted_at_unix": int(Time.get_unix_time_from_system()),
+		"correct": false,
+		"points_awarded": 0
+	}
+	match_record["predictions"] = predictions
+	spectator_matches[match_id] = match_record
+	spectator_daily_counts[spectator_id] = {"date": today, "count": daily_count + 1}
+	_save_spectator_data()
+	return {"success": true, "match_id": match_id, "prediction_locked_at_match_start": true}
+
+func lock_spectator_predictions(match_id: String) -> Dictionary:
+	if not spectator_matches.has(match_id):
+		return {"success": false, "reason": "MATCH_NOT_FOUND"}
+	var match_record: Dictionary = spectator_matches[match_id]
+	if str(match_record.get("state", "")) != "open":
+		return {"success": false, "reason": "MATCH_NOT_OPEN"}
+	match_record["state"] = "locked"
+	match_record["locked_at_unix"] = int(Time.get_unix_time_from_system())
+	spectator_matches[match_id] = match_record
+	_save_spectator_data()
+	return {"success": true, "state": "locked"}
+
+func settle_spectator_match(match_id: String, winner_id: String, settlement_source: String) -> Dictionary:
+	if settlement_source != LOCAL_MATCH_AUTHORITY:
+		return {"success": false, "reason": "UNTRUSTED_MATCH_RESULT"}
+	if not spectator_matches.has(match_id):
+		return {"success": false, "reason": "MATCH_NOT_FOUND"}
+	var match_record: Dictionary = spectator_matches[match_id]
+	if str(match_record.get("state", "")) != "locked":
+		return {"success": false, "reason": "MATCH_NOT_LOCKED"}
+	if winner_id != str(match_record.get("fighter_a_id", "")) and winner_id != str(match_record.get("fighter_b_id", "")):
+		return {"success": false, "reason": "WINNER_NOT_IN_MATCH"}
+	var predictions: Dictionary = match_record.get("predictions", {})
+	var awarded: Dictionary = {}
+	for spectator_id_variant in predictions.keys():
+		var spectator_id := str(spectator_id_variant)
+		var prediction: Dictionary = predictions[spectator_id]
+		var correct := str(prediction.get("predicted_winner_id", "")) == winner_id
+		var points := SPECTATOR_POINTS_PER_CORRECT_PREDICTION if correct else 0
+		prediction["correct"] = correct
+		prediction["points_awarded"] = points
+		predictions[spectator_id] = prediction
+		if points > 0:
+			spectator_prediction_points[spectator_id] = int(spectator_prediction_points.get(spectator_id, 0)) + points
+			awarded[spectator_id] = points
+	match_record["predictions"] = predictions
+	match_record["state"] = "settled"
+	match_record["winner_id"] = winner_id
+	match_record["settled_at_unix"] = int(Time.get_unix_time_from_system())
+	match_record["settlement_source"] = settlement_source
+	spectator_matches[match_id] = match_record
+	_save_spectator_data()
+	return {"success": true, "winner_id": winner_id, "points_awarded": awarded, "cash_value": 0}
+
+func get_spectator_match(match_id: String) -> Dictionary:
+	return (spectator_matches.get(match_id, {}) as Dictionary).duplicate(true)
+
+func get_spectator_status(spectator_id: String) -> Dictionary:
+	var today := Time.get_date_string_from_system(true)
+	var daily_record: Dictionary = spectator_daily_counts.get(spectator_id, {})
+	var daily_count := int(daily_record.get("count", 0)) if str(daily_record.get("date", "")) == today else 0
+	return {
+		"spectator_id": spectator_id,
+		"prediction_points": int(spectator_prediction_points.get(spectator_id, 0)),
+		"predictions_today": daily_count,
+		"daily_prediction_limit": SPECTATOR_DAILY_PREDICTION_LIMIT,
+		"cash_value": 0,
+		"transferable": false,
+		"purchasable": false
+	}
+
+func _save_spectator_data() -> void:
+	var config := ConfigFile.new()
+	config.set_value("spectators", "matches", spectator_matches)
+	config.set_value("spectators", "points", spectator_prediction_points)
+	config.set_value("spectators", "daily_counts", spectator_daily_counts)
+	var error := config.save(spectator_save_path)
+	if error != OK:
+		push_warning("SYSTEM: Spectator prediction data could not be saved.")
+
+func _load_spectator_data() -> void:
+	var config := ConfigFile.new()
+	if config.load(spectator_save_path) != OK:
+		return
+	var saved_matches: Variant = config.get_value("spectators", "matches", {})
+	var saved_points: Variant = config.get_value("spectators", "points", {})
+	var saved_daily_counts: Variant = config.get_value("spectators", "daily_counts", {})
+	spectator_matches = saved_matches.duplicate(true) if saved_matches is Dictionary else {}
+	spectator_prediction_points = saved_points.duplicate(true) if saved_points is Dictionary else {}
+	spectator_daily_counts = saved_daily_counts.duplicate(true) if saved_daily_counts is Dictionary else {}
 
 func _rank_for_floor(floor_number: int) -> String:
 	if floor_number >= 180: return "S"
