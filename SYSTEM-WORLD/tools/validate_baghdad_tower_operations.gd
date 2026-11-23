@@ -1719,10 +1719,20 @@ func _run() -> void:
 		if not pool_service.is_in_group("system_interactable") or not pool_service.has_meta("system_interaction_prompt") or str(pool_service.get_meta("system_tower_id", "")) != "entertainment_tower_baghdad" or int(pool_service.get_meta("system_tower_floor_number", 0)) != 18:
 			_fail("Pool service interaction is missing its prompt or tower/floor routing metadata: " + str(pool_service.name))
 			return
+	operations.set("current_tower_id", "entertainment_tower_baghdad")
+	operations.set("active_floor_root", pool_room)
+	pool_room.set_meta("system_tower_id", "entertainment_tower_baghdad")
+	pool_room.set_meta("system_tower_floor_number", 18)
 	operations.call("open_pool_service", locker_service)
 	operations.call("_use_pool_service", "locker")
-	if not bool(player.get_meta("system_pool_locker_reserved", false)) or str(player.get_meta("system_pool_locker_tower", "")) != "entertainment_tower_baghdad":
-		_fail("Pool locker service did not reserve a player locker in the correct tower.")
+	var assigned_pool_locker_id := str(player.get_meta("system_pool_locker_id", ""))
+	var assigned_pool_locker := mens_suite.get_node_or_null(assigned_pool_locker_id) as MeshInstance3D
+	if not bool(player.get_meta("system_pool_locker_reserved", false)) or str(player.get_meta("system_pool_locker_tower", "")) != "entertainment_tower_baghdad" or assigned_pool_locker == null or not bool(assigned_pool_locker.get_meta("system_pool_locker_occupied", false)) or int(assigned_pool_locker.get_meta("system_pool_locker_owner", -1)) != player.get_instance_id():
+		_fail("Pool locker service did not allocate and mark a real locker for the player in the correct tower.")
+		return
+	operations.call("_use_pool_service", "locker")
+	if str(player.get_meta("system_pool_locker_id", "")) != assigned_pool_locker_id:
+		_fail("Repeated pool locker requests allocated a second locker instead of retaining the player's existing reservation.")
 		return
 	operations.call("open_pool_service", shower_service)
 	operations.call("_use_pool_service", "shower")
@@ -1769,6 +1779,9 @@ func _run() -> void:
 	operations.set("current_tower_id", "shopping_tower_baghdad")
 	print("QA TRACE: invoking floor 29 staff elevator trip.")
 	operations.call("_travel_to_floor", "shopping_tower_baghdad", 29)
+	if bool(player.get_meta("system_pool_locker_reserved", false)) or assigned_pool_locker.has_meta("system_pool_locker_occupied") or assigned_pool_locker.has_meta("system_pool_locker_owner"):
+		_fail("Leaving the pool facility did not release the player's locker for the next guest.")
+		return
 	print("QA TRACE: floor 29 elevator trip requested.")
 	var shopping_staff_ids: Array = operations.get("staff_by_tower").get("shopping_tower_baghdad", [])
 	if shopping_staff_ids.size() <= 4:
