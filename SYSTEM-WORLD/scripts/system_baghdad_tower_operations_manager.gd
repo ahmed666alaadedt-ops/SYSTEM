@@ -2710,13 +2710,58 @@ func _on_floor_emergency_exit_body_entered(body: Node3D, exit_sensor: Area3D) ->
 func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) -> void:
 	var data: Dictionary = power_tower_manager.call("get_floor_data", floor_number) if is_instance_valid(power_tower_manager) else {}
 	var arena_type := str(data.get("arena_type", "DUEL"))
-	var rules := str(data.get("arena_rules", "اهزم خصوم الطابق"))
+	var rules := str(data.get("arena_rules", "مواجهة فردية 1 ضد 1"))
+	var theme_id := str(data.get("arena_theme_id", "IRON"))
+	var theme_name := str(data.get("arena_theme_name", "قاعة الحديد"))
 	room.set_meta("system_power_tower_arena_type", arena_type)
 	room.set_meta("system_power_tower_rules", rules)
 	room.set_meta("system_power_tower_competition_format", "INDIVIDUAL_1V1")
+	room.set_meta("system_power_tower_theme", theme_id)
+	var theme_color := Color(0.18, 0.30, 0.40)
+	match theme_id:
+		"DESERT": theme_color = Color(0.58, 0.38, 0.16)
+		"FROST": theme_color = Color(0.32, 0.72, 0.88)
+		"VOLCANIC": theme_color = Color(0.58, 0.12, 0.055)
+		"JUNGLE": theme_color = Color(0.12, 0.40, 0.20)
+		"RUINS": theme_color = Color(0.38, 0.34, 0.27)
+		"STORM": theme_color = Color(0.24, 0.26, 0.62)
+		"SHADOW": theme_color = Color(0.20, 0.10, 0.28)
+		"CELESTIAL": theme_color = Color(0.66, 0.54, 0.20)
+		"SOVEREIGN": theme_color = Color(0.78, 0.48, 0.08)
+	var theme_material := StandardMaterial3D.new()
+	theme_material.albedo_color = theme_color
+	theme_material.metallic = 0.58
+	theme_material.roughness = 0.32
+	theme_material.emission_enabled = true
+	theme_material.emission = theme_color
+	theme_material.emission_energy_multiplier = 0.28
+	var floor_deck := room.get_node_or_null("FloorDeck") as MeshInstance3D
+	if floor_deck != null:
+		floor_deck.material_override = theme_material
+	var arena_ring := MeshInstance3D.new()
+	arena_ring.name = "ArenaThemeRing"
+	var arena_ring_mesh := TorusMesh.new()
+	arena_ring_mesh.inner_radius = radius * 0.30
+	arena_ring_mesh.outer_radius = radius * 0.325
+	arena_ring.mesh = arena_ring_mesh
+	arena_ring.position.y = 0.58
+	arena_ring.material_override = theme_material
+	room.add_child(arena_ring)
+	for pillar_index in range(4):
+		var pillar_angle := TAU * (float(pillar_index) + 0.5) / 4.0
+		var theme_pillar := MeshInstance3D.new()
+		theme_pillar.name = "ArenaThemePillar_%02d" % pillar_index
+		var pillar_mesh := CylinderMesh.new()
+		pillar_mesh.top_radius = 0.42
+		pillar_mesh.bottom_radius = 0.72
+		pillar_mesh.height = 5.8
+		theme_pillar.mesh = pillar_mesh
+		theme_pillar.position = Vector3(cos(pillar_angle) * radius * 0.62, 2.9, sin(pillar_angle) * radius * 0.62)
+		theme_pillar.material_override = theme_material
+		room.add_child(theme_pillar)
 	var arena_label := Label3D.new()
 	arena_label.name = "ArenaChallengeDisplay"
-	arena_label.text = "%s\nالطابق %d\n%s" % [str(data.get("arena_name", "POWER ARENA")), floor_number, rules]
+	arena_label.text = "%s\n%s\nالطابق %d\n%s" % [str(data.get("arena_name", "POWER ARENA")), theme_name, floor_number, rules]
 	arena_label.position = Vector3(0.0, 5.4, -radius * 0.48)
 	arena_label.font_size = 22
 	arena_label.pixel_size = 0.014
@@ -2739,7 +2784,7 @@ func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) 
 		_:
 			obstacle_count = 2
 	var obstacle_material := StandardMaterial3D.new()
-	obstacle_material.albedo_color = Color(0.20, 0.24, 0.29) if arena_type != "BOSS_TRIAL" else (Color(0.68, 0.43, 0.08) if bool(data.get("final_boss", false)) else Color(0.34, 0.075, 0.045))
+	obstacle_material.albedo_color = theme_color if arena_type != "BOSS_TRIAL" else (Color(0.68, 0.43, 0.08) if bool(data.get("final_boss", false)) else Color(0.34, 0.075, 0.045))
 	obstacle_material.metallic = 0.62
 	obstacle_material.roughness = 0.36
 	for index in range(obstacle_count):
