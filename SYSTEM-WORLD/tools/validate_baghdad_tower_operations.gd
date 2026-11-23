@@ -1848,7 +1848,7 @@ func _run() -> void:
 		_fail("Seated customer NPCs did not generate an independent restaurant order for the waiter.")
 		return
 	var npc_restaurant_order: Dictionary = operations.get("restaurant_orders").get(npc_restaurant_order_id, {})
-	if str(npc_restaurant_order.get("status", "")) != "awaiting_waiter" or npc_restaurant_order.get("items", []).size() < 1:
+	if str(npc_restaurant_order.get("status", "")) not in ["awaiting_waiter", "taking_order", "placed", "preparing", "ready", "delivering", "served"] or npc_restaurant_order.get("items", []).size() < 1:
 		_fail("An autonomous NPC restaurant order was not created in the waiter queue.")
 		return
 	var waiter_staff_id := str(shopping_staff_ids[5]) if shopping_staff_ids.size() > 5 else ""
