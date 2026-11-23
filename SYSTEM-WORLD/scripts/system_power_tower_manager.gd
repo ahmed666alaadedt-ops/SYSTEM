@@ -10,6 +10,7 @@ const MAX_FLOORS := 200
 const SPECTATOR_DAILY_PREDICTION_LIMIT := 20
 const SPECTATOR_MIN_STAKE := 1
 const SPECTATOR_MAX_STAKE := 500
+const NPC_INITIAL_TICKET_BUDGET := 300
 const LOCAL_MATCH_AUTHORITY := "LOCAL_COMBAT_AUTHORITY"
 const FLOOR_THEME_IDS := ["IRON", "DESERT", "FROST", "VOLCANIC", "JUNGLE", "RUINS", "STORM", "SHADOW", "CELESTIAL", "SOVEREIGN"]
 const FLOOR_THEME_NAMES := ["قاعة الحديد", "ساحة الصحراء", "ميدان الجليد", "حلبة البركان", "غابة المحاربين", "أطلال الملوك", "ساحة العاصفة", "ميدان الظلال", "الحلبة السماوية", "عرش السيادة"]
@@ -28,6 +29,7 @@ var spectator_matches: Dictionary = {}
 var spectator_prediction_points: Dictionary = {}
 var spectator_daily_counts: Dictionary = {}
 var spectator_wallet_provider: Node
+var spectator_npc_ticket_balances: Dictionary = {}
 
 func _ready() -> void:
 	name = "SYSTEMPowerTowerManager"
@@ -208,7 +210,29 @@ func register_spectator_match(match_id: String, fighter_a_id: String, fighter_b_
 	return {"success": true, "match_id": match_id, "state": "open", "total_pool": 0}
 
 
-func submit_spectator_prediction(match_id: String, spectator_id: String, predicted_winner_id: String, stake_amount: int = 10) -> Dictionary:
+func register_npc_spectator(npc_id: String) -> Dictionary:
+	npc_id = npc_id.strip_edges()
+	if npc_id.is_empty():
+		return {"success": false, "reason": "INVALID_NPC_SPECTATOR"}
+	var spectator_key := "npc:" + npc_id
+	if not spectator_npc_ticket_balances.has(spectator_key):
+		spectator_npc_ticket_balances[spectator_key] = NPC_INITIAL_TICKET_BUDGET
+		_save_spectator_data()
+	return {"success": true, "spectator_id": spectator_key, "ticket_balance": int(spectator_npc_ticket_balances[spectator_key]), "participant_type": "NPC"}
+
+
+func submit_npc_spectator_ticket(match_id: String, npc_id: String, predicted_winner_id: String, stake_amount: int = 10) -> Dictionary:
+	npc_id = npc_id.strip_edges()
+	if npc_id.is_empty():
+		return {"success": false, "reason": "INVALID_NPC_SPECTATOR"}
+	var spectator_key := "npc:" + npc_id
+	var registration := register_npc_spectator(npc_id)
+	if not bool(registration.get("success", false)):
+		return registration
+	return submit_spectator_prediction(match_id, spectator_key, predicted_winner_id, stake_amount, true)
+
+
+func submit_spectator_prediction(match_id: String, spectator_id: String, predicted_winner_id: String, stake_amount: int = 10, participant_is_npc: bool = false) -> Dictionary:
 	match_id = match_id.strip_edges()
 	spectator_id = spectator_id.strip_edges()
 	predicted_winner_id = predicted_winner_id.strip_edges()
@@ -235,12 +259,20 @@ func submit_spectator_prediction(match_id: String, spectator_id: String, predict
 	var daily_count := int(daily_record.get("count", 0)) if str(daily_record.get("date", "")) == today else 0
 	if daily_count >= SPECTATOR_DAILY_PREDICTION_LIMIT:
 		return {"success": false, "reason": "DAILY_PREDICTION_LIMIT_REACHED"}
-	if not is_instance_valid(spectator_wallet_provider) or not spectator_wallet_provider.has_method("spend_spectator_stake"):
-		return {"success": false, "reason": "SPECTATOR_WALLET_UNAVAILABLE"}
-	if not bool(spectator_wallet_provider.call("spend_spectator_stake", stake_amount)):
-		return {"success": false, "reason": "INSUFFICIENT_VIRTUAL_CREDITS"}
+	if participant_is_npc:
+		if not spectator_npc_ticket_balances.has(spectator_id):
+			spectator_npc_ticket_balances[spectator_id] = NPC_INITIAL_TICKET_BUDGET
+		if int(spectator_npc_ticket_balances.get(spectator_id, 0)) < stake_amount:
+			return {"success": false, "reason": "INSUFFICIENT_NPC_TICKET_BUDGET"}
+		spectator_npc_ticket_balances[spectator_id] = int(spectator_npc_ticket_balances.get(spectator_id, 0)) - stake_amount
+	else:
+		if not is_instance_valid(spectator_wallet_provider) or not spectator_wallet_provider.has_method("spend_spectator_stake"):
+			return {"success": false, "reason": "SPECTATOR_WALLET_UNAVAILABLE"}
+		if not bool(spectator_wallet_provider.call("spend_spectator_stake", stake_amount)):
+			return {"success": false, "reason": "INSUFFICIENT_VIRTUAL_CREDITS"}
 	predictions[spectator_id] = {
 		"predicted_winner_id": predicted_winner_id,
+		"participant_type": "NPC" if participant_is_npc else "PLAYER",
 		"stake_amount": stake_amount,
 		"submitted_at_unix": int(Time.get_unix_time_from_system()),
 		"correct": false,
@@ -303,9 +335,12 @@ func settle_spectator_match(match_id: String, winner_id: String, settlement_sour
 			var stake := int(prediction.get("stake_amount", 0))
 			var payout := total_pool - total_paid_out if index == winning_ids.size() - 1 else int(floor(float(total_pool) * float(stake) / float(winning_stake)))
 			if payout > 0:
-				var granted := int(spectator_wallet_provider.call("grant_spectator_payout", payout))
-				if granted != payout:
-					return {"success": false, "reason": "PAYOUT_GRANT_FAILED", "spectator_id": spectator_id}
+				if str(prediction.get("participant_type", "PLAYER")) == "NPC":
+					spectator_npc_ticket_balances[spectator_id] = int(spectator_npc_ticket_balances.get(spectator_id, 0)) + payout
+				else:
+					var granted := int(spectator_wallet_provider.call("grant_spectator_payout", payout))
+					if granted != payout:
+						return {"success": false, "reason": "PAYOUT_GRANT_FAILED", "spectator_id": spectator_id}
 			total_paid_out += payout
 			prediction["correct"] = true
 			prediction["payout_amount"] = payout
@@ -329,9 +364,12 @@ func settle_spectator_match(match_id: String, winner_id: String, settlement_sour
 			var prediction: Dictionary = predictions[spectator_id]
 			var refund := int(prediction.get("stake_amount", 0))
 			if refund > 0:
-				var granted := int(spectator_wallet_provider.call("grant_spectator_payout", refund))
-				if granted != refund:
-					return {"success": false, "reason": "STAKE_REFUND_FAILED", "spectator_id": spectator_id}
+				if str(prediction.get("participant_type", "PLAYER")) == "NPC":
+					spectator_npc_ticket_balances[spectator_id] = int(spectator_npc_ticket_balances.get(spectator_id, 0)) + refund
+				else:
+					var granted := int(spectator_wallet_provider.call("grant_spectator_payout", refund))
+					if granted != refund:
+						return {"success": false, "reason": "STAKE_REFUND_FAILED", "spectator_id": spectator_id}
 			prediction["correct"] = false
 			prediction["payout_amount"] = refund
 			prediction["net_profit"] = 0
@@ -365,9 +403,11 @@ func get_spectator_status(spectator_id: String) -> Dictionary:
 	var today := Time.get_date_string_from_system(true)
 	var daily_record: Dictionary = spectator_daily_counts.get(spectator_id, {})
 	var daily_count := int(daily_record.get("count", 0)) if str(daily_record.get("date", "")) == today else 0
-	var ticket_balance := int(spectator_wallet_provider.call("get_spectator_wallet_balance")) if is_instance_valid(spectator_wallet_provider) and spectator_wallet_provider.has_method("get_spectator_wallet_balance") else 0
+	var is_npc := spectator_id.begins_with("npc:")
+	var ticket_balance := int(spectator_npc_ticket_balances.get(spectator_id, 0)) if is_npc else (int(spectator_wallet_provider.call("get_spectator_wallet_balance")) if is_instance_valid(spectator_wallet_provider) and spectator_wallet_provider.has_method("get_spectator_wallet_balance") else 0)
 	return {
 		"spectator_id": spectator_id,
+		"participant_type": "NPC" if is_npc else "PLAYER",
 		"ticket_balance": ticket_balance,
 		"predictions_today": daily_count,
 		"daily_prediction_limit": SPECTATOR_DAILY_PREDICTION_LIMIT,
@@ -385,6 +425,7 @@ func _save_spectator_data() -> void:
 	config.set_value("spectators", "matches", spectator_matches)
 	config.set_value("spectators", "points", spectator_prediction_points)
 	config.set_value("spectators", "daily_counts", spectator_daily_counts)
+	config.set_value("spectators", "npc_ticket_balances", spectator_npc_ticket_balances)
 	var error := config.save(spectator_save_path)
 	if error != OK:
 		push_warning("SYSTEM: Spectator prediction data could not be saved.")
@@ -396,9 +437,11 @@ func _load_spectator_data() -> void:
 	var saved_matches: Variant = config.get_value("spectators", "matches", {})
 	var saved_points: Variant = config.get_value("spectators", "points", {})
 	var saved_daily_counts: Variant = config.get_value("spectators", "daily_counts", {})
+	var saved_npc_balances: Variant = config.get_value("spectators", "npc_ticket_balances", {})
 	spectator_matches = saved_matches.duplicate(true) if saved_matches is Dictionary else {}
 	spectator_prediction_points = saved_points.duplicate(true) if saved_points is Dictionary else {}
 	spectator_daily_counts = saved_daily_counts.duplicate(true) if saved_daily_counts is Dictionary else {}
+	spectator_npc_ticket_balances = saved_npc_balances.duplicate(true) if saved_npc_balances is Dictionary else {}
 
 func _rank_for_floor(floor_number: int) -> String:
 	if floor_number >= 180: return "S"
