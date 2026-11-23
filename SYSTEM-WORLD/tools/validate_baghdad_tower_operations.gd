@@ -1999,14 +1999,12 @@ func _run() -> void:
 	var first_meal_health := float(health_manager.get("current_health"))
 	var first_meal_xp := int(progression_manager.get("total_xp"))
 	var consumed_presentation := player_test_table.get_node_or_null("ServedMealPresentation") as Node3D
+	var consumed_label := consumed_presentation.get_node_or_null("MealReadyLabel") as Label3D if consumed_presentation != null else null
 	if not bool(player_order.get("meal_consumed", false)) or first_meal_health <= health_before_meal or first_meal_xp != total_xp_before_meal + 10 or bool(health_manager.get("is_wounded")) != wounded_before_meal:
 		_fail("Eating the delivered meal did not restore bounded health, preserve wound state and award the expected one-time XP.")
 		return
-	if consumed_presentation == null or consumed_presentation.get_node_or_null("MealPlate") == null or consumed_presentation.get_node_or_null("PreparedMeal") != null or str(consumed_presentation.get_node("MealReadyLabel").text) != "تم تناول الوجبة":
+	if consumed_presentation == null or consumed_presentation.get_node_or_null("MealPlate") == null or consumed_presentation.get_node_or_null("PreparedMeal") != null or consumed_label == null or consumed_label.text != "تم تناول الوجبة":
 		_fail("The served food remained visible after consumption instead of leaving an empty plate.")
-		return
-	if false:
-		_fail("Eating the delivered meal did not restore bounded health and award the expected one-time XP.")
 		return
 	if bool(operations.call("_consume_restaurant_meal", player_cycle_table_id)) or float(health_manager.get("current_health")) != first_meal_health or int(progression_manager.get("total_xp")) != first_meal_xp:
 		_fail("The restaurant meal reward could be claimed more than once.")
