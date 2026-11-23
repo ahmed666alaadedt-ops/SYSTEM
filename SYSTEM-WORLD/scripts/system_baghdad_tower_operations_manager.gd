@@ -5185,6 +5185,39 @@ func open_restaurant_table(table_node: Node) -> void:
 			waiting_label.text = "طلبك قيد الخدمة. يتولى الشيف التحضير والنادل التقديم."
 			content.add_child(waiting_label)
 	else:
+		var latest_completed_order: Dictionary = {}
+		for history_index in range(restaurant_order_history.size() - 1, -1, -1):
+			var history_order: Dictionary = restaurant_order_history[history_index]
+			if str(history_order.get("table_id", "")) == current_restaurant_table_id and not bool(history_order.get("npc_order", false)) and str(history_order.get("status", "")) == "completed":
+				latest_completed_order = history_order
+				break
+		if not latest_completed_order.is_empty():
+			var receipt_heading := Label.new()
+			receipt_heading.text = "فاتورة آخر وجبة — SYSTEM FOOD HALL"
+			content.add_child(receipt_heading)
+			var receipt_items: Array = latest_completed_order.get("items", [])
+			for receipt_item_value in receipt_items:
+				var receipt_item: Dictionary = receipt_item_value
+				var receipt_line := Label.new()
+				receipt_line.text = "%s — %d رصيد" % [str(receipt_item.get("name", "وجبة")), int(receipt_item.get("price", 0))]
+				content.add_child(receipt_line)
+			var receipt_total := Label.new()
+			receipt_total.text = "الإجمالي المدفوع: %d رصيد SYSTEM" % int(latest_completed_order.get("total", 0))
+			content.add_child(receipt_total)
+			var saved_rating := int(latest_completed_order.get("rating", 0))
+			if saved_rating > 0:
+				var thanks_label := Label.new()
+				thanks_label.text = "شكراً لتقييمك الخدمة: %d من 5 نجوم" % saved_rating
+				content.add_child(thanks_label)
+			else:
+				var rating_heading := Label.new()
+				rating_heading.text = "قيّم تجربة المطعم والنادل من 1 إلى 5 نجوم"
+				content.add_child(rating_heading)
+				for rating_value in range(1, 6):
+					var rating_button := Button.new()
+					rating_button.text = "%d ★" % rating_value
+					rating_button.pressed.connect(_rate_restaurant_order.bind(current_restaurant_table_id, rating_value))
+					content.add_child(rating_button)
 		status_label.text = "اختر أطباقك ومشروباتك. تُخصم القيمة عند إرسال الطلب إلى المطبخ."
 		var draft: Array = restaurant_draft_items.get(current_restaurant_table_id, [])
 		for product_value in PRODUCT_CATALOG["shopping_tower_baghdad"]:
@@ -5292,6 +5325,25 @@ func _advance_restaurant_order(table_id: String, next_status: String) -> void:
 		var staff_node := lobby.get_node_or_null("TowerStaff_" + current_staff_id) if lobby != null else null
 		if staff_node != null:
 			open_staff_service(staff_node)
+
+
+func _rate_restaurant_order(table_id: String, rating: int) -> void:
+	if table_id.is_empty() or rating < 1 or rating > 5:
+		return
+	for history_index in range(restaurant_order_history.size() - 1, -1, -1):
+		var order: Dictionary = restaurant_order_history[history_index]
+		if str(order.get("table_id", "")) != table_id or bool(order.get("npc_order", false)) or str(order.get("status", "")) != "completed":
+			continue
+		if int(order.get("rating", 0)) > 0:
+			return
+		order["rating"] = rating
+		order["rated_at_unix"] = int(Time.get_unix_time_from_system())
+		restaurant_order_history[history_index] = order
+		_save_restaurant_orders()
+		_set_status("شكراً! تم حفظ تقييمك للمطعم: %d من 5 نجوم." % rating)
+		if panel.visible and is_instance_valid(current_restaurant_table_node) and current_restaurant_table_id == table_id:
+			open_restaurant_table(current_restaurant_table_node)
+		return
 
 
 func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: int) -> void:
