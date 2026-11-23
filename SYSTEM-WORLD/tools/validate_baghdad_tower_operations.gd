@@ -857,6 +857,71 @@ func _run() -> void:
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
 		return
+	var judge_test_manager := power_tower_test_script.new() as Node
+	root.add_child(judge_test_manager)
+	await process_frame
+	var judged_match: Dictionary = judge_test_manager.call("register_judged_duel", "validator_judged_tko", "player_test", "opponent_test", 75, "player_test")
+	if not bool(judged_match.get("success", false)) or int(judged_match.get("judges", []).size()) != 3:
+		_fail("Power Tower did not register its three-official referee panel for a 1v1 duel.")
+		judge_test_manager.queue_free()
+		progression_test_manager.queue_free()
+		reloaded_progression_manager.queue_free()
+		return
+	for hit_index in range(5):
+		var hit_result: Dictionary = judge_test_manager.call("record_judged_duel_event", "validator_judged_tko", "HEAD_REFEREE", "player_test", "CRITICAL_HIT", "critical_hit_%02d" % hit_index)
+		if not bool(hit_result.get("success", false)):
+			_fail("Referee failed to record a valid critical hit.")
+			judge_test_manager.queue_free()
+			progression_test_manager.queue_free()
+			reloaded_progression_manager.queue_free()
+			return
+	var duplicate_hit: Dictionary = judge_test_manager.call("record_judged_duel_event", "validator_judged_tko", "HEAD_REFEREE", "player_test", "CLEAN_HIT", "critical_hit_00")
+	var tko_result: Dictionary = judge_test_manager.call("finish_judged_duel", "validator_judged_tko", "player_test", "TKO", "LOCAL_COMBAT_AUTHORITY")
+	if str(duplicate_hit.get("reason", "")) != "DUPLICATE_JUDGE_EVENT" or not bool(tko_result.get("success", false)) or int(tko_result.get("score", {}).get("player_test", 0)) != 10:
+		_fail("Referee scoring must award 1 clean/2 critical points and end at the ten-point TKO threshold without duplicate events.")
+		judge_test_manager.queue_free()
+		progression_test_manager.queue_free()
+		reloaded_progression_manager.queue_free()
+		return
+	judge_test_manager.queue_free()
+	var loss_test_manager := power_tower_test_script.new() as Node
+	root.add_child(loss_test_manager)
+	await process_frame
+	loss_test_manager.set("highest_cleared_floor", 75)
+	for loss_index in range(3):
+		var loss_match_id := "validator_three_losses_%02d" % loss_index
+		var loss_registration: Dictionary = loss_test_manager.call("register_judged_duel", loss_match_id, "local_fighter", "winner_%02d" % loss_index, 75, "local_fighter")
+		var loss_result: Dictionary = loss_test_manager.call("finish_judged_duel", loss_match_id, "winner_%02d" % loss_index, "KO", "LOCAL_COMBAT_AUTHORITY")
+		if not bool(loss_registration.get("success", false)) or not bool(loss_result.get("success", false)):
+			_fail("Power Tower could not register and settle a verified individual loss.")
+			loss_test_manager.queue_free()
+			progression_test_manager.queue_free()
+			reloaded_progression_manager.queue_free()
+			return
+	var loss_status: Dictionary = loss_test_manager.call("get_duel_career_status")
+	if int(loss_status.get("total_losses", 0)) != 3 or int(loss_status.get("consecutive_losses", 0)) != 3 or int(loss_status.get("highest_cleared_floor", -1)) != 60:
+		_fail("Three consecutive defeats must demote the fighter by one ten-floor division and persist the career penalty.")
+		loss_test_manager.queue_free()
+		progression_test_manager.queue_free()
+		reloaded_progression_manager.queue_free()
+		return
+	loss_test_manager.queue_free()
+	var disqualification_test_manager := power_tower_test_script.new() as Node
+	root.add_child(disqualification_test_manager)
+	await process_frame
+	disqualification_test_manager.set("highest_cleared_floor", 120)
+	disqualification_test_manager.set("total_duels_lost", 9)
+	var tenth_loss_registration: Dictionary = disqualification_test_manager.call("register_judged_duel", "validator_tenth_loss", "local_fighter", "winner_tenth", 120, "local_fighter")
+	var tenth_loss_result: Dictionary = disqualification_test_manager.call("finish_judged_duel", "validator_tenth_loss", "winner_tenth", "KO", "LOCAL_COMBAT_AUTHORITY")
+	var disqualification_status: Dictionary = disqualification_test_manager.call("get_duel_career_status")
+	if not bool(tenth_loss_registration.get("success", false)) or not bool(tenth_loss_result.get("success", false)) or not bool(disqualification_status.get("disqualified", false)) or int(disqualification_status.get("highest_cleared_floor", -1)) != 0:
+		_fail("Ten total defeats must disqualify the fighter and return tower progression to the entry floor.")
+		disqualification_test_manager.queue_free()
+		progression_test_manager.queue_free()
+		reloaded_progression_manager.queue_free()
+		return
+	disqualification_test_manager.queue_free()
+	print("QA: referee panel, 10-point TKO scoring, three-loss demotion and ten-loss disqualification verified.")
 	var prediction_match: Dictionary = progression_test_manager.call("register_spectator_match", "validator_duel_001", "fighter_alpha", "fighter_beta", 12)
 	var prediction_match_record: Dictionary = progression_test_manager.call("get_spectator_match", "validator_duel_001")
 	var same_fighter_match: Dictionary = progression_test_manager.call("register_spectator_match", "validator_same_fighter", "fighter_same", "fighter_same", 12)
