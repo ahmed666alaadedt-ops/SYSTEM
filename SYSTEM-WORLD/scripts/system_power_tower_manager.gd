@@ -87,7 +87,7 @@ func get_floor_data(floor_number: int) -> Dictionary:
 		"reward_xp": reward_xp,
 		"reward_credits": reward_credits,
 		"rank": _rank_for_floor(floor_number),
-		"challenge_type": "FINAL_TITLE_DUEL" if final_boss else ("TITLE_HOLDER_DUEL" if boss_floor else ("ELITE_PLAYER_DUEL" if elite_floor else "SINGLE_PLAYER_DUEL")),
+		"challenge_type": "FINAL_BOSS" if final_boss else ("TITLE_HOLDER_DUEL" if boss_floor else ("ELITE_PLAYER_DUEL" if elite_floor else "SINGLE_PLAYER_DUEL")),
 		"opponent_kind": "HUMAN_PLAYER",
 		"ai_fallback": false,
 		"matchmaking_mode": "ONLINE_1V1",
