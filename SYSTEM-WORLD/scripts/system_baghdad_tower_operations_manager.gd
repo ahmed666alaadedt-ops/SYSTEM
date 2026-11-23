@@ -628,7 +628,7 @@ func _place_floor_duty_staff_on_floor(trip: Dictionary, room: Node3D, radius: fl
 	var target_position := Vector3(radius * 0.34, 0.0, -radius * 0.16)
 	var service_position := target_position + Vector3(2.4, 0.0, 0.0)
 	var information_position := target_position + Vector3(1.2, 0.0, 2.1)
-	if tower_id == "entertainment_tower_baghdad" and floor_number in [18, 19] and role == "مشرف المسابح":
+	if tower_id == "entertainment_tower_baghdad" and floor_number in [18, 19] and role == "pool_supervisor":
 		target_position = Vector3(3.2, 0.0, -17.0)
 		service_position = Vector3(6.2, 0.0, -17.0)
 		information_position = Vector3(6.2, 0.0, -13.0)
@@ -674,7 +674,7 @@ func _place_floor_duty_staff_on_floor(trip: Dictionary, room: Node3D, radius: fl
 		role_sign.pixel_size = 0.012
 		role_sign.modulate = Color(0.72, 0.94, 1.0)
 		station.add_child(role_sign)
-		if role == "مشرف المسابح":
+		if role == "pool_supervisor":
 			_add_facility_box(station, "PoolRescueFirstAidKit", Vector3(-1.55, 0.72, 0.2), Vector3(0.9, 1.1, 0.7), desk_material)
 			_add_facility_box(station, "PoolRescueTubeRack", Vector3(1.55, 1.05, 0.2), Vector3(0.35, 1.8, 0.35), terminal_material)
 			_add_facility_box(station, "PoolRescueWhistlePanel", Vector3(0.0, 1.7, 0.55), Vector3(1.2, 0.35, 0.12), terminal_material)
@@ -700,7 +700,7 @@ func _place_floor_duty_staff_on_floor(trip: Dictionary, room: Node3D, radius: fl
 		service_point.add_child(service_counter)
 		var service_label := Label3D.new()
 		service_label.name = "ServicePointLabel"
-		service_label.text = "POOL SAFETY / خدمة المنقذ" if role == "مشرف المسابح" else "SERVICE / خدمة الموظف"
+		service_label.text = "POOL SAFETY / خدمة المنقذ" if role == "pool_supervisor" else "SERVICE / خدمة الموظف"
 		service_label.position.y = 1.45
 		service_label.font_size = 15
 		service_label.pixel_size = 0.012
@@ -1138,7 +1138,7 @@ func _move_customer_visitors(hour_override: int = -1) -> void:
 						_:
 							target = Vector3((float(customer_index) - 1.5) * 3.6, 0.0, radius * 1.48 + 12.0)
 							action = "waiting_in_lobby"
-				var previous_phase := str(visitor_node.get_meta("system_customer_schedule_phase", ""))
+				var previous_phase := str(visitor_node.get_meta("system_customer_schedule_phase")) if visitor_node.has_meta("system_customer_schedule_phase") else ""
 				visitor_node.set_meta("system_customer_schedule_phase", phase)
 				visitor_node.set_meta("system_customer_schedule_action", action)
 				visitor_node.set_meta("system_customer_schedule_target", target)
@@ -1157,7 +1157,7 @@ func _move_customer_visitors(hour_override: int = -1) -> void:
 					if visitor_child.has_method("set_activity"):
 						model = visitor_child as Node3D
 						break
-				var previous_tween: Variant = visitor_node.get_meta("system_customer_move_tween", null)
+				var previous_tween: Variant = visitor_node.get_meta("system_customer_move_tween") if visitor_node.has_meta("system_customer_move_tween") else null
 				if previous_tween is Tween and (previous_tween as Tween).is_running():
 					if previous_phase == phase:
 						continue
