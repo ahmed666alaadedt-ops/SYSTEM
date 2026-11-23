@@ -5291,9 +5291,10 @@ func open_restaurant_table(table_node: Node) -> void:
 
 
 func _seat_player_at_restaurant(table_node: Node) -> void:
-	if not is_instance_valid(player) or not is_instance_valid(active_floor_root) or not is_instance_valid(table_node):
+	var restaurant_table := table_node as Node3D
+	if not is_instance_valid(player) or not is_instance_valid(active_floor_root) or restaurant_table == null:
 		return
-	if table_node.get_parent() != active_floor_root or not table_node.has_meta("system_restaurant_table_id"):
+	if restaurant_table.get_parent() != active_floor_root or not restaurant_table.has_meta("system_restaurant_table_id"):
 		_set_status("يجب أن تكون داخل صالة المطعم لحجز المقعد.")
 		return
 	if not str(player.get_meta("system_restaurant_seated_table_id", "")).is_empty():
@@ -5301,27 +5302,27 @@ func _seat_player_at_restaurant(table_node: Node) -> void:
 		return
 	var selected_seat: Node3D
 	for seat_index in range(4):
-		var candidate := table_node.get_node_or_null("RestaurantSeat_%02d" % seat_index) as Node3D
+		var candidate := restaurant_table.get_node_or_null("RestaurantSeat_%02d" % seat_index) as Node3D
 		if candidate != null and str(candidate.get_meta("system_restaurant_seat_occupant", "")).is_empty():
 			selected_seat = candidate
 			break
 	if selected_seat == null:
 		_set_status("هذه الطاولة ممتلئة. اختر طاولة أخرى أو انتظر توفر مقعد.")
 		return
-	var table_id := str(table_node.get_meta("system_restaurant_table_id", ""))
+	var table_id := str(restaurant_table.get_meta("system_restaurant_table_id", ""))
 	selected_seat.set_meta("system_restaurant_seat_occupant", "PLAYER")
-	var occupants: Array = table_node.get_meta("system_restaurant_occupants", [])
+	var occupants: Array = restaurant_table.get_meta("system_restaurant_occupants", [])
 	if not occupants.has("PLAYER"):
 		occupants.append("PLAYER")
-	table_node.set_meta("system_restaurant_occupants", occupants)
+	restaurant_table.set_meta("system_restaurant_occupants", occupants)
 	player.set_meta("system_restaurant_seated_table_id", table_id)
-	player.set_meta("system_restaurant_table_node", table_node.name)
+	player.set_meta("system_restaurant_table_node", restaurant_table.name)
 	player.set_meta("system_restaurant_seat_node", selected_seat.name)
 	player.set_meta("system_restaurant_seating_transition", true)
 	player.set_meta("system_restaurant_seated", false)
 	player.velocity = Vector3.ZERO
 	var target_position := selected_seat.global_position + Vector3(0.0, 0.9, 0.0)
-	var facing: Vector3 = table_node.global_position - target_position
+	var facing: Vector3 = restaurant_table.global_position - target_position
 	var target_rotation := atan2(facing.x, facing.z)
 	var seating_tween := create_tween()
 	player.set_meta("system_restaurant_seating_tween", seating_tween)
@@ -5354,7 +5355,7 @@ func _release_player_restaurant_seat() -> void:
 	var seating_tween: Variant = player.get_meta("system_restaurant_seating_tween", null)
 	if seating_tween is Tween and (seating_tween as Tween).is_running():
 		(seating_tween as Tween).kill()
-	var room := active_floor_root if is_instance_valid(active_floor_root) else null
+	var room: Node3D = active_floor_root if is_instance_valid(active_floor_root) else null
 	var table_name := str(player.get_meta("system_restaurant_table_node", ""))
 	var seat_name := str(player.get_meta("system_restaurant_seat_node", ""))
 	var table_node := room.get_node_or_null(table_name) as Node3D if room != null else null
