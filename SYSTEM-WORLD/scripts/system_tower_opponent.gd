@@ -45,6 +45,7 @@ func configure(player: CharacterBody3D, health_manager: Node, health_value: floa
 
 func apply_arena_theme(theme_id: String) -> void:
 	arena_theme_id = theme_id
+	set_meta("system_power_tower_theme", arena_theme_id)
 	if is_inside_tree():
 		_apply_arena_theme_material()
 
@@ -77,7 +78,6 @@ func _apply_arena_theme_material() -> void:
 	material.emission_energy_multiplier = 0.95
 	if health_label != null:
 		health_label.modulate = theme_color.lightened(0.28)
-	set_meta("system_power_tower_theme", arena_theme_id)
 
 func _ready() -> void:
 	name = "PowerTowerOpponent"
