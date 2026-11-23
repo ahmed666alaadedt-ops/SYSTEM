@@ -1768,6 +1768,91 @@ func open_floor_services(tower_id: String, floor_number: int) -> void:
 		status_label.text = "خدمات %s — الطابق %d\n%s" % [str(config.get("title", "البرج")), floor_number, str(staff_node.get_meta("system_tower_staff_role", "service"))]
 
 
+func open_power_tower_ticket_terminal() -> void:
+	if not is_instance_valid(power_tower_manager) or not power_tower_manager.has_method("get_open_spectator_matches"):
+		return
+	var open_matches: Array = power_tower_manager.call("get_open_spectator_matches")
+	_clear_dynamic_controls()
+	title_label.text = "SYSTEM POWER TOWER — منصة توقعات الجمهور"
+	credits_label.text = "رصيدك الافتراضي: %d SYSTEM" % credits
+	status_label.text = "تذاكر افتراضية فقط | لا أموال حقيقية ولا سحب نقدي | اختر مقاتلاً واحداً من النزال"
+	var close_button := Button.new()
+	close_button.text = "إغلاق"
+	close_button.pressed.connect(func(): panel.hide())
+	content.add_child(close_button)
+	var disclaimer := Label.new()
+	disclaimer.text = "تُخصم قيمة التذكرة من رصيد SYSTEM الافتراضي. إذا صح توقعك تشارك في مجمع التذاكر، وإذا لم يصح تخسر قيمة التذكرة. عند عدم وجود توقع صحيح تُعاد التذاكر للجميع."
+	disclaimer.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(disclaimer)
+	if open_matches.is_empty():
+		var empty_label := Label.new()
+		empty_label.text = "لا توجد نزالات مفتوحة للتوقع حالياً. ستظهر النزالات هنا بعد تسجيل المقاتلين وفتح التذاكر."
+		empty_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		content.add_child(empty_label)
+		panel.show()
+		return
+	var match_selector := OptionButton.new()
+	match_selector.name = "PowerTowerTicketMatchSelector"
+	var fighter_selector := OptionButton.new()
+	fighter_selector.name = "PowerTowerTicketFighterSelector"
+	for match_value in open_matches:
+		var match_record: Dictionary = match_value
+		var match_id := str(match_record.get("match_id", ""))
+		var label := "الطابق %d | %s ضد %s | المجموع %d" % [int(match_record.get("floor", 0)), str(match_record.get("fighter_a_id", "")), str(match_record.get("fighter_b_id", "")), int(match_record.get("total_pool", 0))]
+		match_selector.add_item(label)
+		match_selector.set_item_metadata(match_selector.item_count - 1, match_id)
+	content.add_child(match_selector)
+	var fighter_heading := Label.new()
+	fighter_heading.text = "من تتوقع يفوز؟"
+	content.add_child(fighter_heading)
+	content.add_child(fighter_selector)
+	_populate_power_tower_ticket_fighters(match_selector, fighter_selector)
+	match_selector.item_selected.connect(func(_index: int):
+		_populate_power_tower_ticket_fighters(match_selector, fighter_selector)
+	)
+	var stake_heading := Label.new()
+	stake_heading.text = "قيمة التذكرة الافتراضية (1–500 SYSTEM)"
+	content.add_child(stake_heading)
+	var stake_selector := SpinBox.new()
+	stake_selector.min_value = 1
+	stake_selector.max_value = 500
+	stake_selector.step = 1
+	stake_selector.value = 10
+	content.add_child(stake_selector)
+	var submit_button := Button.new()
+	submit_button.text = "تأكيد التوقع وشراء التذكرة الافتراضية"
+	submit_button.pressed.connect(func():
+		if match_selector.item_count <= 0 or fighter_selector.item_count <= 0:
+			status_label.text = "لا يوجد نزال صالح للتوقع."
+			return
+		var match_id := str(match_selector.get_item_metadata(match_selector.selected))
+		var predicted_winner := str(fighter_selector.get_item_metadata(fighter_selector.selected))
+		var spectator_id := str(player.get_meta("system_player_id", "local_player")) if is_instance_valid(player) else "local_player"
+		var result: Dictionary = power_tower_manager.call("submit_spectator_prediction", match_id, spectator_id, predicted_winner, int(stake_selector.value), false)
+		if bool(result.get("success", false)):
+			credits = int(get("credits"))
+			credits_label.text = "رصيدك الافتراضي: %d SYSTEM" % credits
+			status_label.text = "تم تثبيت تذكرتك على %s | قيمة التذكرة %d | مجموع النزال %d SYSTEM" % [predicted_winner, int(result.get("stake_amount", 0)), int(result.get("total_pool", 0))]
+		else:
+			status_label.text = "تعذر تثبيت التذكرة: " + str(result.get("reason", "UNKNOWN"))
+	)
+	content.add_child(submit_button)
+	panel.show()
+
+
+func _populate_power_tower_ticket_fighters(match_selector: OptionButton, fighter_selector: OptionButton) -> void:
+	fighter_selector.clear()
+	if match_selector.item_count <= 0 or not is_instance_valid(power_tower_manager):
+		return
+	var match_id := str(match_selector.get_item_metadata(match_selector.selected))
+	var match_record: Dictionary = power_tower_manager.call("get_spectator_match", match_id)
+	for fighter_id in [str(match_record.get("fighter_a_id", "")), str(match_record.get("fighter_b_id", ""))]:
+		if fighter_id.is_empty():
+			continue
+		fighter_selector.add_item(fighter_id)
+		fighter_selector.set_item_metadata(fighter_selector.item_count - 1, fighter_id)
+
+
 func open_staff_service(staff_node: Node) -> void:
 	if staff_node == null:
 		return
