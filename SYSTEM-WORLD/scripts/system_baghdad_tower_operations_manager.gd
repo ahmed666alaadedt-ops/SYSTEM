@@ -6308,6 +6308,9 @@ func apply_verified_power_tower_pvp_result(result_data: Dictionary, local_player
 	var clear_time_seconds := float(result_data.get("clear_time_seconds", 0.0))
 	if clear_time_seconds <= 0.0:
 		return {"success": false, "reason": "INVALID_VERIFIED_MATCH_DURATION"}
+	var processed_ids: Dictionary = power_tower_manager.get("processed_result_ids")
+	if processed_ids.has(result_id):
+		return {"success": false, "reason": "DUPLICATE_RESULT"}
 	var prediction_settlement: Dictionary = power_tower_manager.call("settle_spectator_match", match_id, winner_player_id, "LOCAL_COMBAT_AUTHORITY")
 	if not bool(prediction_settlement.get("success", false)):
 		return prediction_settlement
@@ -6320,9 +6323,6 @@ func apply_verified_power_tower_pvp_result(result_data: Dictionary, local_player
 			active_power_objective_label.text = "انتهت المواجهة — لم تجتز الطابق"
 		_set_status("خسرت المواجهة الفردية أمام اللاعب المنافس. لم تُمنح مكافأة اجتياز الطابق.")
 		return {"success": true, "won": false, "prediction_settlement": prediction_settlement}
-	var processed_ids: Dictionary = power_tower_manager.get("processed_result_ids")
-	if processed_ids.has(result_id):
-		return {"success": false, "reason": "DUPLICATE_RESULT"}
 	var floor_result: Dictionary = power_tower_manager.call("confirm_floor_clear", floor_number, clear_time_seconds, true, result_id)
 	if not bool(floor_result.get("success", false)):
 		return floor_result
