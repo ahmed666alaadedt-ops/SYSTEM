@@ -2727,6 +2727,7 @@ func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) 
 	var rules := str(data.get("arena_rules", "اهزم خصوم الطابق"))
 	room.set_meta("system_power_tower_arena_type", arena_type)
 	room.set_meta("system_power_tower_rules", rules)
+	room.set_meta("system_power_tower_competition_format", "INDIVIDUAL_1V1")
 	var arena_label := Label3D.new()
 	arena_label.name = "ArenaChallengeDisplay"
 	arena_label.text = "%s\nالطابق %d\n%s" % [str(data.get("arena_name", "POWER ARENA")), floor_number, rules]
@@ -2742,6 +2743,7 @@ func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) 
 	objective_label.pixel_size = 0.013
 	objective_label.modulate = Color(0.50, 0.94, 1.0)
 	room.add_child(objective_label)
+	_create_power_tower_spectator_gallery(room, radius)
 	var obstacle_count := 2
 	match arena_type:
 		"ELITE_DUEL":
@@ -2791,6 +2793,87 @@ func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) 
 		boss_platform.position.y = 0.8
 		boss_platform.material_override = obstacle_material
 		room.add_child(boss_platform)
+
+
+
+func _create_power_tower_spectator_gallery(room: Node3D, radius: float) -> void:
+	var gallery := Node3D.new()
+	gallery.name = "PowerTowerSpectatorGallery"
+	gallery.set_meta("system_spectator_gallery", true)
+	gallery.set_meta("system_competition_format", "INDIVIDUAL_1V1")
+	room.add_child(gallery)
+
+	var seat_material := StandardMaterial3D.new()
+	seat_material.albedo_color = Color(0.075, 0.18, 0.25)
+	seat_material.metallic = 0.68
+	seat_material.roughness = 0.3
+	var trim_material := StandardMaterial3D.new()
+	trim_material.albedo_color = Color(0.76, 0.52, 0.22)
+	trim_material.metallic = 0.82
+	trim_material.roughness = 0.24
+
+	var seat_count := 0
+	for side in range(4):
+		var angle := TAU * float(side) / 4.0
+		var outward := Vector3(cos(angle), 0.0, sin(angle))
+		var tangent := Vector3(-outward.z, 0.0, outward.x)
+		for row in range(3):
+			for seat_index in range(4):
+				var seat := Node3D.new()
+				seat.name = "SpectatorSeat_%02d" % seat_count
+				seat.position = outward * (radius * 0.72 + float(row) * 2.1) + tangent * ((float(seat_index) - 1.5) * 1.55)
+				seat.rotation.y = atan2(outward.x, outward.z)
+				seat.set_meta("system_power_tower_spectator_seat", true)
+				seat.set_meta("system_spectator_seat_id", "PT_%03d" % seat_count)
+				seat.set_meta("system_spectator_seat_floor", int(room.get_meta("system_tower_floor_number", 0)))
+				seat.set_meta("system_spectator_seat_reserved", false)
+				gallery.add_child(seat)
+
+				var cushion := MeshInstance3D.new()
+				cushion.name = "SeatCushion"
+				var cushion_mesh := BoxMesh.new()
+				cushion_mesh.size = Vector3(1.25, 0.28, 0.95)
+				cushion.mesh = cushion_mesh
+				cushion.position = Vector3(0.0, 0.58, 0.0)
+				cushion.material_override = seat_material
+				seat.add_child(cushion)
+
+				var backrest := MeshInstance3D.new()
+				backrest.name = "SeatBackrest"
+				var backrest_mesh := BoxMesh.new()
+				backrest_mesh.size = Vector3(1.25, 0.95, 0.20)
+				backrest.mesh = backrest_mesh
+				backrest.position = Vector3(0.0, 1.12, 0.36)
+				backrest.material_override = trim_material
+				seat.add_child(backrest)
+
+				var seat_body := StaticBody3D.new()
+				seat_body.name = "SpectatorSeatCollision"
+				seat.add_child(seat_body)
+				var cushion_collision := CollisionShape3D.new()
+				var cushion_shape := BoxShape3D.new()
+				cushion_shape.size = cushion_mesh.size
+				cushion_collision.shape = cushion_shape
+				cushion_collision.position = cushion.position
+				seat_body.add_child(cushion_collision)
+				var back_collision := CollisionShape3D.new()
+				var back_shape := BoxShape3D.new()
+				back_shape.size = backrest_mesh.size
+				back_collision.shape = back_shape
+				back_collision.position = backrest.position
+				seat_body.add_child(back_collision)
+				seat_count += 1
+
+	var gallery_label := Label3D.new()
+	gallery_label.name = "PowerTowerSpectatorGalleryLabel"
+	gallery_label.text = "SPECTATOR GALLERY — 48 SEATS\nمنطقة مشاهدة النزالات الفردية"
+	gallery_label.position = Vector3(0.0, 4.2, -radius * 0.92)
+	gallery_label.font_size = 18
+	gallery_label.pixel_size = 0.012
+	gallery_label.modulate = Color(0.72, 0.94, 1.0)
+	gallery.add_child(gallery_label)
+	gallery.set_meta("system_spectator_seat_count", seat_count)
+	room.set_meta("system_power_tower_spectator_seat_count", seat_count)
 
 
 func _department_for_floor(tower_id: String, floor_number: int, total: int) -> String:
