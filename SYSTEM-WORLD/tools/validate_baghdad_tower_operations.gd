@@ -935,6 +935,9 @@ func _run() -> void:
 			return
 	power_manager.set("highest_cleared_floor", 5)
 	power_manager.set("active_floor", 6)
+	var original_current_tower_id := str(operations.get("current_tower_id"))
+	var original_active_floor_root := operations.get("active_floor_root") as Node
+	var original_power_objective_label := operations.get("active_power_objective_label") as Node
 	operations.set("current_tower_id", "power_tower_baghdad")
 	var solo_combat_room := operations.call("_ensure_floor_room", "power_tower_baghdad", 6) as Node3D
 	if solo_combat_room == null:
@@ -977,6 +980,9 @@ func _run() -> void:
 	tower_progression.call("save_progress")
 	operations.set("credits", original_credits)
 	operations.call("_save_wallet")
+	operations.set("active_floor_root", original_active_floor_root)
+	operations.set("active_power_objective_label", original_power_objective_label)
+	operations.set("current_tower_id", original_current_tower_id)
 	operations.set("active_power_floor_data", {})
 	operations.set("power_floor_in_progress", false)
 	operations.set("power_floor_timer_remaining", 0.0)
