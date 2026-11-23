@@ -11,6 +11,11 @@ const MAX_FLOORS := 200
 var highest_cleared_floor := 0
 var active_floor := 0
 var floor_clear_times: Dictionary = {}
+var total_duels_won := 0
+var elite_duels_won := 0
+var boss_duels_won := 0
+var total_xp_earned := 0
+var total_credits_earned := 0
 
 func _ready() -> void:
 	name = "SYSTEMPowerTowerManager"
@@ -82,9 +87,17 @@ func confirm_floor_clear(floor_number: int, clear_time_seconds: float) -> Dictio
 	var data := get_floor_data(floor_number)
 	highest_cleared_floor = maxi(highest_cleared_floor, floor_number)
 	floor_clear_times[str(floor_number)] = clear_time_seconds
+	total_duels_won += 1
+	if bool(data.get("boss_floor", false)):
+		boss_duels_won += 1
+	elif bool(data.get("elite_floor", false)):
+		elite_duels_won += 1
+	var reward := int(data["reward_xp"])
+	var credit_reward := int(data["reward_credits"])
+	total_xp_earned += reward
+	total_credits_earned += credit_reward
 	active_floor = 0
 	_save_progress()
-	var reward := int(data["reward_xp"])
 	var rank := str(data["rank"])
 	floor_cleared.emit(floor_number, reward, rank)
 	tower_record_updated.emit(highest_cleared_floor)
@@ -92,9 +105,14 @@ func confirm_floor_clear(floor_number: int, clear_time_seconds: float) -> Dictio
 		"success": true,
 		"floor": floor_number,
 		"reward_xp": reward,
-		"reward_credits": int(data["reward_credits"]),
+		"reward_credits": credit_reward,
 		"rank": rank,
-		"highest_cleared_floor": highest_cleared_floor
+		"highest_cleared_floor": highest_cleared_floor,
+		"total_duels_won": total_duels_won,
+		"elite_duels_won": elite_duels_won,
+		"boss_duels_won": boss_duels_won,
+		"total_xp_earned": total_xp_earned,
+		"total_credits_earned": total_credits_earned
 	}
 
 func abandon_active_floor() -> void:
@@ -115,7 +133,12 @@ func get_tower_status() -> Dictionary:
 		"highest_rank": _rank_for_floor(highest_cleared_floor) if highest_cleared_floor > 0 else "-",
 		"best_clear_time": best_clear_time,
 		"highest_floor_clear_time": highest_floor_time,
-		"competition_format": "INDIVIDUAL_1V1"
+		"competition_format": "INDIVIDUAL_1V1",
+		"total_duels_won": total_duels_won,
+		"elite_duels_won": elite_duels_won,
+		"boss_duels_won": boss_duels_won,
+		"total_xp_earned": total_xp_earned,
+		"total_credits_earned": total_credits_earned
 	}
 
 func _rank_for_floor(floor_number: int) -> String:
@@ -130,6 +153,11 @@ func _save_progress() -> void:
 	var config := ConfigFile.new()
 	config.set_value("tower", "highest_cleared_floor", highest_cleared_floor)
 	config.set_value("tower", "floor_clear_times", floor_clear_times)
+	config.set_value("tower", "total_duels_won", total_duels_won)
+	config.set_value("tower", "elite_duels_won", elite_duels_won)
+	config.set_value("tower", "boss_duels_won", boss_duels_won)
+	config.set_value("tower", "total_xp_earned", total_xp_earned)
+	config.set_value("tower", "total_credits_earned", total_credits_earned)
 	var error := config.save(SAVE_PATH)
 	if error != OK:
 		push_warning("SYSTEM: Power Tower progress could not be saved.")
@@ -141,3 +169,8 @@ func _load_progress() -> void:
 	highest_cleared_floor = clampi(int(config.get_value("tower", "highest_cleared_floor", 0)), 0, MAX_FLOORS)
 	var saved_times: Dictionary = config.get_value("tower", "floor_clear_times", {})
 	floor_clear_times = saved_times.duplicate(true)
+	total_duels_won = maxi(0, int(config.get_value("tower", "total_duels_won", highest_cleared_floor)))
+	elite_duels_won = maxi(0, int(config.get_value("tower", "elite_duels_won", 0)))
+	boss_duels_won = maxi(0, int(config.get_value("tower", "boss_duels_won", 0)))
+	total_xp_earned = maxi(0, int(config.get_value("tower", "total_xp_earned", 0)))
+	total_credits_earned = maxi(0, int(config.get_value("tower", "total_credits_earned", 0)))
