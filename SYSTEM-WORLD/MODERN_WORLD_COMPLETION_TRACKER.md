@@ -1437,3 +1437,16 @@ This section supersedes the earlier point-only fan prediction wording above. The
 - [ ] Run Godot full validation, canonical runtime validation and Android export on the same latest branch HEAD; do not mark these changes verified until all pass.
 - [ ] Confirm physical Android readability, camera visibility and performance for the arena screens and judge stations.
 - [ ] Integrate server-authoritative human matchmaking, judge identity verification, anti-cheat and cross-device career/wallet persistence; current local manager hooks are prototypes, not a live online service.
+
+
+### Power Tower virtual ticket terminal and judged match lifecycle — 23 November 2026
+
+- [x] Place an interactive virtual-ticket terminal in the Power Tower public lobby and route player interaction to its in-game panel.
+- [x] List open 1v1 matches with floor, both fighters and pool total; allow the spectator to choose one fighter and stake 1–500 virtual SYSTEM credits.
+- [x] Automatically open a spectator ticket pool when a registered, referee-supervised duel is registered.
+- [x] Automatically lock the pool when the referee settles the duel and distribute the pool to correct predictions through the local virtual wallet; wrong predictions receive no payout and no-correct-ticket pools are refunded.
+- [x] Add regression coverage for automatic pool creation and settlement alongside judge scoring, loss penalties and live arena score display.
+- [x] Correct the floor-200 challenge profile string to `FINAL_BOSS`, matching the existing sovereign-floor validator.
+- [ ] Run the latest Godot and Android workflows on the exact current branch HEAD; latest results are pending.
+- [ ] Complete physical Android usability and performance checks.
+- [ ] Replace local match authority and local wallet with trusted server matchmaking, signed judge results and account-level persistence before public online competition.
