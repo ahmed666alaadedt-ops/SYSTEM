@@ -1,3 +1,15 @@
+## Power Tower — safe spectator prediction lifecycle prototype — 23 November 2026
+
+- [x] Added local match registration for exactly two distinct fighters and stable match IDs.
+- [x] Added fan prediction submission before lock; fighters cannot predict their own match, and duplicate/invalid/late entries are rejected.
+- [x] Added match-start locking and one-time result settlement through the local combat-authority path; invalid or untrusted results are rejected.
+- [x] Correct predictions award one non-purchasable, non-transferable spectator point; wrong predictions do not deduct wallet credits or points. No real-money stakes, transfers or cash value exist.
+- [x] Added a transparent cap of 20 free predictions per spectator per UTC day and persisted match, point and daily-count data separately from the SYSTEM credits wallet.
+- [x] Added regression assertions for fighter self-prediction, duplicate entries, lock timing, untrusted/repeated settlement, correct/incorrect rewards, daily limit and save/reload.
+- [ ] The new lifecycle code and regression additions still require canonical Godot validation and Android export on the latest PR head; the new workflow result has not yet been confirmed.
+- [ ] A playable spectator interface, NPC/player match scheduling, global online predictions, server-authoritative settlement and production anti-cheat remain open. The local prototype must not be represented as live global competition.
+- PR #38 remains a draft on `feature/baghdad-five-plus-power-tower-20261122`; do not merge into `main` without explicit user approval.
+
 ## Entertainment Tower — expanded indoor aquatic facilities — 23 November 2026
 
 - [ ] Expanded the existing pool floors 18–20 without replacing the swimming trigger, buoyancy, swim-stroke movement or lap activity.
