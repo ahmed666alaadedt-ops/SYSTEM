@@ -926,6 +926,18 @@ func _run() -> void:
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
 		return
+	var empty_pool_registration: Dictionary = judge_test_manager.call("register_tower_fighter", "empty_pool_fighter_a")
+	var empty_pool_opponent: Dictionary = judge_test_manager.call("register_tower_fighter", "empty_pool_fighter_b")
+	var empty_pool_duel: Dictionary = judge_test_manager.call("register_judged_duel", "validator_empty_ticket_pool", "empty_pool_fighter_a", "empty_pool_fighter_b", 76, "empty_pool_fighter_a")
+	var empty_pool_result: Dictionary = judge_test_manager.call("finish_judged_duel", "validator_empty_ticket_pool", "empty_pool_fighter_a", "KO", "LOCAL_COMBAT_AUTHORITY")
+	var empty_pool_record: Dictionary = judge_test_manager.call("get_spectator_match", "validator_empty_ticket_pool")
+	var late_empty_pool_ticket: Dictionary = judge_test_manager.call("submit_spectator_prediction", "validator_empty_ticket_pool", "late_empty_pool_fan", "empty_pool_fighter_a", 10)
+	if not bool(empty_pool_registration.get("success", false)) or not bool(empty_pool_opponent.get("success", false)) or not bool(empty_pool_duel.get("success", false)) or not bool(empty_pool_result.get("success", false)) or str(empty_pool_record.get("state", "")) != "settled" or int(empty_pool_record.get("total_pool", -1)) != 0 or str(late_empty_pool_ticket.get("reason", "")) != "PREDICTIONS_LOCKED":
+		_fail("An empty spectator pool must settle with the official duel and reject all post-result tickets.")
+		judge_test_manager.queue_free()
+		progression_test_manager.queue_free()
+		reloaded_progression_manager.queue_free()
+		return
 	judge_test_manager.queue_free()
 	var loss_test_manager := power_tower_test_script.new() as Node
 	loss_test_manager.set("duel_save_path", "user://validator_power_tower_duels.cfg")
