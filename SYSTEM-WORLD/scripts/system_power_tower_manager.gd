@@ -24,6 +24,7 @@ func get_floor_data(floor_number: int) -> Dictionary:
 	var difficulty := clampi(1 + int((floor_number - 1) / 5), 1, 40)
 	var required_level := clampi(int(ceil(float(floor_number) * 0.45)), 1, 100)
 	var reward_xp := 100 + floor_number * floor_number * 12 + (250000 if final_boss else 0)
+	var reward_credits := 75 + floor_number * 15 + (5000 if final_boss else 0)
 	var arena_cycle := (floor_number - 1) % 5
 	var arena_names := [
 		"DUEL ARENA",
@@ -55,6 +56,7 @@ func get_floor_data(floor_number: int) -> Dictionary:
 		"opponent_count": 1 if arena_type == "DUEL" or boss_floor else mini(2 + int(difficulty / 4), 8),
 		"wave_count": 1 if arena_type == "DUEL" or boss_floor else mini(2 + int(floor_number / 12), 10),
 		"reward_xp": reward_xp,
+		"reward_credits": reward_credits,
 		"rank": _rank_for_floor(floor_number),
 		"challenge_type": "FINAL_BOSS" if final_boss else ("BOSS" if boss_floor else ("ELITE" if floor_number % 5 == 0 else "COMBAT_TRIAL")),
 		"arena_type": arena_type,
@@ -101,7 +103,7 @@ func confirm_floor_clear(floor_number: int, clear_time_seconds: float) -> Dictio
 	var rank := str(data["rank"])
 	floor_cleared.emit(floor_number, reward, rank)
 	tower_record_updated.emit(highest_cleared_floor)
-	return {"success": true, "floor": floor_number, "reward_xp": reward, "rank": rank, "highest_cleared_floor": highest_cleared_floor}
+	return {"success": true, "floor": floor_number, "reward_xp": reward, "reward_credits": int(data["reward_credits"]), "rank": rank, "highest_cleared_floor": highest_cleared_floor}
 
 func abandon_active_floor() -> void:
 	active_floor = 0
