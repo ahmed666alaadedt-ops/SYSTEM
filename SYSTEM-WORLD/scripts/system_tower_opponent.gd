@@ -26,6 +26,7 @@ var boss_visual: MeshInstance3D
 var shockwave_telegraph: MeshInstance3D
 var shockwave_material: StandardMaterial3D
 var defeated_once := false
+var arena_theme_id := "IRON"
 
 func configure(player: CharacterBody3D, health_manager: Node, health_value: float, damage_value: float, speed_value: float, boss: bool = false, final_boss: bool = false) -> void:
 	target_player = player
@@ -41,6 +42,42 @@ func configure(player: CharacterBody3D, health_manager: Node, health_value: floa
 	is_final_boss = final_boss
 	if is_inside_tree():
 		_apply_boss_runtime_configuration()
+
+func apply_arena_theme(theme_id: String) -> void:
+	arena_theme_id = theme_id
+	if is_inside_tree():
+		_apply_arena_theme_material()
+
+func _apply_arena_theme_material() -> void:
+	if is_boss or boss_visual == null or not (boss_visual.material_override is StandardMaterial3D):
+		return
+	var theme_color := Color(0.18, 0.30, 0.40)
+	match arena_theme_id:
+		"DESERT":
+			theme_color = Color(0.58, 0.38, 0.16)
+		"FROST":
+			theme_color = Color(0.32, 0.72, 0.88)
+		"VOLCANIC":
+			theme_color = Color(0.58, 0.12, 0.055)
+		"JUNGLE":
+			theme_color = Color(0.12, 0.40, 0.20)
+		"RUINS":
+			theme_color = Color(0.38, 0.34, 0.27)
+		"STORM":
+			theme_color = Color(0.24, 0.26, 0.62)
+		"SHADOW":
+			theme_color = Color(0.20, 0.10, 0.28)
+		"CELESTIAL":
+			theme_color = Color(0.66, 0.54, 0.20)
+		"SOVEREIGN":
+			theme_color = Color(0.78, 0.48, 0.08)
+	var material := boss_visual.material_override as StandardMaterial3D
+	material.albedo_color = theme_color.darkened(0.12)
+	material.emission = theme_color
+	material.emission_energy_multiplier = 0.95
+	if health_label != null:
+		health_label.modulate = theme_color.lightened(0.28)
+	set_meta("system_power_tower_theme", arena_theme_id)
 
 func _ready() -> void:
 	name = "PowerTowerOpponent"
@@ -104,6 +141,7 @@ func _ready() -> void:
 		shockwave_telegraph.material_override = shockwave_material
 		add_child(shockwave_telegraph)
 	_apply_boss_runtime_configuration()
+	_apply_arena_theme_material()
 	_update_health_label()
 	set_meta("system_power_tower_opponent", true)
 	set_meta("system_opponent_health", current_health)
