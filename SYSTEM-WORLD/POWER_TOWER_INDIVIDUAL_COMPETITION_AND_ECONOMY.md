@@ -179,3 +179,11 @@ Implementation status: a local prototype now records individual 1v1 matches, ded
 - Reaction tweens are replaced safely when a new score update arrives, preventing stacked animation tweens on the same audience actor.
 - Regression validation checks all eight actors, their articulated arms, and the celebration state after the verified floor-200 individual duel.
 - This is local procedural crowd presentation. It does not claim remote multiplayer spectators, synchronized network animation, voice chat, or persistent cross-session seat reservations.
+
+
+## 17. Arena fan-prediction board and live seat availability — 24 November 2026
+
+- Every generated spectator gallery now includes a physical, interactable fan-prediction board. It opens the existing ticket terminal UI, reusing the official open 1v1 matches, fighter selector, virtual-credit stake limits and settlement logic rather than creating a parallel wallet.
+- A live seat summary reports available and reserved seats out of 48. It refreshes on reservation, owner release and automatic travel cleanup.
+- Regression validation checks the prediction-board interaction route and confirms the summary changes from 48/48 to 47/48 and back to 48/48 during the seat ownership test.
+- Prediction stakes remain virtual SYSTEM credits only. No cash deposits, withdrawals, transfers or cash prizes are introduced.
