@@ -2581,6 +2581,28 @@ func _prepare_tower_interior(tower_id: String) -> void:
 	tower.add_child(floor_container)
 	prepared_towers[tower_id] = floor_container
 
+func update_power_tower_live_match_display(floor_number: int, duel_data: Dictionary, completed: bool = false) -> void:
+	if floor_number < 1 or floor_number > 200:
+		return
+	var room := _ensure_floor_room("power_tower_baghdad", floor_number)
+	if room == null:
+		return
+	var score_label := room.get_node_or_null("ArenaLiveMatchScoreDisplay") as Label3D
+	if score_label == null:
+		return
+	var fighter_a := str(duel_data.get("fighter_a_id", "مقاتل A"))
+	var fighter_b := str(duel_data.get("fighter_b_id", "مقاتل B"))
+	var score: Dictionary = duel_data.get("score", {})
+	var score_a := int(score.get(fighter_a, 0))
+	var score_b := int(score.get(fighter_b, 0))
+	var state_label := "انتهى النزال" if completed else "النزال مباشر"
+	var winner_line := "\nالفائز: " + str(duel_data.get("winner_id", "")) if completed else ""
+	score_label.text = "LIVE MATCH SCORE\n%s | الطابق %d\n%s  %d  —  %d  %s\nالحالة: %s%s" % [str(duel_data.get("match_id", "")), floor_number, fighter_a, score_a, score_b, fighter_b, state_label, winner_line]
+	score_label.set_meta("system_match_id", str(duel_data.get("match_id", "")))
+	score_label.set_meta("system_live_score", score.duplicate(true))
+	score_label.set_meta("system_match_completed", completed)
+
+
 func _create_power_tower_referee_stations(room: Node3D, arena_radius: float, accent_color: Color) -> void:
 	if room.get_node_or_null("PowerTowerRefereeStations") != null:
 		return
