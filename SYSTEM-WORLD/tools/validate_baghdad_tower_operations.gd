@@ -1532,12 +1532,12 @@ func _run() -> void:
 	if int(spectator_gallery.get_meta("system_spectator_seats_occupied", -1)) != 0 or not str(spectator_gallery.get_node("PowerTowerSeatAvailability").text).contains("48 / 48"):
 		_fail("Power Tower spectator seat availability board did not refresh after release.")
 		return
-	if bool(test_spectator_seat.get_meta("system_spectator_seat_reserved", true)) or bool(player.get_meta("system_power_tower_seated", true)) or player.has_meta("system_power_tower_seat_id") or test_spectator_seat.has_meta("system_spectator_seat_owner"):
+	if bool(test_spectator_seat.get_meta("system_spectator_seat_reserved", true)) or bool(player.get_meta("system_power_tower_seated", true)) or player.has_meta("system_power_tower_seat_id") or player.has_meta("system_power_tower_seat_floor") or test_spectator_seat.has_meta("system_spectator_seat_owner"):
 		_fail("Power Tower spectator seat could not be released by its owner.")
 		return
 	operations.call("interact_power_tower_spectator_seat", test_seat_interaction)
 	operations.call("_release_power_tower_spectator_seat")
-	if bool(test_spectator_seat.get_meta("system_spectator_seat_reserved", true)) or bool(player.get_meta("system_power_tower_seated", true)):
+	if bool(test_spectator_seat.get_meta("system_spectator_seat_reserved", true)) or bool(player.get_meta("system_power_tower_seated", true)) or player.has_meta("system_power_tower_seat_floor") or int(spectator_gallery.get_meta("system_spectator_seats_occupied", -1)) != 0:
 		_fail("Power Tower did not release a spectator seat during floor/lobby transition.")
 		return
 	if had_player_id:
