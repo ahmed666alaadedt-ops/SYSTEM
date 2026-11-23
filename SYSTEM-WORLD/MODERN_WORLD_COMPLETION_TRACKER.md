@@ -1450,3 +1450,14 @@ This section supersedes the earlier point-only fan prediction wording above. The
 - [ ] Run the latest Godot and Android workflows on the exact current branch HEAD; latest results are pending.
 - [ ] Complete physical Android usability and performance checks.
 - [ ] Replace local match authority and local wallet with trusted server matchmaking, signed judge results and account-level persistence before public online competition.
+
+
+### Power Tower combat-to-referee integration — 23 November 2026
+
+- [x] Verified human 1v1 match start registers both fighters with persistent competitor numbers and creates/reuses the matching open spectator pool.
+- [x] The live match setup creates the official judged-duel record before the arena begins and locks spectator tickets at match start.
+- [x] Local combat `attack_performed` events feed the head referee score ledger: ordinary hits score 1 and heavy/critical hits score 2; explicit knockdown metadata can add the knockdown point.
+- [x] Referee score signals update the live in-arena scoreboard; verified match results now pass through the referee settlement path so career loss penalties and spectator ticket payouts use the same winner.
+- [x] Floor-clear rewards remain counted once by the verified progression flow; referee win recording only resets the loss streak.
+- [ ] Remote opponent hit events and judge decisions still require trusted server delivery; local client combat events are not authoritative anti-cheat evidence.
+- [ ] Re-run full Godot project validation and canonical Android export on exact current HEAD `0d945bc376b44d80b62ab430d4b979e6812e9468`; latest runtime and export workflows are in progress.
