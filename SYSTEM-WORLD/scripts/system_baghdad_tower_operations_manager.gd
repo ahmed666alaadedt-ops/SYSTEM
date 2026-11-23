@@ -1532,6 +1532,34 @@ func _ensure_power_tower_live_camera_feed(room: Node3D, display_root: Node3D, vi
 	return source_viewport
 
 
+func _ensure_power_tower_floor_live_camera_feed(floor_room: Node3D, source_viewport: SubViewport) -> void:
+	if floor_room == null or source_viewport == null:
+		return
+	var arena_panel := floor_room.get_node_or_null("ArenaChallengeScreenPanel") as MeshInstance3D
+	if arena_panel == null:
+		return
+	var feed := floor_room.get_node_or_null("PowerTowerArenaLiveCameraFeed") as MeshInstance3D
+	if feed == null:
+		feed = MeshInstance3D.new()
+		feed.name = "PowerTowerArenaLiveCameraFeed"
+		var quad := QuadMesh.new()
+		quad.size = Vector2(17.2, 3.9)
+		feed.mesh = quad
+		feed.position = arena_panel.position + Vector3(0.0, 0.0, 0.19)
+		var material := StandardMaterial3D.new()
+		material.albedo_color = Color.WHITE
+		material.albedo_texture = source_viewport.get_texture()
+		material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR
+		feed.material_override = material
+		feed.set_meta("system_power_tower_live_camera_feed", true)
+		floor_room.add_child(feed)
+	else:
+		var existing_material := feed.material_override as StandardMaterial3D
+		if existing_material != null:
+			existing_material.albedo_texture = source_viewport.get_texture()
+
+
 func _ensure_power_tower_live_camera_broadcast(floor_number: int) -> void:
 	var room := _ensure_floor_room("power_tower_baghdad", floor_number)
 	var tower := tower_nodes.get("power_tower_baghdad") as Node3D
@@ -1541,8 +1569,15 @@ func _ensure_power_tower_live_camera_broadcast(floor_number: int) -> void:
 	var outside := tower.get_node_or_null("PowerTowerBattleDisplay_Outside") as Node3D
 	var inside := lobby.get_node_or_null("PowerTowerBattleDisplay_Inside") as Node3D if lobby != null else null
 	var shared_viewport := _ensure_power_tower_live_camera_feed(room, outside)
-	if shared_viewport != null:
-		_ensure_power_tower_live_camera_feed(room, inside, shared_viewport)
+	if shared_viewport == null:
+		return
+	_ensure_power_tower_live_camera_feed(room, inside, shared_viewport)
+	var floors_root := prepared_towers.get("power_tower_baghdad") as Node3D
+	if floors_root != null:
+		for floor_node in floors_root.get_children():
+			var floor_room := floor_node as Node3D
+			if floor_room != null:
+				_ensure_power_tower_floor_live_camera_feed(floor_room, shared_viewport)
 
 
 func _update_power_tower_public_live_broadcast(floor_number: int, duel_data: Dictionary, completed: bool) -> void:
