@@ -38,6 +38,8 @@ The 200-floor progression uses individual combat profiles only:
 
 Every floor has exactly one opponent and one round. Team battles, party fights, multi-opponent rounds, enemy waves and group combat competitions are prohibited. Floor data exposes the individual format, arena type/name, Arabic rules, opponent count, reward values and ranked-treatment flag. Spectators and supporter groups remain non-combat social activities.
 
+The 200 floors are also grouped into ten visual environment chapters of twenty floors each: Iron, Desert, Frost, Volcanic, Jungle, Royal Ruins, Storm, Shadow, Celestial and Sovereign. Each generated arena receives a matching floor-deck material, illuminated ring, four themed pylons and arena title. Floor 200 uses the unique Sovereign theme.
+
 ## Seven-stage Hunter Examination
 
 The examination is a difficult, multi-city journey. It tests judgment, observation, navigation, teamwork, survival, and combat restraint—not only damage output.
