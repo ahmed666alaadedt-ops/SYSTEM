@@ -891,6 +891,9 @@ func _on_interaction_performed(
 	if target.has_meta("system_power_tower_spectator_seat_interaction") and tower_operations_manager != null:
 		tower_operations_manager.call("interact_power_tower_spectator_seat", target)
 		return
+	if target.has_meta("system_power_tower_prediction_board") and tower_operations_manager != null:
+		tower_operations_manager.call("open_power_tower_ticket_terminal")
+		return
 	if target.has_meta("system_power_tower_ticket_terminal") and tower_operations_manager != null:
 		tower_operations_manager.call("open_power_tower_ticket_terminal")
 		return
