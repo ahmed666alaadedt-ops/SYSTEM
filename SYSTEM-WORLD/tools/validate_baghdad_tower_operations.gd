@@ -907,7 +907,7 @@ func _run() -> void:
 	for daily_index in range(20):
 		var daily_match_id := "validator_daily_%02d" % daily_index
 		var daily_match: Dictionary = progression_test_manager.call("register_spectator_match", daily_match_id, "daily_fighter_a", "daily_fighter_b", 1)
-		var daily_prediction: Dictionary = progression_test_manager.call("submit_spectator_prediction", daily_match_id, "daily_fan", "daily_fighter_a")
+		var daily_prediction: Dictionary = progression_test_manager.call("submit_spectator_prediction", daily_match_id, "daily_fan", "daily_fighter_a", 1)
 		if not bool(daily_match.get("success", false)) or not bool(daily_prediction.get("success", false)):
 			_fail("The free spectator daily prediction allowance failed before reaching its published limit.")
 			progression_test_manager.queue_free()
@@ -924,7 +924,7 @@ func _run() -> void:
 	spectator_reload_manager.set("spectator_save_path", "user://validator_power_tower_spectator_predictions.cfg")
 	root.add_child(spectator_reload_manager)
 	await process_frame
-	print("QA: spectator prediction lock, settlement, daily cap and persistence checks completed.")
+	print("QA: virtual fan ticket pools, proportional payouts, NPC budget persistence and daily cap checks completed.")
 	var persisted_fan_status: Dictionary = spectator_reload_manager.call("get_spectator_status", "fan_alpha")
 	var persisted_match: Dictionary = spectator_reload_manager.call("get_spectator_match", "validator_duel_001")
 	var persisted_npc_status: Dictionary = spectator_reload_manager.call("get_spectator_status", "npc:crowd_001")
