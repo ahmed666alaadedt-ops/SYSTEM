@@ -12,6 +12,10 @@ const SPECTATOR_MIN_STAKE := 1
 const SPECTATOR_MAX_STAKE := 500
 const NPC_INITIAL_TICKET_BUDGET := 300
 const LOCAL_MATCH_AUTHORITY := "LOCAL_COMBAT_AUTHORITY"
+const DUEL_TKO_SCORE := 10
+const DUEL_MAX_CONSECUTIVE_LOSSES := 3
+const DUEL_MAX_TOTAL_LOSSES := 10
+const DUEL_JUDGE_IDS := ["HEAD_REFEREE", "TECHNICAL_JUDGE", "SAFETY_JUDGE"]
 const FLOOR_THEME_IDS := ["IRON", "DESERT", "FROST", "VOLCANIC", "JUNGLE", "RUINS", "STORM", "SHADOW", "CELESTIAL", "SOVEREIGN"]
 const FLOOR_THEME_NAMES := ["قاعة الحديد", "ساحة الصحراء", "ميدان الجليد", "حلبة البركان", "غابة المحاربين", "أطلال الملوك", "ساحة العاصفة", "ميدان الظلال", "الحلبة السماوية", "عرش السيادة"]
 
@@ -19,6 +23,10 @@ var highest_cleared_floor := 0
 var active_floor := 0
 var floor_clear_times: Dictionary = {}
 var total_duels_won := 0
+var total_duels_lost := 0
+var consecutive_duel_losses := 0
+var duel_disqualified := false
+var duel_matches: Dictionary = {}
 var elite_duels_won := 0
 var boss_duels_won := 0
 var total_xp_earned := 0
@@ -34,6 +42,7 @@ var spectator_npc_ticket_balances: Dictionary = {}
 func _ready() -> void:
 	name = "SYSTEMPowerTowerManager"
 	_load_progress()
+	_load_duel_records()
 	_load_spectator_data()
 
 func get_floor_data(floor_number: int) -> Dictionary:
@@ -87,6 +96,8 @@ func get_floor_data(floor_number: int) -> Dictionary:
 func request_floor(floor_number: int, player_level: int) -> Dictionary:
 	if floor_number < 1 or floor_number > MAX_FLOORS:
 		return {"success": false, "reason": "INVALID_FLOOR"}
+	if duel_disqualified:
+		return {"success": false, "reason": "TOWER_DISQUALIFIED", "reason_ar": "تم إيقافك من المنافسات بعد بلوغ عشر خسائر."}
 	if highest_cleared_floor >= MAX_FLOORS:
 		return {"success": false, "reason": "TOWER_COMPLETED"}
 	if floor_number <= highest_cleared_floor:
@@ -141,12 +152,200 @@ func confirm_floor_clear(floor_number: int, clear_time_seconds: float, server_ve
 		"rank": rank,
 		"highest_cleared_floor": highest_cleared_floor,
 		"total_duels_won": total_duels_won,
+		"total_duels_lost": total_duels_lost,
+		"consecutive_duel_losses": consecutive_duel_losses,
+		"duel_disqualified": duel_disqualified,
 		"elite_duels_won": elite_duels_won,
 		"boss_duels_won": boss_duels_won,
 		"total_xp_earned": total_xp_earned,
 		"total_credits_earned": total_credits_earned,
 		"processed_result_count": processed_result_ids.size()
 	}
+
+func register_judged_duel(match_id: String, fighter_a_id: String, fighter_b_id: String, floor_number: int) -> Dictionary:
+	match_id = match_id.strip_edges()
+	fighter_a_id = fighter_a_id.strip_edges()
+	fighter_b_id = fighter_b_id.strip_edges()
+	if match_id.is_empty() or fighter_a_id.is_empty() or fighter_b_id.is_empty() or fighter_a_id == fighter_b_id:
+		return {"success": false, "reason": "INVALID_DUEL_IDENTITY"}
+	if floor_number < 1 or floor_number > MAX_FLOORS:
+		return {"success": false, "reason": "INVALID_FLOOR"}
+	if duel_matches.has(match_id):
+		return {"success": false, "reason": "DUEL_ALREADY_REGISTERED"}
+	var floor_data := get_floor_data(floor_number)
+	duel_matches[match_id] = {
+		"match_id": match_id,
+		"floor": floor_number,
+		"fighter_a_id": fighter_a_id,
+		"fighter_b_id": fighter_b_id,
+		"competition_format": "INDIVIDUAL_1V1",
+		"state": "live",
+		"score": {fighter_a_id: 0, fighter_b_id: 0},
+		"knockdowns": {fighter_a_id: 0, fighter_b_id: 0},
+		"judges": DUEL_JUDGE_IDS.duplicate(),
+		"judge_profile": "BALANCED",
+		"events": [],
+		"tko_score": DUEL_TKO_SCORE,
+		"floor_type": str(floor_data.get("arena_type", "DUEL")),
+		"created_at_unix": int(Time.get_unix_time_from_system())
+	}
+	_save_duel_records()
+	return {"success": true, "match_id": match_id, "judges": DUEL_JUDGE_IDS.duplicate(), "floor_type": str(floor_data.get("arena_type", "DUEL")), "state": "live"}
+
+
+func record_judged_duel_event(match_id: String, judge_id: String, attacker_id: String, event_type: String, event_id: String) -> Dictionary:
+	match_id = match_id.strip_edges()
+	judge_id = judge_id.strip_edges()
+	attacker_id = attacker_id.strip_edges()
+	event_id = event_id.strip_edges()
+	event_type = event_type.strip_edges().to_upper()
+	if not duel_matches.has(match_id):
+		return {"success": false, "reason": "DUEL_NOT_FOUND"}
+	var duel: Dictionary = duel_matches[match_id]
+	if str(duel.get("state", "")) != "live":
+		return {"success": false, "reason": "DUEL_NOT_LIVE"}
+	if not DUEL_JUDGE_IDS.has(judge_id):
+		return {"success": false, "reason": "UNAUTHORIZED_JUDGE"}
+	if event_id.is_empty():
+		return {"success": false, "reason": "EVENT_ID_REQUIRED"}
+	var events: Array = duel.get("events", [])
+	for previous_event in events:
+		if str(previous_event.get("event_id", "")) == event_id:
+			return {"success": false, "reason": "DUPLICATE_JUDGE_EVENT"}
+	var fighter_a := str(duel.get("fighter_a_id", ""))
+	var fighter_b := str(duel.get("fighter_b_id", ""))
+	if attacker_id != fighter_a and attacker_id != fighter_b:
+		return {"success": false, "reason": "ATTACKER_NOT_IN_DUEL"}
+	var points := 0
+	match event_type:
+		"CLEAN_HIT":
+			points = 1
+		"CRITICAL_HIT":
+			points = 2
+		"OPPONENT_DOWN":
+			points = 1
+		_:
+			return {"success": false, "reason": "INVALID_SCORING_EVENT"}
+	var score: Dictionary = duel.get("score", {})
+	var knockdowns: Dictionary = duel.get("knockdowns", {})
+	score[attacker_id] = int(score.get(attacker_id, 0)) + points
+	if event_type == "OPPONENT_DOWN":
+		knockdowns[attacker_id] = int(knockdowns.get(attacker_id, 0)) + 1
+	duel["score"] = score
+	duel["knockdowns"] = knockdowns
+	events.append({"event_id": event_id, "judge_id": judge_id, "fighter_id": attacker_id, "event_type": event_type, "points": points, "timestamp": int(Time.get_unix_time_from_system())})
+	duel["events"] = events
+	var opponent_id := fighter_b if attacker_id == fighter_a else fighter_a
+	var reached_tko := int(score.get(attacker_id, 0)) >= DUEL_TKO_SCORE
+	duel_matches[match_id] = duel
+	_save_duel_records()
+	return {"success": true, "fighter_id": attacker_id, "event_type": event_type, "points_awarded": points, "fighter_score": int(score.get(attacker_id, 0)), "opponent_score": int(score.get(opponent_id, 0)), "knockdowns": int(knockdowns.get(attacker_id, 0)), "tko_reached": reached_tko, "judge_id": judge_id}
+
+
+func finish_judged_duel(match_id: String, winner_id: String, finish_type: String, settlement_source: String) -> Dictionary:
+	match_id = match_id.strip_edges()
+	winner_id = winner_id.strip_edges()
+	finish_type = finish_type.strip_edges().to_upper()
+	if settlement_source != LOCAL_MATCH_AUTHORITY:
+		return {"success": false, "reason": "UNTRUSTED_MATCH_RESULT"}
+	if not duel_matches.has(match_id):
+		return {"success": false, "reason": "DUEL_NOT_FOUND"}
+	var duel: Dictionary = duel_matches[match_id]
+	if str(duel.get("state", "")) != "live":
+		return {"success": false, "reason": "DUEL_ALREADY_FINISHED"}
+	var fighter_a := str(duel.get("fighter_a_id", ""))
+	var fighter_b := str(duel.get("fighter_b_id", ""))
+	if winner_id != fighter_a and winner_id != fighter_b:
+		return {"success": false, "reason": "WINNER_NOT_IN_DUEL"}
+	if not ["KO", "TKO", "JUDGES_DECISION", "FORFEIT", "REFEREE_STOPPAGE"].has(finish_type):
+		return {"success": false, "reason": "INVALID_FINISH_TYPE"}
+	var score: Dictionary = duel.get("score", {})
+	if finish_type == "TKO" and int(score.get(winner_id, 0)) < DUEL_TKO_SCORE:
+		return {"success": false, "reason": "TKO_REQUIRES_TEN_POINTS"}
+	if finish_type == "JUDGES_DECISION" and int(score.get(fighter_a, 0)) == int(score.get(fighter_b, 0)):
+		return {"success": false, "reason": "TIED_SCORE_REQUIRES_REFEREE_REVIEW"}
+	var loser_id := fighter_b if winner_id == fighter_a else fighter_a
+	duel["state"] = "settled"
+	duel["winner_id"] = winner_id
+	duel["loser_id"] = loser_id
+	duel["finish_type"] = finish_type
+	duel["settled_at_unix"] = int(Time.get_unix_time_from_system())
+	duel_matches[match_id] = duel
+	var career_result := _record_duel_career_result(winner_id, loser_id, int(duel.get("floor", 1)))
+	_save_duel_records()
+	return {"success": true, "winner_id": winner_id, "loser_id": loser_id, "finish_type": finish_type, "score": score.duplicate(true), "career_result": career_result, "cash_value": 0}
+
+
+func _record_duel_career_result(winner_id: String, loser_id: String, floor_number: int) -> Dictionary:
+	var is_local_player := loser_id == "PLAYER" or loser_id == "LOCAL_PLAYER"
+	var player_won := winner_id == "PLAYER" or winner_id == "LOCAL_PLAYER"
+	var result := {"player_won": player_won, "player_lost": is_local_player, "demoted": false, "disqualified": false, "highest_cleared_floor": highest_cleared_floor}
+	if player_won:
+		consecutive_duel_losses = 0
+		total_duels_won += 1
+	elif is_local_player:
+		total_duels_lost += 1
+		consecutive_duel_losses += 1
+		if total_duels_lost >= DUEL_MAX_TOTAL_LOSSES:
+			highest_cleared_floor = 0
+			active_floor = 0
+			duel_disqualified = true
+			result["disqualified"] = true
+			result["demotion_reason"] = "TEN_TOTAL_LOSSES"
+		elif consecutive_duel_losses >= DUEL_MAX_CONSECUTIVE_LOSSES:
+			var current_band := int(floor(float(maxi(floor_number, highest_cleared_floor)) / 10.0))
+			highest_cleared_floor = maxi(0, (current_band - 1) * 10)
+			active_floor = 0
+			result["demoted"] = true
+			result["demotion_reason"] = "THREE_CONSECUTIVE_LOSSES"
+		result["highest_cleared_floor"] = highest_cleared_floor
+		result["consecutive_losses"] = consecutive_duel_losses
+		result["total_losses"] = total_duels_lost
+		_save_progress()
+	return result
+
+
+func get_duel_match(match_id: String) -> Dictionary:
+	return (duel_matches.get(match_id, {}) as Dictionary).duplicate(true)
+
+
+func get_duel_career_status() -> Dictionary:
+	return {
+		"total_wins": total_duels_won,
+		"total_losses": total_duels_lost,
+		"consecutive_losses": consecutive_duel_losses,
+		"max_consecutive_losses": DUEL_MAX_CONSECUTIVE_LOSSES,
+		"max_total_losses": DUEL_MAX_TOTAL_LOSSES,
+		"disqualified": duel_disqualified,
+		"highest_cleared_floor": highest_cleared_floor,
+		"next_floor": 0 if duel_disqualified or highest_cleared_floor >= MAX_FLOORS else highest_cleared_floor + 1,
+		"rank": _rank_for_floor(highest_cleared_floor) if highest_cleared_floor > 0 else "E"
+	}
+
+
+func _save_duel_records() -> void:
+	var config := ConfigFile.new()
+	config.set_value("duels", "matches", duel_matches)
+	config.set_value("duels", "total_losses", total_duels_lost)
+	config.set_value("duels", "consecutive_losses", consecutive_duel_losses)
+	config.set_value("duels", "disqualified", duel_disqualified)
+	var error := config.save("user://system_power_tower_duels.cfg")
+	if error != OK:
+		push_warning("SYSTEM: Power Tower duel records could not be saved.")
+
+
+func _load_duel_records() -> void:
+	var config := ConfigFile.new()
+	if config.load("user://system_power_tower_duels.cfg") != OK:
+		return
+	var saved_matches: Variant = config.get_value("duels", "matches", {})
+	var saved_total_losses := int(config.get_value("duels", "total_losses", 0))
+	var saved_consecutive_losses := int(config.get_value("duels", "consecutive_losses", 0))
+	duel_matches = saved_matches.duplicate(true) if saved_matches is Dictionary else {}
+	total_duels_lost = maxi(0, saved_total_losses)
+	consecutive_duel_losses = clampi(saved_consecutive_losses, 0, DUEL_MAX_CONSECUTIVE_LOSSES)
+	duel_disqualified = bool(config.get_value("duels", "disqualified", false))
+
 
 func abandon_active_floor() -> void:
 	active_floor = 0
@@ -456,6 +655,9 @@ func _save_progress() -> void:
 	config.set_value("tower", "highest_cleared_floor", highest_cleared_floor)
 	config.set_value("tower", "floor_clear_times", floor_clear_times)
 	config.set_value("tower", "total_duels_won", total_duels_won)
+	config.set_value("tower", "total_duels_lost", total_duels_lost)
+	config.set_value("tower", "consecutive_duel_losses", consecutive_duel_losses)
+	config.set_value("tower", "duel_disqualified", duel_disqualified)
 	config.set_value("tower", "elite_duels_won", elite_duels_won)
 	config.set_value("tower", "boss_duels_won", boss_duels_won)
 	config.set_value("tower", "total_xp_earned", total_xp_earned)
@@ -473,6 +675,9 @@ func _load_progress() -> void:
 	var saved_times: Dictionary = config.get_value("tower", "floor_clear_times", {})
 	floor_clear_times = saved_times.duplicate(true)
 	total_duels_won = maxi(0, int(config.get_value("tower", "total_duels_won", highest_cleared_floor)))
+	total_duels_lost = maxi(0, int(config.get_value("tower", "total_duels_lost", 0)))
+	consecutive_duel_losses = clampi(int(config.get_value("tower", "consecutive_duel_losses", 0)), 0, DUEL_MAX_CONSECUTIVE_LOSSES)
+	duel_disqualified = bool(config.get_value("tower", "duel_disqualified", false))
 	elite_duels_won = maxi(0, int(config.get_value("tower", "elite_duels_won", 0)))
 	boss_duels_won = maxi(0, int(config.get_value("tower", "boss_duels_won", 0)))
 	total_xp_earned = maxi(0, int(config.get_value("tower", "total_xp_earned", 0)))
