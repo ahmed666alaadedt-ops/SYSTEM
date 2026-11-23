@@ -790,6 +790,7 @@ func _run() -> void:
 		_fail("Power Tower progression script could not be loaded for the 200-floor regression.")
 		return
 	var progression_test_manager := power_tower_test_script.new() as Node
+	progression_test_manager.set("spectator_save_path", "user://validator_power_tower_spectator_predictions.cfg")
 	root.add_child(progression_test_manager)
 	await process_frame
 	progression_test_manager.set("highest_cleared_floor", 0)
@@ -821,8 +822,72 @@ func _run() -> void:
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
 		return
+	var prediction_match := progression_test_manager.call("register_spectator_match", "validator_duel_001", "fighter_alpha", "fighter_beta", 12)
+	if not bool(prediction_match.get("success", false)):
+		_fail("Spectator prediction match registration failed.")
+		progression_test_manager.queue_free()
+		reloaded_progression_manager.queue_free()
+		return
+	var fighter_prediction: Dictionary = progression_test_manager.call("submit_spectator_prediction", "validator_duel_001", "fighter_alpha", "fighter_beta")
+	var fan_prediction: Dictionary = progression_test_manager.call("submit_spectator_prediction", "validator_duel_001", "fan_alpha", "fighter_beta")
+	var duplicate_prediction: Dictionary = progression_test_manager.call("submit_spectator_prediction", "validator_duel_001", "fan_alpha", "fighter_alpha")
+	var second_fan_prediction: Dictionary = progression_test_manager.call("submit_spectator_prediction", "validator_duel_001", "fan_beta", "fighter_alpha")
+	if str(fighter_prediction.get("reason", "")) != "FIGHTERS_CANNOT_PREDICT_OWN_MATCH" or not bool(fan_prediction.get("success", false)) or str(duplicate_prediction.get("reason", "")) != "PREDICTION_ALREADY_SUBMITTED" or not bool(second_fan_prediction.get("success", false)):
+		_fail("Spectator predictions allowed a fighter to predict their own match, duplicate a vote or reject a valid fan forecast.")
+		progression_test_manager.queue_free()
+		reloaded_progression_manager.queue_free()
+		return
+	var untrusted_settlement: Dictionary = progression_test_manager.call("settle_spectator_match", "validator_duel_001", "fighter_beta", "CLIENT_SUBMITTED_RESULT")
+	var locked_prediction: Dictionary = progression_test_manager.call("lock_spectator_predictions", "validator_duel_001")
+	var late_prediction: Dictionary = progression_test_manager.call("submit_spectator_prediction", "validator_duel_001", "fan_late", "fighter_beta")
+	var settled_prediction: Dictionary = progression_test_manager.call("settle_spectator_match", "validator_duel_001", "fighter_beta", "LOCAL_COMBAT_AUTHORITY")
+	var repeated_settlement: Dictionary = progression_test_manager.call("settle_spectator_match", "validator_duel_001", "fighter_beta", "LOCAL_COMBAT_AUTHORITY")
+	var fan_alpha_status: Dictionary = progression_test_manager.call("get_spectator_status", "fan_alpha")
+	var fan_beta_status: Dictionary = progression_test_manager.call("get_spectator_status", "fan_beta")
+	if str(untrusted_settlement.get("reason", "")) != "UNTRUSTED_MATCH_RESULT" or not bool(locked_prediction.get("success", false)) or str(late_prediction.get("reason", "")) != "PREDICTIONS_LOCKED" or not bool(settled_prediction.get("success", false)) or str(repeated_settlement.get("reason", "")) != "MATCH_NOT_LOCKED":
+		_fail("Spectator prediction locking or trusted one-time match settlement failed.")
+		progression_test_manager.queue_free()
+		reloaded_progression_manager.queue_free()
+		return
+	if int(fan_alpha_status.get("prediction_points", 0)) != 1 or int(fan_beta_status.get("prediction_points", 0)) != 0 or int(fan_alpha_status.get("cash_value", -1)) != 0 or bool(fan_alpha_status.get("transferable", true)) or bool(fan_alpha_status.get("purchasable", true)):
+		_fail("Correct fan predictions must award only non-transferable, non-purchasable points; incorrect forecasts must not lose value.")
+		progression_test_manager.queue_free()
+		reloaded_progression_manager.queue_free()
+		return
+	for daily_index in range(20):
+		var daily_match_id := "validator_daily_%02d" % daily_index
+		var daily_match: Dictionary = progression_test_manager.call("register_spectator_match", daily_match_id, "daily_fighter_a", "daily_fighter_b", 1)
+		var daily_prediction: Dictionary = progression_test_manager.call("submit_spectator_prediction", daily_match_id, "daily_fan", "daily_fighter_a")
+		if not bool(daily_match.get("success", false)) or not bool(daily_prediction.get("success", false)):
+			_fail("The free spectator daily prediction allowance failed before reaching its published limit.")
+			progression_test_manager.queue_free()
+			reloaded_progression_manager.queue_free()
+			return
+	var limit_match: Dictionary = progression_test_manager.call("register_spectator_match", "validator_daily_limit", "daily_fighter_a", "daily_fighter_b", 1)
+	var limit_prediction: Dictionary = progression_test_manager.call("submit_spectator_prediction", "validator_daily_limit", "daily_fan", "daily_fighter_a")
+	if not bool(limit_match.get("success", false)) or str(limit_prediction.get("reason", "")) != "DAILY_PREDICTION_LIMIT_REACHED":
+		_fail("Spectator daily prediction limit was not enforced consistently.")
+		progression_test_manager.queue_free()
+		reloaded_progression_manager.queue_free()
+		return
+	var spectator_reload_manager := power_tower_test_script.new() as Node
+	spectator_reload_manager.set("spectator_save_path", "user://validator_power_tower_spectator_predictions.cfg")
+	root.add_child(spectator_reload_manager)
+	await process_frame
+	var persisted_fan_status: Dictionary = spectator_reload_manager.call("get_spectator_status", "fan_alpha")
+	if int(persisted_fan_status.get("prediction_points", 0)) != 1:
+		_fail("Spectator prediction points did not persist through a manager reload.")
+		progression_test_manager.queue_free()
+		reloaded_progression_manager.queue_free()
+		spectator_reload_manager.queue_free()
+		return
 	progression_test_manager.queue_free()
 	reloaded_progression_manager.queue_free()
+	spectator_reload_manager.queue_free()
+	var prediction_file_path := ProjectSettings.globalize_path("user://validator_power_tower_spectator_predictions.cfg")
+	if FileAccess.file_exists(prediction_file_path):
+		DirAccess.remove_absolute(prediction_file_path)
+	print("QA: fan predictions reject fighter/self and duplicate entries, lock before combat, settle once from match authority, award only free non-transferable points and persist with a daily cap.")
 	var tower_player: CharacterBody3D = main.get("player") as CharacterBody3D
 	var final_boss_script := load("res://scripts/system_tower_opponent.gd") as Script
 	if tower_player == null or final_boss_script == null:
