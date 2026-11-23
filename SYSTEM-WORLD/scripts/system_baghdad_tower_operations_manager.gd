@@ -1398,7 +1398,7 @@ func _refresh_power_tower_progress_board() -> void:
 	var next_floor := int(status.get("next_floor", 1))
 	var best_time := float(status.get("best_clear_time", 0.0))
 	var best_time_text := "%.1f ثانية" % best_time if best_time > 0.0 else "لم يسجل بعد"
-	power_tower_progress_board.text = "SYSTEM POWER TOWER\nالطوابق المنجزة: %d / 200\nالطابق التالي: %s\nرتبة التقدم: %s\nأفضل وقت: %s\nالتقدم: %d%%" % [highest, "اكتمل البرج" if next_floor == 0 else str(next_floor), str(status.get("highest_rank", "-")), best_time_text, int(round(float(highest) / 200.0 * 100.0))]
+	power_tower_progress_board.text = "SYSTEM POWER TOWER — 1 VS 1\nالطوابق المنجزة: %d / 200\nالمواجهات الفردية الفائزة: %d\nانتصارات النخبة/الزعماء: %d / %d\nإجمالي رصيد المكافآت: %d\nالطابق التالي: %s | الرتبة: %s\nأفضل وقت: %s | التقدم: %d%%" % [highest, int(status.get("total_duels_won", 0)), int(status.get("elite_duels_won", 0)), int(status.get("boss_duels_won", 0)), int(status.get("total_credits_earned", 0)), "اكتمل البرج" if next_floor == 0 else str(next_floor), str(status.get("highest_rank", "-")), best_time_text, int(round(float(highest) / 200.0 * 100.0))]
 
 
 func _create_advertising_surfaces() -> void:
