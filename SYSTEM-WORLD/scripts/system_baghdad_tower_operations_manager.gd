@@ -5149,15 +5149,22 @@ func _save_restaurant_orders() -> void:
 
 
 func open_restaurant_table(table_node: Node) -> void:
-	if table_node == null or not table_node.has_meta("system_restaurant_table_id"):
+	var restaurant_table_root := table_node as Node3D
+	if restaurant_table_root == null or not restaurant_table_root.has_meta("system_restaurant_table_id"):
+		return
+	if is_instance_valid(active_floor_root) and restaurant_table_root.get_parent() != active_floor_root:
+		var interaction_parent := restaurant_table_root.get_parent() as Node3D
+		if interaction_parent != null and str(interaction_parent.get_meta("system_restaurant_table_id", "")) == str(restaurant_table_root.get_meta("system_restaurant_table_id", "")):
+			restaurant_table_root = interaction_parent
+	if is_instance_valid(active_floor_root) and restaurant_table_root.get_parent() != active_floor_root:
 		return
 	current_tower_id = "shopping_tower_baghdad"
-	current_restaurant_table_node = table_node
-	current_restaurant_table_id = str(table_node.get_meta("system_restaurant_table_id", ""))
+	current_restaurant_table_node = restaurant_table_root
+	current_restaurant_table_id = str(restaurant_table_root.get_meta("system_restaurant_table_id", ""))
 	if current_restaurant_table_id.is_empty():
 		return
 	_clear_dynamic_controls()
-	title_label.text = "مطاعم برج التسوق — " + str(table_node.get_meta("system_restaurant_table_name", "طاولة الطعام"))
+	title_label.text = "مطاعم برج التسوق — " + str(restaurant_table_root.get_meta("system_restaurant_table_name", "طاولة الطعام"))
 	credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
 	var close_button := Button.new()
 	close_button.text = "إغلاق"
@@ -5181,7 +5188,7 @@ func open_restaurant_table(table_node: Node) -> void:
 		seat_button.text = "احجز مقعداً واجلس على الطاولة"
 		var has_free_seat := false
 		for seat_index in range(4):
-			var seat_marker := table_node.get_node_or_null("RestaurantSeat_%02d" % seat_index) as Node3D
+			var seat_marker := restaurant_table_root.get_node_or_null("RestaurantSeat_%02d" % seat_index) as Node3D
 			if seat_marker != null and str(seat_marker.get_meta("system_restaurant_seat_occupant", "")).is_empty():
 				has_free_seat = true
 				break
