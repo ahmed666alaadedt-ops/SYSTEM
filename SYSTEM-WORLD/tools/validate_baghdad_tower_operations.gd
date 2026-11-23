@@ -1474,6 +1474,11 @@ func _run() -> void:
 				if spectator_seat.get_node_or_null("SpectatorSeatCollision") == null or spectator_seat.get_node_or_null("SpectatorSeatInteraction") == null or spectator_seat.get_node_or_null("SpectatorSeatStatus") == null or bool(spectator_seat.get_meta("system_spectator_seat_reserved", true)) or int(spectator_seat.get_meta("system_spectator_seat_floor", 0)) != 200:
 					_fail("A Power Tower spectator seat is missing its collision, floor identity or free initial state.")
 					return
+	var prediction_board := spectator_gallery.get_node_or_null("PowerTowerSpectatorPredictionBoard") as Node3D if spectator_gallery != null else null
+	var prediction_interaction := prediction_board.get_node_or_null("SpectatorPredictionInteraction") as Area3D if prediction_board != null else null
+	if prediction_board == null or prediction_interaction == null or not prediction_interaction.is_in_group("system_interactable") or not prediction_interaction.has_meta("system_power_tower_prediction_board"):
+		_fail("Power Tower spectator gallery is missing its interactive virtual fan-prediction board.")
+		return
 	if spectator_gallery == null or spectator_seat_count != 48 or int(spectator_gallery.get_meta("system_spectator_seat_count", 0)) != 48 or str(spectator_gallery.get_meta("system_competition_format", "")) != "INDIVIDUAL_1V1":
 		_fail("Power Tower floor 200 must provide a physical 48-seat spectator gallery for individual duels.")
 		return
@@ -1505,6 +1510,9 @@ func _run() -> void:
 	var previous_player_id := str(player.get_meta("system_player_id", ""))
 	player.set_meta("system_player_id", "validator_spectator")
 	operations.call("interact_power_tower_spectator_seat", test_seat_interaction)
+	if int(spectator_gallery.get_meta("system_spectator_seats_occupied", -1)) != 1 or not str(spectator_gallery.get_node("PowerTowerSeatAvailability").text).contains("47 / 48"):
+		_fail("Power Tower spectator seat availability board did not refresh after reservation.")
+		return
 	if not bool(test_spectator_seat.get_meta("system_spectator_seat_reserved", false)) or str(test_spectator_seat.get_meta("system_spectator_seat_owner", "")) != "validator_spectator" or not bool(player.get_meta("system_power_tower_seated", false)) or str(player.get_meta("system_power_tower_seat_id", "")) != "PT_000":
 		_fail("Power Tower spectator seat reservation did not seat and lock the local player.")
 		return
@@ -1515,6 +1523,9 @@ func _run() -> void:
 		return
 	player.set_meta("system_player_id", "validator_spectator")
 	operations.call("interact_power_tower_spectator_seat", test_seat_interaction)
+	if int(spectator_gallery.get_meta("system_spectator_seats_occupied", -1)) != 0 or not str(spectator_gallery.get_node("PowerTowerSeatAvailability").text).contains("48 / 48"):
+		_fail("Power Tower spectator seat availability board did not refresh after release.")
+		return
 	if bool(test_spectator_seat.get_meta("system_spectator_seat_reserved", true)) or bool(player.get_meta("system_power_tower_seated", true)) or player.has_meta("system_power_tower_seat_id") or test_spectator_seat.has_meta("system_spectator_seat_owner"):
 		_fail("Power Tower spectator seat could not be released by its owner.")
 		return
