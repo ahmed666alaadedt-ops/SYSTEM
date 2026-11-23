@@ -6182,11 +6182,12 @@ func _fail_power_floor(reason: String) -> void:
 	_set_status("لم تنجح في التحدي: " + reason + " حاول مرة أخرى من المصعد.")
 
 
-func grant_power_tower_credits(floor_number: int, final_boss: bool = false) -> int:
-	var reward := 75 + floor_number * 15 + (5000 if final_boss else 0)
-	credits += reward
+func grant_power_tower_credits(reward_amount: int) -> int:
+	if reward_amount <= 0:
+		return 0
+	credits += reward_amount
 	_save_wallet()
-	return reward
+	return reward_amount
 
 
 func _complete_power_floor() -> void:
@@ -6208,7 +6209,7 @@ func _complete_power_floor() -> void:
 				progression.call("add_item", str(item_id), 1)
 				loot_names.append(str(item_id))
 		var loot_text := " | الغنائم: " + ", ".join(loot_names) if not loot_names.is_empty() else ""
-		var credit_reward := grant_power_tower_credits(floor_number, final_boss)
+		var credit_reward := grant_power_tower_credits(int(result.get("reward_credits", 0)))
 		_refresh_power_tower_progress_board()
 		if is_instance_valid(active_power_objective_label):
 			active_power_objective_label.text = "تم اجتياز الطابق %d" % floor_number
