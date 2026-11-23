@@ -165,4 +165,9 @@ func _run_validation() -> void:
 	print("SYSTEM NPC QA PASS: civilians do not join missions or initiate combat; minors evade and adults defend/retreat when attacked")
 	child.queue_free()
 	adult.queue_free()
+	population.queue_free()
+	attacker.queue_free()
+	society.queue_free()
+	daily_life.queue_free()
+	await process_frame
 	quit(0)
