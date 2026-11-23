@@ -730,8 +730,14 @@ func _run() -> void:
 		return
 	power_probe.call("abandon_active_floor")
 	power_probe.queue_free()
+	var power_tower_theme_ids: Dictionary = {}
 	for floor_number in range(1, 201):
 		var floor_data: Dictionary = power_manager.call("get_floor_data", floor_number)
+		var theme_id := str(floor_data.get("arena_theme_id", ""))
+		if theme_id.is_empty():
+			_fail("Power Tower floor %d is missing its arena environment theme." % floor_number)
+			return
+		power_tower_theme_ids[theme_id] = true
 		if int(floor_data.get("floor", 0)) != floor_number or int(floor_data.get("required_level", 999)) > 100:
 			_fail("Power Tower floor data or level gate is invalid at floor %d." % floor_number)
 			return
@@ -751,6 +757,9 @@ func _run() -> void:
 		if str(floor_data.get("objective_type", "")) != expected_objective:
 			_fail("Power Tower floor %d does not use a single-opponent defeat objective." % floor_number)
 			return
+	if power_tower_theme_ids.size() != 10:
+		_fail("Power Tower must expose ten distinct 20-floor environment themes.")
+		return
 	var power_tower := tower_manager.get_node_or_null("PowerTower") as Node3D
 	var power_lobby := power_tower.get_node_or_null("PublicLobby_Blockout") as Node3D
 	var progress_board := power_lobby.get_node_or_null("PowerTowerProgressBoard") as Label3D
@@ -1190,6 +1199,13 @@ func _run() -> void:
 	var boss_room := operations.call("_ensure_floor_room", "power_tower_baghdad", 200) as Node3D
 	if boss_room == null or boss_room.get_node_or_null("BossTrialPlatform") == null:
 		_fail("Power Tower floor 200 boss arena was not generated.")
+		return
+	var boss_theme_pillar_count := 0
+	for boss_room_child in boss_room.get_children():
+		if str(boss_room_child.name).begins_with("ArenaThemePillar_"):
+			boss_theme_pillar_count += 1
+	if boss_room.get_node_or_null("ArenaThemeRing") == null or boss_theme_pillar_count != 4 or str(boss_room.get_meta("system_power_tower_theme", "")) != "SOVEREIGN":
+		_fail("Power Tower final sovereign arena is missing its unique themed ring and four pylons.")
 		return
 	var spectator_gallery := boss_room.get_node_or_null("PowerTowerSpectatorGallery") as Node3D
 	var spectator_seat_count := 0
