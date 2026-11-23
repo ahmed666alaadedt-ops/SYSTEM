@@ -32,6 +32,20 @@ Runtime acceptance criteria:
 - If matchmaking is unavailable, show a clear waiting/unavailable state. Never spawn a bot or simulate a result.
 - Floor 200 retains its unique sovereign title-duel profile and rewards, which are granted only after a trusted human-versus-human result is verified.
 
+### 2.1 Registration, referees, scoring and career discipline
+
+The tower adapts the recognizable tournament structure of an anime-style martial-arts arena while keeping SYSTEM's own 200-floor identity, Baghdad setting, combat engine and economy. It does not reproduce anime dialogue, character identities, scenes or visual assets.
+
+- Every entrant registers at the official desk, receives a persistent fighter number and a division record, then is called to a named arena and waiting room.
+- The 200 floors are grouped into twenty ten-floor divisions. Floor profiles expose their division number and division range; floor 100 grants eligibility for a private fighter room; weapons are enabled only for the final floor-200 challenge.
+- A three-official panel supervises each duel: a head referee, a technical judge and a safety judge. The head referee controls the start, pauses, stoppages and final declaration; judges record valid scoring events and the safety official may stop an unsafe fight.
+- A clean hit awards 1 point, a critical hit awards 2 points, and forcing the opponent down awards 1 additional point. Reaching 10 points ends the match by technical knockout (TKO). A knockout (KO), judges' decision, forfeit or referee stoppage are also supported endings. The arena has no ordinary round timer; a safety stoppage overrides the no-timer rule.
+- Every score event requires an authorized official, a valid fighter identity and a unique event ID; duplicate score events are rejected. The result must come from the configured match authority before career penalties or rewards are applied.
+- A normal verified win advances the fighter through the floor ladder. Three consecutive verified losses demote the fighter by one ten-floor division. Ten cumulative verified losses disqualify the fighter from the tower circuit and reset unlocked tower progress to the entry floor. Earned XP, inventory and wallet credits are not confiscated. A verified win breaks the consecutive-loss streak.
+- The loss record and disqualification state persist between sessions. A disqualified fighter cannot request another floor until an authorized tower reinstatement process is added.
+- The public boards and each arena display show the division, judge panel, point values, TKO threshold and loss penalties so competitors and spectators know the rules before a match.
+- Spectator predictions remain a separate virtual-credit pool. They do not affect the judges, score, opponent selection, fighter rank or match result.
+
 ## 3. Floor environment progression
 
 The 200 floors are arranged into ten visual environment chapters, with twenty floors per theme:
