@@ -142,3 +142,12 @@ Implementation status: a local prototype now records individual 1v1 matches, ded
 - The public panels explicitly label the content as a live individual 1v1 match and show the verified winner only after completion.
 - Regression validation checks that a floor-200 result reaches both the outside and lobby panels with the correct floor and winner.
 - Scope: this update is a live score/result broadcast, not a camera-video stream. Live spectator camera/video routing and remote/global match feeds remain unimplemented and must not be represented as available.
+
+
+## 13. Shared 3D arena camera feed — 23 November 2026
+
+- Added a dedicated 640×360 Godot SubViewport camera for the active Power Tower arena, rendering the existing 3D arena world rather than a prerecorded clip.
+- The outside tower display and inside public-lobby display use the same live ViewportTexture, so both show the same active arena viewpoint while the score and match-state overlay continues updating.
+- The camera is created lazily when a match update arrives and targets the corresponding floor-200/active-floor arena. The feed is a real-time in-engine 3D view; it is not an encoded network video stream, remote spectator service, or broadcast to other players/devices.
+- Regression checks verify the viewport, active camera, texture-backed screen surfaces and shared public-display installation.
+- Individual 1v1 competition remains unchanged. Virtual fan predictions and virtual-credit settlement are unchanged.
