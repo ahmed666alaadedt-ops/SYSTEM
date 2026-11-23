@@ -888,6 +888,9 @@ func _on_interaction_performed(
 		" / ",
 		location_id
 	)
+	if target.has_meta("system_power_tower_spectator_seat_interaction") and tower_operations_manager != null:
+		tower_operations_manager.call("interact_power_tower_spectator_seat", target)
+		return
 	if target.has_meta("system_power_tower_ticket_terminal") and tower_operations_manager != null:
 		tower_operations_manager.call("open_power_tower_ticket_terminal")
 		return
@@ -1368,6 +1371,9 @@ func _physics_process(delta: float) -> void:
 		player.velocity = Vector3.ZERO
 		return
 	if bool(player.get_meta("system_restaurant_seated", false)) or bool(player.get_meta("system_restaurant_seating_transition", false)):
+		player.velocity = Vector3.ZERO
+		return
+	if bool(player.get_meta("system_power_tower_seated", false)):
 		player.velocity = Vector3.ZERO
 		return
 	if vehicle_runtime_manager != null and vehicle_runtime_manager.is_driving:
