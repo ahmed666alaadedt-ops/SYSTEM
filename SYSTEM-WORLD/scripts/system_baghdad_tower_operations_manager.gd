@@ -2,7 +2,6 @@ extends Node
 class_name SYSTEMBaghdadTowerOperationsManager
 
 const NPCCharacterModelScript = preload("res://scripts/npc_character_model.gd")
-const TowerOpponentScript = preload("res://scripts/system_tower_opponent.gd")
 const TowerFloorThemeBuilder = preload("res://scripts/system_baghdad_tower_floor_theme_builder.gd")
 const SAVE_PATH := "user://system_baghdad_tower_operations.cfg"
 const STOCK_SAVE_PATH := "user://system_tower_vendor_stock.cfg"
@@ -237,6 +236,8 @@ var total_waves := 0
 var opponents_per_wave := 0
 var defeated_in_wave := 0
 var power_floor_in_progress := false
+var power_floor_entry_pending := false
+var active_power_tower_match: Dictionary = {}
 var customer_ids_by_tower: Dictionary = {}
 var customer_purchase_clock := 0.0
 var customer_walk_clock := 0.0
@@ -6175,7 +6176,9 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 			_set_status("تعذر بدء التحدي: " + str(request.get("reason", "غير معروف")))
 			return
 		active_power_floor_data = request.get("floor_data", {})
-		power_floor_in_progress = true
+		power_floor_entry_pending = true
+		power_floor_in_progress = false
+		active_power_tower_match.clear()
 	if is_instance_valid(active_floor_root) and (tower_id != current_tower_id or floor_number != int(active_floor_root.get_meta("system_tower_floor_number", 0))):
 		_release_player_restaurant_seat()
 		_clear_pool_visit_state()
@@ -6207,7 +6210,7 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 			player.velocity = Vector3.ZERO
 		_place_floor_duty_staff_on_floor(duty_staff_trip, room, float(config["radius"]))
 		_place_floor_duty_staff_on_floor(restaurant_support_staff_trip, room, float(config["radius"]))
-		if tower_id == "power_tower_baghdad" and power_floor_in_progress:
+		if tower_id == "power_tower_baghdad" and power_floor_entry_pending:
 			_begin_power_floor()
 		elif tower_id != "power_tower_baghdad":
 			_place_customer_visitors_on_floor(tower_id, floor_number, room)
