@@ -466,6 +466,8 @@ func create_power_tower_manager() -> void:
 	add_child(power_tower_manager)
 	power_tower_manager.floor_cleared.connect(_on_power_tower_floor_cleared)
 	power_tower_manager.floor_cleared.connect(_on_public_power_tower_floor_cleared)
+	power_tower_manager.duel_score_updated.connect(_on_power_tower_duel_score_updated)
+	power_tower_manager.duel_completed.connect(_on_power_tower_duel_completed)
 
 
 func create_modern_world_combat_system() -> void:
@@ -494,6 +496,16 @@ func create_baghdad_tower_operations_manager() -> void:
 		player_combat_health,
 		region_manager
 	)
+
+
+func _on_power_tower_duel_score_updated(_match_id: String, duel_data: Dictionary) -> void:
+	if tower_operations_manager != null:
+		tower_operations_manager.call("update_power_tower_live_match_display", int(duel_data.get("floor", 0)), duel_data, false)
+
+
+func _on_power_tower_duel_completed(_match_id: String, duel_data: Dictionary) -> void:
+	if tower_operations_manager != null:
+		tower_operations_manager.call("update_power_tower_live_match_display", int(duel_data.get("floor", 0)), duel_data, true)
 
 
 func _on_power_tower_floor_cleared(floor_number: int, reward_xp: int, rank: String) -> void:
