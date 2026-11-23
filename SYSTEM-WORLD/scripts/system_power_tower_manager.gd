@@ -4,6 +4,8 @@ class_name SYSTEMPowerTowerManager
 signal floor_started(floor_number: int, floor_data: Dictionary)
 signal floor_cleared(floor_number: int, reward_xp: int, rank: String)
 signal tower_record_updated(highest_floor: int)
+signal duel_score_updated(match_id: String, duel_data: Dictionary)
+signal duel_completed(match_id: String, duel_data: Dictionary)
 
 const SAVE_PATH := "user://system_power_tower.cfg"
 const MAX_FLOORS := 200
@@ -272,6 +274,7 @@ func record_judged_duel_event(match_id: String, judge_id: String, attacker_id: S
 	var reached_tko := int(score.get(attacker_id, 0)) >= DUEL_TKO_SCORE
 	duel_matches[match_id] = duel
 	_save_duel_records()
+	duel_score_updated.emit(match_id, duel.duplicate(true))
 	return {"success": true, "fighter_id": attacker_id, "event_type": event_type, "points_awarded": points, "fighter_score": int(score.get(attacker_id, 0)), "opponent_score": int(score.get(opponent_id, 0)), "knockdowns": int(knockdowns.get(attacker_id, 0)), "tko_reached": reached_tko, "judge_id": judge_id}
 
 
@@ -306,6 +309,7 @@ func finish_judged_duel(match_id: String, winner_id: String, finish_type: String
 	duel_matches[match_id] = duel
 	var career_result := _record_duel_career_result(winner_id, loser_id, int(duel.get("floor", 1)), str(duel.get("local_player_id", "PLAYER")))
 	_save_duel_records()
+	duel_completed.emit(match_id, duel.duplicate(true))
 	return {"success": true, "winner_id": winner_id, "loser_id": loser_id, "finish_type": finish_type, "score": score.duplicate(true), "career_result": career_result, "cash_value": 0}
 
 
