@@ -2904,7 +2904,42 @@ func update_power_tower_live_match_display(floor_number: int, duel_data: Diction
 		else:
 			crowd_reaction.text = "الجمهور يترقب المواجهة المتكافئة!"
 			crowd_reaction.modulate = Color(0.8, 0.9, 1.0)
+		var audience_mood := "celebrating" if completed else "cheering" if score_a != score_b else "watching"
+		_react_power_tower_audience(gallery, audience_mood)
 	_update_power_tower_public_live_broadcast(floor_number, duel_data, completed)
+
+
+func _react_power_tower_audience(gallery: Node3D, mood: String) -> void:
+	if gallery == null:
+		return
+	gallery.set_meta("system_audience_reaction", mood)
+	var audience_root := gallery.get_node_or_null("PowerTowerAudienceActors") as Node3D
+	if audience_root == null:
+		return
+	for actor_node in audience_root.get_children():
+		var actor := actor_node as Node3D
+		if actor == null:
+			continue
+		actor.set_meta("system_audience_reaction", mood)
+		var arm_target := 0.0
+		if mood == "cheering":
+			arm_target = 0.82
+		elif mood == "celebrating":
+			arm_target = 1.22
+		var previous_tween: Variant = actor.get_meta("system_audience_reaction_tween", null)
+		if previous_tween is Tween and (previous_tween as Tween).is_running():
+			(previous_tween as Tween).kill()
+		var cheer_tween := create_tween()
+		cheer_tween.set_parallel(true)
+		for arm_name in ["ArmLeft", "ArmRight"]:
+			var arm := actor.get_node_or_null(arm_name) as Node3D
+			if arm != null:
+				var side_sign := -1.0 if arm_name == "ArmLeft" else 1.0
+				cheer_tween.tween_property(arm, "rotation:z", arm_target * side_sign, 0.28)
+		var torso := actor.get_node_or_null("Torso") as MeshInstance3D
+		if torso != null:
+			cheer_tween.tween_property(torso, "scale", Vector3.ONE * (1.08 if mood == "celebrating" else 1.03 if mood == "cheering" else 1.0), 0.22)
+		actor.set_meta("system_audience_reaction_tween", cheer_tween)
 
 
 func _create_power_tower_referee_stations(room: Node3D, arena_radius: float, accent_color: Color) -> void:
@@ -3495,6 +3530,68 @@ func _create_power_tower_spectator_gallery(room: Node3D, radius: float) -> void:
 	gallery_label.pixel_size = 0.012
 	gallery_label.modulate = Color(0.72, 0.94, 1.0)
 	gallery.add_child(gallery_label)
+	var audience_root := Node3D.new()
+	audience_root.name = "PowerTowerAudienceActors"
+	audience_root.set_meta("system_audience_actor_count", 8)
+	gallery.add_child(audience_root)
+	var audience_palette := [
+		Color(0.12, 0.55, 0.72), Color(0.78, 0.38, 0.20),
+		Color(0.36, 0.66, 0.42), Color(0.55, 0.38, 0.78),
+		Color(0.78, 0.62, 0.22), Color(0.22, 0.62, 0.62),
+		Color(0.72, 0.30, 0.48), Color(0.42, 0.52, 0.66)
+	]
+	for audience_index in range(8):
+		var side := audience_index / 2
+		var side_slot := audience_index % 2
+		var angle := TAU * float(side) / 4.0
+		var outward := Vector3(cos(angle), 0.0, sin(angle))
+		var tangent := Vector3(-outward.z, 0.0, outward.x)
+		var audience_actor := Node3D.new()
+		audience_actor.name = "AudienceActor_%02d" % audience_index
+		audience_actor.position = outward * (radius * 0.55 + 4.6) + tangent * (float(side_slot) - 0.5) * 4.2
+		audience_actor.rotation.y = atan2(-outward.x, -outward.z)
+		audience_actor.set_meta("system_audience_actor", true)
+		audience_actor.set_meta("system_audience_reaction", "watching")
+		audience_root.add_child(audience_actor)
+		var torso := MeshInstance3D.new()
+		torso.name = "Torso"
+		var torso_mesh := CapsuleMesh.new()
+		torso_mesh.radius = 0.34
+		torso_mesh.height = 1.25
+		torso.mesh = torso_mesh
+		var torso_material := StandardMaterial3D.new()
+		torso_material.albedo_color = audience_palette[audience_index]
+		torso_material.roughness = 0.78
+		torso.material_override = torso_material
+		torso.position.y = 1.0
+		audience_actor.add_child(torso)
+		var head := MeshInstance3D.new()
+		head.name = "Head"
+		var head_mesh := SphereMesh.new()
+		head_mesh.radius = 0.27
+		head_mesh.height = 0.54
+		head.mesh = head_mesh
+		var head_material := StandardMaterial3D.new()
+		head_material.albedo_color = Color(0.72, 0.54, 0.42)
+		head.material_override = head_material
+		head.position.y = 1.82
+		audience_actor.add_child(head)
+		for arm_side in [-1, 1]:
+			var arm_pivot := Node3D.new()
+			arm_pivot.name = "ArmLeft" if arm_side < 0 else "ArmRight"
+			arm_pivot.position = Vector3(0.39 * float(arm_side), 1.42, 0.0)
+			var arm_mesh := MeshInstance3D.new()
+			arm_mesh.name = "ArmMesh"
+			var arm_capsule := CapsuleMesh.new()
+			arm_capsule.radius = 0.12
+			arm_capsule.height = 0.86
+			arm_mesh.mesh = arm_capsule
+			arm_mesh.position.y = -0.40
+			arm_mesh.material_override = torso_material
+			arm_pivot.add_child(arm_mesh)
+			audience_actor.add_child(arm_pivot)
+	gallery.set_meta("system_audience_actor_count", 8)
+	room.set_meta("system_power_tower_audience_actor_count", 8)
 	gallery.set_meta("system_spectator_seat_count", seat_count)
 	room.set_meta("system_power_tower_spectator_seat_count", seat_count)
 
