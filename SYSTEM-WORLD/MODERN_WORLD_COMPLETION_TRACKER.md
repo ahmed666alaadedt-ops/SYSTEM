@@ -1324,3 +1324,18 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [ ] Add multiplayer QA for match pairing, rank boundaries, server-authoritative combat, disconnect recovery, duplicate/replayed results, rewards-once-only, spectator privacy and cross-device persistence. Run full Godot validation and Android build on the same exact HEAD.
 - [ ] Keep PR #38 draft and do not merge to main without explicit user approval.
 
+
+### Power Tower climb deadlines, player predictions, and achievement prizes — approved 23 November 2026
+
+- [x] Confirm that official combat remains exclusively between authenticated real players; NPCs may train, guide, referee or host the arena but never replace a human opponent in ranked or championship combat.
+- [x] Approve a per-floor challenge deadline: when a player reaches and claims a floor, a visible countdown begins and the player must enter/complete the required official duel before that floor's configured deadline.
+- [x] Approve timeout consequence: if the player does not fight before the deadline, revoke their current-floor claim and return them to the previous earned checkpoint/floor; they must climb and qualify again. Preserve already-earned permanent rewards and do not erase unrelated character progression.
+- [x] Approve player-versus-player match predictions as a spectator/social feature. Predictions use non-purchasable, non-cash in-game prediction points only; no player stakes real money or withdrawable value, and prediction points cannot be converted to cash.
+- [x] Keep monetary prizes separate from predictions and wagers: eligible players may receive achievement-based prizes for verified competitive milestones/floor advancement under published eligibility, anti-cheat, age, regional-law and payout rules. Prize funding must never come from losing players' stakes.
+- [ ] Define configurable floor deadlines, grace periods, notification cadence and fair pause rules for verified server outages or exceptional disconnects; do not punish a player solely for a platform-wide outage.
+- [ ] Define the achievement prize ladder, eligibility, funding cap, identity/age verification, regional availability, tax/payment handling and dispute process before enabling any real-money payout. Keep payouts disabled until legal and payment-provider review is complete.
+- [ ] Implement authoritative server timestamps and floor-claim records so clients cannot pause, reset or alter deadlines; resolve expiry once only and prevent duplicate demotion/reward processing.
+- [ ] Implement prediction windows that close before match start, lock submitted predictions, settle only from a server-verified result, and prevent self-betting, collusion, duplicate accounts and manipulation.
+- [ ] Extend multiplayer QA for deadline start/expiry, checkpoint rollback, offline/outage grace, prediction lock/settlement, verified milestone rewards, duplicate claims and cross-device persistence.
+- [ ] This section records approved design scope only; it is not a claim that player-versus-player matchmaking, prediction settlement or real-money prize payouts are implemented.
+- [ ] Keep PR #38 as draft and do not merge into main without explicit user approval.
