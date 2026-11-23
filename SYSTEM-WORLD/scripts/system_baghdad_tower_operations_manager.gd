@@ -5263,6 +5263,7 @@ func _advance_restaurant_order(table_id: String, next_status: String) -> void:
 	var order: Dictionary = restaurant_orders[table_id]
 	var current := str(order.get("status", ""))
 	var allowed := {
+		"awaiting_waiter": "placed",
 		"placed": "preparing",
 		"preparing": "ready",
 		"ready": "served",
@@ -5534,6 +5535,19 @@ func _release_restaurant_customer_seat(visitor: Node3D) -> void:
 			var occupants: Array = table_root.get_meta("system_restaurant_occupants", [])
 			occupants.erase(customer_id)
 			table_root.set_meta("system_restaurant_occupants", occupants)
+		var npc_order_id := str(table_root.get_meta("system_restaurant_table_id", "")) + "_npc"
+		var npc_order: Dictionary = restaurant_orders.get(npc_order_id, {})
+		if not npc_order.is_empty() and bool(npc_order.get("npc_order", false)):
+			var diners: Array = npc_order.get("customer_ids", [])
+			diners.erase(customer_id)
+			if diners.is_empty():
+				npc_order["status"] = "completed" if str(npc_order.get("status", "")) == "served" else "cancelled_guest_departed"
+				restaurant_order_history.append(npc_order.duplicate(true))
+				restaurant_orders.erase(npc_order_id)
+			else:
+				npc_order["customer_ids"] = diners
+				restaurant_orders[npc_order_id] = npc_order
+			_save_restaurant_orders()
 		visitor.remove_meta("system_restaurant_table_node")
 		visitor.remove_meta("system_restaurant_seat_node")
 	var queue_name := str(visitor.get_meta("system_restaurant_queue_marker", ""))
