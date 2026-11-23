@@ -6586,6 +6586,13 @@ func begin_verified_power_tower_pvp_match(match_data: Dictionary, local_player_i
 		var fighters_match := (str(existing_match.get("fighter_a_id", "")) == local_player_id and str(existing_match.get("fighter_b_id", "")) == opponent_player_id) or (str(existing_match.get("fighter_a_id", "")) == opponent_player_id and str(existing_match.get("fighter_b_id", "")) == local_player_id)
 		if not fighters_match or int(existing_match.get("floor_number", 0)) != floor_number or str(existing_match.get("state", "")) != "open":
 			return {"success": false, "reason": "MATCH_IDENTITY_MISMATCH"}
+	var local_registration: Dictionary = power_tower_manager.call("register_tower_fighter", local_player_id)
+	var opponent_registration: Dictionary = power_tower_manager.call("register_tower_fighter", opponent_player_id)
+	if not bool(local_registration.get("success", false)) or not bool(opponent_registration.get("success", false)):
+		return {"success": false, "reason": "FIGHTER_REGISTRATION_FAILED"}
+	var judged_duel_registration: Dictionary = power_tower_manager.call("register_judged_duel", match_id, local_player_id, opponent_player_id, floor_number, local_player_id)
+	if not bool(judged_duel_registration.get("success", false)):
+		return judged_duel_registration
 	var lock_result: Dictionary = power_tower_manager.call("lock_spectator_predictions", match_id)
 	if not bool(lock_result.get("success", false)):
 		return lock_result
