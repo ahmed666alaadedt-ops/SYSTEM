@@ -3381,11 +3381,12 @@ func _release_power_tower_spectator_seat() -> void:
 	if not is_instance_valid(player) or not bool(player.get_meta("system_power_tower_seated", false)):
 		return
 	var seat_id := str(player.get_meta("system_power_tower_seat_id", ""))
+	var seat_floor := int(player.get_meta("system_power_tower_seat_floor", 0))
 	var floors_root := prepared_towers.get("power_tower_baghdad") as Node3D
 	if floors_root != null:
 		for floor_node in floors_root.get_children():
 			var floor_room := floor_node as Node3D
-			if floor_room == null:
+			if floor_room == null or int(floor_room.get_meta("system_power_tower_floor", 0)) != seat_floor:
 				continue
 			var gallery := floor_room.get_node_or_null("PowerTowerSpectatorGallery") as Node3D
 			if gallery == null:
@@ -3406,6 +3407,7 @@ func _release_power_tower_spectator_seat() -> void:
 				break
 	player.set_meta("system_power_tower_seated", false)
 	player.remove_meta("system_power_tower_seat_id")
+	player.remove_meta("system_power_tower_seat_floor")
 	player.velocity = Vector3.ZERO
 
 
@@ -3429,6 +3431,7 @@ func interact_power_tower_spectator_seat(target: Node) -> void:
 			return
 		player.set_meta("system_power_tower_seated", false)
 		player.remove_meta("system_power_tower_seat_id")
+		player.remove_meta("system_power_tower_seat_floor")
 		player.velocity = Vector3.ZERO
 		player.global_position = seat.global_position + Vector3(0.0, 0.15, 2.4)
 		seat.set_meta("system_spectator_seat_reserved", false)
@@ -3445,6 +3448,7 @@ func interact_power_tower_spectator_seat(target: Node) -> void:
 	player.velocity = Vector3.ZERO
 	player.set_meta("system_power_tower_seated", true)
 	player.set_meta("system_power_tower_seat_id", str(seat.get_meta("system_spectator_seat_id", "")))
+	player.set_meta("system_power_tower_seat_floor", int(seat.get_meta("system_spectator_seat_floor", 0)))
 	if is_instance_valid(status_label):
 		status_label.text = "محجوز — أنت هنا"
 	if is_instance_valid(status_label):
