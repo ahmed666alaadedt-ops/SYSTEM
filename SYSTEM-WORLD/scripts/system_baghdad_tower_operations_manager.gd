@@ -1241,6 +1241,8 @@ func _move_customer_visitors(hour_override: int = -1) -> void:
 				if not str(visitor.name).begins_with("TowerCustomer_") or not visitor is Node3D:
 					continue
 				var visitor_node := visitor as Node3D
+				if visitor_node.has_meta("system_restaurant_table_node") or visitor_node.has_meta("system_restaurant_queue_marker"):
+					continue
 				var customer_index := int(visitor_node.get_meta("system_tower_customer_index", 0))
 				var radius := float(config.get("radius", 20.0))
 				var target := Vector3.ZERO
