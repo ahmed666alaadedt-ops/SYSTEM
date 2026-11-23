@@ -64,6 +64,7 @@ var npc_city_navigation_manager
 var hunter_exam_manager
 var power_tower_manager
 var tower_operations_manager
+var power_tower_score_event_counter := 0
 var player_combat_health: Node
 var inventory_panel: CanvasLayer
 
@@ -475,6 +476,7 @@ func create_modern_world_combat_system() -> void:
 	modern_world_combat_system.name = "ModernWorldCombatSystem"
 	add_child(modern_world_combat_system)
 	modern_world_combat_system.call("bind_actor", player, camera, player_progression)
+	modern_world_combat_system.attack_performed.connect(_on_power_tower_attack_performed)
 
 
 func create_baghdad_tower_operations_manager() -> void:
@@ -496,6 +498,25 @@ func create_baghdad_tower_operations_manager() -> void:
 		player_combat_health,
 		region_manager
 	)
+
+
+func _on_power_tower_attack_performed(damage: float, hit_target: Node) -> void:
+	if not is_instance_valid(tower_operations_manager) or not bool(tower_operations_manager.get("power_floor_in_progress")):
+		return
+	var active_match: Dictionary = tower_operations_manager.get("active_power_tower_match")
+	if active_match.is_empty():
+		return
+	var match_id := str(active_match.get("match_id", ""))
+	var local_player_id := str(active_match.get("local_player_id", ""))
+	if match_id.is_empty() or local_player_id.is_empty():
+		return
+	power_tower_score_event_counter += 1
+	var event_type := "CRITICAL_HIT" if damage >= 80.0 else "CLEAN_HIT"
+	var event_id := "%s_local_hit_%08d" % [match_id, power_tower_score_event_counter]
+	power_tower_manager.call("record_judged_duel_event", match_id, "HEAD_REFEREE", local_player_id, event_type, event_id)
+	if is_instance_valid(hit_target) and bool(hit_target.get_meta("system_duel_knockdown", false)):
+		power_tower_score_event_counter += 1
+		power_tower_manager.call("record_judged_duel_event", match_id, "SAFETY_JUDGE", local_player_id, "OPPONENT_DOWN", "%s_local_down_%08d" % [match_id, power_tower_score_event_counter])
 
 
 func _on_power_tower_duel_score_updated(_match_id: String, duel_data: Dictionary) -> void:
