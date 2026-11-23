@@ -6130,7 +6130,7 @@ func _spawn_power_wave() -> void:
 		var angle := TAU * float(index) / float(maxi(count, 1))
 		opponent.position = Vector3(cos(angle) * 9.0, 1.1, sin(angle) * 9.0)
 		active_opponents[opponent.get_instance_id()] = opponent
-	_set_status("برج القوة — الطابق %d\nالموجة %d من %d | خصوم: %d" % [int(active_power_floor_data.get("floor", 1)), current_wave, total_waves, count])
+	_set_status("برج القوة — الطابق %d\nمواجهة فردية 1 ضد 1 | خصم واحد فقط" % int(active_power_floor_data.get("floor", 1)))
 
 func _on_power_opponent_defeated(opponent: Node) -> void:
 	if opponent == null:
@@ -6150,16 +6150,11 @@ func _on_power_opponent_defeated(opponent: Node) -> void:
 func _update_power_objective_display() -> void:
 	if not is_instance_valid(active_power_objective_label) or active_power_floor_data.is_empty():
 		return
-	var objective := str(active_power_floor_data.get("objective_type", "ELIMINATE_WAVES"))
-	var seconds := int(ceil(power_floor_timer_remaining))
-	var objective_text := "أكمل موجات الخصوم"
-	if objective == "SURVIVE_TIMER":
-		objective_text = "اصمد حتى انتهاء الوقت"
-	elif objective == "CLEAR_WITHIN_TIME":
-		objective_text = "اهزم جميع الخصوم قبل انتهاء الوقت"
-	elif objective == "DEFEAT_BOSS":
-		objective_text = "اهزم زعيم الطابق"
-	active_power_objective_label.text = objective_text + ("\nالوقت المتبقي: %d ثانية" % seconds if power_floor_timer_remaining > 0.0 else "")
+	var objective := str(active_power_floor_data.get("objective_type", "DEFEAT_OPPONENT"))
+	var objective_text := "مواجهة فردية 1 ضد 1 — اهزم خصمك الوحيد"
+	if objective == "DEFEAT_BOSS":
+		objective_text = "مواجهة فردية ضد زعيم الطابق — اهزم الزعيم وحدك"
+	active_power_objective_label.text = objective_text
 
 
 func _clear_active_power_opponents() -> void:
