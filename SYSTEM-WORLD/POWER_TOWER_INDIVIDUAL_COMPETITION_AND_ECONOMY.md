@@ -69,7 +69,7 @@ Each chapter changes its floor-deck material, arena ring, four environmental pyl
 - The gallery is for viewing individual human-versus-human duels only; it does not create combat teams or permit AI combat substitutes.
 - The tower career record persists total individual duel wins, elite-duel wins, boss-duel wins, lifetime XP earned and lifetime virtual credits earned.
 - The Power Tower lobby progress board displays the 1v1 format, floor progression, duel wins, elite/boss wins, lifetime credits and best clear time.
-- Seat reservation/standing interactions, autonomous audience NPCs, live match spectator cameras and prediction terminals are separate follow-up work; the current 48-seat gallery is a physical visual seating prototype.
+- Seat reservation/standing interactions, autonomous audience NPCs and live match spectator cameras remain follow-up work; the 48-seat gallery is a physical seating prototype, and a working local virtual-ticket terminal is now installed in the public lobby.
 
 ## 5. Battle displays — outside, lobby and every active arena floor
 
@@ -102,7 +102,7 @@ Approved design:
 - All tickets, stakes and winnings are virtual SYSTEM credits only. They cannot be bought as tickets, gifted, transferred to another player, withdrawn or converted to real money. No real-money betting or cash prizes.
 - NPC fans may enter as clearly labelled simulated identities with a fixed, persisted 300-credit virtual ticket budget. Their winnings remain in NPC-only balances; never present them as real users or live global participants.
 
-Implementation status: a local prototype now records individual 1v1 matches, deducts virtual ticket stakes through the shared local SYSTEM wallet, locks one ticket per fan, settles the complete pool proportionally from the local match-authority path, refunds the pool when no ticket selected the winner, and persists the gross payout/net-profit ledger. Clearly labelled NPC spectators can also stake from a separate fixed virtual budget and receive winnings only into NPC-only balances. It rejects fighter self-prediction, duplicate tickets, invalid selections, late submissions, insufficient balances and submissions beyond the daily cap. This remains a local prototype: account-level wallet isolation, automated NPC crowd selection, a playable spectator interface, live matchmaking, server-authoritative combat results, anti-cheat/anti-collusion, global rankings and cross-device persistence are not yet implemented.
+Implementation status: a local prototype now records individual 1v1 matches, deducts virtual ticket stakes through the shared local SYSTEM wallet, locks one ticket per fan, settles the complete pool proportionally from the local match-authority path, refunds the pool when no ticket selected the winner, and persists the gross payout/net-profit ledger. Clearly labelled NPC spectators can also stake from a separate fixed virtual budget and receive winnings only into NPC-only balances. It rejects fighter self-prediction, duplicate tickets, invalid selections, late submissions, insufficient balances and submissions beyond the daily cap. This remains a local prototype: account-level wallet isolation, automated NPC crowd selection, live online matchmaking, server-authoritative combat results, anti-cheat/anti-collusion, global rankings and cross-device persistence are not yet implemented. A lobby terminal now lets a local player select an open match, choose one of its two fighters and stake 1–500 virtual credits; each registered judged duel automatically opens its corresponding spectator pool and locks/settles accepted tickets when the official result is recorded.
 
 ## 8. Fair access
 
@@ -125,3 +125,11 @@ Implementation status: a local prototype now records individual 1v1 matches, ded
 - The Power Tower manager publishes score-update and duel-completion signals. The main game connects these signals to the Baghdad tower operations manager, which updates the matching floor's live arena display with both fighter IDs, current points, match state and verified winner.
 - The outside entrance board and public lobby board list all ten-floor divisions and the published scoring/loss rules. Each arena screen identifies its own floor and division.
 - The referee scoring and career discipline are local prototype logic. The `LOCAL_COMBAT_AUTHORITY` gate is not a substitute for a remote trusted server; online human matchmaking, signed judge events and server-side career persistence remain future integration work.
+
+
+## 11. Spectator ticket terminal and match lifecycle
+
+- A physical interactive virtual-ticket terminal is placed in the public lobby. Interacting with it opens the in-game betting panel.
+- The panel lists open 1v1 matches, shows each floor, both fighters and the current pool, lets the spectator choose one fighter and stake 1–500 SYSTEM credits, and confirms or rejects the ticket with a clear reason.
+- Registering a judged duel automatically registers its spectator pool. Once the referee settles the duel, the manager locks the pool and distributes the virtual pool proportionally to correct tickets; losing tickets receive no payout and no-correct-ticket pools are refunded.
+- This terminal is local gameplay UI. It does not connect to a global online betting exchange or real-money payment service.
