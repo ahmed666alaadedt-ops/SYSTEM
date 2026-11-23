@@ -39,6 +39,8 @@ func configure(player: CharacterBody3D, health_manager: Node, health_value: floa
 	base_attack_cooldown = attack_cooldown
 	is_boss = boss
 	is_final_boss = final_boss
+	if is_inside_tree():
+		_apply_boss_runtime_configuration()
 
 func _ready() -> void:
 	name = "PowerTowerOpponent"
@@ -101,9 +103,63 @@ func _ready() -> void:
 		shockwave_material.emission_energy_multiplier = 2.2
 		shockwave_telegraph.material_override = shockwave_material
 		add_child(shockwave_telegraph)
+	_apply_boss_runtime_configuration()
 	_update_health_label()
 	set_meta("system_power_tower_opponent", true)
 	set_meta("system_opponent_health", current_health)
+
+func _apply_boss_runtime_configuration() -> void:
+	if not is_boss:
+		return
+	var capsule_shape := get_node_or_null("CollisionShape3D") as CollisionShape3D
+	if capsule_shape != null and capsule_shape.shape is CapsuleShape3D:
+		var capsule := capsule_shape.shape as CapsuleShape3D
+		capsule.radius = 0.72 if not is_boss else (1.55 if is_final_boss else 1.25)
+		capsule.height = 2.1 if not is_boss else (4.8 if is_final_boss else 3.6)
+		capsule_shape.position.y = capsule.height * 0.5
+	if boss_visual != null and boss_visual.mesh is CapsuleMesh:
+		var visual_capsule := boss_visual.mesh as CapsuleMesh
+		visual_capsule.radius = 0.72 if not is_boss else (1.55 if is_final_boss else 1.25)
+		visual_capsule.height = 2.1 if not is_boss else (4.8 if is_final_boss else 3.6)
+		boss_visual.position.y = visual_capsule.height * 0.5
+	if boss_visual != null and boss_visual.material_override is StandardMaterial3D:
+		var material := boss_visual.material_override as StandardMaterial3D
+		material.albedo_color = Color(0.68, 0.43, 0.08) if is_final_boss else Color(0.22, 0.035, 0.035)
+		material.emission = Color(1.0, 0.58, 0.08) if is_final_boss else Color(0.95, 0.16, 0.025)
+		material.emission_energy_multiplier = 2.6 if is_final_boss else 1.6
+	if health_label != null:
+		health_label.position.y = (4.8 if is_final_boss else 3.6) + 0.55
+		health_label.font_size = 34
+	if shockwave_telegraph == null:
+		shockwave_telegraph = MeshInstance3D.new()
+		shockwave_telegraph.name = "ShockwaveTelegraph"
+		var ring := TorusMesh.new()
+		ring.inner_radius = 4.8 if is_final_boss else 3.7
+		ring.outer_radius = 5.2 if is_final_boss else 4.1
+		shockwave_telegraph.mesh = ring
+		shockwave_telegraph.rotation.x = deg_to_rad(90.0)
+		shockwave_telegraph.position.y = 0.12
+		shockwave_telegraph.visible = false
+		shockwave_material = StandardMaterial3D.new()
+		shockwave_material.albedo_color = Color(1.0, 0.24, 0.08, 0.58)
+		shockwave_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		shockwave_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		shockwave_material.emission_enabled = true
+		shockwave_material.emission = Color(1.0, 0.12, 0.025)
+		shockwave_material.emission_energy_multiplier = 2.2
+		shockwave_telegraph.material_override = shockwave_material
+		add_child(shockwave_telegraph)
+	if attack_telegraph_label == null:
+		attack_telegraph_label = Label3D.new()
+		attack_telegraph_label.name = "ShockwaveTelegraphLabel"
+		attack_telegraph_label.position.y = (4.8 if is_final_boss else 3.6) + 1.45
+		attack_telegraph_label.font_size = 25 if is_final_boss else 20
+		attack_telegraph_label.modulate = Color(1.0, 0.38, 0.18)
+		attack_telegraph_label.text = "MOVE — SHOCKWAVE"
+		attack_telegraph_label.visible = false
+		add_child(attack_telegraph_label)
+	_update_health_label()
+
 
 func _physics_process(delta: float) -> void:
 	if defeated_once or not is_instance_valid(target_player):
