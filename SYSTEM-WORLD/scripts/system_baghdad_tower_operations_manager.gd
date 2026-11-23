@@ -1521,7 +1521,7 @@ func open_tower(tower_id: String) -> void:
 	content.add_child(lobby_button)
 	if tower_id == "power_tower_baghdad":
 		var power_status: Dictionary = power_tower_manager.call("get_tower_status") if is_instance_valid(power_tower_manager) else {}
-		status_label.text = "برج مستقل — 200 طابق\nأعلى طابق مكتمل: %d | الطابق التالي: %d\nكل طابق تحدٍ فعلي، والطابق العاشر ومضاعفاته اختبار زعيم." % [int(power_status.get("highest_cleared_floor", 0)), int(power_status.get("next_floor", 1))]
+		status_label.text = "برج مستقل — 200 طابق | منافسات فردية 1 ضد 1\nأعلى طابق مكتمل: %d | الطابق التالي: %d\nكل خامس طابق مواجهة نخبة، وكل عاشر طابق مواجهة زعيم." % [int(power_status.get("highest_cleared_floor", 0)), int(power_status.get("next_floor", 1))]
 	if tower_id == "hunter_association_tower_baghdad":
 		var rank_board_button := Button.new()
 		rank_board_button.name = "HunterRankBoardButton"
