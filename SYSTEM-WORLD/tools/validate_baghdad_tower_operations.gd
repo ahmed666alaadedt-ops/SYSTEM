@@ -1170,6 +1170,9 @@ func _run() -> void:
 		operations.call("_advance_restaurant_order", restaurant_test_table_id, "preparing")
 		operations.call("_advance_restaurant_order", restaurant_test_table_id, "ready")
 		operations.call("_advance_restaurant_order", restaurant_test_table_id, "served")
+		var persisted_test_order: Dictionary = operations.get("restaurant_orders").get(restaurant_test_table_id, {})
+		persisted_test_order["meal_consumed"] = true
+		operations.get("restaurant_orders")[restaurant_test_table_id] = persisted_test_order
 		operations.call("_advance_restaurant_order", restaurant_test_table_id, "completed")
 		var restaurant_history: Array = operations.get("restaurant_order_history")
 		restaurant_order_ok = not operations.get("restaurant_orders").has(restaurant_test_table_id) and not restaurant_history.is_empty() and str(restaurant_history[-1].get("status", "")) == "completed"
@@ -1923,16 +1926,81 @@ func _run() -> void:
 	if not player.global_position.is_equal_approx(player_position_before_seated_input):
 		_fail("The player movement controller did not lock movement while seated at the restaurant table.")
 		return
-	operations.call("_create_restaurant_served_meal_visual", str(player_test_table.get_meta("system_restaurant_table_id", "")), {"table_index": int(player_test_table.get_meta("system_restaurant_table_index", -1)), "items": [{"name": "كباب عراقي"}]})
-	if player_test_table.get_node_or_null("ServedMealPresentation/MealPlate") == null or player_test_table.get_node_or_null("ServedMealPresentation/PreparedMeal") == null:
-		_fail("The delivered restaurant meal did not create a visible plate and prepared food on the player's table.")
+	var player_cycle_table_id := str(player_test_table.get_meta("system_restaurant_table_id", ""))
+	var player_cycle_credits_snapshot := int(operations.get("credits"))
+	var player_cycle_orders_snapshot: Dictionary = operations.get("restaurant_orders").duplicate(true)
+	var player_cycle_history_snapshot: Array = operations.get("restaurant_order_history").duplicate(true)
+	var player_cycle_drafts_snapshot: Dictionary = operations.get("restaurant_draft_items").duplicate(true)
+	var health_manager := main.get("player_combat_health") as Node
+	var progression_manager := main.get("player_progression") as Node
+	if health_manager == null or progression_manager == null:
+		_fail("Restaurant meal effects could not access the canonical player health/progression systems.")
 		return
-	operations.call("_clear_restaurant_served_meal_visual", str(player_test_table.get_meta("system_restaurant_table_id", "")), {"table_index": int(player_test_table.get_meta("system_restaurant_table_index", -1))})
-	operations.call("_release_player_restaurant_seat")
-	if player.has_meta("system_restaurant_seated_table_id") or player_test_table.get_meta("system_restaurant_occupants", []).has("PLAYER") or str(player_seat_marker.get_meta("system_restaurant_seat_occupant", "")) == "PLAYER":
-		_fail("The player's restaurant seat ownership was not released when standing up.")
+	var health_before_meal := float(health_manager.get("current_health"))
+	var wounded_before_meal := bool(health_manager.get("is_wounded"))
+	var total_xp_before_meal := int(progression_manager.get("total_xp"))
+	var xp_in_level_before_meal := int(progression_manager.get("xp_in_level"))
+	var level_before_meal := int(progression_manager.get("current_level"))
+	var attribute_points_before_meal := int(progression_manager.get("available_attribute_points"))
+	health_manager.set("current_health", minf(75.0, float(health_manager.get("current_health"))))
+	health_manager.call("_sync_player_state")
+	operations.set("credits", maxi(player_cycle_credits_snapshot, 200))
+	operations.set("current_restaurant_table_node", player_test_table)
+	operations.set("current_restaurant_table_id", player_cycle_table_id)
+	operations.set("restaurant_draft_items", {player_cycle_table_id: [
+		{"item_id": "restaurant_kebab", "name": "كباب عراقي", "price": 68},
+		{"item_id": "restaurant_fresh_juice", "name": "عصير طازج", "price": 22}
+	]})
+	operations.call("_place_restaurant_order", player_cycle_table_id)
+	var player_order: Dictionary = operations.get("restaurant_orders").get(player_cycle_table_id, {})
+	if str(player_order.get("status", "")) != "awaiting_waiter" or int(player_order.get("total", 0)) != 90:
+		_fail("A seated player could not send and pay for a restaurant order into the waiter queue.")
 		return
-	print("QA TRACE: player physically sits at a reserved restaurant seat, movement is locked, delivered meal is rendered, and standing releases the seat.")
+	operations.call("_advance_restaurant_order", player_cycle_table_id, "placed")
+	operations.call("_advance_restaurant_order", player_cycle_table_id, "preparing")
+	operations.call("_advance_restaurant_order", player_cycle_table_id, "ready")
+	operations.call("_advance_restaurant_order", player_cycle_table_id, "served")
+	player_order = operations.get("restaurant_orders").get(player_cycle_table_id, {})
+	if str(player_order.get("status", "")) != "served" or player_test_table.get_node_or_null("ServedMealPresentation/MealPlate") == null or player_test_table.get_node_or_null("ServedMealPresentation/PreparedMeal") == null:
+		_fail("The waiter did not deliver the prepared meal and render it on the player's occupied table.")
+		return
+	if not bool(operations.call("_consume_restaurant_meal", player_cycle_table_id)):
+		_fail("The player could not consume the delivered restaurant meal.")
+		return
+	player_order = operations.get("restaurant_orders").get(player_cycle_table_id, {})
+	var first_meal_health := float(health_manager.get("current_health"))
+	var first_meal_xp := int(progression_manager.get("total_xp"))
+	if not bool(player_order.get("meal_consumed", false)) or first_meal_health <= health_before_meal or first_meal_xp != total_xp_before_meal + 10:
+		_fail("Eating the delivered meal did not restore bounded health and award the expected one-time XP.")
+		return
+	if bool(operations.call("_consume_restaurant_meal", player_cycle_table_id)) or float(health_manager.get("current_health")) != first_meal_health or int(progression_manager.get("total_xp")) != first_meal_xp:
+		_fail("The restaurant meal reward could be claimed more than once.")
+		return
+	operations.call("_advance_restaurant_order", player_cycle_table_id, "completed")
+	if operations.get("restaurant_orders").has(player_cycle_table_id) or player.has_meta("system_restaurant_seated_table_id") or player_test_table.get_meta("system_restaurant_occupants", []).has("PLAYER") or str(player_seat_marker.get_meta("system_restaurant_seat_occupant", "")) == "PLAYER":
+		_fail("Completing an eaten meal did not archive the order and release the player's physical seat.")
+		return
+	var player_cycle_history: Array = operations.get("restaurant_order_history")
+	if player_cycle_history.is_empty() or str(player_cycle_history[-1].get("status", "")) != "completed" or not bool(player_cycle_history[-1].get("meal_consumed", false)):
+		_fail("The completed restaurant meal receipt did not preserve its consumption/reward record.")
+		return
+	operations.set("restaurant_orders", player_cycle_orders_snapshot)
+	operations.set("restaurant_order_history", player_cycle_history_snapshot)
+	operations.set("restaurant_draft_items", player_cycle_drafts_snapshot)
+	operations.set("credits", player_cycle_credits_snapshot)
+	operations.call("_save_restaurant_orders")
+	operations.call("_save_wallet")
+	health_manager.set("current_health", health_before_meal)
+	health_manager.set("is_wounded", wounded_before_meal)
+	health_manager.call("_sync_player_state")
+	health_manager.get("health_changed").emit(health_before_meal, float(health_manager.get("MAX_HEALTH")))
+	progression_manager.set("total_xp", total_xp_before_meal)
+	progression_manager.set("xp_in_level", xp_in_level_before_meal)
+	progression_manager.set("current_level", level_before_meal)
+	progression_manager.set("available_attribute_points", attribute_points_before_meal)
+	progression_manager.call("save_progress")
+	progression_manager.call("_emit_progress")
+	print("QA TRACE: player sits, movement locks, waiter accepts order, chef prepares it, waiter delivers it, meal restores health and grants XP exactly once, and checkout releases the seat.")
 	var npc_restaurant_order_id := ""
 	for floor_child in restaurant_room.get_children():
 		if not str(floor_child.name).begins_with("TowerCustomer_"):

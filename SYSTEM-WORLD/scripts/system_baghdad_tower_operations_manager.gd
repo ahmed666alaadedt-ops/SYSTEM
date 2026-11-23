@@ -5224,13 +5224,25 @@ func open_restaurant_table(table_node: Node) -> void:
 			item_names.append(str(item.get("name", "وجبة")))
 		status_label.text = "%s\n%s\nالإجمالي: %d رصيد" % [str(state_names.get(state, state)), "، ".join(PackedStringArray(item_names)), int(active_order.get("total", 0))]
 		if state == "served":
-			var finish_button := Button.new()
-			finish_button.text = "إنهاء الوجبة ومغادرة الطاولة"
-			finish_button.pressed.connect(_advance_restaurant_order.bind(current_restaurant_table_id, "completed"))
-			content.add_child(finish_button)
+			if not bool(active_order.get("meal_consumed", false)):
+				var eat_button := Button.new()
+				eat_button.text = "تناول الوجبة — استعادة الصحة واكتساب الخبرة"
+				eat_button.pressed.connect(_consume_restaurant_meal.bind(current_restaurant_table_id))
+				content.add_child(eat_button)
+				var eating_hint := Label.new()
+				eating_hint.text = "وصلت وجبتك إلى الطاولة. تناولها لتحصل على أثرها داخل SYSTEM."
+				content.add_child(eating_hint)
+			else:
+				var eaten_label := Label.new()
+				eaten_label.text = "تم تناول الوجبة وتسجيل مكافأتها. يمكنك الآن مغادرة الطاولة."
+				content.add_child(eaten_label)
+				var finish_button := Button.new()
+				finish_button.text = "إنهاء الوجبة ومغادرة الطاولة"
+				finish_button.pressed.connect(_advance_restaurant_order.bind(current_restaurant_table_id, "completed"))
+				content.add_child(finish_button)
 		else:
 			var waiting_label := Label.new()
-			waiting_label.text = "طلبك قيد الخدمة. يتولى الشيف التحضير والنادل التقديم."
+			waiting_label.text = "طلبك قيد الخدمة. يتولى النادل استقبال الطلب، والشيف التحضير، ثم النادل التقديم."
 			content.add_child(waiting_label)
 	else:
 		var latest_completed_order: Dictionary = {}
@@ -5506,10 +5518,50 @@ func _place_restaurant_order(table_id: String) -> void:
 		open_restaurant_table(current_restaurant_table_node)
 
 
+func _consume_restaurant_meal(table_id: String) -> bool:
+	if table_id.is_empty() or not restaurant_orders.has(table_id):
+		return false
+	var order: Dictionary = restaurant_orders[table_id]
+	if str(order.get("status", "")) != "served" or bool(order.get("npc_order", false)):
+		return false
+	if not is_instance_valid(player) or not bool(player.get_meta("system_restaurant_seated", false)) or str(player.get_meta("system_restaurant_seated_table_id", "")) != table_id:
+		_set_status("اجلس على طاولتك أولاً قبل تناول الوجبة.")
+		return false
+	if bool(order.get("meal_consumed", false)):
+		_set_status("تم تسجيل تناول هذه الوجبة ومكافأتها مسبقاً.")
+		return false
+
+	var items: Array = order.get("items", [])
+	var health_reward := minf(21.0, 12.0 + float(maxi(items.size() - 1, 0)) * 3.0)
+	var xp_reward := 10
+	# Persist the one-time claim before applying effects so reopening the panel
+	# or repeating the interaction cannot grant the same meal twice.
+	order["meal_consumed"] = true
+	order["meal_consumed_at_unix"] = int(Time.get_unix_time_from_system())
+	order["meal_health_reward"] = health_reward
+	order["meal_xp_reward"] = xp_reward
+	restaurant_orders[table_id] = order
+	_save_restaurant_orders()
+
+	var healed := false
+	if is_instance_valid(player_health) and player_health.has_method("apply_field_healing"):
+		healed = bool(player_health.call("apply_field_healing", health_reward))
+	if is_instance_valid(progression) and progression.has_method("add_experience"):
+		progression.call("add_experience", xp_reward, "SYSTEM restaurant meal: " + table_id)
+	var health_text := "استعدت %.0f صحة" % health_reward if healed else "صحتك ممتلئة أو لا تحتاج إلى علاج"
+	_set_status("تناولت وجبتك بنجاح — %s، واكتسبت %d XP." % [health_text, xp_reward])
+	if panel.visible and is_instance_valid(current_restaurant_table_node) and current_restaurant_table_id == table_id:
+		open_restaurant_table(current_restaurant_table_node)
+	return true
+
+
 func _advance_restaurant_order(table_id: String, next_status: String) -> void:
 	if not restaurant_orders.has(table_id):
 		return
 	var order: Dictionary = restaurant_orders[table_id]
+	if next_status == "completed" and not bool(order.get("npc_order", false)) and not bool(order.get("meal_consumed", false)):
+		_set_status("تناول وجبتك أولاً قبل إنهاء الطلب ومغادرة المقعد.")
+		return
 	var current := str(order.get("status", ""))
 	var allowed := {
 		"awaiting_waiter": "placed",
