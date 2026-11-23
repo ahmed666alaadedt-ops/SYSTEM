@@ -789,6 +789,9 @@ func _run() -> void:
 	if power_tower_test_script == null:
 		_fail("Power Tower progression script could not be loaded for the 200-floor regression.")
 		return
+	var spectator_validation_path := ProjectSettings.globalize_path("user://validator_power_tower_spectator_predictions.cfg")
+	if FileAccess.file_exists(spectator_validation_path):
+		DirAccess.remove_absolute(spectator_validation_path)
 	var progression_test_manager := power_tower_test_script.new() as Node
 	progression_test_manager.set("spectator_save_path", "user://validator_power_tower_spectator_predictions.cfg")
 	root.add_child(progression_test_manager)
