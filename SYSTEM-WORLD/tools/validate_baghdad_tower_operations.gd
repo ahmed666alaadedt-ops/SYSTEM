@@ -773,6 +773,24 @@ func _run() -> void:
 	if progress_board == null or not progress_board.text.contains("200") or not progress_board.text.contains("أفضل وقت") or not progress_board.text.contains("1 VS 1") or not progress_board.text.contains("المواجهات الفردية الفائزة"):
 		_fail("Power Tower lobby progress board is missing the 200-floor completion target.")
 		return
+	var outside_battle_display := power_tower.get_node_or_null("PowerTowerBattleDisplay_Outside") as Node3D
+	var inside_battle_display := power_lobby.get_node_or_null("PowerTowerBattleDisplay_Inside") as Node3D
+	for battle_display in [outside_battle_display, inside_battle_display]:
+		var schedule_label := battle_display.get_node_or_null("DisplayText") as Label3D if battle_display != null else null
+		if battle_display == null or schedule_label == null or not bool(battle_display.get_meta("system_power_tower_battle_display", false)) or int(battle_display.get_meta("system_floor_schedule_count", 0)) != 200 or str(battle_display.get_meta("system_competition_format", "")) != "INDIVIDUAL_1V1":
+			_fail("Power Tower is missing a physical outside/inside battle schedule display for all 200 floors.")
+			return
+		if not schedule_label.text.contains("الطوابق 001-020") or not schedule_label.text.contains("الطوابق 181-200") or not schedule_label.text.contains("نخبة 1v1") or not schedule_label.text.contains("زعماء 1v1") or not schedule_label.text.contains("سيادة"):
+			_fail("Power Tower battle schedule does not show standard, elite, boss and sovereign fights across all 200 floors.")
+			return
+	for sample_floor in [1, 5, 10]:
+		var sample_room := operations.call("_ensure_floor_room", "power_tower_baghdad", sample_floor) as Node3D
+		var sample_display := sample_room.get_node_or_null("ArenaChallengeDisplay") as Label3D if sample_room != null else null
+		var sample_panel := sample_room.get_node_or_null("ArenaChallengeScreenPanel") as MeshInstance3D if sample_room != null else null
+		var expected_arena_name := "PLAYER 1 VS 1 DUEL ARENA" if sample_floor == 1 else ("ELITE PLAYER DUEL ARENA" if sample_floor == 5 else "TITLE HOLDER DUEL ARENA")
+		if sample_display == null or sample_panel == null or not sample_display.text.contains(expected_arena_name) or int(sample_panel.get_meta("system_floor_number", 0)) != sample_floor or str(sample_panel.get_meta("system_competition_format", "")) != "INDIVIDUAL_1V1":
+			_fail("Power Tower floor %d is missing its correctly labelled physical battle screen." % sample_floor)
+			return
 	var first_floor_rewards: Dictionary = power_manager.call("get_floor_data", 1)
 	var second_floor_rewards: Dictionary = power_manager.call("get_floor_data", 2)
 	if int(second_floor_rewards.get("reward_credits", 0)) <= int(first_floor_rewards.get("reward_credits", 0)):
@@ -1340,8 +1358,10 @@ func _run() -> void:
 	if spectator_gallery == null or spectator_seat_count != 48 or int(spectator_gallery.get_meta("system_spectator_seat_count", 0)) != 48 or str(spectator_gallery.get_meta("system_competition_format", "")) != "INDIVIDUAL_1V1":
 		_fail("Power Tower floor 200 must provide a physical 48-seat spectator gallery for individual duels.")
 		return
-	if boss_room.get_node_or_null("ArenaChallengeDisplay") == null:
-		_fail("Power Tower arena challenge display is missing.")
+	var sovereign_display := boss_room.get_node_or_null("ArenaChallengeDisplay") as Label3D
+	var sovereign_screen := boss_room.get_node_or_null("ArenaChallengeScreenPanel") as MeshInstance3D
+	if sovereign_display == null or sovereign_screen == null or not sovereign_display.text.contains("SOVEREIGN TITLE DUEL ARENA") or int(sovereign_screen.get_meta("system_floor_number", 0)) != 200 or str(sovereign_screen.get_meta("system_arena_type", "")) != "BOSS_TRIAL":
+		_fail("Power Tower floor 200 sovereign arena is missing its dedicated battle display.")
 		return
 	if not operations.has_method("_buy_product") or not operations.has_method("_sell_item"):
 		_fail("NPC-supervised buy/sell transaction methods are missing.")
