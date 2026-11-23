@@ -738,14 +738,18 @@ func _run() -> void:
 		if bool(floor_data.get("boss_floor", false)) != (floor_number % 10 == 0):
 			_fail("Power Tower boss cadence is incorrect at floor %d." % floor_number)
 			return
-		if int(floor_data.get("opponent_count", 0)) < 1 or int(floor_data.get("wave_count", 0)) < 1 or int(floor_data.get("reward_xp", 0)) <= 0 or int(floor_data.get("reward_credits", 0)) <= 0:
-			_fail("Power Tower challenge data is incomplete at floor %d." % floor_number)
+		if int(floor_data.get("opponent_count", 0)) != 1 or int(floor_data.get("wave_count", 0)) != 1 or int(floor_data.get("reward_xp", 0)) <= 0 or int(floor_data.get("reward_credits", 0)) <= 0:
+			_fail("Power Tower floor %d must contain exactly one opponent, one round and positive rewards." % floor_number)
 			return
-		if str(floor_data.get("arena_type", "")) == "SURVIVAL" and (str(floor_data.get("objective_type", "")) != "SURVIVE_TIMER" or int(floor_data.get("time_limit_seconds", 0)) <= 0):
-			_fail("Power Tower survival floor is missing its timed survival objective at floor %d." % floor_number)
+		if str(floor_data.get("competition_format", "")) != "INDIVIDUAL_1V1" or int(floor_data.get("time_limit_seconds", -1)) != 0:
+			_fail("Power Tower floor %d violates the individual-only, no-team 1v1 competition rule." % floor_number)
 			return
-		if str(floor_data.get("arena_type", "")) == "CHAMPIONSHIP" and (str(floor_data.get("objective_type", "")) != "CLEAR_WITHIN_TIME" or int(floor_data.get("time_limit_seconds", 0)) <= 0):
-			_fail("Power Tower championship floor is missing its timed clear objective at floor %d." % floor_number)
+		if str(floor_data.get("arena_type", "")) not in ["DUEL", "ELITE_DUEL", "BOSS_TRIAL"]:
+			_fail("Power Tower floor %d exposes a non-individual competition type." % floor_number)
+			return
+		var expected_objective := "DEFEAT_BOSS" if bool(floor_data.get("boss_floor", false)) else "DEFEAT_OPPONENT"
+		if str(floor_data.get("objective_type", "")) != expected_objective:
+			_fail("Power Tower floor %d does not use a single-opponent defeat objective." % floor_number)
 			return
 	var power_tower := tower_manager.get_node_or_null("PowerTower") as Node3D
 	var power_lobby := power_tower.get_node_or_null("PublicLobby_Blockout") as Node3D
@@ -916,42 +920,19 @@ func _run() -> void:
 	operations.call("_save_wallet")
 	operations.set("active_power_floor_data", {})
 	operations.set("power_floor_in_progress", false)
-	power_manager.set("highest_cleared_floor", 2)
-	power_manager.set("active_floor", 3)
-	operations.set("active_power_floor_data", power_manager.call("get_floor_data", 3))
-	operations.set("power_floor_in_progress", true)
-	operations.set("power_floor_timer_remaining", 0.05)
-	operations.set("active_opponents", {})
-	operations.call("_process", 0.1)
-	if int(power_manager.get("highest_cleared_floor")) != 3 or int(power_manager.get("active_floor")) != 0 or bool(operations.get("power_floor_in_progress")):
-		_fail("Power Tower survival timer did not clear its floor when the survival duration elapsed.")
-		power_manager.set("highest_cleared_floor", original_highest_floor)
-		power_manager.set("active_floor", original_active_floor)
-		power_manager.set("floor_clear_times", original_clear_times)
-		power_manager.call("_save_progress")
-		tower_progression.set("inventory_items", original_inventory)
-		tower_progression.call("save_progress")
-		operations.set("credits", original_credits)
-		operations.call("_save_wallet")
-		return
-	power_manager.set("highest_cleared_floor", 4)
-	power_manager.set("active_floor", 5)
-	operations.set("active_power_floor_data", power_manager.call("get_floor_data", 5))
-	operations.set("power_floor_in_progress", true)
-	operations.set("power_floor_timer_remaining", 0.05)
-	operations.set("active_opponents", {})
-	operations.call("_process", 0.1)
-	if int(power_manager.get("highest_cleared_floor")) != 4 or int(power_manager.get("active_floor")) != 0 or bool(operations.get("power_floor_in_progress")):
-		_fail("Power Tower championship timeout did not abandon the attempt without granting a floor clear.")
-		power_manager.set("highest_cleared_floor", original_highest_floor)
-		power_manager.set("active_floor", original_active_floor)
-		power_manager.set("floor_clear_times", original_clear_times)
-		power_manager.call("_save_progress")
-		tower_progression.set("inventory_items", original_inventory)
-		tower_progression.call("save_progress")
-		operations.set("credits", original_credits)
-		operations.call("_save_wallet")
-		return
+	for individual_floor in [1, 3, 5, 10, 25, 50, 100, 150, 199, 200]:
+		var individual_data: Dictionary = power_manager.call("get_floor_data", individual_floor)
+		if int(individual_data.get("opponent_count", 0)) != 1 or int(individual_data.get("wave_count", 0)) != 1 or str(individual_data.get("competition_format", "")) != "INDIVIDUAL_1V1":
+			_fail("Power Tower individual challenge regression failed at floor %d." % individual_floor)
+			power_manager.set("highest_cleared_floor", original_highest_floor)
+			power_manager.set("active_floor", original_active_floor)
+			power_manager.set("floor_clear_times", original_clear_times)
+			power_manager.call("_save_progress")
+			tower_progression.set("inventory_items", original_inventory)
+			tower_progression.call("save_progress")
+			operations.set("credits", original_credits)
+			operations.call("_save_wallet")
+			return
 	power_manager.set("highest_cleared_floor", 5)
 	power_manager.set("active_floor", 6)
 	operations.set("current_tower_id", "power_tower_baghdad")
