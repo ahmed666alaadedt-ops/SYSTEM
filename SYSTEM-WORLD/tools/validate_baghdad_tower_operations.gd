@@ -1103,17 +1103,21 @@ func _run() -> void:
 	operations.set("restaurant_order_history", [])
 	operations.set("restaurant_draft_items", {restaurant_test_table_id: [{"item_id": "restaurant_kebab", "name": "كباب عراقي", "price": 68}, {"item_id": "restaurant_fresh_juice", "name": "عصير طازج", "price": 22}]})
 	operations.set("credits", maxi(restaurant_credits_snapshot, 200))
+	var had_player_seat_meta := player.has_meta("system_restaurant_seated_table_id")
+	var previous_player_seat_meta: Variant = player.get_meta("system_restaurant_seated_table_id", "")
+	player.set_meta("system_restaurant_seated_table_id", restaurant_test_table_id)
 	operations.call("_place_restaurant_order", restaurant_test_table_id)
 	var restaurant_test_order: Dictionary = operations.get("restaurant_orders").get(restaurant_test_table_id, {})
-	var restaurant_order_ok := str(restaurant_test_order.get("status", "")) == "placed" and int(restaurant_test_order.get("total", 0)) == 90 and int(operations.get("credits")) == maxi(restaurant_credits_snapshot, 200) - 90
+	var restaurant_order_ok := str(restaurant_test_order.get("status", "")) == "awaiting_waiter" and int(restaurant_test_order.get("total", 0)) == 90 and int(operations.get("credits")) == maxi(restaurant_credits_snapshot, 200) - 90
 	if restaurant_order_ok:
-		operations.call("_advance_restaurant_order", restaurant_test_table_id, "preparing")
+		operations.call("_advance_restaurant_order", restaurant_test_table_id, "placed")
 		operations.call("_save_restaurant_orders")
 		operations.set("restaurant_orders", {})
 		operations.call("_load_restaurant_orders")
 		restaurant_test_order = operations.get("restaurant_orders").get(restaurant_test_table_id, {})
-		restaurant_order_ok = str(restaurant_test_order.get("status", "")) == "preparing"
+		restaurant_order_ok = str(restaurant_test_order.get("status", "")) == "placed"
 	if restaurant_order_ok:
+		operations.call("_advance_restaurant_order", restaurant_test_table_id, "preparing")
 		operations.call("_advance_restaurant_order", restaurant_test_table_id, "ready")
 		operations.call("_advance_restaurant_order", restaurant_test_table_id, "served")
 		operations.call("_advance_restaurant_order", restaurant_test_table_id, "completed")
@@ -1124,6 +1128,10 @@ func _run() -> void:
 		operations.call("_rate_restaurant_order", restaurant_test_table_id, 3)
 		var rated_history: Array = operations.get("restaurant_order_history")
 		restaurant_order_ok = int(rated_history[-1].get("rating", 0)) == 5 and int(rated_history[-1].get("rated_at_unix", 0)) > 0
+	if had_player_seat_meta:
+		player.set_meta("system_restaurant_seated_table_id", previous_player_seat_meta)
+	else:
+		player.remove_meta("system_restaurant_seated_table_id")
 	operations.set("restaurant_orders", restaurant_orders_snapshot)
 	operations.set("restaurant_order_history", restaurant_history_snapshot)
 	operations.set("restaurant_draft_items", restaurant_drafts_snapshot)
@@ -1835,6 +1843,46 @@ func _run() -> void:
 		_fail("Restaurant visitors were not assigned to real owned seats or the eight visible waiting positions were not generated.")
 		return
 	print("QA TRACE: two restaurant customers occupy individually owned seats; eight visible queue positions are available.")
+	var player_test_table: Node3D
+	for table_index in range(4):
+		var candidate_table := restaurant_room.get_node_or_null("RestaurantTable_%02d" % table_index) as Node3D
+		if candidate_table == null:
+			continue
+		for seat_index in range(4):
+			var candidate_seat := candidate_table.get_node_or_null("RestaurantSeat_%02d" % seat_index) as Node3D
+			if candidate_seat != null and str(candidate_seat.get_meta("system_restaurant_seat_occupant", "")).is_empty():
+				player_test_table = candidate_table
+				break
+		if player_test_table != null:
+			break
+	if player_test_table == null:
+		_fail("No free physical restaurant seat remained for the player seating regression.")
+		return
+	operations.call("_seat_player_at_restaurant", player_test_table)
+	await create_timer(0.8).timeout
+	var player_seat_name := str(player.get_meta("system_restaurant_seat_node", ""))
+	var player_seat_marker := player_test_table.get_node_or_null(player_seat_name) as Node3D
+	var player_seating_ok := bool(player.get_meta("system_restaurant_seated", false)) and str(player.get_meta("system_restaurant_seated_table_id", "")) == str(player_test_table.get_meta("system_restaurant_table_id", "")) and player_seat_marker != null and str(player_seat_marker.get_meta("system_restaurant_seat_occupant", "")) == "PLAYER" and player_test_table.get_meta("system_restaurant_occupants", []).has("PLAYER")
+	if not player_seating_ok:
+		_fail("The player did not physically reserve and reach an individually owned restaurant seat.")
+		return
+	var player_position_before_seated_input: Vector3 = player.global_position
+	main.set("mobile_direction", Vector2(1.0, 0.0))
+	main.call("_physics_process", 0.016)
+	main.set("mobile_direction", Vector2.ZERO)
+	if not player.global_position.is_equal_approx(player_position_before_seated_input):
+		_fail("The player movement controller did not lock movement while seated at the restaurant table.")
+		return
+	operations.call("_create_restaurant_served_meal_visual", str(player_test_table.get_meta("system_restaurant_table_id", "")), {"table_index": int(player_test_table.get_meta("system_restaurant_table_index", -1)), "items": [{"name": "كباب عراقي"}]})
+	if player_test_table.get_node_or_null("ServedMealPresentation/MealPlate") == null or player_test_table.get_node_or_null("ServedMealPresentation/PreparedMeal") == null:
+		_fail("The delivered restaurant meal did not create a visible plate and prepared food on the player's table.")
+		return
+	operations.call("_clear_restaurant_served_meal_visual", str(player_test_table.get_meta("system_restaurant_table_id", "")), {"table_index": int(player_test_table.get_meta("system_restaurant_table_index", -1))})
+	operations.call("_release_player_restaurant_seat")
+	if player.has_meta("system_restaurant_seated_table_id") or player_test_table.get_meta("system_restaurant_occupants", []).has("PLAYER") or str(player_seat_marker.get_meta("system_restaurant_seat_occupant", "")) == "PLAYER":
+		_fail("The player's restaurant seat ownership was not released when standing up.")
+		return
+	print("QA TRACE: player physically sits at a reserved restaurant seat, movement is locked, delivered meal is rendered, and standing releases the seat.")
 	var npc_restaurant_order_id := ""
 	for floor_child in restaurant_room.get_children():
 		if not str(floor_child.name).begins_with("TowerCustomer_"):
