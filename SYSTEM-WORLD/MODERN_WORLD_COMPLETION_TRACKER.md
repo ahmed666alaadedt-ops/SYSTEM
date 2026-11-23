@@ -1281,3 +1281,19 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Pass canonical Android APK export #1289 on gameplay/validator HEAD `93c8f4d0f5aed1a69f21a31ca2c7db1c1bd23122`; APK artifact [14823980114](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45184789462/artifacts/14823980114), 35,990,099 bytes, SHA-256 `f671ab0d2070508e75c414bf108847e968d5816c3e3323e86b12be7e465b58c3`, expires 7 December 2026.
 - [ ] Godot 4.3 full tower validation #1552 (run ID 45184789456) is still in progress; do not mark the restaurant seat/queue runtime assertions fully verified until the job finishes successfully.
 - [ ] Physical Android playtesting remains outstanding.
+
+
+### SYSTEM Worldwide Food, Drink, and Gourmet Skill System — approved scope — 23 November 2026
+
+- [ ] Treat food and drink as a shared SYSTEM WORLD gameplay/economy system, not a Baghdad restaurant-only feature. It must be usable across all four worlds and purchasable from markets, shops, street vendors, restaurants and other suitable food sellers wherever those facilities exist.
+- [ ] Keep restaurant entry walk-in and low-friction: no mandatory advance booking. Dining tables/seats are optional interaction points; takeaway purchase must remain available without sitting down.
+- [ ] Add portable food and water as stackable inventory consumables. The player can buy, carry, inspect and consume them from the inventory, including during combat subject to a short use animation/action window and interruption rules.
+- [ ] Food effects must use the existing player combat-health/progression systems: restore bounded health, energy/stamina and/or grant temporary strength, speed, defence or endurance bonuses. Ordinary food must not clear persistent wound/injury states; serious injuries still require the established hospital/healer treatment.
+- [ ] Add quality tiers (ordinary, good, rare, luxurious/legendary) with clear prices, effects, durations and balance limits. Avoid unlimited stacking; define refresh/replace rules for duplicate buffs.
+- [ ] Luxurious/rare gourmet meals may roll one skill reward from an eligible pool when consumed. Use rarity-weighted deterministic-testable selection, record unlocked food skills persistently, prevent duplicate rewards from becoming meaningless, and clearly distinguish temporary meal buffs from permanent skill unlocks.
+- [ ] Use one shared food catalogue/effect contract so all vendors and world-specific markets sell from the same system while retaining local stock, regional menu variety and prices.
+- [ ] Extend automated QA for purchase/payment, inventory save/load, consumption, health caps, combat use, buff expiry/stacking, rare-skill roll boundaries, duplicate skill handling, and use across world contexts.
+- [ ] Preserve existing customer, queue, restaurant seating, waiter, chef, hotel, tower and economy systems; extend them rather than replacing completed workflows.
+- [ ] This is an approved implementation scope, not yet a verified gameplay feature. Do not mark complete until code and Godot/Android validation pass on the exact same HEAD.
+
+**Priority after the current restaurant runtime verification:** implement the shared food/consumables foundation and market-facing purchase path with minimal UI, then resume the agreed Baghdad sequence: finish Power Tower work and the Hunter Tunnel beneath the Baghdad tower complex. Keep PR #38 draft and do not merge to main without explicit user approval.
