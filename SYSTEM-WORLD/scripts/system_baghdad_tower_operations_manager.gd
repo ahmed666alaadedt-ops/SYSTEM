@@ -5571,8 +5571,8 @@ func _seat_player_at_restaurant(table_node: Node) -> void:
 	seating_tween.set_parallel(true)
 	seating_tween.tween_property(player, "global_position", target_position, 0.55)
 	seating_tween.tween_property(player, "rotation:y", target_rotation, 0.4)
-	var seating_manager_ref := weakref(self)
-	var seating_player_ref := weakref(player)
+	var seating_manager_ref: WeakRef = weakref(self)
+	var seating_player_ref: WeakRef = weakref(player)
 	seating_tween.finished.connect(func():
 		var seating_manager: Node = seating_manager_ref.get_ref() as Node
 		var seated_player: CharacterBody3D = seating_player_ref.get_ref() as CharacterBody3D
