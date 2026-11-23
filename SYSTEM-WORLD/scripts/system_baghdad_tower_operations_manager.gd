@@ -5102,6 +5102,10 @@ func _process_restaurant_staff_service() -> void:
 				active_order["status"] = completion_state
 				active_order["updated_at_unix"] = int(Time.get_unix_time_from_system())
 				restaurant_orders[selected_table_id] = active_order
+				if completion_state == "served" and not bool(active_order.get("npc_order", false)):
+					_create_restaurant_served_meal_visual(selected_table_id, active_order)
+					if is_instance_valid(player) and str(player.get_meta("system_restaurant_seated_table_id", "")) == selected_table_id:
+						_set_player_restaurant_activity("eat")
 				_save_restaurant_orders()
 				if panel.visible and current_staff_id == str(employee.get_meta("system_tower_staff_id", "")):
 					open_staff_service(employee)
@@ -5159,9 +5163,44 @@ func open_restaurant_table(table_node: Node) -> void:
 	close_button.text = "إغلاق"
 	close_button.pressed.connect(func(): panel.hide())
 	content.add_child(close_button)
+	var seated_table_id := str(player.get_meta("system_restaurant_seated_table_id", "")) if is_instance_valid(player) else ""
+	if seated_table_id == current_restaurant_table_id:
+		var seated_label := Label.new()
+		seated_label.text = "أنت جالس الآن — يمكنك متابعة طلبك من الطاولة."
+		content.add_child(seated_label)
+		var stand_button := Button.new()
+		stand_button.text = "مغادرة المقعد والوقوف"
+		stand_button.pressed.connect(func():
+			_release_player_restaurant_seat()
+			if is_instance_valid(current_restaurant_table_node):
+				open_restaurant_table(current_restaurant_table_node)
+		)
+		content.add_child(stand_button)
+	else:
+		var seat_button := Button.new()
+		seat_button.text = "احجز مقعداً واجلس على الطاولة"
+		var has_free_seat := false
+		for seat_index in range(4):
+			var seat_marker := table_node.get_node_or_null("RestaurantSeat_%02d" % seat_index) as Node3D
+			if seat_marker != null and str(seat_marker.get_meta("system_restaurant_seat_occupant", "")).is_empty():
+				has_free_seat = true
+				break
+		seat_button.disabled = not seated_table_id.is_empty() or not has_free_seat or not is_instance_valid(player)
+		seat_button.pressed.connect(_seat_player_at_restaurant.bind(table_node))
+		content.add_child(seat_button)
+		if not seated_table_id.is_empty():
+			var other_table_label := Label.new()
+			other_table_label.text = "غادر مقعدك الحالي أولاً قبل الانتقال إلى طاولة أخرى."
+			content.add_child(other_table_label)
+		elif not has_free_seat:
+			var full_table_label := Label.new()
+			full_table_label.text = "جميع مقاعد هذه الطاولة مشغولة حالياً."
+			content.add_child(full_table_label)
 	var active_order: Dictionary = restaurant_orders.get(current_restaurant_table_id, {})
 	if not active_order.is_empty():
 		var state := str(active_order.get("status", "placed"))
+		if state == "served" and not bool(active_order.get("npc_order", false)):
+			_create_restaurant_served_meal_visual(current_restaurant_table_id, active_order)
 		var state_names := {
 			"awaiting_waiter": "الزبون بانتظار النادل لاستقبال الطلب",
 			"taking_order": "النادل يستقبل طلب الزبون",
@@ -5222,6 +5261,7 @@ func open_restaurant_table(table_node: Node) -> void:
 					content.add_child(rating_button)
 		status_label.text = "اختر أطباقك ومشروباتك. تُخصم القيمة عند إرسال الطلب إلى المطبخ."
 		var draft: Array = restaurant_draft_items.get(current_restaurant_table_id, [])
+		var player_seated_at_table := is_instance_valid(player) and str(player.get_meta("system_restaurant_seated_table_id", "")) == current_restaurant_table_id
 		for product_value in PRODUCT_CATALOG["shopping_tower_baghdad"]:
 			var product: Dictionary = product_value
 			var item_id := str(product.get("id", ""))
@@ -5229,7 +5269,7 @@ func open_restaurant_table(table_node: Node) -> void:
 				continue
 			var item_button := Button.new()
 			item_button.text = "إضافة %s — %d رصيد" % [str(product.get("name", "وجبة")), int(product.get("price", 0))]
-			item_button.disabled = credits < int(product.get("price", 0))
+			item_button.disabled = credits < int(product.get("price", 0)) or not player_seated_at_table
 			item_button.pressed.connect(_add_restaurant_draft_item.bind(current_restaurant_table_id, item_id, str(product.get("name", "وجبة")), int(product.get("price", 0))))
 			content.add_child(item_button)
 		var draft_total := 0
@@ -5244,10 +5284,170 @@ func open_restaurant_table(table_node: Node) -> void:
 		content.add_child(draft_label)
 		var place_button := Button.new()
 		place_button.text = "إرسال الطلب إلى المطبخ والدفع"
-		place_button.disabled = draft.is_empty() or credits < draft_total
+		place_button.disabled = draft.is_empty() or credits < draft_total or not player_seated_at_table
 		place_button.pressed.connect(_place_restaurant_order.bind(current_restaurant_table_id))
 		content.add_child(place_button)
 	panel.show()
+
+
+func _seat_player_at_restaurant(table_node: Node) -> void:
+	if not is_instance_valid(player) or not is_instance_valid(active_floor_root) or not is_instance_valid(table_node):
+		return
+	if table_node.get_parent() != active_floor_root or not table_node.has_meta("system_restaurant_table_id"):
+		_set_status("يجب أن تكون داخل صالة المطعم لحجز المقعد.")
+		return
+	if not str(player.get_meta("system_restaurant_seated_table_id", "")).is_empty():
+		_set_status("أنت جالس بالفعل. غادر مقعدك الحالي أولاً.")
+		return
+	var selected_seat: Node3D
+	for seat_index in range(4):
+		var candidate := table_node.get_node_or_null("RestaurantSeat_%02d" % seat_index) as Node3D
+		if candidate != null and str(candidate.get_meta("system_restaurant_seat_occupant", "")).is_empty():
+			selected_seat = candidate
+			break
+	if selected_seat == null:
+		_set_status("هذه الطاولة ممتلئة. اختر طاولة أخرى أو انتظر توفر مقعد.")
+		return
+	var table_id := str(table_node.get_meta("system_restaurant_table_id", ""))
+	selected_seat.set_meta("system_restaurant_seat_occupant", "PLAYER")
+	var occupants: Array = table_node.get_meta("system_restaurant_occupants", [])
+	if not occupants.has("PLAYER"):
+		occupants.append("PLAYER")
+	table_node.set_meta("system_restaurant_occupants", occupants)
+	player.set_meta("system_restaurant_seated_table_id", table_id)
+	player.set_meta("system_restaurant_table_node", table_node.name)
+	player.set_meta("system_restaurant_seat_node", selected_seat.name)
+	player.set_meta("system_restaurant_seating_transition", true)
+	player.set_meta("system_restaurant_seated", false)
+	player.velocity = Vector3.ZERO
+	var target_position := selected_seat.global_position + Vector3(0.0, 0.9, 0.0)
+	var facing := table_node.global_position - target_position
+	var target_rotation := atan2(facing.x, facing.z)
+	var seating_tween := create_tween()
+	player.set_meta("system_restaurant_seating_tween", seating_tween)
+	seating_tween.set_trans(Tween.TRANS_SINE)
+	seating_tween.set_ease(Tween.EASE_IN_OUT)
+	seating_tween.set_parallel(true)
+	seating_tween.tween_property(player, "global_position", target_position, 0.55)
+	seating_tween.tween_property(player, "rotation:y", target_rotation, 0.4)
+	seating_tween.finished.connect(func():
+		if not is_instance_valid(player):
+			return
+		player.set_meta("system_restaurant_seating_transition", false)
+		player.set_meta("system_restaurant_seated", true)
+		player.remove_meta("system_restaurant_seating_tween")
+		_set_player_restaurant_activity("idle")
+		if panel.visible and is_instance_valid(current_restaurant_table_node) and current_restaurant_table_id == table_id:
+			open_restaurant_table(current_restaurant_table_node)
+	)
+	_set_status("تم حجز مقعدك. يتولى النادل خدمتك عند إرسال الطلب.")
+
+
+func _release_player_restaurant_seat() -> void:
+	if not is_instance_valid(player):
+		return
+	var table_id := str(player.get_meta("system_restaurant_seated_table_id", ""))
+	if table_id.is_empty():
+		player.set_meta("system_restaurant_seated", false)
+		player.set_meta("system_restaurant_seating_transition", false)
+		return
+	var seating_tween: Variant = player.get_meta("system_restaurant_seating_tween", null)
+	if seating_tween is Tween and (seating_tween as Tween).is_running():
+		(seating_tween as Tween).kill()
+	var room := active_floor_root if is_instance_valid(active_floor_root) else null
+	var table_name := str(player.get_meta("system_restaurant_table_node", ""))
+	var seat_name := str(player.get_meta("system_restaurant_seat_node", ""))
+	var table_node := room.get_node_or_null(table_name) as Node3D if room != null else null
+	var seat_marker := table_node.get_node_or_null(seat_name) as Node3D if table_node != null else null
+	if seat_marker != null and str(seat_marker.get_meta("system_restaurant_seat_occupant", "")) == "PLAYER":
+		seat_marker.set_meta("system_restaurant_seat_occupant", "")
+	if table_node != null:
+		var occupants: Array = table_node.get_meta("system_restaurant_occupants", [])
+		occupants.erase("PLAYER")
+		table_node.set_meta("system_restaurant_occupants", occupants)
+	player.remove_meta("system_restaurant_seated_table_id")
+	player.remove_meta("system_restaurant_table_node")
+	player.remove_meta("system_restaurant_seat_node")
+	player.remove_meta("system_restaurant_seating_tween")
+	player.set_meta("system_restaurant_seated", false)
+	player.set_meta("system_restaurant_seating_transition", false)
+	player.velocity = Vector3.ZERO
+	_set_player_restaurant_activity("idle")
+	if room != null:
+		_promote_restaurant_queue(room)
+
+
+func _set_player_restaurant_activity(activity: String) -> void:
+	if not is_instance_valid(player):
+		return
+	for child in player.get_children():
+		if child.has_method("set_activity"):
+			child.call("set_activity", activity)
+			return
+
+
+func _create_restaurant_served_meal_visual(table_id: String, order: Dictionary) -> void:
+	if not is_instance_valid(active_floor_root):
+		return
+	var table_index := int(order.get("table_index", -1))
+	if table_index < 0:
+		var parts := table_id.split("_")
+		table_index = int(parts[parts.size() - 1]) if parts.size() > 0 else -1
+	var table_node := active_floor_root.get_node_or_null("RestaurantTable_%02d" % table_index) as Node3D
+	if table_node == null:
+		return
+	var existing := table_node.get_node_or_null("ServedMealPresentation")
+	if existing != null:
+		existing.queue_free()
+	var presentation := Node3D.new()
+	presentation.name = "ServedMealPresentation"
+	presentation.position = Vector3(0.0, 1.16, 0.0)
+	var plate := MeshInstance3D.new()
+	plate.name = "MealPlate"
+	var plate_mesh := CylinderMesh.new()
+	plate_mesh.top_radius = 0.38
+	plate_mesh.bottom_radius = 0.34
+	plate_mesh.height = 0.07
+	plate.mesh = plate_mesh
+	var plate_material := StandardMaterial3D.new()
+	plate_material.albedo_color = Color(0.92, 0.91, 0.84)
+	plate_material.roughness = 0.28
+	plate.material_override = plate_material
+	presentation.add_child(plate)
+	var food := MeshInstance3D.new()
+	food.name = "PreparedMeal"
+	var food_mesh := SphereMesh.new()
+	food_mesh.radius = 0.22
+	food_mesh.height = 0.17
+	food.mesh = food_mesh
+	food.position = Vector3(0.0, 0.13, 0.0)
+	var food_material := StandardMaterial3D.new()
+	food_material.albedo_color = Color(0.72, 0.34, 0.12)
+	food_material.roughness = 0.72
+	food.material_override = food_material
+	presentation.add_child(food)
+	var meal_label := Label3D.new()
+	meal_label.name = "MealReadyLabel"
+	meal_label.text = "وجبتك جاهزة"
+	meal_label.position = Vector3(0.0, 0.82, 0.0)
+	meal_label.font_size = 14
+	meal_label.pixel_size = 0.009
+	meal_label.modulate = Color(1.0, 0.82, 0.48)
+	presentation.add_child(meal_label)
+	table_node.add_child(presentation)
+
+
+func _clear_restaurant_served_meal_visual(table_id: String, order: Dictionary) -> void:
+	if not is_instance_valid(active_floor_root):
+		return
+	var table_index := int(order.get("table_index", -1))
+	if table_index < 0:
+		var parts := table_id.split("_")
+		table_index = int(parts[parts.size() - 1]) if parts.size() > 0 else -1
+	var table_node := active_floor_root.get_node_or_null("RestaurantTable_%02d" % table_index) as Node3D
+	var presentation := table_node.get_node_or_null("ServedMealPresentation") if table_node != null else null
+	if presentation != null:
+		presentation.queue_free()
 
 
 func _add_restaurant_draft_item(table_id: String, item_id: String, item_name: String, price: int) -> void:
@@ -5263,6 +5463,9 @@ func _add_restaurant_draft_item(table_id: String, item_id: String, item_name: St
 
 func _place_restaurant_order(table_id: String) -> void:
 	if table_id.is_empty() or restaurant_orders.has(table_id):
+		return
+	if not is_instance_valid(player) or str(player.get_meta("system_restaurant_seated_table_id", "")) != table_id:
+		_set_status("اجلس على مقعد الطاولة أولاً قبل إرسال طلبك.")
 		return
 	var draft: Array = restaurant_draft_items.get(table_id, [])
 	if draft.is_empty():
@@ -5280,7 +5483,7 @@ func _place_restaurant_order(table_id: String) -> void:
 		"table_id": table_id,
 		"items": draft.duplicate(true),
 		"total": total,
-		"status": "placed",
+		"status": "awaiting_waiter",
 		"npc_order": false,
 		"table_index": int(current_restaurant_table_node.get_meta("system_restaurant_table_index", -1)) if is_instance_valid(current_restaurant_table_node) else -1,
 		"created_at_unix": int(Time.get_unix_time_from_system()),
@@ -5313,6 +5516,10 @@ func _advance_restaurant_order(table_id: String, next_status: String) -> void:
 	order["status"] = next_status
 	order["updated_at_unix"] = int(Time.get_unix_time_from_system())
 	if next_status == "completed":
+		if not bool(order.get("npc_order", false)):
+			_clear_restaurant_served_meal_visual(table_id, order)
+			if is_instance_valid(player) and str(player.get_meta("system_restaurant_seated_table_id", "")) == table_id:
+				_release_player_restaurant_seat()
 		restaurant_order_history.append(order.duplicate(true))
 		restaurant_orders.erase(table_id)
 	else:
@@ -5780,6 +5987,7 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 		active_power_floor_data = request.get("floor_data", {})
 		power_floor_in_progress = true
 	if is_instance_valid(active_floor_root) and (tower_id != current_tower_id or floor_number != int(active_floor_root.get_meta("system_tower_floor_number", 0))):
+		_release_player_restaurant_seat()
 		_clear_pool_visit_state()
 	_return_floor_duty_staff_to_lobbies()
 	var duty_staff_trip := _board_floor_duty_staff(tower_id, floor_number, car)
@@ -5962,6 +6170,7 @@ func return_to_lobby() -> void:
 		active_power_floor_data.clear()
 		power_floor_timer_remaining = 0.0
 		active_power_objective_label = null
+	_release_player_restaurant_seat()
 	var tower := tower_nodes[current_tower_id] as Node3D
 	var config: Dictionary = TOWER_CONFIG[current_tower_id]
 	var start_y := active_floor_root.position.y
