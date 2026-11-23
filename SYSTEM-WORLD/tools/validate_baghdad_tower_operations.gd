@@ -1491,6 +1491,18 @@ func _run() -> void:
 	if outside_broadcast == null or lobby_broadcast == null or not outside_broadcast.text.contains("LIVE POWER TOWER") or not lobby_broadcast.text.contains("sovereign_challenger") or int(outside_broadcast.get_meta("system_live_floor", 0)) != 200 or int(lobby_broadcast.get_meta("system_live_floor", 0)) != 200:
 		_fail("Power Tower outside and lobby public live-broadcast score panels did not receive the verified duel update.")
 		return
+	var shared_live_viewport := boss_room.get_node_or_null("PowerTowerLiveCameraViewport") as SubViewport
+	var outside_camera_feed := outside_broadcast_root.get_node_or_null("PowerTowerLiveCameraFeed") as MeshInstance3D if outside_broadcast_root != null else null
+	var lobby_camera_feed := lobby_broadcast_root.get_node_or_null("PowerTowerLiveCameraFeed") as MeshInstance3D if lobby_broadcast_root != null else null
+	var outside_feed_material := outside_camera_feed.material_override as StandardMaterial3D if outside_camera_feed != null else null
+	var lobby_feed_material := lobby_camera_feed.material_override as StandardMaterial3D if lobby_camera_feed != null else null
+	if shared_live_viewport == null or shared_live_viewport.size != Vector2i(640, 360) or shared_live_viewport.render_target_update_mode != SubViewport.UPDATE_ALWAYS or outside_camera_feed == null or lobby_camera_feed == null or outside_feed_material == null or lobby_feed_material == null or outside_feed_material.albedo_texture == null or lobby_feed_material.albedo_texture == null or not bool(outside_camera_feed.get_meta("system_power_tower_live_camera_feed", false)) or not bool(lobby_camera_feed.get_meta("system_power_tower_live_camera_feed", false)):
+		_fail("Power Tower live 3D camera viewport is not shared by both public display surfaces.")
+		return
+	var live_camera := shared_live_viewport.get_node_or_null("PowerTowerLiveArenaCamera") as Camera3D
+	if live_camera == null or not live_camera.current:
+		_fail("Power Tower live camera is missing or not active.")
+		return
 	var sovereign_display := boss_room.get_node_or_null("ArenaChallengeDisplay") as Label3D
 	var sovereign_screen := boss_room.get_node_or_null("ArenaChallengeScreenPanel") as MeshInstance3D
 	var sovereign_judges := boss_room.get_node_or_null("PowerTowerRefereeStations") as Node3D
