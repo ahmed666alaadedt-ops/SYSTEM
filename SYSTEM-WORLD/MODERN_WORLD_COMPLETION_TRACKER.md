@@ -6,6 +6,8 @@
 - [ ] The extended operations validation was cancelled at its 20-minute job timeout before reaching its later Power Tower arena and restaurant checks. Added trace checkpoints around sovereign boss phase frames, reward settlement, and Shopping Tower floor generation; increased this validation job's timeout to 45 minutes so the next run can identify and complete the slow section.
 - [ ] Do not mark the extended validation passed until its complete workflow succeeds.
 ## Power Tower — safe spectator prediction lifecycle prototype — 23 November 2026
+- [x] Strengthened the 200-floor regression validator to require exactly one human opponent, `INDIVIDUAL_1V1`, `ONLINE_1V1`, and `ai_fallback=false` on every floor; this prevents team formats or AI substitution from silently entering the official competition profile.
+- [ ] Re-run the extended Godot operations validator and canonical Android export on the exact updated PR head before marking this regression verified.
 
 - [x] Added local match registration for exactly two distinct fighters and stable match IDs.
 - [x] Added fan prediction submission before lock; fighters cannot predict their own match, and duplicate/invalid/late entries are rejected.
