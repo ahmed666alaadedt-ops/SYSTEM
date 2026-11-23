@@ -1515,7 +1515,9 @@ func _ensure_power_tower_live_camera_feed(room: Node3D, display_root: Node3D, vi
 		quad.size = Vector2(17.2, 6.1)
 		feed.mesh = quad
 		feed.position = Vector3(0.0, -0.15, -0.255)
+		feed.rotation.y = PI
 		var material := StandardMaterial3D.new()
+		material.cull_mode = BaseMaterial3D.CULL_DISABLED
 		material.albedo_color = Color.WHITE
 		material.albedo_texture = source_viewport.get_texture()
 		material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
