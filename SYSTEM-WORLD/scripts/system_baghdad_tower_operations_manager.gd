@@ -3623,7 +3623,7 @@ func _create_power_tower_spectator_gallery(room: Node3D, radius: float) -> void:
 	gallery.add_child(seat_summary)
 	var prediction_board := Node3D.new()
 	prediction_board.name = "PowerTowerSpectatorPredictionBoard"
-	prediction_board.position = Vector3(0.0, 0.0, radius * 0.88)
+	prediction_board.position = Vector3(0.0, 4.2, radius * 0.68)
 	prediction_board.set_meta("system_power_tower_prediction_board", true)
 	var board_mesh := MeshInstance3D.new()
 	board_mesh.name = "PredictionBoardDisplay"
@@ -3658,7 +3658,7 @@ func _create_power_tower_spectator_gallery(room: Node3D, radius: float) -> void:
 	var board_sphere := SphereShape3D.new()
 	board_sphere.radius = 2.2
 	board_collision.shape = board_sphere
-	board_collision.position.y = 1.3
+	board_collision.position.y = -2.9
 	board_interaction.add_child(board_collision)
 	prediction_board.add_child(board_interaction)
 	gallery.add_child(prediction_board)
