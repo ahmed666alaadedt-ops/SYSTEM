@@ -60,38 +60,50 @@ jobs:
         run: |
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
-          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_child_character_safety.gd
+          set +e
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_child_character_safety.gd > "$RUNNER_TEMP/child-character-safety.log" 2>&1
+          godot_status=$?
+          grep -E "SYSTEM NPC QA PASS|SYSTEM CHILD QA TRANSIENT|SCRIPT ERROR|Parse Error|ERROR:|WARNING:" "$RUNNER_TEMP/child-character-safety.log" | tail -n 80 || true
+          if grep -E "SCRIPT ERROR|Parse Error" "$RUNNER_TEMP/child-character-safety.log"; then exit 1; fi
+          exit "$godot_status"
 
       - name: Scan runtime scene for missing mesh resources
         shell: bash
         run: |
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
-          "$GODOT" --headless --path "$PROJECT" --script res://tools/diagnose_null_meshes.gd
+          set +e
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/diagnose_null_meshes.gd > "$RUNNER_TEMP/null-mesh-diagnostic.log" 2>&1
+          godot_status=$?
+          grep -E "SYSTEM MESH DIAGNOSTIC|SYSTEM POST-SWITCH|SYSTEM WORLD LOAD TEST|SYSTEM TRANSIENT|ERROR: Parameter" "$RUNNER_TEMP/null-mesh-diagnostic.log" | tail -n 100 || true
+          if grep -E "SCRIPT ERROR|Parse Error" "$RUNNER_TEMP/null-mesh-diagnostic.log"; then exit 1; fi
+          exit "$godot_status"
 
       - name: Launch main scene headlessly
         shell: bash
         run: |
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
-          set -o pipefail
-          "$GODOT" --headless --path "$PROJECT" --quit-after 10 2>&1 | tee "$RUNNER_TEMP/system-world-runtime.log"
-          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" "$RUNNER_TEMP/system-world-runtime.log"; then
-            echo "Godot reported runtime script errors."
-            exit 1
-          fi
+          set +e
+          "$GODOT" --headless --path "$PROJECT" --quit-after 10 > "$RUNNER_TEMP/system-world-runtime.log" 2>&1
+          godot_status=$?
+          grep -E "SCRIPT ERROR|Parse Error|Failed to load script" "$RUNNER_TEMP/system-world-runtime.log" || true
+          echo "Headless renderer null-mesh shutdown warnings: $(grep -c 'ERROR: Parameter "m" is null' "$RUNNER_TEMP/system-world-runtime.log" || true)"
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" "$RUNNER_TEMP/system-world-runtime.log"; then exit 1; fi
+          exit "$godot_status"
 
       - name: Validate Baghdad tower landmarks and lobby systems
         shell: bash
         run: |
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
-          set -o pipefail
-          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_baghdad_towers.gd 2>&1 | tee "$RUNNER_TEMP/baghdad-tower-validation.log"
-          if grep -E "SCRIPT ERROR|Parse Error|Baghdad tower validation failed" "$RUNNER_TEMP/baghdad-tower-validation.log"; then
-            echo "Baghdad tower validation reported an error."
-            exit 1
-          fi
+          set +e
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_baghdad_towers.gd > "$RUNNER_TEMP/baghdad-tower-validation.log" 2>&1
+          godot_status=$?
+          grep -E "Baghdad tower validation|SCRIPT ERROR|Parse Error|Baghdad tower validation failed" "$RUNNER_TEMP/baghdad-tower-validation.log" | tail -n 100 || true
+          echo "Headless renderer null-mesh shutdown warnings: $(grep -c 'ERROR: Parameter "m" is null' "$RUNNER_TEMP/baghdad-tower-validation.log" || true)"
+          if grep -E "SCRIPT ERROR|Parse Error|Baghdad tower validation failed" "$RUNNER_TEMP/baghdad-tower-validation.log"; then exit 1; fi
+          exit "$godot_status"
 
 
       - name: Validate Baghdad tower interiors, NPC commerce, advertising and Power Tower boss arena
