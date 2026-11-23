@@ -209,9 +209,17 @@ func register_judged_duel(match_id: String, fighter_a_id: String, fighter_b_id: 
 		return {"success": false, "reason": "FIGHTER_REGISTRATION_REQUIRED"}
 	if duel_matches.has(match_id):
 		return {"success": false, "reason": "DUEL_ALREADY_REGISTERED"}
-	var spectator_registration := register_spectator_match(match_id, fighter_a_id, fighter_b_id, floor_number)
-	if not bool(spectator_registration.get("success", false)):
-		return {"success": false, "reason": "SPECTATOR_MATCH_REGISTRATION_FAILED", "detail": spectator_registration}
+	var spectator_registration: Dictionary = {}
+	if spectator_matches.has(match_id):
+		var existing_spectator_match: Dictionary = get_spectator_match(match_id)
+		var existing_fighters_match := (str(existing_spectator_match.get("fighter_a_id", "")) == fighter_a_id and str(existing_spectator_match.get("fighter_b_id", "")) == fighter_b_id) or (str(existing_spectator_match.get("fighter_a_id", "")) == fighter_b_id and str(existing_spectator_match.get("fighter_b_id", "")) == fighter_a_id)
+		if not existing_fighters_match or int(existing_spectator_match.get("floor", 0)) != floor_number or str(existing_spectator_match.get("state", "")) != "open":
+			return {"success": false, "reason": "SPECTATOR_MATCH_IDENTITY_MISMATCH"}
+		spectator_registration = {"success": true, "match_id": match_id, "state": "open"}
+	else:
+		spectator_registration = register_spectator_match(match_id, fighter_a_id, fighter_b_id, floor_number)
+		if not bool(spectator_registration.get("success", false)):
+			return {"success": false, "reason": "SPECTATOR_MATCH_REGISTRATION_FAILED", "detail": spectator_registration}
 	var floor_data := get_floor_data(floor_number)
 	duel_matches[match_id] = {
 		"match_id": match_id,
@@ -316,10 +324,13 @@ func finish_judged_duel(match_id: String, winner_id: String, finish_type: String
 	var career_result := _record_duel_career_result(winner_id, loser_id, int(duel.get("floor", 1)), str(duel.get("local_player_id", "PLAYER")))
 	var spectator_settlement: Dictionary = {}
 	var spectator_match: Dictionary = get_spectator_match(match_id)
-	if str(spectator_match.get("state", "")) == "open":
+	var spectator_state := str(spectator_match.get("state", ""))
+	if spectator_state == "open":
 		var lock_result: Dictionary = lock_spectator_predictions(match_id)
-		if bool(lock_result.get("success", false)) and not (spectator_match.get("predictions", {}) as Dictionary).is_empty():
-			spectator_settlement = settle_spectator_match(match_id, winner_id, LOCAL_MATCH_AUTHORITY)
+		if bool(lock_result.get("success", false)):
+			spectator_state = "locked"
+	if spectator_state == "locked" and not (spectator_match.get("predictions", {}) as Dictionary).is_empty():
+		spectator_settlement = settle_spectator_match(match_id, winner_id, LOCAL_MATCH_AUTHORITY)
 	_save_duel_records()
 	duel_completed.emit(match_id, duel.duplicate(true))
 	return {"success": true, "winner_id": winner_id, "loser_id": loser_id, "finish_type": finish_type, "score": score.duplicate(true), "career_result": career_result, "spectator_settlement": spectator_settlement, "cash_value": 0}
