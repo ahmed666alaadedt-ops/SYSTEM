@@ -708,6 +708,7 @@ func _run() -> void:
 	power_probe.set("highest_cleared_floor", 0)
 	power_probe.set("active_floor", 0)
 	power_probe.set("floor_clear_times", {})
+	power_probe.set("processed_result_ids", {})
 	var skipped_floor: Dictionary = power_probe.call("request_floor", 2, 1)
 	if str(skipped_floor.get("reason", "")) != "PREVIOUS_FLOOR_REQUIRED":
 		_fail("Power Tower allowed a player to skip the previous floor.")
@@ -727,6 +728,10 @@ func _run() -> void:
 	var forged_clear: Dictionary = power_probe.call("confirm_floor_clear", 2, 30.0)
 	if str(forged_clear.get("reason", "")) != "FLOOR_NOT_ACTIVE":
 		_fail("Power Tower accepted a clear report for a floor that was never activated.")
+		return
+	var unverified_clear: Dictionary = power_probe.call("confirm_floor_clear", 1, 30.0)
+	if str(unverified_clear.get("reason", "")) != "SERVER_VERIFICATION_REQUIRED" or int(power_probe.get("highest_cleared_floor")) != 0:
+		_fail("Power Tower granted floor progress without a server-verified human 1v1 result.")
 		return
 	power_probe.call("abandon_active_floor")
 	power_probe.queue_free()
@@ -809,13 +814,14 @@ func _run() -> void:
 	progression_test_manager.set("boss_duels_won", 0)
 	progression_test_manager.set("total_xp_earned", 0)
 	progression_test_manager.set("total_credits_earned", 0)
+	progression_test_manager.set("processed_result_ids", {})
 	for test_floor in range(1, 201):
 		var floor_request: Dictionary = progression_test_manager.call("request_floor", test_floor, 100)
 		if not bool(floor_request.get("success", false)):
 			_fail("Power Tower rejected sequential progression at floor %d: %s" % [test_floor, str(floor_request.get("reason", "unknown"))])
 			progression_test_manager.queue_free()
 			return
-		var floor_clear: Dictionary = progression_test_manager.call("confirm_floor_clear", test_floor, float(test_floor))
+		var floor_clear: Dictionary = progression_test_manager.call("confirm_floor_clear", test_floor, float(test_floor), true, "validator_pvp_result_%03d" % test_floor)
 		if not bool(floor_clear.get("success", false)):
 			_fail("Power Tower could not persist a valid clear at floor %d." % test_floor)
 			progression_test_manager.queue_free()
@@ -826,7 +832,7 @@ func _run() -> void:
 	print("QA: 200-floor progression and persistence simulation completed.")
 	var reloaded_tower_status: Dictionary = reloaded_progression_manager.call("get_tower_status")
 	var reloaded_floor_times: Dictionary = reloaded_progression_manager.get("floor_clear_times")
-	if int(reloaded_tower_status.get("highest_cleared_floor", 0)) != 200 or int(reloaded_tower_status.get("next_floor", 1)) != 0 or int(reloaded_floor_times.size()) != 200 or int(reloaded_tower_status.get("total_duels_won", 0)) != 200 or int(reloaded_tower_status.get("elite_duels_won", 0)) != 20 or int(reloaded_tower_status.get("boss_duels_won", 0)) != 20 or int(reloaded_tower_status.get("total_xp_earned", 0)) <= 0 or int(reloaded_tower_status.get("total_credits_earned", 0)) <= 0:
+	if int(reloaded_tower_status.get("highest_cleared_floor", 0)) != 200 or int(reloaded_tower_status.get("next_floor", 1)) != 0 or int(reloaded_floor_times.size()) != 200 or int(reloaded_tower_status.get("total_duels_won", 0)) != 200 or int(reloaded_tower_status.get("elite_duels_won", 0)) != 20 or int(reloaded_tower_status.get("boss_duels_won", 0)) != 20 or int(reloaded_tower_status.get("total_xp_earned", 0)) <= 0 or int(reloaded_tower_status.get("total_credits_earned", 0)) <= 0 or int(reloaded_tower_status.get("processed_result_count", 0)) != 200:
 		_fail("Power Tower did not restore all 200 individual duel wins, elite/boss records, clear times and lifetime rewards.")
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
