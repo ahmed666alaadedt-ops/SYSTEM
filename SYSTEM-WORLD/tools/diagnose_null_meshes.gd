@@ -13,7 +13,19 @@ func _count_meshes(start: Node) -> int:
 	return count
 
 func _initialize() -> void:
+	root.node_added.connect(_on_diagnostic_node_added)
 	call_deferred("_run_diagnostic")
+
+
+func _on_diagnostic_node_added(node: Node) -> void:
+	if node is MeshInstance3D:
+		var mesh_instance := node as MeshInstance3D
+		if mesh_instance.mesh == null:
+			print("SYSTEM TRANSIENT NULL MESH ON TREE ADD: ", str(mesh_instance.get_path()))
+	elif node is MultiMeshInstance3D:
+		var multi_instance := node as MultiMeshInstance3D
+		if multi_instance.multimesh == null or multi_instance.multimesh.mesh == null:
+			print("SYSTEM TRANSIENT INVALID MULTIMESH ON TREE ADD: ", str(multi_instance.get_path()))
 
 func _run_diagnostic() -> void:
 	var packed: PackedScene = load("res://MainScene.tscn")
