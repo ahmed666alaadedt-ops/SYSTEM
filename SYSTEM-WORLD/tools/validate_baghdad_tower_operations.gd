@@ -805,6 +805,8 @@ func _run() -> void:
 	var progression_test_manager := power_tower_test_script.new() as Node
 	progression_test_manager.set("spectator_save_path", "user://validator_power_tower_spectator_predictions.cfg")
 	root.add_child(progression_test_manager)
+	progression_test_manager.call("set_spectator_wallet_provider", operations)
+	var spectator_wallet_before := int(operations.get("credits"))
 	await process_frame
 	progression_test_manager.set("highest_cleared_floor", 0)
 	progression_test_manager.set("active_floor", 0)
@@ -848,10 +850,11 @@ func _run() -> void:
 		reloaded_progression_manager.queue_free()
 		return
 	var fighter_prediction: Dictionary = progression_test_manager.call("submit_spectator_prediction", "validator_duel_001", "fighter_alpha", "fighter_beta")
-	var fan_prediction: Dictionary = progression_test_manager.call("submit_spectator_prediction", "validator_duel_001", "fan_alpha", "fighter_beta")
+	var fan_prediction: Dictionary = progression_test_manager.call("submit_spectator_prediction", "validator_duel_001", "fan_alpha", "fighter_beta", 40)
 	var duplicate_prediction: Dictionary = progression_test_manager.call("submit_spectator_prediction", "validator_duel_001", "fan_alpha", "fighter_alpha")
-	var second_fan_prediction: Dictionary = progression_test_manager.call("submit_spectator_prediction", "validator_duel_001", "fan_beta", "fighter_alpha")
-	if str(fighter_prediction.get("reason", "")) != "FIGHTERS_CANNOT_PREDICT_OWN_MATCH" or not bool(fan_prediction.get("success", false)) or str(duplicate_prediction.get("reason", "")) != "PREDICTION_ALREADY_SUBMITTED" or not bool(second_fan_prediction.get("success", false)):
+	var second_fan_prediction: Dictionary = progression_test_manager.call("submit_spectator_prediction", "validator_duel_001", "fan_beta", "fighter_alpha", 60)
+	var third_fan_prediction: Dictionary = progression_test_manager.call("submit_spectator_prediction", "validator_duel_001", "fan_gamma", "fighter_beta", 20)
+	if str(fighter_prediction.get("reason", "")) != "FIGHTERS_CANNOT_PREDICT_OWN_MATCH" or not bool(fan_prediction.get("success", false)) or str(duplicate_prediction.get("reason", "")) != "PREDICTION_ALREADY_SUBMITTED" or not bool(second_fan_prediction.get("success", false)) or not bool(third_fan_prediction.get("success", false)):
 		_fail("Spectator predictions allowed a fighter to predict their own match, duplicate a vote or reject a valid fan forecast.")
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
@@ -863,14 +866,24 @@ func _run() -> void:
 	var repeated_settlement: Dictionary = progression_test_manager.call("settle_spectator_match", "validator_duel_001", "fighter_beta", "LOCAL_COMBAT_AUTHORITY")
 	var fan_alpha_status: Dictionary = progression_test_manager.call("get_spectator_status", "fan_alpha")
 	var fan_beta_status: Dictionary = progression_test_manager.call("get_spectator_status", "fan_beta")
+	var fan_gamma_status: Dictionary = progression_test_manager.call("get_spectator_status", "fan_gamma")
 	var settled_match_record: Dictionary = progression_test_manager.call("get_spectator_match", "validator_duel_001")
 	if str(untrusted_settlement.get("reason", "")) != "UNTRUSTED_MATCH_RESULT" or not bool(locked_prediction.get("success", false)) or str(late_prediction.get("reason", "")) != "PREDICTIONS_LOCKED" or not bool(settled_prediction.get("success", false)) or str(repeated_settlement.get("reason", "")) != "MATCH_NOT_LOCKED":
 		_fail("Spectator prediction locking or trusted one-time match settlement failed.")
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
 		return
-	if int(fan_alpha_status.get("prediction_points", 0)) != 1 or int(fan_beta_status.get("prediction_points", 0)) != 0 or int(fan_alpha_status.get("cash_value", -1)) != 0 or bool(fan_alpha_status.get("transferable", true)) or bool(fan_alpha_status.get("purchasable", true)) or str(settled_match_record.get("state", "")) != "settled" or str(settled_match_record.get("winner_id", "")) != "fighter_beta":
-		_fail("Correct fan predictions must award only non-transferable, non-purchasable points; incorrect forecasts must not lose value.")
+	if int(fan_alpha_status.get("cash_value", -1)) != 0 or bool(fan_alpha_status.get("transferable", true)) or bool(fan_alpha_status.get("purchasable", true)) or int(settled_prediction.get("total_pool", 0)) != 120 or int(settled_prediction.get("payouts", {}).get("fan_alpha", 0)) != 80 or int(settled_prediction.get("payouts", {}).get("fan_gamma", 0)) != 40 or int(settled_prediction.get("net_profits", {}).get("fan_alpha", 0)) != 40 or int(settled_prediction.get("net_profits", {}).get("fan_beta", 0)) != -60 or int(settled_prediction.get("net_profits", {}).get("fan_gamma", 0)) != 20 or int(operations.get("credits")) != spectator_wallet_before or int(fan_gamma_status.get("cash_value", -1)) != 0 or str(settled_match_record.get("state", "")) != "settled" or str(settled_match_record.get("winner_id", "")) != "fighter_beta":
+		_fail("Virtual tickets must debit stakes and distribute the 120-credit pool proportionally (80/40), with correct net profits and no cash value.")
+		progression_test_manager.queue_free()
+		reloaded_progression_manager.queue_free()
+		return
+	var no_winner_match: Dictionary = progression_test_manager.call("register_spectator_match", "validator_no_winner", "refund_fighter_a", "refund_fighter_b", 14)
+	var refund_ticket: Dictionary = progression_test_manager.call("submit_spectator_prediction", "validator_no_winner", "refund_fan", "refund_fighter_a", 25)
+	var refund_lock: Dictionary = progression_test_manager.call("lock_spectator_predictions", "validator_no_winner")
+	var refund_result: Dictionary = progression_test_manager.call("settle_spectator_match", "validator_no_winner", "refund_fighter_b", "LOCAL_COMBAT_AUTHORITY")
+	if not bool(no_winner_match.get("success", false)) or not bool(refund_ticket.get("success", false)) or not bool(refund_lock.get("success", false)) or not bool(refund_result.get("success", false)) or not bool(refund_result.get("refunded", false)) or int(refund_result.get("total_paid_out", 0)) != 25 or int(operations.get("credits")) != spectator_wallet_before:
+		_fail("A pool with no correct tickets must refund every virtual stake without creating or destroying credits.")
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
 		return
@@ -884,7 +897,7 @@ func _run() -> void:
 			reloaded_progression_manager.queue_free()
 			return
 	var limit_match: Dictionary = progression_test_manager.call("register_spectator_match", "validator_daily_limit", "daily_fighter_a", "daily_fighter_b", 1)
-	var limit_prediction: Dictionary = progression_test_manager.call("submit_spectator_prediction", "validator_daily_limit", "daily_fan", "daily_fighter_a")
+	var limit_prediction: Dictionary = progression_test_manager.call("submit_spectator_prediction", "validator_daily_limit", "daily_fan", "daily_fighter_a", 1)
 	if not bool(limit_match.get("success", false)) or str(limit_prediction.get("reason", "")) != "DAILY_PREDICTION_LIMIT_REACHED":
 		_fail("Spectator daily prediction limit was not enforced consistently.")
 		progression_test_manager.queue_free()
@@ -896,8 +909,9 @@ func _run() -> void:
 	await process_frame
 	print("QA: spectator prediction lock, settlement, daily cap and persistence checks completed.")
 	var persisted_fan_status: Dictionary = spectator_reload_manager.call("get_spectator_status", "fan_alpha")
-	if int(persisted_fan_status.get("prediction_points", 0)) != 1:
-		_fail("Spectator prediction points did not persist through a manager reload.")
+	var persisted_match: Dictionary = spectator_reload_manager.call("get_spectator_match", "validator_duel_001")
+	if str(persisted_match.get("state", "")) != "settled" or int(persisted_match.get("payouts", {}).get("fan_alpha", 0)) != 80 or int(persisted_fan_status.get("cash_value", -1)) != 0:
+		_fail("The virtual ticket payout ledger did not persist through a manager reload.")
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
 		spectator_reload_manager.queue_free()
@@ -905,10 +919,11 @@ func _run() -> void:
 	progression_test_manager.queue_free()
 	reloaded_progression_manager.queue_free()
 	spectator_reload_manager.queue_free()
+	operations.call("grant_spectator_payout", 20)
 	var prediction_file_path := ProjectSettings.globalize_path("user://validator_power_tower_spectator_predictions.cfg")
 	if FileAccess.file_exists(prediction_file_path):
 		DirAccess.remove_absolute(prediction_file_path)
-	print("QA: fan predictions reject fighter/self and duplicate entries, lock before combat, settle once from match authority, award only free non-transferable points and persist with a daily cap.")
+	print("QA: virtual ticket pools debit stakes, distribute proportional winnings, refund a pool with no correct tickets, persist payouts and enforce the daily cap.")
 	var tower_player: CharacterBody3D = main.get("player") as CharacterBody3D
 	var final_boss_script := load("res://scripts/system_tower_opponent.gd") as Script
 	if tower_player == null or final_boss_script == null:
