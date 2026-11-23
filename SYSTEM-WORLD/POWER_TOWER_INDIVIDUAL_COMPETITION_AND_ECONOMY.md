@@ -190,3 +190,5 @@ Implementation status: a local prototype now records individual 1v1 matches, ded
 
 - Seat ownership also records the floor number, so automatic cleanup resolves the exact reserved seat instead of relying on a seat ID reused on every floor.
 - The regression now opens the prediction terminal through the actual arena-board interaction route and verifies that the shared virtual-ticket UI becomes visible.
+
+- The fan-prediction display is mounted above the rear spectator seating line and its interaction zone remains reachable at player height, keeping the board within the arena deck boundary instead of placing the kiosk beyond the platform edge.
