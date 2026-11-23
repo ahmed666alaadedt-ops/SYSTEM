@@ -1030,6 +1030,7 @@ func _return_customer_visitors_to_lobbies() -> void:
 				visitor = active_floor_root.get_node_or_null(visitor_name) as Node3D
 			if visitor == null:
 				continue
+			_release_restaurant_customer_seat(visitor)
 			visitor.reparent(lobby, false)
 			var customer_index := int(visitor.get_meta("system_tower_customer_index", 0))
 			var radius := float(TOWER_CONFIG[tower_id].get("radius", 24.0))
@@ -1064,6 +1065,7 @@ func _board_customer_visitors_into_elevator(tower_id: String, target_floor: int,
 		var previous_tween: Variant = visitor.get_meta("system_customer_move_tween", null)
 		if previous_tween is Tween and (previous_tween as Tween).is_running():
 			(previous_tween as Tween).kill()
+		_release_restaurant_customer_seat(visitor)
 		visitor.reparent(car, true)
 		visitor.position = Vector3(-1.2 + float(boarded) * 2.4, 0.45, 0.0)
 		visitor.set_meta("system_customer_in_elevator", true)
@@ -1133,22 +1135,25 @@ func _place_customer_visitors_on_floor(tower_id: String, floor_number: int, room
 		var visitor := passengers[slot]
 		var customer_id := str(visitor.get_meta("system_tower_customer_id", ""))
 		visitor.reparent(room, false)
-		var angle := TAU * float(slot) / float(maxi(passengers.size(), 1))
-		visitor.position = Vector3(cos(angle) * radius * 0.28, 0.0, sin(angle) * radius * 0.28)
 		visitor.remove_meta("system_customer_in_elevator")
 		visitor.remove_meta("system_customer_elevator_target_floor")
 		visitor.set_meta("system_customer_current_floor", floor_number)
 		visitor.set_meta("system_customer_current_department", floor_label)
+		if tower_id == "shopping_tower_baghdad" and floor_number >= 29:
+			_seat_customer_at_restaurant(visitor, room, slot)
+		else:
+			var angle := TAU * float(slot) / float(maxi(passengers.size(), 1))
+			visitor.position = Vector3(cos(angle) * radius * 0.28, 0.0, sin(angle) * radius * 0.28)
+			for visitor_child in visitor.get_children():
+				if visitor_child.has_method("set_activity"):
+					visitor_child.call("set_activity", "wander" if slot == 0 else "socialize")
 		if is_instance_valid(society) and not customer_id.is_empty():
 			var customer: Dictionary = society.call("get_npc", customer_id)
 			if not customer.is_empty():
 				customer["current_location"] = "%s_floor_%d" % [tower_id, floor_number]
-				customer["current_action"] = "visiting_" + floor_label
+				customer["current_action"] = "dining" if tower_id == "shopping_tower_baghdad" and floor_number >= 29 else "visiting_" + floor_label
 				customer["last_tower_visit"] = Time.get_datetime_string_from_system()
 				society.npcs[customer_id] = customer
-		for visitor_child in visitor.get_children():
-			if visitor_child.has_method("set_activity"):
-				visitor_child.call("set_activity", "wander" if slot == 0 else "socialize")
 	if is_instance_valid(society) and society.has_method("save_society"):
 		society.call("save_society")
 
@@ -5146,6 +5151,8 @@ func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: i
 		table_root.position = Vector3(cos(angle) * radius * 0.34, 0.0, sin(angle) * radius * 0.34)
 		table_root.set_meta("system_restaurant_table_id", "shopping_floor_%02d_table_%02d" % [floor_number, index])
 		table_root.set_meta("system_restaurant_table_name", "طاولة %d — الطابق %d" % [index + 1, floor_number])
+		table_root.set_meta("system_restaurant_table_index", index)
+		table_root.set_meta("system_restaurant_occupants", [])
 		room.add_child(table_root)
 		var interaction_body := StaticBody3D.new()
 		interaction_body.name = "RestaurantTableInteraction"
@@ -5181,6 +5188,111 @@ func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: i
 			seat.position = Vector3(cos(seat_angle) * 1.35, 0.45, sin(seat_angle) * 1.0)
 			seat.material_override = table_material
 			table_root.add_child(seat)
+			var seat_marker := Node3D.new()
+			seat_marker.name = "RestaurantSeat_%02d" % seat_index
+			seat_marker.position = Vector3(cos(seat_angle) * 1.05, 0.0, sin(seat_angle) * 0.78)
+			seat_marker.set_meta("system_restaurant_seat_occupant", "")
+			table_root.add_child(seat_marker)
+	var queue_sign := Label3D.new()
+	queue_sign.name = "RestaurantQueueSign"
+	queue_sign.text = "QUEUE — طابور انتظار الطاولات"
+	queue_sign.position = Vector3(-radius * 0.30, 2.1, radius * 0.20)
+	queue_sign.font_size = 15
+	queue_sign.pixel_size = 0.012
+	queue_sign.modulate = Color(0.55, 0.9, 1.0)
+	room.add_child(queue_sign)
+	for queue_index in range(8):
+		var queue_marker := Node3D.new()
+		queue_marker.name = "RestaurantQueuePosition_%02d" % queue_index
+		queue_marker.position = Vector3(-radius * 0.30, 0.0, radius * 0.20 + float(queue_index) * 1.15)
+		queue_marker.set_meta("system_restaurant_queue_occupant", "")
+		var ring := MeshInstance3D.new()
+		var ring_mesh := CylinderMesh.new()
+		ring_mesh.top_radius = 0.34
+		ring_mesh.bottom_radius = 0.34
+		ring_mesh.height = 0.05
+		ring.mesh = ring_mesh
+		var ring_material := StandardMaterial3D.new()
+		ring_material.albedo_color = Color(0.12, 0.62, 0.78, 0.72)
+		ring_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		ring.material_override = ring_material
+		ring.position.y = 0.04
+		queue_marker.add_child(ring)
+		room.add_child(queue_marker)
+
+
+func _seat_customer_at_restaurant(visitor: Node3D, room: Node3D, queue_seed: int) -> void:
+	if visitor == null or room == null:
+		return
+	var customer_id := str(visitor.get_meta("system_tower_customer_id", visitor.name))
+	for table_index in range(4):
+		var table_root := room.get_node_or_null("RestaurantTable_%02d" % table_index) as Node3D
+		if table_root == null:
+			continue
+		for seat_index in range(4):
+			var seat_marker := table_root.get_node_or_null("RestaurantSeat_%02d" % seat_index) as Node3D
+			if seat_marker == null or not str(seat_marker.get_meta("system_restaurant_seat_occupant", "")).is_empty():
+				continue
+			seat_marker.set_meta("system_restaurant_seat_occupant", customer_id)
+			var occupants: Array = table_root.get_meta("system_restaurant_occupants", [])
+			if not occupants.has(customer_id):
+				occupants.append(customer_id)
+			table_root.set_meta("system_restaurant_occupants", occupants)
+			visitor.position = table_root.position + seat_marker.position
+			visitor.rotation.y = atan2(table_root.position.x - visitor.position.x, table_root.position.z - visitor.position.z)
+			visitor.set_meta("system_restaurant_table_node", table_root.name)
+			visitor.set_meta("system_restaurant_seat_node", seat_marker.name)
+			visitor.remove_meta("system_restaurant_queue_marker")
+			for visitor_child in visitor.get_children():
+				if visitor_child.has_method("set_activity"):
+					visitor_child.call("set_activity", "eat")
+			return
+	for queue_index in range(8):
+		var marker_index := posmod(queue_seed + queue_index, 8)
+		var queue_marker := room.get_node_or_null("RestaurantQueuePosition_%02d" % marker_index) as Node3D
+		if queue_marker == null or not str(queue_marker.get_meta("system_restaurant_queue_occupant", "")).is_empty():
+			continue
+		queue_marker.set_meta("system_restaurant_queue_occupant", customer_id)
+		visitor.position = queue_marker.position
+		visitor.set_meta("system_restaurant_queue_marker", queue_marker.name)
+		visitor.remove_meta("system_restaurant_table_node")
+		visitor.remove_meta("system_restaurant_seat_node")
+		for visitor_child in visitor.get_children():
+			if visitor_child.has_method("set_activity"):
+				visitor_child.call("set_activity", "wait")
+		return
+	visitor.set_meta("system_restaurant_queue_overflow", true)
+	visitor.position = Vector3(-room.get_meta("system_tower_radius", 24.0) * 0.3, 0.0, room.get_meta("system_tower_radius", 24.0) * 0.45 + float(queue_seed) * 1.1)
+
+
+func _release_restaurant_customer_seat(visitor: Node3D) -> void:
+	if visitor == null or not is_instance_valid(visitor):
+		return
+	var room := visitor.get_parent() as Node3D
+	if room == null:
+		return
+	var customer_id := str(visitor.get_meta("system_tower_customer_id", visitor.name))
+	var table_name := str(visitor.get_meta("system_restaurant_table_node", ""))
+	var seat_name := str(visitor.get_meta("system_restaurant_seat_node", ""))
+	if not table_name.is_empty():
+		var table_root := room.get_node_or_null(table_name) as Node3D
+		var seat_marker := table_root.get_node_or_null(seat_name) as Node3D if table_root != null else null
+		if seat_marker != null and str(seat_marker.get_meta("system_restaurant_seat_occupant", "")) == customer_id:
+			seat_marker.set_meta("system_restaurant_seat_occupant", "")
+		if table_root != null:
+			var occupants: Array = table_root.get_meta("system_restaurant_occupants", [])
+			occupants.erase(customer_id)
+			table_root.set_meta("system_restaurant_occupants", occupants)
+		visitor.remove_meta("system_restaurant_table_node")
+		visitor.remove_meta("system_restaurant_seat_node")
+	var queue_name := str(visitor.get_meta("system_restaurant_queue_marker", ""))
+	if not queue_name.is_empty():
+		var queue_marker := room.get_node_or_null(queue_name) as Node3D
+		if queue_marker != null and str(queue_marker.get_meta("system_restaurant_queue_occupant", "")) == customer_id:
+			queue_marker.set_meta("system_restaurant_queue_occupant", "")
+		visitor.remove_meta("system_restaurant_queue_marker")
+	visitor.remove_meta("system_restaurant_queue_overflow")
+
 
 func _create_workshop_station(room: Node3D, station_id: String, station_title: String, station_position: Vector3, staff_id: String, staff_role: String) -> void:
 	var station := Node3D.new()
