@@ -1483,6 +1483,14 @@ func _run() -> void:
 	if audience_reaction == null or not audience_reaction.text.contains("sovereign_challenger"):
 		_fail("Power Tower spectator gallery did not react to the verified individual duel winner.")
 		return
+	var audience_actors := spectator_gallery.get_node_or_null("PowerTowerAudienceActors") as Node3D
+	if audience_actors == null or audience_actors.get_child_count() != 8 or str(spectator_gallery.get_meta("system_audience_reaction", "")) != "celebrating":
+		_fail("Power Tower audience actors did not enter their winner celebration state.")
+		return
+	for audience_actor in audience_actors.get_children():
+		if str(audience_actor.get_meta("system_audience_reaction", "")) != "celebrating" or audience_actor.get_node_or_null("ArmLeft") == null or audience_actor.get_node_or_null("ArmRight") == null:
+			_fail("Power Tower audience actor is missing its celebration state or animated arms.")
+			return
 	var test_spectator_seat := spectator_gallery.get_node("SpectatorSeat_00") as Node3D
 	var test_seat_interaction := test_spectator_seat.get_node("SpectatorSeatInteraction") as Area3D
 	var had_player_id := player.has_meta("system_player_id")
