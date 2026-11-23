@@ -870,8 +870,9 @@ func _run() -> void:
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
 		return
+	var opponent_registration: Dictionary = judge_test_manager.call("register_tower_fighter", "opponent_test")
 	var judged_match: Dictionary = judge_test_manager.call("register_judged_duel", "validator_judged_tko", "player_test", "opponent_test", 75, "player_test")
-	if not bool(judged_match.get("success", false)) or int(judged_match.get("judges", []).size()) != 3:
+	if not bool(opponent_registration.get("success", false)) or not bool(judged_match.get("success", false)) or int(judged_match.get("judges", []).size()) != 3:
 		_fail("Power Tower did not register its three-official referee panel for a 1v1 duel.")
 		judge_test_manager.queue_free()
 		progression_test_manager.queue_free()
@@ -900,6 +901,8 @@ func _run() -> void:
 	loss_test_manager.set("highest_cleared_floor", 75)
 	for loss_index in range(3):
 		var loss_match_id := "validator_three_losses_%02d" % loss_index
+		loss_test_manager.call("register_tower_fighter", "local_fighter")
+		loss_test_manager.call("register_tower_fighter", "winner_%02d" % loss_index)
 		var loss_registration: Dictionary = loss_test_manager.call("register_judged_duel", loss_match_id, "local_fighter", "winner_%02d" % loss_index, 75, "local_fighter")
 		var loss_result: Dictionary = loss_test_manager.call("finish_judged_duel", loss_match_id, "winner_%02d" % loss_index, "KO", "LOCAL_COMBAT_AUTHORITY")
 		if not bool(loss_registration.get("success", false)) or not bool(loss_result.get("success", false)):
@@ -921,6 +924,8 @@ func _run() -> void:
 	await process_frame
 	disqualification_test_manager.set("highest_cleared_floor", 120)
 	disqualification_test_manager.set("total_duels_lost", 9)
+	disqualification_test_manager.call("register_tower_fighter", "local_fighter")
+	disqualification_test_manager.call("register_tower_fighter", "winner_tenth")
 	var tenth_loss_registration: Dictionary = disqualification_test_manager.call("register_judged_duel", "validator_tenth_loss", "local_fighter", "winner_tenth", 120, "local_fighter")
 	var tenth_loss_result: Dictionary = disqualification_test_manager.call("finish_judged_duel", "validator_tenth_loss", "winner_tenth", "KO", "LOCAL_COMBAT_AUTHORITY")
 	var disqualification_status: Dictionary = disqualification_test_manager.call("get_duel_career_status")
