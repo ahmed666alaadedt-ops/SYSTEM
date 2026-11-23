@@ -66,9 +66,13 @@ The design can include candidate-number competition and controlled attempts to o
 
 ## Important implementation boundary
 
-The current work creates the procedural tower blockouts, entrance interaction markers, menu registration/start controls, and the examination progression data manager. It does **not** yet create the explorable interior floors, the seven physical stage environments, the actual maze geometry, puzzle devices, guardian AI encounters, city-to-city travel sequences, server-authoritative candidate verification, anti-cheat checks, or a production Hunter-license card. The entrance currently reports an interaction; it does not yet load a tower interior scene.
+The Baghdad tower district and Power Tower have progressed beyond the original exterior-blockout milestone. The current branch includes procedural tower interiors generated on demand, visible elevator travel and return, floor zoning, staff-managed local commerce, player restaurant seating and waiter delivery, and the separate 200-floor Power Tower combat loop.
 
-The Power Tower now has a separate 200-floor progression manager with unlock order, level gates, boss/elite classification, rank bands, saved highest-floor and clear-time records, and a reward signal connected to player XP. Actual combat encounters, floor scenes, opponent AI, rankings, and a trusted combat-verification caller remain to be implemented.
+Power Tower implementation now includes sequential unlocks and level gates, one-opponent/one-round individual 1v1 duels on every floor, standard/elite/boss profiles, the unique floor-200 sovereign boss, persistent ranks and clear times, XP and virtual-credit rewards, career duel/elite/boss statistics, a lobby progress board, ten visual environment chapters, and a 48-seat physical spectator gallery on each generated arena floor. The floor and wallet records remain local-save prototypes; they are not a shared server-authoritative online economy.
+
+The Power Tower still does not claim production online PvP matchmaking, global leaderboards, authoritative spectator prediction settlement, anti-cheat, interactive seat reservation/standing, autonomous spectator crowds, 200 individually handcrafted arena scenes, or final mobile art/performance polish. Spectator prediction rules are documented and explicitly prohibit real-money wagering; the live online prediction service remains future work.
+
+The Hunter Examination remains a separate seven-stage global qualification journey. Its physical stage environments, actual maze/puzzle/trap devices, guardian AI, city-to-city stage travel, server-authoritative candidate verification, anti-cheat checks, and production Hunter-license card remain unfinished.
 
 The stage completion method is an integration hook for a future trusted objective-verification system. A non-empty evidence string is not sufficient security for an online competitive game. Before live multiplayer, completion and candidate-number records must be validated by an authoritative server.
 
@@ -84,7 +88,12 @@ The stage completion method is an integration hook for a future trusted objectiv
 
 ## Verification boundary
 
-GitHub writes and source-level connections are confirmed for this update. No Godot parser, editor import, runtime scene, Android build, multiplayer test, or visual inspection was performed in this session. The tower geometry and examination progression are prototypes, not a finished playable exam or completed tower experience.
+- Godot full tower validation #1574 passed on gameplay/validator commit `c75ac3b0f27ff7c3491ba9c298c8b0be222eb553`; it included the restaurant seating and waiter-delivery lifecycle checks.
+- Android export #1356 passed on commit `d27c42d539565123eba3dea76f6aafb3cdb8d1c6`, which included the individual-only combat runtime, persistent duel records, physical spectator gallery and removal of legacy timed/team modes.
+- Ten-theme arena additions and their regression checks were added afterward; their exact-head Godot/Android verification is pending in the current branch workflow.
+- Physical Android touch, visual, frame-rate and heat testing remains outstanding. No live multiplayer, server-authoritative economy or online spectator-prediction test is claimed.
+
+The Power Tower is a playable local gameplay prototype with a substantial 200-floor progression foundation, not a finished online competitive service or final-art release. The Hunter Examination remains a separate unfinished multi-stage project.
 
 
 ## Baghdad Five-Tower Connected City — approved spatial direction — 20 November 2026
