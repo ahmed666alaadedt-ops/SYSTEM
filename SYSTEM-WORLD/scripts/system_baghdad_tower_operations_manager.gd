@@ -5193,7 +5193,7 @@ func open_restaurant_table(table_node: Node) -> void:
 				has_free_seat = true
 				break
 		seat_button.disabled = not seated_table_id.is_empty() or not has_free_seat or not is_instance_valid(player)
-		seat_button.pressed.connect(_seat_player_at_restaurant.bind(table_node))
+		seat_button.pressed.connect(_seat_player_at_restaurant.bind(restaurant_table_root))
 		content.add_child(seat_button)
 		if not seated_table_id.is_empty():
 			var other_table_label := Label.new()
