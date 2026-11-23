@@ -1477,6 +1477,14 @@ func _run() -> void:
 	if spectator_gallery == null or spectator_seat_count != 48 or int(spectator_gallery.get_meta("system_spectator_seat_count", 0)) != 48 or str(spectator_gallery.get_meta("system_competition_format", "")) != "INDIVIDUAL_1V1":
 		_fail("Power Tower floor 200 must provide a physical 48-seat spectator gallery for individual duels.")
 		return
+	operations.call("update_power_tower_live_match_display", 200, {"match_id": "validator_live_floor_200", "fighter_a_id": "sovereign_challenger", "fighter_b_id": "current_title_holder", "score": {"sovereign_challenger": 5, "current_title_holder": 5}, "winner_id": ""}, false)
+	if str(spectator_gallery.get_meta("system_audience_reaction", "")) != "watching":
+		_fail("Power Tower audience did not return to a watching pose for a tied live score.")
+		return
+	operations.call("update_power_tower_live_match_display", 200, {"match_id": "validator_live_floor_200", "fighter_a_id": "sovereign_challenger", "fighter_b_id": "current_title_holder", "score": {"sovereign_challenger": 10, "current_title_holder": 4}, "winner_id": "sovereign_challenger"}, false)
+	if str(spectator_gallery.get_meta("system_audience_reaction", "")) != "cheering":
+		_fail("Power Tower audience did not cheer when one individual fighter took the lead.")
+		return
 	operations.call("update_power_tower_live_match_display", 200, {"match_id": "validator_live_floor_200", "fighter_a_id": "sovereign_challenger", "fighter_b_id": "current_title_holder", "score": {"sovereign_challenger": 10, "current_title_holder": 4}, "winner_id": "sovereign_challenger"}, true)
 	var floor_200_live_score := boss_room.get_node_or_null("ArenaLiveMatchScoreDisplay") as Label3D
 	var audience_reaction := spectator_gallery.get_node_or_null("PowerTowerAudienceReaction") as Label3D if spectator_gallery != null else null
