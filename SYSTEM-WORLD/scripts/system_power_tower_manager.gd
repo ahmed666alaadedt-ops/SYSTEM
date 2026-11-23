@@ -162,7 +162,7 @@ func confirm_floor_clear(floor_number: int, clear_time_seconds: float, server_ve
 		"processed_result_count": processed_result_ids.size()
 	}
 
-func register_judged_duel(match_id: String, fighter_a_id: String, fighter_b_id: String, floor_number: int) -> Dictionary:
+func register_judged_duel(match_id: String, fighter_a_id: String, fighter_b_id: String, floor_number: int, local_player_id: String = "PLAYER") -> Dictionary:
 	match_id = match_id.strip_edges()
 	fighter_a_id = fighter_a_id.strip_edges()
 	fighter_b_id = fighter_b_id.strip_edges()
@@ -178,6 +178,7 @@ func register_judged_duel(match_id: String, fighter_a_id: String, fighter_b_id: 
 		"floor": floor_number,
 		"fighter_a_id": fighter_a_id,
 		"fighter_b_id": fighter_b_id,
+		"local_player_id": local_player_id.strip_edges(),
 		"competition_format": "INDIVIDUAL_1V1",
 		"state": "live",
 		"score": {fighter_a_id: 0, fighter_b_id: 0},
@@ -271,14 +272,14 @@ func finish_judged_duel(match_id: String, winner_id: String, finish_type: String
 	duel["finish_type"] = finish_type
 	duel["settled_at_unix"] = int(Time.get_unix_time_from_system())
 	duel_matches[match_id] = duel
-	var career_result := _record_duel_career_result(winner_id, loser_id, int(duel.get("floor", 1)))
+	var career_result := _record_duel_career_result(winner_id, loser_id, int(duel.get("floor", 1)), str(duel.get("local_player_id", "PLAYER")))
 	_save_duel_records()
 	return {"success": true, "winner_id": winner_id, "loser_id": loser_id, "finish_type": finish_type, "score": score.duplicate(true), "career_result": career_result, "cash_value": 0}
 
 
-func _record_duel_career_result(winner_id: String, loser_id: String, floor_number: int) -> Dictionary:
-	var is_local_player := loser_id == "PLAYER" or loser_id == "LOCAL_PLAYER"
-	var player_won := winner_id == "PLAYER" or winner_id == "LOCAL_PLAYER"
+func _record_duel_career_result(winner_id: String, loser_id: String, floor_number: int, local_player_id: String) -> Dictionary:
+	var is_local_player := loser_id == local_player_id
+	var player_won := winner_id == local_player_id
 	var result := {"player_won": player_won, "player_lost": is_local_player, "demoted": false, "disqualified": false, "highest_cleared_floor": highest_cleared_floor}
 	if player_won:
 		consecutive_duel_losses = 0
