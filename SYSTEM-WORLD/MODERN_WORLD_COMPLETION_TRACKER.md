@@ -1461,3 +1461,12 @@ This section supersedes the earlier point-only fan prediction wording above. The
 - [x] Floor-clear rewards remain counted once by the verified progression flow; referee win recording only resets the loss streak.
 - [ ] Remote opponent hit events and judge decisions still require trusted server delivery; local client combat events are not authoritative anti-cheat evidence.
 - [ ] Re-run full Godot project validation and canonical Android export on exact current HEAD `0d945bc376b44d80b62ab430d4b979e6812e9468`; latest runtime and export workflows are in progress.
+
+
+### Power Tower interactive audience and spectator seating — 24 November 2026
+- [x] Generated 48 physical reservable seats per generated arena floor, with per-seat identity, availability status, interaction trigger and collision.
+- [x] Added local player seat ownership, one-seat-at-a-time protection, rejection of occupied seats, seated movement lock, owner release, and automatic cleanup on floor/lobby transitions.
+- [x] Added eight lightweight procedural audience actors behind the seats; tied live scores return them to watching, a leading fighter triggers cheering, and an officially completed duel triggers a winner celebration pose.
+- [x] Added regression coverage for 48 seats, actor count/arm pivots, watching/cheering/celebration states, seat owner protection, manual release and transition cleanup.
+- [ ] Remote spectator synchronization, persistent online seat reservations, voice/chat and server-authoritative online ticket settlement remain outside this local in-engine implementation.
+- [ ] Full Godot validation and canonical Android export must pass on the exact final feature branch HEAD before merge consideration; physical Android touch/visual/performance inspection remains outstanding.
