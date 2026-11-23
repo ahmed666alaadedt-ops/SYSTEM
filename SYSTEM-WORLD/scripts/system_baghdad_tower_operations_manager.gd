@@ -5467,15 +5467,23 @@ func _seat_player_at_restaurant(table_node: Node) -> void:
 	seating_tween.set_parallel(true)
 	seating_tween.tween_property(player, "global_position", target_position, 0.55)
 	seating_tween.tween_property(player, "rotation:y", target_rotation, 0.4)
+	var seating_manager_ref := weakref(self)
+	var seating_player_ref := weakref(player)
 	seating_tween.finished.connect(func():
-		if not is_instance_valid(player):
+		var seating_manager := seating_manager_ref.get_ref() as Node
+		var seated_player := seating_player_ref.get_ref() as CharacterBody3D
+		if seating_manager == null or seated_player == null:
 			return
-		player.set_meta("system_restaurant_seating_transition", false)
-		player.set_meta("system_restaurant_seated", true)
-		player.remove_meta("system_restaurant_seating_tween")
-		_set_player_restaurant_activity("idle")
-		if panel.visible and is_instance_valid(current_restaurant_table_node) and current_restaurant_table_id == table_id:
-			open_restaurant_table(current_restaurant_table_node)
+		seated_player.set_meta("system_restaurant_seating_transition", false)
+		seated_player.set_meta("system_restaurant_seated", true)
+		if seated_player.has_meta("system_restaurant_seating_tween"):
+			seated_player.remove_meta("system_restaurant_seating_tween")
+		seating_manager.call("_set_player_restaurant_activity", "idle")
+		var seating_panel := seating_manager.get("panel") as Control
+		var current_table := seating_manager.get("current_restaurant_table_node") as Node
+		var current_table_id := str(seating_manager.get("current_restaurant_table_id"))
+		if seating_panel != null and seating_panel.visible and is_instance_valid(current_table) and current_table_id == table_id:
+			seating_manager.call("open_restaurant_table", current_table)
 	)
 	_set_status("تم تخصيص مقعد لك. يتولى النادل خدمتك عند إرسال الطلب.")
 
@@ -5505,7 +5513,8 @@ func _release_player_restaurant_seat() -> void:
 	player.remove_meta("system_restaurant_seated_table_id")
 	player.remove_meta("system_restaurant_table_node")
 	player.remove_meta("system_restaurant_seat_node")
-	player.remove_meta("system_restaurant_seating_tween")
+	if player.has_meta("system_restaurant_seating_tween"):
+		player.remove_meta("system_restaurant_seating_tween")
 	player.set_meta("system_restaurant_seated", false)
 	player.set_meta("system_restaurant_seating_transition", false)
 	player.velocity = Vector3.ZERO
