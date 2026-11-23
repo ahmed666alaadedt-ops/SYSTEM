@@ -3325,6 +3325,37 @@ func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) 
 
 
 
+func _release_power_tower_spectator_seat() -> void:
+	if not is_instance_valid(player) or not bool(player.get_meta("system_power_tower_seated", false)):
+		return
+	var seat_id := str(player.get_meta("system_power_tower_seat_id", ""))
+	var floors_root := prepared_towers.get("power_tower_baghdad") as Node3D
+	if floors_root != null:
+		for floor_node in floors_root.get_children():
+			var floor_room := floor_node as Node3D
+			if floor_room == null:
+				continue
+			var gallery := floor_room.get_node_or_null("PowerTowerSpectatorGallery") as Node3D
+			if gallery == null:
+				continue
+			for seat_node in gallery.get_children():
+				var seat := seat_node as Node3D
+				if seat == null or str(seat.get_meta("system_spectator_seat_id", "")) != seat_id:
+					continue
+				var player_id := str(player.get_meta("system_player_id", "local_player"))
+				if str(seat.get_meta("system_spectator_seat_owner", "")) == player_id:
+					seat.set_meta("system_spectator_seat_reserved", false)
+					seat.remove_meta("system_spectator_seat_owner")
+					var status_label := seat.get_node_or_null("SpectatorSeatStatus") as Label3D
+					if status_label != null:
+						status_label.text = "مقعد متاح"
+						status_label.modulate = Color(0.55, 0.95, 0.78)
+				break
+	player.set_meta("system_power_tower_seated", false)
+	player.remove_meta("system_power_tower_seat_id")
+	player.velocity = Vector3.ZERO
+
+
 func interact_power_tower_spectator_seat(target: Node) -> void:
 	if target == null or not is_instance_valid(target) or not target.has_meta("system_power_tower_spectator_seat_interaction"):
 		return
@@ -3340,6 +3371,7 @@ func interact_power_tower_spectator_seat(target: Node) -> void:
 				status_label.text = "المقعد محجوز"
 			return
 		player.set_meta("system_power_tower_seated", false)
+		player.remove_meta("system_power_tower_seat_id")
 		player.velocity = Vector3.ZERO
 		player.global_position = seat.global_position + Vector3(0.0, 0.15, 2.4)
 		seat.set_meta("system_spectator_seat_reserved", false)
@@ -6724,6 +6756,7 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 		active_power_tower_match.clear()
 	if is_instance_valid(active_floor_root) and (tower_id != current_tower_id or floor_number != int(active_floor_root.get_meta("system_tower_floor_number", 0))):
 		_release_player_restaurant_seat()
+		_release_power_tower_spectator_seat()
 		_clear_pool_visit_state()
 	_return_floor_duty_staff_to_lobbies()
 	var duty_staff_trip := _board_floor_duty_staff(tower_id, floor_number, car)
@@ -6969,6 +7002,7 @@ func return_to_lobby() -> void:
 		panel.hide()
 		return
 	_release_player_restaurant_seat()
+	_release_power_tower_spectator_seat()
 	var tower := tower_nodes[current_tower_id] as Node3D
 	var config: Dictionary = TOWER_CONFIG[current_tower_id]
 	var start_y := active_floor_root.position.y
