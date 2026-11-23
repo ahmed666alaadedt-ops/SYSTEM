@@ -786,6 +786,11 @@ func _run() -> void:
 	progression_test_manager.set("highest_cleared_floor", 0)
 	progression_test_manager.set("active_floor", 0)
 	progression_test_manager.set("floor_clear_times", {})
+	progression_test_manager.set("total_duels_won", 0)
+	progression_test_manager.set("elite_duels_won", 0)
+	progression_test_manager.set("boss_duels_won", 0)
+	progression_test_manager.set("total_xp_earned", 0)
+	progression_test_manager.set("total_credits_earned", 0)
 	for test_floor in range(1, 201):
 		var floor_request: Dictionary = progression_test_manager.call("request_floor", test_floor, 100)
 		if not bool(floor_request.get("success", false)):
@@ -802,8 +807,8 @@ func _run() -> void:
 	await process_frame
 	var reloaded_tower_status: Dictionary = reloaded_progression_manager.call("get_tower_status")
 	var reloaded_floor_times: Dictionary = reloaded_progression_manager.get("floor_clear_times")
-	if int(reloaded_tower_status.get("highest_cleared_floor", 0)) != 200 or int(reloaded_tower_status.get("next_floor", 1)) != 0 or int(reloaded_floor_times.size()) != 200:
-		_fail("Power Tower did not restore all 200 cleared floors and their clear-time records.")
+	if int(reloaded_tower_status.get("highest_cleared_floor", 0)) != 200 or int(reloaded_tower_status.get("next_floor", 1)) != 0 or int(reloaded_floor_times.size()) != 200 or int(reloaded_tower_status.get("total_duels_won", 0)) != 200 or int(reloaded_tower_status.get("elite_duels_won", 0)) != 20 or int(reloaded_tower_status.get("boss_duels_won", 0)) != 20 or int(reloaded_tower_status.get("total_xp_earned", 0)) <= 0 or int(reloaded_tower_status.get("total_credits_earned", 0)) <= 0:
+		_fail("Power Tower did not restore all 200 individual duel wins, elite/boss records, clear times and lifetime rewards.")
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
 		return
