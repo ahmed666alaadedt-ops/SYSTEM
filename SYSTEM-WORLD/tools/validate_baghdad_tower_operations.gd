@@ -1119,6 +1119,11 @@ func _run() -> void:
 		operations.call("_advance_restaurant_order", restaurant_test_table_id, "completed")
 		var restaurant_history: Array = operations.get("restaurant_order_history")
 		restaurant_order_ok = not operations.get("restaurant_orders").has(restaurant_test_table_id) and not restaurant_history.is_empty() and str(restaurant_history[-1].get("status", "")) == "completed"
+	if restaurant_order_ok:
+		operations.call("_rate_restaurant_order", restaurant_test_table_id, 5)
+		operations.call("_rate_restaurant_order", restaurant_test_table_id, 3)
+		var rated_history: Array = operations.get("restaurant_order_history")
+		restaurant_order_ok = int(rated_history[-1].get("rating", 0)) == 5 and int(rated_history[-1].get("rated_at_unix", 0)) > 0
 	operations.set("restaurant_orders", restaurant_orders_snapshot)
 	operations.set("restaurant_order_history", restaurant_history_snapshot)
 	operations.set("restaurant_draft_items", restaurant_drafts_snapshot)
