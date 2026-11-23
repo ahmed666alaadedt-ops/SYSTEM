@@ -798,9 +798,17 @@ func _run() -> void:
 	if int(second_floor_rewards.get("reward_credits", 0)) <= int(first_floor_rewards.get("reward_credits", 0)):
 		_fail("Power Tower virtual-credit rewards must scale upward with floor difficulty.")
 		return
+	var floor_100_profile: Dictionary = power_manager.call("get_floor_data", 100)
+	var floor_199_profile: Dictionary = power_manager.call("get_floor_data", 199)
+	if not bool(floor_100_profile.get("private_room_eligible", false)) or bool(floor_199_profile.get("weapons_allowed", true)):
+		_fail("Power Tower floor-100 private room eligibility or pre-final weapon restriction is incorrect.")
+		return
 	var boss_data: Dictionary = power_manager.call("get_floor_data", 200)
 	if not bool(boss_data.get("boss_floor", false)) or str(boss_data.get("arena_type", "")) != "BOSS_TRIAL":
 		_fail("Power Tower floor 200 is not configured as a boss trial.")
+		return
+	if not bool(boss_data.get("weapons_allowed", false)) or int(boss_data.get("division_number", 0)) != 20 or int(boss_data.get("division_floor_start", 0)) != 191 or int(boss_data.get("division_floor_end", 0)) != 200:
+		_fail("Power Tower floor 200 must be the armed final duel in the twentieth ten-floor division.")
 		return
 	if not bool(boss_data.get("final_boss", false)) or str(boss_data.get("challenge_type", "")) != "FINAL_BOSS":
 		_fail("Power Tower floor 200 is missing its unique final sovereign boss profile.")
