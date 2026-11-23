@@ -1198,7 +1198,7 @@ func _run() -> void:
 		for spectator_seat in spectator_gallery.get_children():
 			if bool(spectator_seat.get_meta("system_power_tower_spectator_seat", false)):
 				spectator_seat_count += 1
-				if spectator_seat.get_node_or_null("SpectatorSeatCollision") == null or not bool(spectator_seat.get_meta("system_spectator_seat_reserved", true)) == false:
+				if spectator_seat.get_node_or_null("SpectatorSeatCollision") == null or bool(spectator_seat.get_meta("system_spectator_seat_reserved", true)):
 					_fail("A Power Tower spectator seat is missing its collision or starts reserved.")
 					return
 	if spectator_gallery == null or spectator_seat_count != 48 or int(spectator_gallery.get_meta("system_spectator_seat_count", 0)) != 48 or str(spectator_gallery.get_meta("system_competition_format", "")) != "INDIVIDUAL_1V1":
