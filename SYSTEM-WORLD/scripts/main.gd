@@ -1331,6 +1331,9 @@ func _physics_process(delta: float) -> void:
 	if bool(player.get_meta("system_tower_elevator_active", false)):
 		player.velocity = Vector3.ZERO
 		return
+	if bool(player.get_meta("system_restaurant_seated", false)) or bool(player.get_meta("system_restaurant_seating_transition", false)):
+		player.velocity = Vector3.ZERO
+		return
 	if vehicle_runtime_manager != null and vehicle_runtime_manager.is_driving:
 		return
 
