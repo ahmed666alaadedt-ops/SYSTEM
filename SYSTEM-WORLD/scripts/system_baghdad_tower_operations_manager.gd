@@ -6636,9 +6636,12 @@ func apply_verified_power_tower_pvp_result(result_data: Dictionary, local_player
 	var processed_ids: Dictionary = power_tower_manager.get("processed_result_ids")
 	if processed_ids.has(result_id):
 		return {"success": false, "reason": "DUPLICATE_RESULT"}
-	var prediction_settlement: Dictionary = power_tower_manager.call("settle_spectator_match", match_id, winner_player_id, "LOCAL_COMBAT_AUTHORITY")
-	if not bool(prediction_settlement.get("success", false)):
-		return prediction_settlement
+	var finish_type := str(result_data.get("finish_type", "JUDGES_DECISION")).strip_edges().to_upper()
+	var referee_result: Dictionary = power_tower_manager.call("finish_judged_duel", match_id, winner_player_id, finish_type, "LOCAL_COMBAT_AUTHORITY")
+	if not bool(referee_result.get("success", false)):
+		return referee_result
+	var prediction_settlement: Dictionary = referee_result.get("spectator_settlement", {})
+	var career_result: Dictionary = referee_result.get("career_result", {})
 	power_floor_in_progress = false
 	active_power_tower_match.clear()
 	if winner_player_id != local_player_id:
@@ -6646,8 +6649,13 @@ func apply_verified_power_tower_pvp_result(result_data: Dictionary, local_player
 		active_power_floor_data.clear()
 		if is_instance_valid(active_power_objective_label):
 			active_power_objective_label.text = "انتهت المواجهة — لم تجتز الطابق"
-		_set_status("خسرت المواجهة الفردية أمام اللاعب المنافس. لم تُمنح مكافأة اجتياز الطابق.")
-		return {"success": true, "won": false, "prediction_settlement": prediction_settlement}
+		var loss_message := "خسرت المواجهة الفردية أمام اللاعب المنافس. لم تُمنح مكافأة اجتياز الطابق."
+		if bool(career_result.get("disqualified", false)):
+			loss_message += "\nبلغت عشر خسائر إجمالية؛ تم إيقافك وإرجاع تقدم البرج إلى البداية."
+		elif bool(career_result.get("demoted", false)):
+			loss_message += "\nثلاث خسارات متتالية: هبوط إلى الدرجة السابقة حتى الطابق %d." % int(career_result.get("highest_cleared_floor", 0))
+		_set_status(loss_message)
+		return {"success": true, "won": false, "prediction_settlement": prediction_settlement, "career_result": career_result}
 	var floor_result: Dictionary = power_tower_manager.call("confirm_floor_clear", floor_number, clear_time_seconds, true, result_id)
 	if not bool(floor_result.get("success", false)):
 		return floor_result
@@ -6664,7 +6672,7 @@ func apply_verified_power_tower_pvp_result(result_data: Dictionary, local_player
 	if is_instance_valid(active_power_objective_label):
 		active_power_objective_label.text = "تم اجتياز الطابق %d" % floor_number
 	_set_status("فزت بالمواجهة الفردية البشرية في الطابق %d!\nالتصنيف: %s | XP: %d | رصيد: %d%s\nتم اعتماد النتيجة البشرية." % [floor_number, str(floor_result.get("rank", "E")), int(floor_result.get("reward_xp", 0)), credit_reward, loot_text])
-	return {"success": true, "won": true, "floor_result": floor_result, "prediction_settlement": prediction_settlement}
+	return {"success": true, "won": true, "floor_result": floor_result, "prediction_settlement": prediction_settlement, "career_result": career_result}
 
 
 func _clear_active_power_opponents() -> void:
