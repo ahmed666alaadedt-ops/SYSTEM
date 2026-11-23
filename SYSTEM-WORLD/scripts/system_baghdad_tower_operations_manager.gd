@@ -266,6 +266,8 @@ func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_po
 		push_warning("SYSTEM tower operations: Baghdad tower landmarks unavailable.")
 		return
 	_load_wallet()
+	if is_instance_valid(power_tower_manager) and power_tower_manager.has_method("set_spectator_wallet_provider"):
+		power_tower_manager.call("set_spectator_wallet_provider", self)
 	_load_vendor_stock()
 	_load_hotel_bookings()
 	_load_restaurant_orders()
@@ -6302,6 +6304,30 @@ func grant_power_tower_credits(reward_amount: int) -> int:
 	credits += reward_amount
 	_save_wallet()
 	return reward_amount
+
+func spend_spectator_stake(amount: int) -> bool:
+	if amount <= 0 or credits < amount:
+		return false
+	credits -= amount
+	_save_wallet()
+	if is_instance_valid(credits_label):
+		credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
+	return true
+
+
+func grant_spectator_payout(amount: int) -> int:
+	if amount <= 0:
+		return 0
+	credits += amount
+	_save_wallet()
+	if is_instance_valid(credits_label):
+		credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
+	return amount
+
+
+func get_spectator_wallet_balance() -> int:
+	return credits
+
 
 
 func _complete_power_floor() -> void:
