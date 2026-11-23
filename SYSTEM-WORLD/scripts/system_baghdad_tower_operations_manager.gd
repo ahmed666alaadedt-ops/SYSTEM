@@ -2855,12 +2855,31 @@ func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) 
 		room.add_child(theme_pillar)
 	var arena_label := Label3D.new()
 	arena_label.name = "ArenaChallengeDisplay"
-	arena_label.text = "%s\n%s\nالطابق %d\n%s" % [str(data.get("arena_name", "POWER ARENA")), theme_name, floor_number, rules]
+	arena_label.text = "شاشة عرض المعركة — BATTLE DISPLAY\n%s\n%s | الطابق %d / 200\n%s" % [str(data.get("arena_name", "POWER ARENA")), theme_name, floor_number, rules]
 	arena_label.position = Vector3(0.0, 5.4, -radius * 0.48)
 	arena_label.font_size = 22
 	arena_label.pixel_size = 0.014
 	arena_label.modulate = Color(1.0, 0.78, 0.42)
 	room.add_child(arena_label)
+	var arena_screen_panel := MeshInstance3D.new()
+	arena_screen_panel.name = "ArenaChallengeScreenPanel"
+	var arena_screen_mesh := BoxMesh.new()
+	arena_screen_mesh.size = Vector3(18.0, 4.4, 0.34)
+	arena_screen_panel.mesh = arena_screen_mesh
+	arena_screen_panel.position = arena_label.position + Vector3(0.0, 0.0, -0.46)
+	var arena_screen_material := StandardMaterial3D.new()
+	arena_screen_material.albedo_color = Color(0.025, 0.055, 0.075)
+	arena_screen_material.metallic = 0.78
+	arena_screen_material.roughness = 0.25
+	arena_screen_material.emission_enabled = true
+	arena_screen_material.emission = theme_color * 0.32
+	arena_screen_material.emission_energy_multiplier = 0.75
+	arena_screen_panel.material_override = arena_screen_material
+	arena_screen_panel.set_meta("system_power_tower_battle_display", true)
+	arena_screen_panel.set_meta("system_floor_number", floor_number)
+	arena_screen_panel.set_meta("system_arena_type", arena_type)
+	arena_screen_panel.set_meta("system_competition_format", "INDIVIDUAL_1V1")
+	room.add_child(arena_screen_panel)
 	var objective_label := Label3D.new()
 	objective_label.name = "PowerTowerObjectiveLabel"
 	objective_label.position = Vector3(0.0, 7.0, radius * 0.20)
