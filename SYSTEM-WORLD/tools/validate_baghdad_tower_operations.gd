@@ -839,7 +839,7 @@ func _run() -> void:
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
 		return
-	var prediction_match := progression_test_manager.call("register_spectator_match", "validator_duel_001", "fighter_alpha", "fighter_beta", 12)
+	var prediction_match: Dictionary = progression_test_manager.call("register_spectator_match", "validator_duel_001", "fighter_alpha", "fighter_beta", 12)
 	var prediction_match_record: Dictionary = progression_test_manager.call("get_spectator_match", "validator_duel_001")
 	var same_fighter_match: Dictionary = progression_test_manager.call("register_spectator_match", "validator_same_fighter", "fighter_same", "fighter_same", 12)
 	var whitespace_match: Dictionary = progression_test_manager.call("register_spectator_match", " validator_whitespace ", " fighter_gamma ", " fighter_delta ", 13)
