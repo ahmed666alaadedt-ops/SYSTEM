@@ -99,9 +99,22 @@ jobs:
         run: |
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
-          set -o pipefail
-          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_baghdad_tower_operations.gd 2>&1 | tee "$RUNNER_TEMP/baghdad-tower-operations-validation.log"
+          set +e
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_baghdad_tower_operations.gd > "$RUNNER_TEMP/baghdad-tower-operations-validation.log" 2>&1
+          godot_status=$?
+          echo "---- Baghdad tower and Power Tower validation summary ----"
+          grep -E "QA TRACE|QA:|SYSTEM NPC QA PASS|SYSTEM MESH DIAGNOSTIC|SYSTEM POST-SWITCH|Baghdad tower operations|Power Tower|SCRIPT ERROR|Parse Error|ERROR:|WARNING:" "$RUNNER_TEMP/baghdad-tower-operations-validation.log" | tail -n 180 || true
           if grep -E "SCRIPT ERROR|Parse Error|Baghdad tower operations validation failed" "$RUNNER_TEMP/baghdad-tower-operations-validation.log"; then
             echo "Baghdad tower operations validation reported an error."
             exit 1
           fi
+          exit "$godot_status"
+
+      - name: Upload Baghdad tower operations validation log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SYSTEM-WORLD-baghdad-operations-validation-log
+          path: ${{ runner.temp }}/baghdad-tower-operations-validation.log
+          if-no-files-found: ignore
+          retention-days: 7
