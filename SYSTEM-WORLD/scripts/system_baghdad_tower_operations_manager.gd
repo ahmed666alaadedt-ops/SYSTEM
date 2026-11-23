@@ -301,6 +301,7 @@ func _process(delta: float) -> void:
 	if customer_purchase_clock >= 42.0:
 		customer_purchase_clock = 0.0
 		_simulate_customer_purchases()
+	_process_restaurant_staff_service()
 	customer_walk_clock += delta
 	if customer_walk_clock >= 13.0:
 		customer_walk_clock = 0.0
@@ -609,6 +610,47 @@ func _board_floor_duty_staff(tower_id: String, floor_number: int, car: Node3D) -
 		"tower_id": tower_id,
 		"floor_number": floor_number,
 		"staff_index": staff_index,
+		"npc_id": npc_id,
+		"role": str(employee.get_meta("system_tower_staff_role", "tower_staff")),
+		"home_position": home_position
+	}
+
+
+func _board_restaurant_support_staff(tower_id: String, floor_number: int, car: Node3D) -> Dictionary:
+	if tower_id != "shopping_tower_baghdad" or floor_number < 29 or floor_number > 32:
+		return {}
+	if not is_instance_valid(car) or not staff_by_tower.has(tower_id):
+		return {}
+	var primary_index := _get_floor_duty_staff_index(tower_id, floor_number)
+	var support_index := 5 if primary_index == 4 else 4
+	var staff_ids: Array = staff_by_tower.get(tower_id, [])
+	if support_index < 0 or support_index >= staff_ids.size():
+		return {}
+	var npc_id := str(staff_ids[support_index])
+	var tower := tower_nodes.get(tower_id) as Node3D
+	var employee := tower.find_child("TowerStaff_" + npc_id, true, false) as Node3D if tower != null else null
+	if employee == null:
+		return {}
+	var model := _find_tower_staff_model(employee)
+	if model == null:
+		return {}
+	var previous_tween: Variant = employee.get_meta("system_staff_patrol_tween", null)
+	if previous_tween is Tween:
+		(previous_tween as Tween).kill()
+	var home_position: Vector3 = employee.get_meta("system_staff_home_position", employee.position)
+	employee.set_meta("system_staff_in_elevator", true)
+	employee.set_meta("system_staff_duty_tower", tower_id)
+	employee.set_meta("system_staff_duty_floor", floor_number)
+	employee.set_meta("system_staff_current_location", tower_id + "_elevator_to_floor_" + str(floor_number))
+	employee.reparent(car, true)
+	employee.position = Vector3(1.8, 0.35, 0.0)
+	model.call("set_activity", "walk")
+	return {
+		"employee": employee,
+		"model": model,
+		"tower_id": tower_id,
+		"floor_number": floor_number,
+		"staff_index": support_index,
 		"npc_id": npc_id,
 		"role": str(employee.get_meta("system_tower_staff_role", "tower_staff")),
 		"home_position": home_position
@@ -4968,6 +5010,94 @@ func _add_restaurant_staff_controls(role: String) -> void:
 		empty_label.text = "لا توجد طلبات تحتاج إلى إجراء من هذا الموظف حالياً."
 		content.add_child(empty_label)
 
+func _process_restaurant_staff_service() -> void:
+	if not is_instance_valid(active_floor_root):
+		return
+	if str(active_floor_root.get_meta("system_tower_id", "")) != "shopping_tower_baghdad":
+		return
+	var floor_number := int(active_floor_root.get_meta("system_tower_floor_number", 0))
+	if floor_number < 29 or floor_number > 32:
+		return
+	for child in active_floor_root.get_children():
+		if not child is Node3D or not child.has_meta("system_tower_staff_role"):
+			continue
+		var employee := child as Node3D
+		var role := str(employee.get_meta("system_tower_staff_role", ""))
+		if role not in ["restaurant_chef", "restaurant_waiter"]:
+			continue
+		if bool(employee.get_meta("system_restaurant_service_busy", false)):
+			continue
+		var selected_table_id := ""
+		for table_id_value in restaurant_orders.keys():
+			var table_id := str(table_id_value)
+			if not table_id.begins_with("shopping_floor_%02d_" % floor_number):
+				continue
+			var order: Dictionary = restaurant_orders[table_id]
+			var state := str(order.get("status", ""))
+			if role == "restaurant_chef" and state == "placed":
+				selected_table_id = table_id
+				break
+			if role == "restaurant_waiter" and state == "ready":
+				selected_table_id = table_id
+				break
+		if selected_table_id.is_empty():
+			continue
+		var model := _find_tower_staff_model(employee)
+		if model == null:
+			continue
+		var order: Dictionary = restaurant_orders[selected_table_id]
+		var current_status := str(order.get("status", ""))
+		var next_status := "preparing" if role == "restaurant_chef" else "served"
+		order["status"] = next_status if role == "restaurant_chef" else "ready"
+		order["staff_id"] = str(employee.get_meta("system_tower_staff_id", ""))
+		order["updated_at_unix"] = int(Time.get_unix_time_from_system())
+		restaurant_orders[selected_table_id] = order
+		_save_restaurant_orders()
+		var home_position: Vector3 = employee.get_meta("system_staff_workstation_position", employee.position)
+		var task_tween := employee.create_tween()
+		employee.set_meta("system_restaurant_service_busy", true)
+		employee.set_meta("system_restaurant_service_tween", task_tween)
+		var task_position := Vector3.ZERO
+		if role == "restaurant_chef":
+			var kitchen := active_floor_root.get_node_or_null("RestaurantKitchen") as Node3D
+			task_position = kitchen.position + Vector3(0.0, 0.0, 2.2) if kitchen != null else home_position + Vector3(0.0, 0.0, -2.0)
+			model.call("set_activity", "work")
+		else:
+			var parts := selected_table_id.split("_")
+			var table_index := int(parts[parts.size() - 1]) if parts.size() > 0 else -1
+			var table_root := active_floor_root.get_node_or_null("RestaurantTable_%02d" % table_index) as Node3D
+			task_position = table_root.position + Vector3(0.0, 0.0, 2.6) if table_root != null else home_position + Vector3(0.0, 0.0, 2.0)
+			model.call("set_activity", "walk")
+		var direction := task_position - employee.position
+		task_tween.tween_property(employee, "rotation:y", atan2(direction.x, direction.z), 0.2)
+		task_tween.tween_property(employee, "position", task_position, maxf(direction.length() / 1.8, 0.5)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		task_tween.tween_interval(3.0 if role == "restaurant_chef" else 1.2)
+		task_tween.tween_callback(func():
+			if not is_instance_valid(employee):
+				return
+			var active_order: Dictionary = restaurant_orders.get(selected_table_id, {})
+			if not active_order.is_empty():
+				active_order["status"] = "ready" if role == "restaurant_chef" else "served"
+				active_order["updated_at_unix"] = int(Time.get_unix_time_from_system())
+				restaurant_orders[selected_table_id] = active_order
+				_save_restaurant_orders()
+				if panel.visible and current_staff_id == str(employee.get_meta("system_tower_staff_id", "")):
+					open_staff_service(employee)
+			var return_direction := home_position - employee.position
+			if is_instance_valid(model):
+				model.call("set_activity", "walk")
+				var return_tween := employee.create_tween()
+				return_tween.tween_property(employee, "rotation:y", atan2(return_direction.x, return_direction.z), 0.2)
+				return_tween.tween_property(employee, "position", home_position, maxf(return_direction.length() / 1.8, 0.5)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+				return_tween.tween_callback(func():
+					if is_instance_valid(employee):
+						employee.set_meta("system_restaurant_service_busy", false)
+						model.call("set_activity", "idle")
+				)
+		)
+		break
+
+
 func _load_restaurant_orders() -> void:
 	var config := ConfigFile.new()
 	if config.load(RESTAURANT_SAVE_PATH) != OK:
@@ -5144,6 +5274,32 @@ func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: i
 	dining_sign.pixel_size = 0.013
 	dining_sign.modulate = Color(1.0, 0.78, 0.42)
 	room.add_child(dining_sign)
+	for index in range(4):
+	var kitchen := Node3D.new()
+	kitchen.name = "RestaurantKitchen"
+	kitchen.position = Vector3(radius * 0.28, 0.0, -radius * 0.30)
+	kitchen.set_meta("system_restaurant_kitchen", true)
+	room.add_child(kitchen)
+	var kitchen_counter := MeshInstance3D.new()
+	kitchen_counter.name = "KitchenPreparationCounter"
+	var kitchen_mesh := BoxMesh.new()
+	kitchen_mesh.size = Vector3(7.0, 1.25, 2.2)
+	kitchen_counter.mesh = kitchen_mesh
+	kitchen_counter.position.y = 0.62
+	var kitchen_material := StandardMaterial3D.new()
+	kitchen_material.albedo_color = Color(0.16, 0.22, 0.25)
+	kitchen_material.metallic = 0.38
+	kitchen_material.roughness = 0.42
+	kitchen_counter.material_override = kitchen_material
+	kitchen.add_child(kitchen_counter)
+	var kitchen_sign := Label3D.new()
+	kitchen_sign.name = "KitchenSign"
+	kitchen_sign.text = "SYSTEM KITCHEN — المطبخ"
+	kitchen_sign.position = Vector3(0.0, 2.1, -0.4)
+	kitchen_sign.font_size = 18
+	kitchen_sign.pixel_size = 0.012
+	kitchen_sign.modulate = Color(1.0, 0.78, 0.42)
+	kitchen.add_child(kitchen_sign)
 	for index in range(4):
 		var table_root := Node3D.new()
 		table_root.name = "RestaurantTable_%02d" % index
@@ -5483,6 +5639,7 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 		_clear_pool_visit_state()
 	_return_floor_duty_staff_to_lobbies()
 	var duty_staff_trip := _board_floor_duty_staff(tower_id, floor_number, car)
+	var restaurant_support_staff_trip := _board_restaurant_support_staff(tower_id, floor_number, car)
 	if not is_instance_valid(active_floor_root):
 		player.global_position = tower.to_global(Vector3(0.0, start_y + 1.2, 0.0))
 	if is_instance_valid(active_floor_root) and active_floor_root != room:
@@ -5507,6 +5664,7 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 			player.set_meta("system_tower_elevator_active", false)
 			player.velocity = Vector3.ZERO
 		_place_floor_duty_staff_on_floor(duty_staff_trip, room, float(config["radius"]))
+		_place_floor_duty_staff_on_floor(restaurant_support_staff_trip, room, float(config["radius"]))
 		if tower_id == "power_tower_baghdad" and power_floor_in_progress:
 			_begin_power_floor()
 		elif tower_id != "power_tower_baghdad":
