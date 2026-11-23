@@ -1471,7 +1471,7 @@ func _run() -> void:
 		for spectator_seat in spectator_gallery.get_children():
 			if bool(spectator_seat.get_meta("system_power_tower_spectator_seat", false)):
 				spectator_seat_count += 1
-				if spectator_seat.get_node_or_null("SpectatorSeatCollision") == null or bool(spectator_seat.get_meta("system_spectator_seat_reserved", true)) or int(spectator_seat.get_meta("system_spectator_seat_floor", 0)) != 200:
+				if spectator_seat.get_node_or_null("SpectatorSeatCollision") == null or spectator_seat.get_node_or_null("SpectatorSeatInteraction") == null or spectator_seat.get_node_or_null("SpectatorSeatStatus") == null or bool(spectator_seat.get_meta("system_spectator_seat_reserved", true)) or int(spectator_seat.get_meta("system_spectator_seat_floor", 0)) != 200:
 					_fail("A Power Tower spectator seat is missing its collision, floor identity or free initial state.")
 					return
 	if spectator_gallery == null or spectator_seat_count != 48 or int(spectator_gallery.get_meta("system_spectator_seat_count", 0)) != 48 or str(spectator_gallery.get_meta("system_competition_format", "")) != "INDIVIDUAL_1V1":
@@ -1479,6 +1479,10 @@ func _run() -> void:
 		return
 	operations.call("update_power_tower_live_match_display", 200, {"match_id": "validator_live_floor_200", "fighter_a_id": "sovereign_challenger", "fighter_b_id": "current_title_holder", "score": {"sovereign_challenger": 10, "current_title_holder": 4}, "winner_id": "sovereign_challenger"}, true)
 	var floor_200_live_score := boss_room.get_node_or_null("ArenaLiveMatchScoreDisplay") as Label3D
+	var audience_reaction := spectator_gallery.get_node_or_null("PowerTowerAudienceReaction") as Label3D if spectator_gallery != null else null
+	if audience_reaction == null or not audience_reaction.text.contains("sovereign_challenger"):
+		_fail("Power Tower spectator gallery did not react to the verified individual duel winner.")
+		return
 	if floor_200_live_score == null or not floor_200_live_score.text.contains("10") or not floor_200_live_score.text.contains("انتهى النزال") or not floor_200_live_score.text.contains("sovereign_challenger"):
 		_fail("Power Tower live score screen did not update with the verified match result.")
 		return
