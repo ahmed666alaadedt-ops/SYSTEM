@@ -1477,3 +1477,5 @@ This section supersedes the earlier point-only fan prediction wording above. The
 - [x] Added a live 48-seat availability display that updates on reserve, owner release and automatic floor/lobby cleanup.
 - [x] Added QA assertions for the arena prediction-board interaction and 48/48 ↔ 47/48 seat count refresh.
 - [ ] Exact-HEAD Godot validation and canonical Android export remain pending; remote online spectators and server-authoritative economy remain out of scope for the local prototype.
+
+- [x] Seat ownership stores the exact floor identity to prevent same-number seat collisions across different floors; QA opens the shared virtual-ticket panel through the physical arena prediction-board route.
