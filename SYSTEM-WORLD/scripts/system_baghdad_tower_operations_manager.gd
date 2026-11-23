@@ -2829,6 +2829,8 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 	root.name = "SpecialFacility_" + facility_type
 	root.set_meta("system_facility_type", facility_type)
 	root.set_meta("system_facility_title", facility_title)
+	root.set_meta("system_tower_id", tower_id)
+	root.set_meta("system_tower_floor_number", floor_number)
 	room.add_child(root)
 	var accent := StandardMaterial3D.new()
 	accent.albedo_color = Color(0.10, 0.52, 0.68) if tower_id == "technology_tower_baghdad" else Color(0.12, 0.42, 0.34)
@@ -3196,6 +3198,59 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 	shape.position = Vector3(0.0, 1.2, 0.0)
 	interaction.add_child(shape)
 	root.add_child(interaction)
+
+
+func open_pool_service(target: Node) -> void:
+	if target == null or not is_instance_valid(target) or not target.has_meta("system_pool_service_type"):
+		return
+	var service_type := str(target.get_meta("system_pool_service_type", ""))
+	var service_titles := {
+		"locker": "خزائن المسبح — خدمة الزوار",
+		"shower": "منطقة الاستحمام — مرافق النظافة",
+		"lifeguard": "محطة المنقذ — السلامة والإسعاف"
+	}
+	if not service_titles.has(service_type):
+		return
+	current_tower_id = str(target.get_meta("system_tower_id", "entertainment_tower_baghdad"))
+	current_staff_id = ""
+	_clear_dynamic_controls()
+	title_label.text = str(service_titles[service_type])
+	credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
+	status_label.text = "الطابق %d — اختر الخدمة المطلوبة." % int(target.get_meta("system_tower_floor_number", 0))
+	var action_button := Button.new()
+	action_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	match service_type:
+		"locker":
+			action_button.text = "استلام خزانة شخصية"
+		"shower":
+			action_button.text = "استخدام الدش وتجهيز السباحة"
+		"lifeguard":
+			action_button.text = "طلب مساعدة المنقذ"
+	action_button.pressed.connect(Callable(self, "_use_pool_service").bind(service_type))
+	content.add_child(action_button)
+	var close_button := Button.new()
+	close_button.text = "إغلاق"
+	close_button.pressed.connect(func(): panel.hide())
+	content.add_child(close_button)
+	panel.show()
+
+
+func _use_pool_service(service_type: String) -> void:
+	if not is_instance_valid(player):
+		return
+	match service_type:
+		"locker":
+			player.set_meta("system_pool_locker_reserved", true)
+			player.set_meta("system_pool_locker_tower", current_tower_id)
+			_set_status("تم تخصيص خزانة شخصية لك في مرافق المسبح. يمكنك العودة إليها أثناء زيارتك.")
+		"shower":
+			player.set_meta("system_pool_showered", true)
+			_set_status("اكتمل استخدام الدش. أصبحت جاهزاً للسباحة أو مغادرة المسبح.")
+		"lifeguard":
+			player.set_meta("system_pool_assistance_requested", true)
+			_set_status("وصل طلبك إلى محطة المنقذ. توجه إلى المنصة لاستلام المساعدة.")
+		_:
+			return
 
 
 func open_facility_service(tower_id: String, floor_number: int, facility_type: String) -> void:
@@ -4421,6 +4476,8 @@ func _add_pool_changing_suite(parent: Node3D, suite_name: String, center: Vector
 		_add_facility_box(suite, "Locker_%02d" % locker_index, Vector3(locker_x, 1.15, -3.9), Vector3(0.86, 2.3, 0.72), highlight)
 		_add_facility_box(suite, "LockerHandle_%02d" % locker_index, Vector3(locker_x + 0.25, 1.15, -3.48), Vector3(0.08, 0.24, 0.06), accent)
 	_add_facility_box(suite, "ChangingBench", Vector3(0.0, 0.58, -1.8), Vector3(5.6, 0.3, 0.9), highlight)
+	_create_pool_service_interaction(suite, "PoolLockerServiceInteraction", "locker", "خزائن المسبح — استلام خزانة شخصية", Vector3(0.0, 1.0, -1.9), 2.2)
+	_create_pool_service_interaction(suite, "PoolShowerServiceInteraction", "shower", "منطقة الاستحمام — استخدام الدش قبل وبعد السباحة", Vector3(0.0, 1.0, 3.4), 2.0)
 	for shower_index in range(3):
 		var shower_x := -2.4 + float(shower_index) * 2.4
 		_add_facility_box(suite, "ShowerPartition_%02d" % shower_index, Vector3(shower_x + 1.0, 1.35, 2.6), Vector3(0.12, 2.7, 3.0), highlight)
@@ -4440,6 +4497,30 @@ func _add_pool_lifeguard_station(parent: Node3D, accent: Material, highlight: Ma
 	_add_facility_box(station, "LifeguardUmbrella", Vector3(0.0, 5.0, 1.3), Vector3(3.2, 0.22, 3.2), highlight)
 	_add_facility_box(station, "RescueRing", Vector3(1.9, 1.6, 0.0), Vector3(0.8, 0.8, 0.2), highlight)
 	_add_pool_room_sign(station, "LifeguardSign", "منقذ السباحة — إسعاف أولي", Vector3(0.0, 5.8, -1.4), Color(1.0, 0.86, 0.62))
+	_create_pool_service_interaction(station, "PoolLifeguardServiceInteraction", "lifeguard", "محطة المنقذ — طلب مساعدة أو إسعاف أولي", Vector3(0.0, 1.0, 0.0), 2.6)
+
+
+func _create_pool_service_interaction(parent: Node3D, node_name: String, service_type: String, prompt: String, local_position: Vector3, radius: float) -> void:
+	var interaction := Area3D.new()
+	interaction.name = node_name
+	interaction.add_to_group("system_interactable")
+	interaction.set_meta("system_pool_service_type", service_type)
+	interaction.set_meta("system_interaction_prompt", prompt)
+	interaction.collision_layer = 1
+	interaction.collision_mask = 0
+	var facility_root := parent
+	while facility_root != null and not facility_root.has_meta("system_facility_type"):
+		facility_root = facility_root.get_parent()
+	if facility_root != null:
+		interaction.set_meta("system_tower_id", str(facility_root.get_meta("system_tower_id", "")))
+		interaction.set_meta("system_tower_floor_number", int(facility_root.get_meta("system_tower_floor_number", 0)))
+	var collision := CollisionShape3D.new()
+	var shape := SphereShape3D.new()
+	shape.radius = radius
+	collision.shape = shape
+	collision.position = local_position
+	interaction.add_child(collision)
+	parent.add_child(interaction)
 
 
 func _add_facility_box(parent: Node3D, object_name: String, object_position: Vector3, object_size: Vector3, material: Material) -> void:
