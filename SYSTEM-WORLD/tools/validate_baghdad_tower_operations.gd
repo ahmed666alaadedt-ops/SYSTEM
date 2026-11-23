@@ -67,6 +67,38 @@ func _run() -> void:
 	if scheduled_customer_count != 20:
 		_fail("Expected 20 customer NPCs with active daily routine states; found %d." % scheduled_customer_count)
 		return
+	var routine_tower := operations.get("tower_nodes").get("hunter_association_tower_baghdad") as Node3D
+	var routine_lobby := routine_tower.get_node_or_null("PublicLobby_Blockout") as Node3D if routine_tower != null else null
+	var routine_customer: Node3D = null
+	if routine_lobby != null:
+		for routine_child in routine_lobby.get_children():
+			if str(routine_child.name).begins_with("TowerCustomer_"):
+				routine_customer = routine_child as Node3D
+				break
+	if routine_customer == null:
+		_fail("Customer routine movement regression could not find a persistent lobby customer.")
+		return
+	var routine_start_position := routine_customer.position
+	operations.call("_move_customer_visitors", 8)
+	var cafe_target: Vector3 = routine_customer.get_meta("system_customer_schedule_target", Vector3.ZERO)
+	var cafe_tween: Variant = routine_customer.get_meta("system_customer_move_tween", null)
+	if str(routine_customer.get_meta("system_customer_schedule_phase", "")) != "cafe" or str(routine_customer.get_meta("system_customer_schedule_action", "")) != "having_breakfast" or not (cafe_tween is Tween) or not (cafe_tween as Tween).is_running():
+		_fail("Customer NPC did not begin its breakfast route during the cafe schedule phase.")
+		return
+	operations.call("_move_customer_visitors", 11)
+	var browse_target: Vector3 = routine_customer.get_meta("system_customer_schedule_target", Vector3.ZERO)
+	var browse_tween: Variant = routine_customer.get_meta("system_customer_move_tween", null)
+	if str(routine_customer.get_meta("system_customer_schedule_phase", "")) != "browse" or str(routine_customer.get_meta("system_customer_schedule_action", "")) != "browsing_services" or browse_target.is_equal_approx(cafe_target) or not (browse_tween is Tween) or not (browse_tween as Tween).is_running():
+		_fail("Customer NPC did not redirect its active route when the daily schedule changed from cafe to browsing.")
+		return
+	if cafe_tween is Tween and (cafe_tween as Tween).is_running():
+		_fail("Customer NPC retained an obsolete breakfast tween after its schedule changed.")
+		return
+	for _movement_frame in range(4):
+		await process_frame
+	if routine_customer.position.distance_to(routine_start_position) <= 0.001:
+		_fail("Customer NPC schedule changed its metadata but did not physically move toward the new destination.")
+		return
 	var portrait_panel_size: Vector2 = operations.call("_get_responsive_panel_size", Vector2(360.0, 780.0))
 	if portrait_panel_size.x > 336.0 or portrait_panel_size.y > 530.0:
 		_fail("Baghdad tower operations panel exceeds a 360x780 phone portrait viewport.")
