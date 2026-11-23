@@ -158,3 +158,12 @@ device profiling remain separate, pending acceptance checks.
 - Canonical Android APK export workflow #1036 passed on the same commit. Artifact `SYSTEM-WORLD-canonical-android-debug-apk`: 35,827,982 bytes (about 35.8 MB), available until 6 December 2026.
 - Workflow: https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45055746550
 - Scope limitation: the starter guild mission catalog still has only three unique verified missions (100/250/500 points), so ordinary play currently tops out at B. Additional mission content and more distinct Nen abilities are required to earn A–SS in normal gameplay; SSS still needs a full in-world board workflow.
+
+
+## Power Tower audience/seating verification — 24 November 2026
+
+- Added local 48-seat spectator reservations, owner-only release, occupied-seat rejection, movement lock and automatic release during floor/lobby transitions.
+- Added eight procedural crowd actors with distinct watching, cheering and winner-celebration states driven by the verified 1v1 score/result feed.
+- Expanded validate_baghdad_tower_operations.gd to exercise seat ownership/release and crowd state transitions.
+- Source changes are committed on feature/baghdad-five-plus-power-tower-20261122; no Godot or Android workflow result has yet been confirmed for this exact HEAD. Do not treat the new tests as passed until the matching runs complete.
+- Online spectator synchronization, persistent cross-session reservations, voice/chat and server-authoritative settlement are not included in this local gameplay milestone.
