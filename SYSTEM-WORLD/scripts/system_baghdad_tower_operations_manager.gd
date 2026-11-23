@@ -7066,6 +7066,9 @@ func apply_verified_power_tower_pvp_result(result_data: Dictionary, local_player
 	var clear_time_seconds := float(result_data.get("clear_time_seconds", 0.0))
 	if clear_time_seconds <= 0.0:
 		return {"success": false, "reason": "INVALID_VERIFIED_MATCH_DURATION"}
+	# Validate progression before closing the judged duel or settling spectator tickets.
+	if int(power_tower_manager.get("active_floor")) != floor_number:
+		return {"success": false, "reason": "FLOOR_NOT_ACTIVE"}
 	var processed_ids: Dictionary = power_tower_manager.get("processed_result_ids")
 	if processed_ids.has(result_id):
 		return {"success": false, "reason": "DUPLICATE_RESULT"}
@@ -7087,6 +7090,7 @@ func apply_verified_power_tower_pvp_result(result_data: Dictionary, local_player
 			loss_message += "\nبلغت عشر خسائر إجمالية؛ تم إيقافك وإرجاع تقدم البرج إلى البداية."
 		elif bool(career_result.get("demoted", false)):
 			loss_message += "\nثلاث خسارات متتالية: هبوط إلى الدرجة السابقة حتى الطابق %d." % int(career_result.get("highest_cleared_floor", 0))
+		_refresh_power_tower_progress_board()
 		_set_status(loss_message)
 		return {"success": true, "won": false, "prediction_settlement": prediction_settlement, "career_result": career_result}
 	var floor_result: Dictionary = power_tower_manager.call("confirm_floor_clear", floor_number, clear_time_seconds, true, result_id)
