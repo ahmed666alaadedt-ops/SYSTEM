@@ -827,11 +827,15 @@ func _run() -> void:
 	var spectator_validation_path := ProjectSettings.globalize_path("user://validator_power_tower_spectator_predictions.cfg")
 	if FileAccess.file_exists(spectator_validation_path):
 		DirAccess.remove_absolute(spectator_validation_path)
+	var duel_test_file_path := ProjectSettings.globalize_path("user://validator_power_tower_duels.cfg")
+	if FileAccess.file_exists(duel_test_file_path):
+		DirAccess.remove_absolute(duel_test_file_path)
 	var spectator_test_file_path := ProjectSettings.globalize_path("user://validator_power_tower_spectator_predictions.cfg")
 	if FileAccess.file_exists(spectator_test_file_path):
 		DirAccess.remove_absolute(spectator_test_file_path)
 	var progression_test_manager := power_tower_test_script.new() as Node
 	progression_test_manager.set("spectator_save_path", "user://validator_power_tower_spectator_predictions.cfg")
+	progression_test_manager.set("duel_save_path", "user://validator_power_tower_duels.cfg")
 	root.add_child(progression_test_manager)
 	progression_test_manager.call("set_spectator_wallet_provider", operations)
 	var spectator_wallet_before := int(operations.get("credits"))
@@ -857,6 +861,7 @@ func _run() -> void:
 			progression_test_manager.queue_free()
 			return
 	var reloaded_progression_manager := power_tower_test_script.new() as Node
+	reloaded_progression_manager.set("duel_save_path", "user://validator_power_tower_duels.cfg")
 	root.add_child(reloaded_progression_manager)
 	await process_frame
 	print("QA: 200-floor progression and persistence simulation completed.")
@@ -868,6 +873,7 @@ func _run() -> void:
 		reloaded_progression_manager.queue_free()
 		return
 	var judge_test_manager := power_tower_test_script.new() as Node
+	judge_test_manager.set("duel_save_path", "user://validator_power_tower_duels.cfg")
 	root.add_child(judge_test_manager)
 	await process_frame
 	var fighter_registration: Dictionary = judge_test_manager.call("register_tower_fighter", "player_test")
@@ -904,6 +910,7 @@ func _run() -> void:
 		return
 	judge_test_manager.queue_free()
 	var loss_test_manager := power_tower_test_script.new() as Node
+	loss_test_manager.set("duel_save_path", "user://validator_power_tower_duels.cfg")
 	root.add_child(loss_test_manager)
 	await process_frame
 	loss_test_manager.set("highest_cleared_floor", 75)
@@ -931,6 +938,7 @@ func _run() -> void:
 		return
 	loss_test_manager.queue_free()
 	var disqualification_test_manager := power_tower_test_script.new() as Node
+	disqualification_test_manager.set("duel_save_path", "user://validator_power_tower_duels.cfg")
 	root.add_child(disqualification_test_manager)
 	await process_frame
 	disqualification_test_manager.set("highest_cleared_floor", 120)
