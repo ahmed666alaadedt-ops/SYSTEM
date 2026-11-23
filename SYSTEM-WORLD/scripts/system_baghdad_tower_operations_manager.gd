@@ -6350,15 +6350,17 @@ func _clear_active_power_opponents() -> void:
 
 
 func _fail_power_floor(reason: String) -> void:
-	if not power_floor_in_progress:
+	if active_power_floor_data.is_empty() and not power_floor_entry_pending and not power_floor_in_progress:
 		return
 	_clear_active_power_opponents()
 	power_tower_manager.call("abandon_active_floor")
+	power_floor_entry_pending = false
 	power_floor_in_progress = false
+	active_power_tower_match.clear()
 	active_power_floor_data.clear()
 	if is_instance_valid(active_power_objective_label):
-		active_power_objective_label.text = "انتهت المواجهة — أعد المحاولة من المصعد"
-	_set_status("لم تنجح في التحدي: " + reason + " حاول مرة أخرى من المصعد.")
+		active_power_objective_label.text = "انتهت المحاولة — أعد المحاولة من المصعد"
+	_set_status("لم تكتمل المواجهة البشرية: " + reason + " لم تُمنح مكافأة الطابق.")
 
 
 func grant_power_tower_credits(reward_amount: int) -> int:
@@ -6368,72 +6370,25 @@ func grant_power_tower_credits(reward_amount: int) -> int:
 	_save_wallet()
 	return reward_amount
 
-func spend_spectator_stake(amount: int) -> bool:
-	if amount <= 0 or credits < amount:
-		return false
-	credits -= amount
-	_save_wallet()
-	if is_instance_valid(credits_label):
-		credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
-	return true
-
-
-func grant_spectator_payout(amount: int) -> int:
-	if amount <= 0:
-		return 0
-	credits += amount
-	_save_wallet()
-	if is_instance_valid(credits_label):
-		credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
-	return amount
-
-
 func get_spectator_wallet_balance() -> int:
 	return credits
 
 
 
-func _complete_power_floor() -> void:
-	if not power_floor_in_progress:
-		return
-	var floor_number := int(active_power_floor_data.get("floor", 0))
-	var reward_items: Array = active_power_floor_data.get("reward_items", []).duplicate()
-	var final_boss := bool(active_power_floor_data.get("final_boss", false))
-	var elapsed := maxf(1.0, float(Time.get_ticks_msec() - power_floor_started_at) / 1000.0)
-	_clear_active_power_opponents()
-	var result: Dictionary = power_tower_manager.call("confirm_floor_clear", floor_number, elapsed)
-	power_floor_in_progress = false
-	active_power_floor_data.clear()
-	if bool(result.get("success", false)):
-		var loot_names := PackedStringArray()
-		if is_instance_valid(progression) and progression.has_method("add_item"):
-			for item_id in reward_items:
-				progression.call("add_item", str(item_id), 1)
-				loot_names.append(str(item_id))
-		var loot_text := " | الغنائم: " + ", ".join(loot_names) if not loot_names.is_empty() else ""
-		var credit_reward := grant_power_tower_credits(int(result.get("reward_credits", 0)))
-		_refresh_power_tower_progress_board()
-		if is_instance_valid(active_power_objective_label):
-			active_power_objective_label.text = "تم اجتياز الطابق %d" % floor_number
-		_set_status("تم اجتياز الطابق %d!\nالتصنيف: %s | XP: %d | رصيد: %d%s\nالطابق التالي أصبح متاحاً." % [floor_number, str(result.get("rank", "E")), int(result.get("reward_xp", 0)), credit_reward, loot_text])
-	else:
-		_set_status("انتهى القتال لكن تعذر اعتماد النتيجة: " + str(result.get("reason", "غير معروف")))
-
 func return_to_lobby() -> void:
 	if current_tower_id.is_empty() or not tower_nodes.has(current_tower_id) or not is_instance_valid(player):
 		return
+	if current_tower_id == "power_tower_baghdad" and (power_floor_entry_pending or power_floor_in_progress or not active_power_floor_data.is_empty()):
+		_clear_active_power_opponents()
+		power_tower_manager.call("abandon_active_floor")
+		power_floor_entry_pending = false
+		power_floor_in_progress = false
+		active_power_tower_match.clear()
+		active_power_floor_data.clear()
+		active_power_objective_label = null
 	if not is_instance_valid(active_floor_root):
 		panel.hide()
 		return
-	if current_tower_id == "power_tower_baghdad" and power_floor_in_progress:
-		for opponent in active_opponents.values():
-			if is_instance_valid(opponent):
-				opponent.queue_free()
-		active_opponents.clear()
-		power_tower_manager.call("abandon_active_floor")
-		power_floor_in_progress = false
-		active_power_floor_data.clear()
-		active_power_objective_label = null
 	_release_player_restaurant_seat()
 	var tower := tower_nodes[current_tower_id] as Node3D
 	var config: Dictionary = TOWER_CONFIG[current_tower_id]
@@ -6476,17 +6431,10 @@ func return_to_lobby() -> void:
 	)
 
 func _on_player_wounded() -> void:
-	if not power_floor_in_progress:
+	if current_tower_id != "power_tower_baghdad" or (not power_floor_in_progress and active_power_floor_data.is_empty()):
 		return
-	for opponent in active_opponents.values():
-		if is_instance_valid(opponent):
-			opponent.queue_free()
-	active_opponents.clear()
-	if is_instance_valid(power_tower_manager):
-		power_tower_manager.call("abandon_active_floor")
-	power_floor_in_progress = false
-	active_power_floor_data.clear()
-	_set_status("تعرضت للإصابة، وتم إيقاف تحدي برج القوة دون احتساب الطابق. عُدت إلى البهو؛ توجه إلى المستشفى للعلاج.")
+	_fail_power_floor("تعرضت للإصابة قبل اعتماد نتيجة المواجهة البشرية")
+	_set_status("تعرضت للإصابة؛ أُلغيت محاولة الطابق دون مكافأة. عُدت إلى البهو؛ توجه إلى المستشفى للعلاج.")
 	return_to_lobby()
 
 func get_operations_status() -> Dictionary:
