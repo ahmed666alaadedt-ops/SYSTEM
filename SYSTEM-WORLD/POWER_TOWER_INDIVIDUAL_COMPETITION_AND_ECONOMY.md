@@ -133,3 +133,12 @@ Implementation status: a local prototype now records individual 1v1 matches, ded
 - The panel lists open 1v1 matches, shows each floor, both fighters and the current pool, lets the spectator choose one fighter and stake 1–500 SYSTEM credits, and confirms or rejects the ticket with a clear reason.
 - Registering a judged duel automatically registers its spectator pool. Once the referee settles the duel, the manager locks the pool and distributes the virtual pool proportionally to correct tickets; losing tickets receive no payout and no-correct-ticket pools are refunded.
 - This terminal is local gameplay UI. It does not connect to a global online betting exchange or real-money payment service.
+
+
+## 12. Public live match display updates — 23 November 2026
+
+- The outside entrance display and public-lobby display retain the complete floor schedule and now also have a dedicated live-match broadcast panel.
+- When the arena reports a duel score or verified completion, the same match ID, floor, two fighter IDs, current score and live/completed state are pushed to both public panels as well as the active arena's score display.
+- The public panels explicitly label the content as a live individual 1v1 match and show the verified winner only after completion.
+- Regression validation checks that a floor-200 result reaches both the outside and lobby panels with the correct floor and winner.
+- Scope: this update is a live score/result broadcast, not a camera-video stream. Live spectator camera/video routing and remote/global match feeds remain unimplemented and must not be represented as available.
