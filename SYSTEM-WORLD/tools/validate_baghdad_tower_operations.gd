@@ -1503,6 +1503,11 @@ func _run() -> void:
 	if live_camera == null or not live_camera.current:
 		_fail("Power Tower live camera is missing or not active.")
 		return
+	var floor_internal_camera_feed := boss_room.get_node_or_null("PowerTowerArenaLiveCameraFeed") as MeshInstance3D
+	var floor_internal_feed_material := floor_internal_camera_feed.material_override as StandardMaterial3D if floor_internal_camera_feed != null else null
+	if floor_internal_camera_feed == null or floor_internal_feed_material == null or floor_internal_feed_material.albedo_texture == null:
+		_fail("Power Tower active floor battle screen is not connected to the shared live arena camera.")
+		return
 	var sovereign_display := boss_room.get_node_or_null("ArenaChallengeDisplay") as Label3D
 	var sovereign_screen := boss_room.get_node_or_null("ArenaChallengeScreenPanel") as MeshInstance3D
 	var sovereign_judges := boss_room.get_node_or_null("PowerTowerRefereeStations") as Node3D
