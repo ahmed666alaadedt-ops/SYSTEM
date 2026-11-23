@@ -32,11 +32,12 @@ Fans participate in a match by selecting one of its two fighters and committing 
 - Power Tower match records store the 1v1 fighters, per-fan selection, stake, total pool, result, gross payouts and net profit.
 - The local settlement distributes the whole pool proportionally to correct fans; if there are no correct fans, all tickets are refunded.
 - Match lock, duplicate prevention, self-prediction prevention, the 20-per-day cap and local persistence remain enforced.
-- Regression coverage checks stake debits, proportional payout, losing-stake accounting, no cash value, persistence and daily limits.
+- NPC spectators have a separate persisted virtual ticket budget and can join the same pool; human payouts from NPC stakes are credited to the SYSTEM wallet.
+- Regression coverage checks stake debits, proportional payout, losing-stake accounting, no cash value, NPC participation/budget persistence, refunds and daily limits.
 
 ## Remaining limitations
 
 - This is a local single-player prototype using the current local SYSTEM wallet. It is not a shared online wallet and does not yet authenticate individual spectator accounts.
-- Live match scheduling, spectator interface, NPC fan ticket budgets, online matchmaking, server-authoritative result settlement, anti-cheat/anti-collusion, global rankings and cross-device persistence remain pending.
+- Live match scheduling, spectator interface, automated NPC crowd selection, online matchmaking, server-authoritative result settlement, anti-cheat/anti-collusion, global rankings and cross-device persistence remain pending.
 - Do not display invented live matches, simulated NPCs as real users, or global pools until those systems exist.
 - The prototype is not production-ready for real-money gambling or cash payouts; no such features are part of the approved design.
