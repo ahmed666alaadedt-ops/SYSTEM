@@ -1823,7 +1823,10 @@ func _run() -> void:
 	var pool_supervisor_station := pool_staff_room.get_node_or_null("StaffWorkstation_مشرف المسابح") as Node3D if pool_staff_room != null else null
 	var pool_staff_service := pool_staff_room.get_node_or_null("StaffServicePoint_مشرف المسابح") as Node3D if pool_staff_room != null else null
 	var pool_facility_station := pool_staff_room.get_node_or_null("SpecialFacility_swimming_pool/PoolLifeguardStation") as Node3D if pool_staff_room != null else null
-	if pool_supervisor.get_parent() != pool_staff_room or pool_supervisor_station == null or pool_staff_service == null or pool_facility_station == null or not bool(pool_supervisor.get_meta("system_staff_workstation_active", false)):
+	var rescue_kit := pool_supervisor_station.get_node_or_null("PoolRescueFirstAidKit") as MeshInstance3D if pool_supervisor_station != null else null
+	var rescue_tube := pool_supervisor_station.get_node_or_null("PoolRescueTubeRack") as MeshInstance3D if pool_supervisor_station != null else null
+	var rescue_sign := pool_supervisor_station.get_node_or_null("PoolSafetyEquipmentSign") as Label3D if pool_supervisor_station != null else null
+	if pool_supervisor.get_parent() != pool_staff_room or pool_supervisor_station == null or pool_staff_service == null or pool_facility_station == null or rescue_kit == null or rescue_tube == null or rescue_sign == null or not bool(pool_supervisor.get_meta("system_staff_workstation_active", false)):
 		_fail("The pool supervisor did not reach an active lifeguard workstation beside the pool safety station.")
 		return
 	var expected_pool_duty_position := Vector3(3.2, 0.0, -17.0)
