@@ -204,6 +204,8 @@ func register_judged_duel(match_id: String, fighter_a_id: String, fighter_b_id: 
 		return {"success": false, "reason": "INVALID_DUEL_IDENTITY"}
 	if floor_number < 1 or floor_number > MAX_FLOORS:
 		return {"success": false, "reason": "INVALID_FLOOR"}
+	if not registered_fighters.has(fighter_a_id) or not registered_fighters.has(fighter_b_id):
+		return {"success": false, "reason": "FIGHTER_REGISTRATION_REQUIRED"}
 	if duel_matches.has(match_id):
 		return {"success": false, "reason": "DUEL_ALREADY_REGISTERED"}
 	var floor_data := get_floor_data(floor_number)
