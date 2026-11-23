@@ -58,9 +58,9 @@ func publish_exam_champion(candidate_number: int, license_rank: String) -> void:
 
 func publish_power_tower_clear(floor_number: int, rank: String) -> void:
 	_publish_result(
-		"برج القوة",
-		"إنجاز الطابق %d" % floor_number,
-		"التصنيف: %s" % rank
+		"برج القوة — مواجهة فردية",
+		"فوز 1 ضد 1 في الطابق %d" % floor_number,
+		"مقاتل واحد ضد خصم واحد | التصنيف: %s" % rank
 	)
 
 
