@@ -2,9 +2,9 @@ extends Node3D
 class_name SystemVehicleDealershipManager
 
 const VehicleCatalogScript = preload("res://scripts/system_vehicle_catalog.gd")
-var vehicle_manager: SystemPlayerVehicleManager
+var vehicle_manager: Variant
 
-func setup(manager: SystemPlayerVehicleManager) -> void:
+func setup(manager: Variant) -> void:
 	vehicle_manager = manager
 	_build_showroom_markers()
 
