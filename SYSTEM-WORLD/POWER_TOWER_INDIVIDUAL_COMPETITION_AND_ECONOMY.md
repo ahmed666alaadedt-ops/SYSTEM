@@ -187,3 +187,6 @@ Implementation status: a local prototype now records individual 1v1 matches, ded
 - A live seat summary reports available and reserved seats out of 48. It refreshes on reservation, owner release and automatic travel cleanup.
 - Regression validation checks the prediction-board interaction route and confirms the summary changes from 48/48 to 47/48 and back to 48/48 during the seat ownership test.
 - Prediction stakes remain virtual SYSTEM credits only. No cash deposits, withdrawals, transfers or cash prizes are introduced.
+
+- Seat ownership also records the floor number, so automatic cleanup resolves the exact reserved seat instead of relying on a seat ID reused on every floor.
+- The regression now opens the prediction terminal through the actual arena-board interaction route and verifies that the shared virtual-ticket UI becomes visible.
