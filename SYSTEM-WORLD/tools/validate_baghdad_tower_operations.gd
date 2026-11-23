@@ -1898,6 +1898,22 @@ func _run() -> void:
 		_fail("Restaurant visitors were not assigned to real owned seats or the eight visible waiting positions were not generated.")
 		return
 	print("QA TRACE: two restaurant customers occupy individually owned seats; eight visible queue positions are available.")
+	var waiter_staff_id := str(shopping_staff_ids[5]) if shopping_staff_ids.size() > 5 else ""
+	var restaurant_waiter := shopping_tower_node.find_child("TowerStaff_" + waiter_staff_id, true, false) as Node3D if not waiter_staff_id.is_empty() else null
+	if restaurant_waiter == null:
+		_fail("The assigned restaurant waiter could not be found before player ordering.")
+		return
+	for _staff_wait_attempt in range(100):
+		if restaurant_chef.get_parent() == restaurant_room and restaurant_waiter.get_parent() == restaurant_room:
+			break
+		await create_timer(0.1).timeout
+	if restaurant_chef.get_parent() != restaurant_room or restaurant_waiter.get_parent() != restaurant_room:
+		_fail("Restaurant service staff did not disembark onto floor 29: chef=%s waiter=%s." % [str(restaurant_chef.get_parent().name if restaurant_chef.get_parent() != null else "none"), str(restaurant_waiter.get_parent().name if restaurant_waiter.get_parent() != null else "none")])
+		return
+	if str(restaurant_waiter.get_meta("system_tower_staff_role", "")) != "restaurant_waiter":
+		_fail("The floor-29 support employee is not assigned the restaurant waiter role.")
+		return
+	print("QA TRACE: restaurant chef and waiter reached floor 29; player order service can begin.")
 	var player_test_table: Node3D
 	for table_index in range(4):
 		var candidate_table := restaurant_room.get_node_or_null("RestaurantTable_%02d" % table_index) as Node3D
@@ -1960,6 +1976,7 @@ func _run() -> void:
 		return
 	var observed_player_service_states := {"awaiting_waiter": true}
 	for _attempt in range(600):
+		operations.call("_process_restaurant_staff_service")
 		player_order = operations.get("restaurant_orders").get(player_cycle_table_id, {})
 		var observed_state := str(player_order.get("status", ""))
 		if not observed_state.is_empty():
@@ -1981,7 +1998,14 @@ func _run() -> void:
 	player_order = operations.get("restaurant_orders").get(player_cycle_table_id, {})
 	var first_meal_health := float(health_manager.get("current_health"))
 	var first_meal_xp := int(progression_manager.get("total_xp"))
-	if not bool(player_order.get("meal_consumed", false)) or first_meal_health <= health_before_meal or first_meal_xp != total_xp_before_meal + 10:
+	var consumed_presentation := player_test_table.get_node_or_null("ServedMealPresentation") as Node3D
+	if not bool(player_order.get("meal_consumed", false)) or first_meal_health <= health_before_meal or first_meal_xp != total_xp_before_meal + 10 or bool(health_manager.get("is_wounded")) != wounded_before_meal:
+		_fail("Eating the delivered meal did not restore bounded health, preserve wound state and award the expected one-time XP.")
+		return
+	if consumed_presentation == null or consumed_presentation.get_node_or_null("MealPlate") == null or consumed_presentation.get_node_or_null("PreparedMeal") != null or str(consumed_presentation.get_node("MealReadyLabel").text) != "تم تناول الوجبة":
+		_fail("The served food remained visible after consumption instead of leaving an empty plate.")
+		return
+	if false:
 		_fail("Eating the delivered meal did not restore bounded health and award the expected one-time XP.")
 		return
 	if bool(operations.call("_consume_restaurant_meal", player_cycle_table_id)) or float(health_manager.get("current_health")) != first_meal_health or int(progression_manager.get("total_xp")) != first_meal_xp:
@@ -2033,8 +2057,6 @@ func _run() -> void:
 	if str(npc_restaurant_order.get("status", "")) not in ["awaiting_waiter", "taking_order", "placed", "preparing", "ready", "delivering", "served"] or npc_restaurant_order.get("items", []).size() < 1:
 		_fail("An autonomous NPC restaurant order was not created in the waiter queue.")
 		return
-	var waiter_staff_id := str(shopping_staff_ids[5]) if shopping_staff_ids.size() > 5 else ""
-	var restaurant_waiter := shopping_tower_node.find_child("TowerStaff_" + waiter_staff_id, true, false) as Node3D if not waiter_staff_id.is_empty() else null
 	if restaurant_waiter == null or restaurant_waiter.get_parent() != restaurant_room:
 		_fail("The assigned restaurant waiter did not reach the dining floor.")
 		return

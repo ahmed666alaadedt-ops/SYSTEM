@@ -5434,21 +5434,22 @@ func _create_restaurant_served_meal_visual(table_id: String, order: Dictionary) 
 	plate_material.roughness = 0.28
 	plate.material_override = plate_material
 	presentation.add_child(plate)
-	var food := MeshInstance3D.new()
-	food.name = "PreparedMeal"
-	var food_mesh := SphereMesh.new()
-	food_mesh.radius = 0.22
-	food_mesh.height = 0.17
-	food.mesh = food_mesh
-	food.position = Vector3(0.0, 0.13, 0.0)
-	var food_material := StandardMaterial3D.new()
-	food_material.albedo_color = Color(0.72, 0.34, 0.12)
-	food_material.roughness = 0.72
-	food.material_override = food_material
-	presentation.add_child(food)
+	if not bool(order.get("meal_consumed", false)):
+		var food := MeshInstance3D.new()
+		food.name = "PreparedMeal"
+		var food_mesh := SphereMesh.new()
+		food_mesh.radius = 0.22
+		food_mesh.height = 0.17
+		food.mesh = food_mesh
+		food.position = Vector3(0.0, 0.13, 0.0)
+		var food_material := StandardMaterial3D.new()
+		food_material.albedo_color = Color(0.72, 0.34, 0.12)
+		food_material.roughness = 0.72
+		food.material_override = food_material
+		presentation.add_child(food)
 	var meal_label := Label3D.new()
 	meal_label.name = "MealReadyLabel"
-	meal_label.text = "وجبتك جاهزة"
+	meal_label.text = "تم تناول الوجبة" if bool(order.get("meal_consumed", false)) else "وجبتك جاهزة"
 	meal_label.position = Vector3(0.0, 0.82, 0.0)
 	meal_label.font_size = 14
 	meal_label.pixel_size = 0.009
@@ -5543,6 +5544,7 @@ func _consume_restaurant_meal(table_id: String) -> bool:
 	restaurant_orders[table_id] = order
 	_save_restaurant_orders()
 
+	_create_restaurant_served_meal_visual(table_id, order)
 	var healed := false
 	if is_instance_valid(player_health) and player_health.has_method("apply_field_healing"):
 		healed = bool(player_health.call("apply_field_healing", health_reward))
