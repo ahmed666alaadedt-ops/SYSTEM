@@ -1378,3 +1378,23 @@ This clarification supersedes any earlier wording that could imply cash betting 
 - [ ] Global fan participation, cross-device leaderboards and anti-cheat settlement require an authoritative online service. The existing public event board is a local-session display and must not be represented as live global multiplayer.
 - [ ] Run canonical Godot validation and Android export on the resulting PR head; no new runtime/build success is claimed by this source update.
 - Scope remains the existing Power Tower and shared SYSTEM wallet; no merge to main.
+
+
+### Power Tower fan virtual ticket pools — approved clarification and local implementation — 23 November 2026
+
+This section supersedes the earlier point-only fan prediction wording above. The user's intended mechanic is a virtual ticket-pool system similar to sports-prediction pools, with no real-money betting or cash-out.
+
+- [x] Replace free-only prediction points with virtual SYSTEM-credit tickets. A spectator selects exactly one of the two fighters in an individual 1v1 match and commits 1–500 virtual credits from the existing SYSTEM wallet.
+- [x] Deduct each accepted ticket stake from the local wallet and add it to the match's visible total pool. Reject invalid stakes, insufficient balances, duplicate entries, self-prediction, invalid fighter selection, locked matches and entries beyond the 20-ticket daily cap.
+- [x] On a trusted local match result, distribute the complete pool proportionally to the winning side's total stake. Record each fan's gross payout and net virtual profit separately; losing tickets lose only their committed virtual stake.
+- [x] If no fan selected the actual winner, refund every ticket stake rather than destroying credits. Ensure payout rounding remainder is included so the complete pool is accounted for.
+- [x] Connect the Power Tower manager to the existing SYSTEM local wallet through explicit stake-debit and payout-credit methods.
+- [x] Add regression coverage for a 120-credit pool split 80/40 between two winning fans, the losing fan's 60-credit loss, unchanged total wallet balance after full distribution, refund of a 25-credit pool with no correct prediction, persistence and daily limits.
+- [x] Update the dedicated Power Tower economy and individual competition documents to describe virtual tickets and pool winnings; explicitly prohibit cash deposits, withdrawals, cash-out, real-money transfer and real-world prizes.
+- [ ] Add clearly labelled NPC fan ticket budgets and NPC ticket participation. Do not represent simulated NPC entries as real players.
+- [ ] Add an actual live match scheduler and connect prediction lock to match start and settlement to the authoritative match result. Do not invent live matches or show a prediction panel for the player's own match.
+- [ ] Add a spectator-facing UI for fighter selection, stake entry, live pool totals, lock countdown, results, gross payout and net profit.
+- [ ] Replace local wallet and local settlement with authenticated account-specific, server-authoritative wallet transactions before enabling global users; add anti-cheat, anti-collusion, idempotent settlement and cross-device persistence.
+- [ ] Godot and canonical Android workflows for the resulting exact HEAD are queued; do not mark the new implementation verified until both pass on the same commit.
+- [ ] Physical Android touch/visual testing remains outstanding.
+- PR #38 remains draft and unmerged. Do not merge into main without explicit user approval.
