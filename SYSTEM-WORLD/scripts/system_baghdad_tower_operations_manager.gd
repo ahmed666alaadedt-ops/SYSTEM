@@ -671,6 +671,13 @@ func _place_floor_duty_staff_on_floor(trip: Dictionary, room: Node3D, radius: fl
 	var target_position := Vector3(radius * 0.34, 0.0, -radius * 0.16)
 	var service_position := target_position + Vector3(2.4, 0.0, 0.0)
 	var information_position := target_position + Vector3(1.2, 0.0, 2.1)
+	if tower_id == "shopping_tower_baghdad" and floor_number >= 29 and floor_number <= 32:
+		if role == "restaurant_chef":
+			target_position = Vector3(radius * 0.28, 0.0, -radius * 0.30 + 3.5)
+		else:
+			target_position = Vector3(-radius * 0.22, 0.0, radius * 0.12)
+		service_position = target_position + Vector3(2.4, 0.0, 0.0)
+		information_position = target_position + Vector3(1.2, 0.0, 2.1)
 	if tower_id == "entertainment_tower_baghdad" and floor_number in [18, 19] and role == "pool_supervisor":
 		target_position = Vector3(3.2, 0.0, -17.0)
 		service_position = Vector3(6.2, 0.0, -17.0)
@@ -851,6 +858,8 @@ func _return_one_tower_staff_to_lobby(employee: Node3D) -> void:
 	employee.remove_meta("system_staff_assistance_requested")
 	employee.remove_meta("system_staff_assistance_target")
 	employee.remove_meta("system_staff_assistance_arrived")
+	employee.remove_meta("system_restaurant_service_tween")
+	employee.set_meta("system_restaurant_service_busy", false)
 	if is_instance_valid(model):
 		model.call("set_activity", "idle")
 	_start_tower_staff_waypoint_patrol(employee, model, staff_index)
@@ -5046,9 +5055,7 @@ func _process_restaurant_staff_service() -> void:
 		if model == null:
 			continue
 		var order: Dictionary = restaurant_orders[selected_table_id]
-		var current_status := str(order.get("status", ""))
-		var next_status := "preparing" if role == "restaurant_chef" else "served"
-		order["status"] = next_status if role == "restaurant_chef" else "ready"
+		order["status"] = "preparing" if role == "restaurant_chef" else "ready"
 		order["staff_id"] = str(employee.get_meta("system_tower_staff_id", ""))
 		order["updated_at_unix"] = int(Time.get_unix_time_from_system())
 		restaurant_orders[selected_table_id] = order
@@ -5057,6 +5064,7 @@ func _process_restaurant_staff_service() -> void:
 		var task_tween := employee.create_tween()
 		employee.set_meta("system_restaurant_service_busy", true)
 		employee.set_meta("system_restaurant_service_tween", task_tween)
+		employee.set_meta("system_staff_patrol_tween", task_tween)
 		var task_position := Vector3.ZERO
 		if role == "restaurant_chef":
 			var kitchen := active_floor_root.get_node_or_null("RestaurantKitchen") as Node3D
@@ -5087,6 +5095,7 @@ func _process_restaurant_staff_service() -> void:
 			if is_instance_valid(model):
 				model.call("set_activity", "walk")
 				var return_tween := employee.create_tween()
+				employee.set_meta("system_staff_patrol_tween", return_tween)
 				return_tween.tween_property(employee, "rotation:y", atan2(return_direction.x, return_direction.z), 0.2)
 				return_tween.tween_property(employee, "position", home_position, maxf(return_direction.length() / 1.8, 0.5)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 				return_tween.tween_callback(func():
@@ -5274,7 +5283,6 @@ func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: i
 	dining_sign.pixel_size = 0.013
 	dining_sign.modulate = Color(1.0, 0.78, 0.42)
 	room.add_child(dining_sign)
-	for index in range(4):
 	var kitchen := Node3D.new()
 	kitchen.name = "RestaurantKitchen"
 	kitchen.position = Vector3(radius * 0.28, 0.0, -radius * 0.30)
