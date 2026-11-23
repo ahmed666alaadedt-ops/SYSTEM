@@ -1034,6 +1034,78 @@ func _return_customer_visitors_to_lobbies() -> void:
 			var customer_index := int(visitor.get_meta("system_tower_customer_index", 0))
 			var radius := float(TOWER_CONFIG[tower_id].get("radius", 24.0))
 			visitor.position = Vector3((float(customer_index) - 1.5) * 3.6, 0.0, radius * 1.48 + 12.0 + float(customer_index % 2) * 3.0)
+			visitor.remove_meta("system_customer_in_elevator")
+			visitor.remove_meta("system_customer_elevator_target_floor")
+
+
+func _board_customer_visitors_into_elevator(tower_id: String, target_floor: int, car: Node3D) -> int:
+	if not is_instance_valid(car) or not customer_ids_by_tower.has(tower_id):
+		return 0
+	var tower := tower_nodes.get(tower_id) as Node3D
+	var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D if tower != null else null
+	if lobby == null:
+		return 0
+	var passengers: Array[Node3D] = []
+	if is_instance_valid(active_floor_root) and str(active_floor_root.get_meta("system_tower_id", "")) == tower_id:
+		for child in active_floor_root.get_children():
+			if child is Node3D and str(child.name).begins_with("TowerCustomer_"):
+				passengers.append(child as Node3D)
+	if passengers.is_empty():
+		var ids: Array = customer_ids_by_tower[tower_id]
+		for slot in range(mini(2, ids.size())):
+			var customer_id := str(ids[posmod(target_floor + slot, ids.size())])
+			var visitor := lobby.get_node_or_null("TowerCustomer_" + customer_id) as Node3D
+			if visitor != null:
+				passengers.append(visitor)
+	var boarded := 0
+	for visitor in passengers:
+		if boarded >= 2:
+			break
+		var previous_tween: Variant = visitor.get_meta("system_customer_move_tween", null)
+		if previous_tween is Tween and (previous_tween as Tween).is_running():
+			(previous_tween as Tween).kill()
+		visitor.reparent(car, true)
+		visitor.position = Vector3(-1.2 + float(boarded) * 2.4, 0.45, 0.0)
+		visitor.set_meta("system_customer_in_elevator", true)
+		visitor.set_meta("system_customer_elevator_target_floor", target_floor)
+		for visitor_child in visitor.get_children():
+			if visitor_child.has_method("set_activity"):
+				visitor_child.call("set_activity", "walk")
+		boarded += 1
+	return boarded
+
+
+func _disembark_customer_visitors_to_lobby(tower_id: String, car: Node3D) -> int:
+	if not is_instance_valid(car):
+		return 0
+	var tower := tower_nodes.get(tower_id) as Node3D
+	var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D if tower != null else null
+	if lobby == null:
+		return 0
+	var disembarked := 0
+	for child in car.get_children():
+		if not child is Node3D or not str(child.name).begins_with("TowerCustomer_"):
+			continue
+		var visitor := child as Node3D
+		visitor.reparent(lobby, false)
+		var customer_index := int(visitor.get_meta("system_tower_customer_index", 0))
+		var radius := float(TOWER_CONFIG[tower_id].get("radius", 24.0))
+		visitor.position = Vector3((float(customer_index) - 1.5) * 3.6, 0.0, radius * 1.48 + 12.0 + float(customer_index % 2) * 3.0)
+		visitor.remove_meta("system_customer_in_elevator")
+		visitor.remove_meta("system_customer_elevator_target_floor")
+		visitor.remove_meta("system_customer_current_floor")
+		visitor.remove_meta("system_customer_current_department")
+		if is_instance_valid(society):
+			var customer_id := str(visitor.get_meta("system_tower_customer_id", ""))
+			var customer: Dictionary = society.call("get_npc", customer_id)
+			if not customer.is_empty():
+				customer["current_location"] = tower_id + "_public_lobby"
+				customer["current_action"] = "waiting_in_lobby"
+				society.npcs[customer_id] = customer
+		disembarked += 1
+	if disembarked > 0 and is_instance_valid(society) and society.has_method("save_society"):
+		society.call("save_society")
+	return disembarked
 
 
 func _place_customer_visitors_on_floor(tower_id: String, floor_number: int, room: Node3D) -> void:
@@ -1043,30 +1115,37 @@ func _place_customer_visitors_on_floor(tower_id: String, floor_number: int, room
 	var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D if tower != null else null
 	if lobby == null:
 		return
-	var ids: Array = customer_ids_by_tower[tower_id]
-	if ids.is_empty():
-		return
-	var selected_count := mini(2, ids.size())
+	var passengers: Array[Node3D] = []
+	if is_instance_valid(active_elevator_car):
+		for child in active_elevator_car.get_children():
+			if child is Node3D and str(child.name).begins_with("TowerCustomer_"):
+				passengers.append(child as Node3D)
+	if passengers.is_empty():
+		var ids: Array = customer_ids_by_tower[tower_id]
+		for slot in range(mini(2, ids.size())):
+			var customer_id := str(ids[posmod(floor_number + slot, ids.size())])
+			var visitor := lobby.get_node_or_null("TowerCustomer_" + customer_id) as Node3D
+			if visitor != null:
+				passengers.append(visitor)
 	var floor_label := _department_for_floor(tower_id, floor_number, int(TOWER_CONFIG[tower_id].get("floors", 1)))
-	for slot in range(selected_count):
-		var customer_id := str(ids[posmod(floor_number + slot, ids.size())])
-		var visitor_name := "TowerCustomer_" + customer_id
-		var visitor := lobby.get_node_or_null(visitor_name) as Node3D
-		if visitor == null:
-			continue
+	var radius := float(TOWER_CONFIG[tower_id].get("radius", 24.0))
+	for slot in range(mini(2, passengers.size())):
+		var visitor := passengers[slot]
+		var customer_id := str(visitor.get_meta("system_tower_customer_id", ""))
 		visitor.reparent(room, false)
-		var angle := TAU * float(slot) / float(maxi(selected_count, 1))
-		var radius := float(TOWER_CONFIG[tower_id].get("radius", 24.0))
+		var angle := TAU * float(slot) / float(maxi(passengers.size(), 1))
 		visitor.position = Vector3(cos(angle) * radius * 0.28, 0.0, sin(angle) * radius * 0.28)
+		visitor.remove_meta("system_customer_in_elevator")
+		visitor.remove_meta("system_customer_elevator_target_floor")
 		visitor.set_meta("system_customer_current_floor", floor_number)
 		visitor.set_meta("system_customer_current_department", floor_label)
-		var customer_id_copy := customer_id
-		if is_instance_valid(society):
-			var customer: Dictionary = society.call("get_npc", customer_id_copy)
-			customer["current_location"] = "%s_floor_%d" % [tower_id, floor_number]
-			customer["current_action"] = "visiting_" + floor_label
-			customer["last_tower_visit"] = Time.get_datetime_string_from_system()
-			society.npcs[customer_id_copy] = customer
+		if is_instance_valid(society) and not customer_id.is_empty():
+			var customer: Dictionary = society.call("get_npc", customer_id)
+			if not customer.is_empty():
+				customer["current_location"] = "%s_floor_%d" % [tower_id, floor_number]
+				customer["current_action"] = "visiting_" + floor_label
+				customer["last_tower_visit"] = Time.get_datetime_string_from_system()
+				society.npcs[customer_id] = customer
 		for visitor_child in visitor.get_children():
 			if visitor_child.has_method("set_activity"):
 				visitor_child.call("set_activity", "wander" if slot == 0 else "socialize")
@@ -5242,10 +5321,13 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 		return
 	var tower := tower_nodes[tower_id] as Node3D
 	var start_y := active_floor_root.position.y if is_instance_valid(active_floor_root) else 9.0
+	if is_instance_valid(active_floor_root) and str(active_floor_root.get_meta("system_tower_id", "")) != tower_id:
+		_return_customer_visitors_to_lobbies()
 	var car := _ensure_elevator_car(tower_id, start_y)
 	if car == null:
 		_set_status("تعذر تجهيز عربة المصعد.")
 		return
+	var customer_passenger_count := _board_customer_visitors_into_elevator(tower_id, floor_number, car)
 	if tower_id == "power_tower_baghdad":
 		if not is_instance_valid(power_tower_manager):
 			_set_status("نظام برج القوة غير متاح.")
@@ -5267,7 +5349,6 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 	if not is_instance_valid(active_floor_root):
 		player.global_position = tower.to_global(Vector3(0.0, start_y + 1.2, 0.0))
 	if is_instance_valid(active_floor_root) and active_floor_root != room:
-		_return_customer_visitors_to_lobbies()
 		active_floor_root.queue_free()
 	active_floor_root = room
 	active_floor_root.set_meta("system_tower_id", tower_id)
@@ -5432,7 +5513,6 @@ func return_to_lobby() -> void:
 	if not is_instance_valid(active_floor_root):
 		panel.hide()
 		return
-	_return_customer_visitors_to_lobbies()
 	if current_tower_id == "power_tower_baghdad" and power_floor_in_progress:
 		for opponent in active_opponents.values():
 			if is_instance_valid(opponent):
@@ -5447,6 +5527,7 @@ func return_to_lobby() -> void:
 	var config: Dictionary = TOWER_CONFIG[current_tower_id]
 	var start_y := active_floor_root.position.y
 	var car := _ensure_elevator_car(current_tower_id, start_y)
+	_board_customer_visitors_into_elevator(current_tower_id, 1, car)
 	var returning_staff := _board_active_floor_duty_staff_for_lobby_return(car)
 	var first_floor_y := 9.0
 	var lobby_position := tower.to_global(Vector3(0.0, 1.4, float(config["radius"]) * 1.48 + 10.0))
@@ -5465,6 +5546,7 @@ func return_to_lobby() -> void:
 		exit_tween.tween_property(player, "global_position", lobby_position, 0.7)
 		exit_tween.finished.connect(func():
 			_clear_pool_visit_state()
+			_disembark_customer_visitors_to_lobby(current_tower_id, car)
 			_finish_staff_lobby_return(returning_staff)
 			if is_instance_valid(player):
 				player.set_meta("system_tower_elevator_active", false)
