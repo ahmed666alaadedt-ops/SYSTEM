@@ -1834,14 +1834,14 @@ func _run() -> void:
 	for floor_child in restaurant_room.get_children():
 		if not str(floor_child.name).begins_with("TowerCustomer_"):
 			continue
-		var table_name := str(floor_child.get_meta("system_restaurant_table_node", ""))
-		var table_root := restaurant_room.get_node_or_null(table_name) as Node3D
-		if table_root == null:
+		var npc_table_name := str(floor_child.get_meta("system_restaurant_table_node", ""))
+		var npc_table_root := restaurant_room.get_node_or_null(npc_table_name) as Node3D
+		if npc_table_root == null:
 			continue
-		var candidate_order_id := str(table_root.get_meta("system_restaurant_table_id", "")) + "_npc"
+		var candidate_order_id := str(npc_table_root.get_meta("system_restaurant_table_id", "")) + "_npc"
 		var candidate_order: Dictionary = operations.get("restaurant_orders").get(candidate_order_id, {})
-		var customer_id := str(floor_child.get_meta("system_tower_customer_id", floor_child.name))
-		if bool(candidate_order.get("npc_order", false)) and candidate_order.get("customer_ids", []).has(customer_id):
+		var npc_customer_id := str(floor_child.get_meta("system_tower_customer_id", floor_child.name))
+		if bool(candidate_order.get("npc_order", false)) and candidate_order.get("customer_ids", []).has(npc_customer_id):
 			npc_restaurant_order_id = candidate_order_id
 			break
 	if npc_restaurant_order_id.is_empty():
