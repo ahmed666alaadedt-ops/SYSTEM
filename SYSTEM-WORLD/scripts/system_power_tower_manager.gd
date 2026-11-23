@@ -64,6 +64,14 @@ func get_floor_data(floor_number: int) -> Dictionary:
 	var arena_rules := "مواجهة السيادة النهائية: لاعب بشري ضد حامل اللقب البشري — 1 ضد 1" if final_boss else ("مواجهة فردية ضد حامل لقب الطابق — لاعبان بشريان فقط" if boss_floor else ("مواجهة نخبة فردية بين لاعبين بشريين — 1 ضد 1" if elite_floor else "مواجهة فردية بين لاعبين بشريين 1 ضد 1 — لا فرق ولا خصوم آليين"))
 	return {
 		"floor": floor_number,
+		"division_number": int(ceil(float(floor_number) / 10.0)),
+		"division_floor_start": (int((floor_number - 1) / 10) * 10) + 1,
+		"division_floor_end": mini(MAX_FLOORS, int(ceil(float(floor_number) / 10.0)) * 10),
+		"fighter_registration_required": true,
+		"private_room_eligible": floor_number >= 100,
+		"judge_panel": DUEL_JUDGE_IDS.duplicate(),
+		"scoring_rules": {"clean_hit": 1, "critical_hit": 2, "opponent_down": 1, "tko_score": DUEL_TKO_SCORE},
+		"weapons_allowed": floor_number >= 200,
 		"difficulty": difficulty,
 		"required_level": required_level,
 		"boss_floor": boss_floor,
