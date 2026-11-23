@@ -1214,6 +1214,10 @@ func _run() -> void:
 	operations.call("_travel_to_floor", "shopping_tower_baghdad", 1)
 	await create_timer(2.8).timeout
 	if shopping_tower.get_node_or_null("ActiveTowerElevatorCar") == null:
+		var elevator_status_label := operations.get("status_label") as Label
+		var elevator_active_car := operations.get("active_elevator_car") as Node3D
+		var elevator_tower_nodes: Dictionary = operations.get("tower_nodes")
+		print("QA DIAGNOSTIC: elevator missing | current_tower=%s | player_valid=%s | tower_registered=%s | active_car=%s | active_car_tower=%s | status=%s" % [str(operations.get("current_tower_id")), str(is_instance_valid(player)), str(elevator_tower_nodes.has("shopping_tower_baghdad")), str(is_instance_valid(elevator_active_car)), str(operations.get("active_elevator_tower_id")), elevator_status_label.text if elevator_status_label != null else "no status label"])
 		_fail("Visible elevator cabin was not created for tower travel.")
 		return
 	if bool(player.get_meta("system_tower_elevator_active", true)):
