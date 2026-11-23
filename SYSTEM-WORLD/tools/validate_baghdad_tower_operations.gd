@@ -1482,8 +1482,10 @@ func _run() -> void:
 	if floor_200_live_score == null or not floor_200_live_score.text.contains("10") or not floor_200_live_score.text.contains("انتهى النزال") or not floor_200_live_score.text.contains("sovereign_challenger"):
 		_fail("Power Tower live score screen did not update with the verified match result.")
 		return
-	var outside_broadcast_root := operations.get("tower_nodes").get("power_tower_baghdad").get_node_or_null("PowerTowerBattleDisplay_Outside") as Node3D
-	var lobby_broadcast_root := operations.get("tower_nodes").get("power_tower_baghdad").get_node_or_null("PublicLobby_Blockout").get_node_or_null("PowerTowerBattleDisplay_Inside") as Node3D
+	var power_tower_node := (operations.get("tower_nodes") as Dictionary).get("power_tower_baghdad") as Node3D
+	var public_lobby_node := power_tower_node.get_node_or_null("PublicLobby_Blockout") as Node3D if power_tower_node != null else null
+	var outside_broadcast_root := power_tower_node.get_node_or_null("PowerTowerBattleDisplay_Outside") as Node3D if power_tower_node != null else null
+	var lobby_broadcast_root := public_lobby_node.get_node_or_null("PowerTowerBattleDisplay_Inside") as Node3D if public_lobby_node != null else null
 	var outside_broadcast := outside_broadcast_root.get_node_or_null("PublicLiveMatchBroadcast") as Label3D if outside_broadcast_root != null else null
 	var lobby_broadcast := lobby_broadcast_root.get_node_or_null("PublicLiveMatchBroadcast") as Label3D if lobby_broadcast_root != null else null
 	if outside_broadcast == null or lobby_broadcast == null or not outside_broadcast.text.contains("LIVE POWER TOWER") or not lobby_broadcast.text.contains("sovereign_challenger") or int(outside_broadcast.get_meta("system_live_floor", 0)) != 200 or int(lobby_broadcast.get_meta("system_live_floor", 0)) != 200:
