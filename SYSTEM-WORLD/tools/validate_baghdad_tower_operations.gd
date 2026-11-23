@@ -816,6 +816,10 @@ func _run() -> void:
 		_fail("Power Tower sovereign boss is missing its hidden initial shockwave telegraph.")
 		final_boss_test.queue_free()
 		return
+	if not str(final_boss_test.get("health_label").text).contains("PHASE 1") or not is_equal_approx(float(final_boss_test.get("movement_speed")), 2.5) or not is_equal_approx(float(final_boss_test.get("attack_damage")), 12.0):
+		_fail("Power Tower sovereign boss initial phase combat profile or phase label is incorrect.")
+		final_boss_test.queue_free()
+		return
 	final_boss_test.set("special_attack_clock", 0.0)
 	await physics_frame
 	if not shockwave_ring.visible or not shockwave_label.visible or not str(shockwave_label.text).contains("EVADE"):
@@ -843,6 +847,10 @@ func _run() -> void:
 		_fail("Power Tower sovereign boss phase two did not expand its attack telegraph.")
 		final_boss_test.queue_free()
 		return
+	if not str(final_boss_test.get("health_label").text).contains("PHASE 2") or not is_equal_approx(float(final_boss_test.get("movement_speed")), 3.0) or not is_equal_approx(float(final_boss_test.get("attack_damage")), 13.2) or not is_equal_approx(float(final_boss_test.get("attack_cooldown")), 1.215):
+		_fail("Power Tower sovereign boss phase two did not apply its combat escalation and phase label.")
+		final_boss_test.queue_free()
+		return
 	final_boss_test.call("take_damage", 31.0, tower_player)
 	await physics_frame
 	if int(final_boss_test.get("boss_phase")) != 3:
@@ -851,6 +859,10 @@ func _run() -> void:
 		return
 	if not is_equal_approx((shockwave_ring.mesh as TorusMesh).inner_radius, 6.2):
 		_fail("Power Tower sovereign boss phase three did not expand its attack telegraph.")
+		final_boss_test.queue_free()
+		return
+	if not str(final_boss_test.get("health_label").text).contains("PHASE 3") or not is_equal_approx(float(final_boss_test.get("movement_speed")), 3.625) or not is_equal_approx(float(final_boss_test.get("attack_damage")), 15.0) or not is_equal_approx(float(final_boss_test.get("attack_cooldown")), 1.0125):
+		_fail("Power Tower sovereign boss final phase did not apply its combat escalation and phase label.")
 		final_boss_test.queue_free()
 		return
 	final_boss_test.call("take_damage", 100.0, tower_player)
