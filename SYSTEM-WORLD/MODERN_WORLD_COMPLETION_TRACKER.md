@@ -1213,3 +1213,15 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Pass canonical Android export #1263 (run ID 45084505537) on the same exact PR head; APK artifact 14778453250, 35,969,051 bytes, SHA-256 `c3d960dfdbe720701dbde5c4d0daa21283bd4691903b056dca282061b5825f0c`, expires 6 December 2026.
 - [x] Confirm the Godot runtime and full tower regression completed without the facade assertion failure on this exact head.
 - [ ] Physical Android inspection remains outstanding; automated CI does not replace touch, visual, collision-feel, thermal or frame-rate testing.
+
+### Baghdad customer daily routines and movement redirection — 23 November 2026
+
+- [x] Allow the customer schedule movement routine to accept an optional deterministic hour for validation while preserving the real system clock during normal gameplay.
+- [x] Correct schedule changes so an active customer movement tween is cancelled and redirected when the daily phase changes; retain the existing tween only when the phase and destination remain unchanged.
+- [x] Extend the full tower operations validator to verify all 20 persistent customers receive schedule phase/action/target state, then exercise the 08:00 cafe route and 11:00 browsing route transition.
+- [x] Verify the previous breakfast tween stops, a new browsing tween starts, and the customer position physically changes toward the new destination.
+- [x] Pass Godot 4.3 full project and Baghdad tower operations validation #1530 (run ID 45157041446) on exact gameplay/validator HEAD `7aff69fe38315c96ec3ad3514287cabc3f10ace5`.
+- [x] Pass canonical Godot runtime validation #490 (run ID 45157036497) on the same HEAD.
+- [x] Pass canonical Android APK build #1267 (run ID 45157041358); APK artifact `14808513067`, 35,973,093 bytes, SHA-256 `93f983c93382cd25bd507a083c09f7539cb589804477da53bbfeac1494b02629`, expires 7 December 2026.
+- [x] Pass Android export #559 (run ID 45157036493); APK artifact `14808234799`, 35,878,499 bytes, SHA-256 `d62c69db1aceaaf30783d66b5469b468f715dc779053281fc01169538707bd8e`, expires 7 December 2026.
+- [ ] Physical Android playtesting remains outstanding; automated Godot and APK export checks do not replace device touch, visual, frame-rate and thermal inspection.
