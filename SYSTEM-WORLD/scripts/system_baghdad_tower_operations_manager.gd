@@ -1074,8 +1074,8 @@ func get_customer_schedule_phase(hour: int) -> String:
 	return "quiet"
 
 
-func _move_customer_visitors() -> void:
-	var hour := int(Time.get_datetime_dict_from_system().get("hour", 12))
+func _move_customer_visitors(hour_override: int = -1) -> void:
+	var hour := hour_override if hour_override >= 0 else int(Time.get_datetime_dict_from_system().get("hour", 12))
 	var phase := get_customer_schedule_phase(hour)
 	var society_changed := false
 	for tower_id_value in customer_ids_by_tower.keys():
@@ -1147,7 +1147,9 @@ func _move_customer_visitors() -> void:
 						break
 				var previous_tween: Variant = visitor_node.get_meta("system_customer_move_tween", null)
 				if previous_tween is Tween and (previous_tween as Tween).is_running():
-					continue
+					if previous_phase == phase:
+						continue
+					(previous_tween as Tween).kill()
 				if visitor_node.position.distance_to(target) <= 0.35:
 					if is_instance_valid(model):
 						model.call("set_activity", "socialize" if action in ["socializing", "evening_leisure"] else "idle")
