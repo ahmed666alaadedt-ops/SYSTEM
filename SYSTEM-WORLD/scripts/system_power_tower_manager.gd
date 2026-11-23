@@ -37,6 +37,7 @@ var total_xp_earned := 0
 var total_credits_earned := 0
 var processed_result_ids: Dictionary = {}
 var spectator_save_path := "user://system_power_tower_spectator_predictions.cfg"
+var duel_save_path := "user://system_power_tower_duels.cfg"
 var spectator_matches: Dictionary = {}
 var spectator_prediction_points: Dictionary = {}
 var spectator_daily_counts: Dictionary = {}
@@ -371,14 +372,14 @@ func _save_duel_records() -> void:
 	config.set_value("duels", "total_losses", total_duels_lost)
 	config.set_value("duels", "consecutive_losses", consecutive_duel_losses)
 	config.set_value("duels", "disqualified", duel_disqualified)
-	var error := config.save("user://system_power_tower_duels.cfg")
+	var error := config.save(duel_save_path)
 	if error != OK:
 		push_warning("SYSTEM: Power Tower duel records could not be saved.")
 
 
 func _load_duel_records() -> void:
 	var config := ConfigFile.new()
-	if config.load("user://system_power_tower_duels.cfg") != OK:
+	if config.load(duel_save_path) != OK:
 		return
 	var saved_matches: Variant = config.get_value("duels", "matches", {})
 	var saved_fighters: Variant = config.get_value("duels", "registered_fighters", {})
