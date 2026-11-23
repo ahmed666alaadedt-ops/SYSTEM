@@ -1459,7 +1459,54 @@ func _create_power_tower_battle_screens() -> void:
 	outside.set_meta("system_display_location", "OUTSIDE_TOWER")
 	var inside := _create_power_tower_display(lobby, "PowerTowerBattleDisplay_Inside", Vector3(0.0, 5.8, -10.0), Vector2(18.0, 8.4), PI, schedule, 15, 0.010)
 	inside.set_meta("system_display_location", "INSIDE_LOBBY")
+	_ensure_power_tower_public_live_label(outside)
+	_ensure_power_tower_public_live_label(inside)
 	_create_power_tower_ticket_terminal(lobby)
+
+
+func _ensure_power_tower_public_live_label(display_root: Node3D) -> Label3D:
+	if display_root == null:
+		return null
+	var live_label := display_root.get_node_or_null("PublicLiveMatchBroadcast") as Label3D
+	if live_label == null:
+		live_label = Label3D.new()
+		live_label.name = "PublicLiveMatchBroadcast"
+		live_label.position = Vector3(0.0, -3.15, -0.30)
+		live_label.font_size = 19
+		live_label.pixel_size = 0.012
+		live_label.modulate = Color(1.0, 0.78, 0.38)
+		live_label.outline_size = 5
+		live_label.outline_modulate = Color(0.01, 0.025, 0.04, 1.0)
+		live_label.text = "LIVE ARENA FEED\nبانتظار مواجهة معتمدة — جميع النزالات فردية 1v1"
+		live_label.set_meta("system_power_tower_live_broadcast", true)
+		display_root.add_child(live_label)
+	return live_label
+
+
+func _update_power_tower_public_live_broadcast(floor_number: int, duel_data: Dictionary, completed: bool) -> void:
+	var tower := tower_nodes.get("power_tower_baghdad") as Node3D
+	if tower == null:
+		return
+	var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D
+	var outside := tower.get_node_or_null("PowerTowerBattleDisplay_Outside") as Node3D
+	var inside := lobby.get_node_or_null("PowerTowerBattleDisplay_Inside") as Node3D if lobby != null else null
+	var fighter_a := str(duel_data.get("fighter_a_id", "مقاتل A"))
+	var fighter_b := str(duel_data.get("fighter_b_id", "مقاتل B"))
+	var score: Dictionary = duel_data.get("score", {})
+	var score_a := int(score.get(fighter_a, 0))
+	var score_b := int(score.get(fighter_b, 0))
+	var state_text := "انتهى النزال" if completed else "مباشر الآن"
+	var result_line := "\nالفائز: " + str(duel_data.get("winner_id", "")) if completed else "\nالبث يتابع نتيجة الحكام لحظة بلحظة"
+	var broadcast_text := "LIVE POWER TOWER — %s\nالطابق %d | %s\n%s  %d  —  %d  %s%s\nمواجهة فردية 1 ضد 1" % [state_text, floor_number, str(duel_data.get("match_id", "")), fighter_a, score_a, score_b, fighter_b, result_line]
+	for display in [outside, inside]:
+		if display == null:
+			continue
+		var live_label := _ensure_power_tower_public_live_label(display)
+		if live_label != null:
+			live_label.text = broadcast_text
+			live_label.set_meta("system_live_floor", floor_number)
+			live_label.set_meta("system_live_match_id", str(duel_data.get("match_id", "")))
+			live_label.set_meta("system_live_match_completed", completed)
 
 
 func _refresh_power_tower_progress_board() -> void:
@@ -2737,6 +2784,7 @@ func update_power_tower_live_match_display(floor_number: int, duel_data: Diction
 	score_label.set_meta("system_match_id", str(duel_data.get("match_id", "")))
 	score_label.set_meta("system_live_score", score.duplicate(true))
 	score_label.set_meta("system_match_completed", completed)
+	_update_power_tower_public_live_broadcast(floor_number, duel_data, completed)
 
 
 func _create_power_tower_referee_stations(room: Node3D, arena_radius: float, accent_color: Color) -> void:
