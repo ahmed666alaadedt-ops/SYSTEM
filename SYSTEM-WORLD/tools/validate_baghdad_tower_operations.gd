@@ -1483,6 +1483,18 @@ func _run() -> void:
 	if audience_reaction == null or not audience_reaction.text.contains("sovereign_challenger"):
 		_fail("Power Tower spectator gallery did not react to the verified individual duel winner.")
 		return
+	var test_spectator_seat := spectator_gallery.get_node("SpectatorSeat_00") as Node3D
+	var test_seat_interaction := test_spectator_seat.get_node("SpectatorSeatInteraction") as Area3D
+	player.set_meta("system_player_id", "validator_spectator")
+	operations.call("interact_power_tower_spectator_seat", test_seat_interaction)
+	if not bool(test_spectator_seat.get_meta("system_spectator_seat_reserved", false)) or str(test_spectator_seat.get_meta("system_spectator_seat_owner", "")) != "validator_spectator" or not bool(player.get_meta("system_power_tower_seated", false)) or str(player.get_meta("system_power_tower_seat_id", "")) != "PT_000":
+		_fail("Power Tower spectator seat reservation did not seat and lock the local player.")
+		return
+	operations.call("interact_power_tower_spectator_seat", test_seat_interaction)
+	if bool(test_spectator_seat.get_meta("system_spectator_seat_reserved", true)) or bool(player.get_meta("system_power_tower_seated", true)) or test_spectator_seat.has_meta("system_spectator_seat_owner"):
+		_fail("Power Tower spectator seat could not be released by its owner.")
+		return
+	player.remove_meta("system_player_id")
 	if floor_200_live_score == null or not floor_200_live_score.text.contains("10") or not floor_200_live_score.text.contains("انتهى النزال") or not floor_200_live_score.text.contains("sovereign_challenger"):
 		_fail("Power Tower live score screen did not update with the verified match result.")
 		return
