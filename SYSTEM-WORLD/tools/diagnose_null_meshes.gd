@@ -135,4 +135,7 @@ func _run_diagnostic() -> void:
 				print("SYSTEM POST-SWITCH NULL MESH: world=", world_id, " path=", invalid_path)
 			for invalid_path in post_switch_invalid_multimeshes.slice(0, 40):
 				print("SYSTEM POST-SWITCH INVALID MULTIMESH: world=", world_id, " path=", invalid_path)
-	quit(1 if not null_mesh_paths.is_empty() or not null_multimesh_paths.is_empty() else 0)
+	var diagnostic_exit_code := 1 if not null_mesh_paths.is_empty() or not null_multimesh_paths.is_empty() else 0
+	scene.queue_free()
+	await process_frame
+	quit(diagnostic_exit_code)
