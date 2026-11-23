@@ -1225,3 +1225,18 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Pass canonical Android APK build #1267 (run ID 45157041358); APK artifact `14808513067`, 35,973,093 bytes, SHA-256 `93f983c93382cd25bd507a083c09f7539cb589804477da53bbfeac1494b02629`, expires 7 December 2026.
 - [x] Pass Android export #559 (run ID 45157036493); APK artifact `14808234799`, 35,878,499 bytes, SHA-256 `d62c69db1aceaaf30783d66b5469b468f715dc779053281fc01169538707bd8e`, expires 7 December 2026.
 - [ ] Physical Android playtesting remains outstanding; automated Godot and APK export checks do not replace device touch, visual, frame-rate and thermal inspection.
+
+### Baghdad pool guest services and safety interactions — 23 November 2026
+
+- [x] Add dedicated player interaction zones for personal locker assignment in both pool changing suites.
+- [x] Add dedicated shower service interaction zones so guests can record pool preparation before/after swimming.
+- [x] Add an interactive lifeguard station for requesting pool assistance.
+- [x] Route pool service interactions through the main interaction handler to the Baghdad tower operations manager.
+- [x] Attach tower/floor routing metadata to each pool service target and expose clear Arabic interaction prompts.
+- [x] Add service actions for locker reservation, shower preparation, and lifeguard assistance requests.
+- [x] Extend `validate_baghdad_tower_operations.gd` to verify the three interaction areas, prompts, tower/floor routing, and each service action's player state.
+- [x] Pass full Godot 4.3 validation #1534 (run ID 45158202151) on branch HEAD `4b59264a4e5d5aad5f52153a2f23be66c437e54d`.
+- [x] Pass canonical Godot runtime validation #495 (run ID 45158192206) on the same HEAD.
+- [x] Pass canonical Android APK build #1271 (run ID 45158202685); APK artifact `14809451838`, 35,975,852 bytes, expires 7 December 2026.
+- [x] Pass Android export #564 (run ID 45158192235) on the same HEAD.
+- [ ] Physical Android playtesting remains outstanding; automated validation/export does not verify device touch response, visual layout, frame rate, or thermal behavior.
