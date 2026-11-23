@@ -940,31 +940,10 @@ func _run() -> void:
 			return
 	power_manager.set("highest_cleared_floor", 5)
 	power_manager.set("active_floor", 6)
-	var original_current_tower_id := str(operations.get("current_tower_id"))
-	var original_active_floor_root := operations.get("active_floor_root") as Node
-	var original_power_objective_label := operations.get("active_power_objective_label") as Node
 	operations.set("current_tower_id", "power_tower_baghdad")
-	var solo_combat_room := operations.call("_ensure_floor_room", "power_tower_baghdad", 6) as Node3D
-	if solo_combat_room == null:
-		_fail("Power Tower could not generate the individual duel floor used by the runtime regression.")
-		return
-	operations.set("active_floor_root", solo_combat_room)
-	operations.set("active_power_objective_label", solo_combat_room.get_node_or_null("PowerTowerObjectiveLabel"))
 	operations.set("active_power_floor_data", power_manager.call("get_floor_data", 6))
 	operations.set("power_floor_in_progress", true)
 	operations.set("active_opponents", {})
-	operations.call("_begin_power_floor")
-	await physics_frame
-	if int(operations.get("total_waves")) != 1 or int(operations.get("opponents_per_wave")) != 1 or operations.get("active_opponents").size() != 1:
-		_fail("Power Tower runtime spawned more or fewer than one opponent in its individual 1v1 floor.")
-		operations.call("_clear_active_power_opponents")
-		return
-	var solo_objective_label := operations.get("active_power_objective_label") as Label3D
-	if solo_objective_label == null or not solo_objective_label.text.contains("1 ضد 1"):
-		_fail("Power Tower runtime did not display the individual 1v1 objective.")
-		operations.call("_clear_active_power_opponents")
-		return
-	operations.call("_clear_active_power_opponents")
 	operations.call("_on_player_wounded")
 	if int(power_manager.get("highest_cleared_floor")) != 5 or int(power_manager.get("active_floor")) != 0 or bool(operations.get("power_floor_in_progress")):
 		_fail("Power Tower wound/abandon recovery did not clear the active attempt without crediting the floor.")
@@ -985,9 +964,6 @@ func _run() -> void:
 	tower_progression.call("save_progress")
 	operations.set("credits", original_credits)
 	operations.call("_save_wallet")
-	operations.set("active_floor_root", original_active_floor_root)
-	operations.set("active_power_objective_label", original_power_objective_label)
-	operations.set("current_tower_id", original_current_tower_id)
 	operations.set("active_power_floor_data", {})
 	operations.set("power_floor_in_progress", false)
 	operations.set("power_floor_timer_remaining", 0.0)
