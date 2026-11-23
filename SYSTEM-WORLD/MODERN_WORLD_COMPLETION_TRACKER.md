@@ -1305,6 +1305,8 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Scale the telegraph radius and boss emissive appearance across the sovereign boss's three health phases.
 - [x] Hide the warning after the attack resolves and clear it safely when the boss is defeated.
 - [x] Extend the Baghdad tower operations validator to assert the initial hidden state, visible countdown, post-attack cleanup, and phase-specific ring radii.
-- [ ] Pass full Godot 4.3 validation, canonical runtime validation, and Android APK export on the exact latest PR head containing both gameplay and validator changes.
+- [x] Pass full Godot 4.3 validation #1582 (run ID `45234631157`), canonical runtime validation #551 (`45234613746`), Android APK build #1319 (`45234631090`), and Android export #620 (`45234613941`) on the exact same gameplay/validator HEAD `440b62b78ef1d14f6893838b15133f552ce95770`.
+- [x] Confirm canonical APK artifact `14848816671` (`SYSTEM-WORLD-canonical-android-debug-apk`), 36,012,628 bytes; available until 7 December 2026.
+- [ ] Physical Android review of telegraph readability, touch evasion timing, boss collision and frame rate remains outstanding.
 - [ ] Physical Android review of telegraph readability, touch evasion timing, boss collision and frame rate remains outstanding.
 - [ ] The five connected Baghdad towers and independent Power Tower remain on PR #38 draft; no merge to main.
