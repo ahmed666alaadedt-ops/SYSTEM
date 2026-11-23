@@ -21,6 +21,7 @@ var elite_duels_won := 0
 var boss_duels_won := 0
 var total_xp_earned := 0
 var total_credits_earned := 0
+var processed_result_ids: Dictionary = {}
 var spectator_save_path := "user://system_power_tower_spectator_predictions.cfg"
 var spectator_matches: Dictionary = {}
 var spectator_prediction_points: Dictionary = {}
@@ -46,8 +47,8 @@ func get_floor_data(floor_number: int) -> Dictionary:
 	var arena_theme_name := str(FLOOR_THEME_NAMES[theme_index])
 	var arena_type := "BOSS_TRIAL" if boss_floor else ("ELITE_DUEL" if elite_floor else "DUEL")
 	var objective_type := "DEFEAT_BOSS" if boss_floor else "DEFEAT_OPPONENT"
-	var arena_name := "SYSTEM SOVEREIGN — FINAL DUEL" if final_boss else ("BOSS DUEL ARENA" if boss_floor else ("ELITE DUEL ARENA" if elite_floor else "1 VS 1 DUEL ARENA"))
-	var arena_rules := "المواجهة النهائية الفردية: لاعب واحد ضد حارس برج القوة الأخير" if final_boss else ("مواجهة فردية ضد زعيم الطابق — مقاتل واحد ضد خصم واحد" if boss_floor else ("مواجهة نخبة فردية — 1 ضد 1" if elite_floor else "مواجهة فردية 1 ضد 1 — لا فرق ولا خصوم متعددون"))
+	var arena_name := "SOVEREIGN TITLE DUEL" if final_boss else ("TITLE HOLDER DUEL ARENA" if boss_floor else ("ELITE PLAYER DUEL ARENA" if elite_floor else "PLAYER 1 VS 1 DUEL ARENA"))
+	var arena_rules := "مواجهة السيادة النهائية: لاعب بشري ضد حامل اللقب البشري — 1 ضد 1" if final_boss else ("مواجهة فردية ضد حامل لقب الطابق — لاعبان بشريان فقط" if boss_floor else ("مواجهة نخبة فردية بين لاعبين بشريين — 1 ضد 1" if elite_floor else "مواجهة فردية بين لاعبين بشريين 1 ضد 1 — لا فرق ولا خصوم آليين"))
 	return {
 		"floor": floor_number,
 		"difficulty": difficulty,
@@ -60,7 +61,10 @@ func get_floor_data(floor_number: int) -> Dictionary:
 		"reward_xp": reward_xp,
 		"reward_credits": reward_credits,
 		"rank": _rank_for_floor(floor_number),
-		"challenge_type": "FINAL_BOSS" if final_boss else ("BOSS" if boss_floor else ("ELITE_DUEL" if elite_floor else "SINGLE_DUEL")),
+		"challenge_type": "FINAL_TITLE_DUEL" if final_boss else ("TITLE_HOLDER_DUEL" if boss_floor else ("ELITE_PLAYER_DUEL" if elite_floor else "SINGLE_PLAYER_DUEL")),
+		"opponent_kind": "HUMAN_PLAYER",
+		"ai_fallback": false,
+		"matchmaking_mode": "ONLINE_1V1",
 		"arena_type": arena_type,
 		"arena_theme_index": theme_index,
 		"arena_theme_id": arena_theme_id,
@@ -95,12 +99,20 @@ func request_floor(floor_number: int, player_level: int) -> Dictionary:
 	return {"success": true, "floor_data": data}
 
 ## يستدعيها نظام القتال بعد التأكد من فوز اللاعب في المواجهة الفردية.
-func confirm_floor_clear(floor_number: int, clear_time_seconds: float) -> Dictionary:
+func confirm_floor_clear(floor_number: int, clear_time_seconds: float, server_verified: bool = false, result_id: String = "") -> Dictionary:
 	if active_floor != floor_number or floor_number <= 0:
 		return {"success": false, "reason": "FLOOR_NOT_ACTIVE"}
+	if not server_verified:
+		return {"success": false, "reason": "SERVER_VERIFICATION_REQUIRED"}
+	result_id = result_id.strip_edges()
+	if result_id.is_empty():
+		return {"success": false, "reason": "INVALID_RESULT_ID"}
+	if processed_result_ids.has(result_id):
+		return {"success": false, "reason": "DUPLICATE_RESULT"}
 	if clear_time_seconds <= 0.0:
 		return {"success": false, "reason": "INVALID_CLEAR_TIME"}
 	var data := get_floor_data(floor_number)
+	processed_result_ids[result_id] = true
 	highest_cleared_floor = maxi(highest_cleared_floor, floor_number)
 	floor_clear_times[str(floor_number)] = clear_time_seconds
 	total_duels_won += 1
@@ -128,7 +140,8 @@ func confirm_floor_clear(floor_number: int, clear_time_seconds: float) -> Dictio
 		"elite_duels_won": elite_duels_won,
 		"boss_duels_won": boss_duels_won,
 		"total_xp_earned": total_xp_earned,
-		"total_credits_earned": total_credits_earned
+		"total_credits_earned": total_credits_earned,
+		"processed_result_count": processed_result_ids.size()
 	}
 
 func abandon_active_floor() -> void:
@@ -328,6 +341,7 @@ func _save_progress() -> void:
 	config.set_value("tower", "boss_duels_won", boss_duels_won)
 	config.set_value("tower", "total_xp_earned", total_xp_earned)
 	config.set_value("tower", "total_credits_earned", total_credits_earned)
+	config.set_value("tower", "processed_result_ids", processed_result_ids)
 	var error := config.save(SAVE_PATH)
 	if error != OK:
 		push_warning("SYSTEM: Power Tower progress could not be saved.")
@@ -344,3 +358,5 @@ func _load_progress() -> void:
 	boss_duels_won = maxi(0, int(config.get_value("tower", "boss_duels_won", 0)))
 	total_xp_earned = maxi(0, int(config.get_value("tower", "total_xp_earned", 0)))
 	total_credits_earned = maxi(0, int(config.get_value("tower", "total_credits_earned", 0)))
+	var saved_result_ids: Dictionary = config.get_value("tower", "processed_result_ids", {})
+	processed_result_ids = saved_result_ids.duplicate(true)
