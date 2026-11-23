@@ -1798,9 +1798,9 @@ func _run() -> void:
 	for elevator_child in staff_elevator_car.get_children():
 		if str(elevator_child.name).begins_with("TowerCustomer_") and bool(elevator_child.get_meta("system_customer_in_elevator", false)) and int(elevator_child.get_meta("system_customer_elevator_target_floor", 0)) == 29:
 			customer_elevator_passengers += 1
-		if customer_elevator_passengers != 2:
-			_fail("Two persistent Shopping Tower customers did not physically board the elevator with the player.")
-			return
+	if customer_elevator_passengers != 2:
+		_fail("Two persistent Shopping Tower customers did not physically board the elevator with the player.")
+		return
 	print("QA TRACE: two customer NPCs boarded the physical elevator; waiting for floor 29 arrival.")
 	await create_timer(3.8).timeout
 	print("QA TRACE: floor 29 elevator wait completed.")
