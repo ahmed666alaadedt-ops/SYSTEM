@@ -5268,7 +5268,7 @@ func open_restaurant_table(table_node: Node) -> void:
 					content.add_child(rating_button)
 		status_label.text = "اختر أطباقك ومشروباتك. تُخصم القيمة عند إرسال الطلب إلى المطبخ."
 		var draft: Array = restaurant_draft_items.get(current_restaurant_table_id, [])
-		var player_seated_at_table := is_instance_valid(player) and str(player.get_meta("system_restaurant_seated_table_id", "")) == current_restaurant_table_id
+		var player_seated_at_table := is_instance_valid(player) and bool(player.get_meta("system_restaurant_seated", false)) and str(player.get_meta("system_restaurant_seated_table_id", "")) == current_restaurant_table_id
 		for product_value in PRODUCT_CATALOG["shopping_tower_baghdad"]:
 			var product: Dictionary = product_value
 			var item_id := str(product.get("id", ""))
@@ -5472,7 +5472,7 @@ func _add_restaurant_draft_item(table_id: String, item_id: String, item_name: St
 func _place_restaurant_order(table_id: String) -> void:
 	if table_id.is_empty() or restaurant_orders.has(table_id):
 		return
-	if not is_instance_valid(player) or str(player.get_meta("system_restaurant_seated_table_id", "")) != table_id:
+	if not is_instance_valid(player) or not bool(player.get_meta("system_restaurant_seated", false)) or str(player.get_meta("system_restaurant_seated_table_id", "")) != table_id:
 		_set_status("اجلس على مقعد الطاولة أولاً قبل إرسال طلبك.")
 		return
 	var draft: Array = restaurant_draft_items.get(table_id, [])
