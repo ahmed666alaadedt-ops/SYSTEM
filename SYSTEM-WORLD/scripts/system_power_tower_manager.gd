@@ -27,6 +27,8 @@ var total_duels_lost := 0
 var consecutive_duel_losses := 0
 var duel_disqualified := false
 var duel_matches: Dictionary = {}
+var registered_fighters: Dictionary = {}
+var next_fighter_number := 1001
 var elite_duels_won := 0
 var boss_duels_won := 0
 var total_xp_earned := 0
@@ -170,7 +172,29 @@ func confirm_floor_clear(floor_number: int, clear_time_seconds: float, server_ve
 		"processed_result_count": processed_result_ids.size()
 	}
 
+func register_tower_fighter(fighter_id: String) -> Dictionary:
+	fighter_id = fighter_id.strip_edges()
+	if fighter_id.is_empty():
+		return {"success": false, "reason": "INVALID_FIGHTER_ID"}
+	if registered_fighters.has(fighter_id):
+		return {"success": true, "fighter_id": fighter_id, "fighter_number": int(registered_fighters[fighter_id].get("fighter_number", 0)), "already_registered": true}
+	var fighter_number := next_fighter_number
+	next_fighter_number += 1
+	registered_fighters[fighter_id] = {
+		"fighter_id": fighter_id,
+		"fighter_number": fighter_number,
+		"registered_at_unix": int(Time.get_unix_time_from_system()),
+		"status": "ACTIVE",
+		"division": 1
+	}
+	_save_duel_records()
+	return {"success": true, "fighter_id": fighter_id, "fighter_number": fighter_number, "already_registered": false}
+
+
 func register_judged_duel(match_id: String, fighter_a_id: String, fighter_b_id: String, floor_number: int, local_player_id: String = "PLAYER") -> Dictionary:
+	local_player_id = local_player_id.strip_edges()
+	if local_player_id.is_empty():
+		return {"success": false, "reason": "LOCAL_PLAYER_ID_REQUIRED"}
 	match_id = match_id.strip_edges()
 	fighter_a_id = fighter_a_id.strip_edges()
 	fighter_b_id = fighter_b_id.strip_edges()
@@ -292,6 +316,7 @@ func _record_duel_career_result(winner_id: String, loser_id: String, floor_numbe
 	if player_won:
 		consecutive_duel_losses = 0
 		total_duels_won += 1
+		_save_progress()
 	elif is_local_player:
 		total_duels_lost += 1
 		consecutive_duel_losses += 1
@@ -335,6 +360,8 @@ func get_duel_career_status() -> Dictionary:
 func _save_duel_records() -> void:
 	var config := ConfigFile.new()
 	config.set_value("duels", "matches", duel_matches)
+	config.set_value("duels", "registered_fighters", registered_fighters)
+	config.set_value("duels", "next_fighter_number", next_fighter_number)
 	config.set_value("duels", "total_losses", total_duels_lost)
 	config.set_value("duels", "consecutive_losses", consecutive_duel_losses)
 	config.set_value("duels", "disqualified", duel_disqualified)
@@ -348,6 +375,9 @@ func _load_duel_records() -> void:
 	if config.load("user://system_power_tower_duels.cfg") != OK:
 		return
 	var saved_matches: Variant = config.get_value("duels", "matches", {})
+	var saved_fighters: Variant = config.get_value("duels", "registered_fighters", {})
+	registered_fighters = saved_fighters.duplicate(true) if saved_fighters is Dictionary else {}
+	next_fighter_number = maxi(1001, int(config.get_value("duels", "next_fighter_number", 1001)))
 	var saved_total_losses := int(config.get_value("duels", "total_losses", 0))
 	var saved_consecutive_losses := int(config.get_value("duels", "consecutive_losses", 0))
 	duel_matches = saved_matches.duplicate(true) if saved_matches is Dictionary else {}
