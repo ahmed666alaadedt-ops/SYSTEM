@@ -879,6 +879,7 @@ func _run() -> void:
 		return
 	var judge_test_manager := power_tower_test_script.new() as Node
 	judge_test_manager.set("duel_save_path", "user://validator_power_tower_duels.cfg")
+	judge_test_manager.set("spectator_save_path", "user://validator_power_tower_spectator_predictions.cfg")
 	root.add_child(judge_test_manager)
 	judge_test_manager.call("set_spectator_wallet_provider", operations)
 	await process_frame
@@ -921,6 +922,7 @@ func _run() -> void:
 	judge_test_manager.queue_free()
 	var loss_test_manager := power_tower_test_script.new() as Node
 	loss_test_manager.set("duel_save_path", "user://validator_power_tower_duels.cfg")
+	loss_test_manager.set("spectator_save_path", "user://validator_power_tower_spectator_predictions.cfg")
 	root.add_child(loss_test_manager)
 	await process_frame
 	loss_test_manager.set("highest_cleared_floor", 75)
@@ -949,6 +951,7 @@ func _run() -> void:
 	loss_test_manager.queue_free()
 	var disqualification_test_manager := power_tower_test_script.new() as Node
 	disqualification_test_manager.set("duel_save_path", "user://validator_power_tower_duels.cfg")
+	disqualification_test_manager.set("spectator_save_path", "user://validator_power_tower_spectator_predictions.cfg")
 	root.add_child(disqualification_test_manager)
 	await process_frame
 	disqualification_test_manager.set("highest_cleared_floor", 120)
