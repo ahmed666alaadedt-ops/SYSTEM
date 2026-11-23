@@ -191,7 +191,7 @@ func register_spectator_match(match_id: String, fighter_a_id: String, fighter_b_
 	if floor_number < 1 or floor_number > MAX_FLOORS:
 		return {"success": false, "reason": "INVALID_FLOOR"}
 	var floor_data := get_floor_data(floor_number)
-	if str(floor_data.get("competition_format", "")) != "INDIVIDUAL_1V1" or int(floor_data.get("opponent_count", 0)) != 1 or int(floor_data.get("wave_count", 0)) != 1:
+	if str(floor_data.get("competition_format", "")) != "INDIVIDUAL_1V1" or int(floor_data.get("opponent_count", 0)) != 1 or int(floor_data.get("wave_count", 0)) != 1 or str(floor_data.get("opponent_kind", "")) != "HUMAN_PLAYER" or bool(floor_data.get("ai_fallback", true)) or str(floor_data.get("matchmaking_mode", "")) != "ONLINE_1V1":
 		return {"success": false, "reason": "INDIVIDUAL_1V1_REQUIRED"}
 	if spectator_matches.has(match_id):
 		return {"success": false, "reason": "MATCH_ALREADY_REGISTERED"}
