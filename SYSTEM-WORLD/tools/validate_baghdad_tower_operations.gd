@@ -1827,7 +1827,8 @@ func _run() -> void:
 		_fail("The pool supervisor did not reach an active lifeguard workstation beside the pool safety station.")
 		return
 	var expected_pool_duty_position := Vector3(3.2, 0.0, -17.0)
-	if not (pool_supervisor.get_meta("system_staff_workstation_position", Vector3.ZERO) as Vector3).is_equal_approx(expected_pool_duty_position):
+	var actual_pool_duty_position: Vector3 = pool_supervisor.get_meta("system_staff_workstation_position", Vector3.ZERO)
+	if not actual_pool_duty_position.is_equal_approx(expected_pool_duty_position):
 		_fail("The pool supervisor workstation is not positioned beside the lifeguard station.")
 		return
 	operations.call("_return_floor_duty_staff_to_lobbies")
