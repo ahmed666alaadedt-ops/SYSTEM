@@ -1470,3 +1470,10 @@ This section supersedes the earlier point-only fan prediction wording above. The
 - [x] Added regression coverage for 48 seats, actor count/arm pivots, watching/cheering/celebration states, seat owner protection, manual release and transition cleanup.
 - [ ] Remote spectator synchronization, persistent online seat reservations, voice/chat and server-authoritative online ticket settlement remain outside this local in-engine implementation.
 - [ ] Full Godot validation and canonical Android export must pass on the exact final feature branch HEAD before merge consideration; physical Android touch/visual/performance inspection remains outstanding.
+
+
+### Power Tower arena fan-prediction access and seat availability — 24 November 2026
+- [x] Added a physical interactable fan-prediction board to every generated spectator gallery, routed to the existing official virtual-ticket terminal and 1v1 match pool.
+- [x] Added a live 48-seat availability display that updates on reserve, owner release and automatic floor/lobby cleanup.
+- [x] Added QA assertions for the arena prediction-board interaction and 48/48 ↔ 47/48 seat count refresh.
+- [ ] Exact-HEAD Godot validation and canonical Android export remain pending; remote online spectators and server-authoritative economy remain out of scope for the local prototype.
