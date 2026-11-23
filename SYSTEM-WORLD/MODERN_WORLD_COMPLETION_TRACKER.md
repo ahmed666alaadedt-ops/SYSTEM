@@ -1,3 +1,10 @@
+
+## Validation runtime diagnosis — 24 November 2026
+
+- [x] Confirmed the canonical Android debug APK export on commit `92f3f47b02845de66777b8cd192ea8b1f230ac89` succeeded; artifact `14867240819` is available through 7 December 2026.
+- [x] Confirmed the main-scene mesh diagnostic reported `mesh_instances=5945`, `null_mesh_instances=0`, `multimesh_instances=137`, and `invalid_multimeshes=0`; the repeated dummy-renderer `Parameter \"m\" is null` messages occur during the separate transient child-character QA scene and are not evidence of missing meshes in the canonical runtime scene.
+- [ ] The extended operations validation was cancelled at its 20-minute job timeout before reaching its later Power Tower arena and restaurant checks. Added trace checkpoints around sovereign boss phase frames, reward settlement, and Shopping Tower floor generation; increased this validation job's timeout to 45 minutes so the next run can identify and complete the slow section.
+- [ ] Do not mark the extended validation passed until its complete workflow succeeds.
 ## Power Tower — safe spectator prediction lifecycle prototype — 23 November 2026
 
 - [x] Added local match registration for exactly two distinct fighters and stable match IDs.
