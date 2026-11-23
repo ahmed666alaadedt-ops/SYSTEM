@@ -3,7 +3,7 @@ class_name SystemVehicleDealershipUI
 
 const CatalogScript = preload("res://scripts/system_vehicle_catalog.gd")
 
-var garage_manager: SystemPlayerVehicleManager
+var garage_manager: Variant
 var runtime_manager
 var root_panel: PanelContainer
 var balance_label: Label
@@ -17,7 +17,7 @@ var preview_body_material: StandardMaterial3D
 var preview_cabin_material: StandardMaterial3D
 var preview_status: Label
 
-func setup(garage: SystemPlayerVehicleManager, runtime) -> void:
+func setup(garage: Variant, runtime) -> void:
 	garage_manager = garage
 	runtime_manager = runtime
 	_build_interface()
