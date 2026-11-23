@@ -23,9 +23,15 @@ var hair_material: StandardMaterial3D
 var hair_style := "short"
 
 func _ready() -> void:
-	_build_rigged_body()
+	_ensure_rig_initialized()
+
+
+func _ensure_rig_initialized() -> void:
+	if not is_instance_valid(skeleton):
+		_build_rigged_body()
 
 func configure(profile: Dictionary, palette_index: int = 0) -> void:
+	_ensure_rig_initialized()
 	name = "NPCVisual_" + str(profile.get("name", "Resident")).replace(" ", "_")
 	activity = str(profile.get("state", "rest"))
 	set_activity(activity)
@@ -37,6 +43,7 @@ func configure(profile: Dictionary, palette_index: int = 0) -> void:
 	set_hair_style(str(profile.get("hair_style", "short")))
 
 func set_hair_color(color_id: String) -> void:
+	_ensure_rig_initialized()
 	var color := _hair_color_from_id(color_id)
 	hair_material = _material(color)
 	if attachments.has("head"):
@@ -65,6 +72,7 @@ func _hair_color_from_id(color_id: String) -> Color:
 		_: return Color8(28, 22, 20)
 
 func set_hair_style(style_id: String) -> void:
+	_ensure_rig_initialized()
 	var style := style_id.to_lower().strip_edges().replace("-", "_").replace(" ", "_")
 	match style:
 		"fade", "low_fade", "mid_fade", "high_fade", "taper_fade", "undercut", "محلوق_الجوانب": hair_style = "undercut"
@@ -185,6 +193,8 @@ func _set_bone_rotation(bone_name: String, angle: float) -> void:
 	skeleton.set_bone_pose_rotation(index, Quaternion(Vector3.RIGHT, angle))
 
 func _build_rigged_body() -> void:
+	if is_instance_valid(skeleton):
+		return
 	body_root = Node3D.new()
 	body_root.name = "BodyRoot"
 	add_child(body_root)
@@ -266,6 +276,8 @@ func _create_body_parts() -> void:
 	_add_box("right_foot", "RightBoot", Vector3(0, -0.015, -0.07), Vector3(0.16, 0.12, 0.27), shoes)
 
 func _attachment_for_bone(bone_name: String) -> BoneAttachment3D:
+	if not is_instance_valid(skeleton):
+		_ensure_rig_initialized()
 	if attachments.has(bone_name):
 		return attachments[bone_name]
 	var attachment := BoneAttachment3D.new()
