@@ -2744,14 +2744,8 @@ func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) 
 	room.add_child(objective_label)
 	var obstacle_count := 2
 	match arena_type:
-		"TEAM":
-			obstacle_count = 6
-		"SURVIVAL":
-			obstacle_count = 8
-		"ELITE":
+		"ELITE_DUEL":
 			obstacle_count = 5
-		"CHAMPIONSHIP":
-			obstacle_count = 4
 		"BOSS_TRIAL":
 			obstacle_count = 8
 		_:
@@ -2768,8 +2762,8 @@ func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) 
 		var obstacle_size := Vector3(2.4, 3.2, 1.2)
 		if arena_type == "BOSS_TRIAL":
 			obstacle_size = Vector3(2.0, 5.0, 2.0)
-		elif arena_type == "SURVIVAL":
-			obstacle_size = Vector3(3.2, 2.0, 1.0)
+		elif arena_type == "ELITE_DUEL":
+			obstacle_size = Vector3(2.8, 3.8, 1.4)
 		obstacle_mesh.size = obstacle_size
 		obstacle.mesh = obstacle_mesh
 		obstacle.position = Vector3(cos(angle) * radius * 0.43, obstacle_size.y * 0.5, sin(angle) * radius * 0.43)
