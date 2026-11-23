@@ -805,6 +805,9 @@ func _return_one_tower_staff_to_lobby(employee: Node3D) -> void:
 	employee.remove_meta("system_staff_workstation_position")
 	employee.remove_meta("system_staff_workstation_active")
 	employee.remove_meta("system_staff_work_route")
+	employee.remove_meta("system_staff_assistance_requested")
+	employee.remove_meta("system_staff_assistance_target")
+	employee.remove_meta("system_staff_assistance_arrived")
 	if is_instance_valid(model):
 		model.call("set_activity", "idle")
 	_start_tower_staff_waypoint_patrol(employee, model, staff_index)
