@@ -1151,7 +1151,7 @@ func _place_customer_visitors_on_floor(tower_id: String, floor_number: int, room
 			var customer: Dictionary = society.call("get_npc", customer_id)
 			if not customer.is_empty():
 				customer["current_location"] = "%s_floor_%d" % [tower_id, floor_number]
-				customer["current_action"] = "dining" if tower_id == "shopping_tower_baghdad" and floor_number >= 29 else "visiting_" + floor_label
+				customer["current_action"] = ("waiting_for_restaurant_table" if visitor.has_meta("system_restaurant_queue_marker") else "dining") if tower_id == "shopping_tower_baghdad" and floor_number >= 29 else "visiting_" + floor_label
 				customer["last_tower_visit"] = Time.get_datetime_string_from_system()
 				society.npcs[customer_id] = customer
 	if is_instance_valid(society) and society.has_method("save_society"):
@@ -5233,6 +5233,11 @@ func _seat_customer_at_restaurant(visitor: Node3D, room: Node3D, queue_seed: int
 			var seat_marker := table_root.get_node_or_null("RestaurantSeat_%02d" % seat_index) as Node3D
 			if seat_marker == null or not str(seat_marker.get_meta("system_restaurant_seat_occupant", "")).is_empty():
 				continue
+			var old_queue_name := str(visitor.get_meta("system_restaurant_queue_marker", ""))
+			if not old_queue_name.is_empty():
+				var old_queue_marker := room.get_node_or_null(old_queue_name) as Node3D
+				if old_queue_marker != null:
+					old_queue_marker.set_meta("system_restaurant_queue_occupant", "")
 			seat_marker.set_meta("system_restaurant_seat_occupant", customer_id)
 			var occupants: Array = table_root.get_meta("system_restaurant_occupants", [])
 			if not occupants.has(customer_id):
@@ -5265,6 +5270,22 @@ func _seat_customer_at_restaurant(visitor: Node3D, room: Node3D, queue_seed: int
 	visitor.position = Vector3(-room.get_meta("system_tower_radius", 24.0) * 0.3, 0.0, room.get_meta("system_tower_radius", 24.0) * 0.45 + float(queue_seed) * 1.1)
 
 
+func _promote_restaurant_queue(room: Node3D) -> void:
+	if room == null:
+		return
+	for queue_index in range(8):
+		var queue_marker := room.get_node_or_null("RestaurantQueuePosition_%02d" % queue_index) as Node3D
+		if queue_marker == null:
+			continue
+		var customer_id := str(queue_marker.get_meta("system_restaurant_queue_occupant", ""))
+		if customer_id.is_empty():
+			continue
+		var visitor := room.get_node_or_null("TowerCustomer_" + customer_id) as Node3D
+		if visitor != null:
+			_seat_customer_at_restaurant(visitor, room, queue_index)
+			return
+
+
 func _release_restaurant_customer_seat(visitor: Node3D) -> void:
 	if visitor == null or not is_instance_valid(visitor):
 		return
@@ -5274,11 +5295,13 @@ func _release_restaurant_customer_seat(visitor: Node3D) -> void:
 	var customer_id := str(visitor.get_meta("system_tower_customer_id", visitor.name))
 	var table_name := str(visitor.get_meta("system_restaurant_table_node", ""))
 	var seat_name := str(visitor.get_meta("system_restaurant_seat_node", ""))
+	var released_seat := false
 	if not table_name.is_empty():
 		var table_root := room.get_node_or_null(table_name) as Node3D
 		var seat_marker := table_root.get_node_or_null(seat_name) as Node3D if table_root != null else null
 		if seat_marker != null and str(seat_marker.get_meta("system_restaurant_seat_occupant", "")) == customer_id:
 			seat_marker.set_meta("system_restaurant_seat_occupant", "")
+			released_seat = true
 		if table_root != null:
 			var occupants: Array = table_root.get_meta("system_restaurant_occupants", [])
 			occupants.erase(customer_id)
@@ -5292,6 +5315,8 @@ func _release_restaurant_customer_seat(visitor: Node3D) -> void:
 			queue_marker.set_meta("system_restaurant_queue_occupant", "")
 		visitor.remove_meta("system_restaurant_queue_marker")
 	visitor.remove_meta("system_restaurant_queue_overflow")
+	if released_seat:
+		_promote_restaurant_queue(room)
 
 
 func _create_workshop_station(room: Node3D, station_id: String, station_title: String, station_position: Vector3, staff_id: String, staff_role: String) -> void:
