@@ -165,8 +165,8 @@ Implementation status: a local prototype now records individual 1v1 matches, ded
 ## 15. Interactive spectator seating and crowd reactions — 23 November 2026
 
 - All 48 physical seats in each generated Power Tower arena now include a reachable interaction area, seat availability label and stable seat ID.
-- The local player can reserve an unoccupied seat, be positioned in it, and have movement locked while seated; interacting with the same seat releases it and restores movement.
+- The local player can reserve an unoccupied seat, be positioned in it, and have movement locked while seated; interacting with the same seat releases it and restores movement. Floor changes and return-to-lobby transitions also release the reservation and movement lock.
 - A seat reserved by another spectator cannot be claimed. Reservation ownership is stored on the seat instance and is local to the current running game session; persistent online seat reservations are not claimed.
 - The gallery now displays crowd-reaction messages when the score changes and celebrates the winner only after the match is marked completed. Reactions follow the existing individual 1v1 match feed and do not affect judging, score, matchmaking or virtual-credit pools.
-- Regression validation checks all 48 seats for collision, interaction and status elements, and checks the gallery reaction after a verified floor-200 duel result.
+- Regression validation checks all 48 seats for collision, interaction and status elements; verifies owner reservation, rejection of a second spectator, manual release and automatic release on floor/lobby transition; and checks the gallery reaction after a verified floor-200 duel result.
 - This is local in-engine interaction and crowd feedback. Persistent multiplayer seat occupancy, autonomous animated crowd actors and synchronized remote spectators remain separate future work.
