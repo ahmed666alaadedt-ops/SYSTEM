@@ -76,7 +76,7 @@ var player_character_creator: CanvasLayer
 var system_companion_manager: Node3D
 var camera: Camera3D
 var spring_arm: SpringArm3D
-var mobile_controls: MobileControls
+var mobile_controls: Node
 
 var interaction_prompt_layer: CanvasLayer
 var interaction_prompt_label: Label
