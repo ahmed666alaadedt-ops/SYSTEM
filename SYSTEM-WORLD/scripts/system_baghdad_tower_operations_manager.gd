@@ -2882,6 +2882,28 @@ func update_power_tower_live_match_display(floor_number: int, duel_data: Diction
 	score_label.set_meta("system_match_id", str(duel_data.get("match_id", "")))
 	score_label.set_meta("system_live_score", score.duplicate(true))
 	score_label.set_meta("system_match_completed", completed)
+	var gallery := room.get_node_or_null("PowerTowerSpectatorGallery") as Node3D
+	if gallery != null:
+		var crowd_reaction := gallery.get_node_or_null("PowerTowerAudienceReaction") as Label3D
+		if crowd_reaction == null:
+			crowd_reaction = Label3D.new()
+			crowd_reaction.name = "PowerTowerAudienceReaction"
+			crowd_reaction.position = Vector3(0.0, 5.0, -8.0)
+			crowd_reaction.font_size = 20
+			crowd_reaction.pixel_size = 0.011
+			gallery.add_child(crowd_reaction)
+		if completed:
+			crowd_reaction.text = "الجمهور يحتفل بفوز %s!" % str(duel_data.get("winner_id", "المقاتل الفائز"))
+			crowd_reaction.modulate = Color(1.0, 0.78, 0.32)
+		elif int(score.get(fighter_a, 0)) > int(score.get(fighter_b, 0)):
+			crowd_reaction.text = "هتافات الجمهور: %s يتقدم!" % fighter_a
+			crowd_reaction.modulate = Color(0.48, 0.9, 1.0)
+		elif int(score.get(fighter_b, 0)) > int(score.get(fighter_a, 0)):
+			crowd_reaction.text = "هتافات الجمهور: %s يتقدم!" % fighter_b
+			crowd_reaction.modulate = Color(0.48, 0.9, 1.0)
+		else:
+			crowd_reaction.text = "الجمهور يترقب المواجهة المتكافئة!"
+			crowd_reaction.modulate = Color(0.8, 0.9, 1.0)
 	_update_power_tower_public_live_broadcast(floor_number, duel_data, completed)
 
 
@@ -3303,6 +3325,41 @@ func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) 
 
 
 
+func interact_power_tower_spectator_seat(target: Node) -> void:
+	if target == null or not is_instance_valid(target) or not target.has_meta("system_power_tower_spectator_seat_interaction"):
+		return
+	var seat := target.get_parent() as Node3D
+	if seat == null or not bool(seat.get_meta("system_power_tower_spectator_seat", false)) or not is_instance_valid(player):
+		return
+	var player_id := str(player.get_meta("system_player_id", "local_player"))
+	var owner_id := str(seat.get_meta("system_spectator_seat_owner", ""))
+	var status_label := seat.get_node_or_null("SpectatorSeatStatus") as Label3D
+	if bool(seat.get_meta("system_spectator_seat_reserved", false)):
+		if owner_id != player_id:
+			if is_instance_valid(status_label):
+				status_label.text = "المقعد محجوز"
+			return
+		player.set_meta("system_power_tower_seated", false)
+		player.velocity = Vector3.ZERO
+		player.global_position = seat.global_position + Vector3(0.0, 0.15, 2.4)
+		seat.set_meta("system_spectator_seat_reserved", false)
+		seat.remove_meta("system_spectator_seat_owner")
+		if is_instance_valid(status_label):
+			status_label.text = "مقعد متاح"
+		return
+	seat.set_meta("system_spectator_seat_reserved", true)
+	seat.set_meta("system_spectator_seat_owner", player_id)
+	player.global_position = seat.global_position + Vector3(0.0, 0.12, 0.0)
+	player.rotation.y = seat.global_rotation.y
+	player.velocity = Vector3.ZERO
+	player.set_meta("system_power_tower_seated", true)
+	player.set_meta("system_power_tower_seat_id", str(seat.get_meta("system_spectator_seat_id", "")))
+	if is_instance_valid(status_label):
+		status_label.text = "محجوز — أنت هنا"
+	if is_instance_valid(status_label):
+		status_label.modulate = Color(1.0, 0.78, 0.36)
+
+
 func _create_power_tower_spectator_gallery(room: Node3D, radius: float) -> void:
 	var gallery := Node3D.new()
 	gallery.name = "PowerTowerSpectatorGallery"
@@ -3369,6 +3426,28 @@ func _create_power_tower_spectator_gallery(room: Node3D, radius: float) -> void:
 				back_collision.shape = back_shape
 				back_collision.position = backrest.position
 				seat_body.add_child(back_collision)
+				var seat_status := Label3D.new()
+				seat_status.name = "SpectatorSeatStatus"
+				seat_status.text = "مقعد متاح"
+				seat_status.position = Vector3(0.0, 2.05, 0.0)
+				seat_status.font_size = 12
+				seat_status.pixel_size = 0.009
+				seat_status.modulate = Color(0.55, 0.95, 0.78)
+				seat.add_child(seat_status)
+				var seat_interaction := Area3D.new()
+				seat_interaction.name = "SpectatorSeatInteraction"
+				seat_interaction.add_to_group("system_interactable")
+				seat_interaction.set_meta("system_power_tower_spectator_seat_interaction", true)
+				seat_interaction.set_meta("system_interaction_prompt", "حجز هذا المقعد / مغادرة المقعد")
+				seat_interaction.collision_layer = 1
+				seat_interaction.collision_mask = 0
+				var seat_interaction_shape := CollisionShape3D.new()
+				var seat_interaction_sphere := SphereShape3D.new()
+				seat_interaction_sphere.radius = 1.5
+				seat_interaction_shape.shape = seat_interaction_sphere
+				seat_interaction_shape.position = Vector3(0.0, 1.0, 0.0)
+				seat_interaction.add_child(seat_interaction_shape)
+				seat.add_child(seat_interaction)
 				seat_count += 1
 
 	var gallery_label := Label3D.new()
