@@ -1811,6 +1811,25 @@ func _run() -> void:
 	if arrived_customer_passengers != 2:
 		_fail("The two customer NPCs did not disembark onto restaurant floor 29 after the elevator ride.")
 		return
+	var seated_restaurant_customers := 0
+	for floor_child in restaurant_room.get_children():
+		if not str(floor_child.name).begins_with("TowerCustomer_"):
+			continue
+		var table_name := str(floor_child.get_meta("system_restaurant_table_node", ""))
+		var seat_name := str(floor_child.get_meta("system_restaurant_seat_node", ""))
+		var table_root := restaurant_room.get_node_or_null(table_name) as Node3D
+		var seat_marker := table_root.get_node_or_null(seat_name) as Node3D if table_root != null else null
+		var customer_id := str(floor_child.get_meta("system_tower_customer_id", floor_child.name))
+		if seat_marker != null and str(seat_marker.get_meta("system_restaurant_seat_occupant", "")) == customer_id and table_root.get_meta("system_restaurant_occupants", []).has(customer_id):
+			seated_restaurant_customers += 1
+	var visible_queue_positions := 0
+	for queue_index in range(8):
+		if restaurant_room.get_node_or_null("RestaurantQueuePosition_%02d" % queue_index) != null:
+			visible_queue_positions += 1
+	if seated_restaurant_customers != 2 or visible_queue_positions != 8:
+		_fail("Restaurant visitors were not assigned to real owned seats or the eight visible waiting positions were not generated.")
+		return
+	print("QA TRACE: two restaurant customers occupy individually owned seats; eight visible queue positions are available.")
 	var chef_workstation := restaurant_room.get_node_or_null("StaffWorkstation_restaurant_chef") as Node3D
 	if restaurant_chef.get_parent() != restaurant_room or chef_workstation == null or not bool(restaurant_chef.get_meta("system_staff_workstation_active", false)):
 		_fail("The restaurant chef did not travel to floor 29 and reach the active workstation.")
@@ -1833,7 +1852,11 @@ func _run() -> void:
 	if customers_after_evacuation != 4:
 		_fail("Shopping Tower customer visitors did not return to the public lobby after emergency evacuation; found %d." % customers_after_evacuation)
 		return
-	print("QA TRACE: restaurant evacuation and customer return passed; starting pool supervisor duty trip.")
+	for lobby_child in shopping_customer_lobby.get_children():
+		if str(lobby_child.name).begins_with("TowerCustomer_") and (lobby_child.has_meta("system_restaurant_table_node") or lobby_child.has_meta("system_restaurant_seat_node") or lobby_child.has_meta("system_restaurant_queue_marker")):
+			_fail("A customer retained a restaurant seat or queue reservation after evacuation.")
+			return
+	print("QA TRACE: restaurant seating reservations released on evacuation; customer return passed; starting pool supervisor duty trip.")
 	operations.set("current_tower_id", "entertainment_tower_baghdad")
 	operations.call("_travel_to_floor", "entertainment_tower_baghdad", 18)
 	var entertainment_staff_ids: Array = operations.get("staff_by_tower").get("entertainment_tower_baghdad", [])
