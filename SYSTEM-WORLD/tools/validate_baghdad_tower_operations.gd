@@ -754,7 +754,7 @@ func _run() -> void:
 	var power_tower := tower_manager.get_node_or_null("PowerTower") as Node3D
 	var power_lobby := power_tower.get_node_or_null("PublicLobby_Blockout") as Node3D
 	var progress_board := power_lobby.get_node_or_null("PowerTowerProgressBoard") as Label3D
-	if progress_board == null or not progress_board.text.contains("200") or not progress_board.text.contains("أفضل وقت"):
+	if progress_board == null or not progress_board.text.contains("200") or not progress_board.text.contains("أفضل وقت") or not progress_board.text.contains("1 VS 1") or not progress_board.text.contains("المواجهات الفردية الفائزة"):
 		_fail("Power Tower lobby progress board is missing the 200-floor completion target.")
 		return
 	var first_floor_rewards: Dictionary = power_manager.call("get_floor_data", 1)
