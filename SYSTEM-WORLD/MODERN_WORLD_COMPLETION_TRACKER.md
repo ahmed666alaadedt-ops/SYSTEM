@@ -1310,3 +1310,17 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [ ] Physical Android review of telegraph readability, touch evasion timing, boss collision and frame rate remains outstanding.
 - [ ] Physical Android review of telegraph readability, touch evasion timing, boss collision and frame rate remains outstanding.
 - [ ] The five connected Baghdad towers and independent Power Tower remain on PR #38 draft; no merge to main.
+
+
+### Power Tower player-versus-player policy — approved 23 November 2026
+
+- [x] Adopt the user's decision that **all actual Power Tower combat is exclusively between real human players**. Do not spawn AI combat opponents, AI boss characters, NPC combat waves, or AI substitutes when matchmaking is unavailable.
+- [ ] Replace the current solo/PvE floor progression with player-versus-player challenges: ranked one-on-one duels as the core format, with team formats only where the floor rules explicitly call for them. Survival and championship rounds must also use human participants, not AI waves.
+- [ ] Make the champion/"floor boss" a real player holding the title. Other eligible players can challenge that title-holder; the title changes only after a verified result.
+- [ ] Add fair matchmaking by level, combat rating and recent performance; define disconnect, timeout, draw, surrender, rematch and anti-smurf rules before ranked launch.
+- [ ] Require authenticated player identities and an authoritative online match/result service. Validate damage, cooldowns, movement, equipment and match outcomes server-side; never trust a client-reported win, local save file or local event-board entry as a global result.
+- [ ] Until the online service and matchmaking are available, show the Power Tower PvP mode as unavailable/under preparation rather than silently falling back to bots or presenting local results as global rankings. Existing NPCs may remain as non-combat guides, referees, vendors and arena staff only.
+- [ ] Rework the existing AI sovereign-boss arena and its PvE-specific validator coverage only as part of the PvP migration; do not count the current AI boss/telegraph as the final Power Tower combat design.
+- [ ] Add multiplayer QA for match pairing, rank boundaries, server-authoritative combat, disconnect recovery, duplicate/replayed results, rewards-once-only, spectator privacy and cross-device persistence. Run full Godot validation and Android build on the same exact HEAD.
+- [ ] Keep PR #38 draft and do not merge to main without explicit user approval.
+
