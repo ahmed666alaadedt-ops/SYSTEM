@@ -10,26 +10,27 @@ Pull request: #38 (draft; do not merge without explicit user approval)
 - Power Tower is a standalone optional challenge landmark in Baghdad, outside the five connected civic towers.
 - It contains exactly 200 sequentially unlocked floors.
 - The player must clear the previous floor before entering the next one.
-- The 200th floor is the unique final sovereign boss encounter.
+- The 200th floor is the unique final sovereign title duel against a human title-holder.
 - Preserve existing progress records, clear times, ranks, loot, XP and virtual-credit rewards.
 
 ## 2. Individual-only combat rule
 
-Every Power Tower combat competition is individual:
+Every Power Tower combat competition is an individual human-versus-human duel:
 
-- One participating fighter versus exactly one opponent (1v1).
-- Exactly one opponent and one round per floor.
+- One authenticated human player versus exactly one other authenticated human player (1v1).
+- Exactly one human opponent and one round per floor.
 - No team battles, party battles, squad competitions, multi-opponent rounds, enemy waves or group combat competitions.
-- Elite floors and boss floors remain individual duels; difficulty changes through opponent attributes and boss mechanics, not opponent count.
-- The final sovereign encounter is one player against one final boss.
+- AI combat opponents, AI bosses and bot fallback are prohibited, including when online matchmaking is unavailable.
+- Elite floors are individual ranked duels; every tenth-floor title-holder challenge and the floor-200 sovereign title duel are also human 1v1 matches.
 - Spectators, supporter clubs, social groups and public viewing remain non-combat activities and do not form fighting teams.
 
 Runtime acceptance criteria:
-- Each floor record declares `competition_format = INDIVIDUAL_1V1`.
+- Each floor record declares `competition_format = INDIVIDUAL_1V1`, `opponent_kind = HUMAN_PLAYER`, `matchmaking_mode = ONLINE_1V1` and `ai_fallback = false`.
 - `opponent_count = 1`, `wave_count = 1`, and `time_limit_seconds = 0`.
-- Allowed arena types are `DUEL`, `ELITE_DUEL`, and `BOSS_TRIAL`.
-- The runtime spawns one opponent and completes the floor when that opponent is defeated.
-- Floor 200 retains its unique final-boss profile and rewards.
+- Allowed arena types remain `DUEL`, `ELITE_DUEL`, and `BOSS_TRIAL`; boss arena means a human title-holder duel, not an AI boss.
+- Floor entry may display the arena while waiting, but combat begins only after an authenticated human match is supplied by the online match authority.
+- If matchmaking is unavailable, show a clear waiting/unavailable state. Never spawn a bot or simulate a result.
+- Floor 200 retains its unique sovereign title-duel profile and rewards, which are granted only after a trusted human-versus-human result is verified.
 
 ## 3. Floor environment progression
 
@@ -51,7 +52,7 @@ Each chapter changes its floor-deck material, arena ring, four environmental pyl
 ## 4. Arena spectators and career record
 
 - Each generated duel arena includes a physical spectator gallery with 48 fixed seats, collision, stable seat IDs, floor metadata and an initially unreserved state.
-- The gallery is for viewing individual duels only; it does not create combat teams or alter the 1v1 rules.
+- The gallery is for viewing individual human-versus-human duels only; it does not create combat teams or permit AI combat substitutes.
 - The tower career record persists total individual duel wins, elite-duel wins, boss-duel wins, lifetime XP earned and lifetime virtual credits earned.
 - The Power Tower lobby progress board displays the 1v1 format, floor progression, duel wins, elite/boss wins, lifetime credits and best clear time.
 - Seat reservation/standing interactions, autonomous audience NPCs, live match spectator cameras and prediction terminals are separate follow-up work; the current 48-seat gallery is a physical visual seating prototype.
@@ -61,7 +62,8 @@ Each chapter changes its floor-deck material, arena ring, four environmental pyl
 - Floors unlock sequentially and retain the player's saved highest-cleared floor and per-floor clear-time records.
 - Level requirements remain reachable within the existing level-100 progression cap.
 - XP, rank, loot and SYSTEM virtual credits scale with floor difficulty.
-- Every successful floor clear grants its configured credits to the player's in-world wallet; the wallet can be used in supported SYSTEM WORLD commerce such as food, drink, lodging and equipment.
+- A floor reward is granted only after the match authority verifies a completed human-versus-human 1v1 result and confirms that the local player won. An unverified/local/AI result never grants floor XP, loot, rank or credits.
+- Verified rewards are added to the player's in-world wallet and can be used in supported SYSTEM WORLD commerce such as food, drink, lodging and equipment.
 - The final floor retains its sovereign crown, sovereign core, rare core and Nen fragment rewards.
 - A failed or abandoned attempt does not grant the floor-clear reward and does not erase previously earned wallet balance.
 
@@ -88,7 +90,7 @@ Implementation status: a local prototype now records individual 1v1 matches, ded
 ## 8. Technical boundaries and verification
 
 - Current tower wallet, floor rewards, commerce and activity systems are local-save prototypes; they are not yet a server-authoritative shared online economy.
-- Online matchmaking, authoritative match settlement, anti-cheat and spectator prediction service remain separate future integration work.
+- The human-only matchmaking and match-result hooks are prepared, but the online matchmaking service is not active yet. Until it is connected, the tower must show a waiting/unavailable state and never spawn AI combat opponents. Authoritative result signatures, anti-cheat, anti-collusion and cross-device economy remain future integration work.
 - Godot full validation and Android export must be checked against the exact same branch commit before marking a gameplay milestone verified.
 - Physical Android touch, visual and performance inspection remains a separate required check.
 - Keep PR #38 as draft. Never merge into `main` without explicit user approval.
