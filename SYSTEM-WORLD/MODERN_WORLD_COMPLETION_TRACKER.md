@@ -1421,3 +1421,19 @@ This section supersedes the earlier point-only fan prediction wording above. The
 - [ ] Run Godot 4.3 full validation and canonical Android export against the same resulting branch HEAD; no verification success is claimed until both workflows pass on that exact commit.
 - [ ] Inspect the displays on a physical Android device for text readability, touch behavior, camera visibility and performance.
 - Online live event streaming and the separate interactive spectator prediction interface remain future work; these schedule screens must not imply live global matchmaking.
+
+
+### Hunter-style arena rules adapted for SYSTEM Power Tower — 23 November 2026
+
+- [x] Add persistent fighter registration numbers.
+- [x] Add a three-official referee panel to each generated arena: head referee, technical judge and safety judge.
+- [x] Add referee-scored clean hits (1), critical hits (2), knockdowns (1), a 10-point TKO threshold, KO, judges' decision, forfeit and referee stoppage outcomes.
+- [x] Reject duplicate score events and unauthorized judge IDs; require the configured local match-authority result before career settlement.
+- [x] Add persistent career loss records: three consecutive defeats demote one ten-floor division; ten total defeats disqualify the fighter and reset unlocked tower progress to entry while preserving previously earned wallet/inventory rewards.
+- [x] Add division metadata, floor-100 private-room eligibility and floor-200 weapon allowance to canonical floor profiles.
+- [x] Add physical referee podiums, referee/rules text and a live score/result display to every generated Power Tower arena.
+- [x] Connect duel score/completion signals from the Power Tower manager to the in-arena live score display.
+- [x] Extend regression validation for fighter registration, duplicate judge events, 10-point TKO, three-loss demotion, ten-loss disqualification and floor-200 live score updates.
+- [ ] Run Godot full validation, canonical runtime validation and Android export on the same latest branch HEAD; do not mark these changes verified until all pass.
+- [ ] Confirm physical Android readability, camera visibility and performance for the arena screens and judge stations.
+- [ ] Integrate server-authoritative human matchmaking, judge identity verification, anti-cheat and cross-device career/wallet persistence; current local manager hooks are prototypes, not a live online service.
