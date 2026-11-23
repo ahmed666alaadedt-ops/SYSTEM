@@ -2861,7 +2861,7 @@ func _create_power_tower_spectator_gallery(room: Node3D, radius: float) -> void:
 			for seat_index in range(4):
 				var seat := Node3D.new()
 				seat.name = "SpectatorSeat_%02d" % seat_count
-				seat.position = outward * (radius * 0.72 + float(row) * 2.1) + tangent * ((float(seat_index) - 1.5) * 1.55)
+				seat.position = outward * (radius * 0.55 + float(row) * 1.35) + tangent * ((float(seat_index) - 1.5) * 1.55)
 				seat.rotation.y = atan2(outward.x, outward.z)
 				seat.set_meta("system_power_tower_spectator_seat", true)
 				seat.set_meta("system_spectator_seat_id", "PT_%03d" % seat_count)
@@ -2907,7 +2907,7 @@ func _create_power_tower_spectator_gallery(room: Node3D, radius: float) -> void:
 	var gallery_label := Label3D.new()
 	gallery_label.name = "PowerTowerSpectatorGalleryLabel"
 	gallery_label.text = "SPECTATOR GALLERY — 48 SEATS\nمنطقة مشاهدة النزالات الفردية"
-	gallery_label.position = Vector3(0.0, 4.2, -radius * 0.92)
+	gallery_label.position = Vector3(0.0, 4.2, -radius * 0.60)
 	gallery_label.font_size = 18
 	gallery_label.pixel_size = 0.012
 	gallery_label.modulate = Color(0.72, 0.94, 1.0)
