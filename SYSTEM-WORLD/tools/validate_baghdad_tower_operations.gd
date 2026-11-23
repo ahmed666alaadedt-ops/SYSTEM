@@ -860,6 +860,14 @@ func _run() -> void:
 	var judge_test_manager := power_tower_test_script.new() as Node
 	root.add_child(judge_test_manager)
 	await process_frame
+	var fighter_registration: Dictionary = judge_test_manager.call("register_tower_fighter", "player_test")
+	var fighter_registration_repeat: Dictionary = judge_test_manager.call("register_tower_fighter", "player_test")
+	if not bool(fighter_registration.get("success", false)) or int(fighter_registration.get("fighter_number", 0)) < 1001 or int(fighter_registration.get("fighter_number", -1)) != int(fighter_registration_repeat.get("fighter_number", -2)) or not bool(fighter_registration_repeat.get("already_registered", false)):
+		_fail("Power Tower fighter registration must assign one persistent unique competitor number.")
+		judge_test_manager.queue_free()
+		progression_test_manager.queue_free()
+		reloaded_progression_manager.queue_free()
+		return
 	var judged_match: Dictionary = judge_test_manager.call("register_judged_duel", "validator_judged_tko", "player_test", "opponent_test", 75, "player_test")
 	if not bool(judged_match.get("success", false)) or int(judged_match.get("judges", []).size()) != 3:
 		_fail("Power Tower did not register its three-official referee panel for a 1v1 duel.")
