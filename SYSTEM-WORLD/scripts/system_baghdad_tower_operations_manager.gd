@@ -1378,6 +1378,87 @@ func _create_power_tower_progress_board() -> void:
 		power_tower_progress_board.modulate = Color(1.0, 0.78, 0.36)
 		lobby.add_child(power_tower_progress_board)
 	_refresh_power_tower_progress_board()
+	_create_power_tower_battle_screens()
+
+
+func _build_power_tower_floor_schedule_text() -> String:
+	var chapter_lines := PackedStringArray()
+	for chapter_index in range(10):
+		var first_floor := chapter_index * 20 + 1
+		var last_floor := first_floor + 19
+		var standard_floors := PackedStringArray()
+		var elite_floors := PackedStringArray()
+		var boss_floors := PackedStringArray()
+		for floor_number in range(first_floor, last_floor + 1):
+			var floor_data: Dictionary = power_tower_manager.call("get_floor_data", floor_number) if is_instance_valid(power_tower_manager) else {}
+			var arena_type := str(floor_data.get("arena_type", "DUEL"))
+			if bool(floor_data.get("final_boss", false)):
+				boss_floors.append("%d (سيادة)" % floor_number)
+			elif arena_type == "BOSS_TRIAL":
+				boss_floors.append(str(floor_number))
+			elif arena_type == "ELITE_DUEL":
+				elite_floors.append(str(floor_number))
+			else:
+				standard_floors.append(str(floor_number))
+		chapter_lines.append("الطوابق %03d-%03d | عادي 1v1: %s | نخبة 1v1: %s | زعماء 1v1: %s" % [first_floor, last_floor, ",".join(standard_floors), ",".join(elite_floors), ",".join(boss_floors)])
+	return "جدول جميع نزالات SYSTEM POWER TOWER — 200 طابق\nكل المواجهات فردية 1 ضد 1 — لا فرق ولا قتال جماعي\n" + "\n".join(chapter_lines)
+
+
+func _create_power_tower_display(parent: Node3D, display_name: String, display_position: Vector3, display_size: Vector2, display_rotation_y: float, display_text: String, font_size: int, pixel_size: float) -> Node3D:
+	var existing := parent.get_node_or_null(display_name) as Node3D
+	if existing != null:
+		var existing_text := existing.get_node_or_null("DisplayText") as Label3D
+		if existing_text != null:
+			existing_text.text = display_text
+		return existing
+	var display_root := Node3D.new()
+	display_root.name = display_name
+	display_root.position = display_position
+	display_root.rotation.y = display_rotation_y
+	display_root.set_meta("system_power_tower_battle_display", true)
+	display_root.set_meta("system_floor_schedule_count", 200)
+	display_root.set_meta("system_competition_format", "INDIVIDUAL_1V1")
+	var screen := MeshInstance3D.new()
+	screen.name = "ScreenPanel"
+	var screen_mesh := BoxMesh.new()
+	screen_mesh.size = Vector3(display_size.x, display_size.y, 0.42)
+	screen.mesh = screen_mesh
+	var screen_material := StandardMaterial3D.new()
+	screen_material.albedo_color = Color(0.018, 0.075, 0.105)
+	screen_material.metallic = 0.72
+	screen_material.roughness = 0.24
+	screen_material.emission_enabled = true
+	screen_material.emission = Color(0.015, 0.12, 0.17)
+	screen_material.emission_energy_multiplier = 0.8
+	screen.material_override = screen_material
+	display_root.add_child(screen)
+	var display_label := Label3D.new()
+	display_label.name = "DisplayText"
+	display_label.text = display_text
+	display_label.position = Vector3(0.0, 0.0, -0.24)
+	display_label.font_size = font_size
+	display_label.pixel_size = pixel_size
+	display_label.modulate = Color(0.62, 0.94, 1.0)
+	display_label.outline_size = 6
+	display_label.outline_modulate = Color(0.01, 0.035, 0.05, 1.0)
+	display_root.add_child(display_label)
+	parent.add_child(display_root)
+	return display_root
+
+
+func _create_power_tower_battle_screens() -> void:
+	var tower := tower_nodes.get("power_tower_baghdad") as Node3D
+	if tower == null:
+		return
+	var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D
+	if lobby == null:
+		return
+	var schedule := _build_power_tower_floor_schedule_text()
+	var radius := float(TOWER_CONFIG["power_tower_baghdad"].get("radius", 26.0))
+	var outside := _create_power_tower_display(tower, "PowerTowerBattleDisplay_Outside", Vector3(0.0, 7.0, radius + 2.4), Vector2(18.0, 8.4), 0.0, schedule, 15, 0.010)
+	outside.set_meta("system_display_location", "OUTSIDE_TOWER")
+	var inside := _create_power_tower_display(lobby, "PowerTowerBattleDisplay_Inside", Vector3(0.0, 5.8, -10.0), Vector2(18.0, 8.4), PI, schedule, 15, 0.010)
+	inside.set_meta("system_display_location", "INSIDE_LOBBY")
 
 
 func _refresh_power_tower_progress_board() -> void:
