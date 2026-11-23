@@ -3364,6 +3364,10 @@ func interact_power_tower_spectator_seat(target: Node) -> void:
 		return
 	var player_id := str(player.get_meta("system_player_id", "local_player"))
 	var owner_id := str(seat.get_meta("system_spectator_seat_owner", ""))
+	var current_seat_id := str(player.get_meta("system_power_tower_seat_id", ""))
+	var requested_seat_id := str(seat.get_meta("system_spectator_seat_id", ""))
+	if bool(player.get_meta("system_power_tower_seated", false)) and current_seat_id != requested_seat_id:
+		return
 	var status_label := seat.get_node_or_null("SpectatorSeatStatus") as Label3D
 	if bool(seat.get_meta("system_spectator_seat_reserved", false)):
 		if owner_id != player_id:
@@ -3378,6 +3382,7 @@ func interact_power_tower_spectator_seat(target: Node) -> void:
 		seat.remove_meta("system_spectator_seat_owner")
 		if is_instance_valid(status_label):
 			status_label.text = "مقعد متاح"
+			status_label.modulate = Color(0.55, 0.95, 0.78)
 		return
 	seat.set_meta("system_spectator_seat_reserved", true)
 	seat.set_meta("system_spectator_seat_owner", player_id)
