@@ -622,8 +622,11 @@ func settle_spectator_match(match_id: String, winner_id: String, settlement_sour
 			var losing_prediction: Dictionary = predictions[spectator_id]
 			losing_prediction["correct"] = false
 			losing_prediction["payout_amount"] = 0
-			losing_prediction["net_profit"] = -int(losing_prediction.get("stake_amount", 0))
+			var losing_stake := int(losing_prediction.get("stake_amount", 0))
+			losing_prediction["net_profit"] = -losing_stake
 			predictions[spectator_id] = losing_prediction
+			payouts[spectator_id] = 0
+			profits[spectator_id] = -losing_stake
 	else:
 		# No correct forecast: void this pool and return each fan's virtual stake.
 		for spectator_id_variant in predictions.keys():
