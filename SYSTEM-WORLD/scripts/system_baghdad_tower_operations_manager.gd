@@ -1459,6 +1459,7 @@ func _create_power_tower_battle_screens() -> void:
 	outside.set_meta("system_display_location", "OUTSIDE_TOWER")
 	var inside := _create_power_tower_display(lobby, "PowerTowerBattleDisplay_Inside", Vector3(0.0, 5.8, -10.0), Vector2(18.0, 8.4), PI, schedule, 15, 0.010)
 	inside.set_meta("system_display_location", "INSIDE_LOBBY")
+	_create_power_tower_ticket_terminal(lobby)
 
 
 func _refresh_power_tower_progress_board() -> void:
@@ -1801,6 +1802,8 @@ func open_power_tower_ticket_terminal() -> void:
 		var label := "الطابق %d | %s ضد %s | المجموع %d" % [int(match_record.get("floor", 0)), str(match_record.get("fighter_a_id", "")), str(match_record.get("fighter_b_id", "")), int(match_record.get("total_pool", 0))]
 		match_selector.add_item(label)
 		match_selector.set_item_metadata(match_selector.item_count - 1, match_id)
+	if match_selector.item_count > 0:
+		match_selector.select(0)
 	content.add_child(match_selector)
 	var fighter_heading := Label.new()
 	fighter_heading.text = "من تتوقع يفوز؟"
@@ -1851,6 +1854,8 @@ func _populate_power_tower_ticket_fighters(match_selector: OptionButton, fighter
 			continue
 		fighter_selector.add_item(fighter_id)
 		fighter_selector.set_item_metadata(fighter_selector.item_count - 1, fighter_id)
+	if fighter_selector.item_count > 0:
+		fighter_selector.select(0)
 
 
 func open_staff_service(staff_node: Node) -> void:
@@ -2665,6 +2670,52 @@ func _prepare_tower_interior(tower_id: String) -> void:
 	floor_container.name = "TowerInteriorFloors"
 	tower.add_child(floor_container)
 	prepared_towers[tower_id] = floor_container
+
+func _create_power_tower_ticket_terminal(lobby: Node3D) -> void:
+	if lobby.get_node_or_null("PowerTowerVirtualTicketTerminal") != null:
+		return
+	var terminal := Node3D.new()
+	terminal.name = "PowerTowerVirtualTicketTerminal"
+	terminal.position = Vector3(8.0, 0.0, -7.0)
+	terminal.set_meta("system_power_tower_ticket_terminal", true)
+	var body := StaticBody3D.new()
+	body.name = "TicketTerminalInteractionBody"
+	body.set_meta("system_power_tower_ticket_terminal", true)
+	var collision := CollisionShape3D.new()
+	collision.name = "InteractionCollision"
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(2.2, 2.8, 1.0)
+	collision.shape = shape
+	collision.position.y = 1.4
+	body.add_child(collision)
+	terminal.add_child(body)
+	var cabinet := MeshInstance3D.new()
+	cabinet.name = "TicketTerminalCabinet"
+	var cabinet_mesh := BoxMesh.new()
+	cabinet_mesh.size = Vector3(1.8, 2.5, 0.75)
+	cabinet.mesh = cabinet_mesh
+	var cabinet_material := StandardMaterial3D.new()
+	cabinet_material.albedo_color = Color(0.025, 0.055, 0.075)
+	cabinet_material.metallic = 0.85
+	cabinet_material.roughness = 0.25
+	cabinet_material.emission_enabled = true
+	cabinet_material.emission = Color(0.0, 0.16, 0.22)
+	cabinet_material.emission_energy_multiplier = 0.8
+	cabinet.material_override = cabinet_material
+	cabinet.position.y = 1.25
+	terminal.add_child(cabinet)
+	var terminal_label := Label3D.new()
+	terminal_label.name = "TicketTerminalLabel"
+	terminal_label.text = "SYSTEM ARENA\nتذاكر الجمهور\nVIRTUAL TICKETS\n1–500 SYSTEM"
+	terminal_label.position = Vector3(0.0, 2.0, -0.39)
+	terminal_label.font_size = 22
+	terminal_label.pixel_size = 0.008
+	terminal_label.modulate = Color(0.55, 0.94, 1.0)
+	terminal_label.outline_size = 5
+	terminal_label.outline_modulate = Color(0.01, 0.025, 0.04, 1.0)
+	terminal.add_child(terminal_label)
+	lobby.add_child(terminal)
+
 
 func update_power_tower_live_match_display(floor_number: int, duel_data: Dictionary, completed: bool = false) -> void:
 	if floor_number < 1 or floor_number > 200:
