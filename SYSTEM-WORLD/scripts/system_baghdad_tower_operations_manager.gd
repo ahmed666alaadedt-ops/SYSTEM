@@ -6220,66 +6220,126 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 func _begin_power_floor() -> void:
 	if active_power_floor_data.is_empty() or active_floor_root == null:
 		return
-	power_floor_started_at = Time.get_ticks_msec()
+	power_floor_entry_pending = false
+	power_floor_in_progress = false
 	current_wave = 0
-	# Power Tower competitions are always individual 1v1: one fighter, one opponent, one round.
 	total_waves = 1
 	opponents_per_wave = 1
+	active_opponents.clear()
+	active_power_tower_match.clear()
 	_update_power_objective_display()
-	_spawn_power_wave()
-
-func _spawn_power_wave() -> void:
-	if active_floor_root == null or not active_opponents.is_empty():
-		return
-	current_wave = 1
-	var difficulty := int(active_power_floor_data.get("difficulty", 1))
-	var boss := bool(active_power_floor_data.get("boss_floor", false))
-	var final_boss := bool(active_power_floor_data.get("final_boss", false))
-	var count := 1
-	for index in range(count):
-		var opponent = TowerOpponentScript.new()
-		var health_multiplier := 4.0 if boss else 1.0
-		if final_boss:
-			health_multiplier = 10.0
-		var damage_value := clampf(6.0 + float(difficulty) * 0.72, 6.0, 34.0)
-		if boss:
-			damage_value *= 1.35
-		if final_boss:
-			damage_value *= 1.25
-		opponent.configure(
-			player,
-			player_health,
-			(110.0 + float(difficulty) * 28.0) * health_multiplier,
-			damage_value,
-			2.1 + float(difficulty) * 0.025 + (0.25 if final_boss else 0.0),
-			boss,
-			final_boss
-		)
-		opponent.apply_arena_theme(str(active_power_floor_data.get("arena_theme_id", "IRON")))
-		opponent.defeated.connect(_on_power_opponent_defeated)
-		active_floor_root.add_child(opponent)
-		var angle := TAU * float(index) / float(maxi(count, 1))
-		opponent.position = Vector3(cos(angle) * 9.0, 1.1, sin(angle) * 9.0)
-		active_opponents[opponent.get_instance_id()] = opponent
-	_set_status("برج القوة — الطابق %d\nمواجهة فردية 1 ضد 1 | خصم واحد فقط" % int(active_power_floor_data.get("floor", 1)))
-
-func _on_power_opponent_defeated(opponent: Node) -> void:
-	if opponent == null:
-		return
-	active_opponents.erase(opponent.get_instance_id())
-	if not power_floor_in_progress or not active_opponents.is_empty():
-		return
-	# The sole opponent's defeat completes this individual floor; no waves or team rounds exist.
-	_complete_power_floor()
+	var floor_number := int(active_power_floor_data.get("floor", 1))
+	_set_status("برج القوة — الطابق %d\nمواجهة بشرية فردية 1 ضد 1\nالمطابقة عبر الإنترنت غير مفعّلة بعد؛ لن يظهر خصم آلي." % floor_number)
 
 func _update_power_objective_display() -> void:
 	if not is_instance_valid(active_power_objective_label) or active_power_floor_data.is_empty():
 		return
 	var objective := str(active_power_floor_data.get("objective_type", "DEFEAT_OPPONENT"))
-	var objective_text := "مواجهة فردية 1 ضد 1 — اهزم خصمك الوحيد"
+	var objective_text := "انتظار مطابقة لاعب بشري — مواجهة فردية 1 ضد 1"
 	if objective == "DEFEAT_BOSS":
-		objective_text = "مواجهة فردية ضد زعيم الطابق — اهزم الزعيم وحدك"
+		objective_text = "مواجهة لقب فردية ضد حامل اللقب البشري — 1 ضد 1"
 	active_power_objective_label.text = objective_text
+
+func begin_verified_power_tower_pvp_match(match_data: Dictionary, local_player_id: String) -> Dictionary:
+	if active_power_floor_data.is_empty() or not is_instance_valid(active_floor_root):
+		return {"success": false, "reason": "NO_ACTIVE_POWER_FLOOR"}
+	if power_floor_in_progress:
+		return {"success": false, "reason": "MATCH_ALREADY_ACTIVE"}
+	if not bool(match_data.get("server_verified", false)):
+		return {"success": false, "reason": "SERVER_MATCH_AUTHORITY_REQUIRED"}
+	if str(match_data.get("competition_format", "")) != "INDIVIDUAL_1V1":
+		return {"success": false, "reason": "INDIVIDUAL_1V1_REQUIRED"}
+	if str(match_data.get("opponent_kind", "")) != "HUMAN_PLAYER" or bool(match_data.get("ai_fallback", true)):
+		return {"success": false, "reason": "HUMAN_OPPONENT_REQUIRED"}
+	var floor_number := int(active_power_floor_data.get("floor", 0))
+	if int(match_data.get("floor_number", 0)) != floor_number:
+		return {"success": false, "reason": "MATCH_FLOOR_MISMATCH"}
+	var match_id := str(match_data.get("match_id", "")).strip_edges()
+	var opponent_player_id := str(match_data.get("opponent_player_id", "")).strip_edges()
+	local_player_id = local_player_id.strip_edges()
+	if match_id.is_empty() or local_player_id.is_empty() or opponent_player_id.is_empty() or local_player_id == opponent_player_id:
+		return {"success": false, "reason": "INVALID_HUMAN_FIGHTER_IDENTITIES"}
+	var existing_match: Dictionary = power_tower_manager.call("get_spectator_match", match_id)
+	if existing_match.is_empty():
+		var registration: Dictionary = power_tower_manager.call("register_spectator_match", match_id, local_player_id, opponent_player_id, floor_number)
+		if not bool(registration.get("success", false)):
+			return registration
+	else:
+		var fighters_match := (str(existing_match.get("fighter_a_id", "")) == local_player_id and str(existing_match.get("fighter_b_id", "")) == opponent_player_id) or (str(existing_match.get("fighter_a_id", "")) == opponent_player_id and str(existing_match.get("fighter_b_id", "")) == local_player_id)
+		if not fighters_match or int(existing_match.get("floor_number", 0)) != floor_number or str(existing_match.get("state", "")) != "open":
+			return {"success": false, "reason": "MATCH_IDENTITY_MISMATCH"}
+	var lock_result: Dictionary = power_tower_manager.call("lock_spectator_predictions", match_id)
+	if not bool(lock_result.get("success", false)):
+		return lock_result
+	active_power_tower_match = {
+		"match_id": match_id,
+		"floor_number": floor_number,
+		"local_player_id": local_player_id,
+		"opponent_player_id": opponent_player_id,
+		"competition_format": "INDIVIDUAL_1V1",
+		"opponent_kind": "HUMAN_PLAYER"
+	}
+	power_floor_in_progress = true
+	power_floor_started_at = Time.get_ticks_msec()
+	_set_status("بدأت المواجهة البشرية 1 ضد 1 في الطابق %d. لا توجد فرق أو خصوم آليون." % floor_number)
+	return {"success": true, "match_id": match_id, "floor_number": floor_number, "competition_format": "INDIVIDUAL_1V1"}
+
+func apply_verified_power_tower_pvp_result(result_data: Dictionary, local_player_id: String) -> Dictionary:
+	if not power_floor_in_progress or active_power_tower_match.is_empty():
+		return {"success": false, "reason": "NO_ACTIVE_HUMAN_MATCH"}
+	if not bool(result_data.get("server_verified", false)):
+		return {"success": false, "reason": "SERVER_VERIFICATION_REQUIRED"}
+	local_player_id = local_player_id.strip_edges()
+	var match_id := str(result_data.get("match_id", "")).strip_edges()
+	var result_id := str(result_data.get("result_id", "")).strip_edges()
+	var floor_number := int(active_power_tower_match.get("floor_number", 0))
+	var opponent_player_id := str(active_power_tower_match.get("opponent_player_id", ""))
+	if match_id != str(active_power_tower_match.get("match_id", "")) or int(result_data.get("floor_number", 0)) != floor_number:
+		return {"success": false, "reason": "MATCH_RESULT_IDENTITY_MISMATCH"}
+	if str(result_data.get("competition_format", "")) != "INDIVIDUAL_1V1" or str(result_data.get("opponent_kind", "")) != "HUMAN_PLAYER" or bool(result_data.get("ai_fallback", true)):
+		return {"success": false, "reason": "HUMAN_1V1_RESULT_REQUIRED"}
+	if local_player_id != str(active_power_tower_match.get("local_player_id", "")) or str(result_data.get("opponent_player_id", "")) != opponent_player_id:
+		return {"success": false, "reason": "MATCH_PLAYER_IDENTITY_MISMATCH"}
+	var winner_player_id := str(result_data.get("winner_player_id", "")).strip_edges()
+	if winner_player_id != local_player_id and winner_player_id != opponent_player_id:
+		return {"success": false, "reason": "INVALID_MATCH_WINNER"}
+	if result_id.is_empty():
+		return {"success": false, "reason": "INVALID_RESULT_ID"}
+	var clear_time_seconds := float(result_data.get("clear_time_seconds", 0.0))
+	if clear_time_seconds <= 0.0:
+		return {"success": false, "reason": "INVALID_VERIFIED_MATCH_DURATION"}
+	var prediction_settlement: Dictionary = power_tower_manager.call("settle_spectator_match", match_id, winner_player_id, "LOCAL_COMBAT_AUTHORITY")
+	if not bool(prediction_settlement.get("success", false)):
+		return prediction_settlement
+	power_floor_in_progress = false
+	active_power_tower_match.clear()
+	if winner_player_id != local_player_id:
+		power_tower_manager.call("abandon_active_floor")
+		active_power_floor_data.clear()
+		if is_instance_valid(active_power_objective_label):
+			active_power_objective_label.text = "انتهت المواجهة — لم تجتز الطابق"
+		_set_status("خسرت المواجهة الفردية أمام اللاعب المنافس. لم تُمنح مكافأة اجتياز الطابق.")
+		return {"success": true, "won": false, "prediction_settlement": prediction_settlement}
+	var processed_ids: Dictionary = power_tower_manager.get("processed_result_ids")
+	if processed_ids.has(result_id):
+		return {"success": false, "reason": "DUPLICATE_RESULT"}
+	var floor_result: Dictionary = power_tower_manager.call("confirm_floor_clear", floor_number, clear_time_seconds, true, result_id)
+	if not bool(floor_result.get("success", false)):
+		return floor_result
+	var reward_items: Array = active_power_floor_data.get("reward_items", []).duplicate()
+	var loot_names := PackedStringArray()
+	if is_instance_valid(progression) and progression.has_method("add_item"):
+		for item_id in reward_items:
+			progression.call("add_item", str(item_id), 1)
+			loot_names.append(str(item_id))
+	var loot_text := " | الغنائم: " + ", ".join(loot_names) if not loot_names.is_empty() else ""
+	var credit_reward := grant_power_tower_credits(int(floor_result.get("reward_credits", 0)))
+	active_power_floor_data.clear()
+	_refresh_power_tower_progress_board()
+	if is_instance_valid(active_power_objective_label):
+		active_power_objective_label.text = "تم اجتياز الطابق %d" % floor_number
+	_set_status("فزت بالمواجهة الفردية البشرية في الطابق %d!\nالتصنيف: %s | XP: %d | رصيد: %d%s\nتم اعتماد النتيجة البشرية." % [floor_number, str(floor_result.get("rank", "E")), int(floor_result.get("reward_xp", 0)), credit_reward, loot_text])
+	return {"success": true, "won": true, "floor_result": floor_result, "prediction_settlement": prediction_settlement}
 
 
 func _clear_active_power_opponents() -> void:
