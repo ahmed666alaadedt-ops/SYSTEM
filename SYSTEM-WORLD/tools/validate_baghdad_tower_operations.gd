@@ -1096,11 +1096,14 @@ func _run() -> void:
 	if tower_player == null or final_boss_script == null:
 		_fail("Power Tower final boss combat fixture could not be created.")
 		return
+	print("QA TRACE: creating sovereign boss combat fixture.")
 	var final_boss_test := final_boss_script.new() as Node3D
 	root.add_child(final_boss_test)
 	final_boss_test.call("configure", tower_player, null, 100.0, 12.0, 2.5, true, true)
+	print("QA TRACE: sovereign boss configured; waiting for first physics frame.")
 	final_boss_test.global_position = tower_player.global_position + Vector3(0.0, 0.0, 4.0)
 	await physics_frame
+	print("QA TRACE: sovereign boss first physics frame resumed.")
 	var shockwave_ring := final_boss_test.get_node_or_null("ShockwaveTelegraph") as MeshInstance3D
 	var shockwave_label := final_boss_test.get_node_or_null("ShockwaveTelegraphLabel") as Label3D
 	if shockwave_ring == null or shockwave_label == null or shockwave_ring.visible:
@@ -1112,13 +1115,17 @@ func _run() -> void:
 		final_boss_test.queue_free()
 		return
 	final_boss_test.set("special_attack_clock", 0.0)
+	print("QA TRACE: checking sovereign boss shockwave telegraph.")
 	await physics_frame
+	print("QA TRACE: shockwave telegraph physics frame resumed.")
 	if not shockwave_ring.visible or not shockwave_label.visible or not str(shockwave_label.text).contains("EVADE"):
 		_fail("Power Tower sovereign boss did not show a readable shockwave warning.")
 		final_boss_test.queue_free()
 		return
 	final_boss_test.set("special_attack_windup_clock", 0.01)
+	print("QA TRACE: checking sovereign boss shockwave release.")
 	await physics_frame
+	print("QA TRACE: shockwave release physics frame resumed.")
 	if shockwave_ring.visible or shockwave_label.visible:
 		_fail("Power Tower sovereign boss telegraph did not clear after the shockwave.")
 		final_boss_test.queue_free()
@@ -1129,7 +1136,9 @@ func _run() -> void:
 		final_boss_test.queue_free()
 		return
 	final_boss_test.call("take_damage", 51.0, tower_player)
+	print("QA TRACE: checking sovereign boss phase two.")
 	await physics_frame
+	print("QA TRACE: phase two physics frame resumed.")
 	if int(final_boss_test.get("boss_phase")) != 2:
 		_fail("Power Tower sovereign boss did not enter its second health phase.")
 		final_boss_test.queue_free()
@@ -1143,7 +1152,9 @@ func _run() -> void:
 		final_boss_test.queue_free()
 		return
 	final_boss_test.call("take_damage", 31.0, tower_player)
+	print("QA TRACE: checking sovereign boss final phase.")
 	await physics_frame
+	print("QA TRACE: final phase physics frame resumed.")
 	if int(final_boss_test.get("boss_phase")) != 3:
 		_fail("Power Tower sovereign boss did not enter its final health phase.")
 		final_boss_test.queue_free()
@@ -1176,7 +1187,9 @@ func _run() -> void:
 	operations.set("power_floor_in_progress", true)
 	operations.set("power_floor_started_at", Time.get_ticks_msec() - 1500)
 	operations.set("active_opponents", {})
+	print("QA TRACE: applying sovereign floor completion and reward settlement.")
 	operations.call("_complete_power_floor")
+	print("QA TRACE: sovereign floor reward settlement returned.")
 	var final_rewards_granted := true
 	for reward_id in final_rewards:
 		if int(tower_progression.call("get_item_count", str(reward_id))) <= int(original_inventory.get(str(reward_id), 0)):
@@ -1245,7 +1258,9 @@ func _run() -> void:
 	operations.set("power_floor_in_progress", false)
 	operations.set("active_opponents", {})
 	operations.call("_refresh_power_tower_progress_board")
+	print("QA TRACE: generating Shopping Tower workshop floor 14.")
 	var shopping_workshop_room := operations.call("_ensure_floor_room", "shopping_tower_baghdad", 14) as Node3D
+	print("QA TRACE: workshop floor 14 generation returned.")
 	if shopping_workshop_room == null or shopping_workshop_room.get_node_or_null("WeaponsForge") == null or shopping_workshop_room.get_node_or_null("ElixirLaboratory") == null:
 		_fail("Shopping Tower weapon forge and elixir laboratory stations are missing.")
 		return
@@ -1253,8 +1268,12 @@ func _run() -> void:
 	if forge_area == null or not forge_area.is_in_group("system_interactable") or not forge_area.has_meta("system_tower_staff_id"):
 		_fail("Shopping Tower crafting station is not connected to its NPC employee.")
 		return
+	print("QA TRACE: generating Shopping Tower hotel reception floor 27.")
 	var hotel_reception_room := operations.call("_ensure_floor_room", "shopping_tower_baghdad", 27) as Node3D
+	print("QA TRACE: hotel reception floor 27 generation returned.")
+	print("QA TRACE: generating Shopping Tower hotel suite floor 28.")
 	var hotel_suite_room := operations.call("_ensure_floor_room", "shopping_tower_baghdad", 28) as Node3D
+	print("QA TRACE: hotel suite floor 28 generation returned.")
 	if hotel_reception_room == null or hotel_suite_room == null or hotel_reception_room.get_node_or_null("SYSTEMHotelFacilities/HotelReceptionInteraction") == null or hotel_suite_room.get_node_or_null("SYSTEMHotelFacilities/HotelSuiteBookingInteraction") == null:
 		_fail("SYSTEM Hotel reception or guest-suite booking area is missing from Shopping Tower floors 27–28.")
 		return
@@ -1390,7 +1409,9 @@ func _run() -> void:
 	operations.set("credits", original_hotel_credits)
 	operations.call("_save_hotel_bookings")
 	operations.call("_save_wallet")
+	print("QA TRACE: generating Shopping Tower restaurant floor 29.")
 	var restaurant_floor := operations.call("_ensure_floor_room", "shopping_tower_baghdad", 29) as Node3D
+	print("QA TRACE: restaurant floor 29 generation returned.")
 	if restaurant_floor == null:
 		_fail("Shopping Tower restaurant floor 29 was not generated.")
 		return
@@ -1464,6 +1485,7 @@ func _run() -> void:
 	if not restaurant_order_ok:
 		_fail("Restaurant ordering failed payment, persisted kitchen preparation, serving and table-release lifecycle checks.")
 		return
+	print("QA TRACE: hotel lifecycle checks passed; entering floor 200 arena validation.")
 	print("QA: generating floor 200 sovereign arena and spectator gallery.")
 	var boss_room := operations.call("_ensure_floor_room", "power_tower_baghdad", 200) as Node3D
 	if boss_room == null or boss_room.get_node_or_null("BossTrialPlatform") == null:
