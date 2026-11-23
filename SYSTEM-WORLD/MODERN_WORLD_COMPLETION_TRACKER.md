@@ -1398,3 +1398,14 @@ This section supersedes the earlier point-only fan prediction wording above. The
 - [ ] Godot and canonical Android workflows for the resulting exact HEAD are queued; do not mark the new implementation verified until both pass on the same commit.
 - [ ] Physical Android touch/visual testing remains outstanding.
 - PR #38 remains draft and unmerged. Do not merge into main without explicit user approval.
+
+
+### NPC fan ticket-pool participation — 23 November 2026
+
+- [x] Add clearly labelled NPC spectator identities with a fixed 300-credit virtual ticket budget, separate from the human SYSTEM wallet.
+- [x] Allow NPC spectators to enter the same 1v1 match pool as human fans through an explicit NPC-only ticket API; NPC stakes and balances are persisted.
+- [x] Route NPC winnings/refunds back to NPC-only balances. When a human wins a pool containing NPC stakes, the human's proportional payout is credited to the SYSTEM wallet.
+- [x] Extend regression coverage for NPC participation, the 300-credit budget, human winnings from a mixed pool, and NPC balance persistence.
+- [ ] Automated NPC crowd selection, actual live match scheduling, spectator UI, online accounts, server-authoritative settlement and global anti-cheat remain pending. NPC entries must be labelled as simulated, never as real users.
+- [ ] Validate the latest exact branch HEAD with Godot and canonical Android workflows before marking this change verified.
+- PR #38 remains draft and unmerged.
