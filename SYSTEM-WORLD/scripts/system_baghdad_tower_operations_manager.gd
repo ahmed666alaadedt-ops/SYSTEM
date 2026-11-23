@@ -4997,6 +4997,9 @@ func _add_restaurant_staff_controls(role: String) -> void:
 		elif role == "restaurant_chef" and state == "preparing":
 			next_status = "ready"
 			action_text = "تأكيد جاهزية الوجبة"
+		elif role == "restaurant_waiter" and state == "awaiting_waiter":
+			next_status = "placed"
+			action_text = "استقبال طلب الزبون عند الطاولة"
 		elif role == "restaurant_waiter" and state == "ready":
 			next_status = "served"
 			action_text = "توصيل الوجبة إلى الطاولة"
@@ -5048,7 +5051,7 @@ func _process_restaurant_staff_service() -> void:
 			if role == "restaurant_chef" and state in ["placed", "preparing"]:
 				selected_table_id = table_id
 				break
-			if role == "restaurant_waiter" and state == "ready":
+			if role == "restaurant_waiter" and state in ["awaiting_waiter", "ready"]:
 				selected_table_id = table_id
 				break
 		if selected_table_id.is_empty():
@@ -5057,7 +5060,10 @@ func _process_restaurant_staff_service() -> void:
 		if model == null:
 			continue
 		var order: Dictionary = restaurant_orders[selected_table_id]
-		order["status"] = "preparing" if role == "restaurant_chef" else "ready"
+		var starting_state := str(order.get("status", "placed"))
+		var service_action := "prepare" if role == "restaurant_chef" else ("take_order" if starting_state == "awaiting_waiter" else "deliver")
+		var completion_state := "ready" if role == "restaurant_chef" else ("placed" if service_action == "take_order" else "served")
+		order["status"] = "preparing" if role == "restaurant_chef" else ("taking_order" if service_action == "take_order" else "delivering")
 		order["staff_id"] = str(employee.get_meta("system_tower_staff_id", ""))
 		order["updated_at_unix"] = int(Time.get_unix_time_from_system())
 		restaurant_orders[selected_table_id] = order
@@ -5073,8 +5079,10 @@ func _process_restaurant_staff_service() -> void:
 			task_position = kitchen.position + Vector3(0.0, 0.0, 2.2) if kitchen != null else home_position + Vector3(0.0, 0.0, -2.0)
 			model.call("set_activity", "work")
 		else:
-			var parts := selected_table_id.split("_")
-			var table_index := int(parts[parts.size() - 1]) if parts.size() > 0 else -1
+			var table_index := int(order.get("table_index", -1))
+			if table_index < 0:
+				var parts := selected_table_id.split("_")
+				table_index = int(parts[parts.size() - 1]) if parts.size() > 0 else -1
 			var table_root := active_floor_root.get_node_or_null("RestaurantTable_%02d" % table_index) as Node3D
 			task_position = table_root.position + Vector3(0.0, 0.0, 2.6) if table_root != null else home_position + Vector3(0.0, 0.0, 2.0)
 			model.call("set_activity", "walk")
@@ -5087,7 +5095,7 @@ func _process_restaurant_staff_service() -> void:
 				return
 			var active_order: Dictionary = restaurant_orders.get(selected_table_id, {})
 			if not active_order.is_empty():
-				active_order["status"] = "ready" if role == "restaurant_chef" else "served"
+				active_order["status"] = completion_state
 				active_order["updated_at_unix"] = int(Time.get_unix_time_from_system())
 				restaurant_orders[selected_table_id] = active_order
 				_save_restaurant_orders()
@@ -5149,9 +5157,12 @@ func open_restaurant_table(table_node: Node) -> void:
 	if not active_order.is_empty():
 		var state := str(active_order.get("status", "placed"))
 		var state_names := {
+			"awaiting_waiter": "الزبون بانتظار النادل لاستقبال الطلب",
+			"taking_order": "النادل يستقبل طلب الزبون",
 			"placed": "وصل الطلب إلى المطبخ",
 			"preparing": "الشيف يحضّر الوجبة",
 			"ready": "الوجبة جاهزة للتقديم",
+			"delivering": "النادل في طريقه إلى الطاولة",
 			"served": "النادل قدّم الوجبة — استمتع بوجبتك"
 		}
 		var items: Array = active_order.get("items", [])
@@ -5231,6 +5242,8 @@ func _place_restaurant_order(table_id: String) -> void:
 		"items": draft.duplicate(true),
 		"total": total,
 		"status": "placed",
+		"npc_order": false,
+		"table_index": int(current_restaurant_table_node.get_meta("system_restaurant_table_index", -1)) if is_instance_valid(current_restaurant_table_node) else -1,
 		"created_at_unix": int(Time.get_unix_time_from_system()),
 		"tower_id": "shopping_tower_baghdad"
 	}
@@ -5387,6 +5400,52 @@ func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: i
 		room.add_child(queue_marker)
 
 
+func _create_npc_restaurant_order(table_root: Node3D, customer_id: String, floor_number: int) -> void:
+	if table_root == null or customer_id.is_empty():
+		return
+	var table_id := str(table_root.get_meta("system_restaurant_table_id", ""))
+	if table_id.is_empty():
+		return
+	var existing: Dictionary = restaurant_orders.get(table_id, {})
+	if not existing.is_empty():
+		if bool(existing.get("npc_order", false)):
+			var diners: Array = existing.get("customer_ids", [])
+			if not diners.has(customer_id):
+				diners.append(customer_id)
+			existing["customer_ids"] = diners
+			restaurant_orders[table_id] = existing
+			_save_restaurant_orders()
+		return
+	var menu: Array = []
+	for product_value in PRODUCT_CATALOG.get("shopping_tower_baghdad", []):
+		var product: Dictionary = product_value
+		if str(product.get("id", "")).begins_with("restaurant_"):
+			menu.append(product)
+	if menu.is_empty():
+		return
+	var first_index := posmod(customer_id.hash(), menu.size())
+	var second_index := posmod(first_index + 1 + posmod(floor_number, maxi(menu.size() - 1, 1)), menu.size())
+	var selected: Array = []
+	var total := 0
+	for menu_index in [first_index, second_index]:
+		var product: Dictionary = menu[menu_index]
+		var item := {"item_id": str(product.get("id", "")), "name": str(product.get("name", "وجبة")), "price": int(product.get("price", 0))}
+		selected.append(item)
+		total += int(item["price"])
+	restaurant_orders[table_id] = {
+		"table_id": table_id,
+		"table_index": int(table_root.get_meta("system_restaurant_table_index", -1)),
+		"items": selected,
+		"total": total,
+		"status": "awaiting_waiter",
+		"npc_order": true,
+		"customer_ids": [customer_id],
+		"created_at_unix": int(Time.get_unix_time_from_system()),
+		"tower_id": "shopping_tower_baghdad"
+	}
+	_save_restaurant_orders()
+
+
 func _seat_customer_at_restaurant(visitor: Node3D, room: Node3D, queue_seed: int) -> void:
 	if visitor == null or room == null:
 		return
@@ -5413,6 +5472,7 @@ func _seat_customer_at_restaurant(visitor: Node3D, room: Node3D, queue_seed: int
 			visitor.rotation.y = atan2(table_root.position.x - visitor.position.x, table_root.position.z - visitor.position.z)
 			visitor.set_meta("system_restaurant_table_node", table_root.name)
 			visitor.set_meta("system_restaurant_seat_node", seat_marker.name)
+			_create_npc_restaurant_order(table_root, customer_id, int(room.get_meta("system_tower_floor_number", 29)))
 			visitor.remove_meta("system_restaurant_queue_marker")
 			for visitor_child in visitor.get_children():
 				if visitor_child.has_method("set_activity"):
