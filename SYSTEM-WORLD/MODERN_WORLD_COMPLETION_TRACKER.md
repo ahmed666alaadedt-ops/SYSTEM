@@ -1339,3 +1339,18 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [ ] Extend multiplayer QA for deadline start/expiry, checkpoint rollback, offline/outage grace, prediction lock/settlement, verified milestone rewards, duplicate claims and cross-device persistence.
 - [ ] This section records approved design scope only; it is not a claim that player-versus-player matchmaking, prediction settlement or real-money prize payouts are implemented.
 - [ ] Keep PR #38 as draft and do not merge into main without explicit user approval.
+
+### Power Tower economy clarification — virtual livelihood rewards, fan predictions, and free/paid progression — 23 November 2026
+
+This clarification supersedes any earlier wording that could imply cash betting or cash payouts.
+
+- [x] **Fighters' floor rewards are in-game virtual currency, not real-world cash.** Award the fighter a published virtual-currency reward for each officially verified floor victory/clear, with higher milestone rewards at selected floors/ranks. This currency is usable in SYSTEM WORLD for ordinary living and progression: food, drinks, accommodation/rent, transport, repairs, equipment, services and other world purchases.
+- [x] **Fans are spectators and predictors, not cash bettors.** Fans may predict the winner of a human-versus-human match using free, non-purchasable, non-transferable virtual prediction points. Correct predictions earn additional prediction points and/or clearly defined in-game fan rewards. Prediction points never represent cash, cannot be withdrawn, and are not wagered against real money.
+- [x] **Free players can earn the same core livelihood currency.** They can earn it through verified Power Tower victories, jobs, missions, trade, crafting, exploration and other gameplay. They can buy food, drinks, shelter, equipment and develop skills without paying real money.
+- [x] **Players who top up may obtain premium in-game currency through the official store.** Keep premium currency separate and clearly labelled from gameplay-earned livelihood currency; disclose exchange rates and purchases. Paid currency may support cosmetics and optional convenience, but must not buy ranked wins, combat stats, floor qualification or competitive matchmaking advantage.
+- [x] **No cash-out promise:** neither fighter rewards nor fan prediction points are redeemable for real-world money, and no real-money stakes or player-to-player cash betting are part of this design.
+- [ ] Define the exact reward amount per floor/milestone, economy sinks, daily/seasonal earning balance, anti-farming rules and transparent player-facing reward schedule.
+- [ ] Define whether premium currency can purchase ordinary goods directly or only selected optional goods; preserve a complete free path to essential food, shelter, repairs and competitive equipment.
+- [ ] Implement server-authoritative reward grants exactly once per verified match/floor clear, persistent balances across devices, transaction history, anti-duplication protection and clear UI separation of earned and purchased balances.
+- [ ] Implement fan prediction locking and settlement from verified match results only; enforce one prediction per account/match, no self-prediction by participants, and abuse/collusion controls.
+- [ ] This is approved design scope; implementation and QA remain pending. Keep PR #38 draft and do not merge to main without explicit user approval.
