@@ -878,6 +878,23 @@ func _run() -> void:
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
 		return
+	var npc_ticket_match: Dictionary = progression_test_manager.call("register_spectator_match", "validator_npc_ticket_pool", "npc_pool_fighter_a", "npc_pool_fighter_b", 15)
+	var npc_registration: Dictionary = progression_test_manager.call("register_npc_spectator", "crowd_001")
+	var npc_ticket: Dictionary = progression_test_manager.call("submit_npc_spectator_ticket", "validator_npc_ticket_pool", "crowd_001", "npc_pool_fighter_a", 30)
+	var human_ticket: Dictionary = progression_test_manager.call("submit_spectator_prediction", "validator_npc_ticket_pool", "human_pool_fan", "npc_pool_fighter_b", 20)
+	var npc_lock: Dictionary = progression_test_manager.call("lock_spectator_predictions", "validator_npc_ticket_pool")
+	var npc_settlement: Dictionary = progression_test_manager.call("settle_spectator_match", "validator_npc_ticket_pool", "npc_pool_fighter_b", "LOCAL_COMBAT_AUTHORITY")
+	var npc_status: Dictionary = progression_test_manager.call("get_spectator_status", "npc:crowd_001")
+	if not bool(npc_ticket_match.get("success", false)) or not bool(npc_registration.get("success", false)) or not bool(npc_ticket.get("success", false)) or not bool(human_ticket.get("success", false)) or not bool(npc_lock.get("success", false)) or not bool(npc_settlement.get("success", false)) or str(npc_status.get("participant_type", "")) != "NPC" or int(npc_status.get("ticket_balance", -1)) != 270 or int(npc_settlement.get("payouts", {}).get("human_pool_fan", 0)) != 50:
+		_fail("Clearly labelled NPC fan tickets must join the same virtual pool, use a capped NPC budget and pay the correct human fan.")
+		progression_test_manager.queue_free()
+		reloaded_progression_manager.queue_free()
+		return
+	if not bool(operations.call("spend_spectator_stake", 30)):
+		_fail("The validator could not restore the test-only human wallet balance after NPC pool settlement.")
+		progression_test_manager.queue_free()
+		reloaded_progression_manager.queue_free()
+		return
 	var no_winner_match: Dictionary = progression_test_manager.call("register_spectator_match", "validator_no_winner", "refund_fighter_a", "refund_fighter_b", 14)
 	var refund_ticket: Dictionary = progression_test_manager.call("submit_spectator_prediction", "validator_no_winner", "refund_fan", "refund_fighter_a", 25)
 	var refund_lock: Dictionary = progression_test_manager.call("lock_spectator_predictions", "validator_no_winner")
@@ -910,7 +927,8 @@ func _run() -> void:
 	print("QA: spectator prediction lock, settlement, daily cap and persistence checks completed.")
 	var persisted_fan_status: Dictionary = spectator_reload_manager.call("get_spectator_status", "fan_alpha")
 	var persisted_match: Dictionary = spectator_reload_manager.call("get_spectator_match", "validator_duel_001")
-	if str(persisted_match.get("state", "")) != "settled" or int(persisted_match.get("payouts", {}).get("fan_alpha", 0)) != 80 or int(persisted_fan_status.get("cash_value", -1)) != 0:
+	var persisted_npc_status: Dictionary = spectator_reload_manager.call("get_spectator_status", "npc:crowd_001")
+	if str(persisted_match.get("state", "")) != "settled" or int(persisted_match.get("payouts", {}).get("fan_alpha", 0)) != 80 or int(persisted_fan_status.get("cash_value", -1)) != 0 or int(persisted_npc_status.get("ticket_balance", -1)) != 270 or str(persisted_npc_status.get("participant_type", "")) != "NPC":
 		_fail("The virtual ticket payout ledger did not persist through a manager reload.")
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
