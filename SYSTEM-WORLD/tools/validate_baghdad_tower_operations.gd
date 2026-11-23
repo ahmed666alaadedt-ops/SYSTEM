@@ -1172,7 +1172,9 @@ func _run() -> void:
 		operations.call("_advance_restaurant_order", restaurant_test_table_id, "served")
 		var persisted_test_order: Dictionary = operations.get("restaurant_orders").get(restaurant_test_table_id, {})
 		persisted_test_order["meal_consumed"] = true
-		operations.get("restaurant_orders")[restaurant_test_table_id] = persisted_test_order
+		var persisted_test_orders: Dictionary = operations.get("restaurant_orders")
+		persisted_test_orders[restaurant_test_table_id] = persisted_test_order
+		operations.set("restaurant_orders", persisted_test_orders)
 		operations.call("_advance_restaurant_order", restaurant_test_table_id, "completed")
 		var restaurant_history: Array = operations.get("restaurant_order_history")
 		restaurant_order_ok = not operations.get("restaurant_orders").has(restaurant_test_table_id) and not restaurant_history.is_empty() and str(restaurant_history[-1].get("status", "")) == "completed"
@@ -1993,7 +1995,7 @@ func _run() -> void:
 	health_manager.set("current_health", health_before_meal)
 	health_manager.set("is_wounded", wounded_before_meal)
 	health_manager.call("_sync_player_state")
-	health_manager.get("health_changed").emit(health_before_meal, float(health_manager.get("MAX_HEALTH")))
+	health_manager.emit_signal("health_changed", health_before_meal, 100.0)
 	progression_manager.set("total_xp", total_xp_before_meal)
 	progression_manager.set("xp_in_level", xp_in_level_before_meal)
 	progression_manager.set("current_level", level_before_meal)
