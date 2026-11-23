@@ -1830,6 +1830,60 @@ func _run() -> void:
 		_fail("Restaurant visitors were not assigned to real owned seats or the eight visible waiting positions were not generated.")
 		return
 	print("QA TRACE: two restaurant customers occupy individually owned seats; eight visible queue positions are available.")
+	var npc_restaurant_order_id := ""
+	for floor_child in restaurant_room.get_children():
+		if not str(floor_child.name).begins_with("TowerCustomer_"):
+			continue
+		var table_name := str(floor_child.get_meta("system_restaurant_table_node", ""))
+		var table_root := restaurant_room.get_node_or_null(table_name) as Node3D
+		if table_root == null:
+			continue
+		var candidate_order_id := str(table_root.get_meta("system_restaurant_table_id", "")) + "_npc"
+		var candidate_order: Dictionary = operations.get("restaurant_orders").get(candidate_order_id, {})
+		var customer_id := str(floor_child.get_meta("system_tower_customer_id", floor_child.name))
+		if bool(candidate_order.get("npc_order", false)) and candidate_order.get("customer_ids", []).has(customer_id):
+			npc_restaurant_order_id = candidate_order_id
+			break
+	if npc_restaurant_order_id.is_empty():
+		_fail("Seated customer NPCs did not generate an independent restaurant order for the waiter.")
+		return
+	var npc_restaurant_order: Dictionary = operations.get("restaurant_orders").get(npc_restaurant_order_id, {})
+	if str(npc_restaurant_order.get("status", "")) != "awaiting_waiter" or npc_restaurant_order.get("items", []).size() < 1:
+		_fail("An autonomous NPC restaurant order was not created in the waiter queue.")
+		return
+	var waiter_staff_id := str(shopping_staff_ids[5]) if shopping_staff_ids.size() > 5 else ""
+	var restaurant_waiter := shopping_tower_node.find_child("TowerStaff_" + waiter_staff_id, true, false) as Node3D if not waiter_staff_id.is_empty() else null
+	if restaurant_waiter == null or restaurant_waiter.get_parent() != restaurant_room:
+		_fail("The assigned restaurant waiter did not reach the dining floor.")
+		return
+	print("QA TRACE: autonomous NPC dining order created; waiting for waiter to take the order.")
+	for _attempt in range(80):
+		npc_restaurant_order = operations.get("restaurant_orders").get(npc_restaurant_order_id, {})
+		if str(npc_restaurant_order.get("status", "")) != "awaiting_waiter":
+			break
+		await create_timer(0.25).timeout
+	if str(npc_restaurant_order.get("status", "")) == "awaiting_waiter":
+		_fail("The waiter did not physically visit the NPC table and accept its order.")
+		return
+	print("QA TRACE: waiter accepted the NPC order; waiting for kitchen preparation.")
+	for _attempt in range(80):
+		npc_restaurant_order = operations.get("restaurant_orders").get(npc_restaurant_order_id, {})
+		if str(npc_restaurant_order.get("status", "")) == "ready":
+			break
+		await create_timer(0.25).timeout
+	if str(npc_restaurant_order.get("status", "")) != "ready":
+		_fail("The restaurant chef did not prepare the autonomous NPC order.")
+		return
+	print("QA TRACE: chef prepared the NPC order; waiting for waiter delivery.")
+	for _attempt in range(80):
+		npc_restaurant_order = operations.get("restaurant_orders").get(npc_restaurant_order_id, {})
+		if str(npc_restaurant_order.get("status", "")) == "served":
+			break
+		await create_timer(0.25).timeout
+	if str(npc_restaurant_order.get("status", "")) != "served":
+		_fail("The waiter did not deliver the prepared NPC meal to the occupied table.")
+		return
+	print("QA TRACE: autonomous NPC order completed waiter acceptance, chef preparation and waiter delivery.")
 	var chef_workstation := restaurant_room.get_node_or_null("StaffWorkstation_restaurant_chef") as Node3D
 	if restaurant_chef.get_parent() != restaurant_room or chef_workstation == null or not bool(restaurant_chef.get_meta("system_staff_workstation_active", false)):
 		_fail("The restaurant chef did not travel to floor 29 and reach the active workstation.")
