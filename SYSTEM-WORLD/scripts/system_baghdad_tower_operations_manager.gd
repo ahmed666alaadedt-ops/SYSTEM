@@ -1401,7 +1401,7 @@ func _build_power_tower_floor_schedule_text() -> String:
 			else:
 				standard_floors.append(str(floor_number))
 		chapter_lines.append("الطوابق %03d-%03d | عادي 1v1: %s | نخبة 1v1: %s | زعماء 1v1: %s" % [first_floor, last_floor, ",".join(standard_floors), ",".join(elite_floors), ",".join(boss_floors)])
-	return "جدول جميع نزالات SYSTEM POWER TOWER — 200 طابق\nكل المواجهات فردية 1 ضد 1 — لا فرق ولا قتال جماعي\n" + "\n".join(chapter_lines)
+	return "جدول نزالات SYSTEM POWER TOWER — 200 طابق\nتسجيل رسمي ورقم مقاتل | 3 حكام: رئيسي، فني، سلامة\nضربة نظيفة 1 | حرجة 2 | إسقاط 1 | TKO عند 10 | KO / قرار حكام / انسحاب\n3 خسارات متتالية: هبوط درجة (10 طوابق) | 10 خسارات إجمالية: استبعاد وإعادة للطابق 1\n100+: أهلية غرفة خاصة | 200: أسلحة مسموحة ونزال السيادة النهائي\nكل المواجهات فردية 1 ضد 1 — لا فرق ولا قتال جماعي\n" + "\n".join(chapter_lines)
 
 
 func _create_power_tower_display(parent: Node3D, display_name: String, display_position: Vector3, display_size: Vector2, display_rotation_y: float, display_text: String, font_size: int, pixel_size: float) -> Node3D:
@@ -2855,7 +2855,7 @@ func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) 
 		room.add_child(theme_pillar)
 	var arena_label := Label3D.new()
 	arena_label.name = "ArenaChallengeDisplay"
-	arena_label.text = "شاشة عرض المعركة — BATTLE DISPLAY\n%s\n%s | الطابق %d / 200\n%s" % [str(data.get("arena_name", "POWER ARENA")), theme_name, floor_number, rules]
+	arena_label.text = "شاشة عرض المعركة — BATTLE DISPLAY\n%s\n%s | الطابق %d / 200 | الدرجة %02d\n%s\nالحكام: رئيسي + فني + سلامة\nنقاط: نظيفة 1 | حرجة 2 | إسقاط 1 | TKO عند 10\nالخسارة: 3 متتالية هبوط 10 طوابق | 10 إجمالية استبعاد" % [str(data.get("arena_name", "POWER ARENA")), theme_name, floor_number, int(data.get("division_number", 1)), rules]
 	arena_label.position = Vector3(0.0, 5.4, -radius * 0.48)
 	arena_label.font_size = 22
 	arena_label.pixel_size = 0.014
