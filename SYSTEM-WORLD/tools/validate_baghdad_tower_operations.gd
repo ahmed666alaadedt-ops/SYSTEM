@@ -1805,6 +1805,36 @@ func _run() -> void:
 	if customers_after_evacuation != 4:
 		_fail("Shopping Tower customer visitors did not return to the public lobby after emergency evacuation; found %d." % customers_after_evacuation)
 		return
+	print("QA TRACE: restaurant evacuation and customer return passed; starting pool supervisor duty trip.")
+	operations.set("current_tower_id", "entertainment_tower_baghdad")
+	operations.call("_travel_to_floor", "entertainment_tower_baghdad", 18)
+	var entertainment_staff_ids: Array = operations.get("staff_by_tower").get("entertainment_tower_baghdad", [])
+	if entertainment_staff_ids.size() <= 3:
+		_fail("Entertainment Tower pool supervisor staff record is missing.")
+		return
+	var entertainment_tower_node := tower_manager.get_node("EntertainmentTower") as Node3D
+	var pool_supervisor := entertainment_tower_node.find_child("TowerStaff_" + str(entertainment_staff_ids[3]), true, false) as Node3D
+	var pool_staff_car := operations.get("active_elevator_car") as Node3D
+	if pool_supervisor == null or pool_staff_car == null or pool_supervisor.get_parent() != pool_staff_car or not bool(pool_supervisor.get_meta("system_staff_in_elevator", false)):
+		_fail("The assigned pool supervisor did not board the physical elevator to the swimming pool floor.")
+		return
+	await create_timer(3.8).timeout
+	var pool_staff_room := operations.get("active_floor_root") as Node3D
+	var pool_supervisor_station := pool_staff_room.get_node_or_null("StaffWorkstation_مشرف المسابح") as Node3D if pool_staff_room != null else null
+	var pool_staff_service := pool_staff_room.get_node_or_null("StaffServicePoint_مشرف المسابح") as Node3D if pool_staff_room != null else null
+	var pool_facility_station := pool_staff_room.get_node_or_null("SpecialFacility_swimming_pool/PoolLifeguardStation") as Node3D if pool_staff_room != null else null
+	if pool_supervisor.get_parent() != pool_staff_room or pool_supervisor_station == null or pool_staff_service == null or pool_facility_station == null or not bool(pool_supervisor.get_meta("system_staff_workstation_active", false)):
+		_fail("The pool supervisor did not reach an active lifeguard workstation beside the pool safety station.")
+		return
+	var expected_pool_duty_position := Vector3(3.2, 0.0, -17.0)
+	if not (pool_supervisor.get_meta("system_staff_workstation_position", Vector3.ZERO) as Vector3).is_equal_approx(expected_pool_duty_position):
+		_fail("The pool supervisor workstation is not positioned beside the lifeguard station.")
+		return
+	operations.call("_return_floor_duty_staff_to_lobbies")
+	if pool_supervisor.get_parent() != entertainment_tower_node.get_node("PublicLobby_Blockout") or pool_supervisor.has_meta("system_staff_duty_floor") or not bool(pool_supervisor.get_meta("system_staff_navigation_enabled", false)):
+		_fail("The pool supervisor did not return to the public lobby and resume the lobby patrol after duty.")
+		return
+	print("QA TRACE: pool supervisor duty, lifeguard workstation and lobby return passed.")
 	print("QA TRACE: final staff/customer assertions passed.")
 	print("Baghdad tower operations validation passed: five connected Baghdad towers, independent Power Tower, NPC commerce, hotel workflows, eleven playable leisure/technology activity loops, equipment, Nen progression and the 200th-floor sovereign boss arena.")
 	# This is a short-lived headless validation process; avoid forcing dummy-renderer teardown of placeholder meshes.
