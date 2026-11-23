@@ -4508,7 +4508,7 @@ func _create_pool_service_interaction(parent: Node3D, node_name: String, service
 	interaction.set_meta("system_interaction_prompt", prompt)
 	interaction.collision_layer = 1
 	interaction.collision_mask = 0
-	var facility_root := parent
+	var facility_root: Node = parent
 	while facility_root != null and not facility_root.has_meta("system_facility_type"):
 		facility_root = facility_root.get_parent()
 	if facility_root != null:
