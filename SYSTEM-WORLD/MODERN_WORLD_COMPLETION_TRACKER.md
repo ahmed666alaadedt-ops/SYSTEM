@@ -1354,3 +1354,15 @@ This clarification supersedes any earlier wording that could imply cash betting 
 - [ ] Implement server-authoritative reward grants exactly once per verified match/floor clear, persistent balances across devices, transaction history, anti-duplication protection and clear UI separation of earned and purchased balances.
 - [ ] Implement fan prediction locking and settlement from verified match results only; enforce one prediction per account/match, no self-prediction by participants, and abuse/collusion controls.
 - [ ] This is approved design scope; implementation and QA remain pending. Keep PR #38 draft and do not merge to main without explicit user approval.
+
+
+## Power Tower economy and spectator predictions — 23 November 2026
+
+- [x] Confirmed the existing player economy uses the same local SYSTEM credits wallet as shopping, food, hotel bookings, services and facility rewards; the player begins with a playable starter balance and can earn more without purchasing currency.
+- [x] Centralized Power Tower floor virtual-credit reward values in the progression manager and included them in the verified floor-clear result. Rewards scale by floor; the final sovereign floor receives its configured completion bonus.
+- [x] Updated tower operations to credit the wallet only from the successful verified floor-clear result. Abandoned, timed-out, wounded or otherwise unconfirmed attempts do not receive floor-clear credits.
+- [x] Extended the Baghdad tower validator to require a positive virtual-credit reward on every floor and increasing rewards between the first two floors.
+- [ ] Implement spectator predictions for NPC-versus-NPC and player-versus-NPC/player matches. Predictions must be free to enter, use non-purchasable/non-transferable prediction points, and reward correct forecasts only; no real-money wagers, deposits, withdrawals or player-to-player cash transfers.
+- [ ] Global fan participation, cross-device leaderboards and anti-cheat settlement require an authoritative online service. The existing public event board is a local-session display and must not be represented as live global multiplayer.
+- [ ] Run canonical Godot validation and Android export on the resulting PR head; no new runtime/build success is claimed by this source update.
+- Scope remains the existing Power Tower and shared SYSTEM wallet; no merge to main.
