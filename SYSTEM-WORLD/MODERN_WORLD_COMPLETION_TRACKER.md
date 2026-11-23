@@ -1256,3 +1256,15 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Pass canonical Android APK build #1278 (run ID 45159685656); APK artifact `14810196776`, 35,978,996 bytes, expires 7 December 2026.
 - [x] Pass Android export #576 (run ID 45159681072) on the same HEAD.
 - [ ] Physical Android playtesting remains outstanding; automated Godot validation and APK export do not verify touch response, visual layout, frame rate, thermal behavior, or collision feel on the device.
+
+
+### Baghdad pool physical locker allocation and guest checkout — 23 November 2026
+
+- [x] Replace the previous player-only locker flag with an actual allocation of the first available physical locker in the selected men's or women's changing suite.
+- [x] Mark the selected locker occupied with the owning player instance, show its occupied state visually, and store the exact suite/floor/locker assignment on the player.
+- [x] Prevent duplicate reservations by retaining the player's current locker when the service is requested again; report when a changing suite has no free lockers.
+- [x] Release the locker and restore its original appearance when the player leaves the pool floor for another floor/tower or completes the return-to-lobby flow, including emergency evacuation.
+- [x] Extend the full tower operations validator to assert real locker occupancy/ownership, duplicate-request protection, and release/re-availability on departure.
+- [x] Pass Godot 4.3 full validation #1545 (run ID 45175817840) on exact gameplay/validator HEAD `7d9cb2d1c19f4783ddf7759821a7feb549b596f3`; full tower operations validation passed, including pool locker lifecycle, swimming physics, staff elevator duty, restaurant evacuation and the 200-floor Power Tower checks.
+- [x] Pass canonical Android APK build #1282 (run ID 45175817938) on the same exact HEAD; APK artifact [14819581182](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45175817938/artifacts/14819581182), 35,981,754 bytes; APK SHA-256 `37a5a8b2aa09693b7a8a35de32919036f2ada3e401f3901d4e829226d337d56c`; expires 7 December 2026.
+- [ ] Physical Android playtesting remains outstanding; automated Godot validation and APK export do not verify device touch response, visual layout, frame rate, thermal behavior, or collision feel.
