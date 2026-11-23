@@ -260,7 +260,8 @@ func settle_spectator_match(match_id: String, winner_id: String, settlement_sour
 	return {"success": true, "winner_id": winner_id, "points_awarded": awarded, "cash_value": 0}
 
 func get_spectator_match(match_id: String) -> Dictionary:
-	return (spectator_matches.get(match_id, {}) as Dictionary).duplicate(true)
+	var match_record: Dictionary = spectator_matches.get(match_id, {})
+	return match_record.duplicate(true)
 
 func get_spectator_status(spectator_id: String) -> Dictionary:
 	var today := Time.get_date_string_from_system(true)
