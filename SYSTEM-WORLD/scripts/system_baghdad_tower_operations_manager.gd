@@ -6241,6 +6241,7 @@ func _spawn_power_wave() -> void:
 			boss,
 			final_boss
 		)
+		opponent.apply_arena_theme(str(active_power_floor_data.get("arena_theme_id", "IRON")))
 		opponent.defeated.connect(_on_power_opponent_defeated)
 		active_floor_root.add_child(opponent)
 		var angle := TAU * float(index) / float(maxi(count, 1))
