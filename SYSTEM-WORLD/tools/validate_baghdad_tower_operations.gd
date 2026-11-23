@@ -1512,6 +1512,15 @@ func _run() -> void:
 			return
 	var test_spectator_seat := spectator_gallery.get_node("SpectatorSeat_00") as Node3D
 	var test_seat_interaction := test_spectator_seat.get_node("SpectatorSeatInteraction") as Area3D
+	var adjacent_floor_room := operations.call("_ensure_floor_room", "power_tower_baghdad", 199) as Node3D
+	var adjacent_gallery := adjacent_floor_room.get_node("PowerTowerSpectatorGallery") as Node3D if adjacent_floor_room != null else null
+	var adjacent_floor_seat := adjacent_gallery.get_node("SpectatorSeat_00") as Node3D if adjacent_gallery != null else null
+	if adjacent_floor_seat == null:
+		_fail("Power Tower exact-floor seat release regression could not create the adjacent floor gallery.")
+		return
+	adjacent_floor_seat.set_meta("system_spectator_seat_reserved", true)
+	adjacent_floor_seat.set_meta("system_spectator_seat_owner", "another_floor_spectator")
+	operations.call("_refresh_power_tower_spectator_seat_summary", adjacent_gallery)
 	var had_player_id := player.has_meta("system_player_id")
 	var previous_player_id := str(player.get_meta("system_player_id", ""))
 	player.set_meta("system_player_id", "validator_spectator")
@@ -1540,6 +1549,12 @@ func _run() -> void:
 	if bool(test_spectator_seat.get_meta("system_spectator_seat_reserved", true)) or bool(player.get_meta("system_power_tower_seated", true)) or player.has_meta("system_power_tower_seat_floor") or int(spectator_gallery.get_meta("system_spectator_seats_occupied", -1)) != 0:
 		_fail("Power Tower did not release a spectator seat during floor/lobby transition.")
 		return
+	if not bool(adjacent_floor_seat.get_meta("system_spectator_seat_reserved", false)) or str(adjacent_floor_seat.get_meta("system_spectator_seat_owner", "")) != "another_floor_spectator":
+		_fail("Power Tower seat cleanup released a same-number seat belonging to a different floor.")
+		return
+	adjacent_floor_seat.set_meta("system_spectator_seat_reserved", false)
+	adjacent_floor_seat.remove_meta("system_spectator_seat_owner")
+	operations.call("_refresh_power_tower_spectator_seat_summary", adjacent_gallery)
 	if had_player_id:
 		player.set_meta("system_player_id", previous_player_id)
 	else:
