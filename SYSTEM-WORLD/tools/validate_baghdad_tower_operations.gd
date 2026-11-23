@@ -1491,6 +1491,28 @@ func _run() -> void:
 	if boss_room == null or boss_room.get_node_or_null("BossTrialPlatform") == null:
 		_fail("Power Tower floor 200 boss arena was not generated.")
 		return
+	var previous_power_floor_data: Dictionary = operations.get("active_power_floor_data").duplicate(true)
+	var previous_power_floor_root := operations.get("active_floor_root") as Node3D
+	var previous_power_floor_in_progress := bool(operations.get("power_floor_in_progress"))
+	operations.set("active_power_floor_data", boss_data.duplicate(true))
+	operations.set("active_floor_root", boss_room)
+	operations.set("power_floor_in_progress", false)
+	var team_match_gate: Dictionary = operations.call("begin_verified_power_tower_pvp_match", {"server_verified": true, "competition_format": "TEAM_2V2", "opponent_kind": "HUMAN_PLAYER", "ai_fallback": false, "floor_number": 200, "match_id": "validator_team_match", "opponent_player_id": "team_opponent"}, "validator_player")
+	if bool(team_match_gate.get("success", false)) or str(team_match_gate.get("reason", "")) != "INDIVIDUAL_1V1_REQUIRED":
+		_fail("Power Tower matchmaking accepted a team format instead of rejecting it.")
+		return
+	var ai_match_gate: Dictionary = operations.call("begin_verified_power_tower_pvp_match", {"server_verified": true, "competition_format": "INDIVIDUAL_1V1", "opponent_kind": "AI", "ai_fallback": true, "floor_number": 200, "match_id": "validator_ai_match", "opponent_player_id": "ai_opponent"}, "validator_player")
+	if bool(ai_match_gate.get("success", false)) or str(ai_match_gate.get("reason", "")) != "HUMAN_OPPONENT_REQUIRED":
+		_fail("Power Tower matchmaking accepted an AI opponent or AI fallback.")
+		return
+	var unverified_match_gate: Dictionary = operations.call("begin_verified_power_tower_pvp_match", {"server_verified": false, "competition_format": "INDIVIDUAL_1V1", "opponent_kind": "HUMAN_PLAYER", "ai_fallback": false, "floor_number": 200, "match_id": "validator_unverified_match", "opponent_player_id": "human_opponent"}, "validator_player")
+	if bool(unverified_match_gate.get("success", false)) or str(unverified_match_gate.get("reason", "")) != "SERVER_MATCH_AUTHORITY_REQUIRED":
+		_fail("Power Tower matchmaking accepted an unverified human match.")
+		return
+	operations.set("active_power_floor_data", previous_power_floor_data)
+	operations.set("active_floor_root", previous_power_floor_root)
+	operations.set("power_floor_in_progress", previous_power_floor_in_progress)
+	print("QA: strict Power Tower gate rejects team matches, AI fallback and unverified matchmaking.")
 	print("QA: floor 200 arena generation returned; checking theme pillars and spectator seats.")
 	var boss_theme_pillar_count := 0
 	for boss_room_child in boss_room.get_children():
