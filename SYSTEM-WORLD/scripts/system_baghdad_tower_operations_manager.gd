@@ -5321,7 +5321,7 @@ func _seat_player_at_restaurant(table_node: Node) -> void:
 	player.set_meta("system_restaurant_seated", false)
 	player.velocity = Vector3.ZERO
 	var target_position := selected_seat.global_position + Vector3(0.0, 0.9, 0.0)
-	var facing := table_node.global_position - target_position
+	var facing: Vector3 = table_node.global_position - target_position
 	var target_rotation := atan2(facing.x, facing.z)
 	var seating_tween := create_tween()
 	player.set_meta("system_restaurant_seating_tween", seating_tween)
