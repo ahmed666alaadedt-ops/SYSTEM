@@ -8,7 +8,8 @@ signal tower_record_updated(highest_floor: int)
 const SAVE_PATH := "user://system_power_tower.cfg"
 const MAX_FLOORS := 200
 const SPECTATOR_DAILY_PREDICTION_LIMIT := 20
-const SPECTATOR_POINTS_PER_CORRECT_PREDICTION := 1
+const SPECTATOR_MIN_STAKE := 1
+const SPECTATOR_MAX_STAKE := 500
 const LOCAL_MATCH_AUTHORITY := "LOCAL_COMBAT_AUTHORITY"
 const FLOOR_THEME_IDS := ["IRON", "DESERT", "FROST", "VOLCANIC", "JUNGLE", "RUINS", "STORM", "SHADOW", "CELESTIAL", "SOVEREIGN"]
 const FLOOR_THEME_NAMES := ["قاعة الحديد", "ساحة الصحراء", "ميدان الجليد", "حلبة البركان", "غابة المحاربين", "أطلال الملوك", "ساحة العاصفة", "ميدان الظلال", "الحلبة السماوية", "عرش السيادة"]
@@ -26,6 +27,7 @@ var spectator_save_path := "user://system_power_tower_spectator_predictions.cfg"
 var spectator_matches: Dictionary = {}
 var spectator_prediction_points: Dictionary = {}
 var spectator_daily_counts: Dictionary = {}
+var spectator_wallet_provider: Node
 
 func _ready() -> void:
 	name = "SYSTEMPowerTowerManager"
@@ -171,7 +173,11 @@ func get_tower_status() -> Dictionary:
 	}
 
 
-## Local prototype lifecycle for free fan predictions. Online settlement must move to a trusted server.
+## Local prototype for virtual-credit fan ticket pools. Online settlement must move to a trusted server.
+func set_spectator_wallet_provider(provider: Node) -> void:
+	spectator_wallet_provider = provider
+
+
 func register_spectator_match(match_id: String, fighter_a_id: String, fighter_b_id: String, floor_number: int) -> Dictionary:
 	match_id = match_id.strip_edges()
 	fighter_a_id = fighter_a_id.strip_edges()
@@ -195,17 +201,21 @@ func register_spectator_match(match_id: String, fighter_a_id: String, fighter_b_
 		"competition_format": "INDIVIDUAL_1V1",
 		"state": "open",
 		"predictions": {},
+		"total_pool": 0,
 		"created_at_unix": int(Time.get_unix_time_from_system())
 	}
 	_save_spectator_data()
-	return {"success": true, "match_id": match_id, "state": "open"}
+	return {"success": true, "match_id": match_id, "state": "open", "total_pool": 0}
 
-func submit_spectator_prediction(match_id: String, spectator_id: String, predicted_winner_id: String) -> Dictionary:
+
+func submit_spectator_prediction(match_id: String, spectator_id: String, predicted_winner_id: String, stake_amount: int = 10) -> Dictionary:
 	match_id = match_id.strip_edges()
 	spectator_id = spectator_id.strip_edges()
 	predicted_winner_id = predicted_winner_id.strip_edges()
 	if spectator_id.is_empty():
 		return {"success": false, "reason": "INVALID_SPECTATOR"}
+	if stake_amount < SPECTATOR_MIN_STAKE or stake_amount > SPECTATOR_MAX_STAKE:
+		return {"success": false, "reason": "INVALID_TICKET_STAKE", "minimum": SPECTATOR_MIN_STAKE, "maximum": SPECTATOR_MAX_STAKE}
 	if not spectator_matches.has(match_id):
 		return {"success": false, "reason": "MATCH_NOT_FOUND"}
 	var match_record: Dictionary = spectator_matches[match_id]
@@ -225,17 +235,25 @@ func submit_spectator_prediction(match_id: String, spectator_id: String, predict
 	var daily_count := int(daily_record.get("count", 0)) if str(daily_record.get("date", "")) == today else 0
 	if daily_count >= SPECTATOR_DAILY_PREDICTION_LIMIT:
 		return {"success": false, "reason": "DAILY_PREDICTION_LIMIT_REACHED"}
+	if not is_instance_valid(spectator_wallet_provider) or not spectator_wallet_provider.has_method("spend_spectator_stake"):
+		return {"success": false, "reason": "SPECTATOR_WALLET_UNAVAILABLE"}
+	if not bool(spectator_wallet_provider.call("spend_spectator_stake", stake_amount)):
+		return {"success": false, "reason": "INSUFFICIENT_VIRTUAL_CREDITS"}
 	predictions[spectator_id] = {
 		"predicted_winner_id": predicted_winner_id,
+		"stake_amount": stake_amount,
 		"submitted_at_unix": int(Time.get_unix_time_from_system()),
 		"correct": false,
-		"points_awarded": 0
+		"payout_amount": 0,
+		"net_profit": -stake_amount
 	}
 	match_record["predictions"] = predictions
+	match_record["total_pool"] = int(match_record.get("total_pool", 0)) + stake_amount
 	spectator_matches[match_id] = match_record
 	spectator_daily_counts[spectator_id] = {"date": today, "count": daily_count + 1}
 	_save_spectator_data()
-	return {"success": true, "match_id": match_id, "prediction_locked_at_match_start": true}
+	return {"success": true, "match_id": match_id, "stake_amount": stake_amount, "total_pool": int(match_record["total_pool"]), "virtual_currency": "SYSTEM_CREDITS"}
+
 
 func lock_spectator_predictions(match_id: String) -> Dictionary:
 	match_id = match_id.strip_edges()
@@ -248,7 +266,8 @@ func lock_spectator_predictions(match_id: String) -> Dictionary:
 	match_record["locked_at_unix"] = int(Time.get_unix_time_from_system())
 	spectator_matches[match_id] = match_record
 	_save_spectator_data()
-	return {"success": true, "state": "locked"}
+	return {"success": true, "state": "locked", "total_pool": int(match_record.get("total_pool", 0))}
+
 
 func settle_spectator_match(match_id: String, winner_id: String, settlement_source: String) -> Dictionary:
 	match_id = match_id.strip_edges()
@@ -262,47 +281,104 @@ func settle_spectator_match(match_id: String, winner_id: String, settlement_sour
 		return {"success": false, "reason": "MATCH_NOT_LOCKED"}
 	if winner_id != str(match_record.get("fighter_a_id", "")) and winner_id != str(match_record.get("fighter_b_id", "")):
 		return {"success": false, "reason": "WINNER_NOT_IN_MATCH"}
+	if not is_instance_valid(spectator_wallet_provider) or not spectator_wallet_provider.has_method("grant_spectator_payout"):
+		return {"success": false, "reason": "SPECTATOR_WALLET_UNAVAILABLE"}
 	var predictions: Dictionary = match_record.get("predictions", {})
-	var awarded: Dictionary = {}
+	var total_pool := int(match_record.get("total_pool", 0))
+	var winning_stake := 0
+	var winning_ids: Array[String] = []
 	for spectator_id_variant in predictions.keys():
 		var spectator_id := str(spectator_id_variant)
 		var prediction: Dictionary = predictions[spectator_id]
-		var correct := str(prediction.get("predicted_winner_id", "")) == winner_id
-		var points := SPECTATOR_POINTS_PER_CORRECT_PREDICTION if correct else 0
-		prediction["correct"] = correct
-		prediction["points_awarded"] = points
-		predictions[spectator_id] = prediction
-		if points > 0:
-			spectator_prediction_points[spectator_id] = int(spectator_prediction_points.get(spectator_id, 0)) + points
-			awarded[spectator_id] = points
+		if str(prediction.get("predicted_winner_id", "")) == winner_id:
+			winning_stake += int(prediction.get("stake_amount", 0))
+			winning_ids.append(spectator_id)
+	var payouts: Dictionary = {}
+	var profits: Dictionary = {}
+	var total_paid_out := 0
+	if winning_stake > 0:
+		for index in range(winning_ids.size()):
+			var spectator_id := winning_ids[index]
+			var prediction: Dictionary = predictions[spectator_id]
+			var stake := int(prediction.get("stake_amount", 0))
+			var payout := total_pool - total_paid_out if index == winning_ids.size() - 1 else int(floor(float(total_pool) * float(stake) / float(winning_stake)))
+			if payout > 0:
+				var granted := int(spectator_wallet_provider.call("grant_spectator_payout", payout))
+				if granted != payout:
+					return {"success": false, "reason": "PAYOUT_GRANT_FAILED", "spectator_id": spectator_id}
+			total_paid_out += payout
+			prediction["correct"] = true
+			prediction["payout_amount"] = payout
+			prediction["net_profit"] = payout - stake
+			predictions[spectator_id] = prediction
+			payouts[spectator_id] = payout
+			profits[spectator_id] = payout - stake
+		for spectator_id_variant in predictions.keys():
+			var spectator_id := str(spectator_id_variant)
+			if winning_ids.has(spectator_id):
+				continue
+			var losing_prediction: Dictionary = predictions[spectator_id]
+			losing_prediction["correct"] = false
+			losing_prediction["payout_amount"] = 0
+			losing_prediction["net_profit"] = -int(losing_prediction.get("stake_amount", 0))
+			predictions[spectator_id] = losing_prediction
+	else:
+		# No correct forecast: void this pool and return each fan's virtual stake.
+		for spectator_id_variant in predictions.keys():
+			var spectator_id := str(spectator_id_variant)
+			var prediction: Dictionary = predictions[spectator_id]
+			var refund := int(prediction.get("stake_amount", 0))
+			if refund > 0:
+				var granted := int(spectator_wallet_provider.call("grant_spectator_payout", refund))
+				if granted != refund:
+					return {"success": false, "reason": "STAKE_REFUND_FAILED", "spectator_id": spectator_id}
+			prediction["correct"] = false
+			prediction["payout_amount"] = refund
+			prediction["net_profit"] = 0
+			prediction["refunded"] = true
+			predictions[spectator_id] = prediction
+			payouts[spectator_id] = refund
+			profits[spectator_id] = 0
+			total_paid_out += refund
 	match_record["predictions"] = predictions
 	match_record["state"] = "settled"
 	match_record["winner_id"] = winner_id
+	match_record["winning_stake"] = winning_stake
+	match_record["total_paid_out"] = total_paid_out
+	match_record["payouts"] = payouts
+	match_record["net_profits"] = profits
 	match_record["settled_at_unix"] = int(Time.get_unix_time_from_system())
 	match_record["settlement_source"] = settlement_source
 	spectator_matches[match_id] = match_record
 	_save_spectator_data()
-	return {"success": true, "winner_id": winner_id, "points_awarded": awarded, "cash_value": 0}
+	return {"success": true, "winner_id": winner_id, "total_pool": total_pool, "winning_stake": winning_stake, "payouts": payouts, "net_profits": profits, "total_paid_out": total_paid_out, "refunded": winning_stake == 0, "virtual_currency": "SYSTEM_CREDITS", "cash_value": 0}
+
 
 func get_spectator_match(match_id: String) -> Dictionary:
 	match_id = match_id.strip_edges()
 	var match_record: Dictionary = spectator_matches.get(match_id, {})
 	return match_record.duplicate(true)
 
+
 func get_spectator_status(spectator_id: String) -> Dictionary:
 	spectator_id = spectator_id.strip_edges()
 	var today := Time.get_date_string_from_system(true)
 	var daily_record: Dictionary = spectator_daily_counts.get(spectator_id, {})
 	var daily_count := int(daily_record.get("count", 0)) if str(daily_record.get("date", "")) == today else 0
+	var ticket_balance := int(spectator_wallet_provider.call("get_spectator_wallet_balance")) if is_instance_valid(spectator_wallet_provider) and spectator_wallet_provider.has_method("get_spectator_wallet_balance") else 0
 	return {
 		"spectator_id": spectator_id,
-		"prediction_points": int(spectator_prediction_points.get(spectator_id, 0)),
+		"ticket_balance": ticket_balance,
 		"predictions_today": daily_count,
 		"daily_prediction_limit": SPECTATOR_DAILY_PREDICTION_LIMIT,
+		"minimum_stake": SPECTATOR_MIN_STAKE,
+		"maximum_stake": SPECTATOR_MAX_STAKE,
+		"virtual_currency": "SYSTEM_CREDITS",
 		"cash_value": 0,
 		"transferable": false,
 		"purchasable": false
 	}
+
 
 func _save_spectator_data() -> void:
 	var config := ConfigFile.new()
