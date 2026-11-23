@@ -3257,9 +3257,43 @@ func _use_pool_service(service_type: String) -> void:
 			_set_status("اكتمل استخدام الدش. أصبحت جاهزاً للسباحة أو مغادرة المسبح.")
 		"lifeguard":
 			player.set_meta("system_pool_assistance_requested", true)
-			_set_status("وصل طلبك إلى محطة المنقذ. توجه إلى المنصة لاستلام المساعدة.")
+			if _dispatch_pool_supervisor_to_player():
+				_set_status("استلم مشرف المسبح طلبك ويتجه إليك من محطة الإنقاذ.")
+			else:
+				_set_status("تم تسجيل طلب المساعدة وإبلاغ محطة المنقذ. سيستجيب المشرف عند وصوله إلى الطابق.")
 		_:
 			return
+
+
+func _dispatch_pool_supervisor_to_player() -> bool:
+	if not is_instance_valid(player) or not staff_by_tower.has("entertainment_tower_baghdad"):
+		return false
+	var staff_ids: Array = staff_by_tower.get("entertainment_tower_baghdad", [])
+	if staff_ids.size() <= 3:
+		return false
+	var tower := tower_nodes.get("entertainment_tower_baghdad") as Node3D
+	var supervisor := tower.find_child("TowerStaff_" + str(staff_ids[3]), true, false) as Node3D if tower != null else null
+	if supervisor == null or supervisor.get_parent() != active_floor_root or int(supervisor.get_meta("system_staff_duty_floor", 0)) not in [18, 19]:
+		return false
+	var model := _find_tower_staff_model(supervisor)
+	if model == null:
+		return false
+	var previous_tween: Variant = supervisor.get_meta("system_staff_patrol_tween", null)
+	if previous_tween is Tween and (previous_tween as Tween).is_running():
+		(previous_tween as Tween).kill()
+	supervisor.set_meta("system_staff_assistance_requested", true)
+	supervisor.set_meta("system_staff_assistance_target", player.global_position)
+	model.call("set_activity", "walk")
+	var response_tween := supervisor.create_tween()
+	supervisor.set_meta("system_staff_patrol_tween", response_tween)
+	response_tween.tween_property(supervisor, "global_position", player.global_position + Vector3(1.5, 0.0, 0.0), 1.1).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	response_tween.tween_callback(func():
+		if is_instance_valid(supervisor):
+			supervisor.set_meta("system_staff_assistance_arrived", true)
+			if is_instance_valid(model):
+				model.call("set_activity", "idle")
+	)
+	return true
 
 
 func open_facility_service(tower_id: String, floor_number: int, facility_type: String) -> void:
