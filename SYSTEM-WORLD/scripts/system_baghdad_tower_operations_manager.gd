@@ -5012,7 +5012,8 @@ func _add_restaurant_staff_controls(role: String) -> void:
 			var item: Dictionary = item_value
 			names.append(str(item.get("name", "وجبة")))
 		var order_label := Label.new()
-		order_label.text = "%s — %s — %d رصيد" % [table_id, "، ".join(PackedStringArray(names)), int(order.get("total", 0))]
+		var display_table_id := str(order.get("table_id", table_id))
+		order_label.text = "%s — %s — %d رصيد" % [display_table_id, "، ".join(PackedStringArray(names)), int(order.get("total", 0))]
 		order_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		content.add_child(order_label)
 		var action_button := Button.new()
@@ -5406,14 +5407,15 @@ func _create_npc_restaurant_order(table_root: Node3D, customer_id: String, floor
 	var table_id := str(table_root.get_meta("system_restaurant_table_id", ""))
 	if table_id.is_empty():
 		return
-	var existing: Dictionary = restaurant_orders.get(table_id, {})
+	var order_id := table_id + "_npc"
+	var existing: Dictionary = restaurant_orders.get(order_id, {})
 	if not existing.is_empty():
 		if bool(existing.get("npc_order", false)):
 			var diners: Array = existing.get("customer_ids", [])
 			if not diners.has(customer_id):
 				diners.append(customer_id)
 			existing["customer_ids"] = diners
-			restaurant_orders[table_id] = existing
+			restaurant_orders[order_id] = existing
 			_save_restaurant_orders()
 		return
 	var menu: Array = []
@@ -5432,7 +5434,7 @@ func _create_npc_restaurant_order(table_root: Node3D, customer_id: String, floor
 		var item := {"item_id": str(product.get("id", "")), "name": str(product.get("name", "وجبة")), "price": int(product.get("price", 0))}
 		selected.append(item)
 		total += int(item["price"])
-	restaurant_orders[table_id] = {
+	restaurant_orders[order_id] = {
 		"table_id": table_id,
 		"table_index": int(table_root.get_meta("system_restaurant_table_index", -1)),
 		"items": selected,
