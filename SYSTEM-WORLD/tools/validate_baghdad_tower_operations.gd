@@ -780,6 +780,13 @@ func _run() -> void:
 	if ticket_terminal == null or ticket_terminal_body == null or not bool(ticket_terminal_body.get_meta("system_power_tower_ticket_terminal", false)) or not operations.has_method("open_power_tower_ticket_terminal"):
 		_fail("Power Tower public lobby is missing its interactive virtual ticket terminal.")
 		return
+	operations.call("open_power_tower_ticket_terminal")
+	var ticket_terminal_panel := operations.get("panel") as PanelContainer
+	var ticket_terminal_title := operations.get("title_label") as Label
+	if ticket_terminal_panel == null or not ticket_terminal_panel.visible or ticket_terminal_title == null or not ticket_terminal_title.text.contains("توقعات الجمهور"):
+		_fail("Power Tower virtual ticket terminal did not open its in-game spectator panel.")
+		return
+	ticket_terminal_panel.hide()
 	for battle_display in [outside_battle_display, inside_battle_display]:
 		var schedule_label := battle_display.get_node_or_null("DisplayText") as Label3D if battle_display != null else null
 		if battle_display == null or schedule_label == null or not bool(battle_display.get_meta("system_power_tower_battle_display", false)) or int(battle_display.get_meta("system_floor_schedule_count", 0)) != 200 or str(battle_display.get_meta("system_competition_format", "")) != "INDIVIDUAL_1V1":
