@@ -855,6 +855,9 @@ func _on_interaction_performed(
 		" / ",
 		location_id
 	)
+	if target.has_meta("system_pool_service_type") and tower_operations_manager != null:
+		tower_operations_manager.call("open_pool_service", target)
+		return
 	if target.has_meta("system_tower_staff_id") and tower_operations_manager != null:
 		tower_operations_manager.call("open_staff_service", target)
 		return
