@@ -5070,6 +5070,9 @@ func _process_restaurant_staff_service() -> void:
 		restaurant_orders[selected_table_id] = order
 		_save_restaurant_orders()
 		var home_position: Vector3 = employee.get_meta("system_staff_workstation_position", employee.position)
+		var previous_patrol_tween: Variant = employee.get_meta("system_staff_patrol_tween", null)
+		if previous_patrol_tween is Tween and (previous_patrol_tween as Tween).is_running():
+			(previous_patrol_tween as Tween).kill()
 		var task_tween := employee.create_tween()
 		employee.set_meta("system_restaurant_service_busy", true)
 		employee.set_meta("system_restaurant_service_tween", task_tween)
