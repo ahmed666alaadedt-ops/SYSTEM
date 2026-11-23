@@ -7,7 +7,19 @@ const POPULATION_SCRIPT := preload("res://scripts/npc_visible_population_manager
 const THREAT_RECEIVER_SCRIPT := preload("res://scripts/npc_threat_receiver.gd")
 
 func _initialize() -> void:
+	node_added.connect(_on_test_node_added)
 	call_deferred("_run_validation")
+
+
+func _on_test_node_added(node: Node) -> void:
+	if node is MeshInstance3D:
+		var mesh_instance := node as MeshInstance3D
+		if mesh_instance.mesh == null or not mesh_instance.mesh.get_rid().is_valid():
+			print("SYSTEM CHILD QA TRANSIENT MESH ISSUE: ", str(mesh_instance.get_path()))
+	elif node is MultiMeshInstance3D:
+		var multi_instance := node as MultiMeshInstance3D
+		if multi_instance.multimesh == null or multi_instance.multimesh.mesh == null:
+			print("SYSTEM CHILD QA TRANSIENT MULTIMESH ISSUE: ", str(multi_instance.get_path()))
 
 func _run_validation() -> void:
 	var child := CHARACTER_SCRIPT.new()
