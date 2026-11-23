@@ -223,8 +223,6 @@ var status_label: Label
 var credits_label: Label
 var floor_selector: SpinBox
 var power_floor_started_at := 0
-var power_floor_timer_remaining := 0.0
-var power_floor_timer_display_clock := 0.0
 var active_power_objective_label: Label3D
 var active_power_floor_data: Dictionary = {}
 var active_floor_root: Node3D
@@ -6159,8 +6157,6 @@ func _begin_power_floor() -> void:
 	# Power Tower competitions are always individual 1v1: one fighter, one opponent, one round.
 	total_waves = 1
 	opponents_per_wave = 1
-	power_floor_timer_remaining = 0.0
-	power_floor_timer_display_clock = 0.0
 	_update_power_objective_display()
 	_spawn_power_wave()
 
@@ -6230,7 +6226,6 @@ func _fail_power_floor(reason: String) -> void:
 	_clear_active_power_opponents()
 	power_tower_manager.call("abandon_active_floor")
 	power_floor_in_progress = false
-	power_floor_timer_remaining = 0.0
 	active_power_floor_data.clear()
 	if is_instance_valid(active_power_objective_label):
 		active_power_objective_label.text = "انتهى الوقت — أعد المحاولة من المصعد"
@@ -6253,7 +6248,6 @@ func _complete_power_floor() -> void:
 	var final_boss := bool(active_power_floor_data.get("final_boss", false))
 	var elapsed := maxf(1.0, float(Time.get_ticks_msec() - power_floor_started_at) / 1000.0)
 	_clear_active_power_opponents()
-	power_floor_timer_remaining = 0.0
 	var result: Dictionary = power_tower_manager.call("confirm_floor_clear", floor_number, elapsed)
 	power_floor_in_progress = false
 	active_power_floor_data.clear()
@@ -6286,8 +6280,7 @@ func return_to_lobby() -> void:
 		power_tower_manager.call("abandon_active_floor")
 		power_floor_in_progress = false
 		active_power_floor_data.clear()
-		power_floor_timer_remaining = 0.0
-		active_power_objective_label = null
+			active_power_objective_label = null
 	_release_player_restaurant_seat()
 	var tower := tower_nodes[current_tower_id] as Node3D
 	var config: Dictionary = TOWER_CONFIG[current_tower_id]
