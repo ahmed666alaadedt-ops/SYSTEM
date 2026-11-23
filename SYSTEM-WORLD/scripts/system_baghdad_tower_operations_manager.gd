@@ -6091,21 +6091,22 @@ func _begin_power_floor() -> void:
 		return
 	power_floor_started_at = Time.get_ticks_msec()
 	current_wave = 0
-	total_waves = maxi(1, int(active_power_floor_data.get("wave_count", 1)))
-	opponents_per_wave = maxi(1, int(active_power_floor_data.get("opponent_count", 1)))
-	power_floor_timer_remaining = float(active_power_floor_data.get("time_limit_seconds", 0))
+	# Power Tower competitions are always individual 1v1: one fighter, one opponent, one round.
+	total_waves = 1
+	opponents_per_wave = 1
+	power_floor_timer_remaining = 0.0
 	power_floor_timer_display_clock = 0.0
 	_update_power_objective_display()
 	_spawn_power_wave()
 
 func _spawn_power_wave() -> void:
-	if active_floor_root == null:
+	if active_floor_root == null or not active_opponents.is_empty():
 		return
-	current_wave += 1
+	current_wave = 1
 	var difficulty := int(active_power_floor_data.get("difficulty", 1))
 	var boss := bool(active_power_floor_data.get("boss_floor", false))
 	var final_boss := bool(active_power_floor_data.get("final_boss", false))
-	var count := 1 if boss else opponents_per_wave
+	var count := 1
 	for index in range(count):
 		var opponent = TowerOpponentScript.new()
 		var health_multiplier := 4.0 if boss else 1.0
@@ -6138,14 +6139,8 @@ func _on_power_opponent_defeated(opponent: Node) -> void:
 	active_opponents.erase(opponent.get_instance_id())
 	if not power_floor_in_progress or not active_opponents.is_empty():
 		return
-	if str(active_power_floor_data.get("objective_type", "")) == "SURVIVE_TIMER":
-		if current_wave < total_waves:
-			_spawn_power_wave()
-		return
-	if current_wave < total_waves:
-		_spawn_power_wave()
-	else:
-		_complete_power_floor()
+	# The sole opponent's defeat completes this individual floor; no waves or team rounds exist.
+	_complete_power_floor()
 
 func _update_power_objective_display() -> void:
 	if not is_instance_valid(active_power_objective_label) or active_power_floor_data.is_empty():
