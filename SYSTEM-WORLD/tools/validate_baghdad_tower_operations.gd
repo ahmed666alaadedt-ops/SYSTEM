@@ -1217,8 +1217,8 @@ func _run() -> void:
 	operations.set("power_floor_in_progress", false)
 	for individual_floor in [1, 3, 5, 10, 25, 50, 100, 150, 199, 200]:
 		var individual_data: Dictionary = power_manager.call("get_floor_data", individual_floor)
-		if int(individual_data.get("opponent_count", 0)) != 1 or int(individual_data.get("wave_count", 0)) != 1 or str(individual_data.get("competition_format", "")) != "INDIVIDUAL_1V1":
-			_fail("Power Tower individual challenge regression failed at floor %d." % individual_floor)
+		if int(individual_data.get("opponent_count", 0)) != 1 or int(individual_data.get("wave_count", 0)) != 1 or str(individual_data.get("competition_format", "")) != "INDIVIDUAL_1V1" or str(individual_data.get("opponent_kind", "")) != "HUMAN_PLAYER" or bool(individual_data.get("ai_fallback", true)) or str(individual_data.get("matchmaking_mode", "")) != "ONLINE_1V1":
+			_fail("Power Tower must enforce one human opponent, no AI fallback, and individual online 1v1 at floor %d." % individual_floor)
 			power_manager.set("highest_cleared_floor", original_highest_floor)
 			power_manager.set("active_floor", original_active_floor)
 			power_manager.set("floor_clear_times", original_clear_times)
