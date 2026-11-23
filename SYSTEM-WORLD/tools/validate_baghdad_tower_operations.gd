@@ -775,6 +775,11 @@ func _run() -> void:
 		return
 	var outside_battle_display := power_tower.get_node_or_null("PowerTowerBattleDisplay_Outside") as Node3D
 	var inside_battle_display := power_lobby.get_node_or_null("PowerTowerBattleDisplay_Inside") as Node3D
+	var ticket_terminal := power_lobby.get_node_or_null("PowerTowerVirtualTicketTerminal") as Node3D
+	var ticket_terminal_body := ticket_terminal.get_node_or_null("TicketTerminalInteractionBody") as StaticBody3D if ticket_terminal != null else null
+	if ticket_terminal == null or ticket_terminal_body == null or not bool(ticket_terminal_body.get_meta("system_power_tower_ticket_terminal", false)) or not operations.has_method("open_power_tower_ticket_terminal"):
+		_fail("Power Tower public lobby is missing its interactive virtual ticket terminal.")
+		return
 	for battle_display in [outside_battle_display, inside_battle_display]:
 		var schedule_label := battle_display.get_node_or_null("DisplayText") as Label3D if battle_display != null else null
 		if battle_display == null or schedule_label == null or not bool(battle_display.get_meta("system_power_tower_battle_display", false)) or int(battle_display.get_meta("system_floor_schedule_count", 0)) != 200 or str(battle_display.get_meta("system_competition_format", "")) != "INDIVIDUAL_1V1":
