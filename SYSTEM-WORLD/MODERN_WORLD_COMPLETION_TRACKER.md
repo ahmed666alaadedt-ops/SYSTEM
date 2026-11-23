@@ -1297,3 +1297,14 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [ ] This is an approved implementation scope, not yet a verified gameplay feature. Do not mark complete until code and Godot/Android validation pass on the exact same HEAD.
 
 **Priority after the current restaurant runtime verification:** implement the shared food/consumables foundation and market-facing purchase path with minimal UI, then resume the agreed Baghdad sequence: finish Power Tower work and the Hunter Tunnel beneath the Baghdad tower complex. Keep PR #38 draft and do not merge to main without explicit user approval.
+
+
+### Power Tower sovereign boss readable attack telegraph — 23 November 2026
+
+- [x] Add a visible ground shockwave ring and separate warning label to boss opponents; the ring pulses and its countdown text tells the player to evade before impact.
+- [x] Scale the telegraph radius and boss emissive appearance across the sovereign boss's three health phases.
+- [x] Hide the warning after the attack resolves and clear it safely when the boss is defeated.
+- [x] Extend the Baghdad tower operations validator to assert the initial hidden state, visible countdown, post-attack cleanup, and phase-specific ring radii.
+- [ ] Pass full Godot 4.3 validation, canonical runtime validation, and Android APK export on the exact latest PR head containing both gameplay and validator changes.
+- [ ] Physical Android review of telegraph readability, touch evasion timing, boss collision and frame rate remains outstanding.
+- [ ] The five connected Baghdad towers and independent Power Tower remain on PR #38 draft; no merge to main.
