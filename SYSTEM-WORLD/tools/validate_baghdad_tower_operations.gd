@@ -907,6 +907,9 @@ func _run() -> void:
 	root.add_child(loss_test_manager)
 	await process_frame
 	loss_test_manager.set("highest_cleared_floor", 75)
+	loss_test_manager.set("total_duels_lost", 0)
+	loss_test_manager.set("consecutive_duel_losses", 0)
+	loss_test_manager.set("duel_disqualified", false)
 	for loss_index in range(3):
 		var loss_match_id := "validator_three_losses_%02d" % loss_index
 		loss_test_manager.call("register_tower_fighter", "local_fighter")
