@@ -14,6 +14,10 @@ on:
       - ".github/workflows/godot-system-world-validation.yml"
   workflow_dispatch:
 
+concurrency:
+  group: system-world-godot-validation-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
