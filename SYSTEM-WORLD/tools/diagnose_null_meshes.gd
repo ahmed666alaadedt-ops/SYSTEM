@@ -13,7 +13,7 @@ func _count_meshes(start: Node) -> int:
 	return count
 
 func _initialize() -> void:
-	root.node_added.connect(_on_diagnostic_node_added)
+	node_added.connect(_on_diagnostic_node_added)
 	call_deferred("_run_diagnostic")
 
 
