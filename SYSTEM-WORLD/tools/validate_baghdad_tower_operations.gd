@@ -808,17 +808,49 @@ func _run() -> void:
 	var final_boss_test := final_boss_script.new() as Node3D
 	root.add_child(final_boss_test)
 	final_boss_test.call("configure", tower_player, null, 100.0, 12.0, 2.5, true, true)
+	final_boss_test.global_position = tower_player.global_position + Vector3(0.0, 0.0, 4.0)
 	await physics_frame
+	var shockwave_ring := final_boss_test.get_node_or_null("ShockwaveTelegraph") as MeshInstance3D
+	var shockwave_label := final_boss_test.get_node_or_null("ShockwaveTelegraphLabel") as Label3D
+	if shockwave_ring == null or shockwave_label == null or shockwave_ring.visible:
+		_fail("Power Tower sovereign boss is missing its hidden initial shockwave telegraph.")
+		final_boss_test.queue_free()
+		return
+	final_boss_test.set("special_attack_clock", 0.0)
+	await physics_frame
+	if not shockwave_ring.visible or not shockwave_label.visible or not str(shockwave_label.text).contains("EVADE"):
+		_fail("Power Tower sovereign boss did not show a readable shockwave warning.")
+		final_boss_test.queue_free()
+		return
+	final_boss_test.set("special_attack_windup_clock", 0.01)
+	await physics_frame
+	if shockwave_ring.visible or shockwave_label.visible:
+		_fail("Power Tower sovereign boss telegraph did not clear after the shockwave.")
+		final_boss_test.queue_free()
+		return
+	var initial_ring := shockwave_ring.mesh as TorusMesh
+	if initial_ring == null or not is_equal_approx(initial_ring.inner_radius, 4.8):
+		_fail("Power Tower sovereign boss initial phase ring geometry is incorrect.")
+		final_boss_test.queue_free()
+		return
 	final_boss_test.call("take_damage", 51.0, tower_player)
 	await physics_frame
 	if int(final_boss_test.get("boss_phase")) != 2:
 		_fail("Power Tower sovereign boss did not enter its second health phase.")
 		final_boss_test.queue_free()
 		return
+	if not is_equal_approx((shockwave_ring.mesh as TorusMesh).inner_radius, 5.5):
+		_fail("Power Tower sovereign boss phase two did not expand its attack telegraph.")
+		final_boss_test.queue_free()
+		return
 	final_boss_test.call("take_damage", 31.0, tower_player)
 	await physics_frame
 	if int(final_boss_test.get("boss_phase")) != 3:
 		_fail("Power Tower sovereign boss did not enter its final health phase.")
+		final_boss_test.queue_free()
+		return
+	if not is_equal_approx((shockwave_ring.mesh as TorusMesh).inner_radius, 6.2):
+		_fail("Power Tower sovereign boss phase three did not expand its attack telegraph.")
 		final_boss_test.queue_free()
 		return
 	final_boss_test.call("take_damage", 100.0, tower_player)
