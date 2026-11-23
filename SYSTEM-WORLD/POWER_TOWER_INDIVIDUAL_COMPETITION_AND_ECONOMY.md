@@ -117,3 +117,11 @@ Implementation status: a local prototype now records individual 1v1 matches, ded
 - Godot full validation and Android export must be checked against the exact same branch commit before marking a gameplay milestone verified.
 - Physical Android touch, visual and performance inspection remains a separate required check.
 - Keep PR #38 as draft. Never merge into `main` without explicit user approval.
+
+
+## 10. Live referee and arena display integration
+
+- Each generated arena now contains three physical official podiums with role labels (head referee, technical judge, safety judge), a match-rules screen and a live score/result label.
+- The Power Tower manager publishes score-update and duel-completion signals. The main game connects these signals to the Baghdad tower operations manager, which updates the matching floor's live arena display with both fighter IDs, current points, match state and verified winner.
+- The outside entrance board and public lobby board list all ten-floor divisions and the published scoring/loss rules. Each arena screen identifies its own floor and division.
+- The referee scoring and career discipline are local prototype logic. The `LOCAL_COMBAT_AUTHORITY` gate is not a substitute for a remote trusted server; online human matchmaking, signed judge events and server-side career persistence remain future integration work.
