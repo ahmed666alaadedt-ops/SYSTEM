@@ -880,6 +880,7 @@ func _run() -> void:
 	var judge_test_manager := power_tower_test_script.new() as Node
 	judge_test_manager.set("duel_save_path", "user://validator_power_tower_duels.cfg")
 	root.add_child(judge_test_manager)
+	judge_test_manager.call("set_spectator_wallet_provider", operations)
 	await process_frame
 	var fighter_registration: Dictionary = judge_test_manager.call("register_tower_fighter", "player_test")
 	var fighter_registration_repeat: Dictionary = judge_test_manager.call("register_tower_fighter", "player_test")
