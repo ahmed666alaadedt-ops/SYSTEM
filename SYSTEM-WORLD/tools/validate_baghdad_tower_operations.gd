@@ -1476,7 +1476,7 @@ func _run() -> void:
 					return
 	var prediction_board := spectator_gallery.get_node_or_null("PowerTowerSpectatorPredictionBoard") as Node3D if spectator_gallery != null else null
 	var prediction_interaction := prediction_board.get_node_or_null("SpectatorPredictionInteraction") as Area3D if prediction_board != null else null
-	if prediction_board == null or prediction_interaction == null or not prediction_interaction.is_in_group("system_interactable") or not prediction_interaction.has_meta("system_power_tower_prediction_board"):
+	if prediction_board == null or prediction_interaction == null or prediction_board.position.y < 4.0 or prediction_board.position.z <= 0.0 or prediction_board.position.z >= 100.0 or not prediction_interaction.is_in_group("system_interactable") or not prediction_interaction.has_meta("system_power_tower_prediction_board"):
 		_fail("Power Tower spectator gallery is missing its interactive virtual fan-prediction board.")
 		return
 	main.call("_on_interaction_performed", prediction_interaction, "power_tower_fan_prediction")
