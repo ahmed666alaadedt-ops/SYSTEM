@@ -1709,6 +1709,31 @@ func _run() -> void:
 	if pool_water == null:
 		_fail("Swimming pool water volume was not generated.")
 		return
+	var locker_service := pool_physics_facility.get_node_or_null("MensChangingSuite/PoolLockerServiceInteraction") as Area3D
+	var shower_service := pool_physics_facility.get_node_or_null("MensChangingSuite/PoolShowerServiceInteraction") as Area3D
+	var lifeguard_service := pool_physics_facility.get_node_or_null("PoolLifeguardStation/PoolLifeguardServiceInteraction") as Area3D
+	if locker_service == null or shower_service == null or lifeguard_service == null:
+		_fail("Pool changing suites or lifeguard station are missing their interactive service areas.")
+		return
+	for pool_service in [locker_service, shower_service, lifeguard_service]:
+		if not pool_service.is_in_group("system_interactable") or not pool_service.has_meta("system_interaction_prompt") or str(pool_service.get_meta("system_tower_id", "")) != "entertainment_tower_baghdad" or int(pool_service.get_meta("system_tower_floor_number", 0)) != 18:
+			_fail("Pool service interaction is missing its prompt or tower/floor routing metadata: " + str(pool_service.name))
+			return
+	operations.call("open_pool_service", locker_service)
+	operations.call("_use_pool_service", "locker")
+	if not bool(player.get_meta("system_pool_locker_reserved", false)) or str(player.get_meta("system_pool_locker_tower", "")) != "entertainment_tower_baghdad":
+		_fail("Pool locker service did not reserve a player locker in the correct tower.")
+		return
+	operations.call("open_pool_service", shower_service)
+	operations.call("_use_pool_service", "shower")
+	if not bool(player.get_meta("system_pool_showered", false)):
+		_fail("Pool shower service did not record the player's hygiene preparation.")
+		return
+	operations.call("open_pool_service", lifeguard_service)
+	operations.call("_use_pool_service", "lifeguard")
+	if not bool(player.get_meta("system_pool_assistance_requested", false)):
+		_fail("Lifeguard service did not record the player's assistance request.")
+		return
 	pool_water.body_entered.emit(player)
 	if not bool(player.get_meta("system_swimming", false)):
 		_fail("Entering the pool volume did not enable the player's swimming state.")
