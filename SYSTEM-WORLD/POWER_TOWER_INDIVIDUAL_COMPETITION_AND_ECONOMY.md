@@ -151,3 +151,12 @@ Implementation status: a local prototype now records individual 1v1 matches, ded
 - The camera is created lazily when a match update arrives and targets the corresponding floor-200/active-floor arena. The feed is a real-time in-engine 3D view; it is not an encoded network video stream, remote spectator service, or broadcast to other players/devices.
 - Regression checks verify the viewport, active camera, texture-backed screen surfaces and shared public-display installation.
 - Individual 1v1 competition remains unchanged. Virtual fan predictions and virtual-credit settlement are unchanged.
+
+
+## 14. Internal floor battle screens — 23 November 2026
+
+- The active match's shared camera texture is also routed to the battle-screen surface inside every Power Tower floor room that has already been generated in the scene tree.
+- The active arena floor is included, and newly generated floor rooms are picked up on the next live-broadcast refresh.
+- This reuses one 640×360 camera viewport for the outside entrance, public lobby and generated internal floor screens rather than creating a separate camera/render target for every floor.
+- Regression validation now checks that the active floor's battle screen receives the shared camera texture.
+- This remains an in-engine local 3D camera feed; network streaming to other clients is a separate future system.
