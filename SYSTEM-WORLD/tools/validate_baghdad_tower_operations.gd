@@ -1433,6 +1433,11 @@ func _run() -> void:
 	if spectator_gallery == null or spectator_seat_count != 48 or int(spectator_gallery.get_meta("system_spectator_seat_count", 0)) != 48 or str(spectator_gallery.get_meta("system_competition_format", "")) != "INDIVIDUAL_1V1":
 		_fail("Power Tower floor 200 must provide a physical 48-seat spectator gallery for individual duels.")
 		return
+	operations.call("update_power_tower_live_match_display", 200, {"match_id": "validator_live_floor_200", "fighter_a_id": "sovereign_challenger", "fighter_b_id": "current_title_holder", "score": {"sovereign_challenger": 10, "current_title_holder": 4}, "winner_id": "sovereign_challenger"}, true)
+	var floor_200_live_score := boss_room.get_node_or_null("ArenaLiveMatchScoreDisplay") as Label3D
+	if floor_200_live_score == null or not floor_200_live_score.text.contains("10") or not floor_200_live_score.text.contains("انتهى النزال") or not floor_200_live_score.text.contains("sovereign_challenger"):
+		_fail("Power Tower live score screen did not update with the verified match result.")
+		return
 	var sovereign_display := boss_room.get_node_or_null("ArenaChallengeDisplay") as Label3D
 	var sovereign_screen := boss_room.get_node_or_null("ArenaChallengeScreenPanel") as MeshInstance3D
 	var sovereign_judges := boss_room.get_node_or_null("PowerTowerRefereeStations") as Node3D
