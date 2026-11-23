@@ -24,10 +24,10 @@ func _create_material() -> void:
 	mountain_material.roughness = 1.0
 
 
-func _get_terrain_manager() -> ModernContinentManager:
+func _get_terrain_manager() -> Variant:
 	if get_parent() == null:
 		return null
-	return get_parent().get_node_or_null("ModernContinent") as ModernContinentManager
+	return get_parent().get_node_or_null("ModernContinent")
 
 
 func _create_mountain_range() -> void:
@@ -52,7 +52,7 @@ func _create_mountain(index: int, world_x: float, world_z: float) -> void:
 	mountain_body.position = Vector3(world_x, 0.0, world_z)
 	add_child(mountain_body)
 
-	var terrain := _get_terrain_manager()
+	var terrain: Variant = _get_terrain_manager()
 
 	var surface := SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
