@@ -1834,6 +1834,15 @@ func _run() -> void:
 	if not actual_pool_duty_position.is_equal_approx(expected_pool_duty_position):
 		_fail("The pool supervisor workstation is not positioned beside the lifeguard station.")
 		return
+	operations.call("_use_pool_service", "lifeguard")
+	var rescue_tween: Variant = pool_supervisor.get_meta("system_staff_patrol_tween", null)
+	if not bool(pool_supervisor.get_meta("system_staff_assistance_requested", false)) or not (rescue_tween is Tween) or not (rescue_tween as Tween).is_running():
+		_fail("The pool supervisor did not respond to a lifeguard assistance request.")
+		return
+	await create_timer(1.25).timeout
+	if not bool(pool_supervisor.get_meta("system_staff_assistance_arrived", false)):
+		_fail("The pool supervisor did not physically reach the player after accepting the assistance request.")
+		return
 	operations.call("_return_floor_duty_staff_to_lobbies")
 	if pool_supervisor.get_parent() != entertainment_tower_node.get_node("PublicLobby_Blockout") or pool_supervisor.has_meta("system_staff_duty_floor") or not bool(pool_supervisor.get_meta("system_staff_navigation_enabled", false)):
 		_fail("The pool supervisor did not return to the public lobby and resume the lobby patrol after duty.")
