@@ -6584,7 +6584,7 @@ func begin_verified_power_tower_pvp_match(match_data: Dictionary, local_player_i
 			return registration
 	else:
 		var fighters_match := (str(existing_match.get("fighter_a_id", "")) == local_player_id and str(existing_match.get("fighter_b_id", "")) == opponent_player_id) or (str(existing_match.get("fighter_a_id", "")) == opponent_player_id and str(existing_match.get("fighter_b_id", "")) == local_player_id)
-		if not fighters_match or int(existing_match.get("floor_number", 0)) != floor_number or str(existing_match.get("state", "")) != "open":
+		if not fighters_match or int(existing_match.get("floor", 0)) != floor_number or str(existing_match.get("state", "")) != "open":
 			return {"success": false, "reason": "MATCH_IDENTITY_MISMATCH"}
 	var local_registration: Dictionary = power_tower_manager.call("register_tower_fighter", local_player_id)
 	var opponent_registration: Dictionary = power_tower_manager.call("register_tower_fighter", opponent_player_id)
