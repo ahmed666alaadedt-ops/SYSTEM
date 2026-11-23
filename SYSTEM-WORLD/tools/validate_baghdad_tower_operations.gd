@@ -1706,7 +1706,8 @@ func _run() -> void:
 	var pool_room := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 18) as Node3D
 	var pool_physics_facility := pool_room.get_node_or_null("SpecialFacility_swimming_pool") as Node3D if pool_room != null else null
 	var pool_water := pool_physics_facility.get_node_or_null("PoolWaterVolume") as Area3D if pool_physics_facility != null else null
-	if pool_water == null:
+	var mens_pool_suite := pool_physics_facility.get_node_or_null("MensChangingSuite") as Node3D if pool_physics_facility != null else null
+	if pool_water == null or mens_pool_suite == null:
 		_fail("Swimming pool water volume was not generated.")
 		return
 	var locker_service := pool_physics_facility.get_node_or_null("MensChangingSuite/PoolLockerServiceInteraction") as Area3D
@@ -1726,7 +1727,7 @@ func _run() -> void:
 	operations.call("open_pool_service", locker_service)
 	operations.call("_use_pool_service", "locker")
 	var assigned_pool_locker_id := str(player.get_meta("system_pool_locker_id", ""))
-	var assigned_pool_locker := mens_suite.get_node_or_null(assigned_pool_locker_id) as MeshInstance3D
+	var assigned_pool_locker := mens_pool_suite.get_node_or_null(assigned_pool_locker_id) as MeshInstance3D
 	if not bool(player.get_meta("system_pool_locker_reserved", false)) or str(player.get_meta("system_pool_locker_tower", "")) != "entertainment_tower_baghdad" or assigned_pool_locker == null or not bool(assigned_pool_locker.get_meta("system_pool_locker_occupied", false)) or int(assigned_pool_locker.get_meta("system_pool_locker_owner", -1)) != player.get_instance_id():
 		_fail("Pool locker service did not allocate and mark a real locker for the player in the correct tower.")
 		return
