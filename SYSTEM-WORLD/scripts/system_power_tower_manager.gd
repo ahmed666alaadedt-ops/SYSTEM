@@ -209,6 +209,9 @@ func register_judged_duel(match_id: String, fighter_a_id: String, fighter_b_id: 
 		return {"success": false, "reason": "FIGHTER_REGISTRATION_REQUIRED"}
 	if duel_matches.has(match_id):
 		return {"success": false, "reason": "DUEL_ALREADY_REGISTERED"}
+	var spectator_registration := register_spectator_match(match_id, fighter_a_id, fighter_b_id, floor_number)
+	if not bool(spectator_registration.get("success", false)):
+		return {"success": false, "reason": "SPECTATOR_MATCH_REGISTRATION_FAILED", "detail": spectator_registration}
 	var floor_data := get_floor_data(floor_number)
 	duel_matches[match_id] = {
 		"match_id": match_id,
@@ -311,9 +314,15 @@ func finish_judged_duel(match_id: String, winner_id: String, finish_type: String
 	duel["settled_at_unix"] = int(Time.get_unix_time_from_system())
 	duel_matches[match_id] = duel
 	var career_result := _record_duel_career_result(winner_id, loser_id, int(duel.get("floor", 1)), str(duel.get("local_player_id", "PLAYER")))
+	var spectator_settlement: Dictionary = {}
+	var spectator_match: Dictionary = get_spectator_match(match_id)
+	if str(spectator_match.get("state", "")) == "open":
+		var lock_result: Dictionary = lock_spectator_predictions(match_id)
+		if bool(lock_result.get("success", false)) and not (spectator_match.get("predictions", {}) as Dictionary).is_empty():
+			spectator_settlement = settle_spectator_match(match_id, winner_id, LOCAL_MATCH_AUTHORITY)
 	_save_duel_records()
 	duel_completed.emit(match_id, duel.duplicate(true))
-	return {"success": true, "winner_id": winner_id, "loser_id": loser_id, "finish_type": finish_type, "score": score.duplicate(true), "career_result": career_result, "cash_value": 0}
+	return {"success": true, "winner_id": winner_id, "loser_id": loser_id, "finish_type": finish_type, "score": score.duplicate(true), "career_result": career_result, "spectator_settlement": spectator_settlement, "cash_value": 0}
 
 
 func _record_duel_career_result(winner_id: String, loser_id: String, floor_number: int, local_player_id: String) -> Dictionary:
