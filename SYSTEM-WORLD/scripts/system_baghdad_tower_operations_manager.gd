@@ -2581,6 +2581,53 @@ func _prepare_tower_interior(tower_id: String) -> void:
 	tower.add_child(floor_container)
 	prepared_towers[tower_id] = floor_container
 
+func _create_power_tower_referee_stations(room: Node3D, arena_radius: float, accent_color: Color) -> void:
+	if room.get_node_or_null("PowerTowerRefereeStations") != null:
+		return
+	var stations_root := Node3D.new()
+	stations_root.name = "PowerTowerRefereeStations"
+	stations_root.set_meta("system_official_judge_count", 3)
+	stations_root.set_meta("system_judge_roles", ["HEAD_REFEREE", "TECHNICAL_JUDGE", "SAFETY_JUDGE"])
+	var roles := [
+		{"id": "HEAD_REFEREE", "name": "الحكم الرئيسي", "english": "HEAD REFEREE"},
+		{"id": "TECHNICAL_JUDGE", "name": "الحكم الفني", "english": "TECHNICAL JUDGE"},
+		{"id": "SAFETY_JUDGE", "name": "حكم السلامة", "english": "SAFETY JUDGE"}
+	]
+	for index in range(roles.size()):
+		var angle := (TAU / 3.0) * float(index) - PI * 0.5
+		var station := Node3D.new()
+		station.name = str(roles[index]["id"])
+		station.position = Vector3(cos(angle) * arena_radius * 0.78, 0.0, sin(angle) * arena_radius * 0.78)
+		var podium := MeshInstance3D.new()
+		podium.name = "OfficialPodium"
+		var podium_mesh := CylinderMesh.new()
+		podium_mesh.top_radius = 0.62
+		podium_mesh.bottom_radius = 0.78
+		podium_mesh.height = 1.5
+		podium.mesh = podium_mesh
+		var podium_material := StandardMaterial3D.new()
+		podium_material.albedo_color = Color(0.035, 0.065, 0.085)
+		podium_material.metallic = 0.82
+		podium_material.roughness = 0.3
+		podium_material.emission_enabled = true
+		podium_material.emission = accent_color * 0.2
+		podium.material_override = podium_material
+		podium.position.y = 0.75
+		station.add_child(podium)
+		var role_label := Label3D.new()
+		role_label.name = "OfficialRoleLabel"
+		role_label.text = str(roles[index]["name"]) + "\n" + str(roles[index]["english"])
+		role_label.position.y = 2.15
+		role_label.font_size = 18
+		role_label.pixel_size = 0.009
+		role_label.modulate = Color(1.0, 0.82, 0.48)
+		role_label.outline_size = 5
+		role_label.outline_modulate = Color(0.015, 0.025, 0.035, 1.0)
+		station.add_child(role_label)
+		stations_root.add_child(station)
+	room.add_child(stations_root)
+
+
 func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 	_prepare_tower_interior(tower_id)
 	var floors := prepared_towers.get(tower_id) as Node3D
@@ -2880,6 +2927,18 @@ func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) 
 	arena_screen_panel.set_meta("system_arena_type", arena_type)
 	arena_screen_panel.set_meta("system_competition_format", "INDIVIDUAL_1V1")
 	room.add_child(arena_screen_panel)
+	_create_power_tower_referee_stations(room, radius, theme_color)
+	var live_score_label := Label3D.new()
+	live_score_label.name = "ArenaLiveMatchScoreDisplay"
+	live_score_label.text = "LIVE MATCH SCORE\nبانتظار تسجيل النزال\nلا يبدأ القتال قبل اعتماد الحكم وتثبيت هوية المقاتلين"
+	live_score_label.position = Vector3(0.0, 3.1, -radius * 0.46)
+	live_score_label.font_size = 18
+	live_score_label.pixel_size = 0.009
+	live_score_label.modulate = Color(0.65, 0.95, 1.0)
+	live_score_label.outline_size = 5
+	live_score_label.outline_modulate = Color(0.01, 0.025, 0.04, 1.0)
+	live_score_label.set_meta("system_live_match_score_display", true)
+	room.add_child(live_score_label)
 	var objective_label := Label3D.new()
 	objective_label.name = "PowerTowerObjectiveLabel"
 	objective_label.position = Vector3(0.0, 7.0, radius * 0.20)
