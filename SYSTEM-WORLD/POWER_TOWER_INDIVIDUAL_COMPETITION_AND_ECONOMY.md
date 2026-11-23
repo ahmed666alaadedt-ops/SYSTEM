@@ -57,7 +57,16 @@ Each chapter changes its floor-deck material, arena ring, four environmental pyl
 - The Power Tower lobby progress board displays the 1v1 format, floor progression, duel wins, elite/boss wins, lifetime credits and best clear time.
 - Seat reservation/standing interactions, autonomous audience NPCs, live match spectator cameras and prediction terminals are separate follow-up work; the current 48-seat gallery is a physical visual seating prototype.
 
-## 5. Progression and rewards
+## 5. Battle displays — outside, lobby and every active arena floor
+
+- A physical battle-results/schedule display is installed outside the Power Tower entrance and another inside its public lobby.
+- Both boards publish the full 200-floor schedule in ten chapters of twenty floors, identifying every standard duel, elite duel, boss duel and the unique sovereign final duel on floor 200.
+- The display makes the shared rule explicit: every competition remains individual 1v1; there are no team or group fights.
+- Every generated arena floor also receives its own physical battle-screen panel and floor-specific title/rules, so the current floor's duel type is visible inside the arena.
+- The schedule is generated from `get_floor_data()` rather than a separately hard-coded list, keeping display categories aligned with runtime floor definitions.
+- These are in-world 3D display boards; they do not imply that online matchmaking, a live global event feed, or server-authoritative match broadcasting is already available.
+
+## 6. Progression and rewards
 
 - Floors unlock sequentially and retain the player's saved highest-cleared floor and per-floor clear-time records.
 - Level requirements remain reachable within the existing level-100 progression cap.
@@ -67,7 +76,7 @@ Each chapter changes its floor-deck material, arena ring, four environmental pyl
 - The final floor retains its sovereign crown, sovereign core, rare core and Nen fragment rewards.
 - A failed or abandoned attempt does not grant the floor-clear reward and does not erase previously earned wallet balance.
 
-## 6. Spectators and virtual ticket pools
+## 7. Spectators and virtual ticket pools
 
 Approved design:
 - Spectators watch individual 1v1 duels and may select which of the two fighters they expect to win.
@@ -81,13 +90,13 @@ Approved design:
 
 Implementation status: a local prototype now records individual 1v1 matches, deducts virtual ticket stakes through the shared local SYSTEM wallet, locks one ticket per fan, settles the complete pool proportionally from the local match-authority path, refunds the pool when no ticket selected the winner, and persists the gross payout/net-profit ledger. Clearly labelled NPC spectators can also stake from a separate fixed virtual budget and receive winnings only into NPC-only balances. It rejects fighter self-prediction, duplicate tickets, invalid selections, late submissions, insufficient balances and submissions beyond the daily cap. This remains a local prototype: account-level wallet isolation, automated NPC crowd selection, a playable spectator interface, live matchmaking, server-authoritative combat results, anti-cheat/anti-collusion, global rankings and cross-device persistence are not yet implemented.
 
-## 7. Fair access
+## 8. Fair access
 
 - Free and paying players can enter, progress, earn floor rewards and reach the highest ranks through gameplay.
 - Payments may offer cosmetics or convenience only; they cannot purchase wins, opponent outcomes, rank skips or exclusive combat power.
 - No real-money betting or player-to-player wagering is permitted.
 
-## 8. Technical boundaries and verification
+## 9. Technical boundaries and verification
 
 - Current tower wallet, floor rewards, commerce and activity systems are local-save prototypes; they are not yet a server-authoritative shared online economy.
 - The human-only matchmaking and match-result hooks are prepared, but the online matchmaking service is not active yet. Until it is connected, the tower must show a waiting/unavailable state and never spawn AI combat opponents. Authoritative result signatures, anti-cheat, anti-collusion and cross-device economy remain future integration work.
