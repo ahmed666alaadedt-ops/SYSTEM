@@ -17,7 +17,7 @@ const CITY_EXCLUSION_POINTS := [
 	Vector2(-850.0, 420.0), Vector2(-350.0, 610.0)
 ]
 
-var terrain: ModernContinentManager
+var terrain: Variant
 var rock_material: StandardMaterial3D
 var driftwood_material: StandardMaterial3D
 var dune_grass_material: StandardMaterial3D
@@ -27,7 +27,7 @@ var rng := RandomNumberGenerator.new()
 func _ready() -> void:
 	name = "ModernWorldCoastalDetailManager"
 	rng.seed = 20261119
-	terrain = get_parent().get_node_or_null("ModernContinent") as ModernContinentManager
+	terrain = get_parent().get_node_or_null("ModernContinent")
 	if terrain == null:
 		push_warning("SYSTEM WORLD: coastal details require ModernContinent.")
 		return
@@ -64,7 +64,7 @@ func _build_shoreline_details() -> void:
 		if _near_city(shoreline, 125.0):
 			continue
 		accepted_sites.append(shoreline)
-		var ground_y := terrain.get_terrain_height(shoreline.x, shoreline.y)
+		var ground_y: float = float(terrain.get_terrain_height(shoreline.x, shoreline.y))
 		var rock_count := rng.randi_range(1, 3)
 		for _rock in range(rock_count):
 			var offset := Vector2(rng.randf_range(-8.0, 8.0), rng.randf_range(-8.0, 8.0))
@@ -104,7 +104,7 @@ func _find_shore_position(direction: Vector2) -> Vector2:
 		)
 		if not terrain.is_land_position(point.x, point.y):
 			continue
-		var height := terrain.get_terrain_height(point.x, point.y)
+		var height: float = float(terrain.get_terrain_height(point.x, point.y))
 		if height >= 0.0 and height <= 12.0 and height < best_height:
 			best = point
 			best_height = height
