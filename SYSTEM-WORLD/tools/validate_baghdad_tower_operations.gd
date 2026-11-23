@@ -1794,9 +1794,23 @@ func _run() -> void:
 	if restaurant_chef == null or staff_elevator_car == null or restaurant_chef.get_parent() != staff_elevator_car or not bool(restaurant_chef.get_meta("system_staff_in_elevator", false)):
 		_fail("The assigned Shopping Tower restaurant chef did not board the physical tower elevator.")
 		return
-	print("QA TRACE: waiting for floor 29 elevator arrival.")
+	var customer_elevator_passengers := 0
+	for elevator_child in staff_elevator_car.get_children():
+		if str(elevator_child.name).begins_with("TowerCustomer_") and bool(elevator_child.get_meta("system_customer_in_elevator", false)) and int(elevator_child.get_meta("system_customer_elevator_target_floor", 0)) == 29:
+			customer_elevator_passengers += 1
+		if customer_elevator_passengers != 2:
+			_fail("Two persistent Shopping Tower customers did not physically board the elevator with the player.")
+			return
+	print("QA TRACE: two customer NPCs boarded the physical elevator; waiting for floor 29 arrival.")
 	await create_timer(3.8).timeout
 	print("QA TRACE: floor 29 elevator wait completed.")
+	var arrived_customer_passengers := 0
+	for floor_child in restaurant_room.get_children():
+		if str(floor_child.name).begins_with("TowerCustomer_") and not bool(floor_child.get_meta("system_customer_in_elevator", false)) and int(floor_child.get_meta("system_customer_current_floor", 0)) == 29:
+			arrived_customer_passengers += 1
+	if arrived_customer_passengers != 2:
+		_fail("The two customer NPCs did not disembark onto restaurant floor 29 after the elevator ride.")
+		return
 	var chef_workstation := restaurant_room.get_node_or_null("StaffWorkstation_restaurant_chef") as Node3D
 	if restaurant_chef.get_parent() != restaurant_room or chef_workstation == null or not bool(restaurant_chef.get_meta("system_staff_workstation_active", false)):
 		_fail("The restaurant chef did not travel to floor 29 and reach the active workstation.")
