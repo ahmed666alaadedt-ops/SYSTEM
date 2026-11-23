@@ -3360,6 +3360,23 @@ func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) 
 
 
 
+func _refresh_power_tower_spectator_seat_summary(gallery: Node3D) -> void:
+	if gallery == null:
+		return
+	var total := 0
+	var occupied := 0
+	for child in gallery.get_children():
+		if not bool(child.get_meta("system_power_tower_spectator_seat", false)):
+			continue
+		total += 1
+		if bool(child.get_meta("system_spectator_seat_reserved", false)):
+			occupied += 1
+	var summary := gallery.get_node_or_null("PowerTowerSeatAvailability") as Label3D
+	if summary != null:
+		summary.text = "المقاعد المتاحة: %d / %d | المحجوزة: %d" % [total - occupied, total, occupied]
+	gallery.set_meta("system_spectator_seats_occupied", occupied)
+
+
 func _release_power_tower_spectator_seat() -> void:
 	if not is_instance_valid(player) or not bool(player.get_meta("system_power_tower_seated", false)):
 		return
@@ -3385,6 +3402,7 @@ func _release_power_tower_spectator_seat() -> void:
 					if status_label != null:
 						status_label.text = "مقعد متاح"
 						status_label.modulate = Color(0.55, 0.95, 0.78)
+					_refresh_power_tower_spectator_seat_summary(gallery)
 				break
 	player.set_meta("system_power_tower_seated", false)
 	player.remove_meta("system_power_tower_seat_id")
@@ -3418,6 +3436,7 @@ func interact_power_tower_spectator_seat(target: Node) -> void:
 		if is_instance_valid(status_label):
 			status_label.text = "مقعد متاح"
 			status_label.modulate = Color(0.55, 0.95, 0.78)
+		_refresh_power_tower_spectator_seat_summary(seat.get_parent() as Node3D)
 		return
 	seat.set_meta("system_spectator_seat_reserved", true)
 	seat.set_meta("system_spectator_seat_owner", player_id)
@@ -3430,6 +3449,7 @@ func interact_power_tower_spectator_seat(target: Node) -> void:
 		status_label.text = "محجوز — أنت هنا"
 	if is_instance_valid(status_label):
 		status_label.modulate = Color(1.0, 0.78, 0.36)
+	_refresh_power_tower_spectator_seat_summary(seat.get_parent() as Node3D)
 
 
 func _create_power_tower_spectator_gallery(room: Node3D, radius: float) -> void:
@@ -3590,9 +3610,58 @@ func _create_power_tower_spectator_gallery(room: Node3D, radius: float) -> void:
 			arm_mesh.material_override = torso_material
 			arm_pivot.add_child(arm_mesh)
 			audience_actor.add_child(arm_pivot)
+	var seat_summary := Label3D.new()
+	seat_summary.name = "PowerTowerSeatAvailability"
+	seat_summary.position = Vector3(0.0, 3.3, radius * 0.72)
+	seat_summary.font_size = 16
+	seat_summary.pixel_size = 0.01
+	seat_summary.modulate = Color(0.65, 0.95, 1.0)
+	gallery.add_child(seat_summary)
+	var prediction_board := Node3D.new()
+	prediction_board.name = "PowerTowerSpectatorPredictionBoard"
+	prediction_board.position = Vector3(0.0, 0.0, radius * 0.88)
+	prediction_board.set_meta("system_power_tower_prediction_board", true)
+	var board_mesh := MeshInstance3D.new()
+	board_mesh.name = "PredictionBoardDisplay"
+	var board_box := BoxMesh.new()
+	board_box.size = Vector3(3.2, 2.3, 0.38)
+	board_mesh.mesh = board_box
+	var board_material := StandardMaterial3D.new()
+	board_material.albedo_color = Color(0.025, 0.12, 0.17)
+	board_material.metallic = 0.82
+	board_material.emission_enabled = true
+	board_material.emission = Color(0.0, 0.18, 0.24)
+	board_material.emission_energy_multiplier = 0.8
+	board_mesh.material_override = board_material
+	board_mesh.position.y = 1.5
+	prediction_board.add_child(board_mesh)
+	var board_label := Label3D.new()
+	board_label.name = "PredictionBoardLabel"
+	board_label.text = "SYSTEM FAN PREDICTIONS\nتوقع الفائز في نزال 1 ضد 1\nرصيد افتراضي فقط"
+	board_label.position = Vector3(0.0, 1.55, -0.22)
+	board_label.font_size = 17
+	board_label.pixel_size = 0.009
+	board_label.modulate = Color(0.65, 0.96, 1.0)
+	prediction_board.add_child(board_label)
+	var board_interaction := Area3D.new()
+	board_interaction.name = "SpectatorPredictionInteraction"
+	board_interaction.add_to_group("system_interactable")
+	board_interaction.set_meta("system_power_tower_prediction_board", true)
+	board_interaction.set_meta("system_interaction_prompt", "فتح توقعات الجمهور — نزال فردي 1 ضد 1")
+	board_interaction.collision_layer = 1
+	board_interaction.collision_mask = 0
+	var board_collision := CollisionShape3D.new()
+	var board_sphere := SphereShape3D.new()
+	board_sphere.radius = 2.2
+	board_collision.shape = board_sphere
+	board_collision.position.y = 1.3
+	board_interaction.add_child(board_collision)
+	prediction_board.add_child(board_interaction)
+	gallery.add_child(prediction_board)
 	gallery.set_meta("system_audience_actor_count", 8)
 	room.set_meta("system_power_tower_audience_actor_count", 8)
 	gallery.set_meta("system_spectator_seat_count", seat_count)
+	_refresh_power_tower_spectator_seat_summary(gallery)
 	room.set_meta("system_power_tower_spectator_seat_count", seat_count)
 
 
