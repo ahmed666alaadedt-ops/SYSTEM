@@ -5045,7 +5045,7 @@ func _process_restaurant_staff_service() -> void:
 				continue
 			var order: Dictionary = restaurant_orders[table_id]
 			var state := str(order.get("status", ""))
-			if role == "restaurant_chef" and state == "placed":
+			if role == "restaurant_chef" and state in ["placed", "preparing"]:
 				selected_table_id = table_id
 				break
 			if role == "restaurant_waiter" and state == "ready":
