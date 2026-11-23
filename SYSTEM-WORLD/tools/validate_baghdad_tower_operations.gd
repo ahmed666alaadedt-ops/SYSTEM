@@ -1820,8 +1820,8 @@ func _run() -> void:
 		return
 	await create_timer(3.8).timeout
 	var pool_staff_room := operations.get("active_floor_root") as Node3D
-	var pool_supervisor_station := pool_staff_room.get_node_or_null("StaffWorkstation_مشرف المسابح") as Node3D if pool_staff_room != null else null
-	var pool_staff_service := pool_staff_room.get_node_or_null("StaffServicePoint_مشرف المسابح") as Node3D if pool_staff_room != null else null
+	var pool_supervisor_station := pool_staff_room.get_node_or_null("StaffWorkstation_pool_supervisor") as Node3D if pool_staff_room != null else null
+	var pool_staff_service := pool_staff_room.get_node_or_null("StaffServicePoint_pool_supervisor") as Node3D if pool_staff_room != null else null
 	var pool_facility_station := pool_staff_room.get_node_or_null("SpecialFacility_swimming_pool/PoolLifeguardStation") as Node3D if pool_staff_room != null else null
 	var rescue_kit := pool_supervisor_station.get_node_or_null("PoolRescueFirstAidKit") as MeshInstance3D if pool_supervisor_station != null else null
 	var rescue_tube := pool_supervisor_station.get_node_or_null("PoolRescueTubeRack") as MeshInstance3D if pool_supervisor_station != null else null
