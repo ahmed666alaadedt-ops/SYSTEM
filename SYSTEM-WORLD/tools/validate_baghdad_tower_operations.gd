@@ -1225,10 +1225,14 @@ func _run() -> void:
 	if not operations.has_method("_buy_product") or not operations.has_method("_sell_item"):
 		_fail("NPC-supervised buy/sell transaction methods are missing.")
 		return
+	print("QA: Power Tower final arena, ten themes and 48-seat spectator gallery passed.")
 	var shopping_tower := tower_manager.get_node_or_null("ShoppingTower") as Node3D
+	print("QA: Starting Shopping Tower elevator regression; registered=%s player_valid=%s" % [str(operations.get("tower_nodes").has("shopping_tower_baghdad")), str(is_instance_valid(player))])
 	operations.call("open_tower", "shopping_tower_baghdad")
 	operations.call("_travel_to_floor", "shopping_tower_baghdad", 1)
+	print("QA: Shopping Tower travel request issued.")
 	await create_timer(2.8).timeout
+	print("QA: Shopping Tower elevator wait completed.")
 	if shopping_tower.get_node_or_null("ActiveTowerElevatorCar") == null:
 		var elevator_status_label := operations.get("status_label") as Label
 		var elevator_active_car := operations.get("active_elevator_car") as Node3D
