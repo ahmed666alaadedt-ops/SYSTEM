@@ -674,6 +674,11 @@ func _place_floor_duty_staff_on_floor(trip: Dictionary, room: Node3D, radius: fl
 		role_sign.pixel_size = 0.012
 		role_sign.modulate = Color(0.72, 0.94, 1.0)
 		station.add_child(role_sign)
+		if role == "مشرف المسابح":
+			_add_facility_box(station, "PoolRescueFirstAidKit", Vector3(-1.55, 0.72, 0.2), Vector3(0.9, 1.1, 0.7), desk_material)
+			_add_facility_box(station, "PoolRescueTubeRack", Vector3(1.55, 1.05, 0.2), Vector3(0.35, 1.8, 0.35), terminal_material)
+			_add_facility_box(station, "PoolRescueWhistlePanel", Vector3(0.0, 1.7, 0.55), Vector3(1.2, 0.35, 0.12), terminal_material)
+			_add_pool_room_sign(station, "PoolSafetyEquipmentSign", "معدات الإنقاذ والإسعاف الأولي", Vector3(0.0, 2.65, 0.25), Color(0.95, 0.82, 0.58))
 
 	var service_name := "StaffServicePoint_" + role
 	if room.get_node_or_null(service_name) == null:
