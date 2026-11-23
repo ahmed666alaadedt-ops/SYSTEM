@@ -1479,6 +1479,12 @@ func _run() -> void:
 	if prediction_board == null or prediction_interaction == null or not prediction_interaction.is_in_group("system_interactable") or not prediction_interaction.has_meta("system_power_tower_prediction_board"):
 		_fail("Power Tower spectator gallery is missing its interactive virtual fan-prediction board.")
 		return
+	main.call("_on_interaction_performed", prediction_interaction, "power_tower_fan_prediction")
+	var prediction_panel := operations.get("panel") as Control
+	if prediction_panel == null or not prediction_panel.visible:
+		_fail("Power Tower arena prediction board did not open the existing virtual ticket terminal UI.")
+		return
+	prediction_panel.hide()
 	if spectator_gallery == null or spectator_seat_count != 48 or int(spectator_gallery.get_meta("system_spectator_seat_count", 0)) != 48 or str(spectator_gallery.get_meta("system_competition_format", "")) != "INDIVIDUAL_1V1":
 		_fail("Power Tower floor 200 must provide a physical 48-seat spectator gallery for individual duels.")
 		return
@@ -1513,7 +1519,7 @@ func _run() -> void:
 	if int(spectator_gallery.get_meta("system_spectator_seats_occupied", -1)) != 1 or not str(spectator_gallery.get_node("PowerTowerSeatAvailability").text).contains("47 / 48"):
 		_fail("Power Tower spectator seat availability board did not refresh after reservation.")
 		return
-	if not bool(test_spectator_seat.get_meta("system_spectator_seat_reserved", false)) or str(test_spectator_seat.get_meta("system_spectator_seat_owner", "")) != "validator_spectator" or not bool(player.get_meta("system_power_tower_seated", false)) or str(player.get_meta("system_power_tower_seat_id", "")) != "PT_000":
+	if not bool(test_spectator_seat.get_meta("system_spectator_seat_reserved", false)) or str(test_spectator_seat.get_meta("system_spectator_seat_owner", "")) != "validator_spectator" or not bool(player.get_meta("system_power_tower_seated", false)) or str(player.get_meta("system_power_tower_seat_id", "")) != "PT_000" or int(player.get_meta("system_power_tower_seat_floor", 0)) != 200:
 		_fail("Power Tower spectator seat reservation did not seat and lock the local player.")
 		return
 	player.set_meta("system_player_id", "another_spectator")
