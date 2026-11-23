@@ -160,12 +160,18 @@ func get_tower_status() -> Dictionary:
 
 ## Local prototype lifecycle for free fan predictions. Online settlement must move to a trusted server.
 func register_spectator_match(match_id: String, fighter_a_id: String, fighter_b_id: String, floor_number: int) -> Dictionary:
-	if match_id.strip_edges().is_empty() or fighter_a_id.strip_edges().is_empty() or fighter_b_id.strip_edges().is_empty():
+	match_id = match_id.strip_edges()
+	fighter_a_id = fighter_a_id.strip_edges()
+	fighter_b_id = fighter_b_id.strip_edges()
+	if match_id.is_empty() or fighter_a_id.is_empty() or fighter_b_id.is_empty():
 		return {"success": false, "reason": "INVALID_MATCH_IDENTITY"}
 	if fighter_a_id == fighter_b_id:
 		return {"success": false, "reason": "FIGHTERS_MUST_BE_DISTINCT"}
 	if floor_number < 1 or floor_number > MAX_FLOORS:
 		return {"success": false, "reason": "INVALID_FLOOR"}
+	var floor_data := get_floor_data(floor_number)
+	if str(floor_data.get("competition_format", "")) != "INDIVIDUAL_1V1" or int(floor_data.get("opponent_count", 0)) != 1 or int(floor_data.get("wave_count", 0)) != 1:
+		return {"success": false, "reason": "INDIVIDUAL_1V1_REQUIRED"}
 	if spectator_matches.has(match_id):
 		return {"success": false, "reason": "MATCH_ALREADY_REGISTERED"}
 	spectator_matches[match_id] = {
@@ -182,7 +188,10 @@ func register_spectator_match(match_id: String, fighter_a_id: String, fighter_b_
 	return {"success": true, "match_id": match_id, "state": "open"}
 
 func submit_spectator_prediction(match_id: String, spectator_id: String, predicted_winner_id: String) -> Dictionary:
-	if spectator_id.strip_edges().is_empty():
+	match_id = match_id.strip_edges()
+	spectator_id = spectator_id.strip_edges()
+	predicted_winner_id = predicted_winner_id.strip_edges()
+	if spectator_id.is_empty():
 		return {"success": false, "reason": "INVALID_SPECTATOR"}
 	if not spectator_matches.has(match_id):
 		return {"success": false, "reason": "MATCH_NOT_FOUND"}
@@ -216,6 +225,7 @@ func submit_spectator_prediction(match_id: String, spectator_id: String, predict
 	return {"success": true, "match_id": match_id, "prediction_locked_at_match_start": true}
 
 func lock_spectator_predictions(match_id: String) -> Dictionary:
+	match_id = match_id.strip_edges()
 	if not spectator_matches.has(match_id):
 		return {"success": false, "reason": "MATCH_NOT_FOUND"}
 	var match_record: Dictionary = spectator_matches[match_id]
@@ -228,6 +238,8 @@ func lock_spectator_predictions(match_id: String) -> Dictionary:
 	return {"success": true, "state": "locked"}
 
 func settle_spectator_match(match_id: String, winner_id: String, settlement_source: String) -> Dictionary:
+	match_id = match_id.strip_edges()
+	winner_id = winner_id.strip_edges()
 	if settlement_source != LOCAL_MATCH_AUTHORITY:
 		return {"success": false, "reason": "UNTRUSTED_MATCH_RESULT"}
 	if not spectator_matches.has(match_id):
@@ -260,10 +272,12 @@ func settle_spectator_match(match_id: String, winner_id: String, settlement_sour
 	return {"success": true, "winner_id": winner_id, "points_awarded": awarded, "cash_value": 0}
 
 func get_spectator_match(match_id: String) -> Dictionary:
+	match_id = match_id.strip_edges()
 	var match_record: Dictionary = spectator_matches.get(match_id, {})
 	return match_record.duplicate(true)
 
 func get_spectator_status(spectator_id: String) -> Dictionary:
+	spectator_id = spectator_id.strip_edges()
 	var today := Time.get_date_string_from_system(true)
 	var daily_record: Dictionary = spectator_daily_counts.get(spectator_id, {})
 	var daily_count := int(daily_record.get("count", 0)) if str(daily_record.get("date", "")) == today else 0
