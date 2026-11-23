@@ -2825,7 +2825,7 @@ func _create_power_tower_spectator_gallery(room: Node3D, radius: float) -> void:
 				seat.rotation.y = atan2(outward.x, outward.z)
 				seat.set_meta("system_power_tower_spectator_seat", true)
 				seat.set_meta("system_spectator_seat_id", "PT_%03d" % seat_count)
-				seat.set_meta("system_spectator_seat_floor", int(room.get_meta("system_tower_floor_number", 0)))
+				seat.set_meta("system_spectator_seat_floor", int(room.get_meta("system_power_tower_floor", 0)))
 				seat.set_meta("system_spectator_seat_reserved", false)
 				gallery.add_child(seat)
 
