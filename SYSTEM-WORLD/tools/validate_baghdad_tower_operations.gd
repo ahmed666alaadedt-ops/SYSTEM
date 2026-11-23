@@ -787,8 +787,10 @@ func _run() -> void:
 		var sample_room := operations.call("_ensure_floor_room", "power_tower_baghdad", sample_floor) as Node3D
 		var sample_display := sample_room.get_node_or_null("ArenaChallengeDisplay") as Label3D if sample_room != null else null
 		var sample_panel := sample_room.get_node_or_null("ArenaChallengeScreenPanel") as MeshInstance3D if sample_room != null else null
+		var sample_live_score := sample_room.get_node_or_null("ArenaLiveMatchScoreDisplay") as Label3D if sample_room != null else null
+		var sample_judges := sample_room.get_node_or_null("PowerTowerRefereeStations") as Node3D if sample_room != null else null
 		var expected_arena_name := "PLAYER 1 VS 1 DUEL ARENA" if sample_floor == 1 else ("ELITE PLAYER DUEL ARENA" if sample_floor == 5 else "TITLE HOLDER DUEL ARENA")
-		if sample_display == null or sample_panel == null or not sample_display.text.contains(expected_arena_name) or int(sample_panel.get_meta("system_floor_number", 0)) != sample_floor or str(sample_panel.get_meta("system_competition_format", "")) != "INDIVIDUAL_1V1":
+		if sample_display == null or sample_panel == null or sample_live_score == null or sample_judges == null or sample_judges.get_child_count() != 3 or int(sample_judges.get_meta("system_official_judge_count", 0)) != 3 or not sample_display.text.contains(expected_arena_name) or int(sample_panel.get_meta("system_floor_number", 0)) != sample_floor or str(sample_panel.get_meta("system_competition_format", "")) != "INDIVIDUAL_1V1":
 			_fail("Power Tower floor %d is missing its correctly labelled physical battle screen." % sample_floor)
 			return
 	var first_floor_rewards: Dictionary = power_manager.call("get_floor_data", 1)
@@ -1433,7 +1435,9 @@ func _run() -> void:
 		return
 	var sovereign_display := boss_room.get_node_or_null("ArenaChallengeDisplay") as Label3D
 	var sovereign_screen := boss_room.get_node_or_null("ArenaChallengeScreenPanel") as MeshInstance3D
-	if sovereign_display == null or sovereign_screen == null or not sovereign_display.text.contains("SOVEREIGN TITLE DUEL ARENA") or int(sovereign_screen.get_meta("system_floor_number", 0)) != 200 or str(sovereign_screen.get_meta("system_arena_type", "")) != "BOSS_TRIAL":
+	var sovereign_judges := boss_room.get_node_or_null("PowerTowerRefereeStations") as Node3D
+	var sovereign_live_score := boss_room.get_node_or_null("ArenaLiveMatchScoreDisplay") as Label3D
+	if sovereign_display == null or sovereign_screen == null or sovereign_judges == null or sovereign_judges.get_child_count() != 3 or sovereign_live_score == null or not sovereign_display.text.contains("SOVEREIGN TITLE DUEL ARENA") or int(sovereign_screen.get_meta("system_floor_number", 0)) != 200 or str(sovereign_screen.get_meta("system_arena_type", "")) != "BOSS_TRIAL":
 		_fail("Power Tower floor 200 sovereign arena is missing its dedicated battle display.")
 		return
 	if not operations.has_method("_buy_product") or not operations.has_method("_sell_item"):
