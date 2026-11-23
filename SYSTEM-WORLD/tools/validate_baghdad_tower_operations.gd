@@ -1844,7 +1844,7 @@ func _run() -> void:
 		_fail("The pool supervisor did not physically reach the player after accepting the assistance request.")
 		return
 	operations.call("_return_floor_duty_staff_to_lobbies")
-	if pool_supervisor.get_parent() != entertainment_tower_node.get_node("PublicLobby_Blockout") or pool_supervisor.has_meta("system_staff_duty_floor") or not bool(pool_supervisor.get_meta("system_staff_navigation_enabled", false)):
+	if pool_supervisor.get_parent() != entertainment_tower_node.get_node("PublicLobby_Blockout") or pool_supervisor.has_meta("system_staff_duty_floor") or pool_supervisor.has_meta("system_staff_assistance_requested") or pool_supervisor.has_meta("system_staff_assistance_arrived") or not bool(pool_supervisor.get_meta("system_staff_navigation_enabled", false)):
 		_fail("The pool supervisor did not return to the public lobby and resume the lobby patrol after duty.")
 		return
 	print("QA TRACE: pool supervisor duty, lifeguard workstation and lobby return passed.")
