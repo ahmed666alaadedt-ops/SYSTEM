@@ -306,19 +306,7 @@ func _process(delta: float) -> void:
 	if customer_walk_clock >= 13.0:
 		customer_walk_clock = 0.0
 		_move_customer_visitors()
-	if power_floor_in_progress and power_floor_timer_remaining > 0.0:
-		power_floor_timer_remaining = maxf(0.0, power_floor_timer_remaining - delta)
-		power_floor_timer_display_clock -= delta
-		if power_floor_timer_remaining <= 0.0:
-			var objective := str(active_power_floor_data.get("objective_type", ""))
-			if objective == "SURVIVE_TIMER":
-				_clear_active_power_opponents()
-				_complete_power_floor()
-			elif objective == "CLEAR_WITHIN_TIME":
-				_fail_power_floor("انتهى الوقت قبل إكمال البطولة.")
-		elif power_floor_timer_display_clock <= 0.0:
-			power_floor_timer_display_clock = 1.0
-			_update_power_objective_display()
+
 
 func _resolve_towers() -> void:
 	for tower_id in TOWER_CONFIG.keys():
