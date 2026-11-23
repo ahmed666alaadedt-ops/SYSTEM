@@ -730,6 +730,7 @@ func _run() -> void:
 		return
 	power_probe.call("abandon_active_floor")
 	power_probe.queue_free()
+	print("QA: starting 200 Power Tower floor-profile checks.")
 	var power_tower_theme_ids: Dictionary = {}
 	for floor_number in range(1, 201):
 		var floor_data: Dictionary = power_manager.call("get_floor_data", floor_number)
@@ -760,6 +761,7 @@ func _run() -> void:
 	if power_tower_theme_ids.size() != 10:
 		_fail("Power Tower must expose ten distinct 20-floor environment themes.")
 		return
+	print("QA: all 200 floor profiles and ten environment chapters verified.")
 	var power_tower := tower_manager.get_node_or_null("PowerTower") as Node3D
 	var power_lobby := power_tower.get_node_or_null("PublicLobby_Blockout") as Node3D
 	var progress_board := power_lobby.get_node_or_null("PowerTowerProgressBoard") as Label3D
@@ -821,6 +823,7 @@ func _run() -> void:
 	var reloaded_progression_manager := power_tower_test_script.new() as Node
 	root.add_child(reloaded_progression_manager)
 	await process_frame
+	print("QA: 200-floor progression and persistence simulation completed.")
 	var reloaded_tower_status: Dictionary = reloaded_progression_manager.call("get_tower_status")
 	var reloaded_floor_times: Dictionary = reloaded_progression_manager.get("floor_clear_times")
 	if int(reloaded_tower_status.get("highest_cleared_floor", 0)) != 200 or int(reloaded_tower_status.get("next_floor", 1)) != 0 or int(reloaded_floor_times.size()) != 200 or int(reloaded_tower_status.get("total_duels_won", 0)) != 200 or int(reloaded_tower_status.get("elite_duels_won", 0)) != 20 or int(reloaded_tower_status.get("boss_duels_won", 0)) != 20 or int(reloaded_tower_status.get("total_xp_earned", 0)) <= 0 or int(reloaded_tower_status.get("total_credits_earned", 0)) <= 0:
@@ -885,6 +888,7 @@ func _run() -> void:
 	spectator_reload_manager.set("spectator_save_path", "user://validator_power_tower_spectator_predictions.cfg")
 	root.add_child(spectator_reload_manager)
 	await process_frame
+	print("QA: spectator prediction lock, settlement, daily cap and persistence checks completed.")
 	var persisted_fan_status: Dictionary = spectator_reload_manager.call("get_spectator_status", "fan_alpha")
 	if int(persisted_fan_status.get("prediction_points", 0)) != 1:
 		_fail("Spectator prediction points did not persist through a manager reload.")
@@ -1272,10 +1276,12 @@ func _run() -> void:
 	if not restaurant_order_ok:
 		_fail("Restaurant ordering failed payment, persisted kitchen preparation, serving and table-release lifecycle checks.")
 		return
+	print("QA: generating floor 200 sovereign arena and spectator gallery.")
 	var boss_room := operations.call("_ensure_floor_room", "power_tower_baghdad", 200) as Node3D
 	if boss_room == null or boss_room.get_node_or_null("BossTrialPlatform") == null:
 		_fail("Power Tower floor 200 boss arena was not generated.")
 		return
+	print("QA: floor 200 arena generation returned; checking theme pillars and spectator seats.")
 	var boss_theme_pillar_count := 0
 	for boss_room_child in boss_room.get_children():
 		if str(boss_room_child.name).begins_with("ArenaThemePillar_"):
