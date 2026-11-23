@@ -637,6 +637,18 @@ func settle_spectator_match(match_id: String, winner_id: String, settlement_sour
 	return {"success": true, "winner_id": winner_id, "total_pool": total_pool, "winning_stake": winning_stake, "payouts": payouts, "net_profits": profits, "total_paid_out": total_paid_out, "refunded": winning_stake == 0, "virtual_currency": "SYSTEM_CREDITS", "cash_value": 0}
 
 
+func get_open_spectator_matches() -> Array[Dictionary]:
+	var open_matches: Array[Dictionary] = []
+	for match_id_variant in spectator_matches.keys():
+		var match_record: Dictionary = spectator_matches[match_id_variant]
+		if str(match_record.get("state", "")) == "open":
+			open_matches.append(match_record.duplicate(true))
+	open_matches.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return int(a.get("created_at_unix", 0)) < int(b.get("created_at_unix", 0))
+	)
+	return open_matches
+
+
 func get_spectator_match(match_id: String) -> Dictionary:
 	match_id = match_id.strip_edges()
 	var match_record: Dictionary = spectator_matches.get(match_id, {})
