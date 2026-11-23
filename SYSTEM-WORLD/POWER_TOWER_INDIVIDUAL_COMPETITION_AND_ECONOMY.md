@@ -170,3 +170,12 @@ Implementation status: a local prototype now records individual 1v1 matches, ded
 - The gallery now displays crowd-reaction messages when the score changes and celebrates the winner only after the match is marked completed. Reactions follow the existing individual 1v1 match feed and do not affect judging, score, matchmaking or virtual-credit pools.
 - Regression validation checks all 48 seats for collision, interaction and status elements; verifies owner reservation, rejection of a second spectator, manual release and automatic release on floor/lobby transition; and checks the gallery reaction after a verified floor-200 duel result.
 - This is local in-engine interaction and crowd feedback. Persistent multiplayer seat occupancy, autonomous animated crowd actors and synchronized remote spectators remain separate future work.
+
+
+## 16. Visible audience actors and animated match reactions — 24 November 2026
+
+- Each generated Power Tower arena now includes eight lightweight procedural audience characters positioned behind the 48 reservable spectator seats. These actors are visual crowd members and do not consume or reserve player seats.
+- Crowd actors have visible heads, torsos and articulated arm pivots. Live score changes trigger a cheering pose; an officially completed duel triggers a stronger winner-celebration pose; tied scores return the crowd to a watching pose.
+- Reaction tweens are replaced safely when a new score update arrives, preventing stacked animation tweens on the same audience actor.
+- Regression validation checks all eight actors, their articulated arms, and the celebration state after the verified floor-200 individual duel.
+- This is local procedural crowd presentation. It does not claim remote multiplayer spectators, synchronized network animation, voice chat, or persistent cross-session seat reservations.
