@@ -31,7 +31,15 @@ Runtime acceptance criteria:
 - The runtime spawns one opponent and completes the floor when that opponent is defeated.
 - Floor 200 retains its unique final-boss profile and rewards.
 
-## 3. Progression and rewards
+## 3. Arena spectators and career record
+
+- Each generated duel arena includes a physical spectator gallery with 48 fixed seats, collision, stable seat IDs, floor metadata and an initially unreserved state.
+- The gallery is for viewing individual duels only; it does not create combat teams or alter the 1v1 rules.
+- The tower career record persists total individual duel wins, elite-duel wins, boss-duel wins, lifetime XP earned and lifetime virtual credits earned.
+- The Power Tower lobby progress board displays the 1v1 format, floor progression, duel wins, elite/boss wins, lifetime credits and best clear time.
+- Seat reservation/standing interactions, autonomous audience NPCs, live match spectator cameras and prediction terminals are separate follow-up work; the current 48-seat gallery is a physical visual seating prototype.
+
+## 4. Progression and rewards
 
 - Floors unlock sequentially and retain the player's saved highest-cleared floor and per-floor clear-time records.
 - Level requirements remain reachable within the existing level-100 progression cap.
@@ -40,7 +48,7 @@ Runtime acceptance criteria:
 - The final floor retains its sovereign crown, sovereign core, rare core and Nen fragment rewards.
 - A failed or abandoned attempt does not grant the floor-clear reward and does not erase previously earned wallet balance.
 
-## 4. Spectators and match predictions
+## 5. Spectators and match predictions
 
 Approved design:
 - Spectators may watch an individual duel in person or through supported public displays.
@@ -53,13 +61,13 @@ Approved design:
 
 Implementation note: the spectator prediction feature is approved design, not yet claimed as a completed live online service. Match identity, prediction locking, reward settlement and anti-abuse enforcement must become server-authoritative before public online release.
 
-## 5. Fair access
+## 6. Fair access
 
 - Free and paying players can enter, progress, earn floor rewards and reach the highest ranks through gameplay.
 - Payments may offer cosmetics or convenience only; they cannot purchase wins, opponent outcomes, rank skips or exclusive combat power.
 - No real-money betting or player-to-player wagering is permitted.
 
-## 6. Technical boundaries and verification
+## 7. Technical boundaries and verification
 
 - Current tower wallet, floor rewards, commerce and activity systems are local-save prototypes; they are not yet a server-authoritative shared online economy.
 - Online matchmaking, authoritative match settlement, anti-cheat and spectator prediction service remain separate future integration work.
