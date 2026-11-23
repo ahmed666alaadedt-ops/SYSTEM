@@ -1409,3 +1409,15 @@ This section supersedes the earlier point-only fan prediction wording above. The
 - [ ] Automated NPC crowd selection, actual live match scheduling, spectator UI, online accounts, server-authoritative settlement and global anti-cheat remain pending. NPC entries must be labelled as simulated, never as real users.
 - [ ] Validate the latest exact branch HEAD with Godot and canonical Android workflows before marking this change verified.
 - PR #38 remains draft and unmerged.
+
+
+### Power Tower battle displays — outside, lobby and all floor arenas — 23 November 2026
+
+- [x] Add a physical 3D battle schedule display outside the Power Tower entrance.
+- [x] Add a matching physical 3D battle schedule display inside the public lobby.
+- [x] Generate the complete 200-floor schedule from the canonical floor profiles, grouped into ten 20-floor chapters and labelling standard 1v1, elite 1v1, boss 1v1 and the floor-200 sovereign duel.
+- [x] Add a physical battle-screen panel to each generated arena floor, with the current floor number, arena type, environment and 1v1 rules shown on its in-world display.
+- [x] Extend the Baghdad tower operations validator to check both public displays, all 200 scheduled floors, representative standard/elite/boss floor screens and the sovereign floor-200 screen.
+- [ ] Run Godot 4.3 full validation and canonical Android export against the same resulting branch HEAD; no verification success is claimed until both workflows pass on that exact commit.
+- [ ] Inspect the displays on a physical Android device for text readability, touch behavior, camera visibility and performance.
+- Online live event streaming and the separate interactive spectator prediction interface remain future work; these schedule screens must not imply live global matchmaking.
