@@ -37,6 +37,10 @@ func _run() -> void:
 	if operations == null:
 		_fail("BaghdadTowerOperationsManager was not initialized.")
 		return
+	var player: CharacterBody3D = main.get("player") as CharacterBody3D
+	if player == null:
+		_fail("Player character was not initialized for tower operations validation.")
+		return
 	var status: Dictionary = operations.call("get_operations_status")
 	var schedule_expectations := {
 		8: "cafe",
@@ -1158,7 +1162,6 @@ func _run() -> void:
 	if shopping_tower.get_node_or_null("ActiveTowerElevatorCar") == null:
 		_fail("Visible elevator cabin was not created for tower travel.")
 		return
-	var player: CharacterBody3D = main.get("player") as CharacterBody3D
 	if bool(player.get_meta("system_tower_elevator_active", true)):
 		_fail("Elevator transition did not complete.")
 		return
