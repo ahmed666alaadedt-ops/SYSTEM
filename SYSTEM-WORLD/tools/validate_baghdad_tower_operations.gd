@@ -1865,7 +1865,7 @@ func _run() -> void:
 	await create_timer(0.8).timeout
 	var player_seat_name := str(player.get_meta("system_restaurant_seat_node", ""))
 	var player_seat_marker := player_test_table.get_node_or_null(player_seat_name) as Node3D
-	var player_seating_ok := bool(player.get_meta("system_restaurant_seated", false)) and str(player.get_meta("system_restaurant_seated_table_id", "")) == str(player_test_table.get_meta("system_restaurant_table_id", "")) and player_seat_marker != null and str(player_seat_marker.get_meta("system_restaurant_seat_occupant", "")) == "PLAYER" and player_test_table.get_meta("system_restaurant_occupants", []).has("PLAYER")
+	var player_seating_ok: bool = bool(player.get_meta("system_restaurant_seated", false)) and str(player.get_meta("system_restaurant_seated_table_id", "")) == str(player_test_table.get_meta("system_restaurant_table_id", "")) and player_seat_marker != null and str(player_seat_marker.get_meta("system_restaurant_seat_occupant", "")) == "PLAYER" and player_test_table.get_meta("system_restaurant_occupants", []).has("PLAYER")
 	if not player_seating_ok:
 		_fail("The player did not physically reserve and reach an individually owned restaurant seat.")
 		return
