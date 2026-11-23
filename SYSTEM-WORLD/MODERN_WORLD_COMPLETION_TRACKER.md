@@ -1326,16 +1326,16 @@ Implementation added on the feature branch; automated runtime validation is pend
 
 ### Power Tower player-versus-player policy — approved 23 November 2026
 
-- [x] Adopt the user's decision that **all actual Power Tower combat is exclusively between real human players**. Do not spawn AI combat opponents, AI boss characters, NPC combat waves, or AI substitutes when matchmaking is unavailable.
-- [ ] Replace the current solo/PvE floor progression with player-versus-player challenges: ranked one-on-one duels as the core format, with team formats only where the floor rules explicitly call for them. Survival and championship rounds must also use human participants, not AI waves.
-- [ ] Make the champion/"floor boss" a real player holding the title. Other eligible players can challenge that title-holder; the title changes only after a verified result.
-- [ ] Add fair matchmaking by level, combat rating and recent performance; define disconnect, timeout, draw, surrender, rematch and anti-smurf rules before ranked launch.
-- [ ] Require authenticated player identities and an authoritative online match/result service. Validate damage, cooldowns, movement, equipment and match outcomes server-side; never trust a client-reported win, local save file or local event-board entry as a global result.
-- [ ] Until the online service and matchmaking are available, show the Power Tower PvP mode as unavailable/under preparation rather than silently falling back to bots or presenting local results as global rankings. Existing NPCs may remain as non-combat guides, referees, vendors and arena staff only.
-- [ ] Rework the existing AI sovereign-boss arena and its PvE-specific validator coverage only as part of the PvP migration; do not count the current AI boss/telegraph as the final Power Tower combat design.
-- [ ] Add multiplayer QA for match pairing, rank boundaries, server-authoritative combat, disconnect recovery, duplicate/replayed results, rewards-once-only, spectator privacy and cross-device persistence. Run full Godot validation and Android build on the same exact HEAD.
+- [x] All official Power Tower combat is exclusively between authenticated real human players. NPCs may guide, referee, sell, staff or spectate, but never replace a human combatant.
+- [x] Every competition is individual 1v1 only: one human fighter against one human opponent. No team, party, squad, multi-opponent, enemy-wave or group combat formats are permitted on any floor, including elite and title-holder challenges.
+- [x] Floor data declares `INDIVIDUAL_1V1`, `HUMAN_PLAYER`, `ONLINE_1V1` and `ai_fallback = false`. Floor entry displays a waiting/unavailable state instead of spawning bots when matchmaking is unavailable.
+- [x] The tower has integration hooks for authenticated human match start, prediction locking and server-verified result settlement. Floor rewards require a unique verified result ID and a confirmed local-player win.
+- [x] The champion/"floor boss" is a real player holding the title. Other eligible human players challenge that title-holder; the title changes only after a verified result. Floor 200 is the sovereign title duel, not an AI boss fight.
+- [ ] Add fair online matchmaking by level, combat rating and recent performance; define disconnect, timeout, draw, surrender, rematch and anti-smurf rules before ranked launch.
+- [ ] Require authenticated player identities and a signed authoritative online match/result service. Validate damage, cooldowns, movement, equipment and match outcomes server-side; never trust a client-reported win, local save file or local event-board entry as a global result.
+- [ ] Add multiplayer QA for match pairing, rank boundaries, server-authoritative result verification, disconnect/forfeit handling, anti-cheat and anti-collusion before enabling ranked rewards.
+- [ ] Keep the old AI sovereign-boss/telegraph actor isolated as a legacy test fixture only; it is not spawned in the Power Tower and is not the approved combat design.
 - [ ] Keep PR #38 draft and do not merge to main without explicit user approval.
-
 
 ### Power Tower climb deadlines, player predictions, and achievement prizes — approved 23 November 2026
 
@@ -1374,7 +1374,7 @@ This clarification supersedes any earlier wording that could imply cash betting 
 - [x] Centralized Power Tower floor virtual-credit reward values in the progression manager and included them in the verified floor-clear result. Rewards scale by floor; the final sovereign floor receives its configured completion bonus.
 - [x] Updated tower operations to credit the wallet only from the successful verified floor-clear result. Abandoned, timed-out, wounded or otherwise unconfirmed attempts do not receive floor-clear credits.
 - [x] Extended the Baghdad tower validator to require a positive virtual-credit reward on every floor and increasing rewards between the first two floors.
-- [ ] Implement spectator predictions for NPC-versus-NPC and player-versus-NPC/player matches. Predictions must be free to enter, use non-purchasable/non-transferable prediction points, and reward correct forecasts only; no real-money wagers, deposits, withdrawals or player-to-player cash transfers.
+- [x] Spectator virtual ticket pools are restricted to authenticated human-versus-human individual 1v1 matches. Simulated NPCs may participate only as clearly labelled fans with a fixed virtual ticket budget; NPCs never act as fighters. The later "Power Tower fan virtual ticket pools" section supersedes the earlier point-only wording.
 - [ ] Global fan participation, cross-device leaderboards and anti-cheat settlement require an authoritative online service. The existing public event board is a local-session display and must not be represented as live global multiplayer.
 - [ ] Run canonical Godot validation and Android export on the resulting PR head; no new runtime/build success is claimed by this source update.
 - Scope remains the existing Power Tower and shared SYSTEM wallet; no merge to main.
