@@ -6228,7 +6228,7 @@ func _fail_power_floor(reason: String) -> void:
 	power_floor_in_progress = false
 	active_power_floor_data.clear()
 	if is_instance_valid(active_power_objective_label):
-		active_power_objective_label.text = "انتهى الوقت — أعد المحاولة من المصعد"
+		active_power_objective_label.text = "انتهت المواجهة — أعد المحاولة من المصعد"
 	_set_status("لم تنجح في التحدي: " + reason + " حاول مرة أخرى من المصعد.")
 
 
@@ -6280,7 +6280,7 @@ func return_to_lobby() -> void:
 		power_tower_manager.call("abandon_active_floor")
 		power_floor_in_progress = false
 		active_power_floor_data.clear()
-			active_power_objective_label = null
+		active_power_objective_label = null
 	_release_player_restaurant_seat()
 	var tower := tower_nodes[current_tower_id] as Node3D
 	var config: Dictionary = TOWER_CONFIG[current_tower_id]
