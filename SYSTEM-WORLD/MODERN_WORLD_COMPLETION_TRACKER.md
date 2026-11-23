@@ -1240,3 +1240,19 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Pass canonical Android APK build #1271 (run ID 45158202685); APK artifact `14809451838`, 35,975,852 bytes, expires 7 December 2026.
 - [x] Pass Android export #564 (run ID 45158192235) on the same HEAD.
 - [ ] Physical Android playtesting remains outstanding; automated validation/export does not verify device touch response, visual layout, frame rate, or thermal behavior.
+
+### Baghdad pool supervisor, rescue equipment, and live assistance response — 23 November 2026
+
+- [x] Assign the Entertainment Tower pool supervisor to the lifeguard station on pool floors 18 and 19 rather than a generic floor workstation.
+- [x] Place the supervisor workstation, service counter, and information terminal beside the pool lifeguard platform.
+- [x] Add visible first-aid kit, rescue-tube rack, and pool-safety equipment signage to the supervisor station.
+- [x] Route the lifeguard role using its canonical NPC job identifier `pool_supervisor` (not the Arabic display label).
+- [x] Make the lifeguard assistance action notify the active pool supervisor when the player is on pool duty floors; animate the supervisor's approach to the player and confirm arrival.
+- [x] Clear the assistance request/arrival state when the supervisor finishes duty and returns to the public lobby patrol.
+- [x] Extend the operations validator to test the supervisor's elevator trip, workstation placement, rescue equipment, assistance response, physical approach, and return-to-lobby cleanup.
+- [x] Guard customer movement-tween metadata reads so newly created visitors do not emit missing-meta errors before their first scheduled movement.
+- [x] Pass full Godot 4.3 validation #1541 (run ID 45159685939) on gameplay HEAD `ca807200588964bf388f617e106de1232a0ea5e0`; log confirms: `QA TRACE: pool supervisor duty, lifeguard workstation and lobby return passed.`
+- [x] Pass canonical Godot runtime validation #507 (run ID 45159681081) on the same HEAD.
+- [x] Pass canonical Android APK build #1278 (run ID 45159685656); APK artifact `14810196776`, 35,978,996 bytes, expires 7 December 2026.
+- [x] Pass Android export #576 (run ID 45159681072) on the same HEAD.
+- [ ] Physical Android playtesting remains outstanding; automated Godot validation and APK export do not verify touch response, visual layout, frame rate, thermal behavior, or collision feel on the device.
