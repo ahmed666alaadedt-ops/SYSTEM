@@ -167,3 +167,12 @@ device profiling remain separate, pending acceptance checks.
 - Expanded validate_baghdad_tower_operations.gd to exercise seat ownership/release and crowd state transitions.
 - Source changes are committed on feature/baghdad-five-plus-power-tower-20261122; no Godot or Android workflow result has yet been confirmed for this exact HEAD. Do not treat the new tests as passed until the matching runs complete.
 - Online spectator synchronization, persistent cross-session reservations, voice/chat and server-authoritative settlement are not included in this local gameplay milestone.
+
+
+## Power Tower fan board and cross-floor seat cleanup — 24 November 2026
+
+- Added a physical interactable fan-prediction board in each generated Power Tower arena. It routes through the existing main interaction handler to the established virtual ticket terminal UI and shared 1v1 ticket pools.
+- Added a live 48-seat availability summary and regression checks for 48/48 → 47/48 → 48/48 transitions.
+- Seat reservations now retain exact floor identity. The validator creates matching seat IDs on floors 199 and 200, reserves the adjacent-floor seat for a different owner, and verifies that releasing the player's floor-200 seat does not release floor 199's seat.
+- Expanded crowd regression to cover watching on a tied score, cheering when one fighter leads, and celebration after the official winner is supplied.
+- These are authored regression assertions only. No Godot 4.3 run or canonical Android APK export has yet been confirmed for the exact final feature HEAD; do not mark this milestone as runtime-verified until matching workflow results are inspected.
