@@ -40,6 +40,14 @@ Prediction rules:
 - system_baghdad_tower_operations_manager.gd credits the shared wallet using that successful result.
 - The public event board can publish local Power Tower clear records.
 
+### Implemented local prototype lifecycle
+- Added match registration for exactly two distinct fighters, with a stable match ID and floor identity.
+- Added free fan predictions that reject fighters predicting their own match, duplicate submissions, invalid fighters and submissions after the match locks.
+- Added a 20-prediction daily limit per spectator (UTC) and one non-transferable, non-purchasable point for each correct prediction. Incorrect predictions lose no credits or points.
+- Added one-time settlement that accepts only the local combat-authority settlement source, rejects invalid winners and prevents repeat settlement.
+- Prediction points, match state and daily counts persist in a separate local-save file. This is a local prototype guard, not cryptographic or server authority.
+- Regression coverage was added to `tools/validate_baghdad_tower_operations.gd` for self-prediction rejection, duplicates, locking, untrusted/repeated settlement, correct/incorrect rewards, daily limits and save/reload.
+
 ### Not yet implemented
 - A playable spectator prediction interface and prediction lock/settlement lifecycle.
 - Distinct NPC and player fighter matchmaking.
