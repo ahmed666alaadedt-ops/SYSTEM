@@ -329,7 +329,8 @@ func finish_judged_duel(match_id: String, winner_id: String, finish_type: String
 		var lock_result: Dictionary = lock_spectator_predictions(match_id)
 		if bool(lock_result.get("success", false)):
 			spectator_state = "locked"
-	if spectator_state == "locked" and not (spectator_match.get("predictions", {}) as Dictionary).is_empty():
+	if spectator_state == "locked":
+		# Close every pool after the official result, including empty pools, so no late ticket can be added after the winner is known.
 		spectator_settlement = settle_spectator_match(match_id, winner_id, LOCAL_MATCH_AUTHORITY)
 	_save_duel_records()
 	duel_completed.emit(match_id, duel.duplicate(true))
@@ -580,9 +581,14 @@ func settle_spectator_match(match_id: String, winner_id: String, settlement_sour
 		return {"success": false, "reason": "MATCH_NOT_LOCKED"}
 	if winner_id != str(match_record.get("fighter_a_id", "")) and winner_id != str(match_record.get("fighter_b_id", "")):
 		return {"success": false, "reason": "WINNER_NOT_IN_MATCH"}
-	if not is_instance_valid(spectator_wallet_provider) or not spectator_wallet_provider.has_method("grant_spectator_payout"):
-		return {"success": false, "reason": "SPECTATOR_WALLET_UNAVAILABLE"}
 	var predictions: Dictionary = match_record.get("predictions", {})
+	var requires_player_wallet := false
+	for prediction_value in predictions.values():
+		if str(prediction_value.get("participant_type", "PLAYER")) != "NPC" and int(prediction_value.get("stake_amount", 0)) > 0:
+			requires_player_wallet = true
+			break
+	if requires_player_wallet and (not is_instance_valid(spectator_wallet_provider) or not spectator_wallet_provider.has_method("grant_spectator_payout")):
+		return {"success": false, "reason": "SPECTATOR_WALLET_UNAVAILABLE"}
 	var total_pool := int(match_record.get("total_pool", 0))
 	var winning_stake := 0
 	var winning_ids: Array[String] = []
