@@ -829,8 +829,12 @@ func _run() -> void:
 		reloaded_progression_manager.queue_free()
 		return
 	var prediction_match := progression_test_manager.call("register_spectator_match", "validator_duel_001", "fighter_alpha", "fighter_beta", 12)
-	if not bool(prediction_match.get("success", false)):
-		_fail("Spectator prediction match registration failed.")
+	var prediction_match_record: Dictionary = progression_test_manager.call("get_spectator_match", "validator_duel_001")
+	var same_fighter_match: Dictionary = progression_test_manager.call("register_spectator_match", "validator_same_fighter", "fighter_same", "fighter_same", 12)
+	var whitespace_match: Dictionary = progression_test_manager.call("register_spectator_match", " validator_whitespace ", " fighter_gamma ", " fighter_delta ", 13)
+	var normalized_match_record: Dictionary = progression_test_manager.call("get_spectator_match", "validator_whitespace")
+	if not bool(prediction_match.get("success", false)) or str(prediction_match_record.get("competition_format", "")) != "INDIVIDUAL_1V1" or str(same_fighter_match.get("reason", "")) != "FIGHTERS_MUST_BE_DISTINCT" or not bool(whitespace_match.get("success", false)) or str(normalized_match_record.get("fighter_a_id", "")) != "fighter_gamma":
+		_fail("Spectator match registration did not enforce distinct individual fighters and normalized match identity.")
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
 		return
@@ -850,12 +854,13 @@ func _run() -> void:
 	var repeated_settlement: Dictionary = progression_test_manager.call("settle_spectator_match", "validator_duel_001", "fighter_beta", "LOCAL_COMBAT_AUTHORITY")
 	var fan_alpha_status: Dictionary = progression_test_manager.call("get_spectator_status", "fan_alpha")
 	var fan_beta_status: Dictionary = progression_test_manager.call("get_spectator_status", "fan_beta")
+	var settled_match_record: Dictionary = progression_test_manager.call("get_spectator_match", "validator_duel_001")
 	if str(untrusted_settlement.get("reason", "")) != "UNTRUSTED_MATCH_RESULT" or not bool(locked_prediction.get("success", false)) or str(late_prediction.get("reason", "")) != "PREDICTIONS_LOCKED" or not bool(settled_prediction.get("success", false)) or str(repeated_settlement.get("reason", "")) != "MATCH_NOT_LOCKED":
 		_fail("Spectator prediction locking or trusted one-time match settlement failed.")
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
 		return
-	if int(fan_alpha_status.get("prediction_points", 0)) != 1 or int(fan_beta_status.get("prediction_points", 0)) != 0 or int(fan_alpha_status.get("cash_value", -1)) != 0 or bool(fan_alpha_status.get("transferable", true)) or bool(fan_alpha_status.get("purchasable", true)):
+	if int(fan_alpha_status.get("prediction_points", 0)) != 1 or int(fan_beta_status.get("prediction_points", 0)) != 0 or int(fan_alpha_status.get("cash_value", -1)) != 0 or bool(fan_alpha_status.get("transferable", true)) or bool(fan_alpha_status.get("purchasable", true)) or str(settled_match_record.get("state", "")) != "settled" or str(settled_match_record.get("winner_id", "")) != "fighter_beta":
 		_fail("Correct fan predictions must award only non-transferable, non-purchasable points; incorrect forecasts must not lose value.")
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
