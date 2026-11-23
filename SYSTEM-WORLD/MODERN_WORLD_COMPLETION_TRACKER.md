@@ -1268,3 +1268,16 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Pass Godot 4.3 full validation #1545 (run ID 45175817840) on exact gameplay/validator HEAD `7d9cb2d1c19f4783ddf7759821a7feb549b596f3`; full tower operations validation passed, including pool locker lifecycle, swimming physics, staff elevator duty, restaurant evacuation and the 200-floor Power Tower checks.
 - [x] Pass canonical Android APK build #1282 (run ID 45175817938) on the same exact HEAD; APK artifact [14819581182](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45175817938/artifacts/14819581182), 35,981,754 bytes; APK SHA-256 `37a5a8b2aa09693b7a8a35de32919036f2ada3e401f3901d4e829226d337d56c`; expires 7 December 2026.
 - [ ] Physical Android playtesting remains outstanding; automated Godot validation and APK export do not verify device touch response, visual layout, frame rate, thermal behavior, or collision feel.
+
+
+### Baghdad Shopping Tower restaurant seating and waiting queue — 23 November 2026
+
+- [x] Add four physical dining tables on restaurant floors, each with four explicit seat markers and per-seat customer ownership metadata.
+- [x] Assign arriving customer NPCs to the first available physical seat; move their character nodes to the corresponding seat position and set their dining activity.
+- [x] Add eight visible, ordered waiting positions and a queue sign beside the restaurant entrance; customers without a free seat enter the queue rather than being assigned an occupied seat.
+- [x] Release a customer's seat/queue reservation before elevator boarding or emergency/lobby return; clear table ownership and queue marker state.
+- [x] Promote the first waiting customer into a newly freed seat.
+- [x] Extend the full tower operations validator to check two real seated customers, individual seat ownership, all eight queue positions, and release of reservations after restaurant evacuation.
+- [x] Pass canonical Android APK export #1289 on gameplay/validator HEAD `93c8f4d0f5aed1a69f21a31ca2c7db1c1bd23122`; APK artifact [14823980114](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45184789462/artifacts/14823980114), 35,990,099 bytes, SHA-256 `f671ab0d2070508e75c414bf108847e968d5816c3e3323e86b12be7e465b58c3`, expires 7 December 2026.
+- [ ] Godot 4.3 full tower validation #1552 (run ID 45184789456) is still in progress; do not mark the restaurant seat/queue runtime assertions fully verified until the job finishes successfully.
+- [ ] Physical Android playtesting remains outstanding.
