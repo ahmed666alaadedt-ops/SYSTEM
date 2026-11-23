@@ -21,53 +21,38 @@ func get_floor_data(floor_number: int) -> Dictionary:
 		return {}
 	var final_boss := floor_number == MAX_FLOORS
 	var boss_floor := floor_number % 10 == 0
+	var elite_floor := floor_number % 5 == 0 and not boss_floor
 	var difficulty := clampi(1 + int((floor_number - 1) / 5), 1, 40)
 	var required_level := clampi(int(ceil(float(floor_number) * 0.45)), 1, 100)
 	var reward_xp := 100 + floor_number * floor_number * 12 + (250000 if final_boss else 0)
 	var reward_credits := 75 + floor_number * 15 + (5000 if final_boss else 0)
-	var arena_cycle := (floor_number - 1) % 5
-	var arena_names := [
-		"DUEL ARENA",
-		"TEAM BATTLE ARENA",
-		"SURVIVAL ARENA",
-		"ELITE GAUNTLET",
-		"CHAMPIONSHIP ARENA"
-	]
-	var arena_rules := [
-		"مواجهة فردية — اهزم خصمك ضمن حدود الحلبة",
-		"قتال فرق — تعاون مع فريقك ضد مجموعة خصوم",
-		"اختبار بقاء — اصمد أمام موجات متتابعة",
-		"تحدي نخبة — واجه خصوماً أقوى تباعاً",
-		"بطولة تصنيفية — سلسلة مواجهات بأداء ووقت محسوبين"
-	]
-	var arena_type := "BOSS_TRIAL" if boss_floor else str(["DUEL", "TEAM", "SURVIVAL", "ELITE", "CHAMPIONSHIP"][arena_cycle])
-	var objective_type := "DEFEAT_BOSS" if boss_floor else ("SURVIVE_TIMER" if arena_type == "SURVIVAL" else ("CLEAR_WITHIN_TIME" if arena_type == "CHAMPIONSHIP" else "ELIMINATE_WAVES"))
-	var time_limit_seconds := 0
-	if objective_type == "SURVIVE_TIMER":
-		time_limit_seconds = clampi(50 + int(float(floor_number) * 0.35), 50, 120)
-	elif objective_type == "CLEAR_WITHIN_TIME":
-		time_limit_seconds = clampi(110 + int(float(floor_number) * 0.45), 110, 200)
+	var arena_type := "BOSS_TRIAL" if boss_floor else ("ELITE_DUEL" if elite_floor else "DUEL")
+	var objective_type := "DEFEAT_BOSS" if boss_floor else "DEFEAT_OPPONENT"
+	var arena_name := "SYSTEM SOVEREIGN — FINAL DUEL" if final_boss else ("BOSS DUEL ARENA" if boss_floor else ("ELITE DUEL ARENA" if elite_floor else "1 VS 1 DUEL ARENA"))
+	var arena_rules := "المواجهة النهائية الفردية: لاعب واحد ضد حارس برج القوة الأخير" if final_boss else ("مواجهة فردية ضد زعيم الطابق — مقاتل واحد ضد خصم واحد" if boss_floor else ("مواجهة نخبة فردية — 1 ضد 1" if elite_floor else "مواجهة فردية 1 ضد 1 — لا فرق ولا خصوم متعددون"))
 	return {
 		"floor": floor_number,
 		"difficulty": difficulty,
 		"required_level": required_level,
 		"boss_floor": boss_floor,
+		"elite_floor": elite_floor,
 		"opponent_power": 80 + floor_number * 24,
-		"opponent_count": 1 if arena_type == "DUEL" or boss_floor else mini(2 + int(difficulty / 4), 8),
-		"wave_count": 1 if arena_type == "DUEL" or boss_floor else mini(2 + int(floor_number / 12), 10),
+		"opponent_count": 1,
+		"wave_count": 1,
 		"reward_xp": reward_xp,
 		"reward_credits": reward_credits,
 		"rank": _rank_for_floor(floor_number),
-		"challenge_type": "FINAL_BOSS" if final_boss else ("BOSS" if boss_floor else ("ELITE" if floor_number % 5 == 0 else "COMBAT_TRIAL")),
+		"challenge_type": "FINAL_BOSS" if final_boss else ("BOSS" if boss_floor else ("ELITE_DUEL" if elite_floor else "SINGLE_DUEL")),
 		"arena_type": arena_type,
 		"objective_type": objective_type,
-		"time_limit_seconds": time_limit_seconds,
-		"arena_name": "SYSTEM SOVEREIGN — FINAL TRIAL" if final_boss else ("BOSS TRIAL ARENA" if boss_floor else str(arena_names[arena_cycle])),
-		"arena_rules": "المواجهة النهائية: اهزم حارس برج القوة الأخير لإتمام الطوابق الـ200" if final_boss else ("مواجهة زعيم الطابق — اهزم الخصم الرئيسي" if boss_floor else str(arena_rules[arena_cycle])),
+		"time_limit_seconds": 0,
+		"arena_name": arena_name,
+		"arena_rules": arena_rules,
 		"clear_time_recorded": true,
-		"ranked": arena_type == "CHAMPIONSHIP" or boss_floor,
+		"ranked": elite_floor or boss_floor,
 		"final_boss": final_boss,
-		"reward_items": ["power_tower_sovereign_crown", "sovereign_core", "rare_core", "nen_fragment"] if final_boss else (["boss_core", "monster_core"] if boss_floor else (["power_tower_fragment", "monster_core"] if floor_number % 5 == 0 else ["power_tower_token"]))
+		"competition_format": "INDIVIDUAL_1V1",
+		"reward_items": ["power_tower_sovereign_crown", "sovereign_core", "rare_core", "nen_fragment"] if final_boss else (["boss_core", "monster_core"] if boss_floor else (["power_tower_fragment", "monster_core"] if elite_floor else ["power_tower_token"]))
 	}
 
 func request_floor(floor_number: int, player_level: int) -> Dictionary:
@@ -88,7 +73,7 @@ func request_floor(floor_number: int, player_level: int) -> Dictionary:
 	floor_started.emit(floor_number, data)
 	return {"success": true, "floor_data": data}
 
-## يستدعيها نظام قتال موثوق بعد التحقق من هزيمة خصوم الطابق فعلياً.
+## يستدعيها نظام القتال بعد التأكد من فوز اللاعب في المواجهة الفردية.
 func confirm_floor_clear(floor_number: int, clear_time_seconds: float) -> Dictionary:
 	if active_floor != floor_number or floor_number <= 0:
 		return {"success": false, "reason": "FLOOR_NOT_ACTIVE"}
@@ -103,7 +88,14 @@ func confirm_floor_clear(floor_number: int, clear_time_seconds: float) -> Dictio
 	var rank := str(data["rank"])
 	floor_cleared.emit(floor_number, reward, rank)
 	tower_record_updated.emit(highest_cleared_floor)
-	return {"success": true, "floor": floor_number, "reward_xp": reward, "reward_credits": int(data["reward_credits"]), "rank": rank, "highest_cleared_floor": highest_cleared_floor}
+	return {
+		"success": true,
+		"floor": floor_number,
+		"reward_xp": reward,
+		"reward_credits": int(data["reward_credits"]),
+		"rank": rank,
+		"highest_cleared_floor": highest_cleared_floor
+	}
 
 func abandon_active_floor() -> void:
 	active_floor = 0
@@ -122,7 +114,8 @@ func get_tower_status() -> Dictionary:
 		"next_floor": 0 if highest_cleared_floor >= MAX_FLOORS else highest_cleared_floor + 1,
 		"highest_rank": _rank_for_floor(highest_cleared_floor) if highest_cleared_floor > 0 else "-",
 		"best_clear_time": best_clear_time,
-		"highest_floor_clear_time": highest_floor_time
+		"highest_floor_clear_time": highest_floor_time,
+		"competition_format": "INDIVIDUAL_1V1"
 	}
 
 func _rank_for_floor(floor_number: int) -> String:
