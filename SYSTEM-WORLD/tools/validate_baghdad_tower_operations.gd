@@ -1485,16 +1485,32 @@ func _run() -> void:
 		return
 	var test_spectator_seat := spectator_gallery.get_node("SpectatorSeat_00") as Node3D
 	var test_seat_interaction := test_spectator_seat.get_node("SpectatorSeatInteraction") as Area3D
+	var had_player_id := player.has_meta("system_player_id")
+	var previous_player_id := str(player.get_meta("system_player_id", ""))
 	player.set_meta("system_player_id", "validator_spectator")
 	operations.call("interact_power_tower_spectator_seat", test_seat_interaction)
 	if not bool(test_spectator_seat.get_meta("system_spectator_seat_reserved", false)) or str(test_spectator_seat.get_meta("system_spectator_seat_owner", "")) != "validator_spectator" or not bool(player.get_meta("system_power_tower_seated", false)) or str(player.get_meta("system_power_tower_seat_id", "")) != "PT_000":
 		_fail("Power Tower spectator seat reservation did not seat and lock the local player.")
 		return
+	player.set_meta("system_player_id", "another_spectator")
 	operations.call("interact_power_tower_spectator_seat", test_seat_interaction)
-	if bool(test_spectator_seat.get_meta("system_spectator_seat_reserved", true)) or bool(player.get_meta("system_power_tower_seated", true)) or test_spectator_seat.has_meta("system_spectator_seat_owner"):
+	if str(test_spectator_seat.get_meta("system_spectator_seat_owner", "")) != "validator_spectator" or not bool(test_spectator_seat.get_meta("system_spectator_seat_reserved", false)):
+		_fail("Power Tower allowed another spectator to take an occupied seat.")
+		return
+	player.set_meta("system_player_id", "validator_spectator")
+	operations.call("interact_power_tower_spectator_seat", test_seat_interaction)
+	if bool(test_spectator_seat.get_meta("system_spectator_seat_reserved", true)) or bool(player.get_meta("system_power_tower_seated", true)) or player.has_meta("system_power_tower_seat_id") or test_spectator_seat.has_meta("system_spectator_seat_owner"):
 		_fail("Power Tower spectator seat could not be released by its owner.")
 		return
-	player.remove_meta("system_player_id")
+	operations.call("interact_power_tower_spectator_seat", test_seat_interaction)
+	operations.call("_release_power_tower_spectator_seat")
+	if bool(test_spectator_seat.get_meta("system_spectator_seat_reserved", true)) or bool(player.get_meta("system_power_tower_seated", true)):
+		_fail("Power Tower did not release a spectator seat during floor/lobby transition.")
+		return
+	if had_player_id:
+		player.set_meta("system_player_id", previous_player_id)
+	else:
+		player.remove_meta("system_player_id")
 	if floor_200_live_score == null or not floor_200_live_score.text.contains("10") or not floor_200_live_score.text.contains("انتهى النزال") or not floor_200_live_score.text.contains("sovereign_challenger"):
 		_fail("Power Tower live score screen did not update with the verified match result.")
 		return
