@@ -5105,6 +5105,8 @@ func _process_restaurant_staff_service() -> void:
 				_save_restaurant_orders()
 				if panel.visible and current_staff_id == str(employee.get_meta("system_tower_staff_id", "")):
 					open_staff_service(employee)
+				elif panel.visible and current_restaurant_table_id == selected_table_id and is_instance_valid(current_restaurant_table_node):
+					open_restaurant_table(current_restaurant_table_node)
 			var return_direction := home_position - employee.position
 			if is_instance_valid(model):
 				model.call("set_activity", "walk")
