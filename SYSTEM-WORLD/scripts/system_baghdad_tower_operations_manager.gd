@@ -1483,6 +1483,66 @@ func _ensure_power_tower_public_live_label(display_root: Node3D) -> Label3D:
 	return live_label
 
 
+func _ensure_power_tower_live_camera_feed(room: Node3D, display_root: Node3D, viewport_source: SubViewport = null) -> SubViewport:
+	if room == null or display_root == null:
+		return null
+	var source_viewport := viewport_source
+	if source_viewport == null:
+		source_viewport = room.get_node_or_null("PowerTowerLiveCameraViewport") as SubViewport
+	if source_viewport == null:
+		source_viewport = SubViewport.new()
+		source_viewport.name = "PowerTowerLiveCameraViewport"
+		source_viewport.size = Vector2i(640, 360)
+		source_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+		source_viewport.transparent_bg = false
+		source_viewport.handle_input_locally = false
+		source_viewport.world_3d = room.get_viewport().find_world_3d()
+		var camera := Camera3D.new()
+		camera.name = "PowerTowerLiveArenaCamera"
+		camera.fov = 58.0
+		camera.current = true
+		var tower_config: Dictionary = TOWER_CONFIG.get("power_tower_baghdad", {})
+		var arena_radius := float(tower_config.get("radius", 26.0)) * 0.82
+		camera.position = room.global_position + Vector3(0.0, arena_radius * 0.88, arena_radius * 1.95)
+		camera.look_at(room.global_position + Vector3(0.0, 1.25, 0.0), Vector3.UP)
+		source_viewport.add_child(camera)
+		room.add_child(source_viewport)
+	var feed := display_root.get_node_or_null("PowerTowerLiveCameraFeed") as MeshInstance3D
+	if feed == null:
+		feed = MeshInstance3D.new()
+		feed.name = "PowerTowerLiveCameraFeed"
+		var quad := QuadMesh.new()
+		quad.size = Vector2(17.2, 6.1)
+		feed.mesh = quad
+		feed.position = Vector3(0.0, -0.15, -0.255)
+		var material := StandardMaterial3D.new()
+		material.albedo_color = Color.WHITE
+		material.albedo_texture = source_viewport.get_texture()
+		material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR
+		feed.material_override = material
+		feed.set_meta("system_power_tower_live_camera_feed", true)
+		display_root.add_child(feed)
+	else:
+		var existing_material := feed.material_override as StandardMaterial3D
+		if existing_material != null:
+			existing_material.albedo_texture = source_viewport.get_texture()
+	return source_viewport
+
+
+func _ensure_power_tower_live_camera_broadcast(floor_number: int) -> void:
+	var room := _ensure_floor_room("power_tower_baghdad", floor_number)
+	var tower := tower_nodes.get("power_tower_baghdad") as Node3D
+	if room == null or tower == null:
+		return
+	var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D
+	var outside := tower.get_node_or_null("PowerTowerBattleDisplay_Outside") as Node3D
+	var inside := lobby.get_node_or_null("PowerTowerBattleDisplay_Inside") as Node3D if lobby != null else null
+	var shared_viewport := _ensure_power_tower_live_camera_feed(room, outside)
+	if shared_viewport != null:
+		_ensure_power_tower_live_camera_feed(room, inside, shared_viewport)
+
+
 func _update_power_tower_public_live_broadcast(floor_number: int, duel_data: Dictionary, completed: bool) -> void:
 	var tower := tower_nodes.get("power_tower_baghdad") as Node3D
 	if tower == null:
@@ -1498,6 +1558,7 @@ func _update_power_tower_public_live_broadcast(floor_number: int, duel_data: Dic
 	var state_text := "انتهى النزال" if completed else "مباشر الآن"
 	var result_line := "\nالفائز: " + str(duel_data.get("winner_id", "")) if completed else "\nالبث يتابع نتيجة الحكام لحظة بلحظة"
 	var broadcast_text := "LIVE POWER TOWER — %s\nالطابق %d | %s\n%s  %d  —  %d  %s%s\nمواجهة فردية 1 ضد 1" % [state_text, floor_number, str(duel_data.get("match_id", "")), fighter_a, score_a, score_b, fighter_b, result_line]
+	_ensure_power_tower_live_camera_broadcast(floor_number)
 	for display in [outside, inside]:
 		if display == null:
 			continue
