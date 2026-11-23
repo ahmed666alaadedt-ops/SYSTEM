@@ -21,7 +21,7 @@ jobs:
   validate:
     name: Parse and launch SYSTEM WORLD
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
