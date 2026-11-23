@@ -101,4 +101,26 @@ func _run_diagnostic() -> void:
 				quit(3)
 				return
 			print("SYSTEM WORLD LOAD TEST: world=", world_id, " initialized=true")
+			var post_switch_pending: Array[Node] = [scene]
+			var post_switch_null_meshes: Array[String] = []
+			var post_switch_invalid_multimeshes: Array[String] = []
+			while not post_switch_pending.is_empty():
+				var post_switch_node: Node = post_switch_pending.pop_back()
+				if post_switch_node is MeshInstance3D:
+					var post_switch_mesh := post_switch_node as MeshInstance3D
+					if post_switch_mesh.mesh == null:
+						post_switch_null_meshes.append(str(post_switch_mesh.get_path()))
+				if post_switch_node is MultiMeshInstance3D:
+					var post_switch_multi := post_switch_node as MultiMeshInstance3D
+					if post_switch_multi.multimesh == null or post_switch_multi.multimesh.mesh == null:
+						post_switch_invalid_multimeshes.append(str(post_switch_multi.get_path()))
+				for post_switch_child in post_switch_node.get_children():
+					post_switch_pending.append(post_switch_child)
+			print("SYSTEM POST-SWITCH MESH DIAGNOSTIC: world=", world_id,
+				" null_mesh_instances=", post_switch_null_meshes.size(),
+				" invalid_multimeshes=", post_switch_invalid_multimeshes.size())
+			for invalid_path in post_switch_null_meshes.slice(0, 40):
+				print("SYSTEM POST-SWITCH NULL MESH: world=", world_id, " path=", invalid_path)
+			for invalid_path in post_switch_invalid_multimeshes.slice(0, 40):
+				print("SYSTEM POST-SWITCH INVALID MULTIMESH: world=", world_id, " path=", invalid_path)
 	quit(1 if not null_mesh_paths.is_empty() or not null_multimesh_paths.is_empty() else 0)
