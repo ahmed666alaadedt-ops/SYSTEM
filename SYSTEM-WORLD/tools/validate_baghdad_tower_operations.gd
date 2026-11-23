@@ -1933,7 +1933,6 @@ func _run() -> void:
 	var player_cycle_orders_snapshot: Dictionary = operations.get("restaurant_orders").duplicate(true)
 	var player_cycle_history_snapshot: Array = operations.get("restaurant_order_history").duplicate(true)
 	var player_cycle_drafts_snapshot: Dictionary = operations.get("restaurant_draft_items").duplicate(true)
-	var health_manager := main.get("player_combat_health") as Node
 	var progression_manager := main.get("player_progression") as Node
 	if health_manager == null or progression_manager == null:
 		_fail("Restaurant meal effects could not access the canonical player health/progression systems.")
@@ -2002,10 +2001,10 @@ func _run() -> void:
 	operations.set("credits", player_cycle_credits_snapshot)
 	operations.call("_save_restaurant_orders")
 	operations.call("_save_wallet")
-	health_manager.set("current_health", health_before_meal)
+	health_manager.set("current_health", health_before_test)
 	health_manager.set("is_wounded", wounded_before_meal)
 	health_manager.call("_sync_player_state")
-	health_manager.emit_signal("health_changed", health_before_meal, 100.0)
+	health_manager.emit_signal("health_changed", health_before_test, 100.0)
 	progression_manager.set("total_xp", total_xp_before_meal)
 	progression_manager.set("xp_in_level", xp_in_level_before_meal)
 	progression_manager.set("current_level", level_before_meal)
