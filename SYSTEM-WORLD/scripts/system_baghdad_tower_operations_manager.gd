@@ -628,6 +628,10 @@ func _place_floor_duty_staff_on_floor(trip: Dictionary, room: Node3D, radius: fl
 	var target_position := Vector3(radius * 0.34, 0.0, -radius * 0.16)
 	var service_position := target_position + Vector3(2.4, 0.0, 0.0)
 	var information_position := target_position + Vector3(1.2, 0.0, 2.1)
+	if tower_id == "entertainment_tower_baghdad" and floor_number in [18, 19] and role == "مشرف المسابح":
+		target_position = Vector3(3.2, 0.0, -17.0)
+		service_position = Vector3(6.2, 0.0, -17.0)
+		information_position = Vector3(6.2, 0.0, -13.0)
 	var station := room.get_node_or_null(station_name) as Node3D
 	if station == null:
 		station = Node3D.new()
@@ -691,7 +695,7 @@ func _place_floor_duty_staff_on_floor(trip: Dictionary, room: Node3D, radius: fl
 		service_point.add_child(service_counter)
 		var service_label := Label3D.new()
 		service_label.name = "ServicePointLabel"
-		service_label.text = "SERVICE / خدمة الموظف"
+		service_label.text = "POOL SAFETY / خدمة المنقذ" if role == "مشرف المسابح" else "SERVICE / خدمة الموظف"
 		service_label.position.y = 1.45
 		service_label.font_size = 15
 		service_label.pixel_size = 0.012
