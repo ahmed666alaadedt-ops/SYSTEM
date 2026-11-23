@@ -1109,7 +1109,9 @@ func _run() -> void:
 	operations.set("credits", maxi(restaurant_credits_snapshot, 200))
 	var had_player_seat_meta := player.has_meta("system_restaurant_seated_table_id")
 	var previous_player_seat_meta: Variant = player.get_meta("system_restaurant_seated_table_id", "")
+	var previous_player_seated_state := bool(player.get_meta("system_restaurant_seated", false))
 	player.set_meta("system_restaurant_seated_table_id", restaurant_test_table_id)
+	player.set_meta("system_restaurant_seated", true)
 	operations.call("_place_restaurant_order", restaurant_test_table_id)
 	var restaurant_test_order: Dictionary = operations.get("restaurant_orders").get(restaurant_test_table_id, {})
 	var restaurant_order_ok := str(restaurant_test_order.get("status", "")) == "awaiting_waiter" and int(restaurant_test_order.get("total", 0)) == 90 and int(operations.get("credits")) == maxi(restaurant_credits_snapshot, 200) - 90
@@ -1136,6 +1138,7 @@ func _run() -> void:
 		player.set_meta("system_restaurant_seated_table_id", previous_player_seat_meta)
 	else:
 		player.remove_meta("system_restaurant_seated_table_id")
+	player.set_meta("system_restaurant_seated", previous_player_seated_state)
 	operations.set("restaurant_orders", restaurant_orders_snapshot)
 	operations.set("restaurant_order_history", restaurant_history_snapshot)
 	operations.set("restaurant_draft_items", restaurant_drafts_snapshot)
