@@ -5185,7 +5185,7 @@ func open_restaurant_table(table_node: Node) -> void:
 		content.add_child(stand_button)
 	else:
 		var seat_button := Button.new()
-		seat_button.text = "احجز مقعداً واجلس على الطاولة"
+		seat_button.text = "اجلس على مقعد متاح"
 		var has_free_seat := false
 		for seat_index in range(4):
 			var seat_marker := restaurant_table_root.get_node_or_null("RestaurantSeat_%02d" % seat_index) as Node3D
@@ -5360,7 +5360,7 @@ func _seat_player_at_restaurant(table_node: Node) -> void:
 		if panel.visible and is_instance_valid(current_restaurant_table_node) and current_restaurant_table_id == table_id:
 			open_restaurant_table(current_restaurant_table_node)
 	)
-	_set_status("تم حجز مقعدك. يتولى النادل خدمتك عند إرسال الطلب.")
+	_set_status("تم تخصيص مقعد لك. يتولى النادل خدمتك عند إرسال الطلب.")
 
 
 func _release_player_restaurant_seat() -> void:

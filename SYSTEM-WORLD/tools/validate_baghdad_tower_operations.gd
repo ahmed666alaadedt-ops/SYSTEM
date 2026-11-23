@@ -1938,14 +1938,15 @@ func _run() -> void:
 	if health_manager == null or progression_manager == null:
 		_fail("Restaurant meal effects could not access the canonical player health/progression systems.")
 		return
-	var health_before_meal := float(health_manager.get("current_health"))
+	var health_before_test := float(health_manager.get("current_health"))
 	var wounded_before_meal := bool(health_manager.get("is_wounded"))
 	var total_xp_before_meal := int(progression_manager.get("total_xp"))
 	var xp_in_level_before_meal := int(progression_manager.get("xp_in_level"))
 	var level_before_meal := int(progression_manager.get("current_level"))
 	var attribute_points_before_meal := int(progression_manager.get("available_attribute_points"))
-	health_manager.set("current_health", minf(75.0, float(health_manager.get("current_health"))))
+	health_manager.set("current_health", minf(75.0, health_before_test))
 	health_manager.call("_sync_player_state")
+	var health_before_meal := float(health_manager.get("current_health"))
 	operations.set("credits", maxi(player_cycle_credits_snapshot, 200))
 	operations.set("current_restaurant_table_node", player_test_table)
 	operations.set("current_restaurant_table_id", player_cycle_table_id)
@@ -1958,12 +1959,21 @@ func _run() -> void:
 	if str(player_order.get("status", "")) != "awaiting_waiter" or int(player_order.get("total", 0)) != 90:
 		_fail("A seated player could not send and pay for a restaurant order into the waiter queue.")
 		return
-	operations.call("_advance_restaurant_order", player_cycle_table_id, "placed")
-	operations.call("_advance_restaurant_order", player_cycle_table_id, "preparing")
-	operations.call("_advance_restaurant_order", player_cycle_table_id, "ready")
-	operations.call("_advance_restaurant_order", player_cycle_table_id, "served")
-	player_order = operations.get("restaurant_orders").get(player_cycle_table_id, {})
-	if str(player_order.get("status", "")) != "served" or player_test_table.get_node_or_null("ServedMealPresentation/MealPlate") == null or player_test_table.get_node_or_null("ServedMealPresentation/PreparedMeal") == null:
+	var observed_player_service_states := {"awaiting_waiter": true}
+	for _attempt in range(600):
+		player_order = operations.get("restaurant_orders").get(player_cycle_table_id, {})
+		var observed_state := str(player_order.get("status", ""))
+		if not observed_state.is_empty():
+			observed_player_service_states[observed_state] = true
+		if observed_state == "served":
+			break
+		await create_timer(0.05).timeout
+	var required_player_service_states := ["taking_order", "placed", "preparing", "ready", "delivering", "served"]
+	for required_state in required_player_service_states:
+		if not observed_player_service_states.has(required_state):
+			_fail("The player's restaurant order did not pass through the real waiter/kitchen/chef/waiter stage: " + required_state)
+			return
+	if player_test_table.get_node_or_null("ServedMealPresentation/MealPlate") == null or player_test_table.get_node_or_null("ServedMealPresentation/PreparedMeal") == null:
 		_fail("The waiter did not deliver the prepared meal and render it on the player's occupied table.")
 		return
 	if not bool(operations.call("_consume_restaurant_meal", player_cycle_table_id)):
