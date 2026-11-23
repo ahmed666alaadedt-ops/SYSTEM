@@ -29,21 +29,21 @@ func _ready() -> void:
 	print("SYSTEM WORLD: Enhanced natural forest initialized.")
 
 
-func _get_terrain_manager() -> ModernContinentManager:
+func _get_terrain_manager() -> Variant:
 	if get_parent() == null:
 		return null
-	return get_parent().get_node_or_null("ModernContinent") as ModernContinentManager
+	return get_parent().get_node_or_null("ModernContinent")
 
 
 func _random_forest_position(y_offset: float = 0.0) -> Vector3:
-	var terrain := _get_terrain_manager()
+	var terrain: Variant = _get_terrain_manager()
 	for attempt in range(40):
 		var x := rng.randf_range(-270.0, 270.0)
 		var z := rng.randf_range(-680.0, -330.0)
 		if terrain == null:
 			return Vector3(x, y_offset, z)
 		if terrain.is_land_position(x, z):
-			var ground_height := terrain.get_terrain_height(x, z)
+			var ground_height: float = float(terrain.get_terrain_height(x, z))
 			# Keep this temperate forest below the high rocky and snowy belts.
 			if ground_height <= 65.0:
 				return Vector3(x, ground_height + y_offset, z)
