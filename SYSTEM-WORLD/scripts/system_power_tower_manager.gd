@@ -342,8 +342,6 @@ func _record_duel_career_result(winner_id: String, loser_id: String, floor_numbe
 	var result := {"player_won": player_won, "player_lost": is_local_player, "demoted": false, "disqualified": false, "highest_cleared_floor": highest_cleared_floor}
 	if player_won:
 		consecutive_duel_losses = 0
-		total_duels_won += 1
-		_save_progress()
 	elif is_local_player:
 		total_duels_lost += 1
 		consecutive_duel_losses += 1
