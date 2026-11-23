@@ -65,18 +65,19 @@ Each chapter changes its floor-deck material, arena ring, four environmental pyl
 - The final floor retains its sovereign crown, sovereign core, rare core and Nen fragment rewards.
 - A failed or abandoned attempt does not grant the floor-clear reward and does not erase previously earned wallet balance.
 
-## 6. Spectators and match predictions
+## 6. Spectators and virtual ticket pools
 
 Approved design:
-- Spectators may watch an individual duel in person or through supported public displays.
-- Before a duel starts, a spectator may select which of the two fighters they expect to win.
-- Predictions close before the match begins and cannot be edited after lock.
-- Correct predictions grant non-transferable in-world spectator points or cosmetic/community progression.
-- A fighter cannot predict their own match; account abuse and duplicate-account manipulation must be mitigated.
-- Predictions never use real money, never transfer money between players and never affect combat results.
-- Spectator rewards are separate from the fighter's floor-clear reward budget and wallet.
+- Spectators watch individual 1v1 duels and may select which of the two fighters they expect to win.
+- Each fan commits a ticket stake of 1–500 virtual SYSTEM credits from the shared in-world wallet. The stake is deducted when the ticket is accepted and contributes to the match pool.
+- A fan may enter one ticket per match, with a daily cap of 20. Fighters cannot enter tickets on their own match.
+- Before combat starts, the match authority locks the ticket pool. No edits or late tickets are accepted.
+- After a trusted result, the full pool is distributed proportionally among correct tickets. Winners receive a gross virtual payout and a separately displayed net profit. Incorrect tickets lose only their virtual stake.
+- If no fan selected the actual winner, every stake is refunded. Payout rounding is resolved so the total paid equals the pool.
+- All tickets, stakes and winnings are virtual SYSTEM credits only. They cannot be bought as tickets, gifted, transferred to another player, withdrawn or converted to real money. No real-money betting or cash prizes.
+- NPC fans may be introduced only with clearly labelled simulated identities and a controlled virtual ticket budget; never present them as real users or live global participants.
 
-Implementation status: a local prototype now registers two-fighter matches, accepts one free prediction per spectator before lock, rejects fighter self-prediction and duplicate entries, provides an explicit lock operation for the match-start controller, and settles once from the local combat-authority path. Correct forecasts earn one non-transferable/non-purchasable point; incorrect forecasts lose nothing. The local prototype caps each spectator at 20 predictions per UTC day and persists match/prediction/point state. This manager API is not yet wired to a playable spectator interface or the live Power Tower floor-start/floor-clear path, and it is not a server-authoritative or anti-cheat-secure online service. The spectator interface, real match matchmaking, server settlement, global rankings and online anti-abuse enforcement remain future work.
+Implementation status: a local prototype now records individual 1v1 matches, deducts virtual ticket stakes through the shared local SYSTEM wallet, locks one ticket per fan, settles the complete pool proportionally from the local match-authority path, refunds the pool when no ticket selected the winner, and persists the gross payout/net-profit ledger. It rejects fighter self-prediction, duplicate tickets, invalid selections, late submissions, insufficient balances and submissions beyond the daily cap. This remains a local prototype: account-level wallet isolation, NPC fan budgets, a playable spectator interface, live matchmaking, server-authoritative combat results, anti-cheat/anti-collusion, global rankings and cross-device persistence are not yet implemented.
 
 ## 7. Fair access
 
