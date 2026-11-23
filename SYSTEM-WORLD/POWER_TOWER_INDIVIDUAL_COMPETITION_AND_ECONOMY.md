@@ -31,7 +31,24 @@ Runtime acceptance criteria:
 - The runtime spawns one opponent and completes the floor when that opponent is defeated.
 - Floor 200 retains its unique final-boss profile and rewards.
 
-## 3. Arena spectators and career record
+## 3. Floor environment progression
+
+The 200 floors are arranged into ten visual environment chapters, with twenty floors per theme:
+
+1. Iron Hall
+2. Desert Arena
+3. Frost Field
+4. Volcanic Ring
+5. Warrior Forest
+6. Royal Ruins
+7. Storm Arena
+8. Shadow Field
+9. Celestial Arena
+10. Sovereign Throne (final chapter; floor 200 has the unique sovereign boss arena)
+
+Each chapter changes its floor-deck material, arena ring, four environmental pylons, obstacle palette and Arabic/English arena title. Environment variety never changes the individual 1v1 rule or introduces extra opponents.
+
+## 4. Arena spectators and career record
 
 - Each generated duel arena includes a physical spectator gallery with 48 fixed seats, collision, stable seat IDs, floor metadata and an initially unreserved state.
 - The gallery is for viewing individual duels only; it does not create combat teams or alter the 1v1 rules.
@@ -39,7 +56,7 @@ Runtime acceptance criteria:
 - The Power Tower lobby progress board displays the 1v1 format, floor progression, duel wins, elite/boss wins, lifetime credits and best clear time.
 - Seat reservation/standing interactions, autonomous audience NPCs, live match spectator cameras and prediction terminals are separate follow-up work; the current 48-seat gallery is a physical visual seating prototype.
 
-## 4. Progression and rewards
+## 5. Progression and rewards
 
 - Floors unlock sequentially and retain the player's saved highest-cleared floor and per-floor clear-time records.
 - Level requirements remain reachable within the existing level-100 progression cap.
@@ -48,7 +65,7 @@ Runtime acceptance criteria:
 - The final floor retains its sovereign crown, sovereign core, rare core and Nen fragment rewards.
 - A failed or abandoned attempt does not grant the floor-clear reward and does not erase previously earned wallet balance.
 
-## 5. Spectators and match predictions
+## 6. Spectators and match predictions
 
 Approved design:
 - Spectators may watch an individual duel in person or through supported public displays.
@@ -61,13 +78,13 @@ Approved design:
 
 Implementation note: the spectator prediction feature is approved design, not yet claimed as a completed live online service. Match identity, prediction locking, reward settlement and anti-abuse enforcement must become server-authoritative before public online release.
 
-## 6. Fair access
+## 7. Fair access
 
 - Free and paying players can enter, progress, earn floor rewards and reach the highest ranks through gameplay.
 - Payments may offer cosmetics or convenience only; they cannot purchase wins, opponent outcomes, rank skips or exclusive combat power.
 - No real-money betting or player-to-player wagering is permitted.
 
-## 7. Technical boundaries and verification
+## 8. Technical boundaries and verification
 
 - Current tower wallet, floor rewards, commerce and activity systems are local-save prototypes; they are not yet a server-authoritative shared online economy.
 - Online matchmaking, authoritative match settlement, anti-cheat and spectator prediction service remain separate future integration work.
