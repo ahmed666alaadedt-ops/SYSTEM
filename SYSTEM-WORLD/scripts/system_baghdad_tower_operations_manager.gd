@@ -199,6 +199,7 @@ var ad_labels: Dictionary = {}
 var prepared_towers: Dictionary = {}
 var current_tower_id := ""
 var current_staff_id := ""
+var current_pool_service_suite: Node3D
 var credits := 1200
 var vendor_stock: Dictionary = {}
 var hotel_bookings: Dictionary = {}
@@ -3225,6 +3226,7 @@ func open_pool_service(target: Node) -> void:
 		return
 	current_tower_id = str(target.get_meta("system_tower_id", "entertainment_tower_baghdad"))
 	current_staff_id = ""
+	current_pool_service_suite = target.get_parent() as Node3D if service_type == "locker" else null
 	_clear_dynamic_controls()
 	title_label.text = str(service_titles[service_type])
 	credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
@@ -3233,12 +3235,12 @@ func open_pool_service(target: Node) -> void:
 	action_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	match service_type:
 		"locker":
-			action_button.text = "استلام خزانة شخصية"
+			action_button.text = "عرض خزانتي الحالية" if is_instance_valid(player) and bool(player.get_meta("system_pool_locker_reserved", false)) else "استلام خزانة شخصية"
 		"shower":
 			action_button.text = "استخدام الدش وتجهيز السباحة"
 		"lifeguard":
 			action_button.text = "طلب مساعدة المنقذ"
-	action_button.pressed.connect(Callable(self, "_use_pool_service").bind(service_type))
+	action_button.pressed.connect(Callable(self, "_use_pool_service").bind(service_type, current_pool_service_suite))
 	content.add_child(action_button)
 	var close_button := Button.new()
 	close_button.text = "إغلاق"
@@ -3247,14 +3249,44 @@ func open_pool_service(target: Node) -> void:
 	panel.show()
 
 
-func _use_pool_service(service_type: String) -> void:
+func _use_pool_service(service_type: String, suite: Node3D = null) -> void:
 	if not is_instance_valid(player):
 		return
 	match service_type:
 		"locker":
+			if bool(player.get_meta("system_pool_locker_reserved", false)):
+				_set_status("خزانتك الحالية هي رقم %s. تبقى محجوزة لك حتى مغادرة مرافق المسبح." % str(player.get_meta("system_pool_locker_id", "—")))
+				return
+			var locker_suite := suite if is_instance_valid(suite) else current_pool_service_suite
+			if not is_instance_valid(locker_suite):
+				_set_status("تعذر تحديد غرفة تبديل الملابس. اقترب من محطة الخزائن وحاول مجدداً.")
+				return
+			var assigned_locker: MeshInstance3D
+			var assigned_index := -1
+			for locker_index in range(6):
+				var candidate := locker_suite.get_node_or_null("Locker_%02d" % locker_index) as MeshInstance3D
+				if candidate != null and not bool(candidate.get_meta("system_pool_locker_occupied", false)):
+					assigned_locker = candidate
+					assigned_index = locker_index
+					break
+			if assigned_locker == null:
+				_set_status("جميع خزائن هذه الغرفة مشغولة حالياً. جرّب غرفة تبديل الملابس الأخرى.")
+				return
+			assigned_locker.set_meta("system_pool_locker_occupied", true)
+			assigned_locker.set_meta("system_pool_locker_owner", player.get_instance_id())
+			assigned_locker.set_meta("system_pool_locker_original_material", assigned_locker.material_override)
+			var occupied_material := StandardMaterial3D.new()
+			occupied_material.albedo_color = Color(0.88, 0.48, 0.16)
+			occupied_material.metallic = 0.38
+			occupied_material.roughness = 0.42
+			assigned_locker.material_override = occupied_material
 			player.set_meta("system_pool_locker_reserved", true)
 			player.set_meta("system_pool_locker_tower", current_tower_id)
-			_set_status("تم تخصيص خزانة شخصية لك في مرافق المسبح. يمكنك العودة إليها أثناء زيارتك.")
+			player.set_meta("system_pool_locker_floor", int(active_floor_root.get_meta("system_tower_floor_number", 18)) if is_instance_valid(active_floor_root) else int(locker_suite.get_parent().get_meta("system_tower_floor_number", 18)))
+			player.set_meta("system_pool_locker_suite", str(locker_suite.name))
+			player.set_meta("system_pool_locker_id", str(assigned_locker.name))
+			current_pool_service_suite = locker_suite
+			_set_status("تم حجز الخزانة رقم %d لك فعلياً في غرفة %s. ستبقى مغلقة باسمك حتى مغادرة الطابق." % [assigned_index + 1, "الرجال" if locker_suite.name == "MensChangingSuite" else "النساء"])
 		"shower":
 			player.set_meta("system_pool_showered", true)
 			_set_status("اكتمل استخدام الدش. أصبحت جاهزاً للسباحة أو مغادرة المسبح.")
@@ -3266,6 +3298,34 @@ func _use_pool_service(service_type: String) -> void:
 				_set_status("تم تسجيل طلب المساعدة وإبلاغ محطة المنقذ. سيستجيب المشرف عند وصوله إلى الطابق.")
 		_:
 			return
+
+
+func _release_pool_locker() -> void:
+	if not is_instance_valid(player) or not bool(player.get_meta("system_pool_locker_reserved", false)):
+		return
+	var locker_id := str(player.get_meta("system_pool_locker_id", ""))
+	var tower := tower_nodes.get("entertainment_tower_baghdad") as Node3D
+	var locker := tower.find_child(locker_id, true, false) as MeshInstance3D if tower != null and not locker_id.is_empty() else null
+	if locker != null and int(locker.get_meta("system_pool_locker_owner", -1)) == player.get_instance_id():
+		locker.remove_meta("system_pool_locker_occupied")
+		locker.remove_meta("system_pool_locker_owner")
+		var original_material: Variant = locker.get_meta("system_pool_locker_original_material", null)
+		if original_material is Material:
+			locker.material_override = original_material
+		locker.remove_meta("system_pool_locker_original_material")
+	player.remove_meta("system_pool_locker_reserved")
+	player.remove_meta("system_pool_locker_tower")
+	player.remove_meta("system_pool_locker_floor")
+	player.remove_meta("system_pool_locker_suite")
+	player.remove_meta("system_pool_locker_id")
+
+
+func _clear_pool_visit_state() -> void:
+	_release_pool_locker()
+	if is_instance_valid(player):
+		player.remove_meta("system_pool_showered")
+		player.remove_meta("system_pool_assistance_requested")
+	current_pool_service_suite = null
 
 
 func _dispatch_pool_supervisor_to_player() -> bool:
@@ -5200,6 +5260,8 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 			return
 		active_power_floor_data = request.get("floor_data", {})
 		power_floor_in_progress = true
+	if is_instance_valid(active_floor_root) and (tower_id != current_tower_id or floor_number != int(active_floor_root.get_meta("system_tower_floor_number", 0))):
+		_clear_pool_visit_state()
 	_return_floor_duty_staff_to_lobbies()
 	var duty_staff_trip := _board_floor_duty_staff(tower_id, floor_number, car)
 	if not is_instance_valid(active_floor_root):
@@ -5402,6 +5464,7 @@ func return_to_lobby() -> void:
 		var exit_tween := create_tween()
 		exit_tween.tween_property(player, "global_position", lobby_position, 0.7)
 		exit_tween.finished.connect(func():
+			_clear_pool_visit_state()
 			_finish_staff_lobby_return(returning_staff)
 			if is_instance_valid(player):
 				player.set_meta("system_tower_elevator_active", false)
