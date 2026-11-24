@@ -1358,7 +1358,7 @@ func _run() -> void:
 		var facility_title := facility.get_node_or_null("FacilityTitle") as Label3D if facility != null else null
 		var showcase := facility.get_node_or_null("ShoppingShowcase") as Node3D if facility != null else null
 		var service_shape := service_area.get_node_or_null("CollisionShape3D") as CollisionShape3D if service_area != null else null
-		print("QA TRACE: Shopping floor %d facility=%s service=%s interactable=%s type=%s title=%s shape=%s shape_z=%s showcase=%s" % [floor_number, str(facility != null), str(service_area != null), str(service_area.is_in_group("system_interactable")) if service_area != null else "false", str(service_area.get_meta("system_facility_type", "")) if service_area != null else "missing", facility_title.text if facility_title != null else "missing", str(service_shape != null), str(service_shape.position.z) if service_shape != null else "missing", str(showcase != null)])
+		print("QA TRACE: Shopping floor %d title_has_system=%s shape_exists=%s shape_z=%s" % [floor_number, str(facility_title.text.contains("SYSTEM |")) if facility_title != null else "false", str(service_shape != null), str(service_shape.position.z) if service_shape != null else "missing"])
 		if facility == null or service_area == null or not service_area.is_in_group("system_interactable") or str(service_area.get_meta("system_facility_type", "")) != expected_type or facility_title == null or not facility_title.text.contains("SYSTEM |") or service_shape == null or service_shape.position.z > -4.5:
 			_fail("Shopping Tower floor %d is missing its assigned physical, bilingual, interactive department %s." % [floor_number, expected_type])
 			return
