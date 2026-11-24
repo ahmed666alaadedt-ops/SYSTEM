@@ -24,7 +24,7 @@ func _run() -> void:
 	var built: Dictionary = runtime.call("activate_stage", {"id":"baghdad_tunnel_competition"}, player, null)
 	if not _check(bool(built.get("success", false)), "The canonical continuous tunnel competition environment did not build."):
 		return
-	var rivals := runtime.get("HunterRivalCompetition")
+	var rivals: Node = runtime.get("rival_competition")
 	if not _check(is_instance_valid(rivals), "AI rivals were not attached to the actual Hunter tunnel environment."):
 		return
 	var status: Dictionary = rivals.call("get_competition_status")
