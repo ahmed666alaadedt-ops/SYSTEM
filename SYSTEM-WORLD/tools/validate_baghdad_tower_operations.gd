@@ -2630,6 +2630,7 @@ func _run() -> void:
 		return
 	print("QA TRACE: autonomous NPC dining order created; waiting for waiter to take the order.")
 	for _attempt in range(80):
+		operations.call("_process_restaurant_staff_service")
 		npc_restaurant_order = operations.get("restaurant_orders").get(npc_restaurant_order_id, {})
 		if str(npc_restaurant_order.get("status", "")) != "awaiting_waiter":
 			break
@@ -2639,15 +2640,17 @@ func _run() -> void:
 		return
 	print("QA TRACE: waiter accepted the NPC order; waiting for kitchen preparation.")
 	for _attempt in range(80):
+		operations.call("_process_restaurant_staff_service")
 		npc_restaurant_order = operations.get("restaurant_orders").get(npc_restaurant_order_id, {})
 		if str(npc_restaurant_order.get("status", "")) == "ready":
 			break
 		await create_timer(0.25).timeout
 	if str(npc_restaurant_order.get("status", "")) != "ready":
-		_fail("The restaurant chef did not prepare the autonomous NPC order.")
+		_fail("The restaurant chef did not prepare the autonomous NPC order. Final state: " + str(npc_restaurant_order.get("status", "missing")))
 		return
 	print("QA TRACE: chef prepared the NPC order; waiting for waiter delivery.")
 	for _attempt in range(80):
+		operations.call("_process_restaurant_staff_service")
 		npc_restaurant_order = operations.get("restaurant_orders").get(npc_restaurant_order_id, {})
 		if str(npc_restaurant_order.get("status", "")) == "served":
 			break
