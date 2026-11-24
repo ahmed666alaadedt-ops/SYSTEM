@@ -1709,3 +1709,5 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - Extended the tower validator to require reserved helipad clearance, an offset rooftop beacon, all three advertising-tier halos, skyway edge rails, and the upper circular platform guardrail. These checks and all latest architectural edits are pending exact-HEAD workflow results.
 
 - Rooftop clearance refinement: removed the central Hunter Association crown spire as well as the generic solid crown; replaced it with four diagonal perimeter beacon masts outside the helipad's 22 m landing circle. The validator now rejects either central crown/spire and requires all four perimeter masts.
+
+- Godot runtime validation caught two issues in the first bridge/halo detailing pass: the skyway builder referenced a material local to a different function, and the advertising-tier loop needed an explicit float type. Both were corrected in the source; the next exact-HEAD Godot and Android runs must confirm the correction.
