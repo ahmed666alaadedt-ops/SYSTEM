@@ -5,7 +5,7 @@ const EntranceScript = preload("res://scripts/system_tower_entrance.gd")
 const HunterHelicopterControllerScript = preload("res://scripts/system_hunter_helicopter_pad_controller.gd")
 const HUNTER_TOWER_HEIGHT := 1000.0
 const REPUBLIC_BRIDGE_DECK_HEIGHT := 18.0
-const HUNTER_BRIDGE_PLATFORM_ROOT_HEIGHT := REPUBLIC_BRIDGE_DECK_HEIGHT
+const HUNTER_CENTRAL_SKY_CITY_PLATFORM_HEIGHT := 418.0
 const POWER_TOWER_HEIGHT := 820.0
 
 var terrain: Node
@@ -95,7 +95,7 @@ func _create_materials() -> void:
 	emissive_material.emission_energy_multiplier = 3.2
 
 func _build_hunter_tower() -> void:
-	var position := Vector3(bridge_anchor.x, 0.0, bridge_anchor.y)
+	var position := Vector3(bridge_anchor.x, HUNTER_CENTRAL_SKY_CITY_PLATFORM_HEIGHT, bridge_anchor.y)
 	_build_tower(
 		"HunterAssociationTower",
 		"برج الصيادين العالمي",
@@ -293,7 +293,7 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 		if not bridge_reference_loaded or requested_position.distance_to(bridge_anchor) > 80.0:
 			push_error("SYSTEM WORLD: bridge platform requested outside the verified Republic Bridge anchor.")
 			return
-		root_height = HUNTER_BRIDGE_PLATFORM_ROOT_HEIGHT
+		root_height = HUNTER_CENTRAL_SKY_CITY_PLATFORM_HEIGHT
 	else:
 		resolved = _nearest_land_position(requested_position)
 		if resolved == Vector2.INF:
@@ -305,7 +305,7 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	var root := Node3D.new()
 	root.name = node_name
 	root.position = Vector3(resolved.x, root_height, resolved.y)
-	root.set_meta("system_placement_source", "verified_republic_bridge_osm" if allow_bridge_platform else "verified_baghdad_bridge_riverbank_terrain")
+	root.set_meta("system_placement_source", "verified_republic_bridge_osm_upper_sky_city_central_platform" if allow_bridge_platform else "verified_baghdad_bridge_riverbank_terrain")
 	add_child(root)
 	var tower_record := {"id": location_id, "name": title, "position": root.position, "height": height, "radius": radius}
 	tower_positions.append(tower_record)
@@ -953,10 +953,38 @@ func _create_tower_identity_details(root: Node3D, node_name: String, height: flo
 	glow.emission_energy_multiplier = 1.65
 	match node_name:
 		"HunterAssociationTower":
-			for side in [-1.0, 1.0]:
-				_add_tower_identity_box(root, "AssociationWing_%s" % str(side), Vector3(side * radius * 1.48, 15.0, 0.0), Vector3(radius * 0.62, 30.0, radius * 0.82), tower_material, Vector3(0.0, 0.0, side * -0.10))
-				_add_tower_identity_box(root, "HonorHallPillar_%s" % str(side), Vector3(side * radius * 1.12, 27.0, -radius * 0.62), Vector3(2.8, 54.0, 2.8), trim_material)
-			_add_tower_identity_box(root, "AssociationHonorLintel", Vector3(0.0, 54.0, -radius * 0.62), Vector3(radius * 2.35, 3.0, 3.0), glow)
+			# The former central S-spire is now the real, functional Hunter Association Tower.
+			# Four large XSX identity plaques make the guild unmistakable from every approach.
+			for side in range(4):
+				var angle := TAU * float(side) / 4.0
+				var outward := Vector3(cos(angle), 0.0, sin(angle))
+				var plaque := Node3D.new()
+				plaque.name = "HunterXSXEmblemPlaque_%02d" % side
+				plaque.position = outward * (radius * 0.91) + Vector3(0.0, height * 0.56, 0.0)
+				plaque.rotation.y = -angle
+				root.add_child(plaque)
+				_add_tower_identity_box(plaque, "XSXEmblemFrame", Vector3.ZERO, Vector3(34.0, 24.0, 1.8), trim_material)
+				_add_tower_identity_box(plaque, "XSXEmblemFace", Vector3(0.0, 0.0, -1.05), Vector3(30.0, 20.0, 0.35), glow)
+				var emblem := Label3D.new()
+				emblem.name = "XSXEmblemText"
+				emblem.text = "XSX"
+				emblem.font_size = 150
+				emblem.pixel_size = 0.035
+				emblem.position = Vector3(0.0, -1.5, -1.35)
+				emblem.modulate = Color(0.92, 0.84, 0.62)
+				emblem.outline_size = 10
+				emblem.outline_modulate = Color(0.025, 0.045, 0.08)
+				plaque.add_child(emblem)
+			var guild_title := Label3D.new()
+			guild_title.name = "HunterGuildIdentity"
+			guild_title.text = "نقابة الصيادين العالمية"
+			guild_title.font_size = 34
+			guild_title.pixel_size = 0.018
+			guild_title.position = Vector3(0.0, -17.0, -1.4)
+			guild_title.modulate = Color(0.78, 0.94, 1.0)
+			plaque.add_child(guild_title)
+			root.set_meta("system_hunter_guild_insignia", "XSX")
+			root.set_meta("system_hunter_guild_identity_facades", 4)
 			_add_tower_identity_box(root, "AssociationCrownSpire", Vector3(0.0, height + 34.0, 0.0), Vector3(5.0, 68.0, 5.0), accent)
 		"ShoppingTower":
 			for level in range(3):
@@ -1233,46 +1261,12 @@ func _create_reference_city_architecture(city: Node3D) -> void:
 		vertical_light.position = Vector3(width * 0.5 + 0.32, height * 0.5, 0.0)
 		vertical_light.material_override = emissive_material
 		tower.add_child(vertical_light)
-	var central_spire := Node3D.new()
-	central_spire.name = "BaghdadSYSTEMCentralSpire"
-	central_spire.position = Vector3(0.0, 418.0, 0.0)
-	central_spire.set_meta("system_visual_landmark", true)
-	central_spire.set_meta("system_functional_tower", false)
-	city.add_child(central_spire)
-	var spire := MeshInstance3D.new()
-	spire.name = "CentralGlassSpire"
-	var spire_mesh := CylinderMesh.new()
-	spire_mesh.top_radius = 7.0
-	spire_mesh.bottom_radius = 17.0
-	spire_mesh.height = 196.0
-	spire.mesh = spire_mesh
-	spire.position.y = 98.0
-	spire.material_override = glass_material
-	central_spire.add_child(spire)
-	for side in range(4):
-		var rib := MeshInstance3D.new()
-		rib.name = "CentralSpireBlueRib_%d" % side
-		var rib_mesh := BoxMesh.new()
-		rib_mesh.size = Vector3(0.9, 186.0, 0.9)
-		rib.mesh = rib_mesh
-		var angle := TAU * float(side) / 4.0
-		rib.position = Vector3(cos(angle) * 11.0, 98.0, sin(angle) * 11.0)
-		rib.material_override = edge_material
-		central_spire.add_child(rib)
-	var system_mark := Label3D.new()
-	system_mark.name = "CentralSYSTEM_S_Insignia"
-	system_mark.text = "S"
-	system_mark.font_size = 220
-	system_mark.pixel_size = 0.018
-	system_mark.position = Vector3(0.0, 112.0, -18.0)
-	system_mark.modulate = Color(0.18, 0.84, 1.0)
-	system_mark.outline_size = 12
-	system_mark.outline_modulate = Color(0.015, 0.12, 0.3)
-	central_spire.add_child(system_mark)
-	central_spire.set_meta("system_insignia", "S")
+	# The former decorative S-spire has been removed. The functional Hunter Association
+	# Tower now occupies this central crown position above the upper-city platforms.
+	city.set_meta("system_central_landmark_tower_id", "hunter_association_tower_baghdad")
+	city.set_meta("system_central_landmark_insignia", "XSX")
 	city.set_meta("system_reference_sky_platform_count", platform_specs.size())
 	city.set_meta("system_reference_glass_tower_count", skyline_specs.size())
-	city.set_meta("system_central_spire_insignia", "S")
 	city.set_meta("system_reference_visual_profile", "approved_baghdad_towers_image")
 
 
