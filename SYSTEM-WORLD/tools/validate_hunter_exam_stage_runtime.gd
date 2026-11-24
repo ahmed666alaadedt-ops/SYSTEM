@@ -20,6 +20,7 @@ func _run_validation() -> void:
 	await process_frame
 	manager.set("candidate_number", 0)
 	manager.set("registered", false)
+	manager.set("invitation_accepted", false)
 	manager.set("exam_active", false)
 	manager.set("current_stage_index", -1)
 	manager.set("completed_stage_ids", [])
