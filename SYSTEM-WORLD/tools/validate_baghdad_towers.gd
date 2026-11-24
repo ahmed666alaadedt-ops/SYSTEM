@@ -48,6 +48,26 @@ func _run_validation() -> void:
 		_fail("BaghdadTowerLandmarksManager was not created.")
 		return
 
+	var terrain := main_scene.get_node_or_null("ModernContinent") as Node3D
+	if terrain == null or not terrain.has_method("get_baghdad_bridge_anchor"):
+		_fail("ModernContinent is missing the verified Baghdad bridge anchor API.")
+		return
+	var bridge_anchor: Vector3 = terrain.call("get_baghdad_bridge_anchor")
+	if bridge_anchor == Vector3.INF or absf(bridge_anchor.x - 3563.921) > 2.0 or absf(bridge_anchor.z + 1050.256) > 2.0:
+		_fail("Republic Bridge local anchor does not match the verified WGS84/OSM reference.")
+		return
+	var bridge_node := terrain.get_node_or_null("BaghdadRepublicBridge") as Node3D
+	if bridge_node == null or int(bridge_node.get_meta("system_osm_bridge_polygon_way_id", 0)) != 1077808833:
+		_fail("Republic Bridge runtime deck is missing or not tied to OSM bridge way 1077808833.")
+		return
+	if bridge_node.get_node_or_null("RepublicBridgeDeck_00_Collision") == null:
+		_fail("Republic Bridge has no physical collision deck.")
+		return
+	var tigris := terrain.get_node_or_null("BaghdadTigrisRiver") as MeshInstance3D
+	if tigris == null or str(tigris.get_meta("system_geography_source", "")) != "OpenStreetMap way 24709603":
+		_fail("Tigris River surface is missing its verified OSM geometry source.")
+		return
+
 	var records: Array = tower_manager.call("get_tower_positions")
 	if records.size() != EXPECTED_TOWER_IDS.size():
 		_fail("Expected six Baghdad tower landmarks (five connected plus standalone Power Tower); found %d." % records.size())
@@ -68,6 +88,19 @@ func _run_validation() -> void:
 
 	if tower_manager.district_tower_positions.size() != 5:
 		_fail("The connected Baghdad district must contain exactly five towers.")
+		return
+	for district_record in tower_manager.district_tower_positions:
+		var district_position: Vector3 = district_record.get("position", Vector3.INF)
+		var horizontal_distance := Vector2(district_position.x - bridge_anchor.x, district_position.z - bridge_anchor.z).length()
+		if horizontal_distance > 900.0:
+			_fail("A connected Baghdad tower is outside the Republic Bridge / Tigris district: " + str(district_record.get("id", "unknown")))
+			return
+	var upper_city := tower_manager.get_node_or_null("BaghdadUpperSkyCity") as Node3D
+	if upper_city == null or int(upper_city.get_meta("system_upper_city_blocks", 0)) != 4 or not bool(upper_city.get_meta("system_power_tower_excluded", false)):
+		_fail("The playable upper Baghdad sky city is missing, incomplete or incorrectly includes Power Tower.")
+		return
+	if upper_city.get_node_or_null("HunterTowerUpperCityAtriumRing") == null:
+		_fail("The upper city does not provide the Hunter Tower sky atrium opening.")
 		return
 
 	for district_record in tower_manager.district_tower_positions:
@@ -109,6 +142,24 @@ func _run_validation() -> void:
 			_fail("Floor zoning metadata is missing for " + tower_id)
 			return
 
+	var hunter_tower := tower_manager.get_node_or_null("HunterAssociationTower") as Node3D
+	var hunter_pad := hunter_tower.get_node_or_null("HunterAssociationHelipad") as Node3D if hunter_tower != null else null
+	if hunter_pad == null or str(hunter_pad.get_meta("system_landing_zone_status", "")) != "operational_controller_attached" or hunter_pad.get_node_or_null("HunterAssociationHelicopter") == null:
+		_fail("Hunter Tower rooftop helicopter pad is not connected to its live flight controller and aircraft.")
+		return
+	var hunter_facades := hunter_tower.get_node_or_null("HunterTowerAdvertisingFacades") as Node3D if hunter_tower != null else null
+	if hunter_facades == null or int(hunter_facades.get_meta("system_advertising_screen_count", 0)) < 12:
+		_fail("Hunter Tower exterior advertising facades are missing or incomplete.")
+		return
+	var hunter_lobby := hunter_tower.get_node_or_null("PublicLobby_Blockout") as Node3D if hunter_tower != null else null
+	if hunter_lobby == null or hunter_lobby.get_node_or_null("InteriorAdvertisingFrame_Left") == null or hunter_lobby.get_node_or_null("InteriorAdvertisingFrame_Right") == null:
+		_fail("Hunter Tower internal advertising facades are missing.")
+		return
+	var tunnel_root := tower_manager.get_node_or_null("BaghdadHunterExaminationTunnel") as Node3D
+	if tunnel_root == null or not bool(tunnel_root.get_meta("system_under_republic_bridge", false)):
+		_fail("Hunter examination tunnel is not anchored beneath the Republic Bridge tower district.")
+		return
+
 	var shopping_tower := tower_manager.get_node_or_null("ShoppingTower") as Node3D
 	if shopping_tower == null:
 		_fail("Shopping and Commerce Tower is missing.")
@@ -146,7 +197,7 @@ func _run_validation() -> void:
 		_fail("Technology Tower is missing from the public event-board node map.")
 		return
 
-	print("Baghdad tower validation passed: five connected towers, standalone 200-floor Power Tower, six lobby kiosks, Shopping Tower weapons/elixirs/restaurants/hotel, floor zoning, and Technology public display.")
+	print("Baghdad tower validation passed: verified Republic Bridge and Tigris runtime geometry, five towers on both riverbanks/bridge, upper sky city, standalone Power Tower, Hunter rooftop helicopter controller, internal/external ads, tunnel anchor, six lobby kiosks and Shopping Tower facilities.")
 	# This is a short-lived headless validation process; avoid forcing dummy-renderer teardown of placeholder meshes.
 	quit(0)
 
