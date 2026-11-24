@@ -2722,6 +2722,19 @@ func _run() -> void:
 	if bool(player.get_meta("system_swimming", false)):
 		_fail("Leaving the pool volume did not restore normal movement state.")
 		return
+	for leisure_zone in [
+		family_pool_facility.get_node("FamilySplashPoolWaterVolume") as Area3D,
+		spa_pool_facility.get_node("SpaHotTubWaterVolume") as Area3D,
+		spa_pool_facility.get_node("ThermalPoolWaterVolume") as Area3D
+	]:
+		leisure_zone.body_entered.emit(player)
+		if not bool(player.get_meta("system_swimming", false)) or float(player.get_meta("system_swim_surface_y", -999.0)) < -100.0:
+			_fail("Entering leisure pool zone %s did not activate swimming at its own water surface." % leisure_zone.name)
+			return
+		leisure_zone.body_exited.emit(player)
+		if bool(player.get_meta("system_swimming", false)):
+			_fail("Leaving leisure pool zone %s did not restore normal movement." % leisure_zone.name)
+			return
 	var completed_activity_stats: Dictionary = operations.get("facility_activity_stats").duplicate(true)
 	operations.call("_save_facility_activity_stats")
 	operations.set("facility_activity_stats", {})
