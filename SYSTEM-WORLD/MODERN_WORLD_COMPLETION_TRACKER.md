@@ -1,3 +1,15 @@
+## Hunter Examination seven-stage restoration and runtime integration — 24 November 2026
+
+- [x] Restored the canonical seven-stage progression: Baghdad heritage, Cairo buried market, Alexandria lighthouse, Paris catacombs, Babylon guardian, Tokyo urban pursuit, and Highland Frontier survival.
+- [x] Aligned the manager's first stage ID with the Baghdad heritage runtime (baghdad_heritage_trial); this fixes the prior stage-ID mismatch that rejected artifact recovery.
+- [x] Replaced the obsolete one-stage validation with a seven-stage regression covering stage order, evidence checks, Baghdad clue order, seven physical spike obstacles, relic unlock/recovery, the six additional stage environments, rival initialization, candidate persistence, and final provisional-license progression.
+- [x] Updated the main runtime stage-start handler to accept all seven stage IDs, rebuild the stage environment on each transition, move the player to the next environment, and connect rival event feedback.
+- [x] Restored the actual exam-start action: the start request now begins the exam only after the player is registered and physically inside the tunnel; otherwise it follows the invitation/guide/registration path.
+- [ ] Exact-head Godot validation and Android export are running on PR #38; do not mark the new progression verified until both exact-head runs complete successfully.
+- [ ] The current rival manager creates five named interactive rivals, not the requested 500 independent candidate NPCs. The tunnel builder contains a log message claiming 500 competitors but does not create those 500 actors; implement and validate the actual competitor population before calling this requirement complete.
+- [ ] The six non-Baghdad stage environments currently use procedural route blockouts with stage-specific labels/objectives/materials; distinct production-grade city environments, travel transitions, and visual inspection remain open.
+- [ ] Reconcile the approved hidden entrance/riddle requirements with the current tunnel builder, whose source describes restaurant-elevator access and no concealed clues/doors. Preserve the approved access flow rather than silently dropping either requirement.
+
 ## Baghdad Towers — approved skyline visual expansion — 24 November 2026
 
 - [x] Preserved the user's exact approved Baghdad Towers image as the canonical visual reference; do not substitute another city design or alter its identity.
