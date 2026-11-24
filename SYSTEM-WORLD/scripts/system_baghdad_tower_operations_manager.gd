@@ -56,7 +56,7 @@ const PRODUCT_CATALOG := {
 		{"id":"energy_elixir","name":"إكسير الطاقة","price":360},
 		{"id":"nen_awakening_elixir","name":"إكسير إيقاظ النِن","price":1800},
 		{"id":"nen_control_elixir","name":"إكسير التحكم بالنِن","price":2600},
-		{"id":"rare_legendary_elixir","name":"إكسير نادر/أسطوري","price":12000},
+		{"id":"rare_legendary_elixir","name":"إكسير نادر/أسطوري","price":12000,"required_rank":"S"},
 		{"id":"repair_kit","name":"عدة إصلاح المعدات","price":250},
 		{"id":"iron_ingot","name":"سبيكة حديد","price":45},
 		{"id":"wood_plank","name":"لوح خشب مصقول","price":20},
@@ -2243,6 +2243,10 @@ func _consume_elixir(item_id: String) -> void:
 		_set_status("تعذر استخدام الإكسير: " + str(result.get("reason", "غير معروف")))
 
 func _buy_product(item_id: String, item_name: String, _listed_price: int, required_rank: String = "F") -> void:
+	if item_id in ["rare_legendary_elixir", "elite_legendary_elixir"]:
+		if not is_instance_valid(progression) or int(progression.get("current_level")) < 80 or not bool(progression.get("nen_unlocked")) or int(progression.get("nen_control_rank")) < 5 or not _meets_hunter_rank("S"):
+			_set_status("الخزنة تتطلب مستوى 80 ورتبة صياد S وإيقاظ النِن والتحكم من الرتبة 5.")
+			return
 	if not _meets_hunter_rank(required_rank):
 		_set_status("هذا التجهيز يتطلب رتبة صياد %s أو أعلى. لا يمكن تجاوز الرتبة بالشراء." % required_rank)
 		return
@@ -3925,7 +3929,7 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 	highlight.roughness = 0.2
 	var title := Label3D.new()
 	title.name = "FacilityTitle"
-	title.text = facility_title
+	title.text = facility_title + "\nSYSTEM | " + facility_type.to_upper()
 	title.position = Vector3(0.0, 5.0, -radius * 0.42)
 	title.font_size = 23
 	title.pixel_size = 0.013
