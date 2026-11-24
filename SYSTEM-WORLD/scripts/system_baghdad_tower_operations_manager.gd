@@ -2643,6 +2643,10 @@ func _update_hotel_room_service_order(order_index: int, next_status: String) -> 
 	if (next_status == "preparing" and current != "placed") or (next_status == "delivered" and current != "preparing"):
 		return
 	order["status"] = next_status
+	var manual_history: Array = order.get("status_history", [])
+	if manual_history.is_empty() or str(manual_history.back()) != next_status:
+		manual_history.append(next_status)
+	order["status_history"] = manual_history
 	order["updated_at_unix"] = int(Time.get_unix_time_from_system())
 	orders[order_index] = order
 	stored["room_service_orders"] = orders
@@ -6274,6 +6278,11 @@ func _process_restaurant_staff_service() -> void:
 		var service_action := "prepare" if role == "restaurant_chef" else ("take_order" if starting_state == "awaiting_waiter" else "deliver")
 		var completion_state := "ready" if role == "restaurant_chef" else ("placed" if service_action == "take_order" else "served")
 		order["status"] = "preparing" if role == "restaurant_chef" else ("taking_order" if service_action == "take_order" else "delivering")
+		var stage_history: Array = order.get("status_history", [])
+		var started_state := str(order["status"])
+		if stage_history.is_empty() or str(stage_history.back()) != started_state:
+			stage_history.append(started_state)
+		order["status_history"] = stage_history
 		order["staff_id"] = str(employee.get_meta("system_tower_staff_id", ""))
 		order["updated_at_unix"] = int(Time.get_unix_time_from_system())
 		restaurant_orders[selected_table_id] = order
@@ -6321,6 +6330,10 @@ func _process_restaurant_staff_service() -> void:
 			var active_order: Dictionary = restaurant_orders.get(selected_table_id, {})
 			if not active_order.is_empty():
 				active_order["status"] = completion_state
+				var completed_history: Array = active_order.get("status_history", [])
+				if completed_history.is_empty() or str(completed_history.back()) != completion_state:
+					completed_history.append(completion_state)
+				active_order["status_history"] = completed_history
 				active_order["updated_at_unix"] = int(Time.get_unix_time_from_system())
 				restaurant_orders[selected_table_id] = active_order
 				if completion_state == "served" and not bool(active_order.get("npc_order", false)):
@@ -6405,6 +6418,10 @@ func _complete_restaurant_staff_service_fallback(employee: Node3D, model: Node3D
 		return
 	print("QA TRACE: restaurant service fallback completed ", table_id, " from ", expected_state, " to ", completion_state)
 	active_order["status"] = completion_state
+	var fallback_history: Array = active_order.get("status_history", [])
+	if fallback_history.is_empty() or str(fallback_history.back()) != completion_state:
+		fallback_history.append(completion_state)
+	active_order["status_history"] = fallback_history
 	active_order["updated_at_unix"] = int(Time.get_unix_time_from_system())
 	restaurant_orders[table_id] = active_order
 	if completion_state == "served" and not bool(active_order.get("npc_order", false)):
@@ -6840,6 +6857,7 @@ func _place_restaurant_order(table_id: String) -> void:
 		"items": draft.duplicate(true),
 		"total": total,
 		"status": "awaiting_waiter",
+		"status_history": ["awaiting_waiter"],
 		"npc_order": false,
 		"table_index": int(current_restaurant_table_node.get_meta("system_restaurant_table_index", -1)) if is_instance_valid(current_restaurant_table_node) else -1,
 		"created_at_unix": int(Time.get_unix_time_from_system()),
