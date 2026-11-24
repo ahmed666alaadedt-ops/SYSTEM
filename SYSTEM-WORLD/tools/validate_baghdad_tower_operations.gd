@@ -1311,6 +1311,76 @@ func _run() -> void:
 	if forge_area == null or not forge_area.is_in_group("system_interactable") or not forge_area.has_meta("system_tower_staff_id"):
 		_fail("Shopping Tower crafting station is not connected to its NPC employee.")
 		return
+	var shopping_floor_facilities := {
+		5: "shopping_weapon_gallery", 6: "shopping_weapon_gallery", 7: "shopping_weapon_gallery", 8: "shopping_ranged_gallery", 9: "shopping_ranged_gallery", 10: "shopping_ranged_gallery",
+		11: "shopping_armor_gallery", 12: "shopping_armor_gallery", 13: "shopping_armor_gallery", 15: "shopping_crafting_materials", 16: "shopping_crafting_materials",
+		17: "shopping_elixir_pharmacy", 18: "shopping_elixir_pharmacy", 19: "shopping_elixir_pharmacy", 20: "shopping_nen_center", 21: "shopping_nen_center", 22: "shopping_nen_center",
+		23: "shopping_advanced_elixir_lab", 24: "shopping_advanced_elixir_lab", 25: "shopping_advanced_elixir_lab", 26: "shopping_rare_elixir_vault"
+	}
+	for floor_value in shopping_floor_facilities.keys():
+		var floor_number := int(floor_value)
+		var expected_type := str(shopping_floor_facilities[floor_value])
+		var floor_room := operations.call("_ensure_floor_room", "shopping_tower_baghdad", floor_number) as Node3D
+		var facility := floor_room.get_node_or_null("SpecialFacility_" + expected_type) as Node3D if floor_room != null else null
+		var service_area := facility.get_node_or_null("FacilityServiceInteraction") as Area3D if facility != null else null
+		var facility_title := facility.get_node_or_null("FacilityTitle") as Label3D if facility != null else null
+		if facility == null or service_area == null or not service_area.is_in_group("system_interactable") or str(service_area.get_meta("system_facility_type", "")) != expected_type or facility_title == null or not facility_title.text.contains("SYSTEM |"):
+			_fail("Shopping Tower floor %d is missing its assigned physical, bilingual, interactive department %s." % [floor_number, expected_type])
+			return
+	var hunter_floor_facilities := {7:"hunter_weapon_mastery", 8:"hunter_weapon_mastery", 9:"hunter_weapon_mastery", 10:"hunter_nen_fundamentals", 11:"hunter_nen_fundamentals", 13:"hunter_advanced_control", 14:"hunter_advanced_control", 15:"hunter_advanced_control", 16:"hunter_skill_specialization", 17:"hunter_skill_specialization", 18:"hunter_skill_specialization", 19:"hunter_skill_assessment", 20:"hunter_skill_assessment"}
+	for floor_value in hunter_floor_facilities.keys():
+		var floor_number := int(floor_value)
+		var expected_type := str(hunter_floor_facilities[floor_value])
+		var floor_room := operations.call("_ensure_floor_room", "hunter_association_tower_baghdad", floor_number) as Node3D
+		var facility := floor_room.get_node_or_null("SpecialFacility_" + expected_type) as Node3D if floor_room != null else null
+		var service_area := facility.get_node_or_null("FacilityServiceInteraction") as Area3D if facility != null else null
+		if facility == null or service_area == null or not service_area.is_in_group("system_interactable"):
+			_fail("Hunter Association floor %d is missing its assigned physical training facility %s." % [floor_number, expected_type])
+			return
+	var hunter_floor_twelve := operations.call("_ensure_floor_room", "hunter_association_tower_baghdad", 12) as Node3D
+	if hunter_floor_twelve == null or hunter_floor_twelve.get_node_or_null("SpecialFacility_guild_lounge") == null or hunter_floor_twelve.get_node_or_null("SpecialFacility_hunter_nen_fundamentals/FacilityServiceInteraction") == null:
+		_fail("Hunter Association floor 12 must preserve its guild lounge and add a separate Nen fundamentals practice area.")
+		return
+	var skill_progression := main.get("player_progression") as Node
+	if skill_progression == null or not skill_progression.has_method("practice_system_skill") or skill_progression.call("get_system_skill_tree").size() != 10:
+		_fail("Persistent original SYSTEM skill tree is missing or incomplete.")
+		return
+	var skill_snapshot := {"level":skill_progression.get("current_level"),"points":skill_progression.get("verified_hunter_mission_points"),"learned":skill_progression.get("learned_system_skills").duplicate(),"practice":skill_progression.get("system_skill_practice").duplicate(true),"mastery":skill_progression.get("system_skill_mastery").duplicate(true),"cooldowns":skill_progression.get("system_skill_cooldowns").duplicate(true),"weapon_mastery":skill_progression.get("weapon_mastery").duplicate(true),"energy":skill_progression.get("current_system_energy")}
+	skill_progression.set("current_level", 3)
+	skill_progression.set("verified_hunter_mission_points", 100)
+	var weapon_training: Dictionary = skill_progression.call("record_weapon_training", "sword", "validator_sword_drill")
+	if not bool(weapon_training.get("success", false)) or int(weapon_training.get("mastery", 0)) < 5:
+		_fail("Verified weapon-family practice did not update persistent sword mastery.")
+		return
+	for session_index in range(3):
+		var practice_result: Dictionary = skill_progression.call("practice_system_skill", "guard_breaker", "validator_guard_breaker_%d" % session_index)
+		if not bool(practice_result.get("success", false)):
+			_fail("SYSTEM skill practice rejected a valid unique training session: " + str(practice_result.get("reason", "")))
+			return
+	if not skill_progression.get("learned_system_skills").has("guard_breaker"):
+		_fail("SYSTEM skill was not learned after three verified training sessions.")
+		return
+	var skill_use: Dictionary = skill_progression.call("record_system_skill_use", "guard_breaker")
+	var cooldown_gate: Dictionary = skill_progression.call("can_use_system_skill", "guard_breaker")
+	if not bool(skill_use.get("success", false)) or bool(cooldown_gate.get("success", true)) or str(cooldown_gate.get("reason", "")) != "SKILL_COOLDOWN":
+		_fail("SYSTEM skill use did not spend energy and enforce its cooldown.")
+		return
+	skill_progression.call("save_progress")
+	skill_progression.set("learned_system_skills", [])
+	skill_progression.call("load_progress")
+	if not skill_progression.get("learned_system_skills").has("guard_breaker"):
+		_fail("SYSTEM learned skills did not persist across save/load.")
+		return
+	skill_progression.set("current_level", skill_snapshot["level"])
+	skill_progression.set("verified_hunter_mission_points", skill_snapshot["points"])
+	skill_progression.set("learned_system_skills", skill_snapshot["learned"])
+	skill_progression.set("system_skill_practice", skill_snapshot["practice"])
+	skill_progression.set("system_skill_mastery", skill_snapshot["mastery"])
+	skill_progression.set("system_skill_cooldowns", skill_snapshot["cooldowns"])
+	skill_progression.set("weapon_mastery", skill_snapshot["weapon_mastery"])
+	skill_progression.set("current_system_energy", skill_snapshot["energy"])
+	skill_progression.call("save_progress")
+	print("QA TRACE: Shopping Tower departments and Hunter training floors, weapon mastery, skill unlock, energy, cooldown and save/load passed.")
 	print("QA TRACE: generating Shopping Tower hotel reception floor 27.")
 	var hotel_reception_room := operations.call("_ensure_floor_room", "shopping_tower_baghdad", 27) as Node3D
 	print("QA TRACE: hotel reception floor 27 generation returned.")

@@ -2247,6 +2247,20 @@ func _buy_product(item_id: String, item_name: String, _listed_price: int, requir
 		if not is_instance_valid(progression) or int(progression.get("current_level")) < 80 or not bool(progression.get("nen_unlocked")) or int(progression.get("nen_control_rank")) < 5 or not _meets_hunter_rank("S"):
 			_set_status("الخزنة تتطلب مستوى 80 ورتبة صياد S وإيقاظ النِن والتحكم من الرتبة 5.")
 			return
+	var required_level := 1
+	match item_id:
+		"nen_awakening_elixir": required_level = 15
+		"nen_control_elixir", "nen_focus_elixir": required_level = 20
+		"nen_stabilizer_elixir": required_level = 25
+		"nen_recovery_elixir": required_level = 30
+		"deep_wound_elixir": required_level = 12
+		"regeneration_elixir": required_level = 20
+	if is_instance_valid(progression) and int(progression.get("current_level")) < required_level:
+		_set_status("هذا الإكسير يتطلب مستوى %d." % required_level)
+		return
+	if item_id in ["nen_control_elixir", "nen_focus_elixir", "nen_stabilizer_elixir", "nen_recovery_elixir"] and (not is_instance_valid(progression) or not bool(progression.get("nen_unlocked"))):
+		_set_status("يجب إيقاظ النِن أولاً قبل شراء إكسير التحكم أو التركيز.")
+		return
 	if not _meets_hunter_rank(required_rank):
 		_set_status("هذا التجهيز يتطلب رتبة صياد %s أو أعلى. لا يمكن تجاوز الرتبة بالشراء." % required_rank)
 		return
@@ -3066,7 +3080,7 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 	var department := _department_for_floor(tower_id, floor_number, count)
 	var sign := Label3D.new()
 	sign.name = "FloorDepartmentSign"
-	sign.text = "%s\nالطابق %d / %d" % [department, floor_number, count]
+	sign.text = "SYSTEM BAGHDAD | " + tower_id.to_upper() + "\n" + department + "\nFLOOR %d / %d | الطابق %d / %d" % [floor_number, count, floor_number, count]
 	sign.position = Vector3(0.0, 3.4, -radius * 0.55)
 	sign.font_size = 34
 	sign.pixel_size = 0.012
@@ -3732,7 +3746,7 @@ func _department_for_floor(tower_id: String, floor_number: int, total: int) -> S
 		"hunter_association_tower_baghdad":
 			if floor_number in [4, 5, 6]: return "قاعات التدريب الأساسي والتأهيل البدني"
 			if floor_number in [7, 8, 9]: return "قاعات إتقان الأسلحة — تدريب فردي آمن"
-			if floor_number in [10, 11]: return "أساسيات الطاقة والنِن والتركيز"
+			if floor_number in [10, 11]: return "أساسيات الطاقة والنِن والتركيز"\n			if floor_number == 12: return "صالة النقابات وقاعة أساسيات النِن"
 			if floor_number in [13, 14, 15]: return "التحكم المتقدم بالقدرات وإدارة الطاقة"
 			if floor_number in [16, 17, 18]: return "قاعات التخصص واختبارات المهارة"
 			if floor_number in [19, 20]: return "قاعات تقييم وإثبات الإتقان"
@@ -3796,6 +3810,54 @@ func _create_floor_facilities(room: Node3D, tower_id: String, floor_number: int,
 	room.set_meta("system_tower_floor_number", floor_number)
 	room.set_meta("system_tower_department", department)
 	_create_specialized_floor_facility(room, tower_id, floor_number, radius, department)
+	if tower_id == "hunter_association_tower_baghdad" and floor_number == 12:
+		_create_hunter_nen_side_facility(room, radius)
+
+
+func _create_hunter_nen_side_facility(room: Node3D, radius: float) -> void:
+	if room.get_node_or_null("SpecialFacility_hunter_nen_fundamentals") != null:
+		return
+	var root := Node3D.new()
+	root.name = "SpecialFacility_hunter_nen_fundamentals"
+	root.set_meta("system_facility_type", "hunter_nen_fundamentals")
+	root.set_meta("system_facility_title", "أساسيات النِن والتركيز | NEN FUNDAMENTALS")
+	root.set_meta("system_tower_id", "hunter_association_tower_baghdad")
+	root.set_meta("system_tower_floor_number", 12)
+	root.position = Vector3(radius * 0.34, 0.0, 0.0)
+	room.add_child(root)
+	var accent := StandardMaterial3D.new()
+	accent.albedo_color = Color(0.10, 0.38, 0.52)
+	accent.metallic = 0.55
+	var glow := StandardMaterial3D.new()
+	glow.albedo_color = Color(0.18, 0.72, 0.92)
+	glow.emission_enabled = true
+	glow.emission = Color(0.08, 0.48, 0.78)
+	glow.emission_energy_multiplier = 1.4
+	for index in range(4):
+		_add_facility_box(root, "NenFocusPillar_%02d" % index, Vector3(-6.0 + float(index) * 4.0, 1.8, -1.0), Vector3(1.0, 3.6, 1.0), glow if index % 2 == 0 else accent)
+	var sign := Label3D.new()
+	sign.name = "FacilityTitle"
+	sign.text = "أساسيات النِن والتركيز\nSYSTEM | NEN FUNDAMENTALS"
+	sign.position = Vector3(0.0, 4.0, -radius * 0.18)
+	sign.font_size = 20
+	sign.pixel_size = 0.012
+	root.add_child(sign)
+	var interaction := Area3D.new()
+	interaction.name = "FacilityServiceInteraction"
+	interaction.add_to_group("system_interactable")
+	interaction.set_meta("system_tower_id", "hunter_association_tower_baghdad")
+	interaction.set_meta("system_tower_floor_number", 12)
+	interaction.set_meta("system_facility_type", "hunter_nen_fundamentals")
+	interaction.set_meta("system_interaction_prompt", "أساسيات النِن والتركيز — NEN FUNDAMENTALS")
+	interaction.collision_layer = 1
+	interaction.collision_mask = 0
+	var shape := CollisionShape3D.new()
+	var sphere := SphereShape3D.new()
+	sphere.radius = 2.8
+	shape.shape = sphere
+	shape.position.y = 1.2
+	interaction.add_child(shape)
+	root.add_child(interaction)
 
 
 func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_number: int, radius: float, department: String) -> void:
@@ -6101,6 +6163,10 @@ func _process_restaurant_staff_service() -> void:
 				continue
 			var order: Dictionary = restaurant_orders[table_id]
 			var state := str(order.get("status", ""))
+			if role == "restaurant_chef" and state == "placed":
+				var placed_at := int(order.get("updated_at_unix", 0))
+				if int(Time.get_unix_time_from_system()) - placed_at < 1:
+					continue
 			if role == "restaurant_chef" and state in ["placed", "preparing"]:
 				selected_table_id = table_id
 				break

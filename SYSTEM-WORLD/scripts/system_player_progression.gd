@@ -7,6 +7,7 @@ signal level_up(new_level: int)
 signal attribute_changed(attribute: String, new_value: int)
 
 const MAX_LEVEL := 100
+const MAX_SYSTEM_ENERGY := 100.0
 const SAVE_PATH := "user://system_player_progress.cfg"
 
 const WORLD_FRAGMENT_REQUIREMENTS := {
@@ -28,16 +29,22 @@ const DEFAULT_EQUIPMENT_SLOTS := {"weapon": "", "shield": "", "armor": "", "helm
 const MAX_EQUIPMENT_UPGRADE_LEVEL := 10
 const MAX_EQUIPMENT_DURABILITY := 100.0
 const EQUIPMENT_SLOTS_BY_ITEM := {
-	"training_sword": "weapon", "steel_sword": "weapon", "hunter_spear": "weapon",
-	"battle_axe": "weapon", "composite_bow": "weapon", "system_firearm": "weapon",
-	"hunter_shield": "shield", "hunter_armor": "armor", "hunter_helmet": "helmet",
+	"training_sword": "weapon", "steel_sword": "weapon", "hunter_spear": "weapon", "battle_axe": "weapon", "composite_bow": "weapon", "system_firearm": "weapon",
+	"combat_knife": "weapon", "dual_blades": "weapon", "long_sword": "weapon", "great_sword": "weapon", "crossbow": "weapon", "war_hammer": "weapon", "hunter_pistol": "weapon", "hunter_rifle": "weapon", "precision_rifle": "weapon", "tactical_shotgun": "weapon",
+	"hunter_shield": "shield", "advanced_hunter_shield": "shield",
+	"hunter_armor": "armor", "rank_e_armor": "armor", "rank_d_armor": "armor", "rank_c_armor": "armor", "rank_b_armor": "armor", "rank_a_armor": "armor", "rank_s_armor": "armor", "rank_ss_armor": "armor", "rank_sss_armor": "armor",
+	"hunter_helmet": "helmet", "reinforced_helmet": "helmet",
 	"combat_outfit": "outfit", "casual_outfit": "outfit", "hunter_outfit_e": "outfit", "hunter_outfit_d": "outfit", "hunter_outfit_c": "outfit", "hunter_outfit_b": "outfit", "hunter_outfit_a": "outfit", "hunter_outfit_s": "outfit", "hunter_outfit_ss": "outfit", "hunter_outfit_sss": "outfit"
 }
 const EQUIPMENT_DAMAGE_BONUS := {
-	"training_sword": 5.0, "steel_sword": 12.0, "hunter_spear": 10.0,
-	"battle_axe": 14.0, "composite_bow": 8.0, "system_firearm": 16.0
+	"training_sword": 5.0, "steel_sword": 12.0, "hunter_spear": 10.0, "battle_axe": 14.0, "composite_bow": 8.0, "system_firearm": 16.0,
+	"combat_knife": 7.0, "dual_blades": 13.0, "long_sword": 15.0, "great_sword": 22.0, "crossbow": 12.0, "war_hammer": 18.0, "hunter_pistol": 14.0, "hunter_rifle": 19.0, "precision_rifle": 24.0, "tactical_shotgun": 21.0
 }
-const EQUIPMENT_DEFENSE_BONUS := {"hunter_shield": 8.0, "hunter_armor": 12.0, "hunter_helmet": 4.0, "hunter_outfit_e": 5.0, "hunter_outfit_d": 7.0, "hunter_outfit_c": 10.0, "hunter_outfit_b": 14.0, "hunter_outfit_a": 19.0, "hunter_outfit_s": 25.0, "hunter_outfit_ss": 32.0, "hunter_outfit_sss": 42.0}
+const EQUIPMENT_DEFENSE_BONUS := {
+	"hunter_shield": 8.0, "advanced_hunter_shield": 16.0, "hunter_armor": 12.0, "hunter_helmet": 4.0, "reinforced_helmet": 8.0,
+	"rank_e_armor": 5.0, "rank_d_armor": 7.0, "rank_c_armor": 10.0, "rank_b_armor": 14.0, "rank_a_armor": 19.0, "rank_s_armor": 25.0, "rank_ss_armor": 32.0, "rank_sss_armor": 42.0,
+	"hunter_outfit_e": 5.0, "hunter_outfit_d": 7.0, "hunter_outfit_c": 10.0, "hunter_outfit_b": 14.0, "hunter_outfit_a": 19.0, "hunter_outfit_s": 25.0, "hunter_outfit_ss": 32.0, "hunter_outfit_sss": 42.0
+}
 
 const CRAFTING_RECIPES := {
 	"training_sword": {"name": "صناعة سيف تدريبي", "ingredients": {"iron_ingot": 1, "wood_plank": 2}, "output": "training_sword", "required_level": 1},
@@ -57,7 +64,15 @@ const CRAFTING_RECIPES := {
 	"energy_elixir": {"name": "تحضير إكسير الطاقة", "ingredients": {"crystal_dust": 2, "energy_crystal": 1}, "output": "energy_elixir", "required_level": 8},
 	"nen_awakening_elixir": {"name": "تحضير إكسير إيقاظ النِن", "ingredients": {"monster_core": 2, "nen_fragment": 1}, "output": "nen_awakening_elixir", "required_level": 15},
 	"nen_control_elixir": {"name": "تحضير إكسير التحكم بالنِن", "ingredients": {"nen_fragment": 2, "energy_crystal": 1}, "output": "nen_control_elixir", "required_level": 20, "requires_nen": true},
-	"rare_legendary_elixir": {"name": "تحضير الإكسير النادر/الأسطوري", "ingredients": {"rare_core": 3, "nen_fragment": 5, "energy_crystal": 3}, "output": "rare_legendary_elixir", "required_level": 80, "requires_nen": true, "required_nen_rank": 5}
+	"rare_legendary_elixir": {"name": "تحضير الإكسير النادر/الأسطوري", "ingredients": {"rare_core": 3, "nen_fragment": 5, "energy_crystal": 3}, "output": "rare_legendary_elixir", "required_level": 80, "required_rank": "S", "requires_nen": true, "required_nen_rank": 5},
+	"antidote_elixir": {"name": "تحضير مضاد السموم", "ingredients": {"medicinal_herb": 2, "crystal_dust": 1}, "output": "antidote_elixir", "required_level": 1},
+	"resistance_elixir": {"name": "تحضير إكسير مقاومة الإرهاق", "ingredients": {"medicinal_herb": 2, "monster_core": 1}, "output": "resistance_elixir", "required_level": 5},
+	"deep_wound_elixir": {"name": "تحضير إكسير الجروح العميقة", "ingredients": {"medicinal_herb": 4, "crystal_dust": 2}, "output": "deep_wound_elixir", "required_level": 12, "required_rank": "D"},
+	"regeneration_elixir": {"name": "تحضير إكسير التجدد الحيوي", "ingredients": {"medicinal_herb": 5, "energy_crystal": 2}, "output": "regeneration_elixir", "required_level": 20, "required_rank": "C"},
+	"nen_focus_elixir": {"name": "تحضير إكسير تركيز النِن", "ingredients": {"nen_fragment": 1, "crystal_dust": 2}, "output": "nen_focus_elixir", "required_level": 20, "requires_nen": true, "required_nen_rank": 1},
+	"nen_stabilizer_elixir": {"name": "تحضير إكسير تثبيت الهالة", "ingredients": {"nen_fragment": 2, "energy_crystal": 2}, "output": "nen_stabilizer_elixir", "required_level": 25, "required_rank": "C", "requires_nen": true, "required_nen_rank": 2},
+	"nen_recovery_elixir": {"name": "تحضير إكسير استعادة النِن", "ingredients": {"nen_fragment": 3, "energy_crystal": 2}, "output": "nen_recovery_elixir", "required_level": 30, "required_rank": "C", "requires_nen": true, "required_nen_rank": 2},
+	"elite_legendary_elixir": {"name": "تحضير الإكسير الأسطوري للنخبة", "ingredients": {"rare_core": 5, "nen_fragment": 8, "energy_crystal": 5}, "output": "elite_legendary_elixir", "required_level": 80, "required_rank": "S", "requires_nen": true, "required_nen_rank": 5}
 }
 
 
@@ -94,6 +109,7 @@ var nen_control_rank := 0
 var nen_burst_cooldown_remaining := 0.0
 var nen_button_refresh_clock := 0.0
 var nen_burst_button: Button
+var current_system_energy := MAX_SYSTEM_ENERGY
 var learned_system_skills: Array[String] = []
 var system_skill_practice: Dictionary = {}
 var system_skill_mastery: Dictionary = {}
@@ -119,6 +135,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	current_system_energy = minf(MAX_SYSTEM_ENERGY, current_system_energy + delta * 5.0)
 	var expired := false
 	for effect_id in active_elixir_effects.keys():
 		var effect: Dictionary = active_elixir_effects[effect_id]
@@ -340,6 +357,7 @@ func get_hunter_rank_progress() -> Dictionary:
 		"system_skill_mastery": system_skill_mastery.duplicate(true),
 		"system_skill_practice": system_skill_practice.duplicate(true),
 		"weapon_mastery": weapon_mastery.duplicate(true),
+		"system_energy": current_system_energy,
 		"nen_skill_uses": nen_skill_use_count,
 		"distinct_nen_abilities": nen_skill_ids.size(),
 		"sss_board_approved": hunter_sss_board_approved
@@ -381,6 +399,9 @@ func craft_recipe(recipe_id: String) -> Dictionary:
 	var required_level := int(recipe.get("required_level", 1))
 	if current_level < required_level:
 		return {"success": false, "reason": "LEVEL_REQUIREMENT", "required_level": required_level}
+	var required_rank := str(recipe.get("required_rank", "F"))
+	if not _meets_skill_rank(required_rank):
+		return {"success": false, "reason": "HUNTER_RANK_REQUIREMENT", "required_rank": required_rank}
 	if bool(recipe.get("requires_nen", false)) and not nen_unlocked:
 		return {"success": false, "reason": "NEN_REQUIRED"}
 	var required_nen_rank := int(recipe.get("required_nen_rank", 0))
@@ -615,6 +636,8 @@ func consume_elixir(item_id: String) -> Dictionary:
 				effect_id = "energy"
 				effect = {"remaining_seconds": 120.0, "attack_cooldown_multiplier": 0.82}
 			"rare_legendary_elixir":
+				if current_level < 80 or not nen_unlocked or nen_control_rank < 5 or not _meets_skill_rank("S"):
+					return {"success": false, "reason": "ELITE_ELIXIR_REQUIREMENTS"}
 				effect_id = "sovereign"
 				effect = {"remaining_seconds": 180.0, "damage_bonus": 25.0, "defense_bonus": 15.0, "movement_multiplier": 1.15, "attack_cooldown_multiplier": 0.9}
 			"elite_legendary_elixir":
@@ -644,13 +667,15 @@ func consume_elixir(item_id: String) -> Dictionary:
 				effect_id = "resistance"
 				effect = {"remaining_seconds": 150.0, "defense_bonus": 8.0}
 			"deep_wound_elixir", "regeneration_elixir":
+				effect_id = "wound_recovery" if item_id == "deep_wound_elixir" else "regeneration"
+				if active_elixir_effects.has(effect_id) and float(active_elixir_effects[effect_id].get("remaining_seconds", 0.0)) > 0.0:
+					return {"success": false, "reason": "ELIXIR_EFFECT_ALREADY_ACTIVE"}
 				var health := get_tree().root.find_child("PlayerCombatHealth", true, false)
 				if health == null or not health.has_method("apply_field_healing"):
 					return {"success": false, "reason": "HEALTH_SYSTEM_UNAVAILABLE"}
 				var healing_amount := 15.0 if item_id == "deep_wound_elixir" else 20.0
 				if not bool(health.call("apply_field_healing", healing_amount)):
 					return {"success": false, "reason": "HEALING_NOT_NEEDED"}
-				effect_id = "wound_recovery" if item_id == "deep_wound_elixir" else "regeneration"
 				effect = {"remaining_seconds": 90.0, "defense_bonus": 3.0}
 			_:
 				return {"success": false, "reason": "UNKNOWN_ELIXIR"}
@@ -756,6 +781,7 @@ func save_progress() -> void:
 	config.set_value("skills", "mastery", system_skill_mastery.duplicate(true))
 	config.set_value("skills", "cooldowns", system_skill_cooldowns.duplicate(true))
 	config.set_value("skills", "weapon_mastery", weapon_mastery.duplicate(true))
+	config.set_value("skills", "system_energy", current_system_energy)
 	config.set_value("hunter_rank", "verified_mission_points", verified_hunter_mission_points)
 	config.set_value("hunter_rank", "verified_mission_count", verified_hunter_mission_count)
 	config.set_value("hunter_rank", "verified_mission_ids", verified_hunter_mission_ids)
@@ -870,6 +896,7 @@ func load_progress() -> void:
 		if remaining > 0.0 and SYSTEM_SKILL_TREE.has(str(skill_id)):
 			system_skill_cooldowns[str(skill_id)] = remaining
 	weapon_mastery = config.get_value("skills", "weapon_mastery", {})
+	current_system_energy = clampf(float(config.get_value("skills", "system_energy", MAX_SYSTEM_ENERGY)), 0.0, MAX_SYSTEM_ENERGY)
 	var saved_world_fragments: Dictionary = config.get_value("world_keys", "fragments", {})
 	world_fragments = {"modern": [], "historical": [], "fantasy": []}
 	for world_key in world_fragments.keys():
@@ -991,6 +1018,7 @@ func _reset_progress() -> void:
 	system_skill_mastery.clear()
 	system_skill_cooldowns.clear()
 	weapon_mastery.clear()
+	current_system_energy = MAX_SYSTEM_ENERGY
 	nen_unlocked = false
 	nen_control_rank = 0
 	nen_burst_cooldown_remaining = 0.0
@@ -1075,6 +1103,9 @@ func can_use_system_skill(skill_id: String) -> Dictionary:
 	if remaining > 0.0:
 		return {"success": false, "reason": "SKILL_COOLDOWN", "remaining_seconds": remaining}
 	var skill: Dictionary = SYSTEM_SKILL_TREE[key]
+	var required_energy := float(skill.get("energy_cost", 0))
+	if current_system_energy < required_energy:
+		return {"success": false, "reason": "SYSTEM_ENERGY_LOW", "required_energy": required_energy, "current_energy": current_system_energy}
 	if bool(skill.get("requires_nen", false)) and (not nen_unlocked or nen_control_rank < int(skill.get("required_nen_rank", 1))):
 		return {"success": false, "reason": "NEN_CONTROL_REQUIREMENT"}
 	return {"success": true, "skill": skill.duplicate(true), "mastery": int(system_skill_mastery.get(key, 0))}
@@ -1086,6 +1117,10 @@ func record_system_skill_use(skill_id: String) -> Dictionary:
 		return result
 	var key := skill_id.strip_edges().to_lower()
 	var skill: Dictionary = SYSTEM_SKILL_TREE[key]
+	var energy_cost := float(skill.get("energy_cost", 0))
+	if current_system_energy < energy_cost:
+		return {"success": false, "reason": "SYSTEM_ENERGY_LOW", "required_energy": energy_cost, "current_energy": current_system_energy}
+	current_system_energy = maxf(0.0, current_system_energy - energy_cost)
 	system_skill_cooldowns[key] = float(skill.get("cooldown", 5.0))
 	save_progress()
-	return {"success": true, "skill_id": key, "cooldown_seconds": float(skill.get("cooldown", 5.0)), "energy_cost": int(skill.get("energy_cost", 0)), "effect": str(skill.get("effect", ""))}
+	return {"success": true, "skill_id": key, "cooldown_seconds": float(skill.get("cooldown", 5.0)), "energy_cost": int(energy_cost), "remaining_energy": current_system_energy, "effect": str(skill.get("effect", ""))}
