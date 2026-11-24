@@ -44,10 +44,11 @@ func _run_validation() -> void:
 	var clue_3 := tunnel.get_node_or_null("HunterRiddleClue_3") as Area3D
 	if not _check(clue_1 != null and clue_2 != null and clue_3 != null, "All three hidden clues must exist."):
 		return
-	var operations := main.get_node_or_null("BaghdadTowerOperationsManager")
+	var operations := main.find_child("BaghdadTowerOperationsManager", true, false)
 	var shopping_tower := root.find_child("ShoppingTower", true, false) as Node3D
 	if not _check(operations != null and shopping_tower != null, "Shopping Tower operations or restaurant host is missing."):
 		return
+	var clue_positions_before: Array[Vector3] = [clue_1.global_position, clue_2.global_position, clue_3.global_position]
 	var restaurant_floor := Node3D.new()
 	restaurant_floor.name = "InteriorFloor_029"
 	restaurant_floor.position = Vector3(0.0, 170.0, 0.0)
@@ -66,7 +67,7 @@ func _run_validation() -> void:
 		return
 	if not _check(door.global_position.y < restaurant_floor.global_position.y and door.global_position.distance_to(restaurant_floor.global_position) < 30.0, "Restaurant interaction area is not physically positioned at the concealed floor entry."):
 		return
-	if not _check(clue_1 != null and clue_2 != null and clue_3 != null, "All three riverbank clues must remain attached after the tunnel is anchored to the restaurant."):
+	if not _check(clue_1.global_position.is_equal_approx(clue_positions_before[0]) and clue_2.global_position.is_equal_approx(clue_positions_before[1]) and clue_3.global_position.is_equal_approx(clue_positions_before[2]), "Moving the tunnel under the restaurant must not move the three surveyed riverbank clues."):
 		return
 
 	main.call("_on_interaction_performed", clue_3, "")
