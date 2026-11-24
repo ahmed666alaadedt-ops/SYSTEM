@@ -3,7 +3,7 @@ Status: approved design specification — 2026-11-24
 Branch: `feature/baghdad-five-plus-power-tower-20261122`
 
 ## Canonical Baghdad layout
-- Baghdad's public complex contains **five towers**. The Hunter Association Tower is the highest/overlooking tower above the five-tower complex, as established in the approved visual layout; it is not a sixth ordinary shopping/business tower.
+- Baghdad has **exactly five towers in total**. The fifth and uppermost tower is the **Hunter Association Tower**, positioned above/at the top of the complex as established in the approved visual layout. Do not add a sixth Baghdad tower.
 - The Power Tower remains a separate, independent 200-floor challenge tower and is not part of Baghdad's five-tower complex.
 - Preserve all existing tower interiors, jobs, NPCs, restaurant/hotel services, evacuation exits, and progression. Extend existing systems; do not replace completed work.
 - Include a real, functional **aircraft landing pad / helipad** as part of the Baghdad tower complex. It must be visibly built into the architecture, have safe approach/landing clearance, a player-accessible arrival/departure interaction, and connect to the world's travel/transport system. It is gameplay infrastructure, not decorative scenery.
@@ -22,7 +22,7 @@ Create distinct, explorable specialist floors/sections with NPC merchants, item 
 All categories must respect world-specific equipment rules: modern weapons/gear belong to the modern world; historical weapons belong to historical settings; magical/fantasy equipment belongs to fantasy settings. The shop can expose catalogues across categories but must clearly label compatibility and prevent invalid equipment use. Stock, economy, and rewards must remain balanced.
 
 ## Hunter Association Tower and hidden examination entrance
-- The Hunter Association Tower is the uppermost authority building in the Baghdad complex. Mayar is its president and presents verified Hunter Association awards at formal ceremonies.
+- The fifth and uppermost Baghdad tower is the Hunter Association Tower. Mayar is its president and presents verified Hunter Association awards at formal ceremonies.
 - Preserve the already implemented hidden underground test route, its three-inscription puzzle, registration prerequisite, and physical transition into the lower passage. Do not make the entrance openly visible or directly accessible from the street.
 - The entrance should be discovered through environmental clues and exploration within the tower complex. An original restaurant-based interaction may serve as the concealed trigger: a specific unusual order/request, service interaction, or hidden clue causes access to a concealed passage only after the required puzzle and registration conditions are met.
 - The inspiration is the feeling of a secret entrance/examination in a hunter adventure story, not a reproduction of an anime scene, dialogue, characters, or exact mechanism. Keep SYSTEM's own story, puzzle, and implementation.
