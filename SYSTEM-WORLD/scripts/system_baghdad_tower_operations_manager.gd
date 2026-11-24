@@ -948,8 +948,8 @@ func _create_customer_population() -> void:
 			customer["system_customer_is_child"] = age_group == "child"
 			customer["system_customer_is_elder"] = age_group == "elder"
 			if age_group == "child":
-				customer["job"] = "civilian"
-				customer["occupation"] = "civilian"
+				customer["job"] = "student"
+				customer["occupation"] = "student"
 				customer["civilian_only"] = true
 				customer["combat_capable"] = false
 				customer["can_join_hunter_exam"] = false
