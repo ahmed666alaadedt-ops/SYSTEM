@@ -722,7 +722,9 @@ func _build_baghdad_tigris_surface() -> void:
 	river.name = "BaghdadTigrisRiver"
 	river.mesh = surface.commit()
 	river.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	river.set_meta("system_geography_source", "OpenStreetMap way 24709603")	river.set_meta("system_geography_name", "Tigris River")	add_child(river)
+	river.set_meta("system_geography_source", "OpenStreetMap way 24709603")
+	river.set_meta("system_geography_name", "Tigris River")
+	add_child(river)
 
 
 func _build_baghdad_republic_bridge() -> void:
