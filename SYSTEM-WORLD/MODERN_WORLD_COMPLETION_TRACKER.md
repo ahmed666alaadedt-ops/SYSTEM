@@ -1530,3 +1530,12 @@ This section supersedes the earlier point-only fan prediction wording above. The
 - [ ] Complete physical Android inspection of tower interiors, campaign displays, tunnel traversal and stage-one interactions.
 - [ ] Six remaining physical examination environments and original examiner/candidate behaviors remain future work.
 - [ ] PR #38 remains draft on this feature branch; do not merge to `main` without explicit user approval.
+
+
+### Exact-HEAD final verification — 24 November 2026
+
+- [x] Canonical Godot runtime validation passed on `bd7e5c1ebbe91d2379ae8c13d54f91a8a6486ca8` — run [45324119302](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45324119302).
+- [x] Canonical Android APK build, companion GLB checks, NPC population checks, export and artifact upload all passed on the same HEAD — run [45324126926](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45324126926).
+- [x] Dedicated Android APK export and upload also passed on the same HEAD — run [45324119280](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45324119280).
+- [x] The earlier Miyar companion validation failure did not reproduce on this exact HEAD; both Miyar/Adam companion checks passed.
+- [ ] Human Android device inspection remains necessary for touch feel, camera framing, visual readability, and performance; headless checks do not replace device QA.
