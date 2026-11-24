@@ -3375,6 +3375,10 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 					service_shape.shape = service_sphere
 				service_sphere.radius = 3.0
 				service_shape.position = Vector3(0.0, 1.2, -5.8)
+		if tower_id == "shopping_tower_baghdad" and floor_number == 29:
+			if existing.get_node_or_null("RestaurantDiningSign") == null:
+				_create_restaurant_dining_area(existing, float(config["radius"]), floor_number)
+			_ensure_hunter_exam_secret_entrance(existing, float(config["radius"]))
 		return existing
 	var height := float(tower.get_meta("tower_height_m", config["height"]))
 	var radius := float(config["radius"])
@@ -4154,6 +4158,8 @@ func _create_floor_facilities(room: Node3D, tower_id: String, floor_number: int,
 			_create_workshop_station(room, "ElixirLaboratory", "مختبر تحضير الأكاسير وإيقاظ النِن والعلاج", Vector3(radius * 0.32, 0.0, -radius * 0.42), str(staff_ids[2]), "elixir_pharmacist")
 	if tower_id == "shopping_tower_baghdad" and floor_number >= 29:
 		_create_restaurant_dining_area(room, radius, floor_number)
+	if tower_id == "shopping_tower_baghdad" and floor_number == 29:
+		_ensure_hunter_exam_secret_entrance(room, radius)
 	if tower_id == "shopping_tower_baghdad" and floor_number in [27, 28]:
 		var hotel_staff: Array = staff_by_tower.get(tower_id, [])
 		var hospitality_staff_id := str(hotel_staff[6]) if hotel_staff.size() > 6 else (str(hotel_staff[3]) if hotel_staff.size() > 3 else "")
@@ -7611,7 +7617,17 @@ func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: i
 		room.add_child(queue_marker)
 
 
-
+func _ensure_hunter_exam_secret_entrance(room: Node3D, radius: float) -> void:
+	if room == null or room.get_node_or_null("HunterExamRestaurantSecretEntrance") != null:
+		return
+	var entrance_script := load("res://scripts/system_hunter_exam_secret_entrance.gd")
+	if entrance_script == null:
+		push_error("SYSTEM HUNTER EXAM: restaurant secret entrance script could not be loaded.")
+		return
+	var entrance := entrance_script.new() as Node3D
+	entrance.name = "HunterExamRestaurantSecretEntrance"
+	room.add_child(entrance)
+	entrance.call("setup", player, radius)
 
 func _create_npc_restaurant_order(table_root: Node3D, customer_id: String, floor_number: int) -> void:
 	if table_root == null or customer_id.is_empty():
