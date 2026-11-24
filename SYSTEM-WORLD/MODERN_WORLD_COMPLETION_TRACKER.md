@@ -1838,3 +1838,5 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - Floor-4 repair: if the Shopping Tower's skill-store floor was pre-created as a generic interior before the specialized facility existed, the floor resolver now adds the missing skill-store facility in place without replacing the existing room, floor deck, kiosks, elevator or evacuation route.
 
 - Floor-4 collider repair: the in-place recovery now verifies the skill-store service Area3D and creates or repairs its named SphereShape3D collision child, metadata, collision layer and counter-side position when an older pre-created room is missing them.
+
+- Collision-shape lookup is type-based rather than dependent on Godot's auto-generated child name; the floor-4 repair normalizes any recovered shape name and collision layers so older nodes are reliably repaired.

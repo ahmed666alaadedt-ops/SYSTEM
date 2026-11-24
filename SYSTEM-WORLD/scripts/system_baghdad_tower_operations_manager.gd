@@ -3152,8 +3152,10 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 						break
 				if service_shape == null:
 					service_shape = CollisionShape3D.new()
-					service_shape.name = "CollisionShape3D"
 					service_area.add_child(service_shape)
+				service_shape.name = "CollisionShape3D"
+				service_area.collision_layer = 1
+				service_area.collision_mask = 0
 				var service_sphere := service_shape.shape as SphereShape3D
 				if service_sphere == null:
 					service_sphere = SphereShape3D.new()

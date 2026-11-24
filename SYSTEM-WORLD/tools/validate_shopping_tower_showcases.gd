@@ -77,7 +77,12 @@ func _run() -> void:
 
 		var showcase := facility.get_node_or_null("ShoppingShowcase") as Node3D
 		var general_service := facility.get_node_or_null("FacilityServiceInteraction") as Area3D
-		var general_service_shape := general_service.get_node_or_null("CollisionShape3D") as CollisionShape3D if general_service != null else null
+		var general_service_shape: CollisionShape3D = null
+		if general_service != null:
+			for service_child in general_service.get_children():
+				if service_child is CollisionShape3D:
+					general_service_shape = service_child
+					break
 		if general_service_shape == null or general_service_shape.position.z > -4.5:
 			_fail("Floor %d generic department service target overlaps its product showcase interaction zones." % floor_number)
 			return
