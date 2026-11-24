@@ -1370,6 +1370,13 @@ func _move_customer_visitors(hour_override: int = -1) -> void:
 				var follows_guardian := str(visitor_node.get_meta("system_customer_age_group", "adult")) == "child"
 				if follows_guardian:
 					route_index = int(visitor_node.get_meta("system_customer_guardian_index", customer_index))
+				# Each 13-second crowd pulse gives visitors a nearby waypoint so the
+				# 500-person population keeps circulating instead of stopping after one daily phase change.
+				var route_cycle := int(visitor_node.get_meta("system_customer_route_cycle", -1)) + 1
+				visitor_node.set_meta("system_customer_route_cycle", route_cycle)
+				var route_row := int(route_index / 10)
+				var route_column := posmod(route_index, 10)
+				route_index = route_column + posmod(route_row + route_cycle, 10) * 10
 				var radius := float(config.get("radius", 20.0))
 				var target := Vector3.ZERO
 				var action := "socializing"
@@ -1405,7 +1412,15 @@ func _move_customer_visitors(hour_override: int = -1) -> void:
 				if follows_guardian:
 					target.x += -0.7 if posmod(customer_index, 10) == 0 else 0.7
 					target.z += 0.9
+				var route_offsets := [
+					Vector3(0.0, 0.0, 0.0),
+					Vector3(0.55, 0.0, 0.45),
+					Vector3(-0.55, 0.0, 0.45),
+					Vector3(0.55, 0.0, -0.45)
+				]
+				target += route_offsets[posmod(route_cycle, route_offsets.size())]
 				var previous_phase := str(visitor_node.get_meta("system_customer_schedule_phase")) if visitor_node.has_meta("system_customer_schedule_phase") else ""
+				var previous_target: Vector3 = visitor_node.get_meta("system_customer_schedule_target", Vector3.INF)
 				visitor_node.set_meta("system_customer_schedule_phase", phase)
 				visitor_node.set_meta("system_customer_schedule_action", action)
 				visitor_node.set_meta("system_customer_schedule_target", target)
@@ -1426,7 +1441,7 @@ func _move_customer_visitors(hour_override: int = -1) -> void:
 						break
 				var previous_tween: Variant = visitor_node.get_meta("system_customer_move_tween") if visitor_node.has_meta("system_customer_move_tween") else null
 				if previous_tween is Tween and (previous_tween as Tween).is_running():
-					if previous_phase == phase:
+					if previous_phase == phase and previous_target.is_equal_approx(target):
 						continue
 					(previous_tween as Tween).kill()
 				if visitor_node.position.distance_to(target) <= 0.35:
@@ -1439,7 +1454,10 @@ func _move_customer_visitors(hour_override: int = -1) -> void:
 				visitor_node.set_meta("system_customer_move_tween", move_tween)
 				move_tween.set_trans(Tween.TRANS_SINE)
 				move_tween.set_ease(Tween.EASE_IN_OUT)
-				var travel_duration := clampf(visitor_node.position.distance_to(target) / 1.6, 1.2, 4.0)
+				var age_group := str(visitor_node.get_meta("system_customer_age_group", "adult"))
+				var walking_speed := 1.0 if age_group == "elder" else (1.35 if age_group == "child" else 1.6)
+				var travel_duration := clampf(visitor_node.position.distance_to(target) / walking_speed, 0.9, 4.0)
+				move_tween.tween_interval(float(posmod(customer_index, 10)) * 0.08)
 				move_tween.tween_property(visitor_node, "position", target, travel_duration)
 				move_tween.tween_callback(func():
 					if is_instance_valid(model):
