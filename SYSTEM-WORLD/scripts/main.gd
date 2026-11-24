@@ -637,9 +637,9 @@ func _on_hunter_tower_arrival_body_entered(body: Node3D) -> void:
 	if body != player or hunter_exam_manager == null:
 		return
 	var overview: Dictionary = hunter_exam_manager.get_exam_overview()
-	if bool(overview.get("registered", false)):
+	if bool(overview.get("registered", false)) or bool(overview.get("invitation_accepted", false)):
 		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "أنت مسجل في اختبار الصيادين. اتبع مرشد نقابة الصيادين."
+			interaction_prompt_label.text = "طلبك مقبول" + (" ورقمك محفوظ." if bool(overview.get("registered", false)) else ". اتبع مرشد نقابة الصيادين إلى النفق.")
 			interaction_prompt_label.show()
 		return
 	_show_hunter_exam_invitation()
@@ -666,12 +666,11 @@ func _on_hunter_exam_invitation_accepted() -> void:
 			interaction_prompt_label.text = "نظام نقابة الصيادين غير متاح حالياً."
 		return
 	var overview: Dictionary = hunter_exam_manager.get_exam_overview()
-	if not bool(overview.get("registered", false)):
-		var result: Dictionary = hunter_exam_manager.apply_for_exam("local_player")
-		if not bool(result.get("success", false)):
-			if interaction_prompt_label != null:
-				interaction_prompt_label.text = "تعذر تسجيلك: %s" % str(result.get("reason", "غير معروف"))
-			return
+	var result: Dictionary = hunter_exam_manager.accept_exam_invitation("local_player")
+	if not bool(result.get("success", false)):
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "تعذر قبول طلبك: %s" % str(result.get("reason", "غير معروف"))
+		return
 	if player != null:
 		player.set_meta("system_hunter_exam_invitation_accepted", true)
 	if hunter_exam_invitation_panel != null:
@@ -723,12 +722,20 @@ func _start_hunter_guild_escort(guide: Node) -> void:
 		player.velocity = Vector3.ZERO
 		player.set_meta("system_hunter_exam_escort_active", false)
 		player.set_meta("system_inside_hunter_exam_tunnel", true)
+		var registration: Dictionary = hunter_exam_manager.register_candidate_at_tunnel("local_player")
+		if not bool(registration.get("success", false)):
+			player.set_meta("system_inside_hunter_exam_tunnel", false)
+			hunter_exam_escort_active = false
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "تعذر إكمال تسجيلك داخل النفق: %s" % str(registration.get("reason", "غير معروف"))
+				interaction_prompt_label.show()
+			return
 		var final_overview: Dictionary = hunter_exam_manager.get_exam_overview()
 		var candidate_number := int(final_overview.get("candidate_number", 0))
 		player.set_meta("system_hunter_exam_candidate_number", candidate_number)
 		hunter_exam_escort_active = false
 		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "وصلت إلى نفق اختبار الصيادين برفقة مرشد النقابة. رقمك التسلسلي الدائم: %d. احتفظ به؛ سيبقى نفسه عند عودتك." % candidate_number
+			interaction_prompt_label.text = "مرشد النقابة: أهلاً بك في نفق اختبار الصيادين. اكتمل تسجيلك الآن، وهذا رقمك التسلسلي الدائم: %d. احتفظ به؛ سيبقى نفسه عند عودتك." % candidate_number
 			interaction_prompt_label.show()
 	)
 
