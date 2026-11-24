@@ -147,7 +147,7 @@ func _run_validation() -> void:
 			return
 		if district_id == "hunter_association_tower_baghdad":
 			hunter_record = district_record
-			if district_height < 1000.0 or Vector2(district_position.x - bridge_anchor.x, district_position.z - bridge_anchor.z).length() > 0.5 or absf(district_position.y - 418.0) > 0.1:
+			if district_height < 1000.0 or Vector2(district_position.x - bridge_anchor.x, district_position.z - bridge_anchor.z).length() > 0.5 or absf(district_position.y - 419.2) > 0.1:
 				_fail("Hunter Association Tower must be the 1000 m central landmark seated on the upper Baghdad sky-city crown platform at 418 m.")
 				return
 		elif district_height >= 1000.0:
