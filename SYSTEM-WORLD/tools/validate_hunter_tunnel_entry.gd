@@ -26,8 +26,12 @@ func _run_validation() -> void:
 		return
 	var door := tunnel.get_node_or_null("ConcealedHunterExamDoor") as Area3D
 	var door_collision := tunnel.get_node_or_null("ConcealedDoorCollision") as StaticBody3D
-	if not _check(door != null and door_collision != null, "Secret door or its blocking collision is missing."):
+	var wall_frame := tunnel.get_node_or_null("OrdinaryFoundationMasonry") as Node3D
+	if not _check(door != null and door_collision != null and wall_frame != null, "Secret door or its masonry frame is missing."):
 		return
+	for segment_name in ["Left", "Right", "Top", "Bottom"]:
+		if not _check(wall_frame.get_node_or_null("FoundationMasonryCollision_" + segment_name) != null, "Concealed doorway masonry frame collision is missing: " + segment_name):
+			return
 	if not _check(not bool(tunnel.get_meta("system_tunnel_riddle_solved", true)), "Tunnel must start locked."):
 		return
 
