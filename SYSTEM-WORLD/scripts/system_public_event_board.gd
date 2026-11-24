@@ -225,7 +225,7 @@ func _build_tower_lobby_displays(tower: Node3D, tower_id: String, tower_radius: 
 	_add_screen(lobby, "LobbyChampionPanel", right_position, panel_size, result_material, frame_material)
 	var campaign_label := Label3D.new()
 	campaign_label.name = "LobbyCampaignText"
-	campaign_label.text = "SYSTEM BAGHDAD\\nحملات وفعاليات الأبراج"
+	campaign_label.text = "SYSTEM BAGHDAD\nحملات وفعاليات الأبراج"
 	campaign_label.position = left_position + Vector3(0.0, 0.0, -0.62)
 	campaign_label.font_size = 24
 	campaign_label.pixel_size = 0.012
@@ -234,7 +234,7 @@ func _build_tower_lobby_displays(tower: Node3D, tower_id: String, tower_radius: 
 	lobby.add_child(campaign_label)
 	var results_label := Label3D.new()
 	results_label.name = "LobbyChampionResultsText"
-	results_label.text = "SYSTEM CHAMPIONS\\nبانتظار أول إنجاز موثق"
+	results_label.text = "SYSTEM CHAMPIONS\nبانتظار أول إنجاز موثق"
 	results_label.position = right_position + Vector3(0.0, 0.0, -0.62)
 	results_label.font_size = 23
 	results_label.pixel_size = 0.012
