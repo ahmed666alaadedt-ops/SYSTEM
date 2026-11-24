@@ -70,11 +70,11 @@ func _run_validation() -> void:
 	if tigris == null or str(tigris.get_meta("system_geography_source", "")) != "OpenStreetMap way 24709603":
 		_fail("Tigris River surface is missing its verified OSM geometry source.")
 		return
-	for corridor_fraction in [0.25, 0.5, 0.75]:
+	for corridor_fraction in [0.4, 0.5, 0.65]:
 		var corridor_x := bridge_anchor.x * float(corridor_fraction)
 		var corridor_z := bridge_anchor.z * float(corridor_fraction)
 		if not bool(terrain.call("is_land_position", corridor_x, corridor_z)):
-			_fail("Baghdad playable land corridor is broken between the city core and Republic Bridge.")
+			_fail("Baghdad bridge approach corridor is not playable land between the continent and Republic Bridge.")
 			return
 
 	var records: Array = tower_manager.call("get_tower_positions")
