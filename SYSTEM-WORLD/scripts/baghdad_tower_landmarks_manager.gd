@@ -528,6 +528,35 @@ func _create_tower_sky_gardens(tower: Node3D, tower_id: String, tower_title: Str
 			garden.add_child(deck)
 			_add_static_box_collision(garden, deck.name + "_Collision", deck.position, deck_mesh.size)
 
+		# A collidable radial skyway joins the elevator-core opening to this garden ring.
+		# Floor-room wall segment 00 is intentionally open on the +X side for this route.
+		var bridge_start := tower_radius * 0.42
+		var bridge_end := inner + strip * 0.52
+		var bridge_length := maxf(bridge_end - bridge_start, 1.0)
+		var bridge_width := clampf(tower_radius * 0.34, 3.2, 6.0)
+		var garden_access_bridge := MeshInstance3D.new()
+		garden_access_bridge.name = "GardenAccessBridge"
+		var garden_access_mesh := BoxMesh.new()
+		garden_access_mesh.size = Vector3(bridge_length, 0.48, bridge_width)
+		garden_access_bridge.mesh = garden_access_mesh
+		garden_access_bridge.position = Vector3((bridge_start + bridge_end) * 0.5, 0.42, 0.0)
+		garden_access_bridge.material_override = deck_material
+		garden.add_child(garden_access_bridge)
+		_add_static_box_collision(garden, "GardenAccessBridge_Collision", garden_access_bridge.position, garden_access_mesh.size)
+		for side_sign in [-1.0, 1.0]:
+			var access_rail := MeshInstance3D.new()
+			access_rail.name = "GardenAccessBridgeRail_%s" % ("Left" if side_sign < 0.0 else "Right")
+			var access_rail_mesh := BoxMesh.new()
+			access_rail_mesh.size = Vector3(bridge_length, 1.2, 0.18)
+			access_rail.mesh = access_rail_mesh
+			access_rail.position = Vector3((bridge_start + bridge_end) * 0.5, 1.18, side_sign * bridge_width * 0.5)
+			access_rail.material_override = glass_material
+			garden.add_child(access_rail)
+			_add_static_box_collision(garden, access_rail.name + "_Collision", access_rail.position, access_rail_mesh.size)
+		garden.set_meta("system_garden_elevator_access_bridge", true)
+		garden.set_meta("system_garden_access_bridge_length_m", bridge_length)
+		garden.set_meta("system_garden_access_bridge_width_m", bridge_width)
+
 		# Four glass perimeter rails keep the elevated garden safe without enclosing the views.
 		for edge_index in range(4):
 			var rail := MeshInstance3D.new()
