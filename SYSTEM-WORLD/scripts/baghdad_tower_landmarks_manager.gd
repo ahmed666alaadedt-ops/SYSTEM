@@ -774,7 +774,7 @@ func _create_hunter_guild_recruitment(lobby: Node3D, radius: float, center_z: fl
 	guide.set_meta("system_hunter_exam_tower_guide", true)
 	guide.set_meta("system_display_name", "مرشد نقابة الصيادين")
 	guide.set_meta("system_interaction_prompt", "اتبع مرشد نقابة الصيادين إلى نفق الاختبار")
-	guide.position = Vector3(-radius * 0.62, 0.0, center_z + 5.0)
+	guide.position = Vector3(-radius * 0.62, 0.0, center_z + 9.0)
 	guide.collision_layer = 1
 	guide.collision_mask = 0
 	var guide_shape := CollisionShape3D.new()
