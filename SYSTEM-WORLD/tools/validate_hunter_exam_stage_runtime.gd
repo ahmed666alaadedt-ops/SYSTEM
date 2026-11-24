@@ -17,6 +17,14 @@ func _run_validation() -> void:
 	var manager := ExamManagerScript.new()
 	root.add_child(manager)
 	await process_frame
+	# Isolate this regression from any prior user:// exam save created by other QA runs.
+	manager.set("candidate_number", 0)
+	manager.set("registered", false)
+	manager.set("exam_active", false)
+	manager.set("current_stage_index", -1)
+	manager.set("completed_stage_ids", [])
+	manager.set("failed", false)
+	manager.set("failure_reason", "")
 	var registration: Dictionary = manager.apply_for_exam("hunter_stage_validation")
 	if not _check(bool(registration.get("success", false)), "Hunter exam registration failed."):
 		return
