@@ -5,9 +5,9 @@
 - [x] Added three low-profile stone clues around the district. The player must inspect them in the correct sequence (Eye → River → Crown); a wrong clue resets the sequence.
 - [x] The final blank masonry wall disguises the secret door. Solving the three-clue sequence slides the concealed stone slab upward, removes its blocking collision, illuminates the reveal, and reveals the descending passage.
 - [x] Connected the hidden door interaction to the existing Hunter Examination registration and `begin_exam()` flow; unregistered players are directed to register at the Hunter Association.
-- [ ] Actual player traversal through the revealed passage and transition into the physical seven-stage examination environments remain open.
+- [x] The concealed-door interaction is blocked until the riddle is solved. After registration, starting the existing exam progression moves the player to the revealed underground passage entrance and clears player velocity.
+- [ ] Build the physical seven-stage examination environments and stage-specific objectives; the current manager starts the stage record but does not yet instantiate those environments.
 - [ ] Run Godot parser/runtime, Baghdad landmark and operations regressions, and Android APK export on the exact updated PR head. No validation or APK success is claimed for these source changes.
-- [ ] Run the canonical Godot parser/runtime, Baghdad landmark and operations regressions, and Android APK export on the exact updated PR head. No validation or APK success is claimed for this source change.
 - [ ] Review the entrance placement and visibility in the actual Android build; the current structure is a functional geometry prototype, not the finished cinematic underground complex.
 
 ## Validation runtime diagnosis — 24 November 2026
