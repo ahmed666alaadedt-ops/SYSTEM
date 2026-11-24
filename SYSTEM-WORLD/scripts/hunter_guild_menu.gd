@@ -109,7 +109,16 @@ func _build_interface() -> void:
 
 func set_exam_status(result: Dictionary) -> void:
 	if not bool(result.get("success", false)):
-		status_label.text = "حالة الاختبار: " + str(result.get("reason", "تعذر تنفيذ الطلب"))
+		var reason := str(result.get("reason", ""))
+		match reason:
+			"NOT_REGISTERED":
+				status_label.text = "يجب التسجيل في برج جمعية الصيادين أولاً."
+			"HUNTER_TUNNEL_RIDDLE_NOT_SOLVED":
+				status_label.text = "اكتشف النقوش الثلاثة وافتح الباب السري قبل بدء الاختبار."
+			"HUNTER_LICENSE_ALREADY_EARNED":
+				status_label.text = "لقد حصلت على رخصة الصياد بالفعل."
+			_:
+				status_label.text = "حالة الاختبار: " + (reason if not reason.is_empty() else "تعذر تنفيذ الطلب")
 		return
 	if result.has("candidate_number") and result.has("stages"):
 		status_label.text = "رقم المتسابق: %d | مراحل الاختبار: %d" % [int(result["candidate_number"]), int(result["stages"])]
