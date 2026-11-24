@@ -888,6 +888,27 @@ func _on_interaction_performed(
 		" / ",
 		location_id
 	)
+	if target.has_meta("system_hunter_exam_tunnel"):
+		if hunter_exam_manager == null:
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "نظام اختبار الصيادين غير متاح حالياً."
+			return
+		var exam_overview: Dictionary = hunter_exam_manager.call("get_exam_overview")
+		if not bool(exam_overview.get("registered", false)):
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "نفق اختبار الصيادين: يجب التسجيل أولاً في برج جمعية الصيادين."
+			return
+		var exam_result: Dictionary = hunter_exam_manager.call("begin_exam")
+		var exam_menu := get_node_or_null("HunterGuildMenu")
+		if exam_menu != null and exam_menu.has_method("set_exam_status"):
+			exam_menu.call("set_exam_status", exam_result)
+		if interaction_prompt_label != null:
+			if bool(exam_result.get("success", false)):
+				var stage: Dictionary = exam_result.get("stage", {})
+				interaction_prompt_label.text = "بدأ اختبار الصيادين — %s" % str(stage.get("title", "المرحلة الأولى"))
+			else:
+				interaction_prompt_label.text = "تعذر بدء الاختبار: %s" % str(exam_result.get("reason", "غير متاح"))
+		return
 	if target.has_meta("system_power_tower_spectator_seat_interaction") and tower_operations_manager != null:
 		tower_operations_manager.call("interact_power_tower_spectator_seat", target)
 		return
