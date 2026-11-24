@@ -229,6 +229,23 @@ func _create_hunter_advertising_facades(tower: Node3D, tower_radius: float) -> v
 	screen_material.emission = Color(0.02, 0.48, 0.72)
 	screen_material.emission_energy_multiplier = 1.8
 	var screen_count := 0
+	var tier_halo_count := 0
+	for level in [150.0, 340.0, 530.0]:
+		var progress := level / HUNTER_TOWER_HEIGHT
+		var halo_radius := tower_radius * lerpf(1.0, 0.62, progress) * 1.08
+		var halo := MeshInstance3D.new()
+		halo.name = "HunterAdvertisingTierHalo_%03d" % int(level)
+		var halo_mesh := TorusMesh.new()
+		halo_mesh.inner_radius = halo_radius - 0.65
+		halo_mesh.outer_radius = halo_radius + 0.45
+		halo_mesh.rings = 48
+		halo_mesh.ring_segments = 10
+		halo.mesh = halo_mesh
+		halo.rotation.x = PI * 0.5
+		halo.position.y = level + 7.0
+		halo.material_override = screen_material
+		facade_root.add_child(halo)
+		tier_halo_count += 1
 	for side in range(4):
 		var angle := TAU * float(side) / 4.0
 		var outward := Vector3(cos(angle), 0.0, sin(angle))
@@ -267,6 +284,7 @@ func _create_hunter_advertising_facades(tower: Node3D, tower_radius: float) -> v
 			panel.add_child(label)
 			screen_count += 1
 	facade_root.set_meta("system_advertising_screen_count", screen_count)
+	facade_root.set_meta("system_hunter_ad_tier_halo_count", tier_halo_count)
 	tower.set_meta("system_hunter_exterior_ad_facades", screen_count)
 
 
@@ -379,20 +397,25 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 		rib.material_override = trim_material
 		root.add_child(rib)
 
-	var crown := MeshInstance3D.new()
-	crown.name = "Crown"
-	var crown_mesh := CylinderMesh.new()
-	crown_mesh.top_radius = radius * 0.28
-	crown_mesh.bottom_radius = radius * 0.64
-	crown_mesh.height = height * 0.075
-	crown.mesh = crown_mesh
-	crown.position.y = height + 7.0 + height * 0.0375
-	crown.material_override = trim_material
-	root.add_child(crown)
+	# Keep the Hunter rooftop landing circle completely clear: the generic solid crown
+	# would overlap the 22 m helipad deck, so that tower uses the roof beacon as its crown identity.
+	if node_name != "HunterAssociationTower":
+		var crown := MeshInstance3D.new()
+		crown.name = "Crown"
+		var crown_mesh := CylinderMesh.new()
+		crown_mesh.top_radius = radius * 0.28
+		crown_mesh.bottom_radius = radius * 0.64
+		crown_mesh.height = height * 0.075
+		crown.mesh = crown_mesh
+		crown.position.y = height + 7.0 + height * 0.0375
+		crown.material_override = trim_material
+		root.add_child(crown)
+	else:
+		root.set_meta("system_hunter_roof_clearance_reserved", true)
 
 	var beacon := OmniLight3D.new()
 	beacon.name = "SkyBeacon"
-	beacon.position.y = height + 22.0
+	beacon.position = Vector3(radius * 0.84, height + 22.0, 0.0) if node_name == "HunterAssociationTower" else Vector3(0.0, height + 22.0, 0.0)
 	beacon.light_color = beacon_color
 	beacon.light_energy = 2.0
 	beacon.omni_range = 90.0
@@ -404,7 +427,7 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	core_mesh.radius = 3.5
 	core_mesh.height = 7.0
 	beacon_core.mesh = core_mesh
-	beacon_core.position.y = height + 22.0
+	beacon_core.position = Vector3(radius * 0.84, height + 22.0, 0.0) if node_name == "HunterAssociationTower" else Vector3(0.0, height + 22.0, 0.0)
 	beacon_core.material_override = emissive_material
 	root.add_child(beacon_core)
 
