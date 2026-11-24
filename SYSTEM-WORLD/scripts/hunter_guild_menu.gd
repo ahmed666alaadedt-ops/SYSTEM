@@ -111,6 +111,12 @@ func set_exam_status(result: Dictionary) -> void:
 	if not bool(result.get("success", false)):
 		var reason := str(result.get("reason", ""))
 		match reason:
+			"INVITATION_NOT_ACCEPTED":
+				status_label.text = "اقبل دعوة نقابة الصيادين أولاً."
+			"REGISTER_AT_HUNTER_ASSOCIATION_TOWER":
+				status_label.text = "أكمل التسجيل الرسمي من ردهة برج جمعية الصيادين."
+			"PLAYER_UNAVAILABLE":
+				status_label.text = "تعذر تحديد اللاعب لإكمال التسجيل."
 			"NOT_REGISTERED":
 				status_label.text = "يجب التسجيل في برج جمعية الصيادين أولاً."
 			"HUNTER_TUNNEL_RIDDLE_NOT_SOLVED":
