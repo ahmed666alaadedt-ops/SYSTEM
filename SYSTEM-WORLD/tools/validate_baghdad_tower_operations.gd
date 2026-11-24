@@ -136,6 +136,18 @@ func _run() -> void:
 	if tower_manager == null:
 		_fail("BaghdadTowerLandmarksManager is missing.")
 		return
+	var hunter_tunnel := tower_manager.get_node_or_null("BaghdadHunterExaminationTunnel") as Node3D
+	var competitor_crowd := hunter_tunnel.get_node_or_null("HunterExamCompetitorCrowd") as Node3D if hunter_tunnel != null else null
+	if competitor_crowd == null or int(competitor_crowd.get_meta("system_hunter_exam_competitor_count", 0)) != 500:
+		_fail("Hunter Examination tunnel must contain exactly 500 NPC competitors alongside the player.")
+		return
+	var visible_competitor_count := 0
+	for competitor in competitor_crowd.get_children():
+		if competitor is Node3D and competitor.is_in_group("system_hunter_exam_competitor") and bool(competitor.get_meta("system_exam_competitor_is_npc", false)):
+			visible_competitor_count += 1
+	if visible_competitor_count != 500:
+		_fail("Hunter Examination crowd must instantiate 500 visible NPC competitors; found %d." % visible_competitor_count)
+		return
 	var expected_tower_nodes := {
 		"hunter_association_tower_baghdad": "HunterAssociationTower",
 		"business_investment_tower_baghdad": "BusinessInvestmentTower",
