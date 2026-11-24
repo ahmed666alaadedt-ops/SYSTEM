@@ -231,8 +231,8 @@ func _create_hunter_advertising_facades(tower: Node3D, tower_radius: float) -> v
 	var screen_count := 0
 	var tier_halo_count := 0
 	for level in [150.0, 340.0, 530.0]:
-		var progress := level / HUNTER_TOWER_HEIGHT
-		var halo_radius := tower_radius * lerpf(1.0, 0.62, progress) * 1.08
+		var progress: float = float(level) / HUNTER_TOWER_HEIGHT
+		var halo_radius: float = tower_radius * lerpf(1.0, 0.62, progress) * 1.08
 		var halo := MeshInstance3D.new()
 		halo.name = "HunterAdvertisingTierHalo_%03d" % int(level)
 		var halo_mesh := TorusMesh.new()
@@ -1153,7 +1153,7 @@ func _create_baghdad_upper_city_layer() -> void:
 		var first := upper_positions[index] + Vector3(0.0, 272.0, 0.0)
 		var second := upper_positions[(index + 1) % upper_positions.size()] + Vector3(0.0, 272.0, 0.0)
 		_create_link_deck(city, first, second, "UpperCitySkyway_%02d" % index, 22.0, 1.5, trim)
-		_create_bridge_edge_details(city, first, second, "UpperCitySkyway_%02d" % index, 22.0, edge_material)
+		_create_bridge_edge_details(city, first, second, "UpperCitySkyway_%02d" % index, 22.0, emissive_material)
 	var hunter_atrium := MeshInstance3D.new()
 	hunter_atrium.name = "HunterTowerUpperCityAtriumRing"
 	var ring_mesh := TorusMesh.new()
@@ -1187,7 +1187,7 @@ func _create_baghdad_upper_city_layer() -> void:
 		var skyway_start := outward * 82.0 + Vector3(0.0, 272.0, 0.0)
 		var skyway_end := destination + Vector3(0.0, 272.0, 0.0)
 		_create_link_deck(city, skyway_start, skyway_end, "HunterAtriumSkyway_%02d" % index, 18.0, 1.5, trim)
-		_create_bridge_edge_details(city, skyway_start, skyway_end, "HunterAtriumSkyway_%02d" % index, 18.0, edge_material)
+		_create_bridge_edge_details(city, skyway_start, skyway_end, "HunterAtriumSkyway_%02d" % index, 18.0, emissive_material)
 	_create_reference_city_architecture(city)
 	city.set_meta("system_upper_city_blocks", upper_positions.size())
 	city.set_meta("system_upper_city_elevation_m", 270.0)
