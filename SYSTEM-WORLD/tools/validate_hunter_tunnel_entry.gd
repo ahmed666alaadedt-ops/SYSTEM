@@ -44,6 +44,30 @@ func _run_validation() -> void:
 	var clue_3 := tunnel.get_node_or_null("HunterRiddleClue_3") as Area3D
 	if not _check(clue_1 != null and clue_2 != null and clue_3 != null, "All three hidden clues must exist."):
 		return
+	var operations := main.get_node_or_null("BaghdadTowerOperationsManager")
+	var shopping_tower := root.find_child("ShoppingTower", true, false) as Node3D
+	if not _check(operations != null and shopping_tower != null, "Shopping Tower operations or restaurant host is missing."):
+		return
+	var restaurant_floor := Node3D.new()
+	restaurant_floor.name = "InteriorFloor_029"
+	restaurant_floor.position = Vector3(0.0, 170.0, 0.0)
+	shopping_tower.add_child(restaurant_floor)
+	operations.call("_create_restaurant_dining_area", restaurant_floor, 30.0, 29)
+	if not _check(bool(restaurant_floor.get_meta("system_hunter_exam_secret_entry", false)), "Restaurant floor 29 did not receive the concealed Hunter tunnel entrance."):
+		return
+	if not _check(str(tunnel.get_meta("system_tunnel_secret_entry_location", "")) == "shopping_tower_restaurant_floor_29", "Tunnel root is not anchored beneath the Shopping Tower restaurant."):
+		return
+	if not _check(bool(tunnel.get_meta("system_under_shopping_tower_restaurant", false)), "Tunnel does not report its physical location under the restaurant."):
+		return
+	if not _check(bool(door.get_meta("system_hidden_restaurant_entry", false)), "Concealed entrance is not tagged as the restaurant entry."):
+		return
+	if not _check(door.global_position.y < restaurant_floor.global_position.y and door.global_position.distance_to(restaurant_floor.global_position) < 30.0, "Hidden door is not physically positioned immediately beneath the restaurant floor."):
+		return
+	var entrance_position := door.global_position
+	if not _check(entrance_position.y < restaurant_floor.global_position.y, "Restaurant entrance door should remain concealed below the floor before the riddle is solved."):
+		return
+	if not _check(clue_1 != null and clue_2 != null and clue_3 != null, "All three riverbank clues must remain attached after the tunnel is anchored to the restaurant."):
+		return
 
 	main.call("_on_interaction_performed", clue_3, "")
 	if not _check(int(tunnel.get_meta("system_tunnel_riddle_progress", -1)) == 0, "Wrong clue order must reset progress."):
