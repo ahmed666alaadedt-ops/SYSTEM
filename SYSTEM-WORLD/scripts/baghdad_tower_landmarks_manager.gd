@@ -34,6 +34,7 @@ func _ready() -> void:
 	_build_technology_tower()
 	_create_connected_city_links()
 	_create_public_amenities()
+	_create_hunter_exam_tunnel()
 
 func _create_materials() -> void:
 	tower_material = StandardMaterial3D.new()
@@ -330,6 +331,99 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	root.set_meta("tower_floor_directory", _get_tower_floor_directory(location_id))
 	_create_tower_lobby(root, location_id, title, radius, floors, height, connect_to_district)
 	print("SYSTEM WORLD: landmark tower generated: ", title, " / ", floors, " floors / ", height, "m")
+
+
+func _create_hunter_exam_tunnel() -> void:
+	# The Hunter Examination Tunnel is a separate underground facility beneath
+	# the Baghdad five-tower district; it is not part of the Power Tower.
+	var tunnel_root := Node3D.new()
+	tunnel_root.name = "BaghdadHunterExaminationTunnel"
+	tunnel_root.position = Vector3(
+		city_anchor.x,
+		float(terrain.call("get_terrain_height", city_anchor.x, city_anchor.z)),
+		city_anchor.z
+	)
+	tunnel_root.set_meta("system_facility_type", "hunter_examination_tunnel")
+	tunnel_root.set_meta("system_under_baghdad_tower_district", true)
+	tunnel_root.set_meta("system_exam_manager", "SYSTEMHunterExamManager")
+	add_child(tunnel_root)
+
+	var tunnel_floor_material := _make_surface_material(Color(0.075, 0.11, 0.15), 0.86, 0.24)
+	var tunnel_wall_material := _make_surface_material(Color(0.10, 0.17, 0.23), 0.68, 0.36)
+	var tunnel_trim_material := _make_surface_material(Color(0.08, 0.72, 0.96), 0.3, 0.56)
+	tunnel_trim_material.emission_enabled = true
+	tunnel_trim_material.emission = Color(0.02, 0.58, 0.95)
+	tunnel_trim_material.emission_energy_multiplier = 2.2
+
+	# A broad descending access ramp leads from the district surface to the
+	# underground examination portal. Each segment has physical collision.
+	for segment in range(12):
+		var t0 := float(segment) / 12.0
+		var t1 := float(segment + 1) / 12.0
+		var start := Vector3(0.0, -1.5 - t0 * 18.0, 4.0 + t0 * 84.0)
+		var finish := Vector3(0.0, -1.5 - t1 * 18.0, 4.0 + t1 * 84.0)
+		_create_link_deck(tunnel_root, start, finish, "HunterTunnelRamp_%02d" % segment, 16.0, 0.8, tunnel_floor_material)
+
+	# Retaining walls keep the descending route readable and physically bounded.
+	for side in [-1.0, 1.0]:
+		var wall := MeshInstance3D.new()
+		wall.name = "HunterTunnelRetainingWall_%s" % str(side)
+		var wall_mesh := BoxMesh.new()
+		wall_mesh.size = Vector3(1.2, 19.0, 88.0)
+		wall.mesh = wall_mesh
+		wall.position = Vector3(side * 8.6, -10.8, 46.0)
+		wall.material_override = tunnel_wall_material
+		tunnel_root.add_child(wall)
+		_add_static_box_collision(tunnel_root, wall.name + "_Collision", wall.position, wall_mesh.size)
+
+	# The portal is deliberately oversized and illuminated so players can find
+	# the examination route from the public district.
+	_add_tower_identity_box(tunnel_root, "HunterTunnelPortalLeft", Vector3(-8.0, -10.0, 88.0), Vector3(2.0, 20.0, 3.0), tunnel_trim_material)
+	_add_tower_identity_box(tunnel_root, "HunterTunnelPortalRight", Vector3(8.0, -10.0, 88.0), Vector3(2.0, 20.0, 3.0), tunnel_trim_material)
+	_add_tower_identity_box(tunnel_root, "HunterTunnelPortalHeader", Vector3(0.0, 0.0, 88.0), Vector3(18.0, 2.0, 3.0), tunnel_trim_material)
+	_add_tower_identity_box(tunnel_root, "HunterTunnelRoof", Vector3(0.0, -1.2, 106.0), Vector3(18.0, 1.2, 40.0), tunnel_wall_material)
+	_add_static_box_collision(tunnel_root, "HunterTunnelRoof_Collision", Vector3(0.0, -1.2, 106.0), Vector3(18.0, 1.2, 40.0))
+
+	var title := Label3D.new()
+	title.name = "HunterTunnelArabicSign"
+	title.text = "نفق اختبار الصيادين\nHUNTER EXAMINATION TUNNEL"
+	title.font_size = 30
+	title.pixel_size = 0.018
+	title.position = Vector3(0.0, 3.0, 7.0)
+	title.modulate = Color(0.68, 0.94, 1.0)
+	tunnel_root.add_child(title)
+
+	var interaction := Area3D.new()
+	interaction.name = "HunterExamTunnelEntrance"
+	interaction.add_to_group("system_interactable")
+	interaction.set_meta("system_hunter_exam_tunnel", true)
+	interaction.set_meta("system_facility_type", "hunter_examination_tunnel")
+	interaction.set_meta("system_display_name", "نفق اختبار الصيادين")
+	interaction.set_meta("system_interaction_prompt", "دخول نفق اختبار الصيادين")
+	interaction.collision_layer = 1
+	interaction.collision_mask = 0
+	var interaction_shape := CollisionShape3D.new()
+	var interaction_sphere := SphereShape3D.new()
+	interaction_sphere.radius = 6.0
+	interaction_shape.shape = interaction_sphere
+	interaction_shape.position = Vector3(0.0, 1.0, 9.0)
+	interaction.add_child(interaction_shape)
+	tunnel_root.add_child(interaction)
+
+	for index in range(8):
+		var light := OmniLight3D.new()
+		light.name = "HunterTunnelGuideLight_%02d" % index
+		light.position = Vector3(0.0, -3.0 - float(index) * 2.0, 12.0 + float(index) * 10.0)
+		light.light_color = Color(0.08, 0.68, 1.0)
+		light.light_energy = 1.4
+		light.omni_range = 13.0
+		light.shadow_enabled = false
+		tunnel_root.add_child(light)
+
+	tunnel_root.set_meta("system_tunnel_ramp_segments", 12)
+	tunnel_root.set_meta("system_tunnel_guide_lights", 8)
+	tunnel_root.set_meta("system_tunnel_interaction_ready", true)
+	print("SYSTEM WORLD: Baghdad Hunter Examination Tunnel entrance generated beneath the five-tower district.")
 
 func _nearest_land_position(origin: Vector2) -> Vector2:
 	if terrain.call("is_land_position", origin.x, origin.y):
