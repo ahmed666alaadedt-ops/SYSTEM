@@ -926,6 +926,13 @@ func _on_interaction_performed(
 				interaction_prompt_label.text = "النقوش لم تستجب... الترتيب غير صحيح. ابدأ من جديد."
 		return
 	if target.has_meta("system_hunter_exam_tunnel"):
+		var tunnel_root := target.get_parent() as Node3D
+		if tunnel_root == null:
+			return
+		if not bool(tunnel_root.get_meta("system_tunnel_riddle_solved", false)):
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "هذا جدار عادي... ابحث عن النقوش الثلاثة وحل لغزها أولاً."
+			return
 		if hunter_exam_manager == null:
 			if interaction_prompt_label != null:
 				interaction_prompt_label.text = "نظام اختبار الصيادين غير متاح حالياً."
@@ -943,6 +950,10 @@ func _on_interaction_performed(
 			if bool(exam_result.get("success", false)):
 				var stage: Dictionary = exam_result.get("stage", {})
 				interaction_prompt_label.text = "بدأ اختبار الصيادين — %s" % str(stage.get("title", "المرحلة الأولى"))
+				if player != null:
+					player.global_position = tunnel_root.to_global(Vector3(0.0, -1.2, 101.0))
+					player.velocity = Vector3.ZERO
+					player.set_meta("system_inside_hunter_exam_tunnel", true)
 			else:
 				interaction_prompt_label.text = "تعذر بدء الاختبار: %s" % str(exam_result.get("reason", "غير متاح"))
 		return
