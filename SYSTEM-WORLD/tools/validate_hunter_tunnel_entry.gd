@@ -66,7 +66,15 @@ func _run_validation() -> void:
 		return
 
 	var start_position := player.global_position
+	operations.set("active_floor_root", restaurant_floor)
+	var table_node := restaurant_floor.get_node_or_null("RestaurantTable_00") as Node3D
+	if not _check(table_node != null, "Restaurant table for meal handoff is missing."):
+		return
 	player.set_meta("system_restaurant_seated_table_id", "qa_restaurant_table")
+	player.set_meta("system_restaurant_table_node", "RestaurantTable_00")
+	var meal_presentation := Node3D.new()
+	meal_presentation.name = "ServedMealPresentation"
+	table_node.add_child(meal_presentation)
 	var saved_orders: Dictionary = operations.get("restaurant_orders")
 	saved_orders["qa_restaurant_table"] = {"status":"preparing","meal_consumed":false,"npc_order":false}
 	operations.set("restaurant_orders", saved_orders)
@@ -80,6 +88,10 @@ func _run_validation() -> void:
 	if not _check(player.global_position.distance_to(private_room.global_position) < 12.0, "Player was not transferred into the private competitor room after meal delivery."):
 		return
 	if not _check(str(player.get_meta("system_hunter_exam_meal_order_id", "")).begins_with("qa_restaurant"), "Meal order identity was not carried into the room."):
+		return
+	if not _check(private_room.get_node_or_null("ServedMealPresentation") != null, "Served meal presentation was not transferred from the dining table into the private room."):
+		return
+	if not _check(bool(operations.get("restaurant_orders").get("qa_restaurant_table", {}).get("hunter_exam_room_delivery", false)), "Restaurant order did not record the room delivery handoff."):
 		return
 
 	main.call("_on_interaction_performed", down_button, "")
