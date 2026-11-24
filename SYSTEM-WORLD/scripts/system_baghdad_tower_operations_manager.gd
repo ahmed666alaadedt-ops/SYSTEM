@@ -4365,7 +4365,7 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 	root.set_meta("system_tower_floor_number", floor_number)
 	room.add_child(root)
 	var accent := StandardMaterial3D.new()
-	accent.albedo_color = Color(0.10, 0.52, 0.68) if tower_id == "technology_tower_baghdad" else Color(0.12, 0.42, 0.34)
+	accent.albedo_color = Color(0.10, 0.52, 0.68) if tower_id == "technology_tower_baghdad" else (Color(0.58, 0.39, 0.16) if tower_id == "antiques_heritage_tower_baghdad" else Color(0.12, 0.42, 0.34))
 	accent.metallic = 0.38
 	accent.roughness = 0.3
 	var highlight := StandardMaterial3D.new()
@@ -4389,6 +4389,31 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 				var exhibit_id := "baghdad_museum_f%02d_exhibit_%02d" % [floor_number, exhibit_index + 1]
 				_add_facility_box(root, "ArtifactPedestal_%02d" % exhibit_index, exhibit_position + Vector3(0.0, 0.65, 0.0), Vector3(3.2, 1.3, 2.4), accent)
 				_add_facility_box(root, "ArtifactGlassCase_%02d" % exhibit_index, exhibit_position + Vector3(0.0, 2.35, 0.0), Vector3(2.5, 2.1, 1.8), highlight)
+				var artifact_material := StandardMaterial3D.new()
+				artifact_material.albedo_color = Color(0.78, 0.58, 0.28) if exhibit_index % 2 == 0 else Color(0.55, 0.68, 0.72)
+				artifact_material.metallic = 0.62
+				artifact_material.roughness = 0.28
+				var artifact_model := MeshInstance3D.new()
+				artifact_model.name = "ArtifactModel_%02d" % exhibit_index
+				if exhibit_index % 3 == 0:
+					var vessel := CylinderMesh.new()
+					vessel.top_radius = 0.42
+					vessel.bottom_radius = 0.72
+					vessel.height = 1.45
+					artifact_model.mesh = vessel
+				elif exhibit_index % 3 == 1:
+					var relic := SphereMesh.new()
+					relic.radius = 0.62
+					relic.height = 1.15
+					artifact_model.mesh = relic
+				else:
+					var tablet := BoxMesh.new()
+					tablet.size = Vector3(0.92, 1.15, 0.22)
+					artifact_model.mesh = tablet
+				artifact_model.rotation_degrees = Vector3(8.0, 18.0, 4.0)
+				artifact_model.position = exhibit_position + Vector3(0.0, 2.55, 0.0)
+				artifact_model.material_override = artifact_material
+				root.add_child(artifact_model)
 				var artifact_label := Label3D.new()
 				artifact_label.name = "ArtifactLabel_%02d" % exhibit_index
 				artifact_label.text = "قطعة متحفية موثقة\n%s" % exhibit_id
@@ -4399,8 +4424,8 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 				root.add_child(artifact_label)
 				var exhibit_area := Area3D.new()
 				exhibit_area.name = "ArtifactExhibitInteraction_%02d" % exhibit_index
-				exhibit_area.collision_layer = 0
-				exhibit_area.collision_mask = 1
+				exhibit_area.collision_layer = 1
+				exhibit_area.collision_mask = 0
 				exhibit_area.add_to_group("system_interactable")
 				exhibit_area.set_meta("system_interaction_type", "museum_artifact_exhibit")
 				exhibit_area.set_meta("system_artifact_id", exhibit_id)
