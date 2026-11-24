@@ -878,10 +878,10 @@ func _build_baghdad_bridge_access_causeway() -> void:
 		var b_right := b - side
 		_add_surface_quad(
 			surface,
-			Vector3(a_left.x, get_terrain_height(a_left.x, a_left.y) + 0.32, a_left.y),
-			Vector3(a_right.x, get_terrain_height(a_right.x, a_right.y) + 0.32, a_right.y),
-			Vector3(b_left.x, get_terrain_height(b_left.x, b_left.y) + 0.32, b_left.y),
-			Vector3(b_right.x, get_terrain_height(b_right.x, b_right.y) + 0.32, b_right.y)
+			Vector3(a_left.x, get_terrain_height(a_left.x, a_left.y) + 0.48, a_left.y),
+			Vector3(a_right.x, get_terrain_height(a_right.x, a_right.y) + 0.48, a_right.y),
+			Vector3(b_left.x, get_terrain_height(b_left.x, b_left.y) + 0.48, b_left.y),
+			Vector3(b_right.x, get_terrain_height(b_right.x, b_right.y) + 0.48, b_right.y)
 		)
 	surface.generate_normals()
 	var road := MeshInstance3D.new()
