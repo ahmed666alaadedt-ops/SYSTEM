@@ -599,10 +599,24 @@ func _on_public_power_tower_floor_cleared(floor_number: int, _reward_xp: int, ra
 func _on_hunter_exam_registration_requested() -> void:
 	if hunter_exam_manager == null:
 		return
-	var result: Dictionary = hunter_exam_manager.apply_for_exam("local_player")
+	var overview: Dictionary = hunter_exam_manager.get_exam_overview()
+	var result := {
+		"success": false,
+		"reason": "REGISTER_AT_HUNTER_ASSOCIATION_TOWER",
+		"message": "توجّه إلى برج الصيادين؛ ستظهر لك دعوة التسجيل عند دخول الردهة."
+	}
+	if bool(overview.get("registered", false)):
+		result = {
+			"success": true,
+			"candidate_number": int(overview.get("candidate_number", 0)),
+			"message": "أنت مسجل بالفعل. اتبع مرشد نقابة الصيادين داخل برج الصيادين."
+		}
 	var menu := get_node_or_null("HunterGuildMenu")
 	if menu != null and menu.has_method("set_exam_status"):
 		menu.call("set_exam_status", result)
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = str(result.get("message", "التسجيل متاح من برج الصيادين."))
+		interaction_prompt_label.show()
 
 
 func _on_hunter_exam_start_requested() -> void:
@@ -675,6 +689,11 @@ func _start_hunter_guild_escort(guide: Node) -> void:
 		_show_hunter_exam_invitation()
 		return
 	if hunter_exam_escort_active or bool(player.get_meta("system_inside_hunter_exam_tunnel", false)):
+		return
+	if player.global_position.distance_to(guide.global_position) > 8.0:
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "مرشد النقابة موجود داخل برج الصيادين. تعال إليه أولاً ليصطحبك إلى النفق."
+			interaction_prompt_label.show()
 		return
 	hunter_exam_escort_active = true
 	if interaction_prompt_label != null:
