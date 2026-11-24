@@ -62,6 +62,8 @@ func _run_validation() -> void:
 		return
 	if not _check(bool(door.get_meta("system_hidden_restaurant_entry", false)), "Concealed entrance is not tagged as the restaurant entry."):
 		return
+	if not _check(door.collision_layer == 0 and not door.monitoring, "Restaurant secret entry must remain undetectable before solving the three clues."):
+		return
 	var hidden_door := tunnel.get_node_or_null("ConcealedHunterDoorSlab") as Node3D
 	if not _check(hidden_door != null and hidden_door.global_position.y < restaurant_floor.global_position.y, "Physical concealed door slab is not positioned below the restaurant floor."):
 		return
@@ -79,6 +81,8 @@ func _run_validation() -> void:
 	# queue_free() removes the blocking collision at the end of the frame.
 	await process_frame
 	if not _check(bool(tunnel.get_meta("system_tunnel_riddle_solved", false)), "Correct Eye → River → Crown sequence did not solve the riddle."):
+		return
+	if not _check(door.collision_layer == 1 and door.monitoring and door.monitorable, "Restaurant secret entry did not become interactable after the riddle was solved."):
 		return
 	if not _check(tunnel.get_node_or_null("ConcealedDoorCollision") == null, "Secret door collision did not unlock after solving."):
 		return
