@@ -6186,6 +6186,26 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 		item_sign.font_size = 13
 		item_sign.pixel_size = 0.014
 		item.add_child(item_sign)
+		var item_interaction := Area3D.new()
+		item_interaction.name = "ShowcaseItemInteraction_%02d" % index
+		item_interaction.add_to_group("system_interactable")
+		item_interaction.set_meta("system_tower_id", "shopping_tower_baghdad")
+		item_interaction.set_meta("system_tower_floor_number", floor_number)
+		item_interaction.set_meta("system_facility_type", facility_type)
+		item_interaction.set_meta("system_showcase_product_id", str(item.get_meta("system_showcase_product_id", "")))
+		item_interaction.set_meta("system_display_name", str(display_names[index]))
+		item_interaction.set_meta("system_interaction_prompt", "معاينة وشراء " + str(display_names[index]))
+		item_interaction.collision_layer = 1
+		item_interaction.collision_mask = 0
+		item_interaction.monitoring = true
+		var item_interaction_shape := CollisionShape3D.new()
+		item_interaction_shape.name = "ShowcaseInteractionShape"
+		var item_interaction_sphere := SphereShape3D.new()
+		item_interaction_sphere.radius = 1.9
+		item_interaction_shape.shape = item_interaction_sphere
+		item_interaction_shape.position = Vector3(0.0, 1.7, 0.0)
+		item_interaction.add_child(item_interaction_shape)
+		item.add_child(item_interaction)
 	_add_facility_box(showcase, "DepartmentCounter", Vector3(0.0, 0.7, -5.8), Vector3(12.0, 1.4, 1.8), accent)
 
 
