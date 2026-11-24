@@ -1099,7 +1099,7 @@ func _return_customer_visitors_to_lobbies() -> void:
 			visitor.reparent(lobby, false)
 			var customer_index := int(visitor.get_meta("system_tower_customer_index", 0))
 			var radius := float(TOWER_CONFIG[tower_id].get("radius", 24.0))
-			visitor.position = Vector3((float(customer_index) - 1.5) * 3.6, 0.0, radius * 1.48 + 12.0 + float(customer_index % 2) * 3.0)
+			visitor.position = Vector3((float(customer_index % 10) - 4.5) * 2.15, 0.0, radius * 1.48 + 4.0 + float(customer_index / 10) * 2.1)
 			visitor.remove_meta("system_customer_in_elevator")
 			visitor.remove_meta("system_customer_elevator_target_floor")
 
@@ -1157,7 +1157,7 @@ func _disembark_customer_visitors_to_lobby(tower_id: String, car: Node3D) -> int
 		visitor.reparent(lobby, false)
 		var customer_index := int(visitor.get_meta("system_tower_customer_index", 0))
 		var radius := float(TOWER_CONFIG[tower_id].get("radius", 24.0))
-		visitor.position = Vector3((float(customer_index) - 1.5) * 3.6, 0.0, radius * 1.48 + 12.0 + float(customer_index % 2) * 3.0)
+		visitor.position = Vector3((float(customer_index % 10) - 4.5) * 2.15, 0.0, radius * 1.48 + 4.0 + float(customer_index / 10) * 2.1)
 		visitor.remove_meta("system_customer_in_elevator")
 		visitor.remove_meta("system_customer_elevator_target_floor")
 		visitor.remove_meta("system_customer_current_floor")
