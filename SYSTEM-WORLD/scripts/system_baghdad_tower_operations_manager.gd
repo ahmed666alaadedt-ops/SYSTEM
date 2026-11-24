@@ -6993,24 +6993,38 @@ func _create_npc_restaurant_order(table_root: Node3D, customer_id: String, floor
 	if not existing.is_empty():
 		if bool(existing.get("npc_order", false)):
 			var diners: Array = existing.get("customer_ids", [])
+			var changed := false
 			if not diners.has(customer_id):
 				diners.append(customer_id)
+				changed = true
 			existing["customer_ids"] = diners
-			# Staff tweens and task tokens are runtime-only. A saved NPC order can
-			# therefore resume in a transient state after a scene reload even
-			# though no employee still owns that task. Restore the last durable
-			# hand-off state so the waiter/chef can safely resume the service.
+			# Do not rewind a live waiter/chef task when a visitor is re-seated.
+			# Only recover a transient state after its owner has disappeared or
+			# the task has exceeded the service timeout.
 			var saved_status := str(existing.get("status", "awaiting_waiter"))
-			var recovered_status: String = str({
-				"taking_order": "awaiting_waiter",
-				"preparing": "placed",
-				"delivering": "ready"
-			}.get(saved_status, saved_status))
-			if str(recovered_status) != saved_status:
-				existing["status"] = str(recovered_status)
+			var active_owner_found := false
+			if is_instance_valid(active_floor_root):
+				for staff_child in active_floor_root.get_children():
+					if not staff_child is Node3D or not bool(staff_child.get_meta("system_restaurant_service_busy", false)):
+						continue
+					var active_token := str(staff_child.get_meta("system_restaurant_task_token", ""))
+					if active_token.ends_with("_" + order_id):
+						active_owner_found = true
+						break
+			var updated_at := int(existing.get("updated_at_unix", existing.get("created_at_unix", 0)))
+			var task_expired := int(Time.get_unix_time_from_system()) - updated_at >= 35
+			if saved_status in ["taking_order", "preparing", "delivering"] and not active_owner_found and task_expired:
+				var recovered_status: String = str({
+					"taking_order": "placed",
+					"preparing": "ready",
+					"delivering": "served"
+				}.get(saved_status, saved_status))
+				existing["status"] = recovered_status
 				existing["updated_at_unix"] = int(Time.get_unix_time_from_system())
-			restaurant_orders[order_id] = existing
-			_save_restaurant_orders()
+				changed = true
+			if changed:
+				restaurant_orders[order_id] = existing
+				_save_restaurant_orders()
 		return
 	var menu: Array = []
 	for product_value in PRODUCT_CATALOG.get("shopping_tower_baghdad", []):
