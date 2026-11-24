@@ -281,3 +281,12 @@ The creative reference is the broad adventure structure and strategic ability pr
 - Power Tower remains a separate optional mastery venue. Every Power Tower contest stays strictly individual **1 vs 1**, with one opponent and one round; no team combat or group combat tournaments.
 - The hidden Baghdad entrance regression now verifies the locked state, wrong-order reset, Eye → River → Crown unlock, physical passage reveal and collision activation, rejection before Association registration, and actual player transfer into the underground first-stage environment.
 - The current playable physical examination environment is Baghdad stage one only. The other six city environments, examiner/candidate behavior, production license issuance and server-authoritative verification remain tracked work, not completed features.
+
+
+### Baghdad stage-one examiner implementation — 24 November 2026
+
+- Added the original SYSTEM examiner **Raed** as a physical 3D proctor in the heritage chamber, with a readable nameplate and a proximity interaction.
+- His briefing explains that observation, correct clue order and trap awareness matter more than rushing or brute force. The examiner is not copied from an anime character.
+- The stage regression checks the examiner node, interaction area and briefing response, in addition to the existing chamber, trap, relic-lock and stage-progression checks.
+- Latest canonical Godot runtime run 45323857804 passed all configured checks on commit `39231d9c5a80f718ee9e20ab149db2bdfc28d6bb`. The dedicated Android APK export run 45323857216 also passed on that commit.
+- The combined APK validation job separately reports a Miyar rigged-GLB companion validation failure; that is not a Baghdad tower or tunnel failure and remains an independent build-pipeline issue.
