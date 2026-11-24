@@ -857,7 +857,12 @@ func _build_baghdad_bridge_access_causeway() -> void:
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	surface.set_material(material)
 	var start := Vector2.ZERO
-	var finish := baghdad_bridge_center
+	# Join the bank nearest the playable Baghdad origin; the surveyed bridge
+	# deck itself carries the player across the Tigris to the opposite bank.
+	var finish := baghdad_bridge_centerline[0]
+	var opposite_bank := baghdad_bridge_centerline[baghdad_bridge_centerline.size() - 1]
+	if opposite_bank.length_squared() < finish.length_squared():
+		finish = opposite_bank
 	var half_width := 7.0
 	var segments := 96
 	for index in range(segments):
@@ -886,7 +891,7 @@ func _build_baghdad_bridge_access_causeway() -> void:
 	road.set_meta("system_generated_access_route", true)
 	road.set_meta("system_geography_source", "SYSTEM procedural playable connector; not OpenStreetMap road geometry")
 	road.set_meta("system_route_start", Vector3.ZERO)
-	road.set_meta("system_route_end", Vector3(baghdad_bridge_center.x, 0.0, baghdad_bridge_center.y))
+	road.set_meta("system_route_end", Vector3(finish.x, 0.0, finish.y))
 	add_child(road)
 	var body := StaticBody3D.new()
 	body.name = "BaghdadBridgeAccessCausewayCollision"
