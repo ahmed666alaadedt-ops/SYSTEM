@@ -296,7 +296,8 @@ jobs:
           bridge_features = {int(f.get("properties", {}).get("@id", -1)): f for f in bridge_data.get("features", [])}
           water_features = {int(f.get("properties", {}).get("@id", -1)): f for f in water_data.get("features", [])}
           assert 1077808833 in bridge_features, "Republic Bridge polygon way 1077808833 missing from latest OSM extract"
-          assert 4080878 in bridge_features, "Republic Bridge centerline way 4080878 missing from latest OSM extract"
+          assert 4080878 in bridge_features, "Republic Bridge primary centerline way 4080878 missing from latest OSM extract"
+          assert 754157537 in bridge_features, "Republic Bridge secondary centerline way 754157537 missing from latest OSM extract"
           assert 24709603 in water_features, "Tigris River way 24709603 missing from latest OSM extract"
           centroid = shape(bridge_features[1077808833]["geometry"]).centroid
           expected = reference["republic_bridge"]["center_wgs84"]
