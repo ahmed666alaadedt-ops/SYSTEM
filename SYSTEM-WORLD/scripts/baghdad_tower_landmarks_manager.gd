@@ -529,6 +529,7 @@ func _create_tower_lobby(root: Node3D, tower_id: String, title: String, radius: 
 	sign.position = Vector3(0.0, 10.0, center_z - depth * 0.5 + 4.0)
 	sign.modulate = Color(0.78, 0.94, 1.0)
 	lobby.add_child(sign)
+	_create_lobby_media_panels(lobby, width, center_z, wall_height)
 	lobby.set_meta("lobby_status", "enclosed_reception_lobby_blockout")
 	lobby.set_meta("elevator_status", "not_implemented")
 	lobby.set_meta("lift_door_visual_only", false)
@@ -909,3 +910,59 @@ func _make_surface_material(color: Color, roughness: float, metallic: float) -> 
 	material.metallic = metallic
 	return material
 
+
+
+func _create_lobby_media_panels(lobby: Node3D, lobby_width: float, center_z: float, wall_height: float) -> void:
+	# Two-sided indoor media: a curated campaign screen and a local champion/results screen.
+	# Panels are attached to the inner faces of the lobby side walls, not floating UI.
+	var frame_material := _make_surface_material(Color(0.025, 0.045, 0.065), 0.28, 0.62)
+	var ad_material := _make_surface_material(Color(0.015, 0.12, 0.18), 0.22, 0.35)
+	var result_material := _make_surface_material(Color(0.15, 0.095, 0.025), 0.24, 0.42)
+	ad_material.emission_enabled = true
+	ad_material.emission = Color(0.02, 0.42, 0.62)
+	ad_material.emission_energy_multiplier = 1.4
+	result_material.emission_enabled = true
+	result_material.emission = Color(0.62, 0.36, 0.06)
+	result_material.emission_energy_multiplier = 1.15
+	for side in [-1.0, 1.0]:
+		var inward_rotation := -PI * 0.5 if side < 0.0 else PI * 0.5
+		var wall_x := side * (lobby_width * 0.5 - 0.62)
+		for panel_index in range(2):
+			var is_advertising := panel_index == 0
+			var panel_name := "InteriorAdvertising" if is_advertising else "InteriorChampionResults"
+			var panel_y := 8.0 if is_advertising else 3.8
+			var panel_size := Vector3(0.42, 3.25, minf(10.0, lobby_width * 0.34))
+			var frame := MeshInstance3D.new()
+			frame.name = panel_name + "Frame_" + ("Left" if side < 0.0 else "Right")
+			var frame_mesh := BoxMesh.new()
+			frame_mesh.size = panel_size
+			frame.mesh = frame_mesh
+			frame.position = Vector3(wall_x, panel_y, center_z)
+			frame.rotation.y = inward_rotation
+			frame.material_override = frame_material
+			lobby.add_child(frame)
+			var surface := MeshInstance3D.new()
+			surface.name = panel_name + "Surface_" + ("Left" if side < 0.0 else "Right")
+			var surface_mesh := BoxMesh.new()
+			surface_mesh.size = Vector3(0.12, panel_size.y - 0.3, panel_size.z - 0.3)
+			surface.mesh = surface_mesh
+			surface.position = frame.position + Vector3(-side * 0.24, 0.0, 0.0)
+			surface.rotation.y = inward_rotation
+			surface.material_override = ad_material if is_advertising else result_material
+			lobby.add_child(surface)
+			var label := Label3D.new()
+			label.name = panel_name + "Text_" + ("Left" if side < 0.0 else "Right")
+			if is_advertising:
+				label.text = "SYSTEM BAGHDAD\nحملة داخلية تجريبية\nمساحة إعلانية رقمية"
+				label.modulate = Color(0.78, 0.96, 1.0)
+			else:
+				label.text = "SYSTEM CHAMPIONS\nإنجازات البرج\nالنتائج المحلية فقط"
+				label.modulate = Color(1.0, 0.88, 0.55)
+			label.font_size = 24
+			label.pixel_size = 0.012
+			label.outline_size = 7
+			label.position = surface.position + Vector3(-side * 0.1, 0.0, 0.0)
+			label.rotation.y = inward_rotation
+			lobby.add_child(label)
+			label.set_meta("media_scope", "baghdad_tower_interior_lobby")
+			label.set_meta("media_type", "curated_demo" if is_advertising else "local_event_results")
