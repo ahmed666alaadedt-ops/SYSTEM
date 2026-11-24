@@ -1356,8 +1356,55 @@ func _run() -> void:
 		if facility == null or service_area == null or not service_area.is_in_group("system_interactable") or str(service_area.get_meta("system_facility_type", "")) != expected_type or facility_title == null or not facility_title.text.contains("SYSTEM |"):
 			_fail("Shopping Tower floor %d is missing its assigned physical, bilingual, interactive department %s." % [floor_number, expected_type])
 			return
-		if showcase == null or str(showcase.get_meta("system_showcase_category", "")) != expected_type or showcase.get_node_or_null("ShowcaseItem_00") == null or showcase.get_node_or_null("ShowcaseItem_01") == null or showcase.get_node_or_null("ShowcaseItem_02") == null:
+		if showcase == null or str(showcase.get_meta("system_showcase_category", "")) != expected_type or int(showcase.get_meta("system_showcase_floor", -1)) != floor_number or showcase.get_node_or_null("ShowcaseItem_00") == null or showcase.get_node_or_null("ShowcaseItem_01") == null or showcase.get_node_or_null("ShowcaseItem_02") == null:
 			_fail("Shopping Tower floor %d is missing its three physical category-specific showcase displays." % floor_number)
+			return
+		var item_zero := showcase.get_node("ShowcaseItem_00") as Node3D
+		var item_label := item_zero.get_meta("system_showcase_product_label", "")
+		if str(item_label).is_empty() or item_zero.get_node_or_null("ShowcaseItemLabel") == null:
+			_fail("Shopping Tower floor %d has an unlabeled physical product display." % floor_number)
+			return
+	var floor_product_checks := {
+		5: ["training_sword", "steel_sword"],
+		6: ["hunter_spear", "war_hammer"],
+		7: ["dual_blades", "great_sword"],
+		8: ["composite_bow", "crossbow"],
+		9: ["hunter_pistol", "tactical_shotgun"],
+		10: ["system_firearm", "precision_rifle"],
+		11: ["hunter_shield", "hunter_helmet"],
+		12: ["rank_e_armor", "rank_c_armor"],
+		13: ["rank_ss_armor", "rank_sss_armor"],
+		15: ["iron_ingot", "leather_roll"],
+		16: ["rare_core", "repair_kit"],
+		17: ["healing_elixir", "antidote_elixir"],
+		18: ["strength_elixir", "speed_elixir"],
+		19: ["deep_wound_elixir", "regeneration_elixir"],
+		20: ["nen_awakening_elixir"],
+		21: ["nen_control_elixir", "nen_stabilizer_elixir"],
+		22: ["nen_recovery_elixir"],
+		23: ["deep_wound_elixir", "regeneration_elixir"],
+		24: ["nen_focus_elixir", "nen_recovery_elixir"],
+		25: ["elite_legendary_elixir"],
+		26: ["rare_legendary_elixir", "elite_legendary_elixir"]
+	}
+	var floor_exclusive_products := {
+		5: "battle_axe", 6: "training_sword", 7: "hunter_spear", 8: "hunter_pistol", 9: "composite_bow", 10: "crossbow",
+		11: "rank_sss_armor", 12: "rank_sss_armor", 13: "rank_e_armor", 15: "rare_core", 16: "wood_plank",
+		17: "strength_elixir", 18: "healing_elixir", 19: "strength_elixir", 20: "nen_control_elixir", 21: "nen_awakening_elixir",
+		22: "nen_awakening_elixir", 23: "nen_awakening_elixir", 24: "healing_elixir", 25: "nen_awakening_elixir", 26: "nen_awakening_elixir"
+	}
+	for floor_value in floor_product_checks.keys():
+		var floor_number := int(floor_value)
+		operations.call("open_baghdad_progression_facility", "shopping_tower_baghdad", floor_number, str(shopping_floor_facilities[floor_value]))
+		var product_controls := operations.get("content") as Node
+		for product_id_value in floor_product_checks[floor_value]:
+			var product_id := str(product_id_value)
+			if product_controls == null or product_controls.find_child("ShoppingProduct_" + product_id, true, false) == null:
+				_fail("Shopping Tower floor %d is missing its assigned product %s." % [floor_number, product_id])
+				return
+		var excluded_product := str(floor_exclusive_products.get(floor_number, ""))
+		if not excluded_product.is_empty() and product_controls.find_child("ShoppingProduct_" + excluded_product, true, false) != null:
+			_fail("Shopping Tower floor %d leaked product %s from another department." % [floor_number, excluded_product])
 			return
 	var hunter_floor_facilities := {7:"hunter_weapon_mastery", 8:"hunter_weapon_mastery", 9:"hunter_weapon_mastery", 10:"hunter_nen_fundamentals", 11:"hunter_nen_fundamentals", 13:"hunter_advanced_control", 14:"hunter_advanced_control", 15:"hunter_advanced_control", 16:"hunter_skill_specialization", 17:"hunter_skill_specialization", 18:"hunter_skill_specialization", 19:"hunter_skill_assessment", 20:"hunter_skill_assessment"}
 	for floor_value in hunter_floor_facilities.keys():

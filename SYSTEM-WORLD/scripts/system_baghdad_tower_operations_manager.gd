@@ -4376,7 +4376,7 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 			for index in range(5):
 				_add_facility_box(root, "InnovationConsole_%02d" % index, Vector3(-12.0 + float(index) * 6.0, 1.0, 1.0), Vector3(2.4, 2.0, 1.8), highlight)
 		"shopping_skill_store", "shopping_weapon_gallery", "shopping_ranged_gallery", "shopping_armor_gallery", "shopping_crafting_materials", "shopping_elixir_pharmacy", "shopping_nen_center", "shopping_advanced_elixir_lab", "shopping_rare_elixir_vault":
-			_build_shopping_floor_showcase(root, facility_type, accent, highlight)
+			_build_shopping_floor_showcase(root, floor_number, facility_type, accent, highlight)
 		"hunter_weapon_mastery":
 			for index in range(6):
 				_add_facility_box(root, "WeaponMasteryRack_%02d" % index, Vector3(-12.0 + float(index) * 4.8, 1.5, -2.0), Vector3(1.8, 3.0, 1.2), accent)
@@ -4657,6 +4657,31 @@ func open_baghdad_progression_facility(tower_id: String, floor_number: int, faci
 			"shopping_nen_center": allowed_ids = ["nen_awakening_elixir", "nen_control_elixir", "nen_focus_elixir", "nen_stabilizer_elixir", "nen_recovery_elixir"]
 			"shopping_advanced_elixir_lab": allowed_ids = ["deep_wound_elixir", "regeneration_elixir", "nen_stabilizer_elixir", "nen_focus_elixir", "nen_recovery_elixir"]
 			"shopping_rare_elixir_vault": allowed_ids = ["rare_legendary_elixir", "elite_legendary_elixir"]
+		var floor_catalog_overrides := {
+			5: ["training_sword", "combat_knife", "steel_sword"],
+			6: ["hunter_spear", "battle_axe", "war_hammer"],
+			7: ["dual_blades", "long_sword", "great_sword"],
+			8: ["composite_bow", "crossbow", "reinforced_arrows"],
+			9: ["hunter_pistol", "hunter_rifle", "tactical_shotgun"],
+			10: ["system_firearm", "precision_rifle", "hunter_rifle"],
+			11: ["hunter_shield", "advanced_hunter_shield", "hunter_helmet", "reinforced_helmet", "combat_outfit"],
+			12: ["hunter_armor", "rank_e_armor", "rank_d_armor", "rank_c_armor", "rank_b_armor"],
+			13: ["rank_a_armor", "rank_s_armor", "rank_ss_armor", "rank_sss_armor", "hunter_outfit_a", "hunter_outfit_s", "hunter_outfit_ss", "hunter_outfit_sss"],
+			15: ["iron_ingot", "wood_plank", "leather_roll", "medicinal_herb"],
+			16: ["crystal_dust", "monster_core", "nen_fragment", "energy_crystal", "rare_core", "repair_kit"],
+			17: ["healing_elixir", "antidote_elixir", "resistance_elixir"],
+			18: ["strength_elixir", "speed_elixir", "endurance_elixir", "energy_elixir"],
+			19: ["deep_wound_elixir", "regeneration_elixir", "healing_elixir"],
+			20: ["nen_awakening_elixir"],
+			21: ["nen_control_elixir", "nen_focus_elixir", "nen_stabilizer_elixir"],
+			22: ["nen_recovery_elixir", "nen_stabilizer_elixir", "nen_focus_elixir"],
+			23: ["deep_wound_elixir", "regeneration_elixir"],
+			24: ["nen_stabilizer_elixir", "nen_focus_elixir", "nen_recovery_elixir"],
+			25: ["regeneration_elixir", "elite_legendary_elixir"],
+			26: ["rare_legendary_elixir", "elite_legendary_elixir"]
+		}
+		if floor_catalog_overrides.has(floor_number):
+			allowed_ids = floor_catalog_overrides[floor_number]
 		var heading := Label.new()
 		heading.text = "المنتجات المتاحة — السعر والمخزون والرتبة تُراجع عند الشراء"
 		content.add_child(heading)
@@ -4677,6 +4702,7 @@ func open_baghdad_progression_facility(tower_id: String, floor_number: int, faci
 			var price := _get_current_price(item_id)
 			var stock := get_vendor_stock(item_id)
 			var buy_button := Button.new()
+			buy_button.name = "ShoppingProduct_" + item_id
 			var required_level := int(product.get("required_level", 1))
 			var required_nen_rank := int(product.get("required_nen_rank", 0))
 			var skill_id := str(product.get("skill_id", ""))
@@ -5964,67 +5990,124 @@ func _create_pool_service_interaction(parent: Node3D, node_name: String, service
 	parent.add_child(interaction)
 
 
-func _build_shopping_floor_showcase(root: Node3D, facility_type: String, accent: Material, highlight: Material) -> void:
+func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_type: String, accent: Material, highlight: Material) -> void:
 	var showcase := Node3D.new()
 	showcase.name = "ShoppingShowcase"
 	showcase.set_meta("system_showcase_category", facility_type)
+	showcase.set_meta("system_showcase_floor", floor_number)
 	root.add_child(showcase)
 	var category_titles := {
 		"shopping_skill_store": "مخطوطات وتصاريح التدريب",
-		"shopping_weapon_gallery": "معرض السيوف والرماح والفؤوس",
-		"shopping_ranged_gallery": "معرض الأقواس والنشاب والمعدات الحديثة",
-		"shopping_armor_gallery": "معرض الدروع والخوذ والدروع الواقية",
+		"shopping_weapon_gallery": "معرض الأسلحة القريبة",
+		"shopping_ranged_gallery": "معرض الأسلحة بعيدة المدى",
+		"shopping_armor_gallery": "معرض الدروع والملابس القتالية",
 		"shopping_crafting_materials": "مركز المواد وقطع التصنيع",
 		"shopping_elixir_pharmacy": "صيدلية الأكاسير الأساسية",
 		"shopping_nen_center": "مركز إيقاظ النِن والتحكم",
 		"shopping_advanced_elixir_lab": "مختبر الأكاسير المتقدمة",
 		"shopping_rare_elixir_vault": "خزنة الأكاسير النادرة"
 	}
+	var floor_titles := {
+		4: "مخطوطات المهارات وتصاريح التدريب",
+		5: "السيوف التدريبية والخناجر والسيوف الفولاذية",
+		6: "الرماح والفؤوس ومطارق الحرب",
+		7: "النصال المزدوجة والسيوف الطويلة والثقيلة",
+		8: "الأقواس والنشّابات والسهام",
+		9: "مسدسات وبنادق الصياد التكتيكية",
+		10: "الأسلحة النارية الدقيقة والمتقدمة",
+		11: "الدروع الواقية والخوذ والدروع اليدوية",
+		12: "الدروع الخفيفة والميدانية والقتالية",
+		13: "دروع النخبة وأزياء الصيادين العليا",
+		15: "المعادن والأخشاب والجلود والمواد الطبية",
+		16: "النوى والكريستالات ومواد الإصلاح النادرة",
+		17: "الشفاء ومقاومة السموم والإرهاق",
+		18: "أكاسير القوة والسرعة والتحمل والطاقة",
+		19: "التجدد ومعالجة الإصابات العميقة",
+		20: "إيقاظ النِن لأول مرة",
+		21: "التحكم والتركيز وتثبيت الهالة",
+		22: "استعادة طاقة النِن والتوازن",
+		23: "مختبر التجدد وعلاج الإصابات المتقدمة",
+		24: "مختبر تثبيت الهالة واستعادة النِن",
+		25: "تحضيرات النخبة والأكاسير المتقدمة",
+		26: "الخزنة المحمية للأكاسير النادرة والأسطورية"
+	}
 	var heading := Label3D.new()
 	heading.name = "ShowcaseCategorySign"
-	heading.text = str(category_titles.get(facility_type, "متجر SYSTEM")) + "\nSYSTEM | " + facility_type.to_upper()
+	heading.text = str(category_titles.get(facility_type, "متجر SYSTEM")) + "\n" + str(floor_titles.get(floor_number, "SYSTEM | " + facility_type.to_upper()))
 	heading.position = Vector3(0.0, 4.1, -8.0)
-	heading.font_size = 19
+	heading.font_size = 18
 	heading.pixel_size = 0.014
 	heading.modulate = Color(0.96, 0.82, 0.52)
 	showcase.add_child(heading)
+	var display_names: Array = {
+		5: ["سيف تدريبي", "خنجر قتالي", "سيف فولاذي"],
+		6: ["رمح صياد", "فأس قتالي", "مطرقة حرب"],
+		7: ["نصلان مزدوجان", "سيف طويل", "سيف عظيم"],
+		8: ["قوس مركب", "قوس نشاب", "سهام مقواة"],
+		9: ["مسدس صياد", "بندقية صياد", "بندقية تكتيكية"],
+		10: ["سلاح ناري SYSTEM", "بندقية دقيقة", "منظار تصويب متقدم"],
+		11: ["درع صياد", "خوذة حماية", "درع معزز"],
+		12: ["درع خفيف", "درع ميداني", "درع قتالي"],
+		13: ["درع نخبة A/S", "درع أسطوري SS", "درع SYSTEM SSS"],
+		15: ["سبيكة حديد", "خشب مصقول", "لفافة جلد"],
+		16: ["نواة وحش", "كريستال طاقة", "عدة إصلاح"],
+		17: ["إكسير الشفاء", "مضاد السموم", "مقاومة الإرهاق"],
+		18: ["إكسير القوة", "إكسير السرعة", "إكسير التحمل"],
+		19: ["علاج الإصابات", "إكسير التجدد", "إكسير الشفاء"],
+		20: ["إيقاظ النِن", "شظية نِن", "هالة الاستيقاظ"],
+		21: ["التحكم بالنِن", "تركيز الهالة", "تثبيت الهالة"],
+		22: ["استعادة النِن", "توازن الطاقة", "تركيز الهالة"],
+		23: ["علاج عميق", "التجدد الحيوي", "مختبر الإصابات"],
+		24: ["تثبيت الهالة", "تركيز النِن", "استعادة النِن"],
+		25: ["إكسير متقدم", "تجدد النخبة", "ختم المختبر"],
+		26: ["إكسير أسطوري", "إكسير النخبة", "خزنة مؤمنة"]
+	}.get(floor_number, ["عرض A", "عرض B", "عرض C"])
 	for index in range(3):
 		var item := Node3D.new()
 		item.name = "ShowcaseItem_%02d" % index
 		item.position = Vector3(-9.0 + float(index) * 9.0, 0.0, 0.0)
 		item.set_meta("system_showcase_item_index", index)
+		item.set_meta("system_showcase_product_label", str(display_names[index]))
 		showcase.add_child(item)
 		_add_facility_box(item, "DisplayPedestal", Vector3(0.0, 0.55, 0.0), Vector3(3.6, 1.1, 2.8), accent)
 		if facility_type == "shopping_weapon_gallery":
-			var blade := MeshInstance3D.new()
-			blade.name = "WeaponBlade"
-			var blade_mesh := BoxMesh.new()
-			blade_mesh.size = Vector3(0.20, 2.5, 0.10)
-			blade.mesh = blade_mesh
-			blade.position = Vector3(0.0, 2.35, 0.0)
-			blade.rotation.z = deg_to_rad(float(index - 1) * 7.0)
-			blade.material_override = highlight
-			item.add_child(blade)
-			_add_facility_box(item, "WeaponGuard", Vector3(0.0, 1.12, 0.0), Vector3(0.95, 0.14, 0.22), accent)
-			_add_facility_box(item, "WeaponGrip", Vector3(0.0, 0.78, 0.0), Vector3(0.16, 0.62, 0.16), highlight)
-			if index == 1:
-				_add_facility_box(item, "AxeHead", Vector3(0.58, 2.7, 0.0), Vector3(0.95, 0.72, 0.18), highlight)
-			elif index == 2:
-				_add_facility_box(item, "SpearShaft", Vector3(0.0, 2.65, 0.0), Vector3(0.12, 3.2, 0.12), accent)
+			if floor_number == 5 or floor_number == 7:
+				var blade := MeshInstance3D.new()
+				blade.name = "WeaponBlade"
+				var blade_mesh := BoxMesh.new()
+				blade_mesh.size = Vector3(0.18 + (0.10 if floor_number == 7 and index == 2 else 0.0), 2.2 + float(index) * 0.35, 0.12)
+				blade.mesh = blade_mesh
+				blade.position = Vector3(0.0, 2.35, 0.0)
+				blade.material_override = highlight
+				item.add_child(blade)
+				_add_facility_box(item, "WeaponGuard", Vector3(0.0, 1.12, 0.0), Vector3(0.95, 0.14, 0.22), accent)
+				_add_facility_box(item, "WeaponGrip", Vector3(0.0, 0.78, 0.0), Vector3(0.16, 0.62, 0.16), highlight)
+				if floor_number == 7 and index == 0:
+					_add_facility_box(item, "SecondBlade", Vector3(0.85, 2.0, 0.0), Vector3(0.16, 2.0, 0.12), accent)
+			elif floor_number == 6:
+				_add_facility_box(item, "WeaponShaft", Vector3(0.0, 2.15, 0.0), Vector3(0.14, 3.2, 0.14), highlight)
+				if index == 1:
+					_add_facility_box(item, "AxeHead", Vector3(0.48, 3.0, 0.0), Vector3(1.0, 0.72, 0.2), accent)
+				elif index == 2:
+					_add_facility_box(item, "WarHammerHead", Vector3(0.0, 3.0, 0.0), Vector3(1.0, 0.72, 0.72), accent)
 		elif facility_type == "shopping_ranged_gallery":
-			_add_facility_box(item, "RangedStock", Vector3(-0.15, 1.65, 0.0), Vector3(1.8, 0.28, 0.42), accent)
-			_add_facility_box(item, "RangedBarrel", Vector3(0.95, 1.82, 0.0), Vector3(1.55, 0.12, 0.14), highlight)
-			_add_facility_box(item, "RangedGrip", Vector3(0.25, 1.18, 0.0), Vector3(0.28, 0.78, 0.28), accent)
-			if index == 0:
+			if floor_number == 8 and index < 2:
 				var bow := MeshInstance3D.new()
-				bow.name = "BowDisplay"
+				bow.name = "BowDisplay" if index == 0 else "CrossbowDisplay"
 				var bow_mesh := TorusMesh.new()
-				bow_mesh.inner_radius = 0.62
-				bow_mesh.outer_radius = 0.72
+				bow_mesh.inner_radius = 0.62 if index == 0 else 0.42
+				bow_mesh.outer_radius = 0.72 if index == 0 else 0.54
 				bow.mesh = bow_mesh
-				bow.position = Vector3(0.0, 2.45, 0.0)
+				bow.position = Vector3(0.0, 2.35, 0.0)
 				bow.material_override = highlight
 				item.add_child(bow)
+				_add_facility_box(item, "BowGrip", Vector3(0.0, 1.45, 0.0), Vector3(0.18, 1.4, 0.18), accent)
+			else:
+				_add_facility_box(item, "RangedStock", Vector3(-0.15, 1.65, 0.0), Vector3(1.8, 0.28, 0.42), accent)
+				_add_facility_box(item, "RangedBarrel", Vector3(0.95, 1.82, 0.0), Vector3(1.55, 0.12, 0.14), highlight)
+				_add_facility_box(item, "RangedGrip", Vector3(0.25, 1.18, 0.0), Vector3(0.28, 0.78, 0.28), accent)
+				if floor_number == 10:
+					_add_facility_box(item, "PrecisionScope", Vector3(0.1, 2.05, 0.0), Vector3(0.62, 0.22, 0.22), highlight)
 		elif facility_type == "shopping_armor_gallery":
 			var torso := MeshInstance3D.new()
 			torso.name = "ArmorTorsoDisplay"
@@ -6033,7 +6116,7 @@ func _build_shopping_floor_showcase(root: Node3D, facility_type: String, accent:
 			torso_mesh.height = 1.8
 			torso.mesh = torso_mesh
 			torso.position = Vector3(0.0, 2.0, 0.0)
-			torso.material_override = highlight if index == 1 else accent
+			torso.material_override = highlight if floor_number == 13 else accent
 			item.add_child(torso)
 			var helmet := MeshInstance3D.new()
 			helmet.name = "ArmorHelmetDisplay"
@@ -6045,6 +6128,9 @@ func _build_shopping_floor_showcase(root: Node3D, facility_type: String, accent:
 			helmet.material_override = accent
 			item.add_child(helmet)
 			_add_facility_box(item, "ArmorShieldDisplay", Vector3(1.15, 1.95, 0.25), Vector3(0.82, 1.35, 0.22), highlight)
+			if floor_number == 13:
+				_add_facility_box(item, "EliteShoulderLeft", Vector3(-0.8, 2.65, 0.0), Vector3(0.75, 0.55, 0.75), highlight)
+				_add_facility_box(item, "EliteShoulderRight", Vector3(0.8, 2.65, 0.0), Vector3(0.75, 0.55, 0.75), highlight)
 		elif facility_type == "shopping_crafting_materials":
 			for material_index in range(3):
 				_add_facility_box(item, "CraftMaterial_%02d" % material_index, Vector3(-0.9 + float(material_index) * 0.9, 1.55 + float(material_index % 2) * 0.35, 0.0), Vector3(0.68, 0.52, 0.68), highlight if material_index == 1 else accent)
@@ -6063,12 +6149,11 @@ func _build_shopping_floor_showcase(root: Node3D, facility_type: String, accent:
 				_add_facility_box(item, "ElixirBottleStopper_%02d" % bottle_index, Vector3(-0.72 + float(bottle_index) * 0.72, 2.28, 0.0), Vector3(0.22, 0.18, 0.22), accent)
 		elif facility_type == "shopping_skill_store":
 			_add_facility_box(item, "SkillManualCover", Vector3(0.0, 1.45, 0.0), Vector3(1.25, 1.65, 0.28), highlight)
-			_add_facility_box(item, "SkillManualPages", Vector3(0.0, 1.45, 0.18), Vector3(1.12, 1.48, 0.12), accent)
 		var item_sign := Label3D.new()
 		item_sign.name = "ShowcaseItemLabel"
-		item_sign.text = ["عرض A", "عرض B", "عرض C"][index]
+		item_sign.text = str(display_names[index])
 		item_sign.position = Vector3(0.0, 3.55, 1.4)
-		item_sign.font_size = 14
+		item_sign.font_size = 13
 		item_sign.pixel_size = 0.014
 		item.add_child(item_sign)
 	_add_facility_box(showcase, "DepartmentCounter", Vector3(0.0, 0.7, -5.8), Vector3(12.0, 1.4, 1.8), accent)

@@ -1790,3 +1790,17 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - [x] Canonical Android APK export passed on the same exact commit in run `45439323724`; artifact `14941683919`, 36,648,875 bytes, expires 8 December 2026.
 - [ ] Physical Android device inspection of rival movement, combat, ambush, and objective recovery remains outstanding.
 - PR #38 remains a draft on `feature/baghdad-five-plus-power-tower-20261122`; do not merge to `main` without explicit user approval.
+
+
+## Shopping Tower specialist floor-by-floor merchandise and display pass — 24 November 2026
+- [x] Split the existing Shopping Tower department catalogs into floor-specific product selections while retaining the same purchase flow, wallet, rank/level/Nen requirements, vendor stock, inventory and sell controls.
+- [x] Floors 5–7 now separate training/steel swords and knives, spears/axes/war hammers, and dual/long/great swords.
+- [x] Floors 8–10 now separate bows/crossbows/arrows, hunter pistols/rifles/shotguns, and advanced precision firearms.
+- [x] Floors 11–13 now separate shields/helmets/protective gear, field armour, and elite armour plus high-rank hunter outfits.
+- [x] Floors 15–16 now separate common crafting supplies from rare cores, energy crystals and repair kits. Floor 14's forge and elixir laboratory are unchanged.
+- [x] Floors 17–19 now separate basic healing/antidote, performance elixirs, and advanced wound/regeneration preparations.
+- [x] Floors 20–22 now separate Nen awakening, control/focus/stabilization, and Nen recovery. Floors 23–26 separate advanced treatment, Nen laboratory stock, elite preparations and the protected rare-elixir vault.
+- [x] Added floor-specific 3D showcase names and display geometry so each floor's weapon family, ranged equipment, armour tier, materials or elixir department is visually identifiable rather than repeating a generic display.
+- [x] Added a comprehensive regression loop to open each specialist floor and assert its expected products are present and products belonging to other floors are absent; the existing floor-14 forge, hotel floors 27–28, and restaurant floors 29–32 remain outside these catalog overrides.
+- [ ] Exact-HEAD Godot operations validation and Android APK export are pending. Physical Android touch/visual review remains outstanding.
+- PR #38 remains draft and unmerged. No changes merged to main.
