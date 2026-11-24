@@ -1887,3 +1887,13 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - Selected display controls are explicitly shown after resolving the current floor's live button, so a previously hidden skill-manual or product control cannot remain invisible when a different physical display is selected.
 
 - Godot validation workflow concurrency now separates push and pull-request runs for the same feature branch, preventing the PR-triggered suite from cancelling the push-triggered full showcase regression before it executes.
+
+
+### Baghdad towers — leisure pool zones and physical advertising panels — 25 November 2026
+- Clarified the Entertainment Tower aquatic facilities as leisure/recreation, not sports competitions. The Olympic pool, family splash pool, spa hot tub and thermal pool water volumes carry `system_activity_category = leisure`; the pool signage now describes free swimming and water recreation rather than training.
+- Added distinct monitored water-volume Areas for the family splash pool, spa hot tub and thermal pool, each routed through the existing swimming-state/surface-height callbacks. The original main pool volume and the existing pool movement system are preserved.
+- Added physical emissive MeshInstance screen panels and metal frames behind the existing NPC-managed internal lobby campaign labels and external tower campaign labels. The existing rotating campaign text and staff attribution remain the content source.
+- Extended the tower validator to require leisure metadata, active collision volumes and physical screen/frame nodes; added runtime enter/exit checks for the family, hot-tub and thermal leisure water volumes.
+- Source commits: `acb3a2e9ca399c2c4663145cdb7774d8bc5e5b7e`, `719891959fcfad8b476c94c0dda2dd183f466a27`; validator commits: `1ca1652044c48f98aa38e37e6326a30d4c26ff70`, `2e2ebcf8c2858977b77a9d97f28a796d085f7c7b`.
+- Restored the unrelated OSM streamer file to its pre-excursion baseline in commit `f1dc60fbac96e13e46611a91dd72c5bf91c9c5c5`; no OSM feature expansion is part of this tower task.
+- Verification status: implementation and QA assertions are committed on the PR branch, but no CI status or workflow run is currently attached to exact HEAD `719891959fcfad8b476c94c0dda2dd183f466a27`. Do not mark these changes tested or APK-built until Godot validation and Android export complete.
