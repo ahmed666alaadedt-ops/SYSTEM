@@ -919,6 +919,8 @@ func _create_customer_population() -> void:
 		if lobby == null:
 			continue
 		var ids: Array[String] = []
+		var child_count := 0
+		var elder_count := 0
 		for index in range(100):
 			var existing_id := ""
 			for candidate_id in society.npcs.keys():
@@ -929,6 +931,10 @@ func _create_customer_population() -> void:
 			var gender := "female" if posmod(index, 2) == 1 else "male"
 			var age_slot := posmod(index, 10)
 			var age_group := "child" if age_slot < 2 else ("elder" if age_slot < 4 else "adult")
+			if age_group == "child":
+				child_count += 1
+			elif age_group == "elder":
+				elder_count += 1
 			var age_years := 8.0 + float(posmod(index, 7)) if age_group == "child" else (62.0 + float(posmod(index * 3, 20)) if age_group == "elder" else 18.0 + float(posmod(index * 7, 43)))
 			var customer_name := "زائر " + str(tower_index + 1) + "-" + str(index + 1)
 			if existing_id.is_empty():
@@ -995,9 +1001,12 @@ func _create_customer_population() -> void:
 				if model.has_method("set_activity"):
 					model.call("set_activity", "socialize" if posmod(index, 2) == 0 else "wander")
 		customer_ids_by_tower[tower_id] = ids
+		lobby.set_meta("system_tower_customer_population_count", ids.size())
+		lobby.set_meta("system_tower_child_customer_count", child_count)
+		lobby.set_meta("system_tower_elder_customer_count", elder_count)
 	if society.has_method("save_society"):
 		society.call("save_society")
-	print("SYSTEM Baghdad towers: customer NPC population initialized.")
+	print("SYSTEM Baghdad towers: 500 customer NPCs across five towers, including children, elderly visitors and adults.")
 
 func _create_public_lobby_cafes() -> void:
 	var public_towers := [
