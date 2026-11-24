@@ -103,5 +103,61 @@ func _run_validation() -> void:
 	if not _check(str(manager.get_current_stage().get("id", "")) == "cairo_buried_market", "Exam progression did not advance to stage two."):
 		return
 
-	print("Hunter examination stage validation passed: physical Baghdad chamber, collision, seven spike obstacles, ordered clues, locked artifact and sequential stage completion.")
+	var remaining_stage_objectives := {
+		"cairo_buried_market":["cairo_route_a","cairo_route_b","cairo_exit"],
+		"alexandria_lighthouse":["alex_beacon","alex_rescue","alex_lighthouse"],
+		"paris_catacombs":["paris_echo_a","paris_echo_b","paris_exit"],
+		"babylon_guardian":["babylon_gear_a","babylon_gear_b","babylon_seal"],
+		"tokyo_urban_pursuit":["tokyo_trace_a","tokyo_civilian","tokyo_finish"],
+		"final_survival_route":["highland_supply","highland_shelter","highland_summit"]
+	}
+	for stage_id in remaining_stage_objectives.keys():
+		var stage_data: Dictionary = manager.get_current_stage()
+		if not _check(str(stage_data.get("id","")) == stage_id, "Examination stage order mismatch before " + stage_id):
+			return
+		var next_runtime := StageRuntimeScript.new()
+		root.add_child(next_runtime)
+		var next_build: Dictionary = next_runtime.activate_stage(stage_data,player,manager)
+		if not _check(bool(next_build.get("success",false)), "Physical environment failed to build for " + stage_id):
+			return
+		var next_site := next_runtime.get_node_or_null("ExaminationSite_" + stage_id) as Node3D
+		if not _check(next_site != null, "Physical stage geometry missing for " + stage_id):
+			return
+		if not _check(next_site.get_node_or_null("StageGroundBody/CollisionShape3D") != null, "Stage ground collision missing for " + stage_id):
+			return
+		if not _check(next_site.get_node_or_null("StageExaminer") != null, "Stage examiner missing for " + stage_id):
+			return
+		var expected_objectives: Array = remaining_stage_objectives[stage_id]
+		var objective_areas: Array[Area3D] = []
+		for child in next_site.get_children():
+			if child is Area3D and str(child.get_meta("system_exam_stage_objective","")) in expected_objectives:
+				objective_areas.append(child as Area3D)
+		if not _check(objective_areas.size() == 3, "Three physical objectives missing for " + stage_id):
+			return
+		var wrong_attempt: Dictionary = next_runtime.handle_interaction(objective_areas[1])
+		if not _check(not bool(wrong_attempt.get("success",false)), "Out-of-order objective accepted for " + stage_id):
+			return
+		for objective_index in range(expected_objectives.size()):
+			var objective_area: Area3D = null
+			for candidate in objective_areas:
+				if str(candidate.get_meta("system_exam_stage_objective","")) == str(expected_objectives[objective_index]):
+					objective_area = candidate
+					break
+			if not _check(objective_area != null, "Objective order node missing for " + stage_id):
+				return
+			var objective_result: Dictionary = next_runtime.handle_interaction(objective_area)
+			if not _check(bool(objective_result.get("success",false)), "Objective rejected in " + stage_id + ": " + str(expected_objectives[objective_index])):
+				return
+			if objective_index == expected_objectives.size()-1 and not _check(bool(objective_result.get("stage_completed",false)), "Final objective did not complete " + stage_id):
+				return
+		if not _check(manager.completed_stage_ids.has(stage_id), "Exam manager did not record " + stage_id):
+			return
+		next_runtime.queue_free()
+		await process_frame
+	if not _check(manager.completed_stage_ids.size() == 7, "All seven examination stages were not recorded."):
+		return
+	if not _check(not bool(manager.get_current_stage()), "Exam should not expose another stage after the seventh completion."):
+		return
+
+	print("Hunter examination validation passed: Baghdad plus six additional physical environments, objective-order enforcement and all seven sequential stage completions.")
 	quit(0)
