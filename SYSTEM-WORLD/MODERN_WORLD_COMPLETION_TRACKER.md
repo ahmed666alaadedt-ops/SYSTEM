@@ -1780,3 +1780,13 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - [ ] Android APK export and upload for code commit `0fc856cd1596da1c162baf98ec3d5ea285afcb88` remain in progress; previous successful APKs do not verify these newer rival changes.
 - [ ] Online multiplayer remains out of scope for this local AI implementation and is not claimed.
 - PR #38 remains draft and unmerged. Do not merge to `main` without explicit user approval.
+
+
+## Hunter rival competition — verified results — 24 November 2026
+
+- [x] Canonical rival-specific regression passed on exact code commit `2b6eedf1d902dbc276ff22b2f8380c2a89fef5c3` in Godot workflow run `45439323604`.
+- [x] The regression confirmed five AI rivals spawn in the canonical continuous Hunter tunnel; Ren steals a recorded objective and blocks progression; recovery restores progression; Kai's deception interaction and Daigo's individual duel/damage/defeat work; online multiplayer remains explicitly unclaimed.
+- [x] The same comprehensive Godot run passed Baghdad tower operations, Hunter recruitment/escort/tunnel serial checks, the continuous competition regression, and the seven-stage Hunter examination checks.
+- [x] Canonical Android APK export passed on the same exact commit in run `45439323724`; artifact `14941683919`, 36,648,875 bytes, expires 8 December 2026.
+- [ ] Physical Android device inspection of rival movement, combat, ambush, and objective recovery remains outstanding.
+- PR #38 remains a draft on `feature/baghdad-five-plus-power-tower-20261122`; do not merge to `main` without explicit user approval.
