@@ -211,7 +211,7 @@ func _get_height(x: float, z: float) -> float:
 				return lerpf(natural_height, maxf(natural_height, corridor_height), access_ease)
 			return natural_height
 
-	if corridor_distance <= BAGHDAD_URBAN_CORRIDOR_HALF_WIDTH:
+		if corridor_distance <= BAGHDAD_URBAN_CORRIDOR_HALF_WIDTH:
 			var corridor_blend := clampf((BAGHDAD_URBAN_CORRIDOR_HALF_WIDTH - corridor_distance) / 110.0, 0.0, 1.0)
 			var corridor_ease := corridor_blend * corridor_blend * (3.0 - 2.0 * corridor_blend)
 			var bridge_edge_blend := clampf((bridge_radius - 1.0) / 0.12, 0.0, 1.0)
