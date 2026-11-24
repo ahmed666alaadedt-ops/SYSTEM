@@ -2607,22 +2607,24 @@ func _run() -> void:
 	if str(player_order.get("status", "")) != "awaiting_waiter" or int(player_order.get("total", 0)) != 90:
 		_fail("A seated player could not send and pay for a restaurant order into the waiter queue.")
 		return
-	var observed_player_service_states := {"awaiting_waiter": true}
-	# Existing NPC orders remain FIFO; allow the waiter to finish its current table visit before the player's order reaches the kitchen.
+	# Keep an authoritative transition history on the order itself. Several real service
+	# stages can complete between QA polling frames, so sampling the live status alone
+	# can incorrectly report a missing stage even when the waiter/chef completed it.
 	for _attempt in range(2400):
 		operations.call("_process_restaurant_staff_service")
 		player_order = operations.get("restaurant_orders").get(player_cycle_table_id, {})
-		var observed_state := str(player_order.get("status", ""))
-		if not observed_state.is_empty():
-			observed_player_service_states[observed_state] = true
-		if observed_state == "served":
+		if str(player_order.get("status", "")) == "served":
 			break
 		await create_timer(0.05).timeout
-	var required_player_service_states := ["taking_order", "placed", "preparing", "ready", "delivering", "served"]
+	var required_player_service_states := ["awaiting_waiter", "taking_order", "placed", "preparing", "ready", "delivering", "served"]
+	var recorded_player_service_states: Array = player_order.get("status_history", [])
 	for required_state in required_player_service_states:
-		if not observed_player_service_states.has(required_state):
-			_fail("The player's restaurant order did not pass through the real waiter/kitchen/chef/waiter stage: " + required_state)
+		if not recorded_player_service_states.has(required_state):
+			_fail("The player's restaurant order did not record the real waiter/kitchen/chef/waiter stage: " + required_state)
 			return
+	if str(player_order.get("status", "")) != "served":
+		_fail("The player's restaurant order did not reach served after the full staff workflow.")
+		return
 	if player_test_table.get_node_or_null("ServedMealPresentation/MealPlate") == null or player_test_table.get_node_or_null("ServedMealPresentation/PreparedMeal") == null:
 		_fail("The waiter did not deliver the prepared meal and render it on the player's occupied table.")
 		return
