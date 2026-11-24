@@ -1200,6 +1200,34 @@ func _create_reference_city_architecture(city: Node3D) -> void:
 		rim.position.y = float(spec["y"]) + float(spec["height"]) * 0.5
 		rim.material_override = edge_material
 		city.add_child(rim)
+		# Continuous illuminated safety rail and evenly spaced structural balusters around each floating deck.
+		var guardrail := MeshInstance3D.new()
+		guardrail.name = str(spec["name"]) + "_PerimeterGuardrail"
+		var guardrail_mesh := TorusMesh.new()
+		guardrail_mesh.inner_radius = float(spec["radius"]) - 4.35
+		guardrail_mesh.outer_radius = float(spec["radius"]) - 3.65
+		guardrail_mesh.rings = 64
+		guardrail_mesh.ring_segments = 12
+		guardrail.mesh = guardrail_mesh
+		guardrail.rotation.x = PI * 0.5
+		guardrail.position.y = float(spec["y"]) + float(spec["height"]) * 0.5 + 1.45
+		guardrail.material_override = edge_material
+		city.add_child(guardrail)
+		var baluster_material := _make_surface_material(Color(0.12, 0.22, 0.29), 0.28, 0.84)
+		for baluster_index in range(32):
+			var baluster_angle := TAU * float(baluster_index) / 32.0
+			var baluster := MeshInstance3D.new()
+			baluster.name = str(spec["name"]) + "_GuardrailBaluster_%02d" % baluster_index
+			var baluster_mesh := CylinderMesh.new()
+			baluster_mesh.top_radius = 0.22
+			baluster_mesh.bottom_radius = 0.34
+			baluster_mesh.height = 2.6
+			baluster.mesh = baluster_mesh
+			baluster.position = Vector3(cos(baluster_angle) * (float(spec["radius"]) - 4.0), float(spec["y"]) + float(spec["height"]) * 0.5 + 1.3, sin(baluster_angle) * (float(spec["radius"]) - 4.0))
+			baluster.material_override = baluster_material
+			city.add_child(baluster)
+		platform.set_meta("system_platform_safety_railings", true)
+		platform.set_meta("system_platform_guardrail_balusters", 32)
 		platform.set_meta("system_reference_design_element", "multi_level_circular_sky_platform")
 	var support_material := _make_surface_material(Color(0.12, 0.22, 0.29), 0.3, 0.82)
 	for index in range(16):
