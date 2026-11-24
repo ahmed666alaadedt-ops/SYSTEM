@@ -4768,6 +4768,28 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 	root.add_child(interaction)
 
 
+func open_museum_artifact_exhibit(target: Node) -> void:
+	if target == null or not is_instance_valid(target) or str(target.get_meta("system_interaction_type", "")) != "museum_artifact_exhibit":
+		return
+	current_tower_id = str(target.get_meta("system_tower_id", "antiques_heritage_tower_baghdad"))
+	current_staff_id = ""
+	_clear_dynamic_controls()
+	var artifact_id := str(target.get_meta("system_artifact_id", ""))
+	var floor_number := int(target.get_meta("system_tower_floor_number", 0))
+	var display_role := str(target.get_meta("system_artifact_display_role", "museum_exhibit"))
+	title_label.text = "سجل القطعة الأثرية"
+	credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
+	if display_role == "player_market_prototype":
+		status_label.text = "معرّف القطعة: %s\nالطابق: %d\nهذه نقطة عرض تجريبية لسوق اللاعبين؛ البيع والشراء المباشر والمزايدات لا تزال غير مفعّلة حتى اكتمال الربط الآمن بين الحسابات." % [artifact_id, floor_number]
+	else:
+		status_label.text = "معرّف القطعة: %s\nالطابق: %d\nمعروض متحفي ضمن مجموعة التراث والآثار. تفاصيل المنشأ والأصالة والملكية تُضاف عند تسجيل القطعة في سجل المتحف." % [artifact_id, floor_number]
+	var close_button := Button.new()
+	close_button.text = "إغلاق"
+	close_button.pressed.connect(func(): panel.hide())
+	content.add_child(close_button)
+	panel.show()
+
+
 func open_pool_service(target: Node) -> void:
 	if target == null or not is_instance_valid(target) or not target.has_meta("system_pool_service_type"):
 		return
