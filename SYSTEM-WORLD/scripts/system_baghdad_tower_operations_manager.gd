@@ -4270,15 +4270,6 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 			else:
 				facility_type = "rare_artifact_vault"
 				facility_title = "خزنة القطع النادرة ومجلس الأمناء"
-			elif floor_number == 25:
-				facility_type = "arcade"
-				facility_title = "مركز الألعاب الإلكترونية"
-			elif floor_number == 26:
-				facility_type = "family_zone"
-				facility_title = "منطقة العائلات والأطفال"
-			elif floor_number in [33, 34]:
-				facility_type = "rooftop_leisure"
-				facility_title = "حديقة السطح والمطاعم المفتوحة"
 		"business_investment_tower_baghdad":
 			if floor_number == 8:
 				facility_type = "stock_exchange"
