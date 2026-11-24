@@ -3,6 +3,7 @@ extends SceneTree
 const SHOPPING_TOWER_ID := "shopping_tower_baghdad"
 
 const FLOOR_FACILITIES := {
+	4: "shopping_skill_store",
 	5: "shopping_weapon_gallery",
 	6: "shopping_weapon_gallery",
 	7: "shopping_weapon_gallery",
@@ -127,8 +128,11 @@ func _run() -> void:
 				_fail("Floor %d product %s could not open its real purchase preview." % [floor_number, product_id])
 				return
 			var content: Node = operations.get("content")
-			if content == null or content.find_child("ShoppingProduct_" + product_id, true, false) == null:
-				_fail("Floor %d product %s has no matching purchase control." % [floor_number, product_id])
+			var expected_control_name := "ShoppingProduct_" + product_id
+			if str(product.get("product_type", "")) == "skill_training_permit":
+				expected_control_name = "SkillManualPurchase_" + str(product.get("skill_id", ""))
+			if content == null or content.find_child(expected_control_name, true, false) == null:
+				_fail("Floor %d product %s has no matching purchase control (%s)." % [floor_number, product_id, expected_control_name])
 				return
 			if content.find_child("SelectedShowcaseProductPreview", true, false) == null:
 				_fail("Floor %d product %s did not render its selected product preview." % [floor_number, product_id])
