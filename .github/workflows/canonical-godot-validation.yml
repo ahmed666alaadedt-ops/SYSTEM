@@ -90,7 +90,7 @@ jobs:
           fi
           echo "All Baghdad landmark assertions passed; accepting the known dummy-renderer teardown exit status: $godot_status."
 
-      - name: Validate hidden Hunter tunnel riddle and physical entry
+      - name: Validate Hunter Tower recruitment invitation and guild-guide tunnel escort
         shell: bash
         run: |
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
@@ -98,9 +98,9 @@ jobs:
           set -o pipefail
           "$GODOT" --headless --path "$PROJECT" \
             --script res://tools/validate_hunter_tunnel_entry.gd \
-            2>&1 | tee "$RUNNER_TEMP/hunter-tunnel-entry.log"
+            2>&1 | tee "$RUNNER_TEMP/hunter-tower-recruitment.log"
 
-      - name: Validate all seven playable SYSTEM Hunter Examination stages
+      - name: Validate the single continuous SYSTEM Hunter Examination competition
         shell: bash
         run: |
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
@@ -108,7 +108,7 @@ jobs:
           set -o pipefail
           "$GODOT" --headless --path "$PROJECT" \
             --script res://tools/validate_hunter_exam_stage_runtime.gd \
-            2>&1 | tee "$RUNNER_TEMP/hunter-exam-seven-stages.log"
+            2>&1 | tee "$RUNNER_TEMP/hunter-exam-continuous-competition.log"
 
       - name: Validate Baghdad tower operations, elevator staff and emergency evacuation
         shell: bash
