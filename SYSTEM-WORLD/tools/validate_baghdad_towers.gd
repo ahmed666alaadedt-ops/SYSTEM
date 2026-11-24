@@ -180,6 +180,13 @@ func _run_validation() -> void:
 	if upper_city.get_node_or_null("HunterTowerUpperCityAtriumRing") == null or upper_city.get_node_or_null("HunterAtriumWalkway_North_Collision") == null or upper_city.get_node_or_null("HunterAtriumSkyway_00") == null or upper_city.get_node_or_null("UpperCitySkyway_00") == null:
 		_fail("The upper city does not provide the Hunter Tower atrium and connected walkable skyways.")
 		return
+	if upper_city.get_node_or_null("UpperCitySkyway_00_LeftSafetyRail") == null or upper_city.get_node_or_null("UpperCitySkyway_00_RightSafetyRail") == null or upper_city.get_node_or_null("HunterAtriumSkyway_00_LeftSafetyRail") == null:
+		_fail("Upper-city pedestrian skyways are missing their architectural safety rails.")
+		return
+	var upper_platform := upper_city.get_node_or_null("ReferenceSkyPlatform_Upper") as MeshInstance3D
+	if upper_platform == null or not bool(upper_platform.get_meta("system_platform_safety_railings", false)) or int(upper_platform.get_meta("system_platform_guardrail_balusters", 0)) != 32 or upper_city.get_node_or_null("ReferenceSkyPlatform_Upper_PerimeterGuardrail") == null:
+		_fail("The upper circular sky platform is missing its illuminated perimeter guardrail and balusters.")
+		return
 	var central_hunter := tower_manager.get_node_or_null("HunterAssociationTower") as Node3D
 	if central_hunter == null or absf(central_hunter.position.y - 419.2) > 0.1:
 		_fail("The functional Hunter Association Tower is not physically seated on the uppermost 418 m Baghdad sky-city platform.")
