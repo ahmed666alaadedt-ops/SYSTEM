@@ -51,6 +51,8 @@ func _run_validation() -> void:
 	main.call("_on_interaction_performed", clue_1, "")
 	main.call("_on_interaction_performed", clue_2, "")
 	main.call("_on_interaction_performed", clue_3, "")
+	# queue_free() removes the blocking collision at the end of the frame.
+	await process_frame
 	if not _check(bool(tunnel.get_meta("system_tunnel_riddle_solved", false)), "Correct Eye → River → Crown sequence did not solve the riddle."):
 		return
 	if not _check(tunnel.get_node_or_null("ConcealedDoorCollision") == null, "Secret door collision did not unlock after solving."):
