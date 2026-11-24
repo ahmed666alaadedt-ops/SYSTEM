@@ -2268,14 +2268,22 @@ func _consume_elixir(item_id: String) -> void:
 
 func open_showcase_product_service(tower_id: String, floor_number: int, facility_type: String, product_id: String) -> bool:
 	open_baghdad_progression_facility(tower_id, floor_number, facility_type)
-	var product_button := content.find_child("ShoppingProduct_" + product_id, true, false) as Button if content != null else null
+	var product_data := _get_catalog_product(product_id)
+	if product_data.is_empty():
+		_set_status("معرّف المنتج غير موجود في كتالوج برج التسوق.")
+		return false
+	var purchase_control_name := "ShoppingProduct_" + product_id
+	if str(product_data.get("product_type", "")) == "skill_training_permit":
+		purchase_control_name = "SkillManualPurchase_" + str(product_data.get("skill_id", ""))
+	var product_button := content.find_child(purchase_control_name, true, false) as Button if content != null else null
 	if product_button == null:
 		_set_status("هذا المنتج غير معروض للبيع في هذا الطابق.")
 		return false
 	for child in content.get_children():
-		if child is Button and str(child.name).begins_with("ShoppingProduct_") and child != product_button:
-			child.hide()
-	var product_data := _get_catalog_product(product_id)
+		if child is Button and child != product_button:
+			var child_name := str(child.name)
+			if child_name.begins_with("ShoppingProduct_") or child_name.begins_with("SkillManualPurchase_"):
+				child.hide()
 	var product_name := str(product_data.get("name", product_id))
 	var preview := Label.new()
 	preview.name = "SelectedShowcaseProductPreview"
