@@ -452,7 +452,7 @@ func _create_hunter_exam_tunnel() -> void:
 		float(terrain.call("get_terrain_height", bridge_anchor.x, bridge_anchor.y)),
 		bridge_anchor.y
 	)
-	tunnel_root.set_meta("system_under_republic_bridge", true)
+	tunnel_root.set_meta("system_under_republic_bridge_district", true)
 	tunnel_root.set_meta("system_tunnel_location_source", "OpenStreetMap Republic Bridge / Tigris reference")
 	tunnel_root.set_meta("system_facility_type", "hunter_examination_tunnel")
 	tunnel_root.set_meta("system_under_baghdad_tower_district", true)
