@@ -379,11 +379,17 @@ func _run() -> void:
 				if artifact_id.is_empty() or exhibit_ids.has(artifact_id) or not exhibit_node.is_in_group("system_interactable"):
 					_fail("Museum floor %d has a missing, duplicate or non-interactable artifact ID." % museum_floor)
 					return
+				if exhibit_node.collision_layer != 1 or exhibit_node.collision_mask != 0:
+					_fail("Museum floor %d artifact interaction is not configured for the player's interaction ray." % museum_floor)
+					return
 				exhibit_ids[artifact_id] = true
 				if sample_museum_interaction == null:
 					sample_museum_interaction = exhibit_node as Area3D
 				if museum_facility.get_node_or_null("ArtifactGlassCase_%02d" % (exhibit_interaction_count - 1)) == null:
 					_fail("Museum floor %d is missing a physical glass artifact case." % museum_floor)
+					return
+				if museum_facility.get_node_or_null("ArtifactModel_%02d" % (exhibit_interaction_count - 1)) == null:
+					_fail("Museum floor %d is missing its visible artifact model." % museum_floor)
 					return
 		if exhibit_interaction_count != expected_exhibits:
 			_fail("Museum floor %d expected %d interactive artifact displays; found %d." % [museum_floor, expected_exhibits, exhibit_interaction_count])
