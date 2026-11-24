@@ -55,6 +55,7 @@ jobs:
           "$GODOT" --headless --path "$PROJECT" --check-only --script res://scripts/system_baghdad_tower_operations_manager.gd
           "$GODOT" --headless --path "$PROJECT" --check-only --script res://scripts/system_player_progression.gd
           "$GODOT" --headless --path "$PROJECT" --check-only --script res://tools/validate_baghdad_tower_operations.gd
+          "$GODOT" --headless --path "$PROJECT" --check-only --script res://tools/validate_shopping_tower_showcases.gd
 
       - name: Import resources and parse scripts
         shell: bash
@@ -134,6 +135,14 @@ jobs:
             exit 1
           fi
           exit "$godot_status"
+
+      - name: Validate Shopping Tower 3D product showcases and purchase routing
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_shopping_tower_showcases.gd 2>&1 | tee "$RUNNER_TEMP/shopping-tower-showcases.log"
 
       - name: Validate Hunter rival competition and objective recovery
         shell: bash
