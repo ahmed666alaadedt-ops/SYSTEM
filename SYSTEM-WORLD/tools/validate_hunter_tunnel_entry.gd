@@ -68,16 +68,16 @@ func _run_validation() -> void:
 	var start_position := player.global_position
 	player.set_meta("system_restaurant_seated_table_id", "qa_restaurant_table")
 	var saved_orders: Dictionary = operations.get("restaurant_orders")
+	saved_orders["qa_restaurant_table"] = {"status":"preparing","meal_consumed":false,"npc_order":false}
+	operations.set("restaurant_orders", saved_orders)
+	main.call("_on_interaction_performed", entry, "")
+	if not _check(player.global_position.is_equal_approx(start_position), "Room opened before the waiter delivered the meal."):
+		return
+
 	saved_orders["qa_restaurant_table"] = {"status":"served","meal_consumed":false,"npc_order":false}
 	operations.set("restaurant_orders", saved_orders)
 	main.call("_on_interaction_performed", entry, "")
-	if not _check(player.global_position.is_equal_approx(start_position), "Room opened before the meal was consumed."):
-		return
-
-	saved_orders["qa_restaurant_table"] = {"status":"served","meal_consumed":true,"npc_order":false}
-	operations.set("restaurant_orders", saved_orders)
-	main.call("_on_interaction_performed", entry, "")
-	if not _check(player.global_position.distance_to(private_room.global_position) < 12.0, "Player was not transferred into the private competitor room after the meal."):
+	if not _check(player.global_position.distance_to(private_room.global_position) < 12.0, "Player was not transferred into the private competitor room after meal delivery."):
 		return
 	if not _check(str(player.get_meta("system_hunter_exam_meal_order_id", "")).begins_with("qa_restaurant"), "Meal order identity was not carried into the room."):
 		return
