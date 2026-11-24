@@ -293,6 +293,16 @@ func _run_validation() -> void:
 			if garden == null or not bool(garden.get_meta("system_garden_walkable", false)) or not bool(garden.get_meta("system_glass_perimeter_railing", false)):
 				_fail("A Baghdad sky garden is missing its walkable deck or glass safety rail.")
 				return
+			var mapped_floor := int(garden.get_meta("system_tower_floor", 0))
+			var tower_height_m := float(district_tower.get_meta("tower_height_m", 0.0))
+			var tower_floor_count := int(district_tower.get_meta("tower_floor_count", 0))
+			if mapped_floor < 1 or tower_floor_count < 2 or tower_height_m <= 16.0:
+				_fail("A Baghdad sky garden has invalid elevator floor mapping metadata.")
+				return
+			var expected_elevator_floor_y := 9.0 + (tower_height_m - 16.0) * float(mapped_floor - 1) / float(tower_floor_count - 1)
+			if absf(garden.position.y - expected_elevator_floor_y) > 0.05 or absf(float(garden.get_meta("system_garden_elevator_floor_y", -999.0)) - expected_elevator_floor_y) > 0.05:
+				_fail("A Baghdad sky garden deck is vertically misaligned with its numbered elevator destination.")
+				return
 			if garden.get_node_or_null("GardenFloor_North_Collision") == null or garden.get_node_or_null("GardenFloor_South_Collision") == null or garden.get_node_or_null("GardenFloor_East_Collision") == null or garden.get_node_or_null("GardenFloor_West_Collision") == null:
 				_fail("A Baghdad sky garden is missing one or more physical floor collisions.")
 				return
