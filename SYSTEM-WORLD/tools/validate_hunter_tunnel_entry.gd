@@ -73,6 +73,7 @@ func _run_validation() -> void:
 	if not _check(bool(player.get_meta("system_hunter_exam_invitation_accepted", false)), "Accepted invitation was not stored on the player session."):
 		return
 
+	player.global_position = guide.global_position + Vector3(0.0, 0.0, 2.0)
 	main.call("_start_hunter_guild_escort", guide)
 	if not _check(bool(player.get_meta("system_hunter_exam_escort_active", false)), "The guide did not begin escorting the accepted candidate."):
 		return
