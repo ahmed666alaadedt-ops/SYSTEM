@@ -6535,6 +6535,8 @@ func _set_player_restaurant_activity(activity: String) -> void:
 
 
 func _find_restaurant_table_for_order(table_id: String, table_index: int) -> Node3D:
+	if is_instance_valid(current_restaurant_table_node) and str(current_restaurant_table_node.get_meta("system_restaurant_table_id", "")) == table_id:
+		return current_restaurant_table_node
 	var candidate_rooms: Array[Node3D] = []
 	if is_instance_valid(active_floor_root):
 		candidate_rooms.append(active_floor_root)
@@ -6560,7 +6562,7 @@ func _create_restaurant_served_meal_visual(table_id: String, order: Dictionary) 
 		table_index = int(parts[parts.size() - 1]) if parts.size() > 0 else -1
 	var table_node := _find_restaurant_table_for_order(table_id, table_index)
 	if table_node == null:
-		push_warning("SYSTEM Restaurant: could not resolve the exact table for served order " + table_id)
+		push_warning("SYSTEM Restaurant: could not resolve the exact table for served order " + table_id + " | active floor: " + str(active_floor_root.get_path() if is_instance_valid(active_floor_root) else "none") + " | current table: " + str(current_restaurant_table_node.get_path() if is_instance_valid(current_restaurant_table_node) else "none"))
 		return
 	var existing := table_node.get_node_or_null("ServedMealPresentation")
 	if existing != null:
