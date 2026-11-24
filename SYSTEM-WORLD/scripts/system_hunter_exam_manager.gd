@@ -64,7 +64,7 @@ func accept_exam_invitation(player_id: String) -> Dictionary:
 	if registered:
 		return {"success":true,"already_registered":true,"candidate_number":candidate_number}
 	if invitation_accepted:
-		return {"success":true,"pending_tunnel_registration":true,"message":"تم قبول طلبك. اتبع مرشد نقابة الصيادين إلى النفق."}
+		return {"success":true,"pending_tunnel_registration":true,"message":"تم قبول طلبك مبدئياً. أكمل التسجيل الرسمي في برج الجمعية ثم توجه إلى مطعم برج التسوق لاكتشاف المدخل السري."}
 	var config := ConfigFile.new()
 	config.load(SAVE_PATH)
 	config.set_value("exam", "player_id", player_id)
@@ -75,7 +75,7 @@ func accept_exam_invitation(player_id: String) -> Dictionary:
 	invitation_accepted = true
 	registered = false
 	candidate_number = 0
-	return {"success":true,"pending_tunnel_registration":true,"message":"تم قبول طلبك. اتبع مرشد نقابة الصيادين إلى النفق."}
+	return {"success":true,"pending_tunnel_registration":true,"message":"تم قبول طلبك مبدئياً. أكمل التسجيل الرسمي في برج الجمعية ثم توجه إلى مطعم برج التسوق لاكتشاف المدخل السري."}
 
 func register_candidate_at_tunnel(player_id: String) -> Dictionary:
 	if not invitation_accepted:
