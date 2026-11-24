@@ -77,7 +77,8 @@ func _run_validation() -> void:
 	if not str(access_causeway.get_meta("system_geography_source", "")).contains("not OpenStreetMap road geometry"):
 		_fail("The generated access causeway must be explicitly distinguished from OSM road geometry.")
 		return
-	if access_causeway.get_node_or_null("BaghdadBridgeAccessCausewayCollision/CollisionShape3D") == null:
+	var causeway_body := access_causeway.get_node_or_null("BaghdadBridgeAccessCausewayCollision") as StaticBody3D
+	if causeway_body == null or causeway_body.get_node_or_null("CausewayCollisionShape") == null:
 		_fail("The Baghdad bridge access causeway has no physical collision.")
 		return
 	# Sample the entire playable approach corridor, not just three isolated
