@@ -8,6 +8,15 @@ The World Hunter Association Tower is the global Hunter headquarters and public 
 
 The Hunter examination is a separate seven-stage global qualification journey. It is not the Power Tower and cannot be substituted by clearing Power Tower floors.
 
+## Baghdad district secrets and shopping departments — 24 November 2026
+
+- The Hunter Examination Tunnel is hidden beneath the Baghdad five-tower district. Its surface entrance must not appear as an exposed ramp, public portal, or labelled tunnel.
+- Discovery is a three-clue environmental riddle: the player examines the Eye, River, and Crown stone clues in that order. An incorrect order resets the sequence.
+- The final entrance is disguised as ordinary foundation masonry. Solving the riddle opens the concealed stone slab and reveals the descending passage.
+- The hidden entrance remains separate from the Power Tower and leads into the Hunter Examination system, not a Power Tower floor.
+- Weapons, swords, spears, axes, bows, firearms, shields, armor, helmets, hunter outfits, equipment upgrades, repairs, crafting, and all elixir types are departments inside Shopping and Commerce Tower. They are not separate towers.
+- Source currently includes the concealed door, clue interactions, and reveal behavior. Physical traversal and the explorable examination-stage environments remain unfinished pending implementation and runtime validation.
+
 ## Current source implementation
 
 - `scripts/baghdad_tower_landmarks_manager.gd` builds the five connected district towers plus the separate Power Tower, resolves foundations to nearby land where possible, and excludes Power Tower from the five-tower connection loop.
