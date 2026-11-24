@@ -20,11 +20,11 @@ const THEMES := {
 		"accent": Color(0.92, 0.68, 0.28),
 		"stations": ["معرض الأسلحة والدروع", "مختبر الإكسير والنِن", "سوق الملابس والتجهيزات", "فندق SYSTEM والمطاعم"]
 	},
-	"entertainment_tower_baghdad": {
-		"id": "sports_leisure_and_family",
-		"color": Color(0.12, 0.29, 0.25),
-		"accent": Color(0.30, 0.88, 0.66),
-		"stations": ["المسابح والمنتجع", "النادي الرياضي", "السينما والألعاب", "الفعاليات العائلية"]
+	"antiques_heritage_tower_baghdad": {
+		"id": "antiques_heritage_museum_and_player_galleries",
+		"color": Color(0.24, 0.19, 0.13),
+		"accent": Color(0.82, 0.65, 0.34),
+		"stations": ["معرض الحضارات العراقية", "قاعة الآثار العالمية", "مختبر الترميم والتوثيق", "معرض ومزاد مقتنيات اللاعبين"]
 	},
 	"technology_tower_baghdad": {
 		"id": "technology_innovation_lab",
@@ -101,8 +101,8 @@ static func build(room: Node3D, tower_id: String, floor_number: int, radius: flo
 		station.add_child(station_label)
 		if tower_id == "shopping_tower_baghdad":
 			_add_shop_display(station, base_material, accent_material)
-		elif tower_id == "entertainment_tower_baghdad":
-			_add_sports_display(station, base_material, accent_material)
+		elif tower_id == "antiques_heritage_tower_baghdad":
+			_add_heritage_display(station, base_material, accent_material)
 		elif tower_id == "technology_tower_baghdad":
 			_add_tech_display(station, base_material, accent_material)
 		elif tower_id == "business_investment_tower_baghdad":
@@ -144,6 +144,34 @@ static func _add_sports_display(parent: Node3D, base: Material, accent: Material
 	bar.position = Vector3(0.0, 2.1, 0.3)
 	bar.material_override = base
 	parent.add_child(bar)
+
+static func _add_heritage_display(parent: Node3D, base: Material, accent: Material) -> void:
+	var pedestal := MeshInstance3D.new()
+	pedestal.name = "ArtifactDisplayPedestal"
+	var pedestal_mesh := CylinderMesh.new()
+	pedestal_mesh.top_radius = 0.78
+	pedestal_mesh.bottom_radius = 0.92
+	pedestal_mesh.height = 0.72
+	pedestal.mesh = pedestal_mesh
+	pedestal.position = Vector3(0.0, 1.15, 0.25)
+	pedestal.material_override = base
+	parent.add_child(pedestal)
+	var artifact_case := MeshInstance3D.new()
+	artifact_case.name = "GlassArtifactDisplayCase"
+	var case_mesh := BoxMesh.new()
+	case_mesh.size = Vector3(1.35, 1.55, 1.1)
+	artifact_case.mesh = case_mesh
+	artifact_case.position = Vector3(0.0, 2.28, 0.25)
+	artifact_case.material_override = accent
+	parent.add_child(artifact_case)
+	var archive_panel := MeshInstance3D.new()
+	archive_panel.name = "ArtifactProvenancePanel"
+	var panel_mesh := BoxMesh.new()
+	panel_mesh.size = Vector3(1.8, 0.9, 0.12)
+	archive_panel.mesh = panel_mesh
+	archive_panel.position = Vector3(0.0, 3.2, -0.42)
+	archive_panel.material_override = base
+	parent.add_child(archive_panel)
 
 static func _add_tech_display(parent: Node3D, base: Material, accent: Material) -> void:
 	for index in range(3):
