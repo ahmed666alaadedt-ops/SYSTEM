@@ -61,6 +61,10 @@ func _run_validation() -> void:
 	if primary_bridge.is_empty() or secondary_bridge.is_empty():
 		_fail("Republic Bridge primary/secondary OSM roadway centerlines were not rendered in cell 17:-6.")
 		return
+	for bridge_mesh in primary_bridge + secondary_bridge:
+		if absf(float(bridge_mesh.get_meta("system_bridge_deck_height_override_m", 0.0)) - 18.08) > 0.1:
+			_fail("Republic Bridge roadway centerline is not rendered on the physical deck elevation.")
+			return
 	if tigris_river.is_empty():
 		_fail("Tigris River OSM geometry was not rendered in cell 17:-6.")
 		return
