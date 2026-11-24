@@ -1121,6 +1121,7 @@ func _create_baghdad_upper_city_layer() -> void:
 		var first := upper_positions[index] + Vector3(0.0, 272.0, 0.0)
 		var second := upper_positions[(index + 1) % upper_positions.size()] + Vector3(0.0, 272.0, 0.0)
 		_create_link_deck(city, first, second, "UpperCitySkyway_%02d" % index, 22.0, 1.5, trim)
+		_create_bridge_edge_details(city, first, second, "UpperCitySkyway_%02d" % index, 22.0, edge_material)
 	var hunter_atrium := MeshInstance3D.new()
 	hunter_atrium.name = "HunterTowerUpperCityAtriumRing"
 	var ring_mesh := TorusMesh.new()
@@ -1154,6 +1155,7 @@ func _create_baghdad_upper_city_layer() -> void:
 		var skyway_start := outward * 82.0 + Vector3(0.0, 272.0, 0.0)
 		var skyway_end := destination + Vector3(0.0, 272.0, 0.0)
 		_create_link_deck(city, skyway_start, skyway_end, "HunterAtriumSkyway_%02d" % index, 18.0, 1.5, trim)
+		_create_bridge_edge_details(city, skyway_start, skyway_end, "HunterAtriumSkyway_%02d" % index, 18.0, edge_material)
 	_create_reference_city_architecture(city)
 	city.set_meta("system_upper_city_blocks", upper_positions.size())
 	city.set_meta("system_upper_city_elevation_m", 270.0)
@@ -1161,7 +1163,7 @@ func _create_baghdad_upper_city_layer() -> void:
 
 func _create_reference_city_architecture(city: Node3D) -> void:
 	# Visual expansion based on the user-approved Baghdad skyline reference:
-	# broad circular sky platforms, glass towers, and a central illuminated S spire.
+	# broad circular sky platforms and glass skyline towers; the functional Hunter Association Tower is the central landmark.
 	# This is a visual city layer; it does not create extra functional district towers.
 	var platform_material := _make_surface_material(Color(0.055, 0.16, 0.23), 0.24, 0.72)
 	platform_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -1297,9 +1299,57 @@ func _create_connected_city_links() -> void:
 	for index in range(ordered_positions.size()):
 		var first: Vector3 = ordered_positions[index]
 		var second: Vector3 = ordered_positions[(index + 1) % ordered_positions.size()]
-		_create_link_deck(link_root, first + Vector3(0.0, 34.0, 0.0), second + Vector3(0.0, 34.0, 0.0), "SkyPromenade_%d" % index, 12.0, 0.65, trim_material)
+		var promenade_start := first + Vector3(0.0, 34.0, 0.0)
+		var promenade_end := second + Vector3(0.0, 34.0, 0.0)
+		_create_link_deck(link_root, promenade_start, promenade_end, "SkyPromenade_%d" % index, 12.0, 0.65, trim_material)
+		_create_bridge_edge_details(link_root, promenade_start, promenade_end, "SkyPromenade_%d" % index, 12.0, emissive_material)
 		_create_link_deck(link_root, first + Vector3(0.0, 23.0, 0.0), second + Vector3(0.0, 23.0, 0.0), "VehicleDeck_%d" % index, 18.0, 1.1, tower_material)
 		_create_vehicle_access_ramp(link_root, first, index)
+
+
+func _create_bridge_edge_details(parent: Node3D, start: Vector3, finish: Vector3, bridge_name: String, deck_width: float, light_material: Material) -> void:
+	# Architectural pedestrian safety rails and low-profile guide lights for elevated promenades.
+	var delta := finish - start
+	var bridge_length := delta.length()
+	if bridge_length < 4.0:
+		return
+	var angle := atan2(delta.x, delta.z)
+	var side_axis := Vector3(cos(angle), 0.0, -sin(angle))
+	var post_count := clampi(int(ceil(bridge_length / 32.0)), 4, 24)
+	var edge_offset := deck_width * 0.5 - 0.45
+	var rail_material := _make_surface_material(Color(0.055, 0.12, 0.17), 0.34, 0.78)
+	for side in [-1.0, 1.0]:
+		var rail := MeshInstance3D.new()
+		rail.name = bridge_name + ("_LeftSafetyRail" if side < 0.0 else "_RightSafetyRail")
+		var rail_mesh := BoxMesh.new()
+		rail_mesh.size = Vector3(0.42, 0.22, bridge_length)
+		rail.mesh = rail_mesh
+		rail.position = (start + finish) * 0.5 + side_axis * edge_offset + Vector3(0.0, 1.12, 0.0)
+		rail.rotation.y = angle
+		rail.material_override = rail_material
+		parent.add_child(rail)
+		for post_index in range(post_count + 1):
+			var progress := float(post_index) / float(post_count)
+			var post := MeshInstance3D.new()
+			post.name = bridge_name + "_RailPost_%s_%02d" % ["L" if side < 0.0 else "R", post_index]
+			var post_mesh := CylinderMesh.new()
+			post_mesh.top_radius = 0.16
+			post_mesh.bottom_radius = 0.24
+			post_mesh.height = 1.18
+			post.mesh = post_mesh
+			post.position = start.lerp(finish, progress) + side_axis * edge_offset + Vector3(0.0, 0.68, 0.0)
+			post.material_override = rail_material
+			parent.add_child(post)
+			if post_index % 3 == 0:
+				var guide_light := MeshInstance3D.new()
+				guide_light.name = bridge_name + "_GuideLight_%s_%02d" % ["L" if side < 0.0 else "R", post_index]
+				var light_mesh := SphereMesh.new()
+				light_mesh.radius = 0.22
+				light_mesh.height = 0.44
+				guide_light.mesh = light_mesh
+				guide_light.position = post.position + Vector3(0.0, 0.72, 0.0)
+				guide_light.material_override = light_material
+				parent.add_child(guide_light)
 
 
 func _create_link_deck(parent: Node3D, start: Vector3, finish: Vector3, deck_name: String, width: float, thickness: float, material: Material) -> void:
