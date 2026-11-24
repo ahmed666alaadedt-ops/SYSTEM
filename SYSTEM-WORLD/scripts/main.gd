@@ -640,7 +640,7 @@ func _animate_hunter_exam_elevator(button: Node) -> void:
 		return
 	if direction == "up" and not at_bottom:
 		return
-	if direction == "down" and not bool(player.get_meta("system_hunter_exam_meal_order_id", "") != ""):
+	if direction == "down" and str(player.get_meta("system_hunter_exam_meal_order_id", "")).is_empty():
 		if interaction_prompt_label != null:
 			interaction_prompt_label.text = "يجب استلام الوجبة وتناولها ثم دخول غرفة المتسابقين أولاً."
 		return
