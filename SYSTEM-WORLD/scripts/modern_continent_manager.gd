@@ -196,8 +196,13 @@ func _get_height(x: float, z: float) -> float:
 		if _continent_radius(x, z) > 1.0 and corridor_distance <= BAGHDAD_URBAN_CORRIDOR_HALF_WIDTH:
 			var corridor_blend := clampf((BAGHDAD_URBAN_CORRIDOR_HALF_WIDTH - corridor_distance) / 110.0, 0.0, 1.0)
 			var corridor_ease := corridor_blend * corridor_blend * (3.0 - 2.0 * corridor_blend)
+			var city_edge_blend := clampf((_continent_radius(x, z) - 1.0) / 0.18, 0.0, 1.0)
+			var city_edge_ease := city_edge_blend * city_edge_blend * (3.0 - 2.0 * city_edge_blend)
+			var bridge_edge_blend := clampf((bridge_radius - 1.0) / 0.12, 0.0, 1.0)
+			var bridge_edge_ease := bridge_edge_blend * bridge_edge_blend * (3.0 - 2.0 * bridge_edge_blend)
 			var corridor_height := 13.0 + sin(x * 0.009) * 1.0 + cos(z * 0.011) * 0.8
-			return lerpf(SEA_LEVEL - 1.2, corridor_height, corridor_ease)
+			var corridor_elevation_blend := corridor_ease * city_edge_ease * bridge_edge_ease
+			return lerpf(SEA_LEVEL - 1.2, corridor_height, corridor_elevation_blend)
 
 	var radius := _continent_radius(x, z)
 	if radius <= 1.0:
