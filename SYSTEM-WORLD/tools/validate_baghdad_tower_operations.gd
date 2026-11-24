@@ -393,6 +393,23 @@ func _run() -> void:
 	exam_manager.set("registered", false)
 	exam_manager.set("exam_active", false)
 	exam_manager.set("current_stage_index", -1)
+	var upper_city := tower_manager.get_node_or_null("BaghdadUpperSkyCity") as Node3D
+	if upper_city == null or int(upper_city.get_meta("system_reference_sky_platform_count", 0)) != 3:
+		_fail("Approved Baghdad skyline must contain all three multi-level circular sky platforms.")
+		return
+	if int(upper_city.get_meta("system_reference_glass_tower_count", 0)) != 10:
+		_fail("Approved Baghdad skyline must retain its ten decorative glass skyline towers.")
+		return
+	if str(upper_city.get_meta("system_central_spire_insignia", "")) != "S" or upper_city.get_node_or_null("BaghdadSYSTEMCentralSpire/CentralGlassSpire") == null or upper_city.get_node_or_null("BaghdadSYSTEMCentralSpire/CentralSYSTEM_S_Insignia") == null:
+		_fail("Approved Baghdad skyline is missing the central glass SYSTEM spire or illuminated S insignia.")
+		return
+	for platform_name in ["ReferenceSkyPlatform_Lower", "ReferenceSkyPlatform_Middle", "ReferenceSkyPlatform_Upper"]:
+		if upper_city.get_node_or_null(platform_name) == null or upper_city.get_node_or_null(platform_name + "_LuminousRim") == null:
+			_fail("Approved Baghdad skyline is missing circular platform tier: " + platform_name)
+			return
+	if tower_manager.get_node_or_null("PowerTower") == null or int(upper_city.get_meta("system_district_tower_count", 0)) != 5 or bool(upper_city.get_meta("system_power_tower_excluded", false)) != true:
+		_fail("Visual skyline expansion must preserve exactly five connected district towers and keep Power Tower independent.")
+		return
 	var hunter_tower := tower_manager.get_node_or_null("HunterAssociationTower") as Node3D
 	var helipad := hunter_tower.get_node_or_null("HunterAssociationHelipad") as Node3D if hunter_tower != null else null
 	if helipad == null or str(helipad.get_meta("system_owner_tower_id", "")) != "hunter_association_tower_baghdad":
