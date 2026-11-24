@@ -1090,7 +1090,7 @@ func _create_lobby_media_panels(lobby: Node3D, lobby_width: float, center_z: flo
 	result_material.emission_energy_multiplier = 1.15
 	for side in [-1.0, 1.0]:
 		var inward_rotation := -PI * 0.5 if side < 0.0 else PI * 0.5
-		var wall_x := side * (lobby_width * 0.5 - 0.62)
+		var wall_x: float = side * (lobby_width * 0.5 - 0.62)
 		for panel_index in range(2):
 			var is_advertising := panel_index == 0
 			var panel_name := "InteriorAdvertising" if is_advertising else "InteriorChampionResults"
