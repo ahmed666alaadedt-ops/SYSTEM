@@ -40,7 +40,7 @@ func _ready() -> void:
 	_build_power_tower()
 	_build_business_tower()
 	_build_shopping_tower()
-	_build_entertainment_tower()
+	_build_antiques_heritage_tower()
 	_build_technology_tower()
 	_create_baghdad_upper_city_layer()
 	_create_connected_city_links()
@@ -840,8 +840,13 @@ func _build_shopping_tower() -> void:
 		tower.set_meta("gameplay_status", "shopping_commerce_hospitality_hotel_and_equipment_blockout")
 
 
-func _build_entertainment_tower() -> void:
-	_build_tower("EntertainmentTower", "برج الترفيه والرياضة", "entertainment_tower_baghdad", _bridge_district_position(430.0, -180.0), 205.0, 29.0, 34, Color(0.75, 0.38, 0.95))
+func _build_antiques_heritage_tower() -> void:
+	_build_tower("AntiquesHeritageTower", "برج التحف والآثار", "antiques_heritage_tower_baghdad", _bridge_district_position(430.0, -180.0), 205.0, 29.0, 34, Color(0.78, 0.62, 0.34))
+	var tower := get_node_or_null("AntiquesHeritageTower")
+	if tower != null:
+		tower.set_meta("museum_departments", PackedStringArray(["iraqi_heritage", "ancient_egypt", "greek_roman_hellenistic", "ancient_china_silk_road", "archaeology_research", "conservation_restoration", "player_private_galleries", "player_marketplace", "live_auctions", "curator_council", "rare_artifact_vault"]))
+		tower.set_meta("museum_floor_count", 34)
+		tower.set_meta("gameplay_status", "antiques_heritage_tower_foundation_blockout")
 
 
 func _build_technology_tower() -> void:
@@ -1080,13 +1085,17 @@ func _get_tower_floor_directory(tower_id: String) -> PackedStringArray:
 				"29-30: المطاعم العراقية والعربية والعالمية والمقاهي",
 				"31-32: المطاعم الراقية والحلويات والمخابز"
 			])
-		"entertainment_tower_baghdad":
+		"antiques_heritage_tower_baghdad":
 			return PackedStringArray([
-				"01-08: الاستقبال والأنشطة العائلية",
-				"09-16: الرياضات والصالات والبطولات",
-				"17-22: المسابح والألعاب المائية",
-				"23-30: الترفيه والألعاب والمهرجانات",
-				"31-34: منصات المشاهدة والفعاليات الكبرى"
+				"01-04: التراث العراقي — سومر وأكد وبابل وآشور",
+				"05-08: مصر القديمة وحضارات النيل",
+				"09-12: اليونان وروما والعالم الهلنستي",
+				"13-16: الصين القديمة وطريق الحرير",
+				"17-20: البحث الأثري وأرشيف الملكية والاكتشافات",
+				"21-24: مختبرات الترميم والتقييم وفحص الأصالة",
+				"25-28: معارض المجموعات الشخصية للاعبين",
+				"29-32: سوق اللاعبين وقاعات المزادات المباشرة",
+				"33-34: مجلس الأمناء وخزنة القطع النادرة والمعارض الدولية"
 			])
 		"technology_tower_baghdad":
 			return PackedStringArray([
@@ -1256,20 +1265,14 @@ func _create_tower_identity_details(root: Node3D, node_name: String, height: flo
 				blade.material_override = accent
 				root.add_child(blade)
 			_add_tower_identity_box(root, "ShoppingTowerElixirBeacon", Vector3(0.0, 44.0, radius * 1.48), Vector3(12.0, 2.0, 2.0), glow)
-		"EntertainmentTower":
-			var arena_bowl := MeshInstance3D.new()
-			arena_bowl.name = "EntertainmentArenaBowl"
-			var bowl_mesh := CylinderMesh.new()
-			bowl_mesh.top_radius = radius * 1.9
-			bowl_mesh.bottom_radius = radius * 1.45
-			bowl_mesh.height = 5.0
-			arena_bowl.mesh = bowl_mesh
-			arena_bowl.position.y = 13.0
-			arena_bowl.material_override = accent
-			root.add_child(arena_bowl)
-			_add_tower_identity_box(root, "EntertainmentEventScreen", Vector3(0.0, 31.0, -radius * 1.7), Vector3(radius * 1.5, 9.0, 1.0), glow)
+		"AntiquesHeritageTower":
+			# Museum identity: a broad public exhibition podium, paired gallery wings and a crowned central archive.
+			_add_tower_identity_box(root, "HeritageMuseumPodium", Vector3(0.0, 12.0, 0.0), Vector3(radius * 2.35, 5.0, radius * 2.05), accent)
+			_add_tower_identity_box(root, "HeritageMuseumEntranceCanopy", Vector3(0.0, 22.0, -radius * 1.08), Vector3(radius * 1.18, 2.2, 5.0), glow)
 			for side in [-1.0, 1.0]:
-				_add_tower_identity_box(root, "RecreationArch_%s" % str(side), Vector3(side * radius * 1.2, 20.0, radius * 0.9), Vector3(2.0, 40.0, 2.0), glow)
+				_add_tower_identity_box(root, "HeritageGalleryWing_%s" % str(side), Vector3(side * radius * 0.78, 18.0, -radius * 0.32), Vector3(radius * 0.48, 12.0, radius * 1.05), accent)
+				_add_tower_identity_box(root, "HeritageGalleryColumn_%s" % str(side), Vector3(side * radius * 0.32, 24.0, -radius * 1.12), Vector3(2.4, 14.0, 2.4), glow)
+			_add_tower_identity_box(root, "HeritageArchiveCrown", Vector3(0.0, 35.0, radius * 0.82), Vector3(radius * 0.78, 2.4, radius * 0.78), glow)
 		"TechnologyTower":
 			for index in range(3):
 				var antenna := MeshInstance3D.new()
@@ -1553,7 +1556,7 @@ func _create_connected_city_links() -> void:
 	var ordered_tower_ids := [
 		"hunter_association_tower_baghdad",
 		"business_investment_tower_baghdad",
-		"entertainment_tower_baghdad",
+		"antiques_heritage_tower_baghdad",
 		"shopping_tower_baghdad",
 		"technology_tower_baghdad"
 	]
