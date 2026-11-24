@@ -48,7 +48,7 @@ func _run_validation() -> void:
 		_fail("BaghdadTowerLandmarksManager was not created.")
 		return
 
-	var terrain := main_scene.find_child("ModernContinent", true, false) as Node3D
+	var terrain := tower_manager.get("terrain") as Node3D
 	if terrain == null or not terrain.has_method("get_baghdad_bridge_anchor"):
 		_fail("ModernContinent is missing the verified Baghdad bridge anchor API.")
 		return
