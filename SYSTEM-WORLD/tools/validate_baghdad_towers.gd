@@ -108,8 +108,8 @@ func _run_validation() -> void:
 	if upper_city == null or int(upper_city.get_meta("system_upper_city_blocks", 0)) != 4 or not bool(upper_city.get_meta("system_power_tower_excluded", false)):
 		_fail("The playable upper Baghdad sky city is missing, incomplete or incorrectly includes Power Tower.")
 		return
-	if upper_city.get_node_or_null("HunterTowerUpperCityAtriumRing") == null:
-		_fail("The upper city does not provide the Hunter Tower sky atrium opening.")
+	if upper_city.get_node_or_null("HunterTowerUpperCityAtriumRing") == null or upper_city.get_node_or_null("HunterAtriumWalkway_North_Collision") == null or upper_city.get_node_or_null("HunterAtriumSkyway_00") == null:
+		_fail("The upper city does not provide a walkable Hunter Tower atrium and connected skyways.")
 		return
 
 	for district_record in tower_manager.district_tower_positions:
