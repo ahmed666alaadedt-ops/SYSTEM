@@ -1359,12 +1359,19 @@ func _run() -> void:
 		if showcase == null or str(showcase.get_meta("system_showcase_category", "")) != expected_type or int(showcase.get_meta("system_showcase_floor", -1)) != floor_number or showcase.get_node_or_null("ShowcaseItem_00") == null or showcase.get_node_or_null("ShowcaseItem_01") == null or showcase.get_node_or_null("ShowcaseItem_02") == null:
 			_fail("Shopping Tower floor %d is missing its three physical category-specific showcase displays." % floor_number)
 			return
-		var item_zero := showcase.get_node("ShowcaseItem_00") as Node3D
-		var item_label: String = str(item_zero.get_meta("system_showcase_product_label", ""))
-		var item_product_id: String = str(item_zero.get_meta("system_showcase_product_id", ""))
-		if str(item_label).is_empty() or item_product_id.is_empty() or item_zero.get_node_or_null("ShowcaseItemLabel") == null:
-			_fail("Shopping Tower floor %d has an unlabeled physical product display." % floor_number)
-			return
+		for display_index in range(3):
+			var display_item := showcase.get_node("ShowcaseItem_%02d" % display_index) as Node3D
+			var item_label: String = str(display_item.get_meta("system_showcase_product_label", ""))
+			var item_product_id: String = str(display_item.get_meta("system_showcase_product_id", ""))
+			var item_interaction := display_item.get_node_or_null("ShowcaseItemInteraction_%02d" % display_index) as Area3D
+			var interaction_shape := item_interaction.get_node_or_null("ShowcaseInteractionShape") as CollisionShape3D if item_interaction != null else null
+			var interaction_sphere := interaction_shape.shape as SphereShape3D if interaction_shape != null else null
+			if item_label.is_empty() or item_product_id.is_empty() or display_item.get_node_or_null("ShowcaseItemLabel") == null:
+				_fail("Shopping Tower floor %d has an unlabeled physical product display at index %d." % [floor_number, display_index])
+				return
+			if item_interaction == null or not item_interaction.is_in_group("system_interactable") or str(item_interaction.get_meta("system_tower_id", "")) != "shopping_tower_baghdad" or int(item_interaction.get_meta("system_tower_floor_number", 0)) != floor_number or str(item_interaction.get_meta("system_facility_type", "")) != expected_type or str(item_interaction.get_meta("system_showcase_product_id", "")) != item_product_id or interaction_sphere == null or interaction_sphere.radius < 1.5:
+				_fail("Shopping Tower floor %d display %d is missing its product-linked interaction Area3D." % [floor_number, display_index])
+				return
 	var floor_product_checks := {
 		5: ["training_sword", "steel_sword"],
 		6: ["hunter_spear", "war_hammer"],
