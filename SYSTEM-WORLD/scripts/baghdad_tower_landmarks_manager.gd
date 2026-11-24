@@ -544,10 +544,12 @@ func _create_hunter_exam_tunnel() -> void:
 	entrance.set_meta("system_hunter_exam_tunnel", true)
 	entrance.set_meta("system_facility_type", "hunter_examination_tunnel")
 	entrance.set_meta("system_display_name", "باب حجري قديم")
-	entrance.set_meta("system_interaction_prompt", "افحص الجدار الحجري")
+	entrance.set_meta("system_interaction_prompt", "")
 	entrance.position = Vector3(0.0, 0.0, 88.0)
-	entrance.collision_layer = 1
+	entrance.collision_layer = 0
 	entrance.collision_mask = 0
+	entrance.monitoring = false
+	entrance.monitorable = false
 	var entrance_shape := CollisionShape3D.new()
 	var entrance_sphere := SphereShape3D.new()
 	entrance_sphere.radius = 5.0
