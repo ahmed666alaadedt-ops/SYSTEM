@@ -1,10 +1,12 @@
 
 ## Baghdad Hunter Examination Tunnel entrance — 24 November 2026
 
-- [x] Added a distinct Hunter Examination Tunnel landmark beneath the Baghdad five-tower district, separate from the independent Power Tower.
-- [x] Added a wide descending 12-segment access ramp with physical collision, retaining walls, a large illuminated portal, bilingual entrance signage, eight guide lights, and an interactable entrance marker.
-- [x] Route the entrance interaction through `main.gd`: unregistered players are directed to register at the Hunter Association first; registered candidates call the existing `begin_exam()` flow and receive the current stage status in the Hunter Guild menu.
-- [ ] Actual underground traversal/level transition, physical exam-stage environments and stage-specific gameplay remain open; the current entrance starts the existing seven-stage progression manager but does not yet transport the player into a separate exam scene.
+- [x] Added a concealed Hunter Examination entrance beneath the Baghdad five-tower district, separate from the independent Power Tower; removed the exposed public ramp, glowing portal frame, and bilingual tunnel sign.
+- [x] Added three low-profile stone clues around the district. The player must inspect them in the correct sequence (Eye → River → Crown); a wrong clue resets the sequence.
+- [x] The final blank masonry wall disguises the secret door. Solving the three-clue sequence slides the concealed stone slab upward, removes its blocking collision, illuminates the reveal, and reveals the descending passage.
+- [x] Connected the hidden door interaction to the existing Hunter Examination registration and `begin_exam()` flow; unregistered players are directed to register at the Hunter Association.
+- [ ] Actual player traversal through the revealed passage and transition into the physical seven-stage examination environments remain open.
+- [ ] Run Godot parser/runtime, Baghdad landmark and operations regressions, and Android APK export on the exact updated PR head. No validation or APK success is claimed for these source changes.
 - [ ] Run the canonical Godot parser/runtime, Baghdad landmark and operations regressions, and Android APK export on the exact updated PR head. No validation or APK success is claimed for this source change.
 - [ ] Review the entrance placement and visibility in the actual Android build; the current structure is a functional geometry prototype, not the finished cinematic underground complex.
 
