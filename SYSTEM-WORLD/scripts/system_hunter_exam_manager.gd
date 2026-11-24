@@ -13,6 +13,7 @@ const EXAM_STAGES := [
 ]
 
 var candidate_number := 0
+var invitation_accepted := false
 var registered := false
 var exam_active := false
 var current_stage_index := -1
@@ -37,9 +38,11 @@ func apply_for_exam(player_id: String) -> Dictionary:
 	config.set_value("exam","next_candidate_number",candidate_number + 1)
 	config.set_value("exam","candidate_number",candidate_number)
 	config.set_value("exam","player_id",player_id)
+	config.set_value("exam","invitation_accepted",true)
 	config.set_value("exam","completed_stage_ids",[])
 	config.set_value("exam","exam_active",false)
 	config.save(SAVE_PATH)
+	invitation_accepted = true
 	registered = true
 	exam_active = false
 	current_stage_index = -1
@@ -48,6 +51,53 @@ func apply_for_exam(player_id: String) -> Dictionary:
 	failure_reason = ""
 	exam_registered.emit(candidate_number)
 	return {"success":true,"candidate_number":candidate_number,"stages":EXAM_STAGES.size(),"message":"تم تسجيلك. احتفظ برقمك طوال الاختبار."}
+
+func accept_exam_invitation(player_id: String) -> Dictionary:
+	if player_id.strip_edges().is_empty():
+		return {"success":false,"reason":"PLAYER_ID_REQUIRED"}
+	if registered:
+		return {"success":true,"already_registered":true,"candidate_number":candidate_number}
+	if invitation_accepted:
+		return {"success":true,"pending_tunnel_registration":true,"message":"تم قبول طلبك. اتبع مرشد نقابة الصيادين إلى النفق."}
+	var config := ConfigFile.new()
+	config.load(SAVE_PATH)
+	config.set_value("exam", "player_id", player_id)
+	config.set_value("exam", "invitation_accepted", true)
+	config.set_value("exam", "candidate_number", 0)
+	config.set_value("exam", "exam_active", false)
+	config.save(SAVE_PATH)
+	invitation_accepted = true
+	registered = false
+	candidate_number = 0
+	return {"success":true,"pending_tunnel_registration":true,"message":"تم قبول طلبك. اتبع مرشد نقابة الصيادين إلى النفق."}
+
+
+func register_candidate_at_tunnel(player_id: String) -> Dictionary:
+	if not invitation_accepted:
+		return {"success":false,"reason":"INVITATION_NOT_ACCEPTED"}
+	if registered and candidate_number > 0:
+		return {"success":true,"already_registered":true,"candidate_number":candidate_number}
+	if player_id.strip_edges().is_empty():
+		return {"success":false,"reason":"PLAYER_ID_REQUIRED"}
+	var config := ConfigFile.new()
+	config.load(SAVE_PATH)
+	candidate_number = int(config.get_value("exam", "next_candidate_number", 1001))
+	config.set_value("exam", "next_candidate_number", candidate_number + 1)
+	config.set_value("exam", "candidate_number", candidate_number)
+	config.set_value("exam", "player_id", player_id)
+	config.set_value("exam", "invitation_accepted", true)
+	config.set_value("exam", "completed_stage_ids", [])
+	config.set_value("exam", "exam_active", false)
+	config.save(SAVE_PATH)
+	registered = true
+	exam_active = false
+	current_stage_index = -1
+	completed_stage_ids.clear()
+	failed = false
+	failure_reason = ""
+	exam_registered.emit(candidate_number)
+	return {"success":true,"candidate_number":candidate_number,"message":"تم تسجيلك في النفق. هذا رقمك التسلسلي الدائم."}
+
 
 func begin_exam() -> Dictionary:
 	if not registered:
@@ -104,7 +154,7 @@ func withdraw_or_fail(reason: String) -> void:
 	_save_exam_state()
 
 func get_exam_overview() -> Dictionary:
-	return {"candidate_number":candidate_number,"registered":registered,"active":exam_active,"current_stage_index":current_stage_index,"completed_stages":completed_stage_ids.duplicate(),"total_stages":EXAM_STAGES.size(),"failed":failed,"failure_reason":failure_reason,"stages":EXAM_STAGES.duplicate(true)}
+	return {"candidate_number":candidate_number,"invitation_accepted":invitation_accepted,"registered":registered,"active":exam_active,"current_stage_index":current_stage_index,"completed_stages":completed_stage_ids.duplicate(),"total_stages":EXAM_STAGES.size(),"failed":failed,"failure_reason":failure_reason,"stages":EXAM_STAGES.duplicate(true)}
 
 
 func _load_exam_state() -> void:
@@ -112,6 +162,7 @@ func _load_exam_state() -> void:
 	if config.load(SAVE_PATH) != OK:
 		return
 	candidate_number = int(config.get_value("exam", "candidate_number", 0))
+	invitation_accepted = bool(config.get_value("exam", "invitation_accepted", candidate_number > 0))
 	registered = candidate_number > 0
 	exam_active = bool(config.get_value("exam", "exam_active", false))
 	failed = bool(config.get_value("exam", "failed", false))
@@ -126,6 +177,7 @@ func _save_exam_state() -> void:
 	var config := ConfigFile.new()
 	config.load(SAVE_PATH)
 	config.set_value("exam", "candidate_number", candidate_number)
+	config.set_value("exam", "invitation_accepted", invitation_accepted)
 	config.set_value("exam", "completed_stage_ids", completed_stage_ids)
 	config.set_value("exam", "exam_active", exam_active)
 	config.set_value("exam", "current_stage_index", current_stage_index)
