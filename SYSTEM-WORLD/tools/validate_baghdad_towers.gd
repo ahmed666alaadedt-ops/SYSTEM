@@ -252,6 +252,13 @@ func _run_validation() -> void:
 	if not bool(hunter_tower.get_meta("system_hunter_roof_clearance_reserved", false)) or hunter_tower.get_node_or_null("Crown") != null:
 		_fail("Hunter Tower's rooftop helipad clearance is obstructed by the generic solid crown.")
 		return
+	if hunter_tower.get_node_or_null("AssociationCrownSpire") != null:
+		_fail("The obsolete central Hunter crown spire must not obstruct the rooftop helicopter pad.")
+		return
+	for mast_index in range(4):
+		if hunter_tower.get_node_or_null("HunterRoofBeaconMast_%02d" % mast_index) == null:
+			_fail("Hunter rooftop perimeter beacon mast is missing: %d" % mast_index)
+			return
 	var hunter_beacon := hunter_tower.get_node_or_null("SkyBeacon") as OmniLight3D
 	if hunter_beacon == null or hunter_beacon.position.x < 22.0:
 		_fail("Hunter Tower's rooftop beacon must sit outside the helicopter landing circle.")
