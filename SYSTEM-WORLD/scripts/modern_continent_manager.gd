@@ -814,7 +814,7 @@ func _build_baghdad_republic_bridge() -> void:
 		var delta := Vector3(finish_point.x - start_point.x, 0.0, finish_point.y - start_point.y)
 		if delta.length() < 4.0:
 			continue
-		var midpoint := Vector3((start_point.x + finish_point.x) * 0.5, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 2.15, (start_point.y + finish_point.y) * 0.5)
+		var midpoint := Vector3((start_point.x + finish_point.x) * 0.5, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 0.675, (start_point.y + finish_point.y) * 0.5)
 		var outward_2d := (Vector2(midpoint.x, midpoint.z) - polygon_center).normalized()
 		var rail := MeshInstance3D.new()
 		rail.name = "RepublicBridgeGuardrail_%02d" % index
