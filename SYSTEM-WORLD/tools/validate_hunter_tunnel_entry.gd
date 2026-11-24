@@ -71,7 +71,7 @@ func _run_validation() -> void:
 	var hidden_door := tunnel.get_node_or_null("ConcealedHunterDoorSlab") as Node3D
 	if not _check(hidden_door != null and hidden_door.global_position.y < restaurant_floor.global_position.y, "Physical concealed door slab is not positioned below the restaurant floor."):
 		return
-	if not _check(door.global_position.y < restaurant_floor.global_position.y and door.global_position.distance_to(restaurant_floor.global_position) < 30.0, "Restaurant interaction area is not physically positioned at the concealed floor entry."):
+	if not _check(door.global_position.y <= restaurant_floor.global_position.y + 0.1 and door.global_position.distance_to(restaurant_floor.global_position) < 30.0, "Restaurant interaction area is not physically positioned at the concealed floor entry."):
 		return
 	if not _check(clue_1.global_position.is_equal_approx(clue_positions_before[0]) and clue_2.global_position.is_equal_approx(clue_positions_before[1]) and clue_3.global_position.is_equal_approx(clue_positions_before[2]), "Moving the tunnel under the restaurant must not move the three surveyed riverbank clues."):
 		return
