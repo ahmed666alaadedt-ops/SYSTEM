@@ -339,18 +339,20 @@ func _run() -> void:
 	if str(status.get("advertising_mode", "")) != "npc_staff_managed_internal_external":
 		_fail("NPC-managed internal/external advertising is not active.")
 		return
-	var museum_floor_expectations := {
-		1: "heritage_gallery",
-		5: "heritage_gallery",
-		9: "heritage_gallery",
-		13: "heritage_gallery",
-		17: "archaeology_research",
-		21: "artifact_restoration_lab",
-		25: "player_private_gallery",
-		29: "player_artifact_market",
-		33: "rare_artifact_vault",
-		34: "rare_artifact_vault"
-	}
+	var museum_floor_expectations := {}
+	for museum_floor_number in range(1, 35):
+		var expected_department := "heritage_gallery"
+		if museum_floor_number >= 33:
+			expected_department = "rare_artifact_vault"
+		elif museum_floor_number >= 29:
+			expected_department = "player_artifact_market"
+		elif museum_floor_number >= 25:
+			expected_department = "player_private_gallery"
+		elif museum_floor_number >= 21:
+			expected_department = "artifact_restoration_lab"
+		elif museum_floor_number >= 17:
+			expected_department = "archaeology_research"
+		museum_floor_expectations[museum_floor_number] = expected_department
 	var sample_museum_interaction: Area3D = null
 	for museum_floor_value in museum_floor_expectations.keys():
 		var museum_floor := int(museum_floor_value)
