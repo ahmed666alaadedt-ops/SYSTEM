@@ -7117,6 +7117,7 @@ func _attach_hunter_exam_secret_entry_to_restaurant(room: Node3D, radius: float)
 	tunnel_root.set_meta("system_tunnel_secret_entry_location", "shopping_tower_restaurant_floor_29")
 	tunnel_root.set_meta("system_under_shopping_tower_restaurant", true)
 	tunnel_root.set_meta("system_under_republic_bridge_district", true)
+	tunnel_root.set_meta("system_under_republic_bridge", false)
 	print("SYSTEM Hunter Examination: concealed entrance and descending passage are physically anchored beneath Shopping Tower restaurant floor 29; riverbank clues remain at their surveyed locations.")
 
 func _create_npc_restaurant_order(table_root: Node3D, customer_id: String, floor_number: int) -> void:
