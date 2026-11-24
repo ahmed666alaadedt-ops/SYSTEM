@@ -1765,3 +1765,18 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - [x] Android APK export and artifact upload passed on that run. Artifact [14939624391](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45435296789/artifacts/14939624391), size 36,638,608 bytes, SHA-256 `68d74d57fed9198ed568325f76af585363dce14391fc82a5cba8f03b1696f878`.
 - [x] Local save persistence survives leaving/re-entering and manager recreation on the same installation. Global uniqueness across separate accounts/devices remains pending account/backend integration; it is not claimed by the local ConfigFile counter.
 - [ ] Physical Android-device play inspection of the invitation layout, guide escort presentation and tunnel arrival remains outstanding.
+
+
+## Hunter Examination rival competition — 24 November 2026
+- [x] Added five distinct local AI rivals to the single continuous Hunter tunnel competition: deceiver, objective thief, individual fighter, ambusher and honorable competitor.
+- [x] Connected rival interactions to the real exam runtime and routed rival events into the in-game interaction HUD.
+- [x] Objective theft blocks further objective progression until the player recovers the stolen objective.
+- [x] Added damageable rival combatants compatible with the existing modern-world hitscan damage interface; rivals retaliate through the player's existing combat-health component when a duel or ambush is active.
+- [x] Fighter interaction starts an individual duel; ambusher can reveal itself and pursue the player. Team combat remains excluded.
+- [x] Defeating the thief leaves a recovery interaction available so the stolen objective cannot become permanently inaccessible.
+- [x] Added regression coverage for five rival spawns, objective theft and recovery, recovery after thief defeat, deception, individual duel activation, rival damage/defeat and rejection of unknown rival IDs.
+- [x] Fixed the Hunter Tower recruitment validator's missing global-class resolution by explicitly preloading the manager script.
+- [ ] Final rival-combat regression and full Godot validation on current HEAD `0fc856cd1596da1c162baf98ec3d5ea285afcb88` are queued/running; do not mark the rival system fully verified until the exact latest HEAD completes.
+- [ ] Android APK export and upload for the latest rival-combat HEAD remain in progress; previous successful APKs do not verify these newer rival changes.
+- [ ] Online multiplayer remains out of scope for this local AI implementation and is not claimed.
+- PR #38 remains draft and unmerged. Do not merge to `main` without explicit user approval.
