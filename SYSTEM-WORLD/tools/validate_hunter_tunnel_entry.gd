@@ -58,7 +58,17 @@ func _run_validation() -> void:
 	if not _check(invitation.visible, "Entering the Hunter Tower did not display the invitation."):
 		return
 	var invitation_text := invitation.find_child("InvitationText", true, false) as Label
+	var accept_button := invitation.find_child("AcceptHunterExamInvitation", true, false) as Button
+	var decline_button := invitation.find_child("DeclineHunterExamInvitation", true, false) as Button
 	if not _check(invitation_text != null and invitation_text.text.contains("هل تريد أن تصبح صياداً"), "Invitation does not ask the player to become a Hunter."):
+		return
+	if not _check(accept_button != null and decline_button != null, "Invitation does not provide explicit accept and decline choices."):
+		return
+	main.call("_on_hunter_exam_invitation_declined")
+	if not _check(not invitation.visible and not bool(manager.get_exam_overview().get("invitation_accepted", false)), "Declining the invitation incorrectly accepted or registered the candidate."):
+		return
+	main.call("_on_hunter_tower_arrival_body_entered", player)
+	if not _check(invitation.visible, "The invitation did not reappear after the player returned to the tower entrance."):
 		return
 
 	main.call("_on_hunter_exam_invitation_accepted")
@@ -92,6 +102,15 @@ func _run_validation() -> void:
 	var saved_overview: Dictionary = manager.get_exam_overview()
 	if not _check(int(saved_overview.get("candidate_number", 0)) == serial, "Candidate serial changed during the escort."):
 		return
+	var restored_manager := SYSTEMHunterExamManager.new()
+	root.add_child(restored_manager)
+	await process_frame
+	var restored_overview: Dictionary = restored_manager.get_exam_overview()
+	if not _check(bool(restored_overview.get("registered", false)) and int(restored_overview.get("candidate_number", 0)) == serial, "Candidate serial did not persist across manager recreation."):
+		return
+	var repeat_registration: Dictionary = restored_manager.register_candidate_at_tunnel("local_player")
+	if not _check(int(repeat_registration.get("candidate_number", 0)) == serial, "Re-entry allocated a different candidate serial.") :
+		return
 
-	print("Hunter Tower recruitment validation passed: tower-entry invitation, explicit acceptance, persistent candidate registration, guild-guide escort to the tunnel, and serial delivery at arrival; restaurant access route absent.")
+	print("Hunter Tower recruitment validation passed: arrival invitation, decline/re-entry, acceptance, pending registration, guild-guide escort, serial allocation at tunnel arrival and persistent serial reuse; restaurant access route absent.")
 	quit(0)
