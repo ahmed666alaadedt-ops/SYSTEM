@@ -22,10 +22,13 @@ The Hunter examination is a separate seven-stage global qualification journey. I
 - `scripts/baghdad_tower_landmarks_manager.gd` builds the five connected district towers plus the separate Power Tower, resolves foundations to nearby land where possible, and excludes Power Tower from the five-tower connection loop.
 - `scripts/system_tower_entrance.gd` provides a ray-interactable entrance marker for each tower.
 - `scripts/modern_world_region_manager.gd` creates the tower manager and registers both landmarks in the existing modern-world map manager as `LocationType.LANDMARK` (enum value 5).
-- `scripts/system_hunter_exam_manager.gd` defines a seven-stage examination, candidate numbering, registration, sequential progression, save-state fields, and completion/failure signals. `scripts/system_hunter_exam_stage_runtime.gd` builds Baghdad stage one and connects ordered inscription/relic objectives to that progression.
+- `scripts/system_hunter_exam_manager.gd` defines the seven-stage examination, formal Hunter Association registration, persistent candidate numbering, sequential progression, save-state fields, and completion/failure signals. `scripts/system_hunter_exam_stage_runtime.gd` builds Baghdad stage one and connects ordered inscription/relic objectives to that progression.
+- `scripts/system_hunter_exam_secret_entrance.gd` builds the concealed stone entrance inside Shopping Tower restaurant floor 29. The Eye → River → Crown clue sequence resets on an incorrect order; the stone slab and descending elevator remain locked until formal Association registration, then physically deliver the candidate to the underground tunnel.
+- `scripts/system_hunter_candidate_crowd.gd` creates 500 individually tracked candidate records (serials 2001–2500) with shared MultiMesh body/head rendering and staggered crowd movement. Five named rival NPCs remain separately responsible for full interactive theft/recovery and examination objectives; the 500-person background crowd is not yet a full 500-agent decision-making simulation.
+- `scripts/system_baghdad_tower_operations_manager.gd` attaches the concealed entrance to the restaurant and repairs it when floor 29 is reopened. `scripts/baghdad_tower_landmarks_manager.gd` builds the underground tunnel and its candidate population.
 - `scripts/system_power_tower_manager.gd` defines a separate 200-floor progression track, level requirements, boss/elite floor cadence, rank bands, clear-time records, and XP reward events. `scripts/main.gd` connects its floor-clear reward event to the existing player progression.
-- `scripts/hunter_guild_menu.gd` adds registration and start controls.
-- `scripts/main.gd` creates the examination manager and connects the guild menu signals.
+- `scripts/hunter_guild_menu.gd` adds invitation, formal registration and start controls.
+- `scripts/main.gd` enforces tower registration, riddle completion, physical tunnel arrival and all seven runtime transitions. `tools/validate_hunter_tunnel_entry.gd` covers the hidden entrance and descent; `tools/validate_hunter_exam_stage_runtime.gd` covers all seven stages.
 
 ## Landmark architecture expansion — 20 November 2026
 
@@ -81,7 +84,7 @@ Power Tower implementation now includes sequential unlocks and level gates, huma
 
 The Power Tower still does not claim production online PvP matchmaking, signed server-result verification, global leaderboards, interactive seat reservation/standing, autonomous spectator crowds, a playable spectator ticket interface, 200 individually handcrafted arena scenes or final mobile art/performance polish. The virtual-credit spectator ticket-pool manager is a local prototype and is not an online anti-cheat-secure service.
 
-The Hunter Examination remains a separate seven-stage global qualification journey. Baghdad stage one now has a playable local geometry/objective prototype. The six remaining physical environments, advanced maze/puzzle devices, guardian AI, city-to-city stage travel, server-authoritative candidate verification, anti-cheat checks, and production Hunter-license card remain unfinished.
+The Hunter Examination remains a separate seven-stage global qualification journey. Baghdad stage one has a playable local geometry/objective prototype, and the six additional stages have procedural route blockouts with stage-specific objectives and visual themes. Those six are not yet distinct production-grade city scenes and do not yet implement city-to-city travel. The 500-person tunnel crowd is individually tracked and visibly rendered, but richer autonomous decisions and direct interaction for every crowd candidate, advanced maze/puzzle devices, guardian AI, server-authoritative candidate verification, anti-cheat checks, and the production Hunter-license card remain unfinished.
 
 The stage completion method is an integration hook for a future trusted objective-verification system. A non-empty evidence string is not sufficient security for an online competitive game. Before live multiplayer, completion and candidate-number records must be validated by an authoritative server.
 
