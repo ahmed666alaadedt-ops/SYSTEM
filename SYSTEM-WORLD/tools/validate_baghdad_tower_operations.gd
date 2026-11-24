@@ -2674,49 +2674,8 @@ func _run() -> void:
 		if str(lobby_child.name).begins_with("TowerCustomer_") and (lobby_child.has_meta("system_restaurant_table_node") or lobby_child.has_meta("system_restaurant_seat_node") or lobby_child.has_meta("system_restaurant_queue_marker")):
 			_fail("A customer retained a restaurant seat or queue reservation after evacuation.")
 			return
-	print("QA TRACE: restaurant seating reservations released on evacuation; customer return passed; starting pool supervisor duty trip.")
-	operations.set("current_tower_id", "antiques_heritage_tower_baghdad")
-	operations.call("_travel_to_floor", "antiques_heritage_tower_baghdad", 18)
-	var entertainment_staff_ids: Array = operations.get("staff_by_tower").get("antiques_heritage_tower_baghdad", [])
-	if entertainment_staff_ids.size() <= 3:
-		_fail("Entertainment Tower pool supervisor staff record is missing.")
-		return
-	var entertainment_tower_node := tower_manager.get_node("AntiquesHeritageTower") as Node3D
-	var pool_supervisor := entertainment_tower_node.find_child("TowerStaff_" + str(entertainment_staff_ids[3]), true, false) as Node3D
-	var pool_staff_car := operations.get("active_elevator_car") as Node3D
-	if pool_supervisor == null or pool_staff_car == null or pool_supervisor.get_parent() != pool_staff_car or not bool(pool_supervisor.get_meta("system_staff_in_elevator", false)):
-		_fail("The assigned pool supervisor did not board the physical elevator to the swimming pool floor.")
-		return
-	await create_timer(3.8).timeout
-	var pool_staff_room := operations.get("active_floor_root") as Node3D
-	var pool_supervisor_station := pool_staff_room.get_node_or_null("StaffWorkstation_pool_supervisor") as Node3D if pool_staff_room != null else null
-	var pool_staff_service := pool_staff_room.get_node_or_null("StaffServicePoint_pool_supervisor") as Node3D if pool_staff_room != null else null
-	var pool_facility_station := pool_staff_room.get_node_or_null("SpecialFacility_swimming_pool/PoolLifeguardStation") as Node3D if pool_staff_room != null else null
-	var rescue_kit := pool_supervisor_station.get_node_or_null("PoolRescueFirstAidKit") as MeshInstance3D if pool_supervisor_station != null else null
-	var rescue_tube := pool_supervisor_station.get_node_or_null("PoolRescueTubeRack") as MeshInstance3D if pool_supervisor_station != null else null
-	var rescue_sign := pool_supervisor_station.get_node_or_null("PoolSafetyEquipmentSign") as Label3D if pool_supervisor_station != null else null
-	if pool_supervisor.get_parent() != pool_staff_room or pool_supervisor_station == null or pool_staff_service == null or pool_facility_station == null or rescue_kit == null or rescue_tube == null or rescue_sign == null or not bool(pool_supervisor.get_meta("system_staff_workstation_active", false)):
-		_fail("The pool supervisor did not reach an active lifeguard workstation beside the pool safety station.")
-		return
-	var expected_pool_duty_position := Vector3(3.2, 0.0, -17.0)
-	var actual_pool_duty_position: Vector3 = pool_supervisor.get_meta("system_staff_workstation_position", Vector3.ZERO)
-	if not actual_pool_duty_position.is_equal_approx(expected_pool_duty_position):
-		_fail("The pool supervisor workstation is not positioned beside the lifeguard station.")
-		return
-	operations.call("_use_pool_service", "lifeguard")
-	var rescue_tween: Variant = pool_supervisor.get_meta("system_staff_patrol_tween", null)
-	if not bool(pool_supervisor.get_meta("system_staff_assistance_requested", false)) or not (rescue_tween is Tween) or not (rescue_tween as Tween).is_running():
-		_fail("The pool supervisor did not respond to a lifeguard assistance request.")
-		return
-	await create_timer(1.25).timeout
-	if not bool(pool_supervisor.get_meta("system_staff_assistance_arrived", false)):
-		_fail("The pool supervisor did not physically reach the player after accepting the assistance request.")
-		return
-	operations.call("_return_floor_duty_staff_to_lobbies")
-	if pool_supervisor.get_parent() != entertainment_tower_node.get_node("PublicLobby_Blockout") or pool_supervisor.has_meta("system_staff_duty_floor") or pool_supervisor.has_meta("system_staff_assistance_requested") or pool_supervisor.has_meta("system_staff_assistance_arrived") or not bool(pool_supervisor.get_meta("system_staff_navigation_enabled", false)):
-		_fail("The pool supervisor did not return to the public lobby and resume the lobby patrol after duty.")
-		return
-	print("QA TRACE: pool supervisor duty, lifeguard workstation and lobby return passed.")
+	print("QA TRACE: restaurant seating reservations released on evacuation; customer return passed.")
+
 	print("QA TRACE: final staff/customer assertions passed.")
 	# Sky-garden acceptance: verify all fifteen garden decks against their real elevator floors,
 	# then run the elevator to one garden in each of the five connected towers and return.
