@@ -29,6 +29,9 @@ func handle_interaction(target: Node) -> Dictionary:
 	var objective_id := str(target.get_meta("system_exam_stage_objective", ""))
 	if objective_id.is_empty():
 		return {"handled": false}
+	if objective_id == "examiner_briefing":
+		feedback_message = "الممتحن رائد: لا تبحث عن أسرع طريق فقط. راقب الأرض، اقرأ النقوش بالترتيب، وتجنب الفخاخ. القطعة لا تُفتح بالقوة؛ الدليل الصحيح هو الذي يفتحها."
+		return {"handled": true, "success": true, "message": feedback_message, "examiner": "raed"}
 	if objective_id.begins_with("inscription_"):
 		var clue_id := objective_id.trim_prefix("inscription_")
 		if clue_progress >= EXPECTED_CLUES.size():
@@ -152,6 +155,44 @@ func _build_baghdad_heritage_site() -> void:
 	lantern.light_energy = 1.8
 	lantern.omni_range = 42.0
 	site.add_child(lantern)
+	_build_original_examiner(site, gold, glow)
+
+func _build_original_examiner(parent: Node3D, uniform_material: Material, signal_material: Material) -> void:
+	# Original SYSTEM examiner: a quiet rules-focused proctor, not an anime character recreation.
+	var examiner := Node3D.new()
+	examiner.name = "ExaminerRaed"
+	examiner.position = Vector3(-13.0, 0.0, 4.0)
+	examiner.set_meta("system_examiner_id", "baghdad_examiner_raed")
+	parent.add_child(examiner)
+	var body := MeshInstance3D.new()
+	body.name = "ExaminerUniform"
+	var body_mesh := CapsuleMesh.new()
+	body_mesh.radius = 0.62
+	body_mesh.height = 2.2
+	body.mesh = body_mesh
+	body.position.y = 1.25
+	body.material_override = uniform_material
+	examiner.add_child(body)
+	var head := MeshInstance3D.new()
+	head.name = "ExaminerHead"
+	var head_mesh := SphereMesh.new()
+	head_mesh.radius = 0.42
+	head_mesh.height = 0.84
+	head.mesh = head_mesh
+	head.position.y = 2.72
+	head.material_override = signal_material
+	examiner.add_child(head)
+	var title := Label3D.new()
+	title.name = "ExaminerNameplate"
+	title.text = "الممتحن رائد\nمراقب المرحلة الأولى"
+	title.font_size = 24
+	title.pixel_size = 0.012
+	title.position = Vector3(0.0, 3.65, 0.0)
+	title.modulate = Color(0.88, 0.91, 0.84)
+	examiner.add_child(title)
+	var briefing := _create_objective_area("ExaminerBriefingInteraction", "examiner_briefing", "الممتحن رائد", "تحدث مع ممتحن المرحلة")
+	briefing.position = Vector3(0.0, 1.3, 0.0)
+	examiner.add_child(briefing)
 
 func _add_inscription(parent: Node3D, node_name: String, objective_id: String, label_text: String, local_position: Vector3, material: Material) -> void:
 	var plaque := Node3D.new()
