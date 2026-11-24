@@ -29,6 +29,7 @@ var water_material: StandardMaterial3D
 var land_material: StandardMaterial3D
 var building_material: StandardMaterial3D
 var amenity_material: StandardMaterial3D
+var facade_window_material: StandardMaterial3D
 
 
 func _ready() -> void:
@@ -149,6 +150,14 @@ func _create_materials() -> void:
 	amenity_material.emission_enabled = true
 	amenity_material.emission = Color(0.04, 0.28, 0.4)
 	amenity_material.emission_energy_multiplier = 0.45
+
+	facade_window_material = StandardMaterial3D.new()
+	facade_window_material.albedo_color = Color(0.12, 0.30, 0.39, 0.94)
+	facade_window_material.metallic = 0.12
+	facade_window_material.roughness = 0.24
+	facade_window_material.emission_enabled = true
+	facade_window_material.emission = Color(0.025, 0.075, 0.10)
+	facade_window_material.emission_energy_multiplier = 0.18
 
 
 func _refresh_desired_cells(center: Vector2i) -> void:
@@ -289,6 +298,7 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 		building.set_meta("baghdad_building_type", kind)
 		building.set_meta("osm_building_tag", str(tags.get("building", "yes")))
 		parent.add_child(building)
+		_add_building_facade_windows(parent, ring, height, feature_id)
 		var body := StaticBody3D.new()
 		body.name = "OSMBuildingCollision_%s" % feature_id
 		body.add_to_group("system_interactable")
@@ -328,6 +338,70 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 		if kind == "church" or kind == "mosque":
 			_add_polygon_worship_detail(parent, ring, height, kind, feature_id)
 	return built
+
+
+## Adds one batched facade mesh per footprint instead of hundreds of scene nodes.
+## The instance cap keeps dense real-city cells affordable on Android GPUs.
+func _add_building_facade_windows(parent: Node3D, ring: PackedVector2Array, height: float, feature_id: String) -> void:
+	if ring.size() < 3 or height < 4.5:
+		return
+	var center := Vector2.ZERO
+	for point in ring:
+		center += point
+	center /= float(ring.size())
+	var floor_count := mini(18, maxi(1, int(floor(height / 3.2))))
+	var window_mesh := BoxMesh.new()
+	window_mesh.size = Vector3(0.82, 1.12, 0.055)
+	var transforms: Array[Transform3D] = []
+	const MAX_WINDOWS_PER_BUILDING := 96
+	for edge_index in range(ring.size()):
+		if transforms.size() >= MAX_WINDOWS_PER_BUILDING:
+			break
+		var edge_start := ring[edge_index]
+		var edge_end := ring[(edge_index + 1) % ring.size()]
+		var edge := edge_end - edge_start
+		var edge_length := edge.length()
+		if edge_length < 2.2:
+			continue
+		var tangent := Vector3(edge.x, 0.0, edge.y).normalized()
+		var outward := tangent.cross(Vector3.UP).normalized()
+		var midpoint := (edge_start + edge_end) * 0.5
+		var center_direction := Vector3(midpoint.x - center.x, 0.0, midpoint.y - center.y)
+		if outward.dot(center_direction) < 0.0:
+			tangent = -tangent
+			outward = -outward
+		var basis := Basis(tangent, Vector3.UP, outward)
+		var windows_per_floor := clampi(int(floor(edge_length / 4.2)), 1, 12)
+		for floor_index in range(floor_count):
+			if transforms.size() >= MAX_WINDOWS_PER_BUILDING:
+				break
+			var y := 1.65 + float(floor_index) * 3.15
+			if y + 0.7 >= height:
+				break
+			for window_index in range(windows_per_floor):
+				if transforms.size() >= MAX_WINDOWS_PER_BUILDING:
+					break
+				var fraction := (float(window_index) + 0.5) / float(windows_per_floor)
+				var along := (fraction - 0.5) * edge_length
+				var point := midpoint + Vector2(tangent.x, tangent.z) * along
+				var position := Vector3(point.x, _terrain_height(point) + y, point.y) + outward * 0.045
+				transforms.append(Transform3D(basis, position))
+	if transforms.is_empty():
+		return
+	var multimesh := MultiMesh.new()
+	multimesh.transform_format = MultiMesh.TRANSFORM_3D
+	multimesh.mesh = window_mesh
+	multimesh.instance_count = transforms.size()
+	for index in range(transforms.size()):
+		multimesh.set_instance_transform(index, transforms[index])
+	var facade := MultiMeshInstance3D.new()
+	facade.name = "OSMFacadeWindows_%s" % feature_id
+	facade.multimesh = multimesh
+	facade.material_override = facade_window_material
+	facade.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	facade.set_meta("osm_feature_id", feature_id)
+	facade.set_meta("facade_window_count", transforms.size())
+	parent.add_child(facade)
 
 
 func _find_building_approach_point(ring: PackedVector2Array, road_features: Array) -> Dictionary:
