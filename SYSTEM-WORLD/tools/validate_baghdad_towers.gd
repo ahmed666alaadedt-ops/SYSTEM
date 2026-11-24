@@ -156,7 +156,7 @@ func _run_validation() -> void:
 		_fail("Hunter Tower internal advertising facades are missing.")
 		return
 	var tunnel_root := tower_manager.get_node_or_null("BaghdadHunterExaminationTunnel") as Node3D
-	if tunnel_root == null or not bool(tunnel_root.get_meta("system_under_republic_bridge", false)):
+	if tunnel_root == null or not bool(tunnel_root.get_meta("system_under_republic_bridge_district", false)):
 		_fail("Hunter examination tunnel is not anchored beneath the Republic Bridge tower district.")
 		return
 
