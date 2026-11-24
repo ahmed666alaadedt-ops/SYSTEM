@@ -2930,8 +2930,8 @@ func _run() -> void:
 	for lobby_child in shopping_customer_lobby.get_children():
 		if str(lobby_child.name).begins_with("TowerCustomer_"):
 			customers_after_evacuation += 1
-	if customers_after_evacuation != 4:
-		_fail("Shopping Tower customer visitors did not return to the public lobby after emergency evacuation; found %d." % customers_after_evacuation)
+	if customers_after_evacuation != 100:
+		_fail("All 100 Shopping Tower customers did not return to the public lobby after emergency evacuation; found %d." % customers_after_evacuation)
 		return
 	for lobby_child in shopping_customer_lobby.get_children():
 		if str(lobby_child.name).begins_with("TowerCustomer_") and (lobby_child.has_meta("system_restaurant_table_node") or lobby_child.has_meta("system_restaurant_seat_node") or lobby_child.has_meta("system_restaurant_queue_marker")):
