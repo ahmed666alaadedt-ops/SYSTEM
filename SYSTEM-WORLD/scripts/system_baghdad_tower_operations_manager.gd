@@ -18,7 +18,7 @@ const TOWER_CONFIG := {
 
 	"business_investment_tower_baghdad": {"node": "BusinessInvestmentTower", "title": "برج الأعمال والاستثمار", "floors": 36, "height": 220.0, "radius": 26.0, "roles": ["مدير البرج", "مدير الاستثمار", "مستشار الشركات", "موظف البنوك والعقود", "محاسب البرج", "مسؤول التوظيف", "خدمة المستثمرين", "مسؤول الإعلانات"], "jobs": ["tower_director", "investment_manager", "business_advisor", "bank_contract_clerk", "accountant", "recruitment_manager", "investor_relations", "advertising_manager"]},
 	"shopping_tower_baghdad": {"node": "ShoppingTower", "title": "برج التسوق والتجارة", "floors": 32, "height": 190.0, "radius": 30.0, "roles": ["مدير البرج", "تاجر الأسلحة والدروع", "صيدلاني الإكسير", "مدير الضيافة والفندق", "شيف المطاعم", "نادل وخدمة الزبائن", "موظف استقبال الفندق", "مشرف الغرف والتنظيف", "مسؤول الإعلانات والتسويق"], "jobs": ["shop_manager", "weapons_merchant", "elixir_pharmacist", "hospitality_manager", "restaurant_chef", "restaurant_waiter", "hotel_receptionist", "hotel_housekeeping", "advertising_manager"]},
-	"entertainment_tower_baghdad": {"node": "EntertainmentTower", "title": "برج الترفيه والرياضة", "floors": 34, "height": 205.0, "radius": 29.0, "roles": ["مدير الترفيه", "منظم الفعاليات", "موظف التذاكر", "مشرف المسابح", "مدرب اللياقة", "منظم الألعاب", "خدمة الزوار", "مسؤول الإعلانات"], "jobs": ["entertainment_director", "event_coordinator", "ticket_clerk", "pool_supervisor", "fitness_trainer", "game_host", "guest_services", "advertising_manager"]},
+	"antiques_heritage_tower_baghdad": {"node": "AntiquesHeritageTower", "title": "برج التحف والآثار", "floors": 34, "height": 205.0, "radius": 29.0, "roles": ["مدير المتحف", "أمين آثار عراقية", "أمين الحضارات العالمية", "باحث آثار", "مرمم قطع أثرية", "موثق الملكية والأصالة", "منظم المزادات", "مسؤول المعارض والزوار"], "jobs": ["museum_director", "iraqi_heritage_curator", "world_civilizations_curator", "archaeology_researcher", "artifact_restorer", "provenance_registrar", "auction_coordinator", "museum_guest_services"]},
 	"technology_tower_baghdad": {"node": "TechnologyTower", "title": "برج التكنولوجيا والابتكار", "floors": 40, "height": 245.0, "radius": 27.0, "roles": ["مدير الابتكار", "موظف المختبر", "مهندس الأجهزة", "مهندس الروبوتات", "باحث الذكاء الاصطناعي", "موظف الخدمات الرقمية", "مسؤول الصيانة", "مسؤول الإعلانات"], "jobs": ["innovation_director", "lab_receptionist", "device_engineer", "robotics_engineer", "ai_researcher", "digital_services", "maintenance_engineer", "advertising_manager"]},
 	"power_tower_baghdad": {"node": "PowerTower", "title": "برج القوة", "floors": 200, "height": 820.0, "radius": 26.0, "roles": ["موظف تسجيل التحديات", "منظم الحلبة", "موظف الاستراحة الطبية", "مسؤول الإعلانات"], "jobs": ["arena_registrar", "arena_coordinator", "arena_medic", "advertising_manager"]}
 }
@@ -133,21 +133,17 @@ const PRODUCT_CATALOG := {
 		{"id":"business_cafe_tea","name":"شاي جلسات المستثمرين","price":15},
 		{"id":"business_cafe_pastry","name":"معجنات مقهى الأعمال","price":22}
 	],
-	"entertainment_tower_baghdad": [
-		{"id":"sports_ticket","name":"تذكرة رياضية","price":65},
-		{"id":"pool_ticket","name":"تذكرة المسبح","price":45},
-		{"id":"festival_ticket","name":"تذكرة مهرجان","price":90},
-		{"id":"arena_spectator_ticket","name":"تذكرة مشاهدة الحلبة","price":120},
-		{"id":"cinema_ticket","name":"تذكرة سينما","price":55},
-		{"id":"bowling_ticket","name":"تذكرة بولينغ","price":70},
-		{"id":"arcade_credit_pack","name":"رصيد ألعاب إلكترونية","price":30},
-		{"id":"fitness_day_pass","name":"تذكرة النادي الرياضي","price":50},
-		{"id":"spa_relaxation_ticket","name":"تذكرة الاسترخاء والسبا","price":95},
-		{"id":"family_zone_pass","name":"تذكرة منطقة العائلات","price":80},
-		{"id":"rooftop_event_ticket","name":"تذكرة فعالية السطح","price":120},
-		{"id":"entertainment_cafe_juice","name":"عصير منعش","price":22},
-		{"id":"entertainment_cafe_popcorn","name":"فشار السينما","price":18},
-		{"id":"entertainment_cafe_sandwich","name":"ساندويتش الزوار","price":35}
+	"antiques_heritage_tower_baghdad": [
+		{"id":"museum_general_admission","name":"تذكرة زيارة المتحف","price":35},
+		{"id":"guided_heritage_tour","name":"جولة إرشادية في التراث العراقي","price":55},
+		{"id":"artifact_provenance_report","name":"تقرير توثيق منشأ قطعة أثرية","price":120},
+		{"id":"artifact_condition_assessment","name":"فحص حالة قطعة أثرية","price":95},
+		{"id":"artifact_restoration_consultation","name":"استشارة ترميم متحفي","price":180},
+		{"id":"private_gallery_day_pass","name":"تصريح عرض مجموعة شخصية ليوم","price":90},
+		{"id":"auction_catalog_access","name":"دليل المزاد وسجل القطع","price":40},
+		{"id":"museum_research_archive_pass","name":"تصريح أرشيف البحث الأثري","price":75},
+		{"id":"heritage_cafe_tea","name":"شاي قاعة التراث","price":15},
+		{"id":"heritage_cafe_coffee","name":"قهوة المتحف","price":22}
 	],
 	"technology_tower_baghdad": [
 		{"id":"scanner_device","name":"جهاز ماسح","price":750},
@@ -409,7 +405,7 @@ func _create_visible_staff(tower_id: String, npc_id: String, index: int, config:
 		"business_investment_tower_baghdad": uniform_id = "business_staff"
 		"shopping_tower_baghdad":
 			uniform_id = "hotel_staff" if str(config["jobs"][index]) in ["hospitality_manager", "hotel_receptionist", "hotel_housekeeping"] else ("restaurant_staff" if str(config["jobs"][index]) in ["restaurant_chef", "restaurant_waiter"] else "shopping_staff")
-		"entertainment_tower_baghdad": uniform_id = "entertainment_staff"
+		"antiques_heritage_tower_baghdad": uniform_id = "museum_curator_staff"
 		"technology_tower_baghdad": uniform_id = "technology_staff"
 		"power_tower_baghdad": uniform_id = "power_staff"
 	if model.has_method("set_outfit"):
@@ -527,19 +523,15 @@ func _get_floor_duty_staff_index(tower_id: String, floor_number: int) -> int:
 			if floor_number >= 9:
 				return 2
 			return 0
-		"entertainment_tower_baghdad":
-			if floor_number in [18, 19]:
-				return 3
-			if floor_number == 20:
-				return 4
-			if floor_number == 24:
-				return 1
-			if floor_number >= 26:
-				return 6
-			if floor_number >= 21:
-				return 5
-			if floor_number >= 11:
-				return 2
+		"antiques_heritage_tower_baghdad":
+			if floor_number >= 33: return 7
+			if floor_number >= 29: return 6
+			if floor_number >= 25: return 5
+			if floor_number >= 21: return 4
+			if floor_number >= 17: return 3
+			if floor_number >= 13: return 2
+			if floor_number >= 9: return 2
+			if floor_number >= 5: return 1
 			return 0
 		"technology_tower_baghdad":
 			if floor_number == 12:
@@ -911,7 +903,7 @@ func _create_customer_population() -> void:
 		"hunter_association_tower_baghdad",
 		"business_investment_tower_baghdad",
 		"shopping_tower_baghdad",
-		"entertainment_tower_baghdad",
+		"antiques_heritage_tower_baghdad",
 		"technology_tower_baghdad"
 	]
 	for tower_index in range(public_towers.size()):
@@ -1112,7 +1104,7 @@ func _create_public_lobby_cafes() -> void:
 		"hunter_association_tower_baghdad",
 		"business_investment_tower_baghdad",
 		"shopping_tower_baghdad",
-		"entertainment_tower_baghdad",
+		"antiques_heritage_tower_baghdad",
 		"technology_tower_baghdad"
 	]
 	for tower_id_value in public_towers:
@@ -4120,19 +4112,16 @@ func _department_for_floor(tower_id: String, floor_number: int, total: int) -> S
 			if ratio > 0.55: return "البنوك والتمويل والعقود التجارية"
 			if ratio > 0.3: return "مكاتب تأسيس الشركات والتوظيف"
 			return "ردهة الأعمال والاستشارات"
-		"entertainment_tower_baghdad":
-			if floor_number in [18, 19, 20]: return "المسابح والمنتجع المائي"
-			if floor_number == 21: return "النادي الرياضي واللياقة"
-			if floor_number == 22: return "الملاعب والأنشطة الجماعية"
-			if floor_number == 23: return "البولينغ والألعاب"
-			if floor_number == 24: return "السينما والعروض"
-			if floor_number == 25: return "الألعاب الإلكترونية"
-			if floor_number == 26: return "منطقة العائلات والأطفال"
-			if floor_number >= 33: return "حدائق السطح والفعاليات المفتوحة"
-			if ratio > 0.8: return "المهرجانات والفعاليات"
-			if ratio > 0.55: return "الرياضة والترفيه"
-			if ratio > 0.3: return "الأنشطة العائلية"
-			return "مركز الترفيه"
+		"antiques_heritage_tower_baghdad":
+			if floor_number <= 4: return "معارض سومر وأكد وبابل وآشور"
+			if floor_number <= 8: return "معارض مصر القديمة وحضارات النيل"
+			if floor_number <= 12: return "معارض اليونان وروما والعالم الهلنستي"
+			if floor_number <= 16: return "معارض الصين القديمة وطريق الحرير"
+			if floor_number <= 20: return "مركز البحث الأثري وأرشيف الملكية والاكتشافات"
+			if floor_number <= 24: return "مختبرات الترميم وفحص الأصالة والتقييم"
+			if floor_number <= 28: return "معارض المجموعات الشخصية للاعبين"
+			if floor_number <= 32: return "سوق القطع الأثرية وقاعات المزادات"
+			return "مجلس الأمناء وخزنة القطع النادرة"
 		"technology_tower_baghdad":
 			if ratio > 0.75: return "مختبرات الابتكار المتقدم"
 			if ratio > 0.5: return "الروبوتات والهندسة"
@@ -4262,22 +4251,25 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 	var facility_type := ""
 	var facility_title := ""
 	match tower_id:
-		"entertainment_tower_baghdad":
-			if floor_number in [18, 19, 20]:
-				facility_type = "swimming_pool"
-				facility_title = "مسبح SYSTEM — مسبح رئيسي ومنطقة استرخاء"
-			elif floor_number == 21:
-				facility_type = "fitness_gym"
-				facility_title = "نادي اللياقة والأجهزة الرياضية"
-			elif floor_number == 22:
-				facility_type = "sports_court"
-				facility_title = "ملعب كرة السلة والأنشطة الجماعية"
-			elif floor_number == 23:
-				facility_type = "bowling"
-				facility_title = "صالة البولينغ والألعاب"
-			elif floor_number == 24:
-				facility_type = "cinema"
-				facility_title = "سينما SYSTEM"
+		"antiques_heritage_tower_baghdad":
+			if floor_number <= 16:
+				facility_type = "heritage_gallery"
+				facility_title = "قاعة عرض القطع الأثرية — " + department
+			elif floor_number <= 20:
+				facility_type = "archaeology_research"
+				facility_title = "مركز البحث الأثري وتوثيق الملكية"
+			elif floor_number <= 24:
+				facility_type = "artifact_restoration_lab"
+				facility_title = "مختبر ترميم وفحص القطع الأثرية"
+			elif floor_number <= 28:
+				facility_type = "player_private_gallery"
+				facility_title = "معرض مجموعة اللاعب الخاصة"
+			elif floor_number <= 32:
+				facility_type = "player_artifact_market"
+				facility_title = "سوق اللاعبين وقاعة المزادات"
+			else:
+				facility_type = "rare_artifact_vault"
+				facility_title = "خزنة القطع النادرة ومجلس الأمناء"
 			elif floor_number == 25:
 				facility_type = "arcade"
 				facility_title = "مركز الألعاب الإلكترونية"
@@ -4760,7 +4752,7 @@ func open_pool_service(target: Node) -> void:
 	}
 	if not service_titles.has(service_type):
 		return
-	current_tower_id = str(target.get_meta("system_tower_id", "entertainment_tower_baghdad"))
+	current_tower_id = str(target.get_meta("system_tower_id", "antiques_heritage_tower_baghdad"))
 	current_staff_id = ""
 	current_pool_service_suite = target.get_parent() as Node3D if service_type == "locker" else null
 	_clear_dynamic_controls()
