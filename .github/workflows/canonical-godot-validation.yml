@@ -188,5 +188,7 @@ jobs:
             ${{ runner.temp }}/terrain-cell-streaming.log
             ${{ runner.temp }}/baghdad-tower-landmarks.log
             ${{ runner.temp }}/baghdad-tower-operations.log
+            ${{ runner.temp }}/hunter-tower-recruitment.log
+            ${{ runner.temp }}/hunter-exam-continuous-competition.log
           if-no-files-found: warn
           retention-days: 14
