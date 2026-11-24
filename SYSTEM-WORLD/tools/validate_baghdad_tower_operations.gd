@@ -142,6 +142,26 @@ func _run() -> void:
 	if tower_manager == null:
 		_fail("BaghdadTowerLandmarksManager is missing.")
 		return
+	var hunter_tunnel := main.find_child("BaghdadHunterExaminationTunnel", true, false) as Node3D
+	if hunter_tunnel == null:
+		_fail("The physical Baghdad Hunter examination tunnel is missing.")
+		return
+	var candidate_crowd := hunter_tunnel.get_node_or_null("HunterCandidateCrowd")
+	if candidate_crowd == null:
+		_fail("The tunnel did not spawn its 500-candidate NPC population.")
+		return
+	var candidate_status: Dictionary = candidate_crowd.call("get_crowd_status")
+	if int(candidate_status.get("candidate_count", 0)) != 500 or int(candidate_status.get("unique_candidate_numbers", 0)) != 500:
+		_fail("The Hunter tunnel must contain 500 individually tracked candidate NPCs; found %d." % int(candidate_status.get("candidate_count", 0)))
+		return
+	if int(candidate_status.get("body_instances", 0)) != 500 or int(candidate_status.get("head_instances", 0)) != 500:
+		_fail("The 500 Hunter candidates are not all visibly rendered.")
+		return
+	var first_candidate: Node3D = candidate_crowd.call("get_candidate_by_number", 2001) as Node3D
+	var last_candidate: Node3D = candidate_crowd.call("get_candidate_by_number", 2500) as Node3D
+	if first_candidate == null or last_candidate == null or not bool(hunter_tunnel.get_meta("system_hunter_candidate_population_verified", false)):
+		_fail("The Hunter tunnel candidate serial registry is incomplete.")
+		return
 	var expected_tower_nodes := {
 		"hunter_association_tower_baghdad": "HunterAssociationTower",
 		"business_investment_tower_baghdad": "BusinessInvestmentTower",
