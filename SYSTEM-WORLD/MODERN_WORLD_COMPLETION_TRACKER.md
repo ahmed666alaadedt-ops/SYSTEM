@@ -1671,3 +1671,16 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - [ ] Physical Android-device installation, touch/visual inspection, and performance testing remain outstanding; headless checks and APK export do not replace device QA.
 - [x] PR #38 remains open, draft, and unmerged. No changes were merged into `main`.
 - [x] Scope guard maintained: no Power Tower gameplay/system files were modified in the Baghdad runtime correction pass.
+
+
+## User-approved Baghdad skyline identity and central Hunter Tower relocation — 24 November 2026
+
+- Reassigned the former decorative central S-spire position to the real, functional Hunter Association Tower. The decorative S-spire and its S insignia are removed rather than left as a competing landmark.
+- The five-tower Baghdad district remains geographically centered on the verified Republic Bridge/Tigris reference. The Hunter Tower keeps the bridge's surveyed X/Z anchor, while its physical base now sits on the uppermost circular sky-city platform surface at Y=419.2 m (the platform center is Y=418.0 m and is 2.4 m thick).
+- The Hunter Association Tower remains 1000 m tall and is now visibly the tallest central structure above the four surrounding upper-city district towers and the three circular sky platforms.
+- Added four outward-facing illuminated XSX guild emblem plaques to the Hunter Tower facade, one on each cardinal side, with the Arabic identity “نقابة الصيادين العالمية”. The tower metadata identifies XSX as its guild insignia.
+- Updated SYSTEM-WORLD/tools/validate_baghdad_towers.gd to require the 419.2 m upper-city crown placement, the functional Hunter Tower identity, four XSX facades, and the absence of the obsolete decorative S-spire.
+- Updated SYSTEM-WORLD/tools/validate_baghdad_tower_operations.gd to replace the former S-spire assertion with checks for the central functional Hunter Tower and its XSX emblem.
+- Updated BAGHDAD_TOWERS_APPROVED_EXPANSION.md so the approved vertical layout matches the user's direction while preserving the real Republic Bridge/Tigris geographic reference below.
+- Source changes are on feature/baghdad-five-plus-power-tower-20261122 and PR #38 only. No merge to main was performed.
+- Verification status: Godot 4.3 full validation and Android export for this exact architectural change are pending. Do not mark this relocation or the new XSX facade as verified until both workflows complete successfully. Physical Android visual/touch inspection remains outstanding.
