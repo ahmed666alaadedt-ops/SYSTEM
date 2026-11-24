@@ -13,6 +13,7 @@ var feedback_message := ""
 var active_stage_id := ""
 var stage_objective_progress := 0
 var stage_objectives: Array[String] = []
+var rival_competition: Node3D
 
 func activate_stage(stage_data: Dictionary, active_player: CharacterBody3D, manager: Node) -> Dictionary:
 	exam_manager = manager
@@ -34,6 +35,11 @@ func activate_stage(stage_data: Dictionary, active_player: CharacterBody3D, mana
 func handle_interaction(target: Node) -> Dictionary:
 	if not stage_built or not is_instance_valid(target):
 		return {"handled": false}
+	var rival_id := str(target.get_meta("system_exam_rival_id", ""))
+	if not rival_id.is_empty() and is_instance_valid(rival_competition):
+		return rival_competition.call("handle_rival_interaction", rival_id)
+	if is_instance_valid(rival_competition) and not bool(rival_competition.call("can_continue_objectives")):
+		return {"handled": true, "success": false, "message": "أحد المتسابقين سرق هدفك! استعده منه قبل متابعة الاختبار."}
 	var objective_id := str(target.get_meta("system_exam_stage_objective", ""))
 	if objective_id.is_empty():
 		return {"handled": false}
@@ -51,6 +57,8 @@ func handle_interaction(target: Node) -> Dictionary:
 			feedback_message = "ترتيب خاطئ! أعيد تسلسل النقوش من البداية."
 			return {"handled": true, "success": false, "message": feedback_message, "progress": clue_progress}
 		clue_progress += 1
+		if is_instance_valid(rival_competition):
+			rival_competition.call("record_player_objective", objective_id)
 		if clue_progress == EXPECTED_CLUES.size():
 			artifact_unlocked = true
 			var relic := get_node_or_null("BaghdadHeritageSite/ArtifactPedestal/RecoveredArtifact")
@@ -166,6 +174,7 @@ func _build_baghdad_heritage_site() -> void:
 	lantern.omni_range = 42.0
 	site.add_child(lantern)
 	_build_original_examiner(site, gold, glow)
+	_spawn_rival_competition(site)
 
 func _build_original_examiner(parent: Node3D, uniform_material: Material, signal_material: Material) -> void:
 	# Original SYSTEM examiner: a quiet rules-focused proctor, not an anime character recreation.
@@ -331,6 +340,7 @@ func _build_additional_stage(stage_id: String) -> Dictionary:
 	light.light_color = config["material"]
 	site.add_child(light)
 	_build_stage_examiner(site,base_material)
+	_spawn_rival_competition(site)
 	return {"success":true,"stage_id":stage_id,"environment":"physical_route_with_collisions","objectives":config["labels"].duplicate()}
 
 func _handle_additional_stage_objective(objective_id: String, target: Node) -> Dictionary:
@@ -344,6 +354,8 @@ func _handle_additional_stage_objective(objective_id: String, target: Node) -> D
 	if objective_id != expected:
 		return {"handled":true,"success":false,"message":"هذا ليس الهدف التالي. راجع مسار المرحلة قبل التقدم.","progress":stage_objective_progress}
 	stage_objective_progress += 1
+	if is_instance_valid(rival_competition):
+		rival_competition.call("record_player_objective", objective_id)
 	var stage_labels := {
 		"cairo_buried_market":["تم تحديد علامة القافلة.","حافظت على مورد الماء ووصلت إلى بوابة الخروج."],
 		"alexandria_lighthouse":["عادت إشارة المنارة للعمل.","تم إنقاذ المتسابق وتوجيه العدسة."],
@@ -391,3 +403,16 @@ func _build_stage_examiner(parent: Node3D, uniform_material: Material) -> void:
 	var briefing := _create_objective_area("ExaminerBriefingInteraction","examiner_briefing","مراقب الاختبار","استمع إلى تعليمات المرحلة")
 	briefing.position.y = 1.0
 	examiner.add_child(briefing)
+
+
+func _spawn_rival_competition(parent: Node3D) -> void:
+	if is_instance_valid(rival_competition):
+		return
+	var rival_script := load("res://scripts/system_hunter_rival_competition.gd")
+	if rival_script == null:
+		push_warning("SYSTEM Hunter Exam: rival competition module could not be loaded.")
+		return
+	rival_competition = rival_script.new()
+	rival_competition.name = "HunterRivalCompetition"
+	parent.add_child(rival_competition)
+	rival_competition.call("setup", player, parent)
