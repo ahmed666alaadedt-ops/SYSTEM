@@ -147,8 +147,8 @@ func _run_validation() -> void:
 			return
 		if district_id == "hunter_association_tower_baghdad":
 			hunter_record = district_record
-			if district_height < 1000.0 or Vector2(district_position.x - bridge_anchor.x, district_position.z - bridge_anchor.z).length() > 0.5 or absf(district_position.y - 18.0) > 0.1:
-				_fail("Hunter Association Tower must be the 1000 m landmark seated directly on the Republic Bridge deck.")
+			if district_height < 1000.0 or Vector2(district_position.x - bridge_anchor.x, district_position.z - bridge_anchor.z).length() > 0.5 or absf(district_position.y - 418.0) > 0.1:
+				_fail("Hunter Association Tower must be the 1000 m central landmark seated on the upper Baghdad sky-city crown platform at 418 m.")
 				return
 		elif district_height >= 1000.0:
 			_fail("A non-Hunter Baghdad district tower incorrectly matches or exceeds the Hunter Tower height.")
@@ -179,6 +179,20 @@ func _run_validation() -> void:
 		return
 	if upper_city.get_node_or_null("HunterTowerUpperCityAtriumRing") == null or upper_city.get_node_or_null("HunterAtriumWalkway_North_Collision") == null or upper_city.get_node_or_null("HunterAtriumSkyway_00") == null or upper_city.get_node_or_null("UpperCitySkyway_00") == null:
 		_fail("The upper city does not provide the Hunter Tower atrium and connected walkable skyways.")
+		return
+	var central_hunter := tower_manager.get_node_or_null("HunterAssociationTower") as Node3D
+	if central_hunter == null or absf(central_hunter.position.y - 418.0) > 0.1:
+		_fail("The functional Hunter Association Tower is not physically seated on the uppermost 418 m Baghdad sky-city platform.")
+		return
+	if str(central_hunter.get_meta("system_hunter_guild_insignia", "")) != "XSX" or int(central_hunter.get_meta("system_hunter_guild_identity_facades", 0)) != 4:
+		_fail("The central Hunter Association Tower must display the XSX guild emblem on all four exterior sides.")
+		return
+	var hunter_emblem := central_hunter.get_node_or_null("HunterXSXEmblemPlaque_00/XSXEmblemText") as Label3D
+	if hunter_emblem == null or hunter_emblem.text != "XSX":
+		_fail("The central Hunter Association Tower XSX emblem is missing.")
+		return
+	if tower_manager.get_node_or_null("BaghdadUpperSkyCity/BaghdadSYSTEMCentralSpire") != null:
+		_fail("The obsolete decorative central S spire must not coexist with the functional Hunter Association Tower.")
 		return
 
 	for district_record in tower_manager.district_tower_positions:
