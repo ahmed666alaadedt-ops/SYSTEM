@@ -49,12 +49,16 @@ func _run_validation() -> void:
 		return
 
 	var terrain := tower_manager.get("terrain") as Node3D
-	if terrain == null or not terrain.has_method("get_baghdad_bridge_anchor"):
-		_fail("ModernContinent is missing the verified Baghdad bridge anchor API.")
+	if terrain == null or not terrain.has_method("get_baghdad_bridge_anchor") or not terrain.has_method("get_baghdad_bridge_nearest_bank_anchor"):
+		_fail("ModernContinent is missing the verified Baghdad bridge anchor APIs.")
 		return
 	var bridge_anchor: Vector3 = terrain.call("get_baghdad_bridge_anchor")
+	var bridge_bank_anchor: Vector3 = terrain.call("get_baghdad_bridge_nearest_bank_anchor")
 	if bridge_anchor == Vector3.INF or absf(bridge_anchor.x - 3563.921) > 2.0 or absf(bridge_anchor.z + 1050.256) > 2.0:
 		_fail("Republic Bridge local anchor does not match the verified WGS84/OSM reference.")
+		return
+	if bridge_bank_anchor == Vector3.INF or bridge_bank_anchor.length() >= bridge_anchor.length():
+		_fail("Republic Bridge nearest surveyed bank endpoint is missing or not the nearest approach point.")
 		return
 	var bridge_node := terrain.get_node_or_null("BaghdadRepublicBridge") as Node3D
 	if bridge_node == null or int(bridge_node.get_meta("system_osm_bridge_polygon_way_id", 0)) != 1077808833:
@@ -78,17 +82,24 @@ func _run_validation() -> void:
 		_fail("The generated access causeway must be explicitly distinguished from OSM road geometry.")
 		return
 	var causeway_body := access_causeway.get_node_or_null("BaghdadBridgeAccessCausewayCollision") as StaticBody3D
-	if causeway_body == null or causeway_body.get_node_or_null("CausewayCollisionShape") == null:
+	var causeway_shape := causeway_body.get_node_or_null("CausewayCollisionShape") as CollisionShape3D if causeway_body != null else null
+	if causeway_body == null or causeway_shape == null or causeway_shape.shape == null:
 		_fail("The Baghdad bridge access causeway has no physical collision.")
 		return
-	# Sample the entire playable approach corridor, not just three isolated
-	# points. The surveyed bridge is several kilometres from the Baghdad origin,
-	# so a short island/corridor regression could otherwise pass while leaving
-	# a gap that strands the player before reaching the bridge district.
+	if not causeway_shape.shape is ConcavePolygonShape3D or (causeway_shape.shape as ConcavePolygonShape3D).get_faces().size() < 100:
+		_fail("The Baghdad bridge access causeway collision mesh is empty or incomplete.")
+		return
+	var causeway_end: Vector3 = access_causeway.get_meta("system_route_end", Vector3.INF)
+	if causeway_end == Vector3.INF or Vector2(causeway_end.x, causeway_end.z).distance_to(Vector2(bridge_bank_anchor.x, bridge_bank_anchor.z)) > 1.0:
+		_fail("The playable causeway does not terminate at the nearest surveyed bridge bank.")
+		return
+	# Test only the land approach up to the surveyed near bank. The river itself
+	# is crossed on the separately validated Republic Bridge deck, not by
+	# demanding that the Tigris water surface be classified as dry land.
 	for sample_index in range(1, 19):
 		var corridor_fraction := float(sample_index) * 0.05
-		var corridor_x := bridge_anchor.x * corridor_fraction
-		var corridor_z := bridge_anchor.z * corridor_fraction
+		var corridor_x := bridge_bank_anchor.x * corridor_fraction
+		var corridor_z := bridge_bank_anchor.z * corridor_fraction
 		if not bool(terrain.call("is_land_position", corridor_x, corridor_z)):
 			var sample_height := float(terrain.call("get_terrain_height", corridor_x, corridor_z))
 			var procedural_radius := float(terrain.call("_continent_radius", corridor_x, corridor_z))
