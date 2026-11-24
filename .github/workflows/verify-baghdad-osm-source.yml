@@ -277,6 +277,32 @@ jobs:
           )
           PY
 
+      - name: Verify Republic Bridge and Tigris against the current OSM snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/baghdad-source"
+          python3 -m pip install --disable-pip-version-check "shapely==2.1.2"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from shapely.geometry import shape
+
+          reference = json.loads(Path("$GITHUB_WORKSPACE/SYSTEM-WORLD/data/geography/baghdad/republic_bridge_reference.json").read_text(encoding="utf-8"))
+          bridge_data = json.loads(Path("clipped_layers/bridges.geojson").read_text(encoding="utf-8"))
+          water_data = json.loads(Path("clipped_layers/waterways.geojson").read_text(encoding="utf-8"))
+          bridge_features = {int(f.get("properties", {}).get("@id", -1)): f for f in bridge_data.get("features", [])}
+          water_features = {int(f.get("properties", {}).get("@id", -1)): f for f in water_data.get("features", [])}
+          assert 1077808833 in bridge_features, "Republic Bridge polygon way 1077808833 missing from latest OSM extract"
+          assert 4080878 in bridge_features, "Republic Bridge centerline way 4080878 missing from latest OSM extract"
+          assert 24709603 in water_features, "Tigris River way 24709603 missing from latest OSM extract"
+          centroid = shape(bridge_features[1077808833]["geometry"]).centroid
+          expected = reference["republic_bridge"]["center_wgs84"]
+          assert abs(centroid.y - expected["latitude"]) < 0.0002
+          assert abs(centroid.x - expected["longitude"]) < 0.0002
+          print("Verified Republic Bridge polygon, centerline and Tigris geometry against current OSM snapshot.")
+          PY
+
       - name: Build Baghdad core and Republic Bridge metric cell pack
         shell: bash
         run: |
