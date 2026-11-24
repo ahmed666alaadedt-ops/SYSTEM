@@ -202,6 +202,9 @@ func _land_base_height(x: float, z: float) -> float:
 
 func _get_height(x: float, z: float) -> float:
 	if baghdad_bridge_reference_loaded:
+		var bridge_bank_point := _baghdad_bridge_nearest_bank_point()
+		var corridor_distance := _distance_to_segment(Vector2(x, z), Vector2.ZERO, bridge_bank_point)
+		var corridor_height := 13.0 + sin(x * 0.009) * 1.0 + cos(z * 0.011) * 0.8
 		var bridge_dx := (x - baghdad_bridge_center.x) / BAGHDAD_LAND_RADIUS_X
 		var bridge_dz := (z - baghdad_bridge_center.y) / BAGHDAD_LAND_RADIUS_Z
 		var bridge_radius := sqrt(bridge_dx * bridge_dx + bridge_dz * bridge_dz)
@@ -209,33 +212,38 @@ func _get_height(x: float, z: float) -> float:
 			var bridge_coast_factor := clampf((1.0 - bridge_radius) / 0.12, 0.0, 1.0)
 			var bridge_coast_ease := bridge_coast_factor * bridge_coast_factor * (3.0 - 2.0 * bridge_coast_factor)
 			var bridge_land_height := 18.0 + sin(x * 0.012) * 1.2 + cos(z * 0.014) * 0.9
-			return lerpf(SEA_LEVEL - 1.2, bridge_land_height, bridge_coast_ease) - _baghdad_tigris_channel_depth(x, z)
-		var bridge_bank_point := _baghdad_bridge_nearest_bank_point()
-		var corridor_distance := _distance_to_segment(Vector2(x, z), Vector2.ZERO, bridge_bank_point)
-		var corridor_height := 13.0 + sin(x * 0.009) * 1.0 + cos(z * 0.011) * 0.8
+			var bridge_natural_height := lerpf(SEA_LEVEL - 1.2, bridge_land_height, bridge_coast_ease) - _baghdad_tigris_channel_depth(x, z)
+			# Continue the generated access ramp onto the near bank. The river
+			# crossing itself remains the separately surveyed Republic Bridge.
+			if corridor_distance <= 18.0:
+				var bridge_access_blend := clampf((18.0 - corridor_distance) / 6.0, 0.0, 1.0)
+				var bridge_access_ease := bridge_access_blend * bridge_access_blend * (3.0 - 2.0 * bridge_access_blend)
+				return lerpf(bridge_natural_height, maxf(bridge_natural_height, corridor_height), bridge_access_ease)
+			return bridge_natural_height
+
 		var radius := _continent_radius(x, z)
 		if radius <= 1.0:
 			var coast_factor := clampf((1.0 - radius) / 0.10, 0.0, 1.0)
 			var coast_ease := coast_factor * coast_factor * (3.0 - 2.0 * coast_factor)
 			var interior_height := _land_base_height(x, z)
 			var natural_height := lerpf(SEA_LEVEL - 1.2, interior_height, coast_ease)
-			# The surveyed bridge lies several kilometres from the playable
-			# Baghdad origin. A narrow, explicitly generated access causeway
-			# keeps low terrain inside the continent from breaking the route.
-			# It is separate from OSM data and never claims to be a mapped road.
-			if bridge_radius > 1.0 and corridor_distance <= 18.0:
+			# Keep the connector walkable even where the procedural low basin
+			# falls below sea level. This narrow strip is generated gameplay
+			# infrastructure, not an OpenStreetMap road.
+			if corridor_distance <= 18.0:
 				var access_blend := clampf((18.0 - corridor_distance) / 6.0, 0.0, 1.0)
 				var access_ease := access_blend * access_blend * (3.0 - 2.0 * access_blend)
 				return lerpf(natural_height, maxf(natural_height, corridor_height), access_ease)
 			return natural_height
 
+		# The connector must remain continuous across the entire gap between
+		# the playable continent and the surveyed bridge island. Do not gate
+		# its elevation by the bridge island's coastal radius: that created a
+		# submerged band before the near bank.
 		if corridor_distance <= BAGHDAD_URBAN_CORRIDOR_HALF_WIDTH:
 			var corridor_blend := clampf((BAGHDAD_URBAN_CORRIDOR_HALF_WIDTH - corridor_distance) / 110.0, 0.0, 1.0)
 			var corridor_ease := corridor_blend * corridor_blend * (3.0 - 2.0 * corridor_blend)
-			var bridge_edge_blend := clampf((bridge_radius - 1.0) / 0.12, 0.0, 1.0)
-			var bridge_edge_ease := bridge_edge_blend * bridge_edge_blend * (3.0 - 2.0 * bridge_edge_blend)
-			var corridor_elevation_blend := corridor_ease * bridge_edge_ease
-			return lerpf(SEA_LEVEL - 1.2, corridor_height, corridor_elevation_blend)
+			return lerpf(SEA_LEVEL - 1.2, corridor_height, corridor_ease)
 
 	for island in ISLAND_DATA:
 		var island_radius_value := _island_radius(
