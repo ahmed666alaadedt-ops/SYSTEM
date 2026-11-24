@@ -3153,15 +3153,29 @@ func _walk_sky_garden_bridge(player: CharacterBody3D, tower: Node3D, garden: Nod
 	var travel_direction := travel.normalized()
 	var travel_distance := travel.length()
 	var travelled := 0.0
-	# At 3 m/s a 46–50 m bridge needs roughly 1,000 physics frames at 60 Hz.
-	# Keep real walking speed and collision response; do not teleport or shorten the route.
+	var last_blocker_name := "none"
+	var last_blocker_normal := Vector3.ZERO
+	var last_blocked_position := player.global_position
+	var consecutive_blocked_frames := 0
+	# Keep real walking speed and collision response; record the physical blocker instead of guessing.
 	for _step in range(1050):
 		player.velocity = Vector3(travel_direction.x * 3.0, -1.0, travel_direction.z * 3.0)
 		var previous_position := player.global_position
 		player.move_and_slide()
 		await physics_frame
-		travelled += Vector2(player.global_position.x - previous_position.x, player.global_position.z - previous_position.z).length()
-		if player.global_position.distance_to(end_world) <= 0.55:
+		var frame_distance := Vector2(player.global_position.x - previous_position.x, player.global_position.z - previous_position.z).length()
+		travelled += frame_distance
+		if player.get_slide_collision_count() > 0:
+			var blocking_collision := player.get_slide_collision(player.get_slide_collision_count() - 1)
+			if blocking_collision != null:
+				last_blocker_name = str(blocking_collision.get_collider().name) if is_instance_valid(blocking_collision.get_collider()) else "freed-collider"
+				last_blocker_normal = blocking_collision.get_normal()
+				last_blocked_position = player.global_position
+		if frame_distance < 0.002:
+			consecutive_blocked_frames += 1
+		else:
+			consecutive_blocked_frames = 0
+		if consecutive_blocked_frames >= 30 or player.global_position.distance_to(end_world) <= 0.55:
 			break
 	var reached_far_end := player.global_position.distance_to(end_world) <= 0.55
 	var remained_on_walkway := player.global_position.y >= garden.to_global(Vector3(0.0, 0.66, 0.0)).y + 0.72
@@ -3169,7 +3183,7 @@ func _walk_sky_garden_bridge(player: CharacterBody3D, tower: Node3D, garden: Nod
 	player.velocity = Vector3.ZERO
 	player.set_physics_process(was_physics_processing)
 	if not initial_on_floor or not reached_far_end or travelled < travel_distance * 0.72 or not remained_on_walkway:
-		_fail("Player capsule could not traverse the full sky-garden bridge while supported by collision: %s / garden %d (distance %.2f / %.2f)." % [tower_id, garden_number, travelled, travel_distance])
+		_fail("Player capsule could not traverse the full sky-garden bridge: %s / garden %d (distance %.2f / %.2f, position %s, blocker %s, normal %s, blocked_frames %d, on_floor %s)." % [tower_id, garden_number, travelled, travel_distance, str(last_blocked_position), last_blocker_name, str(last_blocker_normal), consecutive_blocked_frames, str(player.is_on_floor())])
 		return false
 	return true
 
