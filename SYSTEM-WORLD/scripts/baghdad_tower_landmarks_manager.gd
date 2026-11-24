@@ -4,6 +4,8 @@ class_name BaghdadTowerLandmarksManager
 const EntranceScript = preload("res://scripts/system_tower_entrance.gd")
 const HunterHelicopterControllerScript = preload("res://scripts/system_hunter_helicopter_pad_controller.gd")
 const HUNTER_TOWER_HEIGHT := 1000.0
+const REPUBLIC_BRIDGE_DECK_HEIGHT := 18.0
+const HUNTER_BRIDGE_PLATFORM_ROOT_HEIGHT := REPUBLIC_BRIDGE_DECK_HEIGHT - 3.5
 const POWER_TOWER_HEIGHT := 820.0
 
 var terrain: Node
@@ -291,7 +293,7 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 		if not bridge_reference_loaded or requested_position.distance_to(bridge_anchor) > 80.0:
 			push_error("SYSTEM WORLD: bridge platform requested outside the verified Republic Bridge anchor.")
 			return
-		root_height = 0.0
+		root_height = HUNTER_BRIDGE_PLATFORM_ROOT_HEIGHT
 	else:
 		resolved = _nearest_land_position(requested_position)
 		if resolved == Vector2.INF:
