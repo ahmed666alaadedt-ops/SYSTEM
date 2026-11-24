@@ -464,7 +464,186 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	root.set_meta("system_republic_bridge_anchor_local_m", bridge_anchor)
 	root.set_meta("tower_floor_directory", _get_tower_floor_directory(location_id))
 	_create_tower_lobby(root, location_id, title, radius, floors, height, connect_to_district)
+	if connect_to_district:
+		_create_tower_sky_gardens(root, location_id, title, height, radius, floors)
 	print("SYSTEM WORLD: landmark tower generated: ", title, " / ", floors, " floors / ", height, "m")
+
+func _create_tower_sky_gardens(tower: Node3D, tower_id: String, tower_title: String, tower_height: float, tower_radius: float, floor_count: int) -> void:
+	# Three real, walkable sky gardens are attached to each of Baghdad's five civic towers.
+	# The central shaft remains clear; four collidable deck sections form a ring promenade.
+	var gardens := Node3D.new()
+	gardens.name = "TowerSkyGardens"
+	gardens.set_meta("system_owner_tower_id", tower_id)
+	gardens.set_meta("system_sky_garden_count", 3)
+	gardens.set_meta("system_sky_gardens_walkable", true)
+	tower.add_child(gardens)
+
+	var deck_material := _make_surface_material(Color(0.12, 0.19, 0.20), 0.82, 0.12)
+	var soil_material := _make_surface_material(Color(0.18, 0.105, 0.055), 0.96, 0.0)
+	var planter_material := _make_surface_material(Color(0.12, 0.18, 0.20), 0.7, 0.25)
+	var glass_material := _make_surface_material(Color(0.28, 0.72, 0.82, 0.48), 0.18, 0.55)
+	glass_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	glass_material.albedo_color.a = 0.42
+	var foliage_material := _make_surface_material(Color(0.12, 0.42, 0.22), 0.92, 0.0)
+	var canopy_material := _make_surface_material(Color(0.22, 0.58, 0.30), 0.88, 0.0)
+	var trunk_material := _make_surface_material(Color(0.28, 0.16, 0.085), 0.96, 0.0)
+	var light_material := _make_surface_material(Color(0.32, 0.88, 0.82), 0.28, 0.18)
+	light_material.emission_enabled = true
+	light_material.emission = Color(0.08, 0.62, 0.56)
+	light_material.emission_energy_multiplier = 1.25
+
+	var progress_values := [0.24, 0.52, 0.80]
+	var outer := tower_radius * 2.18
+	var inner := tower_radius * 1.16
+	var strip := outer - inner
+	var side_center := (outer + inner) * 0.5
+	for garden_index in range(3):
+		var progress := float(progress_values[garden_index])
+		var floor_number := clampi(roundi(1.0 + float(maxi(floor_count - 1, 0)) * progress), 1, floor_count)
+		var floor_height := 9.0 + (tower_height - 16.0) * progress
+		var garden := Node3D.new()
+		garden.name = "SkyGarden_%02d" % (garden_index + 1)
+		garden.position.y = floor_height
+		garden.set_meta("system_facility_type", "elevated_public_sky_garden")
+		garden.set_meta("system_owner_tower_id", tower_id)
+		garden.set_meta("system_garden_level", garden_index + 1)
+		garden.set_meta("system_tower_floor", floor_number)
+		garden.set_meta("system_garden_walkable", true)
+		gardens.add_child(garden)
+
+		var deck_specs := [
+			{"name": "North", "position": Vector3(0.0, 0.0, -side_center), "size": Vector3(outer * 2.0, 0.72, strip)},
+			{"name": "South", "position": Vector3(0.0, 0.0, side_center), "size": Vector3(outer * 2.0, 0.72, strip)},
+			{"name": "East", "position": Vector3(side_center, 0.0, 0.0), "size": Vector3(strip, 0.72, inner * 2.0)},
+			{"name": "West", "position": Vector3(-side_center, 0.0, 0.0), "size": Vector3(strip, 0.72, inner * 2.0)}
+		]
+		for deck_spec in deck_specs:
+			var deck := MeshInstance3D.new()
+			deck.name = "GardenFloor_" + str(deck_spec["name"])
+			var deck_mesh := BoxMesh.new()
+			deck_mesh.size = deck_spec["size"]
+			deck.mesh = deck_mesh
+			deck.position = deck_spec["position"]
+			deck.material_override = deck_material
+			garden.add_child(deck)
+			_add_static_box_collision(garden, deck.name + "_Collision", deck.position, deck_mesh.size)
+
+		# Four glass perimeter rails keep the elevated garden safe without enclosing the views.
+		for side in [-1.0, 1.0]:
+			for axis in [-1.0, 1.0]:
+				var rail := MeshInstance3D.new()
+				rail.name = "GardenGlassRail_%s_%s" % [str(side), str(axis)]
+				var rail_mesh := BoxMesh.new()
+				rail_mesh.size = Vector3(outer * 2.0 + 0.8, 1.35, 0.24) if side == 0.0 else Vector3(0.24, 1.35, outer * 2.0 + 0.8)
+				# Four independent perimeter edges; the conditional keeps the geometry axis-aligned.
+				rail_mesh.size = Vector3(outer * 2.0 + 0.8, 1.35, 0.24) if side < 0.0 else Vector3(0.24, 1.35, outer * 2.0 + 0.8)
+				rail.mesh = rail_mesh
+				rail.position = Vector3(0.0, 1.02, axis * outer) if side < 0.0 else Vector3(axis * outer, 1.02, 0.0)
+				rail.material_override = glass_material
+				garden.add_child(rail)
+		garden.set_meta("system_glass_perimeter_railing", true)
+
+		# Planter beds, trees, benches and low garden lights provide distinct public green space.
+		for plant_index in range(4):
+			var angle := TAU * float(plant_index) / 4.0 + float(garden_index) * 0.28
+			var plant_position := Vector3(cos(angle) * (inner + strip * 0.72), 0.42, sin(angle) * (inner + strip * 0.72))
+			var planter := MeshInstance3D.new()
+			planter.name = "GardenPlanter_%02d" % plant_index
+			var planter_mesh := BoxMesh.new()
+			planter_mesh.size = Vector3(maxf(3.0, tower_radius * 0.42), 1.1, maxf(2.6, tower_radius * 0.34))
+			planter.mesh = planter_mesh
+			planter.position = plant_position
+			planter.rotation.y = angle
+			planter.material_override = planter_material
+			garden.add_child(planter)
+			var soil := MeshInstance3D.new()
+			soil.name = "GardenPlanterSoil_%02d" % plant_index
+			var soil_mesh := BoxMesh.new()
+			soil_mesh.size = Vector3(planter_mesh.size.x * 0.86, 0.12, planter_mesh.size.z * 0.82)
+			soil.mesh = soil_mesh
+			soil.position = plant_position + Vector3(0.0, 0.58, 0.0)
+			soil.rotation.y = angle
+			soil.material_override = soil_material
+			garden.add_child(soil)
+			var trunk := MeshInstance3D.new()
+			trunk.name = "GardenTreeTrunk_%02d" % plant_index
+			var trunk_mesh := CylinderMesh.new()
+			trunk_mesh.top_radius = 0.22
+			trunk_mesh.bottom_radius = 0.36
+			trunk_mesh.height = 2.7
+			trunk.mesh = trunk_mesh
+			trunk.position = plant_position + Vector3(0.0, 2.0, 0.0)
+			trunk.material_override = trunk_material
+			garden.add_child(trunk)
+			var canopy := MeshInstance3D.new()
+			canopy.name = "GardenTreeCanopy_%02d" % plant_index
+			var canopy_mesh := SphereMesh.new()
+			canopy_mesh.radius = 1.45
+			canopy_mesh.height = 2.9
+			canopy.mesh = canopy_mesh
+			canopy.position = plant_position + Vector3(0.0, 3.75, 0.0)
+			canopy.material_override = canopy_material if plant_index % 2 == 0 else foliage_material
+			garden.add_child(canopy)
+
+		for bench_index in range(2):
+			var bench := MeshInstance3D.new()
+			bench.name = "GardenBench_%02d" % bench_index
+			var bench_mesh := BoxMesh.new()
+			bench_mesh.size = Vector3(maxf(2.8, tower_radius * 0.36), 0.28, 0.82)
+			bench.mesh = bench_mesh
+			bench.position = Vector3(0.0, 0.78, (-1.0 if bench_index == 0 else 1.0) * (inner + strip * 0.28))
+			bench.material_override = trim_material
+			garden.add_child(bench)
+		for light_index in range(4):
+			var angle := TAU * float(light_index) / 4.0
+			var garden_light := MeshInstance3D.new()
+			garden_light.name = "GardenPathLight_%02d" % light_index
+			var light_mesh := SphereMesh.new()
+			light_mesh.radius = 0.28
+			light_mesh.height = 0.56
+			garden_light.mesh = light_mesh
+			garden_light.position = Vector3(cos(angle) * (inner + strip * 0.46), 1.15, sin(angle) * (inner + strip * 0.46))
+			garden_light.material_override = light_material
+			garden.add_child(garden_light)
+
+		var sign := Label3D.new()
+		sign.name = "GardenIdentitySign"
+		sign.text = "SYSTEM SKY GARDEN %d\nحديقة سماوية — %s\nالطابق %d" % [garden_index + 1, tower_title, floor_number]
+		sign.font_size = 22
+		sign.pixel_size = 0.012
+		sign.position = Vector3(0.0, 2.2, -inner - strip * 0.25)
+		sign.modulate = Color(0.78, 0.96, 0.82)
+		garden.add_child(sign)
+
+		var interaction := Area3D.new()
+		interaction.name = "SkyGardenInteraction_%02d" % (garden_index + 1)
+		interaction.position = Vector3(0.0, 1.8, 0.0)
+		interaction.add_to_group("system_interactable")
+		interaction.set_meta("system_facility_type", "elevated_public_sky_garden")
+		interaction.set_meta("system_owner_tower_id", tower_id)
+		interaction.set_meta("system_garden_level", garden_index + 1)
+		interaction.set_meta("system_tower_floor", floor_number)
+		interaction.set_meta("system_interaction_prompt", "استكشف الحديقة السماوية — الطابق %d" % floor_number)
+		var interaction_shape := CollisionShape3D.new()
+		interaction_shape.name = "GardenInteractionShape"
+		var interaction_box := BoxShape3D.new()
+		interaction_box.size = Vector3(outer * 2.0, 4.0, outer * 2.0)
+		interaction_shape.shape = interaction_box
+		interaction.add_child(interaction_shape)
+		garden.add_child(interaction)
+
+		garden.set_meta("system_garden_planter_count", 4)
+		garden.set_meta("system_garden_tree_count", 4)
+		garden.set_meta("system_garden_bench_count", 2)
+		garden.set_meta("system_garden_path_light_count", 4)
+		garden.set_meta("system_garden_floor_collision_count", 4)
+	gardens.set_meta("system_sky_garden_levels", PackedInt32Array([1, 2, 3]))
+	gardens.set_meta("system_sky_garden_floor_map", PackedInt32Array([
+		clampi(roundi(1.0 + float(maxi(floor_count - 1, 0)) * 0.24), 1, floor_count),
+		clampi(roundi(1.0 + float(maxi(floor_count - 1, 0)) * 0.52), 1, floor_count),
+		clampi(roundi(1.0 + float(maxi(floor_count - 1, 0)) * 0.80), 1, floor_count)
+	]))
+
 
 
 func _create_hunter_exam_tunnel() -> void:
