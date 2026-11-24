@@ -1853,7 +1853,9 @@ func _add_advertising_screen_backing(parent: Node3D, screen_name: String, campai
 	screen.set_meta("system_advertising_screen", true)
 	screen.set_meta("system_campaign_label_path", str(parent.get_path_to(campaign_label)))
 	parent.add_child(screen)
-	campaign_label.position.z += 0.12
+	var label_position := campaign_label.position
+	label_position.z += 0.12
+	campaign_label.position = label_position
 
 
 func _refresh_advertisements() -> void:
