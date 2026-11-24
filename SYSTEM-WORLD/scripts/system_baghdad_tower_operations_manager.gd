@@ -3125,10 +3125,41 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 	var tower := tower_nodes.get(tower_id) as Node3D
 	var config: Dictionary = TOWER_CONFIG[tower_id]
 	if existing != null:
-		# Repair a previously prepared Shopping Tower floor 4 that predates its skill-store facility.
-		if tower_id == "shopping_tower_baghdad" and floor_number == 4 and existing.get_node_or_null("SpecialFacility_shopping_skill_store") == null:
+		# Repair a previously prepared Shopping Tower floor 4 and its product-selection collider in place.
+		if tower_id == "shopping_tower_baghdad" and floor_number == 4:
 			var existing_department := _department_for_floor(tower_id, floor_number, int(config["floors"]))
-			_create_specialized_floor_facility(existing, tower_id, floor_number, float(config["radius"]), existing_department)
+			var skill_facility := existing.get_node_or_null("SpecialFacility_shopping_skill_store") as Node3D
+			if skill_facility == null:
+				_create_specialized_floor_facility(existing, tower_id, floor_number, float(config["radius"]), existing_department)
+				skill_facility = existing.get_node_or_null("SpecialFacility_shopping_skill_store") as Node3D
+			if skill_facility != null:
+				var service_area := skill_facility.get_node_or_null("FacilityServiceInteraction") as Area3D
+				if service_area == null:
+					service_area = Area3D.new()
+					service_area.name = "FacilityServiceInteraction"
+					service_area.add_to_group("system_interactable")
+					service_area.set_meta("system_tower_id", tower_id)
+					service_area.set_meta("system_tower_floor_number", floor_number)
+					service_area.set_meta("system_facility_type", "shopping_skill_store")
+					service_area.set_meta("system_interaction_prompt", "متجر المهارات والتقنيات المتقدمة — اضغط للتعامل")
+					service_area.collision_layer = 1
+					service_area.collision_mask = 0
+					skill_facility.add_child(service_area)
+				var service_shape: CollisionShape3D = null
+				for child in service_area.get_children():
+					if child is CollisionShape3D:
+						service_shape = child
+						break
+				if service_shape == null:
+					service_shape = CollisionShape3D.new()
+					service_shape.name = "CollisionShape3D"
+					service_area.add_child(service_shape)
+				var service_sphere := service_shape.shape as SphereShape3D
+				if service_sphere == null:
+					service_sphere = SphereShape3D.new()
+					service_shape.shape = service_sphere
+				service_sphere.radius = 3.0
+				service_shape.position = Vector3(0.0, 1.2, -5.8)
 		return existing
 	var height := float(config["height"])
 	var radius := float(config["radius"])
