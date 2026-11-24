@@ -1181,27 +1181,67 @@ func _run() -> void:
 	if tower_progression == null:
 		_fail("Power Tower final reward test has no player progression manager.")
 		return
+	var original_player_level := int(tower_progression.get("current_level"))
+	tower_progression.set("current_level", 100)
 	power_manager.set("highest_cleared_floor", 199)
-	power_manager.set("active_floor", 200)
-	operations.set("active_power_floor_data", boss_data.duplicate(true))
-	operations.set("power_floor_in_progress", true)
-	operations.set("power_floor_started_at", Time.get_ticks_msec() - 1500)
-	operations.set("active_opponents", {})
-	print("QA TRACE: applying sovereign floor completion and reward settlement.")
-	operations.call("_complete_power_floor")
-	print("QA TRACE: sovereign floor reward settlement returned.")
+	power_manager.set("active_floor", 0)
+	power_manager.set("floor_clear_times", original_clear_times.duplicate(true))
+	operations.call("open_tower", "power_tower_baghdad")
+	print("QA TRACE: entering sovereign floor 200 through the actual elevator flow.")
+	operations.call("_travel_to_floor", "power_tower_baghdad", 200)
+	await create_timer(2.8).timeout
+	if int(power_manager.get("active_floor")) != 200 or operations.get("active_floor_root") == null or operations.get("active_power_floor_data").is_empty():
+		_fail("Power Tower could not activate sovereign floor 200 through its real elevator entry.")
+		power_manager.set("highest_cleared_floor", original_highest_floor)
+		power_manager.set("active_floor", original_active_floor)
+		power_manager.set("floor_clear_times", original_clear_times)
+		tower_progression.set("current_level", original_player_level)
+		return
+	var sovereign_match_id := "validator_sovereign_final_1v1"
+	var sovereign_match: Dictionary = operations.call("begin_verified_power_tower_pvp_match", {
+		"server_verified": true,
+		"match_id": sovereign_match_id,
+		"floor_number": 200,
+		"opponent_player_id": "sovereign_human_champion",
+		"competition_format": "INDIVIDUAL_1V1",
+		"opponent_kind": "HUMAN_PLAYER",
+		"ai_fallback": false
+	}, "validator_local_human")
+	if not bool(sovereign_match.get("success", false)):
+		_fail("Power Tower final floor rejected a server-verified human 1v1 match: " + str(sovereign_match.get("reason", "unknown")))
+		power_manager.set("highest_cleared_floor", original_highest_floor)
+		power_manager.set("active_floor", original_active_floor)
+		power_manager.set("floor_clear_times", original_clear_times)
+		tower_progression.set("current_level", original_player_level)
+		return
+	print("QA TRACE: settling sovereign floor 200 from the trusted human 1v1 result.")
+	var sovereign_result: Dictionary = operations.call("apply_verified_power_tower_pvp_result", {
+		"server_verified": true,
+		"match_id": sovereign_match_id,
+		"result_id": "validator_sovereign_result_200",
+		"floor_number": 200,
+		"winner_player_id": "validator_local_human",
+		"opponent_player_id": "sovereign_human_champion",
+		"competition_format": "INDIVIDUAL_1V1",
+		"opponent_kind": "HUMAN_PLAYER",
+		"ai_fallback": false,
+		"clear_time_seconds": 1.5,
+		"finish_type": "KO"
+	}, "validator_local_human")
+	print("QA TRACE: sovereign verified result settlement returned.")
 	var final_rewards_granted := true
 	for reward_id in final_rewards:
 		if int(tower_progression.call("get_item_count", str(reward_id))) <= int(original_inventory.get(str(reward_id), 0)):
 			final_rewards_granted = false
-	if int(power_manager.get("highest_cleared_floor")) != 200 or int(power_manager.get("active_floor")) != 0 or int(operations.get("credits")) <= original_credits or not final_rewards_granted:
-		_fail("Power Tower final boss clear did not grant the sovereign rewards, credits and completion record.")
+	if not bool(sovereign_result.get("success", false)) or not bool(sovereign_result.get("won", false)) or int(power_manager.get("highest_cleared_floor")) != 200 or int(power_manager.get("active_floor")) != 0 or int(operations.get("credits")) <= original_credits or not final_rewards_granted:
+		_fail("Verified human 1v1 final boss result did not grant sovereign rewards, credits and the floor-200 completion record.")
 		power_manager.set("highest_cleared_floor", original_highest_floor)
 		power_manager.set("active_floor", original_active_floor)
 		power_manager.set("floor_clear_times", original_clear_times)
 		power_manager.call("_save_progress")
 		tower_progression.set("inventory_items", original_inventory)
 		tower_progression.call("save_progress")
+		tower_progression.set("current_level", original_player_level)
 		operations.set("credits", original_credits)
 		operations.call("_save_wallet")
 		return
@@ -1211,6 +1251,7 @@ func _run() -> void:
 	power_manager.call("_save_progress")
 	tower_progression.set("inventory_items", original_inventory)
 	tower_progression.call("save_progress")
+	tower_progression.set("current_level", original_player_level)
 	operations.set("credits", original_credits)
 	operations.call("_save_wallet")
 	operations.set("active_power_floor_data", {})
