@@ -3,6 +3,7 @@ class_name BaghdadTowerLandmarksManager
 
 const EntranceScript = preload("res://scripts/system_tower_entrance.gd")
 const HunterHelicopterControllerScript = preload("res://scripts/system_hunter_helicopter_pad_controller.gd")
+const HunterExamCrowdScript = preload("res://scripts/system_hunter_exam_crowd.gd")
 const HUNTER_TOWER_HEIGHT := 650.0
 const REPUBLIC_BRIDGE_DECK_HEIGHT := 18.0
 const HUNTER_CENTRAL_SKY_CITY_PLATFORM_HEIGHT := 419.2
@@ -754,9 +755,15 @@ func _create_hunter_exam_tunnel() -> void:
 	sign.modulate = Color(0.42, 0.9, 1.0)
 	tunnel_root.add_child(sign)
 
+	var competitor_crowd := Node3D.new()
+	competitor_crowd.name = "HunterExamCompetitorCrowd"
+	competitor_crowd.set_script(HunterExamCrowdScript)
+	tunnel_root.add_child(competitor_crowd)
+	tunnel_root.set_meta("system_hunter_exam_competitor_count", 500)
+	tunnel_root.set_meta("system_hunter_exam_total_candidates_with_player", 501)
 	tunnel_root.set_meta("system_hunter_exam_guide_present", false)
 	tunnel_root.set_meta("system_hunter_exam_return_elevator_present", false)
-	print("SYSTEM WORLD: one continuous Hunter Examination tunnel reached by the Hunter Tower guild guide escort.")
+	print("SYSTEM WORLD: one continuous Hunter Examination tunnel reached by the Hunter Tower guild guide escort; 500 NPC competitors are present.")
 
 
 func _nearest_land_position(origin: Vector2) -> Vector2:
