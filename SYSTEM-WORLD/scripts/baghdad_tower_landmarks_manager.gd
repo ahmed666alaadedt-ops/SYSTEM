@@ -805,6 +805,66 @@ func _create_tower_lobby(root: Node3D, tower_id: String, title: String, radius: 
 	lobby.set_meta("elevator_status", "not_implemented")
 	lobby.set_meta("lift_door_visual_only", false)
 	lobby.set_meta("lift_door_interactive", true)
+	if tower_id == "hunter_association_tower_baghdad":
+		_create_hunter_guild_recruitment(lobby, radius, center_z, front_z)
+
+
+func _create_hunter_guild_recruitment(lobby: Node3D, radius: float, center_z: float, front_z: float) -> void:
+	var arrival_zone := Area3D.new()
+	arrival_zone.name = "HunterTowerRecruitmentArrivalZone"
+	arrival_zone.set_meta("system_hunter_exam_arrival_zone", true)
+	arrival_zone.position = Vector3(0.0, 1.4, front_z - 7.0)
+	arrival_zone.monitoring = true
+	arrival_zone.monitorable = true
+	arrival_zone.collision_layer = 0
+	arrival_zone.collision_mask = 1
+	var arrival_shape := CollisionShape3D.new()
+	var arrival_sphere := SphereShape3D.new()
+	arrival_sphere.radius = 9.0
+	arrival_shape.shape = arrival_sphere
+	arrival_zone.add_child(arrival_shape)
+	lobby.add_child(arrival_zone)
+
+	var guide := Area3D.new()
+	guide.name = "HunterGuildGuideAtTower"
+	guide.add_to_group("system_interactable")
+	guide.set_meta("system_hunter_exam_tower_guide", true)
+	guide.set_meta("system_display_name", "مرشد نقابة الصيادين")
+	guide.set_meta("system_interaction_prompt", "اتبع مرشد نقابة الصيادين إلى نفق الاختبار")
+	guide.position = Vector3(-radius * 0.62, 0.0, center_z + 5.0)
+	guide.collision_layer = 1
+	guide.collision_mask = 0
+	var guide_shape := CollisionShape3D.new()
+	var guide_sphere := SphereShape3D.new()
+	guide_sphere.radius = 3.2
+	guide_shape.shape = guide_sphere
+	guide_shape.position.y = 1.0
+	guide.add_child(guide_shape)
+	var guide_marker := MeshInstance3D.new()
+	guide_marker.name = "GuildGuideCharacter"
+	var guide_mesh := CapsuleMesh.new()
+	guide_mesh.radius = 0.58
+	guide_mesh.height = 2.25
+	guide_marker.mesh = guide_mesh
+	guide_marker.position.y = 1.12
+	var guide_material := StandardMaterial3D.new()
+	guide_material.albedo_color = Color(0.08, 0.22, 0.3)
+	guide_material.emission_enabled = true
+	guide_material.emission = Color(0.0, 0.3, 0.46)
+	guide_material.emission_energy_multiplier = 0.65
+	guide_marker.material_override = guide_material
+	guide.add_child(guide_marker)
+	var guide_label := Label3D.new()
+	guide_label.name = "GuildGuideName"
+	guide_label.text = "مرشد نقابة الصيادين"
+	guide_label.position = Vector3(0.0, 2.7, 0.0)
+	guide_label.font_size = 18
+	guide_label.pixel_size = 0.012
+	guide_label.modulate = Color(1.0, 0.82, 0.45)
+	guide.add_child(guide_label)
+	lobby.add_child(guide)
+	lobby.set_meta("system_hunter_exam_recruitment_available", true)
+
 
 
 func _get_tower_floor_directory(tower_id: String) -> PackedStringArray:
