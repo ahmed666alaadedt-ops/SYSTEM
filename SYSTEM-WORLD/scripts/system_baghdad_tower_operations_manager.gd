@@ -14,7 +14,7 @@ const WORLD_ID := 2
 const STAFF_NAMES := ["أحمد", "سارة", "علي", "نور", "حسن", "مريم", "يوسف", "ليان", "عمر", "زينب", "مصطفى", "رنا"]
 
 const TOWER_CONFIG := {
-	"hunter_association_tower_baghdad": {"node": "HunterAssociationTower", "title": "برج جمعية الصيادين", "floors": 200, "height": 1000.0, "radius": 38.0, "roles": ["مدير النقابة", "موظف الاستقبال", "موظف المهمات", "مسؤول تسجيل الاختبارات", "مستشار الرتب", "منسق النقابات", "مسؤول العلاقات العامة", "مسؤول الإعلانات"], "jobs": ["association_director", "receptionist", "mission_clerk", "exam_registrar", "rank_advisor", "guild_coordinator", "public_relations", "advertising_manager"]},
+	"hunter_association_tower_baghdad": {"node": "HunterAssociationTower", "title": "برج جمعية الصيادين", "floors": 200, "height": 650.0, "radius": 38.0, "roles": ["مدير النقابة", "موظف الاستقبال", "موظف المهمات", "مسؤول تسجيل الاختبارات", "مستشار الرتب", "منسق النقابات", "مسؤول العلاقات العامة", "مسؤول الإعلانات"], "jobs": ["association_director", "receptionist", "mission_clerk", "exam_registrar", "rank_advisor", "guild_coordinator", "public_relations", "advertising_manager"]},
 
 	"business_investment_tower_baghdad": {"node": "BusinessInvestmentTower", "title": "برج الأعمال والاستثمار", "floors": 36, "height": 220.0, "radius": 26.0, "roles": ["مدير البرج", "مدير الاستثمار", "مستشار الشركات", "موظف البنوك والعقود", "محاسب البرج", "مسؤول التوظيف", "خدمة المستثمرين", "مسؤول الإعلانات"], "jobs": ["tower_director", "investment_manager", "business_advisor", "bank_contract_clerk", "accountant", "recruitment_manager", "investor_relations", "advertising_manager"]},
 	"shopping_tower_baghdad": {"node": "ShoppingTower", "title": "برج التسوق والتجارة", "floors": 32, "height": 190.0, "radius": 30.0, "roles": ["مدير البرج", "تاجر الأسلحة والدروع", "صيدلاني الإكسير", "مدير الضيافة والفندق", "شيف المطاعم", "نادل وخدمة الزبائن", "موظف استقبال الفندق", "مشرف الغرف والتنظيف", "مسؤول الإعلانات والتسويق"], "jobs": ["shop_manager", "weapons_merchant", "elixir_pharmacist", "hospitality_manager", "restaurant_chef", "restaurant_waiter", "hotel_receptionist", "hotel_housekeeping", "advertising_manager"]},
@@ -3204,9 +3204,9 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 				service_sphere.radius = 3.0
 				service_shape.position = Vector3(0.0, 1.2, -5.8)
 		return existing
-	var height := float(config["height"])
+	var height := float(tower.get_meta("tower_height_m", config["height"]))
 	var radius := float(config["radius"])
-	var count := int(config["floors"])
+	var count := int(tower.get_meta("tower_floor_count", config["floors"]))
 	var floor_y := 9.0 + (height - 16.0) * float(floor_number - 1) / float(maxi(count - 1, 1))
 	var room := Node3D.new()
 	room.name = room_name
