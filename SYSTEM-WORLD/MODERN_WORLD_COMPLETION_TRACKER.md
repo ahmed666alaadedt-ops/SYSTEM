@@ -1,4 +1,12 @@
 
+## Baghdad Hunter Examination Tunnel entrance — 24 November 2026
+
+- [x] Added a distinct Hunter Examination Tunnel landmark beneath the Baghdad five-tower district, separate from the independent Power Tower.
+- [x] Added a wide descending 12-segment access ramp with physical collision, retaining walls, a large illuminated portal, bilingual entrance signage, eight guide lights, and an interactable entrance marker.
+- [ ] The entrance marker is currently a discoverable interaction target; routing it into the seven-stage Hunter Examination flow, actual underground traversal/level transition, and exam-stage gameplay remains open.
+- [ ] Run the canonical Godot parser/runtime, Baghdad landmark and operations regressions, and Android APK export on the exact updated PR head. No validation or APK success is claimed for this source change.
+- [ ] Review the entrance placement and visibility in the actual Android build; the current structure is a functional geometry prototype, not the finished cinematic underground complex.
+
 ## Validation runtime diagnosis — 24 November 2026
 
 - [x] Confirmed the canonical Android debug APK export on commit `92f3f47b02845de66777b8cd192ea8b1f230ac89` succeeded; artifact `14867240819` is available through 7 December 2026.
