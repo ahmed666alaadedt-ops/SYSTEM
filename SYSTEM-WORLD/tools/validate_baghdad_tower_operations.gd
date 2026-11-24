@@ -1425,7 +1425,7 @@ func _run() -> void:
 	if skill_progression == null or not skill_progression.has_method("practice_system_skill") or skill_progression.call("get_system_skill_tree").size() != 10:
 		_fail("Persistent original SYSTEM skill tree is missing or incomplete.")
 		return
-	var skill_snapshot := {"level":skill_progression.get("current_level"),"points":skill_progression.get("verified_hunter_mission_points"),"learned":skill_progression.get("learned_system_skills").duplicate(),"authorized":skill_progression.get("authorized_system_skills").duplicate(),"practice":skill_progression.get("system_skill_practice").duplicate(true),"mastery":skill_progression.get("system_skill_mastery").duplicate(true),"cooldowns":skill_progression.get("system_skill_cooldowns").duplicate(true),"weapon_mastery":skill_progression.get("weapon_mastery").duplicate(true),"energy":skill_progression.get("current_system_energy"),"nen_unlocked":skill_progression.get("nen_unlocked"),"nen_control_rank":skill_progression.get("nen_control_rank"),"inventory":skill_progression.get("inventory_items").duplicate(true),"credits":operations.get("credits"),"vendor_stock":operations.get("vendor_stock").duplicate(true)}
+	var skill_snapshot := {"level":skill_progression.get("current_level"),"points":skill_progression.get("verified_hunter_mission_points"),"learned":skill_progression.get("learned_system_skills").duplicate(),"authorized":skill_progression.get("authorized_system_skills").duplicate(),"practice":skill_progression.get("system_skill_practice").duplicate(true),"mastery":skill_progression.get("system_skill_mastery").duplicate(true),"cooldowns":skill_progression.get("system_skill_cooldowns").duplicate(true),"weapon_mastery":skill_progression.get("weapon_mastery").duplicate(true),"energy":skill_progression.get("current_system_energy"),"nen_unlocked":skill_progression.get("nen_unlocked"),"nen_control_rank":skill_progression.get("nen_control_rank"),"inventory":skill_progression.get("inventory_items").duplicate(true),"credits":operations.get("credits"),"vendor_stock":operations.get("vendor_stock").duplicate(true),"equipment_slots":skill_progression.get("equipment_slots").duplicate(true)}
 	skill_progression.set("current_level", 3)
 	skill_progression.set("verified_hunter_mission_points", 100)
 	var weapon_training: Dictionary = skill_progression.call("record_weapon_training", "sword", "validator_sword_drill")
@@ -1481,6 +1481,30 @@ func _run() -> void:
 	if skill_progression.get("learned_system_skills").has("pulse_dash"):
 		_fail("Buying a skill manual must not unlock the skill without verified practice.")
 		return
+	# Verify a physical Shopping Tower weapon-floor purchase reaches inventory and equipment.
+	var sword_stock: Dictionary = operations.get("vendor_stock").duplicate(true)
+	sword_stock["training_sword"] = maxi(1, int(sword_stock.get("training_sword", 0)))
+	operations.set("vendor_stock", sword_stock)
+	operations.call("_save_vendor_stock")
+	operations.call("open_baghdad_progression_facility", "shopping_tower_baghdad", 5, "shopping_weapon_gallery")
+	await get_tree().process_frame
+	var sword_purchase_button := (operations.get("content") as Node).find_child("ShoppingProduct_training_sword", true, false) as Button
+	if sword_purchase_button == null or sword_purchase_button.disabled:
+		_fail("Shopping Tower floor 5 did not expose an eligible, stocked training sword purchase.")
+		return
+	var sword_count_before := int(skill_progression.call("get_item_count", "training_sword"))
+	sword_purchase_button.pressed.emit()
+	if int(skill_progression.call("get_item_count", "training_sword")) != sword_count_before + 1:
+		_fail("Purchasing the floor-5 training sword did not add it to the player's inventory.")
+		return
+	var sword_slot := str(skill_progression.call("get_item_equipment_slot", "training_sword"))
+	var sword_equip_result: Dictionary = skill_progression.call("equip_item", "training_sword")
+	if sword_slot.is_empty() or not bool(sword_equip_result.get("success", false)) or not bool(skill_progression.call("is_item_equipped", "training_sword")):
+		_fail("The purchased Shopping Tower sword could not be equipped in its real equipment slot.")
+		return
+	if not bool(skill_progression.call("unequip_item", sword_slot)):
+		_fail("The purchased Shopping Tower sword could not be removed from its equipment slot.")
+		return
 	for session_index in range(3):
 		var pulse_practice: Dictionary = skill_progression.call("practice_system_skill", "pulse_dash", "validator_pulse_dash_%d" % session_index)
 		if not bool(pulse_practice.get("success", false)):
@@ -1518,12 +1542,13 @@ func _run() -> void:
 	skill_progression.set("nen_unlocked", skill_snapshot["nen_unlocked"])
 	skill_progression.set("nen_control_rank", skill_snapshot["nen_control_rank"])
 	skill_progression.set("inventory_items", skill_snapshot["inventory"])
+	skill_progression.set("equipment_slots", skill_snapshot["equipment_slots"])
 	skill_progression.call("save_progress")
 	operations.set("credits", skill_snapshot["credits"])
 	operations.set("vendor_stock", skill_snapshot["vendor_stock"])
 	operations.call("_save_wallet")
 	operations.call("_save_vendor_stock")
-	print("QA TRACE: Shopping Tower skill store permits, non-bypass prerequisites, three-session skill learning, weapon mastery, energy, cooldown and save/load passed.")
+	print("QA TRACE: Shopping Tower weapon-floor purchase, inventory, equipment-slot equip/unequip and skill store permit progression passed.")
 	print("QA TRACE: generating Shopping Tower hotel reception floor 27.")
 	var hotel_reception_room := operations.call("_ensure_floor_room", "shopping_tower_baghdad", 27) as Node3D
 	print("QA TRACE: hotel reception floor 27 generation returned.")
