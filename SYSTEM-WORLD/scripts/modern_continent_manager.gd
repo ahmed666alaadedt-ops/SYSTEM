@@ -123,13 +123,20 @@ func get_baghdad_bridge_anchor() -> Vector3:
 	return Vector3(baghdad_bridge_center.x, get_terrain_height(baghdad_bridge_center.x, baghdad_bridge_center.y), baghdad_bridge_center.y)
 
 
-func get_baghdad_bridge_nearest_bank_anchor() -> Vector3:
+func _baghdad_bridge_nearest_bank_point() -> Vector2:
 	if not baghdad_bridge_reference_loaded or baghdad_bridge_centerline.size() < 2:
-		return Vector3.INF
+		return Vector2.INF
 	var nearest_bank: Vector2 = baghdad_bridge_centerline[0]
 	var opposite_bank: Vector2 = baghdad_bridge_centerline[baghdad_bridge_centerline.size() - 1]
 	if opposite_bank.length_squared() < nearest_bank.length_squared():
 		nearest_bank = opposite_bank
+	return nearest_bank
+
+
+func get_baghdad_bridge_nearest_bank_anchor() -> Vector3:
+	var nearest_bank := _baghdad_bridge_nearest_bank_point()
+	if nearest_bank == Vector2.INF:
+		return Vector3.INF
 	return Vector3(nearest_bank.x, get_terrain_height(nearest_bank.x, nearest_bank.y), nearest_bank.y)
 
 
@@ -203,7 +210,8 @@ func _get_height(x: float, z: float) -> float:
 			var bridge_coast_ease := bridge_coast_factor * bridge_coast_factor * (3.0 - 2.0 * bridge_coast_factor)
 			var bridge_land_height := 18.0 + sin(x * 0.012) * 1.2 + cos(z * 0.014) * 0.9
 			return lerpf(SEA_LEVEL - 1.2, bridge_land_height, bridge_coast_ease) - _baghdad_tigris_channel_depth(x, z)
-		var corridor_distance := _distance_to_segment(Vector2(x, z), Vector2.ZERO, baghdad_bridge_center)
+		var bridge_bank_point := _baghdad_bridge_nearest_bank_point()
+		var corridor_distance := _distance_to_segment(Vector2(x, z), Vector2.ZERO, bridge_bank_point)
 		var corridor_height := 13.0 + sin(x * 0.009) * 1.0 + cos(z * 0.011) * 0.8
 		var radius := _continent_radius(x, z)
 		if radius <= 1.0:
@@ -869,10 +877,9 @@ func _build_baghdad_bridge_access_causeway() -> void:
 	var start := Vector2.ZERO
 	# Join the bank nearest the playable Baghdad origin; the surveyed bridge
 	# deck itself carries the player across the Tigris to the opposite bank.
-	var finish := baghdad_bridge_centerline[0]
-	var opposite_bank := baghdad_bridge_centerline[baghdad_bridge_centerline.size() - 1]
-	if opposite_bank.length_squared() < finish.length_squared():
-		finish = opposite_bank
+	var finish := _baghdad_bridge_nearest_bank_point()
+	if finish == Vector2.INF:
+		return
 	var half_width := 7.0
 	var segments := 96
 	for index in range(segments):
