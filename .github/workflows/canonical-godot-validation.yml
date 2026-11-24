@@ -100,7 +100,7 @@ jobs:
             --script res://tools/validate_hunter_tunnel_entry.gd \
             2>&1 | tee "$RUNNER_TEMP/hunter-tunnel-entry.log"
 
-      - name: Validate playable Baghdad Hunter Examination stage one
+      - name: Validate all seven playable SYSTEM Hunter Examination stages
         shell: bash
         run: |
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
@@ -108,7 +108,7 @@ jobs:
           set -o pipefail
           "$GODOT" --headless --path "$PROJECT" \
             --script res://tools/validate_hunter_exam_stage_runtime.gd \
-            2>&1 | tee "$RUNNER_TEMP/hunter-exam-stage-one.log"
+            2>&1 | tee "$RUNNER_TEMP/hunter-exam-seven-stages.log"
 
       - name: Validate Baghdad tower operations, elevator staff and emergency evacuation
         shell: bash
