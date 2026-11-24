@@ -3122,10 +3122,14 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 		return null
 	var room_name := "InteriorFloor_%03d" % floor_number
 	var existing := floors.get_node_or_null(room_name) as Node3D
-	if existing != null:
-		return existing
 	var tower := tower_nodes.get(tower_id) as Node3D
 	var config: Dictionary = TOWER_CONFIG[tower_id]
+	if existing != null:
+		# Repair a previously prepared Shopping Tower floor 4 that predates its skill-store facility.
+		if tower_id == "shopping_tower_baghdad" and floor_number == 4 and existing.get_node_or_null("SpecialFacility_shopping_skill_store") == null:
+			var existing_department := _department_for_floor(tower_id, floor_number, int(config["floors"]))
+			_create_specialized_floor_facility(existing, tower_id, floor_number, float(config["radius"]), existing_department)
+		return existing
 	var height := float(config["height"])
 	var radius := float(config["radius"])
 	var count := int(config["floors"])

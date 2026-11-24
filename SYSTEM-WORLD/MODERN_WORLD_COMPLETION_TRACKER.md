@@ -1834,3 +1834,5 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - [x] Focused product previews ignore queued-for-deletion controls when choosing the selected purchase button, preventing an earlier floor's same-ID product from intercepting the current selection.
 - [x] Preview labels carry the exact selected catalog product ID. The dedicated showcase validator now checks the live visible selected purchase button, matching live preview, and hides unrelated purchase controls for every displayed product, including floor-4 skill permits.
 - [ ] Exact-HEAD full Godot suite and APK verification for this interaction-isolation pass are pending.
+
+- Floor-4 repair: if the Shopping Tower's skill-store floor was pre-created as a generic interior before the specialized facility existed, the floor resolver now adds the missing skill-store facility in place without replacing the existing room, floor deck, kiosks, elevator or evacuation route.
