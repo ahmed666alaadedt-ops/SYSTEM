@@ -7113,7 +7113,7 @@ func _attach_hunter_exam_private_room_to_restaurant(restaurant_floor: Node3D, ra
 	room_material.roughness = 0.42
 	room_floor.material_override = room_material
 	private_room.add_child(room_floor)
-	_add_static_box_collision(private_room, "PrivateRoomFloorCollision", room_floor.position, floor_mesh.size)
+	_add_hunter_room_box_collision(private_room, "PrivateRoomFloorCollision", room_floor.position, floor_mesh.size)
 
 	for wall_data in [
 		{"name":"Back","position":Vector3(0.0,2.25,-6.0),"size":Vector3(12.0,4.5,0.35)},
@@ -7130,7 +7130,7 @@ func _attach_hunter_exam_private_room_to_restaurant(restaurant_floor: Node3D, ra
 		wall.position = wall_data["position"]
 		wall.material_override = room_material
 		private_room.add_child(wall)
-		_add_static_box_collision(private_room, wall.name + "Collision", wall.position, wall_mesh.size)
+		_add_hunter_room_box_collision(private_room, wall.name + "Collision", wall.position, wall_mesh.size)
 
 	var room_sign := Label3D.new()
 	room_sign.name = "HunterExamPrivateRoomSign"
@@ -7249,6 +7249,19 @@ func enter_hunter_exam_private_room(entry_target: Node) -> void:
 	player.velocity = Vector3.ZERO
 	player.set_meta("system_hunter_exam_meal_order_id", table_id)
 	_set_status("وصلت إلى غرفة المتسابقين الخاصة. المصعد ينقلك إلى مرشد نقابة الصيادين.")
+
+
+func _add_hunter_room_box_collision(parent: Node3D, node_name: String, position: Vector3, size: Vector3) -> void:
+	var body := StaticBody3D.new()
+	body.name = node_name
+	body.position = position
+	parent.add_child(body)
+	var collision := CollisionShape3D.new()
+	collision.name = "CollisionShape3D"
+	var shape := BoxShape3D.new()
+	shape.size = size
+	collision.shape = shape
+	body.add_child(collision)
 
 
 func _create_npc_restaurant_order(table_root: Node3D, customer_id: String, floor_number: int) -> void:
