@@ -1287,6 +1287,8 @@ func _run() -> void:
 		operations.set("credits", original_credits)
 		operations.call("_save_wallet")
 		return
+	# Let the injury-triggered return elevator finish before the next tower transition.
+	await create_timer(3.0).timeout
 	power_manager.set("highest_cleared_floor", original_highest_floor)
 	power_manager.set("active_floor", original_active_floor)
 	power_manager.set("floor_clear_times", original_clear_times)
