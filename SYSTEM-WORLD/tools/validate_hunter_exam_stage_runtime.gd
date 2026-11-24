@@ -85,6 +85,13 @@ func _run_validation() -> void:
 			moving_candidates += 1
 	if not _check(moving_candidates > 0, "The candidate crowd did not start its staggered movement behavior."):
 		return
+	var behavior_status: Dictionary = candidate_crowd.call("get_crowd_status")
+	if not _check(int(behavior_status.get("behavior_profile_count", 0)) == 500 and int(behavior_status.get("decision_count_total", 0)) >= 18 and int(behavior_status.get("cooperation_events", 0)) >= 1 and int(behavior_status.get("mistake_events", 0)) >= 1, "The 500 candidates do not run independent scouting, cooperation and mistake-recovery decisions."):
+		return
+	var first_behavior: Dictionary = candidate_crowd.call("get_candidate_behavior", 2001)
+	var last_behavior: Dictionary = candidate_crowd.call("get_candidate_behavior", 2500)
+	if not _check(first_behavior.has("skill") and first_behavior.has("cooperation") and last_behavior.has("error_rate") and last_behavior.has("activity"), "Individual candidate strategy profiles are missing from the serial registry."):
+		return
 	var active_manager: Node = manager
 
 	for stage_index in range(EXPECTED_STAGE_IDS.size()):
