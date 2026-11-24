@@ -49,10 +49,18 @@ func _run_validation() -> void:
 		_fail("Baghdad OSM building collision bodies were not created.")
 		return
 	print("Baghdad OSM runtime cell passed: roads=", roads.size(), " buildings=", buildings.size(), " landuse=", landuse.size(), " building_collisions=", building_collisions.size())
-	print("Baghdad OSM validation: loading Republic Bridge/Tigris cell 17:-6.")
-	streamer._load_cell(Vector2i(17, -6))
+	print("Baghdad OSM validation: checking automatic player-driven streaming at Republic Bridge cell 17:-6.")
+	var bridge_player := Node3D.new()
+	bridge_player.name = "BridgeStreamingTestPlayer"
+	bridge_player.add_to_group("system_player")
+	bridge_player.position = Vector3(3563.921, 18.0, -1050.256)
+	root.add_child(bridge_player)
+	streamer._process(0.0)
+	if not streamer.desired_cells.has(Vector2i(17, -6)):
+		_fail("Player-driven OSM streaming did not select Republic Bridge cell 17:-6 at the surveyed bridge coordinates.")
+		return
 	if not streamer.loaded_cells.has(Vector2i(17, -6)):
-		_fail("Republic Bridge OSM cell 17:-6 did not load from the extended metric pack.")
+		_fail("Republic Bridge OSM cell 17:-6 was queued but not loaded as the player's active center cell.")
 		return
 	var bridge_cell_root: Node3D = streamer.loaded_cells[Vector2i(17, -6)]
 	var primary_bridge := bridge_cell_root.find_children("OSMBridge_4080878_*", "MeshInstance3D", true, false)
