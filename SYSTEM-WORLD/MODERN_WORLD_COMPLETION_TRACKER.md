@@ -3,7 +3,8 @@
 
 - [x] Added a distinct Hunter Examination Tunnel landmark beneath the Baghdad five-tower district, separate from the independent Power Tower.
 - [x] Added a wide descending 12-segment access ramp with physical collision, retaining walls, a large illuminated portal, bilingual entrance signage, eight guide lights, and an interactable entrance marker.
-- [ ] The entrance marker is currently a discoverable interaction target; routing it into the seven-stage Hunter Examination flow, actual underground traversal/level transition, and exam-stage gameplay remains open.
+- [x] Route the entrance interaction through `main.gd`: unregistered players are directed to register at the Hunter Association first; registered candidates call the existing `begin_exam()` flow and receive the current stage status in the Hunter Guild menu.
+- [ ] Actual underground traversal/level transition, physical exam-stage environments and stage-specific gameplay remain open; the current entrance starts the existing seven-stage progression manager but does not yet transport the player into a separate exam scene.
 - [ ] Run the canonical Godot parser/runtime, Baghdad landmark and operations regressions, and Android APK export on the exact updated PR head. No validation or APK success is claimed for this source change.
 - [ ] Review the entrance placement and visibility in the actual Android build; the current structure is a functional geometry prototype, not the finished cinematic underground complex.
 
