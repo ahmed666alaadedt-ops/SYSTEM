@@ -2259,10 +2259,10 @@ func _consume_elixir(item_id: String) -> void:
 
 func _buy_product(item_id: String, item_name: String, _listed_price: int, required_rank: String = "F") -> void:
 	var product_data := _get_catalog_product(item_id)
-	var required_level := int(product_data.get("required_level", 1))
+	var product_required_level := int(product_data.get("required_level", 1))
 	var required_nen_rank := int(product_data.get("required_nen_rank", 0))
-	if is_instance_valid(progression) and int(progression.get("current_level")) < required_level:
-		_set_status("هذا المنتج يتطلب مستوى %d." % required_level)
+	if is_instance_valid(progression) and int(progression.get("current_level")) < product_required_level:
+		_set_status("هذا المنتج يتطلب مستوى %d." % product_required_level)
 		return
 	if required_nen_rank > 0 and (not is_instance_valid(progression) or not bool(progression.get("nen_unlocked")) or int(progression.get("nen_control_rank")) < required_nen_rank):
 		_set_status("هذا المنتج يتطلب إيقاظ النِن والتحكم من الرتبة %d." % required_nen_rank)
