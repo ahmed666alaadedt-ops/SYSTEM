@@ -1088,6 +1088,28 @@ func _create_baghdad_upper_city_layer() -> void:
 	hunter_atrium.position = Vector3(0.0, 270.0, 0.0)
 	hunter_atrium.material_override = trim
 	city.add_child(hunter_atrium)
+	var atrium_walkways := [
+		{"name": "North", "position": Vector3(0.0, 270.0, 70.0), "size": Vector3(140.0, 1.6, 28.0)},
+		{"name": "South", "position": Vector3(0.0, 270.0, -70.0), "size": Vector3(140.0, 1.6, 28.0)},
+		{"name": "East", "position": Vector3(70.0, 270.0, 0.0), "size": Vector3(28.0, 1.6, 140.0)},
+		{"name": "West", "position": Vector3(-70.0, 270.0, 0.0), "size": Vector3(28.0, 1.6, 140.0)}
+	]
+	for walkway_spec in atrium_walkways:
+		var walkway := MeshInstance3D.new()
+		walkway.name = "HunterAtriumWalkway_" + str(walkway_spec["name"])
+		var walkway_mesh := BoxMesh.new()
+		walkway_mesh.size = walkway_spec["size"]
+		walkway.mesh = walkway_mesh
+		walkway.position = walkway_spec["position"]
+		walkway.material_override = deck_material
+		city.add_child(walkway)
+		_add_static_box_collision(city, walkway.name + "_Collision", walkway.position, walkway_mesh.size)
+	for index in range(upper_positions.size()):
+		var destination: Vector3 = upper_positions[index]
+		var outward := Vector3(destination.x, 0.0, destination.z).normalized()
+		var skyway_start := outward * 82.0 + Vector3(0.0, 272.0, 0.0)
+		var skyway_end := destination + Vector3(0.0, 272.0, 0.0)
+		_create_link_deck(city, skyway_start, skyway_end, "HunterAtriumSkyway_%02d" % index, 18.0, 1.5, trim)
 	city.set_meta("system_upper_city_blocks", upper_positions.size())
 	city.set_meta("system_upper_city_elevation_m", 270.0)
 
