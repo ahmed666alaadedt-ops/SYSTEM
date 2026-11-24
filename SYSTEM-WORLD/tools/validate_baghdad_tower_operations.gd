@@ -3006,7 +3006,7 @@ func _run() -> void:
 		if garden_root == null or actual_tower_height <= 0.0 or actual_floor_count < 2:
 			_fail("Sky-garden elevator acceptance could not resolve tower runtime geometry: " + garden_tower_id)
 			return
-		var lift_destination_floor := 0
+		var garden_floors: Array[int] = []
 		for garden_index in range(3):
 			var garden := garden_root.get_node_or_null("SkyGarden_%02d" % (garden_index + 1)) as Node3D
 			if garden == null:
@@ -3034,32 +3034,93 @@ func _run() -> void:
 			if interaction == null or str(interaction.get_meta("system_tower_id", "")) != garden_tower_id or int(interaction.get_meta("system_tower_floor_number", 0)) != mapped_floor or not bool(interaction.get_meta("system_tower_elevator_destination", false)):
 				_fail("Sky-garden interaction is not routed to its owning tower elevator: %s / garden %d." % [garden_tower_id, garden_index + 1])
 				return
-			if garden_index == 0:
-				lift_destination_floor = mapped_floor
-		if lift_destination_floor <= 0:
-			_fail("No real elevator destination was resolved for " + garden_tower_id)
+			garden_floors.append(mapped_floor)
+		if garden_floors.size() != 3:
+			_fail("All three sky-garden elevator destinations were not resolved for " + garden_tower_id)
 			return
 		operations.call("open_tower", garden_tower_id)
 		if operations.find_child("SkyGardenLiftButton_01", true, false) == null or operations.find_child("SkyGardenLiftButton_02", true, false) == null or operations.find_child("SkyGardenLiftButton_03", true, false) == null:
 			_fail("Tower elevator panel does not expose all three sky-garden destinations: " + garden_tower_id)
 			return
-		operations.call("_travel_to_floor", garden_tower_id, lift_destination_floor)
-		await create_timer(2.75).timeout
-		var travelled_room := operations.get("active_floor_root") as Node3D
-		var travelled_car := operations.get("active_elevator_car") as Node3D
-		var expected_player_position := garden_tower.to_global(Vector3(0.0, travelled_room.position.y + 1.25, 0.0)) if travelled_room != null else Vector3.INF
-		if travelled_room == null or travelled_car == null or str(travelled_room.get_meta("system_tower_id", "")) != garden_tower_id or int(travelled_room.get_meta("system_tower_floor_number", 0)) != lift_destination_floor or absf(travelled_car.position.y - travelled_room.position.y) > 0.05 or player.global_position.distance_to(expected_player_position) > 0.15 or bool(player.get_meta("system_tower_elevator_active", false)):
-			_fail("Physical elevator did not deliver the player and car to the mapped sky-garden floor: " + garden_tower_id)
-			return
-		print("QA TRACE: live elevator trip and all three aligned garden routes passed for " + garden_tower_id)
-		operations.call("return_to_lobby")
-		await create_timer(2.9).timeout
-		if is_instance_valid(operations.get("active_floor_root")) or bool(player.get_meta("system_tower_elevator_active", false)):
-			_fail("Elevator did not return safely from sky-garden floor to the lobby: " + garden_tower_id)
-			return
+		for garden_index in range(3):
+			var garden := garden_root.get_node_or_null("SkyGarden_%02d" % (garden_index + 1)) as Node3D
+			var lift_destination_floor := garden_floors[garden_index]
+			operations.call("_travel_to_floor", garden_tower_id, lift_destination_floor)
+			await create_timer(2.75).timeout
+			var travelled_room := operations.get("active_floor_root") as Node3D
+			var travelled_car := operations.get("active_elevator_car") as Node3D
+			var expected_player_position := garden_tower.to_global(Vector3(0.0, travelled_room.position.y + 1.25, 0.0)) if travelled_room != null else Vector3.INF
+			if travelled_room == null or travelled_car == null or str(travelled_room.get_meta("system_tower_id", "")) != garden_tower_id or int(travelled_room.get_meta("system_tower_floor_number", 0)) != lift_destination_floor or absf(travelled_car.position.y - travelled_room.position.y) > 0.05 or player.global_position.distance_to(expected_player_position) > 0.15 or bool(player.get_meta("system_tower_elevator_active", false)):
+				_fail("Physical elevator did not deliver the player and car to the mapped sky-garden floor: %s / garden %d." % [garden_tower_id, garden_index + 1])
+				return
+			if not await _walk_sky_garden_bridge(player, garden_tower, garden, tower_radius, garden_tower_id, garden_index + 1):
+				return
+			print("QA TRACE: physical player walk across collidable sky-garden bridge passed: %s / garden %d." % [garden_tower_id, garden_index + 1])
+			operations.call("return_to_lobby")
+			await create_timer(2.9).timeout
+			if is_instance_valid(operations.get("active_floor_root")) or bool(player.get_meta("system_tower_elevator_active", false)):
+				_fail("Elevator did not return safely from sky-garden floor to the lobby: %s / garden %d." % [garden_tower_id, garden_index + 1])
+				return
 	print("Baghdad tower operations validation passed: five connected towers, fifteen sky-garden floor mappings, five physical elevator trips and returns, independent Power Tower and existing operations.")
 	# This is a short-lived headless validation process; avoid forcing dummy-renderer teardown of placeholder meshes.
 	quit(0)
+
+func _walk_sky_garden_bridge(player: CharacterBody3D, tower: Node3D, garden: Node3D, tower_radius: float, tower_id: String, garden_number: int) -> bool:
+	var bridge := garden.get_node_or_null("GardenAccessBridge") as MeshInstance3D
+	var bridge_box := bridge.mesh as BoxMesh if bridge != null else null
+	if bridge_box == null:
+		_fail("Cannot physically walk the missing sky-garden bridge: %s / garden %d." % [tower_id, garden_number])
+		return false
+	var bridge_width := float(garden.get_meta("system_garden_access_bridge_width_m", 0.0))
+	var bridge_start := tower_radius * 0.42
+	var bridge_end := tower_radius * 1.16 + (tower_radius * 2.18 - tower_radius * 1.16) * 0.52
+	var start_local := Vector3(bridge_start + 0.8, 1.58, 0.0)
+	var end_local := Vector3(bridge_end - 0.65, 1.58, 0.0)
+	var start_world := garden.to_global(start_local)
+	var end_world := garden.to_global(end_local)
+	var saved_position := player.global_position
+	var was_physics_processing := player.is_physics_processing()
+	player.set_physics_process(false)
+	player.velocity = Vector3.ZERO
+	player.global_position = start_world
+	await physics_frame
+	await physics_frame
+	var midpoint := start_world.lerp(end_world, 0.5)
+	player.global_position = midpoint
+	await physics_frame
+	var left_rail_blocks := player.test_move(player.global_transform, Vector3(0.0, 0.0, -(bridge_width * 0.5 - 0.2)))
+	var right_rail_blocks := player.test_move(player.global_transform, Vector3(0.0, 0.0, bridge_width * 0.5 - 0.2))
+	if not left_rail_blocks or not right_rail_blocks:
+		player.global_position = saved_position
+		player.set_physics_process(was_physics_processing)
+		_fail("Both physical safety rails must block the player capsule: %s / garden %d." % [tower_id, garden_number])
+		return false
+	player.global_position = start_world
+	player.velocity = Vector3(0.0, -1.0, 0.0)
+	await physics_frame
+	var initial_on_floor := player.is_on_floor()
+	var travel := end_world - start_world
+	var travel_direction := travel.normalized()
+	var travel_distance := travel.length()
+	var travelled := 0.0
+	for _step in range(90):
+		player.velocity = Vector3(travel_direction.x * 3.0, -1.0, travel_direction.z * 3.0)
+		var previous_position := player.global_position
+		player.move_and_slide()
+		await physics_frame
+		travelled += Vector2(player.global_position.x - previous_position.x, player.global_position.z - previous_position.z).length()
+		if player.global_position.distance_to(end_world) <= 0.55:
+			break
+	var reached_far_end := player.global_position.distance_to(end_world) <= 0.55
+	var remained_on_walkway := player.global_position.y >= garden.to_global(Vector3(0.0, 0.66, 0.0)).y + 0.72
+	player.global_position = saved_position
+	player.velocity = Vector3.ZERO
+	player.set_physics_process(was_physics_processing)
+	if not initial_on_floor or not reached_far_end or travelled < travel_distance * 0.72 or not remained_on_walkway:
+		_fail("Player capsule could not traverse the full sky-garden bridge while supported by collision: %s / garden %d (distance %.2f / %.2f)." % [tower_id, garden_number, travelled, travel_distance])
+		return false
+	return true
+
 
 func _fail(message: String) -> void:
 	push_error("Baghdad tower operations validation failed: " + message)
