@@ -133,11 +133,11 @@ func _run() -> void:
 	for lobby_child in shopping_lobby.get_children():
 		if str(lobby_child.name).begins_with("TowerCustomer_"):
 			lobby_customer_count += 1
-	if lobby_customer_count != 4:
-		_fail("Shopping Tower customers did not return to their public lobby; found %d." % lobby_customer_count)
+	if lobby_customer_count != 100:
+		_fail("Shopping Tower must restore all 100 persistent customers to the public lobby after evacuation; found %d." % lobby_customer_count)
 		return
 
-	print("Baghdad tower elevator and emergency safety validation passed: six tower exits, physical exit trigger, floor-29 chef elevator ride, workstation arrival, safe lobby return and four persistent customers.")
+	print("Baghdad tower elevator and emergency safety validation passed: six tower exits, physical exit trigger, floor-29 chef elevator ride, workstation arrival, safe lobby return and all 100 persistent customers.")
 	quit(0)
 
 func _fail(message: String) -> void:
