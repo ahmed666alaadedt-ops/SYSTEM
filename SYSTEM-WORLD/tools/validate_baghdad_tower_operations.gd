@@ -351,6 +351,7 @@ func _run() -> void:
 		33: "rare_artifact_vault",
 		34: "rare_artifact_vault"
 	}
+	var sample_museum_interaction: Area3D = null
 	for museum_floor_value in museum_floor_expectations.keys():
 		var museum_floor := int(museum_floor_value)
 		var museum_room := operations.call("_ensure_floor_room", "antiques_heritage_tower_baghdad", museum_floor) as Node3D
@@ -379,12 +380,22 @@ func _run() -> void:
 					_fail("Museum floor %d has a missing, duplicate or non-interactable artifact ID." % museum_floor)
 					return
 				exhibit_ids[artifact_id] = true
+				if sample_museum_interaction == null:
+					sample_museum_interaction = exhibit_node as Area3D
 				if museum_facility.get_node_or_null("ArtifactGlassCase_%02d" % (exhibit_interaction_count - 1)) == null:
 					_fail("Museum floor %d is missing a physical glass artifact case." % museum_floor)
 					return
 		if exhibit_interaction_count != expected_exhibits:
 			_fail("Museum floor %d expected %d interactive artifact displays; found %d." % [museum_floor, expected_exhibits, exhibit_interaction_count])
 			return
+	if not operations.has_method("open_museum_artifact_exhibit") or sample_museum_interaction == null:
+		_fail("Museum artifact interaction panel is not connected to the tower operations manager.")
+		return
+	operations.call("open_museum_artifact_exhibit", sample_museum_interaction)
+	if not bool(operations.get("panel").visible) or str(operations.get("title_label").text) != "سجل القطعة الأثرية":
+		_fail("Interacting with a museum artifact did not open its details panel.")
+		return
+	operations.get("panel").hide()
 	var museum_config: Dictionary = operations.get("TOWER_CONFIG").get("antiques_heritage_tower_baghdad", {})
 	if str(museum_config.get("node", "")) != "AntiquesHeritageTower" or int(museum_config.get("floors", 0)) != 34 or museum_config.get("jobs", []).size() != 8:
 		_fail("Antiques and Heritage Tower staffing/configuration is incomplete.")
