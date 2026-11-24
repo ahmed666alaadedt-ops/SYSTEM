@@ -8,6 +8,11 @@ const POWER_TOWER_HEIGHT := 820.0
 
 var terrain: Node
 var city_anchor := Vector3.ZERO
+var bridge_anchor := Vector2.ZERO
+var bridge_axis := Vector2.ZERO
+var bridge_river_axis := Vector2.ZERO
+var bridge_centerline: Array[Vector2] = []
+var bridge_reference_loaded := false
 var tower_material: StandardMaterial3D
 var trim_material: StandardMaterial3D
 var emissive_material: StandardMaterial3D
@@ -25,6 +30,9 @@ func _ready() -> void:
 	if city_anchor == Vector3.INF:
 		push_warning("SYSTEM WORLD: Baghdad anchor is unavailable; towers were not built.")
 		return
+	if not _load_republic_bridge_reference():
+		push_error("SYSTEM WORLD: verified Republic Bridge reference is required for Baghdad tower placement.")
+		return
 	_create_materials()
 	_build_hunter_tower()
 	_build_power_tower()
@@ -32,9 +40,42 @@ func _ready() -> void:
 	_build_shopping_tower()
 	_build_entertainment_tower()
 	_build_technology_tower()
+	_create_baghdad_upper_city_layer()
 	_create_connected_city_links()
 	_create_public_amenities()
 	_create_hunter_exam_tunnel()
+
+func _load_republic_bridge_reference() -> bool:
+	var path := "res://data/geography/baghdad/republic_bridge_reference.json"
+	if not FileAccess.file_exists(path):
+		return false
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if not parsed is Dictionary or str(parsed.get("region_id", "")) != "iraq_baghdad_region":
+		return false
+	var source: Dictionary = parsed.get("source", {})
+	if str(source.get("license", "")) != "ODbL-1.0" or int(source.get("source_artifact_id", 0)) != 14629100933:
+		return false
+	var bridge: Dictionary = parsed.get("republic_bridge", {})
+	var center: Dictionary = bridge.get("center_local_m", {})
+	bridge_anchor = Vector2(float(center.get("east", 0.0)), float(center.get("south", 0.0)))
+	for point_value in bridge.get("centerline_local_m", []):
+		if point_value is Dictionary:
+			bridge_centerline.append(Vector2(float(point_value.get("east_m", 0.0)), float(point_value.get("south_m", 0.0))))
+	if bridge_centerline.size() < 2:
+		return false
+	bridge_axis = (bridge_centerline[bridge_centerline.size() - 1] - bridge_centerline[0]).normalized()
+	bridge_river_axis = Vector2(-bridge_axis.y, bridge_axis.x)
+	bridge_reference_loaded = true
+	set_meta("system_republic_bridge_osm_way_id", int(bridge.get("osm_bridge_centerline_way_id", 0)))
+	set_meta("system_republic_bridge_anchor_local_m", bridge_anchor)
+	set_meta("system_tigris_river_osm_way_id", int(parsed.get("tigris_river", {}).get("osm_way_id", 0)))
+	return true
+
+
+func _bridge_district_position(across_offset: float, river_offset: float) -> Vector3:
+	var point := bridge_anchor + bridge_axis * across_offset + bridge_river_axis * river_offset
+	return Vector3(point.x, 0.0, point.y)
+
 
 func _create_materials() -> void:
 	tower_material = StandardMaterial3D.new()
@@ -52,7 +93,7 @@ func _create_materials() -> void:
 	emissive_material.emission_energy_multiplier = 3.2
 
 func _build_hunter_tower() -> void:
-	var position := city_anchor + Vector3(0.0, 0.0, 365.0)
+	var position := Vector3(bridge_anchor.x, 0.0, bridge_anchor.y)
 	_build_tower(
 		"HunterAssociationTower",
 		"برج الصيادين العالمي",
@@ -61,11 +102,14 @@ func _build_hunter_tower() -> void:
 		HUNTER_TOWER_HEIGHT,
 		38.0,
 		200,
-		Color(0.08, 0.62, 0.92)
+		Color(0.08, 0.62, 0.92),
+		true,
+		true
 	)
 	var hunter_tower := get_node_or_null("HunterAssociationTower") as Node3D
 	if hunter_tower != null:
 		_create_hunter_helipad(hunter_tower, 38.0)
+		_create_hunter_advertising_facades(hunter_tower, 38.0)
 
 
 func _create_hunter_helipad(tower: Node3D, tower_radius: float) -> void:
@@ -73,11 +117,12 @@ func _create_hunter_helipad(tower: Node3D, tower_radius: float) -> void:
 	var pad_root := Node3D.new()
 	pad_root.name = "HunterAssociationHelipad"
 	pad_root.set_script(HunterHelicopterControllerScript)
-	pad_root.position = Vector3(tower_radius * 1.42, HUNTER_TOWER_HEIGHT + 8.2, 0.0)
+	pad_root.position = Vector3(0.0, HUNTER_TOWER_HEIGHT + 8.2, 0.0)
 	pad_root.set_meta("system_facility_type", "helicopter_landing_pad")
 	pad_root.set_meta("system_owner_tower_id", "hunter_association_tower_baghdad")
 	pad_root.set_meta("system_landing_zone_radius_m", 18.0)
-	pad_root.set_meta("system_landing_zone_status", "geometry_blockout_pending_helicopter_runtime_integration")
+	pad_root.set_meta("system_landing_zone_status", "operational_controller_attached")
+	pad_root.set_meta("system_landing_zone_controller", "HunterHelicopterPadController")
 	tower.add_child(pad_root)
 
 	var deck := MeshInstance3D.new()
@@ -170,6 +215,59 @@ func _create_hunter_helipad(tower: Node3D, tower_radius: float) -> void:
 	pad_root.add_child(sign)
 	print("SYSTEM WORLD: dedicated Hunter Association rooftop helicopter pad generated.")
 
+func _create_hunter_advertising_facades(tower: Node3D, tower_radius: float) -> void:
+	var facade_root := Node3D.new()
+	facade_root.name = "HunterTowerAdvertisingFacades"
+	facade_root.set_meta("system_advertising_scope", "hunter_tower_exterior")
+	facade_root.set_meta("system_advertising_mode", "curated_demo_no_live_ad_network")
+	tower.add_child(facade_root)
+	var frame_material := _make_surface_material(Color(0.018, 0.035, 0.052), 0.28, 0.68)
+	var screen_material := _make_surface_material(Color(0.015, 0.15, 0.22), 0.2, 0.35)
+	screen_material.emission_enabled = true
+	screen_material.emission = Color(0.02, 0.48, 0.72)
+	screen_material.emission_energy_multiplier = 1.8
+	var screen_count := 0
+	for side in range(4):
+		var angle := TAU * float(side) / 4.0
+		var outward := Vector3(cos(angle), 0.0, sin(angle))
+		for level in [220.0, 520.0, 800.0]:
+			var panel := Node3D.new()
+			panel.name = "HunterExteriorAd_%02d_%03d" % [side, int(level)]
+			panel.position = outward * (tower_radius + 1.5) + Vector3(0.0, level, 0.0)
+			panel.rotation.y = -angle
+			panel.set_meta("system_advertising_scope", "hunter_tower_exterior")
+			panel.set_meta("system_advertising_mode", "curated_demo")
+			facade_root.add_child(panel)
+			var frame := MeshInstance3D.new()
+			frame.name = "AdvertisingFrame"
+			var frame_mesh := BoxMesh.new()
+			frame_mesh.size = Vector3(1.2, 20.0, 34.0)
+			frame.mesh = frame_mesh
+			frame.material_override = frame_material
+			panel.add_child(frame)
+			var screen := MeshInstance3D.new()
+			screen.name = "AdvertisingScreen"
+			var screen_mesh := BoxMesh.new()
+			screen_mesh.size = Vector3(0.42, 17.5, 31.5)
+			screen.mesh = screen_mesh
+			screen.position.x = 0.68
+			screen.material_override = screen_material
+			screen.set_meta("system_advertising_screen", true)
+			panel.add_child(screen)
+			var label := Label3D.new()
+			label.name = "AdvertisingIdentity"
+			label.text = "SYSTEM HUNTER ASSOCIATION\nإعلانات برج الصيادين"
+			label.font_size = 24
+			label.pixel_size = 0.012
+			label.modulate = Color(0.78, 0.96, 1.0)
+			label.position = Vector3(0.9, 0.0, 0.0)
+			label.rotation.y = PI * 0.5
+			panel.add_child(label)
+			screen_count += 1
+	facade_root.set_meta("system_advertising_screen_count", screen_count)
+	tower.set_meta("system_hunter_exterior_ad_facades", screen_count)
+
+
 func _build_power_tower() -> void:
 	# Standalone challenge destination: deliberately outside the five-tower district.
 	var position := city_anchor + Vector3(650.0, 0.0, 620.0)
@@ -185,17 +283,27 @@ func _build_power_tower() -> void:
 		false
 	)
 
-func _build_tower(node_name: String, title: String, location_id: String, world_position: Vector3, height: float, radius: float, floors: int, beacon_color: Color, connect_to_district: bool = true) -> void:
+func _build_tower(node_name: String, title: String, location_id: String, world_position: Vector3, height: float, radius: float, floors: int, beacon_color: Color, connect_to_district: bool = true, allow_bridge_platform: bool = false) -> void:
 	var requested_position := Vector2(world_position.x, world_position.z)
-	var resolved := _nearest_land_position(requested_position)
-	if resolved == Vector2.INF:
-		push_warning("SYSTEM WORLD: no suitable land for tower " + title)
-		return
-	if resolved.distance_to(requested_position) > 0.5:
-		print("SYSTEM WORLD: tower plot relocated to nearby land: ", title, " / offset ", snappedf(resolved.distance_to(requested_position), 0.1), "m")
+	var resolved := requested_position
+	var root_height := 0.0
+	if allow_bridge_platform:
+		if not bridge_reference_loaded or requested_position.distance_to(bridge_anchor) > 80.0:
+			push_error("SYSTEM WORLD: bridge platform requested outside the verified Republic Bridge anchor.")
+			return
+		root_height = 0.0
+	else:
+		resolved = _nearest_land_position(requested_position)
+		if resolved == Vector2.INF:
+			push_warning("SYSTEM WORLD: no suitable land for tower " + title)
+			return
+		if resolved.distance_to(requested_position) > 0.5:
+			print("SYSTEM WORLD: tower plot relocated to nearby land: ", title, " / offset ", snappedf(resolved.distance_to(requested_position), 0.1), "m")
+		root_height = float(terrain.call("get_terrain_height", resolved.x, resolved.y))
 	var root := Node3D.new()
 	root.name = node_name
-	root.position = Vector3(resolved.x, float(terrain.call("get_terrain_height", resolved.x, resolved.y)), resolved.y)
+	root.position = Vector3(resolved.x, root_height, resolved.y)
+	root.set_meta("system_placement_source", "verified_republic_bridge_osm" if allow_bridge_platform else "verified_baghdad_bridge_riverbank_terrain")
 	add_child(root)
 	var tower_record := {"id": location_id, "name": title, "position": root.position, "height": height, "radius": radius}
 	tower_positions.append(tower_record)
@@ -328,6 +436,7 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	root.set_meta("tower_floor_count", floors)
 	root.set_meta("tower_height_m", height)
 	root.set_meta("tower_is_connected_district_member", connect_to_district)
+	root.set_meta("system_republic_bridge_anchor_local_m", bridge_anchor)
 	root.set_meta("tower_floor_directory", _get_tower_floor_directory(location_id))
 	_create_tower_lobby(root, location_id, title, radius, floors, height, connect_to_district)
 	print("SYSTEM WORLD: landmark tower generated: ", title, " / ", floors, " floors / ", height, "m")
@@ -339,10 +448,12 @@ func _create_hunter_exam_tunnel() -> void:
 	var tunnel_root := Node3D.new()
 	tunnel_root.name = "BaghdadHunterExaminationTunnel"
 	tunnel_root.position = Vector3(
-		city_anchor.x,
-		float(terrain.call("get_terrain_height", city_anchor.x, city_anchor.z)),
-		city_anchor.z
+		bridge_anchor.x,
+		float(terrain.call("get_terrain_height", bridge_anchor.x, bridge_anchor.y)),
+		bridge_anchor.y
 	)
+	tunnel_root.set_meta("system_under_republic_bridge", true)
+	tunnel_root.set_meta("system_tunnel_location_source", "OpenStreetMap Republic Bridge / Tigris reference")
 	tunnel_root.set_meta("system_facility_type", "hunter_examination_tunnel")
 	tunnel_root.set_meta("system_under_baghdad_tower_district", true)
 	tunnel_root.set_meta("system_exam_manager", "SYSTEMHunterExamManager")
@@ -394,7 +505,11 @@ func _create_hunter_exam_tunnel() -> void:
 		clue.set_meta("system_hunter_tunnel_riddle_step", index + 1)
 		clue.set_meta("system_display_name", "نقش حجري قديم")
 		clue.set_meta("system_interaction_prompt", "تفحّص النقش الحجري")
-		clue.position = clue_positions[index]
+		var clue_local: Vector3 = clue_positions[index]
+		var clue_world_x := bridge_anchor.x + clue_local.x
+		var clue_world_z := bridge_anchor.y + clue_local.z
+		clue_local.y = float(terrain.call("get_terrain_height", clue_world_x, clue_world_z)) - tunnel_root.position.y + 0.12
+		clue.position = clue_local
 		clue.collision_layer = 1
 		clue.collision_mask = 0
 		var stone := MeshInstance3D.new()
@@ -506,7 +621,7 @@ func _build_business_tower() -> void:
 		"BusinessInvestmentTower",
 		"برج الأعمال والاستثمار",
 		"business_investment_tower_baghdad",
-		city_anchor + Vector3(355.0, 0.0, 365.0),
+		_bridge_district_position(390.0, 170.0),
 		220.0,
 		26.0,
 		36,
@@ -515,7 +630,7 @@ func _build_business_tower() -> void:
 
 
 func _build_shopping_tower() -> void:
-	_build_tower("ShoppingTower", "برج التسوق والتجارة", "shopping_tower_baghdad", city_anchor + Vector3(-355.0, 0.0, -350.0), 190.0, 30.0, 32, Color(0.95, 0.72, 0.28))
+	_build_tower("ShoppingTower", "برج التسوق والتجارة", "shopping_tower_baghdad", _bridge_district_position(-390.0, -170.0), 190.0, 30.0, 32, Color(0.95, 0.72, 0.28))
 	var tower := get_node_or_null("ShoppingTower")
 	if tower != null:
 		tower.set_meta("facility_categories", PackedStringArray([
@@ -540,11 +655,11 @@ func _build_shopping_tower() -> void:
 
 
 func _build_entertainment_tower() -> void:
-	_build_tower("EntertainmentTower", "برج الترفيه والرياضة", "entertainment_tower_baghdad", city_anchor + Vector3(355.0, 0.0, -350.0), 205.0, 29.0, 34, Color(0.75, 0.38, 0.95))
+	_build_tower("EntertainmentTower", "برج الترفيه والرياضة", "entertainment_tower_baghdad", _bridge_district_position(430.0, -180.0), 205.0, 29.0, 34, Color(0.75, 0.38, 0.95))
 
 
 func _build_technology_tower() -> void:
-	_build_tower("TechnologyTower", "برج التكنولوجيا والابتكار", "technology_tower_baghdad", city_anchor + Vector3(0.0, 0.0, -365.0), 245.0, 27.0, 40, Color(0.20, 0.82, 0.98))
+	_build_tower("TechnologyTower", "برج التكنولوجيا والابتكار", "technology_tower_baghdad", _bridge_district_position(-430.0, 180.0), 245.0, 27.0, 40, Color(0.20, 0.82, 0.98))
 
 
 func _create_tower_lobby(root: Node3D, tower_id: String, title: String, radius: float, floors: int, height: float, connect_to_district: bool) -> void:
@@ -907,6 +1022,75 @@ func _add_tower_identity_box(parent: Node3D, node_name: String, position: Vector
 	parent.add_child(instance)
 
 
+func _create_baghdad_upper_city_layer() -> void:
+	if district_tower_positions.size() != 5:
+		push_warning("SYSTEM WORLD: upper Baghdad city requires exactly five district towers.")
+		return
+	var city := Node3D.new()
+	city.name = "BaghdadUpperSkyCity"
+	city.set_meta("system_city_layer", "upper_sky_city")
+	city.set_meta("system_district_tower_count", 5)
+	city.set_meta("system_power_tower_excluded", true)
+	add_child(city)
+	var deck_material := _make_surface_material(Color(0.12, 0.19, 0.25), 0.62, 0.48)
+	var trim := _make_surface_material(Color(0.72, 0.52, 0.25), 0.42, 0.72)
+	var upper_positions: Array[Vector3] = []
+	for record in district_tower_positions:
+		if str(record.get("id", "")) == "hunter_association_tower_baghdad":
+			continue
+		var tower_position: Vector3 = record.get("position", Vector3.ZERO)
+		var local := Vector3(tower_position.x - bridge_anchor.x, 0.0, tower_position.z - bridge_anchor.y)
+		upper_positions.append(local)
+		var block := Node3D.new()
+		block.name = "UpperCityBlock_" + str(record.get("id", "tower"))
+		block.position = Vector3(local.x, 270.0, local.z)
+		block.set_meta("system_upper_city_tower_id", str(record.get("id", "")))
+		city.add_child(block)
+		var platform := MeshInstance3D.new()
+		platform.name = "UpperCityPlatform"
+		var platform_mesh := BoxMesh.new()
+		platform_mesh.size = Vector3(170.0, 2.2, 145.0)
+		platform.mesh = platform_mesh
+		platform.material_override = deck_material
+		block.add_child(platform)
+		_add_static_box_collision(block, "UpperCityPlatformCollision", Vector3.ZERO, platform_mesh.size)
+		for building_index in range(3):
+			var building := MeshInstance3D.new()
+			building.name = "UpperCityBuilding_%02d" % building_index
+			var building_mesh := BoxMesh.new()
+			var building_height := 18.0 + float((building_index + upper_positions.size()) % 3) * 7.0
+			building_mesh.size = Vector3(24.0, building_height, 22.0)
+			building.mesh = building_mesh
+			building.position = Vector3(-48.0 + float(building_index) * 48.0, 1.1 + building_height * 0.5, -18.0 if building_index % 2 == 0 else 24.0)
+			building.material_override = tower_material if building_index % 2 == 0 else trim
+			block.add_child(building)
+		var label := Label3D.new()
+		label.name = "UpperCityDistrictSign"
+		label.text = "BAGHDAD SKY CITY\nالمدينة العلوية"
+		label.font_size = 22
+		label.pixel_size = 0.012
+		label.position = Vector3(0.0, 7.0, -62.0)
+		label.modulate = Color(0.78, 0.94, 1.0)
+		block.add_child(label)
+	for index in range(upper_positions.size()):
+		var first := upper_positions[index] + Vector3(0.0, 272.0, 0.0)
+		var second := upper_positions[(index + 1) % upper_positions.size()] + Vector3(0.0, 272.0, 0.0)
+		_create_link_deck(city, first, second, "UpperCitySkyway_%02d" % index, 22.0, 1.5, trim)
+	var hunter_atrium := MeshInstance3D.new()
+	hunter_atrium.name = "HunterTowerUpperCityAtriumRing"
+	var ring_mesh := TorusMesh.new()
+	ring_mesh.inner_radius = 62.0
+	ring_mesh.outer_radius = 78.0
+	ring_mesh.rings = 32
+	ring_mesh.ring_segments = 12
+	hunter_atrium.mesh = ring_mesh
+	hunter_atrium.position = Vector3(0.0, 270.0, 0.0)
+	hunter_atrium.material_override = trim
+	city.add_child(hunter_atrium)
+	city.set_meta("system_upper_city_blocks", upper_positions.size())
+	city.set_meta("system_upper_city_elevation_m", 270.0)
+
+
 func _create_connected_city_links() -> void:
 	# Elevated pedestrian/vehicle corridor blockout linking only the five district towers.
 	# Keep the route in a perimeter sequence; the previous creation order crossed
@@ -993,7 +1177,7 @@ func _create_public_amenities() -> void:
 		var mesh := BoxMesh.new()
 		mesh.size = spec["size"]
 		deck.mesh = mesh
-		deck.position = city_anchor + spec["offset"]
+		deck.position = Vector3(bridge_anchor.x, 0.0, bridge_anchor.y) + spec["offset"]
 		deck.material_override = spec["material"]
 		amenities.add_child(deck)
 	amenities.set_meta("planned_facilities", PackedStringArray(["parks", "restaurants", "cafes", "hotels", "cinema", "amusement_park", "water_park", "swimming_pools", "sports_courts", "family_services", "parking", "emergency_access"]))
@@ -1004,7 +1188,7 @@ func _create_public_amenities() -> void:
 func _create_multilevel_parking_blockout(parent: Node3D) -> void:
 	var garage := Node3D.new()
 	garage.name = "ConnectedDistrictParkingGarage_Blockout"
-	garage.position = city_anchor + Vector3(112.0, 0.0, 24.0)
+	garage.position = Vector3(bridge_anchor.x, 0.0, bridge_anchor.y) + Vector3(112.0, 0.0, 24.0)
 	parent.add_child(garage)
 	var floor_material := _make_surface_material(Color(0.12, 0.15, 0.18), 0.82, 0.28)
 	var marking_material := _make_surface_material(Color(0.88, 0.78, 0.48), 0.7, 0.0)
@@ -1039,7 +1223,7 @@ func _create_multilevel_parking_blockout(parent: Node3D) -> void:
 func _create_vertical_access_blockout(parent: Node3D) -> void:
 	var access := Node3D.new()
 	access.name = "PedestrianElevatorAndServiceCore_Blockout"
-	access.position = city_anchor + Vector3(-112.0, 0.0, 24.0)
+	access.position = Vector3(bridge_anchor.x, 0.0, bridge_anchor.y) + Vector3(-112.0, 0.0, 24.0)
 	parent.add_child(access)
 	var core_material := _make_surface_material(Color(0.18, 0.25, 0.31), 0.5, 0.42)
 	for shaft_index in range(2):
