@@ -1852,3 +1852,5 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - Collision-shape lookup is type-based rather than dependent on Godot's auto-generated child name; the floor-4 repair normalizes any recovered shape name and collision layers so older nodes are reliably repaired.
 
 - Selected display controls are explicitly shown after resolving the current floor's live button, so a previously hidden skill-manual or product control cannot remain invisible when a different physical display is selected.
+
+- Godot validation workflow concurrency now separates push and pull-request runs for the same feature branch, preventing the PR-triggered suite from cancelling the push-triggered full showcase regression before it executes.

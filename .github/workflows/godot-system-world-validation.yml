@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: system-world-godot-validation-${{ github.head_ref || github.ref_name }}
+  group: system-world-godot-validation-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 permissions:
