@@ -7080,56 +7080,176 @@ func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: i
 		queue_marker.add_child(ring)
 		room.add_child(queue_marker)
 	if floor_number == 29:
-		_attach_hunter_exam_secret_entry_to_restaurant(room, radius)
+		_attach_hunter_exam_private_room_to_restaurant(room, radius)
 
 
-func _attach_hunter_exam_secret_entry_to_restaurant(room: Node3D, radius: float) -> void:
-	if room == null:
+func _attach_hunter_exam_private_room_to_restaurant(restaurant_floor: Node3D, radius: float) -> void:
+	if restaurant_floor == null:
 		return
 	var tunnel_root := get_tree().root.find_child("BaghdadHunterExaminationTunnel", true, false) as Node3D
 	if tunnel_root == null:
-		push_warning("SYSTEM Hunter Examination: restaurant secret entry could not find the Baghdad tunnel root.")
+		push_warning("SYSTEM Hunter Examination: permanent tunnel root is missing.")
 		return
-	var wall := tunnel_root.get_node_or_null("OrdinaryFoundationMasonry") as Node3D
-	var door := tunnel_root.get_node_or_null("ConcealedHunterDoorSlab") as Node3D
-	var entrance := tunnel_root.get_node_or_null("ConcealedHunterExamDoor") as Area3D
-	if wall == null or door == null or entrance == null:
-		push_warning("SYSTEM Hunter Examination: concealed restaurant doorway components are incomplete.")
+	if restaurant_floor.get_node_or_null("HunterExamPrivateRoom") != null:
 		return
-	var clue_global_positions: Array[Vector3] = []
-	for clue_index in range(1, 4):
-		var clue := tunnel_root.get_node_or_null("HunterRiddleClue_%d" % clue_index) as Node3D
-		if clue != null:
-			clue_global_positions.append(clue.global_position)
-	var restaurant_entry_point := room.to_global(Vector3(0.0, 0.0, -radius * 0.46))
-	var tunnel_origin := restaurant_entry_point - room.global_basis.z * 94.0
-	tunnel_root.global_position = Vector3(tunnel_origin.x, room.global_position.y, tunnel_origin.z)
-	tunnel_root.global_rotation = room.global_rotation
-	for clue_index in range(clue_global_positions.size()):
-		var clue := tunnel_root.get_node_or_null("HunterRiddleClue_%d" % (clue_index + 1)) as Node3D
-		if clue != null:
-			clue.global_position = clue_global_positions[clue_index]
-	entrance.set_meta("system_interaction_prompt", "")
-	entrance.set_meta("system_hidden_restaurant_entry", true)
-	entrance.set_meta("system_restaurant_floor_number", 29)
-	entrance.collision_layer = 0
-	entrance.monitoring = false
-	entrance.monitorable = false
-	wall.set_meta("system_hidden_restaurant_entry", true)
-	room.set_meta("system_hunter_exam_secret_entry", true)
-	tunnel_root.set_meta("system_tunnel_secret_entry_location", "shopping_tower_restaurant_floor_29")
+
+	var private_room := Node3D.new()
+	private_room.name = "HunterExamPrivateRoom"
+	private_room.position = Vector3(-radius * 0.62, 0.0, 0.0)
+	private_room.set_meta("system_hunter_exam_private_room", true)
+	private_room.set_meta("system_restaurant_floor_number", 29)
+	private_room.set_meta("system_hunter_exam_room_access_requires_served_meal", true)
+	restaurant_floor.add_child(private_room)
+
+	var room_floor := MeshInstance3D.new()
+	room_floor.name = "PrivateRoomFloor"
+	var floor_mesh := BoxMesh.new()
+	floor_mesh.size = Vector3(12.0, 0.35, 12.0)
+	room_floor.mesh = floor_mesh
+	room_floor.position = Vector3(0.0, -0.18, 0.0)
+	var room_material := StandardMaterial3D.new()
+	room_material.albedo_color = Color(0.055, 0.105, 0.14)
+	room_material.metallic = 0.32
+	room_material.roughness = 0.42
+	room_floor.material_override = room_material
+	private_room.add_child(room_floor)
+	_add_static_box_collision(private_room, "PrivateRoomFloorCollision", room_floor.position, floor_mesh.size)
+
+	for wall_data in [
+		{"name":"Back","position":Vector3(0.0,2.25,-6.0),"size":Vector3(12.0,4.5,0.35)},
+		{"name":"Left","position":Vector3(-6.0,2.25,0.0),"size":Vector3(0.35,4.5,12.0)},
+		{"name":"Right","position":Vector3(6.0,2.25,0.0),"size":Vector3(0.35,4.5,12.0)},
+		{"name":"FrontLeft","position":Vector3(-4.1,2.25,6.0),"size":Vector3(3.8,4.5,0.35)},
+		{"name":"FrontRight","position":Vector3(4.1,2.25,6.0),"size":Vector3(3.8,4.5,0.35)}
+	]:
+		var wall := MeshInstance3D.new()
+		wall.name = "PrivateRoomWall_" + str(wall_data["name"])
+		var wall_mesh := BoxMesh.new()
+		wall_mesh.size = wall_data["size"]
+		wall.mesh = wall_mesh
+		wall.position = wall_data["position"]
+		wall.material_override = room_material
+		private_room.add_child(wall)
+		_add_static_box_collision(private_room, wall.name + "Collision", wall.position, wall_mesh.size)
+
+	var room_sign := Label3D.new()
+	room_sign.name = "HunterExamPrivateRoomSign"
+	room_sign.text = "HUNTER GUILD — غرفة المتسابقين"
+	room_sign.position = Vector3(0.0, 3.7, 5.75)
+	room_sign.font_size = 18
+	room_sign.pixel_size = 0.012
+	room_sign.modulate = Color(0.35, 0.88, 1.0)
+	private_room.add_child(room_sign)
+
+	var entry := Area3D.new()
+	entry.name = "HunterExamPrivateRoomEntry"
+	entry.add_to_group("system_interactable")
+	entry.set_meta("system_hunter_exam_room_entry", true)
+	entry.set_meta("system_display_name", "غرفة المتسابقين الخاصة")
+	entry.set_meta("system_interaction_prompt", "ادخل غرفة المتسابقين — بعد استلام وجبتك")
+	entry.position = Vector3(0.0, 0.0, 7.4)
+	entry.collision_layer = 1
+	entry.collision_mask = 0
+	var entry_shape := CollisionShape3D.new()
+	var entry_sphere := SphereShape3D.new()
+	entry_sphere.radius = 2.4
+	entry_shape.shape = entry_sphere
+	entry_shape.position.y = 1.0
+	entry.add_child(entry_shape)
+	private_room.add_child(entry)
+
+	# A real lift platform and shaft connect the private room to the single tunnel.
+	var platform := StaticBody3D.new()
+	platform.name = "HunterExamElevatorPlatform"
+	platform.position = Vector3(0.0, 0.0, -1.5)
+	platform.set_meta("system_hunter_exam_elevator_platform", true)
+	private_room.add_child(platform)
+	var platform_mesh_node := MeshInstance3D.new()
+	platform_mesh_node.name = "ElevatorCabinFloor"
+	var platform_mesh := BoxMesh.new()
+	platform_mesh.size = Vector3(3.6, 0.35, 3.6)
+	platform_mesh_node.mesh = platform_mesh
+	var lift_material := StandardMaterial3D.new()
+	lift_material.albedo_color = Color(0.08, 0.24, 0.31)
+	lift_material.metallic = 0.62
+	lift_material.roughness = 0.28
+	lift_material.emission_enabled = true
+	lift_material.emission = Color(0.0, 0.22, 0.32)
+	lift_material.emission_energy_multiplier = 0.75
+	platform_mesh_node.material_override = lift_material
+	platform.add_child(platform_mesh_node)
+	var platform_collision := CollisionShape3D.new()
+	var platform_box := BoxShape3D.new()
+	platform_box.size = platform_mesh.size
+	platform_collision.shape = platform_box
+	platform.add_child(platform_collision)
+	for corner_x in [-1.0, 1.0]:
+		for corner_z in [-1.0, 1.0]:
+			var rail := MeshInstance3D.new()
+			rail.name = "ElevatorRail_%s_%s" % [str(corner_x), str(corner_z)]
+			var rail_mesh := BoxMesh.new()
+			rail_mesh.size = Vector3(0.16, 2.6, 0.16)
+			rail.mesh = rail_mesh
+			rail.position = Vector3(corner_x * 1.62, 1.3, corner_z * 1.62)
+			rail.material_override = lift_material
+			platform.add_child(rail)
+
+	for shaft_side in [-1.0, 1.0]:
+		var shaft_wall := MeshInstance3D.new()
+		shaft_wall.name = "HunterExamElevatorShaftWall_" + str(shaft_side)
+		var shaft_mesh := BoxMesh.new()
+		shaft_mesh.size = Vector3(0.22, 45.0, 4.2)
+		shaft_wall.mesh = shaft_mesh
+		shaft_wall.position = Vector3(shaft_side * 2.15, -22.5, -1.5)
+		shaft_wall.material_override = room_material
+		private_room.add_child(shaft_wall)
+
+	var lift_button := Area3D.new()
+	lift_button.name = "HunterExamElevatorDownButton"
+	lift_button.add_to_group("system_interactable")
+	lift_button.set_meta("system_hunter_exam_elevator_button", true)
+	lift_button.set_meta("system_hunter_exam_elevator_direction", "down")
+	lift_button.set_meta("system_display_name", "مصعد نفق اختبار الصيادين")
+	lift_button.set_meta("system_interaction_prompt", "انزل إلى نفق اختبار الصيادين")
+	lift_button.position = Vector3(2.0, 0.0, 1.0)
+	lift_button.collision_layer = 1
+	lift_button.collision_mask = 0
+	var lift_shape := CollisionShape3D.new()
+	var lift_sphere := SphereShape3D.new()
+	lift_sphere.radius = 2.2
+	lift_shape.shape = lift_sphere
+	lift_shape.position.y = 1.0
+	lift_button.add_child(lift_shape)
+	private_room.add_child(lift_button)
+
+	tunnel_root.global_position = private_room.to_global(Vector3(0.0, -45.0, -1.5))
+	tunnel_root.global_rotation = private_room.global_rotation
+	tunnel_root.set_meta("system_tunnel_secret_entry_location", "shopping_tower_restaurant_floor_29_private_room_elevator")
 	tunnel_root.set_meta("system_under_shopping_tower_restaurant", true)
 	tunnel_root.set_meta("system_under_republic_bridge_district", true)
-	tunnel_root.set_meta("system_under_republic_bridge", false)
-	if bool(tunnel_root.get_meta("system_tunnel_riddle_solved", false)):
-		var main_scene := get_tree().current_scene
-		if main_scene == null:
-			var operations_node := get_tree().root.find_child("BaghdadTowerOperationsManager", true, false)
-			if operations_node != null:
-				main_scene = operations_node.get_parent()
-		if main_scene != null and main_scene.has_method("_reveal_hunter_tunnel_passage"):
-			main_scene.call("_reveal_hunter_tunnel_passage", tunnel_root)
-	print("SYSTEM Hunter Examination: concealed entrance and descending passage are physically anchored beneath Shopping Tower restaurant floor 29; riverbank clues remain at their surveyed locations.")
+	tunnel_root.set_meta("system_tunnel_riddle_solved", true)
+	tunnel_root.set_meta("system_tunnel_riddle_progress", 0)
+	restaurant_floor.set_meta("system_hunter_exam_private_room", true)
+	print("SYSTEM Hunter Examination: dedicated restaurant room and physical elevator linked to the permanent tunnel.")
+
+
+func enter_hunter_exam_private_room(entry_target: Node) -> void:
+	if not is_instance_valid(player) or entry_target == null:
+		return
+	var table_id := str(player.get_meta("system_restaurant_seated_table_id", ""))
+	var order: Dictionary = restaurant_orders.get(table_id, {})
+	if table_id.is_empty() or str(order.get("status", "")) != "served" or not bool(order.get("meal_consumed", false)):
+		_set_status("تُفتح غرفة المتسابقين بعد وصول الوجبة وتناولها. أكمل طلبك مع النادل أولاً.")
+		return
+	var private_room := entry_target.get_parent() as Node3D
+	if private_room == null or not bool(private_room.get_meta("system_hunter_exam_private_room", false)):
+		return
+	_release_player_restaurant_seat()
+	player.global_position = private_room.to_global(Vector3(0.0, 0.0, 3.5))
+	player.velocity = Vector3.ZERO
+	player.set_meta("system_hunter_exam_meal_order_id", table_id)
+	_set_status("وصلت إلى غرفة المتسابقين الخاصة. المصعد ينقلك إلى مرشد نقابة الصيادين.")
+
 
 func _create_npc_restaurant_order(table_root: Node3D, customer_id: String, floor_number: int) -> void:
 	if table_root == null or customer_id.is_empty():
