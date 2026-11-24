@@ -1260,7 +1260,7 @@ func _move_customer_visitors(hour_override: int = -1) -> void:
 							action = "having_breakfast"
 							location = tower_id + "_lobby_cafe"
 						"browse":
-							target = Vector3((float(customer_index % 4) - 1.5) * 7.0, 0.0, radius * 1.48 + (float(customer_index / 4) - 1.0) * 8.0)
+							target = Vector3((float(customer_index % 4) - 1.5) * 7.0 + 1.2, 0.0, radius * 1.48 + (float(customer_index / 4) - 1.0) * 8.0)
 							action = "browsing_services"
 						"social":
 							target = Vector3((float(customer_index % 4) - 1.5) * 7.0, 0.0, radius * 1.48 + 13.0 + (float(customer_index / 4) - 1.0) * 5.0)
