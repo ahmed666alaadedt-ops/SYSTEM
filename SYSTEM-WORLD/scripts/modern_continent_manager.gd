@@ -19,6 +19,8 @@ var terrain_step_x := WORLD_WIDTH / float(GRID_X - 1)
 var terrain_step_z := WORLD_DEPTH / float(GRID_Z - 1)
 var baghdad_bridge_center := Vector2.ZERO
 var baghdad_bridge_centerline: Array[Vector2] = []
+var baghdad_bridge_secondary_centerline: Array[Vector2] = []
+var baghdad_bridge_outline := PackedVector2Array()
 var baghdad_tigris_route: Array[Vector2] = []
 var baghdad_bridge_reference_loaded := false
 
@@ -95,11 +97,17 @@ func _load_baghdad_bridge_reference() -> void:
 	for point_value in bridge.get("centerline_local_m", []):
 		if point_value is Dictionary:
 			baghdad_bridge_centerline.append(Vector2(float(point_value.get("east_m", 0.0)), float(point_value.get("south_m", 0.0))))
+	for point_value in bridge.get("secondary_centerline_local_m", []):
+		if point_value is Dictionary:
+			baghdad_bridge_secondary_centerline.append(Vector2(float(point_value.get("east_m", 0.0)), float(point_value.get("south_m", 0.0))))
+	for point_value in bridge.get("polygon_outline_local_m", []):
+		if point_value is Dictionary:
+			baghdad_bridge_outline.append(Vector2(float(point_value.get("east_m", 0.0)), float(point_value.get("south_m", 0.0))))
 	var river: Dictionary = parsed.get("tigris_river", {})
 	for point_value in river.get("centerline_local_m", []):
 		if point_value is Dictionary:
 			baghdad_tigris_route.append(Vector2(float(point_value.get("east_m", 0.0)), float(point_value.get("south_m", 0.0))))
-	if baghdad_bridge_centerline.size() < 2 or baghdad_tigris_route.size() < 2:
+	if baghdad_bridge_centerline.size() < 2 or baghdad_bridge_secondary_centerline.size() < 2 or baghdad_bridge_outline.size() < 3 or baghdad_tigris_route.size() < 2:
 		push_error("SYSTEM Baghdad geography: Republic Bridge or Tigris geometry is incomplete.")
 		baghdad_bridge_centerline.clear()
 		baghdad_tigris_route.clear()
@@ -736,62 +744,92 @@ func _build_baghdad_tigris_surface() -> void:
 
 
 func _build_baghdad_republic_bridge() -> void:
-	if not baghdad_bridge_reference_loaded or baghdad_bridge_centerline.size() < 2:
+	if not baghdad_bridge_reference_loaded or baghdad_bridge_outline.size() < 3:
 		return
 	var bridge := Node3D.new()
 	bridge.name = "BaghdadRepublicBridge"
-	bridge.set_meta("system_geography_source", "OpenStreetMap way 4080878")
+	bridge.set_meta("system_geography_source", "OpenStreetMap way 1077808833")
 	bridge.set_meta("system_osm_bridge_polygon_way_id", 1077808833)
+	bridge.set_meta("system_osm_primary_centerline_way_id", 4080878)
+	bridge.set_meta("system_osm_secondary_centerline_way_id", 754157537)
 	bridge.set_meta("system_bridge_name", "جسر الجمهورية / Republic Bridge")
 	add_child(bridge)
+	var triangles: PackedInt32Array = Geometry2D.triangulate_polygon(baghdad_bridge_outline)
+	if triangles.is_empty():
+		push_error("SYSTEM Baghdad geography: Republic Bridge polygon could not be triangulated.")
+		bridge.queue_free()
+		return
 	var deck_material := StandardMaterial3D.new()
 	deck_material.albedo_color = Color(0.24, 0.28, 0.31)
 	deck_material.roughness = 0.82
 	deck_material.metallic = 0.24
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	surface.set_material(deck_material)
+	var collision_faces := PackedVector3Array()
+	for triangle_index in range(0, triangles.size(), 3):
+		var point_a: Vector2 = baghdad_bridge_outline[triangles[triangle_index]]
+		var point_b: Vector2 = baghdad_bridge_outline[triangles[triangle_index + 1]]
+		var point_c: Vector2 = baghdad_bridge_outline[triangles[triangle_index + 2]]
+		var signed_area := (point_b.x - point_a.x) * (point_c.y - point_a.y) - (point_b.y - point_a.y) * (point_c.x - point_a.x)
+		if signed_area > 0.0:
+			var swap_point := point_b
+			point_b = point_c
+			point_c = swap_point
+		var vertex_a := Vector3(point_a.x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT, point_a.y)
+		var vertex_b := Vector3(point_b.x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT, point_b.y)
+		var vertex_c := Vector3(point_c.x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT, point_c.y)
+		surface.add_vertex(vertex_a)
+		surface.add_vertex(vertex_b)
+		surface.add_vertex(vertex_c)
+		collision_faces.append(vertex_a)
+		collision_faces.append(vertex_b)
+		collision_faces.append(vertex_c)
+	surface.generate_normals()
+	var deck := MeshInstance3D.new()
+	deck.name = "RepublicBridgeDeck"
+	deck.mesh = surface.commit()
+	deck.set_meta("system_bridge_deck_height_m", BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT)
+	deck.set_meta("system_bridge_polygon_points", baghdad_bridge_outline.size())
+	bridge.add_child(deck)
+	var body := StaticBody3D.new()
+	body.name = "RepublicBridgeDeckCollision"
+	var collision := CollisionShape3D.new()
+	collision.name = "RepublicBridgeDeckCollisionShape"
+	var concave := ConcavePolygonShape3D.new()
+	concave.set_faces(collision_faces)
+	collision.shape = concave
+	body.add_child(collision)
+	bridge.add_child(body)
 	var rail_material := StandardMaterial3D.new()
 	rail_material.albedo_color = Color(0.58, 0.62, 0.64)
 	rail_material.metallic = 0.72
-	for index in range(baghdad_bridge_centerline.size() - 1):
-		var start: Vector2 = baghdad_bridge_centerline[index]
-		var finish: Vector2 = baghdad_bridge_centerline[index + 1]
-		var delta := Vector3(finish.x - start.x, 0.0, finish.y - start.y)
-		if delta.length() < 1.0:
+	var polygon_center := Vector2.ZERO
+	for point in baghdad_bridge_outline:
+		polygon_center += point
+	polygon_center /= float(baghdad_bridge_outline.size())
+	for index in range(baghdad_bridge_outline.size()):
+		var start_point: Vector2 = baghdad_bridge_outline[index]
+		var finish_point: Vector2 = baghdad_bridge_outline[(index + 1) % baghdad_bridge_outline.size()]
+		var delta := Vector3(finish_point.x - start_point.x, 0.0, finish_point.y - start_point.y)
+		if delta.length() < 4.0:
 			continue
-		var midpoint := Vector3((start.x + finish.x) * 0.5, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT, (start.y + finish.y) * 0.5)
-		var angle := atan2(delta.x, delta.z)
-		var deck := MeshInstance3D.new()
-		deck.name = "RepublicBridgeDeck_%02d" % index
-		var deck_mesh := BoxMesh.new()
-		deck_mesh.size = Vector3(28.0, 3.0, delta.length())
-		deck.mesh = deck_mesh
-		deck.position = midpoint
-		deck.rotation.y = angle
-		deck.material_override = deck_material
-		bridge.add_child(deck)
-		var body := StaticBody3D.new()
-		body.name = deck.name + "_Collision"
-		body.position = midpoint
-		body.rotation.y = angle
-		var collision := CollisionShape3D.new()
-		var shape := BoxShape3D.new()
-		shape.size = deck_mesh.size
-		collision.shape = shape
-		body.add_child(collision)
-		bridge.add_child(body)
-		var side := Vector3(-delta.z, 0.0, delta.x).normalized() * 14.2
-		for side_index in range(2):
-			var rail := MeshInstance3D.new()
-			rail.name = "RepublicBridgeGuardrail_%02d_%d" % [index, side_index]
-			var rail_mesh := BoxMesh.new()
-			rail_mesh.size = Vector3(0.55, 1.35, delta.length())
-			rail.mesh = rail_mesh
-			rail.position = midpoint + side * (1.0 if side_index == 0 else -1.0) + Vector3(0.0, 2.15, 0.0)
-			rail.rotation.y = angle
-			rail.material_override = rail_material
-			bridge.add_child(rail)
-	bridge.set_meta("system_bridge_deck_width_m", 28.0)
+		var midpoint := Vector3((start_point.x + finish_point.x) * 0.5, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 2.15, (start_point.y + finish_point.y) * 0.5)
+		var outward_2d := (Vector2(midpoint.x, midpoint.z) - polygon_center).normalized()
+		var rail := MeshInstance3D.new()
+		rail.name = "RepublicBridgeGuardrail_%02d" % index
+		var rail_mesh := BoxMesh.new()
+		rail_mesh.size = Vector3(0.55, 1.35, delta.length())
+		rail.mesh = rail_mesh
+		rail.position = midpoint + Vector3(outward_2d.x, 0.0, outward_2d.y) * 0.65
+		rail.rotation.y = atan2(delta.x, delta.z)
+		rail.material_override = rail_material
+		bridge.add_child(rail)
+	bridge.set_meta("system_bridge_deck_height_m", BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT)
 	bridge.set_meta("system_bridge_centerline_points", baghdad_bridge_centerline.size())
-	print("SYSTEM Baghdad geography: Republic Bridge deck and collision generated from the verified OSM centerline.")
+	bridge.set_meta("system_bridge_secondary_centerline_points", baghdad_bridge_secondary_centerline.size())
+	bridge.set_meta("system_bridge_polygon_points", baghdad_bridge_outline.size())
+	print("SYSTEM Baghdad geography: Republic Bridge polygon deck, collision and guardrails generated from verified OSM way 1077808833.")
 
 
 func _build_rivers_and_lakes() -> void:
