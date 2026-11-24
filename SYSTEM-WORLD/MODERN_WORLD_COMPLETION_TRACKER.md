@@ -1517,3 +1517,16 @@ This section supersedes the earlier point-only fan prediction wording above. The
 - [ ] Extend the physical examination environments beyond Baghdad stage one. Cairo, Alexandria, Paris, Babylon, Tokyo and Highland Frontier remain planned, not implemented.
 - [ ] Add original examiner/candidate NPC behaviors, scoring for observation/rescue/restraint/resource management, and explicit retry/withdrawal rules; validate each before claiming production readiness.
 - [ ] Keep PR #38 as draft and do not merge into `main` without explicit user approval.
+
+
+## Baghdad towers and Hunter tunnel — verified checkpoint 24 November 2026
+
+- [x] Fixed the Power Tower external advertising regression by assigning the canonical `TowerCampaignText` node name across all six towers; preserved existing legacy campaign nodes when present.
+- [x] Canonical Godot runtime workflow passed on commit `39231d9c5a80f718ee9e20ab149db2bdfc28d6bb`, including Baghdad tower landmark/lobby validation, hidden Hunter tunnel entry, playable Baghdad examination stage one, full tower operations/elevators/staff/emergency evacuation, terrain streaming, child safety, WGS84 anchor integration, Star Gate/Greed Island boundary and headless main-scene launch.
+- [x] Hunter tunnel regression passed: locked door, wrong-order reset, Eye → River → Crown sequence, physical passage visibility/collision, registration requirement, and actual player transfer to the underground stage.
+- [x] Baghdad stage-one regression passed: physical chamber and collisions, seven spike obstacles, ordered inscription objectives, locked relic, original SYSTEM examiner Raed and briefing interaction, artifact recovery and sequential progression to Cairo.
+- [x] Dedicated Android APK export and upload workflow passed on the same commit; see run 45323857216. This confirms export, not on-device visual/touch QA.
+- [ ] The separate combined canonical APK workflow still fails its unrelated companion check: `validate_companion_runtime.gd` reports that Miyar did not load a rigged GLB model. The dedicated APK export succeeded; fix and rerun the companion-model validation separately before calling the combined workflow green.
+- [ ] Complete physical Android inspection of tower interiors, campaign displays, tunnel traversal and stage-one interactions.
+- [ ] Six remaining physical examination environments and original examiner/candidate behaviors remain future work.
+- [ ] PR #38 remains draft on this feature branch; do not merge to `main` without explicit user approval.
