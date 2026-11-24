@@ -6,8 +6,11 @@
 - [x] The final blank masonry wall disguises the secret door. Solving the three-clue sequence slides the concealed stone slab upward, removes its blocking collision, illuminates the reveal, and reveals the descending passage.
 - [x] Connected the hidden door interaction to the existing Hunter Examination registration and `begin_exam()` flow; unregistered players are directed to register at the Hunter Association.
 - [x] The concealed-door interaction is blocked until the riddle is solved. After registration, starting the existing exam progression moves the player to the revealed underground passage entrance and clears player velocity.
-- [ ] Build the physical seven-stage examination environments and stage-specific objectives; the current manager starts the stage record but does not yet instantiate those environments.
-- [ ] Run Godot parser/runtime, Baghdad landmark and operations regressions, and Android APK export on the exact updated PR head. No validation or APK success is claimed for these source changes.
+- [x] Added a physical Baghdad heritage-site stage environment to the hidden passage: collidable stone chamber, entrance and perimeter walls, carved Eye/River/Crown tablets, a physical spike-trap obstacle lane with side routes, an artifact pedestal, and an initially concealed relic.
+- [x] Connected stage-start events to the runtime builder and routed tablet/relic interactions into ordered objective progression. Wrong inscription order resets the sequence; the relic becomes visible and recoverable only after all three clues are read correctly; recovery completes stage one through the existing sequential exam manager.
+- [ ] Build and connect the remaining six physical examination environments (Cairo, Alexandria, Paris, Babylon, Tokyo, Highland Frontier) with their own stage-specific objectives and transitions.
+- [ ] Run Godot parser/runtime, Baghdad landmark and operations regressions, and Android APK export on the exact updated PR head. No validation or APK success is claimed for this source change.
+- [ ] Review the physical chamber, spike collision and relic interaction in an actual Android build; the current environment is a procedural gameplay prototype, not finished cinematic art.
 - [ ] Review the entrance placement and visibility in the actual Android build; the current structure is a functional geometry prototype, not the finished cinematic underground complex.
 
 ## Validation runtime diagnosis — 24 November 2026
