@@ -188,6 +188,7 @@ func _run() -> void:
 		var visible_customers := 0
 		var child_customers := 0
 		var elder_customers := 0
+		var guarded_child_customers := 0
 		var uniformed_staff := 0
 		for lobby_child in lobby.get_children():
 			if str(lobby_child.name).begins_with("TowerStaff_"):
@@ -204,14 +205,20 @@ func _run() -> void:
 				var age_group := str(lobby_child.get_meta("system_customer_age_group", "adult"))
 				if age_group == "child":
 					child_customers += 1
+					var guardian_id := str(lobby_child.get_meta("system_customer_guardian_id", ""))
+					var guardian_node := lobby.get_node_or_null("TowerCustomer_" + guardian_id) as Node3D if not guardian_id.is_empty() else null
+					if guardian_node == null or str(guardian_node.get_meta("system_customer_age_group", "child")) != "adult" or str(guardian_node.get_meta("system_customer_family_group_id", "")) != str(lobby_child.get_meta("system_customer_family_group_id", "")):
+						_fail("Child visitor %s must remain linked to a visible adult guardian in the same family group." % str(lobby_child.name))
+						return
+					guarded_child_customers += 1
 				elif age_group == "elder":
 					elder_customers += 1
 		var expected_staff := int(expected_staff_per_tower[tower_id])
 		if visible_staff != expected_staff or uniformed_staff != expected_staff or visible_customers != 100:
 			_fail("Tower %s requires %d uniformed visible staff and 100 visible customer NPCs; found staff=%d uniformed=%d customers=%d." % [tower_id, expected_staff, visible_staff, uniformed_staff, visible_customers])
 			return
-		if child_customers != 20 or elder_customers != 20:
-			_fail("Tower %s must include 20 child and 20 elderly civilian customers; found children=%d elderly=%d." % [tower_id, child_customers, elder_customers])
+		if child_customers != 20 or elder_customers != 20 or guarded_child_customers != 20:
+			_fail("Tower %s must include 20 child visitors with adult guardians and 20 elderly civilian customers; found children=%d guarded=%d elderly=%d." % [tower_id, child_customers, guarded_child_customers, elder_customers])
 			return
 	var hunter_staff_sample: Node3D
 	var hunter_staff_model: Node3D
