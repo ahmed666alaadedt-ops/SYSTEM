@@ -1000,6 +1000,43 @@ func _create_customer_population() -> void:
 				visitor.position = Vector3((float(index % 10) - 4.5) * 2.15, 0.0, float(config["radius"]) * 1.48 + 4.0 + float(index / 10) * 2.1)
 				if model.has_method("set_activity"):
 					model.call("set_activity", "socialize" if posmod(index, 2) == 0 else "wander")
+		for family_index in range(ids.size()):
+			var family_customer_id := str(ids[family_index])
+			var family_customer: Dictionary = society.call("get_npc", family_customer_id)
+			var family_group_id := "%s_family_%02d" % [tower_id, int(family_index / 10)]
+			family_customer["system_customer_family_group_id"] = family_group_id
+			var family_visitor := lobby.get_node_or_null("TowerCustomer_" + family_customer_id) as Node3D
+			if family_visitor != null:
+				family_visitor.set_meta("system_customer_family_group_id", family_group_id)
+			if str(family_customer.get("age_group", "adult")) != "child":
+				society.npcs[family_customer_id] = family_customer
+				continue
+			var guardian_index := int(family_index / 10) * 10 + 4
+			if guardian_index >= ids.size():
+				guardian_index = maxi(0, ids.size() - 1)
+			var guardian_id := str(ids[guardian_index])
+			if guardian_id == family_customer_id:
+				continue
+			family_customer["guardian_npc_id"] = guardian_id
+			family_customer["parent_ids"] = [guardian_id]
+			family_customer["civilian_only"] = true
+			family_customer["combat_capable"] = false
+			family_customer["can_join_hunter_exam"] = false
+			society.npcs[family_customer_id] = family_customer
+			var guardian: Dictionary = society.call("get_npc", guardian_id)
+			var guardian_children: Array = guardian.get("children_ids", [])
+			if not guardian_children.has(family_customer_id):
+				guardian_children.append(family_customer_id)
+			guardian["children_ids"] = guardian_children
+			guardian["system_customer_family_group_id"] = family_group_id
+			society.npcs[guardian_id] = guardian
+			if family_visitor != null:
+				family_visitor.set_meta("system_customer_guardian_id", guardian_id)
+				family_visitor.set_meta("system_customer_guardian_index", guardian_index)
+				var guardian_node := lobby.get_node_or_null("TowerCustomer_" + guardian_id) as Node3D
+				if guardian_node != null:
+					var family_offset := -0.7 if posmod(family_index, 10) == 0 else 0.7
+					family_visitor.position = guardian_node.position + Vector3(family_offset, 0.0, 0.9)
 		customer_ids_by_tower[tower_id] = ids
 		lobby.set_meta("system_tower_customer_population_count", ids.size())
 		lobby.set_meta("system_tower_child_customer_count", child_count)
@@ -1267,6 +1304,10 @@ func _move_customer_visitors(hour_override: int = -1) -> void:
 				if visitor_node.has_meta("system_restaurant_table_node") or visitor_node.has_meta("system_restaurant_queue_marker"):
 					continue
 				var customer_index := int(visitor_node.get_meta("system_tower_customer_index", 0))
+				var route_index := customer_index
+				var follows_guardian := str(visitor_node.get_meta("system_customer_age_group", "adult")) == "child"
+				if follows_guardian:
+					route_index = int(visitor_node.get_meta("system_customer_guardian_index", customer_index))
 				var radius := float(config.get("radius", 20.0))
 				var target := Vector3.ZERO
 				var action := "socializing"
@@ -1274,31 +1315,34 @@ func _move_customer_visitors(hour_override: int = -1) -> void:
 				if visitor_parent == active_floor_root:
 					var floor_number := int(active_floor_root.get_meta("system_tower_floor_number", 1))
 					target = Vector3(
-						(float(customer_index % 10) - 4.5) * radius * 0.035,
+						(float(route_index % 10) - 4.5) * radius * 0.035,
 						0.0,
-						(float(customer_index / 10) - 4.5) * radius * 0.035
+						(float(route_index / 10) - 4.5) * radius * 0.035
 					)
 					action = "visiting_" + str(visitor_node.get_meta("system_customer_current_department", "department"))
 					location = "%s_floor_%d" % [tower_id, floor_number]
 				else:
 					match phase:
 						"cafe":
-							target = Vector3(-9.675 + float(customer_index % 10) * 2.15 + radius * 0.12, 0.0, radius * 1.48 + 5.0 + float(customer_index / 10) * 2.0)
+							target = Vector3(-9.675 + float(route_index % 10) * 2.15 + radius * 0.12, 0.0, radius * 1.48 + 5.0 + float(route_index / 10) * 2.0)
 							action = "having_breakfast"
 							location = tower_id + "_lobby_cafe"
 						"browse":
-							target = Vector3(-9.675 + float(customer_index % 10) * 2.15 + 2.4, 0.0, radius * 1.48 + 5.0 + float(customer_index / 10) * 2.0)
+							target = Vector3(-9.675 + float(route_index % 10) * 2.15 + 2.4, 0.0, radius * 1.48 + 5.0 + float(route_index / 10) * 2.0)
 							action = "browsing_services"
 						"social":
-							target = Vector3(-9.675 + float(customer_index % 10) * 2.15 - 2.4, 0.0, radius * 1.48 + 9.0 + float(customer_index / 10) * 2.0)
+							target = Vector3(-9.675 + float(route_index % 10) * 2.15 - 2.4, 0.0, radius * 1.48 + 9.0 + float(route_index / 10) * 2.0)
 							action = "socializing"
 						"leisure":
-							target = Vector3(-9.675 + float(customer_index % 10) * 2.15 + radius * 0.08, 0.0, radius * 1.48 + 13.0 + float(customer_index / 10) * 2.0)
+							target = Vector3(-9.675 + float(route_index % 10) * 2.15 + radius * 0.08, 0.0, radius * 1.48 + 13.0 + float(route_index / 10) * 2.0)
 							action = "evening_leisure"
 							location = tower_id + "_public_lounge"
 						_:
-							target = Vector3(-9.675 + float(customer_index % 10) * 2.15, 0.0, radius * 1.48 + 5.0 + float(customer_index / 10) * 2.0)
+							target = Vector3(-9.675 + float(route_index % 10) * 2.15, 0.0, radius * 1.48 + 5.0 + float(route_index / 10) * 2.0)
 							action = "waiting_in_lobby"
+				if follows_guardian:
+					target.x += -0.7 if posmod(customer_index, 10) == 0 else 0.7
+					target.z += 0.9
 				var previous_phase := str(visitor_node.get_meta("system_customer_schedule_phase")) if visitor_node.has_meta("system_customer_schedule_phase") else ""
 				visitor_node.set_meta("system_customer_schedule_phase", phase)
 				visitor_node.set_meta("system_customer_schedule_action", action)
