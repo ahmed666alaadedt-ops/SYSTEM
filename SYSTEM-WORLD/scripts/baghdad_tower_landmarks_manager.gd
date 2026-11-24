@@ -232,7 +232,7 @@ func _create_hunter_advertising_facades(tower: Node3D, tower_radius: float) -> v
 	for side in range(4):
 		var angle := TAU * float(side) / 4.0
 		var outward := Vector3(cos(angle), 0.0, sin(angle))
-		for level in [220.0, 520.0, 800.0]:
+		for level in [150.0, 340.0, 530.0]:
 			var panel := Node3D.new()
 			panel.name = "HunterExteriorAd_%02d_%03d" % [side, int(level)]
 			panel.position = outward * (tower_radius + 1.5) + Vector3(0.0, level, 0.0)
