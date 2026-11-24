@@ -1776,7 +1776,7 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - [x] Defeating the thief leaves a recovery interaction available so the stolen objective cannot become permanently inaccessible.
 - [x] Added regression coverage for five rival spawns, objective theft and recovery, recovery after thief defeat, deception, individual duel activation, rival damage/defeat and rejection of unknown rival IDs.
 - [x] Fixed the Hunter Tower recruitment validator's missing global-class resolution by explicitly preloading the manager script.
-- [ ] Final rival-combat regression and full Godot validation on current HEAD `0fc856cd1596da1c162baf98ec3d5ea285afcb88` are queued/running; do not mark the rival system fully verified until the exact latest HEAD completes.
-- [ ] Android APK export and upload for the latest rival-combat HEAD remain in progress; previous successful APKs do not verify these newer rival changes.
+- [ ] Final rival-combat regression and full Godot validation are queued/running for code commit `0fc856cd1596da1c162baf98ec3d5ea285afcb88`; the subsequent `0ad3123af6efcb6482c879a66681fe8f9e15efd3` changes only this tracker. Do not mark the rival system fully verified until the matching code validation completes.
+- [ ] Android APK export and upload for code commit `0fc856cd1596da1c162baf98ec3d5ea285afcb88` remain in progress; previous successful APKs do not verify these newer rival changes.
 - [ ] Online multiplayer remains out of scope for this local AI implementation and is not claimed.
 - PR #38 remains draft and unmerged. Do not merge to `main` without explicit user approval.
