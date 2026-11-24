@@ -79,6 +79,7 @@ jobs:
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
           SOURCE_PACK="$RUNNER_TEMP/baghdad-osm-artifact/baghdad-metric-cell-pack-bridge-extended.zip"
           DESTINATION="$PROJECT/data/geography/baghdad/cell_pack"
+          echo "Installing branch-matched Baghdad OSM metric cells, including Republic Bridge and Tigris."
           if [ ! -s "$SOURCE_PACK" ]; then
             echo "::warning::Baghdad OSM pack is unavailable; keeping procedural fallback for this build."
             exit 0
