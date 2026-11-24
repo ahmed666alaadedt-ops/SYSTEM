@@ -600,10 +600,28 @@ func _on_hunter_exam_registration_requested() -> void:
 func _on_hunter_exam_start_requested() -> void:
 	if hunter_exam_manager == null:
 		return
-	var result: Dictionary = hunter_exam_manager.begin_exam()
 	var menu := get_node_or_null("HunterGuildMenu")
+	var tunnel_root := get_tree().root.find_child("BaghdadHunterExaminationTunnel", true, false) as Node3D
+	if tunnel_root == null or not bool(tunnel_root.get_meta("system_tunnel_riddle_solved", false)):
+		var locked_result := {"success": false, "reason": "HUNTER_TUNNEL_RIDDLE_NOT_SOLVED"}
+		if menu != null and menu.has_method("set_exam_status"):
+			menu.call("set_exam_status", locked_result)
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "لا يمكن بدء اختبار الصيادين قبل اكتشاف النقوش الثلاثة وفتح الباب السري."
+		return
+	var overview: Dictionary = hunter_exam_manager.get_exam_overview()
+	if not bool(overview.get("registered", false)):
+		var registration_result := {"success": false, "reason": "NOT_REGISTERED"}
+		if menu != null and menu.has_method("set_exam_status"):
+			menu.call("set_exam_status", registration_result)
+		return
+	var result: Dictionary = hunter_exam_manager.begin_exam()
 	if menu != null and menu.has_method("set_exam_status"):
 		menu.call("set_exam_status", result)
+	if bool(result.get("success", false)) and player != null:
+		player.global_position = tunnel_root.to_global(Vector3(0.0, -1.2, 101.0))
+		player.velocity = Vector3.ZERO
+		player.set_meta("system_inside_hunter_exam_tunnel", true)
 
 
 func create_mission_reward_manager() -> void:
