@@ -458,7 +458,9 @@ func _create_hunter_exam_tunnel() -> void:
 		ramp.visible = false
 		tunnel_root.add_child(ramp)
 		_add_static_box_collision(tunnel_root, ramp.name + "_Collision", ramp.position, ramp_mesh.size)
-		tunnel_root.set_meta("system_hidden_passage_segment_%02d" % segment, ramp.get_path())
+		var ramp_collision := tunnel_root.get_node_or_null(ramp.name + "_Collision/CollisionShape3D") as CollisionShape3D
+		if ramp_collision != null:
+			ramp_collision.disabled = true
 
 	var light := OmniLight3D.new()
 	light.name = "SecretDoorRevealLight"
