@@ -6148,6 +6148,7 @@ func _process_restaurant_staff_service() -> void:
 	var floor_number := int(active_floor_root.get_meta("system_tower_floor_number", 0))
 	if floor_number < 29 or floor_number > 32:
 		return
+	_recover_stalled_npc_restaurant_orders(floor_number)
 	for child in active_floor_root.get_children():
 		if not child is Node3D or not child.has_meta("system_tower_staff_role"):
 			continue
@@ -6264,6 +6265,52 @@ func _process_restaurant_staff_service() -> void:
 				)
 		)
 		break
+
+
+func _recover_stalled_npc_restaurant_orders(floor_number: int) -> void:
+	if not is_instance_valid(active_floor_root):
+		return
+	var now_unix := int(Time.get_unix_time_from_system())
+	var recovery_states := {
+		"taking_order": "placed",
+		"preparing": "ready",
+		"delivering": "served"
+	}
+	for table_id_value in restaurant_orders.keys():
+		var table_id := str(table_id_value)
+		if not table_id.begins_with("shopping_floor_%02d_" % floor_number):
+			continue
+		var order: Dictionary = restaurant_orders[table_id]
+		if not bool(order.get("npc_order", false)):
+			continue
+		var current_state := str(order.get("status", ""))
+		if not recovery_states.has(current_state):
+			continue
+		var updated_at := int(order.get("updated_at_unix", order.get("created_at_unix", now_unix)))
+		if now_unix - updated_at < 35:
+			continue
+		var assigned_staff_id := str(order.get("staff_id", ""))
+		if not assigned_staff_id.is_empty():
+			var employee := active_floor_root.get_node_or_null("TowerStaff_" + assigned_staff_id) as Node3D
+			if employee != null:
+				var service_tween: Variant = employee.get_meta("system_restaurant_service_tween", null)
+				if service_tween is Tween and (service_tween as Tween).is_running():
+					(service_tween as Tween).kill()
+				var model := _find_tower_staff_model(employee)
+				if model != null:
+					model.call("set_activity", "idle")
+				var home_position: Vector3 = employee.get_meta("system_staff_workstation_position", employee.position)
+				employee.position = home_position
+				employee.set_meta("system_restaurant_service_busy", false)
+				employee.remove_meta("system_restaurant_task_token")
+				employee.remove_meta("system_restaurant_service_tween")
+				if service_tween is Tween and (service_tween as Tween).is_running():
+					(service_tween as Tween).kill()
+		order["status"] = str(recovery_states[current_state])
+		order["updated_at_unix"] = now_unix
+		restaurant_orders[table_id] = order
+		_save_restaurant_orders()
+		print("QA TRACE: recovered stalled NPC restaurant order ", table_id, " from ", current_state, " to ", str(recovery_states[current_state]))
 
 
 func _complete_restaurant_staff_service_fallback(employee: Node3D, model: Node3D, table_id: String, completion_state: String, home_position: Vector3, task_token: String, fallback_timer: Timer) -> void:
