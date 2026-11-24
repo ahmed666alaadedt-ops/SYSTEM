@@ -7109,15 +7109,22 @@ func _attach_hunter_exam_secret_entry_to_restaurant(room: Node3D, radius: float)
 		var clue := tunnel_root.get_node_or_null("HunterRiddleClue_%d" % (clue_index + 1)) as Node3D
 		if clue != null:
 			clue.global_position = clue_global_positions[clue_index]
-	entrance.set_meta("system_interaction_prompt", "افحص أرضية الجدار الحجري خلف مطعم SYSTEM")
+	entrance.set_meta("system_interaction_prompt", "")
 	entrance.set_meta("system_hidden_restaurant_entry", true)
 	entrance.set_meta("system_restaurant_floor_number", 29)
+	entrance.collision_layer = 0
+	entrance.monitoring = false
+	entrance.monitorable = false
 	wall.set_meta("system_hidden_restaurant_entry", true)
 	room.set_meta("system_hunter_exam_secret_entry", true)
 	tunnel_root.set_meta("system_tunnel_secret_entry_location", "shopping_tower_restaurant_floor_29")
 	tunnel_root.set_meta("system_under_shopping_tower_restaurant", true)
 	tunnel_root.set_meta("system_under_republic_bridge_district", true)
 	tunnel_root.set_meta("system_under_republic_bridge", false)
+	if bool(tunnel_root.get_meta("system_tunnel_riddle_solved", false)):
+		var main_scene := get_tree().current_scene
+		if main_scene != null and main_scene.has_method("_reveal_hunter_tunnel_passage"):
+			main_scene.call("_reveal_hunter_tunnel_passage", tunnel_root)
 	print("SYSTEM Hunter Examination: concealed entrance and descending passage are physically anchored beneath Shopping Tower restaurant floor 29; riverbank clues remain at their surveyed locations.")
 
 func _create_npc_restaurant_order(table_root: Node3D, customer_id: String, floor_number: int) -> void:
