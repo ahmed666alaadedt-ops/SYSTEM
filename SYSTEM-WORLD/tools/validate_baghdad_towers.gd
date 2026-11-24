@@ -74,8 +74,8 @@ func _run_validation() -> void:
 	if access_causeway == null or not bool(access_causeway.get_meta("system_generated_access_route", false)):
 		_fail("The playable Baghdad-to-bridge access causeway is missing.")
 		return
-	if str(access_causeway.get_meta("system_geography_source", "")).contains("OpenStreetMap"):
-		_fail("The generated access causeway must not be misrepresented as OSM road geometry.")
+	if not str(access_causeway.get_meta("system_geography_source", "")).contains("not OpenStreetMap road geometry"):
+		_fail("The generated access causeway must be explicitly distinguished from OSM road geometry.")
 		return
 	if access_causeway.get_node_or_null("BaghdadBridgeAccessCausewayCollision/CollisionShape3D") == null:
 		_fail("The Baghdad bridge access causeway has no physical collision.")
