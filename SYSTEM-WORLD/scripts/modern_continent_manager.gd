@@ -4,8 +4,8 @@ class_name ModernContinentManager
 ## Procedural terrain foundation for the connected modern world.
 ## The map is fictional; city names are real-world references only.
 
-const WORLD_WIDTH := 3000.0
-const WORLD_DEPTH := 2200.0
+const WORLD_WIDTH := 8000.0
+const WORLD_DEPTH := 4000.0
 const GRID_X := 151
 const GRID_Z := 111
 const CONTINENT_RADIUS_X := 1120.0
@@ -17,6 +17,15 @@ const TerrainCellStreamingManagerScript = preload("res://scripts/modern_world_ce
 var terrain_height_data := PackedFloat32Array()
 var terrain_step_x := WORLD_WIDTH / float(GRID_X - 1)
 var terrain_step_z := WORLD_DEPTH / float(GRID_Z - 1)
+var baghdad_bridge_center := Vector2.ZERO
+var baghdad_bridge_centerline: Array[Vector2] = []
+var baghdad_tigris_route: Array[Vector2] = []
+var baghdad_bridge_reference_loaded := false
+
+const BAGHDAD_LAND_RADIUS_X := 900.0
+const BAGHDAD_LAND_RADIUS_Z := 780.0
+const BAGHDAD_TIGRIS_HALF_WIDTH := 155.0
+const BAGHDAD_TIGRIS_DEPTH := 22.0
 
 const ISLAND_DATA := [
 	{"name": "WesternIsle", "center": Vector2(-1260.0, -520.0), "rx": 175.0, "rz": 125.0, "height": 38.0},
@@ -51,6 +60,7 @@ const CITY_DATA := [
 
 func _ready() -> void:
 	name = "ModernContinent"
+	_load_baghdad_bridge_reference()
 	_build_ocean()
 	_setup_terrain_streaming()
 	_build_coastal_beaches()
@@ -59,7 +69,60 @@ func _ready() -> void:
 	_build_city_markers()
 	_build_highways()
 	_build_rivers_and_lakes()
+	_build_baghdad_tigris_surface()
+	_build_baghdad_republic_bridge()
 	print("SYSTEM WORLD: modern continent terrain generated.")
+
+
+func _load_baghdad_bridge_reference() -> void:
+	var path := "res://data/geography/baghdad/republic_bridge_reference.json"
+	if not FileAccess.file_exists(path):
+		push_warning("SYSTEM Baghdad geography: verified Republic Bridge reference is unavailable.")
+		return
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if not parsed is Dictionary or str(parsed.get("region_id", "")) != "iraq_baghdad_region":
+		push_error("SYSTEM Baghdad geography: Republic Bridge reference is invalid.")
+		return
+	var source: Dictionary = parsed.get("source", {})
+	if str(source.get("license", "")) != "ODbL-1.0" or int(source.get("source_artifact_id", 0)) != 14629100933:
+		push_error("SYSTEM Baghdad geography: Republic Bridge source provenance is invalid.")
+		return
+	var bridge: Dictionary = parsed.get("republic_bridge", {})
+	var center: Dictionary = bridge.get("center_local_m", {})
+	baghdad_bridge_center = Vector2(float(center.get("east", 0.0)), float(center.get("south", 0.0)))
+	for point_value in bridge.get("centerline_local_m", []):
+		if point_value is Dictionary:
+			baghdad_bridge_centerline.append(Vector2(float(point_value.get("east_m", 0.0)), float(point_value.get("south_m", 0.0))))
+	var river: Dictionary = parsed.get("tigris_river", {})
+	for point_value in river.get("centerline_local_m", []):
+		if point_value is Dictionary:
+			baghdad_tigris_route.append(Vector2(float(point_value.get("east_m", 0.0)), float(point_value.get("south_m", 0.0))))
+	if baghdad_bridge_centerline.size() < 2 or baghdad_tigris_route.size() < 2:
+		push_error("SYSTEM Baghdad geography: Republic Bridge or Tigris geometry is incomplete.")
+		baghdad_bridge_centerline.clear()
+		baghdad_tigris_route.clear()
+		return
+	baghdad_bridge_reference_loaded = true
+	print("SYSTEM Baghdad geography: Republic Bridge OSM way 1077808833 and Tigris way 24709603 loaded.")
+
+
+func get_baghdad_bridge_anchor() -> Vector3:
+	if not baghdad_bridge_reference_loaded:
+		return Vector3.INF
+	return Vector3(baghdad_bridge_center.x, get_terrain_height(baghdad_bridge_center.x, baghdad_bridge_center.y), baghdad_bridge_center.y)
+
+
+func _baghdad_tigris_channel_depth(x: float, z: float) -> float:
+	if not baghdad_bridge_reference_loaded:
+		return 0.0
+	var point := Vector2(x, z)
+	var nearest_distance := 100000.0
+	for index in range(baghdad_tigris_route.size() - 1):
+		nearest_distance = minf(nearest_distance, _distance_to_segment(point, baghdad_tigris_route[index], baghdad_tigris_route[index + 1]))
+	if nearest_distance >= BAGHDAD_TIGRIS_HALF_WIDTH:
+		return 0.0
+	var blend := 1.0 - nearest_distance / BAGHDAD_TIGRIS_HALF_WIDTH
+	return BAGHDAD_TIGRIS_DEPTH * blend * blend
 
 
 func _continent_radius(x: float, z: float) -> float:
@@ -110,6 +173,16 @@ func _land_base_height(x: float, z: float) -> float:
 
 
 func _get_height(x: float, z: float) -> float:
+	if baghdad_bridge_reference_loaded:
+		var bridge_dx := (x - baghdad_bridge_center.x) / BAGHDAD_LAND_RADIUS_X
+		var bridge_dz := (z - baghdad_bridge_center.y) / BAGHDAD_LAND_RADIUS_Z
+		var bridge_radius := sqrt(bridge_dx * bridge_dx + bridge_dz * bridge_dz)
+		if bridge_radius <= 1.0:
+			var bridge_coast_factor := clampf((1.0 - bridge_radius) / 0.12, 0.0, 1.0)
+			var bridge_coast_ease := bridge_coast_factor * bridge_coast_factor * (3.0 - 2.0 * bridge_coast_factor)
+			var bridge_land_height := 18.0 + sin(x * 0.012) * 1.2 + cos(z * 0.014) * 0.9
+			return lerpf(SEA_LEVEL - 1.2, bridge_land_height, bridge_coast_ease) - _baghdad_tigris_channel_depth(x, z)
+
 	var radius := _continent_radius(x, z)
 	if radius <= 1.0:
 		var coast_factor := clampf((1.0 - radius) / 0.10, 0.0, 1.0)
@@ -621,6 +694,94 @@ func _river_channel_depth(x: float, z: float) -> float:
 		return 0.0
 	var blend := 1.0 - nearest_distance / 9.0
 	return 2.8 * blend * blend
+
+
+func _build_baghdad_tigris_surface() -> void:
+	if not baghdad_bridge_reference_loaded or baghdad_tigris_route.size() < 2:
+		return
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(0.025, 0.24, 0.34, 0.96)
+	material.roughness = 0.18
+	material.metallic = 0.18
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	surface.set_material(material)
+	for index in range(baghdad_tigris_route.size() - 1):
+		var start: Vector2 = baghdad_tigris_route[index]
+		var finish: Vector2 = baghdad_tigris_route[index + 1]
+		var direction := (finish - start).normalized()
+		var bank_offset := Vector2(-direction.y, direction.x) * BAGHDAD_TIGRIS_HALF_WIDTH
+		var a_left := start + bank_offset
+		var a_right := start - bank_offset
+		var b_left := finish + bank_offset
+		var b_right := finish - bank_offset
+		_add_surface_quad(surface, Vector3(a_left.x, SEA_LEVEL + 0.28, a_left.y), Vector3(a_right.x, SEA_LEVEL + 0.28, a_right.y), Vector3(b_left.x, SEA_LEVEL + 0.28, b_left.y), Vector3(b_right.x, SEA_LEVEL + 0.28, b_right.y))
+	surface.generate_normals()
+	var river := MeshInstance3D.new()
+	river.name = "BaghdadTigrisRiver"
+	river.mesh = surface.commit()
+	river.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	river.set_meta("system_geography_source", "OpenStreetMap way 24709603")	river.set_meta("system_geography_name", "Tigris River")	add_child(river)
+
+
+func _build_baghdad_republic_bridge() -> void:
+	if not baghdad_bridge_reference_loaded or baghdad_bridge_centerline.size() < 2:
+		return
+	var bridge := Node3D.new()
+	bridge.name = "BaghdadRepublicBridge"
+	bridge.set_meta("system_geography_source", "OpenStreetMap way 4080878")
+	bridge.set_meta("system_osm_bridge_polygon_way_id", 1077808833)
+	bridge.set_meta("system_bridge_name", "جسر الجمهورية / Republic Bridge")
+	add_child(bridge)
+	var deck_material := StandardMaterial3D.new()
+	deck_material.albedo_color = Color(0.24, 0.28, 0.31)
+	deck_material.roughness = 0.82
+	deck_material.metallic = 0.24
+	var rail_material := StandardMaterial3D.new()
+	rail_material.albedo_color = Color(0.58, 0.62, 0.64)
+	rail_material.metallic = 0.72
+	for index in range(baghdad_bridge_centerline.size() - 1):
+		var start: Vector2 = baghdad_bridge_centerline[index]
+		var finish: Vector2 = baghdad_bridge_centerline[index + 1]
+		var delta := Vector3(finish.x - start.x, 0.0, finish.y - start.y)
+		if delta.length() < 1.0:
+			continue
+		var midpoint := Vector3((start.x + finish.x) * 0.5, 4.0, (start.y + finish.y) * 0.5)
+		var angle := atan2(delta.x, delta.z)
+		var deck := MeshInstance3D.new()
+		deck.name = "RepublicBridgeDeck_%02d" % index
+		var deck_mesh := BoxMesh.new()
+		deck_mesh.size = Vector3(28.0, 3.0, delta.length())
+		deck.mesh = deck_mesh
+		deck.position = midpoint
+		deck.rotation.y = angle
+		deck.material_override = deck_material
+		bridge.add_child(deck)
+		var body := StaticBody3D.new()
+		body.name = deck.name + "_Collision"
+		body.position = midpoint
+		body.rotation.y = angle
+		var collision := CollisionShape3D.new()
+		var shape := BoxShape3D.new()
+		shape.size = deck_mesh.size
+		collision.shape = shape
+		body.add_child(collision)
+		bridge.add_child(body)
+		var side := Vector3(-delta.z, 0.0, delta.x).normalized() * 14.2
+		for side_index in range(2):
+			var rail := MeshInstance3D.new()
+			rail.name = "RepublicBridgeGuardrail_%02d_%d" % [index, side_index]
+			var rail_mesh := BoxMesh.new()
+			rail_mesh.size = Vector3(0.55, 1.35, delta.length())
+			rail.mesh = rail_mesh
+			rail.position = midpoint + side * (1.0 if side_index == 0 else -1.0) + Vector3(0.0, 2.15, 0.0)
+			rail.rotation.y = angle
+			rail.material_override = rail_material
+			bridge.add_child(rail)
+	bridge.set_meta("system_bridge_deck_width_m", 28.0)
+	bridge.set_meta("system_bridge_centerline_points", baghdad_bridge_centerline.size())
+	print("SYSTEM Baghdad geography: Republic Bridge deck and collision generated from the verified OSM centerline.")
 
 
 func _build_rivers_and_lakes() -> void:
