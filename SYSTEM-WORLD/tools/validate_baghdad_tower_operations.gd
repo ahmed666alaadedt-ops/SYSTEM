@@ -1334,6 +1334,10 @@ func _run() -> void:
 	if shopping_workshop_room == null or shopping_workshop_room.get_node_or_null("WeaponsForge") == null or shopping_workshop_room.get_node_or_null("ElixirLaboratory") == null:
 		_fail("Shopping Tower weapon forge and elixir laboratory stations are missing.")
 		return
+	var floor_fourteen_department := str(shopping_workshop_room.get_meta("system_tower_department", ""))
+	if not floor_fourteen_department.contains("ورشة الحدادة الرئيسية") or shopping_workshop_room.get_node_or_null("ShoppingShowcase") != null or shopping_workshop_room.get_node_or_null("SpecialFacility_shopping_weapon_gallery") != null:
+		_fail("Shopping Tower floor 14 legacy forge/laboratory zoning was changed by the gallery expansion.")
+		return
 	var forge_area := shopping_workshop_room.get_node("WeaponsForge/CraftingStationInteraction") as Area3D
 	if forge_area == null or not forge_area.is_in_group("system_interactable") or not forge_area.has_meta("system_tower_staff_id"):
 		_fail("Shopping Tower crafting station is not connected to its NPC employee.")
@@ -1371,6 +1375,10 @@ func _run() -> void:
 				return
 			if item_interaction == null or not item_interaction.is_in_group("system_interactable") or str(item_interaction.get_meta("system_tower_id", "")) != "shopping_tower_baghdad" or int(item_interaction.get_meta("system_tower_floor_number", 0)) != floor_number or str(item_interaction.get_meta("system_facility_type", "")) != expected_type or str(item_interaction.get_meta("system_showcase_product_id", "")) != item_product_id or interaction_sphere == null or interaction_sphere.radius < 1.5:
 				_fail("Shopping Tower floor %d display %d is missing its product-linked interaction Area3D." % [floor_number, display_index])
+				return
+			var linked_product: Dictionary = operations.call("_get_catalog_product", item_product_id)
+			if linked_product.is_empty() or str(linked_product.get("name", "")).is_empty() or int(linked_product.get("price", 0)) <= 0:
+				_fail("Shopping Tower floor %d display %d points to a product missing from the live catalog: %s." % [floor_number, display_index, item_product_id])
 				return
 	var floor_product_checks := {
 		5: ["training_sword", "steel_sword"],
