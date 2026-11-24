@@ -478,11 +478,11 @@ func _create_hunter_exam_tunnel() -> void:
 		bridge_anchor.y
 	)
 	tunnel_root.set_meta("system_under_republic_bridge_district", true)
-	tunnel_root.set_meta("system_tunnel_location_source", "Baghdad Shopping Tower restaurant private-room elevator")
+	tunnel_root.set_meta("system_tunnel_location_source", "Hunter Association Tower Baghdad guild guide escort")
 	tunnel_root.set_meta("system_facility_type", "hunter_examination_tunnel")
 	tunnel_root.set_meta("system_under_baghdad_tower_district", true)
 	tunnel_root.set_meta("system_exam_manager", "SYSTEMHunterExamManager")
-	tunnel_root.set_meta("system_hunter_exam_access", "restaurant_private_room_elevator")
+	tunnel_root.set_meta("system_hunter_exam_access", "hunter_tower_recruitment_and_guide_escort")
 	tunnel_root.set_meta("system_tunnel_is_single_continuous_route", true)
 	add_child(tunnel_root)
 
@@ -540,66 +540,9 @@ func _create_hunter_exam_tunnel() -> void:
 	sign.modulate = Color(0.42, 0.9, 1.0)
 	tunnel_root.add_child(sign)
 
-	var guide := Area3D.new()
-	guide.name = "HunterGuildGuideInteraction"
-	guide.add_to_group("system_interactable")
-	guide.set_meta("system_hunter_exam_guide", true)
-	guide.set_meta("system_display_name", "مرشد نقابة الصيادين")
-	guide.set_meta("system_interaction_prompt", "تحدث مع مرشد نقابة الصيادين")
-	guide.position = Vector3(0.0, 0.0, 3.5)
-	guide.collision_layer = 1
-	guide.collision_mask = 0
-	var guide_shape := CollisionShape3D.new()
-	var guide_sphere := SphereShape3D.new()
-	guide_sphere.radius = 3.2
-	guide_shape.shape = guide_sphere
-	guide_shape.position.y = 1.0
-	guide.add_child(guide_shape)
-	var guide_marker := MeshInstance3D.new()
-	guide_marker.name = "GuildGuideMarker"
-	var guide_mesh := CapsuleMesh.new()
-	guide_mesh.radius = 0.55
-	guide_mesh.height = 2.2
-	guide_marker.mesh = guide_mesh
-	guide_marker.position.y = 1.1
-	var guide_material := StandardMaterial3D.new()
-	guide_material.albedo_color = Color(0.08, 0.22, 0.3)
-	guide_material.emission_enabled = true
-	guide_material.emission = Color(0.0, 0.3, 0.46)
-	guide_material.emission_energy_multiplier = 0.5
-	guide_marker.material_override = guide_material
-	guide.add_child(guide_marker)
-	var guide_label := Label3D.new()
-	guide_label.name = "GuildGuideName"
-	guide_label.text = "مرشد نقابة الصيادين"
-	guide_label.position = Vector3(0.0, 2.65, 0.0)
-	guide_label.font_size = 18
-	guide_label.pixel_size = 0.012
-	guide_label.modulate = Color(1.0, 0.82, 0.45)
-	guide.add_child(guide_label)
-	tunnel_root.add_child(guide)
-
-	var return_button := Area3D.new()
-	return_button.name = "HunterExamElevatorReturnButton"
-	return_button.add_to_group("system_interactable")
-	return_button.set_meta("system_hunter_exam_elevator_button", true)
-	return_button.set_meta("system_hunter_exam_elevator_direction", "up")
-	return_button.set_meta("system_display_name", "مصعد العودة")
-	return_button.set_meta("system_interaction_prompt", "العودة إلى غرفة المطعم عبر المصعد")
-	return_button.position = Vector3(0.0, 0.0, -5.0)
-	return_button.collision_layer = 1
-	return_button.collision_mask = 0
-	var return_shape := CollisionShape3D.new()
-	var return_sphere := SphereShape3D.new()
-	return_sphere.radius = 2.5
-	return_shape.shape = return_sphere
-	return_shape.position.y = 1.0
-	return_button.add_child(return_shape)
-	tunnel_root.add_child(return_button)
-
 	tunnel_root.set_meta("system_hunter_exam_guide_present", true)
-	tunnel_root.set_meta("system_hunter_exam_return_elevator_present", true)
-	print("SYSTEM WORLD: one continuous Hunter Examination tunnel, guild guide and elevator return point created.")
+	tunnel_root.set_meta("system_hunter_exam_return_elevator_present", false)
+	print("SYSTEM WORLD: one continuous Hunter Examination tunnel reached by the Hunter Tower guild guide escort.")
 
 
 func _nearest_land_position(origin: Vector2) -> Vector2:
