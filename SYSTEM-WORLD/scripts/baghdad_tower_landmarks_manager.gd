@@ -470,15 +470,26 @@ func _create_hunter_exam_tunnel() -> void:
 
 	# The concealed wall resembles ordinary foundation masonry. Its door seam
 	# is intentionally indistinguishable until the three-symbol riddle is solved.
-	var wall := MeshInstance3D.new()
+	var wall := Node3D.new()
 	wall.name = "OrdinaryFoundationMasonry"
-	var wall_mesh := BoxMesh.new()
-	wall_mesh.size = Vector3(22.0, 16.0, 2.4)
-	wall.mesh = wall_mesh
 	wall.position = Vector3(0.0, -7.5, 96.0)
-	wall.material_override = stone_material
 	tunnel_root.add_child(wall)
-	_add_static_box_collision(tunnel_root, "FoundationMasonryCollision", wall.position, wall_mesh.size)
+	var wall_segments := [
+		{"name": "Left", "position": Vector3(-8.875, 0.0, 0.0), "size": Vector3(4.25, 16.0, 2.4)},
+		{"name": "Right", "position": Vector3(8.875, 0.0, 0.0), "size": Vector3(4.25, 16.0, 2.4)},
+		{"name": "Top", "position": Vector3(0.0, 6.625, 0.0), "size": Vector3(13.5, 2.75, 2.4)},
+		{"name": "Bottom", "position": Vector3(0.0, -7.125, 0.0), "size": Vector3(13.5, 1.75, 2.4)}
+	]
+	for wall_segment in wall_segments:
+		var masonry := MeshInstance3D.new()
+		masonry.name = "Masonry_" + str(wall_segment["name"])
+		var masonry_mesh := BoxMesh.new()
+		masonry_mesh.size = wall_segment["size"]
+		masonry.mesh = masonry_mesh
+		masonry.position = wall_segment["position"]
+		masonry.material_override = stone_material
+		wall.add_child(masonry)
+		_add_static_box_collision(wall, "FoundationMasonryCollision_" + str(wall_segment["name"]), masonry.position, masonry_mesh.size)
 
 	var hidden_door := MeshInstance3D.new()
 	hidden_door.name = "ConcealedHunterDoorSlab"
