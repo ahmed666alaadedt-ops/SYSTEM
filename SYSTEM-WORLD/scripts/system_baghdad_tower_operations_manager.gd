@@ -6949,6 +6949,19 @@ func _create_npc_restaurant_order(table_root: Node3D, customer_id: String, floor
 			if not diners.has(customer_id):
 				diners.append(customer_id)
 			existing["customer_ids"] = diners
+			# Staff tweens and task tokens are runtime-only. A saved NPC order can
+			# therefore resume in a transient state after a scene reload even
+			# though no employee still owns that task. Restore the last durable
+			# hand-off state so the waiter/chef can safely resume the service.
+			var saved_status := str(existing.get("status", "awaiting_waiter"))
+			var recovered_status := {
+				"taking_order": "awaiting_waiter",
+				"preparing": "placed",
+				"delivering": "ready"
+			}.get(saved_status, saved_status)
+			if str(recovered_status) != saved_status:
+				existing["status"] = str(recovered_status)
+				existing["updated_at_unix"] = int(Time.get_unix_time_from_system())
 			restaurant_orders[order_id] = existing
 			_save_restaurant_orders()
 		return
