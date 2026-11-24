@@ -1462,6 +1462,14 @@ func _simulate_customer_purchases() -> void:
 		var customer: Dictionary = society.call("get_npc", customer_id)
 		if customer.is_empty() or not bool(customer.get("alive", false)):
 			continue
+		if str(customer.get("age_group", "adult")) == "child":
+			var guardian_id := str(customer.get("guardian_npc_id", ""))
+			if guardian_id.is_empty():
+				continue
+			customer_id = guardian_id
+			customer = society.call("get_npc", customer_id)
+			if customer.is_empty() or not bool(customer.get("alive", false)) or str(customer.get("age_group", "adult")) == "child":
+				continue
 		var affordable: Array[Dictionary] = []
 		for product_value in catalog:
 			var product: Dictionary = product_value
