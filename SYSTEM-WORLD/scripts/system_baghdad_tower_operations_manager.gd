@@ -919,7 +919,7 @@ func _create_customer_population() -> void:
 		if lobby == null:
 			continue
 		var ids: Array[String] = []
-		for index in range(4):
+		for index in range(12):
 			var existing_id := ""
 			for candidate_id in society.npcs.keys():
 				var candidate: Dictionary = society.npcs[candidate_id]
@@ -973,7 +973,7 @@ func _create_customer_population() -> void:
 				name_label.pixel_size = 0.011
 				name_label.modulate = Color(0.82, 0.88, 0.94)
 				visitor.add_child(name_label)
-				visitor.position = Vector3((float(index) - 1.5) * 3.6, 0.0, float(config["radius"]) * 1.48 + 12.0 + float(index % 2) * 3.0)
+				visitor.position = Vector3((float(index % 4) - 1.5) * 7.0, 0.0, float(config["radius"]) * 1.48 + (float(index / 4) - 1.0) * 8.0)
 				if model.has_method("set_activity"):
 					model.call("set_activity", "socialize" if posmod(index, 2) == 0 else "wander")
 		customer_ids_by_tower[tower_id] = ids
@@ -1256,21 +1256,21 @@ func _move_customer_visitors(hour_override: int = -1) -> void:
 				else:
 					match phase:
 						"cafe":
-							target = Vector3(radius * 0.78 + float(customer_index % 2) * 2.0, 0.0, radius * 1.48 + 15.0 + float(customer_index / 2) * 2.4)
+							target = Vector3(radius * 0.58 + float(customer_index % 4) * 1.8, 0.0, radius * 1.48 + 10.0 + float(customer_index / 4) * 2.0)
 							action = "having_breakfast"
 							location = tower_id + "_lobby_cafe"
 						"browse":
-							target = Vector3((float(customer_index) - 1.5) * 3.0, 0.0, radius * 1.48 + 10.0)
+							target = Vector3((float(customer_index % 4) - 1.5) * 7.0, 0.0, radius * 1.48 + (float(customer_index / 4) - 1.0) * 8.0)
 							action = "browsing_services"
 						"social":
-							target = Vector3((float(customer_index) - 1.5) * 2.8, 0.0, radius * 1.48 + 20.0)
+							target = Vector3((float(customer_index % 4) - 1.5) * 7.0, 0.0, radius * 1.48 + 13.0 + (float(customer_index / 4) - 1.0) * 5.0)
 							action = "socializing"
 						"leisure":
-							target = Vector3(-radius * 0.72 + float(customer_index % 2) * 2.0, 0.0, radius * 1.48 + 15.0)
+							target = Vector3(-radius * 0.52 + float(customer_index % 4) * 1.8, 0.0, radius * 1.48 + 10.0 + float(customer_index / 4) * 2.0)
 							action = "evening_leisure"
 							location = tower_id + "_public_lounge"
 						_:
-							target = Vector3((float(customer_index) - 1.5) * 3.6, 0.0, radius * 1.48 + 12.0)
+							target = Vector3((float(customer_index % 4) - 1.5) * 7.0, 0.0, radius * 1.48 + (float(customer_index / 4) - 1.0) * 8.0)
 							action = "waiting_in_lobby"
 				var previous_phase := str(visitor_node.get_meta("system_customer_schedule_phase")) if visitor_node.has_meta("system_customer_schedule_phase") else ""
 				visitor_node.set_meta("system_customer_schedule_phase", phase)
