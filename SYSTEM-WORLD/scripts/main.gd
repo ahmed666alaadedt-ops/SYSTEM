@@ -626,29 +626,27 @@ func _on_hunter_exam_registration_requested() -> void:
 	if hunter_exam_manager == null:
 		return
 	var overview: Dictionary = hunter_exam_manager.get_exam_overview()
-	var result := {
-		"success": false,
-		"reason": "REGISTER_AT_HUNTER_ASSOCIATION_TOWER",
-		"message": "توجّه إلى برج الصيادين؛ ستظهر لك دعوة التسجيل عند دخول الردهة."
-	}
-	if bool(overview.get("registered", false)):
-		result = {
-			"success": true,
-			"candidate_number": int(overview.get("candidate_number", 0)),
-			"message": "أنت مسجل بالفعل. رقمك محفوظ؛ اتبع مرشد نقابة الصيادين."
-		}
-	elif bool(overview.get("invitation_accepted", false)):
-		result = {
-			"success": true,
-			"message": "تم قبول طلبك. اتبع مرشد نقابة الصيادين إلى النفق لاستلام رقمك التسلسلي."
-		}
+	var result: Dictionary = {}
+	if not bool(overview.get("invitation_accepted", false)):
+		result = {"success":false,"reason":"INVITATION_NOT_ACCEPTED","message":"اقبل دعوة اختبار الصيادين أولاً من برج الجمعية."}
+	elif not is_instance_valid(player):
+		result = {"success":false,"reason":"PLAYER_UNAVAILABLE","message":"تعذر تحديد موقع اللاعب لإكمال التسجيل."}
+	else:
+		var arrival_zone := get_tree().root.find_child("HunterTowerRecruitmentArrivalZone", true, false) as Area3D
+		if arrival_zone == null or player.global_position.distance_to(arrival_zone.global_position) > 30.0:
+			result = {"success":false,"reason":"REGISTER_AT_HUNTER_ASSOCIATION_TOWER","message":"أكمل التسجيل الرسمي من ردهة برج جمعية الصيادين في بغداد."}
+		elif bool(overview.get("registered", false)):
+			result = {"success":true,"candidate_number":int(overview.get("candidate_number", 0)),"stages":int(overview.get("total_stages", 7)),"message":"تسجيلك الرسمي محفوظ. رقمك التسلسلي ثابت."}
+		else:
+			result = hunter_exam_manager.apply_for_exam("local_player")
+	if bool(result.get("success", false)) and is_instance_valid(player) and result.has("candidate_number"):
+		player.set_meta("system_hunter_exam_candidate_number", int(result.get("candidate_number", 0)))
 	var menu := get_node_or_null("HunterGuildMenu")
 	if menu != null and menu.has_method("set_exam_status"):
 		menu.call("set_exam_status", result)
 	if interaction_prompt_label != null:
-		interaction_prompt_label.text = str(result.get("message", "التسجيل متاح من برج الصيادين."))
+		interaction_prompt_label.text = str(result.get("message", "التسجيل متاح من برج جمعية الصيادين."))
 		interaction_prompt_label.show()
-
 
 func _on_hunter_exam_start_requested() -> void:
 	if hunter_exam_manager == null:
@@ -660,8 +658,26 @@ func _on_hunter_exam_start_requested() -> void:
 	if not bool(overview.get("invitation_accepted", false)):
 		_show_hunter_exam_invitation()
 		return
-	if not bool(overview.get("registered", false)) or not is_instance_valid(player) or not bool(player.get_meta("system_inside_hunter_exam_tunnel", false)):
+	if not bool(overview.get("registered", false)):
+		var not_registered := {"success":false,"reason":"NOT_REGISTERED"}
+		var registration_menu := get_node_or_null("HunterGuildMenu")
+		if registration_menu != null and registration_menu.has_method("set_exam_status"):
+			registration_menu.call("set_exam_status", not_registered)
 		_handle_hunter_exam_guide_interaction()
+		return
+	if not is_instance_valid(player) or not bool(player.get_meta("system_hunter_exam_riddle_solved", false)):
+		var riddle_error := {"success":false,"reason":"HUNTER_TUNNEL_RIDDLE_NOT_SOLVED"}
+		var riddle_menu := get_node_or_null("HunterGuildMenu")
+		if riddle_menu != null and riddle_menu.has_method("set_exam_status"):
+			riddle_menu.call("set_exam_status", riddle_error)
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "حل لغز العين والنهر والتاج داخل مطعم برج التسوق أولاً."
+			interaction_prompt_label.show()
+		return
+	if not bool(player.get_meta("system_inside_hunter_exam_tunnel", false)):
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "المدخل انفتح؛ استخدم المصعد الحجري السري للوصول إلى النفق قبل بدء الاختبار."
+			interaction_prompt_label.show()
 		return
 	var result: Dictionary = hunter_exam_manager.begin_exam()
 	var menu := get_node_or_null("HunterGuildMenu")
@@ -670,7 +686,6 @@ func _on_hunter_exam_start_requested() -> void:
 	if not bool(result.get("success", false)) and interaction_prompt_label != null:
 		interaction_prompt_label.text = "تعذر بدء اختبار الصيادين: %s" % str(result.get("reason", "غير معروف"))
 		interaction_prompt_label.show()
-
 
 func _connect_hunter_tower_recruitment() -> void:
 	var arrival_zone := get_tree().root.find_child("HunterTowerRecruitmentArrivalZone", true, false) as Area3D
@@ -688,11 +703,13 @@ func _on_hunter_tower_arrival_body_entered(body: Node3D) -> void:
 	var overview: Dictionary = hunter_exam_manager.get_exam_overview()
 	if bool(overview.get("registered", false)) or bool(overview.get("invitation_accepted", false)):
 		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "طلبك مقبول" + (" ورقمك محفوظ." if bool(overview.get("registered", false)) else ". اتبع مرشد نقابة الصيادين إلى النفق.")
+			if bool(overview.get("registered", false)):
+				interaction_prompt_label.text = "طلبك مقبول ورقمك محفوظ. توجه إلى مطعم برج التسوق، الطابق 29، لاكتشاف مدخل الاختبار السري."
+			else:
+				interaction_prompt_label.text = "طلبك مقبول مبدئياً. أكمل التسجيل الرسمي من قائمة النقابة، ثم توجه إلى مطعم برج التسوق لاكتشاف المدخل السري."
 			interaction_prompt_label.show()
 		return
 	_show_hunter_exam_invitation()
-
 
 func _show_hunter_exam_invitation() -> void:
 	if hunter_exam_invitation_panel != null:
@@ -724,9 +741,8 @@ func _on_hunter_exam_invitation_accepted() -> void:
 	if hunter_exam_invitation_panel != null:
 		hunter_exam_invitation_panel.hide()
 	if interaction_prompt_label != null:
-		interaction_prompt_label.text = "تم قبولك مبدئياً في اختبار الصيادين. اتبع مرشد نقابة الصيادين داخل البرج؛ سيأخذك إلى النفق ويسلمك رقمك التسلسلي هناك."
+		interaction_prompt_label.text = "تم قبولك مبدئياً. أكمل التسجيل الرسمي من قائمة نقابة الصيادين داخل البرج، ثم اكتشف المدخل السري في مطعم برج التسوق."
 		interaction_prompt_label.show()
-
 
 func _start_hunter_guild_escort(guide: Node) -> void:
 	if not is_instance_valid(player) or guide == null or hunter_exam_manager == null:
@@ -735,58 +751,23 @@ func _start_hunter_guild_escort(guide: Node) -> void:
 	if not bool(overview.get("invitation_accepted", false)):
 		_show_hunter_exam_invitation()
 		return
-	if hunter_exam_escort_active or bool(player.get_meta("system_inside_hunter_exam_tunnel", false)):
+	if bool(player.get_meta("system_inside_hunter_exam_tunnel", false)):
 		return
 	if player.global_position.distance_to(guide.global_position) > 8.0:
 		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "مرشد النقابة موجود داخل برج الصيادين. تعال إليه أولاً ليصطحبك إلى النفق."
+			interaction_prompt_label.text = "مرشد النقابة داخل برج الصيادين. تعال إليه أولاً للحصول على تعليمات المدخل السري."
 			interaction_prompt_label.show()
 		return
-	hunter_exam_escort_active = true
+	hunter_exam_escort_active = false
+	player.set_meta("system_hunter_exam_escort_active", false)
+	var registered := bool(overview.get("registered", false))
+	var candidate_number := int(overview.get("candidate_number", 0))
 	if interaction_prompt_label != null:
-		interaction_prompt_label.text = "مرشد النقابة: اتبعني. سأرافقك إلى نفق اختبار الصيادين."
+		if registered:
+			interaction_prompt_label.text = "المرشد: رقمك %d محفوظ. توجه إلى مطعم برج التسوق، الطابق 29، وافحص نقوش العين والنهر والتاج بالترتيب." % candidate_number
+		else:
+			interaction_prompt_label.text = "المرشد: أكمل التسجيل الرسمي من قائمة النقابة أولاً، ثم توجه إلى مطعم برج التسوق، الطابق 29، لاكتشاف المدخل المخفي."
 		interaction_prompt_label.show()
-	player.velocity = Vector3.ZERO
-	player.set_meta("system_hunter_exam_escort_active", true)
-	var tunnel_root := get_tree().root.find_child("BaghdadHunterExaminationTunnel", true, false) as Node3D
-	if tunnel_root == null:
-		hunter_exam_escort_active = false
-		player.set_meta("system_hunter_exam_escort_active", false)
-		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "تعذر العثور على نفق اختبار الصيادين."
-		return
-	var destination := tunnel_root.to_global(Vector3(0.0, 0.0, -1.5))
-	var guide_node := guide as Node3D
-	var tween := create_tween()
-	tween.set_trans(Tween.TRANS_SINE)
-	tween.set_ease(Tween.EASE_IN_OUT)
-	if guide_node != null:
-		tween.parallel().tween_property(guide_node, "global_position", destination + Vector3(0.0, 0.0, 2.0), 5.0)
-	tween.tween_property(player, "global_position", destination, 5.0)
-	tween.finished.connect(func():
-		if not is_instance_valid(player):
-			hunter_exam_escort_active = false
-			return
-		player.velocity = Vector3.ZERO
-		player.set_meta("system_hunter_exam_escort_active", false)
-		player.set_meta("system_inside_hunter_exam_tunnel", true)
-		var registration: Dictionary = hunter_exam_manager.register_candidate_at_tunnel("local_player")
-		if not bool(registration.get("success", false)):
-			player.set_meta("system_inside_hunter_exam_tunnel", false)
-			hunter_exam_escort_active = false
-			if interaction_prompt_label != null:
-				interaction_prompt_label.text = "تعذر إكمال تسجيلك داخل النفق: %s" % str(registration.get("reason", "غير معروف"))
-				interaction_prompt_label.show()
-			return
-		var final_overview: Dictionary = hunter_exam_manager.get_exam_overview()
-		var candidate_number := int(final_overview.get("candidate_number", 0))
-		player.set_meta("system_hunter_exam_candidate_number", candidate_number)
-		hunter_exam_escort_active = false
-		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "مرشد النقابة: أهلاً بك في نفق اختبار الصيادين. اكتمل تسجيلك الآن، وهذا رقمك التسلسلي الدائم: %d. احتفظ به؛ سيبقى نفسه عند عودتك." % candidate_number
-			interaction_prompt_label.show()
-	)
-
 
 func _handle_hunter_exam_guide_interaction() -> void:
 	_start_hunter_guild_escort(get_tree().root.find_child("HunterGuildGuideAtTower", true, false))
@@ -1151,6 +1132,20 @@ func _on_interaction_performed(
 			if interaction_prompt_label != null:
 				interaction_prompt_label.text = str(objective_result.get("message", "تم التفاعل مع هدف الاختبار."))
 			return
+	if target.has_meta("system_hunter_exam_secret_interaction"):
+		var entrance_root: Node = target
+		while entrance_root != null and not entrance_root.has_method("handle_interaction"):
+			entrance_root = entrance_root.get_parent()
+		if entrance_root == null:
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "نظام المدخل السري غير متاح حالياً."
+				interaction_prompt_label.show()
+			return
+		var secret_result: Dictionary = entrance_root.call("handle_interaction", target)
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = str(secret_result.get("message", "تم التفاعل مع المدخل السري."))
+			interaction_prompt_label.show()
+		return
 	if target.has_meta("system_hunter_exam_tower_guide"):
 		_start_hunter_guild_escort(target)
 		return
