@@ -1386,7 +1386,7 @@ func _run() -> void:
 		23: ["deep_wound_elixir", "regeneration_elixir"],
 		24: ["nen_focus_elixir", "nen_recovery_elixir"],
 		25: ["elite_legendary_elixir"],
-		26: ["rare_legendary_elixir", "elite_legendary_elixir"]
+		26: ["rare_legendary_elixir"]
 	}
 	var floor_required_models := {
 		5: ["WeaponBlade", "WeaponGuard", "WeaponGrip"],
@@ -1425,7 +1425,7 @@ func _run() -> void:
 		5: "battle_axe", 6: "training_sword", 7: "hunter_spear", 8: "hunter_pistol", 9: "composite_bow", 10: "crossbow",
 		11: "rank_sss_armor", 12: "rank_sss_armor", 13: "rank_e_armor", 15: "rare_core", 16: "wood_plank",
 		17: "strength_elixir", 18: "healing_elixir", 19: "strength_elixir", 20: "nen_control_elixir", 21: "nen_awakening_elixir",
-		22: "nen_awakening_elixir", 23: "nen_awakening_elixir", 24: "healing_elixir", 25: "nen_awakening_elixir", 26: "nen_awakening_elixir"
+		22: "nen_awakening_elixir", 23: "nen_awakening_elixir", 24: "healing_elixir", 25: "nen_awakening_elixir", 26: "elite_legendary_elixir"
 	}
 	for floor_value in floor_product_checks.keys():
 		var floor_number := int(floor_value)

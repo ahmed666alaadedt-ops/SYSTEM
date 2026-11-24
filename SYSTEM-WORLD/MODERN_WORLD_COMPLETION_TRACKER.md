@@ -1817,3 +1817,5 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - [x] Added a dedicated elite Hunter outfit rack, coat silhouette, sleeves and rail to floor 13 beside its high-rank armour mannequins.
 - [x] Expanded the tower regression to inspect signature 3D model components for each weapon, ranged, armour, crafting and elixir floor, and to require product-linked display metadata.
 - [ ] Exact-HEAD Godot and Android verification for this visual/detail pass is pending.
+
+- Floor 25 retains the elite legendary preparation in its advanced laboratory; floor 26 is now a stricter rare-elixir vault containing only the rare/legendary vault product, with the validator explicitly rejecting the elite preparation from leaking into that vault.

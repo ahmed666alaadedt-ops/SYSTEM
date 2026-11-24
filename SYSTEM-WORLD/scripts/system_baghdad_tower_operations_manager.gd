@@ -4678,7 +4678,7 @@ func open_baghdad_progression_facility(tower_id: String, floor_number: int, faci
 			23: ["deep_wound_elixir", "regeneration_elixir"],
 			24: ["nen_stabilizer_elixir", "nen_focus_elixir", "nen_recovery_elixir"],
 			25: ["regeneration_elixir", "elite_legendary_elixir"],
-			26: ["rare_legendary_elixir", "elite_legendary_elixir"]
+			26: ["rare_legendary_elixir"]
 		}
 		if floor_catalog_overrides.has(floor_number):
 			allowed_ids = floor_catalog_overrides[floor_number]
@@ -6060,7 +6060,7 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 		23: ["علاج عميق", "التجدد الحيوي", "مختبر الإصابات"],
 		24: ["تثبيت الهالة", "تركيز النِن", "استعادة النِن"],
 		25: ["إكسير متقدم", "تجدد النخبة", "ختم المختبر"],
-		26: ["إكسير أسطوري", "إكسير النخبة", "خزنة مؤمنة"]
+		26: ["إكسير نادر/أسطوري", "حافظة محمية", "ختم الخزنة"]
 	}.get(floor_number, ["عرض A", "عرض B", "عرض C"])
 	for index in range(3):
 		var item := Node3D.new()
@@ -6090,7 +6090,7 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 			23: ["deep_wound_elixir", "regeneration_elixir", "regeneration_elixir"],
 			24: ["nen_stabilizer_elixir", "nen_focus_elixir", "nen_recovery_elixir"],
 			25: ["regeneration_elixir", "elite_legendary_elixir", "elite_legendary_elixir"],
-			26: ["rare_legendary_elixir", "elite_legendary_elixir", "rare_legendary_elixir"]
+			26: ["rare_legendary_elixir", "rare_legendary_elixir", "rare_legendary_elixir"]
 		}.get(floor_number, [])
 		if index < display_product_ids.size():
 			item.set_meta("system_showcase_product_id", str(display_product_ids[index]))
