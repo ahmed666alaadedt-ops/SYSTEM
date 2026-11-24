@@ -1727,8 +1727,12 @@ func _clear_dynamic_controls() -> void:
 	catalog_controls = null
 	inventory_controls = null
 	crafting_controls = null
+	# Detach controls immediately before deferred destruction. This prevents a
+	# newly opened department from receiving auto-renamed duplicate Button names
+	# while the previous department's queued controls still occupy the VBox.
 	for child in content.get_children():
 		if child != title_label and child != credits_label and child != status_label:
+			content.remove_child(child)
 			child.queue_free()
 
 func open_tower(tower_id: String) -> void:
