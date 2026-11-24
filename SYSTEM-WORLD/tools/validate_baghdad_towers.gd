@@ -79,9 +79,12 @@ func _run_validation() -> void:
 		var corridor_x := bridge_anchor.x * corridor_fraction
 		var corridor_z := bridge_anchor.z * corridor_fraction
 		if not bool(terrain.call("is_land_position", corridor_x, corridor_z)):
+			var sample_height := float(terrain.call("get_terrain_height", corridor_x, corridor_z))
+			var procedural_radius := float(terrain.call("_continent_radius", corridor_x, corridor_z))
+			var procedural_land_height := float(terrain.call("_land_base_height", corridor_x, corridor_z))
 			_fail(
-				"Baghdad bridge approach corridor has a non-playable gap at %.0f%% of the route."
-				% (corridor_fraction * 100.0)
+				"Baghdad bridge approach gap at %.0f%%: world=(%.1f, %.1f), height=%.2f m, continent_radius=%.4f, base_land_height=%.2f m."
+				% [corridor_fraction * 100.0, corridor_x, corridor_z, sample_height, procedural_radius, procedural_land_height]
 			)
 			return
 
