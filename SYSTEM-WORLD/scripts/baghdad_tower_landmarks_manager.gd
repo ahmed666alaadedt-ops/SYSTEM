@@ -1060,6 +1060,7 @@ func _add_static_box_collision(parent: Node3D, node_name: String, position: Vect
 	body.name = node_name
 	body.position = position
 	var collision := CollisionShape3D.new()
+	collision.name = "CollisionShape3D"
 	var shape := BoxShape3D.new()
 	shape.size = size
 	collision.shape = shape
