@@ -164,6 +164,7 @@ func _apply_candidate_decision(index: int, forced_activity: String = "") -> void
 				var partner := candidate_records[partner_index]
 				target = record.position.lerp(partner.position, 0.22)
 				target += Vector3(0.12 if left_side else -0.12, 0.0, 0.24)
+				record.set_meta("system_candidate_cooperation_count", int(record.get_meta("system_candidate_cooperation_count", 0)) + 1)
 				partner.set_meta("system_candidate_cooperation_count", int(partner.get_meta("system_candidate_cooperation_count", 0)) + 1)
 				cooperation_event_count += 1
 			else:
