@@ -1141,6 +1141,8 @@ func _on_interaction_performed(
 				interaction_prompt_label.text = "نظام المدخل السري غير متاح حالياً."
 				interaction_prompt_label.show()
 			return
+		if entrance_root.has_method("set_exam_manager"):
+			entrance_root.call("set_exam_manager", hunter_exam_manager)
 		var secret_result: Dictionary = entrance_root.call("handle_interaction", target)
 		if interaction_prompt_label != null:
 			interaction_prompt_label.text = str(secret_result.get("message", "تم التفاعل مع المدخل السري."))
