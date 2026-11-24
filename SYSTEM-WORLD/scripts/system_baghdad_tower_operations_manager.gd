@@ -3746,7 +3746,8 @@ func _department_for_floor(tower_id: String, floor_number: int, total: int) -> S
 		"hunter_association_tower_baghdad":
 			if floor_number in [4, 5, 6]: return "قاعات التدريب الأساسي والتأهيل البدني"
 			if floor_number in [7, 8, 9]: return "قاعات إتقان الأسلحة — تدريب فردي آمن"
-			if floor_number in [10, 11]: return "أساسيات الطاقة والنِن والتركيز"\n			if floor_number == 12: return "صالة النقابات وقاعة أساسيات النِن"
+			if floor_number in [10, 11]: return "أساسيات الطاقة والنِن والتركيز"
+			if floor_number == 12: return "صالة النقابات وقاعة أساسيات النِن"
 			if floor_number in [13, 14, 15]: return "التحكم المتقدم بالقدرات وإدارة الطاقة"
 			if floor_number in [16, 17, 18]: return "قاعات التخصص واختبارات المهارة"
 			if floor_number in [19, 20]: return "قاعات تقييم وإثبات الإتقان"
