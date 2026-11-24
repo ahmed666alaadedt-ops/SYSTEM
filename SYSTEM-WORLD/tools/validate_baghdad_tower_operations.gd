@@ -213,6 +213,21 @@ func _run() -> void:
 					guarded_child_customers += 1
 				elif age_group == "elder":
 					elder_customers += 1
+				var customer_model: Node3D = null
+				for customer_child in lobby_child.get_children():
+					if customer_child is Node3D and customer_child.has_method("set_activity"):
+						customer_model = customer_child as Node3D
+						break
+				if customer_model == null:
+					_fail("Customer NPC has no visible character model: " + str(lobby_child.name))
+					return
+				var selected_model_path := str(customer_model.get("selected_model_path"))
+				if age_group == "child" and (not selected_model_path.contains("Child") or str(customer_model.get("age_group")) != "child"):
+					_fail("Child customer did not load a dedicated child character model: " + str(lobby_child.name))
+					return
+				if age_group == "elder" and (not selected_model_path.contains("Elder") or str(customer_model.get("age_group")) != "elder"):
+					_fail("Elderly customer did not load a dedicated elderly character model: " + str(lobby_child.name))
+					return
 		var expected_staff := int(expected_staff_per_tower[tower_id])
 		if visible_staff != expected_staff or uniformed_staff != expected_staff or visible_customers != 100:
 			_fail("Tower %s requires %d uniformed visible staff and 100 visible customer NPCs; found staff=%d uniformed=%d customers=%d." % [tower_id, expected_staff, visible_staff, uniformed_staff, visible_customers])
