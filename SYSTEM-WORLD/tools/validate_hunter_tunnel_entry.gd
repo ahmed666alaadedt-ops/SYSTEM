@@ -3,12 +3,14 @@ extends SceneTree
 func _initialize() -> void:
 	call_deferred("_run_validation")
 
+
 func _check(condition: bool, message: String) -> bool:
 	if condition:
 		return true
-	push_error("Hunter tunnel entry validation failed: " + message)
+	push_error("Hunter tunnel access validation failed: " + message)
 	quit(1)
 	return false
+
 
 func _run_validation() -> void:
 	var packed := load("res://MainScene.tscn") as PackedScene
@@ -22,112 +24,92 @@ func _run_validation() -> void:
 		await process_frame
 
 	var tunnel := root.find_child("BaghdadHunterExaminationTunnel", true, false) as Node3D
-	if not _check(tunnel != null, "Hidden Baghdad tunnel is missing."):
+	if not _check(tunnel != null, "The permanent Hunter examination tunnel is missing."):
 		return
-	var door := tunnel.get_node_or_null("ConcealedHunterExamDoor") as Area3D
-	var door_collision := tunnel.get_node_or_null("ConcealedDoorCollision") as StaticBody3D
-	var wall_frame := tunnel.get_node_or_null("OrdinaryFoundationMasonry") as Node3D
-	if not _check(door != null and door_collision != null and wall_frame != null, "Secret door or its masonry frame is missing."):
+	if not _check(bool(tunnel.get_meta("system_tunnel_is_single_continuous_route", false)), "Tunnel is not marked as one continuous route."):
 		return
-	for segment_name in ["Left", "Right", "Top", "Bottom"]:
-		if not _check(wall_frame.get_node_or_null("FoundationMasonryCollision_" + segment_name) != null, "Concealed doorway masonry frame collision is missing: " + segment_name):
-			return
-	if not _check(not bool(tunnel.get_meta("system_tunnel_riddle_solved", true)), "Tunnel must start locked."):
+	if not _check(tunnel.get_node_or_null("HunterGuildGuideInteraction") is Area3D, "Guild guide interaction is missing."):
 		return
-
-	var player: CharacterBody3D = main.get("player") as CharacterBody3D
-	var start_position := player.global_position
-	main.call("_on_interaction_performed", door, "")
-	if not _check(player.global_position.is_equal_approx(start_position), "Player entered before solving the riddle."):
+	if not _check(tunnel.get_node_or_null("HunterExamElevatorReturnButton") is Area3D, "Tunnel return elevator button is missing."):
 		return
-	if not _check(is_instance_valid(door_collision), "Door collision was removed before the riddle."):
+	if not _check(tunnel.find_child("HunterRiddleClue_1", true, false) == null, "Legacy clue 1 still exists."):
+		return
+	if not _check(tunnel.find_child("HunterRiddleClue_2", true, false) == null, "Legacy clue 2 still exists."):
+		return
+	if not _check(tunnel.find_child("HunterRiddleClue_3", true, false) == null, "Legacy clue 3 still exists."):
+		return
+	if not _check(tunnel.get_node_or_null("ConcealedHunterExamDoor") == null, "Legacy secret door still exists."):
 		return
 
-	var clue_1 := tunnel.get_node_or_null("HunterRiddleClue_1") as Area3D
-	var clue_2 := tunnel.get_node_or_null("HunterRiddleClue_2") as Area3D
-	var clue_3 := tunnel.get_node_or_null("HunterRiddleClue_3") as Area3D
-	if not _check(clue_1 != null and clue_2 != null and clue_3 != null, "All three hidden clues must exist."):
-		return
 	var operations := main.find_child("BaghdadTowerOperationsManager", true, false)
 	var shopping_tower := root.find_child("ShoppingTower", true, false) as Node3D
-	if not _check(operations != null and shopping_tower != null, "Shopping Tower operations or restaurant host is missing."):
+	var player := main.get("player") as CharacterBody3D
+	if not _check(operations != null and shopping_tower != null and player != null, "Restaurant operations, Shopping Tower or player is missing."):
 		return
-	var clue_positions_before: Array[Vector3] = [clue_1.global_position, clue_2.global_position, clue_3.global_position]
+
 	var restaurant_floor := Node3D.new()
 	restaurant_floor.name = "InteriorFloor_029"
 	restaurant_floor.position = Vector3(0.0, 170.0, 0.0)
 	shopping_tower.add_child(restaurant_floor)
 	operations.call("_create_restaurant_dining_area", restaurant_floor, 30.0, 29)
-	if not _check(bool(restaurant_floor.get_meta("system_hunter_exam_secret_entry", false)), "Restaurant floor 29 did not receive the concealed Hunter tunnel entrance."):
+	var private_room := restaurant_floor.get_node_or_null("HunterExamPrivateRoom") as Node3D
+	if not _check(private_room != null, "Restaurant floor 29 did not create the dedicated competitor room."):
 		return
-	if not _check(str(tunnel.get_meta("system_tunnel_secret_entry_location", "")) == "shopping_tower_restaurant_floor_29", "Tunnel root is not anchored beneath the Shopping Tower restaurant."):
+	var entry := private_room.get_node_or_null("HunterExamPrivateRoomEntry") as Area3D
+	var platform := private_room.get_node_or_null("HunterExamElevatorPlatform") as Node3D
+	var down_button := private_room.get_node_or_null("HunterExamElevatorDownButton") as Area3D
+	if not _check(entry != null and platform != null and down_button != null, "Private room entry or physical elevator components are missing."):
 		return
-	if not _check(bool(tunnel.get_meta("system_under_shopping_tower_restaurant", false)), "Tunnel does not report its physical location under the restaurant."):
+	if not _check(bool(private_room.get_meta("system_hunter_exam_room_access_requires_served_meal", false)), "Room does not declare its meal-delivery access gate."):
 		return
-	if not _check(bool(door.get_meta("system_hidden_restaurant_entry", false)), "Concealed entrance is not tagged as the restaurant entry."):
-		return
-	if not _check(door.collision_layer == 0 and not door.monitoring, "Restaurant secret entry must remain undetectable before solving the three clues."):
-		return
-	var hidden_door := tunnel.get_node_or_null("ConcealedHunterDoorSlab") as Node3D
-	if not _check(hidden_door != null and hidden_door.global_position.y < restaurant_floor.global_position.y, "Physical concealed door slab is not positioned below the restaurant floor."):
-		return
-	if not _check(door.global_position.y <= restaurant_floor.global_position.y + 0.1 and door.global_position.distance_to(restaurant_floor.global_position) < 30.0, "Restaurant interaction area is not physically positioned at the concealed floor entry."):
-		return
-	if not _check(clue_1.global_position.is_equal_approx(clue_positions_before[0]) and clue_2.global_position.is_equal_approx(clue_positions_before[1]) and clue_3.global_position.is_equal_approx(clue_positions_before[2]), "Moving the tunnel under the restaurant must not move the three surveyed riverbank clues."):
+	if not _check(bool(tunnel.get_meta("system_under_shopping_tower_restaurant", false)), "Tunnel is not physically linked below the restaurant room."):
 		return
 
-	main.call("_on_interaction_performed", clue_3, "")
-	if not _check(int(tunnel.get_meta("system_tunnel_riddle_progress", -1)) == 0, "Wrong clue order must reset progress."):
-		return
-	main.call("_on_interaction_performed", clue_1, "")
-	main.call("_on_interaction_performed", clue_2, "")
-	main.call("_on_interaction_performed", clue_3, "")
-	# queue_free() removes the blocking collision at the end of the frame.
-	await process_frame
-	if not _check(bool(tunnel.get_meta("system_tunnel_riddle_solved", false)), "Correct Eye → River → Crown sequence did not solve the riddle."):
-		return
-	if not _check(door.collision_layer == 1 and door.monitoring and door.monitorable, "Restaurant secret entry did not become interactable after the riddle was solved."):
-		return
-	if not _check(hidden_door.global_position.y > restaurant_floor.global_position.y, "Concealed door slab did not rise above the restaurant floor after solving."):
-		return
-	if not _check(tunnel.get_node_or_null("ConcealedDoorCollision") == null, "Secret door collision did not unlock after solving."):
-		return
-	var visible_ramp := tunnel.get_node_or_null("HiddenExamPassageRamp_00") as MeshInstance3D
-	var ramp_body := tunnel.get_node_or_null("HiddenExamPassageRamp_00_Collision") as StaticBody3D
-	if not _check(visible_ramp != null and visible_ramp.visible, "Physical underground passage did not become visible."):
-		return
-	if not _check(ramp_body != null, "Underground passage physics body is missing."):
-		return
-	var ramp_collision := ramp_body.get_node_or_null("CollisionShape3D") as CollisionShape3D
-	if not _check(ramp_collision != null, "Underground passage collision shape is missing."):
-		return
-	if not _check(not ramp_collision.disabled, "Underground passage collision remained disabled after reveal."):
+	var start_position := player.global_position
+	player.set_meta("system_restaurant_seated_table_id", "qa_restaurant_table")
+	var saved_orders: Dictionary = operations.get("restaurant_orders")
+	saved_orders["qa_restaurant_table"] = {"status":"served","meal_consumed":false,"npc_order":false}
+	operations.set("restaurant_orders", saved_orders)
+	main.call("_on_interaction_performed", entry, "")
+	if not _check(player.global_position.is_equal_approx(start_position), "Room opened before the meal was consumed."):
 		return
 
+	saved_orders["qa_restaurant_table"] = {"status":"served","meal_consumed":true,"npc_order":false}
+	operations.set("restaurant_orders", saved_orders)
+	main.call("_on_interaction_performed", entry, "")
+	if not _check(player.global_position.distance_to(private_room.global_position) < 12.0, "Player was not transferred into the private competitor room after the meal."):
+		return
+	if not _check(str(player.get_meta("system_hunter_exam_meal_order_id", "")).begins_with("qa_restaurant"), "Meal order identity was not carried into the room."):
+		return
+
+	main.call("_on_interaction_performed", down_button, "")
+	await create_timer(4.3).timeout
+	if not _check(bool(player.get_meta("system_inside_hunter_exam_tunnel", false)), "Elevator did not deliver the player into the tunnel."):
+		return
+	if not _check(bool(platform.get_meta("system_hunter_exam_elevator_at_bottom", false)), "Elevator platform did not reach the lower stop."):
+		return
+	var guide := tunnel.get_node_or_null("HunterGuildGuideInteraction") as Area3D
+	main.call("_on_interaction_performed", guide, "")
 	var exam_manager := main.get_node_or_null("SYSTEMHunterExamManager")
-	if not _check(exam_manager != null, "Hunter exam manager is missing."):
+	if not _check(exam_manager != null and bool(exam_manager.get_exam_overview().get("registered", false)), "Guild guide did not register the arriving competitor."):
 		return
-	var before_registration := player.global_position
-	main.call("_on_interaction_performed", door, "")
-	if not _check(player.global_position.is_equal_approx(before_registration), "Player entered before Hunter Association registration."):
+	var first_number := int(exam_manager.get_exam_overview().get("candidate_number", 0))
+	if not _check(first_number > 0, "A unique positive competitor serial was not assigned."):
 		return
-
-	exam_manager.set("registered", true)
-	exam_manager.set("candidate_number", 9901)
-	exam_manager.set("completed_stage_ids", [])
-	exam_manager.set("failed", false)
-	exam_manager.set("exam_active", false)
-	exam_manager.set("current_stage_index", -1)
-	main.call("_on_interaction_performed", door, "")
-	if not _check(bool(exam_manager.get("exam_active")), "Registered candidate could not start the examination."):
+	main.call("_on_interaction_performed", guide, "")
+	var second_number := int(exam_manager.get_exam_overview().get("candidate_number", 0))
+	if not _check(first_number == second_number, "Re-entering the guide changed the competitor serial."):
 		return
-	if not _check(bool(player.get_meta("system_inside_hunter_exam_tunnel", false)), "Player tunnel-entry state was not recorded."):
-		return
-	if not _check(player.global_position.distance_to(before_registration) > 5.0, "Player was not physically moved to the underground exam entrance."):
-		return
-	var runtime := tunnel.get_node_or_null("HunterExamStageRuntime")
-	if not _check(runtime != null and runtime.get_node_or_null("BaghdadHeritageSite") != null, "Physical Baghdad stage one was not activated after entry."):
+	if not _check(main.get("hunter_exam_stage_runtime") == null, "The new tunnel flow unexpectedly started the legacy seven-stage runtime."):
 		return
 
-	print("Hunter tunnel validation passed: locked door, wrong-order reset, Eye-River-Crown unlock, physical ramp reveal/collision, registration gate and actual player transfer into stage one.")
+	var return_button := tunnel.get_node_or_null("HunterExamElevatorReturnButton") as Area3D
+	main.call("_on_interaction_performed", return_button, "")
+	await create_timer(4.3).timeout
+	if not _check(not bool(player.get_meta("system_inside_hunter_exam_tunnel", false)), "Return elevator did not bring the player back to the restaurant room."):
+		return
+	if not _check(not bool(platform.get_meta("system_hunter_exam_elevator_at_bottom", true)), "Elevator platform did not return to the upper stop."):
+		return
+
+	print("Hunter tunnel access validation passed: served-meal room gate, physical down/up elevator, single permanent tunnel, guild guide registration and stable competitor serial; legacy clue/secret-door/seven-stage path is not used.")
 	quit(0)
