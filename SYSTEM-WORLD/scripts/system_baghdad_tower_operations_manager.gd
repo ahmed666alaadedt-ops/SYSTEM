@@ -3099,30 +3099,39 @@ func _prepare_tower_interior(tower_id: String) -> void:
 	var boundary := StaticBody3D.new()
 	boundary.name = "TowerInteriorBoundary"
 	tower.add_child(boundary)
-	for segment in range(24):
-		var angle := TAU * float(segment) / 24.0
-		var shape_node := CollisionShape3D.new()
-		var box := BoxShape3D.new()
-		box.size = Vector3(radius * 2.0 * PI / 24.0 * 1.15, height, 1.4)
-		shape_node.shape = box
-		shape_node.position = Vector3(cos(angle) * radius * 0.86, height * 0.5 + 7.0, sin(angle) * radius * 0.86)
-		shape_node.rotation.y = -angle
-		boundary.add_child(shape_node)
-	var inner_wall := MeshInstance3D.new()
-	inner_wall.name = "TowerInteriorInnerWall"
-	var wall_mesh := CylinderMesh.new()
-	wall_mesh.top_radius = radius * 0.88
-	wall_mesh.bottom_radius = radius * 0.88
-	wall_mesh.height = height
-	inner_wall.mesh = wall_mesh
-	inner_wall.position.y = height * 0.5 + 7.0
 	var wall_material := StandardMaterial3D.new()
 	wall_material.albedo_color = Color(0.045, 0.11, 0.15)
 	wall_material.metallic = 0.62
 	wall_material.roughness = 0.35
 	wall_material.cull_mode = BaseMaterial3D.CULL_DISABLED
-	inner_wall.material_override = wall_material
-	tower.add_child(inner_wall)
+	# Keep a deliberate +X portal aligned with the physical sky-garden access bridge.
+	# The old continuous 24-segment collision ring sealed every direction and trapped
+	# the player against the wall before reaching the garden promenade.
+	for segment in range(24):
+		if segment == 0:
+			continue
+		var angle := TAU * float(segment) / 24.0
+		var wall_size := Vector3(radius * 2.0 * PI / 24.0 * 1.15, height, 1.4)
+		var wall_position := Vector3(cos(angle) * radius * 0.86, height * 0.5 + 7.0, sin(angle) * radius * 0.86)
+		var wall_rotation := -angle
+		var shape_node := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size = wall_size
+		shape_node.shape = box
+		shape_node.position = wall_position
+		shape_node.rotation.y = wall_rotation
+		boundary.add_child(shape_node)
+		var wall_panel := MeshInstance3D.new()
+		wall_panel.name = "TowerInteriorWallPanel_%02d" % segment
+		var panel_mesh := BoxMesh.new()
+		panel_mesh.size = wall_size
+		wall_panel.mesh = panel_mesh
+		wall_panel.position = wall_position
+		wall_panel.rotation.y = wall_rotation
+		wall_panel.material_override = wall_material
+		tower.add_child(wall_panel)
+	tower.set_meta("system_tower_interior_sky_garden_portal_direction", "+X")
+	tower.set_meta("system_tower_interior_wall_panel_count", 23)
 	var floor_container := Node3D.new()
 	floor_container.name = "TowerInteriorFloors"
 	tower.add_child(floor_container)
