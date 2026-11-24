@@ -7,7 +7,7 @@ func _initialize() -> void:
 func _check(condition: bool, message: String) -> bool:
 	if condition:
 		return true
-	push_error("Hunter tunnel access validation failed: " + message)
+	push_error("Hunter Tower recruitment validation failed: " + message)
 	quit(1)
 	return false
 
@@ -20,110 +20,70 @@ func _run_validation() -> void:
 	if not _check(main != null, "Main scene root is not Node3D."):
 		return
 	root.add_child(main)
-	for _frame in range(20):
+	for _frame in range(30):
 		await process_frame
 
+	var arrival := root.find_child("HunterTowerRecruitmentArrivalZone", true, false) as Area3D
+	var guide := root.find_child("HunterGuildGuideAtTower", true, false) as Area3D
 	var tunnel := root.find_child("BaghdadHunterExaminationTunnel", true, false) as Node3D
-	if not _check(tunnel != null, "The permanent Hunter examination tunnel is missing."):
-		return
-	if not _check(bool(tunnel.get_meta("system_tunnel_is_single_continuous_route", false)), "Tunnel is not marked as one continuous route."):
-		return
-	if not _check(tunnel.get_node_or_null("HunterGuildGuideInteraction") is Area3D, "Guild guide interaction is missing."):
-		return
-	if not _check(tunnel.get_node_or_null("HunterExamElevatorReturnButton") is Area3D, "Tunnel return elevator button is missing."):
-		return
-	if not _check(tunnel.find_child("HunterRiddleClue_1", true, false) == null, "Legacy clue 1 still exists."):
-		return
-	if not _check(tunnel.find_child("HunterRiddleClue_2", true, false) == null, "Legacy clue 2 still exists."):
-		return
-	if not _check(tunnel.find_child("HunterRiddleClue_3", true, false) == null, "Legacy clue 3 still exists."):
-		return
-	if not _check(tunnel.get_node_or_null("ConcealedHunterExamDoor") == null, "Legacy secret door still exists."):
-		return
-
-	var operations := main.find_child("BaghdadTowerOperationsManager", true, false)
-	var shopping_tower := root.find_child("ShoppingTower", true, false) as Node3D
 	var player := main.get("player") as CharacterBody3D
-	if not _check(operations != null and shopping_tower != null and player != null, "Restaurant operations, Shopping Tower or player is missing."):
+	if not _check(arrival != null and guide != null and tunnel != null and player != null, "Hunter Tower invitation zone, guild guide, tunnel or player is missing."):
+		return
+	if not _check(main.get_node_or_null("HunterExamInvitationPanel") != null, "The yes/no invitation panel is missing."):
+		return
+	if not _check(main.has_method("_on_hunter_tower_arrival_body_entered"), "Hunter Tower arrival callback is missing."):
 		return
 
-	var restaurant_floor := Node3D.new()
-	restaurant_floor.name = "InteriorFloor_029"
-	restaurant_floor.position = Vector3(0.0, 170.0, 0.0)
-	shopping_tower.add_child(restaurant_floor)
-	operations.call("_create_restaurant_dining_area", restaurant_floor, 30.0, 29)
-	var private_room := restaurant_floor.get_node_or_null("HunterExamPrivateRoom") as Node3D
-	if not _check(private_room != null, "Restaurant floor 29 did not create the dedicated competitor room."):
+	var operations := main.get_node_or_null("BaghdadTowerOperationsManager")
+	if not _check(root.find_child("HunterExamPrivateRoom", true, false) == null, "The obsolete restaurant-linked Hunter exam room still exists."):
 		return
-	var entry := private_room.get_node_or_null("HunterExamPrivateRoomEntry") as Area3D
-	var platform := private_room.get_node_or_null("HunterExamElevatorPlatform") as Node3D
-	var down_button := private_room.get_node_or_null("HunterExamElevatorDownButton") as Area3D
-	if not _check(entry != null and platform != null and down_button != null, "Private room entry or physical elevator components are missing."):
-		return
-	if not _check(bool(private_room.get_meta("system_hunter_exam_room_access_requires_served_meal", false)), "Room does not declare its meal-delivery access gate."):
-		return
-	if not _check(bool(tunnel.get_meta("system_under_shopping_tower_restaurant", false)), "Tunnel is not physically linked below the restaurant room."):
+	if not _check(str(tunnel.get_meta("system_hunter_exam_access", "")) == "hunter_tower_recruitment_and_guide_escort", "Tunnel access is not assigned to the Hunter Tower guide route."):
 		return
 
-	var start_position := player.global_position
-	operations.set("active_floor_root", restaurant_floor)
-	var table_node := restaurant_floor.get_node_or_null("RestaurantTable_00") as Node3D
-	if not _check(table_node != null, "Restaurant table for meal handoff is missing."):
+	var manager := main.get("hunter_exam_manager")
+	if not _check(manager != null, "Hunter exam manager is missing."):
 		return
-	player.set_meta("system_restaurant_seated_table_id", "qa_restaurant_table")
-	player.set_meta("system_restaurant_table_node", "RestaurantTable_00")
-	var meal_presentation := Node3D.new()
-	meal_presentation.name = "ServedMealPresentation"
-	table_node.add_child(meal_presentation)
-	var saved_orders: Dictionary = operations.get("restaurant_orders")
-	saved_orders["qa_restaurant_table"] = {"status":"preparing","meal_consumed":false,"npc_order":false}
-	operations.set("restaurant_orders", saved_orders)
-	main.call("_on_interaction_performed", entry, "")
-	if not _check(player.global_position.is_equal_approx(start_position), "Room opened before the waiter delivered the meal."):
+	manager.set("candidate_number", 0)
+	manager.set("registered", false)
+	manager.set("exam_active", false)
+	manager.set("current_stage_index", -1)
+	manager.set("completed_stage_ids", [])
+	manager.set("failed", false)
+	manager.set("failure_reason", "")
+
+	main.call("_on_hunter_tower_arrival_body_entered", player)
+	var invitation := main.get_node("HunterExamInvitationPanel") as Control
+	if not _check(invitation.visible, "Entering the Hunter Tower did not display the invitation."):
+		return
+	var invitation_text := invitation.find_child("InvitationText", true, false) as Label
+	if not _check(invitation_text != null and invitation_text.text.contains("هل تريد أن تصبح صياداً"), "Invitation does not ask the player to become a Hunter."):
 		return
 
-	saved_orders["qa_restaurant_table"] = {"status":"served","meal_consumed":false,"npc_order":false}
-	operations.set("restaurant_orders", saved_orders)
-	main.call("_on_interaction_performed", entry, "")
-	if not _check(player.global_position.distance_to(private_room.global_position) < 12.0, "Player was not transferred into the private competitor room after meal delivery."):
+	main.call("_on_hunter_exam_invitation_accepted")
+	if not _check(not invitation.visible, "Accepting the invitation did not close the prompt."):
 		return
-	if not _check(str(player.get_meta("system_hunter_exam_meal_order_id", "")).begins_with("qa_restaurant"), "Meal order identity was not carried into the room."):
+	var overview: Dictionary = manager.get_exam_overview()
+	if not _check(bool(overview.get("registered", false)), "Accepting the invitation did not register the candidate."):
 		return
-	if not _check(private_room.get_node_or_null("ServedMealPresentation") != null, "Served meal presentation was not transferred from the dining table into the private room."):
+	var serial := int(overview.get("candidate_number", 0))
+	if not _check(serial >= 1001, "Registration did not allocate a unique candidate serial."):
 		return
-	var persisted_orders: Dictionary = operations.get("restaurant_orders")
-	var delivered_order: Dictionary = persisted_orders.get("qa_restaurant_table", {})
-	if not _check(bool(delivered_order.get("hunter_exam_room_delivery", false)), "Restaurant order did not record the room delivery handoff."):
+	if not _check(bool(player.get_meta("system_hunter_exam_invitation_accepted", false)), "Accepted invitation was not stored on the player session."):
 		return
 
-	main.call("_on_interaction_performed", down_button, "")
-	await create_timer(4.3).timeout
-	if not _check(bool(player.get_meta("system_inside_hunter_exam_tunnel", false)), "Elevator did not deliver the player into the tunnel."):
+	main.call("_start_hunter_guild_escort", guide)
+	if not _check(bool(player.get_meta("system_hunter_exam_escort_active", false)), "The guide did not begin escorting the accepted candidate."):
 		return
-	if not _check(bool(platform.get_meta("system_hunter_exam_elevator_at_bottom", false)), "Elevator platform did not reach the lower stop."):
+	await create_timer(10.5).timeout
+	if not _check(bool(player.get_meta("system_inside_hunter_exam_tunnel", false)), "The guide did not deliver the player to the examination tunnel."):
 		return
-	var guide := tunnel.get_node_or_null("HunterGuildGuideInteraction") as Area3D
-	main.call("_on_interaction_performed", guide, "")
-	var exam_manager := main.get_node_or_null("SYSTEMHunterExamManager")
-	if not _check(exam_manager != null and bool(exam_manager.get_exam_overview().get("registered", false)), "Guild guide did not register the arriving competitor."):
+	if not _check(player.global_position.distance_to(tunnel.to_global(Vector3(0.0, 0.0, -1.5))) < 3.0, "Player did not arrive at the tunnel entrance."):
 		return
-	var first_number := int(exam_manager.get_exam_overview().get("candidate_number", 0))
-	if not _check(first_number > 0, "A unique positive competitor serial was not assigned."):
+	if not _check(int(player.get_meta("system_hunter_exam_candidate_number", 0)) == serial, "The permanent candidate serial was not handed to the player at the tunnel."):
 		return
-	main.call("_on_interaction_performed", guide, "")
-	var second_number := int(exam_manager.get_exam_overview().get("candidate_number", 0))
-	if not _check(first_number == second_number, "Re-entering the guide changed the competitor serial."):
-		return
-	if not _check(main.get("hunter_exam_stage_runtime") == null, "The new tunnel flow unexpectedly started the legacy seven-stage runtime."):
+	var saved_overview: Dictionary = manager.get_exam_overview()
+	if not _check(int(saved_overview.get("candidate_number", 0)) == serial, "Candidate serial changed during the escort."):
 		return
 
-	var return_button := tunnel.get_node_or_null("HunterExamElevatorReturnButton") as Area3D
-	main.call("_on_interaction_performed", return_button, "")
-	await create_timer(4.3).timeout
-	if not _check(not bool(player.get_meta("system_inside_hunter_exam_tunnel", false)), "Return elevator did not bring the player back to the restaurant room."):
-		return
-	if not _check(not bool(platform.get_meta("system_hunter_exam_elevator_at_bottom", true)), "Elevator platform did not return to the upper stop."):
-		return
-
-	print("Hunter tunnel access validation passed: served-meal room gate, physical down/up elevator, single permanent tunnel, guild guide registration and stable competitor serial; legacy clue/secret-door/seven-stage path is not used.")
+	print("Hunter Tower recruitment validation passed: tower-entry invitation, explicit acceptance, persistent candidate registration, guild-guide escort to the tunnel, and serial delivery at arrival; restaurant access route absent.")
 	quit(0)
