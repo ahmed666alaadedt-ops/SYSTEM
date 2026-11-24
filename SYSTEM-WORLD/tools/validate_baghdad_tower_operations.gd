@@ -1396,7 +1396,7 @@ func _run() -> void:
 	for floor_value in floor_product_checks.keys():
 		var floor_number := int(floor_value)
 		operations.call("open_baghdad_progression_facility", "shopping_tower_baghdad", floor_number, str(shopping_floor_facilities[floor_value]))
-		await get_tree().process_frame
+		await process_frame
 		var product_controls := operations.get("content") as Node
 		for product_id_value in floor_product_checks[floor_value]:
 			var product_id := str(product_id_value)
@@ -1487,7 +1487,7 @@ func _run() -> void:
 	operations.set("vendor_stock", sword_stock)
 	operations.call("_save_vendor_stock")
 	operations.call("open_baghdad_progression_facility", "shopping_tower_baghdad", 5, "shopping_weapon_gallery")
-	await get_tree().process_frame
+	await process_frame
 	var sword_purchase_button := (operations.get("content") as Node).find_child("ShoppingProduct_training_sword", true, false) as Button
 	if sword_purchase_button == null or sword_purchase_button.disabled:
 		_fail("Shopping Tower floor 5 did not expose an eligible, stocked training sword purchase.")

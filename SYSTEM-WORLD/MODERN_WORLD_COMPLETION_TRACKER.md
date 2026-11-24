@@ -1808,3 +1808,5 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - Regression follow-up: the floor-by-floor UI test now waits one process frame after each department switch so queued UI nodes from the previous floor are released before asserting the new floor's exclusive stock list. This is test synchronization only; live floor changes already occur across separate player interactions.
 
 - Added an end-to-end Shopping Tower weapon transaction regression: floor 5 purchase button, wallet/stock transaction, inventory receipt, equipment-slot assignment, equip and unequip. The test restores its temporary inventory/equipment/wallet/stock changes before later tower tests.
+
+- Validator synchronization correction: the tower operations test is a `SceneTree` script, so its deferred UI cleanup waits use the native `process_frame` signal directly rather than a Node-only `get_tree()` call.
