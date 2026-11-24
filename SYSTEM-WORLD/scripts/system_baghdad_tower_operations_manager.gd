@@ -4459,6 +4459,7 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 	interaction.collision_layer = 1
 	interaction.collision_mask = 0
 	var shape := CollisionShape3D.new()
+	shape.name = "CollisionShape3D"
 	var sphere := SphereShape3D.new()
 	sphere.radius = 3.0
 	shape.shape = sphere
