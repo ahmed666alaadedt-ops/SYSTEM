@@ -2971,7 +2971,93 @@ func _run() -> void:
 		return
 	print("QA TRACE: pool supervisor duty, lifeguard workstation and lobby return passed.")
 	print("QA TRACE: final staff/customer assertions passed.")
-	print("Baghdad tower operations validation passed: five connected Baghdad towers, independent Power Tower, NPC commerce, hotel workflows, eleven playable leisure/technology activity loops, equipment, Nen progression and the 200th-floor sovereign boss arena.")
+	# Sky-garden acceptance: verify all fifteen garden decks against their real elevator floors,
+	# then run the elevator to one garden in each of the five connected towers and return.
+	var garden_tower_ids := [
+		"hunter_association_tower_baghdad",
+		"business_investment_tower_baghdad",
+		"shopping_tower_baghdad",
+		"entertainment_tower_baghdad",
+		"technology_tower_baghdad"
+	]
+	var garden_tower_names := {
+		"hunter_association_tower_baghdad": "HunterAssociationTower",
+		"business_investment_tower_baghdad": "BusinessInvestmentTower",
+		"shopping_tower_baghdad": "ShoppingTower",
+		"entertainment_tower_baghdad": "EntertainmentTower",
+		"technology_tower_baghdad": "TechnologyTower"
+	}
+	var garden_tower_radii := {
+		"hunter_association_tower_baghdad": 38.0,
+		"business_investment_tower_baghdad": 26.0,
+		"shopping_tower_baghdad": 30.0,
+		"entertainment_tower_baghdad": 29.0,
+		"technology_tower_baghdad": 27.0
+	}
+	if is_instance_valid(operations.get("active_floor_root")):
+		operations.call("return_to_lobby")
+		await create_timer(2.9).timeout
+	for garden_tower_id in garden_tower_ids:
+		var garden_tower := tower_manager.get_node_or_null(str(garden_tower_names[garden_tower_id])) as Node3D
+		var garden_root := garden_tower.get_node_or_null("TowerSkyGardens") as Node3D if garden_tower != null else null
+		var actual_tower_height := float(garden_tower.get_meta("tower_height_m", 0.0)) if garden_tower != null else 0.0
+		var actual_floor_count := int(garden_tower.get_meta("tower_floor_count", 0)) if garden_tower != null else 0
+		var tower_radius := float(garden_tower_radii[garden_tower_id])
+		if garden_root == null or actual_tower_height <= 0.0 or actual_floor_count < 2:
+			_fail("Sky-garden elevator acceptance could not resolve tower runtime geometry: " + garden_tower_id)
+			return
+		var lift_destination_floor := 0
+		for garden_index in range(3):
+			var garden := garden_root.get_node_or_null("SkyGarden_%02d" % (garden_index + 1)) as Node3D
+			if garden == null:
+				_fail("Sky-garden acceptance found a missing garden deck: " + garden_tower_id)
+				return
+			var mapped_floor := int(garden.get_meta("system_tower_floor", 0))
+			var expected_y := 9.0 + (actual_tower_height - 16.0) * float(mapped_floor - 1) / float(actual_floor_count - 1)
+			var floor_room := operations.call("_ensure_floor_room", garden_tower_id, mapped_floor) as Node3D
+			var bridge := garden.get_node_or_null("GardenAccessBridge") as MeshInstance3D
+			var bridge_body := garden.get_node_or_null("GardenAccessBridge_Collision") as StaticBody3D
+			var bridge_shape := bridge_body.get_node_or_null("CollisionShape3D") as CollisionShape3D if bridge_body != null else null
+			var bridge_box := bridge_shape.shape as BoxShape3D if bridge_shape != null else null
+			var bridge_start := tower_radius * 0.42
+			var bridge_end := tower_radius * 1.16 + (tower_radius * 2.18 - tower_radius * 1.16) * 0.52
+			if mapped_floor < 1 or floor_room == null or absf(garden.position.y - expected_y) > 0.05 or absf(floor_room.position.y - garden.position.y) > 0.05:
+				_fail("Sky-garden deck and generated elevator floor are vertically misaligned: %s / garden %d." % [garden_tower_id, garden_index + 1])
+				return
+			if bridge == null or bridge_box == null or bridge_box.size.x <= 0.0 or bridge_start >= tower_radius * 0.82 or bridge_end <= tower_radius * 1.16:
+				_fail("Sky-garden radial walkway does not overlap both elevator-floor deck and garden ring: %s / garden %d." % [garden_tower_id, garden_index + 1])
+				return
+			if garden.get_node_or_null("GardenAccessBridgeRail_Left_Collision") == null or garden.get_node_or_null("GardenAccessBridgeRail_Right_Collision") == null:
+				_fail("Sky-garden radial walkway is missing its collidable safety rails: " + garden_tower_id)
+				return
+			var interaction := garden.get_node_or_null("SkyGardenInteraction_%02d" % (garden_index + 1)) as Area3D
+			if interaction == null or str(interaction.get_meta("system_tower_id", "")) != garden_tower_id or int(interaction.get_meta("system_tower_floor_number", 0)) != mapped_floor or not bool(interaction.get_meta("system_tower_elevator_destination", false)):
+				_fail("Sky-garden interaction is not routed to its owning tower elevator: %s / garden %d." % [garden_tower_id, garden_index + 1])
+				return
+			if garden_index == 0:
+				lift_destination_floor = mapped_floor
+		if lift_destination_floor <= 0:
+			_fail("No real elevator destination was resolved for " + garden_tower_id)
+			return
+		operations.call("open_tower", garden_tower_id)
+		if operations.find_child("SkyGardenLiftButton_01", true, false) == null or operations.find_child("SkyGardenLiftButton_02", true, false) == null or operations.find_child("SkyGardenLiftButton_03", true, false) == null:
+			_fail("Tower elevator panel does not expose all three sky-garden destinations: " + garden_tower_id)
+			return
+		operations.call("_travel_to_floor", garden_tower_id, lift_destination_floor)
+		await create_timer(2.75).timeout
+		var travelled_room := operations.get("active_floor_root") as Node3D
+		var travelled_car := operations.get("active_elevator_car") as Node3D
+		var expected_player_position := garden_tower.to_global(Vector3(0.0, travelled_room.position.y + 1.25, 0.0)) if travelled_room != null else Vector3.INF
+		if travelled_room == null or travelled_car == null or str(travelled_room.get_meta("system_tower_id", "")) != garden_tower_id or int(travelled_room.get_meta("system_tower_floor_number", 0)) != lift_destination_floor or absf(travelled_car.position.y - travelled_room.position.y) > 0.05 or player.global_position.distance_to(expected_player_position) > 0.15 or bool(player.get_meta("system_tower_elevator_active", false)):
+			_fail("Physical elevator did not deliver the player and car to the mapped sky-garden floor: " + garden_tower_id)
+			return
+		print("QA TRACE: live elevator trip and all three aligned garden routes passed for " + garden_tower_id)
+		operations.call("return_to_lobby")
+		await create_timer(2.9).timeout
+		if is_instance_valid(operations.get("active_floor_root")) or bool(player.get_meta("system_tower_elevator_active", false)):
+			_fail("Elevator did not return safely from sky-garden floor to the lobby: " + garden_tower_id)
+			return
+	print("Baghdad tower operations validation passed: five connected towers, fifteen sky-garden floor mappings, five physical elevator trips and returns, independent Power Tower and existing operations.")
 	# This is a short-lived headless validation process; avoid forcing dummy-renderer teardown of placeholder meshes.
 	quit(0)
 
