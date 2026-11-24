@@ -6158,21 +6158,29 @@ func _process_restaurant_staff_service() -> void:
 		if bool(employee.get_meta("system_restaurant_service_busy", false)):
 			continue
 		var selected_table_id := ""
-		for table_id_value in restaurant_orders.keys():
-			var table_id := str(table_id_value)
-			if not table_id.begins_with("shopping_floor_%02d_" % floor_number):
-				continue
-			var order: Dictionary = restaurant_orders[table_id]
-			var state := str(order.get("status", ""))
-			if role == "restaurant_chef" and state == "placed":
-				var placed_at := int(order.get("updated_at_unix", 0))
-				if int(Time.get_unix_time_from_system()) - placed_at < 1:
+		# Serve human-player orders before simulated NPC orders. This prevents a
+		# busy restaurant floor from starving the player's paid order behind the
+		# background customer queue while preserving FIFO order within each class.
+		for npc_priority in [false, true]:
+			for table_id_value in restaurant_orders.keys():
+				var table_id := str(table_id_value)
+				if not table_id.begins_with("shopping_floor_%02d_" % floor_number):
 					continue
-			if role == "restaurant_chef" and state in ["placed", "preparing"]:
-				selected_table_id = table_id
-				break
-			if role == "restaurant_waiter" and state in ["awaiting_waiter", "ready"]:
-				selected_table_id = table_id
+				var order: Dictionary = restaurant_orders[table_id]
+				if bool(order.get("npc_order", false)) != npc_priority:
+					continue
+				var state := str(order.get("status", ""))
+				if role == "restaurant_chef" and state == "placed":
+					var placed_at := int(order.get("updated_at_unix", 0))
+					if int(Time.get_unix_time_from_system()) - placed_at < 1:
+						continue
+				if role == "restaurant_chef" and state in ["placed", "preparing"]:
+					selected_table_id = table_id
+					break
+				if role == "restaurant_waiter" and state in ["awaiting_waiter", "ready"]:
+					selected_table_id = table_id
+					break
+			if not selected_table_id.is_empty():
 				break
 		if selected_table_id.is_empty():
 			continue
