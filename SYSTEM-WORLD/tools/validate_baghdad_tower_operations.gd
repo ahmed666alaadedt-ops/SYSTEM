@@ -405,7 +405,7 @@ func _run() -> void:
 		_fail("Approved Baghdad skyline must use the functional Hunter Association Tower and XSX as its central landmark identity.")
 		return
 	if central_hunter == null or absf(central_hunter.position.y - 419.2) > 0.1 or str(central_hunter.get_meta("system_hunter_guild_insignia", "")) != "XSX":
-		_fail("The 1000 m Hunter Association Tower must stand above the upper-city crown platform with its XSX guild emblem.")
+		_fail("The 650 m Hunter Association Tower must stand above the upper-city crown platform with its XSX guild emblem.")
 		return
 	if central_hunter.get_node_or_null("HunterXSXEmblemPlaque_00/XSXEmblemText") == null or central_hunter.get_node_or_null("HunterXSXEmblemPlaque_00/XSXEmblemText").text != "XSX":
 		_fail("The central Hunter Association Tower is missing its physical XSX emblem plaque.")
