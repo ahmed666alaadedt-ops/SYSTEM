@@ -249,9 +249,19 @@ func _run_validation() -> void:
 	if hunter_record.is_empty() or hunter_pad.position.y <= float(hunter_record.get("height", 0.0)):
 		_fail("Hunter helicopter pad must be physically positioned above the tallest Hunter Tower roof.")
 		return
+	if not bool(hunter_tower.get_meta("system_hunter_roof_clearance_reserved", false)) or hunter_tower.get_node_or_null("Crown") != null:
+		_fail("Hunter Tower's rooftop helipad clearance is obstructed by the generic solid crown.")
+		return
+	var hunter_beacon := hunter_tower.get_node_or_null("SkyBeacon") as OmniLight3D
+	if hunter_beacon == null or hunter_beacon.position.x < 22.0:
+		_fail("Hunter Tower's rooftop beacon must sit outside the helicopter landing circle.")
+		return
 	var hunter_facades := hunter_tower.get_node_or_null("HunterTowerAdvertisingFacades") as Node3D if hunter_tower != null else null
 	if hunter_facades == null or int(hunter_facades.get_meta("system_advertising_screen_count", 0)) < 12:
 		_fail("Hunter Tower exterior advertising facades are missing or incomplete.")
+		return
+	if int(hunter_facades.get_meta("system_hunter_ad_tier_halo_count", 0)) != 3 or hunter_facades.get_node_or_null("HunterAdvertisingTierHalo_150") == null or hunter_facades.get_node_or_null("HunterAdvertisingTierHalo_340") == null or hunter_facades.get_node_or_null("HunterAdvertisingTierHalo_530") == null:
+		_fail("Hunter Tower is missing one or more illuminated architectural advertising-tier halos.")
 		return
 	var hunter_lobby := hunter_tower.get_node_or_null("PublicLobby_Blockout") as Node3D if hunter_tower != null else null
 	if hunter_lobby == null or hunter_lobby.get_node_or_null("InteriorAdvertisingFrame_Left") == null or hunter_lobby.get_node_or_null("InteriorAdvertisingFrame_Right") == null:
