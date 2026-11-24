@@ -27,6 +27,10 @@ func setup(active_player: CharacterBody3D, radius: float = 30.0) -> void:
 	if riddle_solved and _is_candidate_registered():
 		_reveal_secret_door(false)
 
+func set_exam_manager(active_manager: Node) -> void:
+	exam_manager = active_manager
+
+
 func _build_secret_entrance() -> void:
 	if get_node_or_null("ClueEye") != null:
 		return
