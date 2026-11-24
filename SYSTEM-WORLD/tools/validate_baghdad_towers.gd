@@ -70,6 +70,16 @@ func _run_validation() -> void:
 	if tigris == null or str(tigris.get_meta("system_geography_source", "")) != "OpenStreetMap way 24709603":
 		_fail("Tigris River surface is missing its verified OSM geometry source.")
 		return
+	var access_causeway := terrain.get_node_or_null("BaghdadBridgeAccessCauseway") as MeshInstance3D
+	if access_causeway == null or not bool(access_causeway.get_meta("system_generated_access_route", false)):
+		_fail("The playable Baghdad-to-bridge access causeway is missing.")
+		return
+	if str(access_causeway.get_meta("system_geography_source", "")).contains("OpenStreetMap"):
+		_fail("The generated access causeway must not be misrepresented as OSM road geometry.")
+		return
+	if access_causeway.get_node_or_null("BaghdadBridgeAccessCausewayCollision/CollisionShape3D") == null:
+		_fail("The Baghdad bridge access causeway has no physical collision.")
+		return
 	# Sample the entire playable approach corridor, not just three isolated
 	# points. The surveyed bridge is several kilometres from the Baghdad origin,
 	# so a short island/corridor regression could otherwise pass while leaving
