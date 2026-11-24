@@ -919,7 +919,7 @@ func _create_customer_population() -> void:
 		if lobby == null:
 			continue
 		var ids: Array[String] = []
-		for index in range(12):
+		for index in range(100):
 			var existing_id := ""
 			for candidate_id in society.npcs.keys():
 				var candidate: Dictionary = society.npcs[candidate_id]
@@ -927,13 +927,26 @@ func _create_customer_population() -> void:
 					existing_id = str(candidate_id)
 					break
 			var gender := "female" if posmod(index, 2) == 1 else "male"
+			var age_slot := posmod(index, 10)
+			var age_group := "child" if age_slot < 2 else ("elder" if age_slot < 4 else "adult")
+			var age_years := 8.0 + float(posmod(index, 7)) if age_group == "child" else (62.0 + float(posmod(index * 3, 20)) if age_group == "elder" else 18.0 + float(posmod(index * 7, 43)))
 			var customer_name := "زائر " + str(tower_index + 1) + "-" + str(index + 1)
 			if existing_id.is_empty():
-				existing_id = str(society.call("create_npc", customer_name, WORLD_ID, 22.0 + float(index * 6), "visitor", "customer"))
+				existing_id = str(society.call("create_npc", customer_name, WORLD_ID, age_years, "visitor", "customer"))
 			if existing_id.is_empty():
 				continue
 			var customer: Dictionary = society.call("get_npc", existing_id)
 			customer["gender"] = gender
+			customer["age_years"] = age_years
+			customer["age_group"] = age_group
+			customer["system_customer_is_child"] = age_group == "child"
+			customer["system_customer_is_elder"] = age_group == "elder"
+			if age_group == "child":
+				customer["job"] = "civilian"
+				customer["occupation"] = "civilian"
+				customer["civilian_only"] = true
+				customer["combat_capable"] = false
+				customer["can_join_hunter_exam"] = false
 			customer["system_tower_customer_tower"] = tower_id
 			customer["system_tower_customer_index"] = index
 			customer["current_location"] = tower_id + "_public_area"
@@ -957,14 +970,19 @@ func _create_customer_population() -> void:
 				model.configure({
 					"name": str(customer.get("name", customer_name)),
 					"gender": gender,
-					"age": float(customer.get("age_years", 26.0)),
-					"job": "customer",
-					"occupation": "customer",
+					"age": age_years,
+					"age_group": age_group,
+					"job": "civilian" if age_group == "child" else "customer",
+					"occupation": "civilian" if age_group == "child" else "customer",
 					"world_id": "modern",
 					"hair_style": "medium" if gender == "female" else "short",
+					"height_type": "short" if age_group == "child" else "average",
 					"body_type": "average"
-				}, tower_index * 11 + index + 40)
-				model.scale = Vector3.ONE * 0.74
+				}, tower_index * 101 + index + 40)
+				model.scale = Vector3.ONE * (0.62 if age_group == "child" else (0.70 if age_group == "elder" else 0.74))
+				visitor.set_meta("system_customer_age_group", age_group)
+				visitor.set_meta("system_customer_age_years", age_years)
+				visitor.set_meta("system_customer_family_visitor", age_group == "child" or age_group == "elder")
 				visitor.add_child(model)
 				var name_label := Label3D.new()
 				name_label.text = str(customer.get("name", customer_name))
@@ -973,7 +991,7 @@ func _create_customer_population() -> void:
 				name_label.pixel_size = 0.011
 				name_label.modulate = Color(0.82, 0.88, 0.94)
 				visitor.add_child(name_label)
-				visitor.position = Vector3((float(index % 4) - 1.5) * 7.0, 0.0, float(config["radius"]) * 1.48 + (float(index / 4) - 1.0) * 8.0)
+				visitor.position = Vector3((float(index % 10) - 4.5) * 2.15, 0.0, float(config["radius"]) * 1.48 + 4.0 + float(index / 10) * 2.1)
 				if model.has_method("set_activity"):
 					model.call("set_activity", "socialize" if posmod(index, 2) == 0 else "wander")
 		customer_ids_by_tower[tower_id] = ids
@@ -1247,30 +1265,30 @@ func _move_customer_visitors(hour_override: int = -1) -> void:
 				if visitor_parent == active_floor_root:
 					var floor_number := int(active_floor_root.get_meta("system_tower_floor_number", 1))
 					target = Vector3(
-						(float(customer_index % 2) * 2.0 - 1.0) * radius * 0.20,
+						(float(customer_index % 10) - 4.5) * radius * 0.035,
 						0.0,
-						(float(customer_index / 2) - 0.5) * radius * 0.24
+						(float(customer_index / 10) - 4.5) * radius * 0.035
 					)
 					action = "visiting_" + str(visitor_node.get_meta("system_customer_current_department", "department"))
 					location = "%s_floor_%d" % [tower_id, floor_number]
 				else:
 					match phase:
 						"cafe":
-							target = Vector3(radius * 0.58 + float(customer_index % 4) * 1.8, 0.0, radius * 1.48 + 10.0 + float(customer_index / 4) * 2.0)
+							target = Vector3(-9.675 + float(customer_index % 10) * 2.15 + radius * 0.12, 0.0, radius * 1.48 + 5.0 + float(customer_index / 10) * 2.0)
 							action = "having_breakfast"
 							location = tower_id + "_lobby_cafe"
 						"browse":
-							target = Vector3((float(customer_index % 4) - 1.5) * 7.0 + 1.2, 0.0, radius * 1.48 + (float(customer_index / 4) - 1.0) * 8.0)
+							target = Vector3(-9.675 + float(customer_index % 10) * 2.15 + 2.4, 0.0, radius * 1.48 + 5.0 + float(customer_index / 10) * 2.0)
 							action = "browsing_services"
 						"social":
-							target = Vector3((float(customer_index % 4) - 1.5) * 7.0, 0.0, radius * 1.48 + 13.0 + (float(customer_index / 4) - 1.0) * 5.0)
+							target = Vector3(-9.675 + float(customer_index % 10) * 2.15 - 2.4, 0.0, radius * 1.48 + 9.0 + float(customer_index / 10) * 2.0)
 							action = "socializing"
 						"leisure":
-							target = Vector3(-radius * 0.52 + float(customer_index % 4) * 1.8, 0.0, radius * 1.48 + 10.0 + float(customer_index / 4) * 2.0)
+							target = Vector3(-9.675 + float(customer_index % 10) * 2.15 + radius * 0.08, 0.0, radius * 1.48 + 13.0 + float(customer_index / 10) * 2.0)
 							action = "evening_leisure"
 							location = tower_id + "_public_lounge"
 						_:
-							target = Vector3((float(customer_index % 4) - 1.5) * 7.0, 0.0, radius * 1.48 + (float(customer_index / 4) - 1.0) * 8.0)
+							target = Vector3(-9.675 + float(customer_index % 10) * 2.15, 0.0, radius * 1.48 + 5.0 + float(customer_index / 10) * 2.0)
 							action = "waiting_in_lobby"
 				var previous_phase := str(visitor_node.get_meta("system_customer_schedule_phase")) if visitor_node.has_meta("system_customer_schedule_phase") else ""
 				visitor_node.set_meta("system_customer_schedule_phase", phase)
