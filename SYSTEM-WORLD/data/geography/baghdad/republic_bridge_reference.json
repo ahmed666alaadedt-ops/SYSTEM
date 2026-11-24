@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "region_id": "iraq_baghdad_region",
+  "coordinate_reference_system": "EPSG:4326",
+  "local_projection": "SYSTEM_LOCAL_ECEF_TANGENT",
+  "local_axes": { "x": "east_m", "z": "south_m" },
+  "origin": { "latitude": 33.3152, "longitude": 44.3661, "altitude_m": 0 },
+  "source": {
+    "provider": "OpenStreetMap contributors via BBBike.org",
+    "snapshot_timestamp": "2026-11-19T23:32:47Z",
+    "license": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors; © BBBike.org",
+    "source_artifact_id": 14629100933
+  },
+  "republic_bridge": {
+    "name": { "ar": "جسر الجمهورية", "en": "Republic Bridge" },
+    "osm_bridge_polygon_way_id": 1077808833,
+    "osm_bridge_centerline_way_id": 4080878,
+    "wikidata_id": "Q35587674",
+    "center_wgs84": { "latitude": 33.3246635384, "longitude": 44.4043766854 },
+    "center_local_m": { "east": 3563.921, "up": -1.081, "south": -1050.256 },
+    "bounds_wgs84": { "west": 44.4010828, "south": 33.3222815, "east": 44.4075955, "north": 33.3269858 },
+    "centerline_local_m": [
+      { "east_m": 3850.804, "south_m": -1301.474 },
+      { "east_m": 3808.921, "south_m": -1264.313 },
+      { "east_m": 3778.987, "south_m": -1238.903 },
+      { "east_m": 3759.246, "south_m": -1222.081 },
+      { "east_m": 3408.967, "south_m": -922.938 }
+    ]
+  },
+  "tigris_river": {
+    "name": { "ar": "نهر دجلة", "en": "Tigris River" },
+    "osm_way_id": 24709603,
+    "centerline_local_m": [
+      { "east_m": 2950.856, "south_m": -1711.172 },
+      { "east_m": 2998.874, "south_m": -1667.898 },
+      { "east_m": 3091.459, "south_m": -1568.330 },
+      { "east_m": 3245.072, "south_m": -1403.135 },
+      { "east_m": 3405.060, "south_m": -1231.079 },
+      { "east_m": 3568.920, "south_m": -1054.879 },
+      { "east_m": 3672.925, "south_m": -951.538 },
+      { "east_m": 3817.059, "south_m": -764.111 },
+      { "east_m": 3900.811, "south_m": -655.209 },
+      { "east_m": 4019.305, "south_m": -501.125 },
+      { "east_m": 4096.676, "south_m": -386.654 },
+      { "east_m": 4170.292, "south_m": -238.387 }
+    ]
+  }
+}
