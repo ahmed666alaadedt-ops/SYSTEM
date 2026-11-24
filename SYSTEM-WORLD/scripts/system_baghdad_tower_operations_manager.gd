@@ -7238,17 +7238,27 @@ func enter_hunter_exam_private_room(entry_target: Node) -> void:
 		return
 	var table_id := str(player.get_meta("system_restaurant_seated_table_id", ""))
 	var order: Dictionary = restaurant_orders.get(table_id, {})
-	if table_id.is_empty() or str(order.get("status", "")) != "served" or not bool(order.get("meal_consumed", false)):
-		_set_status("تُفتح غرفة المتسابقين بعد وصول الوجبة وتناولها. أكمل طلبك مع النادل أولاً.")
+	if table_id.is_empty() or str(order.get("status", "")) != "served":
+		_set_status("تُفتح غرفة المتسابقين بعد وصول وجبتك من النادل. أكمل الطلب أولاً.")
 		return
 	var private_room := entry_target.get_parent() as Node3D
 	if private_room == null or not bool(private_room.get_meta("system_hunter_exam_private_room", false)):
 		return
+	var table_node_name := str(player.get_meta("system_restaurant_table_node", ""))
+	var table_node := active_floor_root.get_node_or_null(table_node_name) as Node3D if is_instance_valid(active_floor_root) else null
+	var meal_presentation := table_node.get_node_or_null("ServedMealPresentation") as Node3D if table_node != null else null
 	_release_player_restaurant_seat()
+	if meal_presentation != null:
+		meal_presentation.reparent(private_room, false)
+		meal_presentation.position = Vector3(-2.2, 0.0, -2.0)
+	order["hunter_exam_room_delivery"] = true
+	order["hunter_exam_room_delivery_at_unix"] = int(Time.get_unix_time_from_system())
+	restaurant_orders[table_id] = order
+	_save_restaurant_orders()
 	player.global_position = private_room.to_global(Vector3(0.0, 0.0, 3.5))
 	player.velocity = Vector3.ZERO
 	player.set_meta("system_hunter_exam_meal_order_id", table_id)
-	_set_status("وصلت إلى غرفة المتسابقين الخاصة. المصعد ينقلك إلى مرشد نقابة الصيادين.")
+	_set_status("وصلت وجبتك إلى غرفة المتسابقين الخاصة. المصعد ينقلك إلى مرشد نقابة الصيادين.")
 
 
 func _add_hunter_room_box_collision(parent: Node3D, node_name: String, position: Vector3, size: Vector3) -> void:
