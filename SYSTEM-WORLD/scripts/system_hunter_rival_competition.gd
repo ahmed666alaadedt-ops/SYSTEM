@@ -1,6 +1,8 @@
 extends Node3D
 class_name SYSTEMHunterRivalCompetition
 
+signal rival_event(message: String)
+
 const PROFILES := [
 	{"id":"rival_kai","name":"كاي","archetype":"المخادع","style":"deceiver","cunning":0.94,"combat":0.42,"stealth":0.82},
 	{"id":"rival_ren","name":"رِن","archetype":"سارق الأهداف","style":"thief","cunning":0.76,"combat":0.58,"stealth":0.96},
@@ -60,7 +62,9 @@ func _perform_action() -> void:
 	if style == "thief" and not player_objectives.is_empty() and stolen_objective_id.is_empty():
 		stolen_objective_id = player_objectives.pop_back()
 		stolen_by_rival_id = rival_id
-		print("SYSTEM HUNTER EXAM: ", profile["name"], " stole objective ", stolen_objective_id)
+		var theft_message := "%s سرق هدفك! أوقف تقدّمك واستعده منه." % profile["name"]
+		rival_event.emit(theft_message)
+		print("SYSTEM HUNTER EXAM: ", theft_message)
 		return
 	var messages := {
 		"deceiver": "%s يضللك بمعلومة قد تكون كاذبة." % profile["name"],
@@ -68,7 +72,9 @@ func _perform_action() -> void:
 		"ambusher": "%s يختبئ ويراقب تحركاتك." % profile["name"],
 		"honorable": "%s ينافسك بشرف دون سرقة أو خداع." % profile["name"]
 	}
-	print("SYSTEM HUNTER EXAM: ", str(messages.get(style, "%s يراقبك." % profile["name"])))
+	var event_message := str(messages.get(style, "%s يراقبك." % profile["name"]))
+	rival_event.emit(event_message)
+	print("SYSTEM HUNTER EXAM: ", event_message)
 
 func record_player_objective(objective_id: String) -> void:
 	if not objective_id.is_empty() and not player_objectives.has(objective_id):
