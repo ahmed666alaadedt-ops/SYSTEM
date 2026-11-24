@@ -911,10 +911,13 @@ func _on_interaction_performed(
 				if reveal_light != null:
 					reveal_light.light_energy = 2.2
 				for segment in range(10):
-					var ramp_path: NodePath = riddle_root.get_meta("system_hidden_passage_segment_%02d" % segment, NodePath())
-					var ramp := riddle_root.get_node_or_null(ramp_path) as MeshInstance3D
+					var ramp_name := "HiddenExamPassageRamp_%02d" % segment
+					var ramp := riddle_root.get_node_or_null(ramp_name) as MeshInstance3D
 					if ramp != null:
 						ramp.visible = true
+					var ramp_collision := riddle_root.get_node_or_null(ramp_name + "_Collision/CollisionShape3D") as CollisionShape3D
+					if ramp_collision != null:
+						ramp_collision.disabled = false
 				if interaction_prompt_label != null:
 					interaction_prompt_label.text = "انفتح الباب السري! ظهر مدخل نفق اختبار الصيادين."
 		else:
