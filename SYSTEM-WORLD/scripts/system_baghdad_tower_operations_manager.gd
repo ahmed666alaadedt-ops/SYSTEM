@@ -6566,6 +6566,8 @@ func _create_restaurant_served_meal_visual(table_id: String, order: Dictionary) 
 		return
 	var existing := table_node.get_node_or_null("ServedMealPresentation")
 	if existing != null:
+		# Detach before queue_free so the replacement can reuse the canonical node name this frame.
+		table_node.remove_child(existing)
 		existing.queue_free()
 	var presentation := Node3D.new()
 	presentation.name = "ServedMealPresentation"
