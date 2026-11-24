@@ -1539,3 +1539,15 @@ This section supersedes the earlier point-only fan prediction wording above. The
 - [x] Dedicated Android APK export and upload also passed on the same HEAD — run [45324119280](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45324119280).
 - [x] The earlier Miyar companion validation failure did not reproduce on this exact HEAD; both Miyar/Adam companion checks passed.
 - [ ] Human Android device inspection remains necessary for touch feel, camera framing, visual readability, and performance; headless checks do not replace device QA.
+
+
+### Six additional physical Hunter examination environments — 24 November 2026
+
+- [x] Extended the shared stage runtime beyond Baghdad so Cairo, Alexandria, Paris, Babylon, Tokyo and Highland Frontier each build a distinct named 3D examination site with physical ground/boundary/obstacle collisions, visible objective markers, interaction areas and an examiner NPC.
+- [x] Added ordered, stage-specific objective chains: Cairo caravan/water/exit; Alexandria beacon/rescue/lighthouse; Paris echo/stealth route; Babylon sun/moon gears/seal; Tokyo trace/civilian assistance/interception; Highland supplies/shelter/summit.
+- [x] Added objective-order rejection and progression feedback; the final objective records the corresponding stage through the existing examination manager. The original Baghdad riddle, traps, artifact and examiner remain unchanged.
+- [x] Expanded `validate_hunter_exam_stage_runtime.gd` to run through all seven stages sequentially, check each additional stage's physical ground collision and examiner, reject out-of-order interaction, complete all three objectives and verify all seven stage records.
+- [ ] Run the expanded Hunter examination validator and full canonical Godot workflow on the exact updated branch HEAD; parser/runtime success is not yet claimed.
+- [ ] Run canonical Android APK export on that same exact HEAD and inspect the generated artifact.
+- [ ] Physical Android inspection remains outstanding. These are first playable local geometry prototypes, not finished authored city-scale environments, online candidate simulations or server-authoritative examination scoring.
+- PR #38 remains draft and unmerged. Do not merge into `main` without explicit user approval.
