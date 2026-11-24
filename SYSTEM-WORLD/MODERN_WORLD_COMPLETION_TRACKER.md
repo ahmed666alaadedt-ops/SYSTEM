@@ -1744,3 +1744,16 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - The new tunnel entry path does not connect to the marshland area. The former seven-stage exam definition was replaced by one continuous tunnel competition; the new elevator/guide flow does not activate a legacy stage runtime.
 - Power Tower gameplay files were not modified. PR #38 remains a draft; no merge to main.
 - **Verification status:** code changes committed; Godot validation and Android export must run on the exact resulting commit before this implementation is marked verified. Physical Android testing remains outstanding.
+
+## Hunter Association Tower recruitment and guild-guide escort — 24 November 2026
+- [x] Supersede the restaurant-meal/private-room/elevator access concept with the user's latest direction: the Hunter Association Tower is the discovery and recruitment point.
+- [x] Added a player-arrival trigger in the Hunter Tower public lobby. Entering the lobby displays an Arabic invitation asking whether the player wants to become a Hunter and register for the Hunter Examination, with explicit accept/decline buttons.
+- [x] Acceptance registers the candidate through the persistent Hunter Examination manager. Declining leaves registration untouched and allows the player to choose again on a later visit.
+- [x] Added a visible Hunter Guild guide inside the tower lobby. After acceptance, the player is instructed to follow and interact with the guide.
+- [x] The guide escorts the player from the Hunter Tower to the single permanent underground examination tunnel. The persistent candidate serial is revealed and assigned to the player's runtime state only after reaching the tunnel.
+- [x] Re-entry reuses the saved candidate number; no second serial is allocated for an already registered player.
+- [x] Removed the superseded Shopping Tower restaurant room, meal gate and elevator access implementation. Restaurant seating, orders, waiter and chef lifecycle remain independent and unchanged.
+- [x] Marshland remains separate and unconnected. The former clue/secret-door route and seven-stage exam definition are not part of this tunnel access flow.
+- [ ] Run the revised Hunter Tower recruitment regression and full Godot validation on the exact resulting HEAD.
+- [ ] Run the Android APK export on the same exact HEAD; no fresh APK verification is claimed yet.
+- [ ] PR #38 remains draft and must not be merged into `main` without explicit user approval.
