@@ -1360,7 +1360,7 @@ func _run() -> void:
 			_fail("Shopping Tower floor %d is missing its three physical category-specific showcase displays." % floor_number)
 			return
 		var item_zero := showcase.get_node("ShowcaseItem_00") as Node3D
-		var item_label := item_zero.get_meta("system_showcase_product_label", "")
+		var item_label: String = str(item_zero.get_meta("system_showcase_product_label", ""))
 		if str(item_label).is_empty() or item_zero.get_node_or_null("ShowcaseItemLabel") == null:
 			_fail("Shopping Tower floor %d has an unlabeled physical product display." % floor_number)
 			return
