@@ -761,15 +761,31 @@ func _add_tower_identity_box(parent: Node3D, node_name: String, position: Vector
 
 func _create_connected_city_links() -> void:
 	# Elevated pedestrian/vehicle corridor blockout linking only the five district towers.
+	# Keep the route in a perimeter sequence; the previous creation order crossed
+	# the district diagonally between opposite towers.
 	# The standalone Power Tower is deliberately excluded from this network.
-	if district_tower_positions.size() < 2:
+	var ordered_tower_ids := [
+		"hunter_association_tower_baghdad",
+		"business_investment_tower_baghdad",
+		"entertainment_tower_baghdad",
+		"shopping_tower_baghdad",
+		"technology_tower_baghdad"
+	]
+	var ordered_positions: Array[Vector3] = []
+	for tower_id in ordered_tower_ids:
+		for tower_data in district_tower_positions:
+			if str(tower_data.get("id", "")) == tower_id:
+				ordered_positions.append(tower_data["position"])
+				break
+	if ordered_positions.size() < 2:
+		push_warning("SYSTEM WORLD: Baghdad connected district needs at least two placed towers.")
 		return
 	var link_root := Node3D.new()
 	link_root.name = "BaghdadFiveTowerConnectedDistrict"
 	add_child(link_root)
-	for index in range(district_tower_positions.size()):
-		var first: Vector3 = district_tower_positions[index]["position"]
-		var second: Vector3 = district_tower_positions[(index + 1) % district_tower_positions.size()]["position"]
+	for index in range(ordered_positions.size()):
+		var first: Vector3 = ordered_positions[index]
+		var second: Vector3 = ordered_positions[(index + 1) % ordered_positions.size()]
 		_create_link_deck(link_root, first + Vector3(0.0, 34.0, 0.0), second + Vector3(0.0, 34.0, 0.0), "SkyPromenade_%d" % index, 12.0, 0.65, trim_material)
 		_create_link_deck(link_root, first + Vector3(0.0, 23.0, 0.0), second + Vector3(0.0, 23.0, 0.0), "VehicleDeck_%d" % index, 18.0, 1.1, tower_material)
 		_create_vehicle_access_ramp(link_root, first, index)
