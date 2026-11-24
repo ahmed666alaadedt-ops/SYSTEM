@@ -1,6 +1,7 @@
 extends SceneTree
 
 const BAGHDAD_STREAMER = preload("res://scripts/baghdad_osm_cell_streamer.gd")
+const TERRAIN_MANAGER = preload("res://scripts/modern_continent_manager.gd")
 
 
 func _initialize() -> void:
@@ -8,6 +9,9 @@ func _initialize() -> void:
 
 
 func _run_validation() -> void:
+	var terrain = TERRAIN_MANAGER.new()
+	terrain.name = "ModernContinent"
+	root.add_child(terrain)
 	var streamer = BAGHDAD_STREAMER.new()
 	root.add_child(streamer)
 	print("Baghdad OSM validation: streamer added; checking manifest and origin.")
@@ -62,6 +66,7 @@ func _run_validation() -> void:
 		return
 	print("Baghdad Republic Bridge OSM cell passed: primary bridge=", primary_bridge.size(), " secondary bridge=", secondary_bridge.size(), " Tigris=", tigris_river.size())
 	streamer.queue_free()
+	terrain.queue_free()
 	quit(0)
 
 
