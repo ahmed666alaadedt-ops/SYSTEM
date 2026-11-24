@@ -6743,6 +6743,9 @@ func _create_hotel_room_interior(parent: Node3D, room_data: Dictionary, room_ind
 func _create_hotel_facilities(room: Node3D, radius: float, floor_number: int, hospitality_staff_id: String) -> void:
 	var hotel := Node3D.new()
 	hotel.name = "SYSTEMHotelFacilities"
+	hotel.set_meta("system_hotel_facility_status", "generated_playable_interior")
+	hotel.set_meta("system_hotel_floor_number", floor_number)
+	hotel.set_meta("system_hotel_room_count", HOTEL_ROOM_CATALOG.size() if floor_number == 28 else 0)
 	room.add_child(hotel)
 	var gold := StandardMaterial3D.new()
 	gold.albedo_color = Color(0.62, 0.39, 0.12)
@@ -6789,6 +6792,24 @@ func _create_hotel_facilities(room: Node3D, radius: float, floor_number: int, ho
 	sign.modulate = Color(1.0, 0.82, 0.48)
 	hotel.add_child(sign)
 	if floor_number == 27:
+		_add_hotel_room_box(hotel, "HotelReceptionFloorRug", Vector3(15.0, 0.12, 9.0), Vector3(0.0, 0.12, 0.0), accent_material)
+		for column_index in range(4):
+			var column_x := -18.0 + float(column_index) * 12.0
+			_add_hotel_room_box(hotel, "HotelReceptionColumn_%02d" % column_index, Vector3(0.85, 5.2, 0.85), Vector3(column_x, 2.6, -15.0), gold)
+			_add_hotel_room_collision_box(hotel, "HotelReceptionColumnCollision_%02d" % column_index, Vector3(0.85, 5.2, 0.85), Vector3(column_x, 2.6, -15.0))
+		for seat_index in range(4):
+			var seat_x := -9.0 + float(seat_index % 2) * 18.0
+			var seat_z := 8.0 + float(seat_index / 2) * 5.0
+			_add_hotel_room_box(hotel, "HotelReceptionWaitingSofa_%02d" % seat_index, Vector3(5.0, 0.85, 1.6), Vector3(seat_x, 0.48, seat_z), accent_material)
+			_add_hotel_room_box(hotel, "HotelReceptionWaitingTable_%02d" % seat_index, Vector3(1.8, 0.55, 1.2), Vector3(seat_x, 0.3, seat_z + 2.0), wood_material)
+		var reception_brand := Label3D.new()
+		reception_brand.name = "HotelReceptionBrandSign"
+		reception_brand.text = "SYSTEM GRAND HOTEL\nRECEPTION • CHECK-IN • CONCIERGE"
+		reception_brand.position = Vector3(0.0, 6.2, -radius * 0.25)
+		reception_brand.font_size = 32
+		reception_brand.pixel_size = 0.018
+		reception_brand.modulate = Color(1.0, 0.84, 0.52)
+		hotel.add_child(reception_brand)
 		var desk := MeshInstance3D.new()
 		desk.name = "HotelReceptionDesk"
 		var desk_mesh := BoxMesh.new()
@@ -6808,6 +6829,17 @@ func _create_hotel_facilities(room: Node3D, radius: float, floor_number: int, ho
 		lounge.material_override = dark
 		hotel.add_child(lounge)
 	else:
+		_add_hotel_room_box(hotel, "HotelSuiteFloorAtriumCarpet", Vector3(12.0, 0.12, 12.0), Vector3.ZERO, accent_material)
+		_add_hotel_room_box(hotel, "HotelSuiteAtriumChandelierStem", Vector3(0.24, 4.0, 0.24), Vector3(0.0, 3.2, 0.0), gold)
+		_add_hotel_room_box(hotel, "HotelSuiteAtriumChandelier", Vector3(3.2, 0.22, 3.2), Vector3(0.0, 5.25, 0.0), gold)
+		var suite_directory := Label3D.new()
+		suite_directory.name = "HotelSuiteFloorDirectory"
+		suite_directory.text = "HOTEL SUITES • ROOMS 01–08\nSTANDARD  |  DELUXE  |  HUNTER  |  VIP"
+		suite_directory.position = Vector3(0.0, 4.2, -radius * 0.58)
+		suite_directory.font_size = 24
+		suite_directory.pixel_size = 0.015
+		suite_directory.modulate = Color(1.0, 0.84, 0.52)
+		hotel.add_child(suite_directory)
 		for index in range(HOTEL_ROOM_CATALOG.size()):
 			var room_data: Dictionary = HOTEL_ROOM_CATALOG[index]
 			_create_hotel_room_interior(hotel, room_data, index, radius, room_materials)
