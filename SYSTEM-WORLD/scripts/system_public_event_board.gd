@@ -165,7 +165,6 @@ func _build_baghdad_tower_displays() -> void:
 	result_material.emission_energy_multiplier = 1.0
 	var tower_nodes := {
 		"hunter_association_tower_baghdad": "HunterAssociationTower",
-		"power_tower_baghdad": "PowerTower",
 		"business_investment_tower_baghdad": "BusinessInvestmentTower",
 		"shopping_tower_baghdad": "ShoppingTower",
 		"entertainment_tower_baghdad": "EntertainmentTower",
