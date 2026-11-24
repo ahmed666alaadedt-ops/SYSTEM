@@ -309,7 +309,7 @@ jobs:
             2>&1 | tee "$RUNNER_TEMP/hunter-exam-continuous-competition.log"
           "$GODOT" --headless --path "$PROJECT" \
             --script res://tools/validate_hunter_rival_competition.gd \
-            2>&1 | tee "$RUNNER_TEMP/hunter-rival-competition.log"
+            2>&1 | tee "$RUNNER_TEMP/hunter-rival-competition-runtime.log"
 
       - name: Export canonical SYSTEM WORLD Android APK
         shell: bash
