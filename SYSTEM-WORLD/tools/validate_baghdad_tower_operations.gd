@@ -253,8 +253,8 @@ func _run() -> void:
 	for lobby_child in shopping_customer_lobby.get_children():
 		if str(lobby_child.name).begins_with("TowerCustomer_"):
 			lobby_visitors_during_visit += 1
-	if floor_visitors != 2 or lobby_visitors_during_visit != 2:
-		_fail("Shopping Tower customers did not split between the lobby and restaurant floor; floor=%d lobby=%d." % [floor_visitors, lobby_visitors_during_visit])
+	if floor_visitors != 2 or lobby_visitors_during_visit != 98:
+		_fail("Shopping Tower must keep 98 customers in the lobby while two visit the restaurant floor; floor=%d lobby=%d." % [floor_visitors, lobby_visitors_during_visit])
 		return
 	operations.call("_return_customer_visitors_to_lobbies")
 	operations.set("active_floor_root", null)
@@ -262,8 +262,8 @@ func _run() -> void:
 	for lobby_child in shopping_customer_lobby.get_children():
 		if str(lobby_child.name).begins_with("TowerCustomer_"):
 			lobby_visitors_after_return += 1
-	if lobby_visitors_after_return != 4:
-		_fail("Shopping Tower restaurant visitors did not return to the public lobby; found %d." % lobby_visitors_after_return)
+	if lobby_visitors_after_return != 100:
+		_fail("Shopping Tower restaurant visitors did not return to the 100-customer public lobby; found %d." % lobby_visitors_after_return)
 		return
 	var post_purchase_status: Dictionary = operations.call("get_operations_status")
 	if int(post_purchase_status.get("npc_purchase_count", 0)) <= 0:
