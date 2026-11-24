@@ -654,9 +654,9 @@ func consume_elixir(item_id: String) -> Dictionary:
 				effect = {"remaining_seconds": 90.0, "defense_bonus": 3.0}
 			_:
 				return {"success": false, "reason": "UNKNOWN_ELIXIR"}
+		if not effect_id.is_empty() and active_elixir_effects.has(effect_id) and float(active_elixir_effects[effect_id].get("remaining_seconds", 0.0)) > 0.0:
+			return {"success": false, "reason": "ELIXIR_EFFECT_ALREADY_ACTIVE"}
 		active_elixir_effects[effect_id] = effect
-	if not effect_id.is_empty() and active_elixir_effects.has(effect_id) and float(active_elixir_effects[effect_id].get("remaining_seconds", 0.0)) > 0.0:
-		return {"success": false, "reason": "ELIXIR_EFFECT_ALREADY_ACTIVE"}
 	var remaining := get_item_count(item_id) - 1
 	if remaining <= 0:
 		inventory_items.erase(item_id)
