@@ -896,6 +896,7 @@ func _build_baghdad_bridge_access_causeway() -> void:
 	var body := StaticBody3D.new()
 	body.name = "BaghdadBridgeAccessCausewayCollision"
 	var collision := CollisionShape3D.new()
+	collision.name = "CausewayCollisionShape"
 	var shape := ConcavePolygonShape3D.new()
 	shape.set_faces(road.mesh.get_faces())
 	collision.shape = shape
