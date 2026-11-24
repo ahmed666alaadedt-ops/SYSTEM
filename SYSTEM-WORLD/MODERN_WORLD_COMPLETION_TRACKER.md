@@ -5,7 +5,8 @@
 - [x] Added sixteen structural support pylons, ten decorative glass skyline towers with illuminated crowns, and a central glass SYSTEM spire with the blue S insignia.
 - [x] Kept these additions as decorative skyline architecture only: they do not add functional towers, alter the five connected Baghdad district towers, or pull the independent Power Tower into the district.
 - [x] Added regression assertions for the three platform tiers, rims, ten glass skyline towers, central S insignia, five-tower district count, and separate Power Tower.
-- [ ] Canonical Godot validation and Android APK export on the exact visual-expansion commit are pending; do not call this visual milestone validated until both workflows pass.
+- [x] Canonical Godot runtime validation passed on visual-expansion code commit `b5007eea458926b476be171cf4e034a0318fb6af`; the tower-landmark validator, hidden tunnel, all seven exam stages, full tower operations/elevator/emergency checks, terrain streaming, child-character safety, WGS84 anchor integration, Star Gate/Greed Island checks, and main-scene launch all passed in run `45419115879`.
+- [x] Canonical Android APK export passed on the same code commit in run `45419115697`; artifact `14933632005`, 36,639,382 bytes, expires 8 December 2026.
 - [ ] Actual Android visual inspection remains pending; the new architecture is procedural geometry and must be reviewed against the saved reference image before claiming a finished art match.
 
 
