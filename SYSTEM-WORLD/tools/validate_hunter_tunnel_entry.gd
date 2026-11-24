@@ -65,10 +65,11 @@ func _run_validation() -> void:
 	if not _check(not invitation.visible, "Accepting the invitation did not close the prompt."):
 		return
 	var overview: Dictionary = manager.get_exam_overview()
-	if not _check(bool(overview.get("registered", false)), "Accepting the invitation did not register the candidate."):
+	if not _check(bool(overview.get("invitation_accepted", false)), "Accepting the invitation did not persist the candidate's acceptance."):
 		return
-	var serial := int(overview.get("candidate_number", 0))
-	if not _check(serial >= 1001, "Registration did not allocate a unique candidate serial."):
+	if not _check(not bool(overview.get("registered", false)), "Candidate serial was assigned before reaching the tunnel."):
+		return
+	if not _check(int(overview.get("candidate_number", 0)) == 0, "Candidate number should remain unassigned until tunnel arrival."):
 		return
 	if not _check(bool(player.get_meta("system_hunter_exam_invitation_accepted", false)), "Accepted invitation was not stored on the player session."):
 		return
@@ -81,6 +82,10 @@ func _run_validation() -> void:
 	if not _check(bool(player.get_meta("system_inside_hunter_exam_tunnel", false)), "The guide did not deliver the player to the examination tunnel."):
 		return
 	if not _check(player.global_position.distance_to(tunnel.to_global(Vector3(0.0, 0.0, -1.5))) < 3.0, "Player did not arrive at the tunnel entrance."):
+		return
+	var arrived_overview: Dictionary = manager.get_exam_overview()
+	var serial := int(arrived_overview.get("candidate_number", 0))
+	if not _check(bool(arrived_overview.get("registered", false)) and serial >= 1001, "Candidate was not formally registered and assigned a serial at tunnel arrival."):
 		return
 	if not _check(int(player.get_meta("system_hunter_exam_candidate_number", 0)) == serial, "The permanent candidate serial was not handed to the player at the tunnel."):
 		return
