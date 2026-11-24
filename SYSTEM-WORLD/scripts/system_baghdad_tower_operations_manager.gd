@@ -3682,6 +3682,15 @@ func _department_for_floor(tower_id: String, floor_number: int, total: int) -> S
 		"shopping_tower_baghdad":
 			if floor_number >= 29: return "المطاعم الراقية وصالات الطعام والمقاهي"
 			if floor_number >= 27: return "فندق SYSTEM — الاستقبال والأجنحة والغرف الفندقية"
+			if floor_number in [5, 6, 7]: return "معارض الأسلحة القتالية — السيوف والرماح والفؤوس"
+			if floor_number in [8, 9, 10]: return "معرض الأسلحة بعيدة المدى والمعدات الحديثة"
+			if floor_number in [11, 12, 13]: return "معرض الدروع والخوذ والحماية"
+			if floor_number == 14: return "ورشة الحدادة الرئيسية — صناعة وترقية وإصلاح المعدات"
+			if floor_number in [15, 16]: return "مركز التصنيع المتقدم والمواد والوصفات"
+			if floor_number in [17, 18, 19]: return "صيدلية الأكاسير الأساسية والمؤقتة"
+			if floor_number in [20, 21, 22]: return "مركز إيقاظ النِن والتحكم والتدريب"
+			if floor_number in [23, 24, 25]: return "مختبر الأكاسير المتقدمة والتحضير المقيد"
+			if floor_number == 26: return "خزنة الأكاسير النادرة والأسطورية — وصول مقيّد"
 			if ratio > 0.90: return "المطاعم الراقية وصالات الطعام والمقاهي"
 			if ratio > 0.80: return "مطاعم الوجبات السريعة والحلويات والمشروبات"
 			if ratio > 0.68: return "مخزن الإكسير النادر والأسطوري — وصول مقيّد"
@@ -3717,6 +3726,12 @@ func _department_for_floor(tower_id: String, floor_number: int, total: int) -> S
 			if ratio > 0.25: return "الخدمات الرقمية"
 			return "معارض التكنولوجيا"
 		"hunter_association_tower_baghdad":
+			if floor_number in [4, 5, 6]: return "قاعات التدريب الأساسي والتأهيل البدني"
+			if floor_number in [7, 8, 9]: return "قاعات إتقان الأسلحة — تدريب فردي آمن"
+			if floor_number in [10, 11]: return "أساسيات الطاقة والنِن والتركيز"
+			if floor_number in [13, 14, 15]: return "التحكم المتقدم بالقدرات وإدارة الطاقة"
+			if floor_number in [16, 17, 18]: return "قاعات التخصص واختبارات المهارة"
+			if floor_number in [19, 20]: return "قاعات تقييم وإثبات الإتقان"
 			if ratio > 0.85: return "قاعة الشرف والسجل العالمي"
 			if ratio > 0.65: return "إدارة الاختبار العالمي"
 			if ratio > 0.4: return "قاعات التدريب والبحث"
@@ -3831,8 +3846,48 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 			elif floor_number == 40:
 				facility_type = "innovation_rooftop"
 				facility_title = "منصة الابتكار والرصد التقني"
+		"shopping_tower_baghdad":
+			if floor_number in [5, 6, 7]:
+				facility_type = "shopping_weapon_gallery"
+				facility_title = "معرض الأسلحة القتالية — فحص وشراء وتجهيز"
+			elif floor_number in [8, 9, 10]:
+				facility_type = "shopping_ranged_gallery"
+				facility_title = "معرض الأسلحة بعيدة المدى والمعدات الحديثة"
+			elif floor_number in [11, 12, 13]:
+				facility_type = "shopping_armor_gallery"
+				facility_title = "معرض الدروع والخوذ والحماية"
+			elif floor_number in [15, 16]:
+				facility_type = "shopping_crafting_materials"
+				facility_title = "مركز التصنيع المتقدم والمواد والوصفات"
+			elif floor_number in [17, 18, 19]:
+				facility_type = "shopping_elixir_pharmacy"
+				facility_title = "صيدلية الأكاسير الأساسية والمؤقتة"
+			elif floor_number in [20, 21, 22]:
+				facility_type = "shopping_nen_center"
+				facility_title = "مركز إيقاظ النِن والتحكم والتدريب"
+			elif floor_number in [23, 24, 25]:
+				facility_type = "shopping_advanced_elixir_lab"
+				facility_title = "مختبر الأكاسير المتقدمة والتحضير المقيد"
+			elif floor_number == 26:
+				facility_type = "shopping_rare_elixir_vault"
+				facility_title = "خزنة الأكاسير النادرة والأسطورية — وصول مقيّد"
 		"hunter_association_tower_baghdad":
-			if floor_number in [4, 5, 6]:
+			if floor_number in [7, 8, 9]:
+				facility_type = "hunter_weapon_mastery"
+				facility_title = "قاعات إتقان الأسلحة — سجل مهارة فردي"
+			elif floor_number in [10, 11]:
+				facility_type = "hunter_nen_fundamentals"
+				facility_title = "أساسيات الطاقة والنِن والتركيز"
+			elif floor_number in [13, 14, 15]:
+				facility_type = "hunter_advanced_control"
+				facility_title = "التحكم المتقدم بالقدرات وإدارة الطاقة"
+			elif floor_number in [16, 17, 18]:
+				facility_type = "hunter_skill_specialization"
+				facility_title = "قاعات التخصص واختبارات المهارة"
+			elif floor_number in [19, 20]:
+				facility_type = "hunter_skill_assessment"
+				facility_title = "قاعات تقييم وإثبات الإتقان"
+			elif floor_number in [4, 5, 6]:
 				facility_type = "hunter_training"
 				facility_title = "قاعة تدريب الصيادين"
 			elif floor_number == 12:
@@ -4185,6 +4240,18 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 		"innovation_rooftop":
 			for index in range(5):
 				_add_facility_box(root, "InnovationConsole_%02d" % index, Vector3(-12.0 + float(index) * 6.0, 1.0, 1.0), Vector3(2.4, 2.0, 1.8), highlight)
+		"shopping_weapon_gallery", "shopping_ranged_gallery", "shopping_armor_gallery", "shopping_crafting_materials", "shopping_elixir_pharmacy", "shopping_nen_center", "shopping_advanced_elixir_lab", "shopping_rare_elixir_vault":
+			for index in range(6):
+				_add_facility_box(root, "CommerceDisplay_%02d" % index, Vector3(-12.0 + float(index) * 4.8, 1.1, 0.0), Vector3(2.0, 2.2, 2.0), highlight if index % 2 == 0 else accent)
+			_add_facility_box(root, "DepartmentCounter", Vector3(0.0, 0.7, -7.0), Vector3(12.0, 1.4, 1.8), accent)
+		"hunter_weapon_mastery":
+			for index in range(6):
+				_add_facility_box(root, "WeaponMasteryRack_%02d" % index, Vector3(-12.0 + float(index) * 4.8, 1.5, -2.0), Vector3(1.8, 3.0, 1.2), accent)
+				_add_facility_box(root, "WeaponPracticeTarget_%02d" % index, Vector3(-12.0 + float(index) * 4.8, 2.2, 5.0), Vector3(1.4, 4.4, 0.5), highlight)
+		"hunter_nen_fundamentals", "hunter_advanced_control", "hunter_skill_specialization", "hunter_skill_assessment":
+			for index in range(5):
+				_add_facility_box(root, "SkillPracticePillar_%02d" % index, Vector3(-10.0 + float(index) * 5.0, 2.0, 0.0), Vector3(1.3, 4.0, 1.3), highlight)
+			_add_facility_box(root, "SkillAssessmentPlatform", Vector3(0.0, 0.35, 7.0), Vector3(16.0, 0.7, 8.0), accent)
 		"hunter_training":
 			for index in range(5):
 				_add_facility_box(root, "HunterTrainingTarget_%02d" % index, Vector3(-12.0 + float(index) * 6.0, 2.0, -1.0), Vector3(1.5, 4.0, 1.5), accent)
@@ -4376,7 +4443,13 @@ func _dispatch_pool_supervisor_to_player() -> bool:
 func open_facility_service(tower_id: String, floor_number: int, facility_type: String) -> void:
 	if bowling_throw_in_progress or facility_projectile_in_progress:
 		return
-	if not TOWER_CONFIG.has(tower_id) or _facility_activity_definition(facility_type).is_empty():
+	if not TOWER_CONFIG.has(tower_id):
+		return
+	var progression_facilities := ["shopping_weapon_gallery", "shopping_ranged_gallery", "shopping_armor_gallery", "shopping_crafting_materials", "shopping_elixir_pharmacy", "shopping_nen_center", "shopping_advanced_elixir_lab", "shopping_rare_elixir_vault", "hunter_weapon_mastery", "hunter_nen_fundamentals", "hunter_advanced_control", "hunter_skill_specialization", "hunter_skill_assessment"]
+	if progression_facilities.has(facility_type):
+		open_baghdad_progression_facility(tower_id, floor_number, facility_type)
+		return
+	if _facility_activity_definition(facility_type).is_empty():
 		return
 	current_tower_id = tower_id
 	current_staff_id = ""
@@ -4407,6 +4480,104 @@ func open_facility_service(tower_id: String, floor_number: int, facility_type: S
 	close_button.pressed.connect(func(): panel.hide())
 	content.add_child(close_button)
 	_add_facility_activity_controls(facility_type)
+	panel.show()
+
+
+func open_baghdad_progression_facility(tower_id: String, floor_number: int, facility_type: String) -> void:
+	current_tower_id = tower_id
+	current_staff_id = ""
+	var facility_room := _ensure_floor_room(tower_id, floor_number)
+	current_facility_root = facility_room.get_node_or_null("SpecialFacility_" + facility_type) as Node3D if facility_room != null else null
+	_clear_dynamic_controls()
+	var titles := {
+		"shopping_weapon_gallery": "معرض الأسلحة القتالية",
+		"shopping_ranged_gallery": "الأسلحة بعيدة المدى والمعدات الحديثة",
+		"shopping_armor_gallery": "الدروع والخوذ والحماية",
+		"shopping_crafting_materials": "التصنيع المتقدم والمواد",
+		"shopping_elixir_pharmacy": "صيدلية الأكاسير الأساسية",
+		"shopping_nen_center": "إيقاظ النِن والتحكم",
+		"shopping_advanced_elixir_lab": "مختبر الأكاسير المتقدمة",
+		"shopping_rare_elixir_vault": "خزنة الأكاسير النادرة والأسطورية",
+		"hunter_weapon_mastery": "تدريب إتقان الأسلحة",
+		"hunter_nen_fundamentals": "أساسيات النِن والتركيز",
+		"hunter_advanced_control": "التحكم المتقدم بالقدرات",
+		"hunter_skill_specialization": "تخصص المهارات",
+		"hunter_skill_assessment": "اختبارات إثبات الإتقان"
+	}
+	title_label.text = str(titles.get(facility_type, "مرافق برج بغداد"))
+	credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
+	status_label.text = "الطابق %d — كل شراء أو تدريب يخضع لمتطلبات المستوى والرتبة والمخزون." % floor_number
+	var close_button := Button.new()
+	close_button.text = "إغلاق"
+	close_button.pressed.connect(func(): panel.hide())
+	content.add_child(close_button)
+	if facility_type.begins_with("shopping_"):
+		var allowed_ids: Array = []
+		match facility_type:
+			"shopping_weapon_gallery": allowed_ids = ["training_sword", "steel_sword", "hunter_spear", "battle_axe", "combat_knife", "dual_blades", "long_sword", "great_sword", "war_hammer"]
+			"shopping_ranged_gallery": allowed_ids = ["composite_bow", "crossbow", "reinforced_arrows", "system_firearm", "hunter_pistol", "hunter_rifle", "precision_rifle", "tactical_shotgun"]
+			"shopping_armor_gallery": allowed_ids = ["hunter_shield", "hunter_armor", "hunter_helmet", "advanced_hunter_shield", "reinforced_helmet", "rank_e_armor", "rank_d_armor", "rank_c_armor", "rank_b_armor", "rank_a_armor", "rank_s_armor", "rank_ss_armor", "rank_sss_armor"]
+			"shopping_crafting_materials": allowed_ids = ["iron_ingot", "wood_plank", "leather_roll", "medicinal_herb", "crystal_dust", "monster_core", "nen_fragment", "energy_crystal", "rare_core", "repair_kit"]
+			"shopping_elixir_pharmacy": allowed_ids = ["healing_elixir", "strength_elixir", "speed_elixir", "endurance_elixir", "energy_elixir", "antidote_elixir", "resistance_elixir"]
+			"shopping_nen_center": allowed_ids = ["nen_awakening_elixir", "nen_control_elixir", "nen_focus_elixir", "nen_stabilizer_elixir", "nen_recovery_elixir"]
+			"shopping_advanced_elixir_lab": allowed_ids = ["deep_wound_elixir", "regeneration_elixir", "nen_stabilizer_elixir", "nen_focus_elixir", "nen_recovery_elixir"]
+			"shopping_rare_elixir_vault": allowed_ids = ["rare_legendary_elixir", "elite_legendary_elixir"]
+		var heading := Label.new()
+		heading.text = "المنتجات المتاحة — السعر والمخزون والرتبة تُراجع عند الشراء"
+		content.add_child(heading)
+		var catalog: Array = PRODUCT_CATALOG.get("shopping_tower_baghdad", [])
+		for product_value in catalog:
+			var product: Dictionary = product_value
+			var item_id := str(product.get("id", ""))
+			if not allowed_ids.has(item_id):
+				continue
+			var item_name := str(product.get("name", item_id))
+			var required_rank := str(product.get("required_rank", "F"))
+			var price := _get_current_price(item_id)
+			var stock := get_vendor_stock(item_id)
+			var buy_button := Button.new()
+			buy_button.text = "%s — %d SYSTEM | رتبة %s | المخزون %d" % [item_name, price, required_rank, stock]
+			buy_button.disabled = stock <= 0 or not _meets_hunter_rank(required_rank)
+			buy_button.pressed.connect(_buy_product.bind(item_id, item_name, price, required_rank))
+			content.add_child(buy_button)
+		if facility_type in ["shopping_crafting_materials", "shopping_advanced_elixir_lab", "shopping_nen_center"]:
+			_add_crafting_controls("shopping_tower_baghdad")
+		_add_sell_controls()
+	else:
+		if not is_instance_valid(progression):
+			_set_status("نظام التقدم غير متاح.")
+			panel.show()
+			return
+		if facility_type == "hunter_weapon_mastery":
+			var family_names := {"sword":"السيف", "spear":"الرمح", "axe":"الفأس", "bow":"القوس", "shield":"الدرع", "modern_ranged":"السلاح بعيد المدى"}
+			for family_value in family_names.keys():
+				var family := str(family_value)
+				var drill_button := Button.new()
+				drill_button.text = "تنفيذ تدريب %s — تقدم الإتقان %d/100" % [str(family_names[family]), int(progression.call("get_weapon_mastery").get(family, 0))]
+				drill_button.pressed.connect(func():
+					var result: Dictionary = progression.call("record_weapon_training", family, "baghdad_floor_%d_%d" % [floor_number, Time.get_ticks_usec()])
+					_set_status("تم تسجيل التدريب: %s — %s" % [family, str(result.get("mastery", 0))] if bool(result.get("success", false)) else "تعذر التدريب: " + str(result.get("reason", "UNKNOWN")))
+				)
+				content.add_child(drill_button)
+		else:
+			var tree: Dictionary = progression.call("get_system_skill_tree")
+			for skill_value in tree.keys():
+				var skill_id := str(skill_value)
+				var skill: Dictionary = tree[skill_id]
+				var practice: Dictionary = progression.get("system_skill_practice")
+				var learned: Array = progression.get("learned_system_skills")
+				var count := int(practice.get(skill_id, 0))
+				var button := Button.new()
+				button.text = "%s — تدريب %d/3%s" % [str(skill.get("name", skill_id)), mini(count, 3), " | متعلمة" if learned.has(skill_id) else ""]
+				button.disabled = learned.has(skill_id)
+				button.pressed.connect(func():
+					var result: Dictionary = progression.call("practice_system_skill", skill_id, "floor_%d_%d" % [floor_number, Time.get_ticks_usec()])
+					_set_status("تم التدريب: %s — إتقان %d/5" % [str(skill.get("name", skill_id)), int(result.get("mastery", 0))] if bool(result.get("success", false)) else "لم يكتمل التدريب: " + str(result.get("reason", "تحقق من الشروط")))
+				)
+				content.add_child(button)
+			var learned_heading := Label.new()
+			learned_heading.text = "المهارات المتعلمة: " + ", ".join(learned)
+			content.add_child(learned_heading)
 	panel.show()
 
 
