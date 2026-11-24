@@ -35,7 +35,7 @@ func apply_for_exam(player_id: String) -> Dictionary:
 		return {"success":false,"reason":"PLAYER_ID_REQUIRED"}
 	if registered and completed_stage_ids.size() >= EXAM_STAGES.size():
 		return {"success":false,"reason":"HUNTER_LICENSE_ALREADY_EARNED","candidate_number":candidate_number}
-	if registered and not failed:
+	if registered:
 		return {"success":false,"reason":"ALREADY_REGISTERED","candidate_number":candidate_number,"stages":EXAM_STAGES.size()}
 	var config := ConfigFile.new()
 	config.load(SAVE_PATH)
