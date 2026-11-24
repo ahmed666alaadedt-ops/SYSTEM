@@ -76,6 +76,12 @@ const PRODUCT_CATALOG := {
 		{"id":"antidote_elixir","name":"إكسير مضاد السموم","price":390,"required_rank":"F"},
 		{"id":"resistance_elixir","name":"إكسير مقاومة الإرهاق","price":620,"required_rank":"E"},
 		{"id":"elite_legendary_elixir","name":"إكسير أسطوري للنخبة","price":24000,"required_rank":"S"},
+		{"id":"skill_manual_pulse_dash","name":"مخطوطة تقنية اندفاع النبضة","price":2500,"required_rank":"C","required_level":15,"required_nen_rank":1,"product_type":"skill_training_permit","skill_id":"pulse_dash"},
+		{"id":"skill_manual_aura_shield","name":"مخطوطة تقنية درع الهالة","price":4500,"required_rank":"B","required_level":20,"required_nen_rank":2,"product_type":"skill_training_permit","skill_id":"aura_shield"},
+		{"id":"skill_manual_sensory_mark","name":"مخطوطة تقنية وسم الإدراك","price":6500,"required_rank":"B","required_level":25,"required_nen_rank":2,"product_type":"skill_training_permit","skill_id":"sensory_mark"},
+		{"id":"skill_manual_flow_counter","name":"مخطوطة تقنية صد التدفق","price":11000,"required_rank":"A","required_level":35,"required_nen_rank":3,"product_type":"skill_training_permit","skill_id":"flow_counter"},
+		{"id":"skill_manual_resonance_burst","name":"مخطوطة تقنية انفجار الرنين","price":18000,"required_rank":"S","required_level":50,"required_nen_rank":4,"product_type":"skill_training_permit","skill_id":"resonance_burst"},
+		{"id":"skill_manual_sovereign_focus","name":"مخطوطة تقنية تركيز السيادة","price":30000,"required_rank":"SS","required_level":80,"required_nen_rank":5,"product_type":"skill_training_permit","skill_id":"sovereign_focus"},
 		{"id":"hunter_pistol","name":"مسدس صياد حديث","price":1750,"required_rank":"C"},
 		{"id":"hunter_rifle","name":"بندقية صياد حديثة","price":3600,"required_rank":"B"},
 		{"id":"precision_rifle","name":"بندقية دقيقة بعيدة المدى","price":6200,"required_rank":"A"},
@@ -2072,8 +2078,17 @@ func _add_catalog_controls(tower_id: String) -> void:
 		var stock := get_vendor_stock(item_id)
 		var buy_button := Button.new()
 		var required_rank := str(product.get("required_rank", "F"))
-		buy_button.text = "%s — %d رصيد | رتبة %s | المخزون: %d" % [item_name, price, required_rank, stock]
-		buy_button.disabled = stock <= 0 or not _meets_hunter_rank(required_rank)
+		var required_level := int(product.get("required_level", 1))
+		var required_nen_rank := int(product.get("required_nen_rank", 0))
+		var skill_id := str(product.get("skill_id", ""))
+		var permit_check: Dictionary = {"success": true}
+		if str(product.get("product_type", "")) == "skill_training_permit":
+			buy_button.name = "SkillManualPurchase_" + skill_id
+			permit_check = progression.call("check_skill_training_permit", skill_id) if is_instance_valid(progression) and progression.has_method("check_skill_training_permit") else {"success": false}
+		var level_ok := not is_instance_valid(progression) or int(progression.get("current_level")) >= required_level
+		var nen_ok := required_nen_rank <= 0 or (is_instance_valid(progression) and bool(progression.get("nen_unlocked")) and int(progression.get("nen_control_rank")) >= required_nen_rank)
+		buy_button.text = "%s — %d رصيد | رتبة %s | مستوى %d | نِن %d | المخزون: %d" % [item_name, price, required_rank, required_level, required_nen_rank, stock]
+		buy_button.disabled = stock <= 0 or not _meets_hunter_rank(required_rank) or not level_ok or not nen_ok or not bool(permit_check.get("success", false))
 		buy_button.pressed.connect(_buy_product.bind(item_id, item_name, price, required_rank))
 		catalog_controls.add_child(buy_button)
 
@@ -2243,6 +2258,24 @@ func _consume_elixir(item_id: String) -> void:
 		_set_status("تعذر استخدام الإكسير: " + str(result.get("reason", "غير معروف")))
 
 func _buy_product(item_id: String, item_name: String, _listed_price: int, required_rank: String = "F") -> void:
+	var product_data := _get_catalog_product(item_id)
+	var required_level := int(product_data.get("required_level", 1))
+	var required_nen_rank := int(product_data.get("required_nen_rank", 0))
+	if is_instance_valid(progression) and int(progression.get("current_level")) < required_level:
+		_set_status("هذا المنتج يتطلب مستوى %d." % required_level)
+		return
+	if required_nen_rank > 0 and (not is_instance_valid(progression) or not bool(progression.get("nen_unlocked")) or int(progression.get("nen_control_rank")) < required_nen_rank):
+		_set_status("هذا المنتج يتطلب إيقاظ النِن والتحكم من الرتبة %d." % required_nen_rank)
+		return
+	if str(product_data.get("product_type", "")) == "skill_training_permit":
+		var skill_id := str(product_data.get("skill_id", ""))
+		if not is_instance_valid(progression) or not progression.has_method("check_skill_training_permit"):
+			_set_status("نظام تصاريح التدريب غير متاح.")
+			return
+		var permit_check: Dictionary = progression.call("check_skill_training_permit", skill_id)
+		if not bool(permit_check.get("success", false)):
+			_set_status("لا يمكن شراء مخطوطة التدريب: " + str(permit_check.get("reason", "تحقق من المتطلبات السابقة")))
+			return
 	if item_id in ["rare_legendary_elixir", "elite_legendary_elixir"]:
 		if not is_instance_valid(progression) or int(progression.get("current_level")) < 80 or not bool(progression.get("nen_unlocked")) or int(progression.get("nen_control_rank")) < 5 or not _meets_hunter_rank("S"):
 			_set_status("الخزنة تتطلب مستوى 80 ورتبة صياد S وإيقاظ النِن والتحكم من الرتبة 5.")
@@ -2275,6 +2308,11 @@ func _buy_product(item_id: String, item_name: String, _listed_price: int, requir
 	if not is_instance_valid(progression) or not progression.has_method("add_item"):
 		_set_status("الحقيبة غير متاحة حالياً.")
 		return
+	if str(product_data.get("product_type", "")) == "skill_training_permit":
+		var permit_result: Dictionary = progression.call("grant_skill_training_permit", str(product_data.get("skill_id", "")))
+		if not bool(permit_result.get("success", false)):
+			_set_status("تعذر إصدار تصريح التدريب: " + str(permit_result.get("reason", "غير معروف")))
+			return
 	credits -= price
 	vendor_stock[item_id] = stock - 1
 	_save_vendor_stock()
@@ -2300,6 +2338,9 @@ func _meets_hunter_rank(required_rank: String) -> bool:
 	return current_index >= 0 and required_index >= 0 and current_index >= required_index
 
 func _sell_item(item_id: String, requested_count: int) -> void:
+	if item_id.begins_with("skill_manual_"):
+		_set_status("مخطوطات التدريب المعتمدة لا تُباع بعد تسجيل تصريحها في سجل المهارات.")
+		return
 	if not is_instance_valid(progression):
 		return
 	if progression.has_method("is_item_equipped") and bool(progression.call("is_item_equipped", item_id)):
@@ -2754,6 +2795,8 @@ func _save_vendor_stock() -> void:
 func _get_stock_cap(item_id: String) -> int:
 	if item_id in ["rare_legendary_elixir", "rare_core"]:
 		return 3
+	if item_id.begins_with("skill_manual_"):
+		return 5
 	if item_id in ["nen_awakening_elixir", "nen_acquisition_elixir", "nen_control_elixir", "nen_fragment", "sovereign_core"]:
 		return 8
 	if item_id in ["iron_ingot", "wood_plank", "leather_roll", "medicinal_herb", "crystal_dust", "monster_core", "energy_crystal"]:
@@ -2763,6 +2806,15 @@ func _get_stock_cap(item_id: String) -> int:
 
 func get_vendor_stock(item_id: String) -> int:
 	return int(vendor_stock.get(item_id, 0))
+
+
+func _get_catalog_product(item_id: String) -> Dictionary:
+	for tower_id in PRODUCT_CATALOG.keys():
+		for product_value in PRODUCT_CATALOG[tower_id]:
+			var product: Dictionary = product_value
+			if str(product.get("id", "")) == item_id:
+				return product.duplicate(true)
+	return {}
 
 
 func _get_current_price(item_id: String) -> int:
@@ -3914,7 +3966,10 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 				facility_type = "innovation_rooftop"
 				facility_title = "منصة الابتكار والرصد التقني"
 		"shopping_tower_baghdad":
-			if floor_number in [5, 6, 7]:
+			if floor_number == 4:
+				facility_type = "shopping_skill_store"
+				facility_title = "متجر المهارات والتقنيات المتقدمة — مخطوطات تدريب مقيّدة"
+			elif floor_number in [5, 6, 7]:
 				facility_type = "shopping_weapon_gallery"
 				facility_title = "معرض الأسلحة القتالية — فحص وشراء وتجهيز"
 			elif floor_number in [8, 9, 10]:
@@ -4307,7 +4362,7 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 		"innovation_rooftop":
 			for index in range(5):
 				_add_facility_box(root, "InnovationConsole_%02d" % index, Vector3(-12.0 + float(index) * 6.0, 1.0, 1.0), Vector3(2.4, 2.0, 1.8), highlight)
-		"shopping_weapon_gallery", "shopping_ranged_gallery", "shopping_armor_gallery", "shopping_crafting_materials", "shopping_elixir_pharmacy", "shopping_nen_center", "shopping_advanced_elixir_lab", "shopping_rare_elixir_vault":
+		"shopping_skill_store", "shopping_weapon_gallery", "shopping_ranged_gallery", "shopping_armor_gallery", "shopping_crafting_materials", "shopping_elixir_pharmacy", "shopping_nen_center", "shopping_advanced_elixir_lab", "shopping_rare_elixir_vault":
 			for index in range(6):
 				_add_facility_box(root, "CommerceDisplay_%02d" % index, Vector3(-12.0 + float(index) * 4.8, 1.1, 0.0), Vector3(2.0, 2.2, 2.0), highlight if index % 2 == 0 else accent)
 			_add_facility_box(root, "DepartmentCounter", Vector3(0.0, 0.7, -7.0), Vector3(12.0, 1.4, 1.8), accent)
@@ -4512,7 +4567,7 @@ func open_facility_service(tower_id: String, floor_number: int, facility_type: S
 		return
 	if not TOWER_CONFIG.has(tower_id):
 		return
-	var progression_facilities := ["shopping_weapon_gallery", "shopping_ranged_gallery", "shopping_armor_gallery", "shopping_crafting_materials", "shopping_elixir_pharmacy", "shopping_nen_center", "shopping_advanced_elixir_lab", "shopping_rare_elixir_vault", "hunter_weapon_mastery", "hunter_nen_fundamentals", "hunter_advanced_control", "hunter_skill_specialization", "hunter_skill_assessment"]
+	var progression_facilities := ["shopping_skill_store", "shopping_weapon_gallery", "shopping_ranged_gallery", "shopping_armor_gallery", "shopping_crafting_materials", "shopping_elixir_pharmacy", "shopping_nen_center", "shopping_advanced_elixir_lab", "shopping_rare_elixir_vault", "hunter_weapon_mastery", "hunter_nen_fundamentals", "hunter_advanced_control", "hunter_skill_specialization", "hunter_skill_assessment"]
 	if progression_facilities.has(facility_type):
 		open_baghdad_progression_facility(tower_id, floor_number, facility_type)
 		return
@@ -4557,6 +4612,7 @@ func open_baghdad_progression_facility(tower_id: String, floor_number: int, faci
 	current_facility_root = facility_room.get_node_or_null("SpecialFacility_" + facility_type) as Node3D if facility_room != null else null
 	_clear_dynamic_controls()
 	var titles := {
+		"shopping_skill_store": "متجر المهارات والتقنيات المتقدمة",
 		"shopping_weapon_gallery": "معرض الأسلحة القتالية",
 		"shopping_ranged_gallery": "الأسلحة بعيدة المدى والمعدات الحديثة",
 		"shopping_armor_gallery": "الدروع والخوذ والحماية",
@@ -4581,6 +4637,7 @@ func open_baghdad_progression_facility(tower_id: String, floor_number: int, faci
 	if facility_type.begins_with("shopping_"):
 		var allowed_ids: Array = []
 		match facility_type:
+			"shopping_skill_store": allowed_ids = ["skill_manual_pulse_dash", "skill_manual_aura_shield", "skill_manual_sensory_mark", "skill_manual_flow_counter", "skill_manual_resonance_burst", "skill_manual_sovereign_focus"]
 			"shopping_weapon_gallery": allowed_ids = ["training_sword", "steel_sword", "hunter_spear", "battle_axe", "combat_knife", "dual_blades", "long_sword", "great_sword", "war_hammer"]
 			"shopping_ranged_gallery": allowed_ids = ["composite_bow", "crossbow", "reinforced_arrows", "system_firearm", "hunter_pistol", "hunter_rifle", "precision_rifle", "tactical_shotgun"]
 			"shopping_armor_gallery": allowed_ids = ["hunter_shield", "hunter_armor", "hunter_helmet", "advanced_hunter_shield", "reinforced_helmet", "rank_e_armor", "rank_d_armor", "rank_c_armor", "rank_b_armor", "rank_a_armor", "rank_s_armor", "rank_ss_armor", "rank_sss_armor"]
@@ -4592,6 +4649,12 @@ func open_baghdad_progression_facility(tower_id: String, floor_number: int, faci
 		var heading := Label.new()
 		heading.text = "المنتجات المتاحة — السعر والمخزون والرتبة تُراجع عند الشراء"
 		content.add_child(heading)
+		if facility_type == "shopping_skill_store":
+			var rules := Label.new()
+			rules.name = "SkillStoreRules"
+			rules.text = "المخطوطة تمنح تصريح بدء التدريب فقط؛ لا تفتح المهارة تلقائياً. يلزم المستوى والرتبة والنِن والمتطلبات السابقة، ثم ثلاث جلسات تدريب موثقة في جمعية الصيادين."
+			rules.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			content.add_child(rules)
 		var catalog: Array = PRODUCT_CATALOG.get("shopping_tower_baghdad", [])
 		for product_value in catalog:
 			var product: Dictionary = product_value
@@ -4603,8 +4666,17 @@ func open_baghdad_progression_facility(tower_id: String, floor_number: int, faci
 			var price := _get_current_price(item_id)
 			var stock := get_vendor_stock(item_id)
 			var buy_button := Button.new()
-			buy_button.text = "%s — %d SYSTEM | رتبة %s | المخزون %d" % [item_name, price, required_rank, stock]
-			buy_button.disabled = stock <= 0 or not _meets_hunter_rank(required_rank)
+			var required_level := int(product.get("required_level", 1))
+			var required_nen_rank := int(product.get("required_nen_rank", 0))
+			var skill_id := str(product.get("skill_id", ""))
+			var permit_check: Dictionary = {"success": true}
+			if str(product.get("product_type", "")) == "skill_training_permit":
+				buy_button.name = "SkillManualPurchase_" + skill_id
+				permit_check = progression.call("check_skill_training_permit", skill_id) if is_instance_valid(progression) and progression.has_method("check_skill_training_permit") else {"success": false}
+			buy_button.text = "%s — %d SYSTEM | رتبة %s | مستوى %d | نِن %d | المخزون %d" % [item_name, price, required_rank, required_level, required_nen_rank, stock]
+			var level_ok := not is_instance_valid(progression) or int(progression.get("current_level")) >= required_level
+			var nen_ok := required_nen_rank <= 0 or (is_instance_valid(progression) and bool(progression.get("nen_unlocked")) and int(progression.get("nen_control_rank")) >= required_nen_rank)
+			buy_button.disabled = stock <= 0 or not _meets_hunter_rank(required_rank) or not level_ok or not nen_ok or not bool(permit_check.get("success", false))
 			buy_button.pressed.connect(_buy_product.bind(item_id, item_name, price, required_rank))
 			content.add_child(buy_button)
 		if facility_type in ["shopping_crafting_materials", "shopping_advanced_elixir_lab", "shopping_nen_center"]:

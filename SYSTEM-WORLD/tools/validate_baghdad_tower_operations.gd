@@ -1312,6 +1312,7 @@ func _run() -> void:
 		_fail("Shopping Tower crafting station is not connected to its NPC employee.")
 		return
 	var shopping_floor_facilities := {
+		4: "shopping_skill_store",
 		5: "shopping_weapon_gallery", 6: "shopping_weapon_gallery", 7: "shopping_weapon_gallery", 8: "shopping_ranged_gallery", 9: "shopping_ranged_gallery", 10: "shopping_ranged_gallery",
 		11: "shopping_armor_gallery", 12: "shopping_armor_gallery", 13: "shopping_armor_gallery", 15: "shopping_crafting_materials", 16: "shopping_crafting_materials",
 		17: "shopping_elixir_pharmacy", 18: "shopping_elixir_pharmacy", 19: "shopping_elixir_pharmacy", 20: "shopping_nen_center", 21: "shopping_nen_center", 22: "shopping_nen_center",
@@ -1345,7 +1346,7 @@ func _run() -> void:
 	if skill_progression == null or not skill_progression.has_method("practice_system_skill") or skill_progression.call("get_system_skill_tree").size() != 10:
 		_fail("Persistent original SYSTEM skill tree is missing or incomplete.")
 		return
-	var skill_snapshot := {"level":skill_progression.get("current_level"),"points":skill_progression.get("verified_hunter_mission_points"),"learned":skill_progression.get("learned_system_skills").duplicate(),"practice":skill_progression.get("system_skill_practice").duplicate(true),"mastery":skill_progression.get("system_skill_mastery").duplicate(true),"cooldowns":skill_progression.get("system_skill_cooldowns").duplicate(true),"weapon_mastery":skill_progression.get("weapon_mastery").duplicate(true),"energy":skill_progression.get("current_system_energy")}
+	var skill_snapshot := {"level":skill_progression.get("current_level"),"points":skill_progression.get("verified_hunter_mission_points"),"learned":skill_progression.get("learned_system_skills").duplicate(),"authorized":skill_progression.get("authorized_system_skills").duplicate(),"practice":skill_progression.get("system_skill_practice").duplicate(true),"mastery":skill_progression.get("system_skill_mastery").duplicate(true),"cooldowns":skill_progression.get("system_skill_cooldowns").duplicate(true),"weapon_mastery":skill_progression.get("weapon_mastery").duplicate(true),"energy":skill_progression.get("current_system_energy"),"nen_unlocked":skill_progression.get("nen_unlocked"),"nen_control_rank":skill_progression.get("nen_control_rank"),"inventory":skill_progression.get("inventory_items").duplicate(true),"credits":operations.get("credits"),"vendor_stock":operations.get("vendor_stock").duplicate(true)}
 	skill_progression.set("current_level", 3)
 	skill_progression.set("verified_hunter_mission_points", 100)
 	var weapon_training: Dictionary = skill_progression.call("record_weapon_training", "sword", "validator_sword_drill")
@@ -1360,6 +1361,51 @@ func _run() -> void:
 	if not skill_progression.get("learned_system_skills").has("guard_breaker"):
 		_fail("SYSTEM skill was not learned after three verified training sessions.")
 		return
+	# The Shopping Tower skill store sells training permits, never instant unlocks.
+	skill_progression.set("current_level", 15)
+	skill_progression.set("verified_hunter_mission_points", 500)
+	skill_progression.set("nen_unlocked", true)
+	skill_progression.set("nen_control_rank", 1)
+	skill_progression.set("learned_system_skills", ["guard_breaker"])
+	skill_progression.set("authorized_system_skills", [])
+	var blocked_manual: Dictionary = skill_progression.call("check_skill_training_permit", "pulse_dash")
+	if bool(blocked_manual.get("success", true)) or str(blocked_manual.get("reason", "")) != "SKILL_PREREQUISITE":
+		_fail("Skill-store permit ignored the required swift_step prerequisite.")
+		return
+	skill_progression.set("learned_system_skills", ["guard_breaker", "swift_step"])
+	var no_permit_practice: Dictionary = skill_progression.call("practice_system_skill", "pulse_dash", "validator_pulse_without_permit")
+	if bool(no_permit_practice.get("success", true)) or str(no_permit_practice.get("reason", "")) != "SKILL_STUDY_PERMIT_REQUIRED":
+		_fail("Advanced skill practice bypassed the Shopping Tower training permit.")
+		return
+	operations.set("credits", maxi(50000, int(operations.get("credits"))))
+	operations.call("open_baghdad_progression_facility", "shopping_tower_baghdad", 4, "shopping_skill_store")
+	var skill_store_content := operations.get("content") as Node
+	var pulse_manual_button := skill_store_content.find_child("SkillManualPurchase_pulse_dash", true, false) as Button if skill_store_content != null else null
+	if pulse_manual_button == null or pulse_manual_button.disabled:
+		_fail("Shopping Tower floor 4 did not expose the eligible Pulse Dash training manual.")
+		return
+	pulse_manual_button.pressed.emit()
+	if not skill_progression.get("authorized_system_skills").has("pulse_dash") or int(skill_progression.call("get_item_count", "skill_manual_pulse_dash")) != 1:
+		_fail("Buying the Pulse Dash manual did not issue and persist its training permit.")
+		return
+	if skill_progression.get("learned_system_skills").has("pulse_dash"):
+		_fail("Buying a skill manual must not unlock the skill without verified practice.")
+		return
+	for session_index in range(3):
+		var pulse_practice: Dictionary = skill_progression.call("practice_system_skill", "pulse_dash", "validator_pulse_dash_%d" % session_index)
+		if not bool(pulse_practice.get("success", false)):
+			_fail("Permitted Pulse Dash training rejected a valid session: " + str(pulse_practice.get("reason", "")))
+			return
+	if not skill_progression.get("learned_system_skills").has("pulse_dash"):
+		_fail("Pulse Dash did not require and complete three verified sessions after permit purchase.")
+		return
+	skill_progression.set("current_level", 20)
+	skill_progression.set("verified_hunter_mission_points", 850)
+	skill_progression.set("nen_control_rank", 2)
+	var aura_without_prerequisite: Dictionary = skill_progression.call("check_skill_training_permit", "aura_shield")
+	if bool(aura_without_prerequisite.get("success", true)) or str(aura_without_prerequisite.get("reason", "")) != "SKILL_PREREQUISITE":
+		_fail("Advanced aura skill permit bypassed its iron_guard prerequisite.")
+		return
 	var skill_use: Dictionary = skill_progression.call("record_system_skill_use", "guard_breaker")
 	var cooldown_gate: Dictionary = skill_progression.call("can_use_system_skill", "guard_breaker")
 	if not bool(skill_use.get("success", false)) or bool(cooldown_gate.get("success", true)) or str(cooldown_gate.get("reason", "")) != "SKILL_COOLDOWN":
@@ -1368,8 +1414,8 @@ func _run() -> void:
 	skill_progression.call("save_progress")
 	skill_progression.set("learned_system_skills", [])
 	skill_progression.call("load_progress")
-	if not skill_progression.get("learned_system_skills").has("guard_breaker"):
-		_fail("SYSTEM learned skills did not persist across save/load.")
+	if not skill_progression.get("learned_system_skills").has("guard_breaker") or not skill_progression.get("learned_system_skills").has("pulse_dash") or not skill_progression.get("authorized_system_skills").has("pulse_dash"):
+		_fail("SYSTEM learned skills and purchased training permits did not persist across save/load.")
 		return
 	skill_progression.set("current_level", skill_snapshot["level"])
 	skill_progression.set("verified_hunter_mission_points", skill_snapshot["points"])
@@ -1379,8 +1425,15 @@ func _run() -> void:
 	skill_progression.set("system_skill_cooldowns", skill_snapshot["cooldowns"])
 	skill_progression.set("weapon_mastery", skill_snapshot["weapon_mastery"])
 	skill_progression.set("current_system_energy", skill_snapshot["energy"])
+	skill_progression.set("nen_unlocked", skill_snapshot["nen_unlocked"])
+	skill_progression.set("nen_control_rank", skill_snapshot["nen_control_rank"])
+	skill_progression.set("inventory_items", skill_snapshot["inventory"])
 	skill_progression.call("save_progress")
-	print("QA TRACE: Shopping Tower departments and Hunter training floors, weapon mastery, skill unlock, energy, cooldown and save/load passed.")
+	operations.set("credits", skill_snapshot["credits"])
+	operations.set("vendor_stock", skill_snapshot["vendor_stock"])
+	operations.call("_save_wallet")
+	operations.call("_save_vendor_stock")
+	print("QA TRACE: Shopping Tower skill store permits, non-bypass prerequisites, three-session skill learning, weapon mastery, energy, cooldown and save/load passed.")
 	print("QA TRACE: generating Shopping Tower hotel reception floor 27.")
 	var hotel_reception_room := operations.call("_ensure_floor_room", "shopping_tower_baghdad", 27) as Node3D
 	print("QA TRACE: hotel reception floor 27 generation returned.")

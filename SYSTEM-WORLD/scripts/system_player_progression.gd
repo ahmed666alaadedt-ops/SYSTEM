@@ -82,12 +82,12 @@ const SYSTEM_SKILL_TREE := {
 	"swift_step": {"name": "خطوة خاطفة", "category": "movement", "required_level": 5, "required_rank": "D", "prerequisites": [], "requires_nen": false, "energy_cost": 10, "cooldown": 7.0, "effect": "اندفاع قصير مضبوط"},
 	"focused_strike": {"name": "ضربة التركيز", "category": "weapon", "required_level": 8, "required_rank": "D", "prerequisites": ["guard_breaker"], "requires_nen": false, "energy_cost": 12, "cooldown": 8.0, "effect": "رفع دقة الضربة التالية"},
 	"iron_guard": {"name": "الحارس الفولاذي", "category": "defense", "required_level": 10, "required_rank": "C", "prerequisites": [], "requires_nen": false, "energy_cost": 12, "cooldown": 10.0, "effect": "تعزيز دفاع مؤقت"},
-	"pulse_dash": {"name": "اندفاع النبضة", "category": "nen", "required_level": 15, "required_rank": "C", "prerequisites": ["swift_step"], "requires_nen": true, "required_nen_rank": 1, "energy_cost": 18, "cooldown": 12.0, "effect": "اندفاع مدعوم بطاقة النِن"},
-	"aura_shield": {"name": "درع الهالة", "category": "nen", "required_level": 20, "required_rank": "B", "prerequisites": ["iron_guard"], "requires_nen": true, "required_nen_rank": 2, "energy_cost": 22, "cooldown": 18.0, "effect": "حاجز هالة دفاعي مؤقت"},
-	"sensory_mark": {"name": "وسم الإدراك", "category": "nen", "required_level": 25, "required_rank": "B", "prerequisites": ["pulse_dash"], "requires_nen": true, "required_nen_rank": 2, "energy_cost": 20, "cooldown": 15.0, "effect": "تمييز حركة الخصم لفترة قصيرة"},
-	"flow_counter": {"name": "صد التدفق", "category": "nen", "required_level": 35, "required_rank": "A", "prerequisites": ["aura_shield", "focused_strike"], "requires_nen": true, "required_nen_rank": 3, "energy_cost": 28, "cooldown": 22.0, "effect": "صد مضبوط يعقبه رد سريع"},
-	"resonance_burst": {"name": "انفجار الرنين", "category": "nen", "required_level": 50, "required_rank": "S", "prerequisites": ["sensory_mark", "flow_counter"], "requires_nen": true, "required_nen_rank": 4, "energy_cost": 40, "cooldown": 35.0, "effect": "موجة هالة قصيرة المدى"},
-	"sovereign_focus": {"name": "تركيز السيادة", "category": "nen", "required_level": 80, "required_rank": "SS", "prerequisites": ["resonance_burst"], "requires_nen": true, "required_nen_rank": 5, "energy_cost": 60, "cooldown": 60.0, "effect": "تركيز نادر عالي الكلفة"}
+	"pulse_dash": {"name": "اندفاع النبضة", "category": "nen", "required_level": 15, "required_rank": "C", "prerequisites": ["swift_step"], "requires_nen": true, "required_nen_rank": 1, "requires_training_permit": true, "energy_cost": 18, "cooldown": 12.0, "effect": "اندفاع مدعوم بطاقة النِن"},
+	"aura_shield": {"name": "درع الهالة", "category": "nen", "required_level": 20, "required_rank": "B", "prerequisites": ["iron_guard"], "requires_nen": true, "required_nen_rank": 2, "requires_training_permit": true, "energy_cost": 22, "cooldown": 18.0, "effect": "حاجز هالة دفاعي مؤقت"},
+	"sensory_mark": {"name": "وسم الإدراك", "category": "nen", "required_level": 25, "required_rank": "B", "prerequisites": ["pulse_dash"], "requires_nen": true, "required_nen_rank": 2, "requires_training_permit": true, "energy_cost": 20, "cooldown": 15.0, "effect": "تمييز حركة الخصم لفترة قصيرة"},
+	"flow_counter": {"name": "صد التدفق", "category": "nen", "required_level": 35, "required_rank": "A", "prerequisites": ["aura_shield", "focused_strike"], "requires_nen": true, "required_nen_rank": 3, "requires_training_permit": true, "energy_cost": 28, "cooldown": 22.0, "effect": "صد مضبوط يعقبه رد سريع"},
+	"resonance_burst": {"name": "انفجار الرنين", "category": "nen", "required_level": 50, "required_rank": "S", "prerequisites": ["sensory_mark", "flow_counter"], "requires_nen": true, "required_nen_rank": 4, "requires_training_permit": true, "energy_cost": 40, "cooldown": 35.0, "effect": "موجة هالة قصيرة المدى"},
+	"sovereign_focus": {"name": "تركيز السيادة", "category": "nen", "required_level": 80, "required_rank": "SS", "prerequisites": ["resonance_burst"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 60, "cooldown": 60.0, "effect": "تركيز نادر عالي الكلفة"}
 }
 const WEAPON_MASTERY_FAMILIES := ["sword", "spear", "axe", "bow", "shield", "modern_ranged"]
 
@@ -111,6 +111,7 @@ var nen_button_refresh_clock := 0.0
 var nen_burst_button: Button
 var current_system_energy := MAX_SYSTEM_ENERGY
 var learned_system_skills: Array[String] = []
+var authorized_system_skills: Array[String] = []
 var system_skill_practice: Dictionary = {}
 var system_skill_mastery: Dictionary = {}
 var system_skill_cooldowns: Dictionary = {}
@@ -777,6 +778,7 @@ func save_progress() -> void:
 	config.set_value("nen", "control_rank", nen_control_rank)
 	config.set_value("nen", "burst_cooldown_remaining", nen_burst_cooldown_remaining)
 	config.set_value("skills", "learned", learned_system_skills.duplicate())
+	config.set_value("skills", "authorized_training", authorized_system_skills.duplicate())
 	config.set_value("skills", "practice", system_skill_practice.duplicate(true))
 	config.set_value("skills", "mastery", system_skill_mastery.duplicate(true))
 	config.set_value("skills", "cooldowns", system_skill_cooldowns.duplicate(true))
@@ -887,6 +889,11 @@ func load_progress() -> void:
 		var normalized_skill := str(skill_id).strip_edges().to_lower()
 		if SYSTEM_SKILL_TREE.has(normalized_skill) and not learned_system_skills.has(normalized_skill):
 			learned_system_skills.append(normalized_skill)
+	authorized_system_skills.clear()
+	for skill_id in config.get_value("skills", "authorized_training", []):
+		var normalized_authorized := str(skill_id).strip_edges().to_lower()
+		if SYSTEM_SKILL_TREE.has(normalized_authorized) and bool(SYSTEM_SKILL_TREE[normalized_authorized].get("requires_training_permit", false)) and not authorized_system_skills.has(normalized_authorized):
+			authorized_system_skills.append(normalized_authorized)
 	system_skill_practice = config.get_value("skills", "practice", {})
 	system_skill_mastery = config.get_value("skills", "mastery", {})
 	system_skill_cooldowns = {}
@@ -1014,6 +1021,7 @@ func _reset_progress() -> void:
 	equipment_durability.clear()
 	active_elixir_effects.clear()
 	learned_system_skills.clear()
+	authorized_system_skills.clear()
 	system_skill_practice.clear()
 	system_skill_mastery.clear()
 	system_skill_cooldowns.clear()
@@ -1035,6 +1043,46 @@ func _emit_progress() -> void:
 
 func get_system_skill_tree() -> Dictionary:
 	return SYSTEM_SKILL_TREE.duplicate(true)
+
+
+func get_authorized_system_skills() -> Array[String]:
+	return authorized_system_skills.duplicate()
+
+
+func check_skill_training_permit(skill_id: String) -> Dictionary:
+	var key := skill_id.strip_edges().to_lower()
+	if not SYSTEM_SKILL_TREE.has(key):
+		return {"success": false, "reason": "UNKNOWN_SYSTEM_SKILL"}
+	var skill: Dictionary = SYSTEM_SKILL_TREE[key]
+	if not bool(skill.get("requires_training_permit", false)):
+		return {"success": false, "reason": "SKILL_PERMIT_NOT_REQUIRED"}
+	if learned_system_skills.has(key):
+		return {"success": false, "reason": "SKILL_ALREADY_LEARNED"}
+	if authorized_system_skills.has(key):
+		return {"success": false, "reason": "SKILL_PERMIT_ALREADY_OWNED"}
+	var required_level := int(skill.get("required_level", 1))
+	if current_level < required_level:
+		return {"success": false, "reason": "LEVEL_REQUIREMENT", "required_level": required_level}
+	var required_rank := str(skill.get("required_rank", "F"))
+	if not _meets_skill_rank(required_rank):
+		return {"success": false, "reason": "HUNTER_RANK_REQUIREMENT", "required_rank": required_rank}
+	var required_nen_rank := int(skill.get("required_nen_rank", 0))
+	if bool(skill.get("requires_nen", false)) and (not nen_unlocked or nen_control_rank < required_nen_rank):
+		return {"success": false, "reason": "NEN_CONTROL_REQUIREMENT", "required_nen_rank": required_nen_rank}
+	for prerequisite in skill.get("prerequisites", []):
+		if not learned_system_skills.has(str(prerequisite)):
+			return {"success": false, "reason": "SKILL_PREREQUISITE", "prerequisite": str(prerequisite)}
+	return {"success": true, "skill_id": key, "required_level": required_level, "required_rank": required_rank, "required_nen_rank": required_nen_rank}
+
+
+func grant_skill_training_permit(skill_id: String) -> Dictionary:
+	var check: Dictionary = check_skill_training_permit(skill_id)
+	if not bool(check.get("success", false)):
+		return check
+	var key := str(check.get("skill_id", ""))
+	authorized_system_skills.append(key)
+	save_progress()
+	return {"success": true, "skill_id": key, "authorized": true}
 
 
 func get_weapon_mastery() -> Dictionary:
@@ -1072,6 +1120,8 @@ func practice_system_skill(skill_id: String, verified_session_id: String) -> Dic
 	for prerequisite in skill.get("prerequisites", []):
 		if not learned_system_skills.has(str(prerequisite)):
 			return {"success": false, "reason": "SKILL_PREREQUISITE", "prerequisite": str(prerequisite)}
+	if bool(skill.get("requires_training_permit", false)) and not authorized_system_skills.has(key):
+		return {"success": false, "reason": "SKILL_STUDY_PERMIT_REQUIRED"}
 	var sessions: Array = system_skill_practice.get(key + "_sessions", [])
 	if sessions.has(session_id):
 		return {"success": false, "reason": "SESSION_ALREADY_RECORDED"}
