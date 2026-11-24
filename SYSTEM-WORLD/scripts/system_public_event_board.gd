@@ -217,7 +217,7 @@ func _build_tower_lobby_displays(tower: Node3D, tower_id: String, tower_radius: 
 	var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D
 	if lobby == null:
 		return
-	var front_z := tower_radius * 1.48 + 36.0 - 18.0
+	var front_z := tower_radius * 1.48 + 36.0
 	var panel_size := Vector3(9.0, 4.2, 0.45)
 	var left_position := Vector3(-tower_radius * 0.72, 7.2, front_z - 0.85)
 	var right_position := Vector3(tower_radius * 0.72, 7.2, front_z - 0.85)
