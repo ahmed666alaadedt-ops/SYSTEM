@@ -29,7 +29,7 @@ func _run_validation() -> void:
 	var player := main.get("player") as CharacterBody3D
 	if not _check(arrival != null and guide != null and tunnel != null and player != null, "Hunter Tower invitation zone, guild guide, tunnel or player is missing."):
 		return
-	if not _check(main.get_node_or_null("HunterExamInvitationPanel") != null, "The yes/no invitation panel is missing."):
+	if not _check(main.find_child("HunterExamInvitationPanel", true, false) != null, "The yes/no invitation panel is missing."):
 		return
 	if not _check(main.has_method("_on_hunter_tower_arrival_body_entered"), "Hunter Tower arrival callback is missing."):
 		return
