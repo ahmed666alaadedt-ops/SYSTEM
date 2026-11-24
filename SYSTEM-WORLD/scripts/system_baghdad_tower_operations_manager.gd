@@ -6217,8 +6217,14 @@ func _process_restaurant_staff_service() -> void:
 		var service_wait := 3.0 if role == "restaurant_chef" else 1.2
 		task_tween.tween_interval(service_wait)
 		var fallback_delay := clampf(maxf(direction.length() / 1.8, 0.5) + service_wait + 1.0, 3.0, 25.0)
-		var fallback_timer := get_tree().create_timer(fallback_delay)
-		fallback_timer.timeout.connect(_complete_restaurant_staff_service_fallback.bind(employee, model, selected_table_id, completion_state, home_position, task_token), CONNECT_ONE_SHOT)
+		var fallback_timer := Timer.new()
+		fallback_timer.name = "RestaurantServiceFallbackTimer"
+		fallback_timer.one_shot = true
+		fallback_timer.wait_time = fallback_delay
+		add_child(fallback_timer)
+		fallback_timer.timeout.connect(_complete_restaurant_staff_service_fallback.bind(employee, model, selected_table_id, completion_state, home_position, task_token, fallback_timer), CONNECT_ONE_SHOT)
+		fallback_timer.start()
+		print("QA TRACE: restaurant fallback scheduled ", selected_table_id, " after ", fallback_delay, " seconds")
 		task_tween.tween_callback(func():
 			if not is_instance_valid(employee):
 				return
@@ -6252,7 +6258,9 @@ func _process_restaurant_staff_service() -> void:
 		break
 
 
-func _complete_restaurant_staff_service_fallback(employee: Node3D, model: Node3D, table_id: String, completion_state: String, home_position: Vector3, task_token: String) -> void:
+func _complete_restaurant_staff_service_fallback(employee: Node3D, model: Node3D, table_id: String, completion_state: String, home_position: Vector3, task_token: String, fallback_timer: Timer) -> void:
+	if is_instance_valid(fallback_timer):
+		fallback_timer.queue_free()
 	if not is_instance_valid(employee) or str(employee.get_meta("system_restaurant_task_token", "")) != task_token:
 		return
 	var expected_state := "taking_order" if completion_state == "placed" else ("preparing" if completion_state == "ready" else "delivering")
