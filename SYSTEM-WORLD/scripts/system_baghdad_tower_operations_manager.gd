@@ -1797,6 +1797,7 @@ func _create_advertising_surfaces() -> void:
 			inside.pixel_size = 0.012
 			inside.modulate = Color(0.5, 0.92, 1.0)
 			lobby.add_child(inside)
+			_add_advertising_screen_backing(lobby, "NPCManagedInternalCampaignScreen", inside, Vector2(14.0, 5.2), Color(0.06, 0.48, 0.72))
 			ad_labels[tower_id + "_internal"] = inside
 		var outside := tower.get_node_or_null("TowerCampaignText") as Label3D
 		if outside == null:
@@ -1814,9 +1815,46 @@ func _create_advertising_surfaces() -> void:
 				outside.pixel_size = 0.012
 				outside.modulate = Color(0.72, 0.96, 1.0)
 				tower.add_child(outside)
+		if tower.get_node_or_null("TowerCampaignScreenPanel") == null:
+			_add_advertising_screen_backing(tower, "TowerCampaignScreen", outside, Vector2(16.0, 6.4), Color(0.08, 0.58, 0.82))
 		ad_labels[tower_id + "_external"] = outside
 		tower.set_meta("system_advertising_mode", "npc_staff_managed_local_campaign")
 	_refresh_advertisements()
+
+func _add_advertising_screen_backing(parent: Node3D, screen_name: String, campaign_label: Label3D, dimensions: Vector2, glow_color: Color) -> void:
+	var frame := MeshInstance3D.new()
+	frame.name = screen_name + "Frame"
+	var frame_mesh := BoxMesh.new()
+	frame_mesh.size = Vector3(dimensions.x + 0.8, dimensions.y + 0.8, 0.42)
+	frame.mesh = frame_mesh
+	var frame_material := StandardMaterial3D.new()
+	frame_material.albedo_color = Color(0.025, 0.045, 0.065)
+	frame_material.metallic = 0.82
+	frame_material.roughness = 0.24
+	frame.material_override = frame_material
+	frame.position = campaign_label.position - Vector3(0.0, 0.0, 0.28)
+	frame.set_meta("system_advertising_frame", true)
+	parent.add_child(frame)
+
+	var screen := MeshInstance3D.new()
+	screen.name = screen_name + "Panel"
+	var screen_mesh := BoxMesh.new()
+	screen_mesh.size = Vector3(dimensions.x, dimensions.y, 0.12)
+	screen.mesh = screen_mesh
+	var screen_material := StandardMaterial3D.new()
+	screen_material.albedo_color = glow_color.darkened(0.72)
+	screen_material.emission_enabled = true
+	screen_material.emission = glow_color
+	screen_material.emission_energy_multiplier = 1.15
+	screen_material.metallic = 0.18
+	screen_material.roughness = 0.22
+	screen.material_override = screen_material
+	screen.position = campaign_label.position - Vector3(0.0, 0.0, 0.04)
+	screen.set_meta("system_advertising_screen", true)
+	screen.set_meta("system_campaign_label_path", str(parent.get_path_to(campaign_label)))
+	parent.add_child(screen)
+	campaign_label.position.z += 0.12
+
 
 func _refresh_advertisements() -> void:
 	for tower_id in tower_nodes.keys():
@@ -4379,38 +4417,27 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 					_add_facility_box(root, "LapLaneDivider_%02d" % lane_index, Vector3(0.0, 1.24, -5.0 + float(lane_index) * 2.5), Vector3(19.2, 0.035, 0.045), highlight)
 				for start_index in range(4):
 					_add_facility_box(root, "LapStartBlock_%02d" % start_index, Vector3(-9.0, 0.72, -4.5 + float(start_index) * 3.0), Vector3(1.0, 0.8, 1.0), accent)
-				_add_pool_room_sign(root, "PoolZoneSign", "المسبح الأولمبي — مسارات تدريب وسباحة", Vector3(0.0, 3.0, -9.0), Color(0.72, 0.94, 1.0))
+				_add_pool_room_sign(root, "PoolZoneSign", "المسبح الأولمبي — سباحة حرة ومسارات مائية", Vector3(0.0, 3.0, -9.0), Color(0.72, 0.94, 1.0))
 			elif floor_number == 19:
 				_add_facility_box(root, "FamilySplashPoolRim", Vector3(0.0, 0.42, 20.0), Vector3(12.0, 0.84, 8.0), accent)
 				_add_facility_box(root, "FamilySplashPoolWater", Vector3(0.0, 0.88, 20.0), Vector3(10.6, 0.08, 6.6), highlight)
+				_create_pool_water_zone(root, "FamilySplashPoolWaterVolume", Vector3(0.0, 0.45, 20.0), Vector3(10.4, 0.9, 6.4), 0.90, "leisure")
 				_add_facility_box(root, "SplashPoolShallowStep", Vector3(-7.0, 0.2, 20.0), Vector3(2.0, 0.4, 8.0), accent)
 				for fountain_index in range(3):
 					_add_facility_box(root, "SplashFountain_%02d" % fountain_index, Vector3(-3.0 + float(fountain_index) * 3.0, 1.45, 20.0), Vector3(0.22, 1.0, 0.22), highlight)
-				_add_pool_room_sign(root, "PoolZoneSign", "المسبح العائلي — منطقة المياه الضحلة", Vector3(0.0, 3.0, 15.0), Color(0.72, 0.94, 1.0))
+				_add_pool_room_sign(root, "PoolZoneSign", "المسبح العائلي الترفيهي — منطقة المياه الضحلة", Vector3(0.0, 3.0, 15.0), Color(0.72, 0.94, 1.0))
 			else:
 				_add_facility_box(root, "SpaHotTubRim", Vector3(-5.0, 0.55, 20.0), Vector3(9.0, 1.1, 7.0), accent)
 				_add_facility_box(root, "SpaHotTubWater", Vector3(-5.0, 1.12, 20.0), Vector3(7.8, 0.1, 5.8), highlight)
+				_create_pool_water_zone(root, "SpaHotTubWaterVolume", Vector3(-5.0, 0.58, 20.0), Vector3(7.6, 1.16, 5.6), 1.16, "leisure")
 				_add_facility_box(root, "ThermalPoolRim", Vector3(7.0, 0.55, 20.0), Vector3(9.0, 1.1, 7.0), accent)
 				_add_facility_box(root, "ThermalPoolWater", Vector3(7.0, 1.12, 20.0), Vector3(7.8, 0.1, 5.8), highlight)
+				_create_pool_water_zone(root, "ThermalPoolWaterVolume", Vector3(7.0, 0.58, 20.0), Vector3(7.6, 1.16, 5.6), 1.16, "leisure")
 				_add_facility_box(root, "SaunaCabin", Vector3(-14.0, 1.5, 16.0), Vector3(7.0, 3.0, 7.0), accent)
 				_add_facility_box(root, "SaunaBench", Vector3(-14.0, 0.9, 17.5), Vector3(5.0, 0.5, 1.0), highlight)
 				_add_facility_box(root, "SteamRoomCabin", Vector3(14.0, 1.5, 16.0), Vector3(7.0, 3.0, 7.0), accent)
-				_add_pool_room_sign(root, "PoolZoneSign", "مركز السبا — جاكوزي وساونا وغرفة بخار", Vector3(0.0, 3.0, 14.0), Color(0.72, 0.94, 1.0))
-			var water_volume := Area3D.new()
-			water_volume.name = "PoolWaterVolume"
-			water_volume.collision_layer = 0
-			water_volume.collision_mask = 1
-			water_volume.monitoring = true
-			water_volume.monitorable = false
-			water_volume.position = Vector3(0.0, 1.0, 0.0)
-			var water_collision := CollisionShape3D.new()
-			var water_shape := BoxShape3D.new()
-			water_shape.size = Vector3(20.0, 2.2, 12.0)
-			water_collision.shape = water_shape
-			water_volume.add_child(water_collision)
-			water_volume.body_entered.connect(_on_pool_water_body_entered.bind(root.global_position.y + 1.12))
-			water_volume.body_exited.connect(_on_pool_water_body_exited)
-			root.add_child(water_volume)
+				_add_pool_room_sign(root, "PoolZoneSign", "منطقة الاستجمام — جاكوزي ومسبح حراري وساونا وغرفة بخار", Vector3(0.0, 3.0, 14.0), Color(0.72, 0.94, 1.0))
+			_create_pool_water_zone(root, "PoolWaterVolume", Vector3(0.0, 1.0, 0.0), Vector3(20.0, 2.2, 12.0), 1.12, "leisure")
 		"fitness_gym":
 			for index in range(5):
 				_add_facility_box(root, "GymMachine_%02d" % index, Vector3(-12.0 + float(index) * 6.0, 1.2, 0.0), Vector3(2.0, 2.4, 2.0), accent)
@@ -6189,6 +6216,30 @@ func _save_facility_activity_stats() -> void:
 	var error := config.save(FACILITY_ACTIVITY_SAVE_PATH)
 	if error != OK:
 		push_warning("SYSTEM facility activity stats could not be saved: " + str(error))
+
+
+func _create_pool_water_zone(parent: Node3D, volume_name: String, local_position: Vector3, volume_size: Vector3, surface_offset_y: float, activity_category: String) -> Area3D:
+	var water_volume := Area3D.new()
+	water_volume.name = volume_name
+	water_volume.collision_layer = 0
+	water_volume.collision_mask = 1
+	water_volume.monitoring = true
+	water_volume.monitorable = false
+	water_volume.position = local_position
+	var water_collision := CollisionShape3D.new()
+	water_collision.name = "WaterVolumeCollision"
+	var water_shape := BoxShape3D.new()
+	water_shape.size = volume_size
+	water_collision.shape = water_shape
+	water_volume.add_child(water_collision)
+	var surface_y := parent.global_position.y + surface_offset_y
+	water_volume.set_meta("system_pool_water_zone", true)
+	water_volume.set_meta("system_activity_category", activity_category)
+	water_volume.set_meta("system_pool_surface_y", surface_y)
+	water_volume.body_entered.connect(_on_pool_water_body_entered.bind(surface_y))
+	water_volume.body_exited.connect(_on_pool_water_body_exited)
+	parent.add_child(water_volume)
+	return water_volume
 
 
 func _on_pool_water_body_entered(body: Node3D, surface_y: float) -> void:
