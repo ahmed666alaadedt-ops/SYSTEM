@@ -205,6 +205,14 @@ func _run() -> void:
 				var age_group := str(lobby_child.get_meta("system_customer_age_group", "adult"))
 				if age_group == "child":
 					child_customers += 1
+					var child_model: Node = null
+					for customer_component in lobby_child.get_children():
+						if customer_component.has_method("set_activity"):
+							child_model = customer_component
+							break
+					if child_model == null or str(child_model.get("age_group")) != "child":
+						_fail("Child customer %s must use the dedicated child character model." % str(lobby_child.name))
+						return
 					var guardian_id := str(lobby_child.get_meta("system_customer_guardian_id", ""))
 					var guardian_node := lobby.get_node_or_null("TowerCustomer_" + guardian_id) as Node3D if not guardian_id.is_empty() else null
 					if guardian_node == null or str(guardian_node.get_meta("system_customer_age_group", "child")) != "adult" or str(guardian_node.get_meta("system_customer_family_group_id", "")) != str(lobby_child.get_meta("system_customer_family_group_id", "")):
@@ -213,6 +221,14 @@ func _run() -> void:
 					guarded_child_customers += 1
 				elif age_group == "elder":
 					elder_customers += 1
+					var elder_model: Node = null
+					for customer_component in lobby_child.get_children():
+						if customer_component.has_method("set_activity"):
+							elder_model = customer_component
+							break
+					if elder_model == null or str(elder_model.get("age_group")) != "elder":
+						_fail("Elderly customer %s must use the dedicated elderly character model." % str(lobby_child.name))
+						return
 				var customer_model: Node3D = null
 				for customer_child in lobby_child.get_children():
 					if customer_child is Node3D and customer_child.has_method("set_activity"):
