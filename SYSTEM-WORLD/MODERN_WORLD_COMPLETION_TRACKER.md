@@ -1569,3 +1569,17 @@ This checkpoint supersedes earlier pending validation notes above. Exact tested 
 - [ ] Physical Android touch, visual readability, camera framing and performance inspection remain outstanding; automated headless success does not replace device QA.
 - [ ] Remaining scope includes fully authored city-scale examination environments, richer original examiner/candidate behavior and server-authoritative online matchmaking/economy; do not label those as complete.
 - [ ] Keep PR #38 as a draft and do not merge into `main` without explicit user approval.
+
+
+## Restaurant lifecycle and complete Baghdad tower verification — 24 November 2026
+
+Exact gameplay/validator HEAD: `f86bbaa933629acad51639bde949d76be705303f`.
+
+- [x] The full Godot project validation #2014 passed on this exact HEAD (run ID `45389414794`): resource import and script parsing, headless main-scene launch, Baghdad landmarks/lobbies, tower interiors and NPC commerce, Power Tower boss arena, hidden Hunter tunnel, and all seven playable Hunter examination stages.
+- [x] The complete Baghdad tower operations validator passed on this exact HEAD. Its restaurant trace confirms the player sits, movement locks, the waiter accepts the order, the chef prepares it, the waiter delivers it, the meal restores health and awards XP exactly once, and checkout releases the seat.
+- [x] The same operations run also confirms autonomous NPC restaurant service: waiter acceptance, chef preparation and waiter delivery; restaurant emergency evacuation releases seating reservations and returns customers safely.
+- [x] Canonical Android APK build #1743 passed on the same exact HEAD (run ID `45389414779`), including required character asset checks, canonical Godot import/parse, headless main-scene launch, Miyar and Adam GLB checks, civilian NPC checks, Android export and artifact upload.
+- [x] APK artifact: `SYSTEM-WORLD-canonical-android-debug-apk`, artifact ID `14917768591`, 36,154,108 bytes; SHA-256 `c9d0c0450cb3c19b7dbe7cda9e60719ef5185530285067300606c4c2e4ea78b5`; expires 8 December 2026.
+- [x] Tower operations validation log artifact: `SYSTEM-WORLD-baghdad-operations-validation-log`, artifact ID `14917428170`; expires 1 December 2026.
+- [ ] Physical Android device inspection (touch response, visual readability, camera framing and performance) remains outstanding; automated/headless success does not replace device QA.
+- PR #38 remains draft and unmerged. Do not merge into `main` without explicit user approval.
