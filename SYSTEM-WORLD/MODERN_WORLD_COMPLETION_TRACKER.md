@@ -1810,3 +1810,10 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - Added an end-to-end Shopping Tower weapon transaction regression: floor 5 purchase button, wallet/stock transaction, inventory receipt, equipment-slot assignment, equip and unequip. The test restores its temporary inventory/equipment/wallet/stock changes before later tower tests.
 
 - Validator synchronization correction: the tower operations test is a `SceneTree` script, so its deferred UI cleanup waits use the native `process_frame` signal directly rather than a Node-only `get_tree()` call.
+
+
+## Shopping Tower product-to-display mapping and elite outfit presentation — 24 November 2026
+- [x] Every floor-specific display pedestal now carries the matching canonical catalog product ID as metadata, alongside its Arabic product label.
+- [x] Added a dedicated elite Hunter outfit rack, coat silhouette, sleeves and rail to floor 13 beside its high-rank armour mannequins.
+- [x] Expanded the tower regression to inspect signature 3D model components for each weapon, ranged, armour, crafting and elixir floor, and to require product-linked display metadata.
+- [ ] Exact-HEAD Godot and Android verification for this visual/detail pass is pending.

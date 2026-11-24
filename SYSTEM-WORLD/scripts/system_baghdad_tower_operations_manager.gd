@@ -6048,7 +6048,7 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 		10: ["سلاح ناري SYSTEM", "بندقية دقيقة", "منظار تصويب متقدم"],
 		11: ["درع صياد", "خوذة حماية", "درع معزز"],
 		12: ["درع خفيف", "درع ميداني", "درع قتالي"],
-		13: ["درع نخبة A/S", "درع أسطوري SS", "درع SYSTEM SSS"],
+		13: ["درع نخبة A", "درع أسطوري SS", "زي صياد SYSTEM SSS"],
 		15: ["سبيكة حديد", "خشب مصقول", "لفافة جلد"],
 		16: ["نواة وحش", "كريستال طاقة", "عدة إصلاح"],
 		17: ["إكسير الشفاء", "مضاد السموم", "مقاومة الإرهاق"],
@@ -6068,6 +6068,32 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 		item.position = Vector3(-9.0 + float(index) * 9.0, 0.0, 0.0)
 		item.set_meta("system_showcase_item_index", index)
 		item.set_meta("system_showcase_product_label", str(display_names[index]))
+		var display_product_ids: Array = {
+			4: ["skill_manual_pulse_dash", "skill_manual_aura_shield", "skill_manual_sensory_mark"],
+			5: ["training_sword", "combat_knife", "steel_sword"],
+			6: ["hunter_spear", "battle_axe", "war_hammer"],
+			7: ["dual_blades", "long_sword", "great_sword"],
+			8: ["composite_bow", "crossbow", "reinforced_arrows"],
+			9: ["hunter_pistol", "hunter_rifle", "tactical_shotgun"],
+			10: ["system_firearm", "precision_rifle", "hunter_rifle"],
+			11: ["hunter_shield", "hunter_helmet", "advanced_hunter_shield"],
+			12: ["rank_e_armor", "rank_d_armor", "rank_c_armor"],
+			13: ["rank_a_armor", "rank_ss_armor", "hunter_outfit_sss"],
+			15: ["iron_ingot", "wood_plank", "leather_roll"],
+			16: ["monster_core", "energy_crystal", "repair_kit"],
+			17: ["healing_elixir", "antidote_elixir", "resistance_elixir"],
+			18: ["strength_elixir", "speed_elixir", "endurance_elixir"],
+			19: ["deep_wound_elixir", "regeneration_elixir", "healing_elixir"],
+			20: ["nen_awakening_elixir", "nen_awakening_elixir", "nen_awakening_elixir"],
+			21: ["nen_control_elixir", "nen_focus_elixir", "nen_stabilizer_elixir"],
+			22: ["nen_recovery_elixir", "nen_stabilizer_elixir", "nen_focus_elixir"],
+			23: ["deep_wound_elixir", "regeneration_elixir", "regeneration_elixir"],
+			24: ["nen_stabilizer_elixir", "nen_focus_elixir", "nen_recovery_elixir"],
+			25: ["regeneration_elixir", "elite_legendary_elixir", "elite_legendary_elixir"],
+			26: ["rare_legendary_elixir", "elite_legendary_elixir", "rare_legendary_elixir"]
+		}.get(floor_number, [])
+		if index < display_product_ids.size():
+			item.set_meta("system_showcase_product_id", str(display_product_ids[index]))
 		showcase.add_child(item)
 		_add_facility_box(item, "DisplayPedestal", Vector3(0.0, 0.55, 0.0), Vector3(3.6, 1.1, 2.8), accent)
 		if facility_type == "shopping_weapon_gallery":
@@ -6131,6 +6157,10 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 			if floor_number == 13:
 				_add_facility_box(item, "EliteShoulderLeft", Vector3(-0.8, 2.65, 0.0), Vector3(0.75, 0.55, 0.75), highlight)
 				_add_facility_box(item, "EliteShoulderRight", Vector3(0.8, 2.65, 0.0), Vector3(0.75, 0.55, 0.75), highlight)
+				_add_facility_box(item, "OutfitRackRail", Vector3(-1.15, 3.0, -0.45), Vector3(1.5, 0.12, 0.12), accent)
+				_add_facility_box(item, "OutfitDisplayCoat", Vector3(-1.15, 1.85, -0.35), Vector3(0.92, 1.75, 0.24), highlight)
+				_add_facility_box(item, "OutfitSleeveLeft", Vector3(-1.72, 2.05, -0.35), Vector3(0.28, 1.05, 0.28), accent)
+				_add_facility_box(item, "OutfitSleeveRight", Vector3(-0.58, 2.05, -0.35), Vector3(0.28, 1.05, 0.28), accent)
 		elif facility_type == "shopping_crafting_materials":
 			for material_index in range(3):
 				_add_facility_box(item, "CraftMaterial_%02d" % material_index, Vector3(-0.9 + float(material_index) * 0.9, 1.55 + float(material_index % 2) * 0.35, 0.0), Vector3(0.68, 0.52, 0.68), highlight if material_index == 1 else accent)

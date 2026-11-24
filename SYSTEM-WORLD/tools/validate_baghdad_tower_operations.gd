@@ -1361,7 +1361,8 @@ func _run() -> void:
 			return
 		var item_zero := showcase.get_node("ShowcaseItem_00") as Node3D
 		var item_label: String = str(item_zero.get_meta("system_showcase_product_label", ""))
-		if str(item_label).is_empty() or item_zero.get_node_or_null("ShowcaseItemLabel") == null:
+		var item_product_id: String = str(item_zero.get_meta("system_showcase_product_id", ""))
+		if str(item_label).is_empty() or item_product_id.is_empty() or item_zero.get_node_or_null("ShowcaseItemLabel") == null:
 			_fail("Shopping Tower floor %d has an unlabeled physical product display." % floor_number)
 			return
 	var floor_product_checks := {
@@ -1387,6 +1388,39 @@ func _run() -> void:
 		25: ["elite_legendary_elixir"],
 		26: ["rare_legendary_elixir", "elite_legendary_elixir"]
 	}
+	var floor_required_models := {
+		5: ["WeaponBlade", "WeaponGuard", "WeaponGrip"],
+		6: ["WeaponShaft", "AxeHead", "WarHammerHead"],
+		7: ["WeaponBlade", "SecondBlade"],
+		8: ["BowDisplay", "CrossbowDisplay"],
+		9: ["RangedStock", "RangedBarrel", "RangedGrip"],
+		10: ["PrecisionScope"],
+		11: ["ArmorHelmetDisplay", "ArmorShieldDisplay"],
+		12: ["ArmorTorsoDisplay"],
+		13: ["EliteShoulderLeft", "EliteShoulderRight", "OutfitRackRail", "OutfitDisplayCoat"],
+		15: ["CraftMaterial_00"],
+		16: ["CraftMaterial_00"],
+		17: ["ElixirBottle_00"],
+		18: ["ElixirBottle_00"],
+		19: ["ElixirBottle_00"],
+		20: ["ElixirBottle_00"],
+		21: ["ElixirBottle_00"],
+		22: ["ElixirBottle_00"],
+		23: ["ElixirBottle_00"],
+		24: ["ElixirBottle_00"],
+		25: ["ElixirBottle_00"],
+		26: ["ElixirBottle_00"]
+	}
+	for model_floor_value in floor_required_models.keys():
+		var model_floor := int(model_floor_value)
+		var model_room := operations.call("_ensure_floor_room", "shopping_tower_baghdad", model_floor) as Node3D
+		var model_facility_type := str(shopping_floor_facilities[model_floor_value])
+		var model_showcase := model_room.get_node_or_null("SpecialFacility_" + model_facility_type + "/ShoppingShowcase") as Node3D if model_room != null else null
+		for model_name_value in floor_required_models[model_floor_value]:
+			var model_name := str(model_name_value)
+			if model_showcase == null or model_showcase.find_child(model_name, true, false) == null:
+				_fail("Shopping Tower floor %d is missing its signature 3D display component %s." % [model_floor, model_name])
+				return
 	var floor_exclusive_products := {
 		5: "battle_axe", 6: "training_sword", 7: "hunter_spear", 8: "hunter_pistol", 9: "composite_bow", 10: "crossbow",
 		11: "rank_sss_armor", 12: "rank_sss_armor", 13: "rank_e_armor", 15: "rare_core", 16: "wood_plank",
