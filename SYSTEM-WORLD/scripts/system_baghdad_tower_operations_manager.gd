@@ -1635,13 +1635,20 @@ func _create_advertising_surfaces() -> void:
 			ad_labels[tower_id + "_internal"] = inside
 		var outside := tower.get_node_or_null("TowerCampaignText") as Label3D
 		if outside == null:
-			outside = Label3D.new()
-			outside.name = "NPCManagedExternalCampaign"
-			outside.position = Vector3(0.0, float(config["height"]) * 0.55, float(config["radius"]) + 1.2)
-			outside.font_size = 32
-			outside.pixel_size = 0.012
-			outside.modulate = Color(0.72, 0.96, 1.0)
-			tower.add_child(outside)
+			# Keep one canonical external campaign node name across all six towers.
+			# The Power Tower has no landmark-authored campaign label, unlike some district towers.
+			var legacy_outside := tower.get_node_or_null("NPCManagedExternalCampaign") as Label3D
+			if legacy_outside != null:
+				outside = legacy_outside
+				outside.name = "TowerCampaignText"
+			else:
+				outside = Label3D.new()
+				outside.name = "TowerCampaignText"
+				outside.position = Vector3(0.0, float(config["height"]) * 0.55, float(config["radius"]) + 1.2)
+				outside.font_size = 32
+				outside.pixel_size = 0.012
+				outside.modulate = Color(0.72, 0.96, 1.0)
+				tower.add_child(outside)
 		ad_labels[tower_id + "_external"] = outside
 		tower.set_meta("system_advertising_mode", "npc_staff_managed_local_campaign")
 	_refresh_advertisements()
