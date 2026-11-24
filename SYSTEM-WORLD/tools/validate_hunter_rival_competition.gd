@@ -83,7 +83,7 @@ func _run() -> void:
 		return
 	fighter_actor.call("take_damage", 150.0, player)
 	status = rivals.call("get_competition_status")
-	if not _check(int(status.get("defeated_count", 0)) == 1, "Defeating a rival did not remove them from the individual competition."):
+	if not _check(int(status.get("defeated_count", 0)) == 2, "Defeating rivals did not remove them from the individual competition."):
 		return
 	var unknown: Dictionary = rivals.call("handle_rival_interaction", "unknown_rival")
 	if not _check(not bool(unknown.get("handled", true)), "Unknown rival ID should be rejected."):
