@@ -719,61 +719,6 @@ func _handle_hunter_exam_guide_interaction() -> void:
 
 
 
-func _animate_hunter_exam_elevator(button: Node) -> void:
-	if not is_instance_valid(player) or button == null:
-		return
-	var direction := str(button.get_meta("system_hunter_exam_elevator_direction", "down"))
-	var private_room := get_tree().root.find_child("HunterExamPrivateRoom", true, false) as Node3D
-	var tunnel_root := get_tree().root.find_child("BaghdadHunterExaminationTunnel", true, false) as Node3D
-	var platform := private_room.get_node_or_null("HunterExamElevatorPlatform") as Node3D if private_room != null else null
-	if private_room == null or tunnel_root == null or platform == null:
-		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "المصعد غير متاح حالياً."
-		return
-	if bool(platform.get_meta("system_hunter_exam_elevator_moving", false)):
-		return
-	var at_bottom := bool(platform.get_meta("system_hunter_exam_elevator_at_bottom", false))
-	if direction == "down" and at_bottom:
-		return
-	if direction == "up" and not at_bottom:
-		return
-	if direction == "down" and str(player.get_meta("system_hunter_exam_meal_order_id", "")).is_empty():
-		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "يجب استلام الوجبة وتناولها ثم دخول غرفة المتسابقين أولاً."
-		return
-	platform.set_meta("system_hunter_exam_elevator_moving", true)
-	player.velocity = Vector3.ZERO
-	player.set_meta("system_tower_elevator_active", true)
-	player.reparent(platform, true)
-	player.position = Vector3(0.0, 1.45, 0.0)
-	var destination := platform.global_position
-	destination.y = private_room.global_position.y - 45.0 if direction == "down" else private_room.global_position.y
-	var lift_tween := create_tween()
-	lift_tween.set_trans(Tween.TRANS_SINE)
-	lift_tween.set_ease(Tween.EASE_IN_OUT)
-	lift_tween.tween_property(platform, "global_position", destination, 4.0)
-	lift_tween.finished.connect(func():
-		if not is_instance_valid(player) or not is_instance_valid(platform):
-			return
-		player.reparent(self, true)
-		player.velocity = Vector3.ZERO
-		player.set_meta("system_tower_elevator_active", false)
-		player.set_meta("system_inside_hunter_exam_tunnel", direction == "down")
-		platform.set_meta("system_hunter_exam_elevator_at_bottom", direction == "down")
-		platform.set_meta("system_hunter_exam_elevator_moving", false)
-		if direction == "down":
-			player.global_position = tunnel_root.to_global(Vector3(0.0, 0.0, -1.5))
-			if interaction_prompt_label != null:
-				interaction_prompt_label.text = "وصلت إلى نفق اختبار الصيادين. مرشد النقابة بانتظارك."
-		else:
-			player.global_position = private_room.to_global(Vector3(0.0, 0.0, 3.5))
-			player.remove_meta("system_inside_hunter_exam_tunnel")
-			if interaction_prompt_label != null:
-				interaction_prompt_label.text = "عدت إلى غرفة المتسابقين في المطعم."
-	)
-
-
-
 
 func create_mission_reward_manager() -> void:
 	mission_reward_manager = MissionRewardManagerScript.new()
@@ -1134,12 +1079,6 @@ func _on_interaction_performed(
 			return
 	if target.has_meta("system_hunter_exam_tower_guide"):
 		_start_hunter_guild_escort(target)
-		return
-	if target.has_meta("system_hunter_exam_room_entry") and tower_operations_manager != null:
-		tower_operations_manager.call("enter_hunter_exam_private_room", target)
-		return
-	if target.has_meta("system_hunter_exam_elevator_button"):
-		_animate_hunter_exam_elevator(target)
 		return
 	if target.has_meta("system_hunter_exam_guide"):
 		_handle_hunter_exam_guide_interaction()
