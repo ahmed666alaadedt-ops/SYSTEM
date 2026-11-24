@@ -2474,7 +2474,8 @@ func _run() -> void:
 		_fail("A seated player could not send and pay for a restaurant order into the waiter queue.")
 		return
 	var observed_player_service_states := {"awaiting_waiter": true}
-	for _attempt in range(600):
+	# Existing NPC orders remain FIFO; allow the waiter to finish its current table visit before the player's order reaches the kitchen.
+	for _attempt in range(2400):
 		operations.call("_process_restaurant_staff_service")
 		player_order = operations.get("restaurant_orders").get(player_cycle_table_id, {})
 		var observed_state := str(player_order.get("status", ""))
