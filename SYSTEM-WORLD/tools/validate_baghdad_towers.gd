@@ -279,6 +279,30 @@ func _run_validation() -> void:
 		_fail("Hunter examination tunnel is not anchored beneath the Republic Bridge tower district.")
 		return
 
+	# Every one of the five connected civic towers must have three physical, walkable sky gardens.
+	for district_tower_id in EXPECTED_TOWER_IDS.slice(0, 5):
+		var district_node_name := str(TOWER_NODE_NAMES[district_tower_id])
+		var district_tower := tower_manager.get_node_or_null(district_node_name) as Node3D
+		var gardens := district_tower.get_node_or_null("TowerSkyGardens") as Node3D if district_tower != null else null
+		if gardens == null or str(gardens.get_meta("system_owner_tower_id", "")) != district_tower_id or int(gardens.get_meta("system_sky_garden_count", 0)) != 3:
+			_fail("A Baghdad civic tower is missing its three dedicated sky gardens: " + district_tower_id)
+			return
+		for garden_index in range(3):
+			var garden := gardens.get_node_or_null("SkyGarden_%02d" % (garden_index + 1)) as Node3D
+			var interaction := garden.get_node_or_null("SkyGardenInteraction_%02d" % (garden_index + 1)) as Area3D if garden != null else null
+			if garden == null or not bool(garden.get_meta("system_garden_walkable", false)) or not bool(garden.get_meta("system_glass_perimeter_railing", false)):
+				_fail("A Baghdad sky garden is missing its walkable deck or glass safety rail.")
+				return
+			if garden.get_node_or_null("GardenFloor_North_Collision") == null or garden.get_node_or_null("GardenFloor_South_Collision") == null or garden.get_node_or_null("GardenFloor_East_Collision") == null or garden.get_node_or_null("GardenFloor_West_Collision") == null:
+				_fail("A Baghdad sky garden is missing one or more physical floor collisions.")
+				return
+			if interaction == null or not interaction.is_in_group("system_interactable") or int(interaction.get_meta("system_tower_floor", 0)) <= 0:
+				_fail("A Baghdad sky garden is missing its tower-floor interaction route.")
+				return
+			if int(garden.get_meta("system_garden_planter_count", 0)) < 4 or int(garden.get_meta("system_garden_tree_count", 0)) < 4 or int(garden.get_meta("system_garden_bench_count", 0)) < 2:
+				_fail("A Baghdad sky garden is missing planters, trees or seating.")
+				return
+
 	var shopping_tower := tower_manager.get_node_or_null("ShoppingTower") as Node3D
 	if shopping_tower == null:
 		_fail("Shopping and Commerce Tower is missing.")
