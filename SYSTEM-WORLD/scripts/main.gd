@@ -888,6 +888,40 @@ func _on_interaction_performed(
 		" / ",
 		location_id
 	)
+	if target.has_meta("system_hunter_tunnel_riddle_step"):
+		var riddle_root := target.get_parent() as Node3D
+		if riddle_root == null:
+			return
+		var clue_step := int(target.get_meta("system_hunter_tunnel_riddle_step", 0))
+		var current_step := int(riddle_root.get_meta("system_tunnel_riddle_progress", 0))
+		if clue_step == current_step + 1:
+			current_step += 1
+			riddle_root.set_meta("system_tunnel_riddle_progress", current_step)
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "النقش استجاب... (%d/3)" % current_step
+			if current_step == 3:
+				riddle_root.set_meta("system_tunnel_riddle_solved", true)
+				var hidden_door := riddle_root.get_node_or_null("ConcealedHunterDoorSlab") as Node3D
+				if hidden_door != null:
+					hidden_door.position.y += 12.0
+				var door_collision := riddle_root.get_node_or_null("ConcealedDoorCollision")
+				if door_collision != null:
+					door_collision.queue_free()
+				var reveal_light := riddle_root.get_node_or_null("SecretDoorRevealLight") as OmniLight3D
+				if reveal_light != null:
+					reveal_light.light_energy = 2.2
+				for segment in range(10):
+					var ramp_path: NodePath = riddle_root.get_meta("system_hidden_passage_segment_%02d" % segment, NodePath())
+					var ramp := riddle_root.get_node_or_null(ramp_path) as MeshInstance3D
+					if ramp != null:
+						ramp.visible = true
+				if interaction_prompt_label != null:
+					interaction_prompt_label.text = "انفتح الباب السري! ظهر مدخل نفق اختبار الصيادين."
+		else:
+			riddle_root.set_meta("system_tunnel_riddle_progress", 0)
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "النقوش لم تستجب... الترتيب غير صحيح. ابدأ من جديد."
+		return
 	if target.has_meta("system_hunter_exam_tunnel"):
 		if hunter_exam_manager == null:
 			if interaction_prompt_label != null:
