@@ -7079,6 +7079,44 @@ func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: i
 		ring.position.y = 0.04
 		queue_marker.add_child(ring)
 		room.add_child(queue_marker)
+	if floor_number == 29:
+		_attach_hunter_exam_secret_entry_to_restaurant(room, radius)
+
+
+func _attach_hunter_exam_secret_entry_to_restaurant(room: Node3D, radius: float) -> void:
+	if room == null:
+		return
+	var tunnel_root := get_tree().root.find_child("BaghdadHunterExaminationTunnel", true, false) as Node3D
+	if tunnel_root == null:
+		push_warning("SYSTEM Hunter Examination: restaurant secret entry could not find the Baghdad tunnel root.")
+		return
+	var wall := tunnel_root.get_node_or_null("OrdinaryFoundationMasonry") as Node3D
+	var wall_collision := tunnel_root.get_node_or_null("FoundationMasonryCollision") as Node3D
+	var door := tunnel_root.get_node_or_null("ConcealedHunterDoorSlab") as Node3D
+	var door_collision := tunnel_root.get_node_or_null("ConcealedDoorCollision") as Node3D
+	var entrance := tunnel_root.get_node_or_null("ConcealedHunterExamDoor") as Area3D
+	if wall == null or wall_collision == null or door == null or door_collision == null or entrance == null:
+		push_warning("SYSTEM Hunter Examination: concealed restaurant doorway components are incomplete.")
+		return
+	var wall_position := room.to_global(Vector3(0.0, 7.5, -radius * 0.46))
+	var wall_rotation := room.global_rotation
+	wall.global_position = wall_position
+	wall.global_rotation = wall_rotation
+	wall_collision.global_position = wall_position
+	wall_collision.global_rotation = wall_rotation
+	var door_position := wall_position + room.global_basis.z * 1.65
+	door.global_position = door_position
+	door.global_rotation = wall_rotation
+	door_collision.global_position = door_position
+	door_collision.global_rotation = wall_rotation
+	entrance.global_position = wall_position + room.global_basis.z * 6.0 + Vector3(0.0, 0.5, 0.0)
+	entrance.set_meta("system_interaction_prompt", "افحص الجدار الحجري خلف مطعم SYSTEM")
+	entrance.set_meta("system_hidden_restaurant_entry", true)
+	entrance.set_meta("system_restaurant_floor_number", 29)
+	wall.set_meta("system_hidden_restaurant_entry", true)
+	room.set_meta("system_hunter_exam_secret_entry", true)
+	tunnel_root.set_meta("system_tunnel_secret_entry_location", "shopping_tower_restaurant_floor_29")
+	print("SYSTEM Hunter Examination: concealed riddle door is now physically placed inside Shopping Tower restaurant floor 29.")
 
 
 func _create_npc_restaurant_order(table_root: Node3D, customer_id: String, floor_number: int) -> void:
