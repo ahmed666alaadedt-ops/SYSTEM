@@ -50,6 +50,15 @@ func _run_validation() -> void:
 		return
 	if not _check(not bool(site.get_node("ArtifactPedestal/RecoveredArtifact").visible), "Artifact must remain hidden before the riddle."):
 		return
+	var examiner := site.get_node_or_null("ExaminerRaed") as Node3D
+	if not _check(examiner != null, "Original SYSTEM stage examiner is missing."):
+		return
+	var briefing_area := examiner.get_node_or_null("ExaminerBriefingInteraction") as Area3D
+	if not _check(briefing_area != null, "Examiner briefing interaction is missing."):
+		return
+	var briefing_result: Dictionary = runtime.handle_interaction(briefing_area)
+	if not _check(bool(briefing_result.get("success", false)) and str(briefing_result.get("message", "")).contains("راقب الأرض"), "Examiner briefing did not explain observation and trap rules."):
+		return
 	var spike_count := 0
 	for child in site.get_children():
 		if str(child.name).begins_with("StoneTrapSpikeCollision_"):
