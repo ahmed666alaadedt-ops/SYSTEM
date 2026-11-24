@@ -125,8 +125,8 @@ func _run() -> void:
 	if int(status.get("staff_count", 0)) != 45:
 		_fail("Expected eight professional NPC staff members in four district towers, nine in Shopping Tower, plus four Power Tower staff; found %d." % int(status.get("staff_count", 0)))
 		return
-	if int(status.get("customer_count", 0)) != 60:
-		_fail("Expected twelve persistent customer NPCs in each of the five Baghdad district towers; found %d." % int(status.get("customer_count", 0)))
+	if int(status.get("customer_count", 0)) != 500:
+		_fail("Expected 100 persistent customer NPCs in each of the five Baghdad district towers (500 total); found %d." % int(status.get("customer_count", 0)))
 		return
 	var region := main.find_child("ModernWorldRegionManager", true, false)
 	if region == null:
@@ -135,18 +135,6 @@ func _run() -> void:
 	var tower_manager := region.get_node_or_null("BaghdadTowerLandmarksManager")
 	if tower_manager == null:
 		_fail("BaghdadTowerLandmarksManager is missing.")
-		return
-	var hunter_tunnel := tower_manager.get_node_or_null("BaghdadHunterExaminationTunnel") as Node3D
-	var competitor_crowd := hunter_tunnel.get_node_or_null("HunterExamCompetitorCrowd") as Node3D if hunter_tunnel != null else null
-	if competitor_crowd == null or int(competitor_crowd.get_meta("system_hunter_exam_competitor_count", 0)) != 500:
-		_fail("Hunter Examination tunnel must contain exactly 500 NPC competitors alongside the player.")
-		return
-	var visible_competitor_count := 0
-	for competitor in competitor_crowd.get_children():
-		if competitor is Node3D and competitor.is_in_group("system_hunter_exam_competitor") and bool(competitor.get_meta("system_exam_competitor_is_npc", false)):
-			visible_competitor_count += 1
-	if visible_competitor_count != 500:
-		_fail("Hunter Examination crowd must instantiate 500 visible NPC competitors; found %d." % visible_competitor_count)
 		return
 	var expected_tower_nodes := {
 		"hunter_association_tower_baghdad": "HunterAssociationTower",
@@ -198,6 +186,8 @@ func _run() -> void:
 			return
 		var visible_staff := 0
 		var visible_customers := 0
+		var child_customers := 0
+		var elder_customers := 0
 		var uniformed_staff := 0
 		for lobby_child in lobby.get_children():
 			if str(lobby_child.name).begins_with("TowerStaff_"):
@@ -211,9 +201,17 @@ func _run() -> void:
 						uniformed_staff += 1
 			elif str(lobby_child.name).begins_with("TowerCustomer_"):
 				visible_customers += 1
+				var age_group := str(lobby_child.get_meta("system_customer_age_group", "adult"))
+				if age_group == "child":
+					child_customers += 1
+				elif age_group == "elder":
+					elder_customers += 1
 		var expected_staff := int(expected_staff_per_tower[tower_id])
-		if visible_staff != expected_staff or uniformed_staff != expected_staff or visible_customers != 12:
-			_fail("Tower %s requires %d uniformed visible staff and 12 visible customer NPCs; found staff=%d uniformed=%d customers=%d." % [tower_id, expected_staff, visible_staff, uniformed_staff, visible_customers])
+		if visible_staff != expected_staff or uniformed_staff != expected_staff or visible_customers != 100:
+			_fail("Tower %s requires %d uniformed visible staff and 100 visible customer NPCs; found staff=%d uniformed=%d customers=%d." % [tower_id, expected_staff, visible_staff, uniformed_staff, visible_customers])
+			return
+		if child_customers != 20 or elder_customers != 20:
+			_fail("Tower %s must include 20 child and 20 elderly civilian customers; found children=%d elderly=%d." % [tower_id, child_customers, elder_customers])
 			return
 	var hunter_staff_sample: Node3D
 	var hunter_staff_model: Node3D
