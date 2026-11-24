@@ -6534,15 +6534,33 @@ func _set_player_restaurant_activity(activity: String) -> void:
 			return
 
 
+func _find_restaurant_table_for_order(table_id: String, table_index: int) -> Node3D:
+	var candidate_rooms: Array[Node3D] = []
+	if is_instance_valid(active_floor_root):
+		candidate_rooms.append(active_floor_root)
+	var shopping_floors := prepared_towers.get("shopping_tower_baghdad") as Node3D
+	var canonical_restaurant_room := shopping_floors.get_node_or_null("InteriorFloor_029") as Node3D if shopping_floors != null else null
+	if canonical_restaurant_room != null and not candidate_rooms.has(canonical_restaurant_room):
+		candidate_rooms.append(canonical_restaurant_room)
+	for room in candidate_rooms:
+		for child in room.get_children():
+			if child is Node3D and str(child.get_meta("system_restaurant_table_id", "")) == table_id:
+				return child as Node3D
+		if table_index >= 0:
+			var indexed_table := room.get_node_or_null("RestaurantTable_%02d" % table_index) as Node3D
+			if indexed_table != null and str(indexed_table.get_meta("system_restaurant_table_id", "")) == table_id:
+				return indexed_table
+	return null
+
+
 func _create_restaurant_served_meal_visual(table_id: String, order: Dictionary) -> void:
-	if not is_instance_valid(active_floor_root):
-		return
 	var table_index := int(order.get("table_index", -1))
 	if table_index < 0:
 		var parts := table_id.split("_")
 		table_index = int(parts[parts.size() - 1]) if parts.size() > 0 else -1
-	var table_node := active_floor_root.get_node_or_null("RestaurantTable_%02d" % table_index) as Node3D
+	var table_node := _find_restaurant_table_for_order(table_id, table_index)
 	if table_node == null:
+		push_warning("SYSTEM Restaurant: could not resolve the exact table for served order " + table_id)
 		return
 	var existing := table_node.get_node_or_null("ServedMealPresentation")
 	if existing != null:
