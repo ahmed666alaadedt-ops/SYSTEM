@@ -9,7 +9,13 @@ signal license_earned(candidate_number: int, license_rank: String)
 
 const SAVE_PATH := "user://system_hunter_exam.cfg"
 const EXAM_STAGES := [
-	{"id":"baghdad_tunnel_competition","city":"Baghdad","title":"المسابقة الموحدة لنفق الصيادين","type":"continuous_tunnel_trial","difficulty":3,"description":"مسابقة متصلة داخل نفق الصيادين بإشراف مرشد نقابة الصيادين؛ لا توجد سبع مراحل منفصلة."}
+	{"id":"baghdad_heritage_trial","city":"Baghdad","title":"اختبار الأثر الرافديني","type":"heritage_riddle_trial","difficulty":3,"description":"اقرأ نقوش العين والنهر والتاج بالترتيب، تجاوز الفخاخ، واسترجع الأثر الصحيح."},
+	{"id":"cairo_buried_market","city":"Cairo","title":"متاهة السوق المدفون","type":"resource_navigation_trial","difficulty":4,"description":"تنقل بين طرق السوق المتغيرة، حافظ على الماء والمؤونة، واعثر على المخرج."},
+	{"id":"alexandria_lighthouse","city":"Alexandria","title":"اختبار المنارة والعاصفة","type":"coastal_rescue_trial","difficulty":4,"description":"أصلح إشارة المنارة، أنقذ المتسابق العالق، ووجّه الضوء عبر العاصفة."},
+	{"id":"paris_catacombs","city":"Paris","title":"سراديب باريس الصامتة","type":"stealth_logic_trial","difficulty":5,"description":"حلل الأصداء والإشارات واعبر السراديب دون تنبيه الحراس."},
+	{"id":"babylon_guardian","city":"Babylon","title":"آلية حارس بابل","type":"guardian_mechanism_trial","difficulty":5,"description":"افهم تروس الحارس وعطّل الآلية واستعد الختم."},
+	{"id":"tokyo_urban_pursuit","city":"Tokyo","title":"مطاردة المدينة المتغيرة","type":"urban_observation_trial","difficulty":5,"description":"تتبع الأثر وساعد المدنيين وحدد نقطة الاعتراض دون تعريضهم للخطر."},
+	{"id":"final_survival_route","city":"Highland Frontier","title":"مسار البقاء الأخير","type":"survival_teamwork_trial","difficulty":6,"description":"اجمع المؤونة واعثر على مأوى واجتز طريق القمة في ظروف قاسية."}
 ]
 
 var candidate_number := 0
@@ -50,7 +56,7 @@ func apply_for_exam(player_id: String) -> Dictionary:
 	failed = false
 	failure_reason = ""
 	exam_registered.emit(candidate_number)
-	return {"success":true,"candidate_number":candidate_number,"stages":EXAM_STAGES.size(),"message":"تم تسجيلك. احتفظ برقمك طوال الاختبار."}
+	return {"success":true,"candidate_number":candidate_number,"stages":EXAM_STAGES.size(),"message":"تم تسجيلك. احتفظ برقمك طوال المراحل السبع."}
 
 func accept_exam_invitation(player_id: String) -> Dictionary:
 	if player_id.strip_edges().is_empty():
@@ -70,7 +76,6 @@ func accept_exam_invitation(player_id: String) -> Dictionary:
 	registered = false
 	candidate_number = 0
 	return {"success":true,"pending_tunnel_registration":true,"message":"تم قبول طلبك. اتبع مرشد نقابة الصيادين إلى النفق."}
-
 
 func register_candidate_at_tunnel(player_id: String) -> Dictionary:
 	if not invitation_accepted:
@@ -97,7 +102,6 @@ func register_candidate_at_tunnel(player_id: String) -> Dictionary:
 	failure_reason = ""
 	exam_registered.emit(candidate_number)
 	return {"success":true,"candidate_number":candidate_number,"message":"تم تسجيلك في النفق. هذا رقمك التسلسلي الدائم."}
-
 
 func begin_exam() -> Dictionary:
 	if not registered:
@@ -156,7 +160,6 @@ func withdraw_or_fail(reason: String) -> void:
 func get_exam_overview() -> Dictionary:
 	return {"candidate_number":candidate_number,"invitation_accepted":invitation_accepted,"registered":registered,"active":exam_active,"current_stage_index":current_stage_index,"completed_stages":completed_stage_ids.duplicate(),"total_stages":EXAM_STAGES.size(),"failed":failed,"failure_reason":failure_reason,"stages":EXAM_STAGES.duplicate(true)}
 
-
 func _load_exam_state() -> void:
 	var config := ConfigFile.new()
 	if config.load(SAVE_PATH) != OK:
@@ -171,7 +174,6 @@ func _load_exam_state() -> void:
 	for stage_id in config.get_value("exam", "completed_stage_ids", []):
 		completed_stage_ids.append(str(stage_id))
 	current_stage_index = completed_stage_ids.size() if exam_active else -1
-
 
 func _save_exam_state() -> void:
 	var config := ConfigFile.new()
