@@ -368,6 +368,23 @@ func _run() -> void:
 		if museum_room.get_node_or_null("FloorThemeIdentity") == null:
 			_fail("Museum floor %d is missing its heritage exhibit theme and display props." % museum_floor)
 			return
+		var expected_exhibits := 2 if museum_floor >= 33 else 4
+		var exhibit_ids := {}
+		var exhibit_interaction_count := 0
+		for exhibit_node in museum_facility.get_children():
+			if exhibit_node is Area3D and str(exhibit_node.name).begins_with("ArtifactExhibitInteraction_"):
+				exhibit_interaction_count += 1
+				var artifact_id := str(exhibit_node.get_meta("system_artifact_id", ""))
+				if artifact_id.is_empty() or exhibit_ids.has(artifact_id) or not exhibit_node.is_in_group("system_interactable"):
+					_fail("Museum floor %d has a missing, duplicate or non-interactable artifact ID." % museum_floor)
+					return
+				exhibit_ids[artifact_id] = true
+				if museum_facility.get_node_or_null("ArtifactGlassCase_%02d" % (exhibit_interaction_count - 1)) == null:
+					_fail("Museum floor %d is missing a physical glass artifact case." % museum_floor)
+					return
+		if exhibit_interaction_count != expected_exhibits:
+			_fail("Museum floor %d expected %d interactive artifact displays; found %d." % [museum_floor, expected_exhibits, exhibit_interaction_count])
+			return
 	var museum_config: Dictionary = operations.get("TOWER_CONFIG").get("antiques_heritage_tower_baghdad", {})
 	if str(museum_config.get("node", "")) != "AntiquesHeritageTower" or int(museum_config.get("floors", 0)) != 34 or museum_config.get("jobs", []).size() != 8:
 		_fail("Antiques and Heritage Tower staffing/configuration is incomplete.")
