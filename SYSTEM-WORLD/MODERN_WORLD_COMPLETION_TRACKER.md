@@ -1804,3 +1804,5 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - [x] Added a comprehensive regression loop to open each specialist floor and assert its expected products are present and products belonging to other floors are absent; the existing floor-14 forge, hotel floors 27–28, and restaurant floors 29–32 remain outside these catalog overrides.
 - [ ] Exact-HEAD Godot operations validation and Android APK export are pending. Physical Android touch/visual review remains outstanding.
 - PR #38 remains draft and unmerged. No changes merged to main.
+
+- Regression follow-up: the floor-by-floor UI test now waits one process frame after each department switch so queued UI nodes from the previous floor are released before asserting the new floor's exclusive stock list. This is test synchronization only; live floor changes already occur across separate player interactions.

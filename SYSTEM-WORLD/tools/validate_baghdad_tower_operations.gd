@@ -1396,6 +1396,7 @@ func _run() -> void:
 	for floor_value in floor_product_checks.keys():
 		var floor_number := int(floor_value)
 		operations.call("open_baghdad_progression_facility", "shopping_tower_baghdad", floor_number, str(shopping_floor_facilities[floor_value]))
+		await get_tree().process_frame
 		var product_controls := operations.get("content") as Node
 		for product_id_value in floor_product_checks[floor_value]:
 			var product_id := str(product_id_value)
