@@ -1733,3 +1733,14 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - [ ] Next implementation pass must remove/disable only the conflicting secret-inscription/hidden-door and obsolete seven-stage dependencies while preserving the restaurant, tower, and all other verified systems. Add persistence and regression coverage for unique competitor numbering and re-entry.
 - [ ] Run fresh Godot validation and Android APK export against the exact new implementation commit before marking the revised tunnel flow verified.
 - PR #38 remains open, draft, and unmerged. Do not merge into `main` without the user's explicit approval.
+
+
+### Hunter Examination tunnel access redesign — 24 November 2026
+- Replaced the former three-clue secret doorway and concealed ramp concept with one permanent Hunter Examination tunnel.
+- The Shopping Tower restaurant floor 29 now creates a dedicated competitor room. Access to that room is gated by the player's delivered and consumed restaurant meal; the existing restaurant order, waiter, chef and table workflow is retained.
+- The dedicated room contains a physical elevator platform and shaft leading to the tunnel. A return interaction is provided at the tunnel end.
+- Added a visible Hunter Guild guide at the tunnel arrival point. The guide explains the competition and registers the player if needed.
+- Candidate serial numbers remain stable after registration, including after a failed attempt or a later re-entry; the existing local ConfigFile persistence is retained.
+- The new tunnel entry path does not connect to the marshland area. No seven-stage runtime is started by the new elevator/guide flow.
+- Power Tower gameplay files were not modified. PR #38 remains a draft; no merge to main.
+- **Verification status:** code changes committed; Godot validation and Android export must run on the exact resulting commit before this implementation is marked verified. Physical Android testing remains outstanding.
