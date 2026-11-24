@@ -41,7 +41,7 @@ func _process(delta: float) -> void:
 	for entry_value in rivals.values():
 		var entry: Dictionary = entry_value
 		var rival := entry["node"] as CharacterBody3D
-		if not is_instance_valid(rival):
+		if not is_instance_valid(rival) or bool(entry.get("defeated", false)):
 			continue
 		var style := str(entry["profile"]["style"])
 		var distance := rival.global_position.distance_to(player.global_position)
@@ -166,10 +166,12 @@ func _on_rival_damaged(rival_id: String, amount: float, _source: Node) -> void:
 	if remaining <= 0.0:
 		entry["defeated"] = true
 		entry["duel_active"] = false
+		rival.velocity = Vector3.ZERO
 		rival.set_physics_process(false)
 		var interaction := rival.get_node_or_null("RivalInteraction") as Area3D
 		if interaction != null:
-			interaction.monitoring = false
+			# A defeated thief must remain interactable so the stolen objective can be recovered.
+			interaction.monitoring = stolen_by_rival_id == rival_id and not stolen_objective_id.is_empty()
 		_emit_event("هزمت %s في مواجهة فردية وأُخرج من المنافسة." % profile["name"])
 		rival_defeated.emit(rival_id, str(profile["name"]))
 	else:
