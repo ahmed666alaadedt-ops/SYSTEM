@@ -2,6 +2,7 @@ extends SceneTree
 
 const ExamManagerScript = preload("res://scripts/system_hunter_exam_manager.gd")
 const StageRuntimeScript = preload("res://scripts/system_hunter_exam_stage_runtime.gd")
+const CandidateCrowdScript = preload("res://scripts/system_hunter_candidate_crowd.gd")
 const EXPECTED_STAGE_IDS: Array[String] = [
 	"baghdad_heritage_trial",
 	"cairo_buried_market",
@@ -63,6 +64,27 @@ func _run_validation() -> void:
 	var player := CharacterBody3D.new()
 	player.name = "HunterExamValidationPlayer"
 	root.add_child(player)
+	var candidate_crowd := CandidateCrowdScript.new()
+	root.add_child(candidate_crowd)
+	await process_frame
+	var crowd_status: Dictionary = candidate_crowd.call("get_crowd_status")
+	if not _check(int(crowd_status.get("candidate_count", 0)) == 500 and int(crowd_status.get("unique_candidate_numbers", 0)) == 500, "The tunnel crowd did not create 500 individually tracked competitors."):
+		return
+	if not _check(int(crowd_status.get("body_instances", 0)) == 500 and int(crowd_status.get("head_instances", 0)) == 500, "The 500 competitors are not all represented in the visible crowd render."):
+		return
+	var first_candidate: Node3D = candidate_crowd.call("get_candidate_by_number", 2001) as Node3D
+	var last_candidate: Node3D = candidate_crowd.call("get_candidate_by_number", 2500) as Node3D
+	if not _check(first_candidate != null and last_candidate != null, "The first or last competitor cannot be resolved by unique candidate number."):
+		return
+	if not _check(bool(first_candidate.get_meta("system_exam_competitor", false)) and int(first_candidate.get_meta("system_candidate_number", 0)) == 2001 and int(last_candidate.get_meta("system_candidate_number", 0)) == 2500, "Competitor records do not preserve their unique serial numbers."):
+		return
+	candidate_crowd.call("_start_staggered_movement_wave")
+	var moving_candidates := 0
+	for candidate in candidate_crowd.candidate_records:
+		if str(candidate.get_meta("system_candidate_status", "")) == "moving":
+			moving_candidates += 1
+	if not _check(moving_candidates > 0, "The candidate crowd did not start its staggered movement behavior."):
+		return
 	var active_manager: Node = manager
 
 	for stage_index in range(EXPECTED_STAGE_IDS.size()):
