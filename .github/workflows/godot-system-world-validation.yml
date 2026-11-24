@@ -47,6 +47,15 @@ jobs:
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
           "$GODOT" --headless --path "$PROJECT" --check-only --script res://scripts/modern_world_transport_network_manager.gd
 
+      - name: Parse tower manager, progression and operations QA scripts directly
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          "$GODOT" --headless --path "$PROJECT" --check-only --script res://scripts/system_baghdad_tower_operations_manager.gd
+          "$GODOT" --headless --path "$PROJECT" --check-only --script res://scripts/system_player_progression.gd
+          "$GODOT" --headless --path "$PROJECT" --check-only --script res://tools/validate_baghdad_tower_operations.gd
+
       - name: Import resources and parse scripts
         shell: bash
         run: |
