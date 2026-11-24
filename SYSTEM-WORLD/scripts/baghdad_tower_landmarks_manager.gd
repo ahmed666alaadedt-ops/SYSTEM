@@ -468,170 +468,139 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 
 
 func _create_hunter_exam_tunnel() -> void:
-	# Secret Hunter Examination entrance hidden beneath the Baghdad five-tower district.
-	# No exposed ramp, portal frame, or public tunnel sign is shown before the riddle is solved.
+	# One permanent Hunter Examination tunnel. Access is provided by the
+	# dedicated restaurant room elevator; there are no hidden clues or doors.
 	var tunnel_root := Node3D.new()
 	tunnel_root.name = "BaghdadHunterExaminationTunnel"
 	tunnel_root.position = Vector3(
 		bridge_anchor.x,
-		float(terrain.call("get_terrain_height", bridge_anchor.x, bridge_anchor.y)),
+		float(terrain.call("get_terrain_height", bridge_anchor.x, bridge_anchor.y)) - 45.0,
 		bridge_anchor.y
 	)
 	tunnel_root.set_meta("system_under_republic_bridge_district", true)
-	tunnel_root.set_meta("system_tunnel_location_source", "OpenStreetMap Republic Bridge / Tigris reference")
+	tunnel_root.set_meta("system_tunnel_location_source", "Baghdad Shopping Tower restaurant private-room elevator")
 	tunnel_root.set_meta("system_facility_type", "hunter_examination_tunnel")
 	tunnel_root.set_meta("system_under_baghdad_tower_district", true)
 	tunnel_root.set_meta("system_exam_manager", "SYSTEMHunterExamManager")
-	tunnel_root.set_meta("system_tunnel_riddle_progress", 0)
-	tunnel_root.set_meta("system_tunnel_riddle_solved", false)
+	tunnel_root.set_meta("system_hunter_exam_access", "restaurant_private_room_elevator")
+	tunnel_root.set_meta("system_tunnel_is_single_continuous_route", true)
 	add_child(tunnel_root)
 
-	var stone_material := _make_surface_material(Color(0.16, 0.18, 0.19), 0.94, 0.08)
-	var carved_material := _make_surface_material(Color(0.24, 0.29, 0.30), 0.82, 0.12)
-	var hidden_trim := _make_surface_material(Color(0.025, 0.20, 0.25), 0.42, 0.5)
-	hidden_trim.emission_enabled = true
-	hidden_trim.emission = Color(0.0, 0.34, 0.48)
-	hidden_trim.emission_energy_multiplier = 0.65
+	var floor_mesh := BoxMesh.new()
+	floor_mesh.size = Vector3(28.0, 1.0, 54.0)
+	var stone_material := _make_surface_material(Color(0.075, 0.105, 0.13), 0.88, 0.18)
+	var trim_material := _make_surface_material(Color(0.015, 0.28, 0.36), 0.38, 0.65)
+	trim_material.emission_enabled = true
+	trim_material.emission = Color(0.0, 0.38, 0.56)
+	trim_material.emission_energy_multiplier = 1.1
 
-	# The concealed wall resembles ordinary foundation masonry. Its door seam
-	# is intentionally indistinguishable until the three-symbol riddle is solved.
-	var wall := Node3D.new()
-	wall.name = "OrdinaryFoundationMasonry"
-	wall.position = Vector3(0.0, -7.5, 96.0)
-	tunnel_root.add_child(wall)
-	var wall_segments := [
-		{"name": "Left", "position": Vector3(-8.875, 0.0, 0.0), "size": Vector3(4.25, 16.0, 2.4)},
-		{"name": "Right", "position": Vector3(8.875, 0.0, 0.0), "size": Vector3(4.25, 16.0, 2.4)},
-		{"name": "Top", "position": Vector3(0.0, 6.625, 0.0), "size": Vector3(13.5, 2.75, 2.4)},
-		{"name": "Bottom", "position": Vector3(0.0, -7.125, 0.0), "size": Vector3(13.5, 1.75, 2.4)}
-	]
-	for wall_segment in wall_segments:
-		var masonry := MeshInstance3D.new()
-		masonry.name = "Masonry_" + str(wall_segment["name"])
-		var masonry_mesh := BoxMesh.new()
-		masonry_mesh.size = wall_segment["size"]
-		masonry.mesh = masonry_mesh
-		masonry.position = wall_segment["position"]
-		masonry.material_override = stone_material
-		wall.add_child(masonry)
-		_add_static_box_collision(wall, "FoundationMasonryCollision_" + str(wall_segment["name"]), masonry.position, masonry_mesh.size)
+	var tunnel_floor := MeshInstance3D.new()
+	tunnel_floor.name = "HunterTunnelFloor"
+	tunnel_floor.mesh = floor_mesh
+	tunnel_floor.position = Vector3(0.0, -0.5, 12.0)
+	tunnel_floor.material_override = stone_material
+	tunnel_root.add_child(tunnel_floor)
+	_add_static_box_collision(tunnel_root, "HunterTunnelFloorCollision", tunnel_floor.position, floor_mesh.size)
 
-	var hidden_door := MeshInstance3D.new()
-	hidden_door.name = "ConcealedHunterDoorSlab"
-	var door_mesh := BoxMesh.new()
-	door_mesh.size = Vector3(13.5, 11.5, 0.65)
-	hidden_door.mesh = door_mesh
-	hidden_door.position = Vector3(0.0, -8.0, 94.65)
-	hidden_door.material_override = stone_material
-	tunnel_root.add_child(hidden_door)
-	_add_static_box_collision(tunnel_root, "ConcealedDoorCollision", hidden_door.position, door_mesh.size)
+	for side in [-1.0, 1.0]:
+		var wall := MeshInstance3D.new()
+		wall.name = "HunterTunnelWall_" + ("Left" if side < 0.0 else "Right")
+		var wall_mesh := BoxMesh.new()
+		wall_mesh.size = Vector3(0.8, 8.0, 54.0)
+		wall.mesh = wall_mesh
+		wall.position = Vector3(side * 13.6, 3.5, 12.0)
+		wall.material_override = stone_material
+		tunnel_root.add_child(wall)
+		_add_static_box_collision(tunnel_root, wall.name + "Collision", wall.position, wall_mesh.size)
 
-	# Three low-profile clue stones are scattered around the public district.
-	# They look like ordinary paving details; each can be examined up close.
-	var clue_positions: Array[Vector2] = [
-		bridge_axis * 300.0 + bridge_river_axis * 120.0,
-		-bridge_axis * 300.0 - bridge_river_axis * 120.0,
-		bridge_axis * 430.0 - bridge_river_axis * 140.0
-	]
-	var clue_symbols := ["عين", "نهر", "تاج"]
-	for index in range(3):
-		var clue := Area3D.new()
-		clue.name = "HunterRiddleClue_%d" % (index + 1)
-		clue.add_to_group("system_interactable")
-		clue.set_meta("system_hunter_tunnel_riddle_step", index + 1)
-		clue.set_meta("system_display_name", "نقش حجري قديم")
-		clue.set_meta("system_interaction_prompt", "تفحّص النقش الحجري")
-		var clue_offset: Vector2 = clue_positions[index]
-		var clue_local := Vector3(clue_offset.x, 0.12, clue_offset.y)
-		var clue_world_x := bridge_anchor.x + clue_local.x
-		var clue_world_z := bridge_anchor.y + clue_local.z
-		clue_local.y = float(terrain.call("get_terrain_height", clue_world_x, clue_world_z)) - tunnel_root.position.y + 0.12
-		clue.position = clue_local
-		clue.collision_layer = 1
-		clue.collision_mask = 0
-		var stone := MeshInstance3D.new()
-		stone.name = "WeatheredClueStone"
-		var stone_mesh := BoxMesh.new()
-		stone_mesh.size = Vector3(2.8, 0.24, 2.8)
-		stone.mesh = stone_mesh
-		stone.material_override = carved_material
-		clue.add_child(stone)
-		var glyph := Label3D.new()
-		glyph.name = "WornGlyph"
-		glyph.text = clue_symbols[index]
-		glyph.font_size = 18
-		glyph.pixel_size = 0.012
-		glyph.position = Vector3(0.0, 0.16, 0.0)
-		glyph.modulate = Color(0.48, 0.57, 0.57, 0.72)
-		clue.add_child(glyph)
-		var clue_shape := CollisionShape3D.new()
-		var clue_sphere := SphereShape3D.new()
-		clue_sphere.radius = 3.0
-		clue_shape.shape = clue_sphere
-		clue_shape.position = Vector3(0.0, 1.0, 0.0)
-		clue.add_child(clue_shape)
-		tunnel_root.add_child(clue)
+	var ceiling := MeshInstance3D.new()
+	ceiling.name = "HunterTunnelCeiling"
+	var ceiling_mesh := BoxMesh.new()
+	ceiling_mesh.size = Vector3(28.0, 0.7, 54.0)
+	ceiling.mesh = ceiling_mesh
+	ceiling.position = Vector3(0.0, 7.5, 12.0)
+	ceiling.material_override = stone_material
+	tunnel_root.add_child(ceiling)
 
-	# The final interaction is on the blank masonry. It reveals no prompt until
-	# the player has found the clues in the correct order.
-	var entrance := Area3D.new()
-	entrance.name = "ConcealedHunterExamDoor"
-	entrance.add_to_group("system_interactable")
-	entrance.set_meta("system_hunter_exam_tunnel", true)
-	entrance.set_meta("system_facility_type", "hunter_examination_tunnel")
-	entrance.set_meta("system_display_name", "باب حجري قديم")
-	entrance.set_meta("system_interaction_prompt", "")
-	entrance.position = Vector3(0.0, 0.0, 88.0)
-	entrance.collision_layer = 0
-	entrance.collision_mask = 0
-	entrance.monitoring = false
-	entrance.monitorable = false
-	var entrance_shape := CollisionShape3D.new()
-	var entrance_sphere := SphereShape3D.new()
-	entrance_sphere.radius = 5.0
-	entrance_shape.shape = entrance_sphere
-	entrance.add_child(entrance_shape)
-	tunnel_root.add_child(entrance)
+	for index in range(8):
+		var light := OmniLight3D.new()
+		light.name = "HunterTunnelLight_%02d" % index
+		light.position = Vector3(0.0, 5.8, -10.0 + float(index) * 6.2)
+		light.light_color = Color(0.08, 0.72, 0.95)
+		light.light_energy = 1.15
+		light.omni_range = 11.0
+		tunnel_root.add_child(light)
 
-	# The descending passage exists behind the concealed door and is revealed
-	# only after solving the riddle.
-	var passage_material := _make_surface_material(Color(0.055, 0.09, 0.12), 0.9, 0.2)
-	for segment in range(10):
-		var t0 := float(segment) / 10.0
-		var t1 := float(segment + 1) / 10.0
-		var ramp := MeshInstance3D.new()
-		ramp.name = "HiddenExamPassageRamp_%02d" % segment
-		var ramp_mesh := BoxMesh.new()
-		ramp_mesh.size = Vector3(14.0, 0.65, 9.0)
-		ramp.mesh = ramp_mesh
-		var a := Vector3(0.0, -1.0 - t0 * 16.0, 100.0 + t0 * 90.0)
-		var b := Vector3(0.0, -1.0 - t1 * 16.0, 100.0 + t1 * 90.0)
-		ramp.position = (a + b) * 0.5
-		ramp.rotation.x = -atan2(b.y - a.y, b.z - a.z)
-		ramp.material_override = passage_material
-		ramp.visible = false
-		tunnel_root.add_child(ramp)
-		_add_static_box_collision(tunnel_root, ramp.name + "_Collision", ramp.position, ramp_mesh.size)
-		var ramp_body := tunnel_root.get_node_or_null(ramp.name + "_Collision") as StaticBody3D
-		if ramp_body != null:
-			ramp_body.rotation.x = ramp.rotation.x
-		var ramp_collision := tunnel_root.get_node_or_null(ramp.name + "_Collision/CollisionShape3D") as CollisionShape3D
-		if ramp_collision != null:
-			ramp_collision.disabled = true
+	var sign := Label3D.new()
+	sign.name = "HunterTunnelWelcomeSign"
+	sign.text = "SYSTEM HUNTER EXAMINATION\nنفق اختبار الصيادين"
+	sign.position = Vector3(0.0, 5.8, 6.0)
+	sign.font_size = 28
+	sign.pixel_size = 0.014
+	sign.modulate = Color(0.42, 0.9, 1.0)
+	tunnel_root.add_child(sign)
 
-	var light := OmniLight3D.new()
-	light.name = "SecretDoorRevealLight"
-	light.position = Vector3(0.0, -4.0, 91.0)
-	light.light_color = Color(0.04, 0.62, 0.9)
-	light.light_energy = 0.0
-	light.omni_range = 18.0
-	tunnel_root.add_child(light)
+	var guide := Area3D.new()
+	guide.name = "HunterGuildGuideInteraction"
+	guide.add_to_group("system_interactable")
+	guide.set_meta("system_hunter_exam_guide", true)
+	guide.set_meta("system_display_name", "مرشد نقابة الصيادين")
+	guide.set_meta("system_interaction_prompt", "تحدث مع مرشد نقابة الصيادين")
+	guide.position = Vector3(0.0, 0.0, 3.5)
+	guide.collision_layer = 1
+	guide.collision_mask = 0
+	var guide_shape := CollisionShape3D.new()
+	var guide_sphere := SphereShape3D.new()
+	guide_sphere.radius = 3.2
+	guide_shape.shape = guide_sphere
+	guide_shape.position.y = 1.0
+	guide.add_child(guide_shape)
+	var guide_marker := MeshInstance3D.new()
+	guide_marker.name = "GuildGuideMarker"
+	var guide_mesh := CapsuleMesh.new()
+	guide_mesh.radius = 0.55
+	guide_mesh.height = 2.2
+	guide_marker.mesh = guide_mesh
+	guide_marker.position.y = 1.1
+	var guide_material := StandardMaterial3D.new()
+	guide_material.albedo_color = Color(0.08, 0.22, 0.3)
+	guide_material.emission_enabled = true
+	guide_material.emission = Color(0.0, 0.3, 0.46)
+	guide_material.emission_energy_multiplier = 0.5
+	guide_marker.material_override = guide_material
+	guide.add_child(guide_marker)
+	var guide_label := Label3D.new()
+	guide_label.name = "GuildGuideName"
+	guide_label.text = "مرشد نقابة الصيادين"
+	guide_label.position = Vector3(0.0, 2.65, 0.0)
+	guide_label.font_size = 18
+	guide_label.pixel_size = 0.012
+	guide_label.modulate = Color(1.0, 0.82, 0.45)
+	guide.add_child(guide_label)
+	tunnel_root.add_child(guide)
 
-	tunnel_root.set_meta("system_tunnel_riddle_order", PackedInt32Array([1, 2, 3]))
-	tunnel_root.set_meta("system_tunnel_clue_count", 3)
-	tunnel_root.set_meta("system_tunnel_hidden_door", true)
-	tunnel_root.set_meta("system_tunnel_interaction_ready", true)
-	print("SYSTEM WORLD: concealed Hunter Examination riddle door prepared beneath Baghdad district.")
+	var return_button := Area3D.new()
+	return_button.name = "HunterExamElevatorReturnButton"
+	return_button.add_to_group("system_interactable")
+	return_button.set_meta("system_hunter_exam_elevator_button", true)
+	return_button.set_meta("system_hunter_exam_elevator_direction", "up")
+	return_button.set_meta("system_display_name", "مصعد العودة")
+	return_button.set_meta("system_interaction_prompt", "العودة إلى غرفة المطعم عبر المصعد")
+	return_button.position = Vector3(0.0, 0.0, -5.0)
+	return_button.collision_layer = 1
+	return_button.collision_mask = 0
+	var return_shape := CollisionShape3D.new()
+	var return_sphere := SphereShape3D.new()
+	return_sphere.radius = 2.5
+	return_shape.shape = return_sphere
+	return_shape.position.y = 1.0
+	return_button.add_child(return_shape)
+	tunnel_root.add_child(return_button)
+
+	tunnel_root.set_meta("system_hunter_exam_guide_present", true)
+	tunnel_root.set_meta("system_hunter_exam_return_elevator_present", true)
+	print("SYSTEM WORLD: one continuous Hunter Examination tunnel, guild guide and elevator return point created.")
+
 
 func _nearest_land_position(origin: Vector2) -> Vector2:
 	if terrain.call("is_land_position", origin.x, origin.y):
