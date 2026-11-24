@@ -76,6 +76,11 @@ func _run() -> void:
 			return
 
 		var showcase := facility.get_node_or_null("ShoppingShowcase") as Node3D
+		var general_service := facility.get_node_or_null("FacilityServiceInteraction") as Area3D
+		var general_service_shape := general_service.get_node_or_null("CollisionShape3D") as CollisionShape3D if general_service != null else null
+		if general_service_shape == null or general_service_shape.position.z > -4.5:
+			_fail("Floor %d generic department service target overlaps its product showcase interaction zones." % floor_number)
+			return
 		if showcase == null:
 			_fail("Floor %d is missing its 3D ShoppingShowcase." % floor_number)
 			return
@@ -131,12 +136,28 @@ func _run() -> void:
 			var expected_control_name := "ShoppingProduct_" + product_id
 			if str(product.get("product_type", "")) == "skill_training_permit":
 				expected_control_name = "SkillManualPurchase_" + str(product.get("skill_id", ""))
-			if content == null or content.find_child(expected_control_name, true, false) == null:
-				_fail("Floor %d product %s has no matching purchase control (%s)." % [floor_number, product_id, expected_control_name])
+			var selected_control: Button = null
+			var selected_preview: Label = null
+			if content != null:
+				for child in content.get_children():
+					if child.is_queued_for_deletion():
+						continue
+					if child is Button and str(child.name) == expected_control_name:
+						selected_control = child
+					elif child is Label and str(child.name) == "SelectedShowcaseProductPreview" and str(child.get_meta("system_showcase_product_id", "")) == product_id:
+						selected_preview = child
+			if selected_control == null or not selected_control.visible:
+				_fail("Floor %d product %s has no visible, live purchase control (%s)." % [floor_number, product_id, expected_control_name])
 				return
-			if content.find_child("SelectedShowcaseProductPreview", true, false) == null:
-				_fail("Floor %d product %s did not render its selected product preview." % [floor_number, product_id])
+			if selected_preview == null:
+				_fail("Floor %d product %s did not render its own live selected product preview." % [floor_number, product_id])
 				return
+			for child in content.get_children():
+				if child is Button and not child.is_queued_for_deletion() and child != selected_control:
+					var child_name := str(child.name)
+					if (child_name.begins_with("ShoppingProduct_") or child_name.begins_with("SkillManualPurchase_")) and child.visible:
+						_fail("Floor %d product %s left unrelated purchase control %s visible." % [floor_number, product_id, child_name])
+						return
 			total_purchase_routes += 1
 
 		if floor_displays != 3:

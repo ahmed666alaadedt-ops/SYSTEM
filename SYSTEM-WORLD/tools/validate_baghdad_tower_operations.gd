@@ -1357,7 +1357,8 @@ func _run() -> void:
 		var service_area := facility.get_node_or_null("FacilityServiceInteraction") as Area3D if facility != null else null
 		var facility_title := facility.get_node_or_null("FacilityTitle") as Label3D if facility != null else null
 		var showcase := facility.get_node_or_null("ShoppingShowcase") as Node3D if facility != null else null
-		if facility == null or service_area == null or not service_area.is_in_group("system_interactable") or str(service_area.get_meta("system_facility_type", "")) != expected_type or facility_title == null or not facility_title.text.contains("SYSTEM |"):
+		var service_shape := service_area.get_node_or_null("CollisionShape3D") as CollisionShape3D if service_area != null else null
+		if facility == null or service_area == null or not service_area.is_in_group("system_interactable") or str(service_area.get_meta("system_facility_type", "")) != expected_type or facility_title == null or not facility_title.text.contains("SYSTEM |") or service_shape == null or service_shape.position.z > -4.5:
 			_fail("Shopping Tower floor %d is missing its assigned physical, bilingual, interactive department %s." % [floor_number, expected_type])
 			return
 		if showcase == null or str(showcase.get_meta("system_showcase_category", "")) != expected_type or int(showcase.get_meta("system_showcase_floor", -1)) != floor_number or showcase.get_node_or_null("ShowcaseItem_00") == null or showcase.get_node_or_null("ShowcaseItem_01") == null or showcase.get_node_or_null("ShowcaseItem_02") == null:

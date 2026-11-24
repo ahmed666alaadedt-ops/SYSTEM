@@ -2275,18 +2275,24 @@ func open_showcase_product_service(tower_id: String, floor_number: int, facility
 	var purchase_control_name := "ShoppingProduct_" + product_id
 	if str(product_data.get("product_type", "")) == "skill_training_permit":
 		purchase_control_name = "SkillManualPurchase_" + str(product_data.get("skill_id", ""))
-	var product_button := content.find_child(purchase_control_name, true, false) as Button if content != null else null
+	var product_button: Button = null
+	if content != null:
+		for child in content.get_children():
+			if child is Button and not child.is_queued_for_deletion() and str(child.name) == purchase_control_name:
+				product_button = child
+				break
 	if product_button == null:
 		_set_status("هذا المنتج غير معروض للبيع في هذا الطابق.")
 		return false
 	for child in content.get_children():
-		if child is Button and child != product_button:
+		if child is Button and not child.is_queued_for_deletion() and child != product_button:
 			var child_name := str(child.name)
 			if child_name.begins_with("ShoppingProduct_") or child_name.begins_with("SkillManualPurchase_"):
 				child.hide()
 	var product_name := str(product_data.get("name", product_id))
 	var preview := Label.new()
 	preview.name = "SelectedShowcaseProductPreview"
+	preview.set_meta("system_showcase_product_id", product_id)
 	preview.text = "معاينة المنتج: %s\nالسعر الحالي: %d رصيد SYSTEM | الرتبة المطلوبة: %s | المخزون: %d" % [product_name, _get_current_price(product_id), str(product_data.get("required_rank", "F")), get_vendor_stock(product_id)]
 	preview.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content.add_child(preview)
@@ -4452,7 +4458,7 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 	var sphere := SphereShape3D.new()
 	sphere.radius = 3.0
 	shape.shape = sphere
-	shape.position = Vector3(0.0, 1.2, 0.0)
+	shape.position = Vector3(0.0, 1.2, -5.8) if facility_type.begins_with("shopping_") else Vector3(0.0, 1.2, 0.0)
 	interaction.add_child(shape)
 	root.add_child(interaction)
 

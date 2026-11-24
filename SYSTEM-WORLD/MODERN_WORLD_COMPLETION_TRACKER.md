@@ -1827,3 +1827,10 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - [x] Added a focused preview service: interacting with a display opens its floor's normal purchase controls, hides unrelated product buttons, and shows the selected item's current price, required rank and stock.
 - [x] Extended the end-to-end regression to interact with the physical floor-5 sword display, require the selected sword preview, hide unrelated products, purchase the sword, verify inventory receipt, equip it and unequip it.
 - [ ] Exact-HEAD comprehensive Godot operations validation and Android export for this direct interaction path are pending.
+
+
+## Shopping Tower interaction-target isolation and live purchase-control verification — 24 November 2026
+- [x] Shopping department-wide interaction targets are positioned at the service counter, outside all product display interaction spheres; individual product displays remain directly selectable.
+- [x] Focused product previews ignore queued-for-deletion controls when choosing the selected purchase button, preventing an earlier floor's same-ID product from intercepting the current selection.
+- [x] Preview labels carry the exact selected catalog product ID. The dedicated showcase validator now checks the live visible selected purchase button, matching live preview, and hides unrelated purchase controls for every displayed product, including floor-4 skill permits.
+- [ ] Exact-HEAD full Godot suite and APK verification for this interaction-isolation pass are pending.
