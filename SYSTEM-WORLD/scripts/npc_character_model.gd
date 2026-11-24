@@ -41,7 +41,7 @@ func configure(profile: Dictionary, palette_index: int = 0) -> void:
 		age_group = "child" if age_value < 18.0 else ("elder" if age_value >= 60.0 else "adult")
 	if age_group in ["طفل", "طفلة", "child", "children"]:
 		age_group = "child"
-	elif age_group in ["كبير السن", "مسن", "مسنة", "elderly", "senior"]:
+	elif age_group in ["elder", "elders", "كبير السن", "مسن", "مسنة", "elderly", "senior", "older_adult"]:
 		age_group = "elder"
 	else:
 		age_group = "adult"
