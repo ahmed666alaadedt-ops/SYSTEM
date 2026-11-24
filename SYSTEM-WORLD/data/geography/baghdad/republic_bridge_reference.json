@@ -3,8 +3,15 @@
   "region_id": "iraq_baghdad_region",
   "coordinate_reference_system": "EPSG:4326",
   "local_projection": "SYSTEM_LOCAL_ECEF_TANGENT",
-  "local_axes": { "x": "east_m", "z": "south_m" },
-  "origin": { "latitude": 33.3152, "longitude": 44.3661, "altitude_m": 0 },
+  "local_axes": {
+    "x": "east_m",
+    "z": "south_m"
+  },
+  "origin": {
+    "latitude": 33.3152,
+    "longitude": 44.3661,
+    "altitude_m": 0
+  },
   "source": {
     "provider": "OpenStreetMap contributors via BBBike.org",
     "snapshot_timestamp": "2026-11-19T23:32:47Z",
@@ -13,37 +20,219 @@
     "source_artifact_id": 14629100933
   },
   "republic_bridge": {
-    "name": { "ar": "جسر الجمهورية", "en": "Republic Bridge" },
+    "name": {
+      "ar": "جسر الجمهورية",
+      "en": "Republic Bridge"
+    },
     "osm_bridge_polygon_way_id": 1077808833,
     "osm_bridge_centerline_way_id": 4080878,
     "wikidata_id": "Q35587674",
-    "center_wgs84": { "latitude": 33.3246635384, "longitude": 44.4043766854 },
-    "center_local_m": { "east": 3563.921, "up": -1.081, "south": -1050.256 },
-    "bounds_wgs84": { "west": 44.4010828, "south": 33.3222815, "east": 44.4075955, "north": 33.3269858 },
+    "center_wgs84": {
+      "latitude": 33.3246635384,
+      "longitude": 44.4043766854
+    },
+    "center_local_m": {
+      "east": 3563.921,
+      "up": -1.081,
+      "south": -1050.256
+    },
+    "bounds_wgs84": {
+      "west": 44.4010828,
+      "south": 33.3222815,
+      "east": 44.4075955,
+      "north": 33.3269858
+    },
     "centerline_local_m": [
-      { "east_m": 3850.804, "south_m": -1301.474 },
-      { "east_m": 3808.921, "south_m": -1264.313 },
-      { "east_m": 3778.987, "south_m": -1238.903 },
-      { "east_m": 3759.246, "south_m": -1222.081 },
-      { "east_m": 3408.967, "south_m": -922.938 }
+      {
+        "east_m": 3850.804,
+        "south_m": -1301.474
+      },
+      {
+        "east_m": 3808.921,
+        "south_m": -1264.313
+      },
+      {
+        "east_m": 3778.987,
+        "south_m": -1238.903
+      },
+      {
+        "east_m": 3759.246,
+        "south_m": -1222.081
+      },
+      {
+        "east_m": 3408.967,
+        "south_m": -922.938
+      }
+    ],
+    "osm_secondary_centerline_way_id": 754157537,
+    "secondary_centerline_local_m": [
+      {
+        "east_m": 3413.224,
+        "south_m": -917.605
+      },
+      {
+        "east_m": 3762.59,
+        "south_m": -1216.981
+      },
+      {
+        "east_m": 3812.535,
+        "south_m": -1259.59
+      },
+      {
+        "east_m": 3856.617,
+        "south_m": -1294.267
+      }
+    ],
+    "polygon_outline_local_m": [
+      {
+        "east_m": 3403.315,
+        "south_m": -925.188
+      },
+      {
+        "east_m": 3406.098,
+        "south_m": -927.44
+      },
+      {
+        "east_m": 3803.575,
+        "south_m": -1266.762
+      },
+      {
+        "east_m": 3845.02,
+        "south_m": -1307.926
+      },
+      {
+        "east_m": 3846.613,
+        "south_m": -1306.053
+      },
+      {
+        "east_m": 3848.336,
+        "south_m": -1304.035
+      },
+      {
+        "east_m": 3850.804,
+        "south_m": -1301.474
+      },
+      {
+        "east_m": 3856.617,
+        "south_m": -1294.267
+      },
+      {
+        "east_m": 3861.508,
+        "south_m": -1288.346
+      },
+      {
+        "east_m": 3862.309,
+        "south_m": -1287.37
+      },
+      {
+        "east_m": 3863.529,
+        "south_m": -1286.129
+      },
+      {
+        "east_m": 3814.447,
+        "south_m": -1252.592
+      },
+      {
+        "east_m": 3417.462,
+        "south_m": -913.48
+      },
+      {
+        "east_m": 3414.679,
+        "south_m": -911.239
+      },
+      {
+        "east_m": 3273.043,
+        "south_m": -789.599
+      },
+      {
+        "east_m": 3268.808,
+        "south_m": -785.96
+      },
+      {
+        "east_m": 3267.774,
+        "south_m": -787.202
+      },
+      {
+        "east_m": 3267.121,
+        "south_m": -788
+      },
+      {
+        "east_m": 3265.286,
+        "south_m": -790.218
+      },
+      {
+        "east_m": 3260.75,
+        "south_m": -795.706
+      },
+      {
+        "east_m": 3259.93,
+        "south_m": -796.704
+      },
+      {
+        "east_m": 3258.496,
+        "south_m": -798.445
+      },
+      {
+        "east_m": 3257.313,
+        "south_m": -799.876
+      }
     ]
   },
   "tigris_river": {
-    "name": { "ar": "نهر دجلة", "en": "Tigris River" },
+    "name": {
+      "ar": "نهر دجلة",
+      "en": "Tigris River"
+    },
     "osm_way_id": 24709603,
     "centerline_local_m": [
-      { "east_m": 2950.856, "south_m": -1711.172 },
-      { "east_m": 2998.874, "south_m": -1667.898 },
-      { "east_m": 3091.459, "south_m": -1568.330 },
-      { "east_m": 3245.072, "south_m": -1403.135 },
-      { "east_m": 3405.060, "south_m": -1231.079 },
-      { "east_m": 3568.920, "south_m": -1054.879 },
-      { "east_m": 3672.925, "south_m": -951.538 },
-      { "east_m": 3817.059, "south_m": -764.111 },
-      { "east_m": 3900.811, "south_m": -655.209 },
-      { "east_m": 4019.305, "south_m": -501.125 },
-      { "east_m": 4096.676, "south_m": -386.654 },
-      { "east_m": 4170.292, "south_m": -238.387 }
+      {
+        "east_m": 2950.856,
+        "south_m": -1711.172
+      },
+      {
+        "east_m": 2998.874,
+        "south_m": -1667.898
+      },
+      {
+        "east_m": 3091.459,
+        "south_m": -1568.33
+      },
+      {
+        "east_m": 3245.072,
+        "south_m": -1403.135
+      },
+      {
+        "east_m": 3405.06,
+        "south_m": -1231.079
+      },
+      {
+        "east_m": 3568.92,
+        "south_m": -1054.879
+      },
+      {
+        "east_m": 3672.925,
+        "south_m": -951.538
+      },
+      {
+        "east_m": 3817.059,
+        "south_m": -764.111
+      },
+      {
+        "east_m": 3900.811,
+        "south_m": -655.209
+      },
+      {
+        "east_m": 4019.305,
+        "south_m": -501.125
+      },
+      {
+        "east_m": 4096.676,
+        "south_m": -386.654
+      },
+      {
+        "east_m": 4170.292,
+        "south_m": -238.387
+      }
     ]
   }
 }
