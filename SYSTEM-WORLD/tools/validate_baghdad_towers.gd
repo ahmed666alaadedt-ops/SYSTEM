@@ -98,21 +98,54 @@ func _run_validation() -> void:
 	if tower_manager.district_tower_positions.size() != 5:
 		_fail("The connected Baghdad district must contain exactly five towers.")
 		return
+	var district_ids: Dictionary = {}
+	var hunter_record: Dictionary = {}
 	for district_record in tower_manager.district_tower_positions:
+		var district_id := str(district_record.get("id", ""))
+		if district_ids.has(district_id) or district_id == "power_tower_baghdad":
+			_fail("The five-tower district contains a duplicate or standalone Power Tower entry.")
+			return
+		district_ids[district_id] = true
 		var district_position: Vector3 = district_record.get("position", Vector3.INF)
+		var district_height := float(district_record.get("height", 0.0))
 		var horizontal_distance := Vector2(district_position.x - bridge_anchor.x, district_position.z - bridge_anchor.z).length()
 		if horizontal_distance > 900.0:
-			_fail("A connected Baghdad tower is outside the Republic Bridge / Tigris district: " + str(district_record.get("id", "unknown")))
+			_fail("A connected Baghdad tower is outside the Republic Bridge / Tigris district: " + district_id)
 			return
-		if str(district_record.get("id", "")) != "hunter_association_tower_baghdad" and not bool(terrain.call("is_land_position", district_position.x, district_position.z)):
-			_fail("A riverbank tower is not supported by playable land: " + str(district_record.get("id", "unknown")))
+		if district_id == "hunter_association_tower_baghdad":
+			hunter_record = district_record
+			if district_height < 1000.0 or Vector2(district_position.x - bridge_anchor.x, district_position.z - bridge_anchor.z).length() > 0.5 or absf(district_position.y - 18.0) > 0.1:
+				_fail("Hunter Association Tower must be the 1000 m landmark seated directly on the Republic Bridge deck.")
+				return
+		elif district_height >= 1000.0:
+			_fail("A non-Hunter Baghdad district tower incorrectly matches or exceeds the Hunter Tower height.")
+			return
+		if district_id != "hunter_association_tower_baghdad" and not bool(terrain.call("is_land_position", district_position.x, district_position.z)):
+			_fail("A riverbank tower is not supported by playable land: " + district_id)
+			return
+	for expected_district_id in EXPECTED_TOWER_IDS.slice(0, 5):
+		if not district_ids.has(expected_district_id):
+			_fail("The connected district is missing approved tower: " + str(expected_district_id))
 			return
 	var upper_city := tower_manager.get_node_or_null("BaghdadUpperSkyCity") as Node3D
 	if upper_city == null or int(upper_city.get_meta("system_upper_city_blocks", 0)) != 4 or not bool(upper_city.get_meta("system_power_tower_excluded", false)):
 		_fail("The playable upper Baghdad sky city is missing, incomplete or incorrectly includes Power Tower.")
 		return
-	if upper_city.get_node_or_null("HunterTowerUpperCityAtriumRing") == null or upper_city.get_node_or_null("HunterAtriumWalkway_North_Collision") == null or upper_city.get_node_or_null("HunterAtriumSkyway_00") == null:
-		_fail("The upper city does not provide a walkable Hunter Tower atrium and connected skyways.")
+	if Vector2(upper_city.position.x - bridge_anchor.x, upper_city.position.z - bridge_anchor.z).length() > 0.1 or absf(float(upper_city.get_meta("system_upper_city_elevation_m", 0.0)) - 270.0) > 0.1:
+		_fail("The upper Baghdad city is not centered over the five-tower Republic Bridge district at its approved 270 m elevation.")
+		return
+	var upper_city_blocks := 0
+	for city_child in upper_city.get_children():
+		if city_child.name.begins_with("UpperCityBlock_"):
+			upper_city_blocks += 1
+			if city_child.get_node_or_null("UpperCityPlatformCollision") == null:
+				_fail("An upper-city block has no physical walkable platform.")
+				return
+	if upper_city_blocks != 4:
+		_fail("The upper city must contain exactly four physical district blocks above the riverbank towers.")
+		return
+	if upper_city.get_node_or_null("HunterTowerUpperCityAtriumRing") == null or upper_city.get_node_or_null("HunterAtriumWalkway_North_Collision") == null or upper_city.get_node_or_null("HunterAtriumSkyway_00") == null or upper_city.get_node_or_null("UpperCitySkyway_00") == null:
+		_fail("The upper city does not provide the Hunter Tower atrium and connected walkable skyways.")
 		return
 
 	for district_record in tower_manager.district_tower_positions:
@@ -158,6 +191,9 @@ func _run_validation() -> void:
 	var hunter_pad := hunter_tower.get_node_or_null("HunterAssociationHelipad") as Node3D if hunter_tower != null else null
 	if hunter_pad == null or str(hunter_pad.get_meta("system_landing_zone_status", "")) != "operational_controller_attached" or hunter_pad.get_node_or_null("HunterAssociationHelicopter") == null:
 		_fail("Hunter Tower rooftop helicopter pad is not connected to its live flight controller and aircraft.")
+		return
+	if hunter_record.is_empty() or hunter_pad.position.y <= float(hunter_record.get("height", 0.0)):
+		_fail("Hunter helicopter pad must be physically positioned above the tallest Hunter Tower roof.")
 		return
 	var hunter_facades := hunter_tower.get_node_or_null("HunterTowerAdvertisingFacades") as Node3D if hunter_tower != null else null
 	if hunter_facades == null or int(hunter_facades.get_meta("system_advertising_screen_count", 0)) < 12:
