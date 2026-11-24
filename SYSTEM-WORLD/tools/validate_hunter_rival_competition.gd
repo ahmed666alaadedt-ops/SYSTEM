@@ -55,6 +55,22 @@ func _run() -> void:
 			break
 	if not _check(recovered and bool(rivals.call("can_continue_objectives")), "Player could not recover the stolen objective from the thief."):
 		return
+	rivals.call("record_player_objective", "second_relic")
+	for attempt in range(100):
+		if bool(rivals.call("get_competition_status").get("objective_stolen", false)):
+			break
+		rivals.call("_perform_action")
+	if not _check(bool(rivals.call("get_competition_status").get("objective_stolen", false)), "Thief did not steal the second objective for defeated-thief recovery validation."):
+		return
+	var thief_entry: Dictionary = rivals.get("rivals").get("rival_ren")
+	var thief_actor: Node = thief_entry.get("node")
+	thief_actor.call("take_damage", 95.0, player)
+	var thief_interaction := thief_actor.get_node("RivalInteraction") as Area3D
+	if not _check(thief_interaction.monitoring, "Defeated thief interaction was disabled before the stolen objective could be recovered."):
+		return
+	var defeated_thief_recovery: Dictionary = rivals.call("handle_rival_interaction", "rival_ren")
+	if not _check(bool(defeated_thief_recovery.get("recovered", false)) and bool(rivals.call("can_continue_objectives")), "Stolen objective could not be recovered after defeating the thief."):
+		return
 	var deceiver: Dictionary = rivals.call("handle_rival_interaction", "rival_kai")
 	if not _check(bool(deceiver.get("handled", false)), "Deceiver interaction was not handled."):
 		return
