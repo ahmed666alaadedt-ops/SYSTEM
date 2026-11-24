@@ -11,6 +11,16 @@ Branch: `feature/baghdad-five-plus-power-tower-20261122`
 - Build the Hunter Association Tower's **uppermost rooftop helipad above the tower** with safe approach/landing clearance, a player-accessible arrival/departure interaction, and a working connection to the world's travel/transport system. It is gameplay infrastructure, not decorative scenery.
 - The Hunter tower must have prominent internal-facing and external-facing advertising facades/screens integrated into its architecture; advertising surfaces must be visible from both the elevated city and the outside skyline.
 
+## Public population, families and visitor density
+- The five connected Baghdad towers must feel like busy, inhabited public destinations, not empty architectural shells.
+- Maintain **100 visible customer/visitor NPCs in each tower (500 total)** across the Hunter Association, Business and Investment, Shopping and Commerce, Entertainment and Sports, and Technology and Innovation towers.
+- Each tower's public population includes **20 children, 20 elderly visitors and 60 adults**, with distinct age-appropriate character models and varied appearances.
+- Children are civilians, do not fight or enter the Hunter Examination as candidates, and remain linked to visible adult guardians/family groups while visiting.
+- Children do not make independent purchases; their accompanying adult guardian handles family purchases.
+- Visitors follow daily routines across lobby cafes, shopping/service areas, lounges and public spaces; two visitors may ride the elevator with the player to an active floor while the rest of the population remains present in the public lobby.
+- Use visual/animation LOD for distant visitors to protect Android performance, while preserving the full nearby crowd around the player.
+- The independent Power Tower is excluded from the 500-customer count and retains its separate challenge audience/staff systems.
+
 ## Shopping and Trade Tower — specialist floors
 The existing Shopping Tower already defines weapons merchant and elixir pharmacist roles. Expand those existing vendor/floor systems rather than creating a duplicate shop system.
 
