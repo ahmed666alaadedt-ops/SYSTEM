@@ -91,7 +91,9 @@ func _run_validation() -> void:
 		return
 	if not _check(private_room.get_node_or_null("ServedMealPresentation") != null, "Served meal presentation was not transferred from the dining table into the private room."):
 		return
-	if not _check(bool(operations.get("restaurant_orders").get("qa_restaurant_table", {}).get("hunter_exam_room_delivery", false)), "Restaurant order did not record the room delivery handoff."):
+	var persisted_orders: Dictionary = operations.get("restaurant_orders")
+	var delivered_order: Dictionary = persisted_orders.get("qa_restaurant_table", {})
+	if not _check(bool(delivered_order.get("hunter_exam_room_delivery", false)), "Restaurant order did not record the room delivery handoff."):
 		return
 
 	main.call("_on_interaction_performed", down_button, "")
