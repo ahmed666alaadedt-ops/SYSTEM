@@ -1596,3 +1596,49 @@ Exact gameplay/validator HEAD: `f86bbaa933629acad51639bde949d76be705303f`.
 - [ ] Keep the existing seven-stage examination, three-inscription sequence, registration requirement, physical tunnel descent, completed tower interiors, and verified restaurant lifecycle. Extend these systems; do not replace or regress them.
 - [ ] Before runtime placement changes, identify the exact Republic Bridge/Tigris anchor from approved geospatial source data. The current geography notes explicitly warn that the Baghdad map pack/bridge layers are not yet fully approved; do not invent real-world coordinates or claim map accuracy.
 - [ ] Re-run Godot tower/runtime validation and Android export after the runtime layout and restaurant-entry integration are implemented. Existing exact-HEAD test success applies to the old placement, not to the corrected layout.
+
+
+---
+
+## Baghdad Republic Bridge five-tower district — runtime implementation and verification (2026-11-24)
+
+**This section supersedes the open runtime-layout and restaurant-entry gaps recorded in the preceding Baghdad audit.** Work remains isolated to `feature/baghdad-five-plus-power-tower-20261122` and draft PR #38; nothing has been merged to `main`.
+
+### Approved runtime layout now implemented
+
+- [x] The five Baghdad towers are anchored to the verified Republic Bridge/Tigris reference rather than generic city-anchor offsets: Hunter Association, Business and Investment, Shopping and Commerce, Entertainment and Sports, and Technology and Innovation.
+- [x] Republic Bridge is built from the verified OSM polygon outline (way 1077808833), with a triangulated deck mesh, physical concave collision, and guardrails. The deck is aligned at 18.0 m with the bank terrain.
+- [x] Both OSM roadway centerlines (ways 4080878 and 754157537) are rendered at 18.08 m on the bridge deck; the Tigris surface uses verified OSM waterway way 24709603.
+- [x] The bridge/tower reference uses the WGS84-derived local frame in `republic_bridge_reference.json`; the latest source workflow independently verified the same bridge polygon, both centerlines, and Tigris feature against the current OSM extract.
+- [x] A blended, playable land approach connects the existing continent to the bridge district. The four non-Hunter towers are placed on the riverbanks; the Hunter Association Tower occupies the bridge platform.
+- [x] The Hunter tower remains the tallest of the five (1000 m). Its public lobby aligns with the bridge deck; twelve outward-facing advertising facades and the internal lobby advertising panels are present.
+- [x] The helicopter landing pad is positioned above the Hunter tower and its runtime controller creates the helicopter.
+- [x] The upper sky city is positioned above the five-tower cluster at the approved upper level. Four walkable city blocks and connecting skyways link the four bank towers to the Hunter atrium ring.
+- [x] The Power Tower was not modified or added to the Baghdad district. It remains a separate standalone destination; its existing boss-arena behavior was only included in regression validation.
+
+### Hunter examination tunnel and restaurant integration
+
+- [x] The three surface clues remain at their riverbank locations and retain the Eye → River → Crown sequence.
+- [x] The concealed tunnel root is physically repositioned beneath Shopping Tower restaurant floor 29 when that floor is generated. The clue locations remain unchanged.
+- [x] The restaurant entrance Area3D remains undetectable before the riddle is solved. If the riddle is solved before the restaurant floor loads, the entrance remains concealed until the restaurant placement is ready.
+- [x] After the third clue is solved, the hidden door slab rises, its blocking collision is removed, the framed doorway remains physically supported, the descending passage becomes visible/collidable, and the restaurant entrance becomes interactable.
+- [x] Hunter registration remains required before tunnel entry. The existing seven playable examination stages were preserved.
+
+### Verified source and test results
+
+- [x] **OSM source verification:** workflow run [45404681838](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45404681838) succeeded. Artifact 14925575635 contains the extended metric cell pack; the pack has 276 occupied cells, including bridge/Tigris cell `17_-6`. The bridge polygon, primary/secondary centerlines, and Tigris feature were verified from the current OSM extract.
+- [x] **Canonical runtime validation:** workflow run [45404778901](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45404778901) succeeded, including Baghdad tower landmarks, tower operations/elevator staff/emergency evacuation, hidden Hunter tunnel entry, and all seven examination stages.
+- [x] **Full Godot project validation:** workflow run [45405266091](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45405266091) succeeded on commit `d42cfbd6f2be8ea46d37802f4845588b500bda0c`. Import/parse, child-character safety, mesh-resource scan, main-scene launch, Baghdad landmarks/lobbies, tower interiors, NPC commerce, advertising, Power Tower boss-arena regression, restaurant/tunnel entry, and all seven Hunter stages passed.
+- [x] **OSM runtime geometry validation:** passed inside the canonical Android workflow. The Godot test loaded the Baghdad core cell and bridge/Tigris cell `17_-6`, found both bridge centerlines and Tigris geometry, and verified the bridge-road height override.
+- [x] **Canonical Android APK:** workflow run [45405266189](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45405266189) succeeded on the same commit. The extended OSM pack was installed before export, and the APK was exported and uploaded.
+  - Artifact: `SYSTEM-WORLD-canonical-android-debug-apk`, ID `14925196373`.
+  - APK size: 36,629,288 bytes.
+  - APK SHA-256: `cd7b97965b0b3166e5dfcfd04d001f8cb09794118a238e287ce86793518ffe81`.
+  - Artifact expiry: 2026-12-08.
+- [ ] Physical Android-device installation/play testing remains outstanding; successful headless Godot validation and APK export do not claim device QA.
+
+### Merge and scope guard
+
+- [x] PR #38 remains **open and draft**, with base `main`; no merge was performed.
+- [x] No Power Tower gameplay/system files were changed as part of this Baghdad implementation.
+- [ ] Merge remains blocked until the user explicitly approves it.
