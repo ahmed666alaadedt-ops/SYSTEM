@@ -24,6 +24,15 @@ Create distinct, explorable specialist floors/sections with NPC merchants, item 
 
 All categories must respect world-specific equipment rules: modern weapons/gear belong to the modern world; historical weapons belong to historical settings; magical/fantasy equipment belongs to fantasy settings. The shop can expose catalogues across categories but must clearly label compatibility and prevent invalid equipment use. Stock, economy, and rewards must remain balanced.
 
+## Five-tower elevated public gardens — user-confirmed scope
+
+- Each of the five connected Baghdad civic towers (Hunter Association, Business and Investment, Shopping and Commerce, Entertainment and Sports, Technology and Innovation) has exactly three dedicated elevated public sky gardens.
+- Each garden is a walkable ring promenade around the tower shaft, with physical floor collision and clear central-shaft clearance.
+- Every garden includes transparent perimeter safety rails, planted beds, trees, benches, path lighting, Arabic/English identity signage, and a nearby interaction trigger mapped to its host tower and floor.
+- The three garden decks are distributed across lower, middle and upper tower levels and reached through the host tower's floor/elevator system; do not treat decorative rooftop garden meshes as completion.
+- The five-tower gardens are part of the connected Baghdad district. The standalone Power Tower is excluded.
+- Garden validation must check all fifteen garden instances, their floor collisions, railings, landscaping, seating and interaction/floor metadata in Godot.
+
 ## Hunter Association Tower and hidden examination entrance
 - The Hunter Association Tower is one of the five connected Baghdad district towers and is specifically located above Republic Bridge on the Tigris riverfront. Mayar is its president and presents verified Hunter Association awards at formal ceremonies.
 - Preserve the already implemented hidden underground test route, its three-inscription puzzle, registration prerequisite, and physical transition into the lower passage. Do not make the entrance openly visible or directly accessible from the street.
