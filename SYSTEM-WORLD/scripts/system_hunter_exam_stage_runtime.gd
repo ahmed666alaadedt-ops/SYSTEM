@@ -278,7 +278,9 @@ func _build_additional_stage(stage_id: String) -> Dictionary:
 	if not configs.has(stage_id):
 		return {"success":false,"reason":"STAGE_ENVIRONMENT_NOT_BUILT","stage_id":stage_id}
 	var config: Dictionary = configs[stage_id]
-	stage_objectives = config["objectives"].duplicate()
+	stage_objectives.clear()
+	for objective_value in config["objectives"]:
+		stage_objectives.append(str(objective_value))
 	stage_objective_progress = 0
 	var site := Node3D.new()
 	site.name = "ExaminationSite_" + stage_id
