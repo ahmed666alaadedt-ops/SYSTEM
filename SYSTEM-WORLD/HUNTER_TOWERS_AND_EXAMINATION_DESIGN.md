@@ -2,7 +2,7 @@
 
 ## Canonical design
 
-Baghdad has **five connected district towers plus one separate Power Tower**. The five connected towers are Hunter Association, Weapons, Equipment and Elixirs, Shopping and Commerce, Entertainment and Sports, and Technology and Innovation. The Power Tower is a separate destination, is not counted among those five, and must not join their skybridge or vehicle-deck loop.
+Baghdad has **five connected district towers plus one separate Power Tower**. The five connected towers are: Hunter Association; Business and Investment; Shopping and Commerce; Entertainment and Sports; Technology and Innovation. Weapons, armor, helmets, equipment upgrades, repairs, crafting, and elixirs are departments inside Shopping and Commerce Tower, not a separate tower. The Power Tower is a separate destination, is not counted among those five, and must not join their skybridge or vehicle-deck loop.
 
 The World Hunter Association Tower is the global Hunter headquarters and public symbol of the organization. It remains the tallest tower in the five-tower district (approximately 1,000 m in the current blockout). The separate Power Tower is a 200-floor challenge destination with its own entrance, progression, arenas, spectator facilities, and rewards. Its current exterior blockout is approximately 820 m tall with 200 visible floor bands, keeping the Hunter headquarters taller.
 
@@ -116,8 +116,8 @@ The five-tower concept is a connected urban district, not five isolated landmark
 
 ### Five tower identities
 1. Hunter Association Tower — hunter registration, mission hall, examination administration, guild services, and Hall of Honor.
-2. Weapons, Equipment and Elixirs Tower — all weapon classes, swords, spears, axes, bows, firearms, shields, helmets, armor, combat outfits, equipment upgrades, Nen-acquisition and Nen-development elixirs, healing elixirs, and strength, speed, endurance, and energy elixirs.
-3. Shopping and Commerce Tower — connected malls, shops, restaurants, cinemas, and indoor public promenades.
+2. Business and Investment Tower — offices, investment services, company headquarters, business services, and commercial development.
+3. Shopping and Commerce Tower — connected malls, shops, restaurants, cinemas, indoor public promenades, and the weapons/equipment/elixirs departments (all weapon classes, armor, helmets, combat outfits, upgrades, repairs, crafting, and healing/strength/speed/endurance/energy/Nen elixirs).
 4. Entertainment and Sports Tower — amusement, sports, pools, family activities, festivals, and recreation.
 5. Technology and Innovation Tower — research campuses, laboratories, robotics, engineering, digital services, startup incubators, and technology exhibitions.
 
