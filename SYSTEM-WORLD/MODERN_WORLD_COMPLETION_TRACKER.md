@@ -15,7 +15,9 @@
 - [x] Implemented the concealed entrance inside Shopping Tower restaurant floor 29: the Eye → River → Crown clue sequence resets on wrong order, the disguised stone slab remains locked until formal Hunter Association registration, and the revealed elevator performs a timed physical descent to the underground tunnel.
 - [x] Moved formal candidate registration to the Hunter Association Tower menu, made the guild guide direct registered candidates to the restaurant, and gated exam start on both solved riddle and physical tunnel arrival.
 - [x] Rewrote the tunnel-entry regression to exercise invitation decline/acceptance, tower registration, wrong-order reset, clue sequence, registration gate, stone-door reveal, elevator descent, persistent serial, 500-candidate crowd, and Baghdad stage-one activation.
-- [ ] Exact-head Godot validation and Android export for the new restaurant entrance flow are pending; the previous green full run was on the earlier candidate-crowd commit and does not validate this new flow.
+- [x] Full Godot validation passed on commit `049e7359fbcd7a8ec51eabc99d38b4cccbb10a78`, workflow run [45488435317](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45488435317). All steps passed, including the five Baghdad towers, 200-floor Power Tower, shopping showcases, rival competition, restaurant riddle/physical descent, 500-candidate behavior assertions, and all seven examination stages.
+- [x] Canonical Android APK exported successfully from the same commit in [run 45488435304](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45488435304). Artifact `14965456591`, 36,733,527 bytes, available until 2026-12-08 21:13 UTC. The Godot operations validation log is artifact `14965018625`, available until 2026-12-01 21:20 UTC.
+- [ ] Manual Android-device visual/performance verification remains outstanding; CI export does not replace testing the APK on a physical phone. Full physics/pathfinding, dialogue, and combat for every background candidate remain outside the lightweight 500-person behavior simulation.
 
 ## Baghdad Towers — approved skyline visual expansion — 24 November 2026
 
