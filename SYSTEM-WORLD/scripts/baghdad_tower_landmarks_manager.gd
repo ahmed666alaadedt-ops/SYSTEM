@@ -1044,6 +1044,7 @@ func _create_baghdad_upper_city_layer() -> void:
 		return
 	var city := Node3D.new()
 	city.name = "BaghdadUpperSkyCity"
+	city.position = Vector3(bridge_anchor.x, 0.0, bridge_anchor.y)
 	city.set_meta("system_city_layer", "upper_sky_city")
 	city.set_meta("system_district_tower_count", 5)
 	city.set_meta("system_power_tower_excluded", true)
