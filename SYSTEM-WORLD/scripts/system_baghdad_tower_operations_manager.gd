@@ -4382,6 +4382,42 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 	title.modulate = Color(0.92, 0.82, 0.55)
 	root.add_child(title)
 	match facility_type:
+		"heritage_gallery", "archaeology_research", "artifact_restoration_lab", "player_private_gallery", "player_artifact_market", "rare_artifact_vault":
+			var exhibit_count := 4 if facility_type != "rare_artifact_vault" else 2
+			for exhibit_index in range(exhibit_count):
+				var exhibit_position := Vector3(-12.0 + float(exhibit_index % 2) * 24.0, 0.0, -7.0 + float(exhibit_index / 2) * 14.0)
+				var exhibit_id := "baghdad_museum_f%02d_exhibit_%02d" % [floor_number, exhibit_index + 1]
+				_add_facility_box(root, "ArtifactPedestal_%02d" % exhibit_index, exhibit_position + Vector3(0.0, 0.65, 0.0), Vector3(3.2, 1.3, 2.4), accent)
+				_add_facility_box(root, "ArtifactGlassCase_%02d" % exhibit_index, exhibit_position + Vector3(0.0, 2.35, 0.0), Vector3(2.5, 2.1, 1.8), highlight)
+				var artifact_label := Label3D.new()
+				artifact_label.name = "ArtifactLabel_%02d" % exhibit_index
+				artifact_label.text = "قطعة متحفية موثقة\n%s" % exhibit_id
+				artifact_label.position = exhibit_position + Vector3(0.0, 3.65, -1.05)
+				artifact_label.font_size = 15
+				artifact_label.pixel_size = 0.012
+				artifact_label.modulate = Color(0.94, 0.82, 0.56)
+				root.add_child(artifact_label)
+				var exhibit_area := Area3D.new()
+				exhibit_area.name = "ArtifactExhibitInteraction_%02d" % exhibit_index
+				exhibit_area.collision_layer = 0
+				exhibit_area.collision_mask = 1
+				exhibit_area.add_to_group("system_interactable")
+				exhibit_area.set_meta("system_interaction_type", "museum_artifact_exhibit")
+				exhibit_area.set_meta("system_artifact_id", exhibit_id)
+				exhibit_area.set_meta("system_tower_id", tower_id)
+				exhibit_area.set_meta("system_tower_floor_number", floor_number)
+				exhibit_area.set_meta("system_artifact_display_role", "player_market_prototype" if facility_type == "player_artifact_market" else "museum_exhibit")
+				exhibit_area.set_meta("system_interaction_prompt", "افحص القطعة الأثرية — " + exhibit_id)
+				var exhibit_shape := CollisionShape3D.new()
+				var exhibit_sphere := SphereShape3D.new()
+				exhibit_sphere.radius = 2.8
+				exhibit_shape.shape = exhibit_sphere
+				exhibit_shape.position = exhibit_position + Vector3(0.0, 1.6, 0.0)
+				exhibit_area.add_child(exhibit_shape)
+				root.add_child(exhibit_area)
+			root.set_meta("system_museum_exhibit_count", exhibit_count)
+			root.set_meta("system_museum_exhibits_have_unique_floor_ids", true)
+			root.set_meta("system_player_marketplace_live", false)
 		"swimming_pool":
 			_add_facility_box(root, "PoolRim", Vector3(0.0, 0.65, 0.0), Vector3(23.0, 1.3, 15.0), accent)
 			_add_facility_box(root, "PoolWater", Vector3(0.0, 1.12, 0.0), Vector3(20.8, 0.12, 12.8), highlight)
