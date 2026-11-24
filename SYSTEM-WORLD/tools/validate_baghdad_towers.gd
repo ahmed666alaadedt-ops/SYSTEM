@@ -296,6 +296,15 @@ func _run_validation() -> void:
 			if garden.get_node_or_null("GardenFloor_North_Collision") == null or garden.get_node_or_null("GardenFloor_South_Collision") == null or garden.get_node_or_null("GardenFloor_East_Collision") == null or garden.get_node_or_null("GardenFloor_West_Collision") == null:
 				_fail("A Baghdad sky garden is missing one or more physical floor collisions.")
 				return
+			var access_bridge := garden.get_node_or_null("GardenAccessBridge") as MeshInstance3D
+			var access_collision := garden.get_node_or_null("GardenAccessBridge_Collision") as StaticBody3D
+			var access_collision_shape := access_collision.get_node_or_null("CollisionShape3D") as CollisionShape3D if access_collision != null else null
+			if access_bridge == null or access_collision_shape == null or access_collision_shape.shape == null or not bool(garden.get_meta("system_garden_elevator_access_bridge", false)):
+				_fail("A Baghdad sky garden is missing its physical elevator-core access bridge and collision.")
+				return
+			if garden.get_node_or_null("GardenAccessBridgeRail_Left_Collision") == null or garden.get_node_or_null("GardenAccessBridgeRail_Right_Collision") == null:
+				_fail("A Baghdad sky garden access bridge is missing its two collidable safety rails.")
+				return
 			if interaction == null or not interaction.is_in_group("system_interactable") or int(interaction.get_meta("system_tower_floor", 0)) <= 0:
 				_fail("A Baghdad sky garden is missing its tower-floor interaction route.")
 				return
@@ -321,6 +330,10 @@ func _run_validation() -> void:
 		return
 	if tower_manager.get_node_or_null("WeaponsEquipmentElixirsTower") != null:
 		_fail("Obsolete standalone Weapons/Equipment/Elixirs Tower must not exist in Baghdad.")
+		return
+
+	if (tower_manager.get_node_or_null("PowerTower") as Node3D).get_node_or_null("TowerSkyGardens") != null:
+		_fail("Standalone Power Tower must not inherit the five civic sky-garden destinations.")
 		return
 
 	var power_tower := tower_manager.get_node_or_null("PowerTower")
