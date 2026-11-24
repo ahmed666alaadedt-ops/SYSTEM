@@ -1695,3 +1695,12 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - Approved exterior concept image saved in the SYSTEM WORLD project Library at /SYSTEM WORLD/References/Baghdad_Towers_Hunter_Association_XSX_Approved_Exterior.jpg. This is a visual reference; it is not yet committed as a binary asset inside the GitHub repository.
 - Latest code commit for the facade-height adjustment: 51b3dc54f7a06b363f5a63b9976e89782bfec216. Latest validator/operations commits: ad83c9c98d200fabb90d5c5905ec9c76d4c6e803 and d0387b702b8047e90908bcb3f33dd357bd525a94.
 - Verification remains pending on this exact final height: rerun Godot 4.3 full validation and Android APK export before marking the reduced-height tower verified. No merge to main.
+
+## Baghdad upper-city bridge and platform architectural detailing — 24 November 2026
+
+- Confirmed the previous complete Godot validation and Android APK export both passed on commit `a3632d6773fbbe3b5c3aecba15e41b513074a496` (Godot run `45423988370`; Android run `45423988372`). Those results validate that exact earlier commit only.
+- Added continuous dark-metal safety rails, evenly spaced balusters, and low-profile guide lights to pedestrian sky promenades, upper-city skyways, and Hunter atrium skyways. Vehicle decks remain separate and unchanged.
+- Added illuminated perimeter guardrails and 32 evenly spaced balusters to each of the three circular sky platforms while preserving their approved radii, heights, locations, and luminous outer rims.
+- Extended `validate_baghdad_towers.gd` to assert the upper platform guardrail metadata and the presence of safety rails on both upper-city and Hunter atrium skyways.
+- The Hunter Tower remains unchanged at 650 m / 200 floors, base Y=419.2 m, rooftop helipad, four XSX facade identities, and exterior advertising tiers at 150/340/530 m. The saved exterior reference and five-tower district arrangement remain unchanged.
+- New architecture and validator changes are on `feature/baghdad-five-plus-power-tower-20261122` / draft PR #38. The new commit requires fresh Godot validation and Android APK export; do not treat the earlier successful workflows as verification of these latest edits. No merge to `main`.
