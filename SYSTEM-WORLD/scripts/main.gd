@@ -651,7 +651,25 @@ func _on_hunter_exam_registration_requested() -> void:
 
 
 func _on_hunter_exam_start_requested() -> void:
-	_handle_hunter_exam_guide_interaction()
+	if hunter_exam_manager == null:
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "نظام اختبار الصيادين غير متاح حالياً."
+			interaction_prompt_label.show()
+		return
+	var overview: Dictionary = hunter_exam_manager.get_exam_overview()
+	if not bool(overview.get("invitation_accepted", false)):
+		_show_hunter_exam_invitation()
+		return
+	if not bool(overview.get("registered", false)) or not is_instance_valid(player) or not bool(player.get_meta("system_inside_hunter_exam_tunnel", false)):
+		_handle_hunter_exam_guide_interaction()
+		return
+	var result: Dictionary = hunter_exam_manager.begin_exam()
+	var menu := get_node_or_null("HunterGuildMenu")
+	if menu != null and menu.has_method("set_exam_status"):
+		menu.call("set_exam_status", result)
+	if not bool(result.get("success", false)) and interaction_prompt_label != null:
+		interaction_prompt_label.text = "تعذر بدء اختبار الصيادين: %s" % str(result.get("reason", "غير معروف"))
+		interaction_prompt_label.show()
 
 
 func _connect_hunter_tower_recruitment() -> void:
