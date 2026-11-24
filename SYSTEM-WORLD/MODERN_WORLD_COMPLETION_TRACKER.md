@@ -1504,3 +1504,16 @@ This section supersedes the earlier point-only fan prediction wording above. The
 - [ ] Exact-HEAD Godot validation and canonical Android export remain pending; remote online spectators and server-authoritative economy remain out of scope for the local prototype.
 
 - [x] Seat ownership stores the exact floor identity to prevent same-number seat collisions across different floors; QA opens the shared virtual-ticket panel through the physical arena prediction-board route.
+
+
+## Baghdad tower regression and Hunter tunnel continuation — 24 November 2026
+
+- [x] Diagnosed the latest full tower-operations failure: the Power Tower's NPC-managed external campaign was created as `NPCManagedExternalCampaign`, while the common tower regression correctly requires the canonical `TowerCampaignText` node. Standardized the external campaign node name across all six towers and retained compatibility with an existing legacy node.
+- [x] Added `tools/validate_hunter_tunnel_entry.gd` as an end-to-end regression: verifies the hidden door starts locked, incorrect clue order resets progress, Eye → River → Crown reveals the stone passage and enables its collision, entry is rejected before Hunter Association registration, and a registered candidate is physically moved into the underground Baghdad stage.
+- [x] Added the tunnel regression to the canonical Godot validation workflow.
+- [x] Documented the original SYSTEM adaptation of broad Hunter-exam adventure themes: seven varied non-combat/combat-balanced stages, original examiners and candidate behavior, and an original energy discipline with control, costs, counters and non-combat applications. No anime characters, dialogue, scenes, named techniques or music are to be copied.
+- [ ] Re-run the six-tower operations regression, all Baghdad tower regressions, Hunter tunnel entry regression and stage-one runtime regression on the exact updated branch HEAD.
+- [ ] Re-run canonical Godot validation and Android APK export on that same exact HEAD; do not mark Baghdad complete until the relevant checks pass.
+- [ ] Extend the physical examination environments beyond Baghdad stage one. Cairo, Alexandria, Paris, Babylon, Tokyo and Highland Frontier remain planned, not implemented.
+- [ ] Add original examiner/candidate NPC behaviors, scoring for observation/rescue/restraint/resource management, and explicit retry/withdrawal rules; validate each before claiming production readiness.
+- [ ] Keep PR #38 as draft and do not merge into `main` without explicit user approval.
