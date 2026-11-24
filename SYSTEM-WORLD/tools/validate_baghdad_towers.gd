@@ -60,8 +60,11 @@ func _run_validation() -> void:
 	if bridge_node == null or int(bridge_node.get_meta("system_osm_bridge_polygon_way_id", 0)) != 1077808833:
 		_fail("Republic Bridge runtime deck is missing or not tied to OSM bridge way 1077808833.")
 		return
-	if bridge_node.get_node_or_null("RepublicBridgeDeck_00_Collision") == null:
+	if bridge_node.get_node_or_null("RepublicBridgeDeckCollision") == null or bridge_node.get_node_or_null("RepublicBridgeDeck") == null:
 		_fail("Republic Bridge has no physical collision deck.")
+		return
+	if int(bridge_node.get_meta("system_bridge_polygon_points", 0)) < 20 or absf(float(bridge_node.get_meta("system_bridge_deck_height_m", 0.0)) - 18.0) > 0.1:
+		_fail("Republic Bridge runtime deck does not use the surveyed polygon and bank-aligned elevation.")
 		return
 	var tigris := terrain.get_node_or_null("BaghdadTigrisRiver") as MeshInstance3D
 	if tigris == null or str(tigris.get_meta("system_geography_source", "")) != "OpenStreetMap way 24709603":
