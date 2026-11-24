@@ -1759,6 +1759,25 @@ func open_tower(tower_id: String) -> void:
 	travel_button.text = "استدعاء المصعد والانتقال"
 	travel_button.pressed.connect(_on_travel_button_pressed)
 	content.add_child(travel_button)
+	# Expose each sky garden as a real elevator destination, using its approved floor map.
+	var garden_root := (tower_nodes[tower_id] as Node3D).get_node_or_null("TowerSkyGardens") as Node3D
+	if garden_root != null:
+		var garden_title := Label.new()
+		garden_title.name = "SkyGardenLiftDestinationsTitle"
+		garden_title.text = "وجهات الحدائق السماوية — مصعد البرج"
+		content.add_child(garden_title)
+		for garden_index in range(3):
+			var garden := garden_root.get_node_or_null("SkyGarden_%02d" % (garden_index + 1)) as Node3D
+			if garden == null:
+				continue
+			var destination_floor := int(garden.get_meta("system_tower_floor", 0))
+			if destination_floor <= 0:
+				continue
+			var garden_button := Button.new()
+			garden_button.name = "SkyGardenLiftButton_%02d" % (garden_index + 1)
+			garden_button.text = "الحديقة السماوية %d — الطابق %d" % [garden_index + 1, destination_floor]
+			garden_button.pressed.connect(func(): _travel_to_floor(tower_id, destination_floor))
+			content.add_child(garden_button)
 	var lobby_button := Button.new()
 	lobby_button.text = "العودة إلى بهو البرج"
 	lobby_button.pressed.connect(return_to_lobby)
