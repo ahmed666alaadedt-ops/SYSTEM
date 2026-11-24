@@ -65,7 +65,7 @@ func get_floor_data(floor_number: int) -> Dictionary:
 	var arena_theme_name := str(FLOOR_THEME_NAMES[theme_index])
 	var arena_type := "BOSS_TRIAL" if boss_floor else ("ELITE_DUEL" if elite_floor else "DUEL")
 	var objective_type := "DEFEAT_BOSS" if boss_floor else "DEFEAT_OPPONENT"
-	var arena_name := "SOVEREIGN TITLE DUEL" if final_boss else ("TITLE HOLDER DUEL ARENA" if boss_floor else ("ELITE PLAYER DUEL ARENA" if elite_floor else "PLAYER 1 VS 1 DUEL ARENA"))
+	var arena_name := "SOVEREIGN TITLE DUEL ARENA" if final_boss else ("TITLE HOLDER DUEL ARENA" if boss_floor else ("ELITE PLAYER DUEL ARENA" if elite_floor else "PLAYER 1 VS 1 DUEL ARENA"))
 	var arena_rules := "مواجهة السيادة النهائية: لاعب بشري ضد حامل اللقب البشري — 1 ضد 1" if final_boss else ("مواجهة فردية ضد حامل لقب الطابق — لاعبان بشريان فقط" if boss_floor else ("مواجهة نخبة فردية بين لاعبين بشريين — 1 ضد 1" if elite_floor else "مواجهة فردية بين لاعبين بشريين 1 ضد 1 — لا فرق ولا خصوم آليين"))
 	return {
 		"floor": floor_number,
