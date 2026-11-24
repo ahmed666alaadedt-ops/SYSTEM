@@ -1,5 +1,7 @@
 extends SceneTree
 
+const HunterExamManagerScript = preload("res://scripts/system_hunter_exam_manager.gd")
+
 func _initialize() -> void:
 	call_deferred("_run_validation")
 
@@ -42,7 +44,7 @@ func _run_validation() -> void:
 	if not _check(str(tunnel.get_meta("system_hunter_exam_access", "")) == "hunter_tower_recruitment_and_guide_escort", "Tunnel access is not assigned to the Hunter Tower guide route."):
 		return
 
-	var manager: SYSTEMHunterExamManager = main.get("hunter_exam_manager") as SYSTEMHunterExamManager
+	var manager: Node = main.get("hunter_exam_manager") as Node
 	if not _check(manager != null, "Hunter exam manager is missing."):
 		return
 	manager.set("candidate_number", 0)
@@ -66,7 +68,7 @@ func _run_validation() -> void:
 	if not _check(accept_button != null and decline_button != null, "Invitation does not provide explicit accept and decline choices."):
 		return
 	main.call("_on_hunter_exam_invitation_declined")
-	if not _check(not invitation.visible and not bool(manager.get_exam_overview().get("invitation_accepted", false)), "Declining the invitation incorrectly accepted or registered the candidate."):
+	if not _check(not invitation.visible and not bool(manager.call("get_exam_overview").get("invitation_accepted", false)), "Declining the invitation incorrectly accepted or registered the candidate."):
 		return
 	main.call("_on_hunter_tower_arrival_body_entered", player)
 	if not _check(invitation.visible, "The invitation did not reappear after the player returned to the tower entrance."):
@@ -103,13 +105,13 @@ func _run_validation() -> void:
 	var saved_overview: Dictionary = manager.get_exam_overview()
 	if not _check(int(saved_overview.get("candidate_number", 0)) == serial, "Candidate serial changed during the escort."):
 		return
-	var restored_manager := SYSTEMHunterExamManager.new()
+	var restored_manager: Node = HunterExamManagerScript.new()
 	root.add_child(restored_manager)
 	await process_frame
-	var restored_overview: Dictionary = restored_manager.get_exam_overview()
+	var restored_overview: Dictionary = restored_manager.call("get_exam_overview")
 	if not _check(bool(restored_overview.get("registered", false)) and int(restored_overview.get("candidate_number", 0)) == serial, "Candidate serial did not persist across manager recreation."):
 		return
-	var repeat_registration: Dictionary = restored_manager.register_candidate_at_tunnel("local_player")
+	var repeat_registration: Dictionary = restored_manager.call("register_candidate_at_tunnel", "local_player")
 	if not _check(int(repeat_registration.get("candidate_number", 0)) == serial, "Re-entry allocated a different candidate serial."):
 		return
 
