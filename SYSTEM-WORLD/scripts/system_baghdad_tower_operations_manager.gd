@@ -248,6 +248,7 @@ var active_power_tower_match: Dictionary = {}
 var customer_ids_by_tower: Dictionary = {}
 var customer_purchase_clock := 0.0
 var customer_walk_clock := 0.0
+var customer_lod_clock := 0.0
 var npc_sales_total := 0
 var npc_purchase_count := 0
 
@@ -314,6 +315,10 @@ func _process(delta: float) -> void:
 	if customer_walk_clock >= 13.0:
 		customer_walk_clock = 0.0
 		_move_customer_visitors()
+	customer_lod_clock += delta
+	if customer_lod_clock >= 2.0:
+		customer_lod_clock = 0.0
+		_update_customer_visual_lod()
 
 
 func _resolve_towers() -> void:
@@ -990,6 +995,7 @@ func _create_customer_population() -> void:
 				visitor.set_meta("system_customer_age_years", age_years)
 				visitor.set_meta("system_customer_family_visitor", age_group == "child" or age_group == "elder")
 				visitor.add_child(model)
+				_apply_customer_mesh_visibility_ranges(model)
 				var name_label := Label3D.new()
 				name_label.text = str(customer.get("name", customer_name))
 				name_label.position.y = 2.3
@@ -997,6 +1003,7 @@ func _create_customer_population() -> void:
 				name_label.pixel_size = 0.011
 				name_label.modulate = Color(0.82, 0.88, 0.94)
 				visitor.add_child(name_label)
+				_apply_customer_mesh_visibility_ranges(name_label)
 				visitor.position = Vector3((float(index % 10) - 4.5) * 2.15, 0.0, float(config["radius"]) * 1.48 + 4.0 + float(index / 10) * 2.1)
 				if model.has_method("set_activity"):
 					model.call("set_activity", "socialize" if posmod(index, 2) == 0 else "wander")
@@ -1044,6 +1051,44 @@ func _create_customer_population() -> void:
 	if society.has_method("save_society"):
 		society.call("save_society")
 	print("SYSTEM Baghdad towers: 500 customer NPCs across five towers, including children, elderly visitors and adults.")
+
+func _apply_customer_mesh_visibility_ranges(root: Node) -> void:
+	if root is GeometryInstance3D:
+		var geometry := root as GeometryInstance3D
+		geometry.visibility_range_begin = 0.0
+		geometry.visibility_range_end = 150.0
+		geometry.visibility_range_end_margin = 20.0
+		if root is Label3D:
+			geometry.visibility_range_end = 48.0
+			geometry.visibility_range_end_margin = 8.0
+	for child in root.get_children():
+		_apply_customer_mesh_visibility_ranges(child)
+
+
+func _update_customer_visual_lod() -> void:
+	var camera := get_viewport().get_camera_3d()
+	if camera == null:
+		return
+	for tower_id_value in customer_ids_by_tower.keys():
+		var tower_id := str(tower_id_value)
+		var tower := tower_nodes.get(tower_id) as Node3D
+		var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D if tower != null else null
+		if lobby == null:
+			continue
+		var visitor_parents: Array[Node3D] = [lobby]
+		if is_instance_valid(active_floor_root) and str(active_floor_root.get_meta("system_tower_id", "")) == tower_id:
+			visitor_parents.append(active_floor_root)
+		for visitor_parent in visitor_parents:
+			for visitor_value in visitor_parent.get_children():
+				if not visitor_value is Node3D or not str(visitor_value.name).begins_with("TowerCustomer_"):
+					continue
+				var visitor := visitor_value as Node3D
+				var distance := camera.global_position.distance_to(visitor.global_position)
+				var model_process_mode := Node.PROCESS_MODE_DISABLED if distance > 95.0 else Node.PROCESS_MODE_INHERIT
+				for visitor_child in visitor.get_children():
+					if visitor_child.has_method("set_activity"):
+						visitor_child.process_mode = model_process_mode
+
 
 func _create_public_lobby_cafes() -> void:
 	var public_towers := [
