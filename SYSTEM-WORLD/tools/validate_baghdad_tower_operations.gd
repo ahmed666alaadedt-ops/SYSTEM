@@ -1764,8 +1764,8 @@ func _run() -> void:
 		if not interior.visible or room_interaction.collision_layer != 1 or room_interaction.collision_mask != 0:
 			_fail("Hotel room %s is hidden or its door interaction cannot be detected by the player." % room_id)
 			return
-		if interior.get_node_or_null("HotelRoomDoorCollision") == null:
-			_fail("Hotel room %s is missing the physical door collision." % room_id)
+		if interior.get_node_or_null("HotelRoomBackWallCollision") == null or interior.get_node_or_null("HotelRoomLeftWallCollision") == null:
+			_fail("Hotel room %s is missing its structural wall collisions." % room_id)
 			return
 	if hotel_suite_room.get_node_or_null("SYSTEMHotelFacilities/HotelRoomInterior_hotel_hunter_suite/HotelRoomHunterGearRack") == null or hotel_suite_room.get_node_or_null("SYSTEMHotelFacilities/HotelRoomInterior_hotel_elite_vip/HotelRoomVIPDiningTable") == null:
 		_fail("Hunter suite or VIP hotel room is missing its signature furnishings.")
