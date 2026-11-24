@@ -58,10 +58,15 @@ func _run_validation() -> void:
 	if not _check(tunnel.get_node_or_null("ConcealedDoorCollision") == null, "Secret door collision did not unlock after solving."):
 		return
 	var visible_ramp := tunnel.get_node_or_null("HiddenExamPassageRamp_00") as MeshInstance3D
-	var ramp_collision := tunnel.get_node_or_null("HiddenExamPassageRamp_00_Collision/CollisionShape3D") as CollisionShape3D
+	var ramp_body := tunnel.get_node_or_null("HiddenExamPassageRamp_00_Collision") as StaticBody3D
 	if not _check(visible_ramp != null and visible_ramp.visible, "Physical underground passage did not become visible."):
 		return
-	if not _check(ramp_collision != null and not ramp_collision.disabled, "Underground passage collision did not activate."):
+	if not _check(ramp_body != null, "Underground passage physics body is missing."):
+		return
+	var ramp_collision := ramp_body.get_node_or_null("CollisionShape3D") as CollisionShape3D
+	if not _check(ramp_collision != null, "Underground passage collision shape is missing."):
+		return
+	if not _check(not ramp_collision.disabled, "Underground passage collision remained disabled after reveal."):
 		return
 
 	var exam_manager := main.get_node_or_null("SYSTEMHunterExamManager")
