@@ -9,13 +9,7 @@ signal license_earned(candidate_number: int, license_rank: String)
 
 const SAVE_PATH := "user://system_hunter_exam.cfg"
 const EXAM_STAGES := [
-	{"id":"baghdad_heritage_trial","city":"Baghdad","title":"اختبار الأثر الرافديني","type":"artifact_recovery","difficulty":3,"description":"دخول موقع أثري مغلق، قراءة النقوش، تحديد القطعة الصحيحة وتجنب الفخاخ الوهمية والحقيقية."},
-	{"id":"cairo_buried_market","city":"Cairo","title":"متاهة السوق المدفون","type":"maze_navigation","difficulty":4,"description":"متاهة متعددة الطبقات، طرق تتغير، موارد محدودة وعلامات مضللة؛ يجب إيجاد المخرج دون إضاعة فريقك."},
-	{"id":"alexandria_lighthouse","city":"Alexandria","title":"اختبار المنارة والعاصفة","type":"navigation_rescue","difficulty":4,"description":"توجيه فريق عبر ممرات ساحلية وعاصفة، تشغيل إشارات قديمة وإنقاذ متسابقين."},
-	{"id":"paris_catacombs","city":"Paris","title":"سراديب باريس الصامتة","type":"logic_and_stealth","difficulty":4,"description":"شبكة سراديب وألغاز صوتية ومسارات مراقبة؛ القتال ليس الحل الأفضل."},
-	{"id":"babylon_guardian","city":"Babylon","title":"حارس بابل","type":"guardian_trial","difficulty":5,"description":"اجتياز أطلال بابل، كشف آلية الحارس، ثم مواجهة حارس قوي وفق قواعد المرحلة."},
-	{"id":"tokyo_urban_pursuit","city":"Tokyo","title":"مطاردة المدينة المتغيرة","type":"urban_pursuit","difficulty":4,"description":"سباق تتبع وملاحظة بين أحياء حضرية وحواجز متغيرة، مع منع إيذاء المدنيين."},
-	{"id":"final_survival_route","city":"Highland Frontier","title":"مسار البقاء الأخير","type":"survival_and_teamwork","difficulty":5,"description":"مسار جبلي طويل، طقس قاسٍ وموارد محدودة وقرارات تعاون؛ يصل للنهاية من يوازن بين السرعة والبقاء."}
+	{"id":"baghdad_tunnel_competition","city":"Baghdad","title":"المسابقة الموحدة لنفق الصيادين","type":"continuous_tunnel_trial","difficulty":3,"description":"مسابقة متصلة داخل نفق الصيادين بإشراف مرشد نقابة الصيادين؛ لا توجد سبع مراحل منفصلة."}
 ]
 
 var candidate_number := 0
