@@ -562,7 +562,7 @@ func _on_hunter_exam_stage_started(stage_id: String, stage_number: int) -> void:
 		hunter_exam_stage_runtime.name = "HunterExamStageRuntime"
 		hunter_exam_stage_runtime.position = Vector3(0.0, -17.0, 190.0)
 		tunnel_root.add_child(hunter_exam_stage_runtime)
-	var stage_data := hunter_exam_manager.get_current_stage()
+	var stage_data: Dictionary = hunter_exam_manager.get_current_stage()
 	var build_result: Dictionary = hunter_exam_stage_runtime.call("activate_stage", stage_data, player, hunter_exam_manager)
 	if not bool(build_result.get("success", false)):
 		push_warning("SYSTEM HUNTER EXAM: stage environment activation failed: %s" % str(build_result.get("reason", "unknown")))
