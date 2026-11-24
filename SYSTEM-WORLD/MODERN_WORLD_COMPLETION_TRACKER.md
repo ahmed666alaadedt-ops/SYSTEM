@@ -1737,10 +1737,10 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 
 ### Hunter Examination tunnel access redesign — 24 November 2026
 - Replaced the former three-clue secret doorway and concealed ramp concept with one permanent Hunter Examination tunnel.
-- The Shopping Tower restaurant floor 29 now creates a dedicated competitor room. Access to that room is gated by the player's delivered and consumed restaurant meal; the existing restaurant order, waiter, chef and table workflow is retained.
+- The Shopping Tower restaurant floor 29 now creates a dedicated competitor room. Access to that room is gated by the waiter's delivered meal; the existing restaurant order, waiter, chef and table workflow is retained. The served meal presentation is transferred from the dining table into the private room.
 - The dedicated room contains a physical elevator platform and shaft leading to the tunnel. A return interaction is provided at the tunnel end.
 - Added a visible Hunter Guild guide at the tunnel arrival point. The guide explains the competition and registers the player if needed.
 - Candidate serial numbers remain stable after registration, including after a failed attempt or a later re-entry; the existing local ConfigFile persistence is retained.
-- The new tunnel entry path does not connect to the marshland area. No seven-stage runtime is started by the new elevator/guide flow.
+- The new tunnel entry path does not connect to the marshland area. The former seven-stage exam definition was replaced by one continuous tunnel competition; the new elevator/guide flow does not activate a legacy stage runtime.
 - Power Tower gameplay files were not modified. PR #38 remains a draft; no merge to main.
 - **Verification status:** code changes committed; Godot validation and Android export must run on the exact resulting commit before this implementation is marked verified. Physical Android testing remains outstanding.
