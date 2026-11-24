@@ -2642,19 +2642,25 @@ func _run() -> void:
 	for _attempt in range(320):
 		operations.call("_process_restaurant_staff_service")
 		npc_restaurant_order = operations.get("restaurant_orders").get(npc_restaurant_order_id, {})
-		if str(npc_restaurant_order.get("status", "")) == "ready":
+		# A recovery tick may advance a stalled chef order to ready and the
+		# waiter may deliver it during the same service pass. Accept either
+		# observable checkpoint so the validator does not miss that valid
+		# ready -> delivering -> served transition between polling frames.
+		if str(npc_restaurant_order.get("status", "")) in ["ready", "served"]:
 			break
 		await create_timer(0.25).timeout
-	if str(npc_restaurant_order.get("status", "")) != "ready":
-		_fail("The restaurant chef did not prepare the autonomous NPC order. Final state: " + str(npc_restaurant_order.get("status", "missing")))
+	var npc_order_after_kitchen := str(npc_restaurant_order.get("status", ""))
+	if npc_order_after_kitchen not in ["ready", "served"]:
+		_fail("The restaurant chef did not prepare the autonomous NPC order. Final state: " + npc_order_after_kitchen)
 		return
 	print("QA TRACE: chef prepared the NPC order; waiting for waiter delivery.")
-	for _attempt in range(320):
-		operations.call("_process_restaurant_staff_service")
-		npc_restaurant_order = operations.get("restaurant_orders").get(npc_restaurant_order_id, {})
-		if str(npc_restaurant_order.get("status", "")) == "served":
-			break
-		await create_timer(0.25).timeout
+	if npc_order_after_kitchen != "served":
+		for _attempt in range(320):
+			operations.call("_process_restaurant_staff_service")
+			npc_restaurant_order = operations.get("restaurant_orders").get(npc_restaurant_order_id, {})
+			if str(npc_restaurant_order.get("status", "")) == "served":
+				break
+			await create_timer(0.25).timeout
 	if str(npc_restaurant_order.get("status", "")) != "served":
 		_fail("The waiter did not deliver the prepared NPC meal to the occupied table.")
 		return
