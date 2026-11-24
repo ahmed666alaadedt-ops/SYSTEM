@@ -969,15 +969,28 @@ func _create_customer_population() -> void:
 			society.npcs[existing_id] = customer
 			ids.append(existing_id)
 			var node_name := "TowerCustomer_" + existing_id
-			if lobby.get_node_or_null(node_name) == null:
-				var visitor := Node3D.new()
+			var visitor := lobby.get_node_or_null(node_name) as Node3D
+			if visitor == null:
+				visitor = Node3D.new()
 				visitor.name = node_name
-				visitor.set_meta("system_tower_customer_id", existing_id)
-				visitor.set_meta("system_tower_customer_index", index)
-				visitor.set_meta("system_tower_id", tower_id)
-				visitor.set_meta("system_display_name", str(customer.get("name", customer_name)))
 				lobby.add_child(visitor)
-				var model = NPCCharacterModelScript.new()
+			visitor.set_meta("system_tower_customer_id", existing_id)
+			visitor.set_meta("system_tower_customer_index", index)
+			visitor.set_meta("system_tower_id", tower_id)
+			visitor.set_meta("system_display_name", str(customer.get("name", customer_name)))
+			visitor.set_meta("system_customer_age_group", age_group)
+			visitor.set_meta("system_customer_age_years", age_years)
+			visitor.set_meta("system_customer_family_visitor", age_group == "child" or age_group == "elder")
+			var model: Node3D = null
+			for visitor_component in visitor.get_children():
+				if visitor_component.has_method("set_activity"):
+					model = visitor_component as Node3D
+					break
+			if model == null or str(model.get("age_group")) != age_group:
+				if is_instance_valid(model):
+					visitor.remove_child(model)
+					model.queue_free()
+				model = NPCCharacterModelScript.new()
 				model.configure({
 					"name": str(customer.get("name", customer_name)),
 					"gender": gender,
@@ -991,22 +1004,26 @@ func _create_customer_population() -> void:
 					"body_type": "average"
 				}, tower_index * 101 + index + 40)
 				model.scale = Vector3.ONE * (0.62 if age_group == "child" else (0.70 if age_group == "elder" else 0.74))
-				visitor.set_meta("system_customer_age_group", age_group)
-				visitor.set_meta("system_customer_age_years", age_years)
-				visitor.set_meta("system_customer_family_visitor", age_group == "child" or age_group == "elder")
 				visitor.add_child(model)
 				_apply_customer_mesh_visibility_ranges(model)
-				var name_label := Label3D.new()
-				name_label.text = str(customer.get("name", customer_name))
+			var name_label: Label3D = null
+			for visitor_component in visitor.get_children():
+				if visitor_component is Label3D:
+					name_label = visitor_component as Label3D
+					break
+			if name_label == null:
+				name_label = Label3D.new()
+				name_label.name = "CustomerNameLabel"
 				name_label.position.y = 2.3
 				name_label.font_size = 15
 				name_label.pixel_size = 0.011
 				name_label.modulate = Color(0.82, 0.88, 0.94)
 				visitor.add_child(name_label)
 				_apply_customer_mesh_visibility_ranges(name_label)
-				visitor.position = Vector3((float(index % 10) - 4.5) * 2.15, 0.0, float(config["radius"]) * 1.48 + 4.0 + float(index / 10) * 2.1)
-				if model.has_method("set_activity"):
-					model.call("set_activity", "socialize" if posmod(index, 2) == 0 else "wander")
+			name_label.text = str(customer.get("name", customer_name))
+			visitor.position = Vector3((float(index % 10) - 4.5) * 2.15, 0.0, float(config["radius"]) * 1.48 + 4.0 + float(index / 10) * 2.1)
+			if model.has_method("set_activity"):
+				model.call("set_activity", "socialize" if posmod(index, 2) == 0 else "wander")
 		for family_index in range(ids.size()):
 			var family_customer_id := str(ids[family_index])
 			var family_customer: Dictionary = society.call("get_npc", family_customer_id)
