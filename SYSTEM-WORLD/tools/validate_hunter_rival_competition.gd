@@ -64,7 +64,7 @@ func _run() -> void:
 		return
 	var thief_entry: Dictionary = rivals.get("rivals").get("rival_ren")
 	var thief_actor: Node = thief_entry.get("node")
-	thief_actor.call("take_damage", 95.0, player)
+	thief_actor.call("take_damage", 100.0, player)
 	var thief_interaction := thief_actor.get_node("RivalInteraction") as Area3D
 	if not _check(thief_interaction.monitoring, "Defeated thief interaction was disabled before the stolen objective could be recovered."):
 		return
