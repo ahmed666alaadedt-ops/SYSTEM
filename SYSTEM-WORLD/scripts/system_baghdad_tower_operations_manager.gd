@@ -2282,8 +2282,28 @@ func open_showcase_product_service(tower_id: String, floor_number: int, facility
 				product_button = child
 				break
 	if product_button == null:
-		_set_status("هذا المنتج غير معروض للبيع في هذا الطابق.")
-		return false
+		# Rebuild the selected control from the authoritative catalog when a department
+		# refresh has not materialized its button yet. The fallback uses the same
+		# guarded purchase handler; it never grants an item or bypasses progression.
+		var fallback_button := Button.new()
+		fallback_button.name = purchase_control_name
+		var item_name := str(product_data.get("name", product_id))
+		var required_rank := str(product_data.get("required_rank", "F"))
+		var required_level := int(product_data.get("required_level", 1))
+		var required_nen_rank := int(product_data.get("required_nen_rank", 0))
+		var skill_id := str(product_data.get("skill_id", ""))
+		var stock := get_vendor_stock(product_id)
+		var price := _get_current_price(product_id)
+		var permit_check: Dictionary = {"success": true}
+		if str(product_data.get("product_type", "")) == "skill_training_permit":
+			permit_check = progression.call("check_skill_training_permit", skill_id) if is_instance_valid(progression) and progression.has_method("check_skill_training_permit") else {"success": false}
+		var level_ok := not is_instance_valid(progression) or int(progression.get("current_level")) >= required_level
+		var nen_ok := required_nen_rank <= 0 or (is_instance_valid(progression) and bool(progression.get("nen_unlocked")) and int(progression.get("nen_control_rank")) >= required_nen_rank)
+		fallback_button.text = "%s — %d SYSTEM | رتبة %s | مستوى %d | نِن %d | المخزون %d" % [item_name, price, required_rank, required_level, required_nen_rank, stock]
+		fallback_button.disabled = stock <= 0 or not _meets_hunter_rank(required_rank) or not level_ok or not nen_ok or not bool(permit_check.get("success", false))
+		fallback_button.pressed.connect(_buy_product.bind(product_id, item_name, price, required_rank))
+		content.add_child(fallback_button)
+		product_button = fallback_button
 	for child in content.get_children():
 		if child is Button and not child.is_queued_for_deletion() and child != product_button:
 			var child_name := str(child.name)
