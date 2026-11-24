@@ -4,7 +4,7 @@ const TOWER_IDS := [
 	"hunter_association_tower_baghdad",
 	"business_investment_tower_baghdad",
 	"shopping_tower_baghdad",
-	"entertainment_tower_baghdad",
+	"antiques_heritage_tower_baghdad",
 	"technology_tower_baghdad",
 	"power_tower_baghdad"
 ]
@@ -13,7 +13,7 @@ const NODE_NAMES := {
 	"hunter_association_tower_baghdad": "HunterAssociationTower",
 	"business_investment_tower_baghdad": "BusinessInvestmentTower",
 	"shopping_tower_baghdad": "ShoppingTower",
-	"entertainment_tower_baghdad": "EntertainmentTower",
+	"antiques_heritage_tower_baghdad": "AntiquesHeritageTower",
 	"technology_tower_baghdad": "TechnologyTower",
 	"power_tower_baghdad": "PowerTower"
 }
@@ -56,7 +56,7 @@ func _run() -> void:
 			return
 	operations.call("_move_customer_visitors")
 	var scheduled_customer_count := 0
-	for tower_id in ["hunter_association_tower_baghdad", "business_investment_tower_baghdad", "shopping_tower_baghdad", "entertainment_tower_baghdad", "technology_tower_baghdad"]:
+	for tower_id in ["hunter_association_tower_baghdad", "business_investment_tower_baghdad", "shopping_tower_baghdad", "antiques_heritage_tower_baghdad", "technology_tower_baghdad"]:
 		var customer_tower := operations.get("tower_nodes").get(tower_id) as Node3D
 		var customer_lobby := customer_tower.get_node_or_null("PublicLobby_Blockout") as Node3D if customer_tower != null else null
 		if customer_lobby == null:
@@ -169,21 +169,21 @@ func _run() -> void:
 		"hunter_association_tower_baghdad": "HunterAssociationTower",
 		"business_investment_tower_baghdad": "BusinessInvestmentTower",
 		"shopping_tower_baghdad": "ShoppingTower",
-		"entertainment_tower_baghdad": "EntertainmentTower",
+		"antiques_heritage_tower_baghdad": "AntiquesHeritageTower",
 		"technology_tower_baghdad": "TechnologyTower"
 	}
 	var expected_staff_per_tower := {
 		"hunter_association_tower_baghdad": 8,
 		"business_investment_tower_baghdad": 8,
 		"shopping_tower_baghdad": 9,
-		"entertainment_tower_baghdad": 8,
+		"antiques_heritage_tower_baghdad": 8,
 		"technology_tower_baghdad": 8
 	}
 	var expected_facade_floors := {
 		"hunter_association_tower_baghdad": 200,
 		"business_investment_tower_baghdad": 36,
 		"shopping_tower_baghdad": 32,
-		"entertainment_tower_baghdad": 34,
+		"antiques_heritage_tower_baghdad": 34,
 		"technology_tower_baghdad": 40,
 		"power_tower_baghdad": 200
 	}
@@ -339,58 +339,38 @@ func _run() -> void:
 	if str(status.get("advertising_mode", "")) != "npc_staff_managed_internal_external":
 		_fail("NPC-managed internal/external advertising is not active.")
 		return
-	var entertainment_pool := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 18) as Node3D
-	var pool_facility := entertainment_pool.get_node_or_null("SpecialFacility_swimming_pool") as Node3D if entertainment_pool != null else null
-	if pool_facility == null or pool_facility.get_node_or_null("PoolWater") == null:
-		_fail("Entertainment Tower swimming pool floor is missing its pool and water surface.")
-		return
-	for pool_floor_number in [18, 19, 20]:
-		var pool_floor_room := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", pool_floor_number) as Node3D
-		var pool_floor_facility := pool_floor_room.get_node_or_null("SpecialFacility_swimming_pool") as Node3D if pool_floor_room != null else null
-		if pool_floor_facility == null:
-			_fail("Entertainment Tower aquatic facility is missing from floor %d." % pool_floor_number)
+	var museum_floor_expectations := {
+		1: "heritage_gallery",
+		5: "heritage_gallery",
+		9: "heritage_gallery",
+		13: "heritage_gallery",
+		17: "archaeology_research",
+		21: "artifact_restoration_lab",
+		25: "player_private_gallery",
+		29: "player_artifact_market",
+		33: "rare_artifact_vault",
+		34: "rare_artifact_vault"
+	}
+	for museum_floor_value in museum_floor_expectations.keys():
+		var museum_floor := int(museum_floor_value)
+		var museum_room := operations.call("_ensure_floor_room", "antiques_heritage_tower_baghdad", museum_floor) as Node3D
+		if museum_room == null:
+			_fail("Antiques and Heritage Tower floor %d did not generate." % museum_floor)
 			return
-		for required_pool_node in ["MensChangingSuite", "WomensChangingSuite", "PoolLifeguardStation", "PoolWaterVolume"]:
-			if pool_floor_facility.get_node_or_null(required_pool_node) == null:
-				_fail("Pool floor %d is missing required indoor facility %s." % [pool_floor_number, required_pool_node])
-				return
-		var mens_suite := pool_floor_facility.get_node("MensChangingSuite")
-		var womens_suite := pool_floor_facility.get_node("WomensChangingSuite")
-		if mens_suite.get_node_or_null("Locker_00") == null or mens_suite.get_node_or_null("ShowerHead_00") == null or womens_suite.get_node_or_null("Locker_05") == null or womens_suite.get_node_or_null("ShowerDrain_02") == null:
-			_fail("Pool floor %d changing suites are missing lockers or shower fixtures." % pool_floor_number)
+		var expected_facility_type := str(museum_floor_expectations[museum_floor])
+		var museum_facility := museum_room.get_node_or_null("SpecialFacility_" + expected_facility_type) as Node3D
+		if museum_facility == null:
+			_fail("Museum floor %d is missing its expected physical department: %s." % [museum_floor, expected_facility_type])
 			return
-	if pool_facility.find_child("LapLaneDivider_00", true, false) == null or pool_facility.find_child("LapStartBlock_00", true, false) == null:
-		_fail("Pool floor 18 is missing its lap lanes and starting blocks.")
-		return
-	var family_pool_room := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 19) as Node3D
-	var family_pool_facility := family_pool_room.get_node("SpecialFacility_swimming_pool") as Node3D
-	if family_pool_facility.find_child("FamilySplashPoolWater", true, false) == null or family_pool_facility.find_child("SplashFountain_00", true, false) == null or family_pool_facility.get_node_or_null("FamilySplashPoolWaterVolume") == null:
-		_fail("Pool floor 19 is missing its family leisure pool, fountains or active water volume.")
-		return
-	var spa_pool_room := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 20) as Node3D
-	var spa_pool_facility := spa_pool_room.get_node("SpecialFacility_swimming_pool") as Node3D
-	for spa_node in ["SpaHotTubWater", "ThermalPoolWater", "SpaHotTubWaterVolume", "ThermalPoolWaterVolume", "SaunaCabin", "SteamRoomCabin"]:
-		if spa_pool_facility.find_child(spa_node, true, false) == null:
-			_fail("Pool floor 20 is missing its spa feature: " + spa_node)
+		if str(museum_facility.get_meta("system_tower_id", "")) != "antiques_heritage_tower_baghdad" or int(museum_facility.get_meta("system_tower_floor_number", 0)) != museum_floor:
+			_fail("Museum department ownership metadata is incorrect on floor %d." % museum_floor)
 			return
-	for leisure_zone_name in ["PoolWaterVolume", "FamilySplashPoolWaterVolume", "SpaHotTubWaterVolume", "ThermalPoolWaterVolume"]:
-		var leisure_zone: Area3D = null
-		if leisure_zone_name == "FamilySplashPoolWaterVolume":
-			leisure_zone = family_pool_facility.get_node(leisure_zone_name) as Area3D
-		elif leisure_zone_name in ["SpaHotTubWaterVolume", "ThermalPoolWaterVolume"]:
-			leisure_zone = spa_pool_facility.get_node(leisure_zone_name) as Area3D
-		else:
-			leisure_zone = pool_facility.get_node(leisure_zone_name) as Area3D
-		if leisure_zone == null or not leisure_zone.monitoring or leisure_zone.get_node_or_null("WaterVolumeCollision") == null or str(leisure_zone.get_meta("system_activity_category", "")) != "leisure":
-			_fail("Pool zone %s must have an active water collision and leisure classification." % leisure_zone_name)
+		if museum_room.get_node_or_null("FloorThemeIdentity") == null:
+			_fail("Museum floor %d is missing its heritage exhibit theme and display props." % museum_floor)
 			return
-	var cinema_floor := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 24) as Node3D
-	var cinema_facility := cinema_floor.get_node_or_null("SpecialFacility_cinema") as Node3D if cinema_floor != null else null
-	if cinema_facility == null or cinema_facility.find_child("CinemaScreen", true, false) == null:
-		_fail("Entertainment Tower cinema room is missing its screen.")
-		return
-	if cinema_facility.get_node_or_null("CinemaProgramScreen") == null or cinema_facility.get_node_or_null("CinemaProgramTitle") == null:
-		_fail("Cinema must generate its original program screen and scene title display.")
+	var museum_config: Dictionary = operations.get("TOWER_CONFIG").get("antiques_heritage_tower_baghdad", {})
+	if str(museum_config.get("node", "")) != "AntiquesHeritageTower" or int(museum_config.get("floors", 0)) != 34 or museum_config.get("jobs", []).size() != 8:
+		_fail("Antiques and Heritage Tower staffing/configuration is incomplete.")
 		return
 	var business_floor := operations.call("_ensure_floor_room", "business_investment_tower_baghdad", 8) as Node3D
 	if business_floor == null or business_floor.find_child("TradingDisplay", true, false) == null:
@@ -753,7 +733,7 @@ func _run() -> void:
 				staff_count += 1
 		var expected_staff_count := 4
 		match tower_id:
-			"hunter_association_tower_baghdad", "business_investment_tower_baghdad", "entertainment_tower_baghdad", "technology_tower_baghdad":
+			"hunter_association_tower_baghdad", "business_investment_tower_baghdad", "antiques_heritage_tower_baghdad", "technology_tower_baghdad":
 				expected_staff_count = 8
 			"shopping_tower_baghdad":
 				expected_staff_count = 9
@@ -2120,7 +2100,7 @@ func _run() -> void:
 		"hunter_association_tower_baghdad": "HunterAssociationTower",
 		"business_investment_tower_baghdad": "BusinessInvestmentTower",
 		"shopping_tower_baghdad": "ShoppingTower",
-		"entertainment_tower_baghdad": "EntertainmentTower",
+		"antiques_heritage_tower_baghdad": "AntiquesHeritageTower",
 		"technology_tower_baghdad": "TechnologyTower"
 	}
 	for district_tower_id in district_tower_lifts.keys():
@@ -2330,7 +2310,7 @@ func _run() -> void:
 
 	var activity_stats_snapshot: Dictionary = operations.get("facility_activity_stats").duplicate(true)
 	var activity_credits_snapshot := int(operations.get("credits"))
-	var bowling_room := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 23) as Node3D
+	var bowling_room := operations.call("_ensure_floor_room", "antiques_heritage_tower_baghdad", 23) as Node3D
 	var bowling_facility := bowling_room.get_node_or_null("SpecialFacility_bowling") as Node3D if bowling_room != null else null
 	if bowling_facility == null or bowling_facility.get_node_or_null("BowlingLanePhysics") == null:
 		_fail("Bowling lane physics body was not generated.")
@@ -2348,12 +2328,12 @@ func _run() -> void:
 		_fail("Touch aim control did not update the facility throw direction.")
 		return
 	operations.call("_on_facility_aim_changed", 0.0)
-	var court_room := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 22) as Node3D
+	var court_room := operations.call("_ensure_floor_room", "antiques_heritage_tower_baghdad", 22) as Node3D
 	var court_facility := court_room.get_node_or_null("SpecialFacility_sports_court") as Node3D if court_room != null else null
 	if court_facility == null or court_facility.get_node_or_null("BasketballScoringSensor") == null:
 		_fail("Basketball scoring sensor was not generated.")
 		return
-	var arcade_room := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 25) as Node3D
+	var arcade_room := operations.call("_ensure_floor_room", "antiques_heritage_tower_baghdad", 25) as Node3D
 	var arcade_facility := arcade_room.get_node_or_null("SpecialFacility_arcade") as Node3D if arcade_room != null else null
 	if arcade_facility == null:
 		_fail("Arcade facility was not generated.")
@@ -2666,7 +2646,7 @@ func _run() -> void:
 		_fail("Arcade physics test did not hit any target during the ten-shot game. Last result: " + str(arcade_last_result))
 		return
 	print("QA TRACE: activity loops completed; starting pool water regression.")
-	var pool_room := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 18) as Node3D
+	var pool_room := operations.call("_ensure_floor_room", "antiques_heritage_tower_baghdad", 18) as Node3D
 	var pool_physics_facility := pool_room.get_node_or_null("SpecialFacility_swimming_pool") as Node3D if pool_room != null else null
 	var pool_water := pool_physics_facility.get_node_or_null("PoolWaterVolume") as Area3D if pool_physics_facility != null else null
 	var mens_pool_suite := pool_physics_facility.get_node_or_null("MensChangingSuite") as Node3D if pool_physics_facility != null else null
@@ -2680,18 +2660,18 @@ func _run() -> void:
 		_fail("Pool changing suites or lifeguard station are missing their interactive service areas.")
 		return
 	for pool_service in [locker_service, shower_service, lifeguard_service]:
-		if not pool_service.is_in_group("system_interactable") or not pool_service.has_meta("system_interaction_prompt") or str(pool_service.get_meta("system_tower_id", "")) != "entertainment_tower_baghdad" or int(pool_service.get_meta("system_tower_floor_number", 0)) != 18:
+		if not pool_service.is_in_group("system_interactable") or not pool_service.has_meta("system_interaction_prompt") or str(pool_service.get_meta("system_tower_id", "")) != "antiques_heritage_tower_baghdad" or int(pool_service.get_meta("system_tower_floor_number", 0)) != 18:
 			_fail("Pool service interaction is missing its prompt or tower/floor routing metadata: " + str(pool_service.name))
 			return
-	operations.set("current_tower_id", "entertainment_tower_baghdad")
+	operations.set("current_tower_id", "antiques_heritage_tower_baghdad")
 	operations.set("active_floor_root", pool_room)
-	pool_room.set_meta("system_tower_id", "entertainment_tower_baghdad")
+	pool_room.set_meta("system_tower_id", "antiques_heritage_tower_baghdad")
 	pool_room.set_meta("system_tower_floor_number", 18)
 	operations.call("open_pool_service", locker_service)
 	operations.call("_use_pool_service", "locker")
 	var assigned_pool_locker_id := str(player.get_meta("system_pool_locker_id", ""))
 	var assigned_pool_locker := mens_pool_suite.get_node_or_null(assigned_pool_locker_id) as MeshInstance3D
-	if not bool(player.get_meta("system_pool_locker_reserved", false)) or str(player.get_meta("system_pool_locker_tower", "")) != "entertainment_tower_baghdad" or assigned_pool_locker == null or not bool(assigned_pool_locker.get_meta("system_pool_locker_occupied", false)) or int(assigned_pool_locker.get_meta("system_pool_locker_owner", -1)) != player.get_instance_id():
+	if not bool(player.get_meta("system_pool_locker_reserved", false)) or str(player.get_meta("system_pool_locker_tower", "")) != "antiques_heritage_tower_baghdad" or assigned_pool_locker == null or not bool(assigned_pool_locker.get_meta("system_pool_locker_occupied", false)) or int(assigned_pool_locker.get_meta("system_pool_locker_owner", -1)) != player.get_instance_id():
 		_fail("Pool locker service did not allocate and mark a real locker for the player in the correct tower.")
 		return
 	operations.call("_use_pool_service", "locker")
@@ -3033,13 +3013,13 @@ func _run() -> void:
 			_fail("A customer retained a restaurant seat or queue reservation after evacuation.")
 			return
 	print("QA TRACE: restaurant seating reservations released on evacuation; customer return passed; starting pool supervisor duty trip.")
-	operations.set("current_tower_id", "entertainment_tower_baghdad")
-	operations.call("_travel_to_floor", "entertainment_tower_baghdad", 18)
-	var entertainment_staff_ids: Array = operations.get("staff_by_tower").get("entertainment_tower_baghdad", [])
+	operations.set("current_tower_id", "antiques_heritage_tower_baghdad")
+	operations.call("_travel_to_floor", "antiques_heritage_tower_baghdad", 18)
+	var entertainment_staff_ids: Array = operations.get("staff_by_tower").get("antiques_heritage_tower_baghdad", [])
 	if entertainment_staff_ids.size() <= 3:
 		_fail("Entertainment Tower pool supervisor staff record is missing.")
 		return
-	var entertainment_tower_node := tower_manager.get_node("EntertainmentTower") as Node3D
+	var entertainment_tower_node := tower_manager.get_node("AntiquesHeritageTower") as Node3D
 	var pool_supervisor := entertainment_tower_node.find_child("TowerStaff_" + str(entertainment_staff_ids[3]), true, false) as Node3D
 	var pool_staff_car := operations.get("active_elevator_car") as Node3D
 	if pool_supervisor == null or pool_staff_car == null or pool_supervisor.get_parent() != pool_staff_car or not bool(pool_supervisor.get_meta("system_staff_in_elevator", false)):
@@ -3082,21 +3062,21 @@ func _run() -> void:
 		"hunter_association_tower_baghdad",
 		"business_investment_tower_baghdad",
 		"shopping_tower_baghdad",
-		"entertainment_tower_baghdad",
+		"antiques_heritage_tower_baghdad",
 		"technology_tower_baghdad"
 	]
 	var garden_tower_names := {
 		"hunter_association_tower_baghdad": "HunterAssociationTower",
 		"business_investment_tower_baghdad": "BusinessInvestmentTower",
 		"shopping_tower_baghdad": "ShoppingTower",
-		"entertainment_tower_baghdad": "EntertainmentTower",
+		"antiques_heritage_tower_baghdad": "AntiquesHeritageTower",
 		"technology_tower_baghdad": "TechnologyTower"
 	}
 	var garden_tower_radii := {
 		"hunter_association_tower_baghdad": 38.0,
 		"business_investment_tower_baghdad": 26.0,
 		"shopping_tower_baghdad": 30.0,
-		"entertainment_tower_baghdad": 29.0,
+		"antiques_heritage_tower_baghdad": 29.0,
 		"technology_tower_baghdad": 27.0
 	}
 	if is_instance_valid(operations.get("active_floor_root")):
