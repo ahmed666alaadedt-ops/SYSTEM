@@ -1391,6 +1391,14 @@ func _run() -> void:
 	if not skill_progression.get("authorized_system_skills").has("pulse_dash") or int(skill_progression.call("get_item_count", "skill_manual_pulse_dash")) != 1:
 		_fail("Buying the Pulse Dash manual did not issue and persist its training permit.")
 		return
+	var general_catalog_controls := operations.get("catalog_controls") as Node
+	if general_catalog_controls != null and general_catalog_controls.find_child("SkillManualPurchase_pulse_dash", true, false) != null:
+		_fail("Advanced skill manuals leaked into the general vendor catalogue instead of the dedicated skill store.")
+		return
+	var inventory_controls := operations.get("inventory_controls") as Node
+	if inventory_controls == null or inventory_controls.find_child("TrainingPermitRecord_skill_manual_pulse_dash", true, false) == null or inventory_controls.find_child("Sell_skill_manual_pulse_dash", true, false) != null:
+		_fail("Purchased training permits must be shown as locked records, not ordinary sellable inventory.")
+		return
 	if skill_progression.get("learned_system_skills").has("pulse_dash"):
 		_fail("Buying a skill manual must not unlock the skill without verified practice.")
 		return

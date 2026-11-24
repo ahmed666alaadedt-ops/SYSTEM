@@ -2072,6 +2072,8 @@ func _add_catalog_controls(tower_id: String) -> void:
 		return
 	for product_value in catalog:
 		var product: Dictionary = product_value
+		if str(product.get("product_type", "")) == "skill_training_permit":
+			continue
 		var item_id := str(product["id"])
 		var item_name := str(product["name"])
 		var price := _get_current_price(item_id)
@@ -2175,7 +2177,14 @@ func _add_sell_controls() -> void:
 		var count := int(items[item_id])
 		if count <= 0:
 			continue
+		if item_id.begins_with("skill_manual_"):
+			var permit_record := Label.new()
+			permit_record.name = "TrainingPermitRecord_" + item_id
+			permit_record.text = "%s × %d — تصريح تدريب معتمد وغير قابل للبيع" % [item_id, count]
+			inventory_controls.add_child(permit_record)
+			continue
 		var sell_button := Button.new()
+		sell_button.name = "Sell_" + item_id
 		sell_button.text = "بيع %s × %d" % [item_id, count]
 		sell_button.pressed.connect(_sell_item.bind(item_id, count))
 		inventory_controls.add_child(sell_button)
