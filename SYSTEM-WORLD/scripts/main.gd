@@ -34,6 +34,7 @@ const NPCVisiblePopulationManagerScript = preload("res://scripts/npc_visible_pop
 const NPCSocialInteractionManagerScript = preload("res://scripts/npc_social_interaction_manager.gd")
 const NPCCityNavigationManagerScript = preload("res://scripts/npc_city_navigation_manager.gd")
 const HunterExamManagerScript = preload("res://scripts/system_hunter_exam_manager.gd")
+const HunterExamStageRuntimeScript = preload("res://scripts/system_hunter_exam_stage_runtime.gd")
 const PowerTowerManagerScript = preload("res://scripts/system_power_tower_manager.gd")
 const BaghdadTowerOperationsManagerScript = preload("res://scripts/system_baghdad_tower_operations_manager.gd")
 const PlayerCombatHealthScript = preload("res://scripts/system_player_combat_health.gd")
@@ -62,6 +63,7 @@ var npc_visible_population_manager
 var npc_social_interaction_manager
 var npc_city_navigation_manager
 var hunter_exam_manager
+var hunter_exam_stage_runtime: Node3D
 var power_tower_manager
 var tower_operations_manager
 var power_tower_score_event_counter := 0
@@ -458,6 +460,7 @@ func create_hunter_exam_manager() -> void:
 	hunter_exam_manager.name = "HunterExamManager"
 	add_child(hunter_exam_manager)
 	hunter_exam_manager.stage_completed.connect(_on_hunter_exam_stage_completed)
+	hunter_exam_manager.stage_started.connect(_on_hunter_exam_stage_started)
 	hunter_exam_manager.license_earned.connect(_on_hunter_exam_license_earned)
 
 
@@ -543,6 +546,28 @@ func _on_public_mission_rewarded(mission_id: String, xp_amount: int) -> void:
 	var board := _get_public_event_board()
 	if board != null and board.has_method("publish_mission_completion"):
 		board.call("publish_mission_completion", mission_id, xp_amount)
+
+
+func _on_hunter_exam_stage_started(stage_id: String, stage_number: int) -> void:
+	if stage_id != "baghdad_heritage_trial":
+		push_warning("SYSTEM HUNTER EXAM: physical environment is not yet built for stage %d (%s)." % [stage_number, stage_id])
+		return
+	var tunnel_root := get_tree().root.find_child("BaghdadHunterExaminationTunnel", true, false) as Node3D
+	if tunnel_root == null:
+		push_warning("SYSTEM HUNTER EXAM: hidden Baghdad tunnel root is unavailable.")
+		return
+	hunter_exam_stage_runtime = tunnel_root.get_node_or_null("HunterExamStageRuntime") as Node3D
+	if hunter_exam_stage_runtime == null:
+		hunter_exam_stage_runtime = HunterExamStageRuntimeScript.new()
+		hunter_exam_stage_runtime.name = "HunterExamStageRuntime"
+		hunter_exam_stage_runtime.position = Vector3(0.0, -17.0, 190.0)
+		tunnel_root.add_child(hunter_exam_stage_runtime)
+	var stage_data := hunter_exam_manager.get_current_stage()
+	var build_result: Dictionary = hunter_exam_stage_runtime.call("activate_stage", stage_data, player, hunter_exam_manager)
+	if not bool(build_result.get("success", false)):
+		push_warning("SYSTEM HUNTER EXAM: stage environment activation failed: %s" % str(build_result.get("reason", "unknown")))
+	else:
+		print("SYSTEM HUNTER EXAM: Baghdad heritage stage environment is active.")
 
 
 func _on_hunter_exam_stage_completed(stage_id: String, stage_number: int) -> void:
@@ -888,6 +913,16 @@ func _on_interaction_performed(
 		" / ",
 		location_id
 	)
+	if target.has_meta("system_exam_stage_objective"):
+		if hunter_exam_stage_runtime == null or not hunter_exam_stage_runtime.has_method("handle_interaction"):
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "نظام أهداف الاختبار غير متاح حالياً."
+			return
+		var objective_result: Dictionary = hunter_exam_stage_runtime.call("handle_interaction", target)
+		if bool(objective_result.get("handled", false)):
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = str(objective_result.get("message", "تم التفاعل مع هدف الاختبار."))
+			return
 	if target.has_meta("system_hunter_tunnel_riddle_step"):
 		var riddle_root := target.get_parent() as Node3D
 		if riddle_root == null:
