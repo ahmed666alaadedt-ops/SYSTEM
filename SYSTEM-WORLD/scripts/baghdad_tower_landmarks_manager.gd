@@ -492,10 +492,10 @@ func _create_hunter_exam_tunnel() -> void:
 
 	# Three low-profile clue stones are scattered around the public district.
 	# They look like ordinary paving details; each can be examined up close.
-	var clue_positions := [
-		Vector3(-34.0, 0.12, 18.0),
-		Vector3(28.0, 0.12, -26.0),
-		Vector3(4.0, 0.12, 70.0)
+	var clue_positions: Array[Vector2] = [
+		bridge_axis * 300.0 + bridge_river_axis * 120.0,
+		-bridge_axis * 300.0 - bridge_river_axis * 120.0,
+		bridge_axis * 430.0 - bridge_river_axis * 140.0
 	]
 	var clue_symbols := ["عين", "نهر", "تاج"]
 	for index in range(3):
@@ -505,7 +505,8 @@ func _create_hunter_exam_tunnel() -> void:
 		clue.set_meta("system_hunter_tunnel_riddle_step", index + 1)
 		clue.set_meta("system_display_name", "نقش حجري قديم")
 		clue.set_meta("system_interaction_prompt", "تفحّص النقش الحجري")
-		var clue_local: Vector3 = clue_positions[index]
+		var clue_offset: Vector2 = clue_positions[index]
+		var clue_local := Vector3(clue_offset.x, 0.12, clue_offset.y)
 		var clue_world_x := bridge_anchor.x + clue_local.x
 		var clue_world_z := bridge_anchor.y + clue_local.z
 		clue_local.y = float(terrain.call("get_terrain_height", clue_world_x, clue_world_z)) - tunnel_root.position.y + 0.12
