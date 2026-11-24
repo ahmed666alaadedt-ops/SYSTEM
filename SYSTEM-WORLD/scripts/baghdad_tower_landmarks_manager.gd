@@ -1008,7 +1008,16 @@ func _create_tower_identity_details(root: Node3D, node_name: String, height: flo
 				plaque.add_child(guild_title)
 			root.set_meta("system_hunter_guild_insignia", "XSX")
 			root.set_meta("system_hunter_guild_identity_facades", 4)
-			_add_tower_identity_box(root, "AssociationCrownSpire", Vector3(0.0, height + 34.0, 0.0), Vector3(5.0, 68.0, 5.0), accent)
+			# Four diagonal roof masts frame the helipad from outside its clear landing circle.
+			for mast_index in range(4):
+				var mast_angle := TAU * (float(mast_index) + 0.5) / 4.0
+				_add_tower_identity_box(
+					root,
+					"HunterRoofBeaconMast_%02d" % mast_index,
+					Vector3(cos(mast_angle) * 30.0, height + 14.0, sin(mast_angle) * 30.0),
+					Vector3(1.6, 12.0, 1.6),
+					accent
+				)
 		"ShoppingTower":
 			for level in range(3):
 				var retail_ring := MeshInstance3D.new()
