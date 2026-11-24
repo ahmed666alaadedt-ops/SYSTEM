@@ -3098,6 +3098,8 @@ func _walk_sky_garden_bridge(player: CharacterBody3D, tower: Node3D, garden: Nod
 	player.global_position = start_world
 	player.velocity = Vector3(0.0, -1.0, 0.0)
 	await physics_frame
+	player.move_and_slide()
+	await physics_frame
 	var initial_on_floor := player.is_on_floor()
 	var travel := end_world - start_world
 	var travel_direction := travel.normalized()
