@@ -541,6 +541,16 @@ A checked repository foundation does not mean a finished gameplay feature. Visua
 - [ ] Validate all collision surfaces, clearances, ramp slopes, and vehicle handling in Godot and on Android.
 - Note: collision-backed decks and parking slabs are source-level additions; no runtime or driving test was run in this update. Lift shafts and parking bay markings remain visual blockout, not interactive systems.
 
+## Baghdad five-tower sky gardens — 24 November 2026
+
+- [x] Add three elevated sky gardens to each of the five connected civic towers (15 total); keep the standalone Power Tower excluded.
+- [x] Give each garden four physical collidable deck sections around the tower shaft, preserving central shaft clearance.
+- [x] Add transparent perimeter safety rails, four planter beds with soil, four trees, two benches, four path lights and Arabic/English garden signage per garden.
+- [x] Add an interactable garden trigger with the owning tower ID, garden level and corresponding tower-floor metadata.
+- [x] Extend `validate_baghdad_towers.gd` to check all fifteen gardens, floor collisions, railings, landscaping, seating and floor interaction metadata.
+- [ ] Run canonical Godot validation and Android APK export on the exact updated PR head; do not mark the gardens runtime-verified until both workflows pass.
+- [ ] Connect the garden floor metadata to confirmed elevator destination routing and add living garden activities/NPC routines; current implementation is a physical geometry and interaction prototype.
+
 ## Connected Baghdad district — vehicles and public life — 20 November 2026
 - [x] Record the five connected district identities: Hunter Association, Business and Investment, Shopping and Commerce, Entertainment and Sports, and Technology and Innovation; keep Power Tower separate.
 - [x] Expand the separate Power Tower progression model to 200 floors; playable interiors, opponent encounters, and server-verified records remain open.
@@ -548,7 +558,7 @@ A checked repository foundation does not mean a finished gameplay feature. Visua
 - [x] Add placeholder public amenity deck geometry and a planned facility inventory for recreation, hospitality, shopping, health support, parking, and emergency access.
 - [ ] Implement validated drivable ramp paths, vehicle physics, lane widths, slope limits, collision barriers, traffic rules, and safe merges from Baghdad streets.
 - [ ] Implement parking garages, vehicle elevators/ramps, drop-off points, pedestrian crossings, and service/emergency circulation.
-- [ ] Expand beyond the current local gameplay prototypes: water-park/amusement-park systems, complete hotel room interiors, full restaurant seating/service, cinema programming/playback, complete sports matches, gardens and public-facility life simulation remain open.
+- [ ] Expand beyond the current local gameplay prototypes: water-park/amusement-park systems, complete hotel room interiors, full restaurant seating/service, cinema programming/playback, complete sports matches, and public-facility life simulation remain open. The fifteen physical sky-garden decks are tracked separately below.
 - [ ] Position and validate the full district against the real in-game Tigris corridor, Karkh/Rusafa geography, Tahrir Square, and the Freedom Monument; preserve river navigation and protected landmark sightlines.
 - [ ] Run Godot parser/editor/runtime checks and inspect the five-tower blockout in-game before calling this milestone validated.
 - Note: the checked items above indicate repository geometry/documentation was added, not that vehicles can already drive on the decks or that the amenities are playable.
