@@ -609,7 +609,12 @@ func _on_hunter_exam_registration_requested() -> void:
 		result = {
 			"success": true,
 			"candidate_number": int(overview.get("candidate_number", 0)),
-			"message": "أنت مسجل بالفعل. اتبع مرشد نقابة الصيادين داخل برج الصيادين."
+			"message": "أنت مسجل بالفعل. رقمك محفوظ؛ اتبع مرشد نقابة الصيادين."
+		}
+	elif bool(overview.get("invitation_accepted", false)):
+		result = {
+			"success": true,
+			"message": "تم قبول طلبك. اتبع مرشد نقابة الصيادين إلى النفق لاستلام رقمك التسلسلي."
 		}
 	var menu := get_node_or_null("HunterGuildMenu")
 	if menu != null and menu.has_method("set_exam_status"):
@@ -665,7 +670,6 @@ func _on_hunter_exam_invitation_accepted() -> void:
 		if interaction_prompt_label != null:
 			interaction_prompt_label.text = "نظام نقابة الصيادين غير متاح حالياً."
 		return
-	var overview: Dictionary = hunter_exam_manager.get_exam_overview()
 	var result: Dictionary = hunter_exam_manager.accept_exam_invitation("local_player")
 	if not bool(result.get("success", false)):
 		if interaction_prompt_label != null:
@@ -684,7 +688,7 @@ func _start_hunter_guild_escort(guide: Node) -> void:
 	if not is_instance_valid(player) or guide == null or hunter_exam_manager == null:
 		return
 	var overview: Dictionary = hunter_exam_manager.get_exam_overview()
-	if not bool(overview.get("registered", false)):
+	if not bool(overview.get("invitation_accepted", false)):
 		_show_hunter_exam_invitation()
 		return
 	if hunter_exam_escort_active or bool(player.get_meta("system_inside_hunter_exam_tunnel", false)):
