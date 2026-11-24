@@ -579,6 +579,8 @@ func get_attack_cooldown_multiplier() -> float:
 func consume_elixir(item_id: String) -> Dictionary:
 	if get_item_count(item_id) <= 0:
 		return {"success": false, "reason": "ELIXIR_NOT_OWNED"}
+	if active_elixir_effects.has(item_id) and float(active_elixir_effects[item_id].get("remaining_seconds", 0.0)) > 0.0:
+		return {"success": false, "reason": "ELIXIR_EFFECT_ALREADY_ACTIVE"}
 	if item_id in ["nen_awakening_elixir", "nen_acquisition_elixir"]:
 		if nen_unlocked:
 			return {"success": false, "reason": "NEN_ALREADY_UNLOCKED"}
@@ -615,6 +617,41 @@ func consume_elixir(item_id: String) -> Dictionary:
 			"rare_legendary_elixir":
 				effect_id = "sovereign"
 				effect = {"remaining_seconds": 180.0, "damage_bonus": 25.0, "defense_bonus": 15.0, "movement_multiplier": 1.15, "attack_cooldown_multiplier": 0.9}
+			"elite_legendary_elixir":
+				if current_level < 80 or not nen_unlocked or nen_control_rank < 5 or not _meets_skill_rank("S"):
+					return {"success": false, "reason": "ELITE_ELIXIR_REQUIREMENTS"}
+				effect_id = "elite_sovereign"
+				effect = {"remaining_seconds": 150.0, "damage_bonus": 30.0, "defense_bonus": 22.0, "movement_multiplier": 1.18, "attack_cooldown_multiplier": 0.88}
+			"nen_stabilizer_elixir":
+				if not nen_unlocked:
+					return {"success": false, "reason": "NEN_NOT_UNLOCKED"}
+				effect_id = "nen_stability"
+				effect = {"remaining_seconds": 150.0, "defense_bonus": 8.0}
+			"nen_focus_elixir":
+				if not nen_unlocked:
+					return {"success": false, "reason": "NEN_NOT_UNLOCKED"}
+				effect_id = "nen_focus"
+				effect = {"remaining_seconds": 120.0, "attack_cooldown_multiplier": 0.9}
+			"nen_recovery_elixir":
+				if not nen_unlocked:
+					return {"success": false, "reason": "NEN_NOT_UNLOCKED"}
+				effect_id = "nen_recovery"
+				effect = {"remaining_seconds": 90.0, "defense_bonus": 6.0, "movement_multiplier": 1.05}
+			"antidote_elixir":
+				effect_id = "antidote"
+				effect = {"remaining_seconds": 180.0, "defense_bonus": 2.0}
+			"resistance_elixir":
+				effect_id = "resistance"
+				effect = {"remaining_seconds": 150.0, "defense_bonus": 8.0}
+			"deep_wound_elixir", "regeneration_elixir":
+				var health := get_tree().root.find_child("PlayerCombatHealth", true, false)
+				if health == null or not health.has_method("apply_field_healing"):
+					return {"success": false, "reason": "HEALTH_SYSTEM_UNAVAILABLE"}
+				var healing_amount := 15.0 if item_id == "deep_wound_elixir" else 20.0
+				if not bool(health.call("apply_field_healing", healing_amount)):
+					return {"success": false, "reason": "HEALING_NOT_NEEDED"}
+				effect_id = "wound_recovery" if item_id == "deep_wound_elixir" else "regeneration"
+				effect = {"remaining_seconds": 90.0, "defense_bonus": 3.0}
 			_:
 				return {"success": false, "reason": "UNKNOWN_ELIXIR"}
 		active_elixir_effects[effect_id] = effect
