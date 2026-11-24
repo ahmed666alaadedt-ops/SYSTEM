@@ -15,14 +15,14 @@ The Hunter examination is a separate seven-stage global qualification journey. I
 - The final entrance is disguised as ordinary foundation masonry. Solving the riddle opens the concealed stone slab and reveals the descending passage.
 - The hidden entrance remains separate from the Power Tower and leads into the Hunter Examination system, not a Power Tower floor.
 - Weapons, swords, spears, axes, bows, firearms, shields, armor, helmets, hunter outfits, equipment upgrades, repairs, crafting, and all elixir types are departments inside Shopping and Commerce Tower. They are not separate towers.
-- Source currently includes the concealed door, clue interactions, and reveal behavior. Physical traversal and the explorable examination-stage environments remain unfinished pending implementation and runtime validation.
+- The concealed door, ordered surface clues, reveal, and physical descent are implemented. Stage one now has a procedural 3D heritage chamber with collidable walls/floor, three ordered inscription tablets, a physical spike-obstacle lane with side routes, and a relic pedestal that unlocks only after the inscriptions. Runtime validation and Android play inspection are still pending.
 
 ## Current source implementation
 
 - `scripts/baghdad_tower_landmarks_manager.gd` builds the five connected district towers plus the separate Power Tower, resolves foundations to nearby land where possible, and excludes Power Tower from the five-tower connection loop.
 - `scripts/system_tower_entrance.gd` provides a ray-interactable entrance marker for each tower.
 - `scripts/modern_world_region_manager.gd` creates the tower manager and registers both landmarks in the existing modern-world map manager as `LocationType.LANDMARK` (enum value 5).
-- `scripts/system_hunter_exam_manager.gd` defines a seven-stage examination, candidate numbering, registration, sequential progression, save-state fields, and completion/failure signals.
+- `scripts/system_hunter_exam_manager.gd` defines a seven-stage examination, candidate numbering, registration, sequential progression, save-state fields, and completion/failure signals. `scripts/system_hunter_exam_stage_runtime.gd` builds Baghdad stage one and connects ordered inscription/relic objectives to that progression.
 - `scripts/system_power_tower_manager.gd` defines a separate 200-floor progression track, level requirements, boss/elite floor cadence, rank bands, clear-time records, and XP reward events. `scripts/main.gd` connects its floor-clear reward event to the existing player progression.
 - `scripts/hunter_guild_menu.gd` adds registration and start controls.
 - `scripts/main.gd` creates the examination manager and connects the guild menu signals.
@@ -81,7 +81,7 @@ Power Tower implementation now includes sequential unlocks and level gates, huma
 
 The Power Tower still does not claim production online PvP matchmaking, signed server-result verification, global leaderboards, interactive seat reservation/standing, autonomous spectator crowds, a playable spectator ticket interface, 200 individually handcrafted arena scenes or final mobile art/performance polish. The virtual-credit spectator ticket-pool manager is a local prototype and is not an online anti-cheat-secure service.
 
-The Hunter Examination remains a separate seven-stage global qualification journey. Its physical stage environments, actual maze/puzzle/trap devices, guardian AI, city-to-city stage travel, server-authoritative candidate verification, anti-cheat checks, and production Hunter-license card remain unfinished.
+The Hunter Examination remains a separate seven-stage global qualification journey. Baghdad stage one now has a playable local geometry/objective prototype. The six remaining physical environments, advanced maze/puzzle devices, guardian AI, city-to-city stage travel, server-authoritative candidate verification, anti-cheat checks, and production Hunter-license card remain unfinished.
 
 The stage completion method is an integration hook for a future trusted objective-verification system. A non-empty evidence string is not sufficient security for an online competitive game. Before live multiplayer, completion and candidate-number records must be validated by an authoritative server.
 
@@ -89,7 +89,7 @@ The stage completion method is an integration hook for a future trusted objectiv
 
 1. Build and validate the tower blockouts and land placement in Godot.
 2. Create separate interior scenes for the Hunter Association headquarters and Power Tower.
-3. Build each examination stage as a playable environment with objective triggers, puzzles, traps, navigation, NPC candidates, and safe failure/retry rules.
+3. Complete and validate the six remaining examination environments, then expand stage one with verified trap responses, navigation objectives, candidate NPCs, and safe failure/retry rules.
 4. Connect travel transitions between the modern and historical city maps.
 5. Add official license/card issuance, Hunter ranks, examination records, and rewards to the existing player/account progression systems.
 6. Add server-side candidate numbering, stage verification, anti-cheat, and multiplayer synchronization.
