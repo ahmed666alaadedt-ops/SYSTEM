@@ -20,7 +20,8 @@ The following is the required explicit floor directory. Existing hotel floors 27
 
 | Floors | Department | Required player-facing activity |
 |---|---|---|
-| 1–4 | General market and supplies | Food, water, travel supplies, clothing and basic services |
+| 1–3 | General market and supplies | Food, water, travel supplies, clothing and basic services |
+| 4 | Skill manuals and training permits | Inspect skill manuals, verify rank/level/Nen prerequisites, purchase a training permit, then complete the required supervised training sessions |
 | 5–7 | Melee weapon galleries | Training/steel swords, spears, axes; inspect, compare, buy and equip |
 | 8–10 | Ranged and modern equipment | Bows/arrows and rank-gated modern equipment; world-appropriate restrictions |
 | 11–13 | Armor and protection | Shields, armor, helmets, outfits; compare defense, durability and rank |
