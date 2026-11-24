@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "SYSTEM-WORLD/**"
+      - "SYSTEM-WORLD/tools/**"
       - ".github/workflows/canonical-godot-android.yml"
   push:
     branches:
@@ -11,6 +12,7 @@ on:
       - feature/baghdad-five-plus-power-tower-20261122
     paths:
       - "SYSTEM-WORLD/**"
+      - "SYSTEM-WORLD/tools/**"
       - ".github/workflows/canonical-godot-android.yml"
   workflow_dispatch:
   workflow_run:
