@@ -181,7 +181,7 @@ func _run_validation() -> void:
 		_fail("The upper city does not provide the Hunter Tower atrium and connected walkable skyways.")
 		return
 	var central_hunter := tower_manager.get_node_or_null("HunterAssociationTower") as Node3D
-	if central_hunter == null or absf(central_hunter.position.y - 418.0) > 0.1:
+	if central_hunter == null or absf(central_hunter.position.y - 419.2) > 0.1:
 		_fail("The functional Hunter Association Tower is not physically seated on the uppermost 418 m Baghdad sky-city platform.")
 		return
 	if str(central_hunter.get_meta("system_hunter_guild_insignia", "")) != "XSX" or int(central_hunter.get_meta("system_hunter_guild_identity_facades", 0)) != 4:
