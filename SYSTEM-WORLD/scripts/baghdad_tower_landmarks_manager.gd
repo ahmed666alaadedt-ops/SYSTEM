@@ -975,14 +975,14 @@ func _create_tower_identity_details(root: Node3D, node_name: String, height: flo
 				emblem.outline_size = 10
 				emblem.outline_modulate = Color(0.025, 0.045, 0.08)
 				plaque.add_child(emblem)
-			var guild_title := Label3D.new()
-			guild_title.name = "HunterGuildIdentity"
-			guild_title.text = "نقابة الصيادين العالمية"
-			guild_title.font_size = 34
-			guild_title.pixel_size = 0.018
-			guild_title.position = Vector3(0.0, -17.0, -1.4)
-			guild_title.modulate = Color(0.78, 0.94, 1.0)
-			plaque.add_child(guild_title)
+				var guild_title := Label3D.new()
+				guild_title.name = "HunterGuildIdentity"
+				guild_title.text = "نقابة الصيادين العالمية"
+				guild_title.font_size = 34
+				guild_title.pixel_size = 0.018
+				guild_title.position = Vector3(0.0, -17.0, -1.4)
+				guild_title.modulate = Color(0.78, 0.94, 1.0)
+				plaque.add_child(guild_title)
 			root.set_meta("system_hunter_guild_insignia", "XSX")
 			root.set_meta("system_hunter_guild_identity_facades", 4)
 			_add_tower_identity_box(root, "AssociationCrownSpire", Vector3(0.0, height + 34.0, 0.0), Vector3(5.0, 68.0, 5.0), accent)
