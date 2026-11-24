@@ -54,7 +54,7 @@ func _run_validation() -> void:
 	if not _check(initial_crowd != null, "The physical tunnel does not contain its candidate crowd."):
 		return
 	var crowd_status: Dictionary = initial_crowd.call("get_crowd_status")
-	if not _check(int(crowd_status.get("candidate_count", 0)) == 500 and int(crowd_status.get("unique_candidate_numbers", 0)) == 500, "The tunnel crowd does not contain 500 individually tracked candidates."):
+	if not _check(int(crowd_status.get("candidate_count", 0)) == 500 and int(crowd_status.get("unique_candidate_numbers", 0)) == 500 and int(crowd_status.get("behavior_profile_count", 0)) == 500, "The tunnel crowd does not contain 500 individually tracked candidates with individual behavior profiles."):
 		return
 
 	main.call("_on_hunter_tower_arrival_body_entered", player)
