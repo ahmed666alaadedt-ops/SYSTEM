@@ -1707,3 +1707,5 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 
 - Follow-up Hunter roof detailing: removed the generic solid crown from the Hunter Tower because it overlapped the approved rooftop helipad footprint; moved the rooftop beacon/core outside the landing circle and added illuminated architectural halo rings aligned to the 150/340/530 m advertising tiers.
 - Extended the tower validator to require reserved helipad clearance, an offset rooftop beacon, all three advertising-tier halos, skyway edge rails, and the upper circular platform guardrail. These checks and all latest architectural edits are pending exact-HEAD workflow results.
+
+- Rooftop clearance refinement: removed the central Hunter Association crown spire as well as the generic solid crown; replaced it with four diagonal perimeter beacon masts outside the helipad's 22 m landing circle. The validator now rejects either central crown/spire and requires all four perimeter masts.
