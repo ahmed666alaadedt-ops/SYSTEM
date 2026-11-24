@@ -1097,7 +1097,7 @@ func _on_interaction_performed(
 		" / ",
 		location_id
 	)
-	if target.has_meta("system_exam_stage_objective"):
+	if target.has_meta("system_exam_stage_objective") or target.has_meta("system_exam_rival_id"):
 		if hunter_exam_stage_runtime == null or not hunter_exam_stage_runtime.has_method("handle_interaction"):
 			if interaction_prompt_label != null:
 				interaction_prompt_label.text = "نظام أهداف الاختبار غير متاح حالياً."
