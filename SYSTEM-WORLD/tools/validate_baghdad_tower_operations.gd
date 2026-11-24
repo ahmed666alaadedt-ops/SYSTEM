@@ -1366,16 +1366,19 @@ func _run() -> void:
 	skill_progression.set("verified_hunter_mission_points", 500)
 	skill_progression.set("nen_unlocked", true)
 	skill_progression.set("nen_control_rank", 1)
-	skill_progression.set("learned_system_skills", ["guard_breaker"])
-	skill_progression.set("authorized_system_skills", [])
+	var permit_test_learned: Array = skill_progression.get("learned_system_skills")
+	permit_test_learned.clear()
+	permit_test_learned.append("guard_breaker")
+	var permit_test_authorized: Array = skill_progression.get("authorized_system_skills")
+	permit_test_authorized.clear()
 	var blocked_manual: Dictionary = skill_progression.call("check_skill_training_permit", "pulse_dash")
 	if bool(blocked_manual.get("success", true)) or str(blocked_manual.get("reason", "")) != "SKILL_PREREQUISITE":
-		_fail("Skill-store permit ignored the required swift_step prerequisite.")
+		_fail("Skill-store permit ignored the required swift_step prerequisite: " + str(blocked_manual))
 		return
-	skill_progression.set("learned_system_skills", ["guard_breaker", "swift_step"])
+	permit_test_learned.append("swift_step")
 	var no_permit_practice: Dictionary = skill_progression.call("practice_system_skill", "pulse_dash", "validator_pulse_without_permit")
 	if bool(no_permit_practice.get("success", true)) or str(no_permit_practice.get("reason", "")) != "SKILL_STUDY_PERMIT_REQUIRED":
-		_fail("Advanced skill practice bypassed the Shopping Tower training permit.")
+		_fail("Advanced skill practice bypassed the Shopping Tower training permit: result=%s | authorized=%s | learned=%s" % [str(no_permit_practice), str(skill_progression.get("authorized_system_skills")), str(skill_progression.get("learned_system_skills"))])
 		return
 	operations.set("credits", maxi(50000, int(operations.get("credits"))))
 	operations.call("open_baghdad_progression_facility", "shopping_tower_baghdad", 4, "shopping_skill_store")
