@@ -197,9 +197,12 @@ func _handle_clue(clue_id: String) -> Dictionary:
 	return {"handled":true,"success":true,"riddle_progress":clue_progress,"message":"تم تسجيل النقش الصحيح. تابع البحث عن الرمز التالي."}
 
 func _handle_secret_door() -> Dictionary:
+	var candidate_registered := _is_candidate_registered()
+	var current_overview: Dictionary = exam_manager.call("get_exam_overview") if is_instance_valid(exam_manager) else {}
+	print("SYSTEM HUNTER SECRET DOOR CHECK: solved=%s registered=%s candidate=%d manager=%s" % [str(riddle_solved), str(candidate_registered), int(current_overview.get("candidate_number", 0)), str(is_instance_valid(exam_manager))])
 	if not riddle_solved:
 		return {"handled":true,"success":false,"reason":"HUNTER_TUNNEL_RIDDLE_NOT_SOLVED","message":"لوح الحجر لا يتحرك. افحص رموز العين والنهر والتاج بالترتيب."}
-	if not _is_candidate_registered():
+	if not candidate_registered:
 		return {"handled":true,"success":false,"reason":"NOT_REGISTERED","message":"حللت اللغز، لكن يجب إكمال التسجيل الرسمي في برج جمعية الصيادين أولاً."}
 	if descent_in_progress:
 		return {"handled":true,"success":false,"reason":"DESCENT_IN_PROGRESS","message":"المصعد السري ينزل بالفعل."}
