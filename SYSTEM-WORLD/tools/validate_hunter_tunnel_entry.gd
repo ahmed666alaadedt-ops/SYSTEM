@@ -138,7 +138,7 @@ func _run_validation() -> void:
 	var door_collision := entrance.get_node_or_null("OrdinaryFoundationMasonry/ConcealedDoorCollision/DoorCollisionShape") as CollisionShape3D
 	var door_panel := entrance.get_node_or_null("OrdinaryFoundationMasonry/ConcealedStoneSlab") as MeshInstance3D
 	var elevator := entrance.get_node_or_null("HunterSecretDescentElevator") as Node3D
-		if not _check(bool(revealed_status.get("door_unlocked", false)) and door_collision != null and door_collision.disabled and door_panel != null and door_panel.position.y > 2.7 and elevator != null and elevator.visible, "Correct clues plus Association registration did not physically reveal the stone door and elevator. status=%s collision=%s disabled=%s panel_y=%s elevator=%s visible=%s" % [str(revealed_status), str(door_collision != null), str(door_collision.disabled if door_collision != null else false), str(door_panel.position.y if door_panel != null else -999.0), str(elevator != null), str(elevator.visible if elevator != null else false)]):
+	if not _check(bool(revealed_status.get("door_unlocked", false)) and door_collision != null and door_collision.disabled and door_panel != null and door_panel.position.y > 2.7 and elevator != null and elevator.visible, "Correct clues plus Association registration did not physically reveal the stone door and elevator. status=%s collision=%s disabled=%s panel_y=%s elevator=%s visible=%s" % [str(revealed_status), str(door_collision != null), str(door_collision.disabled if door_collision != null else false), str(door_panel.position.y if door_panel != null else -999.0), str(elevator != null), str(elevator.visible if elevator != null else false)]):
 		return
 
 	main.call("_on_interaction_performed", door_interaction, "shopping_tower_baghdad_floor_29")
