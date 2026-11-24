@@ -500,7 +500,9 @@ func _create_tower_sky_gardens(tower: Node3D, tower_id: String, tower_title: Str
 	for garden_index in range(3):
 		var progress := float(progress_values[garden_index])
 		var floor_number := clampi(roundi(1.0 + float(maxi(floor_count - 1, 0)) * progress), 1, floor_count)
-		var floor_height := 9.0 + (tower_height - 16.0) * progress
+		# Match the exact floor-elevation formula used by the elevator interior builder.
+		# The garden must sit on the same Y plane as its numbered elevator destination.
+		var floor_height := 9.0 + (tower_height - 16.0) * float(floor_number - 1) / float(maxi(floor_count - 1, 1))
 		var garden := Node3D.new()
 		garden.name = "SkyGarden_%02d" % (garden_index + 1)
 		garden.position.y = floor_height
@@ -508,6 +510,7 @@ func _create_tower_sky_gardens(tower: Node3D, tower_id: String, tower_title: Str
 		garden.set_meta("system_owner_tower_id", tower_id)
 		garden.set_meta("system_garden_level", garden_index + 1)
 		garden.set_meta("system_tower_floor", floor_number)
+		garden.set_meta("system_garden_elevator_floor_y", floor_height)
 		garden.set_meta("system_garden_walkable", true)
 		gardens.add_child(garden)
 
