@@ -9,7 +9,8 @@
 - [x] Added a physical Baghdad heritage-site stage environment to the hidden passage: collidable stone chamber, entrance and perimeter walls, carved Eye/River/Crown tablets, a physical spike-trap obstacle lane with side routes, an artifact pedestal, and an initially concealed relic.
 - [x] Connected stage-start events to the runtime builder and routed tablet/relic interactions into ordered objective progression. Wrong inscription order resets the sequence; the relic becomes visible and recoverable only after all three clues are read correctly; recovery completes stage one through the existing sequential exam manager.
 - [ ] Build and connect the remaining six physical examination environments (Cairo, Alexandria, Paris, Babylon, Tokyo, Highland Frontier) with their own stage-specific objectives and transitions.
-- [ ] Run Godot parser/runtime, Baghdad landmark and operations regressions, and Android APK export on the exact updated PR head. No validation or APK success is claimed for this source change.
+- [x] Added `tools/validate_hunter_exam_stage_runtime.gd` and inserted it into the canonical Godot validation workflow. The regression covers physical floor/wall collision, all seven spike obstacles, rejection/reset of a wrong clue order, successful Eye → River → Crown progression, artifact visibility gating, artifact recovery, and sequential advancement to Cairo.
+- [ ] Run the new stage regression plus full Godot runtime/operations checks and Android APK export on the exact updated PR head. No validation or APK success is claimed until those exact-head runs pass.
 - [ ] Review the physical chamber, spike collision and relic interaction in an actual Android build; the current environment is a procedural gameplay prototype, not finished cinematic art.
 - [ ] Review the entrance placement and visibility in the actual Android build; the current structure is a functional geometry prototype, not the finished cinematic underground complex.
 
