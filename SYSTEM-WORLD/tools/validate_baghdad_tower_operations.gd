@@ -364,14 +364,25 @@ func _run() -> void:
 		return
 	var family_pool_room := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 19) as Node3D
 	var family_pool_facility := family_pool_room.get_node("SpecialFacility_swimming_pool") as Node3D
-	if family_pool_facility.find_child("FamilySplashPoolWater", true, false) == null or family_pool_facility.find_child("SplashFountain_00", true, false) == null:
-		_fail("Pool floor 19 is missing its family splash pool and fountains.")
+	if family_pool_facility.find_child("FamilySplashPoolWater", true, false) == null or family_pool_facility.find_child("SplashFountain_00", true, false) == null or family_pool_facility.get_node_or_null("FamilySplashPoolWaterVolume") == null:
+		_fail("Pool floor 19 is missing its family leisure pool, fountains or active water volume.")
 		return
 	var spa_pool_room := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 20) as Node3D
 	var spa_pool_facility := spa_pool_room.get_node("SpecialFacility_swimming_pool") as Node3D
-	for spa_node in ["SpaHotTubWater", "ThermalPoolWater", "SaunaCabin", "SteamRoomCabin"]:
+	for spa_node in ["SpaHotTubWater", "ThermalPoolWater", "SpaHotTubWaterVolume", "ThermalPoolWaterVolume", "SaunaCabin", "SteamRoomCabin"]:
 		if spa_pool_facility.find_child(spa_node, true, false) == null:
 			_fail("Pool floor 20 is missing its spa feature: " + spa_node)
+			return
+	for leisure_zone_name in ["PoolWaterVolume", "FamilySplashPoolWaterVolume", "SpaHotTubWaterVolume", "ThermalPoolWaterVolume"]:
+		var leisure_zone: Area3D = null
+		if leisure_zone_name == "FamilySplashPoolWaterVolume":
+			leisure_zone = family_pool_facility.get_node(leisure_zone_name) as Area3D
+		elif leisure_zone_name in ["SpaHotTubWaterVolume", "ThermalPoolWaterVolume"]:
+			leisure_zone = spa_pool_facility.get_node(leisure_zone_name) as Area3D
+		else:
+			leisure_zone = pool_facility.get_node(leisure_zone_name) as Area3D
+		if leisure_zone == null or not leisure_zone.monitoring or leisure_zone.get_node_or_null("WaterVolumeCollision") == null or str(leisure_zone.get_meta("system_activity_category", "")) != "leisure":
+			_fail("Pool zone %s must have an active water collision and leisure classification." % leisure_zone_name)
 			return
 	var cinema_floor := operations.call("_ensure_floor_room", "entertainment_tower_baghdad", 24) as Node3D
 	var cinema_facility := cinema_floor.get_node_or_null("SpecialFacility_cinema") as Node3D if cinema_floor != null else null
@@ -756,12 +767,16 @@ func _run() -> void:
 				_fail("A staffed public cafe and customer service interaction are missing from " + tower_id)
 				return
 		var internal_ad := lobby.get_node_or_null("NPCManagedInternalCampaign") as Label3D
-		if internal_ad == null or not internal_ad.text.contains("بإدارة"):
-			_fail("Internal NPC-managed advertising is missing for " + tower_id)
+		var internal_screen := lobby.get_node_or_null("NPCManagedInternalCampaignScreenPanel") as MeshInstance3D
+		var internal_frame := lobby.get_node_or_null("NPCManagedInternalCampaignScreenFrame") as MeshInstance3D
+		if internal_ad == null or not internal_ad.text.contains("بإدارة") or internal_screen == null or internal_frame == null or not bool(internal_screen.get_meta("system_advertising_screen", false)):
+			_fail("Internal NPC-managed advertising is missing its physical emissive screen and frame for " + tower_id)
 			return
 		var external_ad := tower.get_node_or_null("TowerCampaignText") as Label3D
-		if external_ad == null or not external_ad.text.contains("بإدارة"):
-			_fail("External NPC-managed advertising is missing for " + tower_id)
+		var external_screen := tower.get_node_or_null("TowerCampaignScreenPanel") as MeshInstance3D
+		var external_frame := tower.get_node_or_null("TowerCampaignScreenFrame") as MeshInstance3D
+		if external_ad == null or not external_ad.text.contains("بإدارة") or external_screen == null or external_frame == null or not bool(external_screen.get_meta("system_advertising_screen", false)):
+			_fail("External NPC-managed advertising is missing its physical emissive screen and frame for " + tower_id)
 			return
 		var room := operations.call("_ensure_floor_room", tower_id, 1) as Node3D
 		if room == null:
