@@ -123,6 +123,16 @@ func get_baghdad_bridge_anchor() -> Vector3:
 	return Vector3(baghdad_bridge_center.x, get_terrain_height(baghdad_bridge_center.x, baghdad_bridge_center.y), baghdad_bridge_center.y)
 
 
+func get_baghdad_bridge_nearest_bank_anchor() -> Vector3:
+	if not baghdad_bridge_reference_loaded or baghdad_bridge_centerline.size() < 2:
+		return Vector3.INF
+	var nearest_bank: Vector2 = baghdad_bridge_centerline[0]
+	var opposite_bank: Vector2 = baghdad_bridge_centerline[baghdad_bridge_centerline.size() - 1]
+	if opposite_bank.length_squared() < nearest_bank.length_squared():
+		nearest_bank = opposite_bank
+	return Vector3(nearest_bank.x, get_terrain_height(nearest_bank.x, nearest_bank.y), nearest_bank.y)
+
+
 func _baghdad_tigris_channel_depth(x: float, z: float) -> float:
 	if not baghdad_bridge_reference_loaded:
 		return 0.0
