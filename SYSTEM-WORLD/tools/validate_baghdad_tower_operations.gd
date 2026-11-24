@@ -1730,6 +1730,22 @@ func _run() -> void:
 	if hotel_reception_room == null or hotel_suite_room == null or hotel_reception_room.get_node_or_null("SYSTEMHotelFacilities/HotelReceptionInteraction") == null or hotel_suite_room.get_node_or_null("SYSTEMHotelFacilities/HotelSuiteBookingInteraction") == null:
 		_fail("SYSTEM Hotel reception or guest-suite booking area is missing from Shopping Tower floors 27–28.")
 		return
+	var hotel_reception := hotel_reception_room.get_node_or_null("SYSTEMHotelFacilities") as Node3D
+	var hotel_suites := hotel_suite_room.get_node_or_null("SYSTEMHotelFacilities") as Node3D
+	if hotel_reception == null or hotel_suites == null or not hotel_reception.visible or not hotel_suites.visible:
+		_fail("SYSTEM Hotel floors 27–28 are not visible generated interior spaces.")
+		return
+	if str(hotel_reception.get_meta("system_hotel_facility_status", "")) != "generated_playable_interior" or str(hotel_suites.get_meta("system_hotel_facility_status", "")) != "generated_playable_interior":
+		_fail("SYSTEM Hotel floor interior generation status is missing.")
+		return
+	for reception_part in ["HotelReceptionDesk", "HotelReceptionFloorRug", "HotelReceptionBrandSign", "HotelLoungeFeature", "HotelReceptionWaitingSofa_00", "HotelReceptionWaitingSofa_01", "HotelReceptionWaitingSofa_02", "HotelReceptionWaitingSofa_03"]:
+		if hotel_reception.find_child(reception_part, true, false) == null:
+			_fail("SYSTEM Hotel reception lobby is missing visible feature: " + reception_part)
+			return
+	for suite_part in ["HotelSuiteFloorDirectory", "HotelSuiteAtriumChandelier", "HotelSuiteFloorAtriumCarpet"]:
+		if hotel_suites.find_child(suite_part, true, false) == null:
+			_fail("SYSTEM Hotel suite floor is missing visible feature: " + suite_part)
+			return
 	for room_value in operations.call("_get_hotel_room_catalog"):
 		var room_data: Dictionary = room_value
 		var room_id := str(room_data.get("id", ""))
@@ -1744,6 +1760,12 @@ func _run() -> void:
 		var room_interaction := interior.get_node_or_null("HotelRoomDoorInteraction") as Area3D
 		if room_interaction == null or not room_interaction.is_in_group("system_interactable") or str(room_interaction.get_meta("system_hotel_room_id", "")) != room_id:
 			_fail("Hotel room door interaction is not linked to its catalog room.")
+			return
+		if not interior.visible or room_interaction.collision_layer != 1 or room_interaction.collision_mask != 0:
+			_fail("Hotel room %s is hidden or its door interaction cannot be detected by the player." % room_id)
+			return
+		if interior.get_node_or_null("HotelRoomDoorCollision") == null:
+			_fail("Hotel room %s is missing the physical door collision." % room_id)
 			return
 	if hotel_suite_room.get_node_or_null("SYSTEMHotelFacilities/HotelRoomInterior_hotel_hunter_suite/HotelRoomHunterGearRack") == null or hotel_suite_room.get_node_or_null("SYSTEMHotelFacilities/HotelRoomInterior_hotel_elite_vip/HotelRoomVIPDiningTable") == null:
 		_fail("Hunter suite or VIP hotel room is missing its signature furnishings.")
