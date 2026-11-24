@@ -961,7 +961,7 @@ func _create_tower_identity_details(root: Node3D, node_name: String, height: flo
 				var plaque := Node3D.new()
 				plaque.name = "HunterXSXEmblemPlaque_%02d" % side
 				plaque.position = outward * (radius * 0.91) + Vector3(0.0, height * 0.56, 0.0)
-				plaque.rotation.y = -angle
+				plaque.rotation.y = -angle - PI * 0.5
 				root.add_child(plaque)
 				_add_tower_identity_box(plaque, "XSXEmblemFrame", Vector3.ZERO, Vector3(34.0, 24.0, 1.8), trim_material)
 				_add_tower_identity_box(plaque, "XSXEmblemFace", Vector3(0.0, 0.0, -1.05), Vector3(30.0, 20.0, 0.35), glow)
