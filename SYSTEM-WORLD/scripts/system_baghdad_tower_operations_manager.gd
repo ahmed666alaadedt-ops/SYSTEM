@@ -7123,6 +7123,10 @@ func _attach_hunter_exam_secret_entry_to_restaurant(room: Node3D, radius: float)
 	tunnel_root.set_meta("system_under_republic_bridge", false)
 	if bool(tunnel_root.get_meta("system_tunnel_riddle_solved", false)):
 		var main_scene := get_tree().current_scene
+		if main_scene == null:
+			var operations_node := get_tree().root.find_child("BaghdadTowerOperationsManager", true, false)
+			if operations_node != null:
+				main_scene = operations_node.get_parent()
 		if main_scene != null and main_scene.has_method("_reveal_hunter_tunnel_passage"):
 			main_scene.call("_reveal_hunter_tunnel_passage", tunnel_root)
 	print("SYSTEM Hunter Examination: concealed entrance and descending passage are physically anchored beneath Shopping Tower restaurant floor 29; riverbank clues remain at their surveyed locations.")
