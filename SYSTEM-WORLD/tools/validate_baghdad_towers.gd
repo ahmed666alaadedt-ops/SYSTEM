@@ -67,6 +67,12 @@ func _run_validation() -> void:
 	if tigris == null or str(tigris.get_meta("system_geography_source", "")) != "OpenStreetMap way 24709603":
 		_fail("Tigris River surface is missing its verified OSM geometry source.")
 		return
+	for corridor_fraction in [0.25, 0.5, 0.75]:
+		var corridor_x := bridge_anchor.x * float(corridor_fraction)
+		var corridor_z := bridge_anchor.z * float(corridor_fraction)
+		if not bool(terrain.call("is_land_position", corridor_x, corridor_z)):
+			_fail("Baghdad playable land corridor is broken between the city core and Republic Bridge.")
+			return
 
 	var records: Array = tower_manager.call("get_tower_positions")
 	if records.size() != EXPECTED_TOWER_IDS.size():
@@ -94,6 +100,9 @@ func _run_validation() -> void:
 		var horizontal_distance := Vector2(district_position.x - bridge_anchor.x, district_position.z - bridge_anchor.z).length()
 		if horizontal_distance > 900.0:
 			_fail("A connected Baghdad tower is outside the Republic Bridge / Tigris district: " + str(district_record.get("id", "unknown")))
+			return
+		if str(district_record.get("id", "")) != "hunter_association_tower_baghdad" and not bool(terrain.call("is_land_position", district_position.x, district_position.z)):
+			_fail("A riverbank tower is not supported by playable land: " + str(district_record.get("id", "unknown")))
 			return
 	var upper_city := tower_manager.get_node_or_null("BaghdadUpperSkyCity") as Node3D
 	if upper_city == null or int(upper_city.get_meta("system_upper_city_blocks", 0)) != 4 or not bool(upper_city.get_meta("system_power_tower_excluded", false)):
