@@ -98,6 +98,12 @@ func _run() -> void:
 	if cafe_tween is Tween and (cafe_tween as Tween).is_running():
 		_fail("Customer NPC retained an obsolete breakfast tween after its schedule changed.")
 		return
+	operations.call("_move_customer_visitors", 11)
+	var circulating_target: Vector3 = routine_customer.get_meta("system_customer_schedule_target", Vector3.ZERO)
+	var circulating_tween: Variant = routine_customer.get_meta("system_customer_move_tween", null)
+	if circulating_target.is_equal_approx(browse_target) or not (circulating_tween is Tween) or not (circulating_tween as Tween).is_running():
+		_fail("Customer crowd did not begin a new staggered movement wave while remaining in the same daily schedule phase.")
+		return
 	for _movement_frame in range(4):
 		await process_frame
 	if routine_customer.position.distance_to(routine_start_position) <= 0.001:
