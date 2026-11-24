@@ -45,6 +45,22 @@ func _run_validation() -> void:
 		_fail("Baghdad OSM building collision bodies were not created.")
 		return
 	print("Baghdad OSM runtime cell passed: roads=", roads.size(), " buildings=", buildings.size(), " landuse=", landuse.size(), " building_collisions=", building_collisions.size())
+	print("Baghdad OSM validation: loading Republic Bridge/Tigris cell 17:-6.")
+	streamer._load_cell(Vector2i(17, -6))
+	if not streamer.loaded_cells.has(Vector2i(17, -6)):
+		_fail("Republic Bridge OSM cell 17:-6 did not load from the extended metric pack.")
+		return
+	var bridge_cell_root: Node3D = streamer.loaded_cells[Vector2i(17, -6)]
+	var primary_bridge := bridge_cell_root.find_children("OSMBridge_4080878_*", "MeshInstance3D", true, false)
+	var secondary_bridge := bridge_cell_root.find_children("OSMBridge_754157537_*", "MeshInstance3D", true, false)
+	var tigris_river := bridge_cell_root.find_children("OSMWaterway_24709603_*", "MeshInstance3D", true, false)
+	if primary_bridge.is_empty() or secondary_bridge.is_empty():
+		_fail("Republic Bridge primary/secondary OSM roadway centerlines were not rendered in cell 17:-6.")
+		return
+	if tigris_river.is_empty():
+		_fail("Tigris River OSM geometry was not rendered in cell 17:-6.")
+		return
+	print("Baghdad Republic Bridge OSM cell passed: primary bridge=", primary_bridge.size(), " secondary bridge=", secondary_bridge.size(), " Tigris=", tigris_river.size())
 	streamer.queue_free()
 	quit(0)
 
