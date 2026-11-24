@@ -1622,7 +1622,7 @@ Exact gameplay/validator HEAD: `f86bbaa933629acad51639bde949d76be705303f`.
 - [x] Both OSM roadway centerlines (ways 4080878 and 754157537) are rendered at 18.08 m on the bridge deck; the Tigris surface uses verified OSM waterway way 24709603.
 - [x] The bridge/tower reference uses the WGS84-derived local frame in `republic_bridge_reference.json`; the latest source workflow independently verified the same bridge polygon, both centerlines, and Tigris feature against the current OSM extract.
 - [x] A blended, playable land approach connects the existing continent to the bridge district. The four non-Hunter towers are placed on the riverbanks; the Hunter Association Tower occupies the bridge platform.
-- [x] The Hunter tower remains the tallest of the five (1000 m). Its public lobby aligns with the bridge deck; twelve outward-facing advertising facades and the internal lobby advertising panels are present.
+- [x] The Hunter tower remains the tallest of the five (650 m; updated from the earlier 1000 m concept). Its public lobby aligns with the bridge deck; twelve outward-facing advertising facades and the internal lobby advertising panels are present.
 - [x] The helicopter landing pad is positioned above the Hunter tower and its runtime controller creates the helicopter.
 - [x] The upper sky city is positioned above the five-tower cluster at the approved upper level. Four walkable city blocks and connecting skyways link the four bank towers to the Hunter atrium ring.
 - [x] The Power Tower was not modified or added to the Baghdad district. It remains a separate standalone destination; its existing boss-arena behavior was only included in regression validation.
@@ -1677,7 +1677,7 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 
 - Reassigned the former decorative central S-spire position to the real, functional Hunter Association Tower. The decorative S-spire and its S insignia are removed rather than left as a competing landmark.
 - The five-tower Baghdad district remains geographically centered on the verified Republic Bridge/Tigris reference. The Hunter Tower keeps the bridge's surveyed X/Z anchor, while its physical base now sits on the uppermost circular sky-city platform surface at Y=419.2 m (the platform center is Y=418.0 m and is 2.4 m thick).
-- The Hunter Association Tower remains 1000 m tall and is now visibly the tallest central structure above the four surrounding upper-city district towers and the three circular sky platforms.
+- The Hunter Association Tower remains 650 m tall and is now visibly the tallest central structure above the four surrounding upper-city district towers and the three circular sky platforms.
 - Added four outward-facing illuminated XSX guild emblem plaques to the Hunter Tower facade, one on each cardinal side, with the Arabic identity “نقابة الصيادين العالمية”. The tower metadata identifies XSX as its guild insignia.
 - Updated SYSTEM-WORLD/tools/validate_baghdad_towers.gd to require the 419.2 m upper-city crown placement, the functional Hunter Tower identity, four XSX facades, and the absence of the obsolete decorative S-spire.
 - Updated SYSTEM-WORLD/tools/validate_baghdad_tower_operations.gd to replace the former S-spire assertion with checks for the central functional Hunter Tower and its XSX emblem.
