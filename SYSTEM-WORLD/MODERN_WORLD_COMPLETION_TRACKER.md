@@ -1642,3 +1642,21 @@ Exact gameplay/validator HEAD: `f86bbaa933629acad51639bde949d76be705303f`.
 - [x] PR #38 remains **open and draft**, with base `main`; no merge was performed.
 - [x] No Power Tower gameplay/system files were changed as part of this Baghdad implementation.
 - [ ] Merge remains blocked until the user explicitly approves it.
+
+
+### Baghdad exact-HEAD revalidation after runtime alignment fixes — 24 November 2026
+
+Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `feature/baghdad-five-plus-power-tower-20261122`.
+
+- [x] Full Godot 4.3 project validation passed: [workflow 45406162782](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45406162782). The run imported/parsed resources, launched the main scene, validated the Baghdad landmarks/lobbies, five-tower interiors and operations, NPC commerce, advertising, and Power Tower regression.
+- [x] Baghdad tower operations validator passed on this exact HEAD: five connected Baghdad towers, independent Power Tower, NPC commerce, hotel workflows, eleven playable leisure/technology loops, equipment, Nen progression, and the existing sovereign-boss regression.
+- [x] Concealed Hunter tunnel validator passed: locked door before the riddle, wrong-order reset, Eye → River → Crown unlock, physical ramp reveal/collision, registration gate, and actual player transfer into stage one.
+- [x] Hunter examination validator passed: all seven sequential stages, with objective-order enforcement.
+- [x] Canonical Android build passed on this exact HEAD: [workflow 45406162469](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45406162469).
+- [x] The Android workflow installed the branch-matched 276-cell Baghdad OSM pack and verified the Republic Bridge polygon/centerlines and Tigris source IDs before export.
+- [x] OSM runtime geometry test passed: Baghdad center cell generated roads/buildings/landuse/collisions; cell `17_-6` rendered both Republic Bridge roadway centerlines and the Tigris geometry; both roadway meshes carried the 18.08 m deck-height override.
+- [x] Canonical main-scene headless runtime validation passed: [workflow 45406145561](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45406145561).
+- [x] Android APK artifact: [14926790278](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45406162469/artifacts/14926790278), 36,629,121 bytes (about 36 MB), SHA-256 `9ca1b7f6cf2c5c90cbc491cb1516a9c14f4cbeece22fe2130f14d1fe6a49a006`; expires 8 December 2026.
+- [ ] Physical Android-device installation, touch/visual inspection, and performance testing remain outstanding; headless checks and APK export do not replace device QA.
+- [x] PR #38 remains open, draft, and unmerged. No changes were merged into `main`.
+- [x] Scope guard maintained: no Power Tower gameplay/system files were modified in the Baghdad runtime correction pass.
