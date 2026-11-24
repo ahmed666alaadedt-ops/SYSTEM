@@ -503,6 +503,8 @@ func _add_polygon_worship_detail(parent: Node3D, ring: PackedVector2Array, heigh
 func _build_line_feature(parent: Node3D, feature: Dictionary, width: float, material: Material, lift: float, prefix: String) -> int:
 	var geometry: Dictionary = feature.get("geometry", {})
 	var lines := _extract_lines(geometry)
+	var feature_id := str(feature.get("id", "unknown"))
+	var republic_bridge_centerline := prefix == "OSMBridge" and feature_id in ["4080878", "754157537"]
 	var built := 0
 	for line in lines:
 		if line.size() < 2:
@@ -520,10 +522,14 @@ func _build_line_feature(parent: Node3D, feature: Dictionary, width: float, mate
 			var b2 := p0 - side
 			var c2 := p1 + side
 			var d2 := p1 - side
-			var a := Vector3(a2.x, _terrain_height(a2) + lift, a2.y)
-			var b := Vector3(b2.x, _terrain_height(b2) + lift, b2.y)
-			var c := Vector3(c2.x, _terrain_height(c2) + lift, c2.y)
-			var d := Vector3(d2.x, _terrain_height(d2) + lift, d2.y)
+			var a_height := 18.08 if republic_bridge_centerline else _terrain_height(a2) + lift
+			var b_height := 18.08 if republic_bridge_centerline else _terrain_height(b2) + lift
+			var c_height := 18.08 if republic_bridge_centerline else _terrain_height(c2) + lift
+			var d_height := 18.08 if republic_bridge_centerline else _terrain_height(d2) + lift
+			var a := Vector3(a2.x, a_height, a2.y)
+			var b := Vector3(b2.x, b_height, b2.y)
+			var c := Vector3(c2.x, c_height, c2.y)
+			var d := Vector3(d2.x, d_height, d2.y)
 			_add_triangle(surface, a, c, b)
 			_add_triangle(surface, b, c, d)
 		surface.generate_normals()
@@ -531,11 +537,13 @@ func _build_line_feature(parent: Node3D, feature: Dictionary, width: float, mate
 		if mesh == null or mesh.get_surface_count() == 0:
 			continue
 		var instance := MeshInstance3D.new()
-		instance.name = "%s_%s_%02d" % [prefix, str(feature.get("id", "unknown")), built]
+		instance.name = "%s_%s_%02d" % [prefix, feature_id, built]
 		instance.mesh = mesh
 		instance.material_override = material
 		instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		instance.set_meta("osm_feature_id", str(feature.get("id", "")))
+		instance.set_meta("osm_feature_id", feature_id)
+		if republic_bridge_centerline:
+			instance.set_meta("system_bridge_deck_height_override_m", 18.08)
 		parent.add_child(instance)
 		built += 1
 	return built
