@@ -237,7 +237,7 @@ This section supersedes older tower-role notes below wherever they describe the 
 - [x] Expand Shopping Tower to nine employees: tower manager, weapons merchant, elixir pharmacist, hospitality manager, chef, waiter/customer service, hotel receptionist, housekeeping supervisor and advertising manager.
 - [x] Retain four separate Power Tower employees. Current expected total: 45 persistent tower employees.
 - [x] Alternate female and male employee appearances and apply distinct uniform palettes for the Hunter Association, business, shopping, hotel, restaurant, entertainment, technology and Power Tower teams.
-- [x] Create four persistent customer NPCs in each of the five connected towers (20 total), with visible character models, wallet data, visitor schedules and local tower locations.
+- [x] Create 100 persistent customer NPCs in each of the five connected Baghdad towers (500 total), with visible child, elderly and adult character models, wallet data, family/guardian links, visitor schedules and local tower locations. Each tower has 20 children, 20 elderly visitors and 60 adults; children remain civilian-only and their purchases are handled by adult guardians.
 - [x] Move visible customer NPCs around tower public lobbies on a periodic local schedule.
 - [x] When the player arrives at an authored floor, bring two persistent tower customers into that floor as visitors; update their local society location/action data and let them wander/socialize there, including Shopping Tower dining and hotel floors.
 - [x] Return floor visitors safely to their public lobby before the active floor is replaced or the player travels to another tower.
@@ -1272,11 +1272,23 @@ Implementation added on the feature branch; automated runtime validation is pend
 - [x] Confirm the Godot runtime and full tower regression completed without the facade assertion failure on this exact head.
 - [ ] Physical Android inspection remains outstanding; automated CI does not replace touch, visual, collision-feel, thermal or frame-rate testing.
 
+### Baghdad five-tower public crowd expansion — 24 November 2026
+
+- [x] Increase the persistent customer population from four to 100 visitors in each of the five connected Baghdad towers: 500 customers total. The independent Power Tower is excluded from this population.
+- [x] Use a mixed-age public population in every tower: 20 children, 20 elderly visitors and 60 adults. Children use dedicated child character models, remain civilian-only, are linked to visible adult guardians in family groups, and cannot independently purchase goods.
+- [x] Refresh already-persisted visitor models on startup when their saved age group differs, so existing installs also display children and elderly visitors correctly.
+- [x] Keep the established two-customer elevator/floor visit lifecycle intact; the remaining 98 customers stay visible in the public lobby while two visitors use the active floor, preserving the restaurant and hotel flows.
+- [x] Add mobile-oriented customer visual LOD: distant visitor meshes and labels use visibility ranges, and far-away customer model animation processing is suspended until the player approaches.
+- [x] Extend regression checks for 500 total customers, 100 per tower, child guardian relationships, dedicated child/elderly character models and customer schedule state.
+- [x] Route child visitor purchases through their adult guardian rather than allowing minors to transact independently.
+- [ ] Await fresh canonical Godot validation and Android APK export on the latest PR head; no runtime or device-side success is claimed yet.
+- [ ] Physically inspect crowd density, family grouping, age-model readability, elevator flow and Android frame rate on the target phone.
+
 ### Baghdad customer daily routines and movement redirection — 23 November 2026
 
 - [x] Allow the customer schedule movement routine to accept an optional deterministic hour for validation while preserving the real system clock during normal gameplay.
 - [x] Correct schedule changes so an active customer movement tween is cancelled and redirected when the daily phase changes; retain the existing tween only when the phase and destination remain unchanged.
-- [x] Extend the full tower operations validator to verify all 20 persistent customers receive schedule phase/action/target state, then exercise the 08:00 cafe route and 11:00 browsing route transition.
+- [x] Extend the full tower operations validator to verify all 500 persistent customers receive schedule phase/action/target state, all five towers contain exactly 100 visible visitors, and each tower has 20 child models with adult guardians plus 20 dedicated elderly models; then exercise the 08:00 cafe route and 11:00 browsing route transition.
 - [x] Verify the previous breakfast tween stops, a new browsing tween starts, and the customer position physically changes toward the new destination.
 - [x] Pass Godot 4.3 full project and Baghdad tower operations validation #1530 (run ID 45157041446) on exact gameplay/validator HEAD `7aff69fe38315c96ec3ad3514287cabc3f10ace5`.
 - [x] Pass canonical Godot runtime validation #490 (run ID 45157036497) on the same HEAD.
