@@ -1152,6 +1152,9 @@ func _on_interaction_performed(
 			str(target.get_meta("system_arcade_cabinet_mode", ""))
 		)
 		return
+	if bool(target.get_meta("system_tower_elevator_destination", false)) and tower_operations_manager != null:
+		tower_operations_manager.call("open_tower", str(target.get_meta("system_tower_id", "")))
+		return
 	if target.has_meta("system_showcase_product_id") and target.has_meta("system_facility_type") and target.has_meta("system_tower_floor_number") and target.has_meta("system_tower_id") and tower_operations_manager != null:
 		tower_operations_manager.call(
 			"open_showcase_product_service",
