@@ -24,8 +24,8 @@ var baghdad_bridge_outline := PackedVector2Array()
 var baghdad_tigris_route: Array[Vector2] = []
 var baghdad_bridge_reference_loaded := false
 
-const BAGHDAD_LAND_RADIUS_X := 1000.0
-const BAGHDAD_LAND_RADIUS_Z := 900.0
+const BAGHDAD_LAND_RADIUS_X := 1100.0
+const BAGHDAD_LAND_RADIUS_Z := 1000.0
 const BAGHDAD_URBAN_CORRIDOR_HALF_WIDTH := 560.0
 const BAGHDAD_TIGRIS_HALF_WIDTH := 155.0
 const BAGHDAD_TIGRIS_DEPTH := 22.0
