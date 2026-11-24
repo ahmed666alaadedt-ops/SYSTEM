@@ -84,6 +84,8 @@ func _run_validation() -> void:
 		return
 	if not _check(door.collision_layer == 1 and door.monitoring and door.monitorable, "Restaurant secret entry did not become interactable after the riddle was solved."):
 		return
+	if not _check(hidden_door.global_position.y > restaurant_floor.global_position.y, "Concealed door slab did not rise above the restaurant floor after solving."):
+		return
 	if not _check(tunnel.get_node_or_null("ConcealedDoorCollision") == null, "Secret door collision did not unlock after solving."):
 		return
 	var visible_ramp := tunnel.get_node_or_null("HiddenExamPassageRamp_00") as MeshInstance3D
