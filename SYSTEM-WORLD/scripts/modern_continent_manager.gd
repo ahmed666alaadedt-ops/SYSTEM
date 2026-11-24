@@ -27,6 +27,7 @@ const BAGHDAD_LAND_RADIUS_Z := 900.0
 const BAGHDAD_URBAN_CORRIDOR_HALF_WIDTH := 560.0
 const BAGHDAD_TIGRIS_HALF_WIDTH := 155.0
 const BAGHDAD_TIGRIS_DEPTH := 22.0
+const BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT := 18.0
 
 const ISLAND_DATA := [
 	{"name": "WesternIsle", "center": Vector2(-1260.0, -520.0), "rx": 175.0, "rz": 125.0, "height": 38.0},
@@ -756,7 +757,7 @@ func _build_baghdad_republic_bridge() -> void:
 		var delta := Vector3(finish.x - start.x, 0.0, finish.y - start.y)
 		if delta.length() < 1.0:
 			continue
-		var midpoint := Vector3((start.x + finish.x) * 0.5, 4.0, (start.y + finish.y) * 0.5)
+		var midpoint := Vector3((start.x + finish.x) * 0.5, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT, (start.y + finish.y) * 0.5)
 		var angle := atan2(delta.x, delta.z)
 		var deck := MeshInstance3D.new()
 		deck.name = "RepublicBridgeDeck_%02d" % index
