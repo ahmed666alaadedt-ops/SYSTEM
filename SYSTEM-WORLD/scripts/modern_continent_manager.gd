@@ -196,7 +196,12 @@ func _get_height(x: float, z: float) -> float:
 		if _continent_radius(x, z) > 1.0 and corridor_distance <= BAGHDAD_URBAN_CORRIDOR_HALF_WIDTH:
 			var corridor_blend := clampf((BAGHDAD_URBAN_CORRIDOR_HALF_WIDTH - corridor_distance) / 110.0, 0.0, 1.0)
 			var corridor_ease := corridor_blend * corridor_blend * (3.0 - 2.0 * corridor_blend)
-			var city_edge_blend := clampf((_continent_radius(x, z) - 1.0) / 0.18, 0.0, 1.0)
+			# Keep the verified Baghdad-to-bridge access corridor connected across
+			# the coastline. A broad 0.18 radial blend left a submerged gap at
+			# the city edge even when the corridor itself was directly beneath it.
+			# The short 0.01 blend preserves a soft shoreline transition without
+			# leaving a non-walkable band across the surveyed approach.
+			var city_edge_blend := clampf((_continent_radius(x, z) - 1.0) / 0.01, 0.0, 1.0)
 			var city_edge_ease := city_edge_blend * city_edge_blend * (3.0 - 2.0 * city_edge_blend)
 			var bridge_edge_blend := clampf((bridge_radius - 1.0) / 0.12, 0.0, 1.0)
 			var bridge_edge_ease := bridge_edge_blend * bridge_edge_blend * (3.0 - 2.0 * bridge_edge_blend)
