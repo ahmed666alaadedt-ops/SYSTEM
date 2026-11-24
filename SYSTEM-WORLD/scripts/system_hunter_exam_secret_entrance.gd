@@ -203,7 +203,6 @@ func _handle_clue(clue_id: String) -> Dictionary:
 func _handle_secret_door() -> Dictionary:
 	var candidate_registered := _is_candidate_registered()
 	var current_overview: Dictionary = exam_manager.call("get_exam_overview") if is_instance_valid(exam_manager) else {}
-	print("SYSTEM HUNTER SECRET DOOR CHECK: solved=%s registered=%s candidate=%d manager=%s" % [str(riddle_solved), str(candidate_registered), int(current_overview.get("candidate_number", 0)), str(is_instance_valid(exam_manager))])
 	if not riddle_solved:
 		return {"handled":true,"success":false,"reason":"HUNTER_TUNNEL_RIDDLE_NOT_SOLVED","message":"لوح الحجر لا يتحرك. افحص رموز العين والنهر والتاج بالترتيب."}
 	if not candidate_registered:
