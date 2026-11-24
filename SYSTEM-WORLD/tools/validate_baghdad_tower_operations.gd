@@ -68,8 +68,8 @@ func _run() -> void:
 					_fail("Customer NPC is missing its daily schedule state: " + str(customer_node.name))
 					return
 				scheduled_customer_count += 1
-	if scheduled_customer_count != 60:
-		_fail("Expected 60 customer NPCs with active daily routine states; found %d." % scheduled_customer_count)
+	if scheduled_customer_count != 500:
+		_fail("Expected 500 customer NPCs across the five Baghdad district towers; found %d." % scheduled_customer_count)
 		return
 	var routine_tower := operations.get("tower_nodes").get("hunter_association_tower_baghdad") as Node3D
 	var routine_lobby := routine_tower.get_node_or_null("PublicLobby_Blockout") as Node3D if routine_tower != null else null
