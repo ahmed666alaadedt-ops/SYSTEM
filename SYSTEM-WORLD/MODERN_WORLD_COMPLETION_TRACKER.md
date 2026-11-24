@@ -1750,10 +1750,18 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - [x] Added a player-arrival trigger in the Hunter Tower public lobby. Entering the lobby displays an Arabic invitation asking whether the player wants to become a Hunter and register for the Hunter Examination, with explicit accept/decline buttons.
 - [x] Acceptance registers the candidate through the persistent Hunter Examination manager. Declining leaves registration untouched and allows the player to choose again on a later visit.
 - [x] Added a visible Hunter Guild guide inside the tower lobby. After acceptance, the player is instructed to follow and interact with the guide.
-- [x] The guide escorts the player from the Hunter Tower to the single permanent underground examination tunnel. The persistent candidate serial is revealed and assigned to the player's runtime state only after reaching the tunnel.
+- [x] The guide escorts the player from the Hunter Tower to the single permanent underground examination tunnel. Only at tunnel arrival does the manager complete candidate registration, allocate the serial, save it and reveal it to the player.
 - [x] Re-entry reuses the saved candidate number; no second serial is allocated for an already registered player.
 - [x] Removed the superseded Shopping Tower restaurant room, meal gate and elevator access implementation. Restaurant seating, orders, waiter and chef lifecycle remain independent and unchanged.
 - [x] Marshland remains separate and unconnected. The former clue/secret-door route and seven-stage exam definition are not part of this tunnel access flow.
 - [ ] Run the revised Hunter Tower recruitment regression and full Godot validation on the exact resulting HEAD.
 - [ ] Run the Android APK export on the same exact HEAD; no fresh APK verification is claimed yet.
 - [ ] PR #38 remains draft and must not be merged into `main` without explicit user approval.
+
+### Hunter Tower recruitment regression and APK gate — 24 November 2026
+- [x] The recruitment regression now tests automatic arrival invitation, explicit accept/decline controls, decline followed by re-entry, pending application persistence, no serial allocation before tunnel arrival, guide escort, serial allocation at the tunnel, manager recreation, and serial reuse on repeat registration.
+- [x] The continuous-competition regression verifies the single tunnel competition definition and persistent serial behavior.
+- [x] Both Hunter regressions passed inside the canonical Android workflow before APK export on branch commit `debb52cde928015e408b86ccb57c5e1b35fc1ad2`, run [45435296789](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45435296789).
+- [x] Android APK export and artifact upload passed on that run. Artifact [14939624391](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45435296789/artifacts/14939624391), size 36,638,608 bytes, SHA-256 `68d74d57fed9198ed568325f76af585363dce14391fc82a5cba8f03b1696f878`.
+- [x] Local save persistence survives leaving/re-entering and manager recreation on the same installation. Global uniqueness across separate accounts/devices remains pending account/backend integration; it is not claimed by the local ConfigFile counter.
+- [ ] Physical Android-device play inspection of the invitation layout, guide escort presentation and tunnel arrival remains outstanding.
