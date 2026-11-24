@@ -4,7 +4,7 @@ const EXPECTED_TOWER_IDS := [
 	"hunter_association_tower_baghdad",
 	"business_investment_tower_baghdad",
 	"shopping_tower_baghdad",
-	"entertainment_tower_baghdad",
+	"antiques_heritage_tower_baghdad",
 	"technology_tower_baghdad",
 	"power_tower_baghdad"
 ]
@@ -13,7 +13,7 @@ const TOWER_NODE_NAMES := {
 	"hunter_association_tower_baghdad": "HunterAssociationTower",
 	"business_investment_tower_baghdad": "BusinessInvestmentTower",
 	"shopping_tower_baghdad": "ShoppingTower",
-	"entertainment_tower_baghdad": "EntertainmentTower",
+	"antiques_heritage_tower_baghdad": "AntiquesHeritageTower",
 	"technology_tower_baghdad": "TechnologyTower",
 	"power_tower_baghdad": "PowerTower"
 }
@@ -325,6 +325,17 @@ func _run_validation() -> void:
 	var shopping_tower := tower_manager.get_node_or_null("ShoppingTower") as Node3D
 	if shopping_tower == null:
 		_fail("Shopping and Commerce Tower is missing.")
+		return
+	var antiques_tower := tower_manager.get_node_or_null("AntiquesHeritageTower") as Node3D
+	if antiques_tower == null or str(antiques_tower.get_meta("tower_id", "")) != "antiques_heritage_tower_baghdad":
+		_fail("The fourth Baghdad district tower is not the Antiques and Heritage Tower.")
+		return
+	var antiques_directory: Variant = antiques_tower.get_meta("tower_floor_directory", PackedStringArray())
+	if not antiques_directory is PackedStringArray or antiques_directory.size() != 9 or not str(antiques_directory[0]).contains("سومر") or not str(antiques_directory[7]).contains("المزادات"):
+		_fail("Antiques and Heritage Tower does not expose its approved 34-floor museum directory.")
+		return
+	if str(antiques_tower.get_meta("gameplay_status", "")) != "antiques_heritage_tower_foundation_blockout":
+		_fail("Antiques and Heritage Tower implementation status metadata is missing.")
 		return
 	var shopping_categories: PackedStringArray = shopping_tower.get_meta("facility_categories", PackedStringArray())
 	var elixir_categories: PackedStringArray = shopping_tower.get_meta("elixir_categories", PackedStringArray())
