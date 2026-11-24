@@ -285,10 +285,12 @@ jobs:
           python3 -m pip install --disable-pip-version-check "shapely==2.1.2"
           python3 - <<'PY'
           import json
+          import os
           from pathlib import Path
           from shapely.geometry import shape
 
-          reference = json.loads(Path("$GITHUB_WORKSPACE/SYSTEM-WORLD/data/geography/baghdad/republic_bridge_reference.json").read_text(encoding="utf-8"))
+          reference_path = Path(os.environ["GITHUB_WORKSPACE"]) / "SYSTEM-WORLD/data/geography/baghdad/republic_bridge_reference.json"
+          reference = json.loads(reference_path.read_text(encoding="utf-8"))
           bridge_data = json.loads(Path("clipped_layers/bridges.geojson").read_text(encoding="utf-8"))
           water_data = json.loads(Path("clipped_layers/waterways.geojson").read_text(encoding="utf-8"))
           bridge_features = {int(f.get("properties", {}).get("@id", -1)): f for f in bridge_data.get("features", [])}
