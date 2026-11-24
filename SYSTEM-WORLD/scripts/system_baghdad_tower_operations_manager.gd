@@ -4565,11 +4565,11 @@ func open_baghdad_progression_facility(tower_id: String, floor_number: int, faci
 				content.add_child(drill_button)
 		else:
 			var tree: Dictionary = progression.call("get_system_skill_tree")
+			var learned: Array = progression.get("learned_system_skills")
 			for skill_value in tree.keys():
 				var skill_id := str(skill_value)
 				var skill: Dictionary = tree[skill_id]
 				var practice: Dictionary = progression.get("system_skill_practice")
-				var learned: Array = progression.get("learned_system_skills")
 				var count := int(practice.get(skill_id, 0))
 				var button := Button.new()
 				button.text = "%s — تدريب %d/3%s" % [str(skill.get("name", skill_id)), mini(count, 3), " | متعلمة" if learned.has(skill_id) else ""]
