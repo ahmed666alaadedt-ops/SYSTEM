@@ -4,7 +4,7 @@ Branch: `feature/baghdad-five-plus-power-tower-20261122`
 
 ## Canonical Baghdad layout
 - Baghdad's connected vertical district has **exactly five towers**: Hunter Association, Business and Investment, Shopping and Commerce, Entertainment and Sports, and Technology and Innovation. They form one elevated urban district across the Karkh–Rusafa corridor.
-- The Hunter Association Tower is positioned on the Tigris at Republic Bridge, the crossing between Karkh and Rusafa. It is not placed at an arbitrary inland offset or treated as a generic rooftop tower.
+- The Hunter Association Tower uses the verified Republic Bridge/Tigris coordinates as its geographic center, but its physical base stands on the uppermost circular Baghdad sky-city crown platform at 419.2 m above the local reference level. It is the tallest, central, functional tower above the four surrounding district towers; the Republic Bridge and Tigris remain visible and traversable below.
 - The elevated city/district is a distinct, traversable urban layer integrated with the five towers; retain the river channel and bridge identity beneath/through the district.
 - The Power Tower remains a separate, independent 200-floor challenge destination away from the Baghdad five-tower district. It is never counted among the five and never connected to their skybridge/transport loop.
 - Preserve all existing tower interiors, jobs, NPCs, restaurant/hotel services, evacuation exits, and progression. Extend existing systems; do not replace completed work.
