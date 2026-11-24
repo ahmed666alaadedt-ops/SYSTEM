@@ -921,6 +921,35 @@ func _on_interaction_target_changed(
 	interaction_prompt_label.show()
 
 
+func _reveal_hunter_tunnel_passage(riddle_root: Node3D) -> void:
+	if riddle_root == null or str(riddle_root.get_meta("system_tunnel_secret_entry_location", "")) != "shopping_tower_restaurant_floor_29":
+		return
+	var hidden_door := riddle_root.get_node_or_null("ConcealedHunterDoorSlab") as Node3D
+	if hidden_door != null and not bool(hidden_door.get_meta("system_door_revealed", false)):
+		hidden_door.position.y += 12.0
+		hidden_door.set_meta("system_door_revealed", true)
+	var door_collision := riddle_root.get_node_or_null("ConcealedDoorCollision")
+	if door_collision != null:
+		door_collision.queue_free()
+	var reveal_light := riddle_root.get_node_or_null("SecretDoorRevealLight") as OmniLight3D
+	if reveal_light != null:
+		reveal_light.light_energy = 2.2
+	var secret_entry := riddle_root.get_node_or_null("ConcealedHunterExamDoor") as Area3D
+	if secret_entry != null:
+		secret_entry.collision_layer = 1
+		secret_entry.monitoring = true
+		secret_entry.monitorable = true
+		secret_entry.set_meta("system_interaction_prompt", "افحص مدخل نفق اختبار الصيادين السري")
+	for segment in range(10):
+		var ramp_name := "HiddenExamPassageRamp_%02d" % segment
+		var ramp := riddle_root.get_node_or_null(ramp_name) as MeshInstance3D
+		if ramp != null:
+			ramp.visible = true
+		var ramp_collision := riddle_root.get_node_or_null(ramp_name + "_Collision/CollisionShape3D") as CollisionShape3D
+		if ramp_collision != null:
+			ramp_collision.disabled = false
+
+
 func _on_interaction_performed(
 	target: Node,
 	location_id: String
@@ -954,23 +983,7 @@ func _on_interaction_performed(
 				interaction_prompt_label.text = "النقش استجاب... (%d/3)" % current_step
 			if current_step == 3:
 				riddle_root.set_meta("system_tunnel_riddle_solved", true)
-				var hidden_door := riddle_root.get_node_or_null("ConcealedHunterDoorSlab") as Node3D
-				if hidden_door != null:
-					hidden_door.position.y += 12.0
-				var door_collision := riddle_root.get_node_or_null("ConcealedDoorCollision")
-				if door_collision != null:
-					door_collision.queue_free()
-				var reveal_light := riddle_root.get_node_or_null("SecretDoorRevealLight") as OmniLight3D
-				if reveal_light != null:
-					reveal_light.light_energy = 2.2
-				for segment in range(10):
-					var ramp_name := "HiddenExamPassageRamp_%02d" % segment
-					var ramp := riddle_root.get_node_or_null(ramp_name) as MeshInstance3D
-					if ramp != null:
-						ramp.visible = true
-					var ramp_collision := riddle_root.get_node_or_null(ramp_name + "_Collision/CollisionShape3D") as CollisionShape3D
-					if ramp_collision != null:
-						ramp_collision.disabled = false
+				_reveal_hunter_tunnel_passage(riddle_root)
 				if interaction_prompt_label != null:
 					interaction_prompt_label.text = "انفتح الباب السري! ظهر مدخل نفق اختبار الصيادين."
 		else:
