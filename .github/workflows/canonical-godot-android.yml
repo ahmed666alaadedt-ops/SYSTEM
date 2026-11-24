@@ -295,7 +295,7 @@ jobs:
             --script res://tools/validate_npc_society_runtime.gd \
             2>&1 | tee "$RUNNER_TEMP/system-npc-society-runtime.log"
 
-      - name: Validate Hunter Tower invitation, guild escort and tunnel serial
+      - name: Validate Hunter Tower registration, restaurant riddle and physical tunnel descent
         shell: bash
         run: |
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
