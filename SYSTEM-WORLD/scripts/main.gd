@@ -598,30 +598,84 @@ func _on_hunter_exam_registration_requested() -> void:
 
 
 func _on_hunter_exam_start_requested() -> void:
+	_handle_hunter_exam_guide_interaction()
+
+
+func _handle_hunter_exam_guide_interaction() -> void:
 	if hunter_exam_manager == null:
-		return
-	var menu := get_node_or_null("HunterGuildMenu")
-	var tunnel_root := get_tree().root.find_child("BaghdadHunterExaminationTunnel", true, false) as Node3D
-	if tunnel_root == null or not bool(tunnel_root.get_meta("system_tunnel_riddle_solved", false)):
-		var locked_result := {"success": false, "reason": "HUNTER_TUNNEL_RIDDLE_NOT_SOLVED"}
-		if menu != null and menu.has_method("set_exam_status"):
-			menu.call("set_exam_status", locked_result)
 		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "لا يمكن بدء اختبار الصيادين قبل اكتشاف النقوش الثلاثة وفتح الباب السري."
+			interaction_prompt_label.text = "نظام نقابة الصيادين غير متاح حالياً."
 		return
 	var overview: Dictionary = hunter_exam_manager.get_exam_overview()
 	if not bool(overview.get("registered", false)):
-		var registration_result := {"success": false, "reason": "NOT_REGISTERED"}
-		if menu != null and menu.has_method("set_exam_status"):
-			menu.call("set_exam_status", registration_result)
-		return
-	var result: Dictionary = hunter_exam_manager.begin_exam()
-	if menu != null and menu.has_method("set_exam_status"):
-		menu.call("set_exam_status", result)
-	if bool(result.get("success", false)) and player != null:
-		player.global_position = tunnel_root.to_global(Vector3(0.0, -1.2, 101.0))
-		player.velocity = Vector3.ZERO
+		var registration: Dictionary = hunter_exam_manager.apply_for_exam("local_player")
+		if not bool(registration.get("success", false)):
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "تعذر تسجيل المتسابق: %s" % str(registration.get("reason", "غير معروف"))
+			return
+		overview = hunter_exam_manager.get_exam_overview()
+	var candidate_number := int(overview.get("candidate_number", 0))
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = "مرحباً بك في اختبار نقابة الصيادين.\nشرح المرشد: هذه نقطة التجمع الرسمية؛ اتبع تعليمات المشرف قبل بدء المنافسة.\nرقمك التسلسلي الدائم: %d\nاحتفظ بهذا الرقم، فهو يبقى نفسه عند خروجك وعودتك." % candidate_number
+	if player != null:
+		player.set_meta("system_hunter_exam_candidate_number", candidate_number)
 		player.set_meta("system_inside_hunter_exam_tunnel", true)
+
+
+func _animate_hunter_exam_elevator(button: Node) -> void:
+	if not is_instance_valid(player) or button == null:
+		return
+	var direction := str(button.get_meta("system_hunter_exam_elevator_direction", "down"))
+	var private_room := get_tree().root.find_child("HunterExamPrivateRoom", true, false) as Node3D
+	var tunnel_root := get_tree().root.find_child("BaghdadHunterExaminationTunnel", true, false) as Node3D
+	var platform := private_room.get_node_or_null("HunterExamElevatorPlatform") as Node3D if private_room != null else null
+	if private_room == null or tunnel_root == null or platform == null:
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "المصعد غير متاح حالياً."
+		return
+	if bool(platform.get_meta("system_hunter_exam_elevator_moving", false)):
+		return
+	var at_bottom := bool(platform.get_meta("system_hunter_exam_elevator_at_bottom", false))
+	if direction == "down" and at_bottom:
+		return
+	if direction == "up" and not at_bottom:
+		return
+	if direction == "down" and not bool(player.get_meta("system_hunter_exam_meal_order_id", "") != ""):
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "يجب استلام الوجبة وتناولها ثم دخول غرفة المتسابقين أولاً."
+		return
+	platform.set_meta("system_hunter_exam_elevator_moving", true)
+	player.velocity = Vector3.ZERO
+	player.set_meta("system_tower_elevator_active", true)
+	player.reparent(platform, true)
+	player.position = Vector3(0.0, 1.45, 0.0)
+	var destination := platform.global_position
+	destination.y = private_room.global_position.y - 45.0 if direction == "down" else private_room.global_position.y
+	var lift_tween := create_tween()
+	lift_tween.set_trans(Tween.TRANS_SINE)
+	lift_tween.set_ease(Tween.EASE_IN_OUT)
+	lift_tween.tween_property(platform, "global_position", destination, 4.0)
+	lift_tween.finished.connect(func():
+		if not is_instance_valid(player) or not is_instance_valid(platform):
+			return
+		player.reparent(self, true)
+		player.velocity = Vector3.ZERO
+		player.set_meta("system_tower_elevator_active", false)
+		player.set_meta("system_inside_hunter_exam_tunnel", direction == "down")
+		platform.set_meta("system_hunter_exam_elevator_at_bottom", direction == "down")
+		platform.set_meta("system_hunter_exam_elevator_moving", false)
+		if direction == "down":
+			player.global_position = tunnel_root.to_global(Vector3(0.0, 0.0, -1.5))
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "وصلت إلى نفق اختبار الصيادين. مرشد النقابة بانتظارك."
+		else:
+			player.global_position = private_room.to_global(Vector3(0.0, 0.0, 3.5))
+			player.remove_meta("system_inside_hunter_exam_tunnel")
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "عدت إلى غرفة المتسابقين في المطعم."
+	)
+
+
 
 
 func create_mission_reward_manager() -> void:
@@ -921,35 +975,6 @@ func _on_interaction_target_changed(
 	interaction_prompt_label.show()
 
 
-func _reveal_hunter_tunnel_passage(riddle_root: Node3D) -> void:
-	if riddle_root == null or str(riddle_root.get_meta("system_tunnel_secret_entry_location", "")) != "shopping_tower_restaurant_floor_29":
-		return
-	var hidden_door := riddle_root.get_node_or_null("ConcealedHunterDoorSlab") as Node3D
-	if hidden_door != null and not bool(hidden_door.get_meta("system_door_revealed", false)):
-		hidden_door.position.y += 12.0
-		hidden_door.set_meta("system_door_revealed", true)
-	var door_collision := riddle_root.get_node_or_null("ConcealedDoorCollision")
-	if door_collision != null:
-		door_collision.queue_free()
-	var reveal_light := riddle_root.get_node_or_null("SecretDoorRevealLight") as OmniLight3D
-	if reveal_light != null:
-		reveal_light.light_energy = 2.2
-	var secret_entry := riddle_root.get_node_or_null("ConcealedHunterExamDoor") as Area3D
-	if secret_entry != null:
-		secret_entry.collision_layer = 1
-		secret_entry.monitoring = true
-		secret_entry.monitorable = true
-		secret_entry.set_meta("system_interaction_prompt", "افحص مدخل نفق اختبار الصيادين السري")
-	for segment in range(10):
-		var ramp_name := "HiddenExamPassageRamp_%02d" % segment
-		var ramp := riddle_root.get_node_or_null(ramp_name) as MeshInstance3D
-		if ramp != null:
-			ramp.visible = true
-		var ramp_collision := riddle_root.get_node_or_null(ramp_name + "_Collision/CollisionShape3D") as CollisionShape3D
-		if ramp_collision != null:
-			ramp_collision.disabled = false
-
-
 func _on_interaction_performed(
 	target: Node,
 	location_id: String
@@ -970,58 +995,14 @@ func _on_interaction_performed(
 			if interaction_prompt_label != null:
 				interaction_prompt_label.text = str(objective_result.get("message", "تم التفاعل مع هدف الاختبار."))
 			return
-	if target.has_meta("system_hunter_tunnel_riddle_step"):
-		var riddle_root := target.get_parent() as Node3D
-		if riddle_root == null:
-			return
-		var clue_step := int(target.get_meta("system_hunter_tunnel_riddle_step", 0))
-		var current_step := int(riddle_root.get_meta("system_tunnel_riddle_progress", 0))
-		if clue_step == current_step + 1:
-			current_step += 1
-			riddle_root.set_meta("system_tunnel_riddle_progress", current_step)
-			if interaction_prompt_label != null:
-				interaction_prompt_label.text = "النقش استجاب... (%d/3)" % current_step
-			if current_step == 3:
-				riddle_root.set_meta("system_tunnel_riddle_solved", true)
-				_reveal_hunter_tunnel_passage(riddle_root)
-				if interaction_prompt_label != null:
-					interaction_prompt_label.text = "انفتح الباب السري! ظهر مدخل نفق اختبار الصيادين."
-		else:
-			riddle_root.set_meta("system_tunnel_riddle_progress", 0)
-			if interaction_prompt_label != null:
-				interaction_prompt_label.text = "النقوش لم تستجب... الترتيب غير صحيح. ابدأ من جديد."
+	if target.has_meta("system_hunter_exam_room_entry") and tower_operations_manager != null:
+		tower_operations_manager.call("enter_hunter_exam_private_room", target)
 		return
-	if target.has_meta("system_hunter_exam_tunnel"):
-		var tunnel_root := target.get_parent() as Node3D
-		if tunnel_root == null:
-			return
-		if not bool(tunnel_root.get_meta("system_tunnel_riddle_solved", false)):
-			if interaction_prompt_label != null:
-				interaction_prompt_label.text = "هذا جدار عادي... ابحث عن النقوش الثلاثة وحل لغزها أولاً."
-			return
-		if hunter_exam_manager == null:
-			if interaction_prompt_label != null:
-				interaction_prompt_label.text = "نظام اختبار الصيادين غير متاح حالياً."
-			return
-		var exam_overview: Dictionary = hunter_exam_manager.call("get_exam_overview")
-		if not bool(exam_overview.get("registered", false)):
-			if interaction_prompt_label != null:
-				interaction_prompt_label.text = "نفق اختبار الصيادين: يجب التسجيل أولاً في برج جمعية الصيادين."
-			return
-		var exam_result: Dictionary = hunter_exam_manager.call("begin_exam")
-		var exam_menu := get_node_or_null("HunterGuildMenu")
-		if exam_menu != null and exam_menu.has_method("set_exam_status"):
-			exam_menu.call("set_exam_status", exam_result)
-		if interaction_prompt_label != null:
-			if bool(exam_result.get("success", false)):
-				var stage: Dictionary = exam_result.get("stage", {})
-				interaction_prompt_label.text = "بدأ اختبار الصيادين — %s" % str(stage.get("title", "المرحلة الأولى"))
-				if player != null:
-					player.global_position = tunnel_root.to_global(Vector3(0.0, -1.2, 101.0))
-					player.velocity = Vector3.ZERO
-					player.set_meta("system_inside_hunter_exam_tunnel", true)
-			else:
-				interaction_prompt_label.text = "تعذر بدء الاختبار: %s" % str(exam_result.get("reason", "غير متاح"))
+	if target.has_meta("system_hunter_exam_elevator_button"):
+		_animate_hunter_exam_elevator(target)
+		return
+	if target.has_meta("system_hunter_exam_guide"):
+		_handle_hunter_exam_guide_interaction()
 		return
 	if target.has_meta("system_power_tower_spectator_seat_interaction") and tower_operations_manager != null:
 		tower_operations_manager.call("interact_power_tower_spectator_seat", target)
