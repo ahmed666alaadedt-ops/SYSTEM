@@ -552,14 +552,11 @@ func _on_public_mission_rewarded(mission_id: String, xp_amount: int) -> void:
 
 
 func _on_hunter_exam_stage_started(stage_id: String, stage_number: int) -> void:
-	if stage_id == "baghdad_tunnel_competition":
-		hunter_exam_stage_runtime = null
-		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "بدأت المسابقة المتصلة في نفق الصيادين — رقم المتسابق %d" % int(hunter_exam_manager.get_exam_overview().get("candidate_number", 0))
+	if stage_id not in ["baghdad_tunnel_competition", "baghdad_heritage_trial"]:
+		push_warning("SYSTEM HUNTER EXAM: unsupported stage %d (%s)." % [stage_number, stage_id])
 		return
-	if stage_id != "baghdad_heritage_trial":
-		push_warning("SYSTEM HUNTER EXAM: unsupported legacy stage %d (%s)." % [stage_number, stage_id])
-		return
+	if stage_id == "baghdad_tunnel_competition" and interaction_prompt_label != null:
+		interaction_prompt_label.text = "بدأت المسابقة المتصلة في نفق الصيادين — رقم المتسابق %d" % int(hunter_exam_manager.get_exam_overview().get("candidate_number", 0))
 	var tunnel_root := get_tree().root.find_child("BaghdadHunterExaminationTunnel", true, false) as Node3D
 	if tunnel_root == null:
 		push_warning("SYSTEM HUNTER EXAM: hidden Baghdad tunnel root is unavailable.")
