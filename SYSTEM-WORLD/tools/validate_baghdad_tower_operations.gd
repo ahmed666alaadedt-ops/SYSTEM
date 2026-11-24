@@ -1527,12 +1527,22 @@ func _run() -> void:
 	sword_stock["training_sword"] = maxi(1, int(sword_stock.get("training_sword", 0)))
 	operations.set("vendor_stock", sword_stock)
 	operations.call("_save_vendor_stock")
-	operations.call("open_baghdad_progression_facility", "shopping_tower_baghdad", 5, "shopping_weapon_gallery")
+	var floor_five_room := operations.call("_ensure_floor_room", "shopping_tower_baghdad", 5) as Node3D
+	var floor_five_showcase := floor_five_room.get_node_or_null("SpecialFacility_shopping_weapon_gallery/ShoppingShowcase") as Node3D if floor_five_room != null else null
+	var sword_display_interaction := floor_five_showcase.get_node_or_null("ShowcaseItem_00/ShowcaseItemInteraction_00") as Area3D if floor_five_showcase != null else null
+	if sword_display_interaction == null or str(sword_display_interaction.get_meta("system_showcase_product_id", "")) != "training_sword":
+		_fail("Floor-5 training sword display is missing its product-specific interaction target.")
+		return
+	main.call("_on_interaction_performed", sword_display_interaction, "")
 	await process_frame
 	var sword_purchase_button := (operations.get("content") as Node).find_child("ShoppingProduct_training_sword", true, false) as Button
-	if sword_purchase_button == null or sword_purchase_button.disabled:
-		_fail("Shopping Tower floor 5 did not expose an eligible, stocked training sword purchase.")
+	if sword_purchase_button == null or sword_purchase_button.disabled or not sword_purchase_button.visible:
+		_fail("Shopping Tower floor 5 did not expose an eligible, stocked training sword purchase from its physical display interaction.")
 		return
+	for child in (operations.get("content") as Node).get_children():
+		if child is Button and str(child.name).begins_with("ShoppingProduct_") and child != sword_purchase_button and child.visible:
+			_fail("A product-specific display interaction left unrelated product purchase buttons visible.")
+			return
 	var sword_count_before := int(skill_progression.call("get_item_count", "training_sword"))
 	sword_purchase_button.pressed.emit()
 	if int(skill_progression.call("get_item_count", "training_sword")) != sword_count_before + 1:

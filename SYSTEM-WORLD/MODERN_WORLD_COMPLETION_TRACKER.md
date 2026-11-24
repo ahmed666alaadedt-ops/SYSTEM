@@ -1819,3 +1819,11 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - [ ] Exact-HEAD Godot and Android verification for this visual/detail pass is pending.
 
 - Floor 25 retains the elite legendary preparation in its advanced laboratory; floor 26 is now a stricter rare-elixir vault containing only the rare/legendary vault product, with the validator explicitly rejecting the elite preparation from leaking into that vault.
+
+
+## Shopping Tower product display direct interaction and focused purchase preview — 24 November 2026
+- [x] Each physical product display has a dedicated product-specific interaction target carrying the tower, floor, department and exact catalog product ID.
+- [x] Routed product-display interactions ahead of generic department interactions in the main world interaction handler.
+- [x] Added a focused preview service: interacting with a display opens its floor's normal purchase controls, hides unrelated product buttons, and shows the selected item's current price, required rank and stock.
+- [x] Extended the end-to-end regression to interact with the physical floor-5 sword display, require the selected sword preview, hide unrelated products, purchase the sword, verify inventory receipt, equip it and unequip it.
+- [ ] Exact-HEAD comprehensive Godot operations validation and Android export for this direct interaction path are pending.

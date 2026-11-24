@@ -2266,6 +2266,28 @@ func _consume_elixir(item_id: String) -> void:
 	else:
 		_set_status("تعذر استخدام الإكسير: " + str(result.get("reason", "غير معروف")))
 
+func open_showcase_product_service(tower_id: String, floor_number: int, facility_type: String, product_id: String) -> bool:
+	open_baghdad_progression_facility(tower_id, floor_number, facility_type)
+	var product_button := content.find_child("ShoppingProduct_" + product_id, true, false) as Button if content != null else null
+	if product_button == null:
+		_set_status("هذا المنتج غير معروض للبيع في هذا الطابق.")
+		return false
+	for child in content.get_children():
+		if child is Button and str(child.name).begins_with("ShoppingProduct_") and child != product_button:
+			child.hide()
+	var product_data := _get_catalog_product(product_id)
+	var product_name := str(product_data.get("name", product_id))
+	var preview := Label.new()
+	preview.name = "SelectedShowcaseProductPreview"
+	preview.text = "معاينة المنتج: %s\nالسعر الحالي: %d رصيد SYSTEM | الرتبة المطلوبة: %s | المخزون: %d" % [product_name, _get_current_price(product_id), str(product_data.get("required_rank", "F")), get_vendor_stock(product_id)]
+	preview.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(preview)
+	content.move_child(preview, 1)
+	_set_status("تم فتح معاينة %s. زر الشراء يطبق الرتبة والمستوى والمخزون والرصيد قبل إتمام العملية." % product_name)
+	panel.show()
+	return true
+
+
 func _buy_product(item_id: String, item_name: String, _listed_price: int, required_rank: String = "F") -> void:
 	var product_data := _get_catalog_product(item_id)
 	var product_required_level := int(product_data.get("required_level", 1))
