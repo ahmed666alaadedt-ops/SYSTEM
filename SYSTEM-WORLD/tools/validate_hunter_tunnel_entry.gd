@@ -47,6 +47,7 @@ func _run_validation() -> void:
 		return
 	manager.set("candidate_number", 0)
 	manager.set("registered", false)
+	manager.set("invitation_accepted", false)
 	manager.set("exam_active", false)
 	manager.set("current_stage_index", -1)
 	manager.set("completed_stage_ids", [])
@@ -109,7 +110,7 @@ func _run_validation() -> void:
 	if not _check(bool(restored_overview.get("registered", false)) and int(restored_overview.get("candidate_number", 0)) == serial, "Candidate serial did not persist across manager recreation."):
 		return
 	var repeat_registration: Dictionary = restored_manager.register_candidate_at_tunnel("local_player")
-	if not _check(int(repeat_registration.get("candidate_number", 0)) == serial, "Re-entry allocated a different candidate serial.") :
+	if not _check(int(repeat_registration.get("candidate_number", 0)) == serial, "Re-entry allocated a different candidate serial."):
 		return
 
 	print("Hunter Tower recruitment validation passed: arrival invitation, decline/re-entry, acceptance, pending registration, guild-guide escort, serial allocation at tunnel arrival and persistent serial reuse; restaurant access route absent.")
