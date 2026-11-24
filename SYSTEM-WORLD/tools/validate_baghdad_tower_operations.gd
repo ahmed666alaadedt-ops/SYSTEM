@@ -154,6 +154,9 @@ func _run() -> void:
 	if int(candidate_status.get("candidate_count", 0)) != 500 or int(candidate_status.get("unique_candidate_numbers", 0)) != 500:
 		_fail("The Hunter tunnel must contain 500 individually tracked candidate NPCs; found %d." % int(candidate_status.get("candidate_count", 0)))
 		return
+	if int(candidate_status.get("behavior_profile_count", 0)) != 500:
+		_fail("All 500 Hunter candidates must have individual skill, cooperation and error profiles.")
+		return
 	if int(candidate_status.get("body_instances", 0)) != 500 or int(candidate_status.get("head_instances", 0)) != 500:
 		_fail("The 500 Hunter candidates are not all visibly rendered.")
 		return
