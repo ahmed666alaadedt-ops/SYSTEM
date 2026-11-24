@@ -185,6 +185,13 @@ func get_competition_status() -> Dictionary:
 func _make_rival(profile: Dictionary) -> CharacterBody3D:
 	var root := RivalActorScript.new() as CharacterBody3D
 	root.call("configure", profile, self)
+	var body_collision := CollisionShape3D.new()
+	body_collision.name = "BodyCollision"
+	var body_capsule := CapsuleShape3D.new()
+	body_capsule.radius = 0.48
+	body_capsule.height = 1.9
+	body_collision.shape = body_capsule
+	root.add_child(body_collision)
 	root.name = "HunterRival_" + str(profile["id"])
 	var body := MeshInstance3D.new()
 	body.name = "RivalBody"
