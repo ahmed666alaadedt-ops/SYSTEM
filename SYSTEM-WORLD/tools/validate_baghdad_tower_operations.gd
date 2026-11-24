@@ -3105,7 +3105,9 @@ func _walk_sky_garden_bridge(player: CharacterBody3D, tower: Node3D, garden: Nod
 	var travel_direction := travel.normalized()
 	var travel_distance := travel.length()
 	var travelled := 0.0
-	for _step in range(90):
+	# At 3 m/s a 46–50 m bridge needs roughly 1,000 physics frames at 60 Hz.
+	# Keep real walking speed and collision response; do not teleport or shorten the route.
+	for _step in range(1050):
 		player.velocity = Vector3(travel_direction.x * 3.0, -1.0, travel_direction.z * 3.0)
 		var previous_position := player.global_position
 		player.move_and_slide()
