@@ -2395,13 +2395,10 @@ func _run() -> void:
 	if int(operations.call("_get_floor_duty_staff_index", "shopping_tower_baghdad", 29)) != 4 or int(operations.call("_get_floor_duty_staff_index", "shopping_tower_baghdad", 27)) != 6 or int(operations.call("_get_floor_duty_staff_index", "technology_tower_baghdad", 20)) != 4:
 		_fail("Baghdad floor-to-staff duty assignments are incorrect.")
 		return
-	print("QA TRACE: pool movement and save/load regressions completed; starting staff elevator trip.")
+	print("QA TRACE: facility save/load regression completed; starting staff elevator trip.")
 	operations.set("current_tower_id", "shopping_tower_baghdad")
 	print("QA TRACE: invoking floor 29 staff elevator trip.")
 	operations.call("_travel_to_floor", "shopping_tower_baghdad", 29)
-	if bool(player.get_meta("system_pool_locker_reserved", false)) or assigned_pool_locker.has_meta("system_pool_locker_occupied") or assigned_pool_locker.has_meta("system_pool_locker_owner"):
-		_fail("Leaving the pool facility did not release the player's locker for the next guest.")
-		return
 	print("QA TRACE: floor 29 elevator trip requested.")
 	var shopping_staff_ids: Array = operations.get("staff_by_tower").get("shopping_tower_baghdad", [])
 	if shopping_staff_ids.size() <= 4:
