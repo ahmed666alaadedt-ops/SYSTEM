@@ -37,13 +37,12 @@ func _run_validation() -> void:
 	if not _check(main.has_method("_on_hunter_tower_arrival_body_entered"), "Hunter Tower arrival callback is missing."):
 		return
 
-	var operations := main.get_node_or_null("BaghdadTowerOperationsManager")
 	if not _check(root.find_child("HunterExamPrivateRoom", true, false) == null, "The obsolete restaurant-linked Hunter exam room still exists."):
 		return
 	if not _check(str(tunnel.get_meta("system_hunter_exam_access", "")) == "hunter_tower_recruitment_and_guide_escort", "Tunnel access is not assigned to the Hunter Tower guide route."):
 		return
 
-	var manager := main.get("hunter_exam_manager")
+	var manager: SYSTEMHunterExamManager = main.get("hunter_exam_manager") as SYSTEMHunterExamManager
 	if not _check(manager != null, "Hunter exam manager is missing."):
 		return
 	manager.set("candidate_number", 0)
@@ -55,7 +54,7 @@ func _run_validation() -> void:
 	manager.set("failure_reason", "")
 
 	main.call("_on_hunter_tower_arrival_body_entered", player)
-	var invitation := main.get_node("HunterExamInvitationPanel") as Control
+	var invitation := main.find_child("HunterExamInvitationPanel", true, false) as Control
 	if not _check(invitation.visible, "Entering the Hunter Tower did not display the invitation."):
 		return
 	var invitation_text := invitation.find_child("InvitationText", true, false) as Label
