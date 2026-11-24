@@ -572,10 +572,22 @@ func _on_hunter_exam_stage_started(stage_id: String, stage_number: int) -> void:
 		tunnel_root.add_child(hunter_exam_stage_runtime)
 	var stage_data: Dictionary = hunter_exam_manager.get_current_stage()
 	var build_result: Dictionary = hunter_exam_stage_runtime.call("activate_stage", stage_data, player, hunter_exam_manager)
+	var rival_manager: Node = hunter_exam_stage_runtime.get("rival_competition")
+	if is_instance_valid(rival_manager) and rival_manager.has_signal("rival_event"):
+		var rival_callback := Callable(self, "_on_hunter_rival_event")
+		if not rival_manager.is_connected("rival_event", rival_callback):
+			rival_manager.connect("rival_event", rival_callback)
 	if not bool(build_result.get("success", false)):
 		push_warning("SYSTEM HUNTER EXAM: stage environment activation failed: %s" % str(build_result.get("reason", "unknown")))
 	else:
 		print("SYSTEM HUNTER EXAM: Baghdad heritage stage environment is active.")
+
+
+func _on_hunter_rival_event(message: String) -> void:
+	if interaction_prompt_label == null:
+		return
+	interaction_prompt_label.text = message
+	interaction_prompt_label.show()
 
 
 func _on_hunter_exam_stage_completed(stage_id: String, stage_number: int) -> void:
