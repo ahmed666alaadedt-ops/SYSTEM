@@ -5,7 +5,7 @@ const EntranceScript = preload("res://scripts/system_tower_entrance.gd")
 const HunterHelicopterControllerScript = preload("res://scripts/system_hunter_helicopter_pad_controller.gd")
 const HUNTER_TOWER_HEIGHT := 1000.0
 const REPUBLIC_BRIDGE_DECK_HEIGHT := 18.0
-const HUNTER_CENTRAL_SKY_CITY_PLATFORM_HEIGHT := 418.0
+const HUNTER_CENTRAL_SKY_CITY_PLATFORM_HEIGHT := 419.2
 const POWER_TOWER_HEIGHT := 820.0
 
 var terrain: Node
