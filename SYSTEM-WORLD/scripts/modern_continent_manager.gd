@@ -24,6 +24,7 @@ var baghdad_bridge_reference_loaded := false
 
 const BAGHDAD_LAND_RADIUS_X := 1000.0
 const BAGHDAD_LAND_RADIUS_Z := 900.0
+const BAGHDAD_URBAN_CORRIDOR_HALF_WIDTH := 560.0
 const BAGHDAD_TIGRIS_HALF_WIDTH := 155.0
 const BAGHDAD_TIGRIS_DEPTH := 22.0
 
@@ -182,6 +183,12 @@ func _get_height(x: float, z: float) -> float:
 			var bridge_coast_ease := bridge_coast_factor * bridge_coast_factor * (3.0 - 2.0 * bridge_coast_factor)
 			var bridge_land_height := 18.0 + sin(x * 0.012) * 1.2 + cos(z * 0.014) * 0.9
 			return lerpf(SEA_LEVEL - 1.2, bridge_land_height, bridge_coast_ease) - _baghdad_tigris_channel_depth(x, z)
+		var corridor_distance := _distance_to_segment(Vector2(x, z), Vector2.ZERO, baghdad_bridge_center)
+		if _continent_radius(x, z) > 1.0 and corridor_distance <= BAGHDAD_URBAN_CORRIDOR_HALF_WIDTH:
+			var corridor_blend := clampf((BAGHDAD_URBAN_CORRIDOR_HALF_WIDTH - corridor_distance) / 110.0, 0.0, 1.0)
+			var corridor_ease := corridor_blend * corridor_blend * (3.0 - 2.0 * corridor_blend)
+			var corridor_height := 13.0 + sin(x * 0.009) * 1.0 + cos(z * 0.011) * 0.8
+			return lerpf(SEA_LEVEL - 1.2, corridor_height, corridor_ease)
 
 	var radius := _continent_radius(x, z)
 	if radius <= 1.0:
