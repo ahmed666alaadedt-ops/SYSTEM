@@ -36,9 +36,15 @@ func _run_validation() -> void:
 	var site := runtime.get_node_or_null("BaghdadHeritageSite") as Node3D
 	if not _check(site != null, "Physical Baghdad heritage site is missing."):
 		return
-	if not _check(site.get_node_or_null("AncientStoneFloorBody/CollisionShape3D") != null, "Heritage floor collision is missing."):
+	var floor_body := site.get_node_or_null("AncientStoneFloorBody") as StaticBody3D
+	if not _check(floor_body != null, "Heritage floor physics body is missing."):
 		return
-	if not _check(site.get_node_or_null("NorthWallBody/CollisionShape3D") != null, "Heritage wall collision is missing."):
+	if not _check(floor_body.get_child_count() > 0 and floor_body.get_child(0) is CollisionShape3D, "Heritage floor collision shape is missing."):
+		return
+	var north_wall_body := site.get_node_or_null("NorthWallBody") as StaticBody3D
+	if not _check(north_wall_body != null, "Heritage north-wall physics body is missing."):
+		return
+	if not _check(north_wall_body.get_child_count() > 0 and north_wall_body.get_child(0) is CollisionShape3D, "Heritage north-wall collision shape is missing."):
 		return
 	if not _check(site.get_node_or_null("ArtifactPedestal/RecoveredArtifact") != null, "Artifact mesh is missing."):
 		return
