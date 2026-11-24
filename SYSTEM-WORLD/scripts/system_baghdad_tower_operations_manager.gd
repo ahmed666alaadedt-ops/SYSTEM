@@ -6216,7 +6216,9 @@ func _process_restaurant_staff_service() -> void:
 		task_tween.tween_property(employee, "position", task_position, maxf(direction.length() / 1.8, 0.5)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		var service_wait := 3.0 if role == "restaurant_chef" else 1.2
 		task_tween.tween_interval(service_wait)
-		_complete_restaurant_staff_service_fallback(employee, model, selected_table_id, completion_state, home_position, task_token, maxf(direction.length() / 1.8, 0.5) + service_wait + 1.0)
+		var fallback_delay := clampf(maxf(direction.length() / 1.8, 0.5) + service_wait + 1.0, 3.0, 25.0)
+		var fallback_timer := get_tree().create_timer(fallback_delay)
+		fallback_timer.timeout.connect(_complete_restaurant_staff_service_fallback.bind(employee, model, selected_table_id, completion_state, home_position, task_token), CONNECT_ONE_SHOT)
 		task_tween.tween_callback(func():
 			if not is_instance_valid(employee):
 				return
@@ -6250,14 +6252,14 @@ func _process_restaurant_staff_service() -> void:
 		break
 
 
-func _complete_restaurant_staff_service_fallback(employee: Node3D, model: Node3D, table_id: String, completion_state: String, home_position: Vector3, task_token: String, delay_seconds: float) -> void:
-	await get_tree().create_timer(maxf(delay_seconds, 1.0)).timeout
+func _complete_restaurant_staff_service_fallback(employee: Node3D, model: Node3D, table_id: String, completion_state: String, home_position: Vector3, task_token: String) -> void:
 	if not is_instance_valid(employee) or str(employee.get_meta("system_restaurant_task_token", "")) != task_token:
 		return
 	var expected_state := "taking_order" if completion_state == "placed" else ("preparing" if completion_state == "ready" else "delivering")
 	var active_order: Dictionary = restaurant_orders.get(table_id, {})
 	if active_order.is_empty() or str(active_order.get("status", "")) != expected_state:
 		return
+	print("QA TRACE: restaurant service fallback completed ", table_id, " from ", expected_state, " to ", completion_state)
 	active_order["status"] = completion_state
 	active_order["updated_at_unix"] = int(Time.get_unix_time_from_system())
 	restaurant_orders[table_id] = active_order
