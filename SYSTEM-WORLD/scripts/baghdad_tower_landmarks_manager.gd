@@ -529,18 +529,18 @@ func _create_tower_sky_gardens(tower: Node3D, tower_id: String, tower_title: Str
 			_add_static_box_collision(garden, deck.name + "_Collision", deck.position, deck_mesh.size)
 
 		# Four glass perimeter rails keep the elevated garden safe without enclosing the views.
-		for side in [-1.0, 1.0]:
-			for axis in [-1.0, 1.0]:
-				var rail := MeshInstance3D.new()
-				rail.name = "GardenGlassRail_%s_%s" % [str(side), str(axis)]
-				var rail_mesh := BoxMesh.new()
-				rail_mesh.size = Vector3(outer * 2.0 + 0.8, 1.35, 0.24) if side == 0.0 else Vector3(0.24, 1.35, outer * 2.0 + 0.8)
-				# Four independent perimeter edges; the conditional keeps the geometry axis-aligned.
-				rail_mesh.size = Vector3(outer * 2.0 + 0.8, 1.35, 0.24) if side < 0.0 else Vector3(0.24, 1.35, outer * 2.0 + 0.8)
-				rail.mesh = rail_mesh
-				rail.position = Vector3(0.0, 1.02, axis * outer) if side < 0.0 else Vector3(axis * outer, 1.02, 0.0)
-				rail.material_override = glass_material
-				garden.add_child(rail)
+		for edge_index in range(4):
+			var rail := MeshInstance3D.new()
+			rail.name = "GardenGlassRail_%02d" % edge_index
+			var rail_mesh := BoxMesh.new()
+			var horizontal_edge := edge_index < 2
+			rail_mesh.size = Vector3(outer * 2.0 + 0.8, 1.35, 0.24) if horizontal_edge else Vector3(0.24, 1.35, outer * 2.0 + 0.8)
+			rail.mesh = rail_mesh
+			var edge_sign := -1.0 if edge_index % 2 == 0 else 1.0
+			rail.position = Vector3(0.0, 1.02, edge_sign * outer) if horizontal_edge else Vector3(edge_sign * outer, 1.02, 0.0)
+			rail.material_override = glass_material
+			garden.add_child(rail)
+			_add_static_box_collision(garden, rail.name + "_Collision", rail.position, rail_mesh.size)
 		garden.set_meta("system_glass_perimeter_railing", true)
 
 		# Planter beds, trees, benches and low garden lights provide distinct public green space.
