@@ -83,6 +83,8 @@ var mobile_controls: Node
 
 var interaction_prompt_layer: CanvasLayer
 var interaction_prompt_label: Label
+var hunter_exam_invitation_panel: PanelContainer
+var hunter_exam_escort_active := false
 
 var mobile_direction := Vector2.ZERO
 var jump_requested := false
@@ -130,6 +132,7 @@ func _ready() -> void:
 	create_mobile_controls()
 	create_interaction_prompt()
 	create_baghdad_tower_operations_manager()
+	call_deferred("_connect_hunter_tower_recruitment")
 
 	update_camera_mode()
 	connect_android_runtime_bridge()
@@ -606,25 +609,114 @@ func _on_hunter_exam_start_requested() -> void:
 	_handle_hunter_exam_guide_interaction()
 
 
-func _handle_hunter_exam_guide_interaction() -> void:
+func _connect_hunter_tower_recruitment() -> void:
+	var arrival_zone := get_tree().root.find_child("HunterTowerRecruitmentArrivalZone", true, false) as Area3D
+	if arrival_zone == null:
+		push_warning("SYSTEM Hunter Exam: Hunter Tower arrival zone is missing.")
+		return
+	var callback := Callable(self, "_on_hunter_tower_arrival_body_entered")
+	if not arrival_zone.body_entered.is_connected(callback):
+		arrival_zone.body_entered.connect(callback)
+
+
+func _on_hunter_tower_arrival_body_entered(body: Node3D) -> void:
+	if body != player or hunter_exam_manager == null:
+		return
+	var overview: Dictionary = hunter_exam_manager.get_exam_overview()
+	if bool(overview.get("registered", false)):
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "أنت مسجل في اختبار الصيادين. اتبع مرشد نقابة الصيادين."
+			interaction_prompt_label.show()
+		return
+	_show_hunter_exam_invitation()
+
+
+func _show_hunter_exam_invitation() -> void:
+	if hunter_exam_invitation_panel != null:
+		hunter_exam_invitation_panel.show()
+	if interaction_prompt_label != null:
+		interaction_prompt_label.hide()
+
+
+func _on_hunter_exam_invitation_declined() -> void:
+	if hunter_exam_invitation_panel != null:
+		hunter_exam_invitation_panel.hide()
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = "يمكنك التسجيل في اختبار الصيادين لاحقاً من برج الصيادين."
+		interaction_prompt_label.show()
+
+
+func _on_hunter_exam_invitation_accepted() -> void:
 	if hunter_exam_manager == null:
 		if interaction_prompt_label != null:
 			interaction_prompt_label.text = "نظام نقابة الصيادين غير متاح حالياً."
 		return
 	var overview: Dictionary = hunter_exam_manager.get_exam_overview()
 	if not bool(overview.get("registered", false)):
-		var registration: Dictionary = hunter_exam_manager.apply_for_exam("local_player")
-		if not bool(registration.get("success", false)):
+		var result: Dictionary = hunter_exam_manager.apply_for_exam("local_player")
+		if not bool(result.get("success", false)):
 			if interaction_prompt_label != null:
-				interaction_prompt_label.text = "تعذر تسجيل المتسابق: %s" % str(registration.get("reason", "غير معروف"))
+				interaction_prompt_label.text = "تعذر تسجيلك: %s" % str(result.get("reason", "غير معروف"))
 			return
-		overview = hunter_exam_manager.get_exam_overview()
-	var candidate_number := int(overview.get("candidate_number", 0))
-	if interaction_prompt_label != null:
-		interaction_prompt_label.text = "مرحباً بك في اختبار نقابة الصيادين.\nشرح المرشد: هذه نقطة التجمع الرسمية؛ اتبع تعليمات المشرف قبل بدء المنافسة.\nرقمك التسلسلي الدائم: %d\nاحتفظ بهذا الرقم، فهو يبقى نفسه عند خروجك وعودتك." % candidate_number
 	if player != null:
-		player.set_meta("system_hunter_exam_candidate_number", candidate_number)
+		player.set_meta("system_hunter_exam_invitation_accepted", true)
+	if hunter_exam_invitation_panel != null:
+		hunter_exam_invitation_panel.hide()
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = "تم قبولك مبدئياً في اختبار الصيادين. اتبع مرشد نقابة الصيادين داخل البرج؛ سيأخذك إلى النفق ويسلمك رقمك التسلسلي هناك."
+		interaction_prompt_label.show()
+
+
+func _start_hunter_guild_escort(guide: Node) -> void:
+	if not is_instance_valid(player) or guide == null or hunter_exam_manager == null:
+		return
+	var overview: Dictionary = hunter_exam_manager.get_exam_overview()
+	if not bool(overview.get("registered", false)):
+		_show_hunter_exam_invitation()
+		return
+	if hunter_exam_escort_active or bool(player.get_meta("system_inside_hunter_exam_tunnel", false)):
+		return
+	hunter_exam_escort_active = true
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = "مرشد النقابة: اتبعني. سأرافقك إلى نفق اختبار الصيادين."
+		interaction_prompt_label.show()
+	player.velocity = Vector3.ZERO
+	player.set_meta("system_hunter_exam_escort_active", true)
+	var tunnel_root := get_tree().root.find_child("BaghdadHunterExaminationTunnel", true, false) as Node3D
+	if tunnel_root == null:
+		hunter_exam_escort_active = false
+		player.set_meta("system_hunter_exam_escort_active", false)
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "تعذر العثور على نفق اختبار الصيادين."
+		return
+	var destination := tunnel_root.to_global(Vector3(0.0, 0.0, -1.5))
+	var guide_node := guide as Node3D
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_SINE)
+	tween.set_ease(Tween.EASE_IN_OUT)
+	if guide_node != null:
+		tween.parallel().tween_property(guide_node, "global_position", destination + Vector3(0.0, 0.0, 2.0), 5.0)
+	tween.tween_property(player, "global_position", destination, 5.0)
+	tween.finished.connect(func():
+		if not is_instance_valid(player):
+			hunter_exam_escort_active = false
+			return
+		player.velocity = Vector3.ZERO
+		player.set_meta("system_hunter_exam_escort_active", false)
 		player.set_meta("system_inside_hunter_exam_tunnel", true)
+		var final_overview: Dictionary = hunter_exam_manager.get_exam_overview()
+		var candidate_number := int(final_overview.get("candidate_number", 0))
+		player.set_meta("system_hunter_exam_candidate_number", candidate_number)
+		hunter_exam_escort_active = false
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "وصلت إلى نفق اختبار الصيادين برفقة مرشد النقابة. رقمك التسلسلي الدائم: %d. احتفظ به؛ سيبقى نفسه عند عودتك." % candidate_number
+			interaction_prompt_label.show()
+	)
+
+
+func _handle_hunter_exam_guide_interaction() -> void:
+	_start_hunter_guild_escort(get_tree().root.find_child("HunterGuildGuideAtTower", true, false))
+
 
 
 func _animate_hunter_exam_elevator(button: Node) -> void:
@@ -858,6 +950,46 @@ func create_interaction_prompt() -> void:
 	interaction_prompt_layer.add_child(interaction_prompt_label)
 	interaction_prompt_label.hide()
 
+	hunter_exam_invitation_panel = PanelContainer.new()
+	hunter_exam_invitation_panel.name = "HunterExamInvitationPanel"
+	hunter_exam_invitation_panel.set_anchors_preset(Control.PRESET_CENTER)
+	hunter_exam_invitation_panel.position = Vector2(-230.0, -105.0)
+	hunter_exam_invitation_panel.size = Vector2(460.0, 210.0)
+	hunter_exam_invitation_panel.custom_minimum_size = Vector2(460.0, 210.0)
+	var invitation_layout := VBoxContainer.new()
+	invitation_layout.alignment = BoxContainer.ALIGNMENT_CENTER
+	hunter_exam_invitation_panel.add_child(invitation_layout)
+	var invitation_title := Label.new()
+	invitation_title.text = "دعوة نقابة الصيادين"
+	invitation_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	invitation_title.add_theme_font_size_override("font_size", 25)
+	invitation_layout.add_child(invitation_title)
+	var invitation_text := Label.new()
+	invitation_text.name = "InvitationText"
+	invitation_text.text = "هل تريد أن تصبح صياداً وتسجل في اختبار الصيادين؟"
+	invitation_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	invitation_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	invitation_text.custom_minimum_size = Vector2(420.0, 65.0)
+	invitation_text.add_theme_font_size_override("font_size", 21)
+	invitation_layout.add_child(invitation_text)
+	var invitation_buttons := HBoxContainer.new()
+	invitation_buttons.alignment = BoxContainer.ALIGNMENT_CENTER
+	invitation_layout.add_child(invitation_buttons)
+	var accept_button := Button.new()
+	accept_button.name = "AcceptHunterExamInvitation"
+	accept_button.text = "نعم، أريد أن أصبح صياداً"
+	accept_button.custom_minimum_size = Vector2(220.0, 48.0)
+	accept_button.pressed.connect(_on_hunter_exam_invitation_accepted)
+	invitation_buttons.add_child(accept_button)
+	var decline_button := Button.new()
+	decline_button.name = "DeclineHunterExamInvitation"
+	decline_button.text = "ليس الآن"
+	decline_button.custom_minimum_size = Vector2(120.0, 48.0)
+	decline_button.pressed.connect(_on_hunter_exam_invitation_declined)
+	invitation_buttons.add_child(decline_button)
+	interaction_prompt_layer.add_child(hunter_exam_invitation_panel)
+	hunter_exam_invitation_panel.hide()
+
 
 ## معرّف الخريطة النصي يطابق رقم العالم الحالي في WorldManager.
 func get_current_map_world_id() -> String:
@@ -1000,6 +1132,9 @@ func _on_interaction_performed(
 			if interaction_prompt_label != null:
 				interaction_prompt_label.text = str(objective_result.get("message", "تم التفاعل مع هدف الاختبار."))
 			return
+	if target.has_meta("system_hunter_exam_tower_guide"):
+		_start_hunter_guild_escort(target)
+		return
 	if target.has_meta("system_hunter_exam_room_entry") and tower_operations_manager != null:
 		tower_operations_manager.call("enter_hunter_exam_private_room", target)
 		return
