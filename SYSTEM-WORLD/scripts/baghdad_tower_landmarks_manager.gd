@@ -1126,8 +1126,154 @@ func _create_baghdad_upper_city_layer() -> void:
 		var skyway_start := outward * 82.0 + Vector3(0.0, 272.0, 0.0)
 		var skyway_end := destination + Vector3(0.0, 272.0, 0.0)
 		_create_link_deck(city, skyway_start, skyway_end, "HunterAtriumSkyway_%02d" % index, 18.0, 1.5, trim)
+	_create_reference_city_architecture(city)
 	city.set_meta("system_upper_city_blocks", upper_positions.size())
 	city.set_meta("system_upper_city_elevation_m", 270.0)
+
+
+func _create_reference_city_architecture(city: Node3D) -> void:
+	# Visual expansion based on the user-approved Baghdad skyline reference:
+	# broad circular sky platforms, glass towers, and a central illuminated S spire.
+	# This is a visual city layer; it does not create extra functional district towers.
+	var platform_material := _make_surface_material(Color(0.055, 0.16, 0.23), 0.24, 0.72)
+	platform_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	platform_material.albedo_color.a = 0.92
+	var edge_material := _make_surface_material(Color(0.10, 0.62, 0.82), 0.2, 0.68)
+	edge_material.emission_enabled = true
+	edge_material.emission = Color(0.015, 0.32, 0.58)
+	edge_material.emission_energy_multiplier = 1.5
+	var platform_specs := [
+		{"name": "ReferenceSkyPlatform_Lower", "radius": 238.0, "height": 3.2, "y": 310.0},
+		{"name": "ReferenceSkyPlatform_Middle", "radius": 178.0, "height": 2.8, "y": 365.0},
+		{"name": "ReferenceSkyPlatform_Upper", "radius": 116.0, "height": 2.4, "y": 418.0}
+	]
+	for spec in platform_specs:
+		var platform := MeshInstance3D.new()
+		platform.name = str(spec["name"])
+		var platform_mesh := CylinderMesh.new()
+		platform_mesh.top_radius = float(spec["radius"])
+		platform_mesh.bottom_radius = float(spec["radius"]) * 0.985
+		platform_mesh.height = float(spec["height"])
+		platform.mesh = platform_mesh
+		platform.position.y = float(spec["y"])
+		platform.material_override = platform_material
+		city.add_child(platform)
+		var rim := MeshInstance3D.new()
+		rim.name = str(spec["name"]) + "_LuminousRim"
+		var rim_mesh := TorusMesh.new()
+		rim_mesh.inner_radius = float(spec["radius"]) - 1.2
+		rim_mesh.outer_radius = float(spec["radius"]) + 0.8
+		rim_mesh.rings = 48
+		rim_mesh.ring_segments = 12
+		rim.mesh = rim_mesh
+		rim.rotation.x = PI * 0.5
+		rim.position.y = float(spec["y"]) + float(spec["height"]) * 0.5
+		rim.material_override = edge_material
+		city.add_child(rim)
+		platform.set_meta("system_reference_design_element", "multi_level_circular_sky_platform")
+	var support_material := _make_surface_material(Color(0.12, 0.22, 0.29), 0.3, 0.82)
+	for index in range(16):
+		var angle := TAU * float(index) / 16.0
+		var support := MeshInstance3D.new()
+		support.name = "SkyPlatformSupport_%02d" % index
+		var support_mesh := CylinderMesh.new()
+		support_mesh.top_radius = 2.2
+		support_mesh.bottom_radius = 4.0
+		support_mesh.height = 38.0
+		support.mesh = support_mesh
+		support.position = Vector3(cos(angle) * 220.0, 291.0, sin(angle) * 220.0)
+		support.material_override = support_material
+		city.add_child(support)
+	var glass_material := _make_surface_material(Color(0.035, 0.22, 0.34), 0.16, 0.62)
+	glass_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	glass_material.albedo_color.a = 0.84
+	var skyline_specs := [
+		{"angle": 0.0, "radius": 192.0, "height": 76.0, "width": 18.0},
+		{"angle": 0.62, "radius": 214.0, "height": 54.0, "width": 15.0},
+		{"angle": 1.24, "radius": 188.0, "height": 92.0, "width": 17.0},
+		{"angle": 1.88, "radius": 218.0, "height": 63.0, "width": 14.0},
+		{"angle": 2.51, "radius": 194.0, "height": 84.0, "width": 16.0},
+		{"angle": 3.14, "radius": 216.0, "height": 58.0, "width": 15.0},
+		{"angle": 3.77, "radius": 190.0, "height": 98.0, "width": 18.0},
+		{"angle": 4.40, "radius": 218.0, "height": 68.0, "width": 14.0},
+		{"angle": 5.03, "radius": 196.0, "height": 88.0, "width": 17.0},
+		{"angle": 5.66, "radius": 214.0, "height": 60.0, "width": 15.0}
+	]
+	for index in range(skyline_specs.size()):
+		var spec: Dictionary = skyline_specs[index]
+		var angle := float(spec["angle"])
+		var radius := float(spec["radius"])
+		var height := float(spec["height"])
+		var width := float(spec["width"])
+		var tower := Node3D.new()
+		tower.name = "ReferenceGlassSkylineTower_%02d" % index
+		tower.position = Vector3(cos(angle) * radius, 312.0, sin(angle) * radius)
+		city.add_child(tower)
+		var shaft := MeshInstance3D.new()
+		shaft.name = "GlassShaft"
+		var shaft_mesh := BoxMesh.new()
+		shaft_mesh.size = Vector3(width, height, width * 0.78)
+		shaft.mesh = shaft_mesh
+		shaft.position.y = height * 0.5
+		shaft.material_override = glass_material
+		tower.add_child(shaft)
+		var crown := MeshInstance3D.new()
+		crown.name = "IlluminatedCrown"
+		var crown_mesh := PrismMesh.new()
+		crown_mesh.size = Vector3(width * 1.18, height * 0.16, width * 0.92)
+		crown.mesh = crown_mesh
+		crown.position.y = height + crown_mesh.size.y * 0.5
+		crown.material_override = edge_material
+		tower.add_child(crown)
+		var vertical_light := MeshInstance3D.new()
+		vertical_light.name = "BlueVerticalLight"
+		var light_mesh := BoxMesh.new()
+		light_mesh.size = Vector3(0.55, height * 0.82, 0.32)
+		vertical_light.mesh = light_mesh
+		vertical_light.position = Vector3(width * 0.5 + 0.32, height * 0.5, 0.0)
+		vertical_light.material_override = emissive_material
+		tower.add_child(vertical_light)
+	var central_spire := Node3D.new()
+	central_spire.name = "BaghdadSYSTEMCentralSpire"
+	central_spire.position = Vector3(0.0, 418.0, 0.0)
+	central_spire.set_meta("system_visual_landmark", true)
+	central_spire.set_meta("system_functional_tower", false)
+	city.add_child(central_spire)
+	var spire := MeshInstance3D.new()
+	spire.name = "CentralGlassSpire"
+	var spire_mesh := CylinderMesh.new()
+	spire_mesh.top_radius = 7.0
+	spire_mesh.bottom_radius = 17.0
+	spire_mesh.height = 196.0
+	spire.mesh = spire_mesh
+	spire.position.y = 98.0
+	spire.material_override = glass_material
+	central_spire.add_child(spire)
+	for side in range(4):
+		var rib := MeshInstance3D.new()
+		rib.name = "CentralSpireBlueRib_%d" % side
+		var rib_mesh := BoxMesh.new()
+		rib_mesh.size = Vector3(0.9, 186.0, 0.9)
+		rib.mesh = rib_mesh
+		var angle := TAU * float(side) / 4.0
+		rib.position = Vector3(cos(angle) * 11.0, 98.0, sin(angle) * 11.0)
+		rib.material_override = edge_material
+		central_spire.add_child(rib)
+	var system_mark := Label3D.new()
+	system_mark.name = "CentralSYSTEM_S_Insignia"
+	system_mark.text = "S"
+	system_mark.font_size = 220
+	system_mark.pixel_size = 0.018
+	system_mark.position = Vector3(0.0, 112.0, -18.0)
+	system_mark.modulate = Color(0.18, 0.84, 1.0)
+	system_mark.outline_size = 12
+	system_mark.outline_modulate = Color(0.015, 0.12, 0.3)
+	central_spire.add_child(system_mark)
+	central_spire.set_meta("system_insignia", "S")
+	city.set_meta("system_reference_sky_platform_count", platform_specs.size())
+	city.set_meta("system_reference_glass_tower_count", skyline_specs.size())
+	city.set_meta("system_central_spire_insignia", "S")
+	city.set_meta("system_reference_visual_profile", "approved_baghdad_towers_image")
 
 
 func _create_connected_city_links() -> void:
