@@ -552,32 +552,49 @@ func _on_public_mission_rewarded(mission_id: String, xp_amount: int) -> void:
 
 
 func _on_hunter_exam_stage_started(stage_id: String, stage_number: int) -> void:
-	if stage_id not in ["baghdad_tunnel_competition", "baghdad_heritage_trial"]:
+	var supported_stage_ids: Array[String] = [
+		"baghdad_heritage_trial",
+		"cairo_buried_market",
+		"alexandria_lighthouse",
+		"paris_catacombs",
+		"babylon_guardian",
+		"tokyo_urban_pursuit",
+		"final_survival_route"
+	]
+	if stage_id not in supported_stage_ids:
 		push_warning("SYSTEM HUNTER EXAM: unsupported stage %d (%s)." % [stage_number, stage_id])
 		return
-	if stage_id == "baghdad_tunnel_competition" and interaction_prompt_label != null:
-		interaction_prompt_label.text = "بدأت المسابقة المتصلة في نفق الصيادين — رقم المتسابق %d" % int(hunter_exam_manager.get_exam_overview().get("candidate_number", 0))
 	var tunnel_root := get_tree().root.find_child("BaghdadHunterExaminationTunnel", true, false) as Node3D
 	if tunnel_root == null:
 		push_warning("SYSTEM HUNTER EXAM: hidden Baghdad tunnel root is unavailable.")
 		return
-	hunter_exam_stage_runtime = tunnel_root.get_node_or_null("HunterExamStageRuntime") as Node3D
-	if hunter_exam_stage_runtime == null:
-		hunter_exam_stage_runtime = HunterExamStageRuntimeScript.new()
-		hunter_exam_stage_runtime.name = "HunterExamStageRuntime"
-		hunter_exam_stage_runtime.position = Vector3(0.0, -17.0, 190.0)
-		tunnel_root.add_child(hunter_exam_stage_runtime)
+	var previous_runtime := tunnel_root.get_node_or_null("HunterExamStageRuntime")
+	if previous_runtime != null:
+		previous_runtime.queue_free()
+		await get_tree().process_frame
+	hunter_exam_stage_runtime = HunterExamStageRuntimeScript.new()
+	hunter_exam_stage_runtime.name = "HunterExamStageRuntime"
+	hunter_exam_stage_runtime.position = Vector3(0.0, -17.0, 190.0)
+	tunnel_root.add_child(hunter_exam_stage_runtime)
 	var stage_data: Dictionary = hunter_exam_manager.get_current_stage()
 	var build_result: Dictionary = hunter_exam_stage_runtime.call("activate_stage", stage_data, player, hunter_exam_manager)
+	if not bool(build_result.get("success", false)):
+		push_warning("SYSTEM HUNTER EXAM: stage %d environment activation failed: %s" % [stage_number, str(build_result.get("reason", "unknown"))])
+		return
 	var rival_manager: Node = hunter_exam_stage_runtime.get("rival_competition")
 	if is_instance_valid(rival_manager) and rival_manager.has_signal("rival_event"):
 		var rival_callback := Callable(self, "_on_hunter_rival_event")
 		if not rival_manager.is_connected("rival_event", rival_callback):
 			rival_manager.connect("rival_event", rival_callback)
-	if not bool(build_result.get("success", false)):
-		push_warning("SYSTEM HUNTER EXAM: stage environment activation failed: %s" % str(build_result.get("reason", "unknown")))
-	else:
-		print("SYSTEM HUNTER EXAM: Baghdad heritage stage environment is active.")
+	if is_instance_valid(player):
+		player.velocity = Vector3.ZERO
+		player.global_position = hunter_exam_stage_runtime.to_global(Vector3(0.0, 1.2, 2.0))
+		player.set_meta("system_hunter_exam_active_stage", stage_id)
+	var candidate_number := int(hunter_exam_manager.get_exam_overview().get("candidate_number", 0))
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = "بدأت المرحلة %d/7: %s — رقم المتسابق %d" % [stage_number, str(stage_data.get("title", stage_id)), candidate_number]
+		interaction_prompt_label.show()
+	print("SYSTEM HUNTER EXAM: physical stage %d/7 activated: %s" % [stage_number, stage_id])
 
 
 func _on_hunter_rival_event(message: String) -> void:
