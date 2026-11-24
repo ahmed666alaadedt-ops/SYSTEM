@@ -429,7 +429,7 @@ func _create_hunter_exam_tunnel() -> void:
 	entrance.set_meta("system_facility_type", "hunter_examination_tunnel")
 	entrance.set_meta("system_display_name", "باب حجري قديم")
 	entrance.set_meta("system_interaction_prompt", "افحص الجدار الحجري")
-	entrance.position = Vector3(0.0, -6.0, 88.0)
+	entrance.position = Vector3(0.0, 0.0, 88.0)
 	entrance.collision_layer = 1
 	entrance.collision_mask = 0
 	var entrance_shape := CollisionShape3D.new()
@@ -458,6 +458,9 @@ func _create_hunter_exam_tunnel() -> void:
 		ramp.visible = false
 		tunnel_root.add_child(ramp)
 		_add_static_box_collision(tunnel_root, ramp.name + "_Collision", ramp.position, ramp_mesh.size)
+		var ramp_body := tunnel_root.get_node_or_null(ramp.name + "_Collision") as StaticBody3D
+		if ramp_body != null:
+			ramp_body.rotation.x = ramp.rotation.x
 		var ramp_collision := tunnel_root.get_node_or_null(ramp.name + "_Collision/CollisionShape3D") as CollisionShape3D
 		if ramp_collision != null:
 			ramp_collision.disabled = true
