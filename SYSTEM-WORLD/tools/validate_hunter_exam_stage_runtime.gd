@@ -156,7 +156,7 @@ func _run_validation() -> void:
 		await process_frame
 	if not _check(manager.completed_stage_ids.size() == 7, "All seven examination stages were not recorded."):
 		return
-	if not _check(not bool(manager.get_current_stage()), "Exam should not expose another stage after the seventh completion."):
+	if not _check(manager.get_current_stage().is_empty(), "Exam should not expose another stage after the seventh completion."):
 		return
 
 	print("Hunter examination validation passed: Baghdad plus six additional physical environments, objective-order enforcement and all seven sequential stage completions.")
