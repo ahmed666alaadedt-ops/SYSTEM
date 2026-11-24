@@ -11,7 +11,10 @@
 - [x] Added exact operations and stage-runtime assertions for the 500 visible competitor instances, unique candidate records, serial lookup, and movement-wave initialization.
 - [ ] The 500-person population is a background competitor crowd; five named rivals retain the fully interactive theft/recovery and individual-duel behaviors. Broader individual AI decision-making and direct interaction for every crowd member remain open.
 - [ ] The six non-Baghdad stage environments currently use procedural route blockouts with stage-specific labels/objectives/materials; distinct production-grade city environments, travel transitions, and visual inspection remain open.
-- [ ] Reconcile the approved hidden entrance/riddle requirements with the current tunnel builder, whose source describes restaurant-elevator access and no concealed clues/doors. Preserve the approved access flow rather than silently dropping either requirement.
+- [x] Implemented the concealed entrance inside Shopping Tower restaurant floor 29: the Eye → River → Crown clue sequence resets on wrong order, the disguised stone slab remains locked until formal Hunter Association registration, and the revealed elevator performs a timed physical descent to the underground tunnel.
+- [x] Moved formal candidate registration to the Hunter Association Tower menu, made the guild guide direct registered candidates to the restaurant, and gated exam start on both solved riddle and physical tunnel arrival.
+- [x] Rewrote the tunnel-entry regression to exercise invitation decline/acceptance, tower registration, wrong-order reset, clue sequence, registration gate, stone-door reveal, elevator descent, persistent serial, 500-candidate crowd, and Baghdad stage-one activation.
+- [ ] Exact-head Godot validation and Android export for the new restaurant entrance flow are pending; the previous green full run was on the earlier candidate-crowd commit and does not validate this new flow.
 
 ## Baghdad Towers — approved skyline visual expansion — 24 November 2026
 
