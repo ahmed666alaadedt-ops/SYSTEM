@@ -1684,3 +1684,14 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - Updated BAGHDAD_TOWERS_APPROVED_EXPANSION.md so the approved vertical layout matches the user's direction while preserving the real Republic Bridge/Tigris geographic reference below.
 - Source changes are on feature/baghdad-five-plus-power-tower-20261122 and PR #38 only. No merge to main was performed.
 - Verification status: Godot 4.3 full validation and Android export for this exact architectural change are pending. Do not mark this relocation or the new XSX facade as verified until both workflows complete successfully. Physical Android visual/touch inspection remains outstanding.
+
+
+## Hunter Tower proportion correction and approved exterior reference — 24 November 2026
+
+- User approved reducing the central Hunter Association Tower from 1000 m to 650 m so it is more proportionate to the Baghdad upper-city architecture while remaining the tallest of the five connected district towers. The separate Power Tower remains an independent challenge destination and is not part of the five-tower skyline ranking.
+- Updated HUNTER_TOWER_HEIGHT to 650.0 m; retained 200 floors, the 419.2 m upper-city crown platform base, the Republic Bridge geographic X/Z anchor, and the rooftop helicopter pad attached above the tower.
+- Repositioned the Hunter Tower's three exterior advertising-screen tiers to 150 m, 340 m, and 530 m so none extends beyond the reduced tower height. XSX guild emblems remain on all four exterior sides.
+- Updated tower validation to require a minimum 650 m Hunter Tower and to reject any other connected Baghdad district tower at or above 650 m. Updated the operations test's central tower height wording.
+- Approved exterior concept image saved in the SYSTEM WORLD project Library at /SYSTEM WORLD/References/Baghdad_Towers_Hunter_Association_XSX_Approved_Exterior.jpg. This is a visual reference; it is not yet committed as a binary asset inside the GitHub repository.
+- Latest code commit for the facade-height adjustment: 51b3dc54f7a06b363f5a63b9976e89782bfec216. Latest validator/operations commits: ad83c9c98d200fabb90d5c5905ec9c76d4c6e803 and d0387b702b8047e90908bcb3f33dd357bd525a94.
+- Verification remains pending on this exact final height: rerun Godot 4.3 full validation and Android APK export before marking the reduced-height tower verified. No merge to main.
