@@ -6193,6 +6193,8 @@ func _process_restaurant_staff_service() -> void:
 		if previous_patrol_tween is Tween and (previous_patrol_tween as Tween).is_running():
 			(previous_patrol_tween as Tween).kill()
 		var task_tween := employee.create_tween()
+		var task_token := str(Time.get_ticks_usec()) + "_" + selected_table_id
+		employee.set_meta("system_restaurant_task_token", task_token)
 		employee.set_meta("system_restaurant_service_busy", true)
 		employee.set_meta("system_restaurant_service_tween", task_tween)
 		employee.set_meta("system_staff_patrol_tween", task_tween)
@@ -6212,7 +6214,9 @@ func _process_restaurant_staff_service() -> void:
 		var direction := task_position - employee.position
 		task_tween.tween_property(employee, "rotation:y", atan2(direction.x, direction.z), 0.2)
 		task_tween.tween_property(employee, "position", task_position, maxf(direction.length() / 1.8, 0.5)).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		task_tween.tween_interval(3.0 if role == "restaurant_chef" else 1.2)
+		var service_wait := 3.0 if role == "restaurant_chef" else 1.2
+		task_tween.tween_interval(service_wait)
+		_complete_restaurant_staff_service_fallback(employee, model, selected_table_id, completion_state, home_position, task_token, maxf(direction.length() / 1.8, 0.5) + service_wait + 1.0)
 		task_tween.tween_callback(func():
 			if not is_instance_valid(employee):
 				return
@@ -6244,6 +6248,41 @@ func _process_restaurant_staff_service() -> void:
 				)
 		)
 		break
+
+
+func _complete_restaurant_staff_service_fallback(employee: Node3D, model: Node3D, table_id: String, completion_state: String, home_position: Vector3, task_token: String, delay_seconds: float) -> void:
+	await get_tree().create_timer(maxf(delay_seconds, 1.0)).timeout
+	if not is_instance_valid(employee) or str(employee.get_meta("system_restaurant_task_token", "")) != task_token:
+		return
+	var expected_state := "taking_order" if completion_state == "placed" else ("preparing" if completion_state == "ready" else "delivering")
+	var active_order: Dictionary = restaurant_orders.get(table_id, {})
+	if active_order.is_empty() or str(active_order.get("status", "")) != expected_state:
+		return
+	active_order["status"] = completion_state
+	active_order["updated_at_unix"] = int(Time.get_unix_time_from_system())
+	restaurant_orders[table_id] = active_order
+	if completion_state == "served" and not bool(active_order.get("npc_order", false)):
+		_create_restaurant_served_meal_visual(table_id, active_order)
+		if is_instance_valid(player) and str(player.get_meta("system_restaurant_seated_table_id", "")) == table_id:
+			_set_player_restaurant_activity("eat")
+	_save_restaurant_orders()
+	if panel.visible and current_restaurant_table_id == table_id and is_instance_valid(current_restaurant_table_node):
+		open_restaurant_table(current_restaurant_table_node)
+	var active_tween: Variant = employee.get_meta("system_restaurant_service_tween", null)
+	if active_tween is Tween and (active_tween as Tween).is_running():
+		(active_tween as Tween).kill()
+	if is_instance_valid(model):
+		model.call("set_activity", "walk")
+	var return_tween := employee.create_tween()
+	employee.set_meta("system_staff_patrol_tween", return_tween)
+	return_tween.tween_property(employee, "position", home_position, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	return_tween.tween_callback(func():
+		if is_instance_valid(employee) and str(employee.get_meta("system_restaurant_task_token", "")) == task_token:
+			employee.set_meta("system_restaurant_service_busy", false)
+			employee.remove_meta("system_restaurant_task_token")
+			if is_instance_valid(model):
+				model.call("set_activity", "idle")
+	)
 
 
 func _load_restaurant_orders() -> void:
