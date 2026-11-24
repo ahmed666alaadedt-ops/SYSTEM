@@ -1711,3 +1711,12 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - Rooftop clearance refinement: removed the central Hunter Association crown spire as well as the generic solid crown; replaced it with four diagonal perimeter beacon masts outside the helipad's 22 m landing circle. The validator now rejects either central crown/spire and requires all four perimeter masts.
 
 - Godot runtime validation caught two issues in the first bridge/halo detailing pass: the skyway builder referenced a material local to a different function, and the advertising-tier loop needed an explicit float type. Both were corrected in the source; the next exact-HEAD Godot and Android runs must confirm the correction.
+
+## Exact-HEAD Baghdad upper-city architecture verification — 24 November 2026
+
+- [x] Godot 4.3 canonical runtime validation passed on exact commit `945784c8ac450f494d5282bcd263d132ca0d1d02`: run `45425531315`. All steps passed, including resource import/script parsing, main-scene launch, Baghdad landmark/lobby validation, the new skyway and upper-platform safety-detail assertions, Hunter tunnel riddle and physical entry, all seven Hunter examination stages, complete tower operations/elevator staff/emergency evacuation, terrain streaming, child-character safety, WGS84 anchor integration, and Star Gate/Greed Island checks.
+- [x] Canonical Android APK export passed on the same exact commit: run `45425531332`. Artifact `14935739434` (`SYSTEM-WORLD-canonical-android-debug-apk`), 36,643,795 bytes, expires 8 December 2026.
+- APK SHA-256: `dc87c68560d4fb17f34454663892db787bc3f3b9d5e8af02ad6ca714774fab26`.
+- The final verified source includes 650 m / 200-floor Hunter Tower, clear rooftop helipad with four perimeter beacon masts, XSX identity on all four facades, advertising tiers and illuminated halos at 150/340/530 m, circular platform perimeter guardrails, pedestrian skyway safety rails and guide lighting.
+- Physical Android-device visual/touch/performance inspection remains outstanding. An additional full-project workflow is still running; it is not being represented as passed.
+- PR #38 remains open as a draft and unmerged. No changes were merged into `main`.
