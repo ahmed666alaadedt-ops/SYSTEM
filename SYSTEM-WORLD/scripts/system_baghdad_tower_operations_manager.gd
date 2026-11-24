@@ -2304,6 +2304,8 @@ func open_showcase_product_service(tower_id: String, floor_number: int, facility
 		fallback_button.pressed.connect(_buy_product.bind(product_id, item_name, price, required_rank))
 		content.add_child(fallback_button)
 		product_button = fallback_button
+	# The selected control may have been hidden by a previous display preview; restore it explicitly.
+	product_button.show()
 	for child in content.get_children():
 		if child is Button and not child.is_queued_for_deletion() and child != product_button:
 			var child_name := str(child.name)
