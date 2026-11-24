@@ -756,7 +756,29 @@ func _create_hunter_exam_tunnel() -> void:
 
 	tunnel_root.set_meta("system_hunter_exam_guide_present", false)
 	tunnel_root.set_meta("system_hunter_exam_return_elevator_present", false)
-	print("SYSTEM WORLD: one continuous Hunter Examination tunnel reached by the Hunter Tower guild guide escort; 500 NPC competitors are present.")
+	var candidate_crowd_script := load("res://scripts/system_hunter_candidate_crowd.gd")
+	var candidate_count := 0
+	if candidate_crowd_script != null:
+		var candidate_crowd := candidate_crowd_script.new() as Node3D
+		candidate_crowd.name = "HunterCandidateCrowd"
+		tunnel_root.add_child(candidate_crowd)
+		var crowd_status: Dictionary = candidate_crowd.call("get_crowd_status")
+		candidate_count = int(crowd_status.get("candidate_count", 0))
+		tunnel_root.set_meta("system_hunter_candidate_count", candidate_count)
+		tunnel_root.set_meta("system_hunter_candidate_population_verified", candidate_count == 500)
+		if candidate_count != 500:
+			push_error("SYSTEM HUNTER EXAM: expected 500 individually tracked candidate NPCs; found %d." % candidate_count)
+	else:
+		push_error("SYSTEM HUNTER EXAM: 500-candidate crowd script could not be loaded.")
+	var candidate_board := Label3D.new()
+	candidate_board.name = "HunterCandidateCountBoard"
+	candidate_board.text = "%d CANDIDATES\nالمتسابقون: %d" % [candidate_count, candidate_count]
+	candidate_board.position = Vector3(0.0, 6.1, -11.5)
+	candidate_board.font_size = 24
+	candidate_board.pixel_size = 0.014
+	candidate_board.modulate = Color(0.48, 0.91, 1.0)
+	tunnel_root.add_child(candidate_board)
+	print("SYSTEM WORLD: Hunter Examination tunnel initialized with %d individually tracked candidate NPCs." % candidate_count)
 
 
 func _nearest_land_position(origin: Vector2) -> Vector2:
