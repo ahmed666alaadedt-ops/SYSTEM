@@ -68,8 +68,8 @@ func _run() -> void:
 					_fail("Customer NPC is missing its daily schedule state: " + str(customer_node.name))
 					return
 				scheduled_customer_count += 1
-	if scheduled_customer_count != 20:
-		_fail("Expected 20 customer NPCs with active daily routine states; found %d." % scheduled_customer_count)
+	if scheduled_customer_count != 60:
+		_fail("Expected 60 customer NPCs with active daily routine states; found %d." % scheduled_customer_count)
 		return
 	var routine_tower := operations.get("tower_nodes").get("hunter_association_tower_baghdad") as Node3D
 	var routine_lobby := routine_tower.get_node_or_null("PublicLobby_Blockout") as Node3D if routine_tower != null else null
@@ -125,8 +125,8 @@ func _run() -> void:
 	if int(status.get("staff_count", 0)) != 45:
 		_fail("Expected eight professional NPC staff members in four district towers, nine in Shopping Tower, plus four Power Tower staff; found %d." % int(status.get("staff_count", 0)))
 		return
-	if int(status.get("customer_count", 0)) != 20:
-		_fail("Expected four persistent customer NPCs in each of the five Baghdad district towers; found %d." % int(status.get("customer_count", 0)))
+	if int(status.get("customer_count", 0)) != 60:
+		_fail("Expected twelve persistent customer NPCs in each of the five Baghdad district towers; found %d." % int(status.get("customer_count", 0)))
 		return
 	var region := main.find_child("ModernWorldRegionManager", true, false)
 	if region == null:
@@ -200,8 +200,8 @@ func _run() -> void:
 			elif str(lobby_child.name).begins_with("TowerCustomer_"):
 				visible_customers += 1
 		var expected_staff := int(expected_staff_per_tower[tower_id])
-		if visible_staff != expected_staff or uniformed_staff != expected_staff or visible_customers != 4:
-			_fail("Tower %s requires %d uniformed visible staff and 4 visible customer NPCs; found staff=%d uniformed=%d customers=%d." % [tower_id, expected_staff, visible_staff, uniformed_staff, visible_customers])
+		if visible_staff != expected_staff or uniformed_staff != expected_staff or visible_customers != 12:
+			_fail("Tower %s requires %d uniformed visible staff and 12 visible customer NPCs; found staff=%d uniformed=%d customers=%d." % [tower_id, expected_staff, visible_staff, uniformed_staff, visible_customers])
 			return
 	var hunter_staff_sample: Node3D
 	var hunter_staff_model: Node3D
