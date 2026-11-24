@@ -1,3 +1,13 @@
+## Baghdad Towers — approved skyline visual expansion — 24 November 2026
+
+- [x] Preserved the user's exact approved Baghdad Towers image as the canonical visual reference; do not substitute another city design or alter its identity.
+- [x] Extended the existing upper-city scene with three broad circular floating platform tiers and luminous perimeter rims, inspired by the reference composition.
+- [x] Added sixteen structural support pylons, ten decorative glass skyline towers with illuminated crowns, and a central glass SYSTEM spire with the blue S insignia.
+- [x] Kept these additions as decorative skyline architecture only: they do not add functional towers, alter the five connected Baghdad district towers, or pull the independent Power Tower into the district.
+- [x] Added regression assertions for the three platform tiers, rims, ten glass skyline towers, central S insignia, five-tower district count, and separate Power Tower.
+- [ ] Canonical Godot validation and Android APK export on the exact visual-expansion commit are pending; do not call this visual milestone validated until both workflows pass.
+- [ ] Actual Android visual inspection remains pending; the new architecture is procedural geometry and must be reviewed against the saved reference image before claiming a finished art match.
+
 
 ## Baghdad Hunter Examination Tunnel entrance — 24 November 2026
 
