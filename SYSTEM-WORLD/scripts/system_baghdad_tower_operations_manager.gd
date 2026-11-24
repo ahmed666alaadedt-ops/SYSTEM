@@ -5995,76 +5995,75 @@ func _build_shopping_floor_showcase(root: Node3D, facility_type: String, accent:
 		item.set_meta("system_showcase_item_index", index)
 		showcase.add_child(item)
 		_add_facility_box(item, "DisplayPedestal", Vector3(0.0, 0.55, 0.0), Vector3(3.6, 1.1, 2.8), accent)
-		match facility_type:
-			"shopping_weapon_gallery":
-				var blade := MeshInstance3D.new()
-				blade.name = "WeaponBlade"
-				var blade_mesh := BoxMesh.new()
+		if facility_type == "shopping_weapon_gallery":
+			var blade := MeshInstance3D.new()
+			blade.name = "WeaponBlade"
+			var blade_mesh := BoxMesh.new()
 			blade_mesh.size = Vector3(0.20, 2.5, 0.10)
 			blade.mesh = blade_mesh
 			blade.position = Vector3(0.0, 2.35, 0.0)
 			blade.rotation.z = deg_to_rad(float(index - 1) * 7.0)
 			blade.material_override = highlight
 			item.add_child(blade)
-				_add_facility_box(item, "WeaponGuard", Vector3(0.0, 1.12, 0.0), Vector3(0.95, 0.14, 0.22), accent)
-				_add_facility_box(item, "WeaponGrip", Vector3(0.0, 0.78, 0.0), Vector3(0.16, 0.62, 0.16), highlight)
-				if index == 1:
-					_add_facility_box(item, "AxeHead", Vector3(0.58, 2.7, 0.0), Vector3(0.95, 0.72, 0.18), highlight)
-				elif index == 2:
-					_add_facility_box(item, "SpearShaft", Vector3(0.0, 2.65, 0.0), Vector3(0.12, 3.2, 0.12), accent)
-			"shopping_ranged_gallery":
-				_add_facility_box(item, "RangedStock", Vector3(-0.15, 1.65, 0.0), Vector3(1.8, 0.28, 0.42), accent)
-				_add_facility_box(item, "RangedBarrel", Vector3(0.95, 1.82, 0.0), Vector3(1.55, 0.12, 0.14), highlight)
-				_add_facility_box(item, "RangedGrip", Vector3(0.25, 1.18, 0.0), Vector3(0.28, 0.78, 0.28), accent)
-				if index == 0:
-					var bow := MeshInstance3D.new()
-					bow.name = "BowDisplay"
-					var bow_mesh := TorusMesh.new()
-					bow_mesh.inner_radius = 0.62
-					bow_mesh.outer_radius = 0.72
-					bow.mesh = bow_mesh
-					bow.position = Vector3(0.0, 2.45, 0.0)
-					bow.material_override = highlight
-					item.add_child(bow)
-			"shopping_armor_gallery":
-				var torso := MeshInstance3D.new()
-				torso.name = "ArmorTorsoDisplay"
-				var torso_mesh := CapsuleMesh.new()
-				torso_mesh.radius = 0.62
-				torso_mesh.height = 1.8
-				torso.mesh = torso_mesh
-				torso.position = Vector3(0.0, 2.0, 0.0)
-				torso.material_override = highlight if index == 1 else accent
-				item.add_child(torso)
-				var helmet := MeshInstance3D.new()
-				helmet.name = "ArmorHelmetDisplay"
-				var helmet_mesh := SphereMesh.new()
-				helmet_mesh.radius = 0.48
-				helmet_mesh.height = 0.82
-				helmet.mesh = helmet_mesh
-				helmet.position = Vector3(0.0, 3.2, 0.0)
-				helmet.material_override = accent
-				item.add_child(helmet)
-				_add_facility_box(item, "ArmorShieldDisplay", Vector3(1.15, 1.95, 0.25), Vector3(0.82, 1.35, 0.22), highlight)
-			"shopping_crafting_materials":
-				for material_index in range(3):
-					_add_facility_box(item, "CraftMaterial_%02d" % material_index, Vector3(-0.9 + float(material_index) * 0.9, 1.55 + float(material_index % 2) * 0.35, 0.0), Vector3(0.68, 0.52, 0.68), highlight if material_index == 1 else accent)
-			"shopping_elixir_pharmacy", "shopping_nen_center", "shopping_advanced_elixir_lab", "shopping_rare_elixir_vault":
-				for bottle_index in range(3):
-					var bottle := MeshInstance3D.new()
-					bottle.name = "ElixirBottle_%02d" % bottle_index
-					var bottle_mesh := CylinderMesh.new()
-					bottle_mesh.top_radius = 0.24
-					bottle_mesh.bottom_radius = 0.34
-					bottle_mesh.height = 0.92
-					bottle.mesh = bottle_mesh
-					bottle.position = Vector3(-0.72 + float(bottle_index) * 0.72, 1.75, 0.0)
-					bottle.material_override = highlight if bottle_index == 1 else accent
-					item.add_child(bottle)
-					_add_facility_box(item, "ElixirBottleStopper_%02d" % bottle_index, Vector3(-0.72 + float(bottle_index) * 0.72, 2.28, 0.0), Vector3(0.22, 0.18, 0.22), accent)
-			"shopping_skill_store":
-				_add_facility_box(item, "SkillManualCover", Vector3(0.0, 1.45, 0.0), Vector3(1.25, 1.65, 0.28), highlight)
-				_add_facility_box(item, "SkillManualPages", Vector3(0.0, 1.45, 0.18), Vector3(1.12, 1.48, 0.12), accent)
+			_add_facility_box(item, "WeaponGuard", Vector3(0.0, 1.12, 0.0), Vector3(0.95, 0.14, 0.22), accent)
+			_add_facility_box(item, "WeaponGrip", Vector3(0.0, 0.78, 0.0), Vector3(0.16, 0.62, 0.16), highlight)
+			if index == 1:
+				_add_facility_box(item, "AxeHead", Vector3(0.58, 2.7, 0.0), Vector3(0.95, 0.72, 0.18), highlight)
+			elif index == 2:
+				_add_facility_box(item, "SpearShaft", Vector3(0.0, 2.65, 0.0), Vector3(0.12, 3.2, 0.12), accent)
+		elif facility_type == "shopping_ranged_gallery":
+			_add_facility_box(item, "RangedStock", Vector3(-0.15, 1.65, 0.0), Vector3(1.8, 0.28, 0.42), accent)
+			_add_facility_box(item, "RangedBarrel", Vector3(0.95, 1.82, 0.0), Vector3(1.55, 0.12, 0.14), highlight)
+			_add_facility_box(item, "RangedGrip", Vector3(0.25, 1.18, 0.0), Vector3(0.28, 0.78, 0.28), accent)
+			if index == 0:
+				var bow := MeshInstance3D.new()
+				bow.name = "BowDisplay"
+				var bow_mesh := TorusMesh.new()
+				bow_mesh.inner_radius = 0.62
+				bow_mesh.outer_radius = 0.72
+				bow.mesh = bow_mesh
+				bow.position = Vector3(0.0, 2.45, 0.0)
+				bow.material_override = highlight
+				item.add_child(bow)
+		elif facility_type == "shopping_armor_gallery":
+			var torso := MeshInstance3D.new()
+			torso.name = "ArmorTorsoDisplay"
+			var torso_mesh := CapsuleMesh.new()
+			torso_mesh.radius = 0.62
+			torso_mesh.height = 1.8
+			torso.mesh = torso_mesh
+			torso.position = Vector3(0.0, 2.0, 0.0)
+			torso.material_override = highlight if index == 1 else accent
+			item.add_child(torso)
+			var helmet := MeshInstance3D.new()
+			helmet.name = "ArmorHelmetDisplay"
+			var helmet_mesh := SphereMesh.new()
+			helmet_mesh.radius = 0.48
+			helmet_mesh.height = 0.82
+			helmet.mesh = helmet_mesh
+			helmet.position = Vector3(0.0, 3.2, 0.0)
+			helmet.material_override = accent
+			item.add_child(helmet)
+			_add_facility_box(item, "ArmorShieldDisplay", Vector3(1.15, 1.95, 0.25), Vector3(0.82, 1.35, 0.22), highlight)
+		elif facility_type == "shopping_crafting_materials":
+			for material_index in range(3):
+				_add_facility_box(item, "CraftMaterial_%02d" % material_index, Vector3(-0.9 + float(material_index) * 0.9, 1.55 + float(material_index % 2) * 0.35, 0.0), Vector3(0.68, 0.52, 0.68), highlight if material_index == 1 else accent)
+		elif facility_type in ["shopping_elixir_pharmacy", "shopping_nen_center", "shopping_advanced_elixir_lab", "shopping_rare_elixir_vault"]:
+			for bottle_index in range(3):
+				var bottle := MeshInstance3D.new()
+				bottle.name = "ElixirBottle_%02d" % bottle_index
+				var bottle_mesh := CylinderMesh.new()
+				bottle_mesh.top_radius = 0.24
+				bottle_mesh.bottom_radius = 0.34
+				bottle_mesh.height = 0.92
+				bottle.mesh = bottle_mesh
+				bottle.position = Vector3(-0.72 + float(bottle_index) * 0.72, 1.75, 0.0)
+				bottle.material_override = highlight if bottle_index == 1 else accent
+				item.add_child(bottle)
+				_add_facility_box(item, "ElixirBottleStopper_%02d" % bottle_index, Vector3(-0.72 + float(bottle_index) * 0.72, 2.28, 0.0), Vector3(0.22, 0.18, 0.22), accent)
+		elif facility_type == "shopping_skill_store":
+			_add_facility_box(item, "SkillManualCover", Vector3(0.0, 1.45, 0.0), Vector3(1.25, 1.65, 0.28), highlight)
+			_add_facility_box(item, "SkillManualPages", Vector3(0.0, 1.45, 0.18), Vector3(1.12, 1.48, 0.12), accent)
 		var item_sign := Label3D.new()
 		item_sign.name = "ShowcaseItemLabel"
 		item_sign.text = ["عرض A", "عرض B", "عرض C"][index]
