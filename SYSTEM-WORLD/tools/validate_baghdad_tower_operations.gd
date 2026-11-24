@@ -400,8 +400,18 @@ func _run() -> void:
 	if int(upper_city.get_meta("system_reference_glass_tower_count", 0)) != 10:
 		_fail("Approved Baghdad skyline must retain its ten decorative glass skyline towers.")
 		return
-	if str(upper_city.get_meta("system_central_spire_insignia", "")) != "S" or upper_city.get_node_or_null("BaghdadSYSTEMCentralSpire/CentralGlassSpire") == null or upper_city.get_node_or_null("BaghdadSYSTEMCentralSpire/CentralSYSTEM_S_Insignia") == null:
-		_fail("Approved Baghdad skyline is missing the central glass SYSTEM spire or illuminated S insignia.")
+	var central_hunter := tower_manager.get_node_or_null("HunterAssociationTower") as Node3D
+	if str(upper_city.get_meta("system_central_landmark_tower_id", "")) != "hunter_association_tower_baghdad" or str(upper_city.get_meta("system_central_landmark_insignia", "")) != "XSX":
+		_fail("Approved Baghdad skyline must use the functional Hunter Association Tower and XSX as its central landmark identity.")
+		return
+	if central_hunter == null or absf(central_hunter.position.y - 419.2) > 0.1 or str(central_hunter.get_meta("system_hunter_guild_insignia", "")) != "XSX":
+		_fail("The 1000 m Hunter Association Tower must stand above the upper-city crown platform with its XSX guild emblem.")
+		return
+	if central_hunter.get_node_or_null("HunterXSXEmblemPlaque_00/XSXEmblemText") == null or central_hunter.get_node_or_null("HunterXSXEmblemPlaque_00/XSXEmblemText").text != "XSX":
+		_fail("The central Hunter Association Tower is missing its physical XSX emblem plaque.")
+		return
+	if upper_city.get_node_or_null("BaghdadSYSTEMCentralSpire") != null:
+		_fail("The former decorative S-spire must be removed; the functional Hunter Tower is the central landmark.")
 		return
 	for platform_name in ["ReferenceSkyPlatform_Lower", "ReferenceSkyPlatform_Middle", "ReferenceSkyPlatform_Upper"]:
 		if upper_city.get_node_or_null(platform_name) == null or upper_city.get_node_or_null(platform_name + "_LuminousRim") == null:
