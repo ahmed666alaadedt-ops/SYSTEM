@@ -93,7 +93,10 @@ func configure(profile: Dictionary, palette_index: int = 0) -> void:
 	_build_fallback(appearance_profile, palette_index)
 
 func _load_imported_model(path: String) -> bool:
-	if not ResourceLoader.exists(path):
+	# GLB files may be present on disk before Godot has registered their imported
+	# resource metadata in a headless/runtime-only launch. Check the source file
+	# directly, then let load() resolve the imported PackedScene.
+	if not FileAccess.file_exists(path):
 		return false
 	var packed := load(path) as PackedScene
 	if packed == null:
