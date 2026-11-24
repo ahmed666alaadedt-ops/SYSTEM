@@ -61,10 +61,10 @@ func _run_validation() -> void:
 		return
 	if not _check(bool(door.get_meta("system_hidden_restaurant_entry", false)), "Concealed entrance is not tagged as the restaurant entry."):
 		return
-	if not _check(door.global_position.y < restaurant_floor.global_position.y and door.global_position.distance_to(restaurant_floor.global_position) < 30.0, "Hidden door is not physically positioned immediately beneath the restaurant floor."):
+	var hidden_door := tunnel.get_node_or_null("ConcealedHunterDoorSlab") as Node3D
+	if not _check(hidden_door != null and hidden_door.global_position.y < restaurant_floor.global_position.y, "Physical concealed door slab is not positioned below the restaurant floor."):
 		return
-	var entrance_position := door.global_position
-	if not _check(entrance_position.y < restaurant_floor.global_position.y, "Restaurant entrance door should remain concealed below the floor before the riddle is solved."):
+	if not _check(door.global_position.y < restaurant_floor.global_position.y and door.global_position.distance_to(restaurant_floor.global_position) < 30.0, "Restaurant interaction area is not physically positioned at the concealed floor entry."):
 		return
 	if not _check(clue_1 != null and clue_2 != null and clue_3 != null, "All three riverbank clues must remain attached after the tunnel is anchored to the restaurant."):
 		return
