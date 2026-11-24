@@ -540,7 +540,7 @@ func _create_hunter_exam_tunnel() -> void:
 	sign.modulate = Color(0.42, 0.9, 1.0)
 	tunnel_root.add_child(sign)
 
-	tunnel_root.set_meta("system_hunter_exam_guide_present", true)
+	tunnel_root.set_meta("system_hunter_exam_guide_present", false)
 	tunnel_root.set_meta("system_hunter_exam_return_elevator_present", false)
 	print("SYSTEM WORLD: one continuous Hunter Examination tunnel reached by the Hunter Tower guild guide escort.")
 
