@@ -70,11 +70,19 @@ func _run_validation() -> void:
 	if tigris == null or str(tigris.get_meta("system_geography_source", "")) != "OpenStreetMap way 24709603":
 		_fail("Tigris River surface is missing its verified OSM geometry source.")
 		return
-	for corridor_fraction in [0.4, 0.5, 0.65]:
-		var corridor_x := bridge_anchor.x * float(corridor_fraction)
-		var corridor_z := bridge_anchor.z * float(corridor_fraction)
+	# Sample the entire playable approach corridor, not just three isolated
+	# points. The surveyed bridge is several kilometres from the Baghdad origin,
+	# so a short island/corridor regression could otherwise pass while leaving
+	# a gap that strands the player before reaching the bridge district.
+	for sample_index in range(1, 19):
+		var corridor_fraction := float(sample_index) * 0.05
+		var corridor_x := bridge_anchor.x * corridor_fraction
+		var corridor_z := bridge_anchor.z * corridor_fraction
 		if not bool(terrain.call("is_land_position", corridor_x, corridor_z)):
-			_fail("Baghdad bridge approach corridor is not playable land between the continent and Republic Bridge.")
+			_fail(
+				"Baghdad bridge approach corridor has a non-playable gap at %.0f%% of the route."
+				% (corridor_fraction * 100.0)
+			)
 			return
 
 	var records: Array = tower_manager.call("get_tower_positions")
