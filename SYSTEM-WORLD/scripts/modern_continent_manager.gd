@@ -75,6 +75,7 @@ func _ready() -> void:
 	_build_rivers_and_lakes()
 	_build_baghdad_tigris_surface()
 	_build_baghdad_republic_bridge()
+	_build_baghdad_bridge_access_causeway()
 	print("SYSTEM WORLD: modern continent terrain generated.")
 
 
@@ -193,28 +194,30 @@ func _get_height(x: float, z: float) -> float:
 			var bridge_land_height := 18.0 + sin(x * 0.012) * 1.2 + cos(z * 0.014) * 0.9
 			return lerpf(SEA_LEVEL - 1.2, bridge_land_height, bridge_coast_ease) - _baghdad_tigris_channel_depth(x, z)
 		var corridor_distance := _distance_to_segment(Vector2(x, z), Vector2.ZERO, baghdad_bridge_center)
-		if _continent_radius(x, z) > 1.0 and corridor_distance <= BAGHDAD_URBAN_CORRIDOR_HALF_WIDTH:
+		var corridor_height := 13.0 + sin(x * 0.009) * 1.0 + cos(z * 0.011) * 0.8
+		var radius := _continent_radius(x, z)
+		if radius <= 1.0:
+			var coast_factor := clampf((1.0 - radius) / 0.10, 0.0, 1.0)
+			var coast_ease := coast_factor * coast_factor * (3.0 - 2.0 * coast_factor)
+			var interior_height := _land_base_height(x, z)
+			var natural_height := lerpf(SEA_LEVEL - 1.2, interior_height, coast_ease)
+			# The surveyed bridge lies several kilometres from the playable
+			# Baghdad origin. A narrow, explicitly generated access causeway
+			# keeps low terrain inside the continent from breaking the route.
+			# It is separate from OSM data and never claims to be a mapped road.
+			if bridge_radius > 1.0 and corridor_distance <= 18.0:
+				var access_blend := clampf((18.0 - corridor_distance) / 6.0, 0.0, 1.0)
+				var access_ease := access_blend * access_blend * (3.0 - 2.0 * access_blend)
+				return lerpf(natural_height, maxf(natural_height, corridor_height), access_ease)
+			return natural_height
+
+	if corridor_distance <= BAGHDAD_URBAN_CORRIDOR_HALF_WIDTH:
 			var corridor_blend := clampf((BAGHDAD_URBAN_CORRIDOR_HALF_WIDTH - corridor_distance) / 110.0, 0.0, 1.0)
 			var corridor_ease := corridor_blend * corridor_blend * (3.0 - 2.0 * corridor_blend)
-			# Keep the verified Baghdad-to-bridge access corridor connected across
-			# the coastline. A broad 0.18 radial blend left a submerged gap at
-			# the city edge even when the corridor itself was directly beneath it.
-			# The short 0.01 blend preserves a soft shoreline transition without
-			# leaving a non-walkable band across the surveyed approach.
-			var city_edge_blend := clampf((_continent_radius(x, z) - 1.0) / 0.01, 0.0, 1.0)
-			var city_edge_ease := city_edge_blend * city_edge_blend * (3.0 - 2.0 * city_edge_blend)
 			var bridge_edge_blend := clampf((bridge_radius - 1.0) / 0.12, 0.0, 1.0)
 			var bridge_edge_ease := bridge_edge_blend * bridge_edge_blend * (3.0 - 2.0 * bridge_edge_blend)
-			var corridor_height := 13.0 + sin(x * 0.009) * 1.0 + cos(z * 0.011) * 0.8
-			var corridor_elevation_blend := corridor_ease * city_edge_ease * bridge_edge_ease
+			var corridor_elevation_blend := corridor_ease * bridge_edge_ease
 			return lerpf(SEA_LEVEL - 1.2, corridor_height, corridor_elevation_blend)
-
-	var radius := _continent_radius(x, z)
-	if radius <= 1.0:
-		var coast_factor := clampf((1.0 - radius) / 0.10, 0.0, 1.0)
-		var coast_ease := coast_factor * coast_factor * (3.0 - 2.0 * coast_factor)
-		var interior_height := _land_base_height(x, z)
-		return lerpf(SEA_LEVEL - 1.2, interior_height, coast_ease)
 
 	for island in ISLAND_DATA:
 		var island_radius_value := _island_radius(
@@ -840,6 +843,60 @@ func _build_baghdad_republic_bridge() -> void:
 	bridge.set_meta("system_bridge_secondary_centerline_points", baghdad_bridge_secondary_centerline.size())
 	bridge.set_meta("system_bridge_polygon_points", baghdad_bridge_outline.size())
 	print("SYSTEM Baghdad geography: Republic Bridge polygon deck, collision and guardrails generated from verified OSM way 1077808833.")
+
+
+func _build_baghdad_bridge_access_causeway() -> void:
+	if not baghdad_bridge_reference_loaded:
+		return
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(0.12, 0.14, 0.16)
+	material.roughness = 0.92
+	material.metallic = 0.12
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	surface.set_material(material)
+	var start := Vector2.ZERO
+	var finish := baghdad_bridge_center
+	var half_width := 7.0
+	var segments := 96
+	for index in range(segments):
+		var t0 := float(index) / float(segments)
+		var t1 := float(index + 1) / float(segments)
+		var a := start.lerp(finish, t0)
+		var b := start.lerp(finish, t1)
+		var direction := (b - a).normalized()
+		var side := Vector2(-direction.y, direction.x) * half_width
+		var a_left := a + side
+		var a_right := a - side
+		var b_left := b + side
+		var b_right := b - side
+		_add_surface_quad(
+			surface,
+			Vector3(a_left.x, get_terrain_height(a_left.x, a_left.y) + 0.32, a_left.y),
+			Vector3(a_right.x, get_terrain_height(a_right.x, a_right.y) + 0.32, a_right.y),
+			Vector3(b_left.x, get_terrain_height(b_left.x, b_left.y) + 0.32, b_left.y),
+			Vector3(b_right.x, get_terrain_height(b_right.x, b_right.y) + 0.32, b_right.y)
+		)
+	surface.generate_normals()
+	var road := MeshInstance3D.new()
+	road.name = "BaghdadBridgeAccessCauseway"
+	road.mesh = surface.commit()
+	road.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	road.set_meta("system_generated_access_route", true)
+	road.set_meta("system_geography_source", "SYSTEM procedural playable connector; not OpenStreetMap road geometry")
+	road.set_meta("system_route_start", Vector3.ZERO)
+	road.set_meta("system_route_end", Vector3(baghdad_bridge_center.x, 0.0, baghdad_bridge_center.y))
+	add_child(road)
+	var body := StaticBody3D.new()
+	body.name = "BaghdadBridgeAccessCausewayCollision"
+	var collision := CollisionShape3D.new()
+	var shape := ConcavePolygonShape3D.new()
+	shape.set_faces(road.mesh.get_faces())
+	collision.shape = shape
+	body.add_child(collision)
+	road.add_child(body)
+	print("SYSTEM Baghdad geography: playable generated access causeway connects the Baghdad origin to the surveyed Republic Bridge anchor; it is not OSM road data.")
 
 
 func _build_rivers_and_lakes() -> void:
