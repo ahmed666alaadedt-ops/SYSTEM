@@ -241,6 +241,52 @@ func _run_validation() -> void:
 			_fail("Floor zoning metadata is missing for " + tower_id)
 			return
 
+	# Verify the actual procedural architecture on every tower, not only its lobby metadata.
+	const IDENTITY_NODES_BY_TOWER := {
+		"hunter_association_tower_baghdad": ["HunterXSXEmblemPlaque_00", "HunterXSXEmblemPlaque_01", "HunterXSXEmblemPlaque_02", "HunterXSXEmblemPlaque_03"],
+		"business_investment_tower_baghdad": ["BusinessCapitalSpire", "BusinessCapitalRing_00", "BusinessCapitalRing_01", "BusinessCapitalRing_02", "BusinessInvestmentSign"],
+		"shopping_tower_baghdad": ["RetailGalleryRing_0", "RetailGalleryRing_1", "RetailGalleryRing_2", "ShoppingAtriumSign", "ShoppingTowerWeaponBlade_left", "ShoppingTowerWeaponBlade_right", "ShoppingTowerElixirBeacon"],
+		"antiques_heritage_tower_baghdad": ["HeritageMuseumPodium", "HeritageMuseumEntranceCanopy", "HeritageGalleryWing_left", "HeritageGalleryWing_right", "HeritageGalleryColumn_left", "HeritageGalleryColumn_right", "HeritageArchiveCrown"],
+		"technology_tower_baghdad": ["InnovationAntenna_00", "InnovationAntenna_01", "InnovationAntenna_02", "InnovationLabSkyRibbon"],
+		"power_tower_baghdad": ["TournamentBlade_left", "TournamentBlade_right", "PowerTowerChampionCrown"]
+	}
+	for tower_id in EXPECTED_TOWER_IDS:
+		var architecture_tower := tower_manager.get_node_or_null(str(TOWER_NODE_NAMES[tower_id])) as Node3D
+		if architecture_tower == null:
+			_fail("Architecture audit could not resolve tower: " + tower_id)
+			return
+		if architecture_tower.get_node_or_null("MonumentalFoundation") == null or architecture_tower.get_node_or_null("TowerMainShaft") == null or architecture_tower.get_node_or_null("IlluminatedIdentityRing") == null:
+			_fail("A tower is missing its foundation, main shaft or illuminated identity ring: " + tower_id)
+			return
+		var structure := architecture_tower.get_node_or_null("TowerStructureCollision") as StaticBody3D
+		if structure == null:
+			_fail("A tower is missing its physical structural collision body: " + tower_id)
+			return
+		var structural_collision_count := 0
+		for structural_child in structure.get_children():
+			if structural_child is CollisionShape3D and structural_child.shape != null:
+				structural_collision_count += 1
+		if structural_collision_count < 2:
+			_fail("A tower must have both foundation and shaft collision volumes: " + tower_id)
+			return
+		for podium_index in range(3):
+			if architecture_tower.get_node_or_null("PodiumTerrace_%d" % podium_index) == null:
+				_fail("A tower is missing a podium terrace: " + tower_id)
+				return
+		for fin_index in range(4):
+			if architecture_tower.get_node_or_null("FacadeFin_%d" % fin_index) == null:
+				_fail("A tower is missing one of its four vertical facade fins: " + tower_id)
+				return
+		var glazing := architecture_tower.get_node_or_null("FacadeGlazingPanels") as MultiMeshInstance3D
+		var tower_floors := int(architecture_tower.get_meta("tower_floor_count", 0))
+		if glazing == null or glazing.multimesh == null or glazing.multimesh.instance_count != tower_floors * 20 or int(architecture_tower.get_meta("system_facade_window_count", 0)) != tower_floors * 20:
+			_fail("A tower's procedural glass facade does not cover all 20 facade segments on every floor: " + tower_id)
+			return
+		for identity_node_name in IDENTITY_NODES_BY_TOWER[tower_id]:
+			if architecture_tower.get_node_or_null(str(identity_node_name)) == null:
+				_fail("A tower is missing its approved architectural identity feature %s: %s" % [str(identity_node_name), tower_id])
+				return
+
 	var hunter_tower := tower_manager.get_node_or_null("HunterAssociationTower") as Node3D
 	var hunter_pad := hunter_tower.get_node_or_null("HunterAssociationHelipad") as Node3D if hunter_tower != null else null
 	if hunter_pad == null or str(hunter_pad.get_meta("system_landing_zone_status", "")) != "operational_controller_attached" or hunter_pad.get_node_or_null("HunterAssociationHelicopter") == null:
