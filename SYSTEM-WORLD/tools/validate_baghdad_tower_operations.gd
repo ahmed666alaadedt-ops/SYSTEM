@@ -510,7 +510,7 @@ func _run() -> void:
 		return
 	operations.get("panel").hide()
 	var museum_config: Dictionary = operations.get("TOWER_CONFIG").get("antiques_heritage_tower_baghdad", {})
-	if str(museum_config.get("node", "")) != "AntiquesHeritageTower" or int(museum_config.get("floors", 0)) != 34 or museum_config.get("jobs", []).size() != 8:
+	if str(museum_config.get("node", "")) != "AntiquesHeritageTower" or int(museum_config.get("floors", 0)) != 34 or museum_config.get("jobs", []).size() != 9 or not museum_config.get("jobs", []).has("museum_guest_services") or not museum_config.get("jobs", []).has("advertising_manager"):
 		_fail("Antiques and Heritage Tower staffing/configuration is incomplete.")
 		return
 	var business_floor := operations.call("_ensure_floor_room", "business_investment_tower_baghdad", 8) as Node3D
