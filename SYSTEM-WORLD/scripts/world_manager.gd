@@ -17,6 +17,7 @@ const ModernWorldCavePassageManagerScript = preload("res://scripts/modern_world_
 const ModernWorldRegionManagerScript = preload("res://scripts/modern_world_region_manager.gd")
 const UndergroundHeritageManagerScript = preload("res://scripts/underground_heritage_manager.gd")
 const ModernWorldMonsterGateManagerScript = preload("res://scripts/modern_world_monster_gate_manager.gd")
+const HunterMarshlandEnvironmentScript = preload("res://scripts/system_hunter_marshland_environment.gd")
 const BaghdadOSMCellStreamerScript = preload("res://scripts/baghdad_osm_cell_streamer.gd")
 
 signal world_changed(world_id: int)
@@ -273,6 +274,10 @@ func _create_modern_city() -> void:
 	_create_waterways(root)
 	_create_marine_environment(root)
 	_create_modern_discovery_manager(root)
+
+	var hunter_marshland := HunterMarshlandEnvironmentScript.new()
+	hunter_marshland.name = "HunterMarshlandEnvironment"
+	root.add_child(hunter_marshland)
 
 
 # --------------------------------------------------
