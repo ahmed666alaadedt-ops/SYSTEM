@@ -179,10 +179,11 @@ func dispatch_lifeguard_to(target: Node3D) -> bool:
 	return true
 
 
-func release_locker(locker_id: String, owner_instance_id: int) -> bool:
-	if locker_id.is_empty():
+func release_locker(suite_name: String, locker_id: String, owner_instance_id: int) -> bool:
+	if suite_name.is_empty() or locker_id.is_empty():
 		return false
-	var locker := find_child(locker_id, true, false) as MeshInstance3D
+	var suite := get_node_or_null(suite_name) as Node3D
+	var locker := suite.get_node_or_null(locker_id) as MeshInstance3D if suite != null else null
 	if locker == null or int(locker.get_meta("system_pool_locker_owner", -1)) != owner_instance_id:
 		return false
 	locker.set_meta("system_pool_locker_occupied", false)
