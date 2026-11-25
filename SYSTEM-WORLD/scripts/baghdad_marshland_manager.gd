@@ -1294,6 +1294,7 @@ func _attach_guide_tracking_arrow(candidate: Node3D) -> void:
 	arrow.set_meta("system_visible_through_marsh_fog", true)
 	arrow.position = Vector3(0.0, 3.4, 0.0)
 	var arrow_material := _make_material(Color(0.12, 0.92, 1.0), 0.24, 0.25, true)
+	arrow_material.no_depth_test = true
 	arrow_material.emission_enabled = true
 	arrow_material.emission = Color(0.05, 0.72, 1.0)
 	arrow_material.emission_energy_multiplier = 2.4
@@ -1318,6 +1319,7 @@ func _attach_guide_tracking_arrow(candidate: Node3D) -> void:
 	label.text = "اتبع المرشد الحقيقي"
 	label.font_size = 19
 	label.pixel_size = 0.012
+	label.no_depth_test = true
 	label.position = Vector3(0.0, 0.62, 0.0)
 	label.modulate = Color(0.35, 0.94, 1.0)
 	arrow.add_child(label)
