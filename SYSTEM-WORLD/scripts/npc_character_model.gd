@@ -477,7 +477,12 @@ func _sanitize_empty_mesh_instances(root: Node) -> void:
 				var mesh_rid: RID = mesh_node.mesh.get_rid()
 				replace_mesh = not mesh_rid.is_valid()
 			if replace_mesh:
-				mesh_node.mesh = ArrayMesh.new()
+				# An empty ArrayMesh has no rendering surfaces/RID in Godot 4.3's
+				# dummy backend. Use a real one-surface placeholder, kept invisible,
+				# so the renderer never receives a null mesh handle during NPC setup.
+				var safe_placeholder := BoxMesh.new()
+				safe_placeholder.size = Vector3(0.001, 0.001, 0.001)
+				mesh_node.mesh = safe_placeholder
 				mesh_node.visible = false
 				mesh_node.set_meta("system_empty_mesh_sanitized", true)
 				print("SYSTEM NPC: sanitized empty or invalid mesh handle: ", str(mesh_node.get_path()))
