@@ -46,9 +46,9 @@ func _run_validation() -> void:
 		if not _check(water_area.monitoring and water_area.body_entered.get_connections().size() > 0 and water_area.body_exited.get_connections().size() > 0, "A marsh water volume is missing swimming enter/exit signals."):
 			return
 	var reeds := zone.get_node_or_null("MarshReedFields") as MultiMeshInstance3D
-	if not _check(reeds != null and reeds.multimesh != null and reeds.multimesh.instance_count == 520, "The 520-instance marsh reed field is missing."):
+	if not _check(reeds != null and reeds.multimesh != null and reeds.multimesh.instance_count == 1800, "The 520-instance marsh reed field is missing."):
 		return
-	if not _check(zone.find_children("MarshWillow_*", "Node3D", true, false).size() == 34, "Expected 34 marsh willow trees."):
+	if not _check(zone.find_children("MarshWillow_*", "Node3D", true, false).size() == 56, "Expected 56 marsh willow trees."):
 		return
 	if not _check(zone.find_children("MarshBoardwalk_*", "MeshInstance3D", true, false).size() == 7, "Expected seven raised boardwalk segments."):
 		return
@@ -64,5 +64,5 @@ func _run_validation() -> void:
 	if not _check(not bool(test_player.get_meta("system_swimming", false)), "Leaving the final marsh water volume did not clear swimming state."):
 		return
 
-	print("Baghdad Marshland validation passed: Al-Zawraa WGS84 replacement, continuous Hunter tunnel connection, eight swim-enabled water bodies, 520 reeds, 34 willow trees, seven boardwalks and swimming state lifecycle.")
+	print("Baghdad Marshland validation passed: Al-Zawraa WGS84 replacement, continuous Hunter tunnel connection, eight swim-enabled water bodies, 1800 reeds, 56 willow trees, seven boardwalks and swimming state lifecycle.")
 	quit(0)
