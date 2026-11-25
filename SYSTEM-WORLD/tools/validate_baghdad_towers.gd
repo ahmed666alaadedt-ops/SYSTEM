@@ -337,6 +337,44 @@ func _run_validation() -> void:
 	if not bool(helicopter_status.get("available", false)) or str(helicopter_status.get("owner_tower_id", "")) != "hunter_association_tower_baghdad" or not is_equal_approx(float(helicopter_status.get("landing_radius_m", 0.0)), 18.0):
 		_fail("Hunter helicopter controller does not report the expected owner, availability and 18 m landing radius.")
 		return
+	var helicopter_test_player := main_scene.find_child("Player", true, false) as CharacterBody3D
+	if helicopter_test_player == null:
+		_fail("A canonical player is required to validate helicopter pilot authorization and takeoff.")
+		return
+	var had_original_hunter_rank := helicopter_test_player.has_meta("system_hunter_rank")
+	var original_hunter_rank: Variant = helicopter_test_player.get_meta("system_hunter_rank", "")
+	var original_player_position := helicopter_test_player.global_position
+	var original_aircraft_position := hunter_pad.get_node("HunterAssociationHelicopter").global_position
+	helicopter_test_player.set_meta("system_hunter_rank", "S")
+	if not bool(hunter_pad.call("_can_pilot")):
+		_fail("An S-rank Hunter was incorrectly denied helicopter pilot authorization.")
+		return
+	helicopter_test_player.set_meta("system_hunter_rank", "A")
+	if bool(hunter_pad.call("_can_pilot")):
+		_fail("An A-rank Hunter was incorrectly granted helicopter pilot authorization.")
+		return
+	helicopter_test_player.set_meta("system_hunter_rank", "S")
+	hunter_pad.call("_enter_aircraft")
+	hunter_pad.set("vertical_input", 1.0)
+	hunter_pad.call("_update_flight", 0.25)
+	var takeoff_position: Vector3 = hunter_pad.get_node("HunterAssociationHelicopter").global_position
+	if not bool(hunter_pad.get("pilot_active")) or takeoff_position.y <= original_aircraft_position.y + 0.1:
+		_fail("Authorized helicopter pilot could not lift the aircraft clear of its own landing deck.")
+		return
+	# Restore the parked aircraft and player after the takeoff regression.
+	hunter_pad.get_node("HunterAssociationHelicopter").global_position = original_aircraft_position
+	hunter_pad.set("heli_position", original_aircraft_position)
+	hunter_pad.set("landed", true)
+	hunter_pad.call("_exit_aircraft")
+	helicopter_test_player.global_position = original_player_position
+	if had_original_hunter_rank:
+		helicopter_test_player.set_meta("system_hunter_rank", original_hunter_rank)
+	else:
+		helicopter_test_player.remove_meta("system_hunter_rank")
+	if not helicopter_test_player.visible or bool(helicopter_test_player.get("system_helicopter_piloting")):
+		_fail("Exiting the parked helicopter did not restore the player visibility and piloting state.")
+		return
+
 	var parked_aircraft := hunter_pad.get_node_or_null("HunterAssociationHelicopter") as Node3D
 	if parked_aircraft.get_node_or_null("HelicopterFuselage") == null or parked_aircraft.get_node_or_null("MainRotor") == null or parked_aircraft.get_node_or_null("TailRotor") == null:
 		_fail("Hunter rooftop helicopter is missing its fuselage or rotor assemblies.")
