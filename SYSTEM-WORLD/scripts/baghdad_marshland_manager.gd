@@ -21,7 +21,25 @@ const SEASONAL_GATE_DESTINATIONS := {
 var terrain: Node
 var marsh_center := Vector3.ZERO
 var tunnel_connector_length := 0.0
-var marsh_entry_local := Vector3(-900.0, 0.0, -15.0)
+var marsh_entry_local := Vector3(-420.0, 0.0, -15.0)
+var hidden_gates_unlocked := false
+
+
+func _process(_delta: float) -> void:
+	if hidden_gates_unlocked:
+		return
+	var exam_manager := get_tree().root.find_child("SYSTEMHunterExamManager", true, false)
+	if exam_manager == null or not bool(exam_manager.get("registered")):
+		return
+	var completed_exam_segments: Array = exam_manager.get("completed_stage_ids")
+	if not completed_exam_segments.has("baghdad_tunnel_competition"):
+		return
+	for gate in find_children("SeasonalMarshStarGate_*", "Node3D", true, false):
+		gate.visible = true
+		gate.set_meta("system_hidden_until_final_exam_discovery", false)
+	hidden_gates_unlocked = true
+	set_meta("system_hidden_heritage_site_discovered", true)
+	print("SYSTEM Hunter Exam: hidden marsh sanctuary and seasonal Star Gates discovered.")
 
 
 func setup(terrain_node: Node, hunter_tunnel: Node3D) -> void:
