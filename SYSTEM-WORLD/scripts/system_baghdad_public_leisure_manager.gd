@@ -12,6 +12,8 @@ func _ready() -> void:
 	_build_public_leisure_district()
 	set_meta("system_public_leisure_runtime_ready", true)
 	set_meta("system_public_leisure_is_tower", false)
+	set_meta("system_tower_id", "public_leisure_district")
+	set_meta("system_tower_floor_number", 1)
 	set_meta("system_public_leisure_water_volume_count", water_volume_count)
 	set_meta("system_public_leisure_locker_count", locker_count)
 
