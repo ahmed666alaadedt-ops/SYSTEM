@@ -236,6 +236,46 @@ func _run() -> void:
 		if glazing_box == null or glazing_box.size.distance_to(Vector3(4.4, 1.45, 0.2)) > 0.01:
 			_fail("Tower facade glazing panel dimensions are incorrect: " + tower_id)
 			return
+
+		var expected_heights := {
+			"hunter_association_tower_baghdad": 650.0,
+			"business_investment_tower_baghdad": 220.0,
+			"shopping_tower_baghdad": 190.0,
+			"antiques_heritage_tower_baghdad": 205.0,
+			"technology_tower_baghdad": 245.0,
+			"power_tower_baghdad": 820.0
+		}
+		if int(facade_tower.get_meta("tower_floor_count", 0)) != int(expected_facade_floors[tower_id]) or absf(float(facade_tower.get_meta("tower_height_m", 0.0)) - float(expected_heights[tower_id])) > 0.01:
+			_fail("Tower architectural height/floor metadata does not match the approved design: " + tower_id)
+			return
+		if bool(facade_tower.get_meta("tower_is_connected_district_member", true)) != (tower_id != "power_tower_baghdad"):
+			_fail("Power Tower separation or five-tower district membership is incorrect: " + tower_id)
+			return
+		for podium_index in range(3):
+			if facade_tower.get_node_or_null("PodiumTerrace_%d" % podium_index) == null:
+				_fail("Tower is missing a stepped podium terrace: " + tower_id)
+				return
+		for fin_index in range(4):
+			if facade_tower.get_node_or_null("FacadeFin_%d" % fin_index) == null:
+				_fail("Tower is missing a vertical architectural facade fin: " + tower_id)
+				return
+		if facade_tower.get_node_or_null("IlluminatedIdentityRing") == null:
+			_fail("Tower is missing its illuminated crown identity ring: " + tower_id)
+			return
+	var signature_nodes := {
+		"hunter_association_tower_baghdad": ["HunterXSXEmblemPlaque_00", "HunterXSXEmblemPlaque_01", "HunterXSXEmblemPlaque_02", "HunterXSXEmblemPlaque_03"],
+		"business_investment_tower_baghdad": ["BusinessCapitalSpire", "BusinessCapitalRing_00", "BusinessCapitalRing_01", "BusinessCapitalRing_02", "BusinessInvestmentSign"],
+		"shopping_tower_baghdad": ["RetailGalleryRing_00", "RetailGalleryRing_01", "RetailGalleryRing_02", "ShoppingAtriumSign", "ShoppingTowerWeaponBlade_-1.0", "ShoppingTowerWeaponBlade_1.0", "ShoppingTowerElixirBeacon"],
+		"antiques_heritage_tower_baghdad": ["HeritageMuseumPodium", "HeritageMuseumEntranceCanopy", "HeritageGalleryWing_-1.0", "HeritageGalleryWing_1.0", "HeritageGalleryColumn_-1.0", "HeritageGalleryColumn_1.0", "HeritageArchiveCrown"],
+		"technology_tower_baghdad": ["InnovationAntenna_00", "InnovationAntenna_01", "InnovationAntenna_02", "InnovationLabSkyRibbon"],
+		"power_tower_baghdad": ["TournamentBlade_-1.0", "TournamentBlade_1.0", "PowerTowerChampionCrown"]
+	}
+	for signature_tower_id in signature_nodes.keys():
+		var signature_tower := tower_manager.get_node_or_null(str(NODE_NAMES[signature_tower_id])) as Node3D
+		for signature_node_name in signature_nodes[signature_tower_id]:
+			if signature_tower == null or signature_tower.get_node_or_null(str(signature_node_name)) == null:
+				_fail("Tower is missing an approved identity-specific architectural feature: %s / %s." % [signature_tower_id, str(signature_node_name)])
+				return
 	for tower_id in expected_tower_nodes.keys():
 		var tower_node := tower_manager.get_node_or_null(str(expected_tower_nodes[tower_id]))
 		var lobby := tower_node.get_node_or_null("PublicLobby_Blockout") if tower_node != null else null
