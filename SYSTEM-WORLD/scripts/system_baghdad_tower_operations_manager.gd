@@ -10,6 +10,8 @@ const HOTEL_SAVE_PATH := "user://system_baghdad_hotel_bookings.cfg"
 const RESTAURANT_SAVE_PATH := "user://system_baghdad_restaurant_orders.cfg"
 const NPC_SALES_SAVE_PATH := "user://system_baghdad_npc_sales.cfg"
 const FACILITY_ACTIVITY_SAVE_PATH := "user://system_baghdad_facility_activity.cfg"
+const POWER_TOWER_APPOINTMENT_SAVE_PATH := "user://system_power_tower_appointments.cfg"
+const POWER_TOWER_MATCH_SLOTS := ["10:00", "13:00", "16:00", "19:00"]
 const WORLD_ID := 2
 const STAFF_NAMES := ["أحمد", "سارة", "علي", "نور", "حسن", "مريم", "يوسف", "ليان", "عمر", "زينب", "مصطفى", "رنا"]
 
@@ -231,6 +233,7 @@ var current_staff_id := ""
 var current_pool_service_suite: Node3D
 var credits := 1200
 var vendor_stock: Dictionary = {}
+var power_tower_appointments: Dictionary = {}
 var hotel_bookings: Dictionary = {}
 var current_hotel_room_id := ""
 var restaurant_orders: Dictionary = {}
@@ -315,6 +318,7 @@ func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_po
 	if is_instance_valid(power_tower_manager) and power_tower_manager.has_method("set_spectator_wallet_provider"):
 		power_tower_manager.call("set_spectator_wallet_provider", self)
 	_load_vendor_stock()
+	_load_power_tower_appointments()
 	_load_hotel_bookings()
 	_load_restaurant_orders()
 	_load_npc_sales_ledger()
@@ -2122,6 +2126,8 @@ func open_tower(tower_id: String) -> void:
 	if tower_id == "power_tower_baghdad":
 		var power_status: Dictionary = power_tower_manager.call("get_tower_status") if is_instance_valid(power_tower_manager) else {}
 		status_label.text = "برج مستقل — 200 طابق | لاعب بشري ضد لاعب بشري 1 ضد 1 فقط\nأعلى طابق مكتمل: %d | الطابق التالي: %d\nكل خامس طابق مواجهة نخبة، وكل عاشر طابق مواجهة حامل اللقب؛ المطابقة عبر الإنترنت قيد الإعداد." % [int(power_status.get("highest_cleared_floor", 0)), int(power_status.get("next_floor", 1))]
+	if tower_id == "power_tower_baghdad":
+		_add_power_tower_appointment_controls()
 	if tower_id == "hunter_association_tower_baghdad":
 		var rank_board_button := Button.new()
 		rank_board_button.name = "HunterRankBoardButton"
@@ -2138,6 +2144,143 @@ func open_tower(tower_id: String) -> void:
 		nen_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		content.add_child(nen_note)
 	panel.show()
+
+
+func _get_power_tower_appointment_date(day_offset: int) -> Dictionary:
+	var unix_time := int(Time.get_unix_time_from_system()) + maxi(0, day_offset) * 86400
+	return Time.get_datetime_dict_from_unix_time(unix_time, false)
+
+
+func _power_tower_date_key(date_data: Dictionary) -> String:
+	return "%04d-%02d-%02d" % [int(date_data.get("year", 0)), int(date_data.get("month", 0)), int(date_data.get("day", 0))]
+
+
+func _load_power_tower_appointments() -> void:
+	var config := ConfigFile.new()
+	if config.load(POWER_TOWER_APPOINTMENT_SAVE_PATH) == OK:
+		var saved: Variant = config.get_value("appointments", "bookings", {})
+		power_tower_appointments = saved.duplicate(true) if saved is Dictionary else {}
+	else:
+		power_tower_appointments = {}
+
+
+func _save_power_tower_appointments() -> void:
+	var config := ConfigFile.new()
+	config.set_value("appointments", "bookings", power_tower_appointments.duplicate(true))
+	config.save(POWER_TOWER_APPOINTMENT_SAVE_PATH)
+
+
+func _add_power_tower_appointment_controls() -> void:
+	var heading := Label.new()
+	heading.name = "PowerTowerAppointmentHeading"
+	heading.text = "OFFICIAL MATCH APPOINTMENTS — احجز موعد نزالك الفردي 1v1"
+	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(heading)
+
+	var date_selector := OptionButton.new()
+	date_selector.name = "PowerTowerAppointmentDate"
+	for day_offset in range(3):
+		var date_data := _get_power_tower_appointment_date(day_offset)
+		var date_key := _power_tower_date_key(date_data)
+		var date_label := "اليوم" if day_offset == 0 else ("غداً" if day_offset == 1 else "بعد غد")
+		date_selector.add_item("%s — %04d/%02d/%02d" % [date_label, int(date_data.get("year", 0)), int(date_data.get("month", 0)), int(date_data.get("day", 0))])
+		date_selector.set_item_metadata(date_selector.item_count - 1, date_key)
+	content.add_child(date_selector)
+
+	var time_selector := OptionButton.new()
+	time_selector.name = "PowerTowerAppointmentTime"
+	for slot in POWER_TOWER_MATCH_SLOTS:
+		time_selector.add_item(str(slot))
+		time_selector.set_item_metadata(time_selector.item_count - 1, str(slot))
+	content.add_child(time_selector)
+
+	var book_button := Button.new()
+	book_button.name = "BookPowerTowerMatchAppointment"
+	book_button.text = "تأكيد موعد النزال"
+	book_button.pressed.connect(func():
+		var date_key := str(date_selector.get_item_metadata(date_selector.selected))
+		var time_slot := str(time_selector.get_item_metadata(time_selector.selected))
+		_book_power_tower_appointment(date_key, time_slot)
+	)
+	content.add_child(book_button)
+
+	var note := Label.new()
+	note.text = "المواعيد المعروضة نموذج حفظ محلي على هذا الجهاز؛ لا تمثل حجزاً عبر الإنترنت أو مطابقة لاعب حقيقي حتى تفعيل خدمة الخادم."
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(note)
+	_refresh_power_tower_appointment_list()
+
+
+func _book_power_tower_appointment(date_key: String, time_slot: String) -> void:
+	if not POWER_TOWER_MATCH_SLOTS.has(time_slot):
+		_set_status("وقت الموعد غير صالح.")
+		return
+	var date_parts := date_key.split("-")
+	if date_parts.size() != 3:
+		_set_status("تاريخ الموعد غير صالح.")
+		return
+	var today := _power_tower_date_key(Time.get_datetime_dict_from_system())
+	if date_key < today:
+		_set_status("لا يمكن حجز موعد بتاريخ سابق.")
+		return
+	if date_key == today:
+		var current_time := Time.get_datetime_dict_from_system()
+		var slot_parts := time_slot.split(":")
+		var slot_minutes := int(slot_parts[0]) * 60 + int(slot_parts[1])
+		var now_minutes := int(current_time.get("hour", 0)) * 60 + int(current_time.get("minute", 0))
+		if slot_minutes <= now_minutes:
+			_set_status("هذا الموعد انتهى؛ اختر وقتاً لاحقاً.")
+			return
+	var appointment_id := date_key + "_" + time_slot.replace(":", "")
+	if power_tower_appointments.has(appointment_id):
+		_set_status("هذا الموعد محجوز بالفعل. اختر وقتاً آخر.")
+		return
+	for existing_value in power_tower_appointments.values():
+		var existing: Dictionary = existing_value
+		if str(existing.get("player_id", "")) == "local_player" and str(existing.get("status", "")) == "BOOKED":
+			_set_status("لديك موعد نزال قادم بالفعل؛ أكمل الموعد أو ألغِه قبل حجز موعد آخر.")
+			return
+	power_tower_appointments[appointment_id] = {
+		"appointment_id": appointment_id,
+		"player_id": "local_player",
+		"date": date_key,
+		"time": time_slot,
+		"status": "BOOKED",
+		"competition_format": "INDIVIDUAL_1V1",
+		"booked_at_unix": int(Time.get_unix_time_from_system())
+	}
+	_save_power_tower_appointments()
+	_set_status("تم حفظ موعد نزالك الفردي %s الساعة %s محلياً." % [date_key, time_slot])
+	_refresh_power_tower_appointment_list()
+
+
+func _refresh_power_tower_appointment_list() -> void:
+	if not is_instance_valid(content):
+		return
+	var old := content.get_node_or_null("PowerTowerAppointmentList")
+	if old != null:
+		old.queue_free()
+	var list := VBoxContainer.new()
+	list.name = "PowerTowerAppointmentList"
+	var heading := Label.new()
+	heading.text = "مواعيدك المسجلة"
+	list.add_child(heading)
+	var visible_count := 0
+	for appointment_value in power_tower_appointments.values():
+		var appointment: Dictionary = appointment_value
+		if str(appointment.get("player_id", "")) != "local_player":
+			continue
+		if str(appointment.get("status", "")) != "BOOKED":
+			continue
+		var entry := Label.new()
+		entry.text = "%s — %s | 1v1 | %s" % [str(appointment.get("date", "")), str(appointment.get("time", "")), str(appointment.get("status", ""))]
+		list.add_child(entry)
+		visible_count += 1
+	if visible_count == 0:
+		var empty := Label.new()
+		empty.text = "لا توجد مواعيد قادمة."
+		list.add_child(empty)
+	content.add_child(list)
 
 
 func _open_hunter_rank_board() -> void:
