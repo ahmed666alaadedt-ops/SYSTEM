@@ -1,6 +1,7 @@
 extends SceneTree
 
 const OperationsScript = preload("res://scripts/system_baghdad_tower_operations_manager.gd")
+const CombatScript = preload("res://scripts/modern_world_combat_system.gd")
 const ALLOWED_QUALITY := ["BRONZE", "SILVER", "GOLD", "DIAMOND"]
 const FORBIDDEN_IDS := ["system_firearm", "hunter_pistol", "hunter_rifle", "precision_rifle", "tactical_shotgun"]
 
@@ -41,5 +42,7 @@ func _run() -> void:
 	assert(config.get("prohibited_weapon_categories", []).has("FIREARM"))
 	assert(config.get("jobs", []).has("match_schedule_coordinator"))
 	assert(config.get("jobs", []).has("nen_discovery_trainer"))
+	assert(CombatScript.POWER_TOWER_FORBIDDEN_WEAPONS.has("system_firearm"))
+	assert(CombatScript.POWER_TOWER_FORBIDDEN_WEAPONS.has("hunter_rifle"))
 	print("POWER TOWER SHOP VALIDATION PASSED: %d products, %d traditional weapons, %d skill manuals, %d cafeteria items; no modern firearms." % [catalog.size(), weapon_count, skill_count, cafeteria_count])
 	quit(0)
