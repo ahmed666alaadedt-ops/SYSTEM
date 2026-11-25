@@ -54,6 +54,7 @@ func _run() -> void:
 	progression.name = "SYSTEMPlayerProgression"
 	root.add_child(progression)
 	await process_frame
+	progression.call("_reset_progress")
 	var training_plan := [
 		{"id": "pt_nen_01", "floor": 1, "technique": "AURA_AWARENESS", "rank": 1},
 		{"id": "pt_nen_02", "floor": 21, "technique": "TEN", "rank": 1},
