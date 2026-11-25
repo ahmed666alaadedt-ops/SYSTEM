@@ -25,10 +25,16 @@ var marsh_center := Vector3.ZERO
 var tunnel_connector_length := 0.0
 var marsh_entry_local := Vector3(-420.0, 0.0, -15.0)
 var hidden_gates_unlocked := false
+var current_marsh_season := ""
+var fog_material: StandardMaterial3D
 var fog_layers: Array[MeshInstance3D] = []
 
 
 func _process(delta: float) -> void:
+	var season := _get_marsh_season()
+	if season != current_marsh_season:
+		current_marsh_season = season
+		_apply_marsh_seasonal_appearance(season)
 	for index in range(fog_layers.size()):
 		var fog := fog_layers[index]
 		if not is_instance_valid(fog):
@@ -78,6 +84,7 @@ func setup(terrain_node: Node, hunter_tunnel: Node3D) -> void:
 	var entry_direction := Vector2(marsh_center.x - tunnel_end_for_entry.x, marsh_center.z - tunnel_end_for_entry.z).normalized()
 	marsh_entry_local = Vector3(-entry_direction.x * 350.0, 0.0, -entry_direction.y * 350.0)
 	global_position = Vector3.ZERO
+	current_marsh_season = _get_marsh_season()
 	name = "BaghdadMarshland_AlZawraaReplacement"
 	set_meta("system_region_id", "baghdad_marshland_al_zawraa")
 	set_meta("system_replaces_real_place", "Al-Zawraa Park, Baghdad")
@@ -611,13 +618,8 @@ func _build_marsh_farms(zone: Node3D) -> void:
 
 
 func _build_marsh_fog(zone: Node3D) -> void:
-	var fog_material := StandardMaterial3D.new()
-	var fog_tone := Color(0.65, 0.8, 0.68, 0.13)
-	match _get_marsh_season():
-		"summer": fog_tone = Color(0.72, 0.78, 0.7, 0.10)
-		"autumn": fog_tone = Color(0.62, 0.68, 0.68, 0.18)
-		"winter": fog_tone = Color(0.7, 0.8, 0.86, 0.24)
-	fog_material.albedo_color = fog_tone
+	fog_material = StandardMaterial3D.new()
+	fog_material.albedo_color = _get_marsh_season_fog_color(_get_marsh_season())
 	fog_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	fog_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	fog_material.no_depth_test = false
@@ -640,6 +642,34 @@ func _build_marsh_fog(zone: Node3D) -> void:
 		fog_layers.append(fog)
 		fog.set_meta("system_fog_layer", "low_swamp_mist")
 	zone.set_meta("system_ground_fog_layer_count", 14)
+
+
+func _get_marsh_season_fog_color(season: String) -> Color:
+	match season:
+		"summer":
+			return Color(0.72, 0.78, 0.7, 0.10)
+		"autumn":
+			return Color(0.62, 0.68, 0.68, 0.18)
+		"winter":
+			return Color(0.7, 0.8, 0.86, 0.24)
+		_:
+			return Color(0.65, 0.8, 0.68, 0.13)
+
+
+func _apply_marsh_seasonal_appearance(season: String) -> void:
+	if fog_material != null:
+		fog_material.albedo_color = _get_marsh_season_fog_color(season)
+	for gate in find_children("SeasonalMarshStarGate_*", "Node3D", true, false):
+		var gate_id := int(gate.get_meta("system_gate_id", -1))
+		var destinations: Array = SEASONAL_GATE_DESTINATIONS.get(season, [])
+		if gate_id < 0 or gate_id >= destinations.size():
+			continue
+		var city_name := str(destinations[gate_id])
+		gate.set_meta("system_gate_current_season", season)
+		gate.set_meta("system_gate_destination_city", city_name)
+		var label := gate.get_node_or_null("StarGateDestinationLabel") as Label3D
+		if label != null:
+			label.text = "بوابة نجمية %d\n%s" % [gate_id + 1, city_name]
 
 
 func _build_marsh_deception_npcs(zone: Node3D) -> void:
@@ -995,7 +1025,7 @@ func _build_marsh_star_gate_visual(gate: Node3D, material: Material, gate_index:
 	gate.add_child(energy)
 	var label := Label3D.new()
 	label.name = "StarGateDestinationLabel"
-	label.text = "بوابة نجمية %d" % (gate_index + 1)
+	label.text = "بوابة نجمية %d\n%s" % [gate_index + 1, str(gate.get_meta("system_gate_destination_city", "وجهة موسمية"))]
 	label.font_size = 24
 	label.pixel_size = 0.014
 	label.position.y = 7.0
@@ -1060,6 +1090,11 @@ func _on_marsh_star_gate_entered(body: Node3D, gate: Node3D) -> void:
 	if gate_id < 0 or gate_id >= destinations.size():
 		return
 	var city_name := str(destinations[gate_id])
+	gate.set_meta("system_gate_current_season", season)
+	gate.set_meta("system_gate_destination_city", city_name)
+	var gate_label := gate.get_node_or_null("StarGateDestinationLabel") as Label3D
+	if gate_label != null:
+		gate_label.text = "بوابة نجمية %d\n%s" % [gate_id + 1, city_name]
 	var world_manager := get_tree().root.find_child("WorldManager", true, false)
 	if world_manager == null:
 		return
