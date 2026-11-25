@@ -7,8 +7,8 @@ class_name BaghdadMarshlandManager
 
 const PARK_LATITUDE := 33.31496
 const PARK_LONGITUDE := 44.37818
-const MARSH_RADIUS_X := 470.0
-const MARSH_RADIUS_Z := 390.0
+const MARSH_RADIUS_X := 980.0
+const MARSH_RADIUS_Z := 975.0
 const CONNECTOR_SEGMENT_LENGTH := 60.0
 
 var terrain: Node
@@ -32,7 +32,7 @@ func setup(terrain_node: Node, hunter_tunnel: Node3D) -> void:
 	marsh_center = Vector3(projected.x, park_ground_y, projected.z)
 	var tunnel_end_for_entry := hunter_tunnel.global_position + Vector3(0.0, 0.0, 39.0)
 	var entry_direction := Vector2(marsh_center.x - tunnel_end_for_entry.x, marsh_center.z - tunnel_end_for_entry.z).normalized()
-	marsh_entry_local = Vector3(-entry_direction.x * 420.0, 0.0, -entry_direction.y * 420.0)
+	marsh_entry_local = Vector3(-entry_direction.x * 900.0, 0.0, -entry_direction.y * 900.0)
 	global_position = Vector3.ZERO
 	name = "BaghdadMarshland_AlZawraaReplacement"
 	set_meta("system_region_id", "baghdad_marshland_al_zawraa")
@@ -104,8 +104,8 @@ func _build_marshland() -> void:
 	_add_boardwalk_network(zone, wood_material)
 	_add_marsh_entry(zone, wood_material)
 	zone.set_meta("system_marsh_water_body_count", pond_specs.size())
-	zone.set_meta("system_marsh_reed_instance_count", 520)
-	zone.set_meta("system_marsh_tree_count", 34)
+	zone.set_meta("system_marsh_reed_instance_count", 1800)
+	zone.set_meta("system_marsh_tree_count", 56)
 	zone.set_meta("system_marsh_boardwalk_count", 7)
 	zone.set_meta("system_marshland_is_replacement_for_al_zawraa", true)
 	zone.set_meta("system_marshland_is_traversable", true)
@@ -274,12 +274,12 @@ func _add_reed_fields(parent: Node3D, material: Material) -> void:
 	var multi := MultiMesh.new()
 	multi.transform_format = MultiMesh.TRANSFORM_3D
 	multi.mesh = reed_mesh
-	multi.instance_count = 520
-	for index in range(520):
+	multi.instance_count = 1800
+	for index in range(1800):
 		var angle := rng.randf_range(0.0, TAU)
-		var radius := sqrt(rng.randf()) * 420.0
+		var radius := sqrt(rng.randf()) * 930.0
 		var x := cos(angle) * radius
-		var z := sin(angle) * radius * 0.78
+		var z := sin(angle) * radius * 0.92
 		var ground_y := float(terrain.call("get_terrain_height", marsh_center.x + x, marsh_center.z + z)) - marsh_center.y
 		var transform := Transform3D(Basis.IDENTITY, Vector3(x, ground_y + 1.3, z))
 		multi.set_instance_transform(index, transform)
@@ -293,11 +293,11 @@ func _add_reed_fields(parent: Node3D, material: Material) -> void:
 func _add_marsh_trees(parent: Node3D, trunk_material: Material, canopy_material: Material) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 202611252
-	for index in range(34):
-		var angle := TAU * float(index) / 34.0
-		var radius := rng.randf_range(300.0, 445.0)
+	for index in range(56):
+		var angle := TAU * float(index) / 56.0
+		var radius := rng.randf_range(700.0, 945.0)
 		var x := cos(angle) * radius
-		var z := sin(angle) * radius * 0.78
+		var z := sin(angle) * radius * 0.92
 		var ground_y := float(terrain.call("get_terrain_height", marsh_center.x + x, marsh_center.z + z)) - marsh_center.y
 		var tree := Node3D.new()
 		tree.name = "MarshWillow_%02d" % index
