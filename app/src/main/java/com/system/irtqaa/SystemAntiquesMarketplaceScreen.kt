@@ -294,6 +294,7 @@ fun SystemAntiquesMarketplaceScreen(
                         Card(colors = CardDefaults.cardColors(containerColor = panel)) {
                             Column(Modifier.padding(12.dp)) {
                                 Text("عرض تبادل وارد", color = gold, fontWeight = FontWeight.Bold)
+                                Text("الطرف الآخر: ${offer["counterpartyName"] ?: "لاعب"}", color = cyan)
                                 Text("القطعة المعروضة: ${offer["offeredArtifactId"] ?: "—"}", color = Color.White)
                                 Text("المطلوبة منك: ${offer["requestedArtifactId"] ?: "—"}", color = Color.LightGray)
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -308,6 +309,7 @@ fun SystemAntiquesMarketplaceScreen(
                         Card(colors = CardDefaults.cardColors(containerColor = panel)) {
                             Column(Modifier.padding(12.dp)) {
                                 Text("عرضك المرسل", color = gold, fontWeight = FontWeight.Bold)
+                                Text("الطرف الآخر: ${offer["counterpartyName"] ?: "لاعب"}", color = cyan)
                                 Text("الحالة: ${offer["status"] ?: "قيد الانتظار"}", color = Color.White)
                                 OutlinedButton(onClick = { perform({ cb -> repository.closeExchangeOffer(id, "cancel") { cb(it) } }, "أُلغي العرض وأُعيدت القطعة إلى مجموعتك.") }, enabled = !busy) { Text("إلغاء العرض") }
                             }
@@ -321,7 +323,7 @@ fun SystemAntiquesMarketplaceScreen(
                         Text("لا توجد صفقات مسجلة في حسابك بعد.", color = Color.LightGray)
                     }
                     items(transactions, key = { it["transactionId"]?.toString().orEmpty() }) { record ->
-                        val isBuyer = record["buyerId"]?.toString() == currentUid
+                        val isBuyer = record["isBuyer"] as? Boolean ?: false
                         Card(colors = CardDefaults.cardColors(containerColor = panel)) {
                             Column(Modifier.fillMaxWidth().padding(14.dp)) {
                                 Text(
