@@ -448,7 +448,7 @@ func _run() -> void:
 		return
 	operations.call("open_museum_artifact_exhibit", market_interaction)
 	var market_actions: Array[String] = []
-	for market_child in operations.get("content").get_children():
+	for market_child in operations.get("content").find_children("*", "Button", true, false):
 		if market_child is Button:
 			market_actions.append(str((market_child as Button).text))
 	for required_market_action in [
