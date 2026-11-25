@@ -307,6 +307,40 @@ func _run_validation() -> void:
 	if hunter_pad == null or str(hunter_pad.get_meta("system_landing_zone_status", "")) != "operational_controller_attached" or hunter_pad.get_node_or_null("HunterAssociationHelicopter") == null:
 		_fail("Hunter Tower rooftop helicopter pad is not connected to its live flight controller and aircraft.")
 		return
+	var helipad_deck := hunter_pad.get_node_or_null("HelipadDeck") as MeshInstance3D
+	var helipad_deck_shape := hunter_pad.get_node_or_null("HelipadDeckCollision/CollisionShape3D") as CollisionShape3D
+	var helipad_bridge := hunter_pad.get_node_or_null("HelipadAccessBridge") as MeshInstance3D
+	var helipad_bridge_shape := hunter_pad.get_node_or_null("HelipadAccessBridgeCollision/CollisionShape3D") as CollisionShape3D
+	var landing_ring := hunter_pad.get_node_or_null("LandingCircleMarking") as MeshInstance3D
+	var helipad_sign := hunter_pad.get_node_or_null("HelipadIdentitySign") as Label3D
+	if helipad_deck == null or helipad_deck_shape == null or not helipad_deck_shape.shape is CylinderShape3D:
+		_fail("Hunter rooftop helipad is missing its physical circular deck collision.")
+		return
+	if helipad_bridge == null or helipad_bridge_shape == null or not helipad_bridge_shape.shape is BoxShape3D:
+		_fail("Hunter rooftop helipad is missing its collidable access bridge.")
+		return
+	if landing_ring == null or helipad_sign == null:
+		_fail("Hunter rooftop helipad is missing its landing-circle marking or identity sign.")
+		return
+	for marking_name in ["HelipadH_Left", "HelipadH_Right", "HelipadH_Crossbar"]:
+		if hunter_pad.get_node_or_null(marking_name) == null:
+			_fail("Hunter rooftop helipad is missing an H landing marking: " + marking_name)
+			return
+	var helipad_light_count := 0
+	for child in hunter_pad.get_children():
+		if child.name.begins_with("HelipadPerimeterLight_"):
+			helipad_light_count += 1
+	if helipad_light_count != 8:
+		_fail("Hunter rooftop helipad must have eight perimeter lights; found %d." % helipad_light_count)
+		return
+	var helicopter_status: Dictionary = hunter_pad.call("get_helicopter_status")
+	if not bool(helicopter_status.get("available", false)) or str(helicopter_status.get("owner_tower_id", "")) != "hunter_association_tower_baghdad" or not is_equal_approx(float(helicopter_status.get("landing_radius_m", 0.0)), 18.0):
+		_fail("Hunter helicopter controller does not report the expected owner, availability and 18 m landing radius.")
+		return
+	var parked_aircraft := hunter_pad.get_node_or_null("HunterAssociationHelicopter") as Node3D
+	if parked_aircraft.get_node_or_null("HelicopterFuselage") == null or parked_aircraft.get_node_or_null("MainRotor") == null or parked_aircraft.get_node_or_null("TailRotor") == null:
+		_fail("Hunter rooftop helicopter is missing its fuselage or rotor assemblies.")
+		return
 	if hunter_record.is_empty() or hunter_pad.position.y <= float(hunter_record.get("height", 0.0)):
 		_fail("Hunter helicopter pad must be physically positioned above the tallest Hunter Tower roof.")
 		return
