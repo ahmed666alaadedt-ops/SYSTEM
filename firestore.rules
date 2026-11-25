@@ -95,6 +95,35 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    // المزادات وسجل المزايدات: قراءة فقط للاعبين المسجلين.
+    match /marketplaceAuctions/{auctionId} {
+      allow get, list: if signedIn() && resource.data.status == 'active';
+      allow create, update, delete: if false;
+
+      match /bids/{bidId} {
+        allow get, list: if signedIn();
+        allow create, update, delete: if false;
+      }
+    }
+
+    // عروض التبادل لا يراها إلا طرفاها.
+    match /marketplaceExchanges/{exchangeId} {
+      allow get, list: if signedIn()
+                       && (resource.data.initiatorId == request.auth.uid
+                           || resource.data.recipientId == request.auth.uid);
+      allow create, update, delete: if false;
+    }
+
+    // سجل تاريخ ملكية القطع خاص ولا يقبل أي كتابة من العميل.
+    match /artifactHistory/{artifactId}/events/{eventId} {
+      allow read, write: if false;
+    }
+
+    // مكافآت العملة الافتراضية سجلات داخلية.
+    match /marketplaceCurrencyAwards/{awardId} {
+      allow read, write: if false;
+    }
+
     // العروض النشطة عامة للاعبين المسجلين، وكل التغييرات عبر Cloud Functions.
     match /marketplaceListings/{listingId} {
       allow get, list: if signedIn()
