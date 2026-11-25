@@ -109,7 +109,7 @@ The full tower-interiors/hotel/shopping regression and current full-project work
 
 ## Release discipline
 
-- Continue only on `feature/baghdad-five-plus-power-tower-20261122` and existing draft PR #38.
+- Continue the Al-Zawraa Marshland work on `feature/baghdad-marshland-connection-20261125` and draft PR #39. PR #38 was already merged to `main` before this marshland scope began.
 - Preserve existing systems; do not recreate completed towers, interiors, tests or workflows from scratch.
-- Do not merge into `main` without explicit user approval.
+- Keep PR #39 as a draft and do not merge into `main` without explicit user approval.
 - Do not claim final visual/device completion from headless tests or APK export alone.
