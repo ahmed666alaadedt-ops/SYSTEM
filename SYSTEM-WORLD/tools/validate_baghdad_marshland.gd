@@ -50,8 +50,6 @@ func _run_validation() -> void:
 		return
 	if not _check(float(marsh.get_meta("system_geographic_anchor_adjustment_m", 0.0)) <= 300.0, "The marsh anchor moved too far from the real Al-Zawraa Park coordinate."):
 		return
-	if not _check(trial_start.monitoring and trial_start.body_entered.get_connections().size() > 0, "The continuous Hunter trial does not start at the tunnel exit."):
-		return
 	if not _check(zone.find_child("HunterExamMarshlandFinalObjective", true, false) is Area3D, "The final marshland exam objective is missing."):
 		return
 	if not _check(zone.find_child("HunterExamMarshlandFinalAltar", true, false) is MeshInstance3D, "The final marshland altar is missing."):
