@@ -124,7 +124,7 @@ func _build_xsx_identity() -> void:
 			plaque_mesh.size = Vector3(0.8, 8.0 if level != 410.0 else 12.0, 18.0 if level != 410.0 else 22.0)
 			plaque.mesh = plaque_mesh
 			plaque.position = outward * (BASE_RADIUS * 0.91) + Vector3(0.0, level, 0.0)
-			plaque.look_at(plaque.position + outward, Vector3.UP)
+			plaque.rotation.y = -angle
 			plaque.material_override = red_emissive
 			add_child(plaque)
 			var label := Label3D.new()
