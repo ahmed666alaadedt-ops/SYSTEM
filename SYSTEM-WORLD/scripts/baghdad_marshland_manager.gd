@@ -628,42 +628,46 @@ func _build_marsh_farms(zone: Node3D) -> void:
 	farm_root.set_meta("system_marshland_farm_is_walkable", true)
 
 func _build_marsh_fog(zone: Node3D) -> void:
+	# Dense, low-lying visibility fog is a defining part of the Hunter swamp trial.
 	fog_material = StandardMaterial3D.new()
 	fog_material.albedo_color = _get_marsh_season_fog_color(_get_marsh_season())
 	fog_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	fog_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	fog_material.no_depth_test = false
-	for index in range(14):
+	for index in range(18):
 		var fog := MeshInstance3D.new()
 		fog.name = "MarshGroundFog_%02d" % index
 		var mesh := SphereMesh.new()
 		mesh.radius = 1.0
 		mesh.height = 0.32
 		fog.mesh = mesh
-		fog.scale = Vector3(65.0 + float(index % 4) * 12.0, 1.0, 28.0 + float(index % 3) * 9.0)
-		var fog_angle := TAU * float(index) / 14.0
-		var fog_radial := 0.42 + float(index % 4) * 0.13
+		fog.scale = Vector3(82.0 + float(index % 4) * 18.0, 1.0, 38.0 + float(index % 3) * 13.0)
+		var fog_angle := TAU * float(index) / 18.0
+		var fog_radial := 0.18 + float(index % 5) * 0.15
 		var fog_x := cos(fog_angle) * MARSH_RADIUS_X * fog_radial
 		var fog_z := sin(fog_angle) * MARSH_RADIUS_Z * fog_radial
-		fog.position = Vector3(fog_x, _marsh_ground_y(fog_x, fog_z) + 1.8 + float(index % 3) * 0.35, fog_z)
+		fog.position = Vector3(fog_x, _marsh_ground_y(fog_x, fog_z) + 0.85 + float(index % 3) * 0.22, fog_z)
 		fog.material_override = fog_material
 		fog.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		zone.add_child(fog)
 		fog_layers.append(fog)
-		fog.set_meta("system_fog_layer", "low_swamp_mist")
-	zone.set_meta("system_ground_fog_layer_count", 14)
+		fog.set_meta("system_fog_layer", "dense_low_swamp_mist")
+		fog.set_meta("system_fog_visibility_obscuring", true)
+	zone.set_meta("system_ground_fog_layer_count", 18)
+	zone.set_meta("system_fog_style", "dense_numere_swamp_low_mist")
+	zone.set_meta("system_fog_is_core_exam_hazard", true)
 
 
 func _get_marsh_season_fog_color(season: String) -> Color:
 	match season:
 		"summer":
-			return Color(0.72, 0.78, 0.7, 0.10)
+			return Color(0.72, 0.78, 0.7, 0.28)
 		"autumn":
-			return Color(0.62, 0.68, 0.68, 0.18)
+			return Color(0.62, 0.68, 0.68, 0.38)
 		"winter":
-			return Color(0.7, 0.8, 0.86, 0.24)
+			return Color(0.7, 0.8, 0.86, 0.42)
 		_:
-			return Color(0.65, 0.8, 0.68, 0.13)
+			return Color(0.65, 0.8, 0.68, 0.32)
 
 
 func _apply_marsh_seasonal_appearance(season: String) -> void:
@@ -697,7 +701,10 @@ func _build_marsh_deception_npcs(zone: Node3D) -> void:
 		npc.set_meta("system_npc_role", "hunter_exam_candidate_or_false_guide")
 		npc.set_meta("system_deception_enabled", true)
 		npc.set_meta("system_npc_can_give_false_route_hint", true)
-		npc.set_meta("system_npc_deception_type", ["wrong_landmark", "false_safe_path", "fake_exit"][index % 3])
+		npc.set_meta("system_npc_deception_type", ["man_faced_ape_impostor", "wrong_landmark", "false_safe_path", "fake_exit"][index % 4])
+		npc.set_meta("system_disguise_species", "man_faced_ape" if index % 4 == 0 else "deceptive_candidate")
+		npc.set_meta("system_can_impersonate_examiner", index % 4 == 0)
+		npc.set_meta("system_swamp_deception_style", "imitates_a_real_candidate_or_examiner_to_split_the_group")
 		npc.set_meta("system_is_real_guild_guide", false)
 		zone.add_child(npc)
 		var torso := MeshInstance3D.new()
@@ -753,9 +760,19 @@ func _on_deception_npc_approached(body: Node3D, npc: Node3D) -> void:
 func _build_giant_marsh_creatures(zone: Node3D) -> void:
 	var shell_material := _make_material(Color(0.16, 0.25, 0.13), 0.78, 0.0)
 	var hide_material := _make_material(Color(0.20, 0.31, 0.24), 0.9, 0.0)
+	var wing_material := _make_material(Color(0.31, 0.22, 0.46), 0.65, 0.0)
+	var cap_material := _make_material(Color(0.48, 0.25, 0.16), 0.88, 0.0)
+	var species: Array[String] = [
+		"man_faced_ape",
+		"hypnosis_butterfly",
+		"frog_in_waiting",
+		"noggin_lugging_tortoise",
+		"ruse_raven",
+		"claymore_mushroom"
+	]
 	var positions: Array[Vector3] = []
-	for index in range(6):
-		var angle := TAU * float(index) / 6.0 + 0.24
+	for index in range(species.size()):
+		var angle := TAU * float(index) / float(species.size()) + 0.24
 		positions.append(Vector3(cos(angle) * MARSH_RADIUS_X * 0.76, 0.0, sin(angle) * MARSH_RADIUS_Z * 0.76))
 	for index in range(positions.size()):
 		var creature := Node3D.new()
@@ -764,39 +781,108 @@ func _build_giant_marsh_creatures(zone: Node3D) -> void:
 		creature.position.y = _marsh_ground_y(creature.position.x, creature.position.z)
 		creature.set_meta("system_creature_is_giant", true)
 		creature.set_meta("system_hunter_exam_hazard", true)
-		creature.set_meta("system_creature_species", "giant_marsh_turtle" if index % 2 == 0 else "ancient_swamp_beast")
-		creature.set_meta("system_encounter_class", "giant_wildlife")
+		creature.set_meta("system_creature_species", species[index])
+		creature.set_meta("system_encounter_class", "hunter_exam_swamp_fauna")
+		creature.set_meta("system_species_reference", "Hunter x Hunter Numere/Milsy Wetlands fauna inspiration")
 		zone.add_child(creature)
+
 		var body := MeshInstance3D.new()
 		body.name = "CreatureBody"
 		var body_mesh := SphereMesh.new()
 		body_mesh.radius = 1.0
 		body_mesh.height = 2.0
 		body.mesh = body_mesh
-		body.scale = Vector3(3.8, 1.0, 5.2) if index % 2 == 0 else Vector3(4.5, 1.2, 6.0)
+		body.scale = Vector3(3.8, 1.0, 5.2)
 		body.position.y = 1.2
 		body.material_override = hide_material
 		creature.add_child(body)
-		if index % 2 == 0:
-			var shell := MeshInstance3D.new()
-			shell.name = "GiantTurtleShell"
-			var shell_mesh := SphereMesh.new()
-			shell_mesh.radius = 1.0
-			shell_mesh.height = 1.5
-			shell.mesh = shell_mesh
-			shell.scale = Vector3(3.7, 1.45, 4.7)
-			shell.position.y = 2.0
-			shell.material_override = shell_material
-			creature.add_child(shell)
-		else:
-			var jaws := MeshInstance3D.new()
-			jaws.name = "SwampBeastHead"
-			var head_mesh := BoxMesh.new()
-			head_mesh.size = Vector3(2.5, 1.3, 2.8)
-			jaws.mesh = head_mesh
-			jaws.position = Vector3(0.0, 1.1, -5.0)
-			jaws.material_override = hide_material
-			creature.add_child(jaws)
+
+		match species[index]:
+			"man_faced_ape":
+				var face := MeshInstance3D.new()
+				face.name = "HumanLikeApeFace"
+				var face_mesh := SphereMesh.new()
+				face_mesh.radius = 0.8
+				face_mesh.height = 1.4
+				face.mesh = face_mesh
+				face.position = Vector3(0.0, 2.3, -3.8)
+				face.material_override = _make_material(Color(0.52, 0.36, 0.27), 0.9, 0.0)
+				creature.add_child(face)
+				for side in [-1.0, 1.0]:
+					var arm := MeshInstance3D.new()
+					arm.name = "LongApeArm"
+					var arm_mesh := CapsuleMesh.new()
+					arm_mesh.radius = 0.34
+					arm_mesh.height = 4.8
+					arm.mesh = arm_mesh
+					arm.position = Vector3(side * 3.2, 0.9, -0.2)
+					arm.rotation.z = side * -0.32
+					arm.material_override = hide_material
+					creature.add_child(arm)
+			"hypnosis_butterfly":
+				for side in [-1.0, 1.0]:
+					var wing := MeshInstance3D.new()
+					wing.name = "HypnosisWing"
+					var wing_mesh := SphereMesh.new()
+					wing_mesh.radius = 1.0
+					wing.mesh = wing_mesh
+					wing.scale = Vector3(3.0, 0.22, 2.2)
+					wing.position = Vector3(side * 3.0, 2.2, 0.0)
+					wing.rotation.y = side * 0.28
+					wing.material_override = wing_material
+					creature.add_child(wing)
+			"frog_in_waiting":
+				for side in [-1.0, 1.0]:
+					var eye := MeshInstance3D.new()
+					eye.name = "FrogEye"
+					var eye_mesh := SphereMesh.new()
+					eye_mesh.radius = 0.85
+					eye.mesh = eye_mesh
+					eye.position = Vector3(side * 1.7, 2.7, -2.8)
+					eye.material_override = _make_material(Color(0.62, 0.72, 0.28), 0.6, 0.0)
+					creature.add_child(eye)
+			"noggin_lugging_tortoise":
+				var shell := MeshInstance3D.new()
+				shell.name = "GiantTurtleShell"
+				var shell_mesh := SphereMesh.new()
+				shell_mesh.radius = 1.0
+				shell_mesh.height = 1.5
+				shell.mesh = shell_mesh
+				shell.scale = Vector3(3.7, 1.45, 4.7)
+				shell.position.y = 2.0
+				shell.material_override = shell_material
+				creature.add_child(shell)
+			"ruse_raven":
+				for side in [-1.0, 1.0]:
+					var wing := MeshInstance3D.new()
+					wing.name = "RuseRavenWing"
+					var wing_mesh := SphereMesh.new()
+					wing_mesh.radius = 1.0
+					wing.mesh = wing_mesh
+					wing.scale = Vector3(3.1, 0.35, 1.5)
+					wing.position = Vector3(side * 3.0, 1.8, 0.0)
+					wing.material_override = _make_material(Color(0.08, 0.10, 0.09), 0.9, 0.0)
+					creature.add_child(wing)
+			"claymore_mushroom":
+				var stalk := MeshInstance3D.new()
+				stalk.name = "ClaymoreMushroomStalk"
+				var stalk_mesh := CapsuleMesh.new()
+				stalk_mesh.radius = 1.0
+				stalk_mesh.height = 5.0
+				stalk.mesh = stalk_mesh
+				stalk.position.y = 2.2
+				stalk.material_override = _make_material(Color(0.72, 0.68, 0.48), 0.9, 0.0)
+				creature.add_child(stalk)
+				var cap := MeshInstance3D.new()
+				cap.name = "ClaymoreMushroomCap"
+				var cap_mesh := SphereMesh.new()
+				cap_mesh.radius = 1.0
+				cap.mesh = cap_mesh
+				cap.scale = Vector3(4.0, 1.2, 4.0)
+				cap.position.y = 4.8
+				cap.material_override = cap_material
+				creature.add_child(cap)
+
 		var combat_enemy := MarshGateEnemyScript.new() as CharacterBody3D
 		combat_enemy.name = "GiantMarshCombatEnemy"
 		combat_enemy.call("configure", "C", false, null)
@@ -810,7 +896,7 @@ func _build_giant_marsh_creatures(zone: Node3D) -> void:
 		if generic_visual != null:
 			generic_visual.visible = false
 		combat_enemy.set_meta("system_marsh_wildlife_enemy", true)
-		combat_enemy.set_meta("system_creature_species", str(creature.get_meta("system_creature_species", "giant_wildlife")))
+		combat_enemy.set_meta("system_creature_species", species[index])
 		combat_enemy.connect("defeated", _on_giant_marsh_creature_defeated.bind(creature))
 		var encounter := Area3D.new()
 		encounter.name = "GiantCreatureEncounterZone"
