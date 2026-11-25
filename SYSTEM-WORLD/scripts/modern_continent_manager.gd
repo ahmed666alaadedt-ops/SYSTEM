@@ -355,7 +355,7 @@ func _build_continent() -> void:
 
 	var terrain_mesh := ArrayMesh.new()
 	terrain_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	if terrain_mesh.get_surface_count() > 0:
+	if terrain_mesh.get_rid().is_valid() and terrain_mesh.get_surface_count() > 0:
 		terrain_mesh.surface_set_material(0, _make_terrain_material())
 
 	var terrain_visual := MeshInstance3D.new()
