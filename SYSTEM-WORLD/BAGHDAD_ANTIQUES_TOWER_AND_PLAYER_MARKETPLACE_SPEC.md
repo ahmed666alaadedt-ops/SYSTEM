@@ -82,7 +82,7 @@ Firestore rules deny client writes to wallets, ownership, listings, transactions
 An Android Firebase callable repository has been added at:
 `app/src/main/java/com/system/irtqaa/FirebaseArtifactMarketplaceRepository.kt`
 
-It exposes wallet and reserved-balance loading, owned artifact loading, fixed-price listing browse/create/purchase/cancel/expiry, auction browse/create/bid/history/settlement/cancellation, exchange inbox/create/accept/close, and private trade history. The Godot in-world exhibit interaction still needs to be connected to this repository through the Android/Godot host bridge. Existing local Godot wallet and inventory data are not authoritative and must never be copied into server wallets without a trusted migration/reward source.
+It exposes wallet and reserved-balance loading, owned artifact loading, fixed-price listing browse/create/purchase/cancel/expiry, auction browse/create/bid/history/settlement/cancellation, exchange inbox/create/accept/close, and private trade history. A versioned marketplace request/response protocol is now present in `system_android_bridge.gd` and `SystemGodotMessageContract.kt`. `SystemMarketplaceGodotBridgeHandler.kt` dispatches the market, auction, exchange and history operations to Firebase. The actual native Android Godot host singleton/Activity is still absent from the current app export, so the transport handler is prepared but not yet running inside the game. Existing local Godot wallet and inventory data are not authoritative and must never be copied into server wallets without a trusted migration/reward source.
 
 A Firebase Functions TypeScript validation workflow has been added. Passing CI is required before calling the server module build-verified.
 
