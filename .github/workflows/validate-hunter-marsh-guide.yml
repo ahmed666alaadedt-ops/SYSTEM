@@ -1,0 +1,76 @@
+name: Validate Hunter Marsh Guide and Sanctuary Route
+
+on:
+  pull_request:
+    paths:
+      - "SYSTEM-WORLD/scripts/baghdad_marshland_manager.gd"
+      - "SYSTEM-WORLD/scripts/system_hunter_candidate_crowd.gd"
+      - "SYSTEM-WORLD/tools/validate_baghdad_marshland.gd"
+      - ".github/workflows/validate-hunter-marsh-guide.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: hunter-marsh-guide-validation-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  validate-marsh-guide:
+    name: Verify fog escort, tracking arrow and sanctuary gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Godot 4.3
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/godot"
+          curl -L --fail --retry 3 \
+            "https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip" \
+            -o "$RUNNER_TEMP/godot.zip"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP/godot"
+          chmod +x "$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+
+      - name: Import resources and parse project scripts
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --editor --path "$PROJECT" --import 2>&1 | tee "$RUNNER_TEMP/marsh-guide-import.log"
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" "$RUNNER_TEMP/marsh-guide-import.log"; then
+            echo "Godot reported script or resource parse errors."
+            exit 1
+          fi
+
+      - name: Validate real guide, 500-candidate convoy, fog arrow and Star Gate handoff
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_baghdad_marshland.gd 2>&1 | tee "$RUNNER_TEMP/marsh-guide-validation.log"
+
+      - name: Validate the single continuous Hunter examination
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_hunter_exam_stage_runtime.gd 2>&1 | tee "$RUNNER_TEMP/hunter-exam-runtime.log"
+
+      - name: Upload focused marsh validation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hunter-marsh-guide-validation-logs
+          path: |
+            ${{ runner.temp }}/marsh-guide-import.log
+            ${{ runner.temp }}/marsh-guide-validation.log
+            ${{ runner.temp }}/hunter-exam-runtime.log
+          if-no-files-found: ignore
+          retention-days: 7
