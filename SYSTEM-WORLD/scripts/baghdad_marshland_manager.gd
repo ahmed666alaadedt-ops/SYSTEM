@@ -117,18 +117,6 @@ func _build_marshland() -> void:
 	zone.position = marsh_center
 	add_child(zone)
 
-	var shore := MeshInstance3D.new()
-	shore.name = "MarshMudShore"
-	var shore_mesh := CylinderMesh.new()
-	shore_mesh.top_radius = 1.0
-	shore_mesh.bottom_radius = 1.0
-	shore_mesh.height = 0.34
-	shore.mesh = shore_mesh
-	shore.scale = Vector3(MARSH_RADIUS_X, 1.0, MARSH_RADIUS_Z)
-	shore.position.y = _marsh_ground_y(0.0, 0.0) + 0.12
-	shore.material_override = mud_material
-	zone.add_child(shore)
-
 	var pond_specs := [
 		{"x": -380.0, "z": -220.0, "rx": 120.0, "rz": 90.0},
 		{"x": -180.0, "z": -400.0, "rx": 100.0, "rz": 140.0},
@@ -141,6 +129,17 @@ func _build_marshland() -> void:
 	]
 	for index in range(pond_specs.size()):
 		var spec: Dictionary = pond_specs[index]
+		var bank := MeshInstance3D.new()
+		bank.name = "MarshMudBank_%02d" % index
+		var bank_mesh := CylinderMesh.new()
+		bank_mesh.top_radius = 1.0
+		bank_mesh.bottom_radius = 1.0
+		bank_mesh.height = 0.16
+		bank.mesh = bank_mesh
+		bank.scale = Vector3(float(spec["rx"]) + 18.0, 1.0, float(spec["rz"]) + 18.0)
+		bank.position = Vector3(float(spec["x"]), _marsh_ground_y(float(spec["x"]), float(spec["z"])) + 0.04, float(spec["z"]))
+		bank.material_override = mud_material
+		zone.add_child(bank)
 		var pond := MeshInstance3D.new()
 		pond.name = "MarshWaterBody_%02d" % index
 		var pond_mesh := CylinderMesh.new()
@@ -161,6 +160,7 @@ func _build_marshland() -> void:
 	_add_marsh_entry(zone, wood_material)
 	_build_hunter_marsh_trials(zone)
 	zone.set_meta("system_marsh_water_body_count", pond_specs.size())
+	zone.set_meta("system_marsh_mud_bank_count", pond_specs.size())
 	zone.set_meta("system_marsh_reed_instance_count", 12000)
 	zone.set_meta("system_marsh_tree_count", 160)
 	zone.set_meta("system_marsh_boardwalk_count", 9)
