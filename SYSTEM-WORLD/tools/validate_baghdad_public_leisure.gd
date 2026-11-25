@@ -106,6 +106,9 @@ func _run_validation() -> void:
 	if entered_zones.size() != 2 or not entered_zones.has(str(lap_test_water.get_instance_id())) or not entered_zones.has(str(family_test_water.get_instance_id())):
 		_fail("Real physics overlap did not register both water Area3D volumes for the player.")
 		return
+	if not bool(player.get_meta("system_swimming", false)) or not player.has_meta("system_swim_surface_y"):
+		_fail("Public leisure pool entry did not activate the canonical player swimming locomotion state.")
+		return
 	# Move out of the smaller family volume while remaining inside the larger lap volume.
 	player.global_position = overlap_test_center + Vector3(2.5, 0.0, 0.0)
 	for frame_index in range(3):
@@ -117,11 +120,17 @@ func _run_validation() -> void:
 	if not bool(player.get_meta("system_public_leisure_swimming", false)) or str(player.get_meta("system_public_leisure_water_type", "")) != "lap_pool":
 		_fail("The player lost the swimming state after physically exiting only one overlapping water volume.")
 		return
+	if not bool(player.get_meta("system_swimming", false)) or absf(float(player.get_meta("system_swim_surface_y", -999.0)) - (lap_test_water.global_position.y + 0.54)) > 0.01:
+		_fail("Leaving one overlapping zone did not preserve the canonical swim controller or remaining pool surface height.")
+		return
 	player.global_position = overlap_test_center + Vector3(9.0, 0.0, 0.0)
 	for frame_index in range(3):
 		await physics_frame
 	if player.has_meta("system_public_leisure_swimming") or player.has_meta("system_public_leisure_water_zones"):
 		_fail("Leaving the final physical water volume did not clear all swimming state.")
+		return
+	if bool(player.get_meta("system_swimming", false)) or player.has_meta("system_swim_surface_y") or player.has_meta("system_swim_source"):
+		_fail("Leaving the final public pool volume did not clear the canonical player locomotion swimming state.")
 		return
 	lap_test_water.queue_free()
 	family_test_water.queue_free()
