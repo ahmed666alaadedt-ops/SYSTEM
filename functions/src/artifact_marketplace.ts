@@ -261,12 +261,14 @@ export const createArtifactListing = onCall(async (request) => {
   const listingRef = database().collection("marketplaceListings").doc();
   const itemRef = ownershipRef(sellerId, artifactId);
   const sellerProfileRef = playerRef(sellerId);
+  const sellerWalletRef = walletRef(sellerId);
   const expiresAt = Timestamp.fromMillis(Date.now() + durationDays * 24 * 60 * 60 * 1000);
 
   await database().runTransaction(async (transaction) => {
-    const [itemSnapshot, sellerProfile] = await Promise.all([
+    const [itemSnapshot, sellerProfile, sellerWallet] = await Promise.all([
       transaction.get(itemRef),
-      transaction.get(sellerProfileRef)
+      transaction.get(sellerProfileRef),
+      transaction.get(sellerWalletRef)
     ]);
     if (!itemSnapshot.exists || !sellerProfile.exists) {
       throw new HttpsError("not-found", "القطعة أو ملف البائع غير موجود.");
@@ -276,6 +278,16 @@ export const createArtifactListing = onCall(async (request) => {
       throw new HttpsError("failed-precondition", "لا تملك هذه القطعة أو أنها محجوزة في صفقة أخرى.");
     }
 
+    if (!sellerWallet.exists) {
+      transaction.create(sellerWalletRef, {
+        userId: sellerId,
+        currency: "SYSTEM",
+        balance: 0,
+        reservedBalance: 0,
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp()
+      });
+    }
     transaction.update(itemRef, {
       status: "escrow",
       activeListingId: listingRef.id,
