@@ -379,6 +379,7 @@ export {
   cancelArtifactListing,
   purchaseArtifactListing,
   expireArtifactListing,
+  releaseExpiredArtifactListings,
   listMyMarketplaceTransactions,
   grantMarketplaceArtifactFromReward
 } from "./artifact_marketplace";
