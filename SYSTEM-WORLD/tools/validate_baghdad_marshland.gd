@@ -96,6 +96,8 @@ func _run_validation() -> void:
 	var sanctuary := zone.get_node_or_null("HiddenMarshAncientSanctuary") as Node3D
 	if not _check(sanctuary != null and sanctuary.find_children("SeasonalMarshStarGate_*", "Node3D", true, false).size() == 3, "Hidden ancient sanctuary or its three Star Gates are missing."):
 		return
+	if not _check(not sanctuary.visible and zone.find_child("HiddenSanctuaryDiscoveryTrigger", true, false) is Area3D, "The ancient sanctuary is not concealed behind its discovery trigger."):
+		return
 	var spring_destinations: Array = sanctuary.get_node("SeasonalMarshStarGate_00").get_meta("system_gate_destination_pool_by_season").get("spring", [])
 	if not _check(spring_destinations == ["Tokyo", "Paris", "Singapore"], "Seasonal Star Gate destination rotation is missing."):
 		return
@@ -143,6 +145,9 @@ func _run_validation() -> void:
 		return
 	player.set_meta("system_hunter_tunnel_competition_complete", true)
 	marsh.call("_on_marsh_trial_start_entered", player)
+	marsh.call("_on_hidden_sanctuary_discovered", player, sanctuary)
+	if not _check(bool(sanctuary.visible) and bool(player.get_meta("system_hidden_heritage_site_discovered", false)), "The active candidate did not reveal the hidden ancient sanctuary on approach."):
+		return
 	if not _check(bool(player.get_meta("system_hunter_marsh_trial_started", false)) and bool(exam_manager.get("exam_active")), "The marsh section did not start after tunnel checkpoints while keeping the exam active."):
 		return
 	marsh.call("_on_marsh_final_trial_entered", player)
