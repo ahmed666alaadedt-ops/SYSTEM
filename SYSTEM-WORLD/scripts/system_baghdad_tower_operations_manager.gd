@@ -9096,6 +9096,9 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 		return
 	_board_customer_visitors_into_elevator(tower_id, floor_number, car)
 	if tower_id == "power_tower_baghdad":
+		if floor_number >= 81 and (not is_instance_valid(progression) or not bool(progression.get("nen_unlocked")) or int(progression.get("nen_control_rank")) < 5):
+			_set_status("الطوابق 81–200 تتطلب إيقاظ النِن وإتقان الهالة حتى الرتبة 5. أكمل تدريب النِن في قاعة البرج أولاً.")
+			return
 		if not is_instance_valid(power_tower_manager):
 			_set_status("نظام برج القوة غير متاح.")
 			return
@@ -9108,6 +9111,11 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 			_set_status("تعذر بدء التحدي: " + str(request.get("reason", "غير معروف")))
 			return
 		active_power_floor_data = request.get("floor_data", {})
+		var competition_manager := get_tree().root.find_child("PowerTowerCompetitionManager", true, false)
+		if is_instance_valid(competition_manager) and competition_manager.has_method("get_combat_styles_for_floor"):
+			active_power_floor_data["available_combat_styles"] = competition_manager.call("get_combat_styles_for_floor", floor_number)
+			player.set_meta("system_power_tower_available_combat_styles", active_power_floor_data["available_combat_styles"])
+			player.set_meta("system_power_tower_nen_required", floor_number >= 81)
 		power_floor_entry_pending = true
 		power_floor_in_progress = false
 		active_power_tower_match.clear()
