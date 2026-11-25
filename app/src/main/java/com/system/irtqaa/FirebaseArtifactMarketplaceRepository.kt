@@ -33,6 +33,7 @@ data class SystemArtifactListing(
     val currency: String,
     val sellerId: String,
     val sellerName: String,
+    val isSeller: Boolean,
     val createdAt: Long?,
     val expiresAt: Long?
 )
@@ -46,6 +47,7 @@ data class SystemArtifactAuction(
     val condition: String,
     val sellerId: String,
     val sellerName: String,
+    val isSeller: Boolean,
     val startingBid: Long,
     val highestBid: Long,
     val highestBidderName: String?,
@@ -139,6 +141,7 @@ class FirebaseArtifactMarketplaceRepository(
                         currency = item["currency"] as? String ?: "SYSTEM",
                         sellerId = item["sellerId"] as? String ?: "",
                         sellerName = item["sellerName"] as? String ?: "لاعب",
+                        isSeller = item["isSeller"] as? Boolean ?: false,
                         createdAt = (item["createdAt"] as? Number)?.toLong(),
                         expiresAt = (item["expiresAt"] as? Number)?.toLong()
                     )
@@ -271,6 +274,7 @@ class FirebaseArtifactMarketplaceRepository(
                         condition = item["condition"] as? String ?: "good",
                         sellerId = item["sellerId"] as? String ?: "",
                         sellerName = item["sellerName"] as? String ?: "لاعب",
+                        isSeller = item["isSeller"] as? Boolean ?: false,
                         startingBid = (item["startingBid"] as? Number)?.toLong() ?: 0L,
                         highestBid = (item["highestBid"] as? Number)?.toLong() ?: 0L,
                         highestBidderName = item["highestBidderName"] as? String,
