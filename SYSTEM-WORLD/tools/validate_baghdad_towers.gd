@@ -383,8 +383,8 @@ func _run_validation() -> void:
 	if not antiques_directory is PackedStringArray or antiques_directory.size() != 9 or not str(antiques_directory[0]).contains("سومر") or not str(antiques_directory[7]).contains("المزادات"):
 		_fail("Antiques and Heritage Tower does not expose its approved 34-floor museum directory.")
 		return
-	if str(antiques_tower.get_meta("gameplay_status", "")) != "antiques_heritage_tower_foundation_blockout":
-		_fail("Antiques and Heritage Tower implementation status metadata is missing.")
+	if str(antiques_tower.get_meta("gameplay_status", "")) != "antiques_heritage_tower_runtime_floor_generation_and_interactive_exhibits_visual_polish_pending":
+		_fail("Antiques and Heritage Tower runtime floor-generation status metadata is missing.")
 		return
 	var shopping_categories: PackedStringArray = shopping_tower.get_meta("facility_categories", PackedStringArray())
 	var elixir_categories: PackedStringArray = shopping_tower.get_meta("elixir_categories", PackedStringArray())
