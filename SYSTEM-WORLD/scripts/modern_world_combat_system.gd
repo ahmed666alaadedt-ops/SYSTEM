@@ -35,7 +35,7 @@ func light_attack() -> void:
 
 
 func heavy_attack() -> void:
-	if not can_attack or not is_instance_valid(actor):
+	if not can_attack or not is_instance_valid(actor) or not _power_tower_weapon_policy_allows_attack():
 		return
 	can_attack = false
 	_consume_weapon_durability(0.75)
@@ -47,8 +47,6 @@ func heavy_attack() -> void:
 func skill_one() -> Dictionary:
 	if not can_attack or not is_instance_valid(actor):
 		return {"success": false, "reason": "COMBAT_BUSY"}
-	if not _power_tower_weapon_policy_allows_attack():
-		return {"success": false, "reason": "MODERN_FIREARMS_FORBIDDEN_IN_POWER_TOWER"}
 	if not _power_tower_weapon_policy_allows_attack():
 		return {"success": false, "reason": "MODERN_FIREARMS_FORBIDDEN_IN_POWER_TOWER"}
 	var progression := _get_progression()
@@ -69,6 +67,8 @@ func skill_one() -> Dictionary:
 func skill_two() -> Dictionary:
 	if not can_attack or not is_instance_valid(actor):
 		return {"success": false, "reason": "COMBAT_BUSY"}
+	if not _power_tower_weapon_policy_allows_attack():
+		return {"success": false, "reason": "MODERN_FIREARMS_FORBIDDEN_IN_POWER_TOWER"}
 	can_attack = false
 	_consume_weapon_durability(0.9)
 	_fire_hitscan(heavy_damage * 1.2 + _get_progression_damage_bonus(), attack_range * 1.2)
