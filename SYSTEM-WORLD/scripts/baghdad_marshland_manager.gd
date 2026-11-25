@@ -546,7 +546,9 @@ func _create_entry_arch(parent: Node3D, material: Material) -> void:
 
 func _build_hunter_marsh_trials(zone: Node3D) -> void:
 	zone.set_meta("system_hunter_exam_biome", true)
-	zone.set_meta("system_hunter_exam_trial_type", "seasonal_marsh_survival_and_navigation")
+	zone.set_meta("system_hunter_exam_trial_type", "numere_wetlands_swindlers_swamp_survival_navigation")
+	zone.set_meta("system_hunter_exam_core_rule", "keep_the_real_examiner_in_sight_and_reject_impostors")
+	zone.set_meta("system_hunter_exam_fog_visibility", "dense_low_visibility_swamp_mist")
 	zone.set_meta("system_hunter_exam_inspired_by", "Hunter x Hunter Hunter Exam swamp atmosphere; original SYSTEM WORLD implementation")
 	zone.set_meta("system_hunter_marsh_deception_npc_count", 12)
 	zone.set_meta("system_hunter_marsh_giant_creature_count", 6)
@@ -753,8 +755,14 @@ func _on_deception_npc_approached(body: Node3D, npc: Node3D) -> void:
 	body.set_meta("system_hunter_route_hint_source", npc.name)
 	body.set_meta("system_hunter_route_hint_destination", "wrong_marshland_path")
 	body.set_meta("system_hunter_route_hint_waypoint", npc.global_position + Vector3(55.0, 0.0, -40.0))
-	body.set_meta("system_hunter_route_deception_type", str(npc.get_meta("system_npc_deception_type", "false_safe_path")))
-	body.set_meta("system_hunter_deception_warning", "Some candidates and apparent guides deliberately mislead exam participants.")
+	var deception_type := str(npc.get_meta("system_npc_deception_type", "false_safe_path"))
+	body.set_meta("system_hunter_route_deception_type", deception_type)
+	body.set_meta("system_hunter_deception_warning", "Swamp creatures may impersonate candidates or examiners; keep the genuine examiner in sight.")
+	if deception_type == "man_faced_ape_impostor":
+		body.set_meta("system_hunter_fake_examiner_encounter", true)
+		body.set_meta("system_hunter_fake_examiner_claim", "This apparent examiner is an impostor; do not leave the genuine guide.")
+		body.set_meta("system_hunter_impostor_disguise_revealed", false)
+		body.set_meta("system_hunter_follow_real_guide_required", true)
 
 
 func _build_giant_marsh_creatures(zone: Node3D) -> void:
