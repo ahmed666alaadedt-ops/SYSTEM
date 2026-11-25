@@ -448,9 +448,8 @@ func _run() -> void:
 		return
 	operations.call("open_museum_artifact_exhibit", market_interaction)
 	var market_actions: Array[String] = []
-	for market_child in operations.get("content").find_children("*", "Button", true, false):
-		if market_child is Button:
-			market_actions.append(str((market_child as Button).text))
+	_collect_market_button_texts(operations.get("content") as Node, market_actions)
+	print("QA: Antiques marketplace controls detected: ", market_actions)
 	for required_market_action in [
 		"تصفح عروض اللاعبين",
 		"مقتنياتي الأثرية — اختر قطعة للبيع",
