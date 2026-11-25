@@ -1937,12 +1937,12 @@ func _run() -> void:
 	operations.set("credits", expected_hotel_refund_credits)
 	operations.call("_book_hotel_room", "hotel_standard_01", "غرفة قياسية 01", 180, "F", 2)
 	var hotel_booking_fixture: Dictionary = operations.get("hotel_bookings").get("hotel_standard_01", {})
-	if hotel_booking_fixture.is_empty() or int(operations.get("credits")) != maxi(original_hotel_credits, 500) - 180:
+	if hotel_booking_fixture.is_empty() or int(operations.get("credits")) != expected_hotel_refund_credits - 360:
 		operations.set("hotel_bookings", original_hotel_bookings)
 		operations.set("credits", original_hotel_credits)
 		operations.call("_save_hotel_bookings")
 		operations.call("_save_wallet")
-		_fail("SYSTEM Hotel did not reserve an available room or deduct the correct one-night rate.")
+		_fail("SYSTEM Hotel did not reserve an available room or deduct the correct two-night rate.")
 		return
 	operations.call("_check_in_hotel_room")
 	var checked_in_fixture: Dictionary = operations.get("hotel_bookings").get("hotel_standard_01", {})
