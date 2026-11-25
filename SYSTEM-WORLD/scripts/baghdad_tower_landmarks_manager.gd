@@ -5,6 +5,7 @@ const EntranceScript = preload("res://scripts/system_tower_entrance.gd")
 const HunterHelicopterControllerScript = preload("res://scripts/system_hunter_helicopter_pad_controller.gd")
 const PublicLeisureManagerScript = preload("res://scripts/system_baghdad_public_leisure_manager.gd")
 const PublicGardenManagerScript = preload("res://scripts/system_baghdad_rooftop_garden_manager.gd")
+const HunterMarshlandManagerScript = preload("res://scripts/system_hunter_marshland_manager.gd")
 const LobbyFinishScript = preload("res://scripts/system_baghdad_tower_lobby_finish_manager.gd")
 const HUNTER_TOWER_HEIGHT := 650.0
 const REPUBLIC_BRIDGE_DECK_HEIGHT := 18.0
@@ -824,7 +825,46 @@ func _create_hunter_exam_tunnel() -> void:
 	candidate_board.pixel_size = 0.014
 	candidate_board.modulate = Color(0.48, 0.91, 1.0)
 	tunnel_root.add_child(candidate_board)
-	print("SYSTEM WORLD: Hunter Examination tunnel initialized with %d individually tracked candidate NPCs." % candidate_count)
+	# The tunnel now exits directly into the Hunter-inspired marshland, replacing the former Zawraa park destination.
+	var ramp_root := Node3D.new()
+	ramp_root.name = "HunterTunnelToMarshlandRamp"
+	ramp_root.set_meta("system_marshland_access_ramp", true)
+	tunnel_root.add_child(ramp_root)
+	var horizontal_run := 5.25
+	var vertical_rise := 5.625
+	var segment_length := sqrt(horizontal_run * horizontal_run + vertical_rise * vertical_rise)
+	var ramp_angle := -atan2(vertical_rise, horizontal_run)
+	for ramp_index in range(8):
+		var ramp_center := Vector3(0.0, vertical_rise * (float(ramp_index) + 0.5), 40.0 + horizontal_run * (float(ramp_index) + 0.5))
+		var ramp_mesh_node := MeshInstance3D.new()
+		ramp_mesh_node.name = "MarshlandRampDeck_%02d" % ramp_index
+		var ramp_mesh := BoxMesh.new()
+		ramp_mesh.size = Vector3(8.0, 0.62, segment_length)
+		ramp_mesh_node.mesh = ramp_mesh
+		ramp_mesh_node.position = ramp_center
+		ramp_mesh_node.rotation.x = ramp_angle
+		ramp_mesh_node.material_override = stone_material
+		ramp_root.add_child(ramp_mesh_node)
+		var ramp_body := StaticBody3D.new()
+		ramp_body.name = "MarshlandRampCollision_%02d" % ramp_index
+		ramp_body.position = ramp_center
+		ramp_body.rotation.x = ramp_angle
+		var ramp_shape_node := CollisionShape3D.new()
+		var ramp_shape := BoxShape3D.new()
+		ramp_shape.size = ramp_mesh.size
+		ramp_shape_node.shape = ramp_shape
+		ramp_body.add_child(ramp_shape_node)
+		ramp_root.add_child(ramp_body)
+	var marshland := HunterMarshlandManagerScript.new() as Node3D
+	if marshland != null:
+		marshland.name = "HunterMarshland"
+		marshland.position = Vector3(0.0, 45.0, 82.0)
+		marshland.set_meta("system_marshland_replaces_zawraa_park", true)
+		marshland.set_meta("system_marshland_reached_from_tunnel", true)
+		tunnel_root.add_child(marshland)
+	else:
+		push_error("SYSTEM HUNTER: marshland manager could not be instantiated.")
+	print("SYSTEM WORLD: Hunter Examination tunnel initialized with %d individually tracked candidate NPCs and marshland exit." % candidate_count)
 
 
 func _nearest_land_position(origin: Vector2) -> Vector2:
