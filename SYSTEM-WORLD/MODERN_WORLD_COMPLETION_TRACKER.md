@@ -1,3 +1,19 @@
+# Hunter Examination Marshland — initial runtime implementation — 25 November 2026
+
+This section supersedes the earlier note that the marshland remains unconnected. The user has now approved developing it as an original environment used by Hunter Examination candidates. The environment is a separate region in the modern world, not a sixth Baghdad tower and not part of the independent 200-floor Power Tower.
+
+- [x] Added a dedicated `SYSTEMHunterMarshlandEnvironment` runtime manager and registered it in the modern world's lazy-load path.
+- [x] Generated a broad walkable wetland ground area, four cultivated agricultural terraces/plot zones, crop beds, ancient trees, reed beds, three monitored marsh-water zones and a small village of huts.
+- [x] Added a colossal ancient marsh turtle and two additional giant original swamp beasts as distinct creature actors.
+- [x] Added twelve resident NPCs and four deceptive Hunter-exam guides with distinct misdirection patterns and proximity-triggered warnings.
+- [x] Added a physical marshland approach/causeway and arrival trigger that records the player's Hunter-exam marshland progress metadata.
+- [x] Added `tools/validate_hunter_marshland_environment.gd` and wired it into the Godot 4.3 validation workflow.
+- [ ] Exact-HEAD Godot validation and Android export have not yet run on this feature branch. Do not describe this initial runtime as tested or production-complete until CI and device QA pass.
+- [ ] Remaining implementation: authored creature locomotion/AI and combat, resident schedules/dialogue, deceptive NPC branching quests and evidence-based clue logic, complete continuous tunnel-to-marshland travel/return routing, crop interaction/harvesting, fishing/wildlife ecology, and final visual-art integration. The approved image/design will be connected after the code environment is stable.
+- [ ] Physical Android visual, touch, collision and performance QA remains outstanding.
+
+---
+
 ## Current authoritative Hunter route — 25 November 2026
 
 This current section supersedes older historical entries below that describe the former multi-stage examination or the restaurant secret-door route.
