@@ -152,7 +152,7 @@ func _update_proximity() -> void:
 	if interact_button.visible:
 		interact_button.text = "Enter Helicopter" if landed else "Helicopter unavailable"
 		if not _can_pilot():
-			interact_button.text = "Association Staff / A-S-SS-SSS Rank / Level 50+ Required"
+			interact_button.text = "Senior Association Staff / S-Rank+ Hunter Required"
 	status_label.text = "Hunter Association — Helicopter Pad" if distance <= APPROACH_DISTANCE else ""
 
 func _toggle_pilot() -> void:
@@ -165,7 +165,7 @@ func _toggle_pilot() -> void:
 		if not is_instance_valid(player) or player.global_position.distance_to(interaction_anchor) > APPROACH_DISTANCE:
 			return
 		if not _can_pilot():
-			status_label.text = "Pilot access is restricted to Association staff, A/S/SS/SSS hunters, or level 50+ licensed hunters."
+			status_label.text = "Pilot access requires senior Association staff authorization or S-rank (or higher) Hunter status."
 			return
 		_enter_aircraft()
 
