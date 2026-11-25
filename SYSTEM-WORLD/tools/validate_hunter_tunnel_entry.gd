@@ -105,6 +105,7 @@ func _run_validation() -> void:
 	if not _check(bool(registered_overview.get("registered", false)) and serial >= 1001, "The guide did not register the candidate at tunnel arrival. overview=%s escort_active=%s player_inside=%s player_position=%s" % [str(registered_overview), str(main.get("hunter_exam_escort_active")), str(player.get_meta("system_inside_hunter_exam_tunnel", false)), str(player.global_position)]):
 		return
 	if not _check(bool(player.get_meta("system_inside_hunter_exam_tunnel", false)) and int(player.get_meta("system_hunter_exam_candidate_number", 0)) == serial, "The player or permanent candidate serial was not recorded at tunnel arrival."):
+		return
 	var tunnel_guide := tunnel.get_node_or_null("HunterGuildGuideAtTunnel") as Area3D
 	if not _check(tunnel_guide != null and tunnel_guide.is_in_group("system_interactable") and bool(tunnel.get_meta("system_hunter_exam_guide_present", false)), "The guild guide did not remain available to explain and assist inside the tunnel."):
 		return
