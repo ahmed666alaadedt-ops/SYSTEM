@@ -201,7 +201,8 @@ fun SystemApp(account: SystemFirebaseAccount) {
                                     "المستويات",
                                     "جزيرة الطمع",
                                     "المهمات العالمية",
-                                    "فرق اللاعبين"
+                                    "فرق اللاعبين",
+                                    "برج التحف والآثار"
                                 )
 
                                 tabs.forEachIndexed { index, title ->
@@ -521,6 +522,10 @@ fun SystemApp(account: SystemFirebaseAccount) {
 
                             5 -> {
                                 SystemPlayerPartyScreen(account = account)
+                            }
+
+                            6 -> {
+                                SystemAntiquesMarketplaceScreen()
                             }
                         }
                     }
