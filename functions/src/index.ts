@@ -391,6 +391,7 @@ export {
   placeArtifactAuctionBid,
   listArtifactAuctionBids,
   settleExpiredArtifactAuction,
+  settleExpiredArtifactAuctions,
   cancelArtifactAuction,
   createArtifactExchangeOffer,
   acceptArtifactExchangeOffer,
