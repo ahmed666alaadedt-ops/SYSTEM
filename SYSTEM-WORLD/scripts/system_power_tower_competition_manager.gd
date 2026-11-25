@@ -1,6 +1,8 @@
 extends Node3D
 class_name SYSTEMPowerTowerCompetitionManager
 
+signal nen_training_completed(result: Dictionary)
+
 # Independent X-S-X Power Tower gameplay contract. Currency mutations must be
 # delegated to the existing authoritative SYSTEM wallet/economy service.
 const FLOOR_COUNT := 200
@@ -76,6 +78,18 @@ func get_combat_styles_for_floor(floor_number: int) -> Array:
 		styles.erase("BOW_AND_ARROW")
 		styles.erase("TRADITIONAL_MELEE")
 	return styles
+
+func train_player_nen(training_id: String, floor_number: int, technique: String = "") -> Dictionary:
+	var progression := get_tree().root.find_child("SYSTEMPlayerProgression", true, false)
+	if progression == null:
+		return {"success": false, "reason": "PLAYER_PROGRESSION_UNAVAILABLE"}
+	if not progression.has_method("complete_power_tower_nen_training"):
+		return {"success": false, "reason": "POWER_TOWER_NEN_TRAINING_UNAVAILABLE"}
+	var result: Dictionary = progression.call("complete_power_tower_nen_training", training_id, floor_number, technique)
+	if bool(result.get("success", false)):
+		nen_training_completed.emit(result)
+	return result
+
 
 func apply_nen_training(profile: Dictionary, training_points: int) -> Dictionary:
 	var result := profile.duplicate(true)
