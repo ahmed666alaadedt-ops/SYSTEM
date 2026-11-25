@@ -204,17 +204,33 @@ func _create_service_interaction(parent: Node3D, node_name: String, service_type
 func _on_water_body_entered(body: Node3D, water_area: Area3D) -> void:
 	if body == null or not is_instance_valid(body) or not body.is_in_group("system_player"):
 		return
+	var active_zones: Dictionary = body.get_meta("system_public_leisure_water_zones", {}).duplicate()
+	active_zones[str(water_area.get_instance_id())] = {
+		"type": str(water_area.get_meta("system_public_leisure_water_type", "leisure")),
+		"depth": float(water_area.get_meta("system_public_leisure_water_depth", 1.0))
+	}
+	body.set_meta("system_public_leisure_water_zones", active_zones)
 	body.set_meta("system_public_leisure_swimming", true)
 	body.set_meta("system_public_leisure_water_type", str(water_area.get_meta("system_public_leisure_water_type", "leisure")))
 	body.set_meta("system_public_leisure_water_depth", float(water_area.get_meta("system_public_leisure_water_depth", 1.0)))
 
 
-func _on_water_body_exited(body: Node3D, _water_area: Area3D) -> void:
+func _on_water_body_exited(body: Node3D, water_area: Area3D) -> void:
 	if body == null or not is_instance_valid(body) or not body.is_in_group("system_player"):
 		return
-	body.remove_meta("system_public_leisure_swimming")
-	body.remove_meta("system_public_leisure_water_type")
-	body.remove_meta("system_public_leisure_water_depth")
+	var active_zones: Dictionary = body.get_meta("system_public_leisure_water_zones", {}).duplicate()
+	active_zones.erase(str(water_area.get_instance_id()))
+	if active_zones.is_empty():
+		body.remove_meta("system_public_leisure_water_zones")
+		body.remove_meta("system_public_leisure_swimming")
+		body.remove_meta("system_public_leisure_water_type")
+		body.remove_meta("system_public_leisure_water_depth")
+		return
+	body.set_meta("system_public_leisure_water_zones", active_zones)
+	var remaining_zone: Dictionary = active_zones.values()[active_zones.size() - 1]
+	body.set_meta("system_public_leisure_swimming", true)
+	body.set_meta("system_public_leisure_water_type", str(remaining_zone.get("type", "leisure")))
+	body.set_meta("system_public_leisure_water_depth", float(remaining_zone.get("depth", 1.0)))
 
 
 func dispatch_lifeguard_to(target: Node3D) -> bool:
