@@ -99,7 +99,10 @@ func _run() -> void:
 	var betting_manager := PowerTowerManagerScript.new()
 	root.add_child(betting_manager)
 	await process_frame
-	var match_id := "power_tower_validator_match_500"
+	betting_manager.spectator_matches.clear()
+	betting_manager.spectator_npc_ticket_balances.clear()
+	betting_manager.spectator_daily_counts.clear()
+	var match_id := "power_tower_validator_match_500_%d" % Time.get_ticks_usec()
 	var registration: Dictionary = betting_manager.call("register_spectator_match", match_id, "FIGHTER_A", "FIGHTER_B", 1)
 	assert(bool(registration.get("success", false)), "Could not register 1v1 spectator match.")
 	var seeded: Dictionary = betting_manager.call("populate_power_tower_npc_predictions", match_id, 500)
