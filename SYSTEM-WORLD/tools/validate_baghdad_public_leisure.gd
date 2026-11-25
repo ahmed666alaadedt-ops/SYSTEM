@@ -31,6 +31,30 @@ func _run_validation() -> void:
 	if bool(district.get_meta("system_public_leisure_is_tower", true)):
 		_fail("Public leisure district must not be registered as a sixth tower.")
 		return
+
+	var rooftop_deck := amenities.get_node_or_null("RooftopGardenDeck") as MeshInstance3D
+	var garden := rooftop_deck.get_node_or_null("BaghdadRooftopGarden") as Node3D if rooftop_deck != null else null
+	if garden == null or not bool(garden.get_meta("system_public_garden_runtime_ready", false)):
+		_fail("The independent Baghdad rooftop garden did not initialize on its public amenity deck.")
+		return
+	if bool(garden.get_meta("system_public_garden_is_tower", true)):
+		_fail("The rooftop garden must remain an independent public facility, not a sixth Baghdad tower.")
+		return
+	if garden.get_node_or_null("GardenGroundCollision/GardenWalkableSurface") == null:
+		_fail("The rooftop garden is missing its walkable ground collision.")
+		return
+	for expected_group in [{"prefix":"GardenTree_","count":8},{"prefix":"GardenBench_","count":8},{"prefix":"GardenFlowerbed_","count":6},{"prefix":"GardenLamp_","count":6}]:
+		var found := 0
+		for child in garden.get_children():
+			if child.name.begins_with(str(expected_group["prefix"])):
+				found += 1
+		if found != int(expected_group["count"]):
+			_fail("Rooftop garden expected %d %s elements; found %d." % [int(expected_group["count"]), str(expected_group["prefix"]), found])
+			return
+	for path_name in ["GardenCentralWalkway","GardenCrossWalkway","GardenNorthPromenade","GardenSouthPromenade"]:
+		if garden.get_node_or_null(path_name) == null:
+			_fail("The rooftop garden is missing a continuous pedestrian route: " + path_name)
+			return
 	if int(district.get_meta("system_public_leisure_water_volume_count", 0)) != 3:
 		_fail("Expected three active public pool water volumes.")
 		return
@@ -118,7 +142,7 @@ func _run_validation() -> void:
 				_fail("Public changing suite service interaction is missing: " + suite_name + "/" + service_name)
 				return
 
-	print("SYSTEM PUBLIC LEISURE QA PASS: integrated in Baghdad public amenities; three monitored pool volumes, canonical player swim-state, 16 lockers, suite-specific release, shower and lifeguard dispatch; independent of the five Baghdad towers.")
+	print("SYSTEM PUBLIC LEISURE QA PASS: integrated in Baghdad public amenities; three monitored pool volumes, canonical player swim-state, 16 lockers, suite-specific release, shower and lifeguard dispatch; walkable rooftop garden with trees, benches, flowerbeds and lighting; all public facilities independent of the five Baghdad towers.")
 	main_scene.queue_free()
 	quit(0)
 
