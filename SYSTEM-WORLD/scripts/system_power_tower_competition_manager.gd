@@ -304,7 +304,12 @@ func _build_arena_floor_layouts() -> void:
 			var b := Vector3(x + half, floor_y + 0.12, z - half)
 			var d := Vector3(x - half, floor_y + 0.12, z + half)
 			var e := Vector3(x + half, floor_y + 0.12, z + half)
-			collision_faces.append_array([a, b, e, a, e, d])
+			collision_faces.append(a)
+			collision_faces.append(b)
+			collision_faces.append(e)
+			collision_faces.append(a)
+			collision_faces.append(e)
+			collision_faces.append(d)
 	var floors_instance := MultiMeshInstance3D.new()
 	floors_instance.name = "ArenaFloorSurfaces560"
 	floors_instance.multimesh = floor_multi
