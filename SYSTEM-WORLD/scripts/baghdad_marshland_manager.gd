@@ -601,21 +601,37 @@ func _build_marsh_farms(zone: Node3D) -> void:
 		plot.position = Vector3(float(plot_index % 4) * 32.0, 0.0, float(plot_index / 4) * 20.0)
 		plot.material_override = soil
 		farm_root.add_child(plot)
+
+	var crop_mesh := CapsuleMesh.new()
+	crop_mesh.radius = 0.18
+	crop_mesh.height = 1.25
+	var crop_batches: Array[MultiMesh] = []
+	for material_index in range(3):
+		var batch := MultiMesh.new()
+		batch.transform_format = MultiMesh.TRANSFORM_3D
+		batch.mesh = crop_mesh
+		batch.instance_count = 144
+		crop_batches.append(batch)
+	var crop_batch_offsets := PackedInt32Array([0, 0, 0])
+	for plot_index in range(12):
+		var plot_position := Vector3(float(plot_index % 4) * 32.0, 0.0, float(plot_index / 4) * 20.0)
 		for row in range(4):
+			var material_index := (plot_index + row) % 3
 			for plant_index in range(9):
-				var crop := MeshInstance3D.new()
-				crop.name = "MarshCrop_%02d_%02d_%02d" % [plot_index, row, plant_index]
-				var crop_mesh := CapsuleMesh.new()
-				crop_mesh.radius = 0.18
-				crop_mesh.height = 1.25
-				crop.mesh = crop_mesh
-				crop.position = plot.position + Vector3(-11.0 + float(plant_index) * 2.7, 0.65, -4.5 + float(row) * 3.0)
-				crop.material_override = crop_materials[(plot_index + row) % crop_materials.size()]
-				farm_root.add_child(crop)
+				var crop_position := plot_position + Vector3(-11.0 + float(plant_index) * 2.7, 0.65, -4.5 + float(row) * 3.0)
+				var crop_transform := Transform3D(Basis.IDENTITY, crop_position)
+				crop_batches[material_index].set_instance_transform(crop_batch_offsets[material_index], crop_transform)
+				crop_batch_offsets[material_index] += 1
+	for material_index in range(3):
+		var batch_instance := MultiMeshInstance3D.new()
+		batch_instance.name = "MarshCropBatch_%02d" % material_index
+		batch_instance.multimesh = crop_batches[material_index]
+		batch_instance.material_override = crop_materials[material_index]
+		farm_root.add_child(batch_instance)
 	farm_root.set_meta("system_agricultural_plot_count", 12)
 	farm_root.set_meta("system_crop_plant_count", 432)
+	farm_root.set_meta("system_crop_render_batch_count", 3)
 	farm_root.set_meta("system_marshland_farm_is_walkable", true)
-
 
 func _build_marsh_fog(zone: Node3D) -> void:
 	fog_material = StandardMaterial3D.new()
