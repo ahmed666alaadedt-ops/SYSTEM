@@ -25,7 +25,7 @@ const DEFAULT_ATTRIBUTES := {
 	"discipline": 1
 }
 
-const DEFAULT_EQUIPMENT_SLOTS := {"weapon": "", "shield": "", "armor": "", "helmet": "", "outfit": ""}
+const DEFAULT_EQUIPMENT_SLOTS := {"weapon": "", "shield": "", "armor": "", "helmet": "", "outfit": "", "accessory_1": "", "accessory_2": ""}
 const MAX_EQUIPMENT_UPGRADE_LEVEL := 10
 const MAX_EQUIPMENT_DURABILITY := 100.0
 const EQUIPMENT_SLOTS_BY_ITEM := {
@@ -34,14 +34,17 @@ const EQUIPMENT_SLOTS_BY_ITEM := {
 	"hunter_shield": "shield", "advanced_hunter_shield": "shield",
 	"hunter_armor": "armor", "rank_e_armor": "armor", "rank_d_armor": "armor", "rank_c_armor": "armor", "rank_b_armor": "armor", "rank_a_armor": "armor", "rank_s_armor": "armor", "rank_ss_armor": "armor", "rank_sss_armor": "armor",
 	"hunter_helmet": "helmet", "reinforced_helmet": "helmet",
+	"hunter_pendant": "accessory_1", "guardian_ring": "accessory_1", "nen_aura_bracelet": "accessory_2", "hunter_badge": "accessory_2",
 	"combat_outfit": "outfit", "casual_outfit": "outfit", "hunter_outfit_e": "outfit", "hunter_outfit_d": "outfit", "hunter_outfit_c": "outfit", "hunter_outfit_b": "outfit", "hunter_outfit_a": "outfit", "hunter_outfit_s": "outfit", "hunter_outfit_ss": "outfit", "hunter_outfit_sss": "outfit"
 }
 const EQUIPMENT_DAMAGE_BONUS := {
 	"training_sword": 5.0, "steel_sword": 12.0, "hunter_spear": 10.0, "battle_axe": 14.0, "composite_bow": 8.0, "system_firearm": 16.0,
+	"hunter_pendant": 2.0, "guardian_ring": 4.0, "nen_aura_bracelet": 5.0, "hunter_badge": 1.0,
 	"combat_knife": 7.0, "dual_blades": 13.0, "long_sword": 15.0, "great_sword": 22.0, "crossbow": 12.0, "war_hammer": 18.0, "hunter_pistol": 14.0, "hunter_rifle": 19.0, "precision_rifle": 24.0, "tactical_shotgun": 21.0
 }
 const EQUIPMENT_DEFENSE_BONUS := {
-	"hunter_shield": 8.0, "advanced_hunter_shield": 16.0, "hunter_armor": 12.0, "hunter_helmet": 4.0, "reinforced_helmet": 8.0,
+	"hunter_shield": 8.0, "advanced_hunter_shield": 16.0, "hunter_armor": 12.0,
+	"hunter_pendant": 2.0, "guardian_ring": 3.0, "nen_aura_bracelet": 2.0, "hunter_badge": 1.0, "hunter_helmet": 4.0, "reinforced_helmet": 8.0,
 	"rank_e_armor": 5.0, "rank_d_armor": 7.0, "rank_c_armor": 10.0, "rank_b_armor": 14.0, "rank_a_armor": 19.0, "rank_s_armor": 25.0, "rank_ss_armor": 32.0, "rank_sss_armor": 42.0,
 	"hunter_outfit_e": 5.0, "hunter_outfit_d": 7.0, "hunter_outfit_c": 10.0, "hunter_outfit_b": 14.0, "hunter_outfit_a": 19.0, "hunter_outfit_s": 25.0, "hunter_outfit_ss": 32.0, "hunter_outfit_sss": 42.0
 }
