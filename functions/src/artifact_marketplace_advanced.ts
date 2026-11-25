@@ -692,7 +692,6 @@ export const listArtifactAuctionBids = onCall(async (request) => {
       const data = doc.data();
       return {
         bidId: doc.id,
-        bidderId: data.bidderId,
         bidderName: data.bidderName,
         amount: data.amount,
         createdAt: data.createdAt?.toMillis?.() ?? null
