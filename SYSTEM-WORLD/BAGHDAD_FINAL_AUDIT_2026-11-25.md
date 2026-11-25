@@ -82,3 +82,11 @@ This section supersedes older tower-name and Hunter-entry-flow notes above where
 - Hotel refund, room-service text, marketplace scheduler, export and index changes were made after the Hunter-tested commit above.
 - Run Godot operations validation, Firebase Functions TypeScript build, Android app build and canonical Godot APK export on the latest branch HEAD before treating these follow-up changes as validated.
 - Keep PR #38 draft and unmerged until the owner explicitly approves.
+
+
+### Scheduled marketplace lifecycle follow-up
+- Direct-sale listings now have a 15-minute scheduled expiry sweep that atomically releases the listed artifact from escrow when the listing expires.
+- Player-to-player exchange offers now have a 15-minute scheduled expiry sweep that releases the offered artifact from escrow.
+- Auctions now have a 5-minute scheduled settlement sweep; it reuses the same atomic settlement transaction as the authenticated manual settlement endpoint. Winner escrow validation also rejects reserved balances greater than the wallet balance.
+- Firestore composite indexes exist for listing status/expiry and exchange status/expiry. The auction status/end-time index already existed.
+- These are not live until Cloud Functions and indexes are deployed to Firebase. Exact-HEAD TypeScript build and Firestore emulator checks are pending for commit `1b83e5ca73d2e12a9cddbe6c936a9647757383e6`.
