@@ -70,7 +70,7 @@ func setup(terrain_node: Node, hunter_tunnel: Node3D) -> void:
 	set_meta("system_geographic_anchor_adjustment_m", anchor_shift.length())
 	var tunnel_end_for_entry := hunter_tunnel.global_position + Vector3(0.0, 0.0, 94.0)
 	var entry_direction := Vector2(marsh_center.x - tunnel_end_for_entry.x, marsh_center.z - tunnel_end_for_entry.z).normalized()
-	marsh_entry_local = Vector3(-entry_direction.x * 350.0, 0.0, -entry_direction.y * 350.0)
+	marsh_entry_local = Vector3(-entry_direction.x * 600.0, 0.0, -entry_direction.y * 600.0)
 	global_position = Vector3.ZERO
 	current_marsh_season = _get_marsh_season()
 	name = "BaghdadMarshland_AlZawraaReplacement"
@@ -177,7 +177,7 @@ func _build_hunter_tunnel_connection(hunter_tunnel: Node3D) -> void:
 		push_error("SYSTEM Baghdad Marshland: tunnel and marsh anchors are unexpectedly close.")
 		return
 	var direction := toward_marsh.normalized()
-	var entry_xz := Vector2(marsh_center.x, marsh_center.z) - direction * 350.0
+	var entry_xz := Vector2(marsh_center.x, marsh_center.z) - direction * 600.0
 	var entry_ground := float(terrain.call("get_terrain_height", entry_xz.x, entry_xz.y))
 	var start_floor_y := tunnel_end.y
 	var end_floor_y := entry_ground - 0.25
