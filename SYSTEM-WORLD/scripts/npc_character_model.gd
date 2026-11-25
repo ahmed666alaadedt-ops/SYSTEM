@@ -493,7 +493,7 @@ func _collect_mesh_nodes(root: Node) -> Array[Node]:
 			# for a surface count on that empty placeholder RID.
 			if mesh_node.mesh != null and not bool(mesh_node.get_meta("system_empty_mesh_sanitized", false)):
 				var mesh_rid: RID = mesh_node.mesh.get_rid()
-				if mesh_rid.is_valid() and mesh_node.mesh.get_surface_count() > 0:
+				if mesh_rid.is_valid():
 					result.append(mesh_node)
 		result.append_array(_collect_mesh_nodes(child))
 	return result
