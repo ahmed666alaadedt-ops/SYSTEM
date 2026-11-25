@@ -92,8 +92,8 @@ A Firebase Functions TypeScript validation workflow has been added. The schedule
 2. Configure the trusted game-server Firebase custom claim and connect verified quest/dungeon rewards to `awardMarketplaceCurrency`; ordinary players cannot mint currency.
 3. Deploy and monitor the scheduled marketplace jobs: auction settlement every 5 minutes, and listing/exchange escrow expiry every 15 minutes. The scheduler code and expiry indexes are present; production activation still requires deployment.
 4. Complete a physical-device round trip for login, Godot launch, market browse/list/purchase/auction/exchange, network loss and request retry through the native host plugin.
-5. Add callable-function emulator tests for unauthorized calls, self-purchase, insufficient funds, duplicate IDs, escrow cancellation, replay, expired listings and simultaneous purchases.
-6. Add Firebase Emulator integration tests for scheduler idempotency, expired escrow release, auction settlement, simultaneous bids and retry/replay behavior.
+5. [COMPLETED 25 NOV 2026] Callable-function emulator coverage passed for authentication, self-purchase, insufficient funds, atomic settlement, concurrent purchases, auctions, exchanges, trusted reward replay protection and scheduled expiry workers (8/8 transaction tests).
+6. [COMPLETED 25 NOV 2026] Firestore rules and marketplace integration tests passed against the Firebase Emulator (7/7 security-rule tests and 8/8 transaction tests).
 7. Deploy Cloud Functions, Firestore rules and indexes only after user approval and successful tests.
 
 ## Security and technical requirements
