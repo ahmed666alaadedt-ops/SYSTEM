@@ -95,7 +95,7 @@ func _build_interface() -> void:
 	content.add_child(exam_register_button)
 
 	exam_start_button = Button.new()
-	exam_start_button.text = "بدء سلسلة الاختبار"
+	exam_start_button.text = "بدء المسابقة المتصلة داخل النفق"
 	exam_start_button.pressed.connect(func(): exam_start_requested.emit())
 	content.add_child(exam_start_button)
 
@@ -127,10 +127,10 @@ func set_exam_status(result: Dictionary) -> void:
 				status_label.text = "حالة الاختبار: " + (reason if not reason.is_empty() else "تعذر تنفيذ الطلب")
 		return
 	if result.has("candidate_number") and result.has("stages"):
-		status_label.text = "رقم المتسابق: %d | مراحل الاختبار: %d" % [int(result["candidate_number"]), int(result["stages"])]
+		status_label.text = "رقم المتسابق: %d | المسابقة: نفق الصيادين المتصل" % int(result["candidate_number"])
 	elif result.has("stage"):
 		var stage: Dictionary = result["stage"]
-		status_label.text = "بدأ الاختبار: " + str(stage.get("title", ""))
+		status_label.text = "بدأت المسابقة: " + str(stage.get("title", ""))
 	else:
 		status_label.text = "تم تحديث حالة اختبار الصيادين"
 
