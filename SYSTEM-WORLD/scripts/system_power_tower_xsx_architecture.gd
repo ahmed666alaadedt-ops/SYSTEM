@@ -477,6 +477,40 @@ func _build_lobby_facilities() -> void:
 	training_area.add_child(training_collision)
 	nen_hall.add_child(training_area)
 	set_meta("system_power_tower_nen_training_hall", "PowerTowerNenTrainingHall")
-	set_meta("system_power_tower_interior_display_groups", ["TraditionalWeaponsGallery", "ArmorShowroom", "NenElixirCabinet", "SkillScrollLibrary", "HunterAccessoriesGallery", "PowerTowerCafeteria", "PowerTowerNenTrainingHall"])
+	var combat_board := Node3D.new()
+	combat_board.name = "PowerTowerCombatStyleBoard"
+	combat_board.position = Vector3(0.0, 0.0, 40.0)
+	combat_board.set_meta("system_facility_type", "COMBAT_STYLE_SELECTION")
+	combat_board.set_meta("system_tower_id", "power_tower_baghdad")
+	facility_root.add_child(combat_board)
+	var combat_board_mesh := MeshInstance3D.new()
+	combat_board_mesh.name = "CombatStyleBoardDisplay"
+	var combat_board_box := BoxMesh.new()
+	combat_board_box.size = Vector3(7.0, 4.2, 0.45)
+	combat_board_mesh.mesh = combat_board_box
+	combat_board_mesh.position.y = 2.1
+	combat_board_mesh.material_override = dark_glass
+	combat_board.add_child(combat_board_mesh)
+	var combat_board_label := Label3D.new()
+	combat_board_label.name = "CombatStyleBoardLabel"
+	combat_board_label.text = "X-S-X COMBAT STYLES\nKUNG FU • MARTIAL ARTS • WEAPONS • NEN"
+	combat_board_label.font_size = 18
+	combat_board_label.position = Vector3(0.0, 2.2, 0.28)
+	combat_board_label.modulate = Color(0.55, 0.92, 1.0)
+	combat_board.add_child(combat_board_label)
+	var combat_board_interaction := Area3D.new()
+	combat_board_interaction.name = "CombatStyleBoardInteraction"
+	combat_board_interaction.add_to_group("system_interactable")
+	combat_board_interaction.set_meta("system_tower_id", "power_tower_baghdad")
+	combat_board_interaction.set_meta("system_power_tower_combat_style_board", true)
+	combat_board_interaction.set_meta("system_interaction_prompt", "اختيار أسلوب القتال للطابق القادم")
+	var combat_board_collision := CollisionShape3D.new()
+	var combat_board_shape := BoxShape3D.new()
+	combat_board_shape.size = Vector3(8.0, 4.5, 4.0)
+	combat_board_collision.shape = combat_board_shape
+	combat_board_collision.position.y = 2.1
+	combat_board_interaction.add_child(combat_board_collision)
+	combat_board.add_child(combat_board_interaction)
+	set_meta("system_power_tower_interior_display_groups", ["TraditionalWeaponsGallery", "ArmorShowroom", "NenElixirCabinet", "SkillScrollLibrary", "HunterAccessoriesGallery", "PowerTowerCafeteria", "PowerTowerNenTrainingHall", "PowerTowerCombatStyleBoard"])
 	set_meta("system_power_tower_cafeteria_table_count", 4)
 	set_meta("system_power_tower_cafeteria_seat_count", 16)
