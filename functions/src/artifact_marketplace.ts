@@ -6,7 +6,9 @@ import {
 } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 
-const db = getFirestore();
+function database() {
+  return getFirestore();
+}
 
 const MAX_PRICE = 1_000_000_000;
 const MARKETPLACE_FEE_BASIS_POINTS = 0;
@@ -51,16 +53,16 @@ function positiveInteger(value: unknown, fieldName: string): number {
 }
 
 function ownershipRef(uid: string, artifactId: string) {
-  return db.collection("artifactOwnership").doc(uid)
+  return database().collection("artifactOwnership").doc(uid)
     .collection("items").doc(artifactId);
 }
 
 function walletRef(uid: string) {
-  return db.collection("systemWallets").doc(uid);
+  return database().collection("systemWallets").doc(uid);
 }
 
 function playerRef(uid: string) {
-  return db.collection("players").doc(uid);
+  return database().collection("players").doc(uid);
 }
 
 /**
@@ -70,7 +72,7 @@ function playerRef(uid: string) {
 export const getMyMarketplaceWallet = onCall(async (request) => {
   const uid = authenticatedUid(request);
   const ref = walletRef(uid);
-  await db.runTransaction(async (transaction) => {
+  await database().runTransaction(async (transaction) => {
     const snapshot = await transaction.get(ref);
     if (!snapshot.exists) {
       transaction.create(ref, {
@@ -92,7 +94,7 @@ export const getMyMarketplaceWallet = onCall(async (request) => {
 /** Returns only the authenticated player's server-owned artifacts. */
 export const listMyMarketplaceArtifacts = onCall(async (request) => {
   const uid = authenticatedUid(request);
-  const snapshot = await db.collection("artifactOwnership").doc(uid)
+  const snapshot = await database().collection("artifactOwnership").doc(uid)
     .collection("items").where("status", "==", "owned").limit(100).get();
 
   return {
@@ -137,10 +139,10 @@ export const grantMarketplaceArtifact = onCall(async (request) => {
 
   const ownerProfile = playerRef(ownerId);
   const itemRef = ownershipRef(ownerId, artifactId);
-  const auditRef = db.collection("artifactOwnershipAudit").doc(artifactId);
-  const registryRef = db.collection("artifactRegistry").doc(artifactId);
+  const auditRef = database().collection("artifactOwnershipAudit").doc(artifactId);
+  const registryRef = database().collection("artifactRegistry").doc(artifactId);
 
-  await db.runTransaction(async (transaction) => {
+  await database().runTransaction(async (transaction) => {
     const [profile, existing, registry] = await Promise.all([
       transaction.get(ownerProfile),
       transaction.get(itemRef),
@@ -178,6 +180,17 @@ export const grantMarketplaceArtifact = onCall(async (request) => {
       actorId: moderatorId,
       createdAt: FieldValue.serverTimestamp()
     });
+    transaction.create(
+      database().collection("artifactHistory").doc(artifactId)
+        .collection("events").doc("issued"),
+      {
+        artifactId,
+        ownerId,
+        action: "issued",
+        actorId: moderatorId,
+        createdAt: FieldValue.serverTimestamp()
+      }
+    );
   });
 
   return { success: true, artifactId, ownerId };
@@ -193,7 +206,7 @@ export const browseArtifactMarketplace = onCall(async (request) => {
     ? request.data.rarity.trim().toLowerCase()
     : "";
 
-  let query: Query = db.collection("marketplaceListings")
+  let query: Query = database().collection("marketplaceListings")
     .where("status", "==", "active");
 
   if (civilization) query = query.where("civilization", "==", civilization);
@@ -201,7 +214,10 @@ export const browseArtifactMarketplace = onCall(async (request) => {
 
   const snapshot = await query.orderBy("createdAt", "desc").limit(40).get();
   return {
-    listings: snapshot.docs.map((doc) => {
+    listings: snapshot.docs.filter((doc) => {
+      const expiresAt = doc.data().expiresAt;
+      return !(expiresAt instanceof Timestamp) || expiresAt.toMillis() > Date.now();
+    }).map((doc) => {
       const data = doc.data();
       return {
         listingId: doc.id,
@@ -236,12 +252,12 @@ export const createArtifactListing = onCall(async (request) => {
     throw new HttpsError("invalid-argument", "مدة العرض يجب أن تكون بين يوم و30 يوماً.");
   }
 
-  const listingRef = db.collection("marketplaceListings").doc();
+  const listingRef = database().collection("marketplaceListings").doc();
   const itemRef = ownershipRef(sellerId, artifactId);
   const sellerProfileRef = playerRef(sellerId);
   const expiresAt = Timestamp.fromMillis(Date.now() + durationDays * 24 * 60 * 60 * 1000);
 
-  await db.runTransaction(async (transaction) => {
+  await database().runTransaction(async (transaction) => {
     const [itemSnapshot, sellerProfile] = await Promise.all([
       transaction.get(itemRef),
       transaction.get(sellerProfileRef)
@@ -285,9 +301,9 @@ export const createArtifactListing = onCall(async (request) => {
 export const cancelArtifactListing = onCall(async (request) => {
   const sellerId = authenticatedUid(request);
   const listingId = cleanText(request.data?.listingId, 128, "listingId");
-  const listingRef = db.collection("marketplaceListings").doc(listingId);
+  const listingRef = database().collection("marketplaceListings").doc(listingId);
 
-  await db.runTransaction(async (transaction) => {
+  await database().runTransaction(async (transaction) => {
     const listingSnapshot = await transaction.get(listingRef);
     if (!listingSnapshot.exists) throw new HttpsError("not-found", "العرض غير موجود.");
     const listing = listingSnapshot.data()!;
@@ -324,11 +340,11 @@ export const cancelArtifactListing = onCall(async (request) => {
 export const purchaseArtifactListing = onCall(async (request) => {
   const buyerId = authenticatedUid(request);
   const listingId = cleanText(request.data?.listingId, 128, "listingId");
-  const listingRef = db.collection("marketplaceListings").doc(listingId);
-  const transactionRef = db.collection("marketplaceTransactions").doc();
-  const auditRef = db.collection("marketplaceAudit").doc(transactionRef.id);
+  const listingRef = database().collection("marketplaceListings").doc(listingId);
+  const transactionRef = database().collection("marketplaceTransactions").doc();
+  const auditRef = database().collection("marketplaceAudit").doc(transactionRef.id);
 
-  const result = await db.runTransaction(async (transaction) => {
+  const result = await database().runTransaction(async (transaction) => {
     const listingSnapshot = await transaction.get(listingRef);
     if (!listingSnapshot.exists) throw new HttpsError("not-found", "العرض غير موجود.");
     const listing = listingSnapshot.data()!;
@@ -435,6 +451,21 @@ export const purchaseArtifactListing = onCall(async (request) => {
       action: "sold_and_transferred",
       createdAt: FieldValue.serverTimestamp()
     });
+    transaction.create(
+      database().collection("artifactHistory").doc(artifactId)
+        .collection("events").doc(transactionRef.id),
+      {
+        transactionId: transactionRef.id,
+        artifactId,
+        listingId,
+        sellerId,
+        buyerId,
+        action: "sold_and_transferred",
+        price,
+        currency: "SYSTEM",
+        createdAt: FieldValue.serverTimestamp()
+      }
+    );
     return {
       success: true,
       transactionId: transactionRef.id,
