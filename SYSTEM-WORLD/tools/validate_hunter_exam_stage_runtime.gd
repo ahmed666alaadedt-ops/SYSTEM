@@ -3,186 +3,119 @@ extends SceneTree
 const ExamManagerScript = preload("res://scripts/system_hunter_exam_manager.gd")
 const StageRuntimeScript = preload("res://scripts/system_hunter_exam_stage_runtime.gd")
 const CandidateCrowdScript = preload("res://scripts/system_hunter_candidate_crowd.gd")
-const EXPECTED_STAGE_IDS: Array[String] = [
-	"baghdad_heritage_trial",
-	"cairo_buried_market",
-	"alexandria_lighthouse",
-	"paris_catacombs",
-	"babylon_guardian",
-	"tokyo_urban_pursuit",
-	"final_survival_route"
+const CONTINUOUS_STAGE_ID := "baghdad_tunnel_competition"
+const EXPECTED_OBJECTIVES: Array[String] = [
+	"tunnel_checkpoint_a",
+	"tunnel_checkpoint_b",
+	"tunnel_finish"
 ]
 
 func _initialize() -> void:
 	call_deferred("_run_validation")
 
+
 func _check(condition: bool, message: String) -> bool:
 	if condition:
 		return true
-	push_error("Hunter seven-stage runtime validation failed: " + message)
+	push_error("Hunter continuous tunnel competition validation failed: " + message)
 	quit(1)
 	return false
+
 
 func _run_validation() -> void:
 	var reset_config := ConfigFile.new()
 	reset_config.set_value("exam", "next_candidate_number", 1001)
-	if not _check(reset_config.save("user://system_hunter_exam.cfg") == OK, "Could not reset the isolated validation save file."):
+	if not _check(reset_config.save("user://system_hunter_exam.cfg") == OK, "Could not reset the isolated validation save."):
 		return
 
 	var manager := ExamManagerScript.new()
 	root.add_child(manager)
 	await process_frame
-	var registration: Dictionary = manager.apply_for_exam("hunter_seven_stage_validation")
-	if not _check(bool(registration.get("success", false)), "Candidate registration failed."):
+	var invitation: Dictionary = manager.accept_exam_invitation("hunter_continuous_validation")
+	if not _check(bool(invitation.get("success", false)) and not bool(manager.get_exam_overview().get("registered", true)), "Invitation acceptance incorrectly registered the candidate."):
+		return
+	if not _check(int(manager.get_exam_overview().get("candidate_number", 0)) == 0, "Invitation acceptance allocated a candidate number too early."):
+		return
+
+	var registration: Dictionary = manager.register_candidate_at_tunnel("hunter_continuous_validation")
+	if not _check(bool(registration.get("success", false)), "Tunnel registration failed."):
 		return
 	var serial := int(registration.get("candidate_number", 0))
-	if not _check(serial >= 1001 and int(registration.get("stages", 0)) == 7, "Registration did not allocate a serial and seven stages."):
+	if not _check(serial == 1001 and int(manager.get_exam_overview().get("total_stages", 0)) == 1, "The candidate serial or one-stage continuous definition is incorrect."):
+		return
+	var stage_list: Array = manager.get_exam_overview().get("stages", [])
+	if not _check(stage_list.size() == 1 and str(stage_list[0].get("id", "")) == CONTINUOUS_STAGE_ID, "The obsolete seven-stage journey is still active."):
 		return
 
-	var overview: Dictionary = manager.get_exam_overview()
-	var stages: Array = overview.get("stages", [])
-	if not _check(int(overview.get("total_stages", 0)) == 7 and stages.size() == EXPECTED_STAGE_IDS.size(), "The Hunter examination must contain exactly seven stages."):
+	var restored_manager := ExamManagerScript.new()
+	root.add_child(restored_manager)
+	await process_frame
+	if not _check(bool(restored_manager.get_exam_overview().get("registered", false)) and int(restored_manager.get_exam_overview().get("candidate_number", 0)) == serial, "Candidate serial did not persist across manager recreation."):
 		return
-	for index in range(EXPECTED_STAGE_IDS.size()):
-		if not _check(str(stages[index].get("id", "")) == EXPECTED_STAGE_IDS[index], "Stage order or identifier mismatch at stage %d." % (index + 1)):
-			return
-
-	var repeated_registration: Dictionary = manager.apply_for_exam("hunter_seven_stage_validation")
-	if not _check(not bool(repeated_registration.get("success", false)) and int(repeated_registration.get("candidate_number", 0)) == serial, "Repeat registration allocated a new candidate number."):
+	var repeated_registration: Dictionary = restored_manager.register_candidate_at_tunnel("hunter_continuous_validation")
+	if not _check(int(repeated_registration.get("candidate_number", 0)) == serial, "Repeated tunnel registration allocated a new serial."):
 		return
 
 	var started: Dictionary = manager.begin_exam()
-	if not _check(bool(started.get("success", false)) and str(started.get("stage", {}).get("id", "")) == EXPECTED_STAGE_IDS[0], "The examination did not begin at the Baghdad heritage stage."):
+	if not _check(bool(started.get("success", false)) and str(started.get("stage", {}).get("id", "")) == CONTINUOUS_STAGE_ID, "The continuous tunnel competition did not start."):
 		return
-	var wrong_order: Dictionary = manager.complete_current_stage(EXPECTED_STAGE_IDS[1], "OUT_OF_ORDER_TEST")
-	if not _check(not bool(wrong_order.get("success", false)) and str(wrong_order.get("reason", "")) == "STAGE_ORDER_MISMATCH", "The manager accepted a stage out of sequence."):
-		return
-	var missing_evidence: Dictionary = manager.complete_current_stage(EXPECTED_STAGE_IDS[0], "")
-	if not _check(not bool(missing_evidence.get("success", false)), "The manager accepted an empty evidence record."):
+	if not _check(not bool(started.get("stage", {}).get("description", "").contains("seven")), "The active competition still describes seven separate stages."):
 		return
 
 	var player := CharacterBody3D.new()
-	player.name = "HunterExamValidationPlayer"
+	player.name = "HunterContinuousValidationPlayer"
 	root.add_child(player)
-	var candidate_crowd := CandidateCrowdScript.new()
-	root.add_child(candidate_crowd)
+	var runtime := StageRuntimeScript.new()
+	runtime.name = "HunterContinuousCompetitionRuntime"
+	root.add_child(runtime)
+	var activation: Dictionary = runtime.activate_stage(manager.get_current_stage(), player, manager)
+	if not _check(bool(activation.get("success", false)) and str(activation.get("stage_id", "")) == CONTINUOUS_STAGE_ID, "The physical continuous tunnel environment failed to activate."):
+		return
+	var site := runtime.get_node_or_null("ExaminationSite_" + CONTINUOUS_STAGE_ID) as Node3D
+	if not _check(site != null and str(site.get_meta("system_exam_stage_id", "")) == CONTINUOUS_STAGE_ID, "The active physical tunnel route is missing."):
+		return
+	var rival_system: Node = runtime.get("rival_competition")
+	if not _check(is_instance_valid(rival_system) and int(rival_system.call("get_competition_status").get("rival_count", 0)) == 5, "The continuous competition does not spawn all five named rivals."):
+		return
+
+	var ground_collision := site.get_node_or_null("StageGroundBody/CollisionShape3D") as CollisionShape3D
+	if not _check(ground_collision != null and ground_collision.shape != null, "The continuous tunnel route has no physical ground collision."):
+		return
+	for index in range(EXPECTED_OBJECTIVES.size()):
+		var objective := site.get_node_or_null("ObjectiveInteraction_%02d" % index) as Area3D
+		if not _check(objective != null and str(objective.get_meta("system_exam_stage_objective", "")) == EXPECTED_OBJECTIVES[index], "A physical checkpoint is missing or out of order at index %d." % index):
+			return
+
+	var wrong_order: Dictionary = runtime.handle_interaction(site.get_node("ObjectiveInteraction_01"))
+	if not _check(not bool(wrong_order.get("success", false)), "The continuous competition accepted an out-of-order checkpoint."):
+		return
+	for index in range(EXPECTED_OBJECTIVES.size()):
+		var objective := site.get_node("ObjectiveInteraction_%02d" % index)
+		var result: Dictionary = runtime.handle_interaction(objective)
+		if not _check(bool(result.get("success", false)), "Continuous objective %s failed." % EXPECTED_OBJECTIVES[index]):
+			return
+		if index == EXPECTED_OBJECTIVES.size() - 1 and not _check(bool(result.get("stage_completed", false)), "The final tunnel checkpoint did not complete the competition."):
+			return
+
+	var final_overview: Dictionary = manager.get_exam_overview()
+	if not _check(int(final_overview.get("total_stages", 0)) == 1 and final_overview.get("completed_stages", []).size() == 1 and str(final_overview.get("completed_stages", [])[0]) == CONTINUOUS_STAGE_ID, "The single continuous competition was not recorded as completed."):
+		return
+	if not _check(not bool(final_overview.get("active", true)) and not bool(final_overview.get("failed", true)), "The final competition state is not a successful completion."):
+		return
+	var after_completion: Dictionary = manager.begin_exam()
+	if not _check(not bool(after_completion.get("success", false)) and str(after_completion.get("reason", "")) == "ALL_STAGES_COMPLETED", "A completed continuous competition unexpectedly restarted."):
+		return
+
+	var crowd := CandidateCrowdScript.new()
+	root.add_child(crowd)
 	await process_frame
-	var crowd_status: Dictionary = candidate_crowd.call("get_crowd_status")
-	if not _check(int(crowd_status.get("candidate_count", 0)) == 500 and int(crowd_status.get("unique_candidate_numbers", 0)) == 500, "The tunnel crowd did not create 500 individually tracked competitors."):
+	var crowd_status: Dictionary = crowd.call("get_crowd_status")
+	if not _check(int(crowd_status.get("candidate_count", 0)) == 500 and int(crowd_status.get("unique_candidate_numbers", 0)) == 500 and int(crowd_status.get("body_instances", 0)) == 500 and int(crowd_status.get("head_instances", 0)) == 500, "The 500-candidate crowd is not fully tracked and rendered."):
 		return
-	if not _check(int(crowd_status.get("body_instances", 0)) == 500 and int(crowd_status.get("head_instances", 0)) == 500, "The 500 competitors are not all represented in the visible crowd render."):
-		return
-	var first_candidate: Node3D = candidate_crowd.call("get_candidate_by_number", 2001) as Node3D
-	var last_candidate: Node3D = candidate_crowd.call("get_candidate_by_number", 2500) as Node3D
-	if not _check(first_candidate != null and last_candidate != null, "The first or last competitor cannot be resolved by unique candidate number."):
-		return
-	if not _check(bool(first_candidate.get_meta("system_exam_competitor", false)) and int(first_candidate.get_meta("system_candidate_number", 0)) == 2001 and int(last_candidate.get_meta("system_candidate_number", 0)) == 2500, "Competitor records do not preserve their unique serial numbers."):
-		return
-	candidate_crowd.call("_start_staggered_movement_wave")
-	var moving_candidates := 0
-	for candidate in candidate_crowd.candidate_records:
-		if str(candidate.get_meta("system_candidate_status", "")) == "moving":
-			moving_candidates += 1
-	if not _check(moving_candidates > 0, "The candidate crowd did not start its staggered movement behavior."):
-		return
-	var behavior_status: Dictionary = candidate_crowd.call("get_crowd_status")
-	if not _check(int(behavior_status.get("behavior_profile_count", 0)) == 500 and int(behavior_status.get("decision_count_total", 0)) >= 18 and int(behavior_status.get("cooperation_events", 0)) >= 1 and int(behavior_status.get("mistake_events", 0)) >= 1, "The 500 candidates do not run independent scouting, cooperation and mistake-recovery decisions."):
-		return
-	var first_behavior: Dictionary = candidate_crowd.call("get_candidate_behavior", 2001)
-	var last_behavior: Dictionary = candidate_crowd.call("get_candidate_behavior", 2500)
-	if not _check(first_behavior.has("skill") and first_behavior.has("cooperation") and last_behavior.has("error_rate") and last_behavior.has("activity"), "Individual candidate strategy profiles are missing from the serial registry."):
-		return
-	var active_manager: Node = manager
-
-	for stage_index in range(EXPECTED_STAGE_IDS.size()):
-		var stage_data: Dictionary = active_manager.call("get_current_stage")
-		var expected_id := EXPECTED_STAGE_IDS[stage_index]
-		if not _check(str(stage_data.get("id", "")) == expected_id, "Current stage did not advance to %s." % expected_id):
-			return
-		var runtime := StageRuntimeScript.new()
-		runtime.name = "ValidationRuntime_" + expected_id
-		root.add_child(runtime)
-		var activation: Dictionary = runtime.activate_stage(stage_data, player, active_manager)
-		if not _check(bool(activation.get("success", false)) and str(activation.get("stage_id", "")) == expected_id, "Physical environment failed to activate for %s." % expected_id):
-			return
-
-		var rival_system: Node = runtime.get("rival_competition")
-		if not _check(is_instance_valid(rival_system) and int(rival_system.call("get_competition_status").get("rival_count", 0)) == 5, "The named rival competition actors did not initialize for %s." % expected_id):
-			return
-
-		if stage_index == 0:
-			var site := runtime.get_node_or_null("BaghdadHeritageSite")
-			if not _check(site != null, "Baghdad heritage chamber was not built."):
-				return
-			var floor_collision := site.get_node_or_null("AncientStoneFloorBody/CollisionShape3D") as CollisionShape3D
-			if not _check(floor_collision != null and floor_collision.shape != null, "Baghdad chamber floor has no physical collision."):
-				return
-			var spike_count := 0
-			for child in site.get_children():
-				if str(child.name).begins_with("StoneTrapSpikeCollision_"):
-					spike_count += 1
-			if not _check(spike_count == 7, "Baghdad stage must contain seven physical spike obstacles."):
-				return
-			var relic := site.get_node_or_null("ArtifactPedestal/RecoveredArtifact") as MeshInstance3D
-			if not _check(relic != null and not relic.visible, "The Baghdad relic must remain hidden before the three clues."):
-				return
-			var wrong_clue := site.get_node_or_null("CrownInscription/InscriptionInteraction")
-			var wrong_result: Dictionary = runtime.handle_interaction(wrong_clue)
-			if not _check(not bool(wrong_result.get("success", false)), "The Baghdad clue sequence accepted the wrong first inscription."):
-				return
-			for clue_name in ["EyeInscription", "RiverInscription", "CrownInscription"]:
-				var clue := site.get_node_or_null(clue_name + "/InscriptionInteraction")
-				var clue_result: Dictionary = runtime.handle_interaction(clue)
-				if not _check(bool(clue_result.get("success", false)), "The correct Baghdad clue sequence failed at %s." % clue_name):
-					return
-			if not _check(relic.visible, "The Baghdad relic did not unlock after all three clues."):
-				return
-			var artifact_area := site.get_node_or_null("ArtifactPedestal/ArtifactInteraction")
-			var artifact_result: Dictionary = runtime.handle_interaction(artifact_area)
-			if not _check(bool(artifact_result.get("stage_completed", false)), "The Baghdad artifact objective did not complete stage one."):
-				return
-		else:
-			var site_name := "ExaminationSite_" + expected_id
-			var site := runtime.get_node_or_null(site_name)
-			if not _check(site != null, "Physical stage environment is missing: " + expected_id):
-				return
-			var floor_collision := site.get_node_or_null("StageGroundBody/CollisionShape3D") as CollisionShape3D
-			if not _check(floor_collision != null and floor_collision.shape != null, "Physical ground collision is missing for " + expected_id):
-				return
-			for objective_index in range(3):
-				var objective := site.get_node_or_null("ObjectiveInteraction_%02d" % objective_index)
-				if not _check(objective != null, "A sequential physical objective is missing in " + expected_id):
-					return
-				var objective_result: Dictionary = runtime.handle_interaction(objective)
-				if not _check(bool(objective_result.get("success", false)), "Sequential objective %d failed in %s." % [objective_index + 1, expected_id]):
-					return
-				if objective_index == 2 and not _check(bool(objective_result.get("stage_completed", false)), "Final objective did not advance " + expected_id):
-					return
-
-		if stage_index == 0:
-			var restored_manager := ExamManagerScript.new()
-			root.add_child(restored_manager)
-			await process_frame
-			var restored_overview: Dictionary = restored_manager.get_exam_overview()
-			if not _check(bool(restored_overview.get("registered", false)) and bool(restored_overview.get("active", false)), "Candidate registration/active exam did not persist after stage one."):
-				return
-			if not _check(int(restored_overview.get("candidate_number", 0)) == serial and restored_overview.get("completed_stages", []).has(EXPECTED_STAGE_IDS[0]), "Candidate serial or Baghdad completion was not persisted."):
-				return
-			if not _check(str(restored_manager.get_current_stage().get("id", "")) == EXPECTED_STAGE_IDS[1], "Reload did not resume at Cairo after Baghdad."):
-				return
-			active_manager = restored_manager
-
-		runtime.queue_free()
-		await process_frame
-
-	var final_overview: Dictionary = active_manager.call("get_exam_overview")
-	if not _check(int(final_overview.get("total_stages", 0)) == 7 and final_overview.get("completed_stages", []).size() == 7, "All seven stages were not recorded as completed."):
-		return
-	if not _check(not bool(final_overview.get("active", true)) and not bool(final_overview.get("failed", true)), "Exam state is not a successful completed state."):
-		return
-	var after_completion: Dictionary = active_manager.begin_exam()
-	if not _check(not bool(after_completion.get("success", false)) and str(after_completion.get("reason", "")) == "ALL_STAGES_COMPLETED", "A completed examination unexpectedly restarted."):
+	crowd.call("_start_staggered_movement_wave")
+	var behavior_status: Dictionary = crowd.call("get_crowd_status")
+	if not _check(int(behavior_status.get("behavior_profile_count", 0)) == 500 and int(behavior_status.get("decision_count_total", 0)) >= 18, "The 500 candidates did not execute independent movement/decision behavior."):
 		return
 
-	print("Hunter seven-stage runtime validation passed: all seven physical environments, ordered objectives, candidate persistence, and final provisional license progression.")
+	print("Hunter continuous tunnel competition validation passed: one continuous competition, three ordered physical checkpoints, persistent candidate serial, 500 independently tracked crowd candidates and five named AI rivals.")
 	quit(0)
