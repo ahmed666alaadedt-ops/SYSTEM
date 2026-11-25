@@ -227,7 +227,8 @@ func _on_water_body_exited(body: Node3D, water_area: Area3D) -> void:
 		body.remove_meta("system_public_leisure_water_depth")
 		return
 	body.set_meta("system_public_leisure_water_zones", active_zones)
-	var remaining_zone: Dictionary = active_zones.values()[active_zones.size() - 1]
+	var remaining_zone_ids: Array = active_zones.keys()
+	var remaining_zone: Dictionary = active_zones[remaining_zone_ids.back()]
 	body.set_meta("system_public_leisure_swimming", true)
 	body.set_meta("system_public_leisure_water_type", str(remaining_zone.get("type", "leisure")))
 	body.set_meta("system_public_leisure_water_depth", float(remaining_zone.get("depth", 1.0)))
