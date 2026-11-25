@@ -94,6 +94,15 @@ func _run_validation() -> void:
 		return
 
 	for suite_name in ["MensChangingSuite", "WomensChangingSuite"]:
+		var suite := district.get_node_or_null(suite_name) as Node3D
+		var suite_locker_count := 0
+		if suite != null:
+			for child in suite.get_children():
+				if child is MeshInstance3D and child.name.begins_with("Locker_"):
+					suite_locker_count += 1
+		if suite_locker_count != 8:
+			_fail("Each public changing suite must expose eight individually reservable lockers: " + suite_name)
+			return
 		for service_name in ["PoolLockerServiceInteraction", "PoolShowerServiceInteraction"]:
 			var service := district.get_node_or_null(NodePath(suite_name + "/" + service_name)) as Area3D
 			if service == null or not service.is_in_group("system_interactable"):
