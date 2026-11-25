@@ -20,6 +20,7 @@ func _run() -> void:
 	var footwear_count := 0
 	var armor_count := 0
 	var rare_elixir_count := 0
+	var ammunition_count := 0
 	for product_value in catalog:
 		var product: Dictionary = product_value
 		var item_id := str(product.get("id", ""))
@@ -42,6 +43,8 @@ func _run() -> void:
 			accessory_count += 1
 		if category == "FOOTWEAR":
 			footwear_count += 1
+		if category == "AMMUNITION":
+			ammunition_count += 1
 		if category == "ARMOR":
 			armor_count += 1
 		if category == "NEN_ELIXIR" and str(product.get("rarity", "")).to_upper() == "RARE":
@@ -51,6 +54,7 @@ func _run() -> void:
 	assert(cafeteria_count >= 3, "Power Tower cafeteria catalog is incomplete.")
 	assert(accessory_count >= 4, "Hunter accessory catalog is incomplete.")
 	assert(footwear_count >= 5, "Bronze-to-diamond Power Tower footwear progression is incomplete.")
+	assert(ammunition_count >= 3, "Bronze, silver and diamond arrow ammunition tiers are incomplete.")
 	assert(armor_count >= 5, "Armor progression from bronze to diamond is incomplete.")
 	assert(rare_elixir_count >= 4, "Rare Nen elixir selection is incomplete.")
 	assert(ProgressionScript.DEFAULT_EQUIPMENT_SLOTS.has("boots"))
@@ -66,6 +70,9 @@ func _run() -> void:
 	assert(bool(boot_equip.get("success", false)))
 	assert(str(progression.call("get_equipped_item", "boots")) == "training_boots")
 	assert(float(progression.call("get_movement_multiplier")) > 1.0)
+	assert(bool(progression.call("add_item", "reinforced_arrows", 3)))
+	assert(bool(progression.call("consume_item", "reinforced_arrows", 1)))
+	assert(int(progression.call("get_item_count", "reinforced_arrows")) == 2)
 	assert(ProgressionScript.EQUIPMENT_SLOTS_BY_ITEM.get("hunter_pendant", "") == "accessory_1")
 	assert(ProgressionScript.EQUIPMENT_SLOTS_BY_ITEM.get("nen_aura_bracelet", "") == "accessory_2")
 	var config: Dictionary = OperationsScript.POWER_TOWER_CONFIG
@@ -78,5 +85,5 @@ func _run() -> void:
 	assert(str(config.get("roles", [])[3]).contains("النِن"))
 	assert(CombatScript.POWER_TOWER_FORBIDDEN_WEAPONS.has("system_firearm"))
 	assert(CombatScript.POWER_TOWER_FORBIDDEN_WEAPONS.has("hunter_rifle"))
-	print("POWER TOWER SHOP VALIDATION PASSED: %d products, %d traditional weapons, %d skill manuals, %d cafeteria items, %d accessories, %d footwear, %d armor and %d rare Nen elixirs; no modern firearms." % [catalog.size(), weapon_count, skill_count, cafeteria_count, accessory_count, footwear_count, armor_count, rare_elixir_count])
+	print("POWER TOWER SHOP VALIDATION PASSED: %d products, %d traditional weapons, %d skill manuals, %d cafeteria items, %d accessories, %d footwear, %d armor, %d arrow ammunition tiers and %d rare Nen elixirs; no modern firearms." % [catalog.size(), weapon_count, skill_count, cafeteria_count, accessory_count, footwear_count, armor_count, ammunition_count, rare_elixir_count])
 	quit(0)
