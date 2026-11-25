@@ -183,6 +183,7 @@ const PRODUCT_CATALOG := {
 		{"id":"energy_elixir","name":"إكسير الطاقة","price":360,"category":"ELIXIR","quality":"SILVER","rarity":"COMMON","availability":"CONSUMABLE"},
 		{"id":"strength_elixir","name":"إكسير القوة","price":420,"category":"ELIXIR","quality":"SILVER","rarity":"COMMON","availability":"CONSUMABLE"},
 		{"id":"nen_awakening_elixir","name":"إكسير إيقاظ النِن","price":1800,"required_rank":"D","required_level":15,"category":"NEN_ELIXIR","quality":"GOLD","rarity":"RARE","availability":"CONSUMABLE"},
+		{"id":"nen_control_elixir","name":"إكسير تطوير التحكم بالنِن","price":2600,"required_rank":"C","required_level":20,"required_nen_rank":1,"category":"NEN_ELIXIR","quality":"DIAMOND","rarity":"RARE","availability":"CONSUMABLE"},
 		{"id":"nen_focus_elixir","name":"إكسير تركيز النِن","price":2100,"required_rank":"D","required_level":20,"required_nen_rank":1,"category":"NEN_ELIXIR","quality":"DIAMOND","rarity":"RARE","availability":"CONSUMABLE"},
 		{"id":"skill_manual_pulse_dash","name":"مخطوطة تقنية اندفاع النبضة","price":2500,"required_rank":"C","required_level":15,"required_nen_rank":1,"product_type":"skill_training_permit","skill_id":"pulse_dash","category":"SKILL","quality":"GOLD","rarity":"RARE","availability":"PERMANENT"},
 		{"id":"skill_manual_aura_shield","name":"مخطوطة تقنية درع الهالة","price":4500,"required_rank":"B","required_level":20,"required_nen_rank":2,"product_type":"skill_training_permit","skill_id":"aura_shield","category":"SKILL","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
@@ -2132,6 +2133,11 @@ func open_tower(tower_id: String) -> void:
 		status_label.text = "برج مستقل — 200 طابق | لاعب بشري ضد لاعب بشري 1 ضد 1 فقط\nأعلى طابق مكتمل: %d | الطابق التالي: %d\nكل خامس طابق مواجهة نخبة، وكل عاشر طابق مواجهة حامل اللقب؛ المطابقة عبر الإنترنت قيد الإعداد." % [int(power_status.get("highest_cleared_floor", 0)), int(power_status.get("next_floor", 1))]
 	if tower_id == "power_tower_baghdad":
 		_add_power_tower_appointment_controls()
+		var nen_discovery_button := Button.new()
+		nen_discovery_button.name = "PowerTowerNenDiscoveryButton"
+		nen_discovery_button.text = "مدرب اكتشاف النِن وتطوير التحكم"
+		nen_discovery_button.pressed.connect(_open_power_tower_nen_discovery)
+		content.add_child(nen_discovery_button)
 	if tower_id == "hunter_association_tower_baghdad":
 		var rank_board_button := Button.new()
 		rank_board_button.name = "HunterRankBoardButton"
@@ -2318,6 +2324,58 @@ func _refresh_power_tower_appointment_list() -> void:
 		empty.text = "لا توجد مواعيد قادمة."
 		list.add_child(empty)
 	content.add_child(list)
+
+
+func _open_power_tower_nen_discovery() -> void:
+	_clear_dynamic_controls()
+	title_label.text = "X-S-X — معهد اكتشاف النِن"
+	var level := int(progression.get("current_level")) if is_instance_valid(progression) else 1
+	var unlocked := is_instance_valid(progression) and bool(progression.get("nen_unlocked"))
+	var nen_rank := int(progression.get("nen_control_rank")) if is_instance_valid(progression) else 0
+	var has_awakening_elixir := is_instance_valid(progression) and int(progression.call("get_item_count", "nen_awakening_elixir")) > 0
+	var rank_data: Dictionary = progression.call("get_hunter_rank_progress") if is_instance_valid(progression) and progression.has_method("get_hunter_rank_progress") else {}
+	var current_rank := str(rank_data.get("rank", "F"))
+	credits_label.text = "مستوى اللاعب: %d | رتبة الصياد: %s" % [level, current_rank]
+	if unlocked:
+		status_label.text = "النِن مستيقظ بالفعل. رتبة التحكم الحالية: %d/5. طوّر التحكم عبر المهمات الموثقة واستعمال تقنيات النِن." % nen_rank
+	else:
+		status_label.text = "يبدأ الإيقاظ بتدريب المرشد ثم استهلاك إكسير إيقاظ النِن. المتطلبات: مستوى 15، رتبة صياد D، والإكسير في الحقيبة."
+	var close_button := Button.new()
+	close_button.text = "العودة إلى برج القوة"
+	close_button.pressed.connect(func(): open_tower("power_tower_baghdad"))
+	content.add_child(close_button)
+	if not unlocked:
+		var awaken_button := Button.new()
+		awaken_button.name = "BeginPowerTowerNenAwakening"
+		awaken_button.text = "بدء تدريب وإيقاظ النِن"
+		awaken_button.disabled = level < 15 or not _meets_hunter_rank("D") or not has_awakening_elixir
+		awaken_button.pressed.connect(_begin_power_tower_nen_awakening)
+		content.add_child(awaken_button)
+		if not has_awakening_elixir:
+			var shop_note := Label.new()
+			shop_note.text = "اشترِ إكسير إيقاظ النِن من متجر برج القوة، ثم عد إلى المدرب."
+			content.add_child(shop_note)
+	else:
+		var practice_note := Label.new()
+		practice_note.text = "التدريب لا يرفع الرتبة بالشراء؛ سجّل استعمال المهارات وأكمل المهمات المؤهلة لزيادة التحكم."
+		practice_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		content.add_child(practice_note)
+	panel.show()
+
+
+func _begin_power_tower_nen_awakening() -> void:
+	if not is_instance_valid(progression) or not progression.has_method("consume_elixir"):
+		_set_status("نظام إيقاظ النِن غير متاح.")
+		return
+	if int(progression.get("current_level")) < 15 or not _meets_hunter_rank("D"):
+		_set_status("يتطلب إيقاظ النِن مستوى 15 ورتبة صياد D.")
+		return
+	var result: Dictionary = progression.call("consume_elixir", "nen_awakening_elixir")
+	if not bool(result.get("success", false)):
+		_set_status("تعذر إيقاظ النِن: " + str(result.get("reason", "تحقق من الإكسير والمتطلبات.")))
+		return
+	_set_status("تم إيقاظ النِن بنجاح. رتبة التحكم الأولية: 1/5.")
+	_open_power_tower_nen_discovery()
 
 
 func _open_hunter_rank_board() -> void:
