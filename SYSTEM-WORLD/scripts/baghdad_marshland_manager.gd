@@ -42,20 +42,8 @@ func _process(delta: float) -> void:
 		fog.position.x += delta * (0.18 + float(index % 4) * 0.06)
 		if fog.position.x > MARSH_RADIUS_X:
 			fog.position.x = -MARSH_RADIUS_X
-	if hidden_gates_unlocked:
-		return
-	var exam_manager := get_tree().root.find_child("SYSTEMHunterExamManager", true, false)
-	if exam_manager == null or not bool(exam_manager.get("registered")):
-		return
-	var completed_exam_segments: Array = exam_manager.get("completed_stage_ids")
-	if not completed_exam_segments.has("baghdad_tunnel_competition"):
-		return
-	for gate in find_children("SeasonalMarshStarGate_*", "Node3D", true, false):
-		gate.visible = true
-		gate.set_meta("system_hidden_until_final_exam_discovery", false)
-	hidden_gates_unlocked = true
-	set_meta("system_hidden_heritage_site_discovered", true)
-	print("SYSTEM Hunter Exam: hidden marsh sanctuary and seasonal Star Gates discovered.")
+	# Star Gates are unlocked only by the final marsh-sanctuary objective callback.
+	# Never infer sanctuary discovery from a completed tunnel-stage save flag.
 
 func setup(terrain_node: Node, hunter_tunnel: Node3D) -> void:
 	terrain = terrain_node
@@ -1107,6 +1095,8 @@ func _on_marsh_final_trial_entered(body: Node3D) -> void:
 	if bool(exam_manager.get("failed")) or not bool(exam_manager.get("exam_active")):
 		return
 	if not bool(body.get_meta("system_hunter_marsh_trial_started", false)):
+		return
+	if not bool(body.get_meta("system_hidden_heritage_site_discovered", false)):
 		return
 	var completed_segments: Array = exam_manager.get("completed_stage_ids")
 	if completed_segments.has("baghdad_tunnel_competition"):
