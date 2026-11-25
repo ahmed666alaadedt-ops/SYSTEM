@@ -1378,7 +1378,7 @@ func _process_real_guide_escort(delta: float) -> void:
 		) + marsh_center.y
 		candidate_convoy.global_position = behind_guide
 		candidate_convoy.global_basis = real_guild_guide.global_basis
-		for key in guide_tracking_arrows.keys():
+	for key in guide_tracking_arrows.keys():
 		var arrow := guide_tracking_arrows[key] as Node3D
 		if not is_instance_valid(arrow):
 			guide_tracking_arrows.erase(key)
