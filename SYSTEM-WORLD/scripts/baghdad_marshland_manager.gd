@@ -398,7 +398,7 @@ func _add_marsh_trees(parent: Node3D, trunk_material: Material, canopy_material:
 	canopy_instances.multimesh = canopies
 	canopy_instances.material_override = canopy_material
 	parent.add_child(canopy_instances)
-	parent.set_meta("system_marsh_tree_count", 56)
+	parent.set_meta("system_marsh_tree_count", 160)
 	parent.set_meta("system_marsh_tree_render_batch_count", 2)
 
 func _add_boardwalk_network(parent: Node3D, material: Material) -> void:
