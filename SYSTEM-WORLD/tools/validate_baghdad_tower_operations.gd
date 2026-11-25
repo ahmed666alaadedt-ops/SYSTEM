@@ -89,6 +89,24 @@ func _run() -> void:
 		if hotel_exterior.get_node_or_null(required_hotel_node) == null:
 			_fail("SYSTEM Hotel exterior is missing: " + required_hotel_node)
 			return
+	var hotel_reception_room := operations.call("_ensure_floor_room", "shopping_tower_baghdad", 27) as Node3D
+	var hotel_suite_room := operations.call("_ensure_floor_room", "shopping_tower_baghdad", 28) as Node3D
+	var hotel_reception := hotel_reception_room.get_node_or_null("SYSTEMHotelFacilities") as Node3D if hotel_reception_room != null else null
+	var hotel_suites := hotel_suite_room.get_node_or_null("SYSTEMHotelFacilities") as Node3D if hotel_suite_room != null else null
+	if hotel_reception == null or hotel_suites == null:
+		_fail("SYSTEM Hotel floors 27–28 did not generate their reception and suite interiors.")
+		return
+	if hotel_reception.get_node_or_null("HotelReceptionDesk") == null or hotel_reception.get_node_or_null("HotelReceptionInteraction") == null:
+		_fail("SYSTEM Hotel reception is missing its desk or physical booking interaction.")
+		return
+	if int(hotel_suites.get_meta("system_hotel_room_count", 0)) != 8:
+		_fail("SYSTEM Hotel suite floor must expose all eight catalogued rooms.")
+		return
+	for hotel_room_id in ["hotel_standard_01", "hotel_standard_02", "hotel_standard_03", "hotel_standard_04", "hotel_deluxe_01", "hotel_deluxe_02", "hotel_hunter_suite", "hotel_elite_vip"]:
+		var hotel_room := hotel_suites.get_node_or_null("HotelRoomInterior_" + hotel_room_id) as Node3D
+		if hotel_room == null or hotel_room.get_node_or_null("HotelRoomDoorInteraction/CollisionShape3D") == null:
+			_fail("SYSTEM Hotel room is missing its interior or physical door interaction: " + hotel_room_id)
+			return
 
 	# Museum acceptance: generate representative floors across every approved department
 	# and verify that each exhibit is named, uniquely identified and physically interactable.
