@@ -9082,6 +9082,9 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 	if floor_number < 1 or floor_number > int(config["floors"]):
 		_set_status("رقم الطابق خارج حدود البرج.")
 		return
+	if tower_id == "power_tower_baghdad" and floor_number >= 81 and (not is_instance_valid(progression) or not bool(progression.get("nen_unlocked")) or int(progression.get("nen_control_rank")) < 5):
+		_set_status("الطوابق 81–200 تتطلب إيقاظ النِن وإتقان الهالة حتى الرتبة 5. أكمل تدريب النِن في قاعة البرج أولاً.")
+		return
 	var room := _ensure_floor_room(tower_id, floor_number)
 	if room == null:
 		_set_status("تعذر تجهيز الطابق.")
@@ -9096,9 +9099,6 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 		return
 	_board_customer_visitors_into_elevator(tower_id, floor_number, car)
 	if tower_id == "power_tower_baghdad":
-		if floor_number >= 81 and (not is_instance_valid(progression) or not bool(progression.get("nen_unlocked")) or int(progression.get("nen_control_rank")) < 5):
-			_set_status("الطوابق 81–200 تتطلب إيقاظ النِن وإتقان الهالة حتى الرتبة 5. أكمل تدريب النِن في قاعة البرج أولاً.")
-			return
 		if not is_instance_valid(power_tower_manager):
 			_set_status("نظام برج القوة غير متاح.")
 			return
