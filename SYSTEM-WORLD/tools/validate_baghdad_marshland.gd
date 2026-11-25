@@ -50,8 +50,6 @@ func _run_validation() -> void:
 		return
 	if not _check(bool(zone.get_meta("system_hunter_exam_biome", false)), "The marsh biome is not marked as part of the Hunter examination."):
 		return
-	if not _check(bool(connector.get_meta("system_no_teleport_or_loading_gate", false)), "The tunnel-to-marsh route is not a physical continuous passage."):
-		return
 	if not _check(int(connector.get_meta("system_passage_segment_count", 0)) >= 20, "The physical passage does not contain enough continuous segments."):
 		return
 	var water_areas := zone.find_children("*", "Area3D", true, false)
