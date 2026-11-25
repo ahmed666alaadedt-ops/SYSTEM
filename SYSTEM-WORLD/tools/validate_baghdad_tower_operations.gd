@@ -58,7 +58,7 @@ func _run() -> void:
 	for advertising_tower_id in TOWER_IDS:
 		for advertising_suffix in ["_internal", "_external"]:
 			var campaign_label := operations.get("ad_labels").get(advertising_tower_id + advertising_suffix) as Label3D
-			if campaign_label == null or str(campaign_label.get_meta("system_campaign_id", "")).is_empty() or str(campaign_label.get_meta("system_campaign_manager", "")).is_empty() or int(campaign_label.get_meta("system_campaign_expires_msec", 0)) <= Time.get_ticks_msec():
+			if campaign_label == null or str(campaign_label.get_meta("system_campaign_id", "")).is_empty() or str(campaign_label.get_meta("system_campaign_manager", "")).is_empty() or str(campaign_label.get_meta("system_campaign_manager_job", "")) != "advertising_manager" or int(campaign_label.get_meta("system_campaign_expires_msec", 0)) <= Time.get_ticks_msec():
 				_fail("Advertising screen is missing its active campaign, responsible NPC manager or expiry metadata: %s%s." % [advertising_tower_id, advertising_suffix])
 				return
 	operations.call("_process_advertising_campaign", 38.0)
@@ -157,8 +157,8 @@ func _run() -> void:
 	if operations.find_child("HunterRankProgressRows", true, false) == null:
 		_fail("Hunter rank board did not render its F-to-SSS progression requirements.")
 		return
-	if int(status.get("staff_count", 0)) != 45:
-		_fail("Expected eight professional NPC staff members in four district towers, nine in Shopping Tower, plus four Power Tower staff; found %d." % int(status.get("staff_count", 0)))
+	if int(status.get("staff_count", 0)) != 46:
+		_fail("Expected eight professional NPC staff in three district towers, nine each in Shopping and Antiques Towers, plus four Power Tower staff; found %d." % int(status.get("staff_count", 0)))
 		return
 	if int(status.get("customer_count", 0)) != 500:
 		_fail("Expected 100 persistent customer NPCs in each of the five Baghdad district towers (500 total); found %d." % int(status.get("customer_count", 0)))
@@ -866,8 +866,10 @@ func _run() -> void:
 				staff_count += 1
 		var expected_staff_count := 4
 		match tower_id:
-			"hunter_association_tower_baghdad", "business_investment_tower_baghdad", "antiques_heritage_tower_baghdad", "technology_tower_baghdad":
+			"hunter_association_tower_baghdad", "business_investment_tower_baghdad", "technology_tower_baghdad":
 				expected_staff_count = 8
+			"antiques_heritage_tower_baghdad":
+				expected_staff_count = 9
 			"shopping_tower_baghdad":
 				expected_staff_count = 9
 		if staff_count != expected_staff_count:
