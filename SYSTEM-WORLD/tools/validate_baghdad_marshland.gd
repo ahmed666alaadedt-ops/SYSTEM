@@ -81,7 +81,7 @@ func _run_validation() -> void:
 		return
 
 	var farm := zone.get_node_or_null("MarshAgriculturalGardens") as Node3D
-	if not _check(farm != null and int(farm.get_meta("system_agricultural_plot_count", 0)) == 12 and int(farm.get_meta("system_crop_plant_count", 0)) == 432, "Agricultural plots and crops are missing."):
+	if not _check(farm != null and int(farm.get_meta("system_agricultural_plot_count", 0)) == 12 and int(farm.get_meta("system_crop_plant_count", 0)) == 432 and farm.find_children("MarshCropBatch_*", "MultiMeshInstance3D", true, false).size() == 3, "Agricultural plots and crops are missing."):
 		return
 	if not _check(zone.find_children("MarshGroundFog_*", "MeshInstance3D", true, false).size() == 14, "Expected fourteen low fog layers."):
 		return
