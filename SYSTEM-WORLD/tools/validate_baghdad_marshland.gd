@@ -193,6 +193,12 @@ func _run_validation() -> void:
 		marsh.call("_process_real_guide_escort", 1.0)
 	if not _check(bool(real_guide.get_meta("system_guide_arrived_at_sanctuary", false)) and bool(marsh.get_meta("system_real_guide_escort_completed", false)), "The official guide did not complete the full marsh-to-sanctuary escort."):
 		return
+	if not _check(bool(real_guide.get_meta("system_guide_gate_tour_completed", false)) and bool(marsh.get_meta("system_real_guide_gate_tour_completed", false)), "The official guide did not physically escort the candidates to all three Star Gates."):
+		return
+	for gate_index in range(3):
+		var visited_gate := sanctuary.get_node_or_null("SeasonalMarshStarGate_%02d" % gate_index) as Node3D
+		if not _check(visited_gate != null and bool(visited_gate.get_meta("system_guide_presented", false)) and not str(visited_gate.get_meta("system_guide_explained_destination", "")).is_empty(), "The guide did not visit and explain Star Gate %d." % (gate_index + 1)):
+			return
 	if not _check(bool(sanctuary.visible) and bool(player.get_meta("system_hidden_heritage_site_discovered", false)), "The guide's arrival did not reveal the hidden ancient sanctuary to the waiting candidate."):
 		return
 	if not _check(bool(player.get_meta("system_hunter_marsh_trial_started", false)) and bool(player.get_meta("system_hunter_marsh_trial_completed", false)) and not bool(exam_manager.get("exam_active")), "The guide did not complete the continuous marsh section after the tunnel checkpoints and sanctuary arrival."):
