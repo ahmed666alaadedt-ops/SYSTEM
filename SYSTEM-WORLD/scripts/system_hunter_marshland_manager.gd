@@ -305,7 +305,8 @@ func _build_carnivorous_plant(index: int, location: Vector3, dark_leaf: Material
 	for petal_index in range(6):
 		var petal := MeshInstance3D.new()
 		petal.name = "ToothedPetal_%02d" % petal_index
-		var petal_mesh := ConeMesh.new()
+		var petal_mesh := CylinderMesh.new()
+		petal_mesh.top_radius = 0.0
 		petal_mesh.bottom_radius = 0.42
 		petal_mesh.height = 1.35
 		petal.mesh = petal_mesh
@@ -444,7 +445,8 @@ func _build_marsh_tree(index: int, location: Vector3, bark: Material, canopy_a: 
 		for crown_index in range(3):
 			var crown := MeshInstance3D.new()
 			crown.name = "CypressCanopy_%02d" % crown_index
-			var crown_mesh := ConeMesh.new()
+			var crown_mesh := CylinderMesh.new()
+			crown_mesh.top_radius = 0.0
 			crown_mesh.bottom_radius = 2.8 - float(crown_index) * 0.48
 			crown_mesh.height = 3.8
 			crown.mesh = crown_mesh
