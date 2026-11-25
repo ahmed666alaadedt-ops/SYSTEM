@@ -216,6 +216,7 @@ var stock_refresh_clock := 300.0
 var ad_clock := 0.0
 var ad_index := 0
 var ad_rotation_count := 0
+var ad_campaign_overrides: Dictionary = {}
 var active_ad_campaign_id := ""
 var active_ad_campaign_started_msec := 0
 var active_ad_campaign_expires_msec := 0
@@ -1866,21 +1867,75 @@ func _add_advertising_screen_backing(parent: Node3D, screen_name: String, campai
 
 
 func _process_advertising_campaign(delta: float) -> void:
+	var now_msec := Time.get_ticks_msec()
+	if not active_ad_campaign_id.is_empty() and active_ad_campaign_id != "system_fallback" and active_ad_campaign_expires_msec > 0 and now_msec >= active_ad_campaign_expires_msec:
+		_advance_advertising_campaign()
 	ad_clock += maxf(delta, 0.0)
 	while ad_clock >= AD_CAMPAIGN_DURATION_SECONDS:
 		ad_clock -= AD_CAMPAIGN_DURATION_SECONDS
-		ad_index = (ad_index + 1) % AD_CAMPAIGNS.size()
 		ad_rotation_count += 1
+		_advance_advertising_campaign()
+
+
+func set_advertising_campaign_override(campaign_id: String, enabled: bool, starts_at_msec: int = 0, expires_at_msec: int = 0) -> bool:
+	var known_campaign := false
+	for campaign in AD_CAMPAIGNS:
+		if str(campaign.get("id", "")) == campaign_id:
+			known_campaign = true
+			break
+	if not known_campaign or (expires_at_msec > 0 and starts_at_msec > 0 and expires_at_msec <= starts_at_msec):
+		return false
+	ad_campaign_overrides[campaign_id] = {
+		"enabled": enabled,
+		"starts_at_msec": maxi(0, starts_at_msec),
+		"expires_at_msec": maxi(0, expires_at_msec)
+	}
+	if campaign_id == active_ad_campaign_id and not _is_ad_campaign_eligible(campaign_id, Time.get_ticks_msec()):
+		_advance_advertising_campaign()
+	return true
+
+
+func _is_ad_campaign_eligible(campaign_id: String, now_msec: int) -> bool:
+	var override: Dictionary = ad_campaign_overrides.get(campaign_id, {})
+	if not override.is_empty():
+		if not bool(override.get("enabled", false)):
+			return false
+		var starts_at := int(override.get("starts_at_msec", 0))
+		var expires_at := int(override.get("expires_at_msec", 0))
+		if starts_at > 0 and now_msec < starts_at:
+			return false
+		if expires_at > 0 and now_msec >= expires_at:
+			return false
+	return true
+
+
+func _advance_advertising_campaign() -> void:
+	if AD_CAMPAIGNS.is_empty():
+		ad_index = -1
 		_refresh_advertisements()
+		return
+	var now_msec := Time.get_ticks_msec()
+	for offset in range(1, AD_CAMPAIGNS.size() + 1):
+		var candidate_index := posmod(ad_index + offset, AD_CAMPAIGNS.size())
+		var campaign_id := str(AD_CAMPAIGNS[candidate_index].get("id", ""))
+		if _is_ad_campaign_eligible(campaign_id, now_msec):
+			ad_index = candidate_index
+			_refresh_advertisements()
+			return
+	ad_index = -1
+	_refresh_advertisements()
 
 
 func _refresh_advertisements() -> void:
-	if AD_CAMPAIGNS.is_empty():
-		return
-	var campaign: Dictionary = AD_CAMPAIGNS[clampi(ad_index, 0, AD_CAMPAIGNS.size() - 1)]
-	active_ad_campaign_id = str(campaign.get("id", ""))
-	active_ad_campaign_started_msec = Time.get_ticks_msec()
-	active_ad_campaign_expires_msec = active_ad_campaign_started_msec + int(AD_CAMPAIGN_DURATION_SECONDS * 1000.0)
+	var campaign: Dictionary = {}
+	var now_msec := Time.get_ticks_msec()
+	if not AD_CAMPAIGNS.is_empty() and ad_index >= 0 and ad_index < AD_CAMPAIGNS.size():
+		var candidate: Dictionary = AD_CAMPAIGNS[ad_index]
+		if _is_ad_campaign_eligible(str(candidate.get("id", "")), now_msec):
+			campaign = candidate
+	active_ad_campaign_id = str(campaign.get("id", "system_fallback"))
+	active_ad_campaign_started_msec = now_msec
+	active_ad_campaign_expires_msec = now_msec + int(AD_CAMPAIGN_DURATION_SECONDS * 1000.0) if not campaign.is_empty() else 0
 	for tower_id in tower_nodes.keys():
 		var staff_ids: Array = staff_by_tower.get(tower_id, [])
 		var manager_name := "فريق الإعلان"
@@ -1888,11 +1943,11 @@ func _refresh_advertisements() -> void:
 			var manager_index := staff_ids.size() - 1
 			var npc: Dictionary = society.call("get_npc", str(staff_ids[manager_index]))
 			manager_name = str(npc.get("name", manager_name))
-		var message := str(campaign.get("text", ""))
+		var message := str(campaign.get("text", "إعلانات SYSTEM العامة — تابع فعاليات المدينة"))
 		for suffix in ["_internal", "_external"]:
 			var label := ad_labels.get(str(tower_id) + suffix) as Label3D
 			if label != null:
-				label.text = "SYSTEM | " + message + "\nبإدارة " + manager_name
+				label.text = "SYSTEM | " + message + "\\nبإدارة " + manager_name
 				label.set_meta("system_campaign_id", active_ad_campaign_id)
 				label.set_meta("system_campaign_manager", manager_name)
 				label.set_meta("system_campaign_started_msec", active_ad_campaign_started_msec)
