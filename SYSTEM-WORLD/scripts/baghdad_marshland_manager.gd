@@ -928,7 +928,8 @@ func _on_marsh_trial_start_entered(body: Node3D) -> void:
 	var exam_manager := get_tree().root.find_child("SYSTEMHunterExamManager", true, false)
 	if exam_manager == null or not bool(exam_manager.get("registered")) or bool(exam_manager.get("failed")):
 		return
-	if not bool(exam_manager.get("exam_active")) and not exam_manager.get("completed_stage_ids").has("baghdad_tunnel_competition"):
+	var completed_segments: Array = exam_manager.get("completed_stage_ids")
+	if not bool(exam_manager.get("exam_active")) and not completed_segments.has("baghdad_tunnel_competition"):
 		var result: Dictionary = exam_manager.call("begin_exam")
 		if bool(result.get("success", false)):
 			body.set_meta("system_hunter_marsh_trial_started", true)
