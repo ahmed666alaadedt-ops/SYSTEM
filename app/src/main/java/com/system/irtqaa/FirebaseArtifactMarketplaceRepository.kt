@@ -5,6 +5,8 @@ import com.google.firebase.functions.FirebaseFunctions
 
 data class SystemMarketplaceWallet(
     val balance: Long,
+    val reservedBalance: Long = 0L,
+    val availableBalance: Long = balance - reservedBalance,
     val currency: String = "SYSTEM"
 )
 
@@ -52,8 +54,15 @@ class FirebaseArtifactMarketplaceRepository(
                 if (balance == null || balance < 0L) {
                     callback(Result.failure(IllegalStateException("بيانات محفظة SYSTEM غير صالحة.")))
                 } else {
-                    callback(Result.success(SystemMarketplaceWallet(
+                    val reserved = (data["reservedBalance"] as? Number)?.toLong() ?: 0L
+                    val available = (data["availableBalance"] as? Number)?.toLong()
+                        ?: (balance - reserved)
+                    if (reserved < 0L || reserved > balance || available < 0L) {
+                        callback(Result.failure(IllegalStateException("الحجوزات في محفظة SYSTEM غير صالحة.")))
+                    } else callback(Result.success(SystemMarketplaceWallet(
                         balance = balance,
+                        reservedBalance = reserved,
+                        availableBalance = available,
                         currency = data["currency"] as? String ?: "SYSTEM"
                     )))
                 }
