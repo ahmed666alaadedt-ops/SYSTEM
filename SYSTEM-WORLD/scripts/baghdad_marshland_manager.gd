@@ -104,6 +104,12 @@ func _find_nearest_marsh_land_anchor(origin: Vector2) -> Vector2:
 	return Vector2.INF
 
 
+func _marsh_ground_y(local_x: float, local_z: float) -> float:
+	if terrain == null:
+		return 0.0
+	return float(terrain.call("get_terrain_height", marsh_center.x + local_x, marsh_center.z + local_z)) - marsh_center.y
+
+
 func _build_marshland() -> void:
 	var water_material := _make_material(Color(0.055, 0.24, 0.20, 0.88), 0.12, 0.08, true)
 	var mud_material := _make_material(Color(0.19, 0.16, 0.095), 0.98, 0.0)
@@ -124,7 +130,7 @@ func _build_marshland() -> void:
 	shore_mesh.height = 0.34
 	shore.mesh = shore_mesh
 	shore.scale = Vector3(MARSH_RADIUS_X, 1.0, MARSH_RADIUS_Z)
-	shore.position.y = 0.12
+	shore.position.y = _marsh_ground_y(0.0, 0.0) + 0.12
 	shore.material_override = mud_material
 	zone.add_child(shore)
 
@@ -148,7 +154,7 @@ func _build_marshland() -> void:
 		pond_mesh.height = 0.42
 		pond.mesh = pond_mesh
 		pond.scale = Vector3(float(spec["rx"]), 1.0, float(spec["rz"]))
-		pond.position = Vector3(float(spec["x"]), 0.32, float(spec["z"]))
+		pond.position = Vector3(float(spec["x"]), _marsh_ground_y(float(spec["x"]), float(spec["z"])) + 0.32, float(spec["z"]))
 		pond.material_override = water_material
 		zone.add_child(pond)
 		_add_water_collision(zone, pond.position, float(spec["rx"]), float(spec["rz"]), index)
@@ -396,7 +402,7 @@ func _add_marsh_trees(parent: Node3D, trunk_material: Material, canopy_material:
 
 
 func _add_boardwalk_network(parent: Node3D, material: Material) -> void:
-	var entry := Vector3(marsh_entry_local.x, 0.6, marsh_entry_local.z)
+	var entry := Vector3(marsh_entry_local.x, _marsh_ground_y(marsh_entry_local.x, marsh_entry_local.z) + 0.6, marsh_entry_local.z)
 	var inner := entry.lerp(Vector3(0.0, 0.6, 0.0), 0.48)
 	var hub := Vector3(0.0, 0.6, 0.0)
 	var paths := [
@@ -413,6 +419,8 @@ func _add_boardwalk_network(parent: Node3D, material: Material) -> void:
 	for index in range(paths.size()):
 		var start: Vector3 = paths[index][0]
 		var finish: Vector3 = paths[index][1]
+		start.y = _marsh_ground_y(start.x, start.z) + 0.6
+		finish.y = _marsh_ground_y(finish.x, finish.z) + 0.6
 		var midpoint := (start + finish) * 0.5
 		var delta := finish - start
 		var deck := MeshInstance3D.new()
@@ -575,7 +583,7 @@ func _build_marsh_farms(zone: Node3D) -> void:
 	]
 	var farm_root := Node3D.new()
 	farm_root.name = "MarshAgriculturalGardens"
-	farm_root.position = Vector3(-180.0, 0.2, 190.0)
+	farm_root.position = Vector3(-180.0, _marsh_ground_y(-180.0, 190.0) + 0.2, 190.0)
 	zone.add_child(farm_root)
 	for plot_index in range(12):
 		var plot := MeshInstance3D.new()
@@ -623,7 +631,9 @@ func _build_marsh_fog(zone: Node3D) -> void:
 		fog.scale = Vector3(65.0 + float(index % 4) * 12.0, 1.0, 28.0 + float(index % 3) * 9.0)
 		var fog_angle := TAU * float(index) / 14.0
 		var fog_radial := 0.42 + float(index % 4) * 0.13
-		fog.position = Vector3(cos(fog_angle) * MARSH_RADIUS_X * fog_radial, 1.8 + float(index % 3) * 0.35, sin(fog_angle) * MARSH_RADIUS_Z * fog_radial)
+		var fog_x := cos(fog_angle) * MARSH_RADIUS_X * fog_radial
+		var fog_z := sin(fog_angle) * MARSH_RADIUS_Z * fog_radial
+		fog.position = Vector3(fog_x, _marsh_ground_y(fog_x, fog_z) + 1.8 + float(index % 3) * 0.35, fog_z)
 		fog.material_override = fog_material
 		fog.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		zone.add_child(fog)
@@ -643,6 +653,7 @@ func _build_marsh_deception_npcs(zone: Node3D) -> void:
 		var npc := Node3D.new()
 		npc.name = "HunterExamDeceptionNPC_%02d" % index
 		npc.position = decoy_positions[index]
+		npc.position.y = _marsh_ground_y(npc.position.x, npc.position.z)
 		npc.set_meta("system_npc_role", "hunter_exam_candidate_or_false_guide")
 		npc.set_meta("system_deception_enabled", true)
 		npc.set_meta("system_npc_can_give_false_route_hint", true)
@@ -710,6 +721,7 @@ func _build_giant_marsh_creatures(zone: Node3D) -> void:
 		var creature := Node3D.new()
 		creature.name = "GiantMarshCreature_%02d" % index
 		creature.position = positions[index]
+		creature.position.y = _marsh_ground_y(creature.position.x, creature.position.z)
 		creature.set_meta("system_creature_is_giant", true)
 		creature.set_meta("system_hunter_exam_hazard", true)
 		creature.set_meta("system_creature_species", "giant_marsh_turtle" if index % 2 == 0 else "ancient_swamp_beast")
@@ -816,6 +828,7 @@ func _build_marsh_route_markers(zone: Node3D) -> void:
 		var marker := Node3D.new()
 		marker.name = "HunterExamRouteArrow_%02d" % index
 		marker.position = marker_positions[index]
+		marker.position.y = _marsh_ground_y(marker.position.x, marker.position.z) + 0.05
 		var next_position: Vector3 = marker_positions[index + 1] if index + 1 < marker_positions.size() else Vector3(300.0, 0.0, 210.0)
 		zone.add_child(marker)
 		marker.look_at(marker.global_position + (next_position - marker_positions[index]), Vector3.UP)
@@ -858,6 +871,7 @@ func _build_wrong_route_hazards(zone: Node3D) -> void:
 		var hazard := Area3D.new()
 		hazard.name = "HunterExamWrongRouteHazard_%02d" % index
 		hazard.position = hazard_positions[index]
+		hazard.position.y = _marsh_ground_y(hazard.position.x, hazard.position.z)
 		hazard.set_meta("system_wrong_route_hazard", true)
 		hazard.set_meta("system_exam_failure_on_entry", true)
 		var collision := CollisionShape3D.new()
@@ -882,7 +896,7 @@ func _on_wrong_route_hazard_entered(body: Node3D, hazard: Area3D) -> void:
 func _build_hidden_heritage_gates(zone: Node3D) -> void:
 	var sanctuary := Node3D.new()
 	sanctuary.name = "HiddenMarshAncientSanctuary"
-	sanctuary.position = Vector3(300.0, 0.0, 210.0)
+	sanctuary.position = Vector3(300.0, _marsh_ground_y(300.0, 210.0), 210.0)
 	sanctuary.set_meta("system_hidden_ancient_site", true)
 	sanctuary.set_meta("system_hunter_exam_final_discovery", true)
 	sanctuary.set_meta("system_star_gate_hub", true)
