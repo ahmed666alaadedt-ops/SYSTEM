@@ -179,13 +179,14 @@ const HOTEL_ROOM_CATALOG := [
 	{"id":"hotel_elite_vip","name":"جناح النخبة VIP","rate":1500,"required_rank":"S"}
 ]
 
+const AD_CAMPAIGN_DURATION_SECONDS := 38.0
 const AD_CAMPAIGNS := [
-	"معدات الصيادين — جهّز نفسك قبل البوابة",
-	"إكسير الشفاء والطاقة متوفر لدى الصيدلاني",
-	"عروض التسوق والخدمات اليومية داخل مجمع بغداد",
-	"الرياضة والترفيه — فعاليات جديدة بانتظارك",
-	"مختبرات SYSTEM — أدوات وتقنيات للاستكشاف",
-	"برج القوة — سجّل تحديك القادم واصعد بالرتب"
+	{"id":"hunter_gear","text":"معدات الصيادين — جهّز نفسك قبل البوابة"},
+	{"id":"healing_elixirs","text":"إكسير الشفاء والطاقة متوفر لدى الصيدلاني"},
+	{"id":"baghdad_shopping","text":"عروض التسوق والخدمات اليومية داخل مجمع بغداد"},
+	{"id":"leisure_activities","text":"الرياضة والترفيه — فعاليات جديدة بانتظارك"},
+	{"id":"system_labs","text":"مختبرات SYSTEM — أدوات وتقنيات للاستكشاف"},
+	{"id":"power_tower_challenges","text":"برج القوة — سجّل تحديك القادم واصعد بالرتب"}
 ]
 
 var player: CharacterBody3D
@@ -214,6 +215,10 @@ var current_restaurant_table_node: Node
 var stock_refresh_clock := 300.0
 var ad_clock := 0.0
 var ad_index := 0
+var ad_rotation_count := 0
+var active_ad_campaign_id := ""
+var active_ad_campaign_started_msec := 0
+var active_ad_campaign_expires_msec := 0
 var ui_layer: CanvasLayer
 var panel: PanelContainer
 var content: VBoxContainer
@@ -307,11 +312,7 @@ func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_po
 	print("SYSTEM tower operations: staff, local trading, floor interiors and advertising initialized.")
 
 func _process(delta: float) -> void:
-	ad_clock += delta
-	if ad_clock >= 38.0:
-		ad_clock = 0.0
-		ad_index = (ad_index + 1) % AD_CAMPAIGNS.size()
-		_refresh_advertisements()
+	_process_advertising_campaign(delta)
 	stock_refresh_clock -= delta
 	if stock_refresh_clock <= 0.0:
 		stock_refresh_clock = 300.0
@@ -1864,7 +1865,22 @@ func _add_advertising_screen_backing(parent: Node3D, screen_name: String, campai
 	campaign_label.position = label_position
 
 
+func _process_advertising_campaign(delta: float) -> void:
+	ad_clock += maxf(delta, 0.0)
+	while ad_clock >= AD_CAMPAIGN_DURATION_SECONDS:
+		ad_clock -= AD_CAMPAIGN_DURATION_SECONDS
+		ad_index = (ad_index + 1) % AD_CAMPAIGNS.size()
+		ad_rotation_count += 1
+		_refresh_advertisements()
+
+
 func _refresh_advertisements() -> void:
+	if AD_CAMPAIGNS.is_empty():
+		return
+	var campaign: Dictionary = AD_CAMPAIGNS[clampi(ad_index, 0, AD_CAMPAIGNS.size() - 1)]
+	active_ad_campaign_id = str(campaign.get("id", ""))
+	active_ad_campaign_started_msec = Time.get_ticks_msec()
+	active_ad_campaign_expires_msec = active_ad_campaign_started_msec + int(AD_CAMPAIGN_DURATION_SECONDS * 1000.0)
 	for tower_id in tower_nodes.keys():
 		var staff_ids: Array = staff_by_tower.get(tower_id, [])
 		var manager_name := "فريق الإعلان"
@@ -1872,12 +1888,22 @@ func _refresh_advertisements() -> void:
 			var manager_index := staff_ids.size() - 1
 			var npc: Dictionary = society.call("get_npc", str(staff_ids[manager_index]))
 			manager_name = str(npc.get("name", manager_name))
-		var message := str(AD_CAMPAIGNS[ad_index])
+		var message := str(campaign.get("text", ""))
 		for suffix in ["_internal", "_external"]:
 			var label := ad_labels.get(str(tower_id) + suffix) as Label3D
 			if label != null:
 				label.text = "SYSTEM | " + message + "\nبإدارة " + manager_name
+				label.set_meta("system_campaign_id", active_ad_campaign_id)
+				label.set_meta("system_campaign_manager", manager_name)
+				label.set_meta("system_campaign_started_msec", active_ad_campaign_started_msec)
+				label.set_meta("system_campaign_expires_msec", active_ad_campaign_expires_msec)
+				label.set_meta("system_campaign_rotation", ad_rotation_count)
 				label.visible = true
+		var tower := tower_nodes.get(tower_id) as Node3D
+		if tower != null:
+			tower.set_meta("system_active_campaign_id", active_ad_campaign_id)
+			tower.set_meta("system_active_campaign_expires_msec", active_ad_campaign_expires_msec)
+			tower.set_meta("system_active_campaign_rotation", ad_rotation_count)
 
 func _build_ui() -> void:
 	ui_layer = CanvasLayer.new()
@@ -8905,5 +8931,5 @@ func get_operations_status() -> Dictionary:
 		total_staff += ids.size()
 	for ids in customer_ids_by_tower.values():
 		total_customers += ids.size()
-	return {"tower_count": tower_nodes.size(), "staff_count": total_staff, "customer_count": total_customers, "npc_purchase_count": npc_purchase_count, "npc_sales_total": npc_sales_total, "credits": credits, "interior_tower_count": prepared_towers.size(), "power_floor_active": power_floor_in_progress, "power_floor_waiting": power_floor_entry_pending or (not active_power_floor_data.is_empty() and not power_floor_in_progress), "power_tower_matchmaking": "ONLINE_HUMAN_1V1_REQUIRED", "advertising_mode": "npc_staff_managed_internal_external"}
+	return {"tower_count": tower_nodes.size(), "staff_count": total_staff, "customer_count": total_customers, "npc_purchase_count": npc_purchase_count, "npc_sales_total": npc_sales_total, "credits": credits, "interior_tower_count": prepared_towers.size(), "power_floor_active": power_floor_in_progress, "power_floor_waiting": power_floor_entry_pending or (not active_power_floor_data.is_empty() and not power_floor_in_progress), "power_tower_matchmaking": "ONLINE_HUMAN_1V1_REQUIRED", "advertising_mode": "npc_staff_managed_internal_external", "active_campaign_id": active_ad_campaign_id, "campaign_rotation_count": ad_rotation_count, "campaign_expires_msec": active_ad_campaign_expires_msec}
 
