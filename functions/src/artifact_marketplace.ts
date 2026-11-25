@@ -5,6 +5,7 @@ import {
   type Query
 } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 
 function database() {
   return getFirestore();
@@ -675,5 +676,73 @@ export const grantMarketplaceArtifactFromReward = onCall(async (request) => {
       createdAt: FieldValue.serverTimestamp()
     });
     return { success: true, alreadyIssued: false, artifactId, ownerId };
+  });
+});
+
+
+/**
+ * Releases expired direct-sale listings even when the seller is offline.
+ * Each listing and its escrowed artifact are updated atomically.
+ */
+export const releaseExpiredArtifactListings = onSchedule("every 15 minutes", async () => {
+  const now = Timestamp.now();
+  const expiredListings = await database()
+    .collection("marketplaceListings")
+    .where("status", "==", "active")
+    .where("expiresAt", "<=", now)
+    .limit(100)
+    .get();
+
+  let releasedCount = 0;
+  let skippedCount = 0;
+  for (const candidate of expiredListings.docs) {
+    try {
+      const released = await database().runTransaction(async (transaction) => {
+        const listingSnapshot = await transaction.get(candidate.ref);
+        if (!listingSnapshot.exists) return false;
+        const listing = listingSnapshot.data()!;
+        if (listing.status !== "active" ||
+            !(listing.expiresAt instanceof Timestamp) ||
+            listing.expiresAt.toMillis() > now.toMillis()) {
+          return false;
+        }
+
+        const sellerId = String(listing.sellerId ?? "");
+        const artifactId = String(listing.artifactId ?? "");
+        if (!sellerId || !artifactId) {
+          throw new Error("Expired listing is missing its seller or artifact identity.");
+        }
+        const artifactRef = ownershipRef(sellerId, artifactId);
+        const artifactSnapshot = await transaction.get(artifactRef);
+        if (!artifactSnapshot.exists ||
+            artifactSnapshot.data()?.ownerId !== sellerId ||
+            artifactSnapshot.data()?.status !== "escrow" ||
+            artifactSnapshot.data()?.activeListingId !== candidate.id) {
+          throw new Error("Expired listing escrow does not match the seller's artifact.");
+        }
+
+        transaction.update(artifactRef, {
+          status: "owned",
+          activeListingId: FieldValue.delete(),
+          escrowReleasedAt: FieldValue.serverTimestamp()
+        });
+        transaction.update(candidate.ref, {
+          status: "expired",
+          expiredAt: FieldValue.serverTimestamp(),
+          expiredBy: "system_scheduler"
+        });
+        return true;
+      });
+      if (released) releasedCount += 1;
+    } catch (error) {
+      skippedCount += 1;
+      console.error("SYSTEM marketplace: failed to release expired listing", candidate.id, error);
+    }
+  }
+
+  console.info("SYSTEM marketplace expired listing sweep completed", {
+    examined: expiredListings.size,
+    released: releasedCount,
+    skipped: skippedCount
   });
 });
