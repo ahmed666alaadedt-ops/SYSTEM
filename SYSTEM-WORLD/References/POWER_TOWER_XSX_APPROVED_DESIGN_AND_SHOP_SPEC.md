@@ -161,3 +161,9 @@ Official competitive matches remain 1v1. The floor band controls arena count, no
 ### Floor-based combat rules
 - Floors 1–80 allow unarmed hand-to-hand, kung fu, martial arts, traditional melee weapons, and bows/arrows; Nen techniques become available as the player learns them.
 - Floors 81–200 are Nen-only: players must have unlocked Nen and reached control rank 5 before entering, must unequip weapons, and fight using Nen-enhanced unarmed combat and Nen techniques.
+
+
+### Interactive combat-style selection
+- Added a combat-style selection board in the Power Tower lobby. It lists only styles permitted on the player's next floor.
+- The selected style is checked against the player's equipped weapon and Nen progression before each official Power Tower attack.
+- Kung fu uses a rapid three-strike combo; martial arts and traditional melee use heavy attacks; bows/crossbows use a longer-range shot; Nen techniques route through the existing Nen abilities.
