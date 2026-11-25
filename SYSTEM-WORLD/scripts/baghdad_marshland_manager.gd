@@ -33,6 +33,9 @@ var candidate_convoy: Node3D
 var guide_tracking_arrows: Dictionary = {}
 var guide_escort_active := false
 var guide_escort_completed := false
+var guide_gate_tour_active := false
+var guide_gate_tour_completed := false
+var guide_gate_tour_index := 0
 var guide_path_index := 0
 var guide_path_local: Array[Vector3] = []
 var guide_path_speed := 2.8
@@ -1333,8 +1336,7 @@ func _process_real_guide_escort(delta: float) -> void:
 			var zone := real_guild_guide.get_parent() as Node3D
 			var target_local: Vector3 = guide_path_local[guide_path_index]
 			var target := zone.to_global(Vector3(target_local.x, _marsh_ground_y(target_local.x, target_local.z), target_local.z))
-			var next_position := real_guild_guide.global_position.move_toward(target, guide_path_speed * delta)
-			real_guild_guide.global_position = next_position
+			real_guild_guide.global_position = real_guild_guide.global_position.move_toward(target, guide_path_speed * delta)
 			if real_guild_guide.global_position.distance_to(target) <= 1.2:
 				guide_path_index += 1
 			if guide_path_index < guide_path_local.size():
@@ -1351,12 +1353,14 @@ func _process_real_guide_escort(delta: float) -> void:
 			set_meta("system_real_guide_escort_completed", true)
 			var sanctuary := get_node_or_null("MesopotamianMarshland/HiddenMarshAncientSanctuary") as Node3D
 			if sanctuary != null:
+				sanctuary.visible = true
 				sanctuary.set_meta("system_real_guide_arrived", true)
+				sanctuary.set_meta("system_hidden_heritage_site_discovered", true)
 				var gate_briefing := sanctuary.get_node_or_null("GuideStarGateBriefing") as Label3D
 				if gate_briefing != null:
 					var season := _get_marsh_season()
 					var destinations: Array = SEASONAL_GATE_DESTINATIONS.get(season, [])
-					var briefing_lines := PackedStringArray(["وصلتم إلى الملاذ الأثري — اتبعوا المرشد إلى البوابات"])
+					var briefing_lines := PackedStringArray(["وصلتم إلى الملاذ الأثري — سأرافقكم إلى البوابات"])
 					for gate_index in range(mini(3, destinations.size())):
 						briefing_lines.append("البوابة %d: %s" % [gate_index + 1, str(destinations[gate_index])])
 					gate_briefing.text = "\\n".join(briefing_lines)
@@ -1364,14 +1368,48 @@ func _process_real_guide_escort(delta: float) -> void:
 				real_guild_guide.set_meta("system_guide_gate_waypoint_count", 3)
 				real_guild_guide.set_meta("system_guide_explained_seasonal_gate_destinations", true)
 				for candidate in get_tree().get_nodes_in_group("system_player"):
-					if not bool(candidate.get_meta("system_hunter_sanctuary_discovery_pending_guide_arrival", false)):
+					if not bool(candidate.get_meta("system_hunter_guide_escort_started", false)) and not bool(candidate.get_meta("system_hunter_sanctuary_discovery_pending_guide_arrival", false)):
 						continue
 					candidate.set_meta("system_hunter_sanctuary_discovery_pending_guide_arrival", false)
-					sanctuary.visible = true
-					sanctuary.set_meta("system_hidden_heritage_site_discovered", true)
 					candidate.set_meta("system_hidden_heritage_site_discovered", true)
 					_on_marsh_final_trial_entered(candidate)
-	if guide_escort_active and is_instance_valid(candidate_convoy) and is_instance_valid(real_guild_guide):
+				guide_gate_tour_active = true
+				guide_gate_tour_index = 0
+				real_guild_guide.set_meta("system_guide_gate_tour_active", true)
+				set_meta("system_real_guide_gate_tour_started", true)
+
+	if guide_gate_tour_active and is_instance_valid(real_guild_guide):
+		var sanctuary_for_tour := get_node_or_null("MesopotamianMarshland/HiddenMarshAncientSanctuary") as Node3D
+		if sanctuary_for_tour == null or guide_gate_tour_index >= 3:
+			guide_gate_tour_active = false
+			guide_gate_tour_completed = sanctuary_for_tour != null
+		else:
+			var gate_name := "SeasonalMarshStarGate_%02d" % guide_gate_tour_index
+			var tour_gate := sanctuary_for_tour.get_node_or_null(gate_name) as Node3D
+			if tour_gate != null and tour_gate.visible:
+				var gate_target := tour_gate.global_position + Vector3(0.0, 1.0, 5.0)
+				var gate_direction := gate_target - real_guild_guide.global_position
+				if gate_direction.length() > 0.2:
+					real_guild_guide.look_at(gate_target, Vector3.UP)
+				real_guild_guide.global_position = real_guild_guide.global_position.move_toward(gate_target, guide_path_speed * delta)
+				if real_guild_guide.global_position.distance_to(gate_target) <= 1.4:
+					var destination := str(tour_gate.get_meta("system_gate_destination_city", ""))
+					tour_gate.set_meta("system_guide_presented", true)
+					tour_gate.set_meta("system_guide_explained_destination", destination)
+					tour_gate.set_meta("system_guide_presentation_order", guide_gate_tour_index + 1)
+					guide_gate_tour_index += 1
+					real_guild_guide.set_meta("system_guide_current_gate_index", guide_gate_tour_index)
+				if guide_gate_tour_index >= 3:
+					guide_gate_tour_active = false
+					guide_gate_tour_completed = true
+					real_guild_guide.set_meta("system_guide_gate_tour_active", false)
+					real_guild_guide.set_meta("system_guide_gate_tour_completed", true)
+					set_meta("system_real_guide_gate_tour_completed", true)
+					var guide_label := real_guild_guide.get_node_or_null("GuideBriefing") as Label3D
+					if guide_label != null:
+						guide_label.text = "أتممت شرح البوابات الثلاث — اختاروا وجهتكم"
+
+	if (guide_escort_active or guide_gate_tour_active) and is_instance_valid(candidate_convoy) and is_instance_valid(real_guild_guide):
 		var behind_guide := real_guild_guide.global_position - real_guild_guide.global_basis.z * 22.0
 		behind_guide.y = _marsh_ground_y(
 			behind_guide.x - marsh_center.x,
@@ -1379,6 +1417,7 @@ func _process_real_guide_escort(delta: float) -> void:
 		) + marsh_center.y
 		candidate_convoy.global_position = behind_guide
 		candidate_convoy.global_basis = real_guild_guide.global_basis
+
 	for key in guide_tracking_arrows.keys():
 		var arrow := guide_tracking_arrows[key] as Node3D
 		if not is_instance_valid(arrow):
@@ -1389,7 +1428,7 @@ func _process_real_guide_escort(delta: float) -> void:
 			arrow.visible = false
 			continue
 		var distance := candidate.global_position.distance_to(real_guild_guide.global_position)
-		arrow.visible = guide_escort_active and distance > 12.0
+		arrow.visible = (guide_escort_active or guide_gate_tour_active) and distance > 12.0
 		if arrow.visible:
 			arrow.global_position = candidate.global_position + Vector3(0.0, 3.4, 0.0)
 			var flat_target := real_guild_guide.global_position
@@ -1454,7 +1493,7 @@ func _on_marsh_final_trial_entered(body: Node3D) -> void:
 		return
 	if not bool(body.get_meta("system_hidden_heritage_site_discovered", false)):
 		return
-	if not guide_escort_completed or not bool(real_guild_guide.get_meta("system_guide_arrived_at_sanctuary", false)):
+	if not guide_escort_completed or not guide_gate_tour_completed or not bool(real_guild_guide.get_meta("system_guide_arrived_at_sanctuary", false)) or not bool(gate.get_meta("system_guide_presented", false)):
 		return
 	var completed_segments: Array = exam_manager.get("completed_stage_ids")
 	if completed_segments.has("baghdad_tunnel_competition"):
