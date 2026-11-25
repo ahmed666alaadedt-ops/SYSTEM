@@ -203,6 +203,7 @@ export const grantMarketplaceArtifact = onCall(async (request) => {
 /** Public authenticated read of active fixed-price listings. */
 export const browseArtifactMarketplace = onCall(async (request) => {
   authenticatedUid(request);
+  const uid = authenticatedUid(request);
   const civilization = typeof request.data?.civilization === "string"
     ? request.data.civilization.trim().slice(0, 60)
     : "";
@@ -236,6 +237,7 @@ export const browseArtifactMarketplace = onCall(async (request) => {
         currency: "SYSTEM",
         sellerId: data.sellerId,
         sellerName: data.sellerName,
+        isSeller: data.sellerId === uid,
         createdAt: data.createdAt?.toMillis?.() ?? null,
         expiresAt: data.expiresAt?.toMillis?.() ?? null
       };
