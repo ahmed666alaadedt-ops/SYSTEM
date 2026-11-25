@@ -1111,7 +1111,12 @@ func _on_marsh_final_trial_entered(body: Node3D) -> void:
 		body.set_meta("system_hunter_marsh_trial_completed", true)
 		body.set_meta("system_hunter_marsh_trial_rank", str(completion.get("license_rank", "PROVISIONAL_HUNTER")))
 		set_meta("system_hunter_marsh_trial_completed", true)
-		print("SYSTEM Hunter Exam: continuous tunnel-and-marsh trial completed at the hidden sanctuary.")
+		hidden_gates_unlocked = true
+		for gate in find_children("SeasonalMarshStarGate_*", "Node3D", true, false):
+			gate.visible = true
+			gate.set_meta("system_hidden_until_final_exam_discovery", false)
+		set_meta("system_hidden_heritage_site_discovered", true)
+		print("SYSTEM Hunter Exam: continuous tunnel-and-marsh trial completed at the hidden sanctuary; seasonal Star Gates unlocked.")
 
 
 func _on_marsh_star_gate_entered(body: Node3D, gate: Node3D) -> void:
