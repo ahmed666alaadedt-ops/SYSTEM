@@ -77,6 +77,8 @@ func get_floor_data(floor_number: int) -> Dictionary:
 	var weapons_allowed := floor_number <= 80
 	var nen_required := floor_number >= 81
 	var available_combat_styles := ["UNARMED_HAND_TO_HAND", "KUNG_FU", "MARTIAL_ARTS", "TRADITIONAL_MELEE", "BOW_AND_ARROW"] if weapons_allowed else ["NEN_TECHNIQUES", "UNARMED_HAND_TO_HAND"]
+	if floor_number >= 41 and floor_number <= 80:
+		available_combat_styles.append("NEN_TECHNIQUES")
 	return {
 		"floor": floor_number,
 		"division_number": int(ceil(float(floor_number) / 10.0)),
