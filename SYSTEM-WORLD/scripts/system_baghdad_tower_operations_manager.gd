@@ -4825,46 +4825,55 @@ func open_museum_artifact_exhibit(target: Node) -> void:
 	if display_role == "player_market_prototype":
 		credits_label.text = "رصيد SYSTEM: جارٍ التحقق من المحفظة..."
 		status_label.text = "الطابق %d — سوق مباشر بين اللاعبين، ومزادات وتبادل قطع. الملكية والدفع يتحقق منهما الخادم." % floor_number
+		var market_scroll := ScrollContainer.new()
+		market_scroll.custom_minimum_size = Vector2(0.0, 340.0)
+		market_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		content.add_child(market_scroll)
+		var market_controls := VBoxContainer.new()
+		market_controls.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		market_controls.add_theme_constant_override("separation", 6)
+		market_scroll.add_child(market_controls)
+
 		var price_label := Label.new()
 		price_label.text = "السعر أو قيمة المزايدة — رصيد SYSTEM"
-		content.add_child(price_label)
+		market_controls.add_child(price_label)
 		marketplace_price_input = SpinBox.new()
 		marketplace_price_input.min_value = 1
 		marketplace_price_input.max_value = 1000000000
 		marketplace_price_input.step = 1
 		marketplace_price_input.rounded = true
 		marketplace_price_input.value = 100
-		content.add_child(marketplace_price_input)
+		market_controls.add_child(marketplace_price_input)
 
 		var browse_button := Button.new()
 		browse_button.text = "تصفح عروض اللاعبين"
 		browse_button.pressed.connect(func(): _request_marketplace_operation("browse_listings", {}))
-		content.add_child(browse_button)
+		market_controls.add_child(browse_button)
 
 		var inventory_button := Button.new()
 		inventory_button.text = "مقتنياتي الأثرية — اختر قطعة للبيع"
 		inventory_button.pressed.connect(func(): _request_marketplace_operation("owned_artifacts", {}))
-		content.add_child(inventory_button)
+		market_controls.add_child(inventory_button)
 
 		var list_button := Button.new()
 		list_button.text = "عرض القطعة المختارة بالسعر المحدد"
 		list_button.pressed.connect(_create_selected_artifact_listing)
-		content.add_child(list_button)
+		market_controls.add_child(list_button)
 
 		var auction_create_button := Button.new()
 		auction_create_button.text = "إنشاء مزاد للقطعة المختارة"
 		auction_create_button.pressed.connect(_create_selected_artifact_auction)
-		content.add_child(auction_create_button)
+		market_controls.add_child(auction_create_button)
 
 		var auctions_button := Button.new()
 		auctions_button.text = "مشاهدة المزادات"
 		auctions_button.pressed.connect(func(): _request_marketplace_operation("browse_auctions", {}))
-		content.add_child(auctions_button)
+		market_controls.add_child(auctions_button)
 
 		var bid_button := Button.new()
 		bid_button.text = "تقديم المزايدة المحددة"
 		bid_button.pressed.connect(_place_selected_auction_bid)
-		content.add_child(bid_button)
+		market_controls.add_child(bid_button)
 
 		var bid_history_button := Button.new()
 		bid_history_button.text = "سجل مزايدات المزاد المختار"
@@ -4874,7 +4883,7 @@ func open_museum_artifact_exhibit(target: Node) -> void:
 				return
 			_request_marketplace_operation("auction_bids", {"auctionId": selected_market_auction_id})
 		)
-		content.add_child(bid_history_button)
+		market_controls.add_child(bid_history_button)
 
 		var settle_button := Button.new()
 		settle_button.text = "تسوية المزاد المنتهي"
@@ -4884,30 +4893,26 @@ func open_museum_artifact_exhibit(target: Node) -> void:
 				return
 			_request_marketplace_operation("settle_auction", {"auctionId": selected_market_auction_id})
 		)
-		content.add_child(settle_button)
+		market_controls.add_child(settle_button)
 
 		var exchange_button := Button.new()
 		exchange_button.text = "عروض التبادل بين اللاعبين"
 		exchange_button.pressed.connect(func(): _request_marketplace_operation("exchange_offers", {}))
-		content.add_child(exchange_button)
+		market_controls.add_child(exchange_button)
 
 		var history_button := Button.new()
 		history_button.text = "سجل صفقاتي ومبيعاتي"
 		history_button.pressed.connect(func(): _request_marketplace_operation("trade_history", {}))
-		content.add_child(history_button)
+		market_controls.add_child(history_button)
 
 		var wallet_button := Button.new()
 		wallet_button.text = "تحديث محفظة SYSTEM"
 		wallet_button.pressed.connect(func(): _request_marketplace_operation("wallet", {}))
-		content.add_child(wallet_button)
+		market_controls.add_child(wallet_button)
 
-		var scroll := ScrollContainer.new()
-		scroll.custom_minimum_size = Vector2(0.0, 160.0)
-		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		content.add_child(scroll)
 		marketplace_results_container = VBoxContainer.new()
 		marketplace_results_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		scroll.add_child(marketplace_results_container)
+		market_controls.add_child(marketplace_results_container)
 		_request_marketplace_operation("wallet", {})
 	else:
 		credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
