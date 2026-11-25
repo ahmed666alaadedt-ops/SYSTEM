@@ -5,6 +5,7 @@ const ModernCityTrafficManagerScript = preload("res://scripts/modern_city_traffi
 const ModernWorldIncidentManagerScript = preload("res://scripts/modern_world_incident_manager.gd")
 const VehicleDealershipManagerScript = preload("res://scripts/system_vehicle_dealership_manager.gd")
 const ModernWorldLightingManagerScript = preload("res://scripts/modern_world_lighting_manager.gd")
+const ModernWorldCinematicPresentationScript = preload("res://scripts/modern_world_cinematic_presentation.gd")
 const ModernWorldAmbienceManagerScript = preload("res://scripts/modern_world_ambience_manager.gd")
 const BaghdadTowerLandmarksManagerScript = preload("res://scripts/baghdad_tower_landmarks_manager.gd")
 const ModernWorldTransportNetworkManagerScript = preload("res://scripts/modern_world_transport_network_manager.gd")
@@ -90,6 +91,7 @@ func _ready() -> void:
 	_build_rural_settlements()
 	_create_transport_network()
 	_build_city_lighting()
+	_create_cinematic_presentation()
 	_create_city_dealerships()
 	_create_baghdad_towers()
 	_create_city_advertising_screens()
@@ -804,6 +806,12 @@ func _create_city_dealerships() -> void:
 		dealer.position = Vector3(position.x, terrain.get_terrain_height(position.x, position.y), position.y)
 		add_child(dealer)
 		dealer.setup(null)
+
+
+func _create_cinematic_presentation() -> void:
+	var presentation := ModernWorldCinematicPresentationScript.new()
+	presentation.name = "ModernWorldCinematicPresentation"
+	add_child(presentation)
 
 
 func _create_baghdad_towers() -> void:
