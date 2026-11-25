@@ -54,6 +54,15 @@ before(async () => {
       ownerId: "alice",
       status: "owned"
     });
+    await setDoc(doc(database, "marketplaceAuctions", "auction-1"), {
+      status: "active",
+      sellerId: "alice",
+      artifactId: "relic-2"
+    });
+    await setDoc(doc(database, "marketplaceAuctions", "auction-1", "bids", "bid-1"), {
+      bidderId: "bob",
+      amount: 300
+    });
     await setDoc(doc(database, "marketplaceExchanges", "exchange-1"), {
       status: "pending",
       initiatorId: "alice",
@@ -78,9 +87,9 @@ after(async () => {
   await environment?.cleanup();
 });
 
-test("active listings are readable by signed-in players, but inactive listings are hidden", async () => {
-  await assertSucceeds(getDoc(doc(alice, "marketplaceListings", "active-listing")));
-  await assertSucceeds(getDocs(query(
+test("marketplace listing documents cannot be read directly; callable browse is the public interface", async () => {
+  await assertFails(getDoc(doc(alice, "marketplaceListings", "active-listing")));
+  await assertFails(getDocs(query(
     collection(alice, "marketplaceListings"),
     where("status", "==", "active")
   )));
@@ -122,18 +131,20 @@ test("artifact ownership is private to the owner and server-write-only", async (
   await assertFails(deleteDoc(doc(alice, "artifactOwnership", "alice", "items", "relic-1")));
 });
 
-test("exchange offers are visible only to their two participants and remain server-write-only", async () => {
-  await assertSucceeds(getDoc(doc(alice, "marketplaceExchanges", "exchange-1")));
-  await assertSucceeds(getDoc(doc(bob, "marketplaceExchanges", "exchange-1")));
+test("auction and exchange backing documents are callable-only and never directly readable", async () => {
+  await assertFails(getDoc(doc(alice, "marketplaceAuctions", "auction-1")));
+  await assertFails(getDoc(doc(alice, "marketplaceAuctions", "auction-1", "bids", "bid-1")));
+  await assertFails(getDoc(doc(alice, "marketplaceExchanges", "exchange-1")));
+  await assertFails(getDoc(doc(bob, "marketplaceExchanges", "exchange-1")));
   await assertFails(getDoc(doc(outsider, "marketplaceExchanges", "exchange-1")));
   await assertFails(updateDoc(doc(alice, "marketplaceExchanges", "exchange-1"), {
     recipientId: "mallory"
   }));
 });
 
-test("transaction receipts are visible only to their buyer or seller", async () => {
-  await assertSucceeds(getDoc(doc(alice, "marketplaceTransactions", "transaction-1")));
-  await assertSucceeds(getDoc(doc(bob, "marketplaceTransactions", "transaction-1")));
+test("transaction receipt documents are callable-only and cannot be read or forged directly", async () => {
+  await assertFails(getDoc(doc(alice, "marketplaceTransactions", "transaction-1")));
+  await assertFails(getDoc(doc(bob, "marketplaceTransactions", "transaction-1")));
   await assertFails(getDoc(doc(outsider, "marketplaceTransactions", "transaction-1")));
   await assertFails(setDoc(doc(alice, "marketplaceTransactions", "forged"), {
     buyerId: "alice",
