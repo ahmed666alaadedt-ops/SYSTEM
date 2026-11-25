@@ -75,6 +75,21 @@ func _run_validation() -> void:
 				return
 	if not _check(carnivorous_count == 12, "Expected 12 physical carnivorous plant hazards along the running route."):
 		return
+
+	# Exercise one real capture against the player health component, then verify release.
+	var capture_plant := marshland.get_node_or_null("CarnivorousExamPlant_00") as Node3D
+	var player_health := player.get_node_or_null("PlayerCombatHealth")
+	if not _check(capture_plant != null and player_health != null and player_health.has_method("get_health_data"), "The player health component or test capture plant is missing."):
+		return
+	var health_before: Dictionary = player_health.call("get_health_data")
+	var previous_health := float(health_before.get("current_health", 0.0))
+	marshland.call("_on_carnivorous_plant_body_entered", player, capture_plant)
+	var health_during: Dictionary = player_health.call("get_health_data")
+	if not _check(bool(player.get_meta("system_examiner_trapped", false)) and float(health_during.get("current_health", previous_health)) < previous_health, "A carnivorous plant did not trap the player and apply real combat damage."):
+		return
+	await create_timer(2.6).timeout
+	if not _check(not bool(player.get_meta("system_examiner_trapped", true)) and bool(player.get_meta("system_examiner_released_from_trap", false)), "The player did not recover control after the plant capture duration."):
+		return
 	if not _check(int(marshland.get_meta("system_marshland_tracking_arrow_count", 0)) == 8 and int(marshland.get_meta("system_marshland_fog_bank_count", 0)) == 14 and bool(marshland.get_meta("system_marshland_exit_gate_present", false)), "The fog, tracking arrows or final Marshland gate are missing."):
 		return
 
