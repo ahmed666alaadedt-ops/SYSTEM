@@ -1616,7 +1616,8 @@ func _build_power_tower_floor_schedule_text() -> String:
 				elite_floors.append(str(floor_number))
 			else:
 				standard_floors.append(str(floor_number))
-		chapter_lines.append("الطوابق %03d-%03d | عادي 1v1: %s | نخبة 1v1: %s | زعماء 1v1: %s" % [first_floor, last_floor, ",".join(standard_floors), ",".join(elite_floors), ",".join(boss_floors)])
+		var arena_count := int(power_tower_manager.call("get_arena_count_for_floor", first_floor)) if is_instance_valid(power_tower_manager) else 1
+		chapter_lines.append("الطوابق %03d-%03d | ساحات متاحة: %d | عادي 1v1: %s | نخبة 1v1: %s | زعماء 1v1: %s" % [first_floor, last_floor, arena_count, ",".join(standard_floors), ",".join(elite_floors), ",".join(boss_floors)])
 	return "جدول نزالات SYSTEM POWER TOWER — 200 طابق\nتسجيل رسمي ورقم مقاتل | 3 حكام: رئيسي، فني، سلامة\nضربة نظيفة 1 | حرجة 2 | إسقاط 1 | TKO عند 10 | KO / قرار حكام / انسحاب\n3 خسارات متتالية: هبوط درجة (10 طوابق) | 10 خسارات إجمالية: استبعاد وإعادة للطابق 1\n100+: أهلية غرفة خاصة | 200: أسلحة مسموحة ونزال السيادة النهائي\nكل المواجهات فردية 1 ضد 1 — لا فرق ولا قتال جماعي\n" + "\n".join(chapter_lines)
 
 
@@ -4039,10 +4040,12 @@ func _on_floor_emergency_exit_body_entered(body: Node3D, exit_sensor: Area3D) ->
 func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) -> void:
 	var data: Dictionary = power_tower_manager.call("get_floor_data", floor_number) if is_instance_valid(power_tower_manager) else {}
 	var arena_type := str(data.get("arena_type", "DUEL"))
+	var arena_count := int(data.get("arena_count", 1))
 	var rules := str(data.get("arena_rules", "مواجهة فردية 1 ضد 1"))
 	var theme_id := str(data.get("arena_theme_id", "IRON"))
 	var theme_name := str(data.get("arena_theme_name", "قاعة الحديد"))
 	room.set_meta("system_power_tower_arena_type", arena_type)
+	room.set_meta("system_power_tower_arena_count_for_floor", arena_count)
 	room.set_meta("system_power_tower_rules", rules)
 	room.set_meta("system_power_tower_competition_format", "INDIVIDUAL_1V1")
 	room.set_meta("system_power_tower_theme", theme_id)
@@ -4099,7 +4102,7 @@ func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) 
 		room.add_child(theme_pillar)
 	var arena_label := Label3D.new()
 	arena_label.name = "ArenaChallengeDisplay"
-	arena_label.text = "شاشة عرض المعركة — BATTLE DISPLAY\n%s\n%s | الطابق %d / 200 | الدرجة %02d\n%s\nالحكام: رئيسي + فني + سلامة\nنقاط: نظيفة 1 | حرجة 2 | إسقاط 1 | TKO عند 10\nالخسارة: 3 متتالية هبوط 10 طوابق | 10 إجمالية استبعاد" % [str(data.get("arena_name", "POWER ARENA")), theme_name, floor_number, int(data.get("division_number", 1)), rules]
+	arena_label.text = "شاشة عرض المعركة — BATTLE DISPLAY\n%s\n%s | الطابق %d / 200 | الدرجة %02d | الساحات المتاحة: %d\n%s\nالحكام: رئيسي + فني + سلامة\nنقاط: نظيفة 1 | حرجة 2 | إسقاط 1 | TKO عند 10\nالخسارة: 3 متتالية هبوط 10 طوابق | 10 إجمالية استبعاد" % [str(data.get("arena_name", "POWER ARENA")), theme_name, floor_number, int(data.get("division_number", 1)), arena_count, rules]
 	arena_label.position = Vector3(0.0, 5.4, -radius * 0.48)
 	arena_label.font_size = 22
 	arena_label.pixel_size = 0.014
