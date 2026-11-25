@@ -248,6 +248,9 @@ func _run_validation() -> void:
 		if str(kiosk.get_meta("system_tower_id", "")) != tower_id:
 			_fail("Lobby kiosk has an incorrect tower ID for " + tower_id)
 			return
+		if str(tower.get_meta("system_tower_visual_finish", "")) != "facade_fins_belts_and_crown_v1" or tower.get_node_or_null("FacadeFinishFin_00") == null or tower.get_node_or_null("FacadeFinishCrownRing") == null:
+			_fail("Tower facade finish fins, identity belts or crown are missing for " + tower_id)
+			return
 		var floor_directory: Variant = tower.get_meta("tower_floor_directory", PackedStringArray())
 		if not floor_directory is PackedStringArray or floor_directory.is_empty():
 			_fail("Floor zoning metadata is missing for " + tower_id)
