@@ -4512,6 +4512,36 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 			for exhibit_index in range(exhibit_count):
 				var exhibit_position := Vector3(-12.0 + float(exhibit_index % 2) * 24.0, 0.0, -7.0 + float(exhibit_index / 2) * 14.0)
 				var exhibit_id := "baghdad_museum_f%02d_exhibit_%02d" % [floor_number, exhibit_index + 1]
+				var artifact_civilization := ""
+				var artifact_names: Array[String] = []
+				if floor_number <= 4:
+					artifact_civilization = "حضارات سومر وأكد وبابل وآشور"
+					artifact_names = ["ختم أسطواني سومري", "لوح مسماري تجاري", "تمثال نذري من أور", "إناء ملكي بابلي"]
+				elif floor_number <= 8:
+					artifact_civilization = "حضارة مصر القديمة ووادي النيل"
+					artifact_names = ["جعران احتفالي", "إناء كانوبي", "تميمة فرعونية", "قناع جنائزي مصري"]
+				elif floor_number <= 12:
+					artifact_civilization = "اليونان وروما والعصر الهلنستي"
+					artifact_names = ["أمفورة يونانية", "عملة رومانية", "تمثال رخامي هلنستي", "مصباح زيت أثري"]
+				elif floor_number <= 16:
+					artifact_civilization = "الصين القديمة وطريق الحرير"
+					artifact_names = ["قطعة يشم صينية", "ختم طريق الحرير", "إناء خزفي سونغي", "عملة تجارية قديمة"]
+				elif floor_number <= 20:
+					artifact_civilization = "أبحاث التنقيب والسجلات الأثرية"
+					artifact_names = ["سجل طبقات موقع أثري", "خريطة تنقيب موثقة", "لوح توثيق ميداني", "عينة فخارية مؤرخة"]
+				elif floor_number <= 24:
+					artifact_civilization = "مختبرات الفحص والترميم والحفظ"
+					artifact_names = ["قطعة قبل الترميم", "نموذج ترميم خزفي", "عينة تحليل معدني", "قطعة محفوظة بعد المعالجة"]
+				elif floor_number <= 28:
+					artifact_civilization = "مجموعات خاصة يملكها اللاعبون"
+					artifact_names = ["قطعة من مجموعة خاصة", "تحفة معروضة بإذن المالك", "مقتنى موثق", "قطعة من معرض اللاعب"]
+				elif floor_number <= 32:
+					artifact_civilization = "سوق التحف ومزادات اللاعبين"
+					artifact_names = ["نموذج ختم أثري للبيع", "نموذج لوح مسماري للمزاد", "نموذج تحفة قابلة للتبادل", "نموذج قطعة لهواة الجمع"]
+				else:
+					artifact_civilization = "الخزنة المركزية للقطع النادرة"
+					artifact_names = ["أثر ملكي نادر", "قطعة محفوظة عالية القيمة", "تحفة ذات سجل أصالة", "مقتنى تاريخي نادر"]
+				var artifact_name := artifact_names[exhibit_index % artifact_names.size()]
 				_add_facility_box(root, "ArtifactPedestal_%02d" % exhibit_index, exhibit_position + Vector3(0.0, 0.65, 0.0), Vector3(3.2, 1.3, 2.4), accent)
 				_add_facility_box(root, "ArtifactGlassCase_%02d" % exhibit_index, exhibit_position + Vector3(0.0, 2.35, 0.0), Vector3(2.5, 2.1, 1.8), highlight)
 				var artifact_material := StandardMaterial3D.new()
@@ -4538,10 +4568,13 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 				artifact_model.rotation_degrees = Vector3(8.0, 18.0, 4.0)
 				artifact_model.position = exhibit_position + Vector3(0.0, 2.55, 0.0)
 				artifact_model.material_override = artifact_material
+				artifact_model.set_meta("system_artifact_id", exhibit_id)
+				artifact_model.set_meta("system_artifact_name", artifact_name)
+				artifact_model.set_meta("system_artifact_civilization", artifact_civilization)
 				root.add_child(artifact_model)
 				var artifact_label := Label3D.new()
 				artifact_label.name = "ArtifactLabel_%02d" % exhibit_index
-				artifact_label.text = "قطعة متحفية موثقة\n%s" % exhibit_id
+				artifact_label.text = "%s\n%s\n%s" % [artifact_name, artifact_civilization, exhibit_id]
 				artifact_label.position = exhibit_position + Vector3(0.0, 3.65, -1.05)
 				artifact_label.font_size = 15
 				artifact_label.pixel_size = 0.012
@@ -4554,6 +4587,10 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 				exhibit_area.add_to_group("system_interactable")
 				exhibit_area.set_meta("system_interaction_type", "museum_artifact_exhibit")
 				exhibit_area.set_meta("system_artifact_id", exhibit_id)
+				exhibit_area.set_meta("system_artifact_name", artifact_name)
+				exhibit_area.set_meta("system_artifact_civilization", artifact_civilization)
+				exhibit_area.set_meta("system_artifact_provenance", "SYSTEM WORLD museum exhibit catalogue; display specimen only")
+				exhibit_area.set_meta("system_artifact_authenticity", "curator_review_required")
 				exhibit_area.set_meta("system_tower_id", tower_id)
 				exhibit_area.set_meta("system_tower_floor_number", floor_number)
 				exhibit_area.set_meta("system_artifact_display_role", "player_market_prototype" if facility_type == "player_artifact_market" else "museum_exhibit")
