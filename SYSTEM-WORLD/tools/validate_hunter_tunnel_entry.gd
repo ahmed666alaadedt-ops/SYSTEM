@@ -57,6 +57,16 @@ func _run_validation() -> void:
 	if not _check(bool(tunnel.get_meta("system_hunter_candidate_population_verified", false)), "The tunnel did not mark its 500-candidate population verified."):
 		return
 
+	var marshland := tunnel.get_node_or_null("HunterMarshland") as Node3D
+	if not _check(marshland != null and bool(tunnel.get_meta("system_tunnel_marshland_connected", false)), "The single Hunter tunnel does not open directly into the Marshland."):
+		return
+	if not _check(bool(marshland.get_meta("system_marshland_generated", false)) and int(marshland.get_meta("system_marshland_agricultural_plot_count", 0)) == 12 and int(marshland.get_meta("system_marshland_tree_count", 0)) == 28, "The agricultural Marshland environment or vegetation is incomplete."):
+		return
+	if not _check(int(marshland.get_meta("system_marshland_water_zone_count", 0)) == 5 and int(marshland.get_meta("system_marshland_giant_turtle_count", 0)) == 3 and int(marshland.get_meta("system_marshland_decoy_npc_count", 0)) == 6, "Marshland water, giant wildlife or misleading resident population is incomplete."):
+		return
+	if not _check(int(marshland.get_meta("system_marshland_tracking_arrow_count", 0)) == 8 and int(marshland.get_meta("system_marshland_fog_bank_count", 0)) == 14 and bool(marshland.get_meta("system_marshland_exit_gate_present", false)), "The fog, tracking arrows or final Marshland gate are missing."):
+		return
+
 	# The ordinary restaurant and its dine-in service remain, but no longer create an exam entrance.
 	var restaurant_floor := operations.call("_ensure_floor_room", "shopping_tower_baghdad", 29) as Node3D
 	if not _check(restaurant_floor != null and restaurant_floor.get_node_or_null("RestaurantDiningSign") != null, "Shopping Tower restaurant floor 29 was damaged or is missing."):
