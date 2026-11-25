@@ -22,7 +22,7 @@ const BAGHDAD_TOWER_CONFIG := {
 	"technology_tower_baghdad": {"node": "TechnologyTower", "title": "برج التكنولوجيا والابتكار", "floors": 40, "height": 245.0, "radius": 27.0, "roles": ["مدير الابتكار", "موظف المختبر", "مهندس الأجهزة", "مهندس الروبوتات", "باحث الذكاء الاصطناعي", "موظف الخدمات الرقمية", "مسؤول الصيانة", "مسؤول الإعلانات"], "jobs": ["innovation_director", "lab_receptionist", "device_engineer", "robotics_engineer", "ai_researcher", "digital_services", "maintenance_engineer", "advertising_manager"]}
 }
 
-const POWER_TOWER_CONFIG := {"node": "PowerTower", "title": "برج القوة", "floors": 200, "height": 820.0, "radius": 26.0, "roles": ["موظف تسجيل التحديات", "منظم الحلبة", "موظف الاستراحة الطبية", "مسؤول الإعلانات"], "jobs": ["arena_registrar", "arena_coordinator", "arena_medic", "advertising_manager"]}
+const POWER_TOWER_CONFIG := {"node": "PowerTower", "title": "برج القوة X-S-X", "floors": 200, "height": 820.0, "radius": 26.0, "roles": ["موظف تسجيل التحديات", "منظم مواعيد النزالات", "حكم الساحة", "موظف الاستراحة الطبية", "تاجر الأسلحة البيضاء والدروع", "مدرب اكتشاف النِن", "شيف الكافتيريا", "نادل الكافتيريا", "موظف الاستقبال والخدمات", "مسؤول الإعلانات"], "jobs": ["arena_registrar", "match_schedule_coordinator", "arena_referee", "arena_medic", "traditional_equipment_merchant", "nen_discovery_trainer", "tower_cafeteria_chef", "tower_cafeteria_waiter", "tower_guest_services", "advertising_manager"]}
 
 const PRODUCT_CATALOG := {
 	"shopping_tower_baghdad": [
@@ -159,6 +159,31 @@ const PRODUCT_CATALOG := {
 		{"id":"technology_cafe_coffee","name":"قهوة مقهى التقنية","price":25},
 		{"id":"technology_cafe_energy_drink","name":"مشروب طاقة","price":32},
 		{"id":"technology_cafe_snack","name":"وجبة خفيفة","price":20}
+	],
+	"power_tower_baghdad": [
+		{"id":"training_sword","name":"سيف تدريب برونزي","price":180,"category":"MELEE_WEAPON","quality":"BRONZE","rarity":"COMMON","availability":"PERMANENT"},
+		{"id":"combat_knife","name":"خنجر صياد فضي","price":520,"required_rank":"E","category":"MELEE_WEAPON","quality":"SILVER","rarity":"COMMON","availability":"PERMANENT"},
+		{"id":"steel_sword","name":"سيف فولاذي فضي","price":950,"required_rank":"D","category":"MELEE_WEAPON","quality":"SILVER","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"hunter_spear","name":"رمح الصياد","price":780,"required_rank":"D","category":"MELEE_WEAPON","quality":"GOLD","rarity":"COMMON","availability":"PERMANENT"},
+		{"id":"battle_axe","name":"فأس قتالي ذهبي","price":820,"required_rank":"C","category":"MELEE_WEAPON","quality":"GOLD","rarity":"COMMON","availability":"PERMANENT"},
+		{"id":"composite_bow","name":"قوس مركب وسهام","price":1100,"required_rank":"C","category":"TRADITIONAL_RANGED","quality":"GOLD","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"long_sword","name":"سيف طويل ذهبي","price":1750,"required_rank":"C","category":"MELEE_WEAPON","quality":"GOLD","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"great_sword","name":"السيف العظيم الماسي","price":4200,"required_rank":"B","category":"MELEE_WEAPON","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"war_hammer","name":"مطرقة الحرب الماسية","price":1950,"required_rank":"C","category":"MELEE_WEAPON","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"advanced_hunter_shield","name":"درع صياد معزز","price":2850,"required_rank":"B","category":"DEFENSE","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"rank_c_armor","name":"درع قتالي — رتبة C","price":2900,"required_rank":"C","category":"ARMOR","quality":"GOLD","rarity":"COMMON","availability":"PERMANENT"},
+		{"id":"rank_a_armor","name":"درع نخبة — رتبة A","price":7200,"required_rank":"A","category":"ARMOR","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"healing_elixir","name":"إكسير الشفاء","price":280,"category":"ELIXIR","quality":"BRONZE","rarity":"COMMON","availability":"CONSUMABLE"},
+		{"id":"energy_elixir","name":"إكسير الطاقة","price":360,"category":"ELIXIR","quality":"SILVER","rarity":"COMMON","availability":"CONSUMABLE"},
+		{"id":"strength_elixir","name":"إكسير القوة","price":420,"category":"ELIXIR","quality":"SILVER","rarity":"COMMON","availability":"CONSUMABLE"},
+		{"id":"nen_awakening_elixir","name":"إكسير إيقاظ النِن","price":1800,"required_rank":"D","required_level":15,"category":"NEN_ELIXIR","quality":"GOLD","rarity":"RARE","availability":"CONSUMABLE"},
+		{"id":"nen_focus_elixir","name":"إكسير تركيز النِن","price":2100,"required_rank":"D","required_level":20,"required_nen_rank":1,"category":"NEN_ELIXIR","quality":"DIAMOND","rarity":"RARE","availability":"CONSUMABLE"},
+		{"id":"skill_manual_pulse_dash","name":"مخطوطة تقنية اندفاع النبضة","price":2500,"required_rank":"C","required_level":15,"required_nen_rank":1,"product_type":"skill_training_permit","skill_id":"pulse_dash","category":"SKILL","quality":"GOLD","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"skill_manual_aura_shield","name":"مخطوطة تقنية درع الهالة","price":4500,"required_rank":"B","required_level":20,"required_nen_rank":2,"product_type":"skill_training_permit","skill_id":"aura_shield","category":"SKILL","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"skill_manual_sensory_mark","name":"مخطوطة تقنية وسم الإدراك","price":6500,"required_rank":"B","required_level":25,"required_nen_rank":2,"product_type":"skill_training_permit","skill_id":"sensory_mark","category":"SKILL","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"hunter_cafe_meal","name":"وجبة مقاتل متكاملة","price":38,"category":"CAFETERIA","quality":"BRONZE","rarity":"COMMON","availability":"CONSUMABLE"},
+		{"id":"hunter_cafe_coffee","name":"قهوة الكافتيريا","price":18,"category":"CAFETERIA","quality":"BRONZE","rarity":"COMMON","availability":"CONSUMABLE"},
+		{"id":"hunter_cafe_water","name":"ماء معدني","price":12,"category":"CAFETERIA","quality":"BRONZE","rarity":"COMMON","availability":"CONSUMABLE"}
 	],
 	"hunter_association_tower_baghdad": [
 		{"id":"mission_supply_pack","name":"حزمة تجهيز المهمات","price":160},
@@ -2394,7 +2419,7 @@ func _add_catalog_controls(tower_id: String) -> void:
 	scroll.add_child(catalog_controls)
 	var catalog: Array = PRODUCT_CATALOG.get(tower_id, [])
 	var heading := Label.new()
-	heading.text = "المعروض للبيع — بإشراف موظفي البرج"
+	heading.text = "المعروض للبيع — بإشراف موظفي البرج" if tower_id != "power_tower_baghdad" else "X-S-X EQUIPMENT & SKILL SHOP — أسلحة بيضاء فقط | لا أسلحة نارية حديثة"
 	catalog_controls.add_child(heading)
 	if catalog.is_empty():
 		var empty := Label.new()
@@ -2420,10 +2445,29 @@ func _add_catalog_controls(tower_id: String) -> void:
 			permit_check = progression.call("check_skill_training_permit", skill_id) if is_instance_valid(progression) and progression.has_method("check_skill_training_permit") else {"success": false}
 		var level_ok := not is_instance_valid(progression) or int(progression.get("current_level")) >= required_level
 		var nen_ok := required_nen_rank <= 0 or (is_instance_valid(progression) and bool(progression.get("nen_unlocked")) and int(progression.get("nen_control_rank")) >= required_nen_rank)
-		buy_button.text = "%s — %d رصيد | رتبة %s | مستوى %d | نِن %d | المخزون: %d" % [item_name, price, required_rank, required_level, required_nen_rank, stock]
+		var classification := _format_power_tower_product_classification(product)
+		buy_button.text = "%s%s — %d رصيد | رتبة %s | مستوى %d | نِن %d | المخزون: %d" % [item_name, classification, price, required_rank, required_level, required_nen_rank, stock]
 		buy_button.disabled = stock <= 0 or not _meets_hunter_rank(required_rank) or not level_ok or not nen_ok or not bool(permit_check.get("success", false))
 		buy_button.pressed.connect(_buy_product.bind(item_id, item_name, price, required_rank))
 		catalog_controls.add_child(buy_button)
+
+func _format_power_tower_product_classification(product: Dictionary) -> String:
+	if str(current_tower_id) != "power_tower_baghdad":
+		return ""
+	var quality := str(product.get("quality", ""))
+	var rarity := str(product.get("rarity", ""))
+	var availability := str(product.get("availability", ""))
+	var parts := PackedStringArray()
+	if not quality.is_empty():
+		parts.append(quality)
+	if not rarity.is_empty():
+		parts.append(rarity)
+	if availability == "CONSUMABLE":
+		parts.append("CONSUMABLE")
+	elif availability == "TEMPORARY":
+		parts.append("TEMPORARY")
+	return " | " + " / ".join(parts) if not parts.is_empty() else ""
+
 
 func _add_crafting_controls(tower_id: String) -> void:
 	if tower_id != "shopping_tower_baghdad" or not is_instance_valid(progression) or not progression.has_method("get_crafting_recipe_list"):
@@ -2646,7 +2690,7 @@ func open_showcase_product_service(tower_id: String, floor_number: int, facility
 	var preview := Label.new()
 	preview.name = "SelectedShowcaseProductPreview"
 	preview.set_meta("system_showcase_product_id", product_id)
-	preview.text = "معاينة المنتج: %s\nالسعر الحالي: %d رصيد SYSTEM | الرتبة المطلوبة: %s | المخزون: %d" % [product_name, _get_current_price(product_id), str(product_data.get("required_rank", "F")), get_vendor_stock(product_id)]
+	preview.text = "معاينة المنتج: %s\nالتصنيف: %s | الجودة: %s | الندرة: %s | الحالة: %s\nالسعر الحالي: %d رصيد SYSTEM | الرتبة المطلوبة: %s | المخزون: %d" % [product_name, str(product_data.get("category", "GENERAL")), str(product_data.get("quality", "—")), str(product_data.get("rarity", "—")), str(product_data.get("availability", "PERMANENT")), _get_current_price(product_id), str(product_data.get("required_rank", "F")), get_vendor_stock(product_id)]
 	preview.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content.add_child(preview)
 	content.move_child(preview, 1)
