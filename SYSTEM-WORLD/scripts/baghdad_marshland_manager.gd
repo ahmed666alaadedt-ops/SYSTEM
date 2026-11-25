@@ -1493,7 +1493,7 @@ func _on_marsh_final_trial_entered(body: Node3D) -> void:
 		return
 	if not bool(body.get_meta("system_hidden_heritage_site_discovered", false)):
 		return
-	if not guide_escort_completed or not guide_gate_tour_completed or not bool(real_guild_guide.get_meta("system_guide_arrived_at_sanctuary", false)) or not bool(gate.get_meta("system_guide_presented", false)):
+	if not guide_escort_completed or not bool(real_guild_guide.get_meta("system_guide_arrived_at_sanctuary", false)):
 		return
 	var completed_segments: Array = exam_manager.get("completed_stage_ids")
 	if completed_segments.has("baghdad_tunnel_competition"):
@@ -1525,7 +1525,7 @@ func _on_marsh_star_gate_entered(body: Node3D, gate: Node3D) -> void:
 	var completed_exam_segments: Array = exam_manager.get("completed_stage_ids")
 	if not completed_exam_segments.has("baghdad_tunnel_competition"):
 		return
-	if not guide_escort_completed or not bool(real_guild_guide.get_meta("system_guide_arrived_at_sanctuary", false)):
+	if not guide_escort_completed or not guide_gate_tour_completed or not bool(real_guild_guide.get_meta("system_guide_arrived_at_sanctuary", false)) or not bool(gate.get_meta("system_guide_presented", false)):
 		return
 	if bool(exam_manager.get("exam_active")):
 		return
