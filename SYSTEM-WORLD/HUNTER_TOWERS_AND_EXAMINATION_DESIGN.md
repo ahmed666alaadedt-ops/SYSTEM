@@ -42,17 +42,17 @@ Candidate numbers currently persist locally on the installation. Global uniquene
 The Al-Zawraa Park footprint in central Baghdad is permanently repurposed as the Baghdad Mesopotamian Marshland and Hunter Examination biome. This is a major green agricultural and wetland reserve, not a bare water swamp. The initial playable footprint is approximately 0.6 km² (840 m × 720 m), fitted to the current Baghdad land bounds and remains physically connected to the far end of the existing Hunter Examination tunnel by a continuous walkable underground passage. This extends the same Hunter examination journey; it does not create seven separate stages, a second unrelated exam, a teleport at the tunnel exit, or change the Hunter Tower invitation/guide flow.
 
 ### Approved marshland environment
-- Fertile cultivated plots, vegetable gardens, wet soil, grassy banks, willow groves and dense reed beds.
+- Fertile cultivated plots, vegetable gardens (12 plots / 432 crop instances), wet soil, grassy banks, willow groves and dense reed beds.
 - Eight shallow marsh pools, muddy channels, lily pads and shallow swim volumes.
 - 1,800 reed instances, 56 willow trees, nine raised wooden boardwalk segments and nine illuminated route-arrow markers.
-- Fourteen low-lying mist layers; the scene should maintain cinematic swamp fog and low visibility without making the route unreadable.
+- Fourteen animated low-lying mist layers with seasonal tint/density; the scene maintains cinematic swamp fog and low visibility without making the route unreadable.
 - The marsh entrance begins at the tunnel's physical exit and the boardwalk network continues toward the hidden ancient sanctuary. The WGS84 park anchor is retained; if the exact projected point falls outside the current terrain's land mask, the runtime nudges the visual center to the nearest land point within 300 m and records the offset.
 - The region uses Al-Zawraa Park's WGS84 anchor (33.31496, 44.37818) projected through the Baghdad regional origin. Preserve the five Baghdad towers and their approved exterior silhouettes.
 
 ### Hunter examination gameplay inside the marsh
 - Twelve visible candidate/false-guide NPCs populate the marsh. Some deliberately provide misleading route hints; they are not the genuine Hunter Guild guide.
 - Nine directional route markers guide candidates toward the intended route and hidden sanctuary. Their placement is readable through the fog, but they do not guarantee safety.
-- Six giant wildlife encounter profiles are present: giant marsh turtles and ancient swamp beasts. Encounter zones mark a combat-or-escape challenge rather than a harmless decoration.
+- Six giant wildlife encounter profiles are present: giant marsh turtles and ancient swamp beasts. Each has a moving enemy body wired to the existing combat system; approaching activates its C-rank combat behavior, while candidates may fight or attempt to escape.
 - Five forbidden-route hazard zones can fail an active candidate's exam when entered.
 - The trial mood is inspired by the dangerous, deceptive swamp atmosphere of the Hunter Exam in Hunter × Hunter, while all SYSTEM WORLD characters, routes, creatures and locations remain original.
 - The test remains one continuous journey from the tunnel into the marsh; do not reintroduce the retired seven-stage exam wording.
