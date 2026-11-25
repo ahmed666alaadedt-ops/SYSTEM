@@ -7,6 +7,8 @@ signal nen_training_completed(result: Dictionary)
 # delegated to the existing authoritative SYSTEM wallet/economy service.
 const FLOOR_COUNT := 200
 const SPECTATOR_NPC_TARGET := 500
+const SPECTATOR_DETAILED_ACTOR_COUNT := 8
+const SPECTATOR_VISUAL_LOD_COUNT := SPECTATOR_NPC_TARGET - SPECTATOR_DETAILED_ACTOR_COUNT
 const ARENA_BANDS := [
 	{"first": 1, "last": 20, "count": 8},
 	{"first": 21, "last": 40, "count": 6},
@@ -183,8 +185,8 @@ func _build_scaled_spectator_crowd() -> void:
 	var bodies := MultiMesh.new()
 	bodies.transform_format = MultiMesh.TRANSFORM_3D
 	bodies.mesh = body_mesh
-	bodies.instance_count = SPECTATOR_NPC_TARGET
-	for index in range(SPECTATOR_NPC_TARGET):
+	bodies.instance_count = SPECTATOR_VISUAL_LOD_COUNT
+	for index in range(SPECTATOR_VISUAL_LOD_COUNT):
 		var ring := index / 100
 		var slot := index % 100
 		var angle := TAU * float(slot) / 100.0
@@ -203,8 +205,8 @@ func _build_scaled_spectator_crowd() -> void:
 	var heads := MultiMesh.new()
 	heads.transform_format = MultiMesh.TRANSFORM_3D
 	heads.mesh = head_mesh
-	heads.instance_count = SPECTATOR_NPC_TARGET
-	for index in range(SPECTATOR_NPC_TARGET):
+	heads.instance_count = SPECTATOR_VISUAL_LOD_COUNT
+	for index in range(SPECTATOR_VISUAL_LOD_COUNT):
 		var ring := index / 100
 		var slot := index % 100
 		var angle := TAU * float(slot) / 100.0
@@ -219,6 +221,8 @@ func _build_scaled_spectator_crowd() -> void:
 	head_instance.material_override = head_material
 	crowd.add_child(head_instance)
 	crowd.set_meta("system_visible_spectator_count", SPECTATOR_NPC_TARGET)
+	crowd.set_meta("system_multimesh_impostor_count", SPECTATOR_VISUAL_LOD_COUNT)
+	crowd.set_meta("system_full_rig_count", SPECTATOR_DETAILED_ACTOR_COUNT)
 
 func _build_arena_floor_layouts() -> void:
 	var arena_root := Node3D.new()
