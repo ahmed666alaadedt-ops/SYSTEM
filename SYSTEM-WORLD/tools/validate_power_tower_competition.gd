@@ -122,6 +122,16 @@ func _run() -> void:
 	assert(int(crowd.get_meta("system_npc_population", 0)) == 500)
 	assert(int(crowd.get_meta("system_multimesh_impostor_count", 0)) == 492)
 	assert(int(crowd.get_meta("system_full_rig_count", 0)) == 8)
+	assert(int(crowd.get_meta("system_detailed_actor_nodes_created", 0)) == 8)
+	var detailed_actor_count := 0
+	for crowd_child in crowd.get_children():
+		if crowd_child is CharacterBody3D and bool(crowd_child.get_meta("system_npc_full_rig", false)):
+			detailed_actor_count += 1
+			assert(crowd_child.get_node_or_null("Torso") != null)
+			assert(crowd_child.get_node_or_null("Head") != null)
+			assert(crowd_child.get_node_or_null("Arm_L") != null and crowd_child.get_node_or_null("Arm_R") != null)
+			assert(crowd_child.get_node_or_null("Leg_L") != null and crowd_child.get_node_or_null("Leg_R") != null)
+	assert(detailed_actor_count == 8, "Eight detailed spectator NPC rigs must exist as real scene nodes.")
 	var bodies := crowd.get_node_or_null("SpectatorNPCBodies500") as MultiMeshInstance3D
 	assert(bodies != null and bodies.multimesh.instance_count == 492)
 	assert(int(crowd.get_meta("system_multimesh_impostor_count", 0)) == 492)
