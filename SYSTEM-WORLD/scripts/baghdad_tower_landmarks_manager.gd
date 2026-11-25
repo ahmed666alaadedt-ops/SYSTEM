@@ -985,7 +985,7 @@ func _create_antiques_tower_architecture(tower: Node3D) -> void:
 		var pier_mesh := BoxMesh.new()
 		pier_mesh.size = Vector3(3.0, 190.0, 3.0)
 		pier.mesh = pier_mesh
-		pier.position = Vector3(cos(angle) * 20.0, 102.0, sin(angle) * 20.0)
+		pier.position = Vector3(cos(angle) * 27.2, 102.0, sin(angle) * 27.2)
 		pier.rotation.y = -angle
 		pier.material_override = stone
 		architecture.add_child(pier)
@@ -994,7 +994,7 @@ func _create_antiques_tower_architecture(tower: Node3D) -> void:
 		var bay_mesh := BoxMesh.new()
 		bay_mesh.size = Vector3(5.0, 174.0, 0.34)
 		bay.mesh = bay_mesh
-		bay.position = Vector3(cos(angle) * 18.9, 102.0, sin(angle) * 18.9)
+		bay.position = Vector3(cos(angle) * 25.2, 102.0, sin(angle) * 25.2)
 		bay.rotation.y = -angle
 		bay.material_override = glass
 		architecture.add_child(bay)
