@@ -502,7 +502,7 @@ func _start_tower_staff_waypoint_patrol(employee: Node3D, model: Node3D, staff_i
 
 
 func _get_floor_duty_staff_index(tower_id: String, floor_number: int) -> int:
-	if not not _get_tower_config(tower_id).is_empty():
+	if _get_tower_config(tower_id).is_empty():
 		return -1
 	if floor_number < 1 or floor_number > int(_get_tower_config(tower_id)["floors"]):
 		return -1
@@ -2237,7 +2237,7 @@ func _spawn_nen_training_preview() -> void:
 
 
 func open_floor_services(tower_id: String, floor_number: int) -> void:
-	if not tower_nodes.has(tower_id) or not not _get_tower_config(tower_id).is_empty():
+	if not tower_nodes.has(tower_id) or _get_tower_config(tower_id).is_empty():
 		return
 	var config: Dictionary = _get_tower_config(tower_id)
 	if floor_number < 1 or floor_number > int(config.get("floors", 0)):
@@ -5628,7 +5628,7 @@ func _dispatch_pool_supervisor_to_player() -> bool:
 func open_facility_service(tower_id: String, floor_number: int, facility_type: String) -> void:
 	if bowling_throw_in_progress or facility_projectile_in_progress:
 		return
-	if not not _get_tower_config(tower_id).is_empty():
+	if _get_tower_config(tower_id).is_empty():
 		return
 	var progression_facilities := ["shopping_skill_store", "shopping_weapon_gallery", "shopping_ranged_gallery", "shopping_armor_gallery", "shopping_crafting_materials", "shopping_elixir_pharmacy", "shopping_nen_center", "shopping_advanced_elixir_lab", "shopping_rare_elixir_vault", "hunter_weapon_mastery", "hunter_nen_fundamentals", "hunter_advanced_control", "hunter_skill_specialization", "hunter_skill_assessment"]
 	if progression_facilities.has(facility_type):
