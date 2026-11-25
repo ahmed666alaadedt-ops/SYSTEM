@@ -92,22 +92,43 @@ func _run_validation() -> void:
 	if player == null or not player.is_in_group("system_player"):
 		_fail("Canonical main-scene player or system_player group is missing.")
 		return
-	var lap_water := district.get_node("OlympicLapPool/WaterVolume") as Area3D
-	var family_water := district.get_node("FamilyLeisurePool/WaterVolume") as Area3D
-	district.call("_on_water_body_entered", player, lap_water)
+	# Exercise real Area3D/body overlap signals rather than calling the callbacks directly.
+	var original_player_position := player.global_position
+	var original_physics_processing := player.is_physics_processing()
+	player.set_physics_process(false)
+	var overlap_test_center := district.global_position + Vector3(500.0, 12.0, 500.0)
+	player.global_position = overlap_test_center
+	var lap_test_water := _create_overlap_test_water_area(district, "OverlapLapWaterTest", overlap_test_center, Vector3(8.0, 4.0, 8.0), "lap_pool", player.collision_layer)
+	var family_test_water := _create_overlap_test_water_area(district, "OverlapFamilyWaterTest", overlap_test_center + Vector3(-1.5, 0.0, 0.0), Vector3(4.0, 4.0, 4.0), "family_pool", player.collision_layer)
+	for frame_index in range(3):
+		await physics_frame
+	var entered_zones: Dictionary = player.get_meta("system_public_leisure_water_zones", {})
+	if entered_zones.size() != 2 or not entered_zones.has(str(lap_test_water.get_instance_id())) or not entered_zones.has(str(family_test_water.get_instance_id())):
+		_fail("Real physics overlap did not register both water Area3D volumes for the player.")
+		return
+	# Move out of the smaller family volume while remaining inside the larger lap volume.
+	player.global_position = overlap_test_center + Vector3(2.5, 0.0, 0.0)
+	for frame_index in range(3):
+		await physics_frame
+	var remaining_zones: Dictionary = player.get_meta("system_public_leisure_water_zones", {})
+	if remaining_zones.size() != 1 or not remaining_zones.has(str(lap_test_water.get_instance_id())):
+		_fail("Leaving one physically overlapping water volume did not preserve exactly the remaining lap-pool zone.")
+		return
 	if not bool(player.get_meta("system_public_leisure_swimming", false)) or str(player.get_meta("system_public_leisure_water_type", "")) != "lap_pool":
-		_fail("Entering a public pool did not set the player's swimming state.")
+		_fail("The player lost the swimming state after physically exiting only one overlapping water volume.")
 		return
-	# Overlapping water volumes must not clear the player's swim state when only one is exited.
-	district.call("_on_water_body_entered", player, family_water)
-	district.call("_on_water_body_exited", player, lap_water)
-	if not bool(player.get_meta("system_public_leisure_swimming", false)) or str(player.get_meta("system_public_leisure_water_type", "")) != "family_pool":
-		_fail("Exiting one overlapping pool volume incorrectly cleared the remaining swim state.")
-		return
-	district.call("_on_water_body_exited", player, family_water)
+	player.global_position = overlap_test_center + Vector3(9.0, 0.0, 0.0)
+	for frame_index in range(3):
+		await physics_frame
 	if player.has_meta("system_public_leisure_swimming") or player.has_meta("system_public_leisure_water_zones"):
-		_fail("Leaving the final pool volume did not clear all swimming state.")
+		_fail("Leaving the final physical water volume did not clear all swimming state.")
 		return
+	lap_test_water.queue_free()
+	family_test_water.queue_free()
+	player.global_position = original_player_position
+	player.set_physics_process(original_physics_processing)
+	for frame_index in range(2):
+		await physics_frame
 
 	var locker := district.get_node("WomensChangingSuite/Locker_00") as MeshInstance3D
 	locker.set_meta("system_pool_locker_occupied", true)
@@ -152,6 +173,27 @@ func _run_validation() -> void:
 	print("SYSTEM PUBLIC LEISURE QA PASS: integrated in Baghdad public amenities; three monitored pool volumes, canonical player swim-state, 16 lockers, suite-specific release, shower and lifeguard dispatch; walkable rooftop garden with trees, benches, flowerbeds and lighting; all public facilities independent of the five Baghdad towers.")
 	main_scene.queue_free()
 	quit(0)
+
+
+
+func _create_overlap_test_water_area(parent: Node3D, area_name: String, center: Vector3, volume_size: Vector3, water_type: String, body_collision_layer: int) -> Area3D:
+	var area := Area3D.new()
+	area.name = area_name
+	area.collision_layer = 0
+	area.collision_mask = body_collision_layer
+	area.monitoring = true
+	area.set_meta("system_public_leisure_water_type", water_type)
+	area.set_meta("system_public_leisure_water_depth", 1.0)
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = volume_size
+	collision.shape = shape
+	area.add_child(collision)
+	area.body_entered.connect(Callable(parent, "_on_water_body_entered").bind(area))
+	area.body_exited.connect(Callable(parent, "_on_water_body_exited").bind(area))
+	parent.add_child(area)
+	area.global_position = center
+	return area
 
 
 func _fail(message: String) -> void:
