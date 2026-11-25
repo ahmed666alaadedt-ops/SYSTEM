@@ -485,3 +485,77 @@ export const purchaseArtifactListing = onCall(async (request) => {
 
   return result;
 });
+
+
+/** Releases an expired listing from escrow without allowing another player to cancel a live offer. */
+export const expireArtifactListing = onCall(async (request) => {
+  authenticatedUid(request);
+  const listingId = cleanText(request.data?.listingId, 128, "listingId");
+  const listingRef = database().collection("marketplaceListings").doc(listingId);
+
+  await database().runTransaction(async (transaction) => {
+    const listingSnapshot = await transaction.get(listingRef);
+    if (!listingSnapshot.exists) throw new HttpsError("not-found", "العرض غير موجود.");
+    const listing = listingSnapshot.data()!;
+    if (listing.status !== "active") {
+      throw new HttpsError("failed-precondition", "العرض لم يعد نشطاً.");
+    }
+    if (!(listing.expiresAt instanceof Timestamp) || listing.expiresAt.toMillis() > Date.now()) {
+      throw new HttpsError("failed-precondition", "لم تنتهِ مدة العرض بعد.");
+    }
+    const sellerId = String(listing.sellerId);
+    const artifactId = String(listing.artifactId);
+    const itemRef = ownershipRef(sellerId, artifactId);
+    const item = await transaction.get(itemRef);
+    if (!item.exists || item.data()?.activeListingId !== listingId ||
+        item.data()?.status !== "escrow") {
+      throw new HttpsError("failed-precondition", "حجز القطعة لا يطابق العرض.");
+    }
+    transaction.update(itemRef, {
+      status: "owned",
+      activeListingId: FieldValue.delete(),
+      escrowReleasedAt: FieldValue.serverTimestamp()
+    });
+    transaction.update(listingRef, {
+      status: "expired",
+      expiredAt: FieldValue.serverTimestamp()
+    });
+  });
+
+  return { success: true, listingId, status: "expired" };
+});
+
+/** Returns the authenticated player's purchase and sale receipts. */
+export const listMyMarketplaceTransactions = onCall(async (request) => {
+  const uid = authenticatedUid(request);
+  const collection = database().collection("marketplaceTransactions");
+  const [purchases, sales] = await Promise.all([
+    collection.where("buyerId", "==", uid).orderBy("createdAt", "desc").limit(50).get(),
+    collection.where("sellerId", "==", uid).orderBy("createdAt", "desc").limit(50).get()
+  ]);
+  const records = new Map<string, Record<string, unknown>>();
+  for (const doc of [...purchases.docs, ...sales.docs]) {
+    const data = doc.data();
+    records.set(doc.id, {
+      transactionId: doc.id,
+      artifactId: data.artifactId ?? null,
+      artifactIds: data.artifactIds ?? null,
+      listingId: data.listingId ?? null,
+      auctionId: data.auctionId ?? null,
+      exchangeId: data.exchangeId ?? null,
+      sellerId: data.sellerId,
+      buyerId: data.buyerId,
+      sellerName: data.sellerName ?? null,
+      buyerName: data.buyerName ?? null,
+      transactionType: data.transactionType ?? "sale",
+      price: data.price ?? 0,
+      currency: data.currency ?? "SYSTEM",
+      createdAt: data.createdAt?.toMillis?.() ?? 0
+    });
+  }
+  return {
+    transactions: [...records.values()]
+      .sort((a, b) => Number(b.createdAt) - Number(a.createdAt))
+      .slice(0, 50)
+  };
+});
