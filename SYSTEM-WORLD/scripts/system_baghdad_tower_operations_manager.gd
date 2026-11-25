@@ -5154,11 +5154,11 @@ func _render_marketplace_exchanges(data: Dictionary) -> void:
 		marketplace_results_container.add_child(line)
 		var accept_button := Button.new()
 		accept_button.text = "قبول التبادل"
-		accept_button.pressed.connect(func(): _request_marketplace_operation("accept_exchange_offer", {"exchangeId": exchange_id}))
+		accept_button.pressed.connect(_accept_marketplace_exchange.bind(exchange_id))
 		marketplace_results_container.add_child(accept_button)
 		var decline_button := Button.new()
 		decline_button.text = "رفض العرض"
-		decline_button.pressed.connect(func(): _request_marketplace_operation("close_exchange_offer", {"exchangeId": exchange_id, "action": "decline"}))
+		decline_button.pressed.connect(_close_marketplace_exchange.bind(exchange_id, "decline"))
 		marketplace_results_container.add_child(decline_button)
 	for raw in sent:
 		if not raw is Dictionary:
@@ -5173,8 +5173,19 @@ func _render_marketplace_exchanges(data: Dictionary) -> void:
 		if str(raw.get("status", "")) == "pending":
 			var cancel_button := Button.new()
 			cancel_button.text = "إلغاء عرض التبادل"
-			cancel_button.pressed.connect(func(): _request_marketplace_operation("close_exchange_offer", {"exchangeId": exchange_id, "action": "cancel"}))
+			cancel_button.pressed.connect(_close_marketplace_exchange.bind(exchange_id, "cancel"))
 			marketplace_results_container.add_child(cancel_button)
+
+
+func _accept_marketplace_exchange(exchange_id: String) -> void:
+	_request_marketplace_operation("accept_exchange_offer", {"exchangeId": exchange_id})
+
+
+func _close_marketplace_exchange(exchange_id: String, action: String) -> void:
+	_request_marketplace_operation("close_exchange_offer", {
+		"exchangeId": exchange_id,
+		"action": action
+	})
 
 
 func _render_marketplace_history(raw_transactions: Variant) -> void:
