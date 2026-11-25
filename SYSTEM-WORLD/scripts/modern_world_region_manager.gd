@@ -393,7 +393,7 @@ func _build_district_street_grid(parent: Node3D, city_name: String, district_ind
 	sidewalk_surface.generate_normals()
 	crossing_surface.generate_normals()
 	var road_mesh := road_surface.commit()
-	if road_mesh != null and road_mesh.get_surface_count() > 0:
+	if road_mesh != null and road_mesh.get_rid().is_valid() and road_mesh.get_surface_count() > 0:
 		var road_instance := MeshInstance3D.new()
 		road_instance.name = city_name.replace(" ", "") + "_DistrictRoadGrid_%02d" % district_index
 		road_instance.mesh = road_mesh
@@ -401,7 +401,7 @@ func _build_district_street_grid(parent: Node3D, city_name: String, district_ind
 		road_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		parent.add_child(road_instance)
 	var sidewalk_mesh := sidewalk_surface.commit()
-	if sidewalk_mesh != null and sidewalk_mesh.get_surface_count() > 0:
+	if sidewalk_mesh != null and sidewalk_mesh.get_rid().is_valid() and sidewalk_mesh.get_surface_count() > 0:
 		var sidewalk_instance := MeshInstance3D.new()
 		sidewalk_instance.name = city_name.replace(" ", "") + "_DistrictSidewalks_%02d" % district_index
 		sidewalk_instance.mesh = sidewalk_mesh
@@ -409,7 +409,7 @@ func _build_district_street_grid(parent: Node3D, city_name: String, district_ind
 		sidewalk_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		parent.add_child(sidewalk_instance)
 	var crossing_mesh := crossing_surface.commit()
-	if crossing_mesh != null and crossing_mesh.get_surface_count() > 0:
+	if crossing_mesh != null and crossing_mesh.get_rid().is_valid() and crossing_mesh.get_surface_count() > 0:
 		var crossing_material := _material(Color(0.82, 0.84, 0.82), 0.9)
 		var crossing_instance := MeshInstance3D.new()
 		crossing_instance.name = city_name.replace(" ", "") + "_Crosswalks_%02d" % district_index
@@ -520,7 +520,7 @@ func _add_road_strip(node_name: String, start: Vector2, offset: Vector2, width: 
 		_add_quad(surface, a, b, c, d)
 	surface.generate_normals()
 	var mesh := surface.commit()
-	if mesh == null or mesh.get_surface_count() == 0:
+	if mesh == null or not mesh.get_rid().is_valid() or mesh.get_surface_count() == 0:
 		return
 	var road := MeshInstance3D.new()
 	road.name = node_name
