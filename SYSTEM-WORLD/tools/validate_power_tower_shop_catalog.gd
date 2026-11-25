@@ -22,8 +22,8 @@ func _run() -> void:
 		seen_ids[item_id] = true
 		assert(not FORBIDDEN_IDS.has(item_id), "Modern firearm must never be sold in the Power Tower: " + item_id)
 		assert(ALLOWED_QUALITY.has(str(product.get("quality", ""))), "Missing/invalid quality tier for " + item_id)
-		assert(str(product.get("rarity", "")).to_upper() in ["COMMON", "RARE"]), "Power Tower catalog rarity must be explicit and conservative.")
-		assert(str(product.get("availability", "")).to_upper() in ["PERMANENT", "CONSUMABLE", "TEMPORARY"]), "Availability classification missing for " + item_id)
+		assert(str(product.get("rarity", "")).to_upper() in ["COMMON", "RARE"], "Power Tower catalog rarity must be explicit and conservative.")
+		assert(str(product.get("availability", "")).to_upper() in ["PERMANENT", "CONSUMABLE", "TEMPORARY"], "Availability classification missing for " + item_id)
 		var category := str(product.get("category", ""))
 		if category in ["MELEE_WEAPON", "TRADITIONAL_RANGED"]:
 			weapon_count += 1
