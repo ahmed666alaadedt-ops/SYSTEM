@@ -136,7 +136,7 @@ func _build_ground_access_ramp() -> void:
 	var horizontal_run := 15.5
 	var vertical_drop := 43.0 / 8.0
 	var segment_length := sqrt(horizontal_run * horizontal_run + vertical_drop * vertical_drop)
-	var slope := -atan2(vertical_drop, horizontal_run)
+	var slope := atan2(vertical_drop, horizontal_run)
 	var start_z := 48.0
 	for index in range(8):
 		var center := Vector3(0.0, -vertical_drop * (float(index) + 0.5), start_z + horizontal_run * (float(index) + 0.5))
