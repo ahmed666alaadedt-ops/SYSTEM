@@ -16,7 +16,9 @@ object SystemGodotMessageContract {
         PLAYER_CONTEXT("player_context"),
         BRIDGE_READY("bridge_ready"),
         WORLD_STATE("world_state"),
-        WORLD_ENTRY_RESULT("world_entry_result");
+        WORLD_ENTRY_RESULT("world_entry_result"),
+        MARKETPLACE_REQUEST("marketplace_request"),
+        MARKETPLACE_RESULT("marketplace_result");
 
         companion object {
             fun fromWireValue(value: String?): Type? =
@@ -34,14 +36,16 @@ object SystemGodotMessageContract {
     /** Messages Android is permitted to send to Godot. */
     val androidToGodotTypes: Set<Type> = setOf(
         Type.OPEN_WORLD,
-        Type.PLAYER_CONTEXT
+        Type.PLAYER_CONTEXT,
+        Type.MARKETPLACE_RESULT
     )
 
     /** Messages Godot is permitted to send to Android. */
     val godotToAndroidTypes: Set<Type> = setOf(
         Type.BRIDGE_READY,
         Type.WORLD_STATE,
-        Type.WORLD_ENTRY_RESULT
+        Type.WORLD_ENTRY_RESULT,
+        Type.MARKETPLACE_REQUEST
     )
 
     fun encode(
