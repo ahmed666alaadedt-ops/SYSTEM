@@ -77,7 +77,7 @@ func _run_validation() -> void:
 		return
 	var willow_trunks := zone.get_node_or_null("MarshWillowTrunks") as MultiMeshInstance3D
 	var willow_canopies := zone.get_node_or_null("MarshWillowCanopies") as MultiMeshInstance3D
-	if not _check(int(zone.get_meta("system_marsh_tree_count", 0)) == 160 and willow_trunks != null and willow_canopies != null and willow_trunks.multimesh.instance_count == 160 and willow_canopies.multimesh.instance_count == 160, "Expected 56 willow trees in two mobile-friendly render batches."):
+	if not _check(int(zone.get_meta("system_marsh_tree_count", 0)) == 160 and willow_trunks != null and willow_canopies != null and willow_trunks.multimesh.instance_count == 160 and willow_canopies.multimesh.instance_count == 160, "Expected 160 willow trees in two mobile-friendly render batches."):
 		return
 	if not _check(zone.find_children("MarshBoardwalk_*", "MeshInstance3D", true, false).size() == 9 and zone.find_children("MarshBoardwalkCollision_*", "StaticBody3D", true, false).size() == 9, "Expected nine raised boardwalk segments with matching walkable collision."):
 		return
