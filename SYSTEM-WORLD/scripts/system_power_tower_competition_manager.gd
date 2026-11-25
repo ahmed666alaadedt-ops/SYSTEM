@@ -206,7 +206,8 @@ func _build_scaled_spectator_crowd() -> void:
 	crowd.set_meta("system_visible_spectator_count", SPECTATOR_NPC_TARGET)
 
 func _build_restaurant_and_recreation_amenities() -> void:
-	var lobby := get_parent().get_node_or_null("PublicLobby_Blockout") if get_parent() != null else null
+	var tower_root := get_parent().get_parent() if get_parent() != null else null
+	var lobby := tower_root.get_node_or_null("PublicLobby_Blockout") if tower_root != null else null
 	if lobby == null:
 		return
 	var amenities := Node3D.new()
