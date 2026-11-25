@@ -839,7 +839,7 @@ func _build_shopping_tower() -> void:
 			"cafes", "dessert_shops", "bakeries", "hotel_reception",
 			"guest_rooms", "suites", "room_service"
 		]))
-		tower.set_meta("gameplay_status", "shopping_commerce_hospitality_hotel_and_equipment_blockout")
+		tower.set_meta("gameplay_status", "shopping_commerce_hospitality_hotel_and_equipment_runtime_generation_visual_polish_pending")
 
 
 func _build_antiques_heritage_tower() -> void:
@@ -848,7 +848,7 @@ func _build_antiques_heritage_tower() -> void:
 	if tower != null:
 		tower.set_meta("museum_departments", PackedStringArray(["iraqi_heritage", "ancient_egypt", "greek_roman_hellenistic", "ancient_china_silk_road", "archaeology_research", "conservation_restoration", "player_private_galleries", "player_marketplace", "live_auctions", "curator_council", "rare_artifact_vault"]))
 		tower.set_meta("museum_floor_count", 34)
-		tower.set_meta("gameplay_status", "antiques_heritage_tower_foundation_blockout")
+		tower.set_meta("gameplay_status", "antiques_heritage_tower_runtime_floor_generation_and_interactive_exhibits_visual_polish_pending")
 
 
 func _build_technology_tower() -> void:
