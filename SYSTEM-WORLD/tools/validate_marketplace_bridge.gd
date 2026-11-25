@@ -1,5 +1,16 @@
 extends SceneTree
 
+var _received := {
+	"request_id": "",
+	"success": false
+}
+
+
+func _on_marketplace_result(request_id: String, payload: Dictionary) -> void:
+	_received["request_id"] = request_id
+	_received["success"] = bool(payload.get("success", false))
+
+
 func _initialize() -> void:
 	call_deferred("_run_marketplace_bridge_checks")
 
@@ -11,18 +22,10 @@ func _run_marketplace_bridge_checks() -> void:
 		quit(1)
 		return
 
-	var bridge: Node = bridge_script.new()
+	var bridge: Node = bridge_script.new() as Node
 	root.add_child(bridge)
 
-	var received := {
-		"request_id": "",
-		"success": false
-	}
-	bridge.marketplace_result_received.connect(
-		func(request_id: String, payload: Dictionary) -> void:
-			received["request_id"] = request_id
-			received["success"] = bool(payload.get("success", false))
-	)
+	bridge.connect("marketplace_result_received", Callable(self, "_on_marketplace_result"))
 
 	var valid_response := JSON.stringify({
 		"version": 1,
@@ -37,7 +40,7 @@ func _run_marketplace_bridge_checks() -> void:
 		push_error("Valid marketplace response was rejected.")
 		quit(1)
 		return
-	if received["request_id"] != "market_test_001" or not received["success"]:
+	if _received["request_id"] != "market_test_001" or not _received["success"]:
 		push_error("Marketplace response was not routed to its matching request.")
 		quit(1)
 		return
