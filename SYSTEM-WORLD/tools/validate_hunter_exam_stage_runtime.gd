@@ -74,6 +74,10 @@ func _run_validation() -> void:
 	var site := runtime.get_node_or_null("ExaminationSite_" + CONTINUOUS_STAGE_ID) as Node3D
 	if not _check(site != null and str(site.get_meta("system_exam_stage_id", "")) == CONTINUOUS_STAGE_ID, "The active physical tunnel route is missing."):
 		return
+	if not _check(bool(site.get_meta("system_marshland_exit_is_physically_open", false)) and is_equal_approx(float(site.get_meta("system_marshland_exit_opening_width_m", 0.0)), 18.0), "The tunnel competition exit is not open and aligned with the 18 m marsh passage."):
+		return
+	if not _check(site.get_node_or_null("StageNorthBoundaryLeft") != null and site.get_node_or_null("StageNorthBoundaryRight") != null and site.get_node_or_null("MarshlandExitSign") is Label3D, "The physical tunnel exit opening or marshland destination sign is missing."):
+		return
 	var rival_system: Node = runtime.get("rival_competition")
 	if not _check(is_instance_valid(rival_system) and int(rival_system.call("get_competition_status").get("rival_count", 0)) == 5, "The continuous competition does not spawn all five named rivals."):
 		return
