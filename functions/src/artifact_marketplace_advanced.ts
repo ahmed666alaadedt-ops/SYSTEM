@@ -4,6 +4,7 @@ import {
   getFirestore
 } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 
 function database() {
   return getFirestore();
@@ -696,4 +697,67 @@ export const listMyArtifactExchangeOffers = onCall(async (request) => {
     sent: sent.docs.map(mapOffer),
     received: received.docs.map(mapOffer)
   };
+});
+
+
+/** Releases escrow for expired player-to-player exchange offers automatically. */
+export const releaseExpiredArtifactExchangeOffers = onSchedule("every 15 minutes", async () => {
+  const now = Timestamp.now();
+  const expiredOffers = await database()
+    .collection("marketplaceExchanges")
+    .where("status", "==", "pending")
+    .where("expiresAt", "<=", now)
+    .limit(100)
+    .get();
+
+  let releasedCount = 0;
+  let skippedCount = 0;
+  for (const candidate of expiredOffers.docs) {
+    try {
+      const released = await database().runTransaction(async (transaction) => {
+        const offerSnapshot = await transaction.get(candidate.ref);
+        if (!offerSnapshot.exists) return false;
+        const offer = offerSnapshot.data()!;
+        if (offer.status !== "pending" ||
+            !(offer.expiresAt instanceof Timestamp) ||
+            offer.expiresAt.toMillis() > now.toMillis()) {
+          return false;
+        }
+        const initiatorId = String(offer.initiatorId ?? "");
+        const artifactId = String(offer.offeredArtifactId ?? "");
+        if (!initiatorId || !artifactId) {
+          throw new Error("Expired exchange offer is missing its owner or artifact identity.");
+        }
+        const artifactRef = itemRef(initiatorId, artifactId);
+        const artifactSnapshot = await transaction.get(artifactRef);
+        if (!artifactSnapshot.exists ||
+            artifactSnapshot.data()?.ownerId !== initiatorId ||
+            artifactSnapshot.data()?.status !== "escrow" ||
+            artifactSnapshot.data()?.activeExchangeId !== candidate.id) {
+          throw new Error("Expired exchange escrow does not match the initiator's artifact.");
+        }
+        transaction.update(artifactRef, {
+          status: "owned",
+          activeExchangeId: FieldValue.delete(),
+          escrowReleasedAt: FieldValue.serverTimestamp()
+        });
+        transaction.update(candidate.ref, {
+          status: "expired",
+          closedBy: "system_scheduler",
+          closedAt: FieldValue.serverTimestamp()
+        });
+        return true;
+      });
+      if (released) releasedCount += 1;
+    } catch (error) {
+      skippedCount += 1;
+      console.error("SYSTEM marketplace: failed to release expired exchange offer", candidate.id, error);
+    }
+  }
+
+  console.info("SYSTEM marketplace expired exchange sweep completed", {
+    examined: expiredOffers.size,
+    released: releasedCount,
+    skipped: skippedCount
+  });
 });
