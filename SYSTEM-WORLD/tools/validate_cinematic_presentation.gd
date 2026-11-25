@@ -44,7 +44,18 @@ func _run_validation() -> void:
 	if sun == null or not sun.shadow_enabled or sun.light_energy <= 0.0:
 		_fail("The cinematic golden-hour directional light is missing or inactive.")
 		return
-	print("SYSTEM CINEMATIC QA PASS: sky, filmic tone mapping, glow, atmospheric fog and golden-hour sun are active.")
+	var quality_manager := presentation.get_node_or_null("SYSTEMCinematicQualityManager")
+	if quality_manager == null or not bool(quality_manager.get_meta("system_cinematic_quality_manager", false)):
+		_fail("Adaptive cinematic quality manager is missing.")
+		return
+	var quality_report: Dictionary = quality_manager.call("get_quality_report")
+	if float(quality_report.get("render_scale", 0.0)) < 1.0 or not bool(quality_report.get("debanding", false)):
+		_fail("High-definition render scale or debanding is not active.")
+		return
+	if int(quality_report.get("msaa_3d", 0)) < int(Viewport.MSAA_2X):
+		_fail("3D anti-aliasing is below the minimum cinematic quality profile.")
+		return
+	print("SYSTEM CINEMATIC QA PASS: cinematic sky, filmic tone mapping, glow, fog, golden-hour lighting and adaptive HD anti-aliasing are active.")
 	quit(0)
 
 
