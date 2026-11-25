@@ -345,6 +345,9 @@ func _run_validation() -> void:
 	var original_hunter_rank: Variant = helicopter_test_player.get_meta("system_hunter_rank", "")
 	var original_player_position := helicopter_test_player.global_position
 	var original_aircraft_position := hunter_pad.get_node("HunterAssociationHelicopter").global_position
+	if not bool(hunter_pad.call("_is_aircraft_position_clear", original_aircraft_position)):
+		_fail("The helicopter's own helipad deck is still blocking its parked flight-clearance volume.")
+		return
 	helicopter_test_player.set_meta("system_hunter_rank", "S")
 	if not bool(hunter_pad.call("_can_pilot")):
 		_fail("An S-rank Hunter was incorrectly denied helicopter pilot authorization.")
@@ -356,7 +359,7 @@ func _run_validation() -> void:
 	helicopter_test_player.set_meta("system_hunter_rank", "S")
 	hunter_pad.call("_enter_aircraft")
 	hunter_pad.set("vertical_input", 1.0)
-	hunter_pad.call("_update_flight", 0.25)
+	hunter_pad.call("_update_flight", 0.5)
 	var takeoff_position: Vector3 = hunter_pad.get_node("HunterAssociationHelicopter").global_position
 	if not bool(hunter_pad.get("pilot_active")) or takeoff_position.y <= original_aircraft_position.y + 0.1:
 		_fail("Authorized helicopter pilot could not lift the aircraft clear of its own landing deck.")
