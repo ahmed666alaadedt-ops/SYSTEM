@@ -81,9 +81,14 @@ func _run_validation() -> void:
 	var player_health := player.get_node_or_null("PlayerCombatHealth")
 	if not _check(capture_plant != null and player_health != null and player_health.has_method("get_health_data"), "The player health component or test capture plant is missing."):
 		return
+	var capture_zone := capture_plant.get_node_or_null("CandidateCaptureZone") as Area3D
+	if not _check(capture_zone != null and (capture_zone.collision_mask & player.collision_layer) != 0, "The carnivorous plant trigger cannot detect the player's collision layer."):
+		return
 	var health_before: Dictionary = player_health.call("get_health_data")
 	var previous_health := float(health_before.get("current_health", 0.0))
-	marshland.call("_on_carnivorous_plant_body_entered", player, capture_plant)
+	# Emit the connected Area3D signal so the validator exercises the same
+	# callback binding used by a real body_entered physics event.
+	capture_zone.body_entered.emit(player)
 	var health_during: Dictionary = player_health.call("get_health_data")
 	if not _check(bool(player.get_meta("system_examiner_trapped", false)) and float(health_during.get("current_health", previous_health)) < previous_health, "A carnivorous plant did not trap the player and apply real combat damage."):
 		return
@@ -94,8 +99,23 @@ func _run_validation() -> void:
 	main.call("_physics_process", 1.0 / 60.0)
 	if not _check(player.velocity == Vector3.ZERO and player.global_position.distance_to(trapped_position) < 0.001, "The player movement loop did not lock movement while captured."):
 		return
-	await create_timer(2.6).timeout
-	if not _check(not bool(player.get_meta("system_examiner_trapped", true)) and bool(player.get_meta("system_examiner_released_from_trap", false)), "The player did not recover control after the plant capture duration."):
+	await create_timer(0.45).timeout
+	var captured_visuals := player.find_children("*", "VisualInstance3D", true, false)
+	var all_player_meshes_hidden := not captured_visuals.is_empty()
+	for captured_visual in captured_visuals:
+		if (captured_visual as VisualInstance3D).visible:
+			all_player_meshes_hidden = false
+	if not _check(bool(player.get_meta("system_examiner_swallowed", false)) and all_player_meshes_hidden, "The plant did not pull the player into its maw and hide the captured character visuals."):
+		return
+	await create_timer(2.2).timeout
+	var released_visuals := player.find_children("*", "VisualInstance3D", true, false)
+	var any_player_mesh_visible := false
+	for released_visual in released_visuals:
+		if (released_visual as VisualInstance3D).visible:
+			any_player_mesh_visible = true
+	if not _check(not bool(player.get_meta("system_examiner_trapped", true)) and not bool(player.get_meta("system_examiner_swallowed", true)) and bool(player.get_meta("system_examiner_released_from_trap", false)) and any_player_mesh_visible, "The plant did not restore the player visuals and movement after the capture duration."):
+		return
+	if not _check(player.global_position.distance_to(capture_plant.global_position) > 1.5, "The released player remained inside the plant's capture zone."):
 		return
 	# Verify movement becomes available again after release.
 	player.velocity = Vector3.ZERO
