@@ -45,7 +45,7 @@ func _run_validation() -> void:
 		return
 	if not _check(bool(connector.get_meta("system_no_teleport_or_loading_gate", false)), "The tunnel-to-marsh route is not a physical continuous passage."):
 		return
-	if not _check(trial_start.monitoring and trial_start.body_entered.get_connections().size() > 0 and is_equal_approx(trial_start.global_position.distance_to(tunnel.global_position + Vector3(0.0, 0.0, 94.0)), 0.0), "The continuous Hunter trial does not start at the open far end of the tunnel competition."):
+	if not _check(trial_start.monitoring and trial_start.body_entered.get_connections().size() > 0 and is_equal_approx(trial_start.global_position.distance_to(tunnel.global_position + Vector3(0.0, 0.0, 108.0)), 0.0), "The continuous Hunter trial does not start at the 14 m beyond the open far end of the tunnel competition."):
 		return
 	if not _check(connector.get_meta("system_from", "") == "BaghdadHunterExaminationTunnel" and connector.get_meta("system_to", "") == "BaghdadMarshland_AlZawraaReplacement", "The physical passage does not connect the Hunter tunnel to the Al-Zawraa marshland."):
 		return
