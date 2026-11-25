@@ -63,7 +63,7 @@ func _run() -> void:
 		{"floor": 21, "technique": "TEN", "rank": 2},
 		{"floor": 41, "technique": "REN", "rank": 3},
 		{"floor": 61, "technique": "ZETSU", "rank": 4},
-		{"floor": 81, "technique": "HATSU", "rank": 5}
+		{"floor": 80, "technique": "HATSU", "rank": 5}
 	]
 	var training_index := 1
 	var stage_index := 0
