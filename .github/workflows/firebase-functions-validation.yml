@@ -40,3 +40,24 @@ jobs:
 
       - name: Compile Cloud Functions
         run: npm run build
+
+  firestore-rules:
+    name: Compile Firestore marketplace security rules
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout SYSTEM
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17 for Firestore Emulator
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Compile Firestore rules in the emulator
+        run: npx --yes firebase-tools@14 emulators:exec --only firestore --project demo-system-world "echo Firestore marketplace rules compiled successfully"
