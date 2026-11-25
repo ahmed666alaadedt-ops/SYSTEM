@@ -5,6 +5,7 @@ const EntranceScript = preload("res://scripts/system_tower_entrance.gd")
 const HunterHelicopterControllerScript = preload("res://scripts/system_hunter_helicopter_pad_controller.gd")
 const PublicLeisureManagerScript = preload("res://scripts/system_baghdad_public_leisure_manager.gd")
 const PublicGardenManagerScript = preload("res://scripts/system_baghdad_rooftop_garden_manager.gd")
+const HunterMarshlandManagerScript = preload("res://scripts/system_hunter_marshland_manager.gd")
 const LobbyFinishScript = preload("res://scripts/system_baghdad_tower_lobby_finish_manager.gd")
 const HUNTER_TOWER_HEIGHT := 650.0
 const REPUBLIC_BRIDGE_DECK_HEIGHT := 18.0
@@ -825,6 +826,14 @@ func _create_hunter_exam_tunnel() -> void:
 	candidate_board.modulate = Color(0.48, 0.91, 1.0)
 	tunnel_root.add_child(candidate_board)
 	print("SYSTEM WORLD: Hunter Examination tunnel initialized with %d individually tracked candidate NPCs." % candidate_count)
+
+	# The single tunnel opens directly into the Hunter examination Marshland.
+	var marshland := HunterMarshlandManagerScript.new() as Node3D
+	marshland.name = "HunterMarshland"
+	marshland.position = Vector3(0.0, 0.0, 42.0)
+	tunnel_root.add_child(marshland)
+	tunnel_root.set_meta("system_tunnel_marshland_connected", true)
+	tunnel_root.set_meta("system_tunnel_end_destination", "hunter_exam_marshland")
 
 
 func _nearest_land_position(origin: Vector2) -> Vector2:
