@@ -137,6 +137,9 @@ test("auction and exchange backing documents are callable-only and never directl
   await assertFails(getDoc(doc(alice, "marketplaceExchanges", "exchange-1")));
   await assertFails(getDoc(doc(bob, "marketplaceExchanges", "exchange-1")));
   await assertFails(getDoc(doc(outsider, "marketplaceExchanges", "exchange-1")));
+  await assertFails(setDoc(doc(alice, "marketplaceAuctions", "forged-auction"), { status: "active", sellerId: "alice" }));
+  await assertFails(setDoc(doc(alice, "marketplaceAuctions", "auction-1", "bids", "forged-bid"), { bidderId: "alice", amount: 1 }));
+  await assertFails(updateDoc(doc(alice, "marketplaceAuctions", "auction-1", "bids", "bid-1"), { amount: 999999 }));
   await assertFails(updateDoc(doc(alice, "marketplaceExchanges", "exchange-1"), {
     recipientId: "mallory"
   }));
