@@ -178,8 +178,8 @@ func _create_passage_segment(parent: Node3D, start: Vector3, finish: Vector3, in
 	var segment := Node3D.new()
 	segment.name = "MarshConnectionSegment_%03d" % index
 	segment.position = (start + finish) * 0.5 + Vector3.UP * 4.0
-	segment.look_at(finish, Vector3.UP)
 	parent.add_child(segment)
+	segment.look_at(finish, Vector3.UP)
 	_add_segment_box(segment, "PassageFloor", Vector3(0.0, -4.0, 0.0), Vector3(18.0, 0.8, segment_length + 0.8), wall_material, true)
 	_add_segment_box(segment, "PassageLeftWall", Vector3(-9.0, 0.0, 0.0), Vector3(0.8, 8.0, segment_length + 0.8), wall_material, true)
 	_add_segment_box(segment, "PassageRightWall", Vector3(9.0, 0.0, 0.0), Vector3(0.8, 8.0, segment_length + 0.8), wall_material, true)
@@ -349,9 +349,9 @@ func _add_boardwalk_network(parent: Node3D, material: Material) -> void:
 		mesh.size = Vector3(5.0, 0.55, delta.length() + 1.0)
 		deck.mesh = mesh
 		deck.position = midpoint
-		deck.look_at(finish, Vector3.UP)
 		deck.material_override = material
 		parent.add_child(deck)
+		deck.look_at(finish, Vector3.UP)
 		var body := StaticBody3D.new()
 		body.name = "MarshBoardwalkCollision_%02d" % index
 		body.position = deck.position
