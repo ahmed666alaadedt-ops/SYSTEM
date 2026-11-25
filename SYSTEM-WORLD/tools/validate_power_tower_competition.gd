@@ -68,13 +68,16 @@ func _run() -> void:
 			var training_id := "pt_nen_%02d" % training_index
 			var training_result: Dictionary = manager.call("train_player_nen", training_id, stage["floor"], stage["technique"])
 			assert(bool(training_result.get("success", false)), "Nen training failed: " + training_id)
-			assert(int(training_result.get("nen_control_rank", 0)) == int(stage["rank"]))
+			var expected_rank := int(stage["rank"]) if session == 2 or int(stage["rank"]) == 1 else int(stage["rank"]) - 1
+			assert(int(training_result.get("nen_control_rank", 0)) == expected_rank)
 			training_index += 1
 	var nen_status: Dictionary = progression.call("get_power_tower_nen_training_status")
 	assert(bool(nen_status.get("nen_unlocked", false)))
 	assert(int(nen_status.get("nen_control_rank", 0)) == 5)
 	assert(int(nen_status.get("training_sessions", 0)) == 15)
-	assert(not bool(manager.call("train_player_nen", "pt_nen_12", 81, "HATSU").get("success", false)))
+	assert(str(nen_status.get("next_stage", "")) == "ADVANCED_NEN")
+	assert(not bool(manager.call("train_player_nen", "pt_nen_15", 81, "HATSU").get("success", false)))
+	assert(not bool(manager.call("train_player_nen", "pt_nen_discovery_overflow", 1, "AURA_AWARENESS").get("success", false)))
 	assert(not bool(manager.call("train_player_nen", "pt_invalid_technique", 21, "HATSU").get("success", false)))
 
 	var crowd := architecture.get_node_or_null("PowerTowerCompetitionManager/PowerTower500SpectatorNPCs")
