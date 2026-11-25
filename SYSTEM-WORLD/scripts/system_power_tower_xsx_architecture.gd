@@ -25,6 +25,7 @@ func _ready() -> void:
 	_build_xsx_identity()
 	_build_observatory_and_rooftop_pad()
 	_build_circular_entrance_podium()
+	_build_lobby_facilities()
 	print("SYSTEM WORLD: X-S-X Power Tower architectural layers generated.")
 
 func _create_materials() -> void:
@@ -200,3 +201,177 @@ func _build_circular_entrance_podium() -> void:
 	sign.modulate = Color(1.0, 0.82, 0.65)
 	podium.add_child(sign)
 	set_meta("system_power_tower_podium", "CIRCULAR_MULTI_LEVEL_ARRIVAL")
+
+
+func _build_lobby_facilities() -> void:
+	var tower := get_parent()
+	if tower == null:
+		return
+	var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D
+	if lobby == null:
+		push_warning("X-S-X Power Tower: public lobby not found; interior displays were not generated.")
+		return
+	var steel := titanium
+	var display_glow := _emissive(Color(0.16, 0.58, 0.92), 1.4)
+	var facility_root := Node3D.new()
+	facility_root.name = "XSXShopAndCafeteriaInterior"
+	facility_root.set_meta("system_power_tower_interior_facilities", ["TRADITIONAL_WEAPON_GALLERY", "ARMOR_SHOWROOM", "ELIXIR_CABINET", "SKILL_LIBRARY", "CAFETERIA"])
+	lobby.add_child(facility_root)
+
+	# Traditional weapons gallery: no firearms or modern projectile displays are created here.
+	var weapon_root := Node3D.new()
+	weapon_root.name = "TraditionalWeaponsGallery"
+	weapon_root.position = Vector3(-23.0, 0.0, 50.0)
+	weapon_root.set_meta("system_shop_allowed_categories", ["MELEE", "TRADITIONAL_RANGED"])
+	weapon_root.set_meta("system_shop_forbidden_categories", ["FIREARM", "MODERN_PROJECTILE"])
+	facility_root.add_child(weapon_root)
+	_add_cylinder(weapon_root, "WeaponDisplayPlinth", 4.2, 4.8, 1.0, 1.0, steel, 32)
+	for index in range(4):
+		var stand := MeshInstance3D.new()
+		stand.name = "TraditionalWeaponStand_%02d" % index
+		var stand_mesh := BoxMesh.new()
+		stand_mesh.size = Vector3(0.45, 4.2, 0.45)
+		stand.mesh = stand_mesh
+		stand.position = Vector3(-2.4 + float(index) * 1.6, 3.2, 0.0)
+		stand.material_override = gold_trim
+		weapon_root.add_child(stand)
+		var blade := MeshInstance3D.new()
+		blade.name = "DisplayBlade_%02d" % index
+		var blade_mesh := BoxMesh.new()
+		blade_mesh.size = Vector3(0.18, 2.7, 0.38)
+		blade.mesh = blade_mesh
+		blade.position = stand.position + Vector3(0.0, 2.1, 0.0)
+		blade.material_override = white_emissive
+		weapon_root.add_child(blade)
+	var weapon_sign := Label3D.new()
+	weapon_sign.name = "TraditionalWeaponsSign"
+	weapon_sign.text = "TRADITIONAL WEAPONS\nNO FIREARMS"
+	weapon_sign.font_size = 22
+	weapon_sign.position = Vector3(0.0, 6.2, 3.2)
+	weapon_sign.modulate = Color(0.82, 0.94, 1.0)
+	weapon_root.add_child(weapon_sign)
+
+	# Armor mannequins and defensive equipment display.
+	var armor_root := Node3D.new()
+	armor_root.name = "ArmorShowroom"
+	armor_root.position = Vector3(-22.0, 0.0, 65.0)
+	facility_root.add_child(armor_root)
+	for index in range(3):
+		var mannequin := Node3D.new()
+		mannequin.name = "ArmorMannequin_%02d" % index
+		mannequin.position.x = float(index - 1) * 4.0
+		armor_root.add_child(mannequin)
+		_add_cylinder(mannequin, "ArmorTorso", 0.72, 0.9, 2.4, 2.5, steel, 24)
+		var head := MeshInstance3D.new()
+		head.name = "ArmorHelmet"
+		var head_mesh := SphereMesh.new()
+		head_mesh.radius = 0.62
+		head_mesh.height = 1.0
+		head.mesh = head_mesh
+		head.position.y = 4.05
+		head.material_override = gold_trim if index == 2 else steel
+		mannequin.add_child(head)
+	var armor_sign := Label3D.new()
+	armor_sign.name = "ArmorShowroomSign"
+	armor_sign.text = "ARMOR & DEFENSE"
+	armor_sign.font_size = 20
+	armor_sign.position = Vector3(0.0, 5.8, 3.0)
+	armor_sign.modulate = Color(0.9, 0.82, 0.62)
+	armor_root.add_child(armor_sign)
+
+	# Elixir cabinet and skill-scroll library.
+	var elixir_root := Node3D.new()
+	elixir_root.name = "NenElixirCabinet"
+	elixir_root.position = Vector3(23.0, 0.0, 49.0)
+	facility_root.add_child(elixir_root)
+	_add_cylinder(elixir_root, "ElixirCabinetBase", 3.6, 4.0, 1.0, 0.8, steel, 32)
+	for index in range(5):
+		var bottle := MeshInstance3D.new()
+		bottle.name = "ElixirBottle_%02d" % index
+		var bottle_mesh := CylinderMesh.new()
+		bottle_mesh.top_radius = 0.32
+		bottle_mesh.bottom_radius = 0.42
+		bottle_mesh.height = 1.5
+		bottle.mesh = bottle_mesh
+		bottle.position = Vector3(-2.0 + float(index) * 1.0, 2.0, 0.0)
+		bottle.material_override = display_glow if index % 2 == 0 else red_emissive
+		elixir_root.add_child(bottle)
+	var elixir_sign := Label3D.new()
+	elixir_sign.name = "NenElixirSign"
+	elixir_sign.text = "ELIXIRS & NEN"
+	elixir_sign.font_size = 20
+	elixir_sign.position = Vector3(0.0, 4.0, 2.8)
+	elixir_sign.modulate = Color(0.72, 0.9, 1.0)
+	elixir_root.add_child(elixir_sign)
+
+	var skill_root := Node3D.new()
+	skill_root.name = "SkillScrollLibrary"
+	skill_root.position = Vector3(23.0, 0.0, 65.0)
+	facility_root.add_child(skill_root)
+	_add_cylinder(skill_root, "SkillLibraryBase", 3.2, 3.8, 1.0, 0.8, steel, 32)
+	for index in range(4):
+		var scroll := MeshInstance3D.new()
+		scroll.name = "SkillScroll_%02d" % index
+		var scroll_mesh := CylinderMesh.new()
+		scroll_mesh.top_radius = 0.22
+		scroll_mesh.bottom_radius = 0.22
+		scroll_mesh.height = 1.4
+		scroll.mesh = scroll_mesh
+		scroll.rotation.z = PI * 0.5
+		scroll.position = Vector3(-1.8 + float(index) * 1.2, 1.8, 0.0)
+		scroll.material_override = gold_trim
+		skill_root.add_child(scroll)
+	var skill_sign := Label3D.new()
+	skill_sign.name = "SkillLibrarySign"
+	skill_sign.text = "SKILLS & TECHNIQUES"
+	skill_sign.font_size = 18
+	skill_sign.position = Vector3(0.0, 3.8, 2.8)
+	skill_sign.modulate = Color(1.0, 0.82, 0.52)
+	skill_root.add_child(skill_sign)
+
+	# Cafeteria service counter with four dining tables and visible seating.
+	var cafe := Node3D.new()
+	cafe.name = "PowerTowerCafeteria"
+	cafe.position = Vector3(0.0, 0.0, 68.0)
+	cafe.set_meta("system_facility_type", "cafeteria")
+	cafe.set_meta("system_service_roles", ["tower_cafeteria_chef", "tower_cafeteria_waiter"])
+	facility_root.add_child(cafe)
+	var counter := MeshInstance3D.new()
+	counter.name = "CafeteriaServiceCounter"
+	var counter_mesh := BoxMesh.new()
+	counter_mesh.size = Vector3(15.0, 2.6, 2.4)
+	counter.mesh = counter_mesh
+	counter.position = Vector3(0.0, 1.4, 0.0)
+	counter.material_override = gold_trim
+	cafe.add_child(counter)
+	var counter_sign := Label3D.new()
+	counter_sign.name = "CafeteriaSign"
+	counter_sign.text = "X-S-X CAFETERIA"
+	counter_sign.font_size = 26
+	counter_sign.position = Vector3(0.0, 4.0, 1.6)
+	counter_sign.modulate = Color(1.0, 0.82, 0.56)
+	cafe.add_child(counter_sign)
+	for index in range(4):
+		var table := MeshInstance3D.new()
+		table.name = "CafeteriaTable_%02d" % index
+		var table_mesh := CylinderMesh.new()
+		table_mesh.top_radius = 1.45
+		table_mesh.bottom_radius = 1.45
+		table_mesh.height = 0.3
+		table.mesh = table_mesh
+		table.position = Vector3(-8.0 + float(index % 2) * 16.0, 1.8, -7.0 - float(index / 2) * 7.0)
+		table.material_override = steel
+		cafe.add_child(table)
+		for seat_index in range(4):
+			var angle := TAU * float(seat_index) / 4.0
+			var seat := MeshInstance3D.new()
+			seat.name = "CafeteriaSeat_%02d_%02d" % [index, seat_index]
+			var seat_mesh := BoxMesh.new()
+			seat_mesh.size = Vector3(0.9, 1.1, 0.9)
+			seat.mesh = seat_mesh
+			seat.position = table.position + Vector3(cos(angle) * 2.1, -0.8, sin(angle) * 2.1)
+			seat.material_override = titanium
+			cafe.add_child(seat)
+	set_meta("system_power_tower_interior_display_groups", ["TraditionalWeaponsGallery", "ArmorShowroom", "NenElixirCabinet", "SkillScrollLibrary", "PowerTowerCafeteria"])
+	set_meta("system_power_tower_cafeteria_table_count", 4)
+	set_meta("system_power_tower_cafeteria_seat_count", 16)
