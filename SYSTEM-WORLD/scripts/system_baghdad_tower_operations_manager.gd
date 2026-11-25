@@ -2534,13 +2534,13 @@ func open_power_tower_ticket_terminal() -> void:
 	_clear_dynamic_controls()
 	title_label.text = "SYSTEM POWER TOWER — منصة توقعات الجمهور"
 	credits_label.text = "رصيدك الافتراضي: %d SYSTEM" % credits
-	status_label.text = "تذاكر افتراضية فقط | لا أموال حقيقية ولا سحب نقدي | اختر مقاتلاً واحداً من النزال"
+	status_label.text = "عملة SYSTEM افتراضية فقط — لا أموال حقيقية ولا سحب نقدي. اختر مقاتلاً واحداً من النزال."
 	var close_button := Button.new()
 	close_button.text = "إغلاق"
 	close_button.pressed.connect(func(): panel.hide())
 	content.add_child(close_button)
 	var disclaimer := Label.new()
-	disclaimer.text = "تُخصم قيمة التذكرة من رصيد SYSTEM الافتراضي. إذا صح توقعك تشارك في مجمع التذاكر، وإذا لم يصح تخسر قيمة التذكرة. عند عدم وجود توقع صحيح تُعاد التذاكر للجميع."
+	disclaimer.text = "تُخصم قيمة التذكرة من رصيد SYSTEM الافتراضي. من مجمل رهانات الطرف الخاسر: 10% إيراد للبرج، 10% مكافأة للمقاتل الفائز، و80% أرباح تُوزّع بالتناسب على المتراهنين الفائزين، مع إعادة أصل تذاكرهم. إذا لم يصح أي توقع، تُعاد جميع التذاكر دون اقتطاع. لا أموال حقيقية ولا سحب نقدي."
 	disclaimer.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content.add_child(disclaimer)
 	if open_matches.is_empty():
