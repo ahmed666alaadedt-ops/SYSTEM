@@ -552,34 +552,23 @@ func _on_public_mission_rewarded(mission_id: String, xp_amount: int) -> void:
 
 
 func _on_hunter_exam_stage_started(stage_id: String, stage_number: int) -> void:
-	var supported_stage_ids: Array[String] = [
-		"baghdad_heritage_trial",
-		"cairo_buried_market",
-		"alexandria_lighthouse",
-		"paris_catacombs",
-		"babylon_guardian",
-		"tokyo_urban_pursuit",
-		"final_survival_route"
-	]
-	if stage_id not in supported_stage_ids:
-		push_warning("SYSTEM HUNTER EXAM: unsupported stage %d (%s)." % [stage_number, stage_id])
+	if stage_id != "baghdad_tunnel_competition":
+		push_warning("SYSTEM HUNTER EXAM: unsupported continuous competition stage %d (%s)." % [stage_number, stage_id])
 		return
 	var tunnel_root := get_tree().root.find_child("BaghdadHunterExaminationTunnel", true, false) as Node3D
 	if tunnel_root == null:
-		push_warning("SYSTEM HUNTER EXAM: hidden Baghdad tunnel root is unavailable.")
+		push_warning("SYSTEM HUNTER EXAM: Baghdad tunnel root is unavailable.")
 		return
-	var previous_runtime := tunnel_root.get_node_or_null("HunterExamStageRuntime")
-	if previous_runtime != null:
-		previous_runtime.queue_free()
-		await get_tree().process_frame
-	hunter_exam_stage_runtime = HunterExamStageRuntimeScript.new()
-	hunter_exam_stage_runtime.name = "HunterExamStageRuntime"
-	hunter_exam_stage_runtime.position = Vector3(0.0, 0.0, 40.0)
-	tunnel_root.add_child(hunter_exam_stage_runtime)
+	hunter_exam_stage_runtime = tunnel_root.get_node_or_null("HunterExamStageRuntime") as Node3D
+	if hunter_exam_stage_runtime == null:
+		hunter_exam_stage_runtime = HunterExamStageRuntimeScript.new()
+		hunter_exam_stage_runtime.name = "HunterExamStageRuntime"
+		hunter_exam_stage_runtime.position = Vector3(0.0, 0.0, 40.0)
+		tunnel_root.add_child(hunter_exam_stage_runtime)
 	var stage_data: Dictionary = hunter_exam_manager.get_current_stage()
 	var build_result: Dictionary = hunter_exam_stage_runtime.call("activate_stage", stage_data, player, hunter_exam_manager)
 	if not bool(build_result.get("success", false)):
-		push_warning("SYSTEM HUNTER EXAM: stage %d environment activation failed: %s" % [stage_number, str(build_result.get("reason", "unknown"))])
+		push_warning("SYSTEM HUNTER EXAM: continuous tunnel environment activation failed: %s" % str(build_result.get("reason", "unknown")))
 		return
 	var rival_manager: Node = hunter_exam_stage_runtime.get("rival_competition")
 	if is_instance_valid(rival_manager) and rival_manager.has_signal("rival_event"):
@@ -590,12 +579,10 @@ func _on_hunter_exam_stage_started(stage_id: String, stage_number: int) -> void:
 		player.velocity = Vector3.ZERO
 		player.global_position = hunter_exam_stage_runtime.to_global(Vector3(0.0, 1.2, 2.0))
 		player.set_meta("system_hunter_exam_active_stage", stage_id)
-	var candidate_number := int(hunter_exam_manager.get_exam_overview().get("candidate_number", 0))
 	if interaction_prompt_label != null:
-		interaction_prompt_label.text = "بدأت المرحلة %d/7: %s — رقم المتسابق %d" % [stage_number, str(stage_data.get("title", stage_id)), candidate_number]
+		interaction_prompt_label.text = "بدأت المسابقة المتصلة في نفق الصيادين — رقم المتسابق %d" % int(hunter_exam_manager.get_exam_overview().get("candidate_number", 0))
 		interaction_prompt_label.show()
-	print("SYSTEM HUNTER EXAM: physical stage %d/7 activated: %s" % [stage_number, stage_id])
-
+	print("SYSTEM HUNTER EXAM: single continuous Baghdad tunnel competition activated; stage %d." % stage_number)
 
 func _on_hunter_rival_event(message: String) -> void:
 	if interaction_prompt_label == null:
@@ -626,26 +613,29 @@ func _on_hunter_exam_registration_requested() -> void:
 	if hunter_exam_manager == null:
 		return
 	var overview: Dictionary = hunter_exam_manager.get_exam_overview()
-	var result: Dictionary = {}
-	if not bool(overview.get("invitation_accepted", false)):
-		result = {"success":false,"reason":"INVITATION_NOT_ACCEPTED","message":"اقبل دعوة اختبار الصيادين أولاً من برج الجمعية."}
-	elif not is_instance_valid(player):
-		result = {"success":false,"reason":"PLAYER_UNAVAILABLE","message":"تعذر تحديد موقع اللاعب لإكمال التسجيل."}
+	var result: Dictionary
+	if bool(overview.get("registered", false)):
+		result = {
+			"success": true,
+			"candidate_number": int(overview.get("candidate_number", 0)),
+			"message": "أنت مسجل بالفعل. رقمك التسلسلي محفوظ؛ اتبع مرشد نقابة الصيادين."
+		}
+	elif bool(overview.get("invitation_accepted", false)):
+		result = {
+			"success": true,
+			"message": "تم قبول طلبك. اتبع مرشد نقابة الصيادين إلى النفق لاستلام رقمك التسلسلي هناك."
+		}
 	else:
-		var arrival_zone := get_tree().root.find_child("HunterTowerRecruitmentArrivalZone", true, false) as Area3D
-		if arrival_zone == null or player.global_position.distance_to(arrival_zone.global_position) > 30.0:
-			result = {"success":false,"reason":"REGISTER_AT_HUNTER_ASSOCIATION_TOWER","message":"أكمل التسجيل الرسمي من ردهة برج جمعية الصيادين في بغداد."}
-		elif bool(overview.get("registered", false)):
-			result = {"success":true,"candidate_number":int(overview.get("candidate_number", 0)),"stages":int(overview.get("total_stages", 7)),"message":"تسجيلك الرسمي محفوظ. رقمك التسلسلي ثابت."}
-		else:
-			result = hunter_exam_manager.apply_for_exam("local_player")
-	if bool(result.get("success", false)) and is_instance_valid(player) and result.has("candidate_number"):
-		player.set_meta("system_hunter_exam_candidate_number", int(result.get("candidate_number", 0)))
+		result = {
+			"success": false,
+			"reason": "INVITATION_NOT_ACCEPTED",
+			"message": "ابدأ بقبول دعوة نقابة الصيادين من ردهة البرج."
+		}
 	var menu := get_node_or_null("HunterGuildMenu")
 	if menu != null and menu.has_method("set_exam_status"):
 		menu.call("set_exam_status", result)
 	if interaction_prompt_label != null:
-		interaction_prompt_label.text = str(result.get("message", "التسجيل متاح من برج جمعية الصيادين."))
+		interaction_prompt_label.text = str(result.get("message", "اتبع مرشد النقابة."))
 		interaction_prompt_label.show()
 
 func _on_hunter_exam_start_requested() -> void:
@@ -658,33 +648,15 @@ func _on_hunter_exam_start_requested() -> void:
 	if not bool(overview.get("invitation_accepted", false)):
 		_show_hunter_exam_invitation()
 		return
-	if not bool(overview.get("registered", false)):
-		var not_registered := {"success":false,"reason":"NOT_REGISTERED"}
-		var registration_menu := get_node_or_null("HunterGuildMenu")
-		if registration_menu != null and registration_menu.has_method("set_exam_status"):
-			registration_menu.call("set_exam_status", not_registered)
+	if not bool(overview.get("registered", false)) or not bool(player.get_meta("system_inside_hunter_exam_tunnel", false)):
 		_handle_hunter_exam_guide_interaction()
 		return
-	if not is_instance_valid(player) or not bool(player.get_meta("system_hunter_exam_riddle_solved", false)):
-		var riddle_error := {"success":false,"reason":"HUNTER_TUNNEL_RIDDLE_NOT_SOLVED"}
-		var riddle_menu := get_node_or_null("HunterGuildMenu")
-		if riddle_menu != null and riddle_menu.has_method("set_exam_status"):
-			riddle_menu.call("set_exam_status", riddle_error)
-		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "حل لغز العين والنهر والتاج داخل مطعم برج التسوق أولاً."
-			interaction_prompt_label.show()
-		return
-	if not bool(player.get_meta("system_inside_hunter_exam_tunnel", false)):
-		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "المدخل انفتح؛ استخدم المصعد الحجري السري للوصول إلى النفق قبل بدء الاختبار."
-			interaction_prompt_label.show()
-		return
 	var result: Dictionary = hunter_exam_manager.begin_exam()
-	var menu := get_node_or_null("HunterGuildMenu")
-	if menu != null and menu.has_method("set_exam_status"):
-		menu.call("set_exam_status", result)
-	if not bool(result.get("success", false)) and interaction_prompt_label != null:
-		interaction_prompt_label.text = "تعذر بدء اختبار الصيادين: %s" % str(result.get("reason", "غير معروف"))
+	if bool(result.get("success", false)):
+		if bool(result.get("resumed", false)):
+			_on_hunter_exam_stage_started("baghdad_tunnel_competition", 1)
+	elif interaction_prompt_label != null:
+		interaction_prompt_label.text = "تعذر بدء المسابقة: %s" % str(result.get("reason", "غير معروف"))
 		interaction_prompt_label.show()
 
 func _connect_hunter_tower_recruitment() -> void:
@@ -704,9 +676,9 @@ func _on_hunter_tower_arrival_body_entered(body: Node3D) -> void:
 	if bool(overview.get("registered", false)) or bool(overview.get("invitation_accepted", false)):
 		if interaction_prompt_label != null:
 			if bool(overview.get("registered", false)):
-				interaction_prompt_label.text = "طلبك مقبول ورقمك محفوظ. توجه إلى مطعم برج التسوق، الطابق 29، لاكتشاف مدخل الاختبار السري."
+				interaction_prompt_label.text = "أهلاً بعودتك أيها الصياد. رقمك التسلسلي %d محفوظ؛ يمكنك متابعة المسابقة من المرشد." % int(overview.get("candidate_number", 0))
 			else:
-				interaction_prompt_label.text = "طلبك مقبول مبدئياً. أكمل التسجيل الرسمي من قائمة النقابة، ثم توجه إلى مطعم برج التسوق لاكتشاف المدخل السري."
+				interaction_prompt_label.text = "طلبك مقبول مبدئياً. تفاعل مع مرشد نقابة الصيادين ليصطحبك إلى النفق."
 			interaction_prompt_label.show()
 		return
 	_show_hunter_exam_invitation()
@@ -730,50 +702,101 @@ func _on_hunter_exam_invitation_accepted() -> void:
 	if hunter_exam_manager == null:
 		if interaction_prompt_label != null:
 			interaction_prompt_label.text = "نظام نقابة الصيادين غير متاح حالياً."
+			interaction_prompt_label.show()
 		return
 	var result: Dictionary = hunter_exam_manager.accept_exam_invitation("local_player")
 	if not bool(result.get("success", false)):
 		if interaction_prompt_label != null:
 			interaction_prompt_label.text = "تعذر قبول طلبك: %s" % str(result.get("reason", "غير معروف"))
+			interaction_prompt_label.show()
 		return
-	if player != null:
+	if is_instance_valid(player):
 		player.set_meta("system_hunter_exam_invitation_accepted", true)
 	if hunter_exam_invitation_panel != null:
 		hunter_exam_invitation_panel.hide()
 	if interaction_prompt_label != null:
-		interaction_prompt_label.text = "تم قبولك مبدئياً. أكمل التسجيل الرسمي من قائمة نقابة الصيادين داخل البرج، ثم اكتشف المدخل السري في مطعم برج التسوق."
+		interaction_prompt_label.text = "تم قبولك مبدئياً. اتبع مرشد نقابة الصيادين؛ سيصطحبك إلى نفق المنافسة ويسلمك رقمك التسلسلي عند الوصول."
 		interaction_prompt_label.show()
 
 func _start_hunter_guild_escort(guide: Node) -> void:
-	if not is_instance_valid(player) or guide == null or hunter_exam_manager == null:
+	if not is_instance_valid(player) or not is_instance_valid(guide) or hunter_exam_manager == null:
 		return
 	var overview: Dictionary = hunter_exam_manager.get_exam_overview()
 	if not bool(overview.get("invitation_accepted", false)):
 		_show_hunter_exam_invitation()
 		return
+	if hunter_exam_escort_active:
+		return
 	if bool(player.get_meta("system_inside_hunter_exam_tunnel", false)):
+		var resumed_result: Dictionary = hunter_exam_manager.begin_exam()
+		if bool(resumed_result.get("success", false)) and bool(resumed_result.get("resumed", false)):
+			_on_hunter_exam_stage_started("baghdad_tunnel_competition", 1)
 		return
 	if player.global_position.distance_to(guide.global_position) > 8.0:
 		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "مرشد النقابة داخل برج الصيادين. تعال إليه أولاً للحصول على تعليمات المدخل السري."
+			interaction_prompt_label.text = "مرشد النقابة موجود داخل برج الصيادين. اقترب منه أولاً ليصطحبك إلى النفق."
 			interaction_prompt_label.show()
 		return
-	hunter_exam_escort_active = false
-	player.set_meta("system_hunter_exam_escort_active", false)
-	var registered := bool(overview.get("registered", false))
-	var candidate_number := int(overview.get("candidate_number", 0))
+	var tunnel_root := get_tree().root.find_child("BaghdadHunterExaminationTunnel", true, false) as Node3D
+	if tunnel_root == null:
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "تعذر العثور على نفق اختبار الصيادين."
+			interaction_prompt_label.show()
+		return
+	hunter_exam_escort_active = true
+	player.set_meta("system_hunter_exam_escort_active", true)
+	player.velocity = Vector3.ZERO
+	var guide_node := guide as Node3D
+	var guide_origin := guide_node.global_position
+	var destination := tunnel_root.to_global(Vector3(0.0, 1.0, -1.5))
 	if interaction_prompt_label != null:
-		if registered:
-			interaction_prompt_label.text = "المرشد: رقمك %d محفوظ. توجه إلى مطعم برج التسوق، الطابق 29، وافحص نقوش العين والنهر والتاج بالترتيب." % candidate_number
-		else:
-			interaction_prompt_label.text = "المرشد: أكمل التسجيل الرسمي من قائمة النقابة أولاً، ثم توجه إلى مطعم برج التسوق، الطابق 29، لاكتشاف المدخل المخفي."
+		interaction_prompt_label.text = "مرشد النقابة: ابقَ قريباً مني. نتجه الآن إلى نفق المنافسة."
 		interaction_prompt_label.show()
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_SINE)
+	tween.set_ease(Tween.EASE_IN_OUT)
+	tween.parallel().tween_property(guide_node, "global_position", destination + Vector3(0.0, 0.0, 2.0), 5.0)
+	tween.tween_property(player, "global_position", destination, 5.0)
+	tween.finished.connect(func():
+		if not is_instance_valid(player):
+			hunter_exam_escort_active = false
+			return
+		player.velocity = Vector3.ZERO
+		player.set_meta("system_hunter_exam_escort_active", false)
+		player.set_meta("system_inside_hunter_exam_tunnel", true)
+		var registration: Dictionary = hunter_exam_manager.register_candidate_at_tunnel("local_player")
+		if not bool(registration.get("success", false)):
+			player.set_meta("system_inside_hunter_exam_tunnel", false)
+			hunter_exam_escort_active = false
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "تعذر إكمال تسجيلك داخل النفق: %s" % str(registration.get("reason", "غير معروف"))
+				interaction_prompt_label.show()
+			return
+		var candidate_number := int(registration.get("candidate_number", 0))
+		player.set_meta("system_hunter_exam_candidate_number", candidate_number)
+		var start_result: Dictionary = hunter_exam_manager.begin_exam()
+		if not bool(start_result.get("success", false)):
+			hunter_exam_escort_active = false
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "وصلت إلى النفق، لكن تعذر بدء المنافسة: %s" % str(start_result.get("reason", "غير معروف"))
+				interaction_prompt_label.show()
+			return
+		if bool(start_result.get("resumed", false)):
+			_on_hunter_exam_stage_started("baghdad_tunnel_competition", 1)
+		hunter_exam_escort_active = false
+		if is_instance_valid(guide_node):
+			var return_tween := create_tween()
+			return_tween.set_trans(Tween.TRANS_SINE)
+			return_tween.set_ease(Tween.EASE_IN_OUT)
+			return_tween.tween_property(guide_node, "global_position", guide_origin, 5.0)
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "وصلت إلى نفق الصيادين. رقمك التسلسلي الدائم: %d — بدأت المنافسة المتصلة." % candidate_number
+			interaction_prompt_label.show()
+	)
 
 func _handle_hunter_exam_guide_interaction() -> void:
-	_start_hunter_guild_escort(get_tree().root.find_child("HunterGuildGuideAtTower", true, false))
-
-
-
+	var guide := get_tree().root.find_child("HunterGuildGuideAtTower", true, false)
+	_start_hunter_guild_escort(guide)
 
 func create_mission_reward_manager() -> void:
 	mission_reward_manager = MissionRewardManagerScript.new()
