@@ -132,7 +132,7 @@ func _build_marshland() -> void:
 	zone.set_meta("system_marsh_water_body_count", pond_specs.size())
 	zone.set_meta("system_marsh_reed_instance_count", 1800)
 	zone.set_meta("system_marsh_tree_count", 56)
-	zone.set_meta("system_marsh_boardwalk_count", 7)
+	zone.set_meta("system_marsh_boardwalk_count", 9)
 	zone.set_meta("system_marshland_is_replacement_for_al_zawraa", true)
 	zone.set_meta("system_marshland_is_traversable", true)
 
@@ -365,7 +365,9 @@ func _add_boardwalk_network(parent: Node3D, material: Material) -> void:
 		[Vector3(190.0, 0.6, -110.0), Vector3(345.0, 0.6, 80.0)],
 		[hub, Vector3(100.0, 0.6, 235.0)],
 		[Vector3(100.0, 0.6, 235.0), Vector3(-180.0, 0.6, 290.0)],
-		[inner, Vector3(-280.0, 0.6, -230.0)]
+		[inner, Vector3(-280.0, 0.6, -230.0)],
+		[Vector3(100.0, 0.6, 235.0), Vector3(430.0, 0.6, 500.0)],
+		[Vector3(430.0, 0.6, 500.0), Vector3(745.0, 0.6, 745.0)]
 	]
 	for index in range(paths.size()):
 		var start: Vector3 = paths[index][0]
@@ -499,6 +501,7 @@ func _build_hunter_marsh_trials(zone: Node3D) -> void:
 	zone.set_meta("system_hunter_marsh_deception_npc_count", 12)
 	zone.set_meta("system_hunter_marsh_giant_creature_count", 6)
 	zone.set_meta("system_hunter_marsh_seasonal_gate_count", 3)
+	zone.set_meta("system_current_marsh_season", _get_marsh_season())
 	zone.set_meta("system_hunter_marsh_wrong_route_hazards", 5)
 	zone.set_meta("system_hunter_marsh_hidden_heritage_site", "HiddenMarshAncientSanctuary")
 	_build_marsh_farms(zone)
@@ -730,7 +733,7 @@ func _build_marsh_route_markers(zone: Node3D) -> void:
 		Vector3(-780.0, 0.0, -60.0), Vector3(-620.0, 0.0, 20.0),
 		Vector3(-460.0, 0.0, 100.0), Vector3(-280.0, 0.0, 170.0),
 		Vector3(-80.0, 0.0, 260.0), Vector3(120.0, 0.0, 360.0),
-		Vector3(300.0, 0.0, 470.0), Vector3(500.0, 0.0, 620.0)
+		Vector3(300.0, 0.0, 470.0), Vector3(500.0, 0.0, 620.0), Vector3(680.0, 0.0, 700.0)
 	]
 	for index in range(marker_positions.size()):
 		var marker := Node3D.new()
