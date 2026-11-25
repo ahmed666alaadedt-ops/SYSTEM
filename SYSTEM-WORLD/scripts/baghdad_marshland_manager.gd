@@ -66,9 +66,11 @@ func setup(terrain_node: Node, hunter_tunnel: Node3D) -> void:
 	var anchor_shift := Vector2.ZERO
 	if terrain.has_method("is_land_position") and not bool(terrain.call("is_land_position", park_anchor.x, park_anchor.y)):
 		var nearest_land := _find_nearest_marsh_land_anchor(park_anchor)
-		if nearest_land != Vector2.INF:
-			anchor_shift = nearest_land - park_anchor
-			park_anchor = nearest_land
+		if nearest_land == Vector2.INF:
+			push_error("SYSTEM Baghdad Marshland: no nearby playable land exists for the Al-Zawraa anchor.")
+			return
+		anchor_shift = nearest_land - park_anchor
+		park_anchor = nearest_land
 	var park_ground_y := float(terrain.call("get_terrain_height", park_anchor.x, park_anchor.y))
 	marsh_center = Vector3(park_anchor.x, park_ground_y, park_anchor.y)
 	set_meta("system_geographic_anchor_adjustment_m", anchor_shift.length())
@@ -174,7 +176,7 @@ func _build_hunter_tunnel_connection(hunter_tunnel: Node3D) -> void:
 		push_error("SYSTEM Baghdad Marshland: tunnel and marsh anchors are unexpectedly close.")
 		return
 	var direction := toward_marsh.normalized()
-	var entry_xz := Vector2(marsh_center.x, marsh_center.z) - direction * 420.0
+	var entry_xz := Vector2(marsh_center.x, marsh_center.z) - direction * 350.0
 	var entry_ground := float(terrain.call("get_terrain_height", entry_xz.x, entry_xz.y))
 	var start_floor_y := tunnel_end.y
 	var end_floor_y := entry_ground - 0.25
@@ -646,6 +648,7 @@ func _build_marsh_deception_npcs(zone: Node3D) -> void:
 		npc.set_meta("system_npc_role", "hunter_exam_candidate_or_false_guide")
 		npc.set_meta("system_deception_enabled", true)
 		npc.set_meta("system_npc_can_give_false_route_hint", true)
+		npc.set_meta("system_npc_deception_type", ["wrong_landmark", "false_safe_path", "fake_exit"][index % 3])
 		npc.set_meta("system_is_real_guild_guide", false)
 		zone.add_child(npc)
 		var torso := MeshInstance3D.new()
@@ -693,6 +696,8 @@ func _on_deception_npc_approached(body: Node3D, npc: Node3D) -> void:
 	body.set_meta("system_hunter_route_hint", "false")
 	body.set_meta("system_hunter_route_hint_source", npc.name)
 	body.set_meta("system_hunter_route_hint_destination", "wrong_marshland_path")
+	body.set_meta("system_hunter_route_hint_waypoint", npc.global_position + Vector3(55.0, 0.0, -40.0))
+	body.set_meta("system_hunter_route_deception_type", str(npc.get_meta("system_npc_deception_type", "false_safe_path")))
 	body.set_meta("system_hunter_deception_warning", "Some candidates and apparent guides deliberately mislead exam participants.")
 
 
