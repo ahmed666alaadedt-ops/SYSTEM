@@ -219,6 +219,15 @@ func _run_validation() -> void:
 		if lobby == null:
 			_fail("Missing public lobby blockout for " + tower_id)
 			return
+		if str(lobby.get_meta("system_visual_finish_layer", "")) != "architectural_lobby_finish_v1":
+			_fail("Architectural lobby finish layer is missing for " + tower_id)
+			return
+		if lobby.get_node_or_null("FinishLobbyIdentityPlate") == null or lobby.get_node_or_null("FinishFloorCenterInlay") == null or lobby.get_node_or_null("FinishCeilingBeam_-1.0") == null:
+			_fail("Finished lobby identity, floor inlay or ceiling lighting is missing for " + tower_id)
+			return
+		if int(lobby.get_meta("system_visual_finish_piece_count", 0)) < 20:
+			_fail("Lobby visual finish layer has too few architectural pieces for " + tower_id)
+			return
 		if lobby.get_node_or_null("LobbyFloorCollision") == null:
 			_fail("Lobby floor collision is missing for " + tower_id)
 			return
