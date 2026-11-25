@@ -162,6 +162,17 @@ func _build_hunter_tunnel_connection(hunter_tunnel: Node3D) -> void:
 	connector.set_meta("system_length_m", horizontal_distance)
 	add_child(connector)
 
+	var trial_start := Area3D.new()
+	trial_start.name = "HunterMarshTrialStartTrigger"
+	trial_start.position = tunnel_end
+	trial_start.set_meta("system_hunter_exam_start_trigger", true)
+	var trial_start_shape := CollisionShape3D.new()
+	var trial_start_sphere := SphereShape3D.new()
+	trial_start_sphere.radius = 8.0
+	trial_start_shape.shape = trial_start_sphere
+	trial_start.add_child(trial_start_shape)
+	connector.add_child(trial_start)
+	trial_start.body_entered.connect(_on_marsh_trial_start_entered)
 	var passage_material := _make_material(Color(0.085, 0.105, 0.115), 0.9, 0.12)
 	var edge_material := _make_material(Color(0.025, 0.30, 0.36), 0.4, 0.45)
 	edge_material.emission_enabled = true
@@ -909,6 +920,19 @@ func _build_marsh_star_gate_visual(gate: Node3D, material: Material, gate_index:
 	label.pixel_size = 0.014
 	label.position.y = 7.0
 	gate.add_child(label)
+
+
+func _on_marsh_trial_start_entered(body: Node3D) -> void:
+	if not _is_hunter_exam_player(body):
+		return
+	var exam_manager := get_tree().root.find_child("SYSTEMHunterExamManager", true, false)
+	if exam_manager == null or not bool(exam_manager.get("registered")) or bool(exam_manager.get("failed")):
+		return
+	if not bool(exam_manager.get("exam_active")) and not exam_manager.get("completed_stage_ids").has("baghdad_tunnel_competition"):
+		var result: Dictionary = exam_manager.call("begin_exam")
+		if bool(result.get("success", false)):
+			body.set_meta("system_hunter_marsh_trial_started", true)
+			print("SYSTEM Hunter Exam: continuous tunnel-to-marsh trial started.")
 
 
 func _on_marsh_final_trial_entered(body: Node3D) -> void:
