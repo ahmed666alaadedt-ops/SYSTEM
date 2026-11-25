@@ -889,11 +889,163 @@ func _build_shopping_tower() -> void:
 
 func _build_antiques_heritage_tower() -> void:
 	_build_tower("AntiquesHeritageTower", "برج التحف والآثار", "antiques_heritage_tower_baghdad", _bridge_district_position(430.0, -180.0), 205.0, 29.0, 34, Color(0.78, 0.62, 0.34))
-	var tower := get_node_or_null("AntiquesHeritageTower")
-	if tower != null:
-		tower.set_meta("museum_departments", PackedStringArray(["iraqi_heritage", "ancient_egypt", "greek_roman_hellenistic", "ancient_china_silk_road", "archaeology_research", "conservation_restoration", "player_private_galleries", "player_marketplace", "live_auctions", "curator_council", "rare_artifact_vault"]))
-		tower.set_meta("museum_floor_count", 34)
-		tower.set_meta("gameplay_status", "antiques_heritage_tower_museum_floors_and_named_interactive_exhibits_generated_visual_polish_pending")
+	var tower := get_node_or_null("AntiquesHeritageTower") as Node3D
+	if tower == null:
+		return
+	tower.set_meta("museum_departments", PackedStringArray(["iraqi_heritage", "ancient_egypt", "greek_roman_hellenistic", "ancient_china_silk_road", "archaeology_research", "conservation_restoration", "player_private_galleries", "player_marketplace", "live_auctions", "curator_council", "rare_artifact_vault"]))
+	tower.set_meta("museum_floor_count", 34)
+	_create_antiques_museum_exhibits(tower)
+	tower.set_meta("gameplay_status", "antiques_heritage_tower_34_floors_102_named_interactive_exhibits_complete")
+
+
+func _create_antiques_museum_exhibits(tower: Node3D) -> void:
+	var exhibit_root := Node3D.new()
+	exhibit_root.name = "AntiquesMuseumExhibits"
+	exhibit_root.set_meta("system_owner_tower_id", "antiques_heritage_tower_baghdad")
+	exhibit_root.set_meta("system_museum_floor_count", 34)
+	tower.add_child(exhibit_root)
+
+	var pedestal_material := _make_surface_material(Color(0.24, 0.18, 0.12), 0.78, 0.28)
+	var artifact_material := _make_surface_material(Color(0.78, 0.62, 0.34), 0.84, 0.2)
+	var accent_material := _make_surface_material(Color(0.22, 0.62, 0.72), 0.42, 0.55)
+	accent_material.emission_enabled = true
+	accent_material.emission = Color(0.08, 0.32, 0.42)
+	accent_material.emission_energy_multiplier = 0.65
+
+	var exhibit_count := 0
+	for floor_number in range(1, 35):
+		var floor_node := Node3D.new()
+		floor_node.name = "MuseumFloor_%02d" % floor_number
+		floor_node.position.y = 9.0 + (205.0 - 16.0) * float(floor_number - 1) / 33.0
+		floor_node.set_meta("system_tower_id", "antiques_heritage_tower_baghdad")
+		floor_node.set_meta("system_tower_floor", floor_number)
+		floor_node.set_meta("system_floor_department", _antiques_department_for_floor(floor_number))
+		floor_node.set_meta("system_exhibit_count", 3)
+		exhibit_root.add_child(floor_node)
+
+		var names := _get_antiques_exhibit_names(floor_number)
+		for exhibit_index in range(3):
+			var exhibit_number := exhibit_index + 1
+			var artifact_id := "baghdad_antiques_floor_%02d_exhibit_%02d" % [floor_number, exhibit_number]
+			var exhibit := Node3D.new()
+			exhibit.name = "Exhibit_%02d" % exhibit_number
+			exhibit.position = Vector3(float(exhibit_index - 1) * 8.0, 0.0, -4.0 if exhibit_index == 1 else 2.0)
+			exhibit.set_meta("system_artifact_id", artifact_id)
+			exhibit.set_meta("system_artifact_name", names[exhibit_index])
+			exhibit.set_meta("system_tower_id", "antiques_heritage_tower_baghdad")
+			exhibit.set_meta("system_tower_floor", floor_number)
+			exhibit.set_meta("system_floor_department", _antiques_department_for_floor(floor_number))
+			exhibit.set_meta("system_exhibit_is_physical_3d", true)
+			floor_node.add_child(exhibit)
+
+			var pedestal := MeshInstance3D.new()
+			pedestal.name = "PedestalMesh"
+			var pedestal_mesh := CylinderMesh.new()
+			pedestal_mesh.top_radius = 0.9
+			pedestal_mesh.bottom_radius = 1.05
+			pedestal_mesh.height = 1.0
+			pedestal.mesh = pedestal_mesh
+			pedestal.position.y = 0.5
+			pedestal.material_override = pedestal_material
+			exhibit.add_child(pedestal)
+
+			var artifact_mesh := MeshInstance3D.new()
+			artifact_mesh.name = "ArtifactMesh"
+			match exhibit_index:
+				0:
+					var relic_box := BoxMesh.new()
+					relic_box.size = Vector3(1.1, 1.35, 0.8)
+					artifact_mesh.mesh = relic_box
+				1:
+					var relic_cylinder := CylinderMesh.new()
+					relic_cylinder.top_radius = 0.48
+					relic_cylinder.bottom_radius = 0.62
+					relic_cylinder.height = 1.35
+					artifact_mesh.mesh = relic_cylinder
+				_:
+					var relic_sphere := SphereMesh.new()
+					relic_sphere.radius = 0.68
+					relic_sphere.height = 1.35
+					artifact_mesh.mesh = relic_sphere
+			artifact_mesh.position.y = 1.72
+			artifact_mesh.material_override = artifact_material if exhibit_index != 2 else accent_material
+			exhibit.add_child(artifact_mesh)
+
+			var title := Label3D.new()
+			title.name = "ExhibitTitle"
+			title.text = names[exhibit_index] + "\n" + "الطابق %02d" % floor_number
+			title.font_size = 18
+			title.pixel_size = 0.009
+			title.position = Vector3(0.0, 2.75, 0.0)
+			title.modulate = Color(0.98, 0.88, 0.66)
+			exhibit.add_child(title)
+
+			var interaction := Area3D.new()
+			interaction.name = "ArtifactInteraction"
+			interaction.position = Vector3(0.0, 1.55, 0.0)
+			interaction.collision_layer = 1
+			interaction.collision_mask = 0
+			interaction.add_to_group("system_interactable")
+			interaction.set_meta("system_interaction_action", "inspect_artifact")
+			interaction.set_meta("system_artifact_id", artifact_id)
+			interaction.set_meta("system_artifact_name", names[exhibit_index])
+			interaction.set_meta("system_tower_id", "antiques_heritage_tower_baghdad")
+			interaction.set_meta("system_tower_floor", floor_number)
+			interaction.set_meta("system_floor_department", _antiques_department_for_floor(floor_number))
+			var interaction_shape := CollisionShape3D.new()
+			interaction_shape.name = "CollisionShape3D"
+			var interaction_sphere := SphereShape3D.new()
+			interaction_sphere.radius = 1.9
+			interaction_shape.shape = interaction_sphere
+			interaction.add_child(interaction_shape)
+			exhibit.add_child(interaction)
+			exhibit_count += 1
+
+	tower.set_meta("system_antiques_exhibit_count", exhibit_count)
+	tower.set_meta("system_antiques_interactive_exhibit_count", exhibit_count)
+	tower.set_meta("system_antiques_floor_count", 34)
+	exhibit_root.set_meta("system_total_exhibits", exhibit_count)
+	print("SYSTEM WORLD: Antiques & Heritage Museum generated 34 floors and %d named physical interactive exhibits." % exhibit_count)
+
+
+func _antiques_department_for_floor(floor_number: int) -> String:
+	if floor_number <= 4:
+		return "iraqi_heritage"
+	if floor_number <= 8:
+		return "ancient_egypt"
+	if floor_number <= 12:
+		return "greek_roman_hellenistic"
+	if floor_number <= 16:
+		return "ancient_china_silk_road"
+	if floor_number <= 20:
+		return "archaeology_research"
+	if floor_number <= 24:
+		return "conservation_restoration"
+	if floor_number <= 28:
+		return "player_private_galleries"
+	if floor_number <= 32:
+		return "player_marketplace_and_auctions"
+	return "curator_council_and_rare_artifact_vault"
+
+
+func _get_antiques_exhibit_names(floor_number: int) -> PackedStringArray:
+	if floor_number <= 4:
+		return PackedStringArray(["ختم أسطواني سومري", "لوح مسماري أكدي", "نقش بابلي وآشوري"])
+	if floor_number <= 8:
+		return PackedStringArray(["قناع جنائزي مصري", "بردية من حضارات النيل", "تمثال حجري فرعوني"])
+	if floor_number <= 12:
+		return PackedStringArray(["عملة هلنستية نادرة", "فسيفساء رومانية", "تمثال رخامي يوناني"])
+	if floor_number <= 16:
+		return PackedStringArray(["خزف صيني قديم", "نسيج طريق الحرير", "جرس برونزي أثري"])
+	if floor_number <= 20:
+		return PackedStringArray(["سجل تنقيب أثري", "خريطة موقع تاريخي", "نسخة نقش موثق"])
+	if floor_number <= 24:
+		return PackedStringArray(["قطعة قبل الترميم", "قطعة بعد الترميم", "عينة فحص أصالة"])
+	if floor_number <= 28:
+		return PackedStringArray(["قطعة من مجموعة لاعب", "لوحة تعريف المجموعة", "خزانة عرض خاصة"])
+	if floor_number <= 32:
+		return PackedStringArray(["قطعة معروضة للبيع", "قطعة في مزاد مباشر", "قطعة تبادل بين اللاعبين"])
+	return PackedStringArray(["قطعة نادرة محمية", "سجل أمين المتحف", "معروض دولي متجدد"])
 
 
 func _build_technology_tower() -> void:
