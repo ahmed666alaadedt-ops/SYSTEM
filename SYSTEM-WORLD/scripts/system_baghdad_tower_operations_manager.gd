@@ -3424,7 +3424,6 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 		if tower_id == "shopping_tower_baghdad" and floor_number == 29:
 			if existing.get_node_or_null("RestaurantDiningSign") == null:
 				_create_restaurant_dining_area(existing, float(config["radius"]), floor_number)
-			_ensure_hunter_exam_secret_entrance(existing, float(config["radius"]))
 		return existing
 	var height := float(tower.get_meta("tower_height_m", config["height"]))
 	var radius := float(config["radius"])
@@ -4202,7 +4201,6 @@ func _create_floor_facilities(room: Node3D, tower_id: String, floor_number: int,
 	if tower_id == "shopping_tower_baghdad" and floor_number >= 29:
 		_create_restaurant_dining_area(room, radius, floor_number)
 	if tower_id == "shopping_tower_baghdad" and floor_number == 29:
-		_ensure_hunter_exam_secret_entrance(room, radius)
 	if tower_id == "shopping_tower_baghdad" and floor_number in [27, 28]:
 		var hotel_staff: Array = staff_by_tower.get(tower_id, [])
 		var hospitality_staff_id := str(hotel_staff[6]) if hotel_staff.size() > 6 else (str(hotel_staff[3]) if hotel_staff.size() > 3 else "")
