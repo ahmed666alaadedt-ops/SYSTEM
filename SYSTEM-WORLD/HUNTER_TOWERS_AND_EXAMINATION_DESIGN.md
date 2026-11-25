@@ -39,14 +39,14 @@ The five named rivals retain their individual behaviors:
 
 Candidate numbers currently persist locally on the installation. Global uniqueness across accounts/devices and server-authoritative anti-cheat verification are not claimed.
 
-The Al-Zawraa Park footprint in central Baghdad is permanently repurposed as the Baghdad Mesopotamian Marshland and Hunter Examination biome. This is a major green agricultural and wetland reserve, not a bare water swamp. The playable footprint is approximately 3 km² and remains physically connected to the far end of the existing Hunter Examination tunnel by a continuous walkable underground passage. This extends the same Hunter examination journey; it does not create seven separate stages, a second unrelated exam, a teleport at the tunnel exit, or change the Hunter Tower invitation/guide flow.
+The Al-Zawraa Park footprint in central Baghdad is permanently repurposed as the Baghdad Mesopotamian Marshland and Hunter Examination biome. This is a major green agricultural and wetland reserve, not a bare water swamp. The initial playable footprint is approximately 0.6 km² (840 m × 720 m), fitted to the current Baghdad land bounds and remains physically connected to the far end of the existing Hunter Examination tunnel by a continuous walkable underground passage. This extends the same Hunter examination journey; it does not create seven separate stages, a second unrelated exam, a teleport at the tunnel exit, or change the Hunter Tower invitation/guide flow.
 
 ### Approved marshland environment
 - Fertile cultivated plots, vegetable gardens, wet soil, grassy banks, willow groves and dense reed beds.
 - Eight shallow marsh pools, muddy channels, lily pads and shallow swim volumes.
 - 1,800 reed instances, 56 willow trees, nine raised wooden boardwalk segments and nine illuminated route-arrow markers.
 - Fourteen low-lying mist layers; the scene should maintain cinematic swamp fog and low visibility without making the route unreadable.
-- The marsh entrance begins at the tunnel's physical exit and the boardwalk network continues toward the hidden ancient sanctuary.
+- The marsh entrance begins at the tunnel's physical exit and the boardwalk network continues toward the hidden ancient sanctuary. The WGS84 park anchor is retained; if the exact projected point falls outside the current terrain's land mask, the runtime nudges the visual center to the nearest land point within 300 m and records the offset.
 - The region uses Al-Zawraa Park's WGS84 anchor (33.31496, 44.37818) projected through the Baghdad regional origin. Preserve the five Baghdad towers and their approved exterior silhouettes.
 
 ### Hunter examination gameplay inside the marsh
