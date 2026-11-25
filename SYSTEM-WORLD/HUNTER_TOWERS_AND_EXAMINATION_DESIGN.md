@@ -39,7 +39,7 @@ The five named rivals retain their individual behaviors:
 
 Candidate numbers currently persist locally on the installation. Global uniqueness across accounts/devices and server-authoritative anti-cheat verification are not claimed.
 
-The Marshland area remains separate and unconnected for now. Any future connection must be a deliberate design update; it is not part of the current tunnel route.
+The Al-Zawraa Park footprint in central Baghdad is repurposed as the Baghdad Mesopotamian Marshland. The Marshland is physically connected to the far end of the existing single Hunter Examination tunnel by a continuous underground passage that rises to a walkable marsh entrance. This is an extension after the tunnel route, not a second examination stage, teleport, portal, or replacement for the existing Hunter recruitment/escort flow. The Marshland is a separate explorable biome after the exam tunnel, with shallow marsh pools, reed fields, mud banks, willow trees and raised boardwalks. Its geographic anchor uses Al-Zawraa Park's published WGS84 location (33.31496, 44.37818) projected through the Baghdad regional origin. Preserve the five Baghdad towers and their approved exterior silhouettes.
 
 ## Restaurant and Shopping Tower boundary
 
@@ -68,7 +68,8 @@ The Power Tower is a substantial local gameplay foundation, not a claim of produ
 ## Current implementation and verification boundary
 
 Relevant runtime files include:
-- `scripts/baghdad_tower_landmarks_manager.gd` — five connected Baghdad towers, central Hunter tower, separate Power Tower, helipad and the underground tunnel.
+- `scripts/baghdad_tower_landmarks_manager.gd` — five connected Baghdad towers, central Hunter tower, separate Power Tower, helipad, underground tunnel and Al-Zawraa marshland attachment.
+- `scripts/baghdad_marshland_manager.gd` — Al-Zawraa Park replacement biome and the physical Hunter-tunnel-to-marsh passage.
 - `scripts/system_hunter_candidate_crowd.gd` — 500 tracked candidate records with shared rendering and lightweight background behavior.
 - `scripts/system_hunter_exam_manager.gd` — candidate registration, persistent serial, tunnel arrival and continuous competition state.
 - `scripts/hunter_guild_menu.gd` and the Hunter recruitment/guide runtime — invitation, accept/decline and guide escort.
