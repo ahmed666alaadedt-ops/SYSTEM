@@ -18,6 +18,7 @@ var terrain_height_data := PackedFloat32Array()
 var terrain_step_x := WORLD_WIDTH / float(GRID_X - 1)
 var terrain_step_z := WORLD_DEPTH / float(GRID_Z - 1)
 var baghdad_bridge_center := Vector2.ZERO
+var baghdad_al_zawraa_center := Vector2(1127.0, 26.0)
 var baghdad_bridge_centerline: Array[Vector2] = []
 var baghdad_bridge_secondary_centerline: Array[Vector2] = []
 var baghdad_bridge_outline := PackedVector2Array()
@@ -65,6 +66,9 @@ const CITY_DATA := [
 func _ready() -> void:
 	name = "ModernContinent"
 	_load_baghdad_bridge_reference()
+	var al_zawraa_anchor := SystemRealWorldGeography.to_local_world_position("iraq_baghdad_region", 33.31496, 44.37818, 0.0)
+	if al_zawraa_anchor != Vector3.ZERO:
+		baghdad_al_zawraa_center = Vector2(al_zawraa_anchor.x, al_zawraa_anchor.z)
 	_build_ocean()
 	_setup_terrain_streaming()
 	_build_coastal_beaches()
@@ -200,6 +204,18 @@ func _land_base_height(x: float, z: float) -> float:
 	return broad_hills + rolling_detail + mountain_belts + central_basin - river_carving - lake_basin
 
 
+func _get_al_zawraa_marsh_height(x: float, z: float) -> float:
+	var nx := (x - baghdad_al_zawraa_center.x) / 650.0
+	var nz := (z - baghdad_al_zawraa_center.y) / 660.0
+	var radius := sqrt(nx * nx + nz * nz)
+	if radius > 1.0:
+		return OCEAN_FLOOR
+	var coast_factor := clampf((1.0 - radius) / 0.12, 0.0, 1.0)
+	var coast_ease := coast_factor * coast_factor * (3.0 - 2.0 * coast_factor)
+	var interior_height := 12.0 + sin(x * 0.014) * 0.55 + cos(z * 0.016) * 0.45
+	return lerpf(SEA_LEVEL - 1.2, interior_height, coast_ease)
+
+
 func _get_height(x: float, z: float) -> float:
 	if baghdad_bridge_reference_loaded:
 		var bridge_bank_point := _baghdad_bridge_nearest_bank_point()
@@ -227,6 +243,9 @@ func _get_height(x: float, z: float) -> float:
 			var coast_ease := coast_factor * coast_factor * (3.0 - 2.0 * coast_factor)
 			var interior_height := _land_base_height(x, z)
 			var natural_height := lerpf(SEA_LEVEL - 1.2, interior_height, coast_ease)
+			var al_zawraa_marsh_height := _get_al_zawraa_marsh_height(x, z)
+			if al_zawraa_marsh_height > OCEAN_FLOOR:
+				natural_height = maxf(natural_height, al_zawraa_marsh_height)
 			# Keep the connector walkable even where the procedural low basin
 			# falls below sea level. This narrow strip is generated gameplay
 			# infrastructure, not an OpenStreetMap road.
@@ -244,6 +263,11 @@ func _get_height(x: float, z: float) -> float:
 			var corridor_blend := clampf((BAGHDAD_URBAN_CORRIDOR_HALF_WIDTH - corridor_distance) / 110.0, 0.0, 1.0)
 			var corridor_ease := corridor_blend * corridor_blend * (3.0 - 2.0 * corridor_blend)
 			return lerpf(SEA_LEVEL - 1.2, corridor_height, corridor_ease)
+
+	# Fill the water immediately east of Baghdad with the connected Al-Zawraa wetland peninsula.
+	var al_zawraa_marsh_height := _get_al_zawraa_marsh_height(x, z)
+	if al_zawraa_marsh_height > OCEAN_FLOOR:
+		return al_zawraa_marsh_height
 
 	for island in ISLAND_DATA:
 		var island_radius_value := _island_radius(

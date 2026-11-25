@@ -1,0 +1,224 @@
+extends SceneTree
+
+func _initialize() -> void:
+	call_deferred("_run_validation")
+
+
+func _check(condition: bool, message: String) -> bool:
+	if condition:
+		return true
+	push_error("Baghdad Marshland validation failed: " + message)
+	quit(1)
+	return false
+
+
+func _run_validation() -> void:
+	var reset_exam_save := ConfigFile.new()
+	reset_exam_save.set_value("exam", "next_candidate_number", 1001)
+	if not _check(reset_exam_save.save("user://system_hunter_exam.cfg") == OK, "Could not reset the isolated Hunter marsh validation save."):
+		return
+	var packed := load("res://MainScene.tscn") as PackedScene
+	if not _check(packed != null, "MainScene could not load."):
+		return
+	var main := packed.instantiate() as Node3D
+	if not _check(main != null, "Main scene root is not Node3D."):
+		return
+	root.add_child(main)
+	for _frame in range(45):
+		await process_frame
+
+	var marsh := root.find_child("BaghdadMarshland_AlZawraaReplacement", true, false) as Node3D
+	var zone := root.find_child("MesopotamianMarshland", true, false) as Node3D
+	var tunnel := root.find_child("BaghdadHunterExaminationTunnel", true, false) as Node3D
+	var player := main.get("player") as CharacterBody3D
+	var terrain_node := main.find_child("ModernContinent", true, false)
+	var exam_manager: Node = main.get("hunter_exam_manager") as Node
+	var connector := root.find_child("HunterTunnelToMarshlandPhysicalConnector", true, false) as Node3D
+	var trial_start := root.find_child("HunterMarshTrialStartTrigger", true, false) as Area3D
+	if not _check(marsh != null and zone != null and tunnel != null and connector != null and trial_start != null and player != null and exam_manager != null, "Marshland, marsh biome, Hunter tunnel or physical connector is missing."):
+		return
+	if not _check(str(marsh.get_meta("system_replaces_real_place", "")) == "Al-Zawraa Park, Baghdad", "The replacement does not identify Al-Zawraa Park."):
+		return
+	if not _check(absf(float(marsh.get_meta("system_anchor_latitude", 0.0)) - 33.31496) < 0.00001 and absf(float(marsh.get_meta("system_anchor_longitude", 0.0)) - 44.37818) < 0.00001, "The marsh is not anchored to the approved Al-Zawraa WGS84 coordinate."):
+		return
+	if not _check(bool(marsh.get_meta("system_hunter_tunnel_connected", false)) and bool(tunnel.get_meta("system_marshland_extension_attached", false)), "The marsh is not connected to the far end of the Hunter tunnel."):
+		return
+	if not _check(bool(connector.get_meta("system_no_teleport_or_loading_gate", false)), "The tunnel-to-marsh route is not a physical continuous passage."):
+		return
+	if not _check(trial_start.monitoring and trial_start.body_entered.get_connections().size() > 0 and is_equal_approx(trial_start.global_position.distance_to(tunnel.global_position + Vector3(0.0, 0.0, 108.0)), 0.0), "The continuous Hunter trial does not start at the 14 m beyond the open far end of the tunnel competition."):
+		return
+	if not _check(connector.get_meta("system_from", "") == "BaghdadHunterExaminationTunnel" and connector.get_meta("system_to", "") == "BaghdadMarshland_AlZawraaReplacement", "The physical passage does not connect the Hunter tunnel to the Al-Zawraa marshland."):
+		return
+	if not _check(float(marsh.get_meta("system_geographic_anchor_adjustment_m", 0.0)) <= 300.0, "The marsh anchor moved too far from the real Al-Zawraa Park coordinate."):
+		return
+	var marsh_center: Vector3 = marsh.get("marsh_center")
+	if not _check(terrain_node != null and bool(terrain_node.call("is_land_position", marsh_center.x, marsh_center.z)), "The exact Al-Zawraa anchor is not supported by the playable Baghdad terrain."):
+		return
+	if not _check(zone.find_child("HunterExamMarshlandFinalObjective", true, false) is Area3D, "The final marshland exam objective is missing."):
+		return
+	if not _check(zone.find_child("HunterExamMarshlandFinalAltar", true, false) is MeshInstance3D, "The final marshland altar is missing."):
+		return
+	if not _check(zone.find_children("SeasonalMarshStarGate_*", "Node3D", true, false).size() == 3, "The three seasonal gates are not available."):
+		return
+	if not _check(zone.find_children("SeasonalMarshStarGate_*", "Node3D", true, false)[0].visible == false, "The hidden Star Gates should remain concealed before exam completion."):
+		return
+	if not _check(bool(zone.get_meta("system_hunter_exam_biome", false)), "The marsh biome is not marked as part of the Hunter examination."):
+		return
+	if not _check(int(connector.get_meta("system_passage_segment_count", 0)) >= 20, "The physical passage does not contain enough continuous segments."):
+		return
+	var water_areas := zone.find_children("MarshWaterArea_*", "Area3D", true, false)
+	if not _check(water_areas.size() == 8, "Expected eight marsh water volumes; found %d." % water_areas.size()):
+		return
+	if not _check(int(zone.get_meta("system_marsh_mud_bank_count", 0)) == 8 and zone.find_children("MarshMudBank_*", "MeshInstance3D", true, false).size() == 8, "Expected eight terrain-following muddy banks around the marsh pools."):
+		return
+	for water_area in water_areas:
+		if not _check(water_area.monitoring and water_area.body_entered.get_connections().size() > 0 and water_area.body_exited.get_connections().size() > 0, "A marsh water volume is missing swimming enter/exit signals."):
+			return
+	var reeds := zone.get_node_or_null("MarshReedFields") as MultiMeshInstance3D
+	if not _check(reeds != null and reeds.multimesh != null and reeds.multimesh.instance_count == 12000, "The 12000-instance marsh reed field is missing."):
+		return
+	var willow_trunks := zone.get_node_or_null("MarshWillowTrunks") as MultiMeshInstance3D
+	var willow_canopies := zone.get_node_or_null("MarshWillowCanopies") as MultiMeshInstance3D
+	if not _check(int(zone.get_meta("system_marsh_tree_count", 0)) == 160 and willow_trunks != null and willow_canopies != null and willow_trunks.multimesh.instance_count == 160 and willow_canopies.multimesh.instance_count == 160, "Expected 160 willow trees in two mobile-friendly render batches."):
+		return
+	if not _check(zone.find_children("MarshBoardwalk_*", "MeshInstance3D", true, false).size() == 9 and zone.find_children("MarshBoardwalkCollision_*", "StaticBody3D", true, false).size() == 9, "Expected nine raised boardwalk segments with matching walkable collision."):
+		return
+
+	var farm := zone.get_node_or_null("MarshAgriculturalGardens") as Node3D
+	if not _check(farm != null and int(farm.get_meta("system_agricultural_plot_count", 0)) == 12 and int(farm.get_meta("system_crop_plant_count", 0)) == 432 and farm.find_children("MarshCropBatch_*", "MultiMeshInstance3D", true, false).size() == 3, "Agricultural plots and crops are missing."):
+		return
+	if not _check(zone.find_children("MarshGroundFog_*", "MeshInstance3D", true, false).size() == 18, "Expected eighteen dense low fog layers."):
+		return
+	if not _check(zone.find_children("HunterExamDeceptionNPC_*", "Node3D", true, false).size() == 12, "Expected twelve deception NPCs."):
+		return
+	var fog_sample := zone.find_child("MarshGroundFog_00", true, false) as MeshInstance3D
+	var fog_material: StandardMaterial3D = null
+	if fog_sample != null:
+		fog_material = fog_sample.material_override as StandardMaterial3D
+	if not _check(fog_material != null and fog_material.albedo_color.a >= 0.25 and bool(fog_sample.get_meta("system_fog_visibility_obscuring", false)), "Dense visibility-obscuring swamp fog is not configured."):
+		return
+	var fauna_species := {}
+	for marsh_creature in zone.find_children("GiantMarshCreature_*", "Node3D", true, false):
+		fauna_species[str(marsh_creature.get_meta("system_creature_species", ""))] = true
+	for expected_species in ["man_faced_ape", "hypnosis_butterfly", "frog_in_waiting", "noggin_lugging_tortoise", "ruse_raven", "claymore_mushroom"]:
+		if not _check(fauna_species.has(expected_species), "Hunter swamp fauna profile is missing: " + expected_species):
+			return
+	if not _check(zone.find_children("GiantMarshCreature_*", "Node3D", true, false).size() == 6, "Expected six giant marsh wildlife encounters."):
+		return
+	if not _check(zone.find_children("HunterExamRouteArrow_*", "Node3D", true, false).size() == 9, "Expected nine route arrows."):
+		return
+	if not _check(zone.find_children("HunterExamWrongRouteHazard_*", "Area3D", true, false).size() == 5, "Expected five wrong-route failure hazards."):
+		return
+	var sanctuary := zone.get_node_or_null("HiddenMarshAncientSanctuary") as Node3D
+	if not _check(sanctuary != null and sanctuary.find_children("SeasonalMarshStarGate_*", "Node3D", true, false).size() == 3, "Hidden ancient sanctuary or its three Star Gates are missing."):
+		return
+	if not _check(not sanctuary.visible and zone.find_child("HiddenSanctuaryDiscoveryTrigger", true, false) is Area3D, "The ancient sanctuary is not concealed behind its discovery trigger."):
+		return
+	var spring_destinations: Array = sanctuary.get_node("SeasonalMarshStarGate_00").get_meta("system_gate_destination_pool_by_season").get("spring", [])
+	if not _check(spring_destinations == ["Tokyo", "Paris", "Singapore"], "Seasonal Star Gate destination rotation is missing."):
+		return
+
+	for creature in zone.find_children("GiantMarshCreature_*", "Node3D", true, false):
+		var enemy := creature.get_node_or_null("GiantMarshCombatEnemy") as CharacterBody3D
+		if not _check(enemy != null and enemy.is_in_group("system_enemy") and enemy.has_method("take_damage"), "A giant marsh animal is not wired into the combat system."):
+			return
+
+	var test_player := CharacterBody3D.new()
+	test_player.add_to_group("system_player")
+	root.add_child(test_player)
+	var decoy_npc := zone.find_child("HunterExamDeceptionNPC_00", true, false) as Node3D
+	marsh.call("_on_deception_npc_approached", test_player, decoy_npc)
+	if not _check(str(test_player.get_meta("system_hunter_route_hint", "")) == "false" and test_player.has_meta("system_hunter_route_hint_waypoint"), "A deceptive Hunter NPC did not provide a false route hint."):
+		return
+	var wrong_route := zone.find_child("HunterExamWrongRouteHazard_00", true, false) as Area3D
+	marsh.call("_on_wrong_route_hazard_entered", test_player, wrong_route)
+	if not _check(str(test_player.get_meta("system_hunter_wrong_route_triggered", "")) == "HunterExamWrongRouteHazard_00", "Entering a forbidden route did not flag the candidate."):
+		return
+	var first_creature := zone.find_child("GiantMarshCreature_00", true, false) as Node3D
+	marsh.call("_on_giant_creature_encounter", test_player, first_creature)
+	var first_enemy := first_creature.get_node_or_null("GiantMarshCombatEnemy") as CharacterBody3D
+	if not _check(bool(test_player.get_meta("system_hunter_marsh_encounter_active", false)) and first_enemy.get("target") == test_player, "Entering a giant animal encounter did not activate its combat enemy."):
+		return
+	first_enemy.set_physics_process(false)
+	var first_water := water_areas[0] as Area3D
+	marsh.call("_on_marsh_water_body_entered", test_player, first_water)
+	if not _check(bool(test_player.get_meta("system_swimming", false)) and str(test_player.get_meta("system_swim_source", "")) == "Baghdad Mesopotamian Marshland", "Entering marsh water did not activate the canonical swimming state."):
+		return
+	if not _check(is_equal_approx(float(test_player.get_meta("system_swim_surface_y", 0.0)), first_water.global_position.y), "The marsh swimming surface height does not match the visible water surface."):
+		return
+	marsh.call("_on_marsh_water_body_exited", test_player, first_water)
+	if not _check(not bool(test_player.get_meta("system_swimming", false)), "Leaving the final marsh water volume did not clear swimming state."):
+		return
+
+	# Verify the actual one-stage Hunter exam remains active after the tunnel section
+	# and only completes at the marsh sanctuary, then unlocks a seasonal Star Gate.
+	var invitation: Dictionary = exam_manager.call("accept_exam_invitation", "baghdad_marsh_validation")
+	if not _check(bool(invitation.get("success", false)), "Hunter exam invitation could not be accepted for the marsh integration test."):
+		return
+	var registration: Dictionary = exam_manager.call("register_candidate_at_tunnel", "baghdad_marsh_validation")
+	if not _check(bool(registration.get("success", false)), "Hunter candidate could not be registered at the tunnel."):
+		return
+	var start_result: Dictionary = exam_manager.call("begin_exam")
+	if not _check(bool(start_result.get("success", false)), "The single Hunter examination did not start."):
+		return
+	player.set_meta("system_hunter_tunnel_competition_complete", true)
+	marsh.call("_on_marsh_trial_start_entered", player)
+	var real_guide := zone.get_node_or_null("RealHunterGuildMarshGuide") as Node3D
+	if not _check(real_guide != null and bool(real_guide.get_meta("system_is_real_guild_guide", false)) and int(real_guide.get_meta("system_guide_route_waypoint_count", 0)) >= 5, "The uniquely identified official Hunter Guild guide or its sanctuary route is missing."):
+		return
+	if not _check(bool(player.get_meta("system_hunter_guide_escort_started", false)) and bool(real_guide.get_meta("system_guide_escort_active", false)), "The candidate was not enrolled into the real guide-led escort."):
+		return
+	var tracking_arrow := player.get_node_or_null("HunterRealGuideTrackingArrow") as Node3D
+	if not _check(tracking_arrow != null and bool(tracking_arrow.get_meta("system_tracks_real_guild_guide", false)) and bool(tracking_arrow.get_meta("system_visible_through_marsh_fog", false)), "The fog-safe tracking arrow is not attached to the candidate and bound to the real guide."):
+		return
+	player.global_position = real_guide.global_position + Vector3(45.0, 0.0, 0.0)
+	marsh.call("_process_real_guide_escort", 0.016)
+	if not _check(tracking_arrow.visible, "The tracking arrow did not appear when the candidate became separated in the fog."):
+		return
+	var crowd_convoy := root.find_child("HunterCandidateCrowd", true, false) as Node3D
+	if not _check(crowd_convoy != null and bool(crowd_convoy.get_meta("system_candidate_convoy_following_real_guide", false)) and int(crowd_convoy.get_meta("system_candidate_convoy_count", 0)) == 500, "The 500 individually tracked candidates were not assigned to the guide-led convoy."):
+		return
+	var decoy_guides := zone.find_children("HunterExamDeceptionNPC_*", "Node3D", true, false)
+	for decoy in decoy_guides:
+		if not _check(not bool(decoy.get_meta("system_is_real_guild_guide", false)), "A deception NPC was incorrectly identified as the official guide."):
+			return
+	var gates_before_sanctuary := sanctuary.find_children("SeasonalMarshStarGate_*", "Node3D", true, false)
+	if not _check(gates_before_sanctuary.size() == 3 and not bool(gates_before_sanctuary[0].visible) and not bool(gates_before_sanctuary[1].visible) and not bool(gates_before_sanctuary[2].visible), "Seasonal Star Gates became visible before the final marsh sanctuary objective."):
+		return
+	marsh.call("_on_hidden_sanctuary_discovered", player, sanctuary)
+	if not _check(not bool(sanctuary.visible) and bool(player.get_meta("system_hunter_sanctuary_discovery_pending_guide_arrival", false)), "The sanctuary bypassed the guide-led arrival sequence."):
+		return
+	marsh.set("guide_path_speed", 10000.0)
+	for _guide_step in range(12):
+		marsh.call("_process_real_guide_escort", 1.0)
+	if not _check(bool(real_guide.get_meta("system_guide_arrived_at_sanctuary", false)) and bool(marsh.get_meta("system_real_guide_escort_completed", false)), "The official guide did not complete the full marsh-to-sanctuary escort."):
+		return
+	if not _check(bool(real_guide.get_meta("system_guide_gate_tour_completed", false)) and bool(marsh.get_meta("system_real_guide_gate_tour_completed", false)), "The official guide did not physically escort the candidates to all three Star Gates."):
+		return
+	for gate_index in range(3):
+		var visited_gate := sanctuary.get_node_or_null("SeasonalMarshStarGate_%02d" % gate_index) as Node3D
+		if not _check(visited_gate != null and bool(visited_gate.get_meta("system_guide_presented", false)) and not str(visited_gate.get_meta("system_guide_explained_destination", "")).is_empty(), "The guide did not visit and explain Star Gate %d." % (gate_index + 1)):
+			return
+	if not _check(bool(sanctuary.visible) and bool(player.get_meta("system_hidden_heritage_site_discovered", false)), "The guide's arrival did not reveal the hidden ancient sanctuary to the waiting candidate."):
+		return
+	if not _check(bool(player.get_meta("system_hunter_marsh_trial_started", false)) and bool(player.get_meta("system_hunter_marsh_trial_completed", false)) and not bool(exam_manager.get("exam_active")), "The guide did not complete the continuous marsh section after the tunnel checkpoints and sanctuary arrival."):
+		return
+	var gate_briefing := sanctuary.get_node_or_null("GuideStarGateBriefing") as Label3D
+	if not _check(gate_briefing != null and gate_briefing.visible and gate_briefing.text.contains("البوابة 1"), "The official guide did not present the seasonal Star Gate destinations at the sanctuary."):
+		return
+	var completed_overview: Dictionary = exam_manager.call("get_exam_overview")
+	if not _check(not bool(completed_overview.get("active", true)) and completed_overview.get("completed_stages", []).has("baghdad_tunnel_competition") and bool(player.get_meta("system_hunter_marsh_trial_completed", false)), "The Hunter exam did not complete at the hidden marsh sanctuary."):
+		return
+	await process_frame
+	var first_gate := sanctuary.get_node("SeasonalMarshStarGate_00") as Node3D
+	if not _check(first_gate.visible, "The hidden Star Gates did not unlock after the successful marsh exam."):
+		return
+	var current_season := str(marsh.call("_get_marsh_season"))
+	var destination_pool: Dictionary = first_gate.get_meta("system_gate_destination_pool_by_season")
+	var expected_destination: String = str(destination_pool.get(current_season, [])[0])
+	marsh.call("_on_marsh_star_gate_entered", player, first_gate)
+	if not _check(str(player.get_meta("system_last_marsh_star_gate_destination", "")) == expected_destination, "The seasonal Star Gate did not transport the Hunter to its current city destination."):
+		return
+
+	print("Baghdad Marshland validation passed: physical tunnel link, agricultural wetland, fog, 500-candidate guide convoy, official guide identity, fog tracking arrow, decoy separation, escorted sanctuary arrival, six giant creatures and three seasonal Star Gates.")
+	quit(0)

@@ -39,7 +39,30 @@ The five named rivals retain their individual behaviors:
 
 Candidate numbers currently persist locally on the installation. Global uniqueness across accounts/devices and server-authoritative anti-cheat verification are not claimed.
 
-The Marshland area remains separate and unconnected for now. Any future connection must be a deliberate design update; it is not part of the current tunnel route.
+The Al-Zawraa Park footprint in central Baghdad is permanently repurposed as the Baghdad Mesopotamian Marshland and Hunter Examination biome. This is a major green agricultural and wetland reserve, not a bare water swamp. The initial playable footprint is an approximately 1.35 km² elliptical reserve (1,300 m × 1,320 m bounding dimensions). The modern terrain height field is extended as a connected Al-Zawraa peninsula so the reserve sits on its exact WGS84 park anchor; a nearest-land fallback is retained only if the regional terrain data cannot resolve the anchor. The reserve remains physically connected to the far end of the existing Hunter Examination tunnel by a continuous walkable underground passage. This extends the same Hunter examination journey; it does not create seven separate stages, a second unrelated exam, a teleport at the tunnel exit, or change the Hunter Tower invitation/guide flow.
+
+### Approved marshland environment
+- Fertile cultivated plots, vegetable gardens (12 plots / 432 crop instances), wet soil, grassy banks, willow groves and dense reed beds.
+- Eight shallow marsh pools with terrain-following muddy banks, lily pads and shallow swim volumes.
+- 12,000 reed instances, 160 willow trees, nine raised wooden boardwalk segments and nine illuminated route-arrow markers.
+- Fourteen animated low-lying mist layers with seasonal tint/density; the scene maintains cinematic swamp fog and low visibility without making the route unreadable.
+- The marsh entrance begins at the tunnel's physical exit and the boardwalk network continues toward the hidden ancient sanctuary. The WGS84 park anchor is retained; if the exact projected point falls outside the current terrain's land mask, the runtime nudges the visual center to the nearest land point within 300 m and records the offset.
+- The region uses Al-Zawraa Park's WGS84 anchor (33.31496, 44.37818) projected through the Baghdad regional origin. Preserve the five Baghdad towers and their approved exterior silhouettes.
+
+### Hunter examination gameplay inside the marsh
+- Twelve visible candidate/false-guide NPCs populate the marsh. Some deliberately provide misleading route hints; they are not the genuine Hunter Guild guide.
+- Nine directional route markers guide candidates toward the intended route and hidden sanctuary. Their placement is readable through the fog, but they do not guarantee safety.
+- Six giant wildlife encounter profiles are present: giant marsh turtles and ancient swamp beasts. Each has a moving enemy body wired to the existing combat system; approaching activates its C-rank combat behavior, while candidates may fight or attempt to escape.
+- Five forbidden-route hazard zones can fail an active candidate's exam when entered.
+- The trial mood is inspired by the dangerous, deceptive swamp atmosphere of the Hunter Exam in Hunter × Hunter, while all SYSTEM WORLD characters, routes, creatures and locations remain original.
+- The test remains one continuous journey from the tunnel into the marsh; do not reintroduce the retired seven-stage exam wording.
+
+### Hidden ancient sanctuary and seasonal Star Gates
+- A concealed ancient heritage site sits at the far end of the marsh route, beyond the reeds and boardwalks. Its ruins are hidden until an active candidate reaches the discovery area; only then does the sanctuary reveal itself.
+- Three Star Gates are hidden there. They unlock only after the registered candidate completes the full continuous tunnel-plus-marsh exam at the sanctuary; completing the tunnel checkpoints alone must not award the license or reveal the gates.
+- Gate destinations rotate by season and resolve to existing city anchors in the modern world. The current destination pools are: spring — Tokyo, Paris, Singapore; summer — Cairo, Sydney, Guangzhou; autumn — London, Seoul, New York; winter — Moscow, New Delhi, Rio de Janeiro.
+- The three gates therefore provide changing destinations each season; their labels and destinations must reflect the current season, and gate travel must use the existing modern-world city anchors rather than inventing city coordinates.
+- Future seasons can add or replace destinations without rebuilding the sanctuary. The gates are an in-world discovery and travel system, not an external URL or a claim that new world maps are already built.
 
 ## Restaurant and Shopping Tower boundary
 
@@ -68,7 +91,8 @@ The Power Tower is a substantial local gameplay foundation, not a claim of produ
 ## Current implementation and verification boundary
 
 Relevant runtime files include:
-- `scripts/baghdad_tower_landmarks_manager.gd` — five connected Baghdad towers, central Hunter tower, separate Power Tower, helipad and the underground tunnel.
+- `scripts/baghdad_tower_landmarks_manager.gd` — five connected Baghdad towers, central Hunter tower, separate Power Tower, helipad, underground tunnel and Al-Zawraa marshland attachment.
+- `scripts/baghdad_marshland_manager.gd` — Al-Zawraa agricultural wetland, fog, deceiving Hunter NPCs, giant wildlife, route arrows, wrong-route failure hazards, hidden ancient sanctuary, seasonal Star Gates and physical Hunter-tunnel connection.
 - `scripts/system_hunter_candidate_crowd.gd` — 500 tracked candidate records with shared rendering and lightweight background behavior.
 - `scripts/system_hunter_exam_manager.gd` — candidate registration, persistent serial, tunnel arrival and continuous competition state.
 - `scripts/hunter_guild_menu.gd` and the Hunter recruitment/guide runtime — invitation, accept/decline and guide escort.
@@ -85,7 +109,7 @@ The full tower-interiors/hotel/shopping regression and current full-project work
 
 ## Release discipline
 
-- Continue only on `feature/baghdad-five-plus-power-tower-20261122` and existing draft PR #38.
+- Continue the Al-Zawraa Marshland work on `feature/baghdad-marshland-connection-20261125` and draft PR #39. PR #38 was already merged to `main` before this marshland scope began.
 - Preserve existing systems; do not recreate completed towers, interiors, tests or workflows from scratch.
-- Do not merge into `main` without explicit user approval.
+- Keep PR #39 as a draft and do not merge into `main` without explicit user approval.
 - Do not claim final visual/device completion from headless tests or APK export alone.

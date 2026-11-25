@@ -1,0 +1,1578 @@
+extends Node3D
+class_name BaghdadMarshlandManager
+
+const MarshGateEnemyScript = preload("res://scripts/modern_world_gate_enemy.gd")
+
+## Replaces the Al-Zawraa Park gameplay footprint with a traversable marsh biome.
+## The marsh anchor is the published Al-Zawraa Park WGS84 location, projected
+## through the same Baghdad regional origin used by the Republic Bridge.
+
+const PARK_LATITUDE := 33.31496
+const PARK_LONGITUDE := 44.37818
+const MARSH_RADIUS_X := 650.0
+const MARSH_RADIUS_Z := 660.0
+const CONNECTOR_SEGMENT_LENGTH := 60.0
+const HUNTER_MARSH_SEASONS := ["spring", "summer", "autumn", "winter"]
+const SEASONAL_GATE_DESTINATIONS := {
+	"spring": ["Tokyo", "Paris", "Singapore"],
+	"summer": ["Cairo", "Sydney", "Guangzhou"],
+	"autumn": ["London", "Seoul", "New York"],
+	"winter": ["Moscow", "New Delhi", "Rio de Janeiro"]
+}
+
+var terrain: Node
+var marsh_center := Vector3.ZERO
+var tunnel_connector_length := 0.0
+var marsh_entry_local := Vector3(-420.0, 0.0, -15.0)
+var hidden_gates_unlocked := false
+var current_marsh_season := ""
+var fog_material: StandardMaterial3D
+var fog_layers: Array[MeshInstance3D] = []
+var real_guild_guide: Node3D
+var candidate_convoy: Node3D
+var guide_tracking_arrows: Dictionary = {}
+var guide_escort_active := false
+var guide_escort_completed := false
+var guide_gate_tour_active := false
+var guide_gate_tour_completed := false
+var guide_gate_tour_index := 0
+var guide_path_index := 0
+var guide_path_local: Array[Vector3] = []
+var guide_path_speed := 2.8
+
+
+
+func _process(delta: float) -> void:
+	var season := _get_marsh_season()
+	if season != current_marsh_season:
+		current_marsh_season = season
+		_apply_marsh_seasonal_appearance(season)
+	for index in range(fog_layers.size()):
+		var fog := fog_layers[index]
+		if not is_instance_valid(fog):
+			continue
+		fog.position.x += delta * (0.18 + float(index % 4) * 0.06)
+		if fog.position.x > MARSH_RADIUS_X:
+			fog.position.x = -MARSH_RADIUS_X
+	# Star Gates are unlocked only by the final marsh-sanctuary objective callback.
+	# Never infer sanctuary discovery from a completed tunnel-stage save flag.
+	_process_real_guide_escort(delta)
+
+
+func setup(terrain_node: Node, hunter_tunnel: Node3D) -> void:
+	terrain = terrain_node
+	if terrain == null or not is_instance_valid(hunter_tunnel):
+		push_error("SYSTEM Baghdad Marshland: terrain or Hunter tunnel is missing.")
+		return
+	var projected: Vector3 = SystemRealWorldGeography.to_local_world_position(
+		"iraq_baghdad_region", PARK_LATITUDE, PARK_LONGITUDE, 0.0
+	)
+	if projected == Vector3.ZERO:
+		push_error("SYSTEM Baghdad Marshland: Al-Zawraa geographic anchor could not be projected.")
+		return
+	var park_anchor := Vector2(projected.x, projected.z)
+	var anchor_shift := Vector2.ZERO
+	if terrain.has_method("is_land_position") and not bool(terrain.call("is_land_position", park_anchor.x, park_anchor.y)):
+		var nearest_land := _find_nearest_marsh_land_anchor(park_anchor)
+		if nearest_land == Vector2.INF:
+			push_error("SYSTEM Baghdad Marshland: no nearby playable land exists for the Al-Zawraa anchor.")
+			return
+		anchor_shift = nearest_land - park_anchor
+		park_anchor = nearest_land
+	var park_ground_y := float(terrain.call("get_terrain_height", park_anchor.x, park_anchor.y))
+	marsh_center = Vector3(park_anchor.x, park_ground_y, park_anchor.y)
+	set_meta("system_geographic_anchor_adjustment_m", anchor_shift.length())
+	var tunnel_end_for_entry := hunter_tunnel.global_position + Vector3(0.0, 0.0, 94.0)
+	var entry_direction := Vector2(marsh_center.x - tunnel_end_for_entry.x, marsh_center.z - tunnel_end_for_entry.z).normalized()
+	marsh_entry_local = Vector3(-entry_direction.x * 600.0, 0.0, -entry_direction.y * 600.0)
+	global_position = Vector3.ZERO
+	current_marsh_season = _get_marsh_season()
+	name = "BaghdadMarshland_AlZawraaReplacement"
+	set_meta("system_region_id", "baghdad_marshland_al_zawraa")
+	set_meta("system_replaces_real_place", "Al-Zawraa Park, Baghdad")
+	set_meta("system_anchor_latitude", PARK_LATITUDE)
+	set_meta("system_anchor_longitude", PARK_LONGITUDE)
+	set_meta("system_biome", "mesopotamian_marshland")
+	set_meta("system_playable_area_dimensions_m", Vector2(MARSH_RADIUS_X * 2.0, MARSH_RADIUS_Z * 2.0))
+	set_meta("system_hunter_tunnel_connected", false)
+	_build_marshland()
+	_build_hunter_tunnel_connection(hunter_tunnel)
+	set_meta("system_hunter_tunnel_connected", tunnel_connector_length > 0.0)
+	set_meta("system_hunter_tunnel_connection_length_m", tunnel_connector_length)
+	set_meta("system_marshland_runtime_status", "procedural_marshland_with_physical_tunnel_connection")
+
+
+func _find_nearest_marsh_land_anchor(origin: Vector2) -> Vector2:
+	for radius_step in range(1, 13):
+		var radius := float(radius_step) * 25.0
+		for sample in range(32):
+			var angle := TAU * float(sample) / 32.0
+			var candidate := origin + Vector2(cos(angle), sin(angle)) * radius
+			if bool(terrain.call("is_land_position", candidate.x, candidate.y)):
+				return candidate
+	return Vector2.INF
+
+
+func _marsh_ground_y(local_x: float, local_z: float) -> float:
+	if terrain == null:
+		return 0.0
+	return float(terrain.call("get_terrain_height", marsh_center.x + local_x, marsh_center.z + local_z)) - marsh_center.y
+
+
+func _build_marshland() -> void:
+	var water_material := _make_material(Color(0.055, 0.24, 0.20, 0.88), 0.12, 0.08, true)
+	var mud_material := _make_material(Color(0.19, 0.16, 0.095), 0.98, 0.0)
+	var reed_material := _make_material(Color(0.24, 0.36, 0.13), 0.92, 0.0)
+	var wood_material := _make_material(Color(0.30, 0.20, 0.11), 0.82, 0.0)
+	var lily_material := _make_material(Color(0.20, 0.48, 0.30), 0.48, 0.0)
+
+	var zone := Node3D.new()
+	zone.name = "MesopotamianMarshland"
+	zone.position = marsh_center
+	add_child(zone)
+
+	var pond_specs := [
+		{"x": -380.0, "z": -220.0, "rx": 120.0, "rz": 90.0},
+		{"x": -180.0, "z": -400.0, "rx": 100.0, "rz": 140.0},
+		{"x": 150.0, "z": -420.0, "rx": 150.0, "rz": 110.0},
+		{"x": 350.0, "z": -180.0, "rx": 130.0, "rz": 140.0},
+		{"x": 300.0, "z": 250.0, "rx": 150.0, "rz": 100.0},
+		{"x": 0.0, "z": 450.0, "rx": 130.0, "rz": 100.0},
+		{"x": -360.0, "z": 240.0, "rx": 130.0, "rz": 120.0},
+		{"x": -15.0, "z": 0.0, "rx": 90.0, "rz": 80.0}
+	]
+	for index in range(pond_specs.size()):
+		var spec: Dictionary = pond_specs[index]
+		var bank := MeshInstance3D.new()
+		bank.name = "MarshMudBank_%02d" % index
+		var bank_mesh := CylinderMesh.new()
+		bank_mesh.top_radius = 1.0
+		bank_mesh.bottom_radius = 1.0
+		bank_mesh.height = 0.16
+		bank.mesh = bank_mesh
+		bank.scale = Vector3(float(spec["rx"]) + 18.0, 1.0, float(spec["rz"]) + 18.0)
+		bank.position = Vector3(float(spec["x"]), _marsh_ground_y(float(spec["x"]), float(spec["z"])) + 0.04, float(spec["z"]))
+		bank.material_override = mud_material
+		zone.add_child(bank)
+		var pond := MeshInstance3D.new()
+		pond.name = "MarshWaterBody_%02d" % index
+		var pond_mesh := CylinderMesh.new()
+		pond_mesh.top_radius = 1.0
+		pond_mesh.bottom_radius = 1.0
+		pond_mesh.height = 0.42
+		pond.mesh = pond_mesh
+		pond.scale = Vector3(float(spec["rx"]), 1.0, float(spec["rz"]))
+		pond.position = Vector3(float(spec["x"]), _marsh_ground_y(float(spec["x"]), float(spec["z"])) + 0.32, float(spec["z"]))
+		pond.material_override = water_material
+		zone.add_child(pond)
+		_add_water_collision(zone, pond.position, float(spec["rx"]), float(spec["rz"]), index)
+		_add_lily_pads(zone, pond.position, float(spec["rx"]), float(spec["rz"]), lily_material, index)
+
+	_add_reed_fields(zone, reed_material)
+	_add_marsh_trees(zone, wood_material, reed_material)
+	_add_boardwalk_network(zone, wood_material)
+	_add_marsh_entry(zone, wood_material)
+	_build_hunter_marsh_trials(zone)
+	zone.set_meta("system_marsh_water_body_count", pond_specs.size())
+	zone.set_meta("system_marsh_mud_bank_count", pond_specs.size())
+	zone.set_meta("system_marsh_reed_instance_count", 12000)
+	zone.set_meta("system_marsh_tree_count", 160)
+	zone.set_meta("system_marsh_boardwalk_count", 9)
+	zone.set_meta("system_marshland_is_replacement_for_al_zawraa", true)
+	zone.set_meta("system_marshland_is_traversable", true)
+
+
+func _build_hunter_tunnel_connection(hunter_tunnel: Node3D) -> void:
+	# The existing examination tunnel remains intact. This physical extension
+	# starts at its open far end and rises gradually to the west edge of the marsh.
+	var tunnel_end := hunter_tunnel.global_position + Vector3(0.0, 0.0, 94.0)
+	var toward_marsh := Vector2(marsh_center.x - tunnel_end.x, marsh_center.z - tunnel_end.z)
+	if toward_marsh.length() < 100.0:
+		push_error("SYSTEM Baghdad Marshland: tunnel and marsh anchors are unexpectedly close.")
+		return
+	var direction := toward_marsh.normalized()
+	var entry_xz := Vector2(marsh_center.x, marsh_center.z) - direction * 600.0
+	var entry_ground := float(terrain.call("get_terrain_height", entry_xz.x, entry_xz.y))
+	var start_floor_y := tunnel_end.y
+	var end_floor_y := entry_ground - 0.25
+	var horizontal_distance := Vector2(entry_xz.x - tunnel_end.x, entry_xz.y - tunnel_end.z).length()
+	tunnel_connector_length = horizontal_distance
+
+	var connector := Node3D.new()
+	connector.name = "HunterTunnelToMarshlandPhysicalConnector"
+	connector.set_meta("system_connection_type", "continuous_walkable_underground_passage")
+	connector.set_meta("system_from", "BaghdadHunterExaminationTunnel")
+	connector.set_meta("system_to", "BaghdadMarshland_AlZawraaReplacement")
+	connector.set_meta("system_no_teleport_or_loading_gate", true)
+	connector.set_meta("system_length_m", horizontal_distance)
+	add_child(connector)
+
+	var trial_start := Area3D.new()
+	trial_start.name = "HunterMarshTrialStartTrigger"
+	trial_start.position = tunnel_end + Vector3(0.0, 0.0, 14.0)
+	trial_start.set_meta("system_hunter_exam_start_trigger", true)
+	var trial_start_shape := CollisionShape3D.new()
+	var trial_start_sphere := SphereShape3D.new()
+	trial_start_sphere.radius = 8.0
+	trial_start_shape.shape = trial_start_sphere
+	trial_start.add_child(trial_start_shape)
+	connector.add_child(trial_start)
+	trial_start.body_entered.connect(_on_marsh_trial_start_entered)
+	var passage_material := _make_material(Color(0.085, 0.105, 0.115), 0.9, 0.12)
+	var edge_material := _make_material(Color(0.025, 0.30, 0.36), 0.4, 0.45)
+	edge_material.emission_enabled = true
+	edge_material.emission = Color(0.0, 0.24, 0.32)
+	edge_material.emission_energy_multiplier = 0.8
+	var segment_count := maxi(1, ceili(horizontal_distance / CONNECTOR_SEGMENT_LENGTH))
+	for index in range(segment_count):
+		var t0 := float(index) / float(segment_count)
+		var t1 := float(index + 1) / float(segment_count)
+		var p0 := Vector3(
+			lerpf(tunnel_end.x, entry_xz.x, t0),
+			lerpf(start_floor_y, end_floor_y, t0),
+			lerpf(tunnel_end.z, entry_xz.y, t0)
+		)
+		var p1 := Vector3(
+			lerpf(tunnel_end.x, entry_xz.x, t1),
+			lerpf(start_floor_y, end_floor_y, t1),
+			lerpf(tunnel_end.z, entry_xz.y, t1)
+		)
+		_create_passage_segment(connector, p0, p1, index, passage_material, edge_material, index < segment_count - 1)
+	var entry := Node3D.new()
+	entry.name = "HunterTunnelMarshlandExit"
+	entry.global_position = Vector3(entry_xz.x, entry_ground, entry_xz.y)
+	entry.set_meta("system_facility_type", "hunter_exam_marshland_exit")
+	entry.set_meta("system_interactable_destination", "baghdad_marshland_al_zawraa")
+	entry.set_meta("system_walkable_connection", true)
+	connector.add_child(entry)
+	_create_entry_arch(entry, edge_material)
+	connector.set_meta("system_passage_segment_count", segment_count)
+	connector.set_meta("system_exit_at_marshland_edge", true)
+	hunter_tunnel.set_meta("system_marshland_extension_attached", true)
+	hunter_tunnel.set_meta("system_marshland_exit_world_position", entry.global_position)
+
+
+func _create_passage_segment(parent: Node3D, start: Vector3, finish: Vector3, index: int, wall_material: Material, trim: Material, has_ceiling: bool) -> void:
+	var delta := finish - start
+	var segment_length := delta.length()
+	if segment_length < 0.1:
+		return
+	var segment := Node3D.new()
+	segment.name = "MarshConnectionSegment_%03d" % index
+	segment.position = (start + finish) * 0.5 + Vector3.UP * 4.0
+	parent.add_child(segment)
+	segment.look_at(segment.global_position + delta, Vector3.UP)
+	var collision_body := StaticBody3D.new()
+	collision_body.name = "PassageSegmentCollision"
+	segment.add_child(collision_body)
+	_add_segment_box(segment, "PassageFloor", Vector3(0.0, -4.0, 0.0), Vector3(18.0, 0.8, segment_length + 0.8), wall_material, collision_body, true)
+	_add_segment_box(segment, "PassageLeftWall", Vector3(-9.0, 0.0, 0.0), Vector3(0.8, 8.0, segment_length + 0.8), wall_material, collision_body, true)
+	_add_segment_box(segment, "PassageRightWall", Vector3(9.0, 0.0, 0.0), Vector3(0.8, 8.0, segment_length + 0.8), wall_material, collision_body, true)
+	if has_ceiling:
+		_add_segment_box(segment, "PassageCeiling", Vector3(0.0, 4.0, 0.0), Vector3(18.0, 0.8, segment_length + 0.8), wall_material, collision_body, false)
+	for side in [-1.0, 1.0]:
+		var strip := MeshInstance3D.new()
+		strip.name = "PassageGuideLight_" + str(side)
+		var mesh := BoxMesh.new()
+		mesh.size = Vector3(0.16, 0.18, segment_length)
+		strip.mesh = mesh
+		strip.position = Vector3(side * 8.35, -3.45, 0.0)
+		strip.material_override = trim
+		segment.add_child(strip)
+
+
+func _add_segment_box(parent: Node3D, node_name: String, local_position: Vector3, size: Vector3, material: Material, collision_body: StaticBody3D, collision_enabled: bool) -> void:
+	var visual := MeshInstance3D.new()
+	visual.name = node_name
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	visual.mesh = mesh
+	visual.position = local_position
+	visual.material_override = material
+	parent.add_child(visual)
+	if not collision_enabled:
+		return
+	var shape := CollisionShape3D.new()
+	shape.name = node_name + "Shape"
+	shape.position = local_position
+	var box := BoxShape3D.new()
+	box.size = size
+	shape.shape = box
+	collision_body.add_child(shape)
+
+
+func _add_water_collision(parent: Node3D, position: Vector3, radius_x: float, radius_z: float, index: int) -> void:
+	var area := Area3D.new()
+	area.name = "MarshWaterArea_%02d" % index
+	area.position = position + Vector3(0.0, 0.21, 0.0)
+	area.collision_layer = 0
+	area.collision_mask = 1
+	area.monitoring = true
+	area.set_meta("system_water_type", "shallow_marsh")
+	area.set_meta("system_public_leisure_water_type", "marsh_shallow")
+	area.set_meta("system_public_leisure_water_depth", 1.1)
+	area.set_meta("system_swimmable", true)
+	var shape := CollisionShape3D.new()
+	var points := PackedVector3Array()
+	for layer in [-1.1, 0.0]:
+		for point_index in range(24):
+			var angle := TAU * float(point_index) / 24.0
+			points.append(Vector3(cos(angle) * radius_x, float(layer), sin(angle) * radius_z))
+	var water_hull := ConvexPolygonShape3D.new()
+	water_hull.points = points
+	shape.shape = water_hull
+	area.add_child(shape)
+	area.body_entered.connect(_on_marsh_water_body_entered.bind(area))
+	area.body_exited.connect(_on_marsh_water_body_exited.bind(area))
+	parent.add_child(area)
+
+
+func _add_lily_pads(parent: Node3D, center: Vector3, radius_x: float, radius_z: float, material: Material, pond_index: int) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 20261125 + pond_index * 31
+	for index in range(7):
+		var angle := rng.randf_range(0.0, TAU)
+		var distance := rng.randf_range(0.18, 0.72)
+		var pad := MeshInstance3D.new()
+		pad.name = "LilyPad_%02d_%02d" % [pond_index, index]
+		var mesh := CylinderMesh.new()
+		mesh.top_radius = 1.0
+		mesh.bottom_radius = 1.0
+		mesh.height = 0.08
+		pad.mesh = mesh
+		pad.scale = Vector3(rng.randf_range(2.0, 4.2), 1.0, rng.randf_range(1.4, 3.0))
+		pad.position = Vector3(
+			center.x + cos(angle) * radius_x * distance,
+			center.y + 0.28,
+			center.z + sin(angle) * radius_z * distance
+		)
+		pad.material_override = material
+		parent.add_child(pad)
+
+
+func _add_reed_fields(parent: Node3D, material: Material) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 2026112501
+	var reed_mesh := CylinderMesh.new()
+	reed_mesh.top_radius = 0.035
+	reed_mesh.bottom_radius = 0.075
+	reed_mesh.height = 2.6
+	var multi := MultiMesh.new()
+	multi.transform_format = MultiMesh.TRANSFORM_3D
+	multi.mesh = reed_mesh
+	multi.instance_count = 12000
+	for index in range(12000):
+		var angle := rng.randf_range(0.0, TAU)
+		var radial := sqrt(rng.randf()) * 0.94
+		var x := cos(angle) * MARSH_RADIUS_X * radial
+		var z := sin(angle) * MARSH_RADIUS_Z * radial
+		var ground_y := float(terrain.call("get_terrain_height", marsh_center.x + x, marsh_center.z + z)) - marsh_center.y
+		var transform := Transform3D(Basis.IDENTITY, Vector3(x, ground_y + 1.3, z))
+		multi.set_instance_transform(index, transform)
+	var reeds := MultiMeshInstance3D.new()
+	reeds.name = "MarshReedFields"
+	reeds.multimesh = multi
+	reeds.material_override = material
+	parent.add_child(reeds)
+
+
+func _add_marsh_trees(parent: Node3D, trunk_material: Material, canopy_material: Material) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 202611252
+	var trunk_mesh := CylinderMesh.new()
+	trunk_mesh.top_radius = 0.28
+	trunk_mesh.bottom_radius = 0.52
+	trunk_mesh.height = 8.0
+	var canopy_mesh := SphereMesh.new()
+	canopy_mesh.radius = 4.0
+	canopy_mesh.height = 7.0
+	var trunks := MultiMesh.new()
+	trunks.transform_format = MultiMesh.TRANSFORM_3D
+	trunks.mesh = trunk_mesh
+	trunks.instance_count = 160
+	var canopies := MultiMesh.new()
+	canopies.transform_format = MultiMesh.TRANSFORM_3D
+	canopies.mesh = canopy_mesh
+	canopies.instance_count = 160
+	for index in range(160):
+		var angle := TAU * float(index) / 160.0
+		var radial := rng.randf_range(0.82, 0.96)
+		var x := cos(angle) * MARSH_RADIUS_X * radial
+		var z := sin(angle) * MARSH_RADIUS_Z * radial
+		var ground_y := _marsh_ground_y(x, z)
+		trunks.set_instance_transform(index, Transform3D(Basis.IDENTITY, Vector3(x, ground_y + 4.0, z)))
+		var canopy_basis := Basis.from_scale(Vector3(1.8, 0.75, 1.35))
+		canopies.set_instance_transform(index, Transform3D(canopy_basis, Vector3(x, ground_y + 8.0, z)))
+	var trunk_instances := MultiMeshInstance3D.new()
+	trunk_instances.name = "MarshWillowTrunks"
+	trunk_instances.multimesh = trunks
+	trunk_instances.material_override = trunk_material
+	parent.add_child(trunk_instances)
+	var canopy_instances := MultiMeshInstance3D.new()
+	canopy_instances.name = "MarshWillowCanopies"
+	canopy_instances.multimesh = canopies
+	canopy_instances.material_override = canopy_material
+	parent.add_child(canopy_instances)
+	parent.set_meta("system_marsh_tree_count", 160)
+	parent.set_meta("system_marsh_tree_render_batch_count", 2)
+
+func _add_boardwalk_network(parent: Node3D, material: Material) -> void:
+	var entry := Vector3(marsh_entry_local.x, _marsh_ground_y(marsh_entry_local.x, marsh_entry_local.z) + 0.6, marsh_entry_local.z)
+	var inner := entry.lerp(Vector3(0.0, 0.6, 0.0), 0.48)
+	var hub := Vector3(0.0, 0.6, 0.0)
+	var paths := [
+		[entry, inner],
+		[inner, hub],
+		[hub, Vector3(220.0, 0.6, -220.0)],
+		[Vector3(220.0, 0.6, -220.0), Vector3(420.0, 0.6, -100.0)],
+		[hub, Vector3(160.0, 0.6, 250.0)],
+		[Vector3(160.0, 0.6, 250.0), Vector3(320.0, 0.6, 300.0)],
+		[Vector3(320.0, 0.6, 300.0), Vector3(430.0, 0.6, 320.0)],
+		[inner, Vector3(-300.0, 0.6, -300.0)],
+		[Vector3(-300.0, 0.6, -300.0), Vector3(-450.0, 0.6, 100.0)]
+	]
+	for index in range(paths.size()):
+		var start: Vector3 = paths[index][0]
+		var finish: Vector3 = paths[index][1]
+		start.y = _marsh_ground_y(start.x, start.z) + 0.6
+		finish.y = _marsh_ground_y(finish.x, finish.z) + 0.6
+		var midpoint := (start + finish) * 0.5
+		var delta := finish - start
+		var deck := MeshInstance3D.new()
+		deck.name = "MarshBoardwalk_%02d" % index
+		var mesh := BoxMesh.new()
+		mesh.size = Vector3(5.0, 0.55, delta.length() + 1.0)
+		deck.mesh = mesh
+		deck.position = midpoint
+		deck.material_override = material
+		parent.add_child(deck)
+		deck.look_at(deck.global_position + delta, Vector3.UP)
+		var body := StaticBody3D.new()
+		body.name = "MarshBoardwalkCollision_%02d" % index
+		body.position = deck.position
+		body.rotation = deck.rotation
+		var collision := CollisionShape3D.new()
+		var shape := BoxShape3D.new()
+		shape.size = mesh.size
+		collision.shape = shape
+		body.add_child(collision)
+		parent.add_child(body)
+		for side in [-1.0, 1.0]:
+			var rail := MeshInstance3D.new()
+			rail.name = "BoardwalkRail_%02d_%s" % [index, str(side)]
+			var rail_mesh := BoxMesh.new()
+			rail_mesh.size = Vector3(0.18, 1.0, delta.length())
+			rail.mesh = rail_mesh
+			rail.position = Vector3(side * 2.35, 0.65, 0.0)
+			rail.material_override = material
+			deck.add_child(rail)
+
+
+func _on_marsh_water_body_entered(body: Node3D, water_area: Area3D) -> void:
+	if body == null or not is_instance_valid(body) or not body.is_in_group("system_player"):
+		return
+	var surface_y := water_area.global_position.y
+	var active_zones: Dictionary = body.get_meta("system_public_leisure_water_zones", {}).duplicate()
+	active_zones[str(water_area.get_instance_id())] = {
+		"type": "marsh_shallow",
+		"depth": 1.1,
+		"surface_y": surface_y
+	}
+	body.set_meta("system_public_leisure_water_zones", active_zones)
+	body.set_meta("system_public_leisure_swimming", true)
+	body.set_meta("system_public_leisure_water_type", "marsh_shallow")
+	body.set_meta("system_public_leisure_water_depth", 1.1)
+	body.set_meta("system_swimming", true)
+	body.set_meta("system_swim_surface_y", surface_y)
+	body.set_meta("system_swim_source", "Baghdad Mesopotamian Marshland")
+
+
+func _on_marsh_water_body_exited(body: Node3D, water_area: Area3D) -> void:
+	if body == null or not is_instance_valid(body) or not body.is_in_group("system_player"):
+		return
+	var active_zones: Dictionary = body.get_meta("system_public_leisure_water_zones", {}).duplicate()
+	active_zones.erase(str(water_area.get_instance_id()))
+	if active_zones.is_empty():
+		body.remove_meta("system_public_leisure_water_zones")
+		body.remove_meta("system_public_leisure_swimming")
+		body.remove_meta("system_public_leisure_water_type")
+		body.remove_meta("system_public_leisure_water_depth")
+		body.remove_meta("system_swimming")
+		body.remove_meta("system_swim_surface_y")
+		body.remove_meta("system_swim_source")
+		body.remove_meta("system_swim_last_stroke_force")
+		return
+	body.set_meta("system_public_leisure_water_zones", active_zones)
+	var remaining_ids: Array = active_zones.keys()
+	var remaining: Dictionary = active_zones[remaining_ids.back()]
+	body.set_meta("system_public_leisure_swimming", true)
+	body.set_meta("system_public_leisure_water_type", str(remaining.get("type", "marsh_shallow")))
+	body.set_meta("system_public_leisure_water_depth", float(remaining.get("depth", 1.1)))
+	body.set_meta("system_swimming", true)
+	body.set_meta("system_swim_surface_y", float(remaining.get("surface_y", body.global_position.y + 0.25)))
+	body.set_meta("system_swim_source", "Baghdad Mesopotamian Marshland")
+
+
+func _add_marsh_entry(parent: Node3D, material: Material) -> void:
+	var entry := Node3D.new()
+	entry.name = "MarshlandPublicEntry"
+	entry.position = Vector3(marsh_entry_local.x, _marsh_ground_y(marsh_entry_local.x, marsh_entry_local.z), marsh_entry_local.z)
+	entry.set_meta("system_entry_from", "HunterTunnelToMarshlandPhysicalConnector")
+	entry.set_meta("system_destination_id", "baghdad_marshland_al_zawraa")
+	entry.set_meta("system_walkable", true)
+	parent.add_child(entry)
+	var arch := MeshInstance3D.new()
+	arch.name = "MarshlandEntryArch"
+	var arch_mesh := BoxMesh.new()
+	arch_mesh.size = Vector3(13.0, 0.8, 2.0)
+	arch.mesh = arch_mesh
+	arch.position.y = 8.0
+	arch.material_override = material
+	entry.add_child(arch)
+	var sign := Label3D.new()
+	sign.name = "MarshlandWelcomeSign"
+	sign.text = "SYSTEM MARSHLAND\nأرض المستنقعات"
+	sign.font_size = 28
+	sign.pixel_size = 0.016
+	sign.position = Vector3(0.0, 9.0, -1.4)
+	sign.modulate = Color(0.72, 0.91, 0.76)
+	entry.add_child(sign)
+
+
+func _create_entry_arch(parent: Node3D, material: Material) -> void:
+	var arch := MeshInstance3D.new()
+	arch.name = "TunnelExitArch"
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(18.0, 1.0, 2.0)
+	arch.mesh = mesh
+	arch.position.y = 8.0
+	arch.material_override = material
+	parent.add_child(arch)
+	var label := Label3D.new()
+	label.name = "TunnelExitDestinationSign"
+	label.text = "BAGHDAD MARSHLAND\nأرض المستنقعات"
+	label.font_size = 26
+	label.pixel_size = 0.014
+	label.position = Vector3(0.0, 9.5, -1.5)
+	label.modulate = Color(0.7, 0.94, 0.78)
+	parent.add_child(label)
+
+
+func _build_hunter_marsh_trials(zone: Node3D) -> void:
+	zone.set_meta("system_hunter_exam_biome", true)
+	zone.set_meta("system_hunter_exam_trial_type", "numere_wetlands_swindlers_swamp_survival_navigation")
+	zone.set_meta("system_hunter_exam_core_rule", "keep_the_real_examiner_in_sight_and_reject_impostors")
+	zone.set_meta("system_hunter_exam_fog_visibility", "dense_low_visibility_swamp_mist")
+	zone.set_meta("system_hunter_exam_inspired_by", "Hunter x Hunter Hunter Exam swamp atmosphere; original SYSTEM WORLD implementation")
+	zone.set_meta("system_hunter_marsh_deception_npc_count", 12)
+	zone.set_meta("system_hunter_marsh_giant_creature_count", 6)
+	zone.set_meta("system_hunter_marsh_seasonal_gate_count", 3)
+	zone.set_meta("system_current_marsh_season", _get_marsh_season())
+	zone.set_meta("system_hunter_marsh_wrong_route_hazards", 5)
+	zone.set_meta("system_hunter_marsh_hidden_heritage_site", "HiddenMarshAncientSanctuary")
+	_build_marsh_farms(zone)
+	_build_marsh_fog(zone)
+	_build_marsh_deception_npcs(zone)
+	_build_giant_marsh_creatures(zone)
+	_build_marsh_route_markers(zone)
+	_build_real_guild_guide(zone)
+	_build_wrong_route_hazards(zone)
+	_build_hidden_heritage_gates(zone)
+
+
+func _get_marsh_season() -> String:
+	var date := Time.get_date_dict_from_system()
+	var month := int(date.get("month", 1))
+	if month in [3, 4, 5]:
+		return "spring"
+	if month in [6, 7, 8]:
+		return "summer"
+	if month in [9, 10, 11]:
+		return "autumn"
+	return "winter"
+
+
+func _build_marsh_farms(zone: Node3D) -> void:
+	var soil := _make_material(Color(0.23, 0.16, 0.09), 1.0, 0.0)
+	var crop_materials := [
+		_make_material(Color(0.24, 0.46, 0.13), 0.92, 0.0),
+		_make_material(Color(0.42, 0.55, 0.16), 0.9, 0.0),
+		_make_material(Color(0.55, 0.32, 0.12), 0.85, 0.0)
+	]
+	var farm_root := Node3D.new()
+	farm_root.name = "MarshAgriculturalGardens"
+	farm_root.position = Vector3(-300.0, _marsh_ground_y(-300.0, 350.0) + 0.2, 350.0)
+	zone.add_child(farm_root)
+	for plot_index in range(12):
+		var plot := MeshInstance3D.new()
+		plot.name = "CultivatedSoilPlot_%02d" % plot_index
+		var plot_mesh := BoxMesh.new()
+		plot_mesh.size = Vector3(26.0, 0.24, 13.0)
+		plot.mesh = plot_mesh
+		plot.position = Vector3(float(plot_index % 4) * 32.0, 0.0, float(plot_index / 4) * 20.0)
+		plot.material_override = soil
+		farm_root.add_child(plot)
+
+	var crop_mesh := CapsuleMesh.new()
+	crop_mesh.radius = 0.18
+	crop_mesh.height = 1.25
+	var crop_batches: Array[MultiMesh] = []
+	for material_index in range(3):
+		var batch := MultiMesh.new()
+		batch.transform_format = MultiMesh.TRANSFORM_3D
+		batch.mesh = crop_mesh
+		batch.instance_count = 144
+		crop_batches.append(batch)
+	var crop_batch_offsets := PackedInt32Array([0, 0, 0])
+	for plot_index in range(12):
+		var plot_position := Vector3(float(plot_index % 4) * 32.0, 0.0, float(plot_index / 4) * 20.0)
+		for row in range(4):
+			var material_index := (plot_index + row) % 3
+			for plant_index in range(9):
+				var crop_position := plot_position + Vector3(-11.0 + float(plant_index) * 2.7, 0.65, -4.5 + float(row) * 3.0)
+				var crop_transform := Transform3D(Basis.IDENTITY, crop_position)
+				crop_batches[material_index].set_instance_transform(crop_batch_offsets[material_index], crop_transform)
+				crop_batch_offsets[material_index] += 1
+	for material_index in range(3):
+		var batch_instance := MultiMeshInstance3D.new()
+		batch_instance.name = "MarshCropBatch_%02d" % material_index
+		batch_instance.multimesh = crop_batches[material_index]
+		batch_instance.material_override = crop_materials[material_index]
+		farm_root.add_child(batch_instance)
+	farm_root.set_meta("system_agricultural_plot_count", 12)
+	farm_root.set_meta("system_crop_plant_count", 432)
+	farm_root.set_meta("system_crop_render_batch_count", 3)
+	farm_root.set_meta("system_marshland_farm_is_walkable", true)
+
+func _build_marsh_fog(zone: Node3D) -> void:
+	# Dense, low-lying visibility fog is a defining part of the Hunter swamp trial.
+	fog_material = StandardMaterial3D.new()
+	fog_material.albedo_color = _get_marsh_season_fog_color(_get_marsh_season())
+	fog_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	fog_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	fog_material.no_depth_test = false
+	for index in range(18):
+		var fog := MeshInstance3D.new()
+		fog.name = "MarshGroundFog_%02d" % index
+		var mesh := SphereMesh.new()
+		mesh.radius = 1.0
+		mesh.height = 0.32
+		fog.mesh = mesh
+		fog.scale = Vector3(82.0 + float(index % 4) * 18.0, 1.0, 38.0 + float(index % 3) * 13.0)
+		var fog_angle := TAU * float(index) / 18.0
+		var fog_radial := 0.18 + float(index % 5) * 0.15
+		var fog_x := cos(fog_angle) * MARSH_RADIUS_X * fog_radial
+		var fog_z := sin(fog_angle) * MARSH_RADIUS_Z * fog_radial
+		fog.position = Vector3(fog_x, _marsh_ground_y(fog_x, fog_z) + 0.85 + float(index % 3) * 0.22, fog_z)
+		fog.material_override = fog_material
+		fog.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		zone.add_child(fog)
+		fog_layers.append(fog)
+		fog.set_meta("system_fog_layer", "dense_low_swamp_mist")
+		fog.set_meta("system_fog_visibility_obscuring", true)
+	zone.set_meta("system_ground_fog_layer_count", 18)
+	zone.set_meta("system_fog_style", "dense_numere_swamp_low_mist")
+	zone.set_meta("system_fog_is_core_exam_hazard", true)
+
+
+func _get_marsh_season_fog_color(season: String) -> Color:
+	match season:
+		"summer":
+			return Color(0.72, 0.78, 0.7, 0.28)
+		"autumn":
+			return Color(0.62, 0.68, 0.68, 0.38)
+		"winter":
+			return Color(0.7, 0.8, 0.86, 0.42)
+		_:
+			return Color(0.65, 0.8, 0.68, 0.32)
+
+
+func _apply_marsh_seasonal_appearance(season: String) -> void:
+	if fog_material != null:
+		fog_material.albedo_color = _get_marsh_season_fog_color(season)
+	for gate in find_children("SeasonalMarshStarGate_*", "Node3D", true, false):
+		var gate_id := int(gate.get_meta("system_gate_id", -1))
+		var destinations: Array = SEASONAL_GATE_DESTINATIONS.get(season, [])
+		if gate_id < 0 or gate_id >= destinations.size():
+			continue
+		var city_name := str(destinations[gate_id])
+		gate.set_meta("system_gate_current_season", season)
+		gate.set_meta("system_gate_destination_city", city_name)
+		var label := gate.get_node_or_null("StarGateDestinationLabel") as Label3D
+		if label != null:
+			label.text = "بوابة نجمية %d\n%s" % [gate_id + 1, city_name]
+
+
+func _build_marsh_deception_npcs(zone: Node3D) -> void:
+	var clothing := _make_material(Color(0.20, 0.25, 0.21), 0.9, 0.0)
+	var skin := _make_material(Color(0.55, 0.39, 0.27), 0.92, 0.0)
+	var decoy_positions: Array[Vector3] = []
+	for index in range(12):
+		var angle := TAU * float(index) / 12.0
+		decoy_positions.append(Vector3(cos(angle) * MARSH_RADIUS_X * 0.82, 0.0, sin(angle) * MARSH_RADIUS_Z * 0.82))
+	for index in range(decoy_positions.size()):
+		var npc := Node3D.new()
+		npc.name = "HunterExamDeceptionNPC_%02d" % index
+		npc.position = decoy_positions[index]
+		npc.position.y = _marsh_ground_y(npc.position.x, npc.position.z)
+		npc.set_meta("system_npc_role", "hunter_exam_candidate_or_false_guide")
+		npc.set_meta("system_deception_enabled", true)
+		npc.set_meta("system_npc_can_give_false_route_hint", true)
+		npc.set_meta("system_npc_deception_type", ["man_faced_ape_impostor", "wrong_landmark", "false_safe_path", "fake_exit"][index % 4])
+		npc.set_meta("system_disguise_species", "man_faced_ape" if index % 4 == 0 else "deceptive_candidate")
+		npc.set_meta("system_can_impersonate_examiner", index % 4 == 0)
+		npc.set_meta("system_swamp_deception_style", "imitates_a_real_candidate_or_examiner_to_split_the_group")
+		npc.set_meta("system_is_real_guild_guide", false)
+		zone.add_child(npc)
+		var torso := MeshInstance3D.new()
+		torso.name = "NPCBody"
+		var torso_mesh := CapsuleMesh.new()
+		torso_mesh.radius = 0.48
+		torso_mesh.height = 1.8
+		torso.mesh = torso_mesh
+		torso.position.y = 1.1
+		torso.material_override = clothing
+		npc.add_child(torso)
+		var head := MeshInstance3D.new()
+		head.name = "NPCHead"
+		var head_mesh := SphereMesh.new()
+		head_mesh.radius = 0.34
+		head_mesh.height = 0.68
+		head.mesh = head_mesh
+		head.position.y = 2.25
+		head.material_override = skin
+		npc.add_child(head)
+		var label := Label3D.new()
+		label.name = "DeceptionRoleLabel"
+		label.text = "مختبر" if index % 3 != 0 else "مرشد؟"
+		label.font_size = 20
+		label.pixel_size = 0.012
+		label.position.y = 3.0
+		label.modulate = Color(0.95, 0.82, 0.55)
+		npc.add_child(label)
+		var trigger := Area3D.new()
+		trigger.name = "FalseRouteHintTrigger"
+		trigger.position.y = 1.0
+		trigger.set_meta("system_deception_trigger", true)
+		var collision := CollisionShape3D.new()
+		var sphere := SphereShape3D.new()
+		sphere.radius = 4.0
+		collision.shape = sphere
+		trigger.add_child(collision)
+		npc.add_child(trigger)
+		trigger.body_entered.connect(_on_deception_npc_approached.bind(npc))
+
+
+func _on_deception_npc_approached(body: Node3D, npc: Node3D) -> void:
+	if not _is_hunter_exam_player(body):
+		return
+	body.set_meta("system_hunter_route_hint", "false")
+	body.set_meta("system_hunter_route_hint_source", npc.name)
+	body.set_meta("system_hunter_route_hint_destination", "wrong_marshland_path")
+	body.set_meta("system_hunter_route_hint_waypoint", npc.global_position + Vector3(55.0, 0.0, -40.0))
+	var deception_type := str(npc.get_meta("system_npc_deception_type", "false_safe_path"))
+	body.set_meta("system_hunter_route_deception_type", deception_type)
+	body.set_meta("system_hunter_deception_warning", "Swamp creatures may impersonate candidates or examiners; keep the genuine examiner in sight.")
+	if deception_type == "man_faced_ape_impostor":
+		body.set_meta("system_hunter_fake_examiner_encounter", true)
+		body.set_meta("system_hunter_fake_examiner_claim", "This apparent examiner is an impostor; do not leave the genuine guide.")
+		body.set_meta("system_hunter_impostor_disguise_revealed", false)
+		body.set_meta("system_hunter_follow_real_guide_required", true)
+
+
+func _build_giant_marsh_creatures(zone: Node3D) -> void:
+	var shell_material := _make_material(Color(0.16, 0.25, 0.13), 0.78, 0.0)
+	var hide_material := _make_material(Color(0.20, 0.31, 0.24), 0.9, 0.0)
+	var wing_material := _make_material(Color(0.31, 0.22, 0.46), 0.65, 0.0)
+	var cap_material := _make_material(Color(0.48, 0.25, 0.16), 0.88, 0.0)
+	var species: Array[String] = [
+		"man_faced_ape",
+		"hypnosis_butterfly",
+		"frog_in_waiting",
+		"noggin_lugging_tortoise",
+		"ruse_raven",
+		"claymore_mushroom"
+	]
+	var positions: Array[Vector3] = []
+	for index in range(species.size()):
+		var angle := TAU * float(index) / float(species.size()) + 0.24
+		positions.append(Vector3(cos(angle) * MARSH_RADIUS_X * 0.76, 0.0, sin(angle) * MARSH_RADIUS_Z * 0.76))
+	for index in range(positions.size()):
+		var creature := Node3D.new()
+		creature.name = "GiantMarshCreature_%02d" % index
+		creature.position = positions[index]
+		creature.position.y = _marsh_ground_y(creature.position.x, creature.position.z)
+		creature.set_meta("system_creature_is_giant", true)
+		creature.set_meta("system_hunter_exam_hazard", true)
+		creature.set_meta("system_creature_species", species[index])
+		creature.set_meta("system_encounter_class", "hunter_exam_swamp_fauna")
+		creature.set_meta("system_species_reference", "Hunter x Hunter Numere/Milsy Wetlands fauna inspiration")
+		zone.add_child(creature)
+
+		var body := MeshInstance3D.new()
+		body.name = "CreatureBody"
+		var body_mesh := SphereMesh.new()
+		body_mesh.radius = 1.0
+		body_mesh.height = 2.0
+		body.mesh = body_mesh
+		body.scale = Vector3(3.8, 1.0, 5.2)
+		body.position.y = 1.2
+		body.material_override = hide_material
+		creature.add_child(body)
+
+		match species[index]:
+			"man_faced_ape":
+				var face := MeshInstance3D.new()
+				face.name = "HumanLikeApeFace"
+				var face_mesh := SphereMesh.new()
+				face_mesh.radius = 0.8
+				face_mesh.height = 1.4
+				face.mesh = face_mesh
+				face.position = Vector3(0.0, 2.3, -3.8)
+				face.material_override = _make_material(Color(0.52, 0.36, 0.27), 0.9, 0.0)
+				creature.add_child(face)
+				for side in [-1.0, 1.0]:
+					var arm := MeshInstance3D.new()
+					arm.name = "LongApeArm"
+					var arm_mesh := CapsuleMesh.new()
+					arm_mesh.radius = 0.34
+					arm_mesh.height = 4.8
+					arm.mesh = arm_mesh
+					arm.position = Vector3(side * 3.2, 0.9, -0.2)
+					arm.rotation.z = side * -0.32
+					arm.material_override = hide_material
+					creature.add_child(arm)
+			"hypnosis_butterfly":
+				for side in [-1.0, 1.0]:
+					var wing := MeshInstance3D.new()
+					wing.name = "HypnosisWing"
+					var wing_mesh := SphereMesh.new()
+					wing_mesh.radius = 1.0
+					wing.mesh = wing_mesh
+					wing.scale = Vector3(3.0, 0.22, 2.2)
+					wing.position = Vector3(side * 3.0, 2.2, 0.0)
+					wing.rotation.y = side * 0.28
+					wing.material_override = wing_material
+					creature.add_child(wing)
+			"frog_in_waiting":
+				for side in [-1.0, 1.0]:
+					var eye := MeshInstance3D.new()
+					eye.name = "FrogEye"
+					var eye_mesh := SphereMesh.new()
+					eye_mesh.radius = 0.85
+					eye.mesh = eye_mesh
+					eye.position = Vector3(side * 1.7, 2.7, -2.8)
+					eye.material_override = _make_material(Color(0.62, 0.72, 0.28), 0.6, 0.0)
+					creature.add_child(eye)
+			"noggin_lugging_tortoise":
+				var shell := MeshInstance3D.new()
+				shell.name = "GiantTurtleShell"
+				var shell_mesh := SphereMesh.new()
+				shell_mesh.radius = 1.0
+				shell_mesh.height = 1.5
+				shell.mesh = shell_mesh
+				shell.scale = Vector3(3.7, 1.45, 4.7)
+				shell.position.y = 2.0
+				shell.material_override = shell_material
+				creature.add_child(shell)
+			"ruse_raven":
+				for side in [-1.0, 1.0]:
+					var wing := MeshInstance3D.new()
+					wing.name = "RuseRavenWing"
+					var wing_mesh := SphereMesh.new()
+					wing_mesh.radius = 1.0
+					wing.mesh = wing_mesh
+					wing.scale = Vector3(3.1, 0.35, 1.5)
+					wing.position = Vector3(side * 3.0, 1.8, 0.0)
+					wing.material_override = _make_material(Color(0.08, 0.10, 0.09), 0.9, 0.0)
+					creature.add_child(wing)
+			"claymore_mushroom":
+				var stalk := MeshInstance3D.new()
+				stalk.name = "ClaymoreMushroomStalk"
+				var stalk_mesh := CapsuleMesh.new()
+				stalk_mesh.radius = 1.0
+				stalk_mesh.height = 5.0
+				stalk.mesh = stalk_mesh
+				stalk.position.y = 2.2
+				stalk.material_override = _make_material(Color(0.72, 0.68, 0.48), 0.9, 0.0)
+				creature.add_child(stalk)
+				var cap := MeshInstance3D.new()
+				cap.name = "ClaymoreMushroomCap"
+				var cap_mesh := SphereMesh.new()
+				cap_mesh.radius = 1.0
+				cap.mesh = cap_mesh
+				cap.scale = Vector3(4.0, 1.2, 4.0)
+				cap.position.y = 4.8
+				cap.material_override = cap_material
+				creature.add_child(cap)
+
+		var combat_enemy := MarshGateEnemyScript.new() as CharacterBody3D
+		combat_enemy.name = "GiantMarshCombatEnemy"
+		combat_enemy.call("configure", "C", false, null)
+		creature.add_child(combat_enemy)
+		combat_enemy.set_physics_process(false)
+		for visual_child in creature.get_children():
+			if visual_child is MeshInstance3D:
+				creature.remove_child(visual_child)
+				combat_enemy.add_child(visual_child)
+		var generic_visual := combat_enemy.get_node_or_null("Visual") as MeshInstance3D
+		if generic_visual != null:
+			generic_visual.visible = false
+		combat_enemy.set_meta("system_marsh_wildlife_enemy", true)
+		combat_enemy.set_meta("system_creature_species", species[index])
+		combat_enemy.connect("defeated", _on_giant_marsh_creature_defeated.bind(creature))
+		var encounter := Area3D.new()
+		encounter.name = "GiantCreatureEncounterZone"
+		encounter.position.y = 1.0
+		encounter.set_meta("system_giant_creature_encounter", true)
+		var collision := CollisionShape3D.new()
+		var sphere := SphereShape3D.new()
+		sphere.radius = 11.0
+		collision.shape = sphere
+		encounter.add_child(collision)
+		combat_enemy.add_child(encounter)
+		encounter.body_entered.connect(_on_giant_creature_encounter.bind(creature))
+
+
+func _is_hunter_exam_player(body: Node3D) -> bool:
+	return body != null and is_instance_valid(body) and body.is_in_group("system_player")
+
+
+func _on_giant_creature_encounter(body: Node3D, creature: Node3D) -> void:
+	if not _is_hunter_exam_player(body):
+		return
+	body.set_meta("system_hunter_marsh_encounter", creature.name)
+	body.set_meta("system_hunter_marsh_encounter_species", str(creature.get_meta("system_creature_species", "giant_wildlife")))
+	body.set_meta("system_hunter_marsh_encounter_state", "combat_or_escape_required")
+	body.set_meta("system_hunter_marsh_encounter_active", true)
+	var combat_enemy := creature.get_node_or_null("GiantMarshCombatEnemy") as CharacterBody3D
+	if combat_enemy != null and combat_enemy.has_method("configure"):
+		combat_enemy.call("configure", "C", false, body)
+		combat_enemy.set_physics_process(true)
+		body.set_meta("system_hunter_marsh_combat_enemy", combat_enemy.get_instance_id())
+
+
+func _on_giant_marsh_creature_defeated(_enemy: Node, _is_boss: bool, xp_reward: int, creature: Node3D) -> void:
+	if not is_instance_valid(creature):
+		return
+	creature.set_meta("system_creature_defeated", true)
+	creature.set_meta("system_creature_xp_reward", xp_reward)
+	var encounter := creature.find_child("GiantCreatureEncounterZone", true, false) as Area3D
+	if encounter != null:
+		encounter.monitoring = false
+
+
+func _build_marsh_route_markers(zone: Node3D) -> void:
+	var material := _make_material(Color(0.96, 0.72, 0.18), 0.35, 0.2)
+	material.emission_enabled = true
+	material.emission = Color(0.9, 0.45, 0.05)
+	material.emission_energy_multiplier = 1.0
+	var marker_positions: Array[Vector3] = []
+	var route_start := Vector3(marsh_entry_local.x, 0.0, marsh_entry_local.z)
+	var route_hub := Vector3.ZERO
+	var route_waypoint := Vector3(160.0, 0.0, 250.0)
+	var route_sanctuary := Vector3(430.0, 0.0, 320.0)
+	for index in range(9):
+		var progress := float(index) / 8.0
+		var route_position: Vector3
+		if progress < 0.5:
+			route_position = route_start.lerp(route_hub, progress * 2.0)
+		else:
+			route_position = route_hub.lerp(route_waypoint, (progress - 0.5) * 2.0)
+		if progress > 0.72:
+			route_position = route_waypoint.lerp(route_sanctuary, (progress - 0.72) / 0.28)
+		marker_positions.append(route_position)
+	for index in range(marker_positions.size()):
+		var marker := Node3D.new()
+		marker.name = "HunterExamRouteArrow_%02d" % index
+		marker.position = marker_positions[index]
+		marker.position.y = _marsh_ground_y(marker.position.x, marker.position.z) + 0.05
+		var next_position: Vector3 = marker_positions[index + 1] if index + 1 < marker_positions.size() else Vector3(430.0, 0.0, 320.0)
+		zone.add_child(marker)
+		marker.look_at(marker.global_position + (next_position - marker_positions[index]), Vector3.UP)
+		marker.set_meta("system_route_marker", true)
+		marker.set_meta("system_route_marker_index", index)
+		var stem := MeshInstance3D.new()
+		stem.name = "ArrowStem"
+		var stem_mesh := BoxMesh.new()
+		stem_mesh.size = Vector3(0.25, 0.2, 3.4)
+		stem.mesh = stem_mesh
+		stem.position.y = 0.35
+		stem.material_override = material
+		marker.add_child(stem)
+		var head := MeshInstance3D.new()
+		head.name = "ArrowHead"
+		var head_mesh := PrismMesh.new()
+		head_mesh.size = Vector3(1.5, 0.25, 1.5)
+		head.mesh = head_mesh
+		head.position = Vector3(0.0, 0.42, -1.6)
+		head.material_override = material
+		marker.add_child(head)
+		var label := Label3D.new()
+		label.name = "ArrowDirectionLabel"
+		label.text = "اتبع المسار"
+		label.font_size = 18
+		label.pixel_size = 0.012
+		label.position.y = 1.0
+		label.modulate = Color(1.0, 0.83, 0.32)
+		marker.add_child(label)
+	zone.set_meta("system_route_arrow_count", marker_positions.size())
+
+
+func _build_wrong_route_hazards(zone: Node3D) -> void:
+	var hazard_positions := [
+		Vector3(550.0, 0.0, -300.0), Vector3(-520.0, 0.0, 250.0),
+		Vector3(500.0, 0.0, 350.0), Vector3(-250.0, 0.0, -500.0),
+		Vector3(35.0, 0.0, 560.0)
+	]
+	for index in range(hazard_positions.size()):
+		var hazard := Area3D.new()
+		hazard.name = "HunterExamWrongRouteHazard_%02d" % index
+		hazard.position = hazard_positions[index]
+		hazard.position.y = _marsh_ground_y(hazard.position.x, hazard.position.z)
+		hazard.set_meta("system_wrong_route_hazard", true)
+		hazard.set_meta("system_exam_failure_on_entry", true)
+		var collision := CollisionShape3D.new()
+		var sphere := SphereShape3D.new()
+		sphere.radius = 7.5
+		collision.shape = sphere
+		hazard.add_child(collision)
+		zone.add_child(hazard)
+		hazard.body_entered.connect(_on_wrong_route_hazard_entered.bind(hazard))
+
+
+func _on_wrong_route_hazard_entered(body: Node3D, hazard: Area3D) -> void:
+	if not _is_hunter_exam_player(body):
+		return
+	body.set_meta("system_hunter_wrong_route_triggered", hazard.name)
+	body.set_meta("system_hunter_exam_failure_reason", "Entered a forbidden marshland route.")
+	var exam_manager := get_tree().root.find_child("SYSTEMHunterExamManager", true, false)
+	if exam_manager != null and bool(exam_manager.get("exam_active")):
+		exam_manager.call("withdraw_or_fail", "فشلت في اختبار المستنقعات: دخلت مساراً محظوراً.")
+
+
+func _build_hidden_heritage_gates(zone: Node3D) -> void:
+	var sanctuary := Node3D.new()
+	sanctuary.name = "HiddenMarshAncientSanctuary"
+	sanctuary.position = Vector3(430.0, _marsh_ground_y(430.0, 320.0), 320.0)
+	sanctuary.set_meta("system_hidden_ancient_site", true)
+	sanctuary.set_meta("system_hunter_exam_final_discovery", true)
+	sanctuary.set_meta("system_star_gate_hub", true)
+	sanctuary.visible = false
+	zone.add_child(sanctuary)
+	var discovery_trigger := Area3D.new()
+	discovery_trigger.name = "HiddenSanctuaryDiscoveryTrigger"
+	discovery_trigger.position = sanctuary.position
+	discovery_trigger.set_meta("system_hidden_site_discovery_trigger", true)
+	var discovery_collision := CollisionShape3D.new()
+	var discovery_sphere := SphereShape3D.new()
+	discovery_sphere.radius = 45.0
+	discovery_collision.shape = discovery_sphere
+	discovery_trigger.add_child(discovery_collision)
+	zone.add_child(discovery_trigger)
+	discovery_trigger.body_entered.connect(_on_hidden_sanctuary_discovered.bind(sanctuary))
+	var stone := _make_material(Color(0.29, 0.27, 0.20), 0.95, 0.0)
+	var relic := _make_material(Color(0.48, 0.34, 0.15), 0.4, 0.3)
+	for index in range(8):
+		var pillar := MeshInstance3D.new()
+		pillar.name = "AncientSanctuaryPillar_%02d" % index
+		var mesh := CylinderMesh.new()
+		mesh.top_radius = 0.8
+		mesh.bottom_radius = 1.1
+		mesh.height = 8.0
+		pillar.mesh = mesh
+		pillar.position = Vector3(-14.0 + float(index % 4) * 9.0, 4.0, -10.0 + float(index / 4) * 20.0)
+		pillar.material_override = stone
+		sanctuary.add_child(pillar)
+	var final_altar := MeshInstance3D.new()
+	final_altar.name = "HunterExamMarshlandFinalAltar"
+	var altar_mesh := CylinderMesh.new()
+	altar_mesh.top_radius = 2.2
+	altar_mesh.bottom_radius = 3.2
+	altar_mesh.height = 1.5
+	final_altar.mesh = altar_mesh
+	final_altar.position = Vector3(0.0, 0.75, 5.0)
+	final_altar.material_override = relic
+	sanctuary.add_child(final_altar)
+	var final_label := Label3D.new()
+	final_label.name = "HunterExamMarshlandFinalObjectiveLabel"
+	final_label.text = "نهاية اختبار الصيادين\nاكتشف الملاذ القديم"
+	final_label.font_size = 28
+	final_label.pixel_size = 0.014
+	final_label.position = Vector3(0.0, 5.0, 5.0)
+	final_label.modulate = Color(0.9, 0.78, 0.48)
+	sanctuary.add_child(final_label)
+	var guide_briefing := Label3D.new()
+	guide_briefing.name = "GuideStarGateBriefing"
+	guide_briefing.text = "وصلتم إلى الملاذ الأثري\nالمرشد يشرح وجهات البوابات النجمية"
+	guide_briefing.font_size = 22
+	guide_briefing.pixel_size = 0.014
+	guide_briefing.position = Vector3(0.0, 8.0, -8.0)
+	guide_briefing.modulate = Color(0.45, 0.9, 1.0)
+	guide_briefing.visible = false
+	sanctuary.add_child(guide_briefing)
+
+	var final_area := Area3D.new()
+	final_area.name = "HunterExamMarshlandFinalObjective"
+	final_area.position = Vector3(0.0, 1.5, 5.0)
+	final_area.set_meta("system_hunter_exam_final_objective", true)
+	var final_collision := CollisionShape3D.new()
+	var final_sphere := SphereShape3D.new()
+	final_sphere.radius = 9.0
+	final_collision.shape = final_sphere
+	final_area.add_child(final_collision)
+	sanctuary.add_child(final_area)
+	final_area.body_entered.connect(_on_marsh_final_trial_entered)
+
+	for gate_index in range(3):
+		var gate := Node3D.new()
+		gate.name = "SeasonalMarshStarGate_%02d" % gate_index
+		gate.position = Vector3(-12.0 + float(gate_index) * 12.0, 0.0, -22.0)
+		gate.set_meta("system_star_gate", true)
+		gate.set_meta("system_gate_id", gate_index)
+		gate.set_meta("system_gate_destination_pool_by_season", SEASONAL_GATE_DESTINATIONS.duplicate(true))
+		gate.set_meta("system_gate_current_season", _get_marsh_season())
+		gate.set_meta("system_gate_destination_city", str(SEASONAL_GATE_DESTINATIONS[_get_marsh_season()][gate_index]))
+		gate.set_meta("system_gate_rotation", "seasonal")
+		gate.set_meta("system_hidden_until_final_exam_discovery", true)
+		gate.visible = false
+		sanctuary.add_child(gate)
+		_build_marsh_star_gate_visual(gate, relic, gate_index)
+		var area := Area3D.new()
+		area.name = "SeasonalGateActivationArea"
+		area.position = Vector3(0.0, 2.0, 2.5)
+		area.set_meta("system_star_gate_activation", true)
+		var collision := CollisionShape3D.new()
+		var sphere := SphereShape3D.new()
+		sphere.radius = 2.8
+		collision.shape = sphere
+		area.add_child(collision)
+		gate.add_child(area)
+		area.body_entered.connect(_on_marsh_star_gate_entered.bind(gate))
+		gate.set_meta("system_activation_area_path", area.get_path())
+
+
+func _build_marsh_star_gate_visual(gate: Node3D, material: Material, gate_index: int) -> void:
+	var frame := MeshInstance3D.new()
+	frame.name = "AncientStarGateFrame"
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(4.8, 6.5, 0.6)
+	frame.mesh = mesh
+	frame.position.y = 3.2
+	frame.material_override = material
+	gate.add_child(frame)
+	var energy := MeshInstance3D.new()
+	energy.name = "StarGateEnergyVeil"
+	var energy_mesh := PlaneMesh.new()
+	energy_mesh.size = Vector2(3.7, 5.4)
+	energy.mesh = energy_mesh
+	energy.position = Vector3(0.0, 3.2, 0.34)
+	var glow := _make_material([Color(0.1, 0.65, 0.95, 0.7), Color(0.65, 0.3, 0.95, 0.7), Color(0.2, 0.85, 0.55, 0.7)][gate_index], 0.25, 0.2, true)
+	glow.emission_enabled = true
+	glow.emission = glow.albedo_color
+	glow.emission_energy_multiplier = 1.6
+	energy.material_override = glow
+	gate.add_child(energy)
+	var label := Label3D.new()
+	label.name = "StarGateDestinationLabel"
+	label.text = "بوابة نجمية %d\n%s" % [gate_index + 1, str(gate.get_meta("system_gate_destination_city", "وجهة موسمية"))]
+	label.font_size = 24
+	label.pixel_size = 0.014
+	label.position.y = 7.0
+	gate.add_child(label)
+
+
+
+func _build_real_guild_guide(zone: Node3D) -> void:
+	guide_path_local = [
+		marsh_entry_local,
+		Vector3(-220.0, 0.0, -80.0),
+		Vector3(-35.0, 0.0, 95.0),
+		Vector3(160.0, 0.0, 250.0),
+		Vector3(310.0, 0.0, 295.0),
+		Vector3(430.0, 0.0, 320.0)
+	]
+	real_guild_guide = Node3D.new()
+	real_guild_guide.name = "RealHunterGuildMarshGuide"
+	real_guild_guide.position = Vector3(
+		marsh_entry_local.x,
+		_marsh_ground_y(marsh_entry_local.x, marsh_entry_local.z),
+		marsh_entry_local.z
+	)
+	real_guild_guide.set_meta("system_is_real_guild_guide", true)
+	real_guild_guide.set_meta("system_npc_role", "official_hunter_guild_marsh_guide")
+	real_guild_guide.set_meta("system_guide_route_destination", "HiddenMarshAncientSanctuary")
+	real_guild_guide.set_meta("system_guide_route_waypoint_count", guide_path_local.size())
+	real_guild_guide.set_meta("system_guide_escort_active", false)
+	real_guild_guide.set_meta("system_guide_escort_completed", false)
+	zone.add_child(real_guild_guide)
+
+	var uniform := _make_material(Color(0.055, 0.16, 0.23), 0.48, 0.42)
+	var gold := _make_material(Color(0.92, 0.66, 0.18), 0.32, 0.62)
+	gold.emission_enabled = true
+	gold.emission = Color(0.42, 0.22, 0.035)
+	gold.emission_energy_multiplier = 0.65
+	var body := MeshInstance3D.new()
+	body.name = "OfficialGuideUniform"
+	var body_mesh := CapsuleMesh.new()
+	body_mesh.radius = 0.58
+	body_mesh.height = 2.05
+	body.mesh = body_mesh
+	body.position.y = 1.12
+	body.material_override = uniform
+	real_guild_guide.add_child(body)
+	var head := MeshInstance3D.new()
+	head.name = "OfficialGuideHead"
+	var head_mesh := SphereMesh.new()
+	head_mesh.radius = 0.37
+	head_mesh.height = 0.74
+	head.mesh = head_mesh
+	head.position.y = 2.38
+	head.material_override = _make_material(Color(0.62, 0.43, 0.30), 0.82, 0.0)
+	real_guild_guide.add_child(head)
+	var shoulder_mark := MeshInstance3D.new()
+	shoulder_mark.name = "HunterGuildGoldInsignia"
+	var insignia_mesh := BoxMesh.new()
+	insignia_mesh.size = Vector3(0.72, 0.46, 0.12)
+	shoulder_mark.mesh = insignia_mesh
+	shoulder_mark.position = Vector3(0.0, 1.58, -0.52)
+	shoulder_mark.material_override = gold
+	real_guild_guide.add_child(shoulder_mark)
+	var nameplate := Label3D.new()
+	nameplate.name = "RealGuildGuideNameplate"
+	nameplate.text = "مرشد نقابة الصيادين الرسمي"
+	nameplate.font_size = 23
+	nameplate.pixel_size = 0.014
+	nameplate.position.y = 3.25
+	nameplate.modulate = Color(1.0, 0.82, 0.35)
+	real_guild_guide.add_child(nameplate)
+	var briefing := Label3D.new()
+	briefing.name = "GuideBriefing"
+	briefing.text = "ابقوا خلفي — الضباب قد يضلل المتسابقين"
+	briefing.font_size = 16
+	briefing.pixel_size = 0.012
+	briefing.position = Vector3(0.0, 2.9, 0.8)
+	briefing.modulate = Color(0.82, 0.94, 1.0)
+	real_guild_guide.add_child(briefing)
+	zone.set_meta("system_real_guild_guide_present", true)
+	zone.set_meta("system_real_guild_guide_node", real_guild_guide.get_path())
+
+
+func _start_real_guide_escort(candidate: Node3D) -> void:
+	if not is_instance_valid(real_guild_guide) or not _is_hunter_exam_player(candidate):
+		return
+	if guide_escort_active or guide_escort_completed:
+		_attach_guide_tracking_arrow(candidate)
+		return
+	guide_escort_active = true
+	guide_path_index = 1
+	real_guild_guide.set_meta("system_guide_escort_active", true)
+	real_guild_guide.set_meta("system_guide_escort_started_by_candidate", int(candidate.get_meta("system_candidate_number", 0)))
+	candidate.set_meta("system_following_real_guild_guide", true)
+	candidate.set_meta("system_hunter_guide_escort_started", true)
+	candidate.set_meta("system_hunter_guide_escort_destination", "HiddenMarshAncientSanctuary")
+	_attach_guide_tracking_arrow(candidate)
+	var crowd := get_tree().root.find_child("HunterCandidateCrowd", true, false)
+	if crowd != null:
+		candidate_convoy = crowd as Node3D
+		candidate_convoy.set_meta("system_candidate_convoy_following_real_guide", true)
+		candidate_convoy.set_meta("system_candidate_convoy_route", "marsh_entry_to_hidden_ancient_sanctuary")
+		candidate_convoy.set_meta("system_candidate_convoy_count", 500)
+		for record in candidate_convoy.find_children("HunterCandidate_*", "Node3D", true, false):
+			record.set_meta("system_following_real_guild_guide", true)
+			record.set_meta("system_candidate_escort_route", "marsh_entry_to_hidden_ancient_sanctuary")
+	set_meta("system_real_guide_escort_started", true)
+
+
+func _attach_guide_tracking_arrow(candidate: Node3D) -> void:
+	if not is_instance_valid(candidate):
+		return
+	var key := str(candidate.get_instance_id())
+	var arrow := guide_tracking_arrows.get(key) as Node3D
+	if is_instance_valid(arrow):
+		return
+	arrow = Node3D.new()
+	arrow.name = "HunterRealGuideTrackingArrow"
+	arrow.set_meta("system_tracks_real_guild_guide", true)
+	arrow.set_meta("system_visible_through_marsh_fog", true)
+	arrow.position = Vector3(0.0, 3.4, 0.0)
+	var arrow_material := _make_material(Color(0.12, 0.92, 1.0), 0.24, 0.25, true)
+	arrow_material.no_depth_test = true
+	arrow_material.emission_enabled = true
+	arrow_material.emission = Color(0.05, 0.72, 1.0)
+	arrow_material.emission_energy_multiplier = 2.4
+	var shaft := MeshInstance3D.new()
+	shaft.name = "TrackingArrowShaft"
+	var shaft_mesh := BoxMesh.new()
+	shaft_mesh.size = Vector3(0.22, 0.18, 1.35)
+	shaft.mesh = shaft_mesh
+	shaft.position.z = 0.15
+	shaft.material_override = arrow_material
+	arrow.add_child(shaft)
+	var head := MeshInstance3D.new()
+	head.name = "TrackingArrowHead"
+	var head_mesh := PrismMesh.new()
+	head_mesh.size = Vector3(1.05, 0.25, 1.0)
+	head.mesh = head_mesh
+	head.position = Vector3(0.0, 0.0, -0.62)
+	head.material_override = arrow_material
+	arrow.add_child(head)
+	var label := Label3D.new()
+	label.name = "TrackingArrowLabel"
+	label.text = "اتبع المرشد الحقيقي"
+	label.font_size = 19
+	label.pixel_size = 0.012
+	label.no_depth_test = true
+	label.position = Vector3(0.0, 0.62, 0.0)
+	label.modulate = Color(0.35, 0.94, 1.0)
+	arrow.add_child(label)
+	candidate.add_child(arrow)
+	guide_tracking_arrows[key] = arrow
+
+
+func _process_real_guide_escort(delta: float) -> void:
+	if guide_escort_active and is_instance_valid(real_guild_guide):
+		if guide_path_index < guide_path_local.size():
+			var zone := real_guild_guide.get_parent() as Node3D
+			var target_local: Vector3 = guide_path_local[guide_path_index]
+			var target := zone.to_global(Vector3(target_local.x, _marsh_ground_y(target_local.x, target_local.z), target_local.z))
+			real_guild_guide.global_position = real_guild_guide.global_position.move_toward(target, guide_path_speed * delta)
+			if real_guild_guide.global_position.distance_to(target) <= 1.2:
+				guide_path_index += 1
+			if guide_path_index < guide_path_local.size():
+				var next_local: Vector3 = guide_path_local[guide_path_index]
+				var next_global := zone.to_global(Vector3(next_local.x, _marsh_ground_y(next_local.x, next_local.z), next_local.z))
+				if real_guild_guide.global_position.distance_to(next_global) > 0.2:
+					real_guild_guide.look_at(next_global, Vector3.UP)
+		else:
+			guide_escort_active = false
+			guide_escort_completed = true
+			real_guild_guide.set_meta("system_guide_escort_active", false)
+			real_guild_guide.set_meta("system_guide_escort_completed", true)
+			real_guild_guide.set_meta("system_guide_arrived_at_sanctuary", true)
+			set_meta("system_real_guide_escort_completed", true)
+			var sanctuary := get_node_or_null("MesopotamianMarshland/HiddenMarshAncientSanctuary") as Node3D
+			if sanctuary != null:
+				sanctuary.visible = true
+				sanctuary.set_meta("system_real_guide_arrived", true)
+				sanctuary.set_meta("system_hidden_heritage_site_discovered", true)
+				var gate_briefing := sanctuary.get_node_or_null("GuideStarGateBriefing") as Label3D
+				if gate_briefing != null:
+					var season := _get_marsh_season()
+					var destinations: Array = SEASONAL_GATE_DESTINATIONS.get(season, [])
+					var briefing_lines := PackedStringArray(["وصلتم إلى الملاذ الأثري — سأرافقكم إلى البوابات"])
+					for gate_index in range(mini(3, destinations.size())):
+						briefing_lines.append("البوابة %d: %s" % [gate_index + 1, str(destinations[gate_index])])
+					gate_briefing.text = "\n".join(briefing_lines)
+					gate_briefing.visible = true
+				real_guild_guide.set_meta("system_guide_gate_waypoint_count", 3)
+				real_guild_guide.set_meta("system_guide_explained_seasonal_gate_destinations", true)
+				for candidate in get_tree().get_nodes_in_group("system_player"):
+					if not bool(candidate.get_meta("system_hunter_guide_escort_started", false)) and not bool(candidate.get_meta("system_hunter_sanctuary_discovery_pending_guide_arrival", false)):
+						continue
+					candidate.set_meta("system_hunter_sanctuary_discovery_pending_guide_arrival", false)
+					candidate.set_meta("system_hidden_heritage_site_discovered", true)
+					_on_marsh_final_trial_entered(candidate)
+				guide_gate_tour_active = true
+				guide_gate_tour_index = 0
+				real_guild_guide.set_meta("system_guide_gate_tour_active", true)
+				set_meta("system_real_guide_gate_tour_started", true)
+
+	if guide_gate_tour_active and is_instance_valid(real_guild_guide):
+		var sanctuary_for_tour := get_node_or_null("MesopotamianMarshland/HiddenMarshAncientSanctuary") as Node3D
+		if sanctuary_for_tour == null or guide_gate_tour_index >= 3:
+			guide_gate_tour_active = false
+			guide_gate_tour_completed = sanctuary_for_tour != null
+		else:
+			var gate_name := "SeasonalMarshStarGate_%02d" % guide_gate_tour_index
+			var tour_gate := sanctuary_for_tour.get_node_or_null(gate_name) as Node3D
+			if tour_gate != null and tour_gate.visible:
+				var gate_target := tour_gate.global_position + Vector3(0.0, 1.0, 5.0)
+				var gate_direction := gate_target - real_guild_guide.global_position
+				if gate_direction.length() > 0.2:
+					real_guild_guide.look_at(gate_target, Vector3.UP)
+				real_guild_guide.global_position = real_guild_guide.global_position.move_toward(gate_target, guide_path_speed * delta)
+				if real_guild_guide.global_position.distance_to(gate_target) <= 1.4:
+					var destination := str(tour_gate.get_meta("system_gate_destination_city", ""))
+					tour_gate.set_meta("system_guide_presented", true)
+					tour_gate.set_meta("system_guide_explained_destination", destination)
+					tour_gate.set_meta("system_guide_presentation_order", guide_gate_tour_index + 1)
+					guide_gate_tour_index += 1
+					real_guild_guide.set_meta("system_guide_current_gate_index", guide_gate_tour_index)
+				if guide_gate_tour_index >= 3:
+					guide_gate_tour_active = false
+					guide_gate_tour_completed = true
+					real_guild_guide.set_meta("system_guide_gate_tour_active", false)
+					real_guild_guide.set_meta("system_guide_gate_tour_completed", true)
+					set_meta("system_real_guide_gate_tour_completed", true)
+					var guide_label := real_guild_guide.get_node_or_null("GuideBriefing") as Label3D
+					if guide_label != null:
+						guide_label.text = "أتممت شرح البوابات الثلاث — اختاروا وجهتكم"
+
+	if (guide_escort_active or guide_gate_tour_active) and is_instance_valid(candidate_convoy) and is_instance_valid(real_guild_guide):
+		var behind_guide := real_guild_guide.global_position - real_guild_guide.global_basis.z * 22.0
+		behind_guide.y = _marsh_ground_y(
+			behind_guide.x - marsh_center.x,
+			behind_guide.z - marsh_center.z
+		) + marsh_center.y
+		candidate_convoy.global_position = behind_guide
+		candidate_convoy.global_basis = real_guild_guide.global_basis
+
+	for key in guide_tracking_arrows.keys():
+		var arrow := guide_tracking_arrows[key] as Node3D
+		if not is_instance_valid(arrow):
+			guide_tracking_arrows.erase(key)
+			continue
+		var candidate := arrow.get_parent() as Node3D
+		if not is_instance_valid(candidate) or not is_instance_valid(real_guild_guide):
+			arrow.visible = false
+			continue
+		var distance := candidate.global_position.distance_to(real_guild_guide.global_position)
+		arrow.visible = (guide_escort_active or guide_gate_tour_active) and distance > 12.0
+		if arrow.visible:
+			arrow.global_position = candidate.global_position + Vector3(0.0, 3.4, 0.0)
+			var flat_target := real_guild_guide.global_position
+			flat_target.y = arrow.global_position.y
+			if arrow.global_position.distance_to(flat_target) > 0.1:
+				arrow.look_at(flat_target, Vector3.UP)
+
+
+func _on_real_guide_star_gate_briefing() -> void:
+	if not guide_escort_completed:
+		return
+	var sanctuary := get_node_or_null("MesopotamianMarshland/HiddenMarshAncientSanctuary") as Node3D
+	if sanctuary == null:
+		return
+	var briefing := sanctuary.get_node_or_null("GuideStarGateBriefing") as Label3D
+	if briefing != null:
+		briefing.visible = true
+	set_meta("system_guide_delivered_candidates_to_star_gates", true)
+
+func _on_hidden_sanctuary_discovered(body: Node3D, sanctuary: Node3D) -> void:
+	if not _is_hunter_exam_player(body) or not is_instance_valid(sanctuary):
+		return
+	var exam_manager := get_tree().root.find_child("SYSTEMHunterExamManager", true, false)
+	if exam_manager == null or not bool(exam_manager.get("registered")):
+		return
+	if not bool(body.get_meta("system_hunter_marsh_trial_started", false)):
+		return
+	if not guide_escort_completed:
+		body.set_meta("system_hunter_sanctuary_discovery_pending_guide_arrival", true)
+		return
+	sanctuary.visible = true
+	sanctuary.set_meta("system_hidden_heritage_site_discovered", true)
+	body.set_meta("system_hidden_heritage_site_discovered", true)
+	print("SYSTEM Hunter Exam: hidden ancient marsh sanctuary discovered by candidate.")
+
+
+func _on_marsh_trial_start_entered(body: Node3D) -> void:
+	if not _is_hunter_exam_player(body):
+		return
+	var exam_manager := get_tree().root.find_child("SYSTEMHunterExamManager", true, false)
+	if exam_manager == null or not bool(exam_manager.get("registered")) or bool(exam_manager.get("failed")):
+		return
+	if not bool(exam_manager.get("exam_active")):
+		return
+	if not bool(body.get_meta("system_hunter_tunnel_competition_complete", false)):
+		return
+	body.set_meta("system_hunter_marsh_trial_started", true)
+	body.set_meta("system_hunter_marsh_trial_start_time_msec", Time.get_ticks_msec())
+	_start_real_guide_escort(body)
+	print("SYSTEM Hunter Exam: candidate passed tunnel checkpoints and entered the continuous marshland section.")
+
+
+func _on_marsh_final_trial_entered(body: Node3D) -> void:
+	if not _is_hunter_exam_player(body):
+		return
+	var exam_manager := get_tree().root.find_child("SYSTEMHunterExamManager", true, false)
+	if exam_manager == null or not bool(exam_manager.get("registered")):
+		return
+	if bool(exam_manager.get("failed")) or not bool(exam_manager.get("exam_active")):
+		return
+	if not bool(body.get_meta("system_hunter_marsh_trial_started", false)):
+		return
+	if not bool(body.get_meta("system_hidden_heritage_site_discovered", false)):
+		return
+	if not guide_escort_completed or not bool(real_guild_guide.get_meta("system_guide_arrived_at_sanctuary", false)):
+		return
+	var completed_segments: Array = exam_manager.get("completed_stage_ids")
+	if completed_segments.has("baghdad_tunnel_competition"):
+		body.set_meta("system_hunter_marsh_trial_completed", true)
+		return
+	var completion: Dictionary = exam_manager.call(
+		"complete_current_stage",
+		"baghdad_tunnel_competition",
+		"HUNTER_TUNNEL_AND_MARSHLAND_SURVIVAL_SANCTUARY_DISCOVERY"
+	)
+	if bool(completion.get("success", false)):
+		body.set_meta("system_hunter_marsh_trial_completed", true)
+		body.set_meta("system_hunter_marsh_trial_rank", str(completion.get("license_rank", "PROVISIONAL_HUNTER")))
+		set_meta("system_hunter_marsh_trial_completed", true)
+		hidden_gates_unlocked = true
+		for gate in find_children("SeasonalMarshStarGate_*", "Node3D", true, false):
+			gate.visible = true
+			gate.set_meta("system_hidden_until_final_exam_discovery", false)
+		set_meta("system_hidden_heritage_site_discovered", true)
+		print("SYSTEM Hunter Exam: continuous tunnel-and-marsh trial completed at the hidden sanctuary; seasonal Star Gates unlocked.")
+
+
+func _on_marsh_star_gate_entered(body: Node3D, gate: Node3D) -> void:
+	if not _is_hunter_exam_player(body):
+		return
+	var exam_manager := get_tree().root.find_child("SYSTEMHunterExamManager", true, false)
+	if exam_manager == null or not bool(exam_manager.get("registered")):
+		return
+	var completed_exam_segments: Array = exam_manager.get("completed_stage_ids")
+	if not completed_exam_segments.has("baghdad_tunnel_competition"):
+		return
+	if not guide_escort_completed or not guide_gate_tour_completed or not bool(real_guild_guide.get_meta("system_guide_arrived_at_sanctuary", false)) or not bool(gate.get_meta("system_guide_presented", false)):
+		return
+	if bool(exam_manager.get("exam_active")):
+		return
+	var gate_id := int(gate.get_meta("system_gate_id", -1))
+	var season := _get_marsh_season()
+	var destinations: Array = SEASONAL_GATE_DESTINATIONS.get(season, [])
+	if gate_id < 0 or gate_id >= destinations.size():
+		return
+	var city_name := str(destinations[gate_id])
+	gate.set_meta("system_gate_current_season", season)
+	gate.set_meta("system_gate_destination_city", city_name)
+	var gate_label := gate.get_node_or_null("StarGateDestinationLabel") as Label3D
+	if gate_label != null:
+		gate_label.text = "بوابة نجمية %d\n%s" % [gate_id + 1, city_name]
+	var world_manager := get_tree().root.find_child("WorldManager", true, false)
+	if world_manager == null:
+		return
+	var roots: Dictionary = world_manager.get("world_roots")
+	var modern_root := roots.get(2) as Node3D
+	if modern_root == null:
+		return
+	var region := modern_root.get_node_or_null("ModernWorldRegionManager")
+	if region == null:
+		return
+	var anchors: Dictionary = region.get("city_anchors")
+	if not anchors.has(city_name):
+		push_warning("SYSTEM Marshland Star Gate: destination city anchor is unavailable: " + city_name)
+		return
+	var anchor: Vector2 = anchors[city_name]
+	var terrain_node := modern_root.get_node_or_null("ModernContinent")
+	var height := 0.0
+	if terrain_node != null and terrain_node.has_method("get_terrain_height"):
+		height = float(terrain_node.call("get_terrain_height", anchor.x, anchor.y))
+	body.set_meta("system_last_marsh_star_gate", gate.name)
+	body.set_meta("system_last_marsh_star_gate_season", season)
+	body.set_meta("system_last_marsh_star_gate_destination", city_name)
+	body.global_position = Vector3(anchor.x, height + 3.0, anchor.y)
+	body.velocity = Vector3.ZERO
+	print("SYSTEM Marshland Star Gate: season ", season, " -> ", city_name)
+
+
+func _make_material(color: Color, roughness: float, metallic: float, transparent: bool = false) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.roughness = roughness
+	material.metallic = metallic
+	if transparent:
+		material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		material.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_OPAQUE_ONLY
+	return material

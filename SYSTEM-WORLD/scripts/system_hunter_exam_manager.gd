@@ -9,7 +9,7 @@ signal license_earned(candidate_number: int, license_rank: String)
 
 const SAVE_PATH := "user://system_hunter_exam.cfg"
 const EXAM_STAGES := [
-	{"id":"baghdad_tunnel_competition","city":"Baghdad","title":"المسابقة الموحدة لنفق الصيادين","type":"continuous_tunnel_trial","difficulty":3,"description":"مسابقة متصلة داخل نفق الصيادين بإشراف مرشد نقابة الصيادين؛ لا توجد سبع مراحل منفصلة."}
+	{"id":"baghdad_tunnel_competition","city":"Baghdad","title":"المسابقة المتصلة: نفق الصيادين وأرض المستنقعات","type":"continuous_tunnel_trial","difficulty":3,"description":"اختبار واحد متصل بإشراف مرشد نقابة الصيادين: اجتز نقاط النفق، ثم اعبر الممر المادي إلى أرض المستنقعات واكتشف الملاذ الأثري المخفي. لا ينتهي الاختبار عند بوابة النفق ولا توجد سبع مراحل منفصلة."}
 ]
 
 var candidate_number := 0
