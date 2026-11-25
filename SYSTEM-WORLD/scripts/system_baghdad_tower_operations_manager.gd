@@ -1348,7 +1348,7 @@ func get_customer_schedule_phase(hour: int) -> String:
 	return "quiet"
 
 
-func _move_customer_visitors(hour_override: int = -1) -> void:
+func _move_customer_visitors(hour_override: int = -1, customer_id_filter: String = "") -> void:
 	var hour := hour_override if hour_override >= 0 else int(Time.get_datetime_dict_from_system().get("hour", 12))
 	var phase := get_customer_schedule_phase(hour)
 	var society_changed := false
@@ -1368,6 +1368,9 @@ func _move_customer_visitors(hour_override: int = -1) -> void:
 					continue
 				var visitor_node := visitor as Node3D
 				if visitor_node.has_meta("system_restaurant_table_node") or visitor_node.has_meta("system_restaurant_queue_marker"):
+					continue
+				# Optional targeted movement keeps focused QA checks from restarting tweens for all 500 visitors.
+				if not customer_id_filter.is_empty() and str(visitor_node.get_meta("system_tower_customer_id", "")) != customer_id_filter:
 					continue
 				var customer_index := int(visitor_node.get_meta("system_tower_customer_index", 0))
 				var route_index := customer_index
