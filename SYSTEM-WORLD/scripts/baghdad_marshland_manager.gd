@@ -848,12 +848,21 @@ func _build_marsh_route_markers(zone: Node3D) -> void:
 	material.emission_enabled = true
 	material.emission = Color(0.9, 0.45, 0.05)
 	material.emission_energy_multiplier = 1.0
-	var marker_positions := [
-		Vector3(-340.0, 0.0, -40.0), Vector3(-270.0, 0.0, 10.0),
-		Vector3(-200.0, 0.0, 55.0), Vector3(-125.0, 0.0, 95.0),
-		Vector3(-45.0, 0.0, 130.0), Vector3(35.0, 0.0, 155.0),
-		Vector3(110.0, 0.0, 175.0), Vector3(195.0, 0.0, 195.0), Vector3(275.0, 0.0, 205.0)
-	]
+	var marker_positions: Array[Vector3] = []
+	var route_start := Vector3(marsh_entry_local.x, 0.0, marsh_entry_local.z)
+	var route_hub := Vector3.ZERO
+	var route_waypoint := Vector3(80.0, 0.0, 155.0)
+	var route_sanctuary := Vector3(300.0, 0.0, 210.0)
+	for index in range(9):
+		var progress := float(index) / 8.0
+		var route_position: Vector3
+		if progress < 0.5:
+			route_position = route_start.lerp(route_hub, progress * 2.0)
+		else:
+			route_position = route_hub.lerp(route_waypoint, (progress - 0.5) * 2.0)
+		if progress > 0.72:
+			route_position = route_waypoint.lerp(route_sanctuary, (progress - 0.72) / 0.28)
+		marker_positions.append(route_position)
 	for index in range(marker_positions.size()):
 		var marker := Node3D.new()
 		marker.name = "HunterExamRouteArrow_%02d" % index
