@@ -403,6 +403,57 @@ func _build_lobby_facilities() -> void:
 			seat.position = table.position + Vector3(cos(angle) * 2.1, -0.8, sin(angle) * 2.1)
 			seat.material_override = titanium
 			cafe.add_child(seat)
-	set_meta("system_power_tower_interior_display_groups", ["TraditionalWeaponsGallery", "ArmorShowroom", "NenElixirCabinet", "SkillScrollLibrary", "HunterAccessoriesGallery", "PowerTowerCafeteria"])
+	# Dedicated Nen learning hall. Progress is handled by SYSTEMPlayerProgression through the competition manager.
+	var nen_hall := Node3D.new()
+	nen_hall.name = "PowerTowerNenTrainingHall"
+	nen_hall.position = Vector3(0.0, 0.0, 84.0)
+	nen_hall.set_meta("system_facility_type", "NEN_TRAINING_HALL")
+	nen_hall.set_meta("system_interaction_action", "POWER_TOWER_NEN_TRAINING")
+	nen_hall.set_meta("system_training_progression", ["AURA_AWARENESS", "TEN", "REN", "ZETSU", "HATSU"])
+	facility_root.add_child(nen_hall)
+	_add_cylinder(nen_hall, "NenTrainingDais", 8.0, 10.0, 0.8, 0.5, steel, 48)
+	for index in range(3):
+		var station := Node3D.new()
+		station.name = "NenTrainingStation_%02d" % index
+		station.position = Vector3(-9.0 + float(index) * 9.0, 0.0, 0.0)
+		nen_hall.add_child(station)
+		_add_cylinder(station, "TrainingPlatform", 2.0, 2.5, 0.45, 0.55, gold_trim, 32)
+		var aura_ring := MeshInstance3D.new()
+		aura_ring.name = "NenAuraRing"
+		var ring_mesh := TorusMesh.new()
+		ring_mesh.inner_radius = 1.25
+		ring_mesh.outer_radius = 1.42
+		ring_mesh.rings = 32
+		ring_mesh.ring_segments = 12
+		aura_ring.mesh = ring_mesh
+		aura_ring.position.y = 1.2
+		aura_ring.material_override = display_glow
+		station.add_child(aura_ring)
+		var station_label := Label3D.new()
+		station_label.name = "NenTrainingLabel"
+		station_label.text = ["AURA & TEN", "REN & ZETSU", "HATSU MASTERY"][index]
+		station_label.font_size = 16
+		station_label.position = Vector3(0.0, 3.0, 1.8)
+		station.add_child(station_label)
+	var nen_sign := Label3D.new()
+	nen_sign.name = "NenTrainingHallSign"
+	nen_sign.text = "NEN TRAINING HALL\nDISCOVER • CONTROL • MASTER"
+	nen_sign.font_size = 24
+	nen_sign.position = Vector3(0.0, 6.0, 5.0)
+	nen_sign.modulate = Color(0.45, 0.9, 1.0)
+	nen_hall.add_child(nen_sign)
+	var training_area := Area3D.new()
+	training_area.name = "NenTrainingInteractionArea"
+	training_area.position = Vector3(0.0, 1.0, 0.0)
+	training_area.set_meta("system_interaction_action", "POWER_TOWER_NEN_TRAINING")
+	training_area.set_meta("system_training_manager_method", "train_player_nen")
+	var training_collision := CollisionShape3D.new()
+	var training_shape := BoxShape3D.new()
+	training_shape.size = Vector3(28.0, 4.0, 16.0)
+	training_collision.shape = training_shape
+	training_area.add_child(training_collision)
+	nen_hall.add_child(training_area)
+	set_meta("system_power_tower_nen_training_hall", "PowerTowerNenTrainingHall")
+	set_meta("system_power_tower_interior_display_groups", ["TraditionalWeaponsGallery", "ArmorShowroom", "NenElixirCabinet", "SkillScrollLibrary", "HunterAccessoriesGallery", "PowerTowerCafeteria", "PowerTowerNenTrainingHall"])
 	set_meta("system_power_tower_cafeteria_table_count", 4)
 	set_meta("system_power_tower_cafeteria_seat_count", 16)
