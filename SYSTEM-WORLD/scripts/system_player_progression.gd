@@ -109,6 +109,8 @@ var equipment_durability: Dictionary = {}
 var active_elixir_effects: Dictionary = {}
 var nen_unlocked := false
 var nen_control_rank := 0
+var power_tower_nen_training_sessions := 0
+var power_tower_nen_training_ids: Array[String] = []
 var nen_burst_cooldown_remaining := 0.0
 var nen_button_refresh_clock := 0.0
 var nen_burst_button: Button
@@ -303,6 +305,62 @@ func add_experience(amount: int, reason: String = "") -> Dictionary:
 
 func has_verified_hunter_mission(mission_id: String) -> bool:
 	return verified_hunter_mission_ids.has(mission_id.strip_edges())
+
+
+func complete_power_tower_nen_training(training_id: String, floor_number: int, technique: String = "") -> Dictionary:
+	var normalized_id := training_id.strip_edges()
+	if normalized_id.is_empty() or floor_number < 1 or floor_number > 200:
+		return {"success": false, "reason": "INVALID_POWER_TOWER_TRAINING"}
+	if power_tower_nen_training_ids.has(normalized_id):
+		return {"success": false, "reason": "TRAINING_ALREADY_RECORDED"}
+	var expected_technique := "AURA_AWARENESS"
+	var floor_rank_cap := 1
+	if floor_number >= 81:
+		expected_technique = "HATSU"
+		floor_rank_cap = 5
+	elif floor_number >= 61:
+		expected_technique = "ZETSU"
+		floor_rank_cap = 4
+	elif floor_number >= 41:
+		expected_technique = "REN"
+		floor_rank_cap = 3
+	elif floor_number >= 21:
+		expected_technique = "TEN"
+		floor_rank_cap = 2
+	if not technique.strip_edges().is_empty() and technique.strip_edges().to_upper() != expected_technique:
+		return {"success": false, "reason": "NEN_TECHNIQUE_NOT_AVAILABLE_ON_THIS_FLOOR", "required_technique": expected_technique}
+	if floor_number > 20 and not nen_unlocked:
+		return {"success": false, "reason": "NEN_DISCOVERY_TRAINING_REQUIRED"}
+	if not nen_unlocked:
+		nen_unlocked = true
+		nen_control_rank = 1
+	power_tower_nen_training_sessions += 1
+	power_tower_nen_training_ids.append(normalized_id)
+	var earned_rank := 1 + int(power_tower_nen_training_sessions / 3)
+	nen_control_rank = clampi(maxi(nen_control_rank, earned_rank), 1, floor_rank_cap)
+	if floor_rank_cap > 1:
+		nen_control_rank = mini(nen_control_rank, floor_rank_cap)
+	save_progress()
+	_refresh_nen_burst_button()
+	return {
+		"success": true,
+		"nen_unlocked": nen_unlocked,
+		"nen_control_rank": nen_control_rank,
+		"training_sessions": power_tower_nen_training_sessions,
+		"technique": expected_technique,
+		"floor_rank_cap": floor_rank_cap
+	}
+
+
+func get_power_tower_nen_training_status() -> Dictionary:
+	return {
+		"nen_unlocked": nen_unlocked,
+		"nen_control_rank": nen_control_rank,
+		"training_sessions": power_tower_nen_training_sessions,
+		"training_ids": power_tower_nen_training_ids.duplicate(),
+		"next_rank_session": (nen_control_rank * 3) + 1,
+		"next_rank_floor": 21 if nen_control_rank < 2 else (41 if nen_control_rank < 3 else (61 if nen_control_rank < 4 else 81))
+	}
 
 
 func record_verified_hunter_mission(mission_id: String, mission_points: int, used_nen: bool = false, ability_id: String = "") -> Dictionary:
@@ -779,6 +837,8 @@ func save_progress() -> void:
 	config.set_value("effects", "active_elixirs", active_elixir_effects.duplicate(true))
 	config.set_value("nen", "unlocked", nen_unlocked)
 	config.set_value("nen", "control_rank", nen_control_rank)
+	config.set_value("nen", "power_tower_training_sessions", power_tower_nen_training_sessions)
+	config.set_value("nen", "power_tower_training_ids", power_tower_nen_training_ids)
 	config.set_value("nen", "burst_cooldown_remaining", nen_burst_cooldown_remaining)
 	config.set_value("skills", "learned", learned_system_skills.duplicate())
 	config.set_value("skills", "authorized_training", authorized_system_skills.duplicate())
@@ -871,6 +931,12 @@ func load_progress() -> void:
 			active_elixir_effects[str(effect_id)] = effect
 	nen_unlocked = bool(config.get_value("nen", "unlocked", false))
 	nen_control_rank = clampi(int(config.get_value("nen", "control_rank", 0)), 0, 5)
+	power_tower_nen_training_sessions = maxi(0, int(config.get_value("nen", "power_tower_training_sessions", 0)))
+	power_tower_nen_training_ids.clear()
+	for training_id in config.get_value("nen", "power_tower_training_ids", []):
+		var normalized_training_id := str(training_id).strip_edges()
+		if not normalized_training_id.is_empty() and not power_tower_nen_training_ids.has(normalized_training_id):
+			power_tower_nen_training_ids.append(normalized_training_id)
 	nen_burst_cooldown_remaining = maxf(0.0, float(config.get_value("nen", "burst_cooldown_remaining", 0.0)))
 	verified_hunter_mission_points = maxi(0, int(config.get_value("hunter_rank", "verified_mission_points", 0)))
 	verified_hunter_mission_count = maxi(0, int(config.get_value("hunter_rank", "verified_mission_count", 0)))
@@ -1032,6 +1098,8 @@ func _reset_progress() -> void:
 	current_system_energy = MAX_SYSTEM_ENERGY
 	nen_unlocked = false
 	nen_control_rank = 0
+	power_tower_nen_training_sessions = 0
+	power_tower_nen_training_ids.clear()
 	nen_burst_cooldown_remaining = 0.0
 
 
