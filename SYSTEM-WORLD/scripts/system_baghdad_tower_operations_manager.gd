@@ -4944,6 +4944,8 @@ func _on_marketplace_result(request_id: String, response: Dictionary) -> void:
 	var context: Dictionary = marketplace_request_context[request_id]
 	marketplace_request_context.erase(request_id)
 	var operation := str(context.get("operation", ""))
+	if operation in ["owned_artifacts", "browse_listings", "browse_auctions", "exchange_offers", "trade_history", "auction_bids"] and not is_instance_valid(marketplace_results_container):
+		return
 	if not bool(response.get("success", false)):
 		status_label.text = "تعذرت العملية: " + str(response.get("error", "MARKETPLACE_REQUEST_FAILED"))
 		return
@@ -4965,6 +4967,8 @@ func _on_marketplace_result(request_id: String, response: Dictionary) -> void:
 			_render_marketplace_listings(data.get("listings", []))
 		"browse_auctions":
 			_render_marketplace_auctions(data.get("auctions", []))
+		"auction_bids":
+			_render_marketplace_bids(data.get("bids", []))
 		"exchange_offers":
 			_render_marketplace_exchanges(data)
 		"trade_history":
@@ -4977,6 +4981,10 @@ func _on_marketplace_result(request_id: String, response: Dictionary) -> void:
 			status_label.text = "اكتملت الصفقة ونُقلت ملكية القطعة."
 			_request_marketplace_operation("wallet", {})
 			_request_marketplace_operation("owned_artifacts", {})
+		"cancel_listing", "expire_listing":
+			status_label.text = "أُغلق العرض وأُعيدت القطعة إلى ملكية البائع."
+			_request_marketplace_operation("browse_listings", {})
+			_request_marketplace_operation("owned_artifacts", {})
 		"create_auction":
 			status_label.text = "تم إنشاء المزاد وحجز القطعة."
 			_request_marketplace_operation("browse_auctions", {})
@@ -4987,6 +4995,10 @@ func _on_marketplace_result(request_id: String, response: Dictionary) -> void:
 		"settle_auction":
 			status_label.text = "اكتملت محاولة تسوية المزاد."
 			_request_marketplace_operation("wallet", {})
+			_request_marketplace_operation("owned_artifacts", {})
+		"cancel_auction":
+			status_label.text = "أُلغي المزاد وأُعيدت القطعة إلى المالك."
+			_request_marketplace_operation("browse_auctions", {})
 			_request_marketplace_operation("owned_artifacts", {})
 		"accept_exchange_offer":
 			status_label.text = "اكتمل التبادل ونُقلت ملكية القطعتين."
@@ -5151,6 +5163,25 @@ func _place_selected_auction_bid() -> void:
 		"auctionId": selected_market_auction_id,
 		"amount": int(marketplace_price_input.value)
 	})
+
+
+func _render_marketplace_bids(raw_bids: Variant) -> void:
+	_clear_marketplace_results()
+	status_label.text = "سجل المزايدات لهذا المزاد."
+	if not raw_bids is Array or raw_bids.is_empty():
+		var empty_label := Label.new()
+		empty_label.text = "لا توجد مزايدات مسجلة."
+		marketplace_results_container.add_child(empty_label)
+		return
+	for raw in raw_bids:
+		if not raw is Dictionary:
+			continue
+		var line := Label.new()
+		line.text = "%s — %d رصيد SYSTEM" % [
+			str(raw.get("bidderName", "لاعب")),
+			int(raw.get("amount", 0))
+		]
+		marketplace_results_container.add_child(line)
 
 
 func _render_marketplace_exchanges(data: Dictionary) -> void:
