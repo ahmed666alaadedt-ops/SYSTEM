@@ -4898,6 +4898,19 @@ func open_museum_artifact_exhibit(target: Node) -> void:
 		exchange_button.pressed.connect(func(): _request_marketplace_operation("exchange_offers", {}))
 		market_controls.add_child(exchange_button)
 
+		var exchange_recipient_input := LineEdit.new()
+		exchange_recipient_input.placeholder_text = "معرّف حساب اللاعب المستلم"
+		exchange_recipient_input.max_length = 128
+		market_controls.add_child(exchange_recipient_input)
+		var exchange_requested_artifact_input := LineEdit.new()
+		exchange_requested_artifact_input.placeholder_text = "معرّف القطعة التي تطلبها"
+		exchange_requested_artifact_input.max_length = 120
+		market_controls.add_child(exchange_requested_artifact_input)
+		var create_exchange_button := Button.new()
+		create_exchange_button.text = "إرسال عرض تبادل بالقطعة المختارة"
+		create_exchange_button.pressed.connect(_create_marketplace_exchange_offer.bind(exchange_recipient_input, exchange_requested_artifact_input))
+		market_controls.add_child(create_exchange_button)
+
 		var history_button := Button.new()
 		history_button.text = "سجل صفقاتي ومبيعاتي"
 		history_button.pressed.connect(func(): _request_marketplace_operation("trade_history", {}))
@@ -5160,6 +5173,22 @@ func _place_selected_auction_bid() -> void:
 	_request_marketplace_operation("place_bid", {
 		"auctionId": selected_market_auction_id,
 		"amount": int(marketplace_price_input.value)
+	})
+
+
+func _create_marketplace_exchange_offer(recipient_input: LineEdit, requested_artifact_input: LineEdit) -> void:
+	if selected_market_artifact_id.is_empty():
+		status_label.text = "اختر قطعة من مقتنياتك أولاً."
+		return
+	var recipient_id := recipient_input.text.strip_edges()
+	var requested_artifact_id := requested_artifact_input.text.strip_edges()
+	if recipient_id.is_empty() or requested_artifact_id.is_empty():
+		status_label.text = "أدخل معرّف اللاعب ومعرّف القطعة المطلوبة."
+		return
+	_request_marketplace_operation("create_exchange_offer", {
+		"recipientId": recipient_id,
+		"offeredArtifactId": selected_market_artifact_id,
+		"requestedArtifactId": requested_artifact_id
 	})
 
 
