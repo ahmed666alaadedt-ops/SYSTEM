@@ -3,6 +3,7 @@ class_name BaghdadTowerLandmarksManager
 
 const EntranceScript = preload("res://scripts/system_tower_entrance.gd")
 const HunterHelicopterControllerScript = preload("res://scripts/system_hunter_helicopter_pad_controller.gd")
+const PublicLeisureManagerScript = preload("res://scripts/system_baghdad_public_leisure_manager.gd")
 const HUNTER_TOWER_HEIGHT := 650.0
 const REPUBLIC_BRIDGE_DECK_HEIGHT := 18.0
 const HUNTER_CENTRAL_SKY_CITY_PLATFORM_HEIGHT := 419.2
@@ -1686,6 +1687,13 @@ func _create_public_amenities() -> void:
 		deck.material_override = spec["material"]
 		amenities.add_child(deck)
 	amenities.set_meta("planned_facilities", PackedStringArray(["parks", "restaurants", "cafes", "hotels", "cinema", "amusement_park", "water_park", "swimming_pools", "sports_courts", "family_services", "parking", "emergency_access"]))
+	var public_leisure := Node3D.new()
+	public_leisure.name = "BaghdadPublicLeisureDistrict"
+	public_leisure.set_script(PublicLeisureManagerScript)
+	public_leisure.position = Vector3(bridge_anchor.x, 0.0, bridge_anchor.y) + Vector3(0.0, 43.0, 72.0)
+	amenities.add_child(public_leisure)
+	amenities.set_meta("system_public_leisure_runtime_ready", true)
+	amenities.set_meta("system_public_leisure_is_tower", false)
 	_create_multilevel_parking_blockout(amenities)
 	_create_vertical_access_blockout(amenities)
 
