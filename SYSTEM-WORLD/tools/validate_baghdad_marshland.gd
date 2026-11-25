@@ -77,7 +77,7 @@ func _run_validation() -> void:
 		return
 	if not _check(zone.find_children("MarshWillow_*", "Node3D", true, false).size() == 56, "Expected 56 marsh willow trees."):
 		return
-	if not _check(zone.find_children("MarshBoardwalk_*", "MeshInstance3D", true, false).size() == 9 and zone.find_children("MarshBoardwalkCollision_*", "StaticBody3D", true, false).size() == 9, "Expected nine raised boardwalk segments with matching walkable collision.")
+	if not _check(zone.find_children("MarshBoardwalk_*", "MeshInstance3D", true, false).size() == 9 and zone.find_children("MarshBoardwalkCollision_*", "StaticBody3D", true, false).size() == 9, "Expected nine raised boardwalk segments with matching walkable collision."):
 		return
 
 	var farm := zone.get_node_or_null("MarshAgriculturalGardens") as Node3D
