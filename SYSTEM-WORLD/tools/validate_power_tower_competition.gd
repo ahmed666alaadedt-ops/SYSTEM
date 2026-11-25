@@ -55,28 +55,25 @@ func _run() -> void:
 	root.add_child(progression)
 	await process_frame
 	progression.call("_reset_progress")
-	var training_plan := [
-		{"id": "pt_nen_01", "floor": 1, "technique": "AURA_AWARENESS", "rank": 1},
-		{"id": "pt_nen_02", "floor": 21, "technique": "TEN", "rank": 1},
-		{"id": "pt_nen_03", "floor": 21, "technique": "TEN", "rank": 2},
-		{"id": "pt_nen_04", "floor": 41, "technique": "REN", "rank": 2},
-		{"id": "pt_nen_05", "floor": 41, "technique": "REN", "rank": 2},
-		{"id": "pt_nen_06", "floor": 41, "technique": "REN", "rank": 3},
-		{"id": "pt_nen_07", "floor": 61, "technique": "ZETSU", "rank": 3},
-		{"id": "pt_nen_08", "floor": 61, "technique": "ZETSU", "rank": 3},
-		{"id": "pt_nen_09", "floor": 61, "technique": "ZETSU", "rank": 4},
-		{"id": "pt_nen_10", "floor": 81, "technique": "HATSU", "rank": 4},
-		{"id": "pt_nen_11", "floor": 81, "technique": "HATSU", "rank": 4},
-		{"id": "pt_nen_12", "floor": 81, "technique": "HATSU", "rank": 5}
+	var training_stages := [
+		{"floor": 1, "technique": "AURA_AWARENESS", "rank": 1},
+		{"floor": 21, "technique": "TEN", "rank": 2},
+		{"floor": 41, "technique": "REN", "rank": 3},
+		{"floor": 61, "technique": "ZETSU", "rank": 4},
+		{"floor": 81, "technique": "HATSU", "rank": 5}
 	]
-	for training in training_plan:
-		var training_result: Dictionary = manager.call("train_player_nen", training["id"], training["floor"], training["technique"])
-		assert(bool(training_result.get("success", false)), "Nen training failed: " + str(training))
-		assert(int(training_result.get("nen_control_rank", 0)) == int(training["rank"]))
+	var training_index := 1
+	for stage in training_stages:
+		for session in range(3):
+			var training_id := "pt_nen_%02d" % training_index
+			var training_result: Dictionary = manager.call("train_player_nen", training_id, stage["floor"], stage["technique"])
+			assert(bool(training_result.get("success", false)), "Nen training failed: " + training_id)
+			assert(int(training_result.get("nen_control_rank", 0)) == int(stage["rank"]))
+			training_index += 1
 	var nen_status: Dictionary = progression.call("get_power_tower_nen_training_status")
 	assert(bool(nen_status.get("nen_unlocked", false)))
 	assert(int(nen_status.get("nen_control_rank", 0)) == 5)
-	assert(int(nen_status.get("training_sessions", 0)) == 12)
+	assert(int(nen_status.get("training_sessions", 0)) == 15)
 	assert(not bool(manager.call("train_player_nen", "pt_nen_12", 81, "HATSU").get("success", false)))
 	assert(not bool(manager.call("train_player_nen", "pt_invalid_technique", 21, "HATSU").get("success", false)))
 
