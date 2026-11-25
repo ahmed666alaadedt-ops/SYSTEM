@@ -148,6 +148,16 @@ class FirebaseArtifactMarketplaceRepository(
             .addOnFailureListener { callback(Result.failure(it)) }
     }
 
+    fun loadTransactionHistory(callback: (Result<List<Map<String, Any?>>>) -> Unit) {
+        functions.getHttpsCallable("listMyMarketplaceTransactions").call()
+            .addOnSuccessListener { result ->
+                val raw = (result.data as? Map<*, *>)?.get("transactions") as? List<*> ?: emptyList<Any>()
+                val records = raw.mapNotNull { it as? Map<String, Any?> }
+                callback(Result.success(records))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
     fun createListing(
         artifactId: String,
         price: Long,
