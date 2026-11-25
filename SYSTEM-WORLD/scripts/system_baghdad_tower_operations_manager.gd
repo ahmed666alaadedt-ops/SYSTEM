@@ -1943,11 +1943,12 @@ func _refresh_advertisements() -> void:
 	for tower_id in tower_nodes.keys():
 		var staff_ids: Array = staff_by_tower.get(tower_id, [])
 		var config: Dictionary = TOWER_CONFIG.get(tower_id, {})
+		var jobs: Array = config.get("jobs", [])
 		var manager_name := "فريق الإعلان"
 		var manager_job := ""
 		if not staff_ids.is_empty() and is_instance_valid(society):
 			var manager_index := staff_ids.size() - 1
-			manager_job = str(config.get("jobs", [])[manager_index]) if manager_index < config.get("jobs", []).size() else ""
+			manager_job = str(jobs[manager_index]) if manager_index < jobs.size() else ""
 			var npc: Dictionary = society.call("get_npc", str(staff_ids[manager_index]))
 			manager_name = str(npc.get("name", manager_name))
 		var message := str(campaign.get("text", "إعلانات SYSTEM العامة — تابع فعاليات المدينة"))
