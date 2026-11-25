@@ -49,6 +49,28 @@ func _run() -> void:
 		_fail("Player character was not initialized for tower operations validation.")
 		return
 	var status: Dictionary = operations.call("get_operations_status")
+	var first_campaign_id := str(status.get("active_campaign_id", ""))
+	var first_campaign_rotation := int(status.get("campaign_rotation_count", -1))
+	var first_campaign_expiry := int(status.get("campaign_expires_msec", 0))
+	if first_campaign_id.is_empty() or first_campaign_rotation != 0 or first_campaign_expiry <= Time.get_ticks_msec():
+		_fail("NPC-managed advertising did not start with a uniquely identified, expiring campaign.")
+		return
+	for advertising_tower_id in TOWER_IDS:
+		for advertising_suffix in ["_internal", "_external"]:
+			var campaign_label := operations.get("ad_labels").get(advertising_tower_id + advertising_suffix) as Label3D
+			if campaign_label == null or str(campaign_label.get_meta("system_campaign_id", "")).is_empty() or str(campaign_label.get_meta("system_campaign_manager", "")).is_empty() or int(campaign_label.get_meta("system_campaign_expires_msec", 0)) <= Time.get_ticks_msec():
+				_fail("Advertising screen is missing its active campaign, responsible NPC manager or expiry metadata: %s%s." % [advertising_tower_id, advertising_suffix])
+				return
+	operations.call("_process_advertising_campaign", 38.0)
+	var rotated_campaign_status: Dictionary = operations.call("get_operations_status")
+	if str(rotated_campaign_status.get("active_campaign_id", "")) == first_campaign_id or int(rotated_campaign_status.get("campaign_rotation_count", 0)) != first_campaign_rotation + 1 or int(rotated_campaign_status.get("campaign_expires_msec", 0)) <= Time.get_ticks_msec():
+		_fail("Advertising campaign did not expire and rotate to a new tracked campaign after its 38-second lifetime.")
+		return
+	for advertising_tower_id in TOWER_IDS:
+		var advertising_tower := operations.get("tower_nodes").get(advertising_tower_id) as Node3D
+		if advertising_tower == null or str(advertising_tower.get_meta("system_active_campaign_id", "")) != str(rotated_campaign_status.get("active_campaign_id", "")) or int(advertising_tower.get_meta("system_active_campaign_rotation", -1)) != first_campaign_rotation + 1:
+			_fail("Tower campaign state did not synchronize after campaign expiry: " + advertising_tower_id)
+			return
 	var schedule_expectations := {
 		8: "cafe",
 		11: "browse",
