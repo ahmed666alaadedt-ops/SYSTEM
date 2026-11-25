@@ -1363,7 +1363,7 @@ func _process_real_guide_escort(delta: float) -> void:
 					var briefing_lines := PackedStringArray(["وصلتم إلى الملاذ الأثري — سأرافقكم إلى البوابات"])
 					for gate_index in range(mini(3, destinations.size())):
 						briefing_lines.append("البوابة %d: %s" % [gate_index + 1, str(destinations[gate_index])])
-					gate_briefing.text = "\\n".join(briefing_lines)
+					gate_briefing.text = "\n".join(briefing_lines)
 					gate_briefing.visible = true
 				real_guild_guide.set_meta("system_guide_gate_waypoint_count", 3)
 				real_guild_guide.set_meta("system_guide_explained_seasonal_gate_destinations", true)
