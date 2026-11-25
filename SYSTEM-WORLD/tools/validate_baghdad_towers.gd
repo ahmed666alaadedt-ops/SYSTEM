@@ -484,8 +484,51 @@ func _run_validation() -> void:
 	if not antiques_directory is PackedStringArray or antiques_directory.size() != 9 or not str(antiques_directory[0]).contains("سومر") or not str(antiques_directory[7]).contains("المزادات"):
 		_fail("Antiques and Heritage Tower does not expose its approved 34-floor museum directory.")
 		return
-	if str(antiques_tower.get_meta("gameplay_status", "")) != "antiques_heritage_tower_museum_floors_and_named_interactive_exhibits_generated_visual_polish_pending":
-		_fail("Antiques and Heritage Tower runtime floor-generation status metadata is missing.")
+	if str(antiques_tower.get_meta("gameplay_status", "")) != "antiques_heritage_tower_34_floors_102_named_interactive_exhibits_complete":
+		_fail("Antiques and Heritage Tower museum exhibit completion status is missing.")
+		return
+	if int(antiques_tower.get_meta("tower_floor_count", 0)) != 34 or int(antiques_tower.get_meta("system_antiques_floor_count", 0)) != 34:
+		_fail("Antiques and Heritage Tower must generate all 34 numbered museum floors.")
+		return
+	var exhibit_root := antiques_tower.get_node_or_null("AntiquesMuseumExhibits") as Node3D
+	if exhibit_root == null or exhibit_root.get_child_count() != 34 or int(exhibit_root.get_meta("system_total_exhibits", 0)) != 102:
+		_fail("Antiques museum must contain 34 physical floor galleries and 102 exhibits.")
+		return
+	var seen_antiques_ids: Dictionary = {}
+	var verified_exhibits := 0
+	for floor_number in range(1, 35):
+		var museum_floor := exhibit_root.get_node_or_null("MuseumFloor_%02d" % floor_number) as Node3D
+		if museum_floor == null or int(museum_floor.get_meta("system_tower_floor", 0)) != floor_number or museum_floor.get_child_count() != 3:
+			_fail("Antiques museum floor %02d is missing its three exhibit stands or floor metadata." % floor_number)
+			return
+		for exhibit_number in range(1, 4):
+			var exhibit := museum_floor.get_node_or_null("Exhibit_%02d" % exhibit_number) as Node3D
+			if exhibit == null or not bool(exhibit.get_meta("system_exhibit_is_physical_3d", false)):
+				_fail("Antiques museum floor %02d is missing physical exhibit %02d." % [floor_number, exhibit_number])
+				return
+			var artifact_id := str(exhibit.get_meta("system_artifact_id", ""))
+			var artifact_name := str(exhibit.get_meta("system_artifact_name", ""))
+			if artifact_id.is_empty() or artifact_name.is_empty() or seen_antiques_ids.has(artifact_id):
+				_fail("Antiques museum exhibit identity is missing or duplicated on floor %02d." % floor_number)
+				return
+			seen_antiques_ids[artifact_id] = true
+			var artifact_mesh := exhibit.get_node_or_null("ArtifactMesh") as MeshInstance3D
+			var pedestal_mesh := exhibit.get_node_or_null("PedestalMesh") as MeshInstance3D
+			var exhibit_title := exhibit.get_node_or_null("ExhibitTitle") as Label3D
+			var interaction := exhibit.get_node_or_null("ArtifactInteraction") as Area3D
+			var interaction_shape := interaction.get_node_or_null("CollisionShape3D") as CollisionShape3D if interaction != null else null
+			if artifact_mesh == null or artifact_mesh.mesh == null or pedestal_mesh == null or pedestal_mesh.mesh == null or exhibit_title == null:
+				_fail("Antiques exhibit %s is missing its 3D display mesh, pedestal or visible title." % artifact_id)
+				return
+			if interaction == null or not interaction.is_in_group("system_interactable") or str(interaction.get_meta("system_interaction_action", "")) != "inspect_artifact" or interaction_shape == null or interaction_shape.shape == null:
+				_fail("Antiques exhibit %s is missing its working interaction area and collision." % artifact_id)
+				return
+			if str(interaction.get_meta("system_artifact_id", "")) != artifact_id or str(interaction.get_meta("system_tower_id", "")) != "antiques_heritage_tower_baghdad" or int(interaction.get_meta("system_tower_floor", 0)) != floor_number:
+				_fail("Antiques exhibit %s has inconsistent tower/floor ownership metadata." % artifact_id)
+				return
+			verified_exhibits += 1
+	if verified_exhibits != 102 or int(antiques_tower.get_meta("system_antiques_interactive_exhibit_count", 0)) != 102:
+		_fail("Antiques museum did not validate all 102 unique interactive exhibits.")
 		return
 	var shopping_categories: PackedStringArray = shopping_tower.get_meta("facility_categories", PackedStringArray())
 	var elixir_categories: PackedStringArray = shopping_tower.get_meta("elixir_categories", PackedStringArray())
