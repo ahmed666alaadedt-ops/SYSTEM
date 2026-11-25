@@ -58,6 +58,47 @@ func _run() -> void:
 	if player == null:
 		_fail("Player character was not initialized for tower operations validation.")
 		return
+
+	# Museum acceptance: generate representative floors across every approved department
+	# and verify that each exhibit is named, uniquely identified and physically interactable.
+	for museum_floor in [1, 5, 9, 13, 18, 22, 26, 30, 34]:
+		var museum_room := operations.call("_ensure_floor_room", "antiques_heritage_tower_baghdad", museum_floor) as Node3D
+		if museum_room == null:
+			_fail("Antiques Tower could not generate museum floor %d." % museum_floor)
+			return
+		var museum_facility: Node3D
+		for museum_child in museum_room.get_children():
+			if museum_child is Node3D and str(museum_child.name).begins_with("SpecialFacility_"):
+				museum_facility = museum_child as Node3D
+				break
+		if museum_facility == null:
+			_fail("Antiques Tower floor %d has no generated museum department." % museum_floor)
+			return
+		var expected_exhibits := 2 if museum_floor >= 33 else 4
+		if int(museum_facility.get_meta("system_museum_exhibit_count", 0)) != expected_exhibits:
+			_fail("Antiques Tower floor %d has an incomplete exhibit count." % museum_floor)
+			return
+		for exhibit_index in range(expected_exhibits):
+			var exhibit_name := "ArtifactExhibitInteraction_%02d" % exhibit_index
+			var exhibit := museum_facility.get_node_or_null(exhibit_name) as Area3D
+			var artifact_model := museum_facility.get_node_or_null("ArtifactModel_%02d" % exhibit_index) as MeshInstance3D
+			var artifact_label := museum_facility.get_node_or_null("ArtifactLabel_%02d" % exhibit_index) as Label3D
+			var expected_artifact_id := "baghdad_museum_f%02d_exhibit_%02d" % [museum_floor, exhibit_index + 1]
+			if exhibit == null or not exhibit.is_in_group("system_interactable") or exhibit.get_node_or_null("CollisionShape3D") == null:
+				_fail("Antiques Tower floor %d exhibit %d is missing its physical interaction area." % [museum_floor, exhibit_index + 1])
+				return
+			if str(exhibit.get_meta("system_artifact_id", "")) != expected_artifact_id or str(exhibit.get_meta("system_artifact_name", "")).is_empty() or str(exhibit.get_meta("system_artifact_civilization", "")).is_empty():
+				_fail("Antiques Tower floor %d exhibit %d is missing its unique ID, artifact name or civilization." % [museum_floor, exhibit_index + 1])
+				return
+			if artifact_model == null or str(artifact_model.get_meta("system_artifact_id", "")) != expected_artifact_id or artifact_label == null or not artifact_label.text.contains(expected_artifact_id):
+				_fail("Antiques Tower floor %d exhibit %d display model/label is not bound to its artifact record." % [museum_floor, exhibit_index + 1])
+				return
+			var expected_role := "player_market_prototype" if museum_floor >= 29 and museum_floor <= 32 else "museum_exhibit"
+			if str(exhibit.get_meta("system_artifact_display_role", "")) != expected_role:
+				_fail("Antiques Tower floor %d exhibit %d has the wrong museum/market display role." % [museum_floor, exhibit_index + 1])
+				return
+	print("QA TRACE: Antiques Tower museum departments, named artifact models, unique IDs and physical exhibit interactions passed.")
+
 	var status: Dictionary = operations.call("get_operations_status")
 	var first_campaign_id := str(status.get("active_campaign_id", ""))
 	var first_campaign_rotation := int(status.get("campaign_rotation_count", -1))
