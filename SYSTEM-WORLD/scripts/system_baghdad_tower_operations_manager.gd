@@ -9397,9 +9397,38 @@ func interact_power_tower_nen_training(target: Node) -> Dictionary:
 	if competition.has_method("configure_player_progression"):
 		competition.call("configure_player_progression", progression)
 	var tower_status: Dictionary = power_tower_manager.call("get_tower_status")
+	var highest_cleared := clampi(int(tower_status.get("highest_cleared_floor", 0)), 0, 200)
 	var training_floor := clampi(int(tower_status.get("next_floor", 1)), 1, 200)
+	var nen_rank := int(progression.get("nen_control_rank"))
 	if not bool(progression.get("nen_unlocked")):
 		training_floor = mini(training_floor, 20)
+	elif nen_rank <= 1:
+		if highest_cleared < 20:
+			_set_status("أكمل الطوابق حتى 20 أولاً، ثم ارجع لتعلم TEN.")
+			return {"success": false, "reason": "FLOOR_20_CLEAR_REQUIRED"}
+		training_floor = 21
+	elif nen_rank == 2:
+		if highest_cleared < 40:
+			_set_status("أكمل الطوابق حتى 40 أولاً، ثم ارجع لتعلم REN.")
+			return {"success": false, "reason": "FLOOR_40_CLEAR_REQUIRED"}
+		training_floor = 41
+	elif nen_rank == 3:
+		if highest_cleared < 60:
+			_set_status("أكمل الطوابق حتى 60 أولاً، ثم ارجع لتعلم ZETSU.")
+			return {"success": false, "reason": "FLOOR_60_CLEAR_REQUIRED"}
+		training_floor = 61
+	elif nen_rank == 4:
+		if highest_cleared < 80:
+			_set_status("أكمل الطوابق حتى 80 أولاً، ثم ارجع لإتقان HATSU.")
+			return {"success": false, "reason": "FLOOR_80_CLEAR_REQUIRED"}
+		training_floor = 81
+	elif highest_cleared >= 150:
+		training_floor = 151
+	elif highest_cleared >= 100:
+		training_floor = 101
+	else:
+		_set_status("أكمل الطوابق حتى 100 قبل تدريب النِن المتقدم.")
+		return {"success": false, "reason": "FLOOR_100_CLEAR_REQUIRED"}
 	var nen_stage: Dictionary = competition.call("get_nen_stage_for_floor", training_floor)
 	var stage_id := str(nen_stage.get("stage", "DISCOVERY"))
 	var technique := "AURA_AWARENESS"
