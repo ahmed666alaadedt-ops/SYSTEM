@@ -88,10 +88,14 @@ jobs:
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
           set -o pipefail
-          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_power_tower_xsx_architecture.gd 2>&1 | tee "$RUNNER_TEMP/power-tower-xsx-architecture.log"
-          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_power_tower_shop_catalog.gd 2>&1 | tee "$RUNNER_TEMP/power-tower-shop-catalog.log"
-          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_power_tower_crowd_and_arena_ladder.gd 2>&1 | tee "$RUNNER_TEMP/power-tower-crowd-arena-ladder.log"
-          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_power_tower_competition.gd 2>&1 | tee "$RUNNER_TEMP/power-tower-competition.log"
+          echo "Starting X-S-X Power Tower architecture validator."
+          timeout --signal=TERM 120s "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_power_tower_xsx_architecture.gd 2>&1 | tee "$RUNNER_TEMP/power-tower-xsx-architecture.log"
+          echo "Starting X-S-X Power Tower shop catalog validator."
+          timeout --signal=TERM 120s "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_power_tower_shop_catalog.gd 2>&1 | tee "$RUNNER_TEMP/power-tower-shop-catalog.log"
+          echo "Starting X-S-X Power Tower crowd and arena ladder validator."
+          timeout --signal=TERM 120s "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_power_tower_crowd_and_arena_ladder.gd 2>&1 | tee "$RUNNER_TEMP/power-tower-crowd-arena-ladder.log"
+          echo "Starting X-S-X Power Tower competition and Nen validator."
+          timeout --signal=TERM 120s "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_power_tower_competition.gd 2>&1 | tee "$RUNNER_TEMP/power-tower-competition.log"
 
       - name: Validate Baghdad tower landmarks and lobby systems
         shell: bash
