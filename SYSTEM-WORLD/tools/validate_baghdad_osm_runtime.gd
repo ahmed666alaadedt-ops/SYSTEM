@@ -21,6 +21,12 @@ func _run_validation() -> void:
 	if not streamer.get_streaming_status().get("canonical_origin_frame_valid", false):
 		_fail("OSM cell coordinates do not match the canonical WGS84 origin.")
 		return
+	var empty_surface := SurfaceTool.new()
+	empty_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var empty_mesh: ArrayMesh = streamer._commit_surface_tool_if_valid(empty_surface)
+	if empty_mesh != null:
+		_fail("Empty OSM geometry must be rejected before creating a renderer mesh.")
+		return
 	if streamer.get_node_or_null("BaghdadOSMAttribution/OpenStreetMapCredit") == null:
 		_fail("Required OSM attribution overlay is missing.")
 		return
