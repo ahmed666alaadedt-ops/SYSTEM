@@ -22,11 +22,11 @@ const COMBAT_STYLES := [
 	"TRADITIONAL_MELEE", "BOW_AND_ARROW", "NEN_TECHNIQUES"
 ]
 const NEN_FLOOR_STAGES := [
-	{"first": 1, "last": 20, "stage": "DISCOVERY", "label": "Nen Discovery"},
-	{"first": 21, "last": 40, "stage": "AURA_AWARENESS", "label": "Aura Awareness"},
-	{"first": 41, "last": 60, "stage": "TEN_CONTROL", "label": "Ten - Aura Control"},
-	{"first": 61, "last": 80, "stage": "REN_OUTPUT", "label": "Ren - Aura Output"},
-	{"first": 81, "last": 100, "stage": "HATSU_FOUNDATION", "label": "Hatsu Foundation"},
+	{"first": 1, "last": 20, "stage": "DISCOVERY", "label": "Nen Discovery and Aura Awareness"},
+	{"first": 21, "last": 40, "stage": "TEN_CONTROL", "label": "Ten - Aura Control"},
+	{"first": 41, "last": 60, "stage": "REN_OUTPUT", "label": "Ren - Aura Output"},
+	{"first": 61, "last": 80, "stage": "ZETSU_CONTROL", "label": "Zetsu - Aura Concealment"},
+	{"first": 81, "last": 100, "stage": "HATSU_FOUNDATION", "label": "Hatsu - Personal Ability"},
 	{"first": 101, "last": 150, "stage": "ADVANCED_NEN", "label": "Advanced Nen"},
 	{"first": 151, "last": 200, "stage": "NEN_MASTERY", "label": "Nen Mastery"}
 ]
@@ -39,6 +39,7 @@ const BET_PAYOUT_POLICY_BPS := {
 }
 
 var _settled_match_ids: Dictionary = {}
+var player_progression: Node
 
 func _ready() -> void:
 	name = "PowerTowerCompetitionManager"
@@ -81,8 +82,12 @@ func get_combat_styles_for_floor(floor_number: int) -> Array:
 		styles.erase("TRADITIONAL_MELEE")
 	return styles
 
+func configure_player_progression(progression_node: Node) -> void:
+	player_progression = progression_node
+
+
 func train_player_nen(training_id: String, floor_number: int, technique: String = "") -> Dictionary:
-	var progression := get_tree().root.find_child("SYSTEMPlayerProgression", true, false)
+	var progression := player_progression if is_instance_valid(player_progression) else get_tree().root.find_child("SYSTEMPlayerProgression", true, false)
 	if progression == null:
 		return {"success": false, "reason": "PLAYER_PROGRESSION_UNAVAILABLE"}
 	if not progression.has_method("complete_power_tower_nen_training"):
