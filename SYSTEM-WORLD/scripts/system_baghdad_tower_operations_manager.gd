@@ -255,6 +255,14 @@ var bowling_throw_in_progress := false
 var facility_projectile_in_progress := false
 var facility_aim := 0.0
 var selected_arcade_mode := "shooter"
+
+var marketplace_bridge: Node
+var marketplace_request_counter := 0
+var marketplace_request_context: Dictionary = {}
+var marketplace_results_container: VBoxContainer
+var marketplace_price_input: SpinBox
+var selected_market_artifact_id := ""
+var selected_market_auction_id := ""
 var marketplace_pending_requests: Dictionary = {}
 var marketplace_request_serial := 0
 var marketplace_results_container: VBoxContainer
@@ -282,6 +290,11 @@ func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_po
 	_load_npc_sales_ledger()
 	_load_facility_activity_stats()
 	_build_ui()
+	marketplace_bridge = get_node_or_null("/root/SYSTEMAndroidBridge")
+	if is_instance_valid(marketplace_bridge) and marketplace_bridge.has_signal("marketplace_result_received"):
+		var marketplace_callback := Callable(self, "_on_marketplace_result")
+		if not marketplace_bridge.is_connected("marketplace_result_received", marketplace_callback):
+			marketplace_bridge.connect("marketplace_result_received", marketplace_callback)
 	if is_instance_valid(player_health) and player_health.has_signal("player_wounded"):
 		var wounded_callback := Callable(self, "_on_player_wounded")
 		if not player_health.is_connected("player_wounded", wounded_callback):
@@ -4801,21 +4814,105 @@ func open_museum_artifact_exhibit(target: Node) -> void:
 		return
 	current_tower_id = str(target.get_meta("system_tower_id", "antiques_heritage_tower_baghdad"))
 	current_staff_id = ""
+	selected_market_artifact_id = ""
+	selected_market_auction_id = ""
 	_clear_dynamic_controls()
-	_clear_marketplace_result_controls()
 	var artifact_id := str(target.get_meta("system_artifact_id", ""))
 	var floor_number := int(target.get_meta("system_tower_floor_number", 0))
 	var display_role := str(target.get_meta("system_artifact_display_role", "museum_exhibit"))
-	title_label.text = "سجل القطعة الأثرية"
-	credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
+	title_label.text = "سوق التحف والآثار بين اللاعبين" if display_role == "player_market_prototype" else "سجل القطعة الأثرية"
+
 	if display_role == "player_market_prototype":
-		status_label.text = "معرّف المعروض: %s\nالطابق: %d\nاتصل بسوق اللاعبين لعرض القطع الحقيقية المملوكة للحسابات وشراء القطع أو إدارة مجموعتك." % [artifact_id, floor_number]
-		_add_marketplace_action_button("عرض سوق اللاعبين", "browse_listings")
-		_add_marketplace_action_button("عرض مزادات التحف", "browse_auctions")
-		_add_marketplace_action_button("عرض مجموعتي", "owned_artifacts")
-		_add_marketplace_action_button("رصيد ومحجوزات SYSTEM", "wallet")
+		credits_label.text = "رصيد SYSTEM: جارٍ التحقق من المحفظة..."
+		status_label.text = "الطابق %d — سوق مباشر بين اللاعبين، ومزادات وتبادل قطع. الملكية والدفع يتحقق منهما الخادم." % floor_number
+		var price_label := Label.new()
+		price_label.text = "السعر أو قيمة المزايدة — رصيد SYSTEM"
+		content.add_child(price_label)
+		marketplace_price_input = SpinBox.new()
+		marketplace_price_input.min_value = 1
+		marketplace_price_input.max_value = 1000000000
+		marketplace_price_input.step = 1
+		marketplace_price_input.rounded = true
+		marketplace_price_input.value = 100
+		content.add_child(marketplace_price_input)
+
+		var browse_button := Button.new()
+		browse_button.text = "تصفح عروض اللاعبين"
+		browse_button.pressed.connect(func(): _request_marketplace_operation("browse_listings", {}))
+		content.add_child(browse_button)
+
+		var inventory_button := Button.new()
+		inventory_button.text = "مقتنياتي الأثرية — اختر قطعة للبيع"
+		inventory_button.pressed.connect(func(): _request_marketplace_operation("owned_artifacts", {}))
+		content.add_child(inventory_button)
+
+		var list_button := Button.new()
+		list_button.text = "عرض القطعة المختارة بالسعر المحدد"
+		list_button.pressed.connect(_create_selected_artifact_listing)
+		content.add_child(list_button)
+
+		var auction_create_button := Button.new()
+		auction_create_button.text = "إنشاء مزاد للقطعة المختارة"
+		auction_create_button.pressed.connect(_create_selected_artifact_auction)
+		content.add_child(auction_create_button)
+
+		var auctions_button := Button.new()
+		auctions_button.text = "مشاهدة المزادات"
+		auctions_button.pressed.connect(func(): _request_marketplace_operation("browse_auctions", {}))
+		content.add_child(auctions_button)
+
+		var bid_button := Button.new()
+		bid_button.text = "تقديم المزايدة المحددة"
+		bid_button.pressed.connect(_place_selected_auction_bid)
+		content.add_child(bid_button)
+
+		var bid_history_button := Button.new()
+		bid_history_button.text = "سجل مزايدات المزاد المختار"
+		bid_history_button.pressed.connect(func():
+			if selected_market_auction_id.is_empty():
+				status_label.text = "اختر مزاداً أولاً."
+				return
+			_request_marketplace_operation("auction_bids", {"auctionId": selected_market_auction_id})
+		)
+		content.add_child(bid_history_button)
+
+		var settle_button := Button.new()
+		settle_button.text = "تسوية المزاد المنتهي"
+		settle_button.pressed.connect(func():
+			if selected_market_auction_id.is_empty():
+				status_label.text = "اختر مزاداً أولاً."
+				return
+			_request_marketplace_operation("settle_auction", {"auctionId": selected_market_auction_id})
+		)
+		content.add_child(settle_button)
+
+		var exchange_button := Button.new()
+		exchange_button.text = "عروض التبادل بين اللاعبين"
+		exchange_button.pressed.connect(func(): _request_marketplace_operation("exchange_offers", {}))
+		content.add_child(exchange_button)
+
+		var history_button := Button.new()
+		history_button.text = "سجل صفقاتي ومبيعاتي"
+		history_button.pressed.connect(func(): _request_marketplace_operation("trade_history", {}))
+		content.add_child(history_button)
+
+		var wallet_button := Button.new()
+		wallet_button.text = "تحديث محفظة SYSTEM"
+		wallet_button.pressed.connect(func(): _request_marketplace_operation("wallet", {}))
+		content.add_child(wallet_button)
+
+		var scroll := ScrollContainer.new()
+		scroll.custom_minimum_size = Vector2(0.0, 160.0)
+		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		content.add_child(scroll)
+		marketplace_results_container = VBoxContainer.new()
+		marketplace_results_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		scroll.add_child(marketplace_results_container)
+		_request_marketplace_operation("wallet", {})
 	else:
-		status_label.text = "معرّف القطعة: %s\nالطابق: %d\nمعروض متحفي ضمن مجموعة التراث والآثار. تفاصيل المنشأ والأصالة والملكية تُضاف عند تسجيل القطعة في سجل المتحف." % [artifact_id, floor_number]
+		credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
+		status_label.text = "معرّف القطعة: %s\nالطابق: %d\nمعروض متحفي ضمن مجموعة التراث والآثار. تفاصيل المنشأ والأصالة والملكية تُعرض من سجل القطعة الموثق." % [artifact_id, floor_number]
+
 	var close_button := Button.new()
 	close_button.text = "إغلاق"
 	close_button.pressed.connect(func(): panel.hide())
@@ -4823,184 +4920,277 @@ func open_museum_artifact_exhibit(target: Node) -> void:
 	panel.show()
 
 
-func _add_marketplace_action_button(button_title: String, operation: String) -> void:
-	var action_button := Button.new()
-	action_button.text = button_title
-	action_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	action_button.pressed.connect(Callable(self, "_request_tower_marketplace").bind(operation, {}))
-	content.add_child(action_button)
-
-
-func _request_tower_marketplace(operation: String, payload: Dictionary = {}) -> void:
-	var bridge := get_node_or_null("/root/SYSTEMAndroidBridge")
-	if bridge == null or not bridge.has_method("request_marketplace_operation"):
-		status_label.text = "خدمة سوق اللاعبين غير متصلة بمضيف Android حالياً. استخدم قسم برج التحف والآثار في تطبيق SYSTEM."
+func _request_marketplace_operation(operation: String, payload: Dictionary) -> void:
+	if not is_instance_valid(marketplace_bridge) or not marketplace_bridge.has_method("request_marketplace_operation"):
+		status_label.text = "خدمة التجارة غير متصلة بمضيف Android. لم تُنفّذ أي صفقة."
 		return
-	var listener := Callable(self, "_on_tower_marketplace_result")
-	if bridge.has_signal("marketplace_result_received") and not bridge.is_connected("marketplace_result_received", listener):
-		bridge.connect("marketplace_result_received", listener)
-	marketplace_request_serial += 1
-	var request_id := "baghdad_market_%d_%d" % [Time.get_ticks_msec(), marketplace_request_serial]
-	marketplace_pending_requests[request_id] = operation
-	var sent := bool(bridge.call("request_marketplace_operation", operation, payload, request_id))
+	marketplace_request_counter += 1
+	var request_id := "baghdad_market_%d_%d" % [Time.get_ticks_msec(), marketplace_request_counter]
+	marketplace_request_context[request_id] = {"operation": operation}
+	var sent: bool = bool(marketplace_bridge.call("request_marketplace_operation", operation, payload, request_id))
 	if not sent:
-		marketplace_pending_requests.erase(request_id)
-		status_label.text = "تعذر الاتصال بسوق اللاعبين: مضيف Android غير متاح حالياً."
+		marketplace_request_context.erase(request_id)
+		status_label.text = "الاتصال الآمن غير متاح حالياً. لم تُنفّذ أي عملية."
 
 
-func _on_tower_marketplace_result(request_id: String, response: Dictionary) -> void:
-	if not marketplace_pending_requests.has(request_id):
+func _on_marketplace_result(request_id: String, response: Dictionary) -> void:
+	if not marketplace_request_context.has(request_id):
 		return
-	var operation := str(marketplace_pending_requests[request_id])
-	marketplace_pending_requests.erase(request_id)
+	var context: Dictionary = marketplace_request_context[request_id]
+	marketplace_request_context.erase(request_id)
+	var operation := str(context.get("operation", ""))
 	if not bool(response.get("success", false)):
-		status_label.text = "تعذر تنفيذ طلب السوق: %s" % str(response.get("error", "خطأ غير معروف"))
+		status_label.text = "تعذرت العملية: " + str(response.get("error", "MARKETPLACE_REQUEST_FAILED"))
 		return
-	var data: Dictionary = response.get("data", {}) if response.get("data", {}) is Dictionary else {}
+	var data: Variant = response.get("data", {})
+	if not data is Dictionary:
+		status_label.text = "استجابة السوق غير صالحة."
+		return
+
 	match operation:
 		"wallet":
 			var balance := int(data.get("balance", 0))
 			var reserved := int(data.get("reservedBalance", 0))
 			var available := int(data.get("availableBalance", balance - reserved))
-			credits_label.text = "الرصيد: %d SYSTEM | المتاح: %d | المحجوز: %d" % [balance, available, reserved]
-			status_label.text = "تم تحديث محفظتك السحابية من خادم SYSTEM."
-		"browse_listings":
-			status_label.text = "عروض البيع المباشر من اللاعبين:"
-			_render_tower_marketplace_listings(data.get("listings", []))
+			credits_label.text = "محفظة SYSTEM: %d | محجوز: %d | متاح: %d" % [balance, reserved, available]
+			status_label.text = "المحفظة مؤكدة من خادم SYSTEM."
 		"owned_artifacts":
-			status_label.text = "القطع الأثرية المسجلة باسم حسابك:"
-			_render_tower_owned_artifacts(data.get("artifacts", []))
+			_render_owned_market_artifacts(data.get("artifacts", []))
+		"browse_listings":
+			_render_marketplace_listings(data.get("listings", []))
 		"browse_auctions":
-			status_label.text = "المزادات النشطة:"
-			_render_tower_marketplace_auctions(data.get("auctions", []))
-		"purchase_listing":
-			status_label.text = "اكتملت عملية الشراء. تم نقل الملكية وتحديث الرصيد."
-			_request_tower_marketplace("wallet")
-			_request_tower_marketplace("browse_listings")
+			_render_marketplace_auctions(data.get("auctions", []))
+		"exchange_offers":
+			_render_marketplace_exchanges(data)
+		"trade_history":
+			_render_marketplace_history(data.get("transactions", []))
 		"create_listing":
-			status_label.text = "تم عرض القطعة للبيع وحجزها حتى إتمام البيع أو الإلغاء."
-			_request_tower_marketplace("owned_artifacts")
-			_request_tower_marketplace("browse_listings")
+			status_label.text = "تم إنشاء عرض البيع وحجز القطعة بأمان."
+			_request_marketplace_operation("wallet", {})
+			_request_marketplace_operation("browse_listings", {})
+		"purchase_listing":
+			status_label.text = "اكتملت الصفقة ونُقلت ملكية القطعة."
+			_request_marketplace_operation("wallet", {})
+			_request_marketplace_operation("owned_artifacts", {})
+		"create_auction":
+			status_label.text = "تم إنشاء المزاد وحجز القطعة."
+			_request_marketplace_operation("browse_auctions", {})
 		"place_bid":
-			status_label.text = "تم قبول المزايدة وحجز رصيدها."
-			_request_tower_marketplace("wallet")
-			_request_tower_marketplace("browse_auctions")
+			status_label.text = "تم تسجيل المزايدة وحجز رصيدها."
+			_request_marketplace_operation("wallet", {})
+			_request_marketplace_operation("browse_auctions", {})
+		"settle_auction":
+			status_label.text = "اكتملت محاولة تسوية المزاد."
+			_request_marketplace_operation("wallet", {})
+			_request_marketplace_operation("owned_artifacts", {})
+		"accept_exchange_offer":
+			status_label.text = "اكتمل التبادل ونُقلت ملكية القطعتين."
+			_request_marketplace_operation("exchange_offers", {})
+			_request_marketplace_operation("owned_artifacts", {})
+		"close_exchange_offer":
+			status_label.text = "تم إغلاق عرض التبادل وإرجاع القطعة المحجوزة."
+			_request_marketplace_operation("exchange_offers", {})
 		_:
-			status_label.text = "اكتمل طلب سوق اللاعبين."
+			status_label.text = "اكتملت العملية: " + operation
 
 
-func _clear_marketplace_result_controls() -> void:
-	if is_instance_valid(marketplace_results_container):
-		marketplace_results_container.queue_free()
-	marketplace_results_container = VBoxContainer.new()
-	marketplace_results_container.name = "MarketplaceOnlineResults"
-	marketplace_results_container.add_theme_constant_override("separation", 6)
-	content.add_child(marketplace_results_container)
-
-
-func _render_tower_marketplace_listings(raw_listings: Variant) -> void:
-	_clear_marketplace_result_controls()
-	if not raw_listings is Array or raw_listings.is_empty():
-		_add_marketplace_result_label("لا توجد عروض نشطة حالياً.")
+func _clear_marketplace_results() -> void:
+	if not is_instance_valid(marketplace_results_container):
 		return
-	for value in raw_listings:
-		if not value is Dictionary:
-			continue
-		var listing: Dictionary = value
-		var listing_id := str(listing.get("listingId", ""))
-		if listing_id.is_empty():
-			continue
-		_add_marketplace_result_label("%s | %s | %s SYSTEM" % [
-			str(listing.get("name", "قطعة أثرية")),
-			str(listing.get("civilization", "حضارة غير محددة")),
-			str(listing.get("price", 0))
-		])
-		var buy_button := Button.new()
-		buy_button.text = "شراء القطعة"
-		buy_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		buy_button.pressed.connect(Callable(self, "_request_tower_marketplace").bind(
-			"purchase_listing", {"listingId": listing_id}
-		))
-		marketplace_results_container.add_child(buy_button)
+	for child in marketplace_results_container.get_children():
+		marketplace_results_container.remove_child(child)
+		child.queue_free()
 
 
-func _render_tower_owned_artifacts(raw_artifacts: Variant) -> void:
-	_clear_marketplace_result_controls()
+func _render_owned_market_artifacts(raw_artifacts: Variant) -> void:
+	_clear_marketplace_results()
+	status_label.text = "اختر قطعة تملكها فعلياً لعرضها للبيع أو للمزاد."
 	if not raw_artifacts is Array or raw_artifacts.is_empty():
-		_add_marketplace_result_label("لا توجد قطع قابلة للتداول في مجموعتك.")
+		var empty_label := Label.new()
+		empty_label.text = "لا توجد قطع أثرية موثقة في مخزونك حالياً."
+		marketplace_results_container.add_child(empty_label)
 		return
-	for value in raw_artifacts:
-		if not value is Dictionary:
+	for raw in raw_artifacts:
+		if not raw is Dictionary:
 			continue
-		var artifact: Dictionary = value
-		var artifact_id := str(artifact.get("artifactId", ""))
+		var artifact_id := str(raw.get("artifactId", ""))
 		if artifact_id.is_empty():
 			continue
-		_add_marketplace_result_label("%s | %s | %s" % [
-			str(artifact.get("name", "قطعة أثرية")),
-			str(artifact.get("civilization", "")),
-			str(artifact.get("rarity", "common"))
-		])
-		var price_input := LineEdit.new()
-		price_input.placeholder_text = "السعر بعملة SYSTEM"
-		marketplace_results_container.add_child(price_input)
-		var list_button := Button.new()
-		list_button.text = "عرض هذه القطعة للبيع"
-		list_button.pressed.connect(Callable(self, "_create_tower_marketplace_listing").bind(artifact_id, price_input))
-		marketplace_results_container.add_child(list_button)
+		var artifact_name := str(raw.get("name", "قطعة أثرية"))
+		var select_button := Button.new()
+		select_button.text = "%s — %s — %s" % [artifact_name, str(raw.get("civilization", "")), str(raw.get("rarity", ""))]
+		select_button.pressed.connect(_select_market_artifact.bind(artifact_id, artifact_name))
+		marketplace_results_container.add_child(select_button)
 
 
-func _create_tower_marketplace_listing(artifact_id: String, price_input: LineEdit) -> void:
-	var price := price_input.text.strip_edges().to_int()
-	if price <= 0:
-		status_label.text = "أدخل سعراً صحيحاً أكبر من صفر."
+func _select_market_artifact(artifact_id: String, artifact_name: String) -> void:
+	selected_market_artifact_id = artifact_id
+	status_label.text = "القطعة المختارة: %s. حدد السعر ثم اختر البيع أو المزاد." % artifact_name
+
+
+func _create_selected_artifact_listing() -> void:
+	if selected_market_artifact_id.is_empty() or not is_instance_valid(marketplace_price_input):
+		status_label.text = "حمّل مقتنياتك واختر قطعة أولاً."
 		return
-	_request_tower_marketplace("create_listing", {
-		"artifactId": artifact_id,
-		"price": price,
+	_request_marketplace_operation("create_listing", {
+		"artifactId": selected_market_artifact_id,
+		"price": int(marketplace_price_input.value),
 		"durationDays": 7
 	})
 
 
-func _render_tower_marketplace_auctions(raw_auctions: Variant) -> void:
-	_clear_marketplace_result_controls()
-	if not raw_auctions is Array or raw_auctions.is_empty():
-		_add_marketplace_result_label("لا توجد مزادات نشطة حالياً.")
+func _create_selected_artifact_auction() -> void:
+	if selected_market_artifact_id.is_empty() or not is_instance_valid(marketplace_price_input):
+		status_label.text = "حمّل مقتنياتك واختر قطعة أولاً."
 		return
-	for value in raw_auctions:
-		if not value is Dictionary:
+	_request_marketplace_operation("create_auction", {
+		"artifactId": selected_market_artifact_id,
+		"startingBid": int(marketplace_price_input.value),
+		"durationHours": 24
+	})
+
+
+func _render_marketplace_listings(raw_listings: Variant) -> void:
+	_clear_marketplace_results()
+	status_label.text = "عروض البيع المباشر بين اللاعبين."
+	if not raw_listings is Array or raw_listings.is_empty():
+		var empty_label := Label.new()
+		empty_label.text = "لا توجد عروض نشطة حالياً."
+		marketplace_results_container.add_child(empty_label)
+		return
+	for raw in raw_listings:
+		if not raw is Dictionary:
 			continue
-		var auction: Dictionary = value
-		var auction_id := str(auction.get("auctionId", ""))
+		var listing_id := str(raw.get("listingId", ""))
+		if listing_id.is_empty():
+			continue
+		var line := Label.new()
+		line.text = "%s | %s | %s | %d SYSTEM | البائع: %s" % [
+			str(raw.get("name", "قطعة أثرية")),
+			str(raw.get("civilization", "")),
+			str(raw.get("rarity", "")),
+			int(raw.get("price", 0)),
+			str(raw.get("sellerName", "لاعب"))
+		]
+		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		marketplace_results_container.add_child(line)
+		var buy_button := Button.new()
+		buy_button.text = "شراء هذه القطعة"
+		buy_button.pressed.connect(_buy_marketplace_listing.bind(listing_id))
+		marketplace_results_container.add_child(buy_button)
+
+
+func _buy_marketplace_listing(listing_id: String) -> void:
+	_request_marketplace_operation("purchase_listing", {"listingId": listing_id})
+
+
+func _render_marketplace_auctions(raw_auctions: Variant) -> void:
+	_clear_marketplace_results()
+	status_label.text = "اختر مزاداً للمزايدة أو لمراجعة سجل المزايدات."
+	if not raw_auctions is Array or raw_auctions.is_empty():
+		var empty_label := Label.new()
+		empty_label.text = "لا توجد مزادات نشطة حالياً."
+		marketplace_results_container.add_child(empty_label)
+		return
+	for raw in raw_auctions:
+		if not raw is Dictionary:
+			continue
+		var auction_id := str(raw.get("auctionId", ""))
 		if auction_id.is_empty():
 			continue
-		_add_marketplace_result_label("%s | أعلى مزايدة: %s SYSTEM | عدد المزايدات: %s" % [
-			str(auction.get("name", "قطعة أثرية")),
-			str(auction.get("highestBid", 0)),
-			str(auction.get("bidCount", 0))
-		])
-		var bid_input := LineEdit.new()
-		bid_input.placeholder_text = "قيمة مزايدتك"
-		marketplace_results_container.add_child(bid_input)
-		var bid_button := Button.new()
-		bid_button.text = "تقديم مزايدة"
-		bid_button.pressed.connect(Callable(self, "_place_tower_marketplace_bid").bind(auction_id, bid_input))
-		marketplace_results_container.add_child(bid_button)
+		var highest_bid := int(raw.get("highestBid", 0))
+		var minimum_bid := highest_bid + 1 if highest_bid > 0 else int(raw.get("startingBid", 1))
+		var line := Label.new()
+		line.text = "%s | أعلى مزايدة: %d | يبدأ من: %d | المزايدات: %d" % [
+			str(raw.get("name", "قطعة أثرية")),
+			highest_bid,
+			int(raw.get("startingBid", 0)),
+			int(raw.get("bidCount", 0))
+		]
+		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		marketplace_results_container.add_child(line)
+		var select_button := Button.new()
+		select_button.text = "اختيار المزاد — الحد الأدنى %d SYSTEM" % minimum_bid
+		select_button.pressed.connect(_select_market_auction.bind(auction_id, minimum_bid))
+		marketplace_results_container.add_child(select_button)
 
 
-func _place_tower_marketplace_bid(auction_id: String, bid_input: LineEdit) -> void:
-	var amount := bid_input.text.strip_edges().to_int()
-	if amount <= 0:
-		status_label.text = "أدخل مبلغ مزايدة صحيحاً."
+func _select_market_auction(auction_id: String, minimum_bid: int) -> void:
+	selected_market_auction_id = auction_id
+	if is_instance_valid(marketplace_price_input):
+		marketplace_price_input.value = minimum_bid
+	status_label.text = "تم اختيار المزاد. قيمة المزايدة الحالية: %d SYSTEM." % minimum_bid
+
+
+func _place_selected_auction_bid() -> void:
+	if selected_market_auction_id.is_empty() or not is_instance_valid(marketplace_price_input):
+		status_label.text = "اختر مزاداً أولاً."
 		return
-	_request_tower_marketplace("place_bid", {"auctionId": auction_id, "amount": amount})
+	_request_marketplace_operation("place_bid", {
+		"auctionId": selected_market_auction_id,
+		"amount": int(marketplace_price_input.value)
+	})
 
 
-func _add_marketplace_result_label(value: String) -> void:
-	var result_label := Label.new()
-	result_label.text = value
-	result_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	marketplace_results_container.add_child(result_label)
+func _render_marketplace_exchanges(data: Dictionary) -> void:
+	_clear_marketplace_results()
+	var received: Variant = data.get("received", [])
+	var sent: Variant = data.get("sent", [])
+	status_label.text = "عروض التبادل الواردة والصادرة."
+	for raw in received:
+		if not raw is Dictionary:
+			continue
+		var exchange_id := str(raw.get("exchangeId", ""))
+		var line := Label.new()
+		line.text = "عرض وارد من %s — القطعة المطلوبة: %s" % [
+			str(raw.get("initiatorName", "لاعب")),
+			str(raw.get("requestedArtifactId", ""))
+		]
+		marketplace_results_container.add_child(line)
+		var accept_button := Button.new()
+		accept_button.text = "قبول التبادل"
+		accept_button.pressed.connect(func(): _request_marketplace_operation("accept_exchange_offer", {"exchangeId": exchange_id}))
+		marketplace_results_container.add_child(accept_button)
+		var decline_button := Button.new()
+		decline_button.text = "رفض العرض"
+		decline_button.pressed.connect(func(): _request_marketplace_operation("close_exchange_offer", {"exchangeId": exchange_id, "action": "decline"}))
+		marketplace_results_container.add_child(decline_button)
+	for raw in sent:
+		if not raw is Dictionary:
+			continue
+		var exchange_id := str(raw.get("exchangeId", ""))
+		var line := Label.new()
+		line.text = "عرض صادر إلى %s — الحالة: %s" % [
+			str(raw.get("recipientName", "لاعب")),
+			str(raw.get("status", "pending"))
+		]
+		marketplace_results_container.add_child(line)
+		if str(raw.get("status", "")) == "pending":
+			var cancel_button := Button.new()
+			cancel_button.text = "إلغاء عرض التبادل"
+			cancel_button.pressed.connect(func(): _request_marketplace_operation("close_exchange_offer", {"exchangeId": exchange_id, "action": "cancel"}))
+			marketplace_results_container.add_child(cancel_button)
+
+
+func _render_marketplace_history(raw_transactions: Variant) -> void:
+	_clear_marketplace_results()
+	status_label.text = "سجل الصفقات والمبيعات الخاص بحسابك."
+	if not raw_transactions is Array or raw_transactions.is_empty():
+		var empty_label := Label.new()
+		empty_label.text = "لا توجد صفقات مسجلة بعد."
+		marketplace_results_container.add_child(empty_label)
+		return
+	for raw in raw_transactions:
+		if not raw is Dictionary:
+			continue
+		var line := Label.new()
+		line.text = "%s | %d SYSTEM | %s" % [
+			str(raw.get("artifactId", raw.get("transactionType", "صفقة"))),
+			int(raw.get("price", 0)),
+			str(raw.get("transactionId", ""))
+		]
+		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		marketplace_results_container.add_child(line)
 
 
 func open_pool_service(target: Node) -> void:
