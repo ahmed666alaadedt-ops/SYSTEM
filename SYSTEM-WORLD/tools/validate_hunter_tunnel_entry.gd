@@ -64,6 +64,17 @@ func _run_validation() -> void:
 		return
 	if not _check(int(marshland.get_meta("system_marshland_water_zone_count", 0)) == 5 and int(marshland.get_meta("system_marshland_giant_turtle_count", 0)) == 3 and int(marshland.get_meta("system_marshland_decoy_npc_count", 0)) == 6, "Marshland water, giant wildlife or misleading resident population is incomplete."):
 		return
+	if not _check(int(marshland.get_meta("system_marshland_carnivorous_plant_count", 0)) == 12 and bool(marshland.get_meta("system_marshland_running_exam_hazards_enabled", false)), "The carnivorous plant hazards are missing from the running examination route."):
+		return
+	var carnivorous_count := 0
+	for child in marshland.get_children():
+		if child is Node3D and child.name.begins_with("CarnivorousExamPlant_"):
+			carnivorous_count += 1
+			var capture_zone := child.get_node_or_null("CandidateCaptureZone") as Area3D
+			if not _check(capture_zone != null and capture_zone.body_entered.get_connections().size() > 0 and bool(child.get_meta("system_hunter_exam_running_hazard", false)), "A carnivorous plant is missing its candidate capture trigger."):
+				return
+	if not _check(carnivorous_count == 12, "Expected 12 physical carnivorous plant hazards along the running route."):
+		return
 	if not _check(int(marshland.get_meta("system_marshland_tracking_arrow_count", 0)) == 8 and int(marshland.get_meta("system_marshland_fog_bank_count", 0)) == 14 and bool(marshland.get_meta("system_marshland_exit_gate_present", false)), "The fog, tracking arrows or final Marshland gate are missing."):
 		return
 
