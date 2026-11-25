@@ -29,6 +29,7 @@ var current_marsh_season := ""
 var fog_material: StandardMaterial3D
 var fog_layers: Array[MeshInstance3D] = []
 var real_guild_guide: Node3D
+var candidate_convoy: Node3D
 var guide_tracking_arrows: Dictionary = {}
 var guide_escort_active := false
 var guide_escort_completed := false
@@ -1270,10 +1271,12 @@ func _start_real_guide_escort(candidate: Node3D) -> void:
 	_attach_guide_tracking_arrow(candidate)
 	var crowd := get_tree().root.find_child("HunterCandidateCrowd", true, false)
 	if crowd != null:
-		crowd.set_meta("system_candidate_convoy_following_real_guide", true)
-		crowd.set_meta("system_candidate_convoy_route", "marsh_entry_to_hidden_ancient_sanctuary")
-		crowd.set_meta("system_candidate_convoy_count", 500)
-		for record in crowd.find_children("HunterCandidate_*", "Node3D", true, false):
+		candidate_convoy = crowd as Node3D
+		candidate_convoy.reparent(real_guild_guide.get_parent(), true)
+		candidate_convoy.set_meta("system_candidate_convoy_following_real_guide", true)
+		candidate_convoy.set_meta("system_candidate_convoy_route", "marsh_entry_to_hidden_ancient_sanctuary")
+		candidate_convoy.set_meta("system_candidate_convoy_count", 500)
+		for record in candidate_convoy.find_children("HunterCandidate_*", "Node3D", true, false):
 			record.set_meta("system_following_real_guild_guide", true)
 			record.set_meta("system_candidate_escort_route", "marsh_entry_to_hidden_ancient_sanctuary")
 	set_meta("system_real_guide_escort_started", true)
@@ -1351,7 +1354,23 @@ func _process_real_guide_escort(delta: float) -> void:
 				var gate_briefing := sanctuary.get_node_or_null("GuideStarGateBriefing") as Label3D
 				if gate_briefing != null:
 					gate_briefing.visible = true
-	for key in guide_tracking_arrows.keys():
+				for candidate in get_tree().get_nodes_in_group("system_player"):
+					if not bool(candidate.get_meta("system_hunter_sanctuary_discovery_pending_guide_arrival", false)):
+						continue
+					candidate.set_meta("system_hunter_sanctuary_discovery_pending_guide_arrival", false)
+					sanctuary.visible = true
+					sanctuary.set_meta("system_hidden_heritage_site_discovered", true)
+					candidate.set_meta("system_hidden_heritage_site_discovered", true)
+					_on_marsh_final_trial_entered(candidate)
+	if guide_escort_active and is_instance_valid(candidate_convoy) and is_instance_valid(real_guild_guide):
+		var behind_guide := real_guild_guide.global_position - real_guild_guide.global_basis.z * 22.0
+		behind_guide.y = _marsh_ground_y(
+			behind_guide.x - marsh_center.x,
+			behind_guide.z - marsh_center.z
+		) + marsh_center.y
+		candidate_convoy.global_position = behind_guide
+		candidate_convoy.global_basis = real_guild_guide.global_basis
+		for key in guide_tracking_arrows.keys():
 		var arrow := guide_tracking_arrows[key] as Node3D
 		if not is_instance_valid(arrow):
 			guide_tracking_arrows.erase(key)
