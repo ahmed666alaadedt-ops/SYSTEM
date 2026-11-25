@@ -5486,7 +5486,7 @@ func _release_pool_locker() -> void:
 	var locker_id := str(player.get_meta("system_pool_locker_id", ""))
 	var public_leisure := tower_manager.get_node_or_null("ConnectedCityPublicAmenities_Blockout/BaghdadPublicLeisureDistrict") if is_instance_valid(tower_manager) else null
 	if public_leisure != null and public_leisure.has_method("release_locker"):
-		public_leisure.call("release_locker", locker_id, player.get_instance_id())
+		public_leisure.call("release_locker", str(player.get_meta("system_pool_locker_suite", "")), locker_id, player.get_instance_id())
 	player.remove_meta("system_pool_locker_reserved")
 	player.remove_meta("system_pool_locker_tower")
 	player.remove_meta("system_pool_locker_floor")
