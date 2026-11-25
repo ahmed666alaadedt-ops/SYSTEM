@@ -58,7 +58,7 @@ The Al-Zawraa Park footprint in central Baghdad is permanently repurposed as the
 - The test remains one continuous journey from the tunnel into the marsh; do not reintroduce the retired seven-stage exam wording.
 
 ### Hidden ancient sanctuary and seasonal Star Gates
-- A concealed ancient heritage site sits at the far end of the marsh route, beyond the reeds and boardwalks.
+- A concealed ancient heritage site sits at the far end of the marsh route, beyond the reeds and boardwalks. Its ruins are hidden until an active candidate reaches the discovery area; only then does the sanctuary reveal itself.
 - Three Star Gates are hidden there. They unlock only after the registered candidate completes the full continuous tunnel-plus-marsh exam at the sanctuary; completing the tunnel checkpoints alone must not award the license or reveal the gates.
 - Gate destinations rotate by season and resolve to existing city anchors in the modern world. The current destination pools are: spring — Tokyo, Paris, Singapore; summer — Cairo, Sydney, Guangzhou; autumn — London, Seoul, New York; winter — Moscow, New Delhi, Rio de Janeiro.
 - The three gates therefore provide changing destinations each season; their labels and destinations must reflect the current season, and gate travel must use the existing modern-world city anchors rather than inventing city coordinates.
