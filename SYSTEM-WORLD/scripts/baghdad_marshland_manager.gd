@@ -1,6 +1,8 @@
 extends Node3D
 class_name BaghdadMarshlandManager
 
+const MarshGateEnemyScript = preload("res://scripts/modern_world_gate_enemy.gd")
+
 ## Replaces the Al-Zawraa Park gameplay footprint with a traversable marsh biome.
 ## The marsh anchor is the published Al-Zawraa Park WGS84 location, projected
 ## through the same Baghdad regional origin used by the Republic Bridge.
@@ -728,6 +730,17 @@ func _build_giant_marsh_creatures(zone: Node3D) -> void:
 			jaws.position = Vector3(0.0, 1.1, -5.0)
 			jaws.material_override = hide_material
 			creature.add_child(jaws)
+		var combat_enemy := MarshGateEnemyScript.new() as CharacterBody3D
+		combat_enemy.name = "GiantMarshCombatEnemy"
+		combat_enemy.call("configure", "C", false, null)
+		creature.add_child(combat_enemy)
+		combat_enemy.set_physics_process(false)
+		var generic_visual := combat_enemy.get_node_or_null("Visual") as MeshInstance3D
+		if generic_visual != null:
+			generic_visual.visible = false
+		combat_enemy.set_meta("system_marsh_wildlife_enemy", true)
+		combat_enemy.set_meta("system_creature_species", str(creature.get_meta("system_creature_species", "giant_wildlife")))
+		combat_enemy.defeated.connect(_on_giant_marsh_creature_defeated.bind(creature))
 		var encounter := Area3D.new()
 		encounter.name = "GiantCreatureEncounterZone"
 		encounter.position.y = 1.0
@@ -752,6 +765,21 @@ func _on_giant_creature_encounter(body: Node3D, creature: Node3D) -> void:
 	body.set_meta("system_hunter_marsh_encounter_species", str(creature.get_meta("system_creature_species", "giant_wildlife")))
 	body.set_meta("system_hunter_marsh_encounter_state", "combat_or_escape_required")
 	body.set_meta("system_hunter_marsh_encounter_active", true)
+	var combat_enemy := creature.get_node_or_null("GiantMarshCombatEnemy") as CharacterBody3D
+	if combat_enemy != null and combat_enemy.has_method("configure"):
+		combat_enemy.call("configure", "C", false, body)
+		combat_enemy.set_physics_process(true)
+		body.set_meta("system_hunter_marsh_combat_enemy", combat_enemy.get_instance_id())
+
+
+func _on_giant_marsh_creature_defeated(_enemy: Node, _is_boss: bool, xp_reward: int, creature: Node3D) -> void:
+	if not is_instance_valid(creature):
+		return
+	creature.set_meta("system_creature_defeated", true)
+	creature.set_meta("system_creature_xp_reward", xp_reward)
+	var encounter := creature.get_node_or_null("GiantCreatureEncounterZone") as Area3D
+	if encounter != null:
+		encounter.monitoring = false
 
 
 func _build_marsh_route_markers(zone: Node3D) -> void:
