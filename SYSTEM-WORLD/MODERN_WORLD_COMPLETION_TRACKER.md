@@ -1981,3 +1981,16 @@ Feature HEAD at audit update: `f2522b6a3cf603e3aa13ee1bd17ee0ee9e7fba99`.
 - [x] Replaced that stale mapping with `antiques_heritage_tower_baghdad` → `AntiquesHeritageTower`, so its advertising/champion display surfaces are addressed using the canonical fourth tower identity.
 - [x] Added an authoritative correction section to `HUNTER_TOWERS_AND_EXAMINATION_DESIGN.md`: Business and Investment remains; weapons/elixirs remain Shopping Tower departments; Antiques and Heritage is tower four; recreation stays independent; Power Tower stays standalone.
 - [ ] Exact-HEAD Godot validation of the public event-board tower display routing is pending.
+
+## Independent Baghdad public leisure district — runtime implementation checkpoint — 25 November 2026
+
+- [x] Added `system_baghdad_public_leisure_manager.gd` and instantiate it as `BaghdadPublicLeisureDistrict` under the connected-city public amenities root. It is a separate public district facility, not a sixth tower and not part of Antiques and Heritage Tower.
+- [x] Added physical public plaza/pool deck geometry for an Olympic lap pool, family leisure pool and thermal pool, with three monitored Area3D water volumes and collision shapes.
+- [x] Water-volume entry/exit records and clears the canonical `system_player` swimming-state metadata and the selected pool type/depth. This is water-zone state detection; full swimming locomotion/animation and aquatic gameplay remain a separate implementation task.
+- [x] Added two public changing suites with 16 individually reservable lockers, shower service interactions, and suite-specific locker release so duplicate locker names in separate suites cannot release the wrong locker.
+- [x] Added a lifeguard station/NPC and a response tween for player assistance requests. Pool service interactions use the existing `system_pool_service_type` routing in the main interaction handler.
+- [x] Replaced stale locker-release and lifeguard dispatch lookups for the deleted `entertainment_tower_baghdad` with calls to the independent public leisure manager.
+- [x] Added `tools/validate_baghdad_public_leisure.gd` to check pool volumes, swim-state entry/exit, locker release, shower/locker interaction surfaces and lifeguard dispatch; added its parser and runtime invocation to the Godot validation workflow.
+- [ ] Exact-HEAD Godot CI has not yet completed for this implementation. Do not claim the new validator passed until its workflow step finishes successfully.
+- [ ] Remaining gameplay work: connect the swim-state to player movement/animation and stamina, add actual pathfinding to the public district and staffed service schedules, and complete in-device collision/interaction testing.
+- PR #38 remains draft and unmerged; no changes merged to `main`.
