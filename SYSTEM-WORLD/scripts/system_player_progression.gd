@@ -328,7 +328,7 @@ func complete_power_tower_nen_training(training_id: String, floor_number: int, t
 		stage_key = "ADVANCED_NEN"
 		expected_technique = "HATSU"
 		floor_rank = 5
-	elif floor_number >= 81:
+	elif floor_number >= 80:
 		stage_key = "HATSU"
 		expected_technique = "HATSU"
 		floor_rank = 5
@@ -390,7 +390,7 @@ func get_power_tower_nen_training_status() -> Dictionary:
 		next_floor = 61
 	elif nen_control_rank < 5:
 		next_stage = "HATSU"
-		next_floor = 81
+		next_floor = 80
 	else:
 		next_stage = "ADVANCED_NEN"
 		next_floor = 101
