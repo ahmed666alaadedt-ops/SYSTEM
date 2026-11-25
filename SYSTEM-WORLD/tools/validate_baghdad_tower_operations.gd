@@ -1875,7 +1875,8 @@ func _run() -> void:
 	var original_hotel_bookings: Dictionary = operations.get("hotel_bookings").duplicate(true)
 	var original_hotel_credits := int(operations.get("credits"))
 	operations.set("hotel_bookings", {})
-	operations.set("credits", maxi(original_hotel_credits, 500))
+	var expected_hotel_refund_credits := maxi(original_hotel_credits, 500)
+	operations.set("credits", expected_hotel_refund_credits)
 	operations.call("_book_hotel_room", "hotel_standard_01", "غرفة قياسية 01", 180, "F", 1)
 	var hotel_booking_fixture: Dictionary = operations.get("hotel_bookings").get("hotel_standard_01", {})
 	if hotel_booking_fixture.is_empty() or int(operations.get("credits")) != maxi(original_hotel_credits, 500) - 180:
@@ -1896,12 +1897,12 @@ func _run() -> void:
 		return
 	operations.call("_checkout_hotel_room")
 	var checked_out_fixture: Dictionary = operations.get("hotel_bookings").get("hotel_standard_01", {})
-	if str(checked_out_fixture.get("status", "")) != "needs_cleaning" or operations.call("_is_hotel_room_available", "hotel_standard_01"):
+	if str(checked_out_fixture.get("status", "")) != "needs_cleaning" or operations.call("_is_hotel_room_available", "hotel_standard_01") or int(operations.get("credits")) != expected_hotel_refund_credits:
 		operations.set("hotel_bookings", original_hotel_bookings)
 		operations.set("credits", original_hotel_credits)
 		operations.call("_save_hotel_bookings")
 		operations.call("_save_wallet")
-		_fail("SYSTEM Hotel checkout must retain the room as unavailable until housekeeping.")
+		_fail("SYSTEM Hotel checkout must refund every unused night and retain the room as unavailable until housekeeping.")
 		return
 	operations.call("_start_hotel_room_cleaning", "hotel_standard_01")
 	var cleaning_fixture: Dictionary = operations.get("hotel_bookings").get("hotel_standard_01", {})
