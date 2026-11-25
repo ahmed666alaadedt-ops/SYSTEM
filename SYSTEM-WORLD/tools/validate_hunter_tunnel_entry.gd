@@ -87,8 +87,22 @@ func _run_validation() -> void:
 	var health_during: Dictionary = player_health.call("get_health_data")
 	if not _check(bool(player.get_meta("system_examiner_trapped", false)) and float(health_during.get("current_health", previous_health)) < previous_health, "A carnivorous plant did not trap the player and apply real combat damage."):
 		return
+	# Exercise the real player movement loop: the capture must suppress input and velocity.
+	main.set("mobile_direction", Vector2(1.0, 0.0))
+	player.velocity = Vector3(5.0, 0.0, 0.0)
+	var trapped_position := player.global_position
+	main.call("_physics_process", 1.0 / 60.0)
+	if not _check(player.velocity == Vector3.ZERO and player.global_position.distance_to(trapped_position) < 0.001, "The player movement loop did not lock movement while captured."):
+		return
 	await create_timer(2.6).timeout
 	if not _check(not bool(player.get_meta("system_examiner_trapped", true)) and bool(player.get_meta("system_examiner_released_from_trap", false)), "The player did not recover control after the plant capture duration."):
+		return
+	# Verify movement becomes available again after release.
+	player.velocity = Vector3.ZERO
+	var released_position := player.global_position
+	main.call("_physics_process", 1.0 / 60.0)
+	main.set("mobile_direction", Vector2.ZERO)
+	if not _check(player.global_position.distance_to(released_position) > 0.001, "The player remained movement-locked after the plant released them."):
 		return
 	if not _check(int(marshland.get_meta("system_marshland_tracking_arrow_count", 0)) == 8 and int(marshland.get_meta("system_marshland_fog_bank_count", 0)) == 14 and bool(marshland.get_meta("system_marshland_exit_gate_present", false)), "The fog, tracking arrows or final Marshland gate are missing."):
 		return
