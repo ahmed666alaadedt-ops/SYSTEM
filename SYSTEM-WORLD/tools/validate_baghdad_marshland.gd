@@ -46,7 +46,7 @@ func _run_validation() -> void:
 		if not _check(water_area.monitoring and water_area.body_entered.get_connections().size() > 0 and water_area.body_exited.get_connections().size() > 0, "A marsh water volume is missing swimming enter/exit signals."):
 			return
 	var reeds := zone.get_node_or_null("MarshReedFields") as MultiMeshInstance3D
-	if not _check(reeds != null and reeds.multimesh != null and reeds.multimesh.instance_count == 1800, "The 520-instance marsh reed field is missing."):
+	if not _check(reeds != null and reeds.multimesh != null and reeds.multimesh.instance_count == 1800, "The 1800-instance marsh reed field is missing."):
 		return
 	if not _check(zone.find_children("MarshWillow_*", "Node3D", true, false).size() == 56, "Expected 56 marsh willow trees."):
 		return
