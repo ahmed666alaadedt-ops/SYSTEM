@@ -1282,7 +1282,7 @@ func _create_tower_identity_details(root: Node3D, node_name: String, height: flo
 			# The same tower showcases the armoury, elixir research and retail identity.
 			for side in [-1.0, 1.0]:
 				var blade := MeshInstance3D.new()
-				blade.name = "ShoppingTowerWeaponBlade_%s" % str(side)
+				blade.name = "ShoppingTowerWeaponBlade_%s" % ("left" if side < 0.0 else "right")
 				var blade_mesh := BoxMesh.new()
 				blade_mesh.size = Vector3(2.0, 24.0, 1.0)
 				blade.mesh = blade_mesh
@@ -1296,8 +1296,8 @@ func _create_tower_identity_details(root: Node3D, node_name: String, height: flo
 			_add_tower_identity_box(root, "HeritageMuseumPodium", Vector3(0.0, 12.0, 0.0), Vector3(radius * 2.35, 5.0, radius * 2.05), accent)
 			_add_tower_identity_box(root, "HeritageMuseumEntranceCanopy", Vector3(0.0, 22.0, -radius * 1.08), Vector3(radius * 1.18, 2.2, 5.0), glow)
 			for side in [-1.0, 1.0]:
-				_add_tower_identity_box(root, "HeritageGalleryWing_%s" % str(side), Vector3(side * radius * 0.78, 18.0, -radius * 0.32), Vector3(radius * 0.48, 12.0, radius * 1.05), accent)
-				_add_tower_identity_box(root, "HeritageGalleryColumn_%s" % str(side), Vector3(side * radius * 0.32, 24.0, -radius * 1.12), Vector3(2.4, 14.0, 2.4), glow)
+				_add_tower_identity_box(root, "HeritageGalleryWing_%s" % ("left" if side < 0.0 else "right"), Vector3(side * radius * 0.78, 18.0, -radius * 0.32), Vector3(radius * 0.48, 12.0, radius * 1.05), accent)
+				_add_tower_identity_box(root, "HeritageGalleryColumn_%s" % ("left" if side < 0.0 else "right"), Vector3(side * radius * 0.32, 24.0, -radius * 1.12), Vector3(2.4, 14.0, 2.4), glow)
 			_add_tower_identity_box(root, "HeritageArchiveCrown", Vector3(0.0, 35.0, radius * 0.82), Vector3(radius * 0.78, 2.4, radius * 0.78), glow)
 		"TechnologyTower":
 			for index in range(3):
@@ -1314,7 +1314,7 @@ func _create_tower_identity_details(root: Node3D, node_name: String, height: flo
 			_add_tower_identity_box(root, "InnovationLabSkyRibbon", Vector3(0.0, height * 0.62, -radius * 1.4), Vector3(radius * 1.7, 2.0, 2.0), glow)
 		"PowerTower":
 			for side in [-1.0, 1.0]:
-				_add_tower_identity_box(root, "TournamentBlade_%s" % str(side), Vector3(side * radius * 1.25, height * 0.48, 0.0), Vector3(3.0, height * 0.82, 3.0), accent)
+				_add_tower_identity_box(root, "TournamentBlade_%s" % ("left" if side < 0.0 else "right"), Vector3(side * radius * 1.25, height * 0.48, 0.0), Vector3(3.0, height * 0.82, 3.0), accent)
 			var champion_ring := MeshInstance3D.new()
 			champion_ring.name = "PowerTowerChampionCrown"
 			var champion_mesh := CylinderMesh.new()
