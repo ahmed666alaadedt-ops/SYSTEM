@@ -1918,3 +1918,38 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - [x] CI passed: full Baghdad tower operations validator (including 15 physical sky-garden bridge traversals and elevator returns), standalone hotel lifecycle validator, shopping product routing, Hunter rival/escort/continuous tunnel tests, canonical Godot runtime, canonical Godot Android APK, native embedded Android APK, Firebase Functions TypeScript build and Firestore marketplace rules emulator tests.
 - [ ] Still required: physical Android device test of Godot host and live Firebase marketplace round trip; deploy callable functions/rules/indexes only after explicit user approval; wire trusted game-server reward issuance and production wallet funding.
 - PR #38 remains draft and unmerged; do not merge to `main` without the user's separate explicit approval.
+
+---
+
+## Canonical Baghdad five-tower correction and release audit — 25 November 2026
+
+This entry supersedes earlier tower lists in this historical tracker where the fourth tower is named Entertainment, Sports or Leisure.
+
+### Approved five-tower district
+1. Hunter Association Tower.
+2. Business and Investment Tower.
+3. Shopping and Commerce Tower.
+4. Antiques and Heritage Tower.
+5. Technology and Innovation Tower.
+
+The Antiques and Heritage Tower replaces the former Entertainment/Sports Tower as the fourth connected Baghdad tower. Pools, gardens and leisure activities are independent district amenities, not a sixth tower and not a reason to restore an Entertainment/Sports tower. The Power Tower remains a separate 200-floor challenge landmark outside the five-tower district.
+
+### Verified source-level state
+- The runtime registry/customer population uses the five approved tower IDs; the fourth ID is `antiques_heritage_tower_baghdad`.
+- The Antiques and Heritage Tower is a 34-floor foundation/blockout with museum departments and player-marketplace/auction zones in its floor directory. Its metadata still says `antiques_heritage_tower_foundation_blockout`; do not call the complete museum experience finished.
+- Three walkable sky gardens are generated for each approved tower (15 total), with physical deck/collision/railing/planting/seating and elevator-destination interaction metadata. Prior tracker entries report QA traversal; current-head regression must be rerun before release.
+- Advertising panels and local campaign rotation/expiry/manager attribution exist. They are in-world SYSTEM campaigns, not a deployed external advertising network.
+- Hotel booking, housekeeping, inspection and room-service flows are local-save prototypes. They are not shared online reservations.
+- Firebase callable marketplace functions, server-side transaction logic, restrictive Firestore rules, security emulator tests and the Android/Godot request-ID bridge exist. Production deployment and a live two-account/two-device trading round trip remain release gates.
+- Hunter candidate serial persistence is local to the installation, not globally unique across accounts/devices.
+- NPC customers and lobby staff routines exist, but full autonomous cross-floor navigation and server-synchronized populations are not claimed.
+
+### Exact-head CI snapshot at audit time
+Feature HEAD: `cd3e3d1769af01e611e744c9ec46a2a8ab227475`.
+- Firebase Marketplace Functions: success.
+- Android App Shell: success.
+- Canonical Android APK build: success.
+- Full Godot project validation: in progress; no pass is claimed for this exact HEAD until completion.
+
+### Release gate
+Keep PR #38 draft and unmerged until the exact latest head passes Godot validation and Android build, the Antiques tower and all Baghdad systems are covered by current regression checks, the online marketplace deployment/round-trip decision is resolved, and physical Android QA is completed. No merge into `main` without the user's explicit approval.
