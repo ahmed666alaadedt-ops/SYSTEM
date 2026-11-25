@@ -4303,7 +4303,7 @@ func _create_power_tower_spectator_gallery(room: Node3D, radius: float) -> void:
 	gallery.set_meta("system_spectator_gallery", true)
 	gallery.set_meta("system_competition_format", "INDIVIDUAL_1V1")
 	gallery.set_meta("system_audience_population_target", 500)
-	gallery.set_meta("system_audience_lod_mode", "8_FULL_RIGS_PLUS_492_MULTIMESH_IMPOSTORS")
+	gallery.set_meta("system_audience_lod_mode", "8_DETAILED_RIGS_PLUS_492_SHARED_MULTIMESH_IMPOSTORS")
 	room.add_child(gallery)
 
 	var seat_material := StandardMaterial3D.new()
@@ -4457,40 +4457,9 @@ func _create_power_tower_spectator_gallery(room: Node3D, radius: float) -> void:
 			arm_mesh.material_override = torso_material
 			arm_pivot.add_child(arm_mesh)
 			audience_actor.add_child(arm_pivot)
-	# 8 expressive full rigs react to the match; 492 lightweight crowd impostors
-	# complete the 500-person target without creating 500 heavyweight skeletons.
-	var crowd_mesh := CapsuleMesh.new()
-	crowd_mesh.radius = 0.24
-	crowd_mesh.height = 1.35
-	var crowd_multimesh := MultiMesh.new()
-	crowd_multimesh.transform_format = MultiMesh.TRANSFORM_3D
-	crowd_multimesh.use_colors = true
-	crowd_multimesh.mesh = crowd_mesh
-	crowd_multimesh.instance_count = 492
-	var crowd_impostors := MultiMeshInstance3D.new()
-	crowd_impostors.name = "PowerTowerCrowdImpostors"
-	crowd_impostors.multimesh = crowd_multimesh
-	crowd_impostors.set_meta("system_audience_impostor_count", 492)
-	crowd_impostors.set_meta("system_audience_reaction", "watching")
-	var crowd_material := StandardMaterial3D.new()
-	crowd_material.vertex_color_use_as_albedo = true
-	crowd_material.roughness = 0.82
-	crowd_impostors.material_override = crowd_material
-	gallery.add_child(crowd_impostors)
-	for crowd_index in range(492):
-		var side := crowd_index % 4
-		var side_index := int(crowd_index / 4)
-		var row := int(side_index / 4)
-		var column := side_index % 4
-		var angle := TAU * float(side) / 4.0
-		var outward := Vector3(cos(angle), 0.0, sin(angle))
-		var tangent := Vector3(-outward.z, 0.0, outward.x)
-		var position := outward * (radius * 0.58 + float(row) * 0.52) + tangent * ((float(column) - 1.5) * 1.05)
-		position.y = 0.78
-		crowd_multimesh.set_instance_transform(crowd_index, Transform3D(Basis.IDENTITY, position))
-		crowd_multimesh.set_instance_color(crowd_index, audience_palette[crowd_index % audience_palette.size()])
 	audience_root.set_meta("system_audience_full_rig_count", 8)
-	audience_root.set_meta("system_audience_impostor_count", 492)
+	audience_root.set_meta("system_audience_impostor_count", 0)
+	audience_root.set_meta("system_audience_shared_lod_count", 492)
 	var seat_summary := Label3D.new()
 	seat_summary.name = "PowerTowerSeatAvailability"
 	seat_summary.position = Vector3(0.0, 3.3, radius * 0.72)
