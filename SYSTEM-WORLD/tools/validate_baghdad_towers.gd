@@ -523,8 +523,11 @@ func _run_validation() -> void:
 			if interaction == null or not interaction.is_in_group("system_interactable") or str(interaction.get_meta("system_interaction_action", "")) != "inspect_artifact" or interaction_shape == null or interaction_shape.shape == null:
 				_fail("Antiques exhibit %s is missing its working interaction area and collision." % artifact_id)
 				return
-			if str(interaction.get_meta("system_artifact_id", "")) != artifact_id or str(interaction.get_meta("system_tower_id", "")) != "antiques_heritage_tower_baghdad" or int(interaction.get_meta("system_tower_floor", 0)) != floor_number:
+			if str(interaction.get_meta("system_artifact_id", "")) != artifact_id or str(interaction.get_meta("system_tower_id", "")) != "antiques_heritage_tower_baghdad" or int(interaction.get_meta("system_tower_floor", 0)) != floor_number or int(interaction.get_meta("system_tower_floor_number", 0)) != floor_number:
 				_fail("Antiques exhibit %s has inconsistent tower/floor ownership metadata." % artifact_id)
+				return
+			if str(interaction.get_meta("system_interaction_type", "")) != "museum_artifact_exhibit" or str(interaction.get_meta("system_artifact_display_role", "")) not in ["museum_exhibit", "player_market_prototype"] or str(interaction.get_meta("system_artifact_provenance", "")) == "" or str(interaction.get_meta("system_artifact_authenticity", "")) != "curator_review_required":
+				_fail("Antiques exhibit %s is not wired to the museum inspection and marketplace UI contract." % artifact_id)
 				return
 			verified_exhibits += 1
 	if verified_exhibits != 102 or int(antiques_tower.get_meta("system_antiques_interactive_exhibit_count", 0)) != 102:
