@@ -348,6 +348,8 @@ func complete_power_tower_nen_training(training_id: String, floor_number: int, t
 		return {"success": false, "reason": "NEN_TECHNIQUE_NOT_AVAILABLE_ON_THIS_FLOOR", "required_technique": expected_technique}
 	if floor_number > 20 and not nen_unlocked:
 		return {"success": false, "reason": "NEN_DISCOVERY_TRAINING_REQUIRED"}
+	if floor_rank > nen_control_rank + 1:
+		return {"success": false, "reason": "PREVIOUS_NEN_STAGE_REQUIRED", "required_control_rank": floor_rank - 1}
 	var stage_sessions := int(power_tower_nen_stage_sessions.get(stage_key, 0))
 	if stage_sessions >= 3:
 		return {"success": false, "reason": "NEN_STAGE_ALREADY_MASTERED", "stage": stage_key}
