@@ -236,7 +236,6 @@ export const browseArtifactMarketplace = onCall(async (request) => {
         provenanceSummary: data.provenanceSummary,
         price: data.price,
         currency: "SYSTEM",
-        sellerId: data.sellerId,
         sellerName: data.sellerName,
         isSeller: data.sellerId === uid,
         createdAt: data.createdAt?.toMillis?.() ?? null,
