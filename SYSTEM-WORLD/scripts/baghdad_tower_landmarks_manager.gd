@@ -682,7 +682,7 @@ func _create_tower_sky_gardens(tower: Node3D, tower_id: String, tower_title: Str
 
 
 func _create_hunter_exam_tunnel() -> void:
-	# One permanent underground Hunter Examination tunnel. Its concealed entrance is discovered inside the Shopping Tower restaurant.
+	# One permanent underground Hunter Examination tunnel, reached through the Hunter Association Tower guide escort.
 	var tunnel_root := Node3D.new()
 	tunnel_root.name = "BaghdadHunterExaminationTunnel"
 	tunnel_root.position = Vector3(
@@ -691,11 +691,11 @@ func _create_hunter_exam_tunnel() -> void:
 		bridge_anchor.y
 	)
 	tunnel_root.set_meta("system_under_republic_bridge_district", true)
-	tunnel_root.set_meta("system_tunnel_location_source", "Shopping Tower restaurant concealed Eye-River-Crown entrance")
+	tunnel_root.set_meta("system_tunnel_location_source", "Hunter Association Tower guild guide escort")
 	tunnel_root.set_meta("system_facility_type", "hunter_examination_tunnel")
 	tunnel_root.set_meta("system_under_baghdad_tower_district", true)
 	tunnel_root.set_meta("system_exam_manager", "SYSTEMHunterExamManager")
-	tunnel_root.set_meta("system_hunter_exam_access", "shopping_tower_restaurant_three_clue_secret_entrance")
+	tunnel_root.set_meta("system_hunter_exam_access", "hunter_tower_recruitment_and_guide_escort")
 	tunnel_root.set_meta("system_tunnel_is_single_continuous_route", true)
 	add_child(tunnel_root)
 
@@ -1013,7 +1013,7 @@ func _create_hunter_guild_recruitment(lobby: Node3D, radius: float, center_z: fl
 	guide.add_to_group("system_interactable")
 	guide.set_meta("system_hunter_exam_tower_guide", true)
 	guide.set_meta("system_display_name", "مرشد نقابة الصيادين")
-	guide.set_meta("system_interaction_prompt", "مرشد النقابة: اكتشف مدخل الاختبار السري داخل مطعم برج التسوق")
+	guide.set_meta("system_interaction_prompt", "مرشد النقابة: اتبعني إلى نفق المنافسة")
 	guide.position = Vector3(-radius * 0.62, 0.0, center_z + 9.0)
 	guide.collision_layer = 1
 	guide.collision_mask = 0
