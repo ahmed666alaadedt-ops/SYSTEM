@@ -66,6 +66,7 @@ func _run() -> void:
 		{"floor": 81, "technique": "HATSU", "rank": 5}
 	]
 	var training_index := 1
+	var stage_index := 0
 	for stage in training_stages:
 		for session in range(3):
 			var training_id := "pt_nen_%02d" % training_index
@@ -74,6 +75,9 @@ func _run() -> void:
 			var expected_rank := int(stage["rank"]) if session == 2 or int(stage["rank"]) == 1 else int(stage["rank"]) - 1
 			assert(int(training_result.get("nen_control_rank", 0)) == expected_rank)
 			training_index += 1
+		if stage_index == 0:
+			assert(not bool(manager.call("train_player_nen", "pt_nen_skip_stage", 41, "REN").get("success", false)))
+		stage_index += 1
 	var nen_status: Dictionary = progression.call("get_power_tower_nen_training_status")
 	assert(bool(nen_status.get("nen_unlocked", false)))
 	assert(int(nen_status.get("nen_control_rank", 0)) == 5)
