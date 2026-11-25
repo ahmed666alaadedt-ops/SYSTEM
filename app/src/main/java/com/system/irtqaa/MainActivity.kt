@@ -229,6 +229,26 @@ fun SystemApp(account: SystemFirebaseAccount) {
                                 }
                             }
 
+                            Button(
+                                onClick = {
+                                    val worldIntent = SystemGodotRuntimeContract.createWorldIntent(
+                                        context,
+                                        SystemGodotActivity::class.java,
+                                        SystemGodotRuntimeContract.WorldRequest(
+                                            worldId = SystemGodotRuntimeContract.WorldId.MODERN,
+                                            accountUid = userId
+                                        )
+                                    )
+                                    context.startActivity(
+                                        worldIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    )
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("دخول العالم ثلاثي الأبعاد", fontWeight = FontWeight.Bold)
+                            }
+
                             Spacer(Modifier.height(16.dp))
                         }
 
