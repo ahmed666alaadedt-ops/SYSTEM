@@ -663,11 +663,13 @@ func settle_spectator_match(match_id: String, winner_id: String, settlement_sour
 		house_revenue = int(floor(float(losing_pool) * float(HOUSE_REVENUE_BPS) / 10000.0))
 		fighter_reward = int(floor(float(losing_pool) * float(WINNING_FIGHTER_REWARD_BPS) / 10000.0))
 		bettor_profit_pool = losing_pool - house_revenue - fighter_reward
+		var distributed_bettor_bonus := 0
 		for index in range(winning_ids.size()):
 			var spectator_id := winning_ids[index]
 			var prediction: Dictionary = predictions[spectator_id]
 			var stake := int(prediction.get("stake_amount", 0))
-			var bonus := bettor_profit_pool - (total_paid_out - winning_stake) if index == winning_ids.size() - 1 else int(floor(float(bettor_profit_pool) * float(stake) / float(winning_stake)))
+			var bonus := bettor_profit_pool - distributed_bettor_bonus if index == winning_ids.size() - 1 else int(floor(float(bettor_profit_pool) * float(stake) / float(winning_stake)))
+			distributed_bettor_bonus += bonus
 			var payout := stake + bonus
 			if payout > 0:
 				if str(prediction.get("participant_type", "PLAYER")) == "NPC":
