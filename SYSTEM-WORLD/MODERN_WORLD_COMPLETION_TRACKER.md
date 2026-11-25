@@ -2023,7 +2023,8 @@ Feature HEAD at audit update: `f2522b6a3cf603e3aa13ee1bd17ee0ee9e7fba99`.
 - [x] Commit `b59d746bedc45a90621cab803b4ca408de54e36a`: Firebase marketplace Firestore rules emulator and Cloud Functions TypeScript build both completed successfully (workflow `45570202696`).
 - [x] Commit `b59d746bedc45a90621cab803b4ca408de54e36a`: explicit `Vector3` typing correction committed in `validate_baghdad_towers.gd` to resolve the prior inferred-type parser failure. A fresh comprehensive Godot workflow was triggered; do not count the dedicated helicopter takeoff assertion as passed until its specific validator step is observed.
 - [ ] Exact-commit comprehensive tower operations validation on `b59d746` is still running through advertising/NPC commerce/Power Tower, hotel, shopping showcase, and Hunter competition checks.
-- [ ] Exact-commit canonical Android APK and native App Shell builds are still running; do not mark artifacts available until upload steps finish.
+- [x] Exact-commit canonical Android APK build/export completed successfully (workflow `45570202710`); artifact `SYSTEM-WORLD-canonical-android-debug-apk` ID `15000764848`, SHA-256 `07880fef95b9d99e0c47acf90cdb31bbd82a6846db9b2c82f251885d30816a79`.
+- [x] Exact-commit native Android App Shell build and APK upload completed successfully (workflow `45570202819`); artifact `SYSTEM-native-android-debug-apk` ID `15001409347`, SHA-256 `ff0e6256f64e498ed3a124d026982d1f69944e0d63857455d70960628b1a8b71`.
 - [ ] Renderer `mesh_get_surface_count` / `Parameter "m" is null` warnings remain an open issue unless a fresh log proves they are resolved. The null-MeshInstance/MultiMesh diagnostic passing does not prove renderer warnings are fixed.
 - [ ] Player-to-player marketplace remains unproven in a real two-account Android round trip; successful TypeScript and Firestore rules tests are not live transaction settlement.
 - PR #38 remains draft and unmerged; no changes merged to `main`.
