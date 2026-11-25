@@ -336,7 +336,7 @@ func complete_power_tower_nen_training(training_id: String, floor_number: int, t
 		nen_control_rank = 1
 	power_tower_nen_training_sessions += 1
 	power_tower_nen_training_ids.append(normalized_id)
-	var earned_rank := 1 + int(power_tower_nen_training_sessions / 3)
+	var earned_rank := 1 + int((power_tower_nen_training_sessions - 1) / 3)
 	nen_control_rank = clampi(maxi(nen_control_rank, earned_rank), 1, floor_rank_cap)
 	if floor_rank_cap > 1:
 		nen_control_rank = mini(nen_control_rank, floor_rank_cap)
