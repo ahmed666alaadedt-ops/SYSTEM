@@ -57,6 +57,7 @@ class SystemMarketplaceGodotBridgeHandler(
                             .put("currency", listing.currency)
                             .put("sellerId", listing.sellerId)
                             .put("sellerName", listing.sellerName)
+                            .put("isSeller", listing.isSeller)
                     }))
                 })
             }
@@ -89,6 +90,7 @@ class SystemMarketplaceGodotBridgeHandler(
                             .put("condition", auction.condition)
                             .put("sellerId", auction.sellerId)
                             .put("sellerName", auction.sellerName)
+                            .put("isSeller", auction.isSeller)
                             .put("startingBid", auction.startingBid)
                             .put("highestBid", auction.highestBid)
                             .put("highestBidderName", auction.highestBidderName)
