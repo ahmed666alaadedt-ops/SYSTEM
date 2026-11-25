@@ -2025,6 +2025,6 @@ Feature HEAD at audit update: `f2522b6a3cf603e3aa13ee1bd17ee0ee9e7fba99`.
 - [ ] Exact-commit comprehensive tower operations validation on `b59d746` is still running through advertising/NPC commerce/Power Tower, hotel, shopping showcase, and Hunter competition checks.
 - [x] Exact-commit canonical Android APK build/export completed successfully (workflow `45570202710`); artifact `SYSTEM-WORLD-canonical-android-debug-apk` ID `15000764848`, SHA-256 `07880fef95b9d99e0c47acf90cdb31bbd82a6846db9b2c82f251885d30816a79`.
 - [x] Exact-commit native Android App Shell build and APK upload completed successfully (workflow `45570202819`); artifact `SYSTEM-native-android-debug-apk` ID `15001409347`, SHA-256 `ff0e6256f64e498ed3a124d026982d1f69944e0d63857455d70960628b1a8b71`.
-- [ ] Renderer `mesh_get_surface_count` / `Parameter "m" is null` warnings remain an open issue unless a fresh log proves they are resolved. The null-MeshInstance/MultiMesh diagnostic passing does not prove renderer warnings are fixed.
+- [ ] Renderer `mesh_get_surface_count` / `Parameter "m" is null` warnings remain an open issue: the canonical runtime log for `b59d746` (job `139054661380`) contains 46,622 occurrences. The null-MeshInstance/MultiMesh diagnostic passing does not prove renderer warnings are fixed.
 - [ ] Player-to-player marketplace remains unproven in a real two-account Android round trip; successful TypeScript and Firestore rules tests are not live transaction settlement.
 - PR #38 remains draft and unmerged; no changes merged to `main`.
