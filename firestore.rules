@@ -83,6 +83,44 @@ service cloud.firestore {
       }
     }
 
+    // محافظ SYSTEM الافتراضية: قراءة المالك فقط، والكتابة عبر Cloud Functions حصراً.
+    match /systemWallets/{uid} {
+      allow get: if isOwner(uid);
+      allow list, create, update, delete: if false;
+    }
+
+    // سجل ملكية القطع الأثرية: لا يستطيع العميل إنشاء أو نقل أو حذف ملكية.
+    match /artifactOwnership/{uid}/items/{artifactId} {
+      allow get, list: if isOwner(uid);
+      allow create, update, delete: if false;
+    }
+
+    // العروض النشطة عامة للاعبين المسجلين، وكل التغييرات عبر Cloud Functions.
+    match /marketplaceListings/{listingId} {
+      allow get, list: if signedIn()
+                       && resource.data.status == 'active';
+      allow create, update, delete: if false;
+    }
+
+    // سجل الصفقات لا يراه إلا طرفا الصفقة.
+    match /marketplaceTransactions/{transactionId} {
+      allow get, list: if signedIn()
+                       && (resource.data.buyerId == request.auth.uid
+                           || resource.data.sellerId == request.auth.uid);
+      allow create, update, delete: if false;
+    }
+
+    // سجلات التدقيق ومعرّفات القطع العالمية داخلية بالكامل.
+    match /marketplaceAudit/{recordId} {
+      allow read, write: if false;
+    }
+    match /artifactOwnershipAudit/{artifactId} {
+      allow read, write: if false;
+    }
+    match /artifactRegistry/{artifactId} {
+      allow read, write: if false;
+    }
+
     // الرسائل العالمية
     match /globalMessages/{messageId} {
       allow get, list: if signedIn()
