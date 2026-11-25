@@ -119,6 +119,16 @@ func receive_android_message(raw_message: String) -> bool:
 			_last_error = ""
 			_publish_status()
 			return true
+		"marketplace_result":
+			var request_id := str(message.get("request_id", "")).strip_edges()
+			if request_id.is_empty() or request_id.length() > 128:
+				_last_error = "MARKETPLACE_RESPONSE_ID_INVALID"
+				_publish_status()
+				return false
+			marketplace_result_received.emit(request_id, payload)
+			_last_error = "" if bool(payload.get("success", false)) else str(payload.get("error", "MARKETPLACE_REQUEST_FAILED"))
+			_publish_status()
+			return true
 
 	return false
 
@@ -224,6 +234,8 @@ func _send_to_android(message_type: String, payload: Dictionary, request_id: Str
 		"type": message_type,
 		"payload": payload
 	}
+	if not request_id.is_empty():
+		envelope["request_id"] = request_id
 	var raw_message := JSON.stringify(envelope)
 	if raw_message.length() <= 16384:
 		_native_host.call("send_to_android", raw_message)
