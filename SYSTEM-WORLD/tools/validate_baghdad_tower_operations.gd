@@ -819,6 +819,14 @@ func _run() -> void:
 	helicopter_node.position = parked_position
 	helicopter_node.rotation = parked_rotation
 	helipad.call("_save_parked_state")
+	if not helipad.has_method("_get_ground_landing_height"):
+		_fail("Hunter helicopter high-altitude landing surface query is missing.")
+		return
+	var high_altitude_ground: Variant = helipad.call("_get_ground_landing_height", helicopter_node.global_position + Vector3.UP * 150.0)
+	if high_altitude_ground == null:
+		_fail("Hunter helicopter could not detect the landing surface from 150 m above the pad.")
+		return
+	print("QA TRACE: helicopter landing surface detection passed from 150 m above the pad.")
 	var rotor_test_position := helicopter_node.global_position + Vector3.UP * 100.0
 	var rotor_obstacle := StaticBody3D.new()
 	var rotor_obstacle_shape := CollisionShape3D.new()
