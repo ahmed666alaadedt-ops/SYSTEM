@@ -74,13 +74,11 @@ func get_nen_stage_for_floor(floor_number: int) -> Dictionary:
 func get_combat_styles_for_floor(floor_number: int) -> Array:
 	if floor_number < 1 or floor_number > FLOOR_COUNT:
 		return []
-	var styles := COMBAT_STYLES.duplicate()
-	if floor_number >= 101:
-		styles = ["NEN_TECHNIQUES", "UNARMED_HAND_TO_HAND"]
-	elif floor_number >= 81:
-		styles.erase("BOW_AND_ARROW")
-		styles.erase("TRADITIONAL_MELEE")
-	return styles
+	if floor_number >= 81:
+		return ["NEN_TECHNIQUES", "UNARMED_HAND_TO_HAND"]
+	if floor_number >= 41:
+		return ["UNARMED_HAND_TO_HAND", "KUNG_FU", "MARTIAL_ARTS", "TRADITIONAL_MELEE", "BOW_AND_ARROW", "NEN_TECHNIQUES"]
+	return ["UNARMED_HAND_TO_HAND", "KUNG_FU", "MARTIAL_ARTS", "TRADITIONAL_MELEE", "BOW_AND_ARROW"]
 
 func configure_player_progression(progression_node: Node) -> void:
 	player_progression = progression_node
