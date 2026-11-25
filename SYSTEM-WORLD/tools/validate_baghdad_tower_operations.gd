@@ -205,7 +205,7 @@ func _run() -> void:
 		"hunter_association_tower_baghdad": 8,
 		"business_investment_tower_baghdad": 8,
 		"shopping_tower_baghdad": 9,
-		"antiques_heritage_tower_baghdad": 8,
+		"antiques_heritage_tower_baghdad": 9,
 		"technology_tower_baghdad": 8
 	}
 	var expected_facade_floors := {
