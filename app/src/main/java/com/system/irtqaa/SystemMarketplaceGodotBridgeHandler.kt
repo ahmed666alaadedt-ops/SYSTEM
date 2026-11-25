@@ -75,7 +75,7 @@ class SystemMarketplaceGodotBridgeHandler(
                 respond(id, it.map { JSONObject().put("expired", true) })
             }
             "trade_history" -> repository.loadTradeHistory { result ->
-                respond(id, result.map { rows -> JSONObject().put("transactions", JSONArray(rows.map(::JSONObject))) })
+                respond(id, result.map { rows -> JSONObject().put("transactions", JSONArray(rows.map { JSONObject(it) })) })
             }
             "browse_auctions" -> repository.browseAuctions { result ->
                 respond(id, result.map { auctions ->
@@ -107,7 +107,7 @@ class SystemMarketplaceGodotBridgeHandler(
                 payload.optLong("amount")
             ) { respond(id, it.map { JSONObject().put("accepted", true) }) }
             "auction_bids" -> repository.loadAuctionBids(payload.optString("auctionId")) {
-                respond(id, it.map { bids -> JSONObject().put("bids", JSONArray(bids.map(::JSONObject))) })
+                respond(id, it.map { bids -> JSONObject().put("bids", JSONArray(bids.map { JSONObject(it) })) })
             }
             "settle_auction" -> repository.settleAuction(payload.optString("auctionId")) {
                 respond(id, it.map { JSONObject().put("settled", true) })
@@ -117,9 +117,11 @@ class SystemMarketplaceGodotBridgeHandler(
             }
             "exchange_offers" -> repository.loadMyExchangeOffers { result ->
                 respond(id, result.map { offers ->
+                    val sent = offers["sent"] as? List<Map<String, Any?>> ?: emptyList()
+                    val received = offers["received"] as? List<Map<String, Any?>> ?: emptyList()
                     JSONObject()
-                        .put("sent", JSONArray((offers["sent"] ?: emptyList()).map(::JSONObject)))
-                        .put("received", JSONArray((offers["received"] ?: emptyList()).map(::JSONObject)))
+                        .put("sent", JSONArray(sent.map { JSONObject(it) }))
+                        .put("received", JSONArray(received.map { JSONObject(it) }))
                 })
             }
             "create_exchange_offer" -> repository.createExchangeOffer(
