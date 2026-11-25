@@ -371,7 +371,7 @@ func _run_validation() -> void:
 		helicopter_test_player.set_meta("system_hunter_rank", original_hunter_rank)
 	else:
 		helicopter_test_player.remove_meta("system_hunter_rank")
-	if not helicopter_test_player.visible or bool(helicopter_test_player.get("system_helicopter_piloting")):
+	if not helicopter_test_player.visible or bool(helicopter_test_player.get_meta("system_helicopter_piloting", false)):
 		_fail("Exiting the parked helicopter did not restore the player visibility and piloting state.")
 		return
 
