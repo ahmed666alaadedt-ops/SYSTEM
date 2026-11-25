@@ -137,6 +137,7 @@ func _run() -> void:
 	var early_floor_data: Dictionary = betting_manager.call("get_floor_data", 80)
 	var upper_floor_data: Dictionary = betting_manager.call("get_floor_data", 81)
 	assert(bool(early_floor_data.get("weapons_allowed", false)))
+	assert(early_floor_data.get("available_combat_styles", []).has("NEN_TECHNIQUES"))
 	assert(not bool(early_floor_data.get("nen_required", true)))
 	assert(not bool(upper_floor_data.get("weapons_allowed", true)))
 	assert(bool(upper_floor_data.get("nen_required", false)))
