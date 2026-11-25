@@ -412,7 +412,7 @@ func _add_boardwalk_network(parent: Node3D, material: Material) -> void:
 		[Vector3(220.0, 0.6, -220.0), Vector3(420.0, 0.6, -100.0)],
 		[hub, Vector3(160.0, 0.6, 250.0)],
 		[Vector3(160.0, 0.6, 250.0), Vector3(320.0, 0.6, 300.0)],
-		[Vector3(320.0, 0.6, 300.0), Vector3(450.0, 0.6, 350.0)],
+		[Vector3(320.0, 0.6, 300.0), Vector3(430.0, 0.6, 320.0)],
 		[inner, Vector3(-300.0, 0.6, -300.0)],
 		[Vector3(-300.0, 0.6, -300.0), Vector3(-450.0, 0.6, 100.0)]
 	]
@@ -861,7 +861,7 @@ func _build_marsh_route_markers(zone: Node3D) -> void:
 	var route_start := Vector3(marsh_entry_local.x, 0.0, marsh_entry_local.z)
 	var route_hub := Vector3.ZERO
 	var route_waypoint := Vector3(160.0, 0.0, 250.0)
-	var route_sanctuary := Vector3(450.0, 0.0, 350.0)
+	var route_sanctuary := Vector3(430.0, 0.0, 320.0)
 	for index in range(9):
 		var progress := float(index) / 8.0
 		var route_position: Vector3
@@ -877,7 +877,7 @@ func _build_marsh_route_markers(zone: Node3D) -> void:
 		marker.name = "HunterExamRouteArrow_%02d" % index
 		marker.position = marker_positions[index]
 		marker.position.y = _marsh_ground_y(marker.position.x, marker.position.z) + 0.05
-		var next_position: Vector3 = marker_positions[index + 1] if index + 1 < marker_positions.size() else Vector3(450.0, 0.0, 350.0)
+		var next_position: Vector3 = marker_positions[index + 1] if index + 1 < marker_positions.size() else Vector3(430.0, 0.0, 320.0)
 		zone.add_child(marker)
 		marker.look_at(marker.global_position + (next_position - marker_positions[index]), Vector3.UP)
 		marker.set_meta("system_route_marker", true)
@@ -944,7 +944,7 @@ func _on_wrong_route_hazard_entered(body: Node3D, hazard: Area3D) -> void:
 func _build_hidden_heritage_gates(zone: Node3D) -> void:
 	var sanctuary := Node3D.new()
 	sanctuary.name = "HiddenMarshAncientSanctuary"
-	sanctuary.position = Vector3(450.0, _marsh_ground_y(450.0, 350.0), 350.0)
+	sanctuary.position = Vector3(430.0, _marsh_ground_y(430.0, 320.0), 320.0)
 	sanctuary.set_meta("system_hidden_ancient_site", true)
 	sanctuary.set_meta("system_hunter_exam_final_discovery", true)
 	sanctuary.set_meta("system_star_gate_hub", true)
