@@ -2802,7 +2802,7 @@ func _is_hotel_room_available(room_id: String) -> bool:
 		return true
 	var status := str(booking.get("status", ""))
 	if status == "ready":
-		return true
+		return bool(booking.get("inspection_passed", false))
 	var checkout_unix := int(booking.get("check_out_unix", 0))
 	if status in ["reserved", "checked_in"] and checkout_unix > 0 and checkout_unix <= int(Time.get_unix_time_from_system()):
 		booking["guest_id"] = ""
@@ -3071,6 +3071,9 @@ func _check_in_hotel_room() -> void:
 	if booking.is_empty():
 		_set_status("لا يوجد حجز نشط لتسجيل الدخول.")
 		return
+	if int(booking.get("check_in_unix", 0)) > 0:
+		_set_status("تم تسجيل الدخول إلى هذه الغرفة بالفعل.")
+		return
 	var room_id := str(booking.get("room_id", ""))
 	if not hotel_bookings.has(room_id):
 		return
@@ -3089,26 +3092,43 @@ func _checkout_hotel_room() -> void:
 		_set_status("لا يوجد حجز نشط لتسجيل الخروج.")
 		return
 	var room_id := str(booking.get("room_id", ""))
-	var checkout_unix := int(booking.get("check_out_unix", 0))
-	var remaining_seconds := maxi(0, checkout_unix - int(Time.get_unix_time_from_system()))
-	var remaining_nights := mini(int(booking.get("nights", 0)), int(ceil(float(remaining_seconds) / 86400.0)))
-	var refund := remaining_nights * int(booking.get("nightly_rate", 0))
-	credits += refund
+	var now := int(Time.get_unix_time_from_system())
+	var booked_nights := clampi(int(booking.get("nights", 1)), 1, 7)
+	var nightly_rate := maxi(0, int(booking.get("nightly_rate", 0)))
+	var check_in_unix := int(booking.get("check_in_unix", 0))
+	var was_checked_in := check_in_unix > 0
+	var refund := booked_nights * nightly_rate
 	var released_room: Dictionary = hotel_bookings.get(room_id, {}).duplicate(true)
 	released_room["guest_id"] = ""
 	released_room["check_in_unix"] = 0
 	released_room["check_out_unix"] = 0
-	released_room["status"] = "needs_cleaning"
-	released_room["housekeeping_started_unix"] = 0
-	released_room["housekeeping_completed_unix"] = 0
-	released_room["inspection_passed"] = false
+	if was_checked_in:
+		# Once a guest checks in, at least the first night is consumed.
+		var elapsed_seconds := maxi(0, now - check_in_unix)
+		var used_nights := clampi(maxi(1, int(ceil(float(elapsed_seconds) / 86400.0))), 1, booked_nights)
+		var unused_nights := maxi(0, booked_nights - used_nights)
+		refund = unused_nights * nightly_rate
+		released_room["status"] = "needs_cleaning"
+		released_room["housekeeping_started_unix"] = 0
+		released_room["housekeeping_completed_unix"] = 0
+		released_room["inspection_passed"] = false
+	else:
+		# Cancelling before check-in refunds the stay and does not dirty the room.
+		released_room["status"] = "ready"
+		released_room["housekeeping_started_unix"] = 0
+		released_room["housekeeping_completed_unix"] = now
+		released_room["inspection_unix"] = now
+		released_room["inspection_passed"] = true
+	credits += refund
 	hotel_bookings[room_id] = released_room
 	_save_hotel_bookings()
 	_save_wallet()
 	credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
-	_set_status("تم تسجيل الخروج. أُعيد إلى رصيدك %d عن الليالي غير المستخدمة. الغرفة الآن بانتظار فريق التنظيف والفحص." % refund)
+	if was_checked_in:
+		_set_status("تم تسجيل الخروج. أُعيد إلى رصيدك %d عن الليالي غير المستخدمة. الغرفة الآن بانتظار فريق التنظيف والفحص." % refund)
+	else:
+		_set_status("تم إلغاء الحجز قبل تسجيل الدخول وإعادة كامل المبلغ: %d رصيد SYSTEM. الغرفة جاهزة للحجز." % refund)
 	_add_hotel_controls()
-
 
 func _start_hotel_room_cleaning(room_id: String) -> void:
 	if not hotel_bookings.has(room_id):
