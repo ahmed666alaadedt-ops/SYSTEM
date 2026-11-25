@@ -265,10 +265,10 @@ func _run() -> void:
 	var signature_nodes := {
 		"hunter_association_tower_baghdad": ["HunterXSXEmblemPlaque_00", "HunterXSXEmblemPlaque_01", "HunterXSXEmblemPlaque_02", "HunterXSXEmblemPlaque_03"],
 		"business_investment_tower_baghdad": ["BusinessCapitalSpire", "BusinessCapitalRing_00", "BusinessCapitalRing_01", "BusinessCapitalRing_02", "BusinessInvestmentSign"],
-		"shopping_tower_baghdad": ["RetailGalleryRing_00", "RetailGalleryRing_01", "RetailGalleryRing_02", "ShoppingAtriumSign", "ShoppingTowerWeaponBlade_-1.0", "ShoppingTowerWeaponBlade_1.0", "ShoppingTowerElixirBeacon"],
-		"antiques_heritage_tower_baghdad": ["HeritageMuseumPodium", "HeritageMuseumEntranceCanopy", "HeritageGalleryWing_-1.0", "HeritageGalleryWing_1.0", "HeritageGalleryColumn_-1.0", "HeritageGalleryColumn_1.0", "HeritageArchiveCrown"],
+		"shopping_tower_baghdad": ["RetailGalleryRing_00", "RetailGalleryRing_01", "RetailGalleryRing_02", "ShoppingAtriumSign", "ShoppingTowerWeaponBlade_left", "ShoppingTowerWeaponBlade_right", "ShoppingTowerElixirBeacon"],
+		"antiques_heritage_tower_baghdad": ["HeritageMuseumPodium", "HeritageMuseumEntranceCanopy", "HeritageGalleryWing_left", "HeritageGalleryWing_right", "HeritageGalleryColumn_left", "HeritageGalleryColumn_right", "HeritageArchiveCrown"],
 		"technology_tower_baghdad": ["InnovationAntenna_00", "InnovationAntenna_01", "InnovationAntenna_02", "InnovationLabSkyRibbon"],
-		"power_tower_baghdad": ["TournamentBlade_-1.0", "TournamentBlade_1.0", "PowerTowerChampionCrown"]
+		"power_tower_baghdad": ["TournamentBlade_left", "TournamentBlade_right", "PowerTowerChampionCrown"]
 	}
 	for signature_tower_id in signature_nodes.keys():
 		var signature_tower := tower_manager.get_node_or_null(str(NODE_NAMES[signature_tower_id])) as Node3D
