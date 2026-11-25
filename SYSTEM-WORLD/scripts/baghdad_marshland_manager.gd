@@ -381,7 +381,7 @@ func _add_marsh_trees(parent: Node3D, trunk_material: Material, canopy_material:
 	canopies.instance_count = 160
 	for index in range(160):
 		var angle := TAU * float(index) / 160.0
-		var radial := rng.randf_range(0.62, 0.90)
+		var radial := rng.randf_range(0.82, 0.96)
 		var x := cos(angle) * MARSH_RADIUS_X * radial
 		var z := sin(angle) * MARSH_RADIUS_Z * radial
 		var ground_y := _marsh_ground_y(x, z)
