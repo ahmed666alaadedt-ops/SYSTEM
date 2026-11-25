@@ -2484,9 +2484,11 @@ func _run() -> void:
 		_fail("NPC weapon upgrade service did not apply the first equipment upgrade.")
 		return
 	pilot_progression.call("equip_item", "training_sword")
+	var weapon_damage_bonus_before_break := float(pilot_progression.call("get_combat_damage_bonus"))
 	pilot_progression.call("consume_equipment_durability", "weapon", 100.0)
-	if float(pilot_progression.call("get_item_durability", "training_sword")) > 0.0 or float(pilot_progression.call("get_combat_damage_bonus")) > 0.0:
-		_fail("Broken weapon durability did not disable its equipment damage bonus.")
+	var weapon_damage_bonus_after_break := float(pilot_progression.call("get_combat_damage_bonus"))
+	if float(pilot_progression.call("get_item_durability", "training_sword")) > 0.0 or weapon_damage_bonus_after_break >= weapon_damage_bonus_before_break:
+		_fail("Broken weapon durability did not remove the weapon bonus while preserving unrelated Nen bonuses.")
 		return
 	pilot_progression.call("add_item", "repair_kit", 1)
 	var repair_result: Dictionary = pilot_progression.call("repair_item", "training_sword")
