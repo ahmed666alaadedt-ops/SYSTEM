@@ -67,6 +67,13 @@ func select_power_tower_combat_style(style_id: String, allowed_styles: Array = [
 func perform_selected_power_tower_attack() -> Dictionary:
 	if not is_instance_valid(actor):
 		return {"success": false, "reason": "COMBAT_ACTOR_UNAVAILABLE"}
+	var operations := get_tree().root.find_child("BaghdadTowerOperationsManager", true, false)
+	if operations != null and bool(operations.get("power_floor_in_progress")):
+		var active_data: Dictionary = operations.get("active_power_floor_data")
+		var allowed_styles: Array = active_data.get("available_combat_styles", [])
+		var style_check: Dictionary = select_power_tower_combat_style(selected_power_tower_combat_style, allowed_styles)
+		if not bool(style_check.get("success", false)):
+			return style_check
 	match selected_power_tower_combat_style:
 		"UNARMED_HAND_TO_HAND":
 			await light_attack()
