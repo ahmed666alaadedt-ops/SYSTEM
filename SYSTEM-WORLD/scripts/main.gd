@@ -1600,7 +1600,10 @@ func _on_mobile_attack_pressed() -> void:
 	if vehicle_runtime_manager != null and vehicle_runtime_manager.is_driving:
 		return
 	if is_instance_valid(modern_world_combat_system):
-		modern_world_combat_system.call("light_attack")
+		if tower_operations_manager != null and bool(tower_operations_manager.get("power_floor_in_progress")):
+			modern_world_combat_system.call("perform_selected_power_tower_attack")
+		else:
+			modern_world_combat_system.call("light_attack")
 
 
 func _on_mobile_skill_one_pressed() -> void:
