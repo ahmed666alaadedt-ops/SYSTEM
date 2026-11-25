@@ -1974,3 +1974,10 @@ Feature HEAD at audit update: `f2522b6a3cf603e3aa13ee1bd17ee0ee9e7fba99`.
 - Canonical Android APK export: success.
 - Godot comprehensive validation: queued behind an earlier comprehensive run; no exact-HEAD Godot pass is claimed.
 - PR #38 remains draft and unmerged. No changes merged to `main`.
+
+
+### Public event/champion display routing correction — 25 November 2026
+- [x] Found that `system_public_event_board.gd` still mapped the retired `entertainment_tower_baghdad` ID to the old `EntertainmentTower` node. Since the tower positions now expose `antiques_heritage_tower_baghdad`, the Antiques and Heritage Tower was skipped by this event-board display loop.
+- [x] Replaced that stale mapping with `antiques_heritage_tower_baghdad` → `AntiquesHeritageTower`, so its advertising/champion display surfaces are addressed using the canonical fourth tower identity.
+- [x] Added an authoritative correction section to `HUNTER_TOWERS_AND_EXAMINATION_DESIGN.md`: Business and Investment remains; weapons/elixirs remain Shopping Tower departments; Antiques and Heritage is tower four; recreation stays independent; Power Tower stays standalone.
+- [ ] Exact-HEAD Godot validation of the public event-board tower display routing is pending.
