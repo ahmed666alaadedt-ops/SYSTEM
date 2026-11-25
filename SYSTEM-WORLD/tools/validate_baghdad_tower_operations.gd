@@ -59,6 +59,37 @@ func _run() -> void:
 		_fail("Player character was not initialized for tower operations validation.")
 		return
 
+	# Verify the two map assets that were previously only generic/blockout landmarks.
+	var landmarks := main.find_child("BaghdadTowerLandmarksManager", true, false) as Node3D
+	if landmarks == null:
+		_fail("BaghdadTowerLandmarksManager is missing.")
+		return
+	var antiques_tower := landmarks.get_node_or_null("AntiquesHeritageTower") as Node3D
+	var antiques_architecture := antiques_tower.get_node_or_null("AntiquesHeritageArchitecturalIdentity") as Node3D if antiques_tower != null else null
+	if antiques_architecture == null or not bool(antiques_tower.get_meta("system_antiques_architecture_ready", false)):
+		_fail("Antiques Tower is missing its dedicated heritage architecture identity.")
+		return
+	for required_architecture_node in ["MuseumHeritagePier_00", "MuseumHeritagePier_01", "MuseumHeritagePier_02", "MuseumHeritagePier_03", "MuseumGlassBay_00", "MuseumGlassBay_01", "MuseumGlassBay_02", "MuseumGlassBay_03", "MuseumHeritageTerraceBelt_00", "MuseumZigguratCrownTier_00", "MuseumZigguratCrownTier_01", "MuseumZigguratCrownTier_02", "MuseumEntranceCanopy", "MuseumMainEntranceSign"]:
+		if antiques_architecture.get_node_or_null(required_architecture_node) == null:
+			_fail("Antiques Tower architectural identity is missing: " + required_architecture_node)
+			return
+	if int(antiques_tower.get_meta("tower_floor_count", 0)) != 34:
+		_fail("Antiques Tower must remain a 34-floor member of the five-tower district.")
+		return
+
+	var shopping_tower := landmarks.get_node_or_null("ShoppingTower") as Node3D
+	var hotel_exterior := shopping_tower.get_node_or_null("SYSTEMHotelExterior") as Node3D if shopping_tower != null else null
+	if hotel_exterior == null or not bool(hotel_exterior.get_meta("system_hotel_visual_identity_ready", false)):
+		_fail("SYSTEM Hotel is missing its visible exterior identity inside Shopping Tower.")
+		return
+	if int(hotel_exterior.get_meta("system_hotel_floor_start", 0)) != 27 or int(hotel_exterior.get_meta("system_hotel_floor_end", 0)) != 28:
+		_fail("SYSTEM Hotel exterior is not aligned with its approved floors 27–28.")
+		return
+	for required_hotel_node in ["HotelGlassAtrium", "HotelSkyTerraceRing", "HotelFacadeFin_00", "HotelFacadeFin_07", "SYSTEMGrandHotelExteriorSign", "HotelWayfindingDirectory"]:
+		if hotel_exterior.get_node_or_null(required_hotel_node) == null:
+			_fail("SYSTEM Hotel exterior is missing: " + required_hotel_node)
+			return
+
 	# Museum acceptance: generate representative floors across every approved department
 	# and verify that each exhibit is named, uniquely identified and physically interactable.
 	# Validate every one of the 34 floors, not only representative samples.
