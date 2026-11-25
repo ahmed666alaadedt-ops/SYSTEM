@@ -431,7 +431,7 @@ func _add_boardwalk_network(parent: Node3D, material: Material) -> void:
 		deck.position = midpoint
 		deck.material_override = material
 		parent.add_child(deck)
-		deck.look_at(finish, Vector3.UP)
+		deck.look_at(deck.global_position + delta, Vector3.UP)
 		var body := StaticBody3D.new()
 		body.name = "MarshBoardwalkCollision_%02d" % index
 		body.position = deck.position
