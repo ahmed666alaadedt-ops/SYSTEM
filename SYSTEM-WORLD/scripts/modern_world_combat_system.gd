@@ -38,6 +38,11 @@ func select_power_tower_combat_style(style_id: String, allowed_styles: Array = [
 	var progression_node := _get_progression()
 	var slots: Dictionary = progression_node.get("equipment_slots") if progression_node != null else {}
 	var equipped_weapon := str(slots.get("weapon", ""))
+	var nen_only_selection := allowed.size() == 2 and allowed.has("NEN_TECHNIQUES") and allowed.has("UNARMED_HAND_TO_HAND")
+	if nen_only_selection and (progression_node == null or not bool(progression_node.get("nen_unlocked")) or int(progression_node.get("nen_control_rank")) < 5):
+		return {"success": false, "reason": "NEN_MASTERY_RANK_FIVE_REQUIRED"}
+	if nen_only_selection and not equipped_weapon.is_empty():
+		return {"success": false, "reason": "NEN_ONLY_FLOOR_REQUIRES_UNARMED_COMBAT"}
 	match normalized_style:
 		"TRADITIONAL_MELEE":
 			if equipped_weapon not in ["training_sword", "combat_knife", "steel_sword", "hunter_spear", "battle_axe", "long_sword", "great_sword", "war_hammer", "dual_blades"]:
