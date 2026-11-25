@@ -289,7 +289,7 @@ func _add_segment_box(parent: Node3D, node_name: String, local_position: Vector3
 func _add_water_collision(parent: Node3D, position: Vector3, radius_x: float, radius_z: float, index: int) -> void:
 	var area := Area3D.new()
 	area.name = "MarshWaterArea_%02d" % index
-	area.position = position
+	area.position = position + Vector3(0.0, 0.21, 0.0)
 	area.collision_layer = 0
 	area.collision_mask = 1
 	area.monitoring = true
@@ -299,7 +299,7 @@ func _add_water_collision(parent: Node3D, position: Vector3, radius_x: float, ra
 	area.set_meta("system_swimmable", true)
 	var shape := CollisionShape3D.new()
 	var points := PackedVector3Array()
-	for layer in [-0.6, 0.6]:
+	for layer in [-1.1, 0.0]:
 		for point_index in range(24):
 			var angle := TAU * float(point_index) / 24.0
 			points.append(Vector3(cos(angle) * radius_x, float(layer), sin(angle) * radius_z))
@@ -456,7 +456,7 @@ func _add_boardwalk_network(parent: Node3D, material: Material) -> void:
 func _on_marsh_water_body_entered(body: Node3D, water_area: Area3D) -> void:
 	if body == null or not is_instance_valid(body) or not body.is_in_group("system_player"):
 		return
-	var surface_y := water_area.global_position.y + 0.21
+	var surface_y := water_area.global_position.y
 	var active_zones: Dictionary = body.get_meta("system_public_leisure_water_zones", {}).duplicate()
 	active_zones[str(water_area.get_instance_id())] = {
 		"type": "marsh_shallow",
