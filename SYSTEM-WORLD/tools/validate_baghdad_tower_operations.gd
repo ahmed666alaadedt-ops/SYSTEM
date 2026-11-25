@@ -451,7 +451,17 @@ func _run() -> void:
 	for market_child in operations.get("content").get_children():
 		if market_child is Button:
 			market_actions.append(str((market_child as Button).text))
-	for required_market_action in ["عرض سوق اللاعبين", "عرض مزادات التحف", "عرض مجموعتي", "رصيد ومحجوزات SYSTEM"]:
+	for required_market_action in [
+		"تصفح عروض اللاعبين",
+		"مقتنياتي الأثرية — اختر قطعة للبيع",
+		"عرض القطعة المختارة بالسعر المحدد",
+		"إنشاء مزاد للقطعة المختارة",
+		"مشاهدة المزادات",
+		"تقديم المزايدة المحددة",
+		"عروض التبادل بين اللاعبين",
+		"سجل صفقاتي ومبيعاتي",
+		"تحديث محفظة SYSTEM"
+	]:
 		if required_market_action not in market_actions:
 			_fail("Antiques Tower player market is missing its online action: " + required_market_action)
 			return
