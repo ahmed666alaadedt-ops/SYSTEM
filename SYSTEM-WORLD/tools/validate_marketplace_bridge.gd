@@ -66,7 +66,7 @@ func _run_marketplace_bridge_checks() -> void:
 		return
 
 	var status: Dictionary = bridge.call("get_bridge_status")
-	if str(status.get("last_error", "")) != "ANDROID_TRANSPORT_UNAVAILABLE":
+	if str(status.get("last_error", "")) != "ANDROID_MARKETPLACE_TRANSPORT_UNAVAILABLE":
 		push_error("Unavailable native transport was not reported accurately.")
 		quit(1)
 		return
