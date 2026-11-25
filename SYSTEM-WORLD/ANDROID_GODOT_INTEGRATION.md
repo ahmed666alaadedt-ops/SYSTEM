@@ -74,6 +74,12 @@ defines a version-1 JSON envelope for the future native adapter:
   of identity and must never authorize rewards, missions, moderation or combat.
 - `bridge_ready`, `world_state`, `world_entry_result`: Godot-to-Android
   status and navigation responses.
+- `marketplace_request`: Godot requests a wallet, owned artifacts, listings,
+  auctions, bids, exchanges or trade history from the authenticated Android
+  Firebase client. Each request carries a bounded `request_id`.
+- `marketplace_result`: Android returns the matching request ID and a
+  success/data or failure/error payload. Godot validates the ID before
+  emitting `marketplace_result_received`.
 - The parser rejects unknown protocol versions, unknown message types,
   malformed JSON and messages larger than 16 KiB.
 - Message direction allowlists are explicit. Payload fields still require
@@ -92,16 +98,33 @@ eventually added, it must register an Engine singleton named
 - Signal `message_from_android(raw_json: String)`.
 - Method `send_to_android(raw_json: String)`.
 
-Allowed Android-to-Godot messages are `open_world` and `player_context`.
-Allowed Godot-to-Android messages are `bridge_ready`, `world_state` and
-`world_entry_result`; the current engine bridge sends the latter two. Every
-envelope uses `version: 1`, a `type`, and a Dictionary `payload`.
+Allowed Android-to-Godot messages are `open_world`, `player_context` and
+`marketplace_result`. Allowed Godot-to-Android messages are `bridge_ready`,
+`world_state`, `world_entry_result` and `marketplace_request`. Marketplace
+requests and responses preserve the request ID across the round trip. Every
+envelope uses `version: 1`, a `type`, a Dictionary `payload`, and an
+optional `request_id` bounded to 128 characters.
 
 The GDScript adapter validates the version, message direction/type, JSON
 shape and 16 KiB limit. Player context is explicitly marked untrusted. It
 does not authenticate users or authorize missions, teams, rewards, moderator
 actions or game-server events. The native singleton is not present yet, so
 `transport_connected` remains false until a compatible plugin is installed.
+
+## Marketplace Android client prepared
+
+- `app/src/main/java/com/system/irtqaa/FirebaseArtifactMarketplaceRepository.kt`
+  provides authenticated callable operations for the market.
+- `app/src/main/java/com/system/irtqaa/SystemMarketplaceGodotBridgeHandler.kt`
+  dispatches the allowlisted Godot marketplace operations to that repository
+  and returns correlated JSON results.
+- `app/src/main/java/com/system/irtqaa/SystemAntiquesMarketplaceScreen.kt`
+  provides a native Android screen for direct player listings, purchases,
+  cancellations, auctions, bids, two-player exchanges and private trade history.
+- The Android app navigation includes the entry `برج التحف والآثار`.
+- These Android components compile as part of the app, but the Godot handler
+  is not yet instantiated by a native host and no live Godot-to-Android
+  transport exists until the AAR/plugin/Activity work below is completed.
 
 ## Native Android work still required
 
@@ -135,6 +158,7 @@ been generated yet.
 - [x] External direct entry is restricted to the modern starting world.
 - [x] Android-side world request Intent contract prepared.
 - [x] Optional AAR/JAR import location and Gradle discovery configured.
+- [x] Marketplace message types, request-ID correlation and Android callable handler prepared.
 - [ ] Native Android/Godot transport.
 - [ ] Godot AAR export and Gradle embedding.
 - [ ] Firebase account context adapter.
