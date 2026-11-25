@@ -39,7 +39,7 @@ func setup(terrain_node: Node, hunter_tunnel: Node3D) -> void:
 	marsh_center = Vector3(projected.x, park_ground_y, projected.z)
 	var tunnel_end_for_entry := hunter_tunnel.global_position + Vector3(0.0, 0.0, 39.0)
 	var entry_direction := Vector2(marsh_center.x - tunnel_end_for_entry.x, marsh_center.z - tunnel_end_for_entry.z).normalized()
-	marsh_entry_local = Vector3(-entry_direction.x * 900.0, 0.0, -entry_direction.y * 900.0)
+	marsh_entry_local = Vector3(-entry_direction.x * 420.0, 0.0, -entry_direction.y * 420.0)
 	global_position = Vector3.ZERO
 	name = "BaghdadMarshland_AlZawraaReplacement"
 	set_meta("system_region_id", "baghdad_marshland_al_zawraa")
@@ -811,6 +811,7 @@ func _build_hidden_heritage_gates(zone: Node3D) -> void:
 		gate.set_meta("system_gate_destination_city", str(SEASONAL_GATE_DESTINATIONS[_get_marsh_season()][gate_index]))
 		gate.set_meta("system_gate_rotation", "seasonal")
 		gate.set_meta("system_hidden_until_final_exam_discovery", true)
+		gate.visible = false
 		sanctuary.add_child(gate)
 		_build_marsh_star_gate_visual(gate, relic, gate_index)
 		var area := Area3D.new()
@@ -824,6 +825,7 @@ func _build_hidden_heritage_gates(zone: Node3D) -> void:
 		area.add_child(collision)
 		gate.add_child(area)
 		area.body_entered.connect(_on_marsh_star_gate_entered.bind(gate))
+		gate.set_meta("system_activation_area_path", area.get_path())
 
 
 func _build_marsh_star_gate_visual(gate: Node3D, material: Material, gate_index: int) -> void:
@@ -860,7 +862,12 @@ func _on_marsh_star_gate_entered(body: Node3D, gate: Node3D) -> void:
 	if not _is_hunter_exam_player(body):
 		return
 	var exam_manager := get_tree().root.find_child("SYSTEMHunterExamManager", true, false)
-	if exam_manager != null and bool(exam_manager.get("exam_active")):
+	if exam_manager == null or not bool(exam_manager.get("registered")):
+		return
+	var completed_exam_segments: Array = exam_manager.get("completed_stage_ids")
+	if not completed_exam_segments.has("baghdad_tunnel_competition"):
+		return
+	if bool(exam_manager.get("exam_active")):
 		return
 	var gate_id := int(gate.get_meta("system_gate_id", -1))
 	var season := _get_marsh_season()
