@@ -13,6 +13,10 @@ func _check(condition: bool, message: String) -> bool:
 
 
 func _run_validation() -> void:
+	var reset_exam_save := ConfigFile.new()
+	reset_exam_save.set_value("exam", "next_candidate_number", 1001)
+	if not _check(reset_exam_save.save("user://system_hunter_exam.cfg") == OK, "Could not reset the isolated Hunter marsh validation save."):
+		return
 	var packed := load("res://MainScene.tscn") as PackedScene
 	if not _check(packed != null, "MainScene could not load."):
 		return
@@ -26,9 +30,11 @@ func _run_validation() -> void:
 	var marsh := root.find_child("BaghdadMarshland_AlZawraaReplacement", true, false) as Node3D
 	var zone := root.find_child("MesopotamianMarshland", true, false) as Node3D
 	var tunnel := root.find_child("BaghdadHunterExaminationTunnel", true, false) as Node3D
+	var player := main.get("player") as CharacterBody3D
+	var exam_manager: Node = main.get("hunter_exam_manager") as Node
 	var connector := root.find_child("HunterTunnelToMarshlandPhysicalConnector", true, false) as Node3D
 	var trial_start := root.find_child("HunterMarshTrialStartTrigger", true, false) as Area3D
-	if not _check(marsh != null and zone != null and tunnel != null and connector != null and trial_start != null, "Marshland, marsh biome, Hunter tunnel or physical connector is missing."):
+	if not _check(marsh != null and zone != null and tunnel != null and connector != null and trial_start != null and player != null and exam_manager != null, "Marshland, marsh biome, Hunter tunnel or physical connector is missing."):
 		return
 	if not _check(str(marsh.get_meta("system_replaces_real_place", "")) == "Al-Zawraa Park, Baghdad", "The replacement does not identify Al-Zawraa Park."):
 		return
@@ -37,6 +43,12 @@ func _run_validation() -> void:
 	if not _check(bool(marsh.get_meta("system_hunter_tunnel_connected", false)) and bool(tunnel.get_meta("system_marshland_extension_attached", false)), "The marsh is not connected to the far end of the Hunter tunnel."):
 		return
 	if not _check(bool(connector.get_meta("system_no_teleport_or_loading_gate", false)), "The tunnel-to-marsh route is not a physical continuous passage."):
+		return
+	if not _check(trial_start.monitoring and trial_start.body_entered.get_connections().size() > 0 and is_equal_approx(trial_start.global_position.distance_to(tunnel.global_position + Vector3(0.0, 0.0, 94.0)), 0.0), "The continuous Hunter trial does not start at the open far end of the tunnel competition."):
+		return
+	if not _check(connector.get_meta("system_from", "") == "BaghdadHunterExaminationTunnel" and connector.get_meta("system_to", "") == "BaghdadMarshland_AlZawraaReplacement", "The physical passage does not connect the Hunter tunnel to the Al-Zawraa marshland."):
+		return
+	if not _check(float(marsh.get_meta("system_geographic_anchor_adjustment_m", 0.0)) <= 300.0, "The marsh anchor moved too far from the real Al-Zawraa Park coordinate."):
 		return
 	if not _check(trial_start.monitoring and trial_start.body_entered.get_connections().size() > 0, "The continuous Hunter trial does not start at the tunnel exit."):
 		return
@@ -114,6 +126,36 @@ func _run_validation() -> void:
 		return
 	marsh.call("_on_marsh_water_body_exited", test_player, first_water)
 	if not _check(not bool(test_player.get_meta("system_swimming", false)), "Leaving the final marsh water volume did not clear swimming state."):
+		return
+
+	# Verify the actual one-stage Hunter exam remains active after the tunnel section
+	# and only completes at the marsh sanctuary, then unlocks a seasonal Star Gate.
+	var invitation: Dictionary = exam_manager.call("accept_exam_invitation", "baghdad_marsh_validation")
+	if not _check(bool(invitation.get("success", false)), "Hunter exam invitation could not be accepted for the marsh integration test."):
+		return
+	var registration: Dictionary = exam_manager.call("register_candidate_at_tunnel", "baghdad_marsh_validation")
+	if not _check(bool(registration.get("success", false)), "Hunter candidate could not be registered at the tunnel."):
+		return
+	var start_result: Dictionary = exam_manager.call("begin_exam")
+	if not _check(bool(start_result.get("success", false)), "The single Hunter examination did not start."):
+		return
+	player.set_meta("system_hunter_tunnel_competition_complete", true)
+	marsh.call("_on_marsh_trial_start_entered", player)
+	if not _check(bool(player.get_meta("system_hunter_marsh_trial_started", false)) and bool(exam_manager.get("exam_active")), "The marsh section did not start after tunnel checkpoints while keeping the exam active."):
+		return
+	marsh.call("_on_marsh_final_trial_entered", player)
+	var completed_overview: Dictionary = exam_manager.call("get_exam_overview")
+	if not _check(not bool(completed_overview.get("active", true)) and completed_overview.get("completed_stages", []).has("baghdad_tunnel_competition") and bool(player.get_meta("system_hunter_marsh_trial_completed", false)), "The Hunter exam did not complete at the hidden marsh sanctuary."):
+		return
+	await process_frame
+	var first_gate := sanctuary.get_node("SeasonalMarshStarGate_00") as Node3D
+	if not _check(first_gate.visible, "The hidden Star Gates did not unlock after the successful marsh exam."):
+		return
+	var current_season := str(marsh.call("_get_marsh_season"))
+	var destination_pool: Dictionary = first_gate.get_meta("system_gate_destination_pool_by_season")
+	var expected_destination: String = str(destination_pool.get(current_season, [])[0])
+	marsh.call("_on_marsh_star_gate_entered", player, first_gate)
+	if not _check(str(player.get_meta("system_last_marsh_star_gate_destination", "")) == expected_destination, "The seasonal Star Gate did not transport the Hunter to its current city destination."):
 		return
 
 	print("Baghdad Marshland validation passed: Al-Zawraa agricultural wetland, continuous Hunter tunnel connection, eight swim-enabled pools, 1800 reeds, 56 willows, nine boardwalks, 12 deception NPCs, six giant creatures, 14 fog layers, five wrong-route hazards, hidden sanctuary and three seasonal Star Gates.")
