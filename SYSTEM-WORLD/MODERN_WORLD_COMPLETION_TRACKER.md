@@ -7,7 +7,7 @@ This current section supersedes older historical entries below that describe the
 - On acceptance, the player follows the visible Hunter Guild guide, who escorts them to the tunnel. The candidate serial is allocated and saved only on tunnel arrival, then reused on re-entry.
 - The Shopping Tower restaurant retains its independent dining, waiter, chef and meal lifecycle; it is not the current examination entrance.
 - The crowd has 500 individually tracked lightweight background candidates and five named interactive rivals. Do not describe the crowd as 500 full physics/pathfinding combat agents.
-- The Marshland remains separate and unconnected until a future explicit design update.
+- The Hunter tunnel now opens directly into the Marshland as its continuous next environment. The Marshland builder adds agricultural plots, trees, five swamp-water zones, giant turtles and large beasts, misleading resident NPCs, layered low-visibility fog banks, tracking arrows and a final gate. Exact-head runtime validation is pending.
 - Automated runtime checks on recent branch snapshots passed the Hunter invitation, guide escort, serial behavior and continuous tunnel competition. Physical Android presentation checks remain outstanding.
 - PR #38 remains draft; main is unchanged and must not be merged without explicit user approval.
 
@@ -2051,3 +2051,13 @@ Feature HEAD at audit update: `f2522b6a3cf603e3aa13ee1bd17ee0ee9e7fba99`.
 - [x] Marketplace Firestore rules emulator tests passed: 7/7. Callable marketplace transaction/emulator tests passed: 8/8 on workflow `45604503727`; includes fixed-price escrow/purchase, atomic buyer debit and seller credit, ownership transfer, self-purchase and insufficient-balance rejection, concurrent double-purchase race, cancellation/expiry, auctions, two-player exchanges, trusted reward replay protection and scheduled expiry workers.
 - [x] The TypeScript Cloud Functions build and Firestore rules compilation passed on the same workflow.
 - [ ] Still required before calling online trading live: trusted game-server claim and quest-reward source integration, production deployment/monitoring of functions and scheduled workers, and a real two-account Android device round trip. Do not deploy or merge without the user's separate approval.
+
+
+## Hunter Marshland continuation — 26 November 2026
+
+- [x] Added `scripts/system_hunter_marshland_manager.gd` and attached it directly to the existing `BaghdadHunterExaminationTunnel`; the tunnel exit overlaps the Marshland approach so the player does not load into a detached scene.
+- [x] Generated 12 agricultural plots, 28 trees, five swamp-water Area3D zones, three giant turtles, four large marsh beasts, six misleading resident NPCs, 14 layered fog banks, eight luminous tracking arrows and a final examination gate.
+- [x] Extended `tools/validate_hunter_tunnel_entry.gd` to require the direct tunnel connection and verify the key Marshland population/environment counts.
+- [ ] Exact-head Godot validation and Android APK export are pending on `feature/hunter-marshland-continuation-20261126`. Do not claim the new area is runtime-verified until the workflow completes.
+- [ ] Physical Android inspection of fog readability, tracking arrows, water/collision behavior, wildlife scale and mobile performance remains outstanding.
+- This explicit 26 November update supersedes earlier historical tracker entries saying the Marshland must remain unconnected. No changes are made to the five Baghdad tower exteriors or the separate Power Tower.
