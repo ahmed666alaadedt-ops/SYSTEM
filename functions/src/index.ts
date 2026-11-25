@@ -380,3 +380,16 @@ export {
   purchaseArtifactListing
 } from "./artifact_marketplace";
 export { awardMarketplaceCurrency } from "./marketplace_currency";
+
+export {
+  createArtifactAuction,
+  browseArtifactAuctions,
+  placeArtifactAuctionBid,
+  listArtifactAuctionBids,
+  settleExpiredArtifactAuction,
+  cancelArtifactAuction,
+  createArtifactExchangeOffer,
+  acceptArtifactExchangeOffer,
+  closeArtifactExchangeOffer,
+  listMyArtifactExchangeOffers
+} from "./artifact_marketplace_advanced";
