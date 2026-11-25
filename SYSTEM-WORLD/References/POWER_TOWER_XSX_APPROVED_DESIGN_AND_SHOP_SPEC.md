@@ -132,6 +132,7 @@ Official competitive matches remain 1v1. The floor band controls arena count, no
 
 ### Crowd and fan predictions
 - Crowd rendering target is 500: 492 shared MultiMesh LOD crowd proxies plus 8 detailed audience actors in the spectator gallery.
+- The independent tower-wide audience now instantiates eight detailed `CharacterBody3D` spectator actors with torso, head, both arms and both legs; the remaining 492 stay as lightweight MultiMesh body/head proxies. Automated tests verify all eight actor nodes and their five visible body parts.
 - The 500 stable fan NPC identities can submit virtual SYSTEM predictions for registered human 1v1 matches before the betting pool locks.
 
 ### Betting distribution
