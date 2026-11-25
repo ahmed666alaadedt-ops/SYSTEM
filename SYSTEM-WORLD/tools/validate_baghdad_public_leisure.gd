@@ -1,0 +1,85 @@
+extends SceneTree
+
+const PublicLeisureManagerScript = preload("res://scripts/system_baghdad_public_leisure_manager.gd")
+
+
+func _initialize() -> void:
+	call_deferred("_run_validation")
+
+
+func _run_validation() -> void:
+	var district := Node3D.new()
+	district.set_script(PublicLeisureManagerScript)
+	root.add_child(district)
+	await process_frame
+	await process_frame
+
+	if not bool(district.get_meta("system_public_leisure_runtime_ready", false)):
+		_fail("Independent Baghdad public leisure manager did not initialize.")
+		return
+	if bool(district.get_meta("system_public_leisure_is_tower", true)):
+		_fail("Public leisure district must not be registered as a sixth tower.")
+		return
+	if int(district.get_meta("system_public_leisure_water_volume_count", 0)) != 3:
+		_fail("Expected three active public pool water volumes.")
+		return
+	if int(district.get_meta("system_public_leisure_locker_count", 0)) != 16:
+		_fail("Expected sixteen public pool lockers across the two changing suites.")
+		return
+
+	for pool_name in ["OlympicLapPool", "FamilyLeisurePool", "ThermalPool"]:
+		var water_area := district.get_node_or_null(NodePath(pool_name + "/WaterVolume")) as Area3D
+		if water_area == null or not water_area.monitoring or water_area.get_node_or_null("CollisionShape3D") == null:
+			_fail("Pool water volume is missing active monitoring or collision: " + pool_name)
+			return
+
+	var player := CharacterBody3D.new()
+	player.add_to_group("system_player")
+	root.add_child(player)
+	var lap_water := district.get_node("OlympicLapPool/WaterVolume") as Area3D
+	district.call("_on_water_body_entered", player, lap_water)
+	if not bool(player.get_meta("system_public_leisure_swimming", false)) or str(player.get_meta("system_public_leisure_water_type", "")) != "lap_pool":
+		_fail("Entering a public pool did not set the player's swimming state.")
+		return
+	district.call("_on_water_body_exited", player, lap_water)
+	if player.has_meta("system_public_leisure_swimming"):
+		_fail("Leaving the pool did not clear the player's swimming state.")
+		return
+
+	var locker := district.get_node("WomensChangingSuite/Locker_00") as MeshInstance3D
+	locker.set_meta("system_pool_locker_occupied", true)
+	locker.set_meta("system_pool_locker_owner", 9917)
+	if not bool(district.call("release_locker", "WomensChangingSuite", "Locker_00", 9917)):
+		_fail("The public leisure manager could not release a locker from the selected changing suite.")
+		return
+	if bool(locker.get_meta("system_pool_locker_occupied", true)):
+		_fail("Released public pool locker remains occupied.")
+		return
+
+	var lifeguard_service := district.get_node_or_null("PoolLifeguardStation/PoolLifeguardServiceInteraction") as Area3D
+	if lifeguard_service == null or not lifeguard_service.is_in_group("system_interactable") or str(lifeguard_service.get_meta("system_pool_service_type", "")) != "lifeguard":
+		_fail("Public lifeguard service interaction is missing.")
+		return
+	if not bool(district.call("dispatch_lifeguard_to", player)):
+		_fail("Public lifeguard could not accept a player assistance request.")
+		return
+	if not bool(district.get_node("PoolLifeguardStation/PublicLifeguardNPC").get_meta("system_lifeguard_assistance_requested", false)):
+		_fail("Lifeguard assistance request was not recorded.")
+		return
+
+	for suite_name in ["MensChangingSuite", "WomensChangingSuite"]:
+		for service_name in ["PoolLockerServiceInteraction", "PoolShowerServiceInteraction"]:
+			var service := district.get_node_or_null(NodePath(suite_name + "/" + service_name)) as Area3D
+			if service == null or not service.is_in_group("system_interactable"):
+				_fail("Public changing suite service interaction is missing: " + suite_name + "/" + service_name)
+				return
+
+	print("SYSTEM PUBLIC LEISURE QA PASS: three pool volumes, player swim-state, 16 lockers, suite-specific release, shower and lifeguard dispatch; independent of the five Baghdad towers.")
+	player.queue_free()
+	district.queue_free()
+	quit(0)
+
+
+func _fail(message: String) -> void:
+	push_error("SYSTEM PUBLIC LEISURE QA FAIL: " + message)
+	quit(1)
