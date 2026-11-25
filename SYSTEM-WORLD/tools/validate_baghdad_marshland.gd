@@ -130,6 +130,8 @@ func _run_validation() -> void:
 	marsh.call("_on_marsh_water_body_entered", test_player, first_water)
 	if not _check(bool(test_player.get_meta("system_swimming", false)) and str(test_player.get_meta("system_swim_source", "")) == "Baghdad Mesopotamian Marshland", "Entering marsh water did not activate the canonical swimming state."):
 		return
+	if not _check(is_equal_approx(float(test_player.get_meta("system_swim_surface_y", 0.0)), first_water.global_position.y), "The marsh swimming surface height does not match the visible water surface."):
+		return
 	marsh.call("_on_marsh_water_body_exited", test_player, first_water)
 	if not _check(not bool(test_player.get_meta("system_swimming", false)), "Leaving the final marsh water volume did not clear swimming state."):
 		return
