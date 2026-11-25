@@ -5079,14 +5079,26 @@ func _render_marketplace_listings(raw_listings: Variant) -> void:
 		]
 		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		marketplace_results_container.add_child(line)
-		var buy_button := Button.new()
-		buy_button.text = "شراء هذه القطعة"
-		buy_button.pressed.connect(_buy_marketplace_listing.bind(listing_id))
-		marketplace_results_container.add_child(buy_button)
+		var action_button := Button.new()
+		if bool(raw.get("isSeller", false)):
+			action_button.text = "إلغاء عرضك"
+			action_button.pressed.connect(_close_marketplace_listing.bind(listing_id))
+		else:
+			action_button.text = "شراء هذه القطعة"
+			action_button.pressed.connect(_buy_marketplace_listing.bind(listing_id))
+		marketplace_results_container.add_child(action_button)
 
 
 func _buy_marketplace_listing(listing_id: String) -> void:
 	_request_marketplace_operation("purchase_listing", {"listingId": listing_id})
+
+
+func _close_marketplace_listing(listing_id: String) -> void:
+	_request_marketplace_operation("cancel_listing", {"listingId": listing_id})
+
+
+func _cancel_marketplace_auction(auction_id: String) -> void:
+	_request_marketplace_operation("cancel_auction", {"auctionId": auction_id})
 
 
 func _render_marketplace_auctions(raw_auctions: Variant) -> void:
@@ -5115,8 +5127,12 @@ func _render_marketplace_auctions(raw_auctions: Variant) -> void:
 		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		marketplace_results_container.add_child(line)
 		var select_button := Button.new()
-		select_button.text = "اختيار المزاد — الحد الأدنى %d SYSTEM" % minimum_bid
-		select_button.pressed.connect(_select_market_auction.bind(auction_id, minimum_bid))
+		if bool(raw.get("isSeller", false)):
+			select_button.text = "إلغاء مزادك"
+			select_button.pressed.connect(_cancel_marketplace_auction.bind(auction_id))
+		else:
+			select_button.text = "اختيار المزاد — الحد الأدنى %d SYSTEM" % minimum_bid
+			select_button.pressed.connect(_select_market_auction.bind(auction_id, minimum_bid))
 		marketplace_results_container.add_child(select_button)
 
 
