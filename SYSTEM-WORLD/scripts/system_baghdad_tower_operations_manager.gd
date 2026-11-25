@@ -263,9 +263,7 @@ var marketplace_results_container: VBoxContainer
 var marketplace_price_input: SpinBox
 var selected_market_artifact_id := ""
 var selected_market_auction_id := ""
-var marketplace_pending_requests: Dictionary = {}
-var marketplace_request_serial := 0
-var marketplace_results_container: VBoxContainer
+
 
 func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_power_manager: Node, p_player_health: Node, p_region_manager: Node) -> void:
 	player = p_player
