@@ -8041,7 +8041,9 @@ func _release_player_restaurant_seat() -> void:
 		player.set_meta("system_restaurant_seated", false)
 		player.set_meta("system_restaurant_seating_transition", false)
 		return
-	var seating_tween: Variant = player.get_meta("system_restaurant_seating_tween", null)
+	var seating_tween: Variant = null
+	if player.has_meta("system_restaurant_seating_tween"):
+		seating_tween = player.get_meta("system_restaurant_seating_tween")
 	if seating_tween is Tween and (seating_tween as Tween).is_running():
 		(seating_tween as Tween).kill()
 	var room: Node3D = active_floor_root if is_instance_valid(active_floor_root) else null
