@@ -2015,3 +2015,15 @@ Feature HEAD at audit update: `f2522b6a3cf603e3aa13ee1bd17ee0ee9e7fba99`.
 - [ ] The dedicated godot-system-world-validation workflow was still executing the remaining tower-operations, hotel, shopping showcase and Hunter validations; no overall workflow pass is claimed here.
 - [ ] Marketplace activation remains gated by callable-function emulator tests, trusted reward-event integration, production deployment/scheduler activation and a real two-account Android device round trip. A TypeScript build and Firestore rules tests do not prove live player-to-player settlement.
 - PR #38 remains draft and unmerged. No changes merged to main.
+
+## Exact feature checkpoint verification — 25 November 2026
+
+- [x] Commit `b59d746bedc45a90621cab803b4ca408de54e36a`: canonical Godot runtime workflow `45570191591` completed successfully. Its steps passed project import/parse, Android marketplace bridge request correlation, Baghdad tower landmarks/lobby, Hunter recruitment and guide escort, continuous Hunter Examination competition, tower operations/elevator staff/emergency evacuation, terrain streaming seam/lifecycle, child-character safety, Baghdad WGS84 anchor integration, Baghdad-only Star Gate/Greed Island exit, marketplace Android bridge protocol, and headless main-scene launch.
+- [x] Commit `b59d746bedc45a90621cab803b4ca408de54e36a`: BBBike Iraq PBF and Baghdad boundary candidate workflow `45570191583` completed successfully. It produced artifact `SYSTEM-WORLD-Baghdad-OSM-boundary-candidate` (artifact ID `15002255160`; SHA-256 `bb0c1fd6ab2fcd00be459e1416d0055e3f4b303e0027ab59ebda01cd1947da2f`). This verifies the source/boundary candidate workflow; it is not a claim that every city building has final production geometry.
+- [x] Commit `b59d746bedc45a90621cab803b4ca408de54e36a`: Firebase marketplace Firestore rules emulator and Cloud Functions TypeScript build both completed successfully (workflow `45570202696`).
+- [x] Commit `b59d746bedc45a90621cab803b4ca408de54e36a`: explicit `Vector3` typing correction committed in `validate_baghdad_towers.gd` to resolve the prior inferred-type parser failure. A fresh comprehensive Godot workflow was triggered; do not count the dedicated helicopter takeoff assertion as passed until its specific validator step is observed.
+- [ ] Exact-commit comprehensive tower operations validation on `b59d746` is still running through advertising/NPC commerce/Power Tower, hotel, shopping showcase, and Hunter competition checks.
+- [ ] Exact-commit canonical Android APK and native App Shell builds are still running; do not mark artifacts available until upload steps finish.
+- [ ] Renderer `mesh_get_surface_count` / `Parameter "m" is null` warnings remain an open issue unless a fresh log proves they are resolved. The null-MeshInstance/MultiMesh diagnostic passing does not prove renderer warnings are fixed.
+- [ ] Player-to-player marketplace remains unproven in a real two-account Android round trip; successful TypeScript and Firestore rules tests are not live transaction settlement.
+- PR #38 remains draft and unmerged; no changes merged to `main`.
