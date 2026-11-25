@@ -364,37 +364,42 @@ func _add_reed_fields(parent: Node3D, material: Material) -> void:
 func _add_marsh_trees(parent: Node3D, trunk_material: Material, canopy_material: Material) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 202611252
+	var trunk_mesh := CylinderMesh.new()
+	trunk_mesh.top_radius = 0.28
+	trunk_mesh.bottom_radius = 0.52
+	trunk_mesh.height = 8.0
+	var canopy_mesh := SphereMesh.new()
+	canopy_mesh.radius = 4.0
+	canopy_mesh.height = 7.0
+	var trunks := MultiMesh.new()
+	trunks.transform_format = MultiMesh.TRANSFORM_3D
+	trunks.mesh = trunk_mesh
+	trunks.instance_count = 56
+	var canopies := MultiMesh.new()
+	canopies.transform_format = MultiMesh.TRANSFORM_3D
+	canopies.mesh = canopy_mesh
+	canopies.instance_count = 56
 	for index in range(56):
 		var angle := TAU * float(index) / 56.0
 		var radial := rng.randf_range(0.62, 0.90)
 		var x := cos(angle) * MARSH_RADIUS_X * radial
 		var z := sin(angle) * MARSH_RADIUS_Z * radial
-		var ground_y := float(terrain.call("get_terrain_height", marsh_center.x + x, marsh_center.z + z)) - marsh_center.y
-		var tree := Node3D.new()
-		tree.name = "MarshWillow_%02d" % index
-		tree.position = Vector3(x, ground_y, z)
-		parent.add_child(tree)
-		var trunk := MeshInstance3D.new()
-		trunk.name = "Trunk"
-		var trunk_mesh := CylinderMesh.new()
-		trunk_mesh.top_radius = 0.28
-		trunk_mesh.bottom_radius = 0.52
-		trunk_mesh.height = 8.0
-		trunk.mesh = trunk_mesh
-		trunk.position.y = 4.0
-		trunk.material_override = trunk_material
-		tree.add_child(trunk)
-		var canopy := MeshInstance3D.new()
-		canopy.name = "Canopy"
-		var canopy_mesh := SphereMesh.new()
-		canopy_mesh.radius = 4.0
-		canopy_mesh.height = 7.0
-		canopy.mesh = canopy_mesh
-		canopy.position = Vector3(0.0, 8.0, 0.0)
-		canopy.scale = Vector3(1.8, 0.75, 1.35)
-		canopy.material_override = canopy_material
-		tree.add_child(canopy)
-
+		var ground_y := _marsh_ground_y(x, z)
+		trunks.set_instance_transform(index, Transform3D(Basis.IDENTITY, Vector3(x, ground_y + 4.0, z)))
+		var canopy_basis := Basis.from_scale(Vector3(1.8, 0.75, 1.35))
+		canopies.set_instance_transform(index, Transform3D(canopy_basis, Vector3(x, ground_y + 8.0, z)))
+	var trunk_instances := MultiMeshInstance3D.new()
+	trunk_instances.name = "MarshWillowTrunks"
+	trunk_instances.multimesh = trunks
+	trunk_instances.material_override = trunk_material
+	parent.add_child(trunk_instances)
+	var canopy_instances := MultiMeshInstance3D.new()
+	canopy_instances.name = "MarshWillowCanopies"
+	canopy_instances.multimesh = canopies
+	canopy_instances.material_override = canopy_material
+	parent.add_child(canopy_instances)
+	parent.set_meta("system_marsh_tree_count", 56)
+	parent.set_meta("system_marsh_tree_render_batch_count", 2)
 
 func _add_boardwalk_network(parent: Node3D, material: Material) -> void:
 	var entry := Vector3(marsh_entry_local.x, _marsh_ground_y(marsh_entry_local.x, marsh_entry_local.z) + 0.6, marsh_entry_local.z)
