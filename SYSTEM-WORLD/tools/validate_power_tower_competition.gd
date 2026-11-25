@@ -81,6 +81,8 @@ func _run() -> void:
 	assert(crowd != null)
 	assert(int(crowd.get_meta("system_visible_spectator_count", 0)) == 500)
 	assert(int(crowd.get_meta("system_npc_population", 0)) == 500)
+	assert(int(crowd.get_meta("system_multimesh_impostor_count", 0)) == 492)
+	assert(int(crowd.get_meta("system_full_rig_count", 0)) == 8)
 	var bodies := crowd.get_node_or_null("SpectatorNPCBodies500") as MultiMeshInstance3D
 	assert(bodies != null and bodies.multimesh.instance_count == 492)
 	assert(int(crowd.get_meta("system_multimesh_impostor_count", 0)) == 492)
@@ -88,6 +90,9 @@ func _run() -> void:
 
 	var amenities := lobby.get_node_or_null("PowerTowerRestaurantAndRecreation")
 	assert(amenities != null)
+	for amenity_name in ["PowerTowerRestaurant", "PowerTowerRecreationLounge", "PowerTowerEntertainmentZone"]:
+		var amenity := amenities.get_node_or_null(amenity_name) as Node3D
+		assert(amenity != null and amenity.position.length() < 49.0, "Power Tower amenity must remain inside the entrance podium.")
 	for amenity in ["PowerTowerRestaurant", "PowerTowerRecreationLounge", "PowerTowerEntertainmentZone"]:
 		assert(amenities.get_node_or_null(amenity) != null)
 	var interior := lobby.get_node_or_null("XSXShopAndCafeteriaInterior")
