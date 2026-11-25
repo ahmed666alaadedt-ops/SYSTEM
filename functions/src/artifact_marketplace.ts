@@ -1,0 +1,442 @@
+import { initializeApp } from "firebase-admin/app";
+import {
+  FieldValue,
+  Timestamp,
+  getFirestore
+} from "firebase-admin/firestore";
+import { HttpsError, onCall } from "firebase-functions/v2/https";
+
+initializeApp();
+const db = getFirestore();
+
+const MAX_PRICE = 1_000_000_000;
+const MARKETPLACE_FEE_BASIS_POINTS = 0;
+const VALID_RARITIES = new Set([
+  "common", "uncommon", "rare", "epic", "legendary", "mythic", "unique"
+]);
+const VALID_CONDITIONS = new Set([
+  "pristine", "excellent", "good", "worn", "damaged", "restored"
+]);
+
+function authenticatedUid(request: any): string {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "يجب تسجيل الدخول أولاً.");
+  }
+  return String(request.auth.uid);
+}
+
+function requireModerator(request: any): string {
+  const uid = authenticatedUid(request);
+  if (request.auth.token.moderator !== true) {
+    throw new HttpsError("permission-denied", "هذه العملية للمشرفين الموثوقين فقط.");
+  }
+  return uid;
+}
+
+function cleanText(value: unknown, maxLength: number, fieldName: string): string {
+  if (typeof value !== "string") {
+    throw new HttpsError("invalid-argument", `حقل ${fieldName} غير صالح.`);
+  }
+  const clean = value.trim();
+  if (!clean || clean.length > maxLength) {
+    throw new HttpsError("invalid-argument", `حقل ${fieldName} غير صالح.`);
+  }
+  return clean;
+}
+
+function positiveInteger(value: unknown, fieldName: string): number {
+  if (!Number.isSafeInteger(value) || Number(value) <= 0 || Number(value) > MAX_PRICE) {
+    throw new HttpsError("invalid-argument", `قيمة ${fieldName} يجب أن تكون عدداً صحيحاً موجباً.`);
+  }
+  return Number(value);
+}
+
+function ownershipRef(uid: string, artifactId: string) {
+  return db.collection("artifactOwnership").doc(uid)
+    .collection("items").doc(artifactId);
+}
+
+function walletRef(uid: string) {
+  return db.collection("systemWallets").doc(uid);
+}
+
+function playerRef(uid: string) {
+  return db.collection("players").doc(uid);
+}
+
+/**
+ * Creates a zero-balance authoritative SYSTEM currency wallet if absent.
+ * This endpoint never accepts a client-supplied balance or grants currency.
+ */
+export const getMyMarketplaceWallet = onCall(async (request) => {
+  const uid = authenticatedUid(request);
+  const ref = walletRef(uid);
+  await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(ref);
+    if (!snapshot.exists) {
+      transaction.create(ref, {
+        userId: uid,
+        currency: "SYSTEM",
+        balance: 0,
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp()
+      });
+    }
+  });
+  const snapshot = await ref.get();
+  return {
+    currency: "SYSTEM",
+    balance: Number(snapshot.data()?.balance ?? 0)
+  };
+});
+
+/** Returns only the authenticated player's server-owned artifacts. */
+export const listMyMarketplaceArtifacts = onCall(async (request) => {
+  const uid = authenticatedUid(request);
+  const snapshot = await db.collection("artifactOwnership").doc(uid)
+    .collection("items").where("status", "==", "owned").limit(100).get();
+
+  return {
+    artifacts: snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        artifactId: doc.id,
+        name: data.name,
+        civilization: data.civilization,
+        rarity: data.rarity,
+        condition: data.condition,
+        authenticity: data.authenticity,
+        provenanceSummary: data.provenanceSummary
+      };
+    })
+  };
+});
+
+/**
+ * Only trusted game/admin reward services may mint an ownership record.
+ * A normal player cannot claim arbitrary artifacts from the client.
+ */
+export const grantMarketplaceArtifact = onCall(async (request) => {
+  const moderatorId = requireModerator(request);
+  const ownerId = cleanText(request.data?.ownerId, 128, "ownerId");
+  const artifactId = cleanText(request.data?.artifactId, 120, "artifactId");
+  const name = cleanText(request.data?.name, 100, "name");
+  const civilization = cleanText(request.data?.civilization, 60, "civilization");
+  const rarity = cleanText(request.data?.rarity, 20, "rarity").toLowerCase();
+  const condition = cleanText(request.data?.condition, 20, "condition").toLowerCase();
+  const authenticity = cleanText(request.data?.authenticity, 30, "authenticity").toLowerCase();
+  const provenanceSummary = typeof request.data?.provenanceSummary === "string"
+    ? request.data.provenanceSummary.trim().slice(0, 500)
+    : "";
+
+  if (!VALID_RARITIES.has(rarity) || !VALID_CONDITIONS.has(condition)) {
+    throw new HttpsError("invalid-argument", "تصنيف الندرة أو حالة القطعة غير صالح.");
+  }
+  if (!["verified", "unverified", "replica"].includes(authenticity)) {
+    throw new HttpsError("invalid-argument", "حالة الأصالة غير صالحة.");
+  }
+
+  const ownerProfile = playerRef(ownerId);
+  const itemRef = ownershipRef(ownerId, artifactId);
+  const auditRef = db.collection("artifactOwnershipAudit").doc(artifactId);
+
+  await db.runTransaction(async (transaction) => {
+    const [profile, existing] = await Promise.all([
+      transaction.get(ownerProfile),
+      transaction.get(itemRef)
+    ]);
+    if (!profile.exists) {
+      throw new HttpsError("not-found", "حساب مالك القطعة غير موجود.");
+    }
+    if (existing.exists) {
+      throw new HttpsError("already-exists", "معرّف القطعة مستخدم مسبقاً لهذا اللاعب.");
+    }
+    transaction.create(itemRef, {
+      artifactId,
+      ownerId,
+      name,
+      civilization,
+      rarity,
+      condition,
+      authenticity,
+      provenanceSummary,
+      status: "owned",
+      acquiredAt: FieldValue.serverTimestamp(),
+      source: "trusted_reward_or_admin_grant",
+      createdBy: moderatorId
+    });
+    transaction.create(auditRef, {
+      artifactId,
+      ownerId,
+      action: "issued",
+      actorId: moderatorId,
+      createdAt: FieldValue.serverTimestamp()
+    });
+  });
+
+  return { success: true, artifactId, ownerId };
+});
+
+/** Public authenticated read of active fixed-price listings. */
+export const browseArtifactMarketplace = onCall(async (request) => {
+  authenticatedUid(request);
+  const civilization = typeof request.data?.civilization === "string"
+    ? request.data.civilization.trim().slice(0, 60)
+    : "";
+  const rarity = typeof request.data?.rarity === "string"
+    ? request.data.rarity.trim().toLowerCase()
+    : "";
+
+  let query: FirebaseFirestore.Query = db.collection("marketplaceListings")
+    .where("status", "==", "active");
+
+  if (civilization) query = query.where("civilization", "==", civilization);
+  if (rarity && VALID_RARITIES.has(rarity)) query = query.where("rarity", "==", rarity);
+
+  const snapshot = await query.orderBy("createdAt", "desc").limit(40).get();
+  return {
+    listings: snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        listingId: doc.id,
+        artifactId: data.artifactId,
+        name: data.name,
+        civilization: data.civilization,
+        rarity: data.rarity,
+        condition: data.condition,
+        authenticity: data.authenticity,
+        provenanceSummary: data.provenanceSummary,
+        price: data.price,
+        currency: "SYSTEM",
+        sellerId: data.sellerId,
+        sellerName: data.sellerName,
+        createdAt: data.createdAt?.toMillis?.() ?? null,
+        expiresAt: data.expiresAt?.toMillis?.() ?? null
+      };
+    })
+  };
+});
+
+/** Locks an actually-owned artifact in escrow and creates a fixed-price listing. */
+export const createArtifactListing = onCall(async (request) => {
+  const sellerId = authenticatedUid(request);
+  const artifactId = cleanText(request.data?.artifactId, 120, "artifactId");
+  const price = positiveInteger(request.data?.price, "price");
+  const durationDays = Number.isInteger(request.data?.durationDays)
+    ? Number(request.data.durationDays)
+    : 7;
+
+  if (durationDays < 1 || durationDays > 30) {
+    throw new HttpsError("invalid-argument", "مدة العرض يجب أن تكون بين يوم و30 يوماً.");
+  }
+
+  const listingRef = db.collection("marketplaceListings").doc();
+  const itemRef = ownershipRef(sellerId, artifactId);
+  const sellerProfileRef = playerRef(sellerId);
+  const expiresAt = Timestamp.fromMillis(Date.now() + durationDays * 24 * 60 * 60 * 1000);
+
+  await db.runTransaction(async (transaction) => {
+    const [itemSnapshot, sellerProfile] = await Promise.all([
+      transaction.get(itemRef),
+      transaction.get(sellerProfileRef)
+    ]);
+    if (!itemSnapshot.exists || !sellerProfile.exists) {
+      throw new HttpsError("not-found", "القطعة أو ملف البائع غير موجود.");
+    }
+    const item = itemSnapshot.data()!;
+    if (item.ownerId !== sellerId || item.status !== "owned") {
+      throw new HttpsError("failed-precondition", "لا تملك هذه القطعة أو أنها محجوزة في صفقة أخرى.");
+    }
+
+    transaction.update(itemRef, {
+      status: "escrow",
+      activeListingId: listingRef.id,
+      escrowAt: FieldValue.serverTimestamp()
+    });
+    transaction.create(listingRef, {
+      listingId: listingRef.id,
+      artifactId,
+      sellerId,
+      sellerName: String(sellerProfile.data()?.displayName ?? "لاعب").slice(0, 40),
+      name: item.name,
+      civilization: item.civilization,
+      rarity: item.rarity,
+      condition: item.condition,
+      authenticity: item.authenticity,
+      provenanceSummary: item.provenanceSummary ?? "",
+      price,
+      currency: "SYSTEM",
+      status: "active",
+      createdAt: FieldValue.serverTimestamp(),
+      expiresAt
+    });
+  });
+
+  return { success: true, listingId: listingRef.id, artifactId, price, expiresAt: expiresAt.toMillis() };
+});
+
+/** Cancels only the seller's own active listing and releases escrow. */
+export const cancelArtifactListing = onCall(async (request) => {
+  const sellerId = authenticatedUid(request);
+  const listingId = cleanText(request.data?.listingId, 128, "listingId");
+  const listingRef = db.collection("marketplaceListings").doc(listingId);
+
+  await db.runTransaction(async (transaction) => {
+    const listingSnapshot = await transaction.get(listingRef);
+    if (!listingSnapshot.exists) throw new HttpsError("not-found", "العرض غير موجود.");
+    const listing = listingSnapshot.data()!;
+    if (listing.sellerId !== sellerId) {
+      throw new HttpsError("permission-denied", "يمكن للبائع إلغاء عرضه فقط.");
+    }
+    if (listing.status !== "active") {
+      throw new HttpsError("failed-precondition", "هذا العرض لم يعد نشطاً.");
+    }
+    const itemRef = ownershipRef(sellerId, String(listing.artifactId));
+    const itemSnapshot = await transaction.get(itemRef);
+    if (!itemSnapshot.exists || itemSnapshot.data()?.activeListingId !== listingId) {
+      throw new HttpsError("failed-precondition", "سجل الحجز لا يطابق العرض.");
+    }
+    transaction.update(itemRef, {
+      status: "owned",
+      activeListingId: FieldValue.delete(),
+      escrowReleasedAt: FieldValue.serverTimestamp()
+    });
+    transaction.update(listingRef, {
+      status: "cancelled",
+      cancelledAt: FieldValue.serverTimestamp()
+    });
+  });
+
+  return { success: true, listingId };
+});
+
+/**
+ * Atomic settlement: exactly one buyer can win a listing.
+ * The artifact transfer, wallet debit/credit, listing close and audit record
+ * are committed together in one Firestore transaction.
+ */
+export const purchaseArtifactListing = onCall(async (request) => {
+  const buyerId = authenticatedUid(request);
+  const listingId = cleanText(request.data?.listingId, 128, "listingId");
+  const listingRef = db.collection("marketplaceListings").doc(listingId);
+  const transactionRef = db.collection("marketplaceTransactions").doc();
+  const auditRef = db.collection("marketplaceAudit").doc(transactionRef.id);
+
+  const result = await db.runTransaction(async (transaction) => {
+    const listingSnapshot = await transaction.get(listingRef);
+    if (!listingSnapshot.exists) throw new HttpsError("not-found", "العرض غير موجود.");
+    const listing = listingSnapshot.data()!;
+    const sellerId = String(listing.sellerId ?? "");
+    const artifactId = String(listing.artifactId ?? "");
+    if (listing.status !== "active") {
+      throw new HttpsError("failed-precondition", "تم بيع القطعة أو إلغاء عرضها مسبقاً.");
+    }
+    if (listing.expiresAt instanceof Timestamp && listing.expiresAt.toMillis() <= Date.now()) {
+      throw new HttpsError("deadline-exceeded", "انتهت مدة عرض القطعة.");
+    }
+    if (!sellerId || !artifactId || sellerId === buyerId) {
+      throw new HttpsError("failed-precondition", "لا يمكن شراء هذا العرض.");
+    }
+
+    const price = positiveInteger(listing.price, "price");
+    const fee = Math.floor(price * MARKETPLACE_FEE_BASIS_POINTS / 10_000);
+    const sellerCredit = price - fee;
+    const buyerWalletRef = walletRef(buyerId);
+    const sellerWalletRef = walletRef(sellerId);
+    const buyerItemRef = ownershipRef(buyerId, artifactId);
+    const sellerItemRef = ownershipRef(sellerId, artifactId);
+    const buyerProfileRef = playerRef(buyerId);
+    const sellerProfileRef = playerRef(sellerId);
+
+    const [
+      buyerWallet, sellerWallet, sellerItem, buyerItem,
+      buyerProfile, sellerProfile
+    ] = await Promise.all([
+      transaction.get(buyerWalletRef),
+      transaction.get(sellerWalletRef),
+      transaction.get(sellerItemRef),
+      transaction.get(buyerItemRef),
+      transaction.get(buyerProfileRef),
+      transaction.get(sellerProfileRef)
+    ]);
+
+    if (!buyerWallet.exists || !sellerWallet.exists) {
+      throw new HttpsError("failed-precondition", "محفظة أحد الطرفين غير مهيأة.");
+    }
+    if (!buyerProfile.exists || !sellerProfile.exists) {
+      throw new HttpsError("failed-precondition", "ملف أحد اللاعبين غير موجود.");
+    }
+    if (buyerItem.exists) {
+      throw new HttpsError("already-exists", "يمتلك المشتري قطعة بهذا المعرّف مسبقاً.");
+    }
+    const buyerBalance = Number(buyerWallet.data()?.balance ?? -1);
+    const sellerBalance = Number(sellerWallet.data()?.balance ?? -1);
+    if (!Number.isSafeInteger(buyerBalance) || buyerBalance < price ||
+        !Number.isSafeInteger(sellerBalance) || sellerBalance < 0) {
+      throw new HttpsError("failed-precondition", "رصيد المشتري غير كافٍ أو بيانات المحفظة غير صالحة.");
+    }
+    if (!sellerItem.exists ||
+        sellerItem.data()?.ownerId !== sellerId ||
+        sellerItem.data()?.status !== "escrow" ||
+        sellerItem.data()?.activeListingId !== listingId) {
+      throw new HttpsError("failed-precondition", "ملكية القطعة أو حجزها غير صالح.");
+    }
+
+    const item = sellerItem.data()!;
+    transaction.update(buyerWalletRef, {
+      balance: buyerBalance - price,
+      updatedAt: FieldValue.serverTimestamp()
+    });
+    transaction.update(sellerWalletRef, {
+      balance: sellerBalance + sellerCredit,
+      updatedAt: FieldValue.serverTimestamp()
+    });
+    transaction.delete(sellerItemRef);
+    transaction.create(buyerItemRef, {
+      ...item,
+      ownerId: buyerId,
+      status: "owned",
+      activeListingId: FieldValue.delete(),
+      acquiredAt: FieldValue.serverTimestamp(),
+      lastTransferId: transactionRef.id
+    });
+    transaction.update(listingRef, {
+      status: "sold",
+      buyerId,
+      soldAt: FieldValue.serverTimestamp(),
+      transactionId: transactionRef.id
+    });
+    transaction.create(transactionRef, {
+      transactionId: transactionRef.id,
+      artifactId,
+      listingId,
+      sellerId,
+      buyerId,
+      sellerName: String(sellerProfile.data()?.displayName ?? "لاعب").slice(0, 40),
+      buyerName: String(buyerProfile.data()?.displayName ?? "لاعب").slice(0, 40),
+      price,
+      fee,
+      currency: "SYSTEM",
+      createdAt: FieldValue.serverTimestamp()
+    });
+    transaction.create(auditRef, {
+      transactionId: transactionRef.id,
+      artifactId,
+      listingId,
+      sellerId,
+      buyerId,
+      action: "sold_and_transferred",
+      createdAt: FieldValue.serverTimestamp()
+    });
+    return {
+      success: true,
+      transactionId: transactionRef.id,
+      artifactId,
+      price,
+      currency: "SYSTEM",
+      sellerCredit
+    };
+  });
+
+  return result;
+});
