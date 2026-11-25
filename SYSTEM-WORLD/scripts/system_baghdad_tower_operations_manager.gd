@@ -5444,7 +5444,7 @@ func _use_pool_service(service_type: String, suite: Node3D = null) -> void:
 				return
 			var assigned_locker: MeshInstance3D
 			var assigned_index := -1
-			for locker_index in range(6):
+			for locker_index in range(8):
 				var candidate := locker_suite.get_node_or_null("Locker_%02d" % locker_index) as MeshInstance3D
 				if candidate != null and not bool(candidate.get_meta("system_pool_locker_occupied", false)):
 					assigned_locker = candidate
