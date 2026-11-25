@@ -93,13 +93,20 @@ func _run_validation() -> void:
 		_fail("Canonical main-scene player or system_player group is missing.")
 		return
 	var lap_water := district.get_node("OlympicLapPool/WaterVolume") as Area3D
+	var family_water := district.get_node("FamilyLeisurePool/WaterVolume") as Area3D
 	district.call("_on_water_body_entered", player, lap_water)
 	if not bool(player.get_meta("system_public_leisure_swimming", false)) or str(player.get_meta("system_public_leisure_water_type", "")) != "lap_pool":
 		_fail("Entering a public pool did not set the player's swimming state.")
 		return
+	# Overlapping water volumes must not clear the player's swim state when only one is exited.
+	district.call("_on_water_body_entered", player, family_water)
 	district.call("_on_water_body_exited", player, lap_water)
-	if player.has_meta("system_public_leisure_swimming"):
-		_fail("Leaving the pool did not clear the player's swimming state.")
+	if not bool(player.get_meta("system_public_leisure_swimming", false)) or str(player.get_meta("system_public_leisure_water_type", "")) != "family_pool":
+		_fail("Exiting one overlapping pool volume incorrectly cleared the remaining swim state.")
+		return
+	district.call("_on_water_body_exited", player, family_water)
+	if player.has_meta("system_public_leisure_swimming") or player.has_meta("system_public_leisure_water_zones"):
+		_fail("Leaving the final pool volume did not clear all swimming state.")
 		return
 
 	var locker := district.get_node("WomensChangingSuite/Locker_00") as MeshInstance3D
