@@ -11,6 +11,7 @@ var is_blocking := false
 var attack_damage := 34.0
 var heavy_damage := 90.0
 var attack_range := 65.0
+var selected_power_tower_combat_style := "UNARMED_HAND_TO_HAND"
 const POWER_TOWER_FORBIDDEN_WEAPONS := ["system_firearm", "hunter_pistol", "hunter_rifle", "precision_rifle", "tactical_shotgun"]
 
 
@@ -22,6 +23,97 @@ func bind_actor(player: CharacterBody3D, combat_camera: Camera3D, player_progres
 
 func set_combat_camera(combat_camera: Camera3D) -> void:
 	camera = combat_camera
+
+
+func select_power_tower_combat_style(style_id: String, allowed_styles: Array = []) -> Dictionary:
+	var normalized_style := style_id.strip_edges().to_upper()
+	var allowed := allowed_styles.duplicate()
+	if allowed.is_empty():
+		var operations := get_tree().root.find_child("BaghdadTowerOperationsManager", true, false)
+		if operations != null:
+			var active_data: Dictionary = operations.get("active_power_floor_data")
+			allowed = active_data.get("available_combat_styles", [])
+	if not allowed.has(normalized_style):
+		return {"success": false, "reason": "COMBAT_STYLE_NOT_AVAILABLE_ON_THIS_FLOOR"}
+	var progression_node := _get_progression()
+	var slots: Dictionary = progression_node.get("equipment_slots") if progression_node != null else {}
+	var equipped_weapon := str(slots.get("weapon", ""))
+	match normalized_style:
+		"TRADITIONAL_MELEE":
+			if equipped_weapon not in ["training_sword", "combat_knife", "steel_sword", "hunter_spear", "battle_axe", "long_sword", "great_sword", "war_hammer", "dual_blades"]:
+				return {"success": false, "reason": "TRADITIONAL_MELEE_WEAPON_REQUIRED"}
+		"BOW_AND_ARROW":
+			if equipped_weapon not in ["composite_bow", "crossbow"]:
+				return {"success": false, "reason": "BOW_OR_CROSSBOW_REQUIRED"}
+		"KUNG_FU", "MARTIAL_ARTS", "UNARMED_HAND_TO_HAND":
+			if not equipped_weapon.is_empty():
+				return {"success": false, "reason": "UNARMED_STYLE_REQUIRES_EMPTY_WEAPON_SLOT"}
+		"NEN_TECHNIQUES":
+			if progression_node == null or not bool(progression_node.get("nen_unlocked")) or int(progression_node.get("nen_control_rank")) < 1:
+				return {"success": false, "reason": "NEN_TRAINING_REQUIRED"}
+			if not equipped_weapon.is_empty() and _is_nen_only_floor():
+				return {"success": false, "reason": "NEN_ONLY_FLOOR_REQUIRES_UNARMED_COMBAT"}
+	selected_power_tower_combat_style = normalized_style
+	if is_instance_valid(actor):
+		actor.set_meta("system_power_tower_combat_style", normalized_style)
+	return {"success": true, "combat_style": normalized_style}
+
+
+func perform_selected_power_tower_attack() -> Dictionary:
+	if not is_instance_valid(actor):
+		return {"success": false, "reason": "COMBAT_ACTOR_UNAVAILABLE"}
+	match selected_power_tower_combat_style:
+		"UNARMED_HAND_TO_HAND":
+			await light_attack()
+			return {"success": true, "combat_style": selected_power_tower_combat_style}
+		"KUNG_FU":
+			await _perform_kung_fu_combo()
+			return {"success": true, "combat_style": selected_power_tower_combat_style}
+		"MARTIAL_ARTS", "TRADITIONAL_MELEE":
+			await heavy_attack()
+			return {"success": true, "combat_style": selected_power_tower_combat_style}
+		"BOW_AND_ARROW":
+			return await _perform_bow_attack()
+		"NEN_TECHNIQUES":
+			var progression_node := _get_progression()
+			if progression_node != null and int(progression_node.get("nen_control_rank")) >= 4:
+				return skill_one()
+			return skill_two()
+	return {"success": false, "reason": "UNKNOWN_COMBAT_STYLE"}
+
+
+func _is_nen_only_floor() -> bool:
+	var operations := get_tree().root.find_child("BaghdadTowerOperationsManager", true, false)
+	if operations == null:
+		return false
+	var active_data: Dictionary = operations.get("active_power_floor_data")
+	return int(active_data.get("floor", 0)) >= 81
+
+
+func _perform_kung_fu_combo() -> void:
+	if not can_attack or not _power_tower_weapon_policy_allows_attack():
+		return
+	can_attack = false
+	for strike_index in range(3):
+		_fire_hitscan(attack_damage * 0.58 + _get_progression_damage_bonus() / 3.0, attack_range * 0.9)
+		await get_tree().create_timer(0.10).timeout
+	await get_tree().create_timer(0.42 * _get_attack_cooldown_multiplier()).timeout
+	can_attack = true
+
+
+func _perform_bow_attack() -> Dictionary:
+	if not can_attack or not _power_tower_weapon_policy_allows_attack():
+		return {"success": false, "reason": "COMBAT_BUSY_OR_RESTRICTED"}
+	var progression_node := _get_progression()
+	var slots: Dictionary = progression_node.get("equipment_slots") if progression_node != null else {}
+	if str(slots.get("weapon", "")) not in ["composite_bow", "crossbow"]:
+		return {"success": false, "reason": "BOW_OR_CROSSBOW_REQUIRED"}
+	can_attack = false
+	_consume_weapon_durability(0.45)
+	_fire_hitscan(attack_damage * 1.25 + _get_progression_damage_bonus(), attack_range * 2.4)
+	await get_tree().create_timer(0.85 * _get_attack_cooldown_multiplier()).timeout
+	can_attack = true
+	return {"success": true, "combat_style": "BOW_AND_ARROW"}
 
 
 func light_attack() -> void:
