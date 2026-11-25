@@ -2907,7 +2907,7 @@ func _place_hotel_room_service_order(item_id: String, item_name: String, price: 
 	_save_hotel_bookings()
 	_save_wallet()
 	credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
-	_set_status("وصل طلب %s إلى موظف خدمة الغرف. تمت إضافة قيمته إلى الفاتورة." % item_name)
+	_set_status("وصل طلب %s إلى موظف خدمة الغرف، وتم خصم %d رصيد SYSTEM من محفظتك." % [item_name, price])
 	_add_hotel_controls()
 
 
