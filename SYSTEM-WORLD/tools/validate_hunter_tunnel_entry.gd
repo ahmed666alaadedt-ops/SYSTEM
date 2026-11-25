@@ -57,6 +57,76 @@ func _run_validation() -> void:
 	if not _check(bool(tunnel.get_meta("system_hunter_candidate_population_verified", false)), "The tunnel did not mark its 500-candidate population verified."):
 		return
 
+	var marshland := tunnel.get_node_or_null("HunterMarshland") as Node3D
+	if not _check(marshland != null and bool(tunnel.get_meta("system_tunnel_marshland_connected", false)), "The single Hunter tunnel does not open directly into the Marshland."):
+		return
+	if not _check(bool(marshland.get_meta("system_marshland_generated", false)) and int(marshland.get_meta("system_marshland_agricultural_plot_count", 0)) == 12 and int(marshland.get_meta("system_marshland_tree_count", 0)) == 168 and int(marshland.get_meta("system_marshland_undergrowth_count", 0)) == 220 and int(marshland.get_meta("system_marshland_reed_cluster_count", 0)) == 96 and int(marshland.get_meta("system_marshland_tree_species_count", 0)) >= 4 and int(marshland.get_meta("system_marshland_understory_species_count", 0)) >= 4 and int(marshland.get_meta("system_marshland_reed_blades_per_cluster", 0)) >= 7 and int(marshland.get_meta("system_marshland_forest_canopy_layers", 0)) >= 3 and str(marshland.get_meta("system_marshland_forest_density_profile", "")) == "dense_mixed_groves_with_walkable_routes", "The agricultural Marshland environment or diverse dense vegetation is incomplete."):
+		return
+	if not _check(int(marshland.get_meta("system_marshland_water_zone_count", 0)) == 5 and int(marshland.get_meta("system_marshland_giant_turtle_count", 0)) == 3 and int(marshland.get_meta("system_marshland_decoy_npc_count", 0)) == 6, "Marshland water, giant wildlife or misleading resident population is incomplete."):
+		return
+	if not _check(int(marshland.get_meta("system_marshland_carnivorous_plant_count", 0)) == 12 and bool(marshland.get_meta("system_marshland_running_exam_hazards_enabled", false)), "The carnivorous plant hazards are missing from the running examination route."):
+		return
+	var carnivorous_count := 0
+	for child in marshland.get_children():
+		if child is Node3D and child.name.begins_with("CarnivorousExamPlant_"):
+			carnivorous_count += 1
+			var capture_zone := child.get_node_or_null("CandidateCaptureZone") as Area3D
+			if not _check(capture_zone != null and capture_zone.body_entered.get_connections().size() > 0 and bool(child.get_meta("system_hunter_exam_running_hazard", false)), "A carnivorous plant is missing its candidate capture trigger."):
+				return
+	if not _check(carnivorous_count == 12, "Expected 12 physical carnivorous plant hazards along the running route."):
+		return
+
+	# Exercise one real capture against the player health component, then verify release.
+	var capture_plant := marshland.get_node_or_null("CarnivorousExamPlant_00") as Node3D
+	var player_health := player.get_node_or_null("PlayerCombatHealth")
+	if not _check(capture_plant != null and player_health != null and player_health.has_method("get_health_data"), "The player health component or test capture plant is missing."):
+		return
+	var capture_zone := capture_plant.get_node_or_null("CandidateCaptureZone") as Area3D
+	if not _check(capture_zone != null and (capture_zone.collision_mask & player.collision_layer) != 0, "The carnivorous plant trigger cannot detect the player's collision layer."):
+		return
+	var health_before: Dictionary = player_health.call("get_health_data")
+	var previous_health := float(health_before.get("current_health", 0.0))
+	# Emit the connected Area3D signal so the validator exercises the same
+	# callback binding used by a real body_entered physics event.
+	capture_zone.body_entered.emit(player)
+	var health_during: Dictionary = player_health.call("get_health_data")
+	if not _check(bool(player.get_meta("system_examiner_trapped", false)) and float(health_during.get("current_health", previous_health)) < previous_health, "A carnivorous plant did not trap the player and apply real combat damage."):
+		return
+	# Exercise the real player movement loop: the capture must suppress input and velocity.
+	main.set("mobile_direction", Vector2(1.0, 0.0))
+	player.velocity = Vector3(5.0, 0.0, 0.0)
+	var trapped_position := player.global_position
+	main.call("_physics_process", 1.0 / 60.0)
+	if not _check(player.velocity == Vector3.ZERO and player.global_position.distance_to(trapped_position) < 0.001, "The player movement loop did not lock movement while captured."):
+		return
+	await create_timer(0.45).timeout
+	var captured_visuals := player.find_children("*", "VisualInstance3D", true, false)
+	var all_player_meshes_hidden := not captured_visuals.is_empty()
+	for captured_visual in captured_visuals:
+		if (captured_visual as VisualInstance3D).visible:
+			all_player_meshes_hidden = false
+	if not _check(bool(player.get_meta("system_examiner_swallowed", false)) and all_player_meshes_hidden, "The plant did not pull the player into its maw and hide the captured character visuals."):
+		return
+	await create_timer(2.2).timeout
+	var released_visuals := player.find_children("*", "VisualInstance3D", true, false)
+	var any_player_mesh_visible := false
+	for released_visual in released_visuals:
+		if (released_visual as VisualInstance3D).visible:
+			any_player_mesh_visible = true
+	if not _check(not bool(player.get_meta("system_examiner_trapped", true)) and not bool(player.get_meta("system_examiner_swallowed", true)) and bool(player.get_meta("system_examiner_released_from_trap", false)) and any_player_mesh_visible, "The plant did not restore the player visuals and movement after the capture duration."):
+		return
+	if not _check(player.global_position.distance_to(capture_plant.global_position) > 1.5, "The released player remained inside the plant's capture zone."):
+		return
+	# Verify movement becomes available again after release.
+	player.velocity = Vector3.ZERO
+	var released_position := player.global_position
+	main.call("_physics_process", 1.0 / 60.0)
+	main.set("mobile_direction", Vector2.ZERO)
+	if not _check(player.global_position.distance_to(released_position) > 0.001, "The player remained movement-locked after the plant released them."):
+		return
+	if not _check(int(marshland.get_meta("system_marshland_tracking_arrow_count", 0)) == 8 and int(marshland.get_meta("system_marshland_fog_bank_count", 0)) == 14 and bool(marshland.get_meta("system_marshland_exit_gate_present", false)), "The fog, tracking arrows or final Marshland gate are missing."):
+		return
+
 	# The ordinary restaurant and its dine-in service remain, but no longer create an exam entrance.
 	var restaurant_floor := operations.call("_ensure_floor_room", "shopping_tower_baghdad", 29) as Node3D
 	if not _check(restaurant_floor != null and restaurant_floor.get_node_or_null("RestaurantDiningSign") != null, "Shopping Tower restaurant floor 29 was damaged or is missing."):

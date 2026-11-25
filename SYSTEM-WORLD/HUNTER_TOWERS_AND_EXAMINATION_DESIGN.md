@@ -39,7 +39,7 @@ The five named rivals retain their individual behaviors:
 
 Candidate numbers currently persist locally on the installation. Global uniqueness across accounts/devices and server-authoritative anti-cheat verification are not claimed.
 
-The Marshland area remains separate and unconnected for now. Any future connection must be a deliberate design update; it is not part of the current tunnel route.
+The Hunter examination tunnel opens directly into the Marshland as the continuous next environment; it is not a detached destination. The Marshland is an agricultural wetland with crop plots, gardens, dense trees, shallow swamp-water zones, giant marsh turtles and other large original beasts, resident NPCs who may misdirect candidates, heavy low-visibility fog, and luminous tracking arrows that keep the true route readable when the guide is obscured. The route ends at the Marshland final gate. This replaces all older notes that said the Marshland must remain unconnected.
 
 ## Restaurant and Shopping Tower boundary
 
