@@ -743,11 +743,26 @@ func _start_hunter_guild_escort(guide: Node) -> void:
 			interaction_prompt_label.text = "تعذر العثور على نفق اختبار الصيادين."
 			interaction_prompt_label.show()
 		return
+	var guide_node := guide as Node3D
+	var guide_origin := guide_node.global_position
+	var tunnel_guide := tunnel_root.get_node_or_null("HunterGuildGuideAtTunnel") as Area3D
+	if tunnel_guide == null:
+		tunnel_guide = guide_node.duplicate() as Area3D
+		if tunnel_guide == null:
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "تعذر تجهيز مرشد الوصول داخل النفق."
+				interaction_prompt_label.show()
+			return
+		tunnel_guide.name = "HunterGuildGuideAtTunnel"
+		tunnel_guide.add_to_group("system_interactable")
+		tunnel_guide.set_meta("system_hunter_exam_guide", true)
+		tunnel_guide.set_meta("system_interaction_prompt", "مرشد النقابة: تحدث معي لمتابعة المنافسة")
+		tunnel_root.add_child(tunnel_guide)
+	tunnel_guide.global_position = guide_origin
+	tunnel_root.set_meta("system_hunter_exam_guide_present", true)
 	hunter_exam_escort_active = true
 	player.set_meta("system_hunter_exam_escort_active", true)
 	player.velocity = Vector3.ZERO
-	var guide_node := guide as Node3D
-	var guide_origin := guide_node.global_position
 	var destination := tunnel_root.to_global(Vector3(0.0, 1.0, -1.5))
 	if interaction_prompt_label != null:
 		interaction_prompt_label.text = "مرشد النقابة: ابقَ قريباً مني. نتجه الآن إلى نفق المنافسة."
@@ -755,8 +770,8 @@ func _start_hunter_guild_escort(guide: Node) -> void:
 	var tween := create_tween()
 	tween.set_trans(Tween.TRANS_SINE)
 	tween.set_ease(Tween.EASE_IN_OUT)
-	tween.parallel().tween_property(guide_node, "global_position", destination + Vector3(0.0, 0.0, 2.0), 5.0)
-	tween.tween_property(player, "global_position", destination, 5.0)
+	tween.parallel().tween_property(tunnel_guide, "global_position", destination + Vector3(0.0, 0.0, 2.0), 5.0)
+	tween.parallel().tween_property(player, "global_position", destination, 5.0)
 	tween.finished.connect(func():
 		if not is_instance_valid(player):
 			hunter_exam_escort_active = false
@@ -784,13 +799,8 @@ func _start_hunter_guild_escort(guide: Node) -> void:
 		if bool(start_result.get("resumed", false)):
 			_on_hunter_exam_stage_started("baghdad_tunnel_competition", 1)
 		hunter_exam_escort_active = false
-		if is_instance_valid(guide_node):
-			var return_tween := create_tween()
-			return_tween.set_trans(Tween.TRANS_SINE)
-			return_tween.set_ease(Tween.EASE_IN_OUT)
-			return_tween.tween_property(guide_node, "global_position", guide_origin, 5.0)
 		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "وصلت إلى نفق الصيادين. رقمك التسلسلي الدائم: %d — بدأت المنافسة المتصلة." % candidate_number
+			interaction_prompt_label.text = "وصلت إلى نفق الصيادين. رقمك التسلسلي الدائم: %d — بدأت المنافسة المتصلة. المرشد بانتظارك داخل النفق." % candidate_number
 			interaction_prompt_label.show()
 	)
 
