@@ -160,7 +160,7 @@ Official competitive matches remain 1v1. The floor band controls arena count, no
 
 ### Floor-based combat rules
 - Floors 1–80 allow unarmed hand-to-hand, kung fu, martial arts, traditional melee weapons, and bows/arrows; Nen techniques become available as the player learns them.
-- Floors 81–200 are Nen-only: players must have unlocked Nen and reached control rank 5 before entering, must unequip weapons, and fight using Nen-enhanced unarmed combat and Nen techniques.
+- Floors 81–200 are Nen-only: players must have unlocked Nen and reached control rank 5 before entering, must unequip weapons, and fight using Nen-enhanced unarmed combat and Nen techniques. The Hatsu foundation training needed for rank 5 is available in the training hall at floor 80, before the upper-floor entry gate.
 
 
 ### Interactive combat-style selection
