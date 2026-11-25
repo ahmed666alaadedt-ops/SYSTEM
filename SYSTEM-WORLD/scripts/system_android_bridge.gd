@@ -1,9 +1,8 @@
 extends Node
 
 ## Engine-side adapter for the versioned SYSTEM Android message protocol.
-## The native Android plugin is expected to register the Engine singleton
-## "SYSTEMAndroidHost", expose signal "message_from_android(raw_json)", and
-## expose method "send_to_android(raw_json)". Until then transport stays off.
+## The native Android plugin must register SYSTEMAndroidHost with the documented
+## message_from_android signal and send_to_android method.
 
 signal world_entry_requested(world_id: String)
 signal player_context_received(context: Dictionary)
@@ -64,7 +63,10 @@ func _connect_native_transport() -> void:
 		if not _native_host.is_connected("message_from_android", callback):
 			_native_host.connect("message_from_android", callback)
 	if _native_host.has_method("send_to_android"):
-		_send_to_android("bridge_ready", {"ready": true, "protocol_version": PROTOCOL_VERSION})
+		_send_to_android("bridge_ready", {
+			"ready": true,
+			"protocol_version": PROTOCOL_VERSION
+		})
 	_publish_status()
 
 
@@ -196,13 +198,18 @@ func request_marketplace_operation(
 	request_id: String
 ) -> bool:
 	if operation not in MARKETPLACE_OPERATIONS or request_id.strip_edges().is_empty() or request_id.length() > 128:
-	    _last_error = "MARKETPLACE_REQUEST_INVALID"
-	    _publish_status()
-	    return false
+		_last_error = "MARKETPLACE_REQUEST_INVALID"
+		_publish_status()
+		return false
+
 	var request_payload := payload.duplicate(true)
 	request_payload["operation"] = operation
+	if not _send_to_android("marketplace_request", request_payload, request_id):
+		_last_error = "ANDROID_TRANSPORT_UNAVAILABLE"
+		_publish_status()
+		return false
+
 	message_to_android.emit("marketplace_request", request_payload)
-	_send_to_android("marketplace_request", request_payload, request_id)
 	_last_error = ""
 	_publish_status()
 	return true
@@ -223,8 +230,28 @@ func get_bridge_status() -> Dictionary:
 	}
 
 
+func _send_to_android(
+	message_type: String,
+	payload: Dictionary,
+	request_id: String = ""
+) -> bool:
+	if not is_instance_valid(_native_host):
+		return false
+	if not _native_host.has_method("send_to_android"):
+		return false
+
+	var envelope := {
+		"version": PROTOCOL_VERSION,
+		"type": message_type,
+		"payload": payload
+	}
+	if not request_id.is_empty():
+		envelope["request_id"] = request_id
+
+	var raw_message := JSON.stringify(envelope)
 	if raw_message.length() > 16384:
 		return false
+
 	_native_host.call("send_to_android", raw_message)
 	return true
 
