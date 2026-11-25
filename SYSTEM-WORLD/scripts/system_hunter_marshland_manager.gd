@@ -2,7 +2,9 @@ extends Node3D
 class_name SYSTEMHunterMarshlandManager
 
 const PLOT_COUNT := 12
-const TREE_COUNT := 28
+const TREE_COUNT := 168
+const UNDERGROWTH_COUNT := 220
+const REED_CLUSTER_COUNT := 96
 const TURTLE_COUNT := 3
 const DECOY_GUIDE_COUNT := 6
 
@@ -19,6 +21,8 @@ func _build_marshland() -> void:
 	set_meta("system_marshland_tracking_route_enabled", true)
 	set_meta("system_marshland_expected_plot_count", PLOT_COUNT)
 	set_meta("system_marshland_expected_tree_count", TREE_COUNT)
+	set_meta("system_marshland_expected_undergrowth_count", UNDERGROWTH_COUNT)
+	set_meta("system_marshland_expected_reed_cluster_count", REED_CLUSTER_COUNT)
 	set_meta("system_marshland_expected_giant_turtle_count", TURTLE_COUNT)
 	set_meta("system_marshland_expected_decoy_count", DECOY_GUIDE_COUNT)
 
@@ -27,6 +31,10 @@ func _build_marshland() -> void:
 	var crop := _material(Color(0.32, 0.48, 0.16), 0.9, 0.0)
 	var trunk := _material(Color(0.22, 0.14, 0.08), 0.95, 0.0)
 	var leaf := _material(Color(0.12, 0.32, 0.14), 0.92, 0.0)
+	var leaf_light := _material(Color(0.28, 0.43, 0.16), 0.92, 0.0)
+	var leaf_dark := _material(Color(0.055, 0.20, 0.12), 0.94, 0.0)
+	var reed_material := _material(Color(0.42, 0.46, 0.18), 0.88, 0.0)
+	var flower_material := _material(Color(0.72, 0.48, 0.26), 0.65, 0.0)
 	var stone := _material(Color(0.24, 0.28, 0.22), 0.92, 0.0)
 	var glow := _material(Color(0.12, 0.72, 0.92), 0.4, 0.4)
 	glow.emission_enabled = true
@@ -86,33 +94,75 @@ func _build_marshland() -> void:
 				stalk.material_override = crop
 				plot.add_child(stalk)
 
-	# Dense tree line and reeds around the water.
+	# Dense mixed swamp forest: staggered groves, varied silhouettes and overlapping canopies.
 	for index in range(TREE_COUNT):
-		var tree := Node3D.new()
-		tree.name = "MarshTree_%02d" % index
-		var angle := TAU * float(index) / float(TREE_COUNT)
-		var radius := 30.0 + float(index % 5) * 7.0
-		tree.position = Vector3(cos(angle) * radius, 0.0, 22.0 + sin(angle) * radius)
-		add_child(tree)
-		var stem := MeshInstance3D.new()
-		stem.name = "Trunk"
-		var stem_mesh := CylinderMesh.new()
-		stem_mesh.top_radius = 0.25
-		stem_mesh.bottom_radius = 0.48
-		stem_mesh.height = 5.0 + float(index % 4)
-		stem.mesh = stem_mesh
-		stem.position.y = stem_mesh.height * 0.5
-		stem.material_override = trunk
-		tree.add_child(stem)
-		var crown := MeshInstance3D.new()
-		crown.name = "Canopy"
-		var crown_mesh := SphereMesh.new()
-		crown_mesh.radius = 2.5 + float(index % 3) * 0.35
-		crown_mesh.height = crown_mesh.radius * 2.0
-		crown.mesh = crown_mesh
-		crown.position.y = stem_mesh.height + 1.4
-		crown.material_override = leaf
-		tree.add_child(crown)
+		var column := index % 14
+		var row := int(index / 14)
+		var x := -51.0 + float(column) * 7.7 + sin(float(index) * 1.71) * 2.0
+		var z := -12.0 + float(row) * 10.8 + cos(float(index) * 0.83) * 2.4
+		if absf(x) < 8.0 and z < 9.0:
+			z += 15.0
+		_build_marsh_tree(index, Vector3(x, 0.0, z), trunk, leaf, leaf_light, leaf_dark)
+
+	# Thick understory: ferns, broad-leaf shrubs, roots and flowering marsh plants.
+	for index in range(UNDERGROWTH_COUNT):
+		var plant := Node3D.new()
+		plant.name = "MarshUnderstory_%03d" % index
+		var x := -52.0 + fposmod(float(index) * 13.37, 104.0)
+		var z := -8.0 + fposmod(float(index) * 7.91, 98.0)
+		plant.position = Vector3(x, 0.0, z)
+		plant.set_meta("system_plant_species", ["broadleaf_shrub", "giant_fern", "marsh_flower", "exposed_root"][index % 4])
+		add_child(plant)
+		var shrub := MeshInstance3D.new()
+		shrub.name = "UnderstoryFoliage"
+		var shrub_mesh: Mesh
+		match index % 4:
+			0:
+				var sphere := SphereMesh.new()
+				sphere.radius = 1.05 + float(index % 3) * 0.22
+				sphere.height = sphere.radius * 1.25
+				shrub_mesh = sphere
+				shrub.material_override = leaf_dark
+			1:
+				var fern := PrismMesh.new()
+				fern.size = Vector3(1.8, 1.7, 0.45)
+				shrub_mesh = fern
+				shrub.material_override = leaf_light
+			2:
+				var flower := SphereMesh.new()
+				flower.radius = 0.62
+				flower.height = 1.2
+				shrub_mesh = flower
+				shrub.material_override = flower_material
+			_:
+				var root_mesh := CylinderMesh.new()
+				root_mesh.top_radius = 0.10
+				root_mesh.bottom_radius = 0.34
+				root_mesh.height = 1.4
+				shrub_mesh = root_mesh
+				shrub.material_override = trunk
+		shrub.mesh = shrub_mesh
+		shrub.position.y = 0.55
+		plant.add_child(shrub)
+
+	# Reed beds and cattails form dense natural screens beside muddy water.
+	for index in range(REED_CLUSTER_COUNT):
+		var cluster := Node3D.new()
+		cluster.name = "MarshReedCluster_%03d" % index
+		cluster.position = Vector3(-50.0 + fposmod(float(index) * 17.19, 100.0), 0.0, -4.0 + fposmod(float(index) * 11.73, 92.0))
+		cluster.set_meta("system_plant_species", "reed_and_cattail")
+		add_child(cluster)
+		for blade in range(7):
+			var reed := MeshInstance3D.new()
+			reed.name = "Reed_%02d" % blade
+			var reed_mesh := CylinderMesh.new()
+			reed_mesh.top_radius = 0.025
+			reed_mesh.bottom_radius = 0.065
+			reed_mesh.height = 1.8 + float((index + blade) % 5) * 0.38
+			reed.mesh = reed_mesh
+			reed.position = Vector3(sin(float(blade) * 2.4) * 0.65, reed_mesh.height * 0.5, cos(float(blade) * 2.4) * 0.65)
+			reed.material_override = reed_material
+			cluster.add_child(reed)
 
 	# Large original swamp fauna; each creature has its own collision and identity.
 	for index in range(TURTLE_COUNT):
@@ -189,12 +239,70 @@ func _build_marshland() -> void:
 	set_meta("system_marshland_generated", true)
 	set_meta("system_marshland_agricultural_plot_count", PLOT_COUNT)
 	set_meta("system_marshland_tree_count", TREE_COUNT)
+	set_meta("system_marshland_undergrowth_count", UNDERGROWTH_COUNT)
+	set_meta("system_marshland_reed_cluster_count", REED_CLUSTER_COUNT)
+	set_meta("system_marshland_plant_species", ["swamp_tree", "broadleaf_shrub", "giant_fern", "marsh_flower", "exposed_root", "reed", "cattail"])
 	set_meta("system_marshland_water_zone_count", 5)
 	set_meta("system_marshland_giant_turtle_count", TURTLE_COUNT)
 	set_meta("system_marshland_decoy_npc_count", DECOY_GUIDE_COUNT)
 	set_meta("system_marshland_tracking_arrow_count", 8)
 	set_meta("system_marshland_fog_bank_count", 14)
 	set_meta("system_marshland_exit_gate_present", true)
+
+
+func _build_marsh_tree(index: int, location: Vector3, bark: Material, canopy_a: Material, canopy_b: Material, canopy_c: Material) -> void:
+	var tree := Node3D.new()
+	tree.name = "MarshTree_%03d" % index
+	tree.position = location
+	var species := index % 4
+	tree.set_meta("system_tree_species", ["bald_cypress", "swamp_oak", "broadleaf_marsh_tree", "willow_like_tree"][species])
+	add_child(tree)
+	var height := 7.0 + float(index % 6) * 1.15
+	var stem := MeshInstance3D.new()
+	stem.name = "Trunk"
+	var stem_mesh := CylinderMesh.new()
+	stem_mesh.top_radius = 0.24 if species != 1 else 0.38
+	stem_mesh.bottom_radius = 0.48 if species != 1 else 0.68
+	stem_mesh.height = height
+	stem.mesh = stem_mesh
+	stem.position.y = height * 0.5
+	stem.material_override = bark
+	tree.add_child(stem)
+	var crown_material: Material = canopy_a if species == 0 else (canopy_b if species == 1 else canopy_c)
+	if species == 0:
+		for crown_index in range(3):
+			var crown := MeshInstance3D.new()
+			crown.name = "CypressCanopy_%02d" % crown_index
+			var crown_mesh := ConeMesh.new()
+			crown_mesh.bottom_radius = 2.8 - float(crown_index) * 0.48
+			crown_mesh.height = 3.8
+			crown.mesh = crown_mesh
+			crown.position = Vector3(0.0, height * 0.48 + float(crown_index) * 1.8, 0.0)
+			crown.material_override = crown_material
+			tree.add_child(crown)
+	else:
+		var crown := MeshInstance3D.new()
+		crown.name = "BroadCanopy"
+		var crown_mesh := SphereMesh.new()
+		crown_mesh.radius = 3.0 + float(index % 3) * 0.5
+		crown_mesh.height = 3.7 + float(index % 2)
+		crown.mesh = crown_mesh
+		crown.position.y = height + 1.0
+		crown.material_override = crown_material
+		tree.add_child(crown)
+		if species == 3:
+			for branch_index in range(5):
+				var branch := MeshInstance3D.new()
+				branch.name = "DroopingWillowBranch_%02d" % branch_index
+				var branch_mesh := CylinderMesh.new()
+				branch_mesh.top_radius = 0.035
+				branch_mesh.bottom_radius = 0.12
+				branch_mesh.height = 3.8
+				branch.mesh = branch_mesh
+				branch.position = Vector3(cos(float(branch_index) * TAU / 5.0) * 2.0, height - 0.5, sin(float(branch_index) * TAU / 5.0) * 2.0)
+				branch.rotation.z = 0.48
+				branch.material_override = canopy_b
+				tree.add_child(branch)
 
 func _build_giant_turtle(index: int, location: Vector3, shell_material: Material, body_material: Material) -> void:
 	var turtle := Node3D.new()
