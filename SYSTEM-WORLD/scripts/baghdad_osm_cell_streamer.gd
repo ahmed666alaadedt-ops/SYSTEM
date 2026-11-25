@@ -276,8 +276,8 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 				Vector3(p2.x, _terrain_height(p2) + height, p2.y)
 			)
 		surface.generate_normals()
-		var mesh := surface.commit()
-		if mesh == null or mesh.get_surface_count() == 0:
+		var mesh := _commit_surface_tool_if_valid(surface)
+		if mesh == null:
 			continue
 		var feature_id := str(feature.get("id", "unknown"))
 		var building := MeshInstance3D.new()
@@ -533,8 +533,8 @@ func _build_line_feature(parent: Node3D, feature: Dictionary, width: float, mate
 			_add_triangle(surface, a, c, b)
 			_add_triangle(surface, b, c, d)
 		surface.generate_normals()
-		var mesh := surface.commit()
-		if mesh == null or mesh.get_surface_count() == 0:
+		var mesh := _commit_surface_tool_if_valid(surface)
+		if mesh == null:
 			continue
 		var instance := MeshInstance3D.new()
 		instance.name = "%s_%s_%02d" % [prefix, feature_id, built]
@@ -578,8 +578,8 @@ func _build_area_feature(parent: Node3D, feature: Dictionary, material: Material
 				Vector3(p2.x, _terrain_height(p2) + lift, p2.y)
 			)
 		surface.generate_normals()
-		var mesh := surface.commit()
-		if mesh == null or mesh.get_surface_count() == 0:
+		var mesh := _commit_surface_tool_if_valid(surface)
+		if mesh == null:
 			continue
 		var instance := MeshInstance3D.new()
 		instance.name = "%s_%s" % [prefix, str(feature.get("id", "unknown"))]
@@ -913,6 +913,23 @@ func _building_material_for(kind: String) -> StandardMaterial3D:
 		"church":
 			material.albedo_color = Color(0.70, 0.63, 0.52)
 	return material
+
+
+func _commit_surface_tool_if_valid(surface: SurfaceTool) -> ArrayMesh:
+	# Inspect the vertex array before creating a mesh. Calling get_surface_count()
+	# on an empty SurfaceTool commit can dereference a null renderer mesh in
+	# Godot's headless/dummy backend when OSM features contain degenerate lines.
+	var arrays: Array = surface.commit_to_arrays()
+	if arrays.size() <= Mesh.ARRAY_VERTEX:
+		return null
+	var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	if vertices.size() < 3:
+		return null
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	if not mesh.get_rid().is_valid():
+		return null
+	return mesh
 
 
 func _add_triangle(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> void:
