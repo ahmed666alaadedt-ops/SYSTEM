@@ -35,6 +35,13 @@ func _run() -> void:
 	assert(int(global_crowd.get_meta("system_visible_spectator_count", 0)) == 500)
 	assert(int(global_crowd.get_meta("system_multimesh_impostor_count", 0)) == 492)
 	assert(int(global_crowd.get_meta("system_full_rig_count", 0)) == 8)
+	assert(int(global_crowd.get_meta("system_detailed_actor_nodes_created", 0)) == 8)
+	var detailed_actor_count := 0
+	for crowd_child in global_crowd.get_children():
+		if crowd_child is CharacterBody3D and bool(crowd_child.get_meta("system_npc_full_rig", false)):
+			detailed_actor_count += 1
+			assert(crowd_child.get_child_count() == 5)
+	assert(detailed_actor_count == 8, "Eight detailed spectator NPCs must be instantiated, not represented by metadata only.")
 	var body_multimesh := global_crowd.get_node_or_null("SpectatorNPCBodies500") as MultiMeshInstance3D
 	var head_multimesh := global_crowd.get_node_or_null("SpectatorNPCHeads500") as MultiMeshInstance3D
 	assert(body_multimesh != null and body_multimesh.multimesh.instance_count == 492)
