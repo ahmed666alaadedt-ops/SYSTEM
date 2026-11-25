@@ -14,6 +14,7 @@ const CONNECTOR_SEGMENT_LENGTH := 60.0
 var terrain: Node
 var marsh_center := Vector3.ZERO
 var tunnel_connector_length := 0.0
+var marsh_entry_local := Vector3(-390.0, 0.0, -15.0)
 
 
 func setup(terrain_node: Node, hunter_tunnel: Node3D) -> void:
@@ -29,6 +30,9 @@ func setup(terrain_node: Node, hunter_tunnel: Node3D) -> void:
 		return
 	var park_ground_y := float(terrain.call("get_terrain_height", projected.x, projected.z))
 	marsh_center = Vector3(projected.x, park_ground_y, projected.z)
+	var tunnel_end_for_entry := hunter_tunnel.global_position + Vector3(0.0, 0.0, 39.0)
+	var entry_direction := Vector2(marsh_center.x - tunnel_end_for_entry.x, marsh_center.z - tunnel_end_for_entry.z).normalized()
+	marsh_entry_local = Vector3(-entry_direction.x * 420.0, 0.0, -entry_direction.y * 420.0)
 	global_position = Vector3.ZERO
 	name = "BaghdadMarshland_AlZawraaReplacement"
 	set_meta("system_region_id", "baghdad_marshland_al_zawraa")
@@ -218,7 +222,12 @@ func _add_water_collision(parent: Node3D, position: Vector3, radius_x: float, ra
 	var area := Area3D.new()
 	area.name = "MarshWaterArea_%02d" % index
 	area.position = position
+	area.collision_layer = 0
+	area.collision_mask = 1
+	area.monitoring = true
 	area.set_meta("system_water_type", "shallow_marsh")
+	area.set_meta("system_public_leisure_water_type", "marsh_shallow")
+	area.set_meta("system_public_leisure_water_depth", 1.1)
 	area.set_meta("system_swimmable", true)
 	var shape := CollisionShape3D.new()
 	var cylinder := CylinderShape3D.new()
@@ -227,6 +236,8 @@ func _add_water_collision(parent: Node3D, position: Vector3, radius_x: float, ra
 	shape.shape = cylinder
 	shape.scale = Vector3(radius_x / maxf(radius_x, radius_z), 1.0, radius_z / maxf(radius_x, radius_z))
 	area.add_child(shape)
+	area.body_entered.connect(_on_marsh_water_body_entered.bind(area))
+	area.body_exited.connect(_on_marsh_water_body_exited.bind(area))
 	parent.add_child(area)
 
 
@@ -315,14 +326,17 @@ func _add_marsh_trees(parent: Node3D, trunk_material: Material, canopy_material:
 
 
 func _add_boardwalk_network(parent: Node3D, material: Material) -> void:
+	var entry := Vector3(marsh_entry_local.x, 0.6, marsh_entry_local.z)
+	var inner := entry.lerp(Vector3(0.0, 0.6, 0.0), 0.48)
+	var hub := Vector3(0.0, 0.6, 0.0)
 	var paths := [
-		[Vector3(-390.0, 0.6, -15.0), Vector3(-245.0, 0.6, -15.0)],
-		[Vector3(-245.0, 0.6, -15.0), Vector3(-90.0, 0.6, -15.0)],
-		[Vector3(-90.0, 0.6, -15.0), Vector3(70.0, 0.6, -15.0)],
-		[Vector3(70.0, 0.6, -15.0), Vector3(230.0, 0.6, 65.0)],
-		[Vector3(230.0, 0.6, 65.0), Vector3(345.0, 0.6, 180.0)],
-		[Vector3(-90.0, 0.6, -15.0), Vector3(-180.0, 0.6, 190.0)],
-		[Vector3(-180.0, 0.6, 190.0), Vector3(-330.0, 0.6, 260.0)]
+		[entry, inner],
+		[inner, hub],
+		[hub, Vector3(190.0, 0.6, -110.0)],
+		[Vector3(190.0, 0.6, -110.0), Vector3(345.0, 0.6, 80.0)],
+		[hub, Vector3(100.0, 0.6, 235.0)],
+		[Vector3(100.0, 0.6, 235.0), Vector3(-180.0, 0.6, 290.0)],
+		[inner, Vector3(-280.0, 0.6, -230.0)]
 	]
 	for index in range(paths.size()):
 		var start: Vector3 = paths[index][0]
@@ -354,16 +368,60 @@ func _add_boardwalk_network(parent: Node3D, material: Material) -> void:
 			var rail_mesh := BoxMesh.new()
 			rail_mesh.size = Vector3(0.18, 1.0, delta.length())
 			rail.mesh = rail_mesh
-			rail.position = midpoint + Vector3(side * 2.35, 0.65, 0.0)
-			rail.rotation = deck.rotation
+			rail.position = Vector3(side * 2.35, 0.65, 0.0)
 			rail.material_override = material
-			parent.add_child(rail)
+			deck.add_child(rail)
+
+
+func _on_marsh_water_body_entered(body: Node3D, water_area: Area3D) -> void:
+	if body == null or not is_instance_valid(body) or not body.is_in_group("system_player"):
+		return
+	var surface_y := water_area.global_position.y + 0.53
+	var active_zones: Dictionary = body.get_meta("system_public_leisure_water_zones", {}).duplicate()
+	active_zones[str(water_area.get_instance_id())] = {
+		"type": "marsh_shallow",
+		"depth": 1.1,
+		"surface_y": surface_y
+	}
+	body.set_meta("system_public_leisure_water_zones", active_zones)
+	body.set_meta("system_public_leisure_swimming", true)
+	body.set_meta("system_public_leisure_water_type", "marsh_shallow")
+	body.set_meta("system_public_leisure_water_depth", 1.1)
+	body.set_meta("system_swimming", true)
+	body.set_meta("system_swim_surface_y", surface_y)
+	body.set_meta("system_swim_source", "Baghdad Mesopotamian Marshland")
+
+
+func _on_marsh_water_body_exited(body: Node3D, water_area: Area3D) -> void:
+	if body == null or not is_instance_valid(body) or not body.is_in_group("system_player"):
+		return
+	var active_zones: Dictionary = body.get_meta("system_public_leisure_water_zones", {}).duplicate()
+	active_zones.erase(str(water_area.get_instance_id()))
+	if active_zones.is_empty():
+		body.remove_meta("system_public_leisure_water_zones")
+		body.remove_meta("system_public_leisure_swimming")
+		body.remove_meta("system_public_leisure_water_type")
+		body.remove_meta("system_public_leisure_water_depth")
+		body.remove_meta("system_swimming")
+		body.remove_meta("system_swim_surface_y")
+		body.remove_meta("system_swim_source")
+		body.remove_meta("system_swim_last_stroke_force")
+		return
+	body.set_meta("system_public_leisure_water_zones", active_zones)
+	var remaining_ids: Array = active_zones.keys()
+	var remaining: Dictionary = active_zones[remaining_ids.back()]
+	body.set_meta("system_public_leisure_swimming", true)
+	body.set_meta("system_public_leisure_water_type", str(remaining.get("type", "marsh_shallow")))
+	body.set_meta("system_public_leisure_water_depth", float(remaining.get("depth", 1.1)))
+	body.set_meta("system_swimming", true)
+	body.set_meta("system_swim_surface_y", float(remaining.get("surface_y", body.global_position.y + 0.25)))
+	body.set_meta("system_swim_source", "Baghdad Mesopotamian Marshland")
 
 
 func _add_marsh_entry(parent: Node3D, material: Material) -> void:
 	var entry := Node3D.new()
 	entry.name = "MarshlandPublicEntry"
-	entry.position = Vector3(-390.0, 0.0, -15.0)
+	entry.position = marsh_entry_local
 	entry.set_meta("system_entry_from", "HunterTunnelToMarshlandPhysicalConnector")
 	entry.set_meta("system_destination_id", "baghdad_marshland_al_zawraa")
 	entry.set_meta("system_walkable", true)
