@@ -721,6 +721,14 @@ func _run() -> void:
 	if tower_manager.get_node_or_null("PowerTower") == null or int(upper_city.get_meta("system_district_tower_count", 0)) != 5 or bool(upper_city.get_meta("system_power_tower_excluded", false)) != true:
 		_fail("Visual skyline expansion must preserve exactly five connected district towers and keep Power Tower independent.")
 		return
+	var baghdad_tower_config: Dictionary = operations.get("BAGHDAD_TOWER_CONFIG")
+	var independent_power_config: Dictionary = operations.get("POWER_TOWER_CONFIG")
+	if baghdad_tower_config.size() != 5 or baghdad_tower_config.has("power_tower_baghdad"):
+		_fail("The Baghdad tower registry must contain exactly five towers and exclude Power Tower.")
+		return
+	if int(independent_power_config.get("floors", 0)) != 200 or str(independent_power_config.get("node", "")) != "PowerTower":
+		_fail("Power Tower must retain its own independent 200-floor configuration.")
+		return
 	var hunter_tower := tower_manager.get_node_or_null("HunterAssociationTower") as Node3D
 	var helipad := hunter_tower.get_node_or_null("HunterAssociationHelipad") as Node3D if hunter_tower != null else null
 	if helipad == null or str(helipad.get_meta("system_owner_tower_id", "")) != "hunter_association_tower_baghdad":
