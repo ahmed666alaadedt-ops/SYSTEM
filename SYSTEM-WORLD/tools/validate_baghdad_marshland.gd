@@ -27,13 +27,28 @@ func _run_validation() -> void:
 	var zone := root.find_child("MesopotamianMarshland", true, false) as Node3D
 	var tunnel := root.find_child("BaghdadHunterExaminationTunnel", true, false) as Node3D
 	var connector := root.find_child("HunterTunnelToMarshlandPhysicalConnector", true, false) as Node3D
-	if not _check(marsh != null and zone != null and tunnel != null and connector != null, "Marshland, marsh biome, Hunter tunnel or physical connector is missing."):
+	var trial_start := root.find_child("HunterMarshTrialStartTrigger", true, false) as Area3D
+	if not _check(marsh != null and zone != null and tunnel != null and connector != null and trial_start != null, "Marshland, marsh biome, Hunter tunnel or physical connector is missing."):
 		return
 	if not _check(str(marsh.get_meta("system_replaces_real_place", "")) == "Al-Zawraa Park, Baghdad", "The replacement does not identify Al-Zawraa Park."):
 		return
 	if not _check(absf(float(marsh.get_meta("system_anchor_latitude", 0.0)) - 33.31496) < 0.00001 and absf(float(marsh.get_meta("system_anchor_longitude", 0.0)) - 44.37818) < 0.00001, "The marsh is not anchored to the approved Al-Zawraa WGS84 coordinate."):
 		return
 	if not _check(bool(marsh.get_meta("system_hunter_tunnel_connected", false)) and bool(tunnel.get_meta("system_marshland_extension_attached", false)), "The marsh is not connected to the far end of the Hunter tunnel."):
+		return
+	if not _check(bool(connector.get_meta("system_no_teleport_or_loading_gate", false)), "The tunnel-to-marsh route is not a physical continuous passage."):
+		return
+	if not _check(trial_start.monitoring and trial_start.body_entered.get_connections().size() > 0, "The continuous Hunter trial does not start at the tunnel exit."):
+		return
+	if not _check(zone.find_child("HunterExamMarshlandFinalObjective", true, false) is Area3D, "The final marshland exam objective is missing."):
+		return
+	if not _check(zone.find_child("HunterExamMarshlandFinalAltar", true, false) is MeshInstance3D, "The final marshland altar is missing."):
+		return
+	if not _check(zone.find_children("SeasonalMarshStarGate_*", "Node3D", true, false).size() == 3, "The three seasonal gates are not available."):
+		return
+	if not _check(zone.find_children("SeasonalMarshStarGate_*", "Node3D", true, false)[0].visible == false, "The hidden Star Gates should remain concealed before exam completion."):
+		return
+	if not _check(bool(zone.get_meta("system_hunter_exam_biome", false)), "The marsh biome is not marked as part of the Hunter examination."):
 		return
 	if not _check(bool(connector.get_meta("system_no_teleport_or_loading_gate", false)), "The tunnel-to-marsh route is not a physical continuous passage."):
 		return
