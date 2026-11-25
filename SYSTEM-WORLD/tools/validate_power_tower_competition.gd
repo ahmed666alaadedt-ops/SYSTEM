@@ -1,7 +1,8 @@
 extends SceneTree
 
 const ArchitectureScript = preload("res://scripts/system_power_tower_xsx_architecture.gd")
-const CompetitionScript = preload("res://scripts/system_power_tower_competition_manager.gd")
+const ProgressionScript = preload("res://scripts/system_player_progression.gd")
+const PowerTowerManagerScript = preload("res://scripts/system_power_tower_manager.gd")
 
 func _initialize() -> void:
 	call_deferred("_run")
@@ -33,6 +34,15 @@ func _run() -> void:
 	assert(int(manager.call("get_arena_count_for_floor", 0)) == 0)
 	assert(int(manager.call("get_arena_count_for_floor", 201)) == 0)
 
+	var arena_root := manager.get_node_or_null("PowerTowerProgressiveArenaFloors")
+	assert(arena_root != null, "Physical arena floors must be generated.")
+	assert(int(arena_root.get_meta("system_arena_instance_count", 0)) == 560)
+	assert(int(arena_root.get_meta("system_arena_boundary_rail_count", 0)) == 2240)
+	var arena_floors := arena_root.get_node_or_null("ArenaFloorSurfaces560") as MultiMeshInstance3D
+	assert(arena_floors != null and arena_floors.multimesh.instance_count == 560)
+	var arena_rails := arena_root.get_node_or_null("ArenaSafetyRails2240") as MultiMeshInstance3D
+	assert(arena_rails != null and arena_rails.multimesh.instance_count == 2240)
+
 	var early_nen: Dictionary = manager.call("get_nen_stage_for_floor", 1)
 	var upper_nen: Dictionary = manager.call("get_nen_stage_for_floor", 175)
 	assert(early_nen.get("stage") == "DISCOVERY")
@@ -40,10 +50,34 @@ func _run() -> void:
 	assert(manager.call("get_combat_styles_for_floor", 1).has("KUNG_FU"))
 	assert(manager.call("get_combat_styles_for_floor", 150) == ["NEN_TECHNIQUES", "UNARMED_HAND_TO_HAND"])
 
-	var trained: Dictionary = manager.call("apply_nen_training", {"nen_mastery": 90}, 20)
-	assert(bool(trained.get("success", false)))
-	assert(int(trained["profile"]["nen_mastery"]) == 110)
-	assert(trained["profile"]["nen_stage"] == "TEN")
+	var progression := ProgressionScript.new()
+	progression.name = "SYSTEMPlayerProgression"
+	root.add_child(progression)
+	await process_frame
+	var training_plan := [
+		{"id": "pt_nen_01", "floor": 1, "technique": "AURA_AWARENESS", "rank": 1},
+		{"id": "pt_nen_02", "floor": 21, "technique": "TEN", "rank": 1},
+		{"id": "pt_nen_03", "floor": 21, "technique": "TEN", "rank": 2},
+		{"id": "pt_nen_04", "floor": 41, "technique": "REN", "rank": 2},
+		{"id": "pt_nen_05", "floor": 41, "technique": "REN", "rank": 2},
+		{"id": "pt_nen_06", "floor": 41, "technique": "REN", "rank": 3},
+		{"id": "pt_nen_07", "floor": 61, "technique": "ZETSU", "rank": 3},
+		{"id": "pt_nen_08", "floor": 61, "technique": "ZETSU", "rank": 3},
+		{"id": "pt_nen_09", "floor": 61, "technique": "ZETSU", "rank": 4},
+		{"id": "pt_nen_10", "floor": 81, "technique": "HATSU", "rank": 4},
+		{"id": "pt_nen_11", "floor": 81, "technique": "HATSU", "rank": 4},
+		{"id": "pt_nen_12", "floor": 81, "technique": "HATSU", "rank": 5}
+	]
+	for training in training_plan:
+		var training_result: Dictionary = manager.call("train_player_nen", training["id"], training["floor"], training["technique"])
+		assert(bool(training_result.get("success", false)), "Nen training failed: " + str(training))
+		assert(int(training_result.get("nen_control_rank", 0)) == int(training["rank"]))
+	var nen_status: Dictionary = progression.call("get_power_tower_nen_training_status")
+	assert(bool(nen_status.get("nen_unlocked", false)))
+	assert(int(nen_status.get("nen_control_rank", 0)) == 5)
+	assert(int(nen_status.get("training_sessions", 0)) == 12)
+	assert(not bool(manager.call("train_player_nen", "pt_nen_12", 81, "HATSU").get("success", false)))
+	assert(not bool(manager.call("train_player_nen", "pt_invalid_technique", 21, "HATSU").get("success", false)))
 
 	var crowd := architecture.get_node_or_null("PowerTowerCompetitionManager/PowerTower500SpectatorNPCs")
 	assert(crowd != null)
@@ -56,21 +90,46 @@ func _run() -> void:
 	assert(amenities != null)
 	for amenity in ["PowerTowerRestaurant", "PowerTowerRecreationLounge", "PowerTowerEntertainmentZone"]:
 		assert(amenities.get_node_or_null(amenity) != null)
+	var interior := lobby.get_node_or_null("XSXShopAndCafeteriaInterior")
+	assert(interior != null)
+	assert(interior.get_node_or_null("PowerTowerNenTrainingHall") != null)
+	assert(interior.get_node_or_null("PowerTowerCafeteria") != null)
 
-	var bets := [
-		{"bettor_id": "fan_001", "side": "PLAYER_A", "stake": 50},
-		{"bettor_id": "fan_002", "side": "PLAYER_B", "stake": 100}
-	]
-	var settled: Dictionary = manager.call("settle_virtual_bets", "match_test_001", bets, "PLAYER_A", true)
-	assert(bool(settled.get("success", false)))
-	var ledger: Dictionary = settled["ledger"]
-	assert(ledger["currency"] == "SYSTEM_VIRTUAL_CREDITS")
-	assert(int(ledger["tower_profit"]) == 10)
-	assert(int(ledger["fighter_reward"]) == 10)
-	assert(ledger["winning_bettor_payouts"].size() == 1)
-	assert(int(ledger["winning_bettor_payouts"][0]["total_payout"]) == 130)
-	assert(not bool(manager.settle_virtual_bets("match_test_001", bets, "PLAYER_A", true).get("success", false)))
-	assert(not bool(manager.call("settle_virtual_bets", "match_test_002", bets, "PLAYER_A", false).get("success", false)))
+	# Exercise the real 500-NPC prediction pool and three-beneficiary settlement ledger.
+	var betting_manager := PowerTowerManagerScript.new()
+	root.add_child(betting_manager)
+	await process_frame
+	var match_id := "power_tower_validator_match_500"
+	var registration: Dictionary = betting_manager.call("register_spectator_match", match_id, "FIGHTER_A", "FIGHTER_B", 1)
+	assert(bool(registration.get("success", false)), "Could not register 1v1 spectator match.")
+	var seeded: Dictionary = betting_manager.call("populate_power_tower_npc_predictions", match_id, 500)
+	assert(bool(seeded.get("success", false)))
+	assert(int(seeded.get("submitted", 0)) == 500, "All 500 NPC fans should submit virtual predictions.")
+	var open_match: Dictionary = betting_manager.call("get_spectator_match", match_id)
+	var predictions: Dictionary = open_match.get("predictions", {})
+	assert(predictions.size() == 500)
+	assert(str(open_match.get("state", "")) == "open")
+	var locked: Dictionary = betting_manager.call("lock_spectator_predictions", match_id)
+	assert(bool(locked.get("success", false)))
+	var total_pool := int(open_match.get("total_pool", 0))
+	var winning_stake := 0
+	for prediction_value in predictions.values():
+		if str(prediction_value.get("predicted_winner_id", "")) == "FIGHTER_A":
+			winning_stake += int(prediction_value.get("stake_amount", 0))
+	assert(winning_stake > 0 and winning_stake < total_pool)
+	var losing_pool := total_pool - winning_stake
+	var expected_house := int(floor(float(losing_pool) * 0.10))
+	var expected_fighter := int(floor(float(losing_pool) * 0.10))
+	var expected_bettor_profit := losing_pool - expected_house - expected_fighter
+	var settlement: Dictionary = betting_manager.call("settle_spectator_match", match_id, "FIGHTER_A", "LOCAL_COMBAT_AUTHORITY")
+	assert(bool(settlement.get("success", false)))
+	assert(int(settlement.get("house_revenue", -1)) == expected_house)
+	assert(int(settlement.get("fighter_reward", -1)) == expected_fighter)
+	assert(int(settlement.get("bettor_profit_pool", -1)) == expected_bettor_profit)
+	assert(int(settlement.get("total_paid_out", -1)) == winning_stake + expected_bettor_profit)
+	assert(int(betting_manager.power_tower_house_revenue_total) == expected_house)
+	assert(int(betting_manager.power_tower_fighter_reward_ledger.get("FIGHTER_A", 0)) == expected_fighter)
+	assert(not bool(betting_manager.call("settle_spectator_match", match_id, "FIGHTER_A", "LOCAL_COMBAT_AUTHORITY").get("success", false)))
 
-	print("POWER TOWER COMPETITION VALIDATION PASSED: 200-floor arena ladder, Nen progression, martial styles, 500 spectator visual proxies, restaurant/recreation and idempotent virtual-credit ledger.")
+	print("POWER TOWER COMPETITION VALIDATION PASSED: 560 physical arena platforms, progressive Nen player training, 500 NPC fan predictions, three-way virtual-credit settlement, interior amenities and independent 200-floor architecture.")
 	quit(0)
