@@ -438,6 +438,24 @@ func _run() -> void:
 	if antiques_research_floor == null or antiques_market_floor == null:
 		_fail("Antiques Tower research and player-market floors could not be generated.")
 		return
+	var market_interaction: Area3D = null
+	for candidate in antiques_market_floor.find_children("*", "Area3D", true, false):
+		if str(candidate.get_meta("system_interaction_type", "")) == "museum_artifact_exhibit" and str(candidate.get_meta("system_artifact_display_role", "")) == "player_market_prototype":
+			market_interaction = candidate as Area3D
+			break
+	if market_interaction == null:
+		_fail("Antiques Tower player market floor has no interactive marketplace exhibit.")
+		return
+	operations.call("open_museum_artifact_exhibit", market_interaction)
+	var market_actions: Array[String] = []
+	for market_child in operations.get("content").get_children():
+		if market_child is Button:
+			market_actions.append(str((market_child as Button).text))
+	for required_market_action in ["عرض سوق اللاعبين", "عرض مزادات التحف", "عرض مجموعتي", "رصيد ومحجوزات SYSTEM"]:
+		if required_market_action not in market_actions:
+			_fail("Antiques Tower player market is missing its online action: " + required_market_action)
+			return
+	operations.get("panel").hide()
 	var emergency_exit_floors: Array[Node3D] = [
 		shopping_customer_floor,
 		antiques_research_floor,
