@@ -9,13 +9,7 @@ signal license_earned(candidate_number: int, license_rank: String)
 
 const SAVE_PATH := "user://system_hunter_exam.cfg"
 const EXAM_STAGES := [
-	{"id":"baghdad_heritage_trial","city":"Baghdad","title":"اختبار الأثر الرافديني","type":"heritage_riddle_trial","difficulty":3,"description":"اقرأ نقوش العين والنهر والتاج بالترتيب، تجاوز الفخاخ، واسترجع الأثر الصحيح."},
-	{"id":"cairo_buried_market","city":"Cairo","title":"متاهة السوق المدفون","type":"resource_navigation_trial","difficulty":4,"description":"تنقل بين طرق السوق المتغيرة، حافظ على الماء والمؤونة، واعثر على المخرج."},
-	{"id":"alexandria_lighthouse","city":"Alexandria","title":"اختبار المنارة والعاصفة","type":"coastal_rescue_trial","difficulty":4,"description":"أصلح إشارة المنارة، أنقذ المتسابق العالق، ووجّه الضوء عبر العاصفة."},
-	{"id":"paris_catacombs","city":"Paris","title":"سراديب باريس الصامتة","type":"stealth_logic_trial","difficulty":5,"description":"حلل الأصداء والإشارات واعبر السراديب دون تنبيه الحراس."},
-	{"id":"babylon_guardian","city":"Babylon","title":"آلية حارس بابل","type":"guardian_mechanism_trial","difficulty":5,"description":"افهم تروس الحارس وعطّل الآلية واستعد الختم."},
-	{"id":"tokyo_urban_pursuit","city":"Tokyo","title":"مطاردة المدينة المتغيرة","type":"urban_observation_trial","difficulty":5,"description":"تتبع الأثر وساعد المدنيين وحدد نقطة الاعتراض دون تعريضهم للخطر."},
-	{"id":"final_survival_route","city":"Highland Frontier","title":"مسار البقاء الأخير","type":"survival_teamwork_trial","difficulty":6,"description":"اجمع المؤونة واعثر على مأوى واجتز طريق القمة في ظروف قاسية."}
+	{"id":"baghdad_tunnel_competition","city":"Baghdad","title":"المسابقة الموحدة لنفق الصيادين","type":"continuous_tunnel_trial","difficulty":3,"description":"مسابقة متصلة داخل نفق الصيادين بإشراف مرشد نقابة الصيادين؛ لا توجد سبع مراحل منفصلة."}
 ]
 
 var candidate_number := 0
@@ -32,31 +26,9 @@ func _ready() -> void:
 	_load_exam_state()
 
 func apply_for_exam(player_id: String) -> Dictionary:
-	if player_id.strip_edges().is_empty():
-		return {"success":false,"reason":"PLAYER_ID_REQUIRED"}
-	if registered and completed_stage_ids.size() >= EXAM_STAGES.size():
-		return {"success":false,"reason":"HUNTER_LICENSE_ALREADY_EARNED","candidate_number":candidate_number}
-	if registered:
-		return {"success":false,"reason":"ALREADY_REGISTERED","candidate_number":candidate_number,"stages":EXAM_STAGES.size()}
-	var config := ConfigFile.new()
-	config.load(SAVE_PATH)
-	candidate_number = int(config.get_value("exam","next_candidate_number",1001))
-	config.set_value("exam","next_candidate_number",candidate_number + 1)
-	config.set_value("exam","candidate_number",candidate_number)
-	config.set_value("exam","player_id",player_id)
-	config.set_value("exam","invitation_accepted",true)
-	config.set_value("exam","completed_stage_ids",[])
-	config.set_value("exam","exam_active",false)
-	config.save(SAVE_PATH)
-	invitation_accepted = true
-	registered = true
-	exam_active = false
-	current_stage_index = -1
-	completed_stage_ids.clear()
-	failed = false
-	failure_reason = ""
-	exam_registered.emit(candidate_number)
-	return {"success":true,"candidate_number":candidate_number,"stages":EXAM_STAGES.size(),"message":"تم تسجيلك. احتفظ برقمك طوال المراحل السبع."}
+	# Registration is intentionally finalized only after the guide brings the candidate
+	# into the tunnel. This compatibility method now records invitation acceptance only.
+	return accept_exam_invitation(player_id)
 
 func accept_exam_invitation(player_id: String) -> Dictionary:
 	if player_id.strip_edges().is_empty():
@@ -64,7 +36,7 @@ func accept_exam_invitation(player_id: String) -> Dictionary:
 	if registered:
 		return {"success":true,"already_registered":true,"candidate_number":candidate_number}
 	if invitation_accepted:
-		return {"success":true,"pending_tunnel_registration":true,"message":"تم قبول طلبك مبدئياً. أكمل التسجيل الرسمي في برج الجمعية ثم توجه إلى مطعم برج التسوق لاكتشاف المدخل السري."}
+		return {"success":true,"pending_tunnel_registration":true,"message":"تم قبول طلبك. اتبع مرشد نقابة الصيادين إلى النفق."}
 	var config := ConfigFile.new()
 	config.load(SAVE_PATH)
 	config.set_value("exam", "player_id", player_id)
@@ -75,7 +47,8 @@ func accept_exam_invitation(player_id: String) -> Dictionary:
 	invitation_accepted = true
 	registered = false
 	candidate_number = 0
-	return {"success":true,"pending_tunnel_registration":true,"message":"تم قبول طلبك مبدئياً. أكمل التسجيل الرسمي في برج الجمعية ثم توجه إلى مطعم برج التسوق لاكتشاف المدخل السري."}
+	return {"success":true,"pending_tunnel_registration":true,"message":"تم قبول طلبك. اتبع مرشد نقابة الصيادين إلى النفق."}
+
 
 func register_candidate_at_tunnel(player_id: String) -> Dictionary:
 	if not invitation_accepted:
@@ -102,6 +75,7 @@ func register_candidate_at_tunnel(player_id: String) -> Dictionary:
 	failure_reason = ""
 	exam_registered.emit(candidate_number)
 	return {"success":true,"candidate_number":candidate_number,"message":"تم تسجيلك في النفق. هذا رقمك التسلسلي الدائم."}
+
 
 func begin_exam() -> Dictionary:
 	if not registered:
@@ -160,6 +134,7 @@ func withdraw_or_fail(reason: String) -> void:
 func get_exam_overview() -> Dictionary:
 	return {"candidate_number":candidate_number,"invitation_accepted":invitation_accepted,"registered":registered,"active":exam_active,"current_stage_index":current_stage_index,"completed_stages":completed_stage_ids.duplicate(),"total_stages":EXAM_STAGES.size(),"failed":failed,"failure_reason":failure_reason,"stages":EXAM_STAGES.duplicate(true)}
 
+
 func _load_exam_state() -> void:
 	var config := ConfigFile.new()
 	if config.load(SAVE_PATH) != OK:
@@ -171,8 +146,26 @@ func _load_exam_state() -> void:
 	failed = bool(config.get_value("exam", "failed", false))
 	failure_reason = str(config.get_value("exam", "failure_reason", ""))
 	completed_stage_ids.clear()
-	for stage_id in config.get_value("exam", "completed_stage_ids", []):
-		completed_stage_ids.append(str(stage_id))
+	var saved_stage_ids: Array = config.get_value("exam", "completed_stage_ids", [])
+	var legacy_progress_found := false
+	for stage_id in saved_stage_ids:
+		if str(stage_id) == "baghdad_tunnel_competition":
+			completed_stage_ids.append("baghdad_tunnel_competition")
+		else:
+			legacy_progress_found = true
+	if legacy_progress_found:
+		# Keep the candidate's permanent serial and invitation, but discard obsolete
+		# seven-stage progress so the new continuous tunnel competition can begin.
+		completed_stage_ids.clear()
+		exam_active = false
+		failed = false
+		failure_reason = ""
+		config.set_value("exam", "completed_stage_ids", [])
+		config.set_value("exam", "exam_active", false)
+		config.set_value("exam", "current_stage_index", -1)
+		config.set_value("exam", "failed", false)
+		config.set_value("exam", "failure_reason", "")
+		config.save(SAVE_PATH)
 	current_stage_index = completed_stage_ids.size() if exam_active else -1
 
 func _save_exam_state() -> void:
