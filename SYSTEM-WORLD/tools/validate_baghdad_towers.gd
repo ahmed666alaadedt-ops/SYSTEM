@@ -112,7 +112,7 @@ func _run_validation() -> void:
 
 	var records: Array = tower_manager.call("get_tower_positions")
 	if records.size() != EXPECTED_TOWER_IDS.size():
-		_fail("Expected six Baghdad tower landmarks (five connected plus standalone Power Tower); found %d." % records.size())
+		_fail("Expected five Baghdad district towers plus one independent Power Tower facility; found %d." % records.size())
 		return
 
 	var found_ids: Dictionary = {}
@@ -483,7 +483,7 @@ func _run_validation() -> void:
 		_fail("Power Tower must remain an independent 200-floor structure outside the five Baghdad civic towers.")
 		return
 
-	print("Baghdad tower validation passed: verified Republic Bridge and Tigris runtime geometry, five towers on both riverbanks/bridge, upper sky city, standalone Power Tower, Hunter rooftop helicopter controller, internal/external ads, tunnel anchor, six lobby kiosks and Shopping Tower facilities.")
+	print("Baghdad tower validation passed: verified Republic Bridge and Tigris runtime geometry, five towers on both riverbanks/bridge, upper sky city, standalone Power Tower, Hunter rooftop helicopter controller, internal/external ads, tunnel anchor, six facility lobby kiosks (five Baghdad towers plus independent Power Tower) and Shopping Tower facilities.")
 	# This is a short-lived headless validation process; avoid forcing dummy-renderer teardown of placeholder meshes.
 	quit(0)
 
