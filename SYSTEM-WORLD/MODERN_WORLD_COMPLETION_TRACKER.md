@@ -1905,7 +1905,7 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - [x] Every available internal and external tower campaign label now records its active campaign ID, responsible NPC manager, start time, expiry time and rotation number; each tower also records the synchronized campaign ID, expiry and rotation.
 - [x] Exposed active campaign ID, rotation count and expiry through the tower operations status for QA and diagnostics.
 - [x] Extended the Baghdad tower operations validator to check campaign identity, NPC manager attribution, expiry metadata on internal/external displays across all six towers, and synchronized rotation after a simulated 38-second expiry.
-- [ ] Exact-HEAD Godot tower operations validation, canonical runtime validation and Android APK export are running/pending for code commits `486d436880da21cd96bba87105de4705f0115c5e` and `0262c419c584d73bc1a7d023c4534001be41a70e`. Do not mark campaign lifecycle as verified until the validator completes on exact HEAD.
+- [x] Exact-HEAD Godot tower operations validation, canonical runtime validation and Android APK export passed on code commit `503970ecf0f445d89fea75887d361076d0ae456c`; the tower validator also passed the 15 physical sky-garden bridge traversals and five elevator trips/returns. The subsequent documentation-only checkpoint does not alter runtime code.
 - [ ] These remain locally managed in-world SYSTEM campaigns, not a live third-party ad network or monetized advertising integration.
 - PR #38 remains draft and unmerged; no changes merged to `main`.
 

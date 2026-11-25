@@ -1,6 +1,6 @@
 # Baghdad Antiques & Heritage Tower — Approved Design
 
-Status: approved design; authenticated marketplace server foundation and scheduled expiry/settlement jobs are implemented on the feature branch. It is NOT live until deployment, trusted artifact reward issuance, wallet funding, Android/Godot UI wiring and security/concurrency tests are complete.
+Status: approved design; authenticated marketplace server foundation, scheduled expiry/settlement jobs and native Android/Godot host wiring are implemented on the feature branch. It is NOT live until deployment, trusted artifact reward issuance, wallet funding, physical-device round-trip verification and callable-function security/concurrency tests are complete.
 
 ## District identity
 
