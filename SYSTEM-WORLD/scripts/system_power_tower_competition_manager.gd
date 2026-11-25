@@ -337,9 +337,9 @@ func _build_restaurant_and_recreation_amenities() -> void:
 	amenities.name = "PowerTowerRestaurantAndRecreation"
 	amenities.set_meta("system_power_tower_facilities", ["RESTAURANT", "CAFETERIA", "RECREATION_LOUNGE", "ENTERTAINMENT_ZONE"])
 	lobby.add_child(amenities)
-	_add_amenity(amenities, "PowerTowerRestaurant", "X-S-X RESTAURANT", Vector3(-30.0, 0.0, 82.0), Color(0.62, 0.31, 0.12))
-	_add_amenity(amenities, "PowerTowerRecreationLounge", "RECREATION & REST", Vector3(30.0, 0.0, 82.0), Color(0.18, 0.42, 0.5))
-	_add_amenity(amenities, "PowerTowerEntertainmentZone", "ENTERTAINMENT ZONE", Vector3(0.0, 0.0, 96.0), Color(0.35, 0.2, 0.52))
+	_add_amenity(amenities, "PowerTowerRestaurant", "X-S-X RESTAURANT", Vector3(-12.0, 0.0, 22.0), Color(0.62, 0.31, 0.12))
+	_add_amenity(amenities, "PowerTowerRecreationLounge", "RECREATION & REST", Vector3(12.0, 0.0, 22.0), Color(0.18, 0.42, 0.5))
+	_add_amenity(amenities, "PowerTowerEntertainmentZone", "ENTERTAINMENT ZONE", Vector3(0.0, 0.0, -35.0), Color(0.35, 0.2, 0.52))
 	set_meta("system_power_tower_amenity_count", 3)
 
 func _add_amenity(parent: Node3D, node_name: String, sign_text: String, location: Vector3, color: Color) -> void:
@@ -351,7 +351,7 @@ func _add_amenity(parent: Node3D, node_name: String, sign_text: String, location
 	var floor_mesh := MeshInstance3D.new()
 	floor_mesh.name = "FacilityFloor"
 	var floor := BoxMesh.new()
-	floor.size = Vector3(22.0, 0.35, 15.0)
+	floor.size = Vector3(16.0, 0.35, 12.0)
 	floor_mesh.mesh = floor
 	floor_mesh.position.y = 0.18
 	var material := StandardMaterial3D.new()
