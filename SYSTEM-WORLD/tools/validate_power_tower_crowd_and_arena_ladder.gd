@@ -13,6 +13,12 @@ func _run() -> void:
 		1: 8, 20: 8, 21: 6, 40: 6, 41: 4, 60: 4,
 		61: 3, 80: 3, 81: 2, 100: 2, 101: 1, 200: 1
 	}
+	var early_floor_rules: Dictionary = power_manager.call("get_floor_data", 80)
+	var upper_floor_rules: Dictionary = power_manager.call("get_floor_data", 81)
+	assert(bool(early_floor_rules.get("weapons_allowed", false)))
+	assert(not bool(early_floor_rules.get("nen_required", true)))
+	assert(not bool(upper_floor_rules.get("weapons_allowed", true)))
+	assert(bool(upper_floor_rules.get("nen_required", false)))
 	for floor_value in expected_ladder.keys():
 		var floor_number := int(floor_value)
 		var data: Dictionary = power_manager.call("get_floor_data", floor_number)
