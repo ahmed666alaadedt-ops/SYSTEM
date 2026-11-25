@@ -86,9 +86,20 @@ func _run_validation() -> void:
 	if not _check(spring_destinations == ["Tokyo", "Paris", "Singapore"], "Seasonal Star Gate destination rotation is missing."):
 		return
 
+	for creature in zone.find_children("GiantMarshCreature_*", "Node3D", true, false):
+		var enemy := creature.get_node_or_null("GiantMarshCombatEnemy") as CharacterBody3D
+		if not _check(enemy != null and enemy.is_in_group("system_enemy") and enemy.has_method("take_damage"), "A giant marsh animal is not wired into the combat system."):
+			return
+
 	var test_player := CharacterBody3D.new()
 	test_player.add_to_group("system_player")
 	root.add_child(test_player)
+	var first_creature := zone.find_child("GiantMarshCreature_00", true, false) as Node3D
+	marsh.call("_on_giant_creature_encounter", test_player, first_creature)
+	var first_enemy := first_creature.get_node_or_null("GiantMarshCombatEnemy") as CharacterBody3D
+	if not _check(bool(test_player.get_meta("system_hunter_marsh_encounter_active", false)) and first_enemy.get("target") == test_player, "Entering a giant animal encounter did not activate its combat enemy."):
+		return
+	first_enemy.set_physics_process(false)
 	var first_water := water_areas[0] as Area3D
 	marsh.call("_on_marsh_water_body_entered", test_player, first_water)
 	if not _check(bool(test_player.get_meta("system_swimming", false)) and str(test_player.get_meta("system_swim_source", "")) == "Baghdad Mesopotamian Marshland", "Entering marsh water did not activate the canonical swimming state."):
