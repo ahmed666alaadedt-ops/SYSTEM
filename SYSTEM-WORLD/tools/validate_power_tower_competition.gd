@@ -145,6 +145,8 @@ func _run() -> void:
 	betting_manager.spectator_matches.clear()
 	betting_manager.spectator_npc_ticket_balances.clear()
 	betting_manager.spectator_daily_counts.clear()
+	betting_manager.power_tower_house_revenue_total = 0
+	betting_manager.power_tower_fighter_reward_ledger.clear()
 	var match_id := "power_tower_validator_match_500_%d" % Time.get_ticks_usec()
 	var registration: Dictionary = betting_manager.call("register_spectator_match", match_id, "FIGHTER_A", "FIGHTER_B", 1)
 	assert(bool(registration.get("success", false)), "Could not register 1v1 spectator match.")
