@@ -163,11 +163,37 @@ func _run_validation() -> void:
 		return
 	player.set_meta("system_hunter_tunnel_competition_complete", true)
 	marsh.call("_on_marsh_trial_start_entered", player)
+	var real_guide := zone.get_node_or_null("RealHunterGuildMarshGuide") as Node3D
+	if not _check(real_guide != null and bool(real_guide.get_meta("system_is_real_guild_guide", false)) and int(real_guide.get_meta("system_guide_route_waypoint_count", 0)) >= 5, "The uniquely identified official Hunter Guild guide or its sanctuary route is missing."):
+		return
+	if not _check(bool(player.get_meta("system_hunter_guide_escort_started", false)) and bool(real_guide.get_meta("system_guide_escort_active", false)), "The candidate was not enrolled into the real guide-led escort."):
+		return
+	var tracking_arrow := player.get_node_or_null("HunterRealGuideTrackingArrow") as Node3D
+	if not _check(tracking_arrow != null and bool(tracking_arrow.get_meta("system_tracks_real_guild_guide", false)) and bool(tracking_arrow.get_meta("system_visible_through_marsh_fog", false)), "The fog-safe tracking arrow is not attached to the candidate and bound to the real guide."):
+		return
+	player.global_position = real_guide.global_position + Vector3(45.0, 0.0, 0.0)
+	marsh.call("_process_real_guide_escort", 0.016)
+	if not _check(tracking_arrow.visible, "The tracking arrow did not appear when the candidate became separated in the fog."):
+		return
+	var crowd_convoy := root.find_child("HunterCandidateCrowd", true, false) as Node3D
+	if not _check(crowd_convoy != null and bool(crowd_convoy.get_meta("system_candidate_convoy_following_real_guide", false)) and int(crowd_convoy.get_meta("system_candidate_convoy_count", 0)) == 500, "The 500 individually tracked candidates were not assigned to the guide-led convoy."):
+		return
+	var decoy_guides := zone.find_children("HunterExamDeceptionNPC_*", "Node3D", true, false)
+	for decoy in decoy_guides:
+		if not _check(not bool(decoy.get_meta("system_is_real_guild_guide", false)), "A deception NPC was incorrectly identified as the official guide."):
+			return
 	var gates_before_sanctuary := sanctuary.find_children("SeasonalMarshStarGate_*", "Node3D", true, false)
 	if not _check(gates_before_sanctuary.size() == 3 and not bool(gates_before_sanctuary[0].visible) and not bool(gates_before_sanctuary[1].visible) and not bool(gates_before_sanctuary[2].visible), "Seasonal Star Gates became visible before the final marsh sanctuary objective."):
 		return
 	marsh.call("_on_hidden_sanctuary_discovered", player, sanctuary)
-	if not _check(bool(sanctuary.visible) and bool(player.get_meta("system_hidden_heritage_site_discovered", false)), "The active candidate did not reveal the hidden ancient sanctuary on approach."):
+	if not _check(not bool(sanctuary.visible) and bool(player.get_meta("system_hunter_sanctuary_discovery_pending_guide_arrival", false)), "The sanctuary bypassed the guide-led arrival sequence."):
+		return
+	marsh.set("guide_path_speed", 10000.0)
+	for _guide_step in range(12):
+		marsh.call("_process_real_guide_escort", 1.0)
+	if not _check(bool(real_guide.get_meta("system_guide_arrived_at_sanctuary", false)) and bool(marsh.get_meta("system_real_guide_escort_completed", false)), "The official guide did not complete the full marsh-to-sanctuary escort."):
+		return
+	if not _check(bool(sanctuary.visible) and bool(player.get_meta("system_hidden_heritage_site_discovered", false)), "The guide's arrival did not reveal the hidden ancient sanctuary to the waiting candidate."):
 		return
 	if not _check(bool(player.get_meta("system_hunter_marsh_trial_started", false)) and bool(exam_manager.get("exam_active")), "The marsh section did not start after tunnel checkpoints while keeping the exam active."):
 		return
@@ -186,5 +212,5 @@ func _run_validation() -> void:
 	if not _check(str(player.get_meta("system_last_marsh_star_gate_destination", "")) == expected_destination, "The seasonal Star Gate did not transport the Hunter to its current city destination."):
 		return
 
-	print("Baghdad Marshland validation passed: Al-Zawraa agricultural wetland, continuous Hunter tunnel connection, eight swim-enabled pools, 12000 reeds, 160 willows, nine boardwalks, 12 deception NPCs, six giant creatures, 18 dense fog layers, five wrong-route hazards, hidden sanctuary and three seasonal Star Gates.")
+	print("Baghdad Marshland validation passed: physical tunnel link, agricultural wetland, fog, 500-candidate guide convoy, official guide identity, fog tracking arrow, decoy separation, escorted sanctuary arrival, six giant creatures and three seasonal Star Gates.")
 	quit(0)
