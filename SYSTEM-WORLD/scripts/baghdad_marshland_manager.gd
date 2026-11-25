@@ -14,7 +14,7 @@ const CONNECTOR_SEGMENT_LENGTH := 60.0
 var terrain: Node
 var marsh_center := Vector3.ZERO
 var tunnel_connector_length := 0.0
-var marsh_entry_local := Vector3(-390.0, 0.0, -15.0)
+var marsh_entry_local := Vector3(-900.0, 0.0, -15.0)
 
 
 func setup(terrain_node: Node, hunter_tunnel: Node3D) -> void:
@@ -230,11 +230,14 @@ func _add_water_collision(parent: Node3D, position: Vector3, radius_x: float, ra
 	area.set_meta("system_public_leisure_water_depth", 1.1)
 	area.set_meta("system_swimmable", true)
 	var shape := CollisionShape3D.new()
-	var cylinder := CylinderShape3D.new()
-	cylinder.radius = maxf(radius_x, radius_z)
-	cylinder.height = 1.2
-	shape.shape = cylinder
-	shape.scale = Vector3(radius_x / maxf(radius_x, radius_z), 1.0, radius_z / maxf(radius_x, radius_z))
+	var points := PackedVector3Array()
+	for layer in [-0.6, 0.6]:
+		for point_index in range(24):
+			var angle := TAU * float(point_index) / 24.0
+			points.append(Vector3(cos(angle) * radius_x, float(layer), sin(angle) * radius_z))
+	var water_hull := ConvexPolygonShape3D.new()
+	water_hull.points = points
+	shape.shape = water_hull
 	area.add_child(shape)
 	area.body_entered.connect(_on_marsh_water_body_entered.bind(area))
 	area.body_exited.connect(_on_marsh_water_body_exited.bind(area))
