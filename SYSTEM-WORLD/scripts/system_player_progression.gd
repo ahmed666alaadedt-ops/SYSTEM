@@ -25,7 +25,7 @@ const DEFAULT_ATTRIBUTES := {
 	"discipline": 1
 }
 
-const DEFAULT_EQUIPMENT_SLOTS := {"weapon": "", "shield": "", "armor": "", "helmet": "", "outfit": "", "accessory_1": "", "accessory_2": ""}
+const DEFAULT_EQUIPMENT_SLOTS := {"weapon": "", "shield": "", "armor": "", "helmet": "", "boots": "", "outfit": "", "accessory_1": "", "accessory_2": ""}
 const MAX_EQUIPMENT_UPGRADE_LEVEL := 10
 const MAX_EQUIPMENT_DURABILITY := 100.0
 const EQUIPMENT_SLOTS_BY_ITEM := {
@@ -34,6 +34,7 @@ const EQUIPMENT_SLOTS_BY_ITEM := {
 	"hunter_shield": "shield", "advanced_hunter_shield": "shield",
 	"hunter_armor": "armor", "rank_e_armor": "armor", "rank_d_armor": "armor", "rank_c_armor": "armor", "rank_b_armor": "armor", "rank_a_armor": "armor", "rank_s_armor": "armor", "rank_ss_armor": "armor", "rank_sss_armor": "armor",
 	"hunter_helmet": "helmet", "reinforced_helmet": "helmet",
+	"training_boots": "boots", "hunter_boots": "boots", "rank_b_boots": "boots", "rank_a_boots": "boots", "rank_sss_boots": "boots",
 	"hunter_pendant": "accessory_1", "guardian_ring": "accessory_1", "nen_aura_bracelet": "accessory_2", "hunter_badge": "accessory_2",
 	"combat_outfit": "outfit", "casual_outfit": "outfit", "hunter_outfit_e": "outfit", "hunter_outfit_d": "outfit", "hunter_outfit_c": "outfit", "hunter_outfit_b": "outfit", "hunter_outfit_a": "outfit", "hunter_outfit_s": "outfit", "hunter_outfit_ss": "outfit", "hunter_outfit_sss": "outfit"
 }
@@ -42,9 +43,11 @@ const EQUIPMENT_DAMAGE_BONUS := {
 	"hunter_pendant": 2.0, "guardian_ring": 4.0, "nen_aura_bracelet": 5.0, "hunter_badge": 1.0,
 	"combat_knife": 7.0, "dual_blades": 13.0, "long_sword": 15.0, "great_sword": 22.0, "crossbow": 12.0, "war_hammer": 18.0, "hunter_pistol": 14.0, "hunter_rifle": 19.0, "precision_rifle": 24.0, "tactical_shotgun": 21.0
 }
+const EQUIPMENT_MOVEMENT_BONUS := {"training_boots": 0.02, "hunter_boots": 0.04, "rank_b_boots": 0.06, "rank_a_boots": 0.08, "rank_sss_boots": 0.12}
 const EQUIPMENT_DEFENSE_BONUS := {
 	"hunter_shield": 8.0, "advanced_hunter_shield": 16.0, "hunter_armor": 12.0,
 	"hunter_pendant": 2.0, "guardian_ring": 3.0, "nen_aura_bracelet": 2.0, "hunter_badge": 1.0, "hunter_helmet": 4.0, "reinforced_helmet": 8.0,
+	"training_boots": 1.0, "hunter_boots": 2.0, "rank_b_boots": 3.0, "rank_a_boots": 5.0, "rank_sss_boots": 8.0,
 	"rank_e_armor": 5.0, "rank_d_armor": 7.0, "rank_c_armor": 10.0, "rank_b_armor": 14.0, "rank_a_armor": 19.0, "rank_s_armor": 25.0, "rank_ss_armor": 32.0, "rank_sss_armor": 42.0,
 	"hunter_outfit_e": 5.0, "hunter_outfit_d": 7.0, "hunter_outfit_c": 10.0, "hunter_outfit_b": 14.0, "hunter_outfit_a": 19.0, "hunter_outfit_s": 25.0, "hunter_outfit_ss": 32.0, "hunter_outfit_sss": 42.0
 }
@@ -541,8 +544,10 @@ func get_equipment_bonuses() -> Dictionary:
 		var upgrade_level := get_item_upgrade_level(item_id)
 		damage += float(EQUIPMENT_DAMAGE_BONUS.get(item_id, 0.0)) + (float(upgrade_level) * 2.0 if slot == "weapon" else 0.0)
 		defense += float(EQUIPMENT_DEFENSE_BONUS.get(item_id, 0.0)) + (float(upgrade_level) * 1.5 if slot in ["shield", "armor", "helmet"] else 0.0)
-		if slot == "outfit":
-			movement *= 1.0 + float(upgrade_level) * 0.01
+		if slot in ["outfit", "boots"]:
+			var base_movement := float(EQUIPMENT_MOVEMENT_BONUS.get(item_id, 0.0))
+			var upgrade_movement := float(upgrade_level) * (0.015 if slot == "boots" else 0.01)
+			movement *= 1.0 + base_movement + upgrade_movement
 	return {"damage_bonus": damage, "defense_bonus": defense, "movement_multiplier": movement}
 
 
