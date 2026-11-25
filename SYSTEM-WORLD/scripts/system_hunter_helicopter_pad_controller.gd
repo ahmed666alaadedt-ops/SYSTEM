@@ -222,9 +222,11 @@ func _get_ground_landing_height(from_position: Vector3) -> Variant:
 	var world := get_world_3d()
 	if world == null:
 		return null
+	# The helicopter can climb well above the tower roof; keep the ground scan
+	# long enough to find a safe surface from high-altitude emergency descents.
 	var query := PhysicsRayQueryParameters3D.create(
 		from_position + Vector3.UP * 4.0,
-		from_position - Vector3.UP * 100.0
+		from_position - Vector3.UP * 5000.0
 	)
 	query.collision_mask = 1
 	query.collide_with_areas = false
