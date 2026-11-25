@@ -11,6 +11,9 @@ func _run() -> void:
 	tower.set_meta("tower_id", "power_tower_baghdad")
 	tower.set_meta("tower_floor_count", 200)
 	tower.set_meta("tower_is_connected_district_member", false)
+	var lobby := Node3D.new()
+	lobby.name = "PublicLobby_Blockout"
+	tower.add_child(lobby)
 	var architecture := ArchitectureScript.new()
 	tower.add_child(architecture)
 	root.add_child(tower)
