@@ -322,6 +322,9 @@ func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_po
 	_load_wallet()
 	if is_instance_valid(power_tower_manager) and power_tower_manager.has_method("set_spectator_wallet_provider"):
 		power_tower_manager.call("set_spectator_wallet_provider", self)
+	var power_competition_manager := get_tree().root.find_child("PowerTowerCompetitionManager", true, false)
+	if is_instance_valid(power_competition_manager) and power_competition_manager.has_method("configure_player_progression"):
+		power_competition_manager.call("configure_player_progression", progression)
 	_load_vendor_stock()
 	_load_power_tower_appointments()
 	_load_hotel_bookings()
@@ -9293,6 +9296,39 @@ func _fail_power_floor(reason: String) -> void:
 	if is_instance_valid(active_power_objective_label):
 		active_power_objective_label.text = "انتهت المحاولة — أعد المحاولة من المصعد"
 	_set_status("لم تكتمل المواجهة البشرية: " + reason + " لم تُمنح مكافأة الطابق.")
+
+
+func interact_power_tower_nen_training(target: Node) -> Dictionary:
+	if str(target.get_meta("system_tower_id", "power_tower_baghdad")) != "power_tower_baghdad":
+		return {"success": false, "reason": "WRONG_TOWER"}
+	if not is_instance_valid(progression) or not progression.has_method("get_power_tower_nen_training_status"):
+		_set_status("نظام تدريب النِن غير متاح حالياً.")
+		return {"success": false, "reason": "PLAYER_PROGRESSION_UNAVAILABLE"}
+	if not is_instance_valid(power_tower_manager):
+		return {"success": false, "reason": "POWER_TOWER_MANAGER_UNAVAILABLE"}
+	var competition := get_tree().root.find_child("PowerTowerCompetitionManager", true, false)
+	if not is_instance_valid(competition):
+		return {"success": false, "reason": "NEN_TRAINING_HALL_UNAVAILABLE"}
+	var tower_status: Dictionary = power_tower_manager.call("get_tower_status")
+	var training_floor := clampi(int(tower_status.get("next_floor", 1)), 1, 200)
+	var nen_stage: Dictionary = competition.call("get_nen_stage_for_floor", training_floor)
+	var stage_id := str(nen_stage.get("stage", "DISCOVERY"))
+	var technique := "AURA_AWARENESS"
+	match stage_id:
+		"TEN_CONTROL": technique = "TEN"
+		"REN_OUTPUT": technique = "REN"
+		"ZETSU_CONTROL": technique = "ZETSU"
+		"HATSU_FOUNDATION", "ADVANCED_NEN", "NEN_MASTERY": technique = "HATSU"
+	var training_status: Dictionary = progression.call("get_power_tower_nen_training_status")
+	var session_number := int(training_status.get("training_sessions", 0)) + 1
+	var fighter_id := str(player.get_meta("system_player_id", "PLAYER")) if is_instance_valid(player) else "PLAYER"
+	var training_id := "power_tower_nen_%s_%03d" % [fighter_id, session_number]
+	var result: Dictionary = competition.call("train_player_nen", training_id, training_floor, technique)
+	if bool(result.get("success", false)):
+		_set_status("تمرين النِن مكتمل!\nالأسلوب: %s | مستوى التحكم: %d/5\nالجلسات: %d" % [technique, int(result.get("nen_control_rank", 0)), int(result.get("training_sessions", 0))])
+	else:
+		_set_status("تعذر إكمال تدريب النِن: " + str(result.get("reason", "غير معروف")))
+	return result
 
 
 func grant_power_tower_credits(reward_amount: int) -> int:
