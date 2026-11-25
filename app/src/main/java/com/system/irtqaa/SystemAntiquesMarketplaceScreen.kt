@@ -19,7 +19,8 @@ private enum class AntiquesSection(val title: String) {
     MARKET("السوق المباشر"),
     AUCTIONS("المزادات"),
     EXCHANGES("التبادل"),
-    COLLECTION("مجموعتي")
+    COLLECTION("مجموعتي"),
+    HISTORY("سجل الصفقات")
 }
 
 /**
@@ -39,6 +40,7 @@ fun SystemAntiquesMarketplaceScreen(
     var listings by remember { mutableStateOf<List<SystemArtifactListing>>(emptyList()) }
     var auctions by remember { mutableStateOf<List<SystemArtifactAuction>>(emptyList()) }
     var exchanges by remember { mutableStateOf<Map<String, List<Map<String, Any?>>>>(emptyMap()) }
+    var transactions by remember { mutableStateOf<List<Map<String, Any?>>>(emptyList()) }
     var selectedArtifactId by remember { mutableStateOf("") }
     var priceText by remember { mutableStateOf("") }
     var bidText by remember { mutableStateOf("") }
@@ -76,6 +78,10 @@ fun SystemAntiquesMarketplaceScreen(
         repository.loadMyExchangeOffers { result ->
             result.onSuccess { exchanges = it }
                 .onFailure { message = "تعذر تحميل طلبات التبادل: ${it.message}" }
+        }
+        repository.loadTransactionHistory { result ->
+            result.onSuccess { transactions = it }
+                .onFailure { message = "تعذر تحميل سجل الصفقات: ${it.message}" }
         }
     }
 
@@ -159,18 +165,30 @@ fun SystemAntiquesMarketplaceScreen(
                                 Text("${listing.civilization} • ${listing.rarity} • ${listing.condition}", color = cyan)
                                 Text("البائع: ${listing.sellerName}", color = Color.LightGray)
                                 Text("${listing.price} SYSTEM", color = gold, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                                Button(
-                                    onClick = {
-                                        perform(
-                                            action = { callback -> repository.purchaseListing(listing.listingId) { result ->
-                                                callback(result.map { Unit })
-                                            } },
-                                            success = "اكتملت عملية الشراء وانتقلت الملكية إلى حسابك."
-                                        )
-                                    },
-                                    enabled = !busy && listing.sellerId != currentUid,
-                                    colors = ButtonDefaults.buttonColors(containerColor = gold, contentColor = Color.Black)
-                                ) { Text(if (listing.sellerId == currentUid) "عرضك الحالي" else "شراء القطعة") }
+                                if (listing.sellerId == currentUid) {
+                                    OutlinedButton(
+                                        onClick = {
+                                            perform(
+                                                action = { callback -> repository.cancelListing(listing.listingId, callback) },
+                                                success = "أُلغي عرضك وأُعيدت القطعة إلى مجموعتك."
+                                            )
+                                        },
+                                        enabled = !busy
+                                    ) { Text("إلغاء عرضي") }
+                                } else {
+                                    Button(
+                                        onClick = {
+                                            perform(
+                                                action = { callback -> repository.purchaseListing(listing.listingId) { result ->
+                                                    callback(result.map { Unit })
+                                                } },
+                                                success = "اكتملت عملية الشراء وانتقلت الملكية إلى حسابك."
+                                            )
+                                        },
+                                        enabled = !busy,
+                                        colors = ButtonDefaults.buttonColors(containerColor = gold, contentColor = Color.Black)
+                                    ) { Text("شراء القطعة") }
+                                }
                             }
                         }
                     }
@@ -193,18 +211,41 @@ fun SystemAntiquesMarketplaceScreen(
                                     singleLine = true,
                                     enabled = !busy
                                 )
-                                Button(
-                                    onClick = {
-                                        val amount = bidText.toLongOrNull()
-                                        if (amount == null || amount <= auction.highestBid) {
-                                            message = "اكتب مزايدة أعلى من السعر الحالي."
-                                        } else perform(
-                                            action = { callback -> repository.placeAuctionBid(auction.auctionId, amount, callback) },
-                                            success = "تم تسجيل المزايدة وحجز رصيدها."
-                                        )
-                                    },
-                                    enabled = !busy && auction.sellerId != currentUid
-                                ) { Text("تأكيد المزايدة") }
+                                if (auction.sellerId != currentUid) {
+                                    Button(
+                                        onClick = {
+                                            val amount = bidText.toLongOrNull()
+                                            if (amount == null || amount <= auction.highestBid) {
+                                                message = "اكتب مزايدة أعلى من السعر الحالي."
+                                            } else perform(
+                                                action = { callback -> repository.placeAuctionBid(auction.auctionId, amount, callback) },
+                                                success = "تم تسجيل المزايدة وحجز رصيدها."
+                                            )
+                                        },
+                                        enabled = !busy
+                                    ) { Text("تأكيد المزايدة") }
+                                } else if (auction.bidCount == 0) {
+                                    OutlinedButton(
+                                        onClick = {
+                                            perform(
+                                                action = { callback -> repository.cancelAuction(auction.auctionId, callback) },
+                                                success = "أُلغي المزاد وأُعيدت القطعة إلى مجموعتك."
+                                            )
+                                        },
+                                        enabled = !busy
+                                    ) { Text("إلغاء المزاد") }
+                                }
+                                if (auction.endsAt > 0L && auction.endsAt <= System.currentTimeMillis()) {
+                                    OutlinedButton(
+                                        onClick = {
+                                            perform(
+                                                action = { callback -> repository.settleAuction(auction.auctionId, callback) },
+                                                success = "تمت تسوية المزاد وتحديث الملكية والمحافظ."
+                                            )
+                                        },
+                                        enabled = !busy
+                                    ) { Text("تسوية المزاد المنتهي") }
+                                }
                             }
                         }
                     }
@@ -269,6 +310,29 @@ fun SystemAntiquesMarketplaceScreen(
                                 Text("عرضك المرسل", color = gold, fontWeight = FontWeight.Bold)
                                 Text("الحالة: ${offer["status"] ?: "قيد الانتظار"}", color = Color.White)
                                 OutlinedButton(onClick = { perform({ cb -> repository.closeExchangeOffer(id, "cancel") { cb(it) } }, "أُلغي العرض وأُعيدت القطعة إلى مجموعتك.") }, enabled = !busy) { Text("إلغاء العرض") }
+                            }
+                        }
+                    }
+                }
+            }
+            AntiquesSection.HISTORY -> {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    if (transactions.isEmpty()) item {
+                        Text("لا توجد صفقات مسجلة في حسابك بعد.", color = Color.LightGray)
+                    }
+                    items(transactions, key = { it["transactionId"]?.toString().orEmpty() }) { record ->
+                        val isBuyer = record["buyerId"]?.toString() == currentUid
+                        Card(colors = CardDefaults.cardColors(containerColor = panel)) {
+                            Column(Modifier.fillMaxWidth().padding(14.dp)) {
+                                Text(
+                                    if (isBuyer) "عملية شراء" else "عملية بيع",
+                                    color = gold,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text("القطعة: ${record["artifactId"] ?: (record["artifactIds"] ?: "—")}", color = Color.White)
+                                Text("الطرف الآخر: ${if (isBuyer) record["sellerName"] ?: "لاعب" else record["buyerName"] ?: "لاعب"}", color = cyan)
+                                Text("القيمة: ${record["price"] ?: 0} ${record["currency"] ?: "SYSTEM"}", color = Color.White)
+                                Text("رقم العملية: ${record["transactionId"] ?: "—"}", color = Color.LightGray, fontSize = 11.sp)
                             }
                         }
                     }
