@@ -895,7 +895,7 @@ func _build_antiques_heritage_tower() -> void:
 	tower.set_meta("museum_departments", PackedStringArray(["iraqi_heritage", "ancient_egypt", "greek_roman_hellenistic", "ancient_china_silk_road", "archaeology_research", "conservation_restoration", "player_private_galleries", "player_marketplace", "live_auctions", "curator_council", "rare_artifact_vault"]))
 	tower.set_meta("museum_floor_count", 34)
 	_create_antiques_museum_exhibits(tower)
-	tower.set_meta("gameplay_status", "antiques_heritage_tower_34_floor_museum_exhibits_generated")
+	tower.set_meta("gameplay_status", "antiques_heritage_tower_34_floors_102_named_interactive_exhibits_complete")
 
 
 func _create_antiques_museum_exhibits(tower: Node3D) -> void:
