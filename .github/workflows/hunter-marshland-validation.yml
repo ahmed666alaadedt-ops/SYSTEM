@@ -1,0 +1,38 @@
+name: Validate Hunter Marshland
+on:
+  pull_request:
+    paths:
+      - "SYSTEM-WORLD/scripts/system_hunter_marshland_manager.gd"
+      - "SYSTEM-WORLD/scripts/baghdad_tower_landmarks_manager.gd"
+      - "SYSTEM-WORLD/tools/validate_hunter_marshland.gd"
+      - ".github/workflows/hunter-marshland-validation.yml"
+  push:
+    branches:
+      - feature/hunter-marshland-replacement-20261125
+    paths:
+      - "SYSTEM-WORLD/**"
+      - ".github/workflows/hunter-marshland-validation.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  marshland:
+    name: Godot 4.3 marshland runtime regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Godot 4.3
+        run: |
+          mkdir -p "$RUNNER_TEMP/godot"
+          curl -L --fail --retry 3 "https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip" -o "$RUNNER_TEMP/godot.zip"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP/godot"
+          chmod +x "$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+      - name: Import and parse project
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          "$GODOT" --headless --editor --path "$GITHUB_WORKSPACE/SYSTEM-WORLD" --import
+      - name: Run marshland integration regression
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          "$GODOT" --headless --path "$GITHUB_WORKSPACE/SYSTEM-WORLD" --script res://tools/validate_hunter_marshland.gd
