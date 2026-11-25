@@ -146,7 +146,7 @@ func _create_service_interaction(parent: Node3D, node_name: String, service_type
 
 
 func _on_water_body_entered(body: Node3D, water_area: Area3D) -> void:
-	if body == null or not is_instance_valid(body) or not body.is_in_group("player"):
+	if body == null or not is_instance_valid(body) or not body.is_in_group("system_player"):
 		return
 	body.set_meta("system_public_leisure_swimming", true)
 	body.set_meta("system_public_leisure_water_type", str(water_area.get_meta("system_public_leisure_water_type", "leisure")))
@@ -154,7 +154,7 @@ func _on_water_body_entered(body: Node3D, water_area: Area3D) -> void:
 
 
 func _on_water_body_exited(body: Node3D, _water_area: Area3D) -> void:
-	if body == null or not is_instance_valid(body) or not body.is_in_group("player"):
+	if body == null or not is_instance_valid(body) or not body.is_in_group("system_player"):
 		return
 	body.remove_meta("system_public_leisure_swimming")
 	body.remove_meta("system_public_leisure_water_type")
