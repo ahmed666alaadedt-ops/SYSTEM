@@ -57,3 +57,42 @@ A dedicated in-tower equipment and ability marketplace is required.
 - Do not change the Hunter Marshland PR or its branch.
 - Keep all work on this feature branch. Do not merge or push changes into main without explicit approval.
 - A successful headless validator or Android APK build does not establish visual completion. Record separately: code present, automated tests passed, in-engine visual review passed, and physical-device performance reviewed.
+
+
+## 7. User-approved arena ladder, crowd, Nen, and betting expansion — 2026-11-26
+
+### Arena count by floor band
+The number of simultaneous arena spaces progressively decreases as the player climbs. The schedule is data-driven and must remain easy to tune:
+- Floors 1–20: 8 arenas.
+- Floors 21–40: 6 arenas.
+- Floors 41–60: 4 arenas.
+- Floors 61–80: 3 arenas.
+- Floors 81–100: 2 arenas.
+- Floors 101–200: 1 main arena on every floor.
+Official competitive matches remain 1v1. The floor band controls arena count, not team size or opponent type.
+
+### Spectators
+- Target population: 500 visible spectator NPCs in the Power Tower audience.
+- They are crowd/fan NPCs, not extra combatants. They watch official 1v1 matches, react to match events, cheer, and celebrate winners.
+- Use scalable crowd representation/LOD on Android; preserve the 500-person population target without requiring 500 heavyweight full rigs simultaneously.
+
+### SYSTEM virtual-credit betting and three-way rewards
+- Spectator NPCs and player users can place predictions/stakes using SYSTEM virtual credits only. No real-money stake, cash value, cash-out, or external payment.
+- The official result is the only settlement trigger; reject late bets, duplicate settlement, invalid sides, and unverified match results.
+- Each completed betting round records a transparent ledger showing: Power Tower/house earnings, winning bettor payouts, and the fighter's match reward.
+- Reuse the existing SYSTEM wallet/virtual-ticket and server-verification/idempotency services. Do not add a second wallet or let client UI mint or settle credits.
+- The percentage split is a configurable game-economy policy and must be explicitly surfaced in the UI before a bet is confirmed.
+
+### Combat styles and Nen learning curve
+- Early floors allow unarmed hand-to-hand combat, kung fu and other martial-arts styles, traditional melee weapons, and bows/arrows.
+- The player enters a gradual Nen learning/training path inside the Power Tower: discovery, aura awareness, basic control, sustained control, advanced techniques, and personal ability development.
+- Opponent difficulty and Nen use increase with floor progression. Upper-floor official fights are Nen-focused; equipment remains available where the floor rules allow it, but Nen becomes the decisive combat system.
+- NPC Nen trainers and referees explain and supervise training; practice NPCs may be used for training only. Official matches remain player-versus-player 1v1 as already specified.
+
+### Interior amenities
+- Add proper restaurants and cafeterias inside the independent Power Tower, plus dedicated recreation/entertainment and rest areas for fighters and visitors.
+- Keep these facilities inside the Power Tower boundary; do not move them into, or count them as, Baghdad's five connected towers.
+
+### Implementation and verification boundary
+- The existing architecture/shop checkpoint is partial. These new requirements must be implemented and tested; documenting them does not certify runtime completion.
+- Keep work on `feature/power-tower-xsx-expansion-20261126` / draft PR #42. Never merge to `main` without the user's explicit approval.
