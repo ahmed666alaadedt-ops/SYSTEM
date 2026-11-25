@@ -313,10 +313,10 @@ func _run_validation() -> void:
 	var helipad_bridge_shape := hunter_pad.get_node_or_null("HelipadAccessBridgeCollision/CollisionShape3D") as CollisionShape3D
 	var landing_ring := hunter_pad.get_node_or_null("LandingCircleMarking") as MeshInstance3D
 	var helipad_sign := hunter_pad.get_node_or_null("HelipadIdentitySign") as Label3D
-	if helipad_deck == null or helipad_deck_shape == null or not helipad_deck_shape.shape is CylinderShape3D:
+	if helipad_deck == null or helipad_deck_shape == null or not (helipad_deck_shape.shape is CylinderShape3D):
 		_fail("Hunter rooftop helipad is missing its physical circular deck collision.")
 		return
-	if helipad_bridge == null or helipad_bridge_shape == null or not helipad_bridge_shape.shape is BoxShape3D:
+	if helipad_bridge == null or helipad_bridge_shape == null or not (helipad_bridge_shape.shape is BoxShape3D):
 		_fail("Hunter rooftop helipad is missing its collidable access bridge.")
 		return
 	if landing_ring == null or helipad_sign == null:
