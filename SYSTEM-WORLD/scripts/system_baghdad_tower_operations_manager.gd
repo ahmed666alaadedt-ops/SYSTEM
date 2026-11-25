@@ -13,15 +13,16 @@ const FACILITY_ACTIVITY_SAVE_PATH := "user://system_baghdad_facility_activity.cf
 const WORLD_ID := 2
 const STAFF_NAMES := ["أحمد", "سارة", "علي", "نور", "حسن", "مريم", "يوسف", "ليان", "عمر", "زينب", "مصطفى", "رنا"]
 
-const TOWER_CONFIG := {
+const BAGHDAD_TOWER_CONFIG := {
 	"hunter_association_tower_baghdad": {"node": "HunterAssociationTower", "title": "برج جمعية الصيادين", "floors": 200, "height": 650.0, "radius": 38.0, "roles": ["مدير النقابة", "موظف الاستقبال", "موظف المهمات", "مسؤول تسجيل الاختبارات", "مستشار الرتب", "منسق النقابات", "مسؤول العلاقات العامة", "مسؤول الإعلانات"], "jobs": ["association_director", "receptionist", "mission_clerk", "exam_registrar", "rank_advisor", "guild_coordinator", "public_relations", "advertising_manager"]},
 
 	"business_investment_tower_baghdad": {"node": "BusinessInvestmentTower", "title": "برج الأعمال والاستثمار", "floors": 36, "height": 220.0, "radius": 26.0, "roles": ["مدير البرج", "مدير الاستثمار", "مستشار الشركات", "موظف البنوك والعقود", "محاسب البرج", "مسؤول التوظيف", "خدمة المستثمرين", "مسؤول الإعلانات"], "jobs": ["tower_director", "investment_manager", "business_advisor", "bank_contract_clerk", "accountant", "recruitment_manager", "investor_relations", "advertising_manager"]},
 	"shopping_tower_baghdad": {"node": "ShoppingTower", "title": "برج التسوق والتجارة", "floors": 32, "height": 190.0, "radius": 30.0, "roles": ["مدير البرج", "تاجر الأسلحة والدروع", "صيدلاني الإكسير", "مدير الضيافة والفندق", "شيف المطاعم", "نادل وخدمة الزبائن", "موظف استقبال الفندق", "مشرف الغرف والتنظيف", "مسؤول الإعلانات والتسويق"], "jobs": ["shop_manager", "weapons_merchant", "elixir_pharmacist", "hospitality_manager", "restaurant_chef", "restaurant_waiter", "hotel_receptionist", "hotel_housekeeping", "advertising_manager"]},
 	"antiques_heritage_tower_baghdad": {"node": "AntiquesHeritageTower", "title": "برج التحف والآثار", "floors": 34, "height": 205.0, "radius": 29.0, "roles": ["مدير المتحف", "أمين آثار عراقية", "أمين الحضارات العالمية", "باحث آثار", "مرمم قطع أثرية", "موثق الملكية والأصالة", "منظم المزادات", "مسؤول المعارض والزوار", "مسؤول الإعلانات والمعارض"], "jobs": ["museum_director", "iraqi_heritage_curator", "world_civilizations_curator", "archaeology_researcher", "artifact_restorer", "provenance_registrar", "auction_coordinator", "museum_guest_services", "advertising_manager"]},
 	"technology_tower_baghdad": {"node": "TechnologyTower", "title": "برج التكنولوجيا والابتكار", "floors": 40, "height": 245.0, "radius": 27.0, "roles": ["مدير الابتكار", "موظف المختبر", "مهندس الأجهزة", "مهندس الروبوتات", "باحث الذكاء الاصطناعي", "موظف الخدمات الرقمية", "مسؤول الصيانة", "مسؤول الإعلانات"], "jobs": ["innovation_director", "lab_receptionist", "device_engineer", "robotics_engineer", "ai_researcher", "digital_services", "maintenance_engineer", "advertising_manager"]},
-	"power_tower_baghdad": {"node": "PowerTower", "title": "برج القوة", "floors": 200, "height": 820.0, "radius": 26.0, "roles": ["موظف تسجيل التحديات", "منظم الحلبة", "موظف الاستراحة الطبية", "مسؤول الإعلانات"], "jobs": ["arena_registrar", "arena_coordinator", "arena_medic", "advertising_manager"]}
 }
+
+const POWER_TOWER_CONFIG := {"node": "PowerTower", "title": "برج القوة", "floors": 200, "height": 820.0, "radius": 26.0, "roles": ["موظف تسجيل التحديات", "منظم الحلبة", "موظف الاستراحة الطبية", "مسؤول الإعلانات"], "jobs": ["arena_registrar", "arena_coordinator", "arena_medic", "advertising_manager"]}
 
 const PRODUCT_CATALOG := {
 	"shopping_tower_baghdad": [
@@ -333,16 +334,25 @@ func _process(delta: float) -> void:
 		_update_customer_visual_lod()
 
 
+func _get_tower_config(tower_id: String) -> Dictionary:
+	if tower_id == "power_tower_baghdad":
+		return POWER_TOWER_CONFIG
+	return BAGHDAD_TOWER_CONFIG.get(tower_id, {})
+
+
 func _resolve_towers() -> void:
-	for tower_id in TOWER_CONFIG.keys():
-		var config: Dictionary = TOWER_CONFIG[tower_id]
+	for tower_id in BAGHDAD_TOWER_CONFIG.keys():
+		var config: Dictionary = BAGHDAD_TOWER_CONFIG[tower_id]
 		var tower := tower_manager.get_node_or_null(str(config["node"])) as Node3D
 		if tower != null:
 			tower_nodes[tower_id] = tower
+	var power_tower := tower_manager.get_node_or_null(str(POWER_TOWER_CONFIG["node"])) as Node3D
+	if power_tower != null:
+		tower_nodes["power_tower_baghdad"] = power_tower
 
 func _create_staff_for_all_towers() -> void:
 	for tower_id in tower_nodes.keys():
-		var config: Dictionary = TOWER_CONFIG[tower_id]
+		var config: Dictionary = _get_tower_config(tower_id)
 		var staff_ids: Array[String] = []
 		for index in range(config["roles"].size()):
 			var npc_id := _get_or_create_staff(str(tower_id), index, config)
@@ -492,9 +502,9 @@ func _start_tower_staff_waypoint_patrol(employee: Node3D, model: Node3D, staff_i
 
 
 func _get_floor_duty_staff_index(tower_id: String, floor_number: int) -> int:
-	if not TOWER_CONFIG.has(tower_id):
+	if not not _get_tower_config(tower_id).is_empty():
 		return -1
-	if floor_number < 1 or floor_number > int(TOWER_CONFIG[tower_id]["floors"]):
+	if floor_number < 1 or floor_number > int(_get_tower_config(tower_id)["floors"]):
 		return -1
 	match tower_id:
 		"hunter_association_tower_baghdad":
@@ -922,7 +932,7 @@ func _create_customer_population() -> void:
 		var tower_id := str(public_towers[tower_index])
 		if not tower_nodes.has(tower_id):
 			continue
-		var config: Dictionary = TOWER_CONFIG[tower_id]
+		var config: Dictionary = _get_tower_config(tower_id)
 		var tower := tower_nodes[tower_id] as Node3D
 		var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D
 		if lobby == null:
@@ -1122,7 +1132,7 @@ func _create_public_lobby_cafes() -> void:
 	for tower_id_value in public_towers:
 		var tower_id := str(tower_id_value)
 		var tower := tower_nodes.get(tower_id) as Node3D
-		var config: Dictionary = TOWER_CONFIG[tower_id]
+		var config: Dictionary = _get_tower_config(tower_id)
 		var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D if tower != null else null
 		if lobby == null or lobby.get_node_or_null("SYSTEMLobbyCafe") != null:
 			continue
@@ -1210,7 +1220,7 @@ func _return_customer_visitors_to_lobbies() -> void:
 			_release_restaurant_customer_seat(visitor)
 			visitor.reparent(lobby, false)
 			var customer_index := int(visitor.get_meta("system_tower_customer_index", 0))
-			var radius := float(TOWER_CONFIG[tower_id].get("radius", 24.0))
+			var radius := float(_get_tower_config(tower_id).get("radius", 24.0))
 			visitor.position = Vector3((float(customer_index % 10) - 4.5) * 2.15, 0.0, radius * 1.48 + 4.0 + float(customer_index / 10) * 2.1)
 			visitor.remove_meta("system_customer_in_elevator")
 			visitor.remove_meta("system_customer_elevator_target_floor")
@@ -1268,7 +1278,7 @@ func _disembark_customer_visitors_to_lobby(tower_id: String, car: Node3D) -> int
 		var visitor := child as Node3D
 		visitor.reparent(lobby, false)
 		var customer_index := int(visitor.get_meta("system_tower_customer_index", 0))
-		var radius := float(TOWER_CONFIG[tower_id].get("radius", 24.0))
+		var radius := float(_get_tower_config(tower_id).get("radius", 24.0))
 		visitor.position = Vector3((float(customer_index % 10) - 4.5) * 2.15, 0.0, radius * 1.48 + 4.0 + float(customer_index / 10) * 2.1)
 		visitor.remove_meta("system_customer_in_elevator")
 		visitor.remove_meta("system_customer_elevator_target_floor")
@@ -1306,8 +1316,8 @@ func _place_customer_visitors_on_floor(tower_id: String, floor_number: int, room
 			var visitor := lobby.get_node_or_null("TowerCustomer_" + customer_id) as Node3D
 			if visitor != null:
 				passengers.append(visitor)
-	var floor_label := _department_for_floor(tower_id, floor_number, int(TOWER_CONFIG[tower_id].get("floors", 1)))
-	var radius := float(TOWER_CONFIG[tower_id].get("radius", 24.0))
+	var floor_label := _department_for_floor(tower_id, floor_number, int(_get_tower_config(tower_id).get("floors", 1)))
+	var radius := float(_get_tower_config(tower_id).get("radius", 24.0))
 	for slot in range(mini(2, passengers.size())):
 		var visitor := passengers[slot]
 		var customer_id := str(visitor.get_meta("system_tower_customer_id", ""))
@@ -1354,7 +1364,7 @@ func _move_customer_visitors(hour_override: int = -1, customer_id_filter: String
 	var society_changed := false
 	for tower_id_value in customer_ids_by_tower.keys():
 		var tower_id := str(tower_id_value)
-		var config: Dictionary = TOWER_CONFIG.get(tower_id, {})
+		var config: Dictionary = _get_tower_config(tower_id)
 		var tower := tower_nodes.get(tower_id) as Node3D
 		var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D if tower != null else null
 		if lobby == null:
@@ -1626,7 +1636,7 @@ func _create_power_tower_battle_screens() -> void:
 	if lobby == null:
 		return
 	var schedule := _build_power_tower_floor_schedule_text()
-	var radius := float(TOWER_CONFIG["power_tower_baghdad"].get("radius", 26.0))
+	var radius := float(POWER_TOWER_CONFIG.get("radius", 26.0))
 	var outside := _create_power_tower_display(tower, "PowerTowerBattleDisplay_Outside", Vector3(0.0, 7.0, radius + 2.4), Vector2(18.0, 8.4), 0.0, schedule, 15, 0.010)
 	outside.set_meta("system_display_location", "OUTSIDE_TOWER")
 	var inside := _create_power_tower_display(lobby, "PowerTowerBattleDisplay_Inside", Vector3(0.0, 5.8, -10.0), Vector2(18.0, 8.4), PI, schedule, 15, 0.010)
@@ -1673,7 +1683,7 @@ func _ensure_power_tower_live_camera_feed(room: Node3D, display_root: Node3D, vi
 		camera.name = "PowerTowerLiveArenaCamera"
 		camera.fov = 58.0
 		camera.current = true
-		var tower_config: Dictionary = TOWER_CONFIG.get("power_tower_baghdad", {})
+		var tower_config: Dictionary = POWER_TOWER_CONFIG
 		var arena_radius := float(tower_config.get("radius", 26.0)) * 0.82
 		camera.position = room.global_position + Vector3(0.0, arena_radius * 0.88, arena_radius * 1.95)
 		camera.look_at(room.global_position + Vector3(0.0, 1.25, 0.0), Vector3.UP)
@@ -1793,7 +1803,7 @@ func _refresh_power_tower_progress_board() -> void:
 func _create_advertising_surfaces() -> void:
 	for tower_id in tower_nodes.keys():
 		var tower := tower_nodes[tower_id] as Node3D
-		var config: Dictionary = TOWER_CONFIG[tower_id]
+		var config: Dictionary = _get_tower_config(tower_id)
 		var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D
 		if lobby != null:
 			var inside := Label3D.new()
@@ -1945,7 +1955,7 @@ func _refresh_advertisements() -> void:
 			active_ad_campaign_expires_msec = mini(active_ad_campaign_expires_msec, override_expiry)
 	for tower_id in tower_nodes.keys():
 		var staff_ids: Array = staff_by_tower.get(tower_id, [])
-		var config: Dictionary = TOWER_CONFIG.get(tower_id, {})
+		var config: Dictionary = _get_tower_config(tower_id)
 		var jobs: Array = config.get("jobs", [])
 		var manager_name := "فريق الإعلان"
 		var manager_job := ""
@@ -2038,7 +2048,7 @@ func open_tower(tower_id: String) -> void:
 		return
 	current_tower_id = tower_id
 	current_staff_id = ""
-	var config: Dictionary = TOWER_CONFIG[tower_id]
+	var config: Dictionary = _get_tower_config(tower_id)
 	_clear_dynamic_controls()
 	title_label.text = str(config["title"])
 	credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
@@ -2227,9 +2237,9 @@ func _spawn_nen_training_preview() -> void:
 
 
 func open_floor_services(tower_id: String, floor_number: int) -> void:
-	if not tower_nodes.has(tower_id) or not TOWER_CONFIG.has(tower_id):
+	if not tower_nodes.has(tower_id) or not not _get_tower_config(tower_id).is_empty():
 		return
-	var config: Dictionary = TOWER_CONFIG[tower_id]
+	var config: Dictionary = _get_tower_config(tower_id)
 	if floor_number < 1 or floor_number > int(config.get("floors", 0)):
 		return
 	var staff_ids: Array = staff_by_tower.get(tower_id, [])
@@ -2346,7 +2356,7 @@ func open_staff_service(staff_node: Node) -> void:
 	current_restaurant_table_node = null
 	if not tower_nodes.has(current_tower_id):
 		return
-	var config: Dictionary = TOWER_CONFIG[current_tower_id]
+	var config: Dictionary = _get_tower_config(current_tower_id)
 	var staff_name := str(staff_node.get_meta("system_display_name", "موظف"))
 	var role := str(staff_node.get_meta("system_tower_staff_role", "service"))
 	_clear_dynamic_controls()
@@ -3264,7 +3274,7 @@ func _prepare_tower_interior(tower_id: String) -> void:
 	var tower := tower_nodes.get(tower_id) as Node3D
 	if tower == null:
 		return
-	var config: Dictionary = TOWER_CONFIG[tower_id]
+	var config: Dictionary = _get_tower_config(tower_id)
 	var radius := float(config["radius"])
 	var height := float(config["height"])
 	var structure := tower.get_node_or_null("TowerStructureCollision")
@@ -3496,7 +3506,7 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 	var room_name := "InteriorFloor_%03d" % floor_number
 	var existing := floors.get_node_or_null(room_name) as Node3D
 	var tower := tower_nodes.get(tower_id) as Node3D
-	var config: Dictionary = TOWER_CONFIG[tower_id]
+	var config: Dictionary = _get_tower_config(tower_id)
 	if existing != null:
 		# Repair a previously prepared Shopping Tower floor 4 and its product-selection collider in place.
 		if tower_id == "shopping_tower_baghdad" and floor_number == 4:
@@ -5618,7 +5628,7 @@ func _dispatch_pool_supervisor_to_player() -> bool:
 func open_facility_service(tower_id: String, floor_number: int, facility_type: String) -> void:
 	if bowling_throw_in_progress or facility_projectile_in_progress:
 		return
-	if not TOWER_CONFIG.has(tower_id):
+	if not not _get_tower_config(tower_id).is_empty():
 		return
 	var progression_facilities := ["shopping_skill_store", "shopping_weapon_gallery", "shopping_ranged_gallery", "shopping_armor_gallery", "shopping_crafting_materials", "shopping_elixir_pharmacy", "shopping_nen_center", "shopping_advanced_elixir_lab", "shopping_rare_elixir_vault", "hunter_weapon_mastery", "hunter_nen_fundamentals", "hunter_advanced_control", "hunter_skill_specialization", "hunter_skill_assessment"]
 	if progression_facilities.has(facility_type):
@@ -8696,7 +8706,7 @@ func _ensure_elevator_car(tower_id: String, start_y: float) -> Node3D:
 	if is_instance_valid(active_elevator_car):
 		active_elevator_car.queue_free()
 	active_elevator_doors.clear()
-	var config: Dictionary = TOWER_CONFIG[tower_id]
+	var config: Dictionary = _get_tower_config(tower_id)
 	var width := clampf(float(config["radius"]) * 0.46, 7.0, 12.0)
 	var depth := width
 	active_elevator_car_width = width
@@ -8752,7 +8762,7 @@ func _open_elevator_doors() -> void:
 func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 	if not tower_nodes.has(tower_id) or not is_instance_valid(player):
 		return
-	var config: Dictionary = TOWER_CONFIG[tower_id]
+	var config: Dictionary = _get_tower_config(tower_id)
 	if floor_number < 1 or floor_number > int(config["floors"]):
 		_set_status("رقم الطابق خارج حدود البرج.")
 		return
@@ -9039,7 +9049,7 @@ func return_to_lobby() -> void:
 	_release_player_restaurant_seat()
 	_release_power_tower_spectator_seat()
 	var tower := tower_nodes[current_tower_id] as Node3D
-	var config: Dictionary = TOWER_CONFIG[current_tower_id]
+	var config: Dictionary = _get_tower_config(current_tower_id)
 	var start_y := active_floor_root.position.y
 	var car := _ensure_elevator_car(current_tower_id, start_y)
 	_board_customer_visitors_into_elevator(current_tower_id, 1, car)
