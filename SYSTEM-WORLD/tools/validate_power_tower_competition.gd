@@ -48,6 +48,8 @@ func _run() -> void:
 	assert(early_nen.get("stage") == "DISCOVERY")
 	assert(upper_nen.get("stage") == "NEN_MASTERY")
 	assert(manager.call("get_combat_styles_for_floor", 1).has("KUNG_FU"))
+	assert(manager.call("get_combat_styles_for_floor", 80).has("BOW_AND_ARROW"))
+	assert(manager.call("get_combat_styles_for_floor", 81) == ["NEN_TECHNIQUES", "UNARMED_HAND_TO_HAND"])
 	assert(manager.call("get_combat_styles_for_floor", 150) == ["NEN_TECHNIQUES", "UNARMED_HAND_TO_HAND"])
 
 	var progression := ProgressionScript.new()
@@ -107,6 +109,13 @@ func _run() -> void:
 	var betting_manager := PowerTowerManagerScript.new()
 	root.add_child(betting_manager)
 	await process_frame
+	var early_floor_data: Dictionary = betting_manager.call("get_floor_data", 80)
+	var upper_floor_data: Dictionary = betting_manager.call("get_floor_data", 81)
+	assert(bool(early_floor_data.get("weapons_allowed", false)))
+	assert(not bool(early_floor_data.get("nen_required", true)))
+	assert(not bool(upper_floor_data.get("weapons_allowed", true)))
+	assert(bool(upper_floor_data.get("nen_required", false)))
+	assert(upper_floor_data.get("available_combat_styles", []) == ["NEN_TECHNIQUES", "UNARMED_HAND_TO_HAND"])
 	betting_manager.spectator_matches.clear()
 	betting_manager.spectator_npc_ticket_balances.clear()
 	betting_manager.spectator_daily_counts.clear()
