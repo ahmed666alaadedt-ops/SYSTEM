@@ -245,7 +245,7 @@ func _run_validation() -> void:
 	const IDENTITY_NODES_BY_TOWER := {
 		"hunter_association_tower_baghdad": ["HunterXSXEmblemPlaque_00", "HunterXSXEmblemPlaque_01", "HunterXSXEmblemPlaque_02", "HunterXSXEmblemPlaque_03"],
 		"business_investment_tower_baghdad": ["BusinessCapitalSpire", "BusinessCapitalRing_00", "BusinessCapitalRing_01", "BusinessCapitalRing_02", "BusinessInvestmentSign"],
-		"shopping_tower_baghdad": ["RetailGalleryRing_0", "RetailGalleryRing_1", "RetailGalleryRing_2", "ShoppingAtriumSign", "ShoppingTowerWeaponBlade_left", "ShoppingTowerWeaponBlade_right", "ShoppingTowerElixirBeacon"],
+		"shopping_tower_baghdad": ["RetailGalleryRing_00", "RetailGalleryRing_01", "RetailGalleryRing_02", "ShoppingAtriumSign", "ShoppingTowerWeaponBlade_left", "ShoppingTowerWeaponBlade_right", "ShoppingTowerElixirBeacon"],
 		"antiques_heritage_tower_baghdad": ["HeritageMuseumPodium", "HeritageMuseumEntranceCanopy", "HeritageGalleryWing_left", "HeritageGalleryWing_right", "HeritageGalleryColumn_left", "HeritageGalleryColumn_right", "HeritageArchiveCrown"],
 		"technology_tower_baghdad": ["InnovationAntenna_00", "InnovationAntenna_01", "InnovationAntenna_02", "InnovationLabSkyRibbon"],
 		"power_tower_baghdad": ["TournamentBlade_left", "TournamentBlade_right", "PowerTowerChampionCrown"]
@@ -425,7 +425,7 @@ func _run_validation() -> void:
 	const ARCHITECTURAL_IDENTITIES := {
 		"hunter_association_tower_baghdad": ["HunterXSXEmblemPlaque_00", "HunterXSXEmblemPlaque_01", "HunterXSXEmblemPlaque_02", "HunterXSXEmblemPlaque_03"],
 		"business_investment_tower_baghdad": ["BusinessCapitalSpire", "BusinessCapitalRing_00", "BusinessCapitalRing_01", "BusinessCapitalRing_02", "BusinessInvestmentSign"],
-		"shopping_tower_baghdad": ["RetailGalleryRing_0", "RetailGalleryRing_1", "RetailGalleryRing_2", "ShoppingAtriumSign", "ShoppingTowerWeaponBlade_left", "ShoppingTowerWeaponBlade_right", "ShoppingTowerElixirBeacon"],
+		"shopping_tower_baghdad": ["RetailGalleryRing_00", "RetailGalleryRing_01", "RetailGalleryRing_02", "ShoppingAtriumSign", "ShoppingTowerWeaponBlade_left", "ShoppingTowerWeaponBlade_right", "ShoppingTowerElixirBeacon"],
 		"antiques_heritage_tower_baghdad": ["HeritageMuseumPodium", "HeritageMuseumEntranceCanopy", "HeritageGalleryWing_left", "HeritageGalleryWing_right", "HeritageGalleryColumn_left", "HeritageGalleryColumn_right", "HeritageArchiveCrown"],
 		"technology_tower_baghdad": ["InnovationAntenna_00", "InnovationAntenna_01", "InnovationAntenna_02", "InnovationLabSkyRibbon"],
 		"power_tower_baghdad": ["TournamentBlade_left", "TournamentBlade_right", "PowerTowerChampionCrown"]
