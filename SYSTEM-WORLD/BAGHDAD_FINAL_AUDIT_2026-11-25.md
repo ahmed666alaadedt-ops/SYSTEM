@@ -9,7 +9,7 @@ The current tower operations configuration defines five Baghdad towers plus a se
 - Hunter Association Tower: 200 floors, 650 m.
 - Business and Investment Tower: 36 floors, 220 m.
 - Shopping and Commerce Tower: 32 floors, 190 m.
-- Entertainment and Sports Tower: 34 floors, 205 m.
+- Antiques and Heritage Tower: 34 floors, 205 m.
 - Technology and Innovation Tower: 40 floors, 245 m.
 - Power Tower: separate destination, 200 floors, 820 m.
 Power Tower is not counted as one of the five Baghdad district towers.
@@ -47,3 +47,38 @@ Power Tower is not counted as one of the five Baghdad district towers.
 
 ## Audit rule
 A feature is complete only when implementation, integration, regression coverage, exact-HEAD validation and required device QA are all evidenced. A file, design note, test assertion or APK export alone is not sufficient.
+
+## Follow-up implementation checkpoint — 2026-11-25
+This section supersedes older tower-name and Hunter-entry-flow notes above where they conflict with the current approved design.
+
+### Canonical Baghdad layout
+- The five district towers are Hunter Association, Business and Investment, Shopping and Commerce, Antiques and Heritage, and Technology and Innovation.
+- The Power Tower remains a separate destination and is not counted among the five.
+- Swimming, sports and entertainment facilities remain public/independent facilities; they are not a sixth district tower and must not be deleted during tower reorganization.
+
+### Hunter tunnel route
+- The active player route is invitation/registration at the Hunter Association Tower, followed by an actual guide-led escort to one continuous tunnel competition.
+- The guide is moved with the player and remains available inside the tunnel. The player receives and retains a permanent candidate serial.
+- The exact tested commit `ab61630bff9755989e86443ceca2df4f09570b29` passed the guide-led entry and continuous competition validator: one tunnel entry, three in-tunnel progression checkpoints, 500 individually indexed candidate records and five named rivals.
+- The former restaurant secret-door/seven-stage route is not the approved active player entry flow. Legacy code may remain for compatibility but must not be reactivated as the route.
+
+### Hotel corrections
+- Early checkout refund arithmetic was corrected so every unused night is refunded, including an exact 24-hour remaining period; the number of refunded nights is capped by the booking's original nights.
+- The tower operations validator now asserts that an immediate checkout of a one-night booking returns the full unused-night amount while keeping the room unavailable until cleaning and inspection.
+- Room-service status text now correctly says the charge is deducted from the player's wallet when the order is placed, rather than saying it is merely added to a later invoice.
+- Hotel reservation persistence is still local to the Godot installation. Shared cloud reservations across players are not yet implemented.
+
+### Marketplace expiry and integration
+- A scheduled Firebase Function, `releaseExpiredArtifactListings`, now sweeps active listings every 15 minutes and atomically returns matching escrowed artifacts to their owners. A composite Firestore index for listing status/expiry was added.
+- This scheduler and index are source changes only until the Firebase Functions and Firestore indexes are deployed; no live deployment is claimed.
+- The Android Compose marketplace, Firebase callable repository, Cloud Functions for direct listings/auctions/exchanges, and the Godot-side versioned request adapter exist in source.
+- The native Godot Android AAR/host Activity/plugin transport is still absent. Consequently, the Godot in-world marketplace is not yet live-connected to the Android Firebase handler. The Compose marketplace and its Firebase path must be validated separately.
+
+### Advertising status
+- Baghdad tower screens currently rotate NPC-managed local campaign messages every 38 seconds and show the responsible staff member.
+- This is an in-world advertising simulation, not a connected third-party ad network, paid campaign marketplace, or revenue integration.
+
+### Exact-head validation gate
+- Hotel refund, room-service text, marketplace scheduler, export and index changes were made after the Hunter-tested commit above.
+- Run Godot operations validation, Firebase Functions TypeScript build, Android app build and canonical Godot APK export on the latest branch HEAD before treating these follow-up changes as validated.
+- Keep PR #38 draft and unmerged until the owner explicitly approves.
