@@ -9398,6 +9398,8 @@ func interact_power_tower_nen_training(target: Node) -> Dictionary:
 		competition.call("configure_player_progression", progression)
 	var tower_status: Dictionary = power_tower_manager.call("get_tower_status")
 	var training_floor := clampi(int(tower_status.get("next_floor", 1)), 1, 200)
+	if not bool(progression.get("nen_unlocked")):
+		training_floor = mini(training_floor, 20)
 	var nen_stage: Dictionary = competition.call("get_nen_stage_for_floor", training_floor)
 	var stage_id := str(nen_stage.get("stage", "DISCOVERY"))
 	var technique := "AURA_AWARENESS"
