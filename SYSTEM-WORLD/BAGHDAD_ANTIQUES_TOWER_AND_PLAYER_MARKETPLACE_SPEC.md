@@ -1,6 +1,6 @@
 # Baghdad Antiques & Heritage Tower — Approved Design
 
-Status: approved design; authenticated marketplace server foundation, scheduled expiry/settlement jobs and native Android/Godot host wiring are implemented on the feature branch. It is NOT live until deployment, trusted artifact reward issuance, wallet funding, physical-device round-trip verification and callable-function security/concurrency tests are complete.
+Status: approved design; authenticated marketplace server foundation, scheduled expiry/settlement jobs, native Android/Godot host wiring and emulator security/concurrency tests are implemented on the feature branch. The 25 November 2026 emulator run passed 7 Firestore rules tests and 8 marketplace transaction tests. It is NOT live until trusted reward issuance, production wallet funding, deployment/monitoring and physical-device round-trip verification are complete.
 
 ## District identity
 
