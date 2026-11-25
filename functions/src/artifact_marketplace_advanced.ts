@@ -130,7 +130,7 @@ export const createArtifactAuction = onCall(async (request) => {
 
 /** Lists active auctions; the server omits expired auctions. */
 export const browseArtifactAuctions = onCall(async (request) => {
-  uidOf(request);
+  const uid = uidOf(request);
   const snapshot = await database().collection("marketplaceAuctions")
     .where("status", "==", "active")
     .orderBy("endsAt", "asc")
@@ -153,6 +153,7 @@ export const browseArtifactAuctions = onCall(async (request) => {
         authenticity: data.authenticity,
         sellerId: data.sellerId,
         sellerName: data.sellerName,
+        isSeller: data.sellerId === uid,
         startingBid: data.startingBid,
         highestBid: data.highestBid,
         highestBidderName: data.highestBidderName,
