@@ -1897,3 +1897,14 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - Source commits: `acb3a2e9ca399c2c4663145cdb7774d8bc5e5b7e`, `719891959fcfad8b476c94c0dda2dd183f466a27`; validator commits: `1ca1652044c48f98aa38e37e6326a30d4c26ff70`, `2e2ebcf8c2858977b77a9d97f28a796d085f7c7b`.
 - Restored the unrelated OSM streamer file to its pre-excursion baseline in commit `f1dc60fbac96e13e46611a91dd72c5bf91c9c5c5`; no OSM feature expansion is part of this tower task.
 - Verification status: implementation and QA assertions are committed on the PR branch, but no CI status or workflow run is currently attached to exact HEAD `719891959fcfad8b476c94c0dda2dd183f466a27`. Do not mark these changes tested or APK-built until Godot validation and Android export complete.
+
+
+### Baghdad tower advertising — campaign lifecycle and expiry tracking — 25 November 2026
+- [x] Replaced anonymous rotating campaign strings with six stable campaign IDs and Arabic display copy for hunter equipment, healing elixirs, Baghdad shopping, leisure activities, SYSTEM laboratories and Power Tower challenges.
+- [x] Added a 38-second campaign lifetime with elapsed-time catch-up, rotation counter and explicit start/expiry timestamps.
+- [x] Every available internal and external tower campaign label now records its active campaign ID, responsible NPC manager, start time, expiry time and rotation number; each tower also records the synchronized campaign ID, expiry and rotation.
+- [x] Exposed active campaign ID, rotation count and expiry through the tower operations status for QA and diagnostics.
+- [x] Extended the Baghdad tower operations validator to check campaign identity, NPC manager attribution, expiry metadata on internal/external displays across all six towers, and synchronized rotation after a simulated 38-second expiry.
+- [ ] Exact-HEAD Godot tower operations validation, canonical runtime validation and Android APK export are running/pending for code commits `486d436880da21cd96bba87105de4705f0115c5e` and `0262c419c584d73bc1a7d023c4534001be41a70e`. Do not mark campaign lifecycle as verified until the validator completes on exact HEAD.
+- [ ] These remain locally managed in-world SYSTEM campaigns, not a live third-party ad network or monetized advertising integration.
+- PR #38 remains draft and unmerged; no changes merged to `main`.
