@@ -1,16 +1,11 @@
 import { after, before, test } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { getApps, initializeApp } from "firebase-admin/app";
 import { FieldValue, Timestamp, getFirestore } from "firebase-admin/firestore";
 
 process.env.GCLOUD_PROJECT ||= "demo-system-world";
 process.env.GOOGLE_CLOUD_PROJECT ||= "demo-system-world";
 process.env.FIRESTORE_EMULATOR_HOST ||= "127.0.0.1:8080";
-
-if (!getApps().length) {
-  initializeApp({ projectId: process.env.GCLOUD_PROJECT });
-}
 
 // Import after emulator environment and the Admin app have been configured.
 const market = await import("../lib/index.js");
