@@ -3538,6 +3538,9 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 		if tower_id == "shopping_tower_baghdad" and floor_number == 29:
 			if existing.get_node_or_null("RestaurantDiningSign") == null:
 				_create_restaurant_dining_area(existing, float(config["radius"]), floor_number)
+		# Existing museum floors can be prepared before a later interaction pass.
+		# Reconcile every exhibit collider/group/record before returning the cached room.
+		_ensure_museum_exhibit_interactions(existing, tower_id, floor_number)
 		return existing
 	var height := float(tower.get_meta("tower_height_m", config["height"]))
 	var radius := float(config["radius"])
@@ -3621,6 +3624,7 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 	else:
 		_create_floor_facilities(room, tower_id, floor_number, radius, department)
 		TowerFloorThemeBuilder.build(room, tower_id, floor_number, radius, department)
+	_ensure_museum_exhibit_interactions(room, tower_id, floor_number)
 	return room
 
 func _create_floor_emergency_exit(room: Node3D, tower_id: String, floor_number: int, radius: float) -> void:
@@ -4953,6 +4957,65 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 	shape.position = Vector3(0.0, 1.2, -5.8) if facility_type.begins_with("shopping_") else Vector3(0.0, 1.2, 0.0)
 	interaction.add_child(shape)
 	root.add_child(interaction)
+
+
+func _ensure_museum_exhibit_interactions(room: Node3D, tower_id: String, floor_number: int) -> void:
+	if tower_id != "antiques_heritage_tower_baghdad" or room == null:
+		return
+	var facility: Node3D = null
+	for child in room.get_children():
+		if child is Node3D and str(child.name).begins_with("SpecialFacility_"):
+			facility = child as Node3D
+			break
+	if facility == null:
+		return
+	var exhibit_count := int(facility.get_meta("system_museum_exhibit_count", 0))
+	if exhibit_count <= 0:
+		return
+	for exhibit_index in range(exhibit_count):
+		var exhibit_name := "ArtifactExhibitInteraction_%02d" % exhibit_index
+		var area := facility.get_node_or_null(exhibit_name) as Area3D
+		var model := facility.get_node_or_null("ArtifactModel_%02d" % exhibit_index) as MeshInstance3D
+		var label := facility.get_node_or_null("ArtifactLabel_%02d" % exhibit_index) as Label3D
+		if model == null or label == null:
+			continue
+		var artifact_id := str(model.get_meta("system_artifact_id", "baghdad_museum_f%02d_exhibit_%02d" % [floor_number, exhibit_index + 1]))
+		var artifact_name := str(model.get_meta("system_artifact_name", "قطعة أثرية معروضة"))
+		var civilization := str(model.get_meta("system_artifact_civilization", "مجموعة التراث والآثار"))
+		if area == null:
+			area = Area3D.new()
+			area.name = exhibit_name
+			facility.add_child(area)
+		area.collision_layer = 1
+		area.collision_mask = 0
+		area.monitoring = true
+		area.monitorable = true
+		area.add_to_group("system_interactable")
+		area.set_meta("system_interaction_type", "museum_artifact_exhibit")
+		area.set_meta("system_artifact_id", artifact_id)
+		area.set_meta("system_artifact_name", artifact_name)
+		area.set_meta("system_artifact_civilization", civilization)
+		area.set_meta("system_artifact_provenance", "SYSTEM WORLD museum exhibit catalogue; display specimen only")
+		area.set_meta("system_artifact_authenticity", "curator_review_required")
+		area.set_meta("system_tower_id", tower_id)
+		area.set_meta("system_tower_floor_number", floor_number)
+		area.set_meta("system_artifact_display_role", "player_market_prototype" if floor_number >= 29 and floor_number <= 32 else "museum_exhibit")
+		area.set_meta("system_interaction_prompt", "افحص القطعة الأثرية — " + artifact_id)
+		var shape: CollisionShape3D = null
+		for area_child in area.get_children():
+			if area_child is CollisionShape3D:
+				shape = area_child as CollisionShape3D
+				break
+		if shape == null:
+			shape = CollisionShape3D.new()
+			area.add_child(shape)
+		shape.name = "CollisionShape3D"
+		var sphere := shape.shape as SphereShape3D
+		if sphere == null:
+			sphere = SphereShape3D.new()
+			shape.shape = sphere
+		sphere.radius = 2.8
+		shape.position = Vector3(-12.0 + float(exhibit_index % 2) * 24.0, 1.6, -7.0 + float(exhibit_index / 2) * 14.0)
 
 
 func open_museum_artifact_exhibit(target: Node) -> void:
