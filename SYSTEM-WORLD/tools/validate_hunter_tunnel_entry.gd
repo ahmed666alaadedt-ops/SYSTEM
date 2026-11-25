@@ -60,7 +60,7 @@ func _run_validation() -> void:
 	var marshland := tunnel.get_node_or_null("HunterMarshland") as Node3D
 	if not _check(marshland != null and bool(tunnel.get_meta("system_tunnel_marshland_connected", false)), "The single Hunter tunnel does not open directly into the Marshland."):
 		return
-	if not _check(bool(marshland.get_meta("system_marshland_generated", false)) and int(marshland.get_meta("system_marshland_agricultural_plot_count", 0)) == 12 and int(marshland.get_meta("system_marshland_tree_count", 0)) == 28, "The agricultural Marshland environment or vegetation is incomplete."):
+	if not _check(bool(marshland.get_meta("system_marshland_generated", false)) and int(marshland.get_meta("system_marshland_agricultural_plot_count", 0)) == 12 and int(marshland.get_meta("system_marshland_tree_count", 0)) == 168 and int(marshland.get_meta("system_marshland_undergrowth_count", 0)) == 220 and int(marshland.get_meta("system_marshland_reed_cluster_count", 0)) == 96, "The agricultural Marshland environment or vegetation is incomplete."):
 		return
 	if not _check(int(marshland.get_meta("system_marshland_water_zone_count", 0)) == 5 and int(marshland.get_meta("system_marshland_giant_turtle_count", 0)) == 3 and int(marshland.get_meta("system_marshland_decoy_npc_count", 0)) == 6, "Marshland water, giant wildlife or misleading resident population is incomplete."):
 		return
