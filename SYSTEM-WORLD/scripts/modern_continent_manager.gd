@@ -204,6 +204,18 @@ func _land_base_height(x: float, z: float) -> float:
 	return broad_hills + rolling_detail + mountain_belts + central_basin - river_carving - lake_basin
 
 
+func _get_al_zawraa_marsh_height(x: float, z: float) -> float:
+	var nx := (x - baghdad_al_zawraa_center.x) / 420.0
+	var nz := (z - baghdad_al_zawraa_center.y) / 360.0
+	var radius := sqrt(nx * nx + nz * nz)
+	if radius > 1.0:
+		return OCEAN_FLOOR
+	var coast_factor := clampf((1.0 - radius) / 0.12, 0.0, 1.0)
+	var coast_ease := coast_factor * coast_factor * (3.0 - 2.0 * coast_factor)
+	var interior_height := 12.0 + sin(x * 0.014) * 0.55 + cos(z * 0.016) * 0.45
+	return lerpf(SEA_LEVEL - 1.2, interior_height, coast_ease)
+
+
 func _get_height(x: float, z: float) -> float:
 	if baghdad_bridge_reference_loaded:
 		var bridge_bank_point := _baghdad_bridge_nearest_bank_point()
@@ -231,6 +243,9 @@ func _get_height(x: float, z: float) -> float:
 			var coast_ease := coast_factor * coast_factor * (3.0 - 2.0 * coast_factor)
 			var interior_height := _land_base_height(x, z)
 			var natural_height := lerpf(SEA_LEVEL - 1.2, interior_height, coast_ease)
+			var al_zawraa_marsh_height := _get_al_zawraa_marsh_height(x, z)
+			if al_zawraa_marsh_height > OCEAN_FLOOR:
+				natural_height = maxf(natural_height, al_zawraa_marsh_height)
 			# Keep the connector walkable even where the procedural low basin
 			# falls below sea level. This narrow strip is generated gameplay
 			# infrastructure, not an OpenStreetMap road.
@@ -249,17 +264,10 @@ func _get_height(x: float, z: float) -> float:
 			var corridor_ease := corridor_blend * corridor_blend * (3.0 - 2.0 * corridor_blend)
 			return lerpf(SEA_LEVEL - 1.2, corridor_height, corridor_ease)
 
-	# Extend the playable Baghdad landmass to the real Al-Zawraa Park footprint.
-	# The existing continent height takes precedence; this ellipse only fills the
-	# adjacent ocean, producing a connected green peninsula for the marshland reserve.
-	var marsh_nx := (x - baghdad_al_zawraa_center.x) / 420.0
-	var marsh_nz := (z - baghdad_al_zawraa_center.y) / 360.0
-	var marsh_radius := sqrt(marsh_nx * marsh_nx + marsh_nz * marsh_nz)
-	if marsh_radius <= 1.0:
-		var marsh_coast_factor := clampf((1.0 - marsh_radius) / 0.12, 0.0, 1.0)
-		var marsh_coast_ease := marsh_coast_factor * marsh_coast_factor * (3.0 - 2.0 * marsh_coast_factor)
-		var marsh_interior_height := 12.0 + sin(x * 0.014) * 0.55 + cos(z * 0.016) * 0.45
-		return lerpf(SEA_LEVEL - 1.2, marsh_interior_height, marsh_coast_ease)
+	# Fill the water immediately east of Baghdad with the connected Al-Zawraa wetland peninsula.
+	var al_zawraa_marsh_height := _get_al_zawraa_marsh_height(x, z)
+	if al_zawraa_marsh_height > OCEAN_FLOOR:
+		return al_zawraa_marsh_height
 
 	for island in ISLAND_DATA:
 		var island_radius_value := _island_radius(
