@@ -54,7 +54,7 @@ func publish_exam_champion(candidate_number: int, license_rank: String) -> void:
 	_publish_result(
 		"بطل اختبار الصيادين",
 		"الصياد رقم %d" % candidate_number,
-		"الرتبة: %s — أكمل جميع المراحل" % license_rank
+		"الرتبة: %s — أكمل الاختبار المتصل للنفق والمستنقعات" % license_rank
 	)
 
 
