@@ -394,7 +394,7 @@ func _add_boardwalk_network(parent: Node3D, material: Material) -> void:
 		[hub, Vector3(190.0, 0.6, -110.0)],
 		[Vector3(190.0, 0.6, -110.0), Vector3(345.0, 0.6, 80.0)],
 		[hub, Vector3(80.0, 0.6, 155.0)],
-		[Vector3(100.0, 0.6, 235.0), Vector3(-150.0, 0.6, 230.0)],
+		[Vector3(80.0, 0.6, 155.0), Vector3(-150.0, 0.6, 230.0)],
 		[inner, Vector3(-220.0, 0.6, -180.0)],
 		[Vector3(80.0, 0.6, 155.0), Vector3(210.0, 0.6, 220.0)],
 		[Vector3(210.0, 0.6, 220.0), Vector3(340.0, 0.6, 320.0)]
