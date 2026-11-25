@@ -596,7 +596,7 @@ export const closeArtifactExchangeOffer = onCall(async (request) => {
   const actorId = uidOf(request);
   const exchangeId = textField(request.data?.exchangeId, "exchangeId");
   const action = request.data?.action;
-  if (action !== "cancel" && action !== "decline") {
+  if (action !== "cancel" && action !== "decline" && action !== "expire") {
     throw new HttpsError("invalid-argument", "الإجراء غير صالح.");
   }
   const exchangeRef = database().collection("marketplaceExchanges").doc(exchangeId);
@@ -608,9 +608,15 @@ export const closeArtifactExchangeOffer = onCall(async (request) => {
     if (exchange.status !== "pending") {
       throw new HttpsError("failed-precondition", "عرض التبادل لم يعد معلقاً.");
     }
-    const expectedActor = action === "cancel" ? exchange.initiatorId : exchange.recipientId;
-    if (expectedActor !== actorId) {
-      throw new HttpsError("permission-denied", "لا تملك صلاحية إغلاق هذا العرض.");
+    if (action === "expire") {
+      if (!(exchange.expiresAt instanceof Timestamp) || exchange.expiresAt.toMillis() > Date.now()) {
+        throw new HttpsError("failed-precondition", "لم تنتهِ مدة عرض التبادل بعد.");
+      }
+    } else {
+      const expectedActor = action === "cancel" ? exchange.initiatorId : exchange.recipientId;
+      if (expectedActor !== actorId) {
+        throw new HttpsError("permission-denied", "لا تملك صلاحية إغلاق هذا العرض.");
+      }
     }
     const offeredArtifactId = String(exchange.offeredArtifactId);
     const initiatorItemRef = itemRef(String(exchange.initiatorId), offeredArtifactId);
@@ -624,13 +630,17 @@ export const closeArtifactExchangeOffer = onCall(async (request) => {
       escrowReleasedAt: FieldValue.serverTimestamp()
     });
     transaction.update(exchangeRef, {
-      status: action === "cancel" ? "cancelled" : "declined",
+      status: action === "cancel" ? "cancelled" : (action === "decline" ? "declined" : "expired"),
       closedBy: actorId,
       closedAt: FieldValue.serverTimestamp()
     });
   });
 
-  return { success: true, exchangeId, status: action === "cancel" ? "cancelled" : "declined" };
+  return {
+    success: true,
+    exchangeId,
+    status: action === "cancel" ? "cancelled" : (action === "decline" ? "declined" : "expired")
+  };
 });
 
 
