@@ -28,6 +28,14 @@ var hidden_gates_unlocked := false
 var current_marsh_season := ""
 var fog_material: StandardMaterial3D
 var fog_layers: Array[MeshInstance3D] = []
+var real_guild_guide: Node3D
+var guide_tracking_arrows: Dictionary = {}
+var guide_escort_active := false
+var guide_escort_completed := false
+var guide_path_index := 0
+var guide_path_local: Array[Vector3] = []
+var guide_path_speed := 2.8
+
 
 
 func _process(delta: float) -> void:
@@ -44,6 +52,8 @@ func _process(delta: float) -> void:
 			fog.position.x = -MARSH_RADIUS_X
 	# Star Gates are unlocked only by the final marsh-sanctuary objective callback.
 	# Never infer sanctuary discovery from a completed tunnel-stage save flag.
+	_process_real_guide_escort(delta)
+
 
 func setup(terrain_node: Node, hunter_tunnel: Node3D) -> void:
 	terrain = terrain_node
@@ -561,6 +571,7 @@ func _build_hunter_marsh_trials(zone: Node3D) -> void:
 	_build_marsh_deception_npcs(zone)
 	_build_giant_marsh_creatures(zone)
 	_build_marsh_route_markers(zone)
+	_build_real_guild_guide(zone)
 	_build_wrong_route_hazards(zone)
 	_build_hidden_heritage_gates(zone)
 
@@ -1087,6 +1098,16 @@ func _build_hidden_heritage_gates(zone: Node3D) -> void:
 	final_label.position = Vector3(0.0, 5.0, 5.0)
 	final_label.modulate = Color(0.9, 0.78, 0.48)
 	sanctuary.add_child(final_label)
+	var guide_briefing := Label3D.new()
+	guide_briefing.name = "GuideStarGateBriefing"
+	guide_briefing.text = "وصلتم إلى الملاذ الأثري\nالمرشد يشرح وجهات البوابات النجمية"
+	guide_briefing.font_size = 22
+	guide_briefing.pixel_size = 0.014
+	guide_briefing.position = Vector3(0.0, 8.0, -8.0)
+	guide_briefing.modulate = Color(0.45, 0.9, 1.0)
+	guide_briefing.visible = false
+	sanctuary.add_child(guide_briefing)
+
 	var final_area := Area3D.new()
 	final_area.name = "HunterExamMarshlandFinalObjective"
 	final_area.position = Vector3(0.0, 1.5, 5.0)
@@ -1157,6 +1178,209 @@ func _build_marsh_star_gate_visual(gate: Node3D, material: Material, gate_index:
 	gate.add_child(label)
 
 
+
+func _build_real_guild_guide(zone: Node3D) -> void:
+	guide_path_local = [
+		marsh_entry_local,
+		Vector3(-220.0, 0.0, -80.0),
+		Vector3(-35.0, 0.0, 95.0),
+		Vector3(160.0, 0.0, 250.0),
+		Vector3(310.0, 0.0, 295.0),
+		Vector3(430.0, 0.0, 320.0)
+	]
+	real_guild_guide = Node3D.new()
+	real_guild_guide.name = "RealHunterGuildMarshGuide"
+	real_guild_guide.position = Vector3(
+		marsh_entry_local.x,
+		_marsh_ground_y(marsh_entry_local.x, marsh_entry_local.z),
+		marsh_entry_local.z
+	)
+	real_guild_guide.set_meta("system_is_real_guild_guide", true)
+	real_guild_guide.set_meta("system_npc_role", "official_hunter_guild_marsh_guide")
+	real_guild_guide.set_meta("system_guide_route_destination", "HiddenMarshAncientSanctuary")
+	real_guild_guide.set_meta("system_guide_route_waypoint_count", guide_path_local.size())
+	real_guild_guide.set_meta("system_guide_escort_active", false)
+	real_guild_guide.set_meta("system_guide_escort_completed", false)
+	zone.add_child(real_guild_guide)
+
+	var uniform := _make_material(Color(0.055, 0.16, 0.23), 0.48, 0.42)
+	var gold := _make_material(Color(0.92, 0.66, 0.18), 0.32, 0.62)
+	gold.emission_enabled = true
+	gold.emission = Color(0.42, 0.22, 0.035)
+	gold.emission_energy_multiplier = 0.65
+	var body := MeshInstance3D.new()
+	body.name = "OfficialGuideUniform"
+	var body_mesh := CapsuleMesh.new()
+	body_mesh.radius = 0.58
+	body_mesh.height = 2.05
+	body.mesh = body_mesh
+	body.position.y = 1.12
+	body.material_override = uniform
+	real_guild_guide.add_child(body)
+	var head := MeshInstance3D.new()
+	head.name = "OfficialGuideHead"
+	var head_mesh := SphereMesh.new()
+	head_mesh.radius = 0.37
+	head_mesh.height = 0.74
+	head.mesh = head_mesh
+	head.position.y = 2.38
+	head.material_override = _make_material(Color(0.62, 0.43, 0.30), 0.82, 0.0)
+	real_guild_guide.add_child(head)
+	var shoulder_mark := MeshInstance3D.new()
+	shoulder_mark.name = "HunterGuildGoldInsignia"
+	var insignia_mesh := BoxMesh.new()
+	insignia_mesh.size = Vector3(0.72, 0.46, 0.12)
+	shoulder_mark.mesh = insignia_mesh
+	shoulder_mark.position = Vector3(0.0, 1.58, -0.52)
+	shoulder_mark.material_override = gold
+	real_guild_guide.add_child(shoulder_mark)
+	var nameplate := Label3D.new()
+	nameplate.name = "RealGuildGuideNameplate"
+	nameplate.text = "مرشد نقابة الصيادين الرسمي"
+	nameplate.font_size = 23
+	nameplate.pixel_size = 0.014
+	nameplate.position.y = 3.25
+	nameplate.modulate = Color(1.0, 0.82, 0.35)
+	real_guild_guide.add_child(nameplate)
+	var briefing := Label3D.new()
+	briefing.name = "GuideBriefing"
+	briefing.text = "ابقوا خلفي — الضباب قد يضلل المتسابقين"
+	briefing.font_size = 16
+	briefing.pixel_size = 0.012
+	briefing.position = Vector3(0.0, 2.9, 0.8)
+	briefing.modulate = Color(0.82, 0.94, 1.0)
+	real_guild_guide.add_child(briefing)
+	zone.set_meta("system_real_guild_guide_present", true)
+	zone.set_meta("system_real_guild_guide_node", real_guild_guide.get_path())
+
+
+func _start_real_guide_escort(candidate: Node3D) -> void:
+	if not is_instance_valid(real_guild_guide) or not _is_hunter_exam_player(candidate):
+		return
+	if guide_escort_active or guide_escort_completed:
+		_attach_guide_tracking_arrow(candidate)
+		return
+	guide_escort_active = true
+	guide_path_index = 1
+	real_guild_guide.set_meta("system_guide_escort_active", true)
+	real_guild_guide.set_meta("system_guide_escort_started_by_candidate", int(candidate.get_meta("system_candidate_number", 0)))
+	candidate.set_meta("system_following_real_guild_guide", true)
+	candidate.set_meta("system_hunter_guide_escort_started", true)
+	candidate.set_meta("system_hunter_guide_escort_destination", "HiddenMarshAncientSanctuary")
+	_attach_guide_tracking_arrow(candidate)
+	var crowd := get_tree().root.find_child("HunterCandidateCrowd", true, false)
+	if crowd != null:
+		crowd.set_meta("system_candidate_convoy_following_real_guide", true)
+		crowd.set_meta("system_candidate_convoy_route", "marsh_entry_to_hidden_ancient_sanctuary")
+		crowd.set_meta("system_candidate_convoy_count", 500)
+		for record in crowd.find_children("HunterCandidate_*", "Node3D", true, false):
+			record.set_meta("system_following_real_guild_guide", true)
+			record.set_meta("system_candidate_escort_route", "marsh_entry_to_hidden_ancient_sanctuary")
+	set_meta("system_real_guide_escort_started", true)
+
+
+func _attach_guide_tracking_arrow(candidate: Node3D) -> void:
+	if not is_instance_valid(candidate):
+		return
+	var key := str(candidate.get_instance_id())
+	var arrow := guide_tracking_arrows.get(key) as Node3D
+	if is_instance_valid(arrow):
+		return
+	arrow = Node3D.new()
+	arrow.name = "HunterRealGuideTrackingArrow"
+	arrow.set_meta("system_tracks_real_guild_guide", true)
+	arrow.set_meta("system_visible_through_marsh_fog", true)
+	arrow.position = Vector3(0.0, 3.4, 0.0)
+	var arrow_material := _make_material(Color(0.12, 0.92, 1.0), 0.24, 0.25, true)
+	arrow_material.emission_enabled = true
+	arrow_material.emission = Color(0.05, 0.72, 1.0)
+	arrow_material.emission_energy_multiplier = 2.4
+	var shaft := MeshInstance3D.new()
+	shaft.name = "TrackingArrowShaft"
+	var shaft_mesh := BoxMesh.new()
+	shaft_mesh.size = Vector3(0.22, 0.18, 1.35)
+	shaft.mesh = shaft_mesh
+	shaft.position.z = 0.15
+	shaft.material_override = arrow_material
+	arrow.add_child(shaft)
+	var head := MeshInstance3D.new()
+	head.name = "TrackingArrowHead"
+	var head_mesh := PrismMesh.new()
+	head_mesh.size = Vector3(1.05, 0.25, 1.0)
+	head.mesh = head_mesh
+	head.position = Vector3(0.0, 0.0, -0.62)
+	head.material_override = arrow_material
+	arrow.add_child(head)
+	var label := Label3D.new()
+	label.name = "TrackingArrowLabel"
+	label.text = "اتبع المرشد الحقيقي"
+	label.font_size = 19
+	label.pixel_size = 0.012
+	label.position = Vector3(0.0, 0.62, 0.0)
+	label.modulate = Color(0.35, 0.94, 1.0)
+	arrow.add_child(label)
+	candidate.add_child(arrow)
+	guide_tracking_arrows[key] = arrow
+
+
+func _process_real_guide_escort(delta: float) -> void:
+	if guide_escort_active and is_instance_valid(real_guild_guide):
+		if guide_path_index < guide_path_local.size():
+			var zone := real_guild_guide.get_parent() as Node3D
+			var target_local: Vector3 = guide_path_local[guide_path_index]
+			var target := zone.to_global(Vector3(target_local.x, _marsh_ground_y(target_local.x, target_local.z), target_local.z))
+			var next_position := real_guild_guide.global_position.move_toward(target, guide_path_speed * delta)
+			real_guild_guide.global_position = next_position
+			if real_guild_guide.global_position.distance_to(target) <= 1.2:
+				guide_path_index += 1
+			if guide_path_index < guide_path_local.size():
+				var next_local: Vector3 = guide_path_local[guide_path_index]
+				var next_global := zone.to_global(Vector3(next_local.x, _marsh_ground_y(next_local.x, next_local.z), next_local.z))
+				if real_guild_guide.global_position.distance_to(next_global) > 0.2:
+					real_guild_guide.look_at(next_global, Vector3.UP)
+		else:
+			guide_escort_active = false
+			guide_escort_completed = true
+			real_guild_guide.set_meta("system_guide_escort_active", false)
+			real_guild_guide.set_meta("system_guide_escort_completed", true)
+			real_guild_guide.set_meta("system_guide_arrived_at_sanctuary", true)
+			set_meta("system_real_guide_escort_completed", true)
+			var sanctuary := get_node_or_null("MesopotamianMarshland/HiddenMarshAncientSanctuary") as Node3D
+			if sanctuary != null:
+				sanctuary.set_meta("system_real_guide_arrived", true)
+				var gate_briefing := sanctuary.get_node_or_null("GuideStarGateBriefing") as Label3D
+				if gate_briefing != null:
+					gate_briefing.visible = true
+	for key in guide_tracking_arrows.keys():
+		var arrow := guide_tracking_arrows[key] as Node3D
+		if not is_instance_valid(arrow):
+			guide_tracking_arrows.erase(key)
+			continue
+		var candidate := arrow.get_parent() as Node3D
+		if not is_instance_valid(candidate) or not is_instance_valid(real_guild_guide):
+			arrow.visible = false
+			continue
+		var distance := candidate.global_position.distance_to(real_guild_guide.global_position)
+		arrow.visible = guide_escort_active and distance > 12.0
+		if arrow.visible:
+			arrow.global_position = candidate.global_position + Vector3(0.0, 3.4, 0.0)
+			var flat_target := real_guild_guide.global_position
+			flat_target.y = arrow.global_position.y
+			if arrow.global_position.distance_to(flat_target) > 0.1:
+				arrow.look_at(flat_target, Vector3.UP)
+
+
+func _on_real_guide_star_gate_briefing() -> void:
+	if not guide_escort_completed:
+		return
+	var sanctuary := get_node_or_null("MesopotamianMarshland/HiddenMarshAncientSanctuary") as Node3D
+	if sanctuary == null:
+		return
+	var briefing := sanctuary.get_node_or_null("GuideStarGateBriefing") as Label3D
+	if briefing != null:
+		briefing.visible = true
+	set_meta("system_guide_delivered_candidates_to_star_gates", true)
+
 func _on_hidden_sanctuary_discovered(body: Node3D, sanctuary: Node3D) -> void:
 	if not _is_hunter_exam_player(body) or not is_instance_valid(sanctuary):
 		return
@@ -1164,6 +1388,9 @@ func _on_hidden_sanctuary_discovered(body: Node3D, sanctuary: Node3D) -> void:
 	if exam_manager == null or not bool(exam_manager.get("registered")):
 		return
 	if not bool(body.get_meta("system_hunter_marsh_trial_started", false)):
+		return
+	if not guide_escort_completed:
+		body.set_meta("system_hunter_sanctuary_discovery_pending_guide_arrival", true)
 		return
 	sanctuary.visible = true
 	sanctuary.set_meta("system_hidden_heritage_site_discovered", true)
@@ -1183,6 +1410,7 @@ func _on_marsh_trial_start_entered(body: Node3D) -> void:
 		return
 	body.set_meta("system_hunter_marsh_trial_started", true)
 	body.set_meta("system_hunter_marsh_trial_start_time_msec", Time.get_ticks_msec())
+	_start_real_guide_escort(body)
 	print("SYSTEM Hunter Exam: candidate passed tunnel checkpoints and entered the continuous marshland section.")
 
 
@@ -1197,6 +1425,8 @@ func _on_marsh_final_trial_entered(body: Node3D) -> void:
 	if not bool(body.get_meta("system_hunter_marsh_trial_started", false)):
 		return
 	if not bool(body.get_meta("system_hidden_heritage_site_discovered", false)):
+		return
+	if not guide_escort_completed or not bool(real_guild_guide.get_meta("system_guide_arrived_at_sanctuary", false)):
 		return
 	var completed_segments: Array = exam_manager.get("completed_stage_ids")
 	if completed_segments.has("baghdad_tunnel_competition"):
@@ -1227,6 +1457,8 @@ func _on_marsh_star_gate_entered(body: Node3D, gate: Node3D) -> void:
 		return
 	var completed_exam_segments: Array = exam_manager.get("completed_stage_ids")
 	if not completed_exam_segments.has("baghdad_tunnel_competition"):
+		return
+	if not guide_escort_completed or not bool(real_guild_guide.get_meta("system_guide_arrived_at_sanctuary", false)):
 		return
 	if bool(exam_manager.get("exam_active")):
 		return
