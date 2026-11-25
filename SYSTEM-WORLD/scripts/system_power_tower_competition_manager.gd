@@ -226,6 +226,72 @@ func _build_scaled_spectator_crowd() -> void:
 	crowd.set_meta("system_visible_spectator_count", SPECTATOR_NPC_TARGET)
 	crowd.set_meta("system_multimesh_impostor_count", SPECTATOR_VISUAL_LOD_COUNT)
 	crowd.set_meta("system_full_rig_count", SPECTATOR_DETAILED_ACTOR_COUNT)
+	for actor_index in range(SPECTATOR_DETAILED_ACTOR_COUNT):
+		var actor_angle := TAU * float(actor_index) / float(SPECTATOR_DETAILED_ACTOR_COUNT)
+		var actor_position := Vector3(cos(actor_angle) * 28.0, 16.0, sin(actor_angle) * 28.0)
+		var detailed_actor := _create_detailed_spectator_actor(actor_index, actor_position)
+		crowd.add_child(detailed_actor)
+	crowd.set_meta("system_detailed_actor_nodes_created", SPECTATOR_DETAILED_ACTOR_COUNT)
+
+func _create_detailed_spectator_actor(actor_index: int, actor_position: Vector3) -> CharacterBody3D:
+	var actor := CharacterBody3D.new()
+	actor.name = "SpectatorDetailedNPC_%02d" % actor_index
+	actor.position = actor_position
+	actor.set_meta("system_npc_full_rig", true)
+	actor.set_meta("system_npc_role", "POWER_TOWER_FAN_SPECTATOR")
+	actor.set_meta("system_npc_detail_tier", "FULL_DETAIL")
+	actor.set_meta("system_npc_behaviour", ["WATCH_1V1", "CHEER", "REACT_TO_SCORE", "CELEBRATE_WINNER"])
+	var clothing_colors := [
+		Color(0.12, 0.28, 0.52), Color(0.42, 0.16, 0.12),
+		Color(0.12, 0.38, 0.26), Color(0.36, 0.28, 0.12),
+		Color(0.28, 0.18, 0.42), Color(0.16, 0.36, 0.42),
+		Color(0.42, 0.24, 0.32), Color(0.32, 0.34, 0.38)
+	]
+	var clothing := StandardMaterial3D.new()
+	clothing.albedo_color = clothing_colors[actor_index % clothing_colors.size()]
+	clothing.roughness = 0.82
+	var skin := StandardMaterial3D.new()
+	skin.albedo_color = Color(0.68, 0.49, 0.36) if actor_index % 2 == 0 else Color(0.48, 0.32, 0.24)
+	var body := MeshInstance3D.new()
+	body.name = "Torso"
+	var body_mesh := CapsuleMesh.new()
+	body_mesh.radius = 0.34
+	body_mesh.height = 1.25
+	body.mesh = body_mesh
+	body.position.y = 0.98
+	body.material_override = clothing
+	actor.add_child(body)
+	var head := MeshInstance3D.new()
+	head.name = "Head"
+	var head_mesh := SphereMesh.new()
+	head_mesh.radius = 0.23
+	head_mesh.height = 0.46
+	head.mesh = head_mesh
+	head.position.y = 1.82
+	head.material_override = skin
+	actor.add_child(head)
+	for side in [-1.0, 1.0]:
+		var arm := MeshInstance3D.new()
+		arm.name = "Arm_%s" % ("L" if side < 0.0 else "R")
+		var arm_mesh := CapsuleMesh.new()
+		arm_mesh.radius = 0.12
+		arm_mesh.height = 0.78
+		arm.mesh = arm_mesh
+		arm.position = Vector3(side * 0.43, 1.02, 0.0)
+		arm.rotation.z = side * -0.12
+		arm.material_override = clothing
+		actor.add_child(arm)
+		var leg := MeshInstance3D.new()
+		leg.name = "Leg_%s" % ("L" if side < 0.0 else "R")
+		var leg_mesh := CapsuleMesh.new()
+		leg_mesh.radius = 0.15
+		leg_mesh.height = 0.82
+		leg.mesh = leg_mesh
+		leg.position = Vector3(side * 0.17, 0.32, 0.0)
+		leg.material_override = clothing
+		actor.add_child(leg)
+	actor.set_meta("system_npc_visual_part_count", actor.get_child_count())
+	return actor
 
 func _build_arena_floor_layouts() -> void:
 	var arena_root := Node3D.new()
