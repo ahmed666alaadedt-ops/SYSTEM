@@ -43,7 +43,7 @@ The Al-Zawraa Park footprint in central Baghdad is permanently repurposed as the
 
 ### Approved marshland environment
 - Fertile cultivated plots, vegetable gardens (12 plots / 432 crop instances), wet soil, grassy banks, willow groves and dense reed beds.
-- Eight shallow marsh pools, muddy channels, lily pads and shallow swim volumes.
+- Eight shallow marsh pools with terrain-following muddy banks, lily pads and shallow swim volumes.
 - 12,000 reed instances, 160 willow trees, nine raised wooden boardwalk segments and nine illuminated route-arrow markers.
 - Fourteen animated low-lying mist layers with seasonal tint/density; the scene maintains cinematic swamp fog and low visibility without making the route unreadable.
 - The marsh entrance begins at the tunnel's physical exit and the boardwalk network continues toward the hidden ancient sanctuary. The WGS84 park anchor is retained; if the exact projected point falls outside the current terrain's land mask, the runtime nudges the visual center to the nearest land point within 300 m and records the offset.
