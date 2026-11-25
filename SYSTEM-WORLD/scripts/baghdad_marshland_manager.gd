@@ -7,8 +7,8 @@ class_name BaghdadMarshlandManager
 
 const PARK_LATITUDE := 33.31496
 const PARK_LONGITUDE := 44.37818
-const MARSH_RADIUS_X := 980.0
-const MARSH_RADIUS_Z := 975.0
+const MARSH_RADIUS_X := 420.0
+const MARSH_RADIUS_Z := 360.0
 const CONNECTOR_SEGMENT_LENGTH := 60.0
 const HUNTER_MARSH_SEASONS := ["spring", "summer", "autumn", "winter"]
 const SEASONAL_GATE_DESTINATIONS := {
@@ -53,11 +53,19 @@ func setup(terrain_node: Node, hunter_tunnel: Node3D) -> void:
 	if projected == Vector3.ZERO:
 		push_error("SYSTEM Baghdad Marshland: Al-Zawraa geographic anchor could not be projected.")
 		return
-	var park_ground_y := float(terrain.call("get_terrain_height", projected.x, projected.z))
-	marsh_center = Vector3(projected.x, park_ground_y, projected.z)
+	var park_anchor := Vector2(projected.x, projected.z)
+	var anchor_shift := Vector2.ZERO
+	if terrain.has_method("is_land_position") and not bool(terrain.call("is_land_position", park_anchor.x, park_anchor.y)):
+		var nearest_land := _find_nearest_marsh_land_anchor(park_anchor)
+		if nearest_land != Vector2.INF:
+			anchor_shift = nearest_land - park_anchor
+			park_anchor = nearest_land
+	var park_ground_y := float(terrain.call("get_terrain_height", park_anchor.x, park_anchor.y))
+	marsh_center = Vector3(park_anchor.x, park_ground_y, park_anchor.y)
+	set_meta("system_geographic_anchor_adjustment_m", anchor_shift.length())
 	var tunnel_end_for_entry := hunter_tunnel.global_position + Vector3(0.0, 0.0, 39.0)
 	var entry_direction := Vector2(marsh_center.x - tunnel_end_for_entry.x, marsh_center.z - tunnel_end_for_entry.z).normalized()
-	marsh_entry_local = Vector3(-entry_direction.x * 420.0, 0.0, -entry_direction.y * 420.0)
+	marsh_entry_local = Vector3(-entry_direction.x * 350.0, 0.0, -entry_direction.y * 350.0)
 	global_position = Vector3.ZERO
 	name = "BaghdadMarshland_AlZawraaReplacement"
 	set_meta("system_region_id", "baghdad_marshland_al_zawraa")
@@ -72,6 +80,17 @@ func setup(terrain_node: Node, hunter_tunnel: Node3D) -> void:
 	set_meta("system_hunter_tunnel_connected", tunnel_connector_length > 0.0)
 	set_meta("system_hunter_tunnel_connection_length_m", tunnel_connector_length)
 	set_meta("system_marshland_runtime_status", "procedural_marshland_with_physical_tunnel_connection")
+
+
+func _find_nearest_marsh_land_anchor(origin: Vector2) -> Vector2:
+	for radius_step in range(1, 13):
+		var radius := float(radius_step) * 25.0
+		for sample in range(32):
+			var angle := TAU * float(sample) / 32.0
+			var candidate := origin + Vector2(cos(angle), sin(angle)) * radius
+			if bool(terrain.call("is_land_position", candidate.x, candidate.y)):
+				return candidate
+	return Vector2.INF
 
 
 func _build_marshland() -> void:
@@ -317,9 +336,9 @@ func _add_reed_fields(parent: Node3D, material: Material) -> void:
 	multi.instance_count = 1800
 	for index in range(1800):
 		var angle := rng.randf_range(0.0, TAU)
-		var radius := sqrt(rng.randf()) * 930.0
+		var radius := sqrt(rng.randf()) * 390.0
 		var x := cos(angle) * radius
-		var z := sin(angle) * radius * 0.92
+		var z := sin(angle) * radius * 0.82
 		var ground_y := float(terrain.call("get_terrain_height", marsh_center.x + x, marsh_center.z + z)) - marsh_center.y
 		var transform := Transform3D(Basis.IDENTITY, Vector3(x, ground_y + 1.3, z))
 		multi.set_instance_transform(index, transform)
@@ -335,9 +354,9 @@ func _add_marsh_trees(parent: Node3D, trunk_material: Material, canopy_material:
 	rng.seed = 202611252
 	for index in range(56):
 		var angle := TAU * float(index) / 56.0
-		var radius := rng.randf_range(700.0, 945.0)
+		var radius := rng.randf_range(260.0, 390.0)
 		var x := cos(angle) * radius
-		var z := sin(angle) * radius * 0.92
+		var z := sin(angle) * radius * 0.82
 		var ground_y := float(terrain.call("get_terrain_height", marsh_center.x + x, marsh_center.z + z)) - marsh_center.y
 		var tree := Node3D.new()
 		tree.name = "MarshWillow_%02d" % index
@@ -374,11 +393,11 @@ func _add_boardwalk_network(parent: Node3D, material: Material) -> void:
 		[inner, hub],
 		[hub, Vector3(190.0, 0.6, -110.0)],
 		[Vector3(190.0, 0.6, -110.0), Vector3(345.0, 0.6, 80.0)],
-		[hub, Vector3(100.0, 0.6, 235.0)],
-		[Vector3(100.0, 0.6, 235.0), Vector3(-180.0, 0.6, 290.0)],
-		[inner, Vector3(-280.0, 0.6, -230.0)],
-		[Vector3(100.0, 0.6, 235.0), Vector3(430.0, 0.6, 500.0)],
-		[Vector3(430.0, 0.6, 500.0), Vector3(745.0, 0.6, 745.0)]
+		[hub, Vector3(80.0, 0.6, 155.0)],
+		[Vector3(100.0, 0.6, 235.0), Vector3(-150.0, 0.6, 230.0)],
+		[inner, Vector3(-220.0, 0.6, -180.0)],
+		[Vector3(80.0, 0.6, 155.0), Vector3(210.0, 0.6, 220.0)],
+		[Vector3(210.0, 0.6, 220.0), Vector3(340.0, 0.6, 320.0)]
 	]
 	for index in range(paths.size()):
 		var start: Vector3 = paths[index][0]
@@ -545,7 +564,7 @@ func _build_marsh_farms(zone: Node3D) -> void:
 	]
 	var farm_root := Node3D.new()
 	farm_root.name = "MarshAgriculturalGardens"
-	farm_root.position = Vector3(-240.0, 0.2, 440.0)
+	farm_root.position = Vector3(-180.0, 0.2, 190.0)
 	zone.add_child(farm_root)
 	for plot_index in range(12):
 		var plot := MeshInstance3D.new()
@@ -586,7 +605,7 @@ func _build_marsh_fog(zone: Node3D) -> void:
 		mesh.height = 0.32
 		fog.mesh = mesh
 		fog.scale = Vector3(65.0 + float(index % 4) * 12.0, 1.0, 28.0 + float(index % 3) * 9.0)
-		fog.position = Vector3(-620.0 + float((index * 97) % 1240), 1.8 + float(index % 3) * 0.35, -540.0 + float((index * 131) % 1080))
+		fog.position = Vector3(-360.0 + float((index * 53) % 720), 1.8 + float(index % 3) * 0.35, -300.0 + float((index * 61) % 600))
 		fog.material_override = fog_material
 		fog.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		zone.add_child(fog)
@@ -598,12 +617,12 @@ func _build_marsh_deception_npcs(zone: Node3D) -> void:
 	var clothing := _make_material(Color(0.20, 0.25, 0.21), 0.9, 0.0)
 	var skin := _make_material(Color(0.55, 0.39, 0.27), 0.92, 0.0)
 	var decoy_positions := [
-		Vector3(-620.0, 0.0, -240.0), Vector3(-430.0, 0.0, 350.0),
-		Vector3(-120.0, 0.0, -520.0), Vector3(250.0, 0.0, -410.0),
-		Vector3(570.0, 0.0, -190.0), Vector3(650.0, 0.0, 300.0),
-		Vector3(330.0, 0.0, 570.0), Vector3(-400.0, 0.0, 620.0),
-		Vector3(-720.0, 0.0, 90.0), Vector3(30.0, 0.0, 700.0),
-		Vector3(720.0, 0.0, 80.0), Vector3(-30.0, 0.0, -700.0)
+		Vector3(-340.0, 0.0, -180.0), Vector3(-260.0, 0.0, 230.0),
+		Vector3(-90.0, 0.0, -310.0), Vector3(150.0, 0.0, -280.0),
+		Vector3(300.0, 0.0, -130.0), Vector3(340.0, 0.0, 230.0),
+		Vector3(170.0, 0.0, 300.0), Vector3(-230.0, 0.0, 310.0),
+		Vector3(-360.0, 0.0, 50.0), Vector3(15.0, 0.0, 330.0),
+		Vector3(350.0, 0.0, 45.0), Vector3(-15.0, 0.0, -340.0)
 	]
 	for index in range(decoy_positions.size()):
 		var npc := Node3D.new()
@@ -666,9 +685,9 @@ func _build_giant_marsh_creatures(zone: Node3D) -> void:
 	var shell_material := _make_material(Color(0.16, 0.25, 0.13), 0.78, 0.0)
 	var hide_material := _make_material(Color(0.20, 0.31, 0.24), 0.9, 0.0)
 	var positions := [
-		Vector3(-650.0, 0.0, -420.0), Vector3(-280.0, 0.0, 260.0),
-		Vector3(80.0, 0.0, -600.0), Vector3(430.0, 0.0, -300.0),
-		Vector3(560.0, 0.0, 480.0), Vector3(-520.0, 0.0, 560.0)
+		Vector3(-340.0, 0.0, -300.0), Vector3(-160.0, 0.0, 180.0),
+		Vector3(45.0, 0.0, -350.0), Vector3(270.0, 0.0, -190.0),
+		Vector3(300.0, 0.0, 270.0), Vector3(-290.0, 0.0, 300.0)
 	]
 	for index in range(positions.size()):
 		var creature := Node3D.new()
@@ -741,16 +760,16 @@ func _build_marsh_route_markers(zone: Node3D) -> void:
 	material.emission = Color(0.9, 0.45, 0.05)
 	material.emission_energy_multiplier = 1.0
 	var marker_positions := [
-		Vector3(-780.0, 0.0, -60.0), Vector3(-620.0, 0.0, 20.0),
-		Vector3(-460.0, 0.0, 100.0), Vector3(-280.0, 0.0, 170.0),
-		Vector3(-80.0, 0.0, 260.0), Vector3(120.0, 0.0, 360.0),
-		Vector3(300.0, 0.0, 470.0), Vector3(500.0, 0.0, 620.0), Vector3(680.0, 0.0, 700.0)
+		Vector3(-340.0, 0.0, -40.0), Vector3(-270.0, 0.0, 20.0),
+		Vector3(-200.0, 0.0, 75.0), Vector3(-125.0, 0.0, 120.0),
+		Vector3(-45.0, 0.0, 165.0), Vector3(35.0, 0.0, 210.0),
+		Vector3(120.0, 0.0, 255.0), Vector3(220.0, 0.0, 285.0), Vector3(310.0, 0.0, 300.0)
 	]
 	for index in range(marker_positions.size()):
 		var marker := Node3D.new()
 		marker.name = "HunterExamRouteArrow_%02d" % index
 		marker.position = marker_positions[index]
-		var next_position: Vector3 = marker_positions[index + 1] if index + 1 < marker_positions.size() else Vector3(760.0, 0.0, 760.0)
+		var next_position: Vector3 = marker_positions[index + 1] if index + 1 < marker_positions.size() else Vector3(350.0, 0.0, 330.0)
 		zone.add_child(marker)
 		marker.look_at(marker.global_position + (next_position - marker_positions[index]), Vector3.UP)
 		marker.set_meta("system_route_marker", true)
@@ -784,9 +803,9 @@ func _build_marsh_route_markers(zone: Node3D) -> void:
 
 func _build_wrong_route_hazards(zone: Node3D) -> void:
 	var hazard_positions := [
-		Vector3(720.0, 0.0, -620.0), Vector3(-760.0, 0.0, 430.0),
-		Vector3(660.0, 0.0, 680.0), Vector3(-220.0, 0.0, -760.0),
-		Vector3(30.0, 0.0, 760.0)
+		Vector3(350.0, 0.0, -300.0), Vector3(-360.0, 0.0, 240.0),
+		Vector3(330.0, 0.0, 280.0), Vector3(-180.0, 0.0, -330.0),
+		Vector3(35.0, 0.0, 335.0)
 	]
 	for index in range(hazard_positions.size()):
 		var hazard := Area3D.new()
@@ -816,7 +835,7 @@ func _on_wrong_route_hazard_entered(body: Node3D, hazard: Area3D) -> void:
 func _build_hidden_heritage_gates(zone: Node3D) -> void:
 	var sanctuary := Node3D.new()
 	sanctuary.name = "HiddenMarshAncientSanctuary"
-	sanctuary.position = Vector3(760.0, 0.0, 760.0)
+	sanctuary.position = Vector3(350.0, 0.0, 330.0)
 	sanctuary.set_meta("system_hidden_ancient_site", true)
 	sanctuary.set_meta("system_hunter_exam_final_discovery", true)
 	sanctuary.set_meta("system_star_gate_hub", true)
