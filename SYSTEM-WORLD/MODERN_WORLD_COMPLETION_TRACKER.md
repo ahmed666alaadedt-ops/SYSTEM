@@ -2043,3 +2043,11 @@ Feature HEAD at audit update: `f2522b6a3cf603e3aa13ee1bd17ee0ee9e7fba99`.
 - [ ] Renderer `mesh_get_surface_count` / `Parameter "m" is null` warnings remain an open issue: the canonical runtime log for `b59d746` (job `139054661380`) contains 46,622 occurrences. The null-MeshInstance/MultiMesh diagnostic passing does not prove renderer warnings are fixed.
 - [ ] Player-to-player marketplace remains unproven in a real two-account Android round trip; successful TypeScript and Firestore rules tests are not live transaction settlement.
 - PR #38 remains draft and unmerged; no changes merged to `main`.
+
+
+### Antiques Tower museum exhibits and marketplace emulator verification — 25 November 2026
+- [x] Replaced the Antiques Tower's museum-only floor metadata with 34 generated gallery-floor nodes and 102 named physical 3D exhibit stands. Every exhibit has a stable artifact ID, visible title, tower/floor/department metadata, and a collidable `Area3D` interaction tagged `inspect_artifact`.
+- [x] Added a runtime regression audit that checks all 34 floors, all 102 unique exhibit IDs, 3D meshes/pedestals/titles, interaction areas/collisions and matching ownership/floor metadata. The current Godot validation run `45604503822` reached and passed the Baghdad tower validator on the new code.
+- [x] Marketplace Firestore rules emulator tests passed: 7/7. Callable marketplace transaction/emulator tests passed: 8/8 on workflow `45604503727`; includes fixed-price escrow/purchase, atomic buyer debit and seller credit, ownership transfer, self-purchase and insufficient-balance rejection, concurrent double-purchase race, cancellation/expiry, auctions, two-player exchanges, trusted reward replay protection and scheduled expiry workers.
+- [x] The TypeScript Cloud Functions build and Firestore rules compilation passed on the same workflow.
+- [ ] Still required before calling online trading live: trusted game-server claim and quest-reward source integration, production deployment/monitoring of functions and scheduled workers, and a real two-account Android device round trip. Do not deploy or merge without the user's separate approval.
