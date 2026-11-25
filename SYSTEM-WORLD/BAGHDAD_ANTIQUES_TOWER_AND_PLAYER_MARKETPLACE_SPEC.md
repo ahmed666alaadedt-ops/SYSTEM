@@ -103,6 +103,7 @@ A Firebase Functions TypeScript validation workflow has been added. The schedule
 - Prevent self-purchase, duplicate settlement, stale bids, double-spending, replayed requests and simultaneous purchase races.
 - Keep marketplace data separate from public player profile fields. Firestore client rules must deny direct writes to authoritative market, escrow, wallet and ownership records.
 - Public fixed-price and auction browse responses expose only the seller's chosen display name and a server-derived `isSeller` boolean; never return seller Firebase UIDs to other players or the Godot client.
+- Firestore rules deny direct client reads of listing, auction/bid, exchange and transaction backing documents. The Android and Godot clients must use authenticated callable functions, which return filtered projections rather than raw internal records.
 - A transaction must atomically verify seller ownership, lock the artifact in escrow, debit the buyer, credit the seller, transfer ownership and close the listing.
 - Audit records are append-only and must not expose private email addresses.
 - SYSTEM currency is virtual in-game currency only. No real-money trading, cash withdrawal or external payment is part of this feature.
