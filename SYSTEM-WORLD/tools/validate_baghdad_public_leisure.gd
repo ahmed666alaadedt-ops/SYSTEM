@@ -37,6 +37,17 @@ func _run_validation() -> void:
 	if int(district.get_meta("system_public_leisure_locker_count", 0)) != 16:
 		_fail("Expected sixteen public pool lockers across the two changing suites.")
 		return
+	var access_ramp := district.get_node_or_null("PublicLeisureGroundAccessRamp") as Node3D
+	if access_ramp == null or not bool(access_ramp.get_meta("system_public_leisure_ground_access", false)) or int(access_ramp.get_meta("system_public_leisure_access_ramp_segments", 0)) != 8:
+		_fail("Public leisure district is missing its eight-segment physical ground access ramp.")
+		return
+	if access_ramp.get_node_or_null("PublicLeisureGroundArrival/GroundArrivalPlazaCollision") == null:
+		_fail("Public leisure ramp does not terminate at a collidable ground arrival plaza.")
+		return
+	for segment_index in range(8):
+		if access_ramp.get_node_or_null("AccessRampCollision_%02d" % segment_index) == null:
+			_fail("Public leisure access ramp segment has no physical collision: %d" % segment_index)
+			return
 
 	for pool_name in ["OlympicLapPool", "FamilyLeisurePool", "ThermalPool"]:
 		var water_area := district.get_node_or_null(NodePath(pool_name + "/WaterVolume")) as Area3D
