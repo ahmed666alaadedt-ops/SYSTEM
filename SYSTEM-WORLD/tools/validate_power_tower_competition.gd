@@ -3,6 +3,7 @@ extends SceneTree
 const ArchitectureScript = preload("res://scripts/system_power_tower_xsx_architecture.gd")
 const ProgressionScript = preload("res://scripts/system_player_progression.gd")
 const PowerTowerManagerScript = preload("res://scripts/system_power_tower_manager.gd")
+const CombatScript = preload("res://scripts/modern_world_combat_system.gd")
 
 func _initialize() -> void:
 	call_deferred("_run")
@@ -81,6 +82,30 @@ func _run() -> void:
 	assert(not bool(manager.call("train_player_nen", "pt_nen_15", 81, "HATSU").get("success", false)))
 	assert(not bool(manager.call("train_player_nen", "pt_nen_discovery_overflow", 1, "AURA_AWARENESS").get("success", false)))
 	assert(not bool(manager.call("train_player_nen", "pt_invalid_technique", 21, "HATSU").get("success", false)))
+
+	var combat_actor := CharacterBody3D.new()
+	combat_actor.name = "PowerTowerCombatStyleTestActor"
+	root.add_child(combat_actor)
+	var combat := CombatScript.new()
+	combat.name = "ModernWorldCombatSystem"
+	root.add_child(combat)
+	combat.call("bind_actor", combat_actor, null, progression)
+	var early_styles: Array = manager.call("get_combat_styles_for_floor", 80)
+	assert(bool(combat.call("select_power_tower_combat_style", "KUNG_FU", early_styles).get("success", false)))
+	assert(bool(progression.call("add_item", "training_sword", 1)))
+	assert(bool(progression.call("equip_item", "training_sword").get("success", false)))
+	assert(bool(combat.call("select_power_tower_combat_style", "TRADITIONAL_MELEE", early_styles).get("success", false)))
+	assert(not bool(combat.call("select_power_tower_combat_style", "KUNG_FU", early_styles).get("success", false)))
+	assert(bool(progression.call("unequip_item", "weapon")))
+	assert(bool(combat.call("select_power_tower_combat_style", "KUNG_FU", early_styles).get("success", false)))
+	assert(bool(progression.call("add_item", "composite_bow", 1)))
+	assert(bool(progression.call("equip_item", "composite_bow").get("success", false)))
+	assert(bool(combat.call("select_power_tower_combat_style", "BOW_AND_ARROW", early_styles).get("success", false)))
+	var nen_only_styles: Array = manager.call("get_combat_styles_for_floor", 81)
+	assert(not bool(combat.call("select_power_tower_combat_style", "NEN_TECHNIQUES", nen_only_styles).get("success", false)))
+	assert(bool(progression.call("unequip_item", "weapon")))
+	assert(bool(combat.call("select_power_tower_combat_style", "NEN_TECHNIQUES", nen_only_styles).get("success", false)))
+
 
 	var crowd := architecture.get_node_or_null("PowerTowerCompetitionManager/PowerTower500SpectatorNPCs")
 	assert(crowd != null)
