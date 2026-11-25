@@ -5,6 +5,7 @@ const EntranceScript = preload("res://scripts/system_tower_entrance.gd")
 const HunterHelicopterControllerScript = preload("res://scripts/system_hunter_helicopter_pad_controller.gd")
 const PublicLeisureManagerScript = preload("res://scripts/system_baghdad_public_leisure_manager.gd")
 const PublicGardenManagerScript = preload("res://scripts/system_baghdad_rooftop_garden_manager.gd")
+const BaghdadMarshlandManagerScript = preload("res://scripts/baghdad_marshland_manager.gd")
 const LobbyFinishScript = preload("res://scripts/system_baghdad_tower_lobby_finish_manager.gd")
 const HUNTER_TOWER_HEIGHT := 650.0
 const REPUBLIC_BRIDGE_DECK_HEIGHT := 18.0
@@ -49,6 +50,7 @@ func _ready() -> void:
 	_create_connected_city_links()
 	_create_public_amenities()
 	_create_hunter_exam_tunnel()
+	_create_baghdad_marshland()
 
 func _load_republic_bridge_reference() -> bool:
 	var path := "res://data/geography/baghdad/republic_bridge_reference.json"
@@ -726,6 +728,19 @@ func _create_tower_sky_gardens(tower: Node3D, tower_id: String, tower_title: Str
 		clampi(roundi(1.0 + float(maxi(floor_count - 1, 0)) * 0.80), 1, floor_count)
 	]))
 
+
+
+func _create_baghdad_marshland() -> void:
+	# The Al-Zawraa Park footprint is repurposed as Baghdad's Mesopotamian marsh biome.
+	# Its west-edge entrance is physically joined to the far end of the existing Hunter tunnel.
+	var hunter_tunnel := get_node_or_null("BaghdadHunterExaminationTunnel") as Node3D
+	if hunter_tunnel == null:
+		push_error("SYSTEM WORLD: Baghdad marshland cannot connect because the Hunter tunnel is missing.")
+		return
+	var marshland := BaghdadMarshlandManagerScript.new()
+	marshland.name = "BaghdadMarshland_AlZawraaReplacement"
+	add_child(marshland)
+	marshland.call("setup", terrain, hunter_tunnel)
 
 
 func _create_hunter_exam_tunnel() -> void:
