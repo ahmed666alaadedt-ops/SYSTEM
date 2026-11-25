@@ -18,6 +18,13 @@ const NODE_NAMES := {
 	"power_tower_baghdad": "PowerTower"
 }
 
+func _collect_market_button_texts(node: Node, output: Array[String]) -> void:
+	for child in node.get_children():
+		if child is Button:
+			output.append(str((child as Button).text))
+		_collect_market_button_texts(child, output)
+
+
 func _initialize() -> void:
 	call_deferred("_run")
 
