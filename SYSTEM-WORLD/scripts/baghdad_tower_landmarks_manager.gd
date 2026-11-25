@@ -142,7 +142,10 @@ func _create_hunter_helipad(tower: Node3D, tower_radius: float) -> void:
 
 	var deck_body := StaticBody3D.new()
 	deck_body.name = "HelipadDeckCollision"
+	deck_body.collision_layer = 1
+	deck_body.collision_mask = 1
 	var deck_collision := CollisionShape3D.new()
+	deck_collision.name = "CollisionShape3D"
 	var deck_shape := CylinderShape3D.new()
 	deck_shape.radius = 22.0
 	deck_shape.height = 2.4
@@ -202,7 +205,10 @@ func _create_hunter_helipad(tower: Node3D, tower_radius: float) -> void:
 	pad_root.add_child(connector)
 	var connector_body := StaticBody3D.new()
 	connector_body.name = "HelipadAccessBridgeCollision"
+	connector_body.collision_layer = 1
+	connector_body.collision_mask = 1
 	var connector_collision := CollisionShape3D.new()
+	connector_collision.name = "CollisionShape3D"
 	var connector_shape := BoxShape3D.new()
 	connector_shape.size = connector_mesh.size
 	connector_collision.shape = connector_shape
