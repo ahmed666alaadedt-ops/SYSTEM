@@ -85,7 +85,9 @@ func _run() -> void:
 	assert(int(crowd.get_meta("system_visible_spectator_count", 0)) == 500)
 	assert(int(crowd.get_meta("system_npc_population", 0)) == 500)
 	var bodies := crowd.get_node_or_null("SpectatorNPCBodies500") as MultiMeshInstance3D
-	assert(bodies != null and bodies.multimesh.instance_count == 500)
+	assert(bodies != null and bodies.multimesh.instance_count == 492)
+	assert(int(crowd.get_meta("system_multimesh_impostor_count", 0)) == 492)
+	assert(int(crowd.get_meta("system_full_rig_count", 0)) == 8)
 
 	var amenities := lobby.get_node_or_null("PowerTowerRestaurantAndRecreation")
 	assert(amenities != null)
@@ -132,5 +134,5 @@ func _run() -> void:
 	assert(int(betting_manager.power_tower_fighter_reward_ledger.get("FIGHTER_A", 0)) == expected_fighter)
 	assert(not bool(betting_manager.call("settle_spectator_match", match_id, "FIGHTER_A", "LOCAL_COMBAT_AUTHORITY").get("success", false)))
 
-	print("POWER TOWER COMPETITION VALIDATION PASSED: 560 physical arena platforms, progressive Nen player training, 500 NPC fan predictions, three-way virtual-credit settlement, interior amenities and independent 200-floor architecture.")
+	print("POWER TOWER COMPETITION VALIDATION PASSED: 560 physical arena platforms, progressive Nen player training, 500 visible fans (492 LOD + 8 detailed) and 500 NPC fan predictions, three-way virtual-credit settlement, interior amenities and independent 200-floor architecture.")
 	quit(0)
