@@ -248,11 +248,14 @@ func _create_passage_segment(parent: Node3D, start: Vector3, finish: Vector3, in
 	segment.position = (start + finish) * 0.5 + Vector3.UP * 4.0
 	parent.add_child(segment)
 	segment.look_at(segment.global_position + delta, Vector3.UP)
-	_add_segment_box(segment, "PassageFloor", Vector3(0.0, -4.0, 0.0), Vector3(18.0, 0.8, segment_length + 0.8), wall_material, true)
-	_add_segment_box(segment, "PassageLeftWall", Vector3(-9.0, 0.0, 0.0), Vector3(0.8, 8.0, segment_length + 0.8), wall_material, true)
-	_add_segment_box(segment, "PassageRightWall", Vector3(9.0, 0.0, 0.0), Vector3(0.8, 8.0, segment_length + 0.8), wall_material, true)
+	var collision_body := StaticBody3D.new()
+	collision_body.name = "PassageSegmentCollision"
+	segment.add_child(collision_body)
+	_add_segment_box(segment, "PassageFloor", Vector3(0.0, -4.0, 0.0), Vector3(18.0, 0.8, segment_length + 0.8), wall_material, collision_body, true)
+	_add_segment_box(segment, "PassageLeftWall", Vector3(-9.0, 0.0, 0.0), Vector3(0.8, 8.0, segment_length + 0.8), wall_material, collision_body, true)
+	_add_segment_box(segment, "PassageRightWall", Vector3(9.0, 0.0, 0.0), Vector3(0.8, 8.0, segment_length + 0.8), wall_material, collision_body, true)
 	if has_ceiling:
-		_add_segment_box(segment, "PassageCeiling", Vector3(0.0, 4.0, 0.0), Vector3(18.0, 0.8, segment_length + 0.8), wall_material, false)
+		_add_segment_box(segment, "PassageCeiling", Vector3(0.0, 4.0, 0.0), Vector3(18.0, 0.8, segment_length + 0.8), wall_material, collision_body, false)
 	for side in [-1.0, 1.0]:
 		var strip := MeshInstance3D.new()
 		strip.name = "PassageGuideLight_" + str(side)
@@ -264,7 +267,7 @@ func _create_passage_segment(parent: Node3D, start: Vector3, finish: Vector3, in
 		segment.add_child(strip)
 
 
-func _add_segment_box(parent: Node3D, node_name: String, local_position: Vector3, size: Vector3, material: Material, collision_enabled: bool) -> void:
+func _add_segment_box(parent: Node3D, node_name: String, local_position: Vector3, size: Vector3, material: Material, collision_body: StaticBody3D, collision_enabled: bool) -> void:
 	var visual := MeshInstance3D.new()
 	visual.name = node_name
 	var mesh := BoxMesh.new()
@@ -275,15 +278,13 @@ func _add_segment_box(parent: Node3D, node_name: String, local_position: Vector3
 	parent.add_child(visual)
 	if not collision_enabled:
 		return
-	var body := StaticBody3D.new()
-	body.name = node_name + "Collision"
-	body.position = local_position
 	var shape := CollisionShape3D.new()
+	shape.name = node_name + "Shape"
+	shape.position = local_position
 	var box := BoxShape3D.new()
 	box.size = size
 	shape.shape = box
-	body.add_child(shape)
-	parent.add_child(body)
+	collision_body.add_child(shape)
 
 
 func _add_water_collision(parent: Node3D, position: Vector3, radius_x: float, radius_z: float, index: int) -> void:
