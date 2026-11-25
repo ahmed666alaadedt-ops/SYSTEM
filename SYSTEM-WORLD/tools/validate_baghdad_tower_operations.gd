@@ -61,7 +61,8 @@ func _run() -> void:
 
 	# Museum acceptance: generate representative floors across every approved department
 	# and verify that each exhibit is named, uniquely identified and physically interactable.
-	for museum_floor in [1, 5, 9, 13, 18, 22, 26, 30, 34]:
+	# Validate every one of the 34 floors, not only representative samples.
+	for museum_floor in range(1, 35):
 		var museum_room := operations.call("_ensure_floor_room", "antiques_heritage_tower_baghdad", museum_floor) as Node3D
 		if museum_room == null:
 			_fail("Antiques Tower could not generate museum floor %d." % museum_floor)
@@ -73,6 +74,10 @@ func _run() -> void:
 				break
 		if museum_facility == null:
 			_fail("Antiques Tower floor %d has no generated museum department." % museum_floor)
+			return
+		var expected_facility_type := "heritage_gallery" if museum_floor <= 16 else ("archaeology_research" if museum_floor <= 20 else ("artifact_restoration_lab" if museum_floor <= 24 else ("player_private_gallery" if museum_floor <= 28 else ("player_artifact_market" if museum_floor <= 32 else "rare_artifact_vault"))))
+		if str(museum_facility.get_meta("system_facility_type", "")) != expected_facility_type or str(museum_facility.get_meta("system_tower_id", "")) != "antiques_heritage_tower_baghdad" or int(museum_facility.get_meta("system_tower_floor_number", 0)) != museum_floor:
+			_fail("Antiques Tower floor %d has the wrong museum department or tower/floor ownership metadata." % museum_floor)
 			return
 		var expected_exhibits := 2 if museum_floor >= 33 else 4
 		if int(museum_facility.get_meta("system_museum_exhibit_count", 0)) != expected_exhibits:
