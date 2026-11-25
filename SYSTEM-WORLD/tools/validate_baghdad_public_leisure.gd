@@ -87,6 +87,9 @@ func _run_validation() -> void:
 		if not water_area.monitoring or not water_shape_found:
 			_fail("Pool water volume is missing active monitoring or a CollisionShape3D child: %s; monitoring=%s; collision=%s; children=%s" % [pool_name, str(water_area.monitoring), str(water_shape_found), str(child_names)])
 			return
+		if str(water_area.get_meta("system_activity_category", "")) != "leisure":
+			_fail("Public pool must be categorized as leisure/recreation, not a sports competition: " + pool_name)
+			return
 
 	var player := main_scene.find_child("Player", true, false) as CharacterBody3D
 	if player == null or not player.is_in_group("system_player"):
