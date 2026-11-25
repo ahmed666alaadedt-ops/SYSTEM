@@ -1953,3 +1953,24 @@ Feature HEAD: `cd3e3d1769af01e611e744c9ec46a2a8ab227475`.
 
 ### Release gate
 Keep PR #38 draft and unmerged until the exact latest head passes Godot validation and Android build, the Antiques tower and all Baghdad systems are covered by current regression checks, the online marketplace deployment/round-trip decision is resolved, and physical Android QA is completed. No merge into `main` without the user's explicit approval.
+
+
+## Public recreation audit — independent leisure venues remain an implementation gap — 25 November 2026
+
+This audit supersedes any older tracker wording that could be read as proof that the pools are fully playable after the former Entertainment/Sports tower was removed from the canonical five-tower registry.
+
+- The five-tower runtime registry correctly contains Hunter Association, Business and Investment, Shopping and Commerce, Antiques and Heritage, and Technology and Innovation. There is no `entertainment_tower_baghdad` entry in `TOWER_CONFIG`.
+- The legacy pool builder still contains geometry and water-zone code for `swimming_pool`, but the current five-tower floor resolver does not assign that facility to any approved tower. The operations validator explicitly says recreation/sports are independent venues and excludes them from its tower acceptance pass.
+- Three remaining service paths still look up the removed `entertainment_tower_baghdad` ID: pool staff positioning, pool locker release, and lifeguard dispatch. These paths cannot be considered reliable under the current canonical registry.
+- `ConnectedCityPublicAmenities_Blockout` currently creates amenity deck meshes and a `planned_facilities` metadata list. That metadata is a plan, not proof of live swimming pools, working water volumes, public-service interactions, staffing or navigation.
+- No standalone public recreation/pool runtime manager or dedicated public-leisure acceptance validator was found in the current repository tree during this audit.
+- Required next implementation: create the public recreation venues as independent district facilities (not a sixth tower and not attached to Antiques Tower), wire the pool water volumes, player swimming state, locker reservation/release, lifeguard response, entry/exit and public navigation, then add a dedicated end-to-end Godot validator. Do not simply rename the old tower ID or count the old blockout deck as completion.
+- Current status: **not complete; implementation and dedicated validation required**.
+
+### Current CI for canonical documentation/source checkpoint
+Feature HEAD at audit update: `f2522b6a3cf603e3aa13ee1bd17ee0ee9e7fba99`.
+- Firebase marketplace rules compilation and TypeScript build: success.
+- Android App Shell: success.
+- Canonical Android APK export: success.
+- Godot comprehensive validation: queued behind an earlier comprehensive run; no exact-HEAD Godot pass is claimed.
+- PR #38 remains draft and unmerged. No changes merged to `main`.
