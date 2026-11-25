@@ -165,7 +165,7 @@ fun SystemAntiquesMarketplaceScreen(
                                 Text("${listing.civilization} • ${listing.rarity} • ${listing.condition}", color = cyan)
                                 Text("البائع: ${listing.sellerName}", color = Color.LightGray)
                                 Text("${listing.price} SYSTEM", color = gold, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                                if (listing.sellerId == currentUid) {
+                                if (listing.isSeller) {
                                     OutlinedButton(
                                         onClick = {
                                             perform(
@@ -211,7 +211,7 @@ fun SystemAntiquesMarketplaceScreen(
                                     singleLine = true,
                                     enabled = !busy
                                 )
-                                if (auction.sellerId != currentUid) {
+                                if (!auction.isSeller) {
                                     Button(
                                         onClick = {
                                             val amount = bidText.toLongOrNull()
