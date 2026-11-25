@@ -368,6 +368,42 @@ func _run() -> void:
 	if str(status.get("advertising_mode", "")) != "npc_staff_managed_internal_external":
 		_fail("NPC-managed internal/external advertising is not active.")
 		return
+	operations.set("ad_index", 0)
+	operations.call("_refresh_advertisements")
+	if not bool(operations.call("set_advertising_campaign_override", "hunter_gear", false)):
+		_fail("Advertising campaign revocation control rejected a known campaign.")
+		return
+	if bool(operations.call("_is_ad_campaign_eligible", "hunter_gear", Time.get_ticks_msec())):
+		_fail("A revoked advertising campaign remained eligible.")
+		return
+	var campaign_status_after_revoke: Dictionary = operations.call("get_operations_status")
+	if str(campaign_status_after_revoke.get("active_campaign_id", "")) == "hunter_gear":
+		_fail("A revoked campaign remained on Baghdad tower screens.")
+		return
+	var expired_campaign_time := Time.get_ticks_msec() - 1
+	if not bool(operations.call("set_advertising_campaign_override", "hunter_gear", true, 0, expired_campaign_time)):
+		_fail("Advertising campaign expiry configuration was rejected.")
+		return
+	if bool(operations.call("_is_ad_campaign_eligible", "hunter_gear", Time.get_ticks_msec())):
+		_fail("An expired advertising campaign remained eligible.")
+		return
+	var future_campaign_start := Time.get_ticks_msec() + 60000
+	if not bool(operations.call("set_advertising_campaign_override", "hunter_gear", true, future_campaign_start, 0)):
+		_fail("Advertising campaign start scheduling was rejected.")
+		return
+	if bool(operations.call("_is_ad_campaign_eligible", "hunter_gear", Time.get_ticks_msec())):
+		_fail("A campaign was displayed before its scheduled start.")
+		return
+	if bool(operations.call("set_advertising_campaign_override", "hunter_gear", true, future_campaign_start, future_campaign_start - 1)):
+		_fail("An invalid campaign date range was accepted.")
+		return
+	if not bool(operations.call("set_advertising_campaign_override", "hunter_gear", true)):
+		_fail("Advertising campaign could not be restored after lifecycle regression checks.")
+		return
+	if not bool(operations.call("_is_ad_campaign_eligible", "hunter_gear", Time.get_ticks_msec())):
+		_fail("An enabled non-expiring advertising campaign was not eligible.")
+		return
+	operations.call("_advance_advertising_campaign")
 	var museum_floor_expectations := {}
 	for museum_floor_number in range(1, 35):
 		var expected_department := "heritage_gallery"
