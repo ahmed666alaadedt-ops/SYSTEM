@@ -404,23 +404,64 @@ func _on_carnivorous_plant_body_entered(body: Node3D, plant: Node3D) -> void:
 	elif body.has_method("take_damage"):
 		body.call("take_damage", damage_amount, plant)
 
+	var captured_origin := body.global_position
+	body.set_meta("system_examiner_capture_origin", captured_origin)
+	body.set_meta("system_examiner_swallowed", true)
+
+	# Pull the runner into the maw, close the petals around them, then hide only
+	# rendered actor meshes so the player camera and physics body remain active.
+	var swallow_tween := create_tween()
+	swallow_tween.tween_property(body, "global_position", plant.to_global(Vector3(0.0, 1.25, 0.0)), 0.32).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	swallow_tween.tween_callback(func():
+		if is_instance_valid(body):
+			_set_captured_actor_visuals_visible(body, false)
+	)
+	for petal_index in range(6):
+		var petal := plant.get_node_or_null("ToothedPetal_%02d" % petal_index) as Node3D
+		if petal != null:
+			var petal_angle := TAU * float(petal_index) / 6.0
+			var closing_tween := create_tween()
+			closing_tween.tween_property(petal, "position", Vector3(cos(petal_angle) * 0.32, 1.05, sin(petal_angle) * 0.32), 0.28).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
 	var maw := plant.get_node_or_null("PredatorMaw") as Node3D
 	if maw != null:
-		var tween := create_tween()
-		tween.tween_property(maw, "scale", Vector3(0.12, 0.12, 0.12), 0.24)
-		tween.tween_interval(maxf(0.25, capture_seconds - 0.55))
-		tween.tween_property(maw, "scale", Vector3.ONE, 0.31)
+		var maw_tween := create_tween()
+		maw_tween.tween_property(maw, "scale", Vector3(0.12, 0.12, 0.12), 0.24)
+		maw_tween.tween_interval(maxf(0.25, capture_seconds - 0.55))
+		maw_tween.tween_property(maw, "scale", Vector3.ONE, 0.31)
 
 	await get_tree().create_timer(capture_seconds).timeout
 	if is_instance_valid(body):
+		_set_captured_actor_visuals_visible(body, true)
+		if is_instance_valid(plant):
+			var release_position := plant.to_global(Vector3(0.0, 0.0, 2.8))
+			release_position.y = captured_origin.y
+			body.global_position = release_position
+		else:
+			body.global_position = captured_origin
 		body.set_meta("system_examiner_trapped", false)
+		body.set_meta("system_examiner_swallowed", false)
 		body.set_meta("system_examiner_released_from_trap", true)
 		body.remove_meta("system_examiner_trap_release_at_msec")
+		body.remove_meta("system_examiner_capture_origin")
 	if is_instance_valid(plant):
+		for petal_index in range(6):
+			var petal := plant.get_node_or_null("ToothedPetal_%02d" % petal_index) as Node3D
+			if petal != null:
+				var petal_angle := TAU * float(petal_index) / 6.0
+				var opening_tween := create_tween()
+				opening_tween.tween_property(petal, "position", Vector3(cos(petal_angle) * 1.05, 1.55, sin(petal_angle) * 1.05), 0.3)
 		plant.set_meta("system_plant_has_captured_candidate", false)
 		await get_tree().create_timer(4.0).timeout
 		if is_instance_valid(plant):
 			plant.set_meta("system_plant_cooldown", false)
+
+
+func _set_captured_actor_visuals_visible(actor: Node, should_be_visible: bool) -> void:
+	for child in actor.get_children():
+		if child is VisualInstance3D:
+			(child as VisualInstance3D).visible = should_be_visible
+		else:
+			_set_captured_actor_visuals_visible(child, should_be_visible)
 
 func _build_marsh_tree(index: int, location: Vector3, bark: Material, canopy_a: Material, canopy_b: Material, canopy_c: Material) -> void:
 	var tree := Node3D.new()
