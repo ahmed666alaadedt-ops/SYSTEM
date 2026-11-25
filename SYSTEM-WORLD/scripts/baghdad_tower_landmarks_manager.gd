@@ -466,6 +466,8 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	root.add_child(label)
 
 	_create_tower_architecture(root, node_name, title, height, radius, floors, beacon_color)
+	if connect_to_district:
+		_create_cinematic_facade_accents(root, height, radius, beacon_color)
 	root.set_meta("tower_id", location_id)
 	root.set_meta("tower_floor_count", floors)
 	root.set_meta("tower_height_m", height)
@@ -476,6 +478,42 @@ func _build_tower(node_name: String, title: String, location_id: String, world_p
 	if connect_to_district:
 		_create_tower_sky_gardens(root, location_id, title, height, radius, floors)
 	print("SYSTEM WORLD: landmark tower generated: ", title, " / ", floors, " floors / ", height, "m")
+
+func _create_cinematic_facade_accents(tower: Node3D, height: float, radius: float, accent_color: Color) -> void:
+	var accents := Node3D.new()
+	accents.name = "CinematicFacadeAccents"
+	accents.set_meta("system_cinematic_facade", true)
+	tower.add_child(accents)
+	var light_material := _make_surface_material(accent_color, 0.28, 0.42)
+	light_material.emission_enabled = true
+	light_material.emission = accent_color.lightened(0.12)
+	light_material.emission_energy_multiplier = 0.82
+	for side in range(4):
+		var angle := TAU * float(side) / 4.0
+		var rib := MeshInstance3D.new()
+		rib.name = "VerticalCinematicLight_%02d" % side
+		var rib_mesh := BoxMesh.new()
+		rib_mesh.size = Vector3(0.42, height * 0.88, 0.48)
+		rib.mesh = rib_mesh
+		rib.position = Vector3(cos(angle) * radius * 0.69, height * 0.5 + 7.0, sin(angle) * radius * 0.69)
+		rib.material_override = light_material
+		accents.add_child(rib)
+	for band_index in range(3):
+		var band := MeshInstance3D.new()
+		band.name = "CinematicSkylineHalo_%02d" % band_index
+		var halo_mesh := TorusMesh.new()
+		halo_mesh.inner_radius = radius * 0.79
+		halo_mesh.outer_radius = radius * 0.825
+		halo_mesh.rings = 48
+		halo_mesh.ring_segments = 8
+		band.mesh = halo_mesh
+		band.rotation.x = PI * 0.5
+		band.position.y = 7.0 + height * (0.24 + float(band_index) * 0.25)
+		band.material_override = light_material
+		accents.add_child(band)
+	accents.set_meta("system_vertical_light_count", 4)
+	accents.set_meta("system_skyline_halo_count", 3)
+
 
 func _create_tower_sky_gardens(tower: Node3D, tower_id: String, tower_title: String, tower_height: float, tower_radius: float, floor_count: int) -> void:
 	# Three real, walkable sky gardens are attached to each of Baghdad's five civic towers.
