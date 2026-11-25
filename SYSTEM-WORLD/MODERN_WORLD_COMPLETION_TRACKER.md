@@ -1908,3 +1908,13 @@ Validated source snapshot: `9a87f1a90a24d30693c92749a7da5ac1230edbdf` on `featur
 - [ ] Exact-HEAD Godot tower operations validation, canonical runtime validation and Android APK export are running/pending for code commits `486d436880da21cd96bba87105de4705f0115c5e` and `0262c419c584d73bc1a7d023c4534001be41a70e`. Do not mark campaign lifecycle as verified until the validator completes on exact HEAD.
 - [ ] These remain locally managed in-world SYSTEM campaigns, not a live third-party ad network or monetized advertising integration.
 - PR #38 remains draft and unmerged; no changes merged to `main`.
+
+### Verified checkpoint — Baghdad advertising, hotel lifecycle and embedded Android Godot — 25 November 2026
+- [x] Baghdad tower advertising uses six stable local campaigns, 38-second rotation, NPC manager attribution, start/expiry timestamps, scheduled campaign controls, revocation and safe fallback; tower operations QA passed.
+- [x] Hotel checkout consumes at least the first night after check-in, refunds unused nights only, and keeps the room unavailable until housekeeping and inspection. Cancelling before check-in refunds the full stay without dirtying the room.
+- [x] Added standalone hotel lifecycle validation for reservation, check-in, duplicate check-in prevention, room service, delivery state history, early checkout refund, housekeeping, inspection and pre-check-in cancellation.
+- [x] Embedded canonical Godot 4.3 into the Android app through `SystemGodotActivity`, `SystemGodotFragment` and `SystemAndroidHostPlugin`; the plugin registers `SYSTEMAndroidHost` and forwards Firebase-authenticated marketplace calls with correlated request IDs.
+- [x] Latest verified feature-branch commit: `503970ecf0f445d89fea75887d361076d0ae456c`.
+- [x] CI passed: full Baghdad tower operations validator (including 15 physical sky-garden bridge traversals and elevator returns), standalone hotel lifecycle validator, shopping product routing, Hunter rival/escort/continuous tunnel tests, canonical Godot runtime, canonical Godot Android APK, native embedded Android APK, Firebase Functions TypeScript build and Firestore marketplace rules emulator tests.
+- [ ] Still required: physical Android device test of Godot host and live Firebase marketplace round trip; deploy callable functions/rules/indexes only after explicit user approval; wire trusted game-server reward issuance and production wallet funding.
+- PR #38 remains draft and unmerged; do not merge to `main` without the user's separate explicit approval.

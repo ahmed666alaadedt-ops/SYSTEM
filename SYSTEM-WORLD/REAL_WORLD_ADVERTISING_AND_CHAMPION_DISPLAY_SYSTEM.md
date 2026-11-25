@@ -1,6 +1,6 @@
 # SYSTEM WORLD — Real-World Advertising & Champion Display System
 
-Status: approved design. The six Baghdad towers now have NPC-staff-managed internal and external physical campaign screens with a local six-message rotation every 38 seconds; Godot tower validation checks the physical panels and labels. Hunter Tower exterior facade screens and local Power Tower match-result displays also exist. This is curated/local simulation only: no live advertising provider, campaign expiry/revocation service, or authoritative cross-world champion service is claimed.
+Status: approved design. The six Baghdad towers have NPC-staff-managed internal and external physical campaign screens with six stable campaign IDs and a 38-second local rotation. Each display records campaign ID, responsible NPC manager, start time, expiry time and rotation. Local campaign controls support scheduled starts, expiry, revocation and a safe curated fallback; the Baghdad tower operations validator exercises the lifecycle. Hunter Tower exterior facade screens and local Power Tower match-result displays also exist. This remains a curated/local simulation: no live advertising provider or authoritative cross-world champion service is claimed.
 
 ## 1. Purpose and visual direction
 
@@ -106,7 +106,7 @@ All screen updates should be event-driven and throttled. Do not poll every billb
 - [x] Add physical emissive campaign screens and labels to the six Baghdad towers; add curated Hunter Tower exterior facade screens.
 - [ ] Verify screen orientation, occlusion, collision clearance, day/night brightness, LOD, and Android performance.
 - [x] Add an NPC-staff-managed curated local campaign rotation across the six Baghdad towers (six messages, 38-second rotation).
-- [ ] Add campaign start/end timestamps, expiry/revocation handling, and a safe fallback when a campaign is withdrawn.
+- [x] Add local campaign start/end timestamps, expiry/revocation handling, and a safe curated fallback when a campaign is withdrawn.
 - [ ] Implement approved provider integration only after legal, platform, consent, and privacy review.
 - [ ] Implement authoritative verified result records for monster gates and missions; current arena/tower result displays are local runtime displays, not a global authoritative service.
 - [ ] Implement Hunter Examination stage records, qualifiers, finalists, winner, and Hall of Honor archive.
@@ -118,4 +118,4 @@ All screen updates should be event-driven and throttled. Do not poll every billb
 
 ## 9. Non-claims
 
-The curated tower campaign screens, 38-second local rotation, Hunter exterior facade panels, and local Power Tower match-result presentation are implemented as in-world simulations. This does not mean live commercial ads, expiring/revocable campaign delivery, public global champion leaderboards, monster-gate boards, or the complete Hunter Examination display system are connected to a production backend.
+The curated tower campaign screens, 38-second local rotation, NPC manager attribution, local start/expiry/revocation controls, safe fallback, Hunter exterior facade panels, and local Power Tower match-result presentation are implemented as in-world simulations. This does not mean live commercial ads or remote provider delivery, public global champion leaderboards, monster-gate boards, or the complete Hunter Examination display system are connected to a production backend.
