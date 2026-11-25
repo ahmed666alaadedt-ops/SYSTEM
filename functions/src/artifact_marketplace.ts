@@ -559,3 +559,107 @@ export const listMyMarketplaceTransactions = onCall(async (request) => {
       .slice(0, 50)
   };
 });
+
+
+/**
+ * Replay-safe artifact reward issuance for the trusted game-server identity.
+ * Event IDs prevent retrying a quest reward from minting a second artifact.
+ */
+export const grantMarketplaceArtifactFromReward = onCall(async (request) => {
+  if (!request.auth?.uid || request.auth.token.gameServer !== true) {
+    throw new HttpsError("permission-denied", "إصدار القطع متاح لخادم اللعبة الموثوق فقط.");
+  }
+  const gameServerUid = String(request.auth.uid);
+  const ownerId = cleanText(request.data?.playerId, 128, "playerId");
+  const eventId = cleanText(request.data?.eventId, 100, "eventId");
+  if (!/^[A-Za-z0-9_-]+$/.test(eventId)) {
+    throw new HttpsError("invalid-argument", "معرّف حدث المكافأة غير صالح.");
+  }
+  const artifactId = cleanText(request.data?.artifactId, 120, "artifactId");
+  const name = cleanText(request.data?.name, 100, "name");
+  const civilization = cleanText(request.data?.civilization, 60, "civilization");
+  const rarity = cleanText(request.data?.rarity, 20, "rarity").toLowerCase();
+  const condition = cleanText(request.data?.condition, 20, "condition").toLowerCase();
+  const authenticity = cleanText(request.data?.authenticity, 30, "authenticity").toLowerCase();
+  const source = cleanText(request.data?.source, 40, "source");
+  const referenceId = typeof request.data?.referenceId === "string"
+    ? request.data.referenceId.slice(0, 160)
+    : "";
+
+  if (!VALID_RARITIES.has(rarity) || !VALID_CONDITIONS.has(condition) ||
+      !["verified", "unverified", "replica"].includes(authenticity)) {
+    throw new HttpsError("invalid-argument", "بيانات القطعة أو أصالتها غير صالحة.");
+  }
+  if (!["verified_quest", "hunter_guild_mission", "dungeon_clear", "system_event"].includes(source)) {
+    throw new HttpsError("invalid-argument", "مصدر مكافأة القطعة غير معتمد.");
+  }
+
+  const player = playerRef(ownerId);
+  const item = ownershipRef(ownerId, artifactId);
+  const registry = database().collection("artifactRegistry").doc(artifactId);
+  const event = database().collection("artifactRewardEvents").doc(gameServerUid + "_" + eventId);
+  const history = database().collection("artifactHistory").doc(artifactId)
+    .collection("events").doc("reward_" + eventId);
+
+  return database().runTransaction(async (transaction) => {
+    const [playerSnapshot, itemSnapshot, registrySnapshot, eventSnapshot] = await Promise.all([
+      transaction.get(player),
+      transaction.get(item),
+      transaction.get(registry),
+      transaction.get(event)
+    ]);
+    if (!playerSnapshot.exists) throw new HttpsError("not-found", "حساب اللاعب غير موجود.");
+    if (eventSnapshot.exists) {
+      const prior = eventSnapshot.data()!;
+      if (prior.playerId !== ownerId || prior.artifactId !== artifactId || prior.source !== source) {
+        throw new HttpsError("already-exists", "معرّف الحدث مستخدم لمكافأة مختلفة.");
+      }
+      return { success: true, alreadyIssued: true, artifactId, ownerId };
+    }
+    if (itemSnapshot.exists || registrySnapshot.exists) {
+      throw new HttpsError("already-exists", "معرّف القطعة مستخدم مسبقاً عالمياً.");
+    }
+
+    transaction.create(registry, {
+      artifactId,
+      originalOwnerId: ownerId,
+      issuedAt: FieldValue.serverTimestamp()
+    });
+    transaction.create(item, {
+      artifactId,
+      ownerId,
+      name,
+      civilization,
+      rarity,
+      condition,
+      authenticity,
+      provenanceSummary: typeof request.data?.provenanceSummary === "string"
+        ? request.data.provenanceSummary.trim().slice(0, 500)
+        : "",
+      status: "owned",
+      acquiredAt: FieldValue.serverTimestamp(),
+      source,
+      referenceId,
+      createdByGameServer: gameServerUid
+    });
+    transaction.create(event, {
+      eventId,
+      playerId: ownerId,
+      artifactId,
+      source,
+      referenceId,
+      gameServerUid,
+      createdAt: FieldValue.serverTimestamp()
+    });
+    transaction.create(history, {
+      artifactId,
+      ownerId,
+      action: "issued_as_game_reward",
+      source,
+      referenceId,
+      actorId: gameServerUid,
+      createdAt: FieldValue.serverTimestamp()
+    });
+    return { success: true, alreadyIssued: false, artifactId, ownerId };
+  });
+});
