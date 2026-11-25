@@ -102,6 +102,8 @@ func _run_diagnostic() -> void:
 	for path in null_multimesh_paths.slice(0, 100):
 		print("SYSTEM INVALID MULTIMESH: ", path)
 	# Exercise first-entry loading for all four worlds, then return to the modern world.
+	var post_switch_null_mesh_total := 0
+	var post_switch_invalid_multimesh_total := 0
 	if manager != null:
 		for world_id in [0, 1, 3, 2]:
 			manager.call("switch_world", world_id)
@@ -128,6 +130,8 @@ func _run_diagnostic() -> void:
 						post_switch_invalid_multimeshes.append(str(post_switch_multi.get_path()))
 				for post_switch_child in post_switch_node.get_children():
 					post_switch_pending.append(post_switch_child)
+			post_switch_null_mesh_total += post_switch_null_meshes.size()
+			post_switch_invalid_multimesh_total += post_switch_invalid_multimeshes.size()
 			print("SYSTEM POST-SWITCH MESH DIAGNOSTIC: world=", world_id,
 				" null_mesh_instances=", post_switch_null_meshes.size(),
 				" invalid_multimeshes=", post_switch_invalid_multimeshes.size())
@@ -135,7 +139,11 @@ func _run_diagnostic() -> void:
 				print("SYSTEM POST-SWITCH NULL MESH: world=", world_id, " path=", invalid_path)
 			for invalid_path in post_switch_invalid_multimeshes.slice(0, 40):
 				print("SYSTEM POST-SWITCH INVALID MULTIMESH: world=", world_id, " path=", invalid_path)
-	var diagnostic_exit_code := 1 if not null_mesh_paths.is_empty() or not null_multimesh_paths.is_empty() else 0
+	print("SYSTEM MESH DIAGNOSTIC TOTALS: initial_null_meshes=", null_mesh_paths.size(),
+		" initial_invalid_multimeshes=", null_multimesh_paths.size(),
+		" post_switch_null_meshes=", post_switch_null_mesh_total,
+		" post_switch_invalid_multimeshes=", post_switch_invalid_multimesh_total)
+	var diagnostic_exit_code := 1 if not null_mesh_paths.is_empty() or not null_multimesh_paths.is_empty() or post_switch_null_mesh_total > 0 or post_switch_invalid_multimesh_total > 0 else 0
 	scene.queue_free()
 	await process_frame
 	quit(diagnostic_exit_code)
