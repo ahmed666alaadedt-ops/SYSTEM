@@ -225,7 +225,7 @@ func _build_lobby_facilities() -> void:
 	# Traditional weapons gallery: no firearms or modern projectile displays are created here.
 	var weapon_root := Node3D.new()
 	weapon_root.name = "TraditionalWeaponsGallery"
-	weapon_root.position = Vector3(-23.0, 0.0, 50.0)
+	weapon_root.position = Vector3(-18.0, 0.0, 12.0)
 	weapon_root.set_meta("system_shop_allowed_categories", ["MELEE", "TRADITIONAL_RANGED"])
 	weapon_root.set_meta("system_shop_forbidden_categories", ["FIREARM", "MODERN_PROJECTILE"])
 	facility_root.add_child(weapon_root)
@@ -258,7 +258,7 @@ func _build_lobby_facilities() -> void:
 	# Armor mannequins and defensive equipment display.
 	var armor_root := Node3D.new()
 	armor_root.name = "ArmorShowroom"
-	armor_root.position = Vector3(-22.0, 0.0, 65.0)
+	armor_root.position = Vector3(-18.0, 0.0, -12.0)
 	facility_root.add_child(armor_root)
 	for index in range(3):
 		var mannequin := Node3D.new()
@@ -286,7 +286,7 @@ func _build_lobby_facilities() -> void:
 	# Elixir cabinet and skill-scroll library.
 	var elixir_root := Node3D.new()
 	elixir_root.name = "NenElixirCabinet"
-	elixir_root.position = Vector3(23.0, 0.0, 49.0)
+	elixir_root.position = Vector3(18.0, 0.0, 12.0)
 	facility_root.add_child(elixir_root)
 	_add_cylinder(elixir_root, "ElixirCabinetBase", 3.6, 4.0, 1.0, 0.8, steel, 32)
 	for index in range(5):
@@ -310,7 +310,7 @@ func _build_lobby_facilities() -> void:
 
 	var skill_root := Node3D.new()
 	skill_root.name = "SkillScrollLibrary"
-	skill_root.position = Vector3(23.0, 0.0, 65.0)
+	skill_root.position = Vector3(18.0, 0.0, -12.0)
 	facility_root.add_child(skill_root)
 	_add_cylinder(skill_root, "SkillLibraryBase", 3.2, 3.8, 1.0, 0.8, steel, 32)
 	for index in range(4):
@@ -336,7 +336,7 @@ func _build_lobby_facilities() -> void:
 	# Equippable hunter accessories: pendants, rings, aura bracelets and guild insignia.
 	var accessories := Node3D.new()
 	accessories.name = "HunterAccessoriesGallery"
-	accessories.position = Vector3(0.0, 0.0, 58.0)
+	accessories.position = Vector3(0.0, 0.0, 0.0)
 	accessories.set_meta("system_shop_category", "ACCESSORY")
 	facility_root.add_child(accessories)
 	_add_cylinder(accessories, "AccessoryDisplayBase", 3.8, 4.4, 0.9, 0.7, steel, 32)
@@ -363,7 +363,7 @@ func _build_lobby_facilities() -> void:
 	# Cafeteria service counter with four dining tables and visible seating.
 	var cafe := Node3D.new()
 	cafe.name = "PowerTowerCafeteria"
-	cafe.position = Vector3(0.0, 0.0, 68.0)
+	cafe.position = Vector3(0.0, 0.0, 26.0)
 	cafe.set_meta("system_facility_type", "cafeteria")
 	cafe.set_meta("system_service_roles", ["tower_cafeteria_chef", "tower_cafeteria_waiter"])
 	facility_root.add_child(cafe)
@@ -406,7 +406,7 @@ func _build_lobby_facilities() -> void:
 	# Dedicated Nen learning hall. Progress is handled by SYSTEMPlayerProgression through the competition manager.
 	var nen_hall := Node3D.new()
 	nen_hall.name = "PowerTowerNenTrainingHall"
-	nen_hall.position = Vector3(0.0, 0.0, 84.0)
+	nen_hall.position = Vector3(0.0, 0.0, -27.0)
 	nen_hall.set_meta("system_facility_type", "NEN_TRAINING_HALL")
 	nen_hall.set_meta("system_tower_id", "power_tower_baghdad")
 	nen_hall.set_meta("system_interaction_action", "POWER_TOWER_NEN_TRAINING")
