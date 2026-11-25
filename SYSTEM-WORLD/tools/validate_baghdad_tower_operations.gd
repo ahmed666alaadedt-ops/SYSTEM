@@ -1382,8 +1382,8 @@ func _run() -> void:
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
 		return
-	if int(fan_alpha_status.get("cash_value", -1)) != 0 or bool(fan_alpha_status.get("transferable", true)) or bool(fan_alpha_status.get("purchasable", true)) or int(settled_prediction.get("total_pool", 0)) != 120 or int(settled_prediction.get("payouts", {}).get("fan_alpha", 0)) != 80 or int(settled_prediction.get("payouts", {}).get("fan_gamma", 0)) != 40 or int(settled_prediction.get("net_profits", {}).get("fan_alpha", 0)) != 40 or int(settled_prediction.get("net_profits", {}).get("fan_beta", 0)) != -60 or int(settled_prediction.get("payouts", {}).get("fan_beta", -1)) != 0 or int(settled_prediction.get("net_profits", {}).get("fan_gamma", 0)) != 20 or int(operations.get("credits")) != spectator_wallet_before or int(fan_gamma_status.get("cash_value", -1)) != 0 or str(settled_match_record.get("state", "")) != "settled" or str(settled_match_record.get("winner_id", "")) != "fighter_beta":
-		_fail("Virtual tickets must debit stakes and distribute the 120-credit pool proportionally (80/40), with correct net profits and no cash value.")
+	if int(fan_alpha_status.get("cash_value", -1)) != 0 or bool(fan_alpha_status.get("transferable", true)) or bool(fan_alpha_status.get("purchasable", true)) or int(settled_prediction.get("total_pool", 0)) != 120 or int(settled_prediction.get("payouts", {}).get("fan_alpha", 0)) != 72 or int(settled_prediction.get("payouts", {}).get("fan_gamma", 0)) != 36 or int(settled_prediction.get("net_profits", {}).get("fan_alpha", 0)) != 32 or int(settled_prediction.get("net_profits", {}).get("fan_beta", 0)) != -60 or int(settled_prediction.get("payouts", {}).get("fan_beta", -1)) != 0 or int(settled_prediction.get("net_profits", {}).get("fan_gamma", 0)) != 16 or int(settled_prediction.get("house_revenue", 0)) != 6 or int(settled_prediction.get("fighter_reward", 0)) != 6 or int(settled_prediction.get("bettor_profit_pool", 0)) != 48 or int(settled_prediction.get("total_paid_out", 0)) != 108 or int(operations.get("credits")) != spectator_wallet_before - 12 or int(fan_gamma_status.get("cash_value", -1)) != 0 or str(settled_match_record.get("state", "")) != "settled" or str(settled_match_record.get("winner_id", "")) != "fighter_beta":
+		_fail("Virtual tickets must distribute the 120-credit pool as 6 tower / 6 fighter / 48 bettor profit, with original winning stakes returned and correct net profits.")
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
 		return
@@ -1394,12 +1394,12 @@ func _run() -> void:
 	var npc_lock: Dictionary = progression_test_manager.call("lock_spectator_predictions", "validator_npc_ticket_pool")
 	var npc_settlement: Dictionary = progression_test_manager.call("settle_spectator_match", "validator_npc_ticket_pool", "npc_pool_fighter_b", "LOCAL_COMBAT_AUTHORITY")
 	var npc_status: Dictionary = progression_test_manager.call("get_spectator_status", "npc:crowd_001")
-	if not bool(npc_ticket_match.get("success", false)) or not bool(npc_registration.get("success", false)) or not bool(npc_ticket.get("success", false)) or not bool(human_ticket.get("success", false)) or not bool(npc_lock.get("success", false)) or not bool(npc_settlement.get("success", false)) or str(npc_status.get("participant_type", "")) != "NPC" or int(npc_status.get("ticket_balance", -1)) != 270 or int(npc_settlement.get("payouts", {}).get("human_pool_fan", 0)) != 50:
+	if not bool(npc_ticket_match.get("success", false)) or not bool(npc_registration.get("success", false)) or not bool(npc_ticket.get("success", false)) or not bool(human_ticket.get("success", false)) or not bool(npc_lock.get("success", false)) or not bool(npc_settlement.get("success", false)) or str(npc_status.get("participant_type", "")) != "NPC" or int(npc_status.get("ticket_balance", -1)) != 270 or int(npc_settlement.get("payouts", {}).get("human_pool_fan", 0)) != 44 or int(npc_settlement.get("house_revenue", 0)) != 3 or int(npc_settlement.get("fighter_reward", 0)) != 3 or int(npc_settlement.get("bettor_profit_pool", 0)) != 24:
 		_fail("Clearly labelled NPC fan tickets must join the same virtual pool, use a capped NPC budget and pay the correct human fan.")
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
 		return
-	if not bool(operations.call("spend_spectator_stake", 30)):
+	if not bool(operations.call("spend_spectator_stake", 24)):
 		_fail("The validator could not restore the test-only human wallet balance after NPC pool settlement.")
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
