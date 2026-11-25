@@ -31,6 +31,7 @@ func _run_validation() -> void:
 	var zone := root.find_child("MesopotamianMarshland", true, false) as Node3D
 	var tunnel := root.find_child("BaghdadHunterExaminationTunnel", true, false) as Node3D
 	var player := main.get("player") as CharacterBody3D
+	var terrain_node := main.find_child("ModernContinent", true, false)
 	var exam_manager: Node = main.get("hunter_exam_manager") as Node
 	var connector := root.find_child("HunterTunnelToMarshlandPhysicalConnector", true, false) as Node3D
 	var trial_start := root.find_child("HunterMarshTrialStartTrigger", true, false) as Area3D
@@ -49,6 +50,9 @@ func _run_validation() -> void:
 	if not _check(connector.get_meta("system_from", "") == "BaghdadHunterExaminationTunnel" and connector.get_meta("system_to", "") == "BaghdadMarshland_AlZawraaReplacement", "The physical passage does not connect the Hunter tunnel to the Al-Zawraa marshland."):
 		return
 	if not _check(float(marsh.get_meta("system_geographic_anchor_adjustment_m", 0.0)) <= 300.0, "The marsh anchor moved too far from the real Al-Zawraa Park coordinate."):
+		return
+	var marsh_center: Vector3 = marsh.get("marsh_center")
+	if not _check(terrain_node != null and bool(terrain_node.call("is_land_position", marsh_center.x, marsh_center.z)), "The exact Al-Zawraa anchor is not supported by the playable Baghdad terrain."):
 		return
 	if not _check(zone.find_child("HunterExamMarshlandFinalObjective", true, false) is Area3D, "The final marshland exam objective is missing."):
 		return
@@ -73,7 +77,7 @@ func _run_validation() -> void:
 		return
 	if not _check(zone.find_children("MarshWillow_*", "Node3D", true, false).size() == 56, "Expected 56 marsh willow trees."):
 		return
-	if not _check(zone.find_children("MarshBoardwalk_*", "MeshInstance3D", true, false).size() == 9, "Expected nine raised boardwalk segments."):
+	if not _check(zone.find_children("MarshBoardwalk_*", "MeshInstance3D", true, false).size() == 9 and zone.find_children("MarshBoardwalkCollision_*", "StaticBody3D", true, false).size() == 9, "Expected nine raised boardwalk segments with matching walkable collision.")
 		return
 
 	var farm := zone.get_node_or_null("MarshAgriculturalGardens") as Node3D
