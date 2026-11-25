@@ -146,3 +146,47 @@ device profiling remain separate, pending acceptance checks.
 - A pipeline acceptance runner exists in GitHub.
 - Blender execution and Blender export remain blocked until Blender 4.x is installed in an accessible execution environment.
 - Godot import and Android performance acceptance remain pending.
+
+
+## Hunter rank and helicopter authorization — 22 November 2026
+
+- Verified on feature branch commit `58c2888a8607c1815a1437cfb529a5ab694a7040`.
+- Godot 4.3 workflow #1299 passed: resource import/script parsing, safety checks, headless main-scene launch, Baghdad tower landmark checks and the complete Baghdad tower operations validator.
+- Rank regression coverage passed for F, B, A, S, SS and SSS. Promotion requires verified mission points and increasing Nen control/skill practice; SSS requires explicit examination-board approval.
+- Helicopter authorization coverage passed: S/SS/SSS hunters and approved senior/professional Association staff qualify; F through A, ordinary clerks, level-only and license-only profiles do not qualify.
+- Fixed the duplicate progression node: `MainScene.tscn` already contains `PlayerProgression`; main.gd now reuses that canonical node instead of creating a second instance. The tower operations manager, inventory and combat now share the same progression reference.
+- Canonical Android APK export workflow #1036 passed on the same commit. Artifact `SYSTEM-WORLD-canonical-android-debug-apk`: 35,827,982 bytes (about 35.8 MB), available until 6 December 2026.
+- Workflow: https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/45055746550
+- Scope limitation: the starter guild mission catalog still has only three unique verified missions (100/250/500 points), so ordinary play currently tops out at B. Additional mission content and more distinct Nen abilities are required to earn A–SS in normal gameplay; SSS still needs a full in-world board workflow.
+
+
+## Power Tower audience/seating verification — 24 November 2026
+
+- Added local 48-seat spectator reservations, owner-only release, occupied-seat rejection, movement lock and automatic release during floor/lobby transitions.
+- Added eight procedural crowd actors with distinct watching, cheering and winner-celebration states driven by the verified 1v1 score/result feed.
+- Expanded validate_baghdad_tower_operations.gd to exercise seat ownership/release and crowd state transitions.
+- Source changes are committed on feature/baghdad-five-plus-power-tower-20261122; no Godot or Android workflow result has yet been confirmed for this exact HEAD. Do not treat the new tests as passed until the matching runs complete.
+- Online spectator synchronization, persistent cross-session reservations, voice/chat and server-authoritative settlement are not included in this local gameplay milestone.
+
+
+## Power Tower fan board and cross-floor seat cleanup — 24 November 2026
+
+- Added a physical interactable fan-prediction board in each generated Power Tower arena. It routes through the existing main interaction handler to the established virtual ticket terminal UI and shared 1v1 ticket pools.
+- Added a live 48-seat availability summary and regression checks for 48/48 → 47/48 → 48/48 transitions.
+- Seat reservations now retain exact floor identity. The validator creates matching seat IDs on floors 199 and 200, reserves the adjacent-floor seat for a different owner, and verifies that releasing the player's floor-200 seat does not release floor 199's seat.
+- Expanded crowd regression to cover watching on a tied score, cheering when one fighter leads, and celebration after the official winner is supplied.
+- These are authored regression assertions only. No Godot 4.3 run or canonical Android APK export has yet been confirmed for the exact final feature HEAD; do not mark this milestone as runtime-verified until matching workflow results are inspected.
+
+
+## Baghdad towers, marketplace and Android verification — 25 November 2026
+
+Validated source HEAD: `b98799546259f06556b200a4dde2434a4a0e7312`
+
+- Full Godot project and Baghdad operations workflow #2976 passed: tower landmarks, independent public pools, interiors/NPC commerce/local advertising, Power Tower arena, hotel lifecycle, Shopping Tower showcases, Hunter rivals and the continuous guide-led tunnel competition.
+- Restaurant regression now follows the real table interaction route, blocks payment before seating, performs physical seat reservation and release through the UI, then submits and completes the waiter/chef/meal lifecycle.
+- Canonical Godot Android APK workflow #2830 passed. Artifact ID: `15005286548`; size: 36,799,844 bytes; artifact SHA-256: `32639b029812c0e16c406a437f66bb50e933a1fe3a8ec225412c202913cfe7e8`.
+- Native SYSTEM Android app-shell workflow #219 passed. Artifact ID: `15004304406`; size: 138,573,983 bytes; artifact SHA-256: `3c9faaca12a89c3c693fbb724c4a294d97eb25561e891754b444e32364a3cc83`.
+- Firebase workflow #252 passed: TypeScript build, seven Firestore security-rule tests and eight Firestore-emulator callable-handler tests. Coverage includes atomic listing purchase, escrow, concurrency, auctions/outbid reservations, player exchanges, trusted reward idempotency and scheduled expiry workers.
+- OSM runtime loaded Republic Bridge way 1077808833 and Tigris way 24709603. The access causeway is generated game geometry, not a surveyed OSM road.
+- Still pending: physical Android device inspection; live Firebase Functions/index deployment and secure game-server claim provisioning; shared-cloud hotel bookings; live ad-provider integration; full citywide geographic verification; global cross-device hunter serials; full independent humanoid AI for all 500 crowd candidates. Online multiplayer combat is not claimed.
+- PR #38 remains draft and unmerged pending owner review/approval.

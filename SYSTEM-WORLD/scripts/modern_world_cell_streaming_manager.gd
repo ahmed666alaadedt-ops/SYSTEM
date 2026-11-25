@@ -165,7 +165,7 @@ func _load_cell(cell: Vector2i) -> void:
 	arrays[Mesh.ARRAY_INDEX] = indices
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	if mesh.get_surface_count() > 0:
+	if indices.size() >= 3 and mesh.get_rid().is_valid():
 		var surface_tool := SurfaceTool.new()
 		surface_tool.create_from(mesh, 0)
 		surface_tool.generate_normals()

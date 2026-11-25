@@ -1,7 +1,6 @@
 extends SceneTree
 
-## Headless runtime smoke test: verifies the player scene actually mounts
-## both GLB companions and that their rigged animation clips are imported.
+## Confirms Miyar and Adam are interface-only assistants, not player followers.
 
 func _initialize() -> void:
 	call_deferred("_run_validation")
@@ -12,70 +11,47 @@ func _run_validation() -> void:
 	if packed == null:
 		_fail("MainScene.tscn could not be loaded")
 		return
-
 	var scene := packed.instantiate()
 	if scene == null:
 		_fail("MainScene.tscn could not be instantiated")
 		return
 	root.add_child(scene)
-
 	await process_frame
 	await process_frame
 
 	var manager := scene.get_node_or_null("SYSTEMCompanionManager")
 	if manager == null:
-		_fail("SYSTEMCompanionManager was not mounted by main.gd")
+		_fail("SYSTEMCompanionManager assistant interface was not mounted by main.gd")
+		return
+	if manager.get("miyar") != null or manager.get("adam") != null:
+		_fail("Miyar or Adam was instantiated as a world companion instead of remaining interface-only")
+		return
+	if manager.get_node_or_null("SYSTEM_Miyar") != null or manager.get_node_or_null("SYSTEM_Adam") != null:
+		_fail("A Miyar/Adam follower model was mounted under the assistant manager")
+		return
+	var layer := manager.get_node_or_null("SYSTEMCompanionInterface") as CanvasLayer
+	if layer == null:
+		_fail("The interface-only assistant panel is missing")
+		return
+	var miyar_button := layer.find_child("MiyarAssistantButton", true, false) as Button
+	var adam_button := layer.find_child("AdamAssistantButton", true, false) as Button
+	var dialogue := layer.find_child("AssistantDialogue", true, false) as Label
+	if miyar_button == null or adam_button == null or dialogue == null:
+		_fail("Miyar/Adam assistant controls or dialogue surface are missing")
+		return
+	miyar_button.pressed.emit()
+	if str(manager.get("selected_assistant")) != "miyar" or not dialogue.text.begins_with("ميار:"):
+		_fail("Miyar interface selection did not open her SYSTEM explanation")
+		return
+	adam_button.pressed.emit()
+	if str(manager.get("selected_assistant")) != "adam" or not dialogue.text.begins_with("آدم:"):
+		_fail("Adam interface selection did not open his SYSTEM explanation")
 		return
 
-	for companion_id in ["miyar", "adam"]:
-		var companion := manager.get(companion_id) as Node3D
-		if companion == null or not is_instance_valid(companion):
-			_fail(companion_id + " companion node is missing")
-			return
-		var model := companion.get("imported_model") as Node3D
-		if model == null or not is_instance_valid(model):
-			_fail(companion_id + " did not load a rigged GLB model")
-			return
-		var animation_player := companion.get("animation_player") as AnimationPlayer
-		if animation_player == null:
-			_fail(companion_id + " GLB has no AnimationPlayer")
-			return
-		var clips := animation_player.get_animation_list()
-		print("SYSTEM COMPANION CLIPS [", companion_id, "]: ", clips)
-		for required_clip in ["Idle_Breathing", "Walk", "Run"]:
-			if not clips.has(required_clip):
-				_fail(companion_id + " is missing imported animation clip: " + required_clip)
-				return
-		companion.call("set_activity", "idle")
-		if animation_player.current_animation != "Idle_Breathing":
-			_fail(companion_id + " idle activity did not select Idle_Breathing")
-			return
-		companion.call("set_activity", "walk")
-		if animation_player.current_animation != "Walk":
-			_fail(companion_id + " walk activity did not select Walk")
-			return
-		var walk_start := animation_player.current_animation_position
-		# Give the headless AnimationPlayer real elapsed time between repeated
-		# activity requests. A few process_frame awaits can occur within one
-		# animation tick on fast CI runners and create a false failure.
-		for _frame in range(4):
-			companion.call("set_activity", "walk")
-			await create_timer(0.12).timeout
-		var walk_end := animation_player.current_animation_position
-		print("SYSTEM COMPANION WALK CLOCK [", companion_id, "]: ", walk_start, " -> ", walk_end)
-		if walk_end <= walk_start:
-			_fail(companion_id + " walk animation playback did not advance while activity was repeated")
-			return
-		companion.call("set_activity", "run")
-		if animation_player.current_animation != "Run":
-			_fail(companion_id + " run activity did not select Run")
-			return
-		print("SYSTEM COMPANION OK: ", companion_id, " | clips=", clips)
-
-	print("SYSTEM COMPANION RUNTIME VALIDATION PASSED")
+	print("SYSTEM ASSISTANT INTERFACE VALIDATION PASSED: Miyar and Adam remain UI-only; no world follower models are created.")
 	quit(0)
 
 
 func _fail(reason: String) -> void:
-	push_error("SYSTEM COMPANION RUNTIME VALIDATION FAILED: " + reason)
+	push_error("SYSTEM ASSISTANT INTERFACE VALIDATION FAILED: " + reason)
 	quit(1)

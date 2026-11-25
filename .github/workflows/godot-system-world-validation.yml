@@ -8,10 +8,15 @@ on:
   push:
     branches:
       - main
+      - feature/baghdad-five-plus-power-tower-20261122
     paths:
       - "SYSTEM-WORLD/**"
       - ".github/workflows/godot-system-world-validation.yml"
   workflow_dispatch:
+
+concurrency:
+  group: system-world-godot-validation-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -20,7 +25,7 @@ jobs:
   validate:
     name: Parse and launch SYSTEM WORLD
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -42,13 +47,24 @@ jobs:
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
           "$GODOT" --headless --path "$PROJECT" --check-only --script res://scripts/modern_world_transport_network_manager.gd
 
+      - name: Parse tower manager, progression and operations QA scripts directly
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          "$GODOT" --headless --path "$PROJECT" --check-only --script res://scripts/system_baghdad_tower_operations_manager.gd
+          "$GODOT" --headless --path "$PROJECT" --check-only --script res://scripts/system_baghdad_public_leisure_manager.gd
+          "$GODOT" --headless --path "$PROJECT" --check-only --script res://scripts/system_player_progression.gd
+          "$GODOT" --headless --path "$PROJECT" --check-only --script res://tools/validate_baghdad_tower_operations.gd
+          "$GODOT" --headless --path "$PROJECT" --check-only --script res://tools/validate_shopping_tower_showcases.gd
+
       - name: Import resources and parse scripts
         shell: bash
         run: |
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
           set -o pipefail
-          "$GODOT" --headless --verbose --editor --path "$PROJECT" --quit 2>&1 | tee "$RUNNER_TEMP/system-world-import.log"
+          "$GODOT" --headless --editor --path "$PROJECT" --import 2>&1 | tee "$RUNNER_TEMP/system-world-import.log"
           if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" "$RUNNER_TEMP/system-world-import.log"; then
             echo "Godot reported script or resource parse errors."
             exit 1
@@ -59,23 +75,142 @@ jobs:
         run: |
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
-          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_child_character_safety.gd
+          set +e
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_child_character_safety.gd > "$RUNNER_TEMP/child-character-safety.log" 2>&1
+          godot_status=$?
+          grep -E "SYSTEM NPC QA PASS|SYSTEM CHILD QA TRANSIENT|SCRIPT ERROR|Parse Error|ERROR:|WARNING:" "$RUNNER_TEMP/child-character-safety.log" | tail -n 80 || true
+          if grep -E "SCRIPT ERROR|Parse Error" "$RUNNER_TEMP/child-character-safety.log"; then exit 1; fi
+          exit "$godot_status"
 
       - name: Scan runtime scene for missing mesh resources
         shell: bash
         run: |
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
-          "$GODOT" --headless --path "$PROJECT" --script res://tools/diagnose_null_meshes.gd
+          set +e
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/diagnose_null_meshes.gd > "$RUNNER_TEMP/null-mesh-diagnostic.log" 2>&1
+          godot_status=$?
+          grep -E "SYSTEM MESH DIAGNOSTIC|SYSTEM POST-SWITCH|SYSTEM WORLD LOAD TEST|SYSTEM TRANSIENT" "$RUNNER_TEMP/null-mesh-diagnostic.log" | tail -n 160 || true
+          echo "Headless renderer null-mesh engine messages: $(grep -c 'ERROR: Parameter "m" is null' "$RUNNER_TEMP/null-mesh-diagnostic.log" || true)"
+          if grep -E "SCRIPT ERROR|Parse Error" "$RUNNER_TEMP/null-mesh-diagnostic.log"; then exit 1; fi
+          exit "$godot_status"
 
       - name: Launch main scene headlessly
         shell: bash
         run: |
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set +e
+          "$GODOT" --headless --path "$PROJECT" --quit-after 10 > "$RUNNER_TEMP/system-world-runtime.log" 2>&1
+          godot_status=$?
+          grep -E "SCRIPT ERROR|Parse Error|Failed to load script" "$RUNNER_TEMP/system-world-runtime.log" || true
+          echo "Headless renderer null-mesh shutdown warnings: $(grep -c 'ERROR: Parameter "m" is null' "$RUNNER_TEMP/system-world-runtime.log" || true)"
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" "$RUNNER_TEMP/system-world-runtime.log"; then exit 1; fi
+          exit "$godot_status"
+
+      - name: Validate cinematic modern-world presentation
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
           set -o pipefail
-          "$GODOT" --headless --path "$PROJECT" --quit-after 10 2>&1 | tee "$RUNNER_TEMP/system-world-runtime.log"
-          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" "$RUNNER_TEMP/system-world-runtime.log"; then
-            echo "Godot reported runtime script errors."
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_cinematic_presentation.gd 2>&1 | tee "$RUNNER_TEMP/cinematic-presentation.log"
+
+      - name: Validate Baghdad tower landmarks and lobby systems
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set +e
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_baghdad_towers.gd > "$RUNNER_TEMP/baghdad-tower-validation.log" 2>&1
+          godot_status=$?
+          grep -E "Baghdad tower validation|SCRIPT ERROR|Parse Error|Baghdad tower validation failed" "$RUNNER_TEMP/baghdad-tower-validation.log" | tail -n 100 || true
+          echo "Headless renderer null-mesh shutdown warnings: $(grep -c 'ERROR: Parameter "m" is null' "$RUNNER_TEMP/baghdad-tower-validation.log" || true)"
+          if grep -E "SCRIPT ERROR|Parse Error|Baghdad tower validation failed" "$RUNNER_TEMP/baghdad-tower-validation.log"; then exit 1; fi
+          exit "$godot_status"
+
+
+      - name: Validate independent Baghdad public pools, lockers and lifeguard services
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_baghdad_public_leisure.gd 2>&1 | tee "$RUNNER_TEMP/baghdad-public-leisure.log"
+
+      - name: Validate Baghdad tower interiors, NPC commerce, advertising and Power Tower boss arena
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set +e
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_baghdad_tower_operations.gd 2>&1 | tee "$RUNNER_TEMP/baghdad-tower-operations-validation.log" | grep --line-buffered -E "QA TRACE|^QA:|SYSTEM NPC QA PASS|Baghdad tower operations validation passed|Baghdad tower operations validation failed|SCRIPT ERROR|Parse Error"
+          pipeline_status=("${PIPESTATUS[@]}")
+          godot_status="${pipeline_status[0]}"
+          echo "---- Baghdad tower and Power Tower validation summary ----"
+          if grep -E "SCRIPT ERROR|Parse Error|Baghdad tower operations validation failed" "$RUNNER_TEMP/baghdad-tower-operations-validation.log"; then
+            echo "Baghdad tower operations validation reported an error."
             exit 1
           fi
+          exit "$godot_status"
+
+      - name: Validate Android marketplace bridge request-response protocol
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" \
+            --script res://tools/validate_marketplace_bridge.gd \
+            2>&1 | tee "$RUNNER_TEMP/marketplace-bridge-validation.log"
+
+      - name: Validate hotel booking, room service, checkout and housekeeping lifecycle
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" \
+            --script res://tools/validate_hotel_booking_lifecycle.gd \
+            2>&1 | tee "$RUNNER_TEMP/hotel-booking-lifecycle.log"
+
+      - name: Validate Shopping Tower 3D product showcases and purchase routing
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_shopping_tower_showcases.gd 2>&1 | tee "$RUNNER_TEMP/shopping-tower-showcases.log"
+
+      - name: Validate Hunter rival competition and objective recovery
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_hunter_rival_competition.gd 2>&1 | tee "$RUNNER_TEMP/hunter-rival-competition-runtime.log"
+
+      - name: Validate Hunter Tower guide escort and continuous tunnel entry
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_hunter_tunnel_entry.gd 2>&1 | tee "$RUNNER_TEMP/hunter-tower-guide-tunnel.log"
+
+      - name: Validate the single continuous Hunter tunnel competition
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_hunter_exam_stage_runtime.gd 2>&1 | tee "$RUNNER_TEMP/hunter-exam-continuous.log"
+
+      - name: Upload Baghdad tower operations validation log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SYSTEM-WORLD-baghdad-operations-validation-log
+          path: ${{ runner.temp }}/baghdad-tower-operations-validation.log
+          if-no-files-found: ignore
+          retention-days: 7

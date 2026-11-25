@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - feature/baghdad-five-plus-power-tower-20261122
     paths:
       - ".github/workflows/verify-baghdad-osm-source.yml"
       - "SYSTEM-WORLD/data/geography/real_world_registry.json"
@@ -12,7 +13,11 @@ on:
       - "SYSTEM-WORLD/scripts/baghdad_osm_cell_streamer.gd"
       - "SYSTEM-WORLD/scripts/world_manager.gd"
       - "SYSTEM-WORLD/scripts/modern_world_region_manager.gd"
+      - "SYSTEM-WORLD/scripts/modern_continent_manager.gd"
+      - "SYSTEM-WORLD/scripts/baghdad_tower_landmarks_manager.gd"
+      - "SYSTEM-WORLD/data/geography/baghdad/republic_bridge_reference.json"
       - "SYSTEM-WORLD/tools/validate_baghdad_osm_runtime.gd"
+      - "SYSTEM-WORLD/tools/validate_baghdad_towers.gd"
   workflow_dispatch:
 
 permissions:
@@ -272,7 +277,36 @@ jobs:
           )
           PY
 
-      - name: Build initial 5x5 Baghdad metric cell pack
+      - name: Verify Republic Bridge and Tigris against the current OSM snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/baghdad-source"
+          python3 -m pip install --disable-pip-version-check "shapely==2.1.2"
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          from shapely.geometry import shape
+
+          reference_path = Path(os.environ["GITHUB_WORKSPACE"]) / "SYSTEM-WORLD/data/geography/baghdad/republic_bridge_reference.json"
+          reference = json.loads(reference_path.read_text(encoding="utf-8"))
+          bridge_data = json.loads(Path("clipped_layers/bridges.geojson").read_text(encoding="utf-8"))
+          water_data = json.loads(Path("clipped_layers/waterways.geojson").read_text(encoding="utf-8"))
+          bridge_features = {int(f.get("properties", {}).get("@id", -1)): f for f in bridge_data.get("features", [])}
+          water_features = {int(f.get("properties", {}).get("@id", -1)): f for f in water_data.get("features", [])}
+          assert 1077808833 in bridge_features, "Republic Bridge polygon way 1077808833 missing from latest OSM extract"
+          assert 4080878 in bridge_features, "Republic Bridge primary centerline way 4080878 missing from latest OSM extract"
+          assert 754157537 in bridge_features, "Republic Bridge secondary centerline way 754157537 missing from latest OSM extract"
+          assert 24709603 in water_features, "Tigris River way 24709603 missing from latest OSM extract"
+          centroid = shape(bridge_features[1077808833]["geometry"]).centroid
+          expected = reference["republic_bridge"]["center_wgs84"]
+          assert abs(centroid.y - expected["latitude"]) < 0.0002
+          assert abs(centroid.x - expected["longitude"]) < 0.0002
+          print("Verified Republic Bridge polygon, centerline and Tigris geometry against current OSM snapshot.")
+          PY
+
+      - name: Build Baghdad core and Republic Bridge metric cell pack
         shell: bash
         run: |
           set -euo pipefail
@@ -280,25 +314,25 @@ jobs:
           python3 -m pip install --disable-pip-version-check "shapely==2.1.2"
           python3 "$GITHUB_WORKSPACE/SYSTEM-WORLD/tools/geospatial/build_baghdad_metric_cell_pack.py" \
             --input-dir "$RUNNER_TEMP/baghdad-source/clipped_layers" \
-            --output "$RUNNER_TEMP/baghdad-source/baghdad-metric-cell-pack-5x5.zip" \
+            --output "$RUNNER_TEMP/baghdad-source/baghdad-metric-cell-pack-bridge-extended.zip" \
             --cell-size 200 \
             --source-timestamp "$(python3 -c 'import json; print(json.load(open("baghdad-source-verification.json"))["snapshot_timestamp"])')" \
-            --cell-bounds=-2,2,-2,2
+            --cell-bounds=-2,20,-9,2
           python3 - <<'PY'
           import json
           import zipfile
           from pathlib import Path
 
-          path = Path("baghdad-metric-cell-pack-5x5.zip")
+          path = Path("baghdad-metric-cell-pack-bridge-extended.zip")
           with zipfile.ZipFile(path) as archive:
               manifest = json.loads(archive.read("manifest.json"))
               tile_names = [name for name in archive.namelist() if name.startswith("cells/")]
               assert manifest["region_id"] == "iraq_baghdad_region"
               assert manifest["coordinate_system"] == "SYSTEM_LOCAL_ECEF_TANGENT"
               assert manifest["cell_size_m"] == 200.0
-              assert manifest["cell_bounds_inclusive"] == [-2, 2, -2, 2]
+              assert manifest["cell_bounds_inclusive"] == [-2, 20, -9, 2]
               assert len(tile_names) == manifest["cell_count"]
-              assert 1 <= len(tile_names) <= 25
+              assert 1 <= len(tile_names) <= 276
               for name in tile_names:
                   tile = json.loads(archive.read(name))
                   assert tile["region_id"] == manifest["region_id"]
@@ -313,7 +347,13 @@ jobs:
                   for name in tile_names
               )
               print("Mapped entrance points in sample pack:", entrance_count)
-          print("Validated Baghdad 5x5 metric cell pack:", path.stat().st_size, "bytes;", len(tile_names), "occupied cells.")
+              bridge_cell = json.loads(archive.read("cells/17_-6.json"))
+              bridge_ids = {int(feature.get("id", "-1")) for feature in bridge_cell.get("layers", {}).get("bridges", [])}
+              river_ids = {int(feature.get("id", "-1")) for feature in bridge_cell.get("layers", {}).get("waterways", [])}
+              assert 1077808833 in bridge_ids, f"Republic Bridge polygon missing from cell 17_-6: {bridge_ids}"
+              assert 4080878 in bridge_ids and 754157537 in bridge_ids, f"Republic Bridge roadway centerlines missing from cell 17_-6: {bridge_ids}"
+              assert 24709603 in river_ids, f"Tigris River geometry missing from cell 17_-6: {river_ids}"
+              print("Validated Baghdad core + Republic Bridge metric cell pack:", path.stat().st_size, "bytes;", len(tile_names), "occupied cells; bridge and Tigris present.")
           PY
 
       - name: Add attribution and source notes
@@ -343,7 +383,7 @@ jobs:
             ${{ runner.temp }}/baghdad-source/baghdad-source-verification.json
             ${{ runner.temp }}/baghdad-source/clipped_layers/clip-report.json
             ${{ runner.temp }}/baghdad-source/clipped_layers/*.geojson
-            ${{ runner.temp }}/baghdad-source/baghdad-metric-cell-pack-5x5.zip
+            ${{ runner.temp }}/baghdad-source/baghdad-metric-cell-pack-bridge-extended.zip
             ${{ runner.temp }}/baghdad-source/ATTRIBUTION.txt
             ${{ runner.temp }}/baghdad-source/iraq.osm.pbf.sha256
           if-no-files-found: error

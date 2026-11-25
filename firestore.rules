@@ -83,6 +83,67 @@ service cloud.firestore {
       }
     }
 
+    // محافظ SYSTEM الافتراضية: قراءة المالك فقط، والكتابة عبر Cloud Functions حصراً.
+    match /systemWallets/{uid} {
+      allow get: if isOwner(uid);
+      allow list, create, update, delete: if false;
+    }
+
+    // سجل ملكية القطع الأثرية: لا يستطيع العميل إنشاء أو نقل أو حذف ملكية.
+    match /artifactOwnership/{uid}/items/{artifactId} {
+      allow get, list: if isOwner(uid);
+      allow create, update, delete: if false;
+    }
+
+    // بيانات المزادات والمزايدات لا تُقرأ مباشرة من العميل؛ التصفح والسجل يمران عبر Cloud Functions حتى لا تتسرب معرفات الحسابات الداخلية.
+    match /marketplaceAuctions/{auctionId} {
+      allow read, write: if false;
+
+      match /bids/{bidId} {
+        allow read, write: if false;
+      }
+    }
+
+    // عروض التبادل تُعرض للطرفين عبر callable functions فقط؛ يمنع الوصول المباشر إلى معرفات الطرف الآخر.
+    match /marketplaceExchanges/{exchangeId} {
+      allow read, write: if false;
+    }
+
+    // سجل تاريخ ملكية القطع خاص ولا يقبل أي كتابة من العميل.
+    match /artifactHistory/{artifactId}/events/{eventId} {
+      allow read, write: if false;
+    }
+
+    // مكافآت العملة الافتراضية سجلات داخلية.
+    match /marketplaceCurrencyAwards/{awardId} {
+      allow read, write: if false;
+    }
+
+    // تصفح العروض النشطة يتم عبر callable functions التي تخفي UID البائع؛ لا قراءة مباشرة لوثائق السوق.
+    match /marketplaceListings/{listingId} {
+      allow read, write: if false;
+    }
+
+    // إيصالات الصفقات الخاصة تُعرض للمشارك عبر callable functions فقط.
+    match /marketplaceTransactions/{transactionId} {
+      allow read, write: if false;
+    }
+
+    match /artifactRewardEvents/{eventId} {
+      allow read, write: if false;
+    }
+
+    // سجلات التدقيق ومعرّفات القطع العالمية داخلية بالكامل.
+    match /marketplaceAudit/{recordId} {
+      allow read, write: if false;
+    }
+    match /artifactOwnershipAudit/{artifactId} {
+      allow read, write: if false;
+    }
+    match /artifactRegistry/{artifactId} {
+      allow read, write: if false;
+    }
+
     // الرسائل العالمية
     match /globalMessages/{messageId} {
       allow get, list: if signedIn()

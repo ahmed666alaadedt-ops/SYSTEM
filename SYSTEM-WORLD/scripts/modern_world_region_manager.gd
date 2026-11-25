@@ -5,6 +5,7 @@ const ModernCityTrafficManagerScript = preload("res://scripts/modern_city_traffi
 const ModernWorldIncidentManagerScript = preload("res://scripts/modern_world_incident_manager.gd")
 const VehicleDealershipManagerScript = preload("res://scripts/system_vehicle_dealership_manager.gd")
 const ModernWorldLightingManagerScript = preload("res://scripts/modern_world_lighting_manager.gd")
+const ModernWorldCinematicPresentationScript = preload("res://scripts/modern_world_cinematic_presentation.gd")
 const ModernWorldAmbienceManagerScript = preload("res://scripts/modern_world_ambience_manager.gd")
 const BaghdadTowerLandmarksManagerScript = preload("res://scripts/baghdad_tower_landmarks_manager.gd")
 const ModernWorldTransportNetworkManagerScript = preload("res://scripts/modern_world_transport_network_manager.gd")
@@ -59,7 +60,7 @@ const DISTRICT_OFFSETS := [
 	Vector2(0.0, 112.0), Vector2(0.0, 170.0)
 ]
 
-var terrain: ModernContinentManager
+var terrain: Variant
 var rng := RandomNumberGenerator.new()
 var city_anchors: Dictionary = {}
 var village_anchors: Dictionary = {}
@@ -75,7 +76,7 @@ func _ready() -> void:
 	name = "ModernWorldRegionManager"
 	rng.seed = 20261118
 	use_baghdad_osm_cells = FileAccess.file_exists("res://data/geography/baghdad/cell_pack/manifest.json")
-	terrain = get_parent().get_node_or_null("ModernContinent") as ModernContinentManager
+	terrain = get_parent().get_node_or_null("ModernContinent")
 	if terrain == null:
 		push_warning("SYSTEM WORLD: region manager requires ModernContinent.")
 		return
@@ -90,6 +91,7 @@ func _ready() -> void:
 	_build_rural_settlements()
 	_create_transport_network()
 	_build_city_lighting()
+	_create_cinematic_presentation()
 	_create_city_dealerships()
 	_create_baghdad_towers()
 	_create_city_advertising_screens()
@@ -326,8 +328,8 @@ func _build_district(parent: Node3D, city_name: String, district_index: int, cen
 			var world_z := center.y + float(z_index) * CITY_SPACING
 			if not terrain.is_land_position(world_x, world_z):
 				continue
-			var ground_y := terrain.get_terrain_height(world_x, world_z)
-			var district_base := terrain.get_terrain_height(center.x, center.y)
+			var ground_y: float = float(terrain.get_terrain_height(world_x, world_z))
+			var district_base: float = float(terrain.get_terrain_height(center.x, center.y))
 			if absf(ground_y - district_base) > 13.0:
 				continue
 			var seed_value := absf(sin(float(district_index * 83 + x_index * 29 + z_index * 47 + city_name.length() * 11)))
@@ -336,7 +338,7 @@ func _build_district(parent: Node3D, city_name: String, district_index: int, cen
 			var height := _building_height(district_index, seed_value)
 			var local_x := world_x - center.x
 			var local_z := world_z - center.y
-			var local_y := ground_y - district_base + height * 0.5
+			var local_y: float = ground_y - district_base + height * 0.5
 			var basis := Basis.from_scale(Vector3(width, height, depth))
 			var transform := Transform3D(basis, Vector3(local_x, local_y, local_z))
 			transforms.append(transform)
@@ -390,24 +392,24 @@ func _build_district_street_grid(parent: Node3D, city_name: String, district_ind
 	road_surface.generate_normals()
 	sidewalk_surface.generate_normals()
 	crossing_surface.generate_normals()
-	var road_mesh := road_surface.commit()
-	if road_mesh != null and road_mesh.get_surface_count() > 0:
+	var road_mesh := _commit_surface_tool_if_valid(road_surface)
+	if road_mesh != null and road_mesh.get_rid().is_valid():
 		var road_instance := MeshInstance3D.new()
 		road_instance.name = city_name.replace(" ", "") + "_DistrictRoadGrid_%02d" % district_index
 		road_instance.mesh = road_mesh
 		road_instance.material_override = road_material
 		road_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		parent.add_child(road_instance)
-	var sidewalk_mesh := sidewalk_surface.commit()
-	if sidewalk_mesh != null and sidewalk_mesh.get_surface_count() > 0:
+	var sidewalk_mesh := _commit_surface_tool_if_valid(sidewalk_surface)
+	if sidewalk_mesh != null and sidewalk_mesh.get_rid().is_valid():
 		var sidewalk_instance := MeshInstance3D.new()
 		sidewalk_instance.name = city_name.replace(" ", "") + "_DistrictSidewalks_%02d" % district_index
 		sidewalk_instance.mesh = sidewalk_mesh
 		sidewalk_instance.material_override = plaza_material
 		sidewalk_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		parent.add_child(sidewalk_instance)
-	var crossing_mesh := crossing_surface.commit()
-	if crossing_mesh != null and crossing_mesh.get_surface_count() > 0:
+	var crossing_mesh := _commit_surface_tool_if_valid(crossing_surface)
+	if crossing_mesh != null and crossing_mesh.get_rid().is_valid():
 		var crossing_material := _material(Color(0.82, 0.84, 0.82), 0.9)
 		var crossing_instance := MeshInstance3D.new()
 		crossing_instance.name = city_name.replace(" ", "") + "_Crosswalks_%02d" % district_index
@@ -517,14 +519,39 @@ func _add_road_strip(node_name: String, start: Vector2, offset: Vector2, width: 
 		var d := Vector3(p1.x - side.x, terrain.get_terrain_height(p1.x - side.x, p1.y - side.y) + 0.18, p1.y - side.y)
 		_add_quad(surface, a, b, c, d)
 	surface.generate_normals()
-	var mesh := surface.commit()
-	if mesh == null or mesh.get_surface_count() == 0:
+	var mesh := _commit_surface_tool_if_valid(surface)
+	if mesh == null or not mesh.get_rid().is_valid():
 		return
 	var road := MeshInstance3D.new()
 	road.name = node_name
 	road.mesh = mesh
 	road.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(road)
+
+
+func _commit_surface_tool_if_valid(surface: SurfaceTool) -> ArrayMesh:
+	# Never attach an ArrayMesh created from an empty SurfaceTool. A zero-surface
+	# mesh can still expose a RID in the dummy renderer and trigger repeated
+	# mesh_get_surface_count null-parameter errors during headless scene tests.
+	var arrays: Array = surface.commit_to_arrays()
+	if arrays.size() <= Mesh.ARRAY_VERTEX:
+		return null
+	var raw_vertices: Variant = arrays[Mesh.ARRAY_VERTEX]
+	if typeof(raw_vertices) != TYPE_PACKED_VECTOR3_ARRAY:
+		return null
+	var vertices: PackedVector3Array = raw_vertices
+	if vertices.size() < 3:
+		return null
+	var raw_indices: Variant = arrays[Mesh.ARRAY_INDEX]
+	if raw_indices is PackedInt32Array:
+		var indices: PackedInt32Array = raw_indices
+		if not indices.is_empty() and indices.size() < 3:
+			return null
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	if not mesh.get_rid().is_valid():
+		return null
+	return mesh
 
 
 func _add_quad(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3) -> void:
@@ -804,6 +831,12 @@ func _create_city_dealerships() -> void:
 		dealer.position = Vector3(position.x, terrain.get_terrain_height(position.x, position.y), position.y)
 		add_child(dealer)
 		dealer.setup(null)
+
+
+func _create_cinematic_presentation() -> void:
+	var presentation := ModernWorldCinematicPresentationScript.new()
+	presentation.name = "ModernWorldCinematicPresentation"
+	add_child(presentation)
 
 
 func _create_baghdad_towers() -> void:

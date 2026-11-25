@@ -27,7 +27,7 @@ const BIOME_ZONES := [
 	{"name": "NorthernHighlands", "center": Vector2(455.0, -525.0), "radius": 190.0, "kind": "alpine"}
 ]
 
-var terrain: ModernContinentManager
+var terrain: Variant
 var rng := RandomNumberGenerator.new()
 var trunk_material: StandardMaterial3D
 var canopy_materials: Array[StandardMaterial3D] = []
@@ -38,7 +38,7 @@ var rock_material: StandardMaterial3D
 func _ready() -> void:
 	name = "ModernWorldBiomeManager"
 	rng.seed = 20261118
-	terrain = get_parent().get_node_or_null("ModernContinent") as ModernContinentManager
+	terrain = get_parent().get_node_or_null("ModernContinent")
 	if terrain == null:
 		push_warning("SYSTEM WORLD: biome dressing requires ModernContinent.")
 		return
@@ -83,7 +83,7 @@ func _build_biome_zones() -> void:
 			var point := center + Vector2(cos(angle), sin(angle)) * distance
 			if not _is_valid_biome_position(point, kind):
 				continue
-			var ground_y := terrain.get_terrain_height(point.x, point.y)
+			var ground_y: float = float(terrain.get_terrain_height(point.x, point.y))
 			if kind == "woodland":
 				if rng.randf() < 0.48:
 					var tree_height := rng.randf_range(7.0, 12.5)
@@ -124,7 +124,7 @@ func _build_biome_zones() -> void:
 func _is_valid_biome_position(point: Vector2, kind: String) -> bool:
 	if not terrain.is_land_position(point.x, point.y):
 		return false
-	var height := terrain.get_terrain_height(point.x, point.y)
+	var height: float = float(terrain.get_terrain_height(point.x, point.y))
 	if kind == "woodland" and (height < 2.0 or height > 82.0):
 		return false
 	if kind == "dry" and (height < 1.0 or height > 55.0):

@@ -201,7 +201,8 @@ fun SystemApp(account: SystemFirebaseAccount) {
                                     "المستويات",
                                     "جزيرة الطمع",
                                     "المهمات العالمية",
-                                    "فرق اللاعبين"
+                                    "فرق اللاعبين",
+                                    "برج التحف والآثار"
                                 )
 
                                 tabs.forEachIndexed { index, title ->
@@ -226,6 +227,26 @@ fun SystemApp(account: SystemFirebaseAccount) {
                                         Text(title, fontWeight = FontWeight.Bold)
                                     }
                                 }
+                            }
+
+                            Button(
+                                onClick = {
+                                    val worldIntent = SystemGodotRuntimeContract.createWorldIntent(
+                                        context,
+                                        SystemGodotActivity::class.java,
+                                        SystemGodotRuntimeContract.WorldRequest(
+                                            worldId = SystemGodotRuntimeContract.WorldId.MODERN,
+                                            accountUid = userId
+                                        )
+                                    )
+                                    context.startActivity(
+                                        worldIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    )
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("دخول العالم ثلاثي الأبعاد", fontWeight = FontWeight.Bold)
                             }
 
                             Spacer(Modifier.height(16.dp))
@@ -521,6 +542,10 @@ fun SystemApp(account: SystemFirebaseAccount) {
 
                             5 -> {
                                 SystemPlayerPartyScreen(account = account)
+                            }
+
+                            6 -> {
+                                SystemAntiquesMarketplaceScreen()
                             }
                         }
                     }

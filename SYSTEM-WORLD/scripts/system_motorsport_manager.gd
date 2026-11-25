@@ -20,7 +20,7 @@ const EVENTS := {
 	"drag_quarter_mile": {"name":"Quarter Mile Drag","discipline":"race_drag","vehicle_categories":["race_drag","race_hyper","supercar"],"laps":1,"base_reward":3500,"description":"سباق تسارع لمسافة ربع ميل"}
 }
 
-var garage_manager: SystemPlayerVehicleManager
+var garage_manager: Variant
 var active_race: Dictionary = {}
 var race_elapsed := 0.0
 var next_checkpoint_index := 0
@@ -30,7 +30,7 @@ var checkpoint_total := 0
 var dedicated_track_context := false
 var pending_player_wagers: Dictionary = {}
 
-func setup(vehicle_garage: SystemPlayerVehicleManager) -> void:
+func setup(vehicle_garage: Variant) -> void:
 	garage_manager = vehicle_garage
 
 func set_dedicated_track_context(enabled: bool) -> void:

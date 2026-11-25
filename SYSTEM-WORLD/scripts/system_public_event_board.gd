@@ -58,9 +58,9 @@ func publish_exam_champion(candidate_number: int, license_rank: String) -> void:
 
 func publish_power_tower_clear(floor_number: int, rank: String) -> void:
 	_publish_result(
-		"برج القوة",
-		"إنجاز الطابق %d" % floor_number,
-		"التصنيف: %s" % rank
+		"برج القوة — مواجهة فردية",
+		"فوز 1 ضد 1 في الطابق %d" % floor_number,
+		"مقاتل واحد ضد خصم واحد | التصنيف: %s" % rank
 	)
 
 
@@ -165,10 +165,10 @@ func _build_baghdad_tower_displays() -> void:
 	result_material.emission_energy_multiplier = 1.0
 	var tower_nodes := {
 		"hunter_association_tower_baghdad": "HunterAssociationTower",
-		"power_tower_baghdad": "PowerTower",
-		"business_tower_baghdad": "BusinessTower",
+		"business_investment_tower_baghdad": "BusinessInvestmentTower",
 		"shopping_tower_baghdad": "ShoppingTower",
-		"entertainment_tower_baghdad": "EntertainmentTower"
+		"antiques_heritage_tower_baghdad": "AntiquesHeritageTower",
+		"technology_tower_baghdad": "TechnologyTower"
 	}
 	var tower_records: Array = tower_manager.call("get_tower_positions")
 	for record_value in tower_records:
@@ -207,7 +207,43 @@ func _build_baghdad_tower_displays() -> void:
 		result_label.outline_size = 7
 		tower.add_child(result_label)
 		result_labels["Baghdad Tower " + tower_id] = result_label
+		_build_tower_lobby_displays(tower, tower_id, tower_radius, frame_material, ad_material, result_material)
 	_refresh_result_displays()
+
+
+func _build_tower_lobby_displays(tower: Node3D, tower_id: String, tower_radius: float, frame_material: Material, ad_material: Material, result_material: Material) -> void:
+	# Interior-facing information screens inside the existing public lobby.
+	var lobby := tower.get_node_or_null("PublicLobby_Blockout") as Node3D
+	if lobby == null:
+		return
+	var front_z := tower_radius * 1.48 + 36.0
+	var panel_size := Vector3(9.0, 4.2, 0.45)
+	var left_position := Vector3(-tower_radius * 0.72, 7.2, front_z - 0.85)
+	var right_position := Vector3(tower_radius * 0.72, 7.2, front_z - 0.85)
+	_add_screen(lobby, "LobbyAdvertisingPanel", left_position, panel_size, ad_material, frame_material)
+	_add_screen(lobby, "LobbyChampionPanel", right_position, panel_size, result_material, frame_material)
+	var campaign_label := Label3D.new()
+	campaign_label.name = "LobbyCampaignText"
+	campaign_label.text = "SYSTEM BAGHDAD\nحملات وفعاليات الأبراج"
+	campaign_label.position = left_position + Vector3(0.0, 0.0, -0.62)
+	campaign_label.font_size = 24
+	campaign_label.pixel_size = 0.012
+	campaign_label.modulate = Color(0.78, 0.96, 1.0)
+	campaign_label.outline_size = 6
+	lobby.add_child(campaign_label)
+	var results_label := Label3D.new()
+	results_label.name = "LobbyChampionResultsText"
+	results_label.text = "SYSTEM CHAMPIONS\nبانتظار أول إنجاز موثق"
+	results_label.position = right_position + Vector3(0.0, 0.0, -0.62)
+	results_label.font_size = 23
+	results_label.pixel_size = 0.012
+	results_label.modulate = Color(1.0, 0.88, 0.55)
+	results_label.outline_size = 6
+	lobby.add_child(results_label)
+	lobby.set_meta("system_internal_media_displays", true)
+	lobby.set_meta("system_advertising_mode", "curated_demo")
+	lobby.set_meta("system_live_ads_enabled", false)
+	lobby.set_meta("system_tower_id", tower_id)
 
 
 func _add_skyscraper(parent: Node3D, building_material: Material, trim_material: Material) -> void:

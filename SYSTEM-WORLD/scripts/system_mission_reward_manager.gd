@@ -54,6 +54,10 @@ func confirm_verified_completion(mission_id: String) -> bool:
 		mission_rejected.emit(mission_id, "PROGRESSION_UNAVAILABLE")
 		return false
 
+	if progression.has_method("has_verified_hunter_mission") and bool(progression.call("has_verified_hunter_mission", mission_id)):
+		mission_rejected.emit(mission_id, "MISSION_ALREADY_COUNTED_FOR_HUNTER_RANK")
+		return false
+
 	var reward: int = int(MISSION_REWARDS.get(mission_id, 0))
 
 	if reward <= 0:
@@ -68,6 +72,12 @@ func confirm_verified_completion(mission_id: String) -> bool:
 	if not bool(result.get("success", false)):
 		mission_rejected.emit(mission_id, "XP_REWARD_FAILED")
 		return false
+
+	if progression.has_method("record_verified_hunter_mission"):
+		var rank_result: Dictionary = progression.call("record_verified_hunter_mission", mission_id, reward, false, "")
+		if not bool(rank_result.get("success", false)):
+			mission_rejected.emit(mission_id, "HUNTER_RANK_RECORD_FAILED")
+			return false
 
 	completed_missions[mission_id] = true
 	accepted_missions.erase(mission_id)

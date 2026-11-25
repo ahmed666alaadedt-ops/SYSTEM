@@ -3,7 +3,7 @@ class_name SystemVehicleDealershipUI
 
 const CatalogScript = preload("res://scripts/system_vehicle_catalog.gd")
 
-var garage_manager: SystemPlayerVehicleManager
+var garage_manager: Variant
 var runtime_manager
 var root_panel: PanelContainer
 var balance_label: Label
@@ -17,7 +17,7 @@ var preview_body_material: StandardMaterial3D
 var preview_cabin_material: StandardMaterial3D
 var preview_status: Label
 
-func setup(garage: SystemPlayerVehicleManager, runtime) -> void:
+func setup(garage: Variant, runtime) -> void:
 	garage_manager = garage
 	runtime_manager = runtime
 	_build_interface()
@@ -123,7 +123,7 @@ func close() -> void:
 func _refresh_catalog() -> void:
 	for child in list_container.get_children():
 		child.queue_free()
-	var owned := garage_manager.get_garage()
+	var owned: Array = garage_manager.get_garage()
 	var catalog: Dictionary = CatalogScript.get_catalog()
 	var ids: Array = catalog.keys()
 	ids.sort()
@@ -162,7 +162,7 @@ func _refresh_catalog() -> void:
 	_update_vehicle_preview()
 
 func _on_select_vehicle(vehicle_id: String) -> void:
-	var result := garage_manager.set_active_vehicle(vehicle_id)
+	var result: Dictionary = garage_manager.set_active_vehicle(vehicle_id)
 	if bool(result.get("success", false)):
 		selected_vehicle_id = vehicle_id
 		_update_vehicle_preview()
@@ -170,7 +170,7 @@ func _on_select_vehicle(vehicle_id: String) -> void:
 	_refresh_catalog()
 
 func _on_purchase_vehicle(vehicle_id: String) -> void:
-	var result := garage_manager.purchase_vehicle(vehicle_id)
+	var result: Dictionary = garage_manager.purchase_vehicle(vehicle_id)
 	if bool(result.get("success", false)):
 		garage_manager.set_active_vehicle(vehicle_id)
 		selected_vehicle_id = vehicle_id
@@ -201,7 +201,7 @@ func _on_sell_pressed() -> void:
 	if selected_vehicle_id.is_empty():
 		status_label.text = "حدد مركبة تملكها حتى تبيعها."
 		return
-	var result := garage_manager.sell_vehicle(selected_vehicle_id)
+	var result: Dictionary = garage_manager.sell_vehicle(selected_vehicle_id)
 	if bool(result.get("success", false)):
 		status_label.text = "تم بيع المركبة واسترجاع %s Credits." % _format_number(int(result.get("received", 0)))
 		selected_vehicle_id = ""
@@ -256,7 +256,7 @@ func _build_3d_preview(parent: VBoxContainer) -> void:
 	viewport.add_child(world)
 	var camera_3d := Camera3D.new()
 	camera_3d.position = Vector3(4.2, 2.8, 5.6)
-	camera_3d.look_at(Vector3(0.0, 0.25, 0.0), Vector3.UP)
+	camera_3d.look_at_from_position(camera_3d.position, Vector3(0.0, 0.25, 0.0), Vector3.UP)
 	camera_3d.current = true
 	world.add_child(camera_3d)
 	var light := DirectionalLight3D.new()
@@ -363,7 +363,7 @@ func _on_paint_selected(color: Color) -> void:
 func _update_vehicle_preview() -> void:
 	if preview_body_material == null:
 		return
-	var color := garage_manager.get_vehicle_color(selected_vehicle_id) if not selected_vehicle_id.is_empty() else Color(0.08, 0.28, 0.48)
+	var color: Color = garage_manager.get_vehicle_color(selected_vehicle_id) if not selected_vehicle_id.is_empty() else Color(0.08, 0.28, 0.48)
 	preview_body_material.albedo_color = color
 	if preview_status != null:
 		preview_status.text = "المركبة المحددة: " + (selected_vehicle_id if not selected_vehicle_id.is_empty() else "لم يتم التحديد") + " | معاينة إجرائية أولية"

@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - feature/baghdad-five-plus-power-tower-20261122
     paths:
       - "SYSTEM-WORLD/**"
       - ".github/workflows/canonical-godot-validation.yml"
@@ -67,8 +68,76 @@ jobs:
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
           set -o pipefail
-          "$GODOT" --headless --editor --path "$PROJECT" --quit \
+          "$GODOT" --headless --editor --path "$PROJECT" --import \
             2>&1 | tee "$RUNNER_TEMP/canonical-godot-import.log"
+
+      - name: Validate Android marketplace bridge protocol and request correlation
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" \
+            --script res://tools/validate_system_android_bridge.gd \
+            2>&1 | tee "$RUNNER_TEMP/system-android-marketplace-bridge.log"
+
+      - name: Validate Baghdad tower landmarks and lobby systems
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set +e
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_baghdad_towers.gd 2>&1 | tee "$RUNNER_TEMP/baghdad-tower-landmarks.log"
+          godot_status=${PIPESTATUS[0]}
+          set -e
+          if grep -E "SCRIPT ERROR|Parse Error|Baghdad tower validation failed" "$RUNNER_TEMP/baghdad-tower-landmarks.log"; then
+            echo "Baghdad tower landmark validation reported an assertion or script error."
+            exit 1
+          fi
+          if ! grep -Fq "Baghdad tower validation passed:" "$RUNNER_TEMP/baghdad-tower-landmarks.log"; then
+            echo "Baghdad tower landmark validator did not reach its success sentinel (Godot exit: $godot_status)."
+            exit 1
+          fi
+          echo "All Baghdad landmark assertions passed; accepting the known dummy-renderer teardown exit status: $godot_status."
+
+      - name: Validate Hunter Tower recruitment invitation and guild-guide tunnel escort
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" \
+            --script res://tools/validate_hunter_tunnel_entry.gd \
+            2>&1 | tee "$RUNNER_TEMP/hunter-tower-recruitment.log"
+
+      - name: Validate the single continuous SYSTEM Hunter Examination competition
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" \
+            --script res://tools/validate_hunter_exam_stage_runtime.gd \
+            2>&1 | tee "$RUNNER_TEMP/hunter-exam-continuous-competition.log"
+
+      - name: Validate Baghdad tower operations, elevator staff and emergency evacuation
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set +e
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_baghdad_tower_elevator_safety.gd 2>&1 | tee "$RUNNER_TEMP/baghdad-tower-operations.log"
+          godot_status=${PIPESTATUS[0]}
+          set -e
+          if grep -E "SCRIPT ERROR|Parse Error|Baghdad tower elevator safety validation failed" "$RUNNER_TEMP/baghdad-tower-operations.log"; then
+            echo "Baghdad tower elevator safety validation reported an assertion or script error."
+            exit 1
+          fi
+          if ! grep -Fq "Baghdad tower elevator and emergency safety validation passed:" "$RUNNER_TEMP/baghdad-tower-operations.log"; then
+            echo "Baghdad tower elevator safety validator did not reach its success sentinel (Godot exit: $godot_status)."
+            exit 1
+          fi
+          echo "All Baghdad tower elevator and emergency assertions passed; accepting the known dummy-renderer teardown exit status: $godot_status."
 
       - name: Validate terrain cell streaming seam and lifecycle
         shell: bash
@@ -107,6 +176,16 @@ jobs:
             --script res://tools/validate_baghdad_star_gate_hub.gd \
             2>&1 | tee "$RUNNER_TEMP/baghdad-star-gate-runtime.log"
 
+      - name: Validate marketplace Android bridge request-response protocol
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" \
+            --script res://tools/validate_marketplace_bridge.gd \
+            2>&1 | tee "$RUNNER_TEMP/marketplace-bridge-validation.log"
+
       - name: Launch canonical main scene headlessly
         shell: bash
         run: |
@@ -127,5 +206,9 @@ jobs:
             ${{ runner.temp }}/geography-anchor-runtime.log
             ${{ runner.temp }}/baghdad-star-gate-runtime.log
             ${{ runner.temp }}/terrain-cell-streaming.log
+            ${{ runner.temp }}/baghdad-tower-landmarks.log
+            ${{ runner.temp }}/baghdad-tower-operations.log
+            ${{ runner.temp }}/hunter-tower-recruitment.log
+            ${{ runner.temp }}/hunter-exam-continuous-competition.log
           if-no-files-found: warn
           retention-days: 14

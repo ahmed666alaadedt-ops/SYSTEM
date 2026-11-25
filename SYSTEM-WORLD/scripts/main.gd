@@ -23,6 +23,7 @@ const WorldTimeManagerScript = preload("res://scripts/world_time_manager.gd")
 const WildlifeManagerScript = preload("res://scripts/wildlife_manager.gd")
 const MissionRewardManagerScript = preload("res://scripts/system_mission_reward_manager.gd")
 const PlayerProgressionScript = preload("res://scripts/system_player_progression.gd")
+const ModernWorldCombatSystemScript = preload("res://scripts/modern_world_combat_system.gd")
 const PlayerVehicleManagerScript = preload("res://scripts/system_player_vehicle_manager.gd")
 const VehicleRuntimeManagerScript = preload("res://scripts/system_vehicle_runtime_manager.gd")
 const MotorsportManagerScript = preload("res://scripts/system_motorsport_manager.gd")
@@ -33,7 +34,9 @@ const NPCVisiblePopulationManagerScript = preload("res://scripts/npc_visible_pop
 const NPCSocialInteractionManagerScript = preload("res://scripts/npc_social_interaction_manager.gd")
 const NPCCityNavigationManagerScript = preload("res://scripts/npc_city_navigation_manager.gd")
 const HunterExamManagerScript = preload("res://scripts/system_hunter_exam_manager.gd")
+const HunterExamStageRuntimeScript = preload("res://scripts/system_hunter_exam_stage_runtime.gd")
 const PowerTowerManagerScript = preload("res://scripts/system_power_tower_manager.gd")
+const BaghdadTowerOperationsManagerScript = preload("res://scripts/system_baghdad_tower_operations_manager.gd")
 const PlayerCombatHealthScript = preload("res://scripts/system_player_combat_health.gd")
 const InventoryPanelScript = preload("res://scripts/system_inventory_panel.gd")
 const PlayerCharacterModelScript = preload("res://scripts/npc_character_model.gd")
@@ -49,6 +52,7 @@ var world_time_manager
 var wildlife_manager
 var mission_reward_manager
 var player_progression
+var modern_world_combat_system: Node
 var player_vehicle_manager
 var vehicle_runtime_manager
 var motorsport_manager
@@ -59,7 +63,10 @@ var npc_visible_population_manager
 var npc_social_interaction_manager
 var npc_city_navigation_manager
 var hunter_exam_manager
+var hunter_exam_stage_runtime: Node3D
 var power_tower_manager
+var tower_operations_manager
+var power_tower_score_event_counter := 0
 var player_combat_health: Node
 var inventory_panel: CanvasLayer
 
@@ -72,10 +79,12 @@ var player_character_creator: CanvasLayer
 var system_companion_manager: Node3D
 var camera: Camera3D
 var spring_arm: SpringArm3D
-var mobile_controls: MobileControls
+var mobile_controls: Node
 
 var interaction_prompt_layer: CanvasLayer
 var interaction_prompt_label: Label
+var hunter_exam_invitation_panel: PanelContainer
+var hunter_exam_escort_active := false
 
 var mobile_direction := Vector2.ZERO
 var jump_requested := false
@@ -102,6 +111,7 @@ func _ready() -> void:
 	create_system_companions()
 	register_modern_world_map_locations()
 	create_player_progression()
+	create_modern_world_combat_system()
 	create_inventory_panel()
 	create_player_vehicle_manager()
 	create_vehicle_runtime_manager()
@@ -121,6 +131,8 @@ func _ready() -> void:
 	create_interaction_manager()
 	create_mobile_controls()
 	create_interaction_prompt()
+	create_baghdad_tower_operations_manager()
+	call_deferred("_connect_hunter_tower_recruitment")
 
 	update_camera_mode()
 	connect_android_runtime_bridge()
@@ -305,6 +317,12 @@ func update_sovereign_flight() -> bool:
 # --------------------------------------------------
 
 func create_player_progression() -> void:
+	# MainScene.tscn already owns the canonical progression node. Reuse it
+	# instead of creating a second, auto-renamed instance with split save state.
+	var existing_progression := get_node_or_null("PlayerProgression")
+	if existing_progression != null:
+		player_progression = existing_progression
+		return
 	player_progression = PlayerProgressionScript.new()
 	player_progression.name = "PlayerProgression"
 	add_child(player_progression)
@@ -445,6 +463,7 @@ func create_hunter_exam_manager() -> void:
 	hunter_exam_manager.name = "HunterExamManager"
 	add_child(hunter_exam_manager)
 	hunter_exam_manager.stage_completed.connect(_on_hunter_exam_stage_completed)
+	hunter_exam_manager.stage_started.connect(_on_hunter_exam_stage_started)
 	hunter_exam_manager.license_earned.connect(_on_hunter_exam_license_earned)
 
 
@@ -454,6 +473,66 @@ func create_power_tower_manager() -> void:
 	add_child(power_tower_manager)
 	power_tower_manager.floor_cleared.connect(_on_power_tower_floor_cleared)
 	power_tower_manager.floor_cleared.connect(_on_public_power_tower_floor_cleared)
+	power_tower_manager.duel_score_updated.connect(_on_power_tower_duel_score_updated)
+	power_tower_manager.duel_completed.connect(_on_power_tower_duel_completed)
+
+
+func create_modern_world_combat_system() -> void:
+	modern_world_combat_system = ModernWorldCombatSystemScript.new()
+	modern_world_combat_system.name = "ModernWorldCombatSystem"
+	add_child(modern_world_combat_system)
+	modern_world_combat_system.call("bind_actor", player, camera, player_progression)
+	modern_world_combat_system.attack_performed.connect(_on_power_tower_attack_performed)
+
+
+func create_baghdad_tower_operations_manager() -> void:
+	if active_world_root == null:
+		return
+	var region_manager := active_world_root.get_node_or_null("ModernWorldRegionManager")
+	if region_manager == null:
+		push_warning("SYSTEM: Baghdad tower operations require the modern region manager.")
+		return
+	tower_operations_manager = BaghdadTowerOperationsManagerScript.new()
+	tower_operations_manager.name = "BaghdadTowerOperationsManager"
+	add_child(tower_operations_manager)
+	tower_operations_manager.call(
+		"setup",
+		player,
+		player_progression,
+		ai_npc_society_manager,
+		power_tower_manager,
+		player_combat_health,
+		region_manager
+	)
+
+
+func _on_power_tower_attack_performed(damage: float, hit_target: Node) -> void:
+	if not is_instance_valid(tower_operations_manager) or not bool(tower_operations_manager.get("power_floor_in_progress")):
+		return
+	var active_match: Dictionary = tower_operations_manager.get("active_power_tower_match")
+	if active_match.is_empty():
+		return
+	var match_id := str(active_match.get("match_id", ""))
+	var local_player_id := str(active_match.get("local_player_id", ""))
+	if match_id.is_empty() or local_player_id.is_empty():
+		return
+	power_tower_score_event_counter += 1
+	var event_type := "CRITICAL_HIT" if damage >= 80.0 else "CLEAN_HIT"
+	var event_id := "%s_local_hit_%08d" % [match_id, power_tower_score_event_counter]
+	power_tower_manager.call("record_judged_duel_event", match_id, "HEAD_REFEREE", local_player_id, event_type, event_id)
+	if is_instance_valid(hit_target) and bool(hit_target.get_meta("system_duel_knockdown", false)):
+		power_tower_score_event_counter += 1
+		power_tower_manager.call("record_judged_duel_event", match_id, "SAFETY_JUDGE", local_player_id, "OPPONENT_DOWN", "%s_local_down_%08d" % [match_id, power_tower_score_event_counter])
+
+
+func _on_power_tower_duel_score_updated(_match_id: String, duel_data: Dictionary) -> void:
+	if tower_operations_manager != null:
+		tower_operations_manager.call("update_power_tower_live_match_display", int(duel_data.get("floor", 0)), duel_data, false)
+
+
+func _on_power_tower_duel_completed(_match_id: String, duel_data: Dictionary) -> void:
+	if tower_operations_manager != null:
+		tower_operations_manager.call("update_power_tower_live_match_display", int(duel_data.get("floor", 0)), duel_data, true)
 
 
 func _on_power_tower_floor_cleared(floor_number: int, reward_xp: int, rank: String) -> void:
@@ -470,6 +549,46 @@ func _on_public_mission_rewarded(mission_id: String, xp_amount: int) -> void:
 	var board := _get_public_event_board()
 	if board != null and board.has_method("publish_mission_completion"):
 		board.call("publish_mission_completion", mission_id, xp_amount)
+
+
+func _on_hunter_exam_stage_started(stage_id: String, stage_number: int) -> void:
+	if stage_id != "baghdad_tunnel_competition":
+		push_warning("SYSTEM HUNTER EXAM: unsupported continuous competition stage %d (%s)." % [stage_number, stage_id])
+		return
+	var tunnel_root := get_tree().root.find_child("BaghdadHunterExaminationTunnel", true, false) as Node3D
+	if tunnel_root == null:
+		push_warning("SYSTEM HUNTER EXAM: Baghdad tunnel root is unavailable.")
+		return
+	hunter_exam_stage_runtime = tunnel_root.get_node_or_null("HunterExamStageRuntime") as Node3D
+	if hunter_exam_stage_runtime == null:
+		hunter_exam_stage_runtime = HunterExamStageRuntimeScript.new()
+		hunter_exam_stage_runtime.name = "HunterExamStageRuntime"
+		hunter_exam_stage_runtime.position = Vector3(0.0, 0.0, 40.0)
+		tunnel_root.add_child(hunter_exam_stage_runtime)
+	var stage_data: Dictionary = hunter_exam_manager.get_current_stage()
+	var build_result: Dictionary = hunter_exam_stage_runtime.call("activate_stage", stage_data, player, hunter_exam_manager)
+	if not bool(build_result.get("success", false)):
+		push_warning("SYSTEM HUNTER EXAM: continuous tunnel environment activation failed: %s" % str(build_result.get("reason", "unknown")))
+		return
+	var rival_manager: Node = hunter_exam_stage_runtime.get("rival_competition")
+	if is_instance_valid(rival_manager) and rival_manager.has_signal("rival_event"):
+		var rival_callback := Callable(self, "_on_hunter_rival_event")
+		if not rival_manager.is_connected("rival_event", rival_callback):
+			rival_manager.connect("rival_event", rival_callback)
+	if is_instance_valid(player):
+		player.velocity = Vector3.ZERO
+		player.global_position = hunter_exam_stage_runtime.to_global(Vector3(0.0, 1.2, 2.0))
+		player.set_meta("system_hunter_exam_active_stage", stage_id)
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = "بدأت المسابقة المتصلة في نفق الصيادين — رقم المتسابق %d" % int(hunter_exam_manager.get_exam_overview().get("candidate_number", 0))
+		interaction_prompt_label.show()
+	print("SYSTEM HUNTER EXAM: single continuous Baghdad tunnel competition activated; stage %d." % stage_number)
+
+func _on_hunter_rival_event(message: String) -> void:
+	if interaction_prompt_label == null:
+		return
+	interaction_prompt_label.text = message
+	interaction_prompt_label.show()
 
 
 func _on_hunter_exam_stage_completed(stage_id: String, stage_number: int) -> void:
@@ -493,20 +612,201 @@ func _on_public_power_tower_floor_cleared(floor_number: int, _reward_xp: int, ra
 func _on_hunter_exam_registration_requested() -> void:
 	if hunter_exam_manager == null:
 		return
-	var result: Dictionary = hunter_exam_manager.apply_for_exam("local_player")
+	var overview: Dictionary = hunter_exam_manager.get_exam_overview()
+	var result: Dictionary
+	if bool(overview.get("registered", false)):
+		result = {
+			"success": true,
+			"candidate_number": int(overview.get("candidate_number", 0)),
+			"message": "أنت مسجل بالفعل. رقمك التسلسلي محفوظ؛ اتبع مرشد نقابة الصيادين."
+		}
+	elif bool(overview.get("invitation_accepted", false)):
+		result = {
+			"success": true,
+			"message": "تم قبول طلبك. اتبع مرشد نقابة الصيادين إلى النفق لاستلام رقمك التسلسلي هناك."
+		}
+	else:
+		result = {
+			"success": false,
+			"reason": "INVITATION_NOT_ACCEPTED",
+			"message": "ابدأ بقبول دعوة نقابة الصيادين من ردهة البرج."
+		}
 	var menu := get_node_or_null("HunterGuildMenu")
 	if menu != null and menu.has_method("set_exam_status"):
 		menu.call("set_exam_status", result)
-
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = str(result.get("message", "اتبع مرشد النقابة."))
+		interaction_prompt_label.show()
 
 func _on_hunter_exam_start_requested() -> void:
 	if hunter_exam_manager == null:
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "نظام اختبار الصيادين غير متاح حالياً."
+			interaction_prompt_label.show()
+		return
+	var overview: Dictionary = hunter_exam_manager.get_exam_overview()
+	if not bool(overview.get("invitation_accepted", false)):
+		_show_hunter_exam_invitation()
+		return
+	if not bool(overview.get("registered", false)) or not bool(player.get_meta("system_inside_hunter_exam_tunnel", false)):
+		_handle_hunter_exam_guide_interaction()
 		return
 	var result: Dictionary = hunter_exam_manager.begin_exam()
-	var menu := get_node_or_null("HunterGuildMenu")
-	if menu != null and menu.has_method("set_exam_status"):
-		menu.call("set_exam_status", result)
+	if bool(result.get("success", false)):
+		if bool(result.get("resumed", false)):
+			_on_hunter_exam_stage_started("baghdad_tunnel_competition", 1)
+	elif interaction_prompt_label != null:
+		interaction_prompt_label.text = "تعذر بدء المسابقة: %s" % str(result.get("reason", "غير معروف"))
+		interaction_prompt_label.show()
 
+func _connect_hunter_tower_recruitment() -> void:
+	var arrival_zone := get_tree().root.find_child("HunterTowerRecruitmentArrivalZone", true, false) as Area3D
+	if arrival_zone == null:
+		push_warning("SYSTEM Hunter Exam: Hunter Tower arrival zone is missing.")
+		return
+	var callback := Callable(self, "_on_hunter_tower_arrival_body_entered")
+	if not arrival_zone.body_entered.is_connected(callback):
+		arrival_zone.body_entered.connect(callback)
+
+
+func _on_hunter_tower_arrival_body_entered(body: Node3D) -> void:
+	if body != player or hunter_exam_manager == null:
+		return
+	var overview: Dictionary = hunter_exam_manager.get_exam_overview()
+	if bool(overview.get("registered", false)) or bool(overview.get("invitation_accepted", false)):
+		if interaction_prompt_label != null:
+			if bool(overview.get("registered", false)):
+				interaction_prompt_label.text = "أهلاً بعودتك أيها الصياد. رقمك التسلسلي %d محفوظ؛ يمكنك متابعة المسابقة من المرشد." % int(overview.get("candidate_number", 0))
+			else:
+				interaction_prompt_label.text = "طلبك مقبول مبدئياً. تفاعل مع مرشد نقابة الصيادين ليصطحبك إلى النفق."
+			interaction_prompt_label.show()
+		return
+	_show_hunter_exam_invitation()
+
+func _show_hunter_exam_invitation() -> void:
+	if hunter_exam_invitation_panel != null:
+		hunter_exam_invitation_panel.show()
+	if interaction_prompt_label != null:
+		interaction_prompt_label.hide()
+
+
+func _on_hunter_exam_invitation_declined() -> void:
+	if hunter_exam_invitation_panel != null:
+		hunter_exam_invitation_panel.hide()
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = "يمكنك التسجيل في اختبار الصيادين لاحقاً من برج الصيادين."
+		interaction_prompt_label.show()
+
+
+func _on_hunter_exam_invitation_accepted() -> void:
+	if hunter_exam_manager == null:
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "نظام نقابة الصيادين غير متاح حالياً."
+			interaction_prompt_label.show()
+		return
+	var result: Dictionary = hunter_exam_manager.accept_exam_invitation("local_player")
+	if not bool(result.get("success", false)):
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "تعذر قبول طلبك: %s" % str(result.get("reason", "غير معروف"))
+			interaction_prompt_label.show()
+		return
+	if is_instance_valid(player):
+		player.set_meta("system_hunter_exam_invitation_accepted", true)
+	if hunter_exam_invitation_panel != null:
+		hunter_exam_invitation_panel.hide()
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = "تم قبولك مبدئياً. اتبع مرشد نقابة الصيادين؛ سيصطحبك إلى نفق المنافسة ويسلمك رقمك التسلسلي عند الوصول."
+		interaction_prompt_label.show()
+
+func _start_hunter_guild_escort(guide: Node) -> void:
+	if not is_instance_valid(player) or not is_instance_valid(guide) or hunter_exam_manager == null:
+		return
+	var overview: Dictionary = hunter_exam_manager.get_exam_overview()
+	if not bool(overview.get("invitation_accepted", false)):
+		_show_hunter_exam_invitation()
+		return
+	if hunter_exam_escort_active:
+		return
+	if bool(player.get_meta("system_inside_hunter_exam_tunnel", false)):
+		var resumed_result: Dictionary = hunter_exam_manager.begin_exam()
+		if bool(resumed_result.get("success", false)) and bool(resumed_result.get("resumed", false)):
+			_on_hunter_exam_stage_started("baghdad_tunnel_competition", 1)
+		return
+	if player.global_position.distance_to(guide.global_position) > 8.0:
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "مرشد النقابة موجود داخل برج الصيادين. اقترب منه أولاً ليصطحبك إلى النفق."
+			interaction_prompt_label.show()
+		return
+	var tunnel_root := get_tree().root.find_child("BaghdadHunterExaminationTunnel", true, false) as Node3D
+	if tunnel_root == null:
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "تعذر العثور على نفق اختبار الصيادين."
+			interaction_prompt_label.show()
+		return
+	var guide_node := guide as Node3D
+	var guide_origin := guide_node.global_position
+	var tunnel_guide := tunnel_root.get_node_or_null("HunterGuildGuideAtTunnel") as Area3D
+	if tunnel_guide == null:
+		tunnel_guide = guide_node.duplicate() as Area3D
+		if tunnel_guide == null:
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "تعذر تجهيز مرشد الوصول داخل النفق."
+				interaction_prompt_label.show()
+			return
+		tunnel_guide.name = "HunterGuildGuideAtTunnel"
+		tunnel_guide.add_to_group("system_interactable")
+		tunnel_guide.set_meta("system_hunter_exam_guide", true)
+		tunnel_guide.set_meta("system_interaction_prompt", "مرشد النقابة: تحدث معي لمتابعة المنافسة")
+		tunnel_root.add_child(tunnel_guide)
+	tunnel_guide.global_position = guide_origin
+	tunnel_root.set_meta("system_hunter_exam_guide_present", true)
+	hunter_exam_escort_active = true
+	player.set_meta("system_hunter_exam_escort_active", true)
+	player.velocity = Vector3.ZERO
+	var destination := tunnel_root.to_global(Vector3(0.0, 1.0, -1.5))
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = "مرشد النقابة: ابقَ قريباً مني. نتجه الآن إلى نفق المنافسة."
+		interaction_prompt_label.show()
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_SINE)
+	tween.set_ease(Tween.EASE_IN_OUT)
+	tween.parallel().tween_property(tunnel_guide, "global_position", destination + Vector3(0.0, 0.0, 2.0), 5.0)
+	tween.parallel().tween_property(player, "global_position", destination, 5.0)
+	tween.finished.connect(func():
+		if not is_instance_valid(player):
+			hunter_exam_escort_active = false
+			return
+		player.velocity = Vector3.ZERO
+		player.set_meta("system_hunter_exam_escort_active", false)
+		player.set_meta("system_inside_hunter_exam_tunnel", true)
+		var registration: Dictionary = hunter_exam_manager.register_candidate_at_tunnel("local_player")
+		if not bool(registration.get("success", false)):
+			player.set_meta("system_inside_hunter_exam_tunnel", false)
+			hunter_exam_escort_active = false
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "تعذر إكمال تسجيلك داخل النفق: %s" % str(registration.get("reason", "غير معروف"))
+				interaction_prompt_label.show()
+			return
+		var candidate_number := int(registration.get("candidate_number", 0))
+		player.set_meta("system_hunter_exam_candidate_number", candidate_number)
+		var start_result: Dictionary = hunter_exam_manager.begin_exam()
+		if not bool(start_result.get("success", false)):
+			hunter_exam_escort_active = false
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "وصلت إلى النفق، لكن تعذر بدء المنافسة: %s" % str(start_result.get("reason", "غير معروف"))
+				interaction_prompt_label.show()
+			return
+		if bool(start_result.get("resumed", false)):
+			_on_hunter_exam_stage_started("baghdad_tunnel_competition", 1)
+		hunter_exam_escort_active = false
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "وصلت إلى نفق الصيادين. رقمك التسلسلي الدائم: %d — بدأت المنافسة المتصلة. المرشد بانتظارك داخل النفق." % candidate_number
+			interaction_prompt_label.show()
+	)
+
+func _handle_hunter_exam_guide_interaction() -> void:
+	var guide := get_tree().root.find_child("HunterGuildGuideAtTower", true, false)
+	_start_hunter_guild_escort(guide)
 
 func create_mission_reward_manager() -> void:
 	mission_reward_manager = MissionRewardManagerScript.new()
@@ -683,6 +983,46 @@ func create_interaction_prompt() -> void:
 	interaction_prompt_layer.add_child(interaction_prompt_label)
 	interaction_prompt_label.hide()
 
+	hunter_exam_invitation_panel = PanelContainer.new()
+	hunter_exam_invitation_panel.name = "HunterExamInvitationPanel"
+	hunter_exam_invitation_panel.set_anchors_preset(Control.PRESET_CENTER)
+	hunter_exam_invitation_panel.position = Vector2(-230.0, -105.0)
+	hunter_exam_invitation_panel.size = Vector2(460.0, 210.0)
+	hunter_exam_invitation_panel.custom_minimum_size = Vector2(460.0, 210.0)
+	var invitation_layout := VBoxContainer.new()
+	invitation_layout.alignment = BoxContainer.ALIGNMENT_CENTER
+	hunter_exam_invitation_panel.add_child(invitation_layout)
+	var invitation_title := Label.new()
+	invitation_title.text = "دعوة نقابة الصيادين"
+	invitation_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	invitation_title.add_theme_font_size_override("font_size", 25)
+	invitation_layout.add_child(invitation_title)
+	var invitation_text := Label.new()
+	invitation_text.name = "InvitationText"
+	invitation_text.text = "هل تريد أن تصبح صياداً وتسجل في اختبار الصيادين؟"
+	invitation_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	invitation_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	invitation_text.custom_minimum_size = Vector2(420.0, 65.0)
+	invitation_text.add_theme_font_size_override("font_size", 21)
+	invitation_layout.add_child(invitation_text)
+	var invitation_buttons := HBoxContainer.new()
+	invitation_buttons.alignment = BoxContainer.ALIGNMENT_CENTER
+	invitation_layout.add_child(invitation_buttons)
+	var accept_button := Button.new()
+	accept_button.name = "AcceptHunterExamInvitation"
+	accept_button.text = "نعم، أريد أن أصبح صياداً"
+	accept_button.custom_minimum_size = Vector2(220.0, 48.0)
+	accept_button.pressed.connect(_on_hunter_exam_invitation_accepted)
+	invitation_buttons.add_child(accept_button)
+	var decline_button := Button.new()
+	decline_button.name = "DeclineHunterExamInvitation"
+	decline_button.text = "ليس الآن"
+	decline_button.custom_minimum_size = Vector2(120.0, 48.0)
+	decline_button.pressed.connect(_on_hunter_exam_invitation_declined)
+	invitation_buttons.add_child(decline_button)
+	interaction_prompt_layer.add_child(hunter_exam_invitation_panel)
+	hunter_exam_invitation_panel.hide()
+
 
 ## معرّف الخريطة النصي يطابق رقم العالم الحالي في WorldManager.
 func get_current_map_world_id() -> String:
@@ -815,6 +1155,101 @@ func _on_interaction_performed(
 		" / ",
 		location_id
 	)
+	if target.has_meta("system_exam_stage_objective") or target.has_meta("system_exam_rival_id"):
+		if hunter_exam_stage_runtime == null or not hunter_exam_stage_runtime.has_method("handle_interaction"):
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "نظام أهداف الاختبار غير متاح حالياً."
+			return
+		var objective_result: Dictionary = hunter_exam_stage_runtime.call("handle_interaction", target)
+		if bool(objective_result.get("handled", false)):
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = str(objective_result.get("message", "تم التفاعل مع هدف الاختبار."))
+			return
+	if target.has_meta("system_hunter_exam_secret_interaction"):
+		var entrance_root: Node = target
+		while entrance_root != null and not entrance_root.has_method("handle_interaction"):
+			entrance_root = entrance_root.get_parent()
+		if entrance_root == null:
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "نظام المدخل السري غير متاح حالياً."
+				interaction_prompt_label.show()
+			return
+		if entrance_root.has_method("set_exam_manager"):
+			entrance_root.call("set_exam_manager", hunter_exam_manager)
+		var secret_result: Dictionary = entrance_root.call("handle_interaction", target)
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = str(secret_result.get("message", "تم التفاعل مع المدخل السري."))
+			interaction_prompt_label.show()
+		return
+	if target.has_meta("system_hunter_exam_tower_guide"):
+		_start_hunter_guild_escort(target)
+		return
+	if target.has_meta("system_hunter_exam_guide"):
+		_handle_hunter_exam_guide_interaction()
+		return
+	if target.has_meta("system_power_tower_spectator_seat_interaction") and tower_operations_manager != null:
+		tower_operations_manager.call("interact_power_tower_spectator_seat", target)
+		return
+	if target.has_meta("system_power_tower_prediction_board") and tower_operations_manager != null:
+		tower_operations_manager.call("open_power_tower_ticket_terminal")
+		return
+	if target.has_meta("system_power_tower_ticket_terminal") and tower_operations_manager != null:
+		tower_operations_manager.call("open_power_tower_ticket_terminal")
+		return
+	if str(target.get_meta("system_interaction_type", "")) == "museum_artifact_exhibit" and tower_operations_manager != null:
+		tower_operations_manager.call("open_museum_artifact_exhibit", target)
+		return
+	if target.has_meta("system_pool_service_type") and tower_operations_manager != null:
+		tower_operations_manager.call("open_pool_service", target)
+		return
+	if target.has_meta("system_tower_staff_id") and tower_operations_manager != null:
+		tower_operations_manager.call("open_staff_service", target)
+		return
+	if target.has_meta("system_restaurant_table_id") and tower_operations_manager != null:
+		tower_operations_manager.call("open_restaurant_table", target)
+		return
+	if target.has_meta("system_hotel_room_id") and tower_operations_manager != null:
+		tower_operations_manager.call("open_hotel_room_preview", str(target.get_meta("system_hotel_room_id", "")))
+		return
+	if target.has_meta("system_arcade_cabinet_id") and tower_operations_manager != null:
+		tower_operations_manager.call(
+			"open_arcade_cabinet",
+			str(target.get_meta("system_tower_id", "")),
+			int(target.get_meta("system_tower_floor_number", 0)),
+			int(target.get_meta("system_arcade_cabinet_id", -1)),
+			str(target.get_meta("system_arcade_cabinet_mode", ""))
+		)
+		return
+	if bool(target.get_meta("system_tower_elevator_destination", false)) and tower_operations_manager != null:
+		tower_operations_manager.call("open_tower", str(target.get_meta("system_tower_id", "")))
+		return
+	if target.has_meta("system_showcase_product_id") and target.has_meta("system_facility_type") and target.has_meta("system_tower_floor_number") and target.has_meta("system_tower_id") and tower_operations_manager != null:
+		tower_operations_manager.call(
+			"open_showcase_product_service",
+			str(target.get_meta("system_tower_id", "")),
+			int(target.get_meta("system_tower_floor_number", 0)),
+			str(target.get_meta("system_facility_type", "")),
+			str(target.get_meta("system_showcase_product_id", ""))
+		)
+		return
+	if target.has_meta("system_facility_type") and target.has_meta("system_tower_floor_number") and target.has_meta("system_tower_id") and tower_operations_manager != null:
+		tower_operations_manager.call(
+			"open_facility_service",
+			str(target.get_meta("system_tower_id", "")),
+			int(target.get_meta("system_tower_floor_number", 0)),
+			str(target.get_meta("system_facility_type", ""))
+		)
+		return
+	if target.has_meta("system_tower_floor_number") and target.has_meta("system_tower_id") and tower_operations_manager != null:
+		tower_operations_manager.call(
+			"open_floor_services",
+			str(target.get_meta("system_tower_id", "")),
+			int(target.get_meta("system_tower_floor_number", 0))
+		)
+		return
+	if bool(target.get_meta("system_tower_elevator_return", false)) and tower_operations_manager != null:
+		tower_operations_manager.call("return_to_lobby")
+		return
 	if location_id.begins_with("baghdad_osm_entrance_"):
 		var entrance_name := str(target.get_meta("system_display_name", "مدخل محدد على الخريطة"))
 		var entrance_kind := str(target.get_meta("system_entrance_type", "غير محدد"))
@@ -860,15 +1295,40 @@ func _on_interaction_performed(
 					interaction_prompt_label.text = "بدأ العلاج في المستشفى — يرجى الانتظار حتى اكتماله"
 			elif interaction_prompt_label != null:
 				interaction_prompt_label.text = "لا تحتاج إلى علاج حالياً أو أن العلاج جارٍ بالفعل"
-	if location_id == "power_tower_baghdad" and power_tower_manager != null:
-		var next_floor := int(power_tower_manager.get_tower_status().get("next_floor", 1))
-		var level := int(player_progression.current_level) if player_progression != null else 1
-		var result: Dictionary = power_tower_manager.request_floor(next_floor, level)
+	var tower_id := str(target.get_meta("system_tower_id", location_id))
+	if tower_id in [
+		"hunter_association_tower_baghdad",
+		"business_investment_tower_baghdad",
+		"shopping_tower_baghdad",
+		"antiques_heritage_tower_baghdad",
+		"technology_tower_baghdad",
+		"power_tower_baghdad"
+	]:
+		var tower_name := str(target.get_meta("system_display_name", "برج بغداد"))
+		var floor_count := int(target.get_meta("system_tower_floor_count", 0))
+		var height_m := float(target.get_meta("system_tower_height_m", 0.0))
+		var connected := bool(target.get_meta("system_tower_district_member", false))
+		var network_label := "ضمن مجمع الأبراج الخمسة المترابط" if connected else "مستقل عن المجمع"
+		var directory := ""
+		match tower_id:
+			"hunter_association_tower_baghdad":
+				directory = "الأقسام: الإدارة العليا للنقابة، تسجيل الصيادين، المهمات، اختبارات الصيادين، استشارات الرتب، النقابات، قاعات التدريب، المكتبة والأرشيف، قاعة الشرف العالمية، ومهبط المروحيات فوق البرج، ومقهى واستراحة للزوار."
+			"business_investment_tower_baghdad":
+				directory = "الأقسام: إدارة الشركات، الاستثمار والتمويل، البنوك والحسابات، العقود والاستشارات القانونية، المحاسبة، التوظيف، قاعة التداول والبورصة، مركز المؤتمرات، وصالة المستثمرين، ومقهى للزوار."
+			"shopping_tower_baghdad":
+				directory = "الأقسام: الأسواق والمتاجر، الأسلحة الحديثة والتقليدية، السيوف والأقواس والسهام، الدروع والخوذ والبدلات حسب الرتب، الحدادة وإصلاح المعدات، مختبر إيقاظ النِن والتحكم والتثبيت والاستعادة، صيدلية العلاج والأكاسير، فندق SYSTEM في الطابقين 27–28، والمطاعم والمقاهي والمخابز في الطوابق 29–32."
+			"antiques_heritage_tower_baghdad":
+				directory = "الأقسام: متحف الآثار العراقية وحضارات العالم، قاعات السومرية والبابلية والآشورية والمصرية واليونانية والصينية، مختبر البحث والتنقيب، ترميم القطع، توثيق الملكية والأصالة وسجل المنشأ، المعارض الدائمة والخاصة، صالات المقتنين، ومزاد وتجارة القطع الأثرية بين اللاعبين."
+			"technology_tower_baghdad":
+				directory = "الأقسام: مختبرات الروبوتات، الذكاء الاصطناعي، الواقع الافتراضي والمحاكاة، هندسة الأجهزة، الصيانة، الخدمات الرقمية، معرض الابتكار، ومنصة الرصد التقني، ومقهى واستراحة."
+			"power_tower_baghdad":
+				directory = "برج منافسات مستقل من 200 طابق؛ لاعب بشري ضد لاعب بشري 1 ضد 1 فقط، عشر بيئات قتالية، ومدرج مشجعين بسعة 48 مقعداً في كل ساحة؛ لا خصوم آليين ولا فرق، والمطابقة عبر الإنترنت قيد الإعداد."
 		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "برج القوة: " + str(result.get("reason", "تم طلب دخول الطابق"))
-	elif location_id == "hunter_association_tower_baghdad":
-		if interaction_prompt_label != null:
-			interaction_prompt_label.text = "مقر نقابة الصيادين العالمي — راجع واجهة النقابة للتسجيل بالاختبار"
+			interaction_prompt_label.text = "%s\n%d طابق | ارتفاع تقريبي %.0f م\n%s\n%s\nملاحظة: المرافق الداخلية تُنشأ عند زيارة طوابقها؛ خدمات الموظفين والشراء والبيع ومخزون المتاجر وحركة زبائن NPC تعمل محلياً، والربط الجماعي عبر الخادم والتحقق البصري على الهاتف ما زالا ضمن التحقق." % [
+				tower_name, floor_count, height_m, network_label, directory
+			]
+	if tower_operations_manager != null:
+		tower_operations_manager.call("open_tower", tower_id)
 
 
 func _on_location_discovered(
@@ -1124,6 +1584,38 @@ func create_mobile_controls() -> void:
 	mobile_controls.camera_toggle_pressed.connect(_on_camera_toggle_pressed)
 	mobile_controls.interact_pressed.connect(_on_mobile_interact_pressed)
 	mobile_controls.flight_vertical_changed.connect(_on_flight_vertical_changed)
+	mobile_controls.attack_pressed.connect(_on_mobile_attack_pressed)
+	mobile_controls.skill_one_pressed.connect(_on_mobile_skill_one_pressed)
+	mobile_controls.skill_two_pressed.connect(_on_mobile_skill_two_pressed)
+	mobile_controls.dodge_pressed.connect(_on_mobile_dodge_pressed)
+
+
+func _on_mobile_attack_pressed() -> void:
+	if vehicle_runtime_manager != null and vehicle_runtime_manager.is_driving:
+		return
+	if is_instance_valid(modern_world_combat_system):
+		modern_world_combat_system.call("light_attack")
+
+
+func _on_mobile_skill_one_pressed() -> void:
+	if vehicle_runtime_manager != null and vehicle_runtime_manager.is_driving:
+		return
+	if is_instance_valid(modern_world_combat_system):
+		modern_world_combat_system.call("skill_one")
+
+
+func _on_mobile_skill_two_pressed() -> void:
+	if vehicle_runtime_manager != null and vehicle_runtime_manager.is_driving:
+		return
+	if is_instance_valid(modern_world_combat_system):
+		modern_world_combat_system.call("skill_two")
+
+
+func _on_mobile_dodge_pressed() -> void:
+	if vehicle_runtime_manager != null and vehicle_runtime_manager.is_driving:
+		return
+	if is_instance_valid(modern_world_combat_system):
+		modern_world_combat_system.call("dodge")
 
 
 func _on_movement_changed(direction: Vector2) -> void:
@@ -1190,6 +1682,20 @@ func update_camera_rotation() -> void:
 func _physics_process(delta: float) -> void:
 	if player == null:
 		return
+	if bool(player.get_meta("system_helicopter_piloting", false)):
+		return
+	if bool(player.get_meta("system_tower_elevator_active", false)):
+		player.velocity = Vector3.ZERO
+		return
+	if bool(player.get_meta("system_hunter_exam_escort_active", false)):
+		player.velocity = Vector3.ZERO
+		return
+	if bool(player.get_meta("system_restaurant_seated", false)) or bool(player.get_meta("system_restaurant_seating_transition", false)):
+		player.velocity = Vector3.ZERO
+		return
+	if bool(player.get_meta("system_power_tower_seated", false)):
+		player.velocity = Vector3.ZERO
+		return
 	if vehicle_runtime_manager != null and vehicle_runtime_manager.is_driving:
 		return
 
@@ -1226,9 +1732,14 @@ func _physics_process(delta: float) -> void:
 	move_direction += forward * -direction.z
 	move_direction = move_direction.normalized()
 	var is_in_hospital_treatment := bool(player.get_meta("system_hospital_treatment", false))
+	var is_swimming := bool(player.get_meta("system_swimming", false))
 	var movement_speed := PLAYER_SPEED
+	if is_swimming:
+		movement_speed *= 0.62
 	if bool(player.get_meta("system_wounded", false)):
 		movement_speed *= 0.7
+	if is_instance_valid(player_progression) and player_progression.has_method("get_movement_multiplier"):
+		movement_speed *= float(player_progression.call("get_movement_multiplier"))
 	if is_in_hospital_treatment:
 		move_direction = Vector3.ZERO
 		movement_speed = 0.0
@@ -1251,7 +1762,19 @@ func _physics_process(delta: float) -> void:
 	var flight_controlled := update_sovereign_flight()
 
 	if not flight_controlled:
-		if not player.is_on_floor():
+		if is_swimming:
+			var swim_surface_y := float(player.get_meta("system_swim_surface_y", player.global_position.y + 0.25))
+			var swim_target_y := swim_surface_y - 0.25
+			var swim_stroke_requested := not is_in_hospital_treatment and (jump_requested or Input.is_action_just_pressed("ui_accept"))
+			if swim_stroke_requested:
+				player.velocity.y = 2.6
+				player.set_meta("system_swim_last_stroke_force", 2.6)
+			else:
+				player.remove_meta("system_swim_last_stroke_force")
+				var buoyancy_error := swim_target_y - player.global_position.y
+				player.velocity.y = clampf(buoyancy_error * 3.2, -2.0, 2.0)
+		elif not player.is_on_floor():
+			player.remove_meta("system_swim_last_stroke_force")
 			player.velocity.y -= GRAVITY * delta
 		elif not is_in_hospital_treatment and (jump_requested or Input.is_key_pressed(KEY_SPACE)):
 			player.velocity.y = JUMP_FORCE

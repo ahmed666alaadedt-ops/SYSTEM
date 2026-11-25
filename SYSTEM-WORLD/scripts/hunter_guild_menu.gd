@@ -95,7 +95,7 @@ func _build_interface() -> void:
 	content.add_child(exam_register_button)
 
 	exam_start_button = Button.new()
-	exam_start_button.text = "بدء سلسلة الاختبار"
+	exam_start_button.text = "بدء المسابقة المتصلة داخل النفق"
 	exam_start_button.pressed.connect(func(): exam_start_requested.emit())
 	content.add_child(exam_start_button)
 
@@ -109,13 +109,28 @@ func _build_interface() -> void:
 
 func set_exam_status(result: Dictionary) -> void:
 	if not bool(result.get("success", false)):
-		status_label.text = "حالة الاختبار: " + str(result.get("reason", "تعذر تنفيذ الطلب"))
+		var reason := str(result.get("reason", ""))
+		match reason:
+			"INVITATION_NOT_ACCEPTED":
+				status_label.text = "اقبل دعوة نقابة الصيادين أولاً."
+			"REGISTER_AT_HUNTER_ASSOCIATION_TOWER":
+				status_label.text = "أكمل التسجيل الرسمي من ردهة برج جمعية الصيادين."
+			"PLAYER_UNAVAILABLE":
+				status_label.text = "تعذر تحديد اللاعب لإكمال التسجيل."
+			"NOT_REGISTERED":
+				status_label.text = "يجب التسجيل في برج جمعية الصيادين أولاً."
+			"HUNTER_TUNNEL_RIDDLE_NOT_SOLVED":
+				status_label.text = "اكتشف النقوش الثلاثة وافتح الباب السري قبل بدء الاختبار."
+			"HUNTER_LICENSE_ALREADY_EARNED":
+				status_label.text = "لقد حصلت على رخصة الصياد بالفعل."
+			_:
+				status_label.text = "حالة الاختبار: " + (reason if not reason.is_empty() else "تعذر تنفيذ الطلب")
 		return
 	if result.has("candidate_number") and result.has("stages"):
-		status_label.text = "رقم المتسابق: %d | مراحل الاختبار: %d" % [int(result["candidate_number"]), int(result["stages"])]
+		status_label.text = "رقم المتسابق: %d | المسابقة: نفق الصيادين المتصل" % int(result["candidate_number"])
 	elif result.has("stage"):
 		var stage: Dictionary = result["stage"]
-		status_label.text = "بدأ الاختبار: " + str(stage.get("title", ""))
+		status_label.text = "بدأت المسابقة: " + str(stage.get("title", ""))
 	else:
 		status_label.text = "تم تحديث حالة اختبار الصيادين"
 

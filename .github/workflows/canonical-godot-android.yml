@@ -4,12 +4,15 @@ on:
   pull_request:
     paths:
       - "SYSTEM-WORLD/**"
+      - "SYSTEM-WORLD/tools/**"
       - ".github/workflows/canonical-godot-android.yml"
   push:
     branches:
       - main
+      - feature/baghdad-five-plus-power-tower-20261122
     paths:
       - "SYSTEM-WORLD/**"
+      - "SYSTEM-WORLD/tools/**"
       - ".github/workflows/canonical-godot-android.yml"
   workflow_dispatch:
   workflow_run:
@@ -51,7 +54,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          RUN_ID="$(gh api "/repos/$GITHUB_REPOSITORY/actions/workflows/verify-baghdad-osm-source.yml/runs?branch=main&per_page=20" --jq '.workflow_runs | map(select(.conclusion == "success")) | .[0].id // empty')"
+          SOURCE_BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+          if [ -z "$SOURCE_BRANCH" ]; then SOURCE_BRANCH="main"; fi
+          echo "Looking for Baghdad OSM source artifact on branch: $SOURCE_BRANCH"
+          RUN_ID="$(gh api --method GET "repos/$GITHUB_REPOSITORY/actions/workflows/verify-baghdad-osm-source.yml/runs" -f "branch=$SOURCE_BRANCH" -F per_page=20 --jq '.workflow_runs | map(select(.conclusion == "success")) | .[0].id // empty')"
           echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
           if [ -n "$RUN_ID" ]; then
             echo "Using latest successful Baghdad OSM source run: $RUN_ID"
@@ -73,8 +79,9 @@ jobs:
         run: |
           set -euo pipefail
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
-          SOURCE_PACK="$RUNNER_TEMP/baghdad-osm-artifact/baghdad-metric-cell-pack-5x5.zip"
+          SOURCE_PACK="$RUNNER_TEMP/baghdad-osm-artifact/baghdad-metric-cell-pack-bridge-extended.zip"
           DESTINATION="$PROJECT/data/geography/baghdad/cell_pack"
+          echo "Installing branch-matched Baghdad OSM metric cells, including Republic Bridge and Tigris."
           if [ ! -s "$SOURCE_PACK" ]; then
             echo "::warning::Baghdad OSM pack is unavailable; keeping procedural fallback for this build."
             exit 0
@@ -92,9 +99,15 @@ jobs:
           assert manifest["region_id"] == "iraq_baghdad_region"
           assert manifest["coordinate_system"] == "SYSTEM_LOCAL_ECEF_TANGENT"
           assert manifest["cell_size_m"] == 200.0
+          assert manifest["cell_bounds_inclusive"] == [-2, 20, -9, 2]
           cells = list((root / "cells").glob("*.json"))
-          assert len(cells) == manifest["cell_count"] == 25
-          print("Installed Baghdad OSM cell pack:", len(cells), "metric cells.")
+          assert 1 <= len(cells) <= 276 and len(cells) == manifest["cell_count"]
+          bridge_cell = json.loads((root / "cells/17_-6.json").read_text(encoding="utf-8"))
+          bridge_ids = {int(feature.get("id", "-1")) for feature in bridge_cell.get("layers", {}).get("bridges", [])}
+          river_ids = {int(feature.get("id", "-1")) for feature in bridge_cell.get("layers", {}).get("waterways", [])}
+          assert 1077808833 in bridge_ids and 4080878 in bridge_ids and 754157537 in bridge_ids
+          assert 24709603 in river_ids
+          print("Installed Baghdad core + Republic Bridge OSM cell pack:", len(cells), "metric cells; bridge and Tigris verified.")
           PY
 
       - name: Set up Java 17
@@ -234,7 +247,7 @@ jobs:
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
           set -o pipefail
-          "$GODOT" --headless --editor --path "$PROJECT" --quit \
+          "$GODOT" --headless --editor --path "$PROJECT" --import \
             2>&1 | tee "$RUNNER_TEMP/system-world-import.log"
 
       - name: Validate Baghdad OSM cell runtime geometry
@@ -284,6 +297,22 @@ jobs:
             --script res://tools/validate_npc_society_runtime.gd \
             2>&1 | tee "$RUNNER_TEMP/system-npc-society-runtime.log"
 
+      - name: Validate Hunter Tower invitation, guild-guide escort and continuous tunnel competition
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" \
+            --script res://tools/validate_hunter_tunnel_entry.gd \
+            2>&1 | tee "$RUNNER_TEMP/hunter-tower-recruitment.log"
+          "$GODOT" --headless --path "$PROJECT" \
+            --script res://tools/validate_hunter_exam_stage_runtime.gd \
+            2>&1 | tee "$RUNNER_TEMP/hunter-exam-continuous-competition.log"
+          "$GODOT" --headless --path "$PROJECT" \
+            --script res://tools/validate_hunter_rival_competition.gd \
+            2>&1 | tee "$RUNNER_TEMP/hunter-rival-competition-runtime.log"
+
       - name: Export canonical SYSTEM WORLD Android APK
         shell: bash
         run: |
@@ -315,6 +344,8 @@ jobs:
             ${{ runner.temp }}/system-world-runtime.log
             ${{ runner.temp }}/system-companion-runtime.log
             ${{ runner.temp }}/system-npc-society-runtime.log
+            ${{ runner.temp }}/hunter-tower-recruitment.log
+            ${{ runner.temp }}/hunter-exam-continuous-competition.log
             ${{ runner.temp }}/baghdad-osm-runtime.log
           if-no-files-found: warn
           retention-days: 14

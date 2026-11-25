@@ -5,6 +5,7 @@ signal attack_performed(damage: float, hit_target: Node)
 
 var actor: CharacterBody3D
 var camera: Camera3D
+var progression: Node
 var can_attack := true
 var is_blocking := false
 var attack_damage := 34.0
@@ -12,9 +13,10 @@ var heavy_damage := 90.0
 var attack_range := 65.0
 
 
-func bind_actor(player: CharacterBody3D, combat_camera: Camera3D) -> void:
+func bind_actor(player: CharacterBody3D, combat_camera: Camera3D, player_progression: Node = null) -> void:
 	actor = player
 	camera = combat_camera
+	progression = player_progression
 
 
 func set_combat_camera(combat_camera: Camera3D) -> void:
@@ -25,8 +27,9 @@ func light_attack() -> void:
 	if not can_attack or not is_instance_valid(actor):
 		return
 	can_attack = false
-	_fire_hitscan(attack_damage,attack_range)
-	await get_tree().create_timer(0.38).timeout
+	_consume_weapon_durability(0.35)
+	_fire_hitscan(attack_damage + _get_progression_damage_bonus(),attack_range)
+	await get_tree().create_timer(0.38 * _get_attack_cooldown_multiplier()).timeout
 	can_attack = true
 
 
@@ -34,9 +37,69 @@ func heavy_attack() -> void:
 	if not can_attack or not is_instance_valid(actor):
 		return
 	can_attack = false
-	_fire_hitscan(heavy_damage,attack_range * 1.35)
-	await get_tree().create_timer(1.1).timeout
+	_consume_weapon_durability(0.75)
+	_fire_hitscan(heavy_damage + _get_progression_damage_bonus(),attack_range * 1.35)
+	await get_tree().create_timer(1.1 * _get_attack_cooldown_multiplier()).timeout
 	can_attack = true
+
+
+func skill_one() -> Dictionary:
+	if not can_attack or not is_instance_valid(actor):
+		return {"success": false, "reason": "COMBAT_BUSY"}
+	var progression := _get_progression()
+	if progression == null or not progression.has_method("activate_nen_burst"):
+		return {"success": false, "reason": "NEN_SYSTEM_UNAVAILABLE"}
+	var activation: Dictionary = progression.call("activate_nen_burst")
+	if not bool(activation.get("success", false)):
+		return activation
+	if progression.has_method("record_nen_skill_use"):
+		progression.call("record_nen_skill_use", "nen_burst")
+	can_attack = false
+	_consume_weapon_durability(0.75)
+	_fire_hitscan(heavy_damage + _get_progression_damage_bonus(), attack_range * 1.35)
+	get_tree().create_timer(0.75).timeout.connect(func(): can_attack = true)
+	return activation
+
+
+func skill_two() -> Dictionary:
+	if not can_attack or not is_instance_valid(actor):
+		return {"success": false, "reason": "COMBAT_BUSY"}
+	can_attack = false
+	_consume_weapon_durability(0.9)
+	_fire_hitscan(heavy_damage * 1.2 + _get_progression_damage_bonus(), attack_range * 1.2)
+	var progression := _get_progression()
+	if progression != null and bool(progression.get("nen_unlocked")) and progression.has_method("record_nen_skill_use"):
+		progression.call("record_nen_skill_use", "charged_strike")
+	get_tree().create_timer(1.0 * _get_attack_cooldown_multiplier()).timeout.connect(func(): can_attack = true)
+	return {"success": true, "ability_id": "charged_strike"}
+
+
+
+
+func _get_progression() -> Node:
+	if is_instance_valid(progression):
+		return progression
+	return get_tree().root.find_child("PlayerProgression", true, false)
+
+
+func _consume_weapon_durability(amount: float) -> void:
+	var progression := _get_progression()
+	if progression != null and progression.has_method("consume_equipment_durability"):
+		progression.call("consume_equipment_durability", "weapon", amount)
+
+
+func _get_progression_damage_bonus() -> float:
+	var progression := _get_progression()
+	if progression != null and progression.has_method("get_combat_damage_bonus"):
+		return float(progression.call("get_combat_damage_bonus"))
+	return 0.0
+
+
+func _get_attack_cooldown_multiplier() -> float:
+	var progression := _get_progression()
+	if progression != null and progression.has_method("get_attack_cooldown_multiplier"):
+		return float(progression.call("get_attack_cooldown_multiplier"))
+	return 1.0
 
 
 func _fire_hitscan(damage: float, distance: float) -> void:

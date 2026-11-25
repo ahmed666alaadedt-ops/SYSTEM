@@ -7,6 +7,7 @@ signal level_up(new_level: int)
 signal attribute_changed(attribute: String, new_value: int)
 
 const MAX_LEVEL := 100
+const MAX_SYSTEM_ENERGY := 100.0
 const SAVE_PATH := "user://system_player_progress.cfg"
 
 const WORLD_FRAGMENT_REQUIREMENTS := {
@@ -24,6 +25,72 @@ const DEFAULT_ATTRIBUTES := {
 	"discipline": 1
 }
 
+const DEFAULT_EQUIPMENT_SLOTS := {"weapon": "", "shield": "", "armor": "", "helmet": "", "outfit": ""}
+const MAX_EQUIPMENT_UPGRADE_LEVEL := 10
+const MAX_EQUIPMENT_DURABILITY := 100.0
+const EQUIPMENT_SLOTS_BY_ITEM := {
+	"training_sword": "weapon", "steel_sword": "weapon", "hunter_spear": "weapon", "battle_axe": "weapon", "composite_bow": "weapon", "system_firearm": "weapon",
+	"combat_knife": "weapon", "dual_blades": "weapon", "long_sword": "weapon", "great_sword": "weapon", "crossbow": "weapon", "war_hammer": "weapon", "hunter_pistol": "weapon", "hunter_rifle": "weapon", "precision_rifle": "weapon", "tactical_shotgun": "weapon",
+	"hunter_shield": "shield", "advanced_hunter_shield": "shield",
+	"hunter_armor": "armor", "rank_e_armor": "armor", "rank_d_armor": "armor", "rank_c_armor": "armor", "rank_b_armor": "armor", "rank_a_armor": "armor", "rank_s_armor": "armor", "rank_ss_armor": "armor", "rank_sss_armor": "armor",
+	"hunter_helmet": "helmet", "reinforced_helmet": "helmet",
+	"combat_outfit": "outfit", "casual_outfit": "outfit", "hunter_outfit_e": "outfit", "hunter_outfit_d": "outfit", "hunter_outfit_c": "outfit", "hunter_outfit_b": "outfit", "hunter_outfit_a": "outfit", "hunter_outfit_s": "outfit", "hunter_outfit_ss": "outfit", "hunter_outfit_sss": "outfit"
+}
+const EQUIPMENT_DAMAGE_BONUS := {
+	"training_sword": 5.0, "steel_sword": 12.0, "hunter_spear": 10.0, "battle_axe": 14.0, "composite_bow": 8.0, "system_firearm": 16.0,
+	"combat_knife": 7.0, "dual_blades": 13.0, "long_sword": 15.0, "great_sword": 22.0, "crossbow": 12.0, "war_hammer": 18.0, "hunter_pistol": 14.0, "hunter_rifle": 19.0, "precision_rifle": 24.0, "tactical_shotgun": 21.0
+}
+const EQUIPMENT_DEFENSE_BONUS := {
+	"hunter_shield": 8.0, "advanced_hunter_shield": 16.0, "hunter_armor": 12.0, "hunter_helmet": 4.0, "reinforced_helmet": 8.0,
+	"rank_e_armor": 5.0, "rank_d_armor": 7.0, "rank_c_armor": 10.0, "rank_b_armor": 14.0, "rank_a_armor": 19.0, "rank_s_armor": 25.0, "rank_ss_armor": 32.0, "rank_sss_armor": 42.0,
+	"hunter_outfit_e": 5.0, "hunter_outfit_d": 7.0, "hunter_outfit_c": 10.0, "hunter_outfit_b": 14.0, "hunter_outfit_a": 19.0, "hunter_outfit_s": 25.0, "hunter_outfit_ss": 32.0, "hunter_outfit_sss": 42.0
+}
+
+const CRAFTING_RECIPES := {
+	"training_sword": {"name": "صناعة سيف تدريبي", "ingredients": {"iron_ingot": 1, "wood_plank": 2}, "output": "training_sword", "required_level": 1},
+	"steel_sword": {"name": "صناعة سيف فولاذي", "ingredients": {"iron_ingot": 3, "wood_plank": 2}, "output": "steel_sword", "required_level": 5},
+	"hunter_spear": {"name": "صناعة رمح صياد", "ingredients": {"iron_ingot": 2, "wood_plank": 3}, "output": "hunter_spear", "required_level": 5},
+	"battle_axe": {"name": "صناعة فأس قتالي", "ingredients": {"iron_ingot": 4, "wood_plank": 2}, "output": "battle_axe", "required_level": 10},
+	"composite_bow": {"name": "صناعة قوس مركب", "ingredients": {"wood_plank": 4, "leather_roll": 2}, "output": "composite_bow", "required_level": 8},
+	"hunter_shield": {"name": "صناعة درع يدوي", "ingredients": {"iron_ingot": 3, "leather_roll": 1}, "output": "hunter_shield", "required_level": 8},
+	"hunter_armor": {"name": "صناعة درع صياد", "ingredients": {"iron_ingot": 5, "leather_roll": 4}, "output": "hunter_armor", "required_level": 10},
+	"hunter_helmet": {"name": "صناعة خوذة صياد", "ingredients": {"iron_ingot": 2, "leather_roll": 1}, "output": "hunter_helmet", "required_level": 8},
+	"combat_outfit": {"name": "خياطة زي قتالي", "ingredients": {"leather_roll": 4, "energy_crystal": 1}, "output": "combat_outfit", "required_level": 12},
+	"healing_elixir": {"name": "تحضير إكسير الشفاء", "ingredients": {"medicinal_herb": 2, "crystal_dust": 1}, "output": "healing_elixir", "required_level": 1},
+	"repair_kit": {"name": "صناعة عدة إصلاح", "ingredients": {"iron_ingot": 2, "crystal_dust": 1}, "output": "repair_kit", "required_level": 1},
+	"strength_elixir": {"name": "تحضير إكسير القوة", "ingredients": {"medicinal_herb": 2, "monster_core": 1}, "output": "strength_elixir", "required_level": 5},
+	"speed_elixir": {"name": "تحضير إكسير السرعة", "ingredients": {"medicinal_herb": 2, "energy_crystal": 1}, "output": "speed_elixir", "required_level": 5},
+	"endurance_elixir": {"name": "تحضير إكسير التحمل", "ingredients": {"medicinal_herb": 2, "leather_roll": 1}, "output": "endurance_elixir", "required_level": 5},
+	"energy_elixir": {"name": "تحضير إكسير الطاقة", "ingredients": {"crystal_dust": 2, "energy_crystal": 1}, "output": "energy_elixir", "required_level": 8},
+	"nen_awakening_elixir": {"name": "تحضير إكسير إيقاظ النِن", "ingredients": {"monster_core": 2, "nen_fragment": 1}, "output": "nen_awakening_elixir", "required_level": 15},
+	"nen_control_elixir": {"name": "تحضير إكسير التحكم بالنِن", "ingredients": {"nen_fragment": 2, "energy_crystal": 1}, "output": "nen_control_elixir", "required_level": 20, "requires_nen": true},
+	"rare_legendary_elixir": {"name": "تحضير الإكسير النادر/الأسطوري", "ingredients": {"rare_core": 3, "nen_fragment": 5, "energy_crystal": 3}, "output": "rare_legendary_elixir", "required_level": 80, "required_rank": "S", "requires_nen": true, "required_nen_rank": 5},
+	"antidote_elixir": {"name": "تحضير مضاد السموم", "ingredients": {"medicinal_herb": 2, "crystal_dust": 1}, "output": "antidote_elixir", "required_level": 1},
+	"resistance_elixir": {"name": "تحضير إكسير مقاومة الإرهاق", "ingredients": {"medicinal_herb": 2, "monster_core": 1}, "output": "resistance_elixir", "required_level": 5},
+	"deep_wound_elixir": {"name": "تحضير إكسير الجروح العميقة", "ingredients": {"medicinal_herb": 4, "crystal_dust": 2}, "output": "deep_wound_elixir", "required_level": 12, "required_rank": "D"},
+	"regeneration_elixir": {"name": "تحضير إكسير التجدد الحيوي", "ingredients": {"medicinal_herb": 5, "energy_crystal": 2}, "output": "regeneration_elixir", "required_level": 20, "required_rank": "C"},
+	"nen_focus_elixir": {"name": "تحضير إكسير تركيز النِن", "ingredients": {"nen_fragment": 1, "crystal_dust": 2}, "output": "nen_focus_elixir", "required_level": 20, "requires_nen": true, "required_nen_rank": 1},
+	"nen_stabilizer_elixir": {"name": "تحضير إكسير تثبيت الهالة", "ingredients": {"nen_fragment": 2, "energy_crystal": 2}, "output": "nen_stabilizer_elixir", "required_level": 25, "required_rank": "C", "requires_nen": true, "required_nen_rank": 2},
+	"nen_recovery_elixir": {"name": "تحضير إكسير استعادة النِن", "ingredients": {"nen_fragment": 3, "energy_crystal": 2}, "output": "nen_recovery_elixir", "required_level": 30, "required_rank": "C", "requires_nen": true, "required_nen_rank": 2},
+	"elite_legendary_elixir": {"name": "تحضير الإكسير الأسطوري للنخبة", "ingredients": {"rare_core": 5, "nen_fragment": 8, "energy_crystal": 5}, "output": "elite_legendary_elixir", "required_level": 80, "required_rank": "S", "requires_nen": true, "required_nen_rank": 5}
+}
+
+
+# Original SYSTEM skill tree. Practice, learned state and mastery are persisted separately.
+const SYSTEM_SKILL_TREE := {
+	"guard_breaker": {"name": "كاسر الحراسة", "category": "weapon", "required_level": 3, "required_rank": "E", "prerequisites": [], "requires_nen": false, "energy_cost": 8, "cooldown": 5.0, "effect": "ضربة مركزة تكسر دفاع الخصم"},
+	"swift_step": {"name": "خطوة خاطفة", "category": "movement", "required_level": 5, "required_rank": "D", "prerequisites": [], "requires_nen": false, "energy_cost": 10, "cooldown": 7.0, "effect": "اندفاع قصير مضبوط"},
+	"focused_strike": {"name": "ضربة التركيز", "category": "weapon", "required_level": 8, "required_rank": "D", "prerequisites": ["guard_breaker"], "requires_nen": false, "energy_cost": 12, "cooldown": 8.0, "effect": "رفع دقة الضربة التالية"},
+	"iron_guard": {"name": "الحارس الفولاذي", "category": "defense", "required_level": 10, "required_rank": "C", "prerequisites": [], "requires_nen": false, "energy_cost": 12, "cooldown": 10.0, "effect": "تعزيز دفاع مؤقت"},
+	"pulse_dash": {"name": "اندفاع النبضة", "category": "nen", "required_level": 15, "required_rank": "C", "prerequisites": ["swift_step"], "requires_nen": true, "required_nen_rank": 1, "requires_training_permit": true, "energy_cost": 18, "cooldown": 12.0, "effect": "اندفاع مدعوم بطاقة النِن"},
+	"aura_shield": {"name": "درع الهالة", "category": "nen", "required_level": 20, "required_rank": "B", "prerequisites": ["iron_guard"], "requires_nen": true, "required_nen_rank": 2, "requires_training_permit": true, "energy_cost": 22, "cooldown": 18.0, "effect": "حاجز هالة دفاعي مؤقت"},
+	"sensory_mark": {"name": "وسم الإدراك", "category": "nen", "required_level": 25, "required_rank": "B", "prerequisites": ["pulse_dash"], "requires_nen": true, "required_nen_rank": 2, "requires_training_permit": true, "energy_cost": 20, "cooldown": 15.0, "effect": "تمييز حركة الخصم لفترة قصيرة"},
+	"flow_counter": {"name": "صد التدفق", "category": "nen", "required_level": 35, "required_rank": "A", "prerequisites": ["aura_shield", "focused_strike"], "requires_nen": true, "required_nen_rank": 3, "requires_training_permit": true, "energy_cost": 28, "cooldown": 22.0, "effect": "صد مضبوط يعقبه رد سريع"},
+	"resonance_burst": {"name": "انفجار الرنين", "category": "nen", "required_level": 50, "required_rank": "S", "prerequisites": ["sensory_mark", "flow_counter"], "requires_nen": true, "required_nen_rank": 4, "requires_training_permit": true, "energy_cost": 40, "cooldown": 35.0, "effect": "موجة هالة قصيرة المدى"},
+	"sovereign_focus": {"name": "تركيز السيادة", "category": "nen", "required_level": 80, "required_rank": "SS", "prerequisites": ["resonance_burst"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 60, "cooldown": 60.0, "effect": "تركيز نادر عالي الكلفة"}
+}
+const WEAPON_MASTERY_FAMILIES := ["sword", "spear", "axe", "bow", "shield", "modern_ranged"]
+
 var current_level: int = 1
 var total_xp: int = 0
 var xp_in_level: int = 0
@@ -33,11 +100,130 @@ var attributes: Dictionary = DEFAULT_ATTRIBUTES.duplicate(true)
 var greed_fragments: Array[String] = []
 var inventory_items: Dictionary = {}
 var world_fragments: Dictionary = {"modern": [], "historical": [], "fantasy": []}
+var equipment_slots: Dictionary = DEFAULT_EQUIPMENT_SLOTS.duplicate(true)
+var equipment_upgrade_levels: Dictionary = {}
+var equipment_durability: Dictionary = {}
+var active_elixir_effects: Dictionary = {}
+var nen_unlocked := false
+var nen_control_rank := 0
+var nen_burst_cooldown_remaining := 0.0
+var nen_button_refresh_clock := 0.0
+var nen_burst_button: Button
+var current_system_energy := MAX_SYSTEM_ENERGY
+var learned_system_skills: Array[String] = []
+var authorized_system_skills: Array[String] = []
+var system_skill_practice: Dictionary = {}
+var system_skill_mastery: Dictionary = {}
+var system_skill_cooldowns: Dictionary = {}
+var weapon_mastery: Dictionary = {}
+
+# Hunter grades are earned from verified guild work and demonstrated Nen practice.
+const HUNTER_RANK_ORDER := ["F", "E", "D", "C", "B", "A", "S", "SS", "SSS"]
+const HUNTER_RANK_MISSION_POINTS := {"E": 100, "D": 250, "C": 500, "B": 850, "A": 1500, "S": 2500, "SS": 5000}
+var verified_hunter_mission_points := 0
+var verified_hunter_mission_count := 0
+var verified_hunter_mission_ids: Array[String] = []
+var nen_skill_use_count := 0
+var nen_skill_ids: Array[String] = []
+var hunter_sss_board_approved := false
 
 
 func _ready() -> void:
 	load_progress()
 	_emit_progress()
+	set_process(true)
+	_create_nen_burst_button()
+
+
+func _process(delta: float) -> void:
+	current_system_energy = minf(MAX_SYSTEM_ENERGY, current_system_energy + delta * 5.0)
+	var expired := false
+	for effect_id in active_elixir_effects.keys():
+		var effect: Dictionary = active_elixir_effects[effect_id]
+		var remaining := maxf(0.0, float(effect.get("remaining_seconds", 0.0)) - delta)
+		if remaining <= 0.0:
+			active_elixir_effects.erase(effect_id)
+			expired = true
+		else:
+			effect["remaining_seconds"] = remaining
+			active_elixir_effects[effect_id] = effect
+	for skill_id in system_skill_cooldowns.keys():
+		var cooldown_left := maxf(0.0, float(system_skill_cooldowns[skill_id]) - delta)
+		if cooldown_left <= 0.0:
+			system_skill_cooldowns.erase(skill_id)
+		else:
+			system_skill_cooldowns[skill_id] = cooldown_left
+	if nen_burst_cooldown_remaining > 0.0:
+		nen_burst_cooldown_remaining = maxf(0.0, nen_burst_cooldown_remaining - delta)
+		nen_button_refresh_clock -= delta
+		if nen_button_refresh_clock <= 0.0:
+			nen_button_refresh_clock = 1.0
+			_refresh_nen_burst_button()
+		if nen_burst_cooldown_remaining <= 0.0:
+			save_progress()
+			_refresh_nen_burst_button()
+	if expired:
+		save_progress()
+
+
+func _create_nen_burst_button() -> void:
+	var canvas := CanvasLayer.new()
+	canvas.name = "NenAbilityHUD"
+	canvas.layer = 30
+	var hud := Control.new()
+	hud.set_anchors_preset(Control.PRESET_FULL_RECT)
+	canvas.add_child(hud)
+	nen_burst_button = Button.new()
+	nen_burst_button.name = "NenBurstButton"
+	nen_burst_button.anchor_left = 0.83
+	nen_burst_button.anchor_top = 0.82
+	nen_burst_button.anchor_right = 0.98
+	nen_burst_button.anchor_bottom = 0.96
+	nen_burst_button.offset_left = 0.0
+	nen_burst_button.offset_top = 0.0
+	nen_burst_button.offset_right = 0.0
+	nen_burst_button.offset_bottom = 0.0
+	nen_burst_button.text = "نِن"
+	nen_burst_button.pressed.connect(activate_nen_burst)
+	hud.add_child(nen_burst_button)
+	add_child(canvas)
+	_refresh_nen_burst_button()
+
+
+func _refresh_nen_burst_button() -> void:
+	if not is_instance_valid(nen_burst_button):
+		return
+	nen_burst_button.visible = nen_unlocked
+	if not nen_unlocked:
+		return
+	if nen_control_rank < 4:
+		nen_burst_button.text = "النِن — رتبة %d/4" % nen_control_rank
+		nen_burst_button.disabled = true
+		return
+	var active_effect: Dictionary = active_elixir_effects.get("nen_burst", {})
+	var active_remaining := float(active_effect.get("remaining_seconds", 0.0))
+	if active_remaining > 0.0:
+		nen_burst_button.text = "النِن فعال %dث" % int(ceil(active_remaining))
+		nen_burst_button.disabled = true
+	elif nen_burst_cooldown_remaining > 0.0:
+		nen_burst_button.text = "النِن %dث" % int(ceil(nen_burst_cooldown_remaining))
+		nen_burst_button.disabled = true
+	else:
+		nen_burst_button.text = "تفعيل النِن"
+		nen_burst_button.disabled = false
+
+
+func activate_nen_burst() -> Dictionary:
+	if not nen_unlocked or nen_control_rank < 4:
+		return {"success": false, "reason": "NEN_RANK_FOUR_REQUIRED"}
+	if nen_burst_cooldown_remaining > 0.0:
+		return {"success": false, "reason": "NEN_BURST_ON_COOLDOWN"}
+	active_elixir_effects["nen_burst"] = {"remaining_seconds": 20.0, "damage_bonus": 30.0, "defense_bonus": 20.0, "movement_multiplier": 1.1, "attack_cooldown_multiplier": 0.85}
+	nen_burst_cooldown_remaining = 60.0
+	nen_button_refresh_clock = 0.0
+	save_progress()
+	_refresh_nen_burst_button()
+	return {"success": true, "duration_seconds": 20, "cooldown_seconds": 60}
 
 
 func get_xp_required_for_next_level() -> int:
@@ -112,10 +298,88 @@ func add_experience(amount: int, reason: String = "") -> Dictionary:
 	}
 
 
+func has_verified_hunter_mission(mission_id: String) -> bool:
+	return verified_hunter_mission_ids.has(mission_id.strip_edges())
+
+
+func record_verified_hunter_mission(mission_id: String, mission_points: int, used_nen: bool = false, ability_id: String = "") -> Dictionary:
+	var normalized_id := mission_id.strip_edges()
+	if normalized_id.is_empty() or mission_points <= 0:
+		return {"success": false, "reason": "INVALID_VERIFIED_MISSION"}
+	if verified_hunter_mission_ids.has(normalized_id):
+		return {"success": false, "reason": "MISSION_ALREADY_COUNTED"}
+	verified_hunter_mission_ids.append(normalized_id)
+	verified_hunter_mission_count += 1
+	verified_hunter_mission_points += mission_points
+	if used_nen and not ability_id.strip_edges().is_empty():
+		record_nen_skill_use(ability_id)
+	save_progress()
+	return {"success": true, "rank": get_hunter_rank(), "mission_points": verified_hunter_mission_points, "mission_count": verified_hunter_mission_count}
+
+
+func record_nen_skill_use(ability_id: String) -> Dictionary:
+	var normalized_id := ability_id.strip_edges().to_lower()
+	if not nen_unlocked or nen_control_rank <= 0:
+		return {"success": false, "reason": "NEN_NOT_READY"}
+	if normalized_id.is_empty():
+		return {"success": false, "reason": "ABILITY_ID_REQUIRED"}
+	nen_skill_use_count += 1
+	if not nen_skill_ids.has(normalized_id):
+		nen_skill_ids.append(normalized_id)
+	save_progress()
+	return {"success": true, "uses": nen_skill_use_count, "distinct_abilities": nen_skill_ids.size(), "rank": get_hunter_rank()}
+
+
+func get_hunter_rank() -> String:
+	var rank := "F"
+	for candidate in ["E", "D", "C", "B"]:
+		if verified_hunter_mission_points >= int(HUNTER_RANK_MISSION_POINTS[candidate]):
+			rank = candidate
+	if verified_hunter_mission_points >= 1500 and nen_unlocked and nen_control_rank >= 2 and nen_skill_use_count >= 10:
+		rank = "A"
+	if verified_hunter_mission_points >= 2500 and nen_unlocked and nen_control_rank >= 4 and nen_skill_use_count >= 50 and nen_skill_ids.size() >= 2:
+		rank = "S"
+	if verified_hunter_mission_points >= 5000 and nen_unlocked and nen_control_rank >= 5 and nen_skill_use_count >= 150 and nen_skill_ids.size() >= 3:
+		rank = "SS"
+	if hunter_sss_board_approved and rank == "SS":
+		rank = "SSS"
+	return rank
+
+
+func get_hunter_rank_progress() -> Dictionary:
+	return {
+		"rank": get_hunter_rank(),
+		"rank_order": HUNTER_RANK_ORDER.duplicate(),
+		"verified_mission_points": verified_hunter_mission_points,
+		"verified_mission_count": verified_hunter_mission_count,
+		"nen_unlocked": nen_unlocked,
+		"nen_control_rank": nen_control_rank,
+		"learned_system_skills": learned_system_skills.duplicate(),
+		"system_skill_mastery": system_skill_mastery.duplicate(true),
+		"system_skill_practice": system_skill_practice.duplicate(true),
+		"weapon_mastery": weapon_mastery.duplicate(true),
+		"system_energy": current_system_energy,
+		"nen_skill_uses": nen_skill_use_count,
+		"distinct_nen_abilities": nen_skill_ids.size(),
+		"sss_board_approved": hunter_sss_board_approved
+	}
+
+
+func approve_sss_by_exam_board(approval_id: String) -> bool:
+	if approval_id.strip_edges().is_empty() or get_hunter_rank() != "SS":
+		return false
+	hunter_sss_board_approved = true
+	save_progress()
+	return true
+
+
 func add_item(item_id: String, amount: int = 1) -> bool:
 	var normalized_id := item_id.strip_edges()
 	if normalized_id.is_empty() or amount <= 0:
 		return false
+	if get_item_count(normalized_id) <= 0 and EQUIPMENT_SLOTS_BY_ITEM.has(normalized_id):
+		equipment_durability[normalized_id] = MAX_EQUIPMENT_DURABILITY
+		equipment_upgrade_levels[normalized_id] = 0
 	inventory_items[normalized_id] = int(inventory_items.get(normalized_id,0)) + amount
 	save_progress()
 	return true
@@ -123,6 +387,310 @@ func add_item(item_id: String, amount: int = 1) -> bool:
 
 func get_item_count(item_id: String) -> int:
 	return int(inventory_items.get(item_id,0))
+
+
+func get_crafting_recipe_list() -> Dictionary:
+	return CRAFTING_RECIPES.duplicate(true)
+
+
+func craft_recipe(recipe_id: String) -> Dictionary:
+	if not CRAFTING_RECIPES.has(recipe_id):
+		return {"success": false, "reason": "UNKNOWN_RECIPE"}
+	var recipe: Dictionary = CRAFTING_RECIPES[recipe_id]
+	var required_level := int(recipe.get("required_level", 1))
+	if current_level < required_level:
+		return {"success": false, "reason": "LEVEL_REQUIREMENT", "required_level": required_level}
+	var required_rank := str(recipe.get("required_rank", "F"))
+	if not _meets_skill_rank(required_rank):
+		return {"success": false, "reason": "HUNTER_RANK_REQUIREMENT", "required_rank": required_rank}
+	if bool(recipe.get("requires_nen", false)) and not nen_unlocked:
+		return {"success": false, "reason": "NEN_REQUIRED"}
+	var required_nen_rank := int(recipe.get("required_nen_rank", 0))
+	if nen_control_rank < required_nen_rank:
+		return {"success": false, "reason": "NEN_CONTROL_RANK_REQUIRED", "required_nen_rank": required_nen_rank}
+	var ingredients: Dictionary = recipe.get("ingredients", {})
+	for ingredient_id in ingredients.keys():
+		var required_count := int(ingredients[ingredient_id])
+		if get_item_count(str(ingredient_id)) < required_count:
+			return {"success": false, "reason": "MISSING_INGREDIENTS", "ingredient": str(ingredient_id), "required": required_count}
+	for ingredient_id in ingredients.keys():
+		var remaining := get_item_count(str(ingredient_id)) - int(ingredients[ingredient_id])
+		if remaining <= 0:
+			inventory_items.erase(str(ingredient_id))
+		else:
+			inventory_items[str(ingredient_id)] = remaining
+	var output_id := str(recipe.get("output", ""))
+	if output_id.is_empty():
+		return {"success": false, "reason": "INVALID_RECIPE_OUTPUT"}
+	add_item(output_id, 1)
+	save_progress()
+	return {"success": true, "recipe_id": recipe_id, "output": output_id, "output_count": 1}
+
+
+func get_item_equipment_slot(item_id: String) -> String:
+	return str(EQUIPMENT_SLOTS_BY_ITEM.get(item_id, ""))
+
+
+func equip_item(item_id: String) -> Dictionary:
+	var slot := get_item_equipment_slot(item_id)
+	if slot.is_empty():
+		return {"success": false, "reason": "ITEM_NOT_EQUIPPABLE"}
+	if get_item_count(item_id) <= 0:
+		return {"success": false, "reason": "ITEM_NOT_OWNED"}
+	equipment_slots[slot] = item_id
+	if not equipment_durability.has(item_id):
+		equipment_durability[item_id] = MAX_EQUIPMENT_DURABILITY
+	if not equipment_upgrade_levels.has(item_id):
+		equipment_upgrade_levels[item_id] = 0
+	save_progress()
+	return {"success": true, "slot": slot, "item_id": item_id}
+
+
+func unequip_item(slot: String) -> bool:
+	if not DEFAULT_EQUIPMENT_SLOTS.has(slot):
+		return false
+	equipment_slots[slot] = ""
+	save_progress()
+	return true
+
+
+func get_equipped_item(slot: String) -> String:
+	return str(equipment_slots.get(slot, ""))
+
+
+func is_item_equipped(item_id: String) -> bool:
+	for equipped_item in equipment_slots.values():
+		if str(equipped_item) == item_id:
+			return true
+	return false
+
+
+func get_equipment_bonuses() -> Dictionary:
+	var damage := 0.0
+	var defense := 0.0
+	var movement := 1.0
+	var combat_system := get_tree().root.find_child("ModernWorldCombatSystem", true, false)
+	var is_blocking := combat_system != null and bool(combat_system.get("is_blocking"))
+	for slot in equipment_slots.keys():
+		var item_id := str(equipment_slots[slot])
+		if item_id.is_empty() or get_item_durability(item_id) <= 0.0:
+			continue
+		if slot == "shield" and not is_blocking:
+			continue
+		var upgrade_level := get_item_upgrade_level(item_id)
+		damage += float(EQUIPMENT_DAMAGE_BONUS.get(item_id, 0.0)) + (float(upgrade_level) * 2.0 if slot == "weapon" else 0.0)
+		defense += float(EQUIPMENT_DEFENSE_BONUS.get(item_id, 0.0)) + (float(upgrade_level) * 1.5 if slot in ["shield", "armor", "helmet"] else 0.0)
+		if slot == "outfit":
+			movement *= 1.0 + float(upgrade_level) * 0.01
+	return {"damage_bonus": damage, "defense_bonus": defense, "movement_multiplier": movement}
+
+
+func get_item_upgrade_level(item_id: String) -> int:
+	return clampi(int(equipment_upgrade_levels.get(item_id, 0)), 0, MAX_EQUIPMENT_UPGRADE_LEVEL)
+
+
+func get_item_durability(item_id: String) -> float:
+	if item_id.is_empty():
+		return 0.0
+	return clampf(float(equipment_durability.get(item_id, MAX_EQUIPMENT_DURABILITY)), 0.0, MAX_EQUIPMENT_DURABILITY)
+
+
+func consume_equipment_durability(slot: String, amount: float) -> bool:
+	if not DEFAULT_EQUIPMENT_SLOTS.has(slot) or amount <= 0.0:
+		return false
+	var item_id := str(equipment_slots.get(slot, ""))
+	if item_id.is_empty():
+		return false
+	var old_value := get_item_durability(item_id)
+	var new_value := maxf(0.0, old_value - amount)
+	equipment_durability[item_id] = new_value
+	if new_value <= 0.0 or int(old_value / 10.0) != int(new_value / 10.0):
+		save_progress()
+	return true
+
+
+func repair_item(item_id: String) -> Dictionary:
+	if get_item_equipment_slot(item_id).is_empty() or get_item_count(item_id) <= 0:
+		return {"success": false, "reason": "ITEM_NOT_OWNED"}
+	if get_item_durability(item_id) >= MAX_EQUIPMENT_DURABILITY:
+		return {"success": false, "reason": "ITEM_ALREADY_REPAIRED"}
+	if get_item_count("repair_kit") <= 0:
+		return {"success": false, "reason": "REPAIR_KIT_REQUIRED"}
+	var remaining := get_item_count("repair_kit") - 1
+	if remaining <= 0:
+		inventory_items.erase("repair_kit")
+	else:
+		inventory_items["repair_kit"] = remaining
+	equipment_durability[item_id] = MAX_EQUIPMENT_DURABILITY
+	save_progress()
+	return {"success": true, "item_id": item_id, "durability": MAX_EQUIPMENT_DURABILITY}
+
+
+func upgrade_item(item_id: String) -> Dictionary:
+	if get_item_equipment_slot(item_id).is_empty() or get_item_count(item_id) <= 0:
+		return {"success": false, "reason": "ITEM_NOT_OWNED"}
+	var current_upgrade := get_item_upgrade_level(item_id)
+	var next_upgrade := current_upgrade + 1
+	if next_upgrade > MAX_EQUIPMENT_UPGRADE_LEVEL:
+		return {"success": false, "reason": "UPGRADE_MAXED"}
+	if current_level < next_upgrade:
+		return {"success": false, "reason": "LEVEL_REQUIREMENT", "required_level": next_upgrade}
+	var iron_cost := 2 + current_upgrade
+	var rare_core_cost := 1 if next_upgrade >= 6 else 0
+	var nen_fragment_cost := 1 if next_upgrade >= 8 else 0
+	if next_upgrade >= 8 and (not nen_unlocked or nen_control_rank < 3):
+		return {"success": false, "reason": "NEN_CONTROL_RANK_REQUIRED"}
+	if get_item_count("iron_ingot") < iron_cost or get_item_count("rare_core") < rare_core_cost or get_item_count("nen_fragment") < nen_fragment_cost:
+		return {"success": false, "reason": "MISSING_UPGRADE_MATERIALS"}
+	for material_id in ["iron_ingot", "rare_core", "nen_fragment"]:
+		var cost := iron_cost if material_id == "iron_ingot" else (rare_core_cost if material_id == "rare_core" else nen_fragment_cost)
+		if cost <= 0:
+			continue
+		var remaining := get_item_count(material_id) - cost
+		if remaining <= 0:
+			inventory_items.erase(material_id)
+		else:
+			inventory_items[material_id] = remaining
+	equipment_upgrade_levels[item_id] = next_upgrade
+	if not equipment_durability.has(item_id):
+		equipment_durability[item_id] = MAX_EQUIPMENT_DURABILITY
+	save_progress()
+	return {"success": true, "item_id": item_id, "upgrade_level": next_upgrade}
+
+
+func get_combat_damage_bonus() -> float:
+	var bonuses := get_equipment_bonuses()
+	var result := float(bonuses.get("damage_bonus", 0.0))
+	for effect in active_elixir_effects.values():
+		result += float(effect.get("damage_bonus", 0.0))
+	if nen_unlocked and nen_control_rank >= 3:
+		result += float(nen_control_rank - 2) * 2.0
+	return result
+
+
+func get_defense_bonus() -> float:
+	var bonuses := get_equipment_bonuses()
+	var result := float(bonuses.get("defense_bonus", 0.0))
+	for effect in active_elixir_effects.values():
+		result += float(effect.get("defense_bonus", 0.0))
+	if nen_unlocked:
+		result += float(nen_control_rank) * 1.5
+	return result
+
+
+func get_movement_multiplier() -> float:
+	var result := 1.0
+	var equipment_bonus := get_equipment_bonuses()
+	result *= float(equipment_bonus.get("movement_multiplier", 1.0))
+	if nen_unlocked:
+		result *= 1.0 + float(nen_control_rank) * 0.005
+	for effect in active_elixir_effects.values():
+		result *= float(effect.get("movement_multiplier", 1.0))
+	return clampf(result, 0.65, 1.6)
+
+
+func get_attack_cooldown_multiplier() -> float:
+	var result := 1.0
+	for effect in active_elixir_effects.values():
+		result *= float(effect.get("attack_cooldown_multiplier", 1.0))
+	if nen_unlocked:
+		result *= 1.0 - float(nen_control_rank) * 0.01
+	return clampf(result, 0.6, 1.2)
+
+
+func consume_elixir(item_id: String) -> Dictionary:
+	if get_item_count(item_id) <= 0:
+		return {"success": false, "reason": "ELIXIR_NOT_OWNED"}
+	if active_elixir_effects.has(item_id) and float(active_elixir_effects[item_id].get("remaining_seconds", 0.0)) > 0.0:
+		return {"success": false, "reason": "ELIXIR_EFFECT_ALREADY_ACTIVE"}
+	if item_id in ["nen_awakening_elixir", "nen_acquisition_elixir"]:
+		if nen_unlocked:
+			return {"success": false, "reason": "NEN_ALREADY_UNLOCKED"}
+		nen_unlocked = true
+		nen_control_rank = 1
+	elif item_id == "nen_control_elixir":
+		if not nen_unlocked:
+			return {"success": false, "reason": "NEN_NOT_UNLOCKED"}
+		if nen_control_rank >= 5:
+			return {"success": false, "reason": "NEN_CONTROL_MAXED"}
+		nen_control_rank += 1
+	elif item_id == "healing_elixir":
+		var health := get_tree().root.find_child("PlayerCombatHealth", true, false)
+		if health == null or not health.has_method("apply_field_healing"):
+			return {"success": false, "reason": "HEALTH_SYSTEM_UNAVAILABLE"}
+		if not bool(health.call("apply_field_healing", 30.0)):
+			return {"success": false, "reason": "HEALING_NOT_NEEDED"}
+	else:
+		var effect_id := ""
+		var effect: Dictionary = {}
+		match item_id:
+			"strength_elixir":
+				effect_id = "strength"
+				effect = {"remaining_seconds": 120.0, "damage_bonus": 15.0}
+			"speed_elixir":
+				effect_id = "speed"
+				effect = {"remaining_seconds": 120.0, "movement_multiplier": 1.25}
+			"endurance_elixir":
+				effect_id = "endurance"
+				effect = {"remaining_seconds": 120.0, "defense_bonus": 12.0}
+			"energy_elixir":
+				effect_id = "energy"
+				effect = {"remaining_seconds": 120.0, "attack_cooldown_multiplier": 0.82}
+			"rare_legendary_elixir":
+				if current_level < 80 or not nen_unlocked or nen_control_rank < 5 or not _meets_skill_rank("S"):
+					return {"success": false, "reason": "ELITE_ELIXIR_REQUIREMENTS"}
+				effect_id = "sovereign"
+				effect = {"remaining_seconds": 180.0, "damage_bonus": 25.0, "defense_bonus": 15.0, "movement_multiplier": 1.15, "attack_cooldown_multiplier": 0.9}
+			"elite_legendary_elixir":
+				if current_level < 80 or not nen_unlocked or nen_control_rank < 5 or not _meets_skill_rank("S"):
+					return {"success": false, "reason": "ELITE_ELIXIR_REQUIREMENTS"}
+				effect_id = "elite_sovereign"
+				effect = {"remaining_seconds": 150.0, "damage_bonus": 30.0, "defense_bonus": 22.0, "movement_multiplier": 1.18, "attack_cooldown_multiplier": 0.88}
+			"nen_stabilizer_elixir":
+				if not nen_unlocked:
+					return {"success": false, "reason": "NEN_NOT_UNLOCKED"}
+				effect_id = "nen_stability"
+				effect = {"remaining_seconds": 150.0, "defense_bonus": 8.0}
+			"nen_focus_elixir":
+				if not nen_unlocked:
+					return {"success": false, "reason": "NEN_NOT_UNLOCKED"}
+				effect_id = "nen_focus"
+				effect = {"remaining_seconds": 120.0, "attack_cooldown_multiplier": 0.9}
+			"nen_recovery_elixir":
+				if not nen_unlocked:
+					return {"success": false, "reason": "NEN_NOT_UNLOCKED"}
+				effect_id = "nen_recovery"
+				effect = {"remaining_seconds": 90.0, "defense_bonus": 6.0, "movement_multiplier": 1.05}
+			"antidote_elixir":
+				effect_id = "antidote"
+				effect = {"remaining_seconds": 180.0, "defense_bonus": 2.0}
+			"resistance_elixir":
+				effect_id = "resistance"
+				effect = {"remaining_seconds": 150.0, "defense_bonus": 8.0}
+			"deep_wound_elixir", "regeneration_elixir":
+				effect_id = "wound_recovery" if item_id == "deep_wound_elixir" else "regeneration"
+				if active_elixir_effects.has(effect_id) and float(active_elixir_effects[effect_id].get("remaining_seconds", 0.0)) > 0.0:
+					return {"success": false, "reason": "ELIXIR_EFFECT_ALREADY_ACTIVE"}
+				var health := get_tree().root.find_child("PlayerCombatHealth", true, false)
+				if health == null or not health.has_method("apply_field_healing"):
+					return {"success": false, "reason": "HEALTH_SYSTEM_UNAVAILABLE"}
+				var healing_amount := 15.0 if item_id == "deep_wound_elixir" else 20.0
+				if not bool(health.call("apply_field_healing", healing_amount)):
+					return {"success": false, "reason": "HEALING_NOT_NEEDED"}
+				effect = {"remaining_seconds": 90.0, "defense_bonus": 3.0}
+			_:
+				return {"success": false, "reason": "UNKNOWN_ELIXIR"}
+		if not effect_id.is_empty() and active_elixir_effects.has(effect_id) and float(active_elixir_effects[effect_id].get("remaining_seconds", 0.0)) > 0.0:
+			return {"success": false, "reason": "ELIXIR_EFFECT_ALREADY_ACTIVE"}
+		active_elixir_effects[effect_id] = effect
+	var remaining := get_item_count(item_id) - 1
+	if remaining <= 0:
+		inventory_items.erase(item_id)
+	else:
+		inventory_items[item_id] = remaining
+	save_progress()
+	_refresh_nen_burst_button()
+	return {"success": true, "item_id": item_id, "nen_unlocked": nen_unlocked, "nen_control_rank": nen_control_rank}
 
 
 func spend_attribute_point(attribute: String) -> bool:
@@ -163,6 +731,16 @@ func get_progress_data() -> Dictionary:
 		"greed_fragments": greed_fragments.duplicate(),
 		"greed_fragments_count": greed_fragments.size(),
 		"inventory_items": inventory_items.duplicate(true),
+		"equipment_slots": equipment_slots.duplicate(true),
+		"equipment_upgrade_levels": equipment_upgrade_levels.duplicate(true),
+		"equipment_durability": equipment_durability.duplicate(true),
+		"equipment_bonuses": get_equipment_bonuses(),
+		"active_elixir_effects": active_elixir_effects.duplicate(true),
+		"nen_unlocked": nen_unlocked,
+		"nen_control_rank": nen_control_rank,
+		"hunter_rank": get_hunter_rank(),
+		"hunter_rank_progress": get_hunter_rank_progress(),
+		"nen_burst_cooldown_remaining": nen_burst_cooldown_remaining,
 		"greed_island_seal_ready": bool(get_world_fragment_data().get("all_world_keys_ready", false)),
 		"world_keys": get_world_fragment_data()
 	}
@@ -192,6 +770,26 @@ func save_progress() -> void:
 	)
 	config.set_value("world_keys", "fragments", world_fragments.duplicate(true))
 	config.set_value("inventory", "items", inventory_items.duplicate(true))
+	config.set_value("equipment", "slots", equipment_slots.duplicate(true))
+	config.set_value("equipment", "upgrade_levels", equipment_upgrade_levels.duplicate(true))
+	config.set_value("equipment", "durability", equipment_durability.duplicate(true))
+	config.set_value("effects", "active_elixirs", active_elixir_effects.duplicate(true))
+	config.set_value("nen", "unlocked", nen_unlocked)
+	config.set_value("nen", "control_rank", nen_control_rank)
+	config.set_value("nen", "burst_cooldown_remaining", nen_burst_cooldown_remaining)
+	config.set_value("skills", "learned", learned_system_skills.duplicate())
+	config.set_value("skills", "authorized_training", authorized_system_skills.duplicate())
+	config.set_value("skills", "practice", system_skill_practice.duplicate(true))
+	config.set_value("skills", "mastery", system_skill_mastery.duplicate(true))
+	config.set_value("skills", "cooldowns", system_skill_cooldowns.duplicate(true))
+	config.set_value("skills", "weapon_mastery", weapon_mastery.duplicate(true))
+	config.set_value("skills", "system_energy", current_system_energy)
+	config.set_value("hunter_rank", "verified_mission_points", verified_hunter_mission_points)
+	config.set_value("hunter_rank", "verified_mission_count", verified_hunter_mission_count)
+	config.set_value("hunter_rank", "verified_mission_ids", verified_hunter_mission_ids)
+	config.set_value("hunter_rank", "nen_skill_use_count", nen_skill_use_count)
+	config.set_value("hunter_rank", "nen_skill_ids", nen_skill_ids)
+	config.set_value("hunter_rank", "sss_board_approved", hunter_sss_board_approved)
 
 	var error := config.save(SAVE_PATH)
 
@@ -238,10 +836,74 @@ func load_progress() -> void:
 	var saved_inventory: Dictionary = config.get_value("inventory", "items", {})
 	inventory_items = {}
 	for item_id in saved_inventory.keys():
-		var item_count := maxi(0,int(saved_inventory[item_id]))
+		var normalized_item_id := "nen_awakening_elixir" if str(item_id) == "nen_acquisition_elixir" else str(item_id)
+		var item_count := maxi(0, int(saved_inventory[item_id]))
 		if item_count > 0:
-			inventory_items[str(item_id)] = item_count
+			inventory_items[normalized_item_id] = int(inventory_items.get(normalized_item_id, 0)) + item_count
 
+	var saved_equipment: Dictionary = config.get_value("equipment", "slots", {})
+	equipment_slots = DEFAULT_EQUIPMENT_SLOTS.duplicate(true)
+	for slot in DEFAULT_EQUIPMENT_SLOTS.keys():
+		var item_id := str(saved_equipment.get(slot, ""))
+		if item_id.is_empty() or str(EQUIPMENT_SLOTS_BY_ITEM.get(item_id, "")) == str(slot):
+			equipment_slots[slot] = item_id
+	equipment_upgrade_levels = {}
+	var saved_upgrades: Dictionary = config.get_value("equipment", "upgrade_levels", {})
+	for item_id in saved_upgrades.keys():
+		equipment_upgrade_levels[str(item_id)] = clampi(int(saved_upgrades[item_id]), 0, MAX_EQUIPMENT_UPGRADE_LEVEL)
+	equipment_durability = {}
+	var saved_durability: Dictionary = config.get_value("equipment", "durability", {})
+	for item_id in saved_durability.keys():
+		equipment_durability[str(item_id)] = clampf(float(saved_durability[item_id]), 0.0, MAX_EQUIPMENT_DURABILITY)
+	for item_id in equipment_slots.values():
+		var equipped_id := str(item_id)
+		if not equipped_id.is_empty() and not equipment_durability.has(equipped_id):
+			equipment_durability[equipped_id] = MAX_EQUIPMENT_DURABILITY
+
+	var saved_effects: Dictionary = config.get_value("effects", "active_elixirs", {})
+	active_elixir_effects = {}
+	for effect_id in saved_effects.keys():
+		var effect: Dictionary = saved_effects[effect_id].duplicate(true)
+		if float(effect.get("remaining_seconds", 0.0)) > 0.0:
+			active_elixir_effects[str(effect_id)] = effect
+	nen_unlocked = bool(config.get_value("nen", "unlocked", false))
+	nen_control_rank = clampi(int(config.get_value("nen", "control_rank", 0)), 0, 5)
+	nen_burst_cooldown_remaining = maxf(0.0, float(config.get_value("nen", "burst_cooldown_remaining", 0.0)))
+	verified_hunter_mission_points = maxi(0, int(config.get_value("hunter_rank", "verified_mission_points", 0)))
+	verified_hunter_mission_count = maxi(0, int(config.get_value("hunter_rank", "verified_mission_count", 0)))
+	verified_hunter_mission_ids.clear()
+	for mission_id in config.get_value("hunter_rank", "verified_mission_ids", []):
+		var normalized_mission_id := str(mission_id).strip_edges()
+		if not normalized_mission_id.is_empty() and not verified_hunter_mission_ids.has(normalized_mission_id):
+			verified_hunter_mission_ids.append(normalized_mission_id)
+	nen_skill_use_count = maxi(0, int(config.get_value("hunter_rank", "nen_skill_use_count", 0)))
+	nen_skill_ids.clear()
+	for ability_id in config.get_value("hunter_rank", "nen_skill_ids", []):
+		var normalized_ability_id := str(ability_id).strip_edges().to_lower()
+		if not normalized_ability_id.is_empty() and not nen_skill_ids.has(normalized_ability_id):
+			nen_skill_ids.append(normalized_ability_id)
+	hunter_sss_board_approved = bool(config.get_value("hunter_rank", "sss_board_approved", false))
+
+	learned_system_skills.clear()
+	for skill_id in config.get_value("skills", "learned", []):
+		var normalized_skill := str(skill_id).strip_edges().to_lower()
+		if SYSTEM_SKILL_TREE.has(normalized_skill) and not learned_system_skills.has(normalized_skill):
+			learned_system_skills.append(normalized_skill)
+	authorized_system_skills.clear()
+	for skill_id in config.get_value("skills", "authorized_training", []):
+		var normalized_authorized := str(skill_id).strip_edges().to_lower()
+		if SYSTEM_SKILL_TREE.has(normalized_authorized) and bool(SYSTEM_SKILL_TREE[normalized_authorized].get("requires_training_permit", false)) and not authorized_system_skills.has(normalized_authorized):
+			authorized_system_skills.append(normalized_authorized)
+	system_skill_practice = config.get_value("skills", "practice", {})
+	system_skill_mastery = config.get_value("skills", "mastery", {})
+	system_skill_cooldowns = {}
+	var saved_cooldowns: Dictionary = config.get_value("skills", "cooldowns", {})
+	for skill_id in saved_cooldowns.keys():
+		var remaining := maxf(0.0, float(saved_cooldowns[skill_id]))
+		if remaining > 0.0 and SYSTEM_SKILL_TREE.has(str(skill_id)):
+			system_skill_cooldowns[str(skill_id)] = remaining
+	weapon_mastery = config.get_value("skills", "weapon_mastery", {})
+	current_system_energy = clampf(float(config.get_value("skills", "system_energy", MAX_SYSTEM_ENERGY)), 0.0, MAX_SYSTEM_ENERGY)
 	var saved_world_fragments: Dictionary = config.get_value("world_keys", "fragments", {})
 	world_fragments = {"modern": [], "historical": [], "fantasy": []}
 	for world_key in world_fragments.keys():
@@ -354,6 +1016,20 @@ func _reset_progress() -> void:
 	xp_in_level = 0
 	available_attribute_points = 0
 	attributes = DEFAULT_ATTRIBUTES.duplicate(true)
+	equipment_slots = DEFAULT_EQUIPMENT_SLOTS.duplicate(true)
+	equipment_upgrade_levels.clear()
+	equipment_durability.clear()
+	active_elixir_effects.clear()
+	learned_system_skills.clear()
+	authorized_system_skills.clear()
+	system_skill_practice.clear()
+	system_skill_mastery.clear()
+	system_skill_cooldowns.clear()
+	weapon_mastery.clear()
+	current_system_energy = MAX_SYSTEM_ENERGY
+	nen_unlocked = false
+	nen_control_rank = 0
+	nen_burst_cooldown_remaining = 0.0
 
 
 func _emit_progress() -> void:
@@ -363,3 +1039,138 @@ func _emit_progress() -> void:
 		xp_in_level,
 		get_xp_to_next_level()
 	)
+
+
+func get_system_skill_tree() -> Dictionary:
+	return SYSTEM_SKILL_TREE.duplicate(true)
+
+
+func get_authorized_system_skills() -> Array[String]:
+	return authorized_system_skills.duplicate()
+
+
+func check_skill_training_permit(skill_id: String) -> Dictionary:
+	var key := skill_id.strip_edges().to_lower()
+	if not SYSTEM_SKILL_TREE.has(key):
+		return {"success": false, "reason": "UNKNOWN_SYSTEM_SKILL"}
+	var skill: Dictionary = SYSTEM_SKILL_TREE[key]
+	if not bool(skill.get("requires_training_permit", false)):
+		return {"success": false, "reason": "SKILL_PERMIT_NOT_REQUIRED"}
+	if learned_system_skills.has(key):
+		return {"success": false, "reason": "SKILL_ALREADY_LEARNED"}
+	if authorized_system_skills.has(key):
+		return {"success": false, "reason": "SKILL_PERMIT_ALREADY_OWNED"}
+	var required_level := int(skill.get("required_level", 1))
+	if current_level < required_level:
+		return {"success": false, "reason": "LEVEL_REQUIREMENT", "required_level": required_level}
+	var required_rank := str(skill.get("required_rank", "F"))
+	if not _meets_skill_rank(required_rank):
+		return {"success": false, "reason": "HUNTER_RANK_REQUIREMENT", "required_rank": required_rank}
+	var required_nen_rank := int(skill.get("required_nen_rank", 0))
+	if bool(skill.get("requires_nen", false)) and (not nen_unlocked or nen_control_rank < required_nen_rank):
+		return {"success": false, "reason": "NEN_CONTROL_REQUIREMENT", "required_nen_rank": required_nen_rank}
+	for prerequisite in skill.get("prerequisites", []):
+		if not learned_system_skills.has(str(prerequisite)):
+			return {"success": false, "reason": "SKILL_PREREQUISITE", "prerequisite": str(prerequisite)}
+	return {"success": true, "skill_id": key, "required_level": required_level, "required_rank": required_rank, "required_nen_rank": required_nen_rank}
+
+
+func grant_skill_training_permit(skill_id: String) -> Dictionary:
+	var check: Dictionary = check_skill_training_permit(skill_id)
+	if not bool(check.get("success", false)):
+		return check
+	var key := str(check.get("skill_id", ""))
+	authorized_system_skills.append(key)
+	save_progress()
+	return {"success": true, "skill_id": key, "authorized": true}
+
+
+func get_weapon_mastery() -> Dictionary:
+	return weapon_mastery.duplicate(true)
+
+
+func record_weapon_training(family: String, verified_drill_id: String) -> Dictionary:
+	var key := family.strip_edges().to_lower()
+	var drill := verified_drill_id.strip_edges()
+	if not WEAPON_MASTERY_FAMILIES.has(key) or drill.is_empty():
+		return {"success": false, "reason": "INVALID_WEAPON_DRILL"}
+	var seen: Array = weapon_mastery.get("verified_drills", [])
+	var unique_id := key + ":" + drill
+	if seen.has(unique_id):
+		return {"success": false, "reason": "DRILL_ALREADY_RECORDED"}
+	seen.append(unique_id)
+	weapon_mastery["verified_drills"] = seen
+	weapon_mastery[key] = mini(100, int(weapon_mastery.get(key, 0)) + 5)
+	save_progress()
+	return {"success": true, "family": key, "mastery": int(weapon_mastery[key])}
+
+
+func practice_system_skill(skill_id: String, verified_session_id: String) -> Dictionary:
+	var key := skill_id.strip_edges().to_lower()
+	var session_id := verified_session_id.strip_edges()
+	if not SYSTEM_SKILL_TREE.has(key) or session_id.is_empty():
+		return {"success": false, "reason": "INVALID_SKILL_SESSION"}
+	var skill: Dictionary = SYSTEM_SKILL_TREE[key]
+	if current_level < int(skill.get("required_level", 1)):
+		return {"success": false, "reason": "LEVEL_REQUIREMENT", "required_level": int(skill.get("required_level", 1))}
+	if not _meets_skill_rank(str(skill.get("required_rank", "F"))):
+		return {"success": false, "reason": "HUNTER_RANK_REQUIREMENT", "required_rank": str(skill.get("required_rank", "F"))}
+	if bool(skill.get("requires_nen", false)) and (not nen_unlocked or nen_control_rank < int(skill.get("required_nen_rank", 1))):
+		return {"success": false, "reason": "NEN_CONTROL_REQUIREMENT", "required_nen_rank": int(skill.get("required_nen_rank", 1))}
+	for prerequisite in skill.get("prerequisites", []):
+		if not learned_system_skills.has(str(prerequisite)):
+			return {"success": false, "reason": "SKILL_PREREQUISITE", "prerequisite": str(prerequisite)}
+	if bool(skill.get("requires_training_permit", false)) and not authorized_system_skills.has(key):
+		return {"success": false, "reason": "SKILL_STUDY_PERMIT_REQUIRED"}
+	var sessions: Array = system_skill_practice.get(key + "_sessions", [])
+	if sessions.has(session_id):
+		return {"success": false, "reason": "SESSION_ALREADY_RECORDED"}
+	sessions.append(session_id)
+	system_skill_practice[key + "_sessions"] = sessions
+	var practice_count := int(system_skill_practice.get(key, 0)) + 1
+	system_skill_practice[key] = practice_count
+	var mastery := int(system_skill_mastery.get(key, 0))
+	if practice_count >= 3:
+		if not learned_system_skills.has(key):
+			learned_system_skills.append(key)
+		mastery = clampi(mastery + 1, 1, 5)
+		system_skill_mastery[key] = mastery
+	save_progress()
+	return {"success": true, "skill_id": key, "practice_count": practice_count, "learned": learned_system_skills.has(key), "mastery": mastery}
+
+
+func _meets_skill_rank(required_rank: String) -> bool:
+	var current_index := HUNTER_RANK_ORDER.find(get_hunter_rank())
+	var required_index := HUNTER_RANK_ORDER.find(required_rank)
+	return current_index >= 0 and required_index >= 0 and current_index >= required_index
+
+
+func can_use_system_skill(skill_id: String) -> Dictionary:
+	var key := skill_id.strip_edges().to_lower()
+	if not SYSTEM_SKILL_TREE.has(key) or not learned_system_skills.has(key):
+		return {"success": false, "reason": "SKILL_NOT_LEARNED"}
+	var remaining := float(system_skill_cooldowns.get(key, 0.0))
+	if remaining > 0.0:
+		return {"success": false, "reason": "SKILL_COOLDOWN", "remaining_seconds": remaining}
+	var skill: Dictionary = SYSTEM_SKILL_TREE[key]
+	var required_energy := float(skill.get("energy_cost", 0))
+	if current_system_energy < required_energy:
+		return {"success": false, "reason": "SYSTEM_ENERGY_LOW", "required_energy": required_energy, "current_energy": current_system_energy}
+	if bool(skill.get("requires_nen", false)) and (not nen_unlocked or nen_control_rank < int(skill.get("required_nen_rank", 1))):
+		return {"success": false, "reason": "NEN_CONTROL_REQUIREMENT"}
+	return {"success": true, "skill": skill.duplicate(true), "mastery": int(system_skill_mastery.get(key, 0))}
+
+
+func record_system_skill_use(skill_id: String) -> Dictionary:
+	var result := can_use_system_skill(skill_id)
+	if not bool(result.get("success", false)):
+		return result
+	var key := skill_id.strip_edges().to_lower()
+	var skill: Dictionary = SYSTEM_SKILL_TREE[key]
+	var energy_cost := float(skill.get("energy_cost", 0))
+	if current_system_energy < energy_cost:
+		return {"success": false, "reason": "SYSTEM_ENERGY_LOW", "required_energy": energy_cost, "current_energy": current_system_energy}
+	current_system_energy = maxf(0.0, current_system_energy - energy_cost)
+	system_skill_cooldowns[key] = float(skill.get("cooldown", 5.0))
+	save_progress()
+	return {"success": true, "skill_id": key, "cooldown_seconds": float(skill.get("cooldown", 5.0)), "energy_cost": int(energy_cost), "remaining_energy": current_system_energy, "effect": str(skill.get("effect", ""))}

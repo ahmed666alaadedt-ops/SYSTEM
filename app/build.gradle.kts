@@ -42,8 +42,11 @@ kotlin {
 }
 
 dependencies {
-    // Optional Godot runtime export; this folder remains empty until AAR export.
+    // Godot runtime is supplied by the pinned Maven Central AAR.
+    // Optional local Android libraries can still be placed in this folder.
     implementation(fileTree(mapOf("dir" to "libs/godot-runtime", "include" to listOf("*.jar", "*.aar"))))
+    implementation("org.godotengine:godot:4.3.0.stable")
+    implementation("androidx.fragment:fragment:1.7.1")
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))
 
     implementation("androidx.activity:activity-compose:1.10.0")

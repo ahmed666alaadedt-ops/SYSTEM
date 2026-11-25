@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "app/**"
+      - "SYSTEM-WORLD/**"
       - "build.gradle.kts"
       - "settings.gradle.kts"
       - ".github/workflows/system-android-app.yml"
@@ -11,6 +12,7 @@ on:
     branches: [main]
     paths:
       - "app/**"
+      - "SYSTEM-WORLD/**"
       - "build.gradle.kts"
       - "settings.gradle.kts"
       - ".github/workflows/system-android-app.yml"
@@ -91,6 +93,33 @@ jobs:
           grep -q 'SystemMiyarGuideGate' app/src/main/java/com/system/irtqaa/MainActivity.kt
           grep -q 'system_launcher_icon_3d' app/src/main/res/mipmap-anydpi-v26/ic_system.xml
           grep -q 'R.raw.system_intro' app/src/main/java/com/system/irtqaa/SystemStartup.kt
+
+      - name: Download Godot 4.3 editor for embedded runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/godot"
+          curl -L --fail --retry 3 \
+            "https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip" \
+            -o "$RUNNER_TEMP/godot.zip"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP/godot"
+          chmod +x "$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          "$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64" --version
+
+      - name: Export canonical SYSTEM WORLD resource pack for Android host
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          PACK="$GITHUB_WORKSPACE/app/src/main/assets/main.pck"
+          mkdir -p "$(dirname "$PACK")"
+          "$GODOT" --headless --editor --path "$PROJECT" --import
+          "$GODOT" --headless --path "$PROJECT" --export-pack "SYSTEM WORLD Android" "$PACK"
+          test -s "$PACK"
+          echo "Embedded SYSTEM WORLD resource pack:"
+          ls -lh "$PACK"
+          sha256sum "$PACK"
 
       - name: Build native SYSTEM Android application
         run: gradle --no-daemon --stacktrace :app:assembleDebug

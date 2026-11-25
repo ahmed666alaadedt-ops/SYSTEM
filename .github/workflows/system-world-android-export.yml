@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - feature/baghdad-five-plus-power-tower-20261122
     paths:
       - "SYSTEM-WORLD/**"
       - ".github/workflows/system-world-android-export.yml"
@@ -128,7 +129,7 @@ jobs:
         run: |
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
-          "$GODOT" --headless --editor --path "$PROJECT" --quit
+          "$GODOT" --headless --editor --path "$PROJECT" --import
           "$GODOT" --headless --path "$PROJECT" --quit-after 10
 
       - name: Verify Android export prerequisites

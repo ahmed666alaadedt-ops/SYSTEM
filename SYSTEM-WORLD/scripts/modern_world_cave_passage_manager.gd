@@ -15,12 +15,12 @@ const TUNNEL_LENGTH := 42.0
 const TUNNEL_WIDTH := 9.0
 const TUNNEL_HEIGHT := 6.0
 
-var terrain: ModernContinentManager
+var terrain: Variant
 
 
 func _ready() -> void:
 	name = "ModernWorldCavePassageManager"
-	terrain = get_parent().get_node_or_null("ModernContinent") as ModernContinentManager
+	terrain = get_parent().get_node_or_null("ModernContinent")
 	if terrain == null:
 		push_warning("SYSTEM WORLD: cave passages require ModernContinent.")
 		return

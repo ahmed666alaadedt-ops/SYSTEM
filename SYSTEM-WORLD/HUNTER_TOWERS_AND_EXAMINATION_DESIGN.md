@@ -1,129 +1,91 @@
-# SYSTEM WORLD — Hunter Towers and Global Hunter Examination
+# SYSTEM WORLD — Hunter Association and Power Tower Design
 
-## Canonical design
+## Current approved Baghdad layout
 
-The modern-world Baghdad region contains two distinct tower landmarks:
+Baghdad has **exactly five connected district towers** across the Karkh–Rusafa corridor:
 
-1. **World Hunter Association Tower** — the monumental headquarters and public symbol of the global Hunter organization. It is intended to be the tallest tower in the world. The current procedural blockout uses an approximate 1,000 m height and 200 visible floor bands.
-2. **Power Tower** — a separate optional challenge arena for individual progression, ranked battles, increasingly difficult opponents, and rewards. The current procedural blockout uses an approximate 168 m height and 28 visible floor bands.
+1. Hunter Association
+2. Business and Investment
+3. Shopping and Commerce
+4. Antiques and Heritage
+5. Technology and Innovation
 
-The towers are separate gameplay identities. The Power Tower is not the Hunter examination, and the Hunter examination is not a Power Tower floor run.
+The Hunter Association Tower is one of the five, and is the central tallest tower above the upper city, aligned with Republic Bridge and the Tigris. It is 650 m / 200 floors, carries the XSX guild identity on all four exterior faces, has inward- and outward-facing advertising facades, and a functional rooftop helipad with an attached flight controller.
 
-## Current source implementation
+The connected district is an elevated, traversable city layer above the river/bridge corridor. Keep its skyways, public facilities, hotel, restaurants, pools and fifteen sky gardens. Public leisure facilities are not extra towers.
 
-- `scripts/baghdad_tower_landmarks_manager.gd` builds both landmark silhouettes near Baghdad and resolves each requested foundation to nearby land where possible.
-- `scripts/system_tower_entrance.gd` provides a ray-interactable entrance marker for each tower.
-- `scripts/modern_world_region_manager.gd` creates the tower manager and registers both landmarks in the existing modern-world map manager as `LocationType.LANDMARK` (enum value 5).
-- `scripts/system_hunter_exam_manager.gd` defines a seven-stage examination, candidate numbering, registration, sequential progression, save-state fields, and completion/failure signals.
-- `scripts/system_power_tower_manager.gd` defines a separate 100-floor progression track, level requirements, boss/elite floor cadence, rank bands, clear-time records, and XP reward events. `scripts/main.gd` connects its floor-clear reward event to the existing player progression.
-- `scripts/hunter_guild_menu.gd` adds registration and start controls.
-- `scripts/main.gd` creates the examination manager and connects the guild menu signals.
+The Power Tower is a separate standalone 200-floor challenge destination away from Baghdad. It is never counted among the five district towers and must not join their skybridge or vehicle-deck loop.
 
-## Landmark architecture expansion — 20 November 2026
+## Active Hunter discovery, recruitment and tunnel route
 
-- The shared tower shell now adds four monumental facade fins, three stepped podium terraces, and an illuminated crown ring.
-- The Power Tower exterior now has four tournament/champion display blades and three concentric arena terraces at its base, reinforcing its identity as a public combat venue.
-- The Hunter Association Tower exterior now has two monumental association wings, a Hall of Honor display, and a crown spire.
-- These are procedural architectural blockout elements, not final high-detail art assets. The champion boards currently display static titles; they are not yet connected to live player rankings or verified gate-clearing records.
-- The Power Tower's 100-floor progression manager remains separate from the exterior. The arena terraces do not yet constitute explorable interior arenas. A later interior-scene milestone must provide multiple distinct arenas (duel, team combat, survival, boss trial, and ranked championship), spectator galleries, training halls, matchmaking, and verified reward/record flows.
-- The Hunter Association interior likewise still needs navigable reception, registration, mission hall, examination administration, training, research, medical support, meeting rooms, and a dynamically updated global hunter honor gallery.
+The approved player route is one continuous underground examination tunnel, not a multi-city or multi-stage journey.
 
-## Power Tower arena progression data
+1. The player discovers the Hunter Association in Baghdad and enters its public lobby.
+2. On arrival, an Arabic invitation asks whether the player wants to become a Hunter. The player can accept or decline.
+3. Declining leaves registration unchanged and allows the player to choose again on a later visit.
+4. After acceptance, the player follows the visible Hunter Guild guide.
+5. The guide escorts the player from the Hunter Association Tower to the single permanent underground examination tunnel beneath the district.
+6. The candidate serial is allocated, saved and shown only when the player reaches the tunnel.
+7. Re-entry reuses the saved serial. The system must not allocate a second number to an already registered candidate.
 
-The 100-floor progression now assigns a distinct challenge profile by floor cycle:
-- Duel arena: one-on-one combat.
-- Team battle arena: multi-opponent/team encounter.
-- Survival arena: escalating waves.
-- Elite gauntlet: successive stronger opponents.
-- Championship arena: timed ranked sequence.
-- Every tenth floor overrides the cycle with a boss-trial profile.
+The tunnel competition is continuous and contains three ordered physical checkpoints. It includes 500 individually tracked background candidates and five named interactive rivals. The background crowd uses shared MultiMesh rendering and lightweight non-combat decision profiles; it is not represented as 500 full physics/pathfinding agents with individual combat and dialogue.
 
-Floor data now exposes arena type/name, Arabic rules text, opponent count, wave count, and whether the result is marked for ranked treatment. This is progression metadata only: no arena interior scene, opponent spawning, team matchmaking, wave director, or server-verified ranking has been implemented yet.
+The five named rivals retain their individual behaviors:
+- Ren: objective theft and recovery/progression blocking
+- Kai: deception
+- Mira: ambush and pursuit
+- Sami: fair rivalry
+- Daigo: individual combat duel
 
-## Seven-stage Hunter Examination
+Candidate numbers currently persist locally on the installation. Global uniqueness across accounts/devices and server-authoritative anti-cheat verification are not claimed.
 
-The examination is a difficult, multi-city journey. It tests judgment, observation, navigation, teamwork, survival, and combat restraint—not only damage output.
+The Marshland area remains separate and unconnected for now. Any future connection must be a deliberate design update; it is not part of the current tunnel route.
 
-| Stage | Location | Core challenge |
-|---|---|---|
-| 1 | Baghdad — Mesopotamian heritage site | Recover the correct artifact, interpret inscriptions, identify false clues, and avoid traps |
-| 2 | Cairo — buried market | Navigate a layered maze with shifting routes, limited supplies, and misleading signs |
-| 3 | Alexandria — lighthouse and coast | Navigate a storm, restore signal mechanisms, and rescue separated candidates |
-| 4 | Paris — catacombs | Solve sound and logic puzzles while moving quietly through monitored passages |
-| 5 | Babylon — ancient ruins | Read the guardian mechanism and survive a high-risk guardian trial |
-| 6 | Tokyo — urban districts | Complete a changing pursuit and observation course without endangering civilians |
-| 7 | Highland frontier | Complete a long survival and teamwork route under harsh weather and resource pressure |
+## Restaurant and Shopping Tower boundary
 
-The design can include candidate-number competition and controlled attempts to obtain another candidate's number in a dedicated later stage. Any such mechanic must have clear rules, prevent permanent account theft, and be judged as part of the examination rather than as an unrestricted griefing feature.
+The Shopping and Commerce Tower restaurant keeps its own ordering, seating, meal delivery, waiter and chef lifecycle. It is not the active Hunter examination entrance.
 
-## Candidate numbering and persistence
+The old restaurant secret-riddle, private-room meal gate, restaurant elevator, and multi-stage examination prototypes are historical implementation directions, not the current approved player route. Do not restore them or let them replace the Hunter Tower invitation and guide escort.
 
-- Registration allocates a sequential candidate number beginning at 1001.
-- The candidate number is saved locally with the current registration record.
-- Completed stage IDs and examination state are written to `user://system_hunter_exam.cfg`.
-- Stage order is enforced by the manager.
-- A provisional license signal is emitted only after all seven stage IDs have been completed.
+Weapons, swords, spears, axes, bows, firearms, shields, armor, helmets, modern armored outfits, equipment upgrades, repairs, crafting, Nen-awakening/control/recovery elixirs, skill manuals and player marketplace departments remain inside Shopping and Commerce Tower. They are not separate towers.
 
-## Important implementation boundary
+## Power Tower — 200-floor individual challenge
 
-The current work creates the procedural tower blockouts, entrance interaction markers, menu registration/start controls, and the examination progression data manager. It does **not** yet create the explorable interior floors, the seven physical stage environments, the actual maze geometry, puzzle devices, guardian AI encounters, city-to-city travel sequences, server-authoritative candidate verification, anti-cheat checks, or a production Hunter-license card. The entrance currently reports an interaction; it does not yet load a tower interior scene.
+The Power Tower is an independent destination with its own entrance, progression, arenas, spectators, staff and rewards.
 
-The Power Tower now has a separate 100-floor progression manager with unlock order, level gates, boss/elite classification, rank bands, saved highest-floor and clear-time records, and a reward signal connected to player XP. Actual combat encounters, floor scenes, opponent AI, rankings, and a trusted combat-verification caller remain to be implemented.
+- Exactly one player fights exactly one opponent in each official round (1v1).
+- Standard, elite and boss fights remain individual duels; team battles, party fights, enemy waves and group combat competitions are prohibited.
+- Every tenth floor is a boss duel; every fifth non-boss floor is an elite duel.
+- Floor 200 is the unique final sovereign boss duel.
+- The progression uses ranks F through SSS, floor requirements, clear-time records and player progression rewards.
+- Spectators and supporter groups are non-combat social activities. Prediction tickets use SYSTEM virtual currency only; no real-money betting or cash-out.
+- The separate Power Tower does not receive Baghdad's five-tower public-customer or sky-garden allocation.
 
-The stage completion method is an integration hook for a future trusted objective-verification system. A non-empty evidence string is not sufficient security for an online competitive game. Before live multiplayer, completion and candidate-number records must be validated by an authoritative server.
+The 200 floors are grouped into ten visual environment chapters of twenty floors each: Iron, Desert, Frost, Volcanic, Jungle, Royal Ruins, Storm, Shadow, Celestial and Sovereign. Generated arenas receive matching floor-deck materials, illuminated rings, themed pylons and arena titles. Floor 200 uses the unique Sovereign theme.
 
-## Production sequence
+The Power Tower is a substantial local gameplay foundation, not a claim of production online PvP matchmaking. Signed server-result verification, global leaderboards, authoritative online records, final art for every floor and physical Android performance inspection remain separate release gates.
 
-1. Build and validate the tower blockouts and land placement in Godot.
-2. Create separate interior scenes for the Hunter Association headquarters and Power Tower.
-3. Build each examination stage as a playable environment with objective triggers, puzzles, traps, navigation, NPC candidates, and safe failure/retry rules.
-4. Connect travel transitions between the modern and historical city maps.
-5. Add official license/card issuance, Hunter ranks, examination records, and rewards to the existing player/account progression systems.
-6. Add server-side candidate numbering, stage verification, anti-cheat, and multiplayer synchronization.
-7. Add cinematic art, character animations, environmental audio, and mobile performance/LOD passes.
+## Current implementation and verification boundary
 
-## Verification boundary
+Relevant runtime files include:
+- `scripts/baghdad_tower_landmarks_manager.gd` — five connected Baghdad towers, central Hunter tower, separate Power Tower, helipad and the underground tunnel.
+- `scripts/system_hunter_candidate_crowd.gd` — 500 tracked candidate records with shared rendering and lightweight background behavior.
+- `scripts/system_hunter_exam_manager.gd` — candidate registration, persistent serial, tunnel arrival and continuous competition state.
+- `scripts/hunter_guild_menu.gd` and the Hunter recruitment/guide runtime — invitation, accept/decline and guide escort.
+- `scripts/system_power_tower_manager.gd` — separate 200-floor progression, rank and duel records.
 
-GitHub writes and source-level connections are confirmed for this update. No Godot parser, editor import, runtime scene, Android build, multiplayer test, or visual inspection was performed in this session. The tower geometry and examination progression are prototypes, not a finished playable exam or completed tower experience.
+Automated validation on the current branch has passed the following areas on the latest verified runtime snapshot:
+- Baghdad five-tower landmarks, Republic Bridge/Tigris placement, upper city and separate Power Tower.
+- Hunter Tower invitation, guide-led tunnel escort and serial allocation.
+- One continuous tunnel competition with three ordered checkpoints, 500 tracked candidates and five named rivals.
+- Baghdad tower operations, elevator/emergency lifecycle, terrain streaming, child-character safety, WGS84 anchor, Baghdad-only Star Gate hub and Greed Island return.
+- Android marketplace bridge request/response correlation and allowlist behavior.
 
+The full tower-interiors/hotel/shopping regression and current full-project workflow are still being re-run on the latest branch head. Firebase marketplace emulator tests and Android APK export/builds have passed on recent branch snapshots. These are automated checks, not physical Android visual inspection or proof of live cross-account trading between two deployed player accounts.
 
-## Baghdad Five-Tower Connected City — approved spatial direction — 20 November 2026
+## Release discipline
 
-The five-tower concept is a connected urban district, not five isolated landmarks. Treat it as one continuous vertical city woven into central Baghdad and spanning the Karkh–Rusafa river corridor.
-
-### Geographic placement and protected landmarks
-- Place the district in central Baghdad between the Karkh and Rusafa banks of the Tigris, with major parts of the complex on both sides of the river.
-- The Tigris must remain visibly flowing beneath and through the composition as a real open river corridor. Do not roof over, fill, or visually hide the river.
-- Preserve the Tigris waterfront, river navigation corridor, riverbanks, and the legibility of the two historic sides of Baghdad.
-- Tahrir Square (Sahat al-Tahrir) is a mandatory protected landmark on the Rusafa side. Preserve the square's recognizable open public-space identity and the Freedom Monument; do not replace, bury, cover, or visually overwhelm either landmark with tower podiums or elevated structures.
-- Integrate the five-tower district with the existing city fabric and roads rather than treating it as a detached island or replacing central Baghdad.
-
-### Connected-city form
-- The five towers remain five distinct primary towers, each with its own silhouette and identity, but are joined into one coherent complex by elevated skybridges, multi-level pedestrian promenades, public terraces, and carefully placed cross-river connections.
-- Connections must create a walkable network across the Karkh and Rusafa sides while keeping the Tigris open below. River-crossing links should be elegant bridges or high-level connectors with clear navigation clearance; do not place solid building masses across the river.
-- Build a multi-level urban experience: ground-level public streets and plazas; mid-level retail, services, and indoor promenades; upper-level sky gardens, recreation decks, and observation spaces.
-- The five rooftops and podium terraces should connect into large shared gardens and entertainment districts, with some independent zones for each tower. Include parks, restaurants, cafes, pools, sports courts, event plazas, viewing decks, and family recreation areas.
-- Provide clear public routes, emergency/service access, transit connections, accessible paths, and wayfinding. The complex must feel like a functioning city district, not only a decorative mega-structure.
-
-### Five tower identities
-1. Power Tower — combat arenas, training, tournaments, champion displays, and spectator facilities.
-2. Hunter Association Tower — hunter registration, mission hall, examination administration, guild services, and Hall of Honor.
-3. Business Tower — company headquarters, offices, investment, trade, and professional services.
-4. Shopping Tower — connected malls, shops, restaurants, cinemas, and indoor public promenades.
-5. Entertainment Tower — amusement, sports, pools, family activities, festivals, and recreation.
-
-### Visual and gameplay rules
-- From multiple city viewpoints, the player should be able to recognize the five-tower skyline as one connected Baghdad landmark, while still distinguishing all five towers.
-- Ground-level views must preserve meaningful views toward the Tigris and the Freedom Monument/Tahrir Square. Use setbacks, view corridors, and controlled tower heights/placement to avoid hiding protected landmarks.
-- The riverfront and Tahrir Square remain explorable public spaces with their own activities; they are not merely scenery around the towers.
-- Do not claim the real Baghdad skyline or landmarks have been physically altered. This is the fictional future version of Baghdad inside SYSTEM WORLD.
-- This section establishes the approved design direction only. It does not mean the complete district, bridges, interiors, or river engineering are already implemented in Godot.
-
-
-### Vehicle circulation, comfort, and recreation expansion — 20 November 2026
-- The district is intended to support cars entering from Baghdad streets, climbing dedicated ramps, crossing elevated vehicle decks, and reaching tower parking/drop-off levels. Separate pedestrian promenades and sky gardens keep walking routes safe and pleasant.
-- The five primary identities are fixed within the five-tower composition: Power Tower, Hunter Association Tower, Business Tower, Shopping Tower, and Entertainment Tower. The Power Tower and Hunter Association Tower are full independent towers within the connected district, not extra towers perched on top of other buildings.
-- The connected district's eventual facilities include hotels, rest areas, clinics/medical support, restaurants, cafes, retail, cinemas, amusement rides, water attractions, swimming pools, rooftop gardens, sports courts, family spaces, public plazas, parking, emergency access, and service routes.
-- The vehicle ramps and elevated decks added to the procedural manager are architectural blockout geometry only. They do not yet provide drivable road navigation, vehicle physics, traffic rules, parking interactions, or tested collision/clearance.
-- Amenity decks are placeholder geometry and metadata, not finished pools, rides, shops, hotels, or interactive interiors.
-- The Tigris river channel and navigation corridor must remain open below cross-river connections. Tahrir Square and the Freedom Monument remain protected, recognizable, explorable landmarks; no tower deck or bridge may cover or visually erase them.
+- Continue only on `feature/baghdad-five-plus-power-tower-20261122` and existing draft PR #38.
+- Preserve existing systems; do not recreate completed towers, interiors, tests or workflows from scratch.
+- Do not merge into `main` without explicit user approval.
+- Do not claim final visual/device completion from headless tests or APK export alone.

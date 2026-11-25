@@ -41,7 +41,7 @@ func configure(profile: Dictionary, palette_index: int = 0) -> void:
 		age_group = "child" if age_value < 18.0 else ("elder" if age_value >= 60.0 else "adult")
 	if age_group in ["طفل", "طفلة", "child", "children"]:
 		age_group = "child"
-	elif age_group in ["كبير السن", "مسن", "مسنة", "elderly", "senior"]:
+	elif age_group in ["elder", "elders", "كبير السن", "مسن", "مسنة", "elderly", "senior", "older_adult"]:
 		age_group = "elder"
 	else:
 		age_group = "adult"
@@ -93,7 +93,10 @@ func configure(profile: Dictionary, palette_index: int = 0) -> void:
 	_build_fallback(appearance_profile, palette_index)
 
 func _load_imported_model(path: String) -> bool:
-	if not ResourceLoader.exists(path):
+	# GLB files may be present on disk before Godot has registered their imported
+	# resource metadata in a headless/runtime-only launch. Check the source file
+	# directly, then let load() resolve the imported PackedScene.
+	if not FileAccess.file_exists(path):
 		return false
 	var packed := load(path) as PackedScene
 	if packed == null:
@@ -435,7 +438,15 @@ func set_outfit(outfit_id: String, variant_index: int = 0) -> void:
 		"greed_island": [Color8(38, 104, 92), Color8(76, 82, 42), Color8(62, 62, 112), Color8(132, 76, 32)],
 		"hunter": [Color8(20, 48, 82), Color8(30, 64, 82), Color8(36, 42, 68), Color8(62, 54, 36)],
 		"guard": [Color8(72, 42, 28), Color8(46, 58, 72), Color8(72, 62, 34), Color8(42, 66, 54)],
-		"royal": [Color8(86, 54, 104), Color8(105, 74, 34), Color8(44, 62, 104), Color8(92, 42, 54)]
+		"royal": [Color8(86, 54, 104), Color8(105, 74, 34), Color8(44, 62, 104), Color8(92, 42, 54)],
+		"hunter_staff": [Color8(15, 43, 70), Color8(24, 68, 94), Color8(31, 48, 67), Color8(91, 68, 34)],
+		"business_staff": [Color8(38, 46, 57), Color8(23, 70, 77), Color8(50, 58, 76), Color8(83, 42, 54)],
+		"shopping_staff": [Color8(113, 77, 27), Color8(30, 57, 78), Color8(88, 43, 47), Color8(35, 84, 76)],
+		"hotel_staff": [Color8(24, 43, 67), Color8(76, 34, 48), Color8(27, 76, 62), Color8(48, 51, 61)],
+		"restaurant_staff": [Color8(43, 43, 43), Color8(86, 58, 38), Color8(66, 76, 55), Color8(72, 72, 68)],
+		"entertainment_staff": [Color8(71, 42, 104), Color8(30, 91, 72), Color8(34, 66, 108), Color8(126, 70, 30)],
+		"technology_staff": [Color8(19, 79, 101), Color8(30, 58, 99), Color8(45, 58, 70), Color8(23, 103, 93)],
+		"power_staff": [Color8(37, 38, 44), Color8(101, 37, 35), Color8(116, 83, 31), Color8(58, 61, 68)]
 	}
 	var choices: Array = palettes.get(outfit_id.to_lower(), palettes["civilian"])
 	var cloth_color: Color = choices[posmod(variant_index, choices.size())]
@@ -461,8 +472,20 @@ func _sanitize_empty_mesh_instances(root: Node) -> void:
 	for child in root.get_children():
 		if child is MeshInstance3D:
 			var mesh_node := child as MeshInstance3D
-			if mesh_node.mesh == null:
-				mesh_node.mesh = ArrayMesh.new()
+			var replace_mesh := mesh_node.mesh == null
+			if not replace_mesh:
+				var mesh_rid: RID = mesh_node.mesh.get_rid()
+				replace_mesh = not mesh_rid.is_valid()
+			if replace_mesh:
+				# An empty ArrayMesh has no rendering surfaces/RID in Godot 4.3's
+				# dummy backend. Use a real one-surface placeholder, kept invisible,
+				# so the renderer never receives a null mesh handle during NPC setup.
+				var safe_placeholder := BoxMesh.new()
+				safe_placeholder.size = Vector3(0.001, 0.001, 0.001)
+				mesh_node.mesh = safe_placeholder
+				mesh_node.visible = false
+				mesh_node.set_meta("system_empty_mesh_sanitized", true)
+				print("SYSTEM NPC: sanitized empty or invalid mesh handle: ", str(mesh_node.get_path()))
 		_sanitize_empty_mesh_instances(child)
 
 func _collect_mesh_nodes(root: Node) -> Array[Node]:
@@ -470,9 +493,13 @@ func _collect_mesh_nodes(root: Node) -> Array[Node]:
 	for child in root.get_children():
 		if child is MeshInstance3D:
 			var mesh_node := child as MeshInstance3D
-			# Ignore zero-surface placeholders when applying appearance materials.
-			if mesh_node.mesh != null and mesh_node.mesh.get_surface_count() > 0:
-				result.append(mesh_node)
+			# Sanitized empty meshes intentionally carry a valid empty ArrayMesh
+			# resource so the scene remains stable. Never ask the headless renderer
+			# for a surface count on that empty placeholder RID.
+			if mesh_node.mesh != null and not bool(mesh_node.get_meta("system_empty_mesh_sanitized", false)):
+				var mesh_rid: RID = mesh_node.mesh.get_rid()
+				if mesh_rid.is_valid():
+					result.append(mesh_node)
 		result.append_array(_collect_mesh_nodes(child))
 	return result
 

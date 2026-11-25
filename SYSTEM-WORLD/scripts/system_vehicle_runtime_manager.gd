@@ -11,15 +11,15 @@ var player: CharacterBody3D
 var player_mesh: Node3D
 var camera: Camera3D
 var spring_arm: SpringArm3D
-var garage_manager: SystemPlayerVehicleManager
+var garage_manager: Variant
 var world_root: Node3D
-var active_vehicle: SystemDrivableVehicle
+var active_vehicle: Variant
 var is_driving := false
 var mobile_throttle := 0.0
 var mobile_steering := 0.0
 var brake_hold_time := 0.0
 var player_mesh_was_visible := true
-var showroom_ui: SystemVehicleDealershipUI
+var showroom_ui: Variant
 var dedicated_track_context := false
 
 func setup(
@@ -27,7 +27,7 @@ func setup(
 	player_visual: Node3D,
 	camera_node: Camera3D,
 	camera_arm: SpringArm3D,
-	garage: SystemPlayerVehicleManager,
+	garage: Variant,
 	active_root: Node3D
 ) -> void:
 	player = player_node
@@ -183,7 +183,7 @@ func exit_vehicle() -> bool:
 	if not is_driving or not is_instance_valid(active_vehicle):
 		return false
 	active_vehicle.set_driver_active(false)
-	var exit_position := active_vehicle.global_position + active_vehicle.global_transform.basis.x * 2.2 + Vector3.UP * 0.5
+	var exit_position: Vector3 = active_vehicle.global_position + active_vehicle.global_transform.basis.x * 2.2 + Vector3.UP * 0.5
 	player.global_position = exit_position
 	player.velocity = Vector3.ZERO
 	player.set_meta("system_driving_vehicle", false)
@@ -220,6 +220,6 @@ func apply_mobile_brake() -> void:
 func _update_follow_camera() -> void:
 	if not is_instance_valid(camera) or not is_instance_valid(active_vehicle):
 		return
-	var behind := active_vehicle.global_transform.basis * Vector3(0.0, 3.0, 7.0)
+	var behind: Vector3 = active_vehicle.global_transform.basis * Vector3(0.0, 3.0, 7.0)
 	camera.global_position = active_vehicle.global_position + behind
-	camera.look_at(active_vehicle.global_position + Vector3.UP * 1.0, Vector3.UP)
+	camera.look_at_from_position(camera.global_position, active_vehicle.global_position + Vector3.UP * 1.0, Vector3.UP)

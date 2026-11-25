@@ -369,3 +369,33 @@ export {
   listMyHunterGuildMissionContributions,
   finishHunterGuildMissionSession
 } from "./hunter_guild_contributions";
+
+export {
+  getMyMarketplaceWallet,
+  listMyMarketplaceArtifacts,
+  grantMarketplaceArtifact,
+  browseArtifactMarketplace,
+  createArtifactListing,
+  cancelArtifactListing,
+  purchaseArtifactListing,
+  expireArtifactListing,
+  releaseExpiredArtifactListings,
+  listMyMarketplaceTransactions,
+  grantMarketplaceArtifactFromReward
+} from "./artifact_marketplace";
+export { awardMarketplaceCurrency } from "./marketplace_currency";
+
+export {
+  createArtifactAuction,
+  browseArtifactAuctions,
+  placeArtifactAuctionBid,
+  listArtifactAuctionBids,
+  settleExpiredArtifactAuction,
+  settleExpiredArtifactAuctions,
+  cancelArtifactAuction,
+  createArtifactExchangeOffer,
+  acceptArtifactExchangeOffer,
+  closeArtifactExchangeOffer,
+  releaseExpiredArtifactExchangeOffers,
+  listMyArtifactExchangeOffers
+} from "./artifact_marketplace_advanced";
