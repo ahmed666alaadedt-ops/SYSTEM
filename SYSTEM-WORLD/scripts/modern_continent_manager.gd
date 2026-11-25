@@ -205,8 +205,8 @@ func _land_base_height(x: float, z: float) -> float:
 
 
 func _get_al_zawraa_marsh_height(x: float, z: float) -> float:
-	var nx := (x - baghdad_al_zawraa_center.x) / 420.0
-	var nz := (z - baghdad_al_zawraa_center.y) / 360.0
+	var nx := (x - baghdad_al_zawraa_center.x) / 650.0
+	var nz := (z - baghdad_al_zawraa_center.y) / 660.0
 	var radius := sqrt(nx * nx + nz * nz)
 	if radius > 1.0:
 		return OCEAN_FLOOR
