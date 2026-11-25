@@ -42,6 +42,52 @@ static func apply_visual_finish(lobby: Node3D, tower_id: String, title: String, 
 	lobby.set_meta("system_visual_finish_piece_count", 1 + 2 + 7 + 2 + 8 + 2 + 2 + 3)
 	lobby.set_meta("system_visual_finish_title", title)
 
+static func apply_tower_visual_finish(root: Node3D, node_name: String, height: float, radius: float, accent_color: Color) -> void:
+	var accent_material := _material(accent_color.darkened(0.12), 0.24, 0.78)
+	var light_material := _material(accent_color.lightened(0.16), 0.2, 0.5)
+	light_material.emission_enabled = true
+	light_material.emission = accent_color
+	light_material.emission_energy_multiplier = 0.8
+	for fin_index in range(12):
+		var angle := TAU * float(fin_index) / 12.0
+		var outward := Vector3(cos(angle), 0.0, sin(angle))
+		var fin := MeshInstance3D.new()
+		fin.name = "FacadeFinishFin_%02d" % fin_index
+		var fin_mesh := BoxMesh.new()
+		fin_mesh.size = Vector3(1.35, height * 0.82, 0.72)
+		fin.mesh = fin_mesh
+		fin.position = outward * (radius * 0.91) + Vector3.UP * (height * 0.5 + 7.0)
+		fin.basis = Basis.looking_at(outward, Vector3.UP)
+		fin.material_override = accent_material if fin_index % 3 != 0 else light_material
+		root.add_child(fin)
+	for band_index in range(3):
+		var progress := 0.22 + float(band_index) * 0.27
+		var band_radius := lerpf(radius, radius * 0.62, progress) * 0.94
+		var band := MeshInstance3D.new()
+		band.name = "FacadeFinishBelt_%02d" % band_index
+		var band_mesh := CylinderMesh.new()
+		band_mesh.top_radius = band_radius
+		band_mesh.bottom_radius = band_radius
+		band_mesh.height = 0.72
+		band.mesh = band_mesh
+		band.position.y = 9.0 + (height - 16.0) * progress
+		band.material_override = light_material
+		root.add_child(band)
+	var crown := MeshInstance3D.new()
+	crown.name = "FacadeFinishCrownRing"
+	var crown_mesh := CylinderMesh.new()
+	crown_mesh.top_radius = radius * 0.61
+	crown_mesh.bottom_radius = radius * 0.67
+	crown_mesh.height = 2.2
+	crown.mesh = crown_mesh
+	crown.position.y = height + 8.2
+	crown.material_override = accent_material
+	root.add_child(crown)
+	root.set_meta("system_tower_visual_finish", "facade_fins_belts_and_crown_v1")
+	root.set_meta("system_tower_visual_finish_fins", 12)
+	root.set_meta("system_tower_visual_finish_belts", 3)
+	root.set_meta("system_tower_visual_finish_identity", node_name)
+
 static func _accent_for_tower(tower_id: String) -> Color:
 	match tower_id:
 		"hunter_association_tower_baghdad":
