@@ -40,11 +40,13 @@ func publish_mission_completion(mission_id: String, xp_awarded: int) -> void:
 	)
 
 
-func publish_exam_stage(stage_id: String, stage_number: int) -> void:
+func publish_exam_stage(stage_id: String, _stage_number: int) -> void:
+	# Baghdad now has one continuous Hunter exam: tunnel -> marshland -> hidden sanctuary.
+	# This callback fires only when that complete exam is awarded; never show retired stage counts.
 	_publish_result(
 		"اختبار الصيادين",
-		"اجتياز المرحلة %d من 7" % stage_number,
-		stage_id
+		"اكتمل اختبار الصيادين المتصل",
+		"نفق الصيادين + أرض المستنقعات + اكتشاف الملاذ الأثري — " + stage_id
 	)
 
 
