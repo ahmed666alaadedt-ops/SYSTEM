@@ -25,9 +25,17 @@ var marsh_center := Vector3.ZERO
 var tunnel_connector_length := 0.0
 var marsh_entry_local := Vector3(-420.0, 0.0, -15.0)
 var hidden_gates_unlocked := false
+var fog_layers: Array[MeshInstance3D] = []
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	for index in range(fog_layers.size()):
+		var fog := fog_layers[index]
+		if not is_instance_valid(fog):
+			continue
+		fog.position.x += delta * (0.18 + float(index % 4) * 0.06)
+		if fog.position.x > MARSH_RADIUS_X:
+			fog.position.x = -MARSH_RADIUS_X
 	if hidden_gates_unlocked:
 		return
 	var exam_manager := get_tree().root.find_child("SYSTEMHunterExamManager", true, false)
@@ -42,7 +50,6 @@ func _process(_delta: float) -> void:
 	hidden_gates_unlocked = true
 	set_meta("system_hidden_heritage_site_discovered", true)
 	print("SYSTEM Hunter Exam: hidden marsh sanctuary and seasonal Star Gates discovered.")
-
 
 func setup(terrain_node: Node, hunter_tunnel: Node3D) -> void:
 	terrain = terrain_node
@@ -595,7 +602,12 @@ func _build_marsh_farms(zone: Node3D) -> void:
 
 func _build_marsh_fog(zone: Node3D) -> void:
 	var fog_material := StandardMaterial3D.new()
-	fog_material.albedo_color = Color(0.68, 0.78, 0.72, 0.16)
+	var fog_tone := Color(0.65, 0.8, 0.68, 0.13)
+	match _get_marsh_season():
+		"summer": fog_tone = Color(0.72, 0.78, 0.7, 0.10)
+		"autumn": fog_tone = Color(0.62, 0.68, 0.68, 0.18)
+		"winter": fog_tone = Color(0.7, 0.8, 0.86, 0.24)
+	fog_material.albedo_color = fog_tone
 	fog_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	fog_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	fog_material.no_depth_test = false
@@ -611,6 +623,7 @@ func _build_marsh_fog(zone: Node3D) -> void:
 		fog.material_override = fog_material
 		fog.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		zone.add_child(fog)
+		fog_layers.append(fog)
 		fog.set_meta("system_fog_layer", "low_swamp_mist")
 	zone.set_meta("system_ground_fog_layer_count", 14)
 
