@@ -59,6 +59,11 @@ func _run() -> void:
 		_fail("Player character was not initialized for tower operations validation.")
 		return
 
+	var landmarks := main.find_child("BaghdadTowerLandmarksManager", true, false) as Node3D
+	if landmarks == null:
+		_fail("BaghdadTowerLandmarksManager is missing.")
+		return
+
 	# Confirm the Antiques Tower remains one of the five approved Baghdad towers.
 	var antiques_tower := landmarks.get_node_or_null("AntiquesHeritageTower") as Node3D
 	if antiques_tower == null or int(antiques_tower.get_meta("tower_floor_count", 0)) != 34:
