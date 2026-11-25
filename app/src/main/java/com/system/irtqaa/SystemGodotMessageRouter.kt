@@ -24,6 +24,7 @@ class SystemGodotMessageRouter(
         fun onBridgeReady() {}
         fun onWorldState(state: WorldState) {}
         fun onWorldEntryResult(result: WorldEntryResult) {}
+        fun onMarketplaceRequest(requestId: String?, payload: JSONObject) {}
         fun onRejectedMessage(reason: String) {}
     }
 
@@ -80,6 +81,15 @@ class SystemGodotMessageRouter(
                 }
                 listener.onWorldState(WorldState(worldId, worldName))
             }
+            SystemGodotMessageContract.Type.MARKETPLACE_REQUEST -> {
+                val requestId = envelope.requestId
+                val operation = payload.optString("operation").take(64)
+                if (requestId.isNullOrBlank() || operation.isBlank()) {
+                    listener.onRejectedMessage("Marketplace request is missing its request_id or operation.")
+                    return false
+                }
+                listener.onMarketplaceRequest(requestId, payload)
+            }
             SystemGodotMessageContract.Type.WORLD_ENTRY_RESULT -> {
                 val worldId = payload.optString("world_id").take(40)
                 if (worldId.isBlank() || !payload.has("accepted")) {
@@ -102,14 +112,24 @@ class SystemGodotMessageRouter(
         return true
     }
 
+    fun sendMarketplaceResult(requestId: String, payload: JSONObject): Boolean {
+        if (requestId.isBlank() || requestId.length > 128) return false
+        return send(
+            SystemGodotMessageContract.Type.MARKETPLACE_RESULT,
+            payload,
+            requestId
+        )
+    }
+
     private fun send(
         type: SystemGodotMessageContract.Type,
-        payload: JSONObject
+        payload: JSONObject,
+        requestId: String? = null
     ): Boolean {
         if (!SystemGodotMessageContract.isAllowedFromAndroid(type)) return false
         return runCatching {
             sendRawToGodot(
-                SystemGodotMessageContract.encode(type = type, payload = payload)
+                SystemGodotMessageContract.encode(type = type, payload = payload, requestId = requestId)
             )
         }.getOrDefault(false)
     }
