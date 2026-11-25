@@ -986,7 +986,7 @@ func _create_tower_lobby(root: Node3D, tower_id: String, title: String, radius: 
 	lobby.add_child(sign)
 	_create_lobby_media_panels(lobby, width, center_z, wall_height)
 	lobby.set_meta("lobby_status", "enclosed_reception_lobby_blockout")
-	lobby.set_meta("elevator_status", "not_implemented")
+	lobby.set_meta("elevator_status", "runtime_car_and_floor_travel_operational")
 	lobby.set_meta("lift_door_visual_only", false)
 	lobby.set_meta("lift_door_interactive", true)
 	if tower_id == "hunter_association_tower_baghdad":
