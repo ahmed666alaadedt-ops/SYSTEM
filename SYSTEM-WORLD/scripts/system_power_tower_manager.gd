@@ -506,31 +506,52 @@ func populate_power_tower_npc_predictions(match_id: String, spectator_count: int
 	match_id = match_id.strip_edges()
 	if not spectator_matches.has(match_id):
 		return {"success": false, "reason": "MATCH_NOT_FOUND"}
-	if str(spectator_matches[match_id].get("state", "")) != "open":
+	var match_record: Dictionary = spectator_matches[match_id]
+	if str(match_record.get("state", "")) != "open":
 		return {"success": false, "reason": "PREDICTIONS_LOCKED"}
 	var requested_count := clampi(spectator_count, 0, POWER_TOWER_SPECTATOR_TARGET)
+	var predictions: Dictionary = match_record.get("predictions", {})
+	var today := Time.get_date_string_from_system(true)
 	var submitted := 0
 	var skipped := 0
 	for index in range(requested_count):
 		var npc_id := "power_tower_fan_%04d" % (index + 1)
 		var spectator_key := "npc:" + npc_id
-		var match_record: Dictionary = spectator_matches[match_id]
-		var predictions: Dictionary = match_record.get("predictions", {})
 		if predictions.has(spectator_key):
 			skipped += 1
 			continue
-		register_npc_spectator(npc_id)
+		var daily_record: Dictionary = spectator_daily_counts.get(spectator_key, {})
+		var daily_count := int(daily_record.get("count", 0)) if str(daily_record.get("date", "")) == today else 0
+		if daily_count >= SPECTATOR_DAILY_PREDICTION_LIMIT:
+			skipped += 1
+			continue
+		if not spectator_npc_ticket_balances.has(spectator_key):
+			spectator_npc_ticket_balances[spectator_key] = NPC_INITIAL_TICKET_BUDGET
 		var seed_text := "%s:%s" % [match_id, npc_id]
 		var side_index := absi(seed_text.hash()) % 2
 		var fighter_id := str(match_record["fighter_a_id"]) if side_index == 0 else str(match_record["fighter_b_id"])
 		var stake := 1 + (absi((seed_text + ":stake").hash()) % 5)
-		var result := submit_npc_spectator_ticket(match_id, npc_id, fighter_id, stake)
-		if bool(result.get("success", false)):
-			submitted += 1
-		else:
+		var balance := int(spectator_npc_ticket_balances.get(spectator_key, 0))
+		if balance < stake:
 			skipped += 1
+			continue
+		spectator_npc_ticket_balances[spectator_key] = balance - stake
+		predictions[spectator_key] = {
+			"predicted_winner_id": fighter_id,
+			"participant_type": "NPC",
+			"stake_amount": stake,
+			"submitted_at_unix": int(Time.get_unix_time_from_system()),
+			"correct": false,
+			"payout_amount": 0,
+			"net_profit": -stake
+		}
+		match_record["total_pool"] = int(match_record.get("total_pool", 0)) + stake
+		spectator_daily_counts[spectator_key] = {"date": today, "count": daily_count + 1}
+		submitted += 1
+	match_record["predictions"] = predictions
+	spectator_matches[match_id] = match_record
+	_save_spectator_data()
 	return {"success": true, "target": requested_count, "submitted": submitted, "skipped": skipped, "currency": "SYSTEM_CREDITS"}
-
 
 func register_npc_spectator(npc_id: String) -> Dictionary:
 	npc_id = npc_id.strip_edges()
