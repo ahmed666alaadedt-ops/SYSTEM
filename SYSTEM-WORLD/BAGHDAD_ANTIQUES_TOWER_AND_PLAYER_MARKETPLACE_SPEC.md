@@ -51,13 +51,14 @@ Callable endpoints currently added:
 - `getMyMarketplaceWallet`: creates a zero-balance SYSTEM wallet; it never accepts client balance changes.
 - `listMyMarketplaceArtifacts`: returns only the caller's server-owned artifacts.
 - `grantMarketplaceArtifact`: moderator-only trusted issuance endpoint; normal players cannot mint items.
+- `grantMarketplaceArtifactFromReward`: replay-safe artifact issuance restricted to the trusted game-server custom claim; repeated quest events cannot mint duplicates.
 - `browseArtifactMarketplace`: lists active fixed-price offers for authenticated players.
 - `createArtifactListing`: verifies ownership and moves the artifact into escrow before creating the offer.
 - `cancelArtifactListing`: only the seller can cancel their active offer and release escrow.
 - `purchaseArtifactListing`: atomically debits the buyer, credits the seller, transfers ownership, closes the offer and writes transaction/audit records.
 - `expireArtifactListing`: safely releases escrow for expired offers without letting another player cancel a live offer.
 - `listMyMarketplaceTransactions`: returns the player's private purchase/sale history.
-- `createArtifactAuction`, `browseArtifactAuctions`, `placeArtifactAuctionBid`, `listArtifactAuctionBids`, `settleExpiredArtifactAuction`, `cancelArtifactAuction`: player auctions with reserved bid funds, bid history, anti-sniping extension, and atomic settlement after expiry.
+- `createArtifactAuction`, `browseArtifactAuctions`, `placeArtifactAuctionBid`, `listArtifactAuctionBids`, `settleExpiredArtifactAuction`, `cancelArtifactAuction`: player auctions with reserved bid funds, bid history, anti-sniping extension, and atomic settlement after expiry when the settlement endpoint is invoked. Scheduled settlement is still pending.
 - `createArtifactExchangeOffer`, `acceptArtifactExchangeOffer`, `closeArtifactExchangeOffer`, `listMyArtifactExchangeOffers`: two-sided artifact offers with escrow, explicit recipient acceptance, and atomic transfer of both artifacts. Expired offers can be released by any authenticated player.
 
 Authoritative collections:
@@ -81,13 +82,13 @@ Firestore rules deny client writes to wallets, ownership, listings, transactions
 An Android Firebase callable repository has been added at:
 `app/src/main/java/com/system/irtqaa/FirebaseArtifactMarketplaceRepository.kt`
 
-It exposes wallet loading, owned artifact loading, listing browse, listing creation, purchase and cancellation. The Godot in-world exhibit interaction still needs to be connected to this repository through the Android/Godot host bridge. Existing local Godot wallet and inventory data are not authoritative and must never be copied into server wallets without a trusted migration/reward source.
+It exposes wallet and reserved-balance loading, owned artifact loading, fixed-price listing browse/create/purchase/cancel/expiry, auction browse/create/bid/history/settlement/cancellation, exchange inbox/create/accept/close, and private trade history. The Godot in-world exhibit interaction still needs to be connected to this repository through the Android/Godot host bridge. Existing local Godot wallet and inventory data are not authoritative and must never be copied into server wallets without a trusted migration/reward source.
 
 A Firebase Functions TypeScript validation workflow has been added. Passing CI is required before calling the server module build-verified.
 
 ## Remaining activation gates
 
-1. Connect verified quest/reward issuance to trusted artifact ownership grants; do not let players self-mint.
+1. Connect verified quest rewards in the actual game-server runtime to `grantMarketplaceArtifactFromReward`; the secure endpoint exists, but the gameplay reward event source is not wired yet.
 2. Configure the trusted game-server Firebase custom claim and connect verified quest/dungeon rewards to `awardMarketplaceCurrency`; ordinary players cannot mint currency.
 3. Add scheduled background settlement for expired auctions and automatic expiry cleanup for stale marketplace listings.
 5. Connect the Godot exhibit and market-floor UI to the Android callable repository/host bridge.
