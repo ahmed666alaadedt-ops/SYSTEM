@@ -488,6 +488,18 @@ func add_item(item_id: String, amount: int = 1) -> bool:
 	return true
 
 
+func consume_item(item_id: String, amount: int = 1) -> bool:
+	if item_id.strip_edges().is_empty() or amount <= 0 or get_item_count(item_id) < amount:
+		return false
+	var remaining := get_item_count(item_id) - amount
+	if remaining <= 0:
+		inventory_items.erase(item_id)
+	else:
+		inventory_items[item_id] = remaining
+	save_progress()
+	return true
+
+
 func get_item_count(item_id: String) -> int:
 	return int(inventory_items.get(item_id,0))
 
