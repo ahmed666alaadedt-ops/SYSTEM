@@ -7,6 +7,7 @@ const UNDERGROWTH_COUNT := 220
 const REED_CLUSTER_COUNT := 96
 const TURTLE_COUNT := 3
 const DECOY_GUIDE_COUNT := 6
+const CARNIVOROUS_PLANT_COUNT := 12
 
 func _ready() -> void:
 	name = "HunterMarshland"
@@ -25,6 +26,7 @@ func _build_marshland() -> void:
 	set_meta("system_marshland_expected_reed_cluster_count", REED_CLUSTER_COUNT)
 	set_meta("system_marshland_expected_giant_turtle_count", TURTLE_COUNT)
 	set_meta("system_marshland_expected_decoy_count", DECOY_GUIDE_COUNT)
+	set_meta("system_marshland_expected_carnivorous_plant_count", CARNIVOROUS_PLANT_COUNT)
 
 	var soil := _material(Color(0.19, 0.22, 0.12), 0.98, 0.02)
 	var water := _material(Color(0.10, 0.28, 0.25, 0.78), 0.2, 0.1, true)
@@ -164,6 +166,13 @@ func _build_marshland() -> void:
 			reed.material_override = reed_material
 			cluster.add_child(reed)
 
+	# Carnivorous plants are active hazards placed along the running examination route.
+	for index in range(CARNIVOROUS_PLANT_COUNT):
+		var lane := -1.0 if index % 2 == 0 else 1.0
+		var x := lane * (3.8 + float(index % 3) * 1.1)
+		var z := 12.0 + float(index) * 6.0
+		_build_carnivorous_plant(index, Vector3(x, 0.0, z), leaf_dark, leaf_light, flower_material, trunk)
+
 	# Large original swamp fauna; each creature has its own collision and identity.
 	for index in range(TURTLE_COUNT):
 		_build_giant_turtle(index, Vector3(-24.0 + float(index) * 24.0, 0.0, 47.0 + float(index % 2) * 13.0), trunk, leaf)
@@ -252,8 +261,129 @@ func _build_marshland() -> void:
 	set_meta("system_marshland_decoy_npc_count", DECOY_GUIDE_COUNT)
 	set_meta("system_marshland_tracking_arrow_count", 8)
 	set_meta("system_marshland_fog_bank_count", 14)
+	set_meta("system_marshland_carnivorous_plant_count", CARNIVOROUS_PLANT_COUNT)
+	set_meta("system_marshland_carnivorous_plant_species", ["snap_maw", "strangler_vine", "sleeping_spore_bloom", "buried_trap_blossom", "water_lurker"])
+	set_meta("system_marshland_running_exam_hazards_enabled", true)
 	set_meta("system_marshland_exit_gate_present", true)
 
+
+
+func _build_carnivorous_plant(index: int, location: Vector3, dark_leaf: Material, light_leaf: Material, bloom_material: Material, vine_material: Material) -> void:
+	var plant := Node3D.new()
+	plant.name = "CarnivorousExamPlant_%02d" % index
+	plant.position = location
+	var species := index % 5
+	var species_names := ["snap_maw", "strangler_vine", "sleeping_spore_bloom", "buried_trap_blossom", "water_lurker"]
+	plant.set_meta("system_carnivorous_plant_species", species_names[species])
+	plant.set_meta("system_hunter_exam_running_hazard", true)
+	plant.set_meta("system_can_swallow_candidate", species == 0 or species == 3 or species == 4)
+	plant.set_meta("system_can_entangle_candidate", species == 1)
+	plant.set_meta("system_can_release_sleep_spores", species == 2)
+	add_child(plant)
+
+	var stem := MeshInstance3D.new()
+	stem.name = "FleshyStem"
+	var stem_mesh := CylinderMesh.new()
+	stem_mesh.top_radius = 0.22
+	stem_mesh.bottom_radius = 0.42
+	stem_mesh.height = 1.5
+	stem.mesh = stem_mesh
+	stem.position.y = 0.75
+	stem.material_override = vine_material
+	plant.add_child(stem)
+
+	var maw := MeshInstance3D.new()
+	maw.name = "PredatorMaw"
+	var maw_mesh := SphereMesh.new()
+	maw_mesh.radius = 1.25 if species != 2 else 1.55
+	maw_mesh.height = 1.55
+	maw.mesh = maw_mesh
+	maw.position.y = 1.65
+	maw.material_override = bloom_material if species == 2 else dark_leaf
+	plant.add_child(maw)
+
+	for petal_index in range(6):
+		var petal := MeshInstance3D.new()
+		petal.name = "ToothedPetal_%02d" % petal_index
+		var petal_mesh := ConeMesh.new()
+		petal_mesh.bottom_radius = 0.42
+		petal_mesh.height = 1.35
+		petal.mesh = petal_mesh
+		var angle := TAU * float(petal_index) / 6.0
+		petal.position = Vector3(cos(angle) * 1.05, 1.55, sin(angle) * 1.05)
+		petal.rotation.z = -0.82
+		petal.rotation.y = -angle
+		petal.material_override = light_leaf if petal_index % 2 == 0 else dark_leaf
+		plant.add_child(petal)
+
+	if species == 1 or species == 4:
+		for vine_index in range(4):
+			var tendril := MeshInstance3D.new()
+			tendril.name = "GrabbingTendril_%02d" % vine_index
+			var tendril_mesh := CylinderMesh.new()
+			tendril_mesh.top_radius = 0.045
+			tendril_mesh.bottom_radius = 0.14
+			tendril_mesh.height = 3.2
+			tendril.mesh = tendril_mesh
+			var angle := TAU * float(vine_index) / 4.0
+			tendril.position = Vector3(cos(angle) * 1.25, 0.9, sin(angle) * 1.25)
+			tendril.rotation.z = 0.7 * cos(angle)
+			tendril.rotation.x = 0.7 * sin(angle)
+			tendril.material_override = vine_material
+			plant.add_child(tendril)
+
+	if species == 2:
+		var spore_cloud := MeshInstance3D.new()
+		spore_cloud.name = "SleepSporeCloud"
+		var cloud_mesh := SphereMesh.new()
+		cloud_mesh.radius = 2.2
+		cloud_mesh.height = 1.4
+		spore_cloud.mesh = cloud_mesh
+		spore_cloud.position.y = 2.8
+		var spore_material := _material(Color(0.70, 0.78, 0.30, 0.24), 0.0, 0.0, true)
+		spore_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		spore_cloud.material_override = spore_material
+		plant.add_child(spore_cloud)
+
+	var trigger := Area3D.new()
+	trigger.name = "CandidateCaptureZone"
+	trigger.collision_layer = 0
+	trigger.collision_mask = 1
+	trigger.set_meta("system_exam_trap_trigger", true)
+	var trigger_shape := CollisionShape3D.new()
+	var capture_shape := SphereShape3D.new()
+	capture_shape.radius = 2.5 if species != 1 else 3.2
+	trigger_shape.shape = capture_shape
+	trigger_shape.position.y = 1.0
+	trigger.add_child(trigger_shape)
+	plant.add_child(trigger)
+	trigger.body_entered.connect(_on_carnivorous_plant_body_entered.bind(plant))
+
+
+func _on_carnivorous_plant_body_entered(body: Node3D, plant: Node3D) -> void:
+	if not is_instance_valid(body) or not is_instance_valid(plant):
+		return
+	if body.has_meta("system_examiner_trapped") and bool(body.get_meta("system_examiner_trapped")):
+		return
+	var species := str(plant.get_meta("system_carnivorous_plant_species", "snap_maw"))
+	body.set_meta("system_examiner_trapped", true)
+	body.set_meta("system_examiner_trap_species", species)
+	body.set_meta("system_examiner_trap_source", plant.name)
+	if body is CharacterBody3D:
+		(body as CharacterBody3D).velocity = Vector3.ZERO
+	plant.set_meta("system_plant_has_captured_candidate", true)
+	var maw := plant.get_node_or_null("PredatorMaw") as Node3D
+	if maw != null:
+		var tween := create_tween()
+		tween.tween_property(maw, "scale", Vector3(0.18, 0.18, 0.18), 0.28)
+		tween.tween_interval(1.7)
+		tween.tween_property(maw, "scale", Vector3.ONE, 0.35)
+	await get_tree().create_timer(2.4).timeout
+	if is_instance_valid(body):
+		body.set_meta("system_examiner_trapped", false)
+		body.set_meta("system_examiner_released_from_trap", true)
+	if is_instance_valid(plant):
+		plant.set_meta("system_plant_has_captured_candidate", false)
 
 func _build_marsh_tree(index: int, location: Vector3, bark: Material, canopy_a: Material, canopy_b: Material, canopy_c: Material) -> void:
 	var tree := Node3D.new()
