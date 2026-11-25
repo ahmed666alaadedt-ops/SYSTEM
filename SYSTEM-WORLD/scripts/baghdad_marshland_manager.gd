@@ -74,7 +74,7 @@ func setup(terrain_node: Node, hunter_tunnel: Node3D) -> void:
 	var park_ground_y := float(terrain.call("get_terrain_height", park_anchor.x, park_anchor.y))
 	marsh_center = Vector3(park_anchor.x, park_ground_y, park_anchor.y)
 	set_meta("system_geographic_anchor_adjustment_m", anchor_shift.length())
-	var tunnel_end_for_entry := hunter_tunnel.global_position + Vector3(0.0, 0.0, 39.0)
+	var tunnel_end_for_entry := hunter_tunnel.global_position + Vector3(0.0, 0.0, 94.0)
 	var entry_direction := Vector2(marsh_center.x - tunnel_end_for_entry.x, marsh_center.z - tunnel_end_for_entry.z).normalized()
 	marsh_entry_local = Vector3(-entry_direction.x * 350.0, 0.0, -entry_direction.y * 350.0)
 	global_position = Vector3.ZERO
@@ -170,7 +170,7 @@ func _build_marshland() -> void:
 func _build_hunter_tunnel_connection(hunter_tunnel: Node3D) -> void:
 	# The existing examination tunnel remains intact. This physical extension
 	# starts at its open far end and rises gradually to the west edge of the marsh.
-	var tunnel_end := hunter_tunnel.global_position + Vector3(0.0, 0.0, 39.0)
+	var tunnel_end := hunter_tunnel.global_position + Vector3(0.0, 0.0, 94.0)
 	var toward_marsh := Vector2(marsh_center.x - tunnel_end.x, marsh_center.z - tunnel_end.z)
 	if toward_marsh.length() < 100.0:
 		push_error("SYSTEM Baghdad Marshland: tunnel and marsh anchors are unexpectedly close.")
@@ -997,12 +997,13 @@ func _on_marsh_trial_start_entered(body: Node3D) -> void:
 	var exam_manager := get_tree().root.find_child("SYSTEMHunterExamManager", true, false)
 	if exam_manager == null or not bool(exam_manager.get("registered")) or bool(exam_manager.get("failed")):
 		return
-	var completed_segments: Array = exam_manager.get("completed_stage_ids")
-	if not bool(exam_manager.get("exam_active")) and not completed_segments.has("baghdad_tunnel_competition"):
-		var result: Dictionary = exam_manager.call("begin_exam")
-		if bool(result.get("success", false)):
-			body.set_meta("system_hunter_marsh_trial_started", true)
-			print("SYSTEM Hunter Exam: continuous tunnel-to-marsh trial started.")
+	if not bool(exam_manager.get("exam_active")):
+		return
+	if not bool(body.get_meta("system_hunter_tunnel_competition_complete", false)):
+		return
+	body.set_meta("system_hunter_marsh_trial_started", true)
+	body.set_meta("system_hunter_marsh_trial_start_time_msec", Time.get_ticks_msec())
+	print("SYSTEM Hunter Exam: candidate passed tunnel checkpoints and entered the continuous marshland section.")
 
 
 func _on_marsh_final_trial_entered(body: Node3D) -> void:
@@ -1011,16 +1012,14 @@ func _on_marsh_final_trial_entered(body: Node3D) -> void:
 	var exam_manager := get_tree().root.find_child("SYSTEMHunterExamManager", true, false)
 	if exam_manager == null or not bool(exam_manager.get("registered")):
 		return
-	if bool(exam_manager.get("failed")):
+	if bool(exam_manager.get("failed")) or not bool(exam_manager.get("exam_active")):
+		return
+	if not bool(body.get_meta("system_hunter_marsh_trial_started", false)):
 		return
 	var completed_segments: Array = exam_manager.get("completed_stage_ids")
 	if completed_segments.has("baghdad_tunnel_competition"):
 		body.set_meta("system_hunter_marsh_trial_completed", true)
 		return
-	if not bool(exam_manager.get("exam_active")):
-		var start_result: Dictionary = exam_manager.call("begin_exam")
-		if not bool(start_result.get("success", false)):
-			return
 	var completion: Dictionary = exam_manager.call(
 		"complete_current_stage",
 		"baghdad_tunnel_competition",
