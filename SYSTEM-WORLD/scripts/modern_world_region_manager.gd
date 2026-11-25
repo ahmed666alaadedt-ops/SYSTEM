@@ -392,7 +392,7 @@ func _build_district_street_grid(parent: Node3D, city_name: String, district_ind
 	road_surface.generate_normals()
 	sidewalk_surface.generate_normals()
 	crossing_surface.generate_normals()
-	var road_mesh := road_surface.commit()
+	var road_mesh := _commit_surface_tool_if_valid(road_surface)
 	if road_mesh != null and road_mesh.get_rid().is_valid():
 		var road_instance := MeshInstance3D.new()
 		road_instance.name = city_name.replace(" ", "") + "_DistrictRoadGrid_%02d" % district_index
@@ -400,7 +400,7 @@ func _build_district_street_grid(parent: Node3D, city_name: String, district_ind
 		road_instance.material_override = road_material
 		road_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		parent.add_child(road_instance)
-	var sidewalk_mesh := sidewalk_surface.commit()
+	var sidewalk_mesh := _commit_surface_tool_if_valid(sidewalk_surface)
 	if sidewalk_mesh != null and sidewalk_mesh.get_rid().is_valid():
 		var sidewalk_instance := MeshInstance3D.new()
 		sidewalk_instance.name = city_name.replace(" ", "") + "_DistrictSidewalks_%02d" % district_index
@@ -408,7 +408,7 @@ func _build_district_street_grid(parent: Node3D, city_name: String, district_ind
 		sidewalk_instance.material_override = plaza_material
 		sidewalk_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		parent.add_child(sidewalk_instance)
-	var crossing_mesh := crossing_surface.commit()
+	var crossing_mesh := _commit_surface_tool_if_valid(crossing_surface)
 	if crossing_mesh != null and crossing_mesh.get_rid().is_valid():
 		var crossing_material := _material(Color(0.82, 0.84, 0.82), 0.9)
 		var crossing_instance := MeshInstance3D.new()
@@ -519,7 +519,7 @@ func _add_road_strip(node_name: String, start: Vector2, offset: Vector2, width: 
 		var d := Vector3(p1.x - side.x, terrain.get_terrain_height(p1.x - side.x, p1.y - side.y) + 0.18, p1.y - side.y)
 		_add_quad(surface, a, b, c, d)
 	surface.generate_normals()
-	var mesh := surface.commit()
+	var mesh := _commit_surface_tool_if_valid(surface)
 	if mesh == null or not mesh.get_rid().is_valid():
 		return
 	var road := MeshInstance3D.new()
@@ -527,6 +527,29 @@ func _add_road_strip(node_name: String, start: Vector2, offset: Vector2, width: 
 	road.mesh = mesh
 	road.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(road)
+
+
+func _commit_surface_tool_if_valid(surface: SurfaceTool) -> ArrayMesh:
+	# Never attach an ArrayMesh created from an empty SurfaceTool. A zero-surface
+	# mesh can still expose a RID in the dummy renderer and trigger repeated
+	# mesh_get_surface_count null-parameter errors during headless scene tests.
+	var arrays: Array = surface.commit_to_arrays()
+	if arrays.size() <= Mesh.ARRAY_VERTEX:
+		return null
+	var raw_vertices: Variant = arrays[Mesh.ARRAY_VERTEX]
+	if typeof(raw_vertices) != TYPE_PACKED_VECTOR3_ARRAY:
+		return null
+	var vertices: PackedVector3Array = raw_vertices
+	if vertices.size() < 3:
+		return null
+	var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+	if not indices.is_empty() and indices.size() < 3:
+		return null
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	if not mesh.get_rid().is_valid():
+		return null
+	return mesh
 
 
 func _add_quad(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3) -> void:
