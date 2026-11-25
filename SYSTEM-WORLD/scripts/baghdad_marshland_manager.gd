@@ -762,7 +762,7 @@ func _build_giant_marsh_creatures(zone: Node3D) -> void:
 			generic_visual.visible = false
 		combat_enemy.set_meta("system_marsh_wildlife_enemy", true)
 		combat_enemy.set_meta("system_creature_species", str(creature.get_meta("system_creature_species", "giant_wildlife")))
-		combat_enemy.defeated.connect(_on_giant_marsh_creature_defeated.bind(creature))
+		combat_enemy.connect("defeated", _on_giant_marsh_creature_defeated.bind(creature))
 		var encounter := Area3D.new()
 		encounter.name = "GiantCreatureEncounterZone"
 		encounter.position.y = 1.0
