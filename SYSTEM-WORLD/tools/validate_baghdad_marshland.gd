@@ -145,6 +145,9 @@ func _run_validation() -> void:
 		return
 	player.set_meta("system_hunter_tunnel_competition_complete", true)
 	marsh.call("_on_marsh_trial_start_entered", player)
+	var gates_before_sanctuary := sanctuary.find_children("SeasonalMarshStarGate_*", "Node3D", true, false)
+	if not _check(gates_before_sanctuary.size() == 3 and not bool(gates_before_sanctuary[0].visible) and not bool(gates_before_sanctuary[1].visible) and not bool(gates_before_sanctuary[2].visible), "Seasonal Star Gates became visible before the final marsh sanctuary objective."):
+		return
 	marsh.call("_on_hidden_sanctuary_discovered", player, sanctuary)
 	if not _check(bool(sanctuary.visible) and bool(player.get_meta("system_hidden_heritage_site_discovered", false)), "The active candidate did not reveal the hidden ancient sanctuary on approach."):
 		return
