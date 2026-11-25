@@ -34,6 +34,8 @@ func _build_public_leisure_district() -> void:
 	_build_changing_suite("WomensChangingSuite", Vector3(43.0, 0.0, 20.0), "WOMEN / تبديل ملابس النساء")
 	_build_lifeguard_station()
 	_build_public_signage(tile_material)
+	_build_ground_access_ramp()
+
 
 
 func _build_pool(pool_name: String, center: Vector3, size: Vector3, water_material: Material, water_type: String) -> void:
@@ -123,6 +125,57 @@ func _build_lifeguard_station() -> void:
 func _build_public_signage(material: Material) -> void:
 	_add_sign(self, "PublicLeisureDistrictSign", "منطقة بغداد العامة للترفيه والسباحة", Vector3(0.0, 7.0, -45.0))
 	_add_sign(self, "PublicPoolSafetySign", "اتبع تعليمات المنقذ — يمنع الغطس في المياه الضحلة", Vector3(0.0, 3.0, 43.0))
+
+
+func _build_ground_access_ramp() -> void:
+	var ramp_root := Node3D.new()
+	ramp_root.name = "PublicLeisureGroundAccessRamp"
+	add_child(ramp_root)
+	var horizontal_run := 15.5
+	var vertical_drop := 43.0 / 8.0
+	var segment_length := sqrt(horizontal_run * horizontal_run + vertical_drop * vertical_drop)
+	var slope := -atan2(vertical_drop, horizontal_run)
+	var start_z := 48.0
+	for index in range(8):
+		var center := Vector3(0.0, -vertical_drop * (float(index) + 0.5), start_z + horizontal_run * (float(index) + 0.5))
+		var segment := MeshInstance3D.new()
+		segment.name = "AccessRampSegment_%02d" % index
+		var mesh := BoxMesh.new()
+		mesh.size = Vector3(8.0, 0.55, segment_length)
+		segment.mesh = mesh
+		segment.position = center
+		segment.rotation.x = slope
+		segment.material_override = _material(Color(0.19, 0.25, 0.29), 0.68, 0.32)
+		ramp_root.add_child(segment)
+		var body := StaticBody3D.new()
+		body.name = "AccessRampCollision_%02d" % index
+		body.position = center
+		body.rotation.x = slope
+		var shape_node := CollisionShape3D.new()
+		var shape := BoxShape3D.new()
+		shape.size = mesh.size
+		shape_node.shape = shape
+		body.add_child(shape_node)
+		ramp_root.add_child(body)
+		for side in [-1.0, 1.0]:
+			var rail := MeshInstance3D.new()
+			rail.name = "AccessRampRail_%02d_%s" % [index, "Left" if side < 0.0 else "Right"]
+			var rail_mesh := BoxMesh.new()
+			rail_mesh.size = Vector3(0.22, 1.15, segment_length)
+			rail.mesh = rail_mesh
+			rail.position = center + Vector3(side * 4.05, 0.72, 0.0)
+			rail.rotation.x = slope
+			rail.material_override = _material(Color(0.68, 0.51, 0.25), 0.42, 0.68)
+			ramp_root.add_child(rail)
+	var arrival := Node3D.new()
+	arrival.name = "PublicLeisureGroundArrival"
+	arrival.position = Vector3(0.0, -43.15, start_z + horizontal_run * 8.0 + 8.0)
+	ramp_root.add_child(arrival)
+	_add_box(arrival, "GroundArrivalPlaza", Vector3.ZERO, Vector3(14.0, 0.5, 18.0), _material(Color(0.18, 0.24, 0.27), 0.72, 0.24), true)
+	_add_sign(arrival, "GroundArrivalSign", "مدخل منطقة المسابح العامة — بغداد", Vector3(0.0, 3.0, 0.0))
+	ramp_root.set_meta("system_public_leisure_access_ramp_segments", 8)
+	ramp_root.set_meta("system_public_leisure_ground_access", true)
+	set_meta("system_public_leisure_ground_access_ready", true)
 
 
 func _create_service_interaction(parent: Node3D, node_name: String, service_type: String, prompt: String, position: Vector3, radius: float) -> void:
