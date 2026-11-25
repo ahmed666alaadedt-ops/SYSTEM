@@ -87,7 +87,7 @@ func _run_validation() -> void:
 	var farm := zone.get_node_or_null("MarshAgriculturalGardens") as Node3D
 	if not _check(farm != null and int(farm.get_meta("system_agricultural_plot_count", 0)) == 12 and int(farm.get_meta("system_crop_plant_count", 0)) == 432 and farm.find_children("MarshCropBatch_*", "MultiMeshInstance3D", true, false).size() == 3, "Agricultural plots and crops are missing."):
 		return
-	if not _check(zone.find_children("MarshGroundFog_*", "MeshInstance3D", true, false).size() == 14, "Expected fourteen low fog layers."):
+	if not _check(zone.find_children("MarshGroundFog_*", "MeshInstance3D", true, false).size() == 18, "Expected eighteen dense low fog layers."):
 		return
 	if not _check(zone.find_children("HunterExamDeceptionNPC_*", "Node3D", true, false).size() == 12, "Expected twelve deception NPCs."):
 		return
@@ -174,5 +174,5 @@ func _run_validation() -> void:
 	if not _check(str(player.get_meta("system_last_marsh_star_gate_destination", "")) == expected_destination, "The seasonal Star Gate did not transport the Hunter to its current city destination."):
 		return
 
-	print("Baghdad Marshland validation passed: Al-Zawraa agricultural wetland, continuous Hunter tunnel connection, eight swim-enabled pools, 12000 reeds, 160 willows, nine boardwalks, 12 deception NPCs, six giant creatures, 14 fog layers, five wrong-route hazards, hidden sanctuary and three seasonal Star Gates.")
+	print("Baghdad Marshland validation passed: Al-Zawraa agricultural wetland, continuous Hunter tunnel connection, eight swim-enabled pools, 12000 reeds, 160 willows, nine boardwalks, 12 deception NPCs, six giant creatures, 18 dense fog layers, five wrong-route hazards, hidden sanctuary and three seasonal Star Gates.")
 	quit(0)
