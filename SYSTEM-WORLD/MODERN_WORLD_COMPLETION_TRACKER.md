@@ -1,4 +1,19 @@
-## Hunter Examination seven-stage restoration and runtime integration — 24 November 2026
+## Current authoritative Hunter route — 25 November 2026
+
+This current section supersedes older historical entries below that describe the former multi-stage examination or the restaurant secret-door route.
+
+- The active examination is one permanent underground tunnel competition beneath the Baghdad five-tower district, with three ordered physical checkpoints.
+- Discovery begins in the Hunter Association Tower lobby with an Arabic become-a-Hunter invitation and explicit accept/decline choices.
+- On acceptance, the player follows the visible Hunter Guild guide, who escorts them to the tunnel. The candidate serial is allocated and saved only on tunnel arrival, then reused on re-entry.
+- The Shopping Tower restaurant retains its independent dining, waiter, chef and meal lifecycle; it is not the current examination entrance.
+- The crowd has 500 individually tracked lightweight background candidates and five named interactive rivals. Do not describe the crowd as 500 full physics/pathfinding combat agents.
+- The Marshland remains separate and unconnected until a future explicit design update.
+- Automated runtime checks on recent branch snapshots passed the Hunter invitation, guide escort, serial behavior and continuous tunnel competition. Physical Android presentation checks remain outstanding.
+- PR #38 remains draft; main is unchanged and must not be merged without explicit user approval.
+
+---
+
+## Historical record: superseded stage-based Hunter prototype — 24 November 2026
 
 - [x] Restored the canonical seven-stage progression: Baghdad heritage, Cairo buried market, Alexandria lighthouse, Paris catacombs, Babylon guardian, Tokyo urban pursuit, and Highland Frontier survival.
 - [x] Aligned the manager's first stage ID with the Baghdad heritage runtime (baghdad_heritage_trial); this fixes the prior stage-ID mismatch that rejected artifact recovery.
