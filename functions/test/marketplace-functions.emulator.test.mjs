@@ -305,3 +305,41 @@ test("trusted currency and artifact rewards are replay-safe and reject ordinary 
   assert.equal(duplicate.alreadyIssued, true);
   assert.equal((await readArtifact(player, relicId)).data().ownerId, player);
 });
+
+test("scheduled expiry workers release stale listing, auction and exchange escrow", async () => {
+  const seller = uid("scheduled_seller");
+  const recipient = uid("scheduled_recipient");
+  const listingArtifact = artifactId("scheduled_listing");
+  const auctionArtifact = artifactId("scheduled_auction");
+  const exchangeArtifact = artifactId("scheduled_exchange");
+  const requestedArtifact = artifactId("scheduled_requested");
+  await seedPlayer(seller, 0);
+  await seedPlayer(recipient, 0);
+
+  await seedArtifact(seller, listingArtifact);
+  const listing = await call("createArtifactListing", seller, { artifactId: listingArtifact, price: 60 });
+  await db.collection("marketplaceListings").doc(listing.listingId).update({ expiresAt: Timestamp.fromMillis(Date.now() - 1000) });
+
+  await seedArtifact(seller, auctionArtifact);
+  const auction = await call("createArtifactAuction", seller, { artifactId: auctionArtifact, startingBid: 80, durationHours: 1 });
+  await db.collection("marketplaceAuctions").doc(auction.auctionId).update({ endsAt: Timestamp.fromMillis(Date.now() - 1000) });
+
+  await seedArtifact(seller, exchangeArtifact);
+  await db.collection("artifactRegistry").doc(requestedArtifact).set({ artifactId: requestedArtifact, originalOwnerId: recipient, issuedAt: FieldValue.serverTimestamp() });
+  const exchange = await call("createArtifactExchangeOffer", seller, { recipientId: recipient, offeredArtifactId: exchangeArtifact, requestedArtifactId: requestedArtifact });
+  await db.collection("marketplaceExchanges").doc(exchange.exchangeId).update({ expiresAt: Timestamp.fromMillis(Date.now() - 1000) });
+
+  assert.equal(typeof market.releaseExpiredArtifactListings?.run, "function");
+  assert.equal(typeof market.settleExpiredArtifactAuctions?.run, "function");
+  assert.equal(typeof market.releaseExpiredArtifactExchangeOffers?.run, "function");
+  await market.releaseExpiredArtifactListings.run({});
+  await market.settleExpiredArtifactAuctions.run({});
+  await market.releaseExpiredArtifactExchangeOffers.run({});
+
+  assert.equal((await db.collection("marketplaceListings").doc(listing.listingId).get()).data().status, "expired");
+  assert.equal((await readArtifact(seller, listingArtifact)).data().status, "owned");
+  assert.equal((await db.collection("marketplaceAuctions").doc(auction.auctionId).get()).data().status, "ended_without_bids");
+  assert.equal((await readArtifact(seller, auctionArtifact)).data().status, "owned");
+  assert.equal((await db.collection("marketplaceExchanges").doc(exchange.exchangeId).get()).data().status, "expired");
+  assert.equal((await readArtifact(seller, exchangeArtifact)).data().status, "owned");
+});
