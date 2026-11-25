@@ -59,5 +59,8 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Compile Firestore rules in the emulator
-        run: npx --yes firebase-tools@14 emulators:exec --only firestore --project demo-system-world "echo Firestore marketplace rules compiled successfully"
+      - name: Install Firestore rules test dependencies
+        run: npm install --prefix functions --no-package-lock --no-audit --no-fund
+
+      - name: Run Firestore marketplace security tests in the emulator
+        run: npx --yes firebase-tools@14 emulators:exec --only firestore --project demo-system-world "npm --prefix functions run test:rules"
