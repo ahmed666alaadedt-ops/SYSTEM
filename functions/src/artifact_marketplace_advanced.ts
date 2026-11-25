@@ -152,7 +152,6 @@ export const browseArtifactAuctions = onCall(async (request) => {
         rarity: data.rarity,
         condition: data.condition,
         authenticity: data.authenticity,
-        sellerId: data.sellerId,
         sellerName: data.sellerName,
         isSeller: data.sellerId === uid,
         startingBid: data.startingBid,
