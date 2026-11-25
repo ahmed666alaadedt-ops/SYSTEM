@@ -90,6 +90,15 @@ func _power_tower_weapon_policy_allows_attack() -> bool:
 		return true
 	var slots: Dictionary = progression_node.get("equipment_slots")
 	var equipped_weapon := str(slots.get("weapon", ""))
+	var active_floor_data: Dictionary = operations.get("active_power_floor_data")
+	var active_floor_number := int(active_floor_data.get("floor", 0))
+	if active_floor_number >= 81:
+		if not bool(progression_node.get("nen_unlocked")) or int(progression_node.get("nen_control_rank")) < 5:
+			push_warning("SYSTEM POWER TOWER: floors 81–200 require Nen mastery rank 5.")
+			return false
+		if not equipped_weapon.is_empty():
+			push_warning("SYSTEM POWER TOWER: upper floors are Nen-only; unequip all weapons and fight with Nen.")
+			return false
 	if POWER_TOWER_FORBIDDEN_WEAPONS.has(equipped_weapon):
 		push_warning("SYSTEM POWER TOWER: modern firearms are forbidden in official tower duels; equip a traditional weapon.")
 		return false
