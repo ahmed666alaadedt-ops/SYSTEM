@@ -344,7 +344,7 @@ func _run_validation() -> void:
 	var had_original_hunter_rank := helicopter_test_player.has_meta("system_hunter_rank")
 	var original_hunter_rank: Variant = helicopter_test_player.get_meta("system_hunter_rank", "")
 	var original_player_position := helicopter_test_player.global_position
-	var original_aircraft_position := hunter_pad.get_node("HunterAssociationHelicopter").global_position
+	var original_aircraft_position: Vector3 = (hunter_pad.get_node("HunterAssociationHelicopter") as Node3D).global_position
 	if not bool(hunter_pad.call("_is_aircraft_position_clear", original_aircraft_position)):
 		_fail("The helicopter's own helipad deck is still blocking its parked flight-clearance volume.")
 		return
