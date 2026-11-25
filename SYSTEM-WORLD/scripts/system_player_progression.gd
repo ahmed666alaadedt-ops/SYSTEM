@@ -375,16 +375,35 @@ func complete_power_tower_nen_training(training_id: String, floor_number: int, t
 	}
 
 func get_power_tower_nen_training_status() -> Dictionary:
+	var next_stage := "DISCOVERY"
+	var next_floor := 1
+	if nen_control_rank < 2:
+		next_stage = "TEN"
+		next_floor = 21
+	elif nen_control_rank < 3:
+		next_stage = "REN"
+		next_floor = 41
+	elif nen_control_rank < 4:
+		next_stage = "ZETSU"
+		next_floor = 61
+	elif nen_control_rank < 5:
+		next_stage = "HATSU"
+		next_floor = 81
+	else:
+		next_stage = "ADVANCED_NEN"
+		next_floor = 101
+	var completed_stage_sessions := int(power_tower_nen_stage_sessions.get(next_stage, 0))
 	return {
 		"nen_unlocked": nen_unlocked,
 		"nen_control_rank": nen_control_rank,
 		"training_sessions": power_tower_nen_training_sessions,
 		"training_ids": power_tower_nen_training_ids.duplicate(),
 		"stage_sessions": power_tower_nen_stage_sessions.duplicate(true),
-		"next_rank_session": (nen_control_rank * 3) + 1,
-		"next_rank_floor": 21 if nen_control_rank < 2 else (41 if nen_control_rank < 3 else (61 if nen_control_rank < 4 else 81))
+		"next_stage": next_stage,
+		"next_stage_sessions_remaining": maxi(0, 3 - completed_stage_sessions),
+		"next_rank_session": power_tower_nen_training_sessions + maxi(0, 3 - completed_stage_sessions),
+		"next_rank_floor": next_floor
 	}
-
 
 func record_verified_hunter_mission(mission_id: String, mission_points: int, used_nen: bool = false, ability_id: String = "") -> Dictionary:
 	var normalized_id := mission_id.strip_edges()
