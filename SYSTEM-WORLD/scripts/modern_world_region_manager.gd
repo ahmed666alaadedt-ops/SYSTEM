@@ -542,9 +542,11 @@ func _commit_surface_tool_if_valid(surface: SurfaceTool) -> ArrayMesh:
 	var vertices: PackedVector3Array = raw_vertices
 	if vertices.size() < 3:
 		return null
-	var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
-	if not indices.is_empty() and indices.size() < 3:
-		return null
+	var raw_indices: Variant = arrays[Mesh.ARRAY_INDEX]
+	if raw_indices is PackedInt32Array:
+		var indices: PackedInt32Array = raw_indices
+		if not indices.is_empty() and indices.size() < 3:
+			return null
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	if not mesh.get_rid().is_valid():
