@@ -273,9 +273,7 @@ export const placeArtifactAuctionBid = onCall(async (request) => {
 });
 
 /** Anyone signed in may trigger settlement after the deadline; settlement is idempotent. */
-export const settleExpiredArtifactAuction = onCall(async (request) => {
-  uidOf(request);
-  const auctionId = textField(request.data?.auctionId, "auctionId");
+async function settleExpiredAuctionById(auctionId: string) {
   const auctionRef = database().collection("marketplaceAuctions").doc(auctionId);
   const settlementRef = database().collection("marketplaceTransactions").doc();
 
@@ -337,7 +335,7 @@ export const settleExpiredArtifactAuction = onCall(async (request) => {
     const winnerReserved = Number(winnerWallet.data()?.reservedBalance ?? 0);
     if (!Number.isSafeInteger(sellerBalance) || sellerBalance < 0 ||
         !Number.isSafeInteger(winnerBalance) || winnerBalance < highestBid ||
-        !Number.isSafeInteger(winnerReserved) || winnerReserved < highestBid ||
+        !Number.isSafeInteger(winnerReserved) || winnerReserved < highestBid || winnerReserved > winnerBalance ||
         sellerBalance + highestBid > Number.MAX_SAFE_INTEGER) {
       throw new HttpsError("failed-precondition", "الرصيد المحجوز لتسوية المزاد غير صالح.");
     }
@@ -410,6 +408,41 @@ export const settleExpiredArtifactAuction = onCall(async (request) => {
   });
 
   return result;
+}
+
+/** Authenticated clients may settle a single auction after its deadline. */
+export const settleExpiredArtifactAuction = onCall(async (request) => {
+  uidOf(request);
+  const auctionId = textField(request.data?.auctionId, "auctionId");
+  return settleExpiredAuctionById(auctionId);
+});
+
+/** Settles expired auctions even when bidders and sellers are offline. */
+export const settleExpiredArtifactAuctions = onSchedule("every 5 minutes", async () => {
+  const now = Timestamp.now();
+  const expiredAuctions = await database()
+    .collection("marketplaceAuctions")
+    .where("status", "==", "active")
+    .where("endsAt", "<=", now)
+    .limit(50)
+    .get();
+
+  let settledCount = 0;
+  let skippedCount = 0;
+  for (const candidate of expiredAuctions.docs) {
+    try {
+      await settleExpiredAuctionById(candidate.id);
+      settledCount += 1;
+    } catch (error) {
+      skippedCount += 1;
+      console.error("SYSTEM marketplace: failed to settle expired auction", candidate.id, error);
+    }
+  }
+  console.info("SYSTEM marketplace expired auction sweep completed", {
+    examined: expiredAuctions.size,
+    settled: settledCount,
+    skipped: skippedCount
+  });
 });
 
 /** Seller may cancel an auction only before any bid has been accepted. */
