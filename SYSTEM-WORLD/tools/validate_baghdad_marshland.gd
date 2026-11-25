@@ -73,11 +73,11 @@ func _run_validation() -> void:
 		if not _check(water_area.monitoring and water_area.body_entered.get_connections().size() > 0 and water_area.body_exited.get_connections().size() > 0, "A marsh water volume is missing swimming enter/exit signals."):
 			return
 	var reeds := zone.get_node_or_null("MarshReedFields") as MultiMeshInstance3D
-	if not _check(reeds != null and reeds.multimesh != null and reeds.multimesh.instance_count == 1800, "The 1800-instance marsh reed field is missing."):
+	if not _check(reeds != null and reeds.multimesh != null and reeds.multimesh.instance_count == 12000, "The 12000-instance marsh reed field is missing."):
 		return
 	var willow_trunks := zone.get_node_or_null("MarshWillowTrunks") as MultiMeshInstance3D
 	var willow_canopies := zone.get_node_or_null("MarshWillowCanopies") as MultiMeshInstance3D
-	if not _check(int(zone.get_meta("system_marsh_tree_count", 0)) == 56 and willow_trunks != null and willow_canopies != null and willow_trunks.multimesh.instance_count == 56 and willow_canopies.multimesh.instance_count == 56, "Expected 56 willow trees in two mobile-friendly render batches."):
+	if not _check(int(zone.get_meta("system_marsh_tree_count", 0)) == 160 and willow_trunks != null and willow_canopies != null and willow_trunks.multimesh.instance_count == 160 and willow_canopies.multimesh.instance_count == 160, "Expected 56 willow trees in two mobile-friendly render batches."):
 		return
 	if not _check(zone.find_children("MarshBoardwalk_*", "MeshInstance3D", true, false).size() == 9 and zone.find_children("MarshBoardwalkCollision_*", "StaticBody3D", true, false).size() == 9, "Expected nine raised boardwalk segments with matching walkable collision."):
 		return
@@ -170,5 +170,5 @@ func _run_validation() -> void:
 	if not _check(str(player.get_meta("system_last_marsh_star_gate_destination", "")) == expected_destination, "The seasonal Star Gate did not transport the Hunter to its current city destination."):
 		return
 
-	print("Baghdad Marshland validation passed: Al-Zawraa agricultural wetland, continuous Hunter tunnel connection, eight swim-enabled pools, 1800 reeds, 56 willows, nine boardwalks, 12 deception NPCs, six giant creatures, 14 fog layers, five wrong-route hazards, hidden sanctuary and three seasonal Star Gates.")
+	print("Baghdad Marshland validation passed: Al-Zawraa agricultural wetland, continuous Hunter tunnel connection, eight swim-enabled pools, 12000 reeds, 160 willows, nine boardwalks, 12 deception NPCs, six giant creatures, 14 fog layers, five wrong-route hazards, hidden sanctuary and three seasonal Star Gates.")
 	quit(0)
