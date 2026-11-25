@@ -95,23 +95,18 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
-    // المزادات وسجل المزايدات: قراءة فقط للاعبين المسجلين.
+    // بيانات المزادات والمزايدات لا تُقرأ مباشرة من العميل؛ التصفح والسجل يمران عبر Cloud Functions حتى لا تتسرب معرفات الحسابات الداخلية.
     match /marketplaceAuctions/{auctionId} {
-      allow get, list: if signedIn() && resource.data.status == 'active';
-      allow create, update, delete: if false;
+      allow read, write: if false;
 
       match /bids/{bidId} {
-        allow get, list: if signedIn();
-        allow create, update, delete: if false;
+        allow read, write: if false;
       }
     }
 
-    // عروض التبادل لا يراها إلا طرفاها.
+    // عروض التبادل تُعرض للطرفين عبر callable functions فقط؛ يمنع الوصول المباشر إلى معرفات الطرف الآخر.
     match /marketplaceExchanges/{exchangeId} {
-      allow get, list: if signedIn()
-                       && (resource.data.initiatorId == request.auth.uid
-                           || resource.data.recipientId == request.auth.uid);
-      allow create, update, delete: if false;
+      allow read, write: if false;
     }
 
     // سجل تاريخ ملكية القطع خاص ولا يقبل أي كتابة من العميل.
@@ -124,19 +119,14 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // العروض النشطة عامة للاعبين المسجلين، وكل التغييرات عبر Cloud Functions.
+    // تصفح العروض النشطة يتم عبر callable functions التي تخفي UID البائع؛ لا قراءة مباشرة لوثائق السوق.
     match /marketplaceListings/{listingId} {
-      allow get, list: if signedIn()
-                       && resource.data.status == 'active';
-      allow create, update, delete: if false;
+      allow read, write: if false;
     }
 
-    // سجل الصفقات لا يراه إلا طرفا الصفقة.
+    // إيصالات الصفقات الخاصة تُعرض للمشارك عبر callable functions فقط.
     match /marketplaceTransactions/{transactionId} {
-      allow get, list: if signedIn()
-                       && (resource.data.buyerId == request.auth.uid
-                           || resource.data.sellerId == request.auth.uid);
-      allow create, update, delete: if false;
+      allow read, write: if false;
     }
 
     match /artifactRewardEvents/{eventId} {
