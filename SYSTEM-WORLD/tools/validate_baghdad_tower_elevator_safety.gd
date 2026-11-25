@@ -32,7 +32,7 @@ func _run() -> void:
 		"hunter_association_tower_baghdad": 200,
 		"business_investment_tower_baghdad": 36,
 		"shopping_tower_baghdad": 32,
-		"entertainment_tower_baghdad": 34,
+		"antiques_heritage_tower_baghdad": 34,
 		"technology_tower_baghdad": 40,
 		"power_tower_baghdad": 200
 	}
@@ -53,7 +53,7 @@ func _run() -> void:
 		["hunter_association_tower_baghdad", 100],
 		["business_investment_tower_baghdad", 8],
 		["shopping_tower_baghdad", 29],
-		["entertainment_tower_baghdad", 18],
+		["antiques_heritage_tower_baghdad", 29],
 		["technology_tower_baghdad", 20],
 		["power_tower_baghdad", 1]
 	]
@@ -137,7 +137,7 @@ func _run() -> void:
 		_fail("Shopping Tower must restore all 100 persistent customers to the public lobby after evacuation; found %d." % lobby_customer_count)
 		return
 
-	print("Baghdad tower elevator and emergency safety validation passed: six tower exits, physical exit trigger, floor-29 chef elevator ride, workstation arrival, safe lobby return and all 100 persistent customers.")
+	print("Baghdad tower elevator and emergency safety validation passed: five civic tower exits plus the independent Power Tower exit, physical exit trigger, floor-29 chef elevator ride, workstation arrival, safe lobby return and all 100 persistent customers.")
 	quit(0)
 
 func _fail(message: String) -> void:
