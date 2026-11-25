@@ -884,7 +884,7 @@ func _build_shopping_tower() -> void:
 			"cafes", "dessert_shops", "bakeries", "hotel_reception",
 			"guest_rooms", "suites", "room_service"
 		]))
-		_create_system_hotel_exterior(tower)
+		_create_system_hotel_exterior(tower as Node3D)
 		tower.set_meta("gameplay_status", "shopping_commerce_hotel_exterior_and_interior_runtime_generated")
 
 
