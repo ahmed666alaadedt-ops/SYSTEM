@@ -479,6 +479,7 @@ func _sanitize_empty_mesh_instances(root: Node) -> void:
 			if replace_mesh:
 				mesh_node.mesh = ArrayMesh.new()
 				mesh_node.visible = false
+				mesh_node.set_meta("system_empty_mesh_sanitized", true)
 				print("SYSTEM NPC: sanitized empty or invalid mesh handle: ", str(mesh_node.get_path()))
 		_sanitize_empty_mesh_instances(child)
 
@@ -487,8 +488,10 @@ func _collect_mesh_nodes(root: Node) -> Array[Node]:
 	for child in root.get_children():
 		if child is MeshInstance3D:
 			var mesh_node := child as MeshInstance3D
-			# Never query renderer surface data through an invalid mesh RID.
-			if mesh_node.mesh != null:
+			# Sanitized empty meshes intentionally carry a valid empty ArrayMesh
+			# resource so the scene remains stable. Never ask the headless renderer
+			# for a surface count on that empty placeholder RID.
+			if mesh_node.mesh != null and not bool(mesh_node.get_meta("system_empty_mesh_sanitized", false)):
 				var mesh_rid: RID = mesh_node.mesh.get_rid()
 				if mesh_rid.is_valid() and mesh_node.mesh.get_surface_count() > 0:
 					result.append(mesh_node)
