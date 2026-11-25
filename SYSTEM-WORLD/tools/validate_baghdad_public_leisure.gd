@@ -1,19 +1,30 @@
 extends SceneTree
 
-const PublicLeisureManagerScript = preload("res://scripts/system_baghdad_public_leisure_manager.gd")
-
 
 func _initialize() -> void:
 	call_deferred("_run_validation")
 
 
 func _run_validation() -> void:
-	var district := Node3D.new()
-	district.set_script(PublicLeisureManagerScript)
-	root.add_child(district)
-	await process_frame
-	await process_frame
+	var packed_scene := load("res://MainScene.tscn") as PackedScene
+	if packed_scene == null:
+		_fail("MainScene.tscn could not be loaded.")
+		return
+	var main_scene := packed_scene.instantiate() as Node3D
+	if main_scene == null:
+		_fail("MainScene.tscn did not instantiate as Node3D.")
+		return
+	root.add_child(main_scene)
+	for frame_index in range(14):
+		await process_frame
 
+	var region := main_scene.find_child("ModernWorldRegionManager", true, false) as Node3D
+	var tower_manager := region.get_node_or_null("BaghdadTowerLandmarksManager") as Node3D if region != null else null
+	var amenities := tower_manager.get_node_or_null("ConnectedCityPublicAmenities_Blockout") as Node3D if tower_manager != null else null
+	var district := amenities.get_node_or_null("BaghdadPublicLeisureDistrict") as Node3D if amenities != null else null
+	if district == null:
+		_fail("Independent public leisure manager is not attached to Baghdad's runtime public amenities.")
+		return
 	if not bool(district.get_meta("system_public_leisure_runtime_ready", false)):
 		_fail("Independent Baghdad public leisure manager did not initialize.")
 		return
@@ -33,9 +44,10 @@ func _run_validation() -> void:
 			_fail("Pool water volume is missing active monitoring or collision: " + pool_name)
 			return
 
-	var player := CharacterBody3D.new()
-	player.add_to_group("system_player")
-	root.add_child(player)
+	var player := main_scene.find_child("Player", true, false) as CharacterBody3D
+	if player == null or not player.is_in_group("system_player"):
+		_fail("Canonical main-scene player or system_player group is missing.")
+		return
 	var lap_water := district.get_node("OlympicLapPool/WaterVolume") as Area3D
 	district.call("_on_water_body_entered", player, lap_water)
 	if not bool(player.get_meta("system_public_leisure_swimming", false)) or str(player.get_meta("system_public_leisure_water_type", "")) != "lap_pool":
@@ -60,6 +72,9 @@ func _run_validation() -> void:
 	if lifeguard_service == null or not lifeguard_service.is_in_group("system_interactable") or str(lifeguard_service.get_meta("system_pool_service_type", "")) != "lifeguard":
 		_fail("Public lifeguard service interaction is missing.")
 		return
+	if str(lifeguard_service.get_meta("system_tower_id", "")) != "public_leisure_district":
+		_fail("Public leisure service is incorrectly attributed to a tower.")
+		return
 	if not bool(district.call("dispatch_lifeguard_to", player)):
 		_fail("Public lifeguard could not accept a player assistance request.")
 		return
@@ -74,9 +89,8 @@ func _run_validation() -> void:
 				_fail("Public changing suite service interaction is missing: " + suite_name + "/" + service_name)
 				return
 
-	print("SYSTEM PUBLIC LEISURE QA PASS: three pool volumes, player swim-state, 16 lockers, suite-specific release, shower and lifeguard dispatch; independent of the five Baghdad towers.")
-	player.queue_free()
-	district.queue_free()
+	print("SYSTEM PUBLIC LEISURE QA PASS: integrated in Baghdad public amenities; three monitored pool volumes, canonical player swim-state, 16 lockers, suite-specific release, shower and lifeguard dispatch; independent of the five Baghdad towers.")
+	main_scene.queue_free()
 	quit(0)
 
 
