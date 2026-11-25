@@ -939,7 +939,19 @@ func _build_hidden_heritage_gates(zone: Node3D) -> void:
 	sanctuary.set_meta("system_hidden_ancient_site", true)
 	sanctuary.set_meta("system_hunter_exam_final_discovery", true)
 	sanctuary.set_meta("system_star_gate_hub", true)
+	sanctuary.visible = false
 	zone.add_child(sanctuary)
+	var discovery_trigger := Area3D.new()
+	discovery_trigger.name = "HiddenSanctuaryDiscoveryTrigger"
+	discovery_trigger.position = sanctuary.position
+	discovery_trigger.set_meta("system_hidden_site_discovery_trigger", true)
+	var discovery_collision := CollisionShape3D.new()
+	var discovery_sphere := SphereShape3D.new()
+	discovery_sphere.radius = 45.0
+	discovery_collision.shape = discovery_sphere
+	discovery_trigger.add_child(discovery_collision)
+	zone.add_child(discovery_trigger)
+	discovery_trigger.body_entered.connect(_on_hidden_sanctuary_discovered.bind(sanctuary))
 	var stone := _make_material(Color(0.29, 0.27, 0.20), 0.95, 0.0)
 	var relic := _make_material(Color(0.48, 0.34, 0.15), 0.4, 0.3)
 	for index in range(8):
@@ -1039,6 +1051,20 @@ func _build_marsh_star_gate_visual(gate: Node3D, material: Material, gate_index:
 	label.pixel_size = 0.014
 	label.position.y = 7.0
 	gate.add_child(label)
+
+
+func _on_hidden_sanctuary_discovered(body: Node3D, sanctuary: Node3D) -> void:
+	if not _is_hunter_exam_player(body) or not is_instance_valid(sanctuary):
+		return
+	var exam_manager := get_tree().root.find_child("SYSTEMHunterExamManager", true, false)
+	if exam_manager == null or not bool(exam_manager.get("registered")):
+		return
+	if not bool(body.get_meta("system_hunter_marsh_trial_started", false)):
+		return
+	sanctuary.visible = true
+	sanctuary.set_meta("system_hidden_heritage_site_discovered", true)
+	body.set_meta("system_hidden_heritage_site_discovered", true)
+	print("SYSTEM Hunter Exam: hidden ancient marsh sanctuary discovered by candidate.")
 
 
 func _on_marsh_trial_start_entered(body: Node3D) -> void:
