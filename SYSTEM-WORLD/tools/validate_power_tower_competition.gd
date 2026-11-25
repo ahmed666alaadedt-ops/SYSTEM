@@ -22,25 +22,25 @@ func _run() -> void:
 
 	var manager := architecture.get_node_or_null("PowerTowerCompetitionManager") as Node3D
 	assert(manager != null, "Competition manager must be integrated into the independent tower.")
-	assert(manager.get_arena_count_for_floor(1) == 8)
-	assert(manager.get_arena_count_for_floor(20) == 8)
-	assert(manager.get_arena_count_for_floor(21) == 6)
-	assert(manager.get_arena_count_for_floor(41) == 4)
-	assert(manager.get_arena_count_for_floor(61) == 3)
-	assert(manager.get_arena_count_for_floor(81) == 2)
-	assert(manager.get_arena_count_for_floor(101) == 1)
-	assert(manager.get_arena_count_for_floor(200) == 1)
-	assert(manager.get_arena_count_for_floor(0) == 0)
-	assert(manager.get_arena_count_for_floor(201) == 0)
+	assert(int(manager.call("get_arena_count_for_floor", 1) == 8)
+	assert(int(manager.call("get_arena_count_for_floor", 20) == 8)
+	assert(int(manager.call("get_arena_count_for_floor", 21) == 6)
+	assert(int(manager.call("get_arena_count_for_floor", 41) == 4)
+	assert(int(manager.call("get_arena_count_for_floor", 61) == 3)
+	assert(int(manager.call("get_arena_count_for_floor", 81) == 2)
+	assert(int(manager.call("get_arena_count_for_floor", 101) == 1)
+	assert(int(manager.call("get_arena_count_for_floor", 200) == 1)
+	assert(int(manager.call("get_arena_count_for_floor", 0) == 0)
+	assert(int(manager.call("get_arena_count_for_floor", 201) == 0)
 
-	var early_nen: Dictionary = manager.get_nen_stage_for_floor(1)
-	var upper_nen: Dictionary = manager.get_nen_stage_for_floor(175)
+	var early_nen: Dictionary = manager.call("get_nen_stage_for_floor", 1)
+	var upper_nen: Dictionary = manager.call("get_nen_stage_for_floor", 175)
 	assert(early_nen.get("stage") == "DISCOVERY")
 	assert(upper_nen.get("stage") == "NEN_MASTERY")
-	assert(manager.get_combat_styles_for_floor(1).has("KUNG_FU"))
-	assert(manager.get_combat_styles_for_floor(150) == ["NEN_TECHNIQUES", "UNARMED_HAND_TO_HAND"])
+	assert(manager.call("get_combat_styles_for_floor", 1).has("KUNG_FU"))
+	assert(manager.call("get_combat_styles_for_floor", 150) == ["NEN_TECHNIQUES", "UNARMED_HAND_TO_HAND"])
 
-	var trained: Dictionary = manager.apply_nen_training({"nen_mastery": 90}, 20)
+	var trained: Dictionary = manager.call("apply_nen_training", {"nen_mastery": 90}, 20)
 	assert(bool(trained.get("success", false)))
 	assert(int(trained["profile"]["nen_mastery"]) == 110)
 	assert(trained["profile"]["nen_stage"] == "TEN")
@@ -61,7 +61,7 @@ func _run() -> void:
 		{"bettor_id": "fan_001", "side": "PLAYER_A", "stake": 50},
 		{"bettor_id": "fan_002", "side": "PLAYER_B", "stake": 100}
 	]
-	var settled: Dictionary = manager.settle_virtual_bets("match_test_001", bets, "PLAYER_A", true)
+	var settled: Dictionary = manager.call("settle_virtual_bets", "match_test_001", bets, "PLAYER_A", true)
 	assert(bool(settled.get("success", false)))
 	var ledger: Dictionary = settled["ledger"]
 	assert(ledger["currency"] == "SYSTEM_VIRTUAL_CREDITS")
@@ -70,7 +70,7 @@ func _run() -> void:
 	assert(ledger["winning_bettor_payouts"].size() == 1)
 	assert(int(ledger["winning_bettor_payouts"][0]["total_payout"]) == 130)
 	assert(not bool(manager.settle_virtual_bets("match_test_001", bets, "PLAYER_A", true).get("success", false)))
-	assert(not bool(manager.settle_virtual_bets("match_test_002", bets, "PLAYER_A", false).get("success", false)))
+	assert(not bool(manager.call("settle_virtual_bets", "match_test_002", bets, "PLAYER_A", false).get("success", false)))
 
 	print("POWER TOWER COMPETITION VALIDATION PASSED: 200-floor arena ladder, Nen progression, martial styles, 500 spectator visual proxies, restaurant/recreation and idempotent virtual-credit ledger.")
 	quit(0)
