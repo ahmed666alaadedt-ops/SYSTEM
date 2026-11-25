@@ -195,9 +195,11 @@ func _run_validation() -> void:
 		return
 	if not _check(bool(sanctuary.visible) and bool(player.get_meta("system_hidden_heritage_site_discovered", false)), "The guide's arrival did not reveal the hidden ancient sanctuary to the waiting candidate."):
 		return
-	if not _check(bool(player.get_meta("system_hunter_marsh_trial_started", false)) and bool(exam_manager.get("exam_active")), "The marsh section did not start after tunnel checkpoints while keeping the exam active."):
+	if not _check(bool(player.get_meta("system_hunter_marsh_trial_started", false)) and bool(player.get_meta("system_hunter_marsh_trial_completed", false)) and not bool(exam_manager.get("exam_active")), "The guide did not complete the continuous marsh section after the tunnel checkpoints and sanctuary arrival."):
 		return
-	marsh.call("_on_marsh_final_trial_entered", player)
+	var gate_briefing := sanctuary.get_node_or_null("GuideStarGateBriefing") as Label3D
+	if not _check(gate_briefing != null and gate_briefing.visible and gate_briefing.text.contains("البوابة 1"), "The official guide did not present the seasonal Star Gate destinations at the sanctuary."):
+		return
 	var completed_overview: Dictionary = exam_manager.call("get_exam_overview")
 	if not _check(not bool(completed_overview.get("active", true)) and completed_overview.get("completed_stages", []).has("baghdad_tunnel_competition") and bool(player.get_meta("system_hunter_marsh_trial_completed", false)), "The Hunter exam did not complete at the hidden marsh sanctuary."):
 		return
