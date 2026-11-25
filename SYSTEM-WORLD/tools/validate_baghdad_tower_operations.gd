@@ -147,7 +147,7 @@ func _run() -> void:
 		_fail("Baghdad tower operations panel exceeds a 780x360 phone landscape viewport.")
 		return
 	if int(status.get("tower_count", 0)) != 6:
-		_fail("Operations manager did not resolve all six towers.")
+		_fail("Operations manager did not resolve all six managed facilities (five Baghdad towers plus the independent Power Tower).")
 		return
 	operations.call("open_tower", "hunter_association_tower_baghdad")
 	if operations.find_child("HunterRankBoardButton", true, false) == null:
