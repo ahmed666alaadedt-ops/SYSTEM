@@ -9214,6 +9214,9 @@ func begin_verified_power_tower_pvp_match(match_data: Dictionary, local_player_i
 	var judged_duel_registration: Dictionary = power_tower_manager.call("register_judged_duel", match_id, local_player_id, opponent_player_id, floor_number, local_player_id)
 	if not bool(judged_duel_registration.get("success", false)):
 		return judged_duel_registration
+	var fan_prediction_result: Dictionary = power_tower_manager.call("populate_power_tower_npc_predictions", match_id, 500)
+	if not bool(fan_prediction_result.get("success", false)):
+		return fan_prediction_result
 	var lock_result: Dictionary = power_tower_manager.call("lock_spectator_predictions", match_id)
 	if not bool(lock_result.get("success", false)):
 		return lock_result
