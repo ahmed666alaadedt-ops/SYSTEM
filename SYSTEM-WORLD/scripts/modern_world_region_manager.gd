@@ -520,7 +520,7 @@ func _add_road_strip(node_name: String, start: Vector2, offset: Vector2, width: 
 		_add_quad(surface, a, b, c, d)
 	surface.generate_normals()
 	var mesh := surface.commit()
-	if mesh == null or not mesh.get_rid().is_valid() or mesh.get_surface_count() == 0:
+	if mesh == null or not mesh.get_rid().is_valid():
 		return
 	var road := MeshInstance3D.new()
 	road.name = node_name
