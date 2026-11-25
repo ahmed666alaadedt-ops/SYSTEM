@@ -30,6 +30,10 @@ func _run() -> void:
 	for facility_name in ["TraditionalWeaponsGallery", "ArmorShowroom", "NenElixirCabinet", "SkillScrollLibrary", "HunterAccessoriesGallery", "PowerTowerCafeteria", "PowerTowerNenTrainingHall"]:
 		assert(interior.get_node_or_null(facility_name) != null, "Missing Power Tower interior facility: " + facility_name)
 	assert(int(architecture.get_meta("system_power_tower_cafeteria_table_count", 0)) == 4)
+	var armor_showroom := interior.get_node_or_null("ArmorShowroom")
+	assert(armor_showroom != null)
+	assert(int(armor_showroom.get_meta("system_footwear_display_count", 0)) == 5)
+	assert(armor_showroom.get_node_or_null("FootwearProgressionSign") != null)
 	assert(int(architecture.get_meta("system_power_tower_cafeteria_seat_count", 0)) == 16)
 	var nen_hall := interior.get_node_or_null("PowerTowerNenTrainingHall")
 	assert(nen_hall != null)
