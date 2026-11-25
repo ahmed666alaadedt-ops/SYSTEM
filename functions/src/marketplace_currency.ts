@@ -124,6 +124,7 @@ export const awardMarketplaceCurrency = onCall(async (request) => {
     } else {
       transaction.create(walletRef, {
         ...walletData,
+        reservedBalance: 0,
         createdAt: FieldValue.serverTimestamp()
       });
     }
