@@ -189,6 +189,26 @@ class FirebaseArtifactMarketplaceRepository(
             .addOnFailureListener { callback(Result.failure(it)) }
     }
 
+    fun expireListing(listingId: String, callback: (Result<Unit>) -> Unit) {
+        if (listingId.isBlank()) {
+            callback(Result.failure(IllegalArgumentException("معرّف العرض غير صالح.")))
+            return
+        }
+        functions.getHttpsCallable("expireArtifactListing")
+            .call(mapOf("listingId" to listingId))
+            .addOnSuccessListener { callback(Result.success(Unit)) }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    fun loadTradeHistory(callback: (Result<List<Map<String, Any?>>>) -> Unit) {
+        functions.getHttpsCallable("listMyMarketplaceTransactions").call()
+            .addOnSuccessListener { result ->
+                val raw = (result.data as? Map<*, *>)?.get("transactions") as? List<*> ?: emptyList<Any>()
+                callback(Result.success(raw.mapNotNull { it as? Map<String, Any?> }))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
     fun cancelListing(listingId: String, callback: (Result<Unit>) -> Unit) {
         if (listingId.isBlank()) {
             callback(Result.failure(IllegalArgumentException("معرّف العرض غير صالح.")))
@@ -344,7 +364,7 @@ class FirebaseArtifactMarketplaceRepository(
         action: String,
         callback: (Result<Unit>) -> Unit
     ) {
-        if (exchangeId.isBlank() || action !in setOf("cancel", "decline")) {
+        if (exchangeId.isBlank() || action !in setOf("cancel", "decline", "expire")) {
             callback(Result.failure(IllegalArgumentException("إجراء إغلاق التبادل غير صالح.")))
             return
         }
