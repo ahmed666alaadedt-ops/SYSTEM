@@ -986,12 +986,21 @@ func _create_antiques_museum_exhibits(tower: Node3D) -> void:
 			interaction.collision_layer = 1
 			interaction.collision_mask = 0
 			interaction.add_to_group("system_interactable")
+			interaction.monitoring = true
+			interaction.monitorable = true
 			interaction.set_meta("system_interaction_action", "inspect_artifact")
+			interaction.set_meta("system_interaction_type", "museum_artifact_exhibit")
 			interaction.set_meta("system_artifact_id", artifact_id)
 			interaction.set_meta("system_artifact_name", names[exhibit_index])
+			interaction.set_meta("system_artifact_civilization", _antiques_department_for_floor(floor_number))
+			interaction.set_meta("system_artifact_provenance", "SYSTEM WORLD museum exhibit catalogue; display specimen only")
+			interaction.set_meta("system_artifact_authenticity", "curator_review_required")
+			interaction.set_meta("system_artifact_display_role", "player_market_prototype" if floor_number >= 29 and floor_number <= 32 else "museum_exhibit")
 			interaction.set_meta("system_tower_id", "antiques_heritage_tower_baghdad")
 			interaction.set_meta("system_tower_floor", floor_number)
+			interaction.set_meta("system_tower_floor_number", floor_number)
 			interaction.set_meta("system_floor_department", _antiques_department_for_floor(floor_number))
+			interaction.set_meta("system_interaction_prompt", "افحص القطعة الأثرية — " + artifact_id)
 			var interaction_shape := CollisionShape3D.new()
 			interaction_shape.name = "CollisionShape3D"
 			var interaction_sphere := SphereShape3D.new()
