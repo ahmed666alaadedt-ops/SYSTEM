@@ -94,6 +94,14 @@ func _run_validation() -> void:
 	var test_player := CharacterBody3D.new()
 	test_player.add_to_group("system_player")
 	root.add_child(test_player)
+	var decoy_npc := zone.find_child("HunterExamDeceptionNPC_00", true, false) as Node3D
+	marsh.call("_on_deception_npc_approached", test_player, decoy_npc)
+	if not _check(str(test_player.get_meta("system_hunter_route_hint", "")) == "false" and test_player.has_meta("system_hunter_route_hint_waypoint"), "A deceptive Hunter NPC did not provide a false route hint."):
+		return
+	var wrong_route := zone.find_child("HunterExamWrongRouteHazard_00", true, false) as Area3D
+	marsh.call("_on_wrong_route_hazard_entered", test_player, wrong_route)
+	if not _check(str(test_player.get_meta("system_hunter_wrong_route_triggered", "")) == "HunterExamWrongRouteHazard_00", "Entering a forbidden route did not flag the candidate."):
+		return
 	var first_creature := zone.find_child("GiantMarshCreature_00", true, false) as Node3D
 	marsh.call("_on_giant_creature_encounter", test_player, first_creature)
 	var first_enemy := first_creature.get_node_or_null("GiantMarshCombatEnemy") as CharacterBody3D
