@@ -293,3 +293,21 @@ The creative reference is the broad adventure structure and strategic ability pr
 - The stage regression checks the examiner node, interaction area and briefing response, in addition to the existing chamber, trap, relic-lock and stage-progression checks.
 - Latest canonical Godot runtime run 45323857804 passed all configured checks on commit `39231d9c5a80f718ee9e20ab149db2bdfc28d6bb`. The dedicated Android APK export run 45323857216 also passed on that commit.
 - The combined APK validation job separately reports a Miyar rigged-GLB companion validation failure; that is not a Baghdad tower or tunnel failure and remains an independent build-pipeline issue.
+
+
+## Canonical Baghdad tower correction — 25 November 2026
+
+This section is authoritative and supersedes the older five-tower lists and identity notes above wherever they conflict:
+
+1. Hunter Association Tower.
+2. Business and Investment Tower.
+3. Shopping and Commerce Tower.
+4. Antiques and Heritage Tower.
+5. Technology and Innovation Tower.
+
+- The Business and Investment Tower remains one of the five towers. It was not replaced by a Weapons/Equipment/Elixirs Tower.
+- Weapons, armour, equipment, elixirs, crafting and skill manuals remain departments within the Shopping and Commerce Tower.
+- The Antiques and Heritage Tower is the fourth tower. Its canonical runtime ID is `antiques_heritage_tower_baghdad`, scene node `AntiquesHeritageTower`, with 34 floors.
+- Swimming pools, gardens, sports courts, cinema, bowling, amusement and family recreation are independent public district amenities. They are not a sixth tower and are not the Antiques and Heritage Tower.
+- The Power Tower is a separate 200-floor challenge destination, outside the connected five-tower district.
+- This is the canonical identity decision, not a claim that all interiors or independent recreation amenities are complete. Their implementation and current-head validation remain separate release gates.
