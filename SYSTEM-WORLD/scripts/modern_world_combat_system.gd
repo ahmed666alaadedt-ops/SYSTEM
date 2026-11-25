@@ -120,12 +120,28 @@ func _perform_bow_attack() -> Dictionary:
 	var slots: Dictionary = progression_node.get("equipment_slots") if progression_node != null else {}
 	if str(slots.get("weapon", "")) not in ["composite_bow", "crossbow"]:
 		return {"success": false, "reason": "BOW_OR_CROSSBOW_REQUIRED"}
+	if progression_node == null or not progression_node.has_method("get_item_count") or not progression_node.has_method("consume_item"):
+		return {"success": false, "reason": "ARROW_INVENTORY_UNAVAILABLE"}
+	var ammunition_id := ""
+	var ammunition_multiplier := 1.0
+	if int(progression_node.call("get_item_count", "diamond_arrows")) > 0:
+		ammunition_id = "diamond_arrows"
+		ammunition_multiplier = 1.45
+	elif int(progression_node.call("get_item_count", "steel_arrows")) > 0:
+		ammunition_id = "steel_arrows"
+		ammunition_multiplier = 1.2
+	elif int(progression_node.call("get_item_count", "reinforced_arrows")) > 0:
+		ammunition_id = "reinforced_arrows"
+	else:
+		return {"success": false, "reason": "ARROWS_REQUIRED"}
+	if not bool(progression_node.call("consume_item", ammunition_id, 1)):
+		return {"success": false, "reason": "ARROW_CONSUMPTION_FAILED"}
 	can_attack = false
 	_consume_weapon_durability(0.45)
-	_fire_hitscan(attack_damage * 1.25 + _get_progression_damage_bonus(), attack_range * 2.4)
+	_fire_hitscan((attack_damage * 1.25 + _get_progression_damage_bonus()) * ammunition_multiplier, attack_range * 2.4)
 	await get_tree().create_timer(0.85 * _get_attack_cooldown_multiplier()).timeout
 	can_attack = true
-	return {"success": true, "combat_style": "BOW_AND_ARROW"}
+	return {"success": true, "combat_style": "BOW_AND_ARROW", "ammunition_id": ammunition_id}
 
 
 func light_attack() -> void:
