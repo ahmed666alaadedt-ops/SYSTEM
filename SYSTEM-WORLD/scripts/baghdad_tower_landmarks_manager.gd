@@ -1156,6 +1156,7 @@ func _create_tower_architecture(root: Node3D, node_name: String, title: String, 
 	root.add_child(identity_ring)
 	_create_tower_facade_glazing(root, height, radius, floors, beacon_color)
 	_create_tower_identity_details(root, node_name, height, radius, beacon_color)
+	LobbyFinishScript.apply_tower_visual_finish(root, node_name, height, radius, beacon_color)
 
 
 func _create_tower_facade_glazing(root: Node3D, height: float, radius: float, floors: int, accent_color: Color) -> void:
