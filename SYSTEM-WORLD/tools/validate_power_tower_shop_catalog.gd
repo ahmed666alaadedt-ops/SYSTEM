@@ -17,6 +17,9 @@ func _run() -> void:
 	var weapon_count := 0
 	var cafeteria_count := 0
 	var accessory_count := 0
+	var footwear_count := 0
+	var armor_count := 0
+	var rare_elixir_count := 0
 	for product_value in catalog:
 		var product: Dictionary = product_value
 		var item_id := str(product.get("id", ""))
@@ -37,10 +40,22 @@ func _run() -> void:
 			cafeteria_count += 1
 		if category == "ACCESSORY":
 			accessory_count += 1
+		if category == "FOOTWEAR":
+			footwear_count += 1
+		if category == "ARMOR":
+			armor_count += 1
+		if category == "NEN_ELIXIR" and str(product.get("rarity", "")).to_upper() == "RARE":
+			rare_elixir_count += 1
 	assert(weapon_count >= 8, "Traditional weapon selection is incomplete.")
 	assert(skill_count >= 3, "Nen/skill shop must expose skill manuals.")
 	assert(cafeteria_count >= 3, "Power Tower cafeteria catalog is incomplete.")
 	assert(accessory_count >= 4, "Hunter accessory catalog is incomplete.")
+	assert(footwear_count >= 5, "Bronze-to-diamond Power Tower footwear progression is incomplete.")
+	assert(armor_count >= 5, "Armor progression from bronze to diamond is incomplete.")
+	assert(rare_elixir_count >= 4, "Rare Nen elixir selection is incomplete.")
+	assert(ProgressionScript.DEFAULT_EQUIPMENT_SLOTS.has("boots"))
+	assert(ProgressionScript.EQUIPMENT_SLOTS_BY_ITEM.get("training_boots", "") == "boots")
+	assert(ProgressionScript.EQUIPMENT_SLOTS_BY_ITEM.get("rank_sss_boots", "") == "boots")
 	assert(ProgressionScript.EQUIPMENT_SLOTS_BY_ITEM.get("hunter_pendant", "") == "accessory_1")
 	assert(ProgressionScript.EQUIPMENT_SLOTS_BY_ITEM.get("nen_aura_bracelet", "") == "accessory_2")
 	var config: Dictionary = OperationsScript.POWER_TOWER_CONFIG
@@ -53,5 +68,5 @@ func _run() -> void:
 	assert(str(config.get("roles", [])[3]).contains("النِن"))
 	assert(CombatScript.POWER_TOWER_FORBIDDEN_WEAPONS.has("system_firearm"))
 	assert(CombatScript.POWER_TOWER_FORBIDDEN_WEAPONS.has("hunter_rifle"))
-	print("POWER TOWER SHOP VALIDATION PASSED: %d products, %d traditional weapons, %d skill manuals, %d cafeteria items, %d equippable accessories; no modern firearms." % [catalog.size(), weapon_count, skill_count, cafeteria_count, accessory_count])
+	print("POWER TOWER SHOP VALIDATION PASSED: %d products, %d traditional weapons, %d skill manuals, %d cafeteria items, %d accessories, %d footwear, %d armor and %d rare Nen elixirs; no modern firearms." % [catalog.size(), weapon_count, skill_count, cafeteria_count, accessory_count, footwear_count, armor_count, rare_elixir_count])
 	quit(0)
