@@ -33,8 +33,13 @@ class SystemAndroidHostPlugin(godot: Godot) : GodotPlugin(godot) {
 
     @UsedByGodot
     fun send_to_android(rawMessage: String) {
+        val envelope = SystemGodotMessageContract.decode(rawMessage)
         if (!router.receiveFromGodot(rawMessage, marketplaceHandler)) {
             Log.w(TAG, "Rejected an invalid or disallowed Godot bridge message.")
+            return
+        }
+        if (envelope?.type == SystemGodotMessageContract.Type.BRIDGE_READY) {
+            router.sendPlayerContext(FirebaseAuth.getInstance().currentUser?.displayName)
         }
     }
 

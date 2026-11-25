@@ -21,7 +21,7 @@ The plugin exposes the exact singleton name and API expected by `SYSTEM-WORLD/sc
 - Signal: `message_from_android(raw_json: String)`
 - Godot-callable method: `send_to_android(raw_json: String)`
 
-The plugin routes version-1 envelopes through `SystemGodotMessageRouter` and `SystemMarketplaceGodotBridgeHandler`. Marketplace requests use the existing authenticated `FirebaseArtifactMarketplaceRepository`; the UID is obtained from the current Firebase Authentication session, never from a Godot payload. Replies preserve request IDs and return to GDScript through the registered signal.
+The plugin routes version-1 envelopes through `SystemGodotMessageRouter` and `SystemMarketplaceGodotBridgeHandler`. Marketplace requests use the existing authenticated `FirebaseArtifactMarketplaceRepository`; the UID is obtained from the current Firebase Authentication session, never from a Godot payload. Replies preserve request IDs and return to GDScript through the registered signal. When GDScript sends the `bridge_ready` handshake, the plugin returns the current Firebase-authenticated UID and display name as explicitly untrusted display context.
 
 The bridge does not grant gameplay authority. Player display context remains untrusted, and the Android client cannot issue artifacts, grant currency, alter ownership, or bypass callable Cloud Function checks.
 

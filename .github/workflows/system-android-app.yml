@@ -12,6 +12,7 @@ on:
     branches: [main]
     paths:
       - "app/**"
+      - "SYSTEM-WORLD/**"
       - "build.gradle.kts"
       - "settings.gradle.kts"
       - ".github/workflows/system-android-app.yml"
