@@ -263,7 +263,14 @@ func _build_arena_floor_layouts() -> void:
 	var collision_faces := PackedVector3Array()
 	for floor_number in range(1, FLOOR_COUNT + 1):
 		var arena_count := get_arena_count_for_floor(floor_number)
-		var columns := mini(arena_count, 4)
+		var columns := 1
+		match arena_count:
+			8: columns = 4
+			6: columns = 3
+			4: columns = 2
+			3: columns = 3
+			2: columns = 2
+			_: columns = 1
 		var rows := int(ceil(float(arena_count) / float(columns)))
 		var floor_y := float(floor_number - 1) * 4.1 + 2.05
 		for arena_index in range(arena_count):
