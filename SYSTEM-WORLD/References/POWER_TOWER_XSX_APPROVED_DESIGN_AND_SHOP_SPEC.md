@@ -150,3 +150,9 @@ Official competitive matches remain 1v1. The floor band controls arena count, no
 
 ### Interior placement
 - Weapon, armor, elixir, skill, accessory, cafeteria, restaurant, recreation, entertainment and Nen training facilities are positioned within the circular entrance podium footprint.
+
+
+### Equipment tier expansion
+- Added dedicated footwear equipment slot with bronze, silver, gold and diamond boots. Equipped boots add movement and defense bonuses, and use the same persisted durability/upgrade path as other equipment.
+- Expanded the shop catalog with additional traditional melee weapons, crossbows, shields, bronze-to-diamond armor tiers, five footwear tiers, rare Nen elixirs and advanced Nen skill manuals.
+- Modern firearms and modern projectile weapons remain prohibited from the Power Tower.
