@@ -156,3 +156,8 @@ Official competitive matches remain 1v1. The floor band controls arena count, no
 - Added dedicated footwear equipment slot with bronze, silver, gold and diamond boots. Equipped boots add movement and defense bonuses, and use the same persisted durability/upgrade path as other equipment.
 - Expanded the shop catalog with additional traditional melee weapons, crossbows, shields, bronze-to-diamond armor tiers, five footwear tiers, rare Nen elixirs and advanced Nen skill manuals.
 - Modern firearms and modern projectile weapons remain prohibited from the Power Tower.
+
+
+### Floor-based combat rules
+- Floors 1–80 allow unarmed hand-to-hand, kung fu, martial arts, traditional melee weapons, and bows/arrows; Nen techniques become available as the player learns them.
+- Floors 81–200 are Nen-only: players must have unlocked Nen and reached control rank 5 before entering, must unequip weapons, and fight using Nen-enhanced unarmed combat and Nen techniques.
