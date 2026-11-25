@@ -5011,6 +5011,9 @@ func _on_marketplace_result(request_id: String, response: Dictionary) -> void:
 			status_label.text = "أُلغي المزاد وأُعيدت القطعة إلى المالك."
 			_request_marketplace_operation("browse_auctions", {})
 			_request_marketplace_operation("owned_artifacts", {})
+		"create_exchange_offer":
+			status_label.text = "تم إرسال عرض التبادل وحجز قطعتك حتى قبول العرض أو إغلاقه."
+			_request_marketplace_operation("exchange_offers", {})
 		"accept_exchange_offer":
 			status_label.text = "اكتمل التبادل ونُقلت ملكية القطعتين."
 			_request_marketplace_operation("exchange_offers", {})
