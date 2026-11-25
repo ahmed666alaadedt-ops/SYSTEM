@@ -4917,7 +4917,7 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 func open_museum_artifact_exhibit(target: Node) -> void:
 	if target == null or not is_instance_valid(target) or str(target.get_meta("system_interaction_type", "")) != "museum_artifact_exhibit":
 		return
-	current_tower_id = str(target.get_meta("system_tower_id", "antiques_heritage_tower_baghdad"))
+	current_tower_id = str(target.get_meta("system_tower_id", "public_leisure_district"))
 	current_staff_id = ""
 	selected_market_artifact_id = ""
 	selected_market_auction_id = ""
@@ -5484,15 +5484,9 @@ func _release_pool_locker() -> void:
 	if not is_instance_valid(player) or not bool(player.get_meta("system_pool_locker_reserved", false)):
 		return
 	var locker_id := str(player.get_meta("system_pool_locker_id", ""))
-	var tower := tower_nodes.get("entertainment_tower_baghdad") as Node3D
-	var locker := tower.find_child(locker_id, true, false) as MeshInstance3D if tower != null and not locker_id.is_empty() else null
-	if locker != null and int(locker.get_meta("system_pool_locker_owner", -1)) == player.get_instance_id():
-		locker.remove_meta("system_pool_locker_occupied")
-		locker.remove_meta("system_pool_locker_owner")
-		var original_material: Variant = locker.get_meta("system_pool_locker_original_material", null)
-		if original_material is Material:
-			locker.material_override = original_material
-		locker.remove_meta("system_pool_locker_original_material")
+	var public_leisure := tower_manager.get_node_or_null("ConnectedCityPublicAmenities_Blockout/BaghdadPublicLeisureDistrict") if is_instance_valid(tower_manager) else null
+	if public_leisure != null and public_leisure.has_method("release_locker"):
+		public_leisure.call("release_locker", locker_id, player.get_instance_id())
 	player.remove_meta("system_pool_locker_reserved")
 	player.remove_meta("system_pool_locker_tower")
 	player.remove_meta("system_pool_locker_floor")
@@ -5509,34 +5503,12 @@ func _clear_pool_visit_state() -> void:
 
 
 func _dispatch_pool_supervisor_to_player() -> bool:
-	if not is_instance_valid(player) or not staff_by_tower.has("entertainment_tower_baghdad"):
+	if not is_instance_valid(player) or not is_instance_valid(tower_manager):
 		return false
-	var staff_ids: Array = staff_by_tower.get("entertainment_tower_baghdad", [])
-	if staff_ids.size() <= 3:
+	var public_leisure := tower_manager.get_node_or_null("ConnectedCityPublicAmenities_Blockout/BaghdadPublicLeisureDistrict")
+	if public_leisure == null or not public_leisure.has_method("dispatch_lifeguard_to"):
 		return false
-	var tower := tower_nodes.get("entertainment_tower_baghdad") as Node3D
-	var supervisor := tower.find_child("TowerStaff_" + str(staff_ids[3]), true, false) as Node3D if tower != null else null
-	if supervisor == null or supervisor.get_parent() != active_floor_root or int(supervisor.get_meta("system_staff_duty_floor", 0)) not in [18, 19]:
-		return false
-	var model := _find_tower_staff_model(supervisor)
-	if model == null:
-		return false
-	var previous_tween: Variant = supervisor.get_meta("system_staff_patrol_tween", null)
-	if previous_tween is Tween and (previous_tween as Tween).is_running():
-		(previous_tween as Tween).kill()
-	supervisor.set_meta("system_staff_assistance_requested", true)
-	supervisor.set_meta("system_staff_assistance_target", player.global_position)
-	model.call("set_activity", "walk")
-	var response_tween := supervisor.create_tween()
-	supervisor.set_meta("system_staff_patrol_tween", response_tween)
-	response_tween.tween_property(supervisor, "global_position", player.global_position + Vector3(1.5, 0.0, 0.0), 1.1).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	response_tween.tween_callback(func():
-		if is_instance_valid(supervisor):
-			supervisor.set_meta("system_staff_assistance_arrived", true)
-			if is_instance_valid(model):
-				model.call("set_activity", "idle")
-	)
-	return true
+	return bool(public_leisure.call("dispatch_lifeguard_to", player))
 
 
 func open_facility_service(tower_id: String, floor_number: int, facility_type: String) -> void:
