@@ -420,6 +420,69 @@ func _run_validation() -> void:
 		_fail("Technology Tower is missing from the public event-board node map.")
 		return
 
+
+	# Structural architecture audit: validate generated geometry and each tower's approved visual identity.
+	const ARCHITECTURAL_IDENTITIES := {
+		"hunter_association_tower_baghdad": ["HunterXSXEmblemPlaque_00", "HunterXSXEmblemPlaque_01", "HunterXSXEmblemPlaque_02", "HunterXSXEmblemPlaque_03"],
+		"business_investment_tower_baghdad": ["BusinessCapitalSpire", "BusinessCapitalRing_00", "BusinessCapitalRing_01", "BusinessCapitalRing_02", "BusinessInvestmentSign"],
+		"shopping_tower_baghdad": ["RetailGalleryRing_0", "RetailGalleryRing_1", "RetailGalleryRing_2", "ShoppingAtriumSign", "ShoppingTowerWeaponBlade_left", "ShoppingTowerWeaponBlade_right", "ShoppingTowerElixirBeacon"],
+		"antiques_heritage_tower_baghdad": ["HeritageMuseumPodium", "HeritageMuseumEntranceCanopy", "HeritageGalleryWing_left", "HeritageGalleryWing_right", "HeritageGalleryColumn_left", "HeritageGalleryColumn_right", "HeritageArchiveCrown"],
+		"technology_tower_baghdad": ["InnovationAntenna_00", "InnovationAntenna_01", "InnovationAntenna_02", "InnovationLabSkyRibbon"],
+		"power_tower_baghdad": ["TournamentBlade_left", "TournamentBlade_right", "PowerTowerChampionCrown"]
+	}
+	for architecture_tower_id in EXPECTED_TOWER_IDS:
+		var architecture_tower := tower_manager.get_node_or_null(str(TOWER_NODE_NAMES[architecture_tower_id])) as Node3D
+		if architecture_tower == null:
+			_fail("Architecture audit cannot resolve tower: " + architecture_tower_id)
+			return
+		var architecture_height := float(architecture_tower.get_meta("tower_height_m", 0.0))
+		var architecture_floors := int(architecture_tower.get_meta("tower_floor_count", 0))
+		if architecture_height <= 0.0 or architecture_floors <= 0:
+			_fail("Tower architectural height or floor count is missing: " + architecture_tower_id)
+			return
+		if architecture_tower.get_node_or_null("MonumentalFoundation") == null or architecture_tower.get_node_or_null("TowerMainShaft") == null or architecture_tower.get_node_or_null("IlluminatedIdentityRing") == null:
+			_fail("Tower is missing its generated foundation, main shaft or illuminated identity ring: " + architecture_tower_id)
+			return
+		var architecture_body := architecture_tower.get_node_or_null("TowerStructureCollision") as StaticBody3D
+		if architecture_body == null:
+			_fail("Tower is missing its physical structural collision body: " + architecture_tower_id)
+			return
+		var structural_shape_count := 0
+		for structural_child in architecture_body.get_children():
+			if structural_child is CollisionShape3D and structural_child.shape != null:
+				structural_shape_count += 1
+		if structural_shape_count < 2:
+			_fail("Tower must have separate foundation and shaft collision volumes: " + architecture_tower_id)
+			return
+		for podium_index in range(3):
+			if architecture_tower.get_node_or_null("PodiumTerrace_%d" % podium_index) == null:
+				_fail("Tower is missing a podium terrace: " + architecture_tower_id)
+				return
+		for fin_index in range(4):
+			if architecture_tower.get_node_or_null("FacadeFin_%d" % fin_index) == null:
+				_fail("Tower is missing one of its four vertical facade fins: " + architecture_tower_id)
+				return
+		var architecture_glazing := architecture_tower.get_node_or_null("FacadeGlazingPanels") as MultiMeshInstance3D
+		var expected_window_count := architecture_floors * 20
+		if architecture_glazing == null or architecture_glazing.multimesh == null or architecture_glazing.multimesh.instance_count != expected_window_count or int(architecture_tower.get_meta("system_facade_window_count", 0)) != expected_window_count:
+			_fail("Tower glass facade does not contain 20 window panels for every declared floor: " + architecture_tower_id)
+			return
+		if int(architecture_tower.get_meta("system_facade_window_segments_per_floor", 0)) != 20 or int(architecture_tower.get_meta("system_facade_window_floors", 0)) != architecture_floors:
+			_fail("Tower facade floor/segment metadata does not match its generated glass geometry: " + architecture_tower_id)
+			return
+		for identity_node_name in ARCHITECTURAL_IDENTITIES[architecture_tower_id]:
+			if architecture_tower.get_node_or_null(str(identity_node_name)) == null:
+				_fail("Tower is missing its approved architectural identity feature %s: %s" % [str(identity_node_name), architecture_tower_id])
+				return
+	var hunter_architecture := tower_manager.get_node_or_null("HunterAssociationTower") as Node3D
+	if hunter_architecture == null or str(hunter_architecture.get_meta("system_hunter_guild_insignia", "")) != "XSX" or int(hunter_architecture.get_meta("system_hunter_guild_identity_facades", 0)) != 4:
+		_fail("Hunter Association Tower must retain the four-sided approved XSX identity.")
+		return
+	var power_architecture := tower_manager.get_node_or_null("PowerTower") as Node3D
+	if power_architecture == null or int(power_architecture.get_meta("tower_floor_count", 0)) != 200 or bool(power_architecture.get_meta("tower_is_connected_district_member", true)):
+		_fail("Power Tower must remain an independent 200-floor structure outside the five Baghdad civic towers.")
+		return
+
 	print("Baghdad tower validation passed: verified Republic Bridge and Tigris runtime geometry, five towers on both riverbanks/bridge, upper sky city, standalone Power Tower, Hunter rooftop helicopter controller, internal/external ads, tunnel anchor, six lobby kiosks and Shopping Tower facilities.")
 	# This is a short-lived headless validation process; avoid forcing dummy-renderer teardown of placeholder meshes.
 	quit(0)
