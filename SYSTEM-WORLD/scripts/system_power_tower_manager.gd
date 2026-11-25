@@ -13,6 +13,10 @@ const SPECTATOR_DAILY_PREDICTION_LIMIT := 20
 const SPECTATOR_MIN_STAKE := 1
 const SPECTATOR_MAX_STAKE := 500
 const NPC_INITIAL_TICKET_BUDGET := 300
+const POWER_TOWER_SPECTATOR_TARGET := 500
+const HOUSE_REVENUE_BPS := 1000
+const WINNING_FIGHTER_REWARD_BPS := 1000
+const WINNING_BETTOR_POOL_BPS := 8000
 const LOCAL_MATCH_AUTHORITY := "LOCAL_COMBAT_AUTHORITY"
 const DUEL_TKO_SCORE := 10
 const DUEL_MAX_CONSECUTIVE_LOSSES := 3
@@ -43,6 +47,8 @@ var spectator_prediction_points: Dictionary = {}
 var spectator_daily_counts: Dictionary = {}
 var spectator_wallet_provider: Node
 var spectator_npc_ticket_balances: Dictionary = {}
+var power_tower_house_revenue_total := 0
+var power_tower_fighter_reward_ledger: Dictionary = {}
 
 func _ready() -> void:
 	name = "SYSTEMPowerTowerManager"
@@ -496,6 +502,36 @@ func register_spectator_match(match_id: String, fighter_a_id: String, fighter_b_
 	return {"success": true, "match_id": match_id, "state": "open", "total_pool": 0}
 
 
+func populate_power_tower_npc_predictions(match_id: String, spectator_count: int = POWER_TOWER_SPECTATOR_TARGET) -> Dictionary:
+	match_id = match_id.strip_edges()
+	if not spectator_matches.has(match_id):
+		return {"success": false, "reason": "MATCH_NOT_FOUND"}
+	if str(spectator_matches[match_id].get("state", "")) != "open":
+		return {"success": false, "reason": "PREDICTIONS_LOCKED"}
+	var requested_count := clampi(spectator_count, 0, POWER_TOWER_SPECTATOR_TARGET)
+	var submitted := 0
+	var skipped := 0
+	for index in range(requested_count):
+		var npc_id := "power_tower_fan_%04d" % (index + 1)
+		var spectator_key := "npc:" + npc_id
+		var match_record: Dictionary = spectator_matches[match_id]
+		var predictions: Dictionary = match_record.get("predictions", {})
+		if predictions.has(spectator_key):
+			skipped += 1
+			continue
+		register_npc_spectator(npc_id)
+		var seed_text := "%s:%s" % [match_id, npc_id]
+		var side_index := absi(seed_text.hash()) % 2
+		var fighter_id := str(match_record["fighter_a_id"]) if side_index == 0 else str(match_record["fighter_b_id"])
+		var stake := 1 + (absi((seed_text + ":stake").hash()) % 5)
+		var result := submit_npc_spectator_ticket(match_id, npc_id, fighter_id, stake)
+		if bool(result.get("success", false)):
+			submitted += 1
+		else:
+			skipped += 1
+	return {"success": true, "target": requested_count, "submitted": submitted, "skipped": skipped, "currency": "SYSTEM_CREDITS"}
+
+
 func register_npc_spectator(npc_id: String) -> Dictionary:
 	npc_id = npc_id.strip_edges()
 	if npc_id.is_empty():
@@ -619,12 +655,20 @@ func settle_spectator_match(match_id: String, winner_id: String, settlement_sour
 	var payouts: Dictionary = {}
 	var profits: Dictionary = {}
 	var total_paid_out := 0
+	var house_revenue := 0
+	var fighter_reward := 0
+	var bettor_profit_pool := 0
 	if winning_stake > 0:
+		var losing_pool := maxi(0, total_pool - winning_stake)
+		house_revenue = int(floor(float(losing_pool) * float(HOUSE_REVENUE_BPS) / 10000.0))
+		fighter_reward = int(floor(float(losing_pool) * float(WINNING_FIGHTER_REWARD_BPS) / 10000.0))
+		bettor_profit_pool = losing_pool - house_revenue - fighter_reward
 		for index in range(winning_ids.size()):
 			var spectator_id := winning_ids[index]
 			var prediction: Dictionary = predictions[spectator_id]
 			var stake := int(prediction.get("stake_amount", 0))
-			var payout := total_pool - total_paid_out if index == winning_ids.size() - 1 else int(floor(float(total_pool) * float(stake) / float(winning_stake)))
+			var bonus := bettor_profit_pool - (total_paid_out - winning_stake) if index == winning_ids.size() - 1 else int(floor(float(bettor_profit_pool) * float(stake) / float(winning_stake)))
+			var payout := stake + bonus
 			if payout > 0:
 				if str(prediction.get("participant_type", "PLAYER")) == "NPC":
 					spectator_npc_ticket_balances[spectator_id] = int(spectator_npc_ticket_balances.get(spectator_id, 0)) + payout
@@ -635,10 +679,10 @@ func settle_spectator_match(match_id: String, winner_id: String, settlement_sour
 			total_paid_out += payout
 			prediction["correct"] = true
 			prediction["payout_amount"] = payout
-			prediction["net_profit"] = payout - stake
+			prediction["net_profit"] = bonus
 			predictions[spectator_id] = prediction
 			payouts[spectator_id] = payout
-			profits[spectator_id] = payout - stake
+			profits[spectator_id] = bonus
 		for spectator_id_variant in predictions.keys():
 			var spectator_id := str(spectator_id_variant)
 			if winning_ids.has(spectator_id):
@@ -651,8 +695,14 @@ func settle_spectator_match(match_id: String, winner_id: String, settlement_sour
 			predictions[spectator_id] = losing_prediction
 			payouts[spectator_id] = 0
 			profits[spectator_id] = -losing_stake
+		if house_revenue > 0:
+			power_tower_house_revenue_total += house_revenue
+		if fighter_reward > 0:
+			power_tower_fighter_reward_ledger[winner_id] = int(power_tower_fighter_reward_ledger.get(winner_id, 0)) + fighter_reward
+			if is_instance_valid(spectator_wallet_provider) and spectator_wallet_provider.has_method("record_power_tower_fighter_reward"):
+				spectator_wallet_provider.call("record_power_tower_fighter_reward", winner_id, fighter_reward, match_id)
 	else:
-		# No correct forecast: void this pool and return each fan's virtual stake.
+		# No correct forecast: void the round and refund every stake; no house/fighter cut.
 		for spectator_id_variant in predictions.keys():
 			var spectator_id := str(spectator_id_variant)
 			var prediction: Dictionary = predictions[spectator_id]
@@ -677,13 +727,30 @@ func settle_spectator_match(match_id: String, winner_id: String, settlement_sour
 	match_record["winner_id"] = winner_id
 	match_record["winning_stake"] = winning_stake
 	match_record["total_paid_out"] = total_paid_out
+	match_record["house_revenue"] = house_revenue
+	match_record["fighter_reward"] = fighter_reward
+	match_record["bettor_profit_pool"] = bettor_profit_pool
 	match_record["payouts"] = payouts
 	match_record["net_profits"] = profits
 	match_record["settled_at_unix"] = int(Time.get_unix_time_from_system())
 	match_record["settlement_source"] = settlement_source
 	spectator_matches[match_id] = match_record
 	_save_spectator_data()
-	return {"success": true, "winner_id": winner_id, "total_pool": total_pool, "winning_stake": winning_stake, "payouts": payouts, "net_profits": profits, "total_paid_out": total_paid_out, "refunded": winning_stake == 0, "virtual_currency": "SYSTEM_CREDITS", "cash_value": 0}
+	return {
+		"success": true,
+		"winner_id": winner_id,
+		"total_pool": total_pool,
+		"winning_stake": winning_stake,
+		"house_revenue": house_revenue,
+		"fighter_reward": fighter_reward,
+		"bettor_profit_pool": bettor_profit_pool,
+		"payouts": payouts,
+		"net_profits": profits,
+		"total_paid_out": total_paid_out,
+		"refunded": winning_stake == 0,
+		"virtual_currency": "SYSTEM_CREDITS",
+		"cash_value": 0
+	}
 
 
 func get_open_spectator_matches() -> Array[Dictionary]:
@@ -732,6 +799,8 @@ func _save_spectator_data() -> void:
 	config.set_value("spectators", "points", spectator_prediction_points)
 	config.set_value("spectators", "daily_counts", spectator_daily_counts)
 	config.set_value("spectators", "npc_ticket_balances", spectator_npc_ticket_balances)
+	config.set_value("spectators", "house_revenue_total", power_tower_house_revenue_total)
+	config.set_value("spectators", "fighter_reward_ledger", power_tower_fighter_reward_ledger)
 	var error := config.save(spectator_save_path)
 	if error != OK:
 		push_warning("SYSTEM: Spectator prediction data could not be saved.")
@@ -744,6 +813,9 @@ func _load_spectator_data() -> void:
 	var saved_points: Variant = config.get_value("spectators", "points", {})
 	var saved_daily_counts: Variant = config.get_value("spectators", "daily_counts", {})
 	var saved_npc_balances: Variant = config.get_value("spectators", "npc_ticket_balances", {})
+	power_tower_house_revenue_total = maxi(0, int(config.get_value("spectators", "house_revenue_total", 0)))
+	var saved_fighter_rewards: Variant = config.get_value("spectators", "fighter_reward_ledger", {})
+	power_tower_fighter_reward_ledger = saved_fighter_rewards.duplicate(true) if saved_fighter_rewards is Dictionary else {}
 	spectator_matches = saved_matches.duplicate(true) if saved_matches is Dictionary else {}
 	spectator_prediction_points = saved_points.duplicate(true) if saved_points is Dictionary else {}
 	spectator_daily_counts = saved_daily_counts.duplicate(true) if saved_daily_counts is Dictionary else {}
