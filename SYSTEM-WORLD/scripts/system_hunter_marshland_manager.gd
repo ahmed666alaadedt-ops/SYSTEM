@@ -363,27 +363,63 @@ func _build_carnivorous_plant(index: int, location: Vector3, dark_leaf: Material
 func _on_carnivorous_plant_body_entered(body: Node3D, plant: Node3D) -> void:
 	if not is_instance_valid(body) or not is_instance_valid(plant):
 		return
-	if body.has_meta("system_examiner_trapped") and bool(body.get_meta("system_examiner_trapped")):
+	if bool(plant.get_meta("system_plant_cooldown", false)):
 		return
+	if bool(body.get_meta("system_examiner_trapped", false)):
+		return
+
 	var species := str(plant.get_meta("system_carnivorous_plant_species", "snap_maw"))
+	var capture_seconds := 2.4
+	var damage_amount := 8.0
+	match species:
+		"strangler_vine":
+			capture_seconds = 3.2
+			damage_amount = 5.0
+		"sleeping_spore_bloom":
+			capture_seconds = 2.8
+			damage_amount = 4.0
+		"buried_trap_blossom":
+			capture_seconds = 2.6
+			damage_amount = 10.0
+		"water_lurker":
+			capture_seconds = 3.0
+			damage_amount = 9.0
+
+	plant.set_meta("system_plant_cooldown", true)
+	plant.set_meta("system_plant_has_captured_candidate", true)
 	body.set_meta("system_examiner_trapped", true)
 	body.set_meta("system_examiner_trap_species", species)
 	body.set_meta("system_examiner_trap_source", plant.name)
+	body.set_meta("system_examiner_trap_release_at_msec", Time.get_ticks_msec() + int(capture_seconds * 1000.0))
+
 	if body is CharacterBody3D:
 		(body as CharacterBody3D).velocity = Vector3.ZERO
-	plant.set_meta("system_plant_has_captured_candidate", true)
+
+	# Route the hazard through the game's real combat-health component when
+	# the captured actor is the player; rival actors use their own damage API.
+	var health_component := body.get_node_or_null("PlayerCombatHealth")
+	if health_component != null and health_component.has_method("receive_damage"):
+		health_component.call("receive_damage", damage_amount, plant)
+	elif body.has_method("take_damage"):
+		body.call("take_damage", damage_amount, plant)
+
 	var maw := plant.get_node_or_null("PredatorMaw") as Node3D
 	if maw != null:
 		var tween := create_tween()
-		tween.tween_property(maw, "scale", Vector3(0.18, 0.18, 0.18), 0.28)
-		tween.tween_interval(1.7)
-		tween.tween_property(maw, "scale", Vector3.ONE, 0.35)
-	await get_tree().create_timer(2.4).timeout
+		tween.tween_property(maw, "scale", Vector3(0.12, 0.12, 0.12), 0.24)
+		tween.tween_interval(maxf(0.25, capture_seconds - 0.55))
+		tween.tween_property(maw, "scale", Vector3.ONE, 0.31)
+
+	await get_tree().create_timer(capture_seconds).timeout
 	if is_instance_valid(body):
 		body.set_meta("system_examiner_trapped", false)
 		body.set_meta("system_examiner_released_from_trap", true)
+		body.remove_meta("system_examiner_trap_release_at_msec")
 	if is_instance_valid(plant):
 		plant.set_meta("system_plant_has_captured_candidate", false)
+		await get_tree().create_timer(4.0).timeout
+		if is_instance_valid(plant):
+			plant.set_meta("system_plant_cooldown", false)
 
 func _build_marsh_tree(index: int, location: Vector3, bark: Material, canopy_a: Material, canopy_b: Material, canopy_c: Material) -> void:
 	var tree := Node3D.new()
