@@ -369,3 +369,13 @@ export {
   listMyHunterGuildMissionContributions,
   finishHunterGuildMissionSession
 } from "./hunter_guild_contributions";
+
+export {
+  getMyMarketplaceWallet,
+  listMyMarketplaceArtifacts,
+  grantMarketplaceArtifact,
+  browseArtifactMarketplace,
+  createArtifactListing,
+  cancelArtifactListing,
+  purchaseArtifactListing
+} from "./artifact_marketplace";
