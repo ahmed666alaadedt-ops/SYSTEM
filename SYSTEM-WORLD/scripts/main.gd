@@ -1196,6 +1196,9 @@ func _on_interaction_performed(
 	if target.has_meta("system_power_tower_ticket_terminal") and tower_operations_manager != null:
 		tower_operations_manager.call("open_power_tower_ticket_terminal")
 		return
+	if target.has_meta("system_power_tower_combat_style_board") and tower_operations_manager != null:
+		tower_operations_manager.call("open_power_tower_combat_style_terminal")
+		return
 	if str(target.get_meta("system_interaction_action", "")) == "POWER_TOWER_NEN_TRAINING" and tower_operations_manager != null:
 		tower_operations_manager.call("interact_power_tower_nen_training", target)
 		return
