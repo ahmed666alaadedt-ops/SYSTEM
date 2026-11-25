@@ -112,13 +112,17 @@ func _run() -> void:
 		_fail("Customer routine movement regression could not find a persistent lobby customer.")
 		return
 	var routine_start_position := routine_customer.position
-	operations.call("_move_customer_visitors", 8)
+	var routine_customer_id := str(routine_customer.get_meta("system_tower_customer_id", ""))
+	if routine_customer_id.is_empty():
+		_fail("Persistent lobby customer is missing its stable NPC identifier.")
+		return
+	operations.call("_move_customer_visitors", 8, routine_customer_id)
 	var cafe_target: Vector3 = routine_customer.get_meta("system_customer_schedule_target", Vector3.ZERO)
 	var cafe_tween: Variant = routine_customer.get_meta("system_customer_move_tween", null)
 	if str(routine_customer.get_meta("system_customer_schedule_phase", "")) != "cafe" or str(routine_customer.get_meta("system_customer_schedule_action", "")) != "having_breakfast" or not (cafe_tween is Tween) or not (cafe_tween as Tween).is_running():
 		_fail("Customer NPC did not begin its breakfast route during the cafe schedule phase.")
 		return
-	operations.call("_move_customer_visitors", 11)
+	operations.call("_move_customer_visitors", 11, routine_customer_id)
 	var browse_target: Vector3 = routine_customer.get_meta("system_customer_schedule_target", Vector3.ZERO)
 	var browse_tween: Variant = routine_customer.get_meta("system_customer_move_tween", null)
 	if str(routine_customer.get_meta("system_customer_schedule_phase", "")) != "browse" or str(routine_customer.get_meta("system_customer_schedule_action", "")) != "browsing_services" or browse_target.is_equal_approx(cafe_target) or not (browse_tween is Tween) or not (browse_tween as Tween).is_running():
