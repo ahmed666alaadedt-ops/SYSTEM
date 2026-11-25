@@ -33,7 +33,7 @@ func _build_marshland() -> void:
 	glow.emission = Color(0.04, 0.48, 0.9)
 	glow.emission_energy_multiplier = 1.6
 
-	_add_box("MarshlandGround", Vector3(0.0, -0.65, 34.0), Vector3(110.0, 1.3, 100.0), soil, true)
+	_add_box("MarshlandGround", Vector3(0.0, -0.65, 34.0), Vector3(110.0, 1.3, 120.0), soil, true)
 	_add_box("TunnelToMarshlandThreshold", Vector3(0.0, -0.05, -7.0), Vector3(25.0, 0.4, 16.0), stone, true)
 	_add_label("MarshlandWelcome", "أرض المستنقعات\nنهاية نفق اختبار الصيادين", Vector3(0.0, 7.0, -10.0), Color(0.72, 0.92, 0.78))
 
