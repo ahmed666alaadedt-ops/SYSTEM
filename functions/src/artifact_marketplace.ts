@@ -597,7 +597,7 @@ export const grantMarketplaceArtifactFromReward = onCall(async (request) => {
   const player = playerRef(ownerId);
   const item = ownershipRef(ownerId, artifactId);
   const registry = database().collection("artifactRegistry").doc(artifactId);
-  const event = database().collection("artifactRewardEvents").doc(gameServerUid + "_" + eventId);
+  const event = database().collection("artifactRewardEvents").doc(gameServerUid + "_" + ownerId + "_" + eventId);
   const history = database().collection("artifactHistory").doc(artifactId)
     .collection("events").doc("reward_" + eventId);
 
