@@ -43,12 +43,15 @@ All categories must respect world-specific equipment rules: modern weapons/gear 
 - The five-tower gardens are part of the connected Baghdad district. The standalone Power Tower is excluded.
 - Garden validation must check all fifteen garden instances, their floor collisions, railings, landscaping, seating and interaction/floor metadata in Godot.
 
-## Hunter Association Tower and hidden examination entrance
-- The Hunter Association Tower is one of the five connected Baghdad district towers and is specifically located above Republic Bridge on the Tigris riverfront. Mayar is its president and presents verified Hunter Association awards at formal ceremonies.
-- Preserve the already implemented hidden underground test route, its three-inscription puzzle, registration prerequisite, and physical transition into the lower passage. Do not make the entrance openly visible or directly accessible from the street.
-- The concealed examination entrance is accessed from inside the Shopping and Commerce Tower restaurant, using an original secret restaurant interaction inspired by the idea of a hidden Hunter exam entrance. The player must discover the correct restaurant clue/interaction; the existing three-inscription riddle and Hunter Association registration prerequisite remain mandatory. The restaurant is the concealed access point, not a replacement for the puzzle or registration.
-- The inspiration is the feeling of a secret entrance/examination in a hunter adventure story, not a reproduction of an anime scene, dialogue, characters, or exact mechanism. Keep SYSTEM's own story, puzzle, and implementation.
-- Once unlocked, preserve the actual physical entrance and passage transition; do not replace it with a text-only message.
+## Hunter Association Tower and the single continuous examination tunnel
+- The Hunter Association Tower is one of the five connected Baghdad district towers and is the central tallest tower above the upper city, aligned over Republic Bridge and the Tigris. Mayar is its president and presents verified Hunter Association awards at formal ceremonies.
+- The active discovery and recruitment point is the Hunter Association Tower lobby. On arrival, the player receives a clear Arabic invitation to become a Hunter, with explicit accept/decline choices. Declining leaves registration unchanged and allows a later choice.
+- After acceptance, the player follows the visible Hunter Guild guide. The guide escorts the player from the tower to the one permanent underground examination tunnel beneath the district.
+- The candidate serial is allocated and saved only when the player reaches the tunnel. Re-entry reuses the same serial; no duplicate number is allocated.
+- The examination is one continuous tunnel competition with three ordered physical checkpoints, 500 individually tracked background candidates and five named interactive rivals. Do not describe or implement it as a multi-stage journey.
+- The Shopping and Commerce Tower restaurant keeps its independent ordering, dining, waiter and chef lifecycle. It is not the active examination entrance and must not be replaced by a hidden restaurant puzzle, meal gate, private room or restaurant elevator.
+- Keep the tunnel concealed from ordinary street access and preserve the physical guide-led transfer; do not replace it with a text-only message.
+- The inspiration is the broad feeling of a hunter qualification adventure, not a reproduction of any anime scene, dialogue, characters or exact mechanism. Keep SYSTEM's own story and implementation.
 
 ## Canonical layout correction — user-confirmed 25 November 2026
 
@@ -56,7 +59,7 @@ This section supersedes any older wording in this file or related design notes t
 
 - Exactly five connected Baghdad towers form one elevated city district: Hunter Association, Business and Investment, Shopping and Commerce, Antiques and Heritage, and Technology and Innovation.
 - The Hunter Association Tower is the central tallest tower above the Baghdad upper city, physically seated on the uppermost circular sky platform (platform surface 419.2 m). Its geographic center remains aligned with the verified Republic Bridge/Tigris reference below. The tower replaces the former decorative central S-spire and carries the XSX guild emblem on all four exterior faces. Its helipad is above the tower, and advertising facades face both inward toward the elevated city and outward toward Baghdad.
-- The Hunter examination tunnel is below the district, but its concealed player entry is inside the Shopping Tower restaurant. Keep the ordered three-inscription puzzle, registration gate, physical descent, and seven-stage exam.
+- The Hunter examination tunnel is below the district. The approved player route starts with the Hunter Tower arrival invitation, accept/decline registration choice, and visible guild-guide escort to one continuous tunnel competition; allocate the persistent candidate serial only at tunnel arrival.
 - Shopping/Commerce retains the already-developed weapons, armor, modern armored outfits, elixirs including Nen awakening/control/recovery types, skill manuals/marketplace, restaurants, hotel services, and other existing departments. Pools and sports/recreation remain independent public leisure facilities; they are not a sixth Baghdad tower and are not part of the Antiques and Heritage Tower.
 - The Power Tower is a separate standalone destination away from this district and is not part of the five towers.
 
