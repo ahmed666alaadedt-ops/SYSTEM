@@ -369,6 +369,13 @@ func _handle_additional_stage_objective(objective_id: String, target: Node) -> D
 	feedback_message = str(messages[min(stage_objective_progress-1,messages.size()-1)])
 	if stage_objective_progress < stage_objectives.size():
 		return {"handled":true,"success":true,"message":feedback_message,"progress":stage_objective_progress,"total":stage_objectives.size()}
+	if active_stage_id == "baghdad_tunnel_competition":
+		# The tunnel checkpoints are the opening section of one continuous exam.
+		# Do not award the Hunter license here; the marshland sanctuary is the true finish.
+		player.set_meta("system_hunter_tunnel_competition_complete", true)
+		target.set_meta("system_hunter_tunnel_competition_complete", true)
+		feedback_message = "اجتزت نفق الصيادين. استمر عبر الممر إلى أرض المستنقعات؛ الاختبار لا ينتهي إلا عند الملاذ الأثري المخفي."
+		return {"handled":true,"success":true,"tunnel_section_completed":true,"exam_still_active":true,"message":feedback_message,"progress":stage_objective_progress,"total":stage_objectives.size()}
 	if exam_manager == null:
 		return {"handled":true,"success":false,"message":"نظام الاختبار غير متاح."}
 	var evidence := "SYSTEM_LOCAL_STAGE_OBJECTIVES:" + active_stage_id + ":" + str(stage_objective_progress)
