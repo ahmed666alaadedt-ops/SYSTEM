@@ -2,6 +2,7 @@ extends SceneTree
 
 const OperationsScript = preload("res://scripts/system_baghdad_tower_operations_manager.gd")
 const CombatScript = preload("res://scripts/modern_world_combat_system.gd")
+const ProgressionScript = preload("res://scripts/system_player_progression.gd")
 const ALLOWED_QUALITY := ["BRONZE", "SILVER", "GOLD", "DIAMOND"]
 const FORBIDDEN_IDS := ["system_firearm", "hunter_pistol", "hunter_rifle", "precision_rifle", "tactical_shotgun"]
 
@@ -15,6 +16,7 @@ func _run() -> void:
 	var skill_count := 0
 	var weapon_count := 0
 	var cafeteria_count := 0
+	var accessory_count := 0
 	for product_value in catalog:
 		var product: Dictionary = product_value
 		var item_id := str(product.get("id", ""))
@@ -33,9 +35,14 @@ func _run() -> void:
 			skill_count += 1
 		if category == "CAFETERIA":
 			cafeteria_count += 1
+		if category == "ACCESSORY":
+			accessory_count += 1
 	assert(weapon_count >= 8, "Traditional weapon selection is incomplete.")
 	assert(skill_count >= 3, "Nen/skill shop must expose skill manuals.")
 	assert(cafeteria_count >= 3, "Power Tower cafeteria catalog is incomplete.")
+	assert(accessory_count >= 4, "Hunter accessory catalog is incomplete.")
+	assert(ProgressionScript.EQUIPMENT_SLOTS_BY_ITEM.get("hunter_pendant", "") == "accessory_1")
+	assert(ProgressionScript.EQUIPMENT_SLOTS_BY_ITEM.get("nen_aura_bracelet", "") == "accessory_2")
 	var config: Dictionary = OperationsScript.POWER_TOWER_CONFIG
 	assert(int(config.get("floors", 0)) == 200)
 	assert(config.get("allowed_weapon_categories", []).has("MELEE"))
@@ -44,5 +51,5 @@ func _run() -> void:
 	assert(config.get("jobs", []).has("nen_discovery_trainer"))
 	assert(CombatScript.POWER_TOWER_FORBIDDEN_WEAPONS.has("system_firearm"))
 	assert(CombatScript.POWER_TOWER_FORBIDDEN_WEAPONS.has("hunter_rifle"))
-	print("POWER TOWER SHOP VALIDATION PASSED: %d products, %d traditional weapons, %d skill manuals, %d cafeteria items; no modern firearms." % [catalog.size(), weapon_count, skill_count, cafeteria_count])
+	print("POWER TOWER SHOP VALIDATION PASSED: %d products, %d traditional weapons, %d skill manuals, %d cafeteria items, %d equippable accessories; no modern firearms." % [catalog.size(), weapon_count, skill_count, cafeteria_count, accessory_count])
 	quit(0)
