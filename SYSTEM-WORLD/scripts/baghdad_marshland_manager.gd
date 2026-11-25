@@ -1272,7 +1272,6 @@ func _start_real_guide_escort(candidate: Node3D) -> void:
 	var crowd := get_tree().root.find_child("HunterCandidateCrowd", true, false)
 	if crowd != null:
 		candidate_convoy = crowd as Node3D
-		candidate_convoy.reparent(real_guild_guide.get_parent(), true)
 		candidate_convoy.set_meta("system_candidate_convoy_following_real_guide", true)
 		candidate_convoy.set_meta("system_candidate_convoy_route", "marsh_entry_to_hidden_ancient_sanctuary")
 		candidate_convoy.set_meta("system_candidate_convoy_count", 500)
