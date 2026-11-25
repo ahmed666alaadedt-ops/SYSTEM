@@ -25,8 +25,8 @@ const NEN_FLOOR_STAGES := [
 	{"first": 1, "last": 20, "stage": "DISCOVERY", "label": "Nen Discovery and Aura Awareness"},
 	{"first": 21, "last": 40, "stage": "TEN_CONTROL", "label": "Ten - Aura Control"},
 	{"first": 41, "last": 60, "stage": "REN_OUTPUT", "label": "Ren - Aura Output"},
-	{"first": 61, "last": 80, "stage": "ZETSU_CONTROL", "label": "Zetsu - Aura Concealment"},
-	{"first": 81, "last": 100, "stage": "HATSU_FOUNDATION", "label": "Hatsu - Personal Ability"},
+	{"first": 61, "last": 79, "stage": "ZETSU_CONTROL", "label": "Zetsu - Aura Concealment"},
+	{"first": 80, "last": 100, "stage": "HATSU_FOUNDATION", "label": "Hatsu - Personal Ability"},
 	{"first": 101, "last": 150, "stage": "ADVANCED_NEN", "label": "Advanced Nen"},
 	{"first": 151, "last": 200, "stage": "NEN_MASTERY", "label": "Nen Mastery"}
 ]
