@@ -1241,6 +1241,31 @@ func _create_tower_identity_details(root: Node3D, node_name: String, height: flo
 					Vector3(1.6, 12.0, 1.6),
 					accent
 				)
+		"BusinessInvestmentTower":
+			# Distinct financial identity: a gold capital spire with three illuminated investment bands.
+			var capital_spire := MeshInstance3D.new()
+			capital_spire.name = "BusinessCapitalSpire"
+			var capital_spire_mesh := CylinderMesh.new()
+			capital_spire_mesh.top_radius = 2.0
+			capital_spire_mesh.bottom_radius = 3.6
+			capital_spire_mesh.height = 34.0
+			capital_spire.mesh = capital_spire_mesh
+			capital_spire.position = Vector3(0.0, height + 18.0, 0.0)
+			capital_spire.material_override = glow
+			root.add_child(capital_spire)
+			for level in range(3):
+				var capital_ring := MeshInstance3D.new()
+				capital_ring.name = "BusinessCapitalRing_%02d" % level
+				var ring_mesh := CylinderMesh.new()
+				var ring_radius := radius * (0.78 + float(level) * 0.09)
+				ring_mesh.top_radius = ring_radius
+				ring_mesh.bottom_radius = ring_radius
+				ring_mesh.height = 1.2
+				capital_ring.mesh = ring_mesh
+				capital_ring.position.y = height * (0.30 + float(level) * 0.20)
+				capital_ring.material_override = glow if level == 1 else accent
+				root.add_child(capital_ring)
+			_add_tower_identity_box(root, "BusinessInvestmentSign", Vector3(0.0, 38.0, -radius * 1.55), Vector3(radius * 1.55, 5.0, 1.2), glow)
 		"ShoppingTower":
 			for level in range(3):
 				var retail_ring := MeshInstance3D.new()
