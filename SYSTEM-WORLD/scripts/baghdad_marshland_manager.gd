@@ -739,9 +739,11 @@ func _build_marsh_route_markers(zone: Node3D) -> void:
 		var marker := Node3D.new()
 		marker.name = "HunterExamRouteArrow_%02d" % index
 		marker.position = marker_positions[index]
+		var next_position: Vector3 = marker_positions[index + 1] if index + 1 < marker_positions.size() else Vector3(760.0, 0.0, 760.0)
+		zone.add_child(marker)
+		marker.look_at(marker.global_position + (next_position - marker_positions[index]), Vector3.UP)
 		marker.set_meta("system_route_marker", true)
 		marker.set_meta("system_route_marker_index", index)
-		zone.add_child(marker)
 		var stem := MeshInstance3D.new()
 		stem.name = "ArrowStem"
 		var stem_mesh := BoxMesh.new()
