@@ -2545,6 +2545,58 @@ func open_floor_services(tower_id: String, floor_number: int) -> void:
 		status_label.text = "خدمات %s — الطابق %d\n%s" % [str(config.get("title", "البرج")), floor_number, str(staff_node.get_meta("system_tower_staff_role", "service"))]
 
 
+func open_power_tower_combat_style_terminal() -> void:
+	if not is_instance_valid(power_tower_manager):
+		_set_status("نظام برج القوة غير متاح حالياً.")
+		return
+	var competition := get_tree().root.find_child("PowerTowerCompetitionManager", true, false)
+	if not is_instance_valid(competition) or not competition.has_method("get_combat_styles_for_floor"):
+		_set_status("لوحة أساليب القتال غير متاحة حالياً.")
+		return
+	var tower_status: Dictionary = power_tower_manager.call("get_tower_status")
+	var next_floor := clampi(int(tower_status.get("next_floor", 1)), 1, 200)
+	var allowed_styles: Array = competition.call("get_combat_styles_for_floor", next_floor)
+	_clear_dynamic_controls()
+	title_label.text = "X-S-X POWER TOWER — اختيار أسلوب القتال"
+	status_label.text = "الطابق القادم: %d | اختر أسلوباً مسموحاً في هذا المستوى." % next_floor
+	var explanation := Label.new()
+	explanation.text = "الأسلحة التقليدية والكونغ فو والفنون القتالية متاحة حتى الطابق 80. من الطابق 81 يصبح القتال بالنين فقط ويتطلب الرتبة 5 مع إخلاء خانة السلاح."
+	explanation.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(explanation)
+	var style_labels := {
+		"UNARMED_HAND_TO_HAND": "قتال بالأيدي",
+		"KUNG_FU": "كونغ فو",
+		"MARTIAL_ARTS": "فنون قتالية",
+		"TRADITIONAL_MELEE": "أسلحة بيضاء تقليدية",
+		"BOW_AND_ARROW": "القوس والنبال والسهام",
+		"NEN_TECHNIQUES": "تقنيات النِن"
+	}
+	for style_value in allowed_styles:
+		var style_id := str(style_value)
+		var style_button := Button.new()
+		style_button.text = str(style_labels.get(style_id, style_id))
+		style_button.pressed.connect(func():
+			var combat := get_tree().root.find_child("ModernWorldCombatSystem", true, false)
+			if not is_instance_valid(combat) or not combat.has_method("select_power_tower_combat_style"):
+				status_label.text = "نظام القتال غير متاح حالياً."
+				return
+			var selection: Dictionary = combat.call("select_power_tower_combat_style", style_id, allowed_styles)
+			if bool(selection.get("success", false)):
+				if is_instance_valid(player):
+					player.set_meta("system_power_tower_combat_style", style_id)
+				status_label.text = "تم اختيار أسلوب القتال: %s" % str(style_labels.get(style_id, style_id))
+				panel.hide()
+			else:
+				status_label.text = "لا يمكن اختيار هذا الأسلوب: " + str(selection.get("reason", "UNKNOWN"))
+		)
+		content.add_child(style_button)
+	var close_button := Button.new()
+	close_button.text = "إغلاق"
+	close_button.pressed.connect(func(): panel.hide())
+	content.add_child(close_button)
+	panel.show()
+
+
 func open_power_tower_ticket_terminal() -> void:
 	if not is_instance_valid(power_tower_manager) or not power_tower_manager.has_method("get_open_spectator_matches"):
 		return
