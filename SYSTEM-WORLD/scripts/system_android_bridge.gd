@@ -21,24 +21,24 @@ const WORLD_IDS := [
 ]
 const INBOUND_TYPES := ["open_world", "player_context", "marketplace_result"]
 const MARKETPLACE_OPERATIONS := [
-    "wallet",
-    "owned_artifacts",
-    "browse_listings",
-    "create_listing",
-    "purchase_listing",
-    "cancel_listing",
-    "expire_listing",
-    "trade_history",
-    "browse_auctions",
-    "create_auction",
-    "place_bid",
-    "auction_bids",
-    "settle_auction",
-    "cancel_auction",
-    "exchange_offers",
-    "create_exchange_offer",
-    "accept_exchange_offer",
-    "close_exchange_offer"
+	"wallet",
+	"owned_artifacts",
+	"browse_listings",
+	"create_listing",
+	"purchase_listing",
+	"cancel_listing",
+	"expire_listing",
+	"trade_history",
+	"browse_auctions",
+	"create_auction",
+	"place_bid",
+	"auction_bids",
+	"settle_auction",
+	"cancel_auction",
+	"exchange_offers",
+	"create_exchange_offer",
+	"accept_exchange_offer",
+	"close_exchange_offer"
 ]
 
 var _pending_world_id := ""
@@ -191,21 +191,21 @@ func publish_request_result(
 ## Requests a marketplace operation through the authenticated Android host.
 ## The request ID is echoed by Android so responses can be matched safely.
 func request_marketplace_operation(
-    operation: String,
-    payload: Dictionary,
-    request_id: String
+	operation: String,
+	payload: Dictionary,
+	request_id: String
 ) -> bool:
-    if operation not in MARKETPLACE_OPERATIONS or request_id.strip_edges().is_empty() or request_id.length() > 128:
-        _last_error = "MARKETPLACE_REQUEST_INVALID"
-        _publish_status()
-        return false
-    var request_payload := payload.duplicate(true)
-    request_payload["operation"] = operation
-    message_to_android.emit("marketplace_request", request_payload)
-    _send_to_android("marketplace_request", request_payload, request_id)
-    _last_error = ""
-    _publish_status()
-    return true
+	if operation not in MARKETPLACE_OPERATIONS or request_id.strip_edges().is_empty() or request_id.length() > 128:
+	    _last_error = "MARKETPLACE_REQUEST_INVALID"
+	    _publish_status()
+	    return false
+	var request_payload := payload.duplicate(true)
+	request_payload["operation"] = operation
+	message_to_android.emit("marketplace_request", request_payload)
+	_send_to_android("marketplace_request", request_payload, request_id)
+	_last_error = ""
+	_publish_status()
+	return true
 
 
 func get_bridge_status() -> Dictionary:
@@ -223,22 +223,10 @@ func get_bridge_status() -> Dictionary:
 	}
 
 
-func _send_to_android(message_type: String, payload: Dictionary, request_id: String = "") -> void:
-	if not is_instance_valid(_native_host):
-		return
-	if not _native_host.has_method("send_to_android"):
-		return
-
-	var envelope := {
-		"version": PROTOCOL_VERSION,
-		"type": message_type,
-		"payload": payload
-	}
-	if not request_id.is_empty():
-		envelope["request_id"] = request_id
-	var raw_message := JSON.stringify(envelope)
-	if raw_message.length() <= 16384:
-		_native_host.call("send_to_android", raw_message)
+	if raw_message.length() > 16384:
+		return false
+	_native_host.call("send_to_android", raw_message)
+	return true
 
 
 func _normalize_world_id(raw_world_id: String) -> String:
