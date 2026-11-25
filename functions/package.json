@@ -6,7 +6,8 @@
     "build": "tsc",
     "serve": "npm run build && firebase emulators:start --only functions",
     "deploy": "firebase deploy --only functions",
-    "test:rules": "node --test test/firestore-marketplace.rules.test.mjs"
+    "test:rules": "node --test test/firestore-marketplace.rules.test.mjs",
+    "test:marketplace": "node --test test/marketplace-functions.emulator.test.mjs"
   },
   "engines": {
     "node": "20"
