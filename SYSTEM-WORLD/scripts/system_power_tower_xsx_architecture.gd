@@ -4,6 +4,7 @@ class_name SYSTEMPowerTowerXSXArchitecture
 const TOWER_HEIGHT := 820.0
 const BASE_RADIUS := 26.0
 const FLOOR_COUNT := 200
+const CompetitionManagerScript = preload("res://scripts/system_power_tower_competition_manager.gd")
 const TIER_LEVELS := [205.0, 420.0, 635.0]
 const BRAND := "X-S-X"
 
@@ -26,7 +27,10 @@ func _ready() -> void:
 	_build_observatory_and_rooftop_pad()
 	_build_circular_entrance_podium()
 	_build_lobby_facilities()
-	print("SYSTEM WORLD: X-S-X Power Tower architectural layers generated.")
+	var competition_manager := CompetitionManagerScript.new()
+	competition_manager.name = "PowerTowerCompetitionManager"
+	add_child(competition_manager)
+	print("SYSTEM WORLD: X-S-X Power Tower architecture, arena progression, Nen training, 500-fan crowd and amenities initialized.")
 
 func _create_materials() -> void:
 	dark_glass = StandardMaterial3D.new()
