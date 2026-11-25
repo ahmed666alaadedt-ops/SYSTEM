@@ -90,7 +90,8 @@ jobs:
           set +e
           "$GODOT" --headless --path "$PROJECT" --script res://tools/diagnose_null_meshes.gd > "$RUNNER_TEMP/null-mesh-diagnostic.log" 2>&1
           godot_status=$?
-          grep -E "SYSTEM MESH DIAGNOSTIC|SYSTEM POST-SWITCH|SYSTEM WORLD LOAD TEST|SYSTEM TRANSIENT|ERROR: Parameter" "$RUNNER_TEMP/null-mesh-diagnostic.log" | tail -n 100 || true
+          grep -E "SYSTEM MESH DIAGNOSTIC|SYSTEM POST-SWITCH|SYSTEM WORLD LOAD TEST|SYSTEM TRANSIENT" "$RUNNER_TEMP/null-mesh-diagnostic.log" | tail -n 160 || true
+          echo "Headless renderer null-mesh engine messages: $(grep -c 'ERROR: Parameter "m" is null' "$RUNNER_TEMP/null-mesh-diagnostic.log" || true)"
           if grep -E "SCRIPT ERROR|Parse Error" "$RUNNER_TEMP/null-mesh-diagnostic.log"; then exit 1; fi
           exit "$godot_status"
 
