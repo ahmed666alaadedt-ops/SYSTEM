@@ -256,7 +256,7 @@ This section supersedes older tower-role notes below wherever they describe the 
 ## Staff, uniforms and customers
 - [x] Expand the four non-shopping district towers to eight professional NPC employees each: tower director/management, reception, department specialists, customer relations and advertising.
 - [x] Expand Shopping Tower to nine employees: tower manager, weapons merchant, elixir pharmacist, hospitality manager, chef, waiter/customer service, hotel receptionist, housekeeping supervisor and advertising manager.
-- [x] Retain four separate Power Tower employees. Current expected total: 45 persistent tower employees.
+- [x] Retain four separate Power Tower employees. Current expected total: 46 persistent tower employees after adding a dedicated advertising manager to the Antiques and Heritage Tower.
 - [x] Alternate female and male employee appearances and apply distinct uniform palettes for the Hunter Association, business, shopping, hotel, restaurant, entertainment, technology and Power Tower teams.
 - [x] Create 100 persistent customer NPCs in each of the five connected Baghdad towers (500 total), with visible child, elderly and adult character models, wallet data, family/guardian links, visitor schedules and local tower locations. Each tower has 20 children, 20 elderly visitors and 60 adults; children remain civilian-only and their purchases are handled by adult guardians.
 - [x] Move visible customer NPCs around tower public lobbies on a periodic local schedule.
@@ -1995,3 +1995,9 @@ Feature HEAD at audit update: `f2522b6a3cf603e3aa13ee1bd17ee0ee9e7fba99`.
 - [ ] Exact-HEAD Godot CI has not yet completed for this implementation. Do not claim the new validator passed until its workflow step finishes successfully.
 - [ ] Remaining gameplay work: connect the swim-state to player movement/animation and stamina, add actual pathfinding to the public district and staffed service schedules, and complete in-device collision/interaction testing.
 - PR #38 remains draft and unmerged; no changes merged to `main`.
+
+### Dedicated Antiques Tower advertising manager — 25 November 2026
+- [x] Added a ninth Antiques and Heritage Tower employee with the explicit `advertising_manager` job while retaining the museum guest-services role.
+- [x] Campaign display attribution now records both the responsible NPC name and the manager's job ID. The tower operations validator requires `advertising_manager` on every internal/external campaign display, including Antiques Tower.
+- [x] Updated the full expected staff total from 45 to 46 and the Antiques Tower lobby expectation from eight to nine employees.
+- [ ] Exact-HEAD Godot validation of the expanded employee roster and campaign-role assertion is pending.
