@@ -9313,6 +9313,8 @@ func interact_power_tower_nen_training(target: Node) -> Dictionary:
 	var competition := get_tree().root.find_child("PowerTowerCompetitionManager", true, false)
 	if not is_instance_valid(competition):
 		return {"success": false, "reason": "NEN_TRAINING_HALL_UNAVAILABLE"}
+	if competition.has_method("configure_player_progression"):
+		competition.call("configure_player_progression", progression)
 	var tower_status: Dictionary = power_tower_manager.call("get_tower_status")
 	var training_floor := clampi(int(tower_status.get("next_floor", 1)), 1, 200)
 	var nen_stage: Dictionary = competition.call("get_nen_stage_for_floor", training_floor)
