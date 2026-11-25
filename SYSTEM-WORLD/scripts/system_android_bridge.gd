@@ -7,6 +7,7 @@ extends Node
 
 signal world_entry_requested(world_id: String)
 signal player_context_received(context: Dictionary)
+signal marketplace_result_received(request_id: String, payload: Dictionary)
 signal message_to_android(message_type: String, payload: Dictionary)
 signal bridge_status_changed(status: Dictionary)
 
@@ -18,7 +19,27 @@ const WORLD_IDS := [
 	"modern",
 	"greed_island"
 ]
-const INBOUND_TYPES := ["open_world", "player_context"]
+const INBOUND_TYPES := ["open_world", "player_context", "marketplace_result"]
+const MARKETPLACE_OPERATIONS := [
+    "wallet",
+    "owned_artifacts",
+    "browse_listings",
+    "create_listing",
+    "purchase_listing",
+    "cancel_listing",
+    "expire_listing",
+    "trade_history",
+    "browse_auctions",
+    "create_auction",
+    "place_bid",
+    "auction_bids",
+    "settle_auction",
+    "cancel_auction",
+    "exchange_offers",
+    "create_exchange_offer",
+    "accept_exchange_offer",
+    "close_exchange_offer"
+]
 
 var _pending_world_id := ""
 var _last_world_id := ""
@@ -157,6 +178,26 @@ func publish_request_result(
 	_send_to_android("world_entry_result", payload)
 
 
+## Requests a marketplace operation through the authenticated Android host.
+## The request ID is echoed by Android so responses can be matched safely.
+func request_marketplace_operation(
+    operation: String,
+    payload: Dictionary,
+    request_id: String
+) -> bool:
+    if operation not in MARKETPLACE_OPERATIONS or request_id.strip_edges().is_empty() or request_id.length() > 128:
+        _last_error = "MARKETPLACE_REQUEST_INVALID"
+        _publish_status()
+        return false
+    var request_payload := payload.duplicate(true)
+    request_payload["operation"] = operation
+    message_to_android.emit("marketplace_request", request_payload)
+    _send_to_android("marketplace_request", request_payload, request_id)
+    _last_error = ""
+    _publish_status()
+    return true
+
+
 func get_bridge_status() -> Dictionary:
 	var connected := (
 		is_instance_valid(_native_host)
@@ -172,7 +213,7 @@ func get_bridge_status() -> Dictionary:
 	}
 
 
-func _send_to_android(message_type: String, payload: Dictionary) -> void:
+func _send_to_android(message_type: String, payload: Dictionary, request_id: String = "") -> void:
 	if not is_instance_valid(_native_host):
 		return
 	if not _native_host.has_method("send_to_android"):
