@@ -220,7 +220,9 @@ func _on_water_body_exited(body: Node3D, _water_area: Area3D) -> void:
 func dispatch_lifeguard_to(target: Node3D) -> bool:
 	if not is_instance_valid(target) or not is_instance_valid(lifeguard):
 		return false
-	var previous: Variant = lifeguard.get_meta("system_lifeguard_response_tween", null)
+	var previous: Variant = null
+	if lifeguard.has_meta("system_lifeguard_response_tween"):
+		previous = lifeguard.get_meta("system_lifeguard_response_tween")
 	if previous is Tween and (previous as Tween).is_running():
 		(previous as Tween).kill()
 	lifeguard.set_meta("system_lifeguard_assistance_requested", true)
@@ -244,7 +246,9 @@ func release_locker(suite_name: String, locker_id: String, owner_instance_id: in
 		return false
 	locker.set_meta("system_pool_locker_occupied", false)
 	locker.remove_meta("system_pool_locker_owner")
-	var original: Variant = locker.get_meta("system_pool_locker_original_material", null)
+	var original: Variant = null
+	if locker.has_meta("system_pool_locker_original_material"):
+		original = locker.get_meta("system_pool_locker_original_material")
 	if original is Material:
 		locker.material_override = original
 	locker.remove_meta("system_pool_locker_original_material")
