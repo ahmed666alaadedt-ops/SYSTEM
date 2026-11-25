@@ -395,5 +395,6 @@ export {
   createArtifactExchangeOffer,
   acceptArtifactExchangeOffer,
   closeArtifactExchangeOffer,
+  releaseExpiredArtifactExchangeOffers,
   listMyArtifactExchangeOffers
 } from "./artifact_marketplace_advanced";
