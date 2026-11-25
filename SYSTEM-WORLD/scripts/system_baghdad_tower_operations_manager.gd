@@ -4943,7 +4943,6 @@ func _render_tower_owned_artifacts(raw_artifacts: Variant) -> void:
 		])
 		var price_input := LineEdit.new()
 		price_input.placeholder_text = "السعر بعملة SYSTEM"
-		price_input.keyboard_type = LineEdit.KEYBOARD_TYPE_NUMBER
 		marketplace_results_container.add_child(price_input)
 		var list_button := Button.new()
 		list_button.text = "عرض هذه القطعة للبيع"
@@ -4982,7 +4981,6 @@ func _render_tower_marketplace_auctions(raw_auctions: Variant) -> void:
 		])
 		var bid_input := LineEdit.new()
 		bid_input.placeholder_text = "قيمة مزايدتك"
-		bid_input.keyboard_type = LineEdit.KEYBOARD_TYPE_NUMBER
 		marketplace_results_container.add_child(bid_input)
 		var bid_button := Button.new()
 		bid_button.text = "تقديم مزايدة"
