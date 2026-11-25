@@ -1715,7 +1715,8 @@ func _create_public_amenities() -> void:
 		if str(spec["name"]) == "RooftopGardenDeck":
 			var garden := Node3D.new()
 			garden.name = "BaghdadRooftopGarden"
-			garden.position.y = float((spec["size"] as Vector3).y) * 0.5
+			var garden_deck_size: Vector3 = spec["size"]
+			garden.position.y = garden_deck_size.y * 0.5
 			garden.set_script(PublicGardenManagerScript)
 			deck.add_child(garden)
 	amenities.set_meta("planned_facilities", PackedStringArray(["parks", "restaurants", "cafes", "hotels", "cinema", "amusement_park", "water_park", "swimming_pools", "sports_courts", "family_services", "parking", "emergency_access"]))
