@@ -204,15 +204,21 @@ func _create_service_interaction(parent: Node3D, node_name: String, service_type
 func _on_water_body_entered(body: Node3D, water_area: Area3D) -> void:
 	if body == null or not is_instance_valid(body) or not body.is_in_group("system_player"):
 		return
+	var surface_y := water_area.global_position.y + 0.54
 	var active_zones: Dictionary = body.get_meta("system_public_leisure_water_zones", {}).duplicate()
 	active_zones[str(water_area.get_instance_id())] = {
 		"type": str(water_area.get_meta("system_public_leisure_water_type", "leisure")),
-		"depth": float(water_area.get_meta("system_public_leisure_water_depth", 1.0))
+		"depth": float(water_area.get_meta("system_public_leisure_water_depth", 1.0)),
+		"surface_y": surface_y
 	}
 	body.set_meta("system_public_leisure_water_zones", active_zones)
 	body.set_meta("system_public_leisure_swimming", true)
 	body.set_meta("system_public_leisure_water_type", str(water_area.get_meta("system_public_leisure_water_type", "leisure")))
 	body.set_meta("system_public_leisure_water_depth", float(water_area.get_meta("system_public_leisure_water_depth", 1.0)))
+	# Feed the canonical player locomotion state used by main.gd's buoyancy and swim-stroke controller.
+	body.set_meta("system_swimming", true)
+	body.set_meta("system_swim_surface_y", surface_y)
+	body.set_meta("system_swim_source", "Baghdad public leisure district")
 
 
 func _on_water_body_exited(body: Node3D, water_area: Area3D) -> void:
@@ -225,6 +231,10 @@ func _on_water_body_exited(body: Node3D, water_area: Area3D) -> void:
 		body.remove_meta("system_public_leisure_swimming")
 		body.remove_meta("system_public_leisure_water_type")
 		body.remove_meta("system_public_leisure_water_depth")
+		body.remove_meta("system_swimming")
+		body.remove_meta("system_swim_surface_y")
+		body.remove_meta("system_swim_source")
+		body.remove_meta("system_swim_last_stroke_force")
 		return
 	body.set_meta("system_public_leisure_water_zones", active_zones)
 	var remaining_zone_ids: Array = active_zones.keys()
@@ -232,6 +242,10 @@ func _on_water_body_exited(body: Node3D, water_area: Area3D) -> void:
 	body.set_meta("system_public_leisure_swimming", true)
 	body.set_meta("system_public_leisure_water_type", str(remaining_zone.get("type", "leisure")))
 	body.set_meta("system_public_leisure_water_depth", float(remaining_zone.get("depth", 1.0)))
+	# Keep swimming active while any overlapping pool volume remains occupied.
+	body.set_meta("system_swimming", true)
+	body.set_meta("system_swim_surface_y", float(remaining_zone.get("surface_y", body.global_position.y + 0.25)))
+	body.set_meta("system_swim_source", "Baghdad public leisure district")
 
 
 func dispatch_lifeguard_to(target: Node3D) -> bool:
