@@ -25,6 +25,16 @@ func _collect_market_button_texts(node: Node, output: Array[String]) -> void:
 		_collect_market_button_texts(child, output)
 
 
+func _find_button_by_text(node: Node, expected_text: String) -> Button:
+	if node is Button and str((node as Button).text) == expected_text:
+		return node as Button
+	for child in node.get_children():
+		var found := _find_button_by_text(child, expected_text)
+		if found != null:
+			return found
+	return null
+
+
 func _initialize() -> void:
 	call_deferred("_run")
 
@@ -2626,21 +2636,6 @@ func _run() -> void:
 	if player_test_table == null:
 		_fail("No free physical restaurant seat remained for the player seating regression.")
 		return
-	operations.call("_seat_player_at_restaurant", player_test_table)
-	await create_timer(0.8).timeout
-	var player_seat_name := str(player.get_meta("system_restaurant_seat_node", ""))
-	var player_seat_marker := player_test_table.get_node_or_null(player_seat_name) as Node3D
-	var player_seating_ok: bool = bool(player.get_meta("system_restaurant_seated", false)) and str(player.get_meta("system_restaurant_seated_table_id", "")) == str(player_test_table.get_meta("system_restaurant_table_id", "")) and player_seat_marker != null and str(player_seat_marker.get_meta("system_restaurant_seat_occupant", "")) == "PLAYER" and player_test_table.get_meta("system_restaurant_occupants", []).has("PLAYER")
-	if not player_seating_ok:
-		_fail("The player did not physically reserve and reach an individually owned restaurant seat.")
-		return
-	var player_position_before_seated_input: Vector3 = player.global_position
-	main.set("mobile_direction", Vector2(1.0, 0.0))
-	main.call("_physics_process", 0.016)
-	main.set("mobile_direction", Vector2.ZERO)
-	if not player.global_position.is_equal_approx(player_position_before_seated_input):
-		_fail("The player movement controller did not lock movement while seated at the restaurant table.")
-		return
 	var player_cycle_table_id := str(player_test_table.get_meta("system_restaurant_table_id", ""))
 	var player_cycle_credits_snapshot := int(operations.get("credits"))
 	var player_cycle_orders_snapshot: Dictionary = operations.get("restaurant_orders").duplicate(true)
@@ -2660,13 +2655,68 @@ func _run() -> void:
 	health_manager.call("_sync_player_state")
 	var health_before_meal := float(health_manager.get("current_health"))
 	operations.set("credits", maxi(player_cycle_credits_snapshot, 200))
-	operations.set("current_restaurant_table_node", player_test_table)
-	operations.set("current_restaurant_table_id", player_cycle_table_id)
 	operations.set("restaurant_draft_items", {player_cycle_table_id: [
 		{"item_id": "restaurant_kebab", "name": "كباب عراقي", "price": 68},
 		{"item_id": "restaurant_fresh_juice", "name": "عصير طازج", "price": 22}
 	]})
+	var unseated_credits_before_order := int(operations.get("credits"))
 	operations.call("_place_restaurant_order", player_cycle_table_id)
+	if operations.get("restaurant_orders").has(player_cycle_table_id) or int(operations.get("credits")) != unseated_credits_before_order:
+		_fail("A player who has not taken a physical seat was able to place or pay for a restaurant order.")
+		return
+	var table_interaction := player_test_table.get_node_or_null("RestaurantTableInteraction") as StaticBody3D
+	if table_interaction == null or not table_interaction.is_in_group("system_interactable"):
+		_fail("The selected restaurant table has no real player interaction body.")
+		return
+	main.call("_on_interaction_performed", table_interaction, "shopping_tower_baghdad")
+	var operations_content := operations.get("content") as Control
+	var initial_sit_button := _find_button_by_text(operations_content, "اجلس على مقعد متاح")
+	var blocked_order_button := _find_button_by_text(operations_content, "إرسال الطلب إلى المطبخ والدفع")
+	if initial_sit_button == null or blocked_order_button == null or not blocked_order_button.disabled:
+		_fail("The real restaurant interaction did not expose seating first and disable payment before seating.")
+		return
+	initial_sit_button.pressed.emit()
+	await create_timer(0.8).timeout
+	var first_seat_name := str(player.get_meta("system_restaurant_seat_node", ""))
+	var first_seat_marker := player_test_table.get_node_or_null(first_seat_name) as Node3D
+	if not bool(player.get_meta("system_restaurant_seated", false)) or first_seat_marker == null or str(first_seat_marker.get_meta("system_restaurant_seat_occupant", "")) != "PLAYER":
+		_fail("The real table UI seat action did not reserve and reach an individual physical seat.")
+		return
+	var stand_button := _find_button_by_text(operations_content, "مغادرة المقعد والوقوف")
+	if stand_button == null:
+		_fail("The seated restaurant interaction did not expose the stand/release action.")
+		return
+	stand_button.pressed.emit()
+	if player.has_meta("system_restaurant_seated_table_id") or player_test_table.get_meta("system_restaurant_occupants", []).has("PLAYER") or str(first_seat_marker.get_meta("system_restaurant_seat_occupant", "")) == "PLAYER":
+		_fail("Standing from the restaurant UI did not immediately release the seat reservation.")
+		return
+	main.call("_on_interaction_performed", table_interaction, "shopping_tower_baghdad")
+	var reseat_button := _find_button_by_text(operations_content, "اجلس على مقعد متاح")
+	if reseat_button == null:
+		_fail("The restaurant table could not be reopened after standing.")
+		return
+	reseat_button.pressed.emit()
+	await create_timer(0.8).timeout
+	var player_seat_name := str(player.get_meta("system_restaurant_seat_node", ""))
+	var player_seat_marker := player_test_table.get_node_or_null(player_seat_name) as Node3D
+	var player_seating_ok: bool = bool(player.get_meta("system_restaurant_seated", false)) and str(player.get_meta("system_restaurant_seated_table_id", "")) == str(player_test_table.get_meta("system_restaurant_table_id", "")) and player_seat_marker != null and str(player_seat_marker.get_meta("system_restaurant_seat_occupant", "")) == "PLAYER" and player_test_table.get_meta("system_restaurant_occupants", []).has("PLAYER")
+	if not player_seating_ok:
+		_fail("The player did not physically reserve and reach an individually owned restaurant seat.")
+		return
+	var player_position_before_seated_input: Vector3 = player.global_position
+	main.set("mobile_direction", Vector2(1.0, 0.0))
+	main.call("_physics_process", 0.016)
+	main.set("mobile_direction", Vector2.ZERO)
+	if not player.global_position.is_equal_approx(player_position_before_seated_input):
+		_fail("The player movement controller did not lock movement while seated at the restaurant table.")
+		return
+	operations.set("current_restaurant_table_node", player_test_table)
+	operations.set("current_restaurant_table_id", player_cycle_table_id)
+	var submit_order_button := _find_button_by_text(operations_content, "إرسال الطلب إلى المطبخ والدفع")
+	if submit_order_button == null or submit_order_button.disabled:
+		_fail("After seating, the real restaurant UI did not enable the paid order action.")
+		return
+	submit_order_button.pressed.emit()
 	var player_order: Dictionary = operations.get("restaurant_orders").get(player_cycle_table_id, {})
 	if str(player_order.get("status", "")) != "awaiting_waiter" or int(player_order.get("total", 0)) != 90:
 		_fail("A seated player could not send and pay for a restaurant order into the waiter queue.")
