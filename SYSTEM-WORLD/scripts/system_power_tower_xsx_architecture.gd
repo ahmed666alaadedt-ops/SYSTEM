@@ -275,6 +275,26 @@ func _build_lobby_facilities() -> void:
 		head.position.y = 4.05
 		head.material_override = gold_trim if index == 2 else steel
 		mannequin.add_child(head)
+	# Five footwear tiers from bronze training boots to diamond sovereign boots.
+	for index in range(5):
+		var footwear := MeshInstance3D.new()
+		footwear.name = "FootwearDisplay_%02d" % index
+		var shoe_mesh := BoxMesh.new()
+		shoe_mesh.size = Vector3(0.72, 0.42, 1.25)
+		footwear.mesh = shoe_mesh
+		footwear.position = Vector3(-6.0 + float(index) * 3.0, 0.5, 5.0)
+		footwear.material_override = [steel, display_glow, gold_trim, white_emissive, red_emissive][index]
+		armor_root.add_child(footwear)
+	var footwear_sign := Label3D.new()
+	footwear_sign.name = "FootwearProgressionSign"
+	footwear_sign.text = "FOOTWEAR: BRONZE → SILVER → GOLD → DIAMOND"
+	footwear_sign.font_size = 14
+	footwear_sign.position = Vector3(0.0, 2.5, 6.2)
+	footwear_sign.modulate = Color(0.8, 0.9, 1.0)
+	armor_root.add_child(footwear_sign)
+	armor_root.set_meta("system_shop_category", "ARMOR_AND_FOOTWEAR")
+	armor_root.set_meta("system_footwear_display_count", 5)
+
 	var armor_sign := Label3D.new()
 	armor_sign.name = "ArmorShowroomSign"
 	armor_sign.text = "ARMOR & DEFENSE"
