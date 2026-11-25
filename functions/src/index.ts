@@ -377,7 +377,9 @@ export {
   browseArtifactMarketplace,
   createArtifactListing,
   cancelArtifactListing,
-  purchaseArtifactListing
+  purchaseArtifactListing,
+  expireArtifactListing,
+  listMyMarketplaceTransactions
 } from "./artifact_marketplace";
 export { awardMarketplaceCurrency } from "./marketplace_currency";
 
