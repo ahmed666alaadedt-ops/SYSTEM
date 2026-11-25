@@ -52,7 +52,7 @@ func _run_validation() -> void:
 		return
 	if not _check(int(connector.get_meta("system_passage_segment_count", 0)) >= 20, "The physical passage does not contain enough continuous segments."):
 		return
-	var water_areas := zone.find_children("*", "Area3D", true, false)
+	var water_areas := zone.find_children("MarshWaterArea_*", "Area3D", true, false)
 	if not _check(water_areas.size() == 8, "Expected eight marsh water volumes; found %d." % water_areas.size()):
 		return
 	for water_area in water_areas:
