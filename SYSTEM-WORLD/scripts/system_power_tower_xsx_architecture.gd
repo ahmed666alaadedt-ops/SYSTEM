@@ -408,6 +408,7 @@ func _build_lobby_facilities() -> void:
 	nen_hall.name = "PowerTowerNenTrainingHall"
 	nen_hall.position = Vector3(0.0, 0.0, 84.0)
 	nen_hall.set_meta("system_facility_type", "NEN_TRAINING_HALL")
+	nen_hall.set_meta("system_tower_id", "power_tower_baghdad")
 	nen_hall.set_meta("system_interaction_action", "POWER_TOWER_NEN_TRAINING")
 	nen_hall.set_meta("system_training_progression", ["AURA_AWARENESS", "TEN", "REN", "ZETSU", "HATSU"])
 	facility_root.add_child(nen_hall)
@@ -444,6 +445,8 @@ func _build_lobby_facilities() -> void:
 	nen_hall.add_child(nen_sign)
 	var training_area := Area3D.new()
 	training_area.name = "NenTrainingInteractionArea"
+	training_area.add_to_group("system_interactable")
+	training_area.set_meta("system_tower_id", "power_tower_baghdad")
 	training_area.position = Vector3(0.0, 1.0, 0.0)
 	training_area.set_meta("system_interaction_action", "POWER_TOWER_NEN_TRAINING")
 	training_area.set_meta("system_training_manager_method", "train_player_nen")
