@@ -139,18 +139,25 @@ export const grantMarketplaceArtifact = onCall(async (request) => {
   const ownerProfile = playerRef(ownerId);
   const itemRef = ownershipRef(ownerId, artifactId);
   const auditRef = db.collection("artifactOwnershipAudit").doc(artifactId);
+  const registryRef = db.collection("artifactRegistry").doc(artifactId);
 
   await db.runTransaction(async (transaction) => {
-    const [profile, existing] = await Promise.all([
+    const [profile, existing, registry] = await Promise.all([
       transaction.get(ownerProfile),
-      transaction.get(itemRef)
+      transaction.get(itemRef),
+      transaction.get(registryRef)
     ]);
     if (!profile.exists) {
       throw new HttpsError("not-found", "حساب مالك القطعة غير موجود.");
     }
-    if (existing.exists) {
-      throw new HttpsError("already-exists", "معرّف القطعة مستخدم مسبقاً لهذا اللاعب.");
+    if (existing.exists || registry.exists) {
+      throw new HttpsError("already-exists", "معرّف القطعة مستخدم مسبقاً على مستوى العالم.");
     }
+    transaction.create(registryRef, {
+      artifactId,
+      originalOwnerId: ownerId,
+      issuedAt: FieldValue.serverTimestamp()
+    });
     transaction.create(itemRef, {
       artifactId,
       ownerId,
@@ -372,7 +379,8 @@ export const purchaseArtifactListing = onCall(async (request) => {
     const buyerBalance = Number(buyerWallet.data()?.balance ?? -1);
     const sellerBalance = Number(sellerWallet.data()?.balance ?? -1);
     if (!Number.isSafeInteger(buyerBalance) || buyerBalance < price ||
-        !Number.isSafeInteger(sellerBalance) || sellerBalance < 0) {
+        !Number.isSafeInteger(sellerBalance) || sellerBalance < 0 ||
+        sellerBalance + sellerCredit > Number.MAX_SAFE_INTEGER) {
       throw new HttpsError("failed-precondition", "رصيد المشتري غير كافٍ أو بيانات المحفظة غير صالحة.");
     }
     if (!sellerItem.exists ||
@@ -383,6 +391,7 @@ export const purchaseArtifactListing = onCall(async (request) => {
     }
 
     const item = sellerItem.data()!;
+    const { activeListingId: _activeListingId, ...transferableItem } = item;
     transaction.update(buyerWalletRef, {
       balance: buyerBalance - price,
       updatedAt: FieldValue.serverTimestamp()
@@ -393,10 +402,9 @@ export const purchaseArtifactListing = onCall(async (request) => {
     });
     transaction.delete(sellerItemRef);
     transaction.create(buyerItemRef, {
-      ...item,
+      ...transferableItem,
       ownerId: buyerId,
       status: "owned",
-      activeListingId: FieldValue.delete(),
       acquiredAt: FieldValue.serverTimestamp(),
       lastTransferId: transactionRef.id
     });
