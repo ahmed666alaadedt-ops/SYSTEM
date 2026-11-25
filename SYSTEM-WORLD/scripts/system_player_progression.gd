@@ -114,6 +114,7 @@ var nen_unlocked := false
 var nen_control_rank := 0
 var power_tower_nen_training_sessions := 0
 var power_tower_nen_training_ids: Array[String] = []
+var power_tower_nen_stage_sessions: Dictionary = {}
 var nen_burst_cooldown_remaining := 0.0
 var nen_button_refresh_clock := 0.0
 var nen_burst_button: Button
@@ -316,33 +317,49 @@ func complete_power_tower_nen_training(training_id: String, floor_number: int, t
 		return {"success": false, "reason": "INVALID_POWER_TOWER_TRAINING"}
 	if power_tower_nen_training_ids.has(normalized_id):
 		return {"success": false, "reason": "TRAINING_ALREADY_RECORDED"}
+	var stage_key := "DISCOVERY"
 	var expected_technique := "AURA_AWARENESS"
-	var floor_rank_cap := 1
-	if floor_number >= 81:
+	var floor_rank := 1
+	if floor_number >= 151:
+		stage_key = "NEN_MASTERY"
 		expected_technique = "HATSU"
-		floor_rank_cap = 5
+		floor_rank = 5
+	elif floor_number >= 101:
+		stage_key = "ADVANCED_NEN"
+		expected_technique = "HATSU"
+		floor_rank = 5
+	elif floor_number >= 81:
+		stage_key = "HATSU"
+		expected_technique = "HATSU"
+		floor_rank = 5
 	elif floor_number >= 61:
+		stage_key = "ZETSU"
 		expected_technique = "ZETSU"
-		floor_rank_cap = 4
+		floor_rank = 4
 	elif floor_number >= 41:
+		stage_key = "REN"
 		expected_technique = "REN"
-		floor_rank_cap = 3
+		floor_rank = 3
 	elif floor_number >= 21:
+		stage_key = "TEN"
 		expected_technique = "TEN"
-		floor_rank_cap = 2
+		floor_rank = 2
 	if not technique.strip_edges().is_empty() and technique.strip_edges().to_upper() != expected_technique:
 		return {"success": false, "reason": "NEN_TECHNIQUE_NOT_AVAILABLE_ON_THIS_FLOOR", "required_technique": expected_technique}
 	if floor_number > 20 and not nen_unlocked:
 		return {"success": false, "reason": "NEN_DISCOVERY_TRAINING_REQUIRED"}
+	var stage_sessions := int(power_tower_nen_stage_sessions.get(stage_key, 0))
+	if stage_sessions >= 3:
+		return {"success": false, "reason": "NEN_STAGE_ALREADY_MASTERED", "stage": stage_key}
 	if not nen_unlocked:
 		nen_unlocked = true
 		nen_control_rank = 1
+	stage_sessions += 1
+	power_tower_nen_stage_sessions[stage_key] = stage_sessions
 	power_tower_nen_training_sessions += 1
 	power_tower_nen_training_ids.append(normalized_id)
-	var earned_rank := 1 + int((power_tower_nen_training_sessions - 1) / 3)
-	nen_control_rank = clampi(maxi(nen_control_rank, earned_rank), 1, floor_rank_cap)
-	if floor_rank_cap > 1:
-		nen_control_rank = mini(nen_control_rank, floor_rank_cap)
+	if stage_sessions >= 3:
+		nen_control_rank = maxi(nen_control_rank, floor_rank)
 	save_progress()
 	_refresh_nen_burst_button()
 	return {
@@ -350,10 +367,12 @@ func complete_power_tower_nen_training(training_id: String, floor_number: int, t
 		"nen_unlocked": nen_unlocked,
 		"nen_control_rank": nen_control_rank,
 		"training_sessions": power_tower_nen_training_sessions,
+		"stage": stage_key,
+		"stage_sessions": stage_sessions,
+		"stage_sessions_required": 3,
 		"technique": expected_technique,
-		"floor_rank_cap": floor_rank_cap
+		"floor_rank": floor_rank
 	}
-
 
 func get_power_tower_nen_training_status() -> Dictionary:
 	return {
@@ -361,6 +380,7 @@ func get_power_tower_nen_training_status() -> Dictionary:
 		"nen_control_rank": nen_control_rank,
 		"training_sessions": power_tower_nen_training_sessions,
 		"training_ids": power_tower_nen_training_ids.duplicate(),
+		"stage_sessions": power_tower_nen_stage_sessions.duplicate(true),
 		"next_rank_session": (nen_control_rank * 3) + 1,
 		"next_rank_floor": 21 if nen_control_rank < 2 else (41 if nen_control_rank < 3 else (61 if nen_control_rank < 4 else 81))
 	}
@@ -844,6 +864,7 @@ func save_progress() -> void:
 	config.set_value("nen", "control_rank", nen_control_rank)
 	config.set_value("nen", "power_tower_training_sessions", power_tower_nen_training_sessions)
 	config.set_value("nen", "power_tower_training_ids", power_tower_nen_training_ids)
+	config.set_value("nen", "power_tower_stage_sessions", power_tower_nen_stage_sessions.duplicate(true))
 	config.set_value("nen", "burst_cooldown_remaining", nen_burst_cooldown_remaining)
 	config.set_value("skills", "learned", learned_system_skills.duplicate())
 	config.set_value("skills", "authorized_training", authorized_system_skills.duplicate())
@@ -938,6 +959,8 @@ func load_progress() -> void:
 	nen_control_rank = clampi(int(config.get_value("nen", "control_rank", 0)), 0, 5)
 	power_tower_nen_training_sessions = maxi(0, int(config.get_value("nen", "power_tower_training_sessions", 0)))
 	power_tower_nen_training_ids.clear()
+	var saved_nen_stage_sessions: Variant = config.get_value("nen", "power_tower_stage_sessions", {})
+	power_tower_nen_stage_sessions = saved_nen_stage_sessions.duplicate(true) if saved_nen_stage_sessions is Dictionary else {}
 	for training_id in config.get_value("nen", "power_tower_training_ids", []):
 		var normalized_training_id := str(training_id).strip_edges()
 		if not normalized_training_id.is_empty() and not power_tower_nen_training_ids.has(normalized_training_id):
@@ -1105,6 +1128,7 @@ func _reset_progress() -> void:
 	nen_control_rank = 0
 	power_tower_nen_training_sessions = 0
 	power_tower_nen_training_ids.clear()
+	power_tower_nen_stage_sessions.clear()
 	nen_burst_cooldown_remaining = 0.0
 
 
