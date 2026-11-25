@@ -161,7 +161,7 @@ func _build_marshland() -> void:
 	_add_marsh_entry(zone, wood_material)
 	_build_hunter_marsh_trials(zone)
 	zone.set_meta("system_marsh_water_body_count", pond_specs.size())
-	zone.set_meta("system_marsh_reed_instance_count", 3600)
+	zone.set_meta("system_marsh_reed_instance_count", 12000)
 	zone.set_meta("system_marsh_tree_count", 160)
 	zone.set_meta("system_marsh_boardwalk_count", 9)
 	zone.set_meta("system_marshland_is_replacement_for_al_zawraa", true)
@@ -345,8 +345,8 @@ func _add_reed_fields(parent: Node3D, material: Material) -> void:
 	var multi := MultiMesh.new()
 	multi.transform_format = MultiMesh.TRANSFORM_3D
 	multi.mesh = reed_mesh
-	multi.instance_count = 3600
-	for index in range(3600):
+	multi.instance_count = 12000
+	for index in range(12000):
 		var angle := rng.randf_range(0.0, TAU)
 		var radial := sqrt(rng.randf()) * 0.94
 		var x := cos(angle) * MARSH_RADIUS_X * radial
