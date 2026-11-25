@@ -195,7 +195,7 @@ func _build_hunter_tunnel_connection(hunter_tunnel: Node3D) -> void:
 
 	var trial_start := Area3D.new()
 	trial_start.name = "HunterMarshTrialStartTrigger"
-	trial_start.position = tunnel_end
+	trial_start.position = tunnel_end + Vector3(0.0, 0.0, 14.0)
 	trial_start.set_meta("system_hunter_exam_start_trigger", true)
 	var trial_start_shape := CollisionShape3D.new()
 	var trial_start_sphere := SphereShape3D.new()
