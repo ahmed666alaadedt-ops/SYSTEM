@@ -57,6 +57,7 @@ func get_floor_data(floor_number: int) -> Dictionary:
 	var boss_floor := floor_number % 10 == 0
 	var elite_floor := floor_number % 5 == 0 and not boss_floor
 	var difficulty := clampi(1 + int((floor_number - 1) / 5), 1, 40)
+	var arena_count := get_arena_count_for_floor(floor_number)
 	var required_level := clampi(int(ceil(float(floor_number) * 0.45)), 1, 100)
 	var reward_xp := 100 + floor_number * floor_number * 12 + (250000 if final_boss else 0)
 	var reward_credits := 75 + floor_number * 15 + (5000 if final_boss else 0)
@@ -92,6 +93,7 @@ func get_floor_data(floor_number: int) -> Dictionary:
 		"ai_fallback": false,
 		"matchmaking_mode": "ONLINE_1V1",
 		"arena_type": arena_type,
+		"arena_count": arena_count,
 		"arena_theme_index": theme_index,
 		"arena_theme_id": arena_theme_id,
 		"arena_theme_name": arena_theme_name,
@@ -105,6 +107,22 @@ func get_floor_data(floor_number: int) -> Dictionary:
 		"competition_format": "INDIVIDUAL_1V1",
 		"reward_items": ["power_tower_sovereign_crown", "sovereign_core", "rare_core", "nen_fragment"] if final_boss else (["boss_core", "monster_core"] if boss_floor else (["power_tower_fragment", "monster_core"] if elite_floor else ["power_tower_token"]))
 	}
+
+func get_arena_count_for_floor(floor_number: int) -> int:
+	if floor_number < 1 or floor_number > MAX_FLOORS:
+		return 0
+	if floor_number <= 20:
+		return 8
+	if floor_number <= 40:
+		return 6
+	if floor_number <= 60:
+		return 4
+	if floor_number <= 80:
+		return 3
+	if floor_number <= 100:
+		return 2
+	return 1
+
 
 func request_floor(floor_number: int, player_level: int) -> Dictionary:
 	if floor_number < 1 or floor_number > MAX_FLOORS:
