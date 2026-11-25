@@ -5,6 +5,7 @@ const EntranceScript = preload("res://scripts/system_tower_entrance.gd")
 const HunterHelicopterControllerScript = preload("res://scripts/system_hunter_helicopter_pad_controller.gd")
 const PublicLeisureManagerScript = preload("res://scripts/system_baghdad_public_leisure_manager.gd")
 const PublicGardenManagerScript = preload("res://scripts/system_baghdad_rooftop_garden_manager.gd")
+const LobbyFinishScript = preload("res://scripts/system_baghdad_tower_lobby_finish_manager.gd")
 const HUNTER_TOWER_HEIGHT := 650.0
 const REPUBLIC_BRIDGE_DECK_HEIGHT := 18.0
 const HUNTER_CENTRAL_SKY_CITY_PLATFORM_HEIGHT := 419.2
@@ -986,7 +987,9 @@ func _create_tower_lobby(root: Node3D, tower_id: String, title: String, radius: 
 	sign.modulate = Color(0.78, 0.94, 1.0)
 	lobby.add_child(sign)
 	_create_lobby_media_panels(lobby, width, center_z, wall_height)
-	lobby.set_meta("lobby_status", "enclosed_reception_lobby_blockout")
+	LobbyFinishScript.apply_visual_finish(lobby, tower_id, title, width, depth, center_z, front_z)
+	lobby.set_meta("system_visual_finish_layer", "architectural_lobby_finish_v1")
+	lobby.set_meta("lobby_status", "enclosed_reception_lobby_with_visual_finish_layer_v1")
 	lobby.set_meta("elevator_status", "runtime_car_and_floor_travel_operational")
 	lobby.set_meta("lift_door_visual_only", false)
 	lobby.set_meta("lift_door_interactive", true)
