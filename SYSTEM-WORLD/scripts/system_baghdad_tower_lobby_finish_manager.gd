@@ -18,8 +18,9 @@ static func apply_visual_finish(lobby: Node3D, tower_id: String, title: String, 
 		_add_box(lobby, "FinishFloorTransverseInlay_%02d" % index, Vector3(0.0, 1.045, z), Vector3(width * 0.44, 0.035, 0.12), stone)
 	for side_index in range(2):
 		var side: float = -1.0 if side_index == 0 else 1.0
+		var side_label := "Left" if side_index == 0 else "Right"
 		var x: float = side * (width * 0.31)
-		_add_box(lobby, "FinishCeilingBeam_%s" % str(side), Vector3(x, 11.85, center_z), Vector3(0.42, 0.42, depth * 0.86), metal)
+		_add_box(lobby, "FinishCeilingBeam_%s" % side_label, Vector3(x, 11.85, center_z), Vector3(0.42, 0.42, depth * 0.86), metal)
 		for index in range(4):
 			var z := center_z - depth * 0.30 + float(index) * depth * 0.20
 			_add_box(lobby, "FinishCeilingLight_%s_%02d" % [str(side), index], Vector3(x - side * 0.28, 11.55, z), Vector3(0.16, 0.12, 2.8), glow)
