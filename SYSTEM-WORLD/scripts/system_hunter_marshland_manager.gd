@@ -1,0 +1,293 @@
+extends Node3D
+class_name SYSTEMHunterMarshlandManager
+
+const PLOT_COUNT := 12
+const TREE_COUNT := 28
+const TURTLE_COUNT := 3
+const DECOY_GUIDE_COUNT := 6
+
+func _ready() -> void:
+	name = "HunterMarshland"
+	_build_marshland()
+
+func _build_marshland() -> void:
+	set_meta("system_facility_type", "hunter_exam_marshland")
+	set_meta("system_marshland_connected_to_tunnel", true)
+	set_meta("system_marshland_is_separate_world", false)
+	set_meta("system_marshland_biome", "agricultural_wetland")
+	set_meta("system_marshland_fog_enabled", true)
+	set_meta("system_marshland_tracking_route_enabled", true)
+	set_meta("system_marshland_expected_plot_count", PLOT_COUNT)
+	set_meta("system_marshland_expected_tree_count", TREE_COUNT)
+	set_meta("system_marshland_expected_giant_turtle_count", TURTLE_COUNT)
+	set_meta("system_marshland_expected_decoy_count", DECOY_GUIDE_COUNT)
+
+	var soil := _material(Color(0.19, 0.22, 0.12), 0.98, 0.02)
+	var water := _material(Color(0.10, 0.28, 0.25, 0.78), 0.2, 0.1, true)
+	var crop := _material(Color(0.32, 0.48, 0.16), 0.9, 0.0)
+	var trunk := _material(Color(0.22, 0.14, 0.08), 0.95, 0.0)
+	var leaf := _material(Color(0.12, 0.32, 0.14), 0.92, 0.0)
+	var stone := _material(Color(0.24, 0.28, 0.22), 0.92, 0.0)
+	var glow := _material(Color(0.12, 0.72, 0.92), 0.4, 0.4)
+	glow.emission_enabled = true
+	glow.emission = Color(0.04, 0.48, 0.9)
+	glow.emission_energy_multiplier = 1.6
+
+	_add_box("MarshlandGround", Vector3(0.0, -0.65, 34.0), Vector3(110.0, 1.3, 100.0), soil, true)
+	_add_box("TunnelToMarshlandThreshold", Vector3(0.0, -0.05, -7.0), Vector3(25.0, 0.4, 16.0), stone, true)
+	_add_label("MarshlandWelcome", "أرض المستنقعات\nنهاية نفق اختبار الصيادين", Vector3(0.0, 7.0, -10.0), Color(0.72, 0.92, 0.78))
+
+	# Shallow wetlands are physical water zones, not solid ground.
+	for index in range(5):
+		var pond := Area3D.new()
+		pond.name = "MarshWaterZone_%02d" % index
+		pond.position = Vector3(-34.0 + float(index % 3) * 32.0, 0.08, 12.0 + float(index / 3) * 42.0)
+		pond.collision_layer = 0
+		pond.collision_mask = 1
+		pond.set_meta("system_marsh_water", true)
+		pond.set_meta("system_swimming_zone", true)
+		var water_mesh := MeshInstance3D.new()
+		water_mesh.name = "MurkyWaterSurface"
+		var water_shape := CylinderMesh.new()
+		water_shape.top_radius = 9.0 + float(index % 2) * 3.0
+		water_shape.bottom_radius = water_shape.top_radius
+		water_shape.height = 0.16
+		water_mesh.mesh = water_shape
+		water_mesh.material_override = water
+		pond.add_child(water_mesh)
+		var water_collision := CollisionShape3D.new()
+		var water_area_shape := CylinderShape3D.new()
+		water_area_shape.radius = water_shape.top_radius
+		water_area_shape.height = 1.2
+		water_collision.shape = water_area_shape
+		pond.add_child(water_collision)
+		add_child(pond)
+
+	# Agricultural plots with visible crop rows and walkable furrows.
+	for index in range(PLOT_COUNT):
+		var plot := Node3D.new()
+		plot.name = "AgriculturalPlot_%02d" % index
+		var x := -42.0 + float(index % 4) * 28.0
+		var z := 3.0 + float(index / 4) * 29.0
+		plot.position = Vector3(x, 0.0, z)
+		plot.set_meta("system_marshland_plot", true)
+		plot.set_meta("system_crop_type", ["reed", "grain", "vegetable"][index % 3])
+		add_child(plot)
+		for row in range(4):
+			for plant_index in range(8):
+				var stalk := MeshInstance3D.new()
+				stalk.name = "Crop_%02d_%02d" % [row, plant_index]
+				var stalk_mesh := CylinderMesh.new()
+				stalk_mesh.top_radius = 0.045
+				stalk_mesh.bottom_radius = 0.10
+				stalk_mesh.height = 1.15 + float((row + plant_index) % 3) * 0.18
+				stalk.mesh = stalk_mesh
+				stalk.position = Vector3(-8.0 + float(plant_index) * 2.1, stalk_mesh.height * 0.5, -4.5 + float(row) * 3.0)
+				stalk.material_override = crop
+				plot.add_child(stalk)
+
+	# Dense tree line and reeds around the water.
+	for index in range(TREE_COUNT):
+		var tree := Node3D.new()
+		tree.name = "MarshTree_%02d" % index
+		var angle := TAU * float(index) / float(TREE_COUNT)
+		var radius := 30.0 + float(index % 5) * 7.0
+		tree.position = Vector3(cos(angle) * radius, 0.0, 22.0 + sin(angle) * radius)
+		add_child(tree)
+		var stem := MeshInstance3D.new()
+		stem.name = "Trunk"
+		var stem_mesh := CylinderMesh.new()
+		stem_mesh.top_radius = 0.25
+		stem_mesh.bottom_radius = 0.48
+		stem_mesh.height = 5.0 + float(index % 4)
+		stem.mesh = stem_mesh
+		stem.position.y = stem_mesh.height * 0.5
+		stem.material_override = trunk
+		tree.add_child(stem)
+		var crown := MeshInstance3D.new()
+		crown.name = "Canopy"
+		var crown_mesh := SphereMesh.new()
+		crown_mesh.radius = 2.5 + float(index % 3) * 0.35
+		crown_mesh.height = crown_mesh.radius * 2.0
+		crown.mesh = crown_mesh
+		crown.position.y = stem_mesh.height + 1.4
+		crown.material_override = leaf
+		tree.add_child(crown)
+
+	# Large original swamp fauna; each creature has its own collision and identity.
+	for index in range(TURTLE_COUNT):
+		_build_giant_turtle(index, Vector3(-24.0 + float(index) * 24.0, 0.0, 47.0 + float(index % 2) * 13.0), trunk, leaf)
+	_build_marsh_beasts(stone)
+
+	# Decoy NPCs deliberately misdirect some candidates; the tracking arrows still lead to the true gate.
+	for index in range(DECOY_GUIDE_COUNT):
+		var decoy := Node3D.new()
+		decoy.name = "MarshlandDecoyGuide_%02d" % index
+		decoy.position = Vector3(-40.0 + float(index) * 16.0, 0.0, 17.0 + float(index % 2) * 24.0)
+		decoy.set_meta("system_npc_role", "misleading_marshland_resident")
+		decoy.set_meta("system_can_misdirect_candidates", true)
+		add_child(decoy)
+		var body := MeshInstance3D.new()
+		body.name = "ResidentBody"
+		var body_mesh := CapsuleMesh.new()
+		body_mesh.radius = 0.48
+		body_mesh.height = 1.9
+		body.mesh = body_mesh
+		body.position.y = 1.0
+		body.material_override = stone
+		decoy.add_child(body)
+		_add_label("ResidentWarning_%02d" % index, "دليل محلي", decoy.position + Vector3(0.0, 2.7, 0.0), Color(0.88, 0.76, 0.52), decoy)
+
+	# Ground-level luminous route chevrons remain readable when fog hides the guide.
+	for index in range(8):
+		var marker := Node3D.new()
+		marker.name = "HunterTrackingArrow_%02d" % index
+		marker.position = Vector3(0.0, 0.18, -2.0 + float(index) * 11.0)
+		marker.set_meta("system_hunter_tracking_arrow", true)
+		marker.set_meta("system_tracking_target", "MarshlandFinalStarGate")
+		add_child(marker)
+		var arrow := MeshInstance3D.new()
+		arrow.name = "LuminousArrow"
+		var arrow_mesh := PrismMesh.new()
+		arrow_mesh.size = Vector3(2.0, 0.25, 3.0)
+		arrow.mesh = arrow_mesh
+		arrow.material_override = glow
+		marker.add_child(arrow)
+
+	# Volumetric-looking low fog banks made from translucent layered meshes.
+	var fog_material := _material(Color(0.68, 0.76, 0.72, 0.20), 0.0, 0.0, true)
+	fog_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	for index in range(14):
+		var fog := MeshInstance3D.new()
+		fog.name = "MarshFogBank_%02d" % index
+		var fog_mesh := SphereMesh.new()
+		fog_mesh.radius = 5.0 + float(index % 4) * 1.8
+		fog_mesh.height = fog_mesh.radius * 0.55
+		fog.mesh = fog_mesh
+		fog.position = Vector3(-48.0 + float(index % 7) * 16.0, 2.0 + float(index % 3) * 0.7, 4.0 + float(index / 7) * 45.0)
+		fog.material_override = fog_material
+		add_child(fog)
+
+	var gate := Node3D.new()
+	gate.name = "MarshlandFinalStarGate"
+	gate.position = Vector3(0.0, 0.0, 91.0)
+	gate.set_meta("system_exam_route_destination", true)
+	gate.set_meta("system_exam_gate_type", "star_gate")
+	gate.set_meta("system_gate_region", "hunter_exam_marshland")
+	add_child(gate)
+	_add_label("MarshlandFinalGateSign", "بوابة النجاة", Vector3(0.0, 5.0, 91.0), Color(0.52, 0.9, 1.0), gate)
+	var ring := MeshInstance3D.new()
+	ring.name = "StarGateRing"
+	var ring_mesh := TorusMesh.new()
+	ring_mesh.inner_radius = 3.2
+	ring_mesh.outer_radius = 3.8
+	ring.mesh = ring_mesh
+	ring.position.y = 3.5
+	ring.material_override = glow
+	gate.add_child(ring)
+
+	set_meta("system_marshland_generated", true)
+	set_meta("system_marshland_agricultural_plot_count", PLOT_COUNT)
+	set_meta("system_marshland_tree_count", TREE_COUNT)
+	set_meta("system_marshland_water_zone_count", 5)
+	set_meta("system_marshland_giant_turtle_count", TURTLE_COUNT)
+	set_meta("system_marshland_decoy_npc_count", DECOY_GUIDE_COUNT)
+	set_meta("system_marshland_tracking_arrow_count", 8)
+	set_meta("system_marshland_fog_bank_count", 14)
+	set_meta("system_marshland_exit_gate_present", true)
+
+func _build_giant_turtle(index: int, location: Vector3, shell_material: Material, body_material: Material) -> void:
+	var turtle := Node3D.new()
+	turtle.name = "GiantMarshTurtle_%02d" % index
+	turtle.position = location
+	turtle.set_meta("system_wildlife_species", "giant_marsh_turtle")
+	turtle.set_meta("system_wildlife_scale", "giant")
+	add_child(turtle)
+	var shell := MeshInstance3D.new()
+	shell.name = "Shell"
+	var shell_mesh := SphereMesh.new()
+	shell_mesh.radius = 3.2
+	shell_mesh.height = 3.0
+	shell.mesh = shell_mesh
+	shell.position.y = 2.0
+	shell.material_override = shell_material
+	turtle.add_child(shell)
+	var shell_body := StaticBody3D.new()
+	shell_body.name = "ShellCollision"
+	var shell_shape := CollisionShape3D.new()
+	var sphere := SphereShape3D.new()
+	sphere.radius = 2.8
+	shell_shape.shape = sphere
+	shell_shape.position.y = 2.0
+	shell_body.add_child(shell_shape)
+	turtle.add_child(shell_body)
+	for leg_index in range(4):
+		var leg := MeshInstance3D.new()
+		leg.name = "Leg_%02d" % leg_index
+		var leg_mesh := CapsuleMesh.new()
+		leg_mesh.radius = 0.55
+		leg_mesh.height = 1.8
+		leg.mesh = leg_mesh
+		leg.position = Vector3(-1.8 if leg_index < 2 else 1.8, 0.65, -1.7 if leg_index % 2 == 0 else 1.7)
+		leg.material_override = body_material
+		turtle.add_child(leg)
+
+func _build_marsh_beasts(material: Material) -> void:
+	for index in range(4):
+		var beast := Node3D.new()
+		beast.name = "MarshBeast_%02d" % index
+		beast.position = Vector3(-36.0 + float(index) * 24.0, 0.0, 68.0)
+		beast.set_meta("system_wildlife_species", "marshland_beast")
+		beast.set_meta("system_wildlife_scale", "large")
+		add_child(beast)
+		var body := MeshInstance3D.new()
+		body.name = "BeastBody"
+		var mesh := CapsuleMesh.new()
+		mesh.radius = 1.5
+		mesh.height = 4.5
+		body.mesh = mesh
+		body.position.y = 2.0
+		body.material_override = material
+		beast.add_child(body)
+
+func _add_box(node_name: String, position: Vector3, size: Vector3, material: Material, collision: bool) -> void:
+	var mesh_instance := MeshInstance3D.new()
+	mesh_instance.name = node_name
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	mesh_instance.mesh = mesh
+	mesh_instance.position = position
+	mesh_instance.material_override = material
+	add_child(mesh_instance)
+	if collision:
+		var body := StaticBody3D.new()
+		body.name = node_name + "Collision"
+		var shape := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size = size
+		shape.shape = box
+		body.position = position
+		body.add_child(shape)
+		add_child(body)
+
+func _add_label(node_name: String, content: String, position: Vector3, color: Color, parent: Node = null) -> void:
+	var label := Label3D.new()
+	label.name = node_name
+	label.text = content
+	label.font_size = 24
+	label.pixel_size = 0.014
+	label.position = position if parent == null else position - parent.position
+	label.modulate = color
+	if parent == null:
+		add_child(label)
+	else:
+		parent.add_child(label)
+
+func _material(color: Color, metallic: float, roughness: float, transparent: bool = false) -> StandardMaterial3D:
+	var result := StandardMaterial3D.new()
+	result.albedo_color = color
+	result.metallic = metallic
+	result.roughness = roughness
+	if transparent:
+		result.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	return result
