@@ -74,6 +74,9 @@ func get_floor_data(floor_number: int) -> Dictionary:
 	var objective_type := "DEFEAT_BOSS" if boss_floor else "DEFEAT_OPPONENT"
 	var arena_name := "SOVEREIGN TITLE DUEL ARENA" if final_boss else ("TITLE HOLDER DUEL ARENA" if boss_floor else ("ELITE PLAYER DUEL ARENA" if elite_floor else "PLAYER 1 VS 1 DUEL ARENA"))
 	var arena_rules := "مواجهة السيادة النهائية: لاعب بشري ضد حامل اللقب البشري — 1 ضد 1" if final_boss else ("مواجهة فردية ضد حامل لقب الطابق — لاعبان بشريان فقط" if boss_floor else ("مواجهة نخبة فردية بين لاعبين بشريين — 1 ضد 1" if elite_floor else "مواجهة فردية بين لاعبين بشريين 1 ضد 1 — لا فرق ولا خصوم آليين"))
+	var weapons_allowed := floor_number <= 80
+	var nen_required := floor_number >= 81
+	var available_combat_styles := ["UNARMED_HAND_TO_HAND", "KUNG_FU", "MARTIAL_ARTS", "TRADITIONAL_MELEE", "BOW_AND_ARROW"] if weapons_allowed else ["NEN_TECHNIQUES", "UNARMED_HAND_TO_HAND"]
 	return {
 		"floor": floor_number,
 		"division_number": int(ceil(float(floor_number) / 10.0)),
@@ -83,7 +86,10 @@ func get_floor_data(floor_number: int) -> Dictionary:
 		"private_room_eligible": floor_number >= 100,
 		"judge_panel": DUEL_JUDGE_IDS.duplicate(),
 		"scoring_rules": {"clean_hit": 1, "critical_hit": 2, "opponent_down": 1, "tko_score": DUEL_TKO_SCORE},
-		"weapons_allowed": floor_number >= 200,
+		"weapons_allowed": weapons_allowed,
+		"traditional_weapons_allowed": weapons_allowed,
+		"nen_required": nen_required,
+		"available_combat_styles": available_combat_styles,
 		"difficulty": difficulty,
 		"required_level": required_level,
 		"boss_floor": boss_floor,
