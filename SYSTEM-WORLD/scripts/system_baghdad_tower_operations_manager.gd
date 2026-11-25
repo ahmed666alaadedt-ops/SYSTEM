@@ -2147,8 +2147,23 @@ func open_tower(tower_id: String) -> void:
 
 
 func _get_power_tower_appointment_date(day_offset: int) -> Dictionary:
-	var unix_time := int(Time.get_unix_time_from_system()) + maxi(0, day_offset) * 86400
-	return Time.get_datetime_dict_from_unix_time(unix_time, false)
+	var date_data := Time.get_datetime_dict_from_system()
+	var year := int(date_data.get("year", 2026))
+	var month := int(date_data.get("month", 1))
+	var day := int(date_data.get("day", 1))
+	for _step in range(maxi(0, day_offset)):
+		day += 1
+		var days_in_month := [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+		var leap_year := year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+		if leap_year:
+			days_in_month[1] = 29
+		if day > int(days_in_month[month - 1]):
+			day = 1
+			month += 1
+			if month > 12:
+				month = 1
+				year += 1
+	return {"year": year, "month": month, "day": day}
 
 
 func _power_tower_date_key(date_data: Dictionary) -> String:
