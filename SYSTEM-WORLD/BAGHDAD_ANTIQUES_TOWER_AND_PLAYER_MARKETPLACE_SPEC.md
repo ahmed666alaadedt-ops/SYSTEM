@@ -55,13 +55,21 @@ Callable endpoints currently added:
 - `createArtifactListing`: verifies ownership and moves the artifact into escrow before creating the offer.
 - `cancelArtifactListing`: only the seller can cancel their active offer and release escrow.
 - `purchaseArtifactListing`: atomically debits the buyer, credits the seller, transfers ownership, closes the offer and writes transaction/audit records.
+- `expireArtifactListing`: safely releases escrow for expired offers without letting another player cancel a live offer.
+- `listMyMarketplaceTransactions`: returns the player's private purchase/sale history.
+- `createArtifactAuction`, `browseArtifactAuctions`, `placeArtifactAuctionBid`, `listArtifactAuctionBids`, `settleExpiredArtifactAuction`, `cancelArtifactAuction`: player auctions with reserved bid funds, bid history, anti-sniping extension, and atomic settlement after expiry.
+- `createArtifactExchangeOffer`, `acceptArtifactExchangeOffer`, `closeArtifactExchangeOffer`, `listMyArtifactExchangeOffers`: two-sided artifact offers with escrow, explicit recipient acceptance, and atomic transfer of both artifacts. Expired offers can be released by any authenticated player.
 
 Authoritative collections:
 - `artifactRegistry/{artifactId}`: global unique-ID registry.
 - `artifactOwnership/{uid}/items/{artifactId}`: server-owned artifact records.
-- `systemWallets/{uid}`: server-controlled virtual SYSTEM currency balance.
+- `systemWallets/{uid}`: server-controlled virtual SYSTEM currency balance and reserved auction funds.
 - `marketplaceListings/{listingId}`: public active listing metadata; all writes are server-side.
 - `marketplaceTransactions/{transactionId}`: participant-readable transaction receipts.
+- `marketplaceAuctions/{auctionId}/bids/{bidId}`: immutable auction bid history.
+- `marketplaceExchanges/{exchangeId}`: private two-player exchange offers.
+- `artifactHistory/{artifactId}/events/{eventId}`: private append-only ownership timeline.
+- `marketplaceCurrencyAwards/{awardId}`: replay-safe virtual currency rewards from the trusted game-server identity.
 - `marketplaceAudit/{recordId}`, `artifactOwnershipAudit/{artifactId}`: private audit records.
 
 The marketplace fee is currently 0 basis points; no fee is silently deducted. Currency is virtual SYSTEM currency only. No cash withdrawal, external payment or real-money trading is part of this feature.
@@ -80,9 +88,8 @@ A Firebase Functions TypeScript validation workflow has been added. Passing CI i
 ## Remaining activation gates
 
 1. Connect verified quest/reward issuance to trusted artifact ownership grants; do not let players self-mint.
-2. Connect legitimate gameplay currency earnings to server wallet credits; wallets currently start at zero.
-3. Add auction creation, bidding, anti-sniping policy, expiry settlement and cancellation.
-4. Add two-player exchange offers, escrow for both sides, acceptance and expiry.
+2. Configure the trusted game-server Firebase custom claim and connect verified quest/dungeon rewards to `awardMarketplaceCurrency`; ordinary players cannot mint currency.
+3. Add scheduled background settlement for expired auctions and automatic expiry cleanup for stale marketplace listings.
 5. Connect the Godot exhibit and market-floor UI to the Android callable repository/host bridge.
 6. Add emulator tests for unauthorized calls, self-purchase, insufficient funds, duplicate IDs, escrow cancellation, replay, expired listings and simultaneous purchases.
 7. Deploy Cloud Functions, Firestore rules and indexes only after user approval and successful tests.
