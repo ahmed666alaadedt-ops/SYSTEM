@@ -1,6 +1,6 @@
 # X-S-X Power Tower — Approved Design & Gameplay Contract
 
-Status: implementation baseline / not yet visually complete
+Status: partial implementation / Godot 4.3 headless validated / in-engine visual review pending
 Branch: feature/power-tower-xsx-expansion-20261126
 Base: main at dc3d9ba942251173ef0a9a5aa57d83b097937986
 
@@ -96,3 +96,29 @@ Official competitive matches remain 1v1. The floor band controls arena count, no
 ### Implementation and verification boundary
 - The existing architecture/shop checkpoint is partial. These new requirements must be implemented and tested; documenting them does not certify runtime completion.
 - Keep work on `feature/power-tower-xsx-expansion-20261126` / draft PR #42. Never merge to `main` without the user's explicit approval.
+
+
+## 8. Implementation checkpoint — 2026-11-26
+
+### Code present
+- `system_power_tower_xsx_architecture.gd` is attached to the existing independent `PowerTower` landmark by the landmark manager. It adds tapered glass/metal sections, three illuminated structural tiers, 12 X-S-X facade identity marks, upper sky observatory, rooftop helipad, and circular arrival podium.
+- The existing public lobby now receives 3D presentation groups for traditional weapons, armor, elixirs/Nen, skill scrolls, hunter accessories, and a cafeteria with four tables and sixteen visible seats. The existing operations/economy manager remains the single wallet, inventory and shop service.
+- The Power Tower shop currently has 28 products: 9 traditional weapon options, 3 skill manuals, 3 cafeteria items, 4 equippable accessories, armor and elixirs. Accessories use two new equipment slots and contribute their configured combat bonuses.
+- Modern firearm item IDs are excluded from the Power Tower catalog and official Power Tower combat actions are blocked while one is equipped.
+- The Nen trainer flow requires level 15, Hunter rank D and an owned Nen Awakening Elixir; consuming the elixir uses the existing progression/Nen service.
+- Local match appointment UI supports the next three calendar days, four daily slots (10:00, 13:00, 16:00, 19:00), requested floor, one active booking per local player, persistence on device and cancellation. This is a local prototype, not an online reservation/matchmaking service.
+- Arena availability is data-driven by floor band: 1–20: 8; 21–40: 6; 41–60: 4; 61–80: 3; 81–100: 2; 101–200: 1.
+- Each active arena audience targets 500 visible spectators using 8 detailed reacting rigs plus 492 lightweight MultiMesh crowd impostors; 48 reserved interactive seats remain available.
+
+### Automated verification
+- Godot 4.3 canonical import, project launch, Power Tower architecture validator, restricted shop validator, 500-crowd/arena-ladder validator, Baghdad tower validators, Hunter tunnel validator, terrain streaming validator and canonical main-scene headless launch passed on commit `6e9e0c48ea55f165e3e1008f532bac742a2d4a7e`.
+- Canonical Android debug APK export completed successfully on the same commit; artifact size reported by GitHub Actions: approximately 36.3 MB.
+- The branch remains `feature/power-tower-xsx-expansion-20261126` and draft PR #42 remains unmerged.
+
+### Not yet certified / remaining
+- No physical Android-device visual/performance review has been completed; headless success is not visual completion.
+- The new appointment prototype is local-only. Online reservations, real opponent matchmaking and server-authoritative synchronization still need backend integration.
+- Unique / World-Rare stock issuance and TEMPORARY expiry rules are specified but not yet implemented as authoritative scarcity/expiry mechanics.
+- The 500-person crowd is a lightweight visual representation; only eight audience members are full reacting rigs. The 48 reserved seats are interactive.
+- Final high-detail floor interiors, full cinematic ascent/arrival sequences, and on-device LOD/performance tuning remain open.
+- Existing final-floor weapon gate remains unchanged; do not infer that all shop weapons are permitted in every official floor match.
