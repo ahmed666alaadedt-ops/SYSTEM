@@ -91,6 +91,16 @@ func _run_validation() -> void:
 		return
 	if not _check(zone.find_children("HunterExamDeceptionNPC_*", "Node3D", true, false).size() == 12, "Expected twelve deception NPCs."):
 		return
+	var fog_sample := zone.find_child("MarshGroundFog_00", true, false) as MeshInstance3D
+	var fog_material := fog_sample.material_override as StandardMaterial3D if fog_sample != null else null
+	if not _check(fog_material != null and fog_material.albedo_color.a >= 0.25 and bool(fog_sample.get_meta("system_fog_visibility_obscuring", false)), "Dense visibility-obscuring swamp fog is not configured."):
+		return
+	var fauna_species := {}
+	for marsh_creature in zone.find_children("GiantMarshCreature_*", "Node3D", true, false):
+		fauna_species[str(marsh_creature.get_meta("system_creature_species", ""))] = true
+	for expected_species in ["man_faced_ape", "hypnosis_butterfly", "frog_in_waiting", "noggin_lugging_tortoise", "ruse_raven", "claymore_mushroom"]:
+		if not _check(fauna_species.has(expected_species), "Hunter swamp fauna profile is missing: " + expected_species):
+			return
 	if not _check(zone.find_children("GiantMarshCreature_*", "Node3D", true, false).size() == 6, "Expected six giant marsh wildlife encounters."):
 		return
 	if not _check(zone.find_children("HunterExamRouteArrow_*", "Node3D", true, false).size() == 9, "Expected nine route arrows."):
