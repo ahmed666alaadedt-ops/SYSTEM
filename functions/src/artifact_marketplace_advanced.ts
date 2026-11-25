@@ -712,10 +712,10 @@ export const listMyArtifactExchangeOffers = onCall(async (request) => {
     const data = doc.data();
     return {
       exchangeId: doc.id,
-      initiatorId: data.initiatorId,
       initiatorName: data.initiatorName,
-      recipientId: data.recipientId,
       recipientName: data.recipientName,
+      counterpartyName: data.initiatorId === uid ? data.recipientName : data.initiatorName,
+      isIncoming: data.recipientId === uid,
       offeredArtifactId: data.offeredArtifactId,
       offeredArtifactName: data.offeredArtifactName,
       requestedArtifactId: data.requestedArtifactId,
