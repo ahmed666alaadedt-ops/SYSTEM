@@ -79,6 +79,7 @@ export const getMyMarketplaceWallet = onCall(async (request) => {
         userId: uid,
         currency: "SYSTEM",
         balance: 0,
+        reservedBalance: 0,
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp()
       });
@@ -87,7 +88,10 @@ export const getMyMarketplaceWallet = onCall(async (request) => {
   const snapshot = await ref.get();
   return {
     currency: "SYSTEM",
-    balance: Number(snapshot.data()?.balance ?? 0)
+    balance: Number(snapshot.data()?.balance ?? 0),
+    reservedBalance: Number(snapshot.data()?.reservedBalance ?? 0),
+    availableBalance: Number(snapshot.data()?.balance ?? 0) -
+      Number(snapshot.data()?.reservedBalance ?? 0)
   };
 });
 
@@ -392,8 +396,11 @@ export const purchaseArtifactListing = onCall(async (request) => {
       throw new HttpsError("already-exists", "يمتلك المشتري قطعة بهذا المعرّف مسبقاً.");
     }
     const buyerBalance = Number(buyerWallet.data()?.balance ?? -1);
+    const buyerReserved = Number(buyerWallet.data()?.reservedBalance ?? 0);
     const sellerBalance = Number(sellerWallet.data()?.balance ?? -1);
     if (!Number.isSafeInteger(buyerBalance) || buyerBalance < price ||
+        !Number.isSafeInteger(buyerReserved) || buyerReserved < 0 ||
+        buyerReserved > buyerBalance || buyerBalance - buyerReserved < price ||
         !Number.isSafeInteger(sellerBalance) || sellerBalance < 0 ||
         sellerBalance + sellerCredit > Number.MAX_SAFE_INTEGER) {
       throw new HttpsError("failed-precondition", "رصيد المشتري غير كافٍ أو بيانات المحفظة غير صالحة.");
