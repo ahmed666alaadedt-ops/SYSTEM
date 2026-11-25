@@ -122,3 +122,31 @@ Official competitive matches remain 1v1. The floor band controls arena count, no
 - The 500-person crowd is a lightweight visual representation; only eight audience members are full reacting rigs. The 48 reserved seats are interactive.
 - Final high-detail floor interiors, full cinematic ascent/arrival sequences, and on-device LOD/performance tuning remain open.
 - Existing final-floor weapon gate remains unchanged; do not infer that all shop weapons are permitted in every official floor match.
+
+
+## 8. Implemented gameplay details — 2026-11-26
+
+### Physical arena layout
+- The approved arena ladder is represented by 560 arena floor platforms across the 200-floor tower: 8 arenas on floors 1–20, 6 on 21–40, 4 on 41–60, 3 on 61–80, 2 on 81–100, then 1 on every floor from 101–200.
+- Each arena platform has a visible boundary rail and collision surface. The layout is centered within each floor band and generated through MultiMesh for mobile rendering efficiency.
+
+### Crowd and fan predictions
+- Crowd rendering target is 500: 492 shared MultiMesh LOD crowd proxies plus 8 detailed audience actors in the spectator gallery.
+- The 500 stable fan NPC identities can submit virtual SYSTEM predictions for registered human 1v1 matches before the betting pool locks.
+
+### Betting distribution
+- The winning bettors receive their original stakes back plus a proportional share of 80% of the losing-stake pool.
+- The Power Tower records 10% of the losing-stake pool as house revenue.
+- The winning fighter receives 10% of the losing-stake pool as a fighter reward.
+- If nobody predicts the winner, every stake is refunded and no house/fighter share is taken.
+- Betting disclosure appears before user confirmation. SYSTEM credits have no real-money value, cash-out, or external payment.
+- Current client prototype records the house and fighter ledgers and can credit the local winning fighter. Remote fighter reward entries remain pending until account synchronization/claim. Production multiplayer requires authoritative server-side wallet settlement and idempotency.
+
+### Nen training progression
+- Nen training is available at the dedicated Power Tower Nen Training Hall and uses the persistent SYSTEM player progression record.
+- Floor bands gate the techniques: discovery/aura awareness (1–20), Ten (21–40), Ren (41–60), Zetsu (61–80), Hatsu (81–100), advanced Nen (101–150), and mastery (151–200).
+- Three completed training sessions are required per mastery stage. Training IDs are persisted and duplicate session submissions are rejected.
+- The hall's Area3D interaction routes through the main world interaction handler and tower operations manager to the player's progression component.
+
+### Interior placement
+- Weapon, armor, elixir, skill, accessory, cafeteria, restaurant, recreation, entertainment and Nen training facilities are positioned within the circular entrance podium footprint.
