@@ -37,6 +37,22 @@ data class SystemArtifactListing(
     val expiresAt: Long?
 )
 
+data class SystemArtifactAuction(
+    val auctionId: String,
+    val artifactId: String,
+    val name: String,
+    val civilization: String,
+    val rarity: String,
+    val condition: String,
+    val sellerId: String,
+    val sellerName: String,
+    val startingBid: Long,
+    val highestBid: Long,
+    val highestBidderName: String?,
+    val bidCount: Int,
+    val endsAt: Long
+)
+
 /**
  * Client adapter for the server-authoritative Baghdad Antiques marketplace.
  * It deliberately exposes callable operations only; the Android client never
@@ -183,4 +199,172 @@ class FirebaseArtifactMarketplaceRepository(
             .addOnSuccessListener { callback(Result.success(Unit)) }
             .addOnFailureListener { callback(Result.failure(it)) }
     }
+
+    fun createAuction(
+        artifactId: String,
+        startingBid: Long,
+        durationHours: Int = 24,
+        callback: (Result<String>) -> Unit
+    ) {
+        if (artifactId.isBlank() || startingBid <= 0L || durationHours !in 1..168) {
+            callback(Result.failure(IllegalArgumentException("بيانات المزاد غير صالحة.")))
+            return
+        }
+        functions.getHttpsCallable("createArtifactAuction")
+            .call(mapOf(
+                "artifactId" to artifactId,
+                "startingBid" to startingBid,
+                "durationHours" to durationHours
+            ))
+            .addOnSuccessListener { result ->
+                val id = (result.data as? Map<*, *>)?.get("auctionId") as? String
+                if (id.isNullOrBlank()) callback(Result.failure(IllegalStateException("لم يرجع معرّف المزاد.")))
+                else callback(Result.success(id))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    fun browseAuctions(callback: (Result<List<SystemArtifactAuction>>) -> Unit) {
+        functions.getHttpsCallable("browseArtifactAuctions").call()
+            .addOnSuccessListener { result ->
+                val raw = (result.data as? Map<*, *>)?.get("auctions") as? List<*> ?: emptyList<Any>()
+                val auctions = raw.mapNotNull { value ->
+                    val item = value as? Map<*, *> ?: return@mapNotNull null
+                    val id = item["auctionId"] as? String ?: return@mapNotNull null
+                    val artifactId = item["artifactId"] as? String ?: return@mapNotNull null
+                    SystemArtifactAuction(
+                        auctionId = id,
+                        artifactId = artifactId,
+                        name = item["name"] as? String ?: "قطعة أثرية",
+                        civilization = item["civilization"] as? String ?: "",
+                        rarity = item["rarity"] as? String ?: "common",
+                        condition = item["condition"] as? String ?: "good",
+                        sellerId = item["sellerId"] as? String ?: "",
+                        sellerName = item["sellerName"] as? String ?: "لاعب",
+                        startingBid = (item["startingBid"] as? Number)?.toLong() ?: 0L,
+                        highestBid = (item["highestBid"] as? Number)?.toLong() ?: 0L,
+                        highestBidderName = item["highestBidderName"] as? String,
+                        bidCount = (item["bidCount"] as? Number)?.toInt() ?: 0,
+                        endsAt = (item["endsAt"] as? Number)?.toLong() ?: 0L
+                    )
+                }
+                callback(Result.success(auctions))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    fun placeAuctionBid(auctionId: String, amount: Long, callback: (Result<Unit>) -> Unit) {
+        if (auctionId.isBlank() || amount <= 0L) {
+            callback(Result.failure(IllegalArgumentException("بيانات المزايدة غير صالحة.")))
+            return
+        }
+        functions.getHttpsCallable("placeArtifactAuctionBid")
+            .call(mapOf("auctionId" to auctionId, "amount" to amount))
+            .addOnSuccessListener { callback(Result.success(Unit)) }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    fun loadAuctionBids(
+        auctionId: String,
+        callback: (Result<List<Map<String, Any?>>>) -> Unit
+    ) {
+        if (auctionId.isBlank()) {
+            callback(Result.failure(IllegalArgumentException("معرّف المزاد غير صالح.")))
+            return
+        }
+        functions.getHttpsCallable("listArtifactAuctionBids")
+            .call(mapOf("auctionId" to auctionId))
+            .addOnSuccessListener { result ->
+                val raw = (result.data as? Map<*, *>)?.get("bids") as? List<*> ?: emptyList<Any>()
+                val bids = raw.mapNotNull { it as? Map<String, Any?> }
+                callback(Result.success(bids))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    fun settleAuction(auctionId: String, callback: (Result<Unit>) -> Unit) {
+        if (auctionId.isBlank()) {
+            callback(Result.failure(IllegalArgumentException("معرّف المزاد غير صالح.")))
+            return
+        }
+        functions.getHttpsCallable("settleExpiredArtifactAuction")
+            .call(mapOf("auctionId" to auctionId))
+            .addOnSuccessListener { callback(Result.success(Unit)) }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    fun cancelAuction(auctionId: String, callback: (Result<Unit>) -> Unit) {
+        if (auctionId.isBlank()) {
+            callback(Result.failure(IllegalArgumentException("معرّف المزاد غير صالح.")))
+            return
+        }
+        functions.getHttpsCallable("cancelArtifactAuction")
+            .call(mapOf("auctionId" to auctionId))
+            .addOnSuccessListener { callback(Result.success(Unit)) }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    fun createExchangeOffer(
+        recipientId: String,
+        offeredArtifactId: String,
+        requestedArtifactId: String,
+        callback: (Result<String>) -> Unit
+    ) {
+        if (recipientId.isBlank() || offeredArtifactId.isBlank() || requestedArtifactId.isBlank()) {
+            callback(Result.failure(IllegalArgumentException("بيانات التبادل غير مكتملة.")))
+            return
+        }
+        functions.getHttpsCallable("createArtifactExchangeOffer")
+            .call(mapOf(
+                "recipientId" to recipientId,
+                "offeredArtifactId" to offeredArtifactId,
+                "requestedArtifactId" to requestedArtifactId
+            ))
+            .addOnSuccessListener { result ->
+                val id = (result.data as? Map<*, *>)?.get("exchangeId") as? String
+                if (id.isNullOrBlank()) callback(Result.failure(IllegalStateException("لم يرجع معرّف التبادل.")))
+                else callback(Result.success(id))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    fun acceptExchangeOffer(exchangeId: String, callback: (Result<Unit>) -> Unit) {
+        if (exchangeId.isBlank()) {
+            callback(Result.failure(IllegalArgumentException("معرّف التبادل غير صالح.")))
+            return
+        }
+        functions.getHttpsCallable("acceptArtifactExchangeOffer")
+            .call(mapOf("exchangeId" to exchangeId))
+            .addOnSuccessListener { callback(Result.success(Unit)) }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    fun closeExchangeOffer(
+        exchangeId: String,
+        action: String,
+        callback: (Result<Unit>) -> Unit
+    ) {
+        if (exchangeId.isBlank() || action !in setOf("cancel", "decline")) {
+            callback(Result.failure(IllegalArgumentException("إجراء إغلاق التبادل غير صالح.")))
+            return
+        }
+        functions.getHttpsCallable("closeArtifactExchangeOffer")
+            .call(mapOf("exchangeId" to exchangeId, "action" to action))
+            .addOnSuccessListener { callback(Result.success(Unit)) }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    fun loadMyExchangeOffers(
+        callback: (Result<Map<String, List<Map<String, Any?>>>>) -> Unit
+    ) {
+        functions.getHttpsCallable("listMyArtifactExchangeOffers").call()
+            .addOnSuccessListener { result ->
+                val data = result.data as? Map<*, *> ?: emptyMap<Any, Any>()
+                fun parse(key: String): List<Map<String, Any?>> =
+                    (data[key] as? List<*>)?.mapNotNull { it as? Map<String, Any?> } ?: emptyList()
+                callback(Result.success(mapOf("sent" to parse("sent"), "received" to parse("received"))))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
 }
