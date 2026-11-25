@@ -823,6 +823,36 @@ func _build_hidden_heritage_gates(zone: Node3D) -> void:
 		pillar.position = Vector3(-14.0 + float(index % 4) * 9.0, 4.0, -10.0 + float(index / 4) * 20.0)
 		pillar.material_override = stone
 		sanctuary.add_child(pillar)
+	var final_altar := MeshInstance3D.new()
+	final_altar.name = "HunterExamMarshlandFinalAltar"
+	var altar_mesh := CylinderMesh.new()
+	altar_mesh.top_radius = 2.2
+	altar_mesh.bottom_radius = 3.2
+	altar_mesh.height = 1.5
+	final_altar.mesh = altar_mesh
+	final_altar.position = Vector3(0.0, 0.75, 5.0)
+	final_altar.material_override = relic
+	sanctuary.add_child(final_altar)
+	var final_label := Label3D.new()
+	final_label.name = "HunterExamMarshlandFinalObjectiveLabel"
+	final_label.text = "نهاية اختبار الصيادين\nاكتشف الملاذ القديم"
+	final_label.font_size = 28
+	final_label.pixel_size = 0.014
+	final_label.position = Vector3(0.0, 5.0, 5.0)
+	final_label.modulate = Color(0.9, 0.78, 0.48)
+	sanctuary.add_child(final_label)
+	var final_area := Area3D.new()
+	final_area.name = "HunterExamMarshlandFinalObjective"
+	final_area.position = Vector3(0.0, 1.5, 5.0)
+	final_area.set_meta("system_hunter_exam_final_objective", true)
+	var final_collision := CollisionShape3D.new()
+	var final_sphere := SphereShape3D.new()
+	final_sphere.radius = 9.0
+	final_collision.shape = final_sphere
+	final_area.add_child(final_collision)
+	sanctuary.add_child(final_area)
+	final_area.body_entered.connect(_on_marsh_final_trial_entered)
+
 	for gate_index in range(3):
 		var gate := Node3D.new()
 		gate.name = "SeasonalMarshStarGate_%02d" % gate_index
@@ -879,6 +909,34 @@ func _build_marsh_star_gate_visual(gate: Node3D, material: Material, gate_index:
 	label.pixel_size = 0.014
 	label.position.y = 7.0
 	gate.add_child(label)
+
+
+func _on_marsh_final_trial_entered(body: Node3D) -> void:
+	if not _is_hunter_exam_player(body):
+		return
+	var exam_manager := get_tree().root.find_child("SYSTEMHunterExamManager", true, false)
+	if exam_manager == null or not bool(exam_manager.get("registered")):
+		return
+	if bool(exam_manager.get("failed")):
+		return
+	var completed_segments: Array = exam_manager.get("completed_stage_ids")
+	if completed_segments.has("baghdad_tunnel_competition"):
+		body.set_meta("system_hunter_marsh_trial_completed", true)
+		return
+	if not bool(exam_manager.get("exam_active")):
+		var start_result: Dictionary = exam_manager.call("begin_exam")
+		if not bool(start_result.get("success", false)):
+			return
+	var completion: Dictionary = exam_manager.call(
+		"complete_current_stage",
+		"baghdad_tunnel_competition",
+		"HUNTER_TUNNEL_AND_MARSHLAND_SURVIVAL_SANCTUARY_DISCOVERY"
+	)
+	if bool(completion.get("success", false)):
+		body.set_meta("system_hunter_marsh_trial_completed", true)
+		body.set_meta("system_hunter_marsh_trial_rank", str(completion.get("license_rank", "PROVISIONAL_HUNTER")))
+		set_meta("system_hunter_marsh_trial_completed", true)
+		print("SYSTEM Hunter Exam: continuous tunnel-and-marsh trial completed at the hidden sanctuary.")
 
 
 func _on_marsh_star_gate_entered(body: Node3D, gate: Node3D) -> void:
