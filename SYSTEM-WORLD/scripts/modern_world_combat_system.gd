@@ -11,6 +11,7 @@ var is_blocking := false
 var attack_damage := 34.0
 var heavy_damage := 90.0
 var attack_range := 65.0
+const POWER_TOWER_FORBIDDEN_WEAPONS := ["system_firearm", "hunter_pistol", "hunter_rifle", "precision_rifle", "tactical_shotgun"]
 
 
 func bind_actor(player: CharacterBody3D, combat_camera: Camera3D, player_progression: Node = null) -> void:
@@ -24,7 +25,7 @@ func set_combat_camera(combat_camera: Camera3D) -> void:
 
 
 func light_attack() -> void:
-	if not can_attack or not is_instance_valid(actor):
+	if not can_attack or not is_instance_valid(actor) or not _power_tower_weapon_policy_allows_attack():
 		return
 	can_attack = false
 	_consume_weapon_durability(0.35)
@@ -46,6 +47,10 @@ func heavy_attack() -> void:
 func skill_one() -> Dictionary:
 	if not can_attack or not is_instance_valid(actor):
 		return {"success": false, "reason": "COMBAT_BUSY"}
+	if not _power_tower_weapon_policy_allows_attack():
+		return {"success": false, "reason": "MODERN_FIREARMS_FORBIDDEN_IN_POWER_TOWER"}
+	if not _power_tower_weapon_policy_allows_attack():
+		return {"success": false, "reason": "MODERN_FIREARMS_FORBIDDEN_IN_POWER_TOWER"}
 	var progression := _get_progression()
 	if progression == null or not progression.has_method("activate_nen_burst"):
 		return {"success": false, "reason": "NEN_SYSTEM_UNAVAILABLE"}
@@ -74,6 +79,21 @@ func skill_two() -> Dictionary:
 	return {"success": true, "ability_id": "charged_strike"}
 
 
+
+
+func _power_tower_weapon_policy_allows_attack() -> bool:
+	var operations := get_tree().root.find_child("BaghdadTowerOperationsManager", true, false)
+	if operations == null or not bool(operations.get("power_floor_in_progress")):
+		return true
+	var progression_node := _get_progression()
+	if progression_node == null:
+		return true
+	var slots: Dictionary = progression_node.get("equipment_slots")
+	var equipped_weapon := str(slots.get("weapon", ""))
+	if POWER_TOWER_FORBIDDEN_WEAPONS.has(equipped_weapon):
+		push_warning("SYSTEM POWER TOWER: modern firearms are forbidden in official tower duels; equip a traditional weapon.")
+		return false
+	return true
 
 
 func _get_progression() -> Node:
