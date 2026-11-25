@@ -40,7 +40,9 @@ func _run() -> void:
 	for crowd_child in global_crowd.get_children():
 		if crowd_child is CharacterBody3D and bool(crowd_child.get_meta("system_npc_full_rig", false)):
 			detailed_actor_count += 1
-			assert(crowd_child.get_child_count() == 5)
+			assert(crowd_child.get_child_count() == 6, "Each detailed spectator must have torso, head, two arms and two legs.")
+			for part_name in ["Torso", "Head", "Arm_L", "Arm_R", "Leg_L", "Leg_R"]:
+				assert(crowd_child.get_node_or_null(part_name) is MeshInstance3D, "Missing detailed spectator body part: %s" % part_name)
 	assert(detailed_actor_count == 8, "Eight detailed spectator NPCs must be instantiated, not represented by metadata only.")
 	var body_multimesh := global_crowd.get_node_or_null("SpectatorNPCBodies500") as MultiMeshInstance3D
 	var head_multimesh := global_crowd.get_node_or_null("SpectatorNPCHeads500") as MultiMeshInstance3D
