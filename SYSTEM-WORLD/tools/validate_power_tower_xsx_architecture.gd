@@ -22,6 +22,12 @@ func _run() -> void:
 	assert(architecture.get_node_or_null("SkyObservatory") != null)
 	assert(architecture.get_node_or_null("PowerTowerRooftopHelipad") != null)
 	assert(architecture.get_node_or_null("XSXCircularEntrancePodium") != null)
+	var interior := lobby.get_node_or_null("XSXShopAndCafeteriaInterior") as Node3D
+	assert(interior != null)
+	for facility_name in ["TraditionalWeaponsGallery", "ArmorShowroom", "NenElixirCabinet", "SkillScrollLibrary", "PowerTowerCafeteria"]:
+		assert(interior.get_node_or_null(facility_name) != null, "Missing Power Tower interior facility: " + facility_name)
+	assert(int(architecture.get_meta("system_power_tower_cafeteria_table_count", 0)) == 4)
+	assert(int(architecture.get_meta("system_power_tower_cafeteria_seat_count", 0)) == 16)
 	assert(not bool(architecture.get_meta("system_power_tower_shop_modern_firearms_allowed", true)))
-	print("X-S-X POWER TOWER ARCHITECTURE VALIDATION PASSED: 200-floor identity, tapered tiers, 12 facade marks, observatory, helipad and circular podium.")
+	print("X-S-X POWER TOWER ARCHITECTURE VALIDATION PASSED: 200-floor identity, tapered tiers, 12 facade marks, observatory, helipad, circular podium, shop galleries and cafeteria.")
 	quit(0)
