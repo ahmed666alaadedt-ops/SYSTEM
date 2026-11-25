@@ -45,6 +45,8 @@ func _run() -> void:
 	assert(arena_rails != null and arena_rails.multimesh.instance_count == 2240)
 
 	var early_nen: Dictionary = manager.call("get_nen_stage_for_floor", 1)
+	var pre_gate_hatsu: Dictionary = manager.call("get_nen_stage_for_floor", 80)
+	assert(pre_gate_hatsu.get("stage") == "HATSU_FOUNDATION")
 	var upper_nen: Dictionary = manager.call("get_nen_stage_for_floor", 175)
 	assert(early_nen.get("stage") == "DISCOVERY")
 	assert(upper_nen.get("stage") == "NEN_MASTERY")
