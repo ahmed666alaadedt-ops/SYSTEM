@@ -2184,14 +2184,14 @@ func _add_power_tower_appointment_controls() -> void:
 		var date_key := _power_tower_date_key(date_data)
 		var date_label := "اليوم" if day_offset == 0 else ("غداً" if day_offset == 1 else "بعد غد")
 		date_selector.add_item("%s — %04d/%02d/%02d" % [date_label, int(date_data.get("year", 0)), int(date_data.get("month", 0)), int(date_data.get("day", 0))])
-		date_selector.set_item_metadata(date_selector.item_count - 1, date_key)
+		date_selector.set_item_metadata(date_selector.get_item_count() - 1, date_key)
 	content.add_child(date_selector)
 
 	var time_selector := OptionButton.new()
 	time_selector.name = "PowerTowerAppointmentTime"
 	for slot in POWER_TOWER_MATCH_SLOTS:
 		time_selector.add_item(str(slot))
-		time_selector.set_item_metadata(time_selector.item_count - 1, str(slot))
+		time_selector.set_item_metadata(time_selector.get_item_count() - 1, str(slot))
 	content.add_child(time_selector)
 
 	var book_button := Button.new()
@@ -2247,10 +2247,24 @@ func _book_power_tower_appointment(date_key: String, time_slot: String) -> void:
 		"time": time_slot,
 		"status": "BOOKED",
 		"competition_format": "INDIVIDUAL_1V1",
+		"requested_floor": int(floor_selector.value) if is_instance_valid(floor_selector) else 1,
 		"booked_at_unix": int(Time.get_unix_time_from_system())
 	}
 	_save_power_tower_appointments()
 	_set_status("تم حفظ موعد نزالك الفردي %s الساعة %s محلياً." % [date_key, time_slot])
+	_refresh_power_tower_appointment_list()
+
+
+func _cancel_power_tower_appointment(appointment_id: String) -> void:
+	if not power_tower_appointments.has(appointment_id):
+		return
+	var appointment: Dictionary = power_tower_appointments[appointment_id]
+	if str(appointment.get("player_id", "")) != "local_player" or str(appointment.get("status", "")) != "BOOKED":
+		return
+	appointment["status"] = "CANCELLED"
+	power_tower_appointments[appointment_id] = appointment
+	_save_power_tower_appointments()
+	_set_status("تم إلغاء موعد النزال.")
 	_refresh_power_tower_appointment_list()
 
 
@@ -2273,8 +2287,12 @@ func _refresh_power_tower_appointment_list() -> void:
 		if str(appointment.get("status", "")) != "BOOKED":
 			continue
 		var entry := Label.new()
-		entry.text = "%s — %s | 1v1 | %s" % [str(appointment.get("date", "")), str(appointment.get("time", "")), str(appointment.get("status", ""))]
+		entry.text = "%s — %s | الطابق %d | 1v1 | %s" % [str(appointment.get("date", "")), str(appointment.get("time", "")), int(appointment.get("requested_floor", 1)), str(appointment.get("status", ""))]
 		list.add_child(entry)
+		var cancel_button := Button.new()
+		cancel_button.text = "إلغاء الموعد"
+		cancel_button.pressed.connect(_cancel_power_tower_appointment.bind(str(appointment.get("appointment_id", ""))))
+		list.add_child(cancel_button)
 		visible_count += 1
 	if visible_count == 0:
 		var empty := Label.new()
