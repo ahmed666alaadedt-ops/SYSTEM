@@ -1,12 +1,11 @@
-import { initializeApp } from "firebase-admin/app";
 import {
   FieldValue,
   Timestamp,
-  getFirestore
+  getFirestore,
+  type Query
 } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 
-initializeApp();
 const db = getFirestore();
 
 const MAX_PRICE = 1_000_000_000;
@@ -194,7 +193,7 @@ export const browseArtifactMarketplace = onCall(async (request) => {
     ? request.data.rarity.trim().toLowerCase()
     : "";
 
-  let query: FirebaseFirestore.Query = db.collection("marketplaceListings")
+  let query: Query = db.collection("marketplaceListings")
     .where("status", "==", "active");
 
   if (civilization) query = query.where("civilization", "==", civilization);
