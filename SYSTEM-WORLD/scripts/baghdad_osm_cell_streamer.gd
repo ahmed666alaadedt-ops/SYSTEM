@@ -922,7 +922,10 @@ func _commit_surface_tool_if_valid(surface: SurfaceTool) -> ArrayMesh:
 	var arrays: Array = surface.commit_to_arrays()
 	if arrays.size() <= Mesh.ARRAY_VERTEX:
 		return null
-	var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var raw_vertices: Variant = arrays[Mesh.ARRAY_VERTEX]
+	if typeof(raw_vertices) != TYPE_PACKED_VECTOR3_ARRAY:
+		return null
+	var vertices: PackedVector3Array = raw_vertices
 	if vertices.size() < 3:
 		return null
 	var mesh := ArrayMesh.new()
