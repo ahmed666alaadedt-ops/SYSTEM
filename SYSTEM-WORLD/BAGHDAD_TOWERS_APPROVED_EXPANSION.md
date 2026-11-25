@@ -3,7 +3,7 @@ Status: approved design specification — 2026-11-24
 Branch: `feature/baghdad-five-plus-power-tower-20261122`
 
 ## Canonical Baghdad layout
-- Baghdad's connected vertical district has **exactly five towers**: Hunter Association, Business and Investment, Shopping and Commerce, Entertainment and Sports, and Technology and Innovation. They form one elevated urban district across the Karkh–Rusafa corridor.
+- Baghdad's connected vertical district has **exactly five towers**: Hunter Association, Business and Investment, Shopping and Commerce, Antiques and Heritage, and Technology and Innovation. They form one elevated urban district across the Karkh–Rusafa corridor.
 - The Hunter Association Tower uses the verified Republic Bridge/Tigris coordinates as its geographic center, but its physical base stands on the uppermost circular Baghdad sky-city crown platform at 419.2 m above the local reference level. It is the tallest, central, functional tower above the four surrounding district towers; the Republic Bridge and Tigris remain visible and traversable below.
 - The elevated city/district is a distinct, traversable urban layer integrated with the five towers; retain the river channel and bridge identity beneath/through the district.
 - The Power Tower remains a separate, independent 200-floor challenge destination away from the Baghdad five-tower district. It is never counted among the five and never connected to their skybridge/transport loop.
@@ -13,7 +13,7 @@ Branch: `feature/baghdad-five-plus-power-tower-20261122`
 
 ## Public population, families and visitor density
 - The five connected Baghdad towers must feel like busy, inhabited public destinations, not empty architectural shells.
-- Maintain **100 visible customer/visitor NPCs in each tower (500 total)** across the Hunter Association, Business and Investment, Shopping and Commerce, Entertainment and Sports, and Technology and Innovation towers.
+- Maintain **100 visible customer/visitor NPCs in each tower (500 total)** across the Hunter Association, Business and Investment, Shopping and Commerce, Antiques and Heritage, and Technology and Innovation towers.
 - Each tower's public population includes **20 children, 20 elderly visitors and 60 adults**, with distinct age-appropriate character models and varied appearances.
 - Children are civilians, do not fight or enter the Hunter Examination as candidates, and remain linked to visible adult guardians/family groups while visiting.
 - Children do not make independent purchases; their accompanying adult guardian handles family purchases.
@@ -50,14 +50,14 @@ All categories must respect world-specific equipment rules: modern weapons/gear 
 - The inspiration is the feeling of a secret entrance/examination in a hunter adventure story, not a reproduction of an anime scene, dialogue, characters, or exact mechanism. Keep SYSTEM's own story, puzzle, and implementation.
 - Once unlocked, preserve the actual physical entrance and passage transition; do not replace it with a text-only message.
 
-## Canonical layout correction — user-confirmed 24 November 2026
+## Canonical layout correction — user-confirmed 25 November 2026
 
 This section supersedes any older wording in this file or related design notes that conflicts with it:
 
-- Exactly five connected Baghdad towers form one elevated city district: Hunter Association, Business and Investment, Shopping and Commerce, Entertainment and Sports, and Technology and Innovation.
+- Exactly five connected Baghdad towers form one elevated city district: Hunter Association, Business and Investment, Shopping and Commerce, Antiques and Heritage, and Technology and Innovation.
 - The Hunter Association Tower is the central tallest tower above the Baghdad upper city, physically seated on the uppermost circular sky platform (platform surface 419.2 m). Its geographic center remains aligned with the verified Republic Bridge/Tigris reference below. The tower replaces the former decorative central S-spire and carries the XSX guild emblem on all four exterior faces. Its helipad is above the tower, and advertising facades face both inward toward the elevated city and outward toward Baghdad.
 - The Hunter examination tunnel is below the district, but its concealed player entry is inside the Shopping Tower restaurant. Keep the ordered three-inscription puzzle, registration gate, physical descent, and seven-stage exam.
-- Shopping/Commerce retains the already-developed weapons, armor, modern armored outfits, elixirs including Nen awakening/control/recovery types, skill manuals/marketplace, restaurants, hotel services, and other existing departments. Entertainment retains pools and sports/recreation facilities.
+- Shopping/Commerce retains the already-developed weapons, armor, modern armored outfits, elixirs including Nen awakening/control/recovery types, skill manuals/marketplace, restaurants, hotel services, and other existing departments. Pools and sports/recreation remain independent public leisure facilities; they are not a sixth Baghdad tower and are not part of the Antiques and Heritage Tower.
 - The Power Tower is a separate standalone destination away from this district and is not part of the five towers.
 
 ## Scope and implementation discipline
@@ -66,3 +66,16 @@ This section supersedes any older wording in this file or related design notes t
 - Implement missing parts incrementally on `feature/baghdad-five-plus-power-tower-20261122` and its existing draft PR #38. Never merge to `main` without explicit user approval.
 - Add functional tests for helipad access/arrival, specialist shop catalogues and purchases, equipment compatibility, elixir/skill prerequisites, and the hidden examination entrance conditions.
 - Do not report Baghdad Towers complete until all relevant Godot operation tests pass and the Android export/artifact workflow succeeds.
+
+
+## Final canonical correction — 25 November 2026
+
+This section is authoritative and supersedes any historical Entertainment/Sports tower wording in older project notes:
+
+- The five connected Baghdad district towers are exactly: Hunter Association, Business and Investment, Shopping and Commerce, Antiques and Heritage, and Technology and Innovation.
+- Antiques and Heritage Tower is the fourth tower. Its runtime ID is `antiques_heritage_tower_baghdad`, its scene node is `AntiquesHeritageTower`, and it has 34 floors.
+- Swimming pools, gardens, sports, cinema, bowling, arcade and other leisure activities are independent public recreation facilities in the Baghdad district. They are not a separate tower and must not be counted among the five towers.
+- The Power Tower is an independent 200-floor challenge destination and is never included in the five-tower count.
+- The 500 public customers remain distributed as 100 in each of the five canonical towers; Power Tower spectators and staff are separate.
+- The three sky gardens per tower belong to the five canonical towers (15 total); there are no Power Tower sky gardens in this district count.
+- Keep this document as an approved scope specification, not a claim that every gameplay system is complete. Hotel cloud synchronization, live advertising-provider integration, production marketplace deployment/cross-device testing and physical Android QA remain separate release gates.
