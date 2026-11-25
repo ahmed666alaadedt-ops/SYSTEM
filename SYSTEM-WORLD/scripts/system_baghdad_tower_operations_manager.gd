@@ -237,6 +237,7 @@ var current_tower_id := ""
 var current_staff_id := ""
 var current_pool_service_suite: Node3D
 var credits := 1200
+var power_tower_fighter_reward_claims: Dictionary = {}
 var vendor_stock: Dictionary = {}
 var power_tower_appointments: Dictionary = {}
 var hotel_bookings: Dictionary = {}
@@ -320,6 +321,7 @@ func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_po
 		push_warning("SYSTEM tower operations: Baghdad tower landmarks unavailable.")
 		return
 	_load_wallet()
+	_load_power_tower_fighter_reward_claims()
 	if is_instance_valid(power_tower_manager) and power_tower_manager.has_method("set_spectator_wallet_provider"):
 		power_tower_manager.call("set_spectator_wallet_provider", self)
 	var power_competition_manager := get_tree().root.find_child("PowerTowerCompetitionManager", true, false)
@@ -9170,6 +9172,8 @@ func begin_verified_power_tower_pvp_match(match_data: Dictionary, local_player_i
 	var match_id := str(match_data.get("match_id", "")).strip_edges()
 	var opponent_player_id := str(match_data.get("opponent_player_id", "")).strip_edges()
 	local_player_id = local_player_id.strip_edges()
+	if is_instance_valid(player):
+		player.set_meta("system_player_id", local_player_id)
 	if match_id.is_empty() or local_player_id.is_empty() or opponent_player_id.is_empty() or local_player_id == opponent_player_id:
 		return {"success": false, "reason": "INVALID_HUMAN_FIGHTER_IDENTITIES"}
 	var existing_match: Dictionary = power_tower_manager.call("get_spectator_match", match_id)
@@ -9329,6 +9333,69 @@ func interact_power_tower_nen_training(target: Node) -> Dictionary:
 	else:
 		_set_status("تعذر إكمال تدريب النِن: " + str(result.get("reason", "غير معروف")))
 	return result
+
+
+func _load_power_tower_fighter_reward_claims() -> void:
+	var config := ConfigFile.new()
+	if config.load("user://system_power_tower_fighter_rewards.cfg") != OK:
+		power_tower_fighter_reward_claims = {}
+		return
+	var saved: Variant = config.get_value("fighter_rewards", "claims", {})
+	power_tower_fighter_reward_claims = saved.duplicate(true) if saved is Dictionary else {}
+
+
+func _save_power_tower_fighter_reward_claims() -> void:
+	var config := ConfigFile.new()
+	config.set_value("fighter_rewards", "claims", power_tower_fighter_reward_claims.duplicate(true))
+	var error := config.save("user://system_power_tower_fighter_rewards.cfg")
+	if error != OK:
+		push_warning("SYSTEM: Power Tower fighter reward ledger could not be saved.")
+
+
+func record_power_tower_fighter_reward(fighter_id: String, amount: int, match_id: String) -> Dictionary:
+	fighter_id = fighter_id.strip_edges()
+	match_id = match_id.strip_edges()
+	if fighter_id.is_empty() or match_id.is_empty() or amount <= 0:
+		return {"success": false, "reason": "INVALID_FIGHTER_REWARD"}
+	var fighter_record: Dictionary = power_tower_fighter_reward_claims.get(fighter_id, {"balance": 0, "matches": {}, "claimed_total": 0})
+	var match_records: Dictionary = fighter_record.get("matches", {})
+	if match_records.has(match_id):
+		return {"success": false, "reason": "FIGHTER_REWARD_ALREADY_RECORDED"}
+	match_records[match_id] = amount
+	fighter_record["matches"] = match_records
+	fighter_record["balance"] = int(fighter_record.get("balance", 0)) + amount
+	power_tower_fighter_reward_claims[fighter_id] = fighter_record
+	_save_power_tower_fighter_reward_claims()
+	var local_fighter_id := str(player.get_meta("system_player_id", "PLAYER")) if is_instance_valid(player) else "PLAYER"
+	if fighter_id == local_fighter_id or (fighter_id == "PLAYER" and local_fighter_id == "PLAYER"):
+		var claimed := claim_power_tower_fighter_rewards(fighter_id)
+		return {"success": bool(claimed.get("success", false)), "auto_claimed": true, "amount": int(claimed.get("amount", 0))}
+	return {"success": true, "pending_claim": true, "balance": int(fighter_record["balance"])}
+
+
+func get_power_tower_fighter_reward_balance(fighter_id: String) -> int:
+	var fighter_record: Dictionary = power_tower_fighter_reward_claims.get(fighter_id.strip_edges(), {})
+	return maxi(0, int(fighter_record.get("balance", 0)))
+
+
+func claim_power_tower_fighter_rewards(fighter_id: String) -> Dictionary:
+	fighter_id = fighter_id.strip_edges()
+	var local_fighter_id := str(player.get_meta("system_player_id", "PLAYER")) if is_instance_valid(player) else "PLAYER"
+	if fighter_id.is_empty() or fighter_id != local_fighter_id:
+		return {"success": false, "reason": "FIGHTER_IDENTITY_MISMATCH"}
+	var fighter_record: Dictionary = power_tower_fighter_reward_claims.get(fighter_id, {})
+	var amount := maxi(0, int(fighter_record.get("balance", 0)))
+	if amount <= 0:
+		return {"success": false, "reason": "NO_PENDING_FIGHTER_REWARD"}
+	credits += amount
+	_save_wallet()
+	fighter_record["balance"] = 0
+	fighter_record["claimed_total"] = int(fighter_record.get("claimed_total", 0)) + amount
+	power_tower_fighter_reward_claims[fighter_id] = fighter_record
+	_save_power_tower_fighter_reward_claims()
+	if is_instance_valid(credits_label):
+		credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
+	return {"success": true, "amount": amount, "currency": "SYSTEM_CREDITS"}
 
 
 func grant_power_tower_credits(reward_amount: int) -> int:
