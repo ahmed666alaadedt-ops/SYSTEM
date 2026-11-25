@@ -379,3 +379,4 @@ export {
   cancelArtifactListing,
   purchaseArtifactListing
 } from "./artifact_marketplace";
+export { awardMarketplaceCurrency } from "./marketplace_currency";
