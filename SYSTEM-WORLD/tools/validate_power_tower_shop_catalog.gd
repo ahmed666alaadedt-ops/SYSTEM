@@ -56,6 +56,16 @@ func _run() -> void:
 	assert(ProgressionScript.DEFAULT_EQUIPMENT_SLOTS.has("boots"))
 	assert(ProgressionScript.EQUIPMENT_SLOTS_BY_ITEM.get("training_boots", "") == "boots")
 	assert(ProgressionScript.EQUIPMENT_SLOTS_BY_ITEM.get("rank_sss_boots", "") == "boots")
+	var progression := ProgressionScript.new()
+	progression.name = "PowerTowerFootwearProgressionTest"
+	root.add_child(progression)
+	await process_frame
+	progression.call("_reset_progress")
+	assert(bool(progression.call("add_item", "training_boots", 1)))
+	var boot_equip: Dictionary = progression.call("equip_item", "training_boots")
+	assert(bool(boot_equip.get("success", false)))
+	assert(str(progression.call("get_equipped_item", "boots")) == "training_boots")
+	assert(float(progression.call("get_movement_multiplier")) > 1.0)
 	assert(ProgressionScript.EQUIPMENT_SLOTS_BY_ITEM.get("hunter_pendant", "") == "accessory_1")
 	assert(ProgressionScript.EQUIPMENT_SLOTS_BY_ITEM.get("nen_aura_bracelet", "") == "accessory_2")
 	var config: Dictionary = OperationsScript.POWER_TOWER_CONFIG
