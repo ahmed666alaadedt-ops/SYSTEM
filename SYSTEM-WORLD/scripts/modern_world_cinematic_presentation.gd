@@ -1,6 +1,8 @@
 extends Node3D
 class_name ModernWorldCinematicPresentation
 
+const CinematicQualityManagerScript = preload("res://scripts/system_cinematic_quality_manager.gd")
+
 ## Lightweight cinematic atmosphere for the modern world.
 ## Uses one sun light and a restrained sky/fog/glow setup for mobile compatibility.
 
@@ -17,6 +19,7 @@ func _ready() -> void:
 	name = "ModernWorldCinematicPresentation"
 	_create_cinematic_environment()
 	_create_cinematic_sun()
+	_create_quality_manager()
 	set_meta("system_cinematic_presentation", true)
 	set_meta("system_cinematic_profile", "baghdad_golden_hour_filmic")
 	set_meta("system_mobile_friendly_light_count", 1)
@@ -39,19 +42,19 @@ func _create_cinematic_environment() -> void:
 	environment.sky = sky
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
 	environment.ambient_light_color = AMBIENT_COLOR
-	environment.ambient_light_energy = 0.72
+	environment.ambient_light_energy = 0.82
 	environment.reflected_light_source = Environment.REFLECTION_SOURCE_BG
 	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	environment.tonemap_exposure = 1.0
 	environment.tonemap_white = 6.0
 	environment.glow_enabled = true
-	environment.glow_intensity = 0.48
-	environment.glow_strength = 0.72
-	environment.glow_bloom = 0.035
+	environment.glow_intensity = 0.56
+	environment.glow_strength = 0.78
+	environment.glow_bloom = 0.045
 	environment.glow_hdr_threshold = 1.35
 	environment.fog_enabled = true
 	environment.fog_light_color = Color(0.78, 0.48, 0.35)
-	environment.fog_density = 0.0012
+	environment.fog_density = 0.00085
 	environment.fog_sky_affect = 0.28
 	world_environment = WorldEnvironment.new()
 	world_environment.name = "SYSTEMCinematicWorldEnvironment"
@@ -64,10 +67,16 @@ func _create_cinematic_sun() -> void:
 	sun_light.name = "SYSTEMCinematicGoldenHourSun"
 	sun_light.rotation_degrees = Vector3(-34.0, -28.0, 0.0)
 	sun_light.light_color = SUN_COLOR
-	sun_light.light_energy = 1.18
+	sun_light.light_energy = 1.24
 	sun_light.shadow_enabled = true
-	sun_light.directional_shadow_max_distance = 180.0
+	sun_light.directional_shadow_max_distance = 360.0
 	sun_light.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
 	sun_light.light_angular_distance = 0.7
 	sun_light.light_specular = 0.72
 	add_child(sun_light)
+
+
+func _create_quality_manager() -> void:
+	var quality := CinematicQualityManagerScript.new()
+	quality.name = "SYSTEMCinematicQualityManager"
+	add_child(quality)
