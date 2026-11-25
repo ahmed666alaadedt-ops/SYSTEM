@@ -94,11 +94,22 @@ func _run_validation() -> void:
 		var result: Dictionary = runtime.handle_interaction(objective)
 		if not _check(bool(result.get("success", false)), "Continuous objective %s failed." % EXPECTED_OBJECTIVES[index]):
 			return
-		if index == EXPECTED_OBJECTIVES.size() - 1 and not _check(bool(result.get("stage_completed", false)), "The final tunnel checkpoint did not complete the competition."):
+		if index == EXPECTED_OBJECTIVES.size() - 1 and not _check(bool(result.get("tunnel_section_completed", false)) and bool(result.get("exam_still_active", false)), "The tunnel checkpoints must finish the tunnel section but keep the continuous exam active for the marshland."):
+			return
+		if index == EXPECTED_OBJECTIVES.size() - 1 and not _check(bool(player.get_meta("system_hunter_tunnel_competition_complete", false)), "Tunnel checkpoint completion was not recorded on the candidate."):
+
 			return
 
+	var tunnel_section_overview: Dictionary = manager.get_exam_overview()
+	if not _check(int(tunnel_section_overview.get("total_stages", 0)) == 1 and tunnel_section_overview.get("completed_stages", []).is_empty(), "The tunnel section incorrectly awarded the final Hunter exam completion before the marshland sanctuary."):
+		return
+	if not _check(bool(tunnel_section_overview.get("active", false)) and not bool(tunnel_section_overview.get("failed", true)), "The Hunter exam did not remain active after the tunnel section."):
+		return
+	var final_exam_result: Dictionary = manager.complete_current_stage(CONTINUOUS_STAGE_ID, "HUNTER_TUNNEL_AND_MARSHLAND_SANCTUARY_DISCOVERY")
+	if not _check(bool(final_exam_result.get("success", false)) and bool(final_exam_result.get("exam_completed", false)), "The continuous exam did not complete when the candidate reached the marshland sanctuary."):
+		return
 	var final_overview: Dictionary = manager.get_exam_overview()
-	if not _check(int(final_overview.get("total_stages", 0)) == 1 and final_overview.get("completed_stages", []).size() == 1 and str(final_overview.get("completed_stages", [])[0]) == CONTINUOUS_STAGE_ID, "The single continuous competition was not recorded as completed."):
+	if not _check(final_overview.get("completed_stages", []).size() == 1 and str(final_overview.get("completed_stages", [])[0]) == CONTINUOUS_STAGE_ID, "The single continuous exam was not recorded after the marshland sanctuary objective."):
 		return
 	if not _check(not bool(final_overview.get("active", true)) and not bool(final_overview.get("failed", true)), "The final competition state is not a successful completion."):
 		return
