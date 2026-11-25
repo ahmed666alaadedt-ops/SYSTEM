@@ -18,7 +18,7 @@ const TOWER_CONFIG := {
 
 	"business_investment_tower_baghdad": {"node": "BusinessInvestmentTower", "title": "برج الأعمال والاستثمار", "floors": 36, "height": 220.0, "radius": 26.0, "roles": ["مدير البرج", "مدير الاستثمار", "مستشار الشركات", "موظف البنوك والعقود", "محاسب البرج", "مسؤول التوظيف", "خدمة المستثمرين", "مسؤول الإعلانات"], "jobs": ["tower_director", "investment_manager", "business_advisor", "bank_contract_clerk", "accountant", "recruitment_manager", "investor_relations", "advertising_manager"]},
 	"shopping_tower_baghdad": {"node": "ShoppingTower", "title": "برج التسوق والتجارة", "floors": 32, "height": 190.0, "radius": 30.0, "roles": ["مدير البرج", "تاجر الأسلحة والدروع", "صيدلاني الإكسير", "مدير الضيافة والفندق", "شيف المطاعم", "نادل وخدمة الزبائن", "موظف استقبال الفندق", "مشرف الغرف والتنظيف", "مسؤول الإعلانات والتسويق"], "jobs": ["shop_manager", "weapons_merchant", "elixir_pharmacist", "hospitality_manager", "restaurant_chef", "restaurant_waiter", "hotel_receptionist", "hotel_housekeeping", "advertising_manager"]},
-	"antiques_heritage_tower_baghdad": {"node": "AntiquesHeritageTower", "title": "برج التحف والآثار", "floors": 34, "height": 205.0, "radius": 29.0, "roles": ["مدير المتحف", "أمين آثار عراقية", "أمين الحضارات العالمية", "باحث آثار", "مرمم قطع أثرية", "موثق الملكية والأصالة", "منظم المزادات", "مسؤول المعارض والزوار"], "jobs": ["museum_director", "iraqi_heritage_curator", "world_civilizations_curator", "archaeology_researcher", "artifact_restorer", "provenance_registrar", "auction_coordinator", "museum_guest_services"]},
+	"antiques_heritage_tower_baghdad": {"node": "AntiquesHeritageTower", "title": "برج التحف والآثار", "floors": 34, "height": 205.0, "radius": 29.0, "roles": ["مدير المتحف", "أمين آثار عراقية", "أمين الحضارات العالمية", "باحث آثار", "مرمم قطع أثرية", "موثق الملكية والأصالة", "منظم المزادات", "مسؤول المعارض والزوار", "مسؤول الإعلانات والمعارض"], "jobs": ["museum_director", "iraqi_heritage_curator", "world_civilizations_curator", "archaeology_researcher", "artifact_restorer", "provenance_registrar", "auction_coordinator", "museum_guest_services", "advertising_manager"]},
 	"technology_tower_baghdad": {"node": "TechnologyTower", "title": "برج التكنولوجيا والابتكار", "floors": 40, "height": 245.0, "radius": 27.0, "roles": ["مدير الابتكار", "موظف المختبر", "مهندس الأجهزة", "مهندس الروبوتات", "باحث الذكاء الاصطناعي", "موظف الخدمات الرقمية", "مسؤول الصيانة", "مسؤول الإعلانات"], "jobs": ["innovation_director", "lab_receptionist", "device_engineer", "robotics_engineer", "ai_researcher", "digital_services", "maintenance_engineer", "advertising_manager"]},
 	"power_tower_baghdad": {"node": "PowerTower", "title": "برج القوة", "floors": 200, "height": 820.0, "radius": 26.0, "roles": ["موظف تسجيل التحديات", "منظم الحلبة", "موظف الاستراحة الطبية", "مسؤول الإعلانات"], "jobs": ["arena_registrar", "arena_coordinator", "arena_medic", "advertising_manager"]}
 }
@@ -1942,9 +1942,12 @@ func _refresh_advertisements() -> void:
 			active_ad_campaign_expires_msec = mini(active_ad_campaign_expires_msec, override_expiry)
 	for tower_id in tower_nodes.keys():
 		var staff_ids: Array = staff_by_tower.get(tower_id, [])
+		var config: Dictionary = TOWER_CONFIG.get(tower_id, {})
 		var manager_name := "فريق الإعلان"
+		var manager_job := ""
 		if not staff_ids.is_empty() and is_instance_valid(society):
 			var manager_index := staff_ids.size() - 1
+			manager_job = str(config.get("jobs", [])[manager_index]) if manager_index < config.get("jobs", []).size() else ""
 			var npc: Dictionary = society.call("get_npc", str(staff_ids[manager_index]))
 			manager_name = str(npc.get("name", manager_name))
 		var message := str(campaign.get("text", "إعلانات SYSTEM العامة — تابع فعاليات المدينة"))
@@ -1954,6 +1957,7 @@ func _refresh_advertisements() -> void:
 				label.text = "SYSTEM | " + message + "\\nبإدارة " + manager_name
 				label.set_meta("system_campaign_id", active_ad_campaign_id)
 				label.set_meta("system_campaign_manager", manager_name)
+				label.set_meta("system_campaign_manager_job", manager_job)
 				label.set_meta("system_campaign_started_msec", active_ad_campaign_started_msec)
 				label.set_meta("system_campaign_expires_msec", active_ad_campaign_expires_msec)
 				label.set_meta("system_campaign_rotation", ad_rotation_count)
