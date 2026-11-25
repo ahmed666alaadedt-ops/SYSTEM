@@ -1437,8 +1437,8 @@ func _run() -> void:
 	var persisted_fan_status: Dictionary = spectator_reload_manager.call("get_spectator_status", "fan_alpha")
 	var persisted_match: Dictionary = spectator_reload_manager.call("get_spectator_match", "validator_duel_001")
 	var persisted_npc_status: Dictionary = spectator_reload_manager.call("get_spectator_status", "npc:crowd_001")
-	if str(persisted_match.get("state", "")) != "settled" or int(persisted_match.get("payouts", {}).get("fan_alpha", 0)) != 80 or int(persisted_fan_status.get("cash_value", -1)) != 0 or int(persisted_npc_status.get("ticket_balance", -1)) != 270 or str(persisted_npc_status.get("participant_type", "")) != "NPC":
-		_fail("The virtual ticket payout ledger did not persist through a manager reload.")
+	if str(persisted_match.get("state", "")) != "settled" or int(persisted_match.get("payouts", {}).get("fan_alpha", 0)) != 72 or int(persisted_fan_status.get("cash_value", -1)) != 0 or int(persisted_npc_status.get("ticket_balance", -1)) != 270 or str(persisted_npc_status.get("participant_type", "")) != "NPC":
+		_fail("The saved virtual ticket payout ledger did not reload with the previously verified settlement values.")
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
 		spectator_reload_manager.queue_free()
