@@ -366,8 +366,15 @@ func _flight_shape_is_clear(shape: Shape3D, shape_transform: Transform3D) -> boo
 	query.collision_mask = 1
 	query.collide_with_areas = false
 	query.collide_with_bodies = true
+	var excluded_rids: Array[RID] = []
 	if is_instance_valid(player):
-		query.exclude = [player.get_rid()]
+		excluded_rids.append(player.get_rid())
+	# The helicopter is intentionally parked above this deck. Exclude only
+	# the pad's own support collision; nearby tower/building obstacles remain tested.
+	var pad_deck_collision := get_node_or_null("HelipadDeckCollision") as StaticBody3D
+	if pad_deck_collision != null:
+		excluded_rids.append(pad_deck_collision.get_rid())
+	query.exclude = excluded_rids
 	return world.direct_space_state.intersect_shape(query, 12).is_empty()
 
 func _update_camera() -> void:
