@@ -9423,7 +9423,8 @@ func interact_power_tower_nen_training(target: Node) -> Dictionary:
 			return {"success": false, "reason": "FLOOR_80_CLEAR_REQUIRED"}
 		training_floor = 81
 	elif highest_cleared >= 150:
-		training_floor = 151
+		var nen_stage_sessions: Dictionary = progression.get("power_tower_nen_stage_sessions")
+		training_floor = 151 if int(nen_stage_sessions.get("ADVANCED_NEN", 0)) >= 3 else 101
 	elif highest_cleared >= 100:
 		training_floor = 101
 	else:
