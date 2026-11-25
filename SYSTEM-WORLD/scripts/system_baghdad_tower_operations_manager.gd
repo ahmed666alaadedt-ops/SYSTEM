@@ -3001,7 +3001,8 @@ func _checkout_hotel_room() -> void:
 		return
 	var room_id := str(booking.get("room_id", ""))
 	var checkout_unix := int(booking.get("check_out_unix", 0))
-	var remaining_nights := maxi(0, int(ceil(float(checkout_unix - int(Time.get_unix_time_from_system())) / 86400.0)) - 1)
+	var remaining_seconds := maxi(0, checkout_unix - int(Time.get_unix_time_from_system()))
+	var remaining_nights := mini(int(booking.get("nights", 0)), int(ceil(float(remaining_seconds) / 86400.0)))
 	var refund := remaining_nights * int(booking.get("nightly_rate", 0))
 	credits += refund
 	var released_room: Dictionary = hotel_bookings.get(room_id, {}).duplicate(true)
