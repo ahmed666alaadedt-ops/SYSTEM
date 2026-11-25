@@ -2667,6 +2667,8 @@ func _add_catalog_controls(tower_id: String) -> void:
 		return
 	for product_value in catalog:
 		var product: Dictionary = product_value
+		if str(product.get("product_type", "")) == "skill_training_permit" and tower_id != "power_tower_baghdad":
+			continue
 		var item_id := str(product["id"])
 		var item_name := str(product["name"])
 		var price := _get_current_price(item_id)
