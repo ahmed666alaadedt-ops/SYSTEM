@@ -329,6 +329,33 @@ func _build_lobby_facilities() -> void:
 	skill_sign.modulate = Color(1.0, 0.82, 0.52)
 	skill_root.add_child(skill_sign)
 
+	# Equippable hunter accessories: pendants, rings, aura bracelets and guild insignia.
+	var accessories := Node3D.new()
+	accessories.name = "HunterAccessoriesGallery"
+	accessories.position = Vector3(0.0, 0.0, 58.0)
+	accessories.set_meta("system_shop_category", "ACCESSORY")
+	facility_root.add_child(accessories)
+	_add_cylinder(accessories, "AccessoryDisplayBase", 3.8, 4.4, 0.9, 0.7, steel, 32)
+	for index in range(4):
+		var item_display := MeshInstance3D.new()
+		item_display.name = "AccessoryDisplay_%02d" % index
+		var display_mesh := TorusMesh.new()
+		display_mesh.inner_radius = 0.42
+		display_mesh.outer_radius = 0.58
+		display_mesh.rings = 24
+		display_mesh.ring_segments = 8
+		item_display.mesh = display_mesh
+		item_display.position = Vector3(-1.8 + float(index) * 1.2, 1.8, 0.0)
+		item_display.material_override = gold_trim if index % 2 == 0 else white_emissive
+		accessories.add_child(item_display)
+	var accessory_sign := Label3D.new()
+	accessory_sign.name = "AccessoriesGallerySign"
+	accessory_sign.text = "HUNTER ACCESSORIES"
+	accessory_sign.font_size = 20
+	accessory_sign.position = Vector3(0.0, 3.7, 2.8)
+	accessory_sign.modulate = Color(1.0, 0.86, 0.55)
+	accessories.add_child(accessory_sign)
+
 	# Cafeteria service counter with four dining tables and visible seating.
 	var cafe := Node3D.new()
 	cafe.name = "PowerTowerCafeteria"
@@ -372,6 +399,6 @@ func _build_lobby_facilities() -> void:
 			seat.position = table.position + Vector3(cos(angle) * 2.1, -0.8, sin(angle) * 2.1)
 			seat.material_override = titanium
 			cafe.add_child(seat)
-	set_meta("system_power_tower_interior_display_groups", ["TraditionalWeaponsGallery", "ArmorShowroom", "NenElixirCabinet", "SkillScrollLibrary", "PowerTowerCafeteria"])
+	set_meta("system_power_tower_interior_display_groups", ["TraditionalWeaponsGallery", "ArmorShowroom", "NenElixirCabinet", "SkillScrollLibrary", "HunterAccessoriesGallery", "PowerTowerCafeteria"])
 	set_meta("system_power_tower_cafeteria_table_count", 4)
 	set_meta("system_power_tower_cafeteria_seat_count", 16)
