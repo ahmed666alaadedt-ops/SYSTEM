@@ -1,6 +1,6 @@
 # Baghdad Antiques & Heritage Tower — Approved Design
 
-Status: approved design; fixed-price marketplace server foundation implemented on the feature branch. It is NOT live until deployment, trusted artifact reward issuance, wallet funding, Android/Godot UI wiring and security/concurrency tests are complete.
+Status: approved design; authenticated marketplace server foundation and scheduled expiry/settlement jobs are implemented on the feature branch. It is NOT live until deployment, trusted artifact reward issuance, wallet funding, Android/Godot UI wiring and security/concurrency tests are complete.
 
 ## District identity
 
@@ -58,8 +58,8 @@ Callable endpoints currently added:
 - `purchaseArtifactListing`: atomically debits the buyer, credits the seller, transfers ownership, closes the offer and writes transaction/audit records.
 - `expireArtifactListing`: safely releases escrow for expired offers without letting another player cancel a live offer.
 - `listMyMarketplaceTransactions`: returns the player's private purchase/sale history.
-- `createArtifactAuction`, `browseArtifactAuctions`, `placeArtifactAuctionBid`, `listArtifactAuctionBids`, `settleExpiredArtifactAuction`, `cancelArtifactAuction`: player auctions with reserved bid funds, bid history, anti-sniping extension, and atomic settlement after expiry when the settlement endpoint is invoked. Scheduled settlement is still pending.
-- `createArtifactExchangeOffer`, `acceptArtifactExchangeOffer`, `closeArtifactExchangeOffer`, `listMyArtifactExchangeOffers`: two-sided artifact offers with escrow, explicit recipient acceptance, and atomic transfer of both artifacts. Expired offers can be released by any authenticated player.
+- `createArtifactAuction`, `browseArtifactAuctions`, `placeArtifactAuctionBid`, `listArtifactAuctionBids`, `settleExpiredArtifactAuction`, `settleExpiredArtifactAuctions`, `cancelArtifactAuction`: player auctions with reserved bid funds, bid history, anti-sniping extension, and atomic settlement after expiry. A scheduled sweep runs every 5 minutes and reuses the same transactional settlement path.
+- `createArtifactExchangeOffer`, `acceptArtifactExchangeOffer`, `closeArtifactExchangeOffer`, `releaseExpiredArtifactExchangeOffers`, `listMyArtifactExchangeOffers`: two-sided artifact offers with escrow, explicit recipient acceptance, and atomic transfer of both artifacts. A scheduled sweep runs every 15 minutes and releases expired offers from escrow.
 
 Authoritative collections:
 - `artifactRegistry/{artifactId}`: global unique-ID registry.
@@ -84,16 +84,17 @@ An Android Firebase callable repository has been added at:
 
 It exposes wallet and reserved-balance loading, owned artifact loading, fixed-price listing browse/create/purchase/cancel/expiry, auction browse/create/bid/history/settlement/cancellation, exchange inbox/create/accept/close, and private trade history. The native Android app now includes `SystemAntiquesMarketplaceScreen.kt` as a dedicated `برج التحف والآثار` tab with player-to-player listings, purchase/cancellation, auctions, bids, two-player exchanges, collection display and private transaction history. The versioned marketplace request/response protocol is present in `system_android_bridge.gd` and `SystemGodotMessageContract.kt`; `SystemMarketplaceGodotBridgeHandler.kt` dispatches market operations to Firebase and correlates replies by request ID. The Godot market-floor exhibit now exposes wallet, listing browse, auction browse and owned-artifact actions through the versioned bridge request API, including purchase, fixed-price listing creation and bid controls when matching responses arrive. The actual native Android Godot host singleton/Activity is still absent from the current app export, so those in-world requests cannot reach the Android callable handler yet; the native Android market screen is usable as a separate app section. Existing local Godot wallet and inventory data are not authoritative and must never be copied into server wallets without a trusted migration/reward source.
 
-A Firebase Functions TypeScript validation workflow has been added. Passing CI is required before calling the server module build-verified.
+A Firebase Functions TypeScript validation workflow has been added. The scheduled expiry and auction settlement exports are wired through `functions/src/index.ts`; Firestore composite indexes cover listing expiry (`status` + `expiresAt`), exchange expiry (`status` + `expiresAt`) and auction settlement (`status` + `endsAt`). The latest branch CI TypeScript build and Firestore emulator rules compilation passed. These checks do not deploy functions or execute the scheduled jobs against live data.
 
 ## Remaining activation gates
 
 1. Connect verified quest rewards in the actual game-server runtime to `grantMarketplaceArtifactFromReward`; the secure endpoint exists, but the gameplay reward event source is not wired yet.
 2. Configure the trusted game-server Firebase custom claim and connect verified quest/dungeon rewards to `awardMarketplaceCurrency`; ordinary players cannot mint currency.
-3. Add scheduled background settlement for expired auctions and automatic expiry cleanup for stale marketplace listings.
+3. Deploy and monitor the scheduled marketplace jobs: auction settlement every 5 minutes, and listing/exchange escrow expiry every 15 minutes. The scheduler code and expiry indexes are present; production activation still requires deployment.
 5. Connect the Godot exhibit and market-floor UI to the Android callable repository/host bridge.
 6. Add emulator tests for unauthorized calls, self-purchase, insufficient funds, duplicate IDs, escrow cancellation, replay, expired listings and simultaneous purchases.
-7. Deploy Cloud Functions, Firestore rules and indexes only after user approval and successful tests.
+7. Add Firebase Emulator integration tests for scheduler idempotency, expired escrow release, auction settlement, simultaneous bids and retry/replay behavior.
+8. Deploy Cloud Functions, Firestore rules and indexes only after user approval and successful tests.
 
 ## Security and technical requirements
 
