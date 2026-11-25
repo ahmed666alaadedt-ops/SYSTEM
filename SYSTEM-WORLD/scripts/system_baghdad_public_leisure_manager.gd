@@ -55,6 +55,7 @@ func _build_pool(pool_name: String, center: Vector3, size: Vector3, water_materi
 	water_area.set_meta("system_public_leisure_water_type", water_type)
 	water_area.set_meta("system_public_leisure_water_depth", 1.15 if water_type == "thermal_pool" else 1.0)
 	var water_shape := CollisionShape3D.new()
+	water_shape.name = "CollisionShape3D"
 	var box_shape := BoxShape3D.new()
 	box_shape.size = Vector3(size.x - 0.5, 1.6, size.z - 0.5)
 	water_shape.shape = box_shape
