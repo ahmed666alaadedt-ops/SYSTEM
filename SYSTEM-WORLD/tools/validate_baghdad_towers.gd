@@ -1,13 +1,16 @@
 extends SceneTree
 
-const EXPECTED_TOWER_IDS := [
+const BAGHDAD_DISTRICT_TOWER_IDS := [
 	"hunter_association_tower_baghdad",
 	"business_investment_tower_baghdad",
 	"shopping_tower_baghdad",
 	"antiques_heritage_tower_baghdad",
-	"technology_tower_baghdad",
-	"power_tower_baghdad"
+	"technology_tower_baghdad"
 ]
+
+# Power Tower is validated as a separate facility, never as a sixth Baghdad tower.
+const STANDALONE_FACILITY_IDS := ["power_tower_baghdad"]
+const ALL_VALIDATED_FACILITY_IDS := BAGHDAD_DISTRICT_TOWER_IDS + STANDALONE_FACILITY_IDS
 
 const TOWER_NODE_NAMES := {
 	"hunter_association_tower_baghdad": "HunterAssociationTower",
@@ -111,8 +114,8 @@ func _run_validation() -> void:
 			return
 
 	var records: Array = tower_manager.call("get_tower_positions")
-	if records.size() != EXPECTED_TOWER_IDS.size():
-		_fail("Expected five Baghdad district towers plus one independent Power Tower facility; found %d." % records.size())
+	if records.size() != ALL_VALIDATED_FACILITY_IDS.size():
+		_fail("Expected five Baghdad district towers plus one separate Power Tower facility; found %d." % records.size())
 		return
 
 	var found_ids: Dictionary = {}
@@ -123,7 +126,7 @@ func _run_validation() -> void:
 		var record: Dictionary = record_value
 		found_ids[str(record.get("id", ""))] = true
 
-	for tower_id in EXPECTED_TOWER_IDS:
+	for tower_id in ALL_VALIDATED_FACILITY_IDS:
 		if not found_ids.has(tower_id):
 			_fail("Missing Baghdad tower landmark ID: " + tower_id)
 			return
@@ -156,7 +159,7 @@ func _run_validation() -> void:
 		if district_id != "hunter_association_tower_baghdad" and not bool(terrain.call("is_land_position", district_position.x, district_position.z)):
 			_fail("A riverbank tower is not supported by playable land: " + district_id)
 			return
-	for expected_district_id in EXPECTED_TOWER_IDS.slice(0, 5):
+	for expected_district_id in BAGHDAD_DISTRICT_TOWER_IDS:
 		if not district_ids.has(expected_district_id):
 			_fail("The connected district is missing approved tower: " + str(expected_district_id))
 			return
@@ -207,7 +210,7 @@ func _run_validation() -> void:
 			_fail("Power Tower was incorrectly added to the connected district.")
 			return
 
-	for tower_id in EXPECTED_TOWER_IDS:
+	for tower_id in ALL_VALIDATED_FACILITY_IDS:
 		var tower := tower_manager.get_node_or_null(str(TOWER_NODE_NAMES[tower_id])) as Node3D
 		if tower == null:
 			_fail("Missing tower node for " + tower_id)
@@ -250,7 +253,7 @@ func _run_validation() -> void:
 		"technology_tower_baghdad": ["InnovationAntenna_00", "InnovationAntenna_01", "InnovationAntenna_02", "InnovationLabSkyRibbon"],
 		"power_tower_baghdad": ["TournamentBlade_left", "TournamentBlade_right", "PowerTowerChampionCrown"]
 	}
-	for tower_id in EXPECTED_TOWER_IDS:
+	for tower_id in ALL_VALIDATED_FACILITY_IDS:
 		var architecture_tower := tower_manager.get_node_or_null(str(TOWER_NODE_NAMES[tower_id])) as Node3D
 		if architecture_tower == null:
 			_fail("Architecture audit could not resolve tower: " + tower_id)
@@ -326,7 +329,7 @@ func _run_validation() -> void:
 		return
 
 	# Every one of the five connected civic towers must have three physical, walkable sky gardens.
-	for district_tower_id in EXPECTED_TOWER_IDS.slice(0, 5):
+	for district_tower_id in BAGHDAD_DISTRICT_TOWER_IDS:
 		var district_node_name := str(TOWER_NODE_NAMES[district_tower_id])
 		var district_tower := tower_manager.get_node_or_null(district_node_name) as Node3D
 		var gardens := district_tower.get_node_or_null("TowerSkyGardens") as Node3D if district_tower != null else null
@@ -430,7 +433,7 @@ func _run_validation() -> void:
 		"technology_tower_baghdad": ["InnovationAntenna_00", "InnovationAntenna_01", "InnovationAntenna_02", "InnovationLabSkyRibbon"],
 		"power_tower_baghdad": ["TournamentBlade_left", "TournamentBlade_right", "PowerTowerChampionCrown"]
 	}
-	for architecture_tower_id in EXPECTED_TOWER_IDS:
+	for architecture_tower_id in ALL_VALIDATED_FACILITY_IDS:
 		var architecture_tower := tower_manager.get_node_or_null(str(TOWER_NODE_NAMES[architecture_tower_id])) as Node3D
 		if architecture_tower == null:
 			_fail("Architecture audit cannot resolve tower: " + architecture_tower_id)
@@ -483,7 +486,7 @@ func _run_validation() -> void:
 		_fail("Power Tower must remain an independent 200-floor structure outside the five Baghdad civic towers.")
 		return
 
-	print("Baghdad tower validation passed: verified Republic Bridge and Tigris runtime geometry, five towers on both riverbanks/bridge, upper sky city, standalone Power Tower, Hunter rooftop helicopter controller, internal/external ads, tunnel anchor, six facility lobby kiosks (five Baghdad towers plus independent Power Tower) and Shopping Tower facilities.")
+	print("Baghdad tower validation passed: verified Republic Bridge and Tigris runtime geometry, five towers on both riverbanks/bridge, upper sky city, standalone Power Tower, Hunter rooftop helicopter controller, internal/external ads, tunnel anchor, five Baghdad tower lobby kiosks plus one separate Power Tower kiosk and Shopping Tower facilities.")
 	# This is a short-lived headless validation process; avoid forcing dummy-renderer teardown of placeholder meshes.
 	quit(0)
 
