@@ -54,13 +54,14 @@ func _run_validation() -> void:
 		if water_area == null:
 			_fail("Pool water volume node is missing: " + pool_name)
 			return
-		var water_shape := water_area.get_node_or_null("CollisionShape3D") as CollisionShape3D
-		if not water_area.monitoring or water_shape == null:
-			var child_names: Array[String] = []
-			for child in water_area.get_children():
-				child_names.append(child.name)
-			_fail("Pool water volume is missing active monitoring or collision: %s; monitoring=%s; collision=%s; children=%s" % [pool_name, str(water_area.monitoring), str(water_shape != null), str(child_names)])
-			return
+		var water_shape_found := false
+		var child_names: Array[String] = []
+		for child in water_area.get_children():
+			child_names.append(child.name)
+			if child is CollisionShape3D:
+				water_shape_found = true
+		if not water_area.monitoring or not water_shape_found:
+			_fail("Pool water volume is missing active monitoring or a CollisionShape3D child: %s; monitoring=%s; collision=%s; children=%s" % [pool_name, str(water_area.monitoring), str(water_shape_found), str(child_names)])
 			return
 
 	var player := main_scene.find_child("Player", true, false) as CharacterBody3D
