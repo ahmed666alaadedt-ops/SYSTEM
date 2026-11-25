@@ -99,7 +99,7 @@ func _build_marshland() -> void:
 		var column := index % 14
 		var row := int(index / 14)
 		var x := -51.0 + float(column) * 7.7 + sin(float(index) * 1.71) * 2.0
-		var z := -12.0 + float(row) * 10.8 + cos(float(index) * 0.83) * 2.4
+		var z := -12.0 + float(row) * 9.0 + cos(float(index) * 0.83) * 2.4
 		if absf(x) < 8.0 and z < 9.0:
 			z += 15.0
 		_build_marsh_tree(index, Vector3(x, 0.0, z), trunk, leaf, leaf_light, leaf_dark)
