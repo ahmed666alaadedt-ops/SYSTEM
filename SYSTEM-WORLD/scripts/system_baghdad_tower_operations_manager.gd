@@ -1890,8 +1890,11 @@ func set_advertising_campaign_override(campaign_id: String, enabled: bool, start
 		"starts_at_msec": maxi(0, starts_at_msec),
 		"expires_at_msec": maxi(0, expires_at_msec)
 	}
-	if campaign_id == active_ad_campaign_id and not _is_ad_campaign_eligible(campaign_id, Time.get_ticks_msec()):
-		_advance_advertising_campaign()
+	if campaign_id == active_ad_campaign_id:
+		if _is_ad_campaign_eligible(campaign_id, Time.get_ticks_msec()):
+			_refresh_advertisements()
+		else:
+			_advance_advertising_campaign()
 	return true
 
 
@@ -1936,6 +1939,11 @@ func _refresh_advertisements() -> void:
 	active_ad_campaign_id = str(campaign.get("id", "system_fallback"))
 	active_ad_campaign_started_msec = now_msec
 	active_ad_campaign_expires_msec = now_msec + int(AD_CAMPAIGN_DURATION_SECONDS * 1000.0) if not campaign.is_empty() else 0
+	if not campaign.is_empty():
+		var campaign_override: Dictionary = ad_campaign_overrides.get(active_ad_campaign_id, {})
+		var override_expiry := int(campaign_override.get("expires_at_msec", 0))
+		if override_expiry > 0:
+			active_ad_campaign_expires_msec = mini(active_ad_campaign_expires_msec, override_expiry)
 	for tower_id in tower_nodes.keys():
 		var staff_ids: Array = staff_by_tower.get(tower_id, [])
 		var manager_name := "فريق الإعلان"
