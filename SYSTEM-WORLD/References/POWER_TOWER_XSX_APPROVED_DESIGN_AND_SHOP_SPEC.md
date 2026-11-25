@@ -167,3 +167,8 @@ Official competitive matches remain 1v1. The floor band controls arena count, no
 - Added a combat-style selection board in the Power Tower lobby. It lists only styles permitted on the player's next floor.
 - The selected style is checked against the player's equipped weapon and Nen progression before each official Power Tower attack.
 - Kung fu uses a rapid three-strike combo; martial arts and traditional melee use heavy attacks; bows/crossbows use a longer-range shot; Nen techniques route through the existing Nen abilities.
+
+
+### Bow ammunition
+- Added bronze reinforced arrows, silver steel arrows and rare diamond arrows to the Power Tower shop.
+- Bow/crossbow attacks consume one arrow per shot and automatically use the highest available arrow tier, with matching damage scaling.
