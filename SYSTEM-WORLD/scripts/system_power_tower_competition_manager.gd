@@ -47,6 +47,7 @@ func _ready() -> void:
 	set_meta("system_power_tower_betting_currency", "SYSTEM_VIRTUAL_CREDITS")
 	set_meta("system_power_tower_betting_policy_bps", BET_PAYOUT_POLICY_BPS)
 	_build_scaled_spectator_crowd()
+	_build_arena_floor_layouts()
 	_build_restaurant_and_recreation_amenities()
 
 func get_arena_count_for_floor(floor_number: int) -> int:
@@ -204,6 +205,98 @@ func _build_scaled_spectator_crowd() -> void:
 	head_instance.material_override = head_material
 	crowd.add_child(head_instance)
 	crowd.set_meta("system_visible_spectator_count", SPECTATOR_NPC_TARGET)
+
+func _build_arena_floor_layouts() -> void:
+	var arena_root := Node3D.new()
+	arena_root.name = "PowerTowerProgressiveArenaFloors"
+	arena_root.set_meta("system_arena_floor_count", FLOOR_COUNT)
+	arena_root.set_meta("system_arena_floor_height", 4.1)
+	arena_root.set_meta("system_arena_progression", ARENA_BANDS)
+	add_child(arena_root)
+
+	var total_arenas := 0
+	for floor_number in range(1, FLOOR_COUNT + 1):
+		total_arenas += get_arena_count_for_floor(floor_number)
+	var floor_multi := MultiMesh.new()
+	floor_multi.transform_format = MultiMesh.TRANSFORM_3D
+	var floor_box := BoxMesh.new()
+	floor_box.size = Vector3(9.0, 0.22, 9.0)
+	floor_multi.mesh = floor_box
+	floor_multi.instance_count = total_arenas
+	var rail_multi := MultiMesh.new()
+	rail_multi.transform_format = MultiMesh.TRANSFORM_3D
+	var rail_box := BoxMesh.new()
+	rail_box.size = Vector3(9.0, 1.35, 0.18)
+	rail_multi.mesh = rail_box
+	rail_multi.instance_count = total_arenas * 4
+	var floor_material := StandardMaterial3D.new()
+	floor_material.albedo_color = Color(0.035, 0.12, 0.17)
+	floor_material.metallic = 0.68
+	floor_material.roughness = 0.28
+	floor_material.emission_enabled = true
+	floor_material.emission = Color(0.02, 0.22, 0.28)
+	floor_material.emission_energy_multiplier = 0.35
+	var rail_material := StandardMaterial3D.new()
+	rail_material.albedo_color = Color(0.42, 0.68, 0.72)
+	rail_material.metallic = 0.82
+	rail_material.roughness = 0.2
+	var floor_index := 0
+	var rail_index := 0
+	var collision_faces := PackedVector3Array()
+	for floor_number in range(1, FLOOR_COUNT + 1):
+		var arena_count := get_arena_count_for_floor(floor_number)
+		var columns := mini(arena_count, 4)
+		var rows := int(ceil(float(arena_count) / float(columns)))
+		var floor_y := float(floor_number - 1) * 4.1 + 2.05
+		for arena_index in range(arena_count):
+			var column := arena_index % columns
+			var row := int(arena_index / columns)
+			var x := (float(column) - float(columns - 1) * 0.5) * 12.0
+			var z := (float(row) - float(rows - 1) * 0.5) * 12.0
+			var center := Vector3(x, floor_y, z)
+			floor_multi.set_instance_transform(floor_index, Transform3D(Basis.IDENTITY, center))
+			floor_index += 1
+			var edge_y := floor_y + 0.78
+			var edge_positions := [
+				{"position": center + Vector3(0.0, 0.0, -4.4), "rotation": 0.0},
+				{"position": center + Vector3(0.0, 0.0, 4.4), "rotation": 0.0},
+				{"position": center + Vector3(-4.4, 0.0, 0.0), "rotation": PI * 0.5},
+				{"position": center + Vector3(4.4, 0.0, 0.0), "rotation": PI * 0.5}
+			]
+			for edge in edge_positions:
+				var edge_position: Vector3 = edge["position"]
+				edge_position.y = edge_y
+				var edge_basis := Basis(Vector3.UP, float(edge["rotation"]))
+				rail_multi.set_instance_transform(rail_index, Transform3D(edge_basis, edge_position))
+				rail_index += 1
+			var half := 4.5
+			var a := Vector3(x - half, floor_y + 0.12, z - half)
+			var b := Vector3(x + half, floor_y + 0.12, z - half)
+			var d := Vector3(x - half, floor_y + 0.12, z + half)
+			var e := Vector3(x + half, floor_y + 0.12, z + half)
+			collision_faces.append_array([a, b, e, a, e, d])
+	var floors_instance := MultiMeshInstance3D.new()
+	floors_instance.name = "ArenaFloorSurfaces560"
+	floors_instance.multimesh = floor_multi
+	floors_instance.material_override = floor_material
+	arena_root.add_child(floors_instance)
+	var rails_instance := MultiMeshInstance3D.new()
+	rails_instance.name = "ArenaSafetyRails2240"
+	rails_instance.multimesh = rail_multi
+	rails_instance.material_override = rail_material
+	arena_root.add_child(rails_instance)
+	var collision_body := StaticBody3D.new()
+	collision_body.name = "ArenaFloorCollision"
+	var collision_shape := CollisionShape3D.new()
+	var concave_shape := ConcavePolygonShape3D.new()
+	concave_shape.set_faces(collision_faces)
+	collision_shape.shape = concave_shape
+	collision_body.add_child(collision_shape)
+	arena_root.add_child(collision_body)
+	arena_root.set_meta("system_arena_instance_count", total_arenas)
+	arena_root.set_meta("system_arena_boundary_rail_count", total_arenas * 4)
+	arena_root.set_meta("system_arena_collision_triangle_count", collision_faces.size() / 3)
+
 
 func _build_restaurant_and_recreation_amenities() -> void:
 	var tower_root := get_parent().get_parent() if get_parent() != null else null
