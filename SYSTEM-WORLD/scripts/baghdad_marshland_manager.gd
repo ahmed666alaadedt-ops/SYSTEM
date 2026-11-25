@@ -735,6 +735,10 @@ func _build_giant_marsh_creatures(zone: Node3D) -> void:
 		combat_enemy.call("configure", "C", false, null)
 		creature.add_child(combat_enemy)
 		combat_enemy.set_physics_process(false)
+		for visual_child in creature.get_children():
+			if visual_child is MeshInstance3D:
+				creature.remove_child(visual_child)
+				combat_enemy.add_child(visual_child)
 		var generic_visual := combat_enemy.get_node_or_null("Visual") as MeshInstance3D
 		if generic_visual != null:
 			generic_visual.visible = false
@@ -750,7 +754,7 @@ func _build_giant_marsh_creatures(zone: Node3D) -> void:
 		sphere.radius = 11.0
 		collision.shape = sphere
 		encounter.add_child(collision)
-		creature.add_child(encounter)
+		combat_enemy.add_child(encounter)
 		encounter.body_entered.connect(_on_giant_creature_encounter.bind(creature))
 
 
@@ -777,7 +781,7 @@ func _on_giant_marsh_creature_defeated(_enemy: Node, _is_boss: bool, xp_reward: 
 		return
 	creature.set_meta("system_creature_defeated", true)
 	creature.set_meta("system_creature_xp_reward", xp_reward)
-	var encounter := creature.get_node_or_null("GiantCreatureEncounterZone") as Area3D
+	var encounter := creature.find_child("GiantCreatureEncounterZone", true, false) as Area3D
 	if encounter != null:
 		encounter.monitoring = false
 
