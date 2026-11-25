@@ -2,6 +2,7 @@ extends SceneTree
 
 const PowerTowerScript = preload("res://scripts/system_power_tower_manager.gd")
 const OperationsScript = preload("res://scripts/system_baghdad_tower_operations_manager.gd")
+const CompetitionScript = preload("res://scripts/system_power_tower_competition_manager.gd")
 
 func _initialize() -> void:
 	call_deferred("_run")
@@ -21,6 +22,17 @@ func _run() -> void:
 		assert(not bool(data.get("ai_fallback", true)))
 	power_manager.free()
 
+	var competition = CompetitionScript.new()
+	competition.call("_build_scaled_spectator_crowd")
+	var global_crowd := competition.get_node_or_null("PowerTower500SpectatorNPCs") as Node3D
+	assert(global_crowd != null)
+	assert(int(global_crowd.get_meta("system_visible_spectator_count", 0)) == 500)
+	assert(int(global_crowd.get_meta("system_multimesh_impostor_count", 0)) == 492)
+	assert(int(global_crowd.get_meta("system_full_rig_count", 0)) == 8)
+	var body_multimesh := global_crowd.get_node_or_null("SpectatorNPCBodies500") as MultiMeshInstance3D
+	var head_multimesh := global_crowd.get_node_or_null("SpectatorNPCHeads500") as MultiMeshInstance3D
+	assert(body_multimesh != null and body_multimesh.multimesh.instance_count == 492)
+	assert(head_multimesh != null and head_multimesh.multimesh.instance_count == 492)
 	var operations = OperationsScript.new()
 	var room := Node3D.new()
 	room.name = "PowerTowerCrowdTestRoom"
@@ -31,15 +43,15 @@ func _run() -> void:
 	assert(int(gallery.get_meta("system_audience_population_target", 0)) == 500)
 	var full_rigs := gallery.get_node_or_null("PowerTowerAudienceActors") as Node3D
 	assert(full_rigs != null and full_rigs.get_child_count() == 8)
-	var impostors := gallery.get_node_or_null("PowerTowerCrowdImpostors") as MultiMeshInstance3D
-	assert(impostors != null and impostors.multimesh != null)
-	assert(impostors.multimesh.instance_count == 492)
+	assert(int(full_rigs.get_meta("system_audience_shared_lod_count", 0)) == 492)
+	assert(gallery.get_node_or_null("PowerTowerCrowdImpostors") == null)
 	var seat_count := 0
 	for child in gallery.get_children():
 		if bool(child.get_meta("system_power_tower_spectator_seat", false)):
 			seat_count += 1
 	assert(seat_count == 48)
-	print("POWER TOWER CROWD/LADDER VALIDATION PASSED: arena counts 8/6/4/3/2/1 across 200 floors; 500 audience (8 detailed + 492 LOD), 48 reserved seats; official fights remain human 1v1.")
+	print("POWER TOWER CROWD/LADDER VALIDATION PASSED: arena counts 8/6/4/3/2/1 across 200 floors; shared 500-person crowd (492 LOD + 8 detailed), 48 reserved seats; official fights remain human 1v1.")
+	competition.free()
 	operations.free()
 	room.free()
 	quit(0)
