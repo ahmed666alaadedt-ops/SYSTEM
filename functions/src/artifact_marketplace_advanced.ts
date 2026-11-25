@@ -632,3 +632,57 @@ export const closeArtifactExchangeOffer = onCall(async (request) => {
 
   return { success: true, exchangeId, status: action === "cancel" ? "cancelled" : "declined" };
 });
+
+
+/** Returns a bounded public bid history for an authenticated player. */
+export const listArtifactAuctionBids = onCall(async (request) => {
+  uidOf(request);
+  const auctionId = textField(request.data?.auctionId, "auctionId");
+  const auctionRef = database().collection("marketplaceAuctions").doc(auctionId);
+  const auction = await auctionRef.get();
+  if (!auction.exists) throw new HttpsError("not-found", "المزاد غير موجود.");
+  const bids = await auctionRef.collection("bids")
+    .orderBy("createdAt", "desc").limit(50).get();
+  return {
+    bids: bids.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        bidId: doc.id,
+        bidderId: data.bidderId,
+        bidderName: data.bidderName,
+        amount: data.amount,
+        createdAt: data.createdAt?.toMillis?.() ?? null
+      };
+    })
+  };
+});
+
+/** Returns only exchange offers involving the authenticated player. */
+export const listMyArtifactExchangeOffers = onCall(async (request) => {
+  const uid = uidOf(request);
+  const collection = database().collection("marketplaceExchanges");
+  const [sent, received] = await Promise.all([
+    collection.where("initiatorId", "==", uid).orderBy("createdAt", "desc").limit(40).get(),
+    collection.where("recipientId", "==", uid).orderBy("createdAt", "desc").limit(40).get()
+  ]);
+  const mapOffer = (doc: FirebaseFirestore.QueryDocumentSnapshot) => {
+    const data = doc.data();
+    return {
+      exchangeId: doc.id,
+      initiatorId: data.initiatorId,
+      initiatorName: data.initiatorName,
+      recipientId: data.recipientId,
+      recipientName: data.recipientName,
+      offeredArtifactId: data.offeredArtifactId,
+      offeredArtifactName: data.offeredArtifactName,
+      requestedArtifactId: data.requestedArtifactId,
+      status: data.status,
+      expiresAt: data.expiresAt?.toMillis?.() ?? null,
+      createdAt: data.createdAt?.toMillis?.() ?? null
+    };
+  };
+  return {
+    sent: sent.docs.map(mapOffer),
+    received: received.docs.map(mapOffer)
+  };
+});
