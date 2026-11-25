@@ -1179,8 +1179,8 @@ func _run() -> void:
 	if not bool(boss_data.get("boss_floor", false)) or str(boss_data.get("arena_type", "")) != "BOSS_TRIAL":
 		_fail("Power Tower floor 200 is not configured as a boss trial.")
 		return
-	if not bool(boss_data.get("weapons_allowed", false)) or int(boss_data.get("division_number", 0)) != 20 or int(boss_data.get("division_floor_start", 0)) != 191 or int(boss_data.get("division_floor_end", 0)) != 200:
-		_fail("Power Tower floor 200 must be the armed final duel in the twentieth ten-floor division.")
+	if bool(boss_data.get("weapons_allowed", true)) or not bool(boss_data.get("nen_required", false)) or boss_data.get("available_combat_styles", []) != ["NEN_TECHNIQUES", "UNARMED_HAND_TO_HAND"] or int(boss_data.get("division_number", 0)) != 20 or int(boss_data.get("division_floor_start", 0)) != 191 or int(boss_data.get("division_floor_end", 0)) != 200:
+		_fail("Power Tower floor 200 must be the Nen-only sovereign final duel in the twentieth ten-floor division.")
 		return
 	if not bool(boss_data.get("final_boss", false)) or str(boss_data.get("challenge_type", "")) != "FINAL_BOSS":
 		_fail("Power Tower floor 200 is missing its unique final sovereign boss profile.")
@@ -1543,6 +1543,11 @@ func _run() -> void:
 		return
 	var original_player_level := int(tower_progression.get("current_level"))
 	tower_progression.set("current_level", 100)
+	tower_progression.set("nen_unlocked", true)
+	tower_progression.set("nen_control_rank", 5)
+	var final_equipment_slots: Dictionary = tower_progression.get("equipment_slots")
+	final_equipment_slots["weapon"] = ""
+	tower_progression.set("equipment_slots", final_equipment_slots)
 	power_manager.set("highest_cleared_floor", 199)
 	power_manager.set("active_floor", 0)
 	power_manager.set("floor_clear_times", original_clear_times.duplicate(true))
