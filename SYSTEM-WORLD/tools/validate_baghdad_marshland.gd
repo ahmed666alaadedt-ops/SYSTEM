@@ -50,7 +50,27 @@ func _run_validation() -> void:
 		return
 	if not _check(zone.find_children("MarshWillow_*", "Node3D", true, false).size() == 56, "Expected 56 marsh willow trees."):
 		return
-	if not _check(zone.find_children("MarshBoardwalk_*", "MeshInstance3D", true, false).size() == 7, "Expected seven raised boardwalk segments."):
+	if not _check(zone.find_children("MarshBoardwalk_*", "MeshInstance3D", true, false).size() == 9, "Expected nine raised boardwalk segments.")
+		return
+
+	var farm := zone.get_node_or_null("MarshAgriculturalGardens") as Node3D
+	if not _check(farm != null and int(farm.get_meta("system_agricultural_plot_count", 0)) == 12 and int(farm.get_meta("system_crop_plant_count", 0)) == 432, "Agricultural plots and crops are missing."):
+		return
+	if not _check(zone.find_children("MarshGroundFog_*", "MeshInstance3D", true, false).size() == 14, "Expected fourteen low fog layers."):
+		return
+	if not _check(zone.find_children("HunterExamDeceptionNPC_*", "Node3D", true, false).size() == 12, "Expected twelve deception NPCs."):
+		return
+	if not _check(zone.find_children("GiantMarshCreature_*", "Node3D", true, false).size() == 6, "Expected six giant marsh wildlife encounters."):
+		return
+	if not _check(zone.find_children("HunterExamRouteArrow_*", "Node3D", true, false).size() == 9, "Expected nine route arrows."):
+		return
+	if not _check(zone.find_children("HunterExamWrongRouteHazard_*", "Area3D", true, false).size() == 5, "Expected five wrong-route failure hazards."):
+		return
+	var sanctuary := zone.get_node_or_null("HiddenMarshAncientSanctuary") as Node3D
+	if not _check(sanctuary != null and sanctuary.find_children("SeasonalMarshStarGate_*", "Node3D", true, false).size() == 3, "Hidden ancient sanctuary or its three Star Gates are missing."):
+		return
+	var spring_destinations: Array = sanctuary.get_node("SeasonalMarshStarGate_00").get_meta("system_gate_destination_pool_by_season").get("spring", [])
+	if not _check(spring_destinations == ["Tokyo", "Paris", "Singapore"], "Seasonal Star Gate destination rotation is missing."):
 		return
 
 	var test_player := CharacterBody3D.new()
@@ -64,5 +84,5 @@ func _run_validation() -> void:
 	if not _check(not bool(test_player.get_meta("system_swimming", false)), "Leaving the final marsh water volume did not clear swimming state."):
 		return
 
-	print("Baghdad Marshland validation passed: Al-Zawraa WGS84 replacement, continuous Hunter tunnel connection, eight swim-enabled water bodies, 1800 reeds, 56 willow trees, seven boardwalks and swimming state lifecycle.")
+	print("Baghdad Marshland validation passed: Al-Zawraa agricultural wetland, continuous Hunter tunnel connection, eight swim-enabled pools, 1800 reeds, 56 willows, nine boardwalks, 12 deception NPCs, six giant creatures, 14 fog layers, five wrong-route hazards, hidden sanctuary and three seasonal Star Gates.")
 	quit(0)
