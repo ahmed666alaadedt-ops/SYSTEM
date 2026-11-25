@@ -501,7 +501,7 @@ func _on_marsh_water_body_exited(body: Node3D, water_area: Area3D) -> void:
 func _add_marsh_entry(parent: Node3D, material: Material) -> void:
 	var entry := Node3D.new()
 	entry.name = "MarshlandPublicEntry"
-	entry.position = marsh_entry_local
+	entry.position = Vector3(marsh_entry_local.x, _marsh_ground_y(marsh_entry_local.x, marsh_entry_local.z), marsh_entry_local.z)
 	entry.set_meta("system_entry_from", "HunterTunnelToMarshlandPhysicalConnector")
 	entry.set_meta("system_destination_id", "baghdad_marshland_al_zawraa")
 	entry.set_meta("system_walkable", true)
