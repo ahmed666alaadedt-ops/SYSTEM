@@ -110,6 +110,11 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    // مكافآت رصيد SYSTEM تسجلها Cloud Functions فقط لمنع تزوير الأرصدة.
+    match /marketplaceCurrencyAwards/{awardId} {
+      allow read, write: if false;
+    }
+
     // سجلات التدقيق ومعرّفات القطع العالمية داخلية بالكامل.
     match /marketplaceAudit/{recordId} {
       allow read, write: if false;
