@@ -65,7 +65,7 @@ export const awardMarketplaceCurrency = onCall(async (request) => {
   const db = database();
   const playerRef = db.collection("players").doc(playerId);
   const walletRef = db.collection("systemWallets").doc(playerId);
-  const awardId = gameServerUid + "_" + eventId;
+  const awardId = gameServerUid + "_" + playerId + "_" + eventId;
   const awardRef = db.collection("marketplaceCurrencyAwards").doc(awardId);
 
   return db.runTransaction(async (transaction) => {
