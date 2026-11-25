@@ -2515,6 +2515,9 @@ func _run() -> void:
 	if float(pilot_progression.call("get_attack_cooldown_multiplier")) >= 1.0:
 		_fail("Energy elixir did not reduce the attack cooldown multiplier.")
 		return
+	# Exercise the awakening elixir from a known locked-Nen state, regardless of prior player save data.
+	pilot_progression.set("nen_unlocked", false)
+	pilot_progression.set("nen_control_rank", 0)
 	pilot_progression.call("add_item", "nen_awakening_elixir", 1)
 	var awakening_result: Dictionary = pilot_progression.call("consume_elixir", "nen_awakening_elixir")
 	if not bool(awakening_result.get("success", false)):
