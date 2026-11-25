@@ -69,6 +69,8 @@ func _run_validation() -> void:
 	var water_areas := zone.find_children("MarshWaterArea_*", "Area3D", true, false)
 	if not _check(water_areas.size() == 8, "Expected eight marsh water volumes; found %d." % water_areas.size()):
 		return
+	if not _check(int(zone.get_meta("system_marsh_mud_bank_count", 0)) == 8 and zone.find_children("MarshMudBank_*", "MeshInstance3D", true, false).size() == 8, "Expected eight terrain-following muddy banks around the marsh pools."):
+		return
 	for water_area in water_areas:
 		if not _check(water_area.monitoring and water_area.body_entered.get_connections().size() > 0 and water_area.body_exited.get_connections().size() > 0, "A marsh water volume is missing swimming enter/exit signals."):
 			return
