@@ -301,7 +301,22 @@ func _build_additional_stage(stage_id: String) -> Dictionary:
 	var base_material := _material(config["material"],0.88)
 	var floor_material := _material(Color(0.12,0.14,0.16),0.96)
 	_add_box(site,"StageGround",Vector3(0,-0.5,24),Vector3(42,1,58),floor_material,true)
-	_add_box(site,"StageNorthBoundary",Vector3(0,3,54),Vector3(42,6,1),base_material,true)
+	if stage_id == "baghdad_tunnel_competition":
+		# Leave an 18 m central opening aligned with the physical marsh passage.
+		_add_box(site,"StageNorthBoundaryLeft",Vector3(-15,3,54),Vector3(12,6,1),base_material,true)
+		_add_box(site,"StageNorthBoundaryRight",Vector3(15,3,54),Vector3(12,6,1),base_material,true)
+		var marsh_exit_sign := Label3D.new()
+		marsh_exit_sign.name = "MarshlandExitSign"
+		marsh_exit_sign.text = "مخرج النفق — أرض المستنقعات"
+		marsh_exit_sign.font_size = 24
+		marsh_exit_sign.pixel_size = 0.014
+		marsh_exit_sign.position = Vector3(0,6.5,52.5)
+		marsh_exit_sign.modulate = Color(0.72,0.94,0.78)
+		site.add_child(marsh_exit_sign)
+		site.set_meta("system_marshland_exit_opening_width_m", 18.0)
+		site.set_meta("system_marshland_exit_is_physically_open", true)
+	else:
+		_add_box(site,"StageNorthBoundary",Vector3(0,3,54),Vector3(42,6,1),base_material,true)
 	_add_box(site,"StageWestBoundary",Vector3(-21,3,24),Vector3(1,6,58),base_material,true)
 	_add_box(site,"StageEastBoundary",Vector3(21,3,24),Vector3(1,6,58),base_material,true)
 	_add_box(site,"StageSouthBoundaryLeft",Vector3(-16,3,-4),Vector3(10,6,1),base_material,true)
