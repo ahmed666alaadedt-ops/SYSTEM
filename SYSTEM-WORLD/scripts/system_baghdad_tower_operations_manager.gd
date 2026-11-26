@@ -4564,6 +4564,8 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 		return
 	var root := Node3D.new()
 	root.name = "SpecialFacility_" + facility_type
+	if tower_id == "power_tower_baghdad":
+		root.position = Vector3(0.0, 0.0, radius * 0.80)
 	root.set_meta("system_facility_type", facility_type)
 	root.set_meta("system_facility_title", facility_title)
 	root.set_meta("system_tower_id", tower_id)
@@ -5030,7 +5032,7 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 	var sphere := SphereShape3D.new()
 	sphere.radius = 3.0
 	shape.shape = sphere
-	shape.position = Vector3(0.0, 1.2, -5.8) if facility_type.begins_with("shopping_") else Vector3(0.0, 1.2, 0.0)
+	shape.position = Vector3(0.0, 1.2, -1.5) if tower_id == "power_tower_baghdad" else (Vector3(0.0, 1.2, -5.8) if facility_type.begins_with("shopping_") else Vector3(0.0, 1.2, 0.0))
 	interaction.add_child(shape)
 	root.add_child(interaction)
 
@@ -7386,7 +7388,10 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 		item_interaction_shape.position = Vector3(0.0, 1.7, 0.0)
 		item_interaction.add_child(item_interaction_shape)
 		item.add_child(item_interaction)
-	_add_facility_box(showcase, "DepartmentCounter", Vector3(0.0, 0.7, -5.8), Vector3(12.0, 1.4, 1.8), accent)
+	var counter_position := Vector3(0.0, 0.7, -5.8)
+	if tower_id == "power_tower_baghdad":
+		counter_position.z = -1.5
+	_add_facility_box(showcase, "DepartmentCounter", counter_position, Vector3(12.0, 1.4, 1.8), accent)
 
 
 func _add_facility_box(parent: Node3D, object_name: String, object_position: Vector3, object_size: Vector3, material: Material) -> void:
@@ -8432,6 +8437,8 @@ func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: i
 	dining_sign.name = "RestaurantDiningSign"
 	dining_sign.text = "SYSTEM FOOD HALL — مطاعم ومقاهي وصالات طعام"
 	dining_sign.position = Vector3(0.0, 4.0, -radius * 0.42)
+	if tower_id == "power_tower_baghdad":
+		dining_sign.position.z = -radius * 0.78
 	dining_sign.font_size = 22
 	dining_sign.pixel_size = 0.013
 	dining_sign.modulate = Color(1.0, 0.78, 0.42)
@@ -8439,6 +8446,8 @@ func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: i
 	var kitchen := Node3D.new()
 	kitchen.name = "RestaurantKitchen"
 	kitchen.position = Vector3(radius * 0.28, 0.0, -radius * 0.30)
+	if tower_id == "power_tower_baghdad":
+		kitchen.position = Vector3(0.0, 0.0, -radius * 0.72)
 	kitchen.set_meta("system_restaurant_kitchen", true)
 	room.add_child(kitchen)
 	var kitchen_counter := MeshInstance3D.new()
@@ -8466,6 +8475,8 @@ func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: i
 		table_root.name = "RestaurantTable_%02d" % index
 		var angle := TAU * float(index) / 4.0
 		table_root.position = Vector3(cos(angle) * radius * 0.34, 0.0, sin(angle) * radius * 0.34)
+		if tower_id == "power_tower_baghdad":
+			table_root.position = Vector3(-9.0 + float(index) * 6.0, 0.0, radius * 0.72)
 		var restaurant_table_prefix := "shopping" if tower_id == "shopping_tower_baghdad" else tower_id
 		table_root.set_meta("system_restaurant_table_id", "%s_floor_%02d_table_%02d" % [restaurant_table_prefix, floor_number, index])
 		table_root.set_meta("system_restaurant_table_name", "طاولة %d — الطابق %d" % [index + 1, floor_number])
