@@ -1923,17 +1923,6 @@ func _run() -> void:
 	if not bool(weapon_training.get("success", false)) or int(weapon_training.get("mastery", 0)) < 5:
 		_fail("Verified weapon-family practice did not update persistent sword mastery.")
 		return
-	for session_index in range(3):
-		var practice_result: Dictionary = skill_progression.call("practice_system_skill", "guard_breaker", "validator_guard_breaker_%d" % session_index)
-		if not bool(practice_result.get("success", false)):
-			_fail("SYSTEM skill practice rejected a valid unique training session: " + str(practice_result.get("reason", "")))
-			return
-	if not skill_progression.get("learned_system_skills").has("guard_breaker"):
-		_fail("SYSTEM skill was not learned after three verified training sessions.")
-		return
-	# The Shopping Tower skill store sells training permits, never instant unlocks.
-	skill_progression.set("current_level", 15)
-	skill_progression.set("verified_hunter_mission_points", 500)
 	skill_progression.set("nen_unlocked", true)
 	skill_progression.set("nen_control_rank", 1)
 	var blocked_zetsu_training: Dictionary = skill_progression.call("record_nen_foundation_training", "zetsu", "validator_zetsu_before_ten")
@@ -1959,6 +1948,19 @@ func _run() -> void:
 	if not bool(pulse_skill_metadata.get("requires_nen_foundations", false)) or not pulse_skill_metadata.get("nen_types", []).has("enhancement"):
 		_fail("Nen techniques must declare their Nen foundation and compatible affinity types.")
 		return
+	for session_index in range(3):
+		var practice_result: Dictionary = skill_progression.call("practice_system_skill", "guard_breaker", "validator_guard_breaker_%d" % session_index)
+		if not bool(practice_result.get("success", false)):
+			_fail("SYSTEM skill practice rejected a valid unique training session: " + str(practice_result.get("reason", "")))
+			return
+	if not skill_progression.get("learned_system_skills").has("guard_breaker"):
+		_fail("SYSTEM skill was not learned after three verified training sessions.")
+		return
+	# The Shopping Tower skill store sells training permits, never instant unlocks.
+	skill_progression.set("current_level", 15)
+	skill_progression.set("verified_hunter_mission_points", 500)
+	skill_progression.set("nen_unlocked", true)
+	skill_progression.set("nen_control_rank", 1)
 	var permit_test_learned: Array = skill_progression.get("learned_system_skills")
 	permit_test_learned.clear()
 	permit_test_learned.append("guard_breaker")
