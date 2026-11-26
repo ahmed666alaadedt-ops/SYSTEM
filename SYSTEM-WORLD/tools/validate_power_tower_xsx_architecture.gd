@@ -69,6 +69,8 @@ func _run() -> void:
 	var arena_root := competition.get_node_or_null("PowerTowerProgressiveArenaFloors")
 	assert(arena_root != null)
 	assert(int(arena_root.get_meta("system_arena_instance_count", 0)) == 560)
+	assert(int(arena_root.get_meta("system_arena_combat_ring_outline_count", 0)) == 560)
+	assert(arena_root.get_node_or_null("ArenaCombatRingOutlines560") != null)
 	assert(int(arena_root.get_meta("system_arena_boundary_rail_count", 0)) == 2240)
 	assert(int(arena_root.get_meta("system_arena_tier_marker_count", 0)) == 7)
 	assert(str(arena_root.get_meta("system_arena_match_format", "")) == "PLAYER_ONLY_1V1")
