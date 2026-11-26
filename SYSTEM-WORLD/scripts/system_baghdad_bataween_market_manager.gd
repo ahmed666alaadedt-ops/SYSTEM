@@ -57,10 +57,10 @@ func setup(p_terrain: Node) -> bool:
 
 
 func _create_market_access_route() -> void:
-	if not terrain.has_method("get_baghdad_bridge_nearest_bank_anchor"):
-		push_warning("SYSTEM Baghdad Bataween Market: surveyed bridge-bank access anchor is unavailable.")
+	if not terrain.has_method("get_baghdad_bridge_far_bank_anchor"):
+		push_warning("SYSTEM Baghdad Bataween Market: opposite Republic Bridge bank anchor is unavailable.")
 		return
-	var start: Vector3 = terrain.call("get_baghdad_bridge_nearest_bank_anchor")
+	var start: Vector3 = terrain.call("get_baghdad_bridge_far_bank_anchor")
 	if start == Vector3.INF:
 		return
 	var start_xz := Vector2(start.x, start.z)
