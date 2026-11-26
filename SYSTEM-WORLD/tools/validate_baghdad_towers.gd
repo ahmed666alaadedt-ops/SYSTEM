@@ -86,6 +86,11 @@ func _run_validation() -> void:
 		return
 	root.add_child(marketplace_ui)
 	await process_frame
+	var marketplace_title := marketplace_ui.get_node_or_null("BataweenMarketplacePanel/BataweenMarketplaceLayout/BataweenMarketplaceHeader/BataweenMarketplaceTitle") as Label
+	var marketplace_panel := marketplace_ui.get_node_or_null("BataweenMarketplacePanel") as PanelContainer
+	if marketplace_title == null or marketplace_title.text != "سوق البتاوين" or marketplace_panel == null or str(marketplace_panel.get_meta("system_market_category_name", "")) != "سوق التحف والآثار":
+		_fail("The in-world marketplace must visibly identify the district as سوق البتاوين and the category as سوق التحف والآثار.")
+		return
 	var artifact_picker := marketplace_ui.get("_artifact_picker") as OptionButton
 	var picker_callback := Callable(marketplace_ui, "_on_artifact_selected")
 	if artifact_picker == null or not artifact_picker.item_selected.is_connected(picker_callback):
