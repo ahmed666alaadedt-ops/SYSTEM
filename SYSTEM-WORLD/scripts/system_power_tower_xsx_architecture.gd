@@ -198,15 +198,20 @@ func _build_entrance_media_panels() -> void:
 		panel.rotation.y = -angle
 		panel.material_override = dark_glass
 		add_child(panel)
-		var frame := MeshInstance3D.new()
-		frame.name = "PowerTowerArrivalMediaFrame_%02d" % side
-		var frame_mesh := BoxMesh.new()
-		frame_mesh.size = Vector3(0.82, 8.35, 16.35)
-		frame.mesh = frame_mesh
-		frame.position = panel.position - outward * 0.08
-		frame.rotation.y = -angle
-		frame.material_override = gold_trim
-		add_child(frame)
+		for rail_index in range(4):
+			var frame_rail := MeshInstance3D.new()
+			frame_rail.name = "PowerTowerArrivalMediaFrame_%02d_Rail_%d" % [side, rail_index]
+			var rail_mesh := BoxMesh.new()
+			if rail_index < 2:
+				rail_mesh.size = Vector3(0.9, 0.32, 16.35)
+				frame_rail.position = panel.position + Vector3(0.0, 4.16 if rail_index == 0 else -4.16, 0.0) + outward * 0.12
+			else:
+				rail_mesh.size = Vector3(0.9, 8.35, 0.32)
+				frame_rail.position = panel.position + Vector3(0.0, 0.0, 8.16 if rail_index == 2 else -8.16) + outward * 0.12
+			frame_rail.mesh = rail_mesh
+			frame_rail.rotation.y = -angle
+			frame_rail.material_override = gold_trim
+			add_child(frame_rail)
 		var screen_label := Label3D.new()
 		screen_label.name = "PowerTowerArrivalMediaText_%02d" % side
 		screen_label.text = "X-S-X  |  LIVE ARENA\n200 FLOORS  •  HUNTER RANKINGS"
