@@ -5,6 +5,7 @@ const TOWER_HEIGHT := 820.0
 const BASE_RADIUS := 26.0
 const FLOOR_COUNT := 200
 const CompetitionManagerScript = preload("res://scripts/system_power_tower_competition_manager.gd")
+const ElevatorControllerScript = preload("res://scripts/system_power_tower_elevator.gd")
 const TIER_LEVELS := [205.0, 420.0, 635.0]
 const BRAND := "X-S-X"
 
@@ -480,6 +481,19 @@ func _build_lobby_elevator_bank(facility_root: Node3D) -> void:
 		threshold.material_override = gold_trim
 		bank.add_child(threshold)
 
+		var elevator_control := ElevatorControllerScript.new()
+		elevator_control.name = "ElevatorInteractiveControl_%s" % lift_names[lift_index]
+		elevator_control.position = Vector3(center_x + 2.95, 1.65, 0.42)
+		elevator_control.set_meta("system_lift_id", lift_names[lift_index])
+		elevator_control.set_meta("system_lift_center_x", center_x)
+		var interaction_shape := CollisionShape3D.new()
+		interaction_shape.name = "ElevatorControlInteractionShape"
+		var interaction_box := BoxShape3D.new()
+		interaction_box.size = Vector3(1.0, 2.0, 0.8)
+		interaction_shape.shape = interaction_box
+		elevator_control.add_child(interaction_shape)
+		bank.add_child(elevator_control)
+
 	var directory := Label3D.new()
 	directory.name = "PowerTowerElevatorFloorDirectory"
 	directory.text = "VERTICAL TRANSIT\nFLOORS 001–200\nARENAS  •  TRAINING  •  OBSERVATORY"
@@ -489,6 +503,7 @@ func _build_lobby_elevator_bank(facility_root: Node3D) -> void:
 	directory.modulate = Color(0.84, 0.92, 1.0)
 	bank.add_child(directory)
 	set_meta("system_power_tower_elevator_count", 3)
+	set_meta("system_power_tower_functional_elevator_count", 3)
 	set_meta("system_power_tower_elevator_door_leaf_count", door_count)
 	set_meta("system_power_tower_elevator_floor_range", Vector2i(1, FLOOR_COUNT))
 
