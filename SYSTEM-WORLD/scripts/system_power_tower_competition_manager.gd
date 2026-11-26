@@ -300,6 +300,7 @@ func _build_arena_floor_layouts() -> void:
 	arena_root.set_meta("system_arena_floor_height", 4.1)
 	arena_root.set_meta("system_arena_progression", ARENA_BANDS)
 	add_child(arena_root)
+	_build_arena_tier_wayfinding(arena_root)
 
 	var total_arenas := 0
 	for floor_number in range(1, FLOOR_COUNT + 1):
@@ -396,6 +397,62 @@ func _build_arena_floor_layouts() -> void:
 	arena_root.set_meta("system_arena_boundary_rail_count", total_arenas * 4)
 	arena_root.set_meta("system_arena_collision_triangle_count", collision_faces.size() / 3)
 
+
+
+func _build_arena_tier_wayfinding(arena_root: Node3D) -> void:
+	# A small, readable identity marker is placed at each progression transition.
+	var tiers := [
+		{"floor": 1, "last": 20, "name": "ROOKIE ARENAS", "color": Color(0.42, 0.82, 1.0)},
+		{"floor": 21, "last": 40, "name": "ADVANCED ARENAS", "color": Color(0.42, 1.0, 0.78)},
+		{"floor": 41, "last": 60, "name": "ELITE ARENAS", "color": Color(1.0, 0.82, 0.42)},
+		{"floor": 61, "last": 80, "name": "MASTER ARENAS", "color": Color(1.0, 0.58, 0.38)},
+		{"floor": 81, "last": 100, "name": "NEN ARENAS", "color": Color(0.52, 0.78, 1.0)},
+		{"floor": 101, "last": 150, "name": "HIGH-RANK ARENAS", "color": Color(0.78, 0.62, 1.0)},
+		{"floor": 151, "last": 200, "name": "SOVEREIGN ARENAS", "color": Color(1.0, 0.72, 0.42)}
+	]
+	for tier in tiers:
+		var floor_number := int(tier["floor"])
+		var marker := Node3D.new()
+		marker.name = "ArenaTierMarker_%03d" % floor_number
+		marker.position = Vector3(0.0, float(floor_number - 1) * 4.1 + 3.2, -17.0)
+		marker.set_meta("system_arena_tier_first_floor", floor_number)
+		marker.set_meta("system_arena_tier_last_floor", int(tier["last"]))
+		marker.set_meta("system_arena_match_format", "PLAYER_ONLY_1V1")
+		arena_root.add_child(marker)
+
+		var backplate := MeshInstance3D.new()
+		backplate.name = "TierSignBackplate"
+		var plate_mesh := BoxMesh.new()
+		plate_mesh.size = Vector3(10.0, 2.4, 0.28)
+		backplate.mesh = plate_mesh
+		var plate_material := StandardMaterial3D.new()
+		plate_material.albedo_color = Color(0.018, 0.045, 0.065)
+		plate_material.metallic = 0.72
+		plate_material.roughness = 0.24
+		backplate.material_override = plate_material
+		marker.add_child(backplate)
+
+		var label := Label3D.new()
+		label.name = "ArenaTierSignText"
+		label.text = "FLOORS %03d–%03d  |  %s" % [floor_number, int(tier["last"]), str(tier["name"])]
+		label.font_size = 28
+		label.pixel_size = 0.012
+		label.position = Vector3(0.0, -0.2, 0.2)
+		label.modulate = tier["color"]
+		label.outline_size = 8
+		marker.add_child(label)
+
+		var light := OmniLight3D.new()
+		light.name = "ArenaTierAccentLight"
+		light.position = Vector3(0.0, 1.8, 0.8)
+		light.light_color = tier["color"]
+		light.light_energy = 0.8
+		light.omni_range = 12.0
+		light.shadow_enabled = false
+		marker.add_child(light)
+	arena_root.set_meta("system_arena_tier_marker_count", tiers.size())
+	arena_root.set_meta("system_arena_match_format", "PLAYER_ONLY_1V1")
+	arena_root.set_meta("system_arena_progression_signage", true)
 
 func _build_restaurant_and_recreation_amenities() -> void:
 	var tower_root := get_parent().get_parent() if get_parent() != null else null
