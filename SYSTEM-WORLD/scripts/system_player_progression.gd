@@ -72,12 +72,14 @@ const CRAFTING_RECIPES := {
 	"nen_focus_elixir": {"name": "تحضير إكسير تركيز النِن", "ingredients": {"nen_fragment": 1, "crystal_dust": 2}, "output": "nen_focus_elixir", "required_level": 20, "requires_nen": true, "required_nen_rank": 1},
 	"nen_stabilizer_elixir": {"name": "تحضير إكسير تثبيت الهالة", "ingredients": {"nen_fragment": 2, "energy_crystal": 2}, "output": "nen_stabilizer_elixir", "required_level": 25, "required_rank": "C", "requires_nen": true, "required_nen_rank": 2},
 	"nen_recovery_elixir": {"name": "تحضير إكسير استعادة النِن", "ingredients": {"nen_fragment": 3, "energy_crystal": 2}, "output": "nen_recovery_elixir", "required_level": 30, "required_rank": "C", "requires_nen": true, "required_nen_rank": 2},
-	"elite_legendary_elixir": {"name": "تحضير الإكسير الأسطوري للنخبة", "ingredients": {"rare_core": 5, "nen_fragment": 8, "energy_crystal": 5}, "output": "elite_legendary_elixir", "required_level": 80, "required_rank": "S", "requires_nen": true, "required_nen_rank": 5}
+	"elite_legendary_elixir": {"name": "تحضير الإكسير الأسطوري للنخبة", "ingredients": {"rare_core": 5, "nen_fragment": 8, "energy_crystal": 5}, "output": "elite_legendary_elixir", "required_level": 80, "required_rank": "S", "requires_nen": true, "required_nen_rank": 5},
+	"sovereign_ascension_elixir": {"name": "تحضير إكسير ارتقاء السيادة", "ingredients": {"rare_core": 8, "nen_fragment": 12, "energy_crystal": 10}, "output": "sovereign_ascension_elixir", "required_level": 100, "required_rank": "SSS", "requires_nen": true, "required_nen_rank": 5}
 }
 
 
 # Original SYSTEM skill tree. Practice, learned state and mastery are persisted separately.
 const SYSTEM_SKILL_TREE := {
+	"basic_strike": {"name": "الضربة الأساسية", "category": "weapon", "required_level": 1, "required_rank": "F", "prerequisites": [], "requires_nen": false, "requires_training_permit": true, "energy_cost": 5, "cooldown": 3.0, "effect": "ضربة افتتاحية منخفضة الكلفة"},
 	"guard_breaker": {"name": "كاسر الحراسة", "category": "weapon", "required_level": 3, "required_rank": "E", "prerequisites": [], "requires_nen": false, "energy_cost": 8, "cooldown": 5.0, "effect": "ضربة مركزة تكسر دفاع الخصم"},
 	"swift_step": {"name": "خطوة خاطفة", "category": "movement", "required_level": 5, "required_rank": "D", "prerequisites": [], "requires_nen": false, "energy_cost": 10, "cooldown": 7.0, "effect": "اندفاع قصير مضبوط"},
 	"focused_strike": {"name": "ضربة التركيز", "category": "weapon", "required_level": 8, "required_rank": "D", "prerequisites": ["guard_breaker"], "requires_nen": false, "energy_cost": 12, "cooldown": 8.0, "effect": "رفع دقة الضربة التالية"},
@@ -87,7 +89,8 @@ const SYSTEM_SKILL_TREE := {
 	"sensory_mark": {"name": "وسم الإدراك", "category": "nen", "required_level": 25, "required_rank": "B", "prerequisites": ["pulse_dash"], "requires_nen": true, "required_nen_rank": 2, "requires_training_permit": true, "energy_cost": 20, "cooldown": 15.0, "effect": "تمييز حركة الخصم لفترة قصيرة"},
 	"flow_counter": {"name": "صد التدفق", "category": "nen", "required_level": 35, "required_rank": "A", "prerequisites": ["aura_shield", "focused_strike"], "requires_nen": true, "required_nen_rank": 3, "requires_training_permit": true, "energy_cost": 28, "cooldown": 22.0, "effect": "صد مضبوط يعقبه رد سريع"},
 	"resonance_burst": {"name": "انفجار الرنين", "category": "nen", "required_level": 50, "required_rank": "S", "prerequisites": ["sensory_mark", "flow_counter"], "requires_nen": true, "required_nen_rank": 4, "requires_training_permit": true, "energy_cost": 40, "cooldown": 35.0, "effect": "موجة هالة قصيرة المدى"},
-	"sovereign_focus": {"name": "تركيز السيادة", "category": "nen", "required_level": 80, "required_rank": "SS", "prerequisites": ["resonance_burst"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 60, "cooldown": 60.0, "effect": "تركيز نادر عالي الكلفة"}
+	"sovereign_focus": {"name": "تركيز السيادة", "category": "nen", "required_level": 80, "required_rank": "SS", "prerequisites": ["resonance_burst"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 60, "cooldown": 60.0, "effect": "تركيز نادر عالي الكلفة"},
+	"sovereign_overdrive": {"name": "اندفاع السيادة المطلق", "category": "nen", "required_level": 100, "required_rank": "SSS", "prerequisites": ["sovereign_focus"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 80, "cooldown": 90.0, "effect": "اندفاع هالة فائق للرتبة SSS"}
 }
 const WEAPON_MASTERY_FAMILIES := ["sword", "spear", "axe", "bow", "shield", "modern_ranged"]
 
@@ -646,6 +649,11 @@ func consume_elixir(item_id: String) -> Dictionary:
 					return {"success": false, "reason": "ELITE_ELIXIR_REQUIREMENTS"}
 				effect_id = "elite_sovereign"
 				effect = {"remaining_seconds": 150.0, "damage_bonus": 30.0, "defense_bonus": 22.0, "movement_multiplier": 1.18, "attack_cooldown_multiplier": 0.88}
+			"sovereign_ascension_elixir":
+				if current_level < 100 or not nen_unlocked or nen_control_rank < 5 or not _meets_skill_rank("SSS"):
+					return {"success": false, "reason": "SOVEREIGN_ELIXIR_REQUIREMENTS"}
+				effect_id = "sovereign_ascension"
+				effect = {"remaining_seconds": 240.0, "damage_bonus": 45.0, "defense_bonus": 32.0, "movement_multiplier": 1.25, "attack_cooldown_multiplier": 0.78}
 			"nen_stabilizer_elixir":
 				if not nen_unlocked:
 					return {"success": false, "reason": "NEN_NOT_UNLOCKED"}
