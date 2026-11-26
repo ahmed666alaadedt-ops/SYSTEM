@@ -77,6 +77,7 @@ func _build_interface() -> void:
 	_artifact_picker = OptionButton.new()
 	_artifact_picker.custom_minimum_size = Vector2(350.0, 48.0)
 	_artifact_picker.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_artifact_picker.item_selected.connect(_on_artifact_selected)
 	sell_row.add_child(_artifact_picker)
 	_price_input = LineEdit.new()
 	_price_input.placeholder_text = "السعر"
@@ -135,6 +136,8 @@ func _on_marketplace_result(request_id: String, payload: Dictionary) -> void:
 	pending_operations.erase(request_id)
 	if not bool(payload.get("success", false)):
 		busy = false
+		if _sell_button != null:
+			_sell_button.disabled = _artifact_picker == null or _artifact_picker.item_count == 0
 		_set_status("لم تكتمل العملية: " + str(payload.get("error", "MARKETPLACE_REQUEST_FAILED")))
 		return
 	var data: Dictionary = payload.get("data", {}) if payload.get("data", {}) is Dictionary else {}
@@ -234,6 +237,9 @@ func _render_listings() -> void:
 			str(listing.get("condition", "غير محدد"))
 		]
 		details.add_child(meta_label)
+		var authenticity_label := Label.new()
+		authenticity_label.text = "التوثيق: " + str(listing.get("authenticity", "بانتظار التحقق"))
+		details.add_child(authenticity_label)
 		var seller_label := Label.new()
 		seller_label.text = "البائع: " + str(listing.get("sellerName", "لاعب"))
 		details.add_child(seller_label)
