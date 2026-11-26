@@ -163,6 +163,16 @@ func _run() -> void:
 	assert(not bool(upper_floor_data.get("weapons_allowed", true)))
 	assert(bool(upper_floor_data.get("nen_required", false)))
 	assert(upper_floor_data.get("available_combat_styles", []) == ["NEN_TECHNIQUES", "UNARMED_HAND_TO_HAND"])
+	# Verify the complete user-approved F-to-SSS progression across all 200 floors.
+	var expected_rank_by_floor := {
+		1: "F", 20: "F", 21: "E", 40: "E", 41: "D", 60: "D",
+		61: "C", 80: "C", 81: "B", 100: "B", 101: "A", 120: "A",
+		121: "S", 150: "S", 151: "SS", 179: "SS", 180: "SSS", 200: "SSS"
+	}
+	for rank_floor_value in expected_rank_by_floor.keys():
+		var rank_floor := int(rank_floor_value)
+		var rank_data: Dictionary = betting_manager.call("get_floor_data", rank_floor)
+		assert(str(rank_data.get("rank", "")) == str(expected_rank_by_floor[rank_floor_value]), "Power Tower rank ladder mismatch at floor %d." % rank_floor)
 	betting_manager.spectator_matches.clear()
 	betting_manager.spectator_npc_ticket_balances.clear()
 	betting_manager.spectator_daily_counts.clear()
