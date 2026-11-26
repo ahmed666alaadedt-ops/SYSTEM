@@ -9,6 +9,11 @@ import androidx.fragment.app.FragmentActivity
  * the account/startup surface and launches this Activity only for 3D gameplay.
  */
 class SystemGodotActivity : FragmentActivity() {
+    override fun onDestroy() {
+        SystemMiyarSpeech.shutdown()
+        super.onDestroy()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
