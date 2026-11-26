@@ -42,6 +42,7 @@ const InventoryPanelScript = preload("res://scripts/system_inventory_panel.gd")
 const PlayerCharacterModelScript = preload("res://scripts/npc_character_model.gd")
 const PlayerCharacterCreatorScript = preload("res://scripts/system_player_character_creator.gd")
 const SYSTEMCompanionManagerScript = preload("res://scripts/system_companion_manager.gd")
+const BataweenMarketplaceUIScript = preload("res://scripts/system_bataween_marketplace_ui.gd")
 
 var world_manager
 var world_map_manager
@@ -69,6 +70,7 @@ var tower_operations_manager
 var power_tower_score_event_counter := 0
 var player_combat_health: Node
 var inventory_panel: CanvasLayer
+var bataween_marketplace_ui: CanvasLayer
 
 var active_world_root: Node3D
 
@@ -1155,6 +1157,13 @@ func _on_interaction_performed(
 		" / ",
 		location_id
 	)
+	if target.has_meta("system_bataween_market_action"):
+		if not is_instance_valid(bataween_marketplace_ui):
+			bataween_marketplace_ui = BataweenMarketplaceUIScript.new()
+			bataween_marketplace_ui.name = "BataweenMarketplaceUI"
+			add_child(bataween_marketplace_ui)
+		bataween_marketplace_ui.call("open_market")
+		return
 	if target.has_meta("system_exam_stage_objective") or target.has_meta("system_exam_rival_id"):
 		if hunter_exam_stage_runtime == null or not hunter_exam_stage_runtime.has_method("handle_interaction"):
 			if interaction_prompt_label != null:
