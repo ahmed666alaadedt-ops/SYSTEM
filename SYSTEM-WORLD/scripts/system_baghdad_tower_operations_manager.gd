@@ -22,7 +22,7 @@ const BAGHDAD_TOWER_CONFIG := {
 	"technology_tower_baghdad": {"node": "TechnologyTower", "title": "برج التكنولوجيا والابتكار", "floors": 40, "height": 245.0, "radius": 27.0, "roles": ["مدير الابتكار", "موظف المختبر", "مهندس الأجهزة", "مهندس الروبوتات", "باحث الذكاء الاصطناعي", "موظف الخدمات الرقمية", "مسؤول الصيانة", "مسؤول الإعلانات"], "jobs": ["innovation_director", "lab_receptionist", "device_engineer", "robotics_engineer", "ai_researcher", "digital_services", "maintenance_engineer", "advertising_manager"]}
 }
 
-const POWER_TOWER_CONFIG := {"node": "PowerTower", "title": "برج القوة", "floors": 200, "height": 820.0, "radius": 26.0, "roles": ["موظف تسجيل التحديات", "منظم الحلبة", "موظف الاستراحة الطبية", "مسؤول الإعلانات"], "jobs": ["arena_registrar", "arena_coordinator", "arena_medic", "advertising_manager"]}
+const POWER_TOWER_CONFIG := {"node": "PowerTower", "title": "برج القوة", "floors": 200, "height": 820.0, "radius": 26.0, "roles": ["موظف تسجيل التحديات", "منظم الحلبة", "موظف الاستراحة الطبية", "مسؤول الإعلانات", "طاهي كافتيريا برج القوة", "موظف خدمة الكافتيريا"], "jobs": ["arena_registrar", "arena_coordinator", "arena_medic", "advertising_manager", "restaurant_chef", "restaurant_waiter"]}
 
 const PRODUCT_CATALOG := {
 	"shopping_tower_baghdad": [
@@ -647,12 +647,12 @@ func _board_floor_duty_staff(tower_id: String, floor_number: int, car: Node3D) -
 
 
 func _board_restaurant_support_staff(tower_id: String, floor_number: int, car: Node3D) -> Dictionary:
-	if tower_id != "shopping_tower_baghdad" or floor_number < 29 or floor_number > 32:
+	if not ((tower_id == "shopping_tower_baghdad" and floor_number >= 29 and floor_number <= 32) or (tower_id == "power_tower_baghdad" and floor_number in [2, 3])):
 		return {}
 	if not is_instance_valid(car) or not staff_by_tower.has(tower_id):
 		return {}
 	var primary_index := _get_floor_duty_staff_index(tower_id, floor_number)
-	var support_index := 5 if primary_index == 4 else 4
+	var support_index := (4 if floor_number == 2 else 5) if tower_id == "power_tower_baghdad" else (5 if primary_index == 4 else 4)
 	var staff_ids: Array = staff_by_tower.get(tower_id, [])
 	if support_index < 0 or support_index >= staff_ids.size():
 		return {}
@@ -4348,9 +4348,9 @@ func _create_floor_facilities(room: Node3D, tower_id: String, floor_number: int,
 			_create_workshop_station(room, "WeaponsForge", "ورشة الحدادة وصناعة الأسلحة الحديثة والتقليدية", Vector3(-radius * 0.32, 0.0, -radius * 0.42), str(staff_ids[1]), "weapons_merchant")
 			_create_workshop_station(room, "ElixirLaboratory", "مختبر تحضير الأكاسير وإيقاظ النِن والعلاج", Vector3(radius * 0.32, 0.0, -radius * 0.42), str(staff_ids[2]), "elixir_pharmacist")
 	if tower_id == "shopping_tower_baghdad" and floor_number >= 29:
-		_create_restaurant_dining_area(room, radius, floor_number)
+		_create_restaurant_dining_area(room, radius, floor_number, tower_id)
 	if tower_id == "power_tower_baghdad" and floor_number in [2, 3]:
-		_create_restaurant_dining_area(room, radius, floor_number)
+		_create_restaurant_dining_area(room, radius, floor_number, tower_id)
 	if tower_id == "shopping_tower_baghdad" and floor_number in [27, 28]:
 		var hotel_staff: Array = staff_by_tower.get(tower_id, [])
 		var hospitality_staff_id := str(hotel_staff[6]) if hotel_staff.size() > 6 else (str(hotel_staff[3]) if hotel_staff.size() > 3 else "")
@@ -8363,7 +8363,7 @@ func _rate_restaurant_order(table_id: String, rating: int) -> void:
 		return
 
 
-func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: int) -> void:
+func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: int, tower_id: String = "shopping_tower_baghdad") -> void:
 	var dining_sign := Label3D.new()
 	dining_sign.name = "RestaurantDiningSign"
 	dining_sign.text = "SYSTEM FOOD HALL — مطاعم ومقاهي وصالات طعام"
@@ -8402,7 +8402,7 @@ func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: i
 		table_root.name = "RestaurantTable_%02d" % index
 		var angle := TAU * float(index) / 4.0
 		table_root.position = Vector3(cos(angle) * radius * 0.34, 0.0, sin(angle) * radius * 0.34)
-		table_root.set_meta("system_restaurant_table_id", "shopping_floor_%02d_table_%02d" % [floor_number, index])
+		table_root.set_meta("system_restaurant_table_id", "%s_floor_%02d_table_%02d" % [tower_id, floor_number, index])
 		table_root.set_meta("system_restaurant_table_name", "طاولة %d — الطابق %d" % [index + 1, floor_number])
 		table_root.set_meta("system_restaurant_table_index", index)
 		table_root.set_meta("system_restaurant_occupants", [])
