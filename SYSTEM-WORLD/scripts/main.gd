@@ -102,7 +102,17 @@ func _should_start_miyar_world_selection() -> bool:
 	return false
 
 
+func _should_start_npc_character_showcase() -> bool:
+	for argument in OS.get_cmdline_user_args():
+		if argument == "--system-world=npc_showcase":
+			return true
+	return false
+
+
 func _ready() -> void:
+	if _should_start_npc_character_showcase():
+		get_tree().change_scene_to_file("res://scenes/NPCCharacterShowcase.tscn")
+		return
 	if _should_start_miyar_world_selection():
 		get_tree().change_scene_to_file("res://scenes/MiyarFourWorldsStage.tscn")
 		return
