@@ -92,7 +92,13 @@ const SYSTEM_SKILL_TREE := {
 	"flow_counter": {"name": "صد التدفق", "category": "nen", "required_level": 35, "required_rank": "A", "prerequisites": ["aura_shield", "focused_strike"], "requires_nen": true, "required_nen_rank": 3, "requires_training_permit": true, "energy_cost": 28, "cooldown": 22.0, "effect": "صد مضبوط يعقبه رد سريع"},
 	"resonance_burst": {"name": "انفجار الرنين", "category": "nen", "required_level": 50, "required_rank": "S", "prerequisites": ["sensory_mark", "flow_counter"], "requires_nen": true, "required_nen_rank": 4, "requires_training_permit": true, "energy_cost": 40, "cooldown": 35.0, "effect": "موجة هالة قصيرة المدى"},
 	"sovereign_focus": {"name": "تركيز السيادة", "category": "nen", "required_level": 80, "required_rank": "SS", "prerequisites": ["resonance_burst"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 60, "cooldown": 60.0, "effect": "تركيز نادر عالي الكلفة"},
-	"sovereign_overdrive": {"name": "اندفاع السيادة المطلق", "category": "nen", "required_level": 100, "required_rank": "SSS", "prerequisites": ["sovereign_focus"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 80, "cooldown": 90.0, "effect": "اندفاع هالة فائق للرتبة SSS"}
+	"sovereign_overdrive": {"name": "اندفاع السيادة المطلق", "category": "nen", "required_level": 100, "required_rank": "SSS", "prerequisites": ["sovereign_focus"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 80, "cooldown": 90.0, "effect": "اندفاع هالة فائق للرتبة SSS"},
+	"lightning_mantle": {"name": "عباءة البرق الخاطف", "category": "rare_elemental", "required_level": 40, "required_rank": "A", "prerequisites": ["pulse_dash"], "requires_nen": true, "required_nen_rank": 3, "requires_training_permit": true, "energy_cost": 34, "cooldown": 48.0, "duration": 12.0, "damage_bonus": 18.0, "movement_multiplier": 1.32, "attack_cooldown_multiplier": 0.82, "effect": "اندفاع برق نادر يرفع السرعة وقوة الضربات لفترة قصيرة"},
+	"shadow_step": {"name": "خطوة الظلال", "category": "rare_shadow", "required_level": 50, "required_rank": "S", "prerequisites": ["swift_step", "sensory_mark"], "requires_nen": true, "required_nen_rank": 4, "requires_training_permit": true, "energy_cost": 42, "cooldown": 55.0, "duration": 10.0, "damage_bonus": 22.0, "movement_multiplier": 1.42, "attack_cooldown_multiplier": 0.78, "effect": "حركة خاطفة بطابع الظلال مع تعزيز الهجوم"},
+	"shadow_guardian_aura": {"name": "هالة حارس الظلال", "category": "rare_shadow", "required_level": 60, "required_rank": "S", "prerequisites": ["aura_shield", "resonance_burst"], "requires_nen": true, "required_nen_rank": 4, "requires_training_permit": true, "energy_cost": 48, "cooldown": 68.0, "duration": 18.0, "damage_bonus": 26.0, "defense_bonus": 34.0, "effect": "هالة ظل دفاعية هجومية تحيط باللاعب"},
+	"body_manifestation": {"name": "تجسيد الجسد الفولاذي", "category": "rare_body", "required_level": 75, "required_rank": "SS", "prerequisites": ["iron_guard", "aura_shield"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 58, "cooldown": 82.0, "duration": 20.0, "damage_bonus": 30.0, "defense_bonus": 52.0, "effect": "تجسيد جسدي نادر يرفع القوة والتحمل والدفاع"},
+	"lightning_sovereign_form": {"name": "هيئة سيد البرق", "category": "legendary_elemental", "required_level": 95, "required_rank": "SSS", "prerequisites": ["lightning_mantle", "resonance_burst", "sovereign_focus"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 82, "cooldown": 120.0, "duration": 15.0, "damage_bonus": 52.0, "defense_bonus": 24.0, "movement_multiplier": 1.48, "attack_cooldown_multiplier": 0.72, "effect": "هيئة برق سيادية فائقة السرعة والقوة"},
+	"shadow_monarch_aegis": {"name": "درع سيادة الظلال", "category": "legendary_shadow", "required_level": 100, "required_rank": "SSS", "prerequisites": ["shadow_guardian_aura", "sovereign_focus"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 85, "cooldown": 135.0, "duration": 20.0, "damage_bonus": 42.0, "defense_bonus": 62.0, "movement_multiplier": 1.18, "effect": "درع سيادي من طاقة الظلال يرفع الهجوم والدفاع بقوة"}
 }
 const WEAPON_MASTERY_FAMILIES := ["sword", "spear", "axe", "bow", "shield", "modern_ranged"]
 
@@ -1184,3 +1190,18 @@ func record_system_skill_use(skill_id: String) -> Dictionary:
 	system_skill_cooldowns[key] = float(skill.get("cooldown", 5.0))
 	save_progress()
 	return {"success": true, "skill_id": key, "cooldown_seconds": float(skill.get("cooldown", 5.0)), "energy_cost": int(energy_cost), "remaining_energy": current_system_energy, "effect": str(skill.get("effect", ""))}
+
+
+func activate_rare_power_ability(skill_id: String) -> Dictionary:
+	var key := skill_id.strip_edges().to_lower()
+	var rare_categories := ["rare_elemental", "rare_shadow", "rare_body", "legendary_elemental", "legendary_shadow"]
+	if not SYSTEM_SKILL_TREE.has(key) or not rare_categories.has(str(SYSTEM_SKILL_TREE[key].get("category", ""))):
+		return {"success": false, "reason": "NOT_A_RARE_POWER_ABILITY"}
+	var use_result := record_system_skill_use(key)
+	if not bool(use_result.get("success", false)):
+		return use_result
+	var skill: Dictionary = SYSTEM_SKILL_TREE[key]
+	var effect := {"remaining_seconds": float(skill.get("duration", 10.0)), "damage_bonus": float(skill.get("damage_bonus", 0.0)), "defense_bonus": float(skill.get("defense_bonus", 0.0)), "movement_multiplier": float(skill.get("movement_multiplier", 1.0)), "attack_cooldown_multiplier": float(skill.get("attack_cooldown_multiplier", 1.0))}
+	active_elixir_effects["rare_ability_" + key] = effect
+	save_progress()
+	return {"success": true, "skill_id": key, "name": str(skill.get("name", key)), "duration_seconds": float(skill.get("duration", 10.0)), "cooldown_seconds": float(skill.get("cooldown", 5.0)), "energy_cost": int(skill.get("energy_cost", 0)), "effect": str(skill.get("effect", "")), "active_effect": effect.duplicate(true)}
