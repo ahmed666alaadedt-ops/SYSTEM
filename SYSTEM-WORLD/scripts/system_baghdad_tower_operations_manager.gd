@@ -9091,6 +9091,8 @@ func return_to_lobby() -> void:
 		power_tower_manager.call("abandon_active_floor")
 		power_floor_entry_pending = false
 		power_floor_in_progress = false
+		power_floor_time_remaining = 0.0
+		power_floor_timer_display_clock = 0.0
 		active_power_tower_match.clear()
 		active_power_floor_data.clear()
 		active_power_objective_label = null
