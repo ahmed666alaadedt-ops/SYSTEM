@@ -8464,7 +8464,8 @@ func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: i
 		table_root.name = "RestaurantTable_%02d" % index
 		var angle := TAU * float(index) / 4.0
 		table_root.position = Vector3(cos(angle) * radius * 0.34, 0.0, sin(angle) * radius * 0.34)
-		table_root.set_meta("system_restaurant_table_id", "%s_floor_%02d_table_%02d" % [tower_id, floor_number, index])
+		var restaurant_table_prefix := "shopping" if tower_id == "shopping_tower_baghdad" else tower_id
+		table_root.set_meta("system_restaurant_table_id", "%s_floor_%02d_table_%02d" % [restaurant_table_prefix, floor_number, index])
 		table_root.set_meta("system_restaurant_table_name", "طاولة %d — الطابق %d" % [index + 1, floor_number])
 		table_root.set_meta("system_restaurant_table_index", index)
 		table_root.set_meta("system_restaurant_occupants", [])
