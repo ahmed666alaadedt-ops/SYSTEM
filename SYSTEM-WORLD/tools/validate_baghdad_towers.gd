@@ -58,7 +58,7 @@ func _run_validation() -> void:
 		return
 	var market_stats: Dictionary = bataween_market.call("get_market_stats")
 	var market_position: Vector3 = market_stats.get("position", Vector3.INF)
-	if market_position == Vector3.INF or absf(market_position.x - 5060.584) > 2.0 or absf(market_position.z + 545.466) > 2.0:
+	if market_position == Vector3.INF or absf(market_position.x - 5065.417) > 2.0 or absf(market_position.z + 544.780) > 2.0:
 		_fail("Al-Bataween market placement does not match its WGS84 neighborhood anchor.")
 		return
 	if not bool(bataween_market.get_meta("system_market_is_independent_of_five_towers", false)) or not bool(bataween_market.get_meta("system_market_is_not_a_sixth_tower", false)):
