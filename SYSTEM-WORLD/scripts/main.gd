@@ -1196,6 +1196,12 @@ func _on_interaction_performed(
 	if target.has_meta("system_power_tower_ticket_terminal") and tower_operations_manager != null:
 		tower_operations_manager.call("open_power_tower_ticket_terminal")
 		return
+	if target.has_meta("system_power_tower_combat_style_board") and tower_operations_manager != null:
+		tower_operations_manager.call("open_power_tower_combat_style_terminal")
+		return
+	if str(target.get_meta("system_interaction_action", "")) == "POWER_TOWER_NEN_TRAINING" and tower_operations_manager != null:
+		tower_operations_manager.call("interact_power_tower_nen_training", target)
+		return
 	if str(target.get_meta("system_interaction_type", "")) == "museum_artifact_exhibit" and tower_operations_manager != null:
 		tower_operations_manager.call("open_museum_artifact_exhibit", target)
 		return
@@ -1594,7 +1600,10 @@ func _on_mobile_attack_pressed() -> void:
 	if vehicle_runtime_manager != null and vehicle_runtime_manager.is_driving:
 		return
 	if is_instance_valid(modern_world_combat_system):
-		modern_world_combat_system.call("light_attack")
+		if tower_operations_manager != null and bool(tower_operations_manager.get("power_floor_in_progress")):
+			modern_world_combat_system.call("perform_selected_power_tower_attack")
+		else:
+			modern_world_combat_system.call("light_attack")
 
 
 func _on_mobile_skill_one_pressed() -> void:

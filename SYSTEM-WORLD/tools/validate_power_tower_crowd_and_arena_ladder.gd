@@ -1,0 +1,83 @@
+extends SceneTree
+
+const PowerTowerScript = preload("res://scripts/system_power_tower_manager.gd")
+const OperationsScript = preload("res://scripts/system_baghdad_tower_operations_manager.gd")
+const CompetitionScript = preload("res://scripts/system_power_tower_competition_manager.gd")
+
+func _initialize() -> void:
+	call_deferred("_run")
+
+func _run() -> void:
+	var power_manager = PowerTowerScript.new()
+	var expected_ladder := {
+		1: 8, 20: 8, 21: 6, 40: 6, 41: 4, 60: 4,
+		61: 3, 80: 3, 81: 2, 100: 2, 101: 1, 200: 1
+	}
+	var early_floor_rules: Dictionary = power_manager.call("get_floor_data", 80)
+	var upper_floor_rules: Dictionary = power_manager.call("get_floor_data", 81)
+	assert(bool(early_floor_rules.get("weapons_allowed", false)))
+	assert(not bool(early_floor_rules.get("nen_required", true)))
+	assert(not bool(upper_floor_rules.get("weapons_allowed", true)))
+	assert(bool(upper_floor_rules.get("nen_required", false)))
+	for floor_value in expected_ladder.keys():
+		var floor_number := int(floor_value)
+		var data: Dictionary = power_manager.call("get_floor_data", floor_number)
+		assert(int(data.get("arena_count", 0)) == int(expected_ladder[floor_value]), "Arena count ladder mismatch at floor %d." % floor_number)
+		assert(str(data.get("competition_format", "")) == "INDIVIDUAL_1V1")
+		assert(str(data.get("opponent_kind", "")) == "HUMAN_PLAYER")
+		assert(not bool(data.get("ai_fallback", true)))
+	power_manager.free()
+
+	var competition = CompetitionScript.new()
+	competition.call("_build_scaled_spectator_crowd")
+	var global_crowd := competition.get_node_or_null("PowerTower500SpectatorNPCs") as Node3D
+	assert(global_crowd != null)
+	assert(int(global_crowd.get_meta("system_visible_spectator_count", 0)) == 500)
+	assert(int(global_crowd.get_meta("system_multimesh_impostor_count", 0)) == 492)
+	assert(int(global_crowd.get_meta("system_full_rig_count", 0)) == 8)
+	assert(int(global_crowd.get_meta("system_detailed_actor_nodes_created", 0)) == 8)
+	var detailed_actor_count := 0
+	for crowd_child in global_crowd.get_children():
+		if crowd_child is CharacterBody3D and bool(crowd_child.get_meta("system_npc_full_rig", false)):
+			detailed_actor_count += 1
+			assert(crowd_child.get_child_count() == 6, "Each detailed spectator must have torso, head, two arms and two legs.")
+			for part_name in ["Torso", "Head", "Arm_L", "Arm_R", "Leg_L", "Leg_R"]:
+				assert(crowd_child.get_node_or_null(part_name) is MeshInstance3D, "Missing detailed spectator body part: %s" % part_name)
+	assert(detailed_actor_count == 8, "Eight detailed spectator NPCs must be instantiated, not represented by metadata only.")
+	var body_multimesh := global_crowd.get_node_or_null("SpectatorNPCBodies500") as MultiMeshInstance3D
+	var head_multimesh := global_crowd.get_node_or_null("SpectatorNPCHeads500") as MultiMeshInstance3D
+	assert(body_multimesh != null and body_multimesh.multimesh.instance_count == 492)
+	assert(head_multimesh != null and head_multimesh.multimesh.instance_count == 492)
+	var operations = OperationsScript.new()
+	var room := Node3D.new()
+	room.name = "PowerTowerCrowdTestRoom"
+	room.set_meta("system_power_tower_floor", 1)
+	operations.call("_create_power_tower_spectator_gallery", room, 24.0)
+	var gallery := room.get_node_or_null("PowerTowerSpectatorGallery") as Node3D
+	assert(gallery != null)
+	assert(int(gallery.get_meta("system_audience_population_target", 0)) == 500)
+	var full_rigs := gallery.get_node_or_null("PowerTowerAudienceActors") as Node3D
+	assert(full_rigs != null and full_rigs.get_child_count() == 8)
+	assert(int(full_rigs.get_meta("system_audience_shared_lod_count", 0)) == 492)
+	var gallery_bodies := gallery.get_node_or_null("PowerTowerCrowdImpostors") as MultiMeshInstance3D
+	var gallery_heads := gallery.get_node_or_null("PowerTowerCrowdImpostorHeads") as MultiMeshInstance3D
+	assert(gallery_bodies != null and gallery_bodies.multimesh != null and gallery_bodies.multimesh.instance_count == 492, "Operational spectator gallery must render all 492 shared-LOD bodies.")
+	assert(gallery_heads != null and gallery_heads.multimesh != null and gallery_heads.multimesh.instance_count == 492, "Operational spectator gallery must render all 492 shared-LOD heads.")
+	assert(str(gallery.get_meta("system_audience_lod_layout", "")) == "4_SIDES_X_3_ROWS_X_41_COLUMNS")
+	var gallery_body_material := gallery_bodies.material_override as StandardMaterial3D
+	assert(gallery_body_material != null and gallery_body_material.emission_enabled)
+	operations.call("_react_power_tower_audience", gallery, "celebrating")
+	assert(str(gallery.get_meta("system_audience_reaction", "")) == "celebrating")
+	assert(str(gallery_bodies.get_meta("system_audience_reaction", "")) == "celebrating")
+	assert(gallery_body_material.emission_energy_multiplier > 0.8)
+	assert(int(gallery_bodies.get_meta("system_audience_reaction_instance_count", 0)) == 492)
+	var seat_count := 0
+	for child in gallery.get_children():
+		if bool(child.get_meta("system_power_tower_spectator_seat", false)):
+			seat_count += 1
+	assert(seat_count == 48)
+	print("POWER TOWER CROWD/LADDER VALIDATION PASSED: arena counts 8/6/4/3/2/1 across 200 floors; shared 500-person crowd (492 LOD + 8 detailed), 48 reserved seats; official fights remain human 1v1.")
+	competition.free()
+	operations.free()
+	room.free()
+	quit(0)

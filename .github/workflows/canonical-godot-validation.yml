@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - feature/baghdad-five-plus-power-tower-20261122
+      - feature/power-tower-xsx-expansion-20261126
     paths:
       - "SYSTEM-WORLD/**"
       - ".github/workflows/canonical-godot-validation.yml"
@@ -80,6 +81,21 @@ jobs:
           "$GODOT" --headless --path "$PROJECT" \
             --script res://tools/validate_system_android_bridge.gd \
             2>&1 | tee "$RUNNER_TEMP/system-android-marketplace-bridge.log"
+
+      - name: Validate X-S-X Power Tower architecture and restricted shop catalog
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          echo "Starting X-S-X Power Tower architecture validator."
+          timeout --signal=TERM 120s "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_power_tower_xsx_architecture.gd 2>&1 | tee "$RUNNER_TEMP/power-tower-xsx-architecture.log"
+          echo "Starting X-S-X Power Tower shop catalog validator."
+          timeout --signal=TERM 120s "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_power_tower_shop_catalog.gd 2>&1 | tee "$RUNNER_TEMP/power-tower-shop-catalog.log"
+          echo "Starting X-S-X Power Tower crowd and arena ladder validator."
+          timeout --signal=TERM 120s "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_power_tower_crowd_and_arena_ladder.gd 2>&1 | tee "$RUNNER_TEMP/power-tower-crowd-arena-ladder.log"
+          echo "Starting X-S-X Power Tower competition and Nen validator."
+          timeout --signal=TERM 120s "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_power_tower_competition.gd 2>&1 | tee "$RUNNER_TEMP/power-tower-competition.log"
 
       - name: Validate Baghdad tower landmarks and lobby systems
         shell: bash
@@ -206,6 +222,10 @@ jobs:
             ${{ runner.temp }}/geography-anchor-runtime.log
             ${{ runner.temp }}/baghdad-star-gate-runtime.log
             ${{ runner.temp }}/terrain-cell-streaming.log
+            ${{ runner.temp }}/power-tower-xsx-architecture.log
+            ${{ runner.temp }}/power-tower-shop-catalog.log
+            ${{ runner.temp }}/power-tower-crowd-arena-ladder.log
+            ${{ runner.temp }}/power-tower-competition.log
             ${{ runner.temp }}/baghdad-tower-landmarks.log
             ${{ runner.temp }}/baghdad-tower-operations.log
             ${{ runner.temp }}/hunter-tower-recruitment.log

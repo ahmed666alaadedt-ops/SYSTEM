@@ -1179,8 +1179,8 @@ func _run() -> void:
 	if not bool(boss_data.get("boss_floor", false)) or str(boss_data.get("arena_type", "")) != "BOSS_TRIAL":
 		_fail("Power Tower floor 200 is not configured as a boss trial.")
 		return
-	if not bool(boss_data.get("weapons_allowed", false)) or int(boss_data.get("division_number", 0)) != 20 or int(boss_data.get("division_floor_start", 0)) != 191 or int(boss_data.get("division_floor_end", 0)) != 200:
-		_fail("Power Tower floor 200 must be the armed final duel in the twentieth ten-floor division.")
+	if bool(boss_data.get("weapons_allowed", true)) or not bool(boss_data.get("nen_required", false)) or boss_data.get("available_combat_styles", []) != ["NEN_TECHNIQUES", "UNARMED_HAND_TO_HAND"] or int(boss_data.get("division_number", 0)) != 20 or int(boss_data.get("division_floor_start", 0)) != 191 or int(boss_data.get("division_floor_end", 0)) != 200:
+		_fail("Power Tower floor 200 must be the Nen-only sovereign final duel in the twentieth ten-floor division.")
 		return
 	if not bool(boss_data.get("final_boss", false)) or str(boss_data.get("challenge_type", "")) != "FINAL_BOSS":
 		_fail("Power Tower floor 200 is missing its unique final sovereign boss profile.")
@@ -1280,8 +1280,8 @@ func _run() -> void:
 	var duplicate_hit: Dictionary = judge_test_manager.call("record_judged_duel_event", "validator_judged_tko", "HEAD_REFEREE", "player_test", "CLEAN_HIT", "critical_hit_00")
 	var tko_result: Dictionary = judge_test_manager.call("finish_judged_duel", "validator_judged_tko", "player_test", "TKO", "LOCAL_COMBAT_AUTHORITY")
 	var automatically_settled_pool: Dictionary = judge_test_manager.call("get_spectator_match", "validator_judged_tko")
-	if str(automatic_spectator_match.get("state", "")) != "open" or not bool(correct_fan_ticket.get("success", false)) or not bool(losing_fan_ticket.get("success", false)) or str(duplicate_hit.get("reason", "")) != "DUPLICATE_JUDGE_EVENT" or not bool(tko_result.get("success", false)) or int(tko_result.get("score", {}).get("player_test", 0)) != 10 or str(automatically_settled_pool.get("state", "")) != "settled" or int(automatically_settled_pool.get("total_pool", 0)) != 30 or int(automatically_settled_pool.get("payouts", {}).get("referee_test_fan", 0)) != 30 or int(automatically_settled_pool.get("payouts", {}).get("referee_test_fan_two", 0)) != 0:
-		_fail("Referee scoring must award 1 clean/2 critical points and end at the ten-point TKO threshold without duplicate events.")
+	if str(automatic_spectator_match.get("state", "")) != "open" or not bool(correct_fan_ticket.get("success", false)) or not bool(losing_fan_ticket.get("success", false)) or str(duplicate_hit.get("reason", "")) != "DUPLICATE_JUDGE_EVENT" or not bool(tko_result.get("success", false)) or int(tko_result.get("score", {}).get("player_test", 0)) != 10 or str(automatically_settled_pool.get("state", "")) != "settled" or int(automatically_settled_pool.get("total_pool", 0)) != 30 or int(automatically_settled_pool.get("payouts", {}).get("referee_test_fan", 0)) != 26 or int(automatically_settled_pool.get("payouts", {}).get("referee_test_fan_two", 0)) != 0 or int(automatically_settled_pool.get("house_revenue", 0)) != 2 or int(automatically_settled_pool.get("fighter_reward", 0)) != 2 or int(automatically_settled_pool.get("bettor_profit_pool", 0)) != 16 or int(automatically_settled_pool.get("total_paid_out", 0)) != 26:
+		_fail("Referee scoring must award 1 clean/2 critical points and end at the ten-point TKO threshold; spectator settlement must apply the approved 10% house / 10% fighter / 80% winning-bettor split without duplicate events.")
 		judge_test_manager.queue_free()
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
@@ -1382,8 +1382,8 @@ func _run() -> void:
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
 		return
-	if int(fan_alpha_status.get("cash_value", -1)) != 0 or bool(fan_alpha_status.get("transferable", true)) or bool(fan_alpha_status.get("purchasable", true)) or int(settled_prediction.get("total_pool", 0)) != 120 or int(settled_prediction.get("payouts", {}).get("fan_alpha", 0)) != 80 or int(settled_prediction.get("payouts", {}).get("fan_gamma", 0)) != 40 or int(settled_prediction.get("net_profits", {}).get("fan_alpha", 0)) != 40 or int(settled_prediction.get("net_profits", {}).get("fan_beta", 0)) != -60 or int(settled_prediction.get("payouts", {}).get("fan_beta", -1)) != 0 or int(settled_prediction.get("net_profits", {}).get("fan_gamma", 0)) != 20 or int(operations.get("credits")) != spectator_wallet_before or int(fan_gamma_status.get("cash_value", -1)) != 0 or str(settled_match_record.get("state", "")) != "settled" or str(settled_match_record.get("winner_id", "")) != "fighter_beta":
-		_fail("Virtual tickets must debit stakes and distribute the 120-credit pool proportionally (80/40), with correct net profits and no cash value.")
+	if int(fan_alpha_status.get("cash_value", -1)) != 0 or bool(fan_alpha_status.get("transferable", true)) or bool(fan_alpha_status.get("purchasable", true)) or int(settled_prediction.get("total_pool", 0)) != 120 or int(settled_prediction.get("payouts", {}).get("fan_alpha", 0)) != 72 or int(settled_prediction.get("payouts", {}).get("fan_gamma", 0)) != 36 or int(settled_prediction.get("net_profits", {}).get("fan_alpha", 0)) != 32 or int(settled_prediction.get("net_profits", {}).get("fan_beta", 0)) != -60 or int(settled_prediction.get("payouts", {}).get("fan_beta", -1)) != 0 or int(settled_prediction.get("net_profits", {}).get("fan_gamma", 0)) != 16 or int(settled_prediction.get("house_revenue", 0)) != 6 or int(settled_prediction.get("fighter_reward", 0)) != 6 or int(settled_prediction.get("bettor_profit_pool", 0)) != 48 or int(settled_prediction.get("total_paid_out", 0)) != 108 or int(operations.get("credits")) != spectator_wallet_before - 16 or int(fan_gamma_status.get("cash_value", -1)) != 0 or str(settled_match_record.get("state", "")) != "settled" or str(settled_match_record.get("winner_id", "")) != "fighter_beta":
+		_fail("Virtual tickets must distribute the 120-credit pool as 6 tower / 6 fighter / 48 bettor profit, with original winning stakes returned and correct net profits.")
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
 		return
@@ -1394,12 +1394,12 @@ func _run() -> void:
 	var npc_lock: Dictionary = progression_test_manager.call("lock_spectator_predictions", "validator_npc_ticket_pool")
 	var npc_settlement: Dictionary = progression_test_manager.call("settle_spectator_match", "validator_npc_ticket_pool", "npc_pool_fighter_b", "LOCAL_COMBAT_AUTHORITY")
 	var npc_status: Dictionary = progression_test_manager.call("get_spectator_status", "npc:crowd_001")
-	if not bool(npc_ticket_match.get("success", false)) or not bool(npc_registration.get("success", false)) or not bool(npc_ticket.get("success", false)) or not bool(human_ticket.get("success", false)) or not bool(npc_lock.get("success", false)) or not bool(npc_settlement.get("success", false)) or str(npc_status.get("participant_type", "")) != "NPC" or int(npc_status.get("ticket_balance", -1)) != 270 or int(npc_settlement.get("payouts", {}).get("human_pool_fan", 0)) != 50:
+	if not bool(npc_ticket_match.get("success", false)) or not bool(npc_registration.get("success", false)) or not bool(npc_ticket.get("success", false)) or not bool(human_ticket.get("success", false)) or not bool(npc_lock.get("success", false)) or not bool(npc_settlement.get("success", false)) or str(npc_status.get("participant_type", "")) != "NPC" or int(npc_status.get("ticket_balance", -1)) != 270 or int(npc_settlement.get("payouts", {}).get("human_pool_fan", 0)) != 44 or int(npc_settlement.get("house_revenue", 0)) != 3 or int(npc_settlement.get("fighter_reward", 0)) != 3 or int(npc_settlement.get("bettor_profit_pool", 0)) != 24:
 		_fail("Clearly labelled NPC fan tickets must join the same virtual pool, use a capped NPC budget and pay the correct human fan.")
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
 		return
-	if not bool(operations.call("spend_spectator_stake", 30)):
+	if not bool(operations.call("spend_spectator_stake", 24)):
 		_fail("The validator could not restore the test-only human wallet balance after NPC pool settlement.")
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
@@ -1408,7 +1408,7 @@ func _run() -> void:
 	var refund_ticket: Dictionary = progression_test_manager.call("submit_spectator_prediction", "validator_no_winner", "refund_fan", "refund_fighter_a", 25)
 	var refund_lock: Dictionary = progression_test_manager.call("lock_spectator_predictions", "validator_no_winner")
 	var refund_result: Dictionary = progression_test_manager.call("settle_spectator_match", "validator_no_winner", "refund_fighter_b", "LOCAL_COMBAT_AUTHORITY")
-	if not bool(no_winner_match.get("success", false)) or not bool(refund_ticket.get("success", false)) or not bool(refund_lock.get("success", false)) or not bool(refund_result.get("success", false)) or not bool(refund_result.get("refunded", false)) or int(refund_result.get("total_paid_out", 0)) != 25 or int(operations.get("credits")) != spectator_wallet_before:
+	if not bool(no_winner_match.get("success", false)) or not bool(refund_ticket.get("success", false)) or not bool(refund_lock.get("success", false)) or not bool(refund_result.get("success", false)) or not bool(refund_result.get("refunded", false)) or int(refund_result.get("total_paid_out", 0)) != 25 or int(operations.get("credits")) != spectator_wallet_before - 16:
 		_fail("A pool with no correct tickets must refund every virtual stake without creating or destroying credits.")
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
@@ -1437,8 +1437,8 @@ func _run() -> void:
 	var persisted_fan_status: Dictionary = spectator_reload_manager.call("get_spectator_status", "fan_alpha")
 	var persisted_match: Dictionary = spectator_reload_manager.call("get_spectator_match", "validator_duel_001")
 	var persisted_npc_status: Dictionary = spectator_reload_manager.call("get_spectator_status", "npc:crowd_001")
-	if str(persisted_match.get("state", "")) != "settled" or int(persisted_match.get("payouts", {}).get("fan_alpha", 0)) != 80 or int(persisted_fan_status.get("cash_value", -1)) != 0 or int(persisted_npc_status.get("ticket_balance", -1)) != 270 or str(persisted_npc_status.get("participant_type", "")) != "NPC":
-		_fail("The virtual ticket payout ledger did not persist through a manager reload.")
+	if str(persisted_match.get("state", "")) != "settled" or int(persisted_match.get("payouts", {}).get("fan_alpha", 0)) != 72 or int(persisted_fan_status.get("cash_value", -1)) != 0 or int(persisted_npc_status.get("ticket_balance", -1)) != 270 or str(persisted_npc_status.get("participant_type", "")) != "NPC":
+		_fail("The saved virtual ticket payout ledger did not reload with the previously verified settlement values.")
 		progression_test_manager.queue_free()
 		reloaded_progression_manager.queue_free()
 		spectator_reload_manager.queue_free()
@@ -1543,6 +1543,11 @@ func _run() -> void:
 		return
 	var original_player_level := int(tower_progression.get("current_level"))
 	tower_progression.set("current_level", 100)
+	tower_progression.set("nen_unlocked", true)
+	tower_progression.set("nen_control_rank", 5)
+	var final_equipment_slots: Dictionary = tower_progression.get("equipment_slots")
+	final_equipment_slots["weapon"] = ""
+	tower_progression.set("equipment_slots", final_equipment_slots)
 	power_manager.set("highest_cleared_floor", 199)
 	power_manager.set("active_floor", 0)
 	power_manager.set("floor_clear_times", original_clear_times.duplicate(true))
@@ -2262,6 +2267,12 @@ func _run() -> void:
 		_fail("Power Tower spectator gallery did not react to the verified individual duel winner.")
 		return
 	var audience_actors := spectator_gallery.get_node_or_null("PowerTowerAudienceActors") as Node3D
+	var crowd_impostors := spectator_gallery.get_node_or_null("PowerTowerCrowdImpostors") as MultiMeshInstance3D
+	var crowd_heads := spectator_gallery.get_node_or_null("PowerTowerCrowdImpostorHeads") as MultiMeshInstance3D
+	var crowd_material := crowd_impostors.material_override as StandardMaterial3D if crowd_impostors != null else null
+	if crowd_impostors == null or crowd_heads == null or crowd_impostors.multimesh == null or crowd_heads.multimesh == null or crowd_impostors.multimesh.instance_count != 492 or crowd_heads.multimesh.instance_count != 492 or int(spectator_gallery.get_meta("system_audience_impostor_count", 0)) != 492 or crowd_material == null or not crowd_material.emission_enabled or crowd_material.emission_energy_multiplier < 0.8 or str(crowd_impostors.get_meta("system_audience_reaction", "")) != "celebrating":
+		_fail("Power Tower 492 shared-LOD audience members are missing visible body/head instances or winner celebration lighting.")
+		return
 	if audience_actors == null or audience_actors.get_child_count() != 8 or str(spectator_gallery.get_meta("system_audience_reaction", "")) != "celebrating":
 		_fail("Power Tower audience actors did not enter their winner celebration state.")
 		return
@@ -2479,9 +2490,11 @@ func _run() -> void:
 		_fail("NPC weapon upgrade service did not apply the first equipment upgrade.")
 		return
 	pilot_progression.call("equip_item", "training_sword")
+	var weapon_damage_bonus_before_break := float(pilot_progression.call("get_combat_damage_bonus"))
 	pilot_progression.call("consume_equipment_durability", "weapon", 100.0)
-	if float(pilot_progression.call("get_item_durability", "training_sword")) > 0.0 or float(pilot_progression.call("get_combat_damage_bonus")) > 0.0:
-		_fail("Broken weapon durability did not disable its equipment damage bonus.")
+	var weapon_damage_bonus_after_break := float(pilot_progression.call("get_combat_damage_bonus"))
+	if float(pilot_progression.call("get_item_durability", "training_sword")) > 0.0 or weapon_damage_bonus_after_break >= weapon_damage_bonus_before_break:
+		_fail("Broken weapon durability did not remove the weapon bonus while preserving unrelated Nen bonuses.")
 		return
 	pilot_progression.call("add_item", "repair_kit", 1)
 	var repair_result: Dictionary = pilot_progression.call("repair_item", "training_sword")
@@ -2508,6 +2521,9 @@ func _run() -> void:
 	if float(pilot_progression.call("get_attack_cooldown_multiplier")) >= 1.0:
 		_fail("Energy elixir did not reduce the attack cooldown multiplier.")
 		return
+	# Exercise the awakening elixir from a known locked-Nen state, regardless of prior player save data.
+	pilot_progression.set("nen_unlocked", false)
+	pilot_progression.set("nen_control_rank", 0)
 	pilot_progression.call("add_item", "nen_awakening_elixir", 1)
 	var awakening_result: Dictionary = pilot_progression.call("consume_elixir", "nen_awakening_elixir")
 	if not bool(awakening_result.get("success", false)):

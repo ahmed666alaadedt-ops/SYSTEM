@@ -25,7 +25,7 @@ const DEFAULT_ATTRIBUTES := {
 	"discipline": 1
 }
 
-const DEFAULT_EQUIPMENT_SLOTS := {"weapon": "", "shield": "", "armor": "", "helmet": "", "outfit": ""}
+const DEFAULT_EQUIPMENT_SLOTS := {"weapon": "", "shield": "", "armor": "", "helmet": "", "boots": "", "outfit": "", "accessory_1": "", "accessory_2": ""}
 const MAX_EQUIPMENT_UPGRADE_LEVEL := 10
 const MAX_EQUIPMENT_DURABILITY := 100.0
 const EQUIPMENT_SLOTS_BY_ITEM := {
@@ -34,14 +34,20 @@ const EQUIPMENT_SLOTS_BY_ITEM := {
 	"hunter_shield": "shield", "advanced_hunter_shield": "shield",
 	"hunter_armor": "armor", "rank_e_armor": "armor", "rank_d_armor": "armor", "rank_c_armor": "armor", "rank_b_armor": "armor", "rank_a_armor": "armor", "rank_s_armor": "armor", "rank_ss_armor": "armor", "rank_sss_armor": "armor",
 	"hunter_helmet": "helmet", "reinforced_helmet": "helmet",
+	"training_boots": "boots", "hunter_boots": "boots", "rank_b_boots": "boots", "rank_a_boots": "boots", "rank_sss_boots": "boots",
+	"hunter_pendant": "accessory_1", "guardian_ring": "accessory_1", "nen_aura_bracelet": "accessory_2", "hunter_badge": "accessory_2",
 	"combat_outfit": "outfit", "casual_outfit": "outfit", "hunter_outfit_e": "outfit", "hunter_outfit_d": "outfit", "hunter_outfit_c": "outfit", "hunter_outfit_b": "outfit", "hunter_outfit_a": "outfit", "hunter_outfit_s": "outfit", "hunter_outfit_ss": "outfit", "hunter_outfit_sss": "outfit"
 }
 const EQUIPMENT_DAMAGE_BONUS := {
 	"training_sword": 5.0, "steel_sword": 12.0, "hunter_spear": 10.0, "battle_axe": 14.0, "composite_bow": 8.0, "system_firearm": 16.0,
+	"hunter_pendant": 2.0, "guardian_ring": 4.0, "nen_aura_bracelet": 5.0, "hunter_badge": 1.0,
 	"combat_knife": 7.0, "dual_blades": 13.0, "long_sword": 15.0, "great_sword": 22.0, "crossbow": 12.0, "war_hammer": 18.0, "hunter_pistol": 14.0, "hunter_rifle": 19.0, "precision_rifle": 24.0, "tactical_shotgun": 21.0
 }
+const EQUIPMENT_MOVEMENT_BONUS := {"training_boots": 0.02, "hunter_boots": 0.04, "rank_b_boots": 0.06, "rank_a_boots": 0.08, "rank_sss_boots": 0.12}
 const EQUIPMENT_DEFENSE_BONUS := {
-	"hunter_shield": 8.0, "advanced_hunter_shield": 16.0, "hunter_armor": 12.0, "hunter_helmet": 4.0, "reinforced_helmet": 8.0,
+	"hunter_shield": 8.0, "advanced_hunter_shield": 16.0, "hunter_armor": 12.0,
+	"hunter_pendant": 2.0, "guardian_ring": 3.0, "nen_aura_bracelet": 2.0, "hunter_badge": 1.0, "hunter_helmet": 4.0, "reinforced_helmet": 8.0,
+	"training_boots": 1.0, "hunter_boots": 2.0, "rank_b_boots": 3.0, "rank_a_boots": 5.0, "rank_sss_boots": 8.0,
 	"rank_e_armor": 5.0, "rank_d_armor": 7.0, "rank_c_armor": 10.0, "rank_b_armor": 14.0, "rank_a_armor": 19.0, "rank_s_armor": 25.0, "rank_ss_armor": 32.0, "rank_sss_armor": 42.0,
 	"hunter_outfit_e": 5.0, "hunter_outfit_d": 7.0, "hunter_outfit_c": 10.0, "hunter_outfit_b": 14.0, "hunter_outfit_a": 19.0, "hunter_outfit_s": 25.0, "hunter_outfit_ss": 32.0, "hunter_outfit_sss": 42.0
 }
@@ -106,6 +112,9 @@ var equipment_durability: Dictionary = {}
 var active_elixir_effects: Dictionary = {}
 var nen_unlocked := false
 var nen_control_rank := 0
+var power_tower_nen_training_sessions := 0
+var power_tower_nen_training_ids: Array[String] = []
+var power_tower_nen_stage_sessions: Dictionary = {}
 var nen_burst_cooldown_remaining := 0.0
 var nen_button_refresh_clock := 0.0
 var nen_burst_button: Button
@@ -302,6 +311,102 @@ func has_verified_hunter_mission(mission_id: String) -> bool:
 	return verified_hunter_mission_ids.has(mission_id.strip_edges())
 
 
+func complete_power_tower_nen_training(training_id: String, floor_number: int, technique: String = "") -> Dictionary:
+	var normalized_id := training_id.strip_edges()
+	if normalized_id.is_empty() or floor_number < 1 or floor_number > 200:
+		return {"success": false, "reason": "INVALID_POWER_TOWER_TRAINING"}
+	if power_tower_nen_training_ids.has(normalized_id):
+		return {"success": false, "reason": "TRAINING_ALREADY_RECORDED"}
+	var stage_key := "DISCOVERY"
+	var expected_technique := "AURA_AWARENESS"
+	var floor_rank := 1
+	if floor_number >= 151:
+		stage_key = "NEN_MASTERY"
+		expected_technique = "HATSU"
+		floor_rank = 5
+	elif floor_number >= 101:
+		stage_key = "ADVANCED_NEN"
+		expected_technique = "HATSU"
+		floor_rank = 5
+	elif floor_number >= 80:
+		stage_key = "HATSU"
+		expected_technique = "HATSU"
+		floor_rank = 5
+	elif floor_number >= 61:
+		stage_key = "ZETSU"
+		expected_technique = "ZETSU"
+		floor_rank = 4
+	elif floor_number >= 41:
+		stage_key = "REN"
+		expected_technique = "REN"
+		floor_rank = 3
+	elif floor_number >= 21:
+		stage_key = "TEN"
+		expected_technique = "TEN"
+		floor_rank = 2
+	if not technique.strip_edges().is_empty() and technique.strip_edges().to_upper() != expected_technique:
+		return {"success": false, "reason": "NEN_TECHNIQUE_NOT_AVAILABLE_ON_THIS_FLOOR", "required_technique": expected_technique}
+	if floor_number > 20 and not nen_unlocked:
+		return {"success": false, "reason": "NEN_DISCOVERY_TRAINING_REQUIRED"}
+	if floor_rank > nen_control_rank + 1:
+		return {"success": false, "reason": "PREVIOUS_NEN_STAGE_REQUIRED", "required_control_rank": floor_rank - 1}
+	var stage_sessions := int(power_tower_nen_stage_sessions.get(stage_key, 0))
+	if stage_sessions >= 3:
+		return {"success": false, "reason": "NEN_STAGE_ALREADY_MASTERED", "stage": stage_key}
+	if not nen_unlocked:
+		nen_unlocked = true
+		nen_control_rank = 1
+	stage_sessions += 1
+	power_tower_nen_stage_sessions[stage_key] = stage_sessions
+	power_tower_nen_training_sessions += 1
+	power_tower_nen_training_ids.append(normalized_id)
+	if stage_sessions >= 3:
+		nen_control_rank = maxi(nen_control_rank, floor_rank)
+	save_progress()
+	_refresh_nen_burst_button()
+	return {
+		"success": true,
+		"nen_unlocked": nen_unlocked,
+		"nen_control_rank": nen_control_rank,
+		"training_sessions": power_tower_nen_training_sessions,
+		"stage": stage_key,
+		"stage_sessions": stage_sessions,
+		"stage_sessions_required": 3,
+		"technique": expected_technique,
+		"floor_rank": floor_rank
+	}
+
+func get_power_tower_nen_training_status() -> Dictionary:
+	var next_stage := "DISCOVERY"
+	var next_floor := 1
+	if nen_control_rank < 2:
+		next_stage = "TEN"
+		next_floor = 21
+	elif nen_control_rank < 3:
+		next_stage = "REN"
+		next_floor = 41
+	elif nen_control_rank < 4:
+		next_stage = "ZETSU"
+		next_floor = 61
+	elif nen_control_rank < 5:
+		next_stage = "HATSU"
+		next_floor = 80
+	else:
+		next_stage = "ADVANCED_NEN"
+		next_floor = 101
+	var completed_stage_sessions := int(power_tower_nen_stage_sessions.get(next_stage, 0))
+	return {
+		"nen_unlocked": nen_unlocked,
+		"nen_control_rank": nen_control_rank,
+		"training_sessions": power_tower_nen_training_sessions,
+		"training_ids": power_tower_nen_training_ids.duplicate(),
+		"stage_sessions": power_tower_nen_stage_sessions.duplicate(true),
+		"next_stage": next_stage,
+		"next_stage_sessions_remaining": maxi(0, 3 - completed_stage_sessions),
+		"next_rank_session": power_tower_nen_training_sessions + maxi(0, 3 - completed_stage_sessions),
+		"next_rank_floor": next_floor
+	}
+
 func record_verified_hunter_mission(mission_id: String, mission_points: int, used_nen: bool = false, ability_id: String = "") -> Dictionary:
 	var normalized_id := mission_id.strip_edges()
 	if normalized_id.is_empty() or mission_points <= 0:
@@ -381,6 +486,18 @@ func add_item(item_id: String, amount: int = 1) -> bool:
 		equipment_durability[normalized_id] = MAX_EQUIPMENT_DURABILITY
 		equipment_upgrade_levels[normalized_id] = 0
 	inventory_items[normalized_id] = int(inventory_items.get(normalized_id,0)) + amount
+	save_progress()
+	return true
+
+
+func consume_item(item_id: String, amount: int = 1) -> bool:
+	if item_id.strip_edges().is_empty() or amount <= 0 or get_item_count(item_id) < amount:
+		return false
+	var remaining := get_item_count(item_id) - amount
+	if remaining <= 0:
+		inventory_items.erase(item_id)
+	else:
+		inventory_items[item_id] = remaining
 	save_progress()
 	return true
 
@@ -480,8 +597,10 @@ func get_equipment_bonuses() -> Dictionary:
 		var upgrade_level := get_item_upgrade_level(item_id)
 		damage += float(EQUIPMENT_DAMAGE_BONUS.get(item_id, 0.0)) + (float(upgrade_level) * 2.0 if slot == "weapon" else 0.0)
 		defense += float(EQUIPMENT_DEFENSE_BONUS.get(item_id, 0.0)) + (float(upgrade_level) * 1.5 if slot in ["shield", "armor", "helmet"] else 0.0)
-		if slot == "outfit":
-			movement *= 1.0 + float(upgrade_level) * 0.01
+		if slot in ["outfit", "boots"]:
+			var base_movement := float(EQUIPMENT_MOVEMENT_BONUS.get(item_id, 0.0))
+			var upgrade_movement := float(upgrade_level) * (0.015 if slot == "boots" else 0.01)
+			movement *= 1.0 + base_movement + upgrade_movement
 	return {"damage_bonus": damage, "defense_bonus": defense, "movement_multiplier": movement}
 
 
@@ -776,6 +895,9 @@ func save_progress() -> void:
 	config.set_value("effects", "active_elixirs", active_elixir_effects.duplicate(true))
 	config.set_value("nen", "unlocked", nen_unlocked)
 	config.set_value("nen", "control_rank", nen_control_rank)
+	config.set_value("nen", "power_tower_training_sessions", power_tower_nen_training_sessions)
+	config.set_value("nen", "power_tower_training_ids", power_tower_nen_training_ids)
+	config.set_value("nen", "power_tower_stage_sessions", power_tower_nen_stage_sessions.duplicate(true))
 	config.set_value("nen", "burst_cooldown_remaining", nen_burst_cooldown_remaining)
 	config.set_value("skills", "learned", learned_system_skills.duplicate())
 	config.set_value("skills", "authorized_training", authorized_system_skills.duplicate())
@@ -868,6 +990,14 @@ func load_progress() -> void:
 			active_elixir_effects[str(effect_id)] = effect
 	nen_unlocked = bool(config.get_value("nen", "unlocked", false))
 	nen_control_rank = clampi(int(config.get_value("nen", "control_rank", 0)), 0, 5)
+	power_tower_nen_training_sessions = maxi(0, int(config.get_value("nen", "power_tower_training_sessions", 0)))
+	power_tower_nen_training_ids.clear()
+	var saved_nen_stage_sessions: Variant = config.get_value("nen", "power_tower_stage_sessions", {})
+	power_tower_nen_stage_sessions = saved_nen_stage_sessions.duplicate(true) if saved_nen_stage_sessions is Dictionary else {}
+	for training_id in config.get_value("nen", "power_tower_training_ids", []):
+		var normalized_training_id := str(training_id).strip_edges()
+		if not normalized_training_id.is_empty() and not power_tower_nen_training_ids.has(normalized_training_id):
+			power_tower_nen_training_ids.append(normalized_training_id)
 	nen_burst_cooldown_remaining = maxf(0.0, float(config.get_value("nen", "burst_cooldown_remaining", 0.0)))
 	verified_hunter_mission_points = maxi(0, int(config.get_value("hunter_rank", "verified_mission_points", 0)))
 	verified_hunter_mission_count = maxi(0, int(config.get_value("hunter_rank", "verified_mission_count", 0)))
@@ -1029,6 +1159,9 @@ func _reset_progress() -> void:
 	current_system_energy = MAX_SYSTEM_ENERGY
 	nen_unlocked = false
 	nen_control_rank = 0
+	power_tower_nen_training_sessions = 0
+	power_tower_nen_training_ids.clear()
+	power_tower_nen_stage_sessions.clear()
 	nen_burst_cooldown_remaining = 0.0
 
 

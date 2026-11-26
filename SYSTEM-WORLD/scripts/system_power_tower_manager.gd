@@ -6,13 +6,19 @@ signal floor_cleared(floor_number: int, reward_xp: int, rank: String)
 signal tower_record_updated(highest_floor: int)
 signal duel_score_updated(match_id: String, duel_data: Dictionary)
 signal duel_completed(match_id: String, duel_data: Dictionary)
+signal floor_start_deadline_expired(floor_number: int)
 
 const SAVE_PATH := "user://system_power_tower.cfg"
 const MAX_FLOORS := 200
+const FLOOR_START_DEADLINE_SECONDS := 600
 const SPECTATOR_DAILY_PREDICTION_LIMIT := 20
 const SPECTATOR_MIN_STAKE := 1
 const SPECTATOR_MAX_STAKE := 500
 const NPC_INITIAL_TICKET_BUDGET := 300
+const POWER_TOWER_SPECTATOR_TARGET := 500
+const HOUSE_REVENUE_BPS := 1000
+const WINNING_FIGHTER_REWARD_BPS := 1000
+const WINNING_BETTOR_POOL_BPS := 8000
 const LOCAL_MATCH_AUTHORITY := "LOCAL_COMBAT_AUTHORITY"
 const DUEL_TKO_SCORE := 10
 const DUEL_MAX_CONSECUTIVE_LOSSES := 3
@@ -23,6 +29,8 @@ const FLOOR_THEME_NAMES := ["قاعة الحديد", "ساحة الصحراء", 
 
 var highest_cleared_floor := 0
 var active_floor := 0
+var floor_start_deadline_unix := 0
+var floor_duel_started := false
 var floor_clear_times: Dictionary = {}
 var total_duels_won := 0
 var total_duels_lost := 0
@@ -43,12 +51,18 @@ var spectator_prediction_points: Dictionary = {}
 var spectator_daily_counts: Dictionary = {}
 var spectator_wallet_provider: Node
 var spectator_npc_ticket_balances: Dictionary = {}
+var power_tower_house_revenue_total := 0
+var power_tower_fighter_reward_ledger: Dictionary = {}
 
 func _ready() -> void:
 	name = "SYSTEMPowerTowerManager"
 	_load_progress()
 	_load_duel_records()
 	_load_spectator_data()
+	set_process(true)
+
+func _process(_delta: float) -> void:
+	check_floor_start_deadline()
 
 func get_floor_data(floor_number: int) -> Dictionary:
 	if floor_number < 1 or floor_number > MAX_FLOORS:
@@ -57,6 +71,7 @@ func get_floor_data(floor_number: int) -> Dictionary:
 	var boss_floor := floor_number % 10 == 0
 	var elite_floor := floor_number % 5 == 0 and not boss_floor
 	var difficulty := clampi(1 + int((floor_number - 1) / 5), 1, 40)
+	var arena_count := get_arena_count_for_floor(floor_number)
 	var required_level := clampi(int(ceil(float(floor_number) * 0.45)), 1, 100)
 	var reward_xp := 100 + floor_number * floor_number * 12 + (250000 if final_boss else 0)
 	var reward_credits := 75 + floor_number * 15 + (5000 if final_boss else 0)
@@ -67,6 +82,11 @@ func get_floor_data(floor_number: int) -> Dictionary:
 	var objective_type := "DEFEAT_BOSS" if boss_floor else "DEFEAT_OPPONENT"
 	var arena_name := "SOVEREIGN TITLE DUEL ARENA" if final_boss else ("TITLE HOLDER DUEL ARENA" if boss_floor else ("ELITE PLAYER DUEL ARENA" if elite_floor else "PLAYER 1 VS 1 DUEL ARENA"))
 	var arena_rules := "مواجهة السيادة النهائية: لاعب بشري ضد حامل اللقب البشري — 1 ضد 1" if final_boss else ("مواجهة فردية ضد حامل لقب الطابق — لاعبان بشريان فقط" if boss_floor else ("مواجهة نخبة فردية بين لاعبين بشريين — 1 ضد 1" if elite_floor else "مواجهة فردية بين لاعبين بشريين 1 ضد 1 — لا فرق ولا خصوم آليين"))
+	var weapons_allowed := floor_number <= 80
+	var nen_required := floor_number >= 81
+	var available_combat_styles := ["UNARMED_HAND_TO_HAND", "KUNG_FU", "MARTIAL_ARTS", "TRADITIONAL_MELEE", "BOW_AND_ARROW"] if weapons_allowed else ["NEN_TECHNIQUES", "UNARMED_HAND_TO_HAND"]
+	if floor_number >= 41 and floor_number <= 80:
+		available_combat_styles.append("NEN_TECHNIQUES")
 	return {
 		"floor": floor_number,
 		"division_number": int(ceil(float(floor_number) / 10.0)),
@@ -76,7 +96,10 @@ func get_floor_data(floor_number: int) -> Dictionary:
 		"private_room_eligible": floor_number >= 100,
 		"judge_panel": DUEL_JUDGE_IDS.duplicate(),
 		"scoring_rules": {"clean_hit": 1, "critical_hit": 2, "opponent_down": 1, "tko_score": DUEL_TKO_SCORE},
-		"weapons_allowed": floor_number >= 200,
+		"weapons_allowed": weapons_allowed,
+		"traditional_weapons_allowed": weapons_allowed,
+		"nen_required": nen_required,
+		"available_combat_styles": available_combat_styles,
 		"difficulty": difficulty,
 		"required_level": required_level,
 		"boss_floor": boss_floor,
@@ -92,11 +115,13 @@ func get_floor_data(floor_number: int) -> Dictionary:
 		"ai_fallback": false,
 		"matchmaking_mode": "ONLINE_1V1",
 		"arena_type": arena_type,
+		"arena_count": arena_count,
 		"arena_theme_index": theme_index,
 		"arena_theme_id": arena_theme_id,
 		"arena_theme_name": arena_theme_name,
 		"objective_type": objective_type,
-		"time_limit_seconds": 0,
+		"time_limit_seconds": FLOOR_START_DEADLINE_SECONDS,
+		"start_deadline_seconds": FLOOR_START_DEADLINE_SECONDS,
 		"arena_name": arena_name,
 		"arena_rules": arena_rules,
 		"clear_time_recorded": true,
@@ -105,6 +130,22 @@ func get_floor_data(floor_number: int) -> Dictionary:
 		"competition_format": "INDIVIDUAL_1V1",
 		"reward_items": ["power_tower_sovereign_crown", "sovereign_core", "rare_core", "nen_fragment"] if final_boss else (["boss_core", "monster_core"] if boss_floor else (["power_tower_fragment", "monster_core"] if elite_floor else ["power_tower_token"]))
 	}
+
+func get_arena_count_for_floor(floor_number: int) -> int:
+	if floor_number < 1 or floor_number > MAX_FLOORS:
+		return 0
+	if floor_number <= 20:
+		return 8
+	if floor_number <= 40:
+		return 6
+	if floor_number <= 60:
+		return 4
+	if floor_number <= 80:
+		return 3
+	if floor_number <= 100:
+		return 2
+	return 1
+
 
 func request_floor(floor_number: int, player_level: int) -> Dictionary:
 	if floor_number < 1 or floor_number > MAX_FLOORS:
@@ -123,8 +164,72 @@ func request_floor(floor_number: int, player_level: int) -> Dictionary:
 	if active_floor != 0:
 		return {"success": false, "reason": "ANOTHER_FLOOR_IS_ACTIVE", "active_floor": active_floor}
 	active_floor = floor_number
+	floor_duel_started = false
+	floor_start_deadline_unix = int(Time.get_unix_time_from_system()) + FLOOR_START_DEADLINE_SECONDS
+	data["start_deadline_unix"] = floor_start_deadline_unix
 	floor_started.emit(floor_number, data)
 	return {"success": true, "floor_data": data}
+
+func begin_floor_duel(floor_number: int) -> Dictionary:
+	if active_floor != floor_number or floor_number <= 0:
+		return {"success": false, "reason": "FLOOR_NOT_ACTIVE"}
+	var deadline_check := check_floor_start_deadline()
+	if bool(deadline_check.get("expired", false)):
+		return {"success": false, "reason": "FLOOR_START_DEADLINE_EXPIRED"}
+	floor_duel_started = true
+	floor_start_deadline_unix = 0
+	return {"success": true, "floor": floor_number, "started": true}
+
+
+func check_floor_start_deadline(now_unix: int = 0) -> Dictionary:
+	if active_floor <= 0 or floor_duel_started or floor_start_deadline_unix <= 0:
+		return {"expired": false, "active_floor": active_floor}
+	var current_time := now_unix if now_unix > 0 else int(Time.get_unix_time_from_system())
+	var remaining := floor_start_deadline_unix - current_time
+	if remaining > 0:
+		return {"expired": false, "active_floor": active_floor, "remaining_seconds": remaining}
+	var expired_floor := active_floor
+	active_floor = 0
+	floor_start_deadline_unix = 0
+	floor_duel_started = false
+	floor_start_deadline_expired.emit(expired_floor)
+	return {"expired": true, "floor": expired_floor, "reason": "FLOOR_START_DEADLINE_EXPIRED"}
+
+
+func get_heliport_access_status(progression: Node) -> Dictionary:
+	if progression == null or not progression.has_method("get_hunter_rank_progress"):
+		return {"success": false, "access": false, "reason": "HUNTER_PROGRESSION_REQUIRED"}
+	var hunter_status: Dictionary = progression.call("get_hunter_rank_progress")
+	var hunter_rank := str(hunter_status.get("rank", "F"))
+	var rank_order := ["F", "E", "D", "C", "B", "A", "S", "SS", "SSS"]
+	var hunter_rank_index := rank_order.find(hunter_rank)
+	var mission_count := int(hunter_status.get("verified_mission_count", 0))
+	var nen_rank := int(hunter_status.get("nen_control_rank", 0))
+	var skill_uses := int(hunter_status.get("nen_skill_uses", 0))
+	var distinct_skills := int(hunter_status.get("distinct_nen_abilities", 0))
+	var board_approved := bool(hunter_status.get("sss_board_approved", false))
+	var cleared_floor := highest_cleared_floor
+	var eligible_rank := ""
+	if cleared_floor >= 180 and hunter_rank == "SSS" and board_approved and mission_count >= 30 and nen_rank >= 5 and skill_uses >= 200 and distinct_skills >= 3:
+		eligible_rank = "SSS"
+	elif cleared_floor >= 151 and hunter_rank_index >= rank_order.find("SS") and mission_count >= 20 and nen_rank >= 5 and skill_uses >= 150 and distinct_skills >= 3:
+		eligible_rank = "SS"
+	elif cleared_floor >= 121 and hunter_rank_index >= rank_order.find("S") and mission_count >= 10 and nen_rank >= 5 and skill_uses >= 50 and distinct_skills >= 2:
+		eligible_rank = "S"
+	return {
+		"success": true,
+		"access": not eligible_rank.is_empty(),
+		"eligible_rank": eligible_rank,
+		"highest_cleared_floor": cleared_floor,
+		"hunter_rank": hunter_rank,
+		"mission_count": mission_count,
+		"nen_control_rank": nen_rank,
+		"nen_skill_uses": skill_uses,
+		"distinct_nen_skills": distinct_skills,
+		"sss_board_approved": board_approved,
+		"reason": "ACCESS_GRANTED" if not eligible_rank.is_empty() else "RANK_MISSION_NEN_REQUIREMENTS_NOT_MET"
+	}
+
 
 ## يستدعيها نظام القتال بعد التأكد من فوز اللاعب في المواجهة الفردية.
 func confirm_floor_clear(floor_number: int, clear_time_seconds: float, server_verified: bool = false, result_id: String = "") -> Dictionary:
@@ -153,6 +258,8 @@ func confirm_floor_clear(floor_number: int, clear_time_seconds: float, server_ve
 	total_xp_earned += reward
 	total_credits_earned += credit_reward
 	active_floor = 0
+	floor_start_deadline_unix = 0
+	floor_duel_started = false
 	_save_progress()
 	var rank := str(data["rank"])
 	floor_cleared.emit(floor_number, reward, rank)
@@ -209,6 +316,10 @@ func register_judged_duel(match_id: String, fighter_a_id: String, fighter_b_id: 
 		return {"success": false, "reason": "FIGHTER_REGISTRATION_REQUIRED"}
 	if duel_matches.has(match_id):
 		return {"success": false, "reason": "DUEL_ALREADY_REGISTERED"}
+	if active_floor == floor_number:
+		var duel_start := begin_floor_duel(floor_number)
+		if not bool(duel_start.get("success", false)):
+			return duel_start
 	var spectator_registration: Dictionary = {}
 	if spectator_matches.has(match_id):
 		var existing_spectator_match: Dictionary = get_spectator_match(match_id)
@@ -379,7 +490,7 @@ func get_duel_career_status() -> Dictionary:
 		"disqualified": duel_disqualified,
 		"highest_cleared_floor": highest_cleared_floor,
 		"next_floor": 0 if duel_disqualified or highest_cleared_floor >= MAX_FLOORS else highest_cleared_floor + 1,
-		"rank": _rank_for_floor(highest_cleared_floor) if highest_cleared_floor > 0 else "E"
+		"rank": _rank_for_floor(highest_cleared_floor)
 	}
 
 
@@ -414,6 +525,8 @@ func _load_duel_records() -> void:
 
 func abandon_active_floor() -> void:
 	active_floor = 0
+	floor_start_deadline_unix = 0
+	floor_duel_started = false
 
 func get_tower_status() -> Dictionary:
 	var best_clear_time := 0.0
@@ -425,6 +538,8 @@ func get_tower_status() -> Dictionary:
 	return {
 		"highest_cleared_floor": highest_cleared_floor,
 		"active_floor": active_floor,
+		"floor_start_deadline_unix": floor_start_deadline_unix,
+		"floor_duel_started": floor_duel_started,
 		"max_floors": MAX_FLOORS,
 		"next_floor": 0 if highest_cleared_floor >= MAX_FLOORS else highest_cleared_floor + 1,
 		"highest_rank": _rank_for_floor(highest_cleared_floor) if highest_cleared_floor > 0 else "-",
@@ -477,6 +592,57 @@ func register_spectator_match(match_id: String, fighter_a_id: String, fighter_b_
 	_save_spectator_data()
 	return {"success": true, "match_id": match_id, "state": "open", "total_pool": 0}
 
+
+func populate_power_tower_npc_predictions(match_id: String, spectator_count: int = POWER_TOWER_SPECTATOR_TARGET) -> Dictionary:
+	match_id = match_id.strip_edges()
+	if not spectator_matches.has(match_id):
+		return {"success": false, "reason": "MATCH_NOT_FOUND"}
+	var match_record: Dictionary = spectator_matches[match_id]
+	if str(match_record.get("state", "")) != "open":
+		return {"success": false, "reason": "PREDICTIONS_LOCKED"}
+	var requested_count := clampi(spectator_count, 0, POWER_TOWER_SPECTATOR_TARGET)
+	var predictions: Dictionary = match_record.get("predictions", {})
+	var today := Time.get_date_string_from_system(true)
+	var submitted := 0
+	var skipped := 0
+	for index in range(requested_count):
+		var npc_id := "power_tower_fan_%04d" % (index + 1)
+		var spectator_key := "npc:" + npc_id
+		if predictions.has(spectator_key):
+			skipped += 1
+			continue
+		var daily_record: Dictionary = spectator_daily_counts.get(spectator_key, {})
+		var daily_count := int(daily_record.get("count", 0)) if str(daily_record.get("date", "")) == today else 0
+		if daily_count >= SPECTATOR_DAILY_PREDICTION_LIMIT:
+			skipped += 1
+			continue
+		if not spectator_npc_ticket_balances.has(spectator_key):
+			spectator_npc_ticket_balances[spectator_key] = NPC_INITIAL_TICKET_BUDGET
+		var seed_text := "%s:%s" % [match_id, npc_id]
+		var side_index := absi(seed_text.hash()) % 2
+		var fighter_id := str(match_record["fighter_a_id"]) if side_index == 0 else str(match_record["fighter_b_id"])
+		var stake := 1 + (absi((seed_text + ":stake").hash()) % 5)
+		var balance := int(spectator_npc_ticket_balances.get(spectator_key, 0))
+		if balance < stake:
+			skipped += 1
+			continue
+		spectator_npc_ticket_balances[spectator_key] = balance - stake
+		predictions[spectator_key] = {
+			"predicted_winner_id": fighter_id,
+			"participant_type": "NPC",
+			"stake_amount": stake,
+			"submitted_at_unix": int(Time.get_unix_time_from_system()),
+			"correct": false,
+			"payout_amount": 0,
+			"net_profit": -stake
+		}
+		match_record["total_pool"] = int(match_record.get("total_pool", 0)) + stake
+		spectator_daily_counts[spectator_key] = {"date": today, "count": daily_count + 1}
+		submitted += 1
+	match_record["predictions"] = predictions
+	spectator_matches[match_id] = match_record
+	_save_spectator_data()
+	return {"success": true, "target": requested_count, "submitted": submitted, "skipped": skipped, "currency": "SYSTEM_CREDITS"}
 
 func register_npc_spectator(npc_id: String) -> Dictionary:
 	npc_id = npc_id.strip_edges()
@@ -601,12 +767,22 @@ func settle_spectator_match(match_id: String, winner_id: String, settlement_sour
 	var payouts: Dictionary = {}
 	var profits: Dictionary = {}
 	var total_paid_out := 0
+	var house_revenue := 0
+	var fighter_reward := 0
+	var bettor_profit_pool := 0
 	if winning_stake > 0:
+		var losing_pool := maxi(0, total_pool - winning_stake)
+		house_revenue = int(floor(float(losing_pool) * float(HOUSE_REVENUE_BPS) / 10000.0))
+		fighter_reward = int(floor(float(losing_pool) * float(WINNING_FIGHTER_REWARD_BPS) / 10000.0))
+		bettor_profit_pool = losing_pool - house_revenue - fighter_reward
+		var distributed_bettor_bonus := 0
 		for index in range(winning_ids.size()):
 			var spectator_id := winning_ids[index]
 			var prediction: Dictionary = predictions[spectator_id]
 			var stake := int(prediction.get("stake_amount", 0))
-			var payout := total_pool - total_paid_out if index == winning_ids.size() - 1 else int(floor(float(total_pool) * float(stake) / float(winning_stake)))
+			var bonus := bettor_profit_pool - distributed_bettor_bonus if index == winning_ids.size() - 1 else int(floor(float(bettor_profit_pool) * float(stake) / float(winning_stake)))
+			distributed_bettor_bonus += bonus
+			var payout := stake + bonus
 			if payout > 0:
 				if str(prediction.get("participant_type", "PLAYER")) == "NPC":
 					spectator_npc_ticket_balances[spectator_id] = int(spectator_npc_ticket_balances.get(spectator_id, 0)) + payout
@@ -617,10 +793,10 @@ func settle_spectator_match(match_id: String, winner_id: String, settlement_sour
 			total_paid_out += payout
 			prediction["correct"] = true
 			prediction["payout_amount"] = payout
-			prediction["net_profit"] = payout - stake
+			prediction["net_profit"] = bonus
 			predictions[spectator_id] = prediction
 			payouts[spectator_id] = payout
-			profits[spectator_id] = payout - stake
+			profits[spectator_id] = bonus
 		for spectator_id_variant in predictions.keys():
 			var spectator_id := str(spectator_id_variant)
 			if winning_ids.has(spectator_id):
@@ -633,8 +809,14 @@ func settle_spectator_match(match_id: String, winner_id: String, settlement_sour
 			predictions[spectator_id] = losing_prediction
 			payouts[spectator_id] = 0
 			profits[spectator_id] = -losing_stake
+		if house_revenue > 0:
+			power_tower_house_revenue_total += house_revenue
+		if fighter_reward > 0:
+			power_tower_fighter_reward_ledger[winner_id] = int(power_tower_fighter_reward_ledger.get(winner_id, 0)) + fighter_reward
+			if is_instance_valid(spectator_wallet_provider) and spectator_wallet_provider.has_method("record_power_tower_fighter_reward"):
+				spectator_wallet_provider.call("record_power_tower_fighter_reward", winner_id, fighter_reward, match_id)
 	else:
-		# No correct forecast: void this pool and return each fan's virtual stake.
+		# No correct forecast: void the round and refund every stake; no house/fighter cut.
 		for spectator_id_variant in predictions.keys():
 			var spectator_id := str(spectator_id_variant)
 			var prediction: Dictionary = predictions[spectator_id]
@@ -659,13 +841,30 @@ func settle_spectator_match(match_id: String, winner_id: String, settlement_sour
 	match_record["winner_id"] = winner_id
 	match_record["winning_stake"] = winning_stake
 	match_record["total_paid_out"] = total_paid_out
+	match_record["house_revenue"] = house_revenue
+	match_record["fighter_reward"] = fighter_reward
+	match_record["bettor_profit_pool"] = bettor_profit_pool
 	match_record["payouts"] = payouts
 	match_record["net_profits"] = profits
 	match_record["settled_at_unix"] = int(Time.get_unix_time_from_system())
 	match_record["settlement_source"] = settlement_source
 	spectator_matches[match_id] = match_record
 	_save_spectator_data()
-	return {"success": true, "winner_id": winner_id, "total_pool": total_pool, "winning_stake": winning_stake, "payouts": payouts, "net_profits": profits, "total_paid_out": total_paid_out, "refunded": winning_stake == 0, "virtual_currency": "SYSTEM_CREDITS", "cash_value": 0}
+	return {
+		"success": true,
+		"winner_id": winner_id,
+		"total_pool": total_pool,
+		"winning_stake": winning_stake,
+		"house_revenue": house_revenue,
+		"fighter_reward": fighter_reward,
+		"bettor_profit_pool": bettor_profit_pool,
+		"payouts": payouts,
+		"net_profits": profits,
+		"total_paid_out": total_paid_out,
+		"refunded": winning_stake == 0,
+		"virtual_currency": "SYSTEM_CREDITS",
+		"cash_value": 0
+	}
 
 
 func get_open_spectator_matches() -> Array[Dictionary]:
@@ -714,6 +913,8 @@ func _save_spectator_data() -> void:
 	config.set_value("spectators", "points", spectator_prediction_points)
 	config.set_value("spectators", "daily_counts", spectator_daily_counts)
 	config.set_value("spectators", "npc_ticket_balances", spectator_npc_ticket_balances)
+	config.set_value("spectators", "house_revenue_total", power_tower_house_revenue_total)
+	config.set_value("spectators", "fighter_reward_ledger", power_tower_fighter_reward_ledger)
 	var error := config.save(spectator_save_path)
 	if error != OK:
 		push_warning("SYSTEM: Spectator prediction data could not be saved.")
@@ -726,18 +927,24 @@ func _load_spectator_data() -> void:
 	var saved_points: Variant = config.get_value("spectators", "points", {})
 	var saved_daily_counts: Variant = config.get_value("spectators", "daily_counts", {})
 	var saved_npc_balances: Variant = config.get_value("spectators", "npc_ticket_balances", {})
+	power_tower_house_revenue_total = maxi(0, int(config.get_value("spectators", "house_revenue_total", 0)))
+	var saved_fighter_rewards: Variant = config.get_value("spectators", "fighter_reward_ledger", {})
+	power_tower_fighter_reward_ledger = saved_fighter_rewards.duplicate(true) if saved_fighter_rewards is Dictionary else {}
 	spectator_matches = saved_matches.duplicate(true) if saved_matches is Dictionary else {}
 	spectator_prediction_points = saved_points.duplicate(true) if saved_points is Dictionary else {}
 	spectator_daily_counts = saved_daily_counts.duplicate(true) if saved_daily_counts is Dictionary else {}
 	spectator_npc_ticket_balances = saved_npc_balances.duplicate(true) if saved_npc_balances is Dictionary else {}
 
 func _rank_for_floor(floor_number: int) -> String:
-	if floor_number >= 180: return "S"
-	if floor_number >= 150: return "A"
-	if floor_number >= 110: return "B"
-	if floor_number >= 70: return "C"
-	if floor_number >= 30: return "D"
-	return "E"
+	if floor_number >= 180: return "SSS"
+	if floor_number >= 151: return "SS"
+	if floor_number >= 121: return "S"
+	if floor_number >= 101: return "A"
+	if floor_number >= 81: return "B"
+	if floor_number >= 61: return "C"
+	if floor_number >= 41: return "D"
+	if floor_number >= 21: return "E"
+	return "F"
 
 func _save_progress() -> void:
 	var config := ConfigFile.new()

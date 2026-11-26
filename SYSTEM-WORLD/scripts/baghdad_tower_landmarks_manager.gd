@@ -6,6 +6,7 @@ const HunterHelicopterControllerScript = preload("res://scripts/system_hunter_he
 const PublicLeisureManagerScript = preload("res://scripts/system_baghdad_public_leisure_manager.gd")
 const PublicGardenManagerScript = preload("res://scripts/system_baghdad_rooftop_garden_manager.gd")
 const LobbyFinishScript = preload("res://scripts/system_baghdad_tower_lobby_finish_manager.gd")
+const PowerTowerXSXArchitectureScript = preload("res://scripts/system_power_tower_xsx_architecture.gd")
 const HUNTER_TOWER_HEIGHT := 650.0
 const REPUBLIC_BRIDGE_DECK_HEIGHT := 18.0
 const HUNTER_CENTRAL_SKY_CITY_PLATFORM_HEIGHT := 419.2
@@ -311,6 +312,15 @@ func _build_power_tower() -> void:
 		Color(0.95, 0.55, 0.16),
 		false
 	)
+	var power_tower := get_node_or_null("PowerTower") as Node3D
+	if power_tower != null:
+		var xsx_architecture := PowerTowerXSXArchitectureScript.new()
+		xsx_architecture.name = "PowerTowerXSXArchitecture"
+		power_tower.add_child(xsx_architecture)
+		power_tower.set_meta("system_power_tower_visual_reference", "POWER_TOWER_XSX_APPROVED_DESIGN_AND_SHOP_SPEC")
+		power_tower.set_meta("system_power_tower_independent_landmark", true)
+		power_tower.set_meta("system_power_tower_floor_count", 200)
+		power_tower.set_meta("system_power_tower_shop_modern_firearms_allowed", false)
 
 func _build_tower(node_name: String, title: String, location_id: String, world_position: Vector3, height: float, radius: float, floors: int, beacon_color: Color, connect_to_district: bool = true, allow_bridge_platform: bool = false) -> void:
 	var requested_position := Vector2(world_position.x, world_position.z)

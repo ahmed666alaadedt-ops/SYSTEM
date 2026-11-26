@@ -10,6 +10,8 @@ const HOTEL_SAVE_PATH := "user://system_baghdad_hotel_bookings.cfg"
 const RESTAURANT_SAVE_PATH := "user://system_baghdad_restaurant_orders.cfg"
 const NPC_SALES_SAVE_PATH := "user://system_baghdad_npc_sales.cfg"
 const FACILITY_ACTIVITY_SAVE_PATH := "user://system_baghdad_facility_activity.cfg"
+const POWER_TOWER_APPOINTMENT_SAVE_PATH := "user://system_power_tower_appointments.cfg"
+const POWER_TOWER_MATCH_SLOTS := ["10:00", "13:00", "16:00", "19:00"]
 const WORLD_ID := 2
 const STAFF_NAMES := ["أحمد", "سارة", "علي", "نور", "حسن", "مريم", "يوسف", "ليان", "عمر", "زينب", "مصطفى", "رنا"]
 
@@ -22,7 +24,7 @@ const BAGHDAD_TOWER_CONFIG := {
 	"technology_tower_baghdad": {"node": "TechnologyTower", "title": "برج التكنولوجيا والابتكار", "floors": 40, "height": 245.0, "radius": 27.0, "roles": ["مدير الابتكار", "موظف المختبر", "مهندس الأجهزة", "مهندس الروبوتات", "باحث الذكاء الاصطناعي", "موظف الخدمات الرقمية", "مسؤول الصيانة", "مسؤول الإعلانات"], "jobs": ["innovation_director", "lab_receptionist", "device_engineer", "robotics_engineer", "ai_researcher", "digital_services", "maintenance_engineer", "advertising_manager"]}
 }
 
-const POWER_TOWER_CONFIG := {"node": "PowerTower", "title": "برج القوة", "floors": 200, "height": 820.0, "radius": 26.0, "roles": ["موظف تسجيل التحديات", "منظم الحلبة", "موظف الاستراحة الطبية", "مسؤول الإعلانات"], "jobs": ["arena_registrar", "arena_coordinator", "arena_medic", "advertising_manager"]}
+const POWER_TOWER_CONFIG := {"node": "PowerTower", "title": "برج القوة X-S-X", "floors": 200, "height": 820.0, "radius": 26.0, "roles": ["موظف تسجيل التحديات والمواعيد", "منسق الحلبة والحكام", "موظف الاستراحة الطبية وخدمة الزوار", "مسؤول متجر التجهيزات والنِن والكافتيريا والإعلانات"], "jobs": ["arena_registrar", "arena_coordinator", "arena_medic", "advertising_manager"], "allowed_weapon_categories": ["MELEE", "TRADITIONAL_RANGED"], "prohibited_weapon_categories": ["FIREARM", "MODERN_PROJECTILE"]}
 
 const PRODUCT_CATALOG := {
 	"shopping_tower_baghdad": [
@@ -160,6 +162,63 @@ const PRODUCT_CATALOG := {
 		{"id":"technology_cafe_energy_drink","name":"مشروب طاقة","price":32},
 		{"id":"technology_cafe_snack","name":"وجبة خفيفة","price":20}
 	],
+	"power_tower_baghdad": [
+		{"id":"training_sword","name":"سيف تدريب برونزي — رتبة F","price":180,"required_rank":"F","category":"MELEE_WEAPON","quality":"BRONZE","rarity":"COMMON","availability":"PERMANENT"},
+		{"id":"combat_knife","name":"خنجر صياد فضي — رتبة E","price":520,"required_rank":"E","category":"MELEE_WEAPON","quality":"SILVER","rarity":"COMMON","availability":"PERMANENT"},
+		{"id":"steel_sword","name":"سيف فولاذي فضي","price":950,"required_rank":"D","category":"MELEE_WEAPON","quality":"SILVER","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"hunter_spear","name":"رمح الصياد","price":780,"required_rank":"D","category":"MELEE_WEAPON","quality":"GOLD","rarity":"COMMON","availability":"PERMANENT"},
+		{"id":"battle_axe","name":"فأس قتالي ذهبي","price":820,"required_rank":"C","category":"MELEE_WEAPON","quality":"GOLD","rarity":"COMMON","availability":"PERMANENT"},
+		{"id":"composite_bow","name":"قوس مركب وسهام","price":1100,"required_rank":"C","category":"TRADITIONAL_RANGED","quality":"GOLD","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"long_sword","name":"سيف طويل ذهبي","price":1750,"required_rank":"C","category":"MELEE_WEAPON","quality":"GOLD","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"great_sword","name":"السيف العظيم الماسي","price":4200,"required_rank":"B","category":"MELEE_WEAPON","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"war_hammer","name":"مطرقة الحرب الماسية","price":1950,"required_rank":"C","category":"MELEE_WEAPON","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"dual_blades","name":"نصلان قتاليان","price":2300,"required_rank":"C","category":"MELEE_WEAPON","quality":"GOLD","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"crossbow","name":"قوس نشّاب تقليدي","price":2450,"required_rank":"B","category":"TRADITIONAL_RANGED","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"rank_a_nen_blade","name":"نصل الهالة — رتبة A","price":7200,"required_rank":"A","category":"MELEE_WEAPON","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"rank_s_royal_spear","name":"رمح الصياد الملكي — رتبة S","price":12500,"required_rank":"S","category":"MELEE_WEAPON","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"rank_ss_void_sword","name":"سيف الفراغ الأسطوري — رتبة SS","price":24000,"required_rank":"SS","category":"MELEE_WEAPON","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"rank_sss_system_blade","name":"نصل SYSTEM السيادي — رتبة SSS","price":48000,"required_rank":"SSS","category":"MELEE_WEAPON","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"reinforced_arrows","name":"سهام مقواة — حزمة برونزية","price":120,"category":"AMMUNITION","quality":"BRONZE","rarity":"COMMON","availability":"CONSUMABLE"},
+		{"id":"steel_arrows","name":"سهام فولاذية — حزمة فضية","price":350,"required_rank":"D","category":"AMMUNITION","quality":"SILVER","rarity":"COMMON","availability":"CONSUMABLE"},
+		{"id":"diamond_arrows","name":"سهام ماسية — حزمة نادرة","price":1200,"required_rank":"B","category":"AMMUNITION","quality":"DIAMOND","rarity":"RARE","availability":"CONSUMABLE"},
+		{"id":"hunter_shield","name":"درع صياد برونزي","price":420,"category":"DEFENSE","quality":"BRONZE","rarity":"COMMON","availability":"PERMANENT"},
+		{"id":"advanced_hunter_shield","name":"درع صياد معزز","price":2850,"required_rank":"B","category":"DEFENSE","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"rank_c_armor","name":"درع قتالي — رتبة C","price":2900,"required_rank":"C","category":"ARMOR","quality":"GOLD","rarity":"COMMON","availability":"PERMANENT"},
+		{"id":"rank_f_armor","name":"درع متدرّب — رتبة F","price":180,"required_rank":"F","category":"ARMOR","quality":"BRONZE","rarity":"COMMON","availability":"PERMANENT"},
+		{"id":"rank_ss_armor","name":"درع النجم الأسود — رتبة SS","price":26000,"required_rank":"SS","category":"ARMOR","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"rank_e_armor","name":"درع مبتدئ برونزي — رتبة E","price":350,"required_rank":"E","category":"ARMOR","quality":"BRONZE","rarity":"COMMON","availability":"PERMANENT"},
+		{"id":"rank_d_armor","name":"درع صياد فضي — رتبة D","price":1150,"required_rank":"D","category":"ARMOR","quality":"SILVER","rarity":"COMMON","availability":"PERMANENT"},
+		{"id":"rank_b_armor","name":"درع محارب ذهبي — رتبة B","price":4800,"required_rank":"B","category":"ARMOR","quality":"GOLD","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"rank_a_armor","name":"درع نخبة — رتبة A","price":7200,"required_rank":"A","category":"ARMOR","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"rank_s_armor","name":"درع النخبة العليا — رتبة S","price":9800,"required_rank":"S","category":"ARMOR","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"rank_sss_armor","name":"درع السيادة — رتبة SSS","price":18000,"required_rank":"SSS","category":"ARMOR","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"training_boots","name":"حذاء تدريب برونزي","price":140,"category":"FOOTWEAR","quality":"BRONZE","rarity":"COMMON","availability":"PERMANENT"},
+		{"id":"hunter_boots","name":"حذاء صياد فضي","price":650,"required_rank":"E","category":"FOOTWEAR","quality":"SILVER","rarity":"COMMON","availability":"PERMANENT"},
+		{"id":"rank_b_boots","name":"حذاء محارب ذهبي — رتبة B","price":2400,"required_rank":"B","category":"FOOTWEAR","quality":"GOLD","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"rank_a_boots","name":"حذاء نخبة ماسي — رتبة A","price":5200,"required_rank":"A","category":"FOOTWEAR","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"rank_sss_boots","name":"حذاء السيادة الماسي — رتبة SSS","price":12000,"required_rank":"SSS","category":"FOOTWEAR","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"hunter_pendant","name":"قلادة الصياد الفضية","price":850,"category":"ACCESSORY","quality":"SILVER","rarity":"COMMON","availability":"PERMANENT"},
+		{"id":"guardian_ring","name":"خاتم الحارس الذهبي","price":2100,"required_rank":"C","category":"ACCESSORY","quality":"GOLD","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"nen_aura_bracelet","name":"سوار هالة النِن","price":4800,"required_rank":"B","required_level":25,"required_nen_rank":2,"category":"ACCESSORY","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"hunter_badge","name":"شارة الصياد الرسمية","price":1200,"required_rank":"D","category":"ACCESSORY","quality":"GOLD","rarity":"COMMON","availability":"PERMANENT"},
+		{"id":"healing_elixir","name":"إكسير الشفاء","price":280,"category":"ELIXIR","quality":"BRONZE","rarity":"COMMON","availability":"CONSUMABLE"},
+		{"id":"energy_elixir","name":"إكسير الطاقة","price":360,"category":"ELIXIR","quality":"SILVER","rarity":"COMMON","availability":"CONSUMABLE"},
+		{"id":"strength_elixir","name":"إكسير القوة","price":420,"category":"ELIXIR","quality":"SILVER","rarity":"COMMON","availability":"CONSUMABLE"},
+		{"id":"nen_awakening_elixir","name":"إكسير إيقاظ النِن","price":1800,"required_rank":"D","required_level":15,"category":"NEN_ELIXIR","quality":"GOLD","rarity":"RARE","availability":"CONSUMABLE"},
+		{"id":"nen_control_elixir","name":"إكسير تطوير التحكم بالنِن","price":2600,"required_rank":"C","required_level":20,"required_nen_rank":1,"category":"NEN_ELIXIR","quality":"DIAMOND","rarity":"RARE","availability":"CONSUMABLE"},
+		{"id":"nen_focus_elixir","name":"إكسير تركيز النِن","price":2100,"required_rank":"D","required_level":20,"required_nen_rank":1,"category":"NEN_ELIXIR","quality":"DIAMOND","rarity":"RARE","availability":"CONSUMABLE"},
+		{"id":"rare_legendary_elixir","name":"الإكسير الأسطوري النادر","price":8500,"required_rank":"S","required_level":80,"required_nen_rank":5,"category":"NEN_ELIXIR","quality":"DIAMOND","rarity":"RARE","availability":"CONSUMABLE"},
+		{"id":"elite_legendary_elixir","name":"إكسير نخبة السيادة","price":12500,"required_rank":"SS","required_level":90,"required_nen_rank":5,"category":"NEN_ELIXIR","quality":"DIAMOND","rarity":"RARE","availability":"CONSUMABLE"},
+		{"id":"skill_manual_pulse_dash","name":"مخطوطة تقنية اندفاع النبضة","price":2500,"required_rank":"C","required_level":15,"required_nen_rank":1,"product_type":"skill_training_permit","skill_id":"pulse_dash","category":"SKILL","quality":"GOLD","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"skill_manual_aura_shield","name":"مخطوطة تقنية درع الهالة","price":4500,"required_rank":"B","required_level":20,"required_nen_rank":2,"product_type":"skill_training_permit","skill_id":"aura_shield","category":"SKILL","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"skill_manual_sensory_mark","name":"مخطوطة تقنية وسم الإدراك","price":6500,"required_rank":"B","required_level":25,"required_nen_rank":2,"product_type":"skill_training_permit","skill_id":"sensory_mark","category":"SKILL","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"skill_manual_flow_counter","name":"مخطوطة تقنية صد التدفق","price":9200,"required_rank":"A","required_level":35,"required_nen_rank":3,"product_type":"skill_training_permit","skill_id":"flow_counter","category":"SKILL","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"skill_manual_resonance_burst","name":"مخطوطة انفجار الرنين","price":14500,"required_rank":"S","required_level":50,"required_nen_rank":4,"product_type":"skill_training_permit","skill_id":"resonance_burst","category":"SKILL","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"skill_manual_sovereign_focus","name":"مخطوطة تركيز السيادة","price":22000,"required_rank":"SS","required_level":80,"required_nen_rank":5,"product_type":"skill_training_permit","skill_id":"sovereign_focus","category":"SKILL","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
+		{"id":"hunter_cafe_meal","name":"وجبة مقاتل متكاملة","price":38,"category":"CAFETERIA","quality":"BRONZE","rarity":"COMMON","availability":"CONSUMABLE"},
+		{"id":"hunter_cafe_coffee","name":"قهوة الكافتيريا","price":18,"category":"CAFETERIA","quality":"BRONZE","rarity":"COMMON","availability":"CONSUMABLE"},
+		{"id":"hunter_cafe_water","name":"ماء معدني","price":12,"category":"CAFETERIA","quality":"BRONZE","rarity":"COMMON","availability":"CONSUMABLE"}
+	],
 	"hunter_association_tower_baghdad": [
 		{"id":"mission_supply_pack","name":"حزمة تجهيز المهمات","price":160},
 		{"id":"hunter_medical_kit","name":"حقيبة إسعاف صياد","price":230},
@@ -205,7 +264,9 @@ var current_tower_id := ""
 var current_staff_id := ""
 var current_pool_service_suite: Node3D
 var credits := 1200
+var power_tower_fighter_reward_claims: Dictionary = {}
 var vendor_stock: Dictionary = {}
+var power_tower_appointments: Dictionary = {}
 var hotel_bookings: Dictionary = {}
 var current_hotel_room_id := ""
 var restaurant_orders: Dictionary = {}
@@ -287,9 +348,14 @@ func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_po
 		push_warning("SYSTEM tower operations: Baghdad tower landmarks unavailable.")
 		return
 	_load_wallet()
+	_load_power_tower_fighter_reward_claims()
 	if is_instance_valid(power_tower_manager) and power_tower_manager.has_method("set_spectator_wallet_provider"):
 		power_tower_manager.call("set_spectator_wallet_provider", self)
+	var power_competition_manager := get_tree().root.find_child("PowerTowerCompetitionManager", true, false)
+	if is_instance_valid(power_competition_manager) and power_competition_manager.has_method("configure_player_progression"):
+		power_competition_manager.call("configure_player_progression", progression)
 	_load_vendor_stock()
+	_load_power_tower_appointments()
 	_load_hotel_bookings()
 	_load_restaurant_orders()
 	_load_npc_sales_ledger()
@@ -1582,7 +1648,8 @@ func _build_power_tower_floor_schedule_text() -> String:
 				elite_floors.append(str(floor_number))
 			else:
 				standard_floors.append(str(floor_number))
-		chapter_lines.append("الطوابق %03d-%03d | عادي 1v1: %s | نخبة 1v1: %s | زعماء 1v1: %s" % [first_floor, last_floor, ",".join(standard_floors), ",".join(elite_floors), ",".join(boss_floors)])
+		var arena_count := int(power_tower_manager.call("get_arena_count_for_floor", first_floor)) if is_instance_valid(power_tower_manager) else 1
+		chapter_lines.append("الطوابق %03d-%03d | ساحات متاحة: %d | عادي 1v1: %s | نخبة 1v1: %s | زعماء 1v1: %s" % [first_floor, last_floor, arena_count, ",".join(standard_floors), ",".join(elite_floors), ",".join(boss_floors)])
 	return "جدول نزالات SYSTEM POWER TOWER — 200 طابق\nتسجيل رسمي ورقم مقاتل | 3 حكام: رئيسي، فني، سلامة\nضربة نظيفة 1 | حرجة 2 | إسقاط 1 | TKO عند 10 | KO / قرار حكام / انسحاب\n3 خسارات متتالية: هبوط درجة (10 طوابق) | 10 خسارات إجمالية: استبعاد وإعادة للطابق 1\n100+: أهلية غرفة خاصة | 200: أسلحة مسموحة ونزال السيادة النهائي\nكل المواجهات فردية 1 ضد 1 — لا فرق ولا قتال جماعي\n" + "\n".join(chapter_lines)
 
 
@@ -2097,6 +2164,13 @@ func open_tower(tower_id: String) -> void:
 	if tower_id == "power_tower_baghdad":
 		var power_status: Dictionary = power_tower_manager.call("get_tower_status") if is_instance_valid(power_tower_manager) else {}
 		status_label.text = "برج مستقل — 200 طابق | لاعب بشري ضد لاعب بشري 1 ضد 1 فقط\nأعلى طابق مكتمل: %d | الطابق التالي: %d\nكل خامس طابق مواجهة نخبة، وكل عاشر طابق مواجهة حامل اللقب؛ المطابقة عبر الإنترنت قيد الإعداد." % [int(power_status.get("highest_cleared_floor", 0)), int(power_status.get("next_floor", 1))]
+	if tower_id == "power_tower_baghdad":
+		_add_power_tower_appointment_controls()
+		var nen_discovery_button := Button.new()
+		nen_discovery_button.name = "PowerTowerNenDiscoveryButton"
+		nen_discovery_button.text = "مدرب اكتشاف النِن وتطوير التحكم"
+		nen_discovery_button.pressed.connect(_open_power_tower_nen_discovery)
+		content.add_child(nen_discovery_button)
 	if tower_id == "hunter_association_tower_baghdad":
 		var rank_board_button := Button.new()
 		rank_board_button.name = "HunterRankBoardButton"
@@ -2113,6 +2187,228 @@ func open_tower(tower_id: String) -> void:
 		nen_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		content.add_child(nen_note)
 	panel.show()
+
+
+func _get_power_tower_appointment_date(day_offset: int) -> Dictionary:
+	var date_data := Time.get_datetime_dict_from_system()
+	var year := int(date_data.get("year", 2026))
+	var month := int(date_data.get("month", 1))
+	var day := int(date_data.get("day", 1))
+	for _step in range(maxi(0, day_offset)):
+		day += 1
+		var days_in_month := [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+		var leap_year := year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+		if leap_year:
+			days_in_month[1] = 29
+		if day > int(days_in_month[month - 1]):
+			day = 1
+			month += 1
+			if month > 12:
+				month = 1
+				year += 1
+	return {"year": year, "month": month, "day": day}
+
+
+func _power_tower_date_key(date_data: Dictionary) -> String:
+	return "%04d-%02d-%02d" % [int(date_data.get("year", 0)), int(date_data.get("month", 0)), int(date_data.get("day", 0))]
+
+
+func _load_power_tower_appointments() -> void:
+	var config := ConfigFile.new()
+	if config.load(POWER_TOWER_APPOINTMENT_SAVE_PATH) == OK:
+		var saved: Variant = config.get_value("appointments", "bookings", {})
+		power_tower_appointments = saved.duplicate(true) if saved is Dictionary else {}
+	else:
+		power_tower_appointments = {}
+
+
+func _save_power_tower_appointments() -> void:
+	var config := ConfigFile.new()
+	config.set_value("appointments", "bookings", power_tower_appointments.duplicate(true))
+	config.save(POWER_TOWER_APPOINTMENT_SAVE_PATH)
+
+
+func _add_power_tower_appointment_controls() -> void:
+	var heading := Label.new()
+	heading.name = "PowerTowerAppointmentHeading"
+	heading.text = "OFFICIAL MATCH APPOINTMENTS — احجز موعد نزالك الفردي 1v1"
+	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(heading)
+
+	var date_selector := OptionButton.new()
+	date_selector.name = "PowerTowerAppointmentDate"
+	for day_offset in range(3):
+		var date_data := _get_power_tower_appointment_date(day_offset)
+		var date_key := _power_tower_date_key(date_data)
+		var date_label := "اليوم" if day_offset == 0 else ("غداً" if day_offset == 1 else "بعد غد")
+		date_selector.add_item("%s — %04d/%02d/%02d" % [date_label, int(date_data.get("year", 0)), int(date_data.get("month", 0)), int(date_data.get("day", 0))])
+		date_selector.set_item_metadata(date_selector.get_item_count() - 1, date_key)
+	content.add_child(date_selector)
+
+	var time_selector := OptionButton.new()
+	time_selector.name = "PowerTowerAppointmentTime"
+	for slot in POWER_TOWER_MATCH_SLOTS:
+		time_selector.add_item(str(slot))
+		time_selector.set_item_metadata(time_selector.get_item_count() - 1, str(slot))
+	content.add_child(time_selector)
+
+	var book_button := Button.new()
+	book_button.name = "BookPowerTowerMatchAppointment"
+	book_button.text = "تأكيد موعد النزال"
+	book_button.pressed.connect(func():
+		var date_key := str(date_selector.get_item_metadata(date_selector.selected))
+		var time_slot := str(time_selector.get_item_metadata(time_selector.selected))
+		_book_power_tower_appointment(date_key, time_slot)
+	)
+	content.add_child(book_button)
+
+	var note := Label.new()
+	note.text = "المواعيد المعروضة نموذج حفظ محلي على هذا الجهاز؛ لا تمثل حجزاً عبر الإنترنت أو مطابقة لاعب حقيقي حتى تفعيل خدمة الخادم."
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(note)
+	_refresh_power_tower_appointment_list()
+
+
+func _book_power_tower_appointment(date_key: String, time_slot: String) -> void:
+	if not POWER_TOWER_MATCH_SLOTS.has(time_slot):
+		_set_status("وقت الموعد غير صالح.")
+		return
+	var date_parts := date_key.split("-")
+	if date_parts.size() != 3:
+		_set_status("تاريخ الموعد غير صالح.")
+		return
+	var today := _power_tower_date_key(Time.get_datetime_dict_from_system())
+	if date_key < today:
+		_set_status("لا يمكن حجز موعد بتاريخ سابق.")
+		return
+	if date_key == today:
+		var current_time := Time.get_datetime_dict_from_system()
+		var slot_parts := time_slot.split(":")
+		var slot_minutes := int(slot_parts[0]) * 60 + int(slot_parts[1])
+		var now_minutes := int(current_time.get("hour", 0)) * 60 + int(current_time.get("minute", 0))
+		if slot_minutes <= now_minutes:
+			_set_status("هذا الموعد انتهى؛ اختر وقتاً لاحقاً.")
+			return
+	var appointment_id := date_key + "_" + time_slot.replace(":", "")
+	if power_tower_appointments.has(appointment_id):
+		_set_status("هذا الموعد محجوز بالفعل. اختر وقتاً آخر.")
+		return
+	for existing_value in power_tower_appointments.values():
+		var existing: Dictionary = existing_value
+		if str(existing.get("player_id", "")) == "local_player" and str(existing.get("status", "")) == "BOOKED":
+			_set_status("لديك موعد نزال قادم بالفعل؛ أكمل الموعد أو ألغِه قبل حجز موعد آخر.")
+			return
+	power_tower_appointments[appointment_id] = {
+		"appointment_id": appointment_id,
+		"player_id": "local_player",
+		"date": date_key,
+		"time": time_slot,
+		"status": "BOOKED",
+		"competition_format": "INDIVIDUAL_1V1",
+		"requested_floor": int(floor_selector.value) if is_instance_valid(floor_selector) else 1,
+		"booked_at_unix": int(Time.get_unix_time_from_system())
+	}
+	_save_power_tower_appointments()
+	_set_status("تم حفظ موعد نزالك الفردي %s الساعة %s محلياً." % [date_key, time_slot])
+	_refresh_power_tower_appointment_list()
+
+
+func _cancel_power_tower_appointment(appointment_id: String) -> void:
+	if not power_tower_appointments.has(appointment_id):
+		return
+	var appointment: Dictionary = power_tower_appointments[appointment_id]
+	if str(appointment.get("player_id", "")) != "local_player" or str(appointment.get("status", "")) != "BOOKED":
+		return
+	appointment["status"] = "CANCELLED"
+	power_tower_appointments[appointment_id] = appointment
+	_save_power_tower_appointments()
+	_set_status("تم إلغاء موعد النزال.")
+	_refresh_power_tower_appointment_list()
+
+
+func _refresh_power_tower_appointment_list() -> void:
+	if not is_instance_valid(content):
+		return
+	var old := content.get_node_or_null("PowerTowerAppointmentList")
+	if old != null:
+		old.queue_free()
+	var list := VBoxContainer.new()
+	list.name = "PowerTowerAppointmentList"
+	var heading := Label.new()
+	heading.text = "مواعيدك المسجلة"
+	list.add_child(heading)
+	var visible_count := 0
+	for appointment_value in power_tower_appointments.values():
+		var appointment: Dictionary = appointment_value
+		if str(appointment.get("player_id", "")) != "local_player":
+			continue
+		if str(appointment.get("status", "")) != "BOOKED":
+			continue
+		var entry := Label.new()
+		entry.text = "%s — %s | الطابق %d | 1v1 | %s" % [str(appointment.get("date", "")), str(appointment.get("time", "")), int(appointment.get("requested_floor", 1)), str(appointment.get("status", ""))]
+		list.add_child(entry)
+		var cancel_button := Button.new()
+		cancel_button.text = "إلغاء الموعد"
+		cancel_button.pressed.connect(_cancel_power_tower_appointment.bind(str(appointment.get("appointment_id", ""))))
+		list.add_child(cancel_button)
+		visible_count += 1
+	if visible_count == 0:
+		var empty := Label.new()
+		empty.text = "لا توجد مواعيد قادمة."
+		list.add_child(empty)
+	content.add_child(list)
+
+
+func _open_power_tower_nen_discovery() -> void:
+	_clear_dynamic_controls()
+	title_label.text = "X-S-X — معهد اكتشاف النِن"
+	var level := int(progression.get("current_level")) if is_instance_valid(progression) else 1
+	var unlocked := is_instance_valid(progression) and bool(progression.get("nen_unlocked"))
+	var nen_rank := int(progression.get("nen_control_rank")) if is_instance_valid(progression) else 0
+	var has_awakening_elixir := is_instance_valid(progression) and int(progression.call("get_item_count", "nen_awakening_elixir")) > 0
+	var rank_data: Dictionary = progression.call("get_hunter_rank_progress") if is_instance_valid(progression) and progression.has_method("get_hunter_rank_progress") else {}
+	var current_rank := str(rank_data.get("rank", "F"))
+	credits_label.text = "مستوى اللاعب: %d | رتبة الصياد: %s" % [level, current_rank]
+	if unlocked:
+		status_label.text = "النِن مستيقظ بالفعل. رتبة التحكم الحالية: %d/5. طوّر التحكم عبر المهمات الموثقة واستعمال تقنيات النِن." % nen_rank
+	else:
+		status_label.text = "يبدأ الإيقاظ بتدريب المرشد ثم استهلاك إكسير إيقاظ النِن. المتطلبات: مستوى 15، رتبة صياد D، والإكسير في الحقيبة."
+	var close_button := Button.new()
+	close_button.text = "العودة إلى برج القوة"
+	close_button.pressed.connect(func(): open_tower("power_tower_baghdad"))
+	content.add_child(close_button)
+	if not unlocked:
+		var awaken_button := Button.new()
+		awaken_button.name = "BeginPowerTowerNenAwakening"
+		awaken_button.text = "بدء تدريب وإيقاظ النِن"
+		awaken_button.disabled = level < 15 or not _meets_hunter_rank("D") or not has_awakening_elixir
+		awaken_button.pressed.connect(_begin_power_tower_nen_awakening)
+		content.add_child(awaken_button)
+		if not has_awakening_elixir:
+			var shop_note := Label.new()
+			shop_note.text = "اشترِ إكسير إيقاظ النِن من متجر برج القوة، ثم عد إلى المدرب."
+			content.add_child(shop_note)
+	else:
+		var practice_note := Label.new()
+		practice_note.text = "التدريب لا يرفع الرتبة بالشراء؛ سجّل استعمال المهارات وأكمل المهمات المؤهلة لزيادة التحكم."
+		practice_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		content.add_child(practice_note)
+	panel.show()
+
+
+func _begin_power_tower_nen_awakening() -> void:
+	if not is_instance_valid(progression) or not progression.has_method("consume_elixir"):
+		_set_status("نظام إيقاظ النِن غير متاح.")
+		return
+	if int(progression.get("current_level")) < 15 or not _meets_hunter_rank("D"):
+		_set_status("يتطلب إيقاظ النِن مستوى 15 ورتبة صياد D.")
+		return
+	var result: Dictionary = progression.call("consume_elixir", "nen_awakening_elixir")
+	if not bool(result.get("success", false)):
+		_set_status("تعذر إيقاظ النِن: " + str(result.get("reason", "تحقق من الإكسير والمتطلبات.")))
+		return
+	_set_status("تم إيقاظ النِن بنجاح. رتبة التحكم الأولية: 1/5.")
+	_open_power_tower_nen_discovery()
 
 
 func _open_hunter_rank_board() -> void:
@@ -2258,6 +2554,58 @@ func open_floor_services(tower_id: String, floor_number: int) -> void:
 		status_label.text = "خدمات %s — الطابق %d\n%s" % [str(config.get("title", "البرج")), floor_number, str(staff_node.get_meta("system_tower_staff_role", "service"))]
 
 
+func open_power_tower_combat_style_terminal() -> void:
+	if not is_instance_valid(power_tower_manager):
+		_set_status("نظام برج القوة غير متاح حالياً.")
+		return
+	var competition := get_tree().root.find_child("PowerTowerCompetitionManager", true, false)
+	if not is_instance_valid(competition) or not competition.has_method("get_combat_styles_for_floor"):
+		_set_status("لوحة أساليب القتال غير متاحة حالياً.")
+		return
+	var tower_status: Dictionary = power_tower_manager.call("get_tower_status")
+	var next_floor := clampi(int(tower_status.get("next_floor", 1)), 1, 200)
+	var allowed_styles: Array = competition.call("get_combat_styles_for_floor", next_floor)
+	_clear_dynamic_controls()
+	title_label.text = "X-S-X POWER TOWER — اختيار أسلوب القتال"
+	status_label.text = "الطابق القادم: %d | اختر أسلوباً مسموحاً في هذا المستوى." % next_floor
+	var explanation := Label.new()
+	explanation.text = "الأسلحة التقليدية والكونغ فو والفنون القتالية متاحة حتى الطابق 80. من الطابق 81 يصبح القتال بالنين فقط ويتطلب الرتبة 5 مع إخلاء خانة السلاح."
+	explanation.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(explanation)
+	var style_labels := {
+		"UNARMED_HAND_TO_HAND": "قتال بالأيدي",
+		"KUNG_FU": "كونغ فو",
+		"MARTIAL_ARTS": "فنون قتالية",
+		"TRADITIONAL_MELEE": "أسلحة بيضاء تقليدية",
+		"BOW_AND_ARROW": "القوس والنبال والسهام",
+		"NEN_TECHNIQUES": "تقنيات النِن"
+	}
+	for style_value in allowed_styles:
+		var style_id := str(style_value)
+		var style_button := Button.new()
+		style_button.text = str(style_labels.get(style_id, style_id))
+		style_button.pressed.connect(func():
+			var combat := get_tree().root.find_child("ModernWorldCombatSystem", true, false)
+			if not is_instance_valid(combat) or not combat.has_method("select_power_tower_combat_style"):
+				status_label.text = "نظام القتال غير متاح حالياً."
+				return
+			var selection: Dictionary = combat.call("select_power_tower_combat_style", style_id, allowed_styles)
+			if bool(selection.get("success", false)):
+				if is_instance_valid(player):
+					player.set_meta("system_power_tower_combat_style", style_id)
+				status_label.text = "تم اختيار أسلوب القتال: %s" % str(style_labels.get(style_id, style_id))
+				panel.hide()
+			else:
+				status_label.text = "لا يمكن اختيار هذا الأسلوب: " + str(selection.get("reason", "UNKNOWN"))
+		)
+		content.add_child(style_button)
+	var close_button := Button.new()
+	close_button.text = "إغلاق"
+	close_button.pressed.connect(func(): panel.hide())
+	content.add_child(close_button)
+	panel.show()
+
+
 func open_power_tower_ticket_terminal() -> void:
 	if not is_instance_valid(power_tower_manager) or not power_tower_manager.has_method("get_open_spectator_matches"):
 		return
@@ -2265,13 +2613,13 @@ func open_power_tower_ticket_terminal() -> void:
 	_clear_dynamic_controls()
 	title_label.text = "SYSTEM POWER TOWER — منصة توقعات الجمهور"
 	credits_label.text = "رصيدك الافتراضي: %d SYSTEM" % credits
-	status_label.text = "تذاكر افتراضية فقط | لا أموال حقيقية ولا سحب نقدي | اختر مقاتلاً واحداً من النزال"
+	status_label.text = "عملة SYSTEM افتراضية فقط — لا أموال حقيقية ولا سحب نقدي. اختر مقاتلاً واحداً من النزال."
 	var close_button := Button.new()
 	close_button.text = "إغلاق"
 	close_button.pressed.connect(func(): panel.hide())
 	content.add_child(close_button)
 	var disclaimer := Label.new()
-	disclaimer.text = "تُخصم قيمة التذكرة من رصيد SYSTEM الافتراضي. إذا صح توقعك تشارك في مجمع التذاكر، وإذا لم يصح تخسر قيمة التذكرة. عند عدم وجود توقع صحيح تُعاد التذاكر للجميع."
+	disclaimer.text = "تُخصم قيمة التذكرة من رصيد SYSTEM الافتراضي. من مجمل رهانات الطرف الخاسر: 10% إيراد للبرج، 10% مكافأة للمقاتل الفائز، و80% أرباح تُوزّع بالتناسب على المتراهنين الفائزين، مع إعادة أصل تذاكرهم. إذا لم يصح أي توقع، تُعاد جميع التذاكر دون اقتطاع. لا أموال حقيقية ولا سحب نقدي."
 	disclaimer.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content.add_child(disclaimer)
 	if open_matches.is_empty():
@@ -2394,7 +2742,7 @@ func _add_catalog_controls(tower_id: String) -> void:
 	scroll.add_child(catalog_controls)
 	var catalog: Array = PRODUCT_CATALOG.get(tower_id, [])
 	var heading := Label.new()
-	heading.text = "المعروض للبيع — بإشراف موظفي البرج"
+	heading.text = "المعروض للبيع — بإشراف موظفي البرج" if tower_id != "power_tower_baghdad" else "X-S-X EQUIPMENT & SKILL SHOP — أسلحة بيضاء فقط | لا أسلحة نارية حديثة"
 	catalog_controls.add_child(heading)
 	if catalog.is_empty():
 		var empty := Label.new()
@@ -2403,7 +2751,7 @@ func _add_catalog_controls(tower_id: String) -> void:
 		return
 	for product_value in catalog:
 		var product: Dictionary = product_value
-		if str(product.get("product_type", "")) == "skill_training_permit":
+		if str(product.get("product_type", "")) == "skill_training_permit" and tower_id != "power_tower_baghdad":
 			continue
 		var item_id := str(product["id"])
 		var item_name := str(product["name"])
@@ -2420,10 +2768,29 @@ func _add_catalog_controls(tower_id: String) -> void:
 			permit_check = progression.call("check_skill_training_permit", skill_id) if is_instance_valid(progression) and progression.has_method("check_skill_training_permit") else {"success": false}
 		var level_ok := not is_instance_valid(progression) or int(progression.get("current_level")) >= required_level
 		var nen_ok := required_nen_rank <= 0 or (is_instance_valid(progression) and bool(progression.get("nen_unlocked")) and int(progression.get("nen_control_rank")) >= required_nen_rank)
-		buy_button.text = "%s — %d رصيد | رتبة %s | مستوى %d | نِن %d | المخزون: %d" % [item_name, price, required_rank, required_level, required_nen_rank, stock]
+		var classification := _format_power_tower_product_classification(product)
+		buy_button.text = "%s%s — %d رصيد | رتبة %s | مستوى %d | نِن %d | المخزون: %d" % [item_name, classification, price, required_rank, required_level, required_nen_rank, stock]
 		buy_button.disabled = stock <= 0 or not _meets_hunter_rank(required_rank) or not level_ok or not nen_ok or not bool(permit_check.get("success", false))
 		buy_button.pressed.connect(_buy_product.bind(item_id, item_name, price, required_rank))
 		catalog_controls.add_child(buy_button)
+
+func _format_power_tower_product_classification(product: Dictionary) -> String:
+	if str(current_tower_id) != "power_tower_baghdad":
+		return ""
+	var quality := str(product.get("quality", ""))
+	var rarity := str(product.get("rarity", ""))
+	var availability := str(product.get("availability", ""))
+	var parts := PackedStringArray()
+	if not quality.is_empty():
+		parts.append(quality)
+	if not rarity.is_empty():
+		parts.append(rarity)
+	if availability == "CONSUMABLE":
+		parts.append("CONSUMABLE")
+	elif availability == "TEMPORARY":
+		parts.append("TEMPORARY")
+	return " | " + " / ".join(parts) if not parts.is_empty() else ""
+
 
 func _add_crafting_controls(tower_id: String) -> void:
 	if tower_id != "shopping_tower_baghdad" or not is_instance_valid(progression) or not progression.has_method("get_crafting_recipe_list"):
@@ -2646,7 +3013,7 @@ func open_showcase_product_service(tower_id: String, floor_number: int, facility
 	var preview := Label.new()
 	preview.name = "SelectedShowcaseProductPreview"
 	preview.set_meta("system_showcase_product_id", product_id)
-	preview.text = "معاينة المنتج: %s\nالسعر الحالي: %d رصيد SYSTEM | الرتبة المطلوبة: %s | المخزون: %d" % [product_name, _get_current_price(product_id), str(product_data.get("required_rank", "F")), get_vendor_stock(product_id)]
+	preview.text = "معاينة المنتج: %s\nالتصنيف: %s | الجودة: %s | الندرة: %s | الحالة: %s\nالسعر الحالي: %d رصيد SYSTEM | الرتبة المطلوبة: %s | المخزون: %d" % [product_name, str(product_data.get("category", "GENERAL")), str(product_data.get("quality", "—")), str(product_data.get("rarity", "—")), str(product_data.get("availability", "PERMANENT")), _get_current_price(product_id), str(product_data.get("required_rank", "F")), get_vendor_stock(product_id)]
 	preview.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content.add_child(preview)
 	content.move_child(preview, 1)
@@ -3422,6 +3789,27 @@ func _react_power_tower_audience(gallery: Node3D, mood: String) -> void:
 	if gallery == null:
 		return
 	gallery.set_meta("system_audience_reaction", mood)
+	var crowd_impostors := gallery.get_node_or_null("PowerTowerCrowdImpostors") as MultiMeshInstance3D
+	if crowd_impostors != null:
+		crowd_impostors.set_meta("system_audience_reaction", mood)
+		var crowd_material := crowd_impostors.material_override as StandardMaterial3D
+		if crowd_material != null:
+			var reaction_emission := Color(0.01, 0.035, 0.05)
+			var reaction_energy := 0.12
+			match mood:
+				"cheering":
+					reaction_emission = Color(0.02, 0.24, 0.34)
+					reaction_energy = 0.58
+				"celebrating":
+					reaction_emission = Color(0.52, 0.28, 0.045)
+					reaction_energy = 0.92
+			crowd_material.emission_enabled = true
+			crowd_material.emission = reaction_emission
+			crowd_material.emission_energy_multiplier = reaction_energy
+		crowd_impostors.set_meta("system_audience_reaction_instance_count", crowd_impostors.multimesh.instance_count if crowd_impostors.multimesh != null else 0)
+	var crowd_heads := gallery.get_node_or_null("PowerTowerCrowdImpostorHeads") as MultiMeshInstance3D
+	if crowd_heads != null:
+		crowd_heads.set_meta("system_audience_reaction", mood)
 	var audience_root := gallery.get_node_or_null("PowerTowerAudienceActors") as Node3D
 	if audience_root == null:
 		return
@@ -3435,7 +3823,7 @@ func _react_power_tower_audience(gallery: Node3D, mood: String) -> void:
 			arm_target = 0.82
 		elif mood == "celebrating":
 			arm_target = 1.22
-		var previous_tween: Variant = actor.get_meta("system_audience_reaction_tween", null)
+		var previous_tween: Variant = actor.get_meta("system_audience_reaction_tween", null) if actor.has_meta("system_audience_reaction_tween") else null
 		if previous_tween is Tween and (previous_tween as Tween).is_running():
 			(previous_tween as Tween).kill()
 		var cheer_tween := create_tween()
@@ -3756,10 +4144,12 @@ func _on_floor_emergency_exit_body_entered(body: Node3D, exit_sensor: Area3D) ->
 func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) -> void:
 	var data: Dictionary = power_tower_manager.call("get_floor_data", floor_number) if is_instance_valid(power_tower_manager) else {}
 	var arena_type := str(data.get("arena_type", "DUEL"))
+	var arena_count := int(data.get("arena_count", 1))
 	var rules := str(data.get("arena_rules", "مواجهة فردية 1 ضد 1"))
 	var theme_id := str(data.get("arena_theme_id", "IRON"))
 	var theme_name := str(data.get("arena_theme_name", "قاعة الحديد"))
 	room.set_meta("system_power_tower_arena_type", arena_type)
+	room.set_meta("system_power_tower_arena_count_for_floor", arena_count)
 	room.set_meta("system_power_tower_rules", rules)
 	room.set_meta("system_power_tower_competition_format", "INDIVIDUAL_1V1")
 	room.set_meta("system_power_tower_theme", theme_id)
@@ -3816,7 +4206,7 @@ func _create_power_arena_layout(room: Node3D, radius: float, floor_number: int) 
 		room.add_child(theme_pillar)
 	var arena_label := Label3D.new()
 	arena_label.name = "ArenaChallengeDisplay"
-	arena_label.text = "شاشة عرض المعركة — BATTLE DISPLAY\n%s\n%s | الطابق %d / 200 | الدرجة %02d\n%s\nالحكام: رئيسي + فني + سلامة\nنقاط: نظيفة 1 | حرجة 2 | إسقاط 1 | TKO عند 10\nالخسارة: 3 متتالية هبوط 10 طوابق | 10 إجمالية استبعاد" % [str(data.get("arena_name", "POWER ARENA")), theme_name, floor_number, int(data.get("division_number", 1)), rules]
+	arena_label.text = "شاشة عرض المعركة — BATTLE DISPLAY\n%s\n%s | الطابق %d / 200 | الدرجة %02d | الساحات المتاحة: %d\n%s\nالحكام: رئيسي + فني + سلامة\nنقاط: نظيفة 1 | حرجة 2 | إسقاط 1 | TKO عند 10\nالخسارة: 3 متتالية هبوط 10 طوابق | 10 إجمالية استبعاد" % [str(data.get("arena_name", "POWER ARENA")), theme_name, floor_number, int(data.get("division_number", 1)), arena_count, rules]
 	arena_label.position = Vector3(0.0, 5.4, -radius * 0.48)
 	arena_label.font_size = 22
 	arena_label.pixel_size = 0.014
@@ -4014,6 +4404,8 @@ func _create_power_tower_spectator_gallery(room: Node3D, radius: float) -> void:
 	gallery.name = "PowerTowerSpectatorGallery"
 	gallery.set_meta("system_spectator_gallery", true)
 	gallery.set_meta("system_competition_format", "INDIVIDUAL_1V1")
+	gallery.set_meta("system_audience_population_target", 500)
+	gallery.set_meta("system_audience_lod_mode", "8_DETAILED_RIGS_PLUS_492_SHARED_MULTIMESH_IMPOSTORS")
 	room.add_child(gallery)
 
 	var seat_material := StandardMaterial3D.new()
@@ -4101,7 +4493,7 @@ func _create_power_tower_spectator_gallery(room: Node3D, radius: float) -> void:
 
 	var gallery_label := Label3D.new()
 	gallery_label.name = "PowerTowerSpectatorGalleryLabel"
-	gallery_label.text = "SPECTATOR GALLERY — 48 SEATS\nمنطقة مشاهدة النزالات الفردية"
+	gallery_label.text = "SPECTATOR GALLERY — 500 FANS | 48 RESERVED SEATS\nمنطقة مشاهدة النزالات الفردية"
 	gallery_label.position = Vector3(0.0, 4.2, -radius * 0.60)
 	gallery_label.font_size = 18
 	gallery_label.pixel_size = 0.012
@@ -4111,6 +4503,7 @@ func _create_power_tower_spectator_gallery(room: Node3D, radius: float) -> void:
 	audience_root.name = "PowerTowerAudienceActors"
 	audience_root.set_meta("system_audience_actor_count", 8)
 	gallery.add_child(audience_root)
+	_build_power_tower_audience_impostors(gallery, radius)
 	var audience_palette := [
 		Color(0.12, 0.55, 0.72), Color(0.78, 0.38, 0.20),
 		Color(0.36, 0.66, 0.42), Color(0.55, 0.38, 0.78),
@@ -4167,6 +4560,12 @@ func _create_power_tower_spectator_gallery(room: Node3D, radius: float) -> void:
 			arm_mesh.material_override = torso_material
 			arm_pivot.add_child(arm_mesh)
 			audience_actor.add_child(arm_pivot)
+	audience_root.set_meta("system_audience_full_rig_count", 8)
+	audience_root.set_meta("system_audience_impostor_count", 492)
+	audience_root.set_meta("system_audience_shared_lod_count", 492)
+	gallery.set_meta("system_audience_impostor_count", 492)
+	gallery.set_meta("system_audience_population_count", 500)
+	room.set_meta("system_power_tower_audience_population", 500)
 	var seat_summary := Label3D.new()
 	seat_summary.name = "PowerTowerSeatAvailability"
 	seat_summary.position = Vector3(0.0, 3.3, radius * 0.72)
@@ -4220,6 +4619,83 @@ func _create_power_tower_spectator_gallery(room: Node3D, radius: float) -> void:
 	gallery.set_meta("system_spectator_seat_count", seat_count)
 	_refresh_power_tower_spectator_seat_summary(gallery)
 	room.set_meta("system_power_tower_spectator_seat_count", seat_count)
+
+
+func _build_power_tower_audience_impostors(gallery: Node3D, radius: float) -> void:
+	if gallery == null or gallery.get_node_or_null("PowerTowerCrowdImpostors") != null:
+		return
+	var impostor_count := 492
+	var sides := 4
+	var rows_per_side := 3
+	var columns_per_side := 41
+	var body_mesh := CapsuleMesh.new()
+	body_mesh.radius = 0.24
+	body_mesh.height = 1.18
+	var body_multi := MultiMesh.new()
+	body_multi.transform_format = MultiMesh.TRANSFORM_3D
+	body_multi.use_colors = true
+	body_multi.mesh = body_mesh
+	body_multi.instance_count = impostor_count
+	var head_mesh := SphereMesh.new()
+	head_mesh.radius = 0.155
+	head_mesh.height = 0.31
+	var head_multi := MultiMesh.new()
+	head_multi.transform_format = MultiMesh.TRANSFORM_3D
+	head_multi.use_colors = true
+	head_multi.mesh = head_mesh
+	head_multi.instance_count = impostor_count
+	var audience_colors := [
+		Color(0.12, 0.42, 0.62), Color(0.62, 0.22, 0.16),
+		Color(0.16, 0.48, 0.30), Color(0.42, 0.28, 0.62),
+		Color(0.68, 0.48, 0.14), Color(0.16, 0.48, 0.50),
+		Color(0.58, 0.22, 0.38), Color(0.34, 0.42, 0.54)
+	]
+	for index in range(impostor_count):
+		var side := index / (rows_per_side * columns_per_side)
+		var side_slot := index % (rows_per_side * columns_per_side)
+		var row := side_slot / columns_per_side
+		var column := side_slot % columns_per_side
+		var angle := TAU * float(side) / float(sides)
+		var outward := Vector3(cos(angle), 0.0, sin(angle))
+		var tangent := Vector3(-outward.z, 0.0, outward.x)
+		var row_radius := radius * 0.55 + 4.6 + float(row) * 1.35
+		var lateral_offset := (float(column) - 20.0) * 1.02
+		var body_position := outward * row_radius + tangent * lateral_offset
+		body_position.y = 0.82 + float(row) * 0.34
+		var facing := Basis(Vector3.UP, atan2(-outward.x, -outward.z))
+		body_multi.set_instance_transform(index, Transform3D(facing, body_position))
+		var head_position := body_position + Vector3.UP * 0.78
+		head_multi.set_instance_transform(index, Transform3D(facing, head_position))
+		var audience_color: Color = audience_colors[index % audience_colors.size()]
+		body_multi.set_instance_color(index, audience_color)
+		head_multi.set_instance_color(index, Color(0.72, 0.54, 0.42))
+	var body_material := StandardMaterial3D.new()
+	body_material.albedo_color = Color.WHITE
+	body_material.vertex_color_use_as_albedo = true
+	body_material.roughness = 0.84
+	body_material.emission_enabled = true
+	body_material.emission = Color(0.01, 0.035, 0.05)
+	body_material.emission_energy_multiplier = 0.12
+	var heads_material := StandardMaterial3D.new()
+	heads_material.albedo_color = Color.WHITE
+	heads_material.vertex_color_use_as_albedo = true
+	heads_material.roughness = 0.9
+	var bodies := MultiMeshInstance3D.new()
+	bodies.name = "PowerTowerCrowdImpostors"
+	bodies.multimesh = body_multi
+	bodies.material_override = body_material
+	bodies.set_meta("system_audience_lod_count", impostor_count)
+	bodies.set_meta("system_audience_reaction", "watching")
+	gallery.add_child(bodies)
+	var heads := MultiMeshInstance3D.new()
+	heads.name = "PowerTowerCrowdImpostorHeads"
+	heads.multimesh = head_multi
+	heads.material_override = heads_material
+	heads.set_meta("system_audience_lod_count", impostor_count)
+	heads.set_meta("system_audience_reaction", "watching")
+	gallery.add_child(heads)
+	gallery.set_meta("system_audience_impostor_count", impostor_count)
+	gallery.set_meta("system_audience_lod_layout", "4_SIDES_X_3_ROWS_X_41_COLUMNS")
 
 
 func _department_for_floor(tower_id: String, floor_number: int, total: int) -> String:
@@ -8766,6 +9242,9 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 	if floor_number < 1 or floor_number > int(config["floors"]):
 		_set_status("رقم الطابق خارج حدود البرج.")
 		return
+	if tower_id == "power_tower_baghdad" and floor_number >= 81 and (not is_instance_valid(progression) or not bool(progression.get("nen_unlocked")) or int(progression.get("nen_control_rank")) < 5):
+		_set_status("الطوابق 81–200 تتطلب إيقاظ النِن وإتقان الهالة حتى الرتبة 5. أكمل تدريب النِن في قاعة البرج أولاً.")
+		return
 	var room := _ensure_floor_room(tower_id, floor_number)
 	if room == null:
 		_set_status("تعذر تجهيز الطابق.")
@@ -8792,6 +9271,11 @@ func _travel_to_floor(tower_id: String, floor_number: int) -> void:
 			_set_status("تعذر بدء التحدي: " + str(request.get("reason", "غير معروف")))
 			return
 		active_power_floor_data = request.get("floor_data", {})
+		var competition_manager := get_tree().root.find_child("PowerTowerCompetitionManager", true, false)
+		if is_instance_valid(competition_manager) and competition_manager.has_method("get_combat_styles_for_floor"):
+			active_power_floor_data["available_combat_styles"] = competition_manager.call("get_combat_styles_for_floor", floor_number)
+			player.set_meta("system_power_tower_available_combat_styles", active_power_floor_data["available_combat_styles"])
+			player.set_meta("system_power_tower_nen_required", floor_number >= 81)
 		power_floor_entry_pending = true
 		power_floor_in_progress = false
 		active_power_tower_match.clear()
@@ -8874,6 +9358,8 @@ func begin_verified_power_tower_pvp_match(match_data: Dictionary, local_player_i
 	var match_id := str(match_data.get("match_id", "")).strip_edges()
 	var opponent_player_id := str(match_data.get("opponent_player_id", "")).strip_edges()
 	local_player_id = local_player_id.strip_edges()
+	if is_instance_valid(player):
+		player.set_meta("system_player_id", local_player_id)
 	if match_id.is_empty() or local_player_id.is_empty() or opponent_player_id.is_empty() or local_player_id == opponent_player_id:
 		return {"success": false, "reason": "INVALID_HUMAN_FIGHTER_IDENTITIES"}
 	var existing_match: Dictionary = power_tower_manager.call("get_spectator_match", match_id)
@@ -8892,6 +9378,9 @@ func begin_verified_power_tower_pvp_match(match_data: Dictionary, local_player_i
 	var judged_duel_registration: Dictionary = power_tower_manager.call("register_judged_duel", match_id, local_player_id, opponent_player_id, floor_number, local_player_id)
 	if not bool(judged_duel_registration.get("success", false)):
 		return judged_duel_registration
+	var fan_prediction_result: Dictionary = power_tower_manager.call("populate_power_tower_npc_predictions", match_id, 500)
+	if not bool(fan_prediction_result.get("success", false)):
+		return fan_prediction_result
 	var lock_result: Dictionary = power_tower_manager.call("lock_spectator_predictions", match_id)
 	if not bool(lock_result.get("success", false)):
 		return lock_result
@@ -8997,6 +9486,136 @@ func _fail_power_floor(reason: String) -> void:
 	if is_instance_valid(active_power_objective_label):
 		active_power_objective_label.text = "انتهت المحاولة — أعد المحاولة من المصعد"
 	_set_status("لم تكتمل المواجهة البشرية: " + reason + " لم تُمنح مكافأة الطابق.")
+
+
+func interact_power_tower_nen_training(target: Node) -> Dictionary:
+	if str(target.get_meta("system_tower_id", "power_tower_baghdad")) != "power_tower_baghdad":
+		return {"success": false, "reason": "WRONG_TOWER"}
+	if not is_instance_valid(progression) or not progression.has_method("get_power_tower_nen_training_status"):
+		_set_status("نظام تدريب النِن غير متاح حالياً.")
+		return {"success": false, "reason": "PLAYER_PROGRESSION_UNAVAILABLE"}
+	if not is_instance_valid(power_tower_manager):
+		return {"success": false, "reason": "POWER_TOWER_MANAGER_UNAVAILABLE"}
+	var competition := get_tree().root.find_child("PowerTowerCompetitionManager", true, false)
+	if not is_instance_valid(competition):
+		return {"success": false, "reason": "NEN_TRAINING_HALL_UNAVAILABLE"}
+	if competition.has_method("configure_player_progression"):
+		competition.call("configure_player_progression", progression)
+	var tower_status: Dictionary = power_tower_manager.call("get_tower_status")
+	var highest_cleared := clampi(int(tower_status.get("highest_cleared_floor", 0)), 0, 200)
+	var training_floor := clampi(int(tower_status.get("next_floor", 1)), 1, 200)
+	var nen_rank := int(progression.get("nen_control_rank"))
+	if not bool(progression.get("nen_unlocked")):
+		training_floor = mini(training_floor, 20)
+	elif nen_rank <= 1:
+		if highest_cleared < 20:
+			_set_status("أكمل الطوابق حتى 20 أولاً، ثم ارجع لتعلم TEN.")
+			return {"success": false, "reason": "FLOOR_20_CLEAR_REQUIRED"}
+		training_floor = 21
+	elif nen_rank == 2:
+		if highest_cleared < 40:
+			_set_status("أكمل الطوابق حتى 40 أولاً، ثم ارجع لتعلم REN.")
+			return {"success": false, "reason": "FLOOR_40_CLEAR_REQUIRED"}
+		training_floor = 41
+	elif nen_rank == 3:
+		if highest_cleared < 60:
+			_set_status("أكمل الطوابق حتى 60 أولاً، ثم ارجع لتعلم ZETSU.")
+			return {"success": false, "reason": "FLOOR_60_CLEAR_REQUIRED"}
+		training_floor = 61
+	elif nen_rank == 4:
+		if highest_cleared < 80:
+			_set_status("أكمل الطوابق حتى 80 أولاً، ثم ارجع لإتقان HATSU.")
+			return {"success": false, "reason": "FLOOR_80_CLEAR_REQUIRED"}
+		training_floor = 81
+	elif highest_cleared >= 150:
+		var nen_stage_sessions: Dictionary = progression.get("power_tower_nen_stage_sessions")
+		training_floor = 151 if int(nen_stage_sessions.get("ADVANCED_NEN", 0)) >= 3 else 101
+	elif highest_cleared >= 100:
+		training_floor = 101
+	else:
+		_set_status("أكمل الطوابق حتى 100 قبل تدريب النِن المتقدم.")
+		return {"success": false, "reason": "FLOOR_100_CLEAR_REQUIRED"}
+	var nen_stage: Dictionary = competition.call("get_nen_stage_for_floor", training_floor)
+	var stage_id := str(nen_stage.get("stage", "DISCOVERY"))
+	var technique := "AURA_AWARENESS"
+	match stage_id:
+		"TEN_CONTROL": technique = "TEN"
+		"REN_OUTPUT": technique = "REN"
+		"ZETSU_CONTROL": technique = "ZETSU"
+		"HATSU_FOUNDATION", "ADVANCED_NEN", "NEN_MASTERY": technique = "HATSU"
+	var training_status: Dictionary = progression.call("get_power_tower_nen_training_status")
+	var session_number := int(training_status.get("training_sessions", 0)) + 1
+	var fighter_id := str(player.get_meta("system_player_id", "PLAYER")) if is_instance_valid(player) else "PLAYER"
+	var training_id := "power_tower_nen_%s_%03d" % [fighter_id, session_number]
+	var result: Dictionary = competition.call("train_player_nen", training_id, training_floor, technique)
+	if bool(result.get("success", false)):
+		_set_status("تمرين النِن مكتمل!\nالأسلوب: %s | مستوى التحكم: %d/5\nالجلسات: %d" % [technique, int(result.get("nen_control_rank", 0)), int(result.get("training_sessions", 0))])
+	else:
+		_set_status("تعذر إكمال تدريب النِن: " + str(result.get("reason", "غير معروف")))
+	return result
+
+
+func _load_power_tower_fighter_reward_claims() -> void:
+	var config := ConfigFile.new()
+	if config.load("user://system_power_tower_fighter_rewards.cfg") != OK:
+		power_tower_fighter_reward_claims = {}
+		return
+	var saved: Variant = config.get_value("fighter_rewards", "claims", {})
+	power_tower_fighter_reward_claims = saved.duplicate(true) if saved is Dictionary else {}
+
+
+func _save_power_tower_fighter_reward_claims() -> void:
+	var config := ConfigFile.new()
+	config.set_value("fighter_rewards", "claims", power_tower_fighter_reward_claims.duplicate(true))
+	var error := config.save("user://system_power_tower_fighter_rewards.cfg")
+	if error != OK:
+		push_warning("SYSTEM: Power Tower fighter reward ledger could not be saved.")
+
+
+func record_power_tower_fighter_reward(fighter_id: String, amount: int, match_id: String) -> Dictionary:
+	fighter_id = fighter_id.strip_edges()
+	match_id = match_id.strip_edges()
+	if fighter_id.is_empty() or match_id.is_empty() or amount <= 0:
+		return {"success": false, "reason": "INVALID_FIGHTER_REWARD"}
+	var fighter_record: Dictionary = power_tower_fighter_reward_claims.get(fighter_id, {"balance": 0, "matches": {}, "claimed_total": 0})
+	var match_records: Dictionary = fighter_record.get("matches", {})
+	if match_records.has(match_id):
+		return {"success": false, "reason": "FIGHTER_REWARD_ALREADY_RECORDED"}
+	match_records[match_id] = amount
+	fighter_record["matches"] = match_records
+	fighter_record["balance"] = int(fighter_record.get("balance", 0)) + amount
+	power_tower_fighter_reward_claims[fighter_id] = fighter_record
+	_save_power_tower_fighter_reward_claims()
+	var local_fighter_id := str(player.get_meta("system_player_id", "PLAYER")) if is_instance_valid(player) else "PLAYER"
+	if fighter_id == local_fighter_id or (fighter_id == "PLAYER" and local_fighter_id == "PLAYER"):
+		var claimed := claim_power_tower_fighter_rewards(fighter_id)
+		return {"success": bool(claimed.get("success", false)), "auto_claimed": true, "amount": int(claimed.get("amount", 0))}
+	return {"success": true, "pending_claim": true, "balance": int(fighter_record["balance"])}
+
+
+func get_power_tower_fighter_reward_balance(fighter_id: String) -> int:
+	var fighter_record: Dictionary = power_tower_fighter_reward_claims.get(fighter_id.strip_edges(), {})
+	return maxi(0, int(fighter_record.get("balance", 0)))
+
+
+func claim_power_tower_fighter_rewards(fighter_id: String) -> Dictionary:
+	fighter_id = fighter_id.strip_edges()
+	var local_fighter_id := str(player.get_meta("system_player_id", "PLAYER")) if is_instance_valid(player) else "PLAYER"
+	if fighter_id.is_empty() or fighter_id != local_fighter_id:
+		return {"success": false, "reason": "FIGHTER_IDENTITY_MISMATCH"}
+	var fighter_record: Dictionary = power_tower_fighter_reward_claims.get(fighter_id, {})
+	var amount := maxi(0, int(fighter_record.get("balance", 0)))
+	if amount <= 0:
+		return {"success": false, "reason": "NO_PENDING_FIGHTER_REWARD"}
+	credits += amount
+	_save_wallet()
+	fighter_record["balance"] = 0
+	fighter_record["claimed_total"] = int(fighter_record.get("claimed_total", 0)) + amount
+	power_tower_fighter_reward_claims[fighter_id] = fighter_record
+	_save_power_tower_fighter_reward_claims()
+	if is_instance_valid(credits_label):
+		credits_label.text = "رصيدك: %d رصيد SYSTEM" % credits
+	return {"success": true, "amount": amount, "currency": "SYSTEM_CREDITS"}
 
 
 func grant_power_tower_credits(reward_amount: int) -> int:
