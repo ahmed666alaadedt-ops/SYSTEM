@@ -1894,6 +1894,9 @@ func _run() -> void:
 	if not skill_progression.has_method("activate_rare_power_ability"):
 		_fail("Power Tower rare ability activation API is missing.")
 		return
+	if not skill_progression.has_method("_create_rare_power_ability_buttons") or not skill_progression.has_method("_get_learned_rare_power_abilities"):
+		_fail("Player HUD controls for learned rare Power Tower abilities are missing.")
+		return
 	for rare_skill_id in power_rare_ability_checks:
 		if not power_skill_tree.has(rare_skill_id):
 			_fail("Power Tower rare ability missing from progression tree: " + rare_skill_id)
