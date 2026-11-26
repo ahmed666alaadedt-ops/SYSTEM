@@ -272,6 +272,19 @@ fun SystemApp(account: SystemFirebaseAccount) {
                                         onSelectWorld = { world ->
                                             selectedWorld = world
                                             showWorldSelection = false
+                                        },
+                                        onOpenThreeDSelection = {
+                                            val intent = SystemGodotRuntimeContract.createWorldIntent(
+                                                context,
+                                                SystemGodotActivity::class.java,
+                                                SystemGodotRuntimeContract.WorldRequest(
+                                                    worldId = SystemGodotRuntimeContract.WorldId.SELECTION,
+                                                    accountUid = userId
+                                                )
+                                            )
+                                            context.startActivity(
+                                                intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                            )
                                         }
                                     )
                                 } else if (selectedWorld == "mythology") {
@@ -698,7 +711,8 @@ fun SystemWorldBanner(onClick: () -> Unit) {
 @Composable
 fun WorldSelectionScreen(
     onBack: () -> Unit,
-    onSelectWorld: (String) -> Unit
+    onSelectWorld: (String) -> Unit,
+    onOpenThreeDSelection: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -708,6 +722,19 @@ fun WorldSelectionScreen(
     ) {
         Button(onClick = onBack) {
             Text("رجوع")
+        }
+
+        Spacer(Modifier.height(10.dp))
+
+        Button(
+            onClick = onOpenThreeDSelection,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF1A7894),
+                contentColor = Color.White
+            )
+        ) {
+            Text("عرض ميار ثلاثية الأبعاد والبوابات الأربع")
         }
 
         Spacer(Modifier.height(10.dp))
