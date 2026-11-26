@@ -1916,7 +1916,7 @@ func _run() -> void:
 	if not skill_progression.has_method("practice_system_skill") or skill_progression.call("get_system_skill_tree").size() != 18:
 		_fail("Persistent original SYSTEM skill tree is missing or incomplete.")
 		return
-	var skill_snapshot := {"level":skill_progression.get("current_level"),"points":skill_progression.get("verified_hunter_mission_points"),"learned":skill_progression.get("learned_system_skills").duplicate(),"authorized":skill_progression.get("authorized_system_skills").duplicate(),"practice":skill_progression.get("system_skill_practice").duplicate(true),"mastery":skill_progression.get("system_skill_mastery").duplicate(true),"cooldowns":skill_progression.get("system_skill_cooldowns").duplicate(true),"weapon_mastery":skill_progression.get("weapon_mastery").duplicate(true),"energy":skill_progression.get("current_system_energy"),"nen_unlocked":skill_progression.get("nen_unlocked"),"nen_control_rank":skill_progression.get("nen_control_rank"),"nen_foundation_practice":skill_progression.get("nen_foundation_practice").duplicate(true),"nen_affinity":skill_progression.get("nen_affinity"),"inventory":skill_progression.get("inventory_items").duplicate(true),"credits":operations.get("credits"),"vendor_stock":operations.get("vendor_stock").duplicate(true),"equipment_slots":skill_progression.get("equipment_slots").duplicate(true)}
+	var skill_snapshot := {"level":skill_progression.get("current_level"),"points":skill_progression.get("verified_hunter_mission_points"),"learned":skill_progression.get("learned_system_skills").duplicate(),"authorized":skill_progression.get("authorized_system_skills").duplicate(),"practice":skill_progression.get("system_skill_practice").duplicate(true),"mastery":skill_progression.get("system_skill_mastery").duplicate(true),"cooldowns":skill_progression.get("system_skill_cooldowns").duplicate(true),"weapon_mastery":skill_progression.get("weapon_mastery").duplicate(true),"energy":skill_progression.get("current_system_energy"),"nen_unlocked":skill_progression.get("nen_unlocked"),"nen_control_rank":skill_progression.get("nen_control_rank"),"nen_foundation_practice":skill_progression.get("nen_foundation_practice").duplicate(true),"nen_affinity":skill_progression.get("nen_affinity"),"skill_drop_claim_ids":skill_progression.get("skill_drop_claim_ids").duplicate(),"nen_skill_use_count":skill_progression.get("nen_skill_use_count"),"inventory":skill_progression.get("inventory_items").duplicate(true),"credits":operations.get("credits"),"vendor_stock":operations.get("vendor_stock").duplicate(true),"equipment_slots":skill_progression.get("equipment_slots").duplicate(true)}
 	skill_progression.set("current_level", 3)
 	skill_progression.set("verified_hunter_mission_points", 100)
 	var weapon_training: Dictionary = skill_progression.call("record_weapon_training", "sword", "validator_sword_drill")
@@ -2037,6 +2037,23 @@ func _run() -> void:
 	if not skill_progression.get("learned_system_skills").has("pulse_dash"):
 		_fail("Pulse Dash did not require and complete three verified sessions after permit purchase.")
 		return
+	# A qualified A-rank boss gate can grant a rare Nen skill permit without a shop purchase.
+	skill_progression.set("current_level", 40)
+	skill_progression.set("verified_hunter_mission_points", 1500)
+	skill_progression.set("nen_control_rank", 3)
+	skill_progression.set("nen_skill_use_count", 10)
+	var lightning_drop: Dictionary = skill_progression.call("grant_skill_training_permit_from_drop", "lightning_mantle", "validator_boss_drop_lightning_001", "A")
+	if not bool(lightning_drop.get("success", false)) or not skill_progression.get("authorized_system_skills").has("lightning_mantle"):
+		_fail("Eligible A-rank monster/boss loot did not grant the Lightning Mantle training permit: " + str(lightning_drop.get("reason", "UNKNOWN")))
+		return
+	var duplicate_lightning_drop: Dictionary = skill_progression.call("grant_skill_training_permit_from_drop", "lightning_mantle", "validator_boss_drop_lightning_001", "A")
+	if bool(duplicate_lightning_drop.get("success", true)) or str(duplicate_lightning_drop.get("reason", "")) != "DROP_ALREADY_CLAIMED":
+		_fail("Monster skill drops accepted a duplicate reward identifier.")
+		return
+	var under_rank_lightning_drop: Dictionary = skill_progression.call("grant_skill_training_permit_from_drop", "lightning_mantle", "validator_boss_drop_lightning_low", "B")
+	if bool(under_rank_lightning_drop.get("success", true)) or str(under_rank_lightning_drop.get("reason", "")) != "GATE_RANK_TOO_LOW":
+		_fail("A lower-rank monster gate granted an A-rank rare skill permit.")
+		return
 	skill_progression.set("current_level", 20)
 	skill_progression.set("verified_hunter_mission_points", 850)
 	skill_progression.set("nen_control_rank", 2)
@@ -2052,7 +2069,7 @@ func _run() -> void:
 	skill_progression.call("save_progress")
 	skill_progression.set("learned_system_skills", [])
 	skill_progression.call("load_progress")
-	if not skill_progression.get("learned_system_skills").has("guard_breaker") or not skill_progression.get("learned_system_skills").has("pulse_dash") or not skill_progression.get("authorized_system_skills").has("pulse_dash") or not bool(skill_progression.call("get_nen_foundation_status").get("all_complete", false)) or str(skill_progression.get("nen_affinity")) != "enhancement":
+	if not skill_progression.get("learned_system_skills").has("guard_breaker") or not skill_progression.get("learned_system_skills").has("pulse_dash") or not skill_progression.get("authorized_system_skills").has("pulse_dash") or not skill_progression.get("authorized_system_skills").has("lightning_mantle") or not bool(skill_progression.call("get_nen_foundation_status").get("all_complete", false)) or str(skill_progression.get("nen_affinity")) != "enhancement" or not skill_progression.get("skill_drop_claim_ids").has("validator_boss_drop_lightning_001"):
 		_fail("SYSTEM learned skills and purchased training permits did not persist across save/load.")
 		return
 	skill_progression.set("current_level", skill_snapshot["level"])
@@ -2067,6 +2084,8 @@ func _run() -> void:
 	skill_progression.set("nen_control_rank", skill_snapshot["nen_control_rank"])
 	skill_progression.set("nen_foundation_practice", skill_snapshot["nen_foundation_practice"])
 	skill_progression.set("nen_affinity", skill_snapshot["nen_affinity"])
+	skill_progression.set("skill_drop_claim_ids", skill_snapshot["skill_drop_claim_ids"])
+	skill_progression.set("nen_skill_use_count", skill_snapshot["nen_skill_use_count"])
 	skill_progression.set("inventory_items", skill_snapshot["inventory"])
 	skill_progression.set("equipment_slots", skill_snapshot["equipment_slots"])
 	skill_progression.call("save_progress")
