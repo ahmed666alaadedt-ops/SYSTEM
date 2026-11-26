@@ -186,7 +186,7 @@ const PRODUCT_CATALOG := {
 		{"id":"rank_c_armor","name":"درع قتالي — رتبة C","price":2900,"required_rank":"C","category":"ARMOR","quality":"GOLD","rarity":"COMMON","availability":"PERMANENT"},
 		{"id":"rank_f_armor","name":"درع متدرّب — رتبة F","price":180,"required_rank":"F","category":"ARMOR","quality":"BRONZE","rarity":"COMMON","availability":"PERMANENT"},
 		{"id":"rank_ss_armor","name":"درع النجم الأسود — رتبة SS","price":26000,"required_rank":"SS","category":"ARMOR","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
-		{"id":"rank_e_armor","name":"درع مبتدئ برونزي — رتبة E","price":350,"category":"ARMOR","quality":"BRONZE","rarity":"COMMON","availability":"PERMANENT"},
+		{"id":"rank_e_armor","name":"درع مبتدئ برونزي — رتبة E","price":350,"required_rank":"E","category":"ARMOR","quality":"BRONZE","rarity":"COMMON","availability":"PERMANENT"},
 		{"id":"rank_d_armor","name":"درع صياد فضي — رتبة D","price":1150,"required_rank":"D","category":"ARMOR","quality":"SILVER","rarity":"COMMON","availability":"PERMANENT"},
 		{"id":"rank_b_armor","name":"درع محارب ذهبي — رتبة B","price":4800,"required_rank":"B","category":"ARMOR","quality":"GOLD","rarity":"RARE","availability":"PERMANENT"},
 		{"id":"rank_a_armor","name":"درع نخبة — رتبة A","price":7200,"required_rank":"A","category":"ARMOR","quality":"DIAMOND","rarity":"RARE","availability":"PERMANENT"},
