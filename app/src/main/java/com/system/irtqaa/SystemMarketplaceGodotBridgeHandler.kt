@@ -53,6 +53,7 @@ class SystemMarketplaceGodotBridgeHandler(
                             .put("rarity", listing.rarity)
                             .put("condition", listing.condition)
                             .put("authenticity", listing.authenticity)
+                            .put("provenanceSummary", listing.provenanceSummary)
                             .put("price", listing.price)
                             .put("currency", listing.currency)
                             .put("sellerName", listing.sellerName)
