@@ -31,18 +31,20 @@ const MAX_EQUIPMENT_DURABILITY := 100.0
 const EQUIPMENT_SLOTS_BY_ITEM := {
 	"training_sword": "weapon", "steel_sword": "weapon", "hunter_spear": "weapon", "battle_axe": "weapon", "composite_bow": "weapon", "system_firearm": "weapon",
 	"combat_knife": "weapon", "dual_blades": "weapon", "long_sword": "weapon", "great_sword": "weapon", "crossbow": "weapon", "war_hammer": "weapon", "hunter_pistol": "weapon", "hunter_rifle": "weapon", "precision_rifle": "weapon", "tactical_shotgun": "weapon",
+	"rank_e_bow": "weapon", "rank_d_bow": "weapon", "rank_a_blade": "weapon", "rank_s_blade": "weapon", "rank_ss_blade": "weapon", "rank_sss_blade": "weapon", "rank_a_rifle": "weapon", "rank_s_rifle": "weapon", "rank_ss_rifle": "weapon", "rank_sss_rifle": "weapon",
 	"hunter_shield": "shield", "advanced_hunter_shield": "shield",
-	"hunter_armor": "armor", "rank_e_armor": "armor", "rank_d_armor": "armor", "rank_c_armor": "armor", "rank_b_armor": "armor", "rank_a_armor": "armor", "rank_s_armor": "armor", "rank_ss_armor": "armor", "rank_sss_armor": "armor",
+	"hunter_armor": "armor", "rank_f_armor": "armor", "rank_e_armor": "armor", "rank_d_armor": "armor", "rank_c_armor": "armor", "rank_b_armor": "armor", "rank_a_armor": "armor", "rank_s_armor": "armor", "rank_ss_armor": "armor", "rank_sss_armor": "armor",
 	"hunter_helmet": "helmet", "reinforced_helmet": "helmet",
 	"combat_outfit": "outfit", "casual_outfit": "outfit", "hunter_outfit_e": "outfit", "hunter_outfit_d": "outfit", "hunter_outfit_c": "outfit", "hunter_outfit_b": "outfit", "hunter_outfit_a": "outfit", "hunter_outfit_s": "outfit", "hunter_outfit_ss": "outfit", "hunter_outfit_sss": "outfit"
 }
 const EQUIPMENT_DAMAGE_BONUS := {
 	"training_sword": 5.0, "steel_sword": 12.0, "hunter_spear": 10.0, "battle_axe": 14.0, "composite_bow": 8.0, "system_firearm": 16.0,
-	"combat_knife": 7.0, "dual_blades": 13.0, "long_sword": 15.0, "great_sword": 22.0, "crossbow": 12.0, "war_hammer": 18.0, "hunter_pistol": 14.0, "hunter_rifle": 19.0, "precision_rifle": 24.0, "tactical_shotgun": 21.0
+	"combat_knife": 7.0, "dual_blades": 13.0, "long_sword": 15.0, "great_sword": 22.0, "crossbow": 12.0, "war_hammer": 18.0, "hunter_pistol": 14.0, "hunter_rifle": 19.0, "precision_rifle": 24.0, "tactical_shotgun": 21.0,
+	"rank_e_bow": 9.0, "rank_d_bow": 11.0, "rank_a_blade": 28.0, "rank_s_blade": 35.0, "rank_ss_blade": 44.0, "rank_sss_blade": 55.0, "rank_a_rifle": 30.0, "rank_s_rifle": 38.0, "rank_ss_rifle": 48.0, "rank_sss_rifle": 60.0
 }
 const EQUIPMENT_DEFENSE_BONUS := {
 	"hunter_shield": 8.0, "advanced_hunter_shield": 16.0, "hunter_armor": 12.0, "hunter_helmet": 4.0, "reinforced_helmet": 8.0,
-	"rank_e_armor": 5.0, "rank_d_armor": 7.0, "rank_c_armor": 10.0, "rank_b_armor": 14.0, "rank_a_armor": 19.0, "rank_s_armor": 25.0, "rank_ss_armor": 32.0, "rank_sss_armor": 42.0,
+	"rank_f_armor": 3.0, "rank_e_armor": 5.0, "rank_d_armor": 7.0, "rank_c_armor": 10.0, "rank_b_armor": 14.0, "rank_a_armor": 19.0, "rank_s_armor": 25.0, "rank_ss_armor": 32.0, "rank_sss_armor": 42.0,
 	"hunter_outfit_e": 5.0, "hunter_outfit_d": 7.0, "hunter_outfit_c": 10.0, "hunter_outfit_b": 14.0, "hunter_outfit_a": 19.0, "hunter_outfit_s": 25.0, "hunter_outfit_ss": 32.0, "hunter_outfit_sss": 42.0
 }
 
