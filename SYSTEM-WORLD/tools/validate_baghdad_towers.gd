@@ -51,6 +51,33 @@ func _run_validation() -> void:
 		_fail("BaghdadTowerLandmarksManager was not created.")
 		return
 
+	# Al-Bataween is a separate street-level market district, not a sixth tower.
+	var bataween_market := region.get_node_or_null("BaghdadAlBataweenAntiquitiesMarket") as Node3D
+	if bataween_market == null:
+		_fail("The surveyed Al-Bataween antiques market district was not generated.")
+		return
+	var market_stats: Dictionary = bataween_market.call("get_market_stats")
+	var market_position: Vector3 = market_stats.get("position", Vector3.INF)
+	if market_position == Vector3.INF or absf(market_position.x - 5060.584) > 2.0 or absf(market_position.z + 545.466) > 2.0:
+		_fail("Al-Bataween market placement does not match its WGS84 neighborhood anchor.")
+		return
+	if not bool(bataween_market.get_meta("system_market_is_independent_of_five_towers", false)) or not bool(bataween_market.get_meta("system_market_is_not_a_sixth_tower", false)):
+		_fail("Al-Bataween market must remain a separate ground-level district, not a sixth Baghdad tower.")
+		return
+	if int(market_stats.get("stall_count", 0)) != 24 or int(market_stats.get("interaction_count", 0)) != 25:
+		_fail("Al-Bataween market must expose 24 vendor stalls plus one main entrance interaction.")
+		return
+	for stall_number in [1, 12, 24]:
+		var stall := bataween_market.get_node_or_null("AntiquesStall_%02d" % stall_number) as Node3D
+		var stall_interaction := stall.get_node_or_null("StallMarketplaceInteraction") as Area3D if stall != null else null
+		if stall == null or stall_interaction == null or not stall_interaction.is_in_group("system_interactable") or str(stall_interaction.get_meta("system_location_id", "")) != "baghdad_bataween_antiquities_market":
+			_fail("A sampled Al-Bataween stall is missing its physical player-market interaction.")
+			return
+	var marketplace_ui_script := load("res://scripts/system_bataween_marketplace_ui.gd")
+	if marketplace_ui_script == null:
+		_fail("The in-world Al-Bataween player marketplace UI script could not be loaded.")
+		return
+
 	var terrain := tower_manager.get("terrain") as Node3D
 	if terrain == null or not terrain.has_method("get_baghdad_bridge_anchor") or not terrain.has_method("get_baghdad_bridge_nearest_bank_anchor"):
 		_fail("ModernContinent is missing the verified Baghdad bridge anchor APIs.")
