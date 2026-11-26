@@ -88,12 +88,13 @@ func _create_market_access_route() -> void:
 		var b := Vector3(a_right.x - market_position.x, float(terrain.call("get_terrain_height", a_right.x, a_right.y)) + 0.18 - market_position.y, a_right.y - market_position.z)
 		var c := Vector3(b_left.x - market_position.x, float(terrain.call("get_terrain_height", b_left.x, b_left.y)) + 0.18 - market_position.y, b_left.y - market_position.z)
 		var d := Vector3(b_right.x - market_position.x, float(terrain.call("get_terrain_height", b_right.x, b_right.y)) + 0.18 - market_position.y, b_right.y - market_position.z)
+		# Counter-clockwise winding keeps the road's visible normal facing upward.
 		surface.add_vertex(a)
-		surface.add_vertex(b)
-		surface.add_vertex(c)
 		surface.add_vertex(c)
 		surface.add_vertex(b)
+		surface.add_vertex(c)
 		surface.add_vertex(d)
+		surface.add_vertex(b)
 	surface.generate_normals()
 	var route_mesh := surface.commit()
 	if route_mesh == null or route_mesh.get_surface_count() == 0:
