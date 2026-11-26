@@ -267,20 +267,6 @@ func _build_spectator_grandstands(crowd: Node3D) -> void:
 	backrest_multi.mesh = backrest_mesh
 	backrest_multi.instance_count = total_seats
 
-	for tier in range(tier_count):
-		var radius := 31.0 + float(tier) * 2.2
-		var tier_y := 15.42 + float(tier) * 1.25
-		for slot in range(seats_per_tier):
-			var index := tier * seats_per_tier + slot
-			var angle := TAU * float(slot) / float(seats_per_tier)
-			var outward := Vector3(cos(angle), 0.0, sin(angle))
-			var center := outward * radius
-			var facing_basis := Basis(Vector3.UP, PI * 0.5 - angle)
-			deck_multi.set_instance_transform(index, Transform3D(facing_basis, Vector3(center.x, tier_y, center.z)))
-			cushion_multi.set_instance_transform(index, Transform3D(facing_basis, Vector3(center.x, tier_y + 0.24, center.z)))
-			var back_position := center + outward * 0.49
-			backrest_multi.set_instance_transform(index, Transform3D(facing_basis, Vector3(back_position.x, tier_y + 0.69, back_position.z)))
-
 	var deck_material := StandardMaterial3D.new()
 	deck_material.albedo_color = Color(0.055, 0.085, 0.12)
 	deck_material.metallic = 0.78
@@ -309,11 +295,14 @@ func _build_spectator_grandstands(crowd: Node3D) -> void:
 	backrests.material_override = backrest_material
 	stands.add_child(backrests)
 
-	# Re-apply instance transforms after the MultiMesh nodes enter the scene tree.
-	# This keeps the 500 seating transforms initialized on headless and mobile renderers.
-	deck_multi.visible_instance_count = total_seats
-	cushion_multi.visible_instance_count = total_seats
-	backrest_multi.visible_instance_count = total_seats
+	# Recreate instance buffers only after the MultiMeshInstance3D nodes are attached.
+	# Some headless renderer paths leave the pre-attachment instance buffer at Identity.
+	for multimesh_instance in [decks, cushions, backrests]:
+		multimesh_instance.multimesh.transform_format = MultiMesh.TRANSFORM_3D
+		multimesh_instance.multimesh.instance_count = 0
+		multimesh_instance.multimesh.instance_count = total_seats
+		multimesh_instance.multimesh.visible_instance_count = total_seats
+
 	for tier in range(tier_count):
 		var radius := 31.0 + float(tier) * 2.2
 		var tier_y := 15.42 + float(tier) * 1.25
@@ -328,7 +317,11 @@ func _build_spectator_grandstands(crowd: Node3D) -> void:
 			var back_position := center + outward * 0.49
 			backrests.multimesh.set_instance_transform(index, Transform3D(facing_basis, Vector3(back_position.x, tier_y + 0.69, back_position.z)))
 
-	print("Grandstand builder seat transform after attachment: ", decks.multimesh.get_instance_transform(0))
+	var first_seat_transform := cushions.multimesh.get_instance_transform(0)
+	assert(first_seat_transform.origin.distance_to(Vector3(31.0, 15.66, 0.0)) < 0.01, "Grandstand seat transform buffer must retain the first seat position")
+	assert(absf(first_seat_transform.basis.x.normalized().dot(Vector3.BACK)) > 0.95, "Grandstand seat transform buffer must retain tangential orientation")
+
+	print("Grandstand builder seat transform after buffer recreation: ", cushions.multimesh.get_instance_transform(0))
 	stands.set_meta("system_grandstand_deck_count", total_seats)
 	stands.set_meta("system_grandstand_seat_count", total_seats)
 	stands.set_meta("system_grandstand_backrest_count", total_seats)
