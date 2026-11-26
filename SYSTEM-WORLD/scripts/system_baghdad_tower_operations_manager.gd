@@ -4618,10 +4618,10 @@ func _create_power_tower_spectator_gallery(room: Node3D, radius: float) -> void:
 func _build_power_tower_audience_impostors(gallery: Node3D, radius: float) -> void:
 	if gallery == null or gallery.get_node_or_null("PowerTowerCrowdImpostors") != null:
 		return
-	const impostor_count := 492
-	const sides := 4
-	const rows_per_side := 3
-	const columns_per_side := 41
+	var impostor_count := 492
+	var sides := 4
+	var rows_per_side := 3
+	var columns_per_side := 41
 	var body_mesh := CapsuleMesh.new()
 	body_mesh.radius = 0.24
 	body_mesh.height = 1.18
