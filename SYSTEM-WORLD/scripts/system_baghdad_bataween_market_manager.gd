@@ -292,7 +292,7 @@ func _build_stalls() -> void:
 		{"id": "ceramics", "name": "الخزف والفخار", "subtitle": "خزف وأوانٍ فنية"},
 		{"id": "metalwork", "name": "المعادن والحلي", "subtitle": "حلي وتماثيل ومشغولات"},
 		{"id": "player_market", "name": "تجارة اللاعبين", "subtitle": "بيع وشراء القطع المملوكة"},
-		{"id": "auctions", "name": "قاعة المزادات", "subtitle": "مزايدات ومواعيد تسوية"},
+		{"id": "player_listings", "name": "عروض اللاعبين", "subtitle": "تصفح عروض البيع والشراء"},
 		{"id": "restoration", "name": "الترميم والتقييم", "subtitle": "فحص الحالة وسجل المنشأ"}
 	]
 	for index in range(24):
@@ -311,7 +311,7 @@ func _build_stall(stall_number: int, stall_position: Vector3, category: Dictiona
 	stall.position = stall_position
 	stall.set_meta("system_market_stall_id", "bataween_stall_%02d" % stall_number)
 	stall.set_meta("system_market_category", str(category["id"]))
-	stall.set_meta("system_market_stall_is_player_commerce", str(category["id"]) in ["player_market", "auctions"])
+	stall.set_meta("system_market_stall_is_player_commerce", str(category["id"]) in ["player_market", "player_listings"])
 	add_child(stall)
 
 	var back_wall := MeshInstance3D.new()
