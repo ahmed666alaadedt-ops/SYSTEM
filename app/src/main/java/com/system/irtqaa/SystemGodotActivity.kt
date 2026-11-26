@@ -21,7 +21,8 @@ class SystemGodotActivity : FragmentActivity() {
         val request = SystemGodotRuntimeContract.readWorldRequest(intent)
         val worldId = request?.worldId ?: SystemGodotRuntimeContract.WorldId.MODERN
         if (worldId != SystemGodotRuntimeContract.WorldId.MODERN &&
-            worldId != SystemGodotRuntimeContract.WorldId.SELECTION
+            worldId != SystemGodotRuntimeContract.WorldId.SELECTION &&
+            worldId != SystemGodotRuntimeContract.WorldId.NPC_SHOWCASE
         ) {
             finish()
             return
