@@ -378,6 +378,28 @@ fun SystemApp(account: SystemFirebaseAccount) {
                                                 showWorldSelection = true
                                             }
                                         )
+
+                                        Spacer(Modifier.height(12.dp))
+
+                                        Button(
+                                            onClick = {
+                                                val showcaseIntent = SystemGodotRuntimeContract.createWorldIntent(
+                                                    context,
+                                                    SystemGodotActivity::class.java,
+                                                    SystemGodotRuntimeContract.WorldRequest(
+                                                        worldId = SystemGodotRuntimeContract.WorldId.NPC_SHOWCASE,
+                                                        accountUid = userId
+                                                    )
+                                                )
+                                                context.startActivity(
+                                                    showcaseIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                                )
+                                            },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            shape = RoundedCornerShape(12.dp)
+                                        ) {
+                                            Text("معرض الشخصيات ثلاثي الأبعاد")
+                                        }
                                     }
                                 }
                             }
