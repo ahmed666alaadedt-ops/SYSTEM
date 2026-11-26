@@ -164,7 +164,56 @@ jobs:
           godot_status=$?
           grep -E "Grandstand seat diagnostic|X-S-X POWER TOWER ARCHITECTURE VALIDATION PASSED|SCRIPT ERROR|Parse Error|ERROR:" "$RUNNER_TEMP/power-tower-xsx-validation.log" | tail -n 120 || true
           if grep -E "SCRIPT ERROR|Parse Error" "$RUNNER_TEMP/power-tower-xsx-validation.log"; then exit 1; fi
+          if ! grep -Fq "X-S-X POWER TOWER ARCHITECTURE VALIDATION PASSED" "$RUNNER_TEMP/power-tower-xsx-validation.log"; then
+            echo "Power Tower architecture validator did not emit its success marker."
+            exit 1
+          fi
           exit "$godot_status"
+
+      - name: Validate Power Tower competition, Nen progression and fan predictions
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          LOG="$RUNNER_TEMP/power-tower-competition-validation.log"
+          set +e
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_power_tower_competition.gd > "$LOG" 2>&1
+          godot_status=$?
+          grep -E "POWER TOWER COMPETITION VALIDATION PASSED|SCRIPT ERROR|Parse Error|ERROR:" "$LOG" | tail -n 80 || true
+          if [ "$godot_status" -ne 0 ] || grep -E "SCRIPT ERROR|Parse Error" "$LOG" || ! grep -Fq "POWER TOWER COMPETITION VALIDATION PASSED" "$LOG"; then
+            echo "Power Tower competition, Nen or fan prediction regression failed."
+            exit 1
+          fi
+
+      - name: Validate Power Tower 500-person crowd and 200-floor arena ladder
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          LOG="$RUNNER_TEMP/power-tower-crowd-ladder-validation.log"
+          set +e
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_power_tower_crowd_and_arena_ladder.gd > "$LOG" 2>&1
+          godot_status=$?
+          grep -E "POWER TOWER CROWD/LADDER VALIDATION PASSED|SCRIPT ERROR|Parse Error|ERROR:" "$LOG" | tail -n 80 || true
+          if [ "$godot_status" -ne 0 ] || grep -E "SCRIPT ERROR|Parse Error" "$LOG" || ! grep -Fq "POWER TOWER CROWD/LADDER VALIDATION PASSED" "$LOG"; then
+            echo "Power Tower crowd or arena ladder regression failed."
+            exit 1
+          fi
+
+      - name: Validate Power Tower restricted equipment and shop catalog
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          LOG="$RUNNER_TEMP/power-tower-shop-validation.log"
+          set +e
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_power_tower_shop_catalog.gd > "$LOG" 2>&1
+          godot_status=$?
+          grep -E "POWER TOWER SHOP VALIDATION PASSED|SCRIPT ERROR|Parse Error|ERROR:" "$LOG" | tail -n 80 || true
+          if [ "$godot_status" -ne 0 ] || grep -E "SCRIPT ERROR|Parse Error" "$LOG" || ! grep -Fq "POWER TOWER SHOP VALIDATION PASSED" "$LOG"; then
+            echo "Power Tower restricted shop catalog regression failed."
+            exit 1
+          fi
 
       - name: Upload X-S-X Power Tower validation log
         if: always()
