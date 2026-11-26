@@ -1771,11 +1771,6 @@ func _run() -> void:
 		if tier_product.is_empty() or str(tier_product.get("required_rank", "F")) != str(power_tier_catalog_checks[product_value]):
 			_fail("Power Tower progression catalogue is missing the expected %s rank gate for %s." % [str(power_tier_catalog_checks[product_value]), str(product_value)])
 			return
-	var power_skill_tree: Dictionary = skill_progression.call("get_system_skill_tree")
-	if str(power_skill_tree.get("basic_strike", {}).get("required_rank", "")) != "F" or str(power_skill_tree.get("sovereign_overdrive", {}).get("required_rank", "")) != "SSS":
-		_fail("Power Tower skill progression does not span the complete F-to-SSS range.")
-		return
-
 	var floor_product_checks := {
 		5: ["training_sword", "steel_sword"],
 		6: ["hunter_spear", "war_hammer"],
@@ -1867,6 +1862,10 @@ func _run() -> void:
 		_fail("Hunter Association floor 12 must preserve its guild lounge and add a separate Nen fundamentals practice area.")
 		return
 	var skill_progression := main.get("player_progression") as Node
+	var power_skill_tree: Dictionary = skill_progression.call("get_system_skill_tree")
+	if str(power_skill_tree.get("basic_strike", {}).get("required_rank", "")) != "F" or str(power_skill_tree.get("sovereign_overdrive", {}).get("required_rank", "")) != "SSS":
+		_fail("Power Tower skill progression does not span the complete F-to-SSS range.")
+		return
 	if skill_progression == null or not skill_progression.has_method("practice_system_skill") or skill_progression.call("get_system_skill_tree").size() != 10:
 		_fail("Persistent original SYSTEM skill tree is missing or incomplete.")
 		return
