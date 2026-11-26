@@ -3817,7 +3817,7 @@ func _react_power_tower_audience(gallery: Node3D, mood: String) -> void:
 			arm_target = 0.82
 		elif mood == "celebrating":
 			arm_target = 1.22
-		var previous_tween: Variant = actor.get_meta("system_audience_reaction_tween", null)
+		var previous_tween: Variant = actor.get_meta("system_audience_reaction_tween", null) if actor.has_meta("system_audience_reaction_tween") else null
 		if previous_tween is Tween and (previous_tween as Tween).is_running():
 			(previous_tween as Tween).kill()
 		var cheer_tween := create_tween()
