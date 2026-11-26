@@ -2679,9 +2679,6 @@ func _run() -> void:
 	if not bool(awakening_result.get("success", false)):
 		_fail("Nen Awakening Elixir did not awaken Nen: " + str(awakening_result))
 		return
-	if not bool(awakening_result.get("success", false)):
-		_fail("Nen Awakening Elixir did not awaken Nen: " + str(awakening_result))
-		return
 	for mobile_foundation_value in ["ten", "zetsu", "ren", "hatsu"]:
 		var mobile_foundation_id := str(mobile_foundation_value)
 		for mobile_session_index in range(3):
