@@ -43,7 +43,9 @@ func setup(p_terrain: Node) -> bool:
 	_create_market_access_route()
 	_build_market()
 	set_meta("system_location_id", MARKET_LOCATION_ID)
-	set_meta("system_display_name", "سوق البتاوين للتحف والآثار")
+	set_meta("system_display_name", "سوق البتاوين")
+	set_meta("system_market_category_name", "سوق التحف والآثار")
+	set_meta("system_full_display_name", "سوق البتاوين للتحف والآثار")
 	set_meta("system_marketplace_kind", "player_to_player_artifact_market")
 	set_meta("system_geography_source", "WGS84 Al-Bataween neighborhood anchor")
 	set_meta("system_wgs84_latitude", BATAWEEN_LATITUDE)
@@ -235,7 +237,7 @@ func _add_market_sign() -> void:
 
 	var title := Label3D.new()
 	title.name = "BataweenMarketTitle"
-	title.text = "سوق البتاوين للتحف والآثار\nAL-BATAWEEN ANTIQUES MARKET"
+	title.text = "سوق البتاوين\nسوق التحف والآثار — AL-BATAWEEN ANTIQUES MARKET"
 	title.font_size = 34
 	title.pixel_size = 0.012
 	title.position = Vector3(0.0, 10.4, 50.2)
