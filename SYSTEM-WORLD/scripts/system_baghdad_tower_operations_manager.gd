@@ -83,6 +83,12 @@ const PRODUCT_CATALOG := {
 		{"id":"skill_manual_flow_counter","name":"مخطوطة تقنية صد التدفق","price":11000,"required_rank":"A","required_level":35,"required_nen_rank":3,"product_type":"skill_training_permit","skill_id":"flow_counter"},
 		{"id":"skill_manual_resonance_burst","name":"مخطوطة تقنية انفجار الرنين","price":18000,"required_rank":"S","required_level":50,"required_nen_rank":4,"product_type":"skill_training_permit","skill_id":"resonance_burst"},
 		{"id":"skill_manual_sovereign_focus","name":"مخطوطة تقنية تركيز السيادة","price":30000,"required_rank":"SS","required_level":80,"required_nen_rank":5,"product_type":"skill_training_permit","skill_id":"sovereign_focus"},
+		{"id":"skill_manual_lightning_mantle","name":"مخطوطة عباءة البرق الخاطف — نادرة","price":22000,"required_rank":"A","required_level":40,"required_nen_rank":3,"product_type":"skill_training_permit","skill_id":"lightning_mantle"},
+		{"id":"skill_manual_shadow_step","name":"مخطوطة خطوة الظلال — نادرة","price":28000,"required_rank":"S","required_level":50,"required_nen_rank":4,"product_type":"skill_training_permit","skill_id":"shadow_step"},
+		{"id":"skill_manual_shadow_guardian_aura","name":"مخطوطة هالة حارس الظلال — نادرة","price":34000,"required_rank":"S","required_level":60,"required_nen_rank":4,"product_type":"skill_training_permit","skill_id":"shadow_guardian_aura"},
+		{"id":"skill_manual_body_manifestation","name":"مخطوطة تجسيد الجسد الفولاذي — نادرة","price":42000,"required_rank":"SS","required_level":75,"required_nen_rank":5,"product_type":"skill_training_permit","skill_id":"body_manifestation"},
+		{"id":"skill_manual_lightning_sovereign_form","name":"مخطوطة هيئة سيد البرق — أسطورية","price":65000,"required_rank":"SSS","required_level":95,"required_nen_rank":5,"product_type":"skill_training_permit","skill_id":"lightning_sovereign_form"},
+		{"id":"skill_manual_shadow_monarch_aegis","name":"مخطوطة درع سيادة الظلال — أسطورية","price":72000,"required_rank":"SSS","required_level":100,"required_nen_rank":5,"product_type":"skill_training_permit","skill_id":"shadow_monarch_aegis"},
 		{"id":"hunter_pistol","name":"مسدس صياد حديث","price":1750,"required_rank":"C"},
 		{"id":"hunter_rifle","name":"بندقية صياد حديثة","price":3600,"required_rank":"B"},
 		{"id":"precision_rifle","name":"بندقية دقيقة بعيدة المدى","price":6200,"required_rank":"A"},
@@ -5825,7 +5831,7 @@ func open_baghdad_progression_facility(tower_id: String, floor_number: int, faci
 			26: ["rare_legendary_elixir"]
 		}
 		var power_tower_catalog_overrides := {
-			4: ["skill_manual_basic_strike", "skill_manual_pulse_dash", "skill_manual_aura_shield", "skill_manual_sensory_mark", "skill_manual_flow_counter", "skill_manual_resonance_burst", "skill_manual_sovereign_focus", "skill_manual_sovereign_overdrive"],
+			4: ["skill_manual_basic_strike", "skill_manual_pulse_dash", "skill_manual_aura_shield", "skill_manual_sensory_mark", "skill_manual_flow_counter", "skill_manual_resonance_burst", "skill_manual_sovereign_focus", "skill_manual_sovereign_overdrive", "skill_manual_lightning_mantle", "skill_manual_shadow_step", "skill_manual_shadow_guardian_aura", "skill_manual_body_manifestation", "skill_manual_lightning_sovereign_form", "skill_manual_shadow_monarch_aegis"],
 			5: ["training_sword", "combat_knife", "steel_sword", "dual_blades", "great_sword", "rank_a_blade", "rank_s_blade", "rank_ss_blade", "rank_sss_blade"],
 			6: ["reinforced_arrows", "rank_e_bow", "rank_d_bow", "composite_bow", "crossbow", "hunter_pistol", "tactical_shotgun", "hunter_rifle", "precision_rifle", "rank_a_rifle", "rank_s_rifle", "rank_ss_rifle", "rank_sss_rifle"],
 			7: ["rank_f_armor", "rank_e_armor", "rank_d_armor", "rank_c_armor", "rank_b_armor", "rank_a_armor", "rank_s_armor", "rank_ss_armor", "rank_sss_armor", "hunter_shield", "advanced_hunter_shield", "hunter_helmet", "reinforced_helmet"],
