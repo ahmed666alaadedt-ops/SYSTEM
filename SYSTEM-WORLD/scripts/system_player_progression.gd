@@ -1200,6 +1200,8 @@ func _reset_progress() -> void:
 	nen_control_rank = 0
 	nen_foundation_practice.clear()
 	nen_affinity = ""
+	nen_skill_use_count = 0
+	nen_skill_ids.clear()
 	nen_burst_cooldown_remaining = 0.0
 
 
