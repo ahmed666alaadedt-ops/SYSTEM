@@ -59,7 +59,18 @@ func _run() -> void:
 	var full_rigs := gallery.get_node_or_null("PowerTowerAudienceActors") as Node3D
 	assert(full_rigs != null and full_rigs.get_child_count() == 8)
 	assert(int(full_rigs.get_meta("system_audience_shared_lod_count", 0)) == 492)
-	assert(gallery.get_node_or_null("PowerTowerCrowdImpostors") == null)
+	var gallery_bodies := gallery.get_node_or_null("PowerTowerCrowdImpostors") as MultiMeshInstance3D
+	var gallery_heads := gallery.get_node_or_null("PowerTowerCrowdImpostorHeads") as MultiMeshInstance3D
+	assert(gallery_bodies != null and gallery_bodies.multimesh != null and gallery_bodies.multimesh.instance_count == 492, "Operational spectator gallery must render all 492 shared-LOD bodies.")
+	assert(gallery_heads != null and gallery_heads.multimesh != null and gallery_heads.multimesh.instance_count == 492, "Operational spectator gallery must render all 492 shared-LOD heads.")
+	assert(str(gallery.get_meta("system_audience_lod_layout", "")) == "4_SIDES_X_3_ROWS_X_41_COLUMNS")
+	var gallery_body_material := gallery_bodies.material_override as StandardMaterial3D
+	assert(gallery_body_material != null and gallery_body_material.emission_enabled)
+	operations.call("_react_power_tower_audience", gallery, "celebrating")
+	assert(str(gallery.get_meta("system_audience_reaction", "")) == "celebrating")
+	assert(str(gallery_bodies.get_meta("system_audience_reaction", "")) == "celebrating")
+	assert(gallery_body_material.emission_energy_multiplier > 0.8)
+	assert(int(gallery_bodies.get_meta("system_audience_reaction_instance_count", 0)) == 492)
 	var seat_count := 0
 	for child in gallery.get_children():
 		if bool(child.get_meta("system_power_tower_spectator_seat", false)):
