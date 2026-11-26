@@ -57,6 +57,9 @@ func _run_validation() -> void:
 		_fail("The surveyed Al-Bataween antiques market district was not generated.")
 		return
 	var market_stats: Dictionary = bataween_market.call("get_market_stats")
+	if str(bataween_market.get_meta("system_display_name", "")) != "سوق البتاوين" or str(bataween_market.get_meta("system_market_category_name", "")) != "سوق التحف والآثار" or str(bataween_market.get_meta("system_full_display_name", "")) != "سوق البتاوين للتحف والآثار":
+		_fail("Al-Bataween market must expose its district name, antiques category and complete Arabic display name.")
+		return
 	var market_position: Vector3 = market_stats.get("position", Vector3.INF)
 	if market_position == Vector3.INF or absf(market_position.x - 5065.417) > 2.0 or absf(market_position.z + 544.780) > 2.0:
 		_fail("Al-Bataween market placement does not match its WGS84 neighborhood anchor.")
