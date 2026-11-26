@@ -275,7 +275,7 @@ func _build_spectator_grandstands(crowd: Node3D) -> void:
 			var angle := TAU * float(slot) / float(seats_per_tier)
 			var outward := Vector3(cos(angle), 0.0, sin(angle))
 			var center := outward * radius
-			var facing_basis := Basis(Vector3.UP, -angle)
+			var facing_basis := Basis(Vector3.UP, PI * 0.5 - angle)
 			deck_multi.set_instance_transform(index, Transform3D(facing_basis, Vector3(center.x, tier_y, center.z)))
 			cushion_multi.set_instance_transform(index, Transform3D(facing_basis, Vector3(center.x, tier_y + 0.24, center.z)))
 			var back_position := center + outward * 0.49
