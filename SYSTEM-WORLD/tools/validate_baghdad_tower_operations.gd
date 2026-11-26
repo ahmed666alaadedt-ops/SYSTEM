@@ -227,8 +227,8 @@ func _run() -> void:
 	if operations.find_child("HunterRankProgressRows", true, false) == null:
 		_fail("Hunter rank board did not render its F-to-SSS progression requirements.")
 		return
-	if int(status.get("staff_count", 0)) != 46:
-		_fail("Expected eight professional NPC staff in three district towers, nine each in Shopping and Antiques Towers, plus four Power Tower staff; found %d." % int(status.get("staff_count", 0)))
+	if int(status.get("staff_count", 0)) != 48:
+		_fail("Expected eight professional NPC staff in three district towers, nine each in Shopping and Antiques Towers, plus six Power Tower staff; found %d." % int(status.get("staff_count", 0)))
 		return
 	if int(status.get("customer_count", 0)) != 500:
 		_fail("Expected 100 persistent customer NPCs in each of the five Baghdad district towers (500 total); found %d." % int(status.get("customer_count", 0)))
@@ -990,7 +990,7 @@ func _run() -> void:
 		for child in lobby.get_children():
 			if child.has_meta("system_tower_staff_id"):
 				staff_count += 1
-		var expected_staff_count := 4
+		var expected_staff_count := 6
 		match tower_id:
 			"hunter_association_tower_baghdad", "business_investment_tower_baghdad", "technology_tower_baghdad":
 				expected_staff_count = 8
@@ -1113,8 +1113,21 @@ func _run() -> void:
 		if int(floor_data.get("opponent_count", 0)) != 1 or int(floor_data.get("wave_count", 0)) != 1 or int(floor_data.get("reward_xp", 0)) <= 0 or int(floor_data.get("reward_credits", 0)) <= 0:
 			_fail("Power Tower floor %d must contain exactly one opponent, one round and positive rewards." % floor_number)
 			return
-		if str(floor_data.get("competition_format", "")) != "INDIVIDUAL_1V1" or int(floor_data.get("time_limit_seconds", -1)) != 0:
-			_fail("Power Tower floor %d violates the individual-only, no-team 1v1 competition rule." % floor_number)
+		var expected_time_limit := 240 if bool(floor_data.get("boss_floor", false)) else 180
+		if str(floor_data.get("competition_format", "")) != "INDIVIDUAL_1V1" or int(floor_data.get("time_limit_seconds", -1)) != expected_time_limit:
+			_fail("Power Tower floor %d must enforce its configured individual 1v1 time limit." % floor_number)
+			return
+		var expected_rank := "F"
+		if floor_number >= 21: expected_rank = "E"
+		if floor_number >= 41: expected_rank = "D"
+		if floor_number >= 61: expected_rank = "C"
+		if floor_number >= 81: expected_rank = "B"
+		if floor_number >= 106: expected_rank = "A"
+		if floor_number >= 131: expected_rank = "S"
+		if floor_number >= 156: expected_rank = "SS"
+		if floor_number >= 181: expected_rank = "SSS"
+		if str(floor_data.get("rank", "")) != expected_rank:
+			_fail("Power Tower floor %d has an incorrect F-to-SSS rank mapping." % floor_number)
 			return
 		if str(floor_data.get("arena_type", "")) not in ["DUEL", "ELITE_DUEL", "BOSS_TRIAL"]:
 			_fail("Power Tower floor %d exposes a non-individual competition type." % floor_number)
@@ -1227,7 +1240,10 @@ func _run() -> void:
 			_fail("Power Tower rejected sequential progression at floor %d: %s" % [test_floor, str(floor_request.get("reason", "unknown"))])
 			progression_test_manager.queue_free()
 			return
-		var floor_clear: Dictionary = progression_test_manager.call("confirm_floor_clear", test_floor, float(test_floor), true, "validator_pvp_result_%03d" % test_floor)
+		var floor_profile_for_clear: Dictionary = progression_test_manager.call("get_floor_data", test_floor)
+		var floor_time_limit := float(floor_profile_for_clear.get("time_limit_seconds", 180))
+		var simulated_clear_time := minf(float(test_floor), maxf(1.0, floor_time_limit - 1.0))
+		var floor_clear: Dictionary = progression_test_manager.call("confirm_floor_clear", test_floor, simulated_clear_time, true, "validator_pvp_result_%03d" % test_floor)
 		if not bool(floor_clear.get("success", false)):
 			_fail("Power Tower could not persist a valid clear at floor %d." % test_floor)
 			progression_test_manager.queue_free()
@@ -1720,6 +1736,67 @@ func _run() -> void:
 			if linked_product.is_empty() or str(linked_product.get("name", "")).is_empty() or int(linked_product.get("price", 0)) <= 0:
 				_fail("Shopping Tower floor %d display %d points to a product missing from the live catalog: %s." % [floor_number, display_index, item_product_id])
 				return
+	print("QA TRACE: verifying independent Power Tower commercial floors and cafeteria staffing.")
+	var power_staff_by_tower: Dictionary = operations.get("staff_by_tower")
+	var power_cafe_staff: Array = power_staff_by_tower.get("power_tower_baghdad", [])
+	if power_cafe_staff.size() != 6:
+		_fail("Power Tower must provide dedicated arena staff plus a chef and cafeteria waiter.")
+		return
+	for cafe_floor in [2, 3]:
+		var cafe_room := operations.call("_ensure_floor_room", "power_tower_baghdad", cafe_floor) as Node3D
+		if cafe_room == null or cafe_room.get_node_or_null("RestaurantDiningSign") == null or cafe_room.get_node_or_null("RestaurantKitchen") == null or cafe_room.get_node_or_null("RestaurantTable_00") == null:
+			_fail("Power Tower cafeteria floor %d is missing its physical dining hall, kitchen or tables." % cafe_floor)
+			return
+		var cafe_table := cafe_room.get_node("RestaurantTable_00") as Node3D
+		var cafe_table_id := str(cafe_table.get_meta("system_restaurant_table_id", ""))
+		var cafe_interaction := cafe_table.get_node_or_null("RestaurantTableInteraction") as StaticBody3D
+		if not cafe_table_id.begins_with("power_tower_baghdad_floor_%02d_" % cafe_floor) or cafe_interaction == null or str(cafe_interaction.get_meta("system_restaurant_table_id", "")) != cafe_table_id:
+			_fail("Power Tower cafeteria floor %d does not have a unique, connected restaurant table identity." % cafe_floor)
+			return
+	var power_commercial_facilities := {4:"shopping_skill_store",5:"shopping_weapon_gallery",6:"shopping_ranged_gallery",7:"shopping_armor_gallery",8:"shopping_elixir_pharmacy",9:"shopping_advanced_elixir_lab",10:"shopping_rare_elixir_vault"}
+	for floor_value in power_commercial_facilities.keys():
+		var power_floor_number := int(floor_value)
+		var expected_power_type := str(power_commercial_facilities[floor_value])
+		var power_room := operations.call("_ensure_floor_room", "power_tower_baghdad", power_floor_number) as Node3D
+		var power_facility := power_room.get_node_or_null("SpecialFacility_" + expected_power_type) as Node3D if power_room != null else null
+		var power_service := power_facility.get_node_or_null("FacilityServiceInteraction") as Area3D if power_facility != null else null
+		var power_showcase := power_facility.get_node_or_null("ShoppingShowcase") as Node3D if power_facility != null else null
+		if power_facility == null or power_service == null or not power_service.is_in_group("system_interactable") or str(power_service.get_meta("system_tower_id", "")) != "power_tower_baghdad" or str(power_service.get_meta("system_facility_type", "")) != expected_power_type:
+			_fail("Power Tower floor %d is missing its dedicated interactive %s store." % [power_floor_number, expected_power_type])
+			return
+		if power_showcase == null or power_showcase.get_node_or_null("ShowcaseItem_00") == null or power_showcase.get_node_or_null("ShowcaseItem_01") == null or power_showcase.get_node_or_null("ShowcaseItem_02") == null:
+			_fail("Power Tower floor %d is missing physical product displays for %s." % [power_floor_number, expected_power_type])
+			return
+		var expected_display_ids := {
+			4: ["skill_manual_basic_strike", "skill_manual_pulse_dash", "skill_manual_sovereign_overdrive"],
+			5: ["training_sword", "rank_ss_blade", "rank_sss_blade"],
+			6: ["rank_d_bow", "rank_a_rifle", "rank_sss_rifle"],
+			7: ["rank_f_armor", "rank_a_armor", "rank_sss_armor"],
+			8: ["healing_elixir", "resistance_elixir", "energy_elixir"],
+			9: ["nen_focus_elixir", "nen_recovery_elixir", "regeneration_elixir"],
+			10: ["rare_legendary_elixir", "elite_legendary_elixir", "sovereign_ascension_elixir"]
+		}
+		for display_index in range(3):
+			var power_display := power_showcase.get_node("ShowcaseItem_%02d" % display_index) as Node3D
+			var expected_product_id := str(expected_display_ids[power_floor_number][display_index])
+			var power_display_interaction := power_display.get_node_or_null("ShowcaseItemInteraction_%02d" % display_index) as Area3D
+			var linked_power_product: Dictionary = operations.call("_get_catalog_product", expected_product_id)
+			if str(power_display.get_meta("system_showcase_product_id", "")) != expected_product_id or power_display_interaction == null or str(power_display_interaction.get_meta("system_tower_id", "")) != "power_tower_baghdad" or str(power_display_interaction.get_meta("system_showcase_product_id", "")) != expected_product_id or linked_power_product.is_empty():
+				_fail("Power Tower floor %d display %d is not linked to its correct rank-gated catalogue item." % [power_floor_number, display_index])
+				return
+
+	var power_tier_catalog_checks := {
+		"rank_f_armor":"F", "rank_e_armor":"E", "rank_d_armor":"D", "rank_c_armor":"C", "rank_b_armor":"B", "rank_a_armor":"A", "rank_s_armor":"S", "rank_ss_armor":"SS", "rank_sss_armor":"SSS",
+		"training_sword":"F", "combat_knife":"E", "steel_sword":"D", "battle_axe":"C", "great_sword":"B", "rank_a_blade":"A", "rank_s_blade":"S", "rank_ss_blade":"SS", "rank_sss_blade":"SSS",
+		"reinforced_arrows":"F", "rank_e_bow":"E", "rank_d_bow":"D", "composite_bow":"C", "hunter_rifle":"B", "rank_a_rifle":"A", "rank_s_rifle":"S", "rank_ss_rifle":"SS", "rank_sss_rifle":"SSS",
+		"skill_manual_basic_strike":"F", "skill_manual_sovereign_overdrive":"SSS",
+		"healing_elixir":"F", "resistance_elixir":"E", "deep_wound_elixir":"D", "regeneration_elixir":"C", "energy_elixir":"C", "nen_focus_elixir":"B", "nen_recovery_elixir":"A", "rare_legendary_elixir":"S", "elite_legendary_elixir":"SS", "sovereign_ascension_elixir":"SSS"
+	}
+	for product_value in power_tier_catalog_checks.keys():
+		var tier_product: Dictionary = operations.call("_get_catalog_product", str(product_value))
+		if tier_product.is_empty() or str(tier_product.get("required_rank", "F")) != str(power_tier_catalog_checks[product_value]):
+			_fail("Power Tower progression catalogue is missing the expected %s rank gate for %s." % [str(power_tier_catalog_checks[product_value]), str(product_value)])
+			return
 	var floor_product_checks := {
 		5: ["training_sword", "steel_sword"],
 		6: ["hunter_spear", "war_hammer"],
@@ -1811,15 +1888,77 @@ func _run() -> void:
 		_fail("Hunter Association floor 12 must preserve its guild lounge and add a separate Nen fundamentals practice area.")
 		return
 	var skill_progression := main.get("player_progression") as Node
-	if skill_progression == null or not skill_progression.has_method("practice_system_skill") or skill_progression.call("get_system_skill_tree").size() != 10:
+	if skill_progression == null:
+		_fail("Player progression node is missing before Nen and skill regression checks.")
+		return
+	var power_skill_tree: Dictionary = skill_progression.call("get_system_skill_tree")
+	var power_skill_rank_checks := {"basic_strike":"F", "guard_breaker":"E", "swift_step":"D", "iron_guard":"C", "aura_shield":"B", "flow_counter":"A", "resonance_burst":"S", "sovereign_focus":"SS", "sovereign_overdrive":"SSS", "lightning_mantle":"A", "shadow_step":"S", "shadow_guardian_aura":"S", "body_manifestation":"SS", "lightning_sovereign_form":"SSS", "shadow_monarch_aegis":"SSS"}
+	var power_rare_ability_checks := ["lightning_mantle", "shadow_step", "shadow_guardian_aura", "body_manifestation", "lightning_sovereign_form", "shadow_monarch_aegis"]
+	if not skill_progression.has_method("activate_rare_power_ability"):
+		_fail("Power Tower rare ability activation API is missing.")
+		return
+	if not skill_progression.has_method("_create_rare_power_ability_buttons") or not skill_progression.has_method("_get_learned_rare_power_abilities"):
+		_fail("Player HUD controls for learned rare Power Tower abilities are missing.")
+		return
+	for rare_skill_id in power_rare_ability_checks:
+		if not power_skill_tree.has(rare_skill_id):
+			_fail("Power Tower rare ability missing from progression tree: " + rare_skill_id)
+			return
+	var power_equipment_slot_checks := {"rank_e_bow":"weapon", "rank_d_bow":"weapon", "rank_a_blade":"weapon", "rank_s_blade":"weapon", "rank_ss_blade":"weapon", "rank_sss_blade":"weapon", "rank_a_rifle":"weapon", "rank_s_rifle":"weapon", "rank_ss_rifle":"weapon", "rank_sss_rifle":"weapon", "rank_f_armor":"armor"}
+	for equipment_id in power_equipment_slot_checks.keys():
+		if str(skill_progression.call("get_item_equipment_slot", str(equipment_id))) != str(power_equipment_slot_checks[equipment_id]):
+			_fail("Power Tower equipment %s is sold but cannot be equipped in its correct slot." % str(equipment_id))
+			return
+	for skill_id in power_skill_rank_checks.keys():
+		if str(power_skill_tree.get(skill_id, {}).get("required_rank", "")) != str(power_skill_rank_checks[skill_id]):
+			_fail("Power Tower skill %s does not have its correct %s grade." % [str(skill_id), str(power_skill_rank_checks[skill_id])])
+			return
+	if not skill_progression.has_method("practice_system_skill") or skill_progression.call("get_system_skill_tree").size() != 18:
 		_fail("Persistent original SYSTEM skill tree is missing or incomplete.")
 		return
-	var skill_snapshot := {"level":skill_progression.get("current_level"),"points":skill_progression.get("verified_hunter_mission_points"),"learned":skill_progression.get("learned_system_skills").duplicate(),"authorized":skill_progression.get("authorized_system_skills").duplicate(),"practice":skill_progression.get("system_skill_practice").duplicate(true),"mastery":skill_progression.get("system_skill_mastery").duplicate(true),"cooldowns":skill_progression.get("system_skill_cooldowns").duplicate(true),"weapon_mastery":skill_progression.get("weapon_mastery").duplicate(true),"energy":skill_progression.get("current_system_energy"),"nen_unlocked":skill_progression.get("nen_unlocked"),"nen_control_rank":skill_progression.get("nen_control_rank"),"inventory":skill_progression.get("inventory_items").duplicate(true),"credits":operations.get("credits"),"vendor_stock":operations.get("vendor_stock").duplicate(true),"equipment_slots":skill_progression.get("equipment_slots").duplicate(true)}
+	for skill_value in power_skill_tree.keys():
+		var skill_id := str(skill_value)
+		var skill: Dictionary = power_skill_tree[skill_id]
+		if not bool(skill.get("requires_nen", false)) or not bool(skill.get("requires_nen_foundations", false)):
+			_fail("Skill %s can bypass the shared Nen foundation system." % skill_id)
+			return
+	var lightning_types: Array = power_skill_tree.get("lightning_mantle", {}).get("nen_types", [])
+	var shadow_types: Array = power_skill_tree.get("shadow_step", {}).get("nen_types", [])
+	var body_types: Array = power_skill_tree.get("body_manifestation", {}).get("nen_types", [])
+	if not lightning_types.has("transmutation") or not lightning_types.has("enhancement") or not shadow_types.has("manipulation") or not shadow_types.has("specialization") or not body_types.has("enhancement") or not body_types.has("conjuration"):
+		_fail("Lightning, shadow and body-manifestation abilities are missing their agreed Nen affinity mappings.")
+		return
+	var skill_snapshot := {"level":skill_progression.get("current_level"),"points":skill_progression.get("verified_hunter_mission_points"),"learned":skill_progression.get("learned_system_skills").duplicate(),"authorized":skill_progression.get("authorized_system_skills").duplicate(),"practice":skill_progression.get("system_skill_practice").duplicate(true),"mastery":skill_progression.get("system_skill_mastery").duplicate(true),"cooldowns":skill_progression.get("system_skill_cooldowns").duplicate(true),"weapon_mastery":skill_progression.get("weapon_mastery").duplicate(true),"energy":skill_progression.get("current_system_energy"),"nen_unlocked":skill_progression.get("nen_unlocked"),"nen_control_rank":skill_progression.get("nen_control_rank"),"nen_foundation_practice":skill_progression.get("nen_foundation_practice").duplicate(true),"nen_affinity":skill_progression.get("nen_affinity"),"skill_drop_claim_ids":skill_progression.get("skill_drop_claim_ids").duplicate(),"nen_skill_use_count":skill_progression.get("nen_skill_use_count"),"nen_skill_ids":skill_progression.get("nen_skill_ids").duplicate(),"inventory":skill_progression.get("inventory_items").duplicate(true),"credits":operations.get("credits"),"vendor_stock":operations.get("vendor_stock").duplicate(true),"equipment_slots":skill_progression.get("equipment_slots").duplicate(true)}
 	skill_progression.set("current_level", 3)
 	skill_progression.set("verified_hunter_mission_points", 100)
 	var weapon_training: Dictionary = skill_progression.call("record_weapon_training", "sword", "validator_sword_drill")
 	if not bool(weapon_training.get("success", false)) or int(weapon_training.get("mastery", 0)) < 5:
 		_fail("Verified weapon-family practice did not update persistent sword mastery.")
+		return
+	skill_progression.set("nen_unlocked", true)
+	skill_progression.set("nen_control_rank", 1)
+	var blocked_zetsu_training: Dictionary = skill_progression.call("record_nen_foundation_training", "zetsu", "validator_zetsu_before_ten")
+	if bool(blocked_zetsu_training.get("success", true)) or str(blocked_zetsu_training.get("reason", "")) != "PREVIOUS_NEN_FOUNDATION_REQUIRED":
+		_fail("Nen foundations must be completed in Ten, Zetsu, Ren, Hatsu order.")
+		return
+	for foundation_value in ["ten", "zetsu", "ren", "hatsu"]:
+		var foundation_id := str(foundation_value)
+		for session_index in range(3):
+			var foundation_training: Dictionary = skill_progression.call("record_nen_foundation_training", foundation_id, "validator_nen_%s_%d" % [foundation_id, session_index])
+			if not bool(foundation_training.get("success", false)):
+				_fail("Nen foundation %s rejected its required training session: %s" % [foundation_id, str(foundation_training.get("reason", "UNKNOWN"))])
+				return
+	var duplicate_nen_session: Dictionary = skill_progression.call("record_nen_foundation_training", "ten", "validator_nen_ten_0")
+	if bool(duplicate_nen_session.get("success", true)) or str(duplicate_nen_session.get("reason", "")) != "SESSION_ALREADY_RECORDED":
+		_fail("Nen foundation training accepted a duplicate session identifier.")
+		return
+	var affinity_choice: Dictionary = skill_progression.call("choose_nen_affinity", "enhancement")
+	if not bool(affinity_choice.get("success", false)) or not bool(skill_progression.call("get_nen_foundation_status").get("all_complete", false)):
+		_fail("Completing Ten, Zetsu, Ren and Hatsu must unlock a single Nen affinity choice.")
+		return
+	var pulse_skill_metadata: Dictionary = power_skill_tree.get("pulse_dash", {})
+	if not bool(pulse_skill_metadata.get("requires_nen_foundations", false)) or not pulse_skill_metadata.get("nen_types", []).has("enhancement"):
+		_fail("Nen techniques must declare their Nen foundation and compatible affinity types.")
 		return
 	for session_index in range(3):
 		var practice_result: Dictionary = skill_progression.call("practice_system_skill", "guard_breaker", "validator_guard_breaker_%d" % session_index)
@@ -1912,6 +2051,23 @@ func _run() -> void:
 	if not skill_progression.get("learned_system_skills").has("pulse_dash"):
 		_fail("Pulse Dash did not require and complete three verified sessions after permit purchase.")
 		return
+	# A qualified A-rank boss gate can grant a rare Nen skill permit without a shop purchase.
+	skill_progression.set("current_level", 40)
+	skill_progression.set("verified_hunter_mission_points", 1500)
+	skill_progression.set("nen_control_rank", 3)
+	skill_progression.set("nen_skill_use_count", 10)
+	var lightning_drop: Dictionary = skill_progression.call("grant_skill_training_permit_from_drop", "lightning_mantle", "validator_boss_drop_lightning_001", "A")
+	if not bool(lightning_drop.get("success", false)) or not skill_progression.get("authorized_system_skills").has("lightning_mantle"):
+		_fail("Eligible A-rank monster/boss loot did not grant the Lightning Mantle training permit: " + str(lightning_drop.get("reason", "UNKNOWN")))
+		return
+	var duplicate_lightning_drop: Dictionary = skill_progression.call("grant_skill_training_permit_from_drop", "lightning_mantle", "validator_boss_drop_lightning_001", "A")
+	if bool(duplicate_lightning_drop.get("success", true)) or str(duplicate_lightning_drop.get("reason", "")) != "DROP_ALREADY_CLAIMED":
+		_fail("Monster skill drops accepted a duplicate reward identifier.")
+		return
+	var under_rank_lightning_drop: Dictionary = skill_progression.call("grant_skill_training_permit_from_drop", "lightning_mantle", "validator_boss_drop_lightning_low", "B")
+	if bool(under_rank_lightning_drop.get("success", true)) or str(under_rank_lightning_drop.get("reason", "")) != "GATE_RANK_TOO_LOW":
+		_fail("A lower-rank monster gate granted an A-rank rare skill permit.")
+		return
 	skill_progression.set("current_level", 20)
 	skill_progression.set("verified_hunter_mission_points", 850)
 	skill_progression.set("nen_control_rank", 2)
@@ -1927,12 +2083,13 @@ func _run() -> void:
 	skill_progression.call("save_progress")
 	skill_progression.set("learned_system_skills", [])
 	skill_progression.call("load_progress")
-	if not skill_progression.get("learned_system_skills").has("guard_breaker") or not skill_progression.get("learned_system_skills").has("pulse_dash") or not skill_progression.get("authorized_system_skills").has("pulse_dash"):
+	if not skill_progression.get("learned_system_skills").has("guard_breaker") or not skill_progression.get("learned_system_skills").has("pulse_dash") or not skill_progression.get("authorized_system_skills").has("pulse_dash") or not skill_progression.get("authorized_system_skills").has("lightning_mantle") or not bool(skill_progression.call("get_nen_foundation_status").get("all_complete", false)) or str(skill_progression.get("nen_affinity")) != "enhancement" or not skill_progression.get("skill_drop_claim_ids").has("validator_boss_drop_lightning_001"):
 		_fail("SYSTEM learned skills and purchased training permits did not persist across save/load.")
 		return
 	skill_progression.set("current_level", skill_snapshot["level"])
 	skill_progression.set("verified_hunter_mission_points", skill_snapshot["points"])
 	skill_progression.set("learned_system_skills", skill_snapshot["learned"])
+	skill_progression.set("authorized_system_skills", skill_snapshot["authorized"])
 	skill_progression.set("system_skill_practice", skill_snapshot["practice"])
 	skill_progression.set("system_skill_mastery", skill_snapshot["mastery"])
 	skill_progression.set("system_skill_cooldowns", skill_snapshot["cooldowns"])
@@ -1940,6 +2097,11 @@ func _run() -> void:
 	skill_progression.set("current_system_energy", skill_snapshot["energy"])
 	skill_progression.set("nen_unlocked", skill_snapshot["nen_unlocked"])
 	skill_progression.set("nen_control_rank", skill_snapshot["nen_control_rank"])
+	skill_progression.set("nen_foundation_practice", skill_snapshot["nen_foundation_practice"])
+	skill_progression.set("nen_affinity", skill_snapshot["nen_affinity"])
+	skill_progression.set("skill_drop_claim_ids", skill_snapshot["skill_drop_claim_ids"])
+	skill_progression.set("nen_skill_use_count", skill_snapshot["nen_skill_use_count"])
+	skill_progression.set("nen_skill_ids", skill_snapshot["nen_skill_ids"])
 	skill_progression.set("inventory_items", skill_snapshot["inventory"])
 	skill_progression.set("equipment_slots", skill_snapshot["equipment_slots"])
 	skill_progression.call("save_progress")
@@ -2508,10 +2670,25 @@ func _run() -> void:
 	if float(pilot_progression.call("get_attack_cooldown_multiplier")) >= 1.0:
 		_fail("Energy elixir did not reduce the attack cooldown multiplier.")
 		return
+	pilot_progression.set("nen_unlocked", false)
+	pilot_progression.set("nen_control_rank", 0)
+	pilot_progression.set("nen_foundation_practice", {})
+	pilot_progression.set("nen_affinity", "")
 	pilot_progression.call("add_item", "nen_awakening_elixir", 1)
 	var awakening_result: Dictionary = pilot_progression.call("consume_elixir", "nen_awakening_elixir")
 	if not bool(awakening_result.get("success", false)):
 		_fail("Nen Awakening Elixir did not awaken Nen: " + str(awakening_result))
+		return
+	for mobile_foundation_value in ["ten", "zetsu", "ren", "hatsu"]:
+		var mobile_foundation_id := str(mobile_foundation_value)
+		for mobile_session_index in range(3):
+			var mobile_training_result: Dictionary = pilot_progression.call("record_nen_foundation_training", mobile_foundation_id, "validator_mobile_%s_%d" % [mobile_foundation_id, mobile_session_index])
+			if not bool(mobile_training_result.get("success", false)):
+				_fail("Mobile Nen foundation training failed for %s: %s" % [mobile_foundation_id, str(mobile_training_result.get("reason", "UNKNOWN"))])
+				return
+	var mobile_affinity_result: Dictionary = pilot_progression.call("choose_nen_affinity", "enhancement")
+	if not bool(mobile_affinity_result.get("success", false)):
+		_fail("Mobile Nen foundation completion did not unlock affinity selection: " + str(mobile_affinity_result))
 		return
 	pilot_progression.call("add_item", "nen_control_elixir", 1)
 	pilot_progression.call("consume_elixir", "nen_control_elixir")

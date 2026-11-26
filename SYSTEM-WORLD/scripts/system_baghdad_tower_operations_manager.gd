@@ -22,7 +22,7 @@ const BAGHDAD_TOWER_CONFIG := {
 	"technology_tower_baghdad": {"node": "TechnologyTower", "title": "برج التكنولوجيا والابتكار", "floors": 40, "height": 245.0, "radius": 27.0, "roles": ["مدير الابتكار", "موظف المختبر", "مهندس الأجهزة", "مهندس الروبوتات", "باحث الذكاء الاصطناعي", "موظف الخدمات الرقمية", "مسؤول الصيانة", "مسؤول الإعلانات"], "jobs": ["innovation_director", "lab_receptionist", "device_engineer", "robotics_engineer", "ai_researcher", "digital_services", "maintenance_engineer", "advertising_manager"]}
 }
 
-const POWER_TOWER_CONFIG := {"node": "PowerTower", "title": "برج القوة", "floors": 200, "height": 820.0, "radius": 26.0, "roles": ["موظف تسجيل التحديات", "منظم الحلبة", "موظف الاستراحة الطبية", "مسؤول الإعلانات"], "jobs": ["arena_registrar", "arena_coordinator", "arena_medic", "advertising_manager"]}
+const POWER_TOWER_CONFIG := {"node": "PowerTower", "title": "برج القوة", "floors": 200, "height": 820.0, "radius": 26.0, "roles": ["موظف تسجيل التحديات", "منظم الحلبة", "موظف الاستراحة الطبية", "مسؤول الإعلانات", "طاهي كافتيريا برج القوة", "موظف خدمة الكافتيريا"], "jobs": ["arena_registrar", "arena_coordinator", "arena_medic", "advertising_manager", "restaurant_chef", "restaurant_waiter"]}
 
 const PRODUCT_CATALOG := {
 	"shopping_tower_baghdad": [
@@ -54,10 +54,10 @@ const PRODUCT_CATALOG := {
 		{"id":"strength_elixir","name":"إكسير القوة","price":420},
 		{"id":"speed_elixir","name":"إكسير السرعة","price":420},
 		{"id":"endurance_elixir","name":"إكسير التحمل","price":450},
-		{"id":"energy_elixir","name":"إكسير الطاقة","price":360},
+		{"id":"energy_elixir","name":"إكسير الطاقة — رتبة C","price":360,"required_rank":"C"},
 		{"id":"nen_awakening_elixir","name":"إكسير إيقاظ النِن","price":1800},
 		{"id":"nen_control_elixir","name":"إكسير التحكم بالنِن","price":2600},
-		{"id":"rare_legendary_elixir","name":"إكسير نادر/أسطوري","price":12000,"required_rank":"S"},
+		{"id":"rare_legendary_elixir","name":"إكسير نادر/أسطوري — رتبة S","price":18000,"required_rank":"S"},
 		{"id":"repair_kit","name":"عدة إصلاح المعدات","price":250},
 		{"id":"iron_ingot","name":"سبيكة حديد","price":45},
 		{"id":"wood_plank","name":"لوح خشب مصقول","price":20},
@@ -70,19 +70,25 @@ const PRODUCT_CATALOG := {
 		{"id":"rare_core","name":"نواة نادرة","price":1200},
 
 		{"id":"nen_stabilizer_elixir","name":"إكسير تثبيت هالة النِن","price":3200,"required_rank":"C"},
-		{"id":"nen_focus_elixir","name":"إكسير تركيز النِن","price":2100,"required_rank":"D"},
-		{"id":"nen_recovery_elixir","name":"إكسير استعادة النِن","price":2800,"required_rank":"C"},
+		{"id":"nen_focus_elixir","name":"إكسير تركيز النِن","price":2100,"required_rank":"B"},
+		{"id":"nen_recovery_elixir","name":"إكسير استعادة النِن","price":2800,"required_rank":"A"},
 		{"id":"deep_wound_elixir","name":"إكسير علاج الإصابات العميقة","price":950,"required_rank":"D"},
 		{"id":"regeneration_elixir","name":"إكسير التجدد الحيوي","price":1450,"required_rank":"C"},
 		{"id":"antidote_elixir","name":"إكسير مضاد السموم","price":390,"required_rank":"F"},
 		{"id":"resistance_elixir","name":"إكسير مقاومة الإرهاق","price":620,"required_rank":"E"},
-		{"id":"elite_legendary_elixir","name":"إكسير أسطوري للنخبة","price":24000,"required_rank":"S"},
+		{"id":"elite_legendary_elixir","name":"إكسير أسطوري للنخبة — رتبة SS","price":32000,"required_rank":"SS"},
 		{"id":"skill_manual_pulse_dash","name":"مخطوطة تقنية اندفاع النبضة","price":2500,"required_rank":"C","required_level":15,"required_nen_rank":1,"product_type":"skill_training_permit","skill_id":"pulse_dash"},
 		{"id":"skill_manual_aura_shield","name":"مخطوطة تقنية درع الهالة","price":4500,"required_rank":"B","required_level":20,"required_nen_rank":2,"product_type":"skill_training_permit","skill_id":"aura_shield"},
 		{"id":"skill_manual_sensory_mark","name":"مخطوطة تقنية وسم الإدراك","price":6500,"required_rank":"B","required_level":25,"required_nen_rank":2,"product_type":"skill_training_permit","skill_id":"sensory_mark"},
 		{"id":"skill_manual_flow_counter","name":"مخطوطة تقنية صد التدفق","price":11000,"required_rank":"A","required_level":35,"required_nen_rank":3,"product_type":"skill_training_permit","skill_id":"flow_counter"},
 		{"id":"skill_manual_resonance_burst","name":"مخطوطة تقنية انفجار الرنين","price":18000,"required_rank":"S","required_level":50,"required_nen_rank":4,"product_type":"skill_training_permit","skill_id":"resonance_burst"},
 		{"id":"skill_manual_sovereign_focus","name":"مخطوطة تقنية تركيز السيادة","price":30000,"required_rank":"SS","required_level":80,"required_nen_rank":5,"product_type":"skill_training_permit","skill_id":"sovereign_focus"},
+		{"id":"skill_manual_lightning_mantle","name":"مخطوطة عباءة البرق الخاطف — نادرة","price":22000,"required_rank":"A","required_level":40,"required_nen_rank":3,"product_type":"skill_training_permit","skill_id":"lightning_mantle"},
+		{"id":"skill_manual_shadow_step","name":"مخطوطة خطوة الظلال — نادرة","price":28000,"required_rank":"S","required_level":50,"required_nen_rank":4,"product_type":"skill_training_permit","skill_id":"shadow_step"},
+		{"id":"skill_manual_shadow_guardian_aura","name":"مخطوطة هالة حارس الظلال — نادرة","price":34000,"required_rank":"S","required_level":60,"required_nen_rank":4,"product_type":"skill_training_permit","skill_id":"shadow_guardian_aura"},
+		{"id":"skill_manual_body_manifestation","name":"مخطوطة تجسيد الجسد الفولاذي — نادرة","price":42000,"required_rank":"SS","required_level":75,"required_nen_rank":5,"product_type":"skill_training_permit","skill_id":"body_manifestation"},
+		{"id":"skill_manual_lightning_sovereign_form","name":"مخطوطة هيئة سيد البرق — أسطورية","price":65000,"required_rank":"SSS","required_level":95,"required_nen_rank":5,"product_type":"skill_training_permit","skill_id":"lightning_sovereign_form"},
+		{"id":"skill_manual_shadow_monarch_aegis","name":"مخطوطة درع سيادة الظلال — أسطورية","price":72000,"required_rank":"SSS","required_level":100,"required_nen_rank":5,"product_type":"skill_training_permit","skill_id":"shadow_monarch_aegis"},
 		{"id":"hunter_pistol","name":"مسدس صياد حديث","price":1750,"required_rank":"C"},
 		{"id":"hunter_rifle","name":"بندقية صياد حديثة","price":3600,"required_rank":"B"},
 		{"id":"precision_rifle","name":"بندقية دقيقة بعيدة المدى","price":6200,"required_rank":"A"},
@@ -104,6 +110,20 @@ const PRODUCT_CATALOG := {
 		{"id":"rank_s_armor","name":"درع متقدم — رتبة S","price":12500,"required_rank":"S"},
 		{"id":"rank_ss_armor","name":"درع أسطوري — رتبة SS","price":22000,"required_rank":"SS"},
 		{"id":"rank_sss_armor","name":"درع SYSTEM الفريد — رتبة SSS","price":42000,"required_rank":"SSS"},
+		{"id":"rank_f_armor","name":"درع تدريب خفيف — رتبة F","price":700,"required_rank":"F"},
+		{"id":"rank_a_blade","name":"سيف النخبة المشحون — رتبة A","price":7800,"required_rank":"A"},
+		{"id":"rank_s_blade","name":"سيف الهالة الملكي — رتبة S","price":14500,"required_rank":"S"},
+		{"id":"rank_ss_blade","name":"نصل السيادة — رتبة SS","price":26500,"required_rank":"SS"},
+		{"id":"rank_sss_blade","name":"نصل SYSTEM المطلق — رتبة SSS","price":48000,"required_rank":"SSS"},
+		{"id":"rank_e_bow","name":"قوس صيد خفيف — رتبة E","price":650,"required_rank":"E"},
+		{"id":"rank_d_bow","name":"قوس ميداني معزز — رتبة D","price":950,"required_rank":"D"},
+		{"id":"rank_a_rifle","name":"بندقية النخبة الدقيقة — رتبة A","price":8500,"required_rank":"A"},
+		{"id":"rank_s_rifle","name":"بندقية الهالة المتقدمة — رتبة S","price":15500,"required_rank":"S"},
+		{"id":"rank_ss_rifle","name":"بندقية السيادة — رتبة SS","price":28000,"required_rank":"SS"},
+		{"id":"rank_sss_rifle","name":"بندقية SYSTEM الأسطورية — رتبة SSS","price":52000,"required_rank":"SSS"},
+		{"id":"skill_manual_basic_strike","name":"مخطوطة الضربة الأساسية — رتبة F","price":500,"required_rank":"F","required_level":1,"product_type":"skill_training_permit","skill_id":"basic_strike"},
+		{"id":"skill_manual_sovereign_overdrive","name":"مخطوطة اندفاع السيادة — رتبة SSS","price":52000,"required_rank":"SSS","required_level":100,"required_nen_rank":5,"product_type":"skill_training_permit","skill_id":"sovereign_overdrive"},
+		{"id":"sovereign_ascension_elixir","name":"إكسير ارتقاء السيادة — رتبة SSS","price":52000,"required_rank":"SSS","required_level":100,"required_nen_rank":5},
 		{"id":"restaurant_baghdad_breakfast","name":"فطور بغدادي تقليدي","price":42},
 		{"id":"restaurant_masگوف","name":"سمك مسگوف عراقي","price":95},
 		{"id":"restaurant_kebab","name":"كباب عراقي","price":68},
@@ -232,6 +252,8 @@ var status_label: Label
 var credits_label: Label
 var floor_selector: SpinBox
 var power_floor_started_at := 0
+var power_floor_time_remaining := 0.0
+var power_floor_timer_display_clock := 0.0
 var active_power_objective_label: Label3D
 var active_power_floor_data: Dictionary = {}
 var active_floor_root: Node3D
@@ -314,6 +336,17 @@ func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_po
 	print("SYSTEM tower operations: staff, local trading, floor interiors and advertising initialized.")
 
 func _process(delta: float) -> void:
+	if power_floor_in_progress and power_floor_time_remaining > 0.0:
+		power_floor_time_remaining = maxf(0.0, power_floor_time_remaining - delta)
+		power_floor_timer_display_clock += delta
+		if power_floor_timer_display_clock >= 1.0:
+			power_floor_timer_display_clock = 0.0
+			if is_instance_valid(active_power_objective_label):
+				var minutes_left := int(floor(power_floor_time_remaining / 60.0))
+				var seconds_left := int(ceil(power_floor_time_remaining)) % 60
+				active_power_objective_label.text = "المواجهة الفردية 1 ضد 1 — الوقت المتبقي: %02d:%02d" % [minutes_left, seconds_left]
+		if power_floor_time_remaining <= 0.0:
+			_fail_power_floor("انتهى الوقت المحدد للمواجهة")
 	_process_advertising_campaign(delta)
 	stock_refresh_clock -= delta
 	if stock_refresh_clock <= 0.0:
@@ -636,12 +669,12 @@ func _board_floor_duty_staff(tower_id: String, floor_number: int, car: Node3D) -
 
 
 func _board_restaurant_support_staff(tower_id: String, floor_number: int, car: Node3D) -> Dictionary:
-	if tower_id != "shopping_tower_baghdad" or floor_number < 29 or floor_number > 32:
+	if not ((tower_id == "shopping_tower_baghdad" and floor_number >= 29 and floor_number <= 32) or (tower_id == "power_tower_baghdad" and floor_number in [2, 3])):
 		return {}
 	if not is_instance_valid(car) or not staff_by_tower.has(tower_id):
 		return {}
 	var primary_index := _get_floor_duty_staff_index(tower_id, floor_number)
-	var support_index := 5 if primary_index == 4 else 4
+	var support_index := (4 if floor_number == 2 else 5) if tower_id == "power_tower_baghdad" else (5 if primary_index == 4 else 4)
 	var staff_ids: Array = staff_by_tower.get(tower_id, [])
 	if support_index < 0 or support_index >= staff_ids.size():
 		return {}
@@ -1960,7 +1993,9 @@ func _refresh_advertisements() -> void:
 		var manager_name := "فريق الإعلان"
 		var manager_job := ""
 		if not staff_ids.is_empty() and is_instance_valid(society):
-			var manager_index := staff_ids.size() - 1
+			var manager_index := jobs.find("advertising_manager")
+			if manager_index < 0 or manager_index >= staff_ids.size():
+				manager_index = staff_ids.size() - 1
 			manager_job = str(jobs[manager_index]) if manager_index < jobs.size() else ""
 			var npc: Dictionary = society.call("get_npc", str(staff_ids[manager_index]))
 			manager_name = str(npc.get("name", manager_name))
@@ -2674,7 +2709,7 @@ func _buy_product(item_id: String, item_name: String, _listed_price: int, requir
 		if not bool(permit_check.get("success", false)):
 			_set_status("لا يمكن شراء مخطوطة التدريب: " + str(permit_check.get("reason", "تحقق من المتطلبات السابقة")))
 			return
-	if item_id in ["rare_legendary_elixir", "elite_legendary_elixir"]:
+	if item_id in ["rare_legendary_elixir", "elite_legendary_elixir", "sovereign_ascension_elixir"]:
 		if not is_instance_valid(progression) or int(progression.get("current_level")) < 80 or not bool(progression.get("nen_unlocked")) or int(progression.get("nen_control_rank")) < 5 or not _meets_hunter_rank("S"):
 			_set_status("الخزنة تتطلب مستوى 80 ورتبة صياد S وإيقاظ النِن والتحكم من الرتبة 5.")
 			return
@@ -3548,6 +3583,23 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 		if tower_id == "shopping_tower_baghdad" and floor_number == 29:
 			if existing.get_node_or_null("RestaurantDiningSign") == null:
 				_create_restaurant_dining_area(existing, float(config["radius"]), floor_number)
+		if tower_id == "power_tower_baghdad" and floor_number in [2, 3]:
+			if existing.get_node_or_null("RestaurantDiningSign") == null:
+				_create_restaurant_dining_area(existing, float(config["radius"]), floor_number, tower_id)
+			existing.set_meta("system_power_tower_cafeteria_floor", true)
+		if tower_id == "power_tower_baghdad" and floor_number >= 4 and floor_number <= 10:
+			var power_department := _department_for_floor(tower_id, floor_number, int(config["floors"]))
+			var power_facility_type := ""
+			match floor_number:
+				4: power_facility_type = "shopping_skill_store"
+				5: power_facility_type = "shopping_weapon_gallery"
+				6: power_facility_type = "shopping_ranged_gallery"
+				7: power_facility_type = "shopping_armor_gallery"
+				8: power_facility_type = "shopping_elixir_pharmacy"
+				9: power_facility_type = "shopping_advanced_elixir_lab"
+				10: power_facility_type = "shopping_rare_elixir_vault"
+			if existing.get_node_or_null("SpecialFacility_" + power_facility_type) == null:
+				_create_specialized_floor_facility(existing, tower_id, floor_number, float(config["radius"]), power_department)
 		# Existing museum floors can be prepared before a later interaction pass.
 		# Reconcile every exhibit collider/group/record before returning the cached room.
 		_ensure_museum_exhibit_interactions(existing, tower_id, floor_number)
@@ -3629,8 +3681,15 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 	_create_floor_emergency_exit(room, tower_id, floor_number, radius)
 	if tower_id == "power_tower_baghdad":
 		room.set_meta("system_power_tower_floor", floor_number)
-		room.set_meta("system_power_tower_department", "arena")
+		room.set_meta("system_power_tower_department", "arena" if floor_number > 10 else "commercial_and_services")
 		_create_power_arena_layout(room, radius, floor_number)
+		if floor_number in [2, 3]:
+			# Keep the arena floor intact while adding the promised physical cafeteria zone.
+			_create_restaurant_dining_area(room, radius, floor_number, tower_id)
+			room.set_meta("system_power_tower_cafeteria_floor", true)
+		elif floor_number >= 4 and floor_number <= 10:
+			# Power Tower has its own seven commercial departments; do not reuse the Baghdad shopping tower.
+			_create_specialized_floor_facility(room, tower_id, floor_number, radius, department)
 	else:
 		_create_floor_facilities(room, tower_id, floor_number, radius, department)
 		TowerFloorThemeBuilder.build(room, tower_id, floor_number, radius, department)
@@ -4225,6 +4284,18 @@ func _create_power_tower_spectator_gallery(room: Node3D, radius: float) -> void:
 func _department_for_floor(tower_id: String, floor_number: int, total: int) -> String:
 	var ratio := float(floor_number) / float(maxi(total, 1))
 	match tower_id:
+		"power_tower_baghdad":
+			if floor_number == 1: return "ردهة برج القوة وتسجيل المتنافسين"
+			if floor_number in [2, 3]: return "كافتيريات ومطاعم المتنافسين — وجبات الاستعادة والطاقة"
+			if floor_number == 4: return "متجر المهارات وتقنيات النِن"
+			if floor_number == 5: return "معرض الأسلحة البيضاء والسيوف والرماح"
+			if floor_number == 6: return "معرض الأقواس والأسلحة بعيدة المدى"
+			if floor_number == 7: return "معرض الدروع والخوذ والبدلات — F إلى SSS"
+			if floor_number == 8: return "صيدلية الأكاسير الأساسية — F إلى C"
+			if floor_number == 9: return "مختبر الأكاسير المتقدمة — B إلى A"
+			if floor_number == 10: return "خزنة الأكاسير النادرة والأسطورية — S إلى SSS"
+			if floor_number == 11: return "قاعات التدريب والاستعداد للمواجهات"
+			return "طوابق التحديات الفردية — " + str(floor_number)
 		"shopping_tower_baghdad":
 			if floor_number >= 29: return "المطاعم الراقية وصالات الطعام والمقاهي"
 			if floor_number >= 27: return "فندق SYSTEM — الاستقبال والأجنحة والغرف الفندقية"
@@ -4327,7 +4398,9 @@ func _create_floor_facilities(room: Node3D, tower_id: String, floor_number: int,
 			_create_workshop_station(room, "WeaponsForge", "ورشة الحدادة وصناعة الأسلحة الحديثة والتقليدية", Vector3(-radius * 0.32, 0.0, -radius * 0.42), str(staff_ids[1]), "weapons_merchant")
 			_create_workshop_station(room, "ElixirLaboratory", "مختبر تحضير الأكاسير وإيقاظ النِن والعلاج", Vector3(radius * 0.32, 0.0, -radius * 0.42), str(staff_ids[2]), "elixir_pharmacist")
 	if tower_id == "shopping_tower_baghdad" and floor_number >= 29:
-		_create_restaurant_dining_area(room, radius, floor_number)
+		_create_restaurant_dining_area(room, radius, floor_number, tower_id)
+	if tower_id == "power_tower_baghdad" and floor_number in [2, 3]:
+		_create_restaurant_dining_area(room, radius, floor_number, tower_id)
 	if tower_id == "shopping_tower_baghdad" and floor_number in [27, 28]:
 		var hotel_staff: Array = staff_by_tower.get(tower_id, [])
 		var hospitality_staff_id := str(hotel_staff[6]) if hotel_staff.size() > 6 else (str(hotel_staff[3]) if hotel_staff.size() > 3 else "")
@@ -4432,6 +4505,29 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 			elif floor_number == 40:
 				facility_type = "innovation_rooftop"
 				facility_title = "منصة الابتكار والرصد التقني"
+		"power_tower_baghdad":
+			match floor_number:
+				4:
+					facility_type = "shopping_skill_store"
+					facility_title = "متجر مهارات وتقنيات النِن — برج القوة"
+				5:
+					facility_type = "shopping_weapon_gallery"
+					facility_title = "معرض الأسلحة البيضاء — برج القوة"
+				6:
+					facility_type = "shopping_ranged_gallery"
+					facility_title = "معرض الأسلحة بعيدة المدى — برج القوة"
+				7:
+					facility_type = "shopping_armor_gallery"
+					facility_title = "معرض الدروع والبدلات F إلى SSS — برج القوة"
+				8:
+					facility_type = "shopping_elixir_pharmacy"
+					facility_title = "صيدلية الأكاسير الأساسية — برج القوة"
+				9:
+					facility_type = "shopping_advanced_elixir_lab"
+					facility_title = "مختبر الأكاسير المتقدمة — برج القوة"
+				10:
+					facility_type = "shopping_rare_elixir_vault"
+					facility_title = "خزنة الأكاسير النادرة والأسطورية — برج القوة"
 		"shopping_tower_baghdad":
 			if floor_number == 4:
 				facility_type = "shopping_skill_store"
@@ -4498,6 +4594,8 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 		return
 	var root := Node3D.new()
 	root.name = "SpecialFacility_" + facility_type
+	if tower_id == "power_tower_baghdad":
+		root.position = Vector3(0.0, 0.0, radius * 0.80)
 	root.set_meta("system_facility_type", facility_type)
 	root.set_meta("system_facility_title", facility_title)
 	root.set_meta("system_tower_id", tower_id)
@@ -4917,7 +5015,7 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 			for index in range(5):
 				_add_facility_box(root, "InnovationConsole_%02d" % index, Vector3(-12.0 + float(index) * 6.0, 1.0, 1.0), Vector3(2.4, 2.0, 1.8), highlight)
 		"shopping_skill_store", "shopping_weapon_gallery", "shopping_ranged_gallery", "shopping_armor_gallery", "shopping_crafting_materials", "shopping_elixir_pharmacy", "shopping_nen_center", "shopping_advanced_elixir_lab", "shopping_rare_elixir_vault":
-			_build_shopping_floor_showcase(root, floor_number, facility_type, accent, highlight)
+			_build_shopping_floor_showcase(root, floor_number, facility_type, accent, highlight, tower_id)
 		"hunter_weapon_mastery":
 			for index in range(6):
 				_add_facility_box(root, "WeaponMasteryRack_%02d" % index, Vector3(-12.0 + float(index) * 4.8, 1.5, -2.0), Vector3(1.8, 3.0, 1.2), accent)
@@ -4962,9 +5060,9 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 	var shape := CollisionShape3D.new()
 	shape.name = "CollisionShape3D"
 	var sphere := SphereShape3D.new()
-	sphere.radius = 3.0
+	sphere.radius = 2.2 if tower_id == "power_tower_baghdad" else 3.0
 	shape.shape = sphere
-	shape.position = Vector3(0.0, 1.2, -5.8) if facility_type.begins_with("shopping_") else Vector3(0.0, 1.2, 0.0)
+	shape.position = Vector3(0.0, 1.2, 3.0) if tower_id == "power_tower_baghdad" else (Vector3(0.0, 1.2, -5.8) if facility_type.begins_with("shopping_") else Vector3(0.0, 1.2, 0.0))
 	interaction.add_child(shape)
 	root.add_child(interaction)
 
@@ -5700,15 +5798,15 @@ func open_baghdad_progression_facility(tower_id: String, floor_number: int, faci
 	if facility_type.begins_with("shopping_"):
 		var allowed_ids: Array = []
 		match facility_type:
-			"shopping_skill_store": allowed_ids = ["skill_manual_pulse_dash", "skill_manual_aura_shield", "skill_manual_sensory_mark", "skill_manual_flow_counter", "skill_manual_resonance_burst", "skill_manual_sovereign_focus"]
-			"shopping_weapon_gallery": allowed_ids = ["training_sword", "steel_sword", "hunter_spear", "battle_axe", "combat_knife", "dual_blades", "long_sword", "great_sword", "war_hammer"]
-			"shopping_ranged_gallery": allowed_ids = ["composite_bow", "crossbow", "reinforced_arrows", "system_firearm", "hunter_pistol", "hunter_rifle", "precision_rifle", "tactical_shotgun"]
-			"shopping_armor_gallery": allowed_ids = ["hunter_shield", "hunter_armor", "hunter_helmet", "advanced_hunter_shield", "reinforced_helmet", "rank_e_armor", "rank_d_armor", "rank_c_armor", "rank_b_armor", "rank_a_armor", "rank_s_armor", "rank_ss_armor", "rank_sss_armor"]
+			"shopping_skill_store": allowed_ids = ["skill_manual_basic_strike", "skill_manual_pulse_dash", "skill_manual_aura_shield", "skill_manual_sensory_mark", "skill_manual_flow_counter", "skill_manual_resonance_burst", "skill_manual_sovereign_focus", "skill_manual_sovereign_overdrive"]
+			"shopping_weapon_gallery": allowed_ids = ["training_sword", "steel_sword", "hunter_spear", "battle_axe", "combat_knife", "dual_blades", "long_sword", "great_sword", "war_hammer", "rank_a_blade", "rank_s_blade", "rank_ss_blade", "rank_sss_blade"]
+			"shopping_ranged_gallery": allowed_ids = ["composite_bow", "crossbow", "reinforced_arrows", "rank_e_bow", "rank_d_bow", "system_firearm", "hunter_pistol", "hunter_rifle", "precision_rifle", "tactical_shotgun", "rank_a_rifle", "rank_s_rifle", "rank_ss_rifle", "rank_sss_rifle"]
+			"shopping_armor_gallery": allowed_ids = ["hunter_shield", "hunter_armor", "hunter_helmet", "advanced_hunter_shield", "reinforced_helmet", "rank_f_armor", "rank_e_armor", "rank_d_armor", "rank_c_armor", "rank_b_armor", "rank_a_armor", "rank_s_armor", "rank_ss_armor", "rank_sss_armor"]
 			"shopping_crafting_materials": allowed_ids = ["iron_ingot", "wood_plank", "leather_roll", "medicinal_herb", "crystal_dust", "monster_core", "nen_fragment", "energy_crystal", "rare_core", "repair_kit"]
 			"shopping_elixir_pharmacy": allowed_ids = ["healing_elixir", "strength_elixir", "speed_elixir", "endurance_elixir", "energy_elixir", "antidote_elixir", "resistance_elixir"]
 			"shopping_nen_center": allowed_ids = ["nen_awakening_elixir", "nen_control_elixir", "nen_focus_elixir", "nen_stabilizer_elixir", "nen_recovery_elixir"]
 			"shopping_advanced_elixir_lab": allowed_ids = ["deep_wound_elixir", "regeneration_elixir", "nen_stabilizer_elixir", "nen_focus_elixir", "nen_recovery_elixir"]
-			"shopping_rare_elixir_vault": allowed_ids = ["rare_legendary_elixir", "elite_legendary_elixir"]
+			"shopping_rare_elixir_vault": allowed_ids = ["rare_legendary_elixir", "elite_legendary_elixir", "sovereign_ascension_elixir"]
 		var floor_catalog_overrides := {
 			5: ["training_sword", "combat_knife", "steel_sword"],
 			6: ["hunter_spear", "battle_axe", "war_hammer"],
@@ -5732,7 +5830,18 @@ func open_baghdad_progression_facility(tower_id: String, floor_number: int, faci
 			25: ["regeneration_elixir", "elite_legendary_elixir"],
 			26: ["rare_legendary_elixir"]
 		}
-		if floor_catalog_overrides.has(floor_number):
+		var power_tower_catalog_overrides := {
+			4: ["skill_manual_basic_strike", "skill_manual_pulse_dash", "skill_manual_aura_shield", "skill_manual_sensory_mark", "skill_manual_flow_counter", "skill_manual_resonance_burst", "skill_manual_sovereign_focus", "skill_manual_sovereign_overdrive", "skill_manual_lightning_mantle", "skill_manual_shadow_step", "skill_manual_shadow_guardian_aura", "skill_manual_body_manifestation", "skill_manual_lightning_sovereign_form", "skill_manual_shadow_monarch_aegis"],
+			5: ["training_sword", "combat_knife", "steel_sword", "dual_blades", "great_sword", "rank_a_blade", "rank_s_blade", "rank_ss_blade", "rank_sss_blade"],
+			6: ["reinforced_arrows", "rank_e_bow", "rank_d_bow", "composite_bow", "crossbow", "hunter_pistol", "tactical_shotgun", "hunter_rifle", "precision_rifle", "rank_a_rifle", "rank_s_rifle", "rank_ss_rifle", "rank_sss_rifle"],
+			7: ["rank_f_armor", "rank_e_armor", "rank_d_armor", "rank_c_armor", "rank_b_armor", "rank_a_armor", "rank_s_armor", "rank_ss_armor", "rank_sss_armor", "hunter_shield", "advanced_hunter_shield", "hunter_helmet", "reinforced_helmet"],
+			8: ["healing_elixir", "antidote_elixir", "resistance_elixir", "strength_elixir", "speed_elixir", "endurance_elixir", "energy_elixir", "nen_awakening_elixir"],
+			9: ["deep_wound_elixir", "regeneration_elixir", "nen_focus_elixir", "nen_stabilizer_elixir", "nen_recovery_elixir", "nen_control_elixir"],
+			10: ["rare_legendary_elixir", "elite_legendary_elixir", "sovereign_ascension_elixir"]
+		}
+		if tower_id == "power_tower_baghdad" and power_tower_catalog_overrides.has(floor_number):
+			allowed_ids = power_tower_catalog_overrides[floor_number]
+		elif tower_id == "shopping_tower_baghdad" and floor_catalog_overrides.has(floor_number):
 			allowed_ids = floor_catalog_overrides[floor_number]
 		var heading := Label.new()
 		heading.text = "المنتجات المتاحة — السعر والمخزون والرتبة تُراجع عند الشراء"
@@ -5740,7 +5849,7 @@ func open_baghdad_progression_facility(tower_id: String, floor_number: int, faci
 		if facility_type == "shopping_skill_store":
 			var rules := Label.new()
 			rules.name = "SkillStoreRules"
-			rules.text = "المخطوطة تمنح تصريح بدء التدريب فقط؛ لا تفتح المهارة تلقائياً. يلزم المستوى والرتبة والنِن والمتطلبات السابقة، ثم ثلاث جلسات تدريب موثقة في جمعية الصيادين."
+			rules.text = "المخطوطة تمنح تصريح بدء التدريب فقط؛ لا تفتح المهارة تلقائياً. يلزم إيقاظ النِن وإتقان Ten وZetsu وRen وHatsu واختيار ميول متوافقة، مع المستوى والرتبة والتحكم والمتطلبات السابقة، ثم ثلاث جلسات تدريب موثقة في جمعية الصيادين. أغلب تصاريح المهارات النادرة يمكن الحصول عليها من غنائم الوحوش والزعماء المؤهلين."
 			rules.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			content.add_child(rules)
 		var catalog: Array = PRODUCT_CATALOG.get("shopping_tower_baghdad", [])
@@ -5776,6 +5885,8 @@ func open_baghdad_progression_facility(tower_id: String, floor_number: int, faci
 			_set_status("نظام التقدم غير متاح.")
 			panel.show()
 			return
+		if facility_type == "hunter_nen_fundamentals":
+			_add_nen_foundation_training_controls(progression, floor_number)
 		if facility_type == "hunter_weapon_mastery":
 			var family_names := {"sword":"السيف", "spear":"الرمح", "axe":"الفأس", "bow":"القوس", "shield":"الدرع", "modern_ranged":"السلاح بعيد المدى"}
 			for family_value in family_names.keys():
@@ -5807,6 +5918,78 @@ func open_baghdad_progression_facility(tower_id: String, floor_number: int, faci
 			learned_heading.text = "المهارات المتعلمة: " + ", ".join(learned)
 			content.add_child(learned_heading)
 	panel.show()
+
+
+
+func _add_nen_foundation_training_controls(progression: Node, floor_number: int) -> void:
+	var instructions := Label.new()
+	instructions.name = "NenFoundationInstructions"
+	instructions.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	instructions.text = "ابدأ بإكسير إيقاظ النِن، ثم أتقن Ten وZetsu وRen وHatsu بالترتيب. تحتاج كل مرحلة إلى ثلاث جلسات تدريب مختلفة قبل فتح المرحلة التالية."
+	content.add_child(instructions)
+	if not bool(progression.get("nen_unlocked")):
+		var locked_label := Label.new()
+		locked_label.name = "NenAwakeningRequired"
+		locked_label.text = "النِن غير مستيقظ بعد — احصل على إكسير إيقاظ النِن أولاً من متجر الأكاسير."
+		content.add_child(locked_label)
+		return
+	var status: Dictionary = progression.call("get_nen_foundation_status")
+	var foundations: Dictionary = status.get("foundations", {})
+	for foundation_value in ["ten", "zetsu", "ren", "hatsu"]:
+		var foundation_id := str(foundation_value)
+		var stage: Dictionary = foundations.get(foundation_id, {})
+		var training_button := Button.new()
+		training_button.name = "NenFoundationTraining_" + foundation_id
+		training_button.text = "%s — %d/3" % [str(stage.get("name", foundation_id)), int(stage.get("sessions", 0))]
+		training_button.disabled = bool(stage.get("completed", false)) or not bool(stage.get("available", false))
+		training_button.pressed.connect(_on_nen_foundation_training_pressed.bind(progression, foundation_id, floor_number))
+		content.add_child(training_button)
+	if bool(status.get("all_complete", false)):
+		var affinity := str(status.get("affinity", ""))
+		if affinity.is_empty():
+			var affinity_heading := Label.new()
+			affinity_heading.name = "NenAffinityHeading"
+			affinity_heading.text = "اكتملت الأساسيات الأربع. اختر ميول النِن الرئيسي:"
+			content.add_child(affinity_heading)
+			var affinity_names := {"enhancement":"التعزيز — Enhancement", "emission":"الإطلاق — Emission", "transmutation":"التحويل — Transmutation", "conjuration":"التجسيد — Conjuration", "manipulation":"التحكم — Manipulation", "specialization":"التخصص — Specialization"}
+			for affinity_value in affinity_names.keys():
+				var affinity_id := str(affinity_value)
+				var affinity_button := Button.new()
+				affinity_button.name = "NenAffinity_" + affinity_id
+				affinity_button.text = str(affinity_names[affinity_value])
+				affinity_button.pressed.connect(_on_nen_affinity_selected.bind(progression, affinity_id, floor_number))
+				content.add_child(affinity_button)
+		else:
+			var affinity_label := Label.new()
+			affinity_label.name = "NenAffinitySelected"
+			affinity_label.text = "ميول النِن المعتمد: " + str(status.get("affinity_name", affinity))
+			content.add_child(affinity_label)
+
+
+
+func _on_nen_foundation_training_pressed(progression: Node, foundation_id: String, floor_number: int) -> void:
+	if not is_instance_valid(progression):
+		_set_status("نظام تقدم اللاعب غير متاح.")
+		return
+	var session_id := "hunter_floor_%d_%s_%d" % [floor_number, foundation_id, Time.get_ticks_usec()]
+	var result: Dictionary = progression.call("record_nen_foundation_training", foundation_id, session_id)
+	if bool(result.get("success", false)):
+		_set_status("تم تسجيل جلسة %s — %d/3." % [foundation_id, int(result.get("sessions", 0))])
+		open_baghdad_progression_facility("hunter_association_tower_baghdad", floor_number, "hunter_nen_fundamentals")
+	else:
+		_set_status("تعذر تسجيل التدريب: " + str(result.get("reason", "UNKNOWN")))
+
+
+func _on_nen_affinity_selected(progression: Node, affinity_id: String, floor_number: int) -> void:
+	if not is_instance_valid(progression):
+		_set_status("نظام تقدم اللاعب غير متاح.")
+		return
+	var result: Dictionary = progression.call("choose_nen_affinity", affinity_id)
+	if bool(result.get("success", false)):
+		_set_status("تم اختيار ميول النِن: " + str(result.get("name", affinity_id)))
+		open_baghdad_progression_facility("hunter_association_tower_baghdad", floor_number, "hunter_nen_fundamentals")
+	else:
+		_set_status("تعذر اختيار التخصص: " + str(result.get("reason", "UNKNOWN")))
 
 
 func _calculate_arcade_mode_index(cabinet_mode: String) -> int:
@@ -7066,7 +7249,7 @@ func _create_pool_service_interaction(parent: Node3D, node_name: String, service
 	parent.add_child(interaction)
 
 
-func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_type: String, accent: Material, highlight: Material) -> void:
+func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_type: String, accent: Material, highlight: Material, tower_id: String = "shopping_tower_baghdad") -> void:
 	var showcase := Node3D.new()
 	showcase.name = "ShoppingShowcase"
 	showcase.set_meta("system_showcase_category", facility_type)
@@ -7107,6 +7290,15 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 		25: "تحضيرات النخبة والأكاسير المتقدمة",
 		26: "الخزنة المحمية للأكاسير النادرة والأسطورية"
 	}
+	if tower_id == "power_tower_baghdad":
+		match facility_type:
+			"shopping_skill_store": floor_titles[4] = "مهارات F إلى SSS وتصاريح التدريب"
+			"shopping_weapon_gallery": floor_titles[5] = "السيوف والأسلحة البيضاء F إلى SSS"
+			"shopping_ranged_gallery": floor_titles[6] = "الأقواس والأسلحة بعيدة المدى F إلى SSS"
+			"shopping_armor_gallery": floor_titles[7] = "الدروع والخوذ F إلى SSS"
+			"shopping_elixir_pharmacy": floor_titles[8] = "أكاسير الاستعادة والطاقة F إلى C"
+			"shopping_advanced_elixir_lab": floor_titles[9] = "أكاسير النِن المتقدمة B إلى A"
+			"shopping_rare_elixir_vault": floor_titles[10] = "الخزنة النادرة والأسطورية S إلى SSS"
 	var heading := Label3D.new()
 	heading.name = "ShowcaseCategorySign"
 	heading.text = str(category_titles.get(facility_type, "متجر SYSTEM")) + "\n" + str(floor_titles.get(floor_number, "SYSTEM | " + facility_type.to_upper()))
@@ -7138,6 +7330,15 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 		25: ["إكسير متقدم", "تجدد النخبة", "ختم المختبر"],
 		26: ["إكسير نادر/أسطوري", "حافظة محمية", "ختم الخزنة"]
 	}.get(floor_number, ["عرض A", "عرض B", "عرض C"])
+	if tower_id == "power_tower_baghdad":
+		match facility_type:
+			"shopping_skill_store": display_names = ["مخطوطة الضربة الأساسية F", "مخطوطة مهارة النِن", "مخطوطة اندفاع السيادة SSS"]
+			"shopping_weapon_gallery": display_names = ["سيف تدريبي F", "نصل السيادة SS", "نصل SYSTEM SSS"]
+			"shopping_ranged_gallery": display_names = ["قوس ميداني D", "بندقية النخبة A", "بندقية SYSTEM SSS"]
+			"shopping_armor_gallery": display_names = ["درع خفيف F", "درع نخبة A", "درع SYSTEM SSS"]
+			"shopping_elixir_pharmacy": display_names = ["إكسير الشفاء F", "إكسير مقاومة الإرهاق E", "إكسير الطاقة C"]
+			"shopping_advanced_elixir_lab": display_names = ["إكسير تركيز النِن B", "إكسير استعادة النِن A", "إكسير التجدد C"]
+			"shopping_rare_elixir_vault": display_names = ["إكسير نادر S", "إكسير أسطوري SS", "إكسير ارتقاء السيادة SSS"]
 	for index in range(3):
 		var item := Node3D.new()
 		item.name = "ShowcaseItem_%02d" % index
@@ -7168,6 +7369,15 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 			25: ["regeneration_elixir", "elite_legendary_elixir", "elite_legendary_elixir"],
 			26: ["rare_legendary_elixir", "rare_legendary_elixir", "rare_legendary_elixir"]
 		}.get(floor_number, [])
+		if tower_id == "power_tower_baghdad":
+			match facility_type:
+				"shopping_skill_store": display_product_ids = ["skill_manual_basic_strike", "skill_manual_pulse_dash", "skill_manual_sovereign_overdrive"]
+				"shopping_weapon_gallery": display_product_ids = ["training_sword", "rank_ss_blade", "rank_sss_blade"]
+				"shopping_ranged_gallery": display_product_ids = ["rank_d_bow", "rank_a_rifle", "rank_sss_rifle"]
+				"shopping_armor_gallery": display_product_ids = ["rank_f_armor", "rank_a_armor", "rank_sss_armor"]
+				"shopping_elixir_pharmacy": display_product_ids = ["healing_elixir", "resistance_elixir", "energy_elixir"]
+				"shopping_advanced_elixir_lab": display_product_ids = ["nen_focus_elixir", "nen_recovery_elixir", "regeneration_elixir"]
+				"shopping_rare_elixir_vault": display_product_ids = ["rare_legendary_elixir", "elite_legendary_elixir", "sovereign_ascension_elixir"]
 		if index < display_product_ids.size():
 			item.set_meta("system_showcase_product_id", str(display_product_ids[index]))
 		showcase.add_child(item)
@@ -7193,7 +7403,7 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 				elif index == 2:
 					_add_facility_box(item, "WarHammerHead", Vector3(0.0, 3.0, 0.0), Vector3(1.0, 0.72, 0.72), accent)
 		elif facility_type == "shopping_ranged_gallery":
-			if floor_number == 8 and index < 2:
+			if (tower_id == "power_tower_baghdad" and floor_number == 6 and index < 2) or (tower_id != "power_tower_baghdad" and floor_number == 8 and index < 2):
 				var bow := MeshInstance3D.new()
 				bow.name = "BowDisplay" if index == 0 else "CrossbowDisplay"
 				var bow_mesh := TorusMesh.new()
@@ -7208,7 +7418,7 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 				_add_facility_box(item, "RangedStock", Vector3(-0.15, 1.65, 0.0), Vector3(1.8, 0.28, 0.42), accent)
 				_add_facility_box(item, "RangedBarrel", Vector3(0.95, 1.82, 0.0), Vector3(1.55, 0.12, 0.14), highlight)
 				_add_facility_box(item, "RangedGrip", Vector3(0.25, 1.18, 0.0), Vector3(0.28, 0.78, 0.28), accent)
-				if floor_number == 10:
+				if floor_number == 10 or (tower_id == "power_tower_baghdad" and floor_number == 6):
 					_add_facility_box(item, "PrecisionScope", Vector3(0.1, 2.05, 0.0), Vector3(0.62, 0.22, 0.22), highlight)
 		elif facility_type == "shopping_armor_gallery":
 			var torso := MeshInstance3D.new()
@@ -7230,7 +7440,7 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 			helmet.material_override = accent
 			item.add_child(helmet)
 			_add_facility_box(item, "ArmorShieldDisplay", Vector3(1.15, 1.95, 0.25), Vector3(0.82, 1.35, 0.22), highlight)
-			if floor_number == 13:
+			if floor_number == 13 or (tower_id == "power_tower_baghdad" and floor_number == 7):
 				_add_facility_box(item, "EliteShoulderLeft", Vector3(-0.8, 2.65, 0.0), Vector3(0.75, 0.55, 0.75), highlight)
 				_add_facility_box(item, "EliteShoulderRight", Vector3(0.8, 2.65, 0.0), Vector3(0.75, 0.55, 0.75), highlight)
 				_add_facility_box(item, "OutfitRackRail", Vector3(-1.15, 3.0, -0.45), Vector3(1.5, 0.12, 0.12), accent)
@@ -7265,7 +7475,7 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 		var item_interaction := Area3D.new()
 		item_interaction.name = "ShowcaseItemInteraction_%02d" % index
 		item_interaction.add_to_group("system_interactable")
-		item_interaction.set_meta("system_tower_id", "shopping_tower_baghdad")
+		item_interaction.set_meta("system_tower_id", tower_id)
 		item_interaction.set_meta("system_tower_floor_number", floor_number)
 		item_interaction.set_meta("system_facility_type", facility_type)
 		item_interaction.set_meta("system_showcase_product_id", str(item.get_meta("system_showcase_product_id", "")))
@@ -7282,7 +7492,10 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 		item_interaction_shape.position = Vector3(0.0, 1.7, 0.0)
 		item_interaction.add_child(item_interaction_shape)
 		item.add_child(item_interaction)
-	_add_facility_box(showcase, "DepartmentCounter", Vector3(0.0, 0.7, -5.8), Vector3(12.0, 1.4, 1.8), accent)
+	var counter_position := Vector3(0.0, 0.7, -5.8)
+	if tower_id == "power_tower_baghdad":
+		counter_position.z = 3.0
+	_add_facility_box(showcase, "DepartmentCounter", counter_position, Vector3(12.0, 1.4, 1.8), accent)
 
 
 func _add_facility_box(parent: Node3D, object_name: String, object_position: Vector3, object_size: Vector3, material: Material) -> void:
@@ -8323,11 +8536,13 @@ func _rate_restaurant_order(table_id: String, rating: int) -> void:
 		return
 
 
-func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: int) -> void:
+func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: int, tower_id: String = "shopping_tower_baghdad") -> void:
 	var dining_sign := Label3D.new()
 	dining_sign.name = "RestaurantDiningSign"
 	dining_sign.text = "SYSTEM FOOD HALL — مطاعم ومقاهي وصالات طعام"
 	dining_sign.position = Vector3(0.0, 4.0, -radius * 0.42)
+	if tower_id == "power_tower_baghdad":
+		dining_sign.position.z = -radius * 0.78
 	dining_sign.font_size = 22
 	dining_sign.pixel_size = 0.013
 	dining_sign.modulate = Color(1.0, 0.78, 0.42)
@@ -8335,6 +8550,8 @@ func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: i
 	var kitchen := Node3D.new()
 	kitchen.name = "RestaurantKitchen"
 	kitchen.position = Vector3(radius * 0.28, 0.0, -radius * 0.30)
+	if tower_id == "power_tower_baghdad":
+		kitchen.position = Vector3(0.0, 0.0, -radius * 0.72)
 	kitchen.set_meta("system_restaurant_kitchen", true)
 	room.add_child(kitchen)
 	var kitchen_counter := MeshInstance3D.new()
@@ -8362,7 +8579,10 @@ func _create_restaurant_dining_area(room: Node3D, radius: float, floor_number: i
 		table_root.name = "RestaurantTable_%02d" % index
 		var angle := TAU * float(index) / 4.0
 		table_root.position = Vector3(cos(angle) * radius * 0.34, 0.0, sin(angle) * radius * 0.34)
-		table_root.set_meta("system_restaurant_table_id", "shopping_floor_%02d_table_%02d" % [floor_number, index])
+		if tower_id == "power_tower_baghdad":
+			table_root.position = Vector3(-9.0 + float(index) * 6.0, 0.0, radius * 0.72)
+		var restaurant_table_prefix := "shopping" if tower_id == "shopping_tower_baghdad" else tower_id
+		table_root.set_meta("system_restaurant_table_id", "%s_floor_%02d_table_%02d" % [restaurant_table_prefix, floor_number, index])
 		table_root.set_meta("system_restaurant_table_name", "طاولة %d — الطابق %d" % [index + 1, floor_number])
 		table_root.set_meta("system_restaurant_table_index", index)
 		table_root.set_meta("system_restaurant_occupants", [])
@@ -8905,7 +9125,9 @@ func begin_verified_power_tower_pvp_match(match_data: Dictionary, local_player_i
 	}
 	power_floor_in_progress = true
 	power_floor_started_at = Time.get_ticks_msec()
-	_set_status("بدأت المواجهة البشرية 1 ضد 1 في الطابق %d. لا توجد فرق أو خصوم آليون." % floor_number)
+	power_floor_time_remaining = float(active_power_floor_data.get("time_limit_seconds", 180))
+	power_floor_timer_display_clock = 0.0
+	_set_status("بدأت المواجهة البشرية 1 ضد 1 في الطابق %d. الوقت المحدد: %d ثانية. لا توجد فرق أو خصوم آليون." % [floor_number, int(power_floor_time_remaining)])
 	return {"success": true, "match_id": match_id, "floor_number": floor_number, "competition_format": "INDIVIDUAL_1V1"}
 
 func apply_verified_power_tower_pvp_result(result_data: Dictionary, local_player_id: String) -> Dictionary:
@@ -8932,6 +9154,11 @@ func apply_verified_power_tower_pvp_result(result_data: Dictionary, local_player
 	var clear_time_seconds := float(result_data.get("clear_time_seconds", 0.0))
 	if clear_time_seconds <= 0.0:
 		return {"success": false, "reason": "INVALID_VERIFIED_MATCH_DURATION"}
+	var configured_time_limit := float(active_power_floor_data.get("time_limit_seconds", 180))
+	var elapsed_match_seconds := float(Time.get_ticks_msec() - power_floor_started_at) / 1000.0
+	if configured_time_limit > 0.0 and (clear_time_seconds > configured_time_limit or elapsed_match_seconds > configured_time_limit):
+		_fail_power_floor("تجاوزت المواجهة الحد الزمني")
+		return {"success": false, "reason": "MATCH_TIME_LIMIT_EXCEEDED", "time_limit_seconds": configured_time_limit}
 	# Validate progression before closing the judged duel or settling spectator tickets.
 	if int(power_tower_manager.get("active_floor")) != floor_number:
 		return {"success": false, "reason": "FLOOR_NOT_ACTIVE"}
@@ -8945,6 +9172,8 @@ func apply_verified_power_tower_pvp_result(result_data: Dictionary, local_player
 	var prediction_settlement: Dictionary = referee_result.get("spectator_settlement", {})
 	var career_result: Dictionary = referee_result.get("career_result", {})
 	power_floor_in_progress = false
+	power_floor_time_remaining = 0.0
+	power_floor_timer_display_clock = 0.0
 	active_power_tower_match.clear()
 	if winner_player_id != local_player_id:
 		power_tower_manager.call("abandon_active_floor")
@@ -8992,6 +9221,8 @@ func _fail_power_floor(reason: String) -> void:
 	power_tower_manager.call("abandon_active_floor")
 	power_floor_entry_pending = false
 	power_floor_in_progress = false
+	power_floor_time_remaining = 0.0
+	power_floor_timer_display_clock = 0.0
 	active_power_tower_match.clear()
 	active_power_floor_data.clear()
 	if is_instance_valid(active_power_objective_label):
@@ -9040,6 +9271,8 @@ func return_to_lobby() -> void:
 		power_tower_manager.call("abandon_active_floor")
 		power_floor_entry_pending = false
 		power_floor_in_progress = false
+		power_floor_time_remaining = 0.0
+		power_floor_timer_display_clock = 0.0
 		active_power_tower_match.clear()
 		active_power_floor_data.clear()
 		active_power_objective_label = null

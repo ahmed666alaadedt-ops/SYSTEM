@@ -96,7 +96,7 @@ func get_floor_data(floor_number: int) -> Dictionary:
 		"arena_theme_id": arena_theme_id,
 		"arena_theme_name": arena_theme_name,
 		"objective_type": objective_type,
-		"time_limit_seconds": 0,
+		"time_limit_seconds": 240 if boss_floor else 180,
 		"arena_name": arena_name,
 		"arena_rules": arena_rules,
 		"clear_time_recorded": true,
@@ -140,6 +140,9 @@ func confirm_floor_clear(floor_number: int, clear_time_seconds: float, server_ve
 	if clear_time_seconds <= 0.0:
 		return {"success": false, "reason": "INVALID_CLEAR_TIME"}
 	var data := get_floor_data(floor_number)
+	var time_limit := float(data.get("time_limit_seconds", 180))
+	if time_limit > 0.0 and clear_time_seconds > time_limit:
+		return {"success": false, "reason": "TIME_LIMIT_EXCEEDED", "time_limit_seconds": time_limit}
 	processed_result_ids[result_id] = true
 	highest_cleared_floor = maxi(highest_cleared_floor, floor_number)
 	floor_clear_times[str(floor_number)] = clear_time_seconds
@@ -379,7 +382,7 @@ func get_duel_career_status() -> Dictionary:
 		"disqualified": duel_disqualified,
 		"highest_cleared_floor": highest_cleared_floor,
 		"next_floor": 0 if duel_disqualified or highest_cleared_floor >= MAX_FLOORS else highest_cleared_floor + 1,
-		"rank": _rank_for_floor(highest_cleared_floor) if highest_cleared_floor > 0 else "E"
+		"rank": _rank_for_floor(highest_cleared_floor) if highest_cleared_floor > 0 else "F"
 	}
 
 
@@ -732,12 +735,15 @@ func _load_spectator_data() -> void:
 	spectator_npc_ticket_balances = saved_npc_balances.duplicate(true) if saved_npc_balances is Dictionary else {}
 
 func _rank_for_floor(floor_number: int) -> String:
-	if floor_number >= 180: return "S"
-	if floor_number >= 150: return "A"
-	if floor_number >= 110: return "B"
-	if floor_number >= 70: return "C"
-	if floor_number >= 30: return "D"
-	return "E"
+	if floor_number >= 181: return "SSS"
+	if floor_number >= 156: return "SS"
+	if floor_number >= 131: return "S"
+	if floor_number >= 106: return "A"
+	if floor_number >= 81: return "B"
+	if floor_number >= 61: return "C"
+	if floor_number >= 41: return "D"
+	if floor_number >= 21: return "E"
+	return "F"
 
 func _save_progress() -> void:
 	var config := ConfigFile.new()

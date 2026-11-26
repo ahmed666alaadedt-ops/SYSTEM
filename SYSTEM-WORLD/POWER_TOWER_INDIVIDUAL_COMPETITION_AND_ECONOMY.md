@@ -1,9 +1,17 @@
 # SYSTEM WORLD — Power Tower individual competition and economy
 
 Status: approved design and active implementation checkpoint
-Date: 23 November 2026
-Canonical branch: `feature/baghdad-five-plus-power-tower-20261122`
-Pull request: #38 (draft; do not merge without explicit user approval)
+Date: 27 November 2026
+Canonical branch: `feature/power-tower-completion-audit-20261127`
+Pull request: #45 (draft; do not merge without explicit user approval)
+
+## 0. 27 November completion checkpoint
+
+- Dedicated Power Tower cafeteria floors: 2–3, with kitchen, dining tables, chef and service staff.
+- Dedicated commercial floors: 4 skills, 5 melee weapons, 6 ranged weapons, 7 armor, 8 basic elixirs, 9 advanced Nen elixirs, 10 rare/sovereign elixir vault.
+- Equipment, skill and elixir product grades are mapped from F through SSS, with rank, level, Nen, permit and stock checks enforced by the shared progression/store purchase path.
+- Duel limits: 180 seconds for standard/elite human duels and 240 seconds for title-holder/boss-profile duels. A live countdown ends an attempt without granting a floor clear when time expires.
+- The local wallet, inventory and match records remain prototype/local-save systems. Production online human matchmaking, trusted server signatures, anti-cheat, cross-device account economy and physical Android performance validation are still release gates.
 
 ## 1. Canonical tower identity
 
@@ -26,7 +34,7 @@ Every Power Tower combat competition is an individual human-versus-human duel:
 
 Runtime acceptance criteria:
 - Each floor record declares `competition_format = INDIVIDUAL_1V1`, `opponent_kind = HUMAN_PLAYER`, `matchmaking_mode = ONLINE_1V1` and `ai_fallback = false`.
-- `opponent_count = 1`, `wave_count = 1`, and `time_limit_seconds = 0`.
+- `opponent_count = 1`, `wave_count = 1`; standard/elite duels use `time_limit_seconds = 180`, and title-holder/boss-profile duels use `time_limit_seconds = 240`.
 - Allowed arena types remain `DUEL`, `ELITE_DUEL`, and `BOSS_TRIAL`; boss arena means a human title-holder duel, not an AI boss.
 - Floor entry may display the arena while waiting, but combat begins only after an authenticated human match is supplied by the online match authority.
 - If matchmaking is unavailable, show a clear waiting/unavailable state. Never spawn a bot or simulate a result.
@@ -192,3 +200,15 @@ Implementation status: a local prototype now records individual 1v1 matches, ded
 - The regression now opens the prediction terminal through the actual arena-board interaction route and verifies that the shared virtual-ticket UI becomes visible.
 
 - The fan-prediction display is mounted above the rear spectator seating line and its interaction zone remains reachable at player height, keeping the board within the arena deck boundary instead of placing the kiosk beyond the platform edge.
+
+## 11. Nen foundations and affinity-gated abilities (27 November 2026)
+
+- Nen is the shared source for every learned SYSTEM skill-tree ability, including basic techniques and rare powers; ordinary light/heavy attacks remain available as baseline combat actions. Lightning, shadow and body-manifestation abilities are not separate energy systems.
+- Awakening Nen is only the entry gate. The player must then complete three unique training sessions for each foundation, in order: Ten, Zetsu, Ren and Hatsu. A later foundation cannot be trained until the previous one is mastered.
+- After Hatsu, the player selects one primary Nen affinity: Enhancement, Emission, Transmutation, Conjuration, Manipulation or Specialization. The choice and all foundation sessions are persisted in the player save.
+- Nen techniques and rare abilities require the foundations and a compatible selected affinity in addition to their existing level, Hunter rank, Nen-control rank, prerequisites, training permit, energy cost and cooldown.
+- Ability affinity mapping: lightning uses Transmutation/Enhancement; shadow movement and shadow guardians use Manipulation/Specialization; steel-body manifestation uses Enhancement/Conjuration. The higher sovereign variants retain those affinity requirements and require higher rank and Nen control.
+- The Hunter Association Nen fundamentals facility now exposes the ordered training sessions and affinity selection in-world. The Power Tower skill HUD explains missing foundation, affinity, or energy requirements rather than allowing an early activation.
+- Current rare ability catalogue remains six skills: Lightning Mantle (A), Shadow Step (S), Shadow Guardian Aura (S), Steel Body Manifestation (SS), Lightning Sovereign Form (SSS), and Shadow Monarch Aegis (SSS). Store manuals grant training authorization only; they do not instantly teach the ability.
+- Modern-world monster gates now roll Nen skill-training permit drops from the existing shared progression tree: 10% per ordinary monster, 38% per boss, and 55% for S/SS/SSS/EX gate bosses when an eligible skill exists. Drops are filtered by gate rank, player rank/level, Nen foundations, selected affinity, prerequisites and permit state; rare/legendary abilities are preferentially selected from boss drops. Reward IDs are persisted to reject duplicate claims. This remains a local prototype reward path, not a server-authoritative online loot service.
+
