@@ -50,6 +50,17 @@ func _run() -> void:
 	assert(int(armor_showroom.get_meta("system_footwear_display_count", 0)) == 5)
 	assert(armor_showroom.get_node_or_null("FootwearProgressionSign") != null)
 	assert(int(architecture.get_meta("system_power_tower_cafeteria_seat_count", 0)) == 16)
+
+	var elevator_bank := interior.get_node_or_null("PowerTowerLobbyElevatorBank") as Node3D
+	assert(elevator_bank != null, "Power Tower lobby must include the premium elevator bank")
+	assert(int(elevator_bank.get_meta("system_elevator_count", 0)) == 3)
+	assert(int(architecture.get_meta("system_power_tower_elevator_count", 0)) == 3)
+	assert(int(architecture.get_meta("system_power_tower_elevator_door_leaf_count", 0)) == 6)
+	assert(elevator_bank.get_node_or_null("ElevatorDoor_A_0") != null)
+	assert(elevator_bank.get_node_or_null("ElevatorDoor_C_1") != null)
+	assert(elevator_bank.get_node_or_null("PowerTowerElevatorFloorDirectory") != null)
+	assert(bool(elevator_bank.get_meta("system_elevator_visual_only", false)), "Do not claim lift travel is wired by presentation geometry")
+
 	assert(interior.get_node_or_null("PowerTowerCombatStyleBoard") != null)
 	var combat_board := interior.get_node_or_null("PowerTowerCombatStyleBoard")
 	assert(combat_board.get_node_or_null("CombatStyleBoardInteraction") != null)
@@ -98,5 +109,5 @@ func _run() -> void:
 	assert(str(arena_root.get_meta("system_arena_match_format", "")) == "PLAYER_ONLY_1V1")
 	for floor_number in [1, 21, 41, 61, 81, 101, 151]:
 		assert(arena_root.get_node_or_null("ArenaTierMarker_%03d" % floor_number) != null)
-	print("X-S-X POWER TOWER ARCHITECTURE VALIDATION PASSED: 200-floor identity, tapered tiers, 12 facade marks, observatory, helipad, circular podium, shop galleries, lobby wayfinding, 560 arena layouts, seven arena progression signs, 500 spectator target and five-tier 500-seat grandstands.")
+	print("X-S-X POWER TOWER ARCHITECTURE VALIDATION PASSED: 200-floor identity, tapered tiers, 12 facade marks, observatory, helipad, circular podium, shop galleries, three-car elevator lobby, lobby wayfinding, 560 arena layouts, seven arena progression signs, 500 spectator target and five-tier 500-seat grandstands.")
 	quit(0)
