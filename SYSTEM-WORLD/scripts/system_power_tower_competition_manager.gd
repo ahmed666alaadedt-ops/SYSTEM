@@ -323,11 +323,12 @@ func _build_spectator_grandstands(crowd: Node3D) -> void:
 			var outward := Vector3(cos(angle), 0.0, sin(angle))
 			var center := outward * radius
 			var facing_basis := Basis(Vector3.UP, PI * 0.5 - angle)
-			deck_multi.set_instance_transform(index, Transform3D(facing_basis, Vector3(center.x, tier_y, center.z)))
-			cushion_multi.set_instance_transform(index, Transform3D(facing_basis, Vector3(center.x, tier_y + 0.24, center.z)))
+			decks.multimesh.set_instance_transform(index, Transform3D(facing_basis, Vector3(center.x, tier_y, center.z)))
+			cushions.multimesh.set_instance_transform(index, Transform3D(facing_basis, Vector3(center.x, tier_y + 0.24, center.z)))
 			var back_position := center + outward * 0.49
-			backrest_multi.set_instance_transform(index, Transform3D(facing_basis, Vector3(back_position.x, tier_y + 0.69, back_position.z)))
+			backrests.multimesh.set_instance_transform(index, Transform3D(facing_basis, Vector3(back_position.x, tier_y + 0.69, back_position.z)))
 
+	print("Grandstand builder seat transform after attachment: ", decks.multimesh.get_instance_transform(0))
 	stands.set_meta("system_grandstand_deck_count", total_seats)
 	stands.set_meta("system_grandstand_seat_count", total_seats)
 	stands.set_meta("system_grandstand_backrest_count", total_seats)
