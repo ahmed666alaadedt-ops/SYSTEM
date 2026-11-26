@@ -154,6 +154,27 @@ jobs:
           fi
           exit "$godot_status"
 
+      - name: Validate X-S-X Power Tower architecture and restricted shop catalog
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set +e
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_power_tower_xsx_architecture.gd > "$RUNNER_TEMP/power-tower-xsx-validation.log" 2>&1
+          godot_status=$?
+          grep -E "Grandstand seat diagnostic|X-S-X POWER TOWER ARCHITECTURE VALIDATION PASSED|SCRIPT ERROR|Parse Error|ERROR:" "$RUNNER_TEMP/power-tower-xsx-validation.log" | tail -n 120 || true
+          if grep -E "SCRIPT ERROR|Parse Error" "$RUNNER_TEMP/power-tower-xsx-validation.log"; then exit 1; fi
+          exit "$godot_status"
+
+      - name: Upload X-S-X Power Tower validation log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SYSTEM-WORLD-power-tower-xsx-validation-log
+          path: ${{ runner.temp }}/power-tower-xsx-validation.log
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Validate Android marketplace bridge request-response protocol
         shell: bash
         run: |
