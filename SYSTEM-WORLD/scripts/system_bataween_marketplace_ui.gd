@@ -56,12 +56,15 @@ func _build_interface() -> void:
 	add_child(_panel)
 
 	var layout := VBoxContainer.new()
+	layout.name = "BataweenMarketplaceLayout"
 	layout.add_theme_constant_override("separation", 10)
 	_panel.add_child(layout)
 
 	var header := HBoxContainer.new()
+	header.name = "BataweenMarketplaceHeader"
 	layout.add_child(header)
 	var title := Label.new()
+	title.name = "BataweenMarketplaceTitle"
 	title.text = "سوق البتاوين"
 	title.add_theme_font_size_override("font_size", 30)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
