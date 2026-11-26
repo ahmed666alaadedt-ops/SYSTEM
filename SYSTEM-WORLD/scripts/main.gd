@@ -228,7 +228,7 @@ func _handle_android_world_entry_request(
 
 	world_manager.switch_world(destination_id)
 	active_world_root = world_manager.get_active_world()
-	var accepted := world_manager.active_world == destination_id
+	var accepted: bool = int(world_manager.active_world) == destination_id
 	SYSTEMAndroidBridge.publish_request_result(
 		world_id,
 		accepted,
