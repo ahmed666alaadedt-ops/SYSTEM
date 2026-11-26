@@ -2670,13 +2670,18 @@ func _run() -> void:
 	if float(pilot_progression.call("get_attack_cooldown_multiplier")) >= 1.0:
 		_fail("Energy elixir did not reduce the attack cooldown multiplier.")
 		return
+	pilot_progression.set("nen_unlocked", false)
+	pilot_progression.set("nen_control_rank", 0)
+	pilot_progression.set("nen_foundation_practice", {})
+	pilot_progression.set("nen_affinity", "")
 	pilot_progression.call("add_item", "nen_awakening_elixir", 1)
 	var awakening_result: Dictionary = pilot_progression.call("consume_elixir", "nen_awakening_elixir")
 	if not bool(awakening_result.get("success", false)):
 		_fail("Nen Awakening Elixir did not awaken Nen: " + str(awakening_result))
 		return
-	pilot_progression.set("nen_foundation_practice", {})
-	pilot_progression.set("nen_affinity", "")
+	if not bool(awakening_result.get("success", false)):
+		_fail("Nen Awakening Elixir did not awaken Nen: " + str(awakening_result))
+		return
 	for mobile_foundation_value in ["ten", "zetsu", "ren", "hatsu"]:
 		var mobile_foundation_id := str(mobile_foundation_value)
 		for mobile_session_index in range(3):
