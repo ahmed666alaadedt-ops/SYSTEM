@@ -238,8 +238,14 @@ func _render_listings() -> void:
 		]
 		details.add_child(meta_label)
 		var authenticity_label := Label.new()
-		authenticity_label.text = "التوثيق: " + str(listing.get("authenticity", "بانتظار التحقق"))
+		authenticity_label.text = "الأصالة: " + str(listing.get("authenticity", "غير موثّق"))
 		details.add_child(authenticity_label)
+		var provenance_summary := str(listing.get("provenanceSummary", "")).strip_edges()
+		if not provenance_summary.is_empty():
+			var provenance_label := Label.new()
+			provenance_label.text = "سجل المصدر: " + provenance_summary
+			provenance_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			details.add_child(provenance_label)
 		var seller_label := Label.new()
 		seller_label.text = "البائع: " + str(listing.get("sellerName", "لاعب"))
 		details.add_child(seller_label)
