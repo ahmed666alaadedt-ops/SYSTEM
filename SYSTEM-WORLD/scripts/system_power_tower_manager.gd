@@ -316,6 +316,10 @@ func register_judged_duel(match_id: String, fighter_a_id: String, fighter_b_id: 
 		return {"success": false, "reason": "FIGHTER_REGISTRATION_REQUIRED"}
 	if duel_matches.has(match_id):
 		return {"success": false, "reason": "DUEL_ALREADY_REGISTERED"}
+	if active_floor == floor_number:
+		var duel_start := begin_floor_duel(floor_number)
+		if not bool(duel_start.get("success", false)):
+			return duel_start
 	var spectator_registration: Dictionary = {}
 	if spectator_matches.has(match_id):
 		var existing_spectator_match: Dictionary = get_spectator_match(match_id)
@@ -328,10 +332,6 @@ func register_judged_duel(match_id: String, fighter_a_id: String, fighter_b_id: 
 		if not bool(spectator_registration.get("success", false)):
 			return {"success": false, "reason": "SPECTATOR_MATCH_REGISTRATION_FAILED", "detail": spectator_registration}
 	var floor_data := get_floor_data(floor_number)
-	if active_floor == floor_number:
-		var duel_start := begin_floor_duel(floor_number)
-		if not bool(duel_start.get("success", false)):
-			return duel_start
 	duel_matches[match_id] = {
 		"match_id": match_id,
 		"floor": floor_number,
