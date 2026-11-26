@@ -365,7 +365,7 @@ func _create_loot_drop(location: Vector3, boss: bool, gate_rank: String, enemy_t
 	if is_skill_drop:
 		pickup.set_meta("system_skill_id", skill_id)
 		var gate_id := str(current_gate.get_meta("system_gate_id", "monster_gate")) if is_instance_valid(current_gate) else "monster_gate"
-		pickup.set_meta("system_drop_id", "%s_%s_%s" % [gate_id, enemy_token, skill_id])
+		pickup.set_meta("system_drop_id", "%s_%s_%s_%d_%d" % [gate_id, enemy_token, skill_id, int(Time.get_unix_time_from_system()), Time.get_ticks_usec()])
 	var visual := MeshInstance3D.new()
 	var mesh := SphereMesh.new()
 	mesh.radius = 0.38 if is_skill_drop else (0.32 if boss else 0.2)
