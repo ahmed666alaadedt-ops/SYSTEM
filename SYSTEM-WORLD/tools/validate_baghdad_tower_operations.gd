@@ -1117,7 +1117,15 @@ func _run() -> void:
 		if str(floor_data.get("competition_format", "")) != "INDIVIDUAL_1V1" or int(floor_data.get("time_limit_seconds", -1)) != expected_time_limit:
 			_fail("Power Tower floor %d must enforce its configured individual 1v1 time limit." % floor_number)
 			return
-		var expected_rank := "SSS" if floor_number >= 181 else ("SS" if floor_number >= 156 else ("S" if floor_number >= 131 else ("A" if floor_number >= 106 else ("B" if floor_number >= 81 else ("C" if floor_number >= 61 else ("D" if floor_number >= 41 else ("E" if floor_number >= 21 else "F")))))))
+		var expected_rank := "F"
+		if floor_number >= 21: expected_rank = "E"
+		if floor_number >= 41: expected_rank = "D"
+		if floor_number >= 61: expected_rank = "C"
+		if floor_number >= 81: expected_rank = "B"
+		if floor_number >= 106: expected_rank = "A"
+		if floor_number >= 131: expected_rank = "S"
+		if floor_number >= 156: expected_rank = "SS"
+		if floor_number >= 181: expected_rank = "SSS"
 		if str(floor_data.get("rank", "")) != expected_rank:
 			_fail("Power Tower floor %d has an incorrect F-to-SSS rank mapping." % floor_number)
 			return
