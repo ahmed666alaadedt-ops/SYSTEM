@@ -227,8 +227,8 @@ func _run() -> void:
 	if operations.find_child("HunterRankProgressRows", true, false) == null:
 		_fail("Hunter rank board did not render its F-to-SSS progression requirements.")
 		return
-	if int(status.get("staff_count", 0)) != 46:
-		_fail("Expected eight professional NPC staff in three district towers, nine each in Shopping and Antiques Towers, plus four Power Tower staff; found %d." % int(status.get("staff_count", 0)))
+	if int(status.get("staff_count", 0)) != 48:
+		_fail("Expected eight professional NPC staff in three district towers, nine each in Shopping and Antiques Towers, plus six Power Tower staff; found %d." % int(status.get("staff_count", 0)))
 		return
 	if int(status.get("customer_count", 0)) != 500:
 		_fail("Expected 100 persistent customer NPCs in each of the five Baghdad district towers (500 total); found %d." % int(status.get("customer_count", 0)))
@@ -1113,8 +1113,13 @@ func _run() -> void:
 		if int(floor_data.get("opponent_count", 0)) != 1 or int(floor_data.get("wave_count", 0)) != 1 or int(floor_data.get("reward_xp", 0)) <= 0 or int(floor_data.get("reward_credits", 0)) <= 0:
 			_fail("Power Tower floor %d must contain exactly one opponent, one round and positive rewards." % floor_number)
 			return
-		if str(floor_data.get("competition_format", "")) != "INDIVIDUAL_1V1" or int(floor_data.get("time_limit_seconds", -1)) != 0:
-			_fail("Power Tower floor %d violates the individual-only, no-team 1v1 competition rule." % floor_number)
+		var expected_time_limit := 240 if bool(floor_data.get("boss_floor", false)) else 180
+		if str(floor_data.get("competition_format", "")) != "INDIVIDUAL_1V1" or int(floor_data.get("time_limit_seconds", -1)) != expected_time_limit:
+			_fail("Power Tower floor %d must enforce its configured individual 1v1 time limit." % floor_number)
+			return
+		var expected_rank := "SSS" if floor_number >= 181 else ("SS" if floor_number >= 156 else ("S" if floor_number >= 131 else ("A" if floor_number >= 106 else ("B" if floor_number >= 81 else ("C" if floor_number >= 61 else ("D" if floor_number >= 41 else ("E" if floor_number >= 21 else "F")))))))
+		if str(floor_data.get("rank", "")) != expected_rank:
+			_fail("Power Tower floor %d has an incorrect F-to-SSS rank mapping." % floor_number)
 			return
 		if str(floor_data.get("arena_type", "")) not in ["DUEL", "ELITE_DUEL", "BOSS_TRIAL"]:
 			_fail("Power Tower floor %d exposes a non-individual competition type." % floor_number)
@@ -1720,6 +1725,32 @@ func _run() -> void:
 			if linked_product.is_empty() or str(linked_product.get("name", "")).is_empty() or int(linked_product.get("price", 0)) <= 0:
 				_fail("Shopping Tower floor %d display %d points to a product missing from the live catalog: %s." % [floor_number, display_index, item_product_id])
 				return
+	print("QA TRACE: verifying independent Power Tower commercial floors and cafeteria staffing.")
+	var power_staff_by_tower: Dictionary = operations.get("staff_by_tower")
+	var power_cafe_staff: Array = power_staff_by_tower.get("power_tower_baghdad", [])
+	if power_cafe_staff.size() != 6:
+		_fail("Power Tower must provide dedicated arena staff plus a chef and cafeteria waiter.")
+		return
+	for cafe_floor in [2, 3]:
+		var cafe_room := operations.call("_ensure_floor_room", "power_tower_baghdad", cafe_floor) as Node3D
+		if cafe_room == null or cafe_room.get_node_or_null("RestaurantDiningSign") == null or cafe_room.get_node_or_null("RestaurantKitchen") == null or cafe_room.get_node_or_null("RestaurantTable_00") == null:
+			_fail("Power Tower cafeteria floor %d is missing its physical dining hall, kitchen or tables." % cafe_floor)
+			return
+	var power_commercial_facilities := {4:"shopping_skill_store",5:"shopping_weapon_gallery",6:"shopping_ranged_gallery",7:"shopping_armor_gallery",8:"shopping_elixir_pharmacy"}
+	for floor_value in power_commercial_facilities.keys():
+		var power_floor_number := int(floor_value)
+		var expected_power_type := str(power_commercial_facilities[floor_value])
+		var power_room := operations.call("_ensure_floor_room", "power_tower_baghdad", power_floor_number) as Node3D
+		var power_facility := power_room.get_node_or_null("SpecialFacility_" + expected_power_type) as Node3D if power_room != null else null
+		var power_service := power_facility.get_node_or_null("FacilityServiceInteraction") as Area3D if power_facility != null else null
+		var power_showcase := power_facility.get_node_or_null("ShoppingShowcase") as Node3D if power_facility != null else null
+		if power_facility == null or power_service == null or not power_service.is_in_group("system_interactable") or str(power_service.get_meta("system_tower_id", "")) != "power_tower_baghdad" or str(power_service.get_meta("system_facility_type", "")) != expected_power_type:
+			_fail("Power Tower floor %d is missing its dedicated interactive %s store." % [power_floor_number, expected_power_type])
+			return
+		if power_showcase == null or power_showcase.get_node_or_null("ShowcaseItem_00") == null or power_showcase.get_node_or_null("ShowcaseItem_01") == null or power_showcase.get_node_or_null("ShowcaseItem_02") == null:
+			_fail("Power Tower floor %d is missing physical product displays for %s." % [power_floor_number, expected_power_type])
+			return
+
 	var floor_product_checks := {
 		5: ["training_sword", "steel_sword"],
 		6: ["hunter_spear", "war_hammer"],
