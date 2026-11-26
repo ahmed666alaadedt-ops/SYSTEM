@@ -77,6 +77,10 @@ func _run() -> void:
 	assert(int(grandstands.get_meta("system_grandstand_seat_count", 0)) == 500)
 	assert(int(grandstands.get_meta("system_grandstand_backrest_count", 0)) == 500)
 	assert(grandstands.get_node_or_null("GrandstandSpectatorSeats500") != null)
+	var seat_instance := grandstands.get_node("GrandstandSpectatorSeats500") as MultiMeshInstance3D
+	var first_seat_transform := seat_instance.multimesh.get_instance_transform(0)
+	assert(first_seat_transform.basis.x.dot(Vector3.BACK) > 0.95, "Grandstand seat width must run tangentially around the arena")
+	assert(first_seat_transform.basis.z.dot(Vector3.RIGHT) > 0.95, "Grandstand seat back must face outward and spectator must face inward")
 	assert(str(competition.get_meta("system_power_tower_combat_styles", []).size()) == "6")
 	var arena_root := competition.get_node_or_null("PowerTowerProgressiveArenaFloors")
 	assert(arena_root != null)
