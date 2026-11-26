@@ -47,9 +47,9 @@ func _build_interface() -> void:
 
 	_panel = PanelContainer.new()
 	_panel.name = "BataweenMarketplacePanel"
-	_panel.set_meta("system_market_district_name", "سوق البتاوين")
-	_panel.set_meta("system_market_category_name", "سوق التحف والآثار")
-	_panel.set_meta("system_full_display_name", "سوق البتاوين للتحف والآثار")
+	_panel.set_meta("system_market_district_name", "سوق التحف والآثار الغامضة")
+	_panel.set_meta("system_market_category_name", "التحف والآثار الغامضة")
+	_panel.set_meta("system_full_display_name", "سوق التحف والآثار الغامضة")
 	_panel.set_anchors_preset(Control.PRESET_CENTER)
 	_panel.position = Vector2(-520.0, -330.0)
 	_panel.custom_minimum_size = Vector2(1040.0, 660.0)
@@ -65,13 +65,13 @@ func _build_interface() -> void:
 	layout.add_child(header)
 	var title := Label.new()
 	title.name = "BataweenMarketplaceTitle"
-	title.text = "سوق البتاوين"
+	title.text = "سوق التحف والآثار الغامضة"
 	title.add_theme_font_size_override("font_size", 30)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
 	var market_type := Label.new()
 	market_type.name = "BataweenMarketplaceCategory"
-	market_type.text = "سوق التحف والآثار — بيع وشراء بين اللاعبين"
+	market_type.text = "تحف وآثار غامضة — بيع وشراء بين اللاعبين"
 	layout.add_child(market_type)
 	var close_button := Button.new()
 	close_button.text = "إغلاق"
