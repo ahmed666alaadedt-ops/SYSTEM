@@ -2,6 +2,7 @@ name: Validate SYSTEM WORLD Godot Project
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, edited]
     paths:
       - "SYSTEM-WORLD/**"
       - ".github/workflows/godot-system-world-validation.yml"
