@@ -57,7 +57,7 @@ const PRODUCT_CATALOG := {
 		{"id":"energy_elixir","name":"إكسير الطاقة","price":360},
 		{"id":"nen_awakening_elixir","name":"إكسير إيقاظ النِن","price":1800},
 		{"id":"nen_control_elixir","name":"إكسير التحكم بالنِن","price":2600},
-		{"id":"rare_legendary_elixir","name":"إكسير نادر/أسطوري","price":12000,"required_rank":"S"},
+		{"id":"rare_legendary_elixir","name":"إكسير نادر/أسطوري — رتبة S","price":18000,"required_rank":"S"},
 		{"id":"repair_kit","name":"عدة إصلاح المعدات","price":250},
 		{"id":"iron_ingot","name":"سبيكة حديد","price":45},
 		{"id":"wood_plank","name":"لوح خشب مصقول","price":20},
@@ -76,7 +76,7 @@ const PRODUCT_CATALOG := {
 		{"id":"regeneration_elixir","name":"إكسير التجدد الحيوي","price":1450,"required_rank":"C"},
 		{"id":"antidote_elixir","name":"إكسير مضاد السموم","price":390,"required_rank":"F"},
 		{"id":"resistance_elixir","name":"إكسير مقاومة الإرهاق","price":620,"required_rank":"E"},
-		{"id":"elite_legendary_elixir","name":"إكسير أسطوري للنخبة","price":24000,"required_rank":"S"},
+		{"id":"elite_legendary_elixir","name":"إكسير أسطوري للنخبة — رتبة SS","price":32000,"required_rank":"SS"},
 		{"id":"skill_manual_pulse_dash","name":"مخطوطة تقنية اندفاع النبضة","price":2500,"required_rank":"C","required_level":15,"required_nen_rank":1,"product_type":"skill_training_permit","skill_id":"pulse_dash"},
 		{"id":"skill_manual_aura_shield","name":"مخطوطة تقنية درع الهالة","price":4500,"required_rank":"B","required_level":20,"required_nen_rank":2,"product_type":"skill_training_permit","skill_id":"aura_shield"},
 		{"id":"skill_manual_sensory_mark","name":"مخطوطة تقنية وسم الإدراك","price":6500,"required_rank":"B","required_level":25,"required_nen_rank":2,"product_type":"skill_training_permit","skill_id":"sensory_mark"},
@@ -104,6 +104,18 @@ const PRODUCT_CATALOG := {
 		{"id":"rank_s_armor","name":"درع متقدم — رتبة S","price":12500,"required_rank":"S"},
 		{"id":"rank_ss_armor","name":"درع أسطوري — رتبة SS","price":22000,"required_rank":"SS"},
 		{"id":"rank_sss_armor","name":"درع SYSTEM الفريد — رتبة SSS","price":42000,"required_rank":"SSS"},
+		{"id":"rank_f_armor","name":"درع تدريب خفيف — رتبة F","price":700,"required_rank":"F"},
+		{"id":"rank_a_blade","name":"سيف النخبة المشحون — رتبة A","price":7800,"required_rank":"A"},
+		{"id":"rank_s_blade","name":"سيف الهالة الملكي — رتبة S","price":14500,"required_rank":"S"},
+		{"id":"rank_ss_blade","name":"نصل السيادة — رتبة SS","price":26500,"required_rank":"SS"},
+		{"id":"rank_sss_blade","name":"نصل SYSTEM المطلق — رتبة SSS","price":48000,"required_rank":"SSS"},
+		{"id":"rank_a_rifle","name":"بندقية النخبة الدقيقة — رتبة A","price":8500,"required_rank":"A"},
+		{"id":"rank_s_rifle","name":"بندقية الهالة المتقدمة — رتبة S","price":15500,"required_rank":"S"},
+		{"id":"rank_ss_rifle","name":"بندقية السيادة — رتبة SS","price":28000,"required_rank":"SS"},
+		{"id":"rank_sss_rifle","name":"بندقية SYSTEM الأسطورية — رتبة SSS","price":52000,"required_rank":"SSS"},
+		{"id":"skill_manual_basic_strike","name":"مخطوطة الضربة الأساسية — رتبة F","price":500,"required_rank":"F","required_level":1,"product_type":"skill_training_permit","skill_id":"basic_strike"},
+		{"id":"skill_manual_sovereign_overdrive","name":"مخطوطة اندفاع السيادة — رتبة SSS","price":52000,"required_rank":"SSS","required_level":100,"required_nen_rank":5,"product_type":"skill_training_permit","skill_id":"sovereign_overdrive"},
+		{"id":"sovereign_ascension_elixir","name":"إكسير ارتقاء السيادة — رتبة SSS","price":52000,"required_rank":"SSS","required_level":100,"required_nen_rank":5},
 		{"id":"restaurant_baghdad_breakfast","name":"فطور بغدادي تقليدي","price":42},
 		{"id":"restaurant_masگوف","name":"سمك مسگوف عراقي","price":95},
 		{"id":"restaurant_kebab","name":"كباب عراقي","price":68},
@@ -2685,7 +2697,7 @@ func _buy_product(item_id: String, item_name: String, _listed_price: int, requir
 		if not bool(permit_check.get("success", false)):
 			_set_status("لا يمكن شراء مخطوطة التدريب: " + str(permit_check.get("reason", "تحقق من المتطلبات السابقة")))
 			return
-	if item_id in ["rare_legendary_elixir", "elite_legendary_elixir"]:
+	if item_id in ["rare_legendary_elixir", "elite_legendary_elixir", "sovereign_ascension_elixir"]:
 		if not is_instance_valid(progression) or int(progression.get("current_level")) < 80 or not bool(progression.get("nen_unlocked")) or int(progression.get("nen_control_rank")) < 5 or not _meets_hunter_rank("S"):
 			_set_status("الخزنة تتطلب مستوى 80 ورتبة صياد S وإيقاظ النِن والتحكم من الرتبة 5.")
 			return
@@ -5740,15 +5752,15 @@ func open_baghdad_progression_facility(tower_id: String, floor_number: int, faci
 	if facility_type.begins_with("shopping_"):
 		var allowed_ids: Array = []
 		match facility_type:
-			"shopping_skill_store": allowed_ids = ["skill_manual_pulse_dash", "skill_manual_aura_shield", "skill_manual_sensory_mark", "skill_manual_flow_counter", "skill_manual_resonance_burst", "skill_manual_sovereign_focus"]
-			"shopping_weapon_gallery": allowed_ids = ["training_sword", "steel_sword", "hunter_spear", "battle_axe", "combat_knife", "dual_blades", "long_sword", "great_sword", "war_hammer"]
-			"shopping_ranged_gallery": allowed_ids = ["composite_bow", "crossbow", "reinforced_arrows", "system_firearm", "hunter_pistol", "hunter_rifle", "precision_rifle", "tactical_shotgun"]
-			"shopping_armor_gallery": allowed_ids = ["hunter_shield", "hunter_armor", "hunter_helmet", "advanced_hunter_shield", "reinforced_helmet", "rank_e_armor", "rank_d_armor", "rank_c_armor", "rank_b_armor", "rank_a_armor", "rank_s_armor", "rank_ss_armor", "rank_sss_armor"]
+			"shopping_skill_store": allowed_ids = ["skill_manual_basic_strike", "skill_manual_pulse_dash", "skill_manual_aura_shield", "skill_manual_sensory_mark", "skill_manual_flow_counter", "skill_manual_resonance_burst", "skill_manual_sovereign_focus", "skill_manual_sovereign_overdrive"]
+			"shopping_weapon_gallery": allowed_ids = ["training_sword", "steel_sword", "hunter_spear", "battle_axe", "combat_knife", "dual_blades", "long_sword", "great_sword", "war_hammer", "rank_a_blade", "rank_s_blade", "rank_ss_blade", "rank_sss_blade"]
+			"shopping_ranged_gallery": allowed_ids = ["composite_bow", "crossbow", "reinforced_arrows", "system_firearm", "hunter_pistol", "hunter_rifle", "precision_rifle", "tactical_shotgun", "rank_a_rifle", "rank_s_rifle", "rank_ss_rifle", "rank_sss_rifle"]
+			"shopping_armor_gallery": allowed_ids = ["hunter_shield", "hunter_armor", "hunter_helmet", "advanced_hunter_shield", "reinforced_helmet", "rank_f_armor", "rank_e_armor", "rank_d_armor", "rank_c_armor", "rank_b_armor", "rank_a_armor", "rank_s_armor", "rank_ss_armor", "rank_sss_armor"]
 			"shopping_crafting_materials": allowed_ids = ["iron_ingot", "wood_plank", "leather_roll", "medicinal_herb", "crystal_dust", "monster_core", "nen_fragment", "energy_crystal", "rare_core", "repair_kit"]
 			"shopping_elixir_pharmacy": allowed_ids = ["healing_elixir", "strength_elixir", "speed_elixir", "endurance_elixir", "energy_elixir", "antidote_elixir", "resistance_elixir"]
 			"shopping_nen_center": allowed_ids = ["nen_awakening_elixir", "nen_control_elixir", "nen_focus_elixir", "nen_stabilizer_elixir", "nen_recovery_elixir"]
 			"shopping_advanced_elixir_lab": allowed_ids = ["deep_wound_elixir", "regeneration_elixir", "nen_stabilizer_elixir", "nen_focus_elixir", "nen_recovery_elixir"]
-			"shopping_rare_elixir_vault": allowed_ids = ["rare_legendary_elixir", "elite_legendary_elixir"]
+			"shopping_rare_elixir_vault": allowed_ids = ["rare_legendary_elixir", "elite_legendary_elixir", "sovereign_ascension_elixir"]
 		var floor_catalog_overrides := {
 			5: ["training_sword", "combat_knife", "steel_sword"],
 			6: ["hunter_spear", "battle_axe", "war_hammer"],
@@ -5772,7 +5784,18 @@ func open_baghdad_progression_facility(tower_id: String, floor_number: int, faci
 			25: ["regeneration_elixir", "elite_legendary_elixir"],
 			26: ["rare_legendary_elixir"]
 		}
-		if floor_catalog_overrides.has(floor_number):
+		var power_tower_catalog_overrides := {
+			4: ["skill_manual_basic_strike", "skill_manual_pulse_dash", "skill_manual_aura_shield", "skill_manual_sensory_mark", "skill_manual_flow_counter", "skill_manual_resonance_burst", "skill_manual_sovereign_focus", "skill_manual_sovereign_overdrive"],
+			5: ["training_sword", "combat_knife", "steel_sword", "dual_blades", "rank_a_blade", "rank_s_blade"],
+			6: ["composite_bow", "crossbow", "reinforced_arrows", "hunter_pistol", "hunter_rifle", "precision_rifle", "rank_a_rifle", "rank_s_rifle", "rank_ss_rifle", "rank_sss_rifle", "rank_ss_blade", "rank_sss_blade"],
+			7: ["rank_f_armor", "rank_e_armor", "rank_d_armor", "rank_c_armor", "rank_b_armor", "rank_a_armor", "rank_s_armor", "rank_ss_armor", "rank_sss_armor", "hunter_shield", "advanced_hunter_shield", "hunter_helmet", "reinforced_helmet"],
+			8: ["healing_elixir", "antidote_elixir", "resistance_elixir", "strength_elixir", "speed_elixir", "endurance_elixir", "energy_elixir", "nen_awakening_elixir"],
+			9: ["deep_wound_elixir", "regeneration_elixir", "nen_focus_elixir", "nen_stabilizer_elixir", "nen_recovery_elixir", "nen_control_elixir"],
+			10: ["rare_legendary_elixir", "elite_legendary_elixir", "sovereign_ascension_elixir"]
+		}
+		if tower_id == "power_tower_baghdad" and power_tower_catalog_overrides.has(floor_number):
+			allowed_ids = power_tower_catalog_overrides[floor_number]
+		elif tower_id == "shopping_tower_baghdad" and floor_catalog_overrides.has(floor_number):
 			allowed_ids = floor_catalog_overrides[floor_number]
 		var heading := Label.new()
 		heading.text = "المنتجات المتاحة — السعر والمخزون والرتبة تُراجع عند الشراء"
