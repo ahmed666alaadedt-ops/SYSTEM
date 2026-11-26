@@ -103,6 +103,9 @@ func _run_validation() -> void:
 	if bataween_route == null or not bool(bataween_route.get_meta("system_generated_access_route", false)) or bataween_route_shape == null or bataween_route_shape.shape == null:
 		_fail("The Al-Bataween market is missing its walkable physical access route from the Baghdad bridge approach.")
 		return
+	if not bataween_route_shape.shape is ConcavePolygonShape3D or (bataween_route_shape.shape as ConcavePolygonShape3D).get_faces().size() < 100:
+		_fail("The terrain-conforming Al-Bataween access route collision mesh is empty or incomplete.")
+		return
 	var bridge_node := terrain.get_node_or_null("BaghdadRepublicBridge") as Node3D
 	if bridge_node == null or int(bridge_node.get_meta("system_osm_bridge_polygon_way_id", 0)) != 1077808833:
 		_fail("Republic Bridge runtime deck is missing or not tied to OSM bridge way 1077808833.")
