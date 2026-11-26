@@ -17,6 +17,7 @@ object SystemGodotRuntimeContract {
 
     enum class WorldId(val wireValue: String) {
         SELECTION("selection"),
+        NPC_SHOWCASE("npc_showcase"),
         MODERN("modern"),
         HISTORICAL("historical"),
         FANTASY("fantasy"),
@@ -33,7 +34,7 @@ object SystemGodotRuntimeContract {
         val source: String = SOURCE_SYSTEM_APP,
         val accountUid: String? = null
     ) {
-        fun isAllowedAsExternalEntry(): Boolean = worldId == WorldId.MODERN || worldId == WorldId.SELECTION
+        fun isAllowedAsExternalEntry(): Boolean = worldId == WorldId.MODERN || worldId == WorldId.SELECTION || worldId == WorldId.NPC_SHOWCASE
     }
 
     fun createWorldIntent(
@@ -42,7 +43,7 @@ object SystemGodotRuntimeContract {
         request: WorldRequest
     ): Intent {
         require(request.isAllowedAsExternalEntry()) {
-            "Only the modern world or the four-world selection screen may be launched externally."
+            "Only the modern world, four-world selection, or NPC showcase may be launched externally."
         }
         return Intent(context, hostActivity).apply {
             action = ACTION_OPEN_WORLD
