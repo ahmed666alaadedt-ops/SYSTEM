@@ -155,6 +155,32 @@ func _run() -> void:
 	var betting_manager := PowerTowerManagerScript.new()
 	root.add_child(betting_manager)
 	await process_frame
+	var elevator_bank := lobby.get_node_or_null("XSXShopAndCafeteriaInterior/PowerTowerLobbyElevatorBank")
+	assert(elevator_bank != null)
+	assert(int(elevator_bank.get_meta("system_power_tower_functional_elevator_count", 0)) == 3)
+	var elevator_a := elevator_bank.get_node_or_null("ElevatorInteractiveControl_A")
+	var elevator_b := elevator_bank.get_node_or_null("ElevatorInteractiveControl_B")
+	var elevator_c := elevator_bank.get_node_or_null("ElevatorInteractiveControl_C")
+	assert(elevator_a != null and elevator_b != null and elevator_c != null)
+	for elevator in [elevator_a, elevator_b, elevator_c]:
+		assert(elevator.is_in_group("system_interactable"))
+		assert(elevator.has_method("request_floor"))
+		assert(elevator.has_method("get_elevator_status"))
+		assert(elevator.get_node_or_null("ElevatorControlInteractionShape") != null)
+	var elevator_player := CharacterBody3D.new()
+	elevator_player.name = "PowerTowerElevatorValidationPlayer"
+	elevator_player.add_to_group("system_player")
+	root.add_child(elevator_player)
+	betting_manager.highest_cleared_floor = 2
+	assert(int(elevator_a.call("get_max_accessible_floor")) == 3)
+	var elevator_trip: Dictionary = elevator_a.call("request_floor", 3)
+	assert(bool(elevator_trip.get("success", false)), "Functional elevator should accept an unlocked floor.")
+	assert(bool(elevator_player.get_meta("system_tower_elevator_active", false)))
+	await create_timer(float(elevator_trip.get("travel_seconds", 2.0)) + 0.7).timeout
+	assert(int(elevator_a.call("get_current_lift_floor")) == 3)
+	assert(not bool(elevator_player.get_meta("system_tower_elevator_active", false)))
+	assert(not bool(elevator_a.call("get_elevator_status").get("moving", true)))
+	assert(not bool(elevator_a.call("request_floor", 4).get("success", false)), "Elevator must not expose floors beyond the player's progression.");
 	var early_floor_data: Dictionary = betting_manager.call("get_floor_data", 80)
 	var upper_floor_data: Dictionary = betting_manager.call("get_floor_data", 81)
 	assert(bool(early_floor_data.get("weapons_allowed", false)))
@@ -174,7 +200,7 @@ func _run() -> void:
 		var rank_data: Dictionary = betting_manager.call("get_floor_data", rank_floor)
 		assert(str(rank_data.get("rank", "")) == str(expected_rank_by_floor[rank_floor_value]), "Power Tower rank ladder mismatch at floor %d." % rank_floor)
 	var floor_one_data: Dictionary = betting_manager.call("get_floor_data", 1)
-	assert(int(floor_one_data.get("time_limit_seconds", 0)) == 300, "A five-minute floor-start deadline must be configured.")
+	assert(int(floor_one_data.get("time_limit_seconds", 0)) == 600, "A ten-minute floor-start deadline must be configured.")
 	betting_manager.highest_cleared_floor = 0
 	assert(bool(betting_manager.call("request_floor", 1, 100).get("success", false)))
 	assert(int(betting_manager.floor_start_deadline_unix) > 0)
