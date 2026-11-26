@@ -1,9 +1,17 @@
 # SYSTEM WORLD — Power Tower individual competition and economy
 
 Status: approved design and active implementation checkpoint
-Date: 23 November 2026
-Canonical branch: `feature/baghdad-five-plus-power-tower-20261122`
-Pull request: #38 (draft; do not merge without explicit user approval)
+Date: 27 November 2026
+Canonical branch: `feature/power-tower-completion-audit-20261127`
+Pull request: #45 (draft; do not merge without explicit user approval)
+
+## 0. 27 November completion checkpoint
+
+- Dedicated Power Tower cafeteria floors: 2–3, with kitchen, dining tables, chef and service staff.
+- Dedicated commercial floors: 4 skills, 5 melee weapons, 6 ranged weapons, 7 armor, 8 basic elixirs, 9 advanced Nen elixirs, 10 rare/sovereign elixir vault.
+- Equipment, skill and elixir product grades are mapped from F through SSS, with rank, level, Nen, permit and stock checks enforced by the shared progression/store purchase path.
+- Duel limits: 180 seconds for standard/elite human duels and 240 seconds for title-holder/boss-profile duels. A live countdown ends an attempt without granting a floor clear when time expires.
+- The local wallet, inventory and match records remain prototype/local-save systems. Production online human matchmaking, trusted server signatures, anti-cheat, cross-device account economy and physical Android performance validation are still release gates.
 
 ## 1. Canonical tower identity
 
@@ -26,7 +34,7 @@ Every Power Tower combat competition is an individual human-versus-human duel:
 
 Runtime acceptance criteria:
 - Each floor record declares `competition_format = INDIVIDUAL_1V1`, `opponent_kind = HUMAN_PLAYER`, `matchmaking_mode = ONLINE_1V1` and `ai_fallback = false`.
-- `opponent_count = 1`, `wave_count = 1`, and `time_limit_seconds = 0`.
+- `opponent_count = 1`, `wave_count = 1`; standard/elite duels use `time_limit_seconds = 180`, and title-holder/boss-profile duels use `time_limit_seconds = 240`.
 - Allowed arena types remain `DUEL`, `ELITE_DUEL`, and `BOSS_TRIAL`; boss arena means a human title-holder duel, not an AI boss.
 - Floor entry may display the arena while waiting, but combat begins only after an authenticated human match is supplied by the online match authority.
 - If matchmaking is unavailable, show a clear waiting/unavailable state. Never spawn a bot or simulate a result.
