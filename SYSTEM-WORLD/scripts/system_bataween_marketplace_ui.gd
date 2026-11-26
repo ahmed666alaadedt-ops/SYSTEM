@@ -121,6 +121,9 @@ func _request(operation: String, payload: Dictionary) -> void:
 	var sent := bool(bridge.call("request_marketplace_operation", operation, payload, request_id))
 	if not sent:
 		pending_operations.erase(request_id)
+		if operation in ["create_listing", "purchase_listing"]:
+			busy = false
+			_sell_button.disabled = _artifact_picker.item_count == 0
 		_set_status("تعذر الاتصال بسوق اللاعبين: " + str(bridge.get("last_error")))
 
 
@@ -173,7 +176,6 @@ func _render_owned_artifacts() -> void:
 	if _artifact_picker.item_count > 0:
 		_artifact_picker.select(0)
 		selected_artifact_id = str(_artifact_picker.get_item_metadata(0))
-	_artifact_picker.item_selected.connect(_on_artifact_selected)
 	_sell_button.disabled = _artifact_picker.item_count == 0 or busy
 
 
