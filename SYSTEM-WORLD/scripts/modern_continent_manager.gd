@@ -137,6 +137,21 @@ func _baghdad_bridge_nearest_bank_point() -> Vector2:
 	return nearest_bank
 
 
+func _baghdad_bridge_far_bank_point() -> Vector2:
+	if not baghdad_bridge_reference_loaded or baghdad_bridge_centerline.size() < 2:
+		return Vector2.INF
+	var first_bank: Vector2 = baghdad_bridge_centerline[0]
+	var second_bank: Vector2 = baghdad_bridge_centerline[baghdad_bridge_centerline.size() - 1]
+	return first_bank if first_bank.length_squared() > second_bank.length_squared() else second_bank
+
+
+func get_baghdad_bridge_far_bank_anchor() -> Vector3:
+	var far_bank := _baghdad_bridge_far_bank_point()
+	if far_bank == Vector2.INF:
+		return Vector3.INF
+	return Vector3(far_bank.x, get_terrain_height(far_bank.x, far_bank.y), far_bank.y)
+
+
 func get_baghdad_bridge_nearest_bank_anchor() -> Vector3:
 	var nearest_bank := _baghdad_bridge_nearest_bank_point()
 	if nearest_bank == Vector2.INF:
@@ -237,7 +252,8 @@ func _get_height(x: float, z: float) -> float:
 			return lerpf(SEA_LEVEL - 1.2, bataween_land_height, bataween_ease)
 
 		# This generated walkable corridor is gameplay infrastructure, not surveyed OSM road geometry.
-		var bataween_access_distance := _distance_to_segment(Vector2(x, z), bridge_bank_point, BAGHDAD_BATAWEEN_CENTER)
+		var bataween_access_start := _baghdad_bridge_far_bank_point()
+		var bataween_access_distance := _distance_to_segment(Vector2(x, z), bataween_access_start, BAGHDAD_BATAWEEN_CENTER)
 		if bataween_access_distance <= BAGHDAD_BATAWEEN_ACCESS_HALF_WIDTH:
 			var bataween_access_blend := clampf((BAGHDAD_BATAWEEN_ACCESS_HALF_WIDTH - bataween_access_distance) / 55.0, 0.0, 1.0)
 			var bataween_access_ease := bataween_access_blend * bataween_access_blend * (3.0 - 2.0 * bataween_access_blend)
