@@ -378,6 +378,120 @@ func _build_lobby_wayfinding_and_spotlights(facility_root: Node3D) -> void:
 	set_meta("system_power_tower_interior_directory_sign_count", directory_entries.size())
 	set_meta("system_power_tower_interior_accent_light_count", light_positions.size())
 
+
+func _build_lobby_elevator_bank(facility_root: Node3D) -> void:
+	# Three premium passenger lifts establish a clear vertical route from the podium.
+	# This is presentation geometry only; floor travel remains owned by the existing tower manager.
+	var bank := Node3D.new()
+	bank.name = "PowerTowerLobbyElevatorBank"
+	bank.position = Vector3(0.0, 0.0, -44.0)
+	bank.set_meta("system_facility_type", "PASSENGER_ELEVATOR_BANK")
+	bank.set_meta("system_elevator_count", 3)
+	bank.set_meta("system_elevator_floor_range", Vector2i(1, FLOOR_COUNT))
+	bank.set_meta("system_elevator_visual_only", true)
+	facility_root.add_child(bank)
+
+	var door_count := 0
+	var lift_names := ["A", "B", "C"]
+	for lift_index in range(3):
+		var center_x := (float(lift_index) - 1.0) * 7.4
+		var frame := MeshInstance3D.new()
+		frame.name = "ElevatorPortalFrame_%s" % lift_names[lift_index]
+		var frame_mesh := BoxMesh.new()
+		frame_mesh.size = Vector3(5.0, 9.4, 0.55)
+		frame.mesh = frame_mesh
+		frame.position = Vector3(center_x, 4.7, 0.0)
+		frame.material_override = titanium
+		bank.add_child(frame)
+
+		var lintel := MeshInstance3D.new()
+		lintel.name = "ElevatorPortalGoldHeader_%s" % lift_names[lift_index]
+		var lintel_mesh := BoxMesh.new()
+		lintel_mesh.size = Vector3(4.45, 0.28, 0.72)
+		lintel.mesh = lintel_mesh
+		lintel.position = Vector3(center_x, 9.0, 0.0)
+		lintel.material_override = gold_trim
+		bank.add_child(lintel)
+
+		for leaf_index in range(2):
+			var leaf := MeshInstance3D.new()
+			leaf.name = "ElevatorDoor_%s_%d" % [lift_names[lift_index], leaf_index]
+			var leaf_mesh := BoxMesh.new()
+			leaf_mesh.size = Vector3(0.14, 8.25, 2.08)
+			leaf.mesh = leaf_mesh
+			leaf.position = Vector3(center_x + (-1.04 if leaf_index == 0 else 1.04), 4.18, 0.08)
+			leaf.material_override = dark_glass
+			bank.add_child(leaf)
+			door_count += 1
+
+		var center_seam := MeshInstance3D.new()
+		center_seam.name = "ElevatorDoorSeam_%s" % lift_names[lift_index]
+		var seam_mesh := BoxMesh.new()
+		seam_mesh.size = Vector3(0.055, 8.0, 0.08)
+		center_seam.mesh = seam_mesh
+		center_seam.position = Vector3(center_x, 4.18, 0.2)
+		center_seam.material_override = white_emissive
+		bank.add_child(center_seam)
+
+		var indicator := Label3D.new()
+		indicator.name = "ElevatorFloorIndicator_%s" % lift_names[lift_index]
+		indicator.text = "01  /  200"
+		indicator.font_size = 22
+		indicator.pixel_size = 0.012
+		indicator.position = Vector3(center_x, 10.0, 0.0)
+		indicator.modulate = Color(0.66, 0.92, 1.0)
+		bank.add_child(indicator)
+
+		var lift_label := Label3D.new()
+		lift_label.name = "ElevatorIdentity_%s" % lift_names[lift_index]
+		lift_label.text = "X-S-X  LIFT  %s" % lift_names[lift_index]
+		lift_label.font_size = 16
+		lift_label.pixel_size = 0.012
+		lift_label.position = Vector3(center_x, 0.55, 0.42)
+		lift_label.modulate = Color(0.94, 0.78, 0.5)
+		bank.add_child(lift_label)
+
+		var call_panel := MeshInstance3D.new()
+		call_panel.name = "ElevatorCallPanel_%s" % lift_names[lift_index]
+		var panel_mesh := BoxMesh.new()
+		panel_mesh.size = Vector3(0.62, 1.65, 0.18)
+		call_panel.mesh = panel_mesh
+		call_panel.position = Vector3(center_x + 2.95, 1.65, 0.0)
+		call_panel.material_override = dark_glass
+		bank.add_child(call_panel)
+
+		for button_index in range(3):
+			var call_button := MeshInstance3D.new()
+			call_button.name = "ElevatorCallButton_%s_%d" % [lift_names[lift_index], button_index]
+			var button_mesh := SphereMesh.new()
+			button_mesh.radius = 0.11
+			button_mesh.height = 0.22
+			call_button.mesh = button_mesh
+			call_button.position = call_panel.position + Vector3(0.0, 0.48 - float(button_index) * 0.48, 0.13)
+			call_button.material_override = red_emissive if button_index == 0 else white_emissive
+			bank.add_child(call_button)
+
+		var threshold := MeshInstance3D.new()
+		threshold.name = "ElevatorThreshold_%s" % lift_names[lift_index]
+		var threshold_mesh := BoxMesh.new()
+		threshold_mesh.size = Vector3(4.2, 0.12, 1.0)
+		threshold.mesh = threshold_mesh
+		threshold.position = Vector3(center_x, 0.12, 0.55)
+		threshold.material_override = gold_trim
+		bank.add_child(threshold)
+
+	var directory := Label3D.new()
+	directory.name = "PowerTowerElevatorFloorDirectory"
+	directory.text = "VERTICAL TRANSIT\nFLOORS 001–200\nARENAS  •  TRAINING  •  OBSERVATORY"
+	directory.font_size = 20
+	directory.pixel_size = 0.014
+	directory.position = Vector3(0.0, 12.0, -1.2)
+	directory.modulate = Color(0.84, 0.92, 1.0)
+	bank.add_child(directory)
+	set_meta("system_power_tower_elevator_count", 3)
+	set_meta("system_power_tower_elevator_door_leaf_count", door_count)
+	set_meta("system_power_tower_elevator_floor_range", Vector2i(1, FLOOR_COUNT))
+
 func _build_lobby_facilities() -> void:
 	var tower := get_parent()
 	if tower == null:
@@ -394,6 +508,7 @@ func _build_lobby_facilities() -> void:
 	lobby.add_child(facility_root)
 	_build_lobby_ambience(lobby)
 	_build_lobby_wayfinding_and_spotlights(facility_root)
+	_build_lobby_elevator_bank(facility_root)
 
 	# Traditional weapons gallery: no firearms or modern projectile displays are created here.
 	var weapon_root := Node3D.new()
