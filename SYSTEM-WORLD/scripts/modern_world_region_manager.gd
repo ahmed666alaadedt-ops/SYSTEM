@@ -8,6 +8,7 @@ const ModernWorldLightingManagerScript = preload("res://scripts/modern_world_lig
 const ModernWorldCinematicPresentationScript = preload("res://scripts/modern_world_cinematic_presentation.gd")
 const ModernWorldAmbienceManagerScript = preload("res://scripts/modern_world_ambience_manager.gd")
 const BaghdadTowerLandmarksManagerScript = preload("res://scripts/baghdad_tower_landmarks_manager.gd")
+const BataweenAntiquesMarketManagerScript = preload("res://scripts/system_baghdad_bataween_market_manager.gd")
 const ModernWorldTransportNetworkManagerScript = preload("res://scripts/modern_world_transport_network_manager.gd")
 const ModernCityStreetFurnitureManagerScript = preload("res://scripts/modern_city_street_furniture_manager.gd")
 const ModernCityServicesManagerScript = preload("res://scripts/modern_city_services_manager.gd")
@@ -70,6 +71,7 @@ var plaza_material: StandardMaterial3D
 var building_materials: Array[StandardMaterial3D] = []
 var park_material: StandardMaterial3D
 var use_baghdad_osm_cells := false
+var bataween_market_manager: Node
 
 
 func _ready() -> void:
@@ -94,6 +96,7 @@ func _ready() -> void:
 	_create_cinematic_presentation()
 	_create_city_dealerships()
 	_create_baghdad_towers()
+	_create_baghdad_bataween_market()
 	_create_city_advertising_screens()
 	_create_city_traffic()
 	_create_city_incidents()
@@ -755,6 +758,15 @@ func register_map_locations(map_manager: Node, world_id: String) -> void:
 				tower_data["position"], false
 			)
 
+	if is_instance_valid(bataween_market_manager) and bataween_market_manager.has_method("get_market_position"):
+		var market_position: Vector3 = bataween_market_manager.call("get_market_position")
+		if market_position != Vector3.INF:
+			map_manager.call(
+				"register_location", world_id,
+				"baghdad_bataween_antiquities_market", "region_baghdad",
+				"سوق البتاوين للتحف والآثار", 4, market_position, false
+			)
+
 
 func discover_starting_city(map_manager: Node, world_id: String) -> void:
 	if map_manager == null or not map_manager.has_method("discover_region"):
@@ -843,6 +855,16 @@ func _create_baghdad_towers() -> void:
 	var towers := BaghdadTowerLandmarksManagerScript.new()
 	towers.name = "BaghdadTowerLandmarksManager"
 	add_child(towers)
+
+
+func _create_baghdad_bataween_market() -> void:
+	var market := BataweenAntiquesMarketManagerScript.new()
+	market.name = "BaghdadAlBataweenAntiquitiesMarket"
+	if not bool(market.call("setup", terrain)):
+		market.free()
+		return
+	bataween_market_manager = market
+	add_child(market)
 
 
 func _create_city_traffic() -> void:
