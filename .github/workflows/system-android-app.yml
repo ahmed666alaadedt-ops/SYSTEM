@@ -76,7 +76,19 @@ jobs:
             mv "$DRAWABLE_DIR/system_launcher_icon-4.png" "$DRAWABLE_DIR/system_launcher_icon_4.png"
           fi
 
-          cp "SYSTEM-WORLD-3D/assets/1000220666-1.png" "$NODPI_DIR/system_launcher_icon_3d.png"
+          python3 -m pip install --quiet pillow
+          python3 - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          source = Path("SYSTEM-WORLD-3D/assets/1000220666-1.png")
+          target = Path("app/src/main/res/drawable-nodpi/system_launcher_icon_3d.png")
+          image = Image.open(source).convert("RGBA")
+          image.thumbnail((680, 680), Image.Resampling.LANCZOS)
+          canvas = Image.new("RGBA", (1024, 1024), (0, 0, 0, 0))
+          canvas.alpha_composite(image, ((1024 - image.width) // 2, (1024 - image.height) // 2))
+          canvas.save(target, format="PNG", optimize=True)
+          print("Original SYSTEM logo centered and padded for Android adaptive icon.")
+          PY
           cp "SYSTEM-WORLD-3D/assets/ui/file_0000000053f081f4ab5d3e27245ce7a9.png" "$NODPI_DIR/system_home_background.png"
 
       - name: Verify launcher icon, intro and Miyar home assets
