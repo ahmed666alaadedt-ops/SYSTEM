@@ -309,6 +309,25 @@ func _build_spectator_grandstands(crowd: Node3D) -> void:
 	backrests.material_override = backrest_material
 	stands.add_child(backrests)
 
+	# Re-apply instance transforms after the MultiMesh nodes enter the scene tree.
+	# This keeps the 500 seating transforms initialized on headless and mobile renderers.
+	deck_multi.visible_instance_count = total_seats
+	cushion_multi.visible_instance_count = total_seats
+	backrest_multi.visible_instance_count = total_seats
+	for tier in range(tier_count):
+		var radius := 31.0 + float(tier) * 2.2
+		var tier_y := 15.42 + float(tier) * 1.25
+		for slot in range(seats_per_tier):
+			var index := tier * seats_per_tier + slot
+			var angle := TAU * float(slot) / float(seats_per_tier)
+			var outward := Vector3(cos(angle), 0.0, sin(angle))
+			var center := outward * radius
+			var facing_basis := Basis(Vector3.UP, PI * 0.5 - angle)
+			deck_multi.set_instance_transform(index, Transform3D(facing_basis, Vector3(center.x, tier_y, center.z)))
+			cushion_multi.set_instance_transform(index, Transform3D(facing_basis, Vector3(center.x, tier_y + 0.24, center.z)))
+			var back_position := center + outward * 0.49
+			backrest_multi.set_instance_transform(index, Transform3D(facing_basis, Vector3(back_position.x, tier_y + 0.69, back_position.z)))
+
 	stands.set_meta("system_grandstand_deck_count", total_seats)
 	stands.set_meta("system_grandstand_seat_count", total_seats)
 	stands.set_meta("system_grandstand_backrest_count", total_seats)
