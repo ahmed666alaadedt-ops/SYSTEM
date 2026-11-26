@@ -232,6 +232,8 @@ var status_label: Label
 var credits_label: Label
 var floor_selector: SpinBox
 var power_floor_started_at := 0
+var power_floor_time_remaining := 0.0
+var power_floor_timer_display_clock := 0.0
 var active_power_objective_label: Label3D
 var active_power_floor_data: Dictionary = {}
 var active_floor_root: Node3D
@@ -314,6 +316,15 @@ func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_po
 	print("SYSTEM tower operations: staff, local trading, floor interiors and advertising initialized.")
 
 func _process(delta: float) -> void:
+	if power_floor_in_progress and power_floor_time_remaining > 0.0:
+		power_floor_time_remaining = maxf(0.0, power_floor_time_remaining - delta)
+		power_floor_timer_display_clock += delta
+		if power_floor_timer_display_clock >= 1.0:
+			power_floor_timer_display_clock = 0.0
+			if is_instance_valid(active_power_objective_label):
+				active_power_objective_label.text = "المواجهة الفردية 1 ضد 1 — الوقت المتبقي: %02d:%02d" % [int(ceil(power_floor_time_remaining / 60.0)), int(ceil(power_floor_time_remaining)) % 60]
+		if power_floor_time_remaining <= 0.0:
+			_fail_power_floor("انتهى الوقت المحدد للمواجهة")
 	_process_advertising_campaign(delta)
 	stock_refresh_clock -= delta
 	if stock_refresh_clock <= 0.0:
@@ -4225,6 +4236,16 @@ func _create_power_tower_spectator_gallery(room: Node3D, radius: float) -> void:
 func _department_for_floor(tower_id: String, floor_number: int, total: int) -> String:
 	var ratio := float(floor_number) / float(maxi(total, 1))
 	match tower_id:
+		"power_tower_baghdad":
+			if floor_number == 1: return "ردهة برج القوة وتسجيل المتنافسين"
+			if floor_number in [2, 3]: return "كافتيريات ومطاعم المتنافسين — وجبات الاستعادة والطاقة"
+			if floor_number == 4: return "متجر المهارات وتقنيات النِن"
+			if floor_number == 5: return "معرض الأسلحة البيضاء والسيوف والرماح"
+			if floor_number == 6: return "معرض الأقواس والأسلحة بعيدة المدى"
+			if floor_number == 7: return "معرض الدروع والخوذ والبدلات — F إلى SSS"
+			if floor_number == 8: return "صيدلية الأكاسير وإيقاظ النِن — F إلى SSS"
+			if floor_number in [9, 10]: return "قاعات التدريب والاستعداد للمواجهات"
+			return "طوابق التحديات الفردية — " + str(floor_number)
 		"shopping_tower_baghdad":
 			if floor_number >= 29: return "المطاعم الراقية وصالات الطعام والمقاهي"
 			if floor_number >= 27: return "فندق SYSTEM — الاستقبال والأجنحة والغرف الفندقية"
@@ -4327,6 +4348,8 @@ func _create_floor_facilities(room: Node3D, tower_id: String, floor_number: int,
 			_create_workshop_station(room, "WeaponsForge", "ورشة الحدادة وصناعة الأسلحة الحديثة والتقليدية", Vector3(-radius * 0.32, 0.0, -radius * 0.42), str(staff_ids[1]), "weapons_merchant")
 			_create_workshop_station(room, "ElixirLaboratory", "مختبر تحضير الأكاسير وإيقاظ النِن والعلاج", Vector3(radius * 0.32, 0.0, -radius * 0.42), str(staff_ids[2]), "elixir_pharmacist")
 	if tower_id == "shopping_tower_baghdad" and floor_number >= 29:
+		_create_restaurant_dining_area(room, radius, floor_number)
+	if tower_id == "power_tower_baghdad" and floor_number in [2, 3]:
 		_create_restaurant_dining_area(room, radius, floor_number)
 	if tower_id == "shopping_tower_baghdad" and floor_number in [27, 28]:
 		var hotel_staff: Array = staff_by_tower.get(tower_id, [])
@@ -4432,6 +4455,23 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 			elif floor_number == 40:
 				facility_type = "innovation_rooftop"
 				facility_title = "منصة الابتكار والرصد التقني"
+		"power_tower_baghdad":
+			match floor_number:
+				4:
+					facility_type = "shopping_skill_store"
+					facility_title = "متجر مهارات وتقنيات النِن — برج القوة"
+				5:
+					facility_type = "shopping_weapon_gallery"
+					facility_title = "معرض الأسلحة البيضاء — برج القوة"
+				6:
+					facility_type = "shopping_ranged_gallery"
+					facility_title = "معرض الأسلحة بعيدة المدى — برج القوة"
+				7:
+					facility_type = "shopping_armor_gallery"
+					facility_title = "معرض الدروع والبدلات F إلى SSS — برج القوة"
+				8:
+					facility_type = "shopping_elixir_pharmacy"
+					facility_title = "صيدلية الأكاسير وإيقاظ النِن — برج القوة"
 		"shopping_tower_baghdad":
 			if floor_number == 4:
 				facility_type = "shopping_skill_store"
@@ -8905,7 +8945,9 @@ func begin_verified_power_tower_pvp_match(match_data: Dictionary, local_player_i
 	}
 	power_floor_in_progress = true
 	power_floor_started_at = Time.get_ticks_msec()
-	_set_status("بدأت المواجهة البشرية 1 ضد 1 في الطابق %d. لا توجد فرق أو خصوم آليون." % floor_number)
+	power_floor_time_remaining = float(active_power_floor_data.get("time_limit_seconds", 180))
+	power_floor_timer_display_clock = 0.0
+	_set_status("بدأت المواجهة البشرية 1 ضد 1 في الطابق %d. الوقت المحدد: %d ثانية. لا توجد فرق أو خصوم آليون." % [floor_number, int(power_floor_time_remaining)])
 	return {"success": true, "match_id": match_id, "floor_number": floor_number, "competition_format": "INDIVIDUAL_1V1"}
 
 func apply_verified_power_tower_pvp_result(result_data: Dictionary, local_player_id: String) -> Dictionary:
@@ -8932,6 +8974,11 @@ func apply_verified_power_tower_pvp_result(result_data: Dictionary, local_player
 	var clear_time_seconds := float(result_data.get("clear_time_seconds", 0.0))
 	if clear_time_seconds <= 0.0:
 		return {"success": false, "reason": "INVALID_VERIFIED_MATCH_DURATION"}
+	var configured_time_limit := float(active_power_floor_data.get("time_limit_seconds", 180))
+	var elapsed_match_seconds := float(Time.get_ticks_msec() - power_floor_started_at) / 1000.0
+	if configured_time_limit > 0.0 and (clear_time_seconds > configured_time_limit or elapsed_match_seconds > configured_time_limit):
+		_fail_power_floor("تجاوزت المواجهة الحد الزمني")
+		return {"success": false, "reason": "MATCH_TIME_LIMIT_EXCEEDED", "time_limit_seconds": configured_time_limit}
 	# Validate progression before closing the judged duel or settling spectator tickets.
 	if int(power_tower_manager.get("active_floor")) != floor_number:
 		return {"success": false, "reason": "FLOOR_NOT_ACTIVE"}
@@ -8945,6 +8992,8 @@ func apply_verified_power_tower_pvp_result(result_data: Dictionary, local_player
 	var prediction_settlement: Dictionary = referee_result.get("spectator_settlement", {})
 	var career_result: Dictionary = referee_result.get("career_result", {})
 	power_floor_in_progress = false
+	power_floor_time_remaining = 0.0
+	power_floor_timer_display_clock = 0.0
 	active_power_tower_match.clear()
 	if winner_player_id != local_player_id:
 		power_tower_manager.call("abandon_active_floor")
@@ -8992,6 +9041,8 @@ func _fail_power_floor(reason: String) -> void:
 	power_tower_manager.call("abandon_active_floor")
 	power_floor_entry_pending = false
 	power_floor_in_progress = false
+	power_floor_time_remaining = 0.0
+	power_floor_timer_display_clock = 0.0
 	active_power_tower_match.clear()
 	active_power_floor_data.clear()
 	if is_instance_valid(active_power_objective_label):
