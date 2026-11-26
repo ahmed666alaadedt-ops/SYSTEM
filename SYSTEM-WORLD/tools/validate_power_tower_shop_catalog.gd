@@ -5,6 +5,7 @@ const CombatScript = preload("res://scripts/modern_world_combat_system.gd")
 const ProgressionScript = preload("res://scripts/system_player_progression.gd")
 const ALLOWED_QUALITY := ["BRONZE", "SILVER", "GOLD", "DIAMOND"]
 const FORBIDDEN_IDS := ["system_firearm", "hunter_pistol", "hunter_rifle", "precision_rifle", "tactical_shotgun"]
+const HUNTER_RANKS := ["F", "E", "D", "C", "B", "A", "S", "SS", "SSS"]
 
 func _initialize() -> void:
 	call_deferred("_run")
@@ -21,6 +22,8 @@ func _run() -> void:
 	var armor_count := 0
 	var rare_elixir_count := 0
 	var ammunition_count := 0
+	var weapon_rank_counts := {}
+	var armor_rank_counts := {}
 	for product_value in catalog:
 		var product: Dictionary = product_value
 		var item_id := str(product.get("id", ""))
@@ -35,6 +38,9 @@ func _run() -> void:
 		if category in ["MELEE_WEAPON", "TRADITIONAL_RANGED"]:
 			weapon_count += 1
 			assert(category != "FIREARM" and category != "MODERN_PROJECTILE")
+			var weapon_rank := str(product.get("required_rank", ""))
+			assert(HUNTER_RANKS.has(weapon_rank), "Weapon must have an explicit F-to-SSS rank: " + item_id)
+			weapon_rank_counts[weapon_rank] = int(weapon_rank_counts.get(weapon_rank, 0)) + 1
 		if category == "SKILL":
 			skill_count += 1
 		if category == "CAFETERIA":
@@ -47,6 +53,9 @@ func _run() -> void:
 			ammunition_count += 1
 		if category == "ARMOR":
 			armor_count += 1
+			var armor_rank := str(product.get("required_rank", ""))
+			assert(HUNTER_RANKS.has(armor_rank), "Armor must have an explicit F-to-SSS rank: " + item_id)
+			armor_rank_counts[armor_rank] = int(armor_rank_counts.get(armor_rank, 0)) + 1
 		if category == "NEN_ELIXIR" and str(product.get("rarity", "")).to_upper() == "RARE":
 			rare_elixir_count += 1
 	assert(weapon_count >= 8, "Traditional weapon selection is incomplete.")
@@ -55,7 +64,10 @@ func _run() -> void:
 	assert(accessory_count >= 4, "Hunter accessory catalog is incomplete.")
 	assert(footwear_count >= 5, "Bronze-to-diamond Power Tower footwear progression is incomplete.")
 	assert(ammunition_count >= 3, "Bronze, silver and diamond arrow ammunition tiers are incomplete.")
-	assert(armor_count >= 5, "Armor progression from bronze to diamond is incomplete.")
+	assert(armor_count >= 9, "Armor progression must include all nine Hunter ranks.")
+	for rank in HUNTER_RANKS:
+		assert(int(weapon_rank_counts.get(rank, 0)) >= 1, "Missing weapon tier for Hunter rank " + rank)
+		assert(int(armor_rank_counts.get(rank, 0)) >= 1, "Missing armor tier for Hunter rank " + rank)
 	assert(rare_elixir_count >= 4, "Rare Nen elixir selection is incomplete.")
 	assert(ProgressionScript.DEFAULT_EQUIPMENT_SLOTS.has("boots"))
 	assert(ProgressionScript.EQUIPMENT_SLOTS_BY_ITEM.get("training_boots", "") == "boots")
@@ -85,5 +97,5 @@ func _run() -> void:
 	assert(str(config.get("roles", [])[3]).contains("النِن"))
 	assert(CombatScript.POWER_TOWER_FORBIDDEN_WEAPONS.has("system_firearm"))
 	assert(CombatScript.POWER_TOWER_FORBIDDEN_WEAPONS.has("hunter_rifle"))
-	print("POWER TOWER SHOP VALIDATION PASSED: %d products, %d traditional weapons, %d skill manuals, %d cafeteria items, %d accessories, %d footwear, %d armor, %d arrow ammunition tiers and %d rare Nen elixirs; no modern firearms." % [catalog.size(), weapon_count, skill_count, cafeteria_count, accessory_count, footwear_count, armor_count, ammunition_count, rare_elixir_count])
+	print("POWER TOWER SHOP VALIDATION PASSED: %d products, %d traditional weapons, %d skill manuals, %d cafeteria items, %d accessories, %d footwear, %d armor, %d arrow ammunition tiers and %d rare Nen elixirs; all F-to-SSS weapon/armor ranks present; no modern firearms." % [catalog.size(), weapon_count, skill_count, cafeteria_count, accessory_count, footwear_count, armor_count, ammunition_count, rare_elixir_count])
 	quit(0)
