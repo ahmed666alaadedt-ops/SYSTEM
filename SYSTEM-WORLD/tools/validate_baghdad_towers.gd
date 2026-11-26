@@ -97,7 +97,8 @@ func _run_validation() -> void:
 	var bataween_market_position: Vector3 = market_stats.get("position", Vector3.INF)
 	for route_sample in range(1, 10):
 		var route_fraction := float(route_sample) / 10.0
-		var route_point := bataween_access_anchor.lerp(bataween_market_position, route_fraction)
+		var market_entry_position := bataween_market_position + Vector3(0.0, 0.0, 43.0)
+		var route_point := bataween_access_anchor.lerp(market_entry_position, route_fraction)
 		if not bool(terrain.call("is_land_position", route_point.x, route_point.z)):
 			_fail("The playable land corridor from the Republic Bridge opposite bank to Al-Bataween market is discontinuous at %.0f%% (%.1f, %.1f)." % [route_fraction * 100.0, route_point.x, route_point.z])
 			return
