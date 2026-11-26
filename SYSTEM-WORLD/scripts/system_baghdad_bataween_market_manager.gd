@@ -64,7 +64,7 @@ func _create_market_access_route() -> void:
 	if start == Vector3.INF:
 		return
 	var start_xz := Vector2(start.x, start.z)
-	var finish_xz := Vector2(market_position.x, market_position.z)
+	var finish_xz := Vector2(market_position.x, market_position.z + 43.0)
 	var route_delta := finish_xz - start_xz
 	var route_length := route_delta.length()
 	if route_length < 10.0:
