@@ -109,6 +109,8 @@ const PRODUCT_CATALOG := {
 		{"id":"rank_s_blade","name":"سيف الهالة الملكي — رتبة S","price":14500,"required_rank":"S"},
 		{"id":"rank_ss_blade","name":"نصل السيادة — رتبة SS","price":26500,"required_rank":"SS"},
 		{"id":"rank_sss_blade","name":"نصل SYSTEM المطلق — رتبة SSS","price":48000,"required_rank":"SSS"},
+		{"id":"rank_e_bow","name":"قوس صيد خفيف — رتبة E","price":650,"required_rank":"E"},
+		{"id":"rank_d_bow","name":"قوس ميداني معزز — رتبة D","price":950,"required_rank":"D"},
 		{"id":"rank_a_rifle","name":"بندقية النخبة الدقيقة — رتبة A","price":8500,"required_rank":"A"},
 		{"id":"rank_s_rifle","name":"بندقية الهالة المتقدمة — رتبة S","price":15500,"required_rank":"S"},
 		{"id":"rank_ss_rifle","name":"بندقية السيادة — رتبة SS","price":28000,"required_rank":"SS"},
@@ -334,7 +336,9 @@ func _process(delta: float) -> void:
 		if power_floor_timer_display_clock >= 1.0:
 			power_floor_timer_display_clock = 0.0
 			if is_instance_valid(active_power_objective_label):
-				active_power_objective_label.text = "المواجهة الفردية 1 ضد 1 — الوقت المتبقي: %02d:%02d" % [int(ceil(power_floor_time_remaining / 60.0)), int(ceil(power_floor_time_remaining)) % 60]
+				var minutes_left := int(floor(power_floor_time_remaining / 60.0))
+				var seconds_left := int(ceil(power_floor_time_remaining)) % 60
+				active_power_objective_label.text = "المواجهة الفردية 1 ضد 1 — الوقت المتبقي: %02d:%02d" % [minutes_left, seconds_left]
 		if power_floor_time_remaining <= 0.0:
 			_fail_power_floor("انتهى الوقت المحدد للمواجهة")
 	_process_advertising_campaign(delta)
@@ -5762,7 +5766,7 @@ func open_baghdad_progression_facility(tower_id: String, floor_number: int, faci
 		match facility_type:
 			"shopping_skill_store": allowed_ids = ["skill_manual_basic_strike", "skill_manual_pulse_dash", "skill_manual_aura_shield", "skill_manual_sensory_mark", "skill_manual_flow_counter", "skill_manual_resonance_burst", "skill_manual_sovereign_focus", "skill_manual_sovereign_overdrive"]
 			"shopping_weapon_gallery": allowed_ids = ["training_sword", "steel_sword", "hunter_spear", "battle_axe", "combat_knife", "dual_blades", "long_sword", "great_sword", "war_hammer", "rank_a_blade", "rank_s_blade", "rank_ss_blade", "rank_sss_blade"]
-			"shopping_ranged_gallery": allowed_ids = ["composite_bow", "crossbow", "reinforced_arrows", "system_firearm", "hunter_pistol", "hunter_rifle", "precision_rifle", "tactical_shotgun", "rank_a_rifle", "rank_s_rifle", "rank_ss_rifle", "rank_sss_rifle"]
+			"shopping_ranged_gallery": allowed_ids = ["composite_bow", "crossbow", "reinforced_arrows", "rank_e_bow", "rank_d_bow", "system_firearm", "hunter_pistol", "hunter_rifle", "precision_rifle", "tactical_shotgun", "rank_a_rifle", "rank_s_rifle", "rank_ss_rifle", "rank_sss_rifle"]
 			"shopping_armor_gallery": allowed_ids = ["hunter_shield", "hunter_armor", "hunter_helmet", "advanced_hunter_shield", "reinforced_helmet", "rank_f_armor", "rank_e_armor", "rank_d_armor", "rank_c_armor", "rank_b_armor", "rank_a_armor", "rank_s_armor", "rank_ss_armor", "rank_sss_armor"]
 			"shopping_crafting_materials": allowed_ids = ["iron_ingot", "wood_plank", "leather_roll", "medicinal_herb", "crystal_dust", "monster_core", "nen_fragment", "energy_crystal", "rare_core", "repair_kit"]
 			"shopping_elixir_pharmacy": allowed_ids = ["healing_elixir", "strength_elixir", "speed_elixir", "endurance_elixir", "energy_elixir", "antidote_elixir", "resistance_elixir"]
@@ -5794,8 +5798,8 @@ func open_baghdad_progression_facility(tower_id: String, floor_number: int, faci
 		}
 		var power_tower_catalog_overrides := {
 			4: ["skill_manual_basic_strike", "skill_manual_pulse_dash", "skill_manual_aura_shield", "skill_manual_sensory_mark", "skill_manual_flow_counter", "skill_manual_resonance_burst", "skill_manual_sovereign_focus", "skill_manual_sovereign_overdrive"],
-			5: ["training_sword", "combat_knife", "steel_sword", "dual_blades", "rank_a_blade", "rank_s_blade"],
-			6: ["composite_bow", "crossbow", "reinforced_arrows", "hunter_pistol", "hunter_rifle", "precision_rifle", "rank_a_rifle", "rank_s_rifle", "rank_ss_rifle", "rank_sss_rifle", "rank_ss_blade", "rank_sss_blade"],
+			5: ["training_sword", "combat_knife", "steel_sword", "dual_blades", "great_sword", "rank_a_blade", "rank_s_blade", "rank_ss_blade", "rank_sss_blade"],
+			6: ["reinforced_arrows", "rank_e_bow", "rank_d_bow", "composite_bow", "crossbow", "hunter_pistol", "tactical_shotgun", "hunter_rifle", "precision_rifle", "rank_a_rifle", "rank_s_rifle", "rank_ss_rifle", "rank_sss_rifle"],
 			7: ["rank_f_armor", "rank_e_armor", "rank_d_armor", "rank_c_armor", "rank_b_armor", "rank_a_armor", "rank_s_armor", "rank_ss_armor", "rank_sss_armor", "hunter_shield", "advanced_hunter_shield", "hunter_helmet", "reinforced_helmet"],
 			8: ["healing_elixir", "antidote_elixir", "resistance_elixir", "strength_elixir", "speed_elixir", "endurance_elixir", "energy_elixir", "nen_awakening_elixir"],
 			9: ["deep_wound_elixir", "regeneration_elixir", "nen_focus_elixir", "nen_stabilizer_elixir", "nen_recovery_elixir", "nen_control_elixir"],
@@ -7222,7 +7226,7 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 		match facility_type:
 			"shopping_skill_store": display_names = ["مخطوطة الضربة الأساسية F", "مخطوطة مهارة النِن", "مخطوطة اندفاع السيادة SSS"]
 			"shopping_weapon_gallery": display_names = ["سيف تدريبي F", "نصل السيادة SS", "نصل SYSTEM SSS"]
-			"shopping_ranged_gallery": display_names = ["قوس نشاب C", "بندقية النخبة A", "بندقية SYSTEM SSS"]
+			"shopping_ranged_gallery": display_names = ["قوس ميداني D", "بندقية النخبة A", "بندقية SYSTEM SSS"]
 			"shopping_armor_gallery": display_names = ["درع خفيف F", "درع نخبة A", "درع SYSTEM SSS"]
 			"shopping_elixir_pharmacy": display_names = ["إكسير الشفاء F", "إكسير مقاومة الإرهاق E", "إكسير الطاقة C"]
 			"shopping_advanced_elixir_lab": display_names = ["إكسير تركيز النِن B", "إكسير استعادة النِن A", "إكسير التجدد C"]
@@ -7261,7 +7265,7 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 			match facility_type:
 				"shopping_skill_store": display_product_ids = ["skill_manual_basic_strike", "skill_manual_pulse_dash", "skill_manual_sovereign_overdrive"]
 				"shopping_weapon_gallery": display_product_ids = ["training_sword", "rank_ss_blade", "rank_sss_blade"]
-				"shopping_ranged_gallery": display_product_ids = ["crossbow", "rank_a_rifle", "rank_sss_rifle"]
+				"shopping_ranged_gallery": display_product_ids = ["rank_d_bow", "rank_a_rifle", "rank_sss_rifle"]
 				"shopping_armor_gallery": display_product_ids = ["rank_f_armor", "rank_a_armor", "rank_sss_armor"]
 				"shopping_elixir_pharmacy": display_product_ids = ["healing_elixir", "resistance_elixir", "energy_elixir"]
 				"shopping_advanced_elixir_lab": display_product_ids = ["nen_focus_elixir", "nen_recovery_elixir", "regeneration_elixir"]
@@ -7291,7 +7295,7 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 				elif index == 2:
 					_add_facility_box(item, "WarHammerHead", Vector3(0.0, 3.0, 0.0), Vector3(1.0, 0.72, 0.72), accent)
 		elif facility_type == "shopping_ranged_gallery":
-			if (tower_id == "power_tower_baghdad" and floor_number == 6) or (tower_id != "power_tower_baghdad" and floor_number == 8 and index < 2):
+			if ((tower_id == "power_tower_baghdad" and floor_number == 6 and index < 2) or (tower_id != "power_tower_baghdad" and floor_number == 8 and index < 2)):
 				var bow := MeshInstance3D.new()
 				bow.name = "BowDisplay" if index == 0 else "CrossbowDisplay"
 				var bow_mesh := TorusMesh.new()
