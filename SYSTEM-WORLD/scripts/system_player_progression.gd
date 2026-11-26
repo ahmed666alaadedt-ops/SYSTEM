@@ -120,6 +120,10 @@ var nen_control_rank := 0
 var nen_burst_cooldown_remaining := 0.0
 var nen_button_refresh_clock := 0.0
 var nen_burst_button: Button
+var rare_ability_button: Button
+var rare_ability_cycle_button: Button
+var rare_ability_refresh_clock := 0.0
+var selected_rare_ability_index := 0
 var current_system_energy := MAX_SYSTEM_ENERGY
 var learned_system_skills: Array[String] = []
 var authorized_system_skills: Array[String] = []
@@ -144,6 +148,7 @@ func _ready() -> void:
 	_emit_progress()
 	set_process(true)
 	_create_nen_burst_button()
+	_create_rare_power_ability_buttons()
 
 
 func _process(delta: float) -> void:
@@ -173,6 +178,11 @@ func _process(delta: float) -> void:
 		if nen_burst_cooldown_remaining <= 0.0:
 			save_progress()
 			_refresh_nen_burst_button()
+	if rare_ability_refresh_clock <= 0.0:
+		rare_ability_refresh_clock = 1.0
+		_refresh_rare_power_ability_buttons()
+	else:
+		rare_ability_refresh_clock -= delta
 	if expired:
 		save_progress()
 
@@ -222,6 +232,92 @@ func _refresh_nen_burst_button() -> void:
 	else:
 		nen_burst_button.text = "تفعيل النِن"
 		nen_burst_button.disabled = false
+
+
+func _create_rare_power_ability_buttons() -> void:
+	var canvas := CanvasLayer.new()
+	canvas.name = "RarePowerAbilityHUD"
+	canvas.layer = 31
+	var hud := Control.new()
+	hud.set_anchors_preset(Control.PRESET_FULL_RECT)
+	canvas.add_child(hud)
+	rare_ability_button = Button.new()
+	rare_ability_button.name = "RarePowerAbilityActivateButton"
+	rare_ability_button.anchor_left = 0.56
+	rare_ability_button.anchor_top = 0.82
+	rare_ability_button.anchor_right = 0.77
+	rare_ability_button.anchor_bottom = 0.96
+	rare_ability_button.text = "قدرة نادرة"
+	rare_ability_button.pressed.connect(_activate_selected_rare_power_ability)
+	hud.add_child(rare_ability_button)
+	rare_ability_cycle_button = Button.new()
+	rare_ability_cycle_button.name = "RarePowerAbilityCycleButton"
+	rare_ability_cycle_button.anchor_left = 0.78
+	rare_ability_cycle_button.anchor_top = 0.82
+	rare_ability_cycle_button.anchor_right = 0.82
+	rare_ability_cycle_button.anchor_bottom = 0.96
+	rare_ability_cycle_button.text = "التالي"
+	rare_ability_cycle_button.pressed.connect(_cycle_rare_power_ability)
+	hud.add_child(rare_ability_cycle_button)
+	add_child(canvas)
+	_refresh_rare_power_ability_buttons()
+
+
+func _get_learned_rare_power_abilities() -> Array[String]:
+	var result: Array[String] = []
+	for skill_id in SYSTEM_SKILL_TREE.keys():
+		var category := str(SYSTEM_SKILL_TREE[skill_id].get("category", ""))
+		if category in ["rare_elemental", "rare_shadow", "rare_body", "legendary_elemental", "legendary_shadow"] and learned_system_skills.has(str(skill_id)):
+			result.append(str(skill_id))
+	return result
+
+
+func _refresh_rare_power_ability_buttons() -> void:
+	if not is_instance_valid(rare_ability_button) or not is_instance_valid(rare_ability_cycle_button):
+		return
+	var abilities := _get_learned_rare_power_abilities()
+	var has_abilities := not abilities.is_empty()
+	rare_ability_button.visible = has_abilities
+	rare_ability_cycle_button.visible = abilities.size() > 1
+	if not has_abilities:
+		return
+	selected_rare_ability_index = posmod(selected_rare_ability_index, abilities.size())
+	var skill_id := abilities[selected_rare_ability_index]
+	var skill: Dictionary = SYSTEM_SKILL_TREE[skill_id]
+	var remaining := float(system_skill_cooldowns.get(skill_id, 0.0))
+	var active: Dictionary = active_elixir_effects.get("rare_ability_" + skill_id, {})
+	var active_remaining := float(active.get("remaining_seconds", 0.0))
+	if active_remaining > 0.0:
+		rare_ability_button.text = "فعال: " + str(skill.get("name", skill_id))
+		rare_ability_button.disabled = true
+	elif remaining > 0.0:
+		rare_ability_button.text = "%s (%dث)" % [str(skill.get("name", skill_id)), int(ceil(remaining))]
+		rare_ability_button.disabled = true
+	elif current_system_energy < float(skill.get("energy_cost", 0.0)):
+		rare_ability_button.text = "طاقة غير كافية"
+		rare_ability_button.disabled = true
+	else:
+		rare_ability_button.text = "تفعيل: " + str(skill.get("name", skill_id))
+		rare_ability_button.disabled = false
+
+
+func _cycle_rare_power_ability() -> void:
+	var abilities := _get_learned_rare_power_abilities()
+	if abilities.size() <= 1:
+		return
+	selected_rare_ability_index = (selected_rare_ability_index + 1) % abilities.size()
+	_refresh_rare_power_ability_buttons()
+
+
+func _activate_selected_rare_power_ability() -> void:
+	var abilities := _get_learned_rare_power_abilities()
+	if abilities.is_empty():
+		return
+	selected_rare_ability_index = posmod(selected_rare_ability_index, abilities.size())
+	var result := activate_rare_power_ability(abilities[selected_rare_ability_index])
+	if not bool(result.get("success", false)):
+		push_warning("SYSTEM rare ability activation failed: " + str(result.get("reason", "UNKNOWN")))
+	_refresh_rare_power_ability_buttons()
 
 
 func activate_nen_burst() -> Dictionary:
