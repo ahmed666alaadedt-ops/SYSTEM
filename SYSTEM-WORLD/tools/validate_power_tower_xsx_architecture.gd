@@ -70,8 +70,8 @@ func _run() -> void:
 	assert(str(nen_hall.get_meta("system_interaction_action", "")) == "POWER_TOWER_NEN_TRAINING")
 	assert(not bool(architecture.get_meta("system_power_tower_shop_modern_firearms_allowed", true)))
 
-	var competition := CompetitionManagerScript.new()
-	tower.add_child(competition)
+	var competition := architecture.get_node_or_null("PowerTowerCompetitionManager") as Node
+	assert(competition != null, "Architecture must own exactly one Power Tower competition manager")
 	await process_frame
 	assert(bool(competition.get_meta("system_power_tower_independent", false)))
 	assert(int(competition.get_meta("system_power_tower_floor_count", 0)) == 200)
