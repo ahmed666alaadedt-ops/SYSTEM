@@ -1891,6 +1891,9 @@ func _run() -> void:
 	var power_skill_tree: Dictionary = skill_progression.call("get_system_skill_tree")
 	var power_skill_rank_checks := {"basic_strike":"F", "guard_breaker":"E", "swift_step":"D", "iron_guard":"C", "aura_shield":"B", "flow_counter":"A", "resonance_burst":"S", "sovereign_focus":"SS", "sovereign_overdrive":"SSS", "lightning_mantle":"A", "shadow_step":"S", "shadow_guardian_aura":"S", "body_manifestation":"SS", "lightning_sovereign_form":"SSS", "shadow_monarch_aegis":"SSS"}
 	var power_rare_ability_checks := ["lightning_mantle", "shadow_step", "shadow_guardian_aura", "body_manifestation", "lightning_sovereign_form", "shadow_monarch_aegis"]
+	if not skill_progression.has_method("activate_rare_power_ability"):
+		_fail("Power Tower rare ability activation API is missing.")
+		return
 	for rare_skill_id in power_rare_ability_checks:
 		if not power_skill_tree.has(rare_skill_id):
 			_fail("Power Tower rare ability missing from progression tree: " + rare_skill_id)
@@ -1904,7 +1907,7 @@ func _run() -> void:
 		if str(power_skill_tree.get(skill_id, {}).get("required_rank", "")) != str(power_skill_rank_checks[skill_id]):
 			_fail("Power Tower skill %s does not have its correct %s grade." % [str(skill_id), str(power_skill_rank_checks[skill_id])])
 			return
-	if skill_progression == null or not skill_progression.has_method("practice_system_skill") or skill_progression.call("get_system_skill_tree").size() != 12:
+	if skill_progression == null or not skill_progression.has_method("practice_system_skill") or skill_progression.call("get_system_skill_tree").size() != 18:
 		_fail("Persistent original SYSTEM skill tree is missing or incomplete.")
 		return
 	var skill_snapshot := {"level":skill_progression.get("current_level"),"points":skill_progression.get("verified_hunter_mission_points"),"learned":skill_progression.get("learned_system_skills").duplicate(),"authorized":skill_progression.get("authorized_system_skills").duplicate(),"practice":skill_progression.get("system_skill_practice").duplicate(true),"mastery":skill_progression.get("system_skill_mastery").duplicate(true),"cooldowns":skill_progression.get("system_skill_cooldowns").duplicate(true),"weapon_mastery":skill_progression.get("weapon_mastery").duplicate(true),"energy":skill_progression.get("current_system_energy"),"nen_unlocked":skill_progression.get("nen_unlocked"),"nen_control_rank":skill_progression.get("nen_control_rank"),"inventory":skill_progression.get("inventory_items").duplicate(true),"credits":operations.get("credits"),"vendor_stock":operations.get("vendor_stock").duplicate(true),"equipment_slots":skill_progression.get("equipment_slots").duplicate(true)}
