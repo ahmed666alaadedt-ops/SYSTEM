@@ -13,6 +13,20 @@ The Baghdad five-tower district consists of:
 
 The Power Tower remains a separate landmark outside the five-tower count. Its combat competitions remain strictly individual 1v1; no team combat is introduced.
 
+## Al-Bataween street antiques market — primary player trading hub
+
+The outdoor Al-Bataween market is a separate ground-level Baghdad neighborhood destination, not a sixth tower and not a replacement for the 34-floor Antiques & Heritage museum. Its neighborhood-center WGS84 anchor is 33.3201, 44.4205 (a neighborhood reference point, not a surveyed parcel boundary). The playable terrain is extended to this anchor and connected to the Republic Bridge approach by a clearly identified procedural access corridor; that corridor is gameplay infrastructure, not surveyed OpenStreetMap road geometry.
+
+- Generate a walkable street-market courtyard with 24 individually identified stalls and a main entrance interaction.
+- Organize stalls around Iraqi heritage, manuscripts, coins, ceramics, metalwork, player listings, auctions, appraisal and restoration.
+- Every stall routes into the same authoritative player marketplace; do not create a second wallet, local-save trading ledger or duplicate economy.
+- The in-world Godot interaction opens the marketplace panel. The existing native Android marketplace tab remains available and uses the same authenticated Firebase callable functions.
+- Sellers list only artifacts they own and choose their fixed price. Buyers browse active offers and purchase with virtual SYSTEM currency.
+- Listing escrow, balance debit, seller credit, ownership transfer and transaction receipt remain one server-side atomic transaction. Concurrent purchase attempts must still have exactly one winner.
+- This district is a playable procedural first pass; it is not a claim that the surrounding Al-Bataween streets or every building have been reconstructed from OSM.
+
+The existing 34-floor Antiques & Heritage Tower remains the museum, research, restoration and private-gallery venue. Its marketplace and auction floors may act as dealer galleries and auction rooms, but must reuse this same backend and transaction ledger.
+
 ## Antiques & Heritage Tower
 
 A 34-floor public museum, collecting, restoration and player-commerce destination. Keep the existing Baghdad plot and the five-tower district connection unless a terrain validation requires a safe adjustment.
