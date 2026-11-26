@@ -235,7 +235,7 @@ fun SystemApp(account: SystemFirebaseAccount) {
                                         context,
                                         SystemGodotActivity::class.java,
                                         SystemGodotRuntimeContract.WorldRequest(
-                                            worldId = SystemGodotRuntimeContract.WorldId.MODERN,
+                                            worldId = SystemGodotRuntimeContract.WorldId.SELECTION,
                                             accountUid = userId
                                         )
                                     )
@@ -246,7 +246,7 @@ fun SystemApp(account: SystemFirebaseAccount) {
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp)
                             ) {
-                                Text("دخول العالم ثلاثي الأبعاد", fontWeight = FontWeight.Bold)
+                                Text("ميار واختيار العالم ثلاثي الأبعاد", fontWeight = FontWeight.Bold)
                             }
 
                             Spacer(Modifier.height(16.dp))
@@ -272,6 +272,19 @@ fun SystemApp(account: SystemFirebaseAccount) {
                                         onSelectWorld = { world ->
                                             selectedWorld = world
                                             showWorldSelection = false
+                                        },
+                                        onOpenThreeDSelection = {
+                                            val intent = SystemGodotRuntimeContract.createWorldIntent(
+                                                context,
+                                                SystemGodotActivity::class.java,
+                                                SystemGodotRuntimeContract.WorldRequest(
+                                                    worldId = SystemGodotRuntimeContract.WorldId.SELECTION,
+                                                    accountUid = userId
+                                                )
+                                            )
+                                            context.startActivity(
+                                                intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                            )
                                         }
                                     )
                                 } else if (selectedWorld == "mythology") {
@@ -365,6 +378,28 @@ fun SystemApp(account: SystemFirebaseAccount) {
                                                 showWorldSelection = true
                                             }
                                         )
+
+                                        Spacer(Modifier.height(12.dp))
+
+                                        Button(
+                                            onClick = {
+                                                val showcaseIntent = SystemGodotRuntimeContract.createWorldIntent(
+                                                    context,
+                                                    SystemGodotActivity::class.java,
+                                                    SystemGodotRuntimeContract.WorldRequest(
+                                                        worldId = SystemGodotRuntimeContract.WorldId.NPC_SHOWCASE,
+                                                        accountUid = userId
+                                                    )
+                                                )
+                                                context.startActivity(
+                                                    showcaseIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                                )
+                                            },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            shape = RoundedCornerShape(12.dp)
+                                        ) {
+                                            Text("معرض الشخصيات ثلاثي الأبعاد")
+                                        }
                                     }
                                 }
                             }
@@ -698,7 +733,8 @@ fun SystemWorldBanner(onClick: () -> Unit) {
 @Composable
 fun WorldSelectionScreen(
     onBack: () -> Unit,
-    onSelectWorld: (String) -> Unit
+    onSelectWorld: (String) -> Unit,
+    onOpenThreeDSelection: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -708,6 +744,19 @@ fun WorldSelectionScreen(
     ) {
         Button(onClick = onBack) {
             Text("رجوع")
+        }
+
+        Spacer(Modifier.height(10.dp))
+
+        Button(
+            onClick = onOpenThreeDSelection,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF1A7894),
+                contentColor = Color.White
+            )
+        ) {
+            Text("عرض ميار ثلاثية الأبعاد والبوابات الأربع")
         }
 
         Spacer(Modifier.height(10.dp))

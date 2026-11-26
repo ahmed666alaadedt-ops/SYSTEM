@@ -9,13 +9,21 @@ import androidx.fragment.app.FragmentActivity
  * the account/startup surface and launches this Activity only for 3D gameplay.
  */
 class SystemGodotActivity : FragmentActivity() {
+    override fun onDestroy() {
+        SystemMiyarSpeech.shutdown()
+        super.onDestroy()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
         val request = SystemGodotRuntimeContract.readWorldRequest(intent)
         val worldId = request?.worldId ?: SystemGodotRuntimeContract.WorldId.MODERN
-        if (worldId != SystemGodotRuntimeContract.WorldId.MODERN) {
+        if (worldId != SystemGodotRuntimeContract.WorldId.MODERN &&
+            worldId != SystemGodotRuntimeContract.WorldId.SELECTION &&
+            worldId != SystemGodotRuntimeContract.WorldId.NPC_SHOWCASE
+        ) {
             finish()
             return
         }

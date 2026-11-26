@@ -32,6 +32,17 @@ class SystemAndroidHostPlugin(godot: Godot) : GodotPlugin(godot) {
     override fun getPluginSignals(): Set<SignalInfo> = setOf(MESSAGE_FROM_ANDROID)
 
     @UsedByGodot
+    fun speak_arabic(text: String) {
+        val activity = godot.getActivity() ?: return
+        SystemMiyarSpeech.speak(activity, text)
+    }
+
+    @UsedByGodot
+    fun stop_arabic_speech() {
+        SystemMiyarSpeech.stop()
+    }
+
+    @UsedByGodot
     fun send_to_android(rawMessage: String) {
         val envelope = SystemGodotMessageContract.decode(rawMessage)
         if (!router.receiveFromGodot(rawMessage, marketplaceHandler)) {

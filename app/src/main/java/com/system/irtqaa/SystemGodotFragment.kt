@@ -12,8 +12,11 @@ import org.godotengine.godot.plugin.GodotPlugin
 class SystemGodotFragment : GodotFragment() {
     override fun getCommandLine(): MutableList<String> {
         val requestedWorld = arguments?.getString(ARG_WORLD_ID)
-            ?.takeIf { it == SystemGodotRuntimeContract.WorldId.MODERN.wireValue }
-            ?: SystemGodotRuntimeContract.WorldId.MODERN.wireValue
+            ?.takeIf {
+                it == SystemGodotRuntimeContract.WorldId.MODERN.wireValue ||
+                    it == SystemGodotRuntimeContract.WorldId.SELECTION.wireValue ||
+                    it == SystemGodotRuntimeContract.WorldId.NPC_SHOWCASE.wireValue
+            } ?: SystemGodotRuntimeContract.WorldId.MODERN.wireValue
         return mutableListOf(
             "--main-pack",
             "res://main.pck",
@@ -34,7 +37,10 @@ class SystemGodotFragment : GodotFragment() {
                 arguments = Bundle().apply {
                     putString(
                         ARG_WORLD_ID,
-                        if (worldId == SystemGodotRuntimeContract.WorldId.MODERN.wireValue) {
+                        if (worldId == SystemGodotRuntimeContract.WorldId.MODERN.wireValue ||
+                            worldId == SystemGodotRuntimeContract.WorldId.SELECTION.wireValue ||
+                            worldId == SystemGodotRuntimeContract.WorldId.NPC_SHOWCASE.wireValue
+                        ) {
                             worldId
                         } else {
                             SystemGodotRuntimeContract.WorldId.MODERN.wireValue

@@ -95,7 +95,28 @@ var camera_pitch := deg_to_rad(-10.0)
 var first_person := false
 
 
+func _should_start_miyar_world_selection() -> bool:
+	for argument in OS.get_cmdline_user_args():
+		if argument == "--system-world=selection":
+			return true
+	return false
+
+
+func _should_start_npc_character_showcase() -> bool:
+	for argument in OS.get_cmdline_user_args():
+		if argument == "--system-world=npc_showcase":
+			return true
+	return false
+
+
 func _ready() -> void:
+	if _should_start_npc_character_showcase():
+		get_tree().change_scene_to_file("res://scenes/NPCCharacterShowcase.tscn")
+		return
+	if _should_start_miyar_world_selection():
+		get_tree().change_scene_to_file("res://scenes/MiyarFourWorldsStage.tscn")
+		return
+
 	create_world_manager()
 	create_wildlife_manager()
 	create_ai_npc_society_manager()
@@ -164,7 +185,8 @@ func _consume_pending_android_world_request() -> void:
 		return
 	var requested_world := SYSTEMAndroidBridge.consume_pending_world_request()
 	if not requested_world.is_empty():
-		_handle_android_world_entry_request(requested_world)
+		var selection_authorized := SYSTEMAndroidBridge.consume_world_selection_authorization()
+		_handle_android_world_entry_request(requested_world, selection_authorized)
 
 
 func _on_android_world_entry_requested(world_id: String) -> void:
@@ -174,13 +196,17 @@ func _on_android_world_entry_requested(world_id: String) -> void:
 		var pending_world := SYSTEMAndroidBridge.consume_pending_world_request()
 		if not pending_world.is_empty():
 			world_id = pending_world
-	_handle_android_world_entry_request(world_id)
+	var selection_authorized := SYSTEMAndroidBridge.consume_world_selection_authorization()
+	_handle_android_world_entry_request(world_id, selection_authorized)
 
 
-func _handle_android_world_entry_request(world_id: String) -> void:
-	# External app launches may start in the modern world only.
-	# Other worlds require the in-world Star Gate flow in Baghdad.
-	if world_id != "modern":
+func _handle_android_world_entry_request(
+	world_id: String,
+	selection_authorized: bool = false
+) -> void:
+	# Direct external entry remains modern-only. Non-modern destinations can
+	# only be selected from the trusted in-game four-world selection stage.
+	if world_id != "modern" and not selection_authorized:
 		SYSTEMAndroidBridge.publish_request_result(
 			world_id,
 			false,
@@ -196,12 +222,27 @@ func _handle_android_world_entry_request(world_id: String) -> void:
 		)
 		return
 
-	world_manager.switch_world(WorldManagerScript.WorldID.REALISTIC)
+	var destination_id: int = -1
+	match world_id:
+		"modern":
+			destination_id = WorldManagerScript.WorldID.REALISTIC
+		"historical":
+			destination_id = WorldManagerScript.WorldID.MYTHOLOGY
+		"fantasy":
+			destination_id = WorldManagerScript.WorldID.FANTASY
+		"greed_island":
+			destination_id = WorldManagerScript.WorldID.GREED_ISLAND
+		_:
+			SYSTEMAndroidBridge.publish_request_result(world_id, false, "UNKNOWN_WORLD_ID")
+			return
+
+	world_manager.switch_world(destination_id)
 	active_world_root = world_manager.get_active_world()
+	var accepted: bool = int(world_manager.active_world) == destination_id
 	SYSTEMAndroidBridge.publish_request_result(
 		world_id,
-		true,
-		"MODERN_WORLD_READY"
+		accepted,
+		"SELECTED_WORLD_READY" if accepted else "WORLD_SWITCH_FAILED"
 	)
 
 
