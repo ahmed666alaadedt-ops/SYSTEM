@@ -23,9 +23,11 @@ func _ready() -> void:
 	_create_materials()
 	_build_tapered_silhouette()
 	_build_structural_tiers()
+	_build_facade_detail_layers()
 	_build_xsx_identity()
 	_build_observatory_and_rooftop_pad()
 	_build_circular_entrance_podium()
+	_build_entrance_media_panels()
 	_build_lobby_facilities()
 	var competition_manager := CompetitionManagerScript.new()
 	competition_manager.name = "PowerTowerCompetitionManager"
@@ -143,6 +145,79 @@ func _build_xsx_identity() -> void:
 			add_child(label)
 			sign_count += 1
 	set_meta("system_power_tower_xsx_facade_sign_count", sign_count)
+
+
+func _build_facade_detail_layers() -> void:
+	# Lightweight architectural ribs follow the four tapered glass sections.
+	var sections := [
+		{"bottom": 25.0, "top": 20.0, "height": 175.0, "center": 95.0},
+		{"bottom": 20.0, "top": 13.5, "height": 230.0, "center": 300.0},
+		{"bottom": 13.5, "top": 7.2, "height": 245.0, "center": 537.5},
+		{"bottom": 7.2, "top": 1.2, "height": 150.0, "center": 735.0}
+	]
+	var rib_count := 0
+	for section_index in range(sections.size()):
+		var section: Dictionary = sections[section_index]
+		var radius := (float(section["bottom"]) + float(section["top"])) * 0.5 + 0.65
+		for rib_index in range(16):
+			var angle := TAU * float(rib_index) / 16.0
+			var rib := MeshInstance3D.new()
+			rib.name = "TitaniumFacadeRib_%02d_%02d" % [section_index, rib_index]
+			var rib_mesh := BoxMesh.new()
+			rib_mesh.size = Vector3(0.72, float(section["height"]) * 0.96, 1.05)
+			rib.mesh = rib_mesh
+			rib.position = Vector3(cos(angle) * radius, float(section["center"]) + 7.0, sin(angle) * radius)
+			rib.rotation.y = -angle
+			rib.material_override = titanium
+			add_child(rib)
+			rib_count += 1
+
+	# Repeated illuminated floor-band markers make the 200-floor height readable.
+	var band_count := 0
+	for band_index in range(1, 16):
+		var height := float(band_index) * 50.0
+		var radius := maxf(2.0, 25.0 - height * 0.029)
+		_add_ring(self, "TowerFloorLightBand_%02d" % band_index, radius - 0.12, radius + 0.12, height + 7.0, white_emissive)
+		band_count += 1
+	set_meta("system_power_tower_facade_rib_count", rib_count)
+	set_meta("system_power_tower_floor_light_band_count", band_count)
+
+
+func _build_entrance_media_panels() -> void:
+	# Four slim public information screens sit around the independent circular arrival podium.
+	var panel_count := 0
+	for side in range(4):
+		var angle := TAU * float(side) / 4.0
+		var outward := Vector3(cos(angle), 0.0, sin(angle))
+		var panel := MeshInstance3D.new()
+		panel.name = "PowerTowerArrivalMediaPanel_%02d" % side
+		var panel_mesh := BoxMesh.new()
+		panel_mesh.size = Vector3(0.7, 8.0, 16.0)
+		panel.mesh = panel_mesh
+		panel.position = outward * 52.0 + Vector3(0.0, 20.0, 0.0)
+		panel.rotation.y = -angle
+		panel.material_override = dark_glass
+		add_child(panel)
+		var frame := MeshInstance3D.new()
+		frame.name = "PowerTowerArrivalMediaFrame_%02d" % side
+		var frame_mesh := BoxMesh.new()
+		frame_mesh.size = Vector3(0.82, 8.35, 16.35)
+		frame.mesh = frame_mesh
+		frame.position = panel.position - outward * 0.08
+		frame.rotation.y = -angle
+		frame.material_override = gold_trim
+		add_child(frame)
+		var screen_label := Label3D.new()
+		screen_label.name = "PowerTowerArrivalMediaText_%02d" % side
+		screen_label.text = "X-S-X  |  LIVE ARENA\n200 FLOORS  •  HUNTER RANKINGS"
+		screen_label.font_size = 24
+		screen_label.pixel_size = 0.012
+		screen_label.position = panel.position + outward * 0.42
+		screen_label.rotation.y = -angle
+		screen_label.modulate = Color(0.72, 0.91, 1.0)
+		add_child(screen_label)
+		panel_count += 1
+	set_meta("system_power_tower_arrival_media_panel_count", panel_count)
 
 func _build_observatory_and_rooftop_pad() -> void:
 	var observatory := Node3D.new()
