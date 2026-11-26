@@ -200,3 +200,15 @@ Implementation status: a local prototype now records individual 1v1 matches, ded
 - The regression now opens the prediction terminal through the actual arena-board interaction route and verifies that the shared virtual-ticket UI becomes visible.
 
 - The fan-prediction display is mounted above the rear spectator seating line and its interaction zone remains reachable at player height, keeping the board within the arena deck boundary instead of placing the kiosk beyond the platform edge.
+
+## 11. Nen foundations and affinity-gated abilities (27 November 2026)
+
+- Nen is the shared source for all advanced Nen techniques and rare abilities; lightning, shadow and body-manifestation abilities are not separate energy systems.
+- Awakening Nen is only the entry gate. The player must then complete three unique training sessions for each foundation, in order: Ten, Zetsu, Ren and Hatsu. A later foundation cannot be trained until the previous one is mastered.
+- After Hatsu, the player selects one primary Nen affinity: Enhancement, Emission, Transmutation, Conjuration, Manipulation or Specialization. The choice and all foundation sessions are persisted in the player save.
+- Nen techniques and rare abilities require the foundations and a compatible selected affinity in addition to their existing level, Hunter rank, Nen-control rank, prerequisites, training permit, energy cost and cooldown.
+- Ability affinity mapping: lightning uses Transmutation/Enhancement; shadow movement and shadow guardians use Manipulation/Specialization; steel-body manifestation uses Enhancement/Conjuration. The higher sovereign variants retain those affinity requirements and require higher rank and Nen control.
+- The Hunter Association Nen fundamentals facility now exposes the ordered training sessions and affinity selection in-world. The Power Tower skill HUD explains missing foundation, affinity, or energy requirements rather than allowing an early activation.
+- Current rare ability catalogue remains six skills: Lightning Mantle (A), Shadow Step (S), Shadow Guardian Aura (S), Steel Body Manifestation (SS), Lightning Sovereign Form (SSS), and Shadow Monarch Aegis (SSS). Store manuals grant training authorization only; they do not instantly teach the ability.
+- Monster/boss loot distribution still requires a verified reward-source integration. This checkpoint implements the progression-side foundations and affinity gates, but does not claim that live monster drop tables are wired or that online rewards are server-authoritative.
+
