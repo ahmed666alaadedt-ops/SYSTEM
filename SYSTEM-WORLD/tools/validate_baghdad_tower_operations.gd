@@ -2267,6 +2267,12 @@ func _run() -> void:
 		_fail("Power Tower spectator gallery did not react to the verified individual duel winner.")
 		return
 	var audience_actors := spectator_gallery.get_node_or_null("PowerTowerAudienceActors") as Node3D
+	var crowd_impostors := spectator_gallery.get_node_or_null("PowerTowerCrowdImpostors") as MultiMeshInstance3D
+	var crowd_heads := spectator_gallery.get_node_or_null("PowerTowerCrowdImpostorHeads") as MultiMeshInstance3D
+	var crowd_material := crowd_impostors.material_override as StandardMaterial3D if crowd_impostors != null else null
+	if crowd_impostors == null or crowd_heads == null or crowd_impostors.multimesh == null or crowd_heads.multimesh == null or crowd_impostors.multimesh.instance_count != 492 or crowd_heads.multimesh.instance_count != 492 or int(spectator_gallery.get_meta("system_audience_impostor_count", 0)) != 492 or crowd_material == null or not crowd_material.emission_enabled or crowd_material.emission_energy_multiplier < 0.8 or str(crowd_impostors.get_meta("system_audience_reaction", "")) != "celebrating":
+		_fail("Power Tower 492 shared-LOD audience members are missing visible body/head instances or winner celebration lighting.")
+		return
 	if audience_actors == null or audience_actors.get_child_count() != 8 or str(spectator_gallery.get_meta("system_audience_reaction", "")) != "celebrating":
 		_fail("Power Tower audience actors did not enter their winner celebration state.")
 		return
