@@ -338,6 +338,46 @@ func _build_lobby_ambience(lobby: Node3D) -> void:
 	set_meta("system_power_tower_lobby_floor_inlay_count", floor_inlay_count)
 	set_meta("system_power_tower_lobby_ceiling_halo_count", halo_count)
 
+
+func _build_lobby_wayfinding_and_spotlights(facility_root: Node3D) -> void:
+	# Floating directory signs make the compact podium interior easier to read.
+	var directory_entries := [
+		{"name": "Weapons", "text": "WEAPONS  →", "position": Vector3(-18.0, 8.0, 12.0), "color": Color(0.62, 0.88, 1.0)},
+		{"name": "Armor", "text": "ARMOR & DEFENSE  →", "position": Vector3(-18.0, 8.0, -12.0), "color": Color(1.0, 0.82, 0.52)},
+		{"name": "Elixirs", "text": "ELIXIRS & NEN  →", "position": Vector3(18.0, 8.0, 12.0), "color": Color(0.52, 0.88, 1.0)},
+		{"name": "Skills", "text": "SKILLS & TECHNIQUES  →", "position": Vector3(18.0, 8.0, -12.0), "color": Color(1.0, 0.78, 0.48)},
+		{"name": "Cafeteria", "text": "CAFETERIA  ↓", "position": Vector3(0.0, 8.0, 26.0), "color": Color(1.0, 0.84, 0.58)},
+		{"name": "NenHall", "text": "NEN TRAINING  ↓", "position": Vector3(0.0, 8.0, -27.0), "color": Color(0.48, 0.9, 1.0)}
+	]
+	for entry in directory_entries:
+		var directory_sign := Label3D.new()
+		directory_sign.name = "PowerTowerDirectory_" + str(entry["name"])
+		directory_sign.text = str(entry["text"])
+		directory_sign.font_size = 18
+		directory_sign.pixel_size = 0.012
+		directory_sign.position = entry["position"]
+		directory_sign.modulate = entry["color"]
+		directory_sign.outline_size = 8
+		facility_root.add_child(directory_sign)
+
+	# Soft local lighting separates merchandise zones without adding shadow-heavy lights.
+	var light_positions := [
+		Vector3(-18.0, 7.0, 12.0), Vector3(-18.0, 7.0, -12.0),
+		Vector3(18.0, 7.0, 12.0), Vector3(18.0, 7.0, -12.0),
+		Vector3(0.0, 7.0, 26.0), Vector3(0.0, 7.0, -27.0)
+	]
+	for index in range(light_positions.size()):
+		var accent_light := OmniLight3D.new()
+		accent_light.name = "PowerTowerInteriorAccentLight_%02d" % index
+		accent_light.position = light_positions[index]
+		accent_light.light_color = Color(0.55, 0.78, 1.0) if index % 2 == 0 else Color(1.0, 0.76, 0.48)
+		accent_light.light_energy = 1.25
+		accent_light.omni_range = 16.0
+		accent_light.shadow_enabled = false
+		facility_root.add_child(accent_light)
+	set_meta("system_power_tower_interior_directory_sign_count", directory_entries.size())
+	set_meta("system_power_tower_interior_accent_light_count", light_positions.size())
+
 func _build_lobby_facilities() -> void:
 	var tower := get_parent()
 	if tower == null:
@@ -353,6 +393,7 @@ func _build_lobby_facilities() -> void:
 	facility_root.set_meta("system_power_tower_interior_facilities", ["TRADITIONAL_WEAPON_GALLERY", "ARMOR_SHOWROOM", "ELIXIR_CABINET", "SKILL_LIBRARY", "CAFETERIA"])
 	lobby.add_child(facility_root)
 	_build_lobby_ambience(lobby)
+	_build_lobby_wayfinding_and_spotlights(facility_root)
 
 	# Traditional weapons gallery: no firearms or modern projectile displays are created here.
 	var weapon_root := Node3D.new()
@@ -386,6 +427,43 @@ func _build_lobby_facilities() -> void:
 	weapon_sign.position = Vector3(0.0, 6.2, 3.2)
 	weapon_sign.modulate = Color(0.82, 0.94, 1.0)
 	weapon_root.add_child(weapon_sign)
+
+	# Additional traditional equipment displays: spear, bow and shield.
+	var spear := MeshInstance3D.new()
+	spear.name = "TraditionalSpearDisplay"
+	var spear_mesh := CylinderMesh.new()
+	spear_mesh.top_radius = 0.055
+	spear_mesh.bottom_radius = 0.09
+	spear_mesh.height = 4.8
+	spear.mesh = spear_mesh
+	spear.position = Vector3(-5.0, 2.8, -2.8)
+	spear.material_override = gold_trim
+	weapon_root.add_child(spear)
+	var bow := MeshInstance3D.new()
+	bow.name = "TraditionalBowDisplay"
+	var bow_mesh := TorusMesh.new()
+	bow_mesh.inner_radius = 1.15
+	bow_mesh.outer_radius = 1.32
+	bow_mesh.rings = 32
+	bow_mesh.ring_segments = 10
+	bow.mesh = bow_mesh
+	bow.position = Vector3(0.0, 3.0, -2.8)
+	bow.rotation.x = PI * 0.5
+	bow.material_override = gold_trim
+	weapon_root.add_child(bow)
+	var shield := MeshInstance3D.new()
+	shield.name = "TraditionalShieldDisplay"
+	var shield_mesh := CylinderMesh.new()
+	shield_mesh.top_radius = 1.0
+	shield_mesh.bottom_radius = 1.0
+	shield_mesh.height = 0.28
+	shield_mesh.radial_segments = 12
+	shield.mesh = shield_mesh
+	shield.position = Vector3(5.0, 3.0, -2.8)
+	shield.rotation.x = PI * 0.5
+	shield.material_override = display_glow
+	weapon_root.add_child(shield)
+	weapon_root.set_meta("system_traditional_equipment_display_count", 3)
 
 	# Armor mannequins and defensive equipment display.
 	var armor_root := Node3D.new()
