@@ -63,34 +63,57 @@ func _create_market_access_route() -> void:
 	var start: Vector3 = terrain.call("get_baghdad_bridge_nearest_bank_anchor")
 	if start == Vector3.INF:
 		return
-	var delta := Vector3(market_position.x - start.x, 0.0, market_position.z - start.z)
-	var route_length := delta.length()
+	var start_xz := Vector2(start.x, start.z)
+	var finish_xz := Vector2(market_position.x, market_position.z)
+	var route_delta := finish_xz - start_xz
+	var route_length := route_delta.length()
 	if route_length < 10.0:
+		return
+	var side := Vector2(-route_delta.normalized().y, route_delta.normalized().x) * 6.0
+	var route_material := _material(Color(0.095, 0.10, 0.105), 0.94, 0.08)
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	surface.set_material(route_material)
+	var segment_count := maxi(8, int(ceil(route_length / 35.0)))
+	for segment_index in range(segment_count):
+		var t0 := float(segment_index) / float(segment_count)
+		var t1 := float(segment_index + 1) / float(segment_count)
+		var center_a := start_xz.lerp(finish_xz, t0)
+		var center_b := start_xz.lerp(finish_xz, t1)
+		var a_left := center_a + side
+		var a_right := center_a - side
+		var b_left := center_b + side
+		var b_right := center_b - side
+		var a := Vector3(a_left.x - market_position.x, float(terrain.call("get_terrain_height", a_left.x, a_left.y)) + 0.18 - market_position.y, a_left.y - market_position.z)
+		var b := Vector3(a_right.x - market_position.x, float(terrain.call("get_terrain_height", a_right.x, a_right.y)) + 0.18 - market_position.y, a_right.y - market_position.z)
+		var c := Vector3(b_left.x - market_position.x, float(terrain.call("get_terrain_height", b_left.x, b_left.y)) + 0.18 - market_position.y, b_left.y - market_position.z)
+		var d := Vector3(b_right.x - market_position.x, float(terrain.call("get_terrain_height", b_right.x, b_right.y)) + 0.18 - market_position.y, b_right.y - market_position.z)
+		surface.add_vertex(a)
+		surface.add_vertex(b)
+		surface.add_vertex(c)
+		surface.add_vertex(c)
+		surface.add_vertex(b)
+		surface.add_vertex(d)
+	surface.generate_normals()
+	var route_mesh := surface.commit()
+	if route_mesh == null or route_mesh.get_surface_count() == 0:
+		push_warning("SYSTEM Baghdad Bataween Market: access route mesh could not be generated.")
 		return
 	var route := MeshInstance3D.new()
 	route.name = "BataweenPlayableAccessRoute"
-	var route_mesh := BoxMesh.new()
-	route_mesh.size = Vector3(12.0, 0.28, route_length)
 	route.mesh = route_mesh
-	route.position = Vector3(
-		(start.x + market_position.x) * 0.5 - market_position.x,
-		((start.y + market_position.y) * 0.5 + 0.2) - market_position.y,
-		(start.z + market_position.z) * 0.5 - market_position.z
-	)
-	route.rotation.y = atan2(delta.x, delta.z)
-	route.material_override = _material(Color(0.095, 0.10, 0.105), 0.94, 0.08)
+	route.material_override = route_material
+	route.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	route.set_meta("system_generated_access_route", true)
-	route.set_meta("system_geography_source", "procedural playable Al-Bataween access route; not OpenStreetMap road geometry")
+	route.set_meta("system_geography_source", "procedural terrain-conforming Al-Bataween access route; not OpenStreetMap road geometry")
 	add_child(route)
 
 	var route_body := StaticBody3D.new()
 	route_body.name = "BataweenPlayableAccessRouteCollision"
-	route_body.position = route.position
-	route_body.rotation = route.rotation
 	var route_collision := CollisionShape3D.new()
 	route_collision.name = "CollisionShape3D"
-	var route_shape := BoxShape3D.new()
-	route_shape.size = route_mesh.size
+	var route_shape := ConcavePolygonShape3D.new()
+	route_shape.set_faces(route_mesh.get_faces())
 	route_collision.shape = route_shape
 	route_body.add_child(route_collision)
 	add_child(route_body)
@@ -299,6 +322,7 @@ func _build_stall(stall_number: int, stall_position: Vector3, category: Dictiona
 	back_wall.position = Vector3(0.0, 2.6, -3.5)
 	back_wall.material_override = _stone_material
 	stall.add_child(back_wall)
+	_add_box_collision(stall, "StallBackWallCollision", back_wall.position, wall_mesh.size)
 
 	for side in [-1.0, 1.0]:
 		var side_wall := MeshInstance3D.new()
@@ -309,6 +333,7 @@ func _build_stall(stall_number: int, stall_position: Vector3, category: Dictiona
 		side_wall.position = Vector3(side * 5.7, 2.2, 0.0)
 		side_wall.material_override = _stone_material
 		stall.add_child(side_wall)
+		_add_box_collision(stall, "StallSideWallCollision_%s" % str(side), side_wall.position, side_mesh.size)
 
 	var canopy := MeshInstance3D.new()
 	canopy.name = "StallCanopy"
@@ -318,6 +343,7 @@ func _build_stall(stall_number: int, stall_position: Vector3, category: Dictiona
 	canopy.position = Vector3(0.0, 5.2, 0.0)
 	canopy.material_override = _canopy_material
 	stall.add_child(canopy)
+	_add_box_collision(stall, "StallCanopyCollision", canopy.position, canopy_mesh.size)
 
 	var counter := MeshInstance3D.new()
 	counter.name = "DisplayCounter"
@@ -327,6 +353,7 @@ func _build_stall(stall_number: int, stall_position: Vector3, category: Dictiona
 	counter.position = Vector3(0.0, 0.85, 2.4)
 	counter.material_override = _wood_material
 	stall.add_child(counter)
+	_add_box_collision(stall, "DisplayCounterCollision", counter.position, counter_mesh.size)
 
 	var display_case := MeshInstance3D.new()
 	display_case.name = "ArtifactDisplayCase"
@@ -336,6 +363,7 @@ func _build_stall(stall_number: int, stall_position: Vector3, category: Dictiona
 	display_case.position = Vector3(0.0, 2.0, 2.3)
 	display_case.material_override = _brass_material
 	stall.add_child(display_case)
+	_add_box_collision(stall, "ArtifactDisplayCaseCollision", display_case.position, case_mesh.size)
 
 	for display_index in range(3):
 		var artifact := MeshInstance3D.new()
