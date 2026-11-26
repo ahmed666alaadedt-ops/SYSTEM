@@ -43,9 +43,9 @@ func setup(p_terrain: Node) -> bool:
 	_create_market_access_route()
 	_build_market()
 	set_meta("system_location_id", MARKET_LOCATION_ID)
-	set_meta("system_display_name", "سوق البتاوين")
-	set_meta("system_market_category_name", "سوق التحف والآثار")
-	set_meta("system_full_display_name", "سوق البتاوين للتحف والآثار")
+	set_meta("system_display_name", "سوق التحف والآثار الغامضة")
+	set_meta("system_market_category_name", "التحف والآثار الغامضة")
+	set_meta("system_full_display_name", "سوق التحف والآثار الغامضة")
 	set_meta("system_marketplace_kind", "player_to_player_artifact_market")
 	set_meta("system_geography_source", "WGS84 Al-Bataween neighborhood anchor")
 	set_meta("system_wgs84_latitude", BATAWEEN_LATITUDE)
@@ -237,7 +237,7 @@ func _add_market_sign() -> void:
 
 	var title := Label3D.new()
 	title.name = "BataweenMarketTitle"
-	title.text = "سوق البتاوين\nسوق التحف والآثار — AL-BATAWEEN ANTIQUES MARKET"
+	title.text = "سوق التحف والآثار الغامضة\nMYSTERIOUS ANTIQUES & ARTIFACTS MARKET"
 	title.font_size = 34
 	title.pixel_size = 0.012
 	title.position = Vector3(0.0, 10.4, 50.2)
@@ -265,7 +265,7 @@ func _add_market_gate() -> void:
 	gate.set_meta("system_bataween_market_action", "open_market")
 	gate.set_meta("system_marketplace_section", "market")
 	gate.set_meta("system_interaction_type", "bataween_player_market_entry")
-	gate.set_meta("system_interaction_prompt", "افتح سوق البتاوين للتحف والآثار")
+	gate.set_meta("system_interaction_prompt", "افتح سوق التحف والآثار الغامضة")
 	var shape := CollisionShape3D.new()
 	var sphere := SphereShape3D.new()
 	sphere.radius = 5.0
@@ -411,7 +411,7 @@ func _build_stall(stall_number: int, stall_position: Vector3, category: Dictiona
 	interaction.set_meta("system_marketplace_section", str(category["id"]))
 	interaction.set_meta("system_market_stall_id", "bataween_stall_%02d" % stall_number)
 	interaction.set_meta("system_interaction_type", "bataween_player_market_stall")
-	interaction.set_meta("system_interaction_prompt", "تصفح " + str(category["name"]) + " — سوق البتاوين")
+	interaction.set_meta("system_interaction_prompt", "تصفح " + str(category["name"]) + " — سوق التحف والآثار الغامضة")
 	var interaction_shape := CollisionShape3D.new()
 	var interaction_sphere := SphereShape3D.new()
 	interaction_sphere.radius = 4.0
