@@ -55,6 +55,7 @@ jobs:
           "$GODOT" --headless --path "$PROJECT" --check-only --script res://scripts/system_baghdad_tower_operations_manager.gd
           "$GODOT" --headless --path "$PROJECT" --check-only --script res://scripts/system_baghdad_public_leisure_manager.gd
           "$GODOT" --headless --path "$PROJECT" --check-only --script res://scripts/system_player_progression.gd
+          "$GODOT" --headless --path "$PROJECT" --check-only --script res://scripts/modern_world_monster_gate_manager.gd
           "$GODOT" --headless --path "$PROJECT" --check-only --script res://tools/validate_baghdad_tower_operations.gd
           "$GODOT" --headless --path "$PROJECT" --check-only --script res://tools/validate_shopping_tower_showcases.gd
 
