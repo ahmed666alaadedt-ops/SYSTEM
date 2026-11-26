@@ -111,7 +111,8 @@ fun SystemAntiquesMarketplaceScreen(
             shape = RoundedCornerShape(20.dp)
         ) {
             Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                Text("سوق البتاوين للتحف والآثار", color = gold, fontSize = 25.sp, fontWeight = FontWeight.Black)
+                Text("سوق البتاوين", color = gold, fontSize = 25.sp, fontWeight = FontWeight.Black)
+                Text("سوق التحف والآثار", color = cyan, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 Text("بيع وشراء ومزادات آمنة بين اللاعبين — رصيد SYSTEM افتراضي", color = Color.LightGray)
                 Spacer(Modifier.height(12.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
