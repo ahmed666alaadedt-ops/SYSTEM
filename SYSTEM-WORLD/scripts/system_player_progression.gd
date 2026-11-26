@@ -69,10 +69,10 @@ const CRAFTING_RECIPES := {
 	"resistance_elixir": {"name": "تحضير إكسير مقاومة الإرهاق", "ingredients": {"medicinal_herb": 2, "monster_core": 1}, "output": "resistance_elixir", "required_level": 5},
 	"deep_wound_elixir": {"name": "تحضير إكسير الجروح العميقة", "ingredients": {"medicinal_herb": 4, "crystal_dust": 2}, "output": "deep_wound_elixir", "required_level": 12, "required_rank": "D"},
 	"regeneration_elixir": {"name": "تحضير إكسير التجدد الحيوي", "ingredients": {"medicinal_herb": 5, "energy_crystal": 2}, "output": "regeneration_elixir", "required_level": 20, "required_rank": "C"},
-	"nen_focus_elixir": {"name": "تحضير إكسير تركيز النِن", "ingredients": {"nen_fragment": 1, "crystal_dust": 2}, "output": "nen_focus_elixir", "required_level": 20, "requires_nen": true, "required_nen_rank": 1},
+	"nen_focus_elixir": {"name": "تحضير إكسير تركيز النِن", "ingredients": {"nen_fragment": 1, "crystal_dust": 2}, "output": "nen_focus_elixir", "required_level": 20, "required_rank": "B", "requires_nen": true, "required_nen_rank": 1},
 	"nen_stabilizer_elixir": {"name": "تحضير إكسير تثبيت الهالة", "ingredients": {"nen_fragment": 2, "energy_crystal": 2}, "output": "nen_stabilizer_elixir", "required_level": 25, "required_rank": "C", "requires_nen": true, "required_nen_rank": 2},
-	"nen_recovery_elixir": {"name": "تحضير إكسير استعادة النِن", "ingredients": {"nen_fragment": 3, "energy_crystal": 2}, "output": "nen_recovery_elixir", "required_level": 30, "required_rank": "C", "requires_nen": true, "required_nen_rank": 2},
-	"elite_legendary_elixir": {"name": "تحضير الإكسير الأسطوري للنخبة", "ingredients": {"rare_core": 5, "nen_fragment": 8, "energy_crystal": 5}, "output": "elite_legendary_elixir", "required_level": 80, "required_rank": "S", "requires_nen": true, "required_nen_rank": 5},
+	"nen_recovery_elixir": {"name": "تحضير إكسير استعادة النِن", "ingredients": {"nen_fragment": 3, "energy_crystal": 2}, "output": "nen_recovery_elixir", "required_level": 30, "required_rank": "A", "requires_nen": true, "required_nen_rank": 2},
+	"elite_legendary_elixir": {"name": "تحضير الإكسير الأسطوري للنخبة", "ingredients": {"rare_core": 5, "nen_fragment": 8, "energy_crystal": 5}, "output": "elite_legendary_elixir", "required_level": 80, "required_rank": "SS", "requires_nen": true, "required_nen_rank": 5},
 	"sovereign_ascension_elixir": {"name": "تحضير إكسير ارتقاء السيادة", "ingredients": {"rare_core": 8, "nen_fragment": 12, "energy_crystal": 10}, "output": "sovereign_ascension_elixir", "required_level": 100, "required_rank": "SSS", "requires_nen": true, "required_nen_rank": 5}
 }
 
@@ -645,7 +645,7 @@ func consume_elixir(item_id: String) -> Dictionary:
 				effect_id = "sovereign"
 				effect = {"remaining_seconds": 180.0, "damage_bonus": 25.0, "defense_bonus": 15.0, "movement_multiplier": 1.15, "attack_cooldown_multiplier": 0.9}
 			"elite_legendary_elixir":
-				if current_level < 80 or not nen_unlocked or nen_control_rank < 5 or not _meets_skill_rank("S"):
+				if current_level < 80 or not nen_unlocked or nen_control_rank < 5 or not _meets_skill_rank("SS"):
 					return {"success": false, "reason": "ELITE_ELIXIR_REQUIREMENTS"}
 				effect_id = "elite_sovereign"
 				effect = {"remaining_seconds": 150.0, "damage_bonus": 30.0, "defense_bonus": 22.0, "movement_multiplier": 1.18, "attack_cooldown_multiplier": 0.88}
