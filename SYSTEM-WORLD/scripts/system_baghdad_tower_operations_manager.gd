@@ -3577,6 +3577,10 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 		if tower_id == "shopping_tower_baghdad" and floor_number == 29:
 			if existing.get_node_or_null("RestaurantDiningSign") == null:
 				_create_restaurant_dining_area(existing, float(config["radius"]), floor_number)
+		if tower_id == "power_tower_baghdad" and floor_number in [2, 3]:
+			if existing.get_node_or_null("RestaurantDiningSign") == null:
+				_create_restaurant_dining_area(existing, float(config["radius"]), floor_number, tower_id)
+			existing.set_meta("system_power_tower_cafeteria_floor", true)
 		# Existing museum floors can be prepared before a later interaction pass.
 		# Reconcile every exhibit collider/group/record before returning the cached room.
 		_ensure_museum_exhibit_interactions(existing, tower_id, floor_number)
@@ -3660,6 +3664,10 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 		room.set_meta("system_power_tower_floor", floor_number)
 		room.set_meta("system_power_tower_department", "arena")
 		_create_power_arena_layout(room, radius, floor_number)
+		if floor_number in [2, 3]:
+			# Keep the arena floor intact while adding the promised physical cafeteria zone.
+			_create_restaurant_dining_area(room, radius, floor_number, tower_id)
+			room.set_meta("system_power_tower_cafeteria_floor", true)
 	else:
 		_create_floor_facilities(room, tower_id, floor_number, radius, department)
 		TowerFloorThemeBuilder.build(room, tower_id, floor_number, radius, department)
