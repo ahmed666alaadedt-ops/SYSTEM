@@ -3786,6 +3786,24 @@ func _react_power_tower_audience(gallery: Node3D, mood: String) -> void:
 	var crowd_impostors := gallery.get_node_or_null("PowerTowerCrowdImpostors") as MultiMeshInstance3D
 	if crowd_impostors != null:
 		crowd_impostors.set_meta("system_audience_reaction", mood)
+		var crowd_material := crowd_impostors.material_override as StandardMaterial3D
+		if crowd_material != null:
+			var reaction_emission := Color(0.01, 0.035, 0.05)
+			var reaction_energy := 0.12
+			match mood:
+				"cheering":
+					reaction_emission = Color(0.02, 0.24, 0.34)
+					reaction_energy = 0.58
+				"celebrating":
+					reaction_emission = Color(0.52, 0.28, 0.045)
+					reaction_energy = 0.92
+			crowd_material.emission_enabled = true
+			crowd_material.emission = reaction_emission
+			crowd_material.emission_energy_multiplier = reaction_energy
+		crowd_impostors.set_meta("system_audience_reaction_instance_count", crowd_impostors.multimesh.instance_count if crowd_impostors.multimesh != null else 0)
+	var crowd_heads := gallery.get_node_or_null("PowerTowerCrowdImpostorHeads") as MultiMeshInstance3D
+	if crowd_heads != null:
+		crowd_heads.set_meta("system_audience_reaction", mood)
 	var audience_root := gallery.get_node_or_null("PowerTowerAudienceActors") as Node3D
 	if audience_root == null:
 		return
@@ -4479,6 +4497,7 @@ func _create_power_tower_spectator_gallery(room: Node3D, radius: float) -> void:
 	audience_root.name = "PowerTowerAudienceActors"
 	audience_root.set_meta("system_audience_actor_count", 8)
 	gallery.add_child(audience_root)
+	_build_power_tower_audience_impostors(gallery, radius)
 	var audience_palette := [
 		Color(0.12, 0.55, 0.72), Color(0.78, 0.38, 0.20),
 		Color(0.36, 0.66, 0.42), Color(0.55, 0.38, 0.78),
@@ -4536,8 +4555,11 @@ func _create_power_tower_spectator_gallery(room: Node3D, radius: float) -> void:
 			arm_pivot.add_child(arm_mesh)
 			audience_actor.add_child(arm_pivot)
 	audience_root.set_meta("system_audience_full_rig_count", 8)
-	audience_root.set_meta("system_audience_impostor_count", 0)
+	audience_root.set_meta("system_audience_impostor_count", 492)
 	audience_root.set_meta("system_audience_shared_lod_count", 492)
+	gallery.set_meta("system_audience_impostor_count", 492)
+	gallery.set_meta("system_audience_population_count", 500)
+	room.set_meta("system_power_tower_audience_population", 500)
 	var seat_summary := Label3D.new()
 	seat_summary.name = "PowerTowerSeatAvailability"
 	seat_summary.position = Vector3(0.0, 3.3, radius * 0.72)
@@ -4591,6 +4613,83 @@ func _create_power_tower_spectator_gallery(room: Node3D, radius: float) -> void:
 	gallery.set_meta("system_spectator_seat_count", seat_count)
 	_refresh_power_tower_spectator_seat_summary(gallery)
 	room.set_meta("system_power_tower_spectator_seat_count", seat_count)
+
+
+func _build_power_tower_audience_impostors(gallery: Node3D, radius: float) -> void:
+	if gallery == null or gallery.get_node_or_null("PowerTowerCrowdImpostors") != null:
+		return
+	const impostor_count := 492
+	const sides := 4
+	const rows_per_side := 3
+	const columns_per_side := 41
+	var body_mesh := CapsuleMesh.new()
+	body_mesh.radius = 0.24
+	body_mesh.height = 1.18
+	var body_multi := MultiMesh.new()
+	body_multi.transform_format = MultiMesh.TRANSFORM_3D
+	body_multi.use_colors = true
+	body_multi.mesh = body_mesh
+	body_multi.instance_count = impostor_count
+	var head_mesh := SphereMesh.new()
+	head_mesh.radius = 0.155
+	head_mesh.height = 0.31
+	var head_multi := MultiMesh.new()
+	head_multi.transform_format = MultiMesh.TRANSFORM_3D
+	head_multi.use_colors = true
+	head_multi.mesh = head_mesh
+	head_multi.instance_count = impostor_count
+	var audience_colors := [
+		Color(0.12, 0.42, 0.62), Color(0.62, 0.22, 0.16),
+		Color(0.16, 0.48, 0.30), Color(0.42, 0.28, 0.62),
+		Color(0.68, 0.48, 0.14), Color(0.16, 0.48, 0.50),
+		Color(0.58, 0.22, 0.38), Color(0.34, 0.42, 0.54)
+	]
+	for index in range(impostor_count):
+		var side := index / (rows_per_side * columns_per_side)
+		var side_slot := index % (rows_per_side * columns_per_side)
+		var row := side_slot / columns_per_side
+		var column := side_slot % columns_per_side
+		var angle := TAU * float(side) / float(sides)
+		var outward := Vector3(cos(angle), 0.0, sin(angle))
+		var tangent := Vector3(-outward.z, 0.0, outward.x)
+		var row_radius := radius * 0.55 + 4.6 + float(row) * 1.35
+		var lateral_offset := (float(column) - 20.0) * 1.02
+		var body_position := outward * row_radius + tangent * lateral_offset
+		body_position.y = 0.82 + float(row) * 0.34
+		var facing := Basis(Vector3.UP, atan2(-outward.x, -outward.z))
+		body_multi.set_instance_transform(index, Transform3D(facing, body_position))
+		var head_position := body_position + Vector3.UP * 0.78
+		head_multi.set_instance_transform(index, Transform3D(facing, head_position))
+		var audience_color: Color = audience_colors[index % audience_colors.size()]
+		body_multi.set_instance_color(index, audience_color)
+		head_multi.set_instance_color(index, Color(0.72, 0.54, 0.42))
+	var body_material := StandardMaterial3D.new()
+	body_material.albedo_color = Color.WHITE
+	body_material.vertex_color_use_as_albedo = true
+	body_material.roughness = 0.84
+	body_material.emission_enabled = true
+	body_material.emission = Color(0.01, 0.035, 0.05)
+	body_material.emission_energy_multiplier = 0.12
+	var heads_material := StandardMaterial3D.new()
+	heads_material.albedo_color = Color.WHITE
+	heads_material.vertex_color_use_as_albedo = true
+	heads_material.roughness = 0.9
+	var bodies := MultiMeshInstance3D.new()
+	bodies.name = "PowerTowerCrowdImpostors"
+	bodies.multimesh = body_multi
+	bodies.material_override = body_material
+	bodies.set_meta("system_audience_lod_count", impostor_count)
+	bodies.set_meta("system_audience_reaction", "watching")
+	gallery.add_child(bodies)
+	var heads := MultiMeshInstance3D.new()
+	heads.name = "PowerTowerCrowdImpostorHeads"
+	heads.multimesh = head_multi
+	heads.material_override = heads_material
+	heads.set_meta("system_audience_lod_count", impostor_count)
+	heads.set_meta("system_audience_reaction", "watching")
+	gallery.add_child(heads)
+	gallery.set_meta("system_audience_impostor_count", impostor_count)
+	gallery.set_meta("system_audience_lod_layout", "4_SIDES_X_3_ROWS_X_41_COLUMNS")
 
 
 func _department_for_floor(tower_id: String, floor_number: int, total: int) -> String:
