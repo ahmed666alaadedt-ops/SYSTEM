@@ -317,6 +317,15 @@ func _build_arena_floor_layouts() -> void:
 	rail_box.size = Vector3(9.0, 1.35, 0.18)
 	rail_multi.mesh = rail_box
 	rail_multi.instance_count = total_arenas * 4
+	var ring_multi := MultiMesh.new()
+	ring_multi.transform_format = MultiMesh.TRANSFORM_3D
+	var ring_mesh := TorusMesh.new()
+	ring_mesh.inner_radius = 3.45
+	ring_mesh.outer_radius = 3.7
+	ring_mesh.rings = 48
+	ring_mesh.ring_segments = 12
+	ring_multi.mesh = ring_mesh
+	ring_multi.instance_count = total_arenas
 	var floor_material := StandardMaterial3D.new()
 	floor_material.albedo_color = Color(0.035, 0.12, 0.17)
 	floor_material.metallic = 0.68
@@ -328,8 +337,16 @@ func _build_arena_floor_layouts() -> void:
 	rail_material.albedo_color = Color(0.42, 0.68, 0.72)
 	rail_material.metallic = 0.82
 	rail_material.roughness = 0.2
+	var ring_material := StandardMaterial3D.new()
+	ring_material.albedo_color = Color(0.12, 0.72, 0.88)
+	ring_material.metallic = 0.58
+	ring_material.roughness = 0.22
+	ring_material.emission_enabled = true
+	ring_material.emission = Color(0.035, 0.42, 0.62)
+	ring_material.emission_energy_multiplier = 0.8
 	var floor_index := 0
 	var rail_index := 0
+	var ring_index := 0
 	var collision_faces := PackedVector3Array()
 	for floor_number in range(1, FLOOR_COUNT + 1):
 		var arena_count := get_arena_count_for_floor(floor_number)
@@ -351,6 +368,8 @@ func _build_arena_floor_layouts() -> void:
 			var center := Vector3(x, floor_y, z)
 			floor_multi.set_instance_transform(floor_index, Transform3D(Basis.IDENTITY, center))
 			floor_index += 1
+			ring_multi.set_instance_transform(ring_index, Transform3D(Basis.IDENTITY, center + Vector3(0.0, 0.14, 0.0)))
+			ring_index += 1
 			var edge_y := floor_y + 0.78
 			var edge_positions := [
 				{"position": center + Vector3(0.0, 0.0, -4.4), "rotation": 0.0},
@@ -380,6 +399,11 @@ func _build_arena_floor_layouts() -> void:
 	floors_instance.multimesh = floor_multi
 	floors_instance.material_override = floor_material
 	arena_root.add_child(floors_instance)
+	var rings_instance := MultiMeshInstance3D.new()
+	rings_instance.name = "ArenaCombatRingOutlines560"
+	rings_instance.multimesh = ring_multi
+	rings_instance.material_override = ring_material
+	arena_root.add_child(rings_instance)
 	var rails_instance := MultiMeshInstance3D.new()
 	rails_instance.name = "ArenaSafetyRails2240"
 	rails_instance.multimesh = rail_multi
@@ -394,6 +418,7 @@ func _build_arena_floor_layouts() -> void:
 	collision_body.add_child(collision_shape)
 	arena_root.add_child(collision_body)
 	arena_root.set_meta("system_arena_instance_count", total_arenas)
+	arena_root.set_meta("system_arena_combat_ring_outline_count", ring_index)
 	arena_root.set_meta("system_arena_boundary_rail_count", total_arenas * 4)
 	arena_root.set_meta("system_arena_collision_triangle_count", collision_faces.size() / 3)
 
