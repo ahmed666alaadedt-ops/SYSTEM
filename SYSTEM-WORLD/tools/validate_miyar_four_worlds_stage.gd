@@ -17,7 +17,7 @@ func _run() -> void:
 	assert(stage.miyar_model != null, "Miyar rigged model loader missing")
 	assert(stage.miyar_model.imported_model != null, "Miyar female GLB did not load; procedural fallback is not accepted for this stage")
 	assert(stage.miyar_model.animation_player != null, "Miyar imported AnimationPlayer is missing")
-	var animation_names := stage.miyar_model.animation_player.get_animation_list()
+	var animation_names: Array = stage.miyar_model.animation_player.get_animation_list()
 	assert(animation_names.any(func(name): return str(name).to_lower() == "idle_breathing"), "Miyar idle-breathing clip is missing")
 	assert(stage.selected_world_id == "modern", "Modern world should be the default selection")
 	stage.select_world("historical")
