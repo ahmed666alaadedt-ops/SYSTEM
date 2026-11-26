@@ -1744,6 +1744,12 @@ func _run() -> void:
 		if cafe_room == null or cafe_room.get_node_or_null("RestaurantDiningSign") == null or cafe_room.get_node_or_null("RestaurantKitchen") == null or cafe_room.get_node_or_null("RestaurantTable_00") == null:
 			_fail("Power Tower cafeteria floor %d is missing its physical dining hall, kitchen or tables." % cafe_floor)
 			return
+		var cafe_table := cafe_room.get_node("RestaurantTable_00") as Node3D
+		var cafe_table_id := str(cafe_table.get_meta("system_restaurant_table_id", ""))
+		var cafe_interaction := cafe_table.get_node_or_null("RestaurantTableInteraction") as StaticBody3D
+		if not cafe_table_id.begins_with("power_tower_baghdad_floor_%02d_" % cafe_floor) or cafe_interaction == null or str(cafe_interaction.get_meta("system_restaurant_table_id", "")) != cafe_table_id:
+			_fail("Power Tower cafeteria floor %d does not have a unique, connected restaurant table identity." % cafe_floor)
+			return
 	var power_commercial_facilities := {4:"shopping_skill_store",5:"shopping_weapon_gallery",6:"shopping_ranged_gallery",7:"shopping_armor_gallery",8:"shopping_elixir_pharmacy",9:"shopping_advanced_elixir_lab",10:"shopping_rare_elixir_vault"}
 	for floor_value in power_commercial_facilities.keys():
 		var power_floor_number := int(floor_value)
@@ -1758,6 +1764,23 @@ func _run() -> void:
 		if power_showcase == null or power_showcase.get_node_or_null("ShowcaseItem_00") == null or power_showcase.get_node_or_null("ShowcaseItem_01") == null or power_showcase.get_node_or_null("ShowcaseItem_02") == null:
 			_fail("Power Tower floor %d is missing physical product displays for %s." % [power_floor_number, expected_power_type])
 			return
+		var expected_display_ids := {
+			4: ["skill_manual_basic_strike", "skill_manual_pulse_dash", "skill_manual_sovereign_overdrive"],
+			5: ["training_sword", "rank_ss_blade", "rank_sss_blade"],
+			6: ["rank_d_bow", "rank_a_rifle", "rank_sss_rifle"],
+			7: ["rank_f_armor", "rank_a_armor", "rank_sss_armor"],
+			8: ["healing_elixir", "resistance_elixir", "energy_elixir"],
+			9: ["nen_focus_elixir", "nen_recovery_elixir", "regeneration_elixir"],
+			10: ["rare_legendary_elixir", "elite_legendary_elixir", "sovereign_ascension_elixir"]
+		}
+		for display_index in range(3):
+			var power_display := power_showcase.get_node("ShowcaseItem_%02d" % display_index) as Node3D
+			var expected_product_id := str(expected_display_ids[power_floor_number][display_index])
+			var power_display_interaction := power_display.get_node_or_null("ShowcaseItemInteraction_%02d" % display_index) as Area3D
+			var linked_power_product: Dictionary = operations.call("_get_catalog_product", expected_product_id)
+			if str(power_display.get_meta("system_showcase_product_id", "")) != expected_product_id or power_display_interaction == null or str(power_display_interaction.get_meta("system_tower_id", "")) != "power_tower_baghdad" or str(power_display_interaction.get_meta("system_showcase_product_id", "")) != expected_product_id or linked_power_product.is_empty():
+				_fail("Power Tower floor %d display %d is not linked to its correct rank-gated catalogue item." % [power_floor_number, display_index])
+				return
 
 	var power_tier_catalog_checks := {
 		"rank_f_armor":"F", "rank_e_armor":"E", "rank_d_armor":"D", "rank_c_armor":"C", "rank_b_armor":"B", "rank_a_armor":"A", "rank_s_armor":"S", "rank_ss_armor":"SS", "rank_sss_armor":"SSS",
