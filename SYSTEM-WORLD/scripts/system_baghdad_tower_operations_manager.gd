@@ -1987,7 +1987,9 @@ func _refresh_advertisements() -> void:
 		var manager_name := "فريق الإعلان"
 		var manager_job := ""
 		if not staff_ids.is_empty() and is_instance_valid(society):
-			var manager_index := staff_ids.size() - 1
+			var manager_index := jobs.find("advertising_manager")
+			if manager_index < 0 or manager_index >= staff_ids.size():
+				manager_index = staff_ids.size() - 1
 			manager_job = str(jobs[manager_index]) if manager_index < jobs.size() else ""
 			var npc: Dictionary = society.call("get_npc", str(staff_ids[manager_index]))
 			manager_name = str(npc.get("name", manager_name))
