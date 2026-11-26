@@ -85,7 +85,7 @@ func _run() -> void:
 	assert(first_seat_transform.origin.distance_to(Vector3(31.0, 15.66, 0.0)) < 0.01, "Grandstand seat helper must calculate the first seat position")
 	assert(absf(first_seat_transform.basis.x.normalized().dot(Vector3.BACK)) > 0.95, "Grandstand seat width must run tangentially around the arena")
 	assert(first_seat_transform.basis.z.dot(Vector3.RIGHT) > 0.95, "Grandstand seat back must face outward and spectator must face inward")
-	var outer_tier_seat := CompetitionManagerScript.get_grandstand_component_transform(4, 25, 0.24)
+	var outer_tier_seat := CompetitionManagerScript.get_grandstand_component_transform(4, 75, 0.24)
 	assert(outer_tier_seat.origin.distance_to(Vector3(0.0, 20.66, -39.8)) < 0.05, "Outer grandstand tier must expand radially around the arena")
 	assert(str(competition.get_meta("system_power_tower_combat_styles", []).size()) == "6")
 	var arena_root := competition.get_node_or_null("PowerTowerProgressiveArenaFloors")
