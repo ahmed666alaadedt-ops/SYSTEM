@@ -92,11 +92,11 @@ const CRAFTING_RECIPES := {
 
 # Original SYSTEM skill tree. Practice, learned state and mastery are persisted separately.
 const SYSTEM_SKILL_TREE := {
-	"basic_strike": {"name": "الضربة الأساسية", "category": "weapon", "required_level": 1, "required_rank": "F", "prerequisites": [], "requires_nen": false, "requires_training_permit": true, "energy_cost": 5, "cooldown": 3.0, "effect": "ضربة افتتاحية منخفضة الكلفة"},
-	"guard_breaker": {"name": "كاسر الحراسة", "category": "weapon", "required_level": 3, "required_rank": "E", "prerequisites": [], "requires_nen": false, "energy_cost": 8, "cooldown": 5.0, "effect": "ضربة مركزة تكسر دفاع الخصم"},
-	"swift_step": {"name": "خطوة خاطفة", "category": "movement", "required_level": 5, "required_rank": "D", "prerequisites": [], "requires_nen": false, "energy_cost": 10, "cooldown": 7.0, "effect": "اندفاع قصير مضبوط"},
-	"focused_strike": {"name": "ضربة التركيز", "category": "weapon", "required_level": 8, "required_rank": "D", "prerequisites": ["guard_breaker"], "requires_nen": false, "energy_cost": 12, "cooldown": 8.0, "effect": "رفع دقة الضربة التالية"},
-	"iron_guard": {"name": "الحارس الفولاذي", "category": "defense", "required_level": 10, "required_rank": "C", "prerequisites": [], "requires_nen": false, "energy_cost": 12, "cooldown": 10.0, "effect": "تعزيز دفاع مؤقت"},
+	"basic_strike": {"name": "الضربة الأساسية", "category": "weapon", "required_level": 1, "required_rank": "F", "prerequisites": [], "requires_nen": true, "requires_nen_foundations": true, "nen_types": ["enhancement","emission","transmutation","conjuration","manipulation","specialization"], "required_nen_rank": 1, "requires_training_permit": true, "energy_cost": 5, "cooldown": 3.0, "effect": "ضربة افتتاحية منخفضة الكلفة"},
+	"guard_breaker": {"name": "كاسر الحراسة", "category": "weapon", "required_level": 3, "required_rank": "E", "prerequisites": [], "requires_nen": true, "requires_nen_foundations": true, "nen_types": ["enhancement","emission","transmutation","conjuration","manipulation","specialization"], "required_nen_rank": 1, "energy_cost": 8, "cooldown": 5.0, "effect": "ضربة مركزة تكسر دفاع الخصم"},
+	"swift_step": {"name": "خطوة خاطفة", "category": "movement", "required_level": 5, "required_rank": "D", "prerequisites": [], "requires_nen": true, "requires_nen_foundations": true, "nen_types": ["enhancement","emission","transmutation","conjuration","manipulation","specialization"], "required_nen_rank": 1, "energy_cost": 10, "cooldown": 7.0, "effect": "اندفاع قصير مضبوط"},
+	"focused_strike": {"name": "ضربة التركيز", "category": "weapon", "required_level": 8, "required_rank": "D", "prerequisites": ["guard_breaker"], "requires_nen": true, "requires_nen_foundations": true, "nen_types": ["enhancement","emission","transmutation","conjuration","manipulation","specialization"], "required_nen_rank": 1, "energy_cost": 12, "cooldown": 8.0, "effect": "رفع دقة الضربة التالية"},
+	"iron_guard": {"name": "الحارس الفولاذي", "category": "defense", "required_level": 10, "required_rank": "C", "prerequisites": [], "requires_nen": true, "requires_nen_foundations": true, "nen_types": ["enhancement","emission","transmutation","conjuration","manipulation","specialization"], "required_nen_rank": 1, "energy_cost": 12, "cooldown": 10.0, "effect": "تعزيز دفاع مؤقت"},
 	"pulse_dash": {"name": "اندفاع النبضة", "category": "nen", "required_level": 15, "required_rank": "C", "prerequisites": ["swift_step"], "requires_nen": true, "requires_nen_foundations": true, "nen_types": ["enhancement","emission"], "required_nen_rank": 1, "requires_training_permit": true, "energy_cost": 18, "cooldown": 12.0, "effect": "اندفاع مدعوم بطاقة النِن"},
 	"aura_shield": {"name": "درع الهالة", "category": "nen", "required_level": 20, "required_rank": "B", "prerequisites": ["iron_guard"], "requires_nen": true, "requires_nen_foundations": true, "nen_types": ["enhancement"], "required_nen_rank": 2, "requires_training_permit": true, "energy_cost": 22, "cooldown": 18.0, "effect": "حاجز هالة دفاعي مؤقت"},
 	"sensory_mark": {"name": "وسم الإدراك", "category": "nen", "required_level": 25, "required_rank": "B", "prerequisites": ["pulse_dash"], "requires_nen": true, "requires_nen_foundations": true, "nen_types": ["emission","manipulation"], "required_nen_rank": 2, "requires_training_permit": true, "energy_cost": 20, "cooldown": 15.0, "effect": "تمييز حركة الخصم لفترة قصيرة"},
@@ -1458,6 +1458,10 @@ func record_system_skill_use(skill_id: String) -> Dictionary:
 		return {"success": false, "reason": "SYSTEM_ENERGY_LOW", "required_energy": energy_cost, "current_energy": current_system_energy}
 	current_system_energy = maxf(0.0, current_system_energy - energy_cost)
 	system_skill_cooldowns[key] = float(skill.get("cooldown", 5.0))
+	if bool(skill.get("requires_nen", false)):
+		nen_skill_use_count += 1
+		if not nen_skill_ids.has(key):
+			nen_skill_ids.append(key)
 	save_progress()
 	return {"success": true, "skill_id": key, "cooldown_seconds": float(skill.get("cooldown", 5.0)), "energy_cost": int(energy_cost), "remaining_energy": current_system_energy, "effect": str(skill.get("effect", ""))}
 
