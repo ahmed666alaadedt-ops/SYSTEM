@@ -140,6 +140,7 @@ var selected_rare_ability_index := 0
 var current_system_energy := MAX_SYSTEM_ENERGY
 var learned_system_skills: Array[String] = []
 var authorized_system_skills: Array[String] = []
+var skill_drop_claim_ids: Array[String] = []
 var system_skill_practice: Dictionary = {}
 var system_skill_mastery: Dictionary = {}
 var system_skill_cooldowns: Dictionary = {}
@@ -925,6 +926,7 @@ func save_progress() -> void:
 	config.set_value("nen", "burst_cooldown_remaining", nen_burst_cooldown_remaining)
 	config.set_value("skills", "learned", learned_system_skills.duplicate())
 	config.set_value("skills", "authorized_training", authorized_system_skills.duplicate())
+	config.set_value("skills", "drop_claim_ids", skill_drop_claim_ids.duplicate())
 	config.set_value("skills", "practice", system_skill_practice.duplicate(true))
 	config.set_value("skills", "mastery", system_skill_mastery.duplicate(true))
 	config.set_value("skills", "cooldowns", system_skill_cooldowns.duplicate(true))
@@ -1055,6 +1057,11 @@ func load_progress() -> void:
 		var normalized_authorized := str(skill_id).strip_edges().to_lower()
 		if SYSTEM_SKILL_TREE.has(normalized_authorized) and bool(SYSTEM_SKILL_TREE[normalized_authorized].get("requires_training_permit", false)) and not authorized_system_skills.has(normalized_authorized):
 			authorized_system_skills.append(normalized_authorized)
+	skill_drop_claim_ids.clear()
+	for drop_claim in config.get_value("skills", "drop_claim_ids", []):
+		var normalized_drop_claim := str(drop_claim).strip_edges()
+		if not normalized_drop_claim.is_empty() and not skill_drop_claim_ids.has(normalized_drop_claim):
+			skill_drop_claim_ids.append(normalized_drop_claim)
 	system_skill_practice = config.get_value("skills", "practice", {})
 	system_skill_mastery = config.get_value("skills", "mastery", {})
 	system_skill_cooldowns = {}
@@ -1183,6 +1190,7 @@ func _reset_progress() -> void:
 	active_elixir_effects.clear()
 	learned_system_skills.clear()
 	authorized_system_skills.clear()
+	skill_drop_claim_ids.clear()
 	system_skill_practice.clear()
 	system_skill_mastery.clear()
 	system_skill_cooldowns.clear()
@@ -1327,6 +1335,34 @@ func grant_skill_training_permit(skill_id: String) -> Dictionary:
 	authorized_system_skills.append(key)
 	save_progress()
 	return {"success": true, "skill_id": key, "authorized": true}
+
+
+
+
+func grant_skill_training_permit_from_drop(skill_id: String, verified_drop_id: String, source_rank: String) -> Dictionary:
+	var key := skill_id.strip_edges().to_lower()
+	var drop_id := verified_drop_id.strip_edges()
+	var normalized_source_rank := source_rank.strip_edges().to_upper()
+	if not SYSTEM_SKILL_TREE.has(key) or drop_id.is_empty():
+		return {"success": false, "reason": "INVALID_SKILL_DROP"}
+	var skill: Dictionary = SYSTEM_SKILL_TREE[key]
+	if not bool(skill.get("requires_nen", false)) or not bool(skill.get("requires_training_permit", false)):
+		return {"success": false, "reason": "SKILL_NOT_DROP_ELIGIBLE"}
+	if skill_drop_claim_ids.has(drop_id):
+		return {"success": false, "reason": "DROP_ALREADY_CLAIMED"}
+	if normalized_source_rank == "EX":
+		normalized_source_rank = "SSS"
+	var source_rank_index := HUNTER_RANK_ORDER.find(normalized_source_rank)
+	var required_rank_index := HUNTER_RANK_ORDER.find(str(skill.get("required_rank", "F")))
+	if source_rank_index < 0 or required_rank_index < 0 or source_rank_index < required_rank_index:
+		return {"success": false, "reason": "GATE_RANK_TOO_LOW"}
+	var eligibility: Dictionary = check_skill_training_permit(key)
+	if not bool(eligibility.get("success", false)):
+		return eligibility
+	authorized_system_skills.append(key)
+	skill_drop_claim_ids.append(drop_id)
+	save_progress()
+	return {"success": true, "skill_id": key, "authorized": true, "source": "monster_gate_drop", "drop_id": drop_id}
 
 
 func get_weapon_mastery() -> Dictionary:
