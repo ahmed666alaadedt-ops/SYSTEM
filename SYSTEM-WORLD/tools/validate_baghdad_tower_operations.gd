@@ -1240,7 +1240,10 @@ func _run() -> void:
 			_fail("Power Tower rejected sequential progression at floor %d: %s" % [test_floor, str(floor_request.get("reason", "unknown"))])
 			progression_test_manager.queue_free()
 			return
-		var floor_clear: Dictionary = progression_test_manager.call("confirm_floor_clear", test_floor, float(test_floor), true, "validator_pvp_result_%03d" % test_floor)
+		var floor_profile_for_clear: Dictionary = progression_test_manager.call("get_floor_data", test_floor)
+		var floor_time_limit := float(floor_profile_for_clear.get("time_limit_seconds", 180))
+		var simulated_clear_time := minf(float(test_floor), maxf(1.0, floor_time_limit - 1.0))
+		var floor_clear: Dictionary = progression_test_manager.call("confirm_floor_clear", test_floor, simulated_clear_time, true, "validator_pvp_result_%03d" % test_floor)
 		if not bool(floor_clear.get("success", false)):
 			_fail("Power Tower could not persist a valid clear at floor %d." % test_floor)
 			progression_test_manager.queue_free()
