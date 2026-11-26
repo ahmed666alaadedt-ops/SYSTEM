@@ -317,7 +317,7 @@ func _refresh_rare_power_ability_buttons() -> void:
 	elif not bool(can_use_system_skill(skill_id).get("success", false)):
 		var eligibility: Dictionary = can_use_system_skill(skill_id)
 		var reason := str(eligibility.get("reason", ""))
-		rare_ability_button.text = "أكمل أساسيات النِن" if reason == "NEN_FOUNDATIONS_INCOMPLETE" else ("اختر تخصص النِن" if reason == "NEN_AFFINITY_REQUIRED" else ("هذا التخصص لا يوافق المهارة" if reason == "NEN_AFFINITY_MISMATCH" else "متطلبات المهارة غير مكتملة"))
+		rare_ability_button.text = "أكمل أساسيات النِن" if reason == "NEN_FOUNDATIONS_INCOMPLETE" else ("اختر تخصص النِن" if reason == "NEN_AFFINITY_REQUIRED" else ("هذا التخصص لا يوافق المهارة" if reason == "NEN_AFFINITY_MISMATCH" else ("طاقة غير كافية" if reason == "SYSTEM_ENERGY_LOW" else "متطلبات المهارة غير مكتملة")))
 		rare_ability_button.disabled = true
 	elif current_system_energy < float(skill.get("energy_cost", 0.0)):
 		rare_ability_button.text = "طاقة غير كافية"
