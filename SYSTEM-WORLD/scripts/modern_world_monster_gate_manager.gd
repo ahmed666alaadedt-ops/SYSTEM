@@ -415,38 +415,6 @@ func _on_loot_collected(body: Node3D, pickup: Area3D) -> void:
 	pickup.queue_free()
 
 
-	var pickup := Area3D.new()
-	pickup.name = "GateLoot_BossRelic" if boss else "GateLoot_MonsterCore"
-	pickup.add_to_group("system_gate_loot")
-	pickup.set_meta("system_loot_type","boss_relic" if boss else "monster_core")
-	pickup.set_meta("system_loot_quality","rare" if boss else "common")
-	var visual := MeshInstance3D.new()
-	var mesh := SphereMesh.new()
-	mesh.radius = 0.32 if boss else 0.2
-	mesh.height = 0.64 if boss else 0.4
-	visual.mesh = mesh
-	visual.material_override = _make_material(Color(1.0,0.62,0.12) if boss else Color(0.22,0.78,0.92),true)
-	pickup.add_child(visual)
-	var collision := CollisionShape3D.new()
-	var sphere := SphereShape3D.new()
-	sphere.radius = 1.25
-	collision.shape = sphere
-	pickup.add_child(collision)
-	active_dungeon.add_child(pickup)
-	pickup.global_position = location + Vector3(0.0,0.8,0.0)
-	pickup.body_entered.connect(_on_loot_collected.bind(pickup))
-
-
-func _on_loot_collected(body: Node3D, pickup: Area3D) -> void:
-	if not _is_player(body) or not is_instance_valid(pickup):
-		return
-	var loot_type := str(pickup.get_meta("system_loot_type",""))
-	var progression := get_tree().root.find_child("PlayerProgression",true,false)
-	if progression != null and progression.has_method("add_item"):
-		progression.call("add_item",loot_type,1)
-	else:
-		print("SYSTEM LOOT: Player progression inventory is unavailable.")
-	pickup.queue_free()
 
 func _create_exit_gate(root: Node3D) -> void:
 	var exit_area := Area3D.new()
