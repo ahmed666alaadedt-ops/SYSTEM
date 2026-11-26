@@ -287,6 +287,57 @@ func _build_circular_entrance_podium() -> void:
 	set_meta("system_power_tower_podium", "CIRCULAR_MULTI_LEVEL_ARRIVAL")
 
 
+
+func _build_lobby_ambience(lobby: Node3D) -> void:
+	# Decorative lighting is aligned to the existing lobby canopy and does not alter its collisions.
+	var canopy := lobby.get_node_or_null("LobbyCanopy") as MeshInstance3D
+	if canopy == null:
+		push_warning("X-S-X Power Tower: lobby canopy missing; ambience rig skipped.")
+		return
+	var center_z := canopy.position.z
+	var light_bar_count := 0
+	for index in range(5):
+		var light_bar := MeshInstance3D.new()
+		light_bar.name = "PowerTowerLobbyCeilingLight_%02d" % index
+		var bar_mesh := BoxMesh.new()
+		bar_mesh.size = Vector3(18.0, 0.16, 0.34)
+		light_bar.mesh = bar_mesh
+		light_bar.position = Vector3(0.0, 12.25, center_z - 12.0 + float(index) * 6.0)
+		light_bar.material_override = white_emissive
+		lobby.add_child(light_bar)
+		light_bar_count += 1
+
+	var floor_inlay_count := 0
+	for side in [-1.0, 1.0]:
+		var inlay := MeshInstance3D.new()
+		inlay.name = "PowerTowerLobbyGoldFloorInlay_%s" % str(side)
+		var inlay_mesh := BoxMesh.new()
+		inlay_mesh.size = Vector3(0.18, 0.055, 25.0)
+		inlay.mesh = inlay_mesh
+		inlay.position = Vector3(side * 4.2, 1.035, center_z + 2.0)
+		inlay.material_override = gold_trim
+		lobby.add_child(inlay)
+		floor_inlay_count += 1
+
+	var halo_count := 0
+	for index in range(3):
+		var halo := MeshInstance3D.new()
+		halo.name = "PowerTowerLobbyCeilingHalo_%02d" % index
+		var halo_mesh := TorusMesh.new()
+		halo_mesh.inner_radius = 2.0 + float(index) * 0.8
+		halo_mesh.outer_radius = 2.14 + float(index) * 0.8
+		halo_mesh.rings = 48
+		halo_mesh.ring_segments = 12
+		halo.mesh = halo_mesh
+		halo.rotation.x = PI * 0.5
+		halo.position = Vector3(0.0, 11.8, center_z)
+		halo.material_override = gold_trim if index == 1 else white_emissive
+		lobby.add_child(halo)
+		halo_count += 1
+	set_meta("system_power_tower_lobby_light_bar_count", light_bar_count)
+	set_meta("system_power_tower_lobby_floor_inlay_count", floor_inlay_count)
+	set_meta("system_power_tower_lobby_ceiling_halo_count", halo_count)
+
 func _build_lobby_facilities() -> void:
 	var tower := get_parent()
 	if tower == null:
@@ -301,6 +352,7 @@ func _build_lobby_facilities() -> void:
 	facility_root.name = "XSXShopAndCafeteriaInterior"
 	facility_root.set_meta("system_power_tower_interior_facilities", ["TRADITIONAL_WEAPON_GALLERY", "ARMOR_SHOWROOM", "ELIXIR_CABINET", "SKILL_LIBRARY", "CAFETERIA"])
 	lobby.add_child(facility_root)
+	_build_lobby_ambience(lobby)
 
 	# Traditional weapons gallery: no firearms or modern projectile displays are created here.
 	var weapon_root := Node3D.new()
