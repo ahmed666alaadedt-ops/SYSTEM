@@ -70,8 +70,8 @@ const PRODUCT_CATALOG := {
 		{"id":"rare_core","name":"نواة نادرة","price":1200},
 
 		{"id":"nen_stabilizer_elixir","name":"إكسير تثبيت هالة النِن","price":3200,"required_rank":"C"},
-		{"id":"nen_focus_elixir","name":"إكسير تركيز النِن","price":2100,"required_rank":"D"},
-		{"id":"nen_recovery_elixir","name":"إكسير استعادة النِن","price":2800,"required_rank":"C"},
+		{"id":"nen_focus_elixir","name":"إكسير تركيز النِن","price":2100,"required_rank":"B"},
+		{"id":"nen_recovery_elixir","name":"إكسير استعادة النِن","price":2800,"required_rank":"A"},
 		{"id":"deep_wound_elixir","name":"إكسير علاج الإصابات العميقة","price":950,"required_rank":"D"},
 		{"id":"regeneration_elixir","name":"إكسير التجدد الحيوي","price":1450,"required_rank":"C"},
 		{"id":"antidote_elixir","name":"إكسير مضاد السموم","price":390,"required_rank":"F"},
