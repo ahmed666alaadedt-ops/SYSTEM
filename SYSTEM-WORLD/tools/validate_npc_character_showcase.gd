@@ -45,8 +45,8 @@ func _run_validation() -> void:
 		var has_idle := false
 		var has_walk := false
 		for clip in clips:
-			has_idle = has_idle or str(clip).to_lower() == "idle_breathing"
-			has_walk = has_walk or str(clip).to_lower() == "walk_cycle"
+			has_idle = has_idle or str(clip).to_lower() in ["idle_breathing", "idle"]
+			has_walk = has_walk or str(clip).to_lower() in ["walk_cycle", "walk", "walking"]
 		if not has_idle or not has_walk:
 			_fail("A showcase GLB is missing idle or walk animation: " + model_path)
 			return
