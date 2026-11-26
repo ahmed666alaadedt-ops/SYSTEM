@@ -1889,7 +1889,12 @@ func _run() -> void:
 		return
 	var skill_progression := main.get("player_progression") as Node
 	var power_skill_tree: Dictionary = skill_progression.call("get_system_skill_tree")
-	var power_skill_rank_checks := {"basic_strike":"F", "guard_breaker":"E", "swift_step":"D", "iron_guard":"C", "aura_shield":"B", "flow_counter":"A", "resonance_burst":"S", "sovereign_focus":"SS", "sovereign_overdrive":"SSS"}
+	var power_skill_rank_checks := {"basic_strike":"F", "guard_breaker":"E", "swift_step":"D", "iron_guard":"C", "aura_shield":"B", "flow_counter":"A", "resonance_burst":"S", "sovereign_focus":"SS", "sovereign_overdrive":"SSS", "lightning_mantle":"A", "shadow_step":"S", "shadow_guardian_aura":"S", "body_manifestation":"SS", "lightning_sovereign_form":"SSS", "shadow_monarch_aegis":"SSS"}
+	var power_rare_ability_checks := ["lightning_mantle", "shadow_step", "shadow_guardian_aura", "body_manifestation", "lightning_sovereign_form", "shadow_monarch_aegis"]
+	for rare_skill_id in power_rare_ability_checks:
+		if not power_skill_tree.has(rare_skill_id):
+			_fail("Power Tower rare ability missing from progression tree: " + rare_skill_id)
+			return
 	var power_equipment_slot_checks := {"rank_e_bow":"weapon", "rank_d_bow":"weapon", "rank_a_blade":"weapon", "rank_s_blade":"weapon", "rank_ss_blade":"weapon", "rank_sss_blade":"weapon", "rank_a_rifle":"weapon", "rank_s_rifle":"weapon", "rank_ss_rifle":"weapon", "rank_sss_rifle":"weapon", "rank_f_armor":"armor"}
 	for equipment_id in power_equipment_slot_checks.keys():
 		if str(skill_progression.call("get_item_equipment_slot", str(equipment_id))) != str(power_equipment_slot_checks[equipment_id]):
