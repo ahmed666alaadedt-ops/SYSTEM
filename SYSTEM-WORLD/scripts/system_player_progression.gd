@@ -8,6 +8,17 @@ signal attribute_changed(attribute: String, new_value: int)
 
 const MAX_LEVEL := 100
 const MAX_SYSTEM_ENERGY := 100.0
+const NEN_FOUNDATION_ORDER := ["ten", "zetsu", "ren", "hatsu"]
+const NEN_FOUNDATION_NAMES := {"ten": "Ten — تثبيت الهالة", "zetsu": "Zetsu — إخفاء الهالة", "ren": "Ren — إطلاق الهالة", "hatsu": "Hatsu — تشكيل القدرة"}
+const NEN_FOUNDATION_SESSIONS_REQUIRED := 3
+const NEN_TYPE_DATA := {
+	"enhancement": {"name": "التعزيز", "description": "تقوية الجسد والضربات والتحمل"},
+	"emission": {"name": "الإطلاق", "description": "إطلاق الهالة والتحكم بمدى تأثيرها"},
+	"transmutation": {"name": "التحويل", "description": "تغيير خصائص الهالة مثل البرق"},
+	"conjuration": {"name": "التجسيد", "description": "تجسيد أدوات أو بنى مدعومة بالهالة"},
+	"manipulation": {"name": "التحكم", "description": "التحكم بالأهداف أو الكيانات وفق شروط"},
+	"specialization": {"name": "التخصص", "description": "قدرات فريدة بشروط نادرة"}
+}
 const SAVE_PATH := "user://system_player_progress.cfg"
 
 const WORLD_FRAGMENT_REQUIREMENTS := {
@@ -86,19 +97,19 @@ const SYSTEM_SKILL_TREE := {
 	"swift_step": {"name": "خطوة خاطفة", "category": "movement", "required_level": 5, "required_rank": "D", "prerequisites": [], "requires_nen": false, "energy_cost": 10, "cooldown": 7.0, "effect": "اندفاع قصير مضبوط"},
 	"focused_strike": {"name": "ضربة التركيز", "category": "weapon", "required_level": 8, "required_rank": "D", "prerequisites": ["guard_breaker"], "requires_nen": false, "energy_cost": 12, "cooldown": 8.0, "effect": "رفع دقة الضربة التالية"},
 	"iron_guard": {"name": "الحارس الفولاذي", "category": "defense", "required_level": 10, "required_rank": "C", "prerequisites": [], "requires_nen": false, "energy_cost": 12, "cooldown": 10.0, "effect": "تعزيز دفاع مؤقت"},
-	"pulse_dash": {"name": "اندفاع النبضة", "category": "nen", "required_level": 15, "required_rank": "C", "prerequisites": ["swift_step"], "requires_nen": true, "required_nen_rank": 1, "requires_training_permit": true, "energy_cost": 18, "cooldown": 12.0, "effect": "اندفاع مدعوم بطاقة النِن"},
-	"aura_shield": {"name": "درع الهالة", "category": "nen", "required_level": 20, "required_rank": "B", "prerequisites": ["iron_guard"], "requires_nen": true, "required_nen_rank": 2, "requires_training_permit": true, "energy_cost": 22, "cooldown": 18.0, "effect": "حاجز هالة دفاعي مؤقت"},
-	"sensory_mark": {"name": "وسم الإدراك", "category": "nen", "required_level": 25, "required_rank": "B", "prerequisites": ["pulse_dash"], "requires_nen": true, "required_nen_rank": 2, "requires_training_permit": true, "energy_cost": 20, "cooldown": 15.0, "effect": "تمييز حركة الخصم لفترة قصيرة"},
-	"flow_counter": {"name": "صد التدفق", "category": "nen", "required_level": 35, "required_rank": "A", "prerequisites": ["aura_shield", "focused_strike"], "requires_nen": true, "required_nen_rank": 3, "requires_training_permit": true, "energy_cost": 28, "cooldown": 22.0, "effect": "صد مضبوط يعقبه رد سريع"},
-	"resonance_burst": {"name": "انفجار الرنين", "category": "nen", "required_level": 50, "required_rank": "S", "prerequisites": ["sensory_mark", "flow_counter"], "requires_nen": true, "required_nen_rank": 4, "requires_training_permit": true, "energy_cost": 40, "cooldown": 35.0, "effect": "موجة هالة قصيرة المدى"},
-	"sovereign_focus": {"name": "تركيز السيادة", "category": "nen", "required_level": 80, "required_rank": "SS", "prerequisites": ["resonance_burst"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 60, "cooldown": 60.0, "effect": "تركيز نادر عالي الكلفة"},
-	"sovereign_overdrive": {"name": "اندفاع السيادة المطلق", "category": "nen", "required_level": 100, "required_rank": "SSS", "prerequisites": ["sovereign_focus"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 80, "cooldown": 90.0, "effect": "اندفاع هالة فائق للرتبة SSS"},
-	"lightning_mantle": {"name": "عباءة البرق الخاطف", "category": "rare_elemental", "required_level": 40, "required_rank": "A", "prerequisites": ["pulse_dash"], "requires_nen": true, "required_nen_rank": 3, "requires_training_permit": true, "energy_cost": 34, "cooldown": 48.0, "duration": 12.0, "damage_bonus": 18.0, "movement_multiplier": 1.32, "attack_cooldown_multiplier": 0.82, "effect": "اندفاع برق نادر يرفع السرعة وقوة الضربات لفترة قصيرة"},
-	"shadow_step": {"name": "خطوة الظلال", "category": "rare_shadow", "required_level": 50, "required_rank": "S", "prerequisites": ["swift_step", "sensory_mark"], "requires_nen": true, "required_nen_rank": 4, "requires_training_permit": true, "energy_cost": 42, "cooldown": 55.0, "duration": 10.0, "damage_bonus": 22.0, "movement_multiplier": 1.42, "attack_cooldown_multiplier": 0.78, "effect": "حركة خاطفة بطابع الظلال مع تعزيز الهجوم"},
-	"shadow_guardian_aura": {"name": "هالة حارس الظلال", "category": "rare_shadow", "required_level": 60, "required_rank": "S", "prerequisites": ["aura_shield", "resonance_burst"], "requires_nen": true, "required_nen_rank": 4, "requires_training_permit": true, "energy_cost": 48, "cooldown": 68.0, "duration": 18.0, "damage_bonus": 26.0, "defense_bonus": 34.0, "effect": "هالة ظل دفاعية هجومية تحيط باللاعب"},
-	"body_manifestation": {"name": "تجسيد الجسد الفولاذي", "category": "rare_body", "required_level": 75, "required_rank": "SS", "prerequisites": ["iron_guard", "aura_shield"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 58, "cooldown": 82.0, "duration": 20.0, "damage_bonus": 30.0, "defense_bonus": 52.0, "effect": "تجسيد جسدي نادر يرفع القوة والتحمل والدفاع"},
-	"lightning_sovereign_form": {"name": "هيئة سيد البرق", "category": "legendary_elemental", "required_level": 95, "required_rank": "SSS", "prerequisites": ["lightning_mantle", "resonance_burst", "sovereign_focus"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 82, "cooldown": 120.0, "duration": 15.0, "damage_bonus": 52.0, "defense_bonus": 24.0, "movement_multiplier": 1.48, "attack_cooldown_multiplier": 0.72, "effect": "هيئة برق سيادية فائقة السرعة والقوة"},
-	"shadow_monarch_aegis": {"name": "درع سيادة الظلال", "category": "legendary_shadow", "required_level": 100, "required_rank": "SSS", "prerequisites": ["shadow_guardian_aura", "sovereign_focus"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 85, "cooldown": 135.0, "duration": 20.0, "damage_bonus": 42.0, "defense_bonus": 62.0, "movement_multiplier": 1.18, "effect": "درع سيادي من طاقة الظلال يرفع الهجوم والدفاع بقوة"}
+	"pulse_dash": {"name": "اندفاع النبضة", "category": "nen", "required_level": 15, "required_rank": "C", "prerequisites": ["swift_step"], "requires_nen": true, "requires_nen_foundations": true, "nen_types": ["enhancement","emission"], "required_nen_rank": 1, "requires_training_permit": true, "energy_cost": 18, "cooldown": 12.0, "effect": "اندفاع مدعوم بطاقة النِن"},
+	"aura_shield": {"name": "درع الهالة", "category": "nen", "required_level": 20, "required_rank": "B", "prerequisites": ["iron_guard"], "requires_nen": true, "requires_nen_foundations": true, "nen_types": ["enhancement"], "required_nen_rank": 2, "requires_training_permit": true, "energy_cost": 22, "cooldown": 18.0, "effect": "حاجز هالة دفاعي مؤقت"},
+	"sensory_mark": {"name": "وسم الإدراك", "category": "nen", "required_level": 25, "required_rank": "B", "prerequisites": ["pulse_dash"], "requires_nen": true, "requires_nen_foundations": true, "nen_types": ["emission","manipulation"], "required_nen_rank": 2, "requires_training_permit": true, "energy_cost": 20, "cooldown": 15.0, "effect": "تمييز حركة الخصم لفترة قصيرة"},
+	"flow_counter": {"name": "صد التدفق", "category": "nen", "required_level": 35, "required_rank": "A", "prerequisites": ["aura_shield", "focused_strike"], "requires_nen": true, "requires_nen_foundations": true, "nen_types": ["enhancement","emission"], "required_nen_rank": 3, "requires_training_permit": true, "energy_cost": 28, "cooldown": 22.0, "effect": "صد مضبوط يعقبه رد سريع"},
+	"resonance_burst": {"name": "انفجار الرنين", "category": "nen", "required_level": 50, "required_rank": "S", "prerequisites": ["sensory_mark", "flow_counter"], "requires_nen": true, "requires_nen_foundations": true, "nen_types": ["emission"], "required_nen_rank": 4, "requires_training_permit": true, "energy_cost": 40, "cooldown": 35.0, "effect": "موجة هالة قصيرة المدى"},
+	"sovereign_focus": {"name": "تركيز السيادة", "category": "nen", "required_level": 80, "required_rank": "SS", "prerequisites": ["resonance_burst"], "requires_nen": true, "requires_nen_foundations": true, "nen_types": ["specialization"], "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 60, "cooldown": 60.0, "effect": "تركيز نادر عالي الكلفة"},
+	"sovereign_overdrive": {"name": "اندفاع السيادة المطلق", "category": "nen", "required_level": 100, "required_rank": "SSS", "prerequisites": ["sovereign_focus"], "requires_nen": true, "requires_nen_foundations": true, "nen_types": ["specialization","enhancement"], "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 80, "cooldown": 90.0, "effect": "اندفاع هالة فائق للرتبة SSS"},
+	"lightning_mantle": {"name": "عباءة البرق الخاطف", "category": "rare_elemental", "required_level": 40, "required_rank": "A", "prerequisites": ["pulse_dash"], "requires_nen": true, "requires_nen_foundations": true, "nen_types": ["transmutation","enhancement"], "required_nen_rank": 3, "requires_training_permit": true, "energy_cost": 34, "cooldown": 48.0, "duration": 12.0, "damage_bonus": 18.0, "movement_multiplier": 1.32, "attack_cooldown_multiplier": 0.82, "effect": "اندفاع برق نادر يرفع السرعة وقوة الضربات لفترة قصيرة"},
+	"shadow_step": {"name": "خطوة الظلال", "category": "rare_shadow", "required_level": 50, "required_rank": "S", "prerequisites": ["swift_step", "sensory_mark"], "requires_nen": true, "requires_nen_foundations": true, "nen_types": ["manipulation","specialization"], "required_nen_rank": 4, "requires_training_permit": true, "energy_cost": 42, "cooldown": 55.0, "duration": 10.0, "damage_bonus": 22.0, "movement_multiplier": 1.42, "attack_cooldown_multiplier": 0.78, "effect": "حركة خاطفة بطابع الظلال مع تعزيز الهجوم"},
+	"shadow_guardian_aura": {"name": "هالة حارس الظلال", "category": "rare_shadow", "required_level": 60, "required_rank": "S", "prerequisites": ["aura_shield", "resonance_burst"], "requires_nen": true, "requires_nen_foundations": true, "nen_types": ["manipulation","specialization"], "required_nen_rank": 4, "requires_training_permit": true, "energy_cost": 48, "cooldown": 68.0, "duration": 18.0, "damage_bonus": 26.0, "defense_bonus": 34.0, "effect": "هالة ظل دفاعية هجومية تحيط باللاعب"},
+	"body_manifestation": {"name": "تجسيد الجسد الفولاذي", "category": "rare_body", "required_level": 75, "required_rank": "SS", "prerequisites": ["iron_guard", "aura_shield"], "requires_nen": true, "requires_nen_foundations": true, "nen_types": ["enhancement","conjuration"], "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 58, "cooldown": 82.0, "duration": 20.0, "damage_bonus": 30.0, "defense_bonus": 52.0, "effect": "تجسيد جسدي نادر يرفع القوة والتحمل والدفاع"},
+	"lightning_sovereign_form": {"name": "هيئة سيد البرق", "category": "legendary_elemental", "required_level": 95, "required_rank": "SSS", "prerequisites": ["lightning_mantle", "resonance_burst", "sovereign_focus"], "requires_nen": true, "requires_nen_foundations": true, "nen_types": ["transmutation","enhancement"], "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 82, "cooldown": 120.0, "duration": 15.0, "damage_bonus": 52.0, "defense_bonus": 24.0, "movement_multiplier": 1.48, "attack_cooldown_multiplier": 0.72, "effect": "هيئة برق سيادية فائقة السرعة والقوة"},
+	"shadow_monarch_aegis": {"name": "درع سيادة الظلال", "category": "legendary_shadow", "required_level": 100, "required_rank": "SSS", "prerequisites": ["shadow_guardian_aura", "sovereign_focus"], "requires_nen": true, "requires_nen_foundations": true, "nen_types": ["manipulation","specialization"], "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 85, "cooldown": 135.0, "duration": 20.0, "damage_bonus": 42.0, "defense_bonus": 62.0, "movement_multiplier": 1.18, "effect": "درع سيادي من طاقة الظلال يرفع الهجوم والدفاع بقوة"}
 }
 const WEAPON_MASTERY_FAMILIES := ["sword", "spear", "axe", "bow", "shield", "modern_ranged"]
 
@@ -117,6 +128,8 @@ var equipment_durability: Dictionary = {}
 var active_elixir_effects: Dictionary = {}
 var nen_unlocked := false
 var nen_control_rank := 0
+var nen_foundation_practice: Dictionary = {}
+var nen_affinity := ""
 var nen_burst_cooldown_remaining := 0.0
 var nen_button_refresh_clock := 0.0
 var nen_burst_button: Button
@@ -217,6 +230,14 @@ func _refresh_nen_burst_button() -> void:
 	nen_burst_button.visible = nen_unlocked
 	if not nen_unlocked:
 		return
+	if not _has_completed_nen_foundations():
+		nen_burst_button.text = "أكمل أساسيات النِن"
+		nen_burst_button.disabled = true
+		return
+	if nen_affinity.is_empty():
+		nen_burst_button.text = "اختر تخصص النِن"
+		nen_burst_button.disabled = true
+		return
 	if nen_control_rank < 4:
 		nen_burst_button.text = "النِن — رتبة %d/4" % nen_control_rank
 		nen_burst_button.disabled = true
@@ -293,6 +314,11 @@ func _refresh_rare_power_ability_buttons() -> void:
 	elif remaining > 0.0:
 		rare_ability_button.text = "%s (%dث)" % [str(skill.get("name", skill_id)), int(ceil(remaining))]
 		rare_ability_button.disabled = true
+	elif not bool(can_use_system_skill(skill_id).get("success", false)):
+		var eligibility: Dictionary = can_use_system_skill(skill_id)
+		var reason := str(eligibility.get("reason", ""))
+		rare_ability_button.text = "أكمل أساسيات النِن" if reason == "NEN_FOUNDATIONS_INCOMPLETE" else ("اختر تخصص النِن" if reason == "NEN_AFFINITY_REQUIRED" else ("هذا التخصص لا يوافق المهارة" if reason == "NEN_AFFINITY_MISMATCH" else "متطلبات المهارة غير مكتملة"))
+		rare_ability_button.disabled = true
 	elif current_system_energy < float(skill.get("energy_cost", 0.0)):
 		rare_ability_button.text = "طاقة غير كافية"
 		rare_ability_button.disabled = true
@@ -323,6 +349,10 @@ func _activate_selected_rare_power_ability() -> void:
 func activate_nen_burst() -> Dictionary:
 	if not nen_unlocked or nen_control_rank < 4:
 		return {"success": false, "reason": "NEN_RANK_FOUR_REQUIRED"}
+	if not _has_completed_nen_foundations():
+		return {"success": false, "reason": "NEN_FOUNDATIONS_INCOMPLETE"}
+	if nen_affinity.is_empty():
+		return {"success": false, "reason": "NEN_AFFINITY_REQUIRED"}
 	if nen_burst_cooldown_remaining > 0.0:
 		return {"success": false, "reason": "NEN_BURST_ON_COOLDOWN"}
 	active_elixir_effects["nen_burst"] = {"remaining_seconds": 20.0, "damage_bonus": 30.0, "defense_bonus": 20.0, "movement_multiplier": 1.1, "attack_cooldown_multiplier": 0.85}
@@ -850,6 +880,8 @@ func get_progress_data() -> Dictionary:
 		"active_elixir_effects": active_elixir_effects.duplicate(true),
 		"nen_unlocked": nen_unlocked,
 		"nen_control_rank": nen_control_rank,
+		"nen_foundation_status": get_nen_foundation_status(),
+		"nen_affinity": nen_affinity,
 		"hunter_rank": get_hunter_rank(),
 		"hunter_rank_progress": get_hunter_rank_progress(),
 		"nen_burst_cooldown_remaining": nen_burst_cooldown_remaining,
@@ -888,6 +920,8 @@ func save_progress() -> void:
 	config.set_value("effects", "active_elixirs", active_elixir_effects.duplicate(true))
 	config.set_value("nen", "unlocked", nen_unlocked)
 	config.set_value("nen", "control_rank", nen_control_rank)
+	config.set_value("nen", "foundation_practice", nen_foundation_practice.duplicate(true))
+	config.set_value("nen", "affinity", nen_affinity)
 	config.set_value("nen", "burst_cooldown_remaining", nen_burst_cooldown_remaining)
 	config.set_value("skills", "learned", learned_system_skills.duplicate())
 	config.set_value("skills", "authorized_training", authorized_system_skills.duplicate())
@@ -980,6 +1014,21 @@ func load_progress() -> void:
 			active_elixir_effects[str(effect_id)] = effect
 	nen_unlocked = bool(config.get_value("nen", "unlocked", false))
 	nen_control_rank = clampi(int(config.get_value("nen", "control_rank", 0)), 0, 5)
+	var saved_nen_foundations: Dictionary = config.get_value("nen", "foundation_practice", {})
+	nen_foundation_practice = {}
+	for foundation_id in NEN_FOUNDATION_ORDER:
+		var saved_sessions: Array = saved_nen_foundations.get(foundation_id, [])
+		var normalized_sessions: Array[String] = []
+		for session_value in saved_sessions:
+			var normalized_session := str(session_value).strip_edges()
+			if not normalized_session.is_empty() and not normalized_sessions.has(normalized_session):
+				normalized_sessions.append(normalized_session)
+		while normalized_sessions.size() > NEN_FOUNDATION_SESSIONS_REQUIRED:
+			normalized_sessions.pop_back()
+		nen_foundation_practice[foundation_id] = normalized_sessions
+	nen_affinity = str(config.get_value("nen", "affinity", "")).strip_edges().to_lower()
+	if not NEN_TYPE_DATA.has(nen_affinity):
+		nen_affinity = ""
 	nen_burst_cooldown_remaining = maxf(0.0, float(config.get_value("nen", "burst_cooldown_remaining", 0.0)))
 	verified_hunter_mission_points = maxi(0, int(config.get_value("hunter_rank", "verified_mission_points", 0)))
 	verified_hunter_mission_count = maxi(0, int(config.get_value("hunter_rank", "verified_mission_count", 0)))
@@ -1141,6 +1190,8 @@ func _reset_progress() -> void:
 	current_system_energy = MAX_SYSTEM_ENERGY
 	nen_unlocked = false
 	nen_control_rank = 0
+	nen_foundation_practice.clear()
+	nen_affinity = ""
 	nen_burst_cooldown_remaining = 0.0
 
 
@@ -1151,6 +1202,84 @@ func _emit_progress() -> void:
 		xp_in_level,
 		get_xp_to_next_level()
 	)
+
+
+
+func get_nen_foundation_status() -> Dictionary:
+	var foundations := {}
+	var all_complete := true
+	for index in range(NEN_FOUNDATION_ORDER.size()):
+		var foundation_id := str(NEN_FOUNDATION_ORDER[index])
+		var sessions: Array = nen_foundation_practice.get(foundation_id, [])
+		var completed := sessions.size() >= NEN_FOUNDATION_SESSIONS_REQUIRED
+		var available := index == 0
+		if index > 0:
+			var previous_id := str(NEN_FOUNDATION_ORDER[index - 1])
+			var previous_sessions: Array = nen_foundation_practice.get(previous_id, [])
+			available = previous_sessions.size() >= NEN_FOUNDATION_SESSIONS_REQUIRED
+		foundations[foundation_id] = {"name": str(NEN_FOUNDATION_NAMES[foundation_id]), "sessions": mini(sessions.size(), NEN_FOUNDATION_SESSIONS_REQUIRED), "required_sessions": NEN_FOUNDATION_SESSIONS_REQUIRED, "completed": completed, "available": available}
+		all_complete = all_complete and completed
+	return {"foundations": foundations, "all_complete": all_complete, "affinity": nen_affinity, "affinity_name": str(NEN_TYPE_DATA.get(nen_affinity, {}).get("name", ""))}
+
+
+func record_nen_foundation_training(foundation_id: String, verified_session_id: String) -> Dictionary:
+	var key := foundation_id.strip_edges().to_lower()
+	var session_id := verified_session_id.strip_edges()
+	if not NEN_FOUNDATION_ORDER.has(key) or session_id.is_empty():
+		return {"success": false, "reason": "INVALID_NEN_FOUNDATION_SESSION"}
+	if not nen_unlocked:
+		return {"success": false, "reason": "NEN_NOT_UNLOCKED"}
+	var stage_index := NEN_FOUNDATION_ORDER.find(key)
+	if stage_index > 0:
+		var previous_id := str(NEN_FOUNDATION_ORDER[stage_index - 1])
+		var previous_sessions: Array = nen_foundation_practice.get(previous_id, [])
+		if previous_sessions.size() < NEN_FOUNDATION_SESSIONS_REQUIRED:
+			return {"success": false, "reason": "PREVIOUS_NEN_FOUNDATION_REQUIRED", "required_foundation": previous_id}
+	var sessions: Array = nen_foundation_practice.get(key, []).duplicate()
+	if sessions.has(session_id):
+		return {"success": false, "reason": "SESSION_ALREADY_RECORDED"}
+	if sessions.size() >= NEN_FOUNDATION_SESSIONS_REQUIRED:
+		return {"success": false, "reason": "NEN_FOUNDATION_ALREADY_MASTERED"}
+	sessions.append(session_id)
+	nen_foundation_practice[key] = sessions
+	save_progress()
+	return {"success": true, "foundation_id": key, "sessions": sessions.size(), "required_sessions": NEN_FOUNDATION_SESSIONS_REQUIRED, "completed": sessions.size() >= NEN_FOUNDATION_SESSIONS_REQUIRED, "next_foundation": str(NEN_FOUNDATION_ORDER[stage_index + 1]) if stage_index + 1 < NEN_FOUNDATION_ORDER.size() and sessions.size() >= NEN_FOUNDATION_SESSIONS_REQUIRED else ""}
+
+
+func choose_nen_affinity(nen_type: String) -> Dictionary:
+	var key := nen_type.strip_edges().to_lower()
+	if not NEN_TYPE_DATA.has(key):
+		return {"success": false, "reason": "INVALID_NEN_AFFINITY"}
+	if not _has_completed_nen_foundations():
+		return {"success": false, "reason": "NEN_FOUNDATIONS_INCOMPLETE"}
+	if not nen_affinity.is_empty():
+		return {"success": false, "reason": "NEN_AFFINITY_ALREADY_CHOSEN", "affinity": nen_affinity}
+	nen_affinity = key
+	save_progress()
+	return {"success": true, "affinity": nen_affinity, "name": str(NEN_TYPE_DATA[key]["name"])}
+
+
+func _has_completed_nen_foundations() -> bool:
+	for foundation_id in NEN_FOUNDATION_ORDER:
+		var sessions: Array = nen_foundation_practice.get(str(foundation_id), [])
+		if sessions.size() < NEN_FOUNDATION_SESSIONS_REQUIRED:
+			return false
+	return true
+
+
+func _get_skill_nen_affinity_reason(skill: Dictionary) -> String:
+	if not bool(skill.get("requires_nen_foundations", false)):
+		return ""
+	if not nen_unlocked:
+		return "NEN_NOT_UNLOCKED"
+	if not _has_completed_nen_foundations():
+		return "NEN_FOUNDATIONS_INCOMPLETE"
+	if nen_affinity.is_empty():
+		return "NEN_AFFINITY_REQUIRED"
+	var allowed_types: Array = skill.get("nen_types", [])
+	if not allowed_types.is_empty() and not allowed_types.has(nen_affinity):
+		return "NEN_AFFINITY_MISMATCH"
+	return ""
 
 
 func get_system_skill_tree() -> Dictionary:
@@ -1181,6 +1310,9 @@ func check_skill_training_permit(skill_id: String) -> Dictionary:
 	var required_nen_rank := int(skill.get("required_nen_rank", 0))
 	if bool(skill.get("requires_nen", false)) and (not nen_unlocked or nen_control_rank < required_nen_rank):
 		return {"success": false, "reason": "NEN_CONTROL_REQUIREMENT", "required_nen_rank": required_nen_rank}
+	var affinity_reason := _get_skill_nen_affinity_reason(skill)
+	if not affinity_reason.is_empty():
+		return {"success": false, "reason": affinity_reason}
 	for prerequisite in skill.get("prerequisites", []):
 		if not learned_system_skills.has(str(prerequisite)):
 			return {"success": false, "reason": "SKILL_PREREQUISITE", "prerequisite": str(prerequisite)}
@@ -1229,6 +1361,9 @@ func practice_system_skill(skill_id: String, verified_session_id: String) -> Dic
 		return {"success": false, "reason": "HUNTER_RANK_REQUIREMENT", "required_rank": str(skill.get("required_rank", "F"))}
 	if bool(skill.get("requires_nen", false)) and (not nen_unlocked or nen_control_rank < int(skill.get("required_nen_rank", 1))):
 		return {"success": false, "reason": "NEN_CONTROL_REQUIREMENT", "required_nen_rank": int(skill.get("required_nen_rank", 1))}
+	var affinity_reason := _get_skill_nen_affinity_reason(skill)
+	if not affinity_reason.is_empty():
+		return {"success": false, "reason": affinity_reason}
 	for prerequisite in skill.get("prerequisites", []):
 		if not learned_system_skills.has(str(prerequisite)):
 			return {"success": false, "reason": "SKILL_PREREQUISITE", "prerequisite": str(prerequisite)}
@@ -1270,6 +1405,9 @@ func can_use_system_skill(skill_id: String) -> Dictionary:
 		return {"success": false, "reason": "SYSTEM_ENERGY_LOW", "required_energy": required_energy, "current_energy": current_system_energy}
 	if bool(skill.get("requires_nen", false)) and (not nen_unlocked or nen_control_rank < int(skill.get("required_nen_rank", 1))):
 		return {"success": false, "reason": "NEN_CONTROL_REQUIREMENT"}
+	var affinity_reason := _get_skill_nen_affinity_reason(skill)
+	if not affinity_reason.is_empty():
+		return {"success": false, "reason": affinity_reason}
 	return {"success": true, "skill": skill.duplicate(true), "mastery": int(system_skill_mastery.get(key, 0))}
 
 
