@@ -5849,7 +5849,7 @@ func open_baghdad_progression_facility(tower_id: String, floor_number: int, faci
 		if facility_type == "shopping_skill_store":
 			var rules := Label.new()
 			rules.name = "SkillStoreRules"
-			rules.text = "المخطوطة تمنح تصريح بدء التدريب فقط؛ لا تفتح المهارة تلقائياً. يلزم المستوى والرتبة والنِن والمتطلبات السابقة، ثم ثلاث جلسات تدريب موثقة في جمعية الصيادين."
+			rules.text = "المخطوطة تمنح تصريح بدء التدريب فقط؛ لا تفتح المهارة تلقائياً. يلزم إيقاظ النِن وإتقان Ten وZetsu وRen وHatsu واختيار ميول متوافقة، مع المستوى والرتبة والتحكم والمتطلبات السابقة، ثم ثلاث جلسات تدريب موثقة في جمعية الصيادين. أغلب تصاريح المهارات النادرة يمكن الحصول عليها من غنائم الوحوش والزعماء المؤهلين."
 			rules.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			content.add_child(rules)
 		var catalog: Array = PRODUCT_CATALOG.get("shopping_tower_baghdad", [])
