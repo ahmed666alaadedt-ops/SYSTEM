@@ -4255,8 +4255,10 @@ func _department_for_floor(tower_id: String, floor_number: int, total: int) -> S
 			if floor_number == 5: return "معرض الأسلحة البيضاء والسيوف والرماح"
 			if floor_number == 6: return "معرض الأقواس والأسلحة بعيدة المدى"
 			if floor_number == 7: return "معرض الدروع والخوذ والبدلات — F إلى SSS"
-			if floor_number == 8: return "صيدلية الأكاسير وإيقاظ النِن — F إلى SSS"
-			if floor_number in [9, 10]: return "قاعات التدريب والاستعداد للمواجهات"
+			if floor_number == 8: return "صيدلية الأكاسير الأساسية — F إلى C"
+			if floor_number == 9: return "مختبر الأكاسير المتقدمة — B إلى A"
+			if floor_number == 10: return "خزنة الأكاسير النادرة والأسطورية — S إلى SSS"
+			if floor_number == 11: return "قاعات التدريب والاستعداد للمواجهات"
 			return "طوابق التحديات الفردية — " + str(floor_number)
 		"shopping_tower_baghdad":
 			if floor_number >= 29: return "المطاعم الراقية وصالات الطعام والمقاهي"
@@ -4483,7 +4485,13 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 					facility_title = "معرض الدروع والبدلات F إلى SSS — برج القوة"
 				8:
 					facility_type = "shopping_elixir_pharmacy"
-					facility_title = "صيدلية الأكاسير وإيقاظ النِن — برج القوة"
+					facility_title = "صيدلية الأكاسير الأساسية — برج القوة"
+				9:
+					facility_type = "shopping_advanced_elixir_lab"
+					facility_title = "مختبر الأكاسير المتقدمة — برج القوة"
+				10:
+					facility_type = "shopping_rare_elixir_vault"
+					facility_title = "خزنة الأكاسير النادرة والأسطورية — برج القوة"
 		"shopping_tower_baghdad":
 			if floor_number == 4:
 				facility_type = "shopping_skill_store"
