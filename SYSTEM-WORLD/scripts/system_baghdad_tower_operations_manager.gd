@@ -7295,7 +7295,7 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 				elif index == 2:
 					_add_facility_box(item, "WarHammerHead", Vector3(0.0, 3.0, 0.0), Vector3(1.0, 0.72, 0.72), accent)
 		elif facility_type == "shopping_ranged_gallery":
-			if ((tower_id == "power_tower_baghdad" and floor_number == 6 and index < 2) or (tower_id != "power_tower_baghdad" and floor_number == 8 and index < 2)):
+			if (tower_id == "power_tower_baghdad" and floor_number == 6 and index < 2) or (tower_id != "power_tower_baghdad" and floor_number == 8 and index < 2):
 				var bow := MeshInstance3D.new()
 				bow.name = "BowDisplay" if index == 0 else "CrossbowDisplay"
 				var bow_mesh := TorusMesh.new()
