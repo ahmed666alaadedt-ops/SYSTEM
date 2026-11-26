@@ -203,7 +203,7 @@ Implementation status: a local prototype now records individual 1v1 matches, ded
 
 ## 11. Nen foundations and affinity-gated abilities (27 November 2026)
 
-- Nen is the shared source for all advanced Nen techniques and rare abilities; lightning, shadow and body-manifestation abilities are not separate energy systems.
+- Nen is the shared source for every learned SYSTEM skill-tree ability, including basic techniques and rare powers; ordinary light/heavy attacks remain available as baseline combat actions. Lightning, shadow and body-manifestation abilities are not separate energy systems.
 - Awakening Nen is only the entry gate. The player must then complete three unique training sessions for each foundation, in order: Ten, Zetsu, Ren and Hatsu. A later foundation cannot be trained until the previous one is mastered.
 - After Hatsu, the player selects one primary Nen affinity: Enhancement, Emission, Transmutation, Conjuration, Manipulation or Specialization. The choice and all foundation sessions are persisted in the player save.
 - Nen techniques and rare abilities require the foundations and a compatible selected affinity in addition to their existing level, Hunter rank, Nen-control rank, prerequisites, training permit, energy cost and cooldown.
