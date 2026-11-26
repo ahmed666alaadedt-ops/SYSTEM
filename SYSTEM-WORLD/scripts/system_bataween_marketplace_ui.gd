@@ -121,10 +121,11 @@ func _request(operation: String, payload: Dictionary) -> void:
 	var sent := bool(bridge.call("request_marketplace_operation", operation, payload, request_id))
 	if not sent:
 		pending_operations.erase(request_id)
-		if operation in ["create_listing", "purchase_listing"]:
+		if operation in ["create_listing", "purchase_listing", "cancel_listing"]:
 			busy = false
 			_sell_button.disabled = _artifact_picker.item_count == 0
-		_set_status("تعذر الاتصال بسوق اللاعبين: " + str(bridge.get("last_error")))
+		var bridge_status: Dictionary = bridge.call("get_bridge_status") if bridge.has_method("get_bridge_status") else {}
+		_set_status("تعذر الاتصال بسوق اللاعبين: " + str(bridge_status.get("last_error", "ANDROID_MARKETPLACE_TRANSPORT_UNAVAILABLE")))
 
 
 func _on_marketplace_result(request_id: String, payload: Dictionary) -> void:
@@ -158,6 +159,10 @@ func _on_marketplace_result(request_id: String, payload: Dictionary) -> void:
 		"purchase_listing":
 			busy = false
 			_set_status("اكتمل الشراء وانتقلت ملكية القطعة إلى حسابك.")
+			_refresh_market()
+		"cancel_listing":
+			busy = false
+			_set_status("تم إلغاء العرض وإرجاع القطعة إلى ملكيتك.")
 			_refresh_market()
 
 
@@ -232,11 +237,25 @@ func _render_listings() -> void:
 		var seller_label := Label.new()
 		seller_label.text = "البائع: " + str(listing.get("sellerName", "لاعب"))
 		details.add_child(seller_label)
-		var buy_button := Button.new()
-		buy_button.text = "%d SYSTEM — شراء" % int(listing.get("price", 0))
-		buy_button.disabled = busy or bool(listing.get("isSeller", false))
-		buy_button.pressed.connect(_purchase_listing.bind(str(listing.get("listingId", ""))))
-		row.add_child(buy_button)
+		var listing_id := str(listing.get("listingId", ""))
+		var action_button := Button.new()
+		if bool(listing.get("isSeller", false)):
+			action_button.text = "إلغاء العرض"
+			action_button.disabled = busy
+			action_button.pressed.connect(_cancel_listing.bind(listing_id))
+		else:
+			action_button.text = "%d SYSTEM — شراء" % int(listing.get("price", 0))
+			action_button.disabled = busy
+			action_button.pressed.connect(_purchase_listing.bind(listing_id))
+		row.add_child(action_button)
+
+
+func _cancel_listing(listing_id: String) -> void:
+	if busy or listing_id.is_empty():
+		return
+	busy = true
+	_set_status("جارٍ إلغاء العرض وإرجاع القطعة إلى ملكيتك...")
+	_request("cancel_listing", {"listingId": listing_id})
 
 
 func _purchase_listing(listing_id: String) -> void:
