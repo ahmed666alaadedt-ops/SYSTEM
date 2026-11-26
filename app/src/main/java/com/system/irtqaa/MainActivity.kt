@@ -235,7 +235,7 @@ fun SystemApp(account: SystemFirebaseAccount) {
                                         context,
                                         SystemGodotActivity::class.java,
                                         SystemGodotRuntimeContract.WorldRequest(
-                                            worldId = SystemGodotRuntimeContract.WorldId.MODERN,
+                                            worldId = SystemGodotRuntimeContract.WorldId.SELECTION,
                                             accountUid = userId
                                         )
                                     )
@@ -246,7 +246,7 @@ fun SystemApp(account: SystemFirebaseAccount) {
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp)
                             ) {
-                                Text("دخول العالم ثلاثي الأبعاد", fontWeight = FontWeight.Bold)
+                                Text("ميار واختيار العالم ثلاثي الأبعاد", fontWeight = FontWeight.Bold)
                             }
 
                             Spacer(Modifier.height(16.dp))
