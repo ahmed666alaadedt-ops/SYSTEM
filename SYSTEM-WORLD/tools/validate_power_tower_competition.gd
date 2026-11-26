@@ -173,6 +173,42 @@ func _run() -> void:
 		var rank_floor := int(rank_floor_value)
 		var rank_data: Dictionary = betting_manager.call("get_floor_data", rank_floor)
 		assert(str(rank_data.get("rank", "")) == str(expected_rank_by_floor[rank_floor_value]), "Power Tower rank ladder mismatch at floor %d." % rank_floor)
+	var floor_one_data: Dictionary = betting_manager.call("get_floor_data", 1)
+	assert(int(floor_one_data.get("time_limit_seconds", 0)) == 300, "A five-minute floor-start deadline must be configured.")
+	betting_manager.highest_cleared_floor = 0
+	assert(bool(betting_manager.call("request_floor", 1, 100).get("success", false)))
+	assert(int(betting_manager.floor_start_deadline_unix) > 0)
+	var deadline_expiry: Dictionary = betting_manager.call("check_floor_start_deadline", int(betting_manager.floor_start_deadline_unix) + 1)
+	assert(bool(deadline_expiry.get("expired", false)))
+	assert(int(betting_manager.active_floor) == 0)
+	assert(bool(betting_manager.call("request_floor", 1, 100).get("success", false)))
+	assert(bool(betting_manager.call("begin_floor_duel", 1).get("success", false)))
+	var started_deadline_check: Dictionary = betting_manager.call("check_floor_start_deadline", int(Time.get_unix_time_from_system()) + 600)
+	assert(not bool(started_deadline_check.get("expired", false)), "The countdown must stop once the official duel begins.")
+	betting_manager.call("abandon_active_floor")
+
+	# Heliport permissions combine tower floor, verified guild missions, Nen control and demonstrated Nen skills.
+	progression.verified_hunter_mission_points = 2500
+	progression.verified_hunter_mission_count = 10
+	progression.nen_skill_use_count = 50
+	progression.nen_skill_ids = ["ten", "ren"]
+	betting_manager.highest_cleared_floor = 121
+	var heliport_s: Dictionary = betting_manager.call("get_heliport_access_status", progression)
+	assert(bool(heliport_s.get("access", false)) and str(heliport_s.get("eligible_rank", "")) == "S")
+	progression.verified_hunter_mission_points = 5000
+	progression.verified_hunter_mission_count = 20
+	progression.nen_skill_use_count = 150
+	progression.nen_skill_ids = ["ten", "ren", "hatsu"]
+	betting_manager.highest_cleared_floor = 151
+	var heliport_ss: Dictionary = betting_manager.call("get_heliport_access_status", progression)
+	assert(bool(heliport_ss.get("access", false)) and str(heliport_ss.get("eligible_rank", "")) == "SS")
+	progression.hunter_sss_board_approved = true
+	progression.verified_hunter_mission_points = 5000
+	progression.verified_hunter_mission_count = 30
+	progression.nen_skill_use_count = 200
+	betting_manager.highest_cleared_floor = 180
+	var heliport_sss: Dictionary = betting_manager.call("get_heliport_access_status", progression)
+	assert(bool(heliport_sss.get("access", false)) and str(heliport_sss.get("eligible_rank", "")) == "SSS")
 	betting_manager.spectator_matches.clear()
 	betting_manager.spectator_npc_ticket_balances.clear()
 	betting_manager.spectator_daily_counts.clear()
