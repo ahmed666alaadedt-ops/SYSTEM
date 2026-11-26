@@ -53,6 +53,7 @@ var current_gate: Area3D
 var dungeon_exit: Area3D
 var enemies_remaining := 0
 var boss_defeated := false
+var active_gate_rank := "F"
 var dungeon_xp_awarded := 0
 var gate_event_timer: Timer
 
@@ -237,6 +238,7 @@ func _on_gate_body_entered(body: Node3D, gate: Area3D) -> void:
 
 func _enter_dungeon(gate: Area3D) -> void:
 	var rank := str(gate.get_meta("system_gate_rank","E"))
+	active_gate_rank = rank
 	active_dungeon = Node3D.new()
 	active_dungeon.name = "MonsterGateDungeon_" + rank
 	active_dungeon.position = Vector3(5000.0 + float(gate_counter) * 120.0, 100.0, 5000.0)
@@ -286,14 +288,133 @@ func _on_gate_enemy_defeated(enemy: Node, is_boss: bool, xp_reward: int) -> void
 	if progression != null and progression.has_method("add_experience"):
 		progression.call("add_experience",xp_reward,"Monster Gate: " + str(enemy.name))
 	if is_instance_valid(enemy):
-		_create_loot_drop(enemy.global_position,is_boss)
+		_create_loot_drop(enemy.global_position, is_boss, active_gate_rank, str(enemy.get_instance_id()))
 	if is_boss:
 		boss_defeated = true
 	if enemies_remaining == 0 and boss_defeated:
 		_unlock_dungeon_exit()
 
 
-func _create_loot_drop(location: Vector3, boss: bool) -> void:
+func _get_eligible_skill_drop_candidates(gate_rank: String, progression: Node) -> Array[String]:
+	var candidates: Array[String] = []
+	if not is_instance_valid(progression) or not progression.has_method("get_system_skill_tree") or not progression.has_method("check_skill_training_permit"):
+		return candidates
+	if not bool(progression.get("nen_unlocked")) or not progression.has_method("get_nen_foundation_status"):
+		return candidates
+	var nen_status: Dictionary = progression.call("get_nen_foundation_status")
+	if not bool(nen_status.get("all_complete", false)) or str(nen_status.get("affinity", "")).is_empty():
+		return candidates
+	var rank_order := ["F", "E", "D", "C", "B", "A", "S", "SS", "SSS"]
+	var source_rank := "SSS" if gate_rank == "EX" else gate_rank
+	var source_index := rank_order.find(source_rank)
+	if source_index < 0:
+		return candidates
+	var tree: Dictionary = progression.call("get_system_skill_tree")
+	for skill_value in tree.keys():
+		var skill_id := str(skill_value)
+		var skill: Dictionary = tree[skill_id]
+		if not bool(skill.get("requires_nen", false)) or not bool(skill.get("requires_training_permit", false)):
+			continue
+		var required_index := rank_order.find(str(skill.get("required_rank", "F")))
+		if required_index < 0 or source_index < required_index:
+			continue
+		var eligibility: Dictionary = progression.call("check_skill_training_permit", skill_id)
+		if bool(eligibility.get("success", false)):
+			candidates.append(skill_id)
+	return candidates
+
+
+func _roll_skill_training_drop(gate_rank: String, boss: bool, progression: Node) -> String:
+	var candidates := _get_eligible_skill_drop_candidates(gate_rank, progression)
+	if candidates.is_empty():
+		return ""
+	var drop_chance := 0.10 if not boss else 0.38
+	if boss and gate_rank in ["S", "SS", "SSS", "EX"]:
+		drop_chance = 0.55
+	if rng.randf() > drop_chance:
+		return ""
+	if boss:
+		var rare_candidates: Array[String] = []
+		var tree: Dictionary = progression.call("get_system_skill_tree")
+		for candidate in candidates:
+			var category := str(tree[candidate].get("category", ""))
+			if category in ["rare_elemental", "rare_shadow", "rare_body", "legendary_elemental", "legendary_shadow"]:
+				rare_candidates.append(candidate)
+		if not rare_candidates.is_empty() and rng.randf() < 0.8:
+			candidates = rare_candidates
+	return candidates[rng.randi_range(0, candidates.size() - 1)]
+
+
+func _create_loot_drop(location: Vector3, boss: bool, gate_rank: String, enemy_token: String) -> void:
+	var progression := get_tree().root.find_child("PlayerProgression", true, false)
+	var skill_id := _roll_skill_training_drop(gate_rank, boss, progression)
+	var is_skill_drop := not skill_id.is_empty()
+	var pickup := Area3D.new()
+	pickup.name = "GateLoot_SkillPermit_" + skill_id if is_skill_drop else ("GateLoot_BossRelic" if boss else "GateLoot_MonsterCore")
+	pickup.add_to_group("system_gate_loot")
+	pickup.set_meta("system_loot_type", "skill_training_permit" if is_skill_drop else ("boss_relic" if boss else "monster_core"))
+	var quality := "common"
+	if boss or is_skill_drop:
+		quality = "rare"
+	if is_skill_drop:
+		var skill_tree_for_quality: Dictionary = progression.call("get_system_skill_tree")
+		if str(skill_tree_for_quality[skill_id].get("category", "")).begins_with("legendary"):
+			quality = "legendary"
+	pickup.set_meta("system_loot_quality", quality)
+	pickup.set_meta("system_gate_rank", gate_rank)
+	if is_skill_drop:
+		pickup.set_meta("system_skill_id", skill_id)
+		var gate_id := str(current_gate.get_meta("system_gate_id", "monster_gate")) if is_instance_valid(current_gate) else "monster_gate"
+		pickup.set_meta("system_drop_id", "%s_%s_%s" % [gate_id, enemy_token, skill_id])
+	var visual := MeshInstance3D.new()
+	var mesh := SphereMesh.new()
+	mesh.radius = 0.38 if is_skill_drop else (0.32 if boss else 0.2)
+	mesh.height = mesh.radius * 2.0
+	visual.mesh = mesh
+	var loot_color := Color(0.82, 0.2, 0.92) if is_skill_drop else (Color(1.0, 0.62, 0.12) if boss else Color(0.22, 0.78, 0.92))
+	visual.material_override = _make_material(loot_color, true)
+	pickup.add_child(visual)
+	if is_skill_drop:
+		var skill_tree: Dictionary = progression.call("get_system_skill_tree")
+		var skill_label := Label3D.new()
+		skill_label.name = "SkillPermitDropLabel"
+		skill_label.text = "مخطوطة: " + str(skill_tree[skill_id].get("name", skill_id))
+		skill_label.position.y = 0.75
+		skill_label.font_size = 24
+		skill_label.pixel_size = 0.008
+		skill_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		pickup.add_child(skill_label)
+	var collision := CollisionShape3D.new()
+	var sphere := SphereShape3D.new()
+	sphere.radius = 1.25
+	collision.shape = sphere
+	pickup.add_child(collision)
+	active_dungeon.add_child(pickup)
+	pickup.global_position = location + Vector3(0.0, 0.8, 0.0)
+	pickup.body_entered.connect(_on_loot_collected.bind(pickup))
+
+
+func _on_loot_collected(body: Node3D, pickup: Area3D) -> void:
+	if not _is_player(body) or not is_instance_valid(pickup):
+		return
+	var loot_type := str(pickup.get_meta("system_loot_type", ""))
+	var progression := get_tree().root.find_child("PlayerProgression", true, false)
+	if loot_type == "skill_training_permit":
+		if progression == null or not progression.has_method("grant_skill_training_permit_from_drop"):
+			print("SYSTEM LOOT: Nen skill permit could not be claimed; progression API unavailable.")
+			return
+		var drop_result: Dictionary = progression.call("grant_skill_training_permit_from_drop", str(pickup.get_meta("system_skill_id", "")), str(pickup.get_meta("system_drop_id", "")), str(pickup.get_meta("system_gate_rank", "F")))
+		if not bool(drop_result.get("success", false)):
+			print("SYSTEM LOOT: Skill permit not claimed: ", str(drop_result.get("reason", "UNKNOWN")))
+			return
+		print("SYSTEM LOOT: Monster gate granted training permit for ", str(drop_result.get("skill_id", "")))
+	elif progression != null and progression.has_method("add_item"):
+		progression.call("add_item", loot_type, 1)
+	else:
+		print("SYSTEM LOOT: Player progression inventory is unavailable.")
+	pickup.queue_free()
+
+
 	var pickup := Area3D.new()
 	pickup.name = "GateLoot_BossRelic" if boss else "GateLoot_MonsterCore"
 	pickup.add_to_group("system_gate_loot")
