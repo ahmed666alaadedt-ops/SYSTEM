@@ -65,6 +65,7 @@ func request_floor(destination_floor: int) -> Dictionary:
 	var distance := absf(target_local_y - cabin.position.y)
 	var travel_seconds := maxf(MIN_TRAVEL_SECONDS, distance / TRAVEL_SPEED_METERS_PER_SECOND)
 	traveling = true
+	_animate_cabin_doors(false)
 	player.set_meta("system_tower_elevator_active", true)
 	player.velocity = Vector3.ZERO
 	selection_panel.hide()
@@ -94,6 +95,9 @@ func _finish_travel(player: CharacterBody3D, destination_floor: int) -> void:
 	if is_instance_valid(cabin_floor_label):
 		cabin_floor_label.text = "FLOOR %03d / 200" % destination_floor
 	traveling = false
+	_animate_cabin_doors(true)
+	if is_instance_valid(travel_button):
+		travel_button.disabled = false
 	if is_instance_valid(status_label):
 		status_label.text = "وصلت إلى الطابق %03d" % destination_floor
 
@@ -198,6 +202,21 @@ func _on_travel_pressed() -> void:
 	status_label.text = "المصعد يتحرك... وقت الرحلة %.0f ثانية" % float(result.get("travel_seconds", 0.0))
 
 
+func _animate_cabin_doors(open_doors: bool) -> void:
+	if cabin == null:
+		return
+	var left := cabin.get_node_or_null("CabinDoorLeft") as Node3D
+	var right := cabin.get_node_or_null("CabinDoorRight") as Node3D
+	if left == null or right == null:
+		return
+	var tween := create_tween()
+	tween.set_parallel(true)
+	var left_x := -2.0 if open_doors else -1.0
+	var right_x := 2.0 if open_doors else 1.0
+	tween.tween_property(left, "position:x", left_x, 0.55).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(right, "position:x", right_x, 0.55).set_trans(Tween.TRANS_SINE)
+
+
 func _get_player() -> CharacterBody3D:
 	var players := get_tree().get_nodes_in_group("system_player")
 	if players.is_empty():
@@ -216,9 +235,9 @@ func _get_tower_root() -> Node3D:
 
 
 func _get_max_accessible_floor() -> int:
-	var manager := get_tree().root.find_child("PowerTowerManager", true, false)
+	var manager := get_tree().root.find_child("SYSTEMPowerTowerManager", true, false)
 	if manager == null:
-		manager = get_tree().root.find_child("PowerTowerCompetitionManager", true, false)
+		manager = get_tree().root.find_child("PowerTowerManager", true, false)
 	var cleared := 0
 	if manager != null:
 		cleared = int(manager.get("highest_cleared_floor"))
