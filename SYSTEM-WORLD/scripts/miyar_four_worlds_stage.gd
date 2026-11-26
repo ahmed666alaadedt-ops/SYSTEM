@@ -315,3 +315,9 @@ func _finish_speaking() -> void:
 
 func _request_entry() -> void:
 	world_entry_requested.emit(selected_world_id)
+	if not is_instance_valid(SYSTEMAndroidBridge):
+		if selected_world_id == "modern":
+			get_tree().change_scene_to_file("res://MainScene.tscn")
+		return
+	if SYSTEMAndroidBridge.request_world_selection_entry(selected_world_id):
+		get_tree().change_scene_to_file("res://MainScene.tscn")
