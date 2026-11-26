@@ -1744,7 +1744,7 @@ func _run() -> void:
 		if cafe_room == null or cafe_room.get_node_or_null("RestaurantDiningSign") == null or cafe_room.get_node_or_null("RestaurantKitchen") == null or cafe_room.get_node_or_null("RestaurantTable_00") == null:
 			_fail("Power Tower cafeteria floor %d is missing its physical dining hall, kitchen or tables." % cafe_floor)
 			return
-	var power_commercial_facilities := {4:"shopping_skill_store",5:"shopping_weapon_gallery",6:"shopping_ranged_gallery",7:"shopping_armor_gallery",8:"shopping_elixir_pharmacy"}
+	var power_commercial_facilities := {4:"shopping_skill_store",5:"shopping_weapon_gallery",6:"shopping_ranged_gallery",7:"shopping_armor_gallery",8:"shopping_elixir_pharmacy",9:"shopping_advanced_elixir_lab",10:"shopping_rare_elixir_vault"}
 	for floor_value in power_commercial_facilities.keys():
 		var power_floor_number := int(floor_value)
 		var expected_power_type := str(power_commercial_facilities[floor_value])
@@ -1758,6 +1758,23 @@ func _run() -> void:
 		if power_showcase == null or power_showcase.get_node_or_null("ShowcaseItem_00") == null or power_showcase.get_node_or_null("ShowcaseItem_01") == null or power_showcase.get_node_or_null("ShowcaseItem_02") == null:
 			_fail("Power Tower floor %d is missing physical product displays for %s." % [power_floor_number, expected_power_type])
 			return
+
+	var power_tier_catalog_checks := {
+		"rank_f_armor":"F", "rank_e_armor":"E", "rank_d_armor":"D", "rank_c_armor":"C", "rank_b_armor":"B", "rank_a_armor":"A", "rank_s_armor":"S", "rank_ss_armor":"SS", "rank_sss_armor":"SSS",
+		"rank_a_blade":"A", "rank_s_blade":"S", "rank_ss_blade":"SS", "rank_sss_blade":"SSS",
+		"rank_a_rifle":"A", "rank_s_rifle":"S", "rank_ss_rifle":"SS", "rank_sss_rifle":"SSS",
+		"skill_manual_basic_strike":"F", "skill_manual_sovereign_overdrive":"SSS",
+		"healing_elixir":"F", "resistance_elixir":"E", "deep_wound_elixir":"D", "regeneration_elixir":"C", "nen_focus_elixir":"D", "nen_recovery_elixir":"C", "rare_legendary_elixir":"S", "elite_legendary_elixir":"SS", "sovereign_ascension_elixir":"SSS"
+	}
+	for product_value in power_tier_catalog_checks.keys():
+		var tier_product: Dictionary = operations.call("_get_catalog_product", str(product_value))
+		if tier_product.is_empty() or str(tier_product.get("required_rank", "F")) != str(power_tier_catalog_checks[product_value]):
+			_fail("Power Tower progression catalogue is missing the expected %s rank gate for %s." % [str(power_tier_catalog_checks[product_value]), str(product_value)])
+			return
+	var power_skill_tree: Dictionary = skill_progression.call("get_system_skill_tree")
+	if str(power_skill_tree.get("basic_strike", {}).get("required_rank", "")) != "F" or str(power_skill_tree.get("sovereign_overdrive", {}).get("required_rank", "")) != "SSS":
+		_fail("Power Tower skill progression does not span the complete F-to-SSS range.")
+		return
 
 	var floor_product_checks := {
 		5: ["training_sword", "steel_sword"],
