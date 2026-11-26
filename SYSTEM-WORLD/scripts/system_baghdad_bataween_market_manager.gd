@@ -5,7 +5,8 @@ const ORIGIN_LATITUDE := 33.3152
 const ORIGIN_LONGITUDE := 44.3661
 const BATAWEEN_LATITUDE := 33.3201
 const BATAWEEN_LONGITUDE := 44.4205
-const EARTH_RADIUS_M := 6378137.0
+const WGS84_SEMI_MAJOR_AXIS_M := 6378137.0
+const WGS84_INVERSE_FLATTENING := 298.257223563
 const MARKET_LOCATION_ID := "baghdad_bataween_antiquities_market"
 const MARKET_WIDTH_M := 132.0
 const MARKET_DEPTH_M := 112.0
@@ -96,10 +97,36 @@ func _create_market_access_route() -> void:
 
 
 func _bataween_local_position() -> Vector2:
-	var latitude_origin := deg_to_rad(ORIGIN_LATITUDE)
-	var east := deg_to_rad(BATAWEEN_LONGITUDE - ORIGIN_LONGITUDE) * EARTH_RADIUS_M * cos(latitude_origin)
-	var north := deg_to_rad(BATAWEEN_LATITUDE - ORIGIN_LATITUDE) * EARTH_RADIUS_M
+	var origin_ecef := _wgs84_ecef_components(ORIGIN_LATITUDE, ORIGIN_LONGITUDE)
+	var point_ecef := _wgs84_ecef_components(BATAWEEN_LATITUDE, BATAWEEN_LONGITUDE)
+	var dx := point_ecef[0] - origin_ecef[0]
+	var dy := point_ecef[1] - origin_ecef[1]
+	var dz := point_ecef[2] - origin_ecef[2]
+	var origin_latitude := deg_to_rad(ORIGIN_LATITUDE)
+	var origin_longitude := deg_to_rad(ORIGIN_LONGITUDE)
+	var east := -sin(origin_longitude) * dx + cos(origin_longitude) * dy
+	var north := (
+		-sin(origin_latitude) * cos(origin_longitude) * dx
+		-sin(origin_latitude) * sin(origin_longitude) * dy
+		+cos(origin_latitude) * dz
+	)
 	return Vector2(east, -north)
+
+
+func _wgs84_ecef_components(latitude_degrees: float, longitude_degrees: float) -> PackedFloat64Array:
+	var flattening := 1.0 / WGS84_INVERSE_FLATTENING
+	var eccentricity_squared := flattening * (2.0 - flattening)
+	var latitude := deg_to_rad(latitude_degrees)
+	var longitude := deg_to_rad(longitude_degrees)
+	var sin_latitude := sin(latitude)
+	var prime_vertical_radius := WGS84_SEMI_MAJOR_AXIS_M / sqrt(
+		1.0 - eccentricity_squared * sin_latitude * sin_latitude
+	)
+	var coordinates := PackedFloat64Array()
+	coordinates.append(prime_vertical_radius * cos(latitude) * cos(longitude))
+	coordinates.append(prime_vertical_radius * cos(latitude) * sin(longitude))
+	coordinates.append(prime_vertical_radius * (1.0 - eccentricity_squared) * sin_latitude)
+	return coordinates
 
 
 func get_market_position() -> Vector3:
