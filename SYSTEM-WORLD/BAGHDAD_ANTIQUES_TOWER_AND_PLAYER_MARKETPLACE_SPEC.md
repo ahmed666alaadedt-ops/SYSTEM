@@ -13,9 +13,9 @@ The Baghdad five-tower district consists of:
 
 The Power Tower remains a separate landmark outside the five-tower count. Its combat competitions remain strictly individual 1v1; no team combat is introduced.
 
-## Al-Bataween street antiques market — primary player trading hub
+## سوق البتاوين للتحف والآثار (Al-Bataween Street Antiques Market) — primary player trading hub
 
-The outdoor Al-Bataween market is a separate ground-level Baghdad neighborhood destination, not a sixth tower and not a replacement for the 34-floor Antiques & Heritage museum. Its neighborhood-center WGS84 anchor is 33.3201, 44.4205 (a neighborhood reference point, not a surveyed parcel boundary). The playable terrain is extended to this anchor and connected to the Republic Bridge approach by a clearly identified procedural access corridor; that corridor is gameplay infrastructure, not surveyed OpenStreetMap road geometry.
+The district display name is **سوق البتاوين** and its category/descriptor is **سوق التحف والآثار**; always show the complete combined identity **سوق البتاوين للتحف والآثار** on maps, entrance signage, interaction prompts and marketplace screens. The outdoor Al-Bataween market is a separate ground-level Baghdad neighborhood destination, not a sixth tower and not a replacement for the 34-floor Antiques & Heritage museum. Its neighborhood-center WGS84 anchor is 33.3201, 44.4205 (a neighborhood reference point, not a surveyed parcel boundary). The playable terrain is extended to this anchor and connected to the Republic Bridge approach by a clearly identified procedural access corridor; that corridor is gameplay infrastructure, not surveyed OpenStreetMap road geometry.
 
 - Generate a walkable street-market courtyard with 24 individually identified stalls and a main entrance interaction.
 - Organize stalls around Iraqi heritage, manuscripts, coins, ceramics, metalwork, player listings, appraisal and restoration.
