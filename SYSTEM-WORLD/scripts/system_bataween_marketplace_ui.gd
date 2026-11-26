@@ -59,10 +59,14 @@ func _build_interface() -> void:
 	var header := HBoxContainer.new()
 	layout.add_child(header)
 	var title := Label.new()
-	title.text = "سوق البتاوين للتحف والآثار"
-	title.add_theme_font_size_override("font_size", 28)
+	title.text = "سوق البتاوين"
+	title.add_theme_font_size_override("font_size", 30)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
+	var market_type := Label.new()
+	market_type.name = "BataweenMarketplaceCategory"
+	market_type.text = "سوق التحف والآثار — بيع وشراء بين اللاعبين"
+	layout.add_child(market_type)
 	var close_button := Button.new()
 	close_button.text = "إغلاق"
 	close_button.pressed.connect(close_market)
