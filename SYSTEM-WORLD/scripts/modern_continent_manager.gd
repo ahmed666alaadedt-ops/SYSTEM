@@ -4,9 +4,9 @@ class_name ModernContinentManager
 ## Procedural terrain foundation for the connected modern world.
 ## The map is fictional; city names are real-world references only.
 
-const WORLD_WIDTH := 8000.0
+const WORLD_WIDTH := 12000.0
 const WORLD_DEPTH := 4000.0
-const GRID_X := 151
+const GRID_X := 211
 const GRID_Z := 111
 const CONTINENT_RADIUS_X := 1120.0
 const CONTINENT_RADIUS_Z := 790.0
@@ -30,6 +30,10 @@ const BAGHDAD_URBAN_CORRIDOR_HALF_WIDTH := 560.0
 const BAGHDAD_TIGRIS_HALF_WIDTH := 155.0
 const BAGHDAD_TIGRIS_DEPTH := 22.0
 const BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT := 18.0
+const BAGHDAD_BATAWEEN_CENTER := Vector2(5060.584, -545.466)
+const BAGHDAD_BATAWEEN_RADIUS_X := 820.0
+const BAGHDAD_BATAWEEN_RADIUS_Z := 650.0
+const BAGHDAD_BATAWEEN_ACCESS_HALF_WIDTH := 160.0
 
 const ISLAND_DATA := [
 	{"name": "WesternIsle", "center": Vector2(-1260.0, -520.0), "rx": 175.0, "rz": 125.0, "height": 38.0},
@@ -220,6 +224,25 @@ func _get_height(x: float, z: float) -> float:
 				var bridge_access_ease := bridge_access_blend * bridge_access_blend * (3.0 - 2.0 * bridge_access_blend)
 				return lerpf(bridge_natural_height, maxf(bridge_natural_height, corridor_height), bridge_access_ease)
 			return bridge_natural_height
+
+		# Extend the playable Baghdad landmass to the surveyed Al-Bataween
+		# neighborhood instead of placing its market at a false nearby coordinate.
+		var bataween_dx := (x - BAGHDAD_BATAWEEN_CENTER.x) / BAGHDAD_BATAWEEN_RADIUS_X
+		var bataween_dz := (z - BAGHDAD_BATAWEEN_CENTER.y) / BAGHDAD_BATAWEEN_RADIUS_Z
+		var bataween_radius := sqrt(bataween_dx * bataween_dx + bataween_dz * bataween_dz)
+		if bataween_radius <= 1.0:
+			var bataween_coast := clampf((1.0 - bataween_radius) / 0.14, 0.0, 1.0)
+			var bataween_ease := bataween_coast * bataween_coast * (3.0 - 2.0 * bataween_coast)
+			var bataween_land_height := 11.5 + sin(x * 0.006) * 0.8 + cos(z * 0.009) * 0.7
+			return lerpf(SEA_LEVEL - 1.2, bataween_land_height, bataween_ease)
+
+		# This generated walkable corridor is gameplay infrastructure, not surveyed OSM road geometry.
+		var bataween_access_distance := _distance_to_segment(Vector2(x, z), bridge_bank_point, BAGHDAD_BATAWEEN_CENTER)
+		if bataween_access_distance <= BAGHDAD_BATAWEEN_ACCESS_HALF_WIDTH:
+			var bataween_access_blend := clampf((BAGHDAD_BATAWEEN_ACCESS_HALF_WIDTH - bataween_access_distance) / 55.0, 0.0, 1.0)
+			var bataween_access_ease := bataween_access_blend * bataween_access_blend * (3.0 - 2.0 * bataween_access_blend)
+			var bataween_access_height := 9.0 + sin(x * 0.008) * 0.45 + cos(z * 0.01) * 0.35
+			return lerpf(SEA_LEVEL - 1.2, bataween_access_height, bataween_access_ease)
 
 		var radius := _continent_radius(x, z)
 		if radius <= 1.0:
