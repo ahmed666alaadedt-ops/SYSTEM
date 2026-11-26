@@ -1,5 +1,6 @@
-## Al-Bataween antiques market — initial implementation — 27 November 2026
+## سوق البتاوين للتحف والآثار — Al-Bataween market naming and initial implementation — 27 November 2026
 
+- [x] Named the district **سوق البتاوين** and its category **سوق التحف والآثار**; the complete public identity is **سوق البتاوين للتحف والآثار** across the entrance, map landmark, interaction prompt, Godot panel and Android screen.
 - [x] Added a separate ground-level Al-Bataween market district at the neighborhood WGS84 center reference (33.3201, 44.4205); it is not counted as a sixth Baghdad tower.
 - [x] Extended the playable terrain to include the Al-Bataween anchor and a walkable procedural access corridor from the Republic Bridge approach. The connector is explicitly not represented as surveyed OSM road geometry.
 - [x] Generated 24 individually identified stalls across Iraqi heritage, manuscripts, coins, ceramics, metalwork, player commerce, appraisal and restoration, plus a main market entrance interaction.
