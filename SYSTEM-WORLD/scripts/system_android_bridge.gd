@@ -38,6 +38,7 @@ const MARKETPLACE_OPERATIONS := [
 ]
 
 var _pending_world_id := ""
+var _pending_selection_authorized := false
 var _last_world_id := ""
 var _last_error := ""
 var _native_host: Object
@@ -146,6 +147,29 @@ func receive_android_world_request(raw_world_id: String) -> bool:
     world_entry_requested.emit(world_id)
     _publish_status()
     return true
+
+
+## Internal authorization used only by the in-game four-world selection stage.
+## External Android messages cannot grant this permission.
+func request_world_selection_entry(raw_world_id: String) -> bool:
+    var world_id := _normalize_world_id(raw_world_id)
+    if world_id.is_empty():
+        _last_error = "UNKNOWN_WORLD_ID"
+        _publish_status()
+        return false
+    _pending_world_id = world_id
+    _pending_selection_authorized = true
+    _last_world_id = world_id
+    _last_error = ""
+    world_entry_requested.emit(world_id)
+    _publish_status()
+    return true
+
+
+func consume_world_selection_authorization() -> bool:
+    var authorized := _pending_selection_authorized
+    _pending_selection_authorized = false
+    return authorized
 
 
 func has_pending_world_request() -> bool:
