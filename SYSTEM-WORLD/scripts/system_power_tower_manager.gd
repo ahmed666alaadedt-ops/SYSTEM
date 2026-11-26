@@ -379,7 +379,7 @@ func get_duel_career_status() -> Dictionary:
 		"disqualified": duel_disqualified,
 		"highest_cleared_floor": highest_cleared_floor,
 		"next_floor": 0 if duel_disqualified or highest_cleared_floor >= MAX_FLOORS else highest_cleared_floor + 1,
-		"rank": _rank_for_floor(highest_cleared_floor) if highest_cleared_floor > 0 else "E"
+		"rank": _rank_for_floor(highest_cleared_floor) if highest_cleared_floor > 0 else "F"
 	}
 
 
