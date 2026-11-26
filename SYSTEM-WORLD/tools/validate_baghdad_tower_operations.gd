@@ -2077,6 +2077,7 @@ func _run() -> void:
 	skill_progression.set("current_level", skill_snapshot["level"])
 	skill_progression.set("verified_hunter_mission_points", skill_snapshot["points"])
 	skill_progression.set("learned_system_skills", skill_snapshot["learned"])
+	skill_progression.set("authorized_system_skills", skill_snapshot["authorized"])
 	skill_progression.set("system_skill_practice", skill_snapshot["practice"])
 	skill_progression.set("system_skill_mastery", skill_snapshot["mastery"])
 	skill_progression.set("system_skill_cooldowns", skill_snapshot["cooldowns"])
