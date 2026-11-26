@@ -6,9 +6,11 @@ signal floor_cleared(floor_number: int, reward_xp: int, rank: String)
 signal tower_record_updated(highest_floor: int)
 signal duel_score_updated(match_id: String, duel_data: Dictionary)
 signal duel_completed(match_id: String, duel_data: Dictionary)
+signal floor_start_deadline_expired(floor_number: int)
 
 const SAVE_PATH := "user://system_power_tower.cfg"
 const MAX_FLOORS := 200
+const FLOOR_START_DEADLINE_SECONDS := 300
 const SPECTATOR_DAILY_PREDICTION_LIMIT := 20
 const SPECTATOR_MIN_STAKE := 1
 const SPECTATOR_MAX_STAKE := 500
@@ -27,6 +29,8 @@ const FLOOR_THEME_NAMES := ["قاعة الحديد", "ساحة الصحراء", 
 
 var highest_cleared_floor := 0
 var active_floor := 0
+var floor_start_deadline_unix := 0
+var floor_duel_started := false
 var floor_clear_times: Dictionary = {}
 var total_duels_won := 0
 var total_duels_lost := 0
@@ -55,6 +59,10 @@ func _ready() -> void:
 	_load_progress()
 	_load_duel_records()
 	_load_spectator_data()
+	set_process(true)
+
+func _process(_delta: float) -> void:
+	check_floor_start_deadline()
 
 func get_floor_data(floor_number: int) -> Dictionary:
 	if floor_number < 1 or floor_number > MAX_FLOORS:
@@ -112,7 +120,8 @@ func get_floor_data(floor_number: int) -> Dictionary:
 		"arena_theme_id": arena_theme_id,
 		"arena_theme_name": arena_theme_name,
 		"objective_type": objective_type,
-		"time_limit_seconds": 0,
+		"time_limit_seconds": FLOOR_START_DEADLINE_SECONDS,
+		"start_deadline_seconds": FLOOR_START_DEADLINE_SECONDS,
 		"arena_name": arena_name,
 		"arena_rules": arena_rules,
 		"clear_time_recorded": true,
@@ -155,8 +164,72 @@ func request_floor(floor_number: int, player_level: int) -> Dictionary:
 	if active_floor != 0:
 		return {"success": false, "reason": "ANOTHER_FLOOR_IS_ACTIVE", "active_floor": active_floor}
 	active_floor = floor_number
+	floor_duel_started = false
+	floor_start_deadline_unix = int(Time.get_unix_time_from_system()) + FLOOR_START_DEADLINE_SECONDS
+	data["start_deadline_unix"] = floor_start_deadline_unix
 	floor_started.emit(floor_number, data)
 	return {"success": true, "floor_data": data}
+
+func begin_floor_duel(floor_number: int) -> Dictionary:
+	if active_floor != floor_number or floor_number <= 0:
+		return {"success": false, "reason": "FLOOR_NOT_ACTIVE"}
+	var deadline_check := check_floor_start_deadline()
+	if bool(deadline_check.get("expired", false)):
+		return {"success": false, "reason": "FLOOR_START_DEADLINE_EXPIRED"}
+	floor_duel_started = true
+	floor_start_deadline_unix = 0
+	return {"success": true, "floor": floor_number, "started": true}
+
+
+func check_floor_start_deadline(now_unix: int = 0) -> Dictionary:
+	if active_floor <= 0 or floor_duel_started or floor_start_deadline_unix <= 0:
+		return {"expired": false, "active_floor": active_floor}
+	var current_time := now_unix if now_unix > 0 else int(Time.get_unix_time_from_system())
+	var remaining := floor_start_deadline_unix - current_time
+	if remaining > 0:
+		return {"expired": false, "active_floor": active_floor, "remaining_seconds": remaining}
+	var expired_floor := active_floor
+	active_floor = 0
+	floor_start_deadline_unix = 0
+	floor_duel_started = false
+	floor_start_deadline_expired.emit(expired_floor)
+	return {"expired": true, "floor": expired_floor, "reason": "FLOOR_START_DEADLINE_EXPIRED"}
+
+
+func get_heliport_access_status(progression: Node) -> Dictionary:
+	if progression == null or not progression.has_method("get_hunter_rank_progress"):
+		return {"success": false, "access": false, "reason": "HUNTER_PROGRESSION_REQUIRED"}
+	var hunter_status: Dictionary = progression.call("get_hunter_rank_progress")
+	var hunter_rank := str(hunter_status.get("rank", "F"))
+	var rank_order := ["F", "E", "D", "C", "B", "A", "S", "SS", "SSS"]
+	var hunter_rank_index := rank_order.find(hunter_rank)
+	var mission_count := int(hunter_status.get("verified_mission_count", 0))
+	var nen_rank := int(hunter_status.get("nen_control_rank", 0))
+	var skill_uses := int(hunter_status.get("nen_skill_uses", 0))
+	var distinct_skills := int(hunter_status.get("distinct_nen_abilities", 0))
+	var board_approved := bool(hunter_status.get("sss_board_approved", false))
+	var cleared_floor := highest_cleared_floor
+	var eligible_rank := ""
+	if cleared_floor >= 180 and hunter_rank == "SSS" and board_approved and mission_count >= 30 and nen_rank >= 5 and skill_uses >= 200 and distinct_skills >= 3:
+		eligible_rank = "SSS"
+	elif cleared_floor >= 151 and hunter_rank_index >= rank_order.find("SS") and mission_count >= 20 and nen_rank >= 5 and skill_uses >= 150 and distinct_skills >= 3:
+		eligible_rank = "SS"
+	elif cleared_floor >= 121 and hunter_rank_index >= rank_order.find("S") and mission_count >= 10 and nen_rank >= 5 and skill_uses >= 50 and distinct_skills >= 2:
+		eligible_rank = "S"
+	return {
+		"success": true,
+		"access": not eligible_rank.is_empty(),
+		"eligible_rank": eligible_rank,
+		"highest_cleared_floor": cleared_floor,
+		"hunter_rank": hunter_rank,
+		"mission_count": mission_count,
+		"nen_control_rank": nen_rank,
+		"nen_skill_uses": skill_uses,
+		"distinct_nen_skills": distinct_skills,
+		"sss_board_approved": board_approved,
+		"reason": "ACCESS_GRANTED" if not eligible_rank.is_empty() else "RANK_MISSION_NEN_REQUIREMENTS_NOT_MET"
+	}
+
 
 ## يستدعيها نظام القتال بعد التأكد من فوز اللاعب في المواجهة الفردية.
 func confirm_floor_clear(floor_number: int, clear_time_seconds: float, server_verified: bool = false, result_id: String = "") -> Dictionary:
@@ -185,6 +258,8 @@ func confirm_floor_clear(floor_number: int, clear_time_seconds: float, server_ve
 	total_xp_earned += reward
 	total_credits_earned += credit_reward
 	active_floor = 0
+	floor_start_deadline_unix = 0
+	floor_duel_started = false
 	_save_progress()
 	var rank := str(data["rank"])
 	floor_cleared.emit(floor_number, reward, rank)
@@ -253,6 +328,10 @@ func register_judged_duel(match_id: String, fighter_a_id: String, fighter_b_id: 
 		if not bool(spectator_registration.get("success", false)):
 			return {"success": false, "reason": "SPECTATOR_MATCH_REGISTRATION_FAILED", "detail": spectator_registration}
 	var floor_data := get_floor_data(floor_number)
+	if active_floor == floor_number:
+		var duel_start := begin_floor_duel(floor_number)
+		if not bool(duel_start.get("success", false)):
+			return duel_start
 	duel_matches[match_id] = {
 		"match_id": match_id,
 		"floor": floor_number,
@@ -446,6 +525,8 @@ func _load_duel_records() -> void:
 
 func abandon_active_floor() -> void:
 	active_floor = 0
+	floor_start_deadline_unix = 0
+	floor_duel_started = false
 
 func get_tower_status() -> Dictionary:
 	var best_clear_time := 0.0
@@ -457,6 +538,8 @@ func get_tower_status() -> Dictionary:
 	return {
 		"highest_cleared_floor": highest_cleared_floor,
 		"active_floor": active_floor,
+		"floor_start_deadline_unix": floor_start_deadline_unix,
+		"floor_duel_started": floor_duel_started,
 		"max_floors": MAX_FLOORS,
 		"next_floor": 0 if highest_cleared_floor >= MAX_FLOORS else highest_cleared_floor + 1,
 		"highest_rank": _rank_for_floor(highest_cleared_floor) if highest_cleared_floor > 0 else "-",
