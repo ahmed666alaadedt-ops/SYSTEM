@@ -47,6 +47,9 @@ func _build_interface() -> void:
 
 	_panel = PanelContainer.new()
 	_panel.name = "BataweenMarketplacePanel"
+	_panel.set_meta("system_market_district_name", "سوق البتاوين")
+	_panel.set_meta("system_market_category_name", "سوق التحف والآثار")
+	_panel.set_meta("system_full_display_name", "سوق البتاوين للتحف والآثار")
 	_panel.set_anchors_preset(Control.PRESET_CENTER)
 	_panel.position = Vector2(-520.0, -330.0)
 	_panel.custom_minimum_size = Vector2(1040.0, 660.0)
