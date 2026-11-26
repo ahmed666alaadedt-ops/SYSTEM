@@ -197,7 +197,7 @@ func _toggle_walking() -> void:
 		_status_label.text = "حركة المشي قيد العرض" if walking else "الشخصيات بوضع الوقوف والتنفس"
 
 func _cycle_expressions() -> void:
-	var expression := EXPRESSIONS[expression_index % EXPRESSIONS.size()]
+	var expression: String = str(EXPRESSIONS[expression_index % EXPRESSIONS.size()])
 	expression_index += 1
 	for character in characters:
 		character.call("set_facial_expression", expression)
