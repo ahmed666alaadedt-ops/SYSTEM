@@ -1764,7 +1764,7 @@ func _run() -> void:
 		"training_sword":"F", "combat_knife":"E", "steel_sword":"D", "battle_axe":"C", "great_sword":"B", "rank_a_blade":"A", "rank_s_blade":"S", "rank_ss_blade":"SS", "rank_sss_blade":"SSS",
 		"reinforced_arrows":"F", "rank_e_bow":"E", "rank_d_bow":"D", "composite_bow":"C", "hunter_rifle":"B", "rank_a_rifle":"A", "rank_s_rifle":"S", "rank_ss_rifle":"SS", "rank_sss_rifle":"SSS",
 		"skill_manual_basic_strike":"F", "skill_manual_sovereign_overdrive":"SSS",
-		"healing_elixir":"F", "resistance_elixir":"E", "deep_wound_elixir":"D", "regeneration_elixir":"C", "nen_focus_elixir":"B", "nen_recovery_elixir":"A", "rare_legendary_elixir":"S", "elite_legendary_elixir":"SS", "sovereign_ascension_elixir":"SSS"
+		"healing_elixir":"F", "resistance_elixir":"E", "deep_wound_elixir":"D", "regeneration_elixir":"C", "energy_elixir":"C", "nen_focus_elixir":"B", "nen_recovery_elixir":"A", "rare_legendary_elixir":"S", "elite_legendary_elixir":"SS", "sovereign_ascension_elixir":"SSS"
 	}
 	for product_value in power_tier_catalog_checks.keys():
 		var tier_product: Dictionary = operations.call("_get_catalog_product", str(product_value))
