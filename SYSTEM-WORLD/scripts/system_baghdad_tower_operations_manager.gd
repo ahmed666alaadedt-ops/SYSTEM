@@ -4977,7 +4977,7 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 			for index in range(5):
 				_add_facility_box(root, "InnovationConsole_%02d" % index, Vector3(-12.0 + float(index) * 6.0, 1.0, 1.0), Vector3(2.4, 2.0, 1.8), highlight)
 		"shopping_skill_store", "shopping_weapon_gallery", "shopping_ranged_gallery", "shopping_armor_gallery", "shopping_crafting_materials", "shopping_elixir_pharmacy", "shopping_nen_center", "shopping_advanced_elixir_lab", "shopping_rare_elixir_vault":
-			_build_shopping_floor_showcase(root, floor_number, facility_type, accent, highlight)
+			_build_shopping_floor_showcase(root, floor_number, facility_type, accent, highlight, tower_id)
 		"hunter_weapon_mastery":
 			for index in range(6):
 				_add_facility_box(root, "WeaponMasteryRack_%02d" % index, Vector3(-12.0 + float(index) * 4.8, 1.5, -2.0), Vector3(1.8, 3.0, 1.2), accent)
@@ -7137,7 +7137,7 @@ func _create_pool_service_interaction(parent: Node3D, node_name: String, service
 	parent.add_child(interaction)
 
 
-func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_type: String, accent: Material, highlight: Material) -> void:
+func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_type: String, accent: Material, highlight: Material, tower_id: String = "shopping_tower_baghdad") -> void:
 	var showcase := Node3D.new()
 	showcase.name = "ShoppingShowcase"
 	showcase.set_meta("system_showcase_category", facility_type)
@@ -7178,6 +7178,15 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 		25: "تحضيرات النخبة والأكاسير المتقدمة",
 		26: "الخزنة المحمية للأكاسير النادرة والأسطورية"
 	}
+	if tower_id == "power_tower_baghdad":
+		match facility_type:
+			"shopping_skill_store": floor_titles[4] = "مهارات F إلى SSS وتصاريح التدريب"
+			"shopping_weapon_gallery": floor_titles[5] = "السيوف والأسلحة البيضاء F إلى SSS"
+			"shopping_ranged_gallery": floor_titles[6] = "الأقواس والأسلحة بعيدة المدى F إلى SSS"
+			"shopping_armor_gallery": floor_titles[7] = "الدروع والخوذ F إلى SSS"
+			"shopping_elixir_pharmacy": floor_titles[8] = "أكاسير الاستعادة والطاقة F إلى C"
+			"shopping_advanced_elixir_lab": floor_titles[9] = "أكاسير النِن المتقدمة B إلى A"
+			"shopping_rare_elixir_vault": floor_titles[10] = "الخزنة النادرة والأسطورية S إلى SSS"
 	var heading := Label3D.new()
 	heading.name = "ShowcaseCategorySign"
 	heading.text = str(category_titles.get(facility_type, "متجر SYSTEM")) + "\n" + str(floor_titles.get(floor_number, "SYSTEM | " + facility_type.to_upper()))
@@ -7209,6 +7218,15 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 		25: ["إكسير متقدم", "تجدد النخبة", "ختم المختبر"],
 		26: ["إكسير نادر/أسطوري", "حافظة محمية", "ختم الخزنة"]
 	}.get(floor_number, ["عرض A", "عرض B", "عرض C"])
+	if tower_id == "power_tower_baghdad":
+		match facility_type:
+			"shopping_skill_store": display_names = ["مخطوطة الضربة الأساسية F", "مخطوطة مهارة النِن", "مخطوطة اندفاع السيادة SSS"]
+			"shopping_weapon_gallery": display_names = ["سيف تدريبي F", "نصل السيادة SS", "نصل SYSTEM SSS"]
+			"shopping_ranged_gallery": display_names = ["قوس نشاب C", "بندقية النخبة A", "بندقية SYSTEM SSS"]
+			"shopping_armor_gallery": display_names = ["درع خفيف F", "درع نخبة A", "درع SYSTEM SSS"]
+			"shopping_elixir_pharmacy": display_names = ["إكسير الشفاء F", "إكسير مقاومة الإرهاق E", "إكسير الطاقة C"]
+			"shopping_advanced_elixir_lab": display_names = ["إكسير تركيز النِن B", "إكسير استعادة النِن A", "إكسير التجدد C"]
+			"shopping_rare_elixir_vault": display_names = ["إكسير نادر S", "إكسير أسطوري SS", "إكسير ارتقاء السيادة SSS"]
 	for index in range(3):
 		var item := Node3D.new()
 		item.name = "ShowcaseItem_%02d" % index
@@ -7239,6 +7257,15 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 			25: ["regeneration_elixir", "elite_legendary_elixir", "elite_legendary_elixir"],
 			26: ["rare_legendary_elixir", "rare_legendary_elixir", "rare_legendary_elixir"]
 		}.get(floor_number, [])
+		if tower_id == "power_tower_baghdad":
+			match facility_type:
+				"shopping_skill_store": display_product_ids = ["skill_manual_basic_strike", "skill_manual_pulse_dash", "skill_manual_sovereign_overdrive"]
+				"shopping_weapon_gallery": display_product_ids = ["training_sword", "rank_ss_blade", "rank_sss_blade"]
+				"shopping_ranged_gallery": display_product_ids = ["crossbow", "rank_a_rifle", "rank_sss_rifle"]
+				"shopping_armor_gallery": display_product_ids = ["rank_f_armor", "rank_a_armor", "rank_sss_armor"]
+				"shopping_elixir_pharmacy": display_product_ids = ["healing_elixir", "resistance_elixir", "energy_elixir"]
+				"shopping_advanced_elixir_lab": display_product_ids = ["nen_focus_elixir", "nen_recovery_elixir", "regeneration_elixir"]
+				"shopping_rare_elixir_vault": display_product_ids = ["rare_legendary_elixir", "elite_legendary_elixir", "sovereign_ascension_elixir"]
 		if index < display_product_ids.size():
 			item.set_meta("system_showcase_product_id", str(display_product_ids[index]))
 		showcase.add_child(item)
@@ -7264,7 +7291,7 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 				elif index == 2:
 					_add_facility_box(item, "WarHammerHead", Vector3(0.0, 3.0, 0.0), Vector3(1.0, 0.72, 0.72), accent)
 		elif facility_type == "shopping_ranged_gallery":
-			if floor_number == 8 and index < 2:
+			if (tower_id == "power_tower_baghdad" and floor_number == 6) or (tower_id != "power_tower_baghdad" and floor_number == 8 and index < 2):
 				var bow := MeshInstance3D.new()
 				bow.name = "BowDisplay" if index == 0 else "CrossbowDisplay"
 				var bow_mesh := TorusMesh.new()
@@ -7279,7 +7306,7 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 				_add_facility_box(item, "RangedStock", Vector3(-0.15, 1.65, 0.0), Vector3(1.8, 0.28, 0.42), accent)
 				_add_facility_box(item, "RangedBarrel", Vector3(0.95, 1.82, 0.0), Vector3(1.55, 0.12, 0.14), highlight)
 				_add_facility_box(item, "RangedGrip", Vector3(0.25, 1.18, 0.0), Vector3(0.28, 0.78, 0.28), accent)
-				if floor_number == 10:
+				if floor_number == 10 or (tower_id == "power_tower_baghdad" and floor_number == 6):
 					_add_facility_box(item, "PrecisionScope", Vector3(0.1, 2.05, 0.0), Vector3(0.62, 0.22, 0.22), highlight)
 		elif facility_type == "shopping_armor_gallery":
 			var torso := MeshInstance3D.new()
@@ -7301,7 +7328,7 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 			helmet.material_override = accent
 			item.add_child(helmet)
 			_add_facility_box(item, "ArmorShieldDisplay", Vector3(1.15, 1.95, 0.25), Vector3(0.82, 1.35, 0.22), highlight)
-			if floor_number == 13:
+			if floor_number == 13 or (tower_id == "power_tower_baghdad" and floor_number == 7):
 				_add_facility_box(item, "EliteShoulderLeft", Vector3(-0.8, 2.65, 0.0), Vector3(0.75, 0.55, 0.75), highlight)
 				_add_facility_box(item, "EliteShoulderRight", Vector3(0.8, 2.65, 0.0), Vector3(0.75, 0.55, 0.75), highlight)
 				_add_facility_box(item, "OutfitRackRail", Vector3(-1.15, 3.0, -0.45), Vector3(1.5, 0.12, 0.12), accent)
@@ -7336,7 +7363,7 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 		var item_interaction := Area3D.new()
 		item_interaction.name = "ShowcaseItemInteraction_%02d" % index
 		item_interaction.add_to_group("system_interactable")
-		item_interaction.set_meta("system_tower_id", "shopping_tower_baghdad")
+		item_interaction.set_meta("system_tower_id", tower_id)
 		item_interaction.set_meta("system_tower_floor_number", floor_number)
 		item_interaction.set_meta("system_facility_type", facility_type)
 		item_interaction.set_meta("system_showcase_product_id", str(item.get_meta("system_showcase_product_id", "")))
