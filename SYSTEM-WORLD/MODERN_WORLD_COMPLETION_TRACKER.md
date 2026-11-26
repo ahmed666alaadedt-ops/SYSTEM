@@ -2,7 +2,7 @@
 
 - [x] Added a separate ground-level Al-Bataween market district at the neighborhood WGS84 center reference (33.3201, 44.4205); it is not counted as a sixth Baghdad tower.
 - [x] Extended the playable terrain to include the Al-Bataween anchor and a walkable procedural access corridor from the Republic Bridge approach. The connector is explicitly not represented as surveyed OSM road geometry.
-- [x] Generated 24 individually identified stalls across Iraqi heritage, manuscripts, coins, ceramics, metalwork, player commerce, auctions, appraisal and restoration, plus a main market entrance interaction.
+- [x] Generated 24 individually identified stalls across Iraqi heritage, manuscripts, coins, ceramics, metalwork, player commerce, appraisal and restoration, plus a main market entrance interaction.
 - [x] Added an in-world marketplace panel that uses the existing authenticated Firebase callable bridge for wallet, owned artifacts, listing browse, listing creation and purchase; the native Android market tab uses the same backend and ledger.
 - [x] Added regression checks for WGS84 placement, continuous land access, route collision, 24 stalls, 25 interactions and UI script loading.
 - [ ] Exact-head Godot validation, Android build and physical-device round-trip are still required. The 24-stall geometry is a procedural first pass, not finished cinematic art or a complete OSM reconstruction of surrounding Al-Bataween streets.
