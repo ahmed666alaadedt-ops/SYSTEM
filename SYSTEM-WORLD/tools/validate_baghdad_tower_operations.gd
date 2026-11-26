@@ -1761,7 +1761,7 @@ func _run() -> void:
 
 	var power_tier_catalog_checks := {
 		"rank_f_armor":"F", "rank_e_armor":"E", "rank_d_armor":"D", "rank_c_armor":"C", "rank_b_armor":"B", "rank_a_armor":"A", "rank_s_armor":"S", "rank_ss_armor":"SS", "rank_sss_armor":"SSS",
-		"rank_a_blade":"A", "rank_s_blade":"S", "rank_ss_blade":"SS", "rank_sss_blade":"SSS",
+		"rank_a_blade":"A", "rank_s_blade":"S", "rank_ss_blade":"SS", "rank_sss_blade":"SSS", "rank_e_bow":"E", "rank_d_bow":"D",
 		"rank_a_rifle":"A", "rank_s_rifle":"S", "rank_ss_rifle":"SS", "rank_sss_rifle":"SSS",
 		"skill_manual_basic_strike":"F", "skill_manual_sovereign_overdrive":"SSS",
 		"healing_elixir":"F", "resistance_elixir":"E", "deep_wound_elixir":"D", "regeneration_elixir":"C", "nen_focus_elixir":"D", "nen_recovery_elixir":"C", "rare_legendary_elixir":"S", "elite_legendary_elixir":"SS", "sovereign_ascension_elixir":"SSS"
