@@ -5942,15 +5942,7 @@ func _add_nen_foundation_training_controls(progression: Node, floor_number: int)
 		training_button.name = "NenFoundationTraining_" + foundation_id
 		training_button.text = "%s — %d/3" % [str(stage.get("name", foundation_id)), int(stage.get("sessions", 0))]
 		training_button.disabled = bool(stage.get("completed", false)) or not bool(stage.get("available", false))
-		training_button.pressed.connect(func():
-			var session_id := "hunter_floor_%d_%s_%d" % [floor_number, foundation_id, Time.get_ticks_usec()]
-			var result: Dictionary = progression.call("record_nen_foundation_training", foundation_id, session_id)
-			if bool(result.get("success", false)):
-				_set_status("تم تسجيل جلسة %s — %d/3." % [str(stage.get("name", foundation_id)), int(result.get("sessions", 0))])
-				open_baghdad_progression_facility("hunter_association_tower_baghdad", floor_number, "hunter_nen_fundamentals")
-			else:
-				_set_status("تعذر تسجيل التدريب: " + str(result.get("reason", "UNKNOWN")))
-		)
+		training_button.pressed.connect(_on_nen_foundation_training_pressed.bind(progression, foundation_id, floor_number))
 		content.add_child(training_button)
 	if bool(status.get("all_complete", false)):
 		var affinity := str(status.get("affinity", ""))
@@ -5965,20 +5957,39 @@ func _add_nen_foundation_training_controls(progression: Node, floor_number: int)
 				var affinity_button := Button.new()
 				affinity_button.name = "NenAffinity_" + affinity_id
 				affinity_button.text = str(affinity_names[affinity_value])
-				affinity_button.pressed.connect(func():
-					var result: Dictionary = progression.call("choose_nen_affinity", affinity_id)
-					if bool(result.get("success", false)):
-						_set_status("تم اختيار ميول النِن: " + str(result.get("name", affinity_id)))
-						open_baghdad_progression_facility("hunter_association_tower_baghdad", floor_number, "hunter_nen_fundamentals")
-					else:
-						_set_status("تعذر اختيار التخصص: " + str(result.get("reason", "UNKNOWN")))
-				)
+				affinity_button.pressed.connect(_on_nen_affinity_selected.bind(progression, affinity_id, floor_number))
 				content.add_child(affinity_button)
 		else:
 			var affinity_label := Label.new()
 			affinity_label.name = "NenAffinitySelected"
 			affinity_label.text = "ميول النِن المعتمد: " + str(status.get("affinity_name", affinity))
 			content.add_child(affinity_label)
+
+
+
+func _on_nen_foundation_training_pressed(progression: Node, foundation_id: String, floor_number: int) -> void:
+	if not is_instance_valid(progression):
+		_set_status("نظام تقدم اللاعب غير متاح.")
+		return
+	var session_id := "hunter_floor_%d_%s_%d" % [floor_number, foundation_id, Time.get_ticks_usec()]
+	var result: Dictionary = progression.call("record_nen_foundation_training", foundation_id, session_id)
+	if bool(result.get("success", false)):
+		_set_status("تم تسجيل جلسة %s — %d/3." % [foundation_id, int(result.get("sessions", 0))])
+		open_baghdad_progression_facility("hunter_association_tower_baghdad", floor_number, "hunter_nen_fundamentals")
+	else:
+		_set_status("تعذر تسجيل التدريب: " + str(result.get("reason", "UNKNOWN")))
+
+
+func _on_nen_affinity_selected(progression: Node, affinity_id: String, floor_number: int) -> void:
+	if not is_instance_valid(progression):
+		_set_status("نظام تقدم اللاعب غير متاح.")
+		return
+	var result: Dictionary = progression.call("choose_nen_affinity", affinity_id)
+	if bool(result.get("success", false)):
+		_set_status("تم اختيار ميول النِن: " + str(result.get("name", affinity_id)))
+		open_baghdad_progression_facility("hunter_association_tower_baghdad", floor_number, "hunter_nen_fundamentals")
+	else:
+		_set_status("تعذر اختيار التخصص: " + str(result.get("reason", "UNKNOWN")))
 
 
 func _calculate_arcade_mode_index(cabinet_mode: String) -> int:
