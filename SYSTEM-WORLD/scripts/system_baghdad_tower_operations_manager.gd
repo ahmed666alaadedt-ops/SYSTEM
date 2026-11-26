@@ -5030,9 +5030,9 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 	var shape := CollisionShape3D.new()
 	shape.name = "CollisionShape3D"
 	var sphere := SphereShape3D.new()
-	sphere.radius = 3.0
+		sphere.radius = 2.2 if tower_id == "power_tower_baghdad" else 3.0
 	shape.shape = sphere
-	shape.position = Vector3(0.0, 1.2, -1.5) if tower_id == "power_tower_baghdad" else (Vector3(0.0, 1.2, -5.8) if facility_type.begins_with("shopping_") else Vector3(0.0, 1.2, 0.0))
+	shape.position = Vector3(0.0, 1.2, 3.0) if tower_id == "power_tower_baghdad" else (Vector3(0.0, 1.2, -5.8) if facility_type.begins_with("shopping_") else Vector3(0.0, 1.2, 0.0))
 	interaction.add_child(shape)
 	root.add_child(interaction)
 
@@ -7390,7 +7390,7 @@ func _build_shopping_floor_showcase(root: Node3D, floor_number: int, facility_ty
 		item.add_child(item_interaction)
 	var counter_position := Vector3(0.0, 0.7, -5.8)
 	if tower_id == "power_tower_baghdad":
-		counter_position.z = -1.5
+		counter_position.z = 3.0
 	_add_facility_box(showcase, "DepartmentCounter", counter_position, Vector3(12.0, 1.4, 1.8), accent)
 
 
