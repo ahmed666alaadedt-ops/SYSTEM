@@ -73,10 +73,26 @@ func _run_validation() -> void:
 		if stall == null or stall_interaction == null or not stall_interaction.is_in_group("system_interactable") or str(stall_interaction.get_meta("system_location_id", "")) != "baghdad_bataween_antiquities_market":
 			_fail("A sampled Al-Bataween stall is missing its physical player-market interaction.")
 			return
-	var marketplace_ui_script := load("res://scripts/system_bataween_marketplace_ui.gd")
+	var marketplace_ui_script := load("res://scripts/system_bataween_marketplace_ui.gd") as GDScript
 	if marketplace_ui_script == null:
 		_fail("The in-world Al-Bataween player marketplace UI script could not be loaded.")
 		return
+	var marketplace_ui := marketplace_ui_script.new() as CanvasLayer
+	if marketplace_ui == null:
+		_fail("The Al-Bataween marketplace UI could not be instantiated.")
+		return
+	root.add_child(marketplace_ui)
+	await process_frame
+	var artifact_picker := marketplace_ui.get("_artifact_picker") as OptionButton
+	var picker_callback := Callable(marketplace_ui, "_on_artifact_selected")
+	if artifact_picker == null or not artifact_picker.item_selected.is_connected(picker_callback):
+		_fail("The marketplace artifact selector is not connected to its selection handler.")
+		return
+	if marketplace_ui.get("_sell_button") == null or marketplace_ui.get("_listing_list") == null:
+		_fail("The Al-Bataween marketplace UI is missing listing or sell controls.")
+		return
+	marketplace_ui.queue_free()
+	await process_frame
 
 	var terrain := tower_manager.get("terrain") as Node3D
 	if terrain == null or not terrain.has_method("get_baghdad_bridge_anchor") or not terrain.has_method("get_baghdad_bridge_nearest_bank_anchor"):
