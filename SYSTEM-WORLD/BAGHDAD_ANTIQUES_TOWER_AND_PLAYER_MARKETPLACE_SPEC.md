@@ -18,7 +18,7 @@ The Power Tower remains a separate landmark outside the five-tower count. Its co
 The outdoor Al-Bataween market is a separate ground-level Baghdad neighborhood destination, not a sixth tower and not a replacement for the 34-floor Antiques & Heritage museum. Its neighborhood-center WGS84 anchor is 33.3201, 44.4205 (a neighborhood reference point, not a surveyed parcel boundary). The playable terrain is extended to this anchor and connected to the Republic Bridge approach by a clearly identified procedural access corridor; that corridor is gameplay infrastructure, not surveyed OpenStreetMap road geometry.
 
 - Generate a walkable street-market courtyard with 24 individually identified stalls and a main entrance interaction.
-- Organize stalls around Iraqi heritage, manuscripts, coins, ceramics, metalwork, player listings, auctions, appraisal and restoration.
+- Organize stalls around Iraqi heritage, manuscripts, coins, ceramics, metalwork, player listings, appraisal and restoration.
 - Every stall routes into the same authoritative player marketplace; do not create a second wallet, local-save trading ledger or duplicate economy.
 - The in-world Godot interaction opens the marketplace panel. The existing native Android marketplace tab remains available and uses the same authenticated Firebase callable functions.
 - Sellers list only artifacts they own and choose their fixed price. Buyers browse active offers and purchase with virtual SYSTEM currency.
