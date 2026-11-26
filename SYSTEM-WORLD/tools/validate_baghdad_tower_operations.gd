@@ -1890,6 +1890,11 @@ func _run() -> void:
 	var skill_progression := main.get("player_progression") as Node
 	var power_skill_tree: Dictionary = skill_progression.call("get_system_skill_tree")
 	var power_skill_rank_checks := {"basic_strike":"F", "guard_breaker":"E", "swift_step":"D", "iron_guard":"C", "aura_shield":"B", "flow_counter":"A", "resonance_burst":"S", "sovereign_focus":"SS", "sovereign_overdrive":"SSS"}
+	var power_equipment_slot_checks := {"rank_e_bow":"weapon", "rank_d_bow":"weapon", "rank_a_blade":"weapon", "rank_s_blade":"weapon", "rank_ss_blade":"weapon", "rank_sss_blade":"weapon", "rank_a_rifle":"weapon", "rank_s_rifle":"weapon", "rank_ss_rifle":"weapon", "rank_sss_rifle":"weapon", "rank_f_armor":"armor"}
+	for equipment_id in power_equipment_slot_checks.keys():
+		if str(skill_progression.call("get_item_equipment_slot", str(equipment_id))) != str(power_equipment_slot_checks[equipment_id]):
+			_fail("Power Tower equipment %s is sold but cannot be equipped in its correct slot." % str(equipment_id))
+			return
 	for skill_id in power_skill_rank_checks.keys():
 		if str(power_skill_tree.get(skill_id, {}).get("required_rank", "")) != str(power_skill_rank_checks[skill_id]):
 			_fail("Power Tower skill %s does not have its correct %s grade." % [str(skill_id), str(power_skill_rank_checks[skill_id])])
