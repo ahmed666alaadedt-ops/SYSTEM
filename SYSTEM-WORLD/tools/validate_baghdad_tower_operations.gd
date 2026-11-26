@@ -990,7 +990,7 @@ func _run() -> void:
 		for child in lobby.get_children():
 			if child.has_meta("system_tower_staff_id"):
 				staff_count += 1
-		var expected_staff_count := 4
+		var expected_staff_count := 6
 		match tower_id:
 			"hunter_association_tower_baghdad", "business_investment_tower_baghdad", "technology_tower_baghdad":
 				expected_staff_count = 8
