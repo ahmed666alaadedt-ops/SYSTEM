@@ -1916,6 +1916,18 @@ func _run() -> void:
 	if not skill_progression.has_method("practice_system_skill") or skill_progression.call("get_system_skill_tree").size() != 18:
 		_fail("Persistent original SYSTEM skill tree is missing or incomplete.")
 		return
+	for skill_value in power_skill_tree.keys():
+		var skill_id := str(skill_value)
+		var skill: Dictionary = power_skill_tree[skill_id]
+		if not bool(skill.get("requires_nen", false)) or not bool(skill.get("requires_nen_foundations", false)):
+			_fail("Skill %s can bypass the shared Nen foundation system." % skill_id)
+			return
+	var lightning_types: Array = power_skill_tree.get("lightning_mantle", {}).get("nen_types", [])
+	var shadow_types: Array = power_skill_tree.get("shadow_step", {}).get("nen_types", [])
+	var body_types: Array = power_skill_tree.get("body_manifestation", {}).get("nen_types", [])
+	if not lightning_types.has("transmutation") or not lightning_types.has("enhancement") or not shadow_types.has("manipulation") or not shadow_types.has("specialization") or not body_types.has("enhancement") or not body_types.has("conjuration"):
+		_fail("Lightning, shadow and body-manifestation abilities are missing their agreed Nen affinity mappings.")
+		return
 	var skill_snapshot := {"level":skill_progression.get("current_level"),"points":skill_progression.get("verified_hunter_mission_points"),"learned":skill_progression.get("learned_system_skills").duplicate(),"authorized":skill_progression.get("authorized_system_skills").duplicate(),"practice":skill_progression.get("system_skill_practice").duplicate(true),"mastery":skill_progression.get("system_skill_mastery").duplicate(true),"cooldowns":skill_progression.get("system_skill_cooldowns").duplicate(true),"weapon_mastery":skill_progression.get("weapon_mastery").duplicate(true),"energy":skill_progression.get("current_system_energy"),"nen_unlocked":skill_progression.get("nen_unlocked"),"nen_control_rank":skill_progression.get("nen_control_rank"),"nen_foundation_practice":skill_progression.get("nen_foundation_practice").duplicate(true),"nen_affinity":skill_progression.get("nen_affinity"),"skill_drop_claim_ids":skill_progression.get("skill_drop_claim_ids").duplicate(),"nen_skill_use_count":skill_progression.get("nen_skill_use_count"),"nen_skill_ids":skill_progression.get("nen_skill_ids").duplicate(),"inventory":skill_progression.get("inventory_items").duplicate(true),"credits":operations.get("credits"),"vendor_stock":operations.get("vendor_stock").duplicate(true),"equipment_slots":skill_progression.get("equipment_slots").duplicate(true)}
 	skill_progression.set("current_level", 3)
 	skill_progression.set("verified_hunter_mission_points", 100)
