@@ -54,7 +54,7 @@ const PRODUCT_CATALOG := {
 		{"id":"strength_elixir","name":"إكسير القوة","price":420},
 		{"id":"speed_elixir","name":"إكسير السرعة","price":420},
 		{"id":"endurance_elixir","name":"إكسير التحمل","price":450},
-		{"id":"energy_elixir","name":"إكسير الطاقة","price":360},
+		{"id":"energy_elixir","name":"إكسير الطاقة — رتبة C","price":360,"required_rank":"C"},
 		{"id":"nen_awakening_elixir","name":"إكسير إيقاظ النِن","price":1800},
 		{"id":"nen_control_elixir","name":"إكسير التحكم بالنِن","price":2600},
 		{"id":"rare_legendary_elixir","name":"إكسير نادر/أسطوري — رتبة S","price":18000,"required_rank":"S"},
