@@ -5885,6 +5885,8 @@ func open_baghdad_progression_facility(tower_id: String, floor_number: int, faci
 			_set_status("نظام التقدم غير متاح.")
 			panel.show()
 			return
+		if facility_type == "hunter_nen_fundamentals":
+			_add_nen_foundation_training_controls(progression, floor_number)
 		if facility_type == "hunter_weapon_mastery":
 			var family_names := {"sword":"السيف", "spear":"الرمح", "axe":"الفأس", "bow":"القوس", "shield":"الدرع", "modern_ranged":"السلاح بعيد المدى"}
 			for family_value in family_names.keys():
@@ -5916,6 +5918,67 @@ func open_baghdad_progression_facility(tower_id: String, floor_number: int, faci
 			learned_heading.text = "المهارات المتعلمة: " + ", ".join(learned)
 			content.add_child(learned_heading)
 	panel.show()
+
+
+
+func _add_nen_foundation_training_controls(progression: Node, floor_number: int) -> void:
+	var instructions := Label.new()
+	instructions.name = "NenFoundationInstructions"
+	instructions.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	instructions.text = "ابدأ بإكسير إيقاظ النِن، ثم أتقن Ten وZetsu وRen وHatsu بالترتيب. تحتاج كل مرحلة إلى ثلاث جلسات تدريب مختلفة قبل فتح المرحلة التالية."
+	content.add_child(instructions)
+	if not bool(progression.get("nen_unlocked")):
+		var locked_label := Label.new()
+		locked_label.name = "NenAwakeningRequired"
+		locked_label.text = "النِن غير مستيقظ بعد — احصل على إكسير إيقاظ النِن أولاً من متجر الأكاسير."
+		content.add_child(locked_label)
+		return
+	var status: Dictionary = progression.call("get_nen_foundation_status")
+	var foundations: Dictionary = status.get("foundations", {})
+	for foundation_value in ["ten", "zetsu", "ren", "hatsu"]:
+		var foundation_id := str(foundation_value)
+		var stage: Dictionary = foundations.get(foundation_id, {})
+		var training_button := Button.new()
+		training_button.name = "NenFoundationTraining_" + foundation_id
+		training_button.text = "%s — %d/3" % [str(stage.get("name", foundation_id)), int(stage.get("sessions", 0))]
+		training_button.disabled = bool(stage.get("completed", false)) or not bool(stage.get("available", false))
+		training_button.pressed.connect(func():
+			var session_id := "hunter_floor_%d_%s_%d" % [floor_number, foundation_id, Time.get_ticks_usec()]
+			var result: Dictionary = progression.call("record_nen_foundation_training", foundation_id, session_id)
+			if bool(result.get("success", false)):
+				_set_status("تم تسجيل جلسة %s — %d/3." % [str(stage.get("name", foundation_id)), int(result.get("sessions", 0))])
+				open_baghdad_progression_facility("hunter_association_tower_baghdad", floor_number, "hunter_nen_fundamentals")
+			else:
+				_set_status("تعذر تسجيل التدريب: " + str(result.get("reason", "UNKNOWN")))
+		)
+		content.add_child(training_button)
+	if bool(status.get("all_complete", false)):
+		var affinity := str(status.get("affinity", ""))
+		if affinity.is_empty():
+			var affinity_heading := Label.new()
+			affinity_heading.name = "NenAffinityHeading"
+			affinity_heading.text = "اكتملت الأساسيات الأربع. اختر ميول النِن الرئيسي:"
+			content.add_child(affinity_heading)
+			var affinity_names := {"enhancement":"التعزيز — Enhancement", "emission":"الإطلاق — Emission", "transmutation":"التحويل — Transmutation", "conjuration":"التجسيد — Conjuration", "manipulation":"التحكم — Manipulation", "specialization":"التخصص — Specialization"}
+			for affinity_value in affinity_names.keys():
+				var affinity_id := str(affinity_value)
+				var affinity_button := Button.new()
+				affinity_button.name = "NenAffinity_" + affinity_id
+				affinity_button.text = str(affinity_names[affinity_value])
+				affinity_button.pressed.connect(func():
+					var result: Dictionary = progression.call("choose_nen_affinity", affinity_id)
+					if bool(result.get("success", false)):
+						_set_status("تم اختيار ميول النِن: " + str(result.get("name", affinity_id)))
+						open_baghdad_progression_facility("hunter_association_tower_baghdad", floor_number, "hunter_nen_fundamentals")
+					else:
+						_set_status("تعذر اختيار التخصص: " + str(result.get("reason", "UNKNOWN")))
+				)
+				content.add_child(affinity_button)
+		else:
+			var affinity_label := Label.new()
+			affinity_label.name = "NenAffinitySelected"
+			affinity_label.text = "ميول النِن المعتمد: " + str(status.get("affinity_name", affinity))
+			content.add_child(affinity_label)
 
 
 func _calculate_arcade_mode_index(cabinet_mode: String) -> int:
