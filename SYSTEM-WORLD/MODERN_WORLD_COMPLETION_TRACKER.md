@@ -1,3 +1,13 @@
+## Al-Bataween antiques market — initial implementation — 27 November 2026
+
+- [x] Added a separate ground-level Al-Bataween market district at the neighborhood WGS84 center reference (33.3201, 44.4205); it is not counted as a sixth Baghdad tower.
+- [x] Extended the playable terrain to include the Al-Bataween anchor and a walkable procedural access corridor from the Republic Bridge approach. The connector is explicitly not represented as surveyed OSM road geometry.
+- [x] Generated 24 individually identified stalls across Iraqi heritage, manuscripts, coins, ceramics, metalwork, player commerce, auctions, appraisal and restoration, plus a main market entrance interaction.
+- [x] Added an in-world marketplace panel that uses the existing authenticated Firebase callable bridge for wallet, owned artifacts, listing browse, listing creation and purchase; the native Android market tab uses the same backend and ledger.
+- [x] Added regression checks for WGS84 placement, continuous land access, route collision, 24 stalls, 25 interactions and UI script loading.
+- [ ] Exact-head Godot validation, Android build and physical-device round-trip are still required. The 24-stall geometry is a procedural first pass, not finished cinematic art or a complete OSM reconstruction of surrounding Al-Bataween streets.
+- [ ] Marketplace production activation remains gated by trusted quest-reward issuance, production wallet funding, deployment/monitoring of Firebase functions/rules/indexes, and cross-account/device testing. Emulator tests on the earlier backend snapshot do not prove production readiness.
+
 ## Current authoritative Hunter route — 25 November 2026
 
 This current section supersedes older historical entries below that describe the former multi-stage examination or the restaurant secret-door route.
