@@ -1761,8 +1761,9 @@ func _run() -> void:
 
 	var power_tier_catalog_checks := {
 		"rank_f_armor":"F", "rank_e_armor":"E", "rank_d_armor":"D", "rank_c_armor":"C", "rank_b_armor":"B", "rank_a_armor":"A", "rank_s_armor":"S", "rank_ss_armor":"SS", "rank_sss_armor":"SSS",
-		"rank_a_blade":"A", "rank_s_blade":"S", "rank_ss_blade":"SS", "rank_sss_blade":"SSS", "rank_e_bow":"E", "rank_d_bow":"D",
-		"rank_a_rifle":"A", "rank_s_rifle":"S", "rank_ss_rifle":"SS", "rank_sss_rifle":"SSS",
+		"training_sword":"F", "combat_knife":"E", "steel_sword":"D", "battle_axe":"C", "great_sword":"B", "rank_a_blade":"A", "rank_s_blade":"S", "rank_ss_blade":"SS", "rank_sss_blade":"SSS",
+		"reinforced_arrows":"F", "rank_e_bow":"E", "rank_d_bow":"D", "composite_bow":"C", "hunter_rifle":"B", "rank_a_rifle":"A", "rank_s_rifle":"S", "rank_ss_rifle":"SS", "rank_sss_rifle":"SSS",
+		"rank_f_armor":"F", "rank_e_armor":"E", "rank_d_armor":"D", "rank_c_armor":"C", "rank_b_armor":"B", "rank_a_armor":"A", "rank_s_armor":"S", "rank_ss_armor":"SS", "rank_sss_armor":"SSS",
 		"skill_manual_basic_strike":"F", "skill_manual_sovereign_overdrive":"SSS",
 		"healing_elixir":"F", "resistance_elixir":"E", "deep_wound_elixir":"D", "regeneration_elixir":"C", "nen_focus_elixir":"B", "nen_recovery_elixir":"A", "rare_legendary_elixir":"S", "elite_legendary_elixir":"SS", "sovereign_ascension_elixir":"SSS"
 	}
@@ -1863,9 +1864,11 @@ func _run() -> void:
 		return
 	var skill_progression := main.get("player_progression") as Node
 	var power_skill_tree: Dictionary = skill_progression.call("get_system_skill_tree")
-	if str(power_skill_tree.get("basic_strike", {}).get("required_rank", "")) != "F" or str(power_skill_tree.get("sovereign_overdrive", {}).get("required_rank", "")) != "SSS":
-		_fail("Power Tower skill progression does not span the complete F-to-SSS range.")
-		return
+	var power_skill_rank_checks := {"basic_strike":"F", "guard_breaker":"E", "swift_step":"D", "iron_guard":"C", "aura_shield":"B", "flow_counter":"A", "resonance_burst":"S", "sovereign_focus":"SS", "sovereign_overdrive":"SSS"}
+	for skill_id in power_skill_rank_checks.keys():
+		if str(power_skill_tree.get(skill_id, {}).get("required_rank", "")) != str(power_skill_rank_checks[skill_id]):
+			_fail("Power Tower skill %s does not have its correct %s grade." % [str(skill_id), str(power_skill_rank_checks[skill_id])])
+			return
 	if skill_progression == null or not skill_progression.has_method("practice_system_skill") or skill_progression.call("get_system_skill_tree").size() != 10:
 		_fail("Persistent original SYSTEM skill tree is missing or incomplete.")
 		return
