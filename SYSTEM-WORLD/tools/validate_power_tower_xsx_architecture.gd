@@ -30,6 +30,9 @@ func _run() -> void:
 	assert(architecture.get_node_or_null("XSXCircularEntrancePodium") != null)
 	var interior := lobby.get_node_or_null("XSXShopAndCafeteriaInterior") as Node3D
 	assert(interior != null)
+	assert(int(architecture.get_meta("system_power_tower_lobby_light_bar_count", 0)) == 5)
+	assert(int(architecture.get_meta("system_power_tower_lobby_floor_inlay_count", 0)) == 2)
+	assert(int(architecture.get_meta("system_power_tower_lobby_ceiling_halo_count", 0)) == 3)
 	for facility_name in ["TraditionalWeaponsGallery", "ArmorShowroom", "NenElixirCabinet", "SkillScrollLibrary", "HunterAccessoriesGallery", "PowerTowerCafeteria", "PowerTowerNenTrainingHall"]:
 		assert(interior.get_node_or_null(facility_name) != null, "Missing Power Tower interior facility: " + facility_name)
 	assert(int(architecture.get_meta("system_power_tower_cafeteria_table_count", 0)) == 4)
