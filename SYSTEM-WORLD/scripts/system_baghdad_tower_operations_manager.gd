@@ -3581,6 +3581,19 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 			if existing.get_node_or_null("RestaurantDiningSign") == null:
 				_create_restaurant_dining_area(existing, float(config["radius"]), floor_number, tower_id)
 			existing.set_meta("system_power_tower_cafeteria_floor", true)
+		if tower_id == "power_tower_baghdad" and floor_number >= 4 and floor_number <= 10:
+			var power_department := _department_for_floor(tower_id, floor_number, int(config["floors"]))
+			var power_facility_type := ""
+			match floor_number:
+				4: power_facility_type = "shopping_skill_store"
+				5: power_facility_type = "shopping_weapon_gallery"
+				6: power_facility_type = "shopping_ranged_gallery"
+				7: power_facility_type = "shopping_armor_gallery"
+				8: power_facility_type = "shopping_elixir_pharmacy"
+				9: power_facility_type = "shopping_advanced_elixir_lab"
+				10: power_facility_type = "shopping_rare_elixir_vault"
+			if existing.get_node_or_null("SpecialFacility_" + power_facility_type) == null:
+				_create_specialized_floor_facility(existing, tower_id, floor_number, float(config["radius"]), power_department)
 		# Existing museum floors can be prepared before a later interaction pass.
 		# Reconcile every exhibit collider/group/record before returning the cached room.
 		_ensure_museum_exhibit_interactions(existing, tower_id, floor_number)
@@ -3662,12 +3675,15 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 	_create_floor_emergency_exit(room, tower_id, floor_number, radius)
 	if tower_id == "power_tower_baghdad":
 		room.set_meta("system_power_tower_floor", floor_number)
-		room.set_meta("system_power_tower_department", "arena")
+		room.set_meta("system_power_tower_department", "arena" if floor_number > 10 else "commercial_and_services")
 		_create_power_arena_layout(room, radius, floor_number)
 		if floor_number in [2, 3]:
 			# Keep the arena floor intact while adding the promised physical cafeteria zone.
 			_create_restaurant_dining_area(room, radius, floor_number, tower_id)
 			room.set_meta("system_power_tower_cafeteria_floor", true)
+		elif floor_number >= 4 and floor_number <= 10:
+			# Power Tower has its own seven commercial departments; do not reuse the Baghdad shopping tower.
+			_create_specialized_floor_facility(room, tower_id, floor_number, radius, department)
 	else:
 		_create_floor_facilities(room, tower_id, floor_number, radius, department)
 		TowerFloorThemeBuilder.build(room, tower_id, floor_number, radius, department)
