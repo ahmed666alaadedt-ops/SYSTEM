@@ -90,6 +90,19 @@ func _run_validation() -> void:
 	if bridge_bank_anchor == Vector3.INF or bridge_bank_anchor.length() >= bridge_anchor.length():
 		_fail("Republic Bridge nearest surveyed bank endpoint is missing or not the nearest approach point.")
 		return
+	var bataween_market_position: Vector3 = market_stats.get("position", Vector3.INF)
+	for route_sample in range(1, 10):
+		var route_fraction := float(route_sample) / 10.0
+		var route_point := bridge_bank_anchor.lerp(bataween_market_position, route_fraction)
+		if not bool(terrain.call("is_land_position", route_point.x, route_point.z)):
+			_fail("The playable land corridor between the Republic Bridge approach and Al-Bataween market is discontinuous.")
+			return
+	var bataween_route := bataween_market.get_node_or_null("BataweenPlayableAccessRoute") as MeshInstance3D
+	var bataween_route_body := bataween_market.get_node_or_null("BataweenPlayableAccessRouteCollision") as StaticBody3D
+	var bataween_route_shape := bataween_route_body.get_node_or_null("CollisionShape3D") as CollisionShape3D if bataween_route_body != null else null
+	if bataween_route == null or not bool(bataween_route.get_meta("system_generated_access_route", false)) or bataween_route_shape == null or bataween_route_shape.shape == null:
+		_fail("The Al-Bataween market is missing its walkable physical access route from the Baghdad bridge approach.")
+		return
 	var bridge_node := terrain.get_node_or_null("BaghdadRepublicBridge") as Node3D
 	if bridge_node == null or int(bridge_node.get_meta("system_osm_bridge_polygon_way_id", 0)) != 1077808833:
 		_fail("Republic Bridge runtime deck is missing or not tied to OSM bridge way 1077808833.")
