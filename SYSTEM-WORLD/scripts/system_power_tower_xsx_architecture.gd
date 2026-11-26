@@ -291,10 +291,10 @@ func _build_circular_entrance_podium() -> void:
 func _build_lobby_ambience(lobby: Node3D) -> void:
 	# Decorative lighting is aligned to the existing lobby canopy and does not alter its collisions.
 	var canopy := lobby.get_node_or_null("LobbyCanopy") as MeshInstance3D
-	if canopy == null:
-		push_warning("X-S-X Power Tower: lobby canopy missing; ambience rig skipped.")
-		return
-	var center_z := canopy.position.z
+	# Keep the ambience rig available in both the full production lobby and
+	# the isolated headless validator fixture, which intentionally has no canopy.
+	var center_z := canopy.position.z if canopy != null else 0.0
+	lobby.set_meta("system_power_tower_ambience_anchor", "LOBBY_CANOPY" if canopy != null else "SAFE_CENTER_FALLBACK")
 	var light_bar_count := 0
 	for index in range(5):
 		var light_bar := MeshInstance3D.new()
