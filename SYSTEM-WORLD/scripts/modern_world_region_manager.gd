@@ -764,7 +764,7 @@ func register_map_locations(map_manager: Node, world_id: String) -> void:
 			map_manager.call(
 				"register_location", world_id,
 				"baghdad_bataween_antiquities_market", "region_baghdad",
-				"سوق البتاوين للتحف والآثار", 4, market_position, false
+				"سوق التحف والآثار الغامضة", 4, market_position, false
 			)
 
 
