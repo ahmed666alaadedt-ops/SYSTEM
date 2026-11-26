@@ -10,7 +10,7 @@ signal floor_start_deadline_expired(floor_number: int)
 
 const SAVE_PATH := "user://system_power_tower.cfg"
 const MAX_FLOORS := 200
-const FLOOR_START_DEADLINE_SECONDS := 300
+const FLOOR_START_DEADLINE_SECONDS := 600
 const SPECTATOR_DAILY_PREDICTION_LIMIT := 20
 const SPECTATOR_MIN_STAKE := 1
 const SPECTATOR_MAX_STAKE := 500
