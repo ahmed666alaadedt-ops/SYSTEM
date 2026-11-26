@@ -39,6 +39,7 @@ func setup(p_terrain: Node) -> bool:
 	)
 	position = market_position
 	_create_materials()
+	_create_market_access_route()
 	_build_market()
 	set_meta("system_location_id", MARKET_LOCATION_ID)
 	set_meta("system_display_name", "سوق البتاوين للتحف والآثار")
@@ -52,6 +53,46 @@ func setup(p_terrain: Node) -> bool:
 	set_meta("system_marketplace_currency", "virtual_SYSTEM_only")
 	set_meta("gameplay_status", "physical_bataween_market_generated_server_marketplace_connected_by_in_world_ui")
 	return true
+
+
+func _create_market_access_route() -> void:
+	if not terrain.has_method("get_baghdad_bridge_nearest_bank_anchor"):
+		push_warning("SYSTEM Baghdad Bataween Market: surveyed bridge-bank access anchor is unavailable.")
+		return
+	var start: Vector3 = terrain.call("get_baghdad_bridge_nearest_bank_anchor")
+	if start == Vector3.INF:
+		return
+	var delta := Vector3(market_position.x - start.x, 0.0, market_position.z - start.z)
+	var route_length := delta.length()
+	if route_length < 10.0:
+		return
+	var route := MeshInstance3D.new()
+	route.name = "BataweenPlayableAccessRoute"
+	var route_mesh := BoxMesh.new()
+	route_mesh.size = Vector3(12.0, 0.28, route_length)
+	route.mesh = route_mesh
+	route.position = Vector3(
+		(start.x + market_position.x) * 0.5 - market_position.x,
+		((start.y + market_position.y) * 0.5 + 0.2) - market_position.y,
+		(start.z + market_position.z) * 0.5 - market_position.z
+	)
+	route.rotation.y = atan2(delta.x, delta.z)
+	route.material_override = _material(Color(0.095, 0.10, 0.105), 0.94, 0.08)
+	route.set_meta("system_generated_access_route", true)
+	route.set_meta("system_geography_source", "procedural playable Al-Bataween access route; not OpenStreetMap road geometry")
+	add_child(route)
+
+	var route_body := StaticBody3D.new()
+	route_body.name = "BataweenPlayableAccessRouteCollision"
+	route_body.position = route.position
+	route_body.rotation = route.rotation
+	var route_collision := CollisionShape3D.new()
+	route_collision.name = "CollisionShape3D"
+	var route_shape := BoxShape3D.new()
+	route_shape.size = route_mesh.size
+	route_collision.shape = route_shape
+	route_body.add_child(route_collision)
+	add_child(route_body)
 
 
 func _bataween_local_position() -> Vector2:
