@@ -1,6 +1,7 @@
 extends SceneTree
 
 const ArchitectureScript = preload("res://scripts/system_power_tower_xsx_architecture.gd")
+const CompetitionManagerScript = preload("res://scripts/system_power_tower_competition_manager.gd")
 
 func _initialize() -> void:
 	call_deferred("_run")
@@ -57,5 +58,21 @@ func _run() -> void:
 	assert(nen_hall.get_node_or_null("NenTrainingInteractionArea") != null)
 	assert(str(nen_hall.get_meta("system_interaction_action", "")) == "POWER_TOWER_NEN_TRAINING")
 	assert(not bool(architecture.get_meta("system_power_tower_shop_modern_firearms_allowed", true)))
-	print("X-S-X POWER TOWER ARCHITECTURE VALIDATION PASSED: 200-floor identity, tapered tiers, 12 facade marks, observatory, helipad, circular podium, shop galleries, six interior directory signs, accent lighting and cafeteria.")
+
+	var competition := CompetitionManagerScript.new()
+	tower.add_child(competition)
+	await process_frame
+	assert(bool(competition.get_meta("system_power_tower_independent", false)))
+	assert(int(competition.get_meta("system_power_tower_floor_count", 0)) == 200)
+	assert(int(competition.get_meta("system_power_tower_spectator_npc_target", 0)) == 500)
+	assert(str(competition.get_meta("system_power_tower_combat_styles", []).size()) == "6")
+	var arena_root := competition.get_node_or_null("PowerTowerProgressiveArenaFloors")
+	assert(arena_root != null)
+	assert(int(arena_root.get_meta("system_arena_instance_count", 0)) == 560)
+	assert(int(arena_root.get_meta("system_arena_boundary_rail_count", 0)) == 2240)
+	assert(int(arena_root.get_meta("system_arena_tier_marker_count", 0)) == 7)
+	assert(str(arena_root.get_meta("system_arena_match_format", "")) == "PLAYER_ONLY_1V1")
+	for floor_number in [1, 21, 41, 61, 81, 101, 151]:
+		assert(arena_root.get_node_or_null("ArenaTierMarker_%03d" % floor_number) != null)
+	print("X-S-X POWER TOWER ARCHITECTURE VALIDATION PASSED: 200-floor identity, tapered tiers, 12 facade marks, observatory, helipad, circular podium, shop galleries, lobby wayfinding, 560 arena layouts, seven arena progression signs and 500 spectator target.")
 	quit(0)
