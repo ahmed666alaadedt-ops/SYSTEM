@@ -140,6 +140,9 @@ func confirm_floor_clear(floor_number: int, clear_time_seconds: float, server_ve
 	if clear_time_seconds <= 0.0:
 		return {"success": false, "reason": "INVALID_CLEAR_TIME"}
 	var data := get_floor_data(floor_number)
+	var time_limit := float(data.get("time_limit_seconds", 180))
+	if time_limit > 0.0 and clear_time_seconds > time_limit:
+		return {"success": false, "reason": "TIME_LIMIT_EXCEEDED", "time_limit_seconds": time_limit}
 	processed_result_ids[result_id] = true
 	highest_cleared_floor = maxi(highest_cleared_floor, floor_number)
 	floor_clear_times[str(floor_number)] = clear_time_seconds
