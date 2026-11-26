@@ -232,6 +232,89 @@ func _build_scaled_spectator_crowd() -> void:
 		var detailed_actor := _create_detailed_spectator_actor(actor_index, actor_position)
 		crowd.add_child(detailed_actor)
 	crowd.set_meta("system_detailed_actor_nodes_created", SPECTATOR_DETAILED_ACTOR_COUNT)
+	_build_spectator_grandstands(crowd)
+
+
+func _build_spectator_grandstands(crowd: Node3D) -> void:
+	# Five concentric seating tiers align with the five 100-person crowd LOD rings.
+	var stands := Node3D.new()
+	stands.name = "PowerTowerFiveTierSpectatorGrandstands"
+	stands.set_meta("system_grandstand_tier_count", 5)
+	stands.set_meta("system_grandstand_seat_capacity", SPECTATOR_NPC_TARGET)
+	crowd.add_child(stands)
+
+	var tier_count := 5
+	var seats_per_tier := 100
+	var total_seats := tier_count * seats_per_tier
+	var deck_multi := MultiMesh.new()
+	deck_multi.transform_format = MultiMesh.TRANSFORM_3D
+	var deck_mesh := BoxMesh.new()
+	deck_mesh.size = Vector3(1.85, 0.28, 1.35)
+	deck_multi.mesh = deck_mesh
+	deck_multi.instance_count = total_seats
+
+	var cushion_multi := MultiMesh.new()
+	cushion_multi.transform_format = MultiMesh.TRANSFORM_3D
+	var cushion_mesh := BoxMesh.new()
+	cushion_mesh.size = Vector3(1.55, 0.24, 0.62)
+	cushion_multi.mesh = cushion_mesh
+	cushion_multi.instance_count = total_seats
+
+	var backrest_multi := MultiMesh.new()
+	backrest_multi.transform_format = MultiMesh.TRANSFORM_3D
+	var backrest_mesh := BoxMesh.new()
+	backrest_mesh.size = Vector3(1.55, 0.78, 0.18)
+	backrest_multi.mesh = backrest_mesh
+	backrest_multi.instance_count = total_seats
+
+	for tier in range(tier_count):
+		var radius := 31.0 + float(tier) * 2.2
+		var tier_y := 15.42 + float(tier) * 1.25
+		for slot in range(seats_per_tier):
+			var index := tier * seats_per_tier + slot
+			var angle := TAU * float(slot) / float(seats_per_tier)
+			var outward := Vector3(cos(angle), 0.0, sin(angle))
+			var center := outward * radius
+			var facing_basis := Basis(Vector3.UP, -angle)
+			deck_multi.set_instance_transform(index, Transform3D(facing_basis, Vector3(center.x, tier_y, center.z)))
+			cushion_multi.set_instance_transform(index, Transform3D(facing_basis, Vector3(center.x, tier_y + 0.24, center.z)))
+			var back_position := center + outward * 0.49
+			backrest_multi.set_instance_transform(index, Transform3D(facing_basis, Vector3(back_position.x, tier_y + 0.69, back_position.z)))
+
+	var deck_material := StandardMaterial3D.new()
+	deck_material.albedo_color = Color(0.055, 0.085, 0.12)
+	deck_material.metallic = 0.78
+	deck_material.roughness = 0.26
+	var cushion_material := StandardMaterial3D.new()
+	cushion_material.albedo_color = Color(0.42, 0.12, 0.16)
+	cushion_material.roughness = 0.72
+	var backrest_material := StandardMaterial3D.new()
+	backrest_material.albedo_color = Color(0.12, 0.16, 0.2)
+	backrest_material.metallic = 0.48
+	backrest_material.roughness = 0.38
+
+	var decks := MultiMeshInstance3D.new()
+	decks.name = "GrandstandTierDecks500"
+	decks.multimesh = deck_multi
+	decks.material_override = deck_material
+	stands.add_child(decks)
+	var cushions := MultiMeshInstance3D.new()
+	cushions.name = "GrandstandSpectatorSeats500"
+	cushions.multimesh = cushion_multi
+	cushions.material_override = cushion_material
+	stands.add_child(cushions)
+	var backrests := MultiMeshInstance3D.new()
+	backrests.name = "GrandstandSeatBackrests500"
+	backrests.multimesh = backrest_multi
+	backrests.material_override = backrest_material
+	stands.add_child(backrests)
+
+	stands.set_meta("system_grandstand_deck_count", total_seats)
+	stands.set_meta("system_grandstand_seat_count", total_seats)
+	stands.set_meta("system_grandstand_backrest_count", total_seats)
+	stands.set_meta("system_grandstand_rows", tier_count)
+	stands.set_meta("system_grandstand_seats_per_row", seats_per_tier)
+
 
 func _create_detailed_spectator_actor(actor_index: int, actor_position: Vector3) -> CharacterBody3D:
 	var actor := CharacterBody3D.new()
