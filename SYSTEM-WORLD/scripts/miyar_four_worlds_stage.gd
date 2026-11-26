@@ -294,6 +294,13 @@ func _say(message: String) -> void:
 		dialogue_label.text = "ميار: " + message
 	is_speaking = true
 	speech_elapsed = 0.0
+	var speech_duration := maxf(2.0, float(message.length()) * 0.075)
+	if Engine.has_singleton("SYSTEMAndroidHost"):
+		var native_host: Object = Engine.get_singleton("SYSTEMAndroidHost")
+		if native_host.has_method("speak_arabic"):
+			native_host.call("speak_arabic", message)
+			get_tree().create_timer(speech_duration).timeout.connect(_finish_speaking)
+			return
 	if DisplayServer.has_feature(DisplayServer.FEATURE_TEXT_TO_SPEECH):
 		var voices := DisplayServer.tts_get_voices()
 		var voice_id := ""
@@ -302,13 +309,17 @@ func _say(message: String) -> void:
 				voice_id = str(voice.get("id", ""))
 				break
 		DisplayServer.tts_speak(message, voice_id, 50, 1.0, 1.0, 0, true)
-		get_tree().create_timer(maxf(2.0, float(message.length()) * 0.075)).timeout.connect(_finish_speaking)
+		get_tree().create_timer(speech_duration).timeout.connect(_finish_speaking)
 	else:
 		_finish_speaking()
 
 
 func _finish_speaking() -> void:
 	is_speaking = false
+	if Engine.has_singleton("SYSTEMAndroidHost"):
+		var native_host: Object = Engine.get_singleton("SYSTEMAndroidHost")
+		if native_host.has_method("stop_arabic_speech"):
+			native_host.call("stop_arabic_speech")
 	if is_instance_valid(miyar_model):
 		miyar_model.call("set_facial_expression", "happy")
 
