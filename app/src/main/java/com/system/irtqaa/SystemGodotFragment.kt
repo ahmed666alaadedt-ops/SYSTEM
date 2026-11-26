@@ -14,7 +14,8 @@ class SystemGodotFragment : GodotFragment() {
         val requestedWorld = arguments?.getString(ARG_WORLD_ID)
             ?.takeIf {
                 it == SystemGodotRuntimeContract.WorldId.MODERN.wireValue ||
-                    it == SystemGodotRuntimeContract.WorldId.SELECTION.wireValue
+                    it == SystemGodotRuntimeContract.WorldId.SELECTION.wireValue ||
+                    it == SystemGodotRuntimeContract.WorldId.NPC_SHOWCASE.wireValue
             } ?: SystemGodotRuntimeContract.WorldId.MODERN.wireValue
         return mutableListOf(
             "--main-pack",
@@ -37,7 +38,8 @@ class SystemGodotFragment : GodotFragment() {
                     putString(
                         ARG_WORLD_ID,
                         if (worldId == SystemGodotRuntimeContract.WorldId.MODERN.wireValue ||
-                            worldId == SystemGodotRuntimeContract.WorldId.SELECTION.wireValue
+                            worldId == SystemGodotRuntimeContract.WorldId.SELECTION.wireValue ||
+                            worldId == SystemGodotRuntimeContract.WorldId.NPC_SHOWCASE.wireValue
                         ) {
                             worldId
                         } else {
