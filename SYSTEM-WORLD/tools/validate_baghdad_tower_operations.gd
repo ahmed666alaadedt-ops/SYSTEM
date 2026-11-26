@@ -2675,6 +2675,19 @@ func _run() -> void:
 	if not bool(awakening_result.get("success", false)):
 		_fail("Nen Awakening Elixir did not awaken Nen: " + str(awakening_result))
 		return
+	pilot_progression.set("nen_foundation_practice", {})
+	pilot_progression.set("nen_affinity", "")
+	for mobile_foundation_value in ["ten", "zetsu", "ren", "hatsu"]:
+		var mobile_foundation_id := str(mobile_foundation_value)
+		for mobile_session_index in range(3):
+			var mobile_training_result: Dictionary = pilot_progression.call("record_nen_foundation_training", mobile_foundation_id, "validator_mobile_%s_%d" % [mobile_foundation_id, mobile_session_index])
+			if not bool(mobile_training_result.get("success", false)):
+				_fail("Mobile Nen foundation training failed for %s: %s" % [mobile_foundation_id, str(mobile_training_result.get("reason", "UNKNOWN"))])
+				return
+	var mobile_affinity_result: Dictionary = pilot_progression.call("choose_nen_affinity", "enhancement")
+	if not bool(mobile_affinity_result.get("success", false)):
+		_fail("Mobile Nen foundation completion did not unlock affinity selection: " + str(mobile_affinity_result))
+		return
 	pilot_progression.call("add_item", "nen_control_elixir", 1)
 	pilot_progression.call("consume_elixir", "nen_control_elixir")
 	if not bool(pilot_progression.get("nen_unlocked")) or int(pilot_progression.get("nen_control_rank")) != 2:
