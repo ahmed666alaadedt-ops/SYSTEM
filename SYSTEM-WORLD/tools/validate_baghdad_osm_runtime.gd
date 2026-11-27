@@ -168,6 +168,14 @@ func _run_validation() -> void:
 	if overview_buildings.is_empty():
 		_fail("Citywide urban building footprints did not produce low-detail building meshes.")
 		return
+	var footprint_verified := false
+	for building_mesh in overview_buildings:
+		if str(building_mesh.get_meta("system_footprint_geometry", "")) == "osm_polygon_extrusion":
+			footprint_verified = true
+			break
+	if not footprint_verified:
+		_fail("Citywide urban buildings are not using their true OSM polygon footprints.")
+		return
 	regional_urban._load_cell(poi_cell)
 	if not regional_urban.loaded_cells.has(poi_cell):
 		_fail("Citywide urban POI cell did not load.")
