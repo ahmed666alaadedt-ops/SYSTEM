@@ -1176,3 +1176,61 @@ func record_system_skill_use(skill_id: String) -> Dictionary:
 	system_skill_cooldowns[key] = float(skill.get("cooldown", 5.0))
 	save_progress()
 	return {"success": true, "skill_id": key, "cooldown_seconds": float(skill.get("cooldown", 5.0)), "energy_cost": int(energy_cost), "remaining_energy": current_system_energy, "effect": str(skill.get("effect", ""))}
+
+
+## --- Rare relic skill activation effects ---
+
+# Called by the ability UI after the player has learned a relic skill.
+# Costs, cooldowns and learned-state validation remain centralized in record_system_skill_use().
+func activate_relic_skill(skill_id: String, actor: CharacterBody3D) -> Dictionary:
+	var key := skill_id.strip_edges().to_lower()
+	if not is_instance_valid(actor):
+		return {"success": false, "reason": "PLAYER_ACTOR_UNAVAILABLE"}
+	if key not in ["relic_echo_sight", "ashur_guardian_aegis"]:
+		return {"success": false, "reason": "NOT_AN_IMPLEMENTED_RELIC_SKILL"}
+
+	var usage: Dictionary = record_system_skill_use(key)
+	if not bool(usage.get("success", false)):
+		return usage
+
+	match key:
+		"ashur_guardian_aegis":
+			var expires_at := Time.get_ticks_msec() + 12000
+			actor.set_meta("system_assyrian_aegis_until_msec", expires_at)
+			actor.set_meta("system_assyrian_aegis_active", true)
+			_clear_assyrian_aegis_after(actor, expires_at)
+			usage["duration_seconds"] = 12
+			usage["damage_reduction_percent"] = 65
+			usage["effect_applied"] = true
+		"relic_echo_sight":
+			var revealed_count := _reveal_historical_relic_traces()
+			usage["duration_seconds"] = 10
+			usage["revealed_trace_count"] = revealed_count
+			usage["effect_applied"] = true
+	return usage
+
+
+func _clear_assyrian_aegis_after(actor: CharacterBody3D, expected_expiry: int) -> void:
+	await get_tree().create_timer(12.0).timeout
+	if not is_instance_valid(actor):
+		return
+	if int(actor.get_meta("system_assyrian_aegis_until_msec", 0)) == expected_expiry:
+		actor.remove_meta("system_assyrian_aegis_until_msec")
+		actor.remove_meta("system_assyrian_aegis_active")
+
+
+func _reveal_historical_relic_traces() -> int:
+	var revealed := 0
+	for trace in get_tree().get_nodes_in_group("system_hidden_historical_trace"):
+		if is_instance_valid(trace) and trace is Node3D:
+			trace.visible = true
+			revealed += 1
+	_restore_historical_relic_traces_after(10.0)
+	return revealed
+
+
+func _restore_historical_relic_traces_after(duration: float) -> void:
+	await get_tree().create_timer(duration).timeout
+	for trace in get_tree().get_nodes_in_group("system_hidden_historical_trace"):
+		if is_instance_valid(trace) and trace is Node3D:
+			trace.visible = false
