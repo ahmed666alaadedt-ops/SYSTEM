@@ -1237,9 +1237,10 @@ func activate_relic_skill(skill_id: String, actor: CharacterBody3D) -> Dictionar
 					save_progress()
 					return {"success": false, "reason": "NO_VALID_HEAL_TARGET"}
 			"worldroot_earthguard":
-				actor.set_meta("system_earthguard_until_msec", Time.get_ticks_msec() + 8000)
+				var earthguard_expiry := Time.get_ticks_msec() + 8000
+				actor.set_meta("system_earthguard_until_msec", earthguard_expiry)
 				actor.set_meta("system_earthguard_reduction", 0.30)
-				_clear_elemental_guard_after(actor, "system_earthguard_until_msec", "system_earthguard_reduction", Time.get_ticks_msec() + 8000)
+				_clear_elemental_guard_after(actor, "system_earthguard_until_msec", "system_earthguard_reduction", earthguard_expiry)
 				applied = true
 			"stormlightning_arc":
 				var combat := get_tree().root.find_child("ModernWorldCombatSystem", true, false)
