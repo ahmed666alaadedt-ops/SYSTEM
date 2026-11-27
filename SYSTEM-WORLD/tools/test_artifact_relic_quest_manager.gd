@@ -1,6 +1,7 @@
 extends SceneTree
 
 const ManagerScript = preload("res://scripts/artifact_relic_quest_manager.gd")
+const ProgressionScript = preload("res://scripts/system_player_progression.gd")
 
 func _initialize() -> void:
 	var manager = ManagerScript.new()
@@ -65,5 +66,22 @@ func _initialize() -> void:
 	)
 	assert(akkadian_reward.get("completed", false), "Verified Akkadian reward should complete the quest.")
 
+	var progression = ProgressionScript.new()
+	root.add_child(progression)
+	var local_practice: Dictionary = progression.practice_system_skill(
+		"rare_skill_celestial_lightning", "local_forged_practice"
+	)
+	assert(not local_practice.get("success", false),
+		"Local practice must never unlock a server-gated relic skill.")
+	var locked_use: Dictionary = progression.can_use_system_skill("rare_skill_celestial_lightning")
+	assert(not locked_use.get("success", false),
+		"Rare relic skills must remain unavailable without a Firebase server receipt.")
+	progression.apply_server_verified_relic_skills(["rare_skill_celestial_lightning"])
+	var unlocked_use: Dictionary = progression.can_use_system_skill("rare_skill_celestial_lightning")
+	assert(unlocked_use.get("success", false),
+		"A server-read unlock receipt should expose the skill to the combat system.")
+	var activation: Dictionary = progression.record_system_skill_use("rare_skill_celestial_lightning")
+	assert(activation.get("success", false),
+		"A verified rare relic skill should consume energy and enter cooldown.")
 	print("ARTIFACT_RELIC_QUEST_MANAGER_TESTS_PASSED")
 	quit(0)
