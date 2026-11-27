@@ -22,6 +22,11 @@ func receive_damage(amount: float, source: Node = null) -> float:
 	if amount <= 0.0 or not is_instance_valid(player):
 		return 0.0
 	var incoming := amount
+	var aegis_until := int(player.get_meta("system_assyrian_aegis_until_msec", 0))
+	if aegis_until > Time.get_ticks_msec():
+		incoming *= 0.35
+	elif aegis_until > 0:
+		player.remove_meta("system_assyrian_aegis_until_msec")
 	var progression := get_tree().root.find_child("PlayerProgression", true, false)
 	if progression != null and progression.has_method("get_defense_bonus"):
 		var defense_bonus := float(progression.call("get_defense_bonus"))
