@@ -7,6 +7,7 @@ const SECRET_TRADER_OFFERS = {
   secret_babylonian_star_engraving: {
     name: "نقش النجمة البابلي",
     sellerName: "تاجر بابل",
+    traderId: "shadow_trader_01",
     civilization: "Babylonian",
     rarity: "mythic",
     condition: "excellent",
@@ -17,6 +18,7 @@ const SECRET_TRADER_OFFERS = {
   secret_sumerian_oath_signet: {
     name: "ختم العهد السومري",
     sellerName: "جامع سومري",
+    traderId: "shadow_trader_02",
     civilization: "Sumerian",
     rarity: "legendary",
     condition: "very_good",
@@ -27,6 +29,7 @@ const SECRET_TRADER_OFFERS = {
   secret_assyrian_library_key: {
     name: "مفتاح مكتبة آشور المفقودة",
     sellerName: "حارس مكتبة آشور",
+    traderId: "shadow_trader_03",
     civilization: "Assyrian",
     rarity: "legendary",
     condition: "good",
@@ -34,9 +37,21 @@ const SECRET_TRADER_OFFERS = {
     authenticity: "unverified",
     provenanceSummary: "قطعة نادرة تنتظر فحص مختبر الأصالة"
   },
+  secret_sumerian_mirror_disc: {
+    name: "قرص المرآة السومري",
+    sellerName: "تاجر الآثار المجهولة",
+    traderId: "shadow_trader_05",
+    civilization: "Sumerian",
+    rarity: "legendary",
+    condition: "fair",
+    price: 9400,
+    authenticity: "unverified",
+    provenanceSummary: "قطعة غامضة من مخزن لا يحمل سجلاً مكتملاً"
+  },
   secret_akkadian_shadow_coin: {
     name: "عملة الظل الأكدي",
     sellerName: "تاجر الظلال الأكدي",
+    traderId: "shadow_trader_04",
     civilization: "Akkadian",
     rarity: "mythic",
     condition: "excellent",
