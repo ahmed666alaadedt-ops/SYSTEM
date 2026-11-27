@@ -424,6 +424,20 @@ class TouchOverlay extends Control:
 					true
 				)
 
+			"shield":
+				var shield_top := center + Vector2(0, -22) * s
+				var shield_left := center + Vector2(-18, -12) * s
+				var shield_right := center + Vector2(18, -12) * s
+				var shield_left_bottom := center + Vector2(-14, 8) * s
+				var shield_point := center + Vector2(0, 23) * s
+				var shield_right_bottom := center + Vector2(14, 8) * s
+				draw_line(shield_top, shield_left, white, width, true)
+				draw_line(shield_top, shield_right, white, width, true)
+				draw_line(shield_left, shield_left_bottom, white, width, true)
+				draw_line(shield_left_bottom, shield_point, white, width, true)
+				draw_line(shield_point, shield_right_bottom, white, width, true)
+				draw_line(shield_right_bottom, shield_right, white, width, true)
+
 			"camera":
 				draw_arc(
 					center,
