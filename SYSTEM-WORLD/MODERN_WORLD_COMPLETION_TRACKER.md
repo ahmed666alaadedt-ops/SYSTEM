@@ -848,7 +848,7 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [ ] Verify that the 50,000 society records seed and save/load correctly on a real Android device; measure startup hitch, memory, CPU and frame pacing.
 - [ ] Add working shop inventories, staff/customer schedules, checkout/economy integration, manufacturing/warehouse production chains and real walk-in interiors; current new tenant rows are marked visual/interaction foundations, not finished retail simulations.
 - [ ] Extend the population simulation to other cities and rural settlements only after the Baghdad seed, save/load and mobile performance are measured.
-- Note: 50,000 is the authored Baghdad resident-society target, not 1,440 simultaneously rendered 3D characters. The visible crowd remains distance-selected and capped at 72 for mobile safety; all residents are not rendered at once.
+- Note: 50,000 is the authored Baghdad resident-society target, not 50,000 simultaneously rendered 3D characters. The visible crowd remains distance-selected and capped at 72 for mobile safety; all residents are not rendered at once.
 
 ## Baghdad population scale-up — 27 November 2026
 
