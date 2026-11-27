@@ -195,8 +195,9 @@ jobs:
           osmium tags-filter baghdad-municipality-candidate.osm.pbf nwr/amenity -o amenities.osm.pbf
           osmium tags-filter baghdad-municipality-candidate.osm.pbf w/railway -o railway.osm.pbf
           osmium tags-filter baghdad-municipality-candidate.osm.pbf nwr/natural=water -o natural-water.osm.pbf
+          osmium tags-filter baghdad-municipality-candidate.osm.pbf nwr/natural=wetland nwr/wetland -o wetlands.osm.pbf
           osmium tags-filter baghdad-municipality-candidate.osm.pbf n/entrance n/door n/building=entrance -o entrances.osm.pbf
-          for layer in buildings roads waterways bridges landuse amenities railway natural-water entrances; do
+          for layer in buildings roads waterways bridges landuse amenities railway natural-water wetlands entrances; do
             osmium fileinfo --extended --json "$layer.osm.pbf" > "$layer-fileinfo.json"
           done
           osmium export --geometry-types=point,polygon --attributes type,id --output buildings.geojson buildings.osm.pbf
@@ -207,6 +208,7 @@ jobs:
           osmium export --geometry-types=point,linestring,polygon --attributes type,id --output amenities.geojson amenities.osm.pbf
           osmium export --geometry-types=point,linestring --attributes type,id --output railway.geojson railway.osm.pbf
           osmium export --geometry-types=point,polygon --attributes type,id --output natural-water.geojson natural-water.osm.pbf
+          osmium export --geometry-types=point,polygon --attributes type,id --output wetlands.geojson wetlands.osm.pbf
           osmium export --geometry-types=point --attributes type,id --output entrances.geojson entrances.osm.pbf
           python3 - <<'PY'
           import hashlib
@@ -221,7 +223,7 @@ jobs:
               Path("baghdad-clip-fileinfo.json").read_text(encoding="utf-8")
           )
           report["feature_layer_counts"] = {}
-          for layer in ["buildings", "roads", "waterways", "bridges", "landuse", "amenities", "railway", "natural-water", "entrances"]:
+          for layer in ["buildings", "roads", "waterways", "bridges", "landuse", "amenities", "railway", "natural-water", "wetlands", "entrances"]:
               layer_info = json.loads(Path(f"{layer}-fileinfo.json").read_text(encoding="utf-8"))
               report["feature_layer_counts"][layer] = layer_info.get("data", {}).get("count", {})
           report["geojson_layer_stats"] = {}
@@ -425,7 +427,7 @@ jobs:
           from pathlib import Path
 
           path = Path("baghdad-citywide-urban-1km.zip")
-          expected_layers = ["buildings", "waterways", "bridges", "landuse", "amenities", "railway", "natural-water", "entrances"]
+          expected_layers = ["buildings", "waterways", "bridges", "landuse", "amenities", "railway", "natural-water", "wetlands", "entrances"]
           totals = {key: 0 for key in expected_layers}
           facility_types = {"hospital": 0, "police": 0, "mosque": 0, "shop": 0, "food": 0, "education": 0}
           with zipfile.ZipFile(path) as archive:
