@@ -70,6 +70,9 @@ var rail_material: StandardMaterial3D
 var plaza_material: StandardMaterial3D
 var building_materials: Array[StandardMaterial3D] = []
 var park_material: StandardMaterial3D
+var park_trunk_material: StandardMaterial3D
+var park_canopy_material: StandardMaterial3D
+var park_shrub_material: StandardMaterial3D
 var use_baghdad_osm_cells := false
 var city_advertising_manager: Node3D
 var baghdad_landmark_manager: Node3D
@@ -117,6 +120,9 @@ func _create_materials() -> void:
 	for color in palettes:
 		building_materials.append(_material(color, 0.78, 0.12))
 	park_material = _material(Color(0.15, 0.32, 0.18), 1.0)
+	park_trunk_material = _material(Color(0.25, 0.14, 0.075), 0.96)
+	park_canopy_material = _material(Color(0.075, 0.29, 0.12), 0.92)
+	park_shrub_material = _material(Color(0.13, 0.36, 0.15), 0.95)
 
 
 func _material(color: Color, roughness: float, metallic: float = 0.0) -> StandardMaterial3D:
@@ -583,11 +589,28 @@ func _build_green_belts() -> void:
 		if not city_anchors.has(city_name):
 			continue
 		var anchor: Vector2 = city_anchors[city_name]
+		var park_root := Node3D.new()
+		park_root.name = city_name.replace(" ", "") + "_DenseGreenBelt"
+		add_child(park_root)
+		var trunk_mesh := CylinderMesh.new()
+		trunk_mesh.top_radius = 0.14
+		trunk_mesh.bottom_radius = 0.22
+		trunk_mesh.height = 1.0
+		var canopy_mesh := SphereMesh.new()
+		canopy_mesh.radius = 1.0
+		canopy_mesh.height = 2.0
+		var shrub_mesh := SphereMesh.new()
+		shrub_mesh.radius = 1.0
+		shrub_mesh.height = 1.25
+		var trunk_transforms: Array[Transform3D] = []
+		var canopy_transforms: Array[Transform3D] = []
+		var shrub_transforms: Array[Transform3D] = []
 		for index in range(12):
 			var angle := TAU * float(index) / 12.0
 			var point := anchor + Vector2(cos(angle), sin(angle)) * 245.0
 			if not terrain.is_land_position(point.x, point.y):
 				continue
+			var ground_y := terrain.get_terrain_height(point.x, point.y)
 			var park := MeshInstance3D.new()
 			park.name = city_name.replace(" ", "") + "_GreenBelt_%02d" % index
 			var park_mesh := CylinderMesh.new()
@@ -595,9 +618,63 @@ func _build_green_belts() -> void:
 			park_mesh.bottom_radius = 7.0
 			park_mesh.height = 0.24
 			park.mesh = park_mesh
-			park.position = Vector3(point.x, terrain.get_terrain_height(point.x, point.y) + 0.16, point.y)
+			park.position = Vector3(point.x, ground_y + 0.16, point.y)
 			park.material_override = park_material
 			add_child(park)
+			# Five trees and eight low shrubs per pocket form a visibly dense park
+			# while MultiMesh batching avoids hundreds of separate scene nodes.
+			for tree_index in range(5):
+				var tree_angle := angle + TAU * float(tree_index) / 5.0 + rng.randf_range(-0.18, 0.18)
+				var tree_radius := rng.randf_range(2.2, 5.4)
+				var tree_point := point + Vector2(cos(tree_angle), sin(tree_angle)) * tree_radius
+				if not terrain.is_land_position(tree_point.x, tree_point.y):
+					continue
+				var tree_y := terrain.get_terrain_height(tree_point.x, tree_point.y)
+				var tree_height := rng.randf_range(4.2, 6.4)
+				var tree_scale := rng.randf_range(0.85, 1.2)
+				trunk_transforms.append(Transform3D(
+					Basis.from_scale(Vector3(tree_scale, tree_height, tree_scale)),
+					Vector3(tree_point.x, tree_y + tree_height * 0.5, tree_point.y)
+				))
+				canopy_transforms.append(Transform3D(
+					Basis.from_scale(Vector3(2.0, 2.4, 2.0) * tree_scale),
+					Vector3(tree_point.x, tree_y + tree_height + 1.1, tree_point.y)
+				))
+			for shrub_index in range(8):
+				var shrub_angle := TAU * float(shrub_index) / 8.0 + rng.randf_range(-0.2, 0.2)
+				var shrub_radius := rng.randf_range(5.0, 6.7)
+				var shrub_point := point + Vector2(cos(shrub_angle), sin(shrub_angle)) * shrub_radius
+				if not terrain.is_land_position(shrub_point.x, shrub_point.y):
+					continue
+				var shrub_y := terrain.get_terrain_height(shrub_point.x, shrub_point.y)
+				var shrub_scale := rng.randf_range(0.65, 1.05)
+				shrub_transforms.append(Transform3D(
+					Basis.from_scale(Vector3(1.2, 0.8, 1.2) * shrub_scale),
+					Vector3(shrub_point.x, shrub_y + 0.55 * shrub_scale, shrub_point.y)
+				))
+		_add_park_multimesh(park_root, "DenseParkTreeTrunks", trunk_mesh, trunk_transforms, park_trunk_material)
+		_add_park_multimesh(park_root, "DenseParkTreeCanopies", canopy_mesh, canopy_transforms, park_canopy_material)
+		_add_park_multimesh(park_root, "DenseParkShrubs", shrub_mesh, shrub_transforms, park_shrub_material)
+		print("SYSTEM WORLD: dense green belt generated for ", city_name,
+			" trees=", trunk_transforms.size(), " shrubs=", shrub_transforms.size())
+
+
+func _add_park_multimesh(parent: Node3D, node_name: String, mesh: Mesh,
+		transforms: Array[Transform3D], material: Material) -> void:
+	if transforms.is_empty():
+		return
+	var multi := MultiMesh.new()
+	multi.transform_format = MultiMesh.TRANSFORM_3D
+	multi.mesh = mesh
+	multi.instance_count = transforms.size()
+	for index in range(transforms.size()):
+		multi.set_instance_transform(index, transforms[index])
+	var instance := MultiMeshInstance3D.new()
+	instance.name = node_name
+	instance.multimesh = multi
+	instance.material_override = material
+	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(instance)
 
 
 func _build_rural_settlements() -> void:
