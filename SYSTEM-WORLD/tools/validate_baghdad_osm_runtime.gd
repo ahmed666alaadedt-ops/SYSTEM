@@ -8,7 +8,10 @@ const NPC_VEHICLE_SCRIPT = preload("res://scripts/system_npc_vehicle.gd")
 
 class MockVehicleRoadStreamer:
 	extends Node
+	var route_ready := true
 	func get_vehicle_navigation_path(start: Vector3, target: Vector3, _max_snap_distance: float = 70.0) -> Array[Vector3]:
+		if not route_ready:
+			return []
 		return [start, (start + target) * 0.5, target]
 
 
@@ -261,13 +264,18 @@ func _run_validation() -> void:
 	root.add_child(mock_world_root)
 	var mock_vehicle_streamer := MockVehicleRoadStreamer.new()
 	mock_vehicle_streamer.name = "BaghdadOSMCellStreamer"
+	mock_vehicle_streamer.route_ready = false
 	mock_world_root.add_child(mock_vehicle_streamer)
 	var mock_crime_manager := Node.new()
 	mock_world_root.add_child(mock_crime_manager)
 	var baghdad_npc_vehicle = NPC_VEHICLE_SCRIPT.new()
 	baghdad_npc_vehicle.configure("npc_test_baghdad", "citizen_test", "Test Driver", "Baghdad", mock_crime_manager, Vector3.ZERO, 0)
-	if str(baghdad_npc_vehicle.get_meta("system_road_route_source", "")) != "real_osm_vehicle_graph" or baghdad_npc_vehicle.route_points.size() < 4:
-		_fail("Baghdad civilian NPC vehicle did not adopt the real OSM road loop.")
+	if str(baghdad_npc_vehicle.get_meta("system_road_route_source", "")) != "procedural_fallback":
+		_fail("Baghdad NPC vehicle did not safely retain its fallback while OSM cells were unavailable.")
+		return
+	mock_vehicle_streamer.route_ready = true
+	if not baghdad_npc_vehicle._try_upgrade_to_osm_vehicle_route() or str(baghdad_npc_vehicle.get_meta("system_road_route_source", "")) != "real_osm_vehicle_graph" or baghdad_npc_vehicle.route_points.size() < 4:
+		_fail("Baghdad civilian NPC vehicle did not upgrade to real OSM routing after cells became available.")
 		return
 	var other_city_npc_vehicle = NPC_VEHICLE_SCRIPT.new()
 	other_city_npc_vehicle.configure("npc_test_tokyo", "citizen_tokyo", "Test Driver", "Tokyo", mock_crime_manager, Vector3.ZERO, 1)
