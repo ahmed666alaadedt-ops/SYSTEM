@@ -469,9 +469,37 @@ func _build_coastal_beaches() -> void:
 	beach_surface.generate_normals()
 	var beaches := MeshInstance3D.new()
 	beaches.name = "NaturalCoastlineBeaches"
-	beaches.mesh = beach_surface.commit()
+	var beach_mesh := _commit_surface_tool_if_valid(beach_surface)
+	if beach_mesh == null:
+		return
+	beaches.mesh = beach_mesh
 	beaches.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(beaches)
+
+
+func _commit_surface_tool_if_valid(surface: SurfaceTool) -> ArrayMesh:
+	# Empty SurfaceTools must never become MeshInstance3D resources. Godot's
+	# dummy/headless renderer can emit repeated mesh_get_surface_count errors
+	# for zero-surface ArrayMesh resources even when scene-node checks look clean.
+	var arrays: Array = surface.commit_to_arrays()
+	if arrays.size() <= Mesh.ARRAY_VERTEX:
+		return null
+	var raw_vertices: Variant = arrays[Mesh.ARRAY_VERTEX]
+	if typeof(raw_vertices) != TYPE_PACKED_VECTOR3_ARRAY:
+		return null
+	var vertices: PackedVector3Array = raw_vertices
+	if vertices.size() < 3:
+		return null
+	var raw_indices: Variant = arrays[Mesh.ARRAY_INDEX]
+	if raw_indices is PackedInt32Array:
+		var indices: PackedInt32Array = raw_indices
+		if not indices.is_empty() and indices.size() < 3:
+			return null
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	if not mesh.get_rid().is_valid():
+		return null
+	return mesh
 
 
 func _build_cave_entrances() -> void:
@@ -702,7 +730,10 @@ func _build_highways() -> void:
 	road_surface.generate_normals()
 	var road_visual := MeshInstance3D.new()
 	road_visual.name = "ContinentalHighwayNetwork"
-	road_visual.mesh = road_surface.commit()
+	var highway_mesh := _commit_surface_tool_if_valid(road_surface)
+	if highway_mesh == null:
+		return
+	road_visual.mesh = highway_mesh
 	road_visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(road_visual)
 
@@ -775,7 +806,11 @@ func _build_baghdad_tigris_surface() -> void:
 	surface.generate_normals()
 	var river := MeshInstance3D.new()
 	river.name = "BaghdadTigrisRiver"
-	river.mesh = surface.commit()
+	var river_mesh := _commit_surface_tool_if_valid(surface)
+	if river_mesh == null:
+		bridge.queue_free()
+		return
+	river.mesh = river_mesh
 	river.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	river.set_meta("system_geography_source", "OpenStreetMap way 24709603")
 	river.set_meta("system_geography_name", "Tigris River")
@@ -827,7 +862,11 @@ func _build_baghdad_republic_bridge() -> void:
 	surface.generate_normals()
 	var deck := MeshInstance3D.new()
 	deck.name = "RepublicBridgeDeck"
-	deck.mesh = surface.commit()
+	var deck_mesh := _commit_surface_tool_if_valid(surface)
+	if deck_mesh == null:
+		bridge.queue_free()
+		return
+	deck.mesh = deck_mesh
 	deck.set_meta("system_bridge_deck_height_m", BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT)
 	deck.set_meta("system_bridge_polygon_points", baghdad_bridge_outline.size())
 	bridge.add_child(deck)
@@ -911,7 +950,10 @@ func _build_baghdad_bridge_access_causeway() -> void:
 	surface.generate_normals()
 	var road := MeshInstance3D.new()
 	road.name = "BaghdadBridgeAccessCauseway"
-	road.mesh = surface.commit()
+	var access_mesh := _commit_surface_tool_if_valid(surface)
+	if access_mesh == null:
+		return
+	road.mesh = access_mesh
 	road.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	road.set_meta("system_generated_access_route", true)
 	road.set_meta("system_geography_source", "SYSTEM procedural playable connector; not OpenStreetMap road geometry")
@@ -969,7 +1011,10 @@ func _build_rivers_and_lakes() -> void:
 	river_surface.generate_normals()
 	var river_visual := MeshInstance3D.new()
 	river_visual.name = "ConnectedRiverNetwork"
-	river_visual.mesh = river_surface.commit()
+	var river_network_mesh := _commit_surface_tool_if_valid(river_surface)
+	if river_network_mesh == null:
+		return
+	river_visual.mesh = river_network_mesh
 	river_visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(river_visual)
 	_build_mountain_waterfalls()
@@ -1064,7 +1109,10 @@ func _build_mountain_waterfalls() -> void:
 	waterfall_surface.generate_normals()
 	var waterfall_visual := MeshInstance3D.new()
 	waterfall_visual.name = "MountainWaterfalls"
-	waterfall_visual.mesh = waterfall_surface.commit()
+	var waterfall_mesh := _commit_surface_tool_if_valid(waterfall_surface)
+	if waterfall_mesh == null:
+		return
+	waterfall_visual.mesh = waterfall_mesh
 	waterfall_visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(waterfall_visual)
 	print("SYSTEM WORLD: generated ", waterfall_count, " terrain-based waterfalls.")
