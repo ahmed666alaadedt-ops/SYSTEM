@@ -348,7 +348,9 @@ func _load_cell(cell: Vector2i) -> void:
 		Callable(self, "_terrain_height"), layers.get("roads", []), cell_size
 	)
 	counts["vegetation"] = int(vegetation_stats.get("total", 0))
+	counts["vegetation_roadside"] = int(vegetation_stats.get("roadside_count", 0))
 	cell_root.set_meta("vegetation_target_total", BaghdadVegetationCellBuilderScript.TARGET_PLANT_COUNT)
+	cell_root.set_meta("vegetation_category_quotas", BaghdadVegetationCellBuilderScript.CATEGORY_TARGETS)
 	for feature in layers.get("natural-water", []):
 		_build_area_feature(cell_root, feature, water_material, 0.08, "OSMNaturalWater")
 	var amenity_count := 0
