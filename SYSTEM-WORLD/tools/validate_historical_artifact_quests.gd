@@ -21,6 +21,7 @@ func _run() -> void:
 		_fail("MainScene root is not Node3D.")
 		return
 	root.add_child(main)
+	current_scene = main
 	for _frame in range(24):
 		await process_frame
 
@@ -32,17 +33,36 @@ func _run() -> void:
 		_fail("Historical quest, progression, tower operations or world manager is missing.")
 		return
 
+	var accepted: Dictionary = quest_manager.get("accepted_quests")
+	var completed: Dictionary = quest_manager.get("completed_quests")
+	var stages: Dictionary = quest_manager.get("reward_stages")
+	accepted.clear()
+	completed.clear()
+	stages.clear()
+	quest_manager.call("_save_quest_state")
+	var inventory: Dictionary = progression.get("inventory_items")
+	var authorized_before: Array = progression.get("authorized_system_skills")
+	var learned: Array = progression.get("learned_system_skills")
+	var practice_data: Dictionary = progression.get("system_skill_practice")
+	for quest in QUESTS:
+		inventory.erase(str(quest["relic"]))
+		authorized_before.erase(str(quest["skill"]))
+		learned.erase(str(quest["skill"]))
+		practice_data.erase(str(quest["skill"]))
 	progression.set("current_level", 100)
 	progression.set("verified_hunter_mission_points", 5000)
 	progression.set("nen_unlocked", true)
 	progression.set("nen_control_rank", 5)
 	progression.set("nen_skill_use_count", 150)
-	progression.set("nen_skill_ids", ["test_nen_one", "test_nen_two", "test_nen_three"])
-	var learned: Array = progression.get("learned_system_skills")
+	var nen_ids: Array = progression.get("nen_skill_ids")
+	nen_ids.clear()
+	nen_ids.append_array(["test_nen_one", "test_nen_two", "test_nen_three"])
+	var verified_ids: Array = progression.get("verified_hunter_mission_ids")
+	for quest in QUESTS:
+		verified_ids.erase(str(quest["id"]))
 	for prerequisite in ["flow_counter", "resonance_burst", "sovereign_focus"]:
 		if not learned.has(prerequisite):
 			learned.append(prerequisite)
-	progression.set("learned_system_skills", learned)
 
 	for quest in QUESTS:
 		var floor_number := int(quest["floor"])
