@@ -93,6 +93,28 @@ func _build_quest_environment() -> void:
 	_add_box(self, "HistoricalReturnGateLeftPillar", Vector3(-3.2, 3.0, -4.0), Vector3(0.8, 6.0, 0.8), brass)
 	_add_box(self, "HistoricalReturnGateRightPillar", Vector3(3.2, 3.0, -4.0), Vector3(0.8, 6.0, 0.8), brass)
 	_add_box(self, "HistoricalReturnGateLintel", Vector3(0.0, 6.1, -4.0), Vector3(7.2, 0.8, 0.8), brass)
+
+
+	var hidden_echo_trace := Node3D.new()
+	hidden_echo_trace.name = "HiddenBabylonianEchoTrace"
+	hidden_echo_trace.position = Vector3(18.0, 0.2, -39.0)
+	hidden_echo_trace.visible = false
+	hidden_echo_trace.add_to_group("system_hidden_historical_trace")
+	var trace_mesh := MeshInstance3D.new()
+	trace_mesh.name = "BabylonianEchoTraceMarker"
+	var trace_sphere := SphereMesh.new()
+	trace_sphere.radius = 0.7
+	trace_sphere.height = 1.4
+	trace_mesh.mesh = trace_sphere
+	trace_mesh.material_override = _material(Color(0.12, 0.58, 0.88), 0.28, 0.35)
+	hidden_echo_trace.add_child(trace_mesh)
+	var trace_text := Label3D.new()
+	trace_text.text = "أثر مخفي — نقش بابلي قديم"
+	trace_text.font_size = 18
+	trace_text.position = Vector3(0.0, 1.8, 0.0)
+	hidden_echo_trace.add_child(trace_text)
+	add_child(hidden_echo_trace)
+
 	var return_arch := _make_interaction("HistoricalRelicReturnGate", Vector3(0.0, 1.5, -4.0), "ارجع إلى سوق التحف والآثار الغامضة")
 	return_arch.set_meta("system_historical_relic_return", true)
 	add_child(return_arch)
