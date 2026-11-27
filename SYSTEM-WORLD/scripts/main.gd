@@ -1988,6 +1988,17 @@ func _physics_process(delta: float) -> void:
 		elif not is_in_hospital_treatment and (jump_requested or Input.is_key_pressed(KEY_SPACE)):
 			player.velocity.y = JUMP_FORCE
 
+	var air_dash_until := int(player.get_meta("system_nen_air_dash_until_msec", 0))
+	if air_dash_until > Time.get_ticks_msec():
+		var air_dash_direction: Vector3 = player.get_meta("system_nen_air_dash_direction", Vector3.ZERO)
+		var air_dash_speed := float(player.get_meta("system_nen_air_dash_speed", 0.0))
+		player.velocity.x = air_dash_direction.x * air_dash_speed
+		player.velocity.z = air_dash_direction.z * air_dash_speed
+	else:
+		if air_dash_until > 0:
+			player.remove_meta("system_nen_air_dash_until_msec")
+			player.remove_meta("system_nen_air_dash_direction")
+			player.remove_meta("system_nen_air_dash_speed")
 	jump_requested = false
 	player.move_and_slide()
 	if is_instance_valid(player_mesh):
