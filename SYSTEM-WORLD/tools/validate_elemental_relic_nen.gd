@@ -73,7 +73,7 @@ func _run() -> void:
 	var earth: Dictionary = progression.call("activate_relic_skill", "worldroot_earthguard", actor)
 	_assert(bool(earth.get("success", false)), "Earth relic did not activate its guard.")
 	var mitigated: float = health.call("receive_damage", 20.0, target)
-	_assert(is_equal_approx(mitigated, 14.0), "Earth guard did not mitigate incoming player damage by 30 percent.")
+	_assert(is_equal_approx(mitigated, 9.5), "Earth guard did not stack correctly with the existing Nen defense bonus.")
 
 	_prepare_skill("stormlightning_arc", 4, 2500, 50)
 	var lightning: Dictionary = progression.call("activate_relic_skill", "stormlightning_arc", actor)
