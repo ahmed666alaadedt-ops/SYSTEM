@@ -641,6 +641,9 @@ func _flush_facade_window_multimesh(parent: Node3D) -> void:
 	windows.set_meta("system_facade_window_draw_calls_per_cell", 1)
 	parent.add_child(windows)
 	parent.set_meta("system_facade_window_instance_count", transforms.size())
+	# Release temporary arrays after copying transforms/colors into the MultiMesh.
+	parent.set_meta("system_facade_window_transforms", [])
+	parent.set_meta("system_facade_window_colors", [])
 
 
 func _find_building_approach_point(ring: PackedVector2Array, road_features: Array) -> Dictionary:
