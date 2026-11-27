@@ -1207,6 +1207,16 @@ func activate_relic_skill(skill_id: String, actor: CharacterBody3D) -> Dictionar
 		var elemental_check: Dictionary = can_use_system_skill(key)
 		if not bool(elemental_check.get("success", false)):
 			return elemental_check
+		var elemental_definition: Dictionary = SYSTEM_SKILL_TREE[key]
+		var required_level := int(elemental_definition.get("required_level", 1))
+		if current_level < required_level:
+			return {"success": false, "reason": "LEVEL_REQUIREMENT", "required_level": required_level}
+		var required_rank := str(elemental_definition.get("required_rank", "F"))
+		if not _meets_skill_rank(required_rank):
+			return {"success": false, "reason": "HUNTER_RANK_REQUIREMENT", "required_rank": required_rank}
+		for prerequisite in elemental_definition.get("prerequisites", []):
+			if not learned_system_skills.has(str(prerequisite)):
+				return {"success": false, "reason": "SKILL_PREREQUISITE", "prerequisite": str(prerequisite)}
 		if not authorized_system_skills.has(key):
 			return {"success": false, "reason": "SKILL_STUDY_PERMIT_REQUIRED"}
 		if int(system_skill_practice.get(key, 0)) < 3:
