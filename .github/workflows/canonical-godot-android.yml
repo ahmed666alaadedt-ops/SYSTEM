@@ -344,6 +344,17 @@ jobs:
           "$GODOT" --headless --path "$PROJECT" --quit-after 8 \
             2>&1 | tee "$RUNNER_TEMP/system-world-runtime.log"
 
+      - name: Diagnose canonical scene meshes across all world switches
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          timeout 240s "$GODOT" --headless --path "$PROJECT" \
+            --script res://tools/diagnose_null_meshes.gd \
+            2>&1 | tee "$RUNNER_TEMP/system-world-mesh-diagnostic.log"
+          grep -q "SYSTEM MESH DIAGNOSTIC TOTALS:" "$RUNNER_TEMP/system-world-mesh-diagnostic.log"
+
       - name: Verify Miyar and Adam GLB runtime companions
         shell: bash
         run: |
