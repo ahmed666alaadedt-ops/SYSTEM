@@ -410,21 +410,13 @@ func get_vehicle_navigation_path(start: Vector3, target: Vector3, max_snap_dista
 	var graph_path := _vehicle_navigation_graph.get_point_path(start_id, target_id)
 	if graph_path.is_empty():
 		return []
+	# Vehicles stay on mapped road vertices; unlike pedestrian routes, no
+	# straight-line snap connector may cross a building or restricted area.
 	var route: Array[Vector3] = []
-	var first_point: Vector2 = graph_path[0]
-	var start_approach := Vector3(start.x, _terrain_height(Vector2(start.x, start.z)) + 0.22, start.z)
-	var snapped_start := Vector3(first_point.x, _terrain_height(first_point) + 0.24, first_point.y)
-	if start_approach.distance_to(snapped_start) > 0.35:
-		route.append(start_approach)
 	for point in graph_path:
 		var world_point := Vector3(point.x, _terrain_height(point) + 0.24, point.y)
 		if route.is_empty() or route[route.size() - 1].distance_to(world_point) > 0.5:
 			route.append(world_point)
-	var last_point: Vector2 = graph_path[graph_path.size() - 1]
-	var target_approach := Vector3(target.x, _terrain_height(Vector2(target.x, target.z)) + 0.22, target.z)
-	var snapped_target := Vector3(last_point.x, _terrain_height(last_point) + 0.24, last_point.y)
-	if snapped_target.distance_to(target_approach) > 0.35:
-		route.append(target_approach)
 	return route
 
 
