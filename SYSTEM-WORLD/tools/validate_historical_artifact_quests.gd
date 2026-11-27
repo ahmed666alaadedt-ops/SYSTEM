@@ -93,12 +93,25 @@ func _run() -> void:
 	if historical_root == null:
 		_fail("Historical world did not load.")
 		return
+	var historical_environment := historical_root.get_node_or_null("HistoricalCivilizationsEnvironment") as Node3D
+	if historical_environment == null:
+		historical_environment = historical_root.find_child("HistoricalCivilizationsEnvironment", true, false) as Node3D
+	if historical_environment == null:
+		_fail("Historical civilizations environment node was not found inside the active historical world.")
+		return
 
 	for quest in QUESTS:
-		var relic_root := historical_root.find_child("HistoricalKey_" + str(quest["relic"]), true, false) as Node3D
+		var relic_name := "HistoricalKey_" + str(quest["relic"])
+		var relic_root := historical_environment.get_node_or_null(relic_name) as Node3D
+		if relic_root == null:
+			relic_root = historical_environment.find_child(relic_name, true, false) as Node3D
 		var endpoint := relic_root.get_node_or_null("HistoricalKeyInteraction") if relic_root != null else null
-		if endpoint == null or str(endpoint.get("action_type")) != "historical_quest_artifact":
-			_fail("Historical world is missing the physical relic endpoint for %s." % str(quest["id"]))
+		if endpoint == null:
+			_fail("Historical world is missing the physical relic interaction node for %s; relic_found=%s." % [str(quest["id"]), str(relic_root != null)])
+			return
+		var endpoint_action := str(endpoint.get("action_type"))
+		if endpoint_action != "historical_quest_artifact":
+			_fail("Historical relic %s has the wrong interaction action: %s." % [str(quest["id"]), endpoint_action])
 			return
 		endpoint.call("system_interact")
 		var status: Dictionary = quest_manager.call("get_quest_status", str(quest["id"]))
