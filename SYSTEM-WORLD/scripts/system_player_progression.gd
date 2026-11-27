@@ -87,8 +87,12 @@ const SYSTEM_SKILL_TREE := {
 	"sensory_mark": {"name": "وسم الإدراك", "category": "nen", "required_level": 25, "required_rank": "B", "prerequisites": ["pulse_dash"], "requires_nen": true, "required_nen_rank": 2, "requires_training_permit": true, "energy_cost": 20, "cooldown": 15.0, "effect": "تمييز حركة الخصم لفترة قصيرة"},
 	"flow_counter": {"name": "صد التدفق", "category": "nen", "required_level": 35, "required_rank": "A", "prerequisites": ["aura_shield", "focused_strike"], "requires_nen": true, "required_nen_rank": 3, "requires_training_permit": true, "energy_cost": 28, "cooldown": 22.0, "effect": "صد مضبوط يعقبه رد سريع"},
 	"resonance_burst": {"name": "انفجار الرنين", "category": "nen", "required_level": 50, "required_rank": "S", "prerequisites": ["sensory_mark", "flow_counter"], "requires_nen": true, "required_nen_rank": 4, "requires_training_permit": true, "energy_cost": 40, "cooldown": 35.0, "effect": "موجة هالة قصيرة المدى"},
-	"sovereign_focus": {"name": "تركيز السيادة", "category": "nen", "required_level": 80, "required_rank": "SS", "prerequisites": ["resonance_burst"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 60, "cooldown": 60.0, "effect": "تركيز نادر عالي الكلفة"}
+	"sovereign_focus": {"name": "تركيز السيادة", "category": "nen", "required_level": 80, "required_rank": "SS", "prerequisites": ["resonance_burst"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 60, "cooldown": 60.0, "effect": "تركيز نادر عالي الكلفة"},
+	"babylon_seal": {"name": "ختم بابل القديم", "category": "artifact", "required_level": 1, "required_rank": "F", "prerequisites": [], "requires_nen": false, "requires_training_permit": true, "required_artifact_quest": "babylon_seal_trial", "energy_cost": 14, "cooldown": 24.0, "effect": "يضاعف ضرر الضربة التالية بختم أثري قديم"},
+	"pharos_sight": {"name": "بصيرة منارة الإسكندرية", "category": "artifact", "required_level": 1, "required_rank": "F", "prerequisites": [], "requires_nen": false, "requires_training_permit": true, "required_artifact_quest": "pharos_sight_trial", "energy_cost": 12, "cooldown": 20.0, "effect": "يوسع مدى الضربة الموجهة لمدة قصيرة"},
+	"atlantis_tide_guard": {"name": "حارس مدّ أتلانتس", "category": "artifact", "required_level": 1, "required_rank": "F", "prerequisites": [], "requires_nen": false, "requires_training_permit": true, "required_artifact_quest": "atlantis_tide_trial", "energy_cost": 16, "cooldown": 28.0, "effect": "يعزز قوة الضربة القتالية مؤقتاً"}
 }
+const ARTIFACT_QUEST_SKILL_MAP := {"babylon_seal_trial": "babylon_seal", "pharos_sight_trial": "pharos_sight", "atlantis_tide_trial": "atlantis_tide_guard"}
 const WEAPON_MASTERY_FAMILIES := ["sword", "spear", "axe", "bow", "shield", "modern_ranged"]
 
 var current_level: int = 1
@@ -116,6 +120,8 @@ var system_skill_practice: Dictionary = {}
 var system_skill_mastery: Dictionary = {}
 var system_skill_cooldowns: Dictionary = {}
 var weapon_mastery: Dictionary = {}
+var completed_artifact_quests: Array[String] = []
+var active_artifact_quest_id := ""
 
 # Hunter grades are earned from verified guild work and demonstrated Nen practice.
 const HUNTER_RANK_ORDER := ["F", "E", "D", "C", "B", "A", "S", "SS", "SSS"]
@@ -783,6 +789,8 @@ func save_progress() -> void:
 	config.set_value("skills", "mastery", system_skill_mastery.duplicate(true))
 	config.set_value("skills", "cooldowns", system_skill_cooldowns.duplicate(true))
 	config.set_value("skills", "weapon_mastery", weapon_mastery.duplicate(true))
+	config.set_value("skills", "completed_artifact_quests", completed_artifact_quests.duplicate())
+	config.set_value("skills", "active_artifact_quest_id", active_artifact_quest_id)
 	config.set_value("skills", "system_energy", current_system_energy)
 	config.set_value("hunter_rank", "verified_mission_points", verified_hunter_mission_points)
 	config.set_value("hunter_rank", "verified_mission_count", verified_hunter_mission_count)
@@ -897,6 +905,14 @@ func load_progress() -> void:
 	system_skill_practice = config.get_value("skills", "practice", {})
 	system_skill_mastery = config.get_value("skills", "mastery", {})
 	system_skill_cooldowns = {}
+	completed_artifact_quests.clear()
+	for quest_id in config.get_value("skills", "completed_artifact_quests", []):
+		var normalized_quest_id := str(quest_id).strip_edges().to_lower()
+		if ARTIFACT_QUEST_SKILL_MAP.has(normalized_quest_id) and not completed_artifact_quests.has(normalized_quest_id):
+			completed_artifact_quests.append(normalized_quest_id)
+	active_artifact_quest_id = str(config.get_value("skills", "active_artifact_quest_id", "")).strip_edges().to_lower()
+	if not ARTIFACT_QUEST_SKILL_MAP.has(active_artifact_quest_id):
+		active_artifact_quest_id = ""
 	var saved_cooldowns: Dictionary = config.get_value("skills", "cooldowns", {})
 	for skill_id in saved_cooldowns.keys():
 		var remaining := maxf(0.0, float(saved_cooldowns[skill_id]))
@@ -1026,6 +1042,8 @@ func _reset_progress() -> void:
 	system_skill_mastery.clear()
 	system_skill_cooldowns.clear()
 	weapon_mastery.clear()
+	completed_artifact_quests.clear()
+	active_artifact_quest_id = ""
 	current_system_energy = MAX_SYSTEM_ENERGY
 	nen_unlocked = false
 	nen_control_rank = 0
@@ -1049,11 +1067,40 @@ func get_authorized_system_skills() -> Array[String]:
 	return authorized_system_skills.duplicate()
 
 
+func set_active_artifact_quest(quest_id: String) -> Dictionary:
+	var key := quest_id.strip_edges().to_lower()
+	if not ARTIFACT_QUEST_SKILL_MAP.has(key):
+		return {"success": false, "reason": "UNKNOWN_ARTIFACT_QUEST"}
+	if completed_artifact_quests.has(key):
+		return {"success": false, "reason": "ARTIFACT_QUEST_ALREADY_COMPLETED"}
+	if not active_artifact_quest_id.is_empty() and active_artifact_quest_id != key:
+		return {"success": false, "reason": "ANOTHER_ARTIFACT_QUEST_IS_ACTIVE"}
+	active_artifact_quest_id = key
+	save_progress()
+	return {"success": true, "quest_id": key}
+
+
+func complete_artifact_quest(quest_id: String) -> Dictionary:
+	var key := quest_id.strip_edges().to_lower()
+	if not ARTIFACT_QUEST_SKILL_MAP.has(key):
+		return {"success": false, "reason": "UNKNOWN_ARTIFACT_QUEST"}
+	if active_artifact_quest_id != key:
+		return {"success": false, "reason": "ARTIFACT_QUEST_NOT_ACTIVE"}
+	if not completed_artifact_quests.has(key):
+		completed_artifact_quests.append(key)
+	active_artifact_quest_id = ""
+	save_progress()
+	return {"success": true, "quest_id": key, "skill_id": str(ARTIFACT_QUEST_SKILL_MAP[key])}
+
+
 func check_skill_training_permit(skill_id: String) -> Dictionary:
 	var key := skill_id.strip_edges().to_lower()
 	if not SYSTEM_SKILL_TREE.has(key):
 		return {"success": false, "reason": "UNKNOWN_SYSTEM_SKILL"}
 	var skill: Dictionary = SYSTEM_SKILL_TREE[key]
+	var required_artifact_quest := str(skill.get("required_artifact_quest", ""))
+	if not required_artifact_quest.is_empty() and not completed_artifact_quests.has(required_artifact_quest):
+		return {"success": false, "reason": "ARTIFACT_QUEST_REQUIRED", "required_quest": required_artifact_quest}
 	if not bool(skill.get("requires_training_permit", false)):
 		return {"success": false, "reason": "SKILL_PERMIT_NOT_REQUIRED"}
 	if learned_system_skills.has(key):
