@@ -1532,7 +1532,7 @@ func _on_interaction_performed(
 		var entrance_kind := str(target.get_meta("system_entrance_type", "غير محدد"))
 		var access_tag := str(target.get_meta("system_access_tag", "unknown"))
 		var wheelchair_tag := str(target.get_meta("system_wheelchair_tag", "unknown"))
-		var access_note := "هذه نقطة مدخل موثقة في بيانات الخريطة؛ مشهد المبنى الداخلي لم يُنفذ بعد."
+		var access_note := "باب موثق في بيانات بغداد: تفاعل مرة لفتح الباب، ومرة ثانية للدخول؛ استخدم الباب نفسه للخروج."
 		if access_tag == "private" or access_tag == "no":
 			access_note += " الوصول مقيّد حسب بيانات المصدر."
 		var accessibility_note := "إمكانية وصول الكراسي المتحركة غير محددة."
@@ -1553,7 +1553,7 @@ func _on_interaction_performed(
 		var building_kind := str(target.get_meta("baghdad_building_type", "general_building"))
 		var estimated_floors := int(target.get_meta("system_estimated_floors", 1))
 		var height_m := float(target.get_meta("system_building_height_m", 0.0))
-		var access_note := "المبنى الخارجي مكتشف؛ الدخول والداخلية لم يُنفذا بعد."
+		var access_note := "المبنى الخارجي موثق؛ ابحث عن باب موثق للدخول. نقاط الاقتراب التقريبية لا تُعد أبواباً ولا تسمح بالدخول."
 		if location_id.begins_with("baghdad_osm_approach_"):
 			var road_distance := float(target.get_meta("system_approach_distance_m", 0.0))
 			access_note = "نقطة اقتراب تقريبية تبعد %.1f م عن أقرب طريق؛ ليست باباً مؤكداً." % road_distance
