@@ -269,6 +269,8 @@ export const completeHistoricalRelicQuest = onCall(async (request) => {
       transaction.create(skillRef, {
         skillId: quest.skillId, skillName: quest.skillName, rarity: quest.rarity,
         playerId, questId, sourceArtifactId: artifactId,
+        relicReturned: quest.returnRequired,
+        historicalSiteId: quest.returnRequired ? quest.historicalSiteId : null,
         verifiedByGameServer: serverUid, unlockedAt: FieldValue.serverTimestamp()
       });
     }
@@ -305,6 +307,8 @@ export const listMyRareRelicSkills = onCall(async (request) => {
         rarity: String(data.rarity || ""),
         questId: String(data.questId || ""),
         sourceArtifactId: String(data.sourceArtifactId || ""),
+        relicReturned: data.relicReturned === true,
+        historicalSiteId: data.historicalSiteId ? String(data.historicalSiteId) : null,
         unlockedAt: data.unlockedAt?.toMillis?.() ?? null
       };
     })
