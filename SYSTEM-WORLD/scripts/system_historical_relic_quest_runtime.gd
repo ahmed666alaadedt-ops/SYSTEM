@@ -1,0 +1,208 @@
+extends Node3D
+class_name SYSTEMHistoricalRelicQuestRuntime
+
+const QUEST_ID := "babylon_echoes_relic_trial"
+const RARE_SKILL_ID := "relic_echo_sight"
+
+var progression: Node
+var player: CharacterBody3D
+var world_manager: Node
+var return_position := Vector3.ZERO
+var active := false
+var completed := false
+var objective_index := 0
+var objective_nodes: Array[Area3D] = []
+var _status_label: Label3D
+
+
+func _ready() -> void:
+	name = "HistoricalRelicQuestRuntime"
+	_build_quest_environment()
+
+
+func begin_quest(p_progression: Node, p_player: CharacterBody3D, p_world_manager: Node, p_return_position: Vector3) -> Dictionary:
+	if completed:
+		return {"success": false, "reason": "RELIC_QUEST_ALREADY_COMPLETED", "message": "سبق أن أكملت صدى بابل. راجع سجل المهارات النادرة."}
+	if active:
+		return {"success": false, "reason": "RELIC_QUEST_ALREADY_ACTIVE", "message": "مهمتك التاريخية ما زالت جارية."}
+	progression = p_progression
+	player = p_player
+	world_manager = p_world_manager
+	return_position = p_return_position
+	active = true
+	objective_index = 0
+	_refresh_status("ابدأ بقراءة الألواح بالترتيب: النجمة، النهر، التاج.")
+	return {"success": true, "quest_id": QUEST_ID, "message": "بدأت مهمة أصداء بابل التاريخية. اتبع الألواح القديمة بالترتيب."}
+
+
+func _build_quest_environment() -> void:
+	var stone := _material(Color(0.28, 0.22, 0.15), 0.96)
+	var brass := _material(Color(0.66, 0.43, 0.16), 0.48, 0.62)
+	var glow := _material(Color(0.12, 0.42, 0.78), 0.35, 0.25)
+	var floor_body := StaticBody3D.new()
+	floor_body.name = "BabylonRelicTrialGround"
+	floor_body.position = Vector3(0.0, -0.35, -30.0)
+	add_child(floor_body)
+	_add_box(floor_body, "AncientStoneFloor", Vector3.ZERO, Vector3(58.0, 0.7, 54.0), stone)
+	_add_collision(floor_body, "AncientStoneFloorCollision", Vector3.ZERO, Vector3(58.0, 0.7, 54.0))
+	_add_box(self, "BabylonRelicSanctumLintel", Vector3(0.0, 7.0, -55.0), Vector3(25.0, 1.4, 1.8), brass)
+	_add_box(self, "BabylonRelicSanctumPillarLeft", Vector3(-11.0, 3.5, -55.0), Vector3(1.8, 7.0, 1.8), stone)
+	_add_box(self, "BabylonRelicSanctumPillarRight", Vector3(11.0, 3.5, -55.0), Vector3(1.8, 7.0, 1.8), stone)
+	var heading := Label3D.new()
+	heading.name = "HistoricalRelicQuestHeading"
+	heading.text = "أصداء بابل\nمهمة الأثر النادر"
+	heading.font_size = 34
+	heading.position = Vector3(0.0, 9.0, -55.0)
+	add_child(heading)
+	_status_label = Label3D.new()
+	_status_label.name = "HistoricalRelicQuestStatus"
+	_status_label.text = "المهمة تنتظر تفعيل القطعة الأثرية من سوق التحف."
+	_status_label.font_size = 20
+	_status_label.position = Vector3(0.0, 5.8, -26.0)
+	_status_label.modulate = Color(0.72, 0.88, 1.0)
+	add_child(_status_label)
+	var objective_data := [
+		{"id": "star", "name": "لوح النجمة", "position": Vector3(-13.0, 1.5, -35.0), "color": Color(0.78, 0.61, 0.24)},
+		{"id": "river", "name": "لوح النهر", "position": Vector3(0.0, 1.5, -43.0), "color": Color(0.22, 0.54, 0.72)},
+		{"id": "crown", "name": "لوح التاج", "position": Vector3(13.0, 1.5, -35.0), "color": Color(0.72, 0.39, 0.22)}
+	]
+	for item in objective_data:
+		var pedestal := _add_box(self, "RelicCluePedestal_" + str(item["id"]), item["position"], Vector3(3.2, 1.2, 2.6), stone)
+		var tablet := _add_box(self, "RelicClueTablet_" + str(item["id"]), item["position"] + Vector3(0.0, 2.1, 0.0), Vector3(1.5, 2.4, 0.35), brass)
+		var label := Label3D.new()
+		label.text = str(item["name"])
+		label.font_size = 19
+		label.position = item["position"] + Vector3(0.0, 3.8, 0.0)
+		add_child(label)
+		var area := _make_interaction("HistoricalRelicClue_" + str(item["id"]), item["position"] + Vector3(0.0, 1.5, 1.9), "اقرأ " + str(item["name"]))
+		area.set_meta("system_historical_relic_objective", str(item["id"]))
+		add_child(area)
+		objective_nodes.append(area)
+	var relic_position := Vector3(0.0, 1.7, -50.0)
+	_add_cylinder(self, "BabylonStarTabletRelic", relic_position, 0.9, 1.2, 2.2, brass)
+	var relic_label := Label3D.new()
+	relic_label.text = "لوح النجمة البابلي — الأثر المختوم"
+	relic_label.font_size = 20
+	relic_label.position = relic_position + Vector3(0.0, 2.8, 0.0)
+	add_child(relic_label)
+	var relic_area := _make_interaction("RecoverBabylonStarTablet", relic_position + Vector3(0.0, 0.0, 2.1), "استعد لوح النجمة البابلي")
+	relic_area.set_meta("system_historical_relic_objective", "recover_relic")
+	add_child(relic_area)
+	var return_arch := _make_interaction("HistoricalRelicReturnGate", Vector3(0.0, 1.5, -4.0), "ارجع إلى سوق التحف والآثار الغامضة")
+	return_arch.set_meta("system_historical_relic_return", true)
+	add_child(return_arch)
+
+
+func handle_interaction(target: Node) -> Dictionary:
+	if target == null:
+		return {"handled": false}
+	if target.has_meta("system_historical_relic_return"):
+		if not completed:
+			return {"handled": true, "success": false, "message": "أكمل استعادة الأثر أولاً حتى ينفتح طريق العودة."}
+		if world_manager != null and world_manager.has_method("switch_world"):
+			world_manager.call("switch_world", 2)
+			if is_instance_valid(player):
+				player.global_position = return_position
+			return {"handled": true, "success": true, "message": "رجعت إلى سوق التحف والآثار الغامضة ومعك سر الأثر."}
+	if not target.has_meta("system_historical_relic_objective"):
+		return {"handled": false}
+	if not active:
+		return {"handled": true, "success": false, "message": "فعّل المهمة من القطعة الغامضة في السوق أولاً."}
+	var objective := str(target.get_meta("system_historical_relic_objective"))
+	var sequence := ["star", "river", "crown", "recover_relic"]
+	if objective_index >= sequence.size():
+		return {"handled": true, "success": false, "message": "انتهت أهداف المهمة بالفعل."}
+	if objective != sequence[objective_index]:
+		_refresh_status("هذا ليس اللوح الصحيح. تذكّر ترتيب النجمة ثم النهر ثم التاج.")
+		return {"handled": true, "success": false, "message": "الترتيب غير صحيح. ابدأ بالنجمة ثم النهر ثم التاج."}
+	objective_index += 1
+	if objective == "recover_relic":
+		return _complete_quest()
+	var next_name := ["لوح النهر", "لوح التاج", "استعادة الأثر"][objective_index - 1]
+	_refresh_status("تم فك الرمز. هدفك التالي: " + next_name)
+	return {"handled": true, "success": true, "message": "تم تسجيل الرمز القديم. " + next_name}
+
+
+func _complete_quest() -> Dictionary:
+	if progression == null or not progression.has_method("grant_skill_training_permit"):
+		objective_index -= 1
+		return {"handled": true, "success": false, "message": "تعذر ربط مكافأة المهارة بالتقدم. لم تُستهلك القطعة."}
+	var reward: Dictionary = progression.call("grant_skill_training_permit", RARE_SKILL_ID)
+	if not bool(reward.get("success", false)) and str(reward.get("reason", "")) != "SKILL_PERMIT_ALREADY_OWNED":
+		objective_index -= 1
+		return {"handled": true, "success": false, "message": "الأثر استُعيد، لكن تصريح المهارة لم يُمنح: " + str(reward.get("reason", "UNKNOWN"))}
+	completed = true
+	active = false
+	_refresh_status("اكتملت المهمة — فُتح تصريح مهارة عين صدى الأثر النادرة.")
+	return {"handled": true, "success": true, "completed": true, "skill_id": RARE_SKILL_ID, "message": "أكملت أصداء بابل! حصلت على تصريح مهارة نادرة: عين صدى الأثر. تحتاج 3 جلسات تدريب لإتقانها."}
+
+
+func _refresh_status(message: String) -> void:
+	if is_instance_valid(_status_label):
+		_status_label.text = message
+
+
+func _make_interaction(node_name: String, point: Vector3, prompt: String) -> Area3D:
+	var area := Area3D.new()
+	area.name = node_name
+	area.position = point
+	area.collision_layer = 1
+	area.collision_mask = 0
+	area.add_to_group("system_interactable")
+	area.set_meta("system_location_id", "historical_relic_trial_" + node_name.to_lower())
+	area.set_meta("system_interaction_prompt", prompt)
+	return area
+
+
+func _material(color: Color, roughness: float = 0.8, metallic: float = 0.0) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.roughness = roughness
+	material.metallic = metallic
+	return material
+
+
+func _add_box(parent: Node3D, node_name: String, point: Vector3, size: Vector3, material: Material = null) -> MeshInstance3D:
+	var mesh_node := MeshInstance3D.new()
+	mesh_node.name = node_name
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	mesh_node.mesh = mesh
+	mesh_node.position = point
+	mesh_node.material_override = material if material != null else _material(Color(0.3, 0.25, 0.18))
+	parent.add_child(mesh_node)
+	return mesh_node
+
+
+func _add_cylinder(parent: Node3D, node_name: String, point: Vector3, top_radius: float, bottom_radius: float, height: float, material: Material) -> MeshInstance3D:
+	var mesh_node := MeshInstance3D.new()
+	mesh_node.name = node_name
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = top_radius
+	mesh.bottom_radius = bottom_radius
+	mesh.height = height
+	mesh_node.mesh = mesh
+	mesh_node.position = point
+	mesh_node.material_override = material
+	parent.add_child(mesh_node)
+	return mesh_node
+
+
+func _add_collision(parent: Node3D, node_name: String, point: Vector3, size: Vector3) -> void:
+	var body := StaticBody3D.new()
+	body.name = node_name
+	body.position = point
+	parent.add_child(body)
+	var shape_node := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = size
+	shape_node.shape = shape
+	body.add_child(shape_node)
+
+
+func _ready_interaction_shape(area: Area3D) -> void:
+	var shape_node := CollisionShape3D.new()
+	var shape := SphereShape3D.new()
+	shape.radius = 2.8
+	shape_node.shape = shape
+	area.add_child(shape_node)
