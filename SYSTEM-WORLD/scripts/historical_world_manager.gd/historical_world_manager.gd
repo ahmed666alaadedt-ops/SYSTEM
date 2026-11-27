@@ -237,9 +237,12 @@ func _create_landmark(
 
 func _create_historical_world_fragments() -> void:
 	var entries := [
-		{"id": "babylon_cuneiform_tablet", "name": "لوح المسمارية البابلي", "position": Vector3(-65.0, 2.0, 78.0)},
-		{"id": "alexandria_pharos_lens", "name": "عدسة منارة الإسكندرية", "position": Vector3(65.0, 3.0, 48.0)},
-		{"id": "atlantis_tide_relic", "name": "أثر مدّ أتلانتس", "position": Vector3(65.0, 2.0, -52.0)}
+		{"id": "babylon_cuneiform_tablet", "name": "لوح المسمارية البابلي", "position": Vector3(-65.0, 2.0, 78.0), "action_type": "world_fragment"},
+		{"id": "alexandria_pharos_lens", "name": "عدسة منارة الإسكندرية", "position": Vector3(65.0, 3.0, 48.0), "action_type": "world_fragment"},
+		{"id": "atlantis_tide_relic", "name": "أثر مدّ أتلانتس", "position": Vector3(65.0, 2.0, -52.0), "action_type": "world_fragment"},
+		{"id": "babylon_storm_tablet", "name": "لوح العاصفة البابلي", "position": Vector3(-92.0, 2.0, 92.0), "action_type": "historical_quest_artifact", "quest_id": "babylon_storm_seal"},
+		{"id": "nineveh_shadow_seal", "name": "ختم الظلال من نينوى", "position": Vector3(92.0, 2.0, 92.0), "action_type": "historical_quest_artifact", "quest_id": "nineveh_shadow_seal"},
+		{"id": "assyrian_colossus_core", "name": "قلب الحارس العملاق الآشوري", "position": Vector3(92.0, 2.0, -92.0), "action_type": "historical_quest_artifact", "quest_id": "assyrian_colossus_core"}
 	]
 	for entry in entries:
 		var item := Node3D.new()
@@ -261,7 +264,9 @@ func _create_historical_world_fragments() -> void:
 		item.add_child(visual)
 		var endpoint: Node3D = UndergroundInteractableScript.new()
 		endpoint.name = "HistoricalKeyInteraction"
-		endpoint.set("action_type", "world_fragment")
+		endpoint.set("action_type", str(entry.get("action_type", "world_fragment")))
+		if str(entry.get("action_type", "")) == "historical_quest_artifact":
+			endpoint.set("historical_quest_id", str(entry.get("quest_id", "")))
 		endpoint.set("world_fragment_world", "historical")
 		endpoint.set("world_fragment_id", str(entry["id"]))
 		endpoint.add_to_group("system_interactable")
