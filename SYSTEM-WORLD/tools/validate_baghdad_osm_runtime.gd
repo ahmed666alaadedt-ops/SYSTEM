@@ -14,6 +14,13 @@ func _initialize() -> void:
 
 
 func _run_validation() -> void:
+	var interaction_copy := FileAccess.get_file_as_string("res://scripts/main.gd")
+	if interaction_copy.contains("مشهد المبنى الداخلي لم يُنفذ بعد") or interaction_copy.contains("الدخول والداخلية لم يُنفذا بعد"):
+		_fail("Baghdad OSM interaction prompts still claim that the verified physical door/interior runtime is not implemented.")
+		return
+	if not interaction_copy.contains("تفاعل مرة لفتح الباب، ومرة ثانية للدخول") or not interaction_copy.contains("نقاط الاقتراب التقريبية لا تُعد أبواباً"):
+		_fail("Baghdad OSM interaction prompts do not explain verified doors and approximate approach markers accurately.")
+		return
 	var terrain_manager = MODERN_CONTINENT.new()
 	terrain_manager.name = "ModernContinent"
 	root.add_child(terrain_manager)
