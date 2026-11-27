@@ -948,6 +948,99 @@ func _build_baghdad_republic_bridge() -> void:
 		rail.rotation.y = atan2(delta.x, delta.z)
 		rail.material_override = rail_material
 		bridge.add_child(rail)
+
+	# Deck markings follow the surveyed OSM centerlines; they do not move or
+	# rescale the bridge polygon or either verified road alignment.
+	var marking_material := StandardMaterial3D.new()
+	marking_material.albedo_color = Color(0.88, 0.82, 0.58)
+	marking_material.roughness = 0.72
+	var joint_material := StandardMaterial3D.new()
+	joint_material.albedo_color = Color(0.075, 0.085, 0.09)
+	joint_material.roughness = 0.9
+	var lamp_material := StandardMaterial3D.new()
+	lamp_material.albedo_color = Color(0.24, 0.28, 0.31)
+	lamp_material.metallic = 0.78
+	var lamp_glow := StandardMaterial3D.new()
+	lamp_glow.albedo_color = Color(1.0, 0.78, 0.42)
+	lamp_glow.emission_enabled = true
+	lamp_glow.emission = Color(1.0, 0.52, 0.16)
+	lamp_glow.emission_energy_multiplier = 1.8
+	var bridge_line := baghdad_bridge_centerline
+	for segment_index in range(bridge_line.size() - 1):
+		var line_start: Vector2 = bridge_line[segment_index]
+		var line_finish: Vector2 = bridge_line[segment_index + 1]
+		var line_delta := line_finish - line_start
+		var line_length := line_delta.length()
+		if line_length < 1.0:
+			continue
+		var direction := line_delta.normalized()
+		var angle := atan2(direction.x, direction.y)
+		var midpoint := (line_start + line_finish) * 0.5
+		var lane_mark := MeshInstance3D.new()
+		lane_mark.name = "RepublicBridgeLaneCenterline_%02d" % segment_index
+		var lane_mesh := BoxMesh.new()
+		lane_mesh.size = Vector3(0.16, 0.025, line_length)
+		lane_mark.mesh = lane_mesh
+		lane_mark.position = Vector3(midpoint.x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 0.035, midpoint.y)
+		lane_mark.rotation.y = angle
+		lane_mark.material_override = marking_material
+		bridge.add_child(lane_mark)
+		# Expansion joints are transverse deck strips, spaced along the surveyed
+		# centerline and kept visually flush with the road surface.
+		var joint_count := maxi(1, int(floor(line_length / 18.0)))
+		for joint_index in range(1, joint_count + 1):
+			var t := float(joint_index) / float(joint_count + 1)
+			var joint_point := line_start.lerp(line_finish, t)
+			var joint := MeshInstance3D.new()
+			joint.name = "RepublicBridgeExpansionJoint_%02d_%02d" % [segment_index, joint_index]
+			var joint_mesh := BoxMesh.new()
+			joint_mesh.size = Vector3(8.0, 0.035, 0.22)
+			joint.mesh = joint_mesh
+			joint.position = Vector3(joint_point.x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 0.045, joint_point.y)
+			joint.rotation.y = angle
+			joint.material_override = joint_material
+			bridge.add_child(joint)
+	# Paired low-profile light poles are distributed along the bridge route.
+	var lamp_spacing := 22.0
+	var lamp_serial := 0
+	for segment_index in range(bridge_line.size() - 1):
+		var line_start: Vector2 = bridge_line[segment_index]
+		var line_finish: Vector2 = bridge_line[segment_index + 1]
+		var delta := line_finish - line_start
+		var length := delta.length()
+		if length < 1.0:
+			continue
+		var direction := delta.normalized()
+		var side := Vector2(-direction.y, direction.x)
+		var count := maxi(1, int(floor(length / lamp_spacing)))
+		for lamp_index in range(count + 1):
+			var t := float(lamp_index) / float(count + 1)
+			var center := line_start.lerp(line_finish, t)
+			for side_sign in [-1.0, 1.0]:
+				var lamp_position := center + side * side_sign * 5.2
+				var pole := MeshInstance3D.new()
+				pole.name = "RepublicBridgeLampPole_%03d" % lamp_serial
+			var pole_mesh := CylinderMesh.new()
+			pole_mesh.top_radius = 0.07
+			pole_mesh.bottom_radius = 0.11
+			pole_mesh.height = 4.2
+			pole.mesh = pole_mesh
+			pole.position = Vector3(lamp_position.x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 2.1, lamp_position.y)
+			pole.material_override = lamp_material
+			bridge.add_child(pole)
+			var fixture := MeshInstance3D.new()
+			fixture.name = "RepublicBridgeLampFixture_%03d" % lamp_serial
+			var fixture_mesh := SphereMesh.new()
+			fixture_mesh.radius = 0.22
+			fixture_mesh.height = 0.44
+			fixture.mesh = fixture_mesh
+			fixture.position = pole.position + Vector3(0.0, 2.0, 0.0)
+			fixture.material_override = lamp_glow
+			bridge.add_child(fixture)
+			lamp_serial += 1
+	bridge.set_meta("system_bridge_lane_marking_segments", bridge_line.size() - 1)
+	bridge.set_meta("system_bridge_lamp_fixture_count", lamp_serial)
+	bridge.set_meta("system_bridge_expansion_joint_count", bridge.get_child_count())
 	bridge.set_meta("system_bridge_deck_height_m", BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT)
 	bridge.set_meta("system_bridge_centerline_points", baghdad_bridge_centerline.size())
 	bridge.set_meta("system_bridge_secondary_centerline_points", baghdad_bridge_secondary_centerline.size())
