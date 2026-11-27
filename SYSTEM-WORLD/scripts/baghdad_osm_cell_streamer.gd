@@ -466,7 +466,7 @@ func _is_vehicle_road(tags: Dictionary) -> bool:
 		return false
 	for access_key in ["access", "vehicle", "motor_vehicle", "motorcar"]:
 		var access_value := str(tags.get(access_key, "")).to_lower()
-		if access_value in ["no", "private", "agricultural", "forestry"]:
+		if access_value in ["no", "private", "agricultural", "forestry", "destination", "customers", "delivery", "permit"]:
 			return false
 	return true
 
