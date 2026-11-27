@@ -10,6 +10,7 @@ signal elemental_activation_rejected(skill_id: String, reason: String)
 
 var _elemental_request_sequence := 0
 var _pending_elemental_requests: Dictionary = {}
+var elemental_authority_bridge: Node
 
 const MAX_LEVEL := 100
 const MAX_SYSTEM_ENERGY := 100.0
@@ -149,12 +150,18 @@ func _ready() -> void:
 
 
 func _connect_elemental_authority_bridge() -> void:
-	var bridge := get_tree().root.find_child("SYSTEMAndroidBridge", true, false)
+	var bridge := _get_elemental_authority_bridge()
 	if bridge == null or not bridge.has_signal("marketplace_result_received"):
 		return
 	var callback := Callable(self, "_on_elemental_authority_result")
 	if not bridge.is_connected("marketplace_result_received", callback):
 		bridge.connect("marketplace_result_received", callback)
+
+
+func _get_elemental_authority_bridge() -> Node:
+	if is_instance_valid(elemental_authority_bridge):
+		return elemental_authority_bridge
+	return get_tree().root.find_child("SYSTEMAndroidBridge", true, false)
 
 
 func _on_elemental_authority_result(request_id: String, payload: Dictionary) -> void:
@@ -1256,7 +1263,7 @@ func activate_relic_skill(skill_id: String, actor: CharacterBody3D) -> Dictionar
 			return {"success": false, "reason": "SKILL_PRACTICE_INCOMPLETE", "practice_count": int(system_skill_practice.get(key, 0))}
 		# Elemental abilities must be authorized by Firebase before any local cost or effect.
 		# The receipt is only a pending authorization; a trusted live game server must consume it.
-		var bridge := get_tree().root.find_child("SYSTEMAndroidBridge", true, false)
+		var bridge := _get_elemental_authority_bridge()
 		if bridge == null or not bridge.has_method("request_elemental_activation"):
 			return {"success": false, "reason": "ELEMENTAL_AUTHORITY_BRIDGE_UNAVAILABLE"}
 		_elemental_request_sequence += 1
