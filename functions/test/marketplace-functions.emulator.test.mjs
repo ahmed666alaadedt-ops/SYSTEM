@@ -462,3 +462,39 @@ test("historical relic quest rejects wrong return site and keeps retain-branch r
     true
   );
 });
+
+
+test("secret traders sell through the shared artifact registry and wallet; appraisal and collector reputation are server-derived", async () => {
+  const buyer = uid("secret_trader_buyer");
+  await seedPlayer(buyer, 50000);
+  const offers = await call("browseSecretAntiqueOffers", buyer);
+  assert.ok(offers.offers.some((offer) => offer.offerId === "secret_babylonian_star_engraving"));
+
+  const purchasePayload = {
+    offerId: "secret_babylonian_star_engraving",
+    eventId: "secret_babylon_purchase_01"
+  };
+  const purchase = await call("purchaseSecretAntiqueOffer", buyer, purchasePayload);
+  assert.equal(purchase.success, true);
+  assert.equal(purchase.alreadyPurchased, false);
+  assert.equal((await db.collection("systemWallets").doc(buyer).get()).data().balance, 41500);
+  const artifact = await readArtifact(buyer, purchase.artifactId);
+  assert.equal(artifact.data().status, "owned");
+  assert.equal(artifact.data().source, "secret_trader_purchase");
+  assert.equal((await db.collection("artifactRegistry").doc(purchase.artifactId).get()).exists, true);
+
+  const replay = await call("purchaseSecretAntiqueOffer", buyer, purchasePayload);
+  assert.equal(replay.alreadyPurchased, true);
+  assert.equal(replay.artifactId, purchase.artifactId);
+  assert.equal((await db.collection("systemWallets").doc(buyer).get()).data().balance, 41500);
+
+  const appraisal = await call("appraiseMyArtifactAuthenticity", buyer, { artifactId: purchase.artifactId });
+  assert.equal(appraisal.success, true);
+  assert.equal(appraisal.verdict, "verified");
+  assert.equal((await readArtifact(buyer, purchase.artifactId)).data().authenticity, "verified");
+
+  const reputation = await call("getMyAntiquesReputation", buyer);
+  assert.equal(reputation.completedPurchases, 1);
+  assert.equal(reputation.verifiedAppraisals, 1);
+  assert.equal(reputation.score, 20);
+});
