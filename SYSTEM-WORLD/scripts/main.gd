@@ -216,11 +216,11 @@ func _on_android_marketplace_result(request_id: String, payload: Dictionary) -> 
 			verified_skill_ids.append(str(row.get("skillId", "")))
 	if player_progression != null and player_progression.has_method("apply_server_verified_relic_skills"):
 		player_progression.call("apply_server_verified_relic_skills", verified_skill_ids)
-	if artifact_relic_quest_manager != null and artifact_relic_quest_manager.has_method("apply_server_skill_receipts"):
-		artifact_relic_quest_manager.call("apply_server_skill_receipts", skill_rows)
 	var quest_sessions: Array = data.get("questSessions", [])
 	if artifact_relic_quest_manager != null and artifact_relic_quest_manager.has_method("apply_server_quest_sessions"):
 		artifact_relic_quest_manager.call("apply_server_quest_sessions", quest_sessions)
+	if artifact_relic_quest_manager != null and artifact_relic_quest_manager.has_method("apply_server_skill_receipts"):
+		artifact_relic_quest_manager.call("apply_server_skill_receipts", skill_rows)
 	print("SYSTEM relic state refreshed from Firebase: skills=", verified_skill_ids.size(),
 		" owned_artifacts=", (data.get("ownedArtifacts", []) as Array).size(),
 		" market_listings=", (data.get("marketListings", []) as Array).size())
