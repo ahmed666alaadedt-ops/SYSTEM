@@ -67,6 +67,9 @@ func _run() -> void:
 	var water: Dictionary = progression.call("activate_relic_skill", "tideheart_restoration", actor)
 	_assert(bool(water.get("success", false)), "Water relic did not use the player healing API.")
 	_assert(is_equal_approx(float(health.get("current_health")), 72.0), "Water relic did not restore the expected capped field health.")
+	_assert(int(actor.get_meta("system_tideheart_shield_until_msec", 0)) > Time.get_ticks_msec(), "Water relic did not create its temporary defensive shield.")
+	var water_shield_damage: float = health.call("receive_damage", 10.0, target)
+	_assert(water_shield_damage < 10.0, "Water relic shield did not reduce incoming damage.")
 
 	_prepare_skill("worldroot_earthguard", 3, 1500, 10)
 	health.set("current_health", 100.0)
