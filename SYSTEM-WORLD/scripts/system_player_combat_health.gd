@@ -22,6 +22,10 @@ func receive_damage(amount: float, source: Node = null) -> float:
 	if amount <= 0.0 or not is_instance_valid(player):
 		return 0.0
 	var incoming := amount
+	if player.has_meta("system_shadow_cloak_active") and bool(player.get_meta("system_shadow_cloak_active", false)):
+		return 0.0
+	if player.has_meta("system_titan_embodiment_active") and bool(player.get_meta("system_titan_embodiment_active", false)):
+		incoming *= 0.5
 	var progression := get_tree().root.find_child("PlayerProgression", true, false)
 	if progression != null and progression.has_method("get_defense_bonus"):
 		var defense_bonus := float(progression.call("get_defense_bonus"))
