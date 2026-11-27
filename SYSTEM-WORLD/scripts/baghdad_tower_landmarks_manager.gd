@@ -6,6 +6,7 @@ const HeadquartersInteriorScript = preload("res://scripts/system_hunter_headquar
 const TowerInteriorScript = preload("res://scripts/system_baghdad_tower_interior.gd")
 const PowerTowerArenaVenueScript = preload("res://scripts/system_power_tower_arena_venue.gd")
 const PowerTowerFloorWorldScript = preload("res://scripts/system_power_tower_floor_world.gd")
+const BaghdadVegetationCellBuilderScript = preload("res://scripts/baghdad_vegetation_cell_builder.gd")
 const HUNTER_TOWER_HEIGHT := 1000.0
 const POWER_TOWER_HEIGHT := 168.0
 const TECHNOLOGY_TOWER_HEIGHT := 210.0
@@ -18,6 +19,7 @@ var emissive_material: StandardMaterial3D
 var tower_positions: Array[Dictionary] = []
 var connected_tower_positions: Array[Dictionary] = []
 var headquarters_position := Vector3.INF
+var vegetation_builder: RefCounted
 
 func _ready() -> void:
 	name = "BaghdadTowerLandmarksManager"
@@ -31,6 +33,7 @@ func _ready() -> void:
 		push_warning("SYSTEM WORLD: Baghdad anchor is unavailable; towers were not built.")
 		return
 	_create_materials()
+	vegetation_builder = BaghdadVegetationCellBuilderScript.new()
 	_build_hunter_tower()
 	_build_business_tower()
 	_build_shopping_tower()
@@ -677,25 +680,11 @@ func _create_reference_sky_district() -> void:
 			planter.position = Vector3(0.0, 1.7, 0.0)
 			planter.material_override = trim_material
 			segment.add_child(planter)
-			var tree_trunk := MeshInstance3D.new()
-			tree_trunk.name = "SkyGardenTreeTrunk"
-			var trunk_mesh := CylinderMesh.new()
-			trunk_mesh.top_radius = 0.45
-			trunk_mesh.bottom_radius = 0.7
-			trunk_mesh.height = 5.0
-			tree_trunk.mesh = trunk_mesh
-			tree_trunk.position = Vector3(0.0, 4.7, 0.0)
-			tree_trunk.material_override = tower_material
-			segment.add_child(tree_trunk)
-			var canopy := MeshInstance3D.new()
-			canopy.name = "SkyGardenCanopy"
-			var canopy_mesh := SphereMesh.new()
-			canopy_mesh.radius = 3.2
-			canopy_mesh.height = 5.6
-			canopy.mesh = canopy_mesh
-			canopy.position = Vector3(0.0, 8.2, 0.0)
-			canopy.material_override = _make_surface_material(Color(0.12, 0.34, 0.22), 0.82, 0.0)
-			segment.add_child(canopy)
+			var planter_vegetation: Dictionary = vegetation_builder.build_planter(
+				segment, Vector2(planter_mesh.size.x, planter_mesh.size.z),
+				2.28, 20, "baghdad_sky_ring_planter_%d" % index
+			)
+			planter.set_meta("vegetation_count", int(planter_vegetation.get("total", 0)))
 	district.set_meta("reference_visual_blockout", true)
 	district.set_meta("walkable_ring_segment_count", segment_count)
 	district.set_meta("radial_tower_connectors", connected_tower_positions.size())
