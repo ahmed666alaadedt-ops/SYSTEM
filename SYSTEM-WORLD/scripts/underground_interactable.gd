@@ -2,7 +2,7 @@ extends Node3D
 class_name UndergroundInteractable
 
 ## Small interaction endpoint used by the shared SystemWorldInteractionManager.
-@export_enum("stone_door", "relic", "strongbox", "rune", "greed_fragment", "world_fragment") var action_type: String = "stone_door"
+@export_enum("stone_door", "relic", "strongbox", "rune", "greed_fragment", "world_fragment", "historical_quest_artifact") var action_type: String = "stone_door"
 @export var action_target_path: NodePath = ^"DoorBody"
 @export_enum("modern", "historical", "fantasy") var world_fragment_world: String = "modern"
 @export var world_fragment_id: String = ""
@@ -10,6 +10,7 @@ class_name UndergroundInteractable
 @export var rune_symbol: String = "river"
 @export_range(1, 500, 1) var discovery_xp: int = 35
 @export var greed_fragment_id: String = ""
+@export var historical_quest_id: String = ""
 
 var _used := false
 var _opened := false
@@ -27,6 +28,8 @@ func system_interact() -> void:
 			_claim_greed_fragment()
 		"world_fragment":
 			_claim_world_fragment()
+		"historical_quest_artifact":
+			_claim_historical_quest_artifact()
 
 
 func _toggle_stone_door() -> void:
@@ -82,6 +85,39 @@ func _claim_greed_fragment() -> void:
 	_used = true
 	set_meta("system_interaction_prompt", "تم جمع قطعة جزيرة الطمع")
 	print("SYSTEM Greed Island fragment collected: ", greed_fragment_id, " (", result.get("count", 0), "/3)")
+
+
+func _claim_historical_quest_artifact() -> void:
+	if _used:
+		return
+	var quest_id := historical_quest_id.strip_edges()
+	if quest_id.is_empty():
+		push_warning("SYSTEM historical quest: relic has no quest ID: " + name)
+		return
+	var quest_manager := get_tree().root.find_child("HistoricalArtifactQuestManager", true, false)
+	if quest_manager == null or not quest_manager.has_method("complete_quest"):
+		push_warning("SYSTEM historical quest: reward manager is unavailable.")
+		return
+	var result: Dictionary = quest_manager.call("complete_quest", quest_id, quest_id_to_relic_id(quest_id))
+	if not bool(result.get("success", false)):
+		set_meta("system_interaction_prompt", "لم تكتمل المهمة: " + str(result.get("reason", "تحقق من قبول المهمة من سوق التحف")))
+		print("SYSTEM historical quest relic rejected: ", quest_id, " / ", result.get("reason", "UNKNOWN"))
+		return
+	_used = true
+	set_meta("system_interaction_prompt", "اكتملت المهمة وحصلت على القطعة وتصريح المهارة النادرة")
+	print("SYSTEM historical artifact quest completed: ", quest_id, " / ", result.get("artifact_id", ""))
+
+
+func quest_id_to_relic_id(quest_id: String) -> String:
+	match quest_id:
+		"babylon_storm_seal":
+			return "babylon_storm_tablet"
+		"nineveh_shadow_seal":
+			return "nineveh_shadow_seal"
+		"assyrian_colossus_core":
+			return "assyrian_colossus_core"
+		_:
+			return ""
 
 
 func _claim_world_fragment() -> void:
