@@ -95,7 +95,7 @@ func _run() -> void:
 		return
 
 	for quest in QUESTS:
-		var relic_root := historical_root.get_node_or_null("HistoricalKey_" + str(quest["relic"]))
+		var relic_root := historical_root.find_child("HistoricalKey_" + str(quest["relic"]), true, false) as Node3D
 		var endpoint := relic_root.get_node_or_null("HistoricalKeyInteraction") if relic_root != null else null
 		if endpoint == null or str(endpoint.get("action_type")) != "historical_quest_artifact":
 			_fail("Historical world is missing the physical relic endpoint for %s." % str(quest["id"]))
