@@ -1020,24 +1020,24 @@ func _build_baghdad_republic_bridge() -> void:
 				var lamp_position := center + side * side_sign * 5.2
 				var pole := MeshInstance3D.new()
 				pole.name = "RepublicBridgeLampPole_%03d" % lamp_serial
-			var pole_mesh := CylinderMesh.new()
-			pole_mesh.top_radius = 0.07
-			pole_mesh.bottom_radius = 0.11
-			pole_mesh.height = 4.2
-			pole.mesh = pole_mesh
-			pole.position = Vector3(lamp_position.x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 2.1, lamp_position.y)
-			pole.material_override = lamp_material
-			bridge.add_child(pole)
-			var fixture := MeshInstance3D.new()
-			fixture.name = "RepublicBridgeLampFixture_%03d" % lamp_serial
-			var fixture_mesh := SphereMesh.new()
-			fixture_mesh.radius = 0.22
-			fixture_mesh.height = 0.44
-			fixture.mesh = fixture_mesh
-			fixture.position = pole.position + Vector3(0.0, 2.0, 0.0)
-			fixture.material_override = lamp_glow
-			bridge.add_child(fixture)
-			lamp_serial += 1
+				var pole_mesh := CylinderMesh.new()
+				pole_mesh.top_radius = 0.07
+				pole_mesh.bottom_radius = 0.11
+				pole_mesh.height = 4.2
+				pole.mesh = pole_mesh
+				pole.position = Vector3(lamp_position.x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 2.1, lamp_position.y)
+				pole.material_override = lamp_material
+				bridge.add_child(pole)
+				var fixture := MeshInstance3D.new()
+				fixture.name = "RepublicBridgeLampFixture_%03d" % lamp_serial
+				var fixture_mesh := SphereMesh.new()
+				fixture_mesh.radius = 0.22
+				fixture_mesh.height = 0.44
+				fixture.mesh = fixture_mesh
+				fixture.position = pole.position + Vector3(0.0, 2.0, 0.0)
+				fixture.material_override = lamp_glow
+				bridge.add_child(fixture)
+				lamp_serial += 1
 	bridge.set_meta("system_bridge_lane_marking_segments", bridge_line.size() - 1)
 	bridge.set_meta("system_bridge_lamp_fixture_count", lamp_serial)
 	bridge.set_meta("system_bridge_expansion_joint_count", bridge.get_child_count())
