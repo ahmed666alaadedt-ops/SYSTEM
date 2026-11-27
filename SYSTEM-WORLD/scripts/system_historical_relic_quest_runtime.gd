@@ -41,7 +41,6 @@ func begin_quest(p_progression: Node, p_player: CharacterBody3D, p_world_manager
 func _build_quest_environment() -> void:
 	var stone := _material(Color(0.28, 0.22, 0.15), 0.96)
 	var brass := _material(Color(0.66, 0.43, 0.16), 0.48, 0.62)
-	var glow := _material(Color(0.12, 0.42, 0.78), 0.35, 0.25)
 	var floor_body := StaticBody3D.new()
 	floor_body.name = "BabylonRelicTrialGround"
 	floor_body.position = Vector3(0.0, -0.35, -30.0)
@@ -70,8 +69,8 @@ func _build_quest_environment() -> void:
 		{"id": "crown", "name": "لوح التاج", "position": Vector3(13.0, 1.5, -35.0), "color": Color(0.72, 0.39, 0.22)}
 	]
 	for item in objective_data:
-		var pedestal := _add_box(self, "RelicCluePedestal_" + str(item["id"]), item["position"], Vector3(3.2, 1.2, 2.6), stone)
-		var tablet := _add_box(self, "RelicClueTablet_" + str(item["id"]), item["position"] + Vector3(0.0, 2.1, 0.0), Vector3(1.5, 2.4, 0.35), brass)
+		_add_box(self, "RelicCluePedestal_" + str(item["id"]), item["position"], Vector3(3.2, 1.2, 2.6), stone)
+		_add_box(self, "RelicClueTablet_" + str(item["id"]), item["position"] + Vector3(0.0, 2.1, 0.0), Vector3(1.5, 2.4, 0.35), brass)
 		var label := Label3D.new()
 		label.text = str(item["name"])
 		label.font_size = 19
@@ -91,6 +90,9 @@ func _build_quest_environment() -> void:
 	var relic_area := _make_interaction("RecoverBabylonStarTablet", relic_position + Vector3(0.0, 0.0, 2.1), "استعد لوح النجمة البابلي")
 	relic_area.set_meta("system_historical_relic_objective", "recover_relic")
 	add_child(relic_area)
+	_add_box(self, "HistoricalReturnGateLeftPillar", Vector3(-3.2, 3.0, -4.0), Vector3(0.8, 6.0, 0.8), brass)
+	_add_box(self, "HistoricalReturnGateRightPillar", Vector3(3.2, 3.0, -4.0), Vector3(0.8, 6.0, 0.8), brass)
+	_add_box(self, "HistoricalReturnGateLintel", Vector3(0.0, 6.1, -4.0), Vector3(7.2, 0.8, 0.8), brass)
 	var return_arch := _make_interaction("HistoricalRelicReturnGate", Vector3(0.0, 1.5, -4.0), "ارجع إلى سوق التحف والآثار الغامضة")
 	return_arch.set_meta("system_historical_relic_return", true)
 	add_child(return_arch)
