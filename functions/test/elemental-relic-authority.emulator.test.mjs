@@ -253,6 +253,25 @@ test("combat frames are accepted only from the trusted server and reject stale o
   assert.equal(next.success, true);
   const target = await db.collection("combatTargets").doc(targetId).get();
   assert.equal(target.data().health, 180);
+
+  await call("syncAuthoritativeElementalProgression", server, {
+    playerId: uid,
+    state: { nenUnlocked: true, nenControlRank: 4, level: 60, hunterRank: "S",
+      learnedSkills: ["stormlightning_arc"], authorizedSkills: ["stormlightning_arc"],
+      practiceCounts: { stormlightning_arc: 3 }, currentEnergy: 100, maxEnergy: 100 }
+  }, { gameServer: true });
+  await db.collection("artifactOwnership").doc(uid).collection("items").doc("stormlightning_crown").set({
+    artifactId: "stormlightning_crown", ownerId: uid, status: "owned",
+    awakened: true, relicSkillId: "stormlightning_arc"
+  });
+  const receipt = await call("authorizeElementalRelicActivation", uid, { skillId: "stormlightning_arc" });
+  const resolved = await call("resolveElementalRelicCombat", server, {
+    playerId: uid, activationId: receipt.activationId, targetId
+  }, { gameServer: true });
+  assert.equal(resolved.success, true);
+  assert.equal(resolved.result.damage, 12);
+  const afterCombat = await db.collection("combatTargets").doc(targetId).get();
+  assert.equal(afterCombat.data().health, 168);
 });
 
 test("trusted combat frame ingress rejects duplicate targets, invalid resistance and cross-session replacement", async () => {
