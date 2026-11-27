@@ -159,7 +159,7 @@ jobs:
           import pathlib
           root = pathlib.Path("SYSTEM-WORLD/data/geography/baghdad/regional_urban")
           manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
-          expected = ["buildings", "waterways", "bridges", "landuse", "amenities", "railway", "natural-water", "entrances"]
+          expected = ["buildings", "waterways", "bridges", "landuse", "amenities", "railway", "natural-water", "wetlands", "entrances"]
           cells = list((root / "cells").glob("*.json"))
           assert manifest["region_id"] == "iraq_baghdad_region"
           assert manifest["coordinate_system"] == "SYSTEM_LOCAL_ECEF_TANGENT"
