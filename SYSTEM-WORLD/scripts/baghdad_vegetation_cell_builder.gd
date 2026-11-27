@@ -179,7 +179,15 @@ func _roll_land_category() -> String:
 	return "flowers_groundcover"
 
 func _plant_lift(category: String) -> float:
-	return 1.6 if category == "large_trees" else (1.1 if category == "palms" else (0.5 if category == "shrubs" else 0.18))
+	match category:
+		"large_trees", "palms", "ornamental_fruit":
+			return 0.0
+		"shrubs":
+			return 0.5
+		"flowers_groundcover":
+			return 0.21
+		_:
+			return 0.45
 
 func _plant_transform(category: String, point: Vector2, y: float) -> Transform3D:
 	var scale_value := rng.randf_range(0.72, 1.32)
