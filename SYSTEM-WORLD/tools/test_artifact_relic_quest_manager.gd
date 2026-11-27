@@ -71,6 +71,50 @@ func _initialize() -> void:
 	)
 	assert(akkadian_reward.get("completed", false), "Verified Akkadian reward should complete the quest.")
 
+	manager.apply_server_quest_sessions([{
+		"sessionId": "trusted_babylon_session",
+		"questId": "quest_babylon_star_tablet",
+		"artifactId": "babylonian_star_tablet",
+		"status": "active",
+		"requiredObjectives": ["find_the_sealed_archive", "solve_the_celestial_lock", "defeat_the_archive_guardian"],
+		"completedObjectives": {"find_the_sealed_archive": true},
+		"returnProof": null
+	}])
+	assert(manager.get_relic_quest_state("babylonian_star_tablet") == ManagerScript.QUEST_STATE_ACTIVE,
+		"Server session progress must override untrusted local completion.")
+	assert(manager.get_objective_progress("babylonian_star_tablet").size() == 1,
+		"Only server-recorded objectives may populate the authoritative journal.")
+	manager.apply_server_quest_sessions([{
+		"sessionId": "trusted_babylon_session",
+		"questId": "quest_babylon_star_tablet",
+		"artifactId": "babylonian_star_tablet",
+		"status": "active",
+		"requiredObjectives": ["find_the_sealed_archive", "solve_the_celestial_lock", "defeat_the_archive_guardian"],
+		"completedObjectives": {
+			"find_the_sealed_archive": true,
+			"solve_the_celestial_lock": true,
+			"defeat_the_archive_guardian": true
+		},
+		"returnProof": null
+	}])
+	assert(manager.get_relic_quest_state("babylonian_star_tablet") == ManagerScript.QUEST_STATE_READY_TO_RETURN,
+		"All server-verified objectives must unlock only the return step.")
+	manager.apply_server_quest_sessions([{
+		"sessionId": "trusted_babylon_session",
+		"questId": "quest_babylon_star_tablet",
+		"artifactId": "babylonian_star_tablet",
+		"status": "active",
+		"requiredObjectives": ["find_the_sealed_archive", "solve_the_celestial_lock", "defeat_the_archive_guardian"],
+		"completedObjectives": {
+			"find_the_sealed_archive": true,
+			"solve_the_celestial_lock": true,
+			"defeat_the_archive_guardian": true
+		},
+		"returnProof": {"siteId": "babylon_esagila_archive", "verified": true}
+	}])
+	assert(manager.get_relic_quest_state("babylonian_star_tablet") == ManagerScript.QUEST_STATE_READY_FOR_REWARD,
+		"Only a server-confirmed historical return may release the reward gate.")
+
 	var progression = ProgressionScript.new()
 	root.add_child(progression)
 	progression.current_level = 100
