@@ -4,6 +4,7 @@ class_name SYSTEMBaghdadTowerOperationsManager
 const NPCCharacterModelScript = preload("res://scripts/npc_character_model.gd")
 const TowerOpponentScript = preload("res://scripts/system_tower_opponent.gd")
 const TowerFloorThemeBuilder = preload("res://scripts/system_baghdad_tower_floor_theme_builder.gd")
+const AntiqueMarketWorldBuilder = preload("res://scripts/system_antiques_market_world_builder.gd")
 const SAVE_PATH := "user://system_baghdad_tower_operations.cfg"
 const STOCK_SAVE_PATH := "user://system_tower_vendor_stock.cfg"
 const HOTEL_SAVE_PATH := "user://system_baghdad_hotel_bookings.cfg"
@@ -3551,6 +3552,10 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 		# Existing museum floors can be prepared before a later interaction pass.
 		# Reconcile every exhibit collider/group/record before returning the cached room.
 		_ensure_museum_exhibit_interactions(existing, tower_id, floor_number)
+		if tower_id == "antiques_heritage_tower_baghdad" and floor_number >= 29 and floor_number <= 32:
+			var existing_market_facility := existing.get_node_or_null("SpecialFacility_player_artifact_market") as Node3D
+			if existing_market_facility != null:
+				AntiqueMarketWorldBuilder.build_floor(existing_market_facility, floor_number, radius)
 		return existing
 	var height := float(tower.get_meta("tower_height_m", config["height"]))
 	var radius := float(config["radius"])
@@ -4368,6 +4373,8 @@ func _create_hunter_nen_side_facility(room: Node3D, radius: float) -> void:
 	sign.font_size = 20
 	sign.pixel_size = 0.012
 	root.add_child(sign)
+	if tower_id == "antiques_heritage_tower_baghdad" and facility_type == "player_artifact_market" and floor_number >= 29 and floor_number <= 32:
+		AntiqueMarketWorldBuilder.build_floor(root, floor_number, radius)
 	var interaction := Area3D.new()
 	interaction.name = "FacilityServiceInteraction"
 	interaction.add_to_group("system_interactable")
