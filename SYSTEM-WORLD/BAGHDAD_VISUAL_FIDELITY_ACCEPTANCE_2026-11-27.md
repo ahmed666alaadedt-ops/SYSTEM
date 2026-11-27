@@ -18,7 +18,7 @@ Treat the supplied image as the visual-fidelity target for Baghdad, not as permi
 1. Existing five connected Baghdad towers and elevated upper city above the Tigris / Republic Bridge area, preserving their approved layout and identity.
 2. Hunter Association tower above the five-tower district, its rooftop helipad, advertising facades and the single secret Hunter examination tunnel beneath the district.
 3. The independent X-S-X Power Tower, kept separate from the five Baghdad towers and its upper city links.
-4. Baghdad residential city fabric: houses, apartment blocks, mixed-use buildings, commercial streets, shops, restaurants, cafes, clothing stores, workshops, markets and service alleys.
+4. Baghdad residential city fabric: detached houses, apartment blocks, luxury villas and palaces, mixed-use buildings, commercial streets, shops, restaurants, cafes, clothing stores, workshops, markets and service alleys. Villas and palaces need distinct footprints, heights, facade treatment, boundary walls, gates, landscaped grounds and driveways where mapped; do not render them as ordinary house boxes.
 5. Mosques and Islamic religious buildings, plus Christian churches and other mapped places of worship. Keep distinct building silhouettes and labels; do not classify every place of worship as a mosque.
 6. Hospitals, clinics, pharmacies, police stations, fire and civic services, schools and other public facilities. OSM markers are only mapped locations until full building interiors and gameplay are implemented.
 7. Tigris riverfront, bridges, promenades, marinas, parks, roof gardens, transport and street furniture.
@@ -27,7 +27,7 @@ Treat the supplied image as the visual-fidelity target for Baghdad, not as permi
 
 ## Current implementation distinctions
 - The Baghdad landmark manager already contains the connected tower district and a 34-floor Antiques & Heritage museum exhibit system. This does not prove a fully finished player-to-player artifact marketplace.
-- The citywide 1 km OSM urban overview is a low-detail exterior LOD layer. It does not yet meet the image's final visual standard and does not provide detailed interiors or collision-ready walkable buildings.
+- The citywide 1 km OSM urban overview is a low-detail exterior LOD layer. OSM building values for villas and palaces are now classified separately in the overview renderer, with distinct material and display metadata; this is a classification/rendering foundation, not finished luxury architecture. It does not yet meet the image's final visual standard and does not provide detailed interiors or collision-ready walkable buildings.
 - Christian church classification has now been added to the regional POI renderer alongside mosque classification. It still requires source-pack and runtime validation.
 - The separate swamp-land environment is a preserved project feature and must be checked independently; this Baghdad urban expansion must not replace or reset it.
 - Hospitals and police stations mapped as POIs are not equivalent to complete hospital/police buildings, interiors, NPC staffing, dispatch or emergency gameplay.
