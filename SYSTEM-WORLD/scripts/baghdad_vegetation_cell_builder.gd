@@ -6,6 +6,16 @@ class_name BaghdadVegetationCellBuilder
 
 const MUNICIPAL_AREA_M2 := 861080000.0
 const TARGET_PLANT_COUNT := 1000000
+const CATEGORY_TARGETS := {
+	"large_trees": 150000,
+	"palms": 100000,
+	"ornamental_fruit": 150000,
+	"shrubs": 250000,
+	"flowers_groundcover": 250000,
+	"aquatic_riparian": 100000
+}
+const LAND_TARGET_COUNT := 900000
+const AQUATIC_TARGET_COUNT := 100000
 const TARGET_DENSITY_PER_M2 := float(TARGET_PLANT_COUNT) / MUNICIPAL_AREA_M2
 const MAX_PLANTS_PER_CELL := 256
 
