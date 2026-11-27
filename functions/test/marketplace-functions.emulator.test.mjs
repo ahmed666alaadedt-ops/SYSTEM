@@ -343,3 +343,73 @@ test("scheduled expiry workers release stale listing, auction and exchange escro
   assert.equal((await db.collection("marketplaceExchanges").doc(exchange.exchangeId).get()).data().status, "expired");
   assert.equal((await readArtifact(seller, exchangeArtifact)).data().status, "owned");
 });
+
+
+test("historical relic return and rare skill reward are trusted, atomic and replay-safe", async () => {
+  const owner = uid("babylon_relic_owner");
+  const relicId = "babylonian_star_tablet";
+  await seedPlayer(owner, 0);
+  await seedArtifact(owner, relicId);
+
+  await assert.rejects(() => call("completeHistoricalRelicQuest", owner, {
+    playerId: owner,
+    questId: "quest_babylon_star_tablet",
+    artifactId: relicId,
+    eventId: "babylon_reward_untrusted",
+    siteId: "babylon_esagila_archive"
+  }));
+
+  const payload = {
+    playerId: owner,
+    questId: "quest_babylon_star_tablet",
+    artifactId: relicId,
+    eventId: "babylon_reward_verified",
+    siteId: "babylon_esagila_archive"
+  };
+  const result = await call("completeHistoricalRelicQuest", uid("trusted_game_server"), payload, { gameServer: true });
+  assert.equal(result.success, true);
+  assert.equal(result.relicReturned, true);
+  assert.equal(result.skillId, "rare_skill_celestial_lightning");
+
+  const returned = await readArtifact(owner, relicId);
+  assert.equal(returned.data().status, "returned_to_history");
+  assert.equal(returned.data().returnedToHistoricalSite, "babylon_esagila_archive");
+  const skill = await db.collection("playerSkillUnlocks").doc(owner).collection("skills").doc("rare_skill_celestial_lightning").get();
+  assert.equal(skill.exists, true);
+  assert.equal(skill.data().questId, "quest_babylon_star_tablet");
+
+  const retry = await call("completeHistoricalRelicQuest", uid("trusted_game_server"), payload, { gameServer: true });
+  assert.equal(retry.success, true);
+  assert.equal(retry.alreadyCompleted, true);
+  assert.equal((await readArtifact(owner, relicId)).data().status, "returned_to_history");
+});
+
+test("historical relic quest rejects wrong return site and keeps retain-branch relic tradable", async () => {
+  const owner = uid("historical_relic_owner");
+  await seedPlayer(owner, 0);
+  await seedArtifact(owner, "sumerian_oath_seal");
+  await seedArtifact(owner, "akkadian_shadow_crown");
+
+  await assert.rejects(() => call("completeHistoricalRelicQuest", uid("trusted_game_server"), {
+    playerId: owner,
+    questId: "quest_sumerian_oath",
+    artifactId: "sumerian_oath_seal",
+    eventId: "sumer_wrong_site",
+    siteId: "wrong_historical_site"
+  }, { gameServer: true }));
+  assert.equal((await readArtifact(owner, "sumerian_oath_seal")).data().status, "owned");
+
+  const retained = await call("completeHistoricalRelicQuest", uid("trusted_game_server"), {
+    playerId: owner,
+    questId: "quest_akkadian_shadow",
+    artifactId: "akkadian_shadow_crown",
+    eventId: "akkadian_reward_verified"
+  }, { gameServer: true });
+  assert.equal(retained.success, true);
+  assert.equal(retained.relicReturned, false);
+  assert.equal((await readArtifact(owner, "akkadian_shadow_crown")).data().status, "owned");
+  assert.equal(
+    (await db.collection("playerSkillUnlocks").doc(owner).collection("skills").doc("rare_skill_shadow_avatar").get()).exists,
+    true
+  );
+});
