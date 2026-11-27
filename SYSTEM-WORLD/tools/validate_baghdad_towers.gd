@@ -735,7 +735,7 @@ func _run_validation() -> void:
 		_fail("Historical relic quest did not start: " + str(quest_begin.get("reason", "UNKNOWN")))
 		return
 	for clue_id in ["star", "river", "crown", "recover_relic"]:
-		var clue_node_name := "RecoverBabylonStarTablet" if clue_id == "recover_relic" else "HistoricalRelicClue_" + clue_id
+		var clue_node_name: String = "RecoverBabylonStarTablet" if clue_id == "recover_relic" else "HistoricalRelicClue_" + clue_id
 		var clue_node := relic_runtime.get_node_or_null(clue_node_name) as Area3D
 		if clue_node == null:
 			_fail("Historical relic quest is missing clue interaction: " + clue_node_name)
