@@ -469,6 +469,9 @@ test("secret traders sell through the shared artifact registry and wallet; appra
   await seedPlayer(buyer, 50000);
   const offers = await call("browseSecretAntiqueOffers", buyer);
   assert.ok(offers.offers.some((offer) => offer.offerId === "secret_babylonian_star_engraving"));
+  assert.equal(offers.offers.length, 5);
+  assert.equal(new Set(offers.offers.map((offer) => offer.traderId)).size, 5,
+    "Each hidden trader must have a distinct server-owned inventory.");
 
   const purchasePayload = {
     offerId: "secret_babylonian_star_engraving",
