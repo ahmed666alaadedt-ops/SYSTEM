@@ -313,3 +313,16 @@ The local Godot progression path now routes the five elemental relic skills thro
 - Lightning: bounded 32-damage hitscan using the existing combatant `take_damage` API, with reduced damage against player/boss groups.
 
 All five still require Nen unlock and their minimum control rank, level, Hunter rank, training permit, three practice sessions, learned state, energy and cooldown. Fire/lightning require a valid damageable target. These are local gameplay effects only: they do not establish server-authoritative ownership, relic awakening, quest reward issuance, anti-replay or PvP validation. Visuals remain simple impact flashes rather than finished cinematic elemental VFX. `tools/validate_elemental_relic_nen.gd` exercises the five effects and Nen gates in headless Godot and is included in the Godot validation workflow.
+
+
+## Server-authoritative elemental relic gate — implementation checkpoint
+
+Firebase Functions now exports three server-side operations for the five elemental relics:
+
+- `syncAuthoritativeElementalProgression`: callable only by an identity carrying the trusted `gameServer=true` claim. It writes the verified Nen unlock/rank, level, Hunter rank, learned skills, training permits, practice counts and initial energy into server-owned player subcollections. Routine progression sync does not refill energy or clear active cooldowns.
+- `grantElementalRelicFromCompletedMission`: callable only by the trusted game server. It requires a completed `hunterGuildMissionSessions` record and verifies that the recipient is in that session's immutable participant roster. It issues only one of the five registered elemental relics, marks it awakened, records its skill binding and uses an idempotency event plus the global artifact registry to prevent duplicate issuance.
+- `authorizeElementalRelicActivation`: callable by the authenticated player. In one Firestore transaction it checks server-verified Nen, level, Hunter rank, learned skill, training permit, practice count, matching owned-and-awakened artifact, available energy and cooldown. It atomically reserves energy/cooldown and creates a short-lived `authorized_pending_combat` activation receipt.
+
+The emulator test suite covers client rejection of progression writes, missing/non-awakened relic rejection, Nen-rank rejection, successful activation reservation, cooldown replay rejection, completed-mission roster validation and idempotent reward issuance.
+
+**Important boundary:** the activation receipt is not itself a combat effect. A trusted online combat service still must consume the receipt exactly once, validate the target and apply the actual fire/air/water/earth/lightning effect authoritatively. The current Godot effects remain local gameplay implementation and must not be treated as secure online combat until that consumer and the client callable bridge are integrated. No Firebase deployment was performed.
