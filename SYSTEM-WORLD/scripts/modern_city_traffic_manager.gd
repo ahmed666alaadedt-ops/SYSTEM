@@ -39,7 +39,9 @@ func _ready() -> void:
 	terrain = region_manager.get("terrain")
 	_create_materials()
 	active_city_name = _find_nearest_city_name(Vector3.ZERO)
-	_build_city_traffic(active_city_name)
+	# WorldManager adds the Baghdad OSM streamer immediately after the region
+	# manager; defer fleet creation so the streamer can be discovered first.
+	call_deferred("_build_city_traffic", active_city_name)
 
 
 func _create_materials() -> void:
@@ -159,9 +161,13 @@ func _try_upgrade_traffic_to_osm_routes() -> void:
 		if str(item.get("city_name", "")) != "Baghdad" or bool(item.get("uses_osm_route", false)):
 			continue
 		var route_points := _build_real_traffic_route("Baghdad", item["anchor"], index)
-		if route_points.size() < 4:
-			continue
 		var vehicle := item.get("node") as Node3D
+		if route_points.size() < 4:
+			if _should_wait_for_osm_routes("Baghdad") and is_instance_valid(vehicle):
+				item["waiting_for_osm_route"] = true
+				vehicle.visible = false
+				vehicles[index] = item
+			continue
 		if not is_instance_valid(vehicle):
 			continue
 		item["route_points"] = route_points
