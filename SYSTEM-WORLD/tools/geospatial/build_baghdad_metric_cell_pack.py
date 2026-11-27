@@ -21,10 +21,10 @@ ORIGIN_LON = 44.3661
 DEFAULT_CELL_SIZE = 200.0
 LAYERS = (
     "buildings", "roads", "waterways", "bridges",
-    "landuse", "amenities", "railway", "natural-water", "entrances"
+    "landuse", "amenities", "railway", "natural-water", "wetlands", "entrances"
 )
 LINE_LAYERS = {"roads", "waterways", "bridges", "railway"}
-AREA_LAYERS = {"landuse", "natural-water"}
+AREA_LAYERS = {"landuse", "natural-water", "wetlands"}
 KEEP_TAGS = {
     "name", "name:en", "name:ar", "ref", "highway", "building",
     "building:levels", "building:material", "height", "min_height",
@@ -33,6 +33,7 @@ KEEP_TAGS = {
     "oneway", "access", "service", "tunnel", "layer", "leisure",
     "shop", "tourism", "historic", "man_made", "water", "place",
     "religion", "operator", "aeroway", "barrier", "foot", "cycleway",
+    "wetland", "tidal", "seasonal", "marsh",
     "healthcare", "emergency", "office", "craft", "cuisine", "opening_hours",
     "public_transport", "brand", "building:use", "addr:street", "addr:city",
     "entrance", "door", "wheelchair", "level", "indoor"
