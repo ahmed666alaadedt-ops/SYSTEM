@@ -286,3 +286,18 @@ All five affinities are secondary channels of Nen, not independent free powers. 
 5. Fire, Air, Water, Earth and Lightning each have distinct effects, costs, cooldowns, caps and boss/PvP resistance.
 6. Relogging preserves verified Nen mastery and relic skill state without duplicating unlocks.
 7. Existing non-elemental skills and marketplace transactions continue to work.
+
+
+## Runtime progression gate checkpoint — five elemental Nen skills
+
+The existing player progression tree now contains five elemental relic skill definitions, linked to their matching relic template IDs. Training-permit/practice learning uses the existing progression APIs. The current local activation entry point checks:
+- Nen must be unlocked.
+- Minimum Nen control rank: Fire 2, Air 2, Water 3, Earth 3, Lightning 4.
+- Existing skill learning, training and cooldown checks are evaluated before any activation can proceed.
+
+**Important implementation boundary:** the five elemental visual/combat/movement/healing effects are not implemented yet. The activation entry point deliberately returns ELEMENTAL_RELIC_EFFECT_RUNTIME_PENDING after validating the Nen and progression gates; it does not consume energy or pretend an effect occurred. This is a local Godot progression gate, not trusted server authorization. The online server must independently verify Nen tier, relic ownership/provenance, awakening, skill unlock, energy and cooldown before production use. The two existing historical relic skills remain separate and do not receive this elemental Nen requirement.
+
+### Checkpoint tests still required
+- Godot headless parse and progression tests for no-Nen rejection, each Nen rank boundary, training permit, three practice sessions, learned-state and cooldown.
+- Runtime integration tests for each actual element effect and its interaction with combat, health, movement, target resistance and UI.
+- Server-side authoritative validation and replay/race tests before online release.
