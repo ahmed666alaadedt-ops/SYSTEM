@@ -8,6 +8,7 @@ const ModernWorldLightingManagerScript = preload("res://scripts/modern_world_lig
 const ModernWorldCinematicPresentationScript = preload("res://scripts/modern_world_cinematic_presentation.gd")
 const ModernWorldAmbienceManagerScript = preload("res://scripts/modern_world_ambience_manager.gd")
 const BaghdadTowerLandmarksManagerScript = preload("res://scripts/baghdad_tower_landmarks_manager.gd")
+const BataweenAntiquesMarketManagerScript = preload("res://scripts/system_baghdad_bataween_market_manager.gd")
 const ModernWorldTransportNetworkManagerScript = preload("res://scripts/modern_world_transport_network_manager.gd")
 const ModernCityStreetFurnitureManagerScript = preload("res://scripts/modern_city_street_furniture_manager.gd")
 const ModernCityServicesManagerScript = preload("res://scripts/modern_city_services_manager.gd")
@@ -70,6 +71,7 @@ var plaza_material: StandardMaterial3D
 var building_materials: Array[StandardMaterial3D] = []
 var park_material: StandardMaterial3D
 var use_baghdad_osm_cells := false
+var bataween_market_manager: Node
 
 
 func _ready() -> void:
@@ -94,6 +96,7 @@ func _ready() -> void:
 	_create_cinematic_presentation()
 	_create_city_dealerships()
 	_create_baghdad_towers()
+	_create_baghdad_bataween_market()
 	_create_city_advertising_screens()
 	_create_city_traffic()
 	_create_city_incidents()
@@ -125,15 +128,16 @@ func _material(color: Color, roughness: float, metallic: float = 0.0) -> Standar
 
 
 func _resolve_city_anchors() -> void:
+	var geography_manager: Node = get_node_or_null("/root/SystemRealWorldGeography")
 	for city in CITY_DATA:
 		var requested: Vector2 = city["center"]
 		var geography_city_id := str(city.get("geography_city_id", ""))
 		if not geography_city_id.is_empty():
-			var geography_record := SystemRealWorldGeography.get_city(geography_city_id)
+			var geography_record: Dictionary = geography_manager.call("get_city", geography_city_id) if geography_manager != null else {}
 			if geography_record.is_empty():
 				push_warning("SYSTEM WORLD: missing geographic registry record for " + str(city["name"]))
 				continue
-			var projected_position := SystemRealWorldGeography.get_city_world_position(geography_city_id)
+			var projected_position: Vector3 = geography_manager.call("get_city_world_position", geography_city_id) if geography_manager != null else Vector3.ZERO
 			requested = Vector2(projected_position.x, projected_position.z)
 		var resolved := _nearest_land_position(requested)
 		if resolved == Vector2.INF:
@@ -755,6 +759,15 @@ func register_map_locations(map_manager: Node, world_id: String) -> void:
 				tower_data["position"], false
 			)
 
+	if is_instance_valid(bataween_market_manager) and bataween_market_manager.has_method("get_market_position"):
+		var market_position: Vector3 = bataween_market_manager.call("get_market_position")
+		if market_position != Vector3.INF:
+			map_manager.call(
+				"register_location", world_id,
+				"baghdad_bataween_antiquities_market", "region_baghdad",
+				"سوق التحف والآثار الغامضة", 4, market_position, false
+			)
+
 
 func discover_starting_city(map_manager: Node, world_id: String) -> void:
 	if map_manager == null or not map_manager.has_method("discover_region"):
@@ -843,6 +856,16 @@ func _create_baghdad_towers() -> void:
 	var towers := BaghdadTowerLandmarksManagerScript.new()
 	towers.name = "BaghdadTowerLandmarksManager"
 	add_child(towers)
+
+
+func _create_baghdad_bataween_market() -> void:
+	var market := BataweenAntiquesMarketManagerScript.new()
+	market.name = "BaghdadAlBataweenAntiquitiesMarket"
+	if not bool(market.call("setup", terrain)):
+		market.free()
+		return
+	bataween_market_manager = market
+	add_child(market)
 
 
 func _create_city_traffic() -> void:

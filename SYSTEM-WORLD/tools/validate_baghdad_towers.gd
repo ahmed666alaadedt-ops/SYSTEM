@@ -1,5 +1,7 @@
 extends SceneTree
 
+const WorldManagerScript = preload("res://scripts/world_manager.gd")
+
 const BAGHDAD_DISTRICT_TOWER_IDS := [
 	"hunter_association_tower_baghdad",
 	"business_investment_tower_baghdad",
@@ -51,6 +53,69 @@ func _run_validation() -> void:
 		_fail("BaghdadTowerLandmarksManager was not created.")
 		return
 
+	# Al-Bataween is a separate street-level market district, not a sixth tower.
+	var bataween_market := region.get_node_or_null("BaghdadAlBataweenAntiquitiesMarket") as Node3D
+	if bataween_market == null:
+		_fail("The surveyed Al-Bataween antiques market district was not generated.")
+		return
+	var market_stats: Dictionary = bataween_market.call("get_market_stats")
+	if str(bataween_market.get_meta("system_display_name", "")) != "سوق التحف والآثار الغامضة" or str(bataween_market.get_meta("system_market_category_name", "")) != "التحف والآثار الغامضة" or str(bataween_market.get_meta("system_full_display_name", "")) != "سوق التحف والآثار الغامضة":
+		_fail("Al-Bataween market must expose its district name, antiques category and complete Arabic display name.")
+		return
+	var market_entrance_sign := bataween_market.get_node_or_null("BataweenMarketTitle") as Label3D
+	if market_entrance_sign == null or not market_entrance_sign.text.contains("سوق التحف والآثار الغامضة") or market_entrance_sign.text.contains("سوق البتاوين"):
+		_fail("The physical entrance sign must show سوق التحف والآثار الغامضة and must not show the former district name.")
+		return
+	var market_position: Vector3 = market_stats.get("position", Vector3.INF)
+	if market_position == Vector3.INF or absf(market_position.x - 5065.417) > 2.0 or absf(market_position.z + 544.780) > 2.0:
+		_fail("Al-Bataween market placement does not match its WGS84 neighborhood anchor.")
+		return
+	if not bool(bataween_market.get_meta("system_market_is_independent_of_five_towers", false)) or not bool(bataween_market.get_meta("system_market_is_not_a_sixth_tower", false)):
+		_fail("Al-Bataween market must remain a separate ground-level district, not a sixth Baghdad tower.")
+		return
+	if int(market_stats.get("stall_count", 0)) != 24 or int(market_stats.get("interaction_count", 0)) != 27:
+		_fail("Al-Bataween market must expose 24 vendor stalls, one main entrance and two sealed relic quest interactions.")
+		return
+	var market_quest_altar := bataween_market.get_node_or_null("HistoricalRelicQuestStart") as Area3D
+	if market_quest_altar == null or not market_quest_altar.is_in_group("system_interactable") or not bool(market_quest_altar.get_meta("system_historical_relic_quest_start", false)):
+		_fail("The mysterious antiques market is missing its sealed historical relic quest altar.")
+		return
+	var assyrian_quest_altar := bataween_market.get_node_or_null("AssyrianRelicQuestStart") as Area3D
+	if assyrian_quest_altar == null or not assyrian_quest_altar.is_in_group("system_interactable") or not bool(assyrian_quest_altar.get_meta("system_assyrian_relic_quest_start", false)):
+		_fail("The mysterious antiques market is missing its Assyrian royal seal quest altar.")
+		return
+	for stall_number in [1, 12, 24]:
+		var stall := bataween_market.get_node_or_null("AntiquesStall_%02d" % stall_number) as Node3D
+		var stall_interaction := stall.get_node_or_null("StallMarketplaceInteraction") as Area3D if stall != null else null
+		if stall == null or stall_interaction == null or not stall_interaction.is_in_group("system_interactable") or str(stall_interaction.get_meta("system_location_id", "")) != "baghdad_bataween_antiquities_market":
+			_fail("A sampled Al-Bataween stall is missing its physical player-market interaction.")
+			return
+	var marketplace_ui_script := load("res://scripts/system_bataween_marketplace_ui.gd") as GDScript
+	if marketplace_ui_script == null:
+		_fail("The in-world Al-Bataween player marketplace UI script could not be loaded.")
+		return
+	var marketplace_ui := marketplace_ui_script.new() as CanvasLayer
+	if marketplace_ui == null:
+		_fail("The Al-Bataween marketplace UI could not be instantiated.")
+		return
+	root.add_child(marketplace_ui)
+	await process_frame
+	var marketplace_title := marketplace_ui.get_node_or_null("BataweenMarketplacePanel/BataweenMarketplaceLayout/BataweenMarketplaceHeader/BataweenMarketplaceTitle") as Label
+	var marketplace_panel := marketplace_ui.get_node_or_null("BataweenMarketplacePanel") as PanelContainer
+	if marketplace_title == null or marketplace_title.text != "سوق التحف والآثار الغامضة" or marketplace_title.text.contains("سوق البتاوين") or marketplace_panel == null or str(marketplace_panel.get_meta("system_market_category_name", "")) != "التحف والآثار الغامضة":
+		_fail("The in-world marketplace must visibly identify itself as سوق التحف والآثار الغامضة.")
+		return
+	var artifact_picker := marketplace_ui.get("_artifact_picker") as OptionButton
+	var picker_callback := Callable(marketplace_ui, "_on_artifact_selected")
+	if artifact_picker == null or not artifact_picker.item_selected.is_connected(picker_callback):
+		_fail("The marketplace artifact selector is not connected to its selection handler.")
+		return
+	if marketplace_ui.get("_sell_button") == null or marketplace_ui.get("_listing_list") == null:
+		_fail("The Al-Bataween marketplace UI is missing listing or sell controls.")
+		return
+	marketplace_ui.queue_free()
+	await process_frame
+
 	var terrain := tower_manager.get("terrain") as Node3D
 	if terrain == null or not terrain.has_method("get_baghdad_bridge_anchor") or not terrain.has_method("get_baghdad_bridge_nearest_bank_anchor"):
 		_fail("ModernContinent is missing the verified Baghdad bridge anchor APIs.")
@@ -62,6 +127,27 @@ func _run_validation() -> void:
 		return
 	if bridge_bank_anchor == Vector3.INF or bridge_bank_anchor.length() >= bridge_anchor.length():
 		_fail("Republic Bridge nearest surveyed bank endpoint is missing or not the nearest approach point.")
+		return
+	var bataween_access_anchor: Vector3 = terrain.call("get_baghdad_bridge_far_bank_anchor")
+	if bataween_access_anchor == Vector3.INF or bataween_access_anchor.length() <= bridge_bank_anchor.length():
+		_fail("Al-Bataween access must begin from the opposite/eastern bank of the Republic Bridge, not the Baghdad-side bank.")
+		return
+	var bataween_market_position: Vector3 = market_stats.get("position", Vector3.INF)
+	for route_sample in range(1, 10):
+		var route_fraction := float(route_sample) / 10.0
+		var market_entry_position := bataween_market_position + Vector3(0.0, 0.0, 43.0)
+		var route_point := bataween_access_anchor.lerp(market_entry_position, route_fraction)
+		if not bool(terrain.call("is_land_position", route_point.x, route_point.z)):
+			_fail("The playable land corridor from the Republic Bridge opposite bank to Al-Bataween market is discontinuous at %.0f%% (%.1f, %.1f)." % [route_fraction * 100.0, route_point.x, route_point.z])
+			return
+	var bataween_route := bataween_market.get_node_or_null("BataweenPlayableAccessRoute") as MeshInstance3D
+	var bataween_route_body := bataween_market.get_node_or_null("BataweenPlayableAccessRouteCollision") as StaticBody3D
+	var bataween_route_shape := bataween_route_body.get_node_or_null("CollisionShape3D") as CollisionShape3D if bataween_route_body != null else null
+	if bataween_route == null or not bool(bataween_route.get_meta("system_generated_access_route", false)) or bataween_route_shape == null or bataween_route_shape.shape == null:
+		_fail("The Al-Bataween market is missing its walkable physical access route from the Baghdad bridge approach.")
+		return
+	if not bataween_route_shape.shape is ConcavePolygonShape3D or (bataween_route_shape.shape as ConcavePolygonShape3D).get_faces().size() < 100:
+		_fail("The terrain-conforming Al-Bataween access route collision mesh is empty or incomplete.")
 		return
 	var bridge_node := terrain.get_node_or_null("BaghdadRepublicBridge") as Node3D
 	if bridge_node == null or int(bridge_node.get_meta("system_osm_bridge_polygon_way_id", 0)) != 1077808833:
@@ -633,8 +719,119 @@ func _run_validation() -> void:
 		_fail("Power Tower must remain an independent 200-floor structure outside the five Baghdad civic towers.")
 		return
 
-	print("Baghdad tower validation passed: verified Republic Bridge and Tigris runtime geometry, five towers on both riverbanks/bridge, upper sky city, standalone Power Tower, Hunter rooftop helicopter controller, internal/external ads, tunnel anchor, five Baghdad tower lobby kiosks plus one separate Power Tower kiosk and Shopping Tower facilities.")
-	# This is a short-lived headless validation process; avoid forcing dummy-renderer teardown of placeholder meshes.
+	# Historical relic quest regression: market entry -> historical world -> ordered clues -> rare skill permit.
+	var quest_world_manager := main_scene.get_node_or_null("WorldManager")
+	var quest_player := main_scene.find_child("Player", true, false) as CharacterBody3D
+	var quest_progression := main_scene.get_node_or_null("PlayerProgression")
+	if quest_world_manager == null or quest_player == null or quest_progression == null:
+		_fail("Historical relic quest cannot resolve the canonical world, player and progression managers.")
+		return
+	quest_world_manager.call("switch_world", WorldManagerScript.WorldID.MYTHOLOGY)
+	await process_frame
+	await process_frame
+	var historical_root: Node = quest_world_manager.call("get_world_root", WorldManagerScript.WorldID.MYTHOLOGY)
+	var relic_runtime := historical_root.get_node_or_null("HistoricalRelicQuestRuntime") if historical_root != null else null
+	if relic_runtime == null or not relic_runtime.has_method("begin_quest") or not relic_runtime.has_method("handle_interaction"):
+		_fail("Historical world is missing its relic quest runtime.")
+		return
+	var quest_begin: Dictionary = relic_runtime.call("begin_quest", quest_progression, quest_player, quest_world_manager, Vector3(12.0, 2.0, 34.0))
+	if not bool(quest_begin.get("success", false)):
+		_fail("Historical relic quest did not start: " + str(quest_begin.get("reason", "UNKNOWN")))
+		return
+	for clue_id in ["star", "river", "crown", "recover_relic"]:
+		var clue_node_name: String = "RecoverBabylonStarTablet" if clue_id == "recover_relic" else "HistoricalRelicClue_" + clue_id
+		var clue_node := relic_runtime.get_node_or_null(clue_node_name) as Area3D
+		if clue_node == null:
+			_fail("Historical relic quest is missing clue interaction: " + clue_node_name)
+			return
+		var clue_result: Dictionary = relic_runtime.call("handle_interaction", clue_node)
+		if not bool(clue_result.get("success", false)):
+			_fail("Historical relic clue sequence failed at " + clue_id + ": " + str(clue_result.get("message", "")))
+			return
+	var rare_skill_id := "relic_echo_sight"
+	var authorized_skills: Array = quest_progression.call("get_authorized_system_skills")
+	if not authorized_skills.has(rare_skill_id):
+		_fail("Completing the Babylon relic quest did not unlock its rare skill training permit.")
+		return
+	for practice_index in range(3):
+		var practice_result: Dictionary = quest_progression.call("practice_system_skill", rare_skill_id, "babylon_relic_validator_%d" % practice_index)
+		if not bool(practice_result.get("success", false)):
+			_fail("The relic-bound rare skill could not complete its three verified practice sessions.")
+			return
+	var learned_skills: Array = quest_progression.get("learned_system_skills")
+	if not learned_skills.has(rare_skill_id):
+		_fail("The rare relic skill was not learned after three practice sessions.")
+		return
+	var echo_trace := relic_runtime.get_node_or_null("HiddenBabylonianEchoTrace") as Node3D
+	if echo_trace == null or echo_trace.visible:
+		_fail("Historical relic quest must contain a hidden echo trace before skill activation.")
+		return
+	quest_player.global_position = echo_trace.global_position
+	main_scene.call("_on_mobile_relic_echo_pressed")
+	if not echo_trace.visible or not bool(echo_trace.get_meta("system_echo_revealed", false)):
+		_fail("Learned relic echo sight did not reveal the nearby hidden historical trace.")
+		return
+	if quest_player.get_node_or_null("RelicEchoSightPulse") == null:
+		_fail("Relic echo sight did not create its visible scan pulse.")
+		return
+	var assyrian_quest_world: Node = quest_world_manager.call("get_world_root", WorldManagerScript.WorldID.MYTHOLOGY)
+	var assyrian_runtime := assyrian_quest_world.get_node_or_null("AssyrianRelicQuestRuntime") if assyrian_quest_world != null else null
+	if assyrian_runtime == null or not assyrian_runtime.has_method("begin_quest") or not assyrian_runtime.has_method("handle_interaction"):
+		_fail("Historical world is missing the Assyrian royal seal relic quest runtime.")
+		return
+	var assyrian_begin: Dictionary = assyrian_runtime.call("begin_quest", quest_progression, quest_player, quest_world_manager, Vector3(18.0, 2.0, 34.0))
+	if not bool(assyrian_begin.get("success", false)):
+		_fail("Assyrian Nineveh relic quest did not start: " + str(assyrian_begin.get("reason", "UNKNOWN")))
+		return
+	var wrong_assyrian_clue := assyrian_runtime.get_node_or_null("AssyrianRelicClue_tigris") as Area3D
+	if wrong_assyrian_clue == null or bool(assyrian_runtime.call("handle_interaction", wrong_assyrian_clue).get("success", false)):
+		_fail("Assyrian relic quest accepted a clue in the wrong order.")
+		return
+	for clue_id in ["winged_lion", "tigris", "royal_seal", "recover_seal"]:
+		var assyrian_node_name: String = "RecoverAssyrianRoyalSeal" if clue_id == "recover_seal" else "AssyrianRelicClue_" + clue_id
+		var assyrian_clue := assyrian_runtime.get_node_or_null(assyrian_node_name) as Area3D
+		if assyrian_clue == null:
+			_fail("Assyrian relic quest is missing clue interaction: " + assyrian_node_name)
+			return
+		var assyrian_result: Dictionary = assyrian_runtime.call("handle_interaction", assyrian_clue)
+		if not bool(assyrian_result.get("success", false)):
+			_fail("Assyrian relic clue sequence failed at " + clue_id + ": " + str(assyrian_result.get("message", "")))
+			return
+	var assyrian_skill_id := "ashur_guardian_aegis"
+	var assyrian_authorized: Array = quest_progression.call("get_authorized_system_skills")
+	if not assyrian_authorized.has(assyrian_skill_id):
+		_fail("Completing Nineveh relic quest did not unlock the Assyrian guardian skill permit.")
+		return
+	for practice_index in range(3):
+		var assyrian_practice: Dictionary = quest_progression.call("practice_system_skill", assyrian_skill_id, "assyrian_relic_validator_%d" % practice_index)
+		if not bool(assyrian_practice.get("success", false)):
+			_fail("Assyrian guardian relic skill could not complete its three verified practice sessions.")
+			return
+	var assyrian_learned: Array = quest_progression.get("learned_system_skills")
+	if not assyrian_learned.has(assyrian_skill_id):
+		_fail("Assyrian guardian relic skill was not learned after three practice sessions.")
+		return
+	main_scene.call("_on_mobile_relic_aegis_pressed")
+	var aegis_until := int(quest_player.get_meta("system_assyrian_aegis_until_msec", 0))
+	if aegis_until <= Time.get_ticks_msec() or quest_player.get_node_or_null("AssyrianGuardianAegis") == null:
+		_fail("Learned Assyrian guardian aegis did not activate its timed defensive barrier.")
+		return
+	var player_health := quest_player.get_node_or_null("PlayerCombatHealth")
+	if player_health == null or not player_health.has_method("receive_damage"):
+		_fail("Assyrian aegis regression could not resolve the player combat health component.")
+		return
+	var aegis_damage := float(player_health.call("receive_damage", 20.0))
+	if aegis_damage <= 0.0 or aegis_damage > 7.1:
+		_fail("Assyrian aegis did not reduce incoming 20-point damage by at least 65 percent.")
+		return
+	player_health.call("apply_field_healing", aegis_damage)
+	var assyrian_return := assyrian_runtime.get_node_or_null("AssyrianRelicReturnGate") as Area3D
+	if assyrian_return == null or not bool(assyrian_runtime.call("handle_interaction", assyrian_return).get("success", false)):
+		_fail("Completing Nineveh relic quest did not open the return gate to the antiques market.")
+		return
+	await process_frame
+
+	print("Baghdad tower validation passed: verified Republic Bridge and Tigris runtime geometry, five towers on both riverbanks/bridge, upper sky city, standalone Power Tower, Hunter rooftop helicopter controller, internal/external ads, tunnel anchor, five Baghdad tower lobby kiosks plus one separate Power Tower kiosk and Shopping Tower facilities, mysterious antiques market with Babylon and Assyrian relic quests, rare skill permits, three-session mastery and aegis damage mitigation.")
 	quit(0)
 
 

@@ -42,6 +42,7 @@ const InventoryPanelScript = preload("res://scripts/system_inventory_panel.gd")
 const PlayerCharacterModelScript = preload("res://scripts/npc_character_model.gd")
 const PlayerCharacterCreatorScript = preload("res://scripts/system_player_character_creator.gd")
 const SYSTEMCompanionManagerScript = preload("res://scripts/system_companion_manager.gd")
+const BataweenMarketplaceUIScript = preload("res://scripts/system_bataween_marketplace_ui.gd")
 
 var world_manager
 var world_map_manager
@@ -69,6 +70,7 @@ var tower_operations_manager
 var power_tower_score_event_counter := 0
 var player_combat_health: Node
 var inventory_panel: CanvasLayer
+var bataween_marketplace_ui: CanvasLayer
 
 var active_world_root: Node3D
 
@@ -322,10 +324,12 @@ func create_player_progression() -> void:
 	var existing_progression := get_node_or_null("PlayerProgression")
 	if existing_progression != null:
 		player_progression = existing_progression
+		_connect_elemental_progression_feedback()
 		return
 	player_progression = PlayerProgressionScript.new()
 	player_progression.name = "PlayerProgression"
 	add_child(player_progression)
+	_connect_elemental_progression_feedback()
 
 
 func create_inventory_panel() -> void:
@@ -1145,6 +1149,50 @@ func _on_interaction_target_changed(
 	interaction_prompt_label.show()
 
 
+func _start_historical_relic_quest() -> void:
+	if world_manager == null or player == null or player_progression == null:
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "تعذر بدء المهمة: نظام العالم أو اللاعب غير جاهز."
+			interaction_prompt_label.show()
+		return
+	var return_position := player.global_position
+	world_manager.call("switch_world", WorldManagerScript.WorldID.MYTHOLOGY)
+	var historical_root: Node = world_manager.call("get_world_root", WorldManagerScript.WorldID.MYTHOLOGY)
+	var relic_runtime: Node = historical_root.get_node_or_null("HistoricalRelicQuestRuntime") if historical_root != null else null
+	if relic_runtime == null or not relic_runtime.has_method("begin_quest"):
+		world_manager.call("switch_world", WorldManagerScript.WorldID.REALISTIC)
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "تعذر تحميل مهمة الأثر التاريخي."
+			interaction_prompt_label.show()
+		return
+	var result: Dictionary = relic_runtime.call("begin_quest", player_progression, player, world_manager, return_position)
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = str(result.get("message", "بدأت المهمة التاريخية."))
+		interaction_prompt_label.show()
+
+
+func _start_assyrian_relic_quest() -> void:
+	if world_manager == null or player == null or player_progression == null:
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "تعذر بدء المهمة الآشورية: نظام العالم أو اللاعب غير جاهز."
+			interaction_prompt_label.show()
+		return
+	var return_position := player.global_position
+	world_manager.call("switch_world", WorldManagerScript.WorldID.MYTHOLOGY)
+	var historical_root: Node = world_manager.call("get_world_root", WorldManagerScript.WorldID.MYTHOLOGY)
+	var relic_runtime: Node = historical_root.get_node_or_null("AssyrianRelicQuestRuntime") if historical_root != null else null
+	if relic_runtime == null or not relic_runtime.has_method("begin_quest"):
+		world_manager.call("switch_world", WorldManagerScript.WorldID.REALISTIC)
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "تعذر تحميل مهمة حراس نينوى."
+			interaction_prompt_label.show()
+		return
+	var result: Dictionary = relic_runtime.call("begin_quest", player_progression, player, world_manager, return_position)
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = str(result.get("message", "بدأت مهمة حراس نينوى."))
+		interaction_prompt_label.show()
+
+
 func _on_interaction_performed(
 	target: Node,
 	location_id: String
@@ -1155,6 +1203,43 @@ func _on_interaction_performed(
 		" / ",
 		location_id
 	)
+	if target.has_meta("system_assyrian_relic_quest_start"):
+		_start_assyrian_relic_quest()
+		return
+	if target.has_meta("system_historical_relic_quest_start"):
+		_start_historical_relic_quest()
+		return
+	if target.has_meta("system_assyrian_relic_objective") or target.has_meta("system_assyrian_relic_return"):
+		var historical_root: Node = world_manager.call("get_world_root", WorldManagerScript.WorldID.MYTHOLOGY) if world_manager != null else null
+		var assyrian_runtime: Node = historical_root.get_node_or_null("AssyrianRelicQuestRuntime") if historical_root != null else null
+		if assyrian_runtime == null or not assyrian_runtime.has_method("handle_interaction"):
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "نظام مهمة حراس نينوى غير متاح."
+			return
+		var assyrian_result: Dictionary = assyrian_runtime.call("handle_interaction", target)
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = str(assyrian_result.get("message", "تم التفاعل مع الختم الآشوري."))
+			interaction_prompt_label.show()
+		return
+	if target.has_meta("system_historical_relic_objective") or target.has_meta("system_historical_relic_return"):
+		var historical_root: Node = world_manager.call("get_world_root", WorldManagerScript.WorldID.MYTHOLOGY) if world_manager != null else null
+		var relic_runtime: Node = historical_root.get_node_or_null("HistoricalRelicQuestRuntime") if historical_root != null else null
+		if relic_runtime == null or not relic_runtime.has_method("handle_interaction"):
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "نظام المهمة التاريخية غير متاح."
+			return
+		var relic_result: Dictionary = relic_runtime.call("handle_interaction", target)
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = str(relic_result.get("message", "تم التفاعل مع الأثر التاريخي."))
+			interaction_prompt_label.show()
+		return
+	if target.has_meta("system_bataween_market_action"):
+		if not is_instance_valid(bataween_marketplace_ui):
+			bataween_marketplace_ui = BataweenMarketplaceUIScript.new()
+			bataween_marketplace_ui.name = "BataweenMarketplaceUI"
+			add_child(bataween_marketplace_ui)
+		bataween_marketplace_ui.call("open_market")
+		return
 	if target.has_meta("system_exam_stage_objective") or target.has_meta("system_exam_rival_id"):
 		if hunter_exam_stage_runtime == null or not hunter_exam_stage_runtime.has_method("handle_interaction"):
 			if interaction_prompt_label != null:
@@ -1587,7 +1672,94 @@ func create_mobile_controls() -> void:
 	mobile_controls.attack_pressed.connect(_on_mobile_attack_pressed)
 	mobile_controls.skill_one_pressed.connect(_on_mobile_skill_one_pressed)
 	mobile_controls.skill_two_pressed.connect(_on_mobile_skill_two_pressed)
+	mobile_controls.relic_echo_pressed.connect(_on_mobile_relic_echo_pressed)
+	mobile_controls.relic_aegis_pressed.connect(_on_mobile_relic_aegis_pressed)
+	mobile_controls.elemental_fire_pressed.connect(_on_mobile_elemental_fire_pressed)
+	mobile_controls.elemental_air_pressed.connect(_on_mobile_elemental_air_pressed)
+	mobile_controls.elemental_water_pressed.connect(_on_mobile_elemental_water_pressed)
+	mobile_controls.elemental_earth_pressed.connect(_on_mobile_elemental_earth_pressed)
+	mobile_controls.elemental_lightning_pressed.connect(_on_mobile_elemental_lightning_pressed)
 	mobile_controls.dodge_pressed.connect(_on_mobile_dodge_pressed)
+
+
+func _connect_elemental_progression_feedback() -> void:
+	if not is_instance_valid(player_progression):
+		return
+	var receipt_callback := Callable(self, "_on_elemental_activation_receipt_received")
+	if player_progression.has_signal("elemental_activation_receipt_received") and not player_progression.is_connected("elemental_activation_receipt_received", receipt_callback):
+		player_progression.connect("elemental_activation_receipt_received", receipt_callback)
+	var rejected_callback := Callable(self, "_on_elemental_activation_rejected")
+	if player_progression.has_signal("elemental_activation_rejected") and not player_progression.is_connected("elemental_activation_rejected", rejected_callback):
+		player_progression.connect("elemental_activation_rejected", rejected_callback)
+
+
+func _on_elemental_activation_receipt_received(skill_id: String, receipt: Dictionary) -> void:
+	if interaction_prompt_label == null:
+		return
+	interaction_prompt_label.text = "تم تفويض %s من الخادم. ننتظر خادم القتال الموثوق لاستهلاك الإيصال؛ لم يُطبّق تأثير محلي." % skill_id
+	interaction_prompt_label.show()
+
+
+func _on_elemental_activation_rejected(skill_id: String, reason: String) -> void:
+	if interaction_prompt_label == null:
+		return
+	interaction_prompt_label.text = "رفض الخادم تفعيل %s: %s" % [skill_id, reason]
+	interaction_prompt_label.show()
+
+
+func _request_mobile_elemental_skill(skill_id: String) -> void:
+	if vehicle_runtime_manager != null and vehicle_runtime_manager.is_driving:
+		return
+	if not is_instance_valid(player_progression) or not is_instance_valid(player):
+		return
+	var result: Dictionary = player_progression.call("activate_relic_skill", skill_id, player)
+	if bool(result.get("pending", false)):
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "جارٍ طلب تفويض مهارة النِن العنصرية من الخادم..."
+			interaction_prompt_label.show()
+		return
+	if bool(result.get("success", false)):
+		return
+	var reason := str(result.get("reason", "UNKNOWN"))
+	var message := "المهارة العنصرية غير متاحة حالياً."
+	match reason:
+		"NEN_NOT_UNLOCKED":
+			message = "لازم توقظ قوة النِن أولاً؛ التحفة وحدها ما تمنح القوة."
+		"NEN_CONTROL_REQUIREMENT":
+			message = "رتبة تحكم النِن غير كافية لهذه المهارة."
+		"SKILL_NOT_LEARNED":
+			message = "لازم تحصل على المهارة من مهمتها وتتدرب عليها ثلاث مرات."
+		"SKILL_STUDY_PERMIT_REQUIRED":
+			message = "تحتاج تصريح تدريب المهارة من مهمة التحفة."
+		"ELEMENTAL_AUTHORITY_BRIDGE_UNAVAILABLE":
+			message = "اتصال تفويض الخادم غير متاح؛ لم تُفعّل المهارة."
+		"ELEMENTAL_AUTHORITY_REQUEST_FAILED":
+			message = "تعذر إرسال طلب التفويض إلى الخادم."
+		_:
+			message = "المهارة غير متاحة: %s" % reason
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = message
+		interaction_prompt_label.show()
+
+
+func _on_mobile_elemental_fire_pressed() -> void:
+	_request_mobile_elemental_skill("primordial_flame_burst")
+
+
+func _on_mobile_elemental_air_pressed() -> void:
+	_request_mobile_elemental_skill("stormwind_aerial_step")
+
+
+func _on_mobile_elemental_water_pressed() -> void:
+	_request_mobile_elemental_skill("tideheart_restoration")
+
+
+func _on_mobile_elemental_earth_pressed() -> void:
+	_request_mobile_elemental_skill("worldroot_earthguard")
+
+
+func _on_mobile_elemental_lightning_pressed() -> void:
+	_request_mobile_elemental_skill("stormlightning_arc")
 
 
 func _on_mobile_attack_pressed() -> void:
@@ -1609,6 +1781,138 @@ func _on_mobile_skill_two_pressed() -> void:
 		return
 	if is_instance_valid(modern_world_combat_system):
 		modern_world_combat_system.call("skill_two")
+
+
+func _on_mobile_relic_aegis_pressed() -> void:
+	if vehicle_runtime_manager != null and vehicle_runtime_manager.is_driving:
+		return
+	var active_player := find_child("Player", true, false) as CharacterBody3D
+	if not is_instance_valid(active_player):
+		active_player = player
+	var active_progression: Node = get_node_or_null("PlayerProgression")
+	if active_progression == null:
+		active_progression = player_progression
+	if not is_instance_valid(active_progression) or not is_instance_valid(active_player):
+		return
+	var result: Dictionary = active_progression.call("activate_relic_skill", "ashur_guardian_aegis", active_player)
+	if not bool(result.get("success", false)):
+		var reason := str(result.get("reason", "UNKNOWN"))
+		var message := "درع الحارس الآشوري غير متاح."
+		if reason == "SKILL_NOT_LEARNED":
+			message = "أكمل مهمة حراس نينوى وتدرب ثلاث مرات أولاً."
+		elif reason == "SKILL_COOLDOWN":
+			message = "درع الحارس الآشوري يحتاج انتظار %.0f ثانية." % float(result.get("remaining_seconds", 0.0))
+		elif reason == "SYSTEM_ENERGY_LOW":
+			message = "تحتاج 35 طاقة لتفعيل درع الحارس الآشوري."
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = message
+			interaction_prompt_label.show()
+		return
+	_create_assyrian_aegis_visual(active_player)
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = "درع الحارس الآشوري نشط: تقليل الضرر 65% لمدة 12 ثانية."
+		interaction_prompt_label.show()
+
+
+func _create_assyrian_aegis_visual(target_player: CharacterBody3D = null) -> void:
+	var shield_owner: CharacterBody3D = target_player if is_instance_valid(target_player) else player
+	if not is_instance_valid(shield_owner):
+		return
+	var previous := shield_owner.get_node_or_null("AssyrianGuardianAegis")
+	if previous != null:
+		previous.queue_free()
+	var shield := MeshInstance3D.new()
+	shield.name = "AssyrianGuardianAegis"
+	var sphere := SphereMesh.new()
+	sphere.radius = 1.25
+	sphere.height = 2.5
+	shield.mesh = sphere
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(0.88, 0.58, 0.18, 0.24)
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.metallic = 0.7
+	material.roughness = 0.18
+	material.emission_enabled = true
+	material.emission = Color(0.95, 0.52, 0.12)
+	shield.material_override = material
+	shield.position = Vector3(0.0, 1.0, 0.0)
+	shield_owner.add_child(shield)
+	var pulse := create_tween()
+	pulse.set_loops()
+	pulse.tween_property(shield, "scale", Vector3.ONE * 1.08, 0.8)
+	pulse.tween_property(shield, "scale", Vector3.ONE, 0.8)
+	var expiry_timer := get_tree().create_timer(12.0)
+	expiry_timer.timeout.connect(func() -> void:
+		if is_instance_valid(shield):
+			shield.queue_free()
+	)
+
+
+func _on_mobile_relic_echo_pressed() -> void:
+	if vehicle_runtime_manager != null and vehicle_runtime_manager.is_driving:
+		return
+	if player_progression == null or player == null:
+		return
+	var result: Dictionary = player_progression.call("record_system_skill_use", "relic_echo_sight")
+	if not bool(result.get("success", false)):
+		var reason := str(result.get("reason", "UNKNOWN"))
+		var message := "مهارة عين صدى الأثر غير متاحة."
+		if reason == "SKILL_NOT_LEARNED":
+			message = "تحتاج إكمال مهمة الأثر النادر والتدريب ثلاث مرات أولاً."
+		elif reason == "SKILL_COOLDOWN":
+			message = "عين صدى الأثر تحتاج إلى انتظار %.0f ثانية." % float(result.get("remaining_seconds", 0.0))
+		elif reason == "SYSTEM_ENERGY_LOW":
+			message = "طاقة النظام غير كافية لتفعيل عين صدى الأثر."
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = message
+			interaction_prompt_label.show()
+		return
+	var revealed := 0
+	for trace in get_tree().get_nodes_in_group("system_hidden_historical_trace"):
+		if not is_instance_valid(trace) or not (trace is Node3D):
+			continue
+		if player.global_position.distance_to((trace as Node3D).global_position) > 32.0:
+			continue
+		(trace as Node3D).visible = true
+		(trace as Node3D).set_meta("system_echo_revealed", true)
+		revealed += 1
+	_create_relic_echo_pulse()
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = "عين صدى الأثر كشفت %d أثراً خفياً قريباً لمدة 10 ثوانٍ." % revealed if revealed > 0 else "انطلقت موجة صدى الأثر، لكن لا توجد آثار مخفية قريبة."
+		interaction_prompt_label.show()
+	_hide_relic_echo_traces_after_delay()
+
+
+func _create_relic_echo_pulse() -> void:
+	var pulse := MeshInstance3D.new()
+	pulse.name = "RelicEchoSightPulse"
+	var ring := TorusMesh.new()
+	ring.inner_radius = 0.88
+	ring.outer_radius = 1.0
+	pulse.mesh = ring
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(0.18, 0.78, 1.0, 0.72)
+	material.emission_enabled = true
+	material.emission = Color(0.12, 0.68, 1.0)
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	pulse.material_override = material
+	pulse.rotation.x = PI * 0.5
+	pulse.position = Vector3(0.0, 0.15, 0.0)
+	player.add_child(pulse)
+	var tween := create_tween()
+	tween.tween_property(pulse, "scale", Vector3.ONE * 32.0, 1.15)
+	tween.parallel().tween_property(material, "albedo_color", Color(0.18, 0.78, 1.0, 0.0), 1.15)
+	await get_tree().create_timer(1.25).timeout
+	if is_instance_valid(pulse):
+		pulse.queue_free()
+
+
+func _hide_relic_echo_traces_after_delay() -> void:
+	await get_tree().create_timer(10.0).timeout
+	for trace in get_tree().get_nodes_in_group("system_hidden_historical_trace"):
+		if is_instance_valid(trace) and trace is Node3D and bool((trace as Node3D).get_meta("system_echo_revealed", false)):
+			(trace as Node3D).visible = false
+			(trace as Node3D).set_meta("system_echo_revealed", false)
 
 
 func _on_mobile_dodge_pressed() -> void:
@@ -1779,6 +2083,17 @@ func _physics_process(delta: float) -> void:
 		elif not is_in_hospital_treatment and (jump_requested or Input.is_key_pressed(KEY_SPACE)):
 			player.velocity.y = JUMP_FORCE
 
+	var air_dash_until := int(player.get_meta("system_nen_air_dash_until_msec", 0))
+	if air_dash_until > Time.get_ticks_msec():
+		var air_dash_direction: Vector3 = player.get_meta("system_nen_air_dash_direction", Vector3.ZERO)
+		var air_dash_speed := float(player.get_meta("system_nen_air_dash_speed", 0.0))
+		player.velocity.x = air_dash_direction.x * air_dash_speed
+		player.velocity.z = air_dash_direction.z * air_dash_speed
+	else:
+		if air_dash_until > 0:
+			player.remove_meta("system_nen_air_dash_until_msec")
+			player.remove_meta("system_nen_air_dash_direction")
+			player.remove_meta("system_nen_air_dash_speed")
 	jump_requested = false
 	player.move_and_slide()
 	if is_instance_valid(player_mesh):

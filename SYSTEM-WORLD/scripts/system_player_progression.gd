@@ -5,6 +5,12 @@ class_name SYSTEMPlayerProgression
 signal progress_changed(level: int, total_xp: int, xp_in_level: int, xp_to_next: int)
 signal level_up(new_level: int)
 signal attribute_changed(attribute: String, new_value: int)
+signal elemental_activation_receipt_received(skill_id: String, receipt: Dictionary)
+signal elemental_activation_rejected(skill_id: String, reason: String)
+
+var _elemental_request_sequence := 0
+var _pending_elemental_requests: Dictionary = {}
+var elemental_authority_bridge: Node
 
 const MAX_LEVEL := 100
 const MAX_SYSTEM_ENERGY := 100.0
@@ -87,7 +93,14 @@ const SYSTEM_SKILL_TREE := {
 	"sensory_mark": {"name": "وسم الإدراك", "category": "nen", "required_level": 25, "required_rank": "B", "prerequisites": ["pulse_dash"], "requires_nen": true, "required_nen_rank": 2, "requires_training_permit": true, "energy_cost": 20, "cooldown": 15.0, "effect": "تمييز حركة الخصم لفترة قصيرة"},
 	"flow_counter": {"name": "صد التدفق", "category": "nen", "required_level": 35, "required_rank": "A", "prerequisites": ["aura_shield", "focused_strike"], "requires_nen": true, "required_nen_rank": 3, "requires_training_permit": true, "energy_cost": 28, "cooldown": 22.0, "effect": "صد مضبوط يعقبه رد سريع"},
 	"resonance_burst": {"name": "انفجار الرنين", "category": "nen", "required_level": 50, "required_rank": "S", "prerequisites": ["sensory_mark", "flow_counter"], "requires_nen": true, "required_nen_rank": 4, "requires_training_permit": true, "energy_cost": 40, "cooldown": 35.0, "effect": "موجة هالة قصيرة المدى"},
-	"sovereign_focus": {"name": "تركيز السيادة", "category": "nen", "required_level": 80, "required_rank": "SS", "prerequisites": ["resonance_burst"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 60, "cooldown": 60.0, "effect": "تركيز نادر عالي الكلفة"}
+	"sovereign_focus": {"name": "تركيز السيادة", "category": "nen", "required_level": 80, "required_rank": "SS", "prerequisites": ["resonance_burst"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 60, "cooldown": 60.0, "effect": "تركيز نادر عالي الكلفة"},
+	"relic_echo_sight": {"name": "عين صدى الأثر", "category": "rare_relic", "rarity": "mythic", "required_level": 1, "required_rank": "F", "prerequisites": [], "requires_nen": false, "requires_training_permit": true, "energy_cost": 25, "cooldown": 45.0, "effect": "تكشف آثاراً ورموزاً مخفية ومسارات صدى تاريخية لفترة قصيرة", "source_artifact": "babylon_star_tablet"},
+	"ashur_guardian_aegis": {"name": "درع الحارس الآشوري", "category": "rare_relic", "rarity": "mythic", "required_level": 1, "required_rank": "F", "prerequisites": [], "requires_nen": false, "requires_training_permit": true, "energy_cost": 35, "cooldown": 60.0, "effect": "استدعاء درع آشوري أثري يصد ضربة قوية ويحمي اللاعب مؤقتاً", "source_artifact": "assyrian_royal_seal"},
+	"primordial_flame_burst": {"name": "انفجار اللهب البدائي", "category": "elemental_relic", "element": "fire", "required_level": 25, "required_rank": "B", "prerequisites": [], "requires_nen": true, "required_nen_rank": 2, "requires_training_permit": true, "energy_cost": 32, "cooldown": 28.0, "effect": "قناة نين نارية محدودة", "source_artifact": "primordial_flame_heart"},
+	"stormwind_aerial_step": {"name": "خطوة ريح العاصفة", "category": "elemental_relic", "element": "air", "required_level": 25, "required_rank": "B", "prerequisites": [], "requires_nen": true, "required_nen_rank": 2, "requires_training_permit": true, "energy_cost": 28, "cooldown": 24.0, "effect": "قناة نين هوائية واندفاع قصير", "source_artifact": "stormwind_sigil"},
+	"tideheart_restoration": {"name": "موجة قلب المد", "category": "elemental_relic", "element": "water", "required_level": 30, "required_rank": "A", "prerequisites": [], "requires_nen": true, "required_nen_rank": 3, "requires_training_permit": true, "energy_cost": 36, "cooldown": 40.0, "effect": "قناة نين مائية للحماية والشفاء المحدود", "source_artifact": "tideheart_pearl"},
+	"worldroot_earthguard": {"name": "حارس جذر العالم", "category": "elemental_relic", "element": "earth", "required_level": 35, "required_rank": "A", "prerequisites": [], "requires_nen": true, "required_nen_rank": 3, "requires_training_permit": true, "energy_cost": 38, "cooldown": 42.0, "effect": "قناة نين أرضية للتحصين والسيطرة", "source_artifact": "worldroot_geode"},
+	"stormlightning_arc": {"name": "قوس برق العاصفة", "category": "elemental_relic", "element": "lightning", "required_level": 50, "required_rank": "S", "prerequisites": [], "requires_nen": true, "required_nen_rank": 4, "requires_training_permit": true, "energy_cost": 48, "cooldown": 55.0, "effect": "قناة نين برق دقيقة عالية الكلفة", "source_artifact": "stormlightning_crown"}
 }
 const WEAPON_MASTERY_FAMILIES := ["sword", "spear", "axe", "bow", "shield", "modern_ranged"]
 
@@ -133,6 +146,40 @@ func _ready() -> void:
 	_emit_progress()
 	set_process(true)
 	_create_nen_burst_button()
+	_connect_elemental_authority_bridge()
+
+
+func _connect_elemental_authority_bridge() -> void:
+	var bridge := _get_elemental_authority_bridge()
+	if bridge == null or not bridge.has_signal("marketplace_result_received"):
+		return
+	var callback := Callable(self, "_on_elemental_authority_result")
+	if not bridge.is_connected("marketplace_result_received", callback):
+		bridge.connect("marketplace_result_received", callback)
+
+
+func _get_elemental_authority_bridge() -> Node:
+	if is_instance_valid(elemental_authority_bridge):
+		return elemental_authority_bridge
+	return get_tree().root.find_child("SYSTEMAndroidBridge", true, false)
+
+
+func _on_elemental_authority_result(request_id: String, payload: Dictionary) -> void:
+	if not _pending_elemental_requests.has(request_id):
+		return
+	var skill_id := str(_pending_elemental_requests[request_id])
+	_pending_elemental_requests.erase(request_id)
+	if not bool(payload.get("success", false)):
+		elemental_activation_rejected.emit(skill_id, str(payload.get("error", "ELEMENTAL_AUTHORIZATION_FAILED")))
+		return
+	var data: Variant = payload.get("data", {})
+	if not data is Dictionary or not bool(data.get("success", false)):
+		elemental_activation_rejected.emit(skill_id, "ELEMENTAL_RECEIPT_INVALID")
+		return
+	if str(data.get("skillId", "")) != skill_id or str(data.get("status", "")) != "authorized_pending_combat" or str(data.get("activationId", "")).is_empty():
+		elemental_activation_rejected.emit(skill_id, "ELEMENTAL_RECEIPT_MISMATCH")
+		return
+	elemental_activation_receipt_received.emit(skill_id, data.duplicate(true))
 
 
 func _process(delta: float) -> void:
@@ -1174,3 +1221,112 @@ func record_system_skill_use(skill_id: String) -> Dictionary:
 	system_skill_cooldowns[key] = float(skill.get("cooldown", 5.0))
 	save_progress()
 	return {"success": true, "skill_id": key, "cooldown_seconds": float(skill.get("cooldown", 5.0)), "energy_cost": int(energy_cost), "remaining_energy": current_system_energy, "effect": str(skill.get("effect", ""))}
+
+
+## --- Rare relic skill activation effects ---
+
+# Called by the ability UI after the player has learned a relic skill.
+# Costs, cooldowns and learned-state validation remain centralized in record_system_skill_use().
+func activate_relic_skill(skill_id: String, actor: CharacterBody3D) -> Dictionary:
+	var key := skill_id.strip_edges().to_lower()
+	if not is_instance_valid(actor):
+		return {"success": false, "reason": "PLAYER_ACTOR_UNAVAILABLE"}
+	var elemental_nen_requirements := {
+		"primordial_flame_burst": 2,
+		"stormwind_aerial_step": 2,
+		"tideheart_restoration": 3,
+		"worldroot_earthguard": 3,
+		"stormlightning_arc": 4
+	}
+	if elemental_nen_requirements.has(key):
+		if not nen_unlocked:
+			return {"success": false, "reason": "NEN_NOT_UNLOCKED", "elemental_skill": key}
+		var required_nen_rank := int(elemental_nen_requirements[key])
+		if nen_control_rank < required_nen_rank:
+			return {"success": false, "reason": "NEN_CONTROL_REQUIREMENT", "required_nen_rank": required_nen_rank, "current_nen_rank": nen_control_rank}
+		var elemental_check: Dictionary = can_use_system_skill(key)
+		if not bool(elemental_check.get("success", false)):
+			return elemental_check
+		var elemental_definition: Dictionary = SYSTEM_SKILL_TREE[key]
+		var required_level := int(elemental_definition.get("required_level", 1))
+		if current_level < required_level:
+			return {"success": false, "reason": "LEVEL_REQUIREMENT", "required_level": required_level}
+		var required_rank := str(elemental_definition.get("required_rank", "F"))
+		if not _meets_skill_rank(required_rank):
+			return {"success": false, "reason": "HUNTER_RANK_REQUIREMENT", "required_rank": required_rank}
+		for prerequisite in elemental_definition.get("prerequisites", []):
+			if not learned_system_skills.has(str(prerequisite)):
+				return {"success": false, "reason": "SKILL_PREREQUISITE", "prerequisite": str(prerequisite)}
+		if not authorized_system_skills.has(key):
+			return {"success": false, "reason": "SKILL_STUDY_PERMIT_REQUIRED"}
+		if int(system_skill_practice.get(key, 0)) < 3:
+			return {"success": false, "reason": "SKILL_PRACTICE_INCOMPLETE", "practice_count": int(system_skill_practice.get(key, 0))}
+		# Elemental abilities must be authorized by Firebase before any local cost or effect.
+		# The receipt is only a pending authorization; a trusted live game server must consume it.
+		var bridge := _get_elemental_authority_bridge()
+		if bridge == null or not bridge.has_method("request_elemental_activation"):
+			return {"success": false, "reason": "ELEMENTAL_AUTHORITY_BRIDGE_UNAVAILABLE"}
+		_elemental_request_sequence += 1
+		var request_id := "elemental_%d_%d" % [Time.get_ticks_msec(), _elemental_request_sequence]
+		_pending_elemental_requests[request_id] = key
+		if not bool(bridge.call("request_elemental_activation", key, request_id)):
+			_pending_elemental_requests.erase(request_id)
+			return {"success": false, "reason": "ELEMENTAL_AUTHORITY_REQUEST_FAILED"}
+		return {"success": true, "pending": true, "skill_id": key, "request_id": request_id, "reason": "WAITING_FOR_TRUSTED_COMBAT_SERVER"}
+	if key not in ["relic_echo_sight", "ashur_guardian_aegis"]:
+		return {"success": false, "reason": "NOT_AN_IMPLEMENTED_RELIC_SKILL"}
+
+	var usage: Dictionary = record_system_skill_use(key)
+	if not bool(usage.get("success", false)):
+		return usage
+
+	match key:
+		"ashur_guardian_aegis":
+			var expires_at := Time.get_ticks_msec() + 12000
+			actor.set_meta("system_assyrian_aegis_until_msec", expires_at)
+			actor.set_meta("system_assyrian_aegis_active", true)
+			_clear_assyrian_aegis_after(actor, expires_at)
+			usage["duration_seconds"] = 12
+			usage["damage_reduction_percent"] = 65
+			usage["effect_applied"] = true
+		"relic_echo_sight":
+			var revealed_count := _reveal_historical_relic_traces()
+			usage["duration_seconds"] = 10
+			usage["revealed_trace_count"] = revealed_count
+			usage["effect_applied"] = true
+	return usage
+
+
+func _clear_elemental_guard_after(actor: CharacterBody3D, expiry_meta: String, reduction_meta: String, expected_expiry: int, duration: float = 8.0) -> void:
+	await get_tree().create_timer(duration).timeout
+	if not is_instance_valid(actor):
+		return
+	if int(actor.get_meta(expiry_meta, 0)) == expected_expiry:
+		actor.remove_meta(expiry_meta)
+		actor.remove_meta(reduction_meta)
+
+
+func _clear_assyrian_aegis_after(actor: CharacterBody3D, expected_expiry: int) -> void:
+	await get_tree().create_timer(12.0).timeout
+	if not is_instance_valid(actor):
+		return
+	if int(actor.get_meta("system_assyrian_aegis_until_msec", 0)) == expected_expiry:
+		actor.remove_meta("system_assyrian_aegis_until_msec")
+		actor.remove_meta("system_assyrian_aegis_active")
+
+
+func _reveal_historical_relic_traces() -> int:
+	var revealed := 0
+	for trace in get_tree().get_nodes_in_group("system_hidden_historical_trace"):
+		if is_instance_valid(trace) and trace is Node3D:
+			trace.visible = true
+			revealed += 1
+	_restore_historical_relic_traces_after(10.0)
+	return revealed
+
+
+func _restore_historical_relic_traces_after(duration: float) -> void:
+	await get_tree().create_timer(duration).timeout
+	for trace in get_tree().get_nodes_in_group("system_hidden_historical_trace"):
+		if is_instance_valid(trace) and trace is Node3D:
+			trace.visible = false

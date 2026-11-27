@@ -66,4 +66,4 @@ jobs:
         run: npm --prefix functions run build
 
       - name: Run Firestore rules and marketplace transaction tests in the emulator
-        run: npx --yes firebase-tools@14 emulators:exec --only firestore --project demo-system-world "npm --prefix functions run test:rules && npm --prefix functions run test:marketplace"
+        run: npx --yes firebase-tools@14 emulators:exec --only firestore --project demo-system-world "npm --prefix functions run test:rules && npm --prefix functions run test:marketplace && npm --prefix functions run test:elemental"

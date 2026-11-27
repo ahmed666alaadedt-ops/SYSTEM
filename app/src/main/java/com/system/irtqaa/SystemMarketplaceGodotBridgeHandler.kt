@@ -10,12 +10,16 @@ import org.json.JSONObject
  */
 class SystemMarketplaceGodotBridgeHandler(
     private val repository: FirebaseArtifactMarketplaceRepository,
-    private val router: SystemGodotMessageRouter
+    private val router: SystemGodotMessageRouter,
+    private val elementalRepository: FirebaseElementalRelicRepository = FirebaseElementalRelicRepository()
 ) : SystemGodotMessageRouter.Listener {
 
     override fun onMarketplaceRequest(requestId: String?, payload: JSONObject) {
         val id = requestId?.takeIf { it.isNotBlank() } ?: return
         when (payload.optString("operation")) {
+            "elemental_authorize" -> elementalRepository.authorizeActivation(payload.optString("skillId")) { result ->
+                respond(id, result)
+            }
             "wallet" -> repository.loadWallet { result ->
                 respond(id, result.map { wallet ->
                     JSONObject()
@@ -53,6 +57,7 @@ class SystemMarketplaceGodotBridgeHandler(
                             .put("rarity", listing.rarity)
                             .put("condition", listing.condition)
                             .put("authenticity", listing.authenticity)
+                            .put("provenanceSummary", listing.provenanceSummary)
                             .put("price", listing.price)
                             .put("currency", listing.currency)
                             .put("sellerName", listing.sellerName)

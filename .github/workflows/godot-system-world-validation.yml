@@ -16,7 +16,7 @@ on:
 
 concurrency:
   group: system-world-godot-validation-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -57,6 +57,8 @@ jobs:
           "$GODOT" --headless --path "$PROJECT" --check-only --script res://scripts/system_player_progression.gd
           "$GODOT" --headless --path "$PROJECT" --check-only --script res://tools/validate_baghdad_tower_operations.gd
           "$GODOT" --headless --path "$PROJECT" --check-only --script res://tools/validate_shopping_tower_showcases.gd
+          "$GODOT" --headless --path "$PROJECT" --check-only --script res://tools/validate_elemental_relic_nen.gd
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_elemental_relic_nen.gd
 
       - name: Import resources and parse scripts
         shell: bash

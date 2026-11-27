@@ -13,6 +13,20 @@ The Baghdad five-tower district consists of:
 
 The Power Tower remains a separate landmark outside the five-tower count. Its combat competitions remain strictly individual 1v1; no team combat is introduced.
 
+## سوق البتاوين للتحف والآثار (Al-Bataween Street Antiques Market) — primary player trading hub
+
+The district display name is **سوق البتاوين** and its category/descriptor is **سوق التحف والآثار**; always show the complete combined identity **سوق البتاوين للتحف والآثار** on maps, entrance signage, interaction prompts and marketplace screens. The outdoor Al-Bataween market is a separate ground-level Baghdad neighborhood destination, not a sixth tower and not a replacement for the 34-floor Antiques & Heritage museum. Its neighborhood-center WGS84 anchor is 33.3201, 44.4205 (a neighborhood reference point, not a surveyed parcel boundary). The playable terrain is extended to this anchor and connected to the Republic Bridge approach by a clearly identified procedural access corridor; that corridor is gameplay infrastructure, not surveyed OpenStreetMap road geometry.
+
+- Generate a walkable street-market courtyard with 24 individually identified stalls and a main entrance interaction.
+- Organize stalls around Iraqi heritage, manuscripts, coins, ceramics, metalwork, player listings, appraisal and restoration.
+- Every stall routes into the same authoritative player marketplace; do not create a second wallet, local-save trading ledger or duplicate economy.
+- The in-world Godot interaction opens the marketplace panel. The existing native Android marketplace tab remains available and uses the same authenticated Firebase callable functions.
+- Sellers list only artifacts they own and choose their fixed price. Buyers browse active offers and purchase with virtual SYSTEM currency.
+- Listing escrow, balance debit, seller credit, ownership transfer and transaction receipt remain one server-side atomic transaction. Concurrent purchase attempts must still have exactly one winner.
+- This district is a playable procedural first pass; it is not a claim that the surrounding Al-Bataween streets or every building have been reconstructed from OSM.
+
+The existing 34-floor Antiques & Heritage Tower remains the museum, research, restoration and private-gallery venue. Its marketplace and auction floors may act as dealer galleries and auction rooms, but must reuse this same backend and transaction ledger.
+
 ## Antiques & Heritage Tower
 
 A 34-floor public museum, collecting, restoration and player-commerce destination. Keep the existing Baghdad plot and the five-tower district connection unless a terrain validation requires a safe adjustment.
@@ -29,6 +43,16 @@ Proposed floor plan:
 - 33–34: Curator council, rare-artifact vault and rotating international exhibitions
 
 Every exhibit and market object must have a stable artifact ID, display metadata, a physical 3D exhibit, an interaction Area3D and tower/floor ownership metadata. NPC curators, archaeologists, restorers, guards, auctioneers, vendors and visitors populate the public spaces.
+
+## سوق التحف والآثار الغامضة — relic-bound historical quests
+
+- A sealed Babylonian star tablet is displayed at a dedicated in-world altar in the mysterious antiques market. It is separate from ordinary player listings and cannot be bought as a normal stock item.
+- Interacting with the tablet launches the Historical & Civilizations world and starts the first relic quest, **أصداء بابل**.
+- The first quest requires the player to decode the Star → River → Crown inscriptions in order, then recover the Babylonian Star Tablet from its sanctum. Incorrect order is rejected without advancing progress.
+- Completion unlocks a rare skill training permit for **عين صدى الأثر** (`relic_echo_sight`). The player must complete three distinct skill-practice sessions before the skill is learned; the skill is registered in the existing progression tree and save data.
+- The relic skill is intentionally rare and tied to its source artifact and historical quest, not sold as a routine shop skill. Additional relics may later open their own historical missions and distinct rare skills.
+- A return gate becomes usable after quest completion and returns the player to the market location.
+- Current scope is a procedural first historical quest and one relic skill unlock path. The rare skill's full in-world detection/ability effect, additional historical campaigns, multiplayer quest-state persistence, and server-authoritative reward issuance remain future integration work; local progression is not proof of online reward security.
 
 ## Player-to-player artifact economy
 
@@ -128,3 +152,204 @@ Do not count the independent Power Tower as one of the five district towers. Spo
 8. Auction settlement and two-party exchange are tested against expired, cancelled, replayed and conflicting requests.
 9. The existing Hunter Association, Shopping, Business, Technology and standalone Power Tower regressions remain green.
 10. No changes are merged into main without the user's separate explicit approval.
+
+
+## Second historical relic quest — Nineveh Guardians
+
+- The market has a separate sealed Assyrian royal seal altar; it is not a tower and does not replace the Babylon Star Tablet altar.
+- The quest travels to the Historical & Civilizations world and requires the clue order: Winged Lion, Tigris tablet, Royal Seal, then recover the Assyrian seal.
+- Correct completion grants a training permit for the mythic rare skill `ashur_guardian_aegis` (درع الحارس الآشوري); three verified training sessions are required before use.
+- The mobile AEGIS control activates a 12-second defensive barrier after mastery, reducing incoming damage by 65%; cost 35 energy, 60-second cooldown. The player receives a visible amber shield effect.
+- The return gate returns the player to the market. This is an initial procedural quest environment, not a final cinematic historical level.
+
+
+## Cross-world artifact origins, rare skill relics and discovery missions — 27 November 2026
+
+The artifact market is a shared destination for discoveries from two distinct gameplay worlds. It must preserve provenance and never collapse the historical and fantasy sources into one generic loot pool.
+
+### Historical & Civilizations world
+- Historical artifacts originate only from civilization-specific expeditions, archaeological sites, sealed sanctums, archive recovery and their linked quests.
+- Existing quest anchors remain distinct: Babylon Echoes `babylon_echoes_relic_trial` yields the Babylonian Star Tablet / `relic_echo_sight`; Nineveh Guardians `nineveh_guardians_relic_trial` yields the Assyrian Royal Seal / `ashur_guardian_aegis`.
+- Further Sumerian, Akkadian, Egyptian, Greek, Roman and Chinese relic campaigns are planned content, not implemented quests until their world runtime, objectives, persistence and tests exist.
+
+### Fantasy world
+- Fantasy gems and crystals originate only from fantasy expeditions, guardian trials, hidden shrines, mana veins and fantasy quest rewards. They must not be mislabeled as historical archaeological finds.
+- Initial planned relic families include Dragon Star Crystal, Moon Diamond, Ancient Mana Core, Phoenix Ember Gem and Void Shadow Prism. Each has its own quest/source identity and a distinct skill concept in `data/system_cross_world_relic_catalog.json`.
+- Fantasy quest IDs and skill IDs in the catalog marked `planned_quest` are data/design reservations only; they are not claims of implemented or playable quests.
+
+### Rare relic skill ownership and player control
+- Only selected Rare, Epic, Mythic and Unique artifacts may carry a skill. Ordinary artifacts and ordinary gemstones do not automatically grant abilities.
+- The player must recover the real source relic, complete its linked quest, pass the awakening/training requirement and learn the skill into the existing player progression tree. Once learned, the skill must be equipable and manually activated/controlled through the combat or exploration ability UI, with server-verified unlock provenance.
+- A skill-bearing relic is extremely scarce; Unique relic templates may have a one-per-world/storyline issuance cap. The registry must enforce this server-side, not by client-side drop chance.
+- Default trade policy: an unawakened relic may be listed if the server confirms ownership and eligibility; after awakening, the skill is bound to the character and the relic cannot be sold or transferred in a way that duplicates, deletes or strips the learned skill. Unique relic transfers require explicit server validation.
+- Listing price is selected by the seller, while authenticity, rarity, provenance and uniqueness are server-derived and displayed to buyers. High prices are permitted, but the client cannot forge rarity, source or ownership.
+
+### Scalable artifact catalogue and anti-exploit issuance
+- Initial content target: at least 3,000 distinct artifact instances, expandable through data-driven templates, civilization/material/condition/provenance variants and unique server-issued IDs. This is a content target, not a claim that 3,000 playable meshes already exist.
+- Keep reusable 3D mesh templates and material variants separate from unique artifact instance records; do not create thousands of unrelated hand-authored meshes.
+- Every instance must carry `artifactId`, `templateId`, `sourceWorld`, `civilizationOrRealm`, `sourceQuestOrDiscovery`, `rarity`, `provenance`, `condition`, `marketValueBand`, `skillId` (nullable), `awakeningState`, `ownerId` and `tradePolicy`.
+- Only trusted game-server reward/discovery events may issue artifacts through the existing replay-safe reward endpoint. The client may request or display a discovery, but cannot mint an item, choose its rarity, claim a quest completion or assign a skill.
+- The registry file is a content seed/schema reference. It does not itself wire world generation, quest runtime, combat effects, Firebase reward issuance or production marketplace deployment.
+
+### Required cross-world acceptance tests
+1. Historical quest rewards always record `sourceWorld=historical` and their correct civilization and quest provenance.
+2. Fantasy quest rewards always record `sourceWorld=fantasy` and cannot be issued from historical loot tables.
+3. A client cannot request a Mythic/Unique relic or skill by sending a forged rarity, template, quest ID or skill ID.
+4. A quest reward replay cannot issue a second copy; one-per-world Unique caps are enforced transactionally.
+5. Awakening adds the authorized skill to progression once; the skill can be equipped/activated and its effect is tested in combat or exploration.
+6. An awakened bound relic cannot be traded to duplicate the skill or remove the skill from its legitimate owner.
+7. Market listings show origin, provenance, rarity and trade eligibility without exposing private player identifiers.
+8. Existing Babylon Echoes, Nineveh Guardians, artifact marketplace, wallet, auctions and exchanges regressions remain green.
+
+
+## Supernatural relic abilities — healing, combat, movement, flight and petrification
+
+Relics and fantasy gemstones may grant supernatural abilities, but only selected, provenance-authenticated rare items may do so. Abilities are learned through the existing progression/awakening flow, then equipped and manually activated by the player. A catalog entry is not proof that its quest, skill effect or runtime integration is complete.
+
+### Ability families
+- Healing: healing over time, burst recovery, energy restoration and tightly limited emergency recovery. No repeated revival exploit or resurrection after a finalized death state.
+- Combat: temporary strength, guard breaking, defensive resistance, elemental attacks and counter barriers. Bonuses have caps and diminishing returns.
+- Speed and movement: sprint bursts, dashes, evasions and controlled aerial movement.
+- Wings and flight: relics may manifest visible wings on the character or grant temporary flight. Flight has stamina/energy costs, duration and landing control; disable it in restricted interiors, protected quest spaces and selected PvP arenas.
+- Petrification and control: rare gaze relics can briefly petrify a valid enemy. The target must have a break/escape rule, resistance and diminishing returns; bosses and players receive appropriate resistance. No indefinite stun, chain-lock or client-side hit confirmation.
+- Other utility: stealth, detection, shields and elemental resistance.
+
+### World provenance examples
+- Historical world: Sumerian Life Vessel (healing), Babylonian War Standard (combat), Assur Wind Sandals (speed), Horus Sky Wings (flight/wings), and Medusa Obsidian Gaze (petrification). These belong to civilization-specific historical questlines and must be recovered from their associated historical locations.
+- Fantasy world: Phoenix Heartstone (healing), Titan Core (combat), Wind Dragon Feather (speed), Sky Seraph Crystal (wings/flight), and Basilisk Eye Gem (petrification). These originate only from fantasy expeditions, guardian encounters, shrines or fantasy quest rewards.
+- These examples are registered as planned quest content unless a corresponding playable quest/runtime is explicitly implemented and tested. Never present planned content as already obtainable.
+
+### Combat and security requirements
+- The server validates ownership, awakening, learned skill, cooldown, energy cost, range, line of sight, target eligibility, PvP rules and effect duration before accepting an ability use.
+- The server owns damage, healing, petrification, movement/flight authorization and effect expiry. Client animations are presentation only.
+- Effects cannot stack beyond configured caps; repeated control effects apply diminishing returns and temporary immunity windows.
+- Wings must be visible character equipment/animation, not merely a stat flag. Flight must have real movement controller integration, collision handling, stamina and safe landing.
+- Petrification must have a readable visual state, a short maximum duration, an escape/break condition, boss/player resistance and server-side anti-chain-lock enforcement.
+- Healing must respect max health, combat state and death-state transitions. Strength/speed buffs must not bypass movement, attack-rate or damage caps.
+
+### Acceptance tests before calling these abilities complete
+1. Each item can only be issued from its registered world and quest/discovery source; forged client drops are rejected.
+2. Awakening and skill unlock are idempotent and persist across relog/device changes.
+3. Each learned ability can be equipped and manually activated; cooldown, resource cost and target validation are enforced server-side.
+4. Healing, strength, speed, wings/flight and petrification each produce their actual gameplay effect, not only a catalog description or animation.
+5. Petrification cannot permanently disable another player or boss; escape, resistance and immunity windows work under latency and simultaneous hits.
+6. Flight collision, indoor restrictions, landing and PvP restrictions are tested.
+7. Existing historical quests, fantasy world, player progression, artifact market and Android/Godot bridge regression suites pass.
+
+
+## Four primordial elements — rare quest relics
+
+The rare-relic system includes all four classical elements: **Fire, Air, Water and Earth**. These are special artifact/gem abilities, not ordinary vendor skills or common loot. Players earn them by completing their linked missions, exploration routes or guardian trials in the correct world.
+
+- **Fire — قلب اللهب البدائي** (`primordial_flame_heart`): controlled flame burst and temporary fire resistance; offensive focus.
+- **Air — ختم ريح العاصفة** (`stormwind_sigil`): wind blades/gusts and a short aerial dash; mobility focus.
+- **Water — لؤلؤة قلب المد** (`tideheart_pearl`): water barrier, cleansing and limited healing wave; defense/support focus.
+- **Earth — جيود جذر العالم** (`worldroot_geode`): earth armor, ground spikes and a brief breakable root effect; defense/control focus.
+
+These four are currently **planned quest content** in the catalog, not yet playable or obtainable. They must be awarded only by trusted server-verified quest/discovery completion; ordinary market vendors cannot stock them. Rarity, source world, quest provenance and any Unique issuance cap are server-owned. Awakening binds the learned ability to the player under the existing no-duplication trade policy.
+
+Elemental combinations (Fire+Air, Water+Earth and exceptionally all four) may be introduced only as ultra-rare multi-stage quest rewards. They require completion of every linked trial, have strict energy/cooldown and PvP/boss resistance rules, and cannot be created by combining ordinary market items client-side.
+
+### Elemental acceptance checks
+1. Each element drops only from its registered quest/world source; cross-world and forged reward requests are rejected.
+2. Fire, Air, Water and Earth each produce a distinct tested gameplay effect after awakening.
+3. Elemental resistance, damage, healing and control respect caps, cooldowns, target rules and PvP/boss resistance.
+4. Elemental combination rewards require all server-verified prerequisite trials and are issued once only.
+
+
+## Nen as the primary power — elemental relics as secondary power
+
+Nen is the required foundational power system for every supernatural elemental relic ability. A relic does **not** grant Nen and cannot replace Nen training. It supplies a secondary elemental affinity that the player learns to channel through their own Nen.
+
+### Activation and progression gates
+1. The player must unlock Nen through its own training/progression path before any elemental relic skill can activate.
+2. The player must own and recover the eligible rare relic from its registered quest/discovery source, then complete its separate awakening trial.
+3. The skill becomes usable only when both checks pass: the relic is awakened and the player's Nen mastery meets that skill's minimum threshold.
+4. Without Nen, the relic remains dormant: it may be inspected and stored, but its supernatural ability cannot be activated.
+5. Beginner Nen permits only weak, short effects with high energy cost and fatigue. Trained Nen enables stable controlled effects. Advanced mastery improves precision and efficiency within strict caps. Expert mastery plus linked trials is required for exceptional multi-element combinations.
+6. The server validates Nen unlock, mastery tier, relic ownership, awakening, learned skill, energy, cooldown, target and effect. The client cannot assert its own Nen level or successful activation.
+
+### Five elemental affinities
+- Fire: focused flame bursts and heat resistance.
+- Air: wind blades, gusts and short aerial movement.
+- Water: barriers, cleansing and limited healing.
+- Earth: armor, ground control and breakable rooting.
+- Lightning: precise lightning arcs, brief interrupts and controlled mobility bursts.
+
+All five affinities are secondary channels of Nen, not independent free powers. Their effects must be distinct, balanced and costly enough that mastery matters. Dual-element and five-element combinations are endgame-level rare rewards requiring high Nen mastery and multiple verified quest trials; no ordinary market fusion or client-side crafting can create them.
+
+### Nen-elemental acceptance tests
+1. A player without Nen cannot activate any elemental relic ability, even with the relic equipped.
+2. A player with insufficient Nen mastery is rejected or receives only the explicitly configured beginner effect and cost.
+3. Relic awakening without Nen does not unlock activation; Nen training without the relic does not grant the element.
+4. Server rejects forged Nen tier, relic ownership, quest completion, skill unlock and replayed activation.
+5. Fire, Air, Water, Earth and Lightning each have distinct effects, costs, cooldowns, caps and boss/PvP resistance.
+6. Relogging preserves verified Nen mastery and relic skill state without duplicating unlocks.
+7. Existing non-elemental skills and marketplace transactions continue to work.
+
+
+## Runtime progression gate checkpoint — five elemental Nen skills
+
+The existing player progression tree now contains five elemental relic skill definitions, linked to their matching relic template IDs. Training-permit/practice learning uses the existing progression APIs. The current local activation entry point checks:
+- Nen must be unlocked.
+- Minimum Nen control rank: Fire 2, Air 2, Water 3, Earth 3, Lightning 4.
+- Existing skill learning, training and cooldown checks are evaluated before any activation can proceed.
+
+**Important implementation boundary:** the five elemental visual/combat/movement/healing effects are not implemented yet. The activation entry point deliberately returns ELEMENTAL_RELIC_EFFECT_RUNTIME_PENDING after validating the Nen and progression gates; it does not consume energy or pretend an effect occurred. This is a local Godot progression gate, not trusted server authorization. The online server must independently verify Nen tier, relic ownership/provenance, awakening, skill unlock, energy and cooldown before production use. The two existing historical relic skills remain separate and do not receive this elemental Nen requirement.
+
+### Checkpoint tests still required
+- Godot headless parse and progression tests for no-Nen rejection, each Nen rank boundary, training permit, three practice sessions, learned-state and cooldown.
+- Runtime integration tests for each actual element effect and its interaction with combat, health, movement, target resistance and UI.
+- Server-side authoritative validation and replay/race tests before online release.
+
+
+## Elemental relic local runtime implementation checkpoint
+
+The local Godot progression path now routes the five elemental relic skills through the existing player progression, combat and health components:
+- Fire: bounded 26-damage hitscan using the existing combatant `take_damage` API.
+- Air: a short horizontal/upward movement impulse applied to the existing CharacterBody3D velocity.
+- Water: 22 points of capped field healing through `SYSTEMPlayerCombatHealth.apply_field_healing`; it is rejected and the cost/cooldown are refunded when healing is not needed.
+- Earth: an 8-second guard reducing incoming damage by up to 30%, integrated into `SYSTEMPlayerCombatHealth.receive_damage` and stacked with existing Nen/equipment defence rules.
+- Lightning: bounded 32-damage hitscan using the existing combatant `take_damage` API, with reduced damage against player/boss groups.
+
+All five still require Nen unlock and their minimum control rank, level, Hunter rank, training permit, three practice sessions, learned state, energy and cooldown. Fire/lightning require a valid damageable target. These are local gameplay effects only: they do not establish server-authoritative ownership, relic awakening, quest reward issuance, anti-replay or PvP validation. Visuals remain simple impact flashes rather than finished cinematic elemental VFX. `tools/validate_elemental_relic_nen.gd` exercises the five effects and Nen gates in headless Godot and is included in the Godot validation workflow.
+
+
+## Server-authoritative elemental relic gate — implementation checkpoint
+
+Firebase Functions now exports three server-side operations for the five elemental relics:
+
+- `syncAuthoritativeElementalProgression`: callable only by an identity carrying the trusted `gameServer=true` claim. It writes the verified Nen unlock/rank, level, Hunter rank, learned skills, training permits, practice counts and initial energy into server-owned player subcollections. Routine progression sync does not refill energy or clear active cooldowns.
+- `grantElementalRelicFromCompletedMission`: callable only by the trusted game server. It requires a completed `hunterGuildMissionSessions` record and verifies that the recipient is in that session's immutable participant roster. It issues only one of the five registered elemental relics, marks it awakened, records its skill binding and uses an idempotency event plus the global artifact registry to prevent duplicate issuance.
+- `authorizeElementalRelicActivation`: callable by the authenticated player. In one Firestore transaction it checks server-verified Nen, level, Hunter rank, learned skill, training permit, practice count, matching owned-and-awakened artifact, available energy and cooldown. It atomically reserves energy/cooldown and creates a short-lived `authorized_pending_combat` activation receipt.
+
+The emulator test suite covers client rejection of progression writes, missing/non-awakened relic rejection, Nen-rank rejection, successful activation reservation, cooldown replay rejection, completed-mission roster validation and idempotent reward issuance.
+
+**Important boundary:** the activation receipt is not itself a combat effect. A trusted online combat service still must consume the receipt exactly once, validate the target and apply the actual fire/air/water/earth/lightning effect authoritatively. The current Godot effects remain local gameplay implementation and must not be treated as secure online combat until that consumer and the client callable bridge are integrated. No Firebase deployment was performed.
+
+
+### Authoritative elemental combat receipt consumption
+
+The trusted combat server now has `resolveElementalRelicCombat`, restricted to the `gameServer=true` custom claim. It consumes a pending activation receipt exactly once and rejects missing, expired or previously consumed receipts. It does not accept client-supplied damage, healing, resistance or movement values.
+
+- Fire and lightning update a server-owned `combatTargets/{targetId}` health record; elemental resistance is read from the target record, and boss/player targets receive the existing 50% category multiplier.
+- Water updates server-owned player vitals with a 22-point cap and applies a six-second defensive status.
+- Earth applies an eight-second 30% defensive status.
+- Air records a short 220 ms dash impulse on the server-owned elemental status record.
+- Every successful resolution creates an immutable `elementalCombatEvents/{activationId}` audit record in the same transaction as consuming the receipt and applying the state change.
+
+Emulator coverage now exercises lightning against a boss with elemental resistance, single-use receipt enforcement, and server-side water/earth/air outcomes.
+
+**Integration boundary remains:** the current Godot world enemies and player movement/health components are still local runtime objects. A trusted realtime game-server adapter must publish authoritative combatant/vitals documents and reconcile these resolver results back into live sessions before claiming secure online PvP/PvE. The callable resolver and Firestore emulator tests do not, by themselves, connect live Godot combatants to an online authoritative simulation.
+
+
+### Android ↔ Godot elemental activation request bridge
+
+The canonical Godot autoload `SYSTEMAndroidBridge` now allowlists `elemental_authorize` and exposes `request_elemental_activation(skill_id, request_id)`. The Android host routes that request through `FirebaseElementalRelicRepository` to the authenticated callable `authorizeElementalRelicActivation`. The client validates the returned receipt fields before forwarding the result through the existing `marketplace_result` response signal.
+
+This bridge only requests authorization and returns the receipt metadata. It does not publish local Nen/progression as trusted data, invoke the server-only combat resolver, or apply damage/healing/movement locally. Live online combat remains fail-closed until the trusted realtime game server owns combatant state and consumes the receipt.
+
+
+#### Combat-session validation hardening
+
+Before consuming a receipt, the trusted resolver now requires a live server-owned player combat session with a matching player ID, session ID, valid 3D player position and server tick no older than three seconds. Fire/lightning additionally require a live target in that same session, a fresh server tick, a valid target position and a server-computed distance within the elemental range (42 m fire / 48 m lightning). Missing or stale sessions, cross-session targets and out-of-range targets are rejected before any combat write. Emulator tests cover these rejection paths.

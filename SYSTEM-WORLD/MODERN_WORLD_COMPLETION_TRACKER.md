@@ -1,3 +1,14 @@
+## سوق البتاوين للتحف والآثار — Al-Bataween market naming and initial implementation — 27 November 2026
+
+- [x] Named the district **سوق البتاوين** and its category **سوق التحف والآثار**; the complete public identity is **سوق البتاوين للتحف والآثار** across the entrance, map landmark, interaction prompt, Godot panel and Android screen.
+- [x] Added a separate ground-level Al-Bataween market district at the neighborhood WGS84 center reference (33.3201, 44.4205); it is not counted as a sixth Baghdad tower.
+- [x] Extended the playable terrain to include the Al-Bataween anchor and a walkable procedural access corridor from the Republic Bridge approach. The connector is explicitly not represented as surveyed OSM road geometry.
+- [x] Generated 24 individually identified stalls across Iraqi heritage, manuscripts, coins, ceramics, metalwork, player commerce, appraisal and restoration, plus a main market entrance interaction.
+- [x] Added an in-world marketplace panel that uses the existing authenticated Firebase callable bridge for wallet, owned artifacts, listing browse, listing creation and purchase; the native Android market tab uses the same backend and ledger.
+- [x] Added regression checks for WGS84 placement, continuous land access, route collision, 24 stalls, 25 interactions and UI script loading.
+- [ ] Exact-head Godot validation, Android build and physical-device round-trip are still required. The 24-stall geometry is a procedural first pass, not finished cinematic art or a complete OSM reconstruction of surrounding Al-Bataween streets.
+- [ ] Marketplace production activation remains gated by trusted quest-reward issuance, production wallet funding, deployment/monitoring of Firebase functions/rules/indexes, and cross-account/device testing. Emulator tests on the earlier backend snapshot do not prove production readiness.
+
 ## Current authoritative Hunter route — 25 November 2026
 
 This current section supersedes older historical entries below that describe the former multi-stage examination or the restaurant secret-door route.
@@ -2051,3 +2062,11 @@ Feature HEAD at audit update: `f2522b6a3cf603e3aa13ee1bd17ee0ee9e7fba99`.
 - [x] Marketplace Firestore rules emulator tests passed: 7/7. Callable marketplace transaction/emulator tests passed: 8/8 on workflow `45604503727`; includes fixed-price escrow/purchase, atomic buyer debit and seller credit, ownership transfer, self-purchase and insufficient-balance rejection, concurrent double-purchase race, cancellation/expiry, auctions, two-player exchanges, trusted reward replay protection and scheduled expiry workers.
 - [x] The TypeScript Cloud Functions build and Firestore rules compilation passed on the same workflow.
 - [ ] Still required before calling online trading live: trusted game-server claim and quest-reward source integration, production deployment/monitoring of functions and scheduled workers, and a real two-account Android device round trip. Do not deploy or merge without the user's separate approval.
+
+
+### Assyrian royal seal relic quest — 27 November 2026
+- [x] Added a second independent sealed relic altar to the ground-level Mysterious Antiques & Artifacts Market without removing the Babylon altar or any of the 24 stalls.
+- [x] Added the Nineveh Guardians historical quest runtime with ordered clues (winged lion, Tigris, royal seal), recovery objective and return gate.
+- [x] Added the mythic rare skill `ashur_guardian_aegis` to the existing SYSTEM skill tree; quest completion grants its training permit and three verified practice sessions are required.
+- [x] Added an Android AEGIS touch control and visible amber barrier; the existing player combat health system applies 65% damage reduction for 12 seconds after activation (35 energy, 60-second cooldown).
+- [ ] Exact-commit Godot validation, APK export and Android shell build for this second quest are pending; device-side visual and combat testing remains required.

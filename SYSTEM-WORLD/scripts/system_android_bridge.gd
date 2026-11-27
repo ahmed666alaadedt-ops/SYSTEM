@@ -32,6 +32,7 @@ const MARKETPLACE_OPERATIONS := [
     "settle_auction",
     "cancel_auction",
     "exchange_offers",
+    "elemental_authorize",
     "create_exchange_offer",
     "accept_exchange_offer",
     "close_exchange_offer"
@@ -215,6 +216,30 @@ func request_marketplace_operation(
     _last_error = ""
     _publish_status()
     return true
+
+
+
+## Requests a server-verified elemental relic activation.
+## The returned receipt is not a combat effect; only the trusted game server
+## may consume it and apply the corresponding result to the live combat session.
+func request_elemental_activation(skill_id: String, request_id: String) -> bool:
+    var normalized := skill_id.strip_edges().to_lower()
+    var allowed_skills := [
+        "primordial_flame_burst",
+        "stormwind_aerial_step",
+        "tideheart_restoration",
+        "worldroot_earthguard",
+        "stormlightning_arc"
+    ]
+    if normalized not in allowed_skills:
+        _last_error = "ELEMENTAL_SKILL_NOT_ALLOWED"
+        _publish_status()
+        return false
+    return request_marketplace_operation(
+        "elemental_authorize",
+        {"skillId": normalized},
+        request_id
+    )
 
 
 func get_bridge_status() -> Dictionary:
