@@ -134,7 +134,7 @@ func _run_validation() -> void:
 	if not urban_manifest is Dictionary:
 		_fail("Citywide Baghdad urban manifest is invalid.")
 		return
-	var expected_urban_layers := ["buildings", "waterways", "bridges", "landuse", "amenities", "railway", "natural-water", "entrances"]
+	var expected_urban_layers := ["buildings", "waterways", "bridges", "landuse", "amenities", "railway", "natural-water", "wetlands", "entrances"]
 	if urban_manifest.get("layers_included", []) != expected_urban_layers:
 		_fail("Citywide Baghdad urban pack is missing one or more expected OSM layers.")
 		return
