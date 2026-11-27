@@ -154,6 +154,48 @@ class FirebaseArtifactMarketplaceRepository(
             .addOnFailureListener { callback(Result.failure(it)) }
     }
 
+    /** Queue a quest start for the trusted game server; this client never opens the authoritative session. */
+    fun requestHistoricalRelicQuestStart(
+        questId: String,
+        artifactId: String,
+        callback: (Result<Map<String, Any?>>) -> Unit
+    ) {
+        if (questId.isBlank() || artifactId.isBlank()) {
+            callback(Result.failure(IllegalArgumentException("بيانات طلب المهمة التاريخية غير صالحة.")))
+            return
+        }
+        functions.getHttpsCallable("requestHistoricalRelicQuestStart")
+            .call(mapOf("questId" to questId, "artifactId" to artifactId))
+            .addOnSuccessListener { result ->
+                val data = result.data as? Map<String, Any?>
+                if (data == null || data["requestId"] !is String) {
+                    callback(Result.failure(IllegalStateException("لم يرجع الخادم معرّف طلب المهمة.")))
+                } else callback(Result.success(data))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    /** Queue a historical return request. Only the trusted game server can verify the actual return site. */
+    fun requestHistoricalRelicReturn(
+        questId: String,
+        artifactId: String,
+        callback: (Result<Map<String, Any?>>) -> Unit
+    ) {
+        if (questId.isBlank() || artifactId.isBlank()) {
+            callback(Result.failure(IllegalArgumentException("بيانات طلب إرجاع التحفة غير صالحة.")))
+            return
+        }
+        functions.getHttpsCallable("requestHistoricalRelicReturn")
+            .call(mapOf("questId" to questId, "artifactId" to artifactId))
+            .addOnSuccessListener { result ->
+                val data = result.data as? Map<String, Any?>
+                if (data == null || data["requestId"] !is String) {
+                    callback(Result.failure(IllegalStateException("لم يرجع الخادم معرّف طلب الإرجاع.")))
+                } else callback(Result.success(data))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
     /** Reads server-issued rare relic skills for the signed-in player only. */
     fun loadMyRareRelicSkills(callback: (Result<List<Map<String, Any?>>>) -> Unit) {
         functions.getHttpsCallable("listMyRareRelicSkills").call()
