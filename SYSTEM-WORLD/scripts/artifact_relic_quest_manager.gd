@@ -182,6 +182,51 @@ func apply_server_skill_receipts(receipts: Array) -> void:
 			quest_state_changed.emit(quest_id, QUEST_STATE_COMPLETED)
 
 
+## Rebuilds the local quest journal only from server-owned session snapshots.
+## Local objective interactions are never accepted as reward evidence.
+func apply_server_quest_sessions(sessions: Array) -> void:
+	for raw_session in sessions:
+		if not raw_session is Dictionary:
+			continue
+		var session: Dictionary = raw_session
+		var relic_id := str(session.get("artifactId", ""))
+		var quest_id := str(session.get("questId", ""))
+		if not RELIC_QUESTS.has(relic_id):
+			continue
+		var definition: Dictionary = RELIC_QUESTS[relic_id]
+		if str(definition.quest_id) != quest_id:
+			continue
+		var previous_state := str(_quest_states.get(relic_id, ""))
+		var completed: Variant = session.get("completedObjectives", {})
+		_objective_progress[relic_id] = completed.duplicate(true) if completed is Dictionary else {}
+		var next_state := QUEST_STATE_ACTIVE
+		var session_status := str(session.get("status", ""))
+		if session_status == "completed":
+			next_state = QUEST_STATE_COMPLETED
+			_completed_rewards[quest_id] = true
+		elif session_status == "active":
+			var all_complete := true
+			for objective_id in definition.objectives:
+				if not bool(_objective_progress[relic_id].get(str(objective_id), false)):
+					all_complete = false
+					break
+			if all_complete:
+				var return_proof: Variant = session.get("returnProof", null)
+				if bool(definition.return_relic) and not (return_proof is Dictionary and bool(return_proof.get("verified", false))):
+					next_state = QUEST_STATE_READY_TO_RETURN
+				else:
+					next_state = QUEST_STATE_READY_FOR_REWARD
+		else:
+			continue
+		if _quest_states.get(relic_id, "") != next_state:
+			_quest_states[relic_id] = next_state
+			quest_state_changed.emit(quest_id, next_state)
+		if next_state == QUEST_STATE_COMPLETED and previous_state in [
+			QUEST_STATE_ACTIVE, QUEST_STATE_READY_TO_RETURN, QUEST_STATE_READY_FOR_REWARD
+		]:
+			present_world_return_requested.emit(quest_id, relic_id)
+
+
 func get_relic_quest_state(relic_id: String) -> String:
 	return String(_quest_states.get(relic_id, "not_discovered"))
 
