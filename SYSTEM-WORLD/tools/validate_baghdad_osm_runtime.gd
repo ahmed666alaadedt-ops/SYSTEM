@@ -83,6 +83,37 @@ func _run_validation() -> void:
 		_fail("Tigris River OSM geometry was not rendered in cell 17:-6.")
 		return
 	print("Baghdad Republic Bridge OSM cell passed: primary bridge=", primary_bridge.size(), " secondary bridge=", secondary_bridge.size(), " Tigris=", tigris_river.size())
+
+	var regional_roads := BAGHDAD_STREAMER.new()
+	regional_roads.name = "BaghdadRegionalRoadsValidationStreamer"
+	regional_roads.data_root = "res://data/geography/baghdad/regional_roads"
+	root.add_child(regional_roads)
+	if not regional_roads.enabled or absf(regional_roads.cell_size - 1000.0) > 0.01:
+		_fail("Citywide Baghdad road pack did not enable at the expected 1 km overview resolution.")
+		return
+	if int(regional_roads.get_streaming_status().get("loaded_cell_count", -1)) != 0:
+		_fail("Regional road streamer unexpectedly loaded cells before a player position was supplied.")
+		return
+	regional_roads._load_cell(Vector2i(0, 0))
+	if not regional_roads.loaded_cells.has(Vector2i(0, 0)):
+		_fail("Citywide regional road pack has no central Baghdad road cell.")
+		return
+	var regional_center: Node3D = regional_roads.loaded_cells[Vector2i(0, 0)]
+	var regional_center_roads := regional_center.find_children("OSMRoad_*", "MeshInstance3D", true, false)
+	if regional_center_roads.is_empty():
+		_fail("Citywide regional road center cell produced no road meshes.")
+		return
+	regional_roads._load_cell(Vector2i(3, -2))
+	if not regional_roads.loaded_cells.has(Vector2i(3, -2)):
+		_fail("Citywide regional road pack is missing the Republic Bridge overview cell 3:-2.")
+		return
+	var regional_bridge: Node3D = regional_roads.loaded_cells[Vector2i(3, -2)]
+	var regional_bridge_roads := regional_bridge.find_children("OSMRoad_*", "MeshInstance3D", true, false)
+	if regional_bridge_roads.is_empty():
+		_fail("Republic Bridge regional overview cell has no OSM road meshes.")
+		return
+	print("Baghdad citywide road overview passed: center roads=", regional_center_roads.size(), " bridge-area roads=", regional_bridge_roads.size(), " resolution=1 km.")
+	regional_roads.queue_free()
 	streamer.queue_free()
 	terrain.queue_free()
 	quit(0)
