@@ -54,6 +54,8 @@ var world_time_manager
 var wildlife_manager
 var mission_reward_manager
 var artifact_relic_quest_manager: Node
+var pending_relic_quest_starts: Dictionary = {}
+var pending_relic_returns: Dictionary = {}
 var player_progression
 var modern_world_combat_system: Node
 var player_vehicle_manager
@@ -177,6 +179,30 @@ func _request_relic_state_refresh() -> void:
 
 func _on_android_marketplace_result(request_id: String, payload: Dictionary) -> void:
 	var raw_data: Variant = payload.get("data", {})
+	if pending_relic_quest_starts.has(request_id):
+		var pending_start: Dictionary = pending_relic_quest_starts[request_id]
+		pending_relic_quest_starts.erase(request_id)
+		if not bool(payload.get("success", false)):
+			_show_relic_request_message("تعذر إرسال طلب المهمة: " + str(payload.get("error", "unknown")))
+			return
+		var start_data: Dictionary = raw_data if raw_data is Dictionary else {}
+		if str(start_data.get("requestId", "")).is_empty():
+			_show_relic_request_message("لم يصل تأكيد تسجيل طلب المهمة.")
+			return
+		_enter_historical_world_for_relic_quest(
+			str(pending_start.get("worldId", "")),
+			str(pending_start.get("questId", "")),
+			str(pending_start.get("relicId", ""))
+		)
+		_show_relic_request_message("سُجل طلب المهمة لدى الخادم. لا تُحتسب الأهداف ولا تُمنح المهارة إلا بعد إثبات خادم اللعبة الموثوق.")
+		return
+	if pending_relic_returns.has(request_id):
+		pending_relic_returns.erase(request_id)
+		if not bool(payload.get("success", false)):
+			_show_relic_request_message("لم يقبل الخادم طلب الإرجاع: " + str(payload.get("error", "unknown")))
+		else:
+			_show_relic_request_message("سُجل طلب الإرجاع. ينتظر تحقق خادم اللعبة من الموقع؛ لم تتغير ملكية التحفة أو تُمنح المهارة بعد.")
+		return
 	if not raw_data is Dictionary or not raw_data.has("skills") or not raw_data.has("ownedArtifacts"):
 		return
 	if not bool(payload.get("success", false)):
@@ -195,7 +221,6 @@ func _on_android_marketplace_result(request_id: String, payload: Dictionary) -> 
 	print("SYSTEM relic state refreshed from Firebase: skills=", verified_skill_ids.size(),
 		" owned_artifacts=", (data.get("ownedArtifacts", []) as Array).size(),
 		" market_listings=", (data.get("marketListings", []) as Array).size())
-
 
 func _consume_pending_android_world_request() -> void:
 	if not is_instance_valid(SYSTEMAndroidBridge):
@@ -901,6 +926,20 @@ func create_artifact_relic_quest_manager() -> void:
 
 
 func _on_artifact_historical_world_requested(world_id: String, quest_id: String, relic_id: String) -> void:
+	var request_id := "relic_start_" + str(Time.get_ticks_msec())
+	pending_relic_quest_starts[request_id] = {
+		"worldId": world_id, "questId": quest_id, "relicId": relic_id
+	}
+	if not SYSTEMAndroidBridge.request_marketplace_operation(
+		"request_relic_quest_start",
+		{"questId": quest_id, "artifactId": relic_id},
+		request_id
+	):
+		pending_relic_quest_starts.erase(request_id)
+		_show_relic_request_message("تعذر الاتصال بخدمة طلب المهمة. لم يتم إرسال الطلب إلى الخادم.")
+
+
+func _enter_historical_world_for_relic_quest(world_id: String, quest_id: String, relic_id: String) -> void:
 	if world_manager == null:
 		return
 	var historical_root: Node3D = world_manager.get_world_root(WorldManagerScript.WorldID.MYTHOLOGY) as Node3D
@@ -920,9 +959,14 @@ func _on_artifact_historical_world_requested(world_id: String, quest_id: String,
 	if not bool(quest_runtime.call("setup", relic_id, quest_definition)):
 		push_warning("SYSTEM RELIC QUEST: Could not create historical objective markers for " + relic_id)
 	if interaction_prompt_label != null:
-		interaction_prompt_label.text = "بدأت المهمة التاريخية: %s — استكشف العالم وابحث عن أهداف التحفة." % quest_id
+		interaction_prompt_label.text = "بدأت رحلة المهمة التاريخية بعد تسجيل طلبها. الأهداف تنتظر إثبات خادم اللعبة."
 		interaction_prompt_label.show()
 
+
+func _show_relic_request_message(message: String) -> void:
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = message
+		interaction_prompt_label.show()
 
 func _on_artifact_present_world_return_requested(quest_id: String, relic_id: String) -> void:
 	if world_manager == null:
@@ -943,10 +987,17 @@ func _on_artifact_rare_skill_reward_requested(skill_id: String, relic_id: String
 
 
 func _on_artifact_relic_return_requested(relic_id: String, historical_site_id: String, quest_id: String) -> void:
-	# The marketplace backend remains the authority for artifact ownership and
-	# must confirm the return transaction before this request is treated as final.
-	print("SYSTEM RELIC RETURN REQUEST: ", relic_id, " -> ", historical_site_id, " (", quest_id, ")")
-
+	var request_id := "relic_return_" + str(Time.get_ticks_msec())
+	pending_relic_returns[request_id] = {
+		"relicId": relic_id, "historicalSiteId": historical_site_id, "questId": quest_id
+	}
+	if not SYSTEMAndroidBridge.request_marketplace_operation(
+		"request_relic_return",
+		{"questId": quest_id, "artifactId": relic_id},
+		request_id
+	):
+		pending_relic_returns.erase(request_id)
+		_show_relic_request_message("تعذر إرسال طلب الإرجاع إلى الخادم. لم تتغير ملكية التحفة.")
 
 func create_world_manager() -> void:
 	world_manager = WorldManagerScript.new()
