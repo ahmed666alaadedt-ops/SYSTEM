@@ -27,18 +27,9 @@ func _init() -> void:
 	_create_assets()
 
 func _create_assets() -> void:
-	var tree := SphereMesh.new()
-	tree.radius = 1.0
-	tree.height = 2.0
-	meshes["large_trees"] = tree
-	var palm := SphereMesh.new()
-	palm.radius = 0.55
-	palm.height = 4.8
-	meshes["palms"] = palm
-	var ornamental := SphereMesh.new()
-	ornamental.radius = 0.8
-	ornamental.height = 1.8
-	meshes["ornamental_fruit"] = ornamental
+	meshes["large_trees"] = _make_tree_mesh(3.8, 2.4, 1.05, 3)
+	meshes["palms"] = _make_palm_mesh()
+	meshes["ornamental_fruit"] = _make_tree_mesh(2.5, 1.8, 0.78, 4)
 	var shrub := SphereMesh.new()
 	shrub.radius = 0.55
 	shrub.height = 1.0
@@ -65,6 +56,47 @@ func _create_assets() -> void:
 		material.albedo_color = palette[key]
 		material.roughness = 0.94
 		materials[key] = material
+
+
+func _make_tree_mesh(trunk_height: float, crown_height: float, crown_radius: float, crown_count: int) -> ArrayMesh:
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var trunk := CylinderMesh.new()
+	trunk.top_radius = 0.15
+	trunk.bottom_radius = 0.25
+	trunk.height = trunk_height
+	surface.append_from(trunk, 0, Transform3D(Basis.IDENTITY, Vector3(0.0, trunk_height * 0.5, 0.0)))
+	var crown := SphereMesh.new()
+	crown.radius = crown_radius
+	crown.height = crown_height
+	for index in range(crown_count):
+		var angle := TAU * float(index) / float(crown_count)
+		var offset := Vector3(cos(angle), 0.0, sin(angle)) * crown_radius * 0.38
+		var scale := Vector3(0.78, 0.82, 0.78) if index > 0 else Vector3.ONE
+		surface.append_from(crown, 0, Transform3D(Basis.from_scale(scale), Vector3(offset.x, trunk_height + crown_height * 0.34, offset.z)))
+	surface.generate_normals()
+	return surface.commit()
+
+
+func _make_palm_mesh() -> ArrayMesh:
+	var surface := SurfaceTool.new()
+	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var trunk := CylinderMesh.new()
+	trunk.top_radius = 0.09
+	trunk.bottom_radius = 0.19
+	trunk.height = 4.2
+	surface.append_from(trunk, 0, Transform3D(Basis.IDENTITY, Vector3(0.0, 2.1, 0.0)))
+	var frond := SphereMesh.new()
+	frond.radius = 1.0
+	frond.height = 0.22
+	for index in range(8):
+		var angle := TAU * float(index) / 8.0
+		var direction := Vector3(cos(angle), 0.24, sin(angle)).normalized()
+		var basis := Basis().looking_at(direction, Vector3.UP)
+		basis = basis.scaled(Vector3(0.92, 0.12, 0.20))
+		surface.append_from(frond, 0, Transform3D(basis, Vector3(0.0, 4.15, 0.0) + direction * 0.48))
+	surface.generate_normals()
+	return surface.commit()
 
 func build_cell(parent: Node3D, cell: Vector2i, landuse_features: Array,
 		water_features: Array, terrain_height: Callable) -> Dictionary:
