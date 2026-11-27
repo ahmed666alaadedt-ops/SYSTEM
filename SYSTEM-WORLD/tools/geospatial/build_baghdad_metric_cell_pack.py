@@ -31,7 +31,7 @@ KEEP_TAGS = {
     "roof:shape", "roof:material", "bridge", "waterway", "natural",
     "landuse", "amenity", "railway", "surface", "maxspeed", "lanes",
     "oneway", "oneway:conditional", "access", "access:conditional",
-    "vehicle", "motor_vehicle", "motor_vehicle:conditional", "motorcar",
+    "vehicle", "vehicle:conditional", "motor_vehicle", "motor_vehicle:conditional", "motorcar",
     "junction", "service", "tunnel", "layer", "leisure",
     "shop", "tourism", "historic", "man_made", "water", "place",
     "religion", "operator", "aeroway", "barrier", "foot", "cycleway",
