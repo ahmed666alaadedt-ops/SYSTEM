@@ -57,6 +57,11 @@ test("elemental activation requires server-verified progression and an awakened 
   await assert.rejects(() => call("authorizeElementalRelicActivation", playerId, { skillId: "stormlightning_arc" }));
   const combat = await db.collection("players").doc(playerId).collection("elementalCombat").doc("state").get();
   assert.equal(combat.data().energy, 52);
+  const activeCooldown = combat.data().cooldowns.stormlightning_arc;
+  await call("syncAuthoritativeElementalProgression", "trusted_game_server", { playerId, state }, { gameServer: true });
+  const afterRoutineSync = await db.collection("players").doc(playerId).collection("elementalCombat").doc("state").get();
+  assert.equal(afterRoutineSync.data().energy, 52);
+  assert.equal(afterRoutineSync.data().cooldowns.stormlightning_arc, activeCooldown);
 });
 
 test("a non-awakened relic and an insufficient Nen rank cannot authorize an elemental skill", async () => {
