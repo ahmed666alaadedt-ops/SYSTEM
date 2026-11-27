@@ -16,6 +16,19 @@ class SystemMarketplaceGodotBridgeHandler(
     override fun onMarketplaceRequest(requestId: String?, payload: JSONObject) {
         val id = requestId?.takeIf { it.isNotBlank() } ?: return
         when (payload.optString("operation")) {
+            "browse_secret_antique_offers" -> repository.browseSecretAntiqueOffers { result ->
+                respond(id, result.map { offers -> JSONObject().put("offers", JSONArray(offers.map { JSONObject(it) })) })
+            }
+            "purchase_secret_antique_offer" -> repository.purchaseSecretAntiqueOffer(
+                payload.optString("offerId"),
+                payload.optString("eventId")
+            ) { result -> respond(id, result.map { JSONObject(it) }) }
+            "appraise_artifact_authenticity" -> repository.appraiseMyArtifactAuthenticity(
+                payload.optString("artifactId")
+            ) { result -> respond(id, result.map { JSONObject(it) }) }
+            "antiques_reputation" -> repository.loadMyAntiquesReputation { result ->
+                respond(id, result.map { JSONObject(it) })
+            }
             "refresh_relic_state" -> repository.loadRelicQuestState { result ->
                 respond(id, result.map { snapshot ->
                     JSONObject()
