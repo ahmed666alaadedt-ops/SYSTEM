@@ -1,8 +1,8 @@
 extends Node3D
 class_name ModernCityTrafficManager
 
-## حركة مرور مرئية إجرائية على محوري الطرق داخل المدن.
-## هذه مركبات بيئية أولية؛ لا تمثل بعد نظام قيادة أو اصطدام أو ذكاء مرور.
+## Ambient traffic visuals; Baghdad follows streamed OSM motor roads when available.
+## Other cities retain prototype loops. Lane control, collision avoidance and traffic AI remain future work.
 
 const ROAD_LENGTH := 185.0
 const LANE_OFFSET := 3.0
@@ -23,6 +23,7 @@ var vehicles: Array[Dictionary] = []
 var city_speed_factors: Dictionary = {}
 var elapsed := 0.0
 var city_check_clock := 0.0
+var route_retry_clock := 0.0
 var active_city_name := ""
 var body_material: StandardMaterial3D
 var glass_material: StandardMaterial3D
@@ -101,6 +102,77 @@ func _find_nearest_city_name(position: Vector3) -> String:
 	return nearest_name
 
 
+func _get_baghdad_osm_streamer() -> Node:
+	if region_manager == null:
+		return null
+	var world_root := region_manager.get_parent()
+	if world_root == null:
+		return null
+	return world_root.get_node_or_null("BaghdadOSMCellStreamer")
+
+
+func _should_wait_for_osm_routes(city_name: String) -> bool:
+	if city_name != "Baghdad":
+		return false
+	var streamer := _get_baghdad_osm_streamer()
+	return streamer != null and bool(streamer.get("enabled"))
+
+
+func _build_real_traffic_route(city_name: String, anchor: Vector3, fleet_index: int) -> Array[Vector3]:
+	if city_name != "Baghdad":
+		return []
+	var streamer := _get_baghdad_osm_streamer()
+	if streamer == null or not streamer.has_method("get_vehicle_navigation_path"):
+		return []
+	var candidates := [
+		{"start": Vector3(-72.0, 0.0, -48.0), "target": Vector3(72.0, 0.0, 48.0)},
+		{"start": Vector3(-82.0, 0.0, 52.0), "target": Vector3(82.0, 0.0, -52.0)},
+		{"start": Vector3(-105.0, 0.0, 4.0), "target": Vector3(105.0, 0.0, -4.0)}
+	]
+	for offset in range(candidates.size()):
+		var candidate: Dictionary = candidates[(fleet_index + offset) % candidates.size()]
+		var start: Vector3 = anchor + candidate["start"]
+		var target: Vector3 = anchor + candidate["target"]
+		var outbound_value: Variant = streamer.call("get_vehicle_navigation_path", start, target, 75.0)
+		var inbound_value: Variant = streamer.call("get_vehicle_navigation_path", target, start, 75.0)
+		if not outbound_value is Array or not inbound_value is Array:
+			continue
+		var outbound: Array = outbound_value
+		var inbound: Array = inbound_value
+		if outbound.size() < 2 or inbound.size() < 2:
+			continue
+		var loop: Array[Vector3] = []
+		for point in outbound:
+			if point is Vector3:
+				loop.append(point)
+		for index in range(1, inbound.size()):
+			if inbound[index] is Vector3:
+				loop.append(inbound[index])
+		if loop.size() >= 4:
+			return loop
+	return []
+
+
+func _try_upgrade_traffic_to_osm_routes() -> void:
+	for index in range(vehicles.size()):
+		var item: Dictionary = vehicles[index]
+		if str(item.get("city_name", "")) != "Baghdad" or bool(item.get("uses_osm_route", false)):
+			continue
+		var route_points := _build_real_traffic_route("Baghdad", item["anchor"], index)
+		if route_points.size() < 4:
+			continue
+		var vehicle := item.get("node") as Node3D
+		if not is_instance_valid(vehicle):
+			continue
+		item["route_points"] = route_points
+		item["route_index"] = 1
+		item["uses_osm_route"] = true
+		item["waiting_for_osm_route"] = false
+		vehicle.global_position = route_points[0] - Vector3.UP * 0.19
+		vehicle.visible = true
+		vehicles[index] = item
+
+
 func _rebuild_city_traffic(city_name: String) -> void:
 	for item in vehicles:
 		var vehicle := item.get("node") as Node3D
@@ -155,6 +227,13 @@ func _create_vehicle(vehicle_name: String, city_name: String, anchor: Vector3, e
 		headlamp.material_override = lamp_material
 		vehicle.add_child(headlamp)
 
+	var route_points := _build_real_traffic_route(city_name, anchor, fleet_index)
+	var uses_osm_route := route_points.size() >= 4
+	var waiting_for_osm_route := not uses_osm_route and _should_wait_for_osm_routes(city_name)
+	if uses_osm_route:
+		vehicle.global_position = route_points[0] - Vector3.UP * 0.19
+	elif waiting_for_osm_route:
+		vehicle.visible = false
 	vehicles.append({
 		"node": vehicle,
 		"city_name": city_name,
@@ -162,13 +241,22 @@ func _create_vehicle(vehicle_name: String, city_name: String, anchor: Vector3, e
 		"east_west": east_west,
 		"speed": float(definition["speed"]) + float(seed_index % 3) * 0.35,
 		"lane": 2.8 + float((fleet_index / 2) % 2) * 2.1,
-		"offset": float(seed_index) * 17.0 + (ROAD_LENGTH * 0.5 if east_west else 0.0)
+		"offset": float(seed_index) * 17.0 + (ROAD_LENGTH * 0.5 if east_west else 0.0),
+		"route_points": route_points,
+		"route_index": 1,
+		"uses_osm_route": uses_osm_route,
+		"waiting_for_osm_route": waiting_for_osm_route
 	})
 
 
 func _process(delta: float) -> void:
 	elapsed += delta
 	city_check_clock += delta
+	route_retry_clock += delta
+	if route_retry_clock >= 2.0:
+		route_retry_clock = 0.0
+		if active_city_name == "Baghdad":
+			_try_upgrade_traffic_to_osm_routes()
 	if city_check_clock >= 4.0:
 		city_check_clock = 0.0
 		var player := region_manager.get_parent().get_node_or_null("Player") as Node3D
@@ -176,12 +264,37 @@ func _process(delta: float) -> void:
 		var nearest_city := _find_nearest_city_name(player_position)
 		if nearest_city != active_city_name:
 			_rebuild_city_traffic(nearest_city)
-	for item in vehicles:
+	for index in range(vehicles.size()):
+		var item: Dictionary = vehicles[index]
 		var vehicle: Node3D = item["node"]
 		if not is_instance_valid(vehicle):
 			continue
-		var anchor: Vector3 = item["anchor"]
 		var city_factor := float(city_speed_factors.get(str(item.get("city_name", "")), 1.0))
+		if bool(item.get("uses_osm_route", false)):
+			var route_points: Array = item.get("route_points", [])
+			if route_points.size() < 2:
+				continue
+			var route_index := int(item.get("route_index", 1)) % route_points.size()
+			var target: Vector3 = route_points[route_index]
+			var direction := target - vehicle.global_position
+			direction.y = 0.0
+			if direction.length() <= 2.0:
+				route_index = (route_index + 1) % route_points.size()
+				target = route_points[route_index]
+				direction = target - vehicle.global_position
+				direction.y = 0.0
+			if direction.length() > 0.01:
+				vehicle.global_position += direction.normalized() * float(item["speed"]) * city_factor * delta
+				if terrain != null and terrain.has_method("get_terrain_height"):
+					vehicle.global_position.y = float(terrain.call("get_terrain_height", vehicle.global_position.x, vehicle.global_position.z)) + 0.05
+				vehicle.look_at(Vector3(target.x, vehicle.global_position.y, target.z), Vector3.UP)
+			item["route_index"] = route_index
+			vehicles[index] = item
+			continue
+		if bool(item.get("waiting_for_osm_route", false)):
+			vehicle.visible = false
+			continue
+		var anchor: Vector3 = item["anchor"]
 		var distance := fposmod(elapsed * float(item["speed"]) * city_factor + float(item["offset"]), ROAD_LENGTH)
 		var position := anchor
 		if bool(item["east_west"]):
