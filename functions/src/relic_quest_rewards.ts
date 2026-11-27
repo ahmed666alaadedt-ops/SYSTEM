@@ -432,6 +432,30 @@ export const completeHistoricalRelicQuest = onCall(async (request) => {
   });
 });
 
+/** The signed-in player can read only their own server-authoritative relic quest progress. */
+export const listMyHistoricalRelicQuestSessions = onCall(async (request) => {
+  const playerId = requirePlayer(request);
+  const snapshot = await db.collection("historicalRelicQuestSessions")
+    .where("playerId", "==", playerId).limit(30).get();
+  return {
+    sessions: snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        sessionId: doc.id,
+        questId: String(data.questId || ""),
+        artifactId: String(data.artifactId || ""),
+        status: String(data.status || ""),
+        requiredObjectives: Array.isArray(data.requiredObjectives) ? data.requiredObjectives : [],
+        completedObjectives: data.completedObjectives && typeof data.completedObjectives === "object" ? data.completedObjectives : {},
+        returnProof: data.returnProof ? {
+          siteId: String(data.returnProof.siteId || ""),
+          verified: true
+        } : null
+      };
+    })
+  };
+});
+
 /** The signed-in player can read only their own server-issued rare skill unlocks. */
 export const listMyRareRelicSkills = onCall(async (request) => {
   const playerId = requirePlayer(request);
