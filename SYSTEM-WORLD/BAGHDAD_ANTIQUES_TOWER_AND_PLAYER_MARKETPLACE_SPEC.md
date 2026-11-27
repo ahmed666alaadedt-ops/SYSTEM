@@ -348,3 +348,8 @@ Emulator coverage now exercises lightning against a boss with elemental resistan
 The canonical Godot autoload `SYSTEMAndroidBridge` now allowlists `elemental_authorize` and exposes `request_elemental_activation(skill_id, request_id)`. The Android host routes that request through `FirebaseElementalRelicRepository` to the authenticated callable `authorizeElementalRelicActivation`. The client validates the returned receipt fields before forwarding the result through the existing `marketplace_result` response signal.
 
 This bridge only requests authorization and returns the receipt metadata. It does not publish local Nen/progression as trusted data, invoke the server-only combat resolver, or apply damage/healing/movement locally. Live online combat remains fail-closed until the trusted realtime game server owns combatant state and consumes the receipt.
+
+
+#### Combat-session validation hardening
+
+Before consuming a receipt, the trusted resolver now requires a live server-owned player combat session with a matching player ID, session ID, valid 3D player position and server tick no older than three seconds. Fire/lightning additionally require a live target in that same session, a fresh server tick, a valid target position and a server-computed distance within the elemental range (42 m fire / 48 m lightning). Missing or stale sessions, cross-session targets and out-of-range targets are rejected before any combat write. Emulator tests cover these rejection paths.
