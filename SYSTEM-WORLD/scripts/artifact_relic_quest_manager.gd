@@ -16,6 +16,7 @@ signal quest_message(message: String)
 const QUEST_STATE_DISCOVERED := "discovered"
 const QUEST_STATE_ACTIVE := "active"
 const QUEST_STATE_READY_TO_RETURN := "ready_to_return"
+const QUEST_STATE_READY_FOR_REWARD := "ready_for_reward"
 const QUEST_STATE_COMPLETED := "completed"
 
 # Each relic binds one historical setting, objectives, a return rule and a rare skill.
@@ -115,9 +116,19 @@ func record_historical_objective(relic_id: String, objective_id: String, trusted
 	if bool(definition.return_relic):
 		_quest_states[relic_id] = QUEST_STATE_READY_TO_RETURN
 		quest_state_changed.emit(String(definition.quest_id), QUEST_STATE_READY_TO_RETURN)
-		quest_message.emit("اكتملت المهمة. أعد التحفة إلى موقعها التاريخي لاستلام المهارة.")
+		quest_message.emit("اكتملت أهداف العالم التاريخي. أعد التحفة إلى موقعها الأصلي.")
 		return {"ok": true, "all_objectives_complete": true, "return_required": true, "site_id": definition.historical_site_id}
-	return _complete_reward(relic_id, definition)
+	_quest_states[relic_id] = QUEST_STATE_READY_FOR_REWARD
+	quest_state_changed.emit(String(definition.quest_id), QUEST_STATE_READY_FOR_REWARD)
+	rare_skill_reward_requested.emit(String(definition.skill_id), relic_id, String(definition.quest_id))
+	return {"ok": true, "all_objectives_complete": true, "return_required": false, "awaiting_server_reward": true}
+
+func request_relic_return(relic_id: String) -> Dictionary:
+	if not RELIC_QUESTS.has(relic_id) or _quest_states.get(relic_id, "") != QUEST_STATE_READY_TO_RETURN:
+		return {"ok": false, "message": "هذه التحفة ليست بانتظار الإرجاع."}
+	var definition: Dictionary = RELIC_QUESTS[relic_id]
+	relic_return_requested.emit(relic_id, String(definition.historical_site_id), String(definition.quest_id))
+	return {"ok": true, "awaiting_server_confirmation": true, "site_id": definition.historical_site_id}
 
 func confirm_relic_return(relic_id: String, returned_at_site: bool, trusted_server_confirmation: bool) -> Dictionary:
 	if not RELIC_QUESTS.has(relic_id) or _quest_states.get(relic_id, "") != QUEST_STATE_READY_TO_RETURN:
@@ -125,26 +136,27 @@ func confirm_relic_return(relic_id: String, returned_at_site: bool, trusted_serv
 	if not returned_at_site or not trusted_server_confirmation:
 		return {"ok": false, "message": "يجب تأكيد إرجاع التحفة إلى موقعها التاريخي من الخادم."}
 	var definition: Dictionary = RELIC_QUESTS[relic_id]
-	relic_return_requested.emit(relic_id, String(definition.historical_site_id), String(definition.quest_id))
-	return _complete_reward(relic_id, definition)
+	_quest_states[relic_id] = QUEST_STATE_READY_FOR_REWARD
+	quest_state_changed.emit(String(definition.quest_id), QUEST_STATE_READY_FOR_REWARD)
+	rare_skill_reward_requested.emit(String(definition.skill_id), relic_id, String(definition.quest_id))
+	return {"ok": true, "awaiting_server_reward": true, "skill_id": definition.skill_id}
 
-func _complete_reward(relic_id: String, definition: Dictionary) -> Dictionary:
-	var quest_id := String(definition.quest_id)
+func confirm_verified_skill_reward(relic_id: String, quest_id: String, skill_id: String, trusted_server_confirmation: bool) -> Dictionary:
+	if not trusted_server_confirmation or not RELIC_QUESTS.has(relic_id):
+		return {"ok": false, "message": "إثبات مكافأة المهارة غير موثوق."}
+	var definition: Dictionary = RELIC_QUESTS[relic_id]
+	if String(definition.quest_id) != quest_id or String(definition.skill_id) != skill_id:
+		return {"ok": false, "message": "بيانات مكافأة المهارة لا تطابق المهمة."}
+	if _quest_states.get(relic_id, "") != QUEST_STATE_READY_FOR_REWARD:
+		return {"ok": false, "message": "المهمة ليست بانتظار مكافأة موثقة."}
 	if _completed_rewards.has(quest_id):
 		return {"ok": false, "message": "مكافأة هذه المهمة صُرفت سابقاً."}
 	_completed_rewards[quest_id] = true
 	_quest_states[relic_id] = QUEST_STATE_COMPLETED
 	quest_state_changed.emit(quest_id, QUEST_STATE_COMPLETED)
-	rare_skill_reward_requested.emit(String(definition.skill_id), relic_id, quest_id)
 	present_world_return_requested.emit(quest_id, relic_id)
-	quest_message.emit("حصلت على المهارة النادرة: " + String(definition.skill_name))
-	return {
-		"ok": true,
-		"completed": true,
-		"skill_id": definition.skill_id,
-		"skill_name": definition.skill_name,
-		"skill_rarity": definition.skill_rarity
-	}
+	quest_message.emit("أكد الخادم استحقاق المهارة النادرة: " + String(definition.skill_name))
+	return {"ok": true, "completed": true, "skill_id": skill_id, "skill_name": definition.skill_name, "skill_rarity": definition.skill_rarity}
 
 func get_relic_quest_state(relic_id: String) -> String:
 	return String(_quest_states.get(relic_id, "not_discovered"))
