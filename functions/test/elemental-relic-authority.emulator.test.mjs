@@ -211,3 +211,73 @@ test("elemental combat rejects missing, stale and out-of-range server session st
     playerId: uid, activationId: receipt.activationId
   }, { gameServer: true }));
 });
+
+
+test("combat frames are accepted only from the trusted server and reject stale or replayed ticks", async () => {
+  const uid = playerId + "_frame_ingress";
+  const server = "trusted_game_server";
+  await db.collection("players").doc(uid).set({ userId: uid });
+  const frame = {
+    playerId: uid,
+    sessionId: "live_session_01",
+    tickSequence: 1,
+    serverTickMs: Date.now(),
+    active: true,
+    playerPosition: { x: 0, y: 0, z: 0 },
+    targets: [{
+      id: "boss_01", kind: "boss", health: 200, maxHealth: 200, isAlive: true,
+      position: { x: 0, y: 0, z: -10 },
+      elementalResistance: { lightning: 0.25 }
+    }],
+    playerVitals: { health: 75, maxHealth: 100 }
+  };
+  await assert.rejects(() => call("publishAuthoritativeCombatFrame", uid, frame));
+  const published = await call("publishAuthoritativeCombatFrame", server, frame, { gameServer: true });
+  assert.equal(published.success, true);
+  const targetId = published.targetDocumentIds.boss_01;
+  assert.ok(targetId);
+  const session = await db.collection("players").doc(uid).collection("combatState").doc("session").get();
+  assert.equal(session.data().sessionId, frame.sessionId);
+  assert.equal(session.data().tickSequence, 1);
+  const vitals = await db.collection("players").doc(uid).collection("combatState").doc("vitals").get();
+  assert.equal(vitals.data().health, 75);
+
+  await assert.rejects(() => call("publishAuthoritativeCombatFrame", server, frame, { gameServer: true }));
+  await assert.rejects(() => call("publishAuthoritativeCombatFrame", server, {
+    ...frame, tickSequence: 2, serverTickMs: Date.now() - 5000
+  }, { gameServer: true }));
+
+  const nextFrame = { ...frame, tickSequence: 2, serverTickMs: Date.now(),
+    targets: [{ ...frame.targets[0], health: 180 }] };
+  const next = await call("publishAuthoritativeCombatFrame", server, nextFrame, { gameServer: true });
+  assert.equal(next.success, true);
+  const target = await db.collection("combatTargets").doc(targetId).get();
+  assert.equal(target.data().health, 180);
+});
+
+test("trusted combat frame ingress rejects duplicate targets, invalid resistance and cross-session replacement", async () => {
+  const uid = playerId + "_frame_validation";
+  const server = "trusted_game_server";
+  await db.collection("players").doc(uid).set({ userId: uid });
+  const base = {
+    playerId: uid, sessionId: "frame_validation_session", tickSequence: 1,
+    serverTickMs: Date.now(), active: true,
+    playerPosition: { x: 0, y: 0, z: 0 }, targets: []
+  };
+  await call("publishAuthoritativeCombatFrame", server, base, { gameServer: true });
+  await assert.rejects(() => call("publishAuthoritativeCombatFrame", server, {
+    ...base, tickSequence: 2, serverTickMs: Date.now(), sessionId: "another_session"
+  }, { gameServer: true }));
+  await assert.rejects(() => call("publishAuthoritativeCombatFrame", server, {
+    ...base, tickSequence: 2, serverTickMs: Date.now(),
+    targets: [
+      { id: "same_target", kind: "monster", health: 10, maxHealth: 10, isAlive: true, position: { x: 0, y: 0, z: 1 } },
+      { id: "same_target", kind: "monster", health: 10, maxHealth: 10, isAlive: true, position: { x: 0, y: 0, z: 1 } }
+    ]
+  }, { gameServer: true }));
+  await assert.rejects(() => call("publishAuthoritativeCombatFrame", server, {
+    ...base, tickSequence: 2, serverTickMs: Date.now(),
+    targets: [{ id: "bad_resistance", kind: "monster", health: 10, maxHealth: 10, isAlive: true,
+      position: { x: 0, y: 0, z: 1 }, elementalResistance: { lightning: 1.5 } }]
+  }, { gameServer: true }));
+});
