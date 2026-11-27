@@ -114,6 +114,8 @@ func build_cell(parent: Node3D, cell: Vector2i, landuse_features: Array,
 	}
 	var eligible_area := 0.0
 	var generated_total := 0
+	var cell_min := Vector2(float(cell.x) * cell_size, float(cell.y) * cell_size)
+	var cell_max := cell_min + Vector2.ONE * cell_size
 	for feature in landuse_features:
 		if not _is_green_landuse(feature.get("tags", {})):
 			continue
@@ -132,8 +134,6 @@ func build_cell(parent: Node3D, cell: Vector2i, landuse_features: Array,
 				batches[category].append(_plant_transform(category, point, y))
 				generated_total += 1
 	var roadside_count := 0
-	var cell_min := Vector2(float(cell.x) * cell_size, float(cell.y) * cell_size)
-	var cell_max := cell_min + Vector2.ONE * cell_size
 	for feature in road_features:
 		if generated_total >= MAX_PLANTS_PER_CELL:
 			break
@@ -180,7 +180,7 @@ func build_cell(parent: Node3D, cell: Vector2i, landuse_features: Array,
 			var amount := mini(MAX_PLANTS_PER_CELL - generated_total, roundi(area * TARGET_DENSITY_PER_M2 * 0.10))
 			for index in range(amount):
 				var point := _random_riparian_point(ring)
-				if point == Vector2.INF:
+				if point == Vector2.INF or point.x < cell_min.x or point.y < cell_min.y or point.x >= cell_max.x or point.y >= cell_max.y:
 					continue
 				var y := float(terrain_height.call(point)) + 0.12
 				batches["aquatic_riparian"].append(_plant_transform("aquatic_riparian", point, y))
