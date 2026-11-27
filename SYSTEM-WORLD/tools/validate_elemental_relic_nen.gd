@@ -66,6 +66,7 @@ func _run() -> void:
 		_prepare_skill(skill_id, int(skill["rank"]), int(skill["points"]), int(skill["uses"]))
 		var energy_before := float(progression.get("current_system_energy"))
 		var result: Dictionary = progression.call("activate_relic_skill", skill_id, actor)
+		print("ELEMENTAL BRIDGE DIAGNOSTIC: node=%s has_method=%s result=%s" % [str(root.find_child("SYSTEMAndroidBridge", true, false)), str(bridge.has_method("request_elemental_activation")), str(result)])
 		_assert(bool(result.get("success", false)) and bool(result.get("pending", false)), "%s did not enter server-authorized pending state." % skill_id)
 		_assert(str(bridge.last_skill) == skill_id, "%s was not sent through the Android/Firebase authority bridge." % skill_id)
 		_assert(not str(bridge.last_request_id).is_empty(), "%s did not receive a correlation request ID." % skill_id)
