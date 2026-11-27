@@ -33,6 +33,15 @@ func _run_validation() -> void:
 	if not vegetation_source.contains("const TARGET_PLANT_COUNT := 1000000") or not vegetation_source.contains("TARGET_DENSITY_PER_M2") or not vegetation_source.contains("MAX_PLANTS_PER_CELL"):
 		_fail("The million-plant Baghdad density profile or per-cell safety cap is missing.")
 		return
+	var vegetation_quota_total := 0
+	for quota in BAGHDAD_VEGETATION_BUILDER.CATEGORY_TARGETS.values():
+		vegetation_quota_total += int(quota)
+	if vegetation_quota_total != BAGHDAD_VEGETATION_BUILDER.TARGET_PLANT_COUNT:
+		_fail("Baghdad vegetation category quotas do not add up to one million.")
+		return
+	if int(BAGHDAD_VEGETATION_BUILDER.CATEGORY_TARGETS.get("large_trees", 0)) != 150000 or int(BAGHDAD_VEGETATION_BUILDER.CATEGORY_TARGETS.get("aquatic_riparian", 0)) != 100000:
+		_fail("Baghdad vegetation category quotas differ from the approved distribution.")
+		return
 	for category in ["large_trees", "palms", "ornamental_fruit", "shrubs", "flowers_groundcover", "aquatic_riparian"]:
 		if not vegetation_source.contains('"'+category+'"'):
 			_fail("Missing Baghdad vegetation category: " + category)
