@@ -170,14 +170,16 @@ export const startHistoricalRelicQuestSession = onCall(async (request) => {
   const playerRef = db.collection("players").doc(playerId);
   const artifactRef = db.collection("artifactOwnership").doc(playerId).collection("items").doc(artifactId);
   const requestId = requiredText(request.data?.requestId, "requestId", 180);
+  if (!/^[A-Za-z0-9_-]+$/.test(requestId)) throw new HttpsError("invalid-argument", "معرّف طلب بدء المهمة غير صالح.");
   const startRequestRef = db.collection("historicalRelicQuestStartRequests").doc(requestId);
-  const sessionRef = db.collection("historicalRelicQuestSessions").doc();
+  const sessionRef = db.collection("historicalRelicQuestSessions").doc(requestId);
 
   await db.runTransaction(async (transaction) => {
-    const [player, artifact, startRequest] = await Promise.all([
+    const [player, artifact, startRequest, existingSession] = await Promise.all([
       transaction.get(playerRef),
       transaction.get(artifactRef),
-      transaction.get(startRequestRef)
+      transaction.get(startRequestRef),
+      transaction.get(sessionRef)
     ]);
     if (!player.exists) throw new HttpsError("not-found", "حساب اللاعب غير موجود.");
     if (!artifact.exists) throw new HttpsError("not-found", "التحفة غير موجودة في مجموعة اللاعب.");
@@ -188,9 +190,17 @@ export const startHistoricalRelicQuestSession = onCall(async (request) => {
     }
     if (!startRequest.exists) throw new HttpsError("failed-precondition", "لا يوجد طلب مهمة من اللاعب.");
     const queued = startRequest.data()!;
-    if (queued.status !== "pending" || queued.playerId !== playerId ||
-        queued.questId !== questId || queued.artifactId !== artifactId) {
+    if (queued.playerId !== playerId || queued.questId !== questId || queued.artifactId !== artifactId) {
       throw new HttpsError("failed-precondition", "طلب بدء المهمة لا يطابق اللاعب أو التحفة.");
+    }
+    if (queued.status === "accepted" && queued.acceptedBy === serverUid && existingSession.exists) {
+      return {
+        success: true, alreadyStarted: true, sessionId: sessionRef.id,
+        questId, artifactId, requiredObjectives: quest.objectives
+      };
+    }
+    if (queued.status !== "pending" || existingSession.exists) {
+      throw new HttpsError("failed-precondition", "طلب بدء المهمة استُهلك أو مرتبط بخادم آخر.");
     }
     transaction.create(sessionRef, {
       playerId, questId, artifactId, gameServerUid: serverUid,
