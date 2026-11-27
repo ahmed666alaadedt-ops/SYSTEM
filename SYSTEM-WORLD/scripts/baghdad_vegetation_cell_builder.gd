@@ -92,7 +92,7 @@ func build_cell(parent: Node3D, cell: Vector2i, landuse_features: Array,
 			aquatic_area += area
 			var amount := mini(MAX_PLANTS_PER_CELL - generated_total, roundi(area * TARGET_DENSITY_PER_M2 * 0.10))
 			for index in range(amount):
-				var point := _random_point_in_ring(ring)
+				var point := _random_riparian_point(ring)
 				if point == Vector2.INF:
 					continue
 				var y := float(terrain_height.call(point)) + 0.12
@@ -190,6 +190,22 @@ func _polygon_area(ring: PackedVector2Array) -> float:
 		var next := (index + 1) % ring.size()
 		twice_area += ring[index].x * ring[next].y - ring[next].x * ring[index].y
 	return absf(twice_area) * 0.5
+
+func _random_riparian_point(ring: PackedVector2Array) -> Vector2:
+	if ring.size() < 3:
+		return Vector2.INF
+	var centroid := Vector2.ZERO
+	for point in ring:
+		centroid += point
+	centroid /= float(ring.size())
+	var edge_index := rng.randi_range(0, ring.size() - 1)
+	var start := ring[edge_index]
+	var finish := ring[(edge_index + 1) % ring.size()]
+	var edge_point := start.lerp(finish, rng.randf_range(0.15, 0.85))
+	var outward := (edge_point - centroid).normalized()
+	if outward.length_squared() < 0.5:
+		return Vector2.INF
+	return edge_point + outward * rng.randf_range(0.8, 2.8)
 
 func _random_point_in_ring(ring: PackedVector2Array) -> Vector2:
 	var min_x := INF
