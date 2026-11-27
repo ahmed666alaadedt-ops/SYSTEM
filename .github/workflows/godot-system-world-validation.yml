@@ -59,6 +59,20 @@ jobs:
             exit 1
           fi
 
+      - name: Validate dense city greenery and pedestrian population
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          LOG="$RUNNER_TEMP/dense-city-life-validation.log"
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_dense_city_life.gd 2>&1 | tee "$LOG"
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Dense city life validation failed" "$LOG"; then
+            echo "::error::Dense city life validation failed."
+            exit 1
+          fi
+          grep -q "Dense city life validation passed:" "$LOG"
+
       - name: Validate city street advertising and map campaign integration
         shell: bash
         run: |
