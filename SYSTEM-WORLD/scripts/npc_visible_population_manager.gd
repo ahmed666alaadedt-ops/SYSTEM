@@ -96,31 +96,36 @@ func _process(delta: float) -> void:
 func _refresh_pedestrians() -> void:
 	if not is_instance_valid(society):
 		return
-	var living: Array = society.call("get_living_npcs", WORLD_ID)
+	var population: Dictionary = society.get("npcs")
 	var player := get_parent().get_node_or_null("Player") as Node3D
 	var reference_position := to_local(player.global_position) if is_instance_valid(player) else Vector3.ZERO
-	var candidates: Array[Dictionary] = []
-	for raw_npc in living:
-		if not raw_npc is Dictionary:
+	# Maintain only the nearest 72 candidates in a max-heap. This avoids
+	# deep-copying and sorting all 50,000 society records every refresh.
+	var nearest: Array[Dictionary] = []
+	for raw_id in population.keys():
+		var npc_value: Variant = population[raw_id]
+		if not npc_value is Dictionary:
 			continue
-		var npc: Dictionary = raw_npc
-		var npc_id := str(npc.get("npc_id", npc.get("id", "")))
-		if npc_id.is_empty() or not bool(npc.get("alive", false)) or bool(npc.get("jailed", false)):
+		var npc: Dictionary = npc_value
+		if int(npc.get("world_id", -1)) != WORLD_ID or not bool(npc.get("alive", false)) or bool(npc.get("jailed", false)):
+			continue
+		var npc_id := str(npc.get("npc_id", npc.get("id", raw_id)))
+		if npc_id.is_empty():
 			continue
 		var home := _location_for_action(npc, "home", 0)
-		candidates.append({
-			"npc_id": npc_id,
-			"npc": npc,
-			"distance_squared": Vector2(home.x - reference_position.x, home.z - reference_position.z).length_squared()
-		})
-	# Keep the nearest residents around the player, not the first records in the database.
-	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var distance_squared := Vector2(home.x - reference_position.x, home.z - reference_position.z).length_squared()
+		var candidate := {"npc_id": npc_id, "npc": npc, "distance_squared": distance_squared}
+		if nearest.size() < MAX_VISIBLE_CIVILIANS:
+			_heap_push_farthest(nearest, candidate)
+		elif distance_squared < float(nearest[0]["distance_squared"]):
+			nearest[0] = candidate
+			_heap_sift_down(nearest, 0)
+	nearest.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return float(a["distance_squared"]) < float(b["distance_squared"])
 	)
 	var visible_ids: Dictionary = {}
-	var visible_count := mini(MAX_VISIBLE_CIVILIANS, candidates.size())
-	for index in range(visible_count):
-		var candidate: Dictionary = candidates[index]
+	for index in range(nearest.size()):
+		var candidate: Dictionary = nearest[index]
 		var npc_id := str(candidate["npc_id"])
 		var npc: Dictionary = candidate["npc"]
 		visible_ids[npc_id] = true
@@ -134,6 +139,41 @@ func _refresh_pedestrians() -> void:
 			if is_instance_valid(actor):
 				actor.queue_free()
 			pedestrians.erase(npc_id)
+
+
+func _candidate_is_farther(first: Dictionary, second: Dictionary) -> bool:
+	return float(first["distance_squared"]) > float(second["distance_squared"])
+
+
+func _heap_push_farthest(heap: Array[Dictionary], candidate: Dictionary) -> void:
+	heap.append(candidate)
+	var index := heap.size() - 1
+	while index > 0:
+		var parent := int((index - 1) / 2)
+		if not _candidate_is_farther(heap[index], heap[parent]):
+			break
+		var swap_value: Dictionary = heap[parent]
+		heap[parent] = heap[index]
+		heap[index] = swap_value
+		index = parent
+
+
+func _heap_sift_down(heap: Array[Dictionary], start_index: int) -> void:
+	var index := start_index
+	while true:
+		var farthest := index
+		var left := index * 2 + 1
+		var right := left + 1
+		if left < heap.size() and _candidate_is_farther(heap[left], heap[farthest]):
+			farthest = left
+		if right < heap.size() and _candidate_is_farther(heap[right], heap[farthest]):
+			farthest = right
+		if farthest == index:
+			break
+		var swap_value: Dictionary = heap[index]
+		heap[index] = heap[farthest]
+		heap[farthest] = swap_value
+		index = farthest
 
 func _create_pedestrian(npc_id: String, npc: Dictionary, seed_index: int) -> void:
 	var actor := Node3D.new()
