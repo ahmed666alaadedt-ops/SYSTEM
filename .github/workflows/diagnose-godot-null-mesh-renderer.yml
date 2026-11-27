@@ -123,7 +123,7 @@ jobs:
                       if re.search(r"SCRIPT ERROR|Parse Error|Failed to load script", line)],
               }
           out = Path("godot-renderer-comparison.json")
-          out.write_text(json.dumps(report, indent=2) + "\\n")
+          out.write_text(json.dumps(report, indent=2))
           print(out.read_text())
           PY
 
