@@ -131,12 +131,13 @@ func get_quest_status(quest_id: String) -> Dictionary:
 	var key := quest_id.strip_edges().to_lower()
 	if not QUESTS.has(key):
 		return {"known": false}
+	var stages: Dictionary = reward_stages.get(key, {})
 	return {
 		"known": true,
 		"title": str(QUESTS[key]["title"]),
 		"accepted": accepted_quests.has(key),
 		"completed": completed_quests.has(key),
-		"reward_stages": (reward_stages.get(key, {}) as Dictionary).duplicate(true)
+		"reward_stages": stages.duplicate(true)
 	}
 
 
