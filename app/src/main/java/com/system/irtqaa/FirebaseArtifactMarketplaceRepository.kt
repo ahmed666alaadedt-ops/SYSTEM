@@ -204,6 +204,62 @@ class FirebaseArtifactMarketplaceRepository(
         }
     }
 
+    fun browseSecretAntiqueOffers(callback: (Result<List<Map<String, Any?>>>) -> Unit) {
+        functions.getHttpsCallable("browseSecretAntiqueOffers").call()
+            .addOnSuccessListener { result ->
+                val raw = (result.data as? Map<*, *>)?.get("offers") as? List<*> ?: emptyList<Any>()
+                callback(Result.success(raw.mapNotNull { it as? Map<String, Any?> }))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    fun purchaseSecretAntiqueOffer(
+        offerId: String,
+        eventId: String,
+        callback: (Result<Map<String, Any?>>) -> Unit
+    ) {
+        if (offerId.isBlank() || eventId.isBlank()) {
+            callback(Result.failure(IllegalArgumentException("بيانات عرض التاجر السري غير صالحة.")))
+            return
+        }
+        functions.getHttpsCallable("purchaseSecretAntiqueOffer")
+            .call(mapOf("offerId" to offerId, "eventId" to eventId))
+            .addOnSuccessListener { result ->
+                val data = result.data as? Map<String, Any?>
+                if (data == null) callback(Result.failure(IllegalStateException("استجابة التاجر السري غير صالحة.")))
+                else callback(Result.success(data))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    fun appraiseMyArtifactAuthenticity(
+        artifactId: String,
+        callback: (Result<Map<String, Any?>>) -> Unit
+    ) {
+        if (artifactId.isBlank()) {
+            callback(Result.failure(IllegalArgumentException("معرّف القطعة غير صالح.")))
+            return
+        }
+        functions.getHttpsCallable("appraiseMyArtifactAuthenticity")
+            .call(mapOf("artifactId" to artifactId))
+            .addOnSuccessListener { result ->
+                val data = result.data as? Map<String, Any?>
+                if (data == null) callback(Result.failure(IllegalStateException("استجابة تقييم الأصالة غير صالحة.")))
+                else callback(Result.success(data))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    fun loadMyAntiquesReputation(callback: (Result<Map<String, Any?>>) -> Unit) {
+        functions.getHttpsCallable("getMyAntiquesReputation").call()
+            .addOnSuccessListener { result ->
+                val data = result.data as? Map<String, Any?>
+                if (data == null) callback(Result.failure(IllegalStateException("بيانات سمعة الجامع غير صالحة.")))
+                else callback(Result.success(data))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
     fun loadTransactionHistory(callback: (Result<List<Map<String, Any?>>>) -> Unit) {
         functions.getHttpsCallable("listMyMarketplaceTransactions").call()
             .addOnSuccessListener { result ->
