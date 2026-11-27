@@ -74,14 +74,14 @@ export const purchaseSecretAntiqueOffer = onCall(async (request) => {
   if (!/^[A-Za-z0-9_-]+$/.test(eventId)) throw new HttpsError("invalid-argument", "معرّف الشراء غير صالح.");
   const offer = SECRET_TRADER_OFFERS[offerId as keyof typeof SECRET_TRADER_OFFERS];
   if (!offer) throw new HttpsError("not-found", "عرض التاجر السري غير موجود.");
-  const artifactId = `secret_${buyerId}_${offerId}_${eventId}`;
+  const artifactId = `secret_${buyerId}_${offerId}`;
   const playerRef = db.collection("players").doc(buyerId);
   const walletRef = db.collection("systemWallets").doc(buyerId);
   const artifactRef = db.collection("artifactOwnership").doc(buyerId).collection("items").doc(artifactId);
   const registryRef = db.collection("artifactRegistry").doc(artifactId);
-  const purchaseRef = db.collection("secretAntiquePurchases").doc(buyerId + "_" + eventId);
-  const transactionRef = db.collection("marketplaceTransactions").doc("secret_" + buyerId + "_" + eventId);
-  const historyRef = db.collection("artifactHistory").doc(artifactId).collection("events").doc("secret_purchase_" + eventId);
+  const purchaseRef = db.collection("secretAntiquePurchases").doc(buyerId + "_" + offerId);
+  const transactionRef = db.collection("marketplaceTransactions").doc("secret_" + buyerId + "_" + offerId);
+  const historyRef = db.collection("artifactHistory").doc(artifactId).collection("events").doc("secret_purchase");
 
   return db.runTransaction(async (transaction) => {
     const [player, wallet, prior, registry, item] = await Promise.all([
@@ -165,15 +165,28 @@ export const appraiseMyArtifactAuthenticity = onCall(async (request) => {
   const artifactId = cleanText(request.data?.artifactId, "artifactId", 160);
   const itemRef = db.collection("artifactOwnership").doc(playerId).collection("items").doc(artifactId);
   const registryRef = db.collection("artifactRegistry").doc(artifactId);
-  const reportRef = db.collection("artifactAuthenticityAppraisals").doc();
+  const reportId = encodeURIComponent(playerId + "_" + artifactId);
+  const reportRef = db.collection("artifactAuthenticityAppraisals").doc(reportId);
 
   return db.runTransaction(async (transaction) => {
-    const [itemSnapshot, registrySnapshot] = await Promise.all([
+    const [itemSnapshot, registrySnapshot, existingReport] = await Promise.all([
       transaction.get(itemRef),
-      transaction.get(registryRef)
+      transaction.get(registryRef),
+      transaction.get(reportRef)
     ]);
     if (!itemSnapshot.exists) throw new HttpsError("not-found", "القطعة ليست ضمن مقتنياتك.");
     const item = itemSnapshot.data()!;
+    if (existingReport.exists) {
+      const previous = existingReport.data()!;
+      return {
+        success: true, reportId: reportRef.id, artifactId,
+        verdict: String(previous.verdict || "unverified"),
+        confidence: Number(previous.confidence || 0),
+        reason: String(previous.reason || ""),
+        provenanceSummary: String(previous.provenanceSummary || ""),
+        alreadyAppraised: true
+      };
+    }
     if (item.ownerId !== playerId || item.status !== "owned" ||
         item.activeListingId || item.activeAuctionId || item.activeExchangeId) {
       throw new HttpsError("failed-precondition", "يجب أن تكون القطعة بحيازتك وغير محجوزة في السوق.");
