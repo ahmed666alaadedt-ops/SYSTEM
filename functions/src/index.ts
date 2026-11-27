@@ -404,5 +404,6 @@ export {
 export {
   syncAuthoritativeElementalProgression,
   authorizeElementalRelicActivation,
-  grantElementalRelicFromCompletedMission
+  grantElementalRelicFromCompletedMission,
+  resolveElementalRelicCombat
 } from "./elemental_relic_authority";
