@@ -402,6 +402,12 @@ test("historical relic return and rare skill reward are trusted, atomic and repl
   const skill = await db.collection("playerSkillUnlocks").doc(owner).collection("skills").doc("rare_skill_celestial_lightning").get();
   assert.equal(skill.exists, true);
   assert.equal(skill.data().questId, "quest_babylon_star_tablet");
+  assert.equal(skill.data().relicReturned, true);
+  assert.equal(skill.data().historicalSiteId, "babylon_esagila_archive");
+  const syncedSkills = await call("listMyRareRelicSkills", owner);
+  assert.equal(syncedSkills.skills.length, 1);
+  assert.equal(syncedSkills.skills[0].skillId, "rare_skill_celestial_lightning");
+  assert.equal(syncedSkills.skills[0].relicReturned, true);
 
   const retry = await call("completeHistoricalRelicQuest", server, payload, { gameServer: true });
   assert.equal(retry.success, true);
