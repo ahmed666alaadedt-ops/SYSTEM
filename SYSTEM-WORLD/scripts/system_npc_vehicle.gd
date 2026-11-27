@@ -52,13 +52,55 @@ func configure(
 	add_to_group("system_interactable")
 	set_meta("system_interaction_prompt", "سيارة المواطن %s — تفاعل لسرقتها" % owner_name)
 	set_meta("system_vehicle_id", vehicle_id)
-	route_points = [
-		city_anchor + Vector3(-34.0, 0.0, -24.0),
-		city_anchor + Vector3(34.0, 0.0, -24.0),
-		city_anchor + Vector3(34.0, 0.0, 24.0),
-		city_anchor + Vector3(-34.0, 0.0, 24.0)
-	]
+	route_points = _build_real_osm_vehicle_loop(p_slot)
+	if route_points.size() >= 4:
+		set_meta("system_road_route_source", "real_osm_vehicle_graph")
+		set_meta("system_vehicle_route_points", route_points.size())
+	else:
+		route_points = [
+			city_anchor + Vector3(-34.0, 0.0, -24.0),
+			city_anchor + Vector3(34.0, 0.0, -24.0),
+			city_anchor + Vector3(34.0, 0.0, 24.0),
+			city_anchor + Vector3(-34.0, 0.0, 24.0)
+		]
+		set_meta("system_road_route_source", "procedural_fallback")
+		set_meta("system_vehicle_route_points", route_points.size())
 	route_index = p_slot % route_points.size()
+
+
+func _build_real_osm_vehicle_loop(slot: int) -> Array[Vector3]:
+	if city_name != "Baghdad" or not is_instance_valid(crime_manager):
+		return []
+	var world_root := crime_manager.get_parent()
+	if world_root == null:
+		return []
+	var streamer := world_root.get_node_or_null("BaghdadOSMCellStreamer")
+	if streamer == null or not streamer.has_method("get_vehicle_navigation_path"):
+		return []
+	var candidates := [
+		{"start": Vector3(-72.0, 0.0, -48.0), "target": Vector3(72.0, 0.0, 48.0)},
+		{"start": Vector3(-82.0, 0.0, 52.0), "target": Vector3(82.0, 0.0, -52.0)},
+		{"start": Vector3(-105.0, 0.0, 4.0), "target": Vector3(105.0, 0.0, -4.0)}
+	]
+	var candidate: Dictionary = candidates[slot % candidates.size()]
+	var start: Vector3 = city_anchor + candidate["start"]
+	var target: Vector3 = city_anchor + candidate["target"]
+	var outbound_value: Variant = streamer.call("get_vehicle_navigation_path", start, target, 75.0)
+	var inbound_value: Variant = streamer.call("get_vehicle_navigation_path", target, start, 75.0)
+	if not outbound_value is Array or not inbound_value is Array:
+		return []
+	var outbound: Array = outbound_value
+	var inbound: Array = inbound_value
+	if outbound.size() < 2 or inbound.size() < 2:
+		return []
+	var loop: Array[Vector3] = []
+	for point in outbound:
+		if point is Vector3:
+			loop.append(point)
+	for index in range(1, inbound.size()):
+		if inbound[index] is Vector3:
+			loop.append(inbound[index])
+	return loop if loop.size() >= 4 else []
 
 func _process(delta: float) -> void:
 	if not is_driving or route_points.is_empty():
