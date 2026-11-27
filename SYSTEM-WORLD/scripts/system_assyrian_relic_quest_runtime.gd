@@ -35,7 +35,7 @@ func begin_quest(p_progression: Node, p_player: CharacterBody3D, p_world_manager
 		player.global_position = global_position + Vector3(0.0, 2.0, -10.0)
 	objective_index = 0
 	_refresh_status("ابدأ بقراءة الألواح بالترتيب: الأسد المجنح، دجلة، الختم الملكي.")
-	return {"success": true, "quest_id": QUEST_ID, "message": "بدأت مهمة حراس نينوى التاريخية. اتبع الألواح القديمة بالترتيب."}
+	return {"success": true, "quest_id": QUEST_ID, "message": "بدأت مهمة حراس نينوى التاريخية. اتبع الرموز الآشورية بالترتيب."}
 
 
 func _build_quest_environment() -> void:
@@ -81,13 +81,13 @@ func _build_quest_environment() -> void:
 		add_child(area)
 		objective_nodes.append(area)
 	var relic_position := Vector3(0.0, 1.7, -50.0)
-	_add_cylinder(self, "AssyrianStarTabletRelic", relic_position, 0.9, 1.2, 2.2, brass)
+	_add_cylinder(self, "AssyrianRoyalSealRelic", relic_position, 0.9, 1.2, 2.2, brass)
 	var relic_label := Label3D.new()
-	relic_label.text = "تمثال الأسد المجنح البابلي — الختم الملكي المختوم"
+	relic_label.text = "الختم الملكي الآشوري — أثر حراس نينوى"
 	relic_label.font_size = 20
 	relic_label.position = relic_position + Vector3(0.0, 2.8, 0.0)
 	add_child(relic_label)
-	var relic_area := _make_interaction("RecoverAssyrianRoyalSeal", relic_position + Vector3(0.0, 0.0, 2.1), "استعد تمثال الأسد المجنح البابلي")
+	var relic_area := _make_interaction("RecoverAssyrianRoyalSeal", relic_position + Vector3(0.0, 0.0, 2.1), "استعد الختم الملكي الآشوري")
 	relic_area.set_meta("system_assyrian_relic_objective", "recover_seal")
 	add_child(relic_area)
 	_add_box(self, "HistoricalReturnGateLeftPillar", Vector3(-3.2, 3.0, -4.0), Vector3(0.8, 6.0, 0.8), brass)
@@ -145,9 +145,9 @@ func handle_interaction(target: Node) -> Dictionary:
 	objective_index += 1
 	if objective == "recover_seal":
 		return _complete_quest()
-	var next_name: String = ["لوح دجلة", "الختم الملكي", "استعادة الأثر"][objective_index - 1]
+	var next_name: String = ["لوح دجلة", "الختم الملكي", "استعادة الختم"][objective_index - 1]
 	_refresh_status("انكشف الرمز الآشوري. هدفك التالي: " + next_name)
-	return {"handled": true, "success": true, "message": "تم تسجيل الرمز القديم. " + next_name}
+	return {"handled": true, "success": true, "message": "تم تسجيل الرمز الآشوري. " + next_name}
 
 
 func _complete_quest() -> Dictionary:
