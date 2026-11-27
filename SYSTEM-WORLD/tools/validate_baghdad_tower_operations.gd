@@ -2544,6 +2544,11 @@ func _run() -> void:
 		"attack_pressed": "_on_mobile_attack_pressed",
 		"skill_one_pressed": "_on_mobile_skill_one_pressed",
 		"skill_two_pressed": "_on_mobile_skill_two_pressed",
+		"elemental_fire_pressed": "_on_mobile_elemental_fire_pressed",
+		"elemental_air_pressed": "_on_mobile_elemental_air_pressed",
+		"elemental_water_pressed": "_on_mobile_elemental_water_pressed",
+		"elemental_earth_pressed": "_on_mobile_elemental_earth_pressed",
+		"elemental_lightning_pressed": "_on_mobile_elemental_lightning_pressed",
 		"dodge_pressed": "_on_mobile_dodge_pressed"
 	}
 	for signal_name in mobile_callbacks.keys():
