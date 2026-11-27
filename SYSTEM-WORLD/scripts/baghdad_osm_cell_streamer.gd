@@ -281,6 +281,8 @@ func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> in
 	var facility_type := ""
 	if amenity_kind == "hospital" or str(tags.get("healthcare", "")).to_lower() in ["hospital", "clinic"]:
 		facility_type = "healthcare"
+	elif amenity_kind == "place_of_worship" and str(tags.get("religion", "")).to_lower() in ["christian", "christianity"]:
+		facility_type = "church"
 	elif amenity_kind in ["police", "police_station"]:
 		facility_type = "police"
 	elif amenity_kind == "place_of_worship" and str(tags.get("religion", "")).to_lower() == "muslim":
@@ -333,6 +335,12 @@ func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
 	elif amenity == "place_of_worship" and str(tags.get("religion", "")).to_lower() == "muslim":
 		facility_type = "mosque"
 		display_name = "جامع أو مسجد"
+	elif amenity == "place_of_worship" and str(tags.get("religion", "")).to_lower() in ["christian", "christianity"]:
+		facility_type = "church"
+		display_name = "كنيسة"
+	elif str(tags.get("building", "")).to_lower() == "church":
+		facility_type = "church"
+		display_name = "كنيسة"
 	elif shop != "":
 		facility_type = "shop"
 		display_name = "محل تجاري"
