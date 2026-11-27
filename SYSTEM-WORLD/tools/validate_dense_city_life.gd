@@ -34,8 +34,8 @@ func _run_validation() -> void:
 		_fail("Natural forest density settings do not match the approved pass.")
 		return
 
-	if not daily_life_source.contains("const STARTER_RESIDENT_COUNT := 8500") or not daily_life_source.contains("const STARTER_MINOR_COUNT := 1500"):
-		_fail("The large resident society target is missing.")
+	if not daily_life_source.contains("const STARTER_RESIDENT_COUNT := 42500") or not daily_life_source.contains("const STARTER_MINOR_COUNT := 7500"):
+		_fail("The 50,000 resident society target is missing.")
 		return
 	if not daily_life_source.contains("await get_tree().process_frame"):
 		_fail("Resident seeding is not spread across frames.")
@@ -70,5 +70,5 @@ func _run_validation() -> void:
 		_fail("MultiMesh batching helper did not preserve all three test instances.")
 		return
 
-	print("Dense city life validation passed: park_tree_slots_per_pocket=5 park_shrub_slots_per_pocket=8 visible_civilians=72 seeded_residents=8500 seeded_minors=1500 commercial_tenants=12 industrial_units=6 forest_trees=36 forest_shrubs=48 forest_grass=150 multimesh_instances=", batch.multimesh.instance_count)
+	print("Dense city life validation passed: park_tree_slots_per_pocket=5 park_shrub_slots_per_pocket=8 visible_civilians=72 seeded_residents=42500 seeded_minors=7500 commercial_tenants=12 industrial_units=6 forest_trees=36 forest_shrubs=48 forest_grass=150 multimesh_instances=", batch.multimesh.instance_count)
 	quit(0)
