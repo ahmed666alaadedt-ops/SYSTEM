@@ -127,7 +127,8 @@ func _run() -> void:
 			_fail("Artifact recovery did not grant the matching skill training permit: " + skill_id)
 			return
 		var practice: Dictionary = progression.get("system_skill_practice")
-		if not practice.has(skill_id + "_sessions") or practice[skill_id + "_sessions"].size() != 0:
+		var saved_sessions: Array = practice.get(skill_id + "_sessions", [])
+		if int(practice.get(skill_id, 0)) != 0 or not saved_sessions.is_empty():
 			_fail("Artifact skill must not have training sessions before the permit-holder trains.")
 			return
 		for session_index in range(3):
