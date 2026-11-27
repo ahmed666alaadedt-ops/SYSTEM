@@ -102,7 +102,8 @@ func _run() -> void:
 			if not bool(practice.get("success", false)):
 				_fail("Skill %s failed its practice session %d: %s" % [skill_id, session_index + 1, str(practice.get("reason", "UNKNOWN"))])
 				return
-		if not (progression.get("learned_system_skills") as Array).has(skill_id):
+		var learned_after: Array = progression.get("learned_system_skills")
+		if not learned_after.has(skill_id):
 			_fail("Skill %s was not learned after three verified practice sessions." % skill_id)
 			return
 
