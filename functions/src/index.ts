@@ -399,3 +399,9 @@ export {
   releaseExpiredArtifactExchangeOffers,
   listMyArtifactExchangeOffers
 } from "./artifact_marketplace_advanced";
+
+
+export {
+  syncAuthoritativeElementalProgression,
+  authorizeElementalRelicActivation
+} from "./elemental_relic_authority";
