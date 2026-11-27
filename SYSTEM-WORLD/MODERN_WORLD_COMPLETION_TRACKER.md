@@ -2051,3 +2051,13 @@ Feature HEAD at audit update: `f2522b6a3cf603e3aa13ee1bd17ee0ee9e7fba99`.
 - [x] Marketplace Firestore rules emulator tests passed: 7/7. Callable marketplace transaction/emulator tests passed: 8/8 on workflow `45604503727`; includes fixed-price escrow/purchase, atomic buyer debit and seller credit, ownership transfer, self-purchase and insufficient-balance rejection, concurrent double-purchase race, cancellation/expiry, auctions, two-player exchanges, trusted reward replay protection and scheduled expiry workers.
 - [x] The TypeScript Cloud Functions build and Firestore rules compilation passed on the same workflow.
 - [ ] Still required before calling online trading live: trusted game-server claim and quest-reward source integration, production deployment/monitoring of functions and scheduled workers, and a real two-account Android device round trip. Do not deploy or merge without the user's separate approval.
+
+
+## Godot 4.3 headless dummy-renderer root-cause investigation — 27 November 2026
+
+- [x] Exact PR #49 head `77cddc9d7cecab73131d7f59469eb6d5390dbbbd`: the canonical Godot 4.3 diagnostic log contains 55,991 occurrences of `ERROR: Parameter "m" is null` at `mesh_get_surface_count`, across OSM runtime, child-character QA, main-scene launch, world-switch diagnostics, companion/NPC validation and Hunter tunnel tests.
+- [x] The scene diagnostic inspected 19,572 MeshInstance3D nodes and 130 MultiMeshInstance3D nodes. It found zero null mesh references, zero invalid mesh RIDs, zero zero-surface meshes and zero invalid MultiMesh resources in the initial scene and after each of the four world switches.
+- [x] Matched the exact error to upstream Godot issue #86806. Godot maintainers identified the cause as a Mesh resource being freed before its MeshInstance, then fixed Dummy RenderingServer dependency tracking in merged PR #102261. The issue is reproducible in Godot 4.3; the canonical project remains pinned to 4.3 for now.
+- [ ] Run the same complete scene/world-switch diagnostic with Godot 4.4.1, which contains the upstream fix, and record the exact remaining error count. This is a compatibility comparison only; do not change the canonical Android/export engine version until import, runtime, gameplay QA and Android export have all passed on the candidate version.
+- [ ] Keep the 4.3 dummy-renderer error visible in CI logs. A zero-null-mesh scan is not evidence that the headless renderer is clean.
+- [ ] Physical Android visual inspection and real-device frame-time/memory profiling remain separate acceptance requirements.
