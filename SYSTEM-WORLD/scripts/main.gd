@@ -22,6 +22,7 @@ const NPCDailyLifeManagerScript = preload("res://scripts/npc_daily_life_manager.
 const WorldTimeManagerScript = preload("res://scripts/world_time_manager.gd")
 const WildlifeManagerScript = preload("res://scripts/wildlife_manager.gd")
 const MissionRewardManagerScript = preload("res://scripts/system_mission_reward_manager.gd")
+const ArtifactRelicQuestManagerScript = preload("res://scripts/artifact_relic_quest_manager.gd")
 const PlayerProgressionScript = preload("res://scripts/system_player_progression.gd")
 const ModernWorldCombatSystemScript = preload("res://scripts/modern_world_combat_system.gd")
 const PlayerVehicleManagerScript = preload("res://scripts/system_player_vehicle_manager.gd")
@@ -51,6 +52,7 @@ var npc_daily_life_manager
 var world_time_manager
 var wildlife_manager
 var mission_reward_manager
+var artifact_relic_quest_manager: Node
 var player_progression
 var modern_world_combat_system: Node
 var player_vehicle_manager
@@ -125,6 +127,7 @@ func _ready() -> void:
 	create_hunter_exam_manager()
 	create_power_tower_manager()
 	create_mission_reward_manager()
+	create_artifact_relic_quest_manager()
 
 	connect_sovereign_system()
 
@@ -848,6 +851,56 @@ func confirm_verified_hunter_mission(mission_id: String) -> bool:
 		return false
 
 	return mission_reward_manager.confirm_verified_completion(mission_id)
+
+
+func create_artifact_relic_quest_manager() -> void:
+	artifact_relic_quest_manager = ArtifactRelicQuestManagerScript.new()
+	artifact_relic_quest_manager.name = "ArtifactRelicQuestManager"
+	add_child(artifact_relic_quest_manager)
+	artifact_relic_quest_manager.historical_world_requested.connect(_on_artifact_historical_world_requested)
+	artifact_relic_quest_manager.present_world_return_requested.connect(_on_artifact_present_world_return_requested)
+	artifact_relic_quest_manager.rare_skill_reward_requested.connect(_on_artifact_rare_skill_reward_requested)
+	artifact_relic_quest_manager.relic_return_requested.connect(_on_artifact_relic_return_requested)
+
+
+func _on_artifact_historical_world_requested(world_id: String, quest_id: String, relic_id: String) -> void:
+	if world_manager == null:
+		return
+	var historical_root := world_manager.get_world_root(WorldManagerScript.WorldID.MYTHOLOGY)
+	if historical_root == null:
+		return
+	historical_root.set_meta("system_active_relic_quest_id", quest_id)
+	historical_root.set_meta("system_active_relic_id", relic_id)
+	historical_root.set_meta("system_requested_historical_setting", world_id)
+	world_manager.switch_world(WorldManagerScript.WorldID.MYTHOLOGY)
+	active_world_root = world_manager.get_active_world()
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = "بدأت المهمة التاريخية: %s — استكشف العالم وابحث عن أهداف التحفة." % quest_id
+		interaction_prompt_label.show()
+
+
+func _on_artifact_present_world_return_requested(quest_id: String, relic_id: String) -> void:
+	if world_manager == null:
+		return
+	world_manager.switch_world(WorldManagerScript.WorldID.REALISTIC)
+	active_world_root = world_manager.get_active_world()
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = "عدت إلى العالم الحديث بعد إكمال مهمة التحفة: %s." % quest_id
+		interaction_prompt_label.show()
+
+
+func _on_artifact_rare_skill_reward_requested(skill_id: String, relic_id: String, quest_id: String) -> void:
+	# The skill progression system must only unlock this after a trusted backend
+	# reward receipt is verified. A local quest signal is not proof of reward.
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = "اكتملت مهمة التحفة. بانتظار تأكيد الخادم لمكافأة المهارة النادرة: %s." % skill_id
+		interaction_prompt_label.show()
+
+
+func _on_artifact_relic_return_requested(relic_id: String, historical_site_id: String, quest_id: String) -> void:
+	# The marketplace backend remains the authority for artifact ownership and
+	# must confirm the return transaction before this request is treated as final.
+	print("SYSTEM RELIC RETURN REQUEST: ", relic_id, " -> ", historical_site_id, " (", quest_id, ")")
 
 
 func create_world_manager() -> void:
