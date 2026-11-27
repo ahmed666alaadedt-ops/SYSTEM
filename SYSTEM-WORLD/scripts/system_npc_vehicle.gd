@@ -81,6 +81,7 @@ func _try_upgrade_to_osm_vehicle_route() -> bool:
 	route_points = real_route
 	route_index = 0
 	global_position = route_points[0] - Vector3.UP * 0.19
+	is_driving = true
 	set_meta("system_road_route_source", "real_osm_vehicle_graph")
 	set_meta("system_vehicle_route_points", route_points.size())
 	return true
