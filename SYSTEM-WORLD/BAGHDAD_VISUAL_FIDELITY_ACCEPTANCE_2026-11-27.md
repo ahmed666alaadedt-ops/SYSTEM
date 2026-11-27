@@ -71,3 +71,8 @@ These are explicit visual requirements in addition to the general target above. 
 
 ### Acceptance rule
 A Baghdad scene is not accepted as matching this reference if it only has generic towers, a flat water plane, a simple bridge slab, repeated primitive buildings or decorative neon strips. Review the complete composition and each major structure from aerial and street-level views. Preserve the approved Baghdad five-tower district identity and keep the independent Power Tower separate.
+
+## Marshland and wetland scope
+- Preserve the separately authored Swamp Land region and its existing world connection; do not collapse it into Baghdad city tiles or replace its gameplay environment with a few OSM water polygons.
+- Baghdad municipal OSM data now also carries a separate wetlands layer for mapped natural=wetland / wetland=* polygons where those features exist inside the municipal boundary. This supplements, and does not replace, the dedicated Swamp Land environment.
+- The wetland layer is rendered as regional terrain/wetland surfaces and must remain distinguishable from open water, river channels, parks and ordinary land use.
