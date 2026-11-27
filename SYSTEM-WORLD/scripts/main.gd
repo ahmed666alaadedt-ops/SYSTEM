@@ -176,12 +176,13 @@ func _request_relic_state_refresh() -> void:
 
 
 func _on_android_marketplace_result(request_id: String, payload: Dictionary) -> void:
-	if not request_id.begins_with("relic_state_refresh_"):
+	var raw_data: Variant = payload.get("data", {})
+	if not raw_data is Dictionary or not raw_data.has("skills") or not raw_data.has("ownedArtifacts"):
 		return
 	if not bool(payload.get("success", false)):
 		push_warning("SYSTEM relic state refresh failed: " + str(payload.get("error", "unknown")))
 		return
-	var data: Dictionary = payload.get("data", {})
+	var data: Dictionary = raw_data
 	var skill_rows: Array = data.get("skills", [])
 	var verified_skill_ids: Array = []
 	for row in skill_rows:
