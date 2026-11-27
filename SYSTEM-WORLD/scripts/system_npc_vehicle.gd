@@ -19,6 +19,7 @@ var is_stolen := false
 var is_driving := true
 var stop_timer := 0.0
 var vehicle_style := 0
+var route_retry_clock := 0.0
 var wheel_nodes: Array[MeshInstance3D] = []
 
 func _ready() -> void:
@@ -68,6 +69,18 @@ func configure(
 	route_index = p_slot % route_points.size()
 
 
+func _try_upgrade_to_osm_vehicle_route() -> bool:
+	var real_route := _build_real_osm_vehicle_loop(vehicle_style)
+	if real_route.size() < 4:
+		return false
+	route_points = real_route
+	route_index = 0
+	global_position = route_points[0] - Vector3.UP * 0.19
+	set_meta("system_road_route_source", "real_osm_vehicle_graph")
+	set_meta("system_vehicle_route_points", route_points.size())
+	return true
+
+
 func _build_real_osm_vehicle_loop(slot: int) -> Array[Vector3]:
 	if city_name != "Baghdad" or not is_instance_valid(crime_manager):
 		return []
@@ -103,6 +116,11 @@ func _build_real_osm_vehicle_loop(slot: int) -> Array[Vector3]:
 	return loop if loop.size() >= 4 else []
 
 func _process(delta: float) -> void:
+	if city_name == "Baghdad" and str(get_meta("system_road_route_source", "")) != "real_osm_vehicle_graph":
+		route_retry_clock += delta
+		if route_retry_clock >= 2.0:
+			route_retry_clock = 0.0
+			_try_upgrade_to_osm_vehicle_route()
 	if not is_driving or route_points.is_empty():
 		return
 	if stop_timer > 0.0 and not is_stolen:
