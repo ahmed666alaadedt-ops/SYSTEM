@@ -758,6 +758,18 @@ func _run_validation() -> void:
 	if not learned_skills.has(rare_skill_id):
 		_fail("The rare relic skill was not learned after three practice sessions.")
 		return
+	var echo_trace := relic_runtime.get_node_or_null("HiddenBabylonianEchoTrace") as Node3D
+	if echo_trace == null or echo_trace.visible:
+		_fail("Historical relic quest must contain a hidden echo trace before skill activation.")
+		return
+	quest_player.global_position = echo_trace.global_position
+	main_scene.call("_on_mobile_relic_echo_pressed")
+	if not echo_trace.visible or not bool(echo_trace.get_meta("system_echo_revealed", false)):
+		_fail("Learned relic echo sight did not reveal the nearby hidden historical trace.")
+		return
+	if quest_player.get_node_or_null("RelicEchoSightPulse") == null:
+		_fail("Relic echo sight did not create its visible scan pulse.")
+		return
 	quest_world_manager.call("switch_world", WorldManagerScript.WorldID.REALISTIC)
 	await process_frame
 
