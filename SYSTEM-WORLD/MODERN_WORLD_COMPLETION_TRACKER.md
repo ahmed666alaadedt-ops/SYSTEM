@@ -2061,3 +2061,12 @@ Feature HEAD at audit update: `f2522b6a3cf603e3aa13ee1bd17ee0ee9e7fba99`.
 - [ ] Run the same complete scene/world-switch diagnostic with Godot 4.4.1, which contains the upstream fix, and record the exact remaining error count. This is a compatibility comparison only; do not change the canonical Android/export engine version until import, runtime, gameplay QA and Android export have all passed on the candidate version.
 - [ ] Keep the 4.3 dummy-renderer error visible in CI logs. A zero-null-mesh scan is not evidence that the headless renderer is clean.
 - [ ] Physical Android visual inspection and real-device frame-time/memory profiling remain separate acceptance requirements.
+
+
+## Baghdad OSM high-detail facade pass — 27 November 2026
+
+- [x] Added procedural instanced window facades to high-detail 200 m playable OSM cells. Residential houses, villas/palaces, apartment blocks and commercial buildings use different window sizes and spacing; a deterministic mix of cool glass and warm-lit windows prevents identical facades.
+- [x] Each building is capped at 64 window instances in one MultiMesh to keep the mobile draw-call and instance budget bounded. Window instances use a 280 m visibility range and do not add separate collision bodies.
+- [x] Kept the 1 km citywide regional overview on extrusion-only LOD; it does not receive the close-range window geometry. Mosques and churches retain their specialized dome/minaret/cross silhouettes instead of generic window grids.
+- [ ] Synthetic facade validation must pass on the exact current PR head, including a five-floor apartment MultiMesh and an assertion that the 1 km overview remains extrusion-only.
+- [ ] This is a procedural facade-detail layer, not a claim that all Baghdad buildings have final bespoke architectural art, verified doors, interiors or photogrammetry.
