@@ -22,6 +22,7 @@ const NPCDailyLifeManagerScript = preload("res://scripts/npc_daily_life_manager.
 const WorldTimeManagerScript = preload("res://scripts/world_time_manager.gd")
 const WildlifeManagerScript = preload("res://scripts/wildlife_manager.gd")
 const MissionRewardManagerScript = preload("res://scripts/system_mission_reward_manager.gd")
+const HistoricalArtifactQuestManagerScript = preload("res://scripts/system_historical_artifact_quest_manager.gd")
 const PlayerProgressionScript = preload("res://scripts/system_player_progression.gd")
 const ModernWorldCombatSystemScript = preload("res://scripts/modern_world_combat_system.gd")
 const PlayerVehicleManagerScript = preload("res://scripts/system_player_vehicle_manager.gd")
@@ -51,6 +52,7 @@ var npc_daily_life_manager
 var world_time_manager
 var wildlife_manager
 var mission_reward_manager
+var historical_artifact_quest_manager: Node
 var player_progression
 var modern_world_combat_system: Node
 var player_vehicle_manager
@@ -125,6 +127,7 @@ func _ready() -> void:
 	create_hunter_exam_manager()
 	create_power_tower_manager()
 	create_mission_reward_manager()
+	create_historical_artifact_quest_manager()
 
 	connect_sovereign_system()
 
@@ -808,6 +811,14 @@ func _handle_hunter_exam_guide_interaction() -> void:
 	var guide := get_tree().root.find_child("HunterGuildGuideAtTower", true, false)
 	_start_hunter_guild_escort(guide)
 
+func create_historical_artifact_quest_manager() -> void:
+	historical_artifact_quest_manager = HistoricalArtifactQuestManagerScript.new()
+	historical_artifact_quest_manager.name = "HistoricalArtifactQuestManager"
+	add_child(historical_artifact_quest_manager)
+	historical_artifact_quest_manager.call("setup", player_progression)
+	print("SYSTEM: Babylon, Nineveh and Assyrian artifact quest rewards connected.")
+
+
 func create_mission_reward_manager() -> void:
 	mission_reward_manager = MissionRewardManagerScript.new()
 	mission_reward_manager.name = "MissionRewardManager"
@@ -1197,6 +1208,12 @@ func _on_interaction_performed(
 		tower_operations_manager.call("open_power_tower_ticket_terminal")
 		return
 	if str(target.get_meta("system_interaction_type", "")) == "museum_artifact_exhibit" and tower_operations_manager != null:
+		var historical_quest_id := str(target.get_meta("system_historical_quest_id", ""))
+		if not historical_quest_id.is_empty() and is_instance_valid(historical_artifact_quest_manager):
+			var quest_result: Dictionary = historical_artifact_quest_manager.call("start_quest", historical_quest_id)
+			if interaction_prompt_label != null and bool(quest_result.get("success", false)):
+				interaction_prompt_label.text = "بدأت مهمة: " + str(quest_result.get("title", "أثر تاريخي")) + " — ابحث عن القطعة الأصلية في العالم التاريخي."
+				interaction_prompt_label.show()
 		tower_operations_manager.call("open_museum_artifact_exhibit", target)
 		return
 	if target.has_meta("system_pool_service_type") and tower_operations_manager != null:
