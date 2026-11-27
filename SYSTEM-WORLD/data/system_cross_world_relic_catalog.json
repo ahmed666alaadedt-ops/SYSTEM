@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "registry_id": "system_cross_world_relic_catalog",
+  "status": "design_data_not_yet_runtime_wired",
+  "generation_policy": {
+    "target_distinct_artifact_instances": 3000,
+    "expansion": "data-driven templates, provenance variants, material/condition/era variants; each issued instance receives a server-generated globally unique artifactId",
+    "no_client_mint": true,
+    "source_world_required": true,
+    "source_quest_or_discovery_table_required": true,
+    "rare_skill_relics_are_not_ordinary_vendor_stock": true
+  },
+  "worlds": {
+    "historical": {
+      "display_name": "العالم التاريخي",
+      "civilizations": [
+        "Sumerian",
+        "Akkadian",
+        "Babylonian",
+        "Assyrian",
+        "Ancient Egyptian",
+        "Greek",
+        "Roman",
+        "Ancient Chinese"
+      ],
+      "discovery_modes": [
+        "historical_quest",
+        "excavation",
+        "sealed_sanctum",
+        "archive_recovery"
+      ]
+    },
+    "fantasy": {
+      "display_name": "العالم الخيالي",
+      "discovery_modes": [
+        "fantasy_quest",
+        "monster_guardian_drop",
+        "hidden_shrine",
+        "mana_vein_expedition"
+      ]
+    }
+  },
+  "rarity_policy": {
+    "common": {
+      "market_supply": "abundant",
+      "skill_binding_allowed": false
+    },
+    "uncommon": {
+      "market_supply": "limited",
+      "skill_binding_allowed": false
+    },
+    "rare": {
+      "market_supply": "scarce",
+      "skill_binding_allowed": true
+    },
+    "epic": {
+      "market_supply": "very_scarce",
+      "skill_binding_allowed": true
+    },
+    "mythic": {
+      "market_supply": "extremely_scarce",
+      "skill_binding_allowed": true
+    },
+    "unique": {
+      "market_supply": "one_per_world_or_storyline",
+      "skill_binding_allowed": true,
+      "trade_requires_special_server_validation": true
+    }
+  },
+  "artifacts": [
+    {
+      "artifact_template_id": "babylon_star_tablet",
+      "name": "لوح النجمة البابلي",
+      "world": "historical",
+      "civilization": "Babylonian",
+      "rarity": "mythic",
+      "source_quest_id": "babylon_echoes_relic_trial",
+      "source_status": "existing_quest_runtime",
+      "skill_id": "relic_echo_sight",
+      "skill_unlock": "training_permit_then_three_practice_sessions",
+      "trade_policy": "unawakened_tradeable_awakened_bound"
+    },
+    {
+      "artifact_template_id": "assyrian_royal_seal",
+      "name": "الختم الملكي الآشوري",
+      "world": "historical",
+      "civilization": "Assyrian",
+      "rarity": "mythic",
+      "source_quest_id": "nineveh_guardians_relic_trial",
+      "source_status": "existing_quest_runtime",
+      "skill_id": "ashur_guardian_aegis",
+      "skill_unlock": "training_permit_then_three_practice_sessions",
+      "trade_policy": "unawakened_tradeable_awakened_bound"
+    },
+    {
+      "artifact_template_id": "sumerian_celestial_cylinder",
+      "name": "الختم الأسطواني السماوي السومري",
+      "world": "historical",
+      "civilization": "Sumerian",
+      "rarity": "epic",
+      "source_quest_id": "sumerian_stars_archive",
+      "source_status": "planned_quest",
+      "skill_id": "sumerian_memory_sight",
+      "skill_unlock": "quest_completion_and_mastery",
+      "trade_policy": "unawakened_tradeable_awakened_bound"
+    },
+    {
+      "artifact_template_id": "akkadian_oath_crown",
+      "name": "تاج العهد الأكدي",
+      "world": "historical",
+      "civilization": "Akkadian",
+      "rarity": "unique",
+      "source_quest_id": "akkadian_oath_of_kings",
+      "source_status": "planned_quest",
+      "skill_id": "royal_oath_command",
+      "skill_unlock": "quest_completion_and_mastery",
+      "trade_policy": "unique_relic_transfer_requires_server_review"
+    },
+    {
+      "artifact_template_id": "egyptian_solar_disc",
+      "name": "قرص الشمس المصري",
+      "world": "historical",
+      "civilization": "Ancient Egyptian",
+      "rarity": "mythic",
+      "source_quest_id": "solar_chamber_of_karnak",
+      "source_status": "planned_quest",
+      "skill_id": "solar_rebirth",
+      "skill_unlock": "quest_completion_and_mastery",
+      "trade_policy": "unawakened_tradeable_awakened_bound"
+    },
+    {
+      "artifact_template_id": "dragon_star_crystal",
+      "name": "بلورة نجمة التنين",
+      "world": "fantasy",
+      "rarity": "mythic",
+      "source_quest_id": "dragon_star_expedition",
+      "source_status": "planned_quest",
+      "skill_id": "dragon_aura_burst",
+      "skill_unlock": "guardian_trial_then_mastery",
+      "trade_policy": "unawakened_tradeable_awakened_bound"
+    },
+    {
+      "artifact_template_id": "moon_diamond",
+      "name": "ألماسة القمر",
+      "world": "fantasy",
+      "rarity": "unique",
+      "source_quest_id": "moon_diamond_hidden_shrine",
+      "source_status": "planned_quest",
+      "skill_id": "lunar_phase_shift",
+      "skill_unlock": "shrine_trial_then_mastery",
+      "trade_policy": "unique_relic_transfer_requires_server_review"
+    },
+    {
+      "artifact_template_id": "ancient_mana_core",
+      "name": "قلب المانا القديم",
+      "world": "fantasy",
+      "rarity": "epic",
+      "source_quest_id": "mana_core_depths",
+      "source_status": "planned_quest",
+      "skill_id": "mana_overflow",
+      "skill_unlock": "quest_completion_and_mastery",
+      "trade_policy": "unawakened_tradeable_awakened_bound"
+    },
+    {
+      "artifact_template_id": "phoenix_ember_gem",
+      "name": "جوهرة جمرة العنقاء",
+      "world": "fantasy",
+      "rarity": "mythic",
+      "source_quest_id": "phoenix_ash_cycle",
+      "source_status": "planned_quest",
+      "skill_id": "phoenix_flare",
+      "skill_unlock": "rare_drop_plus_awakening_trial",
+      "trade_policy": "unawakened_tradeable_awakened_bound"
+    },
+    {
+      "artifact_template_id": "void_shadow_prism",
+      "name": "موشور فراغ الظلال",
+      "world": "fantasy",
+      "rarity": "unique",
+      "source_quest_id": "veil_of_the_void",
+      "source_status": "planned_quest",
+      "skill_id": "shadow_veil",
+      "skill_unlock": "unique_quest_completion_and_mastery",
+      "trade_policy": "unique_relic_transfer_requires_server_review"
+    }
+  ]
+}
