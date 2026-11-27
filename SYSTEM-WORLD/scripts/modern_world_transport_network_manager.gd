@@ -850,12 +850,19 @@ func _build_access_road(start: Vector3, finish: Vector3, road_name: String, half
 	edge_surface.generate_normals()
 	var road_mesh := MeshInstance3D.new()
 	road_mesh.name = road_name
-	road_mesh.mesh = road_surface.commit()
+	var committed_access_road := _commit_surface_tool_if_valid(road_surface)
+	if committed_access_road == null:
+		return
+	road_mesh.mesh = committed_access_road
 	road_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(road_mesh)
 	var edge_mesh := MeshInstance3D.new()
 	edge_mesh.name = road_name + "_EdgeLines"
-	edge_mesh.mesh = edge_surface.commit()
+	var committed_access_edges := _commit_surface_tool_if_valid(edge_surface)
+	if committed_access_edges == null:
+		road_mesh.queue_free()
+		return
+	edge_mesh.mesh = committed_access_edges
 	edge_mesh.material_override = edge_material
 	edge_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(edge_mesh)
@@ -1111,18 +1118,19 @@ func _build_race_facilities(city_name: String, anchor: Vector3, points: Array[Ve
 	var barriers := MeshInstance3D.new()
 	barriers.name = city_name.replace(" ", "") + "_RaceSafetyBarrier"
 	var committed_race_barrier_mesh := _commit_surface_tool_if_valid(barrier_surface)
-		if committed_race_barrier_mesh == null:
-			return
-		barriers.mesh = committed_race_barrier_mesh
+	if committed_race_barrier_mesh == null:
+		return
+	barriers.mesh = committed_race_barrier_mesh
 	barriers.material_override = barrier_material
 	barriers.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(barriers)
 	var curbs := MeshInstance3D.new()
 	curbs.name = city_name.replace(" ", "") + "_RaceKerbs"
 	var committed_race_curb_mesh := _commit_surface_tool_if_valid(curb_surface)
-		if committed_race_curb_mesh == null:
-			return
-		curbs.mesh = committed_race_curb_mesh
+	if committed_race_curb_mesh == null:
+		barriers.queue_free()
+		return
+	curbs.mesh = committed_race_curb_mesh
 	curbs.material_override = curb_material
 	curbs.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(curbs)
