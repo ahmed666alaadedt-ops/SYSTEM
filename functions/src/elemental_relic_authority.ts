@@ -71,39 +71,43 @@ export const syncAuthoritativeElementalProgression = onCall(async (request) => {
   }
 
   const playerRef = db.collection("players").doc(playerId);
-  const [player, current] = await Promise.all([
-    playerRef.get(),
-    playerRef.collection("elementalCombat").doc("state").get()
-  ]);
-  if (!player.exists) throw new HttpsError("not-found", "ملف اللاعب غير موجود.");
-  await playerRef.collection("elementalProgression").doc("verified").set({
-    nenUnlocked,
-    nenControlRank: nenRank,
-    level,
-    hunterRank: hunterRank.toUpperCase(),
-    learnedSkills: [...new Set(learned as string[])],
-    authorizedSkills: [...new Set(permitted as string[])],
-    practiceCounts,
-    verifiedByGameServer: serverUid,
-    verifiedAt: FieldValue.serverTimestamp()
+  const progressionRef = playerRef.collection("elementalProgression").doc("verified");
+  const combatRef = playerRef.collection("elementalCombat").doc("state");
+  await db.runTransaction(async (transaction) => {
+    const [player, current] = await Promise.all([
+      transaction.get(playerRef),
+      transaction.get(combatRef)
+    ]);
+    if (!player.exists) throw new HttpsError("not-found", "ملف اللاعب غير موجود.");
+    transaction.set(progressionRef, {
+      nenUnlocked,
+      nenControlRank: nenRank,
+      level,
+      hunterRank: hunterRank.toUpperCase(),
+      learnedSkills: [...new Set(learned as string[])],
+      authorizedSkills: [...new Set(permitted as string[])],
+      practiceCounts,
+      verifiedByGameServer: serverUid,
+      verifiedAt: FieldValue.serverTimestamp()
+    });
+    if (!current.exists) {
+      transaction.create(combatRef, {
+        energy,
+        maxEnergy,
+        cooldowns: {},
+        updatedAt: FieldValue.serverTimestamp(),
+        initializedByGameServer: serverUid
+      });
+    } else {
+      // Transaction conflict detection prevents a concurrent activation from being overwritten by a stale sync read.
+      transaction.update(combatRef, {
+        maxEnergy,
+        energy: Math.min(Number(current.data()?.energy ?? 0), maxEnergy),
+        updatedAt: FieldValue.serverTimestamp(),
+        lastProgressionSyncBy: serverUid
+      });
+    }
   });
-  if (!current.exists) {
-    await playerRef.collection("elementalCombat").doc("state").create({
-      energy,
-      maxEnergy,
-      cooldowns: {},
-      updatedAt: FieldValue.serverTimestamp(),
-      initializedByGameServer: serverUid
-    });
-  } else {
-    // Never let a routine progression sync refill energy or erase active cooldowns.
-    await playerRef.collection("elementalCombat").doc("state").update({
-      maxEnergy,
-      energy: Math.min(Number(current.data()?.energy ?? 0), maxEnergy),
-      updatedAt: FieldValue.serverTimestamp(),
-      lastProgressionSyncBy: serverUid
-    });
-  }
   return { success: true, playerId, progressionVerified: true };
 });
 
