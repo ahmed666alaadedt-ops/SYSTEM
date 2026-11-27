@@ -301,3 +301,15 @@ The existing player progression tree now contains five elemental relic skill def
 - Godot headless parse and progression tests for no-Nen rejection, each Nen rank boundary, training permit, three practice sessions, learned-state and cooldown.
 - Runtime integration tests for each actual element effect and its interaction with combat, health, movement, target resistance and UI.
 - Server-side authoritative validation and replay/race tests before online release.
+
+
+## Elemental relic local runtime implementation checkpoint
+
+The local Godot progression path now routes the five elemental relic skills through the existing player progression, combat and health components:
+- Fire: bounded 26-damage hitscan using the existing combatant `take_damage` API.
+- Air: a short horizontal/upward movement impulse applied to the existing CharacterBody3D velocity.
+- Water: 22 points of capped field healing through `SYSTEMPlayerCombatHealth.apply_field_healing`; it is rejected and the cost/cooldown are refunded when healing is not needed.
+- Earth: an 8-second guard reducing incoming damage by up to 30%, integrated into `SYSTEMPlayerCombatHealth.receive_damage` and stacked with existing Nen/equipment defence rules.
+- Lightning: bounded 32-damage hitscan using the existing combatant `take_damage` API, with reduced damage against player/boss groups.
+
+All five still require Nen unlock and their minimum control rank, level, Hunter rank, training permit, three practice sessions, learned state, energy and cooldown. Fire/lightning require a valid damageable target. These are local gameplay effects only: they do not establish server-authoritative ownership, relic awakening, quest reward issuance, anti-replay or PvP validation. Visuals remain simple impact flashes rather than finished cinematic elemental VFX. `tools/validate_elemental_relic_nen.gd` exercises the five effects and Nen gates in headless Godot and is included in the Godot validation workflow.
