@@ -23,6 +23,7 @@ const WorldTimeManagerScript = preload("res://scripts/world_time_manager.gd")
 const WildlifeManagerScript = preload("res://scripts/wildlife_manager.gd")
 const MissionRewardManagerScript = preload("res://scripts/system_mission_reward_manager.gd")
 const ArtifactRelicQuestManagerScript = preload("res://scripts/artifact_relic_quest_manager.gd")
+const ArtifactRelicQuestWorldRuntimeScript = preload("res://scripts/artifact_relic_quest_world_runtime.gd")
 const PlayerProgressionScript = preload("res://scripts/system_player_progression.gd")
 const ModernWorldCombatSystemScript = preload("res://scripts/modern_world_combat_system.gd")
 const PlayerVehicleManagerScript = preload("res://scripts/system_player_vehicle_manager.gd")
@@ -874,6 +875,14 @@ func _on_artifact_historical_world_requested(world_id: String, quest_id: String,
 	historical_root.set_meta("system_requested_historical_setting", world_id)
 	world_manager.switch_world(WorldManagerScript.WorldID.MYTHOLOGY)
 	active_world_root = world_manager.get_active_world()
+	var quest_runtime := historical_root.get_node_or_null("ArtifactRelicQuestWorldRuntime")
+	if quest_runtime == null:
+		quest_runtime = ArtifactRelicQuestWorldRuntimeScript.new()
+		quest_runtime.name = "ArtifactRelicQuestWorldRuntime"
+		historical_root.add_child(quest_runtime)
+	var quest_definition: Dictionary = ArtifactRelicQuestManagerScript.RELIC_QUESTS.get(relic_id, {})
+	if not bool(quest_runtime.call("setup", relic_id, quest_definition)):
+		push_warning("SYSTEM RELIC QUEST: Could not create historical objective markers for " + relic_id)
 	if interaction_prompt_label != null:
 		interaction_prompt_label.text = "بدأت المهمة التاريخية: %s — استكشف العالم وابحث عن أهداف التحفة." % quest_id
 		interaction_prompt_label.show()
@@ -1208,6 +1217,28 @@ func _on_interaction_performed(
 		" / ",
 		location_id
 	)
+	if target.has_meta("system_relic_quest_objective_id") and artifact_relic_quest_manager != null:
+		var relic_id := str(target.get_meta("system_relic_id", ""))
+		var objective_id := str(target.get_meta("system_relic_quest_objective_id", ""))
+		var objective_result: Dictionary = artifact_relic_quest_manager.call(
+			"record_historical_objective", relic_id, objective_id, true
+		)
+		if interaction_prompt_label != null:
+			if not bool(objective_result.get("ok", false)):
+				interaction_prompt_label.text = str(objective_result.get("message", "تعذر تسجيل الهدف."))
+			elif bool(objective_result.get("all_objectives_complete", false)):
+				interaction_prompt_label.text = "اكتملت أهداف المهمة التاريخية. " + ("أعد التحفة إلى موقعها الأصلي." if bool(objective_result.get("return_required", false)) else "بانتظار تأكيد الخادم لمكافأة المهارة.")
+			else:
+				interaction_prompt_label.text = "تم تسجيل الهدف التاريخي (%d/%d)." % [int(objective_result.get("completed_count", 0)), int(objective_result.get("required_count", 0))]
+			interaction_prompt_label.show()
+		return
+	if target.has_meta("system_relic_return_site") and artifact_relic_quest_manager != null:
+		var return_relic_id := str(target.get_meta("system_relic_id", ""))
+		var return_result: Dictionary = artifact_relic_quest_manager.call("request_relic_return", return_relic_id)
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "أُرسل طلب إرجاع التحفة. لا تُمنح المهارة ولا تتغير الملكية حتى يؤكد الخادم عملية الإرجاع." if bool(return_result.get("ok", false)) else str(return_result.get("message", "لا يمكن إرجاع هذه التحفة الآن."))
+			interaction_prompt_label.show()
+		return
 	if target.has_meta("system_exam_stage_objective") or target.has_meta("system_exam_rival_id"):
 		if hunter_exam_stage_runtime == null or not hunter_exam_stage_runtime.has_method("handle_interaction"):
 			if interaction_prompt_label != null:
