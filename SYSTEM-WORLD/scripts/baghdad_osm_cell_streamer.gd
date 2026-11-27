@@ -544,10 +544,14 @@ func _add_procedural_facade_windows(
 		"commercial_building":
 			window_size = Vector3(1.45, 1.65, 0.14)
 			spacing = 3.8
-	var center := Vector2.ZERO
-	for point in ring:
-		center += point
-	center /= float(ring.size())
+	var polygon_twice_area := 0.0
+	for edge_index in range(ring.size()):
+		var area_start := ring[edge_index]
+		var area_finish := ring[(edge_index + 1) % ring.size()]
+		polygon_twice_area += area_start.x * area_finish.y - area_finish.x * area_start.y
+	if absf(polygon_twice_area) < 0.001:
+		return 0
+	var counter_clockwise := polygon_twice_area > 0.0
 	var floor_count := clampi(int(floor(height / 3.2)), 1, 12)
 	var maximum_windows := 64
 	var transforms: Array[Transform3D] = []
@@ -562,11 +566,8 @@ func _add_procedural_facade_windows(
 		if edge_length < spacing * 1.25:
 			continue
 		var windows_per_floor := clampi(int(floor(edge_length / spacing)), 1, 6)
-		var midpoint := (start + finish) * 0.5
-		var outward_2d := midpoint - center
-		if outward_2d.length_squared() < 0.001:
-			continue
-		outward_2d = outward_2d.normalized()
+		var edge_direction := edge / edge_length
+		var outward_2d := Vector2(edge_direction.y, -edge_direction.x) if counter_clockwise else Vector2(-edge_direction.y, edge_direction.x)
 		var outward := Vector3(outward_2d.x, 0.0, outward_2d.y)
 		var facade_right := Vector3.UP.cross(outward).normalized()
 		var facade_basis := Basis(facade_right, Vector3.UP, outward)
