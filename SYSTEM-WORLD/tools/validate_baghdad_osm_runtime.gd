@@ -270,6 +270,34 @@ func _run_validation() -> void:
 	if two_way_reverse.size() < 2:
 		_fail("Bidirectional residential vehicle roads did not permit reverse travel.")
 		return
+	var horizontal_road := PackedVector2Array([
+		Vector2(-20.0, 0.0), Vector2(0.0, 0.0), Vector2(20.0, 0.0)
+	])
+	var elevated_road := PackedVector2Array([
+		Vector2(0.0, -20.0), Vector2(0.0, 0.0), Vector2(0.0, 20.0)
+	])
+	direction_test_cell.set_meta("vehicle_navigation_segments", [
+		{"oneway": "no", "layer": "0", "points": horizontal_road},
+		{"oneway": "no", "layer": "1", "bridge": "yes", "points": elevated_road}
+	])
+	direction_test_streamer._vehicle_navigation_graph_dirty = true
+	var overpass_route: Array[Vector3] = direction_test_streamer.get_vehicle_navigation_path(
+		Vector3(-20.0, 0.0, 0.0), Vector3(0.0, 0.0, 20.0), 2.0
+	)
+	if not overpass_route.is_empty():
+		_fail("Vehicle graph connected roads that cross geometrically at different bridge levels.")
+		return
+	direction_test_cell.set_meta("vehicle_navigation_segments", [
+		{"oneway": "no", "layer": "0", "points": horizontal_road},
+		{"oneway": "no", "layer": "0", "points": elevated_road}
+	])
+	direction_test_streamer._vehicle_navigation_graph_dirty = true
+	var at_grade_route: Array[Vector3] = direction_test_streamer.get_vehicle_navigation_path(
+		Vector3(-20.0, 0.0, 0.0), Vector3(0.0, 0.0, 20.0), 2.0
+	)
+	if at_grade_route.size() < 3:
+		_fail("Vehicle graph failed to connect roads that share a same-level intersection.")
+		return
 	direction_test_streamer.free()
 	direction_test_cell.free()
 
