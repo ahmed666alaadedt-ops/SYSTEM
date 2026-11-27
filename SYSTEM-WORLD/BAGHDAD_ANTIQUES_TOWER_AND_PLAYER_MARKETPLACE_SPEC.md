@@ -183,3 +183,25 @@ These are authored content examples, not guaranteed drops from every artifact. S
 - Add Godot headless tests for relic discovery, opt-in travel request, objective progression, return-required and retain-relic branches, and duplicate reward prevention.
 - Add Android/Godot physical-device tests for opening a relic quest from the market, travelling to the historical world, returning to the present, and seeing the updated server-owned collection.
 - Production deployment, trusted server identity configuration and physical-device verification remain separate activation gates. A passing local quest-manager test does not mean the online reward or world-travel integration is live.
+
+
+## 2026-11-27 implementation checkpoint — Yorknew-inspired market closure
+
+- The existing 34-floor Antiques & Heritage Tower has dedicated 3D market experiences on floors 29–32: global auction hall, hidden/secret trader lounge, authenticity appraisal laboratory, and collector reputation hall. These are additions to the existing tower and existing player marketplace, not a replacement marketplace.
+- The global auction hall reuses the existing player auction/listing/exchange services.
+- Secret-trader offers are server catalogued and purchased through the same SYSTEM wallet, artifact registry, ownership records, transaction history and artifact collection. Each player can acquire each unique secret offer only once; retries are idempotent.
+- Authenticity appraisals compare the owned artifact with its immutable global registry. One appraisal record per player/artifact prevents repeated appraisal farming.
+- Collector reputation is derived from completed marketplace sales/purchases and unique authenticity reports; it is not a client-editable score.
+- Three relic skills are represented in the SYSTEM skill tree and have combat activations: Celestial Lightning, Earth Guardian and Shadow Avatar. Local training cannot unlock them. The client reads only server-issued unlock records and refreshes the owned collection, public listings and skill receipts after a server result.
+- Historical relic reward issuance now requires a trusted game-server session, a separate server-recorded event for every required objective, and a server-recorded return proof at the exact historical site when the quest requires returning the relic. The final relic custody update, skill unlock and session completion are atomic and idempotent.
+
+### Verification boundary — do not mark the marketplace closed yet
+
+- Firebase TypeScript compilation and the Firestore/callable emulator suite passed for the current backend changes.
+- Godot CI is being rerun after correcting a misplaced builder call found by the first parse attempt. The dedicated 3D facility and progression tests still need their final CI result.
+- The repository does not yet contain a deployed authoritative multiplayer/game-server process that calls startHistoricalRelicQuestSession, recordHistoricalRelicQuestObjective, recordHistoricalRelicReturn and completeHistoricalRelicQuest. The callable gates are server-only and ready for that integration, but the actual server caller and its custom claim/service identity still need to be configured and tested. A local Godot objective event is never accepted as backend proof.
+- Firebase Functions and Firestore rules have not been deployed to production. Deployment requires explicit approval and a configured trusted game-server identity.
+- No physical Android device round-trip has been performed yet. CI build success is not a substitute for testing login, server-confirmed relic return, inventory/market refresh, and actual combat use on the phone.
+- The 3D spaces are currently runtime-built geometry and interaction surfaces. They require visual in-game review and polish; do not describe them as final cinematic art assets.
+
+PR #48 remains Draft. Do not merge to main or deploy production services without explicit approval.
