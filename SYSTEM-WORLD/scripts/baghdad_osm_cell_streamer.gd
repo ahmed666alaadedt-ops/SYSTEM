@@ -557,8 +557,6 @@ func _add_procedural_facade_windows(
 	var transforms: Array[Transform3D] = []
 	var colors: Array[Color] = []
 	for edge_index in range(ring.size()):
-		if transforms.size() >= maximum_windows:
-			break
 		var start := ring[edge_index]
 		var finish := ring[(edge_index + 1) % ring.size()]
 		var edge := finish - start
@@ -572,14 +570,10 @@ func _add_procedural_facade_windows(
 		var facade_right := Vector3.UP.cross(outward).normalized()
 		var facade_basis := Basis(facade_right, Vector3.UP, outward)
 		for floor_index in range(floor_count):
-			if transforms.size() >= maximum_windows:
-				break
 			var floor_offset := 1.55 + float(floor_index) * 3.15
 			if floor_offset + window_size.y * 0.5 >= height - 0.25:
 				continue
 			for window_index in range(windows_per_floor):
-				if transforms.size() >= maximum_windows:
-					break
 				var along_wall := float(window_index + 1) / float(windows_per_floor + 1)
 				var point := start.lerp(finish, along_wall)
 				var window_position := Vector3(
@@ -595,6 +589,19 @@ func _add_procedural_facade_windows(
 				elif color_seed % 4 == 0:
 					window_color = Color(0.42, 0.62, 0.72)
 				colors.append(window_color)
+	if transforms.size() > maximum_windows:
+		var sampled_transforms: Array[Transform3D] = []
+		var sampled_colors: Array[Color] = []
+		var sample_step := float(transforms.size()) / float(maximum_windows)
+		for sample_index in range(maximum_windows):
+			var source_index := mini(
+				transforms.size() - 1,
+				int(floor((float(sample_index) + 0.5) * sample_step))
+			)
+			sampled_transforms.append(transforms[source_index])
+			sampled_colors.append(colors[source_index])
+		transforms = sampled_transforms
+		colors = sampled_colors
 	if transforms.is_empty():
 		return 0
 	var window_mesh := BoxMesh.new()
@@ -616,6 +623,7 @@ func _add_procedural_facade_windows(
 	windows.set_meta("osm_feature_id", feature_id)
 	windows.set_meta("system_facade_detail_type", "procedural_instanced_windows")
 	windows.set_meta("system_facade_window_count", transforms.size())
+	windows.set_meta("system_facade_window_sampling", "even_distribution_across_facades")
 	parent.add_child(windows)
 	return transforms.size()
 
