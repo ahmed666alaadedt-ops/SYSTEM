@@ -57,12 +57,12 @@ func _run_validation() -> void:
 		_fail("The surveyed Al-Bataween antiques market district was not generated.")
 		return
 	var market_stats: Dictionary = bataween_market.call("get_market_stats")
-	if str(bataween_market.get_meta("system_display_name", "")) != "سوق البتاوين" or str(bataween_market.get_meta("system_market_category_name", "")) != "سوق التحف والآثار" or str(bataween_market.get_meta("system_full_display_name", "")) != "سوق البتاوين للتحف والآثار":
+	if str(bataween_market.get_meta("system_display_name", "")) != "سوق التحف والآثار الغامضة" or str(bataween_market.get_meta("system_market_category_name", "")) != "التحف والآثار الغامضة" or str(bataween_market.get_meta("system_full_display_name", "")) != "سوق التحف والآثار الغامضة":
 		_fail("Al-Bataween market must expose its district name, antiques category and complete Arabic display name.")
 		return
 	var market_entrance_sign := bataween_market.get_node_or_null("BataweenMarketTitle") as Label3D
-	if market_entrance_sign == null or not market_entrance_sign.text.contains("سوق البتاوين") or not market_entrance_sign.text.contains("سوق التحف والآثار"):
-		_fail("The physical entrance sign must show both سوق البتاوين and سوق التحف والآثار.")
+	if market_entrance_sign == null or not market_entrance_sign.text.contains("سوق التحف والآثار الغامضة") or market_entrance_sign.text.contains("سوق البتاوين"):
+		_fail("The physical entrance sign must show سوق التحف والآثار الغامضة and must not show the former district name.")
 		return
 	var market_position: Vector3 = market_stats.get("position", Vector3.INF)
 	if market_position == Vector3.INF or absf(market_position.x - 5065.417) > 2.0 or absf(market_position.z + 544.780) > 2.0:
@@ -92,8 +92,8 @@ func _run_validation() -> void:
 	await process_frame
 	var marketplace_title := marketplace_ui.get_node_or_null("BataweenMarketplacePanel/BataweenMarketplaceLayout/BataweenMarketplaceHeader/BataweenMarketplaceTitle") as Label
 	var marketplace_panel := marketplace_ui.get_node_or_null("BataweenMarketplacePanel") as PanelContainer
-	if marketplace_title == null or marketplace_title.text != "سوق البتاوين" or marketplace_panel == null or str(marketplace_panel.get_meta("system_market_category_name", "")) != "سوق التحف والآثار":
-		_fail("The in-world marketplace must visibly identify the district as سوق البتاوين and the category as سوق التحف والآثار.")
+	if marketplace_title == null or marketplace_title.text != "سوق التحف والآثار الغامضة" or marketplace_title.text.contains("سوق البتاوين") or marketplace_panel == null or str(marketplace_panel.get_meta("system_market_category_name", "")) != "التحف والآثار الغامضة":
+		_fail("The in-world marketplace must visibly identify itself as سوق التحف والآثار الغامضة.")
 		return
 	var artifact_picker := marketplace_ui.get("_artifact_picker") as OptionButton
 	var picker_callback := Callable(marketplace_ui, "_on_artifact_selected")
