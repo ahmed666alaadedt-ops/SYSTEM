@@ -194,6 +194,7 @@ static func _add_interaction(root: Node3D, node_name: String, floor_number: int,
 	area.set_meta("system_tower_floor_number", floor_number)
 	area.set_meta("system_interaction_prompt", prompt)
 	var collision := CollisionShape3D.new()
+	collision.name = "InteractionCollisionShape"
 	var sphere := SphereShape3D.new()
 	sphere.radius = 3.2
 	collision.shape = sphere
