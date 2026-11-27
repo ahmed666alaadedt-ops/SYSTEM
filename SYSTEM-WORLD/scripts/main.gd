@@ -1699,9 +1699,15 @@ func _on_mobile_skill_two_pressed() -> void:
 func _on_mobile_relic_aegis_pressed() -> void:
 	if vehicle_runtime_manager != null and vehicle_runtime_manager.is_driving:
 		return
-	if player_progression == null or player == null:
+	var active_player := find_child("Player", true, false) as CharacterBody3D
+	if not is_instance_valid(active_player):
+		active_player = player
+	var active_progression: Node = get_node_or_null("PlayerProgression")
+	if active_progression == null:
+		active_progression = player_progression
+	if not is_instance_valid(active_progression) or not is_instance_valid(active_player):
 		return
-	var result: Dictionary = player_progression.call("record_system_skill_use", "ashur_guardian_aegis")
+	var result: Dictionary = active_progression.call("activate_relic_skill", "ashur_guardian_aegis", active_player)
 	if not bool(result.get("success", false)):
 		var reason := str(result.get("reason", "UNKNOWN"))
 		var message := "درع الحارس الآشوري غير متاح."
@@ -1715,15 +1721,17 @@ func _on_mobile_relic_aegis_pressed() -> void:
 			interaction_prompt_label.text = message
 			interaction_prompt_label.show()
 		return
-	player.set_meta("system_assyrian_aegis_until_msec", Time.get_ticks_msec() + 12000)
-	_create_assyrian_aegis_visual()
+	_create_assyrian_aegis_visual(active_player)
 	if interaction_prompt_label != null:
 		interaction_prompt_label.text = "درع الحارس الآشوري نشط: تقليل الضرر 65% لمدة 12 ثانية."
 		interaction_prompt_label.show()
 
 
-func _create_assyrian_aegis_visual() -> void:
-	var previous := player.get_node_or_null("AssyrianGuardianAegis")
+func _create_assyrian_aegis_visual(target_player: CharacterBody3D = null) -> void:
+	var shield_owner: CharacterBody3D = target_player if is_instance_valid(target_player) else player
+	if not is_instance_valid(shield_owner):
+		return
+	var previous := shield_owner.get_node_or_null("AssyrianGuardianAegis")
 	if previous != null:
 		previous.queue_free()
 	var shield := MeshInstance3D.new()
@@ -1741,7 +1749,7 @@ func _create_assyrian_aegis_visual() -> void:
 	material.emission = Color(0.95, 0.52, 0.12)
 	shield.material_override = material
 	shield.position = Vector3(0.0, 1.0, 0.0)
-	player.add_child(shield)
+	shield_owner.add_child(shield)
 	var pulse := create_tween()
 	pulse.set_loops()
 	pulse.tween_property(shield, "scale", Vector3.ONE * 1.08, 0.8)
