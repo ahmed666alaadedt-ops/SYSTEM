@@ -36,6 +36,7 @@ func _run() -> void:
 
 	progression = ProgressionScript.new()
 	progression.name = "PlayerProgression"
+	progression.set("elemental_authority_bridge", bridge)
 	root.add_child(progression)
 	progression.elemental_activation_receipt_received.connect(_on_receipt)
 
