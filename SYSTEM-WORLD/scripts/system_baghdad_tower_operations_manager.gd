@@ -4373,8 +4373,6 @@ func _create_hunter_nen_side_facility(room: Node3D, radius: float) -> void:
 	sign.font_size = 20
 	sign.pixel_size = 0.012
 	root.add_child(sign)
-	if tower_id == "antiques_heritage_tower_baghdad" and facility_type == "player_artifact_market" and floor_number >= 29 and floor_number <= 32:
-		AntiqueMarketWorldBuilder.build_floor(root, floor_number, radius)
 	var interaction := Area3D.new()
 	interaction.name = "FacilityServiceInteraction"
 	interaction.add_to_group("system_interactable")
@@ -4957,6 +4955,8 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 			_add_facility_box(root, "AssociationFlagRight", Vector3(15.0, 4.0, 0.0), Vector3(0.3, 8.0, 0.3), accent)
 			for index in range(4):
 				_add_facility_box(root, "ExecutiveSeat_%02d" % index, Vector3(-6.0 + float(index) * 4.0, 0.7, 1.5), Vector3(2.0, 1.4, 1.6), accent)
+	if tower_id == "antiques_heritage_tower_baghdad" and facility_type == "player_artifact_market" and floor_number >= 29 and floor_number <= 32:
+		AntiqueMarketWorldBuilder.build_floor(root, floor_number, radius)
 	var interaction := Area3D.new()
 	interaction.name = "FacilityServiceInteraction"
 	interaction.add_to_group("system_interactable")
