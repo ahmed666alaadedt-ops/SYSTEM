@@ -217,6 +217,10 @@ export const startHistoricalRelicQuestSession = onCall(async (request) => {
       status: "accepted", sessionId: sessionRef.id, acceptedBy: serverUid,
       acceptedAt: FieldValue.serverTimestamp()
     });
+    return {
+      success: true, alreadyStarted: false, sessionId: sessionRef.id,
+      questId, artifactId, requiredObjectives: quest.objectives
+    };
   });
   return sessionResult;
 });
