@@ -273,6 +273,7 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
         "unexpected_parts": 0,
         "disconnected_seams": 0,
         "errors": [],
+        "seam_mismatch_diagnostics": [],
         "tolerance_m": TOLERANCE_M,
     }
 
@@ -649,6 +650,21 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
                         # must meet at the same point(s) on the actual shared edge.
                         mismatch = actual_edge_a.distance(actual_edge_b) > TOLERANCE_M
                     if mismatch:
+                        report["seam_mismatch_diagnostics"].append({
+                            "layer": layer,
+                            "feature_key": list(feature_key),
+                            "cell_a": list(cell_a),
+                            "cell_b": list(cell_b),
+                            "expected_edge_a": expected_edge_a.wkt[:1200],
+                            "expected_edge_b": expected_edge_b.wkt[:1200],
+                            "actual_edge_a": actual_edge_a.wkt[:1200],
+                            "actual_edge_b": actual_edge_b.wkt[:1200],
+                            "expected_a_b_hausdorff_m": round(expected_edge_a.hausdorff_distance(expected_edge_b), 6),
+                            "actual_a_b_hausdorff_m": round(actual_edge_a.hausdorff_distance(actual_edge_b), 6),
+                            "expected_actual_a_hausdorff_m": round(expected_edge_a.hausdorff_distance(actual_edge_a), 6),
+                            "expected_actual_b_hausdorff_m": round(expected_edge_b.hausdorff_distance(actual_edge_b), 6),
+                            "actual_a_b_distance_m": round(actual_edge_a.distance(actual_edge_b), 6),
+                        })
                         record_seam_error(
                             layer,
                             f"Actual geometry seam mismatch for {feature_key}: "
