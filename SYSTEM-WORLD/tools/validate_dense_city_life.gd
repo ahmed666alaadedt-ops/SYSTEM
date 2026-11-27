@@ -100,7 +100,9 @@ func _run_validation() -> void:
 		_fail("MultiMesh batching helper did not preserve all three test instances.")
 		return
 
+	print("Dense city vegetation validation: creating shared tree, palm and LOD meshes.")
 	var vegetation_builder = BAGHDAD_VEGETATION_BUILDER.new()
+	print("Dense city vegetation validation: shared meshes ready.")
 	var vegetation_root := Node3D.new()
 	root.add_child(vegetation_root)
 	var park_feature := {
@@ -120,6 +122,7 @@ func _run_validation() -> void:
 	var planter_stats: Dictionary = vegetation_builder.build_planter(
 		planter_root, Vector2(14.0, 18.0), 2.28, 20, "validator_sky_planter"
 	)
+	print("Dense city vegetation validation: sky planter instances=", planter_stats.get("total", 0))
 	if int(planter_stats.get("total", 0)) != 20 or int(planter_root.get_meta("baghdad_planter_plant_count", 0)) != 20:
 		_fail("Elevated sky-garden planter vegetation did not preserve the requested plant count.")
 		return
@@ -127,6 +130,7 @@ func _run_validation() -> void:
 		vegetation_root, Vector2i(0, 0), [park_feature], [water_feature],
 		Callable(self, "_zero_height"), [road_feature], 200.0
 	)
+	print("Dense city vegetation validation: OSM synthetic cell stats=", vegetation_stats)
 	if int(vegetation_stats.get("total", 0)) < 40 or int(vegetation_stats.get("counts", {}).get("aquatic_riparian", 0)) < 1 or int(vegetation_stats.get("roadside_count", 0)) < 2:
 		_fail("OSM park, roadside and riparian vegetation batching did not create the expected instances.")
 		return
