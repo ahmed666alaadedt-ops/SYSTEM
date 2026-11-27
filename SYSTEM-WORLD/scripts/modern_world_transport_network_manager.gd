@@ -101,6 +101,30 @@ func _make_material(color: Color, roughness: float, metallic: float) -> Standard
 	material.metallic = metallic
 	return material
 
+
+func _commit_surface_tool_if_valid(surface: SurfaceTool) -> ArrayMesh:
+	# Prevent zero-surface ArrayMesh resources from reaching MeshInstance3D.
+	var arrays: Array = surface.commit_to_arrays()
+	if arrays.size() <= Mesh.ARRAY_VERTEX:
+		return null
+	var raw_vertices: Variant = arrays[Mesh.ARRAY_VERTEX]
+	if typeof(raw_vertices) != TYPE_PACKED_VECTOR3_ARRAY:
+		return null
+	var vertices: PackedVector3Array = raw_vertices
+	if vertices.size() < 3:
+		return null
+	var raw_indices: Variant = arrays[Mesh.ARRAY_INDEX]
+	if raw_indices is PackedInt32Array:
+		var indices: PackedInt32Array = raw_indices
+		if not indices.is_empty() and indices.size() < 3:
+			return null
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	if not mesh.get_rid().is_valid():
+		return null
+	return mesh
+
+
 func _build_intercity_corridors() -> void:
 	for route_index in range(CITY_ROUTES.size()):
 		var route: Array = CITY_ROUTES[route_index]
@@ -187,7 +211,10 @@ func _build_corridor_segment(start: Vector3, finish: Vector3, route_index: int, 
 
 		var road_mesh := MeshInstance3D.new()
 		road_mesh.name = "IntercityHighway_%02d_%02d" % [route_index, segment_index]
-		road_mesh.mesh = road_surface.commit()
+		var committed_road_mesh := _commit_surface_tool_if_valid(road_surface)
+		if committed_road_mesh == null:
+			return
+		road_mesh.mesh = committed_road_mesh
 		road_mesh.material_override = road_material
 		road_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		road_body.add_child(road_mesh)
@@ -201,13 +228,19 @@ func _build_corridor_segment(start: Vector3, finish: Vector3, route_index: int, 
 		road_body.add_child(road_collision)
 		var rail_mesh := MeshInstance3D.new()
 		rail_mesh.name = "IntercityRailCorridor_%02d_%02d" % [route_index, segment_index]
-		rail_mesh.mesh = rail_surface.commit()
+		var committed_rail_mesh := _commit_surface_tool_if_valid(rail_surface)
+		if committed_rail_mesh == null:
+			return
+		rail_mesh.mesh = committed_rail_mesh
 		rail_mesh.material_override = rail_material
 		rail_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(rail_mesh)
 		var marking_mesh := MeshInstance3D.new()
 		marking_mesh.name = "IntercityHighwayMarkings_%02d_%02d" % [route_index, segment_index]
-		marking_mesh.mesh = marking_surface.commit()
+		var committed_marking_mesh := _commit_surface_tool_if_valid(marking_surface)
+		if committed_marking_mesh == null:
+			return
+		marking_mesh.mesh = committed_marking_mesh
 		marking_mesh.material_override = road_marking_material
 		marking_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(marking_mesh)
@@ -252,7 +285,10 @@ func _build_bridge_railings(samples: Array[Vector3], route_index: int, segment_i
 		rail_surface.generate_normals()
 		var rail_mesh := MeshInstance3D.new()
 		rail_mesh.name = "BridgeRailing_%02d_%02d_%s" % [route_index, segment_index, str(side_sign)]
-		rail_mesh.mesh = rail_surface.commit()
+		var committed_railing_mesh := _commit_surface_tool_if_valid(rail_surface)
+		if committed_railing_mesh == null:
+			continue
+		rail_mesh.mesh = committed_railing_mesh
 		rail_mesh.material_override = railing_material
 		add_child(rail_mesh)
 	for index in range(0, samples.size(), 8):
@@ -417,19 +453,28 @@ func _build_city_overpasses() -> void:
 		barrier_surface.generate_normals()
 		var deck := MeshInstance3D.new()
 		deck.name = city_name.replace(" ", "") + "_UrbanFlyoverDeck"
-		deck.mesh = deck_surface.commit()
+		var committed_deck_mesh := _commit_surface_tool_if_valid(deck_surface)
+		if committed_deck_mesh == null:
+			return
+		deck.mesh = committed_deck_mesh
 		deck.material_override = road_material
 		deck.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(deck)
 		var markings := MeshInstance3D.new()
 		markings.name = deck.name + "_Markings"
-		markings.mesh = marking_surface.commit()
+		var committed_markings_mesh := _commit_surface_tool_if_valid(marking_surface)
+		if committed_markings_mesh == null:
+			return
+		markings.mesh = committed_markings_mesh
 		markings.material_override = road_marking_material
 		markings.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(markings)
 		var barriers := MeshInstance3D.new()
 		barriers.name = deck.name + "_Barriers"
-		barriers.mesh = barrier_surface.commit()
+		var committed_barriers_mesh := _commit_surface_tool_if_valid(barrier_surface)
+		if committed_barriers_mesh == null:
+			return
+		barriers.mesh = committed_barriers_mesh
 		barriers.material_override = bridge_material
 		barriers.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(barriers)
@@ -603,12 +648,18 @@ func _build_rural_access_roads() -> void:
 		line_surface.generate_normals()
 		var road_mesh := MeshInstance3D.new()
 		road_mesh.name = "RuralAccessRoad_" + village_name.replace(" ", "")
-		road_mesh.mesh = road_surface.commit()
+		var committed_rural_road_mesh := _commit_surface_tool_if_valid(road_surface)
+		if committed_rural_road_mesh == null:
+			return
+		road_mesh.mesh = committed_rural_road_mesh
 		road_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(road_mesh)
 		var line_mesh := MeshInstance3D.new()
 		line_mesh.name = road_mesh.name + "_CenterMarkings"
-		line_mesh.mesh = line_surface.commit()
+		var committed_line_mesh := _commit_surface_tool_if_valid(line_surface)
+		if committed_line_mesh == null:
+			return
+		line_mesh.mesh = committed_line_mesh
 		line_mesh.material_override = line_material
 		line_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(line_mesh)
@@ -1006,7 +1057,10 @@ func _build_race_circuits() -> void:
 		surface.generate_normals()
 		var circuit := MeshInstance3D.new()
 		circuit.name = city_name.replace(" ", "") + "RaceCircuit"
-		circuit.mesh = surface.commit()
+		var committed_circuit_mesh := _commit_surface_tool_if_valid(surface)
+		if committed_circuit_mesh == null:
+			return
+		circuit.mesh = committed_circuit_mesh
 		circuit.material_override = road_material
 		circuit.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(circuit)
@@ -1056,13 +1110,19 @@ func _build_race_facilities(city_name: String, anchor: Vector3, points: Array[Ve
 	curb_surface.generate_normals()
 	var barriers := MeshInstance3D.new()
 	barriers.name = city_name.replace(" ", "") + "_RaceSafetyBarrier"
-	barriers.mesh = barrier_surface.commit()
+	var committed_race_barrier_mesh := _commit_surface_tool_if_valid(barrier_surface)
+		if committed_race_barrier_mesh == null:
+			return
+		barriers.mesh = committed_race_barrier_mesh
 	barriers.material_override = barrier_material
 	barriers.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(barriers)
 	var curbs := MeshInstance3D.new()
 	curbs.name = city_name.replace(" ", "") + "_RaceKerbs"
-	curbs.mesh = curb_surface.commit()
+	var committed_race_curb_mesh := _commit_surface_tool_if_valid(curb_surface)
+		if committed_race_curb_mesh == null:
+			return
+		curbs.mesh = committed_race_curb_mesh
 	curbs.material_override = curb_material
 	curbs.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(curbs)
