@@ -29,6 +29,7 @@ var bridge_material: StandardMaterial3D
 var water_material: StandardMaterial3D
 var land_material: StandardMaterial3D
 var building_material: StandardMaterial3D
+var facade_window_material: StandardMaterial3D
 var amenity_material: StandardMaterial3D
 
 
@@ -144,6 +145,13 @@ func _create_materials() -> void:
 	building_material.albedo_color = Color(0.55, 0.48, 0.38)
 	building_material.roughness = 0.88
 	building_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+
+	facade_window_material = StandardMaterial3D.new()
+	facade_window_material.albedo_color = Color.WHITE
+	facade_window_material.roughness = 0.24
+	facade_window_material.metallic = 0.42
+	facade_window_material.vertex_color_use_as_albedo = true
+	facade_window_material.cull_mode = BaseMaterial3D.CULL_DISABLED
 
 	amenity_material = StandardMaterial3D.new()
 	amenity_material.albedo_color = Color(0.15, 0.76, 0.91)
@@ -322,6 +330,7 @@ func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> in
 		instance.set_meta("system_estimated_floors", maxi(1, int(ceil(height / 3.2))))
 		instance.set_meta("system_residential_luxury_class", kind in ["villa", "palace"])
 		instance.set_meta("system_footprint_geometry", "osm_polygon_extrusion")
+		instance.set_meta("system_facade_detail_level", "regional_extrusion_lod")
 		instance.set_meta("system_access_state", "regional_exterior_lod_no_collision_or_interior")
 		parent.add_child(instance)
 		if kind in ["mosque", "church"]:
@@ -465,6 +474,9 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 		building.set_meta("baghdad_building_type", kind)
 		building.set_meta("osm_building_tag", str(tags.get("building", "yes")))
 		parent.add_child(building)
+		var facade_window_count := _add_procedural_facade_windows(parent, ring, height, kind, feature_id)
+		building.set_meta("system_facade_detail_level", "core_multimesh_windows" if facade_window_count > 0 else "core_extrusion_only")
+		building.set_meta("system_facade_window_count", facade_window_count)
 		var body := StaticBody3D.new()
 		body.name = "OSMBuildingCollision_%s" % feature_id
 		body.add_to_group("system_interactable")
@@ -504,6 +516,107 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 		if kind == "church" or kind == "mosque":
 			_add_polygon_worship_detail(parent, ring, height, kind, feature_id)
 	return built
+
+
+func _add_procedural_facade_windows(
+	parent: Node3D,
+	ring: PackedVector2Array,
+	height: float,
+	kind: String,
+	feature_id: String
+) -> int:
+	# The 1 km regional overview stays as a cheap extrusion LOD. Only the
+	# 200 m playable cells receive instanced facade windows.
+	if overview_mode or height < 5.0 or ring.size() < 3 or kind in ["mosque", "church"]:
+		return 0
+	var window_size := Vector3(1.1, 1.4, 0.12)
+	var spacing := 4.2
+	match kind:
+		"detached_house":
+			window_size = Vector3(1.15, 1.45, 0.12)
+			spacing = 4.3
+		"villa", "palace":
+			window_size = Vector3(1.5, 1.75, 0.14)
+			spacing = 5.0
+		"apartment_block":
+			window_size = Vector3(1.05, 1.4, 0.12)
+			spacing = 3.6
+		"commercial_building":
+			window_size = Vector3(1.45, 1.65, 0.14)
+			spacing = 3.8
+	var center := Vector2.ZERO
+	for point in ring:
+		center += point
+	center /= float(ring.size())
+	var floor_count := clampi(int(floor(height / 3.2)), 1, 12)
+	var maximum_windows := 64
+	var transforms: Array[Transform3D] = []
+	var colors: Array[Color] = []
+	for edge_index in range(ring.size()):
+		if transforms.size() >= maximum_windows:
+			break
+		var start := ring[edge_index]
+		var finish := ring[(edge_index + 1) % ring.size()]
+		var edge := finish - start
+		var edge_length := edge.length()
+		if edge_length < spacing * 1.25:
+			continue
+		var windows_per_floor := clampi(int(floor(edge_length / spacing)), 1, 6)
+		var midpoint := (start + finish) * 0.5
+		var outward_2d := midpoint - center
+		if outward_2d.length_squared() < 0.001:
+			continue
+		outward_2d = outward_2d.normalized()
+		var outward := Vector3(outward_2d.x, 0.0, outward_2d.y)
+		var facade_right := Vector3.UP.cross(outward).normalized()
+		var facade_basis := Basis(facade_right, Vector3.UP, outward)
+		for floor_index in range(floor_count):
+			if transforms.size() >= maximum_windows:
+				break
+			var floor_offset := 1.55 + float(floor_index) * 3.15
+			if floor_offset + window_size.y * 0.5 >= height - 0.25:
+				continue
+			for window_index in range(windows_per_floor):
+				if transforms.size() >= maximum_windows:
+					break
+				var along_wall := float(window_index + 1) / float(windows_per_floor + 1)
+				var point := start.lerp(finish, along_wall)
+				var window_position := Vector3(
+					point.x,
+					_terrain_height(point) + floor_offset,
+					point.y
+				) + outward * 0.09
+				transforms.append(Transform3D(facade_basis, window_position))
+				var color_seed := absi(feature_id.hash() + edge_index * 17 + floor_index * 11 + window_index * 7)
+				var window_color := Color(0.16, 0.34, 0.46)
+				if color_seed % 7 == 0:
+					window_color = Color(0.95, 0.71, 0.42)
+				elif color_seed % 4 == 0:
+					window_color = Color(0.42, 0.62, 0.72)
+				colors.append(window_color)
+	if transforms.is_empty():
+		return 0
+	var window_mesh := BoxMesh.new()
+	window_mesh.size = window_size
+	var multimesh := MultiMesh.new()
+	multimesh.transform_format = MultiMesh.TRANSFORM_3D
+	multimesh.use_colors = true
+	multimesh.mesh = window_mesh
+	multimesh.instance_count = transforms.size()
+	for index in range(transforms.size()):
+		multimesh.set_instance_transform(index, transforms[index])
+		multimesh.set_instance_color(index, colors[index])
+	var windows := MultiMeshInstance3D.new()
+	windows.name = "OSMBuildingWindows_%s" % feature_id
+	windows.multimesh = multimesh
+	windows.material_override = facade_window_material
+	windows.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	windows.visibility_range_end = 280.0
+	windows.set_meta("osm_feature_id", feature_id)
+	windows.set_meta("system_facade_detail_type", "procedural_instanced_windows")
+	windows.set_meta("system_facade_window_count", transforms.size())
+	parent.add_child(windows)
+	return transforms.size()
 
 
 func _find_building_approach_point(ring: PackedVector2Array, road_features: Array) -> Dictionary:
