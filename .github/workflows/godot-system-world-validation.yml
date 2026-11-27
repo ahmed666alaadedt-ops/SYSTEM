@@ -144,7 +144,7 @@ jobs:
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
           set +e
-          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_baghdad_tower_operations.gd 2>&1 | tee "$RUNNER_TEMP/baghdad-tower-operations-validation.log" | grep --line-buffered -E "QA TRACE|^QA:|SYSTEM NPC QA PASS|Baghdad tower operations validation passed|Baghdad tower operations validation failed|SCRIPT ERROR|Parse Error"
+          timeout --signal=TERM --kill-after=20s 8m "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_baghdad_tower_operations.gd 2>&1 | tee "$RUNNER_TEMP/baghdad-tower-operations-validation.log" | grep --line-buffered -E "QA TRACE|^QA:|SYSTEM NPC QA PASS|Baghdad tower operations validation passed|Baghdad tower operations validation failed|SCRIPT ERROR|Parse Error"
           pipeline_status=("${PIPESTATUS[@]}")
           godot_status="${pipeline_status[0]}"
           echo "---- Baghdad tower and Power Tower validation summary ----"
