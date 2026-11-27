@@ -359,14 +359,39 @@ test("historical relic return and rare skill reward are trusted, atomic and repl
     siteId: "babylon_esagila_archive"
   }));
 
+  const server = uid("trusted_game_server");
+  const session = await call("startHistoricalRelicQuestSession", server, {
+    playerId: owner, questId: "quest_babylon_star_tablet", artifactId: relicId
+  }, { gameServer: true });
+  assert.ok(session.sessionId);
+  const objectiveIds = [
+    "find_the_sealed_archive",
+    "solve_the_celestial_lock",
+    "defeat_the_archive_guardian"
+  ];
+  for (const [index, objectiveId] of objectiveIds.entries()) {
+    const recorded = await call("recordHistoricalRelicQuestObjective", server, {
+      sessionId: session.sessionId,
+      eventId: "babylon_objective_" + index,
+      objectiveId
+    }, { gameServer: true });
+    assert.equal(recorded.success, true);
+  }
   const payload = {
     playerId: owner,
     questId: "quest_babylon_star_tablet",
     artifactId: relicId,
-    eventId: "babylon_reward_verified",
-    siteId: "babylon_esagila_archive"
+    sessionId: session.sessionId,
+    eventId: "babylon_reward_verified"
   };
-  const result = await call("completeHistoricalRelicQuest", uid("trusted_game_server"), payload, { gameServer: true });
+  await assert.rejects(() => call("completeHistoricalRelicQuest", server, payload, { gameServer: true }));
+  const returnProof = await call("recordHistoricalRelicReturn", server, {
+    sessionId: session.sessionId,
+    eventId: "babylon_return_verified",
+    siteId: "babylon_esagila_archive"
+  }, { gameServer: true });
+  assert.equal(returnProof.returnVerified, true);
+  const result = await call("completeHistoricalRelicQuest", server, payload, { gameServer: true });
   assert.equal(result.success, true);
   assert.equal(result.relicReturned, true);
   assert.equal(result.skillId, "rare_skill_celestial_lightning");
@@ -378,7 +403,7 @@ test("historical relic return and rare skill reward are trusted, atomic and repl
   assert.equal(skill.exists, true);
   assert.equal(skill.data().questId, "quest_babylon_star_tablet");
 
-  const retry = await call("completeHistoricalRelicQuest", uid("trusted_game_server"), payload, { gameServer: true });
+  const retry = await call("completeHistoricalRelicQuest", server, payload, { gameServer: true });
   assert.equal(retry.success, true);
   assert.equal(retry.alreadyCompleted, true);
   assert.equal((await readArtifact(owner, relicId)).data().status, "returned_to_history");
@@ -390,19 +415,37 @@ test("historical relic quest rejects wrong return site and keeps retain-branch r
   await seedArtifact(owner, "sumerian_oath_seal");
   await seedArtifact(owner, "akkadian_shadow_crown");
 
-  await assert.rejects(() => call("completeHistoricalRelicQuest", uid("trusted_game_server"), {
-    playerId: owner,
-    questId: "quest_sumerian_oath",
-    artifactId: "sumerian_oath_seal",
-    eventId: "sumer_wrong_site",
-    siteId: "wrong_historical_site"
+  const server = uid("trusted_game_server");
+  const sumerian = await call("startHistoricalRelicQuestSession", server, {
+    playerId: owner, questId: "quest_sumerian_oath", artifactId: "sumerian_oath_seal"
+  }, { gameServer: true });
+  for (const [index, objectiveId] of ["recover_the_three_oaths", "restore_the_temple_seal"].entries()) {
+    await call("recordHistoricalRelicQuestObjective", server, {
+      sessionId: sumerian.sessionId, eventId: "sumer_objective_" + index, objectiveId
+    }, { gameServer: true });
+  }
+  await assert.rejects(() => call("recordHistoricalRelicReturn", server, {
+    sessionId: sumerian.sessionId, eventId: "sumer_wrong_site", siteId: "wrong_historical_site"
+  }, { gameServer: true }));
+  await assert.rejects(() => call("completeHistoricalRelicQuest", server, {
+    playerId: owner, questId: "quest_sumerian_oath", artifactId: "sumerian_oath_seal",
+    sessionId: sumerian.sessionId, eventId: "sumer_reward_without_return"
   }, { gameServer: true }));
   assert.equal((await readArtifact(owner, "sumerian_oath_seal")).data().status, "owned");
 
-  const retained = await call("completeHistoricalRelicQuest", uid("trusted_game_server"), {
+  const akkadian = await call("startHistoricalRelicQuestSession", server, {
+    playerId: owner, questId: "quest_akkadian_shadow", artifactId: "akkadian_shadow_crown"
+  }, { gameServer: true });
+  for (const [index, objectiveId] of ["trace_the_lost_dynasty", "pass_the_shadow_trial", "seal_the_cursed_chamber"].entries()) {
+    await call("recordHistoricalRelicQuestObjective", server, {
+      sessionId: akkadian.sessionId, eventId: "akkadian_objective_" + index, objectiveId
+    }, { gameServer: true });
+  }
+  const retained = await call("completeHistoricalRelicQuest", server, {
     playerId: owner,
     questId: "quest_akkadian_shadow",
     artifactId: "akkadian_shadow_crown",
+    sessionId: akkadian.sessionId,
     eventId: "akkadian_reward_verified"
   }, { gameServer: true });
   assert.equal(retained.success, true);
