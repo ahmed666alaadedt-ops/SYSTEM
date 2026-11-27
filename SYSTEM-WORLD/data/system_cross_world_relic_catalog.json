@@ -182,6 +182,180 @@
       "skill_id": "shadow_veil",
       "skill_unlock": "unique_quest_completion_and_mastery",
       "trade_policy": "unique_relic_transfer_requires_server_review"
+    },
+    {
+      "artifact_template_id": "sumerian_life_vessel",
+      "name": "إناء الحياة السومري",
+      "world": "historical",
+      "civilization": "Sumerian",
+      "rarity": "epic",
+      "source_quest_id": "sumerian_life_vessel_recovery",
+      "source_status": "planned_quest",
+      "skill_id": "life_vessel_healing",
+      "ability_category": "healing",
+      "effect": "heal_over_time_and_restore_energy",
+      "trade_policy": "unawakened_tradeable_awakened_bound"
+    },
+    {
+      "artifact_template_id": "babylonian_war_standard",
+      "name": "راية الحرب البابلية",
+      "world": "historical",
+      "civilization": "Babylonian",
+      "rarity": "mythic",
+      "source_quest_id": "babylonian_war_standard_trial",
+      "source_status": "planned_quest",
+      "skill_id": "ishtar_battle_fervor",
+      "ability_category": "combat",
+      "effect": "temporary_strength_and_damage_resistance",
+      "trade_policy": "unawakened_tradeable_awakened_bound"
+    },
+    {
+      "artifact_template_id": "assur_wind_sandals",
+      "name": "نعال ريح آشور",
+      "world": "historical",
+      "civilization": "Assyrian",
+      "rarity": "rare",
+      "source_quest_id": "assur_wind_sanctum",
+      "source_status": "planned_quest",
+      "skill_id": "assur_windstep",
+      "ability_category": "movement",
+      "effect": "short_speed_burst_and_evasion",
+      "trade_policy": "unawakened_tradeable_awakened_bound"
+    },
+    {
+      "artifact_template_id": "horus_sky_wings",
+      "name": "جناحا حورس",
+      "world": "historical",
+      "civilization": "Ancient Egyptian",
+      "rarity": "unique",
+      "source_quest_id": "horus_sky_trial",
+      "source_status": "planned_quest",
+      "skill_id": "horus_wings",
+      "ability_category": "flight",
+      "effect": "manifest_wings_and_controlled_flight",
+      "trade_policy": "unique_relic_transfer_requires_server_review"
+    },
+    {
+      "artifact_template_id": "medusa_obsidian_gaze",
+      "name": "مرآة نظرة ميدوسا",
+      "world": "historical",
+      "civilization": "Greek",
+      "rarity": "mythic",
+      "source_quest_id": "medusa_gorgon_vault",
+      "source_status": "planned_quest",
+      "skill_id": "gorgon_petrifying_gaze",
+      "ability_category": "control",
+      "effect": "brief_breakable_petrification_on_validated_target",
+      "trade_policy": "unawakened_tradeable_awakened_bound"
+    },
+    {
+      "artifact_template_id": "phoenix_heartstone",
+      "name": "حجر قلب العنقاء",
+      "world": "fantasy",
+      "rarity": "mythic",
+      "source_quest_id": "phoenix_heart_trial",
+      "source_status": "planned_quest",
+      "skill_id": "phoenix_regeneration",
+      "ability_category": "healing",
+      "effect": "healing_over_time_and_limited_emergency_recovery",
+      "trade_policy": "unawakened_tradeable_awakened_bound"
+    },
+    {
+      "artifact_template_id": "titan_core",
+      "name": "قلب العملاق",
+      "world": "fantasy",
+      "rarity": "epic",
+      "source_quest_id": "titan_core_trial",
+      "source_status": "planned_quest",
+      "skill_id": "titan_strength",
+      "ability_category": "combat",
+      "effect": "temporary_strength_and_guard_break",
+      "trade_policy": "unawakened_tradeable_awakened_bound"
+    },
+    {
+      "artifact_template_id": "wind_dragon_feather",
+      "name": "ريشة تنين الرياح",
+      "world": "fantasy",
+      "rarity": "rare",
+      "source_quest_id": "wind_dragon_roost",
+      "source_status": "planned_quest",
+      "skill_id": "wind_dragon_sprint",
+      "ability_category": "movement",
+      "effect": "high_speed_dash_and_air_control",
+      "trade_policy": "unawakened_tradeable_awakened_bound"
+    },
+    {
+      "artifact_template_id": "sky_seraph_crystal",
+      "name": "بلورة أجنحة السرافيم",
+      "world": "fantasy",
+      "rarity": "unique",
+      "source_quest_id": "seraph_sky_citadel",
+      "source_status": "planned_quest",
+      "skill_id": "seraphic_flight",
+      "ability_category": "flight",
+      "effect": "summon_wings_and_sustained_limited_flight",
+      "trade_policy": "unique_relic_transfer_requires_server_review"
+    },
+    {
+      "artifact_template_id": "basilisk_eye_gem",
+      "name": "جوهرة عين البازيليسق",
+      "world": "fantasy",
+      "rarity": "unique",
+      "source_quest_id": "basilisk_king_trial",
+      "source_status": "planned_quest",
+      "skill_id": "basilisk_petrifying_gaze",
+      "ability_category": "control",
+      "effect": "brief_breakable_petrification_with_boss_and_player_resistance",
+      "trade_policy": "unique_relic_transfer_requires_server_review"
     }
-  ]
+  ],
+  "ability_system": {
+    "status": "design_data_not_yet_runtime_wired",
+    "control": "player_equips_unlocked_skill_and_activates_it_manually; server validates unlock, cooldown, energy, target and effect",
+    "categories": {
+      "healing": [
+        "heal_over_time",
+        "burst_heal",
+        "energy_restore",
+        "revive_with_strict_limits"
+      ],
+      "combat": [
+        "strength_boost",
+        "damage_resistance",
+        "elemental_attack",
+        "counter_barrier"
+      ],
+      "movement": [
+        "speed_burst",
+        "dash",
+        "evasion_window"
+      ],
+      "flight": [
+        "temporary_flight",
+        "summon_wings",
+        "glide_and_aerial_control"
+      ],
+      "control": [
+        "petrify_enemy",
+        "slow",
+        "bind"
+      ],
+      "utility": [
+        "stealth",
+        "relic_detection",
+        "shield",
+        "elemental_resistance"
+      ]
+    },
+    "balance_rules": {
+      "no_permanent_unbounded_stat_bonuses": true,
+      "skill_cost_and_cooldown_required": true,
+      "diminishing_returns_and_attribute_caps": true,
+      "boss_and_player_control_resistance_required": true,
+      "petrification_is_short_duration_breakable_and_not_chainable": true,
+      "flight_disabled_in_restricted_interiors_and_selected_pvp_arenas": true,
+      "healing_cannot_revive_repeatedly_or_override_death_state": true,
+      "authoritative_hit_validation_and_effect_expiry": true
+    }
+  }
 }
