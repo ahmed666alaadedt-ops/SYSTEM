@@ -93,7 +93,7 @@ func _ready() -> void:
 			var ground_elevation := float(manifest.get("ground_elevation_m", NAN))
 			var water_elevation := float(manifest.get("water_surface_elevation_m", NAN))
 			var bridge_elevation := float(manifest.get("bridge_deck_elevation_m", NAN))
-			var route_valid := (
+			var route_valid: bool = (
 				str(route.get("osm_bridge_centerline_id", "")) == "754157537"
 				and str(route.get("osm_tigris_centerline_id", "")) == "24709603"
 				and str(route.get("osm_tigris_water_polygon_id", "")) == "1145641"
