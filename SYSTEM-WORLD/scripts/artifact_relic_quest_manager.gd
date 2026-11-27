@@ -98,9 +98,10 @@ func begin_relic_quest(relic_id: String, player_confirmed: bool) -> Dictionary:
 	historical_world_requested.emit(String(definition.world_id), String(definition.quest_id), relic_id)
 	return {"ok": true, "world_id": definition.world_id, "quest_id": definition.quest_id}
 
-func record_historical_objective(relic_id: String, objective_id: String, trusted_event: bool) -> Dictionary:
-	if not trusted_event:
-		return {"ok": false, "message": "لا يُقبل إنجاز هدف المهمة من حدث غير موثوق."}
+## Records local objective presentation only. It is not proof for backend rewards.
+func record_historical_objective(relic_id: String, objective_id: String, runtime_event_observed: bool) -> Dictionary:
+	if not runtime_event_observed:
+		return {"ok": false, "message": "لم يُرصد تفاعل هدف المهمة داخل العالم."}
 	if not RELIC_QUESTS.has(relic_id) or _quest_states.get(relic_id, "") != QUEST_STATE_ACTIVE:
 		return {"ok": false, "message": "لا توجد مهمة نشطة لهذه التحفة."}
 	var definition: Dictionary = RELIC_QUESTS[relic_id]
