@@ -307,6 +307,58 @@
       "ability_category": "control",
       "effect": "brief_breakable_petrification_with_boss_and_player_resistance",
       "trade_policy": "unique_relic_transfer_requires_server_review"
+    },
+    {
+      "artifact_template_id": "primordial_flame_heart",
+      "name": "قلب اللهب البدائي",
+      "world": "fantasy",
+      "rarity": "mythic",
+      "source_quest_id": "primordial_flame_trial",
+      "source_status": "planned_quest",
+      "skill_id": "primordial_flame_burst",
+      "ability_category": "elemental",
+      "elemental_affinity": "fire",
+      "effect": "controlled_fire_burst_and_temporary_fire_resistance",
+      "trade_policy": "unawakened_tradeable_awakened_bound"
+    },
+    {
+      "artifact_template_id": "stormwind_sigil",
+      "name": "ختم ريح العاصفة",
+      "world": "fantasy",
+      "rarity": "epic",
+      "source_quest_id": "stormwind_spire_trial",
+      "source_status": "planned_quest",
+      "skill_id": "stormwind_aerial_step",
+      "ability_category": "elemental",
+      "elemental_affinity": "air",
+      "effect": "wind_blade_gust_and_short_aerial_dash",
+      "trade_policy": "unawakened_tradeable_awakened_bound"
+    },
+    {
+      "artifact_template_id": "tideheart_pearl",
+      "name": "لؤلؤة قلب المد",
+      "world": "fantasy",
+      "rarity": "mythic",
+      "source_quest_id": "tideheart_abyss_trial",
+      "source_status": "planned_quest",
+      "skill_id": "tideheart_restoration",
+      "ability_category": "elemental",
+      "elemental_affinity": "water",
+      "effect": "water_shield_and_limited_healing_wave",
+      "trade_policy": "unawakened_tradeable_awakened_bound"
+    },
+    {
+      "artifact_template_id": "worldroot_geode",
+      "name": "جيود جذر العالم",
+      "world": "fantasy",
+      "rarity": "unique",
+      "source_quest_id": "worldroot_earth_trial",
+      "source_status": "planned_quest",
+      "skill_id": "worldroot_earthguard",
+      "ability_category": "elemental",
+      "elemental_affinity": "earth",
+      "effect": "earth_armor_ground_spikes_and_brief_root",
+      "trade_policy": "unique_relic_transfer_requires_server_review"
     }
   ],
   "ability_system": {
@@ -345,6 +397,14 @@
         "relic_detection",
         "shield",
         "elemental_resistance"
+      ],
+      "elemental": [
+        "fire",
+        "air",
+        "water",
+        "earth",
+        "elemental_resistance",
+        "elemental_combo"
       ]
     },
     "balance_rules": {
@@ -356,6 +416,18 @@
       "flight_disabled_in_restricted_interiors_and_selected_pvp_arenas": true,
       "healing_cannot_revive_repeatedly_or_override_death_state": true,
       "authoritative_hit_validation_and_effect_expiry": true
+    },
+    "elemental_rules": {
+      "rarity_gate": "only rare_epic_mythic_or_unique_quest_relics",
+      "discovery": "earned_from_world_quests_exploration_or_guardian_trials_not_regular_vendor_stock",
+      "elements": {
+        "fire": "offense_burst_burning_effect_with_resistance_and_pve_pvp_caps",
+        "air": "wind_projectiles_mobility_and_limited_aerial_control",
+        "water": "defensive_barriers_cleansing_and_limited_healing",
+        "earth": "armor_stability_ground_control_and_breakable_root_effect"
+      },
+      "combo_relics": "dual_element_or_four_element_mastery_relics_are_extremely_rare_quest_rewards_and_require_all_linked_trials",
+      "server_authority": "server_validates_source_quest_ownership_awakening_skill_unlock_energy_cooldown_target_and_effect"
     }
   }
 }
