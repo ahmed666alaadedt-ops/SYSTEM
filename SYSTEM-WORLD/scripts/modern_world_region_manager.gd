@@ -61,7 +61,7 @@ const DISTRICT_OFFSETS := [
 	Vector2(0.0, 112.0), Vector2(0.0, 170.0)
 ]
 
-var terrain: ModernContinentManager
+var terrain: Variant
 var rng := RandomNumberGenerator.new()
 var city_anchors: Dictionary = {}
 var village_anchors: Dictionary = {}
@@ -82,7 +82,7 @@ func _ready() -> void:
 	name = "ModernWorldRegionManager"
 	rng.seed = 20261118
 	use_baghdad_osm_cells = FileAccess.file_exists("res://data/geography/baghdad/cell_pack/manifest.json")
-	terrain = get_parent().get_node_or_null("ModernContinent") as ModernContinentManager
+	terrain = get_parent().get_node_or_null("ModernContinent")
 	if terrain == null:
 		push_warning("SYSTEM WORLD: region manager requires ModernContinent.")
 		return
@@ -337,8 +337,8 @@ func _build_district(parent: Node3D, city_name: String, district_index: int, cen
 			var world_z := center.y + float(z_index) * CITY_SPACING
 			if not terrain.is_land_position(world_x, world_z):
 				continue
-			var ground_y := terrain.get_terrain_height(world_x, world_z)
-			var district_base := terrain.get_terrain_height(center.x, center.y)
+			var ground_y: float = float(terrain.get_terrain_height(world_x, world_z))
+			var district_base: float = float(terrain.get_terrain_height(center.x, center.y))
 			if absf(ground_y - district_base) > 13.0:
 				continue
 			var seed_value := absf(sin(float(district_index * 83 + x_index * 29 + z_index * 47 + city_name.length() * 11)))
@@ -347,7 +347,7 @@ func _build_district(parent: Node3D, city_name: String, district_index: int, cen
 			var height := _building_height(district_index, seed_value)
 			var local_x := world_x - center.x
 			var local_z := world_z - center.y
-			var local_y := ground_y - district_base + height * 0.5
+			var local_y: float = ground_y - district_base + height * 0.5
 			var basis := Basis.from_scale(Vector3(width, height, depth))
 			var transform := Transform3D(basis, Vector3(local_x, local_y, local_z))
 			transforms.append(transform)
@@ -610,7 +610,7 @@ func _build_green_belts() -> void:
 			var point := anchor + Vector2(cos(angle), sin(angle)) * 245.0
 			if not terrain.is_land_position(point.x, point.y):
 				continue
-			var ground_y := terrain.get_terrain_height(point.x, point.y)
+			var ground_y: float = float(terrain.get_terrain_height(point.x, point.y))
 			var park := MeshInstance3D.new()
 			park.name = city_name.replace(" ", "") + "_GreenBelt_%02d" % index
 			var park_mesh := CylinderMesh.new()
@@ -629,7 +629,7 @@ func _build_green_belts() -> void:
 				var tree_point := point + Vector2(cos(tree_angle), sin(tree_angle)) * tree_radius
 				if not terrain.is_land_position(tree_point.x, tree_point.y):
 					continue
-				var tree_y := terrain.get_terrain_height(tree_point.x, tree_point.y)
+				var tree_y: float = float(terrain.get_terrain_height(tree_point.x, tree_point.y))
 				var tree_height := rng.randf_range(4.2, 6.4)
 				var tree_scale := rng.randf_range(0.85, 1.2)
 				trunk_transforms.append(Transform3D(
@@ -646,7 +646,7 @@ func _build_green_belts() -> void:
 				var shrub_point := point + Vector2(cos(shrub_angle), sin(shrub_angle)) * shrub_radius
 				if not terrain.is_land_position(shrub_point.x, shrub_point.y):
 					continue
-				var shrub_y := terrain.get_terrain_height(shrub_point.x, shrub_point.y)
+				var shrub_y: float = float(terrain.get_terrain_height(shrub_point.x, shrub_point.y))
 				var shrub_scale := rng.randf_range(0.65, 1.05)
 				shrub_transforms.append(Transform3D(
 					Basis.from_scale(Vector3(1.2, 0.8, 1.2) * shrub_scale),
@@ -1006,7 +1006,7 @@ func _create_city_dealerships() -> void:
 		dealer.name = city_name.replace(" ", "") + "VehicleDealership"
 		dealer.position = Vector3(position.x, terrain.get_terrain_height(position.x, position.y), position.y)
 		add_child(dealer)
-		dealer.setup(null)
+		dealer.call("setup", null)
 
 
 func _create_baghdad_towers() -> void:
