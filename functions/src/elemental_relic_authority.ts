@@ -199,3 +199,70 @@ export const authorizeElementalRelicActivation = onCall(async (request) => {
   });
   return result;
 });
+
+
+/**
+ * Issues one of the five elemental relics only after the trusted game server
+ * has closed a registered Hunter Guild mission as completed for this player.
+ * The artifact is awakened by that verified quest reward and is replay-safe.
+ */
+export const grantElementalRelicFromCompletedMission = onCall(async (request) => {
+  const serverUid = requireGameServer(request);
+  const playerId = requiredText(request.data?.playerId, "playerId", 128);
+  const sessionId = requiredText(request.data?.sessionId, "sessionId", 256);
+  const eventId = requiredText(request.data?.eventId, "eventId", 100);
+  const artifactId = requiredText(request.data?.artifactId, "artifactId", 100);
+  if (!/^[A-Za-z0-9_-]+$/.test(eventId)) {
+    throw new HttpsError("invalid-argument", "معرّف حدث المكافأة غير صالح.");
+  }
+  const skillEntry = Object.entries(ELEMENTAL_SKILLS).find(([, definition]) => definition.artifactId === artifactId);
+  if (!skillEntry) throw new HttpsError("invalid-argument", "هذه ليست تحفة عنصرية معتمدة.");
+  const [skillId] = skillEntry;
+  const playerRef = db.collection("players").doc(playerId);
+  const sessionRef = db.collection("hunterGuildMissionSessions").doc(sessionId);
+  const artifactRef = db.collection("artifactOwnership").doc(playerId).collection("items").doc(artifactId);
+  const registryRef = db.collection("artifactRegistry").doc(artifactId);
+  const eventRef = db.collection("elementalRelicRewardEvents").doc(`${serverUid}_${playerId}_${eventId}`);
+
+  return db.runTransaction(async (transaction) => {
+    const [player, session, artifact, registry, event] = await Promise.all([
+      transaction.get(playerRef), transaction.get(sessionRef), transaction.get(artifactRef),
+      transaction.get(registryRef), transaction.get(eventRef)
+    ]);
+    if (!player.exists) throw new HttpsError("not-found", "ملف اللاعب غير موجود.");
+    if (event.exists) {
+      const previous = event.data()!;
+      if (previous.playerId !== playerId || previous.artifactId !== artifactId || previous.sessionId !== sessionId) {
+        throw new HttpsError("already-exists", "معرّف المكافأة مستخدم لحدث آخر.");
+      }
+      return { success: true, alreadyIssued: true, artifactId, skillId };
+    }
+    if (!session.exists || session.data()?.status !== "completed") {
+      throw new HttpsError("failed-precondition", "لا يمكن منح التحفة قبل إكمال المهمة وتوثيقها من خادم اللعبة.");
+    }
+    const roster: string[] = Array.isArray(session.data()?.rosterPlayerIds) ? session.data()!.rosterPlayerIds : [];
+    if (!roster.includes(playerId)) {
+      throw new HttpsError("permission-denied", "اللاعب ليس ضمن المشاركين المثبتين في المهمة المكتملة.");
+    }
+    if (artifact.exists || registry.exists) {
+      throw new HttpsError("already-exists", "معرّف التحفة مستخدم مسبقاً.");
+    }
+    transaction.create(registryRef, {
+      artifactId, originalOwnerId: playerId, issuedAt: FieldValue.serverTimestamp(),
+      source: "verified_hunter_guild_mission", referenceId: sessionId
+    });
+    transaction.create(artifactRef, {
+      artifactId, ownerId: playerId, name: artifactId, civilization: "Unknown",
+      rarity: "mythic", condition: "excellent", authenticity: "verified",
+      status: "owned", awakened: true, relicSkillId: skillId,
+      source: "verified_hunter_guild_mission", referenceId: sessionId,
+      acquiredAt: FieldValue.serverTimestamp(), awakenedAt: FieldValue.serverTimestamp(),
+      createdByGameServer: serverUid
+    });
+    transaction.create(eventRef, {
+      playerId, artifactId, skillId, sessionId, eventId, gameServerUid: serverUid,
+      createdAt: FieldValue.serverTimestamp()
+    });
+    return { success: true, alreadyIssued: false, artifactId, skillId };
+  });
+});
