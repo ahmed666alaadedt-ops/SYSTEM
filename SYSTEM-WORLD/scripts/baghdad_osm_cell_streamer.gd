@@ -41,6 +41,10 @@ var _road_navigation_graph := AStar2D.new()
 var _road_navigation_positions: Dictionary = {}
 var _road_navigation_graph_dirty := true
 var _road_navigation_graph_build_count := 0
+var _vehicle_navigation_graph := AStar2D.new()
+var _vehicle_navigation_positions: Dictionary = {}
+var _vehicle_navigation_graph_dirty := true
+var _vehicle_navigation_graph_build_count := 0
 
 
 func _ready() -> void:
@@ -282,6 +286,7 @@ func _load_cell(cell: Vector2i) -> void:
 	var counts := {}
 	var road_features: Array = layers.get("roads", [])
 	var road_navigation_segments: Array[Dictionary] = []
+	var vehicle_navigation_segments: Array[Dictionary] = []
 	var road_count := 0
 	for feature in road_features:
 		var road_tags: Dictionary = feature.get("tags", {})
@@ -294,8 +299,24 @@ func _load_cell(cell: Vector2i) -> void:
 						"highway": highway_kind,
 						"points": road_line
 					})
+		if _is_vehicle_road(road_tags):
+			var oneway := str(road_tags.get("oneway", "no")).to_lower()
+			if oneway.is_empty() and str(road_tags.get("junction", "")).to_lower() == "roundabout":
+				oneway = "yes"
+			for vehicle_road_line in _extract_lines(feature.get("geometry", {})):
+				if vehicle_road_line.size() >= 2:
+					vehicle_navigation_segments.append({
+						"feature_id": str(feature.get("id", "")),
+						"highway": highway_kind,
+						"oneway": oneway,
+						"maxspeed": str(road_tags.get("maxspeed", "")),
+						"lanes": str(road_tags.get("lanes", "")),
+						"surface": str(road_tags.get("surface", "")),
+						"points": vehicle_road_line
+					})
 		road_count += _build_line_feature(cell_root, feature, _road_width(road_tags), road_material, 0.16, "OSMRoad")
 	cell_root.set_meta("road_navigation_segments", road_navigation_segments)
+	cell_root.set_meta("vehicle_navigation_segments", vehicle_navigation_segments)
 	var building_count := 0
 	for feature in layers.get("buildings", []):
 		building_count += _build_building_feature(cell_root, feature, road_features)
@@ -331,6 +352,7 @@ func _load_cell(cell: Vector2i) -> void:
 	add_child(cell_root)
 	loaded_cells[cell] = cell_root
 	_road_navigation_graph_dirty = true
+	_vehicle_navigation_graph_dirty = true
 	cell_loaded.emit(cell, cell_root)
 
 
@@ -365,6 +387,138 @@ func get_road_navigation_path(start: Vector3, target: Vector3, max_snap_distance
 	if snapped_target.distance_to(target_approach) > 0.35:
 		route.append(target_approach)
 	return route
+
+
+## Returns a route along real OSM motor-vehicle roads in currently loaded Baghdad cells.
+## OSM one-way direction and explicit motor-vehicle access restrictions are enforced.
+func get_vehicle_navigation_path(start: Vector3, target: Vector3, max_snap_distance: float = 70.0) -> Array[Vector3]:
+	if not enabled or loaded_cells.is_empty():
+		return []
+	_ensure_vehicle_navigation_graph()
+	if _vehicle_navigation_graph.get_point_count() < 2:
+		return []
+	var start_id := _nearest_vehicle_road_graph_point(Vector2(start.x, start.z), max_snap_distance)
+	var target_id := _nearest_vehicle_road_graph_point(Vector2(target.x, target.z), max_snap_distance)
+	if start_id < 0 or target_id < 0:
+		return []
+	var graph_path := _vehicle_navigation_graph.get_point_path(start_id, target_id)
+	if graph_path.is_empty():
+		return []
+	var route: Array[Vector3] = []
+	var first_point: Vector2 = graph_path[0]
+	var start_approach := Vector3(start.x, _terrain_height(Vector2(start.x, start.z)) + 0.22, start.z)
+	var snapped_start := Vector3(first_point.x, _terrain_height(first_point) + 0.24, first_point.y)
+	if start_approach.distance_to(snapped_start) > 0.35:
+		route.append(start_approach)
+	for point in graph_path:
+		var world_point := Vector3(point.x, _terrain_height(point) + 0.24, point.y)
+		if route.is_empty() or route[route.size() - 1].distance_to(world_point) > 0.5:
+			route.append(world_point)
+	var last_point: Vector2 = graph_path[graph_path.size() - 1]
+	var target_approach := Vector3(target.x, _terrain_height(Vector2(target.x, target.z)) + 0.22, target.z)
+	var snapped_target := Vector3(last_point.x, _terrain_height(last_point) + 0.24, last_point.y)
+	if snapped_target.distance_to(target_approach) > 0.35:
+		route.append(target_approach)
+	return route
+
+
+func get_loaded_vehicle_map_segments() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for cell_root_value in loaded_cells.values():
+		var cell_root := cell_root_value as Node3D
+		if not is_instance_valid(cell_root):
+			continue
+		var segments_value: Variant = cell_root.get_meta("vehicle_navigation_segments", [])
+		if not segments_value is Array:
+			continue
+		for segment_value in segments_value:
+			if not segment_value is Dictionary:
+				continue
+			var points_value: Variant = segment_value.get("points", PackedVector2Array())
+			if not points_value is PackedVector2Array or points_value.size() < 2:
+				continue
+			result.append({
+				"feature_id": str(segment_value.get("feature_id", "")),
+				"highway": str(segment_value.get("highway", "road")),
+				"oneway": str(segment_value.get("oneway", "no")),
+				"maxspeed": str(segment_value.get("maxspeed", "")),
+				"lanes": str(segment_value.get("lanes", "")),
+				"surface": str(segment_value.get("surface", "")),
+				"points": points_value
+			})
+	return result
+
+
+func _is_vehicle_road(tags: Dictionary) -> bool:
+	const VEHICLE_HIGHWAYS := [
+		"motorway", "motorway_link", "trunk", "trunk_link",
+		"primary", "primary_link", "secondary", "secondary_link",
+		"tertiary", "tertiary_link", "unclassified", "residential",
+		"living_street", "service", "track", "road"
+	]
+	var highway := str(tags.get("highway", "")).to_lower()
+	if highway not in VEHICLE_HIGHWAYS:
+		return false
+	for access_key in ["access", "vehicle", "motor_vehicle", "motorcar"]:
+		var access_value := str(tags.get(access_key, "")).to_lower()
+		if access_value in ["no", "private", "agricultural", "forestry"]:
+			return false
+	return true
+
+
+func _ensure_vehicle_navigation_graph() -> void:
+	if not _vehicle_navigation_graph_dirty:
+		return
+	_vehicle_navigation_graph = AStar2D.new()
+	_vehicle_navigation_positions.clear()
+	var coordinate_to_id: Dictionary = {}
+	var next_id := 1
+	for cell_root_value in loaded_cells.values():
+		var cell_root := cell_root_value as Node3D
+		if not is_instance_valid(cell_root):
+			continue
+		var segments_value: Variant = cell_root.get_meta("vehicle_navigation_segments", [])
+		if not segments_value is Array:
+			continue
+		for segment_value in segments_value:
+			if not segment_value is Dictionary:
+				continue
+			var points_value: Variant = segment_value.get("points", PackedVector2Array())
+			if not points_value is PackedVector2Array or points_value.size() < 2:
+				continue
+			var points: PackedVector2Array = points_value
+			var oneway := str(segment_value.get("oneway", "no")).to_lower()
+			if oneway == "-1":
+				points.reverse()
+			var bidirectional := oneway not in ["yes", "1", "true", "-1"]
+			var previous_id := -1
+			for point in points:
+				var key := "%d:%d" % [roundi(point.x * 2.0), roundi(point.y * 2.0)]
+				var point_id := int(coordinate_to_id.get(key, -1))
+				if point_id < 0:
+					point_id = next_id
+					next_id += 1
+					coordinate_to_id[key] = point_id
+					_vehicle_navigation_graph.add_point(point_id, point)
+					_vehicle_navigation_positions[point_id] = point
+				if previous_id >= 0 and previous_id != point_id and not _vehicle_navigation_graph.are_points_connected(previous_id, point_id):
+					_vehicle_navigation_graph.connect_points(previous_id, point_id, bidirectional)
+				previous_id = point_id
+	_vehicle_navigation_graph_dirty = false
+	_vehicle_navigation_graph_build_count += 1
+
+
+func _nearest_vehicle_road_graph_point(position: Vector2, max_distance: float) -> int:
+	var best_id := -1
+	var best_distance_squared := max_distance * max_distance
+	for point_id_value in _vehicle_navigation_positions.keys():
+		var point_id := int(point_id_value)
+		var point: Vector2 = _vehicle_navigation_positions[point_id]
+		var distance_squared := position.distance_squared_to(point)
+		if distance_squared < best_distance_squared:
+			best_distance_squared = distance_squared
+			best_id = point_id
+	return best_id
 
 
 ## Returns real OSM pedestrian road segments from currently loaded Baghdad cells.
@@ -1553,6 +1707,7 @@ func _unload_cell(cell: Vector2i) -> void:
 	cell_unloading.emit(cell, node)
 	loaded_cells.erase(cell)
 	_road_navigation_graph_dirty = true
+	_vehicle_navigation_graph_dirty = true
 	cell_unloaded.emit(cell, cell_id)
 	if is_instance_valid(node):
 		node.queue_free()
