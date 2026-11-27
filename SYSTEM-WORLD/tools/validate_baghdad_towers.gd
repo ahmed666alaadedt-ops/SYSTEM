@@ -774,10 +774,51 @@ func _run_validation() -> void:
 	if quest_player.get_node_or_null("RelicEchoSightPulse") == null:
 		_fail("Relic echo sight did not create its visible scan pulse.")
 		return
-	quest_world_manager.call("switch_world", WorldManagerScript.WorldID.REALISTIC)
+	var assyrian_quest_world: Node = quest_world_manager.call("get_world_root", WorldManagerScript.WorldID.MYTHOLOGY)
+	var assyrian_runtime := assyrian_quest_world.get_node_or_null("AssyrianRelicQuestRuntime") if assyrian_quest_world != null else null
+	if assyrian_runtime == null or not assyrian_runtime.has_method("begin_quest") or not assyrian_runtime.has_method("handle_interaction"):
+		_fail("Historical world is missing the Assyrian royal seal relic quest runtime.")
+		return
+	var assyrian_begin: Dictionary = assyrian_runtime.call("begin_quest", quest_progression, quest_player, quest_world_manager, Vector3(18.0, 2.0, 34.0))
+	if not bool(assyrian_begin.get("success", false)):
+		_fail("Assyrian Nineveh relic quest did not start: " + str(assyrian_begin.get("reason", "UNKNOWN")))
+		return
+	var wrong_assyrian_clue := assyrian_runtime.get_node_or_null("AssyrianRelicClue_tigris") as Area3D
+	if wrong_assyrian_clue == null or bool(assyrian_runtime.call("handle_interaction", wrong_assyrian_clue).get("success", false)):
+		_fail("Assyrian relic quest accepted a clue in the wrong order.")
+		return
+	for clue_id in ["winged_lion", "tigris", "royal_seal", "recover_seal"]:
+		var assyrian_node_name: String = "RecoverAssyrianRoyalSeal" if clue_id == "recover_seal" else "AssyrianRelicClue_" + clue_id
+		var assyrian_clue := assyrian_runtime.get_node_or_null(assyrian_node_name) as Area3D
+		if assyrian_clue == null:
+			_fail("Assyrian relic quest is missing clue interaction: " + assyrian_node_name)
+			return
+		var assyrian_result: Dictionary = assyrian_runtime.call("handle_interaction", assyrian_clue)
+		if not bool(assyrian_result.get("success", false)):
+			_fail("Assyrian relic clue sequence failed at " + clue_id + ": " + str(assyrian_result.get("message", "")))
+			return
+	var assyrian_skill_id := "ashur_guardian_aegis"
+	var assyrian_authorized: Array = quest_progression.call("get_authorized_system_skills")
+	if not assyrian_authorized.has(assyrian_skill_id):
+		_fail("Completing Nineveh relic quest did not unlock the Assyrian guardian skill permit.")
+		return
+	for practice_index in range(3):
+		var assyrian_practice: Dictionary = quest_progression.call("practice_system_skill", assyrian_skill_id, "assyrian_relic_validator_%d" % practice_index)
+		if not bool(assyrian_practice.get("success", false)):
+			_fail("Assyrian guardian relic skill could not complete its three verified practice sessions.")
+			return
+	var assyrian_learned: Array = quest_progression.get("learned_system_skills")
+	if not assyrian_learned.has(assyrian_skill_id):
+		_fail("Assyrian guardian relic skill was not learned after three practice sessions.")
+		return
+	var assyrian_return := assyrian_runtime.get_node_or_null("AssyrianRelicReturnGate") as Area3D
+	if assyrian_return == null or not bool(assyrian_runtime.call("handle_interaction", assyrian_return).get("success", false)):
+		_fail("Completing Nineveh relic quest did not open the return gate to the antiques market.")
+		return
 	await process_frame
 
-	print("Baghdad tower validation passed: verified Republic Bridge and Tigris runtime geometry, five towers on both riverbanks/bridge, upper sky city, standalone Power Tower, Hunter rooftop helicopter controller, internal/external ads, tunnel anchor, five Baghdad tower lobby kiosks plus one separate Power Tower kiosk and Shopping Tower facilities, mysterious antiques market relic quest and rare skill unlock.")
+	print("Baghdad tower validation passed: verified Republic Bridge and Tigris runtime geometry, five towers on both riverbanks/bridge, upper sky city, standalone Power Tower, Hunter rooftop helicopter controller, internal/external ads, tunnel anchor, five Baghdad tower lobby kiosks plus one separate Power Tower kiosk and Shopping Tower facilities, mysterious antiques market with Babylon and Assyrian relic quests, rare skill permits and three-session mastery.")
+ verified Republic Bridge and Tigris runtime geometry, five towers on both riverbanks/bridge, upper sky city, standalone Power Tower, Hunter rooftop helicopter controller, internal/external ads, tunnel anchor, five Baghdad tower lobby kiosks plus one separate Power Tower kiosk and Shopping Tower facilities, mysterious antiques market relic quest and rare skill unlock.")
 	# This is a short-lived headless validation process; avoid forcing dummy-renderer teardown of placeholder meshes.
 	quit(0)
 
