@@ -128,6 +128,61 @@ func _fire_hitscan(damage: float, distance: float) -> void:
 		_spawn_hit_flash(result.get("position",origin))
 
 
+func apply_elemental_hitscan(source_actor: CharacterBody3D, damage: float, distance: float, element: String) -> Dictionary:
+	if not is_instance_valid(source_actor) or damage <= 0.0 or distance <= 0.0 or element not in ["fire", "lightning"]:
+		return {"success": false, "reason": "INVALID_ELEMENTAL_ATTACK"}
+	var origin := source_actor.global_position + Vector3.UP * 1.35
+	var direction := -source_actor.global_transform.basis.z
+	if is_instance_valid(camera) and actor == source_actor:
+		origin = camera.global_position
+		direction = -camera.global_transform.basis.z
+	var query := PhysicsRayQueryParameters3D.create(origin, origin + direction.normalized() * distance)
+	query.exclude = [source_actor.get_rid()]
+	query.collide_with_areas = true
+	var hit := source_actor.get_world_3d().direct_space_state.intersect_ray(query)
+	if hit.is_empty():
+		return {"success": false, "reason": "ELEMENTAL_TARGET_NOT_FOUND"}
+	var target: Node = hit.get("collider") as Node
+	if target != null and not target.has_method("take_damage"):
+		target = target.get_parent()
+	if target == null or not target.has_method("take_damage"):
+		return {"success": false, "reason": "ELEMENTAL_TARGET_NOT_DAMAGEABLE"}
+	var applied_damage := minf(damage, 40.0)
+	if target.is_in_group("system_players") or target.is_in_group("system_bosses"):
+		applied_damage *= 0.5
+	var accepted: Variant = target.call("take_damage", applied_damage, source_actor)
+	if accepted is bool and not accepted:
+		return {"success": false, "reason": "ELEMENTAL_TARGET_REJECTED"}
+	_spawn_elemental_hit_flash(hit.get("position", origin), element)
+	attack_performed.emit(applied_damage, target)
+	return {"success": true, "damage": applied_damage, "target": target}
+
+
+func _spawn_elemental_hit_flash(location: Vector3, element: String) -> void:
+	var flash := MeshInstance3D.new()
+	var mesh := SphereMesh.new()
+	mesh.radius = 0.22
+	mesh.height = 0.44
+	flash.mesh = mesh
+	var material := StandardMaterial3D.new()
+	match element:
+		"fire":
+			material.albedo_color = Color(1.0, 0.25, 0.04)
+			material.emission = Color(1.0, 0.12, 0.01)
+		"lightning":
+			material.albedo_color = Color(0.55, 0.75, 1.0)
+			material.emission = Color(0.2, 0.45, 1.0)
+	material.emission_enabled = true
+	material.emission_energy_multiplier = 2.5
+	flash.material_override = material
+	get_tree().current_scene.add_child(flash)
+	flash.global_position = location
+	get_tree().create_timer(0.22).timeout.connect(func():
+		if is_instance_valid(flash):
+			flash.queue_free()
+	)
+
+
 func _spawn_hit_flash(location: Vector3) -> void:
 	var flash := MeshInstance3D.new()
 	var mesh := SphereMesh.new()
