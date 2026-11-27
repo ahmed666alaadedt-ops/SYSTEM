@@ -202,6 +202,7 @@ func _build_market() -> void:
 	_add_market_sign()
 	_add_market_gate()
 	_add_historical_relic_quest_altar()
+	_add_assyrian_relic_quest_altar()
 
 	var hidden_trace := Node3D.new()
 	hidden_trace.name = "HiddenBabylonianInscriptionTrace"
@@ -270,6 +271,51 @@ func _add_historical_relic_quest_altar() -> void:
 	var shape_node := CollisionShape3D.new()
 	var sphere := SphereShape3D.new()
 	sphere.radius = 3.5
+	shape_node.shape = sphere
+	interaction.add_child(shape_node)
+	add_child(interaction)
+	interaction_count += 1
+
+
+func _add_assyrian_relic_quest_altar() -> void:
+	var pedestal := MeshInstance3D.new()
+	pedestal.name = "SealedAssyrianRelicPedestal"
+	var pedestal_mesh := CylinderMesh.new()
+	pedestal_mesh.top_radius = 1.35
+	pedestal_mesh.bottom_radius = 1.85
+	pedestal_mesh.height = 1.35
+	pedestal.mesh = pedestal_mesh
+	pedestal.position = Vector3(8.5, 0.9, 34.0)
+	pedestal.material_override = _stone_material
+	add_child(pedestal)
+	_add_box_collision(self, "SealedAssyrianRelicPedestalCollision", pedestal.position, Vector3(3.2, 1.4, 3.2))
+	var relic := MeshInstance3D.new()
+	relic.name = "SealedAssyrianRoyalSeal"
+	var relic_mesh := BoxMesh.new()
+	relic_mesh.size = Vector3(1.15, 1.0, 0.3)
+	relic.mesh = relic_mesh
+	relic.position = Vector3(8.5, 2.05, 34.0)
+	relic.material_override = _brass_material
+	add_child(relic)
+	var label := Label3D.new()
+	label.name = "SealedAssyrianRelicLabel"
+	label.text = "الختم الملكي الآشوري — سر حراس نينوى"
+	label.font_size = 17
+	label.position = Vector3(8.5, 3.65, 34.0)
+	label.modulate = Color(1.0, 0.78, 0.48)
+	add_child(label)
+	var interaction := Area3D.new()
+	interaction.name = "AssyrianRelicQuestStart"
+	interaction.position = Vector3(8.5, 1.6, 37.0)
+	interaction.collision_layer = 1
+	interaction.collision_mask = 0
+	interaction.add_to_group("system_interactable")
+	interaction.set_meta("system_location_id", "mysterious_antiques_assyrian_relic_quest")
+	interaction.set_meta("system_assyrian_relic_quest_start", true)
+	interaction.set_meta("system_interaction_prompt", "افحص الختم الملكي الآشوري وابدأ مهمة حراس نينوى")
+	var shape_node := CollisionShape3D.new()
+	var sphere := SphereShape3D.new()
+	sphere.radius = 3.2
 	shape_node.shape = sphere
 	interaction.add_child(shape_node)
 	add_child(interaction)
