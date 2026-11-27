@@ -4,6 +4,11 @@ const ManagerScript = preload("res://scripts/artifact_relic_quest_manager.gd")
 const ProgressionScript = preload("res://scripts/system_player_progression.gd")
 
 func _initialize() -> void:
+	var bridge_source := FileAccess.get_file_as_string("res://scripts/system_android_bridge.gd")
+	assert(bridge_source.contains('"request_relic_quest_start"'),
+		"Android bridge must allow authenticated relic quest start requests.")
+	assert(bridge_source.contains('"request_relic_return"'),
+		"Android bridge must allow authenticated relic return requests.")
 	var manager = ManagerScript.new()
 	root.add_child(manager)
 	var travel_events: Array = []
