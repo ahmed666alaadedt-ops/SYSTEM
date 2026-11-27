@@ -4,6 +4,7 @@ const BAGHDAD_STREAMER = preload("res://scripts/baghdad_osm_cell_streamer.gd")
 const CITY_STATE_STORE = preload("res://scripts/baghdad_city_state_store.gd")
 const CITY_NAVIGATION = preload("res://scripts/npc_city_navigation_manager.gd")
 const NPC_VEHICLE_SCRIPT = preload("res://scripts/system_npc_vehicle.gd")
+const CITY_TRAFFIC_SCRIPT = preload("res://scripts/modern_city_traffic_manager.gd")
 
 
 class MockVehicleRoadStreamer:
@@ -311,6 +312,13 @@ func _run_validation() -> void:
 	mock_world_root.add_child(mock_vehicle_streamer)
 	var mock_crime_manager := Node.new()
 	mock_world_root.add_child(mock_crime_manager)
+	var mock_region_manager := Node3D.new()
+	mock_world_root.add_child(mock_region_manager)
+	var traffic_manager = CITY_TRAFFIC_SCRIPT.new()
+	traffic_manager.region_manager = mock_region_manager
+	if not traffic_manager._should_wait_for_osm_routes("Baghdad") or not traffic_manager._build_real_traffic_route("Baghdad", Vector3.ZERO, 0).is_empty():
+		_fail("Ambient Baghdad traffic did not wait for the streamed OSM vehicle graph.")
+		return
 	var baghdad_npc_vehicle = NPC_VEHICLE_SCRIPT.new()
 	mock_world_root.add_child(baghdad_npc_vehicle)
 	baghdad_npc_vehicle.configure("npc_test_baghdad", "citizen_test", "Test Driver", "Baghdad", mock_crime_manager, Vector3.ZERO, 0)
@@ -319,6 +327,10 @@ func _run_validation() -> void:
 		return
 	mock_vehicle_streamer.route_ready = true
 	mock_vehicle_streamer.loaded_cells[Vector2i.ZERO] = true
+	var ambient_baghdad_route: Array[Vector3] = traffic_manager._build_real_traffic_route("Baghdad", Vector3.ZERO, 0)
+	if ambient_baghdad_route.size() < 4 or not traffic_manager._build_real_traffic_route("Tokyo", Vector3.ZERO, 0).is_empty():
+		_fail("Ambient traffic did not use Baghdad OSM loops exclusively in the real-world Baghdad region.")
+		return
 	if not baghdad_npc_vehicle._try_upgrade_to_osm_vehicle_route() or not baghdad_npc_vehicle.is_driving or str(baghdad_npc_vehicle.get_meta("system_road_route_source", "")) != "real_osm_vehicle_graph" or baghdad_npc_vehicle.route_points.size() < 4:
 		_fail("Baghdad civilian NPC vehicle did not upgrade to real OSM routing after cells became available.")
 		return
@@ -330,6 +342,7 @@ func _run_validation() -> void:
 		return
 	baghdad_npc_vehicle.free()
 	other_city_npc_vehicle.free()
+	traffic_manager.free()
 	mock_world_root.free()
 
 	navigation_manager.free()
