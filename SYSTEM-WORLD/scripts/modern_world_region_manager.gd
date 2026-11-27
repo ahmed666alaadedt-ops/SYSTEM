@@ -128,15 +128,16 @@ func _material(color: Color, roughness: float, metallic: float = 0.0) -> Standar
 
 
 func _resolve_city_anchors() -> void:
+	var geography_manager: Node = get_node_or_null("/root/SystemRealWorldGeography")
 	for city in CITY_DATA:
 		var requested: Vector2 = city["center"]
 		var geography_city_id := str(city.get("geography_city_id", ""))
 		if not geography_city_id.is_empty():
-			var geography_record := SystemRealWorldGeography.get_city(geography_city_id)
+			var geography_record: Dictionary = geography_manager.call("get_city", geography_city_id) if geography_manager != null else {}
 			if geography_record.is_empty():
 				push_warning("SYSTEM WORLD: missing geographic registry record for " + str(city["name"]))
 				continue
-			var projected_position := SystemRealWorldGeography.get_city_world_position(geography_city_id)
+			var projected_position: Vector3 = geography_manager.call("get_city_world_position", geography_city_id) if geography_manager != null else Vector3.ZERO
 			requested = Vector2(projected_position.x, projected_position.z)
 		var resolved := _nearest_land_position(requested)
 		if resolved == Vector2.INF:
