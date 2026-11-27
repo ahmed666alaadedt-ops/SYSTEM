@@ -109,7 +109,7 @@ func _run_validation() -> void:
 	}
 	var water_feature := {
 		"tags": {"natural": "water"},
-		"geometry": {"type": "Polygon", "coordinates": [[[80, 80], [120, 80], [120, 120], [80, 120], [80, 80]]]}
+		"geometry": {"type": "Polygon", "coordinates": [[[50, 50], [150, 50], [150, 150], [50, 150], [50, 50]]]}
 	}
 	var road_feature := {
 		"tags": {"highway": "residential"},
