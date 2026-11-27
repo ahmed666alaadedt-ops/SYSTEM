@@ -359,6 +359,19 @@
       "elemental_affinity": "earth",
       "effect": "earth_armor_ground_spikes_and_brief_root",
       "trade_policy": "unique_relic_transfer_requires_server_review"
+    },
+    {
+      "artifact_template_id": "stormlightning_crown",
+      "name": "تاج برق العاصفة",
+      "world": "fantasy",
+      "rarity": "unique",
+      "source_quest_id": "stormlightning_trial",
+      "source_status": "planned_quest",
+      "skill_id": "stormlightning_arc",
+      "ability_category": "elemental",
+      "elemental_affinity": "lightning",
+      "effect": "focused_lightning_arc_and_short_interrupt_with_strict_target_resistance",
+      "trade_policy": "unique_relic_transfer_requires_server_review"
     }
   ],
   "ability_system": {
@@ -403,6 +416,7 @@
         "air",
         "water",
         "earth",
+        "lightning",
         "elemental_resistance",
         "elemental_combo"
       ]
@@ -419,15 +433,37 @@
     },
     "elemental_rules": {
       "rarity_gate": "only rare_epic_mythic_or_unique_quest_relics",
-      "discovery": "earned_from_world_quests_exploration_or_guardian_trials_not_regular_vendor_stock",
+      "discovery": "earned_from_world_quests_exploration_or_guardian_trials_not_regular_vendor_stock; elemental activation requires learned Nen mastery",
       "elements": {
         "fire": "offense_burst_burning_effect_with_resistance_and_pve_pvp_caps",
         "air": "wind_projectiles_mobility_and_limited_aerial_control",
         "water": "defensive_barriers_cleansing_and_limited_healing",
-        "earth": "armor_stability_ground_control_and_breakable_root_effect"
+        "earth": "armor_stability_ground_control_and_breakable_root_effect",
+        "lightning": "precision_lightning_arc_short_interrupt_and_mobility_burst_with_strict_energy_cost_and_boss_player_resistance"
       },
       "combo_relics": "dual_element_or_four_element_mastery_relics_are_extremely_rare_quest_rewards_and_require_all_linked_trials",
       "server_authority": "server_validates_source_quest_ownership_awakening_skill_unlock_energy_cooldown_target_and_effect"
+    },
+    "nen_prerequisite": {
+      "required": true,
+      "status": "design_gate_not_yet_runtime_enforced_for_all_relic_skills",
+      "base_power": "nen",
+      "secondary_power": "relic_elemental_affinity",
+      "activation_rule": "relic_elemental_skill_requires_learned_nen_and_minimum_mastery_threshold",
+      "mastery_tiers": {
+        "no_nen": "relic_is_dormant_no_skill_activation",
+        "beginner": "limited_output_high_energy_cost_and_short_duration",
+        "trained": "stable_elemental_effect_with_normal_cost_and_cooldown",
+        "advanced": "improved_control_efficiency_and_precision_with_server_caps",
+        "expert": "rare_elemental_combinations_only_after_linked_trials_and_high_mastery"
+      },
+      "safeguards": [
+        "nen_energy_cost_and_cooldown_are_server_authoritative",
+        "low_mastery_causes_fatigue_and_reduced_effect_not_unbounded_damage",
+        "relic_does_not_grant_nen_itself",
+        "awakening_and_nen_training_are_separate_progression_checks",
+        "no_elemental_skill_can_bypass_target_validation_or_pvp_boss_resistance"
+      ]
     }
   }
 }
