@@ -508,6 +508,8 @@ jobs:
             ${{ runner.temp }}/baghdad-source/baghdad-metric-cell-pack-5x5.zip
             ${{ runner.temp }}/baghdad-source/clipped_layers/clip-report.json
             ${{ runner.temp }}/baghdad-source/clipped_layers/*.geojson
+            ${{ runner.temp }}/baghdad-osm-main-scene.log
+            ${{ runner.temp }}/baghdad-null-mesh-diagnostic.log
           if-no-files-found: warn
           retention-days: 30
 
