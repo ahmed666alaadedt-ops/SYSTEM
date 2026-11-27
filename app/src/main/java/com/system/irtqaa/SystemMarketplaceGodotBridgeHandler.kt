@@ -16,6 +16,36 @@ class SystemMarketplaceGodotBridgeHandler(
     override fun onMarketplaceRequest(requestId: String?, payload: JSONObject) {
         val id = requestId?.takeIf { it.isNotBlank() } ?: return
         when (payload.optString("operation")) {
+            "refresh_relic_state" -> repository.loadRelicQuestState { result ->
+                respond(id, result.map { snapshot ->
+                    JSONObject()
+                        .put("ownedArtifacts", JSONArray(snapshot.ownedArtifacts.map { artifact ->
+                            JSONObject()
+                                .put("artifactId", artifact.artifactId)
+                                .put("name", artifact.name)
+                                .put("civilization", artifact.civilization)
+                                .put("rarity", artifact.rarity)
+                                .put("condition", artifact.condition)
+                                .put("authenticity", artifact.authenticity)
+                                .put("provenanceSummary", artifact.provenanceSummary)
+                        }))
+                        .put("marketListings", JSONArray(snapshot.marketListings.map { listing ->
+                            JSONObject()
+                                .put("listingId", listing.listingId)
+                                .put("artifactId", listing.artifactId)
+                                .put("name", listing.name)
+                                .put("civilization", listing.civilization)
+                                .put("rarity", listing.rarity)
+                                .put("condition", listing.condition)
+                                .put("authenticity", listing.authenticity)
+                                .put("price", listing.price)
+                                .put("currency", listing.currency)
+                                .put("sellerName", listing.sellerName)
+                                .put("isSeller", listing.isSeller)
+                        }))
+                        .put("skills", JSONArray(snapshot.skills.map { JSONObject(it) }))
+                })
+            }
             "wallet" -> repository.loadWallet { result ->
                 respond(id, result.map { wallet ->
                     JSONObject()
