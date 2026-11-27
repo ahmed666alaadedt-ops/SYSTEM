@@ -811,14 +811,27 @@ func _run_validation() -> void:
 	if not assyrian_learned.has(assyrian_skill_id):
 		_fail("Assyrian guardian relic skill was not learned after three practice sessions.")
 		return
+	main_scene.call("_on_mobile_relic_aegis_pressed")
+	var aegis_until := int(quest_player.get_meta("system_assyrian_aegis_until_msec", 0))
+	if aegis_until <= Time.get_ticks_msec() or quest_player.get_node_or_null("AssyrianGuardianAegis") == null:
+		_fail("Learned Assyrian guardian aegis did not activate its timed defensive barrier.")
+		return
+	var player_health := quest_player.get_node_or_null("PlayerCombatHealth")
+	if player_health == null or not player_health.has_method("receive_damage"):
+		_fail("Assyrian aegis regression could not resolve the player combat health component.")
+		return
+	var aegis_damage := float(player_health.call("receive_damage", 20.0))
+	if aegis_damage <= 0.0 or aegis_damage > 7.1:
+		_fail("Assyrian aegis did not reduce incoming 20-point damage by at least 65 percent.")
+		return
+	player_health.call("apply_field_healing", aegis_damage)
 	var assyrian_return := assyrian_runtime.get_node_or_null("AssyrianRelicReturnGate") as Area3D
 	if assyrian_return == null or not bool(assyrian_runtime.call("handle_interaction", assyrian_return).get("success", false)):
 		_fail("Completing Nineveh relic quest did not open the return gate to the antiques market.")
 		return
 	await process_frame
 
-	print("Baghdad tower validation passed: verified Republic Bridge and Tigris runtime geometry, five towers on both riverbanks/bridge, upper sky city, standalone Power Tower, Hunter rooftop helicopter controller, internal/external ads, tunnel anchor, five Baghdad tower lobby kiosks plus one separate Power Tower kiosk and Shopping Tower facilities, mysterious antiques market with Babylon and Assyrian relic quests, rare skill permits and three-session mastery.")
- verified Republic Bridge and Tigris runtime geometry, five towers on both riverbanks/bridge, upper sky city, standalone Power Tower, Hunter rooftop helicopter controller, internal/external ads, tunnel anchor, five Baghdad tower lobby kiosks plus one separate Power Tower kiosk and Shopping Tower facilities, mysterious antiques market relic quest and rare skill unlock.")
+	print("Baghdad tower validation passed: verified Republic Bridge and Tigris runtime geometry, five towers on both riverbanks/bridge, upper sky city, standalone Power Tower, Hunter rooftop helicopter controller, internal/external ads, tunnel anchor, five Baghdad tower lobby kiosks plus one separate Power Tower kiosk and Shopping Tower facilities, mysterious antiques market with Babylon and Assyrian relic quests, rare skill permits, three-session mastery and aegis damage mitigation.")
 	# This is a short-lived headless validation process; avoid forcing dummy-renderer teardown of placeholder meshes.
 	quit(0)
 
