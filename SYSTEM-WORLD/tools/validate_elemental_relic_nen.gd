@@ -96,18 +96,18 @@ func _prepare_skill(skill_id: String, nen_rank: int, mission_points: int, nen_us
 	progression.set("nen_unlocked", true)
 	progression.set("nen_control_rank", nen_rank)
 	progression.set("nen_skill_use_count", nen_uses)
-	var nen_ids: Array = progression.get("nen_skill_ids")
+	var nen_ids: Array[String] = progression.get("nen_skill_ids")
 	nen_ids.clear()
 	if nen_uses >= 50:
 		nen_ids.append("nen_test_ability_one")
 		nen_ids.append("nen_test_ability_two")
 	progression.set("nen_skill_ids", nen_ids)
 	progression.set("current_system_energy", 100.0)
-	var learned: Array = progression.get("learned_system_skills")
+	var learned: Array[String] = progression.get("learned_system_skills")
 	if not learned.has(skill_id):
 		learned.append(skill_id)
 	progression.set("learned_system_skills", learned)
-	var authorized: Array = progression.get("authorized_system_skills")
+	var authorized: Array[String] = progression.get("authorized_system_skills")
 	if not authorized.has(skill_id):
 		authorized.append(skill_id)
 	progression.set("authorized_system_skills", authorized)
