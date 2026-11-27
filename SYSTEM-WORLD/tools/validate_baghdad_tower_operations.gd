@@ -1811,9 +1811,18 @@ func _run() -> void:
 		_fail("Hunter Association floor 12 must preserve its guild lounge and add a separate Nen fundamentals practice area.")
 		return
 	var skill_progression := main.get("player_progression") as Node
-	if skill_progression == null or not skill_progression.has_method("practice_system_skill") or skill_progression.call("get_system_skill_tree").size() != 10:
-		_fail("Persistent original SYSTEM skill tree is missing or incomplete.")
+	if skill_progression == null or not skill_progression.has_method("practice_system_skill") or skill_progression.call("get_system_skill_tree").size() != 13:
+		_fail("Persistent SYSTEM skill tree must preserve ten original skills and append three artifact skills.")
 		return
+	var preserved_skill_tree: Dictionary = skill_progression.call("get_system_skill_tree")
+	for original_skill_id in ["guard_breaker", "swift_step", "focused_strike", "iron_guard", "pulse_dash", "aura_shield", "sensory_mark", "flow_counter", "resonance_burst", "sovereign_focus"]:
+		if not preserved_skill_tree.has(original_skill_id):
+			_fail("Original SYSTEM skill tree entry was lost: " + original_skill_id)
+			return
+	for artifact_skill_id in ["babylon_seal", "pharos_sight", "atlantis_tide_guard"]:
+		if not preserved_skill_tree.has(artifact_skill_id):
+			_fail("Rare artifact skill is missing from the extended tree: " + artifact_skill_id)
+			return
 	var skill_snapshot := {"level":skill_progression.get("current_level"),"points":skill_progression.get("verified_hunter_mission_points"),"learned":skill_progression.get("learned_system_skills").duplicate(),"authorized":skill_progression.get("authorized_system_skills").duplicate(),"practice":skill_progression.get("system_skill_practice").duplicate(true),"mastery":skill_progression.get("system_skill_mastery").duplicate(true),"cooldowns":skill_progression.get("system_skill_cooldowns").duplicate(true),"weapon_mastery":skill_progression.get("weapon_mastery").duplicate(true),"energy":skill_progression.get("current_system_energy"),"nen_unlocked":skill_progression.get("nen_unlocked"),"nen_control_rank":skill_progression.get("nen_control_rank"),"inventory":skill_progression.get("inventory_items").duplicate(true),"credits":operations.get("credits"),"vendor_stock":operations.get("vendor_stock").duplicate(true),"equipment_slots":skill_progression.get("equipment_slots").duplicate(true)}
 	skill_progression.set("current_level", 3)
 	skill_progression.set("verified_hunter_mission_points", 100)
