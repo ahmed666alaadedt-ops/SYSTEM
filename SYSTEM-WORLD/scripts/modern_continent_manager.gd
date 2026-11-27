@@ -824,7 +824,10 @@ void fragment() {
 	for index in range(baghdad_tigris_route.size() - 1):
 		var start: Vector2 = baghdad_tigris_route[index]
 		var finish: Vector2 = baghdad_tigris_route[index + 1]
-		var direction := (finish - start).normalized()
+		var segment := finish - start
+		if segment.length_squared() < 0.01:
+			continue
+		var direction := segment.normalized()
 		var side := Vector2(-direction.y, direction.x)
 		var bank_offset := side * BAGHDAD_TIGRIS_HALF_WIDTH
 		var a_left := start + bank_offset
