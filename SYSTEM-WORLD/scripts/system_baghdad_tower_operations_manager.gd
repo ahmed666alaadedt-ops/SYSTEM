@@ -3555,7 +3555,7 @@ func _ensure_floor_room(tower_id: String, floor_number: int) -> Node3D:
 		if tower_id == "antiques_heritage_tower_baghdad" and floor_number >= 29 and floor_number <= 32:
 			var existing_market_facility := existing.get_node_or_null("SpecialFacility_player_artifact_market") as Node3D
 			if existing_market_facility != null:
-				AntiqueMarketWorldBuilder.build_floor(existing_market_facility, floor_number, radius)
+				AntiqueMarketWorldBuilder.build_floor(existing_market_facility, floor_number, float(config["radius"]))
 		return existing
 	var height := float(tower.get_meta("tower_height_m", config["height"]))
 	var radius := float(config["radius"])
@@ -5164,6 +5164,122 @@ func open_museum_artifact_exhibit(target: Node) -> void:
 	panel.show()
 
 
+func open_antiques_world_facility(target: Node) -> void:
+	if target == null or not is_instance_valid(target):
+		return
+	var facility_type := str(target.get_meta("system_antique_facility_type", ""))
+	var floor_number := int(target.get_meta("system_tower_floor_number", 0))
+	if facility_type.is_empty() or floor_number < 29 or floor_number > 32:
+		return
+	current_tower_id = "antiques_heritage_tower_baghdad"
+	current_staff_id = ""
+	selected_market_artifact_id = ""
+	selected_market_auction_id = ""
+	_clear_dynamic_controls()
+	var titles := {
+		"global_auction_hall": "المزاد العالمي للتحف",
+		"secret_trader_lounge": "السوق السري — تجار الظلال",
+		"authenticity_appraisal": "مختبر تقييم الأصالة والمنشأ",
+		"collector_reputation": "مجلس سمعة الجامعين"
+	}
+	title_label.text = str(titles.get(facility_type, "سوق التحف العالمي"))
+	credits_label.text = "رصيد SYSTEM: جارٍ التحقق..."
+	status_label.text = "الطابق %d — كل الملكية والدفع والتقييم والسمعة تصدر من خادم SYSTEM." % floor_number
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(0.0, 340.0)
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content.add_child(scroll)
+	var controls := VBoxContainer.new()
+	controls.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	controls.add_theme_constant_override("separation", 7)
+	scroll.add_child(controls)
+	marketplace_results_container = VBoxContainer.new()
+	marketplace_results_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	controls.add_child(marketplace_results_container)
+	match facility_type:
+		"global_auction_hall":
+			_add_antique_service_button(controls, "مشاهدة المزادات العالمية", func(): _request_marketplace_operation("browse_auctions", {}))
+			_add_antique_service_button(controls, "تصفح عروض الجامعين", func(): _request_marketplace_operation("browse_listings", {}))
+			_add_antique_service_button(controls, "مقتنياتي الأثرية", func(): _request_marketplace_operation("owned_artifacts", {}))
+			_add_antique_service_button(controls, "سجل الصفقات والمزايدات", func(): _request_marketplace_operation("trade_history", {}))
+		"secret_trader_lounge":
+			_add_antique_service_button(controls, "كشف عروض تجار الظلال", func(): _request_marketplace_operation("browse_secret_antique_offers", {}))
+			_add_antique_service_button(controls, "تصفح السوق العام أيضاً", func(): _request_marketplace_operation("browse_listings", {}))
+		"authenticity_appraisal":
+			_add_antique_service_button(controls, "تحميل القطع التي أملكها", func(): _request_marketplace_operation("owned_artifacts", {}))
+			_add_antique_service_button(controls, "تقييم أصالة القطعة المختارة", func():
+				if selected_market_artifact_id.is_empty():
+					status_label.text = "اختر قطعة من مقتنياتك أولاً."
+					return
+				_request_marketplace_operation("appraise_artifact_authenticity", {"artifactId": selected_market_artifact_id})
+			)
+		"collector_reputation":
+			_add_antique_service_button(controls, "تحديث سمعة الجامع", func(): _request_marketplace_operation("antiques_reputation", {}))
+			_add_antique_service_button(controls, "سجل الصفقات المكتملة", func(): _request_marketplace_operation("trade_history", {}))
+	var close_button := Button.new()
+	close_button.text = "إغلاق"
+	close_button.pressed.connect(func(): panel.hide())
+	controls.add_child(close_button)
+	panel.show()
+
+
+func _add_antique_service_button(parent: VBoxContainer, label: String, action: Callable) -> void:
+	var button := Button.new()
+	button.text = label
+	button.pressed.connect(action)
+	parent.add_child(button)
+
+
+func _render_secret_trader_offers(raw_offers: Variant) -> void:
+	_clear_marketplace_results()
+	status_label.text = "عروض تجار الظلال — كل شراء يمر بمعاملة ذرية في محفظة SYSTEM وسجل التحف."
+	if not raw_offers is Array or raw_offers.is_empty():
+		var empty_label := Label.new()
+		empty_label.text = "لا توجد عروض سرية متاحة حالياً."
+		marketplace_results_container.add_child(empty_label)
+		return
+	for raw in raw_offers:
+		if not raw is Dictionary:
+			continue
+		var offer_id := str(raw.get("offerId", ""))
+		if offer_id.is_empty():
+			continue
+		var line := Label.new()
+		line.text = "%s | %s | %s | %d SYSTEM | الأصالة: %s" % [
+			str(raw.get("name", "تحفة نادرة")),
+			str(raw.get("civilization", "")),
+			str(raw.get("rarity", "")),
+			int(raw.get("price", 0)),
+			str(raw.get("authenticity", "unverified"))
+		]
+		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		marketplace_results_container.add_child(line)
+		var buy_button := Button.new()
+		buy_button.text = "شراء من تاجر الظلال — %d SYSTEM" % int(raw.get("price", 0))
+		buy_button.pressed.connect(func():
+			marketplace_request_counter += 1
+			var event_id := "secret_offer_%d_%d" % [Time.get_ticks_msec(), marketplace_request_counter]
+			_request_marketplace_operation("purchase_secret_antique_offer", {"offerId": offer_id, "eventId": event_id})
+		)
+		marketplace_results_container.add_child(buy_button)
+
+
+func _render_antiques_reputation(data: Dictionary) -> void:
+	_clear_marketplace_results()
+	var score := int(data.get("score", 0))
+	var tier := str(data.get("tier", "newcomer"))
+	status_label.text = "سمعة الجامع: %d نقطة — التصنيف: %s" % [score, tier]
+	for row in [
+		"المبيعات المكتملة: %d" % int(data.get("completedSales", 0)),
+		"المشتريات المكتملة: %d" % int(data.get("completedPurchases", 0)),
+		"تقارير الأصالة المؤكدة: %d" % int(data.get("verifiedAppraisals", 0)),
+		"تقارير النسخ غير الأصلية: %d" % int(data.get("replicaAppraisals", 0))
+	]:
+		var label := Label.new()
+		label.text = row
+		marketplace_results_container.add_child(label)
+
+
 func _request_marketplace_operation(operation: String, payload: Dictionary) -> void:
 	if not is_instance_valid(marketplace_bridge) or not marketplace_bridge.has_method("request_marketplace_operation"):
 		status_label.text = "خدمة التجارة غير متصلة بمضيف Android. لم تُنفّذ أي صفقة."
@@ -5194,6 +5310,24 @@ func _on_marketplace_result(request_id: String, response: Dictionary) -> void:
 		return
 
 	match operation:
+		"browse_secret_antique_offers":
+			_render_secret_trader_offers(data.get("offers", []))
+		"purchase_secret_antique_offer":
+			status_label.text = "تم الشراء من التاجر السري عبر محفظة SYSTEM وسجل الملكية الموحد."
+			_request_marketplace_operation("refresh_relic_state", {})
+			_request_marketplace_operation("wallet", {})
+		"appraise_artifact_authenticity":
+			status_label.text = "نتيجة تقييم الأصالة: %s | الثقة: %d%% | %s" % [
+				str(data.get("verdict", "unverified")),
+				int(data.get("confidence", 0)),
+				str(data.get("reason", ""))
+			]
+			_request_marketplace_operation("owned_artifacts", {})
+		"antiques_reputation":
+			_render_antiques_reputation(data)
+		"refresh_relic_state":
+			_render_owned_market_artifacts(data.get("ownedArtifacts", []))
+			status_label.text = "تم تحديث مقتنياتك والسوق والمهارات من Firebase. عدد عروض السوق: %d" % (data.get("marketListings", []) as Array).size()
 		"wallet":
 			var balance := int(data.get("balance", 0))
 			var reserved := int(data.get("reservedBalance", 0))
