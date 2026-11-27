@@ -4,6 +4,8 @@ class_name SYSTEMInventoryPanel
 var progression: Node
 var panel: PanelContainer
 var item_list: Label
+var skill_actions: VBoxContainer
+var skill_status: Label
 
 
 func setup(player_progression: Node) -> void:
@@ -47,12 +49,31 @@ func _ready() -> void:
 	item_list.text = "الحقيبة فارغة"
 	item_list.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	scroll.add_child(item_list)
+	skill_actions = VBoxContainer.new()
+	skill_actions.name = "LearnedRareSkillActions"
+	skill_actions.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(skill_actions)
+	skill_status = Label.new()
+	skill_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	skill_actions.add_child(skill_status)
 
 
 func _toggle_panel() -> void:
 	panel.visible = not panel.visible
 	if panel.visible:
 		refresh_inventory()
+
+
+
+func _activate_system_skill(skill_id: String) -> void:
+	var router := get_tree().root.find_child("SYSTEMCombatInputRouter", true, false)
+	if router == null or not router.has_method("activate_system_skill"):
+		if skill_status != null:
+			skill_status.text = "نظام القتال غير متاح في العالم الحالي."
+		return
+	var result: Dictionary = router.call("activate_system_skill", skill_id)
+	if skill_status != null:
+		skill_status.text = "تم تفعيل المهارة النادرة." if bool(result.get("success", false)) else "تعذر التفعيل: " + str(result.get("reason", "تحقق من الطاقة والتبريد والتدريب"))
 
 
 func refresh_inventory() -> void:
@@ -96,3 +117,24 @@ func refresh_inventory() -> void:
 		for item_id in items.keys():
 			lines.append("%s  × %d" % [str(item_id), int(items[item_id])])
 	item_list.text = "\n".join(lines)
+	if skill_actions != null:
+		for child in skill_actions.get_children():
+			if child != skill_status:
+				child.queue_free()
+		var heading := Label.new()
+		heading.text = "\nالمهارات المتعلمة — اضغط للتفعيل في القتال"
+		skill_actions.add_child(heading)
+		var tree: Dictionary = progression.call("get_system_skill_tree") if progression.has_method("get_system_skill_tree") else {}
+		var learned: Array = progression.get("learned_system_skills")
+		for skill_value in learned:
+			var skill_id := str(skill_value)
+			if not tree.has(skill_id):
+				continue
+			var skill: Dictionary = tree[skill_id]
+			var button := Button.new()
+			button.text = "تفعيل: " + str(skill.get("name", skill_id))
+			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			button.pressed.connect(_activate_system_skill.bind(skill_id))
+			skill_actions.add_child(button)
+		if skill_status != null and skill_status.text.is_empty():
+			skill_status.text = "تُفتح المهارات النادرة من آثارها، ثم تحتاج إلى 3 جلسات تدريب."
