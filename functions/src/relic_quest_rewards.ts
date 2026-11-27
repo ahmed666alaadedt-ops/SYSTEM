@@ -71,10 +71,13 @@ export const requestHistoricalRelicQuestStart = onCall(async (request) => {
         artifact.activeListingId || artifact.activeAuctionId || artifact.activeExchangeId) {
       throw new HttpsError("failed-precondition", "يجب أن تكون التحفة بحيازة اللاعب وغير محجوزة في السوق.");
     }
-    if (requestSnapshot.exists && requestSnapshot.data()?.status === "pending") {
-      return { success: true, requestId: requestRef.id, alreadyPending: true, questId, artifactId };
+    if (requestSnapshot.exists) {
+      if (requestSnapshot.data()?.status === "pending") {
+        return { success: true, requestId: requestRef.id, alreadyPending: true, questId, artifactId };
+      }
+      throw new HttpsError("already-exists", "سبق تسجيل هذا الطلب أو بدأ خادم اللعبة جلسته.");
     }
-    transaction.set(requestRef, {
+    transaction.create(requestRef, {
       playerId, questId, artifactId, historicalSiteId: quest.historicalSiteId,
       status: "pending", requestedAt: FieldValue.serverTimestamp()
     });
@@ -89,6 +92,13 @@ export const requestHistoricalRelicReturn = onCall(async (request) => {
   const artifactId = requiredText(request.data?.artifactId, "artifactId", 120);
   const quest = getQuest(questId, artifactId);
   if (!quest.returnRequired) throw new HttpsError("failed-precondition", "هذه المهمة لا تتطلب إعادة التحفة.");
+  const artifactSnapshot = await db.collection("artifactOwnership").doc(playerId).collection("items").doc(artifactId).get();
+  if (!artifactSnapshot.exists) throw new HttpsError("failed-precondition", "التحفة غير موجودة في مجموعة اللاعب.");
+  const ownedArtifact = artifactSnapshot.data()!;
+  if (ownedArtifact.ownerId !== playerId || ownedArtifact.status !== "owned" ||
+      ownedArtifact.activeListingId || ownedArtifact.activeAuctionId || ownedArtifact.activeExchangeId) {
+    throw new HttpsError("failed-precondition", "التحفة ليست بحيازة اللاعب أو محجوزة في السوق.");
+  }
   const sessions = await db.collection("historicalRelicQuestSessions")
     .where("playerId", "==", playerId).limit(50).get();
   const sessionDoc = sessions.docs.find((doc) => {
