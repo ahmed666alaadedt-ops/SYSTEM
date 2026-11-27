@@ -40,8 +40,8 @@ func _run_validation() -> void:
 	if not daily_life_source.contains("await get_tree().process_frame"):
 		_fail("Resident seeding is not spread across frames.")
 		return
-	if not population_source.contains("candidates.sort_custom") or not population_source.contains("41 x 41 city-block grid"):
-		_fail("Nearest-resident selection or distributed block placement is missing.")
+	if not population_source.contains("_heap_push_farthest") or not population_source.contains("_heap_sift_down") or not population_source.contains("41 x 41 city-block grid"):
+		_fail("Bounded nearest-resident heap or distributed block placement is missing.")
 		return
 	for tenant_id in ["restaurant", "cafe", "bakery", "sweets", "clothing", "shoes", "perfume", "electronics", "mobile", "furniture", "supermarket", "hardware"]:
 		if not services_source.contains('"id": "' + tenant_id + '"'):
@@ -70,5 +70,5 @@ func _run_validation() -> void:
 		_fail("MultiMesh batching helper did not preserve all three test instances.")
 		return
 
-	print("Dense city life validation passed: park_tree_slots_per_pocket=5 park_shrub_slots_per_pocket=8 visible_civilians=72 seeded_residents=42500 seeded_minors=7500 commercial_tenants=12 industrial_units=6 forest_trees=36 forest_shrubs=48 forest_grass=150 multimesh_instances=", batch.multimesh.instance_count)
+	print("Dense city life validation passed: park_tree_slots_per_pocket=5 park_shrub_slots_per_pocket=8 visible_civilians=72 seeded_residents=42500 seeded_minors=7500 nearest_resident_heap=top_72 commercial_tenants=12 industrial_units=6 forest_trees=36 forest_shrubs=48 forest_grass=150 multimesh_instances=", batch.multimesh.instance_count)
 	quit(0)
