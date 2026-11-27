@@ -150,6 +150,9 @@ func _attach_vehicle_visual(vehicle_id: String, record: Dictionary) -> void:
 	vehicle.position = anchor + Vector3(float(slot - 1) * 9.0, 0.05, 18.0 + float(slot) * 7.0)
 	_build_vehicle_visual(vehicle, slot)
 	add_child(vehicle)
+	if str(vehicle.get_meta("system_road_route_source", "")) == "real_osm_vehicle_graph" and vehicle.route_points.size() >= 2:
+		var route_spawn: Vector3 = vehicle.route_points[vehicle.route_index]
+		vehicle.global_position = route_spawn - Vector3.UP * 0.19
 	record["node"] = vehicle
 	vehicles[vehicle_id] = record
 
