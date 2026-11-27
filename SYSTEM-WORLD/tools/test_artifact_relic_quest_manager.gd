@@ -68,6 +68,9 @@ func _initialize() -> void:
 
 	var progression = ProgressionScript.new()
 	root.add_child(progression)
+	progression.current_level = 100
+	progression.current_system_energy = 100.0
+	progression.system_skill_cooldowns.clear()
 	var local_practice: Dictionary = progression.practice_system_skill(
 		"rare_skill_celestial_lightning", "local_forged_practice"
 	)
