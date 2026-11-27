@@ -53,6 +53,81 @@ function requirePlayer(request: any): string {
   return String(request.auth.uid);
 }
 
+/** Players can request a relic quest, but only the trusted game server may open its session. */
+export const requestHistoricalRelicQuestStart = onCall(async (request) => {
+  const playerId = requirePlayer(request);
+  const questId = requiredText(request.data?.questId, "questId", 100);
+  const artifactId = requiredText(request.data?.artifactId, "artifactId", 120);
+  const quest = getQuest(questId, artifactId);
+  const artifactRef = db.collection("artifactOwnership").doc(playerId).collection("items").doc(artifactId);
+  const requestRef = db.collection("historicalRelicQuestStartRequests").doc(playerId + "_" + questId);
+  return db.runTransaction(async (transaction) => {
+    const [artifactSnapshot, requestSnapshot] = await Promise.all([
+      transaction.get(artifactRef), transaction.get(requestRef)
+    ]);
+    if (!artifactSnapshot.exists) throw new HttpsError("failed-precondition", "التحفة المطلوبة ليست في مجموعة اللاعب.");
+    const artifact = artifactSnapshot.data()!;
+    if (artifact.ownerId !== playerId || artifact.status !== "owned" ||
+        artifact.activeListingId || artifact.activeAuctionId || artifact.activeExchangeId) {
+      throw new HttpsError("failed-precondition", "يجب أن تكون التحفة بحيازة اللاعب وغير محجوزة في السوق.");
+    }
+    if (requestSnapshot.exists && requestSnapshot.data()?.status === "pending") {
+      return { success: true, requestId: requestRef.id, alreadyPending: true, questId, artifactId };
+    }
+    transaction.set(requestRef, {
+      playerId, questId, artifactId, historicalSiteId: quest.historicalSiteId,
+      status: "pending", requestedAt: FieldValue.serverTimestamp()
+    });
+    return { success: true, requestId: requestRef.id, alreadyPending: false, questId, artifactId };
+  });
+});
+
+/** Players may request a return; the server must independently verify world position and site presence. */
+export const requestHistoricalRelicReturn = onCall(async (request) => {
+  const playerId = requirePlayer(request);
+  const questId = requiredText(request.data?.questId, "questId", 100);
+  const artifactId = requiredText(request.data?.artifactId, "artifactId", 120);
+  const quest = getQuest(questId, artifactId);
+  if (!quest.returnRequired) throw new HttpsError("failed-precondition", "هذه المهمة لا تتطلب إعادة التحفة.");
+  const sessions = await db.collection("historicalRelicQuestSessions")
+    .where("playerId", "==", playerId).limit(50).get();
+  const sessionDoc = sessions.docs.find((doc) => {
+    const session = doc.data();
+    return session.questId === questId && session.artifactId === artifactId &&
+      session.status === "active" &&
+      quest.objectives.every((id) => session.completedObjectives?.[id] === true);
+  });
+  if (!sessionDoc) throw new HttpsError("failed-precondition", "لا توجد جلسة موثوقة مكتملة الأهداف تنتظر الإرجاع.");
+  const requestRef = db.collection("historicalRelicReturnRequests").doc(sessionDoc.id);
+  const requestSnapshot = await requestRef.get();
+  if (requestSnapshot.exists) {
+    const existing = requestSnapshot.data()!;
+    if (existing.playerId !== playerId || existing.questId !== questId) {
+      throw new HttpsError("permission-denied", "طلب الإرجاع لا يخص هذا اللاعب.");
+    }
+    return { success: true, requestId: requestRef.id, sessionId: sessionDoc.id, alreadyPending: existing.status === "pending" };
+  }
+  await requestRef.create({
+    playerId, questId, artifactId, sessionId: sessionDoc.id,
+    historicalSiteId: quest.historicalSiteId,
+    status: "pending", requestedAt: FieldValue.serverTimestamp()
+  });
+  return { success: true, requestId: requestRef.id, sessionId: sessionDoc.id, alreadyPending: false };
+});
+
+/** Only the trusted game server may poll player requests; it must validate live gameplay before acting. */
+export const listPendingHistoricalRelicQuestRequests = onCall(async (request) => {
+  requireGameServer(request);
+  const [starts, returns] = await Promise.all([
+    db.collection("historicalRelicQuestStartRequests").where("status", "==", "pending").limit(50).get(),
+    db.collection("historicalRelicReturnRequests").where("status", "==", "pending").limit(50).get()
+  ]);
+  return {
+    starts: starts.docs.map((doc) => ({ requestId: doc.id, ...doc.data() })),
+    returns: returns.docs.map((doc) => ({ requestId: doc.id, ...doc.data() }))
+  };
+});
+
 function requiredText(value: unknown, field: string, maxLength: number): string {
   if (typeof value !== "string") throw new HttpsError("invalid-argument", `الحقل ${field} غير صالح.`);
   const result = value.trim();
@@ -81,12 +156,15 @@ export const startHistoricalRelicQuestSession = onCall(async (request) => {
   const quest = getQuest(questId, artifactId);
   const playerRef = db.collection("players").doc(playerId);
   const artifactRef = db.collection("artifactOwnership").doc(playerId).collection("items").doc(artifactId);
+  const requestId = requiredText(request.data?.requestId, "requestId", 180);
+  const startRequestRef = db.collection("historicalRelicQuestStartRequests").doc(requestId);
   const sessionRef = db.collection("historicalRelicQuestSessions").doc();
 
   await db.runTransaction(async (transaction) => {
-    const [player, artifact] = await Promise.all([
+    const [player, artifact, startRequest] = await Promise.all([
       transaction.get(playerRef),
-      transaction.get(artifactRef)
+      transaction.get(artifactRef),
+      transaction.get(startRequestRef)
     ]);
     if (!player.exists) throw new HttpsError("not-found", "حساب اللاعب غير موجود.");
     if (!artifact.exists) throw new HttpsError("not-found", "التحفة غير موجودة في مجموعة اللاعب.");
@@ -95,12 +173,22 @@ export const startHistoricalRelicQuestSession = onCall(async (request) => {
         item.activeListingId || item.activeAuctionId || item.activeExchangeId) {
       throw new HttpsError("failed-precondition", "التحفة ليست بحيازة اللاعب أو محجوزة في السوق.");
     }
+    if (!startRequest.exists) throw new HttpsError("failed-precondition", "لا يوجد طلب مهمة من اللاعب.");
+    const queued = startRequest.data()!;
+    if (queued.status !== "pending" || queued.playerId !== playerId ||
+        queued.questId !== questId || queued.artifactId !== artifactId) {
+      throw new HttpsError("failed-precondition", "طلب بدء المهمة لا يطابق اللاعب أو التحفة.");
+    }
     transaction.create(sessionRef, {
       playerId, questId, artifactId, gameServerUid: serverUid,
       requiredObjectives: quest.objectives,
       completedObjectives: {},
       status: "active",
       startedAt: FieldValue.serverTimestamp()
+    });
+    transaction.update(startRequestRef, {
+      status: "accepted", sessionId: sessionRef.id, acceptedBy: serverUid,
+      acceptedAt: FieldValue.serverTimestamp()
     });
   });
   return { success: true, sessionId: sessionRef.id, questId, artifactId, requiredObjectives: quest.objectives };
@@ -159,11 +247,13 @@ export const recordHistoricalRelicReturn = onCall(async (request) => {
   if (!/^[A-Za-z0-9_-]+$/.test(eventId)) throw new HttpsError("invalid-argument", "معرّف حدث الإرجاع غير صالح.");
   const sessionRef = getSessionRef(sessionId);
   const eventRef = sessionRef.collection("events").doc("return_" + eventId);
+  const returnRequestRef = db.collection("historicalRelicReturnRequests").doc(sessionId);
 
   return db.runTransaction(async (transaction) => {
-    const [sessionSnapshot, eventSnapshot] = await Promise.all([
+    const [sessionSnapshot, eventSnapshot, returnRequestSnapshot] = await Promise.all([
       transaction.get(sessionRef),
-      transaction.get(eventRef)
+      transaction.get(eventRef),
+      transaction.get(returnRequestRef)
     ]);
     if (!sessionSnapshot.exists) throw new HttpsError("not-found", "جلسة المهمة غير موجودة.");
     const session = sessionSnapshot.data()!;
@@ -172,6 +262,10 @@ export const recordHistoricalRelicReturn = onCall(async (request) => {
     const quest = getQuest(String(session.questId), String(session.artifactId));
     if (!quest.returnRequired || siteId !== quest.historicalSiteId) {
       throw new HttpsError("failed-precondition", "موقع إرجاع التحفة غير صحيح.");
+    }
+    if (!returnRequestSnapshot.exists || returnRequestSnapshot.data()?.status !== "pending" ||
+        returnRequestSnapshot.data()?.playerId !== session.playerId) {
+      throw new HttpsError("failed-precondition", "لا يوجد طلب إرجاع معتمد من اللاعب لهذه الجلسة.");
     }
     if (!quest.objectives.every((id) => session.completedObjectives?.[id] === true)) {
       throw new HttpsError("failed-precondition", "لم تثبت جميع أهداف المهمة من خادم اللعبة.");
@@ -186,6 +280,10 @@ export const recordHistoricalRelicReturn = onCall(async (request) => {
     transaction.update(sessionRef, {
       returnProof: { siteId, eventId, verifiedBy: serverUid, recordedAt: FieldValue.serverTimestamp() },
       updatedAt: FieldValue.serverTimestamp()
+    });
+    transaction.update(returnRequestRef, {
+      status: "verified", verifiedBy: serverUid, eventId,
+      verifiedAt: FieldValue.serverTimestamp()
     });
     return { success: true, returnVerified: true, siteId };
   });
