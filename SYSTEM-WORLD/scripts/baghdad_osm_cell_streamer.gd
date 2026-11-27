@@ -214,6 +214,8 @@ func _load_cell(cell: Vector2i) -> void:
 			building_count += _build_building_overview_feature(cell_root, feature)
 		else:
 			building_count += _build_building_feature(cell_root, feature, road_features)
+	if not overview_mode:
+		_flush_facade_window_multimesh(cell_root)
 	counts["buildings"] = building_count
 	var water_count := 0
 	for feature in layers.get("waterways", []):
@@ -477,6 +479,7 @@ func _build_building_feature(parent: Node3D, feature: Dictionary, road_features:
 		var facade_window_count := _add_procedural_facade_windows(parent, ring, height, kind, feature_id)
 		building.set_meta("system_facade_detail_level", "core_multimesh_windows" if facade_window_count > 0 else "core_extrusion_only")
 		building.set_meta("system_facade_window_count", facade_window_count)
+		building.set_meta("system_facade_window_sampling", "even_distribution_across_facades")
 		var body := StaticBody3D.new()
 		body.name = "OSMBuildingCollision_%s" % feature_id
 		body.add_to_group("system_interactable")
@@ -526,7 +529,7 @@ func _add_procedural_facade_windows(
 	feature_id: String
 ) -> int:
 	# The 1 km regional overview stays as a cheap extrusion LOD. Only the
-	# 200 m playable cells receive instanced facade windows.
+	# 200 m playable cells collect close-range facade windows.
 	if overview_mode or height < 5.0 or ring.size() < 3 or kind in ["mosque", "church"]:
 		return 0
 	var window_size := Vector3(1.1, 1.4, 0.12)
@@ -553,9 +556,8 @@ func _add_procedural_facade_windows(
 		return 0
 	var counter_clockwise := polygon_twice_area > 0.0
 	var floor_count := clampi(int(floor(height / 3.2)), 1, 12)
-	var maximum_windows := 64
-	var transforms: Array[Transform3D] = []
-	var colors: Array[Color] = []
+	var candidate_transforms: Array[Transform3D] = []
+	var candidate_colors: Array[Color] = []
 	for edge_index in range(ring.size()):
 		var start := ring[edge_index]
 		var finish := ring[(edge_index + 1) % ring.size()]
@@ -568,7 +570,7 @@ func _add_procedural_facade_windows(
 		var outward_2d := Vector2(edge_direction.y, -edge_direction.x) if counter_clockwise else Vector2(-edge_direction.y, edge_direction.x)
 		var outward := Vector3(outward_2d.x, 0.0, outward_2d.y)
 		var facade_right := Vector3.UP.cross(outward).normalized()
-		var facade_basis := Basis(facade_right, Vector3.UP, outward)
+		var facade_basis := Basis(facade_right, Vector3.UP, outward).scaled(window_size)
 		for floor_index in range(floor_count):
 			var floor_offset := 1.55 + float(floor_index) * 3.15
 			if floor_offset + window_size.y * 0.5 >= height - 0.25:
@@ -581,31 +583,45 @@ func _add_procedural_facade_windows(
 					_terrain_height(point) + floor_offset,
 					point.y
 				) + outward * 0.09
-				transforms.append(Transform3D(facade_basis, window_position))
+				candidate_transforms.append(Transform3D(facade_basis, window_position))
 				var color_seed := absi(feature_id.hash() + edge_index * 17 + floor_index * 11 + window_index * 7)
 				var window_color := Color(0.16, 0.34, 0.46)
 				if color_seed % 7 == 0:
 					window_color = Color(0.95, 0.71, 0.42)
 				elif color_seed % 4 == 0:
 					window_color = Color(0.42, 0.62, 0.72)
-				colors.append(window_color)
-	if transforms.size() > maximum_windows:
-		var sampled_transforms: Array[Transform3D] = []
-		var sampled_colors: Array[Color] = []
-		var sample_step := float(transforms.size()) / float(maximum_windows)
-		for sample_index in range(maximum_windows):
-			var source_index := mini(
-				transforms.size() - 1,
-				int(floor((float(sample_index) + 0.5) * sample_step))
-			)
-			sampled_transforms.append(transforms[source_index])
-			sampled_colors.append(colors[source_index])
-		transforms = sampled_transforms
-		colors = sampled_colors
-	if transforms.is_empty():
+				candidate_colors.append(window_color)
+	if candidate_transforms.is_empty():
 		return 0
+	# One cell-level MultiMesh keeps the whole 200 m cell to one facade draw call.
+	# The per-building cap and per-cell cap bound memory on Android.
+	var cell_transforms: Array = parent.get_meta("system_facade_window_transforms", [])
+	var cell_colors: Array = parent.get_meta("system_facade_window_colors", [])
+	var remaining_cell_budget := maxi(0, 1200 - cell_transforms.size())
+	var building_budget := mini(32, remaining_cell_budget)
+	if building_budget <= 0:
+		return 0
+	var selected_count := mini(candidate_transforms.size(), building_budget)
+	var sample_step := float(candidate_transforms.size()) / float(selected_count)
+	for sample_index in range(selected_count):
+		var source_index := mini(
+			candidate_transforms.size() - 1,
+			int(floor((float(sample_index) + 0.5) * sample_step))
+		)
+		cell_transforms.append(candidate_transforms[source_index])
+		cell_colors.append(candidate_colors[source_index])
+	parent.set_meta("system_facade_window_transforms", cell_transforms)
+	parent.set_meta("system_facade_window_colors", cell_colors)
+	return selected_count
+
+
+func _flush_facade_window_multimesh(parent: Node3D) -> void:
+	var transforms: Array = parent.get_meta("system_facade_window_transforms", [])
+	var colors: Array = parent.get_meta("system_facade_window_colors", [])
+	if transforms.is_empty() or transforms.size() != colors.size():
+		return
 	var window_mesh := BoxMesh.new()
-	window_mesh.size = window_size
+	window_mesh.size = Vector3.ONE
 	var multimesh := MultiMesh.new()
 	multimesh.transform_format = MultiMesh.TRANSFORM_3D
 	multimesh.use_colors = true
@@ -615,17 +631,16 @@ func _add_procedural_facade_windows(
 		multimesh.set_instance_transform(index, transforms[index])
 		multimesh.set_instance_color(index, colors[index])
 	var windows := MultiMeshInstance3D.new()
-	windows.name = "OSMBuildingWindows_%s" % feature_id
+	windows.name = "BaghdadCellFacadeWindows"
 	windows.multimesh = multimesh
 	windows.material_override = facade_window_material
 	windows.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	windows.visibility_range_end = 280.0
-	windows.set_meta("osm_feature_id", feature_id)
 	windows.set_meta("system_facade_detail_type", "procedural_instanced_windows")
 	windows.set_meta("system_facade_window_count", transforms.size())
 	windows.set_meta("system_facade_window_sampling", "even_distribution_across_facades")
+	windows.set_meta("system_facade_window_draw_calls_per_cell", 1)
 	parent.add_child(windows)
-	return transforms.size()
+	parent.set_meta("system_facade_window_instance_count", transforms.size())
 
 
 func _find_building_approach_point(ring: PackedVector2Array, road_features: Array) -> Dictionary:
