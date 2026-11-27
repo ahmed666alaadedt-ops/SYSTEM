@@ -94,3 +94,72 @@ test("elemental relic rewards require a completed mission roster and cannot be r
     playerId: outsider, sessionId, eventId: "relic_reward_02", artifactId: "stormlightning_crown"
   }, { gameServer: true }));
 });
+
+
+test("trusted combat server consumes elemental receipts once and applies server-side boss resistance", async () => {
+  const uid = playerId + "_combat_resolver";
+  const server = "trusted_game_server";
+  await db.collection("players").doc(uid).set({ userId: uid });
+  await call("syncAuthoritativeElementalProgression", server, {
+    playerId: uid,
+    state: { nenUnlocked: true, nenControlRank: 4, level: 60, hunterRank: "S",
+      learnedSkills: ["stormlightning_arc"], authorizedSkills: ["stormlightning_arc"],
+      practiceCounts: { stormlightning_arc: 3 }, currentEnergy: 100, maxEnergy: 100 }
+  }, { gameServer: true });
+  await db.collection("artifactOwnership").doc(uid).collection("items").doc("stormlightning_crown").set({
+    artifactId: "stormlightning_crown", ownerId: uid, status: "owned",
+    awakened: true, relicSkillId: "stormlightning_arc"
+  });
+  const receipt = await call("authorizeElementalRelicActivation", uid, { skillId: "stormlightning_arc" });
+  const targetId = "elemental_boss_" + uid;
+  await db.collection("combatTargets").doc(targetId).set({
+    kind: "boss", health: 200, maxHealth: 200, isAlive: true,
+    elementalResistance: { lightning: 0.25 }
+  });
+  const resolved = await call("resolveElementalRelicCombat", server, {
+    playerId: uid, activationId: receipt.activationId, targetId
+  }, { gameServer: true });
+  assert.equal(resolved.success, true);
+  assert.equal(resolved.result.damage, 12);
+  assert.equal(resolved.result.remainingHealth, 188);
+  const target = await db.collection("combatTargets").doc(targetId).get();
+  assert.equal(target.data().health, 188);
+  await assert.rejects(() => call("resolveElementalRelicCombat", server, {
+    playerId: uid, activationId: receipt.activationId, targetId
+  }, { gameServer: true }));
+});
+
+test("trusted combat resolver applies water healing, earth guard and air dash to server state", async () => {
+  const cases = [
+    { uid: playerId + "_water_resolve", skill: "tideheart_restoration", artifact: "tideheart_pearl", elementRank: 3 },
+    { uid: playerId + "_earth_resolve", skill: "worldroot_earthguard", artifact: "worldroot_geode", elementRank: 3 },
+    { uid: playerId + "_air_resolve", skill: "stormwind_aerial_step", artifact: "stormwind_sigil", elementRank: 2 }
+  ];
+  for (const item of cases) {
+    await db.collection("players").doc(item.uid).set({ userId: item.uid });
+    await call("syncAuthoritativeElementalProgression", "trusted_game_server", {
+      playerId: item.uid,
+      state: { nenUnlocked: true, nenControlRank: 4, level: 60, hunterRank: "S",
+        learnedSkills: [item.skill], authorizedSkills: [item.skill],
+        practiceCounts: { [item.skill]: 3 }, currentEnergy: 100, maxEnergy: 100 }
+    }, { gameServer: true });
+    await db.collection("artifactOwnership").doc(item.uid).collection("items").doc(item.artifact).set({
+      artifactId: item.artifact, ownerId: item.uid, status: "owned",
+      awakened: true, relicSkillId: item.skill
+    });
+    if (item.skill === "tideheart_restoration") {
+      await db.collection("players").doc(item.uid).collection("combatState").doc("vitals").set({ health: 50, maxHealth: 100 });
+    }
+    const receipt = await call("authorizeElementalRelicActivation", item.uid, { skillId: item.skill });
+    const resolved = await call("resolveElementalRelicCombat", "trusted_game_server", {
+      playerId: item.uid, activationId: receipt.activationId
+    }, { gameServer: true });
+    assert.equal(resolved.success, true);
+    const status = await db.collection("players").doc(item.uid).collection("combatState").doc("elemental_status").get();
+    assert.equal(status.exists, true);
+    if (item.skill === "tideheart_restoration") {
+      const vitals = await db.collection("players").doc(item.uid).collection("combatState").doc("vitals").get();
+      assert.equal(vitals.data().health, 72);
+    }
+  }
+});
