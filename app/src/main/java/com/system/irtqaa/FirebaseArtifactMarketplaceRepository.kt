@@ -40,7 +40,8 @@ data class SystemArtifactListing(
 data class SystemRelicQuestSnapshot(
     val ownedArtifacts: List<SystemOwnedArtifact>,
     val marketListings: List<SystemArtifactListing>,
-    val skills: List<Map<String, Any?>>
+    val skills: List<Map<String, Any?>>,
+    val questSessions: List<Map<String, Any?>>
 )
 
 data class SystemArtifactAuction(
@@ -196,6 +197,30 @@ class FirebaseArtifactMarketplaceRepository(
             .addOnFailureListener { callback(Result.failure(it)) }
     }
 
+    /** Reads only this player's authoritative historical relic quest sessions. */
+    fun loadMyHistoricalRelicQuestSessions(callback: (Result<List<Map<String, Any?>>>) -> Unit) {
+        functions.getHttpsCallable("listMyHistoricalRelicQuestSessions").call()
+            .addOnSuccessListener { result ->
+                val raw = (result.data as? Map<*, *>)?.get("sessions") as? List<*> ?: emptyList<Any>()
+                val sessions = raw.mapNotNull { value ->
+                    val item = value as? Map<*, *> ?: return@mapNotNull null
+                    val sessionId = item["sessionId"] as? String ?: return@mapNotNull null
+                    val completed = item["completedObjectives"] as? Map<*, *> ?: emptyMap<Any, Any>()
+                    mapOf<String, Any?>(
+                        "sessionId" to sessionId,
+                        "questId" to (item["questId"] as? String ?: ""),
+                        "artifactId" to (item["artifactId"] as? String ?: ""),
+                        "status" to (item["status"] as? String ?: ""),
+                        "requiredObjectives" to (item["requiredObjectives"] as? List<*> ?: emptyList<Any>()),
+                        "completedObjectives" to completed.entries.associate { it.key.toString() to (it.value as? Boolean ?: false) },
+                        "returnProof" to (item["returnProof"] as? Map<*, *>)
+                    )
+                }
+                callback(Result.success(sessions))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
     /** Reads server-issued rare relic skills for the signed-in player only. */
     fun loadMyRareRelicSkills(callback: (Result<List<Map<String, Any?>>>) -> Unit) {
         functions.getHttpsCallable("listMyRareRelicSkills").call()
@@ -231,7 +256,14 @@ class FirebaseArtifactMarketplaceRepository(
                                 loadMyRareRelicSkills { skillsResult ->
                                     skillsResult.fold(
                                         onSuccess = { skills ->
-                                            callback(Result.success(SystemRelicQuestSnapshot(owned, listings, skills)))
+                                            loadMyHistoricalRelicQuestSessions { sessionsResult ->
+                                                sessionsResult.fold(
+                                                    onSuccess = { sessions ->
+                                                        callback(Result.success(SystemRelicQuestSnapshot(owned, listings, skills, sessions)))
+                                                    },
+                                                    onFailure = { callback(Result.failure(it)) }
+                                                )
+                                            }
                                         },
                                         onFailure = { callback(Result.failure(it)) }
                                     )
