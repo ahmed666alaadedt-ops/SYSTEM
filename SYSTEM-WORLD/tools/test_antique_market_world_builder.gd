@@ -11,6 +11,9 @@ func _initialize() -> void:
 
 
 func _run_facility_checks() -> bool:
+	var world_root := Node3D.new()
+	world_root.name = "AntiqueMarketTestWorld"
+	root.add_child(world_root)
 	var cases := [
 		{"floor": 29, "type": "global_auction_hall", "node": "GlobalAuctionHallInteraction"},
 		{"floor": 30, "type": "secret_trader_lounge", "node": "SecretTraderLoungeInteraction"},
@@ -20,7 +23,7 @@ func _run_facility_checks() -> bool:
 	for entry in cases:
 		var floor_number := int(entry["floor"])
 		var floor_root := Node3D.new()
-		root.add_child(floor_root)
+		world_root.add_child(floor_root)
 		Builder.build_floor(floor_root, floor_number, 29.0)
 		var experience := floor_root.get_node_or_null("AntiqueMarketWorldExperience") as Node3D
 		if experience == null:
@@ -52,4 +55,5 @@ func _run_facility_checks() -> bool:
 					push_error("Secret trader booth %d has no stable identity." % trader_index)
 					return false
 		floor_root.queue_free()
+	world_root.queue_free()
 	return true
