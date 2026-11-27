@@ -17,6 +17,16 @@ async function call(name, uid, data, claims = {}) {
   return api[name].run(request(uid, data, claims));
 }
 
+async function createActiveCombatSession(uid) {
+  const sessionId = "session_" + uid;
+  await db.collection("players").doc(uid).collection("combatState").doc("session").set({
+    active: true, playerId: uid, sessionId,
+    playerPosition: { x: 0, y: 0, z: 0 },
+    lastServerTickMs: Date.now()
+  });
+  return sessionId;
+}
+
 before(async () => {
   await db.collection("players").doc(playerId).set({ userId: playerId, displayName: "Elemental Test" });
 });
@@ -111,9 +121,11 @@ test("trusted combat server consumes elemental receipts once and applies server-
     awakened: true, relicSkillId: "stormlightning_arc"
   });
   const receipt = await call("authorizeElementalRelicActivation", uid, { skillId: "stormlightning_arc" });
+  const sessionId = await createActiveCombatSession(uid);
   const targetId = "elemental_boss_" + uid;
   await db.collection("combatTargets").doc(targetId).set({
     kind: "boss", health: 200, maxHealth: 200, isAlive: true,
+    sessionId, position: { x: 0, y: 0, z: -10 }, lastServerTickMs: Date.now(),
     elementalResistance: { lightning: 0.25 }
   });
   const resolved = await call("resolveElementalRelicCombat", server, {
@@ -147,6 +159,7 @@ test("trusted combat resolver applies water healing, earth guard and air dash to
       artifactId: item.artifact, ownerId: item.uid, status: "owned",
       awakened: true, relicSkillId: item.skill
     });
+    await createActiveCombatSession(item.uid);
     if (item.skill === "tideheart_restoration") {
       await db.collection("players").doc(item.uid).collection("combatState").doc("vitals").set({ health: 50, maxHealth: 100 });
     }
@@ -162,4 +175,39 @@ test("trusted combat resolver applies water healing, earth guard and air dash to
       assert.equal(vitals.data().health, 72);
     }
   }
+});
+
+
+test("elemental combat rejects missing, stale and out-of-range server session state", async () => {
+  const uid = playerId + "_invalid_session";
+  await db.collection("players").doc(uid).set({ userId: uid });
+  await call("syncAuthoritativeElementalProgression", "trusted_game_server", {
+    playerId: uid,
+    state: { nenUnlocked: true, nenControlRank: 4, level: 60, hunterRank: "S",
+      learnedSkills: ["stormlightning_arc"], authorizedSkills: ["stormlightning_arc"],
+      practiceCounts: { stormlightning_arc: 3 }, currentEnergy: 100, maxEnergy: 100 }
+  }, { gameServer: true });
+  await db.collection("artifactOwnership").doc(uid).collection("items").doc("stormlightning_crown").set({
+    artifactId: "stormlightning_crown", ownerId: uid, status: "owned",
+    awakened: true, relicSkillId: "stormlightning_arc"
+  });
+  const receipt = await call("authorizeElementalRelicActivation", uid, { skillId: "stormlightning_arc" });
+  await assert.rejects(() => call("resolveElementalRelicCombat", "trusted_game_server", {
+    playerId: uid, activationId: receipt.activationId
+  }, { gameServer: true }));
+
+  const sessionId = await createActiveCombatSession(uid);
+  await db.collection("combatTargets").doc("far_target_" + uid).set({
+    kind: "monster", health: 100, maxHealth: 100, isAlive: true,
+    sessionId, position: { x: 0, y: 0, z: -100 }, lastServerTickMs: Date.now()
+  });
+  await assert.rejects(() => call("resolveElementalRelicCombat", "trusted_game_server", {
+    playerId: uid, activationId: receipt.activationId, targetId: "far_target_" + uid
+  }, { gameServer: true }));
+  await db.collection("players").doc(uid).collection("combatState").doc("session").update({
+    lastServerTickMs: Date.now() - 5000
+  });
+  await assert.rejects(() => call("resolveElementalRelicCombat", "trusted_game_server", {
+    playerId: uid, activationId: receipt.activationId
+  }, { gameServer: true }));
 });
