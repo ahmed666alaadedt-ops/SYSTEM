@@ -4556,6 +4556,15 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 					artifact_civilization = "الخزنة المركزية للقطع النادرة"
 					artifact_names = ["أثر ملكي نادر", "قطعة محفوظة عالية القيمة", "تحفة ذات سجل أصالة", "مقتنى تاريخي نادر"]
 				var artifact_name := artifact_names[exhibit_index % artifact_names.size()]
+				var historical_quest_id := ""
+				if facility_type == "player_artifact_market" and exhibit_index == 0:
+					match floor_number:
+						29:
+							historical_quest_id = "babylon_storm_seal"
+						30:
+							historical_quest_id = "nineveh_shadow_seal"
+						31:
+							historical_quest_id = "assyrian_colossus_core"
 				_add_facility_box(root, "ArtifactPedestal_%02d" % exhibit_index, exhibit_position + Vector3(0.0, 0.65, 0.0), Vector3(3.2, 1.3, 2.4), accent)
 				_add_facility_box(root, "ArtifactGlassCase_%02d" % exhibit_index, exhibit_position + Vector3(0.0, 2.35, 0.0), Vector3(2.5, 2.1, 1.8), highlight)
 				var artifact_material := StandardMaterial3D.new()
@@ -4585,6 +4594,8 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 				artifact_model.set_meta("system_artifact_id", exhibit_id)
 				artifact_model.set_meta("system_artifact_name", artifact_name)
 				artifact_model.set_meta("system_artifact_civilization", artifact_civilization)
+				if not historical_quest_id.is_empty():
+					artifact_model.set_meta("system_historical_quest_id", historical_quest_id)
 				root.add_child(artifact_model)
 				var artifact_label := Label3D.new()
 				artifact_label.name = "ArtifactLabel_%02d" % exhibit_index
@@ -4603,6 +4614,8 @@ func _create_specialized_floor_facility(room: Node3D, tower_id: String, floor_nu
 				exhibit_area.set_meta("system_artifact_id", exhibit_id)
 				exhibit_area.set_meta("system_artifact_name", artifact_name)
 				exhibit_area.set_meta("system_artifact_civilization", artifact_civilization)
+				if not historical_quest_id.is_empty():
+					exhibit_area.set_meta("system_historical_quest_id", historical_quest_id)
 				exhibit_area.set_meta("system_artifact_provenance", "SYSTEM WORLD museum exhibit catalogue; display specimen only")
 				exhibit_area.set_meta("system_artifact_authenticity", "curator_review_required")
 				exhibit_area.set_meta("system_tower_id", tower_id)
