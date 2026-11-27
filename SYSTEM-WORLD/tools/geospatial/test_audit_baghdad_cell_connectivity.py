@@ -286,6 +286,38 @@ class BaghdadCellConnectivityTests(unittest.TestCase):
             result = audit.audit_pack(source, pack)
             self.assertEqual(result["status"], "passed", result["errors"])
 
+    def test_multipolygon_crossing_seam_ignores_separate_point_touch(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source, pack = _make_fixture(root)
+
+            def wgs84(x, z):
+                latitude = 33.3152 - z / 110574.0
+                longitude = 44.3661 + x / (111319.49 * 0.835)
+                project = audit._projector()
+                for _ in range(8):
+                    projected_x, projected_z = transform(
+                        project, Point(longitude, latitude)
+                    ).coords[0]
+                    longitude += (x - projected_x) / (111319.49 * 0.835)
+                    latitude -= (z - projected_z) / 110574.0
+                return longitude, latitude
+
+            crossing_component = Polygon([
+                wgs84(180, 30), wgs84(220, 30), wgs84(220, 70),
+                wgs84(180, 70), wgs84(180, 30),
+            ])
+            point_touch_component = Polygon([
+                wgs84(200, 80), wgs84(180, 70), wgs84(180, 90),
+                wgs84(200, 80),
+            ])
+            feature = MultiPolygon([crossing_component, point_touch_component])
+            _append_projected_feature(source, pack, "buildings", 947581133, "way", feature)
+
+            result = audit.audit_pack(source, pack)
+            self.assertEqual(result["status"], "passed", result["errors"])
+            self.assertEqual(result["actual_cell_seam_checks"]["disconnected_seams"], 0)
+
     def test_bridge_polygon_crossing_cell_boundary_is_audited(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
