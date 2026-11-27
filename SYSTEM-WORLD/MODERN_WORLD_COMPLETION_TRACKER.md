@@ -838,14 +838,23 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 
 ## High-density city population, commercial streets and industrial district — 27 November 2026
 
-- [x] Increase Baghdad's seeded civilian society target to 8,500 adults plus 1,500 minors; residents are created in batches across frames to avoid one large startup loop.
+- [x] Increase Baghdad's seeded civilian society target to 42,500 adults plus 7,500 minors; residents are created in batches across frames to avoid one large startup loop.
 - [x] Expand deterministic resident home placement from a 5 × 5 cluster to a 41 × 41 city-block grid.
 - [x] Select the nearest living residents to the player for the bounded visible actor pool instead of always rendering the first records in the society list; retain a 72-actor visible cap pending mobile profiling.
 - [x] Add twelve individually named commercial tenants to the shopping street: restaurant, cafe, bakery, sweets, clothing, shoes, perfume, electronics, mobile, furniture, supermarket and industrial hardware/parts.
 - [x] Add a dedicated industrial/workshop district with six marked units: metalwork, carpentry, auto parts/repair, building materials, textiles and warehousing.
 - [x] Add source-level Godot validation for population targets, distributed placement, nearest-resident streaming, commercial categories, industrial units and the existing batched vegetation helper.
 - [ ] Run the updated Godot 4.3 workflow and fix any parser/runtime failures before marking this pass tested.
-- [ ] Verify that the 10,000 society records seed and save/load correctly on a real Android device; measure startup hitch, memory, CPU and frame pacing.
+- [ ] Verify that the 50,000 society records seed and save/load correctly on a real Android device; measure startup hitch, memory, CPU and frame pacing.
 - [ ] Add working shop inventories, staff/customer schedules, checkout/economy integration, manufacturing/warehouse production chains and real walk-in interiors; current new tenant rows are marked visual/interaction foundations, not finished retail simulations.
 - [ ] Extend the population simulation to other cities and rural settlements only after the Baghdad seed, save/load and mobile performance are measured.
-- Note: 10,000 is the authored Baghdad resident-society target, not 1,440 simultaneously rendered 3D characters. The visible crowd remains distance-selected and capped at 72 for mobile safety; all residents are not rendered at once.
+- Note: 50,000 is the authored Baghdad resident-society target, not 1,440 simultaneously rendered 3D characters. The visible crowd remains distance-selected and capped at 72 for mobile safety; all residents are not rendered at once.
+
+## Baghdad population scale-up — 27 November 2026
+
+- [x] Raise the authored Baghdad society target to 50,000 persistent resident records: 42,500 adults and 7,500 minors, preserving the 85/15 demographic split.
+- [x] Keep resident creation batched across frames and preserve existing saves without deleting residents.
+- [x] Retain the 72 nearby full-detail visible pedestrian cap; 50,000 is the simulated society target, not a simultaneous 3D actor count.
+- [ ] Run Godot 4.3 validation and measure the full 50,000-record seed, save/load time, memory, CPU and Android frame pacing.
+- [ ] Profile the five-second nearest-resident refresh and 200-record simulation batch at 50,000 records; optimize only from measured results.
+- Note: code target updated; runtime population creation and mobile performance are not yet verified.
