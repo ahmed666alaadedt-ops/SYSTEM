@@ -86,7 +86,7 @@ func _run_validation() -> void:
 		return
 	print("Baghdad OSM mesh integrity: no null MeshInstance3D or MultiMeshInstance3D resources in loaded center cell.")
 
-	var manifest_path := streamer.data_root.path_join("manifest.json")
+	var manifest_path: String = str(streamer.data_root).path_join("manifest.json")
 	var manifest_value: Variant = JSON.parse_string(FileAccess.get_file_as_string(manifest_path))
 	if not manifest_value is Dictionary:
 		_fail("Baghdad OSM manifest could not be read for Republic Bridge integration.")
