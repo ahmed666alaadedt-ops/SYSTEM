@@ -257,6 +257,15 @@ func _create_modern_city() -> void:
 		baghdad_osm.name = "BaghdadOSMCellStreamer"
 		root.add_child(baghdad_osm)
 
+	# Preserve the 200 m detailed core and stream the full municipal road network
+	# through a separate, lightweight 1 km overview pack.
+	if FileAccess.file_exists("res://data/geography/baghdad/regional_roads/manifest.json"):
+		var baghdad_regional_roads := BaghdadOSMCellStreamerScript.new()
+		baghdad_regional_roads.name = "BaghdadRegionalRoadsStreamer"
+		baghdad_regional_roads.data_root = "res://data/geography/baghdad/regional_roads"
+		baghdad_regional_roads.load_radius = 1
+		root.add_child(baghdad_regional_roads)
+
 	var monster_gate_manager := ModernWorldMonsterGateManagerScript.new()
 	monster_gate_manager.name = "ModernWorldMonsterGateManager"
 	root.add_child(monster_gate_manager)
