@@ -7,6 +7,7 @@ const WaterwaysManagerScript = preload("res://scripts/waterways_manager.gd")
 const MarineEnvironmentManagerScript = preload("res://scripts/marine_environment_manager.gd")
 const GreedIslandManagerScript = preload("res://scripts/greed_island_manager.gd")
 const HistoricalWorldManagerScript = preload("res://scripts/historical_world_manager.gd/historical_world_manager.gd")
+const HistoricalRelicQuestRuntimeScript = preload("res://scripts/system_historical_relic_quest_runtime.gd")
 const FantasyWorldManagerScript = preload("res://scripts/fantasy_world_manager.gd")
 const ModernWorldDiscoveryManagerScript = preload("res://scripts/modern_world_discovery_manager.gd")
 const ModernContinentManagerScript = preload("res://scripts/modern_continent_manager.gd")
@@ -196,7 +197,11 @@ func _create_historical_world() -> void:
 	historical_world.name = "HistoricalCivilizationsEnvironment"
 	root.add_child(historical_world)
 
-	print("SYSTEM WORLD: Historical & Civilizations world created.")
+	var relic_quest := HistoricalRelicQuestRuntimeScript.new()
+	relic_quest.name = "HistoricalRelicQuestRuntime"
+	root.add_child(relic_quest)
+
+	print("SYSTEM WORLD: Historical & Civilizations world created with relic quest runtime.")
 
 
 # --------------------------------------------------
