@@ -3,6 +3,13 @@ extends SceneTree
 const BAGHDAD_STREAMER = preload("res://scripts/baghdad_osm_cell_streamer.gd")
 const CITY_STATE_STORE = preload("res://scripts/baghdad_city_state_store.gd")
 const CITY_NAVIGATION = preload("res://scripts/npc_city_navigation_manager.gd")
+const NPC_VEHICLE_SCRIPT = preload("res://scripts/system_npc_vehicle.gd")
+
+
+class MockVehicleRoadStreamer:
+	extends Node
+	func get_vehicle_navigation_path(start: Vector3, target: Vector3, _max_snap_distance: float = 70.0) -> Array[Vector3]:
+		return [start, (start + target) * 0.5, target]
 
 
 func _initialize() -> void:
@@ -249,6 +256,27 @@ func _run_validation() -> void:
 		return
 	direction_test_streamer.free()
 	direction_test_cell.free()
+
+	var mock_world_root := Node3D.new()
+	root.add_child(mock_world_root)
+	var mock_vehicle_streamer := MockVehicleRoadStreamer.new()
+	mock_vehicle_streamer.name = "BaghdadOSMCellStreamer"
+	mock_world_root.add_child(mock_vehicle_streamer)
+	var mock_crime_manager := Node.new()
+	mock_world_root.add_child(mock_crime_manager)
+	var baghdad_npc_vehicle = NPC_VEHICLE_SCRIPT.new()
+	baghdad_npc_vehicle.configure("npc_test_baghdad", "citizen_test", "Test Driver", "Baghdad", mock_crime_manager, Vector3.ZERO, 0)
+	if str(baghdad_npc_vehicle.get_meta("system_road_route_source", "")) != "real_osm_vehicle_graph" or baghdad_npc_vehicle.route_points.size() < 4:
+		_fail("Baghdad civilian NPC vehicle did not adopt the real OSM road loop.")
+		return
+	var other_city_npc_vehicle = NPC_VEHICLE_SCRIPT.new()
+	other_city_npc_vehicle.configure("npc_test_tokyo", "citizen_tokyo", "Test Driver", "Tokyo", mock_crime_manager, Vector3.ZERO, 1)
+	if str(other_city_npc_vehicle.get_meta("system_road_route_source", "")) != "procedural_fallback" or other_city_npc_vehicle.route_points.size() != 4:
+		_fail("Non-Baghdad NPC vehicles did not preserve their city-local fallback route.")
+		return
+	baghdad_npc_vehicle.free()
+	other_city_npc_vehicle.free()
+	mock_world_root.free()
 
 	navigation_manager.free()
 	print("Baghdad OSM routing passed: pedestrian_points=", strict_player_route.size(), " vehicle_points=", vehicle_route.size(), " motor_roads=", vehicle_segments.size(), " map_road_segments=", exported_road_segments.size())
