@@ -120,6 +120,65 @@ func _run_validation() -> void:
 		_fail("Republic Bridge regional overview cell has no OSM road meshes.")
 		return
 	print("Baghdad citywide road overview passed: center roads=", regional_center_roads.size(), " bridge-area roads=", regional_bridge_roads.size(), " resolution=1 km.")
+
+	var regional_urban := BAGHDAD_STREAMER.new()
+	regional_urban.name = "BaghdadRegionalUrbanValidationStreamer"
+	regional_urban.data_root = "res://data/geography/baghdad/regional_urban"
+	regional_urban.load_radius = 0
+	regional_urban.overview_mode = true
+	root.add_child(regional_urban)
+	if not regional_urban.enabled or not regional_urban.overview_mode or absf(regional_urban.cell_size - 1000.0) > 0.01:
+		_fail("Citywide Baghdad urban detail pack did not enable in 1 km low-detail mode.")
+		return
+	var urban_manifest: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/geography/baghdad/regional_urban/manifest.json"))
+	if not urban_manifest is Dictionary:
+		_fail("Citywide Baghdad urban manifest is invalid.")
+		return
+	var expected_urban_layers := ["buildings", "waterways", "bridges", "landuse", "amenities", "railway", "natural-water", "entrances"]
+	if urban_manifest.get("layers_included", []) != expected_urban_layers:
+		_fail("Citywide Baghdad urban pack is missing one or more expected OSM layers.")
+		return
+	var urban_cells_path := "res://data/geography/baghdad/regional_urban/cells"
+	var urban_files := DirAccess.get_files_at(urban_cells_path)
+	var building_cell := Vector2i(2147483647, 2147483647)
+	var poi_cell := Vector2i(2147483647, 2147483647)
+	for file_name in urban_files:
+		if not file_name.ends_with(".json"):
+			continue
+		var tile: Variant = JSON.parse_string(FileAccess.get_file_as_string(urban_cells_path.path_join(file_name)))
+		if not tile is Dictionary:
+			continue
+		var tile_layers: Dictionary = tile.get("layers", {})
+		var tile_cell := Vector2i(int(tile.get("cell_x", 0)), int(tile.get("cell_z", 0)))
+		if building_cell.x == 2147483647 and not tile_layers.get("buildings", []).is_empty():
+			building_cell = tile_cell
+		if poi_cell.x == 2147483647 and not tile_layers.get("amenities", []).is_empty():
+			poi_cell = tile_cell
+		if building_cell.x != 2147483647 and poi_cell.x != 2147483647:
+			break
+	if building_cell.x == 2147483647 or poi_cell.x == 2147483647:
+		_fail("Citywide urban pack must contain mapped building footprints and public/commercial POIs.")
+		return
+	regional_urban._load_cell(building_cell)
+	if not regional_urban.loaded_cells.has(building_cell):
+		_fail("Citywide urban building cell did not load.")
+		return
+	var urban_buildings: Node3D = regional_urban.loaded_cells[building_cell]
+	var overview_buildings := urban_buildings.find_children("OSMOverviewBuilding_*", "MeshInstance3D", true, false)
+	if overview_buildings.is_empty():
+		_fail("Citywide urban building footprints did not produce low-detail building meshes.")
+		return
+	regional_urban._load_cell(poi_cell)
+	if not regional_urban.loaded_cells.has(poi_cell):
+		_fail("Citywide urban POI cell did not load.")
+		return
+	var urban_pois: Node3D = regional_urban.loaded_cells[poi_cell]
+	var poi_markers := urban_pois.find_children("OSMRegionalPOI_*", "Node3D", true, false)
+	if poi_markers.is_empty():
+		_fail("Citywide urban amenities did not produce POI markers.")
+		return
+	print("Baghdad citywide urban overview passed: buildings=", overview_buildings.size(), " POI markers=", poi_markers.size(), " resolution=1 km.")
+	regional_urban.queue_free()
 	regional_roads.queue_free()
 	streamer.queue_free()
 	terrain.queue_free()
