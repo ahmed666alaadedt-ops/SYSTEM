@@ -26,7 +26,7 @@ func _run() -> void:
 		return
 	var city_windows := 0
 	for city_name in ["NewYork", "London", "Paris", "Baghdad", "Moscow", "Cairo", "Tokyo"]:
-		var marker := continent.find_child("City_" + city_name, true, false)
+		var marker := continent.find_child("CityMarker_" + city_name, true, false)
 		if marker == null:
 			continue
 		var windows := marker.get_node_or_null("CitySilhouetteWindows_LightLOD") as MultiMeshInstance3D
