@@ -34,7 +34,8 @@ const MARKETPLACE_OPERATIONS := [
     "exchange_offers",
     "create_exchange_offer",
     "accept_exchange_offer",
-    "close_exchange_offer"
+    "close_exchange_offer",
+    "refresh_relic_state"
 ]
 
 var _pending_world_id := ""
