@@ -88,7 +88,9 @@ test("elemental relic rewards require a completed mission roster and cannot be r
     playerId: uid, sessionId, eventId: "relic_reward_01", artifactId: "primordial_flame_heart"
   }, { gameServer: true });
   assert.equal(replay.alreadyIssued, true);
+  const outsider = uid + "_outsider";
+  await db.collection("players").doc(outsider).set({ userId: outsider });
   await assert.rejects(() => call("grantElementalRelicFromCompletedMission", server, {
-    playerId: uid, sessionId, eventId: "relic_reward_02", artifactId: "stormlightning_crown"
+    playerId: outsider, sessionId, eventId: "relic_reward_02", artifactId: "stormlightning_crown"
   }, { gameServer: true }));
 });
