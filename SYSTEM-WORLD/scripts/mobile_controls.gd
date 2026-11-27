@@ -118,7 +118,7 @@ class TouchOverlay extends Control:
 			size.y - 285.0 * ui_scale
 		)
 		relic_echo_center = Vector2(115.0 * ui_scale, size.y - 265.0 * ui_scale)
-		relic_aegis_center = Vector2(220.0 * ui_scale, size.y - 265.0 * ui_scale)
+		relic_aegis_center = Vector2(245.0 * ui_scale, size.y - 265.0 * ui_scale)
 
 		dodge_radius = 40.0 * ui_scale
 		dodge_center = Vector2(
