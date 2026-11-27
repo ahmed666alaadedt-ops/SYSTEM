@@ -21,8 +21,10 @@ The existing detailed OSM artifact is intentionally limited to 200 m cells with 
 - **Verified municipal OSM source:** 64,593 distinct road ways in the Baghdad municipal clip.
 - **Generated citywide overview pack:** 1 km cells; projected bounds [-17, 18, -20, 15]; 927 occupied cells; 81,859 clipped road fragments; all four municipal bounding-box quadrants contain road cells. ZIP size 3,608,423 bytes.
 - **Detailed core pack preserved:** 200 m cells; 276 occupied cells; 47 mapped entrance points; Republic Bridge and Tigris source IDs remain present.
-- **Canonical Godot/Android runtime validation:** pending a new build that downloads the successful source artifact and exercises both the detailed pack and the citywide road streamer.
-- No physical-device visual, collision, vehicle navigation or performance acceptance is claimed.
+- **Canonical Godot/Android validation:** passed on 2026-11-27, run [46046680067](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/46046680067). The build downloaded and installed both packs, imported the project, passed the Baghdad OSM runtime validator, launched the main scene, passed the companion/NPC/Hunter validators and exported a signed debug APK.
+- **Runtime OSM assertions:** detailed center cell roads=31, buildings=10, land-use=15 and building collisions=10; Republic Bridge primary=1, secondary=1 and Tigris=1; 1 km overview center cell=198 road meshes and Republic Bridge area cell=316 road meshes.
+- **Android APK:** artifact [15222627516](https://github.com/ahmed666alaadedt-ops/SYSTEM/actions/runs/46046680067/artifacts/15222627516), 40,516,714 bytes; SHA-256 `ed3872bf80e16a794de566bfd6030327e4fdca4b4b73aa8466737cb16fe69904`.
+- Physical-device visual, collision/driveability, vehicle navigation, frame-rate, memory and thermal acceptance remain pending.
 
 ## Guardrails
 - Do not delete or replace the existing detailed Baghdad OSM pack.
