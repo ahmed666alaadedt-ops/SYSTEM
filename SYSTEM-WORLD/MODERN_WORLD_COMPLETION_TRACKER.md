@@ -808,3 +808,17 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Extend the existing Baghdad civic venue validator to check the stadium's facilities and room collision/entry nodes.
 - [ ] Add ticket validation, secure spectator circulation, stair navigation, crowd NPCs, team/official schedules, dressing-room interactions and a complete football match simulation.
 - [ ] Run Godot 4.3 validation and inspect the expanded stadium in the live Baghdad scene.
+
+## Server-authoritative artifact player marketplace — 27 November 2026
+
+- [x] Add authenticated Firebase callable endpoints for listing a player's owned artifact at a seller-selected SYSTEM Credits price, browsing open listings, purchasing, and seller cancellation.
+- [x] Lock a listed artifact against duplicate listing/sale by recording its listing ID and listed state in the server-owned artifact record.
+- [x] Execute buyer debit, seller credit, artifact ownership transfer, listing settlement, and immutable transaction-ledger creation in one Firestore transaction.
+- [x] Reject unauthenticated users, invalid prices/IDs, self-purchases, already-closed listings, inconsistent ownership/locks, missing wallets, insufficient funds, and duplicate buyer item IDs.
+- [x] Keep marketplace wallet, inventory and listing collections outside client-writable player systemData; the existing Firestore catch-all denies client writes to these new collections.
+- [x] Add a GitHub Actions TypeScript compilation workflow for Firebase Functions.
+- [ ] Provision marketWallets/{uid} and playerArtifacts/{uid}/items/{itemId} only from trusted server reward/account flows; existing local SYSTEM Credits and local artifact saves are not authoritative and are not automatically imported.
+- [ ] Connect the Godot market UI to Firebase callable endpoints and remove local-wallet/local-inventory claims from the online marketplace path while preserving the offline prototype as an explicitly separate mode.
+- [ ] Add emulator-backed transaction tests for concurrent buyers, duplicate requests, seller cancellation races, insufficient balance, and rollback on failed ownership transfer.
+- [ ] Deploy Firebase Functions and verify authenticated end-to-end transactions in a controlled test environment before enabling player-to-player trading.
+- Note: the server transaction path is implemented in functions/src/artifact_market.ts but is not live until server-owned wallets/artifact inventory are provisioned and the client is connected. No real player credits or artifacts have been moved by this code yet.
