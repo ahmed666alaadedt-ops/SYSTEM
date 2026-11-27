@@ -84,7 +84,7 @@ export const createArtifactAuction = onCall(async (request) => {
     if (!item.exists || !profile.exists) {
       throw new HttpsError("not-found", "القطعة أو حساب البائع غير موجود.");
     }
-    if (item.data()?.ownerId !== sellerId || item.data()?.status !== "owned") {
+    if (item.data()?.ownerId !== sellerId || item.data()?.status !== "owned" || item.data()?.activeHistoricalQuestSessionId) {
       throw new HttpsError("failed-precondition", "القطعة غير متاحة أو محجوزة مسبقاً.");
     }
     transaction.update(ownedItemRef, {
@@ -503,7 +503,7 @@ export const createArtifactExchangeOffer = onCall(async (request) => {
         !requestedRegistry.exists) {
       throw new HttpsError("not-found", "القطعة أو أحد حسابي التبادل غير موجود.");
     }
-    if (offeredItem.data()?.ownerId !== initiatorId || offeredItem.data()?.status !== "owned") {
+    if (offeredItem.data()?.ownerId !== initiatorId || offeredItem.data()?.status !== "owned" || offeredItem.data()?.activeHistoricalQuestSessionId) {
       throw new HttpsError("failed-precondition", "القطعة المعروضة ليست ملكك أو أنها محجوزة.");
     }
     transaction.update(offeredItemRef, {
@@ -563,7 +563,7 @@ export const acceptArtifactExchangeOffer = onCall(async (request) => {
       throw new HttpsError("failed-precondition", "القطعة الأولى لم تعد محجوزة لهذا التبادل.");
     }
     if (!recipientItem.exists || recipientItem.data()?.status !== "owned" ||
-        recipientItem.data()?.ownerId !== recipientId) {
+        recipientItem.data()?.ownerId !== recipientId || recipientItem.data()?.activeHistoricalQuestSessionId) {
       throw new HttpsError("failed-precondition", "القطعة المطلوبة ليست ملك اللاعب المستلم أو أنها محجوزة.");
     }
 

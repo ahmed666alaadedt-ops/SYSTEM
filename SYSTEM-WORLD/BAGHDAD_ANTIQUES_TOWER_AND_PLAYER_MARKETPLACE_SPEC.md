@@ -128,3 +128,89 @@ Do not count the independent Power Tower as one of the five district towers. Spo
 8. Auction settlement and two-party exchange are tested against expired, cancelled, replayed and conflicting requests.
 9. The existing Hunter Association, Shopping, Business, Technology and standalone Power Tower regressions remain green.
 10. No changes are merged into main without the user's separate explicit approval.
+
+
+## Yorknew-inspired global antiques market and historical relic quests
+
+The existing marketplace is extended in place; do not create a second economy, duplicate inventory, or replace the escrow implementation.
+
+### Market halls inspired by Yorknew City
+- Global auction hall with scheduled public auctions, rare-lot showcases, bidder history and transparent server settlement.
+- Restricted collector exchange for high-rarity pieces, with curator verification and provenance review before a lot can receive a verified label.
+- Hidden dealer network for mysterious and cursed relics. These are fictional game items; suspicious provenance affects story risk and appraisal, never bypasses ownership or escrow checks.
+- Dealer reputation, appraisal grades, restoration condition, provenance chain and historical-civilization filters.
+- Player-owned gallery rooms and public museum displays remain separate from sale listings.
+- NPC auctioneers, appraisers, curators, restorers, guards and dealers provide world activity and services.
+- Every purchase, bid, exchange and cancellation continues to use the existing authenticated server transactions and escrow. No client-side balance or ownership mutation is permitted.
+
+### Super-rare skills inside relics
+Some artifacts contain a sealed skill, dormant power or historical technique. A relic may:
+- reveal a skill immediately only when its authored rarity and unlock condition permit it;
+- conceal a skill until a linked historical quest is completed;
+- grant a skill only after a required relic-return choice is confirmed by the trusted game server.
+
+Skill examples for the initial content set:
+- Babylonian Star Tablet → Celestial Lightning (mythic).
+- Sumerian Oath Seal → Earth Guardian (legendary).
+- Akkadian Shadow Crown → Shadow Avatar (mythic).
+
+These are authored content examples, not guaranteed drops from every artifact. Skill IDs are stable and unique; reward issuance must be replay-safe and server-authoritative. A client signal or local save must never grant a rare skill or mint an artifact.
+
+### Historical-world quest loop
+1. The player examines an eligible relic in the museum, collection or market and discovers its inscriptions and quest clue.
+2. The game presents an optional invitation to enter the relic's linked historical world. The player must explicitly accept before travel.
+3. The quest loads the corresponding historical setting (for example ancient Babylon, Sumer or Akkad) and its authored objectives, NPCs, puzzles, enemies and locations.
+4. Progress is recorded against the specific quest and relic. Completion events must be validated by the trusted game server; a client-supplied objective-complete flag is not proof.
+5. Each quest explicitly defines whether the relic is retained or must be returned to its original historical site. A return-required quest cannot complete until the server verifies the correct relic was returned to the correct site.
+6. After the quest and any return condition are verified, the server grants the associated rare skill once, records the quest receipt and updates the player's progression.
+7. The player returns to the present-day world. The museum, collection and marketplace refresh from authoritative ownership so a returned relic cannot remain listed, duplicated or tradable.
+
+### Initial relic quest content
+| Relic | Historical world | Quest objective arc | Relic outcome | Skill reward |
+|---|---|---|---|---|
+| Babylonian Star Tablet | Ancient Babylon | Locate the sealed archive, solve the celestial lock, defeat its guardian | Return to Esagila archive | Celestial Lightning |
+| Sumerian Oath Seal | Ancient Sumer | Recover the three oaths and restore the temple seal | Return to the royal temple | Earth Guardian |
+| Akkadian Shadow Crown | Ancient Akkad | Trace the lost dynasty, pass the shadow trial, seal the cursed chamber | Player retains the relic after server verification | Shadow Avatar |
+
+### Required technical integration and closure gates
+- Add a historical relic quest manager to the Godot world as a progression coordinator. It may request world travel, track presentation state and emit requests, but it is not an authority for rewards, ownership or quest completion. The current branch now preloads this manager from `main.gd`, routes accepted relic quests through the existing `WorldManager.WorldID.MYTHOLOGY` world (no duplicate historical-world loader), and creates interactable objective markers and a return altar through `artifact_relic_quest_world_runtime.gd`. Local objective progress remains presentation-only.
+- Connect its world-travel request to the existing historical-world transition system; do not create a duplicate historical-world loader.
+- Connect quest objective events to a trusted server verification endpoint. Do not treat a boolean supplied by Godot as proof of completion.
+- Connect verified relic-return events to the marketplace ownership service so the relic is removed from the player's tradable inventory atomically and its historical return is recorded.
+- A trusted callable `completeHistoricalRelicQuest` is now added in `functions/src/relic_quest_rewards.ts` and exported from `functions/src/index.ts`. It checks the game-server custom claim, validates the quest/relic/site pairing, confirms the player owns an unreserved artifact, then atomically records a return-required relic as `returned_to_history` and unlocks the mapped rare skill with replay-safe event IDs. The gameplay server still must call it only after independently verifying all objectives and the historical-site return; deployment and emulator coverage remain required.
+- Connect the existing trusted reward endpoint `grantMarketplaceArtifactFromReward` only for artifact rewards and the trusted skill-progression reward path for skill unlocks. Both must be idempotent by stable quest/reward ID.
+- Add emulator tests for forged objective events, wrong relic/site return, duplicate completion, replayed skill rewards, and concurrent return/listing attempts.
+- Add Godot headless tests for relic discovery, opt-in travel request, objective progression, return-required and retain-relic branches, and duplicate reward prevention.
+- Add Android/Godot physical-device tests for opening a relic quest from the market, travelling to the historical world, returning to the present, and seeing the updated server-owned collection.
+- Production deployment, trusted server identity configuration and physical-device verification remain separate activation gates. A passing local quest-manager test does not mean the online reward or world-travel integration is live.
+
+
+## 2026-11-27 implementation checkpoint — Yorknew-inspired market closure
+
+- The existing 34-floor Antiques & Heritage Tower has dedicated 3D market experiences on floors 29–32: global auction hall, hidden/secret trader lounge, authenticity appraisal laboratory, and collector reputation hall. These are additions to the existing tower and existing player marketplace, not a replacement marketplace.
+- The global auction hall reuses the existing player auction/listing/exchange services.
+- Secret-trader offers are server catalogued and purchased through the same SYSTEM wallet, artifact registry, ownership records, transaction history and artifact collection. Each player can acquire each unique secret offer only once; retries are idempotent.
+- Authenticity appraisals compare the owned artifact with its immutable global registry. One appraisal record per player/artifact prevents repeated appraisal farming.
+- Collector reputation is derived from completed marketplace sales/purchases and unique authenticity reports; it is not a client-editable score.
+- Three relic skills are represented in the SYSTEM skill tree and have combat activations: Celestial Lightning, Earth Guardian and Shadow Avatar. Local training cannot unlock them. The client reads only server-issued unlock records and refreshes the owned collection, public listings and skill receipts after a server result.
+- Historical relic reward issuance now requires a trusted game-server session, a separate server-recorded event for every required objective, and a server-recorded return proof at the exact historical site when the quest requires returning the relic. The final relic custody update, skill unlock and session completion are atomic and idempotent.
+
+### Verification boundary — do not mark the marketplace closed yet
+
+- Firebase TypeScript compilation and the Firestore/callable emulator suite passed for the current backend changes.
+- Godot CI is being rerun after correcting a misplaced builder call found by the first parse attempt. The dedicated 3D facility and progression tests still need their final CI result.
+- The repository does not yet contain a deployed authoritative multiplayer/game-server process that calls startHistoricalRelicQuestSession, recordHistoricalRelicQuestObjective, recordHistoricalRelicReturn and completeHistoricalRelicQuest. The callable gates are server-only and ready for that integration, but the actual server caller and its custom claim/service identity still need to be configured and tested. A local Godot objective event is never accepted as backend proof.
+- Firebase Functions and Firestore rules have not been deployed to production. Deployment requires explicit approval and a configured trusted game-server identity.
+- No physical Android device round-trip has been performed yet. CI build success is not a substitute for testing login, server-confirmed relic return, inventory/market refresh, and actual combat use on the phone.
+- The 3D spaces are currently runtime-built geometry and interaction surfaces. They require visual in-game review and polish; do not describe them as final cinematic art assets.
+
+PR #48 remains Draft. Do not merge to main or deploy production services without explicit approval.
+
+
+### 2026-11-27 follow-up — player request queue and server-owned quest state
+
+- Authenticated players now submit quest-start and relic-return requests through Firebase callables. The player client cannot open a trusted session or submit objective/return proof.
+- Only a principal carrying the `gameServer: true` custom claim can poll pending requests, consume a start request into a stable idempotent session, record objective events, validate the queued exact-site return, and complete the reward.
+- Starting a trusted session locks the artifact with `activeHistoricalQuestSessionId`; player listing, auction and exchange creation reject locked artifacts. Atomic reward completion releases the lock.
+- The Android bridge now routes player start/return requests to those callable endpoints and reads player-scoped server session snapshots together with owned artifacts, market listings and rare-skill receipts. Godot reconciles its quest journal from these snapshots; local objective interactions are explicitly presentation-only and never count as reward evidence.
+- Important boundary remains: no dedicated authoritative multiplayer/game-server process or server-owned Godot world simulation is present in this repository yet. The trusted queue consumer, authoritative objective evaluator and server-side player-position/site check still must be implemented and connected. The integration contract is documented in `SYSTEM-WORLD/HISTORICAL_RELIC_GAME_SERVER_INTEGRATION.md`. Until that exists, the secure backend correctly refuses to issue rewards from local-only progress.

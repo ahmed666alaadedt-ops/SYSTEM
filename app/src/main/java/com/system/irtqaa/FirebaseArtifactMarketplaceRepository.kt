@@ -37,6 +37,13 @@ data class SystemArtifactListing(
     val expiresAt: Long?
 )
 
+data class SystemRelicQuestSnapshot(
+    val ownedArtifacts: List<SystemOwnedArtifact>,
+    val marketListings: List<SystemArtifactListing>,
+    val skills: List<Map<String, Any?>>,
+    val questSessions: List<Map<String, Any?>>
+)
+
 data class SystemArtifactAuction(
     val auctionId: String,
     val artifactId: String,
@@ -144,6 +151,185 @@ class FirebaseArtifactMarketplaceRepository(
                     )
                 }
                 callback(Result.success(listings))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    /** Queue a quest start for the trusted game server; this client never opens the authoritative session. */
+    fun requestHistoricalRelicQuestStart(
+        questId: String,
+        artifactId: String,
+        callback: (Result<Map<String, Any?>>) -> Unit
+    ) {
+        if (questId.isBlank() || artifactId.isBlank()) {
+            callback(Result.failure(IllegalArgumentException("بيانات طلب المهمة التاريخية غير صالحة.")))
+            return
+        }
+        functions.getHttpsCallable("requestHistoricalRelicQuestStart")
+            .call(mapOf("questId" to questId, "artifactId" to artifactId))
+            .addOnSuccessListener { result ->
+                val data = result.data as? Map<String, Any?>
+                if (data == null || data["requestId"] !is String) {
+                    callback(Result.failure(IllegalStateException("لم يرجع الخادم معرّف طلب المهمة.")))
+                } else callback(Result.success(data))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    /** Queue a historical return request. Only the trusted game server can verify the actual return site. */
+    fun requestHistoricalRelicReturn(
+        questId: String,
+        artifactId: String,
+        callback: (Result<Map<String, Any?>>) -> Unit
+    ) {
+        if (questId.isBlank() || artifactId.isBlank()) {
+            callback(Result.failure(IllegalArgumentException("بيانات طلب إرجاع التحفة غير صالحة.")))
+            return
+        }
+        functions.getHttpsCallable("requestHistoricalRelicReturn")
+            .call(mapOf("questId" to questId, "artifactId" to artifactId))
+            .addOnSuccessListener { result ->
+                val data = result.data as? Map<String, Any?>
+                if (data == null || data["requestId"] !is String) {
+                    callback(Result.failure(IllegalStateException("لم يرجع الخادم معرّف طلب الإرجاع.")))
+                } else callback(Result.success(data))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    /** Reads only this player's authoritative historical relic quest sessions. */
+    fun loadMyHistoricalRelicQuestSessions(callback: (Result<List<Map<String, Any?>>>) -> Unit) {
+        functions.getHttpsCallable("listMyHistoricalRelicQuestSessions").call()
+            .addOnSuccessListener { result ->
+                val raw = (result.data as? Map<*, *>)?.get("sessions") as? List<*> ?: emptyList<Any>()
+                val sessions = raw.mapNotNull { value ->
+                    val item = value as? Map<*, *> ?: return@mapNotNull null
+                    val sessionId = item["sessionId"] as? String ?: return@mapNotNull null
+                    val completed = item["completedObjectives"] as? Map<*, *> ?: emptyMap<Any, Any>()
+                    mapOf<String, Any?>(
+                        "sessionId" to sessionId,
+                        "questId" to (item["questId"] as? String ?: ""),
+                        "artifactId" to (item["artifactId"] as? String ?: ""),
+                        "status" to (item["status"] as? String ?: ""),
+                        "requiredObjectives" to (item["requiredObjectives"] as? List<*> ?: emptyList<Any>()),
+                        "completedObjectives" to completed.entries.associate { it.key.toString() to (it.value as? Boolean ?: false) },
+                        "returnProof" to (item["returnProof"] as? Map<*, *>)
+                    )
+                }
+                callback(Result.success(sessions))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    /** Reads server-issued rare relic skills for the signed-in player only. */
+    fun loadMyRareRelicSkills(callback: (Result<List<Map<String, Any?>>>) -> Unit) {
+        functions.getHttpsCallable("listMyRareRelicSkills").call()
+            .addOnSuccessListener { result ->
+                val raw = (result.data as? Map<*, *>)?.get("skills") as? List<*> ?: emptyList<Any>()
+                val skills = raw.mapNotNull { value ->
+                    val item = value as? Map<*, *> ?: return@mapNotNull null
+                    val skillId = item["skillId"] as? String ?: return@mapNotNull null
+                    mapOf<String, Any?>(
+                        "skillId" to skillId,
+                        "skillName" to (item["skillName"] as? String ?: ""),
+                        "rarity" to (item["rarity"] as? String ?: ""),
+                        "questId" to (item["questId"] as? String ?: ""),
+                        "sourceArtifactId" to (item["sourceArtifactId"] as? String ?: ""),
+                        "relicReturned" to (item["relicReturned"] as? Boolean ?: false),
+                        "historicalSiteId" to (item["historicalSiteId"] as? String),
+                        "unlockedAt" to (item["unlockedAt"] as? Number)?.toLong()
+                    )
+                }
+                callback(Result.success(skills))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    /** Refreshes ownership, public market listings and verified skill receipts after a server quest result. */
+    fun loadRelicQuestState(callback: (Result<SystemRelicQuestSnapshot>) -> Unit) {
+        loadOwnedArtifacts { ownedResult ->
+            ownedResult.fold(
+                onSuccess = { owned ->
+                    browseListings { listingsResult ->
+                        listingsResult.fold(
+                            onSuccess = { listings ->
+                                loadMyRareRelicSkills { skillsResult ->
+                                    skillsResult.fold(
+                                        onSuccess = { skills ->
+                                            loadMyHistoricalRelicQuestSessions { sessionsResult ->
+                                                sessionsResult.fold(
+                                                    onSuccess = { sessions ->
+                                                        callback(Result.success(SystemRelicQuestSnapshot(owned, listings, skills, sessions)))
+                                                    },
+                                                    onFailure = { callback(Result.failure(it)) }
+                                                )
+                                            }
+                                        },
+                                        onFailure = { callback(Result.failure(it)) }
+                                    )
+                                }
+                            },
+                            onFailure = { callback(Result.failure(it)) }
+                        )
+                    }
+                },
+                onFailure = { callback(Result.failure(it)) }
+            )
+        }
+    }
+
+    fun browseSecretAntiqueOffers(callback: (Result<List<Map<String, Any?>>>) -> Unit) {
+        functions.getHttpsCallable("browseSecretAntiqueOffers").call()
+            .addOnSuccessListener { result ->
+                val raw = (result.data as? Map<*, *>)?.get("offers") as? List<*> ?: emptyList<Any>()
+                callback(Result.success(raw.mapNotNull { it as? Map<String, Any?> }))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    fun purchaseSecretAntiqueOffer(
+        offerId: String,
+        eventId: String,
+        callback: (Result<Map<String, Any?>>) -> Unit
+    ) {
+        if (offerId.isBlank() || eventId.isBlank()) {
+            callback(Result.failure(IllegalArgumentException("بيانات عرض التاجر السري غير صالحة.")))
+            return
+        }
+        functions.getHttpsCallable("purchaseSecretAntiqueOffer")
+            .call(mapOf("offerId" to offerId, "eventId" to eventId))
+            .addOnSuccessListener { result ->
+                val data = result.data as? Map<String, Any?>
+                if (data == null) callback(Result.failure(IllegalStateException("استجابة التاجر السري غير صالحة.")))
+                else callback(Result.success(data))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    fun appraiseMyArtifactAuthenticity(
+        artifactId: String,
+        callback: (Result<Map<String, Any?>>) -> Unit
+    ) {
+        if (artifactId.isBlank()) {
+            callback(Result.failure(IllegalArgumentException("معرّف القطعة غير صالح.")))
+            return
+        }
+        functions.getHttpsCallable("appraiseMyArtifactAuthenticity")
+            .call(mapOf("artifactId" to artifactId))
+            .addOnSuccessListener { result ->
+                val data = result.data as? Map<String, Any?>
+                if (data == null) callback(Result.failure(IllegalStateException("استجابة تقييم الأصالة غير صالحة.")))
+                else callback(Result.success(data))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    fun loadMyAntiquesReputation(callback: (Result<Map<String, Any?>>) -> Unit) {
+        functions.getHttpsCallable("getMyAntiquesReputation").call()
+            .addOnSuccessListener { result ->
+                val data = result.data as? Map<String, Any?>
+                if (data == null) callback(Result.failure(IllegalStateException("بيانات سمعة الجامع غير صالحة.")))
+                else callback(Result.success(data))
             }
             .addOnFailureListener { callback(Result.failure(it)) }
     }

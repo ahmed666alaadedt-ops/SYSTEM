@@ -5,6 +5,8 @@ class_name SYSTEMPlayerProgression
 signal progress_changed(level: int, total_xp: int, xp_in_level: int, xp_to_next: int)
 signal level_up(new_level: int)
 signal attribute_changed(attribute: String, new_value: int)
+signal rare_relic_skills_changed(skill_ids: Array)
+signal relic_skill_activation_requested(skill_id: String)
 
 const MAX_LEVEL := 100
 const MAX_SYSTEM_ENERGY := 100.0
@@ -87,7 +89,10 @@ const SYSTEM_SKILL_TREE := {
 	"sensory_mark": {"name": "وسم الإدراك", "category": "nen", "required_level": 25, "required_rank": "B", "prerequisites": ["pulse_dash"], "requires_nen": true, "required_nen_rank": 2, "requires_training_permit": true, "energy_cost": 20, "cooldown": 15.0, "effect": "تمييز حركة الخصم لفترة قصيرة"},
 	"flow_counter": {"name": "صد التدفق", "category": "nen", "required_level": 35, "required_rank": "A", "prerequisites": ["aura_shield", "focused_strike"], "requires_nen": true, "required_nen_rank": 3, "requires_training_permit": true, "energy_cost": 28, "cooldown": 22.0, "effect": "صد مضبوط يعقبه رد سريع"},
 	"resonance_burst": {"name": "انفجار الرنين", "category": "nen", "required_level": 50, "required_rank": "S", "prerequisites": ["sensory_mark", "flow_counter"], "requires_nen": true, "required_nen_rank": 4, "requires_training_permit": true, "energy_cost": 40, "cooldown": 35.0, "effect": "موجة هالة قصيرة المدى"},
-	"sovereign_focus": {"name": "تركيز السيادة", "category": "nen", "required_level": 80, "required_rank": "SS", "prerequisites": ["resonance_burst"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 60, "cooldown": 60.0, "effect": "تركيز نادر عالي الكلفة"}
+	"sovereign_focus": {"name": "تركيز السيادة", "category": "nen", "required_level": 80, "required_rank": "SS", "prerequisites": ["resonance_burst"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 60, "cooldown": 60.0, "effect": "تركيز نادر عالي الكلفة"},
+	"rare_skill_celestial_lightning": {"name": "البرق السماوي", "category": "relic", "rarity": "mythic", "requires_server_unlock": true, "required_level": 1, "required_rank": "F", "prerequisites": [], "requires_nen": false, "energy_cost": 28, "cooldown": 28.0, "effect": "صاعقة أثرية بعيدة المدى تضرب الهدف بقوة عالية"},
+	"rare_skill_earth_guardian": {"name": "درع حارس الأرض", "category": "relic", "rarity": "legendary", "requires_server_unlock": true, "required_level": 1, "required_rank": "F", "prerequisites": [], "requires_nen": false, "energy_cost": 32, "cooldown": 38.0, "effect": "درع أثري يعزز دفاع اللاعب مؤقتاً"},
+	"rare_skill_shadow_avatar": {"name": "تجسيد الظل", "category": "relic", "rarity": "mythic", "requires_server_unlock": true, "required_level": 1, "required_rank": "F", "prerequisites": [], "requires_nen": false, "energy_cost": 36, "cooldown": 48.0, "effect": "تجسيد ظلي يمنح اللاعب اندفاعاً وقوة هجومية مؤقتة"}
 }
 const WEAPON_MASTERY_FAMILIES := ["sword", "spear", "axe", "bow", "shield", "modern_ranged"]
 
@@ -116,6 +121,9 @@ var system_skill_practice: Dictionary = {}
 var system_skill_mastery: Dictionary = {}
 var system_skill_cooldowns: Dictionary = {}
 var weapon_mastery: Dictionary = {}
+# Server-read unlock cache only; it is never restored from the local save file.
+var server_verified_relic_skills: Array[String] = []
+var relic_skill_buttons: Dictionary = {}
 
 # Hunter grades are earned from verified guild work and demonstrated Nen practice.
 const HUNTER_RANK_ORDER := ["F", "E", "D", "C", "B", "A", "S", "SS", "SSS"]
@@ -133,6 +141,7 @@ func _ready() -> void:
 	_emit_progress()
 	set_process(true)
 	_create_nen_burst_button()
+	_create_relic_skill_hud()
 
 
 func _process(delta: float) -> void:
@@ -164,6 +173,7 @@ func _process(delta: float) -> void:
 			_refresh_nen_burst_button()
 	if expired:
 		save_progress()
+	_refresh_relic_skill_hud()
 
 
 func _create_nen_burst_button() -> void:
@@ -884,6 +894,7 @@ func load_progress() -> void:
 			nen_skill_ids.append(normalized_ability_id)
 	hunter_sss_board_approved = bool(config.get_value("hunter_rank", "sss_board_approved", false))
 
+	server_verified_relic_skills.clear()
 	learned_system_skills.clear()
 	for skill_id in config.get_value("skills", "learned", []):
 		var normalized_skill := str(skill_id).strip_edges().to_lower()
@@ -1021,6 +1032,7 @@ func _reset_progress() -> void:
 	equipment_durability.clear()
 	active_elixir_effects.clear()
 	learned_system_skills.clear()
+	server_verified_relic_skills.clear()
 	authorized_system_skills.clear()
 	system_skill_practice.clear()
 	system_skill_mastery.clear()
@@ -1047,6 +1059,85 @@ func get_system_skill_tree() -> Dictionary:
 
 func get_authorized_system_skills() -> Array[String]:
 	return authorized_system_skills.duplicate()
+
+func apply_server_verified_relic_skills(skill_ids: Array) -> void:
+	var verified: Array[String] = []
+	for raw_id in skill_ids:
+		var key := str(raw_id).strip_edges().to_lower()
+		if SYSTEM_SKILL_TREE.has(key) and bool(SYSTEM_SKILL_TREE[key].get("requires_server_unlock", false)) and not verified.has(key):
+			verified.append(key)
+	server_verified_relic_skills = verified
+	rare_relic_skills_changed.emit(server_verified_relic_skills.duplicate())
+	_refresh_relic_skill_hud()
+
+
+func get_server_verified_relic_skills() -> Array[String]:
+	return server_verified_relic_skills.duplicate()
+
+
+func _create_relic_skill_hud() -> void:
+	var canvas := CanvasLayer.new()
+	canvas.name = "RareRelicSkillHUD"
+	canvas.layer = 31
+	var hud := Control.new()
+	hud.set_anchors_preset(Control.PRESET_FULL_RECT)
+	canvas.add_child(hud)
+	var skill_ids := [
+		"rare_skill_celestial_lightning",
+		"rare_skill_earth_guardian",
+		"rare_skill_shadow_avatar"
+	]
+	for index in range(skill_ids.size()):
+		var skill_id: String = skill_ids[index]
+		var definition: Dictionary = SYSTEM_SKILL_TREE[skill_id]
+		var button := Button.new()
+		button.name = skill_id
+		button.anchor_left = 0.79
+		button.anchor_right = 0.985
+		button.anchor_top = 0.43 + float(index) * 0.075
+		button.anchor_bottom = button.anchor_top + 0.065
+		button.offset_left = 0.0
+		button.offset_right = 0.0
+		button.offset_top = 0.0
+		button.offset_bottom = 0.0
+		button.text = str(definition.name)
+		button.visible = false
+		button.pressed.connect(_request_relic_skill_activation.bind(skill_id))
+		hud.add_child(button)
+		relic_skill_buttons[skill_id] = button
+	add_child(canvas)
+	_refresh_relic_skill_hud()
+
+
+func _request_relic_skill_activation(skill_id: String) -> void:
+	relic_skill_activation_requested.emit(skill_id)
+
+
+func _refresh_relic_skill_hud() -> void:
+	for skill_id in relic_skill_buttons.keys():
+		var button: Button = relic_skill_buttons[skill_id]
+		if is_instance_valid(button):
+			button.visible = server_verified_relic_skills.has(str(skill_id))
+			if button.visible:
+				var availability: Dictionary = can_use_system_skill(str(skill_id))
+				button.disabled = not bool(availability.get("success", false))
+				button.tooltip_text = str(availability.get("reason", "مهارة أثرية جاهزة"))
+
+
+func activate_relic_skill_effect(skill_id: String) -> Dictionary:
+	var key := skill_id.strip_edges().to_lower()
+	var activation: Dictionary = record_system_skill_use(key)
+	if not bool(activation.get("success", false)):
+		return activation
+	match key:
+		"rare_skill_earth_guardian":
+			active_elixir_effects["rare_earth_guardian"] = {"remaining_seconds": 12.0, "defense_bonus": 45.0}
+		"rare_skill_shadow_avatar":
+			active_elixir_effects["rare_shadow_avatar"] = {"remaining_seconds": 10.0, "damage_bonus": 55.0, "movement_multiplier": 1.18}
+	save_progress()
+	return activation
+
+
 
 
 func check_skill_training_permit(skill_id: String) -> Dictionary:
@@ -1111,6 +1202,8 @@ func practice_system_skill(skill_id: String, verified_session_id: String) -> Dic
 	if not SYSTEM_SKILL_TREE.has(key) or session_id.is_empty():
 		return {"success": false, "reason": "INVALID_SKILL_SESSION"}
 	var skill: Dictionary = SYSTEM_SKILL_TREE[key]
+	if bool(skill.get("requires_server_unlock", false)):
+		return {"success": false, "reason": "SERVER_RELIC_UNLOCK_REQUIRED"}
 	if current_level < int(skill.get("required_level", 1)):
 		return {"success": false, "reason": "LEVEL_REQUIREMENT", "required_level": int(skill.get("required_level", 1))}
 	if not _meets_skill_rank(str(skill.get("required_rank", "F"))):
@@ -1147,7 +1240,13 @@ func _meets_skill_rank(required_rank: String) -> bool:
 
 func can_use_system_skill(skill_id: String) -> Dictionary:
 	var key := skill_id.strip_edges().to_lower()
-	if not SYSTEM_SKILL_TREE.has(key) or not learned_system_skills.has(key):
+	if not SYSTEM_SKILL_TREE.has(key):
+		return {"success": false, "reason": "SKILL_NOT_LEARNED"}
+	var definition: Dictionary = SYSTEM_SKILL_TREE[key]
+	if bool(definition.get("requires_server_unlock", false)):
+		if not server_verified_relic_skills.has(key):
+			return {"success": false, "reason": "SERVER_RELIC_UNLOCK_REQUIRED"}
+	elif not learned_system_skills.has(key):
 		return {"success": false, "reason": "SKILL_NOT_LEARNED"}
 	var remaining := float(system_skill_cooldowns.get(key, 0.0))
 	if remaining > 0.0:

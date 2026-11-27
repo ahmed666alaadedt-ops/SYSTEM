@@ -384,6 +384,24 @@ export {
   grantMarketplaceArtifactFromReward
 } from "./artifact_marketplace";
 export { awardMarketplaceCurrency } from "./marketplace_currency";
+export {
+  requestHistoricalRelicQuestStart,
+  requestHistoricalRelicReturn,
+  listPendingHistoricalRelicQuestRequests,
+  startHistoricalRelicQuestSession,
+  recordHistoricalRelicQuestObjective,
+  recordHistoricalRelicReturn,
+  completeHistoricalRelicQuest,
+  listMyHistoricalRelicQuestSessions,
+  listMyRareRelicSkills
+} from "./relic_quest_rewards";
+
+export {
+  browseSecretAntiqueOffers,
+  purchaseSecretAntiqueOffer,
+  appraiseMyArtifactAuthenticity,
+  getMyAntiquesReputation
+} from "./antique_market_services";
 
 export {
   createArtifactAuction,

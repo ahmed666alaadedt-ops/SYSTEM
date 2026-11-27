@@ -343,3 +343,231 @@ test("scheduled expiry workers release stale listing, auction and exchange escro
   assert.equal((await db.collection("marketplaceExchanges").doc(exchange.exchangeId).get()).data().status, "expired");
   assert.equal((await readArtifact(seller, exchangeArtifact)).data().status, "owned");
 });
+
+
+test("historical relic return and rare skill reward are trusted, atomic and replay-safe", async () => {
+  const owner = uid("babylon_relic_owner");
+  const relicId = "babylonian_star_tablet";
+  await seedPlayer(owner, 0);
+  await seedArtifact(owner, relicId);
+
+  await assert.rejects(() => call("completeHistoricalRelicQuest", owner, {
+    playerId: owner,
+    questId: "quest_babylon_star_tablet",
+    artifactId: relicId,
+    eventId: "babylon_reward_untrusted",
+    siteId: "babylon_esagila_archive"
+  }));
+
+  await assert.rejects(() => call("startHistoricalRelicQuestSession", owner, {
+    playerId: owner, questId: "quest_babylon_star_tablet", artifactId: relicId
+  }));
+  const startRequest = await call("requestHistoricalRelicQuestStart", owner, {
+    questId: "quest_babylon_star_tablet", artifactId: relicId
+  });
+  assert.equal(startRequest.success, true);
+  await assert.rejects(() => call("listPendingHistoricalRelicQuestRequests", owner));
+  const server = uid("trusted_game_server");
+  const pendingWork = await call("listPendingHistoricalRelicQuestRequests", server, {}, { gameServer: true });
+  assert.ok(pendingWork.starts.some((item) => item.requestId === startRequest.requestId));
+  const session = await call("startHistoricalRelicQuestSession", server, {
+    playerId: owner, questId: "quest_babylon_star_tablet", artifactId: relicId,
+    requestId: startRequest.requestId
+  }, { gameServer: true });
+  assert.ok(session.sessionId);
+  const ownQuestSessions = await call("listMyHistoricalRelicQuestSessions", owner);
+  assert.equal(ownQuestSessions.sessions.length, 1);
+  assert.equal(ownQuestSessions.sessions[0].sessionId, session.sessionId);
+  const unrelatedQuestSessions = await call("listMyHistoricalRelicQuestSessions", uid("unrelated_relic_player"));
+  assert.equal(unrelatedQuestSessions.sessions.length, 0);
+  const lockedArtifact = await readArtifact(owner, relicId);
+  assert.equal(lockedArtifact.data().activeHistoricalQuestSessionId, session.sessionId);
+  await assert.rejects(() => call("createArtifactListing", owner, {
+    artifactId: relicId, price: 1000, durationDays: 7
+  }));
+  await assert.rejects(() => call("createArtifactAuction", owner, {
+    artifactId: relicId, startingBid: 1000, durationHours: 24
+  }));
+  await assert.rejects(() => call("createArtifactExchangeOffer", owner, {
+    recipientId: uid("other_exchange_player"),
+    offeredArtifactId: relicId,
+    requestedArtifactId: "requested_artifact"
+  }));
+  const sessionRetry = await call("startHistoricalRelicQuestSession", server, {
+    playerId: owner, questId: "quest_babylon_star_tablet", artifactId: relicId,
+    requestId: startRequest.requestId
+  }, { gameServer: true });
+  assert.equal(sessionRetry.alreadyStarted, true);
+  assert.equal(sessionRetry.sessionId, session.sessionId);
+  await assert.rejects(() => call("requestHistoricalRelicReturn", owner, {
+    questId: "quest_babylon_star_tablet", artifactId: relicId
+  }));
+  const objectiveIds = [
+    "find_the_sealed_archive",
+    "solve_the_celestial_lock",
+    "defeat_the_archive_guardian"
+  ];
+  for (const [index, objectiveId] of objectiveIds.entries()) {
+    const recorded = await call("recordHistoricalRelicQuestObjective", server, {
+      sessionId: session.sessionId,
+      eventId: "babylon_objective_" + index,
+      objectiveId
+    }, { gameServer: true });
+    assert.equal(recorded.success, true);
+  }
+  const payload = {
+    playerId: owner,
+    questId: "quest_babylon_star_tablet",
+    artifactId: relicId,
+    sessionId: session.sessionId,
+    eventId: "babylon_reward_verified"
+  };
+  await assert.rejects(() => call("completeHistoricalRelicQuest", server, payload, { gameServer: true }));
+  const returnRequest = await call("requestHistoricalRelicReturn", owner, {
+    questId: "quest_babylon_star_tablet", artifactId: relicId
+  });
+  assert.equal(returnRequest.success, true);
+  const returnRequestRetry = await call("requestHistoricalRelicReturn", owner, {
+    questId: "quest_babylon_star_tablet", artifactId: relicId
+  });
+  assert.equal(returnRequestRetry.requestId, returnRequest.requestId);
+  assert.equal(returnRequestRetry.alreadyPending, true);
+  const pendingReturnWork = await call("listPendingHistoricalRelicQuestRequests", server, {}, { gameServer: true });
+  assert.ok(pendingReturnWork.returns.some((item) => item.requestId === returnRequest.requestId));
+  const returnProof = await call("recordHistoricalRelicReturn", server, {
+    sessionId: session.sessionId,
+    eventId: "babylon_return_verified",
+    siteId: "babylon_esagila_archive"
+  }, { gameServer: true });
+  assert.equal(returnProof.returnVerified, true);
+  const result = await call("completeHistoricalRelicQuest", server, payload, { gameServer: true });
+  assert.equal(result.success, true);
+  assert.equal(result.relicReturned, true);
+  assert.equal(result.skillId, "rare_skill_celestial_lightning");
+
+  const returned = await readArtifact(owner, relicId);
+  assert.equal(returned.data().status, "returned_to_history");
+  assert.equal(returned.data().returnedToHistoricalSite, "babylon_esagila_archive");
+  assert.equal(returned.data().activeHistoricalQuestSessionId, undefined);
+  const skill = await db.collection("playerSkillUnlocks").doc(owner).collection("skills").doc("rare_skill_celestial_lightning").get();
+  assert.equal(skill.exists, true);
+  assert.equal(skill.data().questId, "quest_babylon_star_tablet");
+  assert.equal(skill.data().relicReturned, true);
+  assert.equal(skill.data().historicalSiteId, "babylon_esagila_archive");
+  const completedSessions = await call("listMyHistoricalRelicQuestSessions", owner);
+  assert.equal(completedSessions.sessions[0].status, "completed");
+  const syncedSkills = await call("listMyRareRelicSkills", owner);
+  assert.equal(syncedSkills.skills.length, 1);
+  assert.equal(syncedSkills.skills[0].skillId, "rare_skill_celestial_lightning");
+  assert.equal(syncedSkills.skills[0].relicReturned, true);
+
+  const retry = await call("completeHistoricalRelicQuest", server, payload, { gameServer: true });
+  assert.equal(retry.success, true);
+  assert.equal(retry.alreadyCompleted, true);
+  assert.equal((await readArtifact(owner, relicId)).data().status, "returned_to_history");
+});
+
+test("historical relic quest rejects wrong return site and keeps retain-branch relic tradable", async () => {
+  const owner = uid("historical_relic_owner");
+  await seedPlayer(owner, 0);
+  await seedArtifact(owner, "sumerian_oath_seal");
+  await seedArtifact(owner, "akkadian_shadow_crown");
+
+  const server = uid("trusted_game_server");
+  const sumerStart = await call("requestHistoricalRelicQuestStart", owner, {
+    questId: "quest_sumerian_oath", artifactId: "sumerian_oath_seal"
+  });
+  const sumerian = await call("startHistoricalRelicQuestSession", server, {
+    playerId: owner, questId: "quest_sumerian_oath", artifactId: "sumerian_oath_seal",
+    requestId: sumerStart.requestId
+  }, { gameServer: true });
+  for (const [index, objectiveId] of ["recover_the_three_oaths", "restore_the_temple_seal"].entries()) {
+    await call("recordHistoricalRelicQuestObjective", server, {
+      sessionId: sumerian.sessionId, eventId: "sumer_objective_" + index, objectiveId
+    }, { gameServer: true });
+  }
+  await call("requestHistoricalRelicReturn", owner, {
+    questId: "quest_sumerian_oath", artifactId: "sumerian_oath_seal"
+  });
+  await assert.rejects(() => call("recordHistoricalRelicReturn", server, {
+    sessionId: sumerian.sessionId, eventId: "sumer_wrong_site", siteId: "wrong_historical_site"
+  }, { gameServer: true }));
+  await assert.rejects(() => call("completeHistoricalRelicQuest", server, {
+    playerId: owner, questId: "quest_sumerian_oath", artifactId: "sumerian_oath_seal",
+    sessionId: sumerian.sessionId, eventId: "sumer_reward_without_return"
+  }, { gameServer: true }));
+  assert.equal((await readArtifact(owner, "sumerian_oath_seal")).data().status, "owned");
+
+  const akkStart = await call("requestHistoricalRelicQuestStart", owner, {
+    questId: "quest_akkadian_shadow", artifactId: "akkadian_shadow_crown"
+  });
+  const akkadian = await call("startHistoricalRelicQuestSession", server, {
+    playerId: owner, questId: "quest_akkadian_shadow", artifactId: "akkadian_shadow_crown",
+    requestId: akkStart.requestId
+  }, { gameServer: true });
+  for (const [index, objectiveId] of ["trace_the_lost_dynasty", "pass_the_shadow_trial", "seal_the_cursed_chamber"].entries()) {
+    await call("recordHistoricalRelicQuestObjective", server, {
+      sessionId: akkadian.sessionId, eventId: "akkadian_objective_" + index, objectiveId
+    }, { gameServer: true });
+  }
+  const retained = await call("completeHistoricalRelicQuest", server, {
+    playerId: owner,
+    questId: "quest_akkadian_shadow",
+    artifactId: "akkadian_shadow_crown",
+    sessionId: akkadian.sessionId,
+    eventId: "akkadian_reward_verified"
+  }, { gameServer: true });
+  assert.equal(retained.success, true);
+  assert.equal(retained.relicReturned, false);
+  const retainedArtifact = await readArtifact(owner, "akkadian_shadow_crown");
+  assert.equal(retainedArtifact.data().status, "owned");
+  assert.equal(retainedArtifact.data().activeHistoricalQuestSessionId, undefined);
+  assert.equal(
+    (await db.collection("playerSkillUnlocks").doc(owner).collection("skills").doc("rare_skill_shadow_avatar").get()).exists,
+    true
+  );
+});
+
+
+test("secret traders sell through the shared artifact registry and wallet; appraisal and collector reputation are server-derived", async () => {
+  const buyer = uid("secret_trader_buyer");
+  await seedPlayer(buyer, 50000);
+  const offers = await call("browseSecretAntiqueOffers", buyer);
+  assert.ok(offers.offers.some((offer) => offer.offerId === "secret_babylonian_star_engraving"));
+  assert.equal(offers.offers.length, 5);
+  assert.equal(new Set(offers.offers.map((offer) => offer.traderId)).size, 5,
+    "Each hidden trader must have a distinct server-owned inventory.");
+
+  const purchasePayload = {
+    offerId: "secret_babylonian_star_engraving",
+    eventId: "secret_babylon_purchase_01"
+  };
+  const purchase = await call("purchaseSecretAntiqueOffer", buyer, purchasePayload);
+  assert.equal(purchase.success, true);
+  assert.equal(purchase.alreadyPurchased, false);
+  assert.equal((await db.collection("systemWallets").doc(buyer).get()).data().balance, 41500);
+  const artifact = await readArtifact(buyer, purchase.artifactId);
+  assert.equal(artifact.data().status, "owned");
+  assert.equal(artifact.data().source, "secret_trader_purchase");
+  assert.equal((await db.collection("artifactRegistry").doc(purchase.artifactId).get()).exists, true);
+
+  const replay = await call("purchaseSecretAntiqueOffer", buyer, {
+    offerId: purchasePayload.offerId,
+    eventId: "different_retry_event"
+  });
+  assert.equal(replay.alreadyPurchased, true);
+  assert.equal(replay.artifactId, purchase.artifactId);
+  assert.equal((await db.collection("systemWallets").doc(buyer).get()).data().balance, 41500);
+
+  const appraisal = await call("appraiseMyArtifactAuthenticity", buyer, { artifactId: purchase.artifactId });
+  assert.equal(appraisal.success, true);
+  assert.equal(appraisal.verdict, "verified");
+  assert.equal((await readArtifact(buyer, purchase.artifactId)).data().authenticity, "verified");
+  const repeatedAppraisal = await call("appraiseMyArtifactAuthenticity", buyer, { artifactId: purchase.artifactId });
+  assert.equal(repeatedAppraisal.alreadyAppraised, true);
+
+  const reputation = await call("getMyAntiquesReputation", buyer);
+  assert.equal(reputation.completedPurchases, 1);
+  assert.equal(reputation.verifiedAppraisals, 1);
+  assert.equal(reputation.score, 20);
+});

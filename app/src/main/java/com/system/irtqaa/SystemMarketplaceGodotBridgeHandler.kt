@@ -16,6 +16,58 @@ class SystemMarketplaceGodotBridgeHandler(
     override fun onMarketplaceRequest(requestId: String?, payload: JSONObject) {
         val id = requestId?.takeIf { it.isNotBlank() } ?: return
         when (payload.optString("operation")) {
+            "browse_secret_antique_offers" -> repository.browseSecretAntiqueOffers { result ->
+                respond(id, result.map { offers -> JSONObject().put("offers", JSONArray(offers.map { JSONObject(it) })) })
+            }
+            "purchase_secret_antique_offer" -> repository.purchaseSecretAntiqueOffer(
+                payload.optString("offerId"),
+                payload.optString("eventId")
+            ) { result -> respond(id, result.map { JSONObject(it) }) }
+            "appraise_artifact_authenticity" -> repository.appraiseMyArtifactAuthenticity(
+                payload.optString("artifactId")
+            ) { result -> respond(id, result.map { JSONObject(it) }) }
+            "antiques_reputation" -> repository.loadMyAntiquesReputation { result ->
+                respond(id, result.map { JSONObject(it) })
+            }
+            "request_relic_quest_start" -> repository.requestHistoricalRelicQuestStart(
+                payload.optString("questId"),
+                payload.optString("artifactId")
+            ) { result -> respond(id, result.map { JSONObject(it) }) }
+            "request_relic_return" -> repository.requestHistoricalRelicReturn(
+                payload.optString("questId"),
+                payload.optString("artifactId")
+            ) { result -> respond(id, result.map { JSONObject(it) }) }
+            "refresh_relic_state" -> repository.loadRelicQuestState { result ->
+                respond(id, result.map { snapshot ->
+                    JSONObject()
+                        .put("ownedArtifacts", JSONArray(snapshot.ownedArtifacts.map { artifact ->
+                            JSONObject()
+                                .put("artifactId", artifact.artifactId)
+                                .put("name", artifact.name)
+                                .put("civilization", artifact.civilization)
+                                .put("rarity", artifact.rarity)
+                                .put("condition", artifact.condition)
+                                .put("authenticity", artifact.authenticity)
+                                .put("provenanceSummary", artifact.provenanceSummary)
+                        }))
+                        .put("marketListings", JSONArray(snapshot.marketListings.map { listing ->
+                            JSONObject()
+                                .put("listingId", listing.listingId)
+                                .put("artifactId", listing.artifactId)
+                                .put("name", listing.name)
+                                .put("civilization", listing.civilization)
+                                .put("rarity", listing.rarity)
+                                .put("condition", listing.condition)
+                                .put("authenticity", listing.authenticity)
+                                .put("price", listing.price)
+                                .put("currency", listing.currency)
+                                .put("sellerName", listing.sellerName)
+                                .put("isSeller", listing.isSeller)
+                        }))
+                        .put("skills", JSONArray(snapshot.skills.map { JSONObject(it) }))
+                        .put("questSessions", JSONArray(snapshot.questSessions.map { JSONObject(it) }))
+                })
+            }
             "wallet" -> repository.loadWallet { result ->
                 respond(id, result.map { wallet ->
                     JSONObject()

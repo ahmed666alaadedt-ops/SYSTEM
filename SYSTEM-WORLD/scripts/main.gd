@@ -22,6 +22,8 @@ const NPCDailyLifeManagerScript = preload("res://scripts/npc_daily_life_manager.
 const WorldTimeManagerScript = preload("res://scripts/world_time_manager.gd")
 const WildlifeManagerScript = preload("res://scripts/wildlife_manager.gd")
 const MissionRewardManagerScript = preload("res://scripts/system_mission_reward_manager.gd")
+const ArtifactRelicQuestManagerScript = preload("res://scripts/artifact_relic_quest_manager.gd")
+const ArtifactRelicQuestWorldRuntimeScript = preload("res://scripts/artifact_relic_quest_world_runtime.gd")
 const PlayerProgressionScript = preload("res://scripts/system_player_progression.gd")
 const ModernWorldCombatSystemScript = preload("res://scripts/modern_world_combat_system.gd")
 const PlayerVehicleManagerScript = preload("res://scripts/system_player_vehicle_manager.gd")
@@ -51,6 +53,9 @@ var npc_daily_life_manager
 var world_time_manager
 var wildlife_manager
 var mission_reward_manager
+var artifact_relic_quest_manager: Node
+var pending_relic_quest_starts: Dictionary = {}
+var pending_relic_returns: Dictionary = {}
 var player_progression
 var modern_world_combat_system: Node
 var player_vehicle_manager
@@ -125,6 +130,7 @@ func _ready() -> void:
 	create_hunter_exam_manager()
 	create_power_tower_manager()
 	create_mission_reward_manager()
+	create_artifact_relic_quest_manager()
 
 	connect_sovereign_system()
 
@@ -146,6 +152,10 @@ func connect_android_runtime_bridge() -> void:
 	var world_callback := Callable(self, "_on_android_world_entry_requested")
 	if not SYSTEMAndroidBridge.world_entry_requested.is_connected(world_callback):
 		SYSTEMAndroidBridge.world_entry_requested.connect(world_callback)
+	var marketplace_callback := Callable(self, "_on_android_marketplace_result")
+	if SYSTEMAndroidBridge.has_signal("marketplace_result_received") and not SYSTEMAndroidBridge.marketplace_result_received.is_connected(marketplace_callback):
+		SYSTEMAndroidBridge.marketplace_result_received.connect(marketplace_callback)
+	call_deferred("_request_relic_state_refresh")
 
 	if world_manager != null and world_manager.has_signal("world_changed"):
 		var changed_callback := Callable(self, "_on_runtime_world_changed")
@@ -158,6 +168,62 @@ func connect_android_runtime_bridge() -> void:
 	if SYSTEMAndroidBridge.has_pending_world_request():
 		call_deferred("_consume_pending_android_world_request")
 
+
+func _request_relic_state_refresh() -> void:
+	if not is_instance_valid(SYSTEMAndroidBridge):
+		return
+	var request_id := "relic_state_refresh_" + str(Time.get_ticks_msec())
+	if not SYSTEMAndroidBridge.request_marketplace_operation("refresh_relic_state", {}, request_id):
+		push_warning("SYSTEM relic state: Android server refresh is not connected yet.")
+
+
+func _on_android_marketplace_result(request_id: String, payload: Dictionary) -> void:
+	var raw_data: Variant = payload.get("data", {})
+	if pending_relic_quest_starts.has(request_id):
+		var pending_start: Dictionary = pending_relic_quest_starts[request_id]
+		pending_relic_quest_starts.erase(request_id)
+		if not bool(payload.get("success", false)):
+			_show_relic_request_message("تعذر إرسال طلب المهمة: " + str(payload.get("error", "unknown")))
+			return
+		var start_data: Dictionary = raw_data if raw_data is Dictionary else {}
+		if str(start_data.get("requestId", "")).is_empty():
+			_show_relic_request_message("لم يصل تأكيد تسجيل طلب المهمة.")
+			return
+		_enter_historical_world_for_relic_quest(
+			str(pending_start.get("worldId", "")),
+			str(pending_start.get("questId", "")),
+			str(pending_start.get("relicId", ""))
+		)
+		_show_relic_request_message("سُجل طلب المهمة لدى الخادم. لا تُحتسب الأهداف ولا تُمنح المهارة إلا بعد إثبات خادم اللعبة الموثوق.")
+		return
+	if pending_relic_returns.has(request_id):
+		pending_relic_returns.erase(request_id)
+		if not bool(payload.get("success", false)):
+			_show_relic_request_message("لم يقبل الخادم طلب الإرجاع: " + str(payload.get("error", "unknown")))
+		else:
+			_show_relic_request_message("سُجل طلب الإرجاع. ينتظر تحقق خادم اللعبة من الموقع؛ لم تتغير ملكية التحفة أو تُمنح المهارة بعد.")
+		return
+	if not raw_data is Dictionary or not raw_data.has("skills") or not raw_data.has("ownedArtifacts") or not raw_data.has("questSessions"):
+		return
+	if not bool(payload.get("success", false)):
+		push_warning("SYSTEM relic state refresh failed: " + str(payload.get("error", "unknown")))
+		return
+	var data: Dictionary = raw_data
+	var skill_rows: Array = data.get("skills", [])
+	var verified_skill_ids: Array = []
+	for row in skill_rows:
+		if row is Dictionary:
+			verified_skill_ids.append(str(row.get("skillId", "")))
+	if player_progression != null and player_progression.has_method("apply_server_verified_relic_skills"):
+		player_progression.call("apply_server_verified_relic_skills", verified_skill_ids)
+	var quest_sessions: Array = data.get("questSessions", [])
+	if artifact_relic_quest_manager != null and artifact_relic_quest_manager.has_method("apply_server_quest_sessions"):
+		artifact_relic_quest_manager.call("apply_server_quest_sessions", quest_sessions)
+	if artifact_relic_quest_manager != null and artifact_relic_quest_manager.has_method("apply_server_skill_receipts"):
+		artifact_relic_quest_manager.call("apply_server_skill_receipts", skill_rows)
+	print("SYSTEM relic state refreshed from Firebase: skills=", verified_skill_ids.size(),
+		" owned_artifacts=", (data.get("ownedArtifacts", []) as Array).size(),
+		" market_listings=", (data.get("marketListings", []) as Array).size())
 
 func _consume_pending_android_world_request() -> void:
 	if not is_instance_valid(SYSTEMAndroidBridge):
@@ -483,6 +549,8 @@ func create_modern_world_combat_system() -> void:
 	add_child(modern_world_combat_system)
 	modern_world_combat_system.call("bind_actor", player, camera, player_progression)
 	modern_world_combat_system.attack_performed.connect(_on_power_tower_attack_performed)
+	if player_progression != null and player_progression.has_signal("relic_skill_activation_requested"):
+		player_progression.relic_skill_activation_requested.connect(modern_world_combat_system.use_relic_skill)
 
 
 func create_baghdad_tower_operations_manager() -> void:
@@ -850,6 +918,90 @@ func confirm_verified_hunter_mission(mission_id: String) -> bool:
 	return mission_reward_manager.confirm_verified_completion(mission_id)
 
 
+func create_artifact_relic_quest_manager() -> void:
+	artifact_relic_quest_manager = ArtifactRelicQuestManagerScript.new()
+	artifact_relic_quest_manager.name = "ArtifactRelicQuestManager"
+	add_child(artifact_relic_quest_manager)
+	artifact_relic_quest_manager.historical_world_requested.connect(_on_artifact_historical_world_requested)
+	artifact_relic_quest_manager.present_world_return_requested.connect(_on_artifact_present_world_return_requested)
+	artifact_relic_quest_manager.rare_skill_reward_requested.connect(_on_artifact_rare_skill_reward_requested)
+	artifact_relic_quest_manager.relic_return_requested.connect(_on_artifact_relic_return_requested)
+
+
+func _on_artifact_historical_world_requested(world_id: String, quest_id: String, relic_id: String) -> void:
+	var request_id := "relic_start_" + str(Time.get_ticks_msec())
+	pending_relic_quest_starts[request_id] = {
+		"worldId": world_id, "questId": quest_id, "relicId": relic_id
+	}
+	if not SYSTEMAndroidBridge.request_marketplace_operation(
+		"request_relic_quest_start",
+		{"questId": quest_id, "artifactId": relic_id},
+		request_id
+	):
+		pending_relic_quest_starts.erase(request_id)
+		_show_relic_request_message("تعذر الاتصال بخدمة طلب المهمة. لم يتم إرسال الطلب إلى الخادم.")
+
+
+func _enter_historical_world_for_relic_quest(world_id: String, quest_id: String, relic_id: String) -> void:
+	if world_manager == null:
+		return
+	var historical_root: Node3D = world_manager.get_world_root(WorldManagerScript.WorldID.MYTHOLOGY) as Node3D
+	if historical_root == null:
+		return
+	historical_root.set_meta("system_active_relic_quest_id", quest_id)
+	historical_root.set_meta("system_active_relic_id", relic_id)
+	historical_root.set_meta("system_requested_historical_setting", world_id)
+	world_manager.switch_world(WorldManagerScript.WorldID.MYTHOLOGY)
+	active_world_root = world_manager.get_active_world()
+	var quest_runtime: Node = historical_root.get_node_or_null("ArtifactRelicQuestWorldRuntime")
+	if quest_runtime == null:
+		quest_runtime = ArtifactRelicQuestWorldRuntimeScript.new()
+		quest_runtime.name = "ArtifactRelicQuestWorldRuntime"
+		historical_root.add_child(quest_runtime)
+	var quest_definition: Dictionary = ArtifactRelicQuestManagerScript.RELIC_QUESTS.get(relic_id, {})
+	if not bool(quest_runtime.call("setup", relic_id, quest_definition)):
+		push_warning("SYSTEM RELIC QUEST: Could not create historical objective markers for " + relic_id)
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = "بدأت رحلة المهمة التاريخية بعد تسجيل طلبها. الأهداف تنتظر إثبات خادم اللعبة."
+		interaction_prompt_label.show()
+
+
+func _show_relic_request_message(message: String) -> void:
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = message
+		interaction_prompt_label.show()
+
+func _on_artifact_present_world_return_requested(quest_id: String, relic_id: String) -> void:
+	if world_manager == null:
+		return
+	world_manager.switch_world(WorldManagerScript.WorldID.REALISTIC)
+	active_world_root = world_manager.get_active_world()
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = "عدت إلى العالم الحديث بعد إكمال مهمة التحفة: %s." % quest_id
+		interaction_prompt_label.show()
+
+
+func _on_artifact_rare_skill_reward_requested(skill_id: String, relic_id: String, quest_id: String) -> void:
+	# The skill progression system must only unlock this after a trusted backend
+	# reward receipt is verified. A local quest signal is not proof of reward.
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = "اكتملت مهمة التحفة. بانتظار تأكيد الخادم لمكافأة المهارة النادرة: %s." % skill_id
+		interaction_prompt_label.show()
+
+
+func _on_artifact_relic_return_requested(relic_id: String, historical_site_id: String, quest_id: String) -> void:
+	var request_id := "relic_return_" + str(Time.get_ticks_msec())
+	pending_relic_returns[request_id] = {
+		"relicId": relic_id, "historicalSiteId": historical_site_id, "questId": quest_id
+	}
+	if not SYSTEMAndroidBridge.request_marketplace_operation(
+		"request_relic_return",
+		{"questId": quest_id, "artifactId": relic_id},
+		request_id
+	):
+		pending_relic_returns.erase(request_id)
+		_show_relic_request_message("تعذر إرسال طلب الإرجاع إلى الخادم. لم تتغير ملكية التحفة.")
+
 func create_world_manager() -> void:
 	world_manager = WorldManagerScript.new()
 	world_manager.name = "WorldManager"
@@ -1155,6 +1307,28 @@ func _on_interaction_performed(
 		" / ",
 		location_id
 	)
+	if target.has_meta("system_relic_quest_objective_id") and artifact_relic_quest_manager != null:
+		var relic_id := str(target.get_meta("system_relic_id", ""))
+		var objective_id := str(target.get_meta("system_relic_quest_objective_id", ""))
+		var objective_result: Dictionary = artifact_relic_quest_manager.call(
+			"record_historical_objective", relic_id, objective_id, true
+		)
+		if interaction_prompt_label != null:
+			if not bool(objective_result.get("ok", false)):
+				interaction_prompt_label.text = str(objective_result.get("message", "تعذر تسجيل الهدف."))
+			elif bool(objective_result.get("all_objectives_complete", false)):
+				interaction_prompt_label.text = "اكتمل الاستكشاف المحلي فقط. ينتظر هذا التقدم إثبات خادم اللعبة قبل الإرجاع أو المكافأة."
+			else:
+				interaction_prompt_label.text = "تفاعل محلي مع هدف المهمة (%d/%d). لم يُعتمد بعد من خادم اللعبة." % [int(objective_result.get("completed_count", 0)), int(objective_result.get("required_count", 0))]
+			interaction_prompt_label.show()
+		return
+	if target.has_meta("system_relic_return_site") and artifact_relic_quest_manager != null:
+		var return_relic_id := str(target.get_meta("system_relic_id", ""))
+		var return_result: Dictionary = artifact_relic_quest_manager.call("request_relic_return", return_relic_id)
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "أُرسل طلب إرجاع التحفة. لا تُمنح المهارة ولا تتغير الملكية حتى يؤكد الخادم عملية الإرجاع." if bool(return_result.get("ok", false)) else str(return_result.get("message", "لا يمكن إرجاع هذه التحفة الآن."))
+			interaction_prompt_label.show()
+		return
 	if target.has_meta("system_exam_stage_objective") or target.has_meta("system_exam_rival_id"):
 		if hunter_exam_stage_runtime == null or not hunter_exam_stage_runtime.has_method("handle_interaction"):
 			if interaction_prompt_label != null:
@@ -1195,6 +1369,9 @@ func _on_interaction_performed(
 		return
 	if target.has_meta("system_power_tower_ticket_terminal") and tower_operations_manager != null:
 		tower_operations_manager.call("open_power_tower_ticket_terminal")
+		return
+	if str(target.get_meta("system_interaction_type", "")) == "antiques_world_facility" and tower_operations_manager != null:
+		tower_operations_manager.call("open_antiques_world_facility", target)
 		return
 	if str(target.get_meta("system_interaction_type", "")) == "museum_artifact_exhibit" and tower_operations_manager != null:
 		tower_operations_manager.call("open_museum_artifact_exhibit", target)
