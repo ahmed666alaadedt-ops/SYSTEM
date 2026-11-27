@@ -22,6 +22,12 @@ func receive_damage(amount: float, source: Node = null) -> float:
 	if amount <= 0.0 or not is_instance_valid(player):
 		return 0.0
 	var incoming := amount
+	var earthguard_until := int(player.get_meta("system_earthguard_until_msec", 0))
+	if earthguard_until > Time.get_ticks_msec():
+		incoming *= 1.0 - clampf(float(player.get_meta("system_earthguard_reduction", 0.0)), 0.0, 0.30)
+	elif earthguard_until > 0:
+		player.remove_meta("system_earthguard_until_msec")
+		player.remove_meta("system_earthguard_reduction")
 	var aegis_until := int(player.get_meta("system_assyrian_aegis_until_msec", 0))
 	if aegis_until > Time.get_ticks_msec():
 		incoming *= 0.35
