@@ -1169,6 +1169,28 @@ func _start_historical_relic_quest() -> void:
 		interaction_prompt_label.show()
 
 
+func _start_assyrian_relic_quest() -> void:
+	if world_manager == null or player == null or player_progression == null:
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "تعذر بدء المهمة الآشورية: نظام العالم أو اللاعب غير جاهز."
+			interaction_prompt_label.show()
+		return
+	var return_position := player.global_position
+	world_manager.call("switch_world", WorldManagerScript.WorldID.MYTHOLOGY)
+	var historical_root: Node = world_manager.call("get_world_root", WorldManagerScript.WorldID.MYTHOLOGY)
+	var relic_runtime: Node = historical_root.get_node_or_null("AssyrianRelicQuestRuntime") if historical_root != null else null
+	if relic_runtime == null or not relic_runtime.has_method("begin_quest"):
+		world_manager.call("switch_world", WorldManagerScript.WorldID.REALISTIC)
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "تعذر تحميل مهمة حراس نينوى."
+			interaction_prompt_label.show()
+		return
+	var result: Dictionary = relic_runtime.call("begin_quest", player_progression, player, world_manager, return_position)
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = str(result.get("message", "بدأت مهمة حراس نينوى."))
+		interaction_prompt_label.show()
+
+
 func _on_interaction_performed(
 	target: Node,
 	location_id: String
@@ -1179,8 +1201,23 @@ func _on_interaction_performed(
 		" / ",
 		location_id
 	)
+	if target.has_meta("system_assyrian_relic_quest_start"):
+		_start_assyrian_relic_quest()
+		return
 	if target.has_meta("system_historical_relic_quest_start"):
 		_start_historical_relic_quest()
+		return
+	if target.has_meta("system_assyrian_relic_objective") or target.has_meta("system_assyrian_relic_return"):
+		var historical_root: Node = world_manager.call("get_world_root", WorldManagerScript.WorldID.MYTHOLOGY) if world_manager != null else null
+		var assyrian_runtime: Node = historical_root.get_node_or_null("AssyrianRelicQuestRuntime") if historical_root != null else null
+		if assyrian_runtime == null or not assyrian_runtime.has_method("handle_interaction"):
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "نظام مهمة حراس نينوى غير متاح."
+			return
+		var assyrian_result: Dictionary = assyrian_runtime.call("handle_interaction", target)
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = str(assyrian_result.get("message", "تم التفاعل مع الختم الآشوري."))
+			interaction_prompt_label.show()
 		return
 	if target.has_meta("system_historical_relic_objective") or target.has_meta("system_historical_relic_return"):
 		var historical_root: Node = world_manager.call("get_world_root", WorldManagerScript.WorldID.MYTHOLOGY) if world_manager != null else null
