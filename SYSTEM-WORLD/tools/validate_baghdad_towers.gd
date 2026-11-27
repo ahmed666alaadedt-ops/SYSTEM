@@ -713,7 +713,53 @@ func _run_validation() -> void:
 		_fail("Power Tower must remain an independent 200-floor structure outside the five Baghdad civic towers.")
 		return
 
-	print("Baghdad tower validation passed: verified Republic Bridge and Tigris runtime geometry, five towers on both riverbanks/bridge, upper sky city, standalone Power Tower, Hunter rooftop helicopter controller, internal/external ads, tunnel anchor, five Baghdad tower lobby kiosks plus one separate Power Tower kiosk and Shopping Tower facilities.")
+	# Historical relic quest regression: market entry -> historical world -> ordered clues -> rare skill permit.
+	var quest_world_manager := main_scene.get_node_or_null("WorldManager")
+	var quest_player := main_scene.find_child("Player", true, false) as CharacterBody3D
+	var quest_progression := main_scene.get_node_or_null("PlayerProgression")
+	if quest_world_manager == null or quest_player == null or quest_progression == null:
+		_fail("Historical relic quest cannot resolve the canonical world, player and progression managers.")
+		return
+	quest_world_manager.call("switch_world", WorldManagerScript.WorldID.MYTHOLOGY)
+	await process_frame
+	await process_frame
+	var historical_root: Node = quest_world_manager.call("get_world_root", WorldManagerScript.WorldID.MYTHOLOGY)
+	var relic_runtime := historical_root.get_node_or_null("HistoricalRelicQuestRuntime") if historical_root != null else null
+	if relic_runtime == null or not relic_runtime.has_method("begin_quest") or not relic_runtime.has_method("handle_interaction"):
+		_fail("Historical world is missing its relic quest runtime.")
+		return
+	var quest_begin: Dictionary = relic_runtime.call("begin_quest", quest_progression, quest_player, quest_world_manager, Vector3(12.0, 2.0, 34.0))
+	if not bool(quest_begin.get("success", false)):
+		_fail("Historical relic quest did not start: " + str(quest_begin.get("reason", "UNKNOWN")))
+		return
+	for clue_id in ["star", "river", "crown", "recover_relic"]:
+		var clue_node_name := "RecoverBabylonStarTablet" if clue_id == "recover_relic" else "HistoricalRelicClue_" + clue_id
+		var clue_node := relic_runtime.get_node_or_null(clue_node_name) as Area3D
+		if clue_node == null:
+			_fail("Historical relic quest is missing clue interaction: " + clue_node_name)
+			return
+		var clue_result: Dictionary = relic_runtime.call("handle_interaction", clue_node)
+		if not bool(clue_result.get("success", false)):
+			_fail("Historical relic clue sequence failed at " + clue_id + ": " + str(clue_result.get("message", "")))
+			return
+	var rare_skill_id := "relic_echo_sight"
+	var authorized_skills: Array = quest_progression.call("get_authorized_system_skills")
+	if not authorized_skills.has(rare_skill_id):
+		_fail("Completing the Babylon relic quest did not unlock its rare skill training permit.")
+		return
+	for practice_index in range(3):
+		var practice_result: Dictionary = quest_progression.call("practice_system_skill", rare_skill_id, "babylon_relic_validator_%d" % practice_index)
+		if not bool(practice_result.get("success", false)):
+			_fail("The relic-bound rare skill could not complete its three verified practice sessions.")
+			return
+	var learned_skills: Array = quest_progression.get("learned_system_skills")
+	if not learned_skills.has(rare_skill_id):
+		_fail("The rare relic skill was not learned after three practice sessions.")
+		return
+	quest_world_manager.call("switch_world", WorldManagerScript.WorldID.REALISTIC)
+	await process_frame
+
+	print("Baghdad tower validation passed: verified Republic Bridge and Tigris runtime geometry, five towers on both riverbanks/bridge, upper sky city, standalone Power Tower, Hunter rooftop helicopter controller, internal/external ads, tunnel anchor, five Baghdad tower lobby kiosks plus one separate Power Tower kiosk and Shopping Tower facilities, mysterious antiques market relic quest and rare skill unlock.")
 	# This is a short-lived headless validation process; avoid forcing dummy-renderer teardown of placeholder meshes.
 	quit(0)
 
