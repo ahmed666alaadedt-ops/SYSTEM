@@ -284,7 +284,7 @@ jobs:
           GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
           set -o pipefail
-          "$GODOT" --headless --path "$PROJECT" \
+          timeout 90s "$GODOT" --headless --path "$PROJECT" \
             --script res://tools/test_antique_market_world_builder.gd \
             2>&1 | tee "$RUNNER_TEMP/antiques-market-3d-facilities.log"
 
