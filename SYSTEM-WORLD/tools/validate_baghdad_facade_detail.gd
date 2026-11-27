@@ -48,6 +48,9 @@ func _run() -> void:
 	if str(windows.get_meta("system_facade_detail_type", "")) != "procedural_instanced_windows":
 		_fail("Facade window MultiMesh is missing its detail classification.")
 		return
+	if str(windows.get_meta("system_facade_window_sampling", "")) != "even_distribution_across_facades":
+		_fail("Facade windows were not sampled evenly across the building sides.")
+		return
 
 	var overview_parent := Node3D.new()
 	overview_parent.name = "BaghdadRegionalOverviewValidation"
