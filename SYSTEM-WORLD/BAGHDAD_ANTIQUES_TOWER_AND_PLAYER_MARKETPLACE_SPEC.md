@@ -173,7 +173,7 @@ These are authored content examples, not guaranteed drops from every artifact. S
 | Akkadian Shadow Crown | Ancient Akkad | Trace the lost dynasty, pass the shadow trial, seal the cursed chamber | Player retains the relic after server verification | Shadow Avatar |
 
 ### Required technical integration and closure gates
-- Add a historical relic quest manager to the Godot world as a progression coordinator. It may request world travel, track presentation state and emit requests, but it is not an authority for rewards, ownership or quest completion.
+- Add a historical relic quest manager to the Godot world as a progression coordinator. It may request world travel, track presentation state and emit requests, but it is not an authority for rewards, ownership or quest completion. The current branch now preloads this manager from `main.gd`, routes accepted relic quests through the existing `WorldManager.WorldID.MYTHOLOGY` world (no duplicate historical-world loader), and creates interactable objective markers and a return altar through `artifact_relic_quest_world_runtime.gd`. Local objective progress remains presentation-only.
 - Connect its world-travel request to the existing historical-world transition system; do not create a duplicate historical-world loader.
 - Connect quest objective events to a trusted server verification endpoint. Do not treat a boolean supplied by Godot as proof of completion.
 - Connect verified relic-return events to the marketplace ownership service so the relic is removed from the player's tradable inventory atomically and its historical return is recorded.
