@@ -315,11 +315,12 @@ jobs:
           import importlib.util
           import json
           import math
+          import os
           from pathlib import Path
           from shapely.geometry import shape
           from shapely.ops import transform
 
-          script = Path("$GITHUB_WORKSPACE/SYSTEM-WORLD/tools/geospatial/build_baghdad_metric_cell_pack.py")
+          script = Path(os.environ["GITHUB_WORKSPACE"]) / "SYSTEM-WORLD/tools/geospatial/build_baghdad_metric_cell_pack.py"
           spec = importlib.util.spec_from_file_location("baghdad_cell_pack", script)
           module = importlib.util.module_from_spec(spec)
           spec.loader.exec_module(module)
