@@ -326,3 +326,18 @@ Firebase Functions now exports three server-side operations for the five element
 The emulator test suite covers client rejection of progression writes, missing/non-awakened relic rejection, Nen-rank rejection, successful activation reservation, cooldown replay rejection, completed-mission roster validation and idempotent reward issuance.
 
 **Important boundary:** the activation receipt is not itself a combat effect. A trusted online combat service still must consume the receipt exactly once, validate the target and apply the actual fire/air/water/earth/lightning effect authoritatively. The current Godot effects remain local gameplay implementation and must not be treated as secure online combat until that consumer and the client callable bridge are integrated. No Firebase deployment was performed.
+
+
+### Authoritative elemental combat receipt consumption
+
+The trusted combat server now has `resolveElementalRelicCombat`, restricted to the `gameServer=true` custom claim. It consumes a pending activation receipt exactly once and rejects missing, expired or previously consumed receipts. It does not accept client-supplied damage, healing, resistance or movement values.
+
+- Fire and lightning update a server-owned `combatTargets/{targetId}` health record; elemental resistance is read from the target record, and boss/player targets receive the existing 50% category multiplier.
+- Water updates server-owned player vitals with a 22-point cap and applies a six-second defensive status.
+- Earth applies an eight-second 30% defensive status.
+- Air records a short 220 ms dash impulse on the server-owned elemental status record.
+- Every successful resolution creates an immutable `elementalCombatEvents/{activationId}` audit record in the same transaction as consuming the receipt and applying the state change.
+
+Emulator coverage now exercises lightning against a boss with elemental resistance, single-use receipt enforcement, and server-side water/earth/air outcomes.
+
+**Integration boundary remains:** the current Godot world enemies and player movement/health components are still local runtime objects. A trusted realtime game-server adapter must publish authoritative combatant/vitals documents and reconcile these resolver results back into live sessions before claiming secure online PvP/PvE. The callable resolver and Firestore emulator tests do not, by themselves, connect live Godot combatants to an online authoritative simulation.
