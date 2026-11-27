@@ -991,6 +991,8 @@ func _add_baghdad_bridge_lane_markings(bridge: Node3D) -> void:
 		var route: Array = route_value
 		if route.size() < 2:
 			continue
+		var dash_distance_to_next := 0.0
+		var joint_distance_to_next := 24.0
 		for segment_index in range(route.size() - 1):
 			var start: Vector2 = route[segment_index]
 			var finish: Vector2 = route[segment_index + 1]
@@ -1000,7 +1002,7 @@ func _add_baghdad_bridge_lane_markings(bridge: Node3D) -> void:
 				continue
 			var direction := segment / segment_length
 			var side := Vector2(-direction.y, direction.x)
-			var cursor := 0.0
+			var cursor := dash_distance_to_next
 			while cursor < segment_length:
 				var dash_end := minf(cursor + 4.0, segment_length)
 				var a := start + direction * cursor
@@ -1027,9 +1029,10 @@ func _add_baghdad_bridge_lane_markings(bridge: Node3D) -> void:
 					Vector3(center_b_left.x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 0.05, center_b_left.y),
 					Vector3(center_b_right.x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 0.05, center_b_right.y))
 				cursor += 7.0
-			var joint_distance := 24.0
-			while joint_distance < segment_length:
-				var joint_center := start + direction * joint_distance
+			dash_distance_to_next = cursor - segment_length
+			var joint_cursor := joint_distance_to_next
+			while joint_cursor < segment_length:
+				var joint_center := start + direction * joint_cursor
 				var along := direction * 0.055
 				var across := side * 6.25
 				_add_surface_quad(joint_surface,
@@ -1037,7 +1040,8 @@ func _add_baghdad_bridge_lane_markings(bridge: Node3D) -> void:
 					Vector3((joint_center - along - across).x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 0.025, (joint_center - along - across).y),
 					Vector3((joint_center + along + across).x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 0.025, (joint_center + along + across).y),
 					Vector3((joint_center + along - across).x, BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT + 0.025, (joint_center + along - across).y))
-				joint_distance += 24.0
+				joint_cursor += 24.0
+			joint_distance_to_next = joint_cursor - segment_length
 	yellow_surface.generate_normals()
 	white_surface.generate_normals()
 	joint_surface.generate_normals()
@@ -1091,16 +1095,17 @@ func _add_baghdad_bridge_lighting(bridge: Node3D) -> void:
 		var route: Array = route_value
 		if route.size() < 2:
 			continue
+		var lamp_distance_to_next := 12.0
 		for segment_index in range(route.size() - 1):
 			var start: Vector2 = route[segment_index]
 			var finish: Vector2 = route[segment_index + 1]
 			var segment := finish - start
 			var segment_length := segment.length()
-			if segment_length < 24.0:
+			if segment_length < 0.5:
 				continue
 			var direction := segment / segment_length
 			var side := Vector2(-direction.y, direction.x)
-			var lamp_distance := 12.0
+			var lamp_distance := lamp_distance_to_next
 			while lamp_distance < segment_length:
 				var center := start + direction * lamp_distance
 				for side_sign in [-1.0, 1.0]:
@@ -1112,6 +1117,7 @@ func _add_baghdad_bridge_lighting(bridge: Node3D) -> void:
 					var head_forward := Vector3(-direction.y, 0.0, direction.x)
 					head_transforms.append(Transform3D(Basis(head_right, Vector3.UP, head_forward), head_position))
 				lamp_distance += 28.0
+			lamp_distance_to_next = lamp_distance - segment_length
 	if pole_transforms.is_empty():
 		return
 	var pole_multimesh := MultiMesh.new()
