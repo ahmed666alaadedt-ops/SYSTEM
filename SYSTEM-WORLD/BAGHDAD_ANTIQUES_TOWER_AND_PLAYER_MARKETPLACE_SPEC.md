@@ -255,3 +255,34 @@ Elemental combinations (Fire+Air, Water+Earth and exceptionally all four) may be
 2. Fire, Air, Water and Earth each produce a distinct tested gameplay effect after awakening.
 3. Elemental resistance, damage, healing and control respect caps, cooldowns, target rules and PvP/boss resistance.
 4. Elemental combination rewards require all server-verified prerequisite trials and are issued once only.
+
+
+## Nen as the primary power — elemental relics as secondary power
+
+Nen is the required foundational power system for every supernatural elemental relic ability. A relic does **not** grant Nen and cannot replace Nen training. It supplies a secondary elemental affinity that the player learns to channel through their own Nen.
+
+### Activation and progression gates
+1. The player must unlock Nen through its own training/progression path before any elemental relic skill can activate.
+2. The player must own and recover the eligible rare relic from its registered quest/discovery source, then complete its separate awakening trial.
+3. The skill becomes usable only when both checks pass: the relic is awakened and the player's Nen mastery meets that skill's minimum threshold.
+4. Without Nen, the relic remains dormant: it may be inspected and stored, but its supernatural ability cannot be activated.
+5. Beginner Nen permits only weak, short effects with high energy cost and fatigue. Trained Nen enables stable controlled effects. Advanced mastery improves precision and efficiency within strict caps. Expert mastery plus linked trials is required for exceptional multi-element combinations.
+6. The server validates Nen unlock, mastery tier, relic ownership, awakening, learned skill, energy, cooldown, target and effect. The client cannot assert its own Nen level or successful activation.
+
+### Five elemental affinities
+- Fire: focused flame bursts and heat resistance.
+- Air: wind blades, gusts and short aerial movement.
+- Water: barriers, cleansing and limited healing.
+- Earth: armor, ground control and breakable rooting.
+- Lightning: precise lightning arcs, brief interrupts and controlled mobility bursts.
+
+All five affinities are secondary channels of Nen, not independent free powers. Their effects must be distinct, balanced and costly enough that mastery matters. Dual-element and five-element combinations are endgame-level rare rewards requiring high Nen mastery and multiple verified quest trials; no ordinary market fusion or client-side crafting can create them.
+
+### Nen-elemental acceptance tests
+1. A player without Nen cannot activate any elemental relic ability, even with the relic equipped.
+2. A player with insufficient Nen mastery is rejected or receives only the explicitly configured beginner effect and cost.
+3. Relic awakening without Nen does not unlock activation; Nen training without the relic does not grant the element.
+4. Server rejects forged Nen tier, relic ownership, quest completion, skill unlock and replayed activation.
+5. Fire, Air, Water, Earth and Lightning each have distinct effects, costs, cooldowns, caps and boss/PvP resistance.
+6. Relogging preserves verified Nen mastery and relic skill state without duplicating unlocks.
+7. Existing non-elemental skills and marketplace transactions continue to work.
