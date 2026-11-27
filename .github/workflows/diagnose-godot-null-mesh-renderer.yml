@@ -31,7 +31,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --yes xvfb libgl1-mesa-dri mesa-utils
-          glxinfo -B
+          xvfb-run -a glxinfo -B
 
       - name: Download Godot 4.3
         shell: bash
