@@ -966,6 +966,7 @@ func _build_baghdad_republic_bridge() -> void:
 	lamp_glow.emission = Color(1.0, 0.52, 0.16)
 	lamp_glow.emission_energy_multiplier = 1.8
 	var bridge_line := baghdad_bridge_centerline
+	var expansion_joint_total := 0
 	for segment_index in range(bridge_line.size() - 1):
 		var line_start: Vector2 = bridge_line[segment_index]
 		var line_finish: Vector2 = bridge_line[segment_index + 1]
@@ -1000,6 +1001,7 @@ func _build_baghdad_republic_bridge() -> void:
 			joint.rotation.y = angle
 			joint.material_override = joint_material
 			bridge.add_child(joint)
+			expansion_joint_total += 1
 	# Paired low-profile light poles are distributed along the bridge route.
 	var lamp_spacing := 22.0
 	var lamp_serial := 0
@@ -1040,7 +1042,7 @@ func _build_baghdad_republic_bridge() -> void:
 				lamp_serial += 1
 	bridge.set_meta("system_bridge_lane_marking_segments", bridge_line.size() - 1)
 	bridge.set_meta("system_bridge_lamp_fixture_count", lamp_serial)
-	bridge.set_meta("system_bridge_expansion_joint_count", bridge.get_child_count())
+	bridge.set_meta("system_bridge_expansion_joint_count", expansion_joint_total)
 	bridge.set_meta("system_bridge_deck_height_m", BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT)
 	bridge.set_meta("system_bridge_centerline_points", baghdad_bridge_centerline.size())
 	bridge.set_meta("system_bridge_secondary_centerline_points", baghdad_bridge_secondary_centerline.size())
