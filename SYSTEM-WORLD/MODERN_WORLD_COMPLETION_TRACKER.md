@@ -816,7 +816,7 @@ python -m unittest discover -s tools/geospatial -p 'test_associate_baghdad_entra
 - [x] Execute buyer debit, seller credit, artifact ownership transfer, listing settlement, and immutable transaction-ledger creation in one Firestore transaction.
 - [x] Reject unauthenticated users, invalid prices/IDs, self-purchases, already-closed listings, inconsistent ownership/locks, missing wallets, insufficient funds, and duplicate buyer item IDs.
 - [x] Keep marketplace wallet, inventory and listing collections outside client-writable player systemData; the existing Firestore catch-all denies client writes to these new collections.
-- [x] Add a GitHub Actions TypeScript compilation workflow for Firebase Functions.
+- [x] Add a GitHub Actions TypeScript compilation workflow for Firebase Functions; CI run 46038445917 passed the full dependency-install and TypeScript compile job on commit 96faef97.
 - [ ] Provision marketWallets/{uid} and playerArtifacts/{uid}/items/{itemId} only from trusted server reward/account flows; existing local SYSTEM Credits and local artifact saves are not authoritative and are not automatically imported.
 - [ ] Connect the Godot market UI to Firebase callable endpoints and remove local-wallet/local-inventory claims from the online marketplace path while preserving the offline prototype as an explicitly separate mode.
 - [ ] Add emulator-backed transaction tests for concurrent buyers, duplicate requests, seller cancellation races, insufficient balance, and rollback on failed ownership transfer.
