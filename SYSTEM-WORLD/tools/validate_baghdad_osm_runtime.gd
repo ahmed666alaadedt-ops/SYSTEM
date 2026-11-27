@@ -88,6 +88,10 @@ func _run_validation() -> void:
 	regional_roads.name = "BaghdadRegionalRoadsValidationStreamer"
 	regional_roads.data_root = "res://data/geography/baghdad/regional_roads"
 	root.add_child(regional_roads)
+	regional_roads._process(0.0)
+	if not regional_roads.desired_cells.has(Vector2i(3, -2)):
+		_fail("Citywide road streamer did not select the Republic Bridge 1 km cell for the player.")
+		return
 	if not regional_roads.enabled or absf(regional_roads.cell_size - 1000.0) > 0.01:
 		_fail("Citywide Baghdad road pack did not enable at the expected 1 km overview resolution.")
 		return
