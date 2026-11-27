@@ -483,7 +483,10 @@ test("secret traders sell through the shared artifact registry and wallet; appra
   assert.equal(artifact.data().source, "secret_trader_purchase");
   assert.equal((await db.collection("artifactRegistry").doc(purchase.artifactId).get()).exists, true);
 
-  const replay = await call("purchaseSecretAntiqueOffer", buyer, purchasePayload);
+  const replay = await call("purchaseSecretAntiqueOffer", buyer, {
+    offerId: purchasePayload.offerId,
+    eventId: "different_retry_event"
+  });
   assert.equal(replay.alreadyPurchased, true);
   assert.equal(replay.artifactId, purchase.artifactId);
   assert.equal((await db.collection("systemWallets").doc(buyer).get()).data().balance, 41500);
@@ -492,6 +495,8 @@ test("secret traders sell through the shared artifact registry and wallet; appra
   assert.equal(appraisal.success, true);
   assert.equal(appraisal.verdict, "verified");
   assert.equal((await readArtifact(buyer, purchase.artifactId)).data().authenticity, "verified");
+  const repeatedAppraisal = await call("appraiseMyArtifactAuthenticity", buyer, { artifactId: purchase.artifactId });
+  assert.equal(repeatedAppraisal.alreadyAppraised, true);
 
   const reputation = await call("getMyAntiquesReputation", buyer);
   assert.equal(reputation.completedPurchases, 1);
