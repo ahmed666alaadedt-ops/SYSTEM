@@ -195,6 +195,9 @@ func build_cell(parent: Node3D, cell: Vector2i, landuse_features: Array,
 			_add_batch(parent, cell, str(category), transforms)
 	parent.set_meta("baghdad_vegetation_counts", counts)
 	parent.set_meta("baghdad_vegetation_total", total)
+	parent.set_meta("baghdad_vegetation_roadside_count", roadside_count)
+	parent.set_meta("baghdad_vegetation_green_area_m2", eligible_area)
+	parent.set_meta("baghdad_vegetation_water_area_m2", aquatic_area)
 	return {
 		"total": total,
 		"green_area_m2": eligible_area,
