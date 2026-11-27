@@ -37,6 +37,12 @@ data class SystemArtifactListing(
     val expiresAt: Long?
 )
 
+data class SystemRelicQuestSnapshot(
+    val ownedArtifacts: List<SystemOwnedArtifact>,
+    val marketListings: List<SystemArtifactListing>,
+    val skills: List<Map<String, Any?>>
+)
+
 data class SystemArtifactAuction(
     val auctionId: String,
     val artifactId: String,
@@ -146,6 +152,56 @@ class FirebaseArtifactMarketplaceRepository(
                 callback(Result.success(listings))
             }
             .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    /** Reads server-issued rare relic skills for the signed-in player only. */
+    fun loadMyRareRelicSkills(callback: (Result<List<Map<String, Any?>>>) -> Unit) {
+        functions.getHttpsCallable("listMyRareRelicSkills").call()
+            .addOnSuccessListener { result ->
+                val raw = (result.data as? Map<*, *>)?.get("skills") as? List<*> ?: emptyList<Any>()
+                val skills = raw.mapNotNull { value ->
+                    val item = value as? Map<*, *> ?: return@mapNotNull null
+                    val skillId = item["skillId"] as? String ?: return@mapNotNull null
+                    mapOf<String, Any?>(
+                        "skillId" to skillId,
+                        "skillName" to (item["skillName"] as? String ?: ""),
+                        "rarity" to (item["rarity"] as? String ?: ""),
+                        "questId" to (item["questId"] as? String ?: ""),
+                        "sourceArtifactId" to (item["sourceArtifactId"] as? String ?: ""),
+                        "relicReturned" to (item["relicReturned"] as? Boolean ?: false),
+                        "historicalSiteId" to (item["historicalSiteId"] as? String),
+                        "unlockedAt" to (item["unlockedAt"] as? Number)?.toLong()
+                    )
+                }
+                callback(Result.success(skills))
+            }
+            .addOnFailureListener { callback(Result.failure(it)) }
+    }
+
+    /** Refreshes ownership, public market listings and verified skill receipts after a server quest result. */
+    fun loadRelicQuestState(callback: (Result<SystemRelicQuestSnapshot>) -> Unit) {
+        loadOwnedArtifacts { ownedResult ->
+            ownedResult.fold(
+                onSuccess = { owned ->
+                    browseListings { listingsResult ->
+                        listingsResult.fold(
+                            onSuccess = { listings ->
+                                loadMyRareRelicSkills { skillsResult ->
+                                    skillsResult.fold(
+                                        onSuccess = { skills ->
+                                            callback(Result.success(SystemRelicQuestSnapshot(owned, listings, skills)))
+                                        },
+                                        onFailure = { callback(Result.failure(it)) }
+                                    )
+                                }
+                            },
+                            onFailure = { callback(Result.failure(it)) }
+                        )
+                    }
+                },
+                onFailure = { callback(Result.failure(it)) }
+            )
+        }
     }
 
     fun loadTransactionHistory(callback: (Result<List<Map<String, Any?>>>) -> Unit) {
