@@ -152,3 +152,12 @@ Do not count the independent Power Tower as one of the five district towers. Spo
 8. Auction settlement and two-party exchange are tested against expired, cancelled, replayed and conflicting requests.
 9. The existing Hunter Association, Shopping, Business, Technology and standalone Power Tower regressions remain green.
 10. No changes are merged into main without the user's separate explicit approval.
+
+
+## Second historical relic quest — Nineveh Guardians
+
+- The market has a separate sealed Assyrian royal seal altar; it is not a tower and does not replace the Babylon Star Tablet altar.
+- The quest travels to the Historical & Civilizations world and requires the clue order: Winged Lion, Tigris tablet, Royal Seal, then recover the Assyrian seal.
+- Correct completion grants a training permit for the mythic rare skill `ashur_guardian_aegis` (درع الحارس الآشوري); three verified training sessions are required before use.
+- The mobile AEGIS control activates a 12-second defensive barrier after mastery, reducing incoming damage by 65%; cost 35 energy, 60-second cooldown. The player receives a visible amber shield effect.
+- The return gate returns the player to the market. This is an initial procedural quest environment, not a final cinematic historical level.
