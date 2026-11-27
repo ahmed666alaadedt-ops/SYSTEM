@@ -375,6 +375,11 @@ test("historical relic return and rare skill reward are trusted, atomic and repl
     requestId: startRequest.requestId
   }, { gameServer: true });
   assert.ok(session.sessionId);
+  const ownQuestSessions = await call("listMyHistoricalRelicQuestSessions", owner);
+  assert.equal(ownQuestSessions.sessions.length, 1);
+  assert.equal(ownQuestSessions.sessions[0].sessionId, session.sessionId);
+  const unrelatedQuestSessions = await call("listMyHistoricalRelicQuestSessions", uid("unrelated_relic_player"));
+  assert.equal(unrelatedQuestSessions.sessions.length, 0);
   const lockedArtifact = await readArtifact(owner, relicId);
   assert.equal(lockedArtifact.data().activeHistoricalQuestSessionId, session.sessionId);
   await assert.rejects(() => call("createArtifactListing", owner, {
@@ -449,6 +454,8 @@ test("historical relic return and rare skill reward are trusted, atomic and repl
   assert.equal(skill.data().questId, "quest_babylon_star_tablet");
   assert.equal(skill.data().relicReturned, true);
   assert.equal(skill.data().historicalSiteId, "babylon_esagila_archive");
+  const completedSessions = await call("listMyHistoricalRelicQuestSessions", owner);
+  assert.equal(completedSessions.sessions[0].status, "completed");
   const syncedSkills = await call("listMyRareRelicSkills", owner);
   assert.equal(syncedSkills.skills.length, 1);
   assert.equal(syncedSkills.skills[0].skillId, "rare_skill_celestial_lightning");
