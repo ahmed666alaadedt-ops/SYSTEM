@@ -1711,7 +1711,7 @@ func _create_relic_echo_pulse() -> void:
 	player.add_child(pulse)
 	var tween := create_tween()
 	tween.tween_property(pulse, "scale", Vector3.ONE * 32.0, 1.15)
-	tween.parallel().tween_property(material, "albedo_color:a", 0.0, 1.15)
+	tween.parallel().tween_property(material, "albedo_color", Color(0.18, 0.78, 1.0, 0.0), 1.15)
 	await get_tree().create_timer(1.25).timeout
 	if is_instance_valid(pulse):
 		pulse.queue_free()
