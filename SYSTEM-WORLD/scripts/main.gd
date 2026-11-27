@@ -1315,6 +1315,9 @@ func _on_interaction_performed(
 	if target.has_meta("system_power_tower_ticket_terminal") and tower_operations_manager != null:
 		tower_operations_manager.call("open_power_tower_ticket_terminal")
 		return
+	if str(target.get_meta("system_interaction_type", "")) == "antiques_world_facility" and tower_operations_manager != null:
+		tower_operations_manager.call("open_antiques_world_facility", target)
+		return
 	if str(target.get_meta("system_interaction_type", "")) == "museum_artifact_exhibit" and tower_operations_manager != null:
 		tower_operations_manager.call("open_museum_artifact_exhibit", target)
 		return
