@@ -200,3 +200,38 @@ The artifact market is a shared destination for discoveries from two distinct ga
 6. An awakened bound relic cannot be traded to duplicate the skill or remove the skill from its legitimate owner.
 7. Market listings show origin, provenance, rarity and trade eligibility without exposing private player identifiers.
 8. Existing Babylon Echoes, Nineveh Guardians, artifact marketplace, wallet, auctions and exchanges regressions remain green.
+
+
+## Supernatural relic abilities — healing, combat, movement, flight and petrification
+
+Relics and fantasy gemstones may grant supernatural abilities, but only selected, provenance-authenticated rare items may do so. Abilities are learned through the existing progression/awakening flow, then equipped and manually activated by the player. A catalog entry is not proof that its quest, skill effect or runtime integration is complete.
+
+### Ability families
+- Healing: healing over time, burst recovery, energy restoration and tightly limited emergency recovery. No repeated revival exploit or resurrection after a finalized death state.
+- Combat: temporary strength, guard breaking, defensive resistance, elemental attacks and counter barriers. Bonuses have caps and diminishing returns.
+- Speed and movement: sprint bursts, dashes, evasions and controlled aerial movement.
+- Wings and flight: relics may manifest visible wings on the character or grant temporary flight. Flight has stamina/energy costs, duration and landing control; disable it in restricted interiors, protected quest spaces and selected PvP arenas.
+- Petrification and control: rare gaze relics can briefly petrify a valid enemy. The target must have a break/escape rule, resistance and diminishing returns; bosses and players receive appropriate resistance. No indefinite stun, chain-lock or client-side hit confirmation.
+- Other utility: stealth, detection, shields and elemental resistance.
+
+### World provenance examples
+- Historical world: Sumerian Life Vessel (healing), Babylonian War Standard (combat), Assur Wind Sandals (speed), Horus Sky Wings (flight/wings), and Medusa Obsidian Gaze (petrification). These belong to civilization-specific historical questlines and must be recovered from their associated historical locations.
+- Fantasy world: Phoenix Heartstone (healing), Titan Core (combat), Wind Dragon Feather (speed), Sky Seraph Crystal (wings/flight), and Basilisk Eye Gem (petrification). These originate only from fantasy expeditions, guardian encounters, shrines or fantasy quest rewards.
+- These examples are registered as planned quest content unless a corresponding playable quest/runtime is explicitly implemented and tested. Never present planned content as already obtainable.
+
+### Combat and security requirements
+- The server validates ownership, awakening, learned skill, cooldown, energy cost, range, line of sight, target eligibility, PvP rules and effect duration before accepting an ability use.
+- The server owns damage, healing, petrification, movement/flight authorization and effect expiry. Client animations are presentation only.
+- Effects cannot stack beyond configured caps; repeated control effects apply diminishing returns and temporary immunity windows.
+- Wings must be visible character equipment/animation, not merely a stat flag. Flight must have real movement controller integration, collision handling, stamina and safe landing.
+- Petrification must have a readable visual state, a short maximum duration, an escape/break condition, boss/player resistance and server-side anti-chain-lock enforcement.
+- Healing must respect max health, combat state and death-state transitions. Strength/speed buffs must not bypass movement, attack-rate or damage caps.
+
+### Acceptance tests before calling these abilities complete
+1. Each item can only be issued from its registered world and quest/discovery source; forged client drops are rejected.
+2. Awakening and skill unlock are idempotent and persist across relog/device changes.
+3. Each learned ability can be equipped and manually activated; cooldown, resource cost and target validation are enforced server-side.
+4. Healing, strength, speed, wings/flight and petrification each produce their actual gameplay effect, not only a catalog description or animation.
+5. Petrification cannot permanently disable another player or boss; escape, resistance and immunity windows work under latency and simultaneous hits.
+6. Flight collision, indoor restrictions, landing and PvP restrictions are tested.
+7. Existing historical quests, fantasy world, player progression, artifact market and Android/Godot bridge regression suites pass.
