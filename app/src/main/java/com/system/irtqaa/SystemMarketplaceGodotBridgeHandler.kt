@@ -29,6 +29,14 @@ class SystemMarketplaceGodotBridgeHandler(
             "antiques_reputation" -> repository.loadMyAntiquesReputation { result ->
                 respond(id, result.map { JSONObject(it) })
             }
+            "request_relic_quest_start" -> repository.requestHistoricalRelicQuestStart(
+                payload.optString("questId"),
+                payload.optString("artifactId")
+            ) { result -> respond(id, result.map { JSONObject(it) }) }
+            "request_relic_return" -> repository.requestHistoricalRelicReturn(
+                payload.optString("questId"),
+                payload.optString("artifactId")
+            ) { result -> respond(id, result.map { JSONObject(it) }) }
             "refresh_relic_state" -> repository.loadRelicQuestState { result ->
                 respond(id, result.map { snapshot ->
                     JSONObject()
