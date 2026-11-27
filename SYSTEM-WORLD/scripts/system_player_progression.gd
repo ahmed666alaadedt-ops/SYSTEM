@@ -89,7 +89,12 @@ const SYSTEM_SKILL_TREE := {
 	"resonance_burst": {"name": "انفجار الرنين", "category": "nen", "required_level": 50, "required_rank": "S", "prerequisites": ["sensory_mark", "flow_counter"], "requires_nen": true, "required_nen_rank": 4, "requires_training_permit": true, "energy_cost": 40, "cooldown": 35.0, "effect": "موجة هالة قصيرة المدى"},
 	"sovereign_focus": {"name": "تركيز السيادة", "category": "nen", "required_level": 80, "required_rank": "SS", "prerequisites": ["resonance_burst"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 60, "cooldown": 60.0, "effect": "تركيز نادر عالي الكلفة"},
 	"relic_echo_sight": {"name": "عين صدى الأثر", "category": "rare_relic", "rarity": "mythic", "required_level": 1, "required_rank": "F", "prerequisites": [], "requires_nen": false, "requires_training_permit": true, "energy_cost": 25, "cooldown": 45.0, "effect": "تكشف آثاراً ورموزاً مخفية ومسارات صدى تاريخية لفترة قصيرة", "source_artifact": "babylon_star_tablet"},
-	"ashur_guardian_aegis": {"name": "درع الحارس الآشوري", "category": "rare_relic", "rarity": "mythic", "required_level": 1, "required_rank": "F", "prerequisites": [], "requires_nen": false, "requires_training_permit": true, "energy_cost": 35, "cooldown": 60.0, "effect": "استدعاء درع آشوري أثري يصد ضربة قوية ويحمي اللاعب مؤقتاً", "source_artifact": "assyrian_royal_seal"}
+	"ashur_guardian_aegis": {"name": "درع الحارس الآشوري", "category": "rare_relic", "rarity": "mythic", "required_level": 1, "required_rank": "F", "prerequisites": [], "requires_nen": false, "requires_training_permit": true, "energy_cost": 35, "cooldown": 60.0, "effect": "استدعاء درع آشوري أثري يصد ضربة قوية ويحمي اللاعب مؤقتاً", "source_artifact": "assyrian_royal_seal"},
+	"primordial_flame_burst": {"name": "انفجار اللهب البدائي", "category": "elemental_relic", "element": "fire", "required_level": 25, "required_rank": "B", "prerequisites": [], "requires_nen": true, "required_nen_rank": 2, "requires_training_permit": true, "energy_cost": 32, "cooldown": 28.0, "effect": "قناة نين نارية محدودة", "source_artifact": "primordial_flame_heart"},
+	"stormwind_aerial_step": {"name": "خطوة ريح العاصفة", "category": "elemental_relic", "element": "air", "required_level": 25, "required_rank": "B", "prerequisites": [], "requires_nen": true, "required_nen_rank": 2, "requires_training_permit": true, "energy_cost": 28, "cooldown": 24.0, "effect": "قناة نين هوائية واندفاع قصير", "source_artifact": "stormwind_sigil"},
+	"tideheart_restoration": {"name": "موجة قلب المد", "category": "elemental_relic", "element": "water", "required_level": 30, "required_rank": "A", "prerequisites": [], "requires_nen": true, "required_nen_rank": 3, "requires_training_permit": true, "energy_cost": 36, "cooldown": 40.0, "effect": "قناة نين مائية للحماية والشفاء المحدود", "source_artifact": "tideheart_pearl"},
+	"worldroot_earthguard": {"name": "حارس جذر العالم", "category": "elemental_relic", "element": "earth", "required_level": 35, "required_rank": "A", "prerequisites": [], "requires_nen": true, "required_nen_rank": 3, "requires_training_permit": true, "energy_cost": 38, "cooldown": 42.0, "effect": "قناة نين أرضية للتحصين والسيطرة", "source_artifact": "worldroot_geode"},
+	"stormlightning_arc": {"name": "قوس برق العاصفة", "category": "elemental_relic", "element": "lightning", "required_level": 50, "required_rank": "S", "prerequisites": [], "requires_nen": true, "required_nen_rank": 4, "requires_training_permit": true, "energy_cost": 48, "cooldown": 55.0, "effect": "قناة نين برق دقيقة عالية الكلفة", "source_artifact": "stormlightning_crown"}
 }
 const WEAPON_MASTERY_FAMILIES := ["sword", "spear", "axe", "bow", "shield", "modern_ranged"]
 
@@ -1186,6 +1191,23 @@ func activate_relic_skill(skill_id: String, actor: CharacterBody3D) -> Dictionar
 	var key := skill_id.strip_edges().to_lower()
 	if not is_instance_valid(actor):
 		return {"success": false, "reason": "PLAYER_ACTOR_UNAVAILABLE"}
+	var elemental_nen_requirements := {
+		"primordial_flame_burst": 2,
+		"stormwind_aerial_step": 2,
+		"tideheart_restoration": 3,
+		"worldroot_earthguard": 3,
+		"stormlightning_arc": 4
+	}
+	if elemental_nen_requirements.has(key):
+		if not nen_unlocked:
+			return {"success": false, "reason": "NEN_NOT_UNLOCKED", "elemental_skill": key}
+		var required_nen_rank := int(elemental_nen_requirements[key])
+		if nen_control_rank < required_nen_rank:
+			return {"success": false, "reason": "NEN_CONTROL_REQUIREMENT", "required_nen_rank": required_nen_rank, "current_nen_rank": nen_control_rank}
+		var elemental_check: Dictionary = can_use_system_skill(key)
+		if not bool(elemental_check.get("success", false)):
+			return elemental_check
+		return {"success": false, "reason": "ELEMENTAL_RELIC_EFFECT_RUNTIME_PENDING", "elemental_skill": key, "nen_control_rank": nen_control_rank}
 	if key not in ["relic_echo_sight", "ashur_guardian_aegis"]:
 		return {"success": false, "reason": "NOT_AN_IMPLEMENTED_RELIC_SKILL"}
 
