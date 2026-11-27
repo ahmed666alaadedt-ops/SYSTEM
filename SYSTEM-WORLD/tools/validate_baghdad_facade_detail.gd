@@ -5,10 +5,17 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	var streamer := BaghdadOSMCellStreamer.new()
+	var streamer_script := load("res://scripts/baghdad_osm_cell_streamer.gd") as Script
+	if streamer_script == null:
+		_fail("Baghdad OSM cell streamer script could not load.")
+		return
+	var streamer := streamer_script.new() as Node3D
+	if streamer == null:
+		_fail("Baghdad OSM cell streamer instance could not be created.")
+		return
 	streamer.name = "BaghdadFacadeDetailValidationStreamer"
 	root.add_child(streamer)
-	streamer._create_materials()
+	streamer.call("_create_materials")
 
 	var feature := {
 		"id": "facade_validation_apartment_001",
@@ -22,7 +29,7 @@ func _run() -> void:
 			"building:levels": "5"
 		}
 	}
-	var built := streamer._build_building_feature(streamer, feature, [])
+	var built := int(streamer.call("_build_building_feature", streamer, feature, []))
 	if built != 1:
 		_fail("Synthetic five-floor Baghdad apartment footprint did not build.")
 		return
@@ -45,7 +52,7 @@ func _run() -> void:
 	var overview_parent := Node3D.new()
 	overview_parent.name = "BaghdadRegionalOverviewValidation"
 	root.add_child(overview_parent)
-	streamer._build_building_overview_feature(overview_parent, feature)
+	streamer.call("_build_building_overview_feature", overview_parent, feature)
 	if overview_parent.get_child_count() != 1 or overview_parent.get_child(0) is MultiMeshInstance3D:
 		_fail("The 1 km regional overview must remain a low-cost extrusion LOD without facade windows.")
 		return
