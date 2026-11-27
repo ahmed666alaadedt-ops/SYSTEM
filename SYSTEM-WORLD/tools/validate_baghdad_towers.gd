@@ -101,7 +101,7 @@ func _run_validation() -> void:
 	if str(tigris.get_meta("system_water_shader", "")) != "world_space_animated_ripples" or tigris.mesh == null:
 		_fail("Tigris River is missing its animated world-space water surface.")
 		return
-	var tigris_material := tigris.mesh.surface_get_material(0) as ShaderMaterial if tigris.mesh.get_surface_count() > 0 else null
+	var tigris_material := tigris.material_override as ShaderMaterial
 	if tigris_material == null or tigris_material.shader == null or not tigris_material.shader.code.contains("TIME"):
 		_fail("Tigris River shader is missing its time-driven wave and shimmer animation.")
 		return
