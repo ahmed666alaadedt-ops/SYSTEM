@@ -9,8 +9,8 @@ const MODERN_WORLD_ID := 2
 const TICK_INTERVAL_SECONDS := 5.0
 const MAX_NPCS_PER_TICK := 200
 ## Seed a large persistent civilian society; only nearby actors are rendered.
-const STARTER_RESIDENT_COUNT := 8500
-const STARTER_MINOR_COUNT := 1500
+const STARTER_RESIDENT_COUNT := 42500
+const STARTER_MINOR_COUNT := 7500
 const NPC_SEED_BATCH_SIZE := 50
 const FIRST_NAMES := [
 	"Ali", "Zahra", "Omar", "Noor", "Hassan", "Maryam",
