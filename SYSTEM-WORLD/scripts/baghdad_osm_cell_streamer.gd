@@ -1720,5 +1720,8 @@ func get_streaming_status() -> Dictionary:
 		"canonical_origin_frame_valid": canonical_origin_frame_valid,
 		"road_navigation_graph_dirty": _road_navigation_graph_dirty,
 		"road_navigation_node_count": _road_navigation_graph.get_point_count(),
-		"road_navigation_graph_build_count": _road_navigation_graph_build_count
+		"road_navigation_graph_build_count": _road_navigation_graph_build_count,
+		"vehicle_navigation_graph_dirty": _vehicle_navigation_graph_dirty,
+		"vehicle_navigation_node_count": _vehicle_navigation_graph.get_point_count(),
+		"vehicle_navigation_graph_build_count": _vehicle_navigation_graph_build_count
 	}
