@@ -181,8 +181,77 @@ func _run_validation() -> void:
 	if not non_baghdad_route.is_empty():
 		_fail("Baghdad OSM route API incorrectly returned a route for a different city.")
 		return
+
+	var vehicle_segments: Array[Dictionary] = streamer.get_loaded_vehicle_map_segments()
+	if vehicle_segments.is_empty():
+		_fail("Baghdad OSM center cell has no motor-vehicle-accessible road segments.")
+		return
+	var selected_vehicle_segment: Dictionary = {}
+	for candidate_segment in vehicle_segments:
+		var candidate_points: Variant = candidate_segment.get("points", PackedVector2Array())
+		if candidate_points is PackedVector2Array and candidate_points.size() >= 2:
+			if candidate_points[0].distance_to(candidate_points[candidate_points.size() - 1]) > 15.0:
+				selected_vehicle_segment = candidate_segment
+				break
+	if selected_vehicle_segment.is_empty():
+		_fail("Baghdad OSM vehicle graph has no usable road segment longer than 15 metres.")
+		return
+	var vehicle_points: PackedVector2Array = selected_vehicle_segment["points"]
+	var vehicle_start: Vector2 = vehicle_points[0]
+	var vehicle_end: Vector2 = vehicle_points[vehicle_points.size() - 1]
+	if str(selected_vehicle_segment.get("oneway", "no")) == "-1":
+		var swap_point := vehicle_start
+		vehicle_start = vehicle_end
+		vehicle_end = swap_point
+	var vehicle_route: Array[Vector3] = streamer.get_vehicle_navigation_path(
+		Vector3(vehicle_start.x, 0.0, vehicle_start.y),
+		Vector3(vehicle_end.x, 0.0, vehicle_end.y),
+		8.0
+	)
+	if vehicle_route.size() < 2:
+		_fail("Real OSM motor-vehicle graph did not return a route along a permitted road direction.")
+		return
+
+	var direction_test_streamer = BAGHDAD_STREAMER.new()
+	direction_test_streamer.enabled = true
+	var direction_test_cell := Node3D.new()
+	var one_way_points := PackedVector2Array([
+		Vector2(0.0, 0.0), Vector2(20.0, 0.0), Vector2(40.0, 0.0)
+	])
+	direction_test_cell.set_meta("vehicle_navigation_segments", [
+		{"oneway": "yes", "points": one_way_points}
+	])
+	direction_test_streamer.loaded_cells[Vector2i.ZERO] = direction_test_cell
+	if not direction_test_streamer._is_vehicle_road({"highway": "residential"}):
+		_fail("Residential roads were incorrectly excluded from motor traffic.")
+		return
+	if direction_test_streamer._is_vehicle_road({"highway": "footway"}) or direction_test_streamer._is_vehicle_road({"highway": "service", "access": "private"}) or direction_test_streamer._is_vehicle_road({"highway": "primary", "motor_vehicle": "no"}):
+		_fail("Pedestrian-only or explicitly restricted roads entered the vehicle graph.")
+		return
+	var one_way_forward: Array[Vector3] = direction_test_streamer.get_vehicle_navigation_path(
+		Vector3.ZERO, Vector3(40.0, 0.0, 0.0), 2.0
+	)
+	var one_way_reverse: Array[Vector3] = direction_test_streamer.get_vehicle_navigation_path(
+		Vector3(40.0, 0.0, 0.0), Vector3.ZERO, 2.0
+	)
+	if one_way_forward.size() < 2 or not one_way_reverse.is_empty():
+		_fail("OSM one-way vehicle direction was not enforced.")
+		return
+	direction_test_cell.set_meta("vehicle_navigation_segments", [
+		{"oneway": "no", "points": one_way_points}
+	])
+	direction_test_streamer._vehicle_navigation_graph_dirty = true
+	var two_way_reverse: Array[Vector3] = direction_test_streamer.get_vehicle_navigation_path(
+		Vector3(40.0, 0.0, 0.0), Vector3.ZERO, 2.0
+	)
+	if two_way_reverse.size() < 2:
+		_fail("Bidirectional residential vehicle roads did not permit reverse travel.")
+		return
+	direction_test_streamer.free()
+	direction_test_cell.free()
+
 	navigation_manager.free()
-	print("Baghdad OSM player routing and map road export passed: road_nodes=", streamer.get_streaming_status().get("road_navigation_node_count", 0), " route_points=", strict_player_route.size(), " map_road_segments=", exported_road_segments.size())
+	print("Baghdad OSM routing passed: pedestrian_points=", strict_player_route.size(), " vehicle_points=", vehicle_route.size(), " motor_roads=", vehicle_segments.size(), " map_road_segments=", exported_road_segments.size())
 
 	# Exercise persistence against a real OSM-generated building ID, not a test-only ID.
 	var city_state_store = CITY_STATE_STORE.new()
