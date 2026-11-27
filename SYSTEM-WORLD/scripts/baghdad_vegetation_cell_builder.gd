@@ -22,6 +22,7 @@ const MAX_PLANTS_PER_CELL := 256
 var rng := RandomNumberGenerator.new()
 var meshes: Dictionary = {}
 var materials: Dictionary = {}
+var far_mesh: SphereMesh
 
 func _init() -> void:
 	_create_assets()
@@ -43,6 +44,11 @@ func _create_assets() -> void:
 	aquatic.bottom_radius = 0.09
 	aquatic.height = 0.9
 	meshes["aquatic_riparian"] = aquatic
+	far_mesh = SphereMesh.new()
+	far_mesh.radius = 0.8
+	far_mesh.height = 1.7
+	far_mesh.radial_segments = 6
+	far_mesh.rings = 3
 	var palette := {
 		"large_trees": Color(0.075, 0.25, 0.105),
 		"palms": Color(0.16, 0.36, 0.16),
@@ -285,10 +291,33 @@ func _add_batch(parent: Node3D, cell: Vector2i, category: String, transforms: Ar
 	for index in range(transforms.size()):
 		packed.set_instance_transform(index, transforms[index])
 	var instance := MultiMeshInstance3D.new()
-	instance.name = "BaghdadVegetation_%s_%d_%d" % [category, cell.x, cell.y]
+	instance.name = "BaghdadVegetationNear_%s_%d_%d" % [category, cell.x, cell.y]
 	instance.multimesh = packed
 	instance.material_override = materials[category]
 	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	instance.visibility_range_end = 450.0
+	instance.visibility_range_end = 260.0
 	instance.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_DISABLED
 	parent.add_child(instance)
+
+	var far_transforms: Array[Transform3D] = []
+	for index in range(0, transforms.size(), 3):
+		var far_transform: Transform3D = transforms[index]
+		far_transform.basis = far_transform.basis.scaled(Vector3(1.65, 1.35, 1.65))
+		far_transforms.append(far_transform)
+	if far_transforms.is_empty():
+		return
+	var far_batch := MultiMesh.new()
+	far_batch.transform_format = MultiMesh.TRANSFORM_3D
+	far_batch.mesh = far_mesh
+	far_batch.instance_count = far_transforms.size()
+	for index in range(far_transforms.size()):
+		far_batch.set_instance_transform(index, far_transforms[index])
+	var far_instance := MultiMeshInstance3D.new()
+	far_instance.name = "BaghdadVegetationFar_%s_%d_%d" % [category, cell.x, cell.y]
+	far_instance.multimesh = far_batch
+	far_instance.material_override = materials[category]
+	far_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	far_instance.visibility_range_begin = 240.0
+	far_instance.visibility_range_end = 900.0
+	far_instance.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_DISABLED
+	parent.add_child(far_instance)
