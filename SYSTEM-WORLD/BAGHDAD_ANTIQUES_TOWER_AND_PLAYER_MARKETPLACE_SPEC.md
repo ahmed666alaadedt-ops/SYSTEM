@@ -128,3 +128,57 @@ Do not count the independent Power Tower as one of the five district towers. Spo
 8. Auction settlement and two-party exchange are tested against expired, cancelled, replayed and conflicting requests.
 9. The existing Hunter Association, Shopping, Business, Technology and standalone Power Tower regressions remain green.
 10. No changes are merged into main without the user's separate explicit approval.
+
+
+## Yorknew-inspired global antiques market and historical relic quests
+
+The existing marketplace is extended in place; do not create a second economy, duplicate inventory, or replace the escrow implementation.
+
+### Market halls inspired by Yorknew City
+- Global auction hall with scheduled public auctions, rare-lot showcases, bidder history and transparent server settlement.
+- Restricted collector exchange for high-rarity pieces, with curator verification and provenance review before a lot can receive a verified label.
+- Hidden dealer network for mysterious and cursed relics. These are fictional game items; suspicious provenance affects story risk and appraisal, never bypasses ownership or escrow checks.
+- Dealer reputation, appraisal grades, restoration condition, provenance chain and historical-civilization filters.
+- Player-owned gallery rooms and public museum displays remain separate from sale listings.
+- NPC auctioneers, appraisers, curators, restorers, guards and dealers provide world activity and services.
+- Every purchase, bid, exchange and cancellation continues to use the existing authenticated server transactions and escrow. No client-side balance or ownership mutation is permitted.
+
+### Super-rare skills inside relics
+Some artifacts contain a sealed skill, dormant power or historical technique. A relic may:
+- reveal a skill immediately only when its authored rarity and unlock condition permit it;
+- conceal a skill until a linked historical quest is completed;
+- grant a skill only after a required relic-return choice is confirmed by the trusted game server.
+
+Skill examples for the initial content set:
+- Babylonian Star Tablet → Celestial Lightning (mythic).
+- Sumerian Oath Seal → Earth Guardian (legendary).
+- Akkadian Shadow Crown → Shadow Avatar (mythic).
+
+These are authored content examples, not guaranteed drops from every artifact. Skill IDs are stable and unique; reward issuance must be replay-safe and server-authoritative. A client signal or local save must never grant a rare skill or mint an artifact.
+
+### Historical-world quest loop
+1. The player examines an eligible relic in the museum, collection or market and discovers its inscriptions and quest clue.
+2. The game presents an optional invitation to enter the relic's linked historical world. The player must explicitly accept before travel.
+3. The quest loads the corresponding historical setting (for example ancient Babylon, Sumer or Akkad) and its authored objectives, NPCs, puzzles, enemies and locations.
+4. Progress is recorded against the specific quest and relic. Completion events must be validated by the trusted game server; a client-supplied objective-complete flag is not proof.
+5. Each quest explicitly defines whether the relic is retained or must be returned to its original historical site. A return-required quest cannot complete until the server verifies the correct relic was returned to the correct site.
+6. After the quest and any return condition are verified, the server grants the associated rare skill once, records the quest receipt and updates the player's progression.
+7. The player returns to the present-day world. The museum, collection and marketplace refresh from authoritative ownership so a returned relic cannot remain listed, duplicated or tradable.
+
+### Initial relic quest content
+| Relic | Historical world | Quest objective arc | Relic outcome | Skill reward |
+|---|---|---|---|---|
+| Babylonian Star Tablet | Ancient Babylon | Locate the sealed archive, solve the celestial lock, defeat its guardian | Return to Esagila archive | Celestial Lightning |
+| Sumerian Oath Seal | Ancient Sumer | Recover the three oaths and restore the temple seal | Return to the royal temple | Earth Guardian |
+| Akkadian Shadow Crown | Ancient Akkad | Trace the lost dynasty, pass the shadow trial, seal the cursed chamber | Player retains the relic after server verification | Shadow Avatar |
+
+### Required technical integration and closure gates
+- Add a historical relic quest manager to the Godot world as a progression coordinator. It may request world travel, track presentation state and emit requests, but it is not an authority for rewards, ownership or quest completion.
+- Connect its world-travel request to the existing historical-world transition system; do not create a duplicate historical-world loader.
+- Connect quest objective events to a trusted server verification endpoint. Do not treat a boolean supplied by Godot as proof of completion.
+- Connect verified relic-return events to the marketplace ownership service so the relic is removed from the player's tradable inventory atomically and its historical return is recorded.
+- Connect the existing trusted reward endpoint `grantMarketplaceArtifactFromReward` only for artifact rewards and the trusted skill-progression reward path for skill unlocks. Both must be idempotent by stable quest/reward ID.
+- Add emulator tests for forged objective events, wrong relic/site return, duplicate completion, replayed skill rewards, and concurrent return/listing attempts.
+- Add Godot headless tests for relic discovery, opt-in travel request, objective progression, return-required and retain-relic branches, and duplicate reward prevention.
+- Add Android/Godot physical-device tests for opening a relic quest from the market, travelling to the historical world, returning to the present, and seeing the updated server-owned collection.
+- Production deployment, trusted server identity configuration and physical-device verification remain separate activation gates. A passing local quest-manager test does not mean the online reward or world-travel integration is live.
