@@ -8,7 +8,10 @@ class_name SystemNPCDailyLifeManager
 const MODERN_WORLD_ID := 2
 const TICK_INTERVAL_SECONDS := 5.0
 const MAX_NPCS_PER_TICK := 24
-const STARTER_RESIDENT_COUNT := 24
+## Seed a large persistent civilian society; only nearby actors are rendered.
+const STARTER_RESIDENT_COUNT := 1200
+const STARTER_MINOR_COUNT := 240
+const NPC_SEED_BATCH_SIZE := 50
 const FIRST_NAMES := [
 	"Ali", "Zahra", "Omar", "Noor", "Hassan", "Maryam",
 	"Mustafa", "Sara", "Yusuf", "Fatima", "Karar", "Rana",
@@ -66,7 +69,7 @@ func _seed_baghdad_residents_if_needed() -> void:
 	var adults_needed := maxi(0, STARTER_RESIDENT_COUNT - existing_adults.size())
 	for offset in range(adults_needed):
 		var index := existing_adults.size() + offset
-		var age := 19.0 + float((index * 7) % 43)
+		var age := 18.0 + float((index * 7) % 64)
 		var occupation := str(OCCUPATIONS[index % OCCUPATIONS.size()])
 		var npc_id: String = society_manager.call(
 			"create_npc",
@@ -80,6 +83,8 @@ func _seed_baghdad_residents_if_needed() -> void:
 			continue
 		created_adults.append(npc_id)
 		_configure_resident(npc_id, index, occupation)
+		if offset % NPC_SEED_BATCH_SIZE == NPC_SEED_BATCH_SIZE - 1:
+			await get_tree().process_frame
 
 	for pair_index in range(0, mini(8, created_adults.size() - 1), 2):
 		var first_id := created_adults[pair_index]
@@ -89,8 +94,10 @@ func _seed_baghdad_residents_if_needed() -> void:
 		if float(first.get("age_years", 0.0)) >= 18.0 and float(second.get("age_years", 0.0)) >= 18.0:
 			society_manager.call("marry_npcs", first_id, second_id)
 
-	var child_ages := [8.0, 11.0, 14.0, 16.0]
-	var children_needed := maxi(0, child_ages.size() - existing_minors.size())
+	var child_ages: Array[float] = []
+	for child_index in range(STARTER_MINOR_COUNT):
+		child_ages.append(6.0 + float(child_index % 12))
+	var children_needed := maxi(0, STARTER_MINOR_COUNT - existing_minors.size())
 	var created_children := 0
 	for offset in range(children_needed):
 		var child_index := existing_minors.size() + offset
@@ -108,9 +115,11 @@ func _seed_baghdad_residents_if_needed() -> void:
 			continue
 		_configure_resident(child_id, STARTER_RESIDENT_COUNT + child_index, "student")
 		created_children += 1
+		if offset % NPC_SEED_BATCH_SIZE == NPC_SEED_BATCH_SIZE - 1:
+			await get_tree().process_frame
 
 	seeded = true
-	print("SYSTEM NPC Life: residents=", existing.size() + created_adults.size() + created_children,
+	print("SYSTEM NPC Life: seeded_city_residents=", existing.size() + created_adults.size() + created_children,
 		" | existing minors=", existing_minors.size(), " | new minors=", created_children)
 
 
