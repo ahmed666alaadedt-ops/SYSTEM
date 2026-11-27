@@ -235,3 +235,23 @@ Relics and fantasy gemstones may grant supernatural abilities, but only selected
 5. Petrification cannot permanently disable another player or boss; escape, resistance and immunity windows work under latency and simultaneous hits.
 6. Flight collision, indoor restrictions, landing and PvP restrictions are tested.
 7. Existing historical quests, fantasy world, player progression, artifact market and Android/Godot bridge regression suites pass.
+
+
+## Four primordial elements — rare quest relics
+
+The rare-relic system includes all four classical elements: **Fire, Air, Water and Earth**. These are special artifact/gem abilities, not ordinary vendor skills or common loot. Players earn them by completing their linked missions, exploration routes or guardian trials in the correct world.
+
+- **Fire — قلب اللهب البدائي** (`primordial_flame_heart`): controlled flame burst and temporary fire resistance; offensive focus.
+- **Air — ختم ريح العاصفة** (`stormwind_sigil`): wind blades/gusts and a short aerial dash; mobility focus.
+- **Water — لؤلؤة قلب المد** (`tideheart_pearl`): water barrier, cleansing and limited healing wave; defense/support focus.
+- **Earth — جيود جذر العالم** (`worldroot_geode`): earth armor, ground spikes and a brief breakable root effect; defense/control focus.
+
+These four are currently **planned quest content** in the catalog, not yet playable or obtainable. They must be awarded only by trusted server-verified quest/discovery completion; ordinary market vendors cannot stock them. Rarity, source world, quest provenance and any Unique issuance cap are server-owned. Awakening binds the learned ability to the player under the existing no-duplication trade policy.
+
+Elemental combinations (Fire+Air, Water+Earth and exceptionally all four) may be introduced only as ultra-rare multi-stage quest rewards. They require completion of every linked trial, have strict energy/cooldown and PvP/boss resistance rules, and cannot be created by combining ordinary market items client-side.
+
+### Elemental acceptance checks
+1. Each element drops only from its registered quest/world source; cross-world and forged reward requests are rejected.
+2. Fire, Air, Water and Earth each produce a distinct tested gameplay effect after awakening.
+3. Elemental resistance, damage, healing and control respect caps, cooldowns, target rules and PvP/boss resistance.
+4. Elemental combination rewards require all server-verified prerequisite trials and are issued once only.
