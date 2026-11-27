@@ -5221,6 +5221,7 @@ func open_antiques_world_facility(target: Node) -> void:
 	close_button.pressed.connect(func(): panel.hide())
 	controls.add_child(close_button)
 	panel.show()
+	_request_marketplace_operation("refresh_relic_state", {})
 
 
 func _add_antique_service_button(parent: VBoxContainer, label: String, action: Callable) -> void:
