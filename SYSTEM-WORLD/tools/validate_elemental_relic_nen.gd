@@ -18,6 +18,9 @@ func _initialize() -> void:
 
 
 func _run() -> void:
+	var save_path := "user://system_player_progress.cfg"
+	var had_saved_profile := FileAccess.file_exists(save_path)
+	var saved_profile := FileAccess.get_file_as_bytes(save_path) if had_saved_profile else PackedByteArray()
 	progression = ProgressionScript.new()
 	progression.name = "PlayerProgression"
 	root.add_child(progression)
@@ -83,6 +86,7 @@ func _run() -> void:
 	_assert(bool(lightning.get("success", false)), "Lightning relic did not apply its hitscan effect.")
 	_assert(is_equal_approx(float(target.get("current_health")), 42.0), "Lightning damage did not reach the existing combatant health API.")
 
+	_restore_saved_profile(had_saved_profile, saved_profile)
 	if failures.is_empty():
 		print("SYSTEM ELEMENTAL RELIC NEN QA PASS: five elements, Nen gates, combat, movement, healing and guard.")
 		quit(0)
@@ -91,6 +95,22 @@ func _run() -> void:
 			push_error(failure)
 		print("SYSTEM ELEMENTAL RELIC NEN QA FAIL: %d assertion(s)." % failures.size())
 		quit(1)
+
+
+func _restore_saved_profile(had_saved_profile: bool, saved_profile: PackedByteArray) -> void:
+	var save_path := "user://system_player_progress.cfg"
+	if had_saved_profile:
+		var file := FileAccess.open(save_path, FileAccess.WRITE)
+		if file == null:
+			failures.append("Could not restore the pre-test player progression save.")
+			return
+		file.store_buffer(saved_profile)
+		file.close()
+	elif FileAccess.file_exists(save_path):
+		var absolute_path := ProjectSettings.globalize_path(save_path)
+		var remove_error := DirAccess.remove_absolute(absolute_path)
+		if remove_error != OK:
+			failures.append("Could not remove the temporary elemental test progression save.")
 
 
 func _prepare_skill(skill_id: String, nen_rank: int, mission_points: int, nen_uses: int) -> void:
