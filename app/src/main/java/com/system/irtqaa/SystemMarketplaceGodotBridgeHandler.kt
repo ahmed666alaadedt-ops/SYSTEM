@@ -65,6 +65,7 @@ class SystemMarketplaceGodotBridgeHandler(
                                 .put("isSeller", listing.isSeller)
                         }))
                         .put("skills", JSONArray(snapshot.skills.map { JSONObject(it) }))
+                        .put("questSessions", JSONArray(snapshot.questSessions.map { JSONObject(it) }))
                 })
             }
             "wallet" -> repository.loadWallet { result ->
