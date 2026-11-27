@@ -175,7 +175,10 @@ func _spawn_elemental_hit_flash(location: Vector3, element: String) -> void:
 	material.emission_enabled = true
 	material.emission_energy_multiplier = 2.5
 	flash.material_override = material
-	get_tree().current_scene.add_child(flash)
+	var visual_root: Node = get_tree().current_scene
+	if visual_root == null:
+		visual_root = get_tree().root
+	visual_root.add_child(flash)
 	flash.global_position = location
 	get_tree().create_timer(0.22).timeout.connect(func():
 		if is_instance_valid(flash):
