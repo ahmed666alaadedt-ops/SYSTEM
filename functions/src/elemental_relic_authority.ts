@@ -266,3 +266,109 @@ export const grantElementalRelicFromCompletedMission = onCall(async (request) =>
     return { success: true, alreadyIssued: false, artifactId, skillId };
   });
 });
+
+
+/**
+ * Trusted combat-server consumer for a previously authorized elemental activation.
+ * The caller supplies only the activation receipt and target ID; damage, healing,
+ * resistance and movement values are derived here from server-owned records.
+ */
+export const resolveElementalRelicCombat = onCall(async (request) => {
+  const serverUid = requireGameServer(request);
+  const activationId = requiredText(request.data?.activationId, "activationId", 128);
+  const targetId = typeof request.data?.targetId === "string" ? request.data.targetId.trim() : "";
+  if (targetId && targetId.length > 128) throw new HttpsError("invalid-argument", "معرّف الهدف غير صالح.");
+
+  const activationRef = db.collection("players").doc(requiredText(request.data?.playerId, "playerId", 128))
+    .collection("elementalActivations").doc(activationId);
+  const activationSnap = await activationRef.get();
+  if (!activationSnap.exists) throw new HttpsError("not-found", "تذكرة التفعيل غير موجودة.");
+  const playerId = activationSnap.ref.parent.parent!.id;
+  const activation = activationSnap.data()!;
+  const playerRef = db.collection("players").doc(playerId);
+  const targetRef = targetId ? db.collection("combatTargets").doc(targetId) : null;
+  const eventRef = db.collection("elementalCombatEvents").doc(activationId);
+
+  return db.runTransaction(async (transaction) => {
+    const [freshActivation, player, target] = await Promise.all([
+      transaction.get(activationRef),
+      transaction.get(playerRef),
+      targetRef ? transaction.get(targetRef) : Promise.resolve(null)
+    ]);
+    if (!freshActivation.exists || !player.exists) throw new HttpsError("not-found", "بيانات القتال غير موجودة.");
+    const a = freshActivation.data()!;
+    if (a.status !== "authorized_pending_combat") {
+      throw new HttpsError("failed-precondition", "ACTIVATION_ALREADY_CONSUMED");
+    }
+    const now = Date.now();
+    const expiry = Number(a.expiresAtMs ?? 0);
+    if (!Number.isFinite(expiry) || expiry < now) {
+      transaction.update(activationRef, { status: "expired", expiredAt: FieldValue.serverTimestamp() });
+      throw new HttpsError("deadline-exceeded", "ACTIVATION_EXPIRED");
+    }
+
+    const element = String(a.element);
+    let result: Record<string, unknown> = {};
+    if (element === "fire" || element === "lightning") {
+      if (!targetRef || !target?.exists) throw new HttpsError("failed-precondition", "COMBAT_TARGET_NOT_FOUND");
+      const t = target.data()!;
+      if (t.isAlive !== true || !Number.isFinite(Number(t.health)) || Number(t.health) <= 0 ||
+          !Number.isFinite(Number(t.maxHealth)) || Number(t.maxHealth) <= 0) {
+        throw new HttpsError("failed-precondition", "COMBAT_TARGET_NOT_ALIVE");
+      }
+      const baseDamage = element === "fire" ? 26 : 32;
+      const mitigation = Math.min(0.9, Math.max(0, Number(t.elementalResistance?.[element] ?? 0)));
+      const categoryMultiplier = t.kind === "boss" || t.kind === "player" ? 0.5 : 1.0;
+      const damage = Math.max(1, baseDamage * (1 - mitigation) * categoryMultiplier);
+      const nextHealth = Math.max(0, Number(t.health) - damage);
+      transaction.update(targetRef, {
+        health: nextHealth,
+        isAlive: nextHealth > 0,
+        lastDamage: { amount: damage, element, sourcePlayerId: playerId, at: FieldValue.serverTimestamp() },
+        updatedAt: FieldValue.serverTimestamp()
+      });
+      result = { targetId, damage, remainingHealth: nextHealth, defeated: nextHealth <= 0 };
+    } else {
+      const vitalsRef = playerRef.collection("combatState").doc("vitals");
+      const statusRef = playerRef.collection("combatState").doc("elemental_status");
+      const [vitals, status] = await Promise.all([transaction.get(vitalsRef), transaction.get(statusRef)]);
+      if (element === "water") {
+        if (!vitals.exists) throw new HttpsError("failed-precondition", "PLAYER_VITALS_NOT_READY");
+        const v = vitals.data()!;
+        const health = Number(v.health), maxHealth = Number(v.maxHealth);
+        if (!Number.isFinite(health) || !Number.isFinite(maxHealth) || health >= maxHealth) {
+          throw new HttpsError("failed-precondition", "NO_VALID_HEAL_TARGET");
+        }
+        const healed = Math.min(22, maxHealth - health);
+        transaction.update(vitalsRef, { health: health + healed, updatedAt: FieldValue.serverTimestamp() });
+        transaction.set(statusRef, { waterShieldUntilMs: now + 6000, waterShieldReduction: 0.15, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+        result = { healed, shieldSeconds: 6, remainingHealth: health + healed };
+      } else if (element === "earth") {
+        transaction.set(statusRef, { earthGuardUntilMs: now + 8000, earthGuardReduction: 0.30, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+        result = { guardSeconds: 8, damageReduction: 0.30 };
+      } else if (element === "air") {
+        transaction.set(statusRef, { airDashUntilMs: now + 220, airDashSpeed: 11, airDashVerticalImpulse: 5.5, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+        result = { dashSeconds: 0.22, horizontalSpeed: 11, verticalImpulse: 5.5 };
+      } else {
+        throw new HttpsError("failed-precondition", "UNSUPPORTED_ELEMENTAL_EFFECT");
+      }
+    }
+
+    transaction.update(activationRef, {
+      status: "consumed",
+      consumedAt: FieldValue.serverTimestamp(),
+      consumedByGameServer: serverUid
+    });
+    transaction.create(eventRef, {
+      activationId,
+      playerId,
+      skillId: a.skillId,
+      artifactId: a.artifactId,
+      element,
+      result,
+      gameServerUid: serverUid,
+      createdAt: FieldValue.serverTimestamp()
+    });
+    return { success: true, activationId, element, result, status: "consumed" };
+  });
+});
