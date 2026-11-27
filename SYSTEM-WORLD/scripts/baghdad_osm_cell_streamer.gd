@@ -277,6 +277,20 @@ func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> in
 	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	instance.set_meta("osm_feature_id", feature_id)
 	instance.set_meta("baghdad_building_type", kind)
+	var amenity_kind := str(tags.get("amenity", "")).to_lower()
+	var facility_type := ""
+	if amenity_kind == "hospital" or str(tags.get("healthcare", "")).to_lower() in ["hospital", "clinic"]:
+		facility_type = "healthcare"
+	elif amenity_kind in ["police", "police_station"]:
+		facility_type = "police"
+	elif amenity_kind == "place_of_worship" and str(tags.get("religion", "")).to_lower() == "muslim":
+		facility_type = "mosque"
+	elif str(tags.get("shop", "")) != "":
+		facility_type = "shop"
+	elif amenity_kind in ["restaurant", "cafe", "fast_food"]:
+		facility_type = "food"
+	if facility_type != "":
+		instance.set_meta("system_facility_type", facility_type)
 	instance.set_meta("system_display_name", _building_display_name(kind, tags))
 	instance.set_meta("system_building_height_m", height)
 	instance.set_meta("system_estimated_floors", maxi(1, int(ceil(height / 3.2))))
