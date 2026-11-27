@@ -10,6 +10,7 @@ on:
     branches:
       - main
       - feature/baghdad-five-plus-power-tower-20261122
+      - 'fix/**'
     paths:
       - "SYSTEM-WORLD/**"
       - "SYSTEM-WORLD/tools/**"
