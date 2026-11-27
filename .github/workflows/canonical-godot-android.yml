@@ -139,6 +139,44 @@ jobs:
           print("Installed citywide Baghdad OSM road overview:", len(cells), "occupied metric cells.")
           PY
 
+      - name: Install citywide Baghdad urban detail overview
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          SOURCE_PACK="$RUNNER_TEMP/baghdad-osm-artifact/baghdad-citywide-urban-1km.zip"
+          DESTINATION="$PROJECT/data/geography/baghdad/regional_urban"
+          if [ ! -s "$SOURCE_PACK" ]; then
+            echo "::error::Citywide Baghdad urban detail artifact is required for this repair build."
+            exit 1
+          fi
+          mkdir -p "$DESTINATION"
+          unzip -q "$SOURCE_PACK" -d "$DESTINATION"
+          test -s "$DESTINATION/manifest.json"
+          test -s "$DESTINATION/cells/0_0.json"
+          python3 - <<'PY'
+          import json
+          import pathlib
+          root = pathlib.Path("SYSTEM-WORLD/data/geography/baghdad/regional_urban")
+          manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
+          expected = ["buildings", "waterways", "bridges", "landuse", "amenities", "railway", "natural-water", "entrances"]
+          cells = list((root / "cells").glob("*.json"))
+          assert manifest["region_id"] == "iraq_baghdad_region"
+          assert manifest["coordinate_system"] == "SYSTEM_LOCAL_ECEF_TANGENT"
+          assert manifest["cell_size_m"] == 1000.0
+          assert manifest["layers_included"] == expected
+          assert len(cells) == manifest["cell_count"] and len(cells) >= 100
+          total_buildings = 0
+          total_amenities = 0
+          for path in cells:
+              data = json.loads(path.read_text(encoding="utf-8"))
+              total_buildings += len(data.get("layers", {}).get("buildings", []))
+              total_amenities += len(data.get("layers", {}).get("amenities", []))
+          assert total_buildings >= 1000
+          assert total_amenities >= 10
+          print("Installed Baghdad citywide urban detail:", len(cells), "cells;", total_buildings, "building footprints;", total_amenities, "POIs.")
+          PY
+
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
