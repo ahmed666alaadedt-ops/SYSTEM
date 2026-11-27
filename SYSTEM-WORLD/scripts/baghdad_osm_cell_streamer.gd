@@ -4,6 +4,7 @@ class_name BaghdadOSMCellStreamer
 ## Loads the first real Baghdad OSM cell pack in the same local tangent frame
 ## used by SystemRealWorldGeographyManager. Source IDs and OSM tags are retained.
 
+const BaghdadVegetationCellBuilderScript = preload("res://scripts/baghdad_vegetation_cell_builder.gd")
 const DEFAULT_DATA_ROOT := "res://data/geography/baghdad/cell_pack"
 const DEFAULT_CELL_SIZE := 200.0
 const MAX_CELL_OPERATIONS_PER_FRAME := 1
@@ -42,6 +43,7 @@ var water_material: StandardMaterial3D
 var land_material: StandardMaterial3D
 var building_material: StandardMaterial3D
 var amenity_material: StandardMaterial3D
+var vegetation_builder: RefCounted
 
 var _road_navigation_graph := AStar2D.new()
 var _road_navigation_positions: Dictionary = {}
@@ -141,6 +143,7 @@ func _ready() -> void:
 		return
 	terrain_manager = get_parent().get_node_or_null("ModernContinent")
 	_create_materials()
+	vegetation_builder = BaghdadVegetationCellBuilderScript.new()
 	_add_attribution_overlay()
 	source_snapshot = str(parsed.get("source_snapshot", ""))
 	canonical_origin_frame_valid = true
@@ -340,6 +343,12 @@ func _load_cell(cell: Vector2i) -> void:
 		_build_line_feature(cell_root, feature, 2.2, bridge_material, 0.20, "OSMRailway")
 	for feature in layers.get("landuse", []):
 		_build_area_feature(cell_root, feature, land_material, 0.035, "OSMLanduse")
+	var vegetation_stats: Dictionary = vegetation_builder.build_cell(
+		cell_root, cell, layers.get("landuse", []), layers.get("natural-water", []),
+		Callable(self, "_terrain_height")
+	)
+	counts["vegetation"] = int(vegetation_stats.get("total", 0))
+	cell_root.set_meta("vegetation_target_total", BaghdadVegetationCellBuilderScript.TARGET_PLANT_COUNT)
 	for feature in layers.get("natural-water", []):
 		_build_area_feature(cell_root, feature, water_material, 0.08, "OSMNaturalWater")
 	var amenity_count := 0
