@@ -1232,11 +1232,13 @@ func activate_relic_skill(skill_id: String, actor: CharacterBody3D) -> Dictionar
 					applied = bool(combat.call("apply_elemental_hitscan", actor, 26.0, 42.0, "fire").get("success", false))
 			"stormwind_aerial_step":
 				var forward := -actor.global_transform.basis.z
-				actor.velocity.x += forward.x * 11.0
-				actor.velocity.z += forward.z * 11.0
 				actor.velocity.y = maxf(actor.velocity.y, 5.5)
+				actor.set_meta("system_nen_air_dash_direction", Vector3(forward.x, 0.0, forward.z).normalized())
+				actor.set_meta("system_nen_air_dash_speed", 11.0)
+			actor.set_meta("system_nen_air_dash_until_msec", Time.get_ticks_msec() + 220)
 				applied = true
 				usage["movement_impulse"] = Vector3(forward.x * 11.0, 5.5, forward.z * 11.0)
+				usage["duration_seconds"] = 0.22
 			"tideheart_restoration":
 				var health := get_tree().root.find_child("PlayerCombatHealth", true, false)
 				if health != null and health.has_method("apply_field_healing"):
