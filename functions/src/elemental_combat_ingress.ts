@@ -1,7 +1,13 @@
-import { FieldValue, getFirestore } from "firebase-admin/firestore";
+import { DocumentData, DocumentReference, FieldValue, getFirestore } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 
 const db = getFirestore();
+
+type NormalizedTarget = {
+  id: string;
+  ref: DocumentReference<DocumentData>;
+  data: Record<string, unknown>;
+};
 
 function trustedServerUid(request: any): string {
   if (!request.auth?.uid) {
@@ -57,7 +63,7 @@ export const publishAuthoritativeCombatFrame = onCall(async (request) => {
     throw new HttpsError("failed-precondition", "SERVER_FRAME_CLOCK_STALE");
   }
 
-  const normalizedTargets = targets.map((raw: any) => {
+  const normalizedTargets: NormalizedTarget[] = targets.map((raw: any): NormalizedTarget => {
     const id = safeId(raw?.id, "targetId", 64);
     const kind = raw?.kind;
     const health = raw?.health;
@@ -101,7 +107,7 @@ export const publishAuthoritativeCombatFrame = onCall(async (request) => {
       }
     };
   });
-  const uniqueTargetIds = new Set(normalizedTargets.map((target: any) => target.id));
+  const uniqueTargetIds = new Set(normalizedTargets.map((target) => target.id));
   if (uniqueTargetIds.size !== normalizedTargets.length) {
     throw new HttpsError("invalid-argument", "إطار القتال يحتوي أهدافاً مكررة.");
   }
@@ -127,7 +133,7 @@ export const publishAuthoritativeCombatFrame = onCall(async (request) => {
     if (old?.sessionId === sessionId && (!old.active || tickSequence <= Number(old.tickSequence ?? 0))) {
       throw new HttpsError("failed-precondition", "COMBAT_FRAME_REPLAY_OR_NON_MONOTONIC_TICK");
     }
-    const targetSnapshots = await Promise.all(normalizedTargets.map((target: any) => transaction.get(target.ref)));
+    const targetSnapshots = await Promise.all(normalizedTargets.map((target) => transaction.get(target.ref)));
     for (let i = 0; i < normalizedTargets.length; i++) {
       const existing = targetSnapshots[i];
       if (existing.exists && existing.data()?.sessionId === sessionId &&
@@ -161,7 +167,7 @@ export const publishAuthoritativeCombatFrame = onCall(async (request) => {
       sessionId,
       tickSequence,
       active,
-      targetDocumentIds: Object.fromEntries(normalizedTargets.map((target: any) => [target.id, target.ref.id]))
+      targetDocumentIds: Object.fromEntries(normalizedTargets.map((target) => [target.id, target.ref.id]))
     };
   });
   return result;
