@@ -6,6 +6,7 @@ const db = getFirestore();
 const SECRET_TRADER_OFFERS = {
   secret_babylonian_star_engraving: {
     name: "نقش النجمة البابلي",
+    sellerName: "تاجر بابل",
     civilization: "Babylonian",
     rarity: "mythic",
     condition: "excellent",
@@ -15,6 +16,7 @@ const SECRET_TRADER_OFFERS = {
   },
   secret_sumerian_oath_signet: {
     name: "ختم العهد السومري",
+    sellerName: "جامع سومري",
     civilization: "Sumerian",
     rarity: "legendary",
     condition: "very_good",
@@ -24,6 +26,7 @@ const SECRET_TRADER_OFFERS = {
   },
   secret_assyrian_library_key: {
     name: "مفتاح مكتبة آشور المفقودة",
+    sellerName: "حارس مكتبة آشور",
     civilization: "Assyrian",
     rarity: "legendary",
     condition: "good",
@@ -33,6 +36,7 @@ const SECRET_TRADER_OFFERS = {
   },
   secret_akkadian_shadow_coin: {
     name: "عملة الظل الأكدي",
+    sellerName: "تاجر الظلال الأكدي",
     civilization: "Akkadian",
     rarity: "mythic",
     condition: "excellent",
@@ -60,7 +64,7 @@ export const browseSecretAntiqueOffers = onCall(async (request) => {
     offers: Object.entries(SECRET_TRADER_OFFERS).map(([offerId, offer]) => ({
       offerId,
       ...offer,
-      sellerName: "تاجر الظلال",
+      sellerName: offer.sellerName,
       sellerType: "secret_trader"
     }))
   };
