@@ -205,3 +205,12 @@ These are authored content examples, not guaranteed drops from every artifact. S
 - The 3D spaces are currently runtime-built geometry and interaction surfaces. They require visual in-game review and polish; do not describe them as final cinematic art assets.
 
 PR #48 remains Draft. Do not merge to main or deploy production services without explicit approval.
+
+
+### 2026-11-27 follow-up — player request queue and server-owned quest state
+
+- Authenticated players now submit quest-start and relic-return requests through Firebase callables. The player client cannot open a trusted session or submit objective/return proof.
+- Only a principal carrying the `gameServer: true` custom claim can poll pending requests, consume a start request into a stable idempotent session, record objective events, validate the queued exact-site return, and complete the reward.
+- Starting a trusted session locks the artifact with `activeHistoricalQuestSessionId`; player listing, auction and exchange creation reject locked artifacts. Atomic reward completion releases the lock.
+- The Android bridge now routes player start/return requests to those callable endpoints and reads player-scoped server session snapshots together with owned artifacts, market listings and rare-skill receipts. Godot reconciles its quest journal from these snapshots; local objective interactions are explicitly presentation-only and never count as reward evidence.
+- Important boundary remains: no dedicated authoritative multiplayer/game-server process or server-owned Godot world simulation is present in this repository yet. The trusted queue consumer, authoritative objective evaluator and server-side player-position/site check still must be implemented and connected. The integration contract is documented in `SYSTEM-WORLD/HISTORICAL_RELIC_GAME_SERVER_INTEGRATION.md`. Until that exists, the secure backend correctly refuses to issue rewards from local-only progress.
