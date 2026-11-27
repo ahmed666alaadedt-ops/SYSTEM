@@ -245,62 +245,87 @@ func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> in
 	var tags: Dictionary = feature.get("tags", {})
 	var geometry: Dictionary = feature.get("geometry", {})
 	var polygons := _extract_polygons(geometry)
-	if polygons.is_empty() or polygons[0].size() < 4:
+	if polygons.is_empty():
 		return 0
-	var ring: Array = polygons[0]
-	var min_point := Vector2(INF, INF)
-	var max_point := Vector2(-INF, -INF)
-	for coordinate in ring:
-		if not coordinate is Array or coordinate.size() < 2:
-			continue
-		var point := Vector2(float(coordinate[0]), float(coordinate[1]))
-		min_point.x = minf(min_point.x, point.x)
-		min_point.y = minf(min_point.y, point.y)
-		max_point.x = maxf(max_point.x, point.x)
-		max_point.y = maxf(max_point.y, point.y)
-	if not min_point.is_finite() or not max_point.is_finite():
-		return 0
-	var footprint := max_point - min_point
-	if footprint.x < 1.2 or footprint.y < 1.2:
-		return 0
-	var center := (min_point + max_point) * 0.5
 	var height := _building_height(tags)
 	var kind := _building_kind(tags)
-	var mesh := BoxMesh.new()
-	mesh.size = Vector3(footprint.x, height, footprint.y)
-	var instance := MeshInstance3D.new()
 	var feature_id := str(feature.get("id", "unknown"))
-	instance.name = "OSMOverviewBuilding_%s" % feature_id
-	instance.mesh = mesh
-	instance.position = Vector3(center.x, _terrain_height(center) + height * 0.5, center.y)
-	instance.material_override = _building_material_for(kind)
-	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	instance.set_meta("osm_feature_id", feature_id)
-	instance.set_meta("baghdad_building_type", kind)
-	instance.set_meta("system_architecture_class", kind)
-	var amenity_kind := str(tags.get("amenity", "")).to_lower()
-	var facility_type := ""
-	if amenity_kind == "hospital" or str(tags.get("healthcare", "")).to_lower() in ["hospital", "clinic"]:
-		facility_type = "healthcare"
-	elif amenity_kind == "place_of_worship" and str(tags.get("religion", "")).to_lower() in ["christian", "christianity"]:
-		facility_type = "church"
-	elif amenity_kind in ["police", "police_station"]:
-		facility_type = "police"
-	elif amenity_kind == "place_of_worship" and str(tags.get("religion", "")).to_lower() == "muslim":
-		facility_type = "mosque"
-	elif str(tags.get("shop", "")) != "":
-		facility_type = "shop"
-	elif amenity_kind in ["restaurant", "cafe", "fast_food"]:
-		facility_type = "food"
-	if facility_type != "":
-		instance.set_meta("system_facility_type", facility_type)
-	instance.set_meta("system_display_name", _building_display_name(kind, tags))
-	instance.set_meta("system_building_height_m", height)
-	instance.set_meta("system_estimated_floors", maxi(1, int(ceil(height / 3.2))))
-	instance.set_meta("system_residential_luxury_class", kind in ["villa", "palace"])
-	instance.set_meta("system_access_state", "regional_exterior_lod_no_collision_or_interior")
-	parent.add_child(instance)
-	return 1
+	var built := 0
+	for polygon in polygons:
+		if polygon.size() < 4:
+			continue
+		var ring := PackedVector2Array()
+		for coordinate in polygon:
+			if coordinate is Array and coordinate.size() >= 2:
+				ring.append(Vector2(float(coordinate[0]), float(coordinate[1])))
+		if ring.size() > 2 and ring[0].is_equal_approx(ring[ring.size() - 1]):
+			ring.remove_at(ring.size() - 1)
+		if ring.size() < 3:
+			continue
+		var center := Vector2.ZERO
+		for point in ring:
+			center += point
+		center /= float(ring.size())
+		var surface := SurfaceTool.new()
+		surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+		for index in range(ring.size()):
+			var next_index := (index + 1) % ring.size()
+			var p0 := ring[index]
+			var p1 := ring[next_index]
+			var base0 := Vector3(p0.x, _terrain_height(p0) + 0.04, p0.y)
+			var base1 := Vector3(p1.x, _terrain_height(p1) + 0.04, p1.y)
+			var top0 := base0 + Vector3.UP * height
+			var top1 := base1 + Vector3.UP * height
+			_add_triangle(surface, base0, top0, base1)
+			_add_triangle(surface, base1, top0, top1)
+		var triangulation := Geometry2D.triangulate_polygon(ring)
+		for index in range(0, triangulation.size(), 3):
+			var p0 := ring[triangulation[index]]
+			var p1 := ring[triangulation[index + 1]]
+			var p2 := ring[triangulation[index + 2]]
+			_add_triangle(surface,
+				Vector3(p0.x, _terrain_height(p0) + height, p0.y),
+				Vector3(p1.x, _terrain_height(p1) + height, p1.y),
+				Vector3(p2.x, _terrain_height(p2) + height, p2.y))
+		surface.generate_normals()
+		var mesh := _commit_surface_tool_if_valid(surface)
+		if mesh == null:
+			continue
+		var instance := MeshInstance3D.new()
+		instance.name = "OSMOverviewBuilding_%s" % feature_id
+		instance.mesh = mesh
+		instance.material_override = _building_material_for(kind)
+		instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		instance.set_meta("osm_feature_id", feature_id)
+		instance.set_meta("baghdad_building_type", kind)
+		instance.set_meta("system_architecture_class", kind)
+		var amenity_kind := str(tags.get("amenity", "")).to_lower()
+		var facility_type := ""
+		if amenity_kind == "hospital" or str(tags.get("healthcare", "")).to_lower() in ["hospital", "clinic"]:
+			facility_type = "healthcare"
+		elif amenity_kind == "place_of_worship" and str(tags.get("religion", "")).to_lower() in ["christian", "christianity"]:
+			facility_type = "church"
+		elif amenity_kind in ["police", "police_station"]:
+			facility_type = "police"
+		elif amenity_kind == "place_of_worship" and str(tags.get("religion", "")).to_lower() == "muslim":
+			facility_type = "mosque"
+		elif str(tags.get("shop", "")) != "":
+			facility_type = "shop"
+		elif amenity_kind in ["restaurant", "cafe", "fast_food", "food_court"]:
+			facility_type = "food"
+		if facility_type != "":
+			instance.set_meta("system_facility_type", facility_type)
+		instance.set_meta("system_display_name", _building_display_name(kind, tags))
+		instance.set_meta("system_building_height_m", height)
+		instance.set_meta("system_estimated_floors", maxi(1, int(ceil(height / 3.2))))
+		instance.set_meta("system_residential_luxury_class", kind in ["villa", "palace"])
+		instance.set_meta("system_footprint_geometry", "osm_polygon_extrusion")
+		instance.set_meta("system_access_state", "regional_exterior_lod_no_collision_or_interior")
+		parent.add_child(instance)
+		if kind in ["mosque", "church"]:
+			_add_polygon_worship_detail(parent, ring, height, kind, feature_id)
+		built += 1
+	return built
 
 
 func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
