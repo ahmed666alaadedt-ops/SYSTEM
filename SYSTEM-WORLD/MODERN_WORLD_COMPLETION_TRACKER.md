@@ -2062,3 +2062,11 @@ Feature HEAD at audit update: `f2522b6a3cf603e3aa13ee1bd17ee0ee9e7fba99`.
 - [x] Marketplace Firestore rules emulator tests passed: 7/7. Callable marketplace transaction/emulator tests passed: 8/8 on workflow `45604503727`; includes fixed-price escrow/purchase, atomic buyer debit and seller credit, ownership transfer, self-purchase and insufficient-balance rejection, concurrent double-purchase race, cancellation/expiry, auctions, two-player exchanges, trusted reward replay protection and scheduled expiry workers.
 - [x] The TypeScript Cloud Functions build and Firestore rules compilation passed on the same workflow.
 - [ ] Still required before calling online trading live: trusted game-server claim and quest-reward source integration, production deployment/monitoring of functions and scheduled workers, and a real two-account Android device round trip. Do not deploy or merge without the user's separate approval.
+
+
+### Assyrian royal seal relic quest — 27 November 2026
+- [x] Added a second independent sealed relic altar to the ground-level Mysterious Antiques & Artifacts Market without removing the Babylon altar or any of the 24 stalls.
+- [x] Added the Nineveh Guardians historical quest runtime with ordered clues (winged lion, Tigris, royal seal), recovery objective and return gate.
+- [x] Added the mythic rare skill `ashur_guardian_aegis` to the existing SYSTEM skill tree; quest completion grants its training permit and three verified practice sessions are required.
+- [x] Added an Android AEGIS touch control and visible amber barrier; the existing player combat health system applies 65% damage reduction for 12 seconds after activation (35 energy, 60-second cooldown).
+- [ ] Exact-commit Godot validation, APK export and Android shell build for this second quest are pending; device-side visual and combat testing remains required.
