@@ -1,9 +1,10 @@
 extends Area3D
 class_name SystemNPCVehicle
 
-## Civilian-owned vehicle with a lightweight road-loop driver.
-## The simulation is intentionally local and lightweight until road navigation
-## and server-authoritative traffic are implemented.
+## Civilian-owned vehicle with a lightweight route-following driver.
+## Baghdad uses streamed OSM motor-vehicle routes when available; other cities
+## retain local prototype loops. Lane-level traffic rules, collision avoidance
+## and server-authoritative traffic remain future work.
 
 var vehicle_id := ""
 var owner_npc_id := ""
