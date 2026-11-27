@@ -359,6 +359,9 @@ test("historical relic return and rare skill reward are trusted, atomic and repl
     siteId: "babylon_esagila_archive"
   }));
 
+  await assert.rejects(() => call("startHistoricalRelicQuestSession", owner, {
+    playerId: owner, questId: "quest_babylon_star_tablet", artifactId: relicId
+  }));
   const server = uid("trusted_game_server");
   const session = await call("startHistoricalRelicQuestSession", server, {
     playerId: owner, questId: "quest_babylon_star_tablet", artifactId: relicId
