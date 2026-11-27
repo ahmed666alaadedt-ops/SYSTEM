@@ -118,7 +118,6 @@ def main() -> None:
 
     project = _make_projector()
     if args.bounds_geojson:
-        from shapely.geometry import shape
         boundary_data = json.loads(args.bounds_geojson.read_text(encoding="utf-8"))
         boundary_features = boundary_data.get("features", [])
         if len(boundary_features) != 1 or not boundary_features[0].get("geometry"):
