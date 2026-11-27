@@ -375,6 +375,13 @@ test("historical relic return and rare skill reward are trusted, atomic and repl
     requestId: startRequest.requestId
   }, { gameServer: true });
   assert.ok(session.sessionId);
+  await assert.rejects(() => call("startHistoricalRelicQuestSession", server, {
+    playerId: owner, questId: "quest_babylon_star_tablet", artifactId: relicId,
+    requestId: startRequest.requestId
+  }, { gameServer: true }));
+  await assert.rejects(() => call("requestHistoricalRelicReturn", owner, {
+    questId: "quest_babylon_star_tablet", artifactId: relicId
+  }));
   const objectiveIds = [
     "find_the_sealed_archive",
     "solve_the_celestial_lock",
@@ -400,6 +407,11 @@ test("historical relic return and rare skill reward are trusted, atomic and repl
     questId: "quest_babylon_star_tablet", artifactId: relicId
   });
   assert.equal(returnRequest.success, true);
+  const returnRequestRetry = await call("requestHistoricalRelicReturn", owner, {
+    questId: "quest_babylon_star_tablet", artifactId: relicId
+  });
+  assert.equal(returnRequestRetry.requestId, returnRequest.requestId);
+  assert.equal(returnRequestRetry.alreadyPending, true);
   const pendingReturnWork = await call("listPendingHistoricalRelicQuestRequests", server, {}, { gameServer: true });
   assert.ok(pendingReturnWork.returns.some((item) => item.requestId === returnRequest.requestId));
   const returnProof = await call("recordHistoricalRelicReturn", server, {
