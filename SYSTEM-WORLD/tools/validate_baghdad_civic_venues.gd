@@ -140,7 +140,7 @@ func _initialize() -> void:
 		["res://scripts/system_hunter_exam_manager.gd", "const EXAM_STAGES := [", "hunter exam stage catalog"],
 		["res://scripts/system_power_tower_manager.gd", "const MAX_FLOORS := 200", "200-floor Power Tower progression"],
 		["res://scripts/baghdad_tower_landmarks_manager.gd", '"power_tower_baghdad"', "independent Power Tower landmark"],
-		["res://scripts/baghdad_tower_landmarks_manager.gd", "\t\tfalse\n\t)", "Power Tower excluded from five-tower district"]
+		["res://scripts/baghdad_tower_landmarks_manager.gd", "false, false, NAN, false\n\t)", "Power Tower excluded from five-tower district"]
 	]
 	for contract in source_contracts:
 		if not _require_source_text(str(contract[0]), str(contract[1]), str(contract[2])):
