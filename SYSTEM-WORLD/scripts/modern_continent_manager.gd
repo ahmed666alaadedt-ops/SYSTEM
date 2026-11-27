@@ -689,6 +689,59 @@ func _build_city_silhouette(
 	skyline.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	city_root.add_child(skyline)
 
+	# Distant 1 km city LOD: a restrained window pass keeps silhouettes readable
+	# without introducing the dense facade geometry reserved for 200 m detail cells.
+	var window_material := StandardMaterial3D.new()
+	window_material.albedo_color = Color(0.34, 0.52, 0.62)
+	window_material.roughness = 0.28
+	window_material.metallic = 0.18
+	var window_mesh := BoxMesh.new()
+	window_mesh.size = Vector3.ONE
+	var window_multi := MultiMesh.new()
+	window_multi.transform_format = MultiMesh.TRANSFORM_3D
+	window_multi.mesh = window_mesh
+	var window_transforms: Array[Transform3D] = []
+	for grid_z in range(-2, 3):
+		for grid_x in range(-2, 3):
+			if grid_x == 0 and grid_z == 0:
+				continue
+			var offset_x := float(grid_x) * spacing
+			var offset_z := float(grid_z) * spacing
+			var world_x := city_x + offset_x
+			var world_z := city_z + offset_z
+			if not is_land_position(world_x, world_z):
+				continue
+			var ground_height := get_terrain_height(world_x, world_z)
+			if absf(ground_height - city_root.position.y) > 18.0:
+				continue
+			var seed_value := absf(sin(float(city_index * 71 + grid_x * 19 + grid_z * 37)))
+			var width := 9.0 + seed_value * 7.0
+			var depth := 9.0 + absf(cos(seed_value * 8.0)) * 6.0
+			var height := 13.0 + seed_value * 48.0
+			var base_y := ground_height - city_root.position.y
+			var floors := clampi(int(floor(height / 7.0)), 2, 8)
+			for floor_index in range(floors):
+				var y := base_y + 2.6 + float(floor_index) * (height - 5.2) / float(maxi(floors - 1, 1))
+				for side in range(4):
+					var angle := float(side) * PI * 0.5
+					var side_basis := Basis(Vector3.UP, angle)
+					for column in range(2):
+						var horizontal := (float(column) - 0.5) * (width * 0.48)
+						var local_offset := Vector3(horizontal, 0.0, depth * 0.5 + 0.035)
+						var position := Vector3(offset_x, y, offset_z) + side_basis * local_offset
+						var scale := Vector3(1.25, 1.45, 0.10)
+						window_transforms.append(Transform3D(side_basis * Basis().scaled(scale), position))
+	if not window_transforms.is_empty():
+		window_multi.instance_count = window_transforms.size()
+		for window_index in range(window_transforms.size()):
+			window_multi.set_instance_transform(window_index, window_transforms[window_index])
+		var windows := MultiMeshInstance3D.new()
+		windows.name = "CitySilhouetteWindows_LightLOD"
+		windows.multimesh = window_multi
+		windows.material_override = window_material
+		windows.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		city_root.add_child(windows)
+
 
 func _build_highways() -> void:
 	var routes := [
