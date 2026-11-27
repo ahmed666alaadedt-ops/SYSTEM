@@ -268,6 +268,26 @@ jobs:
           PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
           "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_child_character_safety.gd
 
+      - name: Validate server-gated relic quests and all three combat skills
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" \
+            --script res://tools/test_artifact_relic_quest_manager.gd \
+            2>&1 | tee "$RUNNER_TEMP/artifact-relic-quest-tests.log"
+
+      - name: Validate 3D global auction, secret traders, appraisal and collector halls
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" \
+            --script res://tools/test_antique_market_world_builder.gd \
+            2>&1 | tee "$RUNNER_TEMP/antiques-market-3d-facilities.log"
+
       - name: Launch canonical main scene headlessly
         shell: bash
         run: |
@@ -341,6 +361,8 @@ jobs:
           name: SYSTEM-WORLD-godot-validation-logs
           path: |
             ${{ runner.temp }}/system-world-import.log
+            ${{ runner.temp }}/artifact-relic-quest-tests.log
+            ${{ runner.temp }}/antiques-market-3d-facilities.log
             ${{ runner.temp }}/system-world-runtime.log
             ${{ runner.temp }}/system-companion-runtime.log
             ${{ runner.temp }}/system-npc-society-runtime.log
