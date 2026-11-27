@@ -46,6 +46,9 @@ func _run_validation() -> void:
 		if not vegetation_source.contains('"'+category+'"'):
 			_fail("Missing Baghdad vegetation category: " + category)
 			return
+	if not vegetation_source.contains("BaghdadVegetationNear_") or not vegetation_source.contains("BaghdadVegetationFar_") or not vegetation_source.contains("visibility_range_begin = 240.0") or not vegetation_source.contains("visibility_range_end = 900.0"):
+		_fail("Near/far vegetation LOD batches are missing.")
+		return
 	if not baghdad_streamer_source.contains("vegetation_builder.build_cell") or not baghdad_streamer_source.contains("BaghdadVegetationCellBuilderScript.TARGET_PLANT_COUNT"):
 		_fail("Baghdad OSM cell loading is not connected to the vegetation streamer.")
 		return
