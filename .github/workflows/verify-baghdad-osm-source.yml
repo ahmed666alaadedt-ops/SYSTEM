@@ -453,6 +453,24 @@ jobs:
             fi
           fi
 
+      - name: Launch canonical main scene with audited Baghdad OSM pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          LOG="$RUNNER_TEMP/baghdad-osm-main-scene.log"
+          timeout 60s "$GODOT" --headless --path "$PROJECT" --quit-after 8 \\
+            2>&1 | tee "$LOG"
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" "$LOG"; then
+            echo "::error::Canonical main scene failed while the audited Baghdad OSM pack was installed."
+            exit 1
+          fi
+          grep -q "SYSTEM Baghdad OSM: metric cell pack ready" "$LOG" || {
+            echo "::error::Canonical main scene did not initialize the audited Baghdad OSM cell pack."
+            exit 1
+          }
+
       - name: Upload Baghdad OSM audit diagnostics, including failed reports
         if: always()
         uses: actions/upload-artifact@v4
