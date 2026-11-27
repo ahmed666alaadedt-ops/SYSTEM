@@ -15,6 +15,11 @@ signal skill_one_pressed
 signal skill_two_pressed
 signal relic_echo_pressed
 signal relic_aegis_pressed
+signal elemental_fire_pressed
+signal elemental_air_pressed
+signal elemental_water_pressed
+signal elemental_earth_pressed
+signal elemental_lightning_pressed
 signal dodge_pressed
 
 
@@ -32,6 +37,11 @@ class TouchOverlay extends Control:
 	signal skill_two_pressed
 	signal relic_echo_pressed
 	signal relic_aegis_pressed
+	signal elemental_fire_pressed
+	signal elemental_air_pressed
+	signal elemental_water_pressed
+	signal elemental_earth_pressed
+	signal elemental_lightning_pressed
 	signal dodge_pressed
 
 	var joystick_touch := -1
@@ -49,6 +59,8 @@ class TouchOverlay extends Control:
 	var skill_two_center := Vector2.ZERO
 	var relic_echo_center := Vector2.ZERO
 	var relic_aegis_center := Vector2.ZERO
+	var elemental_button_centers: Dictionary = {}
+	var elemental_button_radius := 30.0
 	var skill_radius := 43.0
 
 	var dodge_center := Vector2.ZERO
@@ -119,6 +131,14 @@ class TouchOverlay extends Control:
 		)
 		relic_echo_center = Vector2(115.0 * ui_scale, size.y - 265.0 * ui_scale)
 		relic_aegis_center = Vector2(245.0 * ui_scale, size.y - 265.0 * ui_scale)
+		elemental_button_radius = 29.0 * ui_scale
+		elemental_button_centers = {
+			"fire": Vector2(58.0 * ui_scale, 72.0 * ui_scale),
+			"air": Vector2(132.0 * ui_scale, 72.0 * ui_scale),
+			"water": Vector2(206.0 * ui_scale, 72.0 * ui_scale),
+			"earth": Vector2(280.0 * ui_scale, 72.0 * ui_scale),
+			"lightning": Vector2(354.0 * ui_scale, 72.0 * ui_scale)
+		}
 
 		dodge_radius = 40.0 * ui_scale
 		dodge_center = Vector2(
@@ -197,6 +217,13 @@ class TouchOverlay extends Control:
 			"SKILL",
 			"magic"
 		)
+
+		# Five Nen-gated elemental relic skills. The buttons request server authorization only.
+		_draw_action_button(elemental_button_centers["fire"], elemental_button_radius, Color(0.88, 0.22, 0.12), "FIRE", "magic")
+		_draw_action_button(elemental_button_centers["air"], elemental_button_radius, Color(0.55, 0.72, 0.86), "AIR", "up")
+		_draw_action_button(elemental_button_centers["water"], elemental_button_radius, Color(0.12, 0.48, 0.92), "WATER", "magic")
+		_draw_action_button(elemental_button_centers["earth"], elemental_button_radius, Color(0.38, 0.58, 0.24), "EARTH", "shield")
+		_draw_action_button(elemental_button_centers["lightning"], elemental_button_radius, Color(0.78, 0.68, 0.12), "LIGHT", "burst")
 
 		# Rare relic skill control.
 		_draw_action_button(relic_echo_center, skill_radius, Color(0.12, 0.72, 0.82), "ECHO", "magic")
@@ -500,6 +527,17 @@ class TouchOverlay extends Control:
 	func _handle_touch_pressed(event: InputEventScreenTouch) -> void:
 		var p := event.position
 
+		for element_id in ["fire", "air", "water", "earth", "lightning"]:
+			var elemental_center: Vector2 = elemental_button_centers[element_id]
+			if p.distance_to(elemental_center) <= elemental_button_radius * 1.5:
+				match element_id:
+					"fire": elemental_fire_pressed.emit()
+					"air": elemental_air_pressed.emit()
+					"water": elemental_water_pressed.emit()
+					"earth": elemental_earth_pressed.emit()
+					"lightning": elemental_lightning_pressed.emit()
+				return
+
 		if p.distance_to(view_center) <= view_radius * 1.45:
 			camera_toggle_pressed.emit()
 			return
@@ -609,6 +647,11 @@ func _ready() -> void:
 	screen_control.skill_two_pressed.connect(_on_skill_two_pressed)
 	screen_control.relic_echo_pressed.connect(_on_relic_echo_pressed)
 	screen_control.relic_aegis_pressed.connect(_on_relic_aegis_pressed)
+	screen_control.elemental_fire_pressed.connect(_on_elemental_fire_pressed)
+	screen_control.elemental_air_pressed.connect(_on_elemental_air_pressed)
+	screen_control.elemental_water_pressed.connect(_on_elemental_water_pressed)
+	screen_control.elemental_earth_pressed.connect(_on_elemental_earth_pressed)
+	screen_control.elemental_lightning_pressed.connect(_on_elemental_lightning_pressed)
 	screen_control.dodge_pressed.connect(_on_dodge_pressed)
 
 
@@ -654,6 +697,26 @@ func _on_relic_echo_pressed() -> void:
 
 func _on_relic_aegis_pressed() -> void:
 	relic_aegis_pressed.emit()
+
+
+func _on_elemental_fire_pressed() -> void:
+	elemental_fire_pressed.emit()
+
+
+func _on_elemental_air_pressed() -> void:
+	elemental_air_pressed.emit()
+
+
+func _on_elemental_water_pressed() -> void:
+	elemental_water_pressed.emit()
+
+
+func _on_elemental_earth_pressed() -> void:
+	elemental_earth_pressed.emit()
+
+
+func _on_elemental_lightning_pressed() -> void:
+	elemental_lightning_pressed.emit()
 
 
 func _on_dodge_pressed() -> void:
