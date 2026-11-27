@@ -7,6 +7,12 @@ class_name BaghdadOSMCellStreamer
 const DEFAULT_DATA_ROOT := "res://data/geography/baghdad/cell_pack"
 const DEFAULT_CELL_SIZE := 200.0
 const MAX_CELL_OPERATIONS_PER_FRAME := 1
+const VEHICLE_HIGHWAYS := [
+	"motorway", "motorway_link", "trunk", "trunk_link",
+	"primary", "primary_link", "secondary", "secondary_link",
+	"tertiary", "tertiary_link", "unclassified", "residential",
+	"living_street", "service", "track", "road"
+]
 
 signal cell_loaded(cell: Vector2i, cell_root: Node3D)
 signal cell_unloading(cell: Vector2i, cell_root: Node3D)
@@ -450,12 +456,6 @@ func get_loaded_vehicle_map_segments() -> Array[Dictionary]:
 
 
 func _is_vehicle_road(tags: Dictionary) -> bool:
-	const VEHICLE_HIGHWAYS := [
-		"motorway", "motorway_link", "trunk", "trunk_link",
-		"primary", "primary_link", "secondary", "secondary_link",
-		"tertiary", "tertiary_link", "unclassified", "residential",
-		"living_street", "service", "track", "road"
-	]
 	var highway := str(tags.get("highway", "")).to_lower()
 	if highway not in VEHICLE_HIGHWAYS:
 		return false
