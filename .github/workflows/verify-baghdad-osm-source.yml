@@ -418,7 +418,7 @@ jobs:
             --input-dir "$RUNNER_TEMP/baghdad-source/clipped_layers" \
             --output "$RUNNER_TEMP/baghdad-source/baghdad-citywide-urban-1km.zip" \
             --cell-size 1000 \
-            --layers buildings,waterways,bridges,landuse,amenities,railway,natural-water,entrances \
+            --layers buildings,waterways,bridges,landuse,amenities,railway,natural-water,wetlands,entrances \
             --bounds-geojson "$RUNNER_TEMP/baghdad-source/baghdad-boundary.geojson" \
             --source-timestamp "$(python3 -c 'import json; print(json.load(open("baghdad-source-verification.json"))["snapshot_timestamp"])')"
           python3 - <<'PY'
