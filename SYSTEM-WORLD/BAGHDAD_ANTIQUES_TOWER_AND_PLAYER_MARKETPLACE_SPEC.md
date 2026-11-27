@@ -161,3 +161,42 @@ Do not count the independent Power Tower as one of the five district towers. Spo
 - Correct completion grants a training permit for the mythic rare skill `ashur_guardian_aegis` (درع الحارس الآشوري); three verified training sessions are required before use.
 - The mobile AEGIS control activates a 12-second defensive barrier after mastery, reducing incoming damage by 65%; cost 35 energy, 60-second cooldown. The player receives a visible amber shield effect.
 - The return gate returns the player to the market. This is an initial procedural quest environment, not a final cinematic historical level.
+
+
+## Cross-world artifact origins, rare skill relics and discovery missions — 27 November 2026
+
+The artifact market is a shared destination for discoveries from two distinct gameplay worlds. It must preserve provenance and never collapse the historical and fantasy sources into one generic loot pool.
+
+### Historical & Civilizations world
+- Historical artifacts originate only from civilization-specific expeditions, archaeological sites, sealed sanctums, archive recovery and their linked quests.
+- Existing quest anchors remain distinct: Babylon Echoes `babylon_echoes_relic_trial` yields the Babylonian Star Tablet / `relic_echo_sight`; Nineveh Guardians `nineveh_guardians_relic_trial` yields the Assyrian Royal Seal / `ashur_guardian_aegis`.
+- Further Sumerian, Akkadian, Egyptian, Greek, Roman and Chinese relic campaigns are planned content, not implemented quests until their world runtime, objectives, persistence and tests exist.
+
+### Fantasy world
+- Fantasy gems and crystals originate only from fantasy expeditions, guardian trials, hidden shrines, mana veins and fantasy quest rewards. They must not be mislabeled as historical archaeological finds.
+- Initial planned relic families include Dragon Star Crystal, Moon Diamond, Ancient Mana Core, Phoenix Ember Gem and Void Shadow Prism. Each has its own quest/source identity and a distinct skill concept in `data/system_cross_world_relic_catalog.json`.
+- Fantasy quest IDs and skill IDs in the catalog marked `planned_quest` are data/design reservations only; they are not claims of implemented or playable quests.
+
+### Rare relic skill ownership and player control
+- Only selected Rare, Epic, Mythic and Unique artifacts may carry a skill. Ordinary artifacts and ordinary gemstones do not automatically grant abilities.
+- The player must recover the real source relic, complete its linked quest, pass the awakening/training requirement and learn the skill into the existing player progression tree. Once learned, the skill must be equipable and manually activated/controlled through the combat or exploration ability UI, with server-verified unlock provenance.
+- A skill-bearing relic is extremely scarce; Unique relic templates may have a one-per-world/storyline issuance cap. The registry must enforce this server-side, not by client-side drop chance.
+- Default trade policy: an unawakened relic may be listed if the server confirms ownership and eligibility; after awakening, the skill is bound to the character and the relic cannot be sold or transferred in a way that duplicates, deletes or strips the learned skill. Unique relic transfers require explicit server validation.
+- Listing price is selected by the seller, while authenticity, rarity, provenance and uniqueness are server-derived and displayed to buyers. High prices are permitted, but the client cannot forge rarity, source or ownership.
+
+### Scalable artifact catalogue and anti-exploit issuance
+- Initial content target: at least 3,000 distinct artifact instances, expandable through data-driven templates, civilization/material/condition/provenance variants and unique server-issued IDs. This is a content target, not a claim that 3,000 playable meshes already exist.
+- Keep reusable 3D mesh templates and material variants separate from unique artifact instance records; do not create thousands of unrelated hand-authored meshes.
+- Every instance must carry `artifactId`, `templateId`, `sourceWorld`, `civilizationOrRealm`, `sourceQuestOrDiscovery`, `rarity`, `provenance`, `condition`, `marketValueBand`, `skillId` (nullable), `awakeningState`, `ownerId` and `tradePolicy`.
+- Only trusted game-server reward/discovery events may issue artifacts through the existing replay-safe reward endpoint. The client may request or display a discovery, but cannot mint an item, choose its rarity, claim a quest completion or assign a skill.
+- The registry file is a content seed/schema reference. It does not itself wire world generation, quest runtime, combat effects, Firebase reward issuance or production marketplace deployment.
+
+### Required cross-world acceptance tests
+1. Historical quest rewards always record `sourceWorld=historical` and their correct civilization and quest provenance.
+2. Fantasy quest rewards always record `sourceWorld=fantasy` and cannot be issued from historical loot tables.
+3. A client cannot request a Mythic/Unique relic or skill by sending a forged rarity, template, quest ID or skill ID.
+4. A quest reward replay cannot issue a second copy; one-per-world Unique caps are enforced transactionally.
+5. Awakening adds the authorized skill to progression once; the skill can be equipped/activated and its effect is tested in combat or exploration.
+6. An awakened bound relic cannot be traded to duplicate the skill or remove the skill from its legitimate owner.
+7. Market listings show origin, provenance, rarity and trade eligibility without exposing private player identifiers.
+8. Existing Babylon Echoes, Nineveh Guardians, artifact marketplace, wallet, auctions and exchanges regressions remain green.
