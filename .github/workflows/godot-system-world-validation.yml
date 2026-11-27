@@ -164,6 +164,14 @@ jobs:
             --script res://tools/validate_marketplace_bridge.gd \
             2>&1 | tee "$RUNNER_TEMP/marketplace-bridge-validation.log"
 
+      - name: Validate historical relic quest progression and rare-skill gates
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/test_artifact_relic_quest_manager.gd 2>&1 | tee "$RUNNER_TEMP/artifact-relic-quest-tests.log"
+
       - name: Validate hotel booking, room service, checkout and housekeeping lifecycle
         shell: bash
         run: |
