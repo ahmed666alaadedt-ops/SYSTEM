@@ -107,12 +107,16 @@ func _run_validation() -> void:
 		"tags": {"natural": "water"},
 		"geometry": {"type": "Polygon", "coordinates": [[[220, 0], [320, 0], [320, 100], [220, 100], [220, 0]]]}
 	}
+	var road_feature := {
+		"tags": {"highway": "residential"},
+		"geometry": {"type": "LineString", "coordinates": [[0, 100], [200, 100]]}
+	}
 	var vegetation_stats: Dictionary = vegetation_builder.build_cell(
 		vegetation_root, Vector2i(0, 0), [park_feature], [water_feature],
-		Callable(self, "_zero_height")
+		Callable(self, "_zero_height"), [road_feature], 200.0
 	)
-	if int(vegetation_stats.get("total", 0)) < 40 or int(vegetation_stats.get("counts", {}).get("aquatic_riparian", 0)) < 1:
-		_fail("OSM-grounded vegetation batching did not create the expected park and riparian instances.")
+	if int(vegetation_stats.get("total", 0)) < 40 or int(vegetation_stats.get("counts", {}).get("aquatic_riparian", 0)) < 1 or int(vegetation_stats.get("roadside_count", 0)) < 2:
+		_fail("OSM park, roadside and riparian vegetation batching did not create the expected instances.")
 		return
 	print("Dense city life validation passed: park_tree_slots_per_pocket=5 park_shrub_slots_per_pocket=8 visible_civilians=72 seeded_residents=42500 seeded_minors=7500 nearest_resident_heap=top_72 commercial_tenants=12 industrial_units=6 forest_trees=36 forest_shrubs=48 forest_grass=150 vegetation_target=", BAGHDAD_VEGETATION_BUILDER.TARGET_PLANT_COUNT, " vegetation_cell_instances=", vegetation_stats.total, " multimesh_instances=", batch.multimesh.instance_count)
 
