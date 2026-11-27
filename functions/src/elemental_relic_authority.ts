@@ -286,13 +286,15 @@ export const resolveElementalRelicCombat = onCall(async (request) => {
   const playerId = activationSnap.ref.parent.parent!.id;
   const activation = activationSnap.data()!;
   const playerRef = db.collection("players").doc(playerId);
+  const sessionRef = playerRef.collection("combatState").doc("session");
   const targetRef = targetId ? db.collection("combatTargets").doc(targetId) : null;
   const eventRef = db.collection("elementalCombatEvents").doc(activationId);
 
   return db.runTransaction(async (transaction) => {
-    const [freshActivation, player, target] = await Promise.all([
+    const [freshActivation, player, session, target] = await Promise.all([
       transaction.get(activationRef),
       transaction.get(playerRef),
+      transaction.get(sessionRef),
       targetRef ? transaction.get(targetRef) : Promise.resolve(null)
     ]);
     if (!freshActivation.exists || !player.exists) throw new HttpsError("not-found", "بيانات القتال غير موجودة.");
@@ -301,6 +303,18 @@ export const resolveElementalRelicCombat = onCall(async (request) => {
       throw new HttpsError("failed-precondition", "ACTIVATION_ALREADY_CONSUMED");
     }
     const now = Date.now();
+    if (!session.exists) throw new HttpsError("failed-precondition", "ACTIVE_COMBAT_SESSION_REQUIRED");
+    const sessionData = session.data()!;
+    const sessionId = String(sessionData.sessionId ?? "");
+    const sessionTick = Number(sessionData.lastServerTickMs ?? 0);
+    const playerPosition = sessionData.playerPosition;
+    const validPosition = (value: any) => value &&
+      Number.isFinite(Number(value.x)) && Number.isFinite(Number(value.y)) && Number.isFinite(Number(value.z));
+    if (sessionData.active !== true || !sessionId || sessionData.playerId !== playerId ||
+        !Number.isFinite(sessionTick) || now - sessionTick < 0 || now - sessionTick > 3000 ||
+        !validPosition(playerPosition)) {
+      throw new HttpsError("failed-precondition", "COMBAT_SESSION_STALE_OR_INVALID");
+    }
     const expiry = Number(a.expiresAtMs ?? 0);
     if (!Number.isFinite(expiry) || expiry < now) {
       throw new HttpsError("deadline-exceeded", "ACTIVATION_EXPIRED");
@@ -314,6 +328,19 @@ export const resolveElementalRelicCombat = onCall(async (request) => {
       if (t.isAlive !== true || !Number.isFinite(Number(t.health)) || Number(t.health) <= 0 ||
           !Number.isFinite(Number(t.maxHealth)) || Number(t.maxHealth) <= 0) {
         throw new HttpsError("failed-precondition", "COMBAT_TARGET_NOT_ALIVE");
+      }
+      if (t.sessionId !== sessionId || !validPosition(t.position) ||
+          !Number.isFinite(Number(t.lastServerTickMs)) || now - Number(t.lastServerTickMs) < 0 ||
+          now - Number(t.lastServerTickMs) > 3000) {
+        throw new HttpsError("failed-precondition", "COMBAT_TARGET_NOT_IN_ACTIVE_SESSION");
+      }
+      const dx = Number(t.position.x) - Number(playerPosition.x);
+      const dy = Number(t.position.y) - Number(playerPosition.y);
+      const dz = Number(t.position.z) - Number(playerPosition.z);
+      const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      const maxRange = element === "fire" ? 42 : 48;
+      if (!Number.isFinite(distance) || distance > maxRange) {
+        throw new HttpsError("failed-precondition", "ELEMENTAL_TARGET_OUT_OF_RANGE");
       }
       const baseDamage = element === "fire" ? 26 : 32;
       const mitigation = Math.min(0.9, Math.max(0, Number(t.elementalResistance?.[element] ?? 0)));
