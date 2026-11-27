@@ -324,10 +324,12 @@ func create_player_progression() -> void:
 	var existing_progression := get_node_or_null("PlayerProgression")
 	if existing_progression != null:
 		player_progression = existing_progression
+		_connect_elemental_progression_feedback()
 		return
 	player_progression = PlayerProgressionScript.new()
 	player_progression.name = "PlayerProgression"
 	add_child(player_progression)
+	_connect_elemental_progression_feedback()
 
 
 func create_inventory_panel() -> void:
@@ -1672,7 +1674,92 @@ func create_mobile_controls() -> void:
 	mobile_controls.skill_two_pressed.connect(_on_mobile_skill_two_pressed)
 	mobile_controls.relic_echo_pressed.connect(_on_mobile_relic_echo_pressed)
 	mobile_controls.relic_aegis_pressed.connect(_on_mobile_relic_aegis_pressed)
+	mobile_controls.elemental_fire_pressed.connect(_on_mobile_elemental_fire_pressed)
+	mobile_controls.elemental_air_pressed.connect(_on_mobile_elemental_air_pressed)
+	mobile_controls.elemental_water_pressed.connect(_on_mobile_elemental_water_pressed)
+	mobile_controls.elemental_earth_pressed.connect(_on_mobile_elemental_earth_pressed)
+	mobile_controls.elemental_lightning_pressed.connect(_on_mobile_elemental_lightning_pressed)
 	mobile_controls.dodge_pressed.connect(_on_mobile_dodge_pressed)
+
+
+func _connect_elemental_progression_feedback() -> void:
+	if not is_instance_valid(player_progression):
+		return
+	var receipt_callback := Callable(self, "_on_elemental_activation_receipt_received")
+	if player_progression.has_signal("elemental_activation_receipt_received") and not player_progression.is_connected("elemental_activation_receipt_received", receipt_callback):
+		player_progression.connect("elemental_activation_receipt_received", receipt_callback)
+	var rejected_callback := Callable(self, "_on_elemental_activation_rejected")
+	if player_progression.has_signal("elemental_activation_rejected") and not player_progression.is_connected("elemental_activation_rejected", rejected_callback):
+		player_progression.connect("elemental_activation_rejected", rejected_callback)
+
+
+func _on_elemental_activation_receipt_received(skill_id: String, receipt: Dictionary) -> void:
+	if interaction_prompt_label == null:
+		return
+	interaction_prompt_label.text = "تم تفويض %s من الخادم. ننتظر خادم القتال الموثوق لاستهلاك الإيصال؛ لم يُطبّق تأثير محلي." % skill_id
+	interaction_prompt_label.show()
+
+
+func _on_elemental_activation_rejected(skill_id: String, reason: String) -> void:
+	if interaction_prompt_label == null:
+		return
+	interaction_prompt_label.text = "رفض الخادم تفعيل %s: %s" % [skill_id, reason]
+	interaction_prompt_label.show()
+
+
+func _request_mobile_elemental_skill(skill_id: String) -> void:
+	if vehicle_runtime_manager != null and vehicle_runtime_manager.is_driving:
+		return
+	if not is_instance_valid(player_progression) or not is_instance_valid(player):
+		return
+	var result: Dictionary = player_progression.call("activate_relic_skill", skill_id, player)
+	if bool(result.get("pending", false)):
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "جارٍ طلب تفويض مهارة النِن العنصرية من الخادم..."
+			interaction_prompt_label.show()
+		return
+	if bool(result.get("success", false)):
+		return
+	var reason := str(result.get("reason", "UNKNOWN"))
+	var message := "المهارة العنصرية غير متاحة حالياً."
+	match reason:
+		"NEN_NOT_UNLOCKED":
+			message = "لازم توقظ قوة النِن أولاً؛ التحفة وحدها ما تمنح القوة."
+		"NEN_CONTROL_REQUIREMENT":
+			message = "رتبة تحكم النِن غير كافية لهذه المهارة."
+		"SKILL_NOT_LEARNED":
+			message = "لازم تحصل على المهارة من مهمتها وتتدرب عليها ثلاث مرات."
+		"SKILL_STUDY_PERMIT_REQUIRED":
+			message = "تحتاج تصريح تدريب المهارة من مهمة التحفة."
+		"ELEMENTAL_AUTHORITY_BRIDGE_UNAVAILABLE":
+			message = "اتصال تفويض الخادم غير متاح؛ لم تُفعّل المهارة."
+		"ELEMENTAL_AUTHORITY_REQUEST_FAILED":
+			message = "تعذر إرسال طلب التفويض إلى الخادم."
+		_:
+			message = "المهارة غير متاحة: %s" % reason
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = message
+		interaction_prompt_label.show()
+
+
+func _on_mobile_elemental_fire_pressed() -> void:
+	_request_mobile_elemental_skill("primordial_flame_burst")
+
+
+func _on_mobile_elemental_air_pressed() -> void:
+	_request_mobile_elemental_skill("stormwind_aerial_step")
+
+
+func _on_mobile_elemental_water_pressed() -> void:
+	_request_mobile_elemental_skill("tideheart_restoration")
+
+
+func _on_mobile_elemental_earth_pressed() -> void:
+	_request_mobile_elemental_skill("worldroot_earthguard")
+
+
+func _on_mobile_elemental_lightning_pressed() -> void:
+	_request_mobile_elemental_skill("stormlightning_arc")
 
 
 func _on_mobile_attack_pressed() -> void:
