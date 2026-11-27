@@ -14,7 +14,7 @@ import zipfile
 from collections import defaultdict
 from typing import Any
 
-from shapely.geometry import LineString, box, mapping, shape
+from shapely.geometry import GeometryCollection, LineString, box, mapping, shape
 from shapely.ops import transform, unary_union
 
 A = 6378137.0
@@ -195,6 +195,31 @@ def _geometry_close(expected, actual) -> bool:
         return abs(expected.length - actual.length) <= max(0.08, expected.length * 1e-6)
     except Exception:
         return False
+
+
+def _area_shared_edge_linework(geometry):
+    """Ignore isolated point touches when comparing clipped area-feature seams.
+
+    A MultiPolygon can cross a cell edge with one component while another
+    component only touches that same edge at a single point. The touching
+    component is valid source geometry but does not need a matching polygon
+    fragment in the neighboring cell. Preserve shared line segments only.
+    """
+    if geometry is None or geometry.is_empty:
+        return GeometryCollection()
+    if geometry.geom_type in ("LineString", "LinearRing"):
+        return geometry
+    if geometry.geom_type == "MultiLineString":
+        return geometry
+    if geometry.geom_type == "GeometryCollection":
+        line_parts = []
+        for part in geometry.geoms:
+            extracted = _area_shared_edge_linework(part)
+            if not extracted.is_empty:
+                line_parts.append(extracted)
+        return unary_union(line_parts) if line_parts else GeometryCollection()
+    # Point and MultiPoint intersections are boundary-only contacts, not seams.
+    return GeometryCollection()
 
 
 def _seam_geometry(geometry, cell_a: tuple[int, int], cell_b: tuple[int, int], size: float):
@@ -592,6 +617,12 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
                     # their common edge (for example, a curved road that exits
                     # through another side and later re-enters). Empty expected
                     # intersections mean there is no seam to connect.
+                    if layer in AREA_LAYERS or layer == "buildings":
+                        # Drop isolated point contacts from area-feature edge
+                        # intersections. A separate MultiPolygon component may
+                        # touch this edge without crossing into the neighbor.
+                        expected_edge_a = _area_shared_edge_linework(expected_edge_a)
+                        expected_edge_b = _area_shared_edge_linework(expected_edge_b)
                     if expected_edge_a.is_empty or expected_edge_b.is_empty:
                         seam_report["non_crossing_adjacent_cell_features"] += 1
                         continue
@@ -618,6 +649,9 @@ def audit_pack(input_dir: pathlib.Path, pack_path: pathlib.Path) -> dict[str, An
                     actual_edge_b = _seam_geometry(
                         actual_geometry_b, cell_a, cell_b, cell_size
                     )
+                    if layer in AREA_LAYERS or layer == "buildings":
+                        actual_edge_a = _area_shared_edge_linework(actual_edge_a)
+                        actual_edge_b = _area_shared_edge_linework(actual_edge_b)
                     if any(edge is None for edge in (
                         expected_edge_a, expected_edge_b, actual_edge_a, actual_edge_b
                     )):
