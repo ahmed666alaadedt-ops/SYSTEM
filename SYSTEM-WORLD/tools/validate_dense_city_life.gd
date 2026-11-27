@@ -21,7 +21,8 @@ func _run_validation() -> void:
 	var services_source := FileAccess.get_file_as_string("res://scripts/modern_city_services_manager.gd")
 	var vegetation_source := FileAccess.get_file_as_string("res://scripts/baghdad_vegetation_cell_builder.gd")
 	var baghdad_streamer_source := FileAccess.get_file_as_string("res://scripts/baghdad_osm_cell_streamer.gd")
-	if region_source.is_empty() or population_source.is_empty() or forest_source.is_empty() or daily_life_source.is_empty() or services_source.is_empty() or vegetation_source.is_empty() or baghdad_streamer_source.is_empty():
+	var tower_landmarks_source := FileAccess.get_file_as_string("res://scripts/baghdad_tower_landmarks_manager.gd")
+	if region_source.is_empty() or population_source.is_empty() or forest_source.is_empty() or daily_life_source.is_empty() or services_source.is_empty() or vegetation_source.is_empty() or baghdad_streamer_source.is_empty() or tower_landmarks_source.is_empty():
 		_fail("A required city-life source file could not be read.")
 		return
 	if not region_source.contains("for tree_index in range(5)") or not region_source.contains("for shrub_index in range(8)"):
@@ -48,6 +49,9 @@ func _run_validation() -> void:
 			return
 	if not vegetation_source.contains("BaghdadVegetationNear_") or not vegetation_source.contains("BaghdadVegetationFar_") or not vegetation_source.contains("visibility_range_begin = 240.0") or not vegetation_source.contains("visibility_range_end = 900.0"):
 		_fail("Near/far vegetation LOD batches are missing.")
+		return
+	if not tower_landmarks_source.contains("vegetation_builder.build_planter") or not tower_landmarks_source.contains("baghdad_sky_ring_planter_"):
+		_fail("Baghdad elevated sky-garden planters are not connected to the shared vegetation builder.")
 		return
 	if not baghdad_streamer_source.contains("vegetation_builder.build_cell") or not baghdad_streamer_source.contains("BaghdadVegetationCellBuilderScript.TARGET_PLANT_COUNT"):
 		_fail("Baghdad OSM cell loading is not connected to the vegetation streamer.")
@@ -111,6 +115,14 @@ func _run_validation() -> void:
 		"tags": {"highway": "residential"},
 		"geometry": {"type": "LineString", "coordinates": [[0, 100], [200, 100]]}
 	}
+	var planter_root := Node3D.new()
+	root.add_child(planter_root)
+	var planter_stats: Dictionary = vegetation_builder.build_planter(
+		planter_root, Vector2(14.0, 18.0), 2.28, 20, "validator_sky_planter"
+	)
+	if int(planter_stats.get("total", 0)) != 20 or int(planter_root.get_meta("baghdad_planter_plant_count", 0)) != 20:
+		_fail("Elevated sky-garden planter vegetation did not preserve the requested plant count.")
+		return
 	var vegetation_stats: Dictionary = vegetation_builder.build_cell(
 		vegetation_root, Vector2i(0, 0), [park_feature], [water_feature],
 		Callable(self, "_zero_height"), [road_feature], 200.0
