@@ -9,6 +9,7 @@ class_name ArtifactRelicQuestManager
 signal historical_world_requested(world_id: String, quest_id: String, relic_id: String)
 signal relic_return_requested(relic_id: String, historical_site_id: String, quest_id: String)
 signal rare_skill_reward_requested(skill_id: String, relic_id: String, quest_id: String)
+signal present_world_return_requested(quest_id: String, relic_id: String)
 signal quest_state_changed(quest_id: String, state: String)
 signal quest_message(message: String)
 
@@ -135,6 +136,7 @@ func _complete_reward(relic_id: String, definition: Dictionary) -> Dictionary:
 	_quest_states[relic_id] = QUEST_STATE_COMPLETED
 	quest_state_changed.emit(quest_id, QUEST_STATE_COMPLETED)
 	rare_skill_reward_requested.emit(String(definition.skill_id), relic_id, quest_id)
+	present_world_return_requested.emit(quest_id, relic_id)
 	quest_message.emit("حصلت على المهارة النادرة: " + String(definition.skill_name))
 	return {
 		"ok": true,
