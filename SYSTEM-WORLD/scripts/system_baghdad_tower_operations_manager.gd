@@ -5046,7 +5046,6 @@ func open_museum_artifact_exhibit(target: Node) -> void:
 	_clear_dynamic_controls()
 	var artifact_id := str(target.get_meta("system_artifact_id", ""))
 	var floor_number := int(target.get_meta("system_tower_floor_number", 0))
-	current_secret_trader_id = str(target.get_meta("system_secret_trader_id", ""))
 	var display_role := str(target.get_meta("system_artifact_display_role", "museum_exhibit"))
 	title_label.text = "سوق التحف والآثار بين اللاعبين" if display_role == "player_market_prototype" else "سجل القطعة الأثرية"
 
@@ -5171,6 +5170,7 @@ func open_antiques_world_facility(target: Node) -> void:
 		return
 	var facility_type := str(target.get_meta("system_antique_facility_type", ""))
 	var floor_number := int(target.get_meta("system_tower_floor_number", 0))
+	current_secret_trader_id = str(target.get_meta("system_secret_trader_id", ""))
 	if facility_type.is_empty() or floor_number < 29 or floor_number > 32:
 		return
 	current_tower_id = "antiques_heritage_tower_baghdad"
