@@ -204,6 +204,48 @@ func build_cell(parent: Node3D, cell: Vector2i, landuse_features: Array,
 		"target_density_per_km2": TARGET_DENSITY_PER_M2 * 1000000.0
 	}
 
+func build_planter(parent: Node3D, planter_size: Vector2, surface_y: float, plant_count: int, stable_seed: String) -> Dictionary:
+	rng.seed = absi(hash(stable_seed))
+	var batches: Dictionary = {
+		"large_trees": [], "palms": [], "ornamental_fruit": [],
+		"shrubs": [], "flowers_groundcover": [], "aquatic_riparian": []
+	}
+	var safe_width := maxf(2.0, planter_size.x - 2.0)
+	var safe_depth := maxf(2.0, planter_size.y - 2.0)
+	for index in range(maxi(0, plant_count)):
+		var roll := rng.randi_range(0, 99)
+		var category := "flowers_groundcover"
+		if roll < 8:
+			category = "large_trees"
+		elif roll < 13:
+			category = "palms"
+		elif roll < 20:
+			category = "ornamental_fruit"
+		elif roll < 55:
+			category = "shrubs"
+		var point := Vector2(
+			rng.randf_range(-safe_width * 0.5, safe_width * 0.5),
+			rng.randf_range(-safe_depth * 0.5, safe_depth * 0.5)
+		)
+		var y := surface_y + _plant_lift(category)
+		batches[category].append(_plant_transform(category, point, y))
+	var total := 0
+	for category in batches:
+		var transforms: Array = batches[category]
+		total += transforms.size()
+		if not transforms.is_empty():
+			_add_batch(parent, Vector2i(absi(hash(stable_seed)) % 100000, 0), str(category), transforms)
+	parent.set_meta("baghdad_planter_plant_count", total)
+	return {"total": total, "counts": _count_batches(batches)}
+
+
+func _count_batches(batches: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for category in batches:
+		result[category] = batches[category].size()
+	return result
+
+
 func _is_green_landuse(tags: Dictionary) -> bool:
 	var landuse := str(tags.get("landuse", "")).to_lower()
 	var leisure := str(tags.get("leisure", "")).to_lower()
