@@ -1,6 +1,32 @@
 extends Node3D
 class_name ModernCityServicesManager
 
+## Distinct street tenants share one efficient shopping-street building.
+## Each storefront has its own visible sign and interaction metadata.
+const COMMERCIAL_TENANTS := [
+	{"id": "restaurant", "name": "مطعم ومأكولات", "prompt": "المطعم — الوجبات والطلبات"},
+	{"id": "cafe", "name": "مقهى", "prompt": "المقهى — القهوة والجلسات"},
+	{"id": "bakery", "name": "مخبز ومعجنات", "prompt": "المخبز — الخبز والمعجنات"},
+	{"id": "sweets", "name": "حلويات", "prompt": "محل الحلويات — الكيك والحلويات"},
+	{"id": "clothing", "name": "ملابس وأزياء", "prompt": "متجر الملابس — الأزياء والمقاسات"},
+	{"id": "shoes", "name": "أحذية وحقائب", "prompt": "متجر الأحذية والحقائب"},
+	{"id": "perfume", "name": "عطور وتجميل", "prompt": "متجر العطور والتجميل"},
+	{"id": "electronics", "name": "إلكترونيات", "prompt": "متجر الإلكترونيات والأجهزة"},
+	{"id": "mobile", "name": "هواتف واتصالات", "prompt": "متجر الهواتف والإكسسوارات"},
+	{"id": "furniture", "name": "أثاث ومفروشات", "prompt": "متجر الأثاث والمفروشات"},
+	{"id": "supermarket", "name": "سوبرماركت", "prompt": "السوبرماركت — المواد الغذائية"},
+	{"id": "hardware", "name": "عدد ومواد صناعية", "prompt": "متجر العدد والمواد الصناعية"}
+]
+
+const INDUSTRIAL_TENANTS := [
+	{"id": "metal", "name": "حدادة ومعادن"},
+	{"id": "wood", "name": "نجارة وأثاث"},
+	{"id": "auto", "name": "قطع غيار وصيانة"},
+	{"id": "building", "name": "مواد بناء"},
+	{"id": "textile", "name": "خياطة ومنسوجات"},
+	{"id": "warehouse", "name": "مخازن وتوزيع"}
+]
+
 ## First-pass city service buildings and discoverable interaction markers.
 ## Functional service menus, interiors and backend transactions are future work.
 
@@ -11,6 +37,7 @@ const SERVICE_DATA := [
 	{"id": "hotel", "name": "Grand City Hotel", "prompt": "الفندق — الحجز والإقامة", "color": Color(0.48, 0.38, 0.26), "height": 28.0},
 	{"id": "market", "name": "Central Market", "prompt": "السوق المركزي — البيع والشراء", "color": Color(0.38, 0.42, 0.31), "height": 12.0},
 	{"id": "garage", "name": "Vehicle Service Garage", "prompt": "كراج المركبات — الصيانة", "color": Color(0.25, 0.31, 0.35), "height": 11.0},
+	{"id": "industrial_zone", "name": "Industrial and Workshop District", "prompt": "المنطقة الصناعية — الورش والمصانع والمخازن", "color": Color(0.32, 0.36, 0.39), "height": 15.0},
 	{"id": "school", "name": "Public School", "prompt": "المدرسة — التعليم والأنشطة", "color": Color(0.72, 0.58, 0.34), "height": 10.0},
 	{"id": "university", "name": "City University", "prompt": "الجامعة — التعليم والبحث", "color": Color(0.34, 0.39, 0.52), "height": 16.0},
 	{"id": "stadium", "name": "Football Stadium", "prompt": "ملعب كرة القدم — المباريات والفعاليات", "color": Color(0.24, 0.34, 0.28), "height": 18.0},
@@ -156,6 +183,9 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 	elif service_id == "mall":
 		width = 34.0
 		depth = 28.0
+	elif service_id == "industrial_zone":
+		width = 58.0
+		depth = 42.0
 	elif service_id == "mosque" or service_id == "church" or service_id == "museum" or service_id == "rare_antique_market":
 		width = 34.0
 		depth = 28.0
@@ -239,6 +269,8 @@ func _create_service_building(city_name: String, definition: Dictionary, positio
 		_create_civic_courtyard(building, width, depth, courtyard_material)
 	elif service_id == "shops":
 		_create_shopfronts(building, width, depth, glass, roof_material)
+	elif service_id == "industrial_zone":
+		_create_industrial_details(building, width, depth, glass, roof_material)
 	elif service_id == "mosque":
 		_create_mosque_details(building, width, depth, roof_material, glass)
 	elif service_id == "church":
@@ -1028,21 +1060,95 @@ func _create_civic_courtyard(parent: Node3D, width: float, depth: float, green: 
 
 
 func _create_shopfronts(parent: Node3D, width: float, depth: float, glass: Material, trim: Material) -> void:
-	for index in range(5):
+	var tenant_width := width / float(COMMERCIAL_TENANTS.size())
+	for index in range(COMMERCIAL_TENANTS.size()):
+		var tenant: Dictionary = COMMERCIAL_TENANTS[index]
+		var x := -width * 0.5 + tenant_width * (float(index) + 0.5)
 		var shop := MeshInstance3D.new()
-		shop.name = "Shopfront_%02d" % index
+		shop.name = "Shopfront_" + str(tenant["id"])
 		var shop_mesh := BoxMesh.new()
-		shop_mesh.size = Vector3(width / 6.0, 3.2, 0.16)
+		shop_mesh.size = Vector3(tenant_width * 0.82, 3.2, 0.16)
 		shop.mesh = shop_mesh
-		shop.position = Vector3(-width * 0.4 + float(index) * width * 0.2, 2.0, -depth * 0.5 - 0.12)
+		shop.position = Vector3(x, 2.0, -depth * 0.5 - 0.12)
 		shop.material_override = glass
 		parent.add_child(shop)
 		var awning := MeshInstance3D.new()
-		awning.name = "ShopAwning_%02d" % index
+		awning.name = "ShopAwning_" + str(tenant["id"])
 		var awning_mesh := BoxMesh.new()
-		awning_mesh.size = Vector3(width / 6.0, 0.22, 1.5)
+		awning_mesh.size = Vector3(tenant_width * 0.9, 0.22, 1.5)
 		awning.mesh = awning_mesh
-		awning.position = Vector3(shop.position.x, 4.0, -depth * 0.5 - 0.9)
+		awning.position = Vector3(x, 4.0, -depth * 0.5 - 0.9)
 		awning.material_override = trim
 		parent.add_child(awning)
+		var sign := Label3D.new()
+		sign.name = "TenantSign_" + str(tenant["id"])
+		sign.text = str(tenant["name"])
+		sign.font_size = 18
+		sign.outline_size = 4
+		sign.position = Vector3(x, 4.8, -depth * 0.5 - 0.25)
+		sign.modulate = Color(0.95, 0.88, 0.66)
+		parent.add_child(sign)
+		var entrance := Area3D.new()
+		entrance.name = "TenantEntrance_" + str(tenant["id"])
+		entrance.position = Vector3(x, 1.0, -depth * 0.5 - 1.2)
+		entrance.add_to_group("system_interactable")
+		entrance.set_meta("system_interaction_prompt", str(tenant["prompt"]))
+		entrance.set_meta("system_tenant_id", str(tenant["id"]))
+		entrance.set_meta("system_display_name", str(tenant["name"]))
+		var shape := CollisionShape3D.new()
+		var sphere := SphereShape3D.new()
+		sphere.radius = 1.8
+		shape.shape = sphere
+		entrance.add_child(shape)
+		parent.add_child(entrance)
+
+
+func _create_industrial_details(parent: Node3D, width: float, depth: float, glass: Material, trim: Material) -> void:
+	var bay_width := width / 3.0
+	for index in range(INDUSTRIAL_TENANTS.size()):
+		var tenant: Dictionary = INDUSTRIAL_TENANTS[index]
+		var row := index / 3
+		var column := index % 3
+		var x := -width * 0.5 + bay_width * (float(column) + 0.5)
+		var z := -depth * 0.5 + 10.0 if row == 0 else depth * 0.5 - 10.0
+		var shutter := MeshInstance3D.new()
+		shutter.name = "IndustrialBay_" + str(tenant["id"])
+		var shutter_mesh := BoxMesh.new()
+		shutter_mesh.size = Vector3(bay_width * 0.72, 4.0, 0.22)
+		shutter.mesh = shutter_mesh
+		shutter.position = Vector3(x, 2.2, z - 4.2 if row == 0 else z + 4.2)
+		shutter.material_override = glass
+		parent.add_child(shutter)
+		var sign := Label3D.new()
+		sign.name = "IndustrialSign_" + str(tenant["id"])
+		sign.text = str(tenant["name"])
+		sign.font_size = 22
+		sign.outline_size = 4
+		sign.position = Vector3(x, 5.2, shutter.position.z)
+		sign.modulate = Color(0.92, 0.82, 0.55)
+		parent.add_child(sign)
+		var entrance := Area3D.new()
+		entrance.name = "IndustrialEntrance_" + str(tenant["id"])
+		entrance.position = Vector3(x, 1.0, shutter.position.z - 1.0 if row == 0 else shutter.position.z + 1.0)
+		entrance.add_to_group("system_interactable")
+		entrance.set_meta("system_interaction_prompt", "المنطقة الصناعية — " + str(tenant["name"]))
+		entrance.set_meta("system_tenant_id", "industrial_" + str(tenant["id"]))
+		var shape := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size = Vector3(bay_width * 0.7, 2.0, 2.0)
+		shape.shape = box
+		entrance.add_child(shape)
+		parent.add_child(entrance)
+	# Industrial roof vents and extraction stacks distinguish the workshop skyline.
+	for stack_index in range(3):
+		var stack := MeshInstance3D.new()
+		stack.name = "IndustrialVent_%02d" % stack_index
+		var stack_mesh := CylinderMesh.new()
+		stack_mesh.top_radius = 0.55
+		stack_mesh.bottom_radius = 0.8
+		stack_mesh.height = 5.0 + float(stack_index % 2) * 2.0
+		stack.mesh = stack_mesh
+		stack.position = Vector3(-width * 0.32 + float(stack_index) * width * 0.32, 17.5, 0.0)
+		stack.material_override = trim
+		parent.add_child(stack)
 
