@@ -119,8 +119,8 @@ jobs:
           SOURCE_PACK="$RUNNER_TEMP/baghdad-osm-artifact/baghdad-citywide-roads-1km.zip"
           DESTINATION="$PROJECT/data/geography/baghdad/regional_roads"
           if [ ! -s "$SOURCE_PACK" ]; then
-            echo "::warning::Citywide Baghdad road overview artifact is unavailable; only the detailed core pack can be used."
-            exit 0
+            echo "::error::Citywide Baghdad road overview artifact is required for this repair build."
+            exit 1
           fi
           mkdir -p "$DESTINATION"
           unzip -q "$SOURCE_PACK" -d "$DESTINATION"
