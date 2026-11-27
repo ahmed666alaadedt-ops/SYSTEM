@@ -1,0 +1,61 @@
+name: Validate Artifact Skill Quest End-to-End
+
+on:
+  pull_request:
+    paths:
+      - "SYSTEM-WORLD/scripts/system_artifact_skill_manager.gd"
+      - "SYSTEM-WORLD/scripts/system_player_progression.gd"
+      - "SYSTEM-WORLD/scripts/modern_world_combat_system.gd"
+      - "SYSTEM-WORLD/scripts/historical_world_manager.gd/**"
+      - "SYSTEM-WORLD/scripts/baghdad_tower_landmarks_manager.gd"
+      - "SYSTEM-WORLD/scripts/main.gd"
+      - "SYSTEM-WORLD/tools/validate_artifact_skill_quest.gd"
+      - ".github/workflows/artifact-skill-quest-validation.yml"
+  push:
+    branches:
+      - feature/artifact-skill-final-validation-20261127
+    paths:
+      - "SYSTEM-WORLD/**"
+      - ".github/workflows/artifact-skill-quest-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  artifact-quest:
+    name: Artifact quest, permit, training and combat regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Godot 4.3
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/godot"
+          curl -L --fail --retry 3 "https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip" -o "$RUNNER_TEMP/godot.zip"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP/godot"
+          chmod +x "$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+
+      - name: Import resources and parse artifact skill scripts
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --editor --path "$PROJECT" --import 2>&1 | tee "$RUNNER_TEMP/artifact-import.log"
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" "$RUNNER_TEMP/artifact-import.log"; then exit 1; fi
+          "$GODOT" --headless --path "$PROJECT" --check-only --script res://scripts/system_artifact_skill_manager.gd
+          "$GODOT" --headless --path "$PROJECT" --check-only --script res://scripts/system_player_progression.gd
+          "$GODOT" --headless --path "$PROJECT" --check-only --script res://scripts/modern_world_combat_system.gd
+          "$GODOT" --headless --path "$PROJECT" --check-only --script res://tools/validate_artifact_skill_quest.gd
+
+      - name: Run all three artifact quests through historical recovery, permits, three sessions and combat
+        shell: bash
+        run: |
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          set -o pipefail
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_artifact_skill_quest.gd 2>&1 | tee "$RUNNER_TEMP/artifact-skill-quest-validation.log"

@@ -237,9 +237,9 @@ func _create_landmark(
 
 func _create_historical_world_fragments() -> void:
 	var entries := [
-		{"id": "babylon_cuneiform_tablet", "name": "لوح المسمارية البابلي", "position": Vector3(-65.0, 2.0, 78.0)},
-		{"id": "alexandria_pharos_lens", "name": "عدسة منارة الإسكندرية", "position": Vector3(65.0, 3.0, 48.0)},
-		{"id": "atlantis_tide_relic", "name": "أثر مدّ أتلانتس", "position": Vector3(65.0, 2.0, -52.0)}
+		{"id": "babylon_cuneiform_tablet", "quest_id": "babylon_seal_trial", "name": "لوح المسمارية البابلي", "position": Vector3(-65.0, 2.0, 78.0)},
+		{"id": "alexandria_pharos_lens", "quest_id": "pharos_sight_trial", "name": "عدسة منارة الإسكندرية", "position": Vector3(65.0, 3.0, 48.0)},
+		{"id": "atlantis_tide_relic", "quest_id": "atlantis_tide_trial", "name": "أثر مدّ أتلانتس", "position": Vector3(65.0, 2.0, -52.0)}
 	]
 	for entry in entries:
 		var item := Node3D.new()
@@ -264,6 +264,8 @@ func _create_historical_world_fragments() -> void:
 		endpoint.set("action_type", "world_fragment")
 		endpoint.set("world_fragment_world", "historical")
 		endpoint.set("world_fragment_id", str(entry["id"]))
+		endpoint.set_meta("system_artifact_quest_id", str(entry["quest_id"]))
+		endpoint.set_meta("system_artifact_quest_relic_id", str(entry["id"]))
 		endpoint.add_to_group("system_interactable")
 		endpoint.set_meta("system_interaction_prompt", "اجمع " + str(entry["name"]))
 		item.add_child(endpoint)

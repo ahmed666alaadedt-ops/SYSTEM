@@ -23,6 +23,7 @@ const WorldTimeManagerScript = preload("res://scripts/world_time_manager.gd")
 const WildlifeManagerScript = preload("res://scripts/wildlife_manager.gd")
 const MissionRewardManagerScript = preload("res://scripts/system_mission_reward_manager.gd")
 const PlayerProgressionScript = preload("res://scripts/system_player_progression.gd")
+const ArtifactSkillManagerScript = preload("res://scripts/system_artifact_skill_manager.gd")
 const ModernWorldCombatSystemScript = preload("res://scripts/modern_world_combat_system.gd")
 const PlayerVehicleManagerScript = preload("res://scripts/system_player_vehicle_manager.gd")
 const VehicleRuntimeManagerScript = preload("res://scripts/system_vehicle_runtime_manager.gd")
@@ -52,6 +53,7 @@ var world_time_manager
 var wildlife_manager
 var mission_reward_manager
 var player_progression
+var artifact_skill_manager: Node
 var modern_world_combat_system: Node
 var player_vehicle_manager
 var vehicle_runtime_manager
@@ -112,6 +114,7 @@ func _ready() -> void:
 	register_modern_world_map_locations()
 	create_player_progression()
 	create_modern_world_combat_system()
+	create_artifact_skill_manager()
 	create_inventory_panel()
 	create_player_vehicle_manager()
 	create_vehicle_runtime_manager()
@@ -326,6 +329,13 @@ func create_player_progression() -> void:
 	player_progression = PlayerProgressionScript.new()
 	player_progression.name = "PlayerProgression"
 	add_child(player_progression)
+
+
+func create_artifact_skill_manager() -> void:
+	artifact_skill_manager = ArtifactSkillManagerScript.new()
+	artifact_skill_manager.name = "ArtifactSkillManager"
+	add_child(artifact_skill_manager)
+	artifact_skill_manager.call("setup", world_manager, player_progression, modern_world_combat_system, player)
 
 
 func create_inventory_panel() -> void:
@@ -1196,8 +1206,16 @@ func _on_interaction_performed(
 	if target.has_meta("system_power_tower_ticket_terminal") and tower_operations_manager != null:
 		tower_operations_manager.call("open_power_tower_ticket_terminal")
 		return
+	if target.has_meta("system_artifact_quest_relic_id") and artifact_skill_manager != null:
+		var artifact_result: Dictionary = artifact_skill_manager.call("handle_historical_relic_interaction", target)
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "تم استرجاع الأثر ومنح تصريح المهارة." if bool(artifact_result.get("success", false)) else "تعذر استرجاع الأثر: " + str(artifact_result.get("reason", ""))
+			interaction_prompt_label.show()
+		return
 	if str(target.get_meta("system_interaction_type", "")) == "museum_artifact_exhibit" and tower_operations_manager != null:
 		tower_operations_manager.call("open_museum_artifact_exhibit", target)
+		if artifact_skill_manager != null:
+			artifact_skill_manager.call("offer_quest_from_exhibit", target)
 		return
 	if target.has_meta("system_pool_service_type") and tower_operations_manager != null:
 		tower_operations_manager.call("open_pool_service", target)

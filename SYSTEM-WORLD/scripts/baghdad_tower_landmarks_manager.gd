@@ -996,6 +996,12 @@ func _create_antiques_museum_exhibits(tower: Node3D) -> void:
 			interaction.set_meta("system_artifact_provenance", "SYSTEM WORLD museum exhibit catalogue; display specimen only")
 			interaction.set_meta("system_artifact_authenticity", "curator_review_required")
 			interaction.set_meta("system_artifact_display_role", "player_market_prototype" if floor_number >= 29 and floor_number <= 32 else "museum_exhibit")
+			if exhibit_index == 0 and floor_number == 1:
+				interaction.set_meta("system_artifact_quest_id", "babylon_seal_trial")
+			elif exhibit_index == 0 and floor_number == 5:
+				interaction.set_meta("system_artifact_quest_id", "pharos_sight_trial")
+			elif exhibit_index == 0 and floor_number == 9:
+				interaction.set_meta("system_artifact_quest_id", "atlantis_tide_trial")
 			interaction.set_meta("system_tower_id", "antiques_heritage_tower_baghdad")
 			interaction.set_meta("system_tower_floor", floor_number)
 			interaction.set_meta("system_tower_floor_number", floor_number)
