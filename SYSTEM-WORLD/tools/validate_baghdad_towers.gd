@@ -98,6 +98,17 @@ func _run_validation() -> void:
 	if tigris == null or str(tigris.get_meta("system_geography_source", "")) != "OpenStreetMap way 24709603":
 		_fail("Tigris River surface is missing its verified OSM geometry source.")
 		return
+	if str(tigris.get_meta("system_water_shader", "")) != "world_space_animated_ripples" or tigris.mesh == null:
+		_fail("Tigris River is missing its animated world-space water surface.")
+		return
+	var tigris_material := tigris.mesh.surface_get_material(0) as ShaderMaterial if tigris.mesh.get_surface_count() > 0 else null
+	if tigris_material == null or tigris_material.shader == null or not tigris_material.shader.code.contains("TIME"):
+		_fail("Tigris River shader is missing its time-driven wave and shimmer animation.")
+		return
+	var tigris_foam := terrain.get_node_or_null("BaghdadTigrisBankFoam") as MeshInstance3D
+	if tigris_foam == null or str(tigris_foam.get_meta("system_water_edge_detail", "")) != "soft_bank_foam":
+		_fail("Tigris River is missing its two-bank foam edge detail.")
+		return
 	var access_causeway := terrain.get_node_or_null("BaghdadBridgeAccessCauseway") as MeshInstance3D
 	if access_causeway == null or not bool(access_causeway.get_meta("system_generated_access_route", false)):
 		_fail("The playable Baghdad-to-bridge access causeway is missing.")
