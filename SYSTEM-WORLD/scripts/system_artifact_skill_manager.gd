@@ -156,7 +156,12 @@ func open_training_panel(skill_id: String, quest_id: String) -> void:
 	panel.show()
 
 func practice_artifact_skill(skill_id: String, session_id: String) -> Dictionary:
-	if progression == null or not QUESTS.values().any(func(entry: Dictionary) -> bool: return str(entry["skill_id"]) == skill_id):
+	var known_skill := false
+	for entry in QUESTS.values():
+		if str(entry["skill_id"]) == skill_id:
+			known_skill = true
+			break
+	if progression == null or not known_skill:
 		return {"success": false, "reason": "UNKNOWN_ARTIFACT_SKILL"}
 	var result: Dictionary = progression.call("practice_system_skill", skill_id, session_id)
 	_update_training_status(skill_id)
