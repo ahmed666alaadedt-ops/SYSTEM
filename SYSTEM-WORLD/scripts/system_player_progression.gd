@@ -1198,6 +1198,8 @@ func practice_system_skill(skill_id: String, verified_session_id: String) -> Dic
 	if not SYSTEM_SKILL_TREE.has(key) or session_id.is_empty():
 		return {"success": false, "reason": "INVALID_SKILL_SESSION"}
 	var skill: Dictionary = SYSTEM_SKILL_TREE[key]
+	if bool(skill.get("requires_server_unlock", false)):
+		return {"success": false, "reason": "SERVER_RELIC_UNLOCK_REQUIRED"}
 	if current_level < int(skill.get("required_level", 1)):
 		return {"success": false, "reason": "LEVEL_REQUIREMENT", "required_level": int(skill.get("required_level", 1))}
 	if not _meets_skill_rank(str(skill.get("required_rank", "F"))):
