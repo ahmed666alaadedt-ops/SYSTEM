@@ -385,6 +385,9 @@ export {
 } from "./artifact_marketplace";
 export { awardMarketplaceCurrency } from "./marketplace_currency";
 export {
+  requestHistoricalRelicQuestStart,
+  requestHistoricalRelicReturn,
+  listPendingHistoricalRelicQuestRequests,
   startHistoricalRelicQuestSession,
   recordHistoricalRelicQuestObjective,
   recordHistoricalRelicReturn,
