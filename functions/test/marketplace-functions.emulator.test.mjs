@@ -375,6 +375,19 @@ test("historical relic return and rare skill reward are trusted, atomic and repl
     requestId: startRequest.requestId
   }, { gameServer: true });
   assert.ok(session.sessionId);
+  const lockedArtifact = await readArtifact(owner, relicId);
+  assert.equal(lockedArtifact.data().activeHistoricalQuestSessionId, session.sessionId);
+  await assert.rejects(() => call("createArtifactListing", owner, {
+    artifactId: relicId, price: 1000, durationDays: 7
+  }));
+  await assert.rejects(() => call("createArtifactAuction", owner, {
+    artifactId: relicId, startingBid: 1000, durationHours: 24
+  }));
+  await assert.rejects(() => call("createArtifactExchangeOffer", owner, {
+    recipientId: uid("other_exchange_player"),
+    offeredArtifactId: relicId,
+    requestedArtifactId: "requested_artifact"
+  }));
   await assert.rejects(() => call("startHistoricalRelicQuestSession", server, {
     playerId: owner, questId: "quest_babylon_star_tablet", artifactId: relicId,
     requestId: startRequest.requestId
@@ -428,6 +441,7 @@ test("historical relic return and rare skill reward are trusted, atomic and repl
   const returned = await readArtifact(owner, relicId);
   assert.equal(returned.data().status, "returned_to_history");
   assert.equal(returned.data().returnedToHistoricalSite, "babylon_esagila_archive");
+  assert.equal(returned.data().activeHistoricalQuestSessionId, undefined);
   const skill = await db.collection("playerSkillUnlocks").doc(owner).collection("skills").doc("rare_skill_celestial_lightning").get();
   assert.equal(skill.exists, true);
   assert.equal(skill.data().questId, "quest_babylon_star_tablet");
@@ -496,7 +510,9 @@ test("historical relic quest rejects wrong return site and keeps retain-branch r
   }, { gameServer: true });
   assert.equal(retained.success, true);
   assert.equal(retained.relicReturned, false);
-  assert.equal((await readArtifact(owner, "akkadian_shadow_crown")).data().status, "owned");
+  const retainedArtifact = await readArtifact(owner, "akkadian_shadow_crown");
+  assert.equal(retainedArtifact.data().status, "owned");
+  assert.equal(retainedArtifact.data().activeHistoricalQuestSessionId, undefined);
   assert.equal(
     (await db.collection("playerSkillUnlocks").doc(owner).collection("skills").doc("rare_skill_shadow_avatar").get()).exists,
     true
