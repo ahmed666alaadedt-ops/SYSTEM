@@ -473,6 +473,7 @@ func _build_coastal_beaches() -> void:
 	if beach_mesh == null:
 		return
 	beaches.mesh = beach_mesh
+	beaches.material_override = beach_material
 	beaches.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(beaches)
 
@@ -734,6 +735,7 @@ func _build_highways() -> void:
 	if highway_mesh == null:
 		return
 	road_visual.mesh = highway_mesh
+	road_visual.material_override = road_material
 	road_visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(road_visual)
 
@@ -848,6 +850,7 @@ void fragment() {
 	if river_mesh == null:
 		return
 	river.mesh = river_mesh
+	river.material_override = material
 	river.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	river.set_meta("system_geography_source", "OpenStreetMap way 24709603")
 	river.set_meta("system_geography_name", "Tigris River")
@@ -914,6 +917,7 @@ func _build_baghdad_republic_bridge() -> void:
 		bridge.queue_free()
 		return
 	deck.mesh = deck_mesh
+	deck.material_override = deck_material
 	deck.set_meta("system_bridge_deck_height_m", BAGHDAD_REPUBLIC_BRIDGE_DECK_HEIGHT)
 	deck.set_meta("system_bridge_polygon_points", baghdad_bridge_outline.size())
 	bridge.add_child(deck)
@@ -1239,6 +1243,7 @@ func _build_baghdad_bridge_access_causeway() -> void:
 	if access_mesh == null:
 		return
 	road.mesh = access_mesh
+	road.material_override = material
 	road.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	road.set_meta("system_generated_access_route", true)
 	road.set_meta("system_geography_source", "SYSTEM procedural playable connector; not OpenStreetMap road geometry")
@@ -1300,6 +1305,7 @@ func _build_rivers_and_lakes() -> void:
 	if river_network_mesh == null:
 		return
 	river_visual.mesh = river_network_mesh
+	river_visual.material_override = water_material
 	river_visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(river_visual)
 	_build_mountain_waterfalls()
@@ -1398,6 +1404,7 @@ func _build_mountain_waterfalls() -> void:
 	if waterfall_mesh == null:
 		return
 	waterfall_visual.mesh = waterfall_mesh
+	waterfall_visual.material_override = waterfall_material
 	waterfall_visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(waterfall_visual)
 	print("SYSTEM WORLD: generated ", waterfall_count, " terrain-based waterfalls.")
