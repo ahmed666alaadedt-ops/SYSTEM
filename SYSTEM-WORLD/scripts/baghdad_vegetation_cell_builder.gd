@@ -65,6 +65,7 @@ func build_cell(parent: Node3D, cell: Vector2i, landuse_features: Array,
 		"shrubs": [], "flowers_groundcover": [], "aquatic_riparian": []
 	}
 	var eligible_area := 0.0
+	var generated_total := 0
 	for feature in landuse_features:
 		if not _is_green_landuse(feature.get("tags", {})):
 			continue
@@ -73,7 +74,7 @@ func build_cell(parent: Node3D, cell: Vector2i, landuse_features: Array,
 			if area < 4.0:
 				continue
 			eligible_area += area
-			var amount := mini(MAX_PLANTS_PER_CELL, roundi(area * TARGET_DENSITY_PER_M2))
+			var amount := mini(MAX_PLANTS_PER_CELL - generated_total, roundi(area * TARGET_DENSITY_PER_M2))
 			for index in range(amount):
 				var point := _random_point_in_ring(ring)
 				if point == Vector2.INF:
@@ -81,6 +82,7 @@ func build_cell(parent: Node3D, cell: Vector2i, landuse_features: Array,
 				var category := _roll_land_category()
 				var y := float(terrain_height.call(point)) + _plant_lift(category)
 				batches[category].append(_plant_transform(category, point, y))
+				generated_total += 1
 	var aquatic_area := 0.0
 	for feature in water_features:
 		for ring in _rings(feature.get("geometry", {})):
@@ -88,13 +90,14 @@ func build_cell(parent: Node3D, cell: Vector2i, landuse_features: Array,
 			if area < 4.0:
 				continue
 			aquatic_area += area
-			var amount := mini(MAX_PLANTS_PER_CELL, roundi(area * TARGET_DENSITY_PER_M2 * 0.10))
+			var amount := mini(MAX_PLANTS_PER_CELL - generated_total, roundi(area * TARGET_DENSITY_PER_M2 * 0.10))
 			for index in range(amount):
 				var point := _random_point_in_ring(ring)
 				if point == Vector2.INF:
 					continue
 				var y := float(terrain_height.call(point)) + 0.12
 				batches["aquatic_riparian"].append(_plant_transform("aquatic_riparian", point, y))
+				generated_total += 1
 	var counts: Dictionary = {}
 	var total := 0
 	for category in batches:
