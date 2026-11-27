@@ -1147,6 +1147,28 @@ func _on_interaction_target_changed(
 	interaction_prompt_label.show()
 
 
+func _start_historical_relic_quest() -> void:
+	if world_manager == null or player == null or player_progression == null:
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "تعذر بدء المهمة: نظام العالم أو اللاعب غير جاهز."
+			interaction_prompt_label.show()
+		return
+	var return_position := player.global_position
+	world_manager.call("switch_world", WorldManagerScript.WorldID.MYTHOLOGY)
+	var historical_root: Node = world_manager.call("get_world_root", WorldManagerScript.WorldID.MYTHOLOGY)
+	var relic_runtime: Node = historical_root.get_node_or_null("HistoricalRelicQuestRuntime") if historical_root != null else null
+	if relic_runtime == null or not relic_runtime.has_method("begin_quest"):
+		world_manager.call("switch_world", WorldManagerScript.WorldID.REALISTIC)
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = "تعذر تحميل مهمة الأثر التاريخي."
+			interaction_prompt_label.show()
+		return
+	var result: Dictionary = relic_runtime.call("begin_quest", player_progression, player, world_manager, return_position)
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = str(result.get("message", "بدأت المهمة التاريخية."))
+		interaction_prompt_label.show()
+
+
 func _on_interaction_performed(
 	target: Node,
 	location_id: String
@@ -1157,6 +1179,21 @@ func _on_interaction_performed(
 		" / ",
 		location_id
 	)
+	if target.has_meta("system_historical_relic_quest_start"):
+		_start_historical_relic_quest()
+		return
+	if target.has_meta("system_historical_relic_objective") or target.has_meta("system_historical_relic_return"):
+		var historical_root: Node = world_manager.call("get_world_root", WorldManagerScript.WorldID.MYTHOLOGY) if world_manager != null else null
+		var relic_runtime: Node = historical_root.get_node_or_null("HistoricalRelicQuestRuntime") if historical_root != null else null
+		if relic_runtime == null or not relic_runtime.has_method("handle_interaction"):
+			if interaction_prompt_label != null:
+				interaction_prompt_label.text = "نظام المهمة التاريخية غير متاح."
+			return
+		var relic_result: Dictionary = relic_runtime.call("handle_interaction", target)
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = str(relic_result.get("message", "تم التفاعل مع الأثر التاريخي."))
+			interaction_prompt_label.show()
+		return
 	if target.has_meta("system_bataween_market_action"):
 		if not is_instance_valid(bataween_marketplace_ui):
 			bataween_marketplace_ui = BataweenMarketplaceUIScript.new()
