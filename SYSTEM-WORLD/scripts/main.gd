@@ -867,7 +867,7 @@ func create_artifact_relic_quest_manager() -> void:
 func _on_artifact_historical_world_requested(world_id: String, quest_id: String, relic_id: String) -> void:
 	if world_manager == null:
 		return
-	var historical_root := world_manager.get_world_root(WorldManagerScript.WorldID.MYTHOLOGY)
+	var historical_root: Node3D = world_manager.get_world_root(WorldManagerScript.WorldID.MYTHOLOGY) as Node3D
 	if historical_root == null:
 		return
 	historical_root.set_meta("system_active_relic_quest_id", quest_id)
@@ -875,7 +875,7 @@ func _on_artifact_historical_world_requested(world_id: String, quest_id: String,
 	historical_root.set_meta("system_requested_historical_setting", world_id)
 	world_manager.switch_world(WorldManagerScript.WorldID.MYTHOLOGY)
 	active_world_root = world_manager.get_active_world()
-	var quest_runtime := historical_root.get_node_or_null("ArtifactRelicQuestWorldRuntime")
+	var quest_runtime: Node = historical_root.get_node_or_null("ArtifactRelicQuestWorldRuntime")
 	if quest_runtime == null:
 		quest_runtime = ArtifactRelicQuestWorldRuntimeScript.new()
 		quest_runtime.name = "ArtifactRelicQuestWorldRuntime"
