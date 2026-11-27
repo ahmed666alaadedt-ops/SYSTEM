@@ -248,6 +248,19 @@ func _run_validation() -> void:
 		_fail("OSM one-way vehicle direction was not enforced.")
 		return
 	direction_test_cell.set_meta("vehicle_navigation_segments", [
+		{"oneway": "-1", "points": one_way_points}
+	])
+	direction_test_streamer._vehicle_navigation_graph_dirty = true
+	var reverse_one_way_forward: Array[Vector3] = direction_test_streamer.get_vehicle_navigation_path(
+		Vector3(40.0, 0.0, 0.0), Vector3.ZERO, 2.0
+	)
+	var reverse_one_way_wrong: Array[Vector3] = direction_test_streamer.get_vehicle_navigation_path(
+		Vector3.ZERO, Vector3(40.0, 0.0, 0.0), 2.0
+	)
+	if reverse_one_way_forward.size() < 2 or not reverse_one_way_wrong.is_empty():
+		_fail("OSM reverse one-way (-1) direction was not normalized correctly.")
+		return
+	direction_test_cell.set_meta("vehicle_navigation_segments", [
 		{"oneway": "no", "points": one_way_points}
 	])
 	direction_test_streamer._vehicle_navigation_graph_dirty = true
