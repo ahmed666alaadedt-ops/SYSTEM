@@ -219,6 +219,8 @@ func _load_cell(cell: Vector2i) -> void:
 		_build_area_feature(cell_root, feature, land_material, 0.035, "OSMLanduse")
 	for feature in layers.get("natural-water", []):
 		_build_area_feature(cell_root, feature, water_material, 0.08, "OSMNaturalWater")
+	for feature in layers.get("wetlands", []):
+		_build_area_feature(cell_root, feature, land_material, 0.12, "OSMWetland")
 	var amenity_count := 0
 	for feature in layers.get("amenities", []):
 		if overview_mode:
