@@ -388,10 +388,12 @@ test("historical relic return and rare skill reward are trusted, atomic and repl
     offeredArtifactId: relicId,
     requestedArtifactId: "requested_artifact"
   }));
-  await assert.rejects(() => call("startHistoricalRelicQuestSession", server, {
+  const sessionRetry = await call("startHistoricalRelicQuestSession", server, {
     playerId: owner, questId: "quest_babylon_star_tablet", artifactId: relicId,
     requestId: startRequest.requestId
-  }, { gameServer: true }));
+  }, { gameServer: true });
+  assert.equal(sessionRetry.alreadyStarted, true);
+  assert.equal(sessionRetry.sessionId, session.sessionId);
   await assert.rejects(() => call("requestHistoricalRelicReturn", owner, {
     questId: "quest_babylon_star_tablet", artifactId: relicId
   }));
