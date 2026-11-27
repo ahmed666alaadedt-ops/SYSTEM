@@ -66,9 +66,16 @@ const CITY_DATA := [
 func _ready() -> void:
 	name = "ModernContinent"
 	_load_baghdad_bridge_reference()
-	var al_zawraa_anchor := SystemRealWorldGeography.to_local_world_position("iraq_baghdad_region", 33.31496, 44.37818, 0.0)
-	if al_zawraa_anchor != Vector3.ZERO:
-		baghdad_al_zawraa_center = Vector2(al_zawraa_anchor.x, al_zawraa_anchor.z)
+	# Resolve the optional geography autoload by node path instead of a compile-time
+	# singleton symbol. This keeps the manager independently testable with --script
+	# while preserving the same WGS84 anchor whenever the project autoload is present.
+	var geography: Node = get_node_or_null("/root/SystemRealWorldGeography")
+	if geography != null and geography.has_method("to_local_world_position"):
+		var al_zawraa_anchor: Vector3 = geography.call(
+			"to_local_world_position", "iraq_baghdad_region", 33.31496, 44.37818, 0.0
+		)
+		if al_zawraa_anchor != Vector3.ZERO:
+			baghdad_al_zawraa_center = Vector2(al_zawraa_anchor.x, al_zawraa_anchor.z)
 	_build_ocean()
 	_setup_terrain_streaming()
 	_build_coastal_beaches()
