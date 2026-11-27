@@ -401,6 +401,8 @@ export {
 } from "./artifact_marketplace_advanced";
 
 
+export { publishAuthoritativeCombatFrame } from "./elemental_combat_ingress";
+
 export {
   syncAuthoritativeElementalProgression,
   authorizeElementalRelicActivation,
