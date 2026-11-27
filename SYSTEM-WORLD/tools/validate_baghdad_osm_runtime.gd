@@ -318,7 +318,7 @@ func _run_validation() -> void:
 		_fail("Baghdad NPC vehicle did not wait safely for streamed OSM roads.")
 		return
 	mock_vehicle_streamer.route_ready = true
-	mock_vehicle_streamer.loaded_cells[Vector2i.ZERO] = Node3D.new()
+	mock_vehicle_streamer.loaded_cells[Vector2i.ZERO] = true
 	if not baghdad_npc_vehicle._try_upgrade_to_osm_vehicle_route() or not baghdad_npc_vehicle.is_driving or str(baghdad_npc_vehicle.get_meta("system_road_route_source", "")) != "real_osm_vehicle_graph" or baghdad_npc_vehicle.route_points.size() < 4:
 		_fail("Baghdad civilian NPC vehicle did not upgrade to real OSM routing after cells became available.")
 		return
