@@ -73,12 +73,16 @@ func _run_validation() -> void:
 	if not bool(bataween_market.get_meta("system_market_is_independent_of_five_towers", false)) or not bool(bataween_market.get_meta("system_market_is_not_a_sixth_tower", false)):
 		_fail("Al-Bataween market must remain a separate ground-level district, not a sixth Baghdad tower.")
 		return
-	if int(market_stats.get("stall_count", 0)) != 24 or int(market_stats.get("interaction_count", 0)) != 26:
-		_fail("Al-Bataween market must expose 24 vendor stalls, one main entrance and one sealed relic quest interaction.")
+	if int(market_stats.get("stall_count", 0)) != 24 or int(market_stats.get("interaction_count", 0)) != 27:
+		_fail("Al-Bataween market must expose 24 vendor stalls, one main entrance and two sealed relic quest interactions.")
 		return
 	var market_quest_altar := bataween_market.get_node_or_null("HistoricalRelicQuestStart") as Area3D
 	if market_quest_altar == null or not market_quest_altar.is_in_group("system_interactable") or not bool(market_quest_altar.get_meta("system_historical_relic_quest_start", false)):
 		_fail("The mysterious antiques market is missing its sealed historical relic quest altar.")
+		return
+	var assyrian_quest_altar := bataween_market.get_node_or_null("AssyrianRelicQuestStart") as Area3D
+	if assyrian_quest_altar == null or not assyrian_quest_altar.is_in_group("system_interactable") or not bool(assyrian_quest_altar.get_meta("system_assyrian_relic_quest_start", false)):
+		_fail("The mysterious antiques market is missing its Assyrian royal seal quest altar.")
 		return
 	for stall_number in [1, 12, 24]:
 		var stall := bataween_market.get_node_or_null("AntiquesStall_%02d" % stall_number) as Node3D
