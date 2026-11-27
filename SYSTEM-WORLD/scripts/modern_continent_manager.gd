@@ -785,25 +785,63 @@ func _river_channel_depth(x: float, z: float) -> float:
 func _build_baghdad_tigris_surface() -> void:
 	if not baghdad_bridge_reference_loaded or baghdad_tigris_route.size() < 2:
 		return
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.025, 0.24, 0.34, 0.96)
-	material.roughness = 0.18
-	material.metallic = 0.18
-	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var water_shader := Shader.new()
+	water_shader.code = """
+shader_type spatial;
+render_mode cull_disabled, depth_draw_opaque;
+varying vec3 world_position;
+void vertex() {
+	world_position = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+}
+void fragment() {
+	float wave_a = sin(world_position.x * 0.035 + world_position.z * 0.012 + TIME * 0.52);
+	float wave_b = sin(world_position.z * 0.052 - world_position.x * 0.018 - TIME * 0.38);
+	float ripple = wave_a * 0.55 + wave_b * 0.45;
+	float glint = smoothstep(0.72, 0.96, ripple);
+	vec3 deep_water = vec3(0.012, 0.13, 0.20);
+	vec3 lit_water = vec3(0.035, 0.30, 0.38);
+	ALBEDO = mix(deep_water, lit_water, clamp(0.48 + ripple * 0.24, 0.0, 1.0));
+	ROUGHNESS = 0.22;
+	METALLIC = 0.16;
+	EMISSION = vec3(0.004, 0.018, 0.024) + glint * vec3(0.018, 0.045, 0.052);
+}
+"""
+	var material := ShaderMaterial.new()
+	material.shader = water_shader
 	var surface := SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	surface.set_material(material)
+	var foam_material := StandardMaterial3D.new()
+	foam_material.albedo_color = Color(0.42, 0.75, 0.78, 0.42)
+	foam_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	foam_material.roughness = 0.34
+	foam_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var foam_surface := SurfaceTool.new()
+	foam_surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+	foam_surface.set_material(foam_material)
 	for index in range(baghdad_tigris_route.size() - 1):
 		var start: Vector2 = baghdad_tigris_route[index]
 		var finish: Vector2 = baghdad_tigris_route[index + 1]
 		var direction := (finish - start).normalized()
-		var bank_offset := Vector2(-direction.y, direction.x) * BAGHDAD_TIGRIS_HALF_WIDTH
+		var side := Vector2(-direction.y, direction.x)
+		var bank_offset := side * BAGHDAD_TIGRIS_HALF_WIDTH
 		var a_left := start + bank_offset
 		var a_right := start - bank_offset
 		var b_left := finish + bank_offset
 		var b_right := finish - bank_offset
 		_add_surface_quad(surface, Vector3(a_left.x, SEA_LEVEL + 0.28, a_left.y), Vector3(a_right.x, SEA_LEVEL + 0.28, a_right.y), Vector3(b_left.x, SEA_LEVEL + 0.28, b_left.y), Vector3(b_right.x, SEA_LEVEL + 0.28, b_right.y))
+		for side_sign in [-1.0, 1.0]:
+			var inner_a := start + side * (BAGHDAD_TIGRIS_HALF_WIDTH - 0.12) * float(side_sign)
+			var outer_a := start + side * (BAGHDAD_TIGRIS_HALF_WIDTH + 0.18) * float(side_sign)
+			var inner_b := finish + side * (BAGHDAD_TIGRIS_HALF_WIDTH - 0.12) * float(side_sign)
+			var outer_b := finish + side * (BAGHDAD_TIGRIS_HALF_WIDTH + 0.18) * float(side_sign)
+			_add_surface_quad(foam_surface,
+				Vector3(inner_a.x, SEA_LEVEL + 0.33, inner_a.y),
+				Vector3(outer_a.x, SEA_LEVEL + 0.33, outer_a.y),
+				Vector3(inner_b.x, SEA_LEVEL + 0.33, inner_b.y),
+				Vector3(outer_b.x, SEA_LEVEL + 0.33, outer_b.y))
 	surface.generate_normals()
+	foam_surface.generate_normals()
 	var river := MeshInstance3D.new()
 	river.name = "BaghdadTigrisRiver"
 	var river_mesh := _commit_surface_tool_if_valid(surface)
@@ -813,7 +851,17 @@ func _build_baghdad_tigris_surface() -> void:
 	river.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	river.set_meta("system_geography_source", "OpenStreetMap way 24709603")
 	river.set_meta("system_geography_name", "Tigris River")
+	river.set_meta("system_water_shader", "world_space_animated_ripples")
 	add_child(river)
+	var foam_mesh := _commit_surface_tool_if_valid(foam_surface)
+	if foam_mesh != null:
+		var foam := MeshInstance3D.new()
+		foam.name = "BaghdadTigrisBankFoam"
+		foam.mesh = foam_mesh
+		foam.material_override = foam_material
+		foam.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		foam.set_meta("system_water_edge_detail", "soft_bank_foam")
+		add_child(foam)
 
 
 func _build_baghdad_republic_bridge() -> void:
