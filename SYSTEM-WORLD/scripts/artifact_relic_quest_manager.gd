@@ -159,6 +159,29 @@ func confirm_verified_skill_reward(relic_id: String, quest_id: String, skill_id:
 	quest_message.emit("أكد الخادم استحقاق المهارة النادرة: " + String(definition.skill_name))
 	return {"ok": true, "completed": true, "skill_id": skill_id, "skill_name": definition.skill_name, "skill_rarity": definition.skill_rarity}
 
+## Reconciles the local story journal from a fresh Firebase callable receipt snapshot.
+## This updates presentation only; the backend remains the ownership and reward authority.
+func apply_server_skill_receipts(receipts: Array) -> void:
+	for raw_receipt in receipts:
+		if not raw_receipt is Dictionary:
+			continue
+		var receipt: Dictionary = raw_receipt
+		var quest_id := str(receipt.get("questId", ""))
+		var skill_id := str(receipt.get("skillId", ""))
+		var relic_id := str(receipt.get("sourceArtifactId", ""))
+		if not RELIC_QUESTS.has(relic_id):
+			continue
+		var definition: Dictionary = RELIC_QUESTS[relic_id]
+		if str(definition.quest_id) != quest_id or str(definition.skill_id) != skill_id:
+			continue
+		if bool(definition.return_relic) != bool(receipt.get("relicReturned", false)):
+			continue
+		_completed_rewards[quest_id] = true
+		if _quest_states.get(relic_id, "") != QUEST_STATE_COMPLETED:
+			_quest_states[relic_id] = QUEST_STATE_COMPLETED
+			quest_state_changed.emit(quest_id, QUEST_STATE_COMPLETED)
+
+
 func get_relic_quest_state(relic_id: String) -> String:
 	return String(_quest_states.get(relic_id, "not_discovered"))
 
