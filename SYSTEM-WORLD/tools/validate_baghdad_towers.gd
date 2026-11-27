@@ -832,6 +832,7 @@ func _run_validation() -> void:
 	await process_frame
 
 	print("Baghdad tower validation passed: verified Republic Bridge and Tigris runtime geometry, five towers on both riverbanks/bridge, upper sky city, standalone Power Tower, Hunter rooftop helicopter controller, internal/external ads, tunnel anchor, five Baghdad tower lobby kiosks plus one separate Power Tower kiosk and Shopping Tower facilities, mysterious antiques market with Babylon and Assyrian relic quests, rare skill permits, three-session mastery and aegis damage mitigation.")
+	quit(0)
 
 
 func _fail(message: String) -> void:
