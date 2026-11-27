@@ -271,6 +271,7 @@ var marketplace_results_container: VBoxContainer
 var marketplace_price_input: SpinBox
 var selected_market_artifact_id := ""
 var selected_market_auction_id := ""
+var current_secret_trader_id := ""
 
 
 func setup(p_player: CharacterBody3D, p_progression: Node, p_society: Node, p_power_manager: Node, p_player_health: Node, p_region_manager: Node) -> void:
@@ -5045,6 +5046,7 @@ func open_museum_artifact_exhibit(target: Node) -> void:
 	_clear_dynamic_controls()
 	var artifact_id := str(target.get_meta("system_artifact_id", ""))
 	var floor_number := int(target.get_meta("system_tower_floor_number", 0))
+	current_secret_trader_id = str(target.get_meta("system_secret_trader_id", ""))
 	var display_role := str(target.get_meta("system_artifact_display_role", "museum_exhibit"))
 	title_label.text = "سوق التحف والآثار بين اللاعبين" if display_role == "player_market_prototype" else "سجل القطعة الأثرية"
 
@@ -5241,6 +5243,8 @@ func _render_secret_trader_offers(raw_offers: Variant) -> void:
 		return
 	for raw in raw_offers:
 		if not raw is Dictionary:
+			continue
+		if not current_secret_trader_id.is_empty() and str(raw.get("traderId", "")) != current_secret_trader_id:
 			continue
 		var offer_id := str(raw.get("offerId", ""))
 		if offer_id.is_empty():
