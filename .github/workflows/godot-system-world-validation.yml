@@ -73,6 +73,20 @@ jobs:
           fi
           grep -q "Dense city life validation passed:" "$LOG"
 
+      - name: Validate 50,000 Baghdad resident seeding and save-load scale
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          LOG="$RUNNER_TEMP/dense-city-population-scale.log"
+          "$GODOT" --headless --path "$PROJECT" --script res://tools/validate_dense_city_population_scale.gd 2>&1 | tee "$LOG"
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|50,000 resident scale validation failed" "$LOG"; then
+            echo "::error::50,000 resident population scale validation failed."
+            exit 1
+          fi
+          grep -q "50,000 resident scale validation passed:" "$LOG"
+
       - name: Validate city street advertising and map campaign integration
         shell: bash
         run: |
