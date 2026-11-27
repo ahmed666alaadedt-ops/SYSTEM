@@ -105,7 +105,7 @@ func _make_palm_mesh() -> ArrayMesh:
 	return surface.commit()
 
 func build_cell(parent: Node3D, cell: Vector2i, landuse_features: Array,
-		water_features: Array, terrain_height: Callable) -> Dictionary:
+		water_features: Array, terrain_height: Callable, road_features: Array = [], cell_size: float = 200.0) -> Dictionary:
 	var seed_text := "baghdad_vegetation_%d_%d" % [cell.x, cell.y]
 	rng.seed = absi(hash(seed_text))
 	var batches: Dictionary = {
@@ -131,6 +131,45 @@ func build_cell(parent: Node3D, cell: Vector2i, landuse_features: Array,
 				var y := float(terrain_height.call(point)) + _plant_lift(category)
 				batches[category].append(_plant_transform(category, point, y))
 				generated_total += 1
+	var roadside_count := 0
+	var cell_min := Vector2(float(cell.x) * cell_size, float(cell.y) * cell_size)
+	var cell_max := cell_min + Vector2.ONE * cell_size
+	for feature in road_features:
+		if generated_total >= MAX_PLANTS_PER_CELL:
+			break
+		var tags: Dictionary = feature.get("tags", {})
+		var highway := str(tags.get("highway", "")).to_lower()
+		if highway not in ["residential", "tertiary", "tertiary_link", "secondary", "living_street", "service", "pedestrian", "unclassified"]:
+			continue
+		for line in _lines(feature.get("geometry", {})):
+			if line.size() < 2:
+				continue
+			for segment_index in range(line.size() - 1):
+				if generated_total >= MAX_PLANTS_PER_CELL:
+					break
+				var start: Vector2 = line[segment_index]
+				var finish: Vector2 = line[segment_index + 1]
+				var direction := finish - start
+				var length := direction.length()
+				if length < 8.0:
+					continue
+				var side := Vector2(-direction.y, direction.x).normalized() * 6.0
+				var spacing := rng.randf_range(20.0, 28.0)
+				var distance := rng.randf_range(8.0, 16.0)
+				while distance < length and generated_total < MAX_PLANTS_PER_CELL:
+					var center_point := start.lerp(finish, distance / length)
+					for sign_value in [-1.0, 1.0]:
+						var point := center_point + side * sign_value
+						if point.x < cell_min.x or point.y < cell_min.y or point.x >= cell_max.x or point.y >= cell_max.y:
+							continue
+						var category := _roll_street_category()
+					var y := float(terrain_height.call(point)) + _plant_lift(category)
+					batches[category].append(_plant_transform(category, point, y))
+					generated_total += 1
+					roadside_count += 1
+						if generated_total >= MAX_PLANTS_PER_CELL:
+							break
+					distance += spacing
 	var aquatic_area := 0.0
 	for feature in water_features:
 		for ring in _rings(feature.get("geometry", {})):
@@ -160,6 +199,7 @@ func build_cell(parent: Node3D, cell: Vector2i, landuse_features: Array,
 		"total": total,
 		"green_area_m2": eligible_area,
 		"water_area_m2": aquatic_area,
+		"roadside_count": roadside_count,
 		"counts": counts,
 		"target_density_per_km2": TARGET_DENSITY_PER_M2 * 1000000.0
 	}
@@ -171,6 +211,40 @@ func _is_green_landuse(tags: Dictionary) -> bool:
 	return landuse in ["grass", "forest", "orchard", "meadow", "allotments", "flowerbed", "village_green"] \
 		or leisure in ["park", "garden", "nature_reserve", "recreation_ground"] \
 		or natural in ["wood", "scrub", "grassland", "heath"]
+
+func _roll_street_category() -> String:
+	var roll := rng.randi_range(0, 99)
+	if roll < 50:
+		return "large_trees"
+	if roll < 70:
+		return "palms"
+	return "shrubs"
+
+
+func _lines(geometry: Dictionary) -> Array[PackedVector2Array]:
+	var result: Array[PackedVector2Array] = []
+	var geometry_type := str(geometry.get("type", ""))
+	if geometry_type == "GeometryCollection":
+		for child in geometry.get("geometries", []):
+			result.append_array(_lines(child))
+		return result
+	var coordinates: Variant = geometry.get("coordinates", [])
+	var line_values: Array = []
+	if geometry_type == "LineString":
+		line_values.append(coordinates)
+	elif geometry_type == "MultiLineString":
+		line_values = coordinates
+	else:
+		return result
+	for line in line_values:
+		var points := PackedVector2Array()
+		for coordinate in line:
+			if coordinate is Array and coordinate.size() >= 2:
+				points.append(Vector2(float(coordinate[0]), float(coordinate[1])))
+		if points.size() >= 2:
+			result.append(points)
+	return result
+
 
 func _roll_land_category() -> String:
 	var roll := rng.randi_range(0, 89)
