@@ -11,6 +11,7 @@ var is_blocking := false
 var attack_damage := 34.0
 var heavy_damage := 90.0
 var attack_range := 65.0
+var active_skill_damage_multiplier := 1.0
 
 
 func bind_actor(player: CharacterBody3D, combat_camera: Camera3D, player_progression: Node = null) -> void:
@@ -76,6 +77,42 @@ func skill_two() -> Dictionary:
 
 
 
+func activate_system_skill(skill_id: String) -> Dictionary:
+	if not can_attack or not is_instance_valid(actor):
+		return {"success": false, "reason": "COMBAT_BUSY"}
+	var progression_node := _get_progression()
+	if progression_node == null or not progression_node.has_method("record_system_skill_use"):
+		return {"success": false, "reason": "SKILL_PROGRESSION_UNAVAILABLE"}
+	var result: Dictionary = progression_node.call("record_system_skill_use", skill_id)
+	if not bool(result.get("success", false)):
+		return result
+	match skill_id:
+		"ancient_lightning":
+			can_attack = false
+			_consume_weapon_durability(0.4)
+			_fire_hitscan(heavy_damage * 2.0 + _get_progression_damage_bonus(), attack_range * 1.55)
+			get_tree().create_timer(0.7).timeout.connect(func(): can_attack = true)
+		"shadow_cloak":
+			actor.set_meta("system_shadow_cloak_active", true)
+			actor.global_position += (-actor.global_transform.basis.z).normalized() * 4.5
+			get_tree().create_timer(5.0).timeout.connect(func():
+				if is_instance_valid(actor):
+					actor.set_meta("system_shadow_cloak_active", false)
+			)
+		"titan_embodiment":
+			actor.set_meta("system_titan_embodiment_active", true)
+			active_skill_damage_multiplier = 1.8
+			get_tree().create_timer(8.0).timeout.connect(func():
+				active_skill_damage_multiplier = 1.0
+				if is_instance_valid(actor):
+					actor.set_meta("system_titan_embodiment_active", false)
+			)
+		_:
+			return {"success": false, "reason": "UNSUPPORTED_SYSTEM_SKILL"}
+	result["activated"] = true
+	return result
+
+
 func _get_progression() -> Node:
 	if is_instance_valid(progression):
 		return progression
@@ -123,8 +160,9 @@ func _fire_hitscan(damage: float, distance: float) -> void:
 		_spawn_hit_flash(result.get("position",origin))
 		return
 	if target != null and target.has_method("take_damage"):
-		target.call("take_damage",damage,actor)
-		attack_performed.emit(damage,target)
+		var final_damage := damage * active_skill_damage_multiplier
+		target.call("take_damage", final_damage, actor)
+		attack_performed.emit(final_damage,target)
 		_spawn_hit_flash(result.get("position",origin))
 
 
