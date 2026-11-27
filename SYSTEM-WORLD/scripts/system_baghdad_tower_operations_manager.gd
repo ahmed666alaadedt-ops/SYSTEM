@@ -5246,12 +5246,13 @@ func _render_secret_trader_offers(raw_offers: Variant) -> void:
 		if offer_id.is_empty():
 			continue
 		var line := Label.new()
-		line.text = "%s | %s | %s | %d SYSTEM | الأصالة: %s" % [
+		line.text = "%s | %s | %s | %d SYSTEM | الأصالة: %s | البائع: %s" % [
 			str(raw.get("name", "تحفة نادرة")),
 			str(raw.get("civilization", "")),
 			str(raw.get("rarity", "")),
 			int(raw.get("price", 0)),
-			str(raw.get("authenticity", "unverified"))
+			str(raw.get("authenticity", "unverified")),
+			str(raw.get("sellerName", "تاجر سري"))
 		]
 		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		marketplace_results_container.add_child(line)
