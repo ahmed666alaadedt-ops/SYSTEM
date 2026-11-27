@@ -13,6 +13,7 @@ signal flight_vertical_changed(value: float)
 signal attack_pressed
 signal skill_one_pressed
 signal skill_two_pressed
+signal relic_echo_pressed
 signal dodge_pressed
 
 
@@ -28,6 +29,7 @@ class TouchOverlay extends Control:
 	signal attack_pressed
 	signal skill_one_pressed
 	signal skill_two_pressed
+	signal relic_echo_pressed
 	signal dodge_pressed
 
 	var joystick_touch := -1
@@ -43,6 +45,7 @@ class TouchOverlay extends Control:
 
 	var skill_one_center := Vector2.ZERO
 	var skill_two_center := Vector2.ZERO
+	var relic_echo_center := Vector2.ZERO
 	var skill_radius := 43.0
 
 	var dodge_center := Vector2.ZERO
@@ -111,6 +114,7 @@ class TouchOverlay extends Control:
 			size.x - 115.0 * ui_scale,
 			size.y - 285.0 * ui_scale
 		)
+		relic_echo_center = Vector2(115.0 * ui_scale, size.y - 265.0 * ui_scale)
 
 		dodge_radius = 40.0 * ui_scale
 		dodge_center = Vector2(
@@ -189,6 +193,9 @@ class TouchOverlay extends Control:
 			"SKILL",
 			"magic"
 		)
+
+		# Rare relic skill control.
+		_draw_action_button(relic_echo_center, skill_radius, Color(0.12, 0.72, 0.82), "ECHO", "magic")
 
 		# Dodge and jump.
 		_draw_action_button(
@@ -482,6 +489,10 @@ class TouchOverlay extends Control:
 			interact_pressed.emit()
 			return
 
+		if p.distance_to(relic_echo_center) <= skill_radius * 1.4:
+			relic_echo_pressed.emit()
+			return
+
 		if p.distance_to(flight_up_center) <= flight_button_radius * 1.45:
 			if flight_touch == -1:
 				flight_touch = event.index
@@ -573,6 +584,7 @@ func _ready() -> void:
 	screen_control.attack_pressed.connect(_on_attack_pressed)
 	screen_control.skill_one_pressed.connect(_on_skill_one_pressed)
 	screen_control.skill_two_pressed.connect(_on_skill_two_pressed)
+	screen_control.relic_echo_pressed.connect(_on_relic_echo_pressed)
 	screen_control.dodge_pressed.connect(_on_dodge_pressed)
 
 
@@ -610,6 +622,10 @@ func _on_skill_one_pressed() -> void:
 
 func _on_skill_two_pressed() -> void:
 	skill_two_pressed.emit()
+
+
+func _on_relic_echo_pressed() -> void:
+	relic_echo_pressed.emit()
 
 
 func _on_dodge_pressed() -> void:
