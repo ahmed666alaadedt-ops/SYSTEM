@@ -652,6 +652,7 @@ func _build_rural_access_roads() -> void:
 		if committed_rural_road_mesh == null:
 			return
 		road_mesh.mesh = committed_rural_road_mesh
+		road_mesh.material_override = road_material
 		road_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(road_mesh)
 		var line_mesh := MeshInstance3D.new()
@@ -854,6 +855,7 @@ func _build_access_road(start: Vector3, finish: Vector3, road_name: String, half
 	if committed_access_road == null:
 		return
 	road_mesh.mesh = committed_access_road
+	road_mesh.material_override = road_material
 	road_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(road_mesh)
 	var edge_mesh := MeshInstance3D.new()
