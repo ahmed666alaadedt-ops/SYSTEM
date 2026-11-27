@@ -2070,3 +2070,13 @@ Feature HEAD at audit update: `f2522b6a3cf603e3aa13ee1bd17ee0ee9e7fba99`.
 - [x] Kept the 1 km citywide regional overview on extrusion-only LOD; it does not receive the close-range window geometry. Mosques and churches retain their specialized dome/minaret/cross silhouettes instead of generic window grids.
 - [ ] Synthetic facade validation must pass on the exact current PR head, including a five-floor apartment MultiMesh and an assertion that the 1 km overview remains extrusion-only.
 - [ ] This is a procedural facade-detail layer, not a claim that all Baghdad buildings have final bespoke architectural art, verified doors, interiors or photogrammetry.
+
+
+## Republic Bridge physical-detail pass — 27 November 2026
+
+- [x] Refined the surveyed Republic Bridge guardrails into slimmer continuous barriers and handrails, with guardrail posts instanced along the verified OSM bridge polygon.
+- [x] Added dashed yellow centerline markings, white lane separators and transverse expansion joints along both surveyed OSM centerlines.
+- [x] Added instanced metallic light poles and warm emissive lamp heads at regular intervals along both bridge approaches.
+- [x] All procedural bridge marking surfaces use the validated non-empty SurfaceTool commit helper; repeated posts and lamps use MultiMesh to limit draw calls.
+- [ ] Exact-HEAD Godot tower validation must prove the road markings, expansion joints, guardrail posts, poles and matching lamp heads are present and valid.
+- [ ] Bridge support piers and real nighttime illumination still require a separate structural/geographic review; do not infer their positions from the deck polygon alone.
