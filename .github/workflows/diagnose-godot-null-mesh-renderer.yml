@@ -103,9 +103,10 @@ jobs:
         run: |
           python3 - <<'PY'
           import json
+          import os
           import re
           from pathlib import Path
-          root = Path("$RUNNER_TEMP")
+          root = Path(os.environ["RUNNER_TEMP"])
           report = {}
           for name in ("dummy-renderer", "opengl-renderer"):
               log_path = root / f"{name}.log"
