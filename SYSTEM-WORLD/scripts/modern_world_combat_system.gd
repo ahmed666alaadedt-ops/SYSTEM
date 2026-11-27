@@ -148,7 +148,7 @@ func apply_elemental_hitscan(source_actor: CharacterBody3D, damage: float, dista
 	if target == null or not target.has_method("take_damage"):
 		return {"success": false, "reason": "ELEMENTAL_TARGET_NOT_DAMAGEABLE"}
 	var applied_damage := minf(damage, 40.0)
-	if target.is_in_group("system_players") or target.is_in_group("system_bosses"):
+	if target.is_in_group("system_player") or target.is_in_group("system_players") or target.is_in_group("system_bosses"):
 		applied_damage *= 0.5
 	var accepted: Variant = target.call("take_damage", applied_damage, source_actor)
 	if accepted is bool and not accepted:
