@@ -2080,3 +2080,11 @@ Feature HEAD at audit update: `f2522b6a3cf603e3aa13ee1bd17ee0ee9e7fba99`.
 - [x] All procedural bridge marking surfaces use the validated non-empty SurfaceTool commit helper; repeated posts and lamps use MultiMesh to limit draw calls.
 - [ ] Exact-HEAD Godot tower validation must prove the road markings, expansion joints, guardrail posts, poles and matching lamp heads are present and valid.
 - [ ] Bridge support piers and real nighttime illumination still require a separate structural/geographic review; do not infer their positions from the deck polygon alone.
+
+
+## Tigris water-surface detail pass — 27 November 2026
+
+- [x] Replaced the flat Baghdad Tigris color with a world-space, time-driven water shader that produces subtle moving ripple bands and glints while retaining the verified OSM way 24709603 source.
+- [x] Added narrow soft-foam ribbons along both banks from the same surveyed river route; degenerate zero-length route segments are skipped before surface generation.
+- [x] Explicitly assign materials after guarded ArrayMesh construction so the new commit helper does not discard the shader/foam materials.
+- [ ] Exact-head Godot validation must confirm the shader material, TIME-driven code and bank-foam mesh are present; real-device visual review remains required for reflections, transparency, current direction and mobile GPU cost.
