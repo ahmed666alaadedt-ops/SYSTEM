@@ -1,6 +1,7 @@
 extends SceneTree
 
 const REGION_MANAGER_SCRIPT = preload("res://scripts/modern_world_region_manager.gd")
+const BAGHDAD_VEGETATION_BUILDER = preload("res://scripts/baghdad_vegetation_cell_builder.gd")
 
 
 func _initialize() -> void:
@@ -18,7 +19,9 @@ func _run_validation() -> void:
 	var forest_source := FileAccess.get_file_as_string("res://scripts/forest_manager.gd")
 	var daily_life_source := FileAccess.get_file_as_string("res://scripts/npc_daily_life_manager.gd")
 	var services_source := FileAccess.get_file_as_string("res://scripts/modern_city_services_manager.gd")
-	if region_source.is_empty() or population_source.is_empty() or forest_source.is_empty() or daily_life_source.is_empty() or services_source.is_empty():
+	var vegetation_source := FileAccess.get_file_as_string("res://scripts/baghdad_vegetation_cell_builder.gd")
+	var baghdad_streamer_source := FileAccess.get_file_as_string("res://scripts/baghdad_osm_cell_streamer.gd")
+	if region_source.is_empty() or population_source.is_empty() or forest_source.is_empty() or daily_life_source.is_empty() or services_source.is_empty() or vegetation_source.is_empty() or baghdad_streamer_source.is_empty():
 		_fail("A required city-life source file could not be read.")
 		return
 	if not region_source.contains("for tree_index in range(5)") or not region_source.contains("for shrub_index in range(8)"):
@@ -27,6 +30,17 @@ func _run_validation() -> void:
 	if not region_source.contains("MultiMeshInstance3D") or not region_source.contains("_add_park_multimesh"):
 		_fail("Batched park vegetation renderer is missing.")
 		return
+	if not vegetation_source.contains("const TARGET_PLANT_COUNT := 1000000") or not vegetation_source.contains("TARGET_DENSITY_PER_M2") or not vegetation_source.contains("MAX_PLANTS_PER_CELL"):
+		_fail("The million-plant Baghdad density profile or per-cell safety cap is missing.")
+		return
+	for category in ["large_trees", "palms", "ornamental_fruit", "shrubs", "flowers_groundcover", "aquatic_riparian"]:
+		if not vegetation_source.contains('"'+category+'"'):
+			_fail("Missing Baghdad vegetation category: " + category)
+			return
+	if not baghdad_streamer_source.contains("vegetation_builder.build_cell") or not baghdad_streamer_source.contains("BaghdadVegetationCellBuilderScript.TARGET_PLANT_COUNT"):
+		_fail("Baghdad OSM cell loading is not connected to the vegetation streamer.")
+		return
+
 	if not population_source.contains("const MAX_VISIBLE_CIVILIANS := 72"):
 		_fail("Visible civilian cap is not the expected 72.")
 		return
@@ -70,5 +84,28 @@ func _run_validation() -> void:
 		_fail("MultiMesh batching helper did not preserve all three test instances.")
 		return
 
-	print("Dense city life validation passed: park_tree_slots_per_pocket=5 park_shrub_slots_per_pocket=8 visible_civilians=72 seeded_residents=42500 seeded_minors=7500 nearest_resident_heap=top_72 commercial_tenants=12 industrial_units=6 forest_trees=36 forest_shrubs=48 forest_grass=150 multimesh_instances=", batch.multimesh.instance_count)
+	var vegetation_builder = BAGHDAD_VEGETATION_BUILDER.new()
+	var vegetation_root := Node3D.new()
+	root.add_child(vegetation_root)
+	var park_feature := {
+		"tags": {"leisure": "park"},
+		"geometry": {"type": "Polygon", "coordinates": [[[0, 0], [200, 0], [200, 200], [0, 200], [0, 0]]]}
+	}
+	var water_feature := {
+		"tags": {"natural": "water"},
+		"geometry": {"type": "Polygon", "coordinates": [[[220, 0], [320, 0], [320, 100], [220, 100], [220, 0]]]}
+	}
+	var vegetation_stats: Dictionary = vegetation_builder.build_cell(
+		vegetation_root, Vector2i(0, 0), [park_feature], [water_feature],
+		Callable(self, "_zero_height")
+	)
+	if int(vegetation_stats.get("total", 0)) < 40 or int(vegetation_stats.get("counts", {}).get("aquatic_riparian", 0)) < 1:
+		_fail("OSM-grounded vegetation batching did not create the expected park and riparian instances.")
+		return
+	print("Dense city life validation passed: park_tree_slots_per_pocket=5 park_shrub_slots_per_pocket=8 visible_civilians=72 seeded_residents=42500 seeded_minors=7500 nearest_resident_heap=top_72 commercial_tenants=12 industrial_units=6 forest_trees=36 forest_shrubs=48 forest_grass=150 vegetation_target=", BAGHDAD_VEGETATION_BUILDER.TARGET_PLANT_COUNT, " vegetation_cell_instances=", vegetation_stats.total, " multimesh_instances=", batch.multimesh.instance_count)
+
 	quit(0)
+
+
+func _zero_height(_point: Vector2) -> float:
+	return 0.0
