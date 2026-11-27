@@ -9,10 +9,11 @@ const NPCHumanoidVisualScript = preload("res://scripts/npc_character_model.gd")
 const NPCThreatReceiverScript = preload("res://scripts/npc_threat_receiver.gd")
 
 const WORLD_ID := 2
-const MAX_VISIBLE_CIVILIANS := 32
+## Higher pedestrian density with a hard cap for mobile frame-time safety.
+const MAX_VISIBLE_CIVILIANS := 72
 const WALK_SPEED := 1.45
 const ARRIVAL_DISTANCE := 0.65
-const RESIDENT_REFRESH_SECONDS := 3.0
+const RESIDENT_REFRESH_SECONDS := 5.0
 const SERVICE_SPEED := 8.0
 
 var society: Node
@@ -53,7 +54,7 @@ func setup(p_society: Node, p_daily_life: Node, p_crime_manager: Node,
 			crime_manager.crime_case_opened.connect(callback)
 	_refresh_pedestrians()
 	set_process(true)
-	print("SYSTEM Pedestrians: visible civilian movement connected.")
+	print("SYSTEM Pedestrians: dense visible civilian movement connected; cap=", MAX_VISIBLE_CIVILIANS)
 
 func _create_materials() -> void:
 	for color in [Color(0.68, 0.49, 0.36), Color(0.82, 0.65, 0.51), Color(0.43, 0.29, 0.21)]:
