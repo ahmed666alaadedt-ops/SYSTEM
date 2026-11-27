@@ -87,7 +87,16 @@ const SYSTEM_SKILL_TREE := {
 	"sensory_mark": {"name": "وسم الإدراك", "category": "nen", "required_level": 25, "required_rank": "B", "prerequisites": ["pulse_dash"], "requires_nen": true, "required_nen_rank": 2, "requires_training_permit": true, "energy_cost": 20, "cooldown": 15.0, "effect": "تمييز حركة الخصم لفترة قصيرة"},
 	"flow_counter": {"name": "صد التدفق", "category": "nen", "required_level": 35, "required_rank": "A", "prerequisites": ["aura_shield", "focused_strike"], "requires_nen": true, "required_nen_rank": 3, "requires_training_permit": true, "energy_cost": 28, "cooldown": 22.0, "effect": "صد مضبوط يعقبه رد سريع"},
 	"resonance_burst": {"name": "انفجار الرنين", "category": "nen", "required_level": 50, "required_rank": "S", "prerequisites": ["sensory_mark", "flow_counter"], "requires_nen": true, "required_nen_rank": 4, "requires_training_permit": true, "energy_cost": 40, "cooldown": 35.0, "effect": "موجة هالة قصيرة المدى"},
-	"sovereign_focus": {"name": "تركيز السيادة", "category": "nen", "required_level": 80, "required_rank": "SS", "prerequisites": ["resonance_burst"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 60, "cooldown": 60.0, "effect": "تركيز نادر عالي الكلفة"}
+	"sovereign_focus": {"name": "تركيز السيادة", "category": "nen", "required_level": 80, "required_rank": "SS", "prerequisites": ["resonance_burst"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 60, "cooldown": 60.0, "effect": "تركيز نادر عالي الكلفة"},
+	"ancient_lightning": {"name": "صاعقة اللوح البابلي", "category": "nen", "rarity": "legendary", "required_level": 35, "required_rank": "A", "prerequisites": ["flow_counter"], "requires_nen": true, "required_nen_rank": 3, "requires_training_permit": true, "energy_cost": 34, "cooldown": 28.0, "effect": "إطلاق صاعقة مركزة من الهالة الأثرية"},
+	"shadow_cloak": {"name": "عباءة ظلال نينوى", "category": "nen", "rarity": "legendary", "required_level": 50, "required_rank": "S", "prerequisites": ["resonance_burst"], "requires_nen": true, "required_nen_rank": 4, "requires_training_permit": true, "energy_cost": 42, "cooldown": 38.0, "effect": "اندفاع ظلي قصير مع حماية مؤقتة"},
+	"titan_embodiment": {"name": "تجسيد الحارس العملاق", "category": "nen", "rarity": "mythic", "required_level": 80, "required_rank": "SS", "prerequisites": ["sovereign_focus"], "requires_nen": true, "required_nen_rank": 5, "requires_training_permit": true, "energy_cost": 58, "cooldown": 65.0, "effect": "تجسيد جسدي هائل يعزز الضرر ويخفض الضرر الوارد"}
+
+}
+const ARTIFACT_SKILL_PERMIT_BINDINGS := {
+	"ancient_lightning": "babylon_storm_tablet",
+	"shadow_cloak": "nineveh_shadow_seal",
+	"titan_embodiment": "assyrian_colossus_core"
 }
 const WEAPON_MASTERY_FAMILIES := ["sword", "spear", "axe", "bow", "shield", "modern_ranged"]
 
@@ -1073,6 +1082,24 @@ func check_skill_training_permit(skill_id: String) -> Dictionary:
 		if not learned_system_skills.has(str(prerequisite)):
 			return {"success": false, "reason": "SKILL_PREREQUISITE", "prerequisite": str(prerequisite)}
 	return {"success": true, "skill_id": key, "required_level": required_level, "required_rank": required_rank, "required_nen_rank": required_nen_rank}
+
+
+func grant_artifact_skill_training_permit(skill_id: String, artifact_id: String) -> Dictionary:
+	var key := skill_id.strip_edges().to_lower()
+	var required_artifact := str(ARTIFACT_SKILL_PERMIT_BINDINGS.get(key, ""))
+	if required_artifact.is_empty() or required_artifact != artifact_id.strip_edges():
+		return {"success": false, "reason": "ARTIFACT_DOES_NOT_AUTHORIZE_SKILL"}
+	if get_item_count(required_artifact) <= 0:
+		return {"success": false, "reason": "REQUIRED_ARTIFACT_NOT_OWNED"}
+	if not SYSTEM_SKILL_TREE.has(key) or not bool(SYSTEM_SKILL_TREE[key].get("requires_training_permit", false)):
+		return {"success": false, "reason": "SKILL_PERMIT_NOT_REQUIRED"}
+	if learned_system_skills.has(key):
+		return {"success": false, "reason": "SKILL_ALREADY_LEARNED"}
+	if authorized_system_skills.has(key):
+		return {"success": true, "skill_id": key, "authorized": true, "already_authorized": true}
+	authorized_system_skills.append(key)
+	save_progress()
+	return {"success": true, "skill_id": key, "authorized": true, "source_artifact": required_artifact}
 
 
 func grant_skill_training_permit(skill_id: String) -> Dictionary:
