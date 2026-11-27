@@ -470,6 +470,34 @@ jobs:
             exit 1
           }
 
+      - name: Diagnose null meshes in canonical Baghdad-enabled world and world switches
+        shell: bash
+        run: |
+          set -euo pipefail
+          GODOT="$RUNNER_TEMP/godot/Godot_v4.3-stable_linux.x86_64"
+          PROJECT="$GITHUB_WORKSPACE/SYSTEM-WORLD"
+          LOG="$RUNNER_TEMP/baghdad-null-mesh-diagnostic.log"
+          set +e
+          timeout 180s "$GODOT" --headless --path "$PROJECT" \
+            --script res://tools/diagnose_null_meshes.gd 2>&1 | tee "$LOG"
+          GODOT_STATUS=${PIPESTATUS[0]}
+          set -e
+          if [ "$GODOT_STATUS" -ne 0 ]; then
+            echo "::error::Canonical world mesh diagnostic found null mesh resources or failed to finish."
+            exit "$GODOT_STATUS"
+          fi
+          grep -E "SYSTEM MESH DIAGNOSTIC:|SYSTEM WORLD LOAD TEST:" "$LOG"
+          grep -q "SYSTEM MESH DIAGNOSTIC: .*null_mesh_instances=0 .*invalid_multimeshes=0" "$LOG" || {
+            echo "::error::Mesh diagnostic did not confirm zero null mesh resources."
+            exit 1
+          }
+          for world_id in 0 1 3 2; do
+            grep -q "SYSTEM WORLD LOAD TEST: world=$world_id initialized=true" "$LOG" || {
+              echo "::error::World $world_id did not pass lazy-load validation."
+              exit 1
+            }
+          done
+
       - name: Upload Baghdad OSM audit diagnostics, including failed reports
         if: always()
         uses: actions/upload-artifact@v4
