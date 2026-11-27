@@ -1248,6 +1248,10 @@ func activate_relic_skill(skill_id: String, actor: CharacterBody3D) -> Dictionar
 					system_skill_cooldowns.erase(key)
 					save_progress()
 					return {"success": false, "reason": "NO_VALID_HEAL_TARGET"}
+				var water_shield_expiry := Time.get_ticks_msec() + 6000
+				actor.set_meta("system_tideheart_shield_until_msec", water_shield_expiry)
+				actor.set_meta("system_tideheart_shield_reduction", 0.15)
+				_clear_elemental_guard_after(actor, "system_tideheart_shield_until_msec", "system_tideheart_shield_reduction", water_shield_expiry, 6.0)
 			"worldroot_earthguard":
 				var earthguard_expiry := Time.get_ticks_msec() + 8000
 				actor.set_meta("system_earthguard_until_msec", earthguard_expiry)
@@ -1291,8 +1295,8 @@ func activate_relic_skill(skill_id: String, actor: CharacterBody3D) -> Dictionar
 	return usage
 
 
-func _clear_elemental_guard_after(actor: CharacterBody3D, expiry_meta: String, reduction_meta: String, expected_expiry: int) -> void:
-	await get_tree().create_timer(8.0).timeout
+func _clear_elemental_guard_after(actor: CharacterBody3D, expiry_meta: String, reduction_meta: String, expected_expiry: int, duration: float = 8.0) -> void:
+	await get_tree().create_timer(duration).timeout
 	if not is_instance_valid(actor):
 		return
 	if int(actor.get_meta(expiry_meta, 0)) == expected_expiry:
