@@ -201,12 +201,58 @@ func _build_market() -> void:
 
 	_add_market_sign()
 	_add_market_gate()
+	_add_historical_relic_quest_altar()
 	_add_main_aisles()
 	_build_stalls()
 	_add_lighting()
 	set_meta("system_market_is_independent_of_five_towers", true)
 	set_meta("system_market_is_not_a_sixth_tower", true)
 	set_meta("system_market_uses_existing_antiques_marketplace_backend", true)
+
+
+func _add_historical_relic_quest_altar() -> void:
+	var pedestal := MeshInstance3D.new()
+	pedestal.name = "SealedHistoricalRelicPedestal"
+	var pedestal_mesh := CylinderMesh.new()
+	pedestal_mesh.top_radius = 1.5
+	pedestal_mesh.bottom_radius = 2.0
+	pedestal_mesh.height = 1.5
+	pedestal.mesh = pedestal_mesh
+	pedestal.position = Vector3(0.0, 1.0, 34.0)
+	pedestal.material_override = _brass_material
+	add_child(pedestal)
+	_add_box_collision(self, "SealedHistoricalRelicPedestalCollision", pedestal.position, Vector3(3.4, 1.5, 3.4))
+	var relic := MeshInstance3D.new()
+	relic.name = "SealedBabylonStarTablet"
+	var relic_mesh := BoxMesh.new()
+	relic_mesh.size = Vector3(1.0, 1.3, 0.35)
+	relic.mesh = relic_mesh
+	relic.position = Vector3(0.0, 2.35, 34.0)
+	relic.material_override = _wood_material
+	add_child(relic)
+	var label := Label3D.new()
+	label.name = "SealedHistoricalRelicLabel"
+	label.text = "لوح النجمة المختوم — أثر يوقظ مهارة نادرة"
+	label.font_size = 19
+	label.position = Vector3(0.0, 4.0, 34.0)
+	label.modulate = Color(0.76, 0.88, 1.0)
+	add_child(label)
+	var interaction := Area3D.new()
+	interaction.name = "HistoricalRelicQuestStart"
+	interaction.position = Vector3(0.0, 1.7, 37.0)
+	interaction.collision_layer = 1
+	interaction.collision_mask = 0
+	interaction.add_to_group("system_interactable")
+	interaction.set_meta("system_location_id", "mysterious_antiques_relic_quest")
+	interaction.set_meta("system_historical_relic_quest_start", true)
+	interaction.set_meta("system_interaction_prompt", "افحص لوح النجمة المختوم وابدأ مهمة أصداء بابل")
+	var shape_node := CollisionShape3D.new()
+	var sphere := SphereShape3D.new()
+	sphere.radius = 3.5
+	shape_node.shape = sphere
+	interaction.add_child(shape_node)
+	add_child(interaction)
+	interaction_count += 1
 
 
 func _add_market_sign() -> void:
