@@ -51,3 +51,12 @@ The game-server adapter must provide:
 - Firebase emulator tests exercise player request creation, rejection of client polling, server-only session creation, objective event recording, exact-site return validation, atomic reward issuance and replay protection.
 - Godot CI tests the local quest presentation and the three combat skill effects; these are not a substitute for authoritative server gameplay.
 - No production deployment, custom claim provisioning, or physical Android round-trip is performed by CI.
+
+## Artifact custody lock
+
+When the trusted server opens a quest session, the artifact is marked with
+`activeHistoricalQuestSessionId`. Player listings, auctions and exchanges reject
+an artifact carrying this lock. The final atomic reward transaction releases the
+lock only when it returns the relic to history or completes the retain-the-relic
+branch. This prevents the player from selling or trading the quest item while
+the historical mission is active.
