@@ -203,7 +203,7 @@ func _on_android_marketplace_result(request_id: String, payload: Dictionary) -> 
 		else:
 			_show_relic_request_message("سُجل طلب الإرجاع. ينتظر تحقق خادم اللعبة من الموقع؛ لم تتغير ملكية التحفة أو تُمنح المهارة بعد.")
 		return
-	if not raw_data is Dictionary or not raw_data.has("skills") or not raw_data.has("ownedArtifacts"):
+	if not raw_data is Dictionary or not raw_data.has("skills") or not raw_data.has("ownedArtifacts") or not raw_data.has("questSessions"):
 		return
 	if not bool(payload.get("success", false)):
 		push_warning("SYSTEM relic state refresh failed: " + str(payload.get("error", "unknown")))
@@ -218,6 +218,9 @@ func _on_android_marketplace_result(request_id: String, payload: Dictionary) -> 
 		player_progression.call("apply_server_verified_relic_skills", verified_skill_ids)
 	if artifact_relic_quest_manager != null and artifact_relic_quest_manager.has_method("apply_server_skill_receipts"):
 		artifact_relic_quest_manager.call("apply_server_skill_receipts", skill_rows)
+	var quest_sessions: Array = data.get("questSessions", [])
+	if artifact_relic_quest_manager != null and artifact_relic_quest_manager.has_method("apply_server_quest_sessions"):
+		artifact_relic_quest_manager.call("apply_server_quest_sessions", quest_sessions)
 	print("SYSTEM relic state refreshed from Firebase: skills=", verified_skill_ids.size(),
 		" owned_artifacts=", (data.get("ownedArtifacts", []) as Array).size(),
 		" market_listings=", (data.get("marketListings", []) as Array).size())
@@ -1314,9 +1317,9 @@ func _on_interaction_performed(
 			if not bool(objective_result.get("ok", false)):
 				interaction_prompt_label.text = str(objective_result.get("message", "تعذر تسجيل الهدف."))
 			elif bool(objective_result.get("all_objectives_complete", false)):
-				interaction_prompt_label.text = "اكتملت أهداف المهمة التاريخية. " + ("أعد التحفة إلى موقعها الأصلي." if bool(objective_result.get("return_required", false)) else "بانتظار تأكيد الخادم لمكافأة المهارة.")
+				interaction_prompt_label.text = "اكتمل الاستكشاف المحلي فقط. ينتظر هذا التقدم إثبات خادم اللعبة قبل الإرجاع أو المكافأة."
 			else:
-				interaction_prompt_label.text = "تم تسجيل الهدف التاريخي (%d/%d)." % [int(objective_result.get("completed_count", 0)), int(objective_result.get("required_count", 0))]
+				interaction_prompt_label.text = "تفاعل محلي مع هدف المهمة (%d/%d). لم يُعتمد بعد من خادم اللعبة." % [int(objective_result.get("completed_count", 0)), int(objective_result.get("required_count", 0))]
 			interaction_prompt_label.show()
 		return
 	if target.has_meta("system_relic_return_site") and artifact_relic_quest_manager != null:
