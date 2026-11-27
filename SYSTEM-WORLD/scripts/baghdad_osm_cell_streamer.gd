@@ -277,6 +277,7 @@ func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> in
 	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	instance.set_meta("osm_feature_id", feature_id)
 	instance.set_meta("baghdad_building_type", kind)
+	instance.set_meta("system_architecture_class", kind)
 	var amenity_kind := str(tags.get("amenity", "")).to_lower()
 	var facility_type := ""
 	if amenity_kind == "hospital" or str(tags.get("healthcare", "")).to_lower() in ["hospital", "clinic"]:
@@ -296,6 +297,7 @@ func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> in
 	instance.set_meta("system_display_name", _building_display_name(kind, tags))
 	instance.set_meta("system_building_height_m", height)
 	instance.set_meta("system_estimated_floors", maxi(1, int(ceil(height / 3.2))))
+	instance.set_meta("system_residential_luxury_class", kind in ["villa", "palace"])
 	instance.set_meta("system_access_state", "regional_exterior_lod_no_collision_or_interior")
 	parent.add_child(instance)
 	return 1
@@ -577,6 +579,10 @@ func _building_display_name(kind: String, tags: Dictionary) -> String:
 	match kind:
 		"detached_house":
 			return "منزل سكني"
+		"villa":
+			return "فيلا سكنية"
+		"palace":
+			return "قصر"
 		"apartment_block":
 			return "عمارة سكنية"
 		"commercial_building":
@@ -1026,8 +1032,10 @@ func _building_height(tags: Dictionary) -> float:
 	if levels > 0 and levels <= 60:
 		return float(levels) * 3.2
 	var kind := str(tags.get("building", "yes")).to_lower()
-	if kind in ["house", "detached", "semidetached_house", "bungalow", "terrace"]:
-		return 6.5
+	if kind in ["house", "detached", "semidetached_house", "bungalow", "terrace", "villa"]:
+		return 7.5
+	if kind in ["palace", "castle", "manor"]:
+		return 18.0
 	if kind in ["apartments", "residential", "dormitory"]:
 		return 16.0
 	if kind in ["commercial", "office", "retail"]:
@@ -1039,6 +1047,10 @@ func _building_kind(tags: Dictionary) -> String:
 	var kind := str(tags.get("building", "yes")).to_lower()
 	if kind in ["house", "detached", "semidetached_house", "bungalow", "terrace"]:
 		return "detached_house"
+	if kind in ["villa", "residential"] and (str(tags.get("building", "")).to_lower() == "villa" or str(tags.get("residential", "")).to_lower() == "villa"):
+		return "villa"
+	if kind in ["palace", "castle", "manor"]:
+		return "palace"
 	if kind in ["apartments", "residential", "dormitory"]:
 		return "apartment_block"
 	if kind in ["commercial", "office", "retail", "industrial"]:
@@ -1055,6 +1067,10 @@ func _building_material_for(kind: String) -> StandardMaterial3D:
 	match kind:
 		"detached_house":
 			material.albedo_color = Color(0.68, 0.55, 0.40)
+		"villa":
+			material.albedo_color = Color(0.78, 0.70, 0.55)
+		"palace":
+			material.albedo_color = Color(0.76, 0.67, 0.48)
 		"apartment_block":
 			material.albedo_color = Color(0.62, 0.63, 0.60)
 		"commercial_building":
