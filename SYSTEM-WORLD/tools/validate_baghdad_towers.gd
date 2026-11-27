@@ -73,6 +73,27 @@ func _run_validation() -> void:
 	if int(bridge_node.get_meta("system_bridge_polygon_points", 0)) < 20 or absf(float(bridge_node.get_meta("system_bridge_deck_height_m", 0.0)) - 18.0) > 0.1:
 		_fail("Republic Bridge runtime deck does not use the surveyed polygon and bank-aligned elevation.")
 		return
+	var bridge_centerline_markings := bridge_node.get_node_or_null("RepublicBridgeCenterlineMarkings") as MeshInstance3D
+	var bridge_lane_markings := bridge_node.get_node_or_null("RepublicBridgeLaneMarkings") as MeshInstance3D
+	var bridge_guardrail_posts := bridge_node.get_node_or_null("RepublicBridgeGuardrailPosts") as MultiMeshInstance3D
+	var bridge_light_poles := bridge_node.get_node_or_null("RepublicBridgeLightPoles") as MultiMeshInstance3D
+	var bridge_lamp_heads := bridge_node.get_node_or_null("RepublicBridgeLampHeads") as MultiMeshInstance3D
+	if bridge_centerline_markings == null or bridge_lane_markings == null:
+		_fail("Republic Bridge is missing the surveyed yellow centerline or white lane markings.")
+		return
+	if bridge_guardrail_posts == null or bridge_guardrail_posts.multimesh == null or bridge_guardrail_posts.multimesh.instance_count < 8:
+		_fail("Republic Bridge is missing its instanced guardrail safety posts.")
+		return
+	if bridge_light_poles == null or bridge_lamp_heads == null or bridge_light_poles.multimesh == null or bridge_lamp_heads.multimesh == null:
+		_fail("Republic Bridge is missing its instanced street-light poles or emissive lamp heads.")
+		return
+	if bridge_light_poles.multimesh.instance_count < 2 or bridge_lamp_heads.multimesh.instance_count != bridge_light_poles.multimesh.instance_count:
+		_fail("Republic Bridge street-light poles and lamp heads are incomplete or mismatched.")
+		return
+	var bridge_joints := bridge_node.get_node_or_null("RepublicBridgeExpansionJoints") as MeshInstance3D
+	if bridge_joints == null:
+		_fail("Republic Bridge is missing its transverse expansion-joint detail.")
+		return
 	var tigris := terrain.get_node_or_null("BaghdadTigrisRiver") as MeshInstance3D
 	if tigris == null or str(tigris.get_meta("system_geography_source", "")) != "OpenStreetMap way 24709603":
 		_fail("Tigris River surface is missing its verified OSM geometry source.")
