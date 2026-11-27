@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - feature/baghdad-five-plus-power-tower-20261122
+      - 'fix/**'
     paths:
       - ".github/workflows/verify-baghdad-osm-source.yml"
       - "SYSTEM-WORLD/data/geography/real_world_registry.json"
