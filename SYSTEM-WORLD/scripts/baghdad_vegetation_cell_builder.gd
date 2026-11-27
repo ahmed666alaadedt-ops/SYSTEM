@@ -163,10 +163,10 @@ func build_cell(parent: Node3D, cell: Vector2i, landuse_features: Array,
 						if point.x < cell_min.x or point.y < cell_min.y or point.x >= cell_max.x or point.y >= cell_max.y:
 							continue
 						var category := _roll_street_category()
-					var y := float(terrain_height.call(point)) + _plant_lift(category)
-					batches[category].append(_plant_transform(category, point, y))
-					generated_total += 1
-					roadside_count += 1
+						var y := float(terrain_height.call(point)) + _plant_lift(category)
+						batches[category].append(_plant_transform(category, point, y))
+						generated_total += 1
+						roadside_count += 1
 						if generated_total >= MAX_PLANTS_PER_CELL:
 							break
 					distance += spacing
