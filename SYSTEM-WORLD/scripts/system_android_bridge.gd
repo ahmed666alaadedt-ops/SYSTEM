@@ -35,7 +35,11 @@ const MARKETPLACE_OPERATIONS := [
     "create_exchange_offer",
     "accept_exchange_offer",
     "close_exchange_offer",
-    "refresh_relic_state"
+    "refresh_relic_state",
+    "browse_secret_antique_offers",
+    "purchase_secret_antique_offer",
+    "appraise_artifact_authenticity",
+    "antiques_reputation"
 ]
 
 var _pending_world_id := ""
