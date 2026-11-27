@@ -174,7 +174,7 @@ export const startHistoricalRelicQuestSession = onCall(async (request) => {
   const startRequestRef = db.collection("historicalRelicQuestStartRequests").doc(requestId);
   const sessionRef = db.collection("historicalRelicQuestSessions").doc(requestId);
 
-  await db.runTransaction(async (transaction) => {
+  const sessionResult = await db.runTransaction(async (transaction) => {
     const [player, artifact, startRequest, existingSession] = await Promise.all([
       transaction.get(playerRef),
       transaction.get(artifactRef),
@@ -218,7 +218,7 @@ export const startHistoricalRelicQuestSession = onCall(async (request) => {
       acceptedAt: FieldValue.serverTimestamp()
     });
   });
-  return { success: true, sessionId: sessionRef.id, questId, artifactId, requiredObjectives: quest.objectives };
+  return sessionResult;
 });
 
 /** Each objective event must originate from the trusted game server and belong to the active session. */
