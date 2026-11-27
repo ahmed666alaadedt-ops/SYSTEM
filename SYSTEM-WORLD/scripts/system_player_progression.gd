@@ -1266,56 +1266,6 @@ func activate_relic_skill(skill_id: String, actor: CharacterBody3D) -> Dictionar
 			_pending_elemental_requests.erase(request_id)
 			return {"success": false, "reason": "ELEMENTAL_AUTHORITY_REQUEST_FAILED"}
 		return {"success": true, "pending": true, "skill_id": key, "request_id": request_id, "reason": "WAITING_FOR_TRUSTED_COMBAT_SERVER"}
-		var usage: Dictionary = record_system_skill_use(key)
-		if not bool(usage.get("success", false)):
-			return usage
-		var applied := false
-		match key:
-			"primordial_flame_burst":
-				var combat := get_tree().root.find_child("ModernWorldCombatSystem", true, false)
-				if combat != null and combat.has_method("apply_elemental_hitscan"):
-					applied = bool(combat.call("apply_elemental_hitscan", actor, 26.0, 42.0, "fire").get("success", false))
-			"stormwind_aerial_step":
-				var forward := -actor.global_transform.basis.z
-				actor.velocity.y = maxf(actor.velocity.y, 5.5)
-				actor.set_meta("system_nen_air_dash_direction", Vector3(forward.x, 0.0, forward.z).normalized())
-				actor.set_meta("system_nen_air_dash_speed", 11.0)
-				actor.set_meta("system_nen_air_dash_until_msec", Time.get_ticks_msec() + 220)
-				applied = true
-				usage["movement_impulse"] = Vector3(forward.x * 11.0, 5.5, forward.z * 11.0)
-				usage["duration_seconds"] = 0.22
-			"tideheart_restoration":
-				var health := get_tree().root.find_child("PlayerCombatHealth", true, false)
-				if health != null and health.has_method("apply_field_healing"):
-					applied = bool(health.call("apply_field_healing", 22.0))
-				if not applied:
-					current_system_energy = minf(MAX_SYSTEM_ENERGY, current_system_energy + float(usage.get("energy_cost", 0)))
-					system_skill_cooldowns.erase(key)
-					save_progress()
-					return {"success": false, "reason": "NO_VALID_HEAL_TARGET"}
-				var water_shield_expiry := Time.get_ticks_msec() + 6000
-				actor.set_meta("system_tideheart_shield_until_msec", water_shield_expiry)
-				actor.set_meta("system_tideheart_shield_reduction", 0.15)
-				_clear_elemental_guard_after(actor, "system_tideheart_shield_until_msec", "system_tideheart_shield_reduction", water_shield_expiry, 6.0)
-			"worldroot_earthguard":
-				var earthguard_expiry := Time.get_ticks_msec() + 8000
-				actor.set_meta("system_earthguard_until_msec", earthguard_expiry)
-				actor.set_meta("system_earthguard_reduction", 0.30)
-				_clear_elemental_guard_after(actor, "system_earthguard_until_msec", "system_earthguard_reduction", earthguard_expiry)
-				applied = true
-			"stormlightning_arc":
-				var combat := get_tree().root.find_child("ModernWorldCombatSystem", true, false)
-				if combat != null and combat.has_method("apply_elemental_hitscan"):
-					applied = bool(combat.call("apply_elemental_hitscan", actor, 32.0, 48.0, "lightning").get("success", false))
-		if not applied:
-			current_system_energy = minf(MAX_SYSTEM_ENERGY, current_system_energy + float(usage.get("energy_cost", 0)))
-			system_skill_cooldowns.erase(key)
-			save_progress()
-			return {"success": false, "reason": "ELEMENTAL_EFFECT_TARGET_UNAVAILABLE", "elemental_skill": key}
-		usage["effect_applied"] = true
-		usage["element"] = str(SYSTEM_SKILL_TREE[key].get("element", ""))
-		usage["nen_control_rank"] = nen_control_rank
-		return usage
 	if key not in ["relic_echo_sight", "ashur_guardian_aegis"]:
 		return {"success": false, "reason": "NOT_AN_IMPLEMENTED_RELIC_SKILL"}
 
