@@ -44,6 +44,16 @@ Proposed floor plan:
 
 Every exhibit and market object must have a stable artifact ID, display metadata, a physical 3D exhibit, an interaction Area3D and tower/floor ownership metadata. NPC curators, archaeologists, restorers, guards, auctioneers, vendors and visitors populate the public spaces.
 
+## سوق التحف والآثار الغامضة — relic-bound historical quests
+
+- A sealed Babylonian star tablet is displayed at a dedicated in-world altar in the mysterious antiques market. It is separate from ordinary player listings and cannot be bought as a normal stock item.
+- Interacting with the tablet launches the Historical & Civilizations world and starts the first relic quest, **أصداء بابل**.
+- The first quest requires the player to decode the Star → River → Crown inscriptions in order, then recover the Babylonian Star Tablet from its sanctum. Incorrect order is rejected without advancing progress.
+- Completion unlocks a rare skill training permit for **عين صدى الأثر** (`relic_echo_sight`). The player must complete three distinct skill-practice sessions before the skill is learned; the skill is registered in the existing progression tree and save data.
+- The relic skill is intentionally rare and tied to its source artifact and historical quest, not sold as a routine shop skill. Additional relics may later open their own historical missions and distinct rare skills.
+- A return gate becomes usable after quest completion and returns the player to the market location.
+- Current scope is a procedural first historical quest and one relic skill unlock path. The rare skill's full in-world detection/ability effect, additional historical campaigns, multiplayer quest-state persistence, and server-authoritative reward issuance remain future integration work; local progression is not proof of online reward security.
+
 ## Player-to-player artifact economy
 
 The marketplace is for direct trading between authenticated SYSTEM WORLD players, not merely NPC shop purchases:
