@@ -15,6 +15,7 @@ var max_cell_x := 2
 var min_cell_z := -2
 var max_cell_z := 2
 var load_radius := 1
+var overview_mode := false
 var terrain_manager: Node
 var loaded_cells: Dictionary = {}
 var desired_cells: Dictionary = {}
@@ -201,7 +202,10 @@ func _load_cell(cell: Vector2i) -> void:
 		road_count += _build_line_feature(cell_root, feature, _road_width(feature.get("tags", {})), road_material, 0.16, "OSMRoad")
 	var building_count := 0
 	for feature in layers.get("buildings", []):
-		building_count += _build_building_feature(cell_root, feature, road_features)
+		if overview_mode:
+			building_count += _build_building_overview_feature(cell_root, feature)
+		else:
+			building_count += _build_building_feature(cell_root, feature, road_features)
 	counts["buildings"] = building_count
 	var water_count := 0
 	for feature in layers.get("waterways", []):
@@ -217,10 +221,14 @@ func _load_cell(cell: Vector2i) -> void:
 		_build_area_feature(cell_root, feature, water_material, 0.08, "OSMNaturalWater")
 	var amenity_count := 0
 	for feature in layers.get("amenities", []):
-		amenity_count += _build_amenity_feature(cell_root, feature)
+		if overview_mode:
+			amenity_count += _build_regional_poi_feature(cell_root, feature)
+		else:
+			amenity_count += _build_amenity_feature(cell_root, feature)
 	var entrance_count := 0
-	for feature in layers.get("entrances", []):
-		entrance_count += _build_entrance_feature(cell_root, feature)
+	if not overview_mode:
+		for feature in layers.get("entrances", []):
+			entrance_count += _build_entrance_feature(cell_root, feature)
 	counts["entrances"] = entrance_count
 	counts["roads"] = road_count
 	counts["waterways"] = water_count
@@ -230,6 +238,123 @@ func _load_cell(cell: Vector2i) -> void:
 	add_child(cell_root)
 	loaded_cells[cell] = cell_root
 
+
+
+
+func _build_building_overview_feature(parent: Node3D, feature: Dictionary) -> int:
+	var tags: Dictionary = feature.get("tags", {})
+	var geometry: Dictionary = feature.get("geometry", {})
+	var polygons := _extract_polygons(geometry)
+	if polygons.is_empty() or polygons[0].size() < 4:
+		return 0
+	var ring: Array = polygons[0]
+	var min_point := Vector2(INF, INF)
+	var max_point := Vector2(-INF, -INF)
+	for coordinate in ring:
+		if not coordinate is Array or coordinate.size() < 2:
+			continue
+		var point := Vector2(float(coordinate[0]), float(coordinate[1]))
+		min_point.x = minf(min_point.x, point.x)
+		min_point.y = minf(min_point.y, point.y)
+		max_point.x = maxf(max_point.x, point.x)
+		max_point.y = maxf(max_point.y, point.y)
+	if not min_point.is_finite() or not max_point.is_finite():
+		return 0
+	var footprint := max_point - min_point
+	if footprint.x < 1.2 or footprint.y < 1.2:
+		return 0
+	var center := (min_point + max_point) * 0.5
+	var height := _building_height(tags)
+	var kind := _building_kind(tags)
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(footprint.x, height, footprint.y)
+	var instance := MeshInstance3D.new()
+	var feature_id := str(feature.get("id", "unknown"))
+	instance.name = "OSMOverviewBuilding_%s" % feature_id
+	instance.mesh = mesh
+	instance.position = Vector3(center.x, _terrain_height(center) + height * 0.5, center.y)
+	instance.material_override = _building_material_for(kind)
+	instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	instance.set_meta("osm_feature_id", feature_id)
+	instance.set_meta("baghdad_building_type", kind)
+	instance.set_meta("system_display_name", _building_display_name(kind, tags))
+	instance.set_meta("system_building_height_m", height)
+	instance.set_meta("system_estimated_floors", maxi(1, int(ceil(height / 3.2))))
+	instance.set_meta("system_access_state", "regional_exterior_lod_no_collision_or_interior")
+	parent.add_child(instance)
+	return 1
+
+
+func _build_regional_poi_feature(parent: Node3D, feature: Dictionary) -> int:
+	var geometry: Dictionary = feature.get("geometry", {})
+	var geometry_type := str(geometry.get("type", ""))
+	var point := Vector2.ZERO
+	if geometry_type == "Point":
+		var coordinates: Array = geometry.get("coordinates", [])
+		if coordinates.size() < 2:
+			return 0
+		point = Vector2(float(coordinates[0]), float(coordinates[1]))
+	elif geometry_type in ["Polygon", "MultiPolygon"]:
+		var polygons := _extract_polygons(geometry)
+		if polygons.is_empty() or polygons[0].is_empty():
+			return 0
+		for coordinate in polygons[0]:
+			if coordinate is Array and coordinate.size() >= 2:
+				point += Vector2(float(coordinate[0]), float(coordinate[1]))
+		point /= float(polygons[0].size())
+	else:
+		return 0
+	var tags: Dictionary = feature.get("tags", {})
+	var amenity := str(tags.get("amenity", "")).to_lower()
+	var shop := str(tags.get("shop", "")).to_lower()
+	var healthcare := str(tags.get("healthcare", "")).to_lower()
+	var facility_type := "public_service"
+	var display_name := "مرفق خدمي"
+	if amenity in ["hospital", "clinic", "doctors", "pharmacy"] or healthcare != "":
+		facility_type = "healthcare"
+		display_name = "مرفق صحي"
+	elif amenity in ["police", "police_station"]:
+		facility_type = "police"
+		display_name = "مركز شرطة"
+	elif amenity == "place_of_worship" and str(tags.get("religion", "")).to_lower() == "muslim":
+		facility_type = "mosque"
+		display_name = "جامع أو مسجد"
+	elif shop != "":
+		facility_type = "shop"
+		display_name = "محل تجاري"
+	elif amenity in ["restaurant", "cafe", "fast_food", "food_court"]:
+		facility_type = "food"
+		display_name = "مطعم أو مقهى"
+	elif amenity in ["school", "university", "college", "kindergarten"]:
+		facility_type = "education"
+		display_name = "مؤسسة تعليمية"
+	elif amenity in ["fire_station", "post_office", "bank", "townhall", "library"]:
+		facility_type = "civic"
+		display_name = "مرفق عام"
+	var custom_name := str(tags.get("name:ar", tags.get("name", ""))).strip_edges()
+	if custom_name != "":
+		display_name = custom_name
+	var marker := Node3D.new()
+	var feature_id := str(feature.get("id", "unknown"))
+	marker.name = "OSMRegionalPOI_%s_%s" % [facility_type, feature_id]
+	marker.position = Vector3(point.x, _terrain_height(point) + 0.65, point.y)
+	marker.set_meta("osm_feature_id", feature_id)
+	marker.set_meta("system_facility_type", facility_type)
+	marker.set_meta("system_display_name", display_name)
+	marker.set_meta("system_access_state", "mapped_poi_marker_no_verified_interior")
+	marker.set_meta("osm_tags", tags)
+	var visual := MeshInstance3D.new()
+	visual.name = "POIMarker"
+	var marker_mesh := CylinderMesh.new()
+	marker_mesh.top_radius = 0.38
+	marker_mesh.bottom_radius = 0.58
+	marker_mesh.height = 1.3
+	visual.mesh = marker_mesh
+	visual.material_override = amenity_material
+	visual.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	marker.add_child(visual)
+	parent.add_child(marker)
+	return 1
 
 func _build_building_feature(parent: Node3D, feature: Dictionary, road_features: Array) -> int:
 	var built := 0
