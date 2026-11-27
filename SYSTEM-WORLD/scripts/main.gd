@@ -1633,6 +1633,7 @@ func create_mobile_controls() -> void:
 	mobile_controls.attack_pressed.connect(_on_mobile_attack_pressed)
 	mobile_controls.skill_one_pressed.connect(_on_mobile_skill_one_pressed)
 	mobile_controls.skill_two_pressed.connect(_on_mobile_skill_two_pressed)
+	mobile_controls.relic_echo_pressed.connect(_on_mobile_relic_echo_pressed)
 	mobile_controls.dodge_pressed.connect(_on_mobile_dodge_pressed)
 
 
@@ -1655,6 +1656,73 @@ func _on_mobile_skill_two_pressed() -> void:
 		return
 	if is_instance_valid(modern_world_combat_system):
 		modern_world_combat_system.call("skill_two")
+
+
+func _on_mobile_relic_echo_pressed() -> void:
+	if vehicle_runtime_manager != null and vehicle_runtime_manager.is_driving:
+		return
+	if player_progression == null or player == null:
+		return
+	var result: Dictionary = player_progression.call("record_system_skill_use", "relic_echo_sight")
+	if not bool(result.get("success", false)):
+		var reason := str(result.get("reason", "UNKNOWN"))
+		var message := "مهارة عين صدى الأثر غير متاحة."
+		if reason == "SKILL_NOT_LEARNED":
+			message = "تحتاج إكمال مهمة الأثر النادر والتدريب ثلاث مرات أولاً."
+		elif reason == "SKILL_COOLDOWN":
+			message = "عين صدى الأثر تحتاج إلى انتظار %.0f ثانية." % float(result.get("remaining_seconds", 0.0))
+		elif reason == "SYSTEM_ENERGY_LOW":
+			message = "طاقة النظام غير كافية لتفعيل عين صدى الأثر."
+		if interaction_prompt_label != null:
+			interaction_prompt_label.text = message
+			interaction_prompt_label.show()
+		return
+	var revealed := 0
+	for trace in get_tree().get_nodes_in_group("system_hidden_historical_trace"):
+		if not is_instance_valid(trace) or not (trace is Node3D):
+			continue
+		if player.global_position.distance_to((trace as Node3D).global_position) > 32.0:
+			continue
+		(trace as Node3D).visible = true
+		(trace as Node3D).set_meta("system_echo_revealed", true)
+		revealed += 1
+	_create_relic_echo_pulse()
+	if interaction_prompt_label != null:
+		interaction_prompt_label.text = "عين صدى الأثر كشفت %d أثراً خفياً قريباً لمدة 10 ثوانٍ." % revealed if revealed > 0 else "انطلقت موجة صدى الأثر، لكن لا توجد آثار مخفية قريبة."
+		interaction_prompt_label.show()
+	_hide_relic_echo_traces_after_delay()
+
+
+func _create_relic_echo_pulse() -> void:
+	var pulse := MeshInstance3D.new()
+	pulse.name = "RelicEchoSightPulse"
+	var ring := TorusMesh.new()
+	ring.inner_radius = 0.88
+	ring.outer_radius = 1.0
+	pulse.mesh = ring
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(0.18, 0.78, 1.0, 0.72)
+	material.emission_enabled = true
+	material.emission = Color(0.12, 0.68, 1.0)
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	pulse.material_override = material
+	pulse.rotation.x = PI * 0.5
+	pulse.position = Vector3(0.0, 0.15, 0.0)
+	player.add_child(pulse)
+	var tween := create_tween()
+	tween.tween_property(pulse, "scale", Vector3.ONE * 32.0, 1.15)
+	tween.parallel().tween_property(material, "albedo_color:a", 0.0, 1.15)
+	await get_tree().create_timer(1.25).timeout
+	if is_instance_valid(pulse):
+		pulse.queue_free()
+
+
+func _hide_relic_echo_traces_after_delay() -> void:
+	await get_tree().create_timer(10.0).timeout
+	for trace in get_tree().get_nodes_in_group("system_hidden_historical_trace"):
+		if is_instance_valid(trace) and trace is Node3D and bool((trace as Node3D).get_meta("system_echo_revealed", false)):
+			(trace as Node3D).visible = false
+			(trace as Node3D).set_meta("system_echo_revealed", false)
 
 
 func _on_mobile_dodge_pressed() -> void:
