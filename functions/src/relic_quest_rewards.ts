@@ -290,9 +290,14 @@ export const recordHistoricalRelicReturn = onCall(async (request) => {
     if (!quest.returnRequired || siteId !== quest.historicalSiteId) {
       throw new HttpsError("failed-precondition", "موقع إرجاع التحفة غير صحيح.");
     }
-    if (!returnRequestSnapshot.exists || returnRequestSnapshot.data()?.status !== "pending" ||
-        returnRequestSnapshot.data()?.playerId !== session.playerId) {
-      throw new HttpsError("failed-precondition", "لا يوجد طلب إرجاع معتمد من اللاعب لهذه الجلسة.");
+    const queuedReturn = returnRequestSnapshot.data();
+    if (!returnRequestSnapshot.exists || queuedReturn?.status !== "pending" ||
+        queuedReturn?.playerId !== session.playerId ||
+        queuedReturn?.sessionId !== sessionId ||
+        queuedReturn?.questId !== session.questId ||
+        queuedReturn?.artifactId !== session.artifactId ||
+        queuedReturn?.historicalSiteId !== siteId) {
+      throw new HttpsError("failed-precondition", "لا يوجد طلب إرجاع معتمد يطابق اللاعب والتحفة والموقع لهذه الجلسة.");
     }
     if (!quest.objectives.every((id) => session.completedObjectives?.[id] === true)) {
       throw new HttpsError("failed-precondition", "لم تثبت جميع أهداف المهمة من خادم اللعبة.");
