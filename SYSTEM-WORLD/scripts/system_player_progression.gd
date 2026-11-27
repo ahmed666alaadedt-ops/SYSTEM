@@ -1207,7 +1207,53 @@ func activate_relic_skill(skill_id: String, actor: CharacterBody3D) -> Dictionar
 		var elemental_check: Dictionary = can_use_system_skill(key)
 		if not bool(elemental_check.get("success", false)):
 			return elemental_check
-		return {"success": false, "reason": "ELEMENTAL_RELIC_EFFECT_RUNTIME_PENDING", "elemental_skill": key, "nen_control_rank": nen_control_rank}
+		if not authorized_system_skills.has(key):
+			return {"success": false, "reason": "SKILL_STUDY_PERMIT_REQUIRED"}
+		if int(system_skill_practice.get(key, 0)) < 3:
+			return {"success": false, "reason": "SKILL_PRACTICE_INCOMPLETE", "practice_count": int(system_skill_practice.get(key, 0))}
+		var usage: Dictionary = record_system_skill_use(key)
+		if not bool(usage.get("success", false)):
+			return usage
+		var applied := false
+		match key:
+			"primordial_flame_burst":
+				var combat := get_tree().root.find_child("ModernWorldCombatSystem", true, false)
+				if combat != null and combat.has_method("apply_elemental_hitscan"):
+					applied = bool(combat.call("apply_elemental_hitscan", actor, 26.0, 42.0, "fire").get("success", false))
+			"stormwind_aerial_step":
+				var forward := -actor.global_transform.basis.z
+				actor.velocity.x += forward.x * 11.0
+				actor.velocity.z += forward.z * 11.0
+				actor.velocity.y = maxf(actor.velocity.y, 5.5)
+				applied = true
+				usage["movement_impulse"] = Vector3(forward.x * 11.0, 5.5, forward.z * 11.0)
+			"tideheart_restoration":
+				var health := get_tree().root.find_child("PlayerCombatHealth", true, false)
+				if health != null and health.has_method("apply_field_healing"):
+					applied = bool(health.call("apply_field_healing", 22.0))
+				if not applied:
+					current_system_energy = minf(MAX_SYSTEM_ENERGY, current_system_energy + float(usage.get("energy_cost", 0)))
+					system_skill_cooldowns.erase(key)
+					save_progress()
+					return {"success": false, "reason": "NO_VALID_HEAL_TARGET"}
+			"worldroot_earthguard":
+				actor.set_meta("system_earthguard_until_msec", Time.get_ticks_msec() + 8000)
+				actor.set_meta("system_earthguard_reduction", 0.30)
+				_clear_elemental_guard_after(actor, "system_earthguard_until_msec", "system_earthguard_reduction", Time.get_ticks_msec() + 8000)
+				applied = true
+			"stormlightning_arc":
+				var combat := get_tree().root.find_child("ModernWorldCombatSystem", true, false)
+				if combat != null and combat.has_method("apply_elemental_hitscan"):
+					applied = bool(combat.call("apply_elemental_hitscan", actor, 32.0, 48.0, "lightning").get("success", false))
+		if not applied:
+			current_system_energy = minf(MAX_SYSTEM_ENERGY, current_system_energy + float(usage.get("energy_cost", 0)))
+			system_skill_cooldowns.erase(key)
+			save_progress()
+			return {"success": false, "reason": "ELEMENTAL_EFFECT_TARGET_UNAVAILABLE", "elemental_skill": key}
+		usage["effect_applied"] = true
+		usage["element"] = str(SYSTEM_SKILL_TREE[key].get("element", ""))
+		usage["nen_control_rank"] = nen_control_rank
+		return usage
 	if key not in ["relic_echo_sight", "ashur_guardian_aegis"]:
 		return {"success": false, "reason": "NOT_AN_IMPLEMENTED_RELIC_SKILL"}
 
@@ -1230,6 +1276,15 @@ func activate_relic_skill(skill_id: String, actor: CharacterBody3D) -> Dictionar
 			usage["revealed_trace_count"] = revealed_count
 			usage["effect_applied"] = true
 	return usage
+
+
+func _clear_elemental_guard_after(actor: CharacterBody3D, expiry_meta: String, reduction_meta: String, expected_expiry: int) -> void:
+	await get_tree().create_timer(8.0).timeout
+	if not is_instance_valid(actor):
+		return
+	if int(actor.get_meta(expiry_meta, 0)) == expected_expiry:
+		actor.remove_meta(expiry_meta)
+		actor.remove_meta(reduction_meta)
 
 
 func _clear_assyrian_aegis_after(actor: CharacterBody3D, expected_expiry: int) -> void:
