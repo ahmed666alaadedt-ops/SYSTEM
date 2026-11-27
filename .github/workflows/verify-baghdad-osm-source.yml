@@ -407,6 +407,63 @@ jobs:
               print("Verified citywide Baghdad road overview:", len(occupied), "occupied 1 km cells;", road_parts, "road fragments;", len(unique_ids), "unique OSM ways; four quadrants covered.")
           PY
 
+      - name: Build citywide Baghdad urban detail overview at 1 km streaming resolution
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/baghdad-source"
+          python3 "$GITHUB_WORKSPACE/SYSTEM-WORLD/tools/geospatial/build_baghdad_metric_cell_pack.py" \
+            --input-dir "$RUNNER_TEMP/baghdad-source/clipped_layers" \
+            --output "$RUNNER_TEMP/baghdad-source/baghdad-citywide-urban-1km.zip" \
+            --cell-size 1000 \
+            --layers buildings,waterways,bridges,landuse,amenities,railway,natural-water,entrances \
+            --bounds-geojson "$RUNNER_TEMP/baghdad-source/baghdad-boundary.geojson" \
+            --source-timestamp "$(python3 -c 'import json; print(json.load(open("baghdad-source-verification.json"))["snapshot_timestamp"])')"
+          python3 - <<'PY'
+          import json
+          import zipfile
+          from pathlib import Path
+
+          path = Path("baghdad-citywide-urban-1km.zip")
+          expected_layers = ["buildings", "waterways", "bridges", "landuse", "amenities", "railway", "natural-water", "entrances"]
+          totals = {key: 0 for key in expected_layers}
+          facility_types = {"hospital": 0, "police": 0, "mosque": 0, "shop": 0, "food": 0, "education": 0}
+          with zipfile.ZipFile(path) as archive:
+              manifest = json.loads(archive.read("manifest.json"))
+              names = [name for name in archive.namelist() if name.startswith("cells/") and name.endswith(".json")]
+              assert manifest["region_id"] == "iraq_baghdad_region"
+              assert manifest["coordinate_system"] == "SYSTEM_LOCAL_ECEF_TANGENT"
+              assert manifest["cell_size_m"] == 1000.0
+              assert manifest["layers_included"] == expected_layers
+              assert len(names) == manifest["cell_count"] and len(names) >= 100
+              for name in names:
+                  tile = json.loads(archive.read(name))
+                  layers = tile.get("layers", {})
+                  for layer in expected_layers:
+                      totals[layer] += len(layers.get(layer, []))
+                  for item in layers.get("amenities", []):
+                      tags = item.get("tags", {})
+                      amenity = str(tags.get("amenity", "")).lower()
+                      shop = str(tags.get("shop", "")).lower()
+                      if amenity == "hospital" or tags.get("healthcare"):
+                          facility_types["hospital"] += 1
+                      if amenity in ("police", "police_station"):
+                          facility_types["police"] += 1
+                      if amenity == "place_of_worship" and str(tags.get("religion", "")).lower() == "muslim":
+                          facility_types["mosque"] += 1
+                      if shop:
+                          facility_types["shop"] += 1
+                      if amenity in ("restaurant", "cafe", "fast_food", "food_court"):
+                          facility_types["food"] += 1
+                      if amenity in ("school", "university", "college", "kindergarten"):
+                          facility_types["education"] += 1
+          assert totals["buildings"] >= 1000, f"Too few mapped Baghdad building footprints: {totals['buildings']}"
+          assert totals["amenities"] >= 10, f"Too few mapped public/commercial POIs: {totals['amenities']}"
+          print("Verified citywide Baghdad urban overview:", len(names), "occupied 1 km cells")
+          print("Urban feature totals:", json.dumps(totals, ensure_ascii=False, sort_keys=True))
+          print("Classified facilities:", json.dumps(facility_types, ensure_ascii=False, sort_keys=True))
+          PY
+
       - name: Add attribution and source notes
         shell: bash
         run: |
@@ -436,6 +493,7 @@ jobs:
             ${{ runner.temp }}/baghdad-source/clipped_layers/*.geojson
             ${{ runner.temp }}/baghdad-source/baghdad-metric-cell-pack-bridge-extended.zip
             ${{ runner.temp }}/baghdad-source/baghdad-citywide-roads-1km.zip
+            ${{ runner.temp }}/baghdad-source/baghdad-citywide-urban-1km.zip
             ${{ runner.temp }}/baghdad-source/ATTRIBUTION.txt
             ${{ runner.temp }}/baghdad-source/iraq.osm.pbf.sha256
           if-no-files-found: error
