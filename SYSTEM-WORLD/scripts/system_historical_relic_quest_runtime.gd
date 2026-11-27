@@ -131,7 +131,7 @@ func _complete_quest() -> Dictionary:
 		objective_index -= 1
 		return {"handled": true, "success": false, "message": "تعذر ربط مكافأة المهارة بالتقدم. لم تُستهلك القطعة."}
 	var reward: Dictionary = progression.call("grant_skill_training_permit", RARE_SKILL_ID)
-	if not bool(reward.get("success", false)) and not str(reward.get("reason", "")) in ["SKILL_PERMIT_ALREADY_OWNED", "SKILL_ALREADY_LEARNED"]:
+	if not bool(reward.get("success", false)) and not (str(reward.get("reason", "")) in ["SKILL_PERMIT_ALREADY_OWNED", "SKILL_ALREADY_LEARNED"]):
 		objective_index -= 1
 		return {"handled": true, "success": false, "message": "الأثر استُعيد، لكن تصريح المهارة لم يُمنح: " + str(reward.get("reason", "UNKNOWN"))}
 	completed = true
