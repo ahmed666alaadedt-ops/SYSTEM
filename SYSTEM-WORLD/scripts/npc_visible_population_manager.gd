@@ -54,7 +54,7 @@ func setup(p_society: Node, p_daily_life: Node, p_crime_manager: Node,
 			crime_manager.crime_case_opened.connect(callback)
 	_refresh_pedestrians()
 	set_process(true)
-	print("SYSTEM Pedestrians: dense visible civilian movement connected; cap=", MAX_VISIBLE_CIVILIANS)
+	print("SYSTEM Pedestrians: nearest-resident streaming connected; visible cap=", MAX_VISIBLE_CIVILIANS)
 
 func _create_materials() -> void:
 	for color in [Color(0.68, 0.49, 0.36), Color(0.82, 0.65, 0.51), Color(0.43, 0.29, 0.21)]:
@@ -97,24 +97,36 @@ func _refresh_pedestrians() -> void:
 	if not is_instance_valid(society):
 		return
 	var living: Array = society.call("get_living_npcs", WORLD_ID)
-	var visible_ids: Dictionary = {}
-	var added := 0
+	var player := get_parent().get_node_or_null("Player") as Node3D
+	var reference_position := to_local(player.global_position) if is_instance_valid(player) else Vector3.ZERO
+	var candidates: Array[Dictionary] = []
 	for raw_npc in living:
-		if added >= MAX_VISIBLE_CIVILIANS:
-			break
-		var npc_id := str(raw_npc.get("npc_id", raw_npc.get("id", ""))) if raw_npc is Dictionary else str(raw_npc)
-		if npc_id.is_empty():
+		if not raw_npc is Dictionary:
 			continue
-		var npc: Dictionary = society.call("get_npc", npc_id)
-		if npc.is_empty() or not bool(npc.get("alive", false)):
+		var npc: Dictionary = raw_npc
+		var npc_id := str(npc.get("npc_id", npc.get("id", "")))
+		if npc_id.is_empty() or not bool(npc.get("alive", false)) or bool(npc.get("jailed", false)):
 			continue
-		if bool(npc.get("jailed", false)):
-			continue
+		var home := _location_for_action(npc, "home", 0)
+		candidates.append({
+			"npc_id": npc_id,
+			"npc": npc,
+			"distance_squared": Vector2(home.x - reference_position.x, home.z - reference_position.z).length_squared()
+		})
+	# Keep the nearest residents around the player, not the first records in the database.
+	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return float(a["distance_squared"]) < float(b["distance_squared"])
+	)
+	var visible_ids: Dictionary = {}
+	var visible_count := mini(MAX_VISIBLE_CIVILIANS, candidates.size())
+	for index in range(visible_count):
+		var candidate: Dictionary = candidates[index]
+		var npc_id := str(candidate["npc_id"])
+		var npc: Dictionary = candidate["npc"]
 		visible_ids[npc_id] = true
 		if not pedestrians.has(npc_id):
-			_create_pedestrian(npc_id, npc, added)
+			_create_pedestrian(npc_id, npc, index)
 		_set_pedestrian_destination(npc_id, npc)
-		added += 1
 	for npc_id in pedestrians.keys():
 		if not visible_ids.has(npc_id):
 			var record: Dictionary = pedestrians[npc_id]
@@ -207,11 +219,15 @@ func _location_for_action(npc: Dictionary, action: String, seed_index: int) -> V
 	var city := _city_name_for_npc(npc)
 	var anchor := _city_anchor(city)
 	var seed_value: int = absi(str(npc.get("npc_id", npc.get("id", seed_index))).hash())
-	var block_x := float((seed_value % 5) - 2) * 7.0
-	var block_z := float((floori(float(seed_value) / 5.0) % 5) - 2) * 7.0
+	# Spread thousands of residents over a deterministic 41 x 41 city-block grid.
+	# This prevents the old 5 x 5 spawn cluster from stacking crowds on one spot.
+	var grid_x := posmod(seed_value, 41) - 20
+	var grid_z := posmod(floori(float(seed_value) / 41.0), 41) - 20
+	var block_x := float(grid_x) * 8.0
+	var block_z := float(grid_z) * 8.0
 	var home := Vector3(block_x, 0.0, block_z) + anchor
-	var district := Vector3(float((seed_value % 3) - 1) * 28.0, 0.0,
-		float((floori(float(seed_value) / 3.0) % 3) - 1) * 24.0) + anchor
+	var district := Vector3(float(posmod(grid_x, 7) - 3) * 42.0, 0.0,
+		float(posmod(grid_z, 7) - 3) * 42.0) + anchor
 	match action:
 		"work":
 			return anchor + Vector3(block_x + 42.0, 0.0, block_z - 18.0)
