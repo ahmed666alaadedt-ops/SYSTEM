@@ -195,6 +195,16 @@ func _on_dodge_pressed() -> void:
 		modern_combat.call("dodge")
 
 
+func activate_system_skill(skill_id: String) -> Dictionary:
+	if _is_historical_combat_active() and is_instance_valid(historical_combat):
+		if historical_combat.has_method("activate_system_skill"):
+			return historical_combat.call("activate_system_skill", skill_id)
+	elif is_instance_valid(modern_combat):
+		if modern_combat.has_method("activate_system_skill"):
+			return modern_combat.call("activate_system_skill", skill_id)
+	return {"success": false, "reason": "ACTIVE_WORLD_COMBAT_UNAVAILABLE"}
+
+
 func _show_historical_weapon() -> void:
 	if not is_instance_valid(historical_combat):
 		return
