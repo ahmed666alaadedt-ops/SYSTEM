@@ -362,9 +362,17 @@ test("historical relic return and rare skill reward are trusted, atomic and repl
   await assert.rejects(() => call("startHistoricalRelicQuestSession", owner, {
     playerId: owner, questId: "quest_babylon_star_tablet", artifactId: relicId
   }));
+  const startRequest = await call("requestHistoricalRelicQuestStart", owner, {
+    questId: "quest_babylon_star_tablet", artifactId: relicId
+  });
+  assert.equal(startRequest.success, true);
+  await assert.rejects(() => call("listPendingHistoricalRelicQuestRequests", owner));
   const server = uid("trusted_game_server");
+  const pendingWork = await call("listPendingHistoricalRelicQuestRequests", server, {}, { gameServer: true });
+  assert.ok(pendingWork.starts.some((item) => item.requestId === startRequest.requestId));
   const session = await call("startHistoricalRelicQuestSession", server, {
-    playerId: owner, questId: "quest_babylon_star_tablet", artifactId: relicId
+    playerId: owner, questId: "quest_babylon_star_tablet", artifactId: relicId,
+    requestId: startRequest.requestId
   }, { gameServer: true });
   assert.ok(session.sessionId);
   const objectiveIds = [
@@ -388,6 +396,12 @@ test("historical relic return and rare skill reward are trusted, atomic and repl
     eventId: "babylon_reward_verified"
   };
   await assert.rejects(() => call("completeHistoricalRelicQuest", server, payload, { gameServer: true }));
+  const returnRequest = await call("requestHistoricalRelicReturn", owner, {
+    questId: "quest_babylon_star_tablet", artifactId: relicId
+  });
+  assert.equal(returnRequest.success, true);
+  const pendingReturnWork = await call("listPendingHistoricalRelicQuestRequests", server, {}, { gameServer: true });
+  assert.ok(pendingReturnWork.returns.some((item) => item.requestId === returnRequest.requestId));
   const returnProof = await call("recordHistoricalRelicReturn", server, {
     sessionId: session.sessionId,
     eventId: "babylon_return_verified",
@@ -425,14 +439,21 @@ test("historical relic quest rejects wrong return site and keeps retain-branch r
   await seedArtifact(owner, "akkadian_shadow_crown");
 
   const server = uid("trusted_game_server");
+  const sumerStart = await call("requestHistoricalRelicQuestStart", owner, {
+    questId: "quest_sumerian_oath", artifactId: "sumerian_oath_seal"
+  });
   const sumerian = await call("startHistoricalRelicQuestSession", server, {
-    playerId: owner, questId: "quest_sumerian_oath", artifactId: "sumerian_oath_seal"
+    playerId: owner, questId: "quest_sumerian_oath", artifactId: "sumerian_oath_seal",
+    requestId: sumerStart.requestId
   }, { gameServer: true });
   for (const [index, objectiveId] of ["recover_the_three_oaths", "restore_the_temple_seal"].entries()) {
     await call("recordHistoricalRelicQuestObjective", server, {
       sessionId: sumerian.sessionId, eventId: "sumer_objective_" + index, objectiveId
     }, { gameServer: true });
   }
+  await call("requestHistoricalRelicReturn", owner, {
+    questId: "quest_sumerian_oath", artifactId: "sumerian_oath_seal"
+  });
   await assert.rejects(() => call("recordHistoricalRelicReturn", server, {
     sessionId: sumerian.sessionId, eventId: "sumer_wrong_site", siteId: "wrong_historical_site"
   }, { gameServer: true }));
@@ -442,8 +463,12 @@ test("historical relic quest rejects wrong return site and keeps retain-branch r
   }, { gameServer: true }));
   assert.equal((await readArtifact(owner, "sumerian_oath_seal")).data().status, "owned");
 
+  const akkStart = await call("requestHistoricalRelicQuestStart", owner, {
+    questId: "quest_akkadian_shadow", artifactId: "akkadian_shadow_crown"
+  });
   const akkadian = await call("startHistoricalRelicQuestSession", server, {
-    playerId: owner, questId: "quest_akkadian_shadow", artifactId: "akkadian_shadow_crown"
+    playerId: owner, questId: "quest_akkadian_shadow", artifactId: "akkadian_shadow_crown",
+    requestId: akkStart.requestId
   }, { gameServer: true });
   for (const [index, objectiveId] of ["trace_the_lost_dynasty", "pass_the_shadow_trial", "seal_the_cursed_chamber"].entries()) {
     await call("recordHistoricalRelicQuestObjective", server, {
