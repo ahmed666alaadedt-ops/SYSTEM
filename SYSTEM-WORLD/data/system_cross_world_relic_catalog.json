@@ -446,7 +446,7 @@
     },
     "nen_prerequisite": {
       "required": true,
-      "status": "design_gate_not_yet_runtime_enforced_for_all_relic_skills",
+      "status": "five_elemental_skill_ids_added_to_local_progression_tree_and_activation_gate; gameplay_effects_and_server_authority_pending",
       "base_power": "nen",
       "secondary_power": "relic_elemental_affinity",
       "activation_rule": "relic_elemental_skill_requires_learned_nen_and_minimum_mastery_threshold",
@@ -463,7 +463,14 @@
         "relic_does_not_grant_nen_itself",
         "awakening_and_nen_training_are_separate_progression_checks",
         "no_elemental_skill_can_bypass_target_validation_or_pvp_boss_resistance"
-      ]
+      ],
+      "skill_requirements": {
+        "primordial_flame_burst": 2,
+        "stormwind_aerial_step": 2,
+        "tideheart_restoration": 3,
+        "worldroot_earthguard": 3,
+        "stormlightning_arc": 4
+      }
     }
   }
 }
