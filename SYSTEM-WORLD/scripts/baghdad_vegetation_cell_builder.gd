@@ -159,7 +159,7 @@ func build_cell(parent: Node3D, cell: Vector2i, landuse_features: Array,
 				while distance < length and generated_total < MAX_PLANTS_PER_CELL:
 					var center_point := start.lerp(finish, distance / length)
 					for sign_value in [-1.0, 1.0]:
-						var point := center_point + side * sign_value
+						var point: Vector2 = center_point + side * sign_value
 						if point.x < cell_min.x or point.y < cell_min.y or point.x >= cell_max.x or point.y >= cell_max.y:
 							continue
 						var category := _roll_street_category()
