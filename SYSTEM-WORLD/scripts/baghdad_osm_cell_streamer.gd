@@ -318,6 +318,9 @@ func _load_cell(cell: Vector2i) -> void:
 						"maxspeed": str(road_tags.get("maxspeed", "")),
 						"lanes": str(road_tags.get("lanes", "")),
 						"surface": str(road_tags.get("surface", "")),
+						"layer": str(road_tags.get("layer", "0")),
+						"bridge": str(road_tags.get("bridge", "")),
+						"tunnel": str(road_tags.get("tunnel", "")),
 						"points": vehicle_road_line
 					})
 		road_count += _build_line_feature(cell_root, feature, _road_width(road_tags), road_material, 0.16, "OSMRoad")
@@ -442,6 +445,9 @@ func get_loaded_vehicle_map_segments() -> Array[Dictionary]:
 				"maxspeed": str(segment_value.get("maxspeed", "")),
 				"lanes": str(segment_value.get("lanes", "")),
 				"surface": str(segment_value.get("surface", "")),
+				"layer": str(segment_value.get("layer", "0")),
+				"bridge": str(segment_value.get("bridge", "")),
+				"tunnel": str(segment_value.get("tunnel", "")),
 				"points": points_value
 			})
 	return result
@@ -485,7 +491,8 @@ func _ensure_vehicle_navigation_graph() -> void:
 			var bidirectional := oneway not in ["yes", "1", "true", "-1"]
 			var previous_id := -1
 			for point in points:
-				var key := "%d:%d" % [roundi(point.x * 2.0), roundi(point.y * 2.0)]
+				var level_key := "%s:%s:%s" % [str(segment_value.get("layer", "0")), str(segment_value.get("bridge", "")), str(segment_value.get("tunnel", ""))]
+				var key := "%s:%d:%d" % [level_key, roundi(point.x * 2.0), roundi(point.y * 2.0)]
 				var point_id := int(coordinate_to_id.get(key, -1))
 				if point_id < 0:
 					point_id = next_id
