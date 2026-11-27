@@ -1102,11 +1102,15 @@ func _create_relic_skill_hud() -> void:
 		button.offset_bottom = 0.0
 		button.text = str(definition.name)
 		button.visible = false
-		button.pressed.connect(func(): relic_skill_activation_requested.emit(skill_id))
+		button.pressed.connect(_request_relic_skill_activation.bind(skill_id))
 		hud.add_child(button)
 		relic_skill_buttons[skill_id] = button
 	add_child(canvas)
 	_refresh_relic_skill_hud()
+
+
+func _request_relic_skill_activation(skill_id: String) -> void:
+	relic_skill_activation_requested.emit(skill_id)
 
 
 func _refresh_relic_skill_hud() -> void:
