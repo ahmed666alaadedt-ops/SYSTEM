@@ -65,7 +65,11 @@ func configure(
 			city_anchor + Vector3(34.0, 0.0, 24.0),
 			city_anchor + Vector3(-34.0, 0.0, 24.0)
 		]
-		set_meta("system_road_route_source", "procedural_fallback")
+		if _baghdad_osm_waiting_for_cells():
+			is_driving = false
+			set_meta("system_road_route_source", "waiting_for_osm_vehicle_graph")
+		else:
+			set_meta("system_road_route_source", "procedural_fallback")
 		set_meta("system_vehicle_route_points", route_points.size())
 	route_index = p_slot % route_points.size()
 
@@ -82,13 +86,25 @@ func _try_upgrade_to_osm_vehicle_route() -> bool:
 	return true
 
 
-func _build_real_osm_vehicle_loop(slot: int) -> Array[Vector3]:
+func _get_baghdad_osm_streamer() -> Node:
 	if city_name != "Baghdad" or not is_instance_valid(crime_manager):
-		return []
+		return null
 	var world_root := crime_manager.get_parent()
 	if world_root == null:
-		return []
-	var streamer := world_root.get_node_or_null("BaghdadOSMCellStreamer")
+		return null
+	return world_root.get_node_or_null("BaghdadOSMCellStreamer")
+
+
+func _baghdad_osm_waiting_for_cells() -> bool:
+	var streamer := _get_baghdad_osm_streamer()
+	if streamer == null or not bool(streamer.get("enabled")):
+		return false
+	var loaded_value: Variant = streamer.get("loaded_cells")
+	return loaded_value is Dictionary and loaded_value.is_empty()
+
+
+func _build_real_osm_vehicle_loop(slot: int) -> Array[Vector3]:
+	var streamer := _get_baghdad_osm_streamer()
 	if streamer == null or not streamer.has_method("get_vehicle_navigation_path"):
 		return []
 	var candidates := [
@@ -96,25 +112,28 @@ func _build_real_osm_vehicle_loop(slot: int) -> Array[Vector3]:
 		{"start": Vector3(-82.0, 0.0, 52.0), "target": Vector3(82.0, 0.0, -52.0)},
 		{"start": Vector3(-105.0, 0.0, 4.0), "target": Vector3(105.0, 0.0, -4.0)}
 	]
-	var candidate: Dictionary = candidates[slot % candidates.size()]
-	var start: Vector3 = city_anchor + candidate["start"]
-	var target: Vector3 = city_anchor + candidate["target"]
-	var outbound_value: Variant = streamer.call("get_vehicle_navigation_path", start, target, 75.0)
-	var inbound_value: Variant = streamer.call("get_vehicle_navigation_path", target, start, 75.0)
-	if not outbound_value is Array or not inbound_value is Array:
-		return []
-	var outbound: Array = outbound_value
-	var inbound: Array = inbound_value
-	if outbound.size() < 2 or inbound.size() < 2:
-		return []
-	var loop: Array[Vector3] = []
-	for point in outbound:
-		if point is Vector3:
-			loop.append(point)
-	for index in range(1, inbound.size()):
-		if inbound[index] is Vector3:
-			loop.append(inbound[index])
-	return loop if loop.size() >= 4 else []
+	for offset in range(candidates.size()):
+		var candidate: Dictionary = candidates[(slot + offset) % candidates.size()]
+		var start: Vector3 = city_anchor + candidate["start"]
+		var target: Vector3 = city_anchor + candidate["target"]
+		var outbound_value: Variant = streamer.call("get_vehicle_navigation_path", start, target, 75.0)
+		var inbound_value: Variant = streamer.call("get_vehicle_navigation_path", target, start, 75.0)
+		if not outbound_value is Array or not inbound_value is Array:
+			continue
+		var outbound: Array = outbound_value
+		var inbound: Array = inbound_value
+		if outbound.size() < 2 or inbound.size() < 2:
+			continue
+		var loop: Array[Vector3] = []
+		for point in outbound:
+			if point is Vector3:
+				loop.append(point)
+		for index in range(1, inbound.size()):
+			if inbound[index] is Vector3:
+				loop.append(inbound[index])
+		if loop.size() >= 4:
+			return loop
+	return []
 
 func _process(delta: float) -> void:
 	if city_name == "Baghdad" and str(get_meta("system_road_route_source", "")) != "real_osm_vehicle_graph":
