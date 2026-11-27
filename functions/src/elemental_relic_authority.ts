@@ -303,7 +303,6 @@ export const resolveElementalRelicCombat = onCall(async (request) => {
     const now = Date.now();
     const expiry = Number(a.expiresAtMs ?? 0);
     if (!Number.isFinite(expiry) || expiry < now) {
-      transaction.update(activationRef, { status: "expired", expiredAt: FieldValue.serverTimestamp() });
       throw new HttpsError("deadline-exceeded", "ACTIVATION_EXPIRED");
     }
 
