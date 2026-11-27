@@ -808,7 +808,6 @@ func _build_baghdad_tigris_surface() -> void:
 	river.name = "BaghdadTigrisRiver"
 	var river_mesh := _commit_surface_tool_if_valid(surface)
 	if river_mesh == null:
-		bridge.queue_free()
 		return
 	river.mesh = river_mesh
 	river.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
