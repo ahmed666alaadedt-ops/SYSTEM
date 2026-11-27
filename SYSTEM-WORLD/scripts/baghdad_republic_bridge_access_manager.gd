@@ -149,7 +149,7 @@ func build(tower: Node3D, city_anchor: Vector3, route: Dictionary, terrain_manag
 	set_meta("river_surface_elevation_world_m", water_y)
 	set_meta("bridge_deck_elevation_world_m", bridge_y)
 	set_meta("tower_platform_elevation_world_m", platform_y)
-	set_meta("river_clearance_to_tower_platform_m", round(platform_y - water_y, 2))
+	set_meta("river_clearance_to_tower_platform_m", (roundf((platform_y - water_y) * 100.0) / 100.0))
 	set_meta("traffic_lane_clear", true)
 	set_meta("tigris_navigation_corridor_clear", true)
 
@@ -158,7 +158,7 @@ func build(tower: Node3D, city_anchor: Vector3, route: Dictionary, terrain_manag
 	tower.set_meta("bridge_deck_elevation_world_m", bridge_y)
 	tower.set_meta("river_surface_elevation_world_m", water_y)
 	tower.set_meta("tower_platform_elevation_world_m", platform_y)
-	tower.set_meta("river_clearance_m", round(platform_y - water_y, 2))
+	tower.set_meta("river_clearance_m", (roundf((platform_y - water_y) * 100.0) / 100.0))
 	tower.set_meta("district_connector_type", "express_skyway")
 	return true
 
