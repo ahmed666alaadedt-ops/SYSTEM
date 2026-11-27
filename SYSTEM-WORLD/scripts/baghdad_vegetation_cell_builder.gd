@@ -182,7 +182,7 @@ func build_cell(parent: Node3D, cell: Vector2i, landuse_features: Array,
 				var point := _random_riparian_point(ring)
 				if point == Vector2.INF or point.x < cell_min.x or point.y < cell_min.y or point.x >= cell_max.x or point.y >= cell_max.y:
 					continue
-				var y := float(terrain_height.call(point)) + 0.12
+				var y := float(terrain_height.call(point)) + _plant_lift("aquatic_riparian")
 				batches["aquatic_riparian"].append(_plant_transform("aquatic_riparian", point, y))
 				generated_total += 1
 	var counts: Dictionary = {}
